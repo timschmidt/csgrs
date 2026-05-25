@@ -21231,6 +21231,68 @@ fn exact_coplanar_orthogonal_surface_cells_materialize_nonconvex_outputs() {
         }
     );
 
+    let hole_branch_left = rect_surface_i64(&[(0, 0, 5, 5)]);
+    let hole_branch_right = rect_surface_i64(&[
+        (1, 2, 2, 3),
+        (1, 3, 2, 4),
+        (2, 1, 3, 2),
+        (2, 3, 3, 4),
+        (3, 1, 4, 2),
+        (3, 2, 4, 3),
+        (3, 3, 4, 4),
+    ]);
+    let hole_branch_difference = hypermesh::exact::arrange_coplanar_orthogonal_surface_difference(
+        &hole_branch_left,
+        &hole_branch_right,
+    )
+    .expect("orthogonal island should point-touch its containing hole boundary");
+    hole_branch_difference.validate().unwrap();
+    hole_branch_difference
+        .validate_against_sources(&hole_branch_left, &hole_branch_right)
+        .unwrap();
+    assert_eq!(hole_branch_difference.components.len(), 2);
+    assert!(
+        hole_branch_difference
+            .components
+            .iter()
+            .any(|component| component.holes.len() == 1)
+    );
+    let hole_branch_point = p3(2, 2, 0);
+    assert_eq!(
+        hole_branch_difference
+            .components
+            .iter()
+            .filter(|component| {
+                component.outer.iter().any(|point| {
+                    real_eq(&point.x, &hole_branch_point.x)
+                        && real_eq(&point.y, &hole_branch_point.y)
+                        && real_eq(&point.z, &hole_branch_point.z)
+                }) || component.holes.iter().any(|hole| {
+                    hole.iter().any(|point| {
+                        real_eq(&point.x, &hole_branch_point.x)
+                            && real_eq(&point.y, &hole_branch_point.y)
+                            && real_eq(&point.z, &hole_branch_point.z)
+                    })
+                })
+            })
+            .count(),
+        2
+    );
+    let hole_branch_preflight = hypermesh::exact::preflight_boolean_exact(
+        &hole_branch_left,
+        &hole_branch_right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    hole_branch_preflight.validate().unwrap();
+    hole_branch_preflight
+        .validate_against_sources(&hole_branch_left, &hole_branch_right)
+        .unwrap();
+    assert_eq!(
+        hole_branch_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceDifference
+    );
+
     let invalid_nested_without_hole = hypermesh::exact::CoplanarOrthogonalSurfaceArrangement {
         projection: CoplanarProjection::Xy,
         operation: hypermesh::exact::CoplanarOrthogonalSurfaceOperation::Difference,
@@ -21643,6 +21705,65 @@ fn exact_coplanar_affine_surface_cells_materialize_rotated_nonconvex_outputs() {
         .unwrap();
     assert_eq!(
         nested_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarAffineSurfaceDifference
+    );
+
+    let hole_branch_left = affine_rect_surface_i64(&[(0, 0, 5, 5)], origin, basis_u, basis_v);
+    let hole_branch_right = affine_rect_surface_i64(
+        &[
+            (1, 2, 2, 3),
+            (1, 3, 2, 4),
+            (2, 1, 3, 2),
+            (2, 3, 3, 4),
+            (3, 1, 4, 2),
+            (3, 2, 4, 3),
+            (3, 3, 4, 4),
+        ],
+        origin,
+        basis_u,
+        basis_v,
+    );
+    let hole_branch_difference = hypermesh::exact::arrange_coplanar_affine_surface_difference(
+        &hole_branch_left,
+        &hole_branch_right,
+    )
+    .expect("rotated island should point-touch its containing affine hole boundary");
+    hole_branch_difference.validate().unwrap();
+    hole_branch_difference
+        .validate_against_sources(&hole_branch_left, &hole_branch_right)
+        .unwrap();
+    assert_eq!(hole_branch_difference.components.len(), 2);
+    let affine_hole_branch_point =
+        Point3::new(ExactReal::from(2), ExactReal::from(6), ExactReal::from(0));
+    assert_eq!(
+        hole_branch_difference
+            .components
+            .iter()
+            .filter(|component| {
+                component
+                    .outer
+                    .iter()
+                    .any(|point| point == &affine_hole_branch_point)
+                    || component
+                        .holes
+                        .iter()
+                        .any(|hole| hole.iter().any(|point| point == &affine_hole_branch_point))
+            })
+            .count(),
+        2
+    );
+    let hole_branch_preflight = hypermesh::exact::preflight_boolean_exact(
+        &hole_branch_left,
+        &hole_branch_right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    hole_branch_preflight.validate().unwrap();
+    hole_branch_preflight
+        .validate_against_sources(&hole_branch_left, &hole_branch_right)
+        .unwrap();
+    assert_eq!(
+        hole_branch_preflight.support,
         hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarAffineSurfaceDifference
     );
 

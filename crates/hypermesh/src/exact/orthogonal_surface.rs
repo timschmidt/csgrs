@@ -15,9 +15,11 @@
 //! grid facts that justified the set boundary. Retained output components may
 //! meet at exact grid vertices only; those branch points are kept as separate
 //! component vertices instead of being welded into non-manifold mesh topology.
-//! Components may also be nested strictly inside retained holes: an island in a
-//! removed rectilinear ring is separate output topology, not an overlap with the
-//! containing component.
+//! Components may also be nested inside retained holes: an island in a removed
+//! rectilinear ring is separate output topology, not an overlap with the
+//! containing component. If that island touches the containing hole boundary
+//! at exact grid vertices only, the branch is retained with duplicated mesh
+//! coordinates just like ordinary point-touch component branches.
 //!
 //! The grid subdivision is the orthogonal analogue of the arrangement viewpoint
 //! in de Berg, Cheong, van Kreveld, and Overmars, *Computational Geometry:
@@ -73,12 +75,13 @@ pub struct CoplanarOrthogonalSurfaceComponent {
 /// only at exact grid vertices are retained as separate components with
 /// duplicated coordinates, which is the cell-complex analogue of the bounded
 /// point-touch branch artifact in [`crate::exact::surface`]. Components nested
-/// strictly inside retained holes are also accepted, which covers rectilinear
-/// island outputs without requiring a general non-rectilinear
-/// planar-subdivision object. Positive-length component contact and
-/// hole/boundary contact stay rejected. Cases outside that model stay explicit
-/// planar-arrangement work instead of being decided by a tolerance polygon
-/// kernel.
+/// inside retained holes are also accepted when the island is strictly inside
+/// the hole or touches the hole boundary only at exact grid vertices. That
+/// covers rectilinear island outputs without requiring a general
+/// non-rectilinear planar-subdivision object. Positive-length component
+/// contact and positive-length/proper hole-boundary contact stay rejected.
+/// Cases outside that model stay explicit planar-arrangement work instead of
+/// being decided by a tolerance polygon kernel.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CoplanarOrthogonalSurfaceArrangement {
     /// Projection plane used by the exact cell grid.
@@ -978,6 +981,17 @@ fn component_to_mesh(
     component: &CoplanarOrthogonalSurfaceComponent,
     projection: CoplanarProjection,
 ) -> Option<ExactMesh> {
+    if let Some(mesh) = component_to_keyholed_mesh(component, projection) {
+        return Some(mesh);
+    }
+    component_to_earcut_mesh(component, projection)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn component_to_earcut_mesh(
+    component: &CoplanarOrthogonalSurfaceComponent,
+    projection: CoplanarProjection,
+) -> Option<ExactMesh> {
     let mut points = component.outer.clone();
     let mut hole_indices = Vec::with_capacity(component.holes.len());
     for hole in &component.holes {
@@ -1007,6 +1021,219 @@ fn component_to_mesh(
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .ok()
+}
+
+/// Triangulate a one-hole orthogonal component by opening it along a bridge.
+///
+/// `hypertri::earcut` is reliable for ordinary simple rings, but the retained
+/// object here may contain a hole boundary that point-touches a separate
+/// island component. The hole is still a valid retained boundary, yet a direct
+/// holed earcut can emit a triangle made entirely from hole vertices. We avoid
+/// that by converting one holed ring into a simple "keyhole" polygon with an
+/// exact visible bridge, then mapping duplicated bridge endpoints back onto the
+/// retained outer and hole vertices. This is the keyhole construction used by
+/// Held, "FIST: Fast Industrial-Strength Triangulation of Polygons,"
+/// *Algorithmica* 30 (2001), with Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997), supplying the acceptance discipline:
+/// the bridge is an internal proof edge, while all exported vertices and
+/// boundary edges remain the exact retained cell-complex topology.
+#[cfg(feature = "exact-triangulation")]
+fn component_to_keyholed_mesh(
+    component: &CoplanarOrthogonalSurfaceComponent,
+    projection: CoplanarProjection,
+) -> Option<ExactMesh> {
+    if component.holes.len() != 1 || component.outer.len() < 4 {
+        return None;
+    }
+    let hole = component.holes.first()?;
+    if hole.len() < 4 {
+        return None;
+    }
+    for outer_index in 0..component.outer.len() {
+        for hole_index in 0..hole.len() {
+            if !keyhole_bridge_is_valid(
+                &component.outer,
+                hole,
+                outer_index,
+                hole_index,
+                projection,
+            )? {
+                continue;
+            }
+            if let Some(mesh) =
+                keyhole_mesh_for_bridge(&component.outer, hole, outer_index, hole_index, projection)
+                    .filter(|mesh| {
+                        validate_component_mesh(projection, core::slice::from_ref(component), mesh)
+                            .is_ok()
+                    })
+            {
+                return Some(mesh);
+            }
+        }
+    }
+    None
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn keyhole_mesh_for_bridge(
+    outer: &[Point3],
+    hole: &[Point3],
+    outer_index: usize,
+    hole_index: usize,
+    projection: CoplanarProjection,
+) -> Option<ExactMesh> {
+    let mut keyhole_points = Vec::with_capacity(outer.len() + hole.len() + 2);
+    let mut index_map = Vec::with_capacity(outer.len() + hole.len() + 2);
+    keyhole_points.push(outer[outer_index].clone());
+    index_map.push(outer_index);
+    keyhole_points.push(hole[hole_index].clone());
+    index_map.push(outer.len() + hole_index);
+    for step in 1..hole.len() {
+        let index = (hole_index + step) % hole.len();
+        keyhole_points.push(hole[index].clone());
+        index_map.push(outer.len() + index);
+    }
+    keyhole_points.push(hole[hole_index].clone());
+    index_map.push(outer.len() + hole_index);
+    keyhole_points.push(outer[outer_index].clone());
+    index_map.push(outer_index);
+    for step in 1..outer.len() {
+        let index = (outer_index + step) % outer.len();
+        keyhole_points.push(outer[index].clone());
+        index_map.push(index);
+    }
+
+    let vertices2 = keyhole_points
+        .iter()
+        .map(|point| project_for_hypertri(point, projection))
+        .collect::<Vec<_>>();
+    let indices = hypertri::earcut(&vertices2, &[]).ok()?;
+    if indices.is_empty() || indices.len() % 3 != 0 {
+        return None;
+    }
+
+    let points = outer.iter().chain(hole).cloned().collect::<Vec<_>>();
+    let mut triangles = Vec::new();
+    for chunk in indices.chunks_exact(3) {
+        let mapped = [
+            *index_map.get(chunk[0])?,
+            *index_map.get(chunk[1])?,
+            *index_map.get(chunk[2])?,
+        ];
+        if mapped[0] == mapped[1] || mapped[1] == mapped[2] || mapped[2] == mapped[0] {
+            continue;
+        }
+        if mapped.iter().all(|&index| index >= outer.len()) {
+            continue;
+        }
+        let cell = triangle_points(&points, mapped);
+        let signed_area = projected_area2_signed(&cell, projection)?;
+        match compare_reals(&signed_area, &ExactReal::from(0)).value()? {
+            Ordering::Greater => triangles.push(Triangle(mapped)),
+            Ordering::Less => triangles.push(Triangle([mapped[2], mapped[1], mapped[0]])),
+            Ordering::Equal => {}
+        }
+    }
+    if triangles.is_empty() {
+        return None;
+    }
+    let vertices = points
+        .iter()
+        .map(|point| ExactPoint3::new(point.x.clone(), point.y.clone(), point.z.clone()))
+        .collect::<Vec<_>>();
+    ExactMesh::new_with_policy(
+        vertices,
+        triangles,
+        SourceProvenance::exact("exact coplanar orthogonal keyholed component"),
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .ok()
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn keyhole_bridge_is_valid(
+    outer: &[Point3],
+    hole: &[Point3],
+    outer_index: usize,
+    hole_index: usize,
+    projection: CoplanarProjection,
+) -> Option<bool> {
+    let a = outer.get(outer_index)?;
+    let b = hole.get(hole_index)?;
+    let midpoint = midpoint3(a, b);
+    if loop_point_location(&midpoint, outer, projection)? != LoopPointLocation::Inside {
+        return Some(false);
+    }
+    if loop_point_location(&midpoint, hole, projection)? != LoopPointLocation::Outside {
+        return Some(false);
+    }
+    if !keyhole_bridge_respects_ring(a, b, outer, outer_index, projection)? {
+        return Some(false);
+    }
+    if !keyhole_bridge_respects_ring(a, b, hole, hole_index, projection)? {
+        return Some(false);
+    }
+    Some(true)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn keyhole_bridge_respects_ring(
+    a: &Point3,
+    b: &Point3,
+    ring: &[Point3],
+    allowed_vertex: usize,
+    projection: CoplanarProjection,
+) -> Option<bool> {
+    let start = project_point(a, projection);
+    let end = project_point(b, projection);
+    for edge in 0..ring.len() {
+        let edge_start = project_point(&ring[edge], projection);
+        let edge_end = project_point(&ring[(edge + 1) % ring.len()], projection);
+        match classify_segment_intersection(&start, &end, &edge_start, &edge_end).value()? {
+            SegmentIntersection::Disjoint => {}
+            SegmentIntersection::EndpointTouch => {
+                let incident = edge == allowed_vertex || (edge + 1) % ring.len() == allowed_vertex;
+                if !incident {
+                    return Some(false);
+                }
+            }
+            SegmentIntersection::Proper
+            | SegmentIntersection::CollinearOverlap
+            | SegmentIntersection::Identical => return Some(false),
+        }
+    }
+    Some(true)
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum LoopPointLocation {
+    Inside,
+    Boundary,
+    Outside,
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn loop_point_location(
+    point: &Point3,
+    loop_points: &[Point3],
+    projection: CoplanarProjection,
+) -> Option<LoopPointLocation> {
+    if loop_points.iter().enumerate().any(|(index, start)| {
+        point_on_projected_segment(
+            start,
+            &loop_points[(index + 1) % loop_points.len()],
+            point,
+            projection,
+        )
+    }) {
+        return Some(LoopPointLocation::Boundary);
+    }
+    match point_strictly_inside_loop(point, loop_points, projection) {
+        Ok(true) => Some(LoopPointLocation::Inside),
+        Ok(false) => Some(LoopPointLocation::Outside),
+        Err(_) => None,
+    }
 }
 
 fn validate_components(
@@ -1073,7 +1300,7 @@ fn validate_components(
                     ));
                 }
             }
-            validate_cross_component_hole_boundaries(left_component, right_component, projection)?;
+            validate_cross_component_hole_contacts(left_component, right_component, projection)?;
             let right_witness = right_component
                 .outer
                 .first()
@@ -1126,55 +1353,68 @@ fn validate_components(
 /// Orthogonal cell extraction may produce a filled island inside a removed
 /// rectilinear ring. Yap, "Towards Exact Geometric Computation,"
 /// *Computational Geometry* 7.1-2 (1997), requires that this relationship stay
-/// explicit in retained object topology: the island's outer loop must be
-/// strictly separated from the containing hole boundary. A touch or shared
-/// edge would be a higher-valence planar subdivision that this bounded
-/// materializer does not claim to own.
-fn validate_cross_component_hole_boundaries(
+/// explicit in retained object topology. Exact point-only contact is retained
+/// as a named branch by duplicating the shared coordinate in each component
+/// mesh. Positive-length or proper contact is still a higher-valence planar
+/// subdivision that this bounded materializer does not claim to own.
+fn validate_cross_component_hole_contacts(
     left: &CoplanarOrthogonalSurfaceComponent,
     right: &CoplanarOrthogonalSurfaceComponent,
     projection: CoplanarProjection,
 ) -> Result<(), MeshError> {
     for hole in &left.holes {
-        if loop_edges_intersect(hole, &right.outer, projection)? {
-            return Err(orthogonal_error(
-                "orthogonal output component touches a retained hole boundary",
-            ));
+        match loop_contact(hole, &right.outer, projection)? {
+            LoopContact::Disjoint | LoopContact::PointOnly => {}
+            LoopContact::PositiveLengthOrArea => {
+                return Err(orthogonal_error(
+                    "orthogonal output component has positive-dimensional contact with a retained hole boundary",
+                ));
+            }
         }
     }
     for hole in &right.holes {
-        if loop_edges_intersect(hole, &left.outer, projection)? {
-            return Err(orthogonal_error(
-                "orthogonal output component touches a retained hole boundary",
-            ));
+        match loop_contact(hole, &left.outer, projection)? {
+            LoopContact::Disjoint | LoopContact::PointOnly => {}
+            LoopContact::PositiveLengthOrArea => {
+                return Err(orthogonal_error(
+                    "orthogonal output component has positive-dimensional contact with a retained hole boundary",
+                ));
+            }
         }
     }
     Ok(())
 }
 
-/// Return whether `inner` is strictly contained by one hole of `outer`.
+/// Return whether `inner` is contained by one hole of `outer`.
 ///
 /// This is the exact rectilinear island case: the inner component is not part
 /// of `outer`'s filled area, but is still a valid output component because it
-/// lies in a retained void of `outer`. The test deliberately uses one witness
-/// plus exact edge separation. For simple loops, a witness inside the hole and
-/// no boundary crossing proves the whole outer loop of `inner` stays in that
-/// hole; de Berg, Cheong, van Kreveld, and Overmars' planar-subdivision model
-/// justifies treating that as a finite cell-complex relation.
+/// lies in a retained void of `outer`. The test uses one strict interior
+/// witness plus exact loop contact classification. For simple loops, a witness
+/// inside the hole and no positive-dimensional boundary crossing proves the
+/// whole outer loop of `inner` stays in that hole; point-only contact is
+/// retained as explicit branch topology. This is the finite cell-complex
+/// relation from de Berg, Cheong, van Kreveld, and Overmars' planar-
+/// subdivision model, kept in Yap's retained-object style.
 fn component_strictly_inside_retained_hole(
     inner: &CoplanarOrthogonalSurfaceComponent,
     outer: &CoplanarOrthogonalSurfaceComponent,
     projection: CoplanarProjection,
 ) -> Result<bool, MeshError> {
-    let witness = inner
-        .outer
-        .first()
-        .ok_or_else(|| orthogonal_error("orthogonal outer loop is empty"))?;
     for hole in &outer.holes {
-        if point_strictly_inside_loop(witness, hole, projection)?
-            && !loop_edges_intersect(&inner.outer, hole, projection)?
-        {
-            return Ok(true);
+        let has_strict_witness = inner
+            .outer
+            .iter()
+            .map(|point| point_strictly_inside_loop(point, hole, projection))
+            .collect::<Result<Vec<_>, _>>()?
+            .into_iter()
+            .any(|inside| inside);
+        if !has_strict_witness {
+            continue;
+        }
+        match loop_contact(&inner.outer, hole, projection)? {
+            LoopContact::Disjoint | LoopContact::PointOnly => return Ok(true),
+            LoopContact::PositiveLengthOrArea => {}
         }
     }
     Ok(false)
@@ -1858,6 +2098,11 @@ fn projected_mesh_area2_signed(
     Some(area)
 }
 
+#[cfg(feature = "exact-triangulation")]
+fn triangle_points(points: &[Point3], tri: [usize; 3]) -> Vec<Point3> {
+    tri.iter().map(|&index| points[index].clone()).collect()
+}
+
 fn polygon_min_projected_point(polygon: &[Point3], projection: CoplanarProjection) -> Point2 {
     polygon
         .iter()
@@ -1920,6 +2165,15 @@ fn sort_reals_and_dedup(values: &mut Vec<ExactReal>) -> Option<()> {
 fn midpoint_real(left: &ExactReal, right: &ExactReal) -> ExactReal {
     let half = (ExactReal::from(1) / &ExactReal::from(2)).expect("2 is nonzero");
     mul(&add(left, right), &half)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn midpoint3(left: &Point3, right: &Point3) -> Point3 {
+    Point3::new(
+        midpoint_real(&left.x, &right.x),
+        midpoint_real(&left.y, &right.y),
+        midpoint_real(&left.z, &right.z),
+    )
 }
 
 fn compare_point2(left: &Point2, right: &Point2) -> Option<Ordering> {

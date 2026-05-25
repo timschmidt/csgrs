@@ -6090,6 +6090,87 @@ fn exercise_component_coplanar_difference() {
         ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceDifference
     );
 
+    let hole_branch_left = rect_surface_i64(&[(0, 0, 5, 5)]);
+    let hole_branch_right = rect_surface_i64(&[
+        (1, 2, 2, 3),
+        (1, 3, 2, 4),
+        (2, 1, 3, 2),
+        (2, 3, 3, 4),
+        (3, 1, 4, 2),
+        (3, 2, 4, 3),
+        (3, 3, 4, 4),
+    ]);
+    let hole_branch_difference =
+        arrange_coplanar_orthogonal_surface_difference(&hole_branch_left, &hole_branch_right)
+            .expect("orthogonal hole-boundary point branch should materialize");
+    hole_branch_difference.validate().unwrap();
+    hole_branch_difference
+        .validate_against_sources(&hole_branch_left, &hole_branch_right)
+        .unwrap();
+    assert_eq!(hole_branch_difference.components.len(), 2);
+    assert!(
+        hole_branch_difference
+            .components
+            .iter()
+            .any(|component| component.holes.len() == 1)
+    );
+    assert_eq!(
+        hole_branch_difference
+            .components
+            .iter()
+            .filter(|component| {
+                component
+                    .outer
+                    .iter()
+                    .chain(component.holes.iter().flat_map(|hole| hole.iter()))
+                    .any(|point| point == &point3(2, 2, 0))
+            })
+            .count(),
+        2
+    );
+    let hole_branch_preflight = preflight_boolean_exact(
+        &hole_branch_left,
+        &hole_branch_right,
+        ExactBooleanOperation::Difference,
+    )
+    .expect("orthogonal hole-boundary point branch preflight should classify shortcut");
+    hole_branch_preflight.validate().unwrap();
+    assert_eq!(
+        hole_branch_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceDifference
+    );
+    let invalid_positive_hole_contact = CoplanarOrthogonalSurfaceArrangement {
+        projection: CoplanarProjection::Xy,
+        operation: CoplanarOrthogonalSurfaceOperation::Difference,
+        components: vec![
+            CoplanarOrthogonalSurfaceComponent {
+                outer: vec![
+                    point3(0, 0, 0),
+                    point3(6, 0, 0),
+                    point3(6, 6, 0),
+                    point3(0, 6, 0),
+                ],
+                holes: vec![vec![
+                    point3(4, 4, 0),
+                    point3(4, 2, 0),
+                    point3(2, 2, 0),
+                    point3(2, 4, 0),
+                ]],
+            },
+            CoplanarOrthogonalSurfaceComponent {
+                outer: vec![
+                    point3(4, 3, 0),
+                    point3(5, 3, 0),
+                    point3(5, 4, 0),
+                    point3(4, 4, 0),
+                ],
+                holes: Vec::new(),
+            },
+        ],
+        mesh: rect_surface_i64(&[(0, 0, 6, 6), (4, 3, 5, 4)]),
+    };
+    assert!(invalid_positive_hole_contact.validate().is_err());
+
     let graph_left = rect_surface_i64(&[(0, 0, 12, 10)]);
     let graph_right = rect_surface_i64(&[(3, 3, 5, 5), (7, 3, 9, 5), (5, 4, 7, 5), (-1, 4, 3, 5)]);
     assert!(
@@ -6323,6 +6404,59 @@ fn exercise_component_coplanar_difference() {
         affine_nested_preflight.support,
         ExactBooleanSupport::CertifiedCoplanarAffineSurfaceDifference
     );
+
+    let affine_hole_branch_left =
+        affine_rect_surface_i64(&[(0, 0, 5, 5)], origin, basis_u, basis_v);
+    let affine_hole_branch_right = affine_rect_surface_i64(
+        &[
+            (1, 2, 2, 3),
+            (1, 3, 2, 4),
+            (2, 1, 3, 2),
+            (2, 3, 3, 4),
+            (3, 1, 4, 2),
+            (3, 2, 4, 3),
+            (3, 3, 4, 4),
+        ],
+        origin,
+        basis_u,
+        basis_v,
+    );
+    let affine_hole_branch_difference = arrange_coplanar_affine_surface_difference(
+        &affine_hole_branch_left,
+        &affine_hole_branch_right,
+    )
+    .expect("affine hole-boundary point branch should materialize");
+    affine_hole_branch_difference.validate().unwrap();
+    affine_hole_branch_difference
+        .validate_against_sources(&affine_hole_branch_left, &affine_hole_branch_right)
+        .unwrap();
+    assert_eq!(affine_hole_branch_difference.components.len(), 2);
+    assert_eq!(
+        affine_hole_branch_difference
+            .components
+            .iter()
+            .filter(|component| {
+                component
+                    .outer
+                    .iter()
+                    .chain(component.holes.iter().flat_map(|hole| hole.iter()))
+                    .any(|point| point == &point3(2, 6, 0))
+            })
+            .count(),
+        2
+    );
+    let affine_hole_branch_preflight = preflight_boolean_exact(
+        &affine_hole_branch_left,
+        &affine_hole_branch_right,
+        ExactBooleanOperation::Difference,
+    )
+    .expect("affine hole-boundary point branch preflight should classify shortcut");
+    affine_hole_branch_preflight.validate().unwrap();
+    assert_eq!(
+        affine_hole_branch_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarAffineSurfaceDifference
+    );
+
     let affine_graph_left = affine_rect_surface_i64(&[(0, 0, 12, 10)], origin, basis_u, basis_v);
     let affine_graph_right = affine_rect_surface_i64(
         &[(3, 3, 5, 5), (7, 3, 9, 5), (5, 4, 7, 5), (-1, 4, 3, 5)],
