@@ -96,6 +96,8 @@ pub use mixed_bezier_arrangement::{
     arrange_line_segments_with_quadratic_beziers_and_provenance,
 };
 pub use mixed_conic_arrangement::{
+    LineRationalQuadraticBezierAlgebraicBreakpoint,
+    LineRationalQuadraticBezierAlgebraicBreakpointDomain,
     LineRationalQuadraticBezierArrangementError, LineRationalQuadraticBezierArrangementEvent,
     LineRationalQuadraticBezierArrangementFacts, LineRationalQuadraticBezierArrangementReport,
     LineRationalQuadraticBezierSupportOverlapCandidate, MixedConicLineArrangementBreakpoint,

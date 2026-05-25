@@ -13,8 +13,9 @@ use hyperpath::{
     LineCubicAlgebraicPointDomain, LineCubicAlgebraicRootDomain,
     LineCubicBezierAlgebraicBreakpointDomain, LineCubicBezierIntersectionClass,
     LineExplicitArcIntersectionClass, LineOffsetError, LinePathSegment,
-    LineQuadraticBezierIntersectionClass, LineRationalQuadraticBezierIntersectionClass,
-    LineRationalQuadraticBezierInverseBoundarySource, LineRationalQuadraticBezierInverseRootDomain,
+    LineQuadraticBezierIntersectionClass, LineRationalQuadraticBezierAlgebraicBreakpointDomain,
+    LineRationalQuadraticBezierIntersectionClass, LineRationalQuadraticBezierInverseBoundarySource,
+    LineRationalQuadraticBezierInverseRootDomain,
     LineRationalQuadraticBezierSupportOverlapMonotonicity, LookaheadFeedSchedule, MeanderError,
     MeanderKeepout, MeanderObstacle, MeanderPlacementCandidate, NetId, OffsetSide, PathProvenance,
     PathSourceFormat, PcbBoardOutline, PcbCardinalRectPad, PcbCircularBoardOutline, PcbCircularPad,
@@ -1227,6 +1228,28 @@ fn line_rational_quadratic_bezier_arrangement_keeps_nonmonotone_support_overlap_
             .len(),
         2
     );
+    assert_eq!(report.algebraic_breakpoints.len(), 4);
+    assert!(
+        report
+            .algebraic_breakpoints
+            .iter()
+            .all(|breakpoint| breakpoint.domain
+                == LineRationalQuadraticBezierAlgebraicBreakpointDomain::InsideLineAndCurve)
+    );
+    assert_eq!(
+        report.algebraic_breakpoints[0].boundary_source,
+        LineRationalQuadraticBezierInverseBoundarySource::SegmentStart
+    );
+    assert_eq!(report.algebraic_breakpoints[0].boundary_value, r(1));
+    assert_eq!(report.algebraic_breakpoints[0].point, p(1, 0));
+    assert_eq!(report.algebraic_breakpoints[0].line_parameter, r(0));
+    assert_eq!(
+        report.algebraic_breakpoints[2].boundary_source,
+        LineRationalQuadraticBezierInverseBoundarySource::SegmentEnd
+    );
+    assert_eq!(report.algebraic_breakpoints[2].boundary_value, r(3));
+    assert_eq!(report.algebraic_breakpoints[2].point, p(3, 0));
+    assert_eq!(report.algebraic_breakpoints[2].line_parameter, r(1));
     assert_eq!(report.line_breakpoints[0].len(), 2);
     assert_eq!(report.conic_breakpoints[0].len(), 2);
     assert_eq!(report.conic_fragments.len(), 1);
@@ -1257,6 +1280,7 @@ fn line_rational_quadratic_bezier_overlap_retains_empty_inverse_boundary_evidenc
     assert!(support_overlap.inverse_boundary_roots[0].roots.is_empty());
     assert_eq!(support_overlap.inverse_boundary_roots[1].value, r(6));
     assert!(support_overlap.inverse_boundary_roots[1].roots.is_empty());
+    assert!(report.algebraic_breakpoints.is_empty());
 }
 
 #[test]
@@ -9668,6 +9692,14 @@ proptest! {
                 .flat_map(|boundary| boundary.roots.iter())
                 .all(|root| root.parameter_domain
                     == LineRationalQuadraticBezierInverseRootDomain::InsideUnitInterval)
+        );
+        prop_assert_eq!(report.algebraic_breakpoints.len(), 3);
+        prop_assert!(
+            report
+                .algebraic_breakpoints
+                .iter()
+                .all(|breakpoint| breakpoint.domain
+                    == LineRationalQuadraticBezierAlgebraicBreakpointDomain::InsideLineAndCurve)
         );
         prop_assert_eq!(report.line_breakpoints[0].len(), 2);
         prop_assert_eq!(report.conic_breakpoints[0].len(), 2);

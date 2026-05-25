@@ -10,16 +10,18 @@ use std::cmp::Ordering;
 
 use hyperlimit::{Point2, PredicatePolicy, compare_reals_with_policy, point2_equal_with_policy};
 use hyperreal::{Real, RealExactSetFacts};
+use hypersolve::AlgebraicRootRepresentation;
 
 use crate::bezier::RationalQuadraticBezier;
 use crate::bezier_arrangement::{
     HomogeneousPoint2, LineRationalQuadraticBezierIntersection,
     LineRationalQuadraticBezierIntersectionClass, LineRationalQuadraticBezierIntersectionReport,
+    LineRationalQuadraticBezierInverseBoundarySource, LineRationalQuadraticBezierInverseRootDomain,
     LineRationalQuadraticBezierSupportOverlap,
     intersect_axis_aligned_line_rational_quadratic_bezier,
 };
 use crate::provenance::PathProvenance;
-use crate::segment::LinePathSegment;
+use crate::segment::{Axis, LinePathSegment};
 
 /// Errors that prevent a trusted line/rational-quadratic split schedule.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -65,6 +67,55 @@ pub struct LineRationalQuadraticBezierSupportOverlapCandidate {
     pub curve: usize,
     /// Retained same-support overlap evidence.
     pub overlap: LineRationalQuadraticBezierSupportOverlap,
+}
+
+/// Certified domain status for a retained algebraic line/conic breakpoint candidate.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum LineRationalQuadraticBezierAlgebraicBreakpointDomain {
+    /// Conic parameter and line boundary source are certified inside the retained pair domains.
+    InsideLineAndCurve,
+    /// The retained conic parameter is certified outside `[0, 1]`.
+    OutsideConic,
+    /// Exact interval comparison did not decide.
+    Unknown,
+}
+
+/// Retained algebraic breakpoint candidate for a nonmonotone line/conic overlap boundary.
+///
+/// This is the mixed-scheduler counterpart to
+/// [`crate::bezier_arrangement::LineRationalQuadraticBezierAlgebraicInverseRoot`].
+/// The predicate layer retains represented roots of
+/// `N_v(t) - value * W(t) == 0`; this scheduler attaches each finite root to
+/// the exact line endpoint that induced the boundary value.
+///
+/// Following Yap, "Towards Exact Geometric Computation" (1997), these
+/// candidates are exact replay evidence, not inserted topology. They remain
+/// separate from [`RationalQuadraticBezierRealBreakpoint`] until a later
+/// ordering/materialization pass can compare represented conic parameters and
+/// split homogeneous rational quadratics without sampling. The homogeneous
+/// rational equation follows Farouki, *Pythagorean Hodograph Curves* (2008),
+/// while the represented root itself is isolated by the Sturm/Collins-Loos
+/// univariate root discipline used by `hypersolve`.
+#[derive(Clone, Debug, PartialEq)]
+pub struct LineRationalQuadraticBezierAlgebraicBreakpoint {
+    /// Line segment index.
+    pub line: usize,
+    /// Rational quadratic conic index.
+    pub curve: usize,
+    /// Line endpoint that supplied the retained boundary value.
+    pub boundary_source: LineRationalQuadraticBezierInverseBoundarySource,
+    /// Exact varying-coordinate boundary value on the line support.
+    pub boundary_value: Real,
+    /// Exact point on the retained line support.
+    pub point: Point2,
+    /// Exact line parameter for the retained endpoint boundary (`0` or `1`).
+    pub line_parameter: Real,
+    /// Represented algebraic conic parameter.
+    pub conic_parameter: AlgebraicRootRepresentation,
+    /// Certified relation of the represented conic parameter to `[0, 1]`.
+    pub conic_parameter_domain: LineRationalQuadraticBezierInverseRootDomain,
+    /// Certified relation of the candidate to both source domains.
+    pub domain: LineRationalQuadraticBezierAlgebraicBreakpointDomain,
 }
 
 /// Exact breakpoint on one arranged rational quadratic conic.
@@ -150,6 +201,8 @@ pub struct LineRationalQuadraticBezierArrangementReport {
     pub events: Vec<LineRationalQuadraticBezierArrangementEvent>,
     /// Retained same-support conic overlap candidates.
     pub support_overlaps: Vec<LineRationalQuadraticBezierSupportOverlapCandidate>,
+    /// Algebraic conic breakpoint candidates retained from nonmonotone overlap boundaries.
+    pub algebraic_breakpoints: Vec<LineRationalQuadraticBezierAlgebraicBreakpoint>,
     /// Sorted line breakpoints induced by line endpoints and certified events.
     pub line_breakpoints: Vec<Vec<MixedConicLineArrangementBreakpoint>>,
     /// Sorted conic breakpoints induced by endpoints and certified events.
@@ -190,6 +243,7 @@ pub fn arrange_line_segments_with_rational_quadratic_beziers_and_provenance(
     let mut conic_breakpoints = seed_conic_breakpoints(curves);
     let mut events = Vec::new();
     let mut support_overlaps = Vec::new();
+    let mut algebraic_breakpoints = Vec::new();
 
     for (line_index, line) in lines.iter().enumerate() {
         for (curve_index, curve) in curves.iter().enumerate() {
@@ -213,6 +267,11 @@ pub fn arrange_line_segments_with_rational_quadratic_beziers_and_provenance(
                 }
             }
             if let Some(overlap) = &intersection.support_overlap {
+                algebraic_breakpoints.extend(retained_algebraic_conic_breakpoints(
+                    line_index,
+                    curve_index,
+                    overlap,
+                ));
                 support_overlaps.push(LineRationalQuadraticBezierSupportOverlapCandidate {
                     line: line_index,
                     curve: curve_index,
@@ -243,6 +302,7 @@ pub fn arrange_line_segments_with_rational_quadratic_beziers_and_provenance(
         curves: curves.to_vec(),
         events,
         support_overlaps,
+        algebraic_breakpoints,
         line_breakpoints,
         conic_breakpoints,
         line_fragments,
@@ -304,6 +364,58 @@ fn seed_conic_breakpoints(
             ]
         })
         .collect()
+}
+
+fn retained_algebraic_conic_breakpoints(
+    line_index: usize,
+    curve_index: usize,
+    overlap: &LineRationalQuadraticBezierSupportOverlap,
+) -> Vec<LineRationalQuadraticBezierAlgebraicBreakpoint> {
+    let mut retained = Vec::new();
+    for boundary in &overlap.inverse_boundary_roots {
+        let point = point_from_axis(overlap.axis, overlap.fixed.clone(), boundary.value.clone());
+        let line_parameter = match boundary.source {
+            LineRationalQuadraticBezierInverseBoundarySource::SegmentStart => Real::zero(),
+            LineRationalQuadraticBezierInverseBoundarySource::SegmentEnd => Real::one(),
+        };
+        for root in &boundary.roots {
+            retained.push(LineRationalQuadraticBezierAlgebraicBreakpoint {
+                line: line_index,
+                curve: curve_index,
+                boundary_source: boundary.source,
+                boundary_value: boundary.value.clone(),
+                point: point.clone(),
+                line_parameter: line_parameter.clone(),
+                conic_parameter: root.parameter.clone(),
+                conic_parameter_domain: root.parameter_domain,
+                domain: classify_algebraic_conic_breakpoint_domain(root.parameter_domain),
+            });
+        }
+    }
+    retained
+}
+
+fn classify_algebraic_conic_breakpoint_domain(
+    conic_domain: LineRationalQuadraticBezierInverseRootDomain,
+) -> LineRationalQuadraticBezierAlgebraicBreakpointDomain {
+    match conic_domain {
+        LineRationalQuadraticBezierInverseRootDomain::InsideUnitInterval => {
+            LineRationalQuadraticBezierAlgebraicBreakpointDomain::InsideLineAndCurve
+        }
+        LineRationalQuadraticBezierInverseRootDomain::OutsideUnitInterval => {
+            LineRationalQuadraticBezierAlgebraicBreakpointDomain::OutsideConic
+        }
+        LineRationalQuadraticBezierInverseRootDomain::Unknown => {
+            LineRationalQuadraticBezierAlgebraicBreakpointDomain::Unknown
+        }
+    }
+}
+
+fn point_from_axis(axis: Axis, fixed: Real, varying: Real) -> Point2 {
+    match axis {
+        Axis::X => Point2::new(varying, fixed),
+        Axis::Y => Point2::new(fixed, varying),
+    }
 }
 
 fn insert_line_breakpoint(

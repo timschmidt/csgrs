@@ -6,8 +6,8 @@ use hyperlimit::{PredicatePolicy, compare_reals_with_policy};
 use hyperpath::{
     BezierParameter, CubicBezier, LineCubicAlgebraicPointDomain, LineCubicAlgebraicRootDomain,
     LineCubicBezierAlgebraicBreakpointDomain, LineCubicBezierIntersectionClass, LinePathSegment,
-    LineQuadraticBezierIntersectionClass, LineRationalQuadraticBezierIntersectionClass,
-    LineRationalQuadraticBezierInverseRootDomain,
+    LineQuadraticBezierIntersectionClass, LineRationalQuadraticBezierAlgebraicBreakpointDomain,
+    LineRationalQuadraticBezierIntersectionClass, LineRationalQuadraticBezierInverseRootDomain,
     LineRationalQuadraticBezierSupportOverlapMonotonicity, QuadraticBezier,
     RationalQuadraticBezier, arrange_cubic_beziers, arrange_line_segments_with_cubic_beziers,
     arrange_line_segments_with_quadratic_beziers,
@@ -356,6 +356,14 @@ fuzz_target!(|data: &[u8]| {
             .flat_map(|boundary| boundary.roots.iter())
             .all(|root| root.parameter_domain
                 == LineRationalQuadraticBezierInverseRootDomain::InsideUnitInterval)
+    );
+    assert_eq!(nonmonotone_report.algebraic_breakpoints.len(), 2);
+    assert!(
+        nonmonotone_report
+            .algebraic_breakpoints
+            .iter()
+            .all(|breakpoint| breakpoint.domain
+                == LineRationalQuadraticBezierAlgebraicBreakpointDomain::InsideLineAndCurve)
     );
 
     let r_report =
