@@ -290,14 +290,14 @@ Core scalar algorithms that do not require high-precision transcendental approxi
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
 | `pure_scalar_algorithm_speed/rational_add` | not run | not run | Adds two nontrivial rational values. |
-| `pure_scalar_algorithm_speed/rational_mul` | not run | not run | Multiplies two nontrivial rational values. |
-| `pure_scalar_algorithm_speed/rational_div` | not run | not run | Divides two nontrivial rational values. |
-| `pure_scalar_algorithm_speed/real_exact_add` | not run | not run | Adds exact rational-backed `Real` values. |
-| `pure_scalar_algorithm_speed/real_exact_mul` | not run | not run | Multiplies exact rational-backed `Real` values. |
-| `pure_scalar_algorithm_speed/real_exact_div` | not run | not run | Divides exact rational-backed `Real` values. |
+| `pure_scalar_algorithm_speed/rational_mul` | 155.42 ns | 146.03 ns - 165.44 ns | Multiplies two nontrivial rational values. |
+| `pure_scalar_algorithm_speed/rational_div` | 33.98 ns | 33.84 ns - 34.18 ns | Divides two nontrivial rational values. |
+| `pure_scalar_algorithm_speed/real_exact_add` | 444.53 ns | 441.90 ns - 447.46 ns | Adds exact rational-backed `Real` values. |
+| `pure_scalar_algorithm_speed/real_exact_mul` | 185.83 ns | 184.71 ns - 187.12 ns | Multiplies exact rational-backed `Real` values. |
+| `pure_scalar_algorithm_speed/real_exact_div` | 106.72 ns | 106.55 ns - 106.90 ns | Divides exact rational-backed `Real` values. |
 | `pure_scalar_algorithm_speed/real_exact_sqrt_reduce` | not run | not run | Reduces an exact square-root expression. |
 | `pure_scalar_algorithm_speed/real_exact_ln_reduce` | not run | not run | Reduces an exact logarithm of a power of two. |
-| `pure_scalar_algorithm_speed/real_pow_small_integer_exponent` | not run | not run | Dispatches `Real::pow` with an exact small-integer exponent. |
+| `pure_scalar_algorithm_speed/real_pow_small_integer_exponent` | 308.44 ns | 307.37 ns - 309.61 ns | Dispatches `Real::pow` with an exact small-integer exponent. |
 
 ### `borrowed_op_overhead`
 
@@ -309,9 +309,9 @@ Borrowed versus owned operation overhead for rational and real operands.
 | `borrowed_op_overhead/rational_add_refs` | not run | not run | Adds rational references. |
 | `borrowed_op_overhead/rational_add_owned` | not run | not run | Adds owned rational values. |
 | `borrowed_op_overhead/real_clone_pair` | not run | not run | Clones two scaled transcendental `Real` values. |
-| `borrowed_op_overhead/real_unscaled_add_refs` | not run | not run | Adds borrowed unscaled transcendental `Real` values. |
+| `borrowed_op_overhead/real_unscaled_add_refs` | 170.20 ns | 169.70 ns - 170.74 ns | Adds borrowed unscaled transcendental `Real` values. |
 | `borrowed_op_overhead/real_unscaled_add_owned` | not run | not run | Adds owned unscaled transcendental `Real` values. |
-| `borrowed_op_overhead/real_add_refs` | not run | not run | Adds borrowed scaled transcendental `Real` values. |
+| `borrowed_op_overhead/real_add_refs` | 584.69 ns | 561.82 ns - 606.92 ns | Adds borrowed scaled transcendental `Real` values. |
 | `borrowed_op_overhead/real_add_owned` | not run | not run | Adds owned scaled transcendental `Real` values. |
 | `borrowed_op_overhead/real_dot3_refs_dense_symbolic` | 3.069 us | 3.060 us - 3.079 us | Computes a borrowed three-lane symbolic dot product with no rational shortcut terms. |
 | `borrowed_op_overhead/real_active_dot3_refs_dense_symbolic` | 3.284 us | 3.278 us - 3.291 us | Computes a borrowed three-lane symbolic dot product after the caller has already classified every lane active. |
