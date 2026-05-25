@@ -29,6 +29,7 @@ mod cell;
 mod chunk;
 mod chunk_faces;
 mod chunk_storage;
+mod chunk_support;
 mod compression;
 mod continuous;
 mod coupling;
@@ -94,6 +95,7 @@ pub use chunk_storage::{
     ChunkPagedManhattanBandReport, ChunkPagedRegionAggregateReport, ChunkPagedSparseGrid,
     ChunkPagedSparsePage, ChunkPagedSparsePageReport, ChunkPagedSparseStorageReport,
 };
+pub use chunk_support::{ChunkPagedSupportMaskReport, classify_chunk_paged_support_mask};
 pub use compression::{
     CompressedStorageKind, CompressedStorageManifest, CompressedStorageReport, StorageReplayStatus,
     VoxelMemoryBudgetManifest, VoxelMemoryBudgetReport,

@@ -21,16 +21,16 @@ use hypervoxel::{
     VoxelIoCompression, VoxelIoMetadata, VoxelMemoryBudgetManifest, VoxelSideTables,
     VoxelSliceNaming, VoxelSliceOrdering, VoxelSpatialAggregateFacts, VoxelTraceDimension,
     VoxelTraceManifest, VoxelizationAudit, VoxelizationPolicy,
-    chunk_paged_greedy_face_patch_plan_with_report, classify_support_mask,
-    continuous_field_address, diff_sparse_grids, extract_chunk_paged_exposed_faces_with_report,
-    extract_exposed_faces, extract_exposed_faces_with_report, greedy_face_patch_plan,
-    lookup_material_display_colors, lossy_obj_from_quad_mesh, lossy_quad_mesh_from_faces,
-    query_field_samples, query_material_regions, report_material_region_metadata,
-    sample_manhattan_distance_field, sample_signed_manhattan_distance_field, select_lod_cells,
-    sweep_address_segment, trace_address_ray, voxelize_exact_box,
-    voxelize_exact_convex_halfspace_set, voxelize_exact_halfspace,
-    voxelize_exact_triangle_solid_mesh, voxelize_exact_triangle_surface_mesh,
-    voxelize_prepared_exact_triangle_solid_mesh,
+    chunk_paged_greedy_face_patch_plan_with_report, classify_chunk_paged_support_mask,
+    classify_support_mask, continuous_field_address, diff_sparse_grids,
+    extract_chunk_paged_exposed_faces_with_report, extract_exposed_faces,
+    extract_exposed_faces_with_report, greedy_face_patch_plan, lookup_material_display_colors,
+    lossy_obj_from_quad_mesh, lossy_quad_mesh_from_faces, query_field_samples,
+    query_material_regions, report_material_region_metadata, sample_manhattan_distance_field,
+    sample_signed_manhattan_distance_field, select_lod_cells, sweep_address_segment,
+    trace_address_ray, voxelize_exact_box, voxelize_exact_convex_halfspace_set,
+    voxelize_exact_halfspace, voxelize_exact_triangle_solid_mesh,
+    voxelize_exact_triangle_surface_mesh, voxelize_prepared_exact_triangle_solid_mesh,
     voxelize_prepared_exact_triangle_solid_mesh_by_components,
     voxelize_prepared_exact_triangle_solid_mesh_by_verified_components,
 };
@@ -963,6 +963,24 @@ fn bench_batches_field_facts_and_sweeps(c: &mut Criterion) {
                 report.has_checked_cells,
                 report.exact_support_mask_ready,
                 report.is_conservatively_supported(),
+            )
+        })
+    });
+    c.bench_function("chunk_paged_support_mask_report", |b| {
+        let paged =
+            ChunkPagedSparseGrid::from_sparse_grid(&grid, ChunkShape::new(3).unwrap()).unwrap();
+        b.iter(|| {
+            let report = classify_chunk_paged_support_mask(
+                &paged,
+                &paged,
+                SupportDirection::new(2, -1).unwrap(),
+            )
+            .unwrap();
+            (
+                report.support.checked_cells,
+                report.support_page_hits,
+                report.support_page_misses,
+                report.exact_paged_support_ready,
             )
         })
     });

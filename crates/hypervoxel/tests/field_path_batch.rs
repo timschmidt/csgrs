@@ -1,12 +1,13 @@
 use hyperreal::{Rational, Real};
 use hypervoxel::{
     AddressRay, AggregateCertainty, AxisPermutationTransform, CertifiedFieldInterval,
-    CertifiedTensorInterval, CertifiedVectorInterval, ExactAffineTransform, FieldAggregateFacts,
-    FieldEnvelopeFacts, FieldSampleId, FieldSampleRecord, FreshnessStatus, GridFrame, GridSource,
-    HypervoxelError, MaterialRegionId, OccupancyState, PreparedVoxelGrid, ProcessGridArtifact,
-    ProcessGridRole, SignedAxis, SparseVoxelGrid, SupportCellStatus, SupportDirection,
-    SweptVolumeProvenance, VoxelAddress, VoxelCandidateKind, VoxelCandidateManifest, VoxelCell,
-    VoxelEditBatch, VoxelFieldCouplingKind, VoxelFieldCouplingManifest, VoxelSideTables,
+    CertifiedTensorInterval, CertifiedVectorInterval, ChunkPagedSparseGrid, ChunkShape,
+    ExactAffineTransform, FieldAggregateFacts, FieldEnvelopeFacts, FieldSampleId,
+    FieldSampleRecord, FreshnessStatus, GridFrame, GridSource, HypervoxelError, MaterialRegionId,
+    OccupancyState, PreparedVoxelGrid, ProcessGridArtifact, ProcessGridRole, SignedAxis,
+    SparseVoxelGrid, SupportCellStatus, SupportDirection, SweptVolumeProvenance, VoxelAddress,
+    VoxelCandidateKind, VoxelCandidateManifest, VoxelCell, VoxelEditBatch, VoxelFieldCouplingKind,
+    VoxelFieldCouplingManifest, VoxelSideTables, classify_chunk_paged_support_mask,
     classify_support_mask, query_field_samples, sweep_address_segment, trace_address_ray,
     trace_address_segment,
 };
@@ -562,6 +563,24 @@ fn support_mask_reports_unsupported_unknown_and_lossy_cells_explicitly() {
     assert_eq!(report.cells[1].status, SupportCellStatus::Unsupported);
     assert_eq!(report.cells[2].status, SupportCellStatus::Unknown);
     assert_eq!(report.cells[3].status, SupportCellStatus::Lossy);
+    let paged_target =
+        ChunkPagedSparseGrid::from_sparse_grid(&target, ChunkShape::new(0).unwrap()).unwrap();
+    let paged_support =
+        ChunkPagedSparseGrid::from_sparse_grid(&support, ChunkShape::new(0).unwrap()).unwrap();
+    let paged_report = classify_chunk_paged_support_mask(
+        &paged_target,
+        &paged_support,
+        SupportDirection::new(2, -1).unwrap(),
+    )
+    .unwrap();
+    assert_eq!(paged_report.support, report);
+    assert_eq!(paged_report.target_pages, 4);
+    assert_eq!(paged_report.target_cells, 4);
+    assert_eq!(paged_report.support_plane_probes, 0);
+    assert_eq!(paged_report.support_page_hits, 3);
+    assert_eq!(paged_report.support_page_misses, 1);
+    assert_eq!(paged_report.cross_page_support_probes, 4);
+    assert!(!paged_report.exact_paged_support_ready);
     assert!(matches!(
         SupportDirection::new(4, -1),
         Err(HypervoxelError::InvalidSupportDirection)
@@ -590,6 +609,41 @@ fn support_mask_reports_unsupported_unknown_and_lossy_cells_explicitly() {
     assert!(ready.has_checked_cells);
     assert!(ready.exact_support_mask_ready);
     assert!(ready.is_conservatively_supported());
+    let ready_paged_target =
+        ChunkPagedSparseGrid::from_sparse_grid(&ready_target, ChunkShape::new(0).unwrap()).unwrap();
+    let ready_paged_support =
+        ChunkPagedSparseGrid::from_sparse_grid(&ready_support, ChunkShape::new(0).unwrap())
+            .unwrap();
+    let ready_paged = classify_chunk_paged_support_mask(
+        &ready_paged_target,
+        &ready_paged_support,
+        SupportDirection::new(2, -1).unwrap(),
+    )
+    .unwrap();
+    assert_eq!(ready_paged.support, ready);
+    assert_eq!(ready_paged.support_page_hits, 1);
+    assert_eq!(ready_paged.support_page_misses, 0);
+    assert!(ready_paged.exact_paged_support_ready);
+
+    let mut plane_target = SparseVoxelGrid::new(frame());
+    plane_target
+        .set(
+            VoxelAddress::new(3, [2, 2, 0]).unwrap(),
+            VoxelCell::material(MaterialRegionId(3)),
+        )
+        .unwrap();
+    let plane_paged_target =
+        ChunkPagedSparseGrid::from_sparse_grid(&plane_target, ChunkShape::new(0).unwrap()).unwrap();
+    let plane_paged = classify_chunk_paged_support_mask(
+        &plane_paged_target,
+        &ready_paged_support,
+        SupportDirection::new(2, -1).unwrap(),
+    )
+    .unwrap();
+    assert_eq!(plane_paged.support.support_plane_cells, 1);
+    assert_eq!(plane_paged.support_plane_probes, 1);
+    assert_eq!(plane_paged.support_page_hits, 0);
+    assert!(plane_paged.exact_paged_support_ready);
 
     let empty = classify_support_mask(
         &SparseVoxelGrid::new(frame()),
@@ -601,6 +655,34 @@ fn support_mask_reports_unsupported_unknown_and_lossy_cells_explicitly() {
     assert!(!empty.has_checked_cells);
     assert!(!empty.exact_support_mask_ready);
     assert!(!empty.is_conservatively_supported());
+    let empty_paged_target = ChunkPagedSparseGrid::from_sparse_grid(
+        &SparseVoxelGrid::new(frame()),
+        ChunkShape::new(0).unwrap(),
+    )
+    .unwrap();
+    let empty_paged = classify_chunk_paged_support_mask(
+        &empty_paged_target,
+        &ready_paged_support,
+        SupportDirection::new(2, -1).unwrap(),
+    )
+    .unwrap();
+    assert_eq!(empty_paged.support.checked_cells, 0);
+    assert_eq!(empty_paged.target_pages, 0);
+    assert!(!empty_paged.exact_paged_support_ready);
+
+    let coarser_support = SparseVoxelGrid::new(GridFrame::builder().depth(2).build().unwrap());
+    let coarser_support =
+        ChunkPagedSparseGrid::from_sparse_grid(&coarser_support, ChunkShape::new(0).unwrap())
+            .unwrap();
+    assert_eq!(
+        classify_chunk_paged_support_mask(
+            &ready_paged_target,
+            &coarser_support,
+            SupportDirection::new(2, -1).unwrap(),
+        )
+        .unwrap_err(),
+        HypervoxelError::MismatchedAddressDepth { left: 3, right: 2 }
+    );
 }
 
 #[test]

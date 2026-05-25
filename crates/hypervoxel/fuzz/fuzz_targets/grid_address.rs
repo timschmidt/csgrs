@@ -23,8 +23,8 @@ use hypervoxel::{
     VoxelIndexConvention, VoxelIoCompression, VoxelIoMetadata, VoxelMemoryBudgetManifest,
     VoxelSideTables, VoxelSliceNaming, VoxelSliceOrdering, VoxelSpatialAggregateFacts,
     VoxelTraceDimension, VoxelTraceManifest, VoxelizationAudit, VoxelizationPolicy,
-    chunk_paged_greedy_face_patch_plan_with_report, classify_support_mask,
-    continuous_field_address, extract_chunk_paged_exposed_faces_with_report,
+    chunk_paged_greedy_face_patch_plan_with_report, classify_chunk_paged_support_mask,
+    classify_support_mask, continuous_field_address, extract_chunk_paged_exposed_faces_with_report,
     diff_sparse_grids, extract_exposed_faces, greedy_face_patch_plan, lookup_material_display_colors,
     extract_exposed_faces_with_report, lossy_obj_from_quad_mesh, lossy_quad_mesh_from_faces, query_field_samples,
     query_material_regions, report_material_region_metadata, sample_manhattan_distance_field,
@@ -934,6 +934,28 @@ fuzz_target!(|data: (u8, u64, u64, u64)| {
         assert_eq!(support_report.unknown_cells, 0);
         assert_eq!(support_report.lossy_cells, 0);
     }
+    let paged_prepared_storage = ChunkPagedSparseGrid::from_sparse_grid(
+        &prepared.storage,
+        ChunkShape::new(small_depth.min(2)).unwrap(),
+    )
+    .unwrap();
+    let paged_support_report = classify_chunk_paged_support_mask(
+        &paged_prepared_storage,
+        &paged_prepared_storage,
+        SupportDirection::new((depth_raw as usize) % 3, if depth_raw & 1 == 0 { -1 } else { 1 })
+            .unwrap(),
+    )
+    .unwrap();
+    assert_eq!(paged_support_report.support, support_report);
+    assert_eq!(
+        paged_support_report.exact_paged_support_ready,
+        support_report.exact_support_mask_ready
+            && paged_prepared_storage.report().exact_chunk_storage_ready
+    );
+    assert_eq!(
+        paged_support_report.target_cells,
+        support_report.checked_cells
+    );
     let empty_support_report = classify_support_mask(
         &SparseVoxelGrid::new(report.frame.clone()),
         &prepared.storage,
@@ -943,6 +965,19 @@ fuzz_target!(|data: (u8, u64, u64, u64)| {
     assert_eq!(empty_support_report.checked_cells, 0);
     assert!(!empty_support_report.has_checked_cells);
     assert!(!empty_support_report.exact_support_mask_ready);
+    let empty_paged_support_report = classify_chunk_paged_support_mask(
+        &ChunkPagedSparseGrid::from_sparse_grid(
+            &SparseVoxelGrid::new(report.frame.clone()),
+            ChunkShape::new(small_depth.min(2)).unwrap(),
+        )
+        .unwrap(),
+        &paged_prepared_storage,
+        SupportDirection::new((depth_raw as usize) % 3, 1).unwrap(),
+    )
+    .unwrap();
+    assert_eq!(empty_paged_support_report.support, empty_support_report);
+    assert_eq!(empty_paged_support_report.target_pages, 0);
+    assert!(!empty_paged_support_report.exact_paged_support_ready);
     let neighbors = voxel_neighbors6(VoxelAddress::new(small_depth, [0, 0, 0]).unwrap());
     assert!(neighbors.len() <= 3);
     prepared
