@@ -11,6 +11,10 @@ use std::cmp::Ordering;
 
 use hyperlimit::{Point2, PredicatePolicy, compare_reals_with_policy, point2_equal_with_policy};
 use hyperreal::{Real, RealExactSetFacts};
+use hypersolve::{
+    AlgebraicRootRepresentation, Constraint, Expr, PreparedProblem, Problem, RootIsolationConfig,
+    represent_univariate_algebraic_roots,
+};
 
 use crate::bezier::{BezierParameter, CubicBezier, QuadraticBezier, RationalQuadraticBezier};
 use crate::provenance::PathProvenance;
@@ -103,15 +107,42 @@ pub struct LineCubicBezierIntersection {
     pub point: Point2,
 }
 
+/// Exact interval-domain status for a represented line/cubic support root.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum LineCubicAlgebraicRootDomain {
+    /// The isolating interval is wholly inside the retained Bezier parameter domain `[0, 1]`.
+    InsideUnitInterval,
+    /// The isolating interval is wholly outside `[0, 1]`.
+    OutsideUnitInterval,
+    /// Exact interval comparison could not decide or the interval straddles a boundary.
+    Unknown,
+}
+
+/// Represented algebraic root of the line/cubic support equation.
+///
+/// This is retained event evidence, not a split breakpoint. The parameter is
+/// an algebraic object represented by its exact support polynomial and a
+/// Sturm-isolated interval from `hypersolve`. Until the path layer has exact
+/// algebraic point-image ordering for line bounds, these roots keep the
+/// topological relation [`LineCubicBezierIntersectionClass::Unknown`].
+#[derive(Clone, Debug, PartialEq)]
+pub struct LineCubicBezierAlgebraicSupportRoot {
+    /// Represented algebraic parameter root for the cubic support equation.
+    pub parameter: AlgebraicRootRepresentation,
+    /// Whether the root's isolating interval is certified inside `[0, 1]`.
+    pub parameter_domain: LineCubicAlgebraicRootDomain,
+}
+
 /// Exact event report for an axis-aligned line segment and cubic Bezier.
 ///
 /// The retained line is substituted into one cubic Bezier coordinate. Constant,
 /// linear, and quadratic support polynomials are solved exactly and replayed
-/// against the parameter and segment domains. True cubic roots stay
-/// [`LineCubicBezierIntersectionClass::Unknown`] until `hypersolve` exposes a
-/// represented cubic-root package for path arrangements. Same-support overlaps
-/// are promoted only for degree-elevated straight cubic images, where endpoint
-/// coordinates invert to exact affine parameters.
+/// against the parameter and segment domains. True cubic support roots are
+/// retained as represented algebraic parameters, but the topological class
+/// remains [`LineCubicBezierIntersectionClass::Unknown`] until exact algebraic
+/// point-image ordering can clip them against segment bounds. Same-support
+/// overlaps are promoted only for degree-elevated straight cubic images, where
+/// endpoint coordinates invert to exact affine parameters.
 ///
 /// This follows Yap, "Towards Exact Geometric Computation," *Computational
 /// Geometry* 7.1-2 (1997): unsupported algebraic discovery is reported instead
@@ -124,6 +155,8 @@ pub struct LineCubicBezierIntersectionReport {
     pub class: LineCubicBezierIntersectionClass,
     /// Certified witnesses in increasing cubic-parameter order.
     pub intersections: Vec<LineCubicBezierIntersection>,
+    /// Represented algebraic support roots for true cubic equations.
+    pub algebraic_support_roots: Vec<LineCubicBezierAlgebraicSupportRoot>,
 }
 
 /// Certified class for a retained line segment against a rational quadratic conic.
@@ -488,9 +521,15 @@ pub fn intersect_axis_aligned_line_cubic_bezier(
             Some(roots) => roots,
             None => {
                 return degree_elevated_cubic_line_overlap_report(
-                    segment, curve, axis, fixed, policy,
+                    segment,
+                    curve,
+                    axis,
+                    fixed.clone(),
+                    policy,
                 )
-                .unwrap_or_else(line_cubic_unknown_report);
+                .unwrap_or_else(|| {
+                    true_cubic_algebraic_support_report(curve, axis, fixed, policy)
+                });
             }
         };
     let mut intersections = Vec::new();
@@ -527,6 +566,7 @@ pub fn intersect_axis_aligned_line_cubic_bezier(
     LineCubicBezierIntersectionReport {
         class,
         intersections,
+        algebraic_support_roots: Vec::new(),
     }
 }
 
@@ -963,6 +1003,21 @@ fn solve_cubic_coordinate_roots_up_to_quadratic(
     fixed: Real,
     policy: PredicatePolicy,
 ) -> Option<Vec<Real>> {
+    let (a, b, c, d) = cubic_coordinate_polynomial(curve, axis, fixed);
+    match compare_reals_with_policy(&a, &Real::zero(), policy).value()? {
+        Ordering::Equal => match compare_reals_with_policy(&b, &Real::zero(), policy).value()? {
+            Ordering::Equal => solve_linear_root(c, d, policy),
+            Ordering::Less | Ordering::Greater => solve_quadratic_roots(b, c, d, policy),
+        },
+        Ordering::Less | Ordering::Greater => None,
+    }
+}
+
+fn cubic_coordinate_polynomial(
+    curve: &CubicBezier,
+    axis: Axis,
+    fixed: Real,
+) -> (Real, Real, Real, Real) {
     let p0 = coordinate(curve.start(), axis);
     let p1 = coordinate(curve.control0(), axis);
     let p2 = coordinate(curve.control1(), axis);
@@ -971,12 +1026,84 @@ fn solve_cubic_coordinate_roots_up_to_quadratic(
     let b = Real::from(3) * p0.clone() - Real::from(6) * p1.clone() + Real::from(3) * p2;
     let c = Real::from(3) * (p1 - p0.clone());
     let d = p0 - fixed;
-    match compare_reals_with_policy(&a, &Real::zero(), policy).value()? {
-        Ordering::Equal => match compare_reals_with_policy(&b, &Real::zero(), policy).value()? {
-            Ordering::Equal => solve_linear_root(c, d, policy),
-            Ordering::Less | Ordering::Greater => solve_quadratic_roots(b, c, d, policy),
+    (a, b, c, d)
+}
+
+fn true_cubic_algebraic_support_report(
+    curve: &CubicBezier,
+    axis: Axis,
+    fixed: Real,
+    policy: PredicatePolicy,
+) -> LineCubicBezierIntersectionReport {
+    // True cubic support equations cross the boundary where a `Real`
+    // parameter witness may not be orderable enough for arrangement splitting.
+    // We still retain the exact event evidence by delegating to `hypersolve`'s
+    // Sturm isolator and algebraic-root representation. Sturm's theorem
+    // (1835) supplies the distinct-root interval proof; Yap (1997) supplies the
+    // discipline used here: report the exact algebraic object, but do not turn
+    // it into topology until later predicates can order its point image.
+    let (a, b, c, d) = cubic_coordinate_polynomial(curve, axis, fixed);
+    match compare_reals_with_policy(&a, &Real::zero(), policy).value() {
+        Some(Ordering::Less | Ordering::Greater) => {}
+        Some(Ordering::Equal) | None => return line_cubic_unknown_report(),
+    }
+    let mut problem = Problem::default();
+    let parameter = problem.add_variable("line_cubic_parameter", Real::zero());
+    let t = Expr::symbol(parameter.into(), "line_cubic_parameter");
+    let residual = Expr::real(d)
+        + Expr::real(c) * t.clone()
+        + Expr::real(b) * t.clone().powi(2)
+        + Expr::real(a) * t.powi(3);
+    problem.add_constraint(Constraint::equality("line cubic support root", residual));
+    let prepared = PreparedProblem::new(&problem);
+    let roots = represent_univariate_algebraic_roots(
+        &prepared,
+        RootIsolationConfig {
+            policy,
+            max_interval_width: Some((Real::one() / Real::from(1024)).expect("nonzero width")),
+            max_refinement_steps: 64,
+            ..RootIsolationConfig::default()
         },
-        Ordering::Less | Ordering::Greater => None,
+    )
+    .into_iter()
+    .flat_map(|report| report.roots)
+    .map(|root| LineCubicBezierAlgebraicSupportRoot {
+        parameter_domain: classify_algebraic_root_unit_domain(&root, policy),
+        parameter: root,
+    })
+    .collect();
+    LineCubicBezierIntersectionReport {
+        class: LineCubicBezierIntersectionClass::Unknown,
+        intersections: Vec::new(),
+        algebraic_support_roots: roots,
+    }
+}
+
+fn classify_algebraic_root_unit_domain(
+    root: &AlgebraicRootRepresentation,
+    policy: PredicatePolicy,
+) -> LineCubicAlgebraicRootDomain {
+    if let Some(exact) = &root.interval.exact_root {
+        return match parameter_in_unit_interval(exact, policy) {
+            Some(true) => LineCubicAlgebraicRootDomain::InsideUnitInterval,
+            Some(false) => LineCubicAlgebraicRootDomain::OutsideUnitInterval,
+            None => LineCubicAlgebraicRootDomain::Unknown,
+        };
+    }
+    let lower_zero = compare_reals_with_policy(&root.interval.lower, &Real::zero(), policy).value();
+    let upper_one = compare_reals_with_policy(&root.interval.upper, &Real::one(), policy).value();
+    let upper_zero = compare_reals_with_policy(&root.interval.upper, &Real::zero(), policy).value();
+    let lower_one = compare_reals_with_policy(&root.interval.lower, &Real::one(), policy).value();
+    if matches!(lower_zero, Some(Ordering::Equal | Ordering::Greater))
+        && matches!(upper_one, Some(Ordering::Equal | Ordering::Less))
+    {
+        LineCubicAlgebraicRootDomain::InsideUnitInterval
+    } else if matches!(upper_zero, Some(Ordering::Less))
+        || matches!(lower_one, Some(Ordering::Greater))
+    {
+        LineCubicAlgebraicRootDomain::OutsideUnitInterval
+    } else {
+        LineCubicAlgebraicRootDomain::Unknown
     }
 }
 
@@ -1111,6 +1238,7 @@ fn degree_elevated_cubic_line_overlap_report(
         return Some(LineCubicBezierIntersectionReport {
             class: LineCubicBezierIntersectionClass::Disjoint,
             intersections: Vec::new(),
+            algebraic_support_roots: Vec::new(),
         });
     }
 
@@ -1132,6 +1260,7 @@ fn degree_elevated_cubic_line_overlap_report(
         Ordering::Greater => Some(LineCubicBezierIntersectionReport {
             class: LineCubicBezierIntersectionClass::Disjoint,
             intersections: Vec::new(),
+            algebraic_support_roots: Vec::new(),
         }),
         Ordering::Equal => {
             let parameter = cubic_line_image_parameter(curve, axis, &overlap_min, policy)?;
@@ -1139,6 +1268,7 @@ fn degree_elevated_cubic_line_overlap_report(
             Some(LineCubicBezierIntersectionReport {
                 class: LineCubicBezierIntersectionClass::OnePoint,
                 intersections: vec![LineCubicBezierIntersection { parameter, point }],
+                algebraic_support_roots: Vec::new(),
             })
         }
         Ordering::Less => {
@@ -1156,6 +1286,7 @@ fn degree_elevated_cubic_line_overlap_report(
             Some(LineCubicBezierIntersectionReport {
                 class: LineCubicBezierIntersectionClass::Overlap,
                 intersections,
+                algebraic_support_roots: Vec::new(),
             })
         }
     }
@@ -1816,6 +1947,7 @@ fn line_cubic_unknown_report() -> LineCubicBezierIntersectionReport {
     LineCubicBezierIntersectionReport {
         class: LineCubicBezierIntersectionClass::Unknown,
         intersections: Vec::new(),
+        algebraic_support_roots: Vec::new(),
     }
 }
 

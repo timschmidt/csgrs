@@ -4,10 +4,11 @@ use std::cmp::Ordering;
 
 use hyperlimit::{PredicatePolicy, compare_reals_with_policy};
 use hyperpath::{
-    BezierParameter, CubicBezier, LineCubicBezierIntersectionClass, LinePathSegment,
-    LineQuadraticBezierIntersectionClass, LineRationalQuadraticBezierIntersectionClass,
-    QuadraticBezier, RationalQuadraticBezier, arrange_cubic_beziers,
-    arrange_line_segments_with_cubic_beziers, arrange_line_segments_with_quadratic_beziers,
+    BezierParameter, CubicBezier, LineCubicAlgebraicRootDomain, LineCubicBezierIntersectionClass,
+    LinePathSegment, LineQuadraticBezierIntersectionClass,
+    LineRationalQuadraticBezierIntersectionClass, QuadraticBezier, RationalQuadraticBezier,
+    arrange_cubic_beziers, arrange_line_segments_with_cubic_beziers,
+    arrange_line_segments_with_quadratic_beziers,
     arrange_line_segments_with_rational_quadratic_beziers, arrange_quadratic_beziers,
     arrange_rational_quadratic_beziers, intersect_axis_aligned_line_cubic_bezier,
     intersect_axis_aligned_line_quadratic_bezier,
@@ -182,6 +183,22 @@ fuzz_target!(|data: &[u8]| {
         LineCubicBezierIntersectionClass::Overlap
     );
     assert_eq!(cubic_overlap_report.cubic_breakpoints[0].len(), 4);
+    let algebraic_cubic = CubicBezier::new(p(0, 0), pq(1, 3, 0, 1), pq(2, 3, 0, 1), p(1, 1));
+    let algebraic_line = LinePathSegment::new(pq(0, 1, 1, 8), pq(1, 1, 1, 8));
+    let algebraic_report = intersect_axis_aligned_line_cubic_bezier(
+        &algebraic_line,
+        &algebraic_cubic,
+        PredicatePolicy::default(),
+    );
+    assert_eq!(
+        algebraic_report.class,
+        LineCubicBezierIntersectionClass::Unknown
+    );
+    assert_eq!(algebraic_report.algebraic_support_roots.len(), 1);
+    assert_eq!(
+        algebraic_report.algebraic_support_roots[0].parameter_domain,
+        LineCubicAlgebraicRootDomain::InsideUnitInterval
+    );
 
     let weight = r(i64::from(data[11] % 16));
     let conic = RationalQuadraticBezier::new(

@@ -384,6 +384,17 @@ fn path_predicates(c: &mut Criterion) {
             )
         })
     });
+    let line_cubic_algebraic = CubicBezier::new(p(0, 0), pq(1, 3, 0, 1), pq(2, 3, 0, 1), p(1, 1));
+    let line_cubic_algebraic_line = LinePathSegment::new(pq(0, 1, 1, 8), pq(1, 1, 1, 8));
+    c.bench_function("line_cubic_bezier_algebraic_support_roots", |b| {
+        b.iter(|| {
+            intersect_axis_aligned_line_cubic_bezier(
+                &line_cubic_algebraic_line,
+                &line_cubic_algebraic,
+                PredicatePolicy::default(),
+            )
+        })
+    });
     let quintic = HigherOrderBezier::quintic(
         p(0, 0),
         p(200, 100),

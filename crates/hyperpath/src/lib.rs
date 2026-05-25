@@ -58,7 +58,8 @@ pub use bezier::{
 };
 pub use bezier_arrangement::{
     BezierArrangementBreakpoint, BezierArrangementError, CubicBezierArrangementFragment,
-    CubicBezierArrangementReport, HomogeneousPoint2, LineCubicBezierIntersection,
+    CubicBezierArrangementReport, HomogeneousPoint2, LineCubicAlgebraicRootDomain,
+    LineCubicBezierAlgebraicSupportRoot, LineCubicBezierIntersection,
     LineCubicBezierIntersectionClass, LineCubicBezierIntersectionReport,
     LineQuadraticBezierIntersection, LineQuadraticBezierIntersectionClass,
     LineQuadraticBezierIntersectionReport, LineRationalQuadraticBezierIntersection,

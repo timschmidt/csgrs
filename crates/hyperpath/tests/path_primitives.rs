@@ -10,11 +10,12 @@ use hyperpath::{
     ExplicitCircularArc, FeedPathElement, HigherOrderBezier, HigherOrderBezierError,
     InfillGraphError, JerkLimitedFeedTimeReport, JerkRampPhaseProposal, JerkRampSpanProposal,
     LineArcArrangementEventClass, LineArrangementError, LineArrangementEventClass,
-    LineCubicBezierIntersectionClass, LineExplicitArcIntersectionClass, LineOffsetError,
-    LinePathSegment, LineQuadraticBezierIntersectionClass,
-    LineRationalQuadraticBezierIntersectionClass, LookaheadFeedSchedule, MeanderError,
-    MeanderKeepout, MeanderObstacle, MeanderPlacementCandidate, NetId, OffsetSide, PathProvenance,
-    PathSourceFormat, PcbBoardOutline, PcbCardinalRectPad, PcbCircularBoardOutline, PcbCircularPad,
+    LineCubicAlgebraicRootDomain, LineCubicBezierIntersectionClass,
+    LineExplicitArcIntersectionClass, LineOffsetError, LinePathSegment,
+    LineQuadraticBezierIntersectionClass, LineRationalQuadraticBezierIntersectionClass,
+    LookaheadFeedSchedule, MeanderError, MeanderKeepout, MeanderObstacle,
+    MeanderPlacementCandidate, NetId, OffsetSide, PathProvenance, PathSourceFormat,
+    PcbBoardOutline, PcbCardinalRectPad, PcbCircularBoardOutline, PcbCircularPad,
     PcbConvexBoardOutline, PcbConvexPad, PcbObroundPad, PcbOrientedRectPad,
     PcbOrthogonalBoardOutline, PcbOrthogonalPad, PcbRectPad, PcbRoundedRectPad, PcbTrace,
     PcbViaStack, PhCurveError, PocketLinkGraphError, PocketPlanError, PocketPlanStopReason,
@@ -848,6 +849,47 @@ fn line_cubic_bezier_arrangement_keeps_true_cubic_roots_unknown() {
     );
     assert_eq!(report.line_breakpoints[0].len(), 2);
     assert_eq!(report.cubic_breakpoints[0].len(), 2);
+}
+
+#[test]
+fn line_cubic_bezier_intersection_retains_true_cubic_algebraic_support_roots() {
+    let curve = CubicBezier::new(p(0, 0), pq(1, 3, 0, 1), pq(2, 3, 0, 1), p(1, 1));
+    let line = LinePathSegment::new(pq(0, 1, 1, 8), pq(1, 1, 1, 8));
+
+    let report =
+        intersect_axis_aligned_line_cubic_bezier(&line, &curve, PredicatePolicy::default());
+
+    assert_eq!(report.class, LineCubicBezierIntersectionClass::Unknown);
+    assert!(report.intersections.is_empty());
+    assert_eq!(report.algebraic_support_roots.len(), 1);
+    assert_eq!(
+        report.algebraic_support_roots[0].parameter_domain,
+        LineCubicAlgebraicRootDomain::InsideUnitInterval
+    );
+    assert_eq!(
+        report.algebraic_support_roots[0]
+            .parameter
+            .interval
+            .distinct_root_count,
+        1
+    );
+}
+
+#[test]
+fn line_cubic_bezier_intersection_marks_outside_algebraic_support_roots() {
+    let curve = CubicBezier::new(p(0, 0), pq(1, 3, 0, 1), pq(2, 3, 0, 1), p(1, 1));
+    let line = LinePathSegment::new(p(0, 8), p(1, 8));
+
+    let report =
+        intersect_axis_aligned_line_cubic_bezier(&line, &curve, PredicatePolicy::default());
+
+    assert_eq!(report.class, LineCubicBezierIntersectionClass::Unknown);
+    assert!(report.intersections.is_empty());
+    assert_eq!(report.algebraic_support_roots.len(), 1);
+    assert_eq!(
+        report.algebraic_support_roots[0].parameter_domain,
+        LineCubicAlgebraicRootDomain::OutsideUnitInterval
+    );
 }
 
 #[test]
@@ -9166,6 +9208,45 @@ proptest! {
         prop_assert_eq!(report.cubic_breakpoints[0][2].parameter.clone(), rq(3, 4));
         prop_assert_eq!(report.line_fragments.len(), 3);
         prop_assert_eq!(report.cubic_fragments.len(), 3);
+    }
+
+    #[test]
+    fn line_cubic_bezier_generated_true_cubic_support_roots_are_retained(
+        numerator in 1_i64..=9,
+    ) {
+        let parameter = rq(numerator, 10);
+        let support = parameter.clone() * parameter.clone() * parameter;
+        let curve = CubicBezier::new(
+            p(0, 0),
+            pq(1, 3, 0, 1),
+            pq(2, 3, 0, 1),
+            p(1, 1),
+        );
+        let line = LinePathSegment::new(
+            Point2::new(r(0), support.clone()),
+            Point2::new(r(1), support),
+        );
+
+        let report = intersect_axis_aligned_line_cubic_bezier(
+            &line,
+            &curve,
+            PredicatePolicy::default(),
+        );
+
+        prop_assert_eq!(report.class, LineCubicBezierIntersectionClass::Unknown);
+        prop_assert_eq!(report.intersections.len(), 0);
+        prop_assert_eq!(report.algebraic_support_roots.len(), 1);
+        prop_assert_eq!(
+            report.algebraic_support_roots[0].parameter_domain,
+            LineCubicAlgebraicRootDomain::InsideUnitInterval
+        );
+        prop_assert_eq!(
+            report.algebraic_support_roots[0]
+                .parameter
+                .interval
+                .distinct_root_count,
+            1
+        );
     }
 
     #[test]
