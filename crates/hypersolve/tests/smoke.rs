@@ -5493,6 +5493,114 @@ fn sketch_projected_equal_point_point_distances3_lowers_exact_workplane_rows() {
 }
 
 #[test]
+fn sketch_projected_point_radius_equality_lowers_exact_workplane_rows() {
+    let mut sketch = SketchSolveProblem::new();
+    let origin = sketch.add_point3d("origin", real(10), real(20), real(30));
+    let normal = sketch.add_normal3d("normal", real(1), real(0), real(0), real(0));
+    let workplane = sketch.add_workplane("workplane", origin, normal);
+    let a = sketch.add_point3d("a", real(10), real(20), real(30));
+    let b = sketch.add_point3d("b", real(13), real(24), real(99));
+    let bad = sketch.add_point3d("bad", real(16), real(20), real(99));
+    let center = sketch.add_point2d("center", real(2), real(3));
+    let start = sketch.add_point2d("start", real(5), real(7));
+    let end = sketch.add_point2d("end", real(-2), real(6));
+    let radius = sketch.add_distance("radius", real(5));
+    let arc = sketch.add_arc_of_circle2("arc", center, start, end, radius);
+
+    let valid = sketch_distance_builders::projected_point_radius_equality3(
+        &mut sketch,
+        "projected point radius equality",
+        workplane,
+        a,
+        b,
+        arc,
+    );
+    sketch.add_projected_point_radius_equality3(
+        "bad projected point radius equality",
+        workplane,
+        a,
+        bad,
+        arc,
+    );
+    let wrong = sketch.add_projected_point_radius_equality3(
+        "wrong projected point radius equality",
+        workplane,
+        a,
+        b,
+        radius,
+    );
+
+    assert_eq!(valid.family, hypersolve::SketchConstraintFamily::Distance);
+    assert_eq!(
+        valid.strategy,
+        SketchResidualStrategy::SquaredProjectedPointRadiusEquality
+    );
+    assert_eq!(
+        valid.kind,
+        SketchConstraintKind::ProjectedPointRadiusEquality3 {
+            workplane,
+            a,
+            b,
+            curve: arc,
+        }
+    );
+
+    let report = sketch.lower_to_problem();
+    let certification = certify_candidate(
+        &PreparedProblem::new(&report.problem),
+        &context_from_problem(&report.problem),
+    );
+
+    assert_eq!(report.problem.constraints.len(), 4);
+    assert_eq!(report.rows.len(), 5);
+    assert_eq!(
+        report.rows[0].strategy,
+        Some(SketchResidualStrategy::WorkplaneUnitQuaternion)
+    );
+    assert_eq!(
+        report.rows[1].strategy,
+        Some(SketchResidualStrategy::SquaredProjectedPointRadiusEquality)
+    );
+    assert_eq!(
+        report.rows[3].strategy,
+        Some(SketchResidualStrategy::SquaredProjectedPointRadiusEquality)
+    );
+    assert_eq!(
+        report.rows.last().unwrap().status,
+        SketchGeneratedRowStatus::WrongEntityKind {
+            handle: radius,
+            expected: "circle or circular arc",
+        }
+    );
+    assert!(matches!(
+        certification.rows[1].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+    assert!(matches!(
+        certification.rows[3].status,
+        CertifiedCandidateStatus::CertifiedViolation { .. }
+    ));
+
+    let forms = sketch.residual_forms_for_constraint(valid.handle);
+    assert_eq!(forms.status, SketchResidualFormsStatus::Generated);
+    assert_eq!(forms.forms.len(), 2);
+    assert_eq!(
+        forms.forms[0].kind,
+        SketchResidualFormKind::WorkplaneUnitQuaternionPolynomial
+    );
+    assert_eq!(
+        forms.forms[1].kind,
+        SketchResidualFormKind::SquaredProjectedPointRadiusEqualityPolynomial
+    );
+    assert_eq!(
+        forms.forms[1].strategy,
+        Some(SketchResidualStrategy::SquaredProjectedPointRadiusEquality)
+    );
+    let wrong_forms = sketch.residual_forms_for_constraint(wrong);
+    assert_eq!(wrong_forms.status, SketchResidualFormsStatus::InvalidInputs);
+}
+
+#[test]
 fn sketch_projected_distance_ranges_lower_to_exact_squared_inequalities() {
     let mut sketch = SketchSolveProblem::new();
     let origin = sketch.add_point3d("origin", real(10), real(20), real(30));

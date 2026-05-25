@@ -1167,6 +1167,37 @@ pub mod distance {
         }
     }
 
+    /// Add projected point-pair distance to retained circle/arc radius equality.
+    ///
+    /// Lowering emits the workplane unit guard and
+    /// `|a-b|_uv^2 - radius^2 == 0`. This preserves the point-pair source
+    /// relation instead of requiring helper line geometry. Yap (1997) defines
+    /// the exact replay boundary, Shoemake (1985) supplies the quaternion
+    /// frame, and Bouma et al. (1995) motivates retaining the radius equality
+    /// vocabulary in the sketch layer.
+    pub fn projected_point_radius_equality3(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        workplane: SketchEntityHandle,
+        a: SketchEntityHandle,
+        b: SketchEntityHandle,
+        curve: SketchEntityHandle,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::ProjectedPointRadiusEquality3 {
+            workplane,
+            a,
+            b,
+            curve,
+        };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Distance,
+            strategy: SketchResidualStrategy::SquaredProjectedPointRadiusEquality,
+            kind,
+        }
+    }
+
     /// Add equality between two retained projected 3D point-to-point distances.
     ///
     /// Lowering emits the retained workplane unit guard plus

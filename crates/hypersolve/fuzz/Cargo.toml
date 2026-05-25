@@ -210,6 +210,13 @@ doc = false
 bench = false
 
 [[bin]]
+name = "sketch_projected_point_radius_equality"
+path = "fuzz_targets/sketch_projected_point_radius_equality.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
 name = "sketch_projected_line_symmetry"
 path = "fuzz_targets/sketch_projected_line_symmetry.rs"
 test = false
