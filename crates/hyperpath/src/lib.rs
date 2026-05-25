@@ -100,7 +100,8 @@ pub use mixed_conic_arrangement::{
     arrange_line_segments_with_rational_quadratic_beziers_and_provenance,
 };
 pub use mixed_cubic_arrangement::{
-    CubicBezierRealBreakpoint, CubicBezierRealFragment, LineCubicBezierArrangementError,
+    CubicBezierRealBreakpoint, CubicBezierRealFragment, LineCubicBezierAlgebraicBreakpoint,
+    LineCubicBezierAlgebraicBreakpointDomain, LineCubicBezierArrangementError,
     LineCubicBezierArrangementEvent, LineCubicBezierArrangementFacts,
     LineCubicBezierArrangementReport, MixedCubicLineArrangementBreakpoint,
     MixedCubicLineArrangementFragment, arrange_line_segments_with_cubic_beziers,

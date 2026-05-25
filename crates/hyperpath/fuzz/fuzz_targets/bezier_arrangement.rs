@@ -5,10 +5,10 @@ use std::cmp::Ordering;
 use hyperlimit::{PredicatePolicy, compare_reals_with_policy};
 use hyperpath::{
     BezierParameter, CubicBezier, LineCubicAlgebraicPointDomain, LineCubicAlgebraicRootDomain,
-    LineCubicBezierIntersectionClass, LinePathSegment, LineQuadraticBezierIntersectionClass,
-    LineRationalQuadraticBezierIntersectionClass, QuadraticBezier, RationalQuadraticBezier,
-    arrange_cubic_beziers, arrange_line_segments_with_cubic_beziers,
-    arrange_line_segments_with_quadratic_beziers,
+    LineCubicBezierAlgebraicBreakpointDomain, LineCubicBezierIntersectionClass, LinePathSegment,
+    LineQuadraticBezierIntersectionClass, LineRationalQuadraticBezierIntersectionClass,
+    QuadraticBezier, RationalQuadraticBezier, arrange_cubic_beziers,
+    arrange_line_segments_with_cubic_beziers, arrange_line_segments_with_quadratic_beziers,
     arrange_line_segments_with_rational_quadratic_beziers, arrange_quadratic_beziers,
     arrange_rational_quadratic_beziers, intersect_axis_aligned_line_cubic_bezier,
     intersect_axis_aligned_line_quadratic_bezier,
@@ -219,6 +219,23 @@ fuzz_target!(|data: &[u8]| {
             .point_image
             .segment_domain,
         LineCubicAlgebraicPointDomain::InsideSegmentBounds
+    );
+    let algebraic_mixed_report = arrange_line_segments_with_cubic_beziers(
+        &[algebraic_line],
+        &[algebraic_cubic],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert_eq!(algebraic_mixed_report.algebraic_breakpoints.len(), 1);
+    assert_eq!(
+        algebraic_mixed_report.algebraic_breakpoints[0].domain,
+        LineCubicBezierAlgebraicBreakpointDomain::InsideLineAndCurve
+    );
+    assert_eq!(
+        &algebraic_mixed_report.algebraic_breakpoints[0]
+            .line_parameter
+            .status,
+        &AlgebraicRootPolynomialImageStatus::Transformed
     );
 
     let weight = r(i64::from(data[11] % 16));

@@ -5,16 +5,23 @@
 //! exact line breakpoints and exact cubic `Real`-parameter breakpoints, then
 //! emits positive-length fragments. True cubic support roots are retained by
 //! the predicate layer as represented algebraic parameters and point images,
-//! but remain explicit `Unknown` events here until this scheduler can consume
-//! algebraic image ordering as concrete breakpoints.
+//! then copied here as separate algebraic breakpoint candidates with exact line
+//! parameter images. They remain out of the rational fragment lists until this
+//! scheduler can order and materialize algebraic split parameters directly.
 
 use std::cmp::Ordering;
 
 use hyperlimit::{Point2, PredicatePolicy, compare_reals_with_policy, point2_equal_with_policy};
 use hyperreal::{Real, RealExactSetFacts};
+use hypersolve::{
+    AlgebraicRootPolynomialImageReport, AlgebraicRootPolynomialImageStatus,
+    AlgebraicRootRepresentation, transform_algebraic_root_polynomial_image,
+};
 
 use crate::bezier::CubicBezier;
 use crate::bezier_arrangement::{
+    LineCubicAlgebraicPointDomain, LineCubicAlgebraicRootDomain,
+    LineCubicBezierAlgebraicPointImage, LineCubicBezierAlgebraicSupportRoot,
     LineCubicBezierIntersection, LineCubicBezierIntersectionClass,
     LineCubicBezierIntersectionReport, intersect_axis_aligned_line_cubic_bezier,
 };
@@ -45,6 +52,48 @@ pub struct LineCubicBezierArrangementEvent {
     pub class: LineCubicBezierIntersectionClass,
     /// Raw exact line/cubic-Bezier predicate report.
     pub intersection: LineCubicBezierIntersectionReport,
+}
+
+/// Certified domain status for a retained algebraic line/cubic breakpoint candidate.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum LineCubicBezierAlgebraicBreakpointDomain {
+    /// Cubic parameter, point image, and line parameter are inside the retained pair domains.
+    InsideLineAndCurve,
+    /// At least one retained parameter/image is certified outside the pair domains.
+    OutsideLineOrCurve,
+    /// Exact image construction or interval comparison did not decide.
+    Unknown,
+}
+
+/// Retained algebraic breakpoint candidate for a true line/cubic support root.
+///
+/// This is the mixed-scheduler counterpart to
+/// [`LineCubicBezierAlgebraicSupportRoot`]. It keeps the represented cubic
+/// parameter, the exact algebraic point image, and a normalized line-parameter
+/// image `dot(B(alpha)-line.start, line.end-line.start) / |line|^2`.
+///
+/// The line-parameter image is constructed with `hypersolve`'s resultant-based
+/// algebraic polynomial image. This directly follows Yap, "Towards Exact
+/// Geometric Computation" (1997): the scheduler retains exact algebraic
+/// objects with replayable evidence, but it does not insert them into the
+/// rational breakpoint/fragments lists until ordering and construction are
+/// supported. The elimination step is the Sylvester resultant construction
+/// used by Sylvester (1853) and the certified-root discipline of Collins and
+/// Loos, "Real Zeros of Polynomials" (1982).
+#[derive(Clone, Debug, PartialEq)]
+pub struct LineCubicBezierAlgebraicBreakpoint {
+    /// Line segment index.
+    pub line: usize,
+    /// Cubic Bezier index.
+    pub curve: usize,
+    /// Represented algebraic cubic parameter.
+    pub cubic_parameter: AlgebraicRootRepresentation,
+    /// Exact represented point image on the cubic.
+    pub point_image: LineCubicBezierAlgebraicPointImage,
+    /// Exact represented normalized line parameter image.
+    pub line_parameter: AlgebraicRootPolynomialImageReport,
+    /// Certified relation of the retained algebraic candidate to both source domains.
+    pub domain: LineCubicBezierAlgebraicBreakpointDomain,
 }
 
 /// Exact breakpoint on one arranged cubic Bezier.
@@ -127,6 +176,8 @@ pub struct LineCubicBezierArrangementReport {
     pub curves: Vec<CubicBezier>,
     /// Certified or unknown pairwise events.
     pub events: Vec<LineCubicBezierArrangementEvent>,
+    /// Algebraic breakpoint candidates retained from true cubic support roots.
+    pub algebraic_breakpoints: Vec<LineCubicBezierAlgebraicBreakpoint>,
     /// Sorted line breakpoints induced by line endpoints and certified events.
     pub line_breakpoints: Vec<Vec<MixedCubicLineArrangementBreakpoint>>,
     /// Sorted cubic breakpoints induced by curve endpoints and certified events.
@@ -164,6 +215,7 @@ pub fn arrange_line_segments_with_cubic_beziers_and_provenance(
     let mut line_breakpoints = seed_line_breakpoints(lines);
     let mut cubic_breakpoints = seed_cubic_breakpoints(curves);
     let mut events = Vec::new();
+    let mut algebraic_breakpoints = Vec::new();
 
     for (line_index, line) in lines.iter().enumerate() {
         for (curve_index, curve) in curves.iter().enumerate() {
@@ -185,6 +237,20 @@ pub fn arrange_line_segments_with_cubic_beziers_and_provenance(
                     )?;
                 }
             }
+            algebraic_breakpoints.extend(
+                retained_algebraic_breakpoints(
+                    line_index,
+                    line,
+                    curve_index,
+                    curve,
+                    &intersection,
+                    policy,
+                )
+                .into_iter()
+                .filter(|candidate| {
+                    candidate.domain == LineCubicBezierAlgebraicBreakpointDomain::InsideLineAndCurve
+                }),
+            );
             events.push(LineCubicBezierArrangementEvent {
                 line: line_index,
                 curve: curve_index,
@@ -208,6 +274,7 @@ pub fn arrange_line_segments_with_cubic_beziers_and_provenance(
         lines: lines.to_vec(),
         curves: curves.to_vec(),
         events,
+        algebraic_breakpoints,
         line_breakpoints,
         cubic_breakpoints,
         line_fragments,
@@ -265,6 +332,161 @@ fn seed_cubic_breakpoints(curves: &[CubicBezier]) -> Vec<Vec<CubicBezierRealBrea
             ]
         })
         .collect()
+}
+
+fn retained_algebraic_breakpoints(
+    line_index: usize,
+    line: &LinePathSegment,
+    curve_index: usize,
+    curve: &CubicBezier,
+    intersection: &LineCubicBezierIntersectionReport,
+    policy: PredicatePolicy,
+) -> Vec<LineCubicBezierAlgebraicBreakpoint> {
+    intersection
+        .algebraic_support_roots
+        .iter()
+        .filter_map(|root| {
+            let line_parameter =
+                algebraic_line_parameter_image(line, curve, &root.parameter, policy)?;
+            let domain = classify_algebraic_breakpoint_domain(root, &line_parameter, policy);
+            Some(LineCubicBezierAlgebraicBreakpoint {
+                line: line_index,
+                curve: curve_index,
+                cubic_parameter: root.parameter.clone(),
+                point_image: root.point_image.clone(),
+                line_parameter,
+                domain,
+            })
+        })
+        .collect()
+}
+
+fn algebraic_line_parameter_image(
+    line: &LinePathSegment,
+    curve: &CubicBezier,
+    root: &AlgebraicRootRepresentation,
+    policy: PredicatePolicy,
+) -> Option<AlgebraicRootPolynomialImageReport> {
+    // The normalized line parameter is a polynomial image of the same cubic
+    // source parameter:
+    //
+    //     s(t) = dot(B(t)-L0, L1-L0) / |L1-L0|^2.
+    //
+    // Keeping this as a represented algebraic image gives the next scheduler
+    // stage an exact line-order witness without inserting an unorderable
+    // algebraic value into the existing rational breakpoint list. The image
+    // construction is the same Sylvester-resultant/Yap retained-object step
+    // used by the predicate layer.
+    let coefficients = cubic_line_parameter_polynomial(line, curve)?;
+    Some(transform_algebraic_root_polynomial_image(
+        root,
+        &coefficients,
+        policy,
+    ))
+}
+
+fn cubic_line_parameter_polynomial(
+    line: &LinePathSegment,
+    curve: &CubicBezier,
+) -> Option<Vec<Real>> {
+    let dx = line.end().x.clone() - line.start().x.clone();
+    let dy = line.end().y.clone() - line.start().y.clone();
+    let denominator = dx.clone() * dx.clone() + dy.clone() * dy.clone();
+    let x = cubic_coordinate_power_coefficients(
+        &curve.start().x,
+        &curve.control0().x,
+        &curve.control1().x,
+        &curve.end().x,
+    );
+    let y = cubic_coordinate_power_coefficients(
+        &curve.start().y,
+        &curve.control0().y,
+        &curve.control1().y,
+        &curve.end().y,
+    );
+    let mut numerator = Vec::with_capacity(4);
+    for index in 0..4 {
+        let x_coefficient = if index == 0 {
+            x[index].clone() - line.start().x.clone()
+        } else {
+            x[index].clone()
+        };
+        let y_coefficient = if index == 0 {
+            y[index].clone() - line.start().y.clone()
+        } else {
+            y[index].clone()
+        };
+        numerator.push(x_coefficient * dx.clone() + y_coefficient * dy.clone());
+    }
+    numerator
+        .into_iter()
+        .map(|coefficient| coefficient / denominator.clone())
+        .collect::<Result<Vec<_>, _>>()
+        .ok()
+}
+
+fn cubic_coordinate_power_coefficients(p0: &Real, p1: &Real, p2: &Real, p3: &Real) -> [Real; 4] {
+    [
+        p0.clone(),
+        Real::from(3) * (p1.clone() - p0.clone()),
+        Real::from(3) * p0.clone() - Real::from(6) * p1.clone() + Real::from(3) * p2.clone(),
+        -p0.clone() + Real::from(3) * p1.clone() - Real::from(3) * p2.clone() + p3.clone(),
+    ]
+}
+
+fn classify_algebraic_breakpoint_domain(
+    root: &LineCubicBezierAlgebraicSupportRoot,
+    line_parameter: &AlgebraicRootPolynomialImageReport,
+    policy: PredicatePolicy,
+) -> LineCubicBezierAlgebraicBreakpointDomain {
+    let line_domain = classify_line_parameter_image(line_parameter, policy);
+    match (
+        root.parameter_domain,
+        root.point_image.segment_domain,
+        line_domain,
+    ) {
+        (
+            LineCubicAlgebraicRootDomain::InsideUnitInterval,
+            LineCubicAlgebraicPointDomain::InsideSegmentBounds,
+            Some(true),
+        ) => LineCubicBezierAlgebraicBreakpointDomain::InsideLineAndCurve,
+        (LineCubicAlgebraicRootDomain::OutsideUnitInterval, _, _)
+        | (_, LineCubicAlgebraicPointDomain::OutsideSegmentBounds, _)
+        | (_, _, Some(false)) => LineCubicBezierAlgebraicBreakpointDomain::OutsideLineOrCurve,
+        _ => LineCubicBezierAlgebraicBreakpointDomain::Unknown,
+    }
+}
+
+fn classify_line_parameter_image(
+    image: &AlgebraicRootPolynomialImageReport,
+    policy: PredicatePolicy,
+) -> Option<bool> {
+    if image.status != AlgebraicRootPolynomialImageStatus::Transformed {
+        return None;
+    }
+    let representation = image.representation.as_ref()?;
+    interval_inside_unit(
+        &representation.interval.lower,
+        &representation.interval.upper,
+        policy,
+    )
+}
+
+fn interval_inside_unit(lower: &Real, upper: &Real, policy: PredicatePolicy) -> Option<bool> {
+    let lower_zero = compare_reals_with_policy(lower, &Real::zero(), policy).value()?;
+    let upper_one = compare_reals_with_policy(upper, &Real::one(), policy).value()?;
+    if matches!(lower_zero, Ordering::Equal | Ordering::Greater)
+        && matches!(upper_one, Ordering::Equal | Ordering::Less)
+    {
+        return Some(true);
+    }
+    let upper_zero = compare_reals_with_policy(upper, &Real::zero(), policy).value()?;
+    let lower_one = compare_reals_with_policy(lower, &Real::one(), policy).value()?;
+    if matches!(upper_zero, Ordering::Less) || matches!(lower_one, Ordering::Greater) {
+        Some(false)
+    } else {
+        None
+    }
 }
 
 fn insert_line_breakpoint(

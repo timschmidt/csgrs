@@ -10,7 +10,8 @@ use hyperpath::{
     ExplicitCircularArc, FeedPathElement, HigherOrderBezier, HigherOrderBezierError,
     InfillGraphError, JerkLimitedFeedTimeReport, JerkRampPhaseProposal, JerkRampSpanProposal,
     LineArcArrangementEventClass, LineArrangementError, LineArrangementEventClass,
-    LineCubicAlgebraicPointDomain, LineCubicAlgebraicRootDomain, LineCubicBezierIntersectionClass,
+    LineCubicAlgebraicPointDomain, LineCubicAlgebraicRootDomain,
+    LineCubicBezierAlgebraicBreakpointDomain, LineCubicBezierIntersectionClass,
     LineExplicitArcIntersectionClass, LineOffsetError, LinePathSegment,
     LineQuadraticBezierIntersectionClass, LineRationalQuadraticBezierIntersectionClass,
     LookaheadFeedSchedule, MeanderError, MeanderKeepout, MeanderObstacle,
@@ -854,8 +855,8 @@ fn line_cubic_bezier_arrangement_splits_certified_quadratic_events() {
 
 #[test]
 fn line_cubic_bezier_arrangement_keeps_true_cubic_roots_unknown() {
-    let curve = CubicBezier::new(p(0, 0), p(2, 0), p(6, 4), p(8, 0));
-    let line = LinePathSegment::new(p(0, 1), p(8, 1));
+    let curve = CubicBezier::new(p(0, 0), pq(1, 3, 0, 1), pq(2, 3, 0, 1), p(1, 1));
+    let line = LinePathSegment::new(pq(0, 1, 1, 8), pq(1, 1, 1, 8));
 
     let report =
         arrange_line_segments_with_cubic_beziers(&[line], &[curve], PredicatePolicy::default())
@@ -865,6 +866,49 @@ fn line_cubic_bezier_arrangement_keeps_true_cubic_roots_unknown() {
         report.events[0].class,
         LineCubicBezierIntersectionClass::Unknown
     );
+    assert_eq!(report.algebraic_breakpoints.len(), 1);
+    assert_eq!(
+        report.algebraic_breakpoints[0].domain,
+        LineCubicBezierAlgebraicBreakpointDomain::InsideLineAndCurve
+    );
+    assert_eq!(
+        &report.algebraic_breakpoints[0].line_parameter.status,
+        &AlgebraicRootPolynomialImageStatus::Transformed
+    );
+    let line_parameter = report.algebraic_breakpoints[0]
+        .line_parameter
+        .representation
+        .as_ref()
+        .unwrap();
+    assert_interval_contains(
+        rq(1, 2),
+        &line_parameter.interval.lower,
+        &line_parameter.interval.upper,
+    );
+    assert_eq!(report.line_breakpoints[0].len(), 2);
+    assert_eq!(report.cubic_breakpoints[0].len(), 2);
+}
+
+#[test]
+fn line_cubic_bezier_arrangement_rejects_algebraic_breakpoint_outside_line_span() {
+    let curve = CubicBezier::new(p(0, 0), pq(1, 3, 0, 1), pq(2, 3, 0, 1), p(1, 1));
+    let line = LinePathSegment::new(pq(3, 4, 1, 8), pq(1, 1, 1, 8));
+
+    let report =
+        arrange_line_segments_with_cubic_beziers(&[line], &[curve], PredicatePolicy::default())
+            .unwrap();
+
+    assert_eq!(
+        report.events[0].class,
+        LineCubicBezierIntersectionClass::Unknown
+    );
+    assert_eq!(
+        report.events[0].intersection.algebraic_support_roots[0]
+            .point_image
+            .segment_domain,
+        LineCubicAlgebraicPointDomain::OutsideSegmentBounds
+    );
+    assert!(report.algebraic_breakpoints.is_empty());
     assert_eq!(report.line_breakpoints[0].len(), 2);
     assert_eq!(report.cubic_breakpoints[0].len(), 2);
 }
@@ -9333,6 +9377,43 @@ proptest! {
                 .segment_domain,
             LineCubicAlgebraicPointDomain::InsideSegmentBounds
         );
+    }
+
+    #[test]
+    fn line_cubic_bezier_arrangement_generated_true_cubic_roots_retain_algebraic_breakpoints(
+        numerator in 1_i64..=9,
+    ) {
+        let parameter = rq(numerator, 10);
+        let support = parameter.clone() * parameter.clone() * parameter.clone();
+        let curve = CubicBezier::new(
+            p(0, 0),
+            pq(1, 3, 0, 1),
+            pq(2, 3, 0, 1),
+            p(1, 1),
+        );
+        let line = LinePathSegment::new(
+            Point2::new(r(0), support.clone()),
+            Point2::new(r(1), support),
+        );
+
+        let report = arrange_line_segments_with_cubic_beziers(
+            &[line],
+            &[curve],
+            PredicatePolicy::default(),
+        ).unwrap();
+
+        prop_assert_eq!(report.events[0].class, LineCubicBezierIntersectionClass::Unknown);
+        prop_assert_eq!(report.algebraic_breakpoints.len(), 1);
+        prop_assert_eq!(
+            report.algebraic_breakpoints[0].domain,
+            LineCubicBezierAlgebraicBreakpointDomain::InsideLineAndCurve
+        );
+        prop_assert_eq!(
+            &report.algebraic_breakpoints[0].line_parameter.status,
+            &AlgebraicRootPolynomialImageStatus::Transformed
+        );
+        prop_assert_eq!(report.line_breakpoints[0].len(), 2);
+        prop_assert_eq!(report.cubic_breakpoints[0].len(), 2);
     }
 
     #[test]
