@@ -4044,6 +4044,66 @@ fn exercise_side_cutter_opening_without_holes() {
         .unwrap();
     assert_eq!(nonconvex_point_branch_result.mesh, nonconvex_point_branch.mesh);
 
+    let multi_component_nonconvex_left = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            0, 0, 0, 20, 0, 0, 20, 20, 0, 12, 20, 0, 12, 12, 0, 8, 12, 0, 8, 20, 0, 0, 20, 0,
+            20, 12, 0, 0, 12, 0, //
+            30, 0, 0, 40, 0, 0, 40, 10, 0, 30, 10, 0,
+        ],
+        &[
+            0, 1, 8, 0, 8, 4, 0, 4, 5, 0, 5, 9, //
+            9, 5, 6, 9, 6, 7, //
+            4, 8, 2, 4, 2, 3, //
+            10, 11, 12, 10, 12, 13,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("multi-component nonconvex point-branch source fixture must import");
+    let multi_component_nonconvex_point_branch = arrange_coplanar_surface_point_touch_difference(
+        &multi_component_nonconvex_left,
+        &point_only,
+    )
+    .expect("source-local nonconvex point-touch side cutters should materialize");
+    multi_component_nonconvex_point_branch.validate().unwrap();
+    multi_component_nonconvex_point_branch
+        .validate_difference_against_sources(&multi_component_nonconvex_left, &point_only)
+        .unwrap();
+    assert!(multi_component_nonconvex_point_branch.polygons.len() >= 3);
+    let multi_component_nonconvex_preflight = preflight_boolean_exact(
+        &multi_component_nonconvex_left,
+        &point_only,
+        ExactBooleanOperation::Difference,
+    )
+    .expect("source-local nonconvex point-touch preflight should classify shortcut");
+    multi_component_nonconvex_preflight.validate().unwrap();
+    multi_component_nonconvex_preflight
+        .validate_against_sources(&multi_component_nonconvex_left, &point_only)
+        .unwrap();
+    assert_eq!(
+        multi_component_nonconvex_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchDifference
+    );
+    let multi_component_nonconvex_result = hypermesh::exact::boolean_exact(
+        &multi_component_nonconvex_left,
+        &point_only,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("source-local nonconvex point-touch boolean should materialize");
+    multi_component_nonconvex_result
+        .validate_operation_against_sources(
+            &multi_component_nonconvex_left,
+            &point_only,
+            ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        multi_component_nonconvex_result.mesh,
+        multi_component_nonconvex_point_branch.mesh
+    );
+
     let incidental_point_cutters = ExactMesh::from_i64_triangles_with_policy(
         &[
             0, 8, 0, 8, 8, 0, 8, 12, 0, 0, 12, 0, //

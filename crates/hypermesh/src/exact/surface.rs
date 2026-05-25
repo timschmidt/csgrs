@@ -7874,83 +7874,133 @@ pub fn arrange_coplanar_surface_point_touch_difference(
 /// mesh is exported. This follows Yap's retained-object requirement from
 /// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
 /// (1997): a point branch is accepted only when exact topology, containment,
-/// and area facts name the output object.
+/// and area facts name the output object. For multi-component simple-source
+/// operands this remains source-local: unaffected disks are copied as exact
+/// retained loops, covered disks may be dropped, and only the components with
+/// branch side cutters are replayed by the branch subtraction core.
 #[cfg(feature = "exact-triangulation")]
 fn arrange_coplanar_simple_surface_point_touch_difference(
     left_component_meshes: Vec<ExactMesh>,
     right_component_meshes: Vec<ExactMesh>,
 ) -> Option<CoplanarSurfacePointTouchDifference> {
-    if left_component_meshes.len() != 1 || right_component_meshes.len() < 2 {
+    if left_component_meshes.is_empty() || right_component_meshes.len() < 2 {
         return None;
     }
-    let component = SimpleSurfaceComponent::from_mesh(left_component_meshes.into_iter().next()?)?;
+    let mut left_components = left_component_meshes
+        .into_iter()
+        .map(SimpleSurfaceComponent::from_mesh)
+        .collect::<Option<Vec<_>>>()?;
     let right_components = right_component_meshes
         .into_iter()
         .map(|mesh| ConvexUnionComponent::from_mesh(MultiUnionSide::Right, mesh))
         .collect::<Option<Vec<_>>>()?;
-    let projection = component.projection;
-    if right_components
+    let projection = left_components.first()?.projection;
+    if left_components
         .iter()
         .any(|component| component.projection != projection)
+        || right_components
+            .iter()
+            .any(|component| component.projection != projection)
     {
         return None;
     }
+    let left_boundaries = left_components
+        .iter()
+        .map(|component| component.boundary.clone())
+        .collect::<Vec<_>>();
+    validate_simple_component_loops_disjoint(
+        &left_boundaries,
+        projection,
+        "coplanar nonconvex source point-touch side-cutter difference",
+    )
+    .ok()?;
 
-    let mut removed = Vec::new();
-    for right_component in &right_components {
-        if polygons_equal(&component.boundary, &right_component.hull)
-            || polygon_in_closed_convex_polygon(
-                &component.boundary,
-                &right_component.hull,
-                projection,
-            )?
-        {
-            return None;
-        }
-        if polygon_lies_in_closed_simple_polygon(
-            &right_component.hull,
-            &component.boundary,
-            projection,
-        )? {
-            if simple_boundary_attachment_count(
-                &component.boundary,
-                &right_component.hull,
-                projection,
-            )? == 0
+    let mut polygons = Vec::new();
+    let mut emitted_branch = false;
+    for component in &mut left_components {
+        let mut dropped = false;
+        let mut removed = Vec::new();
+        for right_component in &right_components {
+            if polygons_equal(&component.boundary, &right_component.hull)
+                || polygon_in_closed_convex_polygon(
+                    &component.boundary,
+                    &right_component.hull,
+                    projection,
+                )?
             {
-                return None;
+                if dropped || !removed.is_empty() {
+                    return None;
+                }
+                dropped = true;
+                continue;
             }
-            let mut cutter = right_component.hull.clone();
-            orient_polygon_ccw(&mut cutter, projection)?;
-            removed.push(cutter);
+            if polygon_lies_in_closed_simple_polygon(
+                &right_component.hull,
+                &component.boundary,
+                projection,
+            )? {
+                if dropped {
+                    return None;
+                }
+                if simple_boundary_attachment_count(
+                    &component.boundary,
+                    &right_component.hull,
+                    projection,
+                )? == 0
+                {
+                    return None;
+                }
+                let mut cutter = right_component.hull.clone();
+                orient_polygon_ccw(&mut cutter, projection)?;
+                removed.push(cutter);
+                continue;
+            }
+            match simple_source_convex_region_relation(
+                &component.boundary,
+                &right_component.hull,
+                projection,
+            )? {
+                SimpleSourceConvexRegionRelation::Disjoint => {}
+                SimpleSourceConvexRegionRelation::BoundaryOnly => return None,
+                SimpleSourceConvexRegionRelation::UnsupportedCrossing => {
+                    if dropped {
+                        return None;
+                    }
+                    let mut clipped = simple_source_convex_crossing_removed_openings(
+                        component,
+                        &right_component.hull,
+                        "coplanar nonconvex source point-touch clipped side-cutter difference",
+                    )?;
+                    removed.append(&mut clipped);
+                }
+            }
+        }
+        if dropped {
             continue;
         }
-        match simple_source_convex_region_relation(
-            &component.boundary,
-            &right_component.hull,
-            projection,
-        )? {
-            SimpleSourceConvexRegionRelation::Disjoint => {}
-            SimpleSourceConvexRegionRelation::BoundaryOnly => return None,
-            SimpleSourceConvexRegionRelation::UnsupportedCrossing => {
-                let mut clipped = simple_source_convex_crossing_removed_openings(
-                    &component,
-                    &right_component.hull,
-                    "coplanar nonconvex source point-touch clipped side-cutter difference",
-                )?;
-                removed.append(&mut clipped);
-            }
+        if removed.is_empty() {
+            polygons.push(component.boundary.clone());
+            continue;
         }
+        if removed.len() < 2 {
+            return None;
+        }
+        let (_, mut branch_polygons) =
+            materialize_simple_source_side_cutter_point_touch_difference_core(
+                component,
+                &removed,
+                "coplanar nonconvex source point-touch side-cutter difference",
+            )?;
+        emitted_branch = true;
+        polygons.append(&mut branch_polygons);
     }
-    if removed.len() < 2 {
+    if !emitted_branch || polygons.is_empty() {
         return None;
     }
-
-    let (_, polygons) = materialize_simple_source_side_cutter_point_touch_difference_core(
-        &component,
-        &removed,
-        "coplanar nonconvex source point-touch side-cutter difference",
-    )?;
+    for polygon in &mut polygons {
+        orient_polygon_ccw(polygon, projection)?;
+    }
+    sort_polygons_for_replay(&mut polygons, projection);
     let mesh = polygons_to_earcut_open_mesh_with_label(
         &polygons,
         projection,
