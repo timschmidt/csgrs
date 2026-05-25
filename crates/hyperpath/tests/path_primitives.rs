@@ -4,22 +4,23 @@ use hyperpath::{
     BeadPlanError, BezierOffsetError, BezierParameter, BezierParameterError, BoardContourError,
     BoardContourOrientation, CardinalPoint, CardinalRotation, CircularArc, CircularArcError,
     ClearanceStatus, ConstructionStamp, CornerLookaheadJoinClass, CubicBezier,
-    DrillBoardClearanceReport, ExplicitArcArrangementClass, ExplicitArcIntersectionClass,
-    ExplicitArcOverlapClass, ExplicitArcPointClassification, ExplicitArcSweepClass,
-    ExplicitArcTangentClass, ExplicitCircleRelationClass, ExplicitCircularArc, FeedPathElement,
-    HigherOrderBezier, HigherOrderBezierError, InfillGraphError, JerkLimitedFeedTimeReport,
-    JerkRampPhaseProposal, JerkRampSpanProposal, LineArcArrangementEventClass,
-    LineArrangementError, LineArrangementEventClass, LineExplicitArcIntersectionClass,
-    LineOffsetError, LinePathSegment, LineQuadraticBezierIntersectionClass,
-    LineRationalQuadraticBezierIntersectionClass, LookaheadFeedSchedule, MeanderError,
-    MeanderKeepout, MeanderObstacle, MeanderPlacementCandidate, NetId, OffsetSide, PathProvenance,
-    PathSourceFormat, PcbBoardOutline, PcbCardinalRectPad, PcbCircularBoardOutline, PcbCircularPad,
+    CubicPythagoreanHodograph, DrillBoardClearanceReport, ExplicitArcArrangementClass,
+    ExplicitArcIntersectionClass, ExplicitArcOverlapClass, ExplicitArcPointClassification,
+    ExplicitArcSweepClass, ExplicitArcTangentClass, ExplicitCircleRelationClass,
+    ExplicitCircularArc, FeedPathElement, HigherOrderBezier, HigherOrderBezierError,
+    InfillGraphError, JerkLimitedFeedTimeReport, JerkRampPhaseProposal, JerkRampSpanProposal,
+    LineArcArrangementEventClass, LineArrangementError, LineArrangementEventClass,
+    LineExplicitArcIntersectionClass, LineOffsetError, LinePathSegment,
+    LineQuadraticBezierIntersectionClass, LineRationalQuadraticBezierIntersectionClass,
+    LookaheadFeedSchedule, MeanderError, MeanderKeepout, MeanderObstacle,
+    MeanderPlacementCandidate, NetId, OffsetSide, PathProvenance, PathSourceFormat,
+    PcbBoardOutline, PcbCardinalRectPad, PcbCircularBoardOutline, PcbCircularPad,
     PcbConvexBoardOutline, PcbConvexPad, PcbObroundPad, PcbOrientedRectPad,
     PcbOrthogonalBoardOutline, PcbOrthogonalPad, PcbRectPad, PcbRoundedRectPad, PcbTrace,
-    PcbViaStack, PocketLinkGraphError, PocketPlanError, PocketPlanStopReason, PocketRingSide,
-    QuadraticBezier, RationalQuadraticBezier, RationalQuadraticBezierError, RectangularPocket,
-    RectangularRegionRelation, RouteCertificationError, SegmentParameterOrder, SourceLengthUnit,
-    SpecctraGridKeepoutRecord, SpecctraGridKeepoutShape, SpecctraGridTraceRecord,
+    PcbViaStack, PhCurveError, PocketLinkGraphError, PocketPlanError, PocketPlanStopReason,
+    PocketRingSide, QuadraticBezier, RationalQuadraticBezier, RationalQuadraticBezierError,
+    RectangularPocket, RectangularRegionRelation, RouteCertificationError, SegmentParameterOrder,
+    SourceLengthUnit, SpecctraGridKeepoutRecord, SpecctraGridKeepoutShape, SpecctraGridTraceRecord,
     SpecctraGridViaRecord, SpecctraImportError, SpecctraLayerAlias, SpecctraNetAlias,
     SpecctraParseError, SupportFootprintStatus, SupportPlanError, SweptLineSegment,
     TangentAlignment, TangentJoinClass, TangentJoinReport, TangentSpan, TraceLayer,
@@ -36,18 +37,18 @@ use hyperpath::{
     build_single_detour_meander, build_tangent_alignment_problem,
     certify_acceleration_limited_feed_time, certify_acceleration_limited_feed_time_for_path,
     certify_constant_feed_time, certify_constant_feed_time_for_path,
-    certify_corner_lookahead_limits, certify_differential_pair_skew, certify_g1_chain,
-    certify_g1_join_candidate, certify_jerk_ramp_feed_schedule, certify_length_extension,
-    certify_lookahead_feed_schedule, certify_multi_phase_jerk_ramp_feed_schedule,
-    certify_symmetric_jerk_limited_feed_time, certify_symmetric_jerk_limited_feed_time_for_path,
-    certify_tangent_alignment_candidate, check_cardinal_rect_pad_board_clearance,
-    check_circular_pad_board_clearance, check_circular_pad_circular_board_clearance,
-    check_convex_pad_board_clearance, check_obround_pad_board_clearance,
-    check_oriented_rect_pad_board_clearance, check_orthogonal_pad_board_clearance,
-    check_rect_pad_board_clearance, check_rounded_rect_pad_board_clearance,
-    check_trace_board_clearance, check_trace_cardinal_rect_pad_clearance,
-    check_trace_circular_board_clearance, check_trace_clearance,
-    check_trace_convex_board_clearance, check_trace_convex_pad_clearance,
+    certify_corner_lookahead_limits, certify_cubic_ph_inverse_length,
+    certify_differential_pair_skew, certify_g1_chain, certify_g1_join_candidate,
+    certify_jerk_ramp_feed_schedule, certify_length_extension, certify_lookahead_feed_schedule,
+    certify_multi_phase_jerk_ramp_feed_schedule, certify_symmetric_jerk_limited_feed_time,
+    certify_symmetric_jerk_limited_feed_time_for_path, certify_tangent_alignment_candidate,
+    check_cardinal_rect_pad_board_clearance, check_circular_pad_board_clearance,
+    check_circular_pad_circular_board_clearance, check_convex_pad_board_clearance,
+    check_obround_pad_board_clearance, check_oriented_rect_pad_board_clearance,
+    check_orthogonal_pad_board_clearance, check_rect_pad_board_clearance,
+    check_rounded_rect_pad_board_clearance, check_trace_board_clearance,
+    check_trace_cardinal_rect_pad_clearance, check_trace_circular_board_clearance,
+    check_trace_clearance, check_trace_convex_board_clearance, check_trace_convex_pad_clearance,
     check_trace_obround_pad_clearance, check_trace_oriented_rect_pad_clearance,
     check_trace_orthogonal_board_clearance, check_trace_orthogonal_pad_clearance,
     check_trace_pad_clearance, check_trace_rect_pad_clearance,
@@ -1277,6 +1278,76 @@ fn higher_order_bezier_evaluates_quartic_and_quintic_exactly() {
         quintic.derivative(BezierParameter::new(1, 2).unwrap()),
         p(10, 0)
     );
+}
+
+#[test]
+fn cubic_ph_retains_exact_length_endpoint_and_inverse_length() {
+    let curve =
+        CubicPythagoreanHodograph::new(p(0, 0), r(1), Real::zero(), Real::zero(), r(1)).unwrap();
+
+    assert_eq!(curve.start(), &p(0, 0));
+    assert_eq!(curve.end(), &Point2::new(Real::zero(), rq(1, 3)));
+    assert_eq!(curve.exact_length(), rq(2, 3));
+    assert_eq!(
+        curve
+            .partial_length(BezierParameter::new(1, 2).unwrap())
+            .unwrap(),
+        rq(1, 3)
+    );
+
+    let inverse =
+        certify_cubic_ph_inverse_length(&curve, rq(1, 3), BezierParameter::new(1, 2).unwrap())
+            .unwrap();
+    assert!(inverse.certification.all_satisfied());
+    assert_eq!(inverse.parameter, BezierParameter::new(1, 2).unwrap());
+
+    let wrong =
+        certify_cubic_ph_inverse_length(&curve, rq(1, 2), BezierParameter::new(1, 2).unwrap())
+            .unwrap();
+    assert!(wrong.certification.has_certified_violation());
+}
+
+#[test]
+fn cubic_ph_rejects_degenerate_and_negative_inverse_length_inputs() {
+    assert_eq!(
+        CubicPythagoreanHodograph::new(
+            p(0, 0),
+            Real::zero(),
+            Real::zero(),
+            Real::zero(),
+            Real::zero(),
+        )
+        .unwrap_err(),
+        PhCurveError::DegenerateHodograph
+    );
+
+    let curve =
+        CubicPythagoreanHodograph::new(p(0, 0), r(2), Real::zero(), r(2), Real::zero()).unwrap();
+    assert_eq!(curve.exact_length(), r(4));
+    assert_eq!(
+        certify_cubic_ph_inverse_length(&curve, r(-1), BezierParameter::new(0, 1).unwrap())
+            .unwrap_err(),
+        PhCurveError::NegativeLength
+    );
+}
+
+#[test]
+fn mixed_path_feed_replay_accepts_native_cubic_ph_length() {
+    let ph =
+        CubicPythagoreanHodograph::new(p(0, 0), r(1), Real::zero(), Real::zero(), r(1)).unwrap();
+    let route = vec![
+        FeedPathElement::CubicPh(ph),
+        FeedPathElement::Line(LinePathSegment::new(
+            Point2::new(Real::zero(), rq(1, 3)),
+            Point2::new(Real::zero(), rq(2, 3)),
+        )),
+    ];
+
+    let report =
+        certify_constant_feed_time_for_path(&route, r(1), r(1), PredicatePolicy::default())
+            .unwrap();
+    assert_eq!(report.path_length, r(1));
+    assert!(report.certification.all_satisfied());
 }
 
 #[test]
@@ -7398,6 +7469,28 @@ proptest! {
 
         prop_assert_eq!(report.elements[0].route_length.clone(), r(total_length));
         prop_assert!(report.all_satisfied());
+    }
+
+    #[test]
+    fn cubic_ph_generated_constant_hodograph_inverse_length_certifies(
+        speed_root in 1_i16..=20,
+        numerator in 0_i16..=16,
+    ) {
+        let speed_root = i64::from(speed_root);
+        let numerator = i64::from(numerator);
+        let curve = CubicPythagoreanHodograph::new(
+            p(0, 0),
+            r(speed_root),
+            Real::zero(),
+            r(speed_root),
+            Real::zero(),
+        ).unwrap();
+        let parameter = BezierParameter::new(numerator, 16).unwrap();
+        let target = rq(speed_root * speed_root * numerator, 16);
+        let report = certify_cubic_ph_inverse_length(&curve, target, parameter).unwrap();
+
+        prop_assert_eq!(curve.exact_length(), r(speed_root * speed_root));
+        prop_assert!(report.certification.all_satisfied());
     }
 
     #[test]

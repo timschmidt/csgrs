@@ -2,11 +2,12 @@
 
 use hyperlimit::{Point2, PredicatePolicy};
 use hyperpath::{
-    AccelerationLimitedFeedProfileClass, ArcDirection, ExplicitCircularArc, FeedPathElement,
-    JerkRampPhaseProposal, JerkRampSpanProposal, LinePathSegment, LookaheadFeedSchedule,
-    RouteCertificationError, TangentSpan, certify_acceleration_limited_feed_time,
-    certify_acceleration_limited_feed_time_for_path, certify_constant_feed_time,
-    certify_constant_feed_time_for_path, certify_corner_lookahead_limits,
+    AccelerationLimitedFeedProfileClass, ArcDirection, CubicPythagoreanHodograph,
+    ExplicitCircularArc, FeedPathElement, JerkRampPhaseProposal, JerkRampSpanProposal,
+    LinePathSegment, LookaheadFeedSchedule, RouteCertificationError, TangentSpan,
+    certify_acceleration_limited_feed_time, certify_acceleration_limited_feed_time_for_path,
+    certify_constant_feed_time, certify_constant_feed_time_for_path,
+    certify_corner_lookahead_limits, certify_cubic_ph_inverse_length,
     certify_jerk_ramp_feed_schedule, certify_lookahead_feed_schedule,
     certify_multi_phase_jerk_ramp_feed_schedule, certify_symmetric_jerk_limited_feed_time,
     certify_symmetric_jerk_limited_feed_time_for_path,
@@ -275,4 +276,25 @@ fuzz_target!(|data: &[u8]| {
     )
     .unwrap();
     assert!(phase_report.all_satisfied());
+
+    let ph_root = positive(data[4], 12);
+    let ph =
+        CubicPythagoreanHodograph::new(p(0, 0), r(ph_root), Real::zero(), r(ph_root), Real::zero())
+            .unwrap();
+    let ph_inverse = certify_cubic_ph_inverse_length(
+        &ph,
+        rq(ph_root * ph_root, 2),
+        hyperpath::BezierParameter::new(1, 2).unwrap(),
+    )
+    .unwrap();
+    assert!(ph_inverse.certification.all_satisfied());
+    let ph_route = vec![FeedPathElement::CubicPh(ph)];
+    let ph_feed = certify_constant_feed_time_for_path(
+        &ph_route,
+        r(ph_root * ph_root),
+        r(1),
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert!(ph_feed.certification.all_satisfied());
 });

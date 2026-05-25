@@ -325,6 +325,7 @@ fn element_length(
         FeedPathElement::ExplicitArc(arc) => arc
             .certified_sweep_length()
             .ok_or(RouteCertificationError::UnsupportedRouteGeometry),
+        FeedPathElement::CubicPh(curve) => Ok(curve.exact_length()),
     }
 }
 

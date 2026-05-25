@@ -23,6 +23,7 @@ use hypersolve::{
 };
 
 use crate::arc::ExplicitCircularArc;
+use crate::ph::CubicPythagoreanHodograph;
 use crate::segment::LinePathSegment;
 use crate::solve::symmetric_jerk_limited_feed_time_equation;
 use crate::tangent::{TangentJoinClass, TangentJoinReport, TangentSpan, classify_tangent_join};
@@ -47,6 +48,8 @@ pub enum FeedPathElement {
     Line(LinePathSegment),
     /// Exact explicit circular arc with a certified symbolic sweep length.
     ExplicitArc(ExplicitCircularArc),
+    /// Exact cubic PH span with native polynomial arc length.
+    CubicPh(CubicPythagoreanHodograph),
 }
 
 /// Exact symmetric jerk-limited traversal time certification report.
@@ -485,6 +488,7 @@ fn element_length(
         FeedPathElement::ExplicitArc(arc) => arc
             .certified_sweep_length()
             .ok_or(RouteCertificationError::UnsupportedRouteGeometry),
+        FeedPathElement::CubicPh(curve) => Ok(curve.exact_length()),
     }
 }
 

@@ -2,10 +2,11 @@ use criterion::{Criterion, criterion_group, criterion_main};
 use hyperlimit::{Point2, PredicatePolicy};
 use hyperpath::{
     ArcDirection, BeadFillAxis, BezierParameter, CardinalPoint, CardinalRotation, CircularArc,
-    ConstructionStamp, CubicBezier, ExplicitCircularArc, FeedPathElement, HigherOrderBezier,
-    JerkRampPhaseProposal, JerkRampSpanProposal, LinePathSegment, LookaheadFeedSchedule,
-    MeanderKeepout, MeanderObstacle, MeanderPlacementCandidate, NetId, OffsetSide, PathProvenance,
-    PathSourceFormat, PcbBoardOutline, PcbCardinalRectPad, PcbCircularBoardOutline, PcbCircularPad,
+    ConstructionStamp, CubicBezier, CubicPythagoreanHodograph, ExplicitCircularArc,
+    FeedPathElement, HigherOrderBezier, JerkRampPhaseProposal, JerkRampSpanProposal,
+    LinePathSegment, LookaheadFeedSchedule, MeanderKeepout, MeanderObstacle,
+    MeanderPlacementCandidate, NetId, OffsetSide, PathProvenance, PathSourceFormat,
+    PcbBoardOutline, PcbCardinalRectPad, PcbCircularBoardOutline, PcbCircularPad,
     PcbConvexBoardOutline, PcbConvexPad, PcbObroundPad, PcbOrientedRectPad,
     PcbOrthogonalBoardOutline, PcbOrthogonalPad, PcbRectPad, PcbRoundedRectPad, PcbTrace,
     PcbViaStack, QuadraticBezier, RationalQuadraticBezier, RectangularPocket, SourceLengthUnit,
@@ -24,18 +25,18 @@ use hyperpath::{
     build_single_detour_meander, build_tangent_alignment_problem,
     certify_acceleration_limited_feed_time, certify_acceleration_limited_feed_time_for_path,
     certify_constant_feed_time, certify_constant_feed_time_for_path,
-    certify_corner_lookahead_limits, certify_differential_pair_skew, certify_g1_chain,
-    certify_g1_join_candidate, certify_jerk_ramp_feed_schedule, certify_length_extension,
-    certify_lookahead_feed_schedule, certify_multi_phase_jerk_ramp_feed_schedule,
-    certify_symmetric_jerk_limited_feed_time, certify_symmetric_jerk_limited_feed_time_for_path,
-    certify_tangent_alignment_candidate, check_cardinal_rect_pad_board_clearance,
-    check_circular_pad_board_clearance, check_circular_pad_circular_board_clearance,
-    check_convex_pad_board_clearance, check_obround_pad_board_clearance,
-    check_oriented_rect_pad_board_clearance, check_orthogonal_pad_board_clearance,
-    check_rect_pad_board_clearance, check_rounded_rect_pad_board_clearance,
-    check_trace_board_clearance, check_trace_cardinal_rect_pad_clearance,
-    check_trace_circular_board_clearance, check_trace_clearance,
-    check_trace_convex_board_clearance, check_trace_convex_pad_clearance,
+    certify_corner_lookahead_limits, certify_cubic_ph_inverse_length,
+    certify_differential_pair_skew, certify_g1_chain, certify_g1_join_candidate,
+    certify_jerk_ramp_feed_schedule, certify_length_extension, certify_lookahead_feed_schedule,
+    certify_multi_phase_jerk_ramp_feed_schedule, certify_symmetric_jerk_limited_feed_time,
+    certify_symmetric_jerk_limited_feed_time_for_path, certify_tangent_alignment_candidate,
+    check_cardinal_rect_pad_board_clearance, check_circular_pad_board_clearance,
+    check_circular_pad_circular_board_clearance, check_convex_pad_board_clearance,
+    check_obround_pad_board_clearance, check_oriented_rect_pad_board_clearance,
+    check_orthogonal_pad_board_clearance, check_rect_pad_board_clearance,
+    check_rounded_rect_pad_board_clearance, check_trace_board_clearance,
+    check_trace_cardinal_rect_pad_clearance, check_trace_circular_board_clearance,
+    check_trace_clearance, check_trace_convex_board_clearance, check_trace_convex_pad_clearance,
     check_trace_obround_pad_clearance, check_trace_oriented_rect_pad_clearance,
     check_trace_orthogonal_board_clearance, check_trace_orthogonal_pad_clearance,
     check_trace_pad_clearance, check_trace_rect_pad_clearance,
@@ -348,6 +349,11 @@ fn path_predicates(c: &mut Criterion) {
     });
     c.bench_function("higher_order_bezier_exact_speed_squared", |b| {
         b.iter(|| quintic.speed_squared(half))
+    });
+    let ph = CubicPythagoreanHodograph::new(p(0, 0), r(1), r(0), r(0), r(1)).unwrap();
+    c.bench_function("cubic_ph_exact_length", |b| b.iter(|| ph.exact_length()));
+    c.bench_function("cubic_ph_inverse_length_certification", |b| {
+        b.iter(|| certify_cubic_ph_inverse_length(&ph, rq(1, 3), half))
     });
     c.bench_function("quadratic_bezier_offset_sample", |b| {
         b.iter(|| {
