@@ -14,11 +14,11 @@ use hypervoxel::{
     VoxelizationAudit, VoxelizationPolicy, audit_chunk_paged_material_regions,
     audit_chunk_paged_process_states, audit_exact_voxel_surface_topology,
     certify_chunk_paged_handoff, chunk_paged_binary_snapshot_v1,
-    chunk_paged_run_length_snapshot_v1, diff_chunk_paged_sparse_grids, diff_sparse_grids,
-    exact_voxel_surface_triangle_mesh_from_faces, extract_exposed_faces,
-    extract_exposed_faces_with_report, greedy_face_patch_plan, lookup_material_display_colors,
-    lossy_obj_from_quad_mesh, lossy_quad_mesh_from_faces, query_material_regions,
-    report_material_region_metadata, sample_manhattan_distance_field,
+    chunk_paged_exact_surface_triangle_mesh_with_report, chunk_paged_run_length_snapshot_v1,
+    diff_chunk_paged_sparse_grids, diff_sparse_grids, exact_voxel_surface_triangle_mesh_from_faces,
+    extract_exposed_faces, extract_exposed_faces_with_report, greedy_face_patch_plan,
+    lookup_material_display_colors, lossy_obj_from_quad_mesh, lossy_quad_mesh_from_faces,
+    query_material_regions, report_material_region_metadata, sample_manhattan_distance_field,
     sample_signed_manhattan_distance_field, select_lod_cells, voxel_neighbors6, voxelize_exact_box,
     voxelize_exact_convex_halfspace_set, voxelize_exact_halfspace,
 };
@@ -1246,6 +1246,58 @@ fn exposed_faces_are_exact_before_lossy_mesh_export() {
     assert_eq!(empty_shell.exact_faces, 0);
     assert!(!empty_shell.has_exact_faces);
     assert!(!empty_shell.exact_shell_ready);
+}
+
+#[test]
+fn chunk_paged_exact_surface_triangle_mesh_preserves_page_shell_evidence() {
+    let exact_box = ExactBox::new([r(1), r(1), r(1)], [r(3), r(3), r(3)], None);
+    let (grid, _) = voxelize_exact_box(
+        frame(),
+        &exact_box,
+        MaterialRegionId(4),
+        VoxelizationPolicy::conservative_cover(),
+    )
+    .unwrap();
+    let sparse_shell = extract_exposed_faces_with_report(&grid).unwrap();
+    let sparse_mesh = exact_voxel_surface_triangle_mesh_from_faces(&sparse_shell.faces);
+    assert!(sparse_mesh.report.exact_triangle_surface_mesh_ready);
+
+    let paged = ChunkPagedSparseGrid::from_sparse_grid(&grid, ChunkShape::new(1).unwrap()).unwrap();
+    let paged_mesh = chunk_paged_exact_surface_triangle_mesh_with_report(&paged).unwrap();
+    assert_eq!(paged_mesh.shell.exact_faces, sparse_shell.exact_faces);
+    assert_eq!(paged_mesh.mesh, sparse_mesh);
+    assert!(paged_mesh.shell.exact_paged_shell_ready);
+    assert!(paged_mesh.mesh.report.exact_triangle_surface_mesh_ready);
+    assert!(paged_mesh.exact_paged_triangle_mesh_ready);
+    assert!(paged_mesh.shell.page_hits > 0);
+    assert!(paged_mesh.shell.cross_page_sides > 0);
+
+    let empty_paged = ChunkPagedSparseGrid::from_sparse_grid(
+        &SparseVoxelGrid::new(frame()),
+        ChunkShape::new(1).unwrap(),
+    )
+    .unwrap();
+    let empty = chunk_paged_exact_surface_triangle_mesh_with_report(&empty_paged).unwrap();
+    assert_eq!(empty.shell.exact_faces, 0);
+    assert!(empty.mesh.triangles.is_empty());
+    assert!(!empty.shell.exact_paged_shell_ready);
+    assert!(!empty.mesh.report.exact_triangle_surface_mesh_ready);
+    assert!(!empty.exact_paged_triangle_mesh_ready);
+
+    let mut blocked_grid = grid;
+    blocked_grid
+        .set(
+            VoxelAddress::new(2, [1, 1, 1]).unwrap(),
+            VoxelCell::lossy_adapter_value(9),
+        )
+        .unwrap();
+    let blocked_paged =
+        ChunkPagedSparseGrid::from_sparse_grid(&blocked_grid, ChunkShape::new(1).unwrap()).unwrap();
+    let blocked = chunk_paged_exact_surface_triangle_mesh_with_report(&blocked_paged).unwrap();
+    assert!(blocked.shell.skipped_lossy_cells > 0);
+    assert!(!blocked.shell.exact_paged_shell_ready);
+    assert!(!blocked.mesh.report.exact_triangle_surface_mesh_ready);
+    assert!(!blocked.exact_paged_triangle_mesh_ready);
 }
 
 #[test]

@@ -1,0 +1,52 @@
+//! Page-backed exact voxel-surface triangle mesh handoff.
+//!
+//! [`crate::ChunkPagedSparseGrid`] can accelerate exact shell extraction by
+//! grouping cells into integer pages, but page layout is not itself topology.
+//! This module threads that page-backed shell evidence into the exact
+//! lattice-vertex triangle mesh handoff from [`crate::surface_mesh`].
+//!
+//! The gate follows Yap, "Towards Exact Geometric Computation,"
+//! *Computational Geometry* 7(1-2), 1997: an accelerated representation may be
+//! consumed as exact only after replaying retained object facts and reporting
+//! blockers. The indexed triangle vocabulary follows the combinatorial mesh
+//! model in Botsch et al., *Polygon Mesh Processing*, AK Peters, 2010, with
+//! exact grid-lattice vertices replacing primitive-float coordinates.
+
+use crate::{
+    ChunkPagedExactFaceExtractionReport, ChunkPagedSparseGrid, ExactVoxelSurfaceTriangleMesh,
+    HypervoxelResult, exact_voxel_surface_triangle_mesh_from_faces,
+    extract_chunk_paged_exposed_faces_with_report,
+};
+
+/// Page-backed exact voxel-surface triangle mesh report.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ChunkPagedExactSurfaceTriangleMeshReport {
+    /// Exact page-backed shell consumed by the handoff.
+    pub shell: ChunkPagedExactFaceExtractionReport,
+    /// Exact indexed triangle mesh produced from the shell.
+    pub mesh: ExactVoxelSurfaceTriangleMesh,
+    /// Whether page-backed shell extraction and exact triangle mesh handoff
+    /// both produced replay-ready evidence.
+    pub exact_paged_triangle_mesh_ready: bool,
+}
+
+/// Builds an exact indexed triangle mesh from chunk-paged sparse storage.
+///
+/// Pages schedule the shell extraction, but the emitted mesh is accepted only
+/// when exact neighbor lookup certifies a non-empty shell and the topology
+/// audit accepts that shell as a closed manifold. Empty, unknown, lossy, open,
+/// duplicate, mixed-depth, or nonmanifold cases return a report with blockers
+/// and no exact triangle mesh.
+pub fn chunk_paged_exact_surface_triangle_mesh_with_report(
+    grid: &ChunkPagedSparseGrid,
+) -> HypervoxelResult<ChunkPagedExactSurfaceTriangleMeshReport> {
+    let shell = extract_chunk_paged_exposed_faces_with_report(grid)?;
+    let mesh = exact_voxel_surface_triangle_mesh_from_faces(&shell.faces);
+    let exact_paged_triangle_mesh_ready =
+        shell.exact_paged_shell_ready && mesh.report.exact_triangle_surface_mesh_ready;
+    Ok(ChunkPagedExactSurfaceTriangleMeshReport {
+        shell,
+        mesh,
+        exact_paged_triangle_mesh_ready,
+    })
+}

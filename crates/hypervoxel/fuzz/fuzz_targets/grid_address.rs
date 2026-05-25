@@ -26,6 +26,7 @@ use hypervoxel::{
     audit_chunk_paged_field_samples, audit_chunk_paged_material_regions,
     audit_chunk_paged_process_states, audit_exact_voxel_surface_topology,
     certify_chunk_paged_handoff, chunk_paged_binary_snapshot_v1,
+    chunk_paged_exact_surface_triangle_mesh_with_report,
     chunk_paged_run_length_snapshot_v1, chunk_paged_greedy_face_patch_plan_with_report,
     classify_chunk_paged_support_mask, classify_support_mask, continuous_field_address,
     diff_chunk_paged_sparse_grids, diff_sparse_grids,
@@ -448,6 +449,18 @@ fuzz_target!(|data: (u8, u64, u64, u64)| {
         .map(|face| (face.address, face.side.integer_normal()))
         .collect::<BTreeSet<_>>();
     assert_eq!(paged_shell_keys, shell_keys);
+    let paged_surface_mesh =
+        chunk_paged_exact_surface_triangle_mesh_with_report(&paged_grid).unwrap();
+    assert_eq!(paged_surface_mesh.shell, paged_shell);
+    assert_eq!(paged_surface_mesh.mesh, exact_surface_mesh);
+    assert_eq!(
+        paged_surface_mesh.exact_paged_triangle_mesh_ready,
+        paged_surface_mesh.shell.exact_paged_shell_ready
+            && paged_surface_mesh
+                .mesh
+                .report
+                .exact_triangle_surface_mesh_ready
+    );
     let paged_patch_plan =
         chunk_paged_greedy_face_patch_plan_with_report(&paged_grid, "fuzz paged preview").unwrap();
     assert_eq!(paged_patch_plan.shell.exact_faces, shell.exact_faces);

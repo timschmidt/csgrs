@@ -36,6 +36,7 @@ mod chunk_process;
 mod chunk_snapshot;
 mod chunk_storage;
 mod chunk_support;
+mod chunk_surface_mesh;
 mod compression;
 mod continuous;
 mod coupling;
@@ -113,6 +114,9 @@ pub use chunk_storage::{
     ChunkPagedSparsePage, ChunkPagedSparsePageReport, ChunkPagedSparseStorageReport,
 };
 pub use chunk_support::{ChunkPagedSupportMaskReport, classify_chunk_paged_support_mask};
+pub use chunk_surface_mesh::{
+    ChunkPagedExactSurfaceTriangleMeshReport, chunk_paged_exact_surface_triangle_mesh_with_report,
+};
 pub use compression::{
     CompressedStorageKind, CompressedStorageManifest, CompressedStorageReport, StorageReplayStatus,
     VoxelMemoryBudgetManifest, VoxelMemoryBudgetReport,
