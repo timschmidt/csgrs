@@ -406,18 +406,21 @@ fn retained_tangent_order_traverses_algebraic_branch_vertex() {
     let incoming = BezierSplitFragment2::AlgebraicEndpointImages {
         start: exact(r(0)),
         end: algebraic.clone(),
+        source_curve: None,
         start_image: None,
         end_image: Some(algebraic_endpoint_image(&incoming_curve, &parameter)),
     };
     let upward = BezierSplitFragment2::AlgebraicEndpointImages {
         start: algebraic.clone(),
         end: exact(r(1)),
+        source_curve: None,
         start_image: Some(algebraic_endpoint_image(&upward_curve, &parameter)),
         end_image: None,
     };
     let downward = BezierSplitFragment2::AlgebraicEndpointImages {
         start: algebraic,
         end: exact(r(1)),
+        source_curve: None,
         start_image: Some(algebraic_endpoint_image(&downward_curve, &parameter)),
         end_image: None,
     };
@@ -448,18 +451,21 @@ fn retained_tangent_order_rejects_equal_algebraic_successors() {
     let incoming = BezierSplitFragment2::AlgebraicEndpointImages {
         start: exact(r(0)),
         end: algebraic.clone(),
+        source_curve: None,
         start_image: None,
         end_image: Some(algebraic_endpoint_image(&incoming_curve, &parameter)),
     };
     let first = BezierSplitFragment2::AlgebraicEndpointImages {
         start: algebraic.clone(),
         end: exact(r(1)),
+        source_curve: None,
         start_image: Some(algebraic_endpoint_image(&first_curve, &parameter)),
         end_image: None,
     };
     let second = BezierSplitFragment2::AlgebraicEndpointImages {
         start: algebraic,
         end: exact(r(1)),
+        source_curve: None,
         start_image: Some(algebraic_endpoint_image(&second_curve, &parameter)),
         end_image: None,
     };
@@ -485,18 +491,21 @@ fn retained_tangent_order_uses_algebraic_second_order_for_equal_successors() {
     let incoming = BezierSplitFragment2::AlgebraicEndpointImages {
         start: exact(r(0)),
         end: algebraic.clone(),
+        source_curve: None,
         start_image: None,
         end_image: Some(algebraic_endpoint_image(&incoming_curve, &parameter)),
     };
     let upward = BezierSplitFragment2::AlgebraicEndpointImages {
         start: algebraic.clone(),
         end: exact(r(1)),
+        source_curve: None,
         start_image: Some(algebraic_endpoint_image(&upward_curve, &parameter)),
         end_image: None,
     };
     let downward = BezierSplitFragment2::AlgebraicEndpointImages {
         start: algebraic,
         end: exact(r(1)),
+        source_curve: None,
         start_image: Some(algebraic_endpoint_image(&downward_curve, &parameter)),
         end_image: None,
     };
@@ -522,18 +531,21 @@ fn retained_tangent_order_uses_algebraic_third_order_for_cubic_same_tangent_infl
     let incoming = BezierSplitFragment2::AlgebraicEndpointImages {
         start: exact(r(0)),
         end: algebraic.clone(),
+        source_curve: None,
         start_image: None,
         end_image: Some(algebraic_endpoint_image(&incoming_curve, &parameter)),
     };
     let upward = BezierSplitFragment2::AlgebraicEndpointImages {
         start: algebraic.clone(),
         end: exact(r(1)),
+        source_curve: None,
         start_image: Some(algebraic_cubic_endpoint_image(&upward_curve, &parameter)),
         end_image: None,
     };
     let downward = BezierSplitFragment2::AlgebraicEndpointImages {
         start: algebraic,
         end: exact(r(1)),
+        source_curve: None,
         start_image: Some(algebraic_cubic_endpoint_image(&downward_curve, &parameter)),
         end_image: None,
     };
@@ -952,6 +964,7 @@ fn retained_overlap_report_does_not_sample_algebraic_endpoint_image_fragments() 
     let fragment = BezierSplitFragment2::AlgebraicEndpointImages {
         start: algebraic.clone(),
         end: algebraic,
+        source_curve: None,
         start_image: Some(algebraic_endpoint_image(&curve, &parameter)),
         end_image: Some(algebraic_endpoint_image(&curve, &parameter)),
     };

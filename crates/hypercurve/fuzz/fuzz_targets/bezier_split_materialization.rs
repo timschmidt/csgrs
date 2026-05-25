@@ -66,6 +66,7 @@ fuzz_target!(|data: &[u8]| {
                     end,
                     start_image,
                     end_image,
+                    ..
                 } => {
                     assert!(start_image.is_some() || end_image.is_some());
                     if !start.is_exact() {

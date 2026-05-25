@@ -8,18 +8,20 @@
 //! their represented coordinates.  It never samples an algebraic root and it
 //! does not claim curve-interior extrema.
 //!
-//! A curve envelope is stronger: it consumes only materialized native
-//! Bezier/conic carriers and includes exact coordinate extrema from derivative
-//! roots.  Polynomial Bezier extrema use the Bernstein derivative identities
-//! described by Farin, *Curves and Surfaces for CAGD* (5th ed., 2002), and the
+//! A curve envelope is stronger: it consumes materialized native Bezier/conic
+//! carriers and includes exact coordinate extrema from derivative roots.
+//! Polynomial Bezier extrema use the Bernstein derivative identities described
+//! by Farin, *Curves and Surfaces for CAGD* (5th ed., 2002), and the
 //! rational-quadratic path reuses the crate's quotient-derivative conic bounds.
-//! Algebraic endpoint-image fragments remain explicit unsupported evidence for
-//! this measurement because their curve-interior extrema are not yet
-//! represented.  This is the construction/decision split advocated by Yap,
-//! "Towards Exact Geometric Computation," *Computational Geometry* 7(1-2),
-//! 3-23 (1997).  The broad-phase role mirrors Bentley and Ottmann's sweep-line
-//! candidate filters, "Algorithms for Reporting and Counting Geometric
-//! Intersections," *IEEE Transactions on Computers* C-28(9), 643-647 (1979).
+//! Algebraic endpoint-image fragments can also contribute when they retain the
+//! source curve that generated the algebraic split: the envelope includes the
+//! exact source-curve bounds as a conservative overbound of the algebraic
+//! subrange.  Fragments without source-curve evidence remain unsupported. This
+//! is the construction/decision split advocated by Yap, "Towards Exact
+//! Geometric Computation," *Computational Geometry* 7(1-2), 3-23 (1997).  The
+//! broad-phase role mirrors Bentley and Ottmann's sweep-line candidate filters,
+//! "Algorithms for Reporting and Counting Geometric Intersections," *IEEE
+//! Transactions on Computers* C-28(9), 643-647 (1979).
 
 use hyperreal::Real;
 use hypersolve::AlgebraicRootRepresentation;
@@ -30,14 +32,13 @@ use crate::{
     BezierSplitFragment2, BezierSubcurve2, Classification, CurvePolicy, Point2, UncertaintyReason,
 };
 
-/// Exact curve-interior envelope for materialized retained Bezier/conic carriers.
+/// Exact curve-interior envelope for retained Bezier/conic carriers.
 ///
-/// This is a full curve envelope for retained boundary loops whose fragments
-/// are already native subcurves.  Quadratic and cubic polynomial Beziers
-/// contribute endpoint and derivative-root extrema; rational quadratics
-/// contribute their certified quotient-derivative conic bounds.  Algebraic
-/// endpoint-image fragments are deliberately rejected as unsupported because an
-/// endpoint image is not enough evidence for curve-interior extrema.
+/// Native subcurves contribute endpoint and derivative-root extrema. Algebraic
+/// endpoint-image fragments contribute only when they carry their source
+/// curve; in that case the source curve's certified bounds conservatively
+/// overbound the algebraic subrange. Endpoint images alone are still rejected
+/// because they do not prove any interior extrema.
 #[derive(Clone, Debug, PartialEq)]
 pub struct BezierRetainedCurveEnvelope2 {
     envelope: Aabb2,
@@ -48,8 +49,8 @@ impl BezierRetainedCurveEnvelope2 {
     /// Constructs a curve-interior envelope for a retained region.
     ///
     /// Empty regions are unsupported because there is no finite neutral
-    /// envelope. Any retained algebraic endpoint-image fragment returns
-    /// `Unsupported` until its curve-interior extrema are represented exactly.
+    /// envelope. A retained algebraic endpoint-image fragment must carry its
+    /// source curve; endpoint-only evidence is unsupported.
     pub fn from_region(
         region: &BezierRetainedRegion2,
         policy: &CurvePolicy,
@@ -205,14 +206,17 @@ impl CurveEnvelopeAccumulator {
         fragment: &BezierSplitFragment2,
         policy: &CurvePolicy,
     ) -> Classification<()> {
-        let BezierSplitFragment2::Materialized { curve, .. } = fragment else {
-            return Classification::Uncertain(match fragment {
-                BezierSplitFragment2::AlgebraicEndpointImages { .. } => {
-                    UncertaintyReason::Unsupported
-                }
-                BezierSplitFragment2::Unresolved { .. } => UncertaintyReason::Boundary,
-                BezierSplitFragment2::Materialized { .. } => unreachable!(),
-            });
+        let curve = match fragment {
+            BezierSplitFragment2::Materialized { curve, .. } => curve,
+            BezierSplitFragment2::AlgebraicEndpointImages { source_curve, .. } => {
+                let Some(source_curve) = source_curve else {
+                    return Classification::Uncertain(UncertaintyReason::Unsupported);
+                };
+                source_curve
+            }
+            BezierSplitFragment2::Unresolved { .. } => {
+                return Classification::Uncertain(UncertaintyReason::Boundary);
+            }
         };
 
         let curve_box = match retained_curve_bounds(curve, policy) {

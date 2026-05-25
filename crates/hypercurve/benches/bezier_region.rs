@@ -2,10 +2,11 @@ use std::hint::black_box;
 use std::time::Instant;
 
 use hypercurve::{
-    BezierArrangementFragment2, BezierArrangementGraph2, BezierParameter2, BezierRegion2,
-    BezierRetainedCurveEnvelope2, BezierRetainedEndpointEnvelope2, BezierRetainedRegion2,
-    BezierSplitFragment2, BezierSubcurve2, Classification, CurvePolicy, CurveResult, Point2,
-    QuadraticBezier2, RationalQuadraticBezier2, Real,
+    BezierAlgebraicParameter2, BezierArrangementFragment2, BezierArrangementGraph2,
+    BezierParameter2, BezierParameterInterval, BezierParameterPolynomial, BezierRegion2,
+    BezierRetainedBoundaryLoop2, BezierRetainedCurveEnvelope2, BezierRetainedEndpointEnvelope2,
+    BezierRetainedRegion2, BezierSplitFragment2, BezierSubcurve2, Classification, CurvePolicy,
+    CurveResult, Point2, QuadraticBezier2, RationalQuadraticBezier2, Real,
 };
 
 fn r(value: i32) -> Real {
@@ -42,6 +43,17 @@ fn line_fragment(
             curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(start, control, end)),
         },
     )
+}
+
+fn algebraic_midpoint(policy: &CurvePolicy) -> CurveResult<BezierParameter2> {
+    let polynomial = decided(BezierParameterPolynomial::try_new_power_basis(
+        vec![r(-1), r(2)],
+        policy,
+    )?);
+    let interval = decided(BezierParameterInterval::try_new(q(2, 5), q(3, 5), policy)?);
+    Ok(BezierParameter2::algebraic(decided(
+        BezierAlgebraicParameter2::try_isolate(polynomial, interval, policy)?,
+    )))
 }
 
 fn main() -> CurveResult<()> {
@@ -102,6 +114,25 @@ fn main() -> CurveResult<()> {
     let elapsed = started.elapsed();
     println!(
         "bezier_retained_region_materialization: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={retained_checksum}",
+        elapsed / iterations
+    );
+
+    let algebraic_split =
+        decided(upper.split_at_parameters(&[algebraic_midpoint(&policy)?], &policy)?);
+    let algebraic_loop = BezierRetainedBoundaryLoop2::new(algebraic_split.fragments().to_vec());
+    let started = Instant::now();
+    let mut algebraic_envelope_checksum = 0_usize;
+    for _ in 0..iterations {
+        let envelope = decided(BezierRetainedCurveEnvelope2::from_loop(
+            &algebraic_loop,
+            &policy,
+        ));
+        algebraic_envelope_checksum ^=
+            black_box(format!("{:?}", envelope.envelope()).len() + envelope.exact_fragment_count());
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "bezier_retained_algebraic_source_envelope: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={algebraic_envelope_checksum}",
         elapsed / iterations
     );
 

@@ -479,6 +479,7 @@ fn retained_signed_area_role_report_rejects_zero_area_and_algebraic_loops() {
         BezierSplitFragment2::AlgebraicEndpointImages {
             start: parameter.clone(),
             end: parameter,
+            source_curve: None,
             start_image: Some(algebraic_image(&line_midpoint_curve(-1, 0, 1))),
             end_image: Some(algebraic_image(&line_midpoint_curve(0, 1, 2))),
         },
@@ -519,6 +520,30 @@ fn retained_curve_envelope_includes_native_bezier_interior_extrema() {
 }
 
 #[test]
+fn retained_curve_envelope_uses_source_bounds_for_algebraic_split_fragments() {
+    let curve = QuadraticBezier2::new(p(0, 0), p(2, 4), p(4, 0));
+    let split = decided(
+        curve
+            .split_at_parameters(
+                &[BezierParameter2::algebraic(algebraic_midpoint_parameter())],
+                &policy(),
+            )
+            .unwrap(),
+    );
+    assert!(split.has_algebraic_endpoint_images());
+    let loop_with_algebraic_boundary = BezierRetainedBoundaryLoop2::new(split.fragments().to_vec());
+
+    let curve_envelope = decided(BezierRetainedCurveEnvelope2::from_loop(
+        &loop_with_algebraic_boundary,
+        &policy(),
+    ));
+
+    assert_eq!(curve_envelope.envelope().min(), &p(0, 0));
+    assert_eq!(curve_envelope.envelope().max(), &p(4, 2));
+    assert_eq!(curve_envelope.exact_fragment_count(), 2);
+}
+
+#[test]
 fn retained_region_materializes_closed_algebraic_carrier_loop_without_area_sampling() {
     let parameter = BezierParameter2::algebraic(algebraic_midpoint_parameter());
     let p0_right = algebraic_image(&line_midpoint_curve(-1, 0, 1));
@@ -528,12 +553,14 @@ fn retained_region_materializes_closed_algebraic_carrier_loop_without_area_sampl
     let first = BezierSplitFragment2::AlgebraicEndpointImages {
         start: parameter.clone(),
         end: parameter.clone(),
+        source_curve: None,
         start_image: Some(p0_right),
         end_image: Some(p1_right),
     };
     let second = BezierSplitFragment2::AlgebraicEndpointImages {
         start: parameter.clone(),
         end: parameter,
+        source_curve: None,
         start_image: Some(p1_left),
         end_image: Some(p0_left),
     };
@@ -597,6 +624,7 @@ fn retained_endpoint_envelope_rejects_incomplete_algebraic_endpoint_evidence() {
     let partial = BezierSplitFragment2::AlgebraicEndpointImages {
         start: parameter.clone(),
         end: parameter,
+        source_curve: None,
         start_image: Some(algebraic_image(&line_midpoint_curve(-1, 0, 1))),
         end_image: None,
     };

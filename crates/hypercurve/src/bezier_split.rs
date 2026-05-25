@@ -60,6 +60,14 @@ pub enum BezierSplitFragment2 {
         start: BezierParameter2,
         /// End split boundary in the original parameter space.
         end: BezierParameter2,
+        /// Source curve that generated this algebraic-boundary fragment.
+        ///
+        /// This is not a native subcurve over the algebraic parameter range.
+        /// It is retained construction evidence for conservative exact
+        /// measurements, such as source-curve envelopes, that can safely
+        /// overbound the algebraic subrange without evaluating an algebraic
+        /// split point as a floating coordinate.
+        source_curve: Option<BezierSubcurve2>,
         /// Exact point/tangent image when the start boundary is algebraic.
         start_image: Option<BezierAlgebraicEndpointImage2>,
         /// Exact point/tangent image when the end boundary is algebraic.
@@ -133,6 +141,7 @@ impl QuadraticBezier2 {
                 ))
             },
             |parameter| BezierAlgebraicEndpointImage2::quadratic(self, parameter, policy),
+            BezierSubcurve2::Quadratic(self.clone()),
         )
     }
 
@@ -196,6 +205,7 @@ impl CubicBezier2 {
                 ))
             },
             |parameter| BezierAlgebraicEndpointImage2::cubic(self, parameter, policy),
+            BezierSubcurve2::Cubic(self.clone()),
         )
     }
 
@@ -267,6 +277,7 @@ impl RationalQuadraticBezier2 {
                 ))
             },
             |parameter| BezierAlgebraicEndpointImage2::rational_quadratic(self, parameter, policy),
+            BezierSubcurve2::RationalQuadratic(self.clone()),
         )
     }
 
@@ -346,6 +357,7 @@ fn split_curve_at_parameters<F, G>(
     policy: &CurvePolicy,
     mut materialize: F,
     mut endpoint_image: G,
+    source_curve: BezierSubcurve2,
 ) -> CurveResult<Classification<BezierSplitMaterialization2>>
 where
     F: FnMut(&Real, &Real) -> CurveResult<BezierSubcurve2>,
@@ -386,6 +398,7 @@ where
                     fragments.push(BezierSplitFragment2::AlgebraicEndpointImages {
                         start,
                         end,
+                        source_curve: Some(source_curve.clone()),
                         start_image,
                         end_image,
                     });

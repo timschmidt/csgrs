@@ -193,6 +193,7 @@ fn algebraic_boundary_carries_endpoint_images_without_approximate_materializatio
         BezierSplitFragment2::Materialized { .. }
     ));
     let BezierSplitFragment2::AlgebraicEndpointImages {
+        source_curve,
         start_image,
         end_image,
         ..
@@ -200,10 +201,12 @@ fn algebraic_boundary_carries_endpoint_images_without_approximate_materializatio
     else {
         panic!("left algebraic fragment should carry endpoint images");
     };
+    assert!(source_curve.is_some());
     assert!(start_image.is_none());
     assert_polynomial_endpoint_image(end_image);
 
     let BezierSplitFragment2::AlgebraicEndpointImages {
+        source_curve,
         start_image,
         end_image,
         ..
@@ -211,6 +214,7 @@ fn algebraic_boundary_carries_endpoint_images_without_approximate_materializatio
     else {
         panic!("right algebraic fragment should carry endpoint images");
     };
+    assert!(source_curve.is_some());
     assert_polynomial_endpoint_image(start_image);
     assert!(end_image.is_none());
 }
@@ -237,6 +241,7 @@ fn rational_algebraic_boundary_carries_conic_endpoint_images() {
     assert!(!materialization.has_unresolved_fragments());
     assert!(materialization.has_algebraic_endpoint_images());
     let BezierSplitFragment2::AlgebraicEndpointImages {
+        source_curve,
         start_image,
         end_image,
         ..
@@ -244,6 +249,7 @@ fn rational_algebraic_boundary_carries_conic_endpoint_images() {
     else {
         panic!("rational fragment should carry endpoint images");
     };
+    assert!(source_curve.is_some());
     assert!(start_image.is_none());
     assert_rational_endpoint_image(end_image);
 }
