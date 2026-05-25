@@ -25,6 +25,7 @@ use hypersolve::{
 use crate::arc::ExplicitCircularArc;
 use crate::segment::LinePathSegment;
 use crate::solve::symmetric_jerk_limited_feed_time_equation;
+use crate::tangent::{TangentJoinClass, TangentJoinReport, TangentSpan, classify_tangent_join};
 
 use super::{
     AccelerationLimitedFeedTimeReport, ConstantFeedTimeReport, RouteCertificationError,
@@ -79,6 +80,70 @@ pub struct JerkLimitedFeedTimeReport {
     pub peak_acceleration: Real,
     /// Exact solver replay report for length and peak-limit constraints.
     pub certification: CandidateCertificationReport,
+}
+
+/// Exact lookahead classification for one retained path join.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CornerLookaheadJoinClass {
+    /// The join is G1-continuous, so this report only certifies the feed cap.
+    StraightThrough,
+    /// The join is a true corner and must respect the retained corner radius.
+    RadiusLimitedCorner,
+    /// The join reverses direction and requires a zero corner speed.
+    ReversalStop,
+}
+
+/// Exact corner-speed replay report for one adjacent tangent-span join.
+///
+/// The report carries the tangent predicate result and a solver replay of the
+/// process limit applied to the candidate junction feed. For corners, the
+/// replay row is the squared-speed form of the centripetal bound `v^2 <= a*r`
+/// for a caller-retained blend radius. This is the path-parameterization view
+/// used by Bobrow, Dubowsky, and Gibson (1985): the geometric path is retained,
+/// while dynamic limits are algebraic constraints on motion along that path.
+/// Yap's exact-computation discipline is preserved by accepting no numeric
+/// controller proposal until those inequalities are certified exactly.
+#[derive(Clone, Debug)]
+pub struct CornerLookaheadJoinReport {
+    /// Zero-based adjacent-span join index.
+    pub index: u64,
+    /// Exact endpoint/tangent predicate report used to choose the limit class.
+    pub tangent_join: TangentJoinReport,
+    /// Lookahead class selected from the tangent predicate report.
+    pub class: CornerLookaheadJoinClass,
+    /// Exact candidate feed rate at the join.
+    pub candidate_corner_feed: Real,
+    /// Exact maximum feed-rate cap.
+    pub max_feed_rate: Real,
+    /// Exact maximum centripetal acceleration cap.
+    pub max_acceleration: Real,
+    /// Exact retained corner/blend radius used for true corners.
+    pub corner_radius: Real,
+    /// Exact replay report for the feed cap, corner bound, and reversal stop.
+    pub certification: CandidateCertificationReport,
+}
+
+/// Exact lookahead replay report for a retained tangent-span chain.
+#[derive(Clone, Debug)]
+pub struct CornerLookaheadLimitReport {
+    /// Per-adjacent-join reports in traversal order.
+    pub joins: Vec<CornerLookaheadJoinReport>,
+}
+
+impl CornerLookaheadLimitReport {
+    /// Return whether every join's candidate corner feed was certified.
+    pub fn all_satisfied(&self) -> bool {
+        self.joins
+            .iter()
+            .all(|join| join.certification.all_satisfied())
+    }
+
+    /// Return the first join with a certified violation or undecided row.
+    pub fn first_unsatisfied_join(&self) -> Option<usize> {
+        self.joins
+            .iter()
+            .position(|join| !join.certification.all_satisfied())
+    }
 }
 
 /// Certify constant-feed traversal time for a retained mixed line/arc route.
@@ -244,6 +309,78 @@ pub fn certify_symmetric_jerk_limited_feed_time(
     )
 }
 
+/// Certify exact lookahead corner-speed limits for retained tangent spans.
+///
+/// This is a process-constraint report for a path chain, not a mesh or stock
+/// boolean. Adjacent [`TangentSpan`] values are classified by exact endpoint
+/// and tangent predicates. G1 joins replay only the global feed cap; true
+/// corners additionally replay `a_max * r_corner - v_corner^2 >= 0`; reversed
+/// tangents replay an exact stop row `v_corner = 0`. The constraints are kept
+/// denominator-free and algebraic so `hypersolve` can audit the caller's
+/// candidate speed under Yap's "construct then certify" model.
+///
+/// The caller supplies one retained corner radius for this chain. A future
+/// richer scheduler can call this function per corner with locally selected
+/// radii, but the certification model remains the same: geometry decides the
+/// join class, and exact replay decides whether the proposed process speed is
+/// admissible.
+pub fn certify_corner_lookahead_limits(
+    spans: &[TangentSpan],
+    candidate_corner_feed: Real,
+    max_feed_rate: Real,
+    max_acceleration: Real,
+    corner_radius: Real,
+    policy: PredicatePolicy,
+) -> Result<CornerLookaheadLimitReport, RouteCertificationError> {
+    if spans.len() < 2 {
+        return Err(RouteCertificationError::EmptyRoute);
+    }
+    require_nonnegative_feed(&candidate_corner_feed)?;
+    require_positive_feed(&max_feed_rate)?;
+    require_positive_acceleration(&max_acceleration)?;
+    require_positive_corner_radius(&corner_radius)?;
+
+    let mut joins = Vec::with_capacity(spans.len().saturating_sub(1));
+    for (index, pair) in spans.windows(2).enumerate() {
+        let tangent_join = classify_tangent_join(
+            &pair[0].end,
+            &pair[0].end_tangent,
+            &pair[1].start,
+            &pair[1].start_tangent,
+            policy,
+        );
+        let class = match tangent_join.class {
+            TangentJoinClass::G1Continuous => CornerLookaheadJoinClass::StraightThrough,
+            TangentJoinClass::Corner => CornerLookaheadJoinClass::RadiusLimitedCorner,
+            TangentJoinClass::ReversedTangent => CornerLookaheadJoinClass::ReversalStop,
+            TangentJoinClass::DegenerateTangent
+            | TangentJoinClass::EndpointMismatch
+            | TangentJoinClass::Unknown => {
+                return Err(RouteCertificationError::UnsupportedRouteGeometry);
+            }
+        };
+        let certification = certify_corner_lookahead_join_candidate(
+            class,
+            candidate_corner_feed.clone(),
+            max_feed_rate.clone(),
+            max_acceleration.clone(),
+            corner_radius.clone(),
+        );
+        joins.push(CornerLookaheadJoinReport {
+            index: index as u64,
+            tangent_join,
+            class,
+            candidate_corner_feed: candidate_corner_feed.clone(),
+            max_feed_rate: max_feed_rate.clone(),
+            max_acceleration: max_acceleration.clone(),
+            corner_radius: corner_radius.clone(),
+            certification,
+        });
+    }
+
+    Ok(CornerLookaheadLimitReport { joins })
+}
+
 fn build_jerk_limited_report(
     path_length: Real,
     max_feed_rate: Real,
@@ -290,6 +427,42 @@ fn build_jerk_limited_report(
         peak_acceleration,
         certification: certify_candidate(&prepared, &context),
     })
+}
+
+fn certify_corner_lookahead_join_candidate(
+    class: CornerLookaheadJoinClass,
+    candidate_corner_feed: Real,
+    max_feed_rate: Real,
+    max_acceleration: Real,
+    corner_radius: Real,
+) -> CandidateCertificationReport {
+    let mut problem = Problem::default();
+    let feed = problem.add_variable("corner_feed", candidate_corner_feed);
+    problem.add_constraint(corner_feed_cap_constraint(
+        "lookahead corner feed cap",
+        max_feed_rate,
+        feed,
+    ));
+    match class {
+        CornerLookaheadJoinClass::StraightThrough => {}
+        CornerLookaheadJoinClass::RadiusLimitedCorner => {
+            problem.add_constraint(corner_centripetal_limit_constraint(
+                "lookahead corner centripetal limit",
+                max_acceleration,
+                corner_radius,
+                feed,
+            ));
+        }
+        CornerLookaheadJoinClass::ReversalStop => {
+            problem.add_constraint(Constraint::equality(
+                "lookahead reversal stop",
+                Expr::symbol(feed.into(), "corner_feed"),
+            ));
+        }
+    }
+    let prepared = PreparedProblem::new(&problem);
+    let context = context_from_problem(&problem);
+    certify_candidate(&prepared, &context)
 }
 
 fn route_path_length(
@@ -348,6 +521,43 @@ fn peak_acceleration_limit_constraint(
     }
 }
 
+fn corner_feed_cap_constraint(
+    name: impl Into<String>,
+    max_feed_rate: Real,
+    feed: hypersolve::VariableId,
+) -> Constraint {
+    Constraint {
+        name: name.into(),
+        kind: ConstraintKind::GreaterOrEqual,
+        residual: Expr::real(max_feed_rate) - Expr::symbol(feed.into(), "corner_feed"),
+        weight: Real::one(),
+        active: true,
+    }
+}
+
+fn corner_centripetal_limit_constraint(
+    name: impl Into<String>,
+    max_acceleration: Real,
+    corner_radius: Real,
+    feed: hypersolve::VariableId,
+) -> Constraint {
+    let feed_expr = Expr::symbol(feed.into(), "corner_feed");
+    Constraint {
+        name: name.into(),
+        kind: ConstraintKind::GreaterOrEqual,
+        residual: Expr::real(max_acceleration * corner_radius) - feed_expr.clone() * feed_expr,
+        weight: Real::one(),
+        active: true,
+    }
+}
+
+fn require_nonnegative_feed(value: &Real) -> Result<(), RouteCertificationError> {
+    match value.structural_facts().sign {
+        Some(RealSign::Negative) => Err(RouteCertificationError::NegativeFeedRate),
+        _ => Ok(()),
+    }
+}
+
 fn require_positive_feed(value: &Real) -> Result<(), RouteCertificationError> {
     match value.structural_facts().sign {
         Some(RealSign::Negative) => Err(RouteCertificationError::NegativeFeedRate),
@@ -368,6 +578,14 @@ fn require_positive_jerk(value: &Real) -> Result<(), RouteCertificationError> {
     match value.structural_facts().sign {
         Some(RealSign::Negative) => Err(RouteCertificationError::NegativeJerk),
         Some(RealSign::Zero) => Err(RouteCertificationError::ZeroJerk),
+        _ => Ok(()),
+    }
+}
+
+fn require_positive_corner_radius(value: &Real) -> Result<(), RouteCertificationError> {
+    match value.structural_facts().sign {
+        Some(RealSign::Negative) => Err(RouteCertificationError::NegativeCornerRadius),
+        Some(RealSign::Zero) => Err(RouteCertificationError::ZeroCornerRadius),
         _ => Ok(()),
     }
 }

@@ -141,6 +141,7 @@ pub use provenance::{
 };
 pub use routing::{
     AccelerationLimitedFeedProfileClass, AccelerationLimitedFeedTimeReport, ConstantFeedTimeReport,
+    CornerLookaheadJoinClass, CornerLookaheadJoinReport, CornerLookaheadLimitReport,
     DifferentialPairSkewReport, FeedPathElement, JerkLimitedFeedTimeReport,
     KeepoutAwareDetourMeander, LengthMatchProblem, MeanderCandidatePlacementReport, MeanderError,
     MeanderKeepout, MeanderKeepoutCandidatePlacementReport, MeanderKeepoutPlacementReport,
@@ -151,7 +152,8 @@ pub use routing::{
     build_nonuniform_detour_meander, build_obstacle_aware_detour_meander,
     build_single_detour_meander, certify_acceleration_limited_feed_time,
     certify_acceleration_limited_feed_time_for_path, certify_constant_feed_time,
-    certify_constant_feed_time_for_path, certify_differential_pair_skew, certify_length_extension,
+    certify_constant_feed_time_for_path, certify_corner_lookahead_limits,
+    certify_differential_pair_skew, certify_length_extension,
     certify_symmetric_jerk_limited_feed_time, certify_symmetric_jerk_limited_feed_time_for_path,
     classify_meander_candidate_slots, classify_meander_candidate_slots_with_keepouts,
     classify_meander_placement_slots, classify_meander_placement_slots_with_keepouts,

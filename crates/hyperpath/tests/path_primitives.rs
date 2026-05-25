@@ -3,11 +3,11 @@ use hyperpath::{
     AccelerationLimitedFeedProfileClass, ArcDirection, ArcOffsetError, Axis, BeadFillAxis,
     BeadPlanError, BezierOffsetError, BezierParameter, BezierParameterError, BoardContourError,
     BoardContourOrientation, CardinalPoint, CardinalRotation, CircularArc, CircularArcError,
-    ClearanceStatus, ConstructionStamp, CubicBezier, DrillBoardClearanceReport,
-    ExplicitArcArrangementClass, ExplicitArcIntersectionClass, ExplicitArcOverlapClass,
-    ExplicitArcPointClassification, ExplicitArcSweepClass, ExplicitArcTangentClass,
-    ExplicitCircleRelationClass, ExplicitCircularArc, FeedPathElement, HigherOrderBezier,
-    HigherOrderBezierError, InfillGraphError, JerkLimitedFeedTimeReport,
+    ClearanceStatus, ConstructionStamp, CornerLookaheadJoinClass, CubicBezier,
+    DrillBoardClearanceReport, ExplicitArcArrangementClass, ExplicitArcIntersectionClass,
+    ExplicitArcOverlapClass, ExplicitArcPointClassification, ExplicitArcSweepClass,
+    ExplicitArcTangentClass, ExplicitCircleRelationClass, ExplicitCircularArc, FeedPathElement,
+    HigherOrderBezier, HigherOrderBezierError, InfillGraphError, JerkLimitedFeedTimeReport,
     LineArcArrangementEventClass, LineArrangementError, LineArrangementEventClass,
     LineExplicitArcIntersectionClass, LineOffsetError, LinePathSegment,
     LineQuadraticBezierIntersectionClass, LineRationalQuadraticBezierIntersectionClass,
@@ -35,8 +35,8 @@ use hyperpath::{
     build_single_detour_meander, build_tangent_alignment_problem,
     certify_acceleration_limited_feed_time, certify_acceleration_limited_feed_time_for_path,
     certify_constant_feed_time, certify_constant_feed_time_for_path,
-    certify_differential_pair_skew, certify_g1_chain, certify_g1_join_candidate,
-    certify_length_extension, certify_symmetric_jerk_limited_feed_time,
+    certify_corner_lookahead_limits, certify_differential_pair_skew, certify_g1_chain,
+    certify_g1_join_candidate, certify_length_extension, certify_symmetric_jerk_limited_feed_time,
     certify_symmetric_jerk_limited_feed_time_for_path, certify_tangent_alignment_candidate,
     check_cardinal_rect_pad_board_clearance, check_circular_pad_board_clearance,
     check_circular_pad_circular_board_clearance, check_convex_pad_board_clearance,
@@ -4282,6 +4282,191 @@ fn symmetric_jerk_limited_feed_time_rejects_invalid_inputs() {
 }
 
 #[test]
+fn corner_lookahead_limits_certify_corners_g1_and_reversals() {
+    let corner_spans = vec![
+        TangentSpan::from_line_segment(&LinePathSegment::new(p(0, 0), p(10, 0))),
+        TangentSpan::from_line_segment(&LinePathSegment::new(p(10, 0), p(10, 10))),
+    ];
+    let corner = certify_corner_lookahead_limits(
+        &corner_spans,
+        r(2),
+        r(5),
+        r(2),
+        r(2),
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert_eq!(corner.joins.len(), 1);
+    assert_eq!(
+        corner.joins[0].class,
+        CornerLookaheadJoinClass::RadiusLimitedCorner
+    );
+    assert_eq!(corner.joins[0].tangent_join.class, TangentJoinClass::Corner);
+    assert!(corner.all_satisfied());
+    assert_eq!(corner.first_unsatisfied_join(), None);
+
+    let too_fast = certify_corner_lookahead_limits(
+        &corner_spans,
+        r(3),
+        r(5),
+        r(2),
+        r(2),
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert!(too_fast.joins[0].certification.has_certified_violation());
+    assert_eq!(too_fast.first_unsatisfied_join(), Some(0));
+
+    let g1_spans = vec![
+        TangentSpan::from_line_segment(&LinePathSegment::new(p(0, 0), p(5, 0))),
+        TangentSpan::from_line_segment(&LinePathSegment::new(p(5, 0), p(10, 0))),
+    ];
+    let g1 = certify_corner_lookahead_limits(
+        &g1_spans,
+        r(5),
+        r(5),
+        r(1),
+        r(1),
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert_eq!(g1.joins[0].class, CornerLookaheadJoinClass::StraightThrough);
+    assert_eq!(
+        g1.joins[0].tangent_join.class,
+        TangentJoinClass::G1Continuous
+    );
+    assert!(g1.all_satisfied());
+
+    let reversal_spans = vec![
+        TangentSpan::from_line_segment(&LinePathSegment::new(p(0, 0), p(5, 0))),
+        TangentSpan::from_line_segment(&LinePathSegment::new(p(5, 0), p(0, 0))),
+    ];
+    let stopped = certify_corner_lookahead_limits(
+        &reversal_spans,
+        Real::zero(),
+        r(5),
+        r(2),
+        r(1),
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert_eq!(
+        stopped.joins[0].class,
+        CornerLookaheadJoinClass::ReversalStop
+    );
+    assert_eq!(
+        stopped.joins[0].tangent_join.class,
+        TangentJoinClass::ReversedTangent
+    );
+    assert!(stopped.all_satisfied());
+
+    let rolling_reversal = certify_corner_lookahead_limits(
+        &reversal_spans,
+        r(1),
+        r(5),
+        r(2),
+        r(1),
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert!(
+        rolling_reversal.joins[0]
+            .certification
+            .has_certified_violation()
+    );
+}
+
+#[test]
+fn corner_lookahead_limits_reject_invalid_inputs_and_uncertified_joins() {
+    let spans = vec![
+        TangentSpan::from_line_segment(&LinePathSegment::new(p(0, 0), p(10, 0))),
+        TangentSpan::from_line_segment(&LinePathSegment::new(p(10, 0), p(10, 10))),
+    ];
+    assert_eq!(
+        certify_corner_lookahead_limits(&[], r(1), r(1), r(1), r(1), PredicatePolicy::default())
+            .unwrap_err(),
+        RouteCertificationError::EmptyRoute
+    );
+    assert_eq!(
+        certify_corner_lookahead_limits(
+            &spans,
+            r(-1),
+            r(1),
+            r(1),
+            r(1),
+            PredicatePolicy::default()
+        )
+        .unwrap_err(),
+        RouteCertificationError::NegativeFeedRate
+    );
+    assert_eq!(
+        certify_corner_lookahead_limits(
+            &spans,
+            r(1),
+            Real::zero(),
+            r(1),
+            r(1),
+            PredicatePolicy::default()
+        )
+        .unwrap_err(),
+        RouteCertificationError::ZeroFeedRate
+    );
+    assert_eq!(
+        certify_corner_lookahead_limits(
+            &spans,
+            r(1),
+            r(1),
+            Real::zero(),
+            r(1),
+            PredicatePolicy::default()
+        )
+        .unwrap_err(),
+        RouteCertificationError::ZeroAcceleration
+    );
+    assert_eq!(
+        certify_corner_lookahead_limits(
+            &spans,
+            r(1),
+            r(1),
+            r(1),
+            Real::zero(),
+            PredicatePolicy::default()
+        )
+        .unwrap_err(),
+        RouteCertificationError::ZeroCornerRadius
+    );
+    assert_eq!(
+        certify_corner_lookahead_limits(
+            &spans,
+            r(1),
+            r(1),
+            r(1),
+            r(-1),
+            PredicatePolicy::default()
+        )
+        .unwrap_err(),
+        RouteCertificationError::NegativeCornerRadius
+    );
+
+    let mismatch = vec![
+        TangentSpan::from_line_segment(&LinePathSegment::new(p(0, 0), p(10, 0))),
+        TangentSpan::from_line_segment(&LinePathSegment::new(p(11, 0), p(11, 10))),
+    ];
+    assert_eq!(
+        certify_corner_lookahead_limits(
+            &mismatch,
+            r(1),
+            r(1),
+            r(1),
+            r(1),
+            PredicatePolicy::default()
+        )
+        .unwrap_err(),
+        RouteCertificationError::UnsupportedRouteGeometry
+    );
+}
+
+#[test]
 fn single_detour_meander_adds_exact_length_and_certifies_target() {
     let source = LinePathSegment::new(p(0, 0), p(10, 0));
     let meander =
@@ -6489,6 +6674,32 @@ proptest! {
         prop_assert_eq!(report.peak_feed_rate, r(peak_feed));
         prop_assert_eq!(report.peak_acceleration, r(peak_acceleration));
         prop_assert!(report.certification.all_satisfied());
+    }
+
+    #[test]
+    fn corner_lookahead_generated_centripetal_bound_matches_integer_oracle(
+        feed in 0_i16..=30,
+        max_feed in 1_i16..=30,
+        acceleration in 1_i16..=20,
+        radius in 1_i16..=20,
+    ) {
+        let spans = vec![
+            TangentSpan::from_line_segment(&LinePathSegment::new(p(0, 0), p(10, 0))),
+            TangentSpan::from_line_segment(&LinePathSegment::new(p(10, 0), p(10, 10))),
+        ];
+        let report = certify_corner_lookahead_limits(
+            &spans,
+            r(i64::from(feed)),
+            r(i64::from(max_feed)),
+            r(i64::from(acceleration)),
+            r(i64::from(radius)),
+            PredicatePolicy::default(),
+        ).unwrap();
+
+        prop_assert_eq!(report.joins[0].class, CornerLookaheadJoinClass::RadiusLimitedCorner);
+        let expected = i64::from(feed) <= i64::from(max_feed)
+            && i64::from(feed).pow(2) <= i64::from(acceleration) * i64::from(radius);
+        prop_assert_eq!(report.all_satisfied(), expected);
     }
 
     #[test]

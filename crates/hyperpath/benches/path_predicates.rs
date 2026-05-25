@@ -23,8 +23,8 @@ use hyperpath::{
     build_single_detour_meander, build_tangent_alignment_problem,
     certify_acceleration_limited_feed_time, certify_acceleration_limited_feed_time_for_path,
     certify_constant_feed_time, certify_constant_feed_time_for_path,
-    certify_differential_pair_skew, certify_g1_chain, certify_g1_join_candidate,
-    certify_length_extension, certify_symmetric_jerk_limited_feed_time,
+    certify_corner_lookahead_limits, certify_differential_pair_skew, certify_g1_chain,
+    certify_g1_join_candidate, certify_length_extension, certify_symmetric_jerk_limited_feed_time,
     certify_symmetric_jerk_limited_feed_time_for_path, certify_tangent_alignment_candidate,
     check_cardinal_rect_pad_board_clearance, check_circular_pad_board_clearance,
     check_circular_pad_circular_board_clearance, check_convex_pad_board_clearance,
@@ -907,6 +907,23 @@ fn path_predicates(c: &mut Criterion) {
                 r(100),
                 r(16),
                 r(20),
+                PredicatePolicy::default(),
+            )
+        })
+    });
+    let corner_lookahead_spans = vec![
+        TangentSpan::from_line_segment(&LinePathSegment::new(p(0, 0), p(100, 0))),
+        TangentSpan::from_line_segment(&LinePathSegment::new(p(100, 0), p(100, 100))),
+        TangentSpan::from_line_segment(&LinePathSegment::new(p(100, 100), p(150, 100))),
+    ];
+    c.bench_function("corner_lookahead_feed_limit_certification", |b| {
+        b.iter(|| {
+            certify_corner_lookahead_limits(
+                &corner_lookahead_spans,
+                r(10),
+                r(20),
+                r(25),
+                r(4),
                 PredicatePolicy::default(),
             )
         })

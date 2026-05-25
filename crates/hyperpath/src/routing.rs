@@ -27,9 +27,10 @@ mod feed;
 mod orthogonal_keepout;
 
 pub use feed::{
+    CornerLookaheadJoinClass, CornerLookaheadJoinReport, CornerLookaheadLimitReport,
     FeedPathElement, JerkLimitedFeedTimeReport, certify_acceleration_limited_feed_time_for_path,
-    certify_constant_feed_time_for_path, certify_symmetric_jerk_limited_feed_time,
-    certify_symmetric_jerk_limited_feed_time_for_path,
+    certify_constant_feed_time_for_path, certify_corner_lookahead_limits,
+    certify_symmetric_jerk_limited_feed_time, certify_symmetric_jerk_limited_feed_time_for_path,
 };
 use orthogonal_keepout::{
     segment_intersects_orthogonal_keepout, validate_orthogonal_keepout_vertices,
@@ -500,6 +501,10 @@ pub enum RouteCertificationError {
     ZeroJerk,
     /// Exact scalar division failed while deriving feed-profile facts.
     UnsupportedDivision,
+    /// Corner radius was structurally negative.
+    NegativeCornerRadius,
+    /// Corner radius was structurally zero.
+    ZeroCornerRadius,
 }
 
 /// Build a one-bump rectangular meander from an exact extra length.

@@ -3,10 +3,10 @@
 use hyperlimit::{Point2, PredicatePolicy};
 use hyperpath::{
     AccelerationLimitedFeedProfileClass, ArcDirection, ExplicitCircularArc, FeedPathElement,
-    LinePathSegment, RouteCertificationError, certify_acceleration_limited_feed_time,
+    LinePathSegment, RouteCertificationError, TangentSpan, certify_acceleration_limited_feed_time,
     certify_acceleration_limited_feed_time_for_path, certify_constant_feed_time,
-    certify_constant_feed_time_for_path, certify_symmetric_jerk_limited_feed_time,
-    certify_symmetric_jerk_limited_feed_time_for_path,
+    certify_constant_feed_time_for_path, certify_corner_lookahead_limits,
+    certify_symmetric_jerk_limited_feed_time, certify_symmetric_jerk_limited_feed_time_for_path,
 };
 use hyperreal::{Rational, Real};
 use libfuzzer_sys::fuzz_target;
@@ -152,4 +152,35 @@ fuzz_target!(|data: &[u8]| {
     )
     .unwrap();
     assert!(limited_report.certification.has_certified_violation());
+
+    let corner_feed = positive(data[0], 20);
+    let corner_spans = vec![
+        TangentSpan::from_line_segment(&LinePathSegment::new(p(0, 0), p(10, 0))),
+        TangentSpan::from_line_segment(&LinePathSegment::new(p(10, 0), p(10, 10))),
+    ];
+    let corner_report = certify_corner_lookahead_limits(
+        &corner_spans,
+        r(corner_feed),
+        r(corner_feed),
+        r(corner_feed * corner_feed),
+        r(1),
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert!(corner_report.all_satisfied());
+
+    let reversal_spans = vec![
+        TangentSpan::from_line_segment(&LinePathSegment::new(p(0, 0), p(5, 0))),
+        TangentSpan::from_line_segment(&LinePathSegment::new(p(5, 0), p(0, 0))),
+    ];
+    let reversal_report = certify_corner_lookahead_limits(
+        &reversal_spans,
+        Real::zero(),
+        r(1),
+        r(1),
+        r(1),
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert!(reversal_report.all_satisfied());
 });
