@@ -34,7 +34,7 @@ use crate::{
     BezierEndpointTangentImage2, BezierSplitFragment2, BezierSplitMaterialization2,
     BezierSubcurve2, BezierTangentTurnOrdering2, Classification, CurvePolicy, Point2,
     UncertaintyReason, ZeroStatus, compare_algebraic_same_tangent_second_order,
-    compare_algebraic_tangent_turn_from_base,
+    compare_algebraic_same_tangent_third_order, compare_algebraic_tangent_turn_from_base,
 };
 
 /// One retained Bezier arrangement fragment with source provenance.
@@ -1017,33 +1017,83 @@ fn compare_retained_same_tangent_second_order(
                     second_second_derivative,
                     policy,
                 ) {
-                    Classification::Decided(report) => match report.status {
-                        BezierAlgebraicSameTangentOrderStatus::Ordered => match report.ordering {
-                            Some(BezierTangentTurnOrdering2::FirstBeforeSecond) => {
-                                Classification::Decided(TurnOrdering::FirstBeforeSecond)
-                            }
-                            Some(BezierTangentTurnOrdering2::SecondBeforeFirst) => {
-                                Classification::Decided(TurnOrdering::SecondBeforeFirst)
-                            }
-                            None => Classification::Uncertain(UncertaintyReason::Boundary),
-                        },
-                        BezierAlgebraicSameTangentOrderStatus::SameDirection => {
-                            Classification::Decided(TurnOrdering::SameDirection)
+                    Classification::Decided(report) => {
+                        if report.status == BezierAlgebraicSameTangentOrderStatus::SameDirection {
+                            return compare_retained_algebraic_same_tangent_third_order(
+                                first,
+                                second,
+                                first_tangent,
+                                second_tangent,
+                                policy,
+                            );
                         }
-                        BezierAlgebraicSameTangentOrderStatus::ZeroTangent
-                        | BezierAlgebraicSameTangentOrderStatus::SignUndecided => {
-                            Classification::Uncertain(UncertaintyReason::RealSign)
-                        }
-                        BezierAlgebraicSameTangentOrderStatus::ArithmeticFailed => {
-                            Classification::Uncertain(UncertaintyReason::Unsupported)
-                        }
-                    },
+                        retained_algebraic_same_tangent_report_to_turn(
+                            report.status,
+                            report.ordering,
+                        )
+                    }
                     Classification::Uncertain(reason) => Classification::Uncertain(reason),
                 }
             }
             _ => Classification::Decided(TurnOrdering::SameDirection),
         },
         _ => Classification::Decided(TurnOrdering::SameDirection),
+    }
+}
+
+fn compare_retained_algebraic_same_tangent_third_order(
+    first: &RetainedEndpointData,
+    second: &RetainedEndpointData,
+    first_tangent: &BezierAlgebraicTangentVector2,
+    second_tangent: &BezierAlgebraicTangentVector2,
+    policy: &CurvePolicy,
+) -> Classification<TurnOrdering> {
+    match (
+        retained_algebraic_vector(first.start_third_derivative.as_ref()),
+        retained_algebraic_vector(second.start_third_derivative.as_ref()),
+    ) {
+        (Some(first_third_derivative), Some(second_third_derivative)) => {
+            match compare_algebraic_same_tangent_third_order(
+                first_tangent,
+                first_third_derivative,
+                second_tangent,
+                second_third_derivative,
+                policy,
+            ) {
+                Classification::Decided(report) => {
+                    retained_algebraic_same_tangent_report_to_turn(report.status, report.ordering)
+                }
+                Classification::Uncertain(reason) => Classification::Uncertain(reason),
+            }
+        }
+        _ => Classification::Decided(TurnOrdering::SameDirection),
+    }
+}
+
+fn retained_algebraic_same_tangent_report_to_turn(
+    status: BezierAlgebraicSameTangentOrderStatus,
+    ordering: Option<BezierTangentTurnOrdering2>,
+) -> Classification<TurnOrdering> {
+    match status {
+        BezierAlgebraicSameTangentOrderStatus::Ordered => match ordering {
+            Some(BezierTangentTurnOrdering2::FirstBeforeSecond) => {
+                Classification::Decided(TurnOrdering::FirstBeforeSecond)
+            }
+            Some(BezierTangentTurnOrdering2::SecondBeforeFirst) => {
+                Classification::Decided(TurnOrdering::SecondBeforeFirst)
+            }
+            None => Classification::Uncertain(UncertaintyReason::Boundary),
+        },
+        BezierAlgebraicSameTangentOrderStatus::SameDirection => {
+            Classification::Decided(TurnOrdering::SameDirection)
+        }
+        BezierAlgebraicSameTangentOrderStatus::ZeroTangent
+        | BezierAlgebraicSameTangentOrderStatus::SignUndecided => {
+            Classification::Uncertain(UncertaintyReason::RealSign)
+        }
+        BezierAlgebraicSameTangentOrderStatus::ArithmeticFailed => {
+            Classification::Uncertain(UncertaintyReason::Unsupported)
+        }
     }
 }
 

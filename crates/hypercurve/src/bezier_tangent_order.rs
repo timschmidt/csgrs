@@ -190,7 +190,7 @@ pub struct BezierAlgebraicTangentOrderReport {
     pub message: Option<String>,
 }
 
-/// Report for a certified algebraic same-tangent second-order predicate.
+/// Report for a certified algebraic same-tangent higher-order predicate.
 #[derive(Clone, Debug, PartialEq)]
 pub struct BezierAlgebraicSameTangentOrderReport {
     /// Final predicate status.
@@ -514,6 +514,129 @@ pub fn compare_algebraic_same_tangent_second_order(
     }
 }
 
+/// Compares same-direction algebraic tangent branches by third-order evidence.
+///
+/// This is used only after first-order tangents agree and both second-order
+/// side witnesses have vanished.  For a cubic Bezier branch the next Taylor
+/// witness is `cross(B'(t), B'''(t))`; opposite signs identify the side of
+/// departure, and same-side magnitudes are compared as `cross^2 / |B'|^4` by
+/// clearing positive speed denominators.  The derivative witness is the
+/// standard polynomial Bezier endpoint formula from Farin, *Curves and
+/// Surfaces for CAGD* (5th ed., 2002), and the predicate follows Yap's
+/// exact-geometric-computation rule: construct represented algebraic scalars
+/// first, then branch only on certified signs; see Yap, "Towards Exact
+/// Geometric Computation," *Computational Geometry* 7(1-2), 3-23 (1997).
+pub fn compare_algebraic_same_tangent_third_order(
+    first_tangent: &BezierAlgebraicTangentVector2,
+    first_third_derivative: &BezierAlgebraicTangentVector2,
+    second_tangent: &BezierAlgebraicTangentVector2,
+    second_third_derivative: &BezierAlgebraicTangentVector2,
+    policy: &CurvePolicy,
+) -> Classification<BezierAlgebraicSameTangentOrderReport> {
+    for tangent in [first_tangent, second_tangent] {
+        match tangent_nonzero(tangent, policy) {
+            AlgebraicTangentNonzero::Nonzero => {}
+            AlgebraicTangentNonzero::Zero(report) => {
+                return Classification::Decided(same_tangent_report(
+                    BezierAlgebraicSameTangentOrderStatus::ZeroTangent,
+                    None,
+                    None,
+                    None,
+                    None,
+                    Some(format!("zero tangent certified by {:?}", report.sign)),
+                ));
+            }
+            AlgebraicTangentNonzero::Undecided(report) => {
+                return Classification::Decided(same_tangent_report(
+                    BezierAlgebraicSameTangentOrderStatus::SignUndecided,
+                    None,
+                    None,
+                    None,
+                    None,
+                    report.message,
+                ));
+            }
+            AlgebraicTangentNonzero::ArithmeticFailed(report) => {
+                return Classification::Decided(same_tangent_report(
+                    BezierAlgebraicSameTangentOrderStatus::ArithmeticFailed,
+                    None,
+                    None,
+                    None,
+                    None,
+                    report.message,
+                ));
+            }
+        }
+    }
+
+    let first_cross = cross_sign(first_tangent, first_third_derivative, policy);
+    let second_cross = cross_sign(second_tangent, second_third_derivative, policy);
+    match (sign_status(&first_cross), sign_status(&second_cross)) {
+        (ScalarSignStatus::ArithmeticFailed, _) | (_, ScalarSignStatus::ArithmeticFailed) => {
+            Classification::Decided(same_tangent_report(
+                BezierAlgebraicSameTangentOrderStatus::ArithmeticFailed,
+                None,
+                Some(first_cross),
+                Some(second_cross),
+                None,
+                Some("could not construct algebraic third-order cross scalar".to_owned()),
+            ))
+        }
+        (ScalarSignStatus::Undecided, _) | (_, ScalarSignStatus::Undecided) => {
+            Classification::Decided(same_tangent_report(
+                BezierAlgebraicSameTangentOrderStatus::SignUndecided,
+                None,
+                Some(first_cross),
+                Some(second_cross),
+                None,
+                Some("could not certify algebraic third-order cross sign".to_owned()),
+            ))
+        }
+        (ScalarSignStatus::Zero, _) | (_, ScalarSignStatus::Zero) => {
+            Classification::Decided(same_tangent_report(
+                BezierAlgebraicSameTangentOrderStatus::SameDirection,
+                None,
+                Some(first_cross),
+                Some(second_cross),
+                None,
+                Some("an algebraic third-order side witness vanished".to_owned()),
+            ))
+        }
+        (ScalarSignStatus::Positive, ScalarSignStatus::Negative) => {
+            Classification::Decided(same_tangent_report(
+                BezierAlgebraicSameTangentOrderStatus::Ordered,
+                Some(BezierTangentTurnOrdering2::FirstBeforeSecond),
+                Some(first_cross),
+                Some(second_cross),
+                None,
+                None,
+            ))
+        }
+        (ScalarSignStatus::Negative, ScalarSignStatus::Positive) => {
+            Classification::Decided(same_tangent_report(
+                BezierAlgebraicSameTangentOrderStatus::Ordered,
+                Some(BezierTangentTurnOrdering2::SecondBeforeFirst),
+                Some(first_cross),
+                Some(second_cross),
+                None,
+                None,
+            ))
+        }
+        (ScalarSignStatus::Positive, ScalarSignStatus::Positive)
+        | (ScalarSignStatus::Negative, ScalarSignStatus::Negative) => {
+            compare_algebraic_same_side_magnitude(
+                first_tangent,
+                first_cross,
+                second_tangent,
+                second_cross,
+                2,
+                "third-order",
+                policy,
+            )
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum ScalarSignStatus {
     Positive,
@@ -641,6 +764,26 @@ fn compare_algebraic_same_side_curvature_magnitude(
     second_cross: BezierAlgebraicScalarSignReport,
     policy: &CurvePolicy,
 ) -> Classification<BezierAlgebraicSameTangentOrderReport> {
+    compare_algebraic_same_side_magnitude(
+        first_tangent,
+        first_cross,
+        second_tangent,
+        second_cross,
+        3,
+        "curvature",
+        policy,
+    )
+}
+
+fn compare_algebraic_same_side_magnitude(
+    first_tangent: &BezierAlgebraicTangentVector2,
+    first_cross: BezierAlgebraicScalarSignReport,
+    second_tangent: &BezierAlgebraicTangentVector2,
+    second_cross: BezierAlgebraicScalarSignReport,
+    speed_power: usize,
+    witness_name: &str,
+    policy: &CurvePolicy,
+) -> Classification<BezierAlgebraicSameTangentOrderReport> {
     let first_speed = norm_squared_sign(first_tangent, policy);
     let second_speed = norm_squared_sign(second_tangent, policy);
     if !matches!(sign_status(&first_speed), ScalarSignStatus::Positive)
@@ -656,11 +799,12 @@ fn compare_algebraic_same_side_curvature_magnitude(
         ));
     }
 
-    let magnitude = same_side_curvature_magnitude_difference(
+    let magnitude = same_side_magnitude_difference(
         &first_cross,
         &second_cross,
         &first_speed,
         &second_speed,
+        speed_power,
         policy,
     );
     match sign_status(&magnitude) {
@@ -686,7 +830,9 @@ fn compare_algebraic_same_side_curvature_magnitude(
             Some(first_cross),
             Some(second_cross),
             Some(magnitude),
-            Some("same-side algebraic curvature magnitudes are equal".to_owned()),
+            Some(format!(
+                "same-side algebraic {witness_name} magnitudes are equal"
+            )),
         )),
         ScalarSignStatus::Undecided => Classification::Decided(same_tangent_report(
             BezierAlgebraicSameTangentOrderStatus::SignUndecided,
@@ -694,7 +840,9 @@ fn compare_algebraic_same_side_curvature_magnitude(
             Some(first_cross),
             Some(second_cross),
             Some(magnitude),
-            Some("could not certify same-side algebraic curvature magnitude".to_owned()),
+            Some(format!(
+                "could not certify same-side algebraic {witness_name} magnitude"
+            )),
         )),
         ScalarSignStatus::ArithmeticFailed => Classification::Decided(same_tangent_report(
             BezierAlgebraicSameTangentOrderStatus::ArithmeticFailed,
@@ -702,16 +850,19 @@ fn compare_algebraic_same_side_curvature_magnitude(
             Some(first_cross),
             Some(second_cross),
             Some(magnitude),
-            Some("could not construct same-side algebraic curvature magnitude".to_owned()),
+            Some(format!(
+                "could not construct same-side algebraic {witness_name} magnitude"
+            )),
         )),
     }
 }
 
-fn same_side_curvature_magnitude_difference(
+fn same_side_magnitude_difference(
     first_cross: &BezierAlgebraicScalarSignReport,
     second_cross: &BezierAlgebraicScalarSignReport,
     first_speed: &BezierAlgebraicScalarSignReport,
     second_speed: &BezierAlgebraicScalarSignReport,
+    speed_power: usize,
     policy: &CurvePolicy,
 ) -> BezierAlgebraicScalarSignReport {
     let Some(first_cross_scalar) = first_cross.scalar.as_ref() else {
@@ -753,10 +904,10 @@ fn same_side_curvature_magnitude_difference(
 
     let first_cross_squared = multiply(first_cross_scalar, first_cross_scalar);
     let second_cross_squared = multiply(second_cross_scalar, second_cross_scalar);
-    let first_speed_cubed = cube_representation(first_speed_scalar);
-    let second_speed_cubed = cube_representation(second_speed_scalar);
-    let first_scaled = multiply_report_results(&first_cross_squared, &second_speed_cubed);
-    let second_scaled = multiply_report_results(&second_cross_squared, &first_speed_cubed);
+    let first_speed_power = power_representation(first_speed_scalar, speed_power);
+    let second_speed_power = power_representation(second_speed_scalar, speed_power);
+    let first_scaled = multiply_report_results(&first_cross_squared, &second_speed_power);
+    let second_scaled = multiply_report_results(&second_cross_squared, &first_speed_power);
     let difference = subtract(
         first_scaled.result_representation.as_ref(),
         first_scaled.exact_result.as_ref(),
@@ -767,8 +918,8 @@ fn same_side_curvature_magnitude_difference(
     let mut arithmetic = Vec::new();
     arithmetic.push(first_cross_squared);
     arithmetic.push(second_cross_squared);
-    arithmetic.extend(first_speed_cubed.arithmetic);
-    arithmetic.extend(second_speed_cubed.arithmetic);
+    arithmetic.extend(first_speed_power.arithmetic);
+    arithmetic.extend(second_speed_power.arithmetic);
     arithmetic.push(first_scaled);
     arithmetic.push(second_scaled);
     arithmetic.push(difference);
@@ -781,27 +932,28 @@ struct AlgebraicPowerReport {
     exact: Option<Real>,
 }
 
-fn cube_representation(value: &AlgebraicRootRepresentation) -> AlgebraicPowerReport {
-    let squared = multiply(value, value);
-    let cubed = multiply_report_result_by_representation(&squared, value);
-    AlgebraicPowerReport {
-        representation: cubed.result_representation.clone(),
-        exact: cubed.exact_result.clone(),
-        arithmetic: vec![squared, cubed],
+fn power_representation(value: &AlgebraicRootRepresentation, power: usize) -> AlgebraicPowerReport {
+    assert!(power >= 1, "algebraic power must be positive");
+    let mut arithmetic = Vec::new();
+    let mut representation = Some(value.clone());
+    let mut exact = None;
+    for _ in 1..power {
+        let product = binary_from_report_values(
+            representation.as_ref(),
+            exact.as_ref(),
+            Some(value),
+            None,
+            AlgebraicRootArithmeticOp::Multiply,
+        );
+        representation = product.result_representation.clone();
+        exact = product.exact_result.clone();
+        arithmetic.push(product);
     }
-}
-
-fn multiply_report_result_by_representation(
-    left: &AlgebraicRootArithmeticReport,
-    right: &AlgebraicRootRepresentation,
-) -> AlgebraicRootArithmeticReport {
-    binary_from_report_values(
-        left.result_representation.as_ref(),
-        left.exact_result.as_ref(),
-        Some(right),
-        None,
-        AlgebraicRootArithmeticOp::Multiply,
-    )
+    AlgebraicPowerReport {
+        arithmetic,
+        representation,
+        exact,
+    }
 }
 
 fn multiply_report_results(

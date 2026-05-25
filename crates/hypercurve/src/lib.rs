@@ -106,7 +106,7 @@ pub use bezier_tangent_order::{
     BezierAlgebraicTangentOrderStatus, BezierAlgebraicTangentVector2,
     BezierAlgebraicTangentVectorReport, BezierAlgebraicTangentVectorStatus,
     BezierTangentTurnOrdering2, compare_algebraic_same_tangent_second_order,
-    compare_algebraic_tangent_turn_from_base,
+    compare_algebraic_same_tangent_third_order, compare_algebraic_tangent_turn_from_base,
 };
 pub use bezier_topology::{
     Axis2, BezierCurveIntersectionPoint, BezierCurveIntersectionRegion, BezierCurveRelation,

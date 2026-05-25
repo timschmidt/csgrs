@@ -4,7 +4,8 @@ use hypercurve::{
     BezierAlgebraicParameter2, BezierAlgebraicTangentOrderStatus,
     BezierAlgebraicTangentVector2, BezierEndpointTangentImage2, BezierParameterInterval,
     BezierParameterPolynomial, Classification, CurvePolicy, Point2, QuadraticBezier2, Real,
-    compare_algebraic_same_tangent_second_order, compare_algebraic_tangent_turn_from_base,
+    compare_algebraic_same_tangent_second_order, compare_algebraic_same_tangent_third_order,
+    compare_algebraic_tangent_turn_from_base,
 };
 use libfuzzer_sys::fuzz_target;
 
@@ -96,6 +97,13 @@ fuzz_target!(|data: &[u8]| {
         return;
     };
     let _ = compare_algebraic_same_tangent_second_order(
+        &first,
+        &first_second,
+        &second,
+        &second_second,
+        &policy,
+    );
+    let _ = compare_algebraic_same_tangent_third_order(
         &first,
         &first_second,
         &second,

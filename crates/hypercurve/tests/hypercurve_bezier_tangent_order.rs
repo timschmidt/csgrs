@@ -4,7 +4,8 @@ use hypercurve::{
     BezierAlgebraicTangentVectorReport, BezierAlgebraicTangentVectorStatus,
     BezierEndpointTangentImage2, BezierParameterInterval, BezierParameterPolynomial,
     BezierTangentTurnOrdering2, Classification, CurvePolicy, Point2, QuadraticBezier2, Real,
-    compare_algebraic_same_tangent_second_order, compare_algebraic_tangent_turn_from_base,
+    compare_algebraic_same_tangent_second_order, compare_algebraic_same_tangent_third_order,
+    compare_algebraic_tangent_turn_from_base,
 };
 
 fn r(value: i32) -> Real {
@@ -220,4 +221,66 @@ fn algebraic_same_tangent_order_rejects_equal_second_order_evidence() {
         BezierAlgebraicSameTangentOrderStatus::SameDirection
     );
     assert!(report.ordering.is_none());
+}
+
+#[test]
+fn algebraic_same_tangent_order_uses_third_derivative_after_zero_curvature() {
+    let tangent = tangent_vector(&horizontal());
+    let zero_second = BezierAlgebraicTangentVector2::new(
+        tangent_vector(&upward()).dx().clone(),
+        tangent_vector(&upward()).dx().clone(),
+    );
+    let upward_third = BezierAlgebraicTangentVector2::new(
+        tangent_vector(&upward()).dx().clone(),
+        tangent_vector(&upward()).dy().clone(),
+    );
+    let downward_third = BezierAlgebraicTangentVector2::new(
+        tangent_vector(&downward()).dx().clone(),
+        tangent_vector(&downward()).dy().clone(),
+    );
+
+    let second_report = decided(compare_algebraic_same_tangent_second_order(
+        &tangent,
+        &zero_second,
+        &tangent,
+        &zero_second,
+        &policy(),
+    ));
+    assert_eq!(
+        second_report.status,
+        BezierAlgebraicSameTangentOrderStatus::SameDirection
+    );
+
+    let third_report = decided(compare_algebraic_same_tangent_third_order(
+        &tangent,
+        &upward_third,
+        &tangent,
+        &downward_third,
+        &policy(),
+    ));
+
+    assert_eq!(
+        third_report.status,
+        BezierAlgebraicSameTangentOrderStatus::Ordered
+    );
+    assert_eq!(
+        third_report.ordering,
+        Some(BezierTangentTurnOrdering2::FirstBeforeSecond)
+    );
+    assert!(
+        third_report
+            .first_curvature_cross
+            .unwrap()
+            .sign
+            .unwrap()
+            .is_gt()
+    );
+    assert!(
+        third_report
+            .second_curvature_cross
+            .unwrap()
+            .sign
+            .unwrap()
+            .is_lt()
+    );
 }

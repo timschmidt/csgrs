@@ -5,7 +5,7 @@ use hypercurve::{
     BezierAlgebraicParameter2, BezierAlgebraicTangentVector2, BezierEndpointTangentImage2,
     BezierParameterInterval, BezierParameterPolynomial, Classification, CurvePolicy, CurveResult,
     Point2, QuadraticBezier2, Real, compare_algebraic_same_tangent_second_order,
-    compare_algebraic_tangent_turn_from_base,
+    compare_algebraic_same_tangent_third_order, compare_algebraic_tangent_turn_from_base,
 };
 
 fn r(value: i32) -> Real {
@@ -110,6 +110,24 @@ fn main() -> CurveResult<()> {
     let elapsed = started.elapsed();
     println!(
         "bezier_algebraic_same_tangent_second_order: {iterations} iterations in {elapsed:?} ({:?}/iter), ordered={same_tangent_ordered}",
+        elapsed / iterations
+    );
+
+    let started = Instant::now();
+    let mut third_tangent_ordered = 0_usize;
+    for _ in 0..iterations {
+        let report = decided(compare_algebraic_same_tangent_third_order(
+            &same_tangent,
+            &upward_second,
+            &same_tangent,
+            &downward_second,
+            &policy,
+        ));
+        third_tangent_ordered += black_box(usize::from(report.ordering.is_some()));
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "bezier_algebraic_same_tangent_third_order: {iterations} iterations in {elapsed:?} ({:?}/iter), ordered={third_tangent_ordered}",
         elapsed / iterations
     );
 
