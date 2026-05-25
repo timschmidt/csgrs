@@ -1464,6 +1464,7 @@ fn exercise_deterministic_case(selector: u8) {
         35 => exercise_nonrectangular_component_union_hull_coverage(),
         36 => exercise_holed_coplanar_mesh_containment(),
         37 => exercise_component_holed_coplanar_intersection(),
+        38 => exercise_same_outer_component_holed_coplanar_intersection(),
         _ => exercise_nonconvex_coplanar_volumetric_difference_fan_split(),
     }
 }
@@ -2362,6 +2363,82 @@ fn exercise_component_holed_coplanar_intersection() {
     .validate_operation_against_sources(
         &annulus,
         &clipper,
+        ExactBooleanOperation::Intersection,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn exercise_same_outer_component_holed_coplanar_intersection() {
+    let outer = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 10, 0, 0, 10, 10, 0, 0, 10, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("same-outer holed intersection outer fixture must import");
+    let left_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[2, 2, 0, 4, 2, 0, 4, 4, 0, 2, 4, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("same-outer holed intersection left hole fixture must import");
+    let right_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[6, 6, 0, 8, 6, 0, 8, 8, 0, 6, 8, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("same-outer holed intersection right hole fixture must import");
+    let left = arrange_coplanar_convex_surface_holed_difference(&outer, &left_hole)
+        .expect("same-outer left annulus should materialize")
+        .mesh;
+    let right = arrange_coplanar_convex_surface_holed_difference(&outer, &right_hole)
+        .expect("same-outer right annulus should materialize")
+        .mesh;
+
+    let intersection = arrange_coplanar_surface_component_holed_intersection(&left, &right)
+        .expect("same outer annuli with disjoint holes should materialize");
+    intersection.validate().unwrap();
+    intersection
+        .validate_intersection_against_sources(&left, &right)
+        .unwrap();
+    assert_eq!(intersection.components.len(), 1);
+    assert_eq!(intersection.components[0].holes.len(), 2);
+    assert_eq!(
+        arrange_coplanar_surface_component_holed_intersection(&right, &left),
+        Some(intersection)
+    );
+
+    let overlapping_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[3, 2, 0, 5, 2, 0, 5, 4, 0, 3, 4, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("same-outer overlapping hole fixture must import");
+    let overlapping = arrange_coplanar_convex_surface_holed_difference(&outer, &overlapping_hole)
+        .expect("same-outer overlapping annulus should materialize")
+        .mesh;
+    assert!(arrange_coplanar_surface_component_holed_intersection(&left, &overlapping).is_none());
+
+    let preflight = preflight_boolean_exact(&left, &right, ExactBooleanOperation::Intersection)
+        .expect("same-outer holed intersection preflight should classify shortcut");
+    preflight.validate().unwrap();
+    preflight.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
+    );
+    hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        ExactBooleanOperation::Intersection,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("same-outer holed intersection should materialize")
+    .validate_operation_against_sources(
+        &left,
+        &right,
         ExactBooleanOperation::Intersection,
         ValidationPolicy::ALLOW_BOUNDARY,
         ExactBoundaryBooleanPolicy::Reject,

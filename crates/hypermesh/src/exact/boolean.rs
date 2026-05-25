@@ -1454,6 +1454,12 @@ pub fn boolean_exact_with_boundary_policy(
             boolean_coplanar_convex_multi_intersection(left, right, validation)
         }
         ExactBooleanOperation::Intersection
+            if arrange_coplanar_surface_component_holed_intersection(left, right).is_some() =>
+        {
+            boolean_coplanar_surface_intersection(left, right, operation, validation)
+                .map(|result| result.expect("caller checked coplanar component-holed intersection"))
+        }
+        ExactBooleanOperation::Intersection
             if arrange_coplanar_orthogonal_surface_intersection(left, right).is_some() =>
         {
             boolean_coplanar_orthogonal_surface(left, right, operation, validation)

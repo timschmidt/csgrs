@@ -3225,8 +3225,142 @@ pub fn arrange_coplanar_surface_component_holed_intersection(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Option<CoplanarConvexComponentHoledArrangement> {
-    arrange_coplanar_surface_component_holed_intersection_oriented(left, right)
+    arrange_coplanar_surface_component_holed_same_outer_intersection(left, right)
+        .or_else(|| arrange_coplanar_surface_component_holed_intersection_oriented(left, right))
         .or_else(|| arrange_coplanar_surface_component_holed_intersection_oriented(right, left))
+}
+
+/// Intersect source-owned holed sheets that replay the same outer boundary.
+///
+/// This is the holed/holed sibling of the source-disk clip certificate. It
+/// accepts only equal retained outer rings; the result keeps that outer ring
+/// and the exact union of both operands' disjoint retained holes. Identical
+/// holes are deduplicated, while touching, crossing, overlapping, or nested
+/// non-identical holes reject to the general planar arrangement layer. This is
+/// a legitimate Boolean intersection because the complement of each retained
+/// hole is part of the source object: intersecting two equal-outer holed
+/// sheets removes the union of their holes.
+///
+/// Boundary rings still come from exact mesh incidence and the final retained
+/// area must equal the pairwise source-triangle intersection area. That is the
+/// retained object/predicate split advocated by Yap, "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7.1-2 (1997). The local face clips
+/// use Sutherland and Hodgman's half-plane clipping model from "Reentrant
+/// Polygon Clipping," *Communications of the ACM* 17.1 (1974), and
+/// triangulation follows Held, "FIST: Fast Industrial-Strength Triangulation
+/// of Polygons," *Algorithmica* 30 (2001), through `hypertri`'s exact earcut
+/// adapter.
+#[cfg(feature = "exact-triangulation")]
+fn arrange_coplanar_surface_component_holed_same_outer_intersection(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Option<CoplanarConvexComponentHoledArrangement> {
+    if left.triangles().is_empty() || right.triangles().is_empty() {
+        return None;
+    }
+    let (projection, left_components) = source_holed_surface_components_from_mesh(left)?;
+    let (right_projection, right_components) = source_holed_surface_components_from_mesh(right)?;
+    if projection != right_projection {
+        return None;
+    }
+    if !coplanar_mesh_faces_have_disjoint_interiors(left, projection)?
+        || !coplanar_mesh_faces_have_disjoint_interiors(right, projection)?
+    {
+        return None;
+    }
+
+    let mut retained_components = Vec::new();
+    for left_component in &left_components {
+        for right_component in &right_components {
+            if polygons_equal(&left_component.outer, &right_component.outer) {
+                let mut outer = left_component.outer.clone();
+                orient_polygon_ccw(&mut outer, projection)?;
+                let mut holes = merged_same_outer_intersection_holes(
+                    left_component,
+                    right_component,
+                    projection,
+                )?;
+                sort_polygons_for_replay(&mut holes, projection);
+                retained_components.push(CoplanarConvexHoledComponent { outer, holes });
+                continue;
+            }
+            match simple_polygon_interaction(
+                &left_component.outer,
+                &right_component.outer,
+                projection,
+            )? {
+                SimplePolygonInteraction::Disjoint => {}
+                SimplePolygonInteraction::PointOnly | SimplePolygonInteraction::Connected => {
+                    return None;
+                }
+            }
+        }
+    }
+    if retained_components.is_empty() {
+        return None;
+    }
+    sort_components_for_replay(&mut retained_components, projection);
+    let retained_outers = retained_components
+        .iter()
+        .map(|component| component.outer.clone())
+        .collect::<Vec<_>>();
+    validate_simple_component_loops_disjoint(
+        &retained_outers,
+        projection,
+        "coplanar same-outer component-holed intersection",
+    )
+    .ok()?;
+    let intersection_area = coplanar_mesh_pairwise_intersection_area2(left, right, projection)?;
+    let retained_area = component_holed_components_area2(&retained_components, projection)?;
+    if compare_reals(&intersection_area, &retained_area).value() != Some(Ordering::Equal) {
+        return None;
+    }
+    let mesh = component_holed_components_to_earcut_open_mesh(&retained_components, projection)?;
+    let arrangement = CoplanarConvexComponentHoledArrangement {
+        projection,
+        components: retained_components,
+        mesh,
+    };
+    arrangement.validate().ok()?;
+    Some(arrangement)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn merged_same_outer_intersection_holes(
+    left: &SourceHoledSurfaceComponent,
+    right: &SourceHoledSurfaceComponent,
+    projection: CoplanarProjection,
+) -> Option<Vec<Vec<Point3>>> {
+    let mut holes = left.holes.clone();
+    for hole in &mut holes {
+        orient_polygon_cw(hole, projection)?;
+    }
+    for right_hole in &right.holes {
+        if holes
+            .iter()
+            .any(|left_hole| polygons_equal(left_hole, right_hole))
+        {
+            continue;
+        }
+        for left_hole in &holes {
+            match simple_polygon_interaction(left_hole, right_hole, projection)? {
+                SimplePolygonInteraction::Disjoint => {}
+                SimplePolygonInteraction::PointOnly | SimplePolygonInteraction::Connected => {
+                    return None;
+                }
+            }
+        }
+        let mut retained = right_hole.clone();
+        orient_polygon_cw(&mut retained, projection)?;
+        holes.push(retained);
+    }
+    validate_component_loops_disjoint(
+        &holes,
+        projection,
+        "coplanar same-outer component-holed intersection",
+    )
+    .ok()?;
+    Some(holes)
 }
 
 #[cfg(feature = "exact-triangulation")]

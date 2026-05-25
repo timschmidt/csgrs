@@ -8911,6 +8911,36 @@ fn exact_boolean_coplanar_surface_intersection(c: &mut Criterion) {
             ValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap();
+        let same_outer_outer = ExactMesh::from_i64_triangles_with_policy(
+            &[0, 0, 0, 10, 1, 0, 9, 10, 0, -1, 9, 0],
+            &[0, 1, 2, 0, 2, 3],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let same_outer_left_hole = ExactMesh::from_i64_triangles_with_policy(
+            &[2, 2, 0, 4, 2, 0, 4, 4, 0, 2, 4, 0],
+            &[0, 1, 2, 0, 2, 3],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let same_outer_right_hole = ExactMesh::from_i64_triangles_with_policy(
+            &[6, 6, 0, 8, 6, 0, 8, 8, 0, 6, 8, 0],
+            &[0, 1, 2, 0, 2, 3],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let same_outer_left_annulus = arrange_coplanar_convex_surface_holed_difference(
+            &same_outer_outer,
+            &same_outer_left_hole,
+        )
+        .unwrap()
+        .mesh;
+        let same_outer_right_annulus = arrange_coplanar_convex_surface_holed_difference(
+            &same_outer_outer,
+            &same_outer_right_hole,
+        )
+        .unwrap()
+        .mesh;
 
         c.bench_function("exact_boolean_coplanar_surface_intersection", |b| {
             b.iter(|| {
@@ -9064,6 +9094,16 @@ fn exact_boolean_coplanar_surface_intersection(c: &mut Criterion) {
                         hypermesh::exact::ExactBooleanOperation::Intersection,
                     )
                     .map(|report| report.validate()),
+                    arrange_coplanar_surface_component_holed_intersection(
+                        &same_outer_left_annulus,
+                        &same_outer_right_annulus,
+                    )
+                    .map(|output| {
+                        output.validate_intersection_against_sources(
+                            &same_outer_left_annulus,
+                            &same_outer_right_annulus,
+                        )
+                    }),
                     hypermesh::exact::boolean_exact(
                         &nonconvex_multi_intersection_left,
                         &nonconvex_multi_intersection_right,
