@@ -36,10 +36,13 @@ pub use arc::{
     LineExplicitArcIntersectionReport,
 };
 pub use arrangement::{
-    LineArcArrangementEvent, LineArcArrangementEventClass, LineArcArrangementReport,
-    LineArrangementBreakpoint, LineArrangementError, LineArrangementEvent,
-    LineArrangementEventClass, LineArrangementFacts, LineArrangementFragment,
-    LineArrangementReport, arrange_line_segments, arrange_line_segments_with_explicit_arcs,
+    ExplicitArcArrangementBreakpoint, ExplicitArcArrangementError, ExplicitArcArrangementFragment,
+    ExplicitArcSetArrangementEvent, ExplicitArcSetArrangementReport, LineArcArrangementEvent,
+    LineArcArrangementEventClass, LineArcArrangementReport, LineArrangementBreakpoint,
+    LineArrangementError, LineArrangementEvent, LineArrangementEventClass, LineArrangementFacts,
+    LineArrangementFragment, LineArrangementReport, arrange_explicit_arcs,
+    arrange_explicit_arcs_with_provenance, arrange_line_segments,
+    arrange_line_segments_with_explicit_arcs,
     arrange_line_segments_with_explicit_arcs_and_provenance, arrange_line_segments_with_provenance,
 };
 pub use bezier::{

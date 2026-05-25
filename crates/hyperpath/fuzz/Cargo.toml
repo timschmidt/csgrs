@@ -68,3 +68,10 @@ path = "fuzz_targets/line_arc_arrangement.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "explicit_arc_arrangement"
+path = "fuzz_targets/explicit_arc_arrangement.rs"
+test = false
+doc = false
+bench = false

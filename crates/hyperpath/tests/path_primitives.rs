@@ -4,12 +4,12 @@ use hyperpath::{
     BezierParameter, BezierParameterError, BoardContourError, BoardContourOrientation,
     CardinalPoint, CardinalRotation, CircularArc, CircularArcError, ClearanceStatus,
     ConstructionStamp, CubicBezier, DrillBoardClearanceReport, ExplicitArcArrangementClass,
-    ExplicitArcIntersectionClass, ExplicitArcOverlapClass, ExplicitArcPointClassification,
-    ExplicitArcSweepClass, ExplicitArcTangentClass, ExplicitCircleRelationClass,
-    ExplicitCircularArc, HigherOrderBezier, HigherOrderBezierError, InfillGraphError,
-    LineArcArrangementEventClass, LineArrangementError, LineArrangementEventClass,
-    LineExplicitArcIntersectionClass, LineOffsetError, LinePathSegment, MeanderError,
-    MeanderObstacle, MeanderPlacementCandidate, NetId, OffsetSide, PathProvenance,
+    ExplicitArcArrangementError, ExplicitArcIntersectionClass, ExplicitArcOverlapClass,
+    ExplicitArcPointClassification, ExplicitArcSweepClass, ExplicitArcTangentClass,
+    ExplicitCircleRelationClass, ExplicitCircularArc, HigherOrderBezier, HigherOrderBezierError,
+    InfillGraphError, LineArcArrangementEventClass, LineArrangementError,
+    LineArrangementEventClass, LineExplicitArcIntersectionClass, LineOffsetError, LinePathSegment,
+    MeanderError, MeanderObstacle, MeanderPlacementCandidate, NetId, OffsetSide, PathProvenance,
     PathSourceFormat, PcbBoardOutline, PcbCardinalRectPad, PcbCircularBoardOutline, PcbCircularPad,
     PcbConvexBoardOutline, PcbConvexPad, PcbObroundPad, PcbOrientedRectPad,
     PcbOrthogonalBoardOutline, PcbRectPad, PcbRoundedRectPad, PcbTrace, PcbViaStack,
@@ -20,15 +20,15 @@ use hyperpath::{
     SpecctraParseError, SupportFootprintStatus, SupportPlanError, SweptLineSegment,
     TangentAlignment, TangentJoinClass, TangentJoinReport, TangentSpan, TraceLayer,
     ViaAnnularRingReport, ViaDrillIntent, ViaDrillPolicyClass, ViaLayerSpanRelation,
-    ViaLayerTransitionClass, arrange_line_segments, arrange_line_segments_with_explicit_arcs,
-    build_alternating_detour_meander, build_g1_join_problem, build_length_match_problem,
-    build_multi_detour_meander, build_nonuniform_detour_meander,
-    build_obstacle_aware_detour_meander, build_oriented_tangent_alignment_problem,
-    build_rectangular_bead_plan, build_rectangular_pocket_plan,
-    build_rectangular_serpentine_infill_graph, build_rectangular_support_plan,
-    build_single_detour_meander, build_tangent_alignment_problem, certify_constant_feed_time,
-    certify_differential_pair_skew, certify_g1_chain, certify_g1_join_candidate,
-    certify_length_extension, certify_tangent_alignment_candidate,
+    ViaLayerTransitionClass, arrange_explicit_arcs, arrange_line_segments,
+    arrange_line_segments_with_explicit_arcs, build_alternating_detour_meander,
+    build_g1_join_problem, build_length_match_problem, build_multi_detour_meander,
+    build_nonuniform_detour_meander, build_obstacle_aware_detour_meander,
+    build_oriented_tangent_alignment_problem, build_rectangular_bead_plan,
+    build_rectangular_pocket_plan, build_rectangular_serpentine_infill_graph,
+    build_rectangular_support_plan, build_single_detour_meander, build_tangent_alignment_problem,
+    certify_constant_feed_time, certify_differential_pair_skew, certify_g1_chain,
+    certify_g1_join_candidate, certify_length_extension, certify_tangent_alignment_candidate,
     check_cardinal_rect_pad_board_clearance, check_circular_pad_board_clearance,
     check_circular_pad_circular_board_clearance, check_convex_pad_board_clearance,
     check_obround_pad_board_clearance, check_oriented_rect_pad_board_clearance,
@@ -305,6 +305,74 @@ fn line_arc_arrangement_reports_unknown_for_non_axis_line() {
     );
     assert_eq!(report.line_breakpoints[0].len(), 2);
     assert_eq!(report.line_fragments.len(), 1);
+}
+
+#[test]
+fn explicit_arc_arrangement_splits_different_circle_secants() {
+    let left =
+        ExplicitCircularArc::new(p(-3, 0), r(5), p(-3, -5), p(-3, 5), ArcDirection::Ccw).unwrap();
+    let right =
+        ExplicitCircularArc::new(p(3, 0), r(5), p(3, 5), p(3, -5), ArcDirection::Ccw).unwrap();
+
+    let report = arrange_explicit_arcs(&[left, right], PredicatePolicy::default()).unwrap();
+
+    assert_eq!(
+        report.events[0].class,
+        ExplicitArcArrangementClass::DifferentCircleTwoPoints
+    );
+    assert_eq!(report.events[0].points, vec![p(0, 4), p(0, -4)]);
+    assert_eq!(
+        report.breakpoints[0]
+            .iter()
+            .map(|breakpoint| breakpoint.point.clone())
+            .collect::<Vec<_>>(),
+        vec![p(-3, -5), p(0, -4), p(0, 4), p(-3, 5)]
+    );
+    assert_eq!(report.breakpoints[1].len(), 4);
+    assert_eq!(report.fragments.len(), 6);
+    assert_eq!(report.fragments[0].arc.start(), &p(-3, -5));
+    assert_eq!(report.fragments[0].arc.end(), &p(0, -4));
+}
+
+#[test]
+fn explicit_arc_arrangement_promotes_same_circle_overlap_boundaries() {
+    let top_half =
+        ExplicitCircularArc::new(p(0, 0), r(5), p(5, 0), p(-5, 0), ArcDirection::Ccw).unwrap();
+    let top_left =
+        ExplicitCircularArc::new(p(0, 0), r(5), p(0, 5), p(-5, 0), ArcDirection::Ccw).unwrap();
+
+    let report = arrange_explicit_arcs(&[top_half, top_left], PredicatePolicy::default()).unwrap();
+
+    assert_eq!(
+        report.events[0].class,
+        ExplicitArcArrangementClass::SameCircleFirstCoversSecond
+    );
+    assert_eq!(
+        report.breakpoints[0]
+            .iter()
+            .map(|breakpoint| breakpoint.point.clone())
+            .collect::<Vec<_>>(),
+        vec![p(5, 0), p(0, 5), p(-5, 0)]
+    );
+    assert_eq!(
+        report.breakpoints[1]
+            .iter()
+            .map(|breakpoint| breakpoint.point.clone())
+            .collect::<Vec<_>>(),
+        vec![p(0, 5), p(-5, 0)]
+    );
+    assert_eq!(report.fragments.len(), 3);
+}
+
+#[test]
+fn explicit_arc_arrangement_rejects_full_circle_without_branch_cut() {
+    let full =
+        ExplicitCircularArc::new(p(0, 0), r(5), p(5, 0), p(5, 0), ArcDirection::Ccw).unwrap();
+
+    assert_eq!(
+        arrange_explicit_arcs(&[full], PredicatePolicy::default()).unwrap_err(),
+        ExplicitArcArrangementError::FullCircleArcUnsupported { arc: 0 }
+    );
 }
 
 #[test]
