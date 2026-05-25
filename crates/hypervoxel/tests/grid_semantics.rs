@@ -257,6 +257,43 @@ fn chunk_paged_sparse_storage_replays_exact_addresses_and_payload_blockers() {
     assert!(!miss.cells.has_tested_cells);
     assert!(miss.exact_page_filter_ready);
     assert!(!miss.exact_paged_broad_phase_ready);
+
+    let mut component_grid = SparseVoxelGrid::new(frame.clone());
+    let s0 = VoxelAddress::new(4, [1, 1, 1]).unwrap();
+    let s1 = VoxelAddress::new(4, [2, 1, 1]).unwrap();
+    let s2 = VoxelAddress::new(4, [3, 1, 1]).unwrap();
+    let isolated = VoxelAddress::new(4, [12, 12, 12]).unwrap();
+    for address in [s0, s1, s2, isolated] {
+        component_grid
+            .set(address, VoxelCell::material(MaterialRegionId(7)))
+            .unwrap();
+    }
+    let component_pages = ChunkPagedSparseGrid::from_sparse_grid(&component_grid, shape).unwrap();
+    let component = component_pages.query_connected_component(s0).unwrap();
+    assert_eq!(component.addresses, vec![s0, s1, s2]);
+    assert!(component.has_reached_cells);
+    assert!(component.exact_component_ready);
+    assert!(component.page_hits > 0);
+    assert!(component.page_misses > 0);
+    assert!(component.cross_page_edges > 0);
+    assert_eq!(component.aggregate.child_count, 3);
+
+    let empty_component = component_pages
+        .query_connected_component(VoxelAddress::new(4, [0, 0, 0]).unwrap())
+        .unwrap();
+    assert!(empty_component.addresses.is_empty());
+    assert!(!empty_component.has_reached_cells);
+    assert!(!empty_component.exact_component_ready);
+
+    component_grid.set(s1, VoxelCell::unknown()).unwrap();
+    let blocked_component_pages =
+        ChunkPagedSparseGrid::from_sparse_grid(&component_grid, shape).unwrap();
+    let blocked_component = blocked_component_pages
+        .query_connected_component(s0)
+        .unwrap();
+    assert_eq!(blocked_component.addresses, vec![s0, s1, s2]);
+    assert!(blocked_component.has_unknown);
+    assert!(!blocked_component.exact_component_ready);
 }
 
 #[test]

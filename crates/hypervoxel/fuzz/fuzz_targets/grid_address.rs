@@ -145,6 +145,14 @@ fuzz_target!(|data: (u8, u64, u64, u64)| {
         paged_broad_phase.exact_paged_broad_phase_ready,
         covered_cell_count > 0
     );
+    let paged_component = paged_grid.query_connected_component(first_small_address).unwrap();
+    assert_eq!(paged_component.addresses.len() as u64, covered_cell_count);
+    assert_eq!(paged_component.has_reached_cells, covered_cell_count > 0);
+    assert_eq!(
+        paged_component.exact_component_ready,
+        covered_cell_count > 0
+    );
+    assert_eq!(paged_component.aggregate.child_count as u64, covered_cell_count);
     let halfspace =
         ExactHalfSpace::new([Real::from(1), Real::from(0), Real::from(0)], Real::from(1), None);
     assert!(halfspace.report().exact_halfspace_ready);

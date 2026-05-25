@@ -814,6 +814,20 @@ fn bench_batches_field_facts_and_sweeps(c: &mut Criterion) {
             )
         })
     });
+    c.bench_function("chunk_paged_connected_component", |b| {
+        let shape = ChunkShape::new(3).unwrap();
+        let paged = ChunkPagedSparseGrid::from_sparse_grid(&grid, shape).unwrap();
+        let seed = grid.iter().next().map(|(address, _)| *address).unwrap();
+        b.iter(|| {
+            let report = paged.query_connected_component(seed).unwrap();
+            (
+                report.addresses.len(),
+                report.page_hits,
+                report.page_misses,
+                report.exact_component_ready,
+            )
+        })
+    });
     c.bench_function("chunk_local_address_split", |b| {
         let shape = ChunkShape::new(3).unwrap();
         b.iter(|| {

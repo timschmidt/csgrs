@@ -15,14 +15,15 @@
 //! payload readiness, unknown/lossy blockers, and aggregate facts instead of
 //! asking callers to trust a compressed layout name.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet, VecDeque};
 
 use hyperlimit::{PredicateOutcome, classify_aabb3_intersection};
 
+use crate::query::voxel_neighbors6;
 use crate::{
     AabbBroadPhaseCandidate, AabbBroadPhaseQuery, ChunkAddress, ChunkLocalAddress,
     ChunkPageSummary, ChunkShape, ExactAabb3, GridFrame, HypervoxelError, HypervoxelResult,
-    QueryRegion, SparseVoxelGrid, VoxelAddress, VoxelAggregateFacts, VoxelCell,
+    OccupancyState, QueryRegion, SparseVoxelGrid, VoxelAddress, VoxelAggregateFacts, VoxelCell,
 };
 
 /// Exact cells stored in one chunk page.
@@ -134,6 +135,35 @@ pub struct ChunkPagedAabbBroadPhaseReport {
     /// Whether both page-level and cell-level broad phase evidence are exact
     /// and non-vacuous.
     pub exact_paged_broad_phase_ready: bool,
+}
+
+/// Exact connected-component traversal report over chunk-paged storage.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ChunkPagedConnectedComponentReport {
+    /// Seed address.
+    pub seed: VoxelAddress,
+    /// Reached explicit non-empty addresses in deterministic order.
+    pub addresses: Vec<VoxelAddress>,
+    /// Whether the seed reached at least one non-empty cell.
+    pub has_reached_cells: bool,
+    /// Number of neighbor edges tested by the traversal.
+    pub neighbor_edges: usize,
+    /// Number of neighbor checks whose target page existed.
+    pub page_hits: usize,
+    /// Number of neighbor checks whose target page was absent.
+    pub page_misses: usize,
+    /// Number of neighbor checks that crossed an integer page boundary.
+    pub cross_page_edges: usize,
+    /// Number of in-page or candidate-page neighbors that were exact empty.
+    pub empty_neighbors: usize,
+    /// Whether any reached cell carries explicit unknown evidence.
+    pub has_unknown: bool,
+    /// Whether any reached cell came from a lossy adapter.
+    pub has_lossy: bool,
+    /// Aggregate facts over reached cells.
+    pub aggregate: VoxelAggregateFacts,
+    /// Whether this traversal is exact connected-component evidence.
+    pub exact_component_ready: bool,
 }
 
 /// Sparse grid cells grouped by exact integer chunk pages.
@@ -426,6 +456,124 @@ impl ChunkPagedSparseGrid {
             exact_page_filter_ready,
             exact_paged_broad_phase_ready,
         })
+    }
+
+    /// Returns the six-connected component of explicit non-empty cells.
+    ///
+    /// This is the chunk-paged counterpart to prepared sparse-grid component
+    /// queries. The traversal uses exact integer 6-neighbor adjacency and page
+    /// membership only as a storage shortcut: a missing page proves all
+    /// explicit sparse cells in that page are absent, while present pages still
+    /// require exact address lookup. The lattice connectivity model follows
+    /// Rosenfeld and Pfaltz, "Sequential Operations in Digital Picture
+    /// Processing," *JACM* 13(4), 1966. As in Yap, "Towards Exact Geometric
+    /// Computation," *Computational Geometry* 7(1-2), 1997, unknown and lossy
+    /// cells remain explicit blockers instead of being coerced into exact
+    /// topology evidence.
+    pub fn query_connected_component(
+        &self,
+        seed: VoxelAddress,
+    ) -> HypervoxelResult<ChunkPagedConnectedComponentReport> {
+        validate_address_in_frame(seed, &self.frame)?;
+        let mut page_hits = 0_usize;
+        let mut page_misses = 0_usize;
+        let seed_cell = self.get_with_page_probe(seed, &mut page_hits, &mut page_misses)?;
+        if seed_cell.occupancy == OccupancyState::Empty {
+            return Ok(ChunkPagedConnectedComponentReport {
+                seed,
+                addresses: Vec::new(),
+                has_reached_cells: false,
+                neighbor_edges: 0,
+                page_hits,
+                page_misses,
+                cross_page_edges: 0,
+                empty_neighbors: 0,
+                has_unknown: false,
+                has_lossy: false,
+                aggregate: VoxelAggregateFacts::from_cells(std::iter::empty::<&VoxelCell>()),
+                exact_component_ready: false,
+            });
+        }
+
+        let mut seen = BTreeSet::new();
+        let mut reached = BTreeMap::new();
+        let mut queue = VecDeque::new();
+        let mut neighbor_edges = 0_usize;
+        let mut cross_page_edges = 0_usize;
+        let mut empty_neighbors = 0_usize;
+        let mut has_unknown = false;
+        let mut has_lossy = false;
+
+        seen.insert(seed);
+        queue.push_back(seed);
+        reached.insert(seed, seed_cell);
+
+        while let Some(address) = queue.pop_front() {
+            let source_page = ChunkAddress::containing(address, self.shape);
+            for neighbor in voxel_neighbors6(address) {
+                neighbor_edges += 1;
+                if ChunkAddress::containing(neighbor, self.shape) != source_page {
+                    cross_page_edges += 1;
+                }
+                if !seen.insert(neighbor) {
+                    continue;
+                }
+                let cell = self.get_with_page_probe(neighbor, &mut page_hits, &mut page_misses)?;
+                if cell.occupancy == OccupancyState::Empty {
+                    empty_neighbors += 1;
+                    continue;
+                }
+                let cell_report = cell.report();
+                has_unknown |= cell_report.has_unknown;
+                has_lossy |= cell_report.has_lossy;
+                reached.insert(neighbor, cell);
+                queue.push_back(neighbor);
+            }
+        }
+
+        let aggregate = VoxelAggregateFacts::from_cells(reached.values());
+        let has_reached_cells = !reached.is_empty();
+        let exact_component_ready = has_reached_cells
+            && self.report.exact_chunk_storage_ready
+            && !has_unknown
+            && !has_lossy
+            && aggregate.certainty != crate::AggregateCertainty::Unknown
+            && aggregate.certainty != crate::AggregateCertainty::Lossy;
+        Ok(ChunkPagedConnectedComponentReport {
+            seed,
+            addresses: reached.keys().copied().collect(),
+            has_reached_cells,
+            neighbor_edges,
+            page_hits,
+            page_misses,
+            cross_page_edges,
+            empty_neighbors,
+            has_unknown,
+            has_lossy,
+            aggregate,
+            exact_component_ready,
+        })
+    }
+
+    fn get_with_page_probe(
+        &self,
+        address: VoxelAddress,
+        page_hits: &mut usize,
+        page_misses: &mut usize,
+    ) -> HypervoxelResult<VoxelCell> {
+        validate_address_in_frame(address, &self.frame)?;
+        let chunk = ChunkAddress::containing(address, self.shape);
+        if let Some(page) = self.pages.get(&chunk) {
+            *page_hits += 1;
+            Ok(page
+                .cells
+                .get(&address)
+                .copied()
+                .unwrap_or_else(VoxelCell::empty))
+        } else {
+            *page_misses += 1;
+            Ok(VoxelCell::empty())
+        }
     }
 }
 
