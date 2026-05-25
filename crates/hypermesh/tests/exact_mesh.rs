@@ -25671,6 +25671,124 @@ fn exact_multi_component_coplanar_intersection_materializes_component_hulls() {
 
 #[cfg(feature = "exact-triangulation")]
 #[test]
+fn exact_coplanar_mesh_containment_preserves_holed_intersection() {
+    let outer = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 10, 0, 0, 10, 10, 0, 0, 10, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let removed_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[4, 4, 0, 6, 4, 0, 6, 6, 0, 4, 6, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let annulus =
+        hypermesh::exact::arrange_coplanar_convex_surface_holed_difference(&outer, &removed_hole)
+            .expect("one-hole source fixture should materialize")
+            .mesh;
+    let cover = ExactMesh::from_i64_triangles_with_policy(
+        &[-1, -1, 0, 12, -1, 0, 11, 11, 0, -1, 12, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+
+    assert_eq!(
+        hypermesh::exact::certify_coplanar_surface_mesh_containment(&annulus, &cover),
+        Some(hypermesh::exact::CoplanarSurfaceContainment::LeftInsideRight)
+    );
+    assert_eq!(
+        hypermesh::exact::certify_coplanar_surface_mesh_containment(&cover, &annulus),
+        Some(hypermesh::exact::CoplanarSurfaceContainment::RightInsideLeft)
+    );
+    assert!(
+        hypermesh::exact::certify_coplanar_surface_mesh_containment(&removed_hole, &annulus)
+            .is_none(),
+        "area replay must not treat the annulus as covering its retained hole"
+    );
+
+    let preflight = hypermesh::exact::preflight_boolean_exact(
+        &annulus,
+        &cover,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+    )
+    .unwrap();
+    preflight.validate().unwrap();
+    preflight
+        .validate_against_sources(&annulus, &cover)
+        .unwrap();
+    assert_eq!(
+        preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceContainment
+    );
+
+    let intersection = hypermesh::exact::boolean_exact(
+        &annulus,
+        &cover,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    intersection
+        .validate_operation_against_sources(
+            &annulus,
+            &cover,
+            hypermesh::exact::ExactBooleanOperation::Intersection,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        intersection.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::CoplanarSurfaceContainment
+        }
+    );
+    assert_eq!(intersection.mesh.vertices(), annulus.vertices());
+    assert_eq!(intersection.mesh.triangles(), annulus.triangles());
+
+    let union = hypermesh::exact::boolean_exact(
+        &annulus,
+        &cover,
+        hypermesh::exact::ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    union
+        .validate_operation_against_sources(
+            &annulus,
+            &cover,
+            hypermesh::exact::ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(union.mesh.vertices(), cover.vertices());
+    assert_eq!(union.mesh.triangles(), cover.triangles());
+
+    let difference = hypermesh::exact::boolean_exact(
+        &annulus,
+        &cover,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    difference
+        .validate_operation_against_sources(
+            &annulus,
+            &cover,
+            hypermesh::exact::ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert!(difference.mesh.triangles().is_empty());
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[test]
 fn exact_named_booleans_handle_empty_operands() {
     let empty =
         ExactMesh::from_i64_triangles_with_policy(&[], &[], ValidationPolicy::ALLOW_BOUNDARY)

@@ -2909,6 +2909,132 @@ pub fn arrange_coplanar_surface_multi_component_intersection(
     Some(arrangement)
 }
 
+/// Certify whole-surface containment for coplanar triangulated sheets.
+///
+/// This is the non-single-triangle containment certificate used by named
+/// booleans whose result can be copied directly from one source mesh. It
+/// deliberately avoids inferring topology from a boundary sample: every
+/// source triangle is clipped against every triangle of the candidate cover,
+/// and the exact sum of positive-area clips must equal the source triangle's
+/// exact projected area. The cover mesh is first required to have pairwise
+/// interior-disjoint coplanar faces, so the replay cannot double-count
+/// overlapping cover triangles.
+///
+/// The local clips reuse Sutherland and Hodgman's half-plane construction
+/// (Sutherland and Hodgman, "Reentrant Polygon Clipping," *Communications of
+/// the ACM* 17.1, 1974), while the acceptance rule follows Yap, "Towards
+/// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997):
+/// topology-changing containment is emitted only when exact retained
+/// predicate/area facts prove whole-object coverage. In particular, retained
+/// holes remain holes because their uncovered area contributes no clip area.
+#[cfg(feature = "exact-triangulation")]
+pub fn certify_coplanar_surface_mesh_containment(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Option<CoplanarSurfaceContainment> {
+    if left.triangles().is_empty() || right.triangles().is_empty() {
+        return None;
+    }
+    if certify_single_triangle_coplanar_containment(left, right).is_some()
+        || certify_coplanar_convex_surface_containment(left, right).is_some()
+        || certify_coplanar_convex_surface_equivalence(left, right).is_some()
+    {
+        return None;
+    }
+    if !single_retained_plane(left, right)? {
+        return None;
+    }
+    let projection = choose_mesh_projection(left).or_else(|| choose_mesh_projection(right))?;
+    if !coplanar_mesh_faces_have_disjoint_interiors(left, projection)?
+        || !coplanar_mesh_faces_have_disjoint_interiors(right, projection)?
+    {
+        return None;
+    }
+
+    let left_inside_right = coplanar_mesh_area_covered_by_mesh(left, right, projection)?;
+    let right_inside_left = coplanar_mesh_area_covered_by_mesh(right, left, projection)?;
+    match (left_inside_right, right_inside_left) {
+        (true, false) => Some(CoplanarSurfaceContainment::LeftInsideRight),
+        (false, true) => Some(CoplanarSurfaceContainment::RightInsideLeft),
+        (true, true) | (false, false) => None,
+    }
+}
+
+/// Return whether every subject face is covered by exact coplanar cover clips.
+///
+/// The equality test is per subject triangle instead of whole-mesh only. That
+/// makes the certificate antagonistic to false positives where one covered
+/// triangle overcompensates for an uncovered triangle elsewhere, and it
+/// preserves Yap's object/state boundary by replaying each retained face as
+/// its own exact coverage claim.
+#[cfg(feature = "exact-triangulation")]
+fn coplanar_mesh_area_covered_by_mesh(
+    subject: &ExactMesh,
+    cover: &ExactMesh,
+    projection: CoplanarProjection,
+) -> Option<bool> {
+    for subject_face in 0..subject.triangles().len() {
+        let subject_triangle = single_face_mesh(subject, subject_face)?;
+        let subject_points = mesh_points(&subject_triangle);
+        let subject_area = projected_area2_abs(&subject_points, projection)?;
+        if compare_reals(&subject_area, &ExactReal::from(0)).value() != Some(Ordering::Greater) {
+            return Some(false);
+        }
+        let mut covered_area = ExactReal::from(0);
+        for cover_face in 0..cover.triangles().len() {
+            let cover_triangle = single_face_mesh(cover, cover_face)?;
+            let Some((clip_projection, clip)) =
+                pairwise_coplanar_triangle_intersection_polygon(&subject_triangle, &cover_triangle)
+            else {
+                continue;
+            };
+            if clip_projection != projection {
+                return None;
+            }
+            let clip_area = projected_area2_abs(&clip, projection)?;
+            if compare_reals(&clip_area, &ExactReal::from(0)).value() == Some(Ordering::Greater) {
+                covered_area = add(&covered_area, &clip_area);
+            }
+        }
+        if compare_reals(&covered_area, &subject_area).value() != Some(Ordering::Equal) {
+            return Some(false);
+        }
+    }
+    Some(true)
+}
+
+/// Reject cover/source meshes whose faces overlap in positive area.
+///
+/// Area-sum containment is only a coverage proof when same-mesh triangles are
+/// interior-disjoint. Boundary contacts are fine: they carry no area in the
+/// triangle-mesh result channel and match the retained triangulation model
+/// used by exact open surfaces.
+#[cfg(feature = "exact-triangulation")]
+fn coplanar_mesh_faces_have_disjoint_interiors(
+    mesh: &ExactMesh,
+    projection: CoplanarProjection,
+) -> Option<bool> {
+    for left_face in 0..mesh.triangles().len() {
+        let left_triangle = single_face_mesh(mesh, left_face)?;
+        for right_face in left_face + 1..mesh.triangles().len() {
+            let right_triangle = single_face_mesh(mesh, right_face)?;
+            let Some((clip_projection, clip)) =
+                pairwise_coplanar_triangle_intersection_polygon(&left_triangle, &right_triangle)
+            else {
+                continue;
+            };
+            if clip_projection != projection {
+                return None;
+            }
+            let clip_area = projected_area2_abs(&clip, projection)?;
+            if compare_reals(&clip_area, &ExactReal::from(0)).value() == Some(Ordering::Greater) {
+                return Some(false);
+            }
+        }
+    }
+    Some(true)
+}
+
 #[cfg(feature = "exact-triangulation")]
 fn arrange_coplanar_convex_surface_pairwise_triangle_multi_intersection(
     left: &ExactMesh,

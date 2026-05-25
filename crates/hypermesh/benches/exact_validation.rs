@@ -11,7 +11,8 @@ use hypermesh::exact::{
     arrange_coplanar_affine_surface_intersection, arrange_coplanar_affine_surface_union,
     arrange_coplanar_convex_surface_component_holed_difference,
     arrange_coplanar_convex_surface_component_union, arrange_coplanar_convex_surface_difference,
-    arrange_coplanar_convex_surface_intersection, arrange_coplanar_convex_surface_multi_difference,
+    arrange_coplanar_convex_surface_holed_difference, arrange_coplanar_convex_surface_intersection,
+    arrange_coplanar_convex_surface_multi_difference,
     arrange_coplanar_convex_surface_multi_holed_difference,
     arrange_coplanar_convex_surface_multi_union, arrange_coplanar_convex_surface_union,
     arrange_coplanar_orthogonal_surface_difference,
@@ -27,10 +28,10 @@ use hypermesh::exact::{
     audit_exact_mesh, build_intersection_graph, certify_boundary_touching_report,
     certify_convex_solid, certify_coplanar_convex_surface_containment,
     certify_coplanar_convex_surface_equivalence, certify_coplanar_convex_surface_report,
-    certify_coplanar_surface_boundary_touch, certify_coplanar_volumetric_cell_evidence,
-    certify_exact_mesh_proposal, certify_open_surface_disjoint_report,
-    certify_planar_arrangement_evidence, certify_planar_arrangement_report,
-    certify_refinement_report, certify_same_surface_report,
+    certify_coplanar_surface_boundary_touch, certify_coplanar_surface_mesh_containment,
+    certify_coplanar_volumetric_cell_evidence, certify_exact_mesh_proposal,
+    certify_open_surface_disjoint_report, certify_planar_arrangement_evidence,
+    certify_planar_arrangement_report, certify_refinement_report, certify_same_surface_report,
     certify_single_triangle_coplanar_containment,
     certify_single_triangle_coplanar_containment_report, certify_winding_readiness_report,
     checked_classify_face_regions_against_opposite_planes, classify_coplanar_triangles,
@@ -8621,6 +8622,42 @@ fn exact_boolean_coplanar_surface_containment(c: &mut Criterion) {
             b.iter(|| {
                 let report = certify_single_triangle_coplanar_containment_report(&inner, &outer);
                 report.validate_against_sources(&inner, &outer)
+            })
+        });
+
+        let holed_outer = ExactMesh::from_i64_triangles_with_policy(
+            &[0, 0, 0, 10, 0, 0, 10, 10, 0, 0, 10, 0],
+            &[0, 1, 2, 0, 2, 3],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let holed_inner = ExactMesh::from_i64_triangles_with_policy(
+            &[4, 4, 0, 6, 4, 0, 6, 6, 0, 4, 6, 0],
+            &[0, 1, 2, 0, 2, 3],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let annulus = arrange_coplanar_convex_surface_holed_difference(&holed_outer, &holed_inner)
+            .unwrap()
+            .mesh;
+        let cover = ExactMesh::from_i64_triangles_with_policy(
+            &[-1, -1, 0, 12, -1, 0, 11, 11, 0, -1, 12, 0],
+            &[0, 1, 2, 0, 2, 3],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        c.bench_function("exact_coplanar_mesh_containment_holed_area_replay", |b| {
+            b.iter(|| {
+                (
+                    certify_coplanar_surface_mesh_containment(&annulus, &cover),
+                    hypermesh::exact::boolean_exact(
+                        &annulus,
+                        &cover,
+                        hypermesh::exact::ExactBooleanOperation::Intersection,
+                        ValidationPolicy::ALLOW_BOUNDARY,
+                    )
+                    .unwrap(),
+                )
             })
         });
     }

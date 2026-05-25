@@ -37,8 +37,8 @@ use hypermesh::exact::{
     certify_boundary_touching_report, certify_convex_solid,
     certify_coplanar_convex_surface_containment, certify_coplanar_convex_surface_equivalence,
     certify_coplanar_convex_surface_report, certify_coplanar_surface_boundary_touch,
-    certify_coplanar_volumetric_cell_evidence, certify_exact_mesh_proposal,
-    certify_open_surface_disjoint_report,
+    certify_coplanar_surface_mesh_containment, certify_coplanar_volumetric_cell_evidence,
+    certify_exact_mesh_proposal, certify_open_surface_disjoint_report,
     certify_planar_arrangement_evidence, certify_planar_arrangement_report,
     certify_refinement_report, certify_same_surface_report,
     certify_single_triangle_coplanar_containment,
@@ -1423,7 +1423,7 @@ fuzz_target!(|data: &[u8]| {
 
 #[cfg(feature = "exact-triangulation")]
 fn exercise_deterministic_case(selector: u8) {
-    match selector % 37 {
+    match selector % 38 {
         0 => exercise_partial_convex_union_boundary(),
         1 => exercise_face_interior_steiner_boundary(),
         2 => exercise_multi_component_coplanar_union(),
@@ -1460,6 +1460,7 @@ fn exercise_deterministic_case(selector: u8) {
         33 => exercise_nonconvex_overlap_component_holed_coplanar_union(),
         34 => exercise_point_branch_component_holed_coplanar_union(),
         35 => exercise_nonrectangular_component_union_hull_coverage(),
+        36 => exercise_holed_coplanar_mesh_containment(),
         _ => exercise_nonconvex_coplanar_volumetric_difference_fan_split(),
     }
 }
@@ -2213,6 +2214,70 @@ fn exercise_nonrectangular_component_union_hull_coverage() {
             ExactBoundaryBooleanPolicy::Reject,
         )
         .unwrap();
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn exercise_holed_coplanar_mesh_containment() {
+    let outer = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 10, 0, 0, 10, 10, 0, 0, 10, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("holed containment outer fixture must import");
+    let hole = ExactMesh::from_i64_triangles_with_policy(
+        &[4, 4, 0, 6, 4, 0, 6, 6, 0, 4, 6, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("holed containment hole fixture must import");
+    let annulus = arrange_coplanar_convex_surface_holed_difference(&outer, &hole)
+        .expect("holed containment fixture should materialize an annulus")
+        .mesh;
+    let cover = ExactMesh::from_i64_triangles_with_policy(
+        &[-1, -1, 0, 12, -1, 0, 11, 11, 0, -1, 12, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("holed containment cover fixture must import");
+
+    assert_eq!(
+        certify_coplanar_surface_mesh_containment(&annulus, &cover),
+        Some(CoplanarSurfaceContainment::LeftInsideRight)
+    );
+    assert_eq!(
+        certify_coplanar_surface_mesh_containment(&cover, &annulus),
+        Some(CoplanarSurfaceContainment::RightInsideLeft)
+    );
+    assert!(
+        certify_coplanar_surface_mesh_containment(&hole, &annulus).is_none(),
+        "annulus coverage must not fill its retained hole"
+    );
+
+    let preflight = preflight_boolean_exact(&annulus, &cover, ExactBooleanOperation::Intersection)
+        .expect("holed containment intersection preflight should classify shortcut");
+    preflight.validate().unwrap();
+    preflight
+        .validate_against_sources(&annulus, &cover)
+        .unwrap();
+    assert_eq!(
+        preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarSurfaceContainment
+    );
+    hypermesh::exact::boolean_exact(
+        &annulus,
+        &cover,
+        ExactBooleanOperation::Intersection,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("holed containment intersection should copy the inner source")
+    .validate_operation_against_sources(
+        &annulus,
+        &cover,
+        ExactBooleanOperation::Intersection,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
 }
 
 #[cfg(feature = "exact-triangulation")]

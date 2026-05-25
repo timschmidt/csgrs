@@ -122,9 +122,9 @@ use super::surface::{
     arrange_coplanar_surface_side_cutter_difference, arrange_single_triangle_coplanar_difference,
     arrange_single_triangle_coplanar_holed_difference, arrange_single_triangle_coplanar_union,
     certify_coplanar_convex_surface_containment, certify_coplanar_convex_surface_equivalence,
-    certify_coplanar_surface_boundary_touch, certify_single_triangle_coplanar_containment,
-    difference_single_triangle_coplanar_surfaces, intersect_single_triangle_coplanar_surfaces,
-    union_single_triangle_coplanar_surfaces,
+    certify_coplanar_surface_boundary_touch, certify_coplanar_surface_mesh_containment,
+    certify_single_triangle_coplanar_containment, difference_single_triangle_coplanar_surfaces,
+    intersect_single_triangle_coplanar_surfaces, union_single_triangle_coplanar_surfaces,
 };
 #[cfg(feature = "exact-triangulation")]
 use super::validation::ValidationPolicy;
@@ -1680,13 +1680,23 @@ pub fn boolean_exact_with_boundary_policy(
         ExactBooleanOperation::Union
         | ExactBooleanOperation::Intersection
         | ExactBooleanOperation::Difference => {
+            let single_triangle_containment =
+                certify_single_triangle_coplanar_containment(left, right).is_some();
+            if operation == ExactBooleanOperation::Intersection
+                && !single_triangle_containment
+                && let Some(result) =
+                    boolean_coplanar_surface_intersection(left, right, operation, validation)?
+            {
+                return Ok(result);
+            }
             if let Some(result) =
                 boolean_coplanar_surface_containment(left, right, operation, validation)?
             {
                 return Ok(result);
             }
-            if let Some(result) =
-                boolean_coplanar_surface_intersection(left, right, operation, validation)?
+            if operation != ExactBooleanOperation::Intersection
+                && let Some(result) =
+                    boolean_coplanar_surface_intersection(left, right, operation, validation)?
             {
                 return Ok(result);
             }
@@ -3226,7 +3236,8 @@ fn certified_coplanar_surface_boolean_support(
     right: &ExactMesh,
     operation: ExactBooleanOperation,
 ) -> Option<CoplanarSurfaceContainment> {
-    let containment = certify_single_triangle_coplanar_containment(left, right)?;
+    let containment = certify_single_triangle_coplanar_containment(left, right)
+        .or_else(|| certify_coplanar_surface_mesh_containment(left, right))?;
     match (containment, operation) {
         (
             CoplanarSurfaceContainment::LeftInsideRight,
