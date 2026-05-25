@@ -2,8 +2,9 @@ use std::hint::black_box;
 use std::time::Instant;
 
 use hypercurve::{
-    BezierArrangementGraph2, BezierParameter2, Classification, CurvePolicy, CurveResult, Point2,
-    QuadraticBezier2, Real,
+    BezierAlgebraicParameter2, BezierArrangementGraph2, BezierParameter2, BezierParameterInterval,
+    BezierParameterPolynomial, Classification, CurvePolicy, CurveResult, Point2, QuadraticBezier2,
+    Real,
 };
 
 fn r(value: i32) -> Real {
@@ -49,6 +50,31 @@ fn main() -> CurveResult<()> {
     let elapsed = started.elapsed();
     println!(
         "bezier_arrangement_tangent_order: {iterations} iterations in {elapsed:?} ({:?}/iter), total={total}",
+        elapsed / iterations
+    );
+
+    let algebraic_parameter =
+        BezierParameter2::algebraic(decided(BezierAlgebraicParameter2::try_isolate(
+            decided(BezierParameterPolynomial::try_new_power_basis(
+                vec![r(-1), r(2)],
+                &policy,
+            )?),
+            decided(BezierParameterInterval::try_new(q(2, 5), q(3, 5), &policy)?),
+            &policy,
+        )?));
+    let algebraic_curve = QuadraticBezier2::new(p(-1, 0), p(0, 0), p(1, 0));
+    let algebraic_split =
+        decided(algebraic_curve.split_at_parameters(&[algebraic_parameter], &policy)?);
+    let retained_graph = BezierArrangementGraph2::from_split_materializations(&[algebraic_split]);
+    let started = Instant::now();
+    let mut retained_total = 0_usize;
+    for _ in 0..iterations {
+        let traversal = decided(retained_graph.traverse_retained_with_tangent_order(&policy));
+        retained_total += black_box(traversal.len());
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "bezier_arrangement_retained_tangent_order: {iterations} iterations in {elapsed:?} ({:?}/iter), total={retained_total}",
         elapsed / iterations
     );
 

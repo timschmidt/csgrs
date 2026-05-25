@@ -1,7 +1,8 @@
 use hypercurve::{
-    BezierAlgebraicParameter2, BezierArrangementGraph2, BezierParameter2, BezierParameterInterval,
-    BezierParameterPolynomial, BezierSplitFragment2, BezierSubcurve2, Classification, CubicBezier2,
-    CurvePolicy, Point2, QuadraticBezier2, Real, UncertaintyReason,
+    BezierAlgebraicEndpointImage2, BezierAlgebraicParameter2, BezierArrangementGraph2,
+    BezierParameter2, BezierParameterInterval, BezierParameterPolynomial, BezierSplitFragment2,
+    BezierSubcurve2, Classification, CubicBezier2, CurvePolicy, Point2, QuadraticBezier2, Real,
+    UncertaintyReason,
 };
 use proptest::prelude::*;
 
@@ -40,6 +41,25 @@ fn algebraic_midpoint() -> BezierParameter2 {
     BezierParameter2::algebraic(decided(
         BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy()).unwrap(),
     ))
+}
+
+fn algebraic_midpoint_parameter() -> BezierAlgebraicParameter2 {
+    let polynomial = decided(
+        BezierParameterPolynomial::try_new_power_basis(vec![r(-1), r(2)], &policy()).unwrap(),
+    );
+    let interval = decided(BezierParameterInterval::try_new(q(2, 5), q(3, 5), &policy()).unwrap());
+    decided(BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy()).unwrap())
+}
+
+fn through_origin_with_midpoint_tangent(dx: i32, dy: i32) -> QuadraticBezier2 {
+    QuadraticBezier2::new(p(-dx, -dy), p(0, 0), p(dx, dy))
+}
+
+fn algebraic_endpoint_image(
+    curve: &QuadraticBezier2,
+    parameter: &BezierAlgebraicParameter2,
+) -> BezierAlgebraicEndpointImage2 {
+    BezierAlgebraicEndpointImage2::quadratic(curve, parameter, &policy()).unwrap()
 }
 
 #[test]
@@ -165,6 +185,85 @@ fn algebraic_split_boundary_blocks_graph_traversal() {
 
     assert_eq!(
         graph.traverse_branch_free(&policy()),
+        Classification::Uncertain(UncertaintyReason::Boundary)
+    );
+}
+
+#[test]
+fn retained_tangent_order_traverses_algebraic_branch_vertex() {
+    let parameter = algebraic_midpoint_parameter();
+    let algebraic = BezierParameter2::algebraic(parameter.clone());
+    let incoming_curve = through_origin_with_midpoint_tangent(1, 0);
+    let upward_curve = through_origin_with_midpoint_tangent(0, 1);
+    let downward_curve = through_origin_with_midpoint_tangent(0, -1);
+    let incoming = BezierSplitFragment2::AlgebraicEndpointImages {
+        start: exact(r(0)),
+        end: algebraic.clone(),
+        start_image: None,
+        end_image: Some(algebraic_endpoint_image(&incoming_curve, &parameter)),
+    };
+    let upward = BezierSplitFragment2::AlgebraicEndpointImages {
+        start: algebraic.clone(),
+        end: exact(r(1)),
+        start_image: Some(algebraic_endpoint_image(&upward_curve, &parameter)),
+        end_image: None,
+    };
+    let downward = BezierSplitFragment2::AlgebraicEndpointImages {
+        start: algebraic,
+        end: exact(r(1)),
+        start_image: Some(algebraic_endpoint_image(&downward_curve, &parameter)),
+        end_image: None,
+    };
+    let graph = BezierArrangementGraph2::new(vec![
+        hypercurve::BezierArrangementFragment2::new(0, 0, incoming),
+        hypercurve::BezierArrangementFragment2::new(1, 0, upward),
+        hypercurve::BezierArrangementFragment2::new(2, 0, downward),
+    ]);
+
+    assert_eq!(
+        graph.traverse_with_tangent_order(&policy()),
+        Classification::Uncertain(UncertaintyReason::Boundary)
+    );
+    let traversal = decided(graph.traverse_retained_with_tangent_order(&policy()));
+
+    assert_eq!(traversal.len(), 2);
+    assert_eq!(traversal.chains()[0].fragment_indices(), &[0, 1]);
+    assert_eq!(traversal.chains()[1].fragment_indices(), &[2]);
+}
+
+#[test]
+fn retained_tangent_order_rejects_equal_algebraic_successors() {
+    let parameter = algebraic_midpoint_parameter();
+    let algebraic = BezierParameter2::algebraic(parameter.clone());
+    let incoming_curve = through_origin_with_midpoint_tangent(1, 0);
+    let first_curve = through_origin_with_midpoint_tangent(0, 1);
+    let second_curve = through_origin_with_midpoint_tangent(0, 1);
+    let incoming = BezierSplitFragment2::AlgebraicEndpointImages {
+        start: exact(r(0)),
+        end: algebraic.clone(),
+        start_image: None,
+        end_image: Some(algebraic_endpoint_image(&incoming_curve, &parameter)),
+    };
+    let first = BezierSplitFragment2::AlgebraicEndpointImages {
+        start: algebraic.clone(),
+        end: exact(r(1)),
+        start_image: Some(algebraic_endpoint_image(&first_curve, &parameter)),
+        end_image: None,
+    };
+    let second = BezierSplitFragment2::AlgebraicEndpointImages {
+        start: algebraic,
+        end: exact(r(1)),
+        start_image: Some(algebraic_endpoint_image(&second_curve, &parameter)),
+        end_image: None,
+    };
+    let graph = BezierArrangementGraph2::new(vec![
+        hypercurve::BezierArrangementFragment2::new(0, 0, incoming),
+        hypercurve::BezierArrangementFragment2::new(1, 0, first),
+        hypercurve::BezierArrangementFragment2::new(2, 0, second),
+    ]);
+
+    assert_eq!(
+        graph.traverse_retained_with_tangent_order(&policy()),
         Classification::Uncertain(UncertaintyReason::Boundary)
     );
 }

@@ -50,4 +50,5 @@ fuzz_target!(|data: &[u8]| {
     let graph = BezierArrangementGraph2::from_split_materializations(&materializations);
     let _ = graph.traverse_branch_free(&policy);
     let _ = graph.traverse_with_tangent_order(&policy);
+    let _ = graph.traverse_retained_with_tangent_order(&policy);
 });

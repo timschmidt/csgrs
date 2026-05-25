@@ -5,8 +5,10 @@
 //! substrate for the fragments produced by [`BezierSplitMaterialization2`]: it
 //! connects materialized Bezier/conic fragments by exact endpoint equality,
 //! follows branch-free chains, and can optionally resolve simple branch
-//! vertices by exact tangent angle order. It still refuses overlaps,
-//! coincident tangents, zero tangents, and algebraic-boundary uncertainty.
+//! vertices by exact tangent angle order. A retained traversal variant also
+//! consumes algebraic endpoint-image fragments whose represented point and
+//! tangent evidence is present, while still refusing unresolved fragments,
+//! overlaps, coincident tangents, zero tangents, and mixed unsupported evidence.
 //!
 //! That boundary is the exact-computation discipline described by Yap,
 //! "Towards Exact Geometric Computation," *Computational Geometry* 7(1-2),
@@ -20,11 +22,14 @@
 //! order is not certified, traversal stops instead of guessing.
 
 use hyperreal::{Real, RealSign};
+use hypersolve::AlgebraicRootRepresentation;
 
 use crate::classify::{is_zero, real_sign};
 use crate::{
-    BezierEndpoint, BezierSplitFragment2, BezierSplitMaterialization2, BezierSubcurve2,
-    Classification, CurvePolicy, Point2, UncertaintyReason, ZeroStatus,
+    BezierAlgebraicTangentOrderStatus, BezierAlgebraicTangentVector2, BezierEndpoint,
+    BezierEndpointPointImage2, BezierEndpointTangentImage2, BezierSplitFragment2,
+    BezierSplitMaterialization2, BezierSubcurve2, BezierTangentTurnOrdering2, Classification,
+    CurvePolicy, Point2, UncertaintyReason, ZeroStatus, compare_algebraic_tangent_turn_from_base,
 };
 
 /// One retained Bezier arrangement fragment with source provenance.
@@ -226,6 +231,73 @@ impl BezierArrangementGraph2 {
 
         Classification::Decided(BezierArrangementTraversal2::new(chains))
     }
+
+    /// Traverses retained fragments using native and algebraic endpoint evidence.
+    ///
+    /// This is the first traversal consumer for
+    /// [`BezierSplitFragment2::AlgebraicEndpointImages`]. It connects endpoints
+    /// only when the retained point evidence is exact and structurally equal
+    /// (or when a represented coordinate has an exact rational witness matching
+    /// a native point). At a branch vertex it compares outgoing tangents with
+    /// either the native exact cross/dot predicate or
+    /// [`compare_algebraic_tangent_turn_from_base`].
+    ///
+    /// The method deliberately does not materialize concrete Bezier regions
+    /// from algebraic fragments. It only proves traversal order over retained
+    /// evidence, preserving Yap's construction/decision boundary from
+    /// "Towards Exact Geometric Computation," *Computational Geometry* 7(1-2),
+    /// 3-23 (1997), and matching the arrangement local-order discipline in de
+    /// Berg et al., *Computational Geometry* (3rd ed., 2008).
+    pub fn traverse_retained_with_tangent_order(
+        &self,
+        policy: &CurvePolicy,
+    ) -> Classification<BezierArrangementTraversal2> {
+        let mut endpoints = Vec::with_capacity(self.fragments.len());
+        for fragment in &self.fragments {
+            let endpoints_for_fragment = match retained_endpoint_data(fragment.fragment(), policy) {
+                Some(Classification::Decided(endpoints)) => endpoints,
+                Some(Classification::Uncertain(reason)) => {
+                    return Classification::Uncertain(reason);
+                }
+                None => return Classification::Uncertain(UncertaintyReason::Boundary),
+            };
+            endpoints.push(endpoints_for_fragment);
+        }
+
+        let outgoing = match retained_outgoing_adjacency(&endpoints, policy) {
+            Classification::Decided(outgoing) => outgoing,
+            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+        };
+        let predecessors = match retained_predecessor_counts(&endpoints, policy) {
+            Classification::Decided(predecessors) => predecessors,
+            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+        };
+
+        let mut used = vec![false; self.fragments.len()];
+        let mut chains = Vec::new();
+        for index in 0..self.fragments.len() {
+            if predecessors[index] == 0 && !used[index] {
+                match follow_retained_tangent_ordered_chain(
+                    index, &outgoing, &endpoints, &mut used, policy,
+                ) {
+                    Classification::Decided(chain) => chains.push(chain),
+                    Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+                }
+            }
+        }
+        for index in 0..self.fragments.len() {
+            if !used[index] {
+                match follow_retained_tangent_ordered_chain(
+                    index, &outgoing, &endpoints, &mut used, policy,
+                ) {
+                    Classification::Decided(chain) => chains.push(chain),
+                    Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+                }
+            }
+        }
+
+        Classification::Decided(BezierArrangementTraversal2::new(chains))
+    }
 }
 
 impl BezierArrangementChain2 {
@@ -317,6 +389,29 @@ struct TangentVector {
     dy: Real,
 }
 
+#[derive(Clone, Debug)]
+struct RetainedEndpointData {
+    start: Option<RetainedEndpointKey>,
+    end: Option<RetainedEndpointKey>,
+    start_tangent: Option<RetainedTangentVector>,
+    end_tangent: Option<RetainedTangentVector>,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+enum RetainedEndpointKey {
+    Exact(Box<Point2>),
+    Algebraic {
+        x: Box<AlgebraicRootRepresentation>,
+        y: Box<AlgebraicRootRepresentation>,
+    },
+}
+
+#[derive(Clone, Debug)]
+enum RetainedTangentVector {
+    Native(Box<TangentVector>),
+    Algebraic(Box<BezierAlgebraicTangentVector2>),
+}
+
 fn materialized_endpoint_data(
     fragment: &BezierSplitFragment2,
     policy: &CurvePolicy,
@@ -326,6 +421,90 @@ fn materialized_endpoint_data(
         BezierSplitFragment2::AlgebraicEndpointImages { .. }
         | BezierSplitFragment2::Unresolved { .. } => None,
     }
+}
+
+fn retained_endpoint_data(
+    fragment: &BezierSplitFragment2,
+    policy: &CurvePolicy,
+) -> Option<Classification<RetainedEndpointData>> {
+    match fragment {
+        BezierSplitFragment2::Materialized { curve, .. } => match curve.endpoint_data(policy) {
+            Classification::Decided(data) => Some(Classification::Decided(RetainedEndpointData {
+                start: Some(RetainedEndpointKey::Exact(Box::new(data.start))),
+                end: Some(RetainedEndpointKey::Exact(Box::new(data.end))),
+                start_tangent: Some(RetainedTangentVector::Native(Box::new(data.start_tangent))),
+                end_tangent: Some(RetainedTangentVector::Native(Box::new(data.end_tangent))),
+            })),
+            Classification::Uncertain(reason) => Some(Classification::Uncertain(reason)),
+        },
+        BezierSplitFragment2::AlgebraicEndpointImages {
+            start_image,
+            end_image,
+            ..
+        } => {
+            let start = match start_image {
+                Some(image) => match retained_algebraic_point_key(image.point()) {
+                    Some(key) => Some(key),
+                    None => return Some(Classification::Uncertain(UncertaintyReason::Boundary)),
+                },
+                None => None,
+            };
+            let end = match end_image {
+                Some(image) => match retained_algebraic_point_key(image.point()) {
+                    Some(key) => Some(key),
+                    None => return Some(Classification::Uncertain(UncertaintyReason::Boundary)),
+                },
+                None => None,
+            };
+            let start_tangent = match start_image {
+                Some(image) => match retained_algebraic_tangent(image.tangent()) {
+                    Some(tangent) => Some(tangent),
+                    None => return Some(Classification::Uncertain(UncertaintyReason::Boundary)),
+                },
+                None => None,
+            };
+            let end_tangent = match end_image {
+                Some(image) => match retained_algebraic_tangent(image.tangent()) {
+                    Some(tangent) => Some(tangent),
+                    None => return Some(Classification::Uncertain(UncertaintyReason::Boundary)),
+                },
+                None => None,
+            };
+            Some(Classification::Decided(RetainedEndpointData {
+                start,
+                end,
+                start_tangent,
+                end_tangent,
+            }))
+        }
+        BezierSplitFragment2::Unresolved { .. } => None,
+    }
+}
+
+fn retained_algebraic_point_key(point: &BezierEndpointPointImage2) -> Option<RetainedEndpointKey> {
+    let (x, y) = match point {
+        BezierEndpointPointImage2::Polynomial(point) => (
+            point.x()?.representation()?.clone(),
+            point.y()?.representation()?.clone(),
+        ),
+        BezierEndpointPointImage2::RationalQuadratic(point) => (
+            point.x()?.representation()?.clone(),
+            point.y()?.representation()?.clone(),
+        ),
+    };
+    Some(RetainedEndpointKey::Algebraic {
+        x: Box::new(x),
+        y: Box::new(y),
+    })
+}
+
+fn retained_algebraic_tangent(
+    tangent: &BezierEndpointTangentImage2,
+) -> Option<RetainedTangentVector> {
+    BezierAlgebraicTangentVector2::from_endpoint_image(tangent)
+        .vector
+        .map(Box::new)
+        .map(RetainedTangentVector::Algebraic)
 }
 
 type EndpointAdjacency = (Vec<Option<usize>>, Vec<Option<usize>>);
@@ -431,6 +610,146 @@ fn predecessor_counts(
         }
     }
     Classification::Decided(predecessors)
+}
+
+fn retained_outgoing_adjacency(
+    endpoints: &[RetainedEndpointData],
+    policy: &CurvePolicy,
+) -> Classification<Vec<Vec<usize>>> {
+    let mut outgoing = vec![Vec::new(); endpoints.len()];
+    for (left_index, left) in endpoints.iter().enumerate() {
+        let Some(left_end) = left.end.as_ref() else {
+            continue;
+        };
+        for (right_index, right) in endpoints.iter().enumerate() {
+            if left_index == right_index {
+                continue;
+            }
+            let Some(right_start) = right.start.as_ref() else {
+                continue;
+            };
+            match retained_endpoints_equal(left_end, right_start, policy) {
+                Some(true) => outgoing[left_index].push(right_index),
+                Some(false) => {}
+                None => return Classification::Uncertain(UncertaintyReason::RealSign),
+            }
+        }
+    }
+    Classification::Decided(outgoing)
+}
+
+fn retained_predecessor_counts(
+    endpoints: &[RetainedEndpointData],
+    policy: &CurvePolicy,
+) -> Classification<Vec<usize>> {
+    let mut predecessors = vec![0_usize; endpoints.len()];
+    for (left_index, left) in endpoints.iter().enumerate() {
+        let Some(left_end) = left.end.as_ref() else {
+            continue;
+        };
+        for (right_index, right) in endpoints.iter().enumerate() {
+            if left_index == right_index {
+                continue;
+            }
+            let Some(right_start) = right.start.as_ref() else {
+                continue;
+            };
+            match retained_endpoints_equal(left_end, right_start, policy) {
+                Some(true) => predecessors[right_index] += 1,
+                Some(false) => {}
+                None => return Classification::Uncertain(UncertaintyReason::RealSign),
+            }
+        }
+    }
+    Classification::Decided(predecessors)
+}
+
+fn follow_retained_tangent_ordered_chain(
+    start: usize,
+    outgoing: &[Vec<usize>],
+    endpoints: &[RetainedEndpointData],
+    used: &mut [bool],
+    policy: &CurvePolicy,
+) -> Classification<BezierArrangementChain2> {
+    let first_start = endpoints[start].start.clone();
+    let mut current = start;
+    let mut indices = Vec::new();
+
+    loop {
+        if used[current] {
+            break;
+        }
+        used[current] = true;
+        indices.push(current);
+
+        let next =
+            match choose_retained_tangent_successor(current, &outgoing[current], endpoints, policy)
+            {
+                Classification::Decided(next) => next,
+                Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+            };
+        let Some(next) = next else {
+            let closed = match (&endpoints[current].end, &first_start) {
+                (Some(end), Some(start)) => match retained_endpoints_equal(end, start, policy) {
+                    Some(value) => value,
+                    None => return Classification::Uncertain(UncertaintyReason::RealSign),
+                },
+                _ => false,
+            };
+            return Classification::Decided(BezierArrangementChain2::new(indices, closed));
+        };
+
+        current = next;
+        if current == start {
+            return Classification::Decided(BezierArrangementChain2::new(indices, true));
+        }
+    }
+
+    Classification::Uncertain(UncertaintyReason::Boundary)
+}
+
+fn choose_retained_tangent_successor(
+    current: usize,
+    candidates: &[usize],
+    endpoints: &[RetainedEndpointData],
+    policy: &CurvePolicy,
+) -> Classification<Option<usize>> {
+    if candidates.is_empty() {
+        return Classification::Decided(None);
+    }
+    if candidates.len() == 1 {
+        return Classification::Decided(Some(candidates[0]));
+    }
+
+    let Some(base) = endpoints[current].end_tangent.as_ref() else {
+        return Classification::Uncertain(UncertaintyReason::Boundary);
+    };
+    let mut best = candidates[0];
+    for candidate in candidates {
+        if endpoints[*candidate].start_tangent.is_none() {
+            return Classification::Uncertain(UncertaintyReason::Boundary);
+        }
+    }
+
+    for candidate in candidates.iter().copied().skip(1) {
+        let first = endpoints[candidate]
+            .start_tangent
+            .as_ref()
+            .expect("candidate tangent checked above");
+        let second = endpoints[best]
+            .start_tangent
+            .as_ref()
+            .expect("candidate tangent checked above");
+        match compare_retained_turn_from_base(base, first, second, policy) {
+            Classification::Decided(TurnOrdering::FirstBeforeSecond) => best = candidate,
+            Classification::Decided(TurnOrdering::SecondBeforeFirst) => {}
+            Classification::Decided(TurnOrdering::SameDirection) => {
+                return Classification::Uncertain(UncertaintyReason::Boundary);
+            }
+            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+        }
+    }
+    Classification::Decided(Some(best))
 }
 
 fn follow_tangent_ordered_chain(
@@ -552,6 +871,50 @@ fn compare_turn_from_base(
     }
 }
 
+fn compare_retained_turn_from_base(
+    base: &RetainedTangentVector,
+    first: &RetainedTangentVector,
+    second: &RetainedTangentVector,
+    policy: &CurvePolicy,
+) -> Classification<TurnOrdering> {
+    match (base, first, second) {
+        (
+            RetainedTangentVector::Native(base),
+            RetainedTangentVector::Native(first),
+            RetainedTangentVector::Native(second),
+        ) => compare_turn_from_base(base, first, second, policy),
+        (
+            RetainedTangentVector::Algebraic(base),
+            RetainedTangentVector::Algebraic(first),
+            RetainedTangentVector::Algebraic(second),
+        ) => match compare_algebraic_tangent_turn_from_base(base, first, second, policy) {
+            Classification::Decided(report) => match report.status {
+                BezierAlgebraicTangentOrderStatus::Ordered => match report.ordering {
+                    Some(BezierTangentTurnOrdering2::FirstBeforeSecond) => {
+                        Classification::Decided(TurnOrdering::FirstBeforeSecond)
+                    }
+                    Some(BezierTangentTurnOrdering2::SecondBeforeFirst) => {
+                        Classification::Decided(TurnOrdering::SecondBeforeFirst)
+                    }
+                    None => Classification::Uncertain(UncertaintyReason::Boundary),
+                },
+                BezierAlgebraicTangentOrderStatus::SameDirection => {
+                    Classification::Decided(TurnOrdering::SameDirection)
+                }
+                BezierAlgebraicTangentOrderStatus::ZeroTangent
+                | BezierAlgebraicTangentOrderStatus::SignUndecided => {
+                    Classification::Uncertain(UncertaintyReason::RealSign)
+                }
+                BezierAlgebraicTangentOrderStatus::ArithmeticFailed => {
+                    Classification::Uncertain(UncertaintyReason::Unsupported)
+                }
+            },
+            Classification::Uncertain(reason) => Classification::Uncertain(reason),
+        },
+        _ => Classification::Uncertain(UncertaintyReason::Unsupported),
+    }
+}
+
 fn turn_half(base: &TangentVector, candidate: &TangentVector, policy: &CurvePolicy) -> Option<u8> {
     match real_sign(&cross_vectors(base, candidate), policy)? {
         RealSign::Positive => Some(0),
@@ -566,6 +929,41 @@ fn turn_half(base: &TangentVector, candidate: &TangentVector, policy: &CurvePoli
 
 fn points_equal(left: &Point2, right: &Point2, policy: &CurvePolicy) -> Option<bool> {
     is_zero(&left.distance_squared(right), policy)
+}
+
+fn retained_endpoints_equal(
+    left: &RetainedEndpointKey,
+    right: &RetainedEndpointKey,
+    policy: &CurvePolicy,
+) -> Option<bool> {
+    match (left, right) {
+        (RetainedEndpointKey::Exact(left), RetainedEndpointKey::Exact(right)) => {
+            points_equal(left, right, policy)
+        }
+        (
+            RetainedEndpointKey::Algebraic {
+                x: left_x,
+                y: left_y,
+            },
+            RetainedEndpointKey::Algebraic {
+                x: right_x,
+                y: right_y,
+            },
+        ) => Some(left_x == right_x && left_y == right_y),
+        (RetainedEndpointKey::Exact(point), RetainedEndpointKey::Algebraic { x, y })
+        | (RetainedEndpointKey::Algebraic { x, y }, RetainedEndpointKey::Exact(point)) => {
+            let x_witness = x.exact_rational_witness()?;
+            let y_witness = y.exact_rational_witness()?;
+            Some(
+                compare_reals_equal(x_witness, point.x(), policy)?
+                    && compare_reals_equal(y_witness, point.y(), policy)?,
+            )
+        }
+    }
+}
+
+fn compare_reals_equal(left: &Real, right: &Real, policy: &CurvePolicy) -> Option<bool> {
+    Some(crate::classify::compare_reals(left, right, policy)? == std::cmp::Ordering::Equal)
 }
 
 impl BezierSubcurve2 {
