@@ -8,12 +8,21 @@ publish = false
 cargo-fuzz = true
 
 [dependencies]
+hyperlimit = { path = "../../hyperlimit" }
 hyperpath = { path = ".." }
+hyperreal = { path = "../../hyperreal" }
 libfuzzer-sys = "0.4"
 
 [[bin]]
 name = "specctra_route_text"
 path = "fuzz_targets/specctra_route_text.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "pcb_rounded_rect_pad"
+path = "fuzz_targets/pcb_rounded_rect_pad.rs"
 test = false
 doc = false
 bench = false

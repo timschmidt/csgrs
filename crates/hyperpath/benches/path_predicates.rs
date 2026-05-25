@@ -5,22 +5,23 @@ use hyperpath::{
     ConstructionStamp, CubicBezier, ExplicitCircularArc, HigherOrderBezier, LinePathSegment,
     MeanderObstacle, MeanderPlacementCandidate, NetId, OffsetSide, PathProvenance,
     PathSourceFormat, PcbBoardOutline, PcbCardinalRectPad, PcbCircularPad, PcbConvexBoardOutline,
-    PcbOrthogonalBoardOutline, PcbRectPad, PcbTrace, PcbViaStack, QuadraticBezier,
-    RationalQuadraticBezier, RectangularPocket, SourceLengthUnit, SpecctraGridTraceRecord,
-    SpecctraGridViaRecord, SpecctraLayerAlias, SpecctraNetAlias, SweptLineSegment, TangentSpan,
-    TraceLayer, ViaDrillIntent, build_alternating_detour_meander, build_g1_join_problem,
-    build_length_match_problem, build_multi_detour_meander, build_nonuniform_detour_meander,
-    build_obstacle_aware_detour_meander, build_oriented_tangent_alignment_problem,
-    build_rectangular_bead_plan, build_rectangular_pocket_plan,
-    build_rectangular_serpentine_infill_graph, build_rectangular_support_plan,
-    build_single_detour_meander, build_tangent_alignment_problem, certify_constant_feed_time,
-    certify_differential_pair_skew, certify_g1_chain, certify_g1_join_candidate,
-    certify_length_extension, certify_tangent_alignment_candidate,
+    PcbOrthogonalBoardOutline, PcbRectPad, PcbRoundedRectPad, PcbTrace, PcbViaStack,
+    QuadraticBezier, RationalQuadraticBezier, RectangularPocket, SourceLengthUnit,
+    SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraLayerAlias, SpecctraNetAlias,
+    SweptLineSegment, TangentSpan, TraceLayer, ViaDrillIntent, build_alternating_detour_meander,
+    build_g1_join_problem, build_length_match_problem, build_multi_detour_meander,
+    build_nonuniform_detour_meander, build_obstacle_aware_detour_meander,
+    build_oriented_tangent_alignment_problem, build_rectangular_bead_plan,
+    build_rectangular_pocket_plan, build_rectangular_serpentine_infill_graph,
+    build_rectangular_support_plan, build_single_detour_meander, build_tangent_alignment_problem,
+    certify_constant_feed_time, certify_differential_pair_skew, certify_g1_chain,
+    certify_g1_join_candidate, certify_length_extension, certify_tangent_alignment_candidate,
     check_cardinal_rect_pad_board_clearance, check_circular_pad_board_clearance,
-    check_rect_pad_board_clearance, check_trace_board_clearance,
-    check_trace_cardinal_rect_pad_clearance, check_trace_clearance,
+    check_rect_pad_board_clearance, check_rounded_rect_pad_board_clearance,
+    check_trace_board_clearance, check_trace_cardinal_rect_pad_clearance, check_trace_clearance,
     check_trace_convex_board_clearance, check_trace_orthogonal_board_clearance,
-    check_trace_pad_clearance, check_trace_rect_pad_clearance, check_trace_via_clearance,
+    check_trace_pad_clearance, check_trace_rect_pad_clearance,
+    check_trace_rounded_rect_pad_clearance, check_trace_via_clearance,
     check_trace_via_drill_clearance, check_via_drill_board_clearance,
     classify_meander_candidate_slots, classify_meander_placement_slots, classify_tangent_alignment,
     classify_tangent_chain, classify_tangent_join, import_specctra_trace_record,
@@ -362,6 +363,18 @@ fn path_predicates(c: &mut Criterion) {
             )
         })
     });
+    let rounded_rect =
+        PcbRoundedRectPad::new(NetId(2), TraceLayer(0), p(500, 8), r(10), r(4), r(2)).unwrap();
+    c.bench_function("trace_rounded_rect_pad_clearance_exact", |b| {
+        b.iter(|| {
+            check_trace_rounded_rect_pad_clearance(
+                &first,
+                &rounded_rect,
+                &r(3),
+                PredicatePolicy::default(),
+            )
+        })
+    });
     let board = PcbBoardOutline::new(p(-100, -100), p(1100, 100)).unwrap();
     c.bench_function("trace_board_edge_clearance_exact", |b| {
         b.iter(|| check_trace_board_clearance(&first, &board, &r(25), PredicatePolicy::default()))
@@ -426,6 +439,16 @@ fn path_predicates(c: &mut Criterion) {
         b.iter(|| {
             check_cardinal_rect_pad_board_clearance(
                 &cardinal_rect,
+                &board,
+                &r(25),
+                PredicatePolicy::default(),
+            )
+        })
+    });
+    c.bench_function("rounded_rect_pad_board_edge_clearance_exact", |b| {
+        b.iter(|| {
+            check_rounded_rect_pad_board_clearance(
+                &rounded_rect,
                 &board,
                 &r(25),
                 PredicatePolicy::default(),

@@ -277,6 +277,17 @@ pub struct PcbPadFacts {
     pub provenance: PathProvenance,
 }
 
+/// Cached facts for an exact rounded rectangular pad.
+#[derive(Clone, Debug, PartialEq)]
+pub struct PcbRoundedRectPadFacts {
+    /// Exact-set facts across center coordinates, extents, and radius.
+    pub exact: RealExactSetFacts,
+    /// Corner-radius sign class.
+    pub corner_radius_class: TraceWidthClass,
+    /// Source provenance.
+    pub provenance: PathProvenance,
+}
+
 /// Exact circular pad/via approximation for first routing predicates.
 #[derive(Clone, Debug, PartialEq)]
 pub struct PcbCircularPad {
@@ -296,6 +307,27 @@ pub struct PcbRectPad {
     width: Real,
     height: Real,
     provenance: PathProvenance,
+}
+
+/// Exact axis-aligned rounded rectangular pad.
+///
+/// This is a retained PCB/CAM-domain shape, not a mesh boolean artifact. The
+/// predicate model treats the pad as an exact inner rectangle Minkowski-summed
+/// with a disk of `corner_radius`. Trace clearance can therefore be certified
+/// by one exact segment-to-rectangle squared-distance comparison. That is the
+/// same exact object/predicate split advocated by Yap, "Towards Exact
+/// Geometric Computation," *Computational Geometry* 7.1-2 (1997), and it keeps
+/// rounded SMD pads available to Lee/Hightower-style route generators without
+/// materializing approximate arcs or triangle meshes.
+#[derive(Clone, Debug, PartialEq)]
+pub struct PcbRoundedRectPad {
+    net: NetId,
+    layer: TraceLayer,
+    center: Point2,
+    width: Real,
+    height: Real,
+    corner_radius: Real,
+    facts: PcbRoundedRectPadFacts,
 }
 
 /// Cardinal rotation for exact rectangular-pad predicates.
@@ -534,10 +566,10 @@ impl PcbRectPad {
 
     /// Construct an axis-aligned rectangular pad with source provenance.
     ///
-    /// This is the first non-circular pad carrier. Rotated pads and rounded
-    /// rectangles should be represented later as exact polygon/arc path
-    /// geometry; this type keeps common SMD rectangular-pad clearance inside a
-    /// small exact predicate surface.
+    /// This is the sharp-corner rectangular carrier. Cardinal rotations and
+    /// rounded rectangles are represented by neighboring exact pad carriers;
+    /// arbitrary-angle pads still belong in a later polygon/arc arrangement
+    /// layer.
     pub fn with_provenance(
         net: NetId,
         layer: TraceLayer,
@@ -590,6 +622,124 @@ impl PcbRectPad {
     /// Return source provenance.
     pub const fn provenance(&self) -> PathProvenance {
         self.provenance
+    }
+}
+
+impl PcbRoundedRectPad {
+    /// Construct an axis-aligned rounded rectangular pad.
+    pub fn new(
+        net: NetId,
+        layer: TraceLayer,
+        center: Point2,
+        width: Real,
+        height: Real,
+        corner_radius: Real,
+    ) -> Result<Self, &'static str> {
+        Self::with_provenance(
+            net,
+            layer,
+            center,
+            width,
+            height,
+            corner_radius,
+            PathProvenance::native(),
+        )
+    }
+
+    /// Construct an axis-aligned rounded rectangular pad with source provenance.
+    ///
+    /// The shape is accepted only when `0 <= corner_radius <= min(width,
+    /// height) / 2` can be certified exactly. That validation is intentionally
+    /// stricter than a display/import tolerance: under Yap's exact-computation
+    /// discipline, ambiguous object construction must not become trusted input
+    /// to later clearance predicates.
+    pub fn with_provenance(
+        net: NetId,
+        layer: TraceLayer,
+        center: Point2,
+        width: Real,
+        height: Real,
+        corner_radius: Real,
+        provenance: PathProvenance,
+    ) -> Result<Self, &'static str> {
+        if real_sign(&width) == Some(hyperreal::RealSign::Negative) {
+            return Err("rounded rect pad width must be nonnegative");
+        }
+        if real_sign(&height) == Some(hyperreal::RealSign::Negative) {
+            return Err("rounded rect pad height must be nonnegative");
+        }
+        let corner_radius_class = match real_sign(&corner_radius) {
+            Some(hyperreal::RealSign::Negative) => {
+                return Err("rounded rect pad corner radius must be nonnegative");
+            }
+            Some(hyperreal::RealSign::Zero) => TraceWidthClass::Zero,
+            Some(hyperreal::RealSign::Positive) => TraceWidthClass::Positive,
+            None => TraceWidthClass::Unknown,
+        };
+        let doubled_radius = corner_radius.clone() * Real::from(2);
+        let radius_within_width =
+            compare_reals_with_policy(&doubled_radius, &width, PredicatePolicy::default()).value();
+        let radius_within_height =
+            compare_reals_with_policy(&doubled_radius, &height, PredicatePolicy::default()).value();
+        if !matches!(radius_within_width, Some(Ordering::Less | Ordering::Equal))
+            || !matches!(radius_within_height, Some(Ordering::Less | Ordering::Equal))
+        {
+            return Err("rounded rect pad corner radius must not exceed half extent");
+        }
+        let facts = PcbRoundedRectPadFacts {
+            exact: Real::exact_set_facts([&center.x, &center.y, &width, &height, &corner_radius]),
+            corner_radius_class,
+            provenance,
+        };
+        Ok(Self {
+            net,
+            layer,
+            center,
+            width,
+            height,
+            corner_radius,
+            facts,
+        })
+    }
+
+    /// Return pad net.
+    pub const fn net(&self) -> NetId {
+        self.net
+    }
+
+    /// Return pad layer.
+    pub const fn layer(&self) -> TraceLayer {
+        self.layer
+    }
+
+    /// Return exact center.
+    pub const fn center(&self) -> &Point2 {
+        &self.center
+    }
+
+    /// Return exact full width.
+    pub const fn width(&self) -> &Real {
+        &self.width
+    }
+
+    /// Return exact full height.
+    pub const fn height(&self) -> &Real {
+        &self.height
+    }
+
+    /// Return exact corner radius.
+    pub const fn corner_radius(&self) -> &Real {
+        &self.corner_radius
+    }
+
+    /// Return cached exact facts.
+    pub const fn facts(&self) -> &PcbRoundedRectPadFacts {
+        &self.facts
+    }
+
+    /// Return source provenance.
+    pub const fn provenance(&self) -> PathProvenance {
+        self.facts.provenance
     }
 }
 
@@ -1423,6 +1573,76 @@ pub fn check_trace_rect_pad_clearance(
     }
 }
 
+/// Check an axis-aligned trace against an axis-aligned rounded rectangular pad.
+///
+/// The rounded pad is represented exactly as `inner_rect + disk(radius)`, i.e.
+/// the Minkowski sum of a sharp inner rectangle with a circular corner kernel.
+/// The predicate therefore compares the exact squared distance from the trace
+/// centerline to the inner rectangle against squared copper-overlap and
+/// clearance limits. This directly follows Yap's exact geometric computation
+/// rule of keeping construction objects exact and deciding acceptance with
+/// exact predicates; it also fits Lee/Hightower router pipelines because route
+/// candidates remain straight centerline segments until this certification
+/// step.
+pub fn check_trace_rounded_rect_pad_clearance(
+    trace: &PcbTrace,
+    pad: &PcbRoundedRectPad,
+    required_clearance: &Real,
+    policy: PredicatePolicy,
+) -> TraceClearanceReport {
+    if trace.layer != pad.layer || trace.net == pad.net {
+        return TraceClearanceReport {
+            status: ClearanceStatus::NotApplicable,
+            centerline_intersection: None,
+            axis_gap: None,
+        };
+    }
+    let Some(distance_squared) = axis_aligned_segment_rounded_rect_inner_distance_squared(
+        trace.swept.centerline(),
+        pad,
+        policy,
+    ) else {
+        return TraceClearanceReport {
+            status: ClearanceStatus::Unknown,
+            centerline_intersection: None,
+            axis_gap: None,
+        };
+    };
+    let four_distance_squared = distance_squared * Real::from(4);
+    let rounded_kernel_diameter = pad.corner_radius().clone() * Real::from(2);
+    let overlap_limit = trace.swept.width().clone() + rounded_kernel_diameter.clone();
+    let overlap_limit_squared = overlap_limit.clone() * overlap_limit;
+    let clearance_limit = trace.swept.width().clone()
+        + rounded_kernel_diameter
+        + required_clearance.clone() * Real::from(2);
+    let clearance_limit_squared = clearance_limit.clone() * clearance_limit;
+    let status =
+        match compare_reals_with_policy(&four_distance_squared, &overlap_limit_squared, policy)
+            .value()
+        {
+            Some(Ordering::Less | Ordering::Equal) => ClearanceStatus::NoShortViolation,
+            Some(Ordering::Greater) => {
+                match compare_reals_with_policy(
+                    &four_distance_squared,
+                    &clearance_limit_squared,
+                    policy,
+                )
+                .value()
+                {
+                    Some(Ordering::Less) => ClearanceStatus::ClearanceViolation,
+                    Some(Ordering::Equal | Ordering::Greater) => ClearanceStatus::CertifiedClear,
+                    None => ClearanceStatus::Unknown,
+                }
+            }
+            None => ClearanceStatus::Unknown,
+        };
+    TraceClearanceReport {
+        status,
+        centerline_intersection: None,
+        axis_gap: None,
+    }
+}
+
 /// Check an axis-aligned trace against a cardinally rotated rectangular pad.
 ///
 /// Cardinal rotations are exact extent swaps, so this function lowers to the
@@ -1707,6 +1927,38 @@ pub fn check_rect_pad_board_clearance(
     policy: PredicatePolicy,
 ) -> PadBoardClearanceReport {
     let Some((min_x, max_x, min_y, max_y)) = rect_pad_bounds(pad) else {
+        return unknown_pad_board_report();
+    };
+    let margins = [
+        min_x - board.min().x.clone(),
+        board.max().x.clone() - max_x,
+        min_y - board.min().y.clone(),
+        board.max().y.clone() - max_y,
+    ];
+    match classify_margins(&margins, required_clearance, policy) {
+        Some((status, copper_gap)) => PadBoardClearanceReport {
+            status,
+            copper_gap: Some(copper_gap),
+        },
+        None => unknown_pad_board_report(),
+    }
+}
+
+/// Check exact clearance from an axis-aligned rounded rectangular pad to a board.
+///
+/// For a rectangular board envelope, the closest board-edge approach of a
+/// rounded rectangle is still decided by its exact outer copper bounds. The
+/// corner arcs affect trace/pad distance through the Minkowski kernel, while
+/// this board-edge rule only needs the retained full extents. Keeping those
+/// decisions separate mirrors Yap's object/predicate model and avoids smearing
+/// manufacturing clearance rules into approximate outline materialization.
+pub fn check_rounded_rect_pad_board_clearance(
+    pad: &PcbRoundedRectPad,
+    board: &PcbBoardOutline,
+    required_clearance: &Real,
+    policy: PredicatePolicy,
+) -> PadBoardClearanceReport {
+    let Some((min_x, max_x, min_y, max_y)) = rounded_rect_outer_bounds(pad) else {
         return unknown_pad_board_report();
     };
     let margins = [
@@ -2205,6 +2457,20 @@ fn axis_aligned_segment_rect_distance_squared(
     ))
 }
 
+fn axis_aligned_segment_rounded_rect_inner_distance_squared(
+    segment: &LinePathSegment,
+    pad: &PcbRoundedRectPad,
+    policy: PredicatePolicy,
+) -> Option<Real> {
+    let (min_x, max_x, min_y, max_y) = rounded_rect_inner_bounds(pad)?;
+    let x_gap = interval_gap(&segment.start().x, &segment.end().x, &min_x, &max_x, policy)?;
+    let y_gap = interval_gap(&segment.start().y, &segment.end().y, &min_y, &max_y, policy)?;
+    Some(Real::signed_product_sum(
+        [true, true],
+        [[&x_gap, &x_gap], [&y_gap, &y_gap]],
+    ))
+}
+
 fn axis_aligned_segment_segment_distance_squared(
     first: &LinePathSegment,
     second: &LinePathSegment,
@@ -2241,6 +2507,30 @@ fn rect_pad_bounds(pad: &PcbRectPad) -> Option<(Real, Real, Real, Real)> {
         pad.center().x.clone() + half_width,
         pad.center().y.clone() - half_height.clone(),
         pad.center().y.clone() + half_height,
+    ))
+}
+
+fn rounded_rect_outer_bounds(pad: &PcbRoundedRectPad) -> Option<(Real, Real, Real, Real)> {
+    let half_width = (pad.width().clone() / Real::from(2)).ok()?;
+    let half_height = (pad.height().clone() / Real::from(2)).ok()?;
+    Some((
+        pad.center().x.clone() - half_width.clone(),
+        pad.center().x.clone() + half_width,
+        pad.center().y.clone() - half_height.clone(),
+        pad.center().y.clone() + half_height,
+    ))
+}
+
+fn rounded_rect_inner_bounds(pad: &PcbRoundedRectPad) -> Option<(Real, Real, Real, Real)> {
+    let half_width = (pad.width().clone() / Real::from(2)).ok()?;
+    let half_height = (pad.height().clone() / Real::from(2)).ok()?;
+    let inner_half_width = half_width - pad.corner_radius().clone();
+    let inner_half_height = half_height - pad.corner_radius().clone();
+    Some((
+        pad.center().x.clone() - inner_half_width.clone(),
+        pad.center().x.clone() + inner_half_width,
+        pad.center().y.clone() - inner_half_height.clone(),
+        pad.center().y.clone() + inner_half_height,
     ))
 }
 

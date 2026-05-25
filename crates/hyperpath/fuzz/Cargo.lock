@@ -122,7 +122,9 @@ dependencies = [
 name = "hyperpath-fuzz"
 version = "0.0.0"
 dependencies = [
+ "hyperlimit",
  "hyperpath",
+ "hyperreal",
  "libfuzzer-sys",
 ]
 
