@@ -63,10 +63,16 @@ fuzz_target!(|data: &[u8]| {
             }],
             keepouts: vec![SpecctraGridKeepoutRecord {
                 layer: Some(layer),
-                shape: SpecctraGridKeepoutShape::Circle {
-                    x: x2,
-                    y: y2,
-                    radius: i64::from(data[15] % 32),
+                shape: SpecctraGridKeepoutShape::Polygon {
+                    vertices: vec![
+                        (x2, y2),
+                        (x2 + i64::from(data[15] % 16) + 1, y2),
+                        (
+                            x2 + i64::from(data[15] % 16) + 1,
+                            y2 + i64::from(data[3] % 16) + 1,
+                        ),
+                        (x2, y2 + i64::from(data[3] % 16) + 1),
+                    ],
                 },
                 grid_denominator: denominator,
             }],

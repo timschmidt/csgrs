@@ -192,8 +192,7 @@ fuzz_target!(|data: &[u8]| {
     );
     assert_eq!(overlap_report.conic_breakpoints[0].len(), 4);
 
-    let nonmonotone_conic =
-        RationalQuadraticBezier::new(p(0, 0), p(8, 0), p(0, 0), r(1)).unwrap();
+    let nonmonotone_conic = RationalQuadraticBezier::new(p(0, 0), p(8, 0), p(0, 0), r(1)).unwrap();
     let nonmonotone_report = arrange_line_segments_with_rational_quadratic_beziers(
         &[LinePathSegment::new(p(2, 0), p(6, 0))],
         &[nonmonotone_conic],

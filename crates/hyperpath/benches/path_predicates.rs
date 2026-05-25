@@ -1038,10 +1038,15 @@ fn path_predicates(c: &mut Criterion) {
         vias: vec![via_record_text],
         keepouts: vec![SpecctraGridKeepoutRecord {
             layer: Some(TraceLayer(1)),
-            shape: SpecctraGridKeepoutShape::Circle {
-                x: 500,
-                y: 250,
-                radius: 100,
+            shape: SpecctraGridKeepoutShape::Polygon {
+                vertices: vec![
+                    (400, 100),
+                    (700, 100),
+                    (700, 200),
+                    (550, 200),
+                    (550, 350),
+                    (400, 350),
+                ],
             },
             grid_denominator: 10,
         }],
@@ -1072,7 +1077,17 @@ fn path_predicates(c: &mut Criterion) {
         grid_denominator: 10,
     };
     c.bench_function("specctra_grid_keepout_exact_lift", |b| {
-        b.iter(|| specctra_grid_keepout_record(exact_keepout))
+        b.iter(|| specctra_grid_keepout_record(exact_keepout.clone()))
+    });
+    let exact_polygon_keepout = SpecctraGridKeepoutRecord {
+        layer: Some(TraceLayer(1)),
+        shape: SpecctraGridKeepoutShape::Polygon {
+            vertices: vec![(0, 0), (60, 0), (60, 20), (20, 20), (20, 60), (0, 60)],
+        },
+        grid_denominator: 10,
+    };
+    c.bench_function("specctra_grid_polygon_keepout_exact_lift", |b| {
+        b.iter(|| specctra_grid_keepout_record(exact_polygon_keepout.clone()))
     });
     let envelope_path_text = concat!(
         "(session \"bench board\"",

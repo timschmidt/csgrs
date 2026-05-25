@@ -4536,6 +4536,33 @@ fn meander_keepout_slots_block_against_exact_circular_obstacles() {
 }
 
 #[test]
+fn meander_keepout_slots_block_against_exact_orthogonal_polygons() {
+    let source = LinePathSegment::new(p(0, 0), p(12, 0));
+    let keepout = MeanderKeepout::OrthogonalPolygon {
+        vertices: vec![p(2, 1), p(7, 1), p(7, 3), p(5, 3), p(5, 5), p(2, 5)],
+    };
+    let report = classify_meander_placement_slots_with_keepouts(
+        &source,
+        r(2),
+        3,
+        OffsetSide::Left,
+        vec![keepout.clone()],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+
+    assert_eq!(report.keepouts, vec![keepout]);
+    assert_eq!(report.slots.len(), 3);
+    assert!(report.slots[0].preferred_blocked);
+    assert!(!report.slots[0].opposite_blocked);
+    assert_eq!(report.slots[0].selected_side, Some(OffsetSide::Right));
+    assert!(report.slots[1].preferred_blocked);
+    assert!(!report.slots[1].opposite_blocked);
+    assert_eq!(report.slots[1].selected_side, Some(OffsetSide::Right));
+    assert_eq!(report.slots[2].selected_side, Some(OffsetSide::Left));
+}
+
+#[test]
 fn keepout_aware_detour_meander_routes_around_round_keepouts() {
     let source = LinePathSegment::new(p(0, 0), p(12, 0));
     let keepout = MeanderKeepout::Circular {
@@ -4774,6 +4801,47 @@ fn obstacle_aware_detour_meander_rejects_blocked_or_invalid_keepouts() {
         .unwrap_err(),
         MeanderError::NegativeObstacleRadius
     );
+
+    let diagonal_polygon = MeanderKeepout::OrthogonalPolygon {
+        vertices: vec![p(0, 0), p(4, 2), p(4, 4), p(0, 4)],
+    };
+    assert_eq!(
+        classify_meander_placement_slots_with_keepouts(
+            &source,
+            r(2),
+            1,
+            OffsetSide::Left,
+            vec![diagonal_polygon],
+            PredicatePolicy::default()
+        )
+        .unwrap_err(),
+        MeanderError::InvalidObstaclePolygon
+    );
+
+    let self_intersecting_polygon = MeanderKeepout::OrthogonalPolygon {
+        vertices: vec![
+            p(0, 0),
+            p(4, 0),
+            p(4, 4),
+            p(2, 4),
+            p(2, -1),
+            p(1, -1),
+            p(1, 4),
+            p(0, 4),
+        ],
+    };
+    assert_eq!(
+        classify_meander_placement_slots_with_keepouts(
+            &source,
+            r(2),
+            1,
+            OffsetSide::Left,
+            vec![self_intersecting_polygon],
+            PredicatePolicy::default()
+        )
+        .unwrap_err(),
+        MeanderError::InvalidObstaclePolygon
+    );
 }
 
 #[test]
@@ -5003,18 +5071,29 @@ fn specctra_grid_route_text_round_trips_retained_keepouts() {
         },
         grid_denominator: 10,
     };
+    let polygon = SpecctraGridKeepoutRecord {
+        layer: Some(TraceLayer(1)),
+        shape: SpecctraGridKeepoutShape::Polygon {
+            vertices: vec![(0, 0), (60, 0), (60, 20), (20, 20), (20, 60), (0, 60)],
+        },
+        grid_denominator: 10,
+    };
     let text = serialize_specctra_grid_route_records(&hyperpath::SpecctraGridRouteRecords {
         net_aliases: Vec::new(),
         layer_aliases: Vec::new(),
         traces: Vec::new(),
         vias: Vec::new(),
-        keepouts: vec![rect, circle],
+        keepouts: vec![rect.clone(), circle.clone(), polygon.clone()],
     });
     let parsed = parse_specctra_grid_route_records(&text).unwrap();
 
-    assert_eq!(parsed.keepouts, vec![rect, circle]);
-    let exact_rect = specctra_grid_keepout_record(rect).unwrap();
-    let exact_circle = specctra_grid_keepout_record(circle).unwrap();
+    assert_eq!(
+        parsed.keepouts,
+        vec![rect.clone(), circle.clone(), polygon.clone()]
+    );
+    let exact_rect = specctra_grid_keepout_record(rect.clone()).unwrap();
+    let exact_circle = specctra_grid_keepout_record(circle.clone()).unwrap();
+    let exact_polygon = specctra_grid_keepout_record(polygon.clone()).unwrap();
     assert_eq!(exact_rect.layer, Some(TraceLayer(2)));
     assert_eq!(exact_rect.provenance, exact_circle.provenance);
     assert_eq!(
@@ -5031,12 +5110,30 @@ fn specctra_grid_route_text_round_trips_retained_keepouts() {
             radius: rq(5, 10),
         }
     );
+    assert_eq!(exact_polygon.layer, Some(TraceLayer(1)));
+    assert_eq!(
+        exact_polygon.keepout,
+        MeanderKeepout::OrthogonalPolygon {
+            vertices: vec![
+                pq(0, 10, 0, 10),
+                pq(60, 10, 0, 10),
+                pq(60, 10, 20, 10),
+                pq(20, 10, 20, 10),
+                pq(20, 10, 60, 10),
+                pq(0, 10, 60, 10),
+            ],
+        }
+    );
     assert_eq!(
         import_specctra_keepout_record(&exact_circle),
         exact_circle.keepout
     );
     assert_eq!(
-        serialize_specctra_grid_keepout_records(&[rect, circle]),
+        import_specctra_keepout_record(&exact_polygon),
+        exact_polygon.keepout
+    );
+    assert_eq!(
+        serialize_specctra_grid_keepout_records(&[rect, circle, polygon]),
         text
     );
 }
@@ -5244,6 +5341,23 @@ fn specctra_grid_route_text_rejects_malformed_and_invalid_routes() {
         parse_specctra_grid_route_records("(routes (keepout (circle 0 0 1) (grid 0)))")
             .unwrap_err(),
         SpecctraParseError::InvalidGrid
+    );
+    assert_eq!(
+        parse_specctra_grid_route_records("(routes (keepout (polygon 0 0 4 2 4 4 0 4) (grid 1)))")
+            .unwrap_err(),
+        SpecctraParseError::InvalidKeepoutPolygon
+    );
+    assert_eq!(
+        parse_specctra_grid_route_records(
+            "(routes (keepout (polygon 0 0 4 0 4 4 2 4 2 -1 1 -1 1 4 0 4) (grid 1)))"
+        )
+        .unwrap_err(),
+        SpecctraParseError::InvalidKeepoutPolygon
+    );
+    assert_eq!(
+        parse_specctra_grid_route_records("(routes (keepout (polygon 0 0 1 0 1) (grid 1)))")
+            .unwrap_err(),
+        SpecctraParseError::InvalidSyntax
     );
     assert_eq!(
         parse_specctra_grid_route_records("(routes (net 1 \"unterminated))").unwrap_err(),
@@ -5603,9 +5717,36 @@ proptest! {
             },
             grid_denominator: u64::from(denominator),
         };
-        let text = serialize_specctra_grid_keepout_records(&[record]);
+        let text = serialize_specctra_grid_keepout_records(&[record.clone()]);
         let parsed = parse_specctra_grid_route_records(&text).unwrap();
-        let exact = specctra_grid_keepout_record(record).unwrap();
+        let exact = specctra_grid_keepout_record(record.clone()).unwrap();
+
+        prop_assert_eq!(parsed.keepouts, vec![record]);
+        prop_assert_eq!(import_specctra_keepout_record(&exact), exact.keepout);
+    }
+
+    #[test]
+    fn specctra_grid_polygon_keepouts_round_trip_generated_rectangles(
+        min_x in -100_i16..=100,
+        min_y in -100_i16..=100,
+        width in 1_i16..=100,
+        height in 1_i16..=100,
+        denominator in 1_u16..=100,
+    ) {
+        let min_x = i64::from(min_x);
+        let min_y = i64::from(min_y);
+        let max_x = min_x + i64::from(width);
+        let max_y = min_y + i64::from(height);
+        let record = SpecctraGridKeepoutRecord {
+            layer: Some(TraceLayer(2)),
+            shape: SpecctraGridKeepoutShape::Polygon {
+                vertices: vec![(min_x, min_y), (max_x, min_y), (max_x, max_y), (min_x, max_y)],
+            },
+            grid_denominator: u64::from(denominator),
+        };
+        let text = serialize_specctra_grid_keepout_records(&[record.clone()]);
+        let parsed = parse_specctra_grid_route_records(&text).unwrap();
+        let exact = specctra_grid_keepout_record(record.clone()).unwrap();
 
         prop_assert_eq!(parsed.keepouts, vec![record]);
         prop_assert_eq!(import_specctra_keepout_record(&exact), exact.keepout);

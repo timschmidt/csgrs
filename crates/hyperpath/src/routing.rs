@@ -24,9 +24,13 @@ use crate::segment::{Axis, LinePathSegment};
 use crate::solve::{constant_feed_time_equation, differential_pair_skew_equation};
 
 mod feed;
+mod orthogonal_keepout;
 
 pub use feed::JerkLimitedFeedTimeReport;
 pub use feed::certify_symmetric_jerk_limited_feed_time;
+use orthogonal_keepout::{
+    segment_intersects_orthogonal_keepout, validate_orthogonal_keepout_vertices,
+};
 
 /// Exact length-match solve model for one continuous extension parameter.
 #[derive(Clone, Debug)]
@@ -141,10 +145,12 @@ pub struct MeanderObstacle {
 /// This is still a routing-scheduler object, not a full copper or stock
 /// boolean. Rectangular keepouts preserve the legacy [`MeanderObstacle`] model;
 /// circular keepouts add exact disc predicates for vias, drills, round pads,
-/// and machine exclusion zones without polygonal approximation. Lee/Hightower
-/// style search may propose these candidates, but Yap's exact-computation
-/// boundary is preserved by rejecting undecidable comparisons before a route is
-/// committed.
+/// and machine exclusion zones without polygonal approximation. Orthogonal
+/// polygon keepouts retain notched route blockages by exact vertex loops and
+/// classify segment hits through rectilinear point-in-polygon and edge
+/// intersection predicates. Lee/Hightower style search may propose these
+/// candidates, but Yap's exact-computation boundary is preserved by rejecting
+/// undecidable comparisons before a route is committed.
 #[derive(Clone, Debug, PartialEq)]
 pub enum MeanderKeepout {
     /// Axis-aligned rectangular keepout.
@@ -155,6 +161,11 @@ pub enum MeanderKeepout {
         center: Point2,
         /// Exact nonnegative disc radius.
         radius: Real,
+    },
+    /// Simple orthogonal polygon keepout.
+    OrthogonalPolygon {
+        /// Retained rectilinear loop vertices in winding order.
+        vertices: Vec<Point2>,
     },
 }
 
@@ -453,6 +464,8 @@ pub enum MeanderError {
     InvalidObstacleBounds,
     /// Circular keepout radius was structurally negative.
     NegativeObstacleRadius,
+    /// Orthogonal polygon keepout vertices were not a simple rectilinear loop.
+    InvalidObstaclePolygon,
     /// A bump could not be placed on either side without hitting a keepout.
     ObstacleConflict,
     /// Obstacle intersection could not be decided exactly.
@@ -700,7 +713,7 @@ pub fn build_keepout_aware_detour_meander(
     keepouts: Vec<MeanderKeepout>,
     policy: PredicatePolicy,
 ) -> Result<KeepoutAwareDetourMeander, MeanderError> {
-    validate_keepouts(&keepouts, policy)?;
+    validate_meander_keepouts(&keepouts, policy)?;
     if bump_count == 0 {
         return Err(MeanderError::ZeroBumps);
     }
@@ -860,7 +873,7 @@ pub fn classify_meander_placement_slots_with_keepouts(
     keepouts: Vec<MeanderKeepout>,
     policy: PredicatePolicy,
 ) -> Result<MeanderKeepoutPlacementReport, MeanderError> {
-    validate_keepouts(&keepouts, policy)?;
+    validate_meander_keepouts(&keepouts, policy)?;
     if bump_count == 0 {
         return Err(MeanderError::ZeroBumps);
     }
@@ -909,7 +922,7 @@ pub fn classify_meander_candidate_slots_with_keepouts(
     keepouts: Vec<MeanderKeepout>,
     policy: PredicatePolicy,
 ) -> Result<MeanderKeepoutCandidatePlacementReport, MeanderError> {
-    validate_keepouts(&keepouts, policy)?;
+    validate_meander_keepouts(&keepouts, policy)?;
     if candidates.is_empty() {
         return Err(MeanderError::ZeroBumps);
     }
@@ -1434,7 +1447,7 @@ fn validate_obstacles(
     Ok(())
 }
 
-fn validate_keepouts(
+pub(crate) fn validate_meander_keepouts(
     keepouts: &[MeanderKeepout],
     policy: PredicatePolicy,
 ) -> Result<(), MeanderError> {
@@ -1447,6 +1460,9 @@ fn validate_keepouts(
                 if radius.structural_facts().sign == Some(hyperreal::RealSign::Negative) {
                     return Err(MeanderError::NegativeObstacleRadius);
                 }
+            }
+            MeanderKeepout::OrthogonalPolygon { vertices } => {
+                validate_orthogonal_keepout_vertices(vertices, policy)?;
             }
         }
     }
@@ -1478,6 +1494,9 @@ fn segment_intersects_keepout(
         }
         MeanderKeepout::Circular { center, radius } => {
             segment_intersects_circular_keepout(segment, center, radius, policy)
+        }
+        MeanderKeepout::OrthogonalPolygon { vertices } => {
+            segment_intersects_orthogonal_keepout(segment, vertices, policy)
         }
     }
 }

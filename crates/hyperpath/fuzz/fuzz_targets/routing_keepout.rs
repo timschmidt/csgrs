@@ -2,8 +2,8 @@
 
 use hyperlimit::{Point2, PredicatePolicy};
 use hyperpath::{
-    LinePathSegment, MeanderKeepout, MeanderObstacle, OffsetSide, build_keepout_aware_detour_meander,
-    classify_meander_placement_slots_with_keepouts,
+    LinePathSegment, MeanderKeepout, MeanderObstacle, OffsetSide,
+    build_keepout_aware_detour_meander, classify_meander_placement_slots_with_keepouts,
 };
 use hyperreal::{Rational, Real};
 use libfuzzer_sys::fuzz_target;
@@ -43,6 +43,16 @@ fuzz_target!(|data: &[u8]| {
         MeanderKeepout::Circular {
             center: p(5, center_y),
             radius: r(radius),
+        },
+        MeanderKeepout::OrthogonalPolygon {
+            vertices: vec![
+                p(length + 30, length + 30),
+                p(length + 40, length + 30),
+                p(length + 40, length + 35),
+                p(length + 35, length + 35),
+                p(length + 35, length + 40),
+                p(length + 30, length + 40),
+            ],
         },
         MeanderKeepout::Rectangular(MeanderObstacle {
             min: p(length + 10, length + 10),
