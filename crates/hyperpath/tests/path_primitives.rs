@@ -14,9 +14,10 @@ use hyperpath::{
     LineCubicBezierAlgebraicBreakpointDomain, LineCubicBezierAlgebraicBreakpointOrderClass,
     LineCubicBezierAlgebraicBreakpointSequenceBlocker,
     LineCubicBezierAlgebraicBreakpointSequenceClass,
-    LineCubicBezierAlgebraicBreakpointSequenceSource, LineCubicBezierIntersectionClass,
-    LineExplicitArcIntersectionClass, LineOffsetError, LinePathSegment,
-    LineQuadraticBezierIntersectionClass, LineRationalQuadraticBezierAlgebraicBreakpointDomain,
+    LineCubicBezierAlgebraicBreakpointSequenceSource, LineCubicBezierAlgebraicSourceSpanBoundary,
+    LineCubicBezierIntersectionClass, LineExplicitArcIntersectionClass, LineOffsetError,
+    LinePathSegment, LineQuadraticBezierIntersectionClass,
+    LineRationalQuadraticBezierAlgebraicBreakpointDomain,
     LineRationalQuadraticBezierAlgebraicBreakpointOrderClass,
     LineRationalQuadraticBezierAlgebraicBreakpointSequenceBlocker,
     LineRationalQuadraticBezierAlgebraicBreakpointSequenceClass,
@@ -905,6 +906,13 @@ fn line_cubic_bezier_arrangement_keeps_true_cubic_roots_unknown() {
                 && sequence.breakpoints == vec![0]
                 && sequence.blockers.is_empty())
     );
+    assert_eq!(report.algebraic_source_spans.len(), 4);
+    assert!(
+        report
+            .algebraic_source_spans
+            .iter()
+            .all(|span| span.parameter_lower == r(0) || span.parameter_upper == r(1))
+    );
     assert_eq!(report.line_breakpoints[0].len(), 2);
     assert_eq!(report.cubic_breakpoints[0].len(), 2);
 }
@@ -973,6 +981,40 @@ fn line_cubic_bezier_arrangement_orders_multiple_algebraic_breakpoints() {
     );
     assert_eq!(line_sequence.breakpoints, vec![0, 1, 2]);
     assert!(line_sequence.blockers.is_empty());
+    assert_eq!(report.algebraic_source_spans.len(), 8);
+    let curve_spans: Vec<_> = report
+        .algebraic_source_spans
+        .iter()
+        .filter(|span| span.source == LineCubicBezierAlgebraicBreakpointSequenceSource::Curve(0))
+        .collect();
+    assert_eq!(curve_spans.len(), 4);
+    assert_eq!(
+        curve_spans[0].left,
+        LineCubicBezierAlgebraicSourceSpanBoundary::SourceStart
+    );
+    assert_eq!(
+        curve_spans[0].right,
+        LineCubicBezierAlgebraicSourceSpanBoundary::Breakpoint(0)
+    );
+    assert_eq!(
+        curve_spans[3].left,
+        LineCubicBezierAlgebraicSourceSpanBoundary::Breakpoint(2)
+    );
+    assert_eq!(
+        curve_spans[3].right,
+        LineCubicBezierAlgebraicSourceSpanBoundary::SourceEnd
+    );
+    for span in curve_spans.windows(2) {
+        assert!(
+            compare_reals_with_policy(
+                &span[0].parameter_upper,
+                &span[1].parameter_lower,
+                PredicatePolicy::default()
+            )
+            .value()
+            .is_some()
+        );
+    }
     assert_eq!(report.line_breakpoints[0].len(), 2);
     assert_eq!(report.cubic_breakpoints[0].len(), 2);
 }
@@ -1013,6 +1055,18 @@ fn line_cubic_bezier_arrangement_blocks_duplicate_algebraic_curve_sequence() {
         curve_sequence.blockers,
         vec![LineCubicBezierAlgebraicBreakpointSequenceBlocker::UnknownOrder { left: 0, right: 1 }]
     );
+    let line_spans: Vec<_> = report
+        .algebraic_source_spans
+        .iter()
+        .filter(|span| span.source == LineCubicBezierAlgebraicBreakpointSequenceSource::Line(0))
+        .collect();
+    assert_eq!(line_spans.len(), 2);
+    assert!(
+        report
+            .algebraic_source_spans
+            .iter()
+            .all(|span| span.source != LineCubicBezierAlgebraicBreakpointSequenceSource::Curve(0))
+    );
 }
 
 #[test]
@@ -1036,6 +1090,7 @@ fn line_cubic_bezier_arrangement_rejects_algebraic_breakpoint_outside_line_span(
     );
     assert!(report.algebraic_breakpoints.is_empty());
     assert!(report.algebraic_breakpoint_sequences.is_empty());
+    assert!(report.algebraic_source_spans.is_empty());
     assert_eq!(report.line_breakpoints[0].len(), 2);
     assert_eq!(report.cubic_breakpoints[0].len(), 2);
 }

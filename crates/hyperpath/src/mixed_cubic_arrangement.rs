@@ -195,6 +195,48 @@ pub struct LineCubicBezierAlgebraicBreakpointSequence {
     pub blockers: Vec<LineCubicBezierAlgebraicBreakpointSequenceBlocker>,
 }
 
+/// Boundary of a retained algebraic source span.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum LineCubicBezierAlgebraicSourceSpanBoundary {
+    /// The exact source parameter `0`.
+    SourceStart,
+    /// An index in [`LineCubicBezierArrangementReport::algebraic_breakpoints`].
+    Breakpoint(usize),
+    /// The exact source parameter `1`.
+    SourceEnd,
+}
+
+/// Conservative source-parameter interval between ordered algebraic breakpoints.
+///
+/// Spans are emitted only from
+/// [`LineCubicBezierAlgebraicBreakpointSequenceClass::Ordered`] sequences.
+/// They are not curve fragments. A span records the smallest retained interval
+/// that is guaranteed to contain the true source subrange between two adjacent
+/// ordered boundaries. For represented algebraic endpoints this uses the
+/// Sturm isolating interval retained by `hypersolve`; for line sources it uses
+/// the transformed normalized line-parameter image.
+///
+/// This is the Yap-style certificate/object separation from Yap, "Towards
+/// Exact Geometric Computation" (1997): exact construction can later replay
+/// these intervals and represented roots, while this scheduler avoids sampling
+/// or pretending the nonlinear algebraic boundary is a concrete `Real`
+/// breakpoint. The isolating-interval discipline is the Collins-Loos model
+/// from Collins and Loos, "Real Zeros of Polynomials" (1982); line source
+/// images rely on the Sylvester resultant construction of Sylvester (1853).
+#[derive(Clone, Debug, PartialEq)]
+pub struct LineCubicBezierAlgebraicSourceSpan {
+    /// Source whose parameter space owns this span.
+    pub source: LineCubicBezierAlgebraicBreakpointSequenceSource,
+    /// Left adjacent boundary.
+    pub left: LineCubicBezierAlgebraicSourceSpanBoundary,
+    /// Right adjacent boundary.
+    pub right: LineCubicBezierAlgebraicSourceSpanBoundary,
+    /// Conservative lower source parameter bound.
+    pub parameter_lower: Real,
+    /// Conservative upper source parameter bound.
+    pub parameter_upper: Real,
+}
+
 /// Exact breakpoint on one arranged cubic Bezier.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CubicBezierRealBreakpoint {
@@ -281,6 +323,8 @@ pub struct LineCubicBezierArrangementReport {
     pub algebraic_breakpoint_orders: Vec<LineCubicBezierAlgebraicBreakpointOrder>,
     /// Per-source retained algebraic breakpoint sequences derived from exact order evidence.
     pub algebraic_breakpoint_sequences: Vec<LineCubicBezierAlgebraicBreakpointSequence>,
+    /// Conservative source spans induced by certified algebraic breakpoint sequences.
+    pub algebraic_source_spans: Vec<LineCubicBezierAlgebraicSourceSpan>,
     /// Sorted line breakpoints induced by line endpoints and certified events.
     pub line_breakpoints: Vec<Vec<MixedCubicLineArrangementBreakpoint>>,
     /// Sorted cubic breakpoints induced by curve endpoints and certified events.
@@ -369,6 +413,8 @@ pub fn arrange_line_segments_with_cubic_beziers_and_provenance(
         algebraic_cubic_breakpoint_orders(&algebraic_breakpoints, policy);
     let algebraic_breakpoint_sequences =
         algebraic_cubic_breakpoint_sequences(&algebraic_breakpoints, &algebraic_breakpoint_orders);
+    let algebraic_source_spans =
+        algebraic_cubic_source_spans(&algebraic_breakpoints, &algebraic_breakpoint_sequences);
     let line_fragments = build_line_fragments(&line_breakpoints, policy)?;
     let cubic_fragments = build_cubic_fragments(&cubic_breakpoints, curves, policy)?;
     let facts = LineCubicBezierArrangementFacts {
@@ -384,6 +430,7 @@ pub fn arrange_line_segments_with_cubic_beziers_and_provenance(
         algebraic_breakpoints,
         algebraic_breakpoint_orders,
         algebraic_breakpoint_sequences,
+        algebraic_source_spans,
         line_breakpoints,
         cubic_breakpoints,
         line_fragments,
@@ -789,6 +836,76 @@ fn reverse_algebraic_cubic_order(
         LineCubicBezierAlgebraicBreakpointOrderClass::Unknown => {
             LineCubicBezierAlgebraicBreakpointOrderClass::Unknown
         }
+    }
+}
+
+fn algebraic_cubic_source_spans(
+    breakpoints: &[LineCubicBezierAlgebraicBreakpoint],
+    sequences: &[LineCubicBezierAlgebraicBreakpointSequence],
+) -> Vec<LineCubicBezierAlgebraicSourceSpan> {
+    let mut spans = Vec::new();
+    for sequence in sequences {
+        if sequence.class != LineCubicBezierAlgebraicBreakpointSequenceClass::Ordered {
+            continue;
+        }
+        let mut boundaries = Vec::with_capacity(sequence.breakpoints.len() + 2);
+        boundaries.push(LineCubicBezierAlgebraicSourceSpanBoundary::SourceStart);
+        boundaries.extend(
+            sequence
+                .breakpoints
+                .iter()
+                .copied()
+                .map(LineCubicBezierAlgebraicSourceSpanBoundary::Breakpoint),
+        );
+        boundaries.push(LineCubicBezierAlgebraicSourceSpanBoundary::SourceEnd);
+
+        for pair in boundaries.windows(2) {
+            let Some((parameter_lower, _)) =
+                algebraic_cubic_boundary_interval(sequence.source, pair[0], breakpoints)
+            else {
+                continue;
+            };
+            let Some((_, parameter_upper)) =
+                algebraic_cubic_boundary_interval(sequence.source, pair[1], breakpoints)
+            else {
+                continue;
+            };
+            spans.push(LineCubicBezierAlgebraicSourceSpan {
+                source: sequence.source,
+                left: pair[0],
+                right: pair[1],
+                parameter_lower,
+                parameter_upper,
+            });
+        }
+    }
+    spans
+}
+
+fn algebraic_cubic_boundary_interval(
+    source: LineCubicBezierAlgebraicBreakpointSequenceSource,
+    boundary: LineCubicBezierAlgebraicSourceSpanBoundary,
+    breakpoints: &[LineCubicBezierAlgebraicBreakpoint],
+) -> Option<(Real, Real)> {
+    match boundary {
+        LineCubicBezierAlgebraicSourceSpanBoundary::SourceStart => {
+            Some((Real::zero(), Real::zero()))
+        }
+        LineCubicBezierAlgebraicSourceSpanBoundary::SourceEnd => Some((Real::one(), Real::one())),
+        LineCubicBezierAlgebraicSourceSpanBoundary::Breakpoint(index) => match source {
+            LineCubicBezierAlgebraicBreakpointSequenceSource::Curve(_) => {
+                let interval = &breakpoints.get(index)?.cubic_parameter.interval;
+                Some((interval.lower.clone(), interval.upper.clone()))
+            }
+            LineCubicBezierAlgebraicBreakpointSequenceSource::Line(_) => {
+                let representation =
+                    transformed_image_representation(&breakpoints.get(index)?.line_parameter)?;
+                Some((
+                    representation.interval.lower.clone(),
+                    representation.interval.upper.clone(),
+                ))
+            }
+        },
     }
 }
 
