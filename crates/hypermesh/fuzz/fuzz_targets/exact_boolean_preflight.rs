@@ -4787,6 +4787,138 @@ fn exercise_side_cutter_opening_without_holes() {
         ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchDifference
     );
 
+    let nonconvex_grouped_left = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            0, 0, 0, 30, 0, 0, 30, 26, 0, 30, 30, 0, 22, 30, 0, 22, 26, 0, 20, 26, 0, 20, 30, 0,
+            0, 30, 0, 0, 26, 0,
+        ],
+        &[
+            0, 1, 2, //
+            0, 2, 5, //
+            0, 5, 6, //
+            0, 6, 9, //
+            9, 6, 7, //
+            9, 7, 8, //
+            5, 2, 3, //
+            5, 3, 4,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("nonconvex grouped source fixture must import");
+    let nonconvex_grouped_right = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            11, 11, 0, 13, 11, 0, 13, 13, 0, 11, 13, 0, //
+            -2, 8, 0, 12, 8, 0, 12, 12, 0, -2, 12, 0, //
+            12, 12, 0, 32, 12, 0, 32, 16, 0, 14, 16, 0, //
+            12, 16, 0, 14, 16, 0, 14, 32, 0, 12, 32, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7, //
+            8, 9, 10, 8, 10, 11, //
+            12, 13, 14, 12, 14, 15,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("nonconvex grouped right fixture must import");
+    let nonconvex_grouped = arrange_coplanar_surface_point_touch_difference(
+        &nonconvex_grouped_left,
+        &nonconvex_grouped_right,
+    )
+    .expect("nonconvex grouped branch should consume a straddling hole");
+    nonconvex_grouped.validate().unwrap();
+    nonconvex_grouped
+        .validate_difference_against_sources(&nonconvex_grouped_left, &nonconvex_grouped_right)
+        .unwrap();
+    let nonconvex_grouped_preflight = preflight_boolean_exact(
+        &nonconvex_grouped_left,
+        &nonconvex_grouped_right,
+        ExactBooleanOperation::Difference,
+    )
+    .expect("nonconvex grouped branch preflight should classify shortcut");
+    nonconvex_grouped_preflight.validate().unwrap();
+    assert_eq!(
+        nonconvex_grouped_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchDifference
+    );
+    hypermesh::exact::boolean_exact(
+        &nonconvex_grouped_left,
+        &nonconvex_grouped_right,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("nonconvex grouped branch boolean should materialize")
+    .validate_operation_against_sources(
+        &nonconvex_grouped_left,
+        &nonconvex_grouped_right,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
+
+    let nonconvex_grouped_retained_right = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            3, 3, 0, 5, 3, 0, 5, 5, 0, 3, 5, 0, //
+            11, 11, 0, 13, 11, 0, 13, 13, 0, 11, 13, 0, //
+            -2, 8, 0, 12, 8, 0, 12, 12, 0, -2, 12, 0, //
+            12, 12, 0, 32, 12, 0, 32, 16, 0, 14, 16, 0, //
+            12, 16, 0, 14, 16, 0, 14, 32, 0, 12, 32, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7, //
+            8, 9, 10, 8, 10, 11, //
+            12, 13, 14, 12, 14, 15, //
+            16, 17, 18, 16, 18, 19,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("nonconvex grouped retained right fixture must import");
+    assert!(
+        arrange_coplanar_surface_point_touch_difference(
+            &nonconvex_grouped_left,
+            &nonconvex_grouped_retained_right,
+        )
+        .is_none()
+    );
+    let nonconvex_grouped_retained =
+        arrange_coplanar_convex_surface_component_holed_difference(
+            &nonconvex_grouped_left,
+            &nonconvex_grouped_retained_right,
+        )
+        .expect("nonconvex grouped component-holed branch should retain unrelated holes");
+    nonconvex_grouped_retained.validate().unwrap();
+    nonconvex_grouped_retained
+        .validate_against_sources(&nonconvex_grouped_left, &nonconvex_grouped_retained_right)
+        .unwrap();
+    let nonconvex_grouped_retained_preflight = preflight_boolean_exact(
+        &nonconvex_grouped_left,
+        &nonconvex_grouped_retained_right,
+        ExactBooleanOperation::Difference,
+    )
+    .expect("nonconvex grouped retained preflight should classify shortcut");
+    nonconvex_grouped_retained_preflight.validate().unwrap();
+    assert_eq!(
+        nonconvex_grouped_retained_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
+    );
+    hypermesh::exact::boolean_exact(
+        &nonconvex_grouped_left,
+        &nonconvex_grouped_retained_right,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("nonconvex grouped retained boolean should materialize")
+    .validate_operation_against_sources(
+        &nonconvex_grouped_left,
+        &nonconvex_grouped_retained_right,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
+
     let nonconvex_point_branch_straddling_retained = ExactMesh::from_i64_triangles_with_policy(
         &[
             3, 1, 0, 5, 1, 0, 5, 3, 0, 3, 3, 0, //

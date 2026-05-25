@@ -5382,6 +5382,59 @@ fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
                 ValidationPolicy::ALLOW_BOUNDARY,
             )
             .unwrap();
+        let nonconvex_grouped_point_touch_left = ExactMesh::from_i64_triangles_with_policy(
+            &[
+                0, 0, 0, 30, 0, 0, 30, 26, 0, 30, 30, 0, 22, 30, 0, 22, 26, 0, 20, 26, 0, 20, 30,
+                0, 0, 30, 0, 0, 26, 0,
+            ],
+            &[
+                0, 1, 2, //
+                0, 2, 5, //
+                0, 5, 6, //
+                0, 6, 9, //
+                9, 6, 7, //
+                9, 7, 8, //
+                5, 2, 3, //
+                5, 3, 4,
+            ],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let nonconvex_grouped_point_touch_right = ExactMesh::from_i64_triangles_with_policy(
+            &[
+                11, 11, 0, 13, 11, 0, 13, 13, 0, 11, 13, 0, //
+                -2, 8, 0, 12, 8, 0, 12, 12, 0, -2, 12, 0, //
+                12, 12, 0, 32, 12, 0, 32, 16, 0, 14, 16, 0, //
+                12, 16, 0, 14, 16, 0, 14, 32, 0, 12, 32, 0,
+            ],
+            &[
+                0, 1, 2, 0, 2, 3, //
+                4, 5, 6, 4, 6, 7, //
+                8, 9, 10, 8, 10, 11, //
+                12, 13, 14, 12, 14, 15,
+            ],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let nonconvex_grouped_point_touch_retained_right =
+            ExactMesh::from_i64_triangles_with_policy(
+                &[
+                    3, 3, 0, 5, 3, 0, 5, 5, 0, 3, 5, 0, //
+                    11, 11, 0, 13, 11, 0, 13, 13, 0, 11, 13, 0, //
+                    -2, 8, 0, 12, 8, 0, 12, 12, 0, -2, 12, 0, //
+                    12, 12, 0, 32, 12, 0, 32, 16, 0, 14, 16, 0, //
+                    12, 16, 0, 14, 16, 0, 14, 32, 0, 12, 32, 0,
+                ],
+                &[
+                    0, 1, 2, 0, 2, 3, //
+                    4, 5, 6, 4, 6, 7, //
+                    8, 9, 10, 8, 10, 11, //
+                    12, 13, 14, 12, 14, 15, //
+                    16, 17, 18, 16, 18, 19,
+                ],
+                ValidationPolicy::ALLOW_BOUNDARY,
+            )
+            .unwrap();
         let incidental_side_cutter_right = ExactMesh::from_i64_triangles_with_policy(
             &[
                 0, 8, 0, 8, 8, 0, 8, 12, 0, 0, 12, 0, //
@@ -6989,6 +7042,52 @@ fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
                         hypermesh::exact::boolean_exact(
                             &nonconvex_point_touch_side_cutter_left,
                             &point_touch_straddling_hole_side_cutter_right,
+                            hypermesh::exact::ExactBooleanOperation::Difference,
+                            ValidationPolicy::ALLOW_BOUNDARY,
+                        )
+                        .unwrap(),
+                        arrange_coplanar_surface_point_touch_difference(
+                            &nonconvex_grouped_point_touch_left,
+                            &nonconvex_grouped_point_touch_right,
+                        )
+                        .map(|output| {
+                            output.validate_difference_against_sources(
+                                &nonconvex_grouped_point_touch_left,
+                                &nonconvex_grouped_point_touch_right,
+                            )
+                        }),
+                        hypermesh::exact::preflight_boolean_exact(
+                            &nonconvex_grouped_point_touch_left,
+                            &nonconvex_grouped_point_touch_right,
+                            hypermesh::exact::ExactBooleanOperation::Difference,
+                        )
+                        .map(|report| report.validate()),
+                        hypermesh::exact::boolean_exact(
+                            &nonconvex_grouped_point_touch_left,
+                            &nonconvex_grouped_point_touch_right,
+                            hypermesh::exact::ExactBooleanOperation::Difference,
+                            ValidationPolicy::ALLOW_BOUNDARY,
+                        )
+                        .unwrap(),
+                        arrange_coplanar_convex_surface_component_holed_difference(
+                            &nonconvex_grouped_point_touch_left,
+                            &nonconvex_grouped_point_touch_retained_right,
+                        )
+                        .map(|output| {
+                            output.validate_against_sources(
+                                &nonconvex_grouped_point_touch_left,
+                                &nonconvex_grouped_point_touch_retained_right,
+                            )
+                        }),
+                        hypermesh::exact::preflight_boolean_exact(
+                            &nonconvex_grouped_point_touch_left,
+                            &nonconvex_grouped_point_touch_retained_right,
+                            hypermesh::exact::ExactBooleanOperation::Difference,
+                        )
+                        .map(|report| report.validate()),
+                        hypermesh::exact::boolean_exact(
+                            &nonconvex_grouped_point_touch_left,
+                            &nonconvex_grouped_point_touch_retained_right,
                             hypermesh::exact::ExactBooleanOperation::Difference,
                             ValidationPolicy::ALLOW_BOUNDARY,
                         )

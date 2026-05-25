@@ -18195,6 +18195,228 @@ fn exact_coplanar_convex_surface_difference_materializes_multiple_component_cuts
         }
     );
 
+    let nonconvex_grouped_left = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            0, 0, 0, 30, 0, 0, 30, 26, 0, 30, 30, 0, 22, 30, 0, 22, 26, 0, 20, 26, 0, 20, 30, 0, 0,
+            30, 0, 0, 26, 0,
+        ],
+        &[
+            0, 1, 2, //
+            0, 2, 5, //
+            0, 5, 6, //
+            0, 6, 9, //
+            9, 6, 7, //
+            9, 7, 8, //
+            5, 2, 3, //
+            5, 3, 4,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let nonconvex_grouped_right = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            11, 11, 0, 13, 11, 0, 13, 13, 0, 11, 13, 0, //
+            -2, 8, 0, 12, 8, 0, 12, 12, 0, -2, 12, 0, //
+            12, 12, 0, 32, 12, 0, 32, 16, 0, 14, 16, 0, //
+            12, 16, 0, 14, 16, 0, 14, 32, 0, 12, 32, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7, //
+            8, 9, 10, 8, 10, 11, //
+            12, 13, 14, 12, 14, 15,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_multi_difference(
+            &nonconvex_grouped_left,
+            &nonconvex_grouped_right,
+        )
+        .is_none()
+    );
+    let nonconvex_grouped = hypermesh::exact::arrange_coplanar_surface_point_touch_difference(
+        &nonconvex_grouped_left,
+        &nonconvex_grouped_right,
+    )
+    .expect("nonconvex grouped point-touch replay should consume the straddling hole");
+    nonconvex_grouped.validate().unwrap();
+    nonconvex_grouped
+        .validate_difference_against_sources(&nonconvex_grouped_left, &nonconvex_grouped_right)
+        .unwrap();
+    assert!(nonconvex_grouped.polygons.len() >= 2);
+    assert!(nonconvex_grouped.polygons.iter().all(|polygon| {
+        polygon.iter().all(|point| {
+            !(real_eq(&point.x, &ExactReal::from(11)) && real_eq(&point.y, &ExactReal::from(11)))
+        })
+    }));
+    assert!(
+        nonconvex_grouped
+            .polygons
+            .iter()
+            .filter(|polygon| {
+                polygon.iter().any(|point| {
+                    real_eq(&point.x, &ExactReal::from(14))
+                        && real_eq(&point.y, &ExactReal::from(16))
+                })
+            })
+            .count()
+            >= 2
+    );
+    let mut stale_nonconvex_grouped = nonconvex_grouped.clone();
+    stale_nonconvex_grouped.polygons.pop();
+    assert!(
+        stale_nonconvex_grouped
+            .validate_difference_against_sources(&nonconvex_grouped_left, &nonconvex_grouped_right)
+            .is_err()
+    );
+    let nonconvex_grouped_preflight = hypermesh::exact::preflight_boolean_exact(
+        &nonconvex_grouped_left,
+        &nonconvex_grouped_right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    nonconvex_grouped_preflight.validate().unwrap();
+    nonconvex_grouped_preflight
+        .validate_against_sources(&nonconvex_grouped_left, &nonconvex_grouped_right)
+        .unwrap();
+    assert_eq!(
+        nonconvex_grouped_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchDifference
+    );
+    let nonconvex_grouped_result = hypermesh::exact::boolean_exact(
+        &nonconvex_grouped_left,
+        &nonconvex_grouped_right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    nonconvex_grouped_result
+        .validate_operation_against_sources(
+            &nonconvex_grouped_left,
+            &nonconvex_grouped_right,
+            hypermesh::exact::ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+
+    let nonconvex_grouped_retained_right = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            3, 3, 0, 5, 3, 0, 5, 5, 0, 3, 5, 0, //
+            11, 11, 0, 13, 11, 0, 13, 13, 0, 11, 13, 0, //
+            -2, 8, 0, 12, 8, 0, 12, 12, 0, -2, 12, 0, //
+            12, 12, 0, 32, 12, 0, 32, 16, 0, 14, 16, 0, //
+            12, 16, 0, 14, 16, 0, 14, 32, 0, 12, 32, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7, //
+            8, 9, 10, 8, 10, 11, //
+            12, 13, 14, 12, 14, 15, //
+            16, 17, 18, 16, 18, 19,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_point_touch_difference(
+            &nonconvex_grouped_left,
+            &nonconvex_grouped_retained_right,
+        )
+        .is_none()
+    );
+    let nonconvex_grouped_retained =
+        hypermesh::exact::arrange_coplanar_convex_surface_component_holed_difference(
+            &nonconvex_grouped_left,
+            &nonconvex_grouped_retained_right,
+        )
+        .expect("nonconvex grouped component-holed replay should retain unrelated strict holes");
+    nonconvex_grouped_retained.validate().unwrap();
+    nonconvex_grouped_retained
+        .validate_against_sources(&nonconvex_grouped_left, &nonconvex_grouped_retained_right)
+        .unwrap();
+    assert_eq!(
+        nonconvex_grouped_retained
+            .components
+            .iter()
+            .map(|component| component.holes.len())
+            .sum::<usize>(),
+        1
+    );
+    assert!(
+        nonconvex_grouped_retained
+            .components
+            .iter()
+            .any(|component| {
+                component.holes.iter().any(|hole| {
+                    hole.iter().any(|point| {
+                        real_eq(&point.x, &ExactReal::from(3))
+                            && real_eq(&point.y, &ExactReal::from(3))
+                    })
+                })
+            })
+    );
+    assert!(
+        !nonconvex_grouped_retained
+            .components
+            .iter()
+            .any(|component| {
+                component.holes.iter().any(|hole| {
+                    hole.iter().any(|point| {
+                        real_eq(&point.x, &ExactReal::from(11))
+                            && real_eq(&point.y, &ExactReal::from(11))
+                    })
+                })
+            })
+    );
+    let mut stale_nonconvex_grouped_retained = nonconvex_grouped_retained.clone();
+    stale_nonconvex_grouped_retained.components[0]
+        .holes
+        .push(vec![
+            p3(11, 11, 0),
+            p3(13, 11, 0),
+            p3(13, 13, 0),
+            p3(11, 13, 0),
+        ]);
+    assert!(
+        stale_nonconvex_grouped_retained
+            .validate_against_sources(&nonconvex_grouped_left, &nonconvex_grouped_retained_right)
+            .is_err()
+    );
+    let nonconvex_grouped_retained_preflight = hypermesh::exact::preflight_boolean_exact(
+        &nonconvex_grouped_left,
+        &nonconvex_grouped_retained_right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    nonconvex_grouped_retained_preflight.validate().unwrap();
+    nonconvex_grouped_retained_preflight
+        .validate_against_sources(&nonconvex_grouped_left, &nonconvex_grouped_retained_right)
+        .unwrap();
+    assert_eq!(
+        nonconvex_grouped_retained_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::
+            CertifiedCoplanarConvexSurfaceComponentHoledDifference
+    );
+    let nonconvex_grouped_retained_result = hypermesh::exact::boolean_exact(
+        &nonconvex_grouped_left,
+        &nonconvex_grouped_retained_right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    nonconvex_grouped_retained_result
+        .validate_operation_against_sources(
+            &nonconvex_grouped_left,
+            &nonconvex_grouped_retained_right,
+            hypermesh::exact::ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+
     let nonconvex_point_branch_straddling_retained = ExactMesh::from_i64_triangles_with_policy(
         &[
             3, 1, 0, 5, 1, 0, 5, 3, 0, 3, 3, 0, //

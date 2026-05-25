@@ -8153,7 +8153,15 @@ fn arrange_coplanar_simple_surface_point_touch_difference(
                 &removed,
                 &holes,
                 "coplanar nonconvex source point-touch straddling-hole side-cutter difference",
-            )?
+            )
+            .or_else(|| {
+                materialize_simple_source_side_cutter_point_touch_difference_consuming_hole_contact_groups(
+                    component,
+                    &removed,
+                    &holes,
+                    "coplanar nonconvex source point-touch grouped straddling-hole side-cutter difference",
+                )
+            })?
         };
         emitted_branch = true;
         polygons.append(&mut branch_polygons);
@@ -11021,6 +11029,15 @@ fn arrange_coplanar_simple_surface_component_holed_difference(
         {
             components.extend(opened);
         } else if let Some(opened) =
+            materialize_simple_source_side_cutter_point_touch_component_holed_difference_consuming_hole_contact_groups(
+                component,
+                &side_removed,
+                &holes,
+                "coplanar nonconvex source component-holed grouped point-touch straddling-hole side-cutter difference",
+            )
+        {
+            components.extend(opened);
+        } else if let Some(opened) =
             materialize_simple_source_side_cutter_point_touch_difference_consuming_holes(
                 component,
                 &side_removed,
@@ -11375,6 +11392,223 @@ fn materialize_simple_source_side_cutter_point_touch_component_holed_difference_
     )
 }
 
+/// Replay grouped branch/hole objects on simple nonconvex sources.
+///
+/// This is the simple-source counterpart to
+/// [`materialize_side_cutter_point_touch_component_holed_difference_consuming_hole_contact_groups`].
+/// It handles the bounded case where a strict hole has positive-dimensional
+/// contact with several source-owned removed openings, those openings plus
+/// the hole replay as one simple removed object, and remaining opening groups
+/// meet only at exact branch vertices. When `retain_disjoint_holes` is true,
+/// strict holes disjoint from every removed group are assigned to the emitted
+/// output loops; otherwise every hole must be consumed.
+///
+/// The policy is Yap's retained-object model from "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7.1-2 (1997): a deleted ring is
+/// accepted only after exact predicates name the removed object that owns it,
+/// while retained rings remain explicit output objects. Grouped removed
+/// objects are built by the Weiler-Atherton retained-fragment construction
+/// cited by [`materialize_simple_polygon_union_group`], and contact
+/// dimensionality is certified by the Guigue-Devillers orientation-predicate
+/// classifier exposed through [`simple_polygon_interaction`].
+#[cfg(feature = "exact-triangulation")]
+fn materialize_simple_source_side_cutter_point_touch_grouped_hole_replay(
+    component: &SimpleSurfaceComponent,
+    side_removed: &[Vec<Point3>],
+    holes: &[ComponentHoleCandidate],
+    retain_disjoint_holes: bool,
+    label: &'static str,
+) -> Option<(Vec<Vec<Point3>>, Vec<Vec<Point3>>, Vec<Vec<Point3>>)> {
+    if side_removed.len() < 2 || holes.is_empty() {
+        return None;
+    }
+    let projection = component.projection;
+    let mut regions = Vec::with_capacity(side_removed.len() + holes.len());
+    for opening in side_removed {
+        let mut region = opening.clone();
+        orient_polygon_ccw(&mut region, projection)?;
+        region = simplify_projected_polygon(region, projection);
+        validate_projected_simple_loop(&region, projection, label).ok()?;
+        if !polygon_lies_in_closed_simple_polygon(&region, &component.boundary, projection)? {
+            return None;
+        }
+        if simple_boundary_attachment_count(&component.boundary, &region, projection)? == 0 {
+            return None;
+        }
+        regions.push(SimpleRemovedRegionCandidate {
+            right_index: None,
+            is_cutter: true,
+            region,
+        });
+    }
+    for (hole_index, hole) in holes.iter().enumerate() {
+        if !polygon_strictly_inside_simple_polygon(&hole.ring, &component.boundary, projection)? {
+            return None;
+        }
+        let mut region = hole.ring.clone();
+        orient_polygon_ccw(&mut region, projection)?;
+        region = simplify_projected_polygon(region, projection);
+        validate_projected_simple_loop(&region, projection, label).ok()?;
+        regions.push(SimpleRemovedRegionCandidate {
+            right_index: Some(hole_index),
+            is_cutter: false,
+            region,
+        });
+    }
+
+    let mut contact_graph = UnionFind::new(regions.len());
+    for left in 0..regions.len() {
+        for right in left + 1..regions.len() {
+            match simple_polygon_interaction(
+                &regions[left].region,
+                &regions[right].region,
+                projection,
+            )? {
+                SimplePolygonInteraction::Disjoint => {}
+                SimplePolygonInteraction::PointOnly => {
+                    if !regions[left].is_cutter || !regions[right].is_cutter {
+                        return None;
+                    }
+                }
+                SimplePolygonInteraction::Connected => contact_graph.union(left, right),
+            }
+        }
+    }
+
+    let mut groups: Vec<(usize, Vec<usize>)> = Vec::new();
+    for index in 0..regions.len() {
+        let root = contact_graph.find(index);
+        if let Some((_, members)) = groups.iter_mut().find(|(candidate, _)| *candidate == root) {
+            members.push(index);
+        } else {
+            groups.push((root, vec![index]));
+        }
+    }
+    groups.sort_by_key(|(_, members)| members.first().copied().unwrap_or(usize::MAX));
+
+    let mut retained_holes = Vec::new();
+    let mut removed_openings = Vec::new();
+    let mut consumed_holes = Vec::new();
+    let mut saw_multi_opening_consumed_group = false;
+    for (_, group) in groups {
+        let cutter_count = group
+            .iter()
+            .filter(|&&index| regions[index].is_cutter)
+            .count();
+        let hole_count = group
+            .iter()
+            .filter(|&&index| !regions[index].is_cutter)
+            .count();
+        if cutter_count == 0 {
+            if !retain_disjoint_holes || hole_count != 1 || group.len() != 1 {
+                return None;
+            }
+            let mut retained = regions[group[0]].region.clone();
+            orient_polygon_cw(&mut retained, projection)?;
+            retained_holes.push(retained);
+            continue;
+        }
+        if hole_count > 0 {
+            consumed_holes.extend(group.iter().filter_map(|&index| regions[index].right_index));
+            if cutter_count > 1 {
+                saw_multi_opening_consumed_group = true;
+            }
+        }
+
+        let mut opening = if group.len() == 1 {
+            regions[group[0]].region.clone()
+        } else {
+            let polygons = group
+                .iter()
+                .map(|&index| regions[index].region.clone())
+                .collect::<Vec<_>>();
+            let all = (0..polygons.len()).collect::<Vec<_>>();
+            materialize_simple_polygon_union_group(&polygons, &all, projection, label)?
+        };
+        orient_polygon_ccw(&mut opening, projection)?;
+        opening = simplify_projected_polygon(opening, projection);
+        validate_projected_simple_loop(&opening, projection, label).ok()?;
+        if !polygon_lies_in_closed_simple_polygon(&opening, &component.boundary, projection)? {
+            return None;
+        }
+        if simple_boundary_attachment_count(&component.boundary, &opening, projection)? == 0 {
+            return None;
+        }
+        removed_openings.push(opening);
+    }
+    if !saw_multi_opening_consumed_group {
+        return None;
+    }
+    if retain_disjoint_holes {
+        if retained_holes.is_empty() {
+            return None;
+        }
+    } else if holes
+        .iter()
+        .enumerate()
+        .any(|(index, _)| !consumed_holes.contains(&index))
+    {
+        return None;
+    }
+
+    let (removed_openings, mut cut_polygons) =
+        materialize_simple_source_side_cutter_point_touch_difference_core(
+            component,
+            &removed_openings,
+            label,
+        )?;
+    for polygon in &mut cut_polygons {
+        orient_polygon_ccw(polygon, projection)?;
+        validate_projected_simple_loop(polygon, projection, label).ok()?;
+    }
+    validate_simple_component_loops_disjoint_allowing_vertex_point_touches(
+        &cut_polygons,
+        projection,
+        label,
+    )
+    .ok()?;
+    sort_polygons_for_replay(&mut cut_polygons, projection);
+    Some((removed_openings, cut_polygons, retained_holes))
+}
+
+/// Replay grouped straddling-hole ownership on simple-source holed branches.
+///
+/// This wrapper keeps the component-holed artifact honest: disjoint strict
+/// rings remain output holes and are assigned by exact containment after the
+/// grouped removed openings split the source.
+#[cfg(feature = "exact-triangulation")]
+fn materialize_simple_source_side_cutter_point_touch_component_holed_difference_consuming_hole_contact_groups(
+    component: &SimpleSurfaceComponent,
+    side_removed: &[Vec<Point3>],
+    holes: &[ComponentHoleCandidate],
+    label: &'static str,
+) -> Option<Vec<CoplanarConvexHoledComponent>> {
+    let (removed_openings, cut_polygons, retained_holes) =
+        materialize_simple_source_side_cutter_point_touch_grouped_hole_replay(
+            component,
+            side_removed,
+            holes,
+            true,
+            label,
+        )?;
+    let holes_by_cut = assign_holes_to_side_cutter_split_outputs(
+        &retained_holes,
+        &cut_polygons,
+        &removed_openings,
+        component.projection,
+    )?;
+    if holes_by_cut.iter().all(Vec::is_empty) {
+        return None;
+    }
+    Some(
+        cut_polygons
+            .into_iter()
+            .zip(holes_by_cut)
+            .map(|(outer, holes)| CoplanarConvexHoledComponent { outer, holes })
+            .collect(),
+    )
+}
+
 /// Replay nonconvex source point branches whose strict holes are all consumed.
 ///
 /// This is the no-hole sibling of
@@ -11544,6 +11778,34 @@ fn materialize_simple_source_side_cutter_point_touch_difference_consuming_hole_c
     )
     .ok()?;
     sort_polygons_for_replay(&mut cut_polygons, projection);
+    Some(cut_polygons)
+}
+
+/// Replay grouped straddling holes on simple-source point branches.
+///
+/// This is the no-hole wrapper for
+/// [`materialize_simple_source_side_cutter_point_touch_grouped_hole_replay`]:
+/// every strict ring must be consumed by a grouped removed object, so the
+/// public artifact remains [`CoplanarSurfacePointTouchDifference`] rather than
+/// an empty component-holed carrier.
+#[cfg(feature = "exact-triangulation")]
+fn materialize_simple_source_side_cutter_point_touch_difference_consuming_hole_contact_groups(
+    component: &SimpleSurfaceComponent,
+    side_removed: &[Vec<Point3>],
+    holes: &[ComponentHoleCandidate],
+    label: &'static str,
+) -> Option<Vec<Vec<Point3>>> {
+    let (_, cut_polygons, retained_holes) =
+        materialize_simple_source_side_cutter_point_touch_grouped_hole_replay(
+            component,
+            side_removed,
+            holes,
+            false,
+            label,
+        )?;
+    if !retained_holes.is_empty() {
+        return None;
+    }
     Some(cut_polygons)
 }
 
