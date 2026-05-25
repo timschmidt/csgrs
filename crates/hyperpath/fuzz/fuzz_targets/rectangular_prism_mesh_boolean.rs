@@ -7,12 +7,12 @@ use hyperpath::{
     PathExactMeshHandoffSource, PathMeshBooleanOperation, PathMeshBooleanProgramStep,
     PcbCardinalRectPad, PcbCompositeCopperBooleanSource, PcbConvexPolyPad,
     PcbCopperBoardClipOutline, PcbCopperBooleanSource, PcbExactBoardHandoffOutline,
-    PcbExactCopperHandoffSource, PcbHoledOrthogonalCopperSource, PcbLayerZModel,
-    PcbOrthogonalBoardOutline, PcbOrthogonalPolyPad, PcbRectPad, PcbTrace, SweptLineSegment,
-    TraceLayer, boolean_path_mesh_program, boolean_path_mesh_sources,
-    boolean_rectangular_prism_chain, boolean_rectangular_prisms,
-    boolean_rectangular_prisms_with_boundary_policy, build_cam_infill_clip_program,
-    build_cam_rest_material_program, build_cam_support_clip_program,
+    PcbExactCopperHandoffSource, PcbHoledOrthogonalBoardClipOutline,
+    PcbHoledOrthogonalCopperSource, PcbLayerZModel, PcbOrthogonalBoardOutline,
+    PcbOrthogonalPolyPad, PcbRectPad, PcbTrace, SweptLineSegment, TraceLayer,
+    boolean_path_mesh_program, boolean_path_mesh_sources, boolean_rectangular_prism_chain,
+    boolean_rectangular_prisms, boolean_rectangular_prisms_with_boundary_policy,
+    build_cam_infill_clip_program, build_cam_rest_material_program, build_cam_support_clip_program,
     build_pcb_composite_copper_union_program, build_pcb_copper_board_clip_program,
     build_pcb_copper_union_program, build_pcb_holed_orthogonal_copper_program,
     build_rectangular_bead_plan, build_rectangular_serpentine_infill_graph,
@@ -564,6 +564,62 @@ fuzz_target!(|data: &[u8]| {
                         ) {
                             report.validate_replay(PredicatePolicy::default()).unwrap();
                             report.clip_step.result.validate().unwrap();
+                        }
+                    }
+                    if data[15] & 64 == 64 {
+                        let outer_min = Point2::new(min_x.clone(), min_y.clone());
+                        let outer_max = Point2::new(
+                            min_x.clone() + Real::from(6),
+                            min_y.clone() + Real::from(6),
+                        );
+                        let hole_min = Point2::new(
+                            outer_min.x.clone() + Real::from(2),
+                            outer_min.y.clone() + Real::from(2),
+                        );
+                        let hole_max = Point2::new(
+                            outer_min.x.clone() + Real::from(4),
+                            outer_min.y.clone() + Real::from(4),
+                        );
+                        if let Ok(board) = PcbHoledOrthogonalBoardClipOutline::new(
+                            vec![
+                                outer_min.clone(),
+                                Point2::new(outer_max.x.clone(), outer_min.y.clone()),
+                                outer_max.clone(),
+                                Point2::new(outer_min.x.clone(), outer_max.y.clone()),
+                            ],
+                            vec![vec![
+                                hole_min.clone(),
+                                Point2::new(hole_max.x.clone(), hole_min.y.clone()),
+                                hole_max.clone(),
+                                Point2::new(hole_min.x.clone(), hole_max.y.clone()),
+                            ]],
+                            PredicatePolicy::default(),
+                        ) {
+                            let pad = PcbRectPad::new(
+                                NetId(u32::from(data[16])),
+                                layer,
+                                Point2::new(
+                                    outer_min.x.clone() + Real::from(3),
+                                    outer_min.y.clone() + Real::from(3),
+                                ),
+                                Real::from(6),
+                                Real::from(6),
+                            )
+                            .unwrap();
+                            if let Ok(report) = build_pcb_copper_board_clip_program(
+                                vec![PcbCompositeCopperBooleanSource::Solid(
+                                    PcbCopperBooleanSource::RectPad(pad),
+                                )],
+                                PcbCopperBoardClipOutline::HoledOrthogonal(board),
+                                z_model.clone(),
+                                PredicatePolicy::default(),
+                            ) {
+                                report.validate_replay(PredicatePolicy::default()).unwrap();
+                                assert!(report.mesh().facts().mesh.closed_manifold);
+                                for step in &report.void_steps {
+                                    step.result.validate().unwrap();
+                                }
+                            }
                         }
                     }
                 }

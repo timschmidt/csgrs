@@ -9,23 +9,23 @@ use hyperpath::{
     PathProvenance, PathSourceFormat, PcbBoardOutline, PcbCardinalRectPad, PcbCircularPad,
     PcbCompositeCopperBooleanSource, PcbConvexBoardOutline, PcbConvexPolyPad,
     PcbCopperBoardClipOutline, PcbCopperBooleanSource, PcbExactBoardHandoffOutline,
-    PcbExactCopperHandoffSource, PcbHoledOrthogonalCopperSource, PcbLayerZModel,
-    PcbOrthogonalBoardOutline, PcbOrthogonalPolyPad, PcbRectPad, PcbTrace, PcbViaStack,
-    QuadraticBezier, RationalQuadraticBezier, RectangularPocket, SourceLengthUnit,
-    SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraLayerAlias, SpecctraNetAlias,
-    SweptLineSegment, TangentSpan, TraceLayer, ViaDrillIntent, boolean_path_mesh_program,
-    boolean_path_mesh_sources, boolean_rectangular_prism_chain, boolean_rectangular_prisms,
-    build_alternating_detour_meander, build_cam_infill_clip_program,
-    build_cam_rest_material_program, build_cam_support_clip_program, build_g1_join_problem,
-    build_length_match_problem, build_multi_detour_meander, build_nonuniform_detour_meander,
-    build_obstacle_aware_detour_meander, build_oriented_tangent_alignment_problem,
-    build_pcb_composite_copper_union_program, build_pcb_copper_board_clip_program,
-    build_pcb_copper_union_program, build_pcb_holed_orthogonal_copper_program,
-    build_rectangular_bead_plan, build_rectangular_pocket_plan,
-    build_rectangular_serpentine_infill_graph, build_rectangular_support_plan,
-    build_single_detour_meander, build_tangent_alignment_problem, certify_constant_feed_time,
-    certify_differential_pair_skew, certify_g1_chain, certify_g1_join_candidate,
-    certify_length_extension, certify_tangent_alignment_candidate,
+    PcbExactCopperHandoffSource, PcbHoledOrthogonalBoardClipOutline,
+    PcbHoledOrthogonalCopperSource, PcbLayerZModel, PcbOrthogonalBoardOutline,
+    PcbOrthogonalPolyPad, PcbRectPad, PcbTrace, PcbViaStack, QuadraticBezier,
+    RationalQuadraticBezier, RectangularPocket, SourceLengthUnit, SpecctraGridTraceRecord,
+    SpecctraGridViaRecord, SpecctraLayerAlias, SpecctraNetAlias, SweptLineSegment, TangentSpan,
+    TraceLayer, ViaDrillIntent, boolean_path_mesh_program, boolean_path_mesh_sources,
+    boolean_rectangular_prism_chain, boolean_rectangular_prisms, build_alternating_detour_meander,
+    build_cam_infill_clip_program, build_cam_rest_material_program, build_cam_support_clip_program,
+    build_g1_join_problem, build_length_match_problem, build_multi_detour_meander,
+    build_nonuniform_detour_meander, build_obstacle_aware_detour_meander,
+    build_oriented_tangent_alignment_problem, build_pcb_composite_copper_union_program,
+    build_pcb_copper_board_clip_program, build_pcb_copper_union_program,
+    build_pcb_holed_orthogonal_copper_program, build_rectangular_bead_plan,
+    build_rectangular_pocket_plan, build_rectangular_serpentine_infill_graph,
+    build_rectangular_support_plan, build_single_detour_meander, build_tangent_alignment_problem,
+    certify_constant_feed_time, certify_differential_pair_skew, certify_g1_chain,
+    certify_g1_join_candidate, certify_length_extension, certify_tangent_alignment_candidate,
     check_cardinal_rect_pad_board_clearance, check_circular_pad_board_clearance,
     check_rect_pad_board_clearance, check_trace_board_clearance,
     check_trace_cardinal_rect_pad_clearance, check_trace_clearance,
@@ -1181,6 +1181,40 @@ fn path_predicates(c: &mut Criterion) {
                     ),
                 )],
                 PcbCopperBoardClipOutline::Orthogonal(pcb_board_clip_outline.clone()),
+                pcb_z.clone(),
+                PredicatePolicy::default(),
+            )
+            .unwrap();
+            report.validate_replay(PredicatePolicy::default())
+        })
+    });
+    let pcb_holed_board_clip_outline = PcbHoledOrthogonalBoardClipOutline::new(
+        vec![p(0, 0), p(19_000, 0), p(19_000, 9_000), p(0, 9_000)],
+        vec![vec![
+            p(7_000, 3_000),
+            p(12_000, 3_000),
+            p(12_000, 6_000),
+            p(7_000, 6_000),
+        ]],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    c.bench_function("pcb_holed_board_clip_program_replay", |b| {
+        b.iter(|| {
+            let report = build_pcb_copper_board_clip_program(
+                vec![PcbCompositeCopperBooleanSource::Solid(
+                    PcbCopperBooleanSource::RectPad(
+                        PcbRectPad::new(
+                            NetId(7),
+                            TraceLayer(0),
+                            p(9_500, 4_500),
+                            r(19_000),
+                            r(9_000),
+                        )
+                        .unwrap(),
+                    ),
+                )],
+                PcbCopperBoardClipOutline::HoledOrthogonal(pcb_holed_board_clip_outline.clone()),
                 pcb_z.clone(),
                 PredicatePolicy::default(),
             )

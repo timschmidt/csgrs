@@ -14,17 +14,17 @@ use hyperpath::{
     PathMeshBooleanProgramStep, PathMeshBooleanSource, PathProvenance, PathSourceFormat,
     PcbBoardOutline, PcbCardinalRectPad, PcbCircularPad, PcbCompositeCopperBooleanSource,
     PcbConvexBoardOutline, PcbConvexPolyPad, PcbCopperBoardClipOutline, PcbCopperBooleanSource,
-    PcbExactBoardHandoffOutline, PcbExactCopperHandoffSource, PcbHoledOrthogonalCopperSource,
-    PcbLayerZModel, PcbOrthogonalBoardOutline, PcbOrthogonalPolyPad, PcbRectPad, PcbTrace,
-    PcbViaStack, PocketPlanError, PocketPlanStopReason, QuadraticBezier, RationalQuadraticBezier,
-    RationalQuadraticBezierError, RectangularInfillGraph, RectangularPocket,
-    RectangularRegionRelation, RouteCertificationError, SegmentParameterOrder, SourceLengthUnit,
-    SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraImportError, SpecctraLayerAlias,
-    SpecctraNetAlias, SpecctraParseError, SupportFootprintStatus, SupportPlanError,
-    SweptLineSegment, TangentAlignment, TangentJoinClass, TangentJoinReport, TangentSpan,
-    TraceLayer, ViaAnnularRingReport, ViaDrillIntent, ViaDrillPolicyClass, ViaLayerSpanRelation,
-    ViaLayerTransitionClass, boolean_path_mesh_program, boolean_path_mesh_sources,
-    boolean_rectangular_prism_chain, boolean_rectangular_prisms,
+    PcbExactBoardHandoffOutline, PcbExactCopperHandoffSource, PcbHoledOrthogonalBoardClipOutline,
+    PcbHoledOrthogonalCopperSource, PcbLayerZModel, PcbOrthogonalBoardOutline,
+    PcbOrthogonalPolyPad, PcbRectPad, PcbTrace, PcbViaStack, PocketPlanError, PocketPlanStopReason,
+    QuadraticBezier, RationalQuadraticBezier, RationalQuadraticBezierError, RectangularInfillGraph,
+    RectangularPocket, RectangularRegionRelation, RouteCertificationError, SegmentParameterOrder,
+    SourceLengthUnit, SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraImportError,
+    SpecctraLayerAlias, SpecctraNetAlias, SpecctraParseError, SupportFootprintStatus,
+    SupportPlanError, SweptLineSegment, TangentAlignment, TangentJoinClass, TangentJoinReport,
+    TangentSpan, TraceLayer, ViaAnnularRingReport, ViaDrillIntent, ViaDrillPolicyClass,
+    ViaLayerSpanRelation, ViaLayerTransitionClass, boolean_path_mesh_program,
+    boolean_path_mesh_sources, boolean_rectangular_prism_chain, boolean_rectangular_prisms,
     boolean_rectangular_prisms_with_boundary_policy, build_alternating_detour_meander,
     build_cam_infill_clip_program, build_cam_rest_material_program, build_cam_support_clip_program,
     build_g1_join_problem, build_length_match_problem, build_multi_detour_meander,
@@ -937,6 +937,79 @@ fn pcb_copper_board_clip_program_intersects_union_with_retained_board_outline() 
         .validate_replay(PredicatePolicy::default())
         .unwrap();
     assert!(orthogonal_report.mesh().facts().mesh.closed_manifold);
+}
+
+#[test]
+fn pcb_copper_board_clip_program_subtracts_retained_board_cutouts() {
+    let z_model = PcbLayerZModel::new(r(0), r(10), r(2), PredicatePolicy::default()).unwrap();
+    let copper = PcbRectPad::new(NetId(17), TraceLayer(0), p(10, 5), r(20), r(10)).unwrap();
+    let board = PcbHoledOrthogonalBoardClipOutline::new(
+        vec![p(0, 0), p(20, 0), p(20, 10), p(0, 10)],
+        vec![vec![p(8, 3), p(12, 3), p(12, 7), p(8, 7)]],
+        PredicatePolicy::default(),
+    )
+    .expect("strict internal board cutout should be retained");
+    assert!(board.exact_facts().all_exact_rational);
+
+    let report = build_pcb_copper_board_clip_program(
+        vec![PcbCompositeCopperBooleanSource::Solid(
+            PcbCopperBooleanSource::RectPad(copper),
+        )],
+        PcbCopperBoardClipOutline::HoledOrthogonal(board.clone()),
+        z_model,
+        PredicatePolicy::default(),
+    )
+    .expect("same-net copper should clip to outer board and subtract cutout");
+    report.validate_replay(PredicatePolicy::default()).unwrap();
+    assert!(report.union_steps.is_empty());
+    assert_eq!(report.void_steps.len(), 1);
+    assert_eq!(report.void_steps[0].index, 0);
+    assert_eq!(report.void_steps[0].hole, board.holes()[0]);
+    assert!(report.clip_step.result.validate().is_ok());
+    assert!(report.void_steps[0].result.validate().is_ok());
+    assert!(report.mesh().facts().mesh.closed_manifold);
+
+    let mut stale = report.clone();
+    stale.void_steps[0].hole =
+        PcbOrthogonalBoardOutline::new(vec![p(9, 3), p(12, 3), p(12, 7), p(9, 7)]).unwrap();
+    assert!(matches!(
+        stale.validate_replay(PredicatePolicy::default()),
+        Err(PathMeshBooleanError::Replay(_))
+    ));
+}
+
+#[test]
+fn pcb_holed_board_clip_outline_rejects_bad_cutouts() {
+    assert_eq!(
+        PcbHoledOrthogonalBoardClipOutline::new(
+            vec![p(0, 0), p(20, 0), p(20, 10), p(0, 10)],
+            vec![],
+            PredicatePolicy::default(),
+        )
+        .unwrap_err(),
+        PathMeshBooleanError::EmptyPolygonHoles
+    );
+    assert_eq!(
+        PcbHoledOrthogonalBoardClipOutline::new(
+            vec![p(0, 0), p(20, 0), p(20, 10), p(0, 10)],
+            vec![vec![p(18, 3), p(22, 3), p(22, 7), p(18, 7)]],
+            PredicatePolicy::default(),
+        )
+        .unwrap_err(),
+        PathMeshBooleanError::PolygonHoleOutsideOuter
+    );
+    assert_eq!(
+        PcbHoledOrthogonalBoardClipOutline::new(
+            vec![p(0, 0), p(20, 0), p(20, 10), p(0, 10)],
+            vec![
+                vec![p(4, 3), p(10, 3), p(10, 7), p(4, 7)],
+                vec![p(8, 4), p(14, 4), p(14, 8), p(8, 8)],
+            ],
+            PredicatePolicy::default(),
+        )
+        .unwrap_err(),
+        PathMeshBooleanError::PolygonHoleOverlap
+    );
 }
 
 #[test]
