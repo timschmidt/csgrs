@@ -117,12 +117,13 @@ use super::surface::{
     arrange_coplanar_surface_cutter_hole_contact_difference,
     arrange_coplanar_surface_multi_component_intersection,
     arrange_coplanar_surface_multi_component_union, arrange_coplanar_surface_multi_difference,
-    arrange_coplanar_surface_point_touch_union, arrange_coplanar_surface_side_cutter_difference,
-    arrange_single_triangle_coplanar_difference, arrange_single_triangle_coplanar_holed_difference,
-    arrange_single_triangle_coplanar_union, certify_coplanar_convex_surface_containment,
-    certify_coplanar_convex_surface_equivalence, certify_coplanar_surface_boundary_touch,
-    certify_single_triangle_coplanar_containment, difference_single_triangle_coplanar_surfaces,
-    intersect_single_triangle_coplanar_surfaces, union_single_triangle_coplanar_surfaces,
+    arrange_coplanar_surface_point_touch_difference, arrange_coplanar_surface_point_touch_union,
+    arrange_coplanar_surface_side_cutter_difference, arrange_single_triangle_coplanar_difference,
+    arrange_single_triangle_coplanar_holed_difference, arrange_single_triangle_coplanar_union,
+    certify_coplanar_convex_surface_containment, certify_coplanar_convex_surface_equivalence,
+    certify_coplanar_surface_boundary_touch, certify_single_triangle_coplanar_containment,
+    difference_single_triangle_coplanar_surfaces, intersect_single_triangle_coplanar_surfaces,
+    union_single_triangle_coplanar_surfaces,
 };
 #[cfg(feature = "exact-triangulation")]
 use super::validation::ValidationPolicy;
@@ -517,6 +518,11 @@ pub fn preflight_boolean_exact(
             if arrange_coplanar_affine_surface_difference(left, right).is_some() =>
         {
             ExactBooleanSupport::CertifiedCoplanarAffineSurfaceDifference
+        }
+        ExactBooleanOperation::Difference
+            if arrange_coplanar_surface_point_touch_difference(left, right).is_some() =>
+        {
+            ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchDifference
         }
         ExactBooleanOperation::Union if has_axis_aligned_box_union(left, right) => {
             ExactBooleanSupport::CertifiedAxisAlignedBoxUnion
@@ -1568,6 +1574,11 @@ pub fn boolean_exact_with_boundary_policy(
         {
             boolean_coplanar_affine_surface(left, right, operation, validation)
         }
+        ExactBooleanOperation::Difference
+            if arrange_coplanar_surface_point_touch_difference(left, right).is_some() =>
+        {
+            boolean_coplanar_surface_point_touch_difference(left, right, validation)
+        }
         ExactBooleanOperation::Union if has_axis_aligned_box_union(left, right) => {
             boolean_axis_aligned_box_union(left, right, validation)
         }
@@ -1934,14 +1945,23 @@ fn boolean_coplanar_surface_point_touch_difference(
     right: &ExactMesh,
     validation: ValidationPolicy,
 ) -> Result<ExactBooleanResult, MeshError> {
-    let union = arrange_coplanar_surface_point_touch_union(left, right)
-        .expect("caller checked coplanar point-touch surface difference");
-    union.validate_union_against_sources(left, right)?;
-    let mesh = copy_mesh(
-        left,
-        "exact coplanar point-touch surface difference keeps left",
-        validation,
-    )?;
+    let mesh = if let Some(union) = arrange_coplanar_surface_point_touch_union(left, right) {
+        union.validate_union_against_sources(left, right)?;
+        copy_mesh(
+            left,
+            "exact coplanar point-touch surface difference keeps left",
+            validation,
+        )?
+    } else {
+        let difference = arrange_coplanar_surface_point_touch_difference(left, right)
+            .expect("caller checked coplanar point-touch surface difference");
+        difference.validate_difference_against_sources(left, right)?;
+        copy_mesh(
+            &difference.mesh,
+            "exact coplanar point-touch surface difference",
+            validation,
+        )?
+    };
     Ok(certified_shortcut_result(
         mesh,
         ExactBooleanShortcutKind::CoplanarSurfacePointTouchDifference,

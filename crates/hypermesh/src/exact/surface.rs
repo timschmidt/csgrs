@@ -1231,6 +1231,38 @@ pub struct CoplanarSurfacePointTouchUnion {
     pub mesh: ExactMesh,
 }
 
+/// Exact coplanar difference output whose retained components meet at vertices.
+///
+/// This is the side-cutter counterpart to [`CoplanarSurfacePointTouchUnion`].
+/// A set of removed side openings may touch only at exact vertices, splitting
+/// the retained image into simple components that share geometric branch
+/// points. The mesh keeps each component loop independent and duplicates the
+/// shared coordinates, so no halfedge incidence is invented by coordinate
+/// equality alone. Positive-area/positive-length cutter groups are still
+/// merged by exact boundary replay; point-only contact is accepted only as
+/// lower-dimensional branch evidence after the removed openings and retained
+/// components satisfy exact area and source-boundary ownership checks.
+///
+/// The retained-fragment construction follows Weiler and Atherton, "Hidden
+/// Surface Removal Using Polygon Area Sorting," *SIGGRAPH Computer Graphics*
+/// 11.2 (1977). Segment contact is certified with the orientation-predicate
+/// model of Guigue and Devillers, "Fast and Robust Triangle-Triangle Overlap
+/// Test Using Orientation Predicates," *Journal of Graphics Tools* 8.1
+/// (2003). Yap, "Towards Exact Geometric Computation," *Computational
+/// Geometry* 7.1-2 (1997), is the reason this artifact is separate from the
+/// ordinary multi-difference object: the branch topology is explicit retained
+/// state, not a tolerance-side effect.
+#[cfg(feature = "exact-triangulation")]
+#[derive(Clone, Debug, PartialEq)]
+pub struct CoplanarSurfacePointTouchDifference {
+    /// Projection used by exact 2D branch predicates and triangulation.
+    pub projection: CoplanarProjection,
+    /// Exact 3D simple boundary loops, one per retained component.
+    pub polygons: Vec<Vec<Point3>>,
+    /// Exact triangulated open surface mesh containing all retained disks.
+    pub mesh: ExactMesh,
+}
+
 /// Exact single-loop arrangement output for nonconvex coplanar surfaces.
 ///
 /// This is the single-component counterpart to
@@ -1765,6 +1797,55 @@ impl CoplanarSurfacePointTouchUnion {
             Err(surface_validation_error(
                 "coplanar point-touch surface union",
                 "retained union does not match source replay",
+            ))
+        }
+    }
+}
+
+#[cfg(feature = "exact-triangulation")]
+impl CoplanarSurfacePointTouchDifference {
+    /// Validate branch-point difference loops, exact point contacts, and mesh state.
+    ///
+    /// The retained components may share exact vertex coordinates across loops
+    /// but must not cross, overlap, nest, or touch along positive-length
+    /// intervals. The triangulated mesh must keep those branch coordinates as
+    /// separate vertices owned by separate component loops.
+    pub fn validate(&self) -> Result<(), MeshError> {
+        validate_multi_surface_output_allowing_vertex_point_touches(
+            self.projection,
+            &self.polygons,
+            &self.mesh,
+            "coplanar point-touch surface difference",
+            false,
+        )
+    }
+
+    /// Validate this point-touch difference against its exact sources.
+    ///
+    /// Source replay rebuilds the side-cutter point-branch certificate and
+    /// requires the same retained loops and duplicate branch vertices. This
+    /// keeps the artifact inside Yap's exact-computation model: a locally valid
+    /// branch mesh is accepted only while the source predicates still justify
+    /// exactly that topology.
+    pub fn validate_difference_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<(), MeshError> {
+        self.validate()?;
+        let replay =
+            arrange_coplanar_surface_point_touch_difference(left, right).ok_or_else(|| {
+                surface_validation_error(
+                    "coplanar point-touch surface difference",
+                    "source replay did not reproduce a point-touch difference",
+                )
+            })?;
+        if self == &replay {
+            Ok(())
+        } else {
+            Err(surface_validation_error(
+                "coplanar point-touch surface difference",
+                "retained difference does not match source replay",
             ))
         }
     }
@@ -7454,6 +7535,101 @@ pub fn arrange_coplanar_surface_side_cutter_difference(
     Some(arrangement)
 }
 
+/// Certify a side-cutter difference whose retained components meet at points.
+///
+/// The ordinary side-cutter difference requires one simple retained loop, and
+/// the multi-difference requires strictly disjoint retained loops. This helper
+/// covers the bounded branch case between them: two or more non-rectilinear
+/// clipped side openings touch only at exact vertices, so subtracting them
+/// leaves retained simple loops that share those branch coordinates. The mesh
+/// duplicates branch coordinates across component loops and validates the
+/// exact area equation before export.
+#[cfg(feature = "exact-triangulation")]
+pub fn arrange_coplanar_surface_point_touch_difference(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Option<CoplanarSurfacePointTouchDifference> {
+    let left_components = connected_face_component_meshes(left)?;
+    let right_components = connected_face_component_meshes(right)?;
+    if left_components.len() != 1 || right_components.len() < 2 {
+        return None;
+    }
+
+    let left_component =
+        ConvexUnionComponent::from_mesh(MultiUnionSide::Left, left_components.into_iter().next()?)?;
+    let right_components = right_components
+        .into_iter()
+        .map(|mesh| ConvexUnionComponent::from_mesh(MultiUnionSide::Right, mesh))
+        .collect::<Option<Vec<_>>>()?;
+    let projection = left_component.projection;
+    if right_components
+        .iter()
+        .any(|component| component.projection != projection)
+    {
+        return None;
+    }
+
+    let mut cut_indices = Vec::new();
+    for (right_index, right_component) in right_components.iter().enumerate() {
+        if polygons_equal(&left_component.hull, &right_component.hull)
+            || polygon_in_closed_convex_polygon(
+                &left_component.hull,
+                &right_component.hull,
+                projection,
+            )?
+        {
+            return None;
+        }
+        if polygon_in_closed_convex_polygon(
+            &right_component.hull,
+            &left_component.hull,
+            projection,
+        )? {
+            if convex_polygons_touch_on_positive_boundary(
+                &left_component.hull,
+                &right_component.hull,
+                projection,
+            )? {
+                cut_indices.push(right_index);
+                continue;
+            }
+            return None;
+        }
+
+        match convex_union_component_relation(
+            &left_component.hull,
+            &right_component.hull,
+            projection,
+        )? {
+            ConvexUnionComponentRelation::Disjoint => {}
+            ConvexUnionComponentRelation::BoundaryOnly => return None,
+            ConvexUnionComponentRelation::PositiveArea => cut_indices.push(right_index),
+        }
+    }
+    if cut_indices.len() < 2 {
+        return None;
+    }
+
+    let (_, polygons) = materialize_side_cutter_point_touch_difference_core(
+        &left_component,
+        &cut_indices,
+        &right_components,
+        "coplanar point-touch side-cutter difference",
+    )?;
+    let mesh = polygons_to_earcut_open_mesh_with_label(
+        &polygons,
+        projection,
+        "exact coplanar point-touch side-cutter difference",
+    )?;
+    let arrangement = CoplanarSurfacePointTouchDifference {
+        projection,
+        polygons,
+        mesh,
+    };
+    arrangement.validate().ok()?;
+    Some(arrangement)
+}
+
 /// Certify a bounded cutter/hole-contact coplanar difference.
 ///
 /// This handles the narrow case that the strict component/holed arrangement
@@ -8422,6 +8598,81 @@ fn removed_region_contact_groups_allowing_incidental_points(
     projection: CoplanarProjection,
 ) -> Option<Vec<Vec<usize>>> {
     removed_region_contact_groups_with_policy(regions, projection, true)
+}
+
+/// Group removed regions while retaining exact point-only branch contacts.
+///
+/// Positive-area and positive-length contacts still create ordinary connected
+/// removed groups. Point-only contacts are reported separately instead of
+/// creating connectivity. This is the predicate split required by Yap's exact
+/// computation model: a vertex contact may authorize a named branch artifact
+/// only after the positive-dimensional groups and final retained loops replay
+/// exactly.
+#[cfg(feature = "exact-triangulation")]
+fn removed_region_contact_groups_allowing_branch_points(
+    regions: &[RemovedRegionCandidate],
+    projection: CoplanarProjection,
+) -> Option<(Vec<Vec<usize>>, bool)> {
+    if regions.is_empty() {
+        return None;
+    }
+    let mut contact_graph = UnionFind::new(regions.len());
+    let mut saw_point_contact = false;
+    for left in 0..regions.len() {
+        for right in left + 1..regions.len() {
+            let relation = convex_union_component_relation(
+                &regions[left].region,
+                &regions[right].region,
+                projection,
+            )?;
+            match relation {
+                ConvexUnionComponentRelation::Disjoint => {
+                    if polygons_share_exact_vertex(&regions[left].region, &regions[right].region) {
+                        saw_point_contact = true;
+                    }
+                }
+                ConvexUnionComponentRelation::BoundaryOnly => {
+                    let share_exact_vertex =
+                        polygons_share_exact_vertex(&regions[left].region, &regions[right].region);
+                    match convex_polygons_touch_on_positive_boundary(
+                        &regions[left].region,
+                        &regions[right].region,
+                        projection,
+                    ) {
+                        Some(true) => contact_graph.union(left, right),
+                        Some(false) => saw_point_contact = true,
+                        None if share_exact_vertex => saw_point_contact = true,
+                        None => return None,
+                    }
+                }
+                ConvexUnionComponentRelation::PositiveArea => contact_graph.union(left, right),
+            }
+        }
+    }
+
+    let mut groups: Vec<(usize, Vec<usize>)> = Vec::new();
+    for index in 0..regions.len() {
+        let root = contact_graph.find(index);
+        if let Some((_, members)) = groups.iter_mut().find(|(candidate, _)| *candidate == root) {
+            members.push(index);
+        } else {
+            groups.push((root, vec![index]));
+        }
+    }
+    groups.sort_by_key(|(_, members)| members.first().copied().unwrap_or(usize::MAX));
+    Some((
+        groups.into_iter().map(|(_, members)| members).collect(),
+        saw_point_contact,
+    ))
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn polygons_share_exact_vertex(left: &[Point3], right: &[Point3]) -> bool {
+    left.iter().any(|left_point| {
+        right
+            .iter()
+            .any(|right_point| points_equal(left_point, right_point))
+    })
 }
 
 #[cfg(feature = "exact-triangulation")]
@@ -11386,6 +11637,139 @@ fn materialize_side_cutter_multi_component_difference_core(
     {
         return None;
     }
+    Some((removed_openings, polygons))
+}
+
+/// Replay a no-hole side-cutter split with exact vertex branch contacts.
+///
+/// This is deliberately separate from
+/// [`materialize_side_cutter_multi_component_difference_core`]. Ordinary
+/// multi-difference loops must be disjoint; this helper accepts only the
+/// bounded case where clipped removed openings have at least one point-only
+/// contact, the contact does not provide connectivity for the removed-region
+/// groups, and the retained components validate with exact shared vertices.
+/// The same Weiler-Atherton retained-fragment construction and exact area
+/// replay are used, but the loop-disjointness predicate is the branch-aware
+/// one. That keeps the topology promotion explicit in Yap's sense instead of
+/// weakening the existing multi-difference contract.
+#[cfg(feature = "exact-triangulation")]
+fn materialize_side_cutter_point_touch_difference_core(
+    component: &ConvexUnionComponent,
+    cut_indices: &[usize],
+    right_components: &[ConvexUnionComponent],
+    label: &'static str,
+) -> Option<(Vec<Vec<Point3>>, Vec<Vec<Point3>>)> {
+    if cut_indices.len() < 2 {
+        return None;
+    }
+    let projection = component.projection;
+    let mut regions = Vec::with_capacity(cut_indices.len());
+    let mut all_clipped_cutters_are_rectangles = true;
+    for &right_index in cut_indices {
+        let mut clipped = convex_polygon_intersection_boundary(
+            &right_components[right_index].hull,
+            &component.hull,
+            projection,
+        )?;
+        if clipped.len() < 3 {
+            return None;
+        }
+        orient_polygon_ccw(&mut clipped, projection)?;
+        validate_projected_strictly_convex_loop(&clipped, projection, label).ok()?;
+        all_clipped_cutters_are_rectangles &=
+            projected_axis_aligned_rectangle(&clipped, projection).is_some();
+        regions.push(RemovedRegionCandidate {
+            right_index,
+            is_cutter: true,
+            region: clipped,
+        });
+    }
+    if all_clipped_cutters_are_rectangles {
+        return None;
+    }
+
+    let (groups, saw_point_contact) =
+        removed_region_contact_groups_allowing_branch_points(&regions, projection)?;
+    if !saw_point_contact {
+        return None;
+    }
+    let mut removed_openings = Vec::with_capacity(groups.len());
+    for group in &groups {
+        let mut opening = if group.len() == 1 {
+            regions[group[0]].region.clone()
+        } else {
+            materialize_removed_region_group_polygon_allowing_incidental_points(
+                &regions, group, projection,
+            )?
+        };
+        orient_polygon_ccw(&mut opening, projection)?;
+        opening = simplify_projected_polygon(opening, projection);
+        validate_projected_simple_loop(&opening, projection, label).ok()?;
+        if convex_boundary_attachment_count(&component.hull, &opening, projection)? == 0 {
+            return None;
+        }
+        for point in &opening {
+            if convex_polygon_location(point, &component.hull, projection)?
+                == ConvexPolygonLocation::Outside
+            {
+                return None;
+            }
+        }
+        removed_openings.push(opening);
+    }
+    if removed_openings.len() < 2 {
+        return None;
+    }
+    validate_simple_component_loops_disjoint_allowing_vertex_point_touches(
+        &removed_openings,
+        projection,
+        label,
+    )
+    .ok()?;
+
+    let mut fragments = Vec::new();
+    collect_outer_difference_fragments(
+        &component.hull,
+        &removed_openings,
+        projection,
+        &mut fragments,
+    )?;
+    for index in 0..removed_openings.len() {
+        collect_removed_difference_fragments(
+            index,
+            &component.hull,
+            &removed_openings,
+            projection,
+            &mut fragments,
+        )?;
+    }
+    let mut polygons = stitch_branching_simple_loops(fragments, projection)?;
+    if polygons.len() < 2 {
+        return None;
+    }
+    let mut output_area = ExactReal::from(0);
+    for polygon in &mut polygons {
+        orient_polygon_ccw(polygon, projection)?;
+        *polygon = simplify_projected_polygon(polygon.clone(), projection);
+        validate_projected_simple_loop(polygon, projection, label).ok()?;
+        output_area = add(&output_area, &projected_area2_abs(polygon, projection)?);
+    }
+    validate_simple_component_loops_disjoint_allowing_vertex_point_touches(
+        &polygons, projection, label,
+    )
+    .ok()?;
+
+    let mut removed_area = ExactReal::from(0);
+    for opening in &removed_openings {
+        removed_area = add(&removed_area, &projected_area2_abs(opening, projection)?);
+    }
+    let component_area = projected_area2_abs(&component.hull, projection)?;
+    if compare_reals(&add(&output_area, &removed_area), &component_area).value()
+        != Some(Ordering::Equal)
+    {
+        return None;
+    }
+    sort_polygons_for_replay(&mut polygons, projection);
     Some((removed_openings, polygons))
 }
 
@@ -15576,6 +15960,126 @@ fn stitch_disjoint_simple_loops(
         loops.push(polygon);
     }
     if loops.len() < 2 { None } else { Some(loops) }
+}
+
+/// Stitch retained loops through exact point-branch vertices.
+///
+/// Ordinary disjoint-loop stitching has only one continuation at each vertex.
+/// Point-touch differences deliberately admit vertices with several incident
+/// retained fragments. At those vertices the next directed fragment is the
+/// outgoing edge with the smallest counter-clockwise turn from the incoming
+/// edge, computed with exact projected cross/dot predicates rather than an
+/// angle tolerance. This is the local planar-graph walk used by the
+/// Weiler-Atherton retained-boundary construction, and the explicit branch
+/// walk is the topology certificate Yap calls for in "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7.1-2 (1997).
+#[cfg(feature = "exact-triangulation")]
+fn stitch_branching_simple_loops(
+    mut fragments: Vec<DirectedFragment>,
+    projection: CoplanarProjection,
+) -> Option<Vec<Vec<Point3>>> {
+    if fragments.len() < 6 {
+        return None;
+    }
+    let mut loops = Vec::new();
+    while !fragments.is_empty() {
+        let first = fragments.remove(0);
+        let mut polygon = vec![first.start, first.end];
+        loop {
+            let current = polygon.last()?.clone();
+            if points_equal(&current, polygon.first()?) {
+                polygon.pop();
+                break;
+            }
+            let previous = polygon.get(polygon.len().checked_sub(2)?)?.clone();
+            let next_index =
+                select_ccw_branch_continuation(&fragments, &previous, &current, projection)?;
+            let next = fragments.remove(next_index);
+            polygon.push(next.end);
+            if polygon.len() > 128 {
+                return None;
+            }
+        }
+        let polygon = simplify_projected_polygon(polygon, projection);
+        if polygon.len() < 3 {
+            return None;
+        }
+        loops.push(polygon);
+    }
+    if loops.len() < 2 { None } else { Some(loops) }
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn select_ccw_branch_continuation(
+    fragments: &[DirectedFragment],
+    previous: &Point3,
+    current: &Point3,
+    projection: CoplanarProjection,
+) -> Option<usize> {
+    let incoming = projected_vector(previous, current, projection);
+    let mut best: Option<(usize, Point2)> = None;
+    for (index, fragment) in fragments.iter().enumerate() {
+        if !points_equal(&fragment.start, current) {
+            continue;
+        }
+        let candidate = projected_vector(current, &fragment.end, projection);
+        if let Some((_, best_vector)) = &best {
+            if ccw_turn_less(&incoming, &candidate, best_vector)? {
+                best = Some((index, candidate));
+            }
+        } else {
+            best = Some((index, candidate));
+        }
+    }
+    best.map(|(index, _)| index)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn projected_vector(from: &Point3, to: &Point3, projection: CoplanarProjection) -> Point2 {
+    let from = project_point(from, projection);
+    let to = project_point(to, projection);
+    Point2 {
+        x: sub(&to.x, &from.x),
+        y: sub(&to.y, &from.y),
+    }
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn ccw_turn_less(base: &Point2, left: &Point2, right: &Point2) -> Option<bool> {
+    let left_bucket = ccw_turn_bucket(base, left)?;
+    let right_bucket = ccw_turn_bucket(base, right)?;
+    if left_bucket != right_bucket {
+        return Some(left_bucket < right_bucket);
+    }
+    match compare_reals(&cross2(left, right), &ExactReal::from(0)).value()? {
+        Ordering::Greater => Some(true),
+        Ordering::Less => Some(false),
+        Ordering::Equal => Some(false),
+    }
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn ccw_turn_bucket(base: &Point2, candidate: &Point2) -> Option<u8> {
+    match compare_reals(&cross2(base, candidate), &ExactReal::from(0)).value()? {
+        Ordering::Greater => Some(0),
+        Ordering::Less => Some(1),
+        Ordering::Equal => {
+            match compare_reals(&dot2(base, candidate), &ExactReal::from(0)).value()? {
+                Ordering::Greater | Ordering::Equal => Some(0),
+                Ordering::Less => Some(1),
+            }
+        }
+    }
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn cross2(left: &Point2, right: &Point2) -> ExactReal {
+    sub(&mul(&left.x, &right.y), &mul(&left.y, &right.x))
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn dot2(left: &Point2, right: &Point2) -> ExactReal {
+    add(&mul(&left.x, &right.x), &mul(&left.y, &right.y))
 }
 
 #[cfg(feature = "exact-triangulation")]

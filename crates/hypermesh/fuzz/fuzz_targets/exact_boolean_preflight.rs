@@ -24,7 +24,8 @@ use hypermesh::exact::{
     arrange_coplanar_surface_cutter_hole_contact_difference,
     arrange_coplanar_surface_multi_component_intersection,
     arrange_coplanar_surface_multi_component_union, arrange_coplanar_surface_multi_difference,
-    arrange_coplanar_surface_point_touch_union, arrange_coplanar_surface_side_cutter_difference,
+    arrange_coplanar_surface_point_touch_difference, arrange_coplanar_surface_point_touch_union,
+    arrange_coplanar_surface_side_cutter_difference,
     arrange_single_triangle_coplanar_difference, arrange_single_triangle_coplanar_holed_difference,
     arrange_single_triangle_coplanar_union, boolean_exact_with_boundary_policy,
     boolean_selected_regions, build_intersection_graph, build_selected_region_mesh,
@@ -3887,14 +3888,49 @@ fn exercise_side_cutter_opening_without_holes() {
 
     let point_only = ExactMesh::from_i64_triangles_with_policy(
         &[
-            -2, 4, 0, 9, 4, 0, 7, 10, 0, -2, 10, 0, //
-            -2, 13, 0, 7, 10, 0, 10, 14, 0, -2, 18, 0,
+            -2, 4, 0, 8, 4, 0, 10, 10, 0, -2, 10, 0, //
+            10, 10, 0, 22, 10, 0, 22, 16, 0, 14, 16, 0,
         ],
         &[0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7],
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .expect("point-only side-cutter fixture must import");
     assert!(arrange_coplanar_surface_side_cutter_difference(&left, &point_only).is_none());
+    let point_branch = arrange_coplanar_surface_point_touch_difference(&left, &point_only)
+        .expect("point-touch side-cutter difference should materialize branched loops");
+    point_branch.validate().unwrap();
+    point_branch
+        .validate_difference_against_sources(&left, &point_only)
+        .unwrap();
+    assert!(point_branch.polygons.len() >= 2);
+    let point_branch_preflight =
+        preflight_boolean_exact(&left, &point_only, ExactBooleanOperation::Difference)
+            .expect("point-touch side-cutter preflight should classify shortcut");
+    point_branch_preflight.validate().unwrap();
+    point_branch_preflight
+        .validate_against_sources(&left, &point_only)
+        .unwrap();
+    assert_eq!(
+        point_branch_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchDifference
+    );
+    let point_branch_result = hypermesh::exact::boolean_exact(
+        &left,
+        &point_only,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("point-touch side-cutter boolean should materialize");
+    point_branch_result
+        .validate_operation_against_sources(
+            &left,
+            &point_only,
+            ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(point_branch_result.mesh, point_branch.mesh);
 
     let incidental_point_cutters = ExactMesh::from_i64_triangles_with_policy(
         &[

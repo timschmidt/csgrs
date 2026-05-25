@@ -16590,8 +16590,8 @@ fn exact_coplanar_convex_surface_difference_materializes_multiple_component_cuts
 
     let point_only_side_opening = ExactMesh::from_i64_triangles_with_policy(
         &[
-            -2, 4, 0, 9, 4, 0, 7, 10, 0, -2, 10, 0, //
-            -2, 13, 0, 7, 10, 0, 10, 14, 0, -2, 18, 0,
+            -2, 4, 0, 8, 4, 0, 10, 10, 0, -2, 10, 0, //
+            10, 10, 0, 22, 10, 0, 22, 16, 0, 14, 16, 0,
         ],
         &[0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7],
         ValidationPolicy::ALLOW_BOUNDARY,
@@ -16603,6 +16603,85 @@ fn exact_coplanar_convex_surface_difference_materializes_multiple_component_cuts
             &point_only_side_opening,
         )
         .is_none()
+    );
+    let point_branch_difference =
+        hypermesh::exact::arrange_coplanar_surface_point_touch_difference(
+            &side_opening_left,
+            &point_only_side_opening,
+        )
+        .expect("point-touch side cutters should retain branched simple components");
+    point_branch_difference.validate().unwrap();
+    point_branch_difference
+        .validate_difference_against_sources(&side_opening_left, &point_only_side_opening)
+        .unwrap();
+    assert!(point_branch_difference.polygons.len() >= 2);
+    let branch_loop_count = point_branch_difference
+        .polygons
+        .iter()
+        .filter(|polygon| {
+            polygon.iter().any(|point| {
+                real_eq(&point.x, &ExactReal::from(10)) && real_eq(&point.y, &ExactReal::from(10))
+            })
+        })
+        .count();
+    assert!(
+        branch_loop_count >= 2,
+        "the exact point branch must remain duplicated across retained loops"
+    );
+    let mut reversed_point_branch = point_branch_difference.clone();
+    reversed_point_branch.polygons[0].reverse();
+    assert!(reversed_point_branch.validate().is_err());
+    let mut stale_point_branch = point_branch_difference.clone();
+    stale_point_branch.polygons.pop();
+    assert!(
+        stale_point_branch
+            .validate_difference_against_sources(&side_opening_left, &point_only_side_opening)
+            .is_err()
+    );
+    let point_branch_preflight = hypermesh::exact::preflight_boolean_exact(
+        &side_opening_left,
+        &point_only_side_opening,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    point_branch_preflight.validate().unwrap();
+    point_branch_preflight
+        .validate_against_sources(&side_opening_left, &point_only_side_opening)
+        .unwrap();
+    assert_eq!(
+        point_branch_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchDifference
+    );
+    let point_branch_result = hypermesh::exact::boolean_exact(
+        &side_opening_left,
+        &point_only_side_opening,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    point_branch_result
+        .validate_operation_against_sources(
+            &side_opening_left,
+            &point_only_side_opening,
+            hypermesh::exact::ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        point_branch_result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut:
+                hypermesh::exact::ExactBooleanShortcutKind::CoplanarSurfacePointTouchDifference
+        }
+    );
+    assert_eq!(
+        point_branch_result.mesh.vertices(),
+        point_branch_difference.mesh.vertices()
+    );
+    assert_eq!(
+        point_branch_result.mesh.triangles(),
+        point_branch_difference.mesh.triangles()
     );
 
     let preflight = hypermesh::exact::preflight_boolean_exact(
