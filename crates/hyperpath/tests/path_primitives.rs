@@ -10,14 +10,15 @@ use hyperpath::{
     LineExplicitArcIntersectionClass, LineOffsetError, LinePathSegment, MeanderError,
     MeanderObstacle, MeanderPlacementCandidate, NetId, OffsetSide, PathProvenance,
     PathSourceFormat, PcbBoardOutline, PcbCardinalRectPad, PcbCircularBoardOutline, PcbCircularPad,
-    PcbConvexBoardOutline, PcbObroundPad, PcbOrientedRectPad, PcbOrthogonalBoardOutline,
-    PcbRectPad, PcbRoundedRectPad, PcbTrace, PcbViaStack, PocketPlanError, PocketPlanStopReason,
-    QuadraticBezier, RationalQuadraticBezier, RationalQuadraticBezierError, RectangularPocket,
-    RectangularRegionRelation, RouteCertificationError, SegmentParameterOrder, SourceLengthUnit,
-    SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraImportError, SpecctraLayerAlias,
-    SpecctraNetAlias, SpecctraParseError, SupportFootprintStatus, SupportPlanError,
-    SweptLineSegment, TangentAlignment, TangentJoinClass, TangentJoinReport, TangentSpan,
-    TraceLayer, ViaAnnularRingReport, ViaDrillIntent, ViaDrillPolicyClass, ViaLayerSpanRelation,
+    PcbConvexBoardOutline, PcbConvexPad, PcbObroundPad, PcbOrientedRectPad,
+    PcbOrthogonalBoardOutline, PcbRectPad, PcbRoundedRectPad, PcbTrace, PcbViaStack,
+    PocketPlanError, PocketPlanStopReason, QuadraticBezier, RationalQuadraticBezier,
+    RationalQuadraticBezierError, RectangularPocket, RectangularRegionRelation,
+    RouteCertificationError, SegmentParameterOrder, SourceLengthUnit, SpecctraGridTraceRecord,
+    SpecctraGridViaRecord, SpecctraImportError, SpecctraLayerAlias, SpecctraNetAlias,
+    SpecctraParseError, SupportFootprintStatus, SupportPlanError, SweptLineSegment,
+    TangentAlignment, TangentJoinClass, TangentJoinReport, TangentSpan, TraceLayer,
+    ViaAnnularRingReport, ViaDrillIntent, ViaDrillPolicyClass, ViaLayerSpanRelation,
     ViaLayerTransitionClass, build_alternating_detour_meander, build_g1_join_problem,
     build_length_match_problem, build_multi_detour_meander, build_nonuniform_detour_meander,
     build_obstacle_aware_detour_meander, build_oriented_tangent_alignment_problem,
@@ -27,15 +28,16 @@ use hyperpath::{
     certify_differential_pair_skew, certify_g1_chain, certify_g1_join_candidate,
     certify_length_extension, certify_tangent_alignment_candidate,
     check_cardinal_rect_pad_board_clearance, check_circular_pad_board_clearance,
-    check_circular_pad_circular_board_clearance, check_obround_pad_board_clearance,
-    check_oriented_rect_pad_board_clearance, check_rect_pad_board_clearance,
-    check_rounded_rect_pad_board_clearance, check_trace_board_clearance,
-    check_trace_cardinal_rect_pad_clearance, check_trace_circular_board_clearance,
-    check_trace_clearance, check_trace_convex_board_clearance, check_trace_obround_pad_clearance,
-    check_trace_oriented_rect_pad_clearance, check_trace_orthogonal_board_clearance,
-    check_trace_pad_clearance, check_trace_rect_pad_clearance,
-    check_trace_rounded_rect_pad_clearance, check_trace_via_clearance,
-    check_trace_via_drill_clearance, check_via_drill_board_clearance,
+    check_circular_pad_circular_board_clearance, check_convex_pad_board_clearance,
+    check_obround_pad_board_clearance, check_oriented_rect_pad_board_clearance,
+    check_rect_pad_board_clearance, check_rounded_rect_pad_board_clearance,
+    check_trace_board_clearance, check_trace_cardinal_rect_pad_clearance,
+    check_trace_circular_board_clearance, check_trace_clearance,
+    check_trace_convex_board_clearance, check_trace_convex_pad_clearance,
+    check_trace_obround_pad_clearance, check_trace_oriented_rect_pad_clearance,
+    check_trace_orthogonal_board_clearance, check_trace_pad_clearance,
+    check_trace_rect_pad_clearance, check_trace_rounded_rect_pad_clearance,
+    check_trace_via_clearance, check_trace_via_drill_clearance, check_via_drill_board_clearance,
     classify_meander_candidate_slots, classify_meander_placement_slots, classify_tangent_alignment,
     classify_tangent_chain, classify_tangent_join, export_specctra_trace_record,
     import_specctra_text_route, import_specctra_trace_record, import_specctra_via_record,
@@ -1725,6 +1727,72 @@ fn pcb_obround_pad_rejects_negative_diameter() {
 }
 
 #[test]
+fn pcb_convex_pad_validates_strict_convexity() {
+    let diamond = PcbConvexPad::new(
+        NetId(2),
+        TraceLayer(0),
+        vec![p(0, 5), p(5, 0), p(0, -5), p(-5, 0)],
+    )
+    .unwrap();
+    assert_eq!(diamond.orientation(), BoardContourOrientation::Clockwise);
+    assert_eq!(diamond.vertices().len(), 4);
+
+    let too_few = PcbConvexPad::new(NetId(2), TraceLayer(0), vec![p(0, 0), p(1, 0)])
+        .expect_err("two vertices cannot define a convex pad");
+    assert_eq!(too_few, BoardContourError::TooFewVertices);
+
+    let collinear = PcbConvexPad::new(NetId(2), TraceLayer(0), vec![p(0, 0), p(1, 0), p(2, 0)])
+        .expect_err("zero-area pad must be rejected");
+    assert_eq!(collinear, BoardContourError::DegenerateArea);
+
+    let nonconvex = PcbConvexPad::new(
+        NetId(2),
+        TraceLayer(0),
+        vec![p(0, 0), p(4, 0), p(1, 1), p(0, 4)],
+    )
+    .expect_err("concave pad must be rejected");
+    assert_eq!(nonconvex, BoardContourError::NonConvex);
+}
+
+#[test]
+fn pcb_trace_convex_pad_clearance_certifies_polygon_gap() {
+    let trace = trace(1, 0, p(-2, 10), p(2, 10), 2);
+    let pad = PcbConvexPad::new(
+        NetId(2),
+        TraceLayer(0),
+        vec![p(0, 5), p(5, 0), p(0, -5), p(-5, 0)],
+    )
+    .unwrap();
+
+    let tangent = check_trace_convex_pad_clearance(&trace, &pad, &r(4), PredicatePolicy::default());
+    assert_eq!(tangent.status, ClearanceStatus::CertifiedClear);
+
+    let violation =
+        check_trace_convex_pad_clearance(&trace, &pad, &r(5), PredicatePolicy::default());
+    assert_eq!(violation.status, ClearanceStatus::ClearanceViolation);
+}
+
+#[test]
+fn pcb_trace_convex_pad_clearance_reports_overlap_and_not_applicable() {
+    let crossing_trace = trace(1, 0, p(-10, 0), p(10, 0), 2);
+    let same_net = trace(2, 0, p(-10, 0), p(10, 0), 2);
+    let pad = PcbConvexPad::new(
+        NetId(2),
+        TraceLayer(0),
+        vec![p(0, 5), p(5, 0), p(0, -5), p(-5, 0)],
+    )
+    .unwrap();
+
+    let report =
+        check_trace_convex_pad_clearance(&crossing_trace, &pad, &r(0), PredicatePolicy::default());
+    assert_eq!(report.status, ClearanceStatus::NoShortViolation);
+
+    let skipped =
+        check_trace_convex_pad_clearance(&same_net, &pad, &r(0), PredicatePolicy::default());
+    assert_eq!(skipped.status, ClearanceStatus::NotApplicable);
+}
+
+#[test]
 fn pcb_rect_pad_rejects_negative_extent() {
     let error = PcbRectPad::new(NetId(1), TraceLayer(0), p(0, 0), r(-1), r(1))
         .expect_err("negative rectangular pad width must be rejected");
@@ -2307,6 +2375,26 @@ fn pcb_obround_pad_board_clearance_uses_spine_extrema_plus_radius() {
         check_obround_pad_board_clearance(&pad, &board, &r(3), PredicatePolicy::default());
     assert_eq!(violation.status, ClearanceStatus::ClearanceViolation);
     assert_eq!(violation.copper_gap, Some(r(2)));
+}
+
+#[test]
+fn pcb_convex_pad_board_clearance_uses_vertex_extrema() {
+    let board = PcbBoardOutline::new(p(-10, -10), p(10, 10)).unwrap();
+    let pad = PcbConvexPad::new(
+        NetId(1),
+        TraceLayer(0),
+        vec![p(0, 5), p(5, 0), p(0, -5), p(-5, 0)],
+    )
+    .unwrap();
+
+    let clear = check_convex_pad_board_clearance(&pad, &board, &r(5), PredicatePolicy::default());
+    assert_eq!(clear.status, ClearanceStatus::CertifiedClear);
+    assert_eq!(clear.copper_gap, Some(r(5)));
+
+    let violation =
+        check_convex_pad_board_clearance(&pad, &board, &r(6), PredicatePolicy::default());
+    assert_eq!(violation.status, ClearanceStatus::ClearanceViolation);
+    assert_eq!(violation.copper_gap, Some(r(5)));
 }
 
 #[test]
@@ -5511,6 +5599,89 @@ proptest! {
 
         prop_assert_eq!(
             check_obround_pad_board_clearance(
+                &pad,
+                &board,
+                &r(i64::from(clearance)),
+                PredicatePolicy::default(),
+            ).status,
+            ClearanceStatus::CertifiedClear
+        );
+    }
+
+    #[test]
+    fn convex_rect_pad_matches_rect_for_generated_trace_gaps(
+        pad_y in 5_i16..=40,
+        width in 0_i16..=30,
+        height in 0_i16..=30,
+        clearance in 0_i16..=20,
+    ) {
+        prop_assume!(width > 0);
+        prop_assume!(height > 0);
+        prop_assume!(width % 2 == 0);
+        prop_assume!(height % 2 == 0);
+        let trace = trace(1, 0, p(0, 0), p(40, 0), 2);
+        let rect = PcbRectPad::new(
+            NetId(2),
+            TraceLayer(0),
+            p(20, i64::from(pad_y)),
+            r(i64::from(width)),
+            r(i64::from(height)),
+        ).unwrap();
+        let half_width = i64::from(width) / 2;
+        let half_height = i64::from(height) / 2;
+        prop_assume!(half_width > 0);
+        prop_assume!(half_height > 0);
+        let convex = PcbConvexPad::new(
+            NetId(2),
+            TraceLayer(0),
+            vec![
+                p(20 - half_width, i64::from(pad_y) - half_height),
+                p(20 + half_width, i64::from(pad_y) - half_height),
+                p(20 + half_width, i64::from(pad_y) + half_height),
+                p(20 - half_width, i64::from(pad_y) + half_height),
+            ],
+        ).unwrap();
+
+        prop_assert_eq!(
+            check_trace_convex_pad_clearance(
+                &trace,
+                &convex,
+                &r(i64::from(clearance)),
+                PredicatePolicy::default(),
+            ).status,
+            check_trace_rect_pad_clearance(
+                &trace,
+                &rect,
+                &r(i64::from(clearance)),
+                PredicatePolicy::default(),
+            ).status
+        );
+    }
+
+    #[test]
+    fn convex_pad_board_clearance_accepts_generated_interior_diamonds(
+        x in 30_i16..=70,
+        y in 30_i16..=70,
+        radius in 1_i16..=20,
+        clearance in 0_i16..=10,
+    ) {
+        let board = PcbBoardOutline::new(p(0, 0), p(100, 100)).unwrap();
+        let x = i64::from(x);
+        let y = i64::from(y);
+        let radius = i64::from(radius);
+        let pad = PcbConvexPad::new(
+            NetId(1),
+            TraceLayer(0),
+            vec![
+                p(x, y + radius),
+                p(x + radius, y),
+                p(x, y - radius),
+                p(x - radius, y),
+            ],
+        ).unwrap();
+
+        prop_assert_eq!(
+            check_convex_pad_board_clearance(
                 &pad,
                 &board,
                 &r(i64::from(clearance)),

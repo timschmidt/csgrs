@@ -47,3 +47,10 @@ path = "fuzz_targets/pcb_obround_pad.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "pcb_convex_pad"
+path = "fuzz_targets/pcb_convex_pad.rs"
+test = false
+doc = false
+bench = false
