@@ -25,6 +25,7 @@ use hypermesh::exact::{
     arrange_coplanar_orthogonal_surface_difference,
     arrange_coplanar_orthogonal_surface_intersection, arrange_coplanar_orthogonal_surface_union,
     arrange_coplanar_surface_component_difference,
+    arrange_coplanar_surface_component_holed_difference,
     arrange_coplanar_surface_component_holed_intersection,
     arrange_coplanar_surface_component_holed_union, arrange_coplanar_surface_component_intersection,
     arrange_coplanar_surface_component_union,
@@ -1465,6 +1466,7 @@ fn exercise_deterministic_case(selector: u8) {
         36 => exercise_holed_coplanar_mesh_containment(),
         37 => exercise_component_holed_coplanar_intersection(),
         38 => exercise_same_outer_component_holed_coplanar_intersection(),
+        39 => exercise_same_outer_component_holed_coplanar_difference(),
         _ => exercise_nonconvex_coplanar_volumetric_difference_fan_split(),
     }
 }
@@ -2440,6 +2442,79 @@ fn exercise_same_outer_component_holed_coplanar_intersection() {
         &left,
         &right,
         ExactBooleanOperation::Intersection,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn exercise_same_outer_component_holed_coplanar_difference() {
+    let outer = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 10, 0, 0, 10, 10, 0, 0, 10, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("same-outer holed difference outer fixture must import");
+    let small_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[4, 4, 0, 6, 4, 0, 6, 6, 0, 4, 6, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("same-outer holed difference small hole fixture must import");
+    let large_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[3, 3, 0, 7, 3, 0, 7, 7, 0, 3, 7, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("same-outer holed difference large hole fixture must import");
+    let left = arrange_coplanar_convex_surface_holed_difference(&outer, &small_hole)
+        .expect("same-outer small-hole left should materialize")
+        .mesh;
+    let right = arrange_coplanar_convex_surface_holed_difference(&outer, &large_hole)
+        .expect("same-outer large-hole right should materialize")
+        .mesh;
+
+    let difference = arrange_coplanar_surface_component_holed_difference(&left, &right)
+        .expect("nested same-outer holes should materialize the difference annulus");
+    difference.validate().unwrap();
+    difference
+        .validate_surface_difference_against_sources(&left, &right)
+        .unwrap();
+    assert_eq!(difference.components.len(), 1);
+    assert_eq!(difference.components[0].holes.len(), 1);
+    assert!(arrange_coplanar_surface_component_holed_difference(&right, &left).is_none());
+
+    let crossing_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[5, 3, 0, 8, 3, 0, 8, 6, 0, 5, 6, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("same-outer crossing hole fixture must import");
+    let crossing = arrange_coplanar_convex_surface_holed_difference(&outer, &crossing_hole)
+        .expect("same-outer crossing annulus should materialize")
+        .mesh;
+    assert!(arrange_coplanar_surface_component_holed_difference(&left, &crossing).is_none());
+
+    let preflight = preflight_boolean_exact(&left, &right, ExactBooleanOperation::Difference)
+        .expect("same-outer holed difference preflight should classify shortcut");
+    preflight.validate().unwrap();
+    preflight.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
+    );
+    hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("same-outer holed difference should materialize")
+    .validate_operation_against_sources(
+        &left,
+        &right,
+        ExactBooleanOperation::Difference,
         ValidationPolicy::ALLOW_BOUNDARY,
         ExactBoundaryBooleanPolicy::Reject,
     )

@@ -18,6 +18,7 @@ use hypermesh::exact::{
     arrange_coplanar_orthogonal_surface_difference,
     arrange_coplanar_orthogonal_surface_intersection, arrange_coplanar_orthogonal_surface_union,
     arrange_coplanar_surface_component_difference,
+    arrange_coplanar_surface_component_holed_difference,
     arrange_coplanar_surface_component_holed_intersection,
     arrange_coplanar_surface_component_holed_union,
     arrange_coplanar_surface_component_intersection, arrange_coplanar_surface_component_union,
@@ -4728,6 +4729,30 @@ fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
             ValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap();
+        let same_outer_nested_small_hole = ExactMesh::from_i64_triangles_with_policy(
+            &[4, 4, 0, 6, 4, 0, 6, 6, 0, 4, 6, 0],
+            &[0, 1, 2, 0, 2, 3],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let same_outer_nested_large_hole = ExactMesh::from_i64_triangles_with_policy(
+            &[3, 3, 0, 7, 3, 0, 7, 7, 0, 3, 7, 0],
+            &[0, 1, 2, 0, 2, 3],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let same_outer_nested_left = arrange_coplanar_convex_surface_holed_difference(
+            &single_component_holed_left,
+            &same_outer_nested_small_hole,
+        )
+        .unwrap()
+        .mesh;
+        let same_outer_nested_right = arrange_coplanar_convex_surface_holed_difference(
+            &single_component_holed_left,
+            &same_outer_nested_large_hole,
+        )
+        .unwrap()
+        .mesh;
         let nonrectilinear_channel_holed_left = ExactMesh::from_i64_triangles_with_policy(
             &[0, 0, 0, 20, 0, 0, 20, 20, 0, 0, 20, 0],
             &[0, 1, 2, 0, 2, 3],
@@ -6059,6 +6084,22 @@ fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
                             ValidationPolicy::ALLOW_BOUNDARY,
                         )
                         .unwrap(),
+                        arrange_coplanar_surface_component_holed_difference(
+                            &same_outer_nested_left,
+                            &same_outer_nested_right,
+                        )
+                        .map(|output| {
+                            output.validate_surface_difference_against_sources(
+                                &same_outer_nested_left,
+                                &same_outer_nested_right,
+                            )
+                        }),
+                        hypermesh::exact::preflight_boolean_exact(
+                            &same_outer_nested_left,
+                            &same_outer_nested_right,
+                            hypermesh::exact::ExactBooleanOperation::Difference,
+                        )
+                        .map(|report| report.validate()),
                         arrange_coplanar_convex_surface_component_holed_difference(
                             &component_holed_left,
                             &component_holed_cut_right,

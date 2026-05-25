@@ -257,6 +257,7 @@ pub use surface::{
     arrange_coplanar_convex_surface_multi_intersection,
     arrange_coplanar_convex_surface_multi_union, arrange_coplanar_convex_surface_union,
     arrange_coplanar_surface_component_difference,
+    arrange_coplanar_surface_component_holed_difference,
     arrange_coplanar_surface_component_holed_intersection,
     arrange_coplanar_surface_component_holed_union,
     arrange_coplanar_surface_component_intersection, arrange_coplanar_surface_component_union,

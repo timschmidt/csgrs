@@ -26052,6 +26052,132 @@ fn exact_coplanar_component_holed_intersection_merges_same_outer_holes() {
 
 #[cfg(feature = "exact-triangulation")]
 #[test]
+fn exact_coplanar_component_holed_difference_materializes_nested_same_outer_holes() {
+    let outer = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 10, 0, 0, 10, 10, 0, 0, 10, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let small_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[4, 4, 0, 6, 4, 0, 6, 6, 0, 4, 6, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let large_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[3, 3, 0, 7, 3, 0, 7, 7, 0, 3, 7, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let left =
+        hypermesh::exact::arrange_coplanar_convex_surface_holed_difference(&outer, &small_hole)
+            .expect("small-hole left annulus should materialize")
+            .mesh;
+    let right =
+        hypermesh::exact::arrange_coplanar_convex_surface_holed_difference(&outer, &large_hole)
+            .expect("large-hole right annulus should materialize")
+            .mesh;
+
+    let difference =
+        hypermesh::exact::arrange_coplanar_surface_component_holed_difference(&left, &right)
+            .expect("same-outer nested holes should materialize the hole annulus");
+    difference.validate().unwrap();
+    difference
+        .validate_surface_difference_against_sources(&left, &right)
+        .unwrap();
+    assert_eq!(difference.components.len(), 1);
+    assert_eq!(difference.components[0].holes.len(), 1);
+    assert!(
+        difference.components[0]
+            .outer
+            .iter()
+            .any(|point| real_eq(&point.x, &ExactReal::from(3)))
+    );
+    assert!(
+        difference.components[0].holes[0]
+            .iter()
+            .any(|point| real_eq(&point.x, &ExactReal::from(4)))
+    );
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_component_holed_difference(&right, &left)
+            .is_none(),
+        "the reverse same-outer subtraction is empty/containment, not a holed remnant"
+    );
+
+    let crossing_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[5, 3, 0, 8, 3, 0, 8, 6, 0, 5, 6, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let crossing =
+        hypermesh::exact::arrange_coplanar_convex_surface_holed_difference(&outer, &crossing_hole)
+            .expect("crossing-hole annulus should materialize")
+            .mesh;
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_component_holed_difference(&left, &crossing)
+            .is_none(),
+        "partial hole overlap requires the full planar arrangement layer"
+    );
+
+    let touching_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[6, 4, 0, 8, 4, 0, 8, 6, 0, 6, 6, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let touching =
+        hypermesh::exact::arrange_coplanar_convex_surface_holed_difference(&outer, &touching_hole)
+            .expect("touching-hole annulus should materialize")
+            .mesh;
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_component_holed_difference(&left, &touching)
+            .is_none(),
+        "hole boundary contact is not a strict nested-hole difference"
+    );
+
+    let preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    preflight.validate().unwrap();
+    preflight.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
+    );
+
+    let result = hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    result
+        .validate_operation_against_sources(
+            &left,
+            &right,
+            hypermesh::exact::ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut:
+                hypermesh::exact::ExactBooleanShortcutKind::CoplanarConvexSurfaceComponentHoledDifference
+        }
+    );
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[test]
 fn exact_named_booleans_handle_empty_operands() {
     let empty =
         ExactMesh::from_i64_triangles_with_policy(&[], &[], ValidationPolicy::ALLOW_BOUNDARY)

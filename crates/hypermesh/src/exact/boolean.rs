@@ -114,6 +114,7 @@ use super::surface::{
     arrange_coplanar_convex_surface_multi_intersection,
     arrange_coplanar_convex_surface_multi_union, arrange_coplanar_convex_surface_union,
     arrange_coplanar_surface_component_difference,
+    arrange_coplanar_surface_component_holed_difference,
     arrange_coplanar_surface_component_holed_intersection,
     arrange_coplanar_surface_component_holed_union,
     arrange_coplanar_surface_component_intersection, arrange_coplanar_surface_component_union,
@@ -513,7 +514,8 @@ pub fn preflight_boolean_exact(
         }
         ExactBooleanOperation::Difference
             if arrange_coplanar_convex_surface_component_holed_difference(left, right)
-                .is_some() =>
+                .is_some()
+                || arrange_coplanar_surface_component_holed_difference(left, right).is_some() =>
         {
             ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
         }
@@ -1578,7 +1580,8 @@ pub fn boolean_exact_with_boundary_policy(
         }
         ExactBooleanOperation::Difference
             if arrange_coplanar_convex_surface_component_holed_difference(left, right)
-                .is_some() =>
+                .is_some()
+                || arrange_coplanar_surface_component_holed_difference(left, right).is_some() =>
         {
             boolean_coplanar_convex_component_holed_difference(left, right, validation)
         }
@@ -2518,11 +2521,12 @@ fn boolean_coplanar_convex_component_holed_difference_optional(
         return Ok(None);
     }
     arrange_coplanar_convex_surface_component_holed_difference(left, right)
+        .or_else(|| arrange_coplanar_surface_component_holed_difference(left, right))
         .map(|difference| {
-            difference.validate_against_sources(left, right)?;
+            difference.validate_surface_difference_against_sources(left, right)?;
             let mesh = copy_mesh(
                 &difference.mesh,
-                "exact coplanar convex component-holed difference",
+                "exact coplanar component-holed difference",
                 validation,
             )?;
             Ok(certified_shortcut_result(
