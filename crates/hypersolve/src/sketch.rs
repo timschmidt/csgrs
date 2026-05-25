@@ -1051,6 +1051,23 @@ pub enum SketchConstraintKind {
         /// Second circle or circular-arc entity.
         b: SketchEntityHandle,
     },
+    /// 2D circle/arc concentricity relation.
+    ///
+    /// Lowering emits exact center coordinate equality rows between two
+    /// retained circle or circular-arc carriers. Radius equality, positive
+    /// radius, and nondegenerate arc policy stay separate retained
+    /// obligations. This follows Yap, "Towards Exact Geometric Computation"
+    /// (1997): concentric topology is replayed from retained center handles
+    /// and exact rows, not inferred from floating center-distance tolerances.
+    /// The explicit circle/arc relation follows the geometric-constraint
+    /// vocabulary described by Bouma et al., "A Geometric Constraint Solver"
+    /// (1995).
+    Concentric2 {
+        /// First circle or circular-arc entity.
+        a: SketchEntityHandle,
+        /// Second circle or circular-arc entity.
+        b: SketchEntityHandle,
+    },
     /// 2D horizontal line constraint.
     Horizontal {
         /// Line entity.
@@ -1938,6 +1955,8 @@ pub enum SketchResidualStrategy {
     SquaredEqualPointLineDistances,
     /// Exact retained radius equality.
     RadiusEquality,
+    /// Exact retained circle/arc center coordinate equality package.
+    Concentricity,
     /// Incidence represented as a squared-distance polynomial.
     SquaredIncidence,
     /// Exact point-on-arc incidence and branch package.
@@ -2125,6 +2144,8 @@ pub enum SketchResidualFormKind {
     ProjectedLineCircleTangencyPolynomial,
     /// Branch-specific retained 2D circle/circle tangency proof row.
     CircleCircleTangencyPolynomial,
+    /// Exact retained circle/arc center coordinate equality row.
+    ConcentricCenterCoordinatePolynomial,
     /// Point-on-arc endpoint-on-radius proof row.
     ArcIncidenceEndpointRadiusPolynomial,
     /// Point-on-arc point-on-radius proof row.
@@ -3004,6 +3025,16 @@ impl SketchSolveProblem {
         b: SketchEntityHandle,
     ) -> SketchConstraintHandle {
         distance::equal_radius2(self, name, a, b).handle
+    }
+
+    /// Add a retained 2D concentricity relation for circles or circular arcs.
+    pub fn add_concentric2(
+        &mut self,
+        name: impl Into<String>,
+        a: SketchEntityHandle,
+        b: SketchEntityHandle,
+    ) -> SketchConstraintHandle {
+        distance::concentric2(self, name, a, b).handle
     }
 
     /// Add a horizontal 2D line constraint.
@@ -4254,6 +4285,32 @@ impl SketchSolveProblem {
                             residual: parts.tangency,
                         },
                     ],
+                    diagnostics,
+                }
+            }
+            SketchConstraintKind::Concentric2 { a, b } => {
+                let mut diagnostics = Vec::new();
+                let Some(parts) = self.concentric_exprs(a, b, constraint, &mut diagnostics) else {
+                    return SketchResidualFormsReport {
+                        constraint: handle,
+                        status: SketchResidualFormsStatus::InvalidInputs,
+                        forms: Vec::new(),
+                        diagnostics,
+                    };
+                };
+                SketchResidualFormsReport {
+                    constraint: handle,
+                    status: SketchResidualFormsStatus::Generated,
+                    forms: parts
+                        .center
+                        .into_iter()
+                        .map(|residual| SketchResidualForm {
+                            kind: SketchResidualFormKind::ConcentricCenterCoordinatePolynomial,
+                            role: SketchResidualFormRole::ExactProof,
+                            strategy: Some(SketchResidualStrategy::Concentricity),
+                            residual,
+                        })
+                        .collect(),
                     diagnostics,
                 }
             }
@@ -7947,6 +8004,25 @@ impl SketchSolveProblem {
                     SketchResidualStrategy::RadiusEquality,
                 );
             }
+            SketchConstraintKind::Concentric2 { a, b } => {
+                // Concentricity is exact center-coordinate equality over
+                // retained circle/arc carriers. It is intentionally separate
+                // from radius equality and from point-point coincidence so
+                // failed-constraint reports preserve the source relation.
+                let Some(parts) = self.concentric_exprs(a, b, constraint, rows) else {
+                    return;
+                };
+                for (axis, residual) in parts.center.into_iter().enumerate() {
+                    self.push_residual(
+                        problem,
+                        rows,
+                        constraint,
+                        format!("{} concentric center coordinate {axis}", constraint.name),
+                        residual,
+                        SketchResidualStrategy::Concentricity,
+                    );
+                }
+            }
             SketchConstraintKind::Horizontal { line } => {
                 let Some((start, end)) = self.line2_points(line, constraint, rows) else {
                     return;
@@ -10258,6 +10334,48 @@ impl SketchSolveProblem {
         })
     }
 
+    fn concentric_exprs(
+        &self,
+        a: SketchEntityHandle,
+        b: SketchEntityHandle,
+        constraint: &SketchConstraint,
+        rows: &mut Vec<SketchGeneratedRow>,
+    ) -> Option<ConcentricExprs> {
+        let a = self.circle_or_arc_center_expr(a, constraint, rows)?;
+        let b = self.circle_or_arc_center_expr(b, constraint, rows)?;
+        Some(ConcentricExprs {
+            center: [
+                a.exprs[0].clone() - b.exprs[0].clone(),
+                a.exprs[1].clone() - b.exprs[1].clone(),
+            ],
+        })
+    }
+
+    fn circle_or_arc_center_expr(
+        &self,
+        handle: SketchEntityHandle,
+        constraint: &SketchConstraint,
+        rows: &mut Vec<SketchGeneratedRow>,
+    ) -> Option<CoordinateExprs> {
+        let Some(entity) = self.entity(handle) else {
+            rows.push(missing_entity_row(constraint, handle));
+            return None;
+        };
+        let center = match &entity.kind {
+            SketchEntityKind::Circle2(circle) => circle.center,
+            SketchEntityKind::ArcOfCircle2(arc) => arc.center,
+            _ => {
+                rows.push(wrong_entity_row(
+                    constraint,
+                    handle,
+                    "circle or circular arc",
+                ));
+                return None;
+            }
+        };
+        self.point2_coordinates(center, constraint, rows)
+    }
+
     fn projected_point_range_exprs(
         &self,
         workplane: SketchEntityHandle,
@@ -11753,6 +11871,11 @@ struct CubicLineTangentExprs {
 struct CirclePartsExprs {
     center: CoordinateExprs,
     radius: Expr,
+}
+
+#[derive(Clone, Debug)]
+struct ConcentricExprs {
+    center: [Expr; 2],
 }
 
 #[derive(Clone, Debug)]

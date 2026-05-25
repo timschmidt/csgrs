@@ -189,6 +189,13 @@ doc = false
 bench = false
 
 [[bin]]
+name = "sketch_concentric"
+path = "fuzz_targets/sketch_concentric.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
 name = "sketch_projected_line_symmetry"
 path = "fuzz_targets/sketch_projected_line_symmetry.rs"
 test = false

@@ -359,6 +359,66 @@ proptest! {
     }
 
     #[test]
+    fn sketch_concentric_rows_match_generated_circle_arc_centers(
+        cx in -8_i16..=8,
+        cy in -8_i16..=8,
+        radius in 1_i16..=16,
+        dx in -6_i16..=6,
+        dy in -6_i16..=6,
+    ) {
+        let cx = i64::from(cx);
+        let cy = i64::from(cy);
+        let radius = i64::from(radius);
+        let dx = i64::from(dx);
+        let dy = i64::from(dy);
+        let mut sketch = SketchSolveProblem::new();
+        let center = sketch.add_point2d("center", Real::from(cx), Real::from(cy));
+        let start = sketch.add_point2d("start", Real::from(cx + radius), Real::from(cy));
+        let end = sketch.add_point2d("end", Real::from(cx), Real::from(cy + radius));
+        let radius_entity = sketch.add_distance("radius", Real::from(radius));
+        let circle = sketch.add_circle2("circle", center, radius_entity);
+        let arc = sketch.add_arc_of_circle2("arc", center, start, end, radius_entity);
+        let handle = sketch.add_concentric2("concentric", circle, arc);
+        if dx != 0 || dy != 0 {
+            let shifted_center =
+                sketch.add_point2d("shifted center", Real::from(cx + dx), Real::from(cy + dy));
+            let shifted = sketch.add_circle2("shifted", shifted_center, radius_entity);
+            sketch.add_concentric2("bad concentric", circle, shifted);
+        }
+
+        let lowered = sketch.lower_to_problem();
+        let context = context_from_problem(&lowered.problem);
+        let certification = certify_candidate(&PreparedProblem::new(&lowered.problem), &context);
+        let forms = sketch.residual_forms_for_constraint(handle);
+
+        prop_assert_eq!(lowered.rows[0].strategy, Some(SketchResidualStrategy::Concentricity));
+        prop_assert_eq!(lowered.rows[1].strategy, Some(SketchResidualStrategy::Concentricity));
+        let first_zero = matches!(
+            certification.rows[0].status,
+            CertifiedCandidateStatus::CertifiedZero { .. }
+        );
+        let second_zero = matches!(
+            certification.rows[1].status,
+            CertifiedCandidateStatus::CertifiedZero { .. }
+        );
+        prop_assert!(first_zero);
+        prop_assert!(second_zero);
+        if dx != 0 || dy != 0 {
+            prop_assert!(!certification.all_satisfied());
+        }
+        prop_assert_eq!(forms.status, SketchResidualFormsStatus::Generated);
+        prop_assert_eq!(forms.forms.len(), 2);
+        for form in &forms.forms {
+            prop_assert_eq!(
+                form.kind,
+                SketchResidualFormKind::ConcentricCenterCoordinatePolynomial
+            );
+            prop_assert_eq!(form.role, SketchResidualFormRole::ExactProof);
+            prop_assert_eq!(form.residual.eval_real(context.bindings()).unwrap(), Real::zero());
+        }
+    }
+
+    #[test]
     fn sketch_length_ratio_rows_match_generated_integer_scaled_directions(
         ax in -8_i16..=8,
         ay in -8_i16..=8,

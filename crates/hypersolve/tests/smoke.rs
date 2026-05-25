@@ -4604,6 +4604,77 @@ fn sketch_equal_length_and_radius_relations_lower_to_exact_rows() {
 }
 
 #[test]
+fn sketch_concentric_relations_lower_to_exact_center_rows() {
+    let mut sketch = SketchSolveProblem::new();
+    let center = sketch.add_point2d("center", real(2), real(3));
+    let other = sketch.add_point2d("other", real(7), real(3));
+    let start = sketch.add_point2d("start", real(6), real(3));
+    let end = sketch.add_point2d("end", real(2), real(7));
+    let radius = sketch.add_distance("radius", real(4));
+    let circle = sketch.add_circle2("circle", center, radius);
+    let arc = sketch.add_arc_of_circle2("arc", center, start, end, radius);
+    let bad = sketch.add_circle2("bad circle", other, radius);
+
+    let valid = sketch_distance_builders::concentric2(&mut sketch, "concentric", circle, arc);
+    sketch.add_concentric2("bad concentric", circle, bad);
+    let wrong = sketch.add_concentric2("wrong concentric", circle, radius);
+
+    assert_eq!(valid.family, hypersolve::SketchConstraintFamily::Distance);
+    assert_eq!(valid.strategy, SketchResidualStrategy::Concentricity);
+
+    let lowered = sketch.lower_to_problem();
+    let context = context_from_problem(&lowered.problem);
+    let certification = certify_candidate(&PreparedProblem::new(&lowered.problem), &context);
+    let forms = sketch.residual_forms_for_constraint(valid.handle);
+
+    assert_eq!(lowered.problem.constraints.len(), 4);
+    assert_eq!(lowered.rows.len(), 5);
+    assert!(lowered.rows[..4].iter().all(|row| {
+        row.strategy == Some(SketchResidualStrategy::Concentricity)
+            && row.status == SketchGeneratedRowStatus::Generated
+    }));
+    assert_eq!(
+        lowered.rows.last().unwrap().status,
+        SketchGeneratedRowStatus::WrongEntityKind {
+            handle: radius,
+            expected: "circle or circular arc",
+        }
+    );
+    assert!(matches!(
+        certification.rows[0].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+    assert!(matches!(
+        certification.rows[1].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+    assert!(matches!(
+        certification.rows[2].status,
+        CertifiedCandidateStatus::CertifiedViolation { .. }
+    ));
+    assert!(matches!(
+        certification.rows[3].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+
+    assert_eq!(forms.status, SketchResidualFormsStatus::Generated);
+    assert_eq!(forms.forms.len(), 2);
+    for form in forms.forms {
+        assert_eq!(
+            form.kind,
+            SketchResidualFormKind::ConcentricCenterCoordinatePolynomial
+        );
+        assert_eq!(form.role, SketchResidualFormRole::ExactProof);
+        assert_eq!(
+            form.residual.eval_real(context.bindings()).unwrap(),
+            Real::zero()
+        );
+    }
+    let wrong_forms = sketch.residual_forms_for_constraint(wrong);
+    assert_eq!(wrong_forms.status, SketchResidualFormsStatus::InvalidInputs);
+}
+
+#[test]
 fn sketch_equal_length_and_radius_relations_report_bad_inputs() {
     let mut sketch = SketchSolveProblem::new();
     let p = sketch.add_point2d("p", real(0), real(0));
@@ -4617,11 +4688,13 @@ fn sketch_equal_length_and_radius_relations_report_bad_inputs() {
     sketch.add_equal_radius2("missing radius object", circle, SketchEntityHandle(999));
     sketch.add_equal_radius2("wrong radius object", circle, line);
     sketch.add_equal_radius2("wrong radius carrier", circle, bad_circle);
+    sketch.add_concentric2("missing concentric", circle, SketchEntityHandle(999));
+    sketch.add_concentric2("wrong concentric", circle, line);
 
     let lowered = sketch.lower_to_problem();
 
     assert_eq!(lowered.problem.constraints.len(), 0);
-    assert_eq!(lowered.rows.len(), 5);
+    assert_eq!(lowered.rows.len(), 7);
     assert_eq!(
         lowered.rows[0].status,
         SketchGeneratedRowStatus::MissingEntity(SketchEntityHandle(999))
@@ -4649,6 +4722,17 @@ fn sketch_equal_length_and_radius_relations_report_bad_inputs() {
         SketchGeneratedRowStatus::WrongEntityKind {
             handle: line,
             expected: "distance"
+        }
+    );
+    assert_eq!(
+        lowered.rows[5].status,
+        SketchGeneratedRowStatus::MissingEntity(SketchEntityHandle(999))
+    );
+    assert_eq!(
+        lowered.rows[6].status,
+        SketchGeneratedRowStatus::WrongEntityKind {
+            handle: line,
+            expected: "circle or circular arc"
         }
     );
 }

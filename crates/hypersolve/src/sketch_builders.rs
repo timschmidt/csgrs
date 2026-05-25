@@ -1533,6 +1533,29 @@ pub mod distance {
         }
     }
 
+    /// Add an exact concentricity relation for 2D circles or circular arcs.
+    ///
+    /// Lowering replays equality between retained center coordinates. It does
+    /// not imply equal radii and it does not derive topology from a rounded
+    /// center-distance tolerance. This is the Yap (1997) retained-object
+    /// boundary applied to the SolveSpace-style concentric constraint
+    /// vocabulary described by Bouma et al. (1995).
+    pub fn concentric2(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        a: SketchEntityHandle,
+        b: SketchEntityHandle,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::Concentric2 { a, b };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Distance,
+            strategy: SketchResidualStrategy::Concentricity,
+            kind,
+        }
+    }
+
     /// Add a retained workplane-projected equal-length relation for 3D lines.
     ///
     /// Lowering projects both retained 3D line directions into the workplane
