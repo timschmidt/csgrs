@@ -3271,21 +3271,26 @@ pub fn arrange_coplanar_surface_component_holed_intersection(
 /// accepts only equal retained outer rings; the result keeps that outer ring
 /// and the exact union of both operands' retained holes. Identical holes are
 /// deduplicated, strictly nested holes collapse to the larger removed region,
-/// and disjoint holes are retained independently. Touching, crossing, or
-/// partially overlapping hole boundaries reject to the general planar
-/// arrangement layer. This is a legitimate Boolean intersection because the
-/// complement of each retained hole is part of the source object:
-/// intersecting two equal-outer holed sheets removes the union of their holes.
+/// and disjoint holes are retained independently. The bounded rectangular
+/// overlap case is also accepted when both overlapping holes are exact
+/// projected axis-aligned rectangles and their removed union replays as one
+/// convex retained hole. Touching, crossing, nonrectangular partial overlaps,
+/// and nonconvex removed-hole unions reject to the general planar arrangement
+/// layer. This is a legitimate Boolean intersection because the complement of
+/// each retained hole is part of the source object: intersecting two
+/// equal-outer holed sheets removes the union of their holes.
 ///
 /// Boundary rings still come from exact mesh incidence and the final retained
 /// area must equal the pairwise source-triangle intersection area. That is the
 /// retained object/predicate split advocated by Yap, "Towards Exact Geometric
 /// Computation," *Computational Geometry* 7.1-2 (1997). The local face clips
 /// use Sutherland and Hodgman's half-plane clipping model from "Reentrant
-/// Polygon Clipping," *Communications of the ACM* 17.1 (1974), and
-/// triangulation follows Held, "FIST: Fast Industrial-Strength Triangulation
-/// of Polygons," *Algorithmica* 30 (2001), through `hypertri`'s exact earcut
-/// adapter.
+/// Polygon Clipping," *Communications of the ACM* 17.1 (1974). Rectangular
+/// overlap replay is a bounded orthogonal-cell subdivision in the sense of de
+/// Berg, Cheong, van Kreveld, and Overmars, *Computational Geometry:
+/// Algorithms and Applications*, 3rd ed. (2008), Chapter 2. Triangulation
+/// follows Held, "FIST: Fast Industrial-Strength Triangulation of Polygons,"
+/// *Algorithmica* 30 (2001), through `hypertri`'s exact earcut adapter.
 #[cfg(feature = "exact-triangulation")]
 fn arrange_coplanar_surface_component_holed_same_outer_intersection(
     left: &ExactMesh,
@@ -3374,7 +3379,7 @@ fn merged_same_outer_intersection_holes(
     for right_hole in &right.holes {
         insert_same_outer_intersection_hole(&mut holes, right_hole, projection)?;
     }
-    validate_component_loops_disjoint(
+    validate_simple_component_loops_disjoint(
         &holes,
         projection,
         "coplanar same-outer component-holed intersection",
@@ -3406,8 +3411,16 @@ fn insert_same_outer_intersection_hole(
             SimplePolygonInteraction::Disjoint => {
                 index += 1;
             }
-            SimplePolygonInteraction::PointOnly | SimplePolygonInteraction::Connected => {
-                return None;
+            SimplePolygonInteraction::PointOnly => return None,
+            SimplePolygonInteraction::Connected => {
+                let retained = same_outer_intersection_rectangular_hole_union(
+                    &holes[index],
+                    candidate,
+                    projection,
+                )?;
+                holes.remove(index);
+                holes.push(retained);
+                return Some(());
             }
         }
     }
@@ -3416,6 +3429,45 @@ fn insert_same_outer_intersection_hole(
     orient_polygon_cw(&mut retained, projection)?;
     holes.push(retained);
     Some(())
+}
+
+/// Replay the removed union of two overlapping rectangular retained holes.
+///
+/// This is the smallest same-outer intersection cell certificate beyond
+/// disjoint and nested holes. The output hole is named by exact retained input
+/// rectangles and then stitched from exact orthogonal cells, matching Yap's
+/// retained-object discipline from "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997). The cell decomposition is the
+/// orthogonal arrangement model described by de Berg, Cheong, van Kreveld, and
+/// Overmars, *Computational Geometry: Algorithms and Applications*, 3rd ed.
+/// (2008), Chapter 2.
+#[cfg(feature = "exact-triangulation")]
+fn same_outer_intersection_rectangular_hole_union(
+    left_hole: &[Point3],
+    right_hole: &[Point3],
+    projection: CoplanarProjection,
+) -> Option<Vec<Point3>> {
+    let left_rect = projected_axis_aligned_rectangle(left_hole, projection)?;
+    let right_rect = projected_axis_aligned_rectangle(right_hole, projection)?;
+    if !rectangles_overlap_with_positive_area(&left_rect, &right_rect)? {
+        return None;
+    }
+    let mut union = axis_aligned_rectangle_union_polygon(&[left_rect, right_rect], projection)?;
+    union = simplify_projected_polygon(union, projection);
+    orient_polygon_cw(&mut union, projection)?;
+    validate_projected_simple_loop(
+        &union,
+        projection,
+        "coplanar same-outer rectangular intersection hole union",
+    )
+    .ok()?;
+    validate_projected_strictly_convex_loop(
+        &union,
+        projection,
+        "coplanar same-outer rectangular intersection hole union",
+    )
+    .ok()?;
+    Some(union)
 }
 
 #[cfg(feature = "exact-triangulation")]
@@ -3626,14 +3678,14 @@ fn source_holed_surface_components_from_mesh(
         let mut holes = ring_points;
         for hole in &mut holes {
             orient_polygon_cw(hole, component_projection)?;
-            validate_projected_strictly_convex_loop(
+            validate_projected_simple_loop(
                 hole,
                 component_projection,
                 "coplanar source-holed surface component",
             )
             .ok()?;
         }
-        validate_component_loops_disjoint(
+        validate_simple_component_loops_disjoint(
             &holes,
             component_projection,
             "coplanar source-holed surface component",
@@ -16904,7 +16956,20 @@ fn component_holed_component_to_earcut_open_mesh(
             "exact coplanar convex component-holed sub-arrangement",
         ),
     };
-    earcut_mesh.or_else(|| component_holed_component_to_keyholed_open_mesh(component, projection))
+    if component.holes.is_empty() {
+        return earcut_mesh;
+    }
+    let earcut_mesh = earcut_mesh.filter(|mesh| {
+        validate_component_holed_surface_output(
+            projection,
+            std::slice::from_ref(component),
+            mesh,
+            "coplanar convex component-holed arrangement",
+        )
+        .is_ok()
+    });
+    let keyhole = component_holed_component_to_keyholed_open_mesh(component, projection);
+    earcut_mesh.or(keyhole)
 }
 
 /// Triangulate a one-hole retained component by opening it along a bridge.
@@ -16947,7 +17012,16 @@ fn component_holed_component_to_keyholed_open_mesh(
                 outer_index,
                 hole_index,
                 projection,
-            ) {
+            )
+            .filter(|mesh| {
+                validate_component_holed_surface_output(
+                    projection,
+                    std::slice::from_ref(component),
+                    mesh,
+                    "coplanar convex component-holed arrangement",
+                )
+                .is_ok()
+            }) {
                 return Some(mesh);
             }
         }
@@ -17002,6 +17076,13 @@ fn component_holed_keyhole_mesh_for_bridge(
             *index_map.get(chunk[2])?,
         ];
         if mapped[0] == mapped[1] || mapped[1] == mapped[2] || mapped[2] == mapped[0] {
+            continue;
+        }
+        // The keyhole polygon duplicates bridge vertices; earcut may still
+        // return cells internal to the removed ring. Those are proof
+        // artifacts, not output triangles, so they are discarded before the
+        // retained-boundary validation gate below.
+        if mapped.iter().all(|&index| index >= outer.len()) {
             continue;
         }
         let cell = triangle_points(&points, mapped);
@@ -17549,7 +17630,6 @@ fn validate_component_holed_surface_output(
                 "component hole repeats an exact point",
             )?;
             validate_projected_simple_loop(hole, projection, label)?;
-            validate_projected_strictly_convex_loop(hole, projection, label)?;
             validate_projected_ring_orientation(
                 hole,
                 projection,
@@ -17586,7 +17666,7 @@ fn validate_component_holed_surface_output(
             component_signed_area = add(&component_signed_area, &hole_signed);
         }
         if component.holes.len() > 1 {
-            validate_component_loops_disjoint(&component.holes, projection, label)?;
+            validate_simple_component_loops_disjoint(&component.holes, projection, label)?;
         }
         if compare_reals(&outer_area, &hole_area_sum).value() != Some(Ordering::Greater) {
             return Err(surface_validation_error(

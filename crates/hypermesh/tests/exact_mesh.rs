@@ -25988,13 +25988,80 @@ fn exact_coplanar_component_holed_intersection_merges_same_outer_holes() {
     )
     .expect("overlapping-hole annulus fixture should materialize")
     .mesh;
-    assert!(
+    let overlap_intersection =
         hypermesh::exact::arrange_coplanar_surface_component_holed_intersection(
             &left,
             &overlapping,
         )
+        .expect("rectangular same-outer retained-hole overlap should replay as one merged hole");
+    overlap_intersection.validate().unwrap();
+    overlap_intersection
+        .validate_intersection_against_sources(&left, &overlapping)
+        .unwrap();
+    assert_eq!(overlap_intersection.components.len(), 1);
+    assert_eq!(overlap_intersection.components[0].holes.len(), 1);
+    assert_eq!(overlap_intersection.components[0].holes[0].len(), 4);
+    assert!(
+        overlap_intersection.components[0].holes[0]
+            .iter()
+            .any(|point| real_eq(&point.x, &ExactReal::from(5)))
+    );
+    assert_eq!(
+        hypermesh::exact::arrange_coplanar_surface_component_holed_intersection(
+            &overlapping,
+            &left,
+        ),
+        Some(overlap_intersection)
+    );
+    let overlap_preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &overlapping,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+    )
+    .expect("rectangular same-outer retained-hole overlap preflight should classify shortcut");
+    overlap_preflight.validate().unwrap();
+    overlap_preflight
+        .validate_against_sources(&left, &overlapping)
+        .unwrap();
+    assert_eq!(
+        overlap_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
+    );
+    hypermesh::exact::boolean_exact(
+        &left,
+        &overlapping,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("rectangular same-outer retained-hole overlap boolean should materialize")
+    .validate_operation_against_sources(
+        &left,
+        &overlapping,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
+
+    let corner_overlapping_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[3, 3, 0, 5, 3, 0, 5, 6, 0, 3, 6, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let corner_overlapping = hypermesh::exact::arrange_coplanar_convex_surface_holed_difference(
+        &outer,
+        &corner_overlapping_hole,
+    )
+    .expect("corner-overlapping annulus fixture should materialize")
+    .mesh;
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_component_holed_intersection(
+            &left,
+            &corner_overlapping,
+        )
         .is_none(),
-        "overlapping retained holes require a full planar arrangement"
+        "nonconvex retained-hole unions still need the planar-cell triangulation path"
     );
 
     let touching_hole = ExactMesh::from_i64_triangles_with_policy(
