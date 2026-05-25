@@ -40,6 +40,10 @@ features = [
 [lib]
 crate-type = ["cdylib", "rlib"]
 
+[[bench]]
+name = "part_blueprint"
+harness = false
+
 [profile.release]
 opt-level = 3
 lto = true
