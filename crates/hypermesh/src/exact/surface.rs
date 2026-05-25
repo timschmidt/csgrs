@@ -4068,6 +4068,184 @@ fn same_outer_holed_filled_union_polygons(
     Some((projection, polygons))
 }
 
+/// Replay same-outer holed unions that still retain common holes.
+///
+/// For two source-owned sheets with the same retained outer ring,
+/// `(outer - left_holes) union (outer - right_holes)` is
+/// `outer - (left_holes intersect right_holes)`. This certificate handles the
+/// named-ring cases where that hole intersection is either an identical
+/// retained hole or the smaller of two strictly nested retained holes. Holes
+/// that are strictly disjoint are filled by the opposite operand. Touching,
+/// crossing, and partial-overlap hole relations reject to the general planar
+/// arrangement layer because their output boundary is not a retained source
+/// ring.
+///
+/// This follows Yap, "Towards Exact Geometric Computation," *Computational
+/// Geometry* 7.1-2 (1997): the topology is expressed in source-owned objects
+/// and certified predicates, not sampled triangles. The final equality
+/// `area(union) == area(retained rings)` is replayed with the exact
+/// Sutherland-Hodgman triangle-clip sum from Sutherland and Hodgman,
+/// "Reentrant Polygon Clipping," *Communications of the ACM* 17.1 (1974).
+/// The retained holed rings are triangulated through the same FIST-style
+/// `hypertri` earcut handoff described by Held, "FIST: Fast
+/// Industrial-Strength Triangulation of Polygons," *Algorithmica* 30 (2001).
+#[cfg(feature = "exact-triangulation")]
+fn same_outer_holed_retained_union(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Option<CoplanarConvexComponentHoledArrangement> {
+    if left.triangles().is_empty() || right.triangles().is_empty() {
+        return None;
+    }
+    let (projection, left_components) = source_holed_surface_components_from_mesh(left)?;
+    let (right_projection, right_components) = source_holed_surface_components_from_mesh(right)?;
+    if projection != right_projection {
+        return None;
+    }
+    if !coplanar_mesh_faces_have_disjoint_interiors(left, projection)?
+        || !coplanar_mesh_faces_have_disjoint_interiors(right, projection)?
+    {
+        return None;
+    }
+
+    let mut matched_left = vec![false; left_components.len()];
+    let mut matched_right = vec![false; right_components.len()];
+    let mut retained_components = Vec::new();
+    for (left_index, left_component) in left_components.iter().enumerate() {
+        for (right_index, right_component) in right_components.iter().enumerate() {
+            if polygons_equal(&left_component.outer, &right_component.outer) {
+                if matched_left[left_index] || matched_right[right_index] {
+                    return None;
+                }
+                let mut outer = left_component.outer.clone();
+                orient_polygon_ccw(&mut outer, projection)?;
+                let mut holes =
+                    same_outer_retained_union_holes(left_component, right_component, projection)?;
+                sort_polygons_for_replay(&mut holes, projection);
+                retained_components.push(CoplanarConvexHoledComponent { outer, holes });
+                matched_left[left_index] = true;
+                matched_right[right_index] = true;
+                continue;
+            }
+            match simple_polygon_interaction(
+                &left_component.outer,
+                &right_component.outer,
+                projection,
+            )? {
+                SimplePolygonInteraction::Disjoint => {}
+                SimplePolygonInteraction::PointOnly | SimplePolygonInteraction::Connected => {
+                    return None;
+                }
+            }
+        }
+    }
+    for (index, component) in left_components.iter().enumerate() {
+        if !matched_left[index] {
+            retained_components.push(source_holed_component_to_retained(component, projection)?);
+        }
+    }
+    for (index, component) in right_components.iter().enumerate() {
+        if !matched_right[index] {
+            retained_components.push(source_holed_component_to_retained(component, projection)?);
+        }
+    }
+    if retained_components.is_empty()
+        || !retained_components
+            .iter()
+            .any(|component| !component.holes.is_empty())
+    {
+        return None;
+    }
+
+    sort_components_for_replay(&mut retained_components, projection);
+    let retained_outers = retained_components
+        .iter()
+        .map(|component| component.outer.clone())
+        .collect::<Vec<_>>();
+    validate_simple_component_loops_disjoint(
+        &retained_outers,
+        projection,
+        "coplanar same-outer retained-hole union",
+    )
+    .ok()?;
+
+    let left_area = mesh_projected_area2(left, projection)?;
+    let right_area = mesh_projected_area2(right, projection)?;
+    let intersection_area = coplanar_mesh_pairwise_intersection_area2(left, right, projection)?;
+    let union_area = sub(&add(&left_area, &right_area), &intersection_area);
+    let retained_area = component_holed_components_area2(&retained_components, projection)?;
+    if compare_reals(&union_area, &retained_area).value() != Some(Ordering::Equal) {
+        return None;
+    }
+
+    let mesh = component_holed_components_to_earcut_open_mesh(&retained_components, projection)?;
+    let arrangement = CoplanarConvexComponentHoledArrangement {
+        projection,
+        components: retained_components,
+        mesh,
+    };
+    arrangement.validate().ok()?;
+    Some(arrangement)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn source_holed_component_to_retained(
+    component: &SourceHoledSurfaceComponent,
+    projection: CoplanarProjection,
+) -> Option<CoplanarConvexHoledComponent> {
+    let mut outer = component.outer.clone();
+    orient_polygon_ccw(&mut outer, projection)?;
+    let mut holes = component.holes.clone();
+    for hole in &mut holes {
+        orient_polygon_cw(hole, projection)?;
+    }
+    sort_polygons_for_replay(&mut holes, projection);
+    Some(CoplanarConvexHoledComponent { outer, holes })
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn same_outer_retained_union_holes(
+    left: &SourceHoledSurfaceComponent,
+    right: &SourceHoledSurfaceComponent,
+    projection: CoplanarProjection,
+) -> Option<Vec<Vec<Point3>>> {
+    let mut holes: Vec<Vec<Point3>> = Vec::new();
+    for left_hole in &left.holes {
+        for right_hole in &right.holes {
+            let retained = if polygons_equal(left_hole, right_hole) {
+                Some(left_hole)
+            } else if polygon_strictly_inside_simple_polygon(left_hole, right_hole, projection)? {
+                Some(left_hole)
+            } else if polygon_strictly_inside_simple_polygon(right_hole, left_hole, projection)? {
+                Some(right_hole)
+            } else {
+                match simple_polygon_interaction(left_hole, right_hole, projection)? {
+                    SimplePolygonInteraction::Disjoint => None,
+                    SimplePolygonInteraction::PointOnly | SimplePolygonInteraction::Connected => {
+                        return None;
+                    }
+                }
+            };
+            let Some(retained) = retained else {
+                continue;
+            };
+            if holes.iter().any(|hole| polygons_equal(hole, retained)) {
+                continue;
+            }
+            let mut retained = retained.clone();
+            orient_polygon_cw(&mut retained, projection)?;
+            holes.push(retained);
+        }
+    }
+    validate_component_loops_disjoint(
+        &holes,
+        projection,
+        "coplanar same-outer retained-hole union",
+    )
+    .ok()?;
+    Some(holes)
+}
+
 #[cfg(feature = "exact-triangulation")]
 fn same_outer_holes_are_strictly_cross_disjoint(
     left_holes: &[Vec<Point3>],
@@ -5458,6 +5636,9 @@ pub fn arrange_coplanar_surface_component_holed_union(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Option<CoplanarConvexComponentHoledArrangement> {
+    if let Some(arrangement) = same_outer_holed_retained_union(left, right) {
+        return Some(arrangement);
+    }
     if arrange_coplanar_convex_surface_union(left, right).is_some()
         || arrange_coplanar_convex_surface_component_union(left, right).is_some()
         || arrange_coplanar_convex_surface_multi_union(left, right).is_some()

@@ -1426,7 +1426,7 @@ fuzz_target!(|data: &[u8]| {
 
 #[cfg(feature = "exact-triangulation")]
 fn exercise_deterministic_case(selector: u8) {
-    match selector % 38 {
+    match selector % 44 {
         0 => exercise_partial_convex_union_boundary(),
         1 => exercise_face_interior_steiner_boundary(),
         2 => exercise_multi_component_coplanar_union(),
@@ -1470,6 +1470,7 @@ fn exercise_deterministic_case(selector: u8) {
         40 => exercise_same_outer_holed_coplanar_multi_difference(),
         41 => exercise_same_outer_holed_coplanar_component_difference(),
         42 => exercise_same_outer_holed_coplanar_filled_union(),
+        43 => exercise_same_outer_holed_coplanar_retained_union(),
         _ => exercise_nonconvex_coplanar_volumetric_difference_fan_split(),
     }
 }
@@ -2735,6 +2736,111 @@ fn exercise_same_outer_holed_coplanar_filled_union() {
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .expect("same-outer filled union should materialize")
+    .validate_operation_against_sources(
+        &left,
+        &right,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn exercise_same_outer_holed_coplanar_retained_union() {
+    let outer = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 10, 0, 0, 10, 10, 0, 0, 10, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("same-outer retained-union outer fixture must import");
+    let left_holes = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            2, 2, 0, 4, 2, 0, 4, 4, 0, 2, 4, 0, //
+            6, 6, 0, 8, 6, 0, 8, 8, 0, 6, 8, 0,
+        ],
+        &[0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("same-outer retained-union left holes fixture must import");
+    let right_holes = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            2, 2, 0, 4, 2, 0, 4, 4, 0, 2, 4, 0, //
+            6, 1, 0, 8, 1, 0, 8, 3, 0, 6, 3, 0,
+        ],
+        &[0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("same-outer retained-union right holes fixture must import");
+    let left = arrange_coplanar_convex_surface_multi_holed_difference(&outer, &left_holes)
+        .expect("same-outer retained-union left should materialize")
+        .mesh;
+    let right = arrange_coplanar_convex_surface_multi_holed_difference(&outer, &right_holes)
+        .expect("same-outer retained-union right should materialize")
+        .mesh;
+
+    assert!(arrange_coplanar_surface_component_union(&left, &right).is_none());
+    let union = arrange_coplanar_surface_component_holed_union(&left, &right)
+        .expect("same-outer retained-hole union should materialize");
+    union.validate().unwrap();
+    union.validate_union_against_sources(&left, &right).unwrap();
+    let reverse = arrange_coplanar_surface_component_holed_union(&right, &left)
+        .expect("same-outer retained-hole union should be symmetric");
+    reverse.validate().unwrap();
+    reverse.validate_union_against_sources(&right, &left).unwrap();
+    assert_eq!(reverse.components.len(), union.components.len());
+
+    let mut stale = union.clone();
+    if let Some(hole) = stale.components.first_mut().and_then(|component| component.holes.first_mut())
+    {
+        hole.reverse();
+        assert!(stale.validate().is_err());
+    }
+
+    let overlapping_holes = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            3, 2, 0, 5, 2, 0, 5, 4, 0, 3, 4, 0, //
+            6, 1, 0, 8, 1, 0, 8, 3, 0, 6, 3, 0,
+        ],
+        &[0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("same-outer overlapping retained-union fixture must import");
+    let overlapping =
+        arrange_coplanar_convex_surface_multi_holed_difference(&outer, &overlapping_holes)
+            .expect("same-outer overlapping source should materialize")
+            .mesh;
+    assert!(arrange_coplanar_surface_component_holed_union(&left, &overlapping).is_none());
+
+    let touching_holes = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            4, 2, 0, 6, 2, 0, 6, 4, 0, 4, 4, 0, //
+            7, 1, 0, 9, 1, 0, 9, 3, 0, 7, 3, 0,
+        ],
+        &[0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("same-outer touching retained-union fixture must import");
+    let touching = arrange_coplanar_convex_surface_multi_holed_difference(&outer, &touching_holes)
+        .expect("same-outer touching source should materialize")
+        .mesh;
+    assert!(arrange_coplanar_surface_component_holed_union(&left, &touching).is_none());
+
+    let preflight = preflight_boolean_exact(&left, &right, ExactBooleanOperation::Union)
+        .expect("same-outer retained union preflight should classify shortcut");
+    preflight.validate().unwrap();
+    preflight.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
+    );
+    hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("same-outer retained union should materialize")
     .validate_operation_against_sources(
         &left,
         &right,

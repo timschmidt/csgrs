@@ -4781,6 +4781,36 @@ fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
         )
         .unwrap()
         .mesh;
+        let same_outer_common_left_holes = ExactMesh::from_i64_triangles_with_policy(
+            &[
+                2, 2, 0, 4, 2, 0, 4, 4, 0, 2, 4, 0, //
+                6, 6, 0, 8, 6, 0, 8, 8, 0, 6, 8, 0,
+            ],
+            &[0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let same_outer_common_right_holes = ExactMesh::from_i64_triangles_with_policy(
+            &[
+                2, 2, 0, 4, 2, 0, 4, 4, 0, 2, 4, 0, //
+                6, 1, 0, 8, 1, 0, 8, 3, 0, 6, 3, 0,
+            ],
+            &[0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let same_outer_common_left = arrange_coplanar_convex_surface_multi_holed_difference(
+            &single_component_holed_left,
+            &same_outer_common_left_holes,
+        )
+        .unwrap()
+        .mesh;
+        let same_outer_common_right = arrange_coplanar_convex_surface_multi_holed_difference(
+            &single_component_holed_left,
+            &same_outer_common_right_holes,
+        )
+        .unwrap()
+        .mesh;
         let nonrectilinear_channel_holed_left = ExactMesh::from_i64_triangles_with_policy(
             &[0, 0, 0, 20, 0, 0, 20, 20, 0, 0, 20, 0],
             &[0, 1, 2, 0, 2, 3],
@@ -6173,6 +6203,22 @@ fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
                         hypermesh::exact::preflight_boolean_exact(
                             &same_outer_nested_left,
                             &same_outer_disjoint_single_right,
+                            hypermesh::exact::ExactBooleanOperation::Union,
+                        )
+                        .map(|report| report.validate()),
+                        arrange_coplanar_surface_component_holed_union(
+                            &same_outer_common_left,
+                            &same_outer_common_right,
+                        )
+                        .map(|output| {
+                            output.validate_union_against_sources(
+                                &same_outer_common_left,
+                                &same_outer_common_right,
+                            )
+                        }),
+                        hypermesh::exact::preflight_boolean_exact(
+                            &same_outer_common_left,
+                            &same_outer_common_right,
                             hypermesh::exact::ExactBooleanOperation::Union,
                         )
                         .map(|report| report.validate()),
