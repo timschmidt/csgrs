@@ -14552,6 +14552,26 @@ fn exact_coplanar_surface_component_holed_union_materializes_annular_contact_gra
             .is_none()
     );
 
+    let point_only_disconnected_right = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            4, 0, 0, 2, 0, 0, 0, -2, 0, 1, -3, 0, //
+            -5, 0, 0, -3, 0, 0, -1, 2, 0, -1, 4, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_component_holed_union(
+            &left,
+            &point_only_disconnected_right,
+        )
+        .is_none()
+    );
+
     let preflight = hypermesh::exact::preflight_boolean_exact(
         &left,
         &right,
