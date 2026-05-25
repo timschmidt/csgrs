@@ -230,6 +230,33 @@ fn chunk_paged_sparse_storage_replays_exact_addresses_and_payload_blockers() {
     assert_eq!(cross_depth.cross_depth_candidate_pages, 1);
     assert!(!cross_depth.exact_page_filter_ready);
     assert!(!cross_depth.exact_region_query_ready);
+
+    let broad_phase = paged
+        .query_aabb_broad_phase(&hypervoxel::ExactAabb3 {
+            min: [r(-1), r(2), r(3)],
+            max: [rf(-5, 8), rf(12, 4), rf(10, 2)],
+        })
+        .unwrap();
+    assert_eq!(broad_phase.tested_pages, 2);
+    assert_eq!(broad_phase.rejected_pages, 1);
+    assert_eq!(broad_phase.candidate_pages, 1);
+    assert_eq!(broad_phase.unknown_pages, 0);
+    assert_eq!(broad_phase.cells.tested_cells, 2);
+    assert_eq!(broad_phase.cells.candidates.len(), 2);
+    assert!(broad_phase.exact_page_filter_ready);
+    assert!(broad_phase.exact_paged_broad_phase_ready);
+
+    let miss = paged
+        .query_aabb_broad_phase(&hypervoxel::ExactAabb3 {
+            min: [r(10), r(10), r(10)],
+            max: [r(11), r(11), r(11)],
+        })
+        .unwrap();
+    assert_eq!(miss.rejected_pages, 2);
+    assert_eq!(miss.cells.tested_cells, 0);
+    assert!(!miss.cells.has_tested_cells);
+    assert!(miss.exact_page_filter_ready);
+    assert!(!miss.exact_paged_broad_phase_ready);
 }
 
 #[test]

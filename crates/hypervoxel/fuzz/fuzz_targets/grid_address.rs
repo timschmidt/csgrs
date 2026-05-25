@@ -127,6 +127,24 @@ fuzz_target!(|data: (u8, u64, u64, u64)| {
     assert_eq!(paged_region.aggregate.child_count as u64, covered_cell_count);
     assert!(paged_region.exact_page_filter_ready);
     assert!(paged_region.exact_region_query_ready);
+    let paged_broad_phase = paged_grid
+        .query_aabb_broad_phase(&ExactAabb3 {
+            min: [Real::from(0), Real::from(0), Real::from(0)],
+            max: [
+                Real::from(small_cells),
+                Real::from(small_cells),
+                Real::from(small_cells),
+            ],
+        })
+        .unwrap();
+    assert_eq!(paged_broad_phase.cells.candidates.len() as u64, covered_cell_count);
+    assert_eq!(paged_broad_phase.cells.unknown_addresses.len(), 0);
+    assert_eq!(paged_broad_phase.unknown_pages, 0);
+    assert!(paged_broad_phase.exact_page_filter_ready);
+    assert_eq!(
+        paged_broad_phase.exact_paged_broad_phase_ready,
+        covered_cell_count > 0
+    );
     let halfspace =
         ExactHalfSpace::new([Real::from(1), Real::from(0), Real::from(0)], Real::from(1), None);
     assert!(halfspace.report().exact_halfspace_ready);

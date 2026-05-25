@@ -797,6 +797,23 @@ fn bench_batches_field_facts_and_sweeps(c: &mut Criterion) {
             )
         })
     });
+    c.bench_function("chunk_paged_aabb_broad_phase", |b| {
+        let shape = ChunkShape::new(3).unwrap();
+        let paged = ChunkPagedSparseGrid::from_sparse_grid(&grid, shape).unwrap();
+        let query = ExactAabb3 {
+            min: [r(0), r(0), r(0)],
+            max: [r(32), r(32), r(32)],
+        };
+        b.iter(|| {
+            let report = paged.query_aabb_broad_phase(&query).unwrap();
+            (
+                report.rejected_pages,
+                report.cells.tested_cells,
+                report.cells.candidates.len(),
+                report.exact_paged_broad_phase_ready,
+            )
+        })
+    });
     c.bench_function("chunk_local_address_split", |b| {
         let shape = ChunkShape::new(3).unwrap();
         b.iter(|| {

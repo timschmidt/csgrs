@@ -17,9 +17,12 @@
 
 use std::collections::BTreeMap;
 
+use hyperlimit::{PredicateOutcome, classify_aabb3_intersection};
+
 use crate::{
-    ChunkAddress, ChunkLocalAddress, ChunkPageSummary, ChunkShape, GridFrame, HypervoxelError,
-    HypervoxelResult, QueryRegion, SparseVoxelGrid, VoxelAddress, VoxelAggregateFacts, VoxelCell,
+    AabbBroadPhaseCandidate, AabbBroadPhaseQuery, ChunkAddress, ChunkLocalAddress,
+    ChunkPageSummary, ChunkShape, ExactAabb3, GridFrame, HypervoxelError, HypervoxelResult,
+    QueryRegion, SparseVoxelGrid, VoxelAddress, VoxelAggregateFacts, VoxelCell,
 };
 
 /// Exact cells stored in one chunk page.
@@ -109,6 +112,28 @@ pub struct ChunkPagedRegionAggregateReport {
     pub aggregate: VoxelAggregateFacts,
     /// Whether this query has non-vacuous exact page/storage evidence.
     pub exact_region_query_ready: bool,
+}
+
+/// Exact page-pruned AABB broad-phase report.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ChunkPagedAabbBroadPhaseReport {
+    /// Query AABB.
+    pub query: ExactAabb3,
+    /// Occupied pages tested by the page AABB filter.
+    pub tested_pages: usize,
+    /// Pages certified disjoint from the query AABB.
+    pub rejected_pages: usize,
+    /// Pages whose exact AABB intersects or touches the query AABB.
+    pub candidate_pages: usize,
+    /// Pages whose exact page/query relation was undecided.
+    pub unknown_pages: usize,
+    /// Exact per-cell broad-phase result after page pruning.
+    pub cells: AabbBroadPhaseQuery,
+    /// Whether page-level pruning was fully certified.
+    pub exact_page_filter_ready: bool,
+    /// Whether both page-level and cell-level broad phase evidence are exact
+    /// and non-vacuous.
+    pub exact_paged_broad_phase_ready: bool,
 }
 
 /// Sparse grid cells grouped by exact integer chunk pages.
@@ -313,6 +338,95 @@ impl ChunkPagedSparseGrid {
             exact_region_query_ready,
         })
     }
+
+    /// Returns exact AABB broad-phase candidates using page AABBs first.
+    ///
+    /// Page AABBs are exact constructions from integer chunk/page coordinates
+    /// and [`GridFrame`] cell bounds. A page certified disjoint from the query
+    /// is skipped; intersecting and undecided pages are scanned at the
+    /// retained-cell level, where each stored cell is still classified by its
+    /// exact cell AABB. This is a report-bearing broad/narrow split in the
+    /// spirit of Bentley and Ottmann, "Algorithms for Reporting and Counting
+    /// Geometric Intersections," *IEEE Transactions on Computers* C-28.9
+    /// (1979), but with Yap's exact-geometric-computation discipline: page
+    /// pruning can reduce work, never decide topology by tolerance.
+    pub fn query_aabb_broad_phase(
+        &self,
+        query: &ExactAabb3,
+    ) -> HypervoxelResult<ChunkPagedAabbBroadPhaseReport> {
+        let query_min = point3(&query.min);
+        let query_max = point3(&query.max);
+        let mut tested_pages = 0_usize;
+        let mut rejected_pages = 0_usize;
+        let mut candidate_pages = 0_usize;
+        let mut unknown_pages = 0_usize;
+        let mut tested_cells = 0_usize;
+        let mut candidates = Vec::new();
+        let mut rejected_addresses = Vec::new();
+        let mut unknown_addresses = Vec::new();
+
+        for page in self.pages.values() {
+            tested_pages += 1;
+            let page_bounds = page_aabb(page.chunk, self.shape, &self.frame)?;
+            match classify_aabb3_intersection(
+                &query_min,
+                &query_max,
+                &point3(&page_bounds.min),
+                &point3(&page_bounds.max),
+            ) {
+                PredicateOutcome::Decided { value, .. } if !value.intersects() => {
+                    rejected_pages += 1;
+                    continue;
+                }
+                PredicateOutcome::Decided { .. } => candidate_pages += 1,
+                PredicateOutcome::Unknown { .. } => unknown_pages += 1,
+            }
+
+            for (address, _) in &page.cells {
+                tested_cells += 1;
+                let bounds = ExactAabb3::from(address.bounds(&self.frame)?);
+                match classify_aabb3_intersection(
+                    &query_min,
+                    &query_max,
+                    &point3(&bounds.min),
+                    &point3(&bounds.max),
+                ) {
+                    PredicateOutcome::Decided { value, .. } if value.intersects() => {
+                        candidates.push(AabbBroadPhaseCandidate {
+                            address: *address,
+                            bounds,
+                            relation: value,
+                        });
+                    }
+                    PredicateOutcome::Decided { .. } => rejected_addresses.push(*address),
+                    PredicateOutcome::Unknown { .. } => unknown_addresses.push(*address),
+                }
+            }
+        }
+
+        let cells = AabbBroadPhaseQuery {
+            query: query.clone(),
+            tested_cells,
+            has_tested_cells: tested_cells > 0,
+            certified_broad_phase_ready: tested_cells > 0 && unknown_addresses.is_empty(),
+            candidates,
+            rejected_addresses,
+            unknown_addresses,
+        };
+        let exact_page_filter_ready = unknown_pages == 0;
+        let exact_paged_broad_phase_ready =
+            exact_page_filter_ready && cells.certified_broad_phase_ready;
+        Ok(ChunkPagedAabbBroadPhaseReport {
+            query: query.clone(),
+            tested_pages,
+            rejected_pages,
+            candidate_pages,
+            unknown_pages,
+            cells,
+            exact_page_filter_ready,
+            exact_paged_broad_phase_ready,
+        })
+    }
 }
 
 impl ChunkPagedSparsePage {
@@ -399,6 +513,41 @@ fn validate_address_in_frame(address: VoxelAddress, frame: &GridFrame) -> Hyperv
         });
     }
     Ok(())
+}
+
+fn page_aabb(
+    chunk: ChunkAddress,
+    shape: ChunkShape,
+    frame: &GridFrame,
+) -> HypervoxelResult<ExactAabb3> {
+    if chunk.depth > frame.depth() {
+        return Err(HypervoxelError::DepthOutsideFrame {
+            depth: chunk.depth,
+            frame_depth: frame.depth(),
+        });
+    }
+    let shift = shape.log2_cells.min(chunk.depth);
+    let extent = 1_u64 << shift;
+    let min_xyz = [
+        chunk.xyz[0] << shift,
+        chunk.xyz[1] << shift,
+        chunk.xyz[2] << shift,
+    ];
+    let max_xyz = [
+        min_xyz[0] + extent - 1,
+        min_xyz[1] + extent - 1,
+        min_xyz[2] + extent - 1,
+    ];
+    let min_bounds = VoxelAddress::new(chunk.depth, min_xyz)?.bounds(frame)?;
+    let max_bounds = VoxelAddress::new(chunk.depth, max_xyz)?.bounds(frame)?;
+    Ok(ExactAabb3 {
+        min: min_bounds.min,
+        max: max_bounds.max,
+    })
+}
+
+fn point3(values: &[hyperreal::Real; 3]) -> hyperlimit::Point3 {
+    hyperlimit::Point3::new(values[0].clone(), values[1].clone(), values[2].clone())
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
