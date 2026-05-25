@@ -1315,16 +1315,26 @@ mod tests {
 
         assert!(report.exact_aabb_handoff_ready);
         assert!(report.exact_triangle_source_ready);
-        assert!(!report.exact_triangle_voxelization_ready);
+        assert!(report.exact_triangle_voxelization_ready);
         assert_eq!(report.bounds.min, Some(p(0, 0, 0)));
         assert_eq!(report.bounds.max, Some(p(1, 1, 1)));
         assert_eq!(report.triangle_mesh.triangle_count, 12);
         assert!(report.exact_aabb_fixture.is_some());
-        assert!(
-            report
-                .blockers
-                .contains(&BrepVoxelHandoffBlocker::TriangleVoxelizationUnavailable)
-        );
+        assert!(report.exact_triangle_solid.is_some());
+        assert!(report.prepared_triangle_solid.is_some());
+        assert!(report.prepared_triangle_solid_report.is_some());
+        assert!(report.blockers.is_empty());
+
+        let prepared = report.prepared_triangle_solid.as_ref().unwrap();
+        let (_, voxel_report, schedule) = hypervoxel::voxelize_prepared_exact_triangle_solid_mesh(
+            report.frame.clone(),
+            prepared,
+            hypervoxel::MaterialRegionId(7),
+            hypervoxel::VoxelizationPolicy::conservative_cover(),
+        )
+        .unwrap();
+        assert!(voxel_report.predicate_certificates.is_fully_certified());
+        assert!(schedule.boundary_aabb_rejections > 0);
     }
 
     #[test]
@@ -1346,6 +1356,8 @@ mod tests {
 
         assert!(!report.exact_aabb_handoff_ready);
         assert!(!report.exact_triangle_source_ready);
+        assert!(!report.exact_triangle_voxelization_ready);
+        assert!(report.prepared_triangle_solid.is_none());
         assert!(
             report
                 .blockers
@@ -1375,7 +1387,7 @@ mod tests {
             .with_voxel(BrepVoxelPackageRequest {
                 frame,
                 expected_source: Some(source),
-                require_triangle_voxelization: false,
+                require_triangle_voxelization: true,
             });
 
         let report = shell.handoff_package_report(None, manifest);

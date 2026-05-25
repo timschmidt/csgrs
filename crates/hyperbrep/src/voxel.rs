@@ -3,10 +3,13 @@
 //! `hypervoxel` owns grid frames, sparse storage, and voxelization reports.
 //! `hyperbrep` owns retained shell evidence. This module bridges the two by
 //! packaging exact BREP triangles and an exact shell AABB fixture for voxel
-//! broad-phase/scheduling, while explicitly blocking any claim that general
-//! triangle voxelization has already happened.
+//! broad-phase/scheduling, and preparing the exact retained triangle solid
+//! that `hypervoxel` can voxelize.
 
-use hypervoxel::{ExactBox, GridFrame, GridSource};
+use hypervoxel::{
+    ExactBox, ExactTriangle3, ExactTriangleSolidMesh, ExactTriangleSurfaceMesh, GridFrame,
+    GridSource, PreparedExactTriangleSolidMesh, PreparedExactTriangleSolidMeshReport,
+};
 
 use crate::bounds::BrepShellBoundsReport;
 use crate::topology::BrepShell;
@@ -23,8 +26,9 @@ pub enum BrepVoxelHandoffBlocker {
     MissingFrameSource,
     /// The frame source did not match the expected source/version.
     StaleFrameSource,
-    /// General exact triangle voxelization is not implemented in this crate.
-    TriangleVoxelizationUnavailable,
+    /// Exact retained triangles could not be prepared as a `hypervoxel`
+    /// closed-solid schedule.
+    TriangleSolidPreparationNotReady,
 }
 
 /// BREP-side exact voxel handoff preflight.
@@ -40,12 +44,19 @@ pub struct BrepVoxelHandoffReport {
     pub triangle_mesh: BrepExactTriangleMeshHandoffReport,
     /// Exact AABB fixture in the supplied frame's coordinate system.
     pub exact_aabb_fixture: Option<ExactBox>,
+    /// Exact triangle-solid handoff consumable by `hypervoxel`.
+    pub exact_triangle_solid: Option<ExactTriangleSolidMesh>,
+    /// Prepared exact triangle-solid schedule for `hypervoxel` voxelization.
+    pub prepared_triangle_solid: Option<PreparedExactTriangleSolidMesh>,
+    /// Prepared schedule report, retained even when the prepared object is
+    /// unavailable.
+    pub prepared_triangle_solid_report: Option<PreparedExactTriangleSolidMeshReport>,
     /// Whether the AABB broad-phase fixture is ready for `hypervoxel`.
     pub exact_aabb_handoff_ready: bool,
     /// Whether exact retained triangles are available for a future
     /// triangle-voxelization owner.
     pub exact_triangle_source_ready: bool,
-    /// Whether general exact triangle voxelization is available now.
+    /// Whether exact retained triangle-solid voxelization is available now.
     pub exact_triangle_voxelization_ready: bool,
     /// Explicit blockers.
     pub blockers: Vec<BrepVoxelHandoffBlocker>,
@@ -56,10 +67,14 @@ impl BrepVoxelHandoffReport {
     ///
     /// This follows Yap, "Towards Exact Geometric Computation,"
     /// *Computational Geometry* 7.1-2 (1997): the voxel owner receives exact
-    /// object evidence and named unavailable work rather than an approximate
-    /// triangle rasterization. The AABB fixture uses `hypervoxel::ExactBox`,
-    /// while full triangle/solid voxelization remains a future cross-crate
-    /// algorithm.
+    /// object evidence and named blockers rather than an approximate triangle
+    /// rasterization. The AABB fixture uses `hypervoxel::ExactBox`; exact
+    /// triangle-solid voxelization is exposed only after the retained BREP
+    /// triangle handoff lowers into [`ExactTriangleSolidMesh`] and replays
+    /// through [`PreparedExactTriangleSolidMesh`]. The handoff follows the
+    /// BREP topology model of Mäntylä, *An Introduction to Solid Modeling*
+    /// (1988), while the prepared voxel schedule follows the exact
+    /// broad/narrow-phase separation used by Yap (1997).
     pub fn from_shell_frame(
         shell: &BrepShell,
         frame: GridFrame,
@@ -82,8 +97,6 @@ impl BrepVoxelHandoffReport {
                 None => blockers.push(BrepVoxelHandoffBlocker::MissingFrameSource),
             }
         }
-        blockers.push(BrepVoxelHandoffBlocker::TriangleVoxelizationUnavailable);
-
         let exact_aabb_fixture = match (&bounds.min, &bounds.max) {
             (Some(min), Some(max)) if bounds.exact_bounds_ready => Some(ExactBox::new(
                 [min.x.clone(), min.y.clone(), min.z.clone()],
@@ -92,6 +105,28 @@ impl BrepVoxelHandoffReport {
             )),
             _ => None,
         };
+        let exact_triangle_solid = if triangle_mesh.exact_triangle_mesh_ready {
+            Some(triangle_solid_from_brep_triangles(
+                &triangle_mesh,
+                frame.source().cloned(),
+            ))
+        } else {
+            None
+        };
+        let (prepared_triangle_solid, prepared_triangle_solid_report) =
+            match exact_triangle_solid.clone() {
+                Some(solid) => match PreparedExactTriangleSolidMesh::prepare(solid) {
+                    Ok(prepared) => {
+                        let report = prepared.report().clone();
+                        (Some(prepared), Some(report))
+                    }
+                    Err(_) => {
+                        blockers.push(BrepVoxelHandoffBlocker::TriangleSolidPreparationNotReady);
+                        (None, None)
+                    }
+                },
+                None => (None, None),
+            };
         let exact_aabb_handoff_ready = exact_aabb_fixture.is_some()
             && !blockers.iter().any(|blocker| {
                 matches!(
@@ -102,7 +137,16 @@ impl BrepVoxelHandoffReport {
                 )
             });
         let exact_triangle_source_ready = triangle_mesh.exact_triangle_mesh_ready;
-        let exact_triangle_voxelization_ready = false;
+        let exact_triangle_voxelization_ready = prepared_triangle_solid.is_some()
+            && !blockers.iter().any(|blocker| {
+                matches!(
+                    blocker,
+                    BrepVoxelHandoffBlocker::TriangleMeshNotReady
+                        | BrepVoxelHandoffBlocker::MissingFrameSource
+                        | BrepVoxelHandoffBlocker::StaleFrameSource
+                        | BrepVoxelHandoffBlocker::TriangleSolidPreparationNotReady
+                )
+            });
 
         Self {
             frame,
@@ -110,12 +154,36 @@ impl BrepVoxelHandoffReport {
             bounds,
             triangle_mesh,
             exact_aabb_fixture,
+            exact_triangle_solid,
+            prepared_triangle_solid,
+            prepared_triangle_solid_report,
             exact_aabb_handoff_ready,
             exact_triangle_source_ready,
             exact_triangle_voxelization_ready,
             blockers,
         }
     }
+}
+
+fn triangle_solid_from_brep_triangles(
+    triangle_mesh: &BrepExactTriangleMeshHandoffReport,
+    source: Option<GridSource>,
+) -> ExactTriangleSolidMesh {
+    let triangles = triangle_mesh
+        .triangles
+        .iter()
+        .enumerate()
+        .map(|(index, triangle)| {
+            ExactTriangle3::new(
+                triangle
+                    .vertices
+                    .clone()
+                    .map(|point| [point.x, point.y, point.z]),
+                Some(index as u64),
+            )
+        })
+        .collect::<Vec<_>>();
+    ExactTriangleSolidMesh::new(ExactTriangleSurfaceMesh::new(triangles, source, true), true)
 }
 
 impl BrepShell {

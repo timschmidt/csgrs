@@ -358,12 +358,25 @@ fn bench_shell_audit(c: &mut Criterion) {
     c.bench_function("hyperbrep voxel handoff report", |b| {
         b.iter(|| cube.voxel_handoff_report(voxel_frame.clone(), Some(voxel_source.clone())))
     });
+    let voxel_handoff = cube.voxel_handoff_report(voxel_frame.clone(), Some(voxel_source.clone()));
+    let prepared_voxel_solid = voxel_handoff.prepared_triangle_solid.clone().unwrap();
+    c.bench_function("hyperbrep prepared voxel solid materialization", |b| {
+        b.iter(|| {
+            hypervoxel::voxelize_prepared_exact_triangle_solid_mesh(
+                voxel_frame.clone(),
+                &prepared_voxel_solid,
+                hypervoxel::MaterialRegionId(1),
+                hypervoxel::VoxelizationPolicy::conservative_cover(),
+            )
+            .unwrap()
+        })
+    });
     let package_manifest = hyperbrep::BrepHandoffPackageManifest::basic()
         .with_physics_density(r(1))
         .with_voxel(hyperbrep::BrepVoxelPackageRequest {
             frame: voxel_frame,
             expected_source: Some(voxel_source),
-            require_triangle_voxelization: false,
+            require_triangle_voxelization: true,
         });
     c.bench_function("hyperbrep consolidated handoff package", |b| {
         b.iter(|| cube.handoff_package_report(None, package_manifest.clone()))

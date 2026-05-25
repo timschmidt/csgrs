@@ -25,10 +25,11 @@ pub struct BrepVoxelPackageRequest {
     pub expected_source: Option<GridSource>,
     /// Whether the caller requires full exact triangle voxelization now.
     ///
-    /// The current BREP package can provide exact AABB and triangle source
-    /// evidence, but not exact triangle rasterization. Keeping this as an
-    /// explicit request flag follows Yap's exact-computation boundary: an
-    /// unavailable algorithm must remain named evidence, not a silent fallback.
+    /// The BREP package can provide exact AABB evidence and, for exact-ready
+    /// retained solids, a prepared `hypervoxel` triangle-solid schedule.
+    /// Keeping this as an explicit request flag follows Yap's
+    /// exact-computation boundary: a blocked voxel route remains named
+    /// evidence, not a silent fallback.
     pub require_triangle_voxelization: bool,
 }
 
@@ -54,7 +55,7 @@ pub enum BrepHandoffPackageBlocker {
     PhysicsMassNotReady,
     /// Requested voxel AABB preflight was not exact-ready.
     VoxelAabbNotReady,
-    /// Requested full exact triangle voxelization is unavailable.
+    /// Requested full exact triangle voxelization is unavailable or blocked.
     TriangleVoxelizationUnavailable,
 }
 

@@ -476,6 +476,20 @@ proptest! {
             Some(r(6 * width * depth * height))
         );
         prop_assert!(shell.physics_mass_handoff_report(r(1)).exact_physics_mass_ready);
+        let frame = hypervoxel::GridFrame::new(
+            [r(0), r(0), r(0)],
+            [r(1), r(1), r(1)],
+            6,
+            hypervoxel::LengthUnit::Unitless,
+            None,
+        ).unwrap();
+        let voxel = shell.voxel_handoff_report(frame, None);
+        prop_assert!(voxel.exact_aabb_handoff_ready);
+        prop_assert!(voxel.exact_triangle_source_ready);
+        prop_assert!(voxel.exact_triangle_voxelization_ready);
+        prop_assert!(voxel.exact_triangle_solid.is_some());
+        prop_assert!(voxel.prepared_triangle_solid.is_some());
+        prop_assert!(voxel.blockers.is_empty());
     }
 
     #[test]

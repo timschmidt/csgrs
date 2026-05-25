@@ -1,0 +1,30 @@
+[package]
+name = "hyperbrep-fuzz"
+version = "0.1.0"
+publish = false
+edition = "2024"
+
+[workspace]
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+# Hyper sibling dependency switch: keep both local path and crates.io lines; do not remove either.
+# Development mode uses the local path lines. For release, comment those and uncomment the crates.io lines.
+hyperbrep = { path = ".." }
+hypercurve = { path = "../../hypercurve" }
+hyperreal = { path = "../../hyperreal" }
+hypervoxel = { path = "../../hypervoxel" }
+# hyperbrep = "0.2.0"
+# hypercurve = "0.3.0"
+# hyperreal = "0.13.0"
+# hypervoxel = "0.3.0"
+
+[[bin]]
+name = "voxel_handoff"
+path = "fuzz_targets/voxel_handoff.rs"
+test = false
+doc = false
+bench = false
