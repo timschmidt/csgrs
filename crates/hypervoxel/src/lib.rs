@@ -32,6 +32,7 @@ mod chunk_faces;
 mod chunk_field;
 mod chunk_material;
 mod chunk_process;
+mod chunk_snapshot;
 mod chunk_storage;
 mod chunk_support;
 mod compression;
@@ -98,6 +99,9 @@ pub use chunk_faces::{
 pub use chunk_field::{ChunkPagedFieldAuditReport, audit_chunk_paged_field_samples};
 pub use chunk_material::{ChunkPagedMaterialAuditReport, audit_chunk_paged_material_regions};
 pub use chunk_process::{ChunkPagedProcessStateAuditReport, audit_chunk_paged_process_states};
+pub use chunk_snapshot::{
+    ChunkPagedSnapshotReplay, chunk_paged_binary_snapshot_v1, chunk_paged_run_length_snapshot_v1,
+};
 pub use chunk_storage::{
     ChunkPagedAabbBroadPhaseReport, ChunkPagedConnectedComponentReport,
     ChunkPagedManhattanBandReport, ChunkPagedRegionAggregateReport, ChunkPagedSparseGrid,

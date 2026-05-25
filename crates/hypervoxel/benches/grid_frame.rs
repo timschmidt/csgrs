@@ -22,7 +22,8 @@ use hypervoxel::{
     VoxelSideTables, VoxelSliceNaming, VoxelSliceOrdering, VoxelSpatialAggregateFacts,
     VoxelTraceDimension, VoxelTraceManifest, VoxelizationAudit, VoxelizationPolicy,
     audit_chunk_paged_field_samples, audit_chunk_paged_material_regions,
-    audit_chunk_paged_process_states, chunk_paged_greedy_face_patch_plan_with_report,
+    audit_chunk_paged_process_states, chunk_paged_binary_snapshot_v1,
+    chunk_paged_greedy_face_patch_plan_with_report, chunk_paged_run_length_snapshot_v1,
     classify_chunk_paged_support_mask, classify_support_mask, continuous_field_address,
     diff_chunk_paged_sparse_grids, diff_sparse_grids,
     extract_chunk_paged_exposed_faces_with_report, extract_exposed_faces,
@@ -547,6 +548,19 @@ fn bench_connectivity_and_export_adapters(c: &mut Criterion) {
             )
         })
     });
+    c.bench_function("chunk_paged_binary_snapshot_replay", |b| {
+        let paged =
+            ChunkPagedSparseGrid::from_sparse_grid(&grid, ChunkShape::new(3).unwrap()).unwrap();
+        b.iter(|| {
+            let snapshot = chunk_paged_binary_snapshot_v1(&paged, &side_tables).unwrap();
+            (
+                snapshot.snapshot_report.byte_len,
+                snapshot.replayed_pages,
+                snapshot.replayed_cells,
+                snapshot.exact_paged_snapshot_ready,
+            )
+        })
+    });
     c.bench_function("voxelization_audit", |b| {
         b.iter(|| {
             let audit = VoxelizationAudit::from_grid_and_report(&grid, &report);
@@ -578,6 +592,19 @@ fn bench_connectivity_and_export_adapters(c: &mut Criterion) {
                 snapshot.report().serialized_cell_records,
                 snapshot.report().has_cell_records,
                 snapshot.report().exact_snapshot_replay_ready,
+            )
+        })
+    });
+    c.bench_function("chunk_paged_run_length_snapshot_replay", |b| {
+        let paged =
+            ChunkPagedSparseGrid::from_sparse_grid(&grid, ChunkShape::new(3).unwrap()).unwrap();
+        b.iter(|| {
+            let snapshot = chunk_paged_run_length_snapshot_v1(&paged).unwrap();
+            (
+                snapshot.snapshot_report.serialized_cell_records,
+                snapshot.replayed_cells,
+                snapshot.exact_cell_count_replay,
+                snapshot.exact_paged_snapshot_ready,
             )
         })
     });

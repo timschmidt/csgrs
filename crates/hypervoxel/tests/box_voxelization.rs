@@ -12,7 +12,8 @@ use hypervoxel::{
     SparseVoxelGrid, StorageReplayStatus, VoxelAddress, VoxelAggregateFacts, VoxelCell,
     VoxelHandoffDomain, VoxelHandoffManifest, VoxelMemoryBudgetManifest, VoxelSideTables,
     VoxelizationAudit, VoxelizationPolicy, audit_chunk_paged_material_regions,
-    audit_chunk_paged_process_states, diff_chunk_paged_sparse_grids, diff_sparse_grids,
+    audit_chunk_paged_process_states, chunk_paged_binary_snapshot_v1,
+    chunk_paged_run_length_snapshot_v1, diff_chunk_paged_sparse_grids, diff_sparse_grids,
     extract_exposed_faces, extract_exposed_faces_with_report, greedy_face_patch_plan,
     lookup_material_display_colors, lossy_obj_from_quad_mesh, lossy_quad_mesh_from_faces,
     query_material_regions, report_material_region_metadata, sample_manhattan_distance_field,
@@ -587,6 +588,16 @@ fn deterministic_binary_snapshot_is_stable_and_keeps_exact_scalars_as_bytes() {
     assert!(left.report().has_cell_records);
     assert!(left.bytes.starts_with(b"HYPERVOXEL-BIN-V1\0"));
     assert!(!left.bytes.windows(3).any(|bytes| bytes == b"NaN"));
+    let paged = ChunkPagedSparseGrid::from_sparse_grid(&grid, ChunkShape::new(1).unwrap()).unwrap();
+    let paged_snapshot = chunk_paged_binary_snapshot_v1(&paged, &side_tables).unwrap();
+    assert_eq!(paged_snapshot.snapshot, left);
+    assert_eq!(paged_snapshot.snapshot_report, left.report());
+    assert_eq!(paged_snapshot.replayed_pages, 1);
+    assert_eq!(paged_snapshot.replayed_cells, 1);
+    assert_eq!(paged_snapshot.unknown_cells, 0);
+    assert_eq!(paged_snapshot.lossy_cells, 0);
+    assert!(paged_snapshot.exact_cell_count_replay);
+    assert!(paged_snapshot.exact_paged_snapshot_ready);
 
     let empty = DeterministicSnapshot::binary_v1(
         &SparseVoxelGrid::new(frame()),
@@ -596,6 +607,40 @@ fn deterministic_binary_snapshot_is_stable_and_keeps_exact_scalars_as_bytes() {
     assert_eq!(empty_report.serialized_cell_records, 0);
     assert!(!empty_report.has_cell_records);
     assert!(!empty_report.exact_snapshot_replay_ready);
+    let empty_paged = ChunkPagedSparseGrid::from_sparse_grid(
+        &SparseVoxelGrid::new(frame()),
+        ChunkShape::new(1).unwrap(),
+    )
+    .unwrap();
+    let empty_paged_snapshot =
+        chunk_paged_binary_snapshot_v1(&empty_paged, &VoxelSideTables::default()).unwrap();
+    assert_eq!(empty_paged_snapshot.snapshot, empty);
+    assert_eq!(empty_paged_snapshot.replayed_pages, 0);
+    assert_eq!(empty_paged_snapshot.replayed_cells, 0);
+    assert!(empty_paged_snapshot.exact_cell_count_replay);
+    assert!(!empty_paged_snapshot.exact_paged_snapshot_ready);
+
+    let mut uncertain = SparseVoxelGrid::new(frame());
+    uncertain
+        .set(
+            VoxelAddress::new(2, [1, 1, 1]).unwrap(),
+            VoxelCell::unknown(),
+        )
+        .unwrap();
+    uncertain
+        .set(
+            VoxelAddress::new(2, [2, 1, 1]).unwrap(),
+            VoxelCell::lossy_adapter_value(4),
+        )
+        .unwrap();
+    let uncertain_paged =
+        ChunkPagedSparseGrid::from_sparse_grid(&uncertain, ChunkShape::new(1).unwrap()).unwrap();
+    let uncertain_snapshot =
+        chunk_paged_binary_snapshot_v1(&uncertain_paged, &VoxelSideTables::default()).unwrap();
+    assert_eq!(uncertain_snapshot.replayed_cells, 2);
+    assert_eq!(uncertain_snapshot.unknown_cells, 1);
+    assert_eq!(uncertain_snapshot.lossy_cells, 1);
+    assert!(!uncertain_snapshot.exact_paged_snapshot_ready);
 }
 
 #[test]
@@ -625,6 +670,13 @@ fn deterministic_run_length_snapshot_groups_identical_morton_runs() {
                 .bytes
                 .len()
     );
+    let paged = ChunkPagedSparseGrid::from_sparse_grid(&grid, ChunkShape::new(1).unwrap()).unwrap();
+    let paged_rle = chunk_paged_run_length_snapshot_v1(&paged).unwrap();
+    assert_eq!(paged_rle.snapshot, snapshot);
+    assert_eq!(paged_rle.snapshot_report, report);
+    assert_eq!(paged_rle.replayed_cells, grid.len());
+    assert!(paged_rle.exact_cell_count_replay);
+    assert!(!paged_rle.exact_paged_snapshot_ready);
 }
 
 #[test]

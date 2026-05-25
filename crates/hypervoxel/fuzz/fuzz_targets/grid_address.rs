@@ -24,9 +24,9 @@ use hypervoxel::{
     VoxelSideTables, VoxelSliceNaming, VoxelSliceOrdering, VoxelSpatialAggregateFacts,
     VoxelTraceDimension, VoxelTraceManifest, VoxelizationAudit, VoxelizationPolicy,
     audit_chunk_paged_field_samples, audit_chunk_paged_material_regions,
-    audit_chunk_paged_process_states,
-    chunk_paged_greedy_face_patch_plan_with_report, classify_chunk_paged_support_mask,
-    classify_support_mask, continuous_field_address, diff_chunk_paged_sparse_grids,
+    audit_chunk_paged_process_states, chunk_paged_binary_snapshot_v1,
+    chunk_paged_run_length_snapshot_v1, chunk_paged_greedy_face_patch_plan_with_report,
+    classify_chunk_paged_support_mask, classify_support_mask, continuous_field_address, diff_chunk_paged_sparse_grids,
     extract_chunk_paged_exposed_faces_with_report,
     diff_sparse_grids, extract_exposed_faces, greedy_face_patch_plan, lookup_material_display_colors,
     extract_exposed_faces_with_report, lossy_obj_from_quad_mesh, lossy_quad_mesh_from_faces, query_field_samples,
@@ -340,6 +340,17 @@ fuzz_target!(|data: (u8, u64, u64, u64)| {
     assert!(binary_snapshot.report().exact_snapshot_replay_ready);
     assert_eq!(binary_snapshot.report().serialized_cell_records, grid.len());
     assert!(binary_snapshot.report().has_cell_records);
+    let paged_binary_snapshot =
+        chunk_paged_binary_snapshot_v1(&paged_grid, &VoxelSideTables::default()).unwrap();
+    assert_eq!(paged_binary_snapshot.snapshot, binary_snapshot);
+    assert_eq!(paged_binary_snapshot.replayed_cells, grid.len());
+    assert_eq!(paged_binary_snapshot.unknown_cells, 0);
+    assert_eq!(paged_binary_snapshot.lossy_cells, 0);
+    assert_eq!(
+        paged_binary_snapshot.exact_paged_snapshot_ready,
+        paged_grid.report().exact_chunk_storage_ready
+            && binary_snapshot.report().exact_snapshot_replay_ready
+    );
     let empty_snapshot = DeterministicSnapshot::binary_v1(
         &SparseVoxelGrid::new(report.frame.clone()),
         &VoxelSideTables::default(),
@@ -347,10 +358,27 @@ fuzz_target!(|data: (u8, u64, u64, u64)| {
     assert_eq!(empty_snapshot.report().serialized_cell_records, 0);
     assert!(!empty_snapshot.report().has_cell_records);
     assert!(!empty_snapshot.report().exact_snapshot_replay_ready);
+    let empty_paged_snapshot = chunk_paged_binary_snapshot_v1(
+        &ChunkPagedSparseGrid::from_sparse_grid(
+            &SparseVoxelGrid::new(report.frame.clone()),
+            ChunkShape::new(small_depth.min(2)).unwrap(),
+        )
+        .unwrap(),
+        &VoxelSideTables::default(),
+    )
+    .unwrap();
+    assert_eq!(empty_paged_snapshot.snapshot, empty_snapshot);
+    assert_eq!(empty_paged_snapshot.replayed_cells, 0);
+    assert!(!empty_paged_snapshot.exact_paged_snapshot_ready);
     let rle_snapshot = DeterministicSnapshot::run_length_binary_v1(&grid);
     assert!(rle_snapshot.report().exact_address_encoding);
     assert!(rle_snapshot.report().has_cell_records);
     assert!(!rle_snapshot.report().exact_snapshot_replay_ready);
+    let paged_rle_snapshot = chunk_paged_run_length_snapshot_v1(&paged_grid).unwrap();
+    assert_eq!(paged_rle_snapshot.snapshot, rle_snapshot);
+    assert_eq!(paged_rle_snapshot.replayed_cells, grid.len());
+    assert!(paged_rle_snapshot.exact_cell_count_replay);
+    assert!(!paged_rle_snapshot.exact_paged_snapshot_ready);
     let diff_report = diff_sparse_grids(&grid, &grid);
     assert!(diff_report.semantic_equivalence_ready);
     assert!(diff_report.frame_matches);
