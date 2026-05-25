@@ -28,9 +28,10 @@ use hypervoxel::{
     certify_chunk_paged_handoff, chunk_paged_binary_snapshot_v1,
     chunk_paged_run_length_snapshot_v1, chunk_paged_greedy_face_patch_plan_with_report,
     classify_chunk_paged_support_mask, classify_support_mask, continuous_field_address,
-    diff_chunk_paged_sparse_grids, extract_chunk_paged_exposed_faces_with_report,
-    diff_sparse_grids, extract_exposed_faces, greedy_face_patch_plan, lookup_material_display_colors,
-    extract_exposed_faces_with_report, lossy_obj_from_quad_mesh, lossy_quad_mesh_from_faces, query_field_samples,
+    diff_chunk_paged_sparse_grids, diff_sparse_grids,
+    extract_chunk_paged_exposed_faces_with_report, extract_exposed_faces,
+    extract_exposed_faces_with_report, extract_svo_exposed_faces_with_report,
+    greedy_face_patch_plan, lookup_material_display_colors, lossy_obj_from_quad_mesh, lossy_quad_mesh_from_faces, query_field_samples,
     query_material_regions, report_material_region_metadata, sample_manhattan_distance_field,
     sample_signed_manhattan_distance_field, select_lod_cells, sweep_address_segment,
     trace_address_ray, voxel_neighbors6, voxelize_exact_box, voxelize_exact_convex_halfspace_set,
@@ -239,6 +240,18 @@ fuzz_target!(|data: (u8, u64, u64, u64)| {
             && svo_replay.unknown_leaf_cells == 0
             && svo_replay.lossy_leaf_cells == 0
             && svo_replay.exact_payload_cells == svo_replay.expanded_non_empty_leaf_cells
+    );
+    let (svo_faces, svo_surface) = extract_svo_exposed_faces_with_report(&svo).unwrap();
+    let sparse_shell = extract_exposed_faces_with_report(&svo_sparse).unwrap();
+    assert_eq!(svo_faces, sparse_shell.faces);
+    assert_eq!(svo_surface.shell.exact_faces, sparse_shell.exact_faces);
+    assert_eq!(svo_surface.sparse_replay, svo_replay);
+    assert_eq!(
+        svo_surface.exact_svo_surface_replay_ready,
+        svo_replay.exact_sparse_replay_ready
+            && svo_surface.shell.exact_shell_ready
+            && svo_surface.topology.exact_surface_topology_ready
+            && svo_surface.exact_faces > 0
     );
     assert_eq!(
         svo_report.logical_leaf_cells,

@@ -67,6 +67,7 @@ mod storage;
 mod support;
 mod surface_topology;
 mod svo;
+mod svo_surface;
 mod trace;
 mod transform;
 mod triangle_mesh;
@@ -205,6 +206,7 @@ pub use surface_topology::{
 pub use svo::{
     SvoDagStats, SvoEditReport, SvoNodeId, SvoSparseReplayReport, SvoStorageReport, SvoVoxelGrid,
 };
+pub use svo_surface::{SvoSurfaceReplayReport, extract_svo_exposed_faces_with_report};
 pub use trace::{VoxelTraceDimension, VoxelTraceManifest, VoxelTraceReport};
 pub use transform::{AxisPermutationTransform, SignedAxis};
 pub use triangle_mesh::{

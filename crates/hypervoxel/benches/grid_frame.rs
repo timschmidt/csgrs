@@ -28,9 +28,10 @@ use hypervoxel::{
     classify_chunk_paged_support_mask, classify_support_mask, continuous_field_address,
     diff_chunk_paged_sparse_grids, diff_sparse_grids,
     extract_chunk_paged_exposed_faces_with_report, extract_exposed_faces,
-    extract_exposed_faces_with_report, greedy_face_patch_plan, lookup_material_display_colors,
-    lossy_obj_from_quad_mesh, lossy_quad_mesh_from_faces, query_field_samples,
-    query_material_regions, report_material_region_metadata, sample_manhattan_distance_field,
+    extract_exposed_faces_with_report, extract_svo_exposed_faces_with_report,
+    greedy_face_patch_plan, lookup_material_display_colors, lossy_obj_from_quad_mesh,
+    lossy_quad_mesh_from_faces, query_field_samples, query_material_regions,
+    report_material_region_metadata, sample_manhattan_distance_field,
     sample_signed_manhattan_distance_field, select_lod_cells, sweep_address_segment,
     trace_address_ray, voxelize_exact_box, voxelize_exact_convex_halfspace_set,
     voxelize_exact_halfspace, voxelize_exact_triangle_solid_mesh,
@@ -410,6 +411,24 @@ fn bench_svo_path_copy_edits(c: &mut Criterion) {
                 report.materialized_sparse_cells,
                 report.aggregate_replay_matches_root,
                 report.exact_sparse_replay_ready,
+            )
+        })
+    });
+    c.bench_function("semantic_svo_surface_replay", |b| {
+        let surface_frame = GridFrame::builder().depth(4).build().unwrap();
+        let mut grid = SvoVoxelGrid::new(surface_frame);
+        grid.set(
+            VoxelAddress::root(),
+            VoxelCell::material(MaterialRegionId(3)),
+        )
+        .unwrap();
+        b.iter(|| {
+            let (_, report) = extract_svo_exposed_faces_with_report(&grid).unwrap();
+            (
+                report.exact_faces,
+                report.topology.edges.len(),
+                report.sparse_replay.materialized_sparse_cells,
+                report.exact_svo_surface_replay_ready,
             )
         })
     });

@@ -1123,6 +1123,50 @@ fn svo_sparse_replay_expands_collapsed_leaves_and_reports_blockers() {
 }
 
 #[test]
+fn svo_surface_replay_extracts_exact_shell_after_sparse_expansion() {
+    let frame = frame(2);
+    let mut grid = SvoVoxelGrid::new(frame.clone());
+    grid.set(
+        VoxelAddress::root(),
+        VoxelCell::material(MaterialRegionId(8)),
+    )
+    .unwrap();
+
+    let (sparse, sparse_replay) = grid.replay_sparse_grid_with_report().unwrap();
+    assert_eq!(sparse.len(), 64);
+    assert_eq!(sparse_replay.max_expanded_remaining_depth, 2);
+    let sparse_shell = extract_exposed_faces_with_report(&sparse).unwrap();
+    let (faces, report) = hypervoxel::extract_svo_exposed_faces_with_report(&grid).unwrap();
+    assert_eq!(faces, sparse_shell.faces);
+    assert_eq!(report.exact_faces, sparse_shell.exact_faces);
+    assert_eq!(report.shell, sparse_shell);
+    assert_eq!(report.sparse_replay, sparse_replay);
+    assert!(report.topology.exact_surface_topology_ready);
+    assert!(report.exact_svo_surface_replay_ready);
+
+    let empty = SvoVoxelGrid::new(frame.clone());
+    let (empty_faces, empty_report) =
+        hypervoxel::extract_svo_exposed_faces_with_report(&empty).unwrap();
+    assert!(empty_faces.is_empty());
+    assert_eq!(empty_report.exact_faces, 0);
+    assert!(!empty_report.sparse_replay.storage.has_materialized_evidence);
+    assert!(!empty_report.shell.exact_shell_ready);
+    assert!(!empty_report.topology.exact_surface_topology_ready);
+    assert!(!empty_report.exact_svo_surface_replay_ready);
+
+    let mut lossy = SvoVoxelGrid::new(frame);
+    lossy
+        .set(VoxelAddress::root(), VoxelCell::lossy_adapter_value(5))
+        .unwrap();
+    let (_, lossy_report) = hypervoxel::extract_svo_exposed_faces_with_report(&lossy).unwrap();
+    assert_eq!(lossy_report.sparse_replay.lossy_leaf_cells, 64);
+    assert_eq!(lossy_report.shell.skipped_lossy_cells, 64);
+    assert!(!lossy_report.sparse_replay.exact_sparse_replay_ready);
+    assert!(!lossy_report.shell.exact_shell_ready);
+    assert!(!lossy_report.exact_svo_surface_replay_ready);
+}
+
+#[test]
 fn voxelization_report_exposes_freshness_and_legacy_status() {
     let frame = frame(2);
     let aggregate = VoxelAggregateFacts::from_cells([&VoxelCell::material(MaterialRegionId(3))]);
