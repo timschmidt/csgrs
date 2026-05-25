@@ -9,15 +9,15 @@ use hyperpath::{
     ExplicitCircularArc, HigherOrderBezier, HigherOrderBezierError, InfillGraphError,
     LineExplicitArcIntersectionClass, LineOffsetError, LinePathSegment, MeanderError,
     MeanderObstacle, MeanderPlacementCandidate, NetId, OffsetSide, PathProvenance,
-    PathSourceFormat, PcbBoardOutline, PcbCardinalRectPad, PcbCircularPad, PcbConvexBoardOutline,
-    PcbOrientedRectPad, PcbOrthogonalBoardOutline, PcbRectPad, PcbRoundedRectPad, PcbTrace,
-    PcbViaStack, PocketPlanError, PocketPlanStopReason, QuadraticBezier, RationalQuadraticBezier,
-    RationalQuadraticBezierError, RectangularPocket, RectangularRegionRelation,
-    RouteCertificationError, SegmentParameterOrder, SourceLengthUnit, SpecctraGridTraceRecord,
-    SpecctraGridViaRecord, SpecctraImportError, SpecctraLayerAlias, SpecctraNetAlias,
-    SpecctraParseError, SupportFootprintStatus, SupportPlanError, SweptLineSegment,
-    TangentAlignment, TangentJoinClass, TangentJoinReport, TangentSpan, TraceLayer,
-    ViaAnnularRingReport, ViaDrillIntent, ViaDrillPolicyClass, ViaLayerSpanRelation,
+    PathSourceFormat, PcbBoardOutline, PcbCardinalRectPad, PcbCircularBoardOutline, PcbCircularPad,
+    PcbConvexBoardOutline, PcbOrientedRectPad, PcbOrthogonalBoardOutline, PcbRectPad,
+    PcbRoundedRectPad, PcbTrace, PcbViaStack, PocketPlanError, PocketPlanStopReason,
+    QuadraticBezier, RationalQuadraticBezier, RationalQuadraticBezierError, RectangularPocket,
+    RectangularRegionRelation, RouteCertificationError, SegmentParameterOrder, SourceLengthUnit,
+    SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraImportError, SpecctraLayerAlias,
+    SpecctraNetAlias, SpecctraParseError, SupportFootprintStatus, SupportPlanError,
+    SweptLineSegment, TangentAlignment, TangentJoinClass, TangentJoinReport, TangentSpan,
+    TraceLayer, ViaAnnularRingReport, ViaDrillIntent, ViaDrillPolicyClass, ViaLayerSpanRelation,
     ViaLayerTransitionClass, build_alternating_detour_meander, build_g1_join_problem,
     build_length_match_problem, build_multi_detour_meander, build_nonuniform_detour_meander,
     build_obstacle_aware_detour_meander, build_oriented_tangent_alignment_problem,
@@ -27,9 +27,10 @@ use hyperpath::{
     certify_differential_pair_skew, certify_g1_chain, certify_g1_join_candidate,
     certify_length_extension, certify_tangent_alignment_candidate,
     check_cardinal_rect_pad_board_clearance, check_circular_pad_board_clearance,
-    check_oriented_rect_pad_board_clearance, check_rect_pad_board_clearance,
-    check_rounded_rect_pad_board_clearance, check_trace_board_clearance,
-    check_trace_cardinal_rect_pad_clearance, check_trace_clearance,
+    check_circular_pad_circular_board_clearance, check_oriented_rect_pad_board_clearance,
+    check_rect_pad_board_clearance, check_rounded_rect_pad_board_clearance,
+    check_trace_board_clearance, check_trace_cardinal_rect_pad_clearance,
+    check_trace_circular_board_clearance, check_trace_clearance,
     check_trace_convex_board_clearance, check_trace_oriented_rect_pad_clearance,
     check_trace_orthogonal_board_clearance, check_trace_pad_clearance,
     check_trace_rect_pad_clearance, check_trace_rounded_rect_pad_clearance,
@@ -2044,6 +2045,60 @@ fn pcb_trace_board_clearance_certifies_inside_gap_and_edge_violation() {
         check_trace_board_clearance(&outside, &board, &r(0), PredicatePolicy::default());
     assert_eq!(outside_report.status, ClearanceStatus::ClearanceViolation);
     assert_eq!(outside_report.axis_gap, Some(r(-1)));
+}
+
+#[test]
+fn pcb_circular_board_outline_rejects_negative_radius() {
+    let error = PcbCircularBoardOutline::new(p(0, 0), r(-1))
+        .expect_err("negative circular board radius must be rejected");
+    assert_eq!(error, "circular board radius must be nonnegative");
+}
+
+#[test]
+fn pcb_trace_circular_board_clearance_certifies_diagonal_endpoint_radius() {
+    let board = PcbCircularBoardOutline::new(p(0, 0), r(10)).unwrap();
+    let trace = trace(1, 0, p(-3, -4), p(3, 4), 2);
+
+    let tangent =
+        check_trace_circular_board_clearance(&trace, &board, &r(4), PredicatePolicy::default());
+    assert_eq!(tangent.status, ClearanceStatus::CertifiedClear);
+
+    let violation =
+        check_trace_circular_board_clearance(&trace, &board, &r(5), PredicatePolicy::default());
+    assert_eq!(violation.status, ClearanceStatus::ClearanceViolation);
+}
+
+#[test]
+fn pcb_trace_circular_board_clearance_rejects_impossible_allowance_before_squaring() {
+    let board = PcbCircularBoardOutline::new(p(0, 0), r(3)).unwrap();
+    let trace = trace(1, 0, p(0, 0), p(0, 0), 8);
+
+    let report =
+        check_trace_circular_board_clearance(&trace, &board, &r(0), PredicatePolicy::default());
+    assert_eq!(report.status, ClearanceStatus::ClearanceViolation);
+}
+
+#[test]
+fn pcb_circular_pad_circular_board_clearance_uses_exact_center_radius_sum() {
+    let board = PcbCircularBoardOutline::new(p(0, 0), r(10)).unwrap();
+    let pad = PcbCircularPad::new(NetId(1), TraceLayer(0), p(3, 4), r(4)).unwrap();
+
+    let tangent = check_circular_pad_circular_board_clearance(
+        &pad,
+        &board,
+        &r(3),
+        PredicatePolicy::default(),
+    );
+    assert_eq!(tangent.status, ClearanceStatus::CertifiedClear);
+    assert_eq!(tangent.copper_gap, None);
+
+    let violation = check_circular_pad_circular_board_clearance(
+        &pad,
+        &board,
+        &r(4),
+        PredicatePolicy::default(),
+    );
+    assert_eq!(violation.status, ClearanceStatus::ClearanceViolation);
 }
 
 #[test]
@@ -5102,6 +5157,35 @@ proptest! {
     }
 
     #[test]
+    fn circular_board_clearance_accepts_generated_interior_diagonal_traces(
+        x0 in -20_i16..=20,
+        y0 in -20_i16..=20,
+        x1 in -20_i16..=20,
+        y1 in -20_i16..=20,
+        width in 0_i16..=10,
+        clearance in 0_i16..=10,
+    ) {
+        let board = PcbCircularBoardOutline::new(p(0, 0), r(50)).unwrap();
+        let trace = trace(
+            1,
+            0,
+            p(i64::from(x0), i64::from(y0)),
+            p(i64::from(x1), i64::from(y1)),
+            i64::from(width),
+        );
+
+        prop_assert_eq!(
+            check_trace_circular_board_clearance(
+                &trace,
+                &board,
+                &r(i64::from(clearance)),
+                PredicatePolicy::default(),
+            ).status,
+            ClearanceStatus::CertifiedClear
+        );
+    }
+
+    #[test]
     fn via_drill_board_clearance_accepts_generated_interior_drills(
         x in 20_i16..=80,
         y in 20_i16..=80,
@@ -5146,6 +5230,32 @@ proptest! {
 
         prop_assert_eq!(
             check_circular_pad_board_clearance(
+                &pad,
+                &board,
+                &r(i64::from(clearance)),
+                PredicatePolicy::default(),
+            ).status,
+            ClearanceStatus::CertifiedClear
+        );
+    }
+
+    #[test]
+    fn circular_pad_circular_board_clearance_accepts_generated_interior_pads(
+        x in -20_i16..=20,
+        y in -20_i16..=20,
+        diameter in 0_i16..=20,
+        clearance in 0_i16..=10,
+    ) {
+        let board = PcbCircularBoardOutline::new(p(0, 0), r(50)).unwrap();
+        let pad = PcbCircularPad::new(
+            NetId(1),
+            TraceLayer(0),
+            p(i64::from(x), i64::from(y)),
+            r(i64::from(diameter)),
+        ).unwrap();
+
+        prop_assert_eq!(
+            check_circular_pad_circular_board_clearance(
                 &pad,
                 &board,
                 &r(i64::from(clearance)),

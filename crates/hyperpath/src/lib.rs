@@ -12,6 +12,7 @@ pub mod bezier;
 pub mod cam;
 pub mod offset;
 pub mod pcb;
+pub mod pcb_circular_board;
 pub mod pcb_oriented;
 pub mod provenance;
 pub mod routing;
@@ -66,6 +67,10 @@ pub use pcb::{
     check_trace_pad_clearance, check_trace_rect_pad_clearance,
     check_trace_rounded_rect_pad_clearance, check_trace_via_clearance,
     check_trace_via_drill_clearance, check_via_drill_board_clearance,
+};
+pub use pcb_circular_board::{
+    PcbCircularBoardOutline, PcbCircularBoardOutlineFacts,
+    check_circular_pad_circular_board_clearance, check_trace_circular_board_clearance,
 };
 pub use pcb_oriented::{
     PcbOrientedRectPad, PcbOrientedRectPadFacts, check_oriented_rect_pad_board_clearance,
