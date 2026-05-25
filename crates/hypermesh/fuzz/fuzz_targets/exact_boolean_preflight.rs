@@ -2607,7 +2607,12 @@ fn exercise_same_outer_holed_coplanar_multi_difference() {
     let crossing = arrange_coplanar_convex_surface_multi_holed_difference(&outer, &crossing_holes)
         .expect("same-outer crossing right should materialize")
         .mesh;
-    assert!(arrange_coplanar_surface_multi_difference(&left, &crossing).is_none());
+    let crossing_difference = arrange_coplanar_surface_multi_difference(&left, &crossing)
+        .expect("same-outer rectangular hole overlap should replay as multi no-hole cells");
+    crossing_difference.validate().unwrap();
+    crossing_difference
+        .validate_difference_against_sources(&left, &crossing)
+        .unwrap();
 
     let preflight = preflight_boolean_exact(&left, &right, ExactBooleanOperation::Difference)
         .expect("same-outer holed multi-difference preflight should classify shortcut");
@@ -2668,6 +2673,22 @@ fn exercise_same_outer_holed_coplanar_component_difference() {
     difference.validate().unwrap();
     difference
         .validate_component_difference_against_sources(&left, &right)
+        .unwrap();
+
+    let crossing_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[5, 3, 0, 8, 3, 0, 8, 6, 0, 5, 6, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("same-outer crossing component hole fixture must import");
+    let crossing = arrange_coplanar_convex_surface_holed_difference(&outer, &crossing_hole)
+        .expect("same-outer crossing component annulus should materialize")
+        .mesh;
+    let crossing_difference = arrange_coplanar_surface_component_difference(&left, &crossing)
+        .expect("same-outer rectangular hole overlap should replay as one no-hole cell loop");
+    crossing_difference.validate().unwrap();
+    crossing_difference
+        .validate_component_difference_against_sources(&left, &crossing)
         .unwrap();
 
     let touching_hole = ExactMesh::from_i64_triangles_with_policy(

@@ -26659,10 +26659,19 @@ fn exact_coplanar_multi_difference_materializes_same_outer_disjoint_hole_fills()
     )
     .expect("right crossing-hole source fixture should materialize")
     .mesh;
-    assert!(
-        hypermesh::exact::arrange_coplanar_surface_multi_difference(&left, &crossing).is_none(),
-        "partial retained-hole overlap must stay with full planar arrangement work"
-    );
+    let crossing_difference =
+        hypermesh::exact::arrange_coplanar_surface_multi_difference(&left, &crossing)
+            .expect("rectangular partial retained-hole overlap should replay as no-hole cells");
+    crossing_difference.validate().unwrap();
+    crossing_difference
+        .validate_difference_against_sources(&left, &crossing)
+        .unwrap();
+    assert_eq!(crossing_difference.polygons.len(), 2);
+    assert!(crossing_difference.polygons.iter().any(|polygon| {
+        polygon
+            .iter()
+            .any(|point| real_eq(&point.x, &ExactReal::from(8)))
+    }));
 
     let touching_holes = ExactMesh::from_i64_triangles_with_policy(
         &[
@@ -26803,9 +26812,19 @@ fn exact_coplanar_component_difference_materializes_same_outer_single_hole_fill(
         hypermesh::exact::arrange_coplanar_convex_surface_holed_difference(&outer, &crossing_hole)
             .expect("crossing annulus should materialize")
             .mesh;
+    let crossing_difference =
+        hypermesh::exact::arrange_coplanar_surface_component_difference(&left, &crossing)
+            .expect("rectangular partial retained-hole overlap should replay as one L loop");
+    crossing_difference.validate().unwrap();
+    crossing_difference
+        .validate_component_difference_against_sources(&left, &crossing)
+        .unwrap();
+    assert!(crossing_difference.polygon.len() > 4);
     assert!(
-        hypermesh::exact::arrange_coplanar_surface_component_difference(&left, &crossing).is_none(),
-        "partial retained-hole overlap is not a filled-hole certificate"
+        crossing_difference
+            .polygon
+            .iter()
+            .any(|point| real_eq(&point.x, &ExactReal::from(8)))
     );
 
     let touching_hole = ExactMesh::from_i64_triangles_with_policy(

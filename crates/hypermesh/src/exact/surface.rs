@@ -3880,10 +3880,15 @@ fn same_outer_holed_difference_components(
 /// sheets with the same retained outer ring,
 /// `(outer - left_holes) - (outer - right_holes)` includes each right-side
 /// retained hole that is disjoint from every left-side retained hole. Those
-/// holes become ordinary filled output components, not retained holes. If a
-/// right hole strictly contains a left hole, the output is holed and belongs to
-/// the component-holed artifact instead; if rings overlap or touch, the case
-/// remains general planar-arrangement work.
+/// holes become ordinary filled output components, not retained holes. This
+/// path also accepts the bounded rectilinear overlap case where a right
+/// retained hole and one or more left retained holes are exact projected
+/// axis-aligned rectangles: the output is the exact orthogonal cell set
+/// `right_hole - union(left_holes)`, emitted as simple filled loops. If a
+/// right hole strictly contains a left hole, the output is holed and belongs
+/// to the component-holed artifact instead; if rings touch, cross, or overlap
+/// outside this rectangle-cell certificate, the case remains general
+/// planar-arrangement work.
 ///
 /// The certificate follows Yap, "Towards Exact Geometric Computation,"
 /// *Computational Geometry* 7.1-2 (1997): source boundary rings are recovered
@@ -3891,9 +3896,12 @@ fn same_outer_holed_difference_components(
 /// rings, and the result is accepted only after exact area replay. The area
 /// replay sums pairwise Sutherland-Hodgman triangle clips (Sutherland and
 /// Hodgman, "Reentrant Polygon Clipping," *Communications of the ACM* 17.1,
-/// 1974) and triangulates retained simple loops through the same FIST-style
-/// earcut handoff described by Held, "FIST: Fast Industrial-Strength
-/// Triangulation of Polygons," *Algorithmica* 30 (2001).
+/// 1974). The rectilinear overlap branch is the bounded orthogonal cell
+/// decomposition described by de Berg, Cheong, van Kreveld, and Overmars,
+/// *Computational Geometry: Algorithms and Applications*, 3rd ed. (2008),
+/// Chapter 2. Retained simple loops are triangulated through the same
+/// FIST-style earcut handoff described by Held, "FIST: Fast
+/// Industrial-Strength Triangulation of Polygons," *Algorithmica* 30 (2001).
 #[cfg(feature = "exact-triangulation")]
 fn same_outer_holed_no_hole_difference_polygons(
     left: &ExactMesh,
@@ -3970,6 +3978,7 @@ fn same_outer_holed_no_hole_difference_rings(
     let mut polygons = Vec::new();
     for right_hole in &right.holes {
         let mut contributes = true;
+        let mut rectangular_cutters = Vec::new();
         for left_hole in &left.holes {
             if polygons_equal(left_hole, right_hole)
                 || polygon_strictly_inside_simple_polygon(right_hole, left_hole, projection)?
@@ -3982,18 +3991,194 @@ fn same_outer_holed_no_hole_difference_rings(
             }
             match simple_polygon_interaction(left_hole, right_hole, projection)? {
                 SimplePolygonInteraction::Disjoint => {}
-                SimplePolygonInteraction::PointOnly | SimplePolygonInteraction::Connected => {
-                    return None;
+                SimplePolygonInteraction::PointOnly => return None,
+                SimplePolygonInteraction::Connected => {
+                    let right_rect = projected_axis_aligned_rectangle(right_hole, projection)?;
+                    let left_rect = projected_axis_aligned_rectangle(left_hole, projection)?;
+                    if !rectangles_overlap_with_positive_area(&right_rect, &left_rect)? {
+                        return None;
+                    }
+                    rectangular_cutters.push(left_rect);
                 }
             }
         }
         if contributes {
-            let mut polygon = right_hole.clone();
-            orient_polygon_ccw(&mut polygon, projection)?;
-            polygons.push(polygon);
+            if rectangular_cutters.is_empty() {
+                let mut polygon = right_hole.clone();
+                orient_polygon_ccw(&mut polygon, projection)?;
+                polygons.push(polygon);
+            } else {
+                let right_rect = projected_axis_aligned_rectangle(right_hole, projection)?;
+                let mut remnants = axis_aligned_rectangle_difference_polygons(
+                    &right_rect,
+                    &rectangular_cutters,
+                    projection,
+                )?;
+                for remnant in &mut remnants {
+                    orient_polygon_ccw(remnant, projection)?;
+                }
+                polygons.extend(remnants);
+            }
         }
     }
     Some(polygons)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn rectangles_overlap_with_positive_area(
+    left: &ProjectedRectangle,
+    right: &ProjectedRectangle,
+) -> Option<bool> {
+    if !real_equal(&left.dropped, &right.dropped) {
+        return Some(false);
+    }
+    Some(
+        intervals_overlap_with_positive_length(
+            &left.min.x,
+            &left.max.x,
+            &right.min.x,
+            &right.max.x,
+        )? && intervals_overlap_with_positive_length(
+            &left.min.y,
+            &left.max.y,
+            &right.min.y,
+            &right.max.y,
+        )?,
+    )
+}
+
+/// Materialize `source - union(cutters)` for exact projected rectangles.
+///
+/// The caller has already ruled out equal, containment, and strict-hole
+/// outputs. This helper owns only the remaining no-hole orthogonal cells: it
+/// splits the source rectangle by every exact cutter interval, keeps cells
+/// whose midpoint is inside the source and outside all cutters, and stitches
+/// the exposed cell boundary into simple retained loops. The midpoint is an
+/// exact rational construction, so the occupancy decision remains in Yap's
+/// exact-object model from "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997). The finite cell traversal is the
+/// standard orthogonal arrangement model described by de Berg, Cheong, van
+/// Kreveld, and Overmars, *Computational Geometry: Algorithms and
+/// Applications*, 3rd ed. (2008), Chapter 2.
+#[cfg(feature = "exact-triangulation")]
+fn axis_aligned_rectangle_difference_polygons(
+    source: &ProjectedRectangle,
+    cutters: &[ProjectedRectangle],
+    projection: CoplanarProjection,
+) -> Option<Vec<Vec<Point3>>> {
+    if cutters.is_empty()
+        || cutters
+            .iter()
+            .any(|cutter| !real_equal(&cutter.dropped, &source.dropped))
+    {
+        return None;
+    }
+
+    let mut xs = vec![source.min.x.clone(), source.max.x.clone()];
+    let mut ys = vec![source.min.y.clone(), source.max.y.clone()];
+    let mut clipped_cutters = Vec::new();
+    for cutter in cutters {
+        let min_x = exact_max_real(&source.min.x, &cutter.min.x)?;
+        let max_x = exact_min_real(&source.max.x, &cutter.max.x)?;
+        let min_y = exact_max_real(&source.min.y, &cutter.min.y)?;
+        let max_y = exact_min_real(&source.max.y, &cutter.max.y)?;
+        if real_order(&min_x, &max_x)? != Ordering::Less
+            || real_order(&min_y, &max_y)? != Ordering::Less
+        {
+            return None;
+        }
+        xs.push(min_x.clone());
+        xs.push(max_x.clone());
+        ys.push(min_y.clone());
+        ys.push(max_y.clone());
+        clipped_cutters.push(ProjectedRectangle {
+            min: Point2::new(min_x, min_y),
+            max: Point2::new(max_x, max_y),
+            dropped: source.dropped.clone(),
+        });
+    }
+    sort_reals_and_dedup(&mut xs)?;
+    sort_reals_and_dedup(&mut ys)?;
+    if xs.len() < 2 || ys.len() < 2 {
+        return None;
+    }
+
+    let x_cells = xs.len() - 1;
+    let y_cells = ys.len() - 1;
+    let mut occupied = vec![false; x_cells * y_cells];
+    for x in 0..x_cells {
+        for y in 0..y_cells {
+            if real_order(&xs[x], &xs[x + 1])? != Ordering::Less
+                || real_order(&ys[y], &ys[y + 1])? != Ordering::Less
+            {
+                continue;
+            }
+            let midpoint = Point2::new(
+                midpoint_real(&xs[x], &xs[x + 1]),
+                midpoint_real(&ys[y], &ys[y + 1]),
+            );
+            occupied[x * y_cells + y] =
+                point_strictly_inside_projected_rectangle(&midpoint, source)
+                    && !clipped_cutters
+                        .iter()
+                        .any(|cutter| point_strictly_inside_projected_rectangle(&midpoint, cutter));
+        }
+    }
+
+    let mut fragments = Vec::new();
+    for x in 0..x_cells {
+        for y in 0..y_cells {
+            if !occupied[x * y_cells + y] {
+                continue;
+            }
+            let x0 = &xs[x];
+            let x1 = &xs[x + 1];
+            let y0 = &ys[y];
+            let y1 = &ys[y + 1];
+            let bottom_empty = y == 0 || !occupied[x * y_cells + (y - 1)];
+            let top_empty = y + 1 == y_cells || !occupied[x * y_cells + (y + 1)];
+            let left_empty = x == 0 || !occupied[(x - 1) * y_cells + y];
+            let right_empty = x + 1 == x_cells || !occupied[(x + 1) * y_cells + y];
+            if bottom_empty {
+                fragments.push(DirectedFragment {
+                    start: point_from_projection(x0, y0, &source.dropped, projection),
+                    end: point_from_projection(x1, y0, &source.dropped, projection),
+                });
+            }
+            if right_empty {
+                fragments.push(DirectedFragment {
+                    start: point_from_projection(x1, y0, &source.dropped, projection),
+                    end: point_from_projection(x1, y1, &source.dropped, projection),
+                });
+            }
+            if top_empty {
+                fragments.push(DirectedFragment {
+                    start: point_from_projection(x1, y1, &source.dropped, projection),
+                    end: point_from_projection(x0, y1, &source.dropped, projection),
+                });
+            }
+            if left_empty {
+                fragments.push(DirectedFragment {
+                    start: point_from_projection(x0, y1, &source.dropped, projection),
+                    end: point_from_projection(x0, y0, &source.dropped, projection),
+                });
+            }
+        }
+    }
+
+    let loops = stitch_simple_union_loops(fragments, projection)?;
+    if loops.is_empty() {
+        return None;
+    }
+    for loop_points in &loops {
+        validate_projected_simple_loop(
+            loop_points,
+            projection,
+            "coplanar same-outer rectangular hole difference",
+        )
+        .ok()?;
+    }
+    Some(loops)
 }
 
 /// Replay same-outer holed unions whose holes are completely filled.
