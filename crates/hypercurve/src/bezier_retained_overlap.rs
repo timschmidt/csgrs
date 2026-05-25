@@ -179,6 +179,23 @@ pub struct BezierRetainedLinearOverlapSplitGraph2 {
     split_plan: Vec<BezierRetainedLinearOverlapSplit2>,
 }
 
+/// Traversal through a graph whose certified linear overlaps were refined.
+///
+/// This is the first positive-dimensional overlap consumer beyond exact
+/// duplicate shadowing.  It runs in two report-bearing stages: first
+/// [`BezierArrangementGraph2::split_retained_linear_overlaps`] creates exact
+/// subfragments at overlap endpoints, then
+/// [`BezierArrangementGraph2::traverse_retained_deduplicating_materialized_overlaps`]
+/// shadows the now-identical overlap subfragment before ordinary retained
+/// tangent traversal.  The composition follows Yap's (1997) requirement that
+/// each construction and decision stay replayable, and Foster, Hormann, and
+/// Popa's (2019) treatment of overlaps as first-class degeneracy events.
+#[derive(Clone, Debug, PartialEq)]
+pub struct BezierRetainedLinearOverlapTraversal2 {
+    refinement: BezierRetainedLinearOverlapSplitGraph2,
+    refined_traversal: BezierRetainedOverlapTraversal2,
+}
+
 impl BezierRetainedLinearOverlapSplit2 {
     /// Constructs exact Bezier-parameter split evidence for a linear overlap.
     pub const fn new(
@@ -301,6 +318,44 @@ impl BezierRetainedLinearOverlapSplitGraph2 {
             self.overlap_report,
             self.split_plan,
         )
+    }
+}
+
+impl BezierRetainedLinearOverlapTraversal2 {
+    /// Constructs a traversal through a refined linear-overlap graph.
+    pub const fn new(
+        refinement: BezierRetainedLinearOverlapSplitGraph2,
+        refined_traversal: BezierRetainedOverlapTraversal2,
+    ) -> Self {
+        Self {
+            refinement,
+            refined_traversal,
+        }
+    }
+
+    /// Returns the original graph refinement evidence.
+    pub const fn refinement(&self) -> &BezierRetainedLinearOverlapSplitGraph2 {
+        &self.refinement
+    }
+
+    /// Returns the duplicate-consuming traversal over the refined graph.
+    pub const fn refined_traversal(&self) -> &BezierRetainedOverlapTraversal2 {
+        &self.refined_traversal
+    }
+
+    /// Returns the final retained traversal over refined graph-fragment indices.
+    pub const fn traversal(&self) -> &BezierArrangementTraversal2 {
+        self.refined_traversal.traversal()
+    }
+
+    /// Consumes this object and returns its two proof stages.
+    pub fn into_parts(
+        self,
+    ) -> (
+        BezierRetainedLinearOverlapSplitGraph2,
+        BezierRetainedOverlapTraversal2,
+    ) {
+        (self.refinement, self.refined_traversal)
     }
 }
 
@@ -440,6 +495,34 @@ impl BezierArrangementGraph2 {
             refined_fragments,
             overlap_report,
             split_plan,
+        ))
+    }
+
+    /// Traverses after resolving certified linearly-parameterized overlaps.
+    ///
+    /// This method handles the conservative case where overlap endpoints split
+    /// the graph into ordinary subfragments and the shared overlap subfragment
+    /// is a same-oriented exact duplicate.  Reversed overlaps, nonlinear line
+    /// images, algebraic endpoint-image fragments without native subcurves, and
+    /// remaining branch ambiguities still return explicit uncertainty.
+    pub fn traverse_retained_splitting_linear_overlaps(
+        &self,
+        policy: &CurvePolicy,
+    ) -> Classification<BezierRetainedLinearOverlapTraversal2> {
+        let refinement = match self.split_retained_linear_overlaps(policy) {
+            Classification::Decided(refinement) => refinement,
+            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+        };
+        let refined_traversal = match refinement
+            .graph()
+            .traverse_retained_deduplicating_materialized_overlaps(policy)
+        {
+            Classification::Decided(traversal) => traversal,
+            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+        };
+        Classification::Decided(BezierRetainedLinearOverlapTraversal2::new(
+            refinement,
+            refined_traversal,
         ))
     }
 }

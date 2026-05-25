@@ -75,6 +75,18 @@ fn main() -> CurveResult<()> {
             }
             Classification::Uncertain(_) => 0,
         });
+        total += black_box(
+            match graph.traverse_retained_splitting_linear_overlaps(&policy) {
+                Classification::Decided(traversal) => {
+                    traversal.traversal().len()
+                        + traversal
+                            .refined_traversal()
+                            .shadowed_fragment_indices()
+                            .len()
+                }
+                Classification::Uncertain(_) => 0,
+            },
+        );
     }
     let elapsed = started.elapsed();
     println!(
