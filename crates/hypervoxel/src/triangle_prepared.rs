@@ -432,6 +432,54 @@ pub fn voxelize_prepared_exact_triangle_solid_mesh_by_components(
     VoxelizationReport,
     PreparedTriangleSolidComponentVoxelizationReport,
 )> {
+    voxelize_prepared_exact_triangle_solid_mesh_by_components_impl(
+        frame, prepared, material, policy, false,
+    )
+}
+
+/// Voxelize a prepared exact closed triangle solid by connected non-boundary
+/// components with full component-arrangement replay.
+///
+/// The ordinary component scheduler relies on the exact boundary pass plus one
+/// representative parity query per enclosed open component. This stricter path
+/// keeps the same 6-neighbor component model, but then replays parity for every
+/// cell in each enclosed component and reports conflicts before materializing
+/// the component. The audit is a discrete arrangement consistency check: a
+/// component of cells proven disjoint from the boundary should have constant
+/// winding/parity. If any cell disagrees, becomes unknown, or unexpectedly
+/// reclassifies as boundary, the whole component is materialized as unknown.
+///
+/// This follows Yap, "Towards Exact Geometric Computation," *Computational
+/// Geometry* 7(1-2), 1997: the accelerated representative decision is accepted
+/// only after exact replay validates the combinatorial invariant it depends
+/// on. The connected-cell model is the same Rosenfeld and Pfaltz 6-neighbor
+/// digital topology used by [`voxelize_prepared_exact_triangle_solid_mesh_by_components`].
+pub fn voxelize_prepared_exact_triangle_solid_mesh_by_verified_components(
+    frame: GridFrame,
+    prepared: &PreparedExactTriangleSolidMesh,
+    material: MaterialRegionId,
+    policy: VoxelizationPolicy,
+) -> HypervoxelResult<(
+    SparseVoxelGrid,
+    VoxelizationReport,
+    PreparedTriangleSolidComponentVoxelizationReport,
+)> {
+    voxelize_prepared_exact_triangle_solid_mesh_by_components_impl(
+        frame, prepared, material, policy, true,
+    )
+}
+
+fn voxelize_prepared_exact_triangle_solid_mesh_by_components_impl(
+    frame: GridFrame,
+    prepared: &PreparedExactTriangleSolidMesh,
+    material: MaterialRegionId,
+    policy: VoxelizationPolicy,
+    verify_component_arrangement: bool,
+) -> HypervoxelResult<(
+    SparseVoxelGrid,
+    VoxelizationReport,
+    PreparedTriangleSolidComponentVoxelizationReport,
+)> {
     if !prepared.report.exact_prepared_solid_ready {
         return Err(HypervoxelError::InvalidSourceGeometry {
             reason: "prepared triangle solid mesh is not exact-ready",
@@ -532,7 +580,7 @@ pub fn voxelize_prepared_exact_triangle_solid_mesh_by_components(
                         .iter()
                         .filter(|attempt| !attempt.certified)
                         .count();
-                    match cell.classifier {
+                    let mut classifier = match cell.classifier {
                         VoxelTriangleSolidClassifier::Inside => {
                             component_report.inside_components += 1;
                             VoxelTriangleSolidClassifier::Inside
@@ -546,7 +594,37 @@ pub fn voxelize_prepared_exact_triangle_solid_mesh_by_components(
                             component_report.unknown_components += 1;
                             VoxelTriangleSolidClassifier::Unknown
                         }
+                    };
+                    if verify_component_arrangement
+                        && matches!(
+                            classifier,
+                            VoxelTriangleSolidClassifier::Inside
+                                | VoxelTriangleSolidClassifier::Outside
+                        )
+                    {
+                        component_report.arrangement_verified_components += 1;
+                        let audit = verify_component_arrangement_classification(
+                            &component,
+                            classifier,
+                            &frame,
+                            prepared,
+                            &mut component_report,
+                        )?;
+                        if !audit {
+                            match classifier {
+                                VoxelTriangleSolidClassifier::Inside => {
+                                    component_report.inside_components -= 1;
+                                }
+                                VoxelTriangleSolidClassifier::Outside => {
+                                    component_report.outside_components -= 1;
+                                }
+                                _ => {}
+                            }
+                            component_report.unknown_components += 1;
+                            classifier = VoxelTriangleSolidClassifier::Unknown;
+                        }
                     }
+                    classifier
                 };
 
                 for coords in component {
@@ -624,6 +702,29 @@ pub struct PreparedTriangleSolidComponentVoxelizationReport {
     /// Number of ambiguous representative ray attempts skipped before a
     /// certified parity decision or component unknown.
     pub ambiguous_component_ray_attempts: usize,
+    /// Number of enclosed components whose every open cell was replayed for
+    /// arrangement consistency.
+    pub arrangement_verified_components: usize,
+    /// Number of non-representative open cells replayed during arrangement
+    /// verification.
+    pub arrangement_verified_cells: usize,
+    /// Number of replayed open cells whose inside/outside parity disagreed
+    /// with the component representative.
+    pub arrangement_conflicting_cells: usize,
+    /// Number of replayed open cells whose parity remained unknown.
+    pub arrangement_unknown_cells: usize,
+    /// Number of replayed open cells that unexpectedly reclassified as
+    /// boundary despite the boundary pass marking them open.
+    pub arrangement_boundary_regression_cells: usize,
+    /// Exact ray-parity attempts consumed by arrangement verification.
+    pub arrangement_ray_attempts: usize,
+    /// Exact ray/AABB broad-phase rejections consumed by arrangement
+    /// verification.
+    pub arrangement_ray_aabb_rejections: usize,
+    /// Exact ray/triangle predicates consumed by arrangement verification.
+    pub arrangement_ray_triangle_tests: usize,
+    /// Ambiguous ray attempts seen during arrangement verification.
+    pub ambiguous_arrangement_ray_attempts: usize,
 }
 
 impl PreparedTriangleSolidVoxelizationReport {
@@ -644,6 +745,50 @@ impl PreparedTriangleSolidVoxelizationReport {
             .filter(|attempt| !attempt.certified)
             .count();
     }
+}
+
+fn verify_component_arrangement_classification(
+    component: &[[u64; 3]],
+    representative_classifier: VoxelTriangleSolidClassifier,
+    frame: &GridFrame,
+    prepared: &PreparedExactTriangleSolidMesh,
+    component_report: &mut PreparedTriangleSolidComponentVoxelizationReport,
+) -> HypervoxelResult<bool> {
+    let mut exact_arrangement_ready = true;
+    for coords in component.iter().skip(1) {
+        let address = VoxelAddress::new(frame.depth(), *coords)?;
+        let cell = classify_cell_against_prepared_triangle_solid_mesh(address, frame, prepared)?;
+        component_report.arrangement_verified_cells += 1;
+        component_report.arrangement_ray_attempts += cell.ray_attempts.len();
+        component_report.arrangement_ray_aabb_rejections += cell
+            .ray_attempts
+            .iter()
+            .map(|attempt| attempt.ray_aabb_rejections)
+            .sum::<usize>();
+        component_report.arrangement_ray_triangle_tests += cell.ray_triangle_tests();
+        component_report.ambiguous_arrangement_ray_attempts += cell
+            .ray_attempts
+            .iter()
+            .filter(|attempt| !attempt.certified)
+            .count();
+
+        match cell.classifier {
+            classifier if classifier == representative_classifier => {}
+            VoxelTriangleSolidClassifier::Unknown => {
+                component_report.arrangement_unknown_cells += 1;
+                exact_arrangement_ready = false;
+            }
+            VoxelTriangleSolidClassifier::Boundary => {
+                component_report.arrangement_boundary_regression_cells += 1;
+                exact_arrangement_ready = false;
+            }
+            VoxelTriangleSolidClassifier::Inside | VoxelTriangleSolidClassifier::Outside => {
+                component_report.arrangement_conflicting_cells += 1;
+                exact_arrangement_ready = false;
+            }
+        }
+    }
+    Ok(exact_arrangement_ready)
 }
 
 fn materialize_component_classifiers(

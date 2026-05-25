@@ -30,6 +30,7 @@ use hypervoxel::{
     voxelize_exact_halfspace, voxelize_exact_triangle_solid_mesh,
     voxelize_exact_triangle_surface_mesh, voxelize_prepared_exact_triangle_solid_mesh,
     voxelize_prepared_exact_triangle_solid_mesh_by_components,
+    voxelize_prepared_exact_triangle_solid_mesh_by_verified_components,
 };
 
 fn r(n: i32) -> Real {
@@ -310,6 +311,20 @@ fn bench_exact_box_voxelization(c: &mut Criterion) {
         |b| {
             b.iter(|| {
                 voxelize_prepared_exact_triangle_solid_mesh_by_components(
+                    frame.clone(),
+                    &prepared_triangle_solid,
+                    MaterialRegionId(10),
+                    VoxelizationPolicy::conservative_cover(),
+                )
+                .unwrap()
+            })
+        },
+    );
+    c.bench_function(
+        "verified_component_prepared_exact_triangle_solid_mesh_voxelization",
+        |b| {
+            b.iter(|| {
+                voxelize_prepared_exact_triangle_solid_mesh_by_verified_components(
                     frame.clone(),
                     &prepared_triangle_solid,
                     MaterialRegionId(10),

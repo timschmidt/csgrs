@@ -6,6 +6,7 @@ use hypervoxel::{
     MaterialRegionId, PreparedExactTriangleSolidMesh, VoxelizationPolicy,
     voxelize_exact_triangle_solid_mesh, voxelize_prepared_exact_triangle_solid_mesh,
     voxelize_prepared_exact_triangle_solid_mesh_by_components,
+    voxelize_prepared_exact_triangle_solid_mesh_by_verified_components,
 };
 use libfuzzer_sys::fuzz_target;
 
@@ -77,6 +78,14 @@ fuzz_target!(|data: (u8, u8, u8, bool)| {
         VoxelizationPolicy::conservative_cover(),
     )
     .unwrap();
+    let (_, verified_report, verified_components) =
+        voxelize_prepared_exact_triangle_solid_mesh_by_verified_components(
+            frame.clone(),
+            &prepared,
+            MaterialRegionId(1),
+            VoxelizationPolicy::conservative_cover(),
+        )
+        .unwrap();
     assert_eq!(
         prepared_report.predicate_certificates,
         ordinary_report.predicate_certificates
@@ -85,12 +94,20 @@ fuzz_target!(|data: (u8, u8, u8, bool)| {
         component_report.predicate_certificates,
         ordinary_report.predicate_certificates
     );
+    assert_eq!(
+        verified_report.predicate_certificates,
+        ordinary_report.predicate_certificates
+    );
     assert_eq!(prepared_report.unknown_cells, ordinary_report.unknown_cells);
     assert_eq!(component_report.unknown_cells, ordinary_report.unknown_cells);
+    assert_eq!(verified_report.unknown_cells, ordinary_report.unknown_cells);
     assert!(schedule.boundary_aabb_rejections > 0);
     assert!(schedule.ray_aabb_rejections > 0);
     assert!(schedule.ray_triangle_tests < schedule.ray_attempts * 12);
     assert!(components.boundary_aabb_rejections > 0);
     assert!(components.component_ray_aabb_rejections <= schedule.ray_aabb_rejections);
     assert!(components.component_ray_triangle_tests <= schedule.ray_triangle_tests);
+    assert_eq!(verified_components.arrangement_conflicting_cells, 0);
+    assert_eq!(verified_components.arrangement_unknown_cells, 0);
+    assert_eq!(verified_components.arrangement_boundary_regression_cells, 0);
 });

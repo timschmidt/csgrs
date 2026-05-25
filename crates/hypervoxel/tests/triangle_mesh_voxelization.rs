@@ -8,6 +8,7 @@ use hypervoxel::{
     voxelize_exact_triangle_solid_mesh, voxelize_exact_triangle_surface_mesh,
     voxelize_prepared_exact_triangle_solid_mesh,
     voxelize_prepared_exact_triangle_solid_mesh_by_components,
+    voxelize_prepared_exact_triangle_solid_mesh_by_verified_components,
 };
 use proptest::prelude::*;
 
@@ -364,6 +365,14 @@ fn component_prepared_triangle_solid_classifies_components_with_fewer_rays() {
         .unwrap();
     let (component_grid, component_report, components) =
         voxelize_prepared_exact_triangle_solid_mesh_by_components(
+            frame.clone(),
+            &prepared,
+            MaterialRegionId(4),
+            VoxelizationPolicy::conservative_cover(),
+        )
+        .unwrap();
+    let (verified_grid, verified_report, verified_components) =
+        voxelize_prepared_exact_triangle_solid_mesh_by_verified_components(
             frame,
             &prepared,
             MaterialRegionId(4),
@@ -372,11 +381,17 @@ fn component_prepared_triangle_solid_classifies_components_with_fewer_rays() {
         .unwrap();
 
     assert_eq!(component_grid.len(), per_cell_grid.len());
+    assert_eq!(verified_grid.len(), per_cell_grid.len());
     assert_eq!(
         component_report.predicate_certificates,
         per_cell_report.predicate_certificates
     );
+    assert_eq!(
+        verified_report.predicate_certificates,
+        per_cell_report.predicate_certificates
+    );
     assert_eq!(component_report.unknown_cells, 0);
+    assert_eq!(verified_report.unknown_cells, 0);
     assert_eq!(components.classified_cells, 512);
     assert_eq!(components.boundary_cells, 208);
     assert_eq!(components.open_cells, 304);
@@ -389,6 +404,14 @@ fn component_prepared_triangle_solid_classifies_components_with_fewer_rays() {
     assert!(components.component_ray_aabb_rejections > 0);
     assert!(components.component_ray_triangle_tests < per_cell_schedule.ray_triangle_tests);
     assert!(component_report.exact_topology_ready());
+    assert_eq!(verified_components.arrangement_verified_components, 1);
+    assert_eq!(verified_components.arrangement_verified_cells, 7);
+    assert_eq!(verified_components.arrangement_conflicting_cells, 0);
+    assert_eq!(verified_components.arrangement_unknown_cells, 0);
+    assert_eq!(verified_components.arrangement_boundary_regression_cells, 0);
+    assert!(verified_components.arrangement_ray_attempts > 0);
+    assert!(verified_components.arrangement_ray_aabb_rejections > 0);
+    assert!(verified_report.exact_topology_ready());
 }
 
 #[test]
