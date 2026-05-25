@@ -1380,6 +1380,74 @@ fn sketch_problem_with_projected_cubic_curve_cubic_curve_tangent_relations(
     sketch
 }
 
+fn sketch_problem_with_projected_cubic_curve_cubic_curve_c2_relations(
+    row_count: usize,
+) -> hypersolve::SketchSolveProblem {
+    let mut sketch = hypersolve::SketchSolveProblem::new();
+    let origin = sketch.add_point3d("project-cubic3-cubic3-c2.origin", r(1), r(2), r(3));
+    let normal = sketch.add_normal3d("project-cubic3-cubic3-c2.normal", r(1), r(0), r(0), r(0));
+    let workplane = sketch.add_workplane("project-cubic3-cubic3-c2.workplane", origin, normal);
+    for index in 0..row_count {
+        let x = index as i64;
+        let a0 = sketch.add_point3d(
+            format!("project-cubic3c2{index}.a0"),
+            r(x + 1),
+            r(x + 2),
+            r(3),
+        );
+        let a1 = sketch.add_point3d(
+            format!("project-cubic3c2{index}.a1"),
+            r(x + 2),
+            r(x + 4),
+            r(5),
+        );
+        let a2 = sketch.add_point3d(
+            format!("project-cubic3c2{index}.a2"),
+            r(x + 3),
+            r(x + 6),
+            r(7),
+        );
+        let join = sketch.add_point3d(
+            format!("project-cubic3c2{index}.join"),
+            r(x + 4),
+            r(x + 8),
+            r(11),
+        );
+        let b1 = sketch.add_point3d(
+            format!("project-cubic3c2{index}.b1"),
+            r(x + 5),
+            r(x + 10),
+            r(13),
+        );
+        let b2 = sketch.add_point3d(
+            format!("project-cubic3c2{index}.b2"),
+            r(x + 6),
+            r(x + 12),
+            r(17),
+        );
+        let b3 = sketch.add_point3d(
+            format!("project-cubic3c2{index}.b3"),
+            r(x + 7),
+            r(x + 14),
+            r(19),
+        );
+        let first = sketch.add_cubic3(format!("project-cubic3c2{index}.first"), a0, a1, a2, join);
+        let second = sketch.add_cubic3(format!("project-cubic3c2{index}.second"), join, b1, b2, b3);
+        let first_parameter = sketch.add_parameter(format!("project-cubic3c2{index}.ta"), r(1));
+        let second_parameter = sketch.add_parameter(format!("project-cubic3c2{index}.tb"), r(0));
+        hypersolve::sketch_tangency_builders::projected_cubic_curve_cubic_curve_c2_continuity3(
+            &mut sketch,
+            format!("projected 3D cubic cubic c2 {index}"),
+            workplane,
+            first,
+            first_parameter,
+            second,
+            second_parameter,
+        );
+    }
+    sketch
+}
+
 fn sketch_problem_with_cubic_cubic_tangent_relations(
     row_count: usize,
 ) -> hypersolve::SketchSolveProblem {
@@ -2170,6 +2238,12 @@ fn certification(c: &mut Criterion) {
         "sketch_projected_cubic_curve_cubic_curve_tangent_lowering",
         |b| b.iter(|| projected_cubic_curve_cubic_curve_tangent_sketch.lower_to_problem()),
     );
+    let projected_cubic_curve_cubic_curve_c2_sketch =
+        sketch_problem_with_projected_cubic_curve_cubic_curve_c2_relations(16);
+    c.bench_function(
+        "sketch_projected_cubic_curve_cubic_curve_c2_lowering",
+        |b| b.iter(|| projected_cubic_curve_cubic_curve_c2_sketch.lower_to_problem()),
+    );
     let cubic_cubic_tangent_sketch = sketch_problem_with_cubic_cubic_tangent_relations(16);
     c.bench_function("sketch_cubic_cubic_tangent_lowering", |b| {
         b.iter(|| cubic_cubic_tangent_sketch.lower_to_problem())
@@ -2531,6 +2605,31 @@ fn certification(c: &mut Criterion) {
             b.iter(|| {
                 for handle in &projected_cubic_curve_cubic_curve_tangent_form_handles {
                     let _ = projected_cubic_curve_cubic_curve_tangent_sketch
+                        .residual_forms_for_constraint(*handle);
+                }
+            })
+        },
+    );
+    let projected_cubic_curve_cubic_curve_c2_form_handles =
+        projected_cubic_curve_cubic_curve_c2_sketch
+            .constraints()
+            .iter()
+            .filter(|constraint| {
+                matches!(
+                    constraint.kind,
+                    hypersolve::SketchConstraintKind::ProjectedCubicCurveCubicCurveC2Continuity3 {
+                        ..
+                    }
+                )
+            })
+            .map(|constraint| constraint.handle)
+            .collect::<Vec<_>>();
+    c.bench_function(
+        "sketch_projected_cubic_curve_cubic_curve_c2_residual_forms",
+        |b| {
+            b.iter(|| {
+                for handle in &projected_cubic_curve_cubic_curve_c2_form_handles {
+                    let _ = projected_cubic_curve_cubic_curve_c2_sketch
                         .residual_forms_for_constraint(*handle);
                 }
             })

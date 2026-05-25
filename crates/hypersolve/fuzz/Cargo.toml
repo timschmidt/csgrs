@@ -280,6 +280,13 @@ doc = false
 bench = false
 
 [[bin]]
+name = "sketch_projected_cubic_curve_cubic_curve_c2"
+path = "fuzz_targets/sketch_projected_cubic_curve_cubic_curve_c2.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
 name = "sketch_cubic_cubic_tangent"
 path = "fuzz_targets/sketch_cubic_cubic_tangent.rs"
 test = false

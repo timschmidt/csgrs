@@ -1296,6 +1296,33 @@ pub enum SketchConstraintKind {
         /// Parameter on the second cubic.
         second_parameter: SketchParameterHandle,
     },
+    /// Projected parametric C2 continuity between two retained 3D cubic Beziers.
+    ///
+    /// Lowering proves the workplane unit-quaternion guard, projects both 3D
+    /// cubic control nets relative to the same retained workplane origin, and
+    /// evaluates point, first derivative, and second derivative exactly in
+    /// Bernstein form at the retained parameters. It then emits coordinate
+    /// equality rows for `B_a(t_a) = B_b(t_b)`,
+    /// `B_a'(t_a) = B_b'(t_b)`, and `B_a''(t_a) = B_b''(t_b)` in projected
+    /// `U/V` coordinates. This is intentionally parametric C2, not geometric
+    /// G2 curvature continuity, and it performs no speed, curvature, or frame
+    /// normalization through primitive floats. The retained proof-object model
+    /// follows Yap, "Towards Exact Geometric Computation" (1997); the
+    /// quaternion workplane frame follows Shoemake, "Animating Rotation with
+    /// Quaternion Curves" (1985); and the Bernstein derivative control nets
+    /// follow Farin, *Curves and Surfaces for CAGD*, 5th ed. (2002).
+    ProjectedCubicCurveCubicCurveC2Continuity3 {
+        /// Workplane entity that supplies origin and normal/quaternion.
+        workplane: SketchEntityHandle,
+        /// First retained 3D cubic Bezier entity.
+        first: SketchEntityHandle,
+        /// Parameter on the first cubic.
+        first_parameter: SketchParameterHandle,
+        /// Second retained 3D cubic Bezier entity.
+        second: SketchEntityHandle,
+        /// Parameter on the second cubic.
+        second_parameter: SketchParameterHandle,
+    },
     /// 2D cubic-Bezier tangent to another cubic Bezier at retained parameters.
     ///
     /// Lowering evaluates both retained cubic points and derivatives exactly
@@ -1841,6 +1868,8 @@ pub enum SketchResidualStrategy {
     CubicCubicG2Continuity,
     /// Exact point/first/second derivative rows for parametric cubic C2 continuity.
     CubicCubicC2Continuity,
+    /// Exact projected point/first/second derivative rows for 3D cubic C2 continuity.
+    ProjectedCubicCurveCubicCurveC2Continuity,
     /// Squared-cosine equality for unsigned 2D line angles.
     SquaredCosineAngleEquality,
     /// Exact angle-vector package for oriented 2D line-pair angles.
@@ -2078,6 +2107,12 @@ pub enum SketchResidualFormKind {
     ProjectedCubicCurveCubicCurveTangentCrossProductPredicate,
     /// Exact projected 3D cubic/cubic derivative dot-product branch predicate.
     ProjectedCubicCurveCubicCurveTangentDotProductPredicate,
+    /// Exact projected 3D cubic/cubic C2 point coordinate equality proof row.
+    ProjectedCubicCurveCubicCurveC2PointPolynomial,
+    /// Exact projected 3D cubic/cubic C2 first-derivative equality proof row.
+    ProjectedCubicCurveCubicCurveC2FirstDerivativePolynomial,
+    /// Exact projected 3D cubic/cubic C2 second-derivative equality proof row.
+    ProjectedCubicCurveCubicCurveC2SecondDerivativePolynomial,
     /// Exact cubic/cubic point coordinate-incidence proof row.
     CubicCubicTangentPointIncidencePolynomial,
     /// Exact cubic/cubic derivative cross-product proof row.
@@ -3520,6 +3555,32 @@ impl SketchSolveProblem {
         second_parameter: SketchParameterHandle,
     ) -> SketchConstraintHandle {
         tangency::projected_cubic_curve_cubic_curve_tangent3(
+            self,
+            name,
+            workplane,
+            first,
+            first_parameter,
+            second,
+            second_parameter,
+        )
+        .handle
+    }
+
+    /// Add projected parametric C2 continuity between retained 3D cubics.
+    ///
+    /// Both 3D cubic control nets are projected into the retained workplane,
+    /// then exact Bernstein replay emits projected point, velocity, and
+    /// acceleration equality rows.
+    pub fn add_projected_cubic_curve_cubic_curve_c2_continuity3(
+        &mut self,
+        name: impl Into<String>,
+        workplane: SketchEntityHandle,
+        first: SketchEntityHandle,
+        first_parameter: SketchParameterHandle,
+        second: SketchEntityHandle,
+        second_parameter: SketchParameterHandle,
+    ) -> SketchConstraintHandle {
+        tangency::projected_cubic_curve_cubic_curve_c2_continuity3(
             self,
             name,
             workplane,
@@ -5977,6 +6038,80 @@ impl SketchSolveProblem {
                     diagnostics,
                 }
             }
+            SketchConstraintKind::ProjectedCubicCurveCubicCurveC2Continuity3 {
+                workplane,
+                first,
+                first_parameter,
+                second,
+                second_parameter,
+            } => {
+                let mut diagnostics = Vec::new();
+                let Some(parts) = self.projected_cubic_curve_cubic_curve_c2_exprs(
+                    workplane,
+                    first,
+                    first_parameter,
+                    second,
+                    second_parameter,
+                    constraint,
+                    &mut diagnostics,
+                ) else {
+                    return SketchResidualFormsReport {
+                        constraint: handle,
+                        status: SketchResidualFormsStatus::InvalidInputs,
+                        forms: Vec::new(),
+                        diagnostics,
+                    };
+                };
+                let mut forms = Vec::with_capacity(7);
+                forms.push(SketchResidualForm {
+                    kind: SketchResidualFormKind::WorkplaneUnitQuaternionPolynomial,
+                    role: SketchResidualFormRole::ExactProof,
+                    strategy: Some(SketchResidualStrategy::WorkplaneUnitQuaternion),
+                    residual: unit_quaternion_residual(&parts.quaternion),
+                });
+                forms.extend(
+                    parts
+                        .c2
+                        .point
+                        .into_iter()
+                        .map(|residual| {
+                            SketchResidualForm {
+                    kind: SketchResidualFormKind::ProjectedCubicCurveCubicCurveC2PointPolynomial,
+                    role: SketchResidualFormRole::ExactProof,
+                    strategy: Some(
+                        SketchResidualStrategy::ProjectedCubicCurveCubicCurveC2Continuity,
+                    ),
+                    residual,
+                }
+                        }),
+                );
+                forms.extend(parts.c2.first_derivative.into_iter().map(|residual| {
+                    SketchResidualForm {
+                        kind: SketchResidualFormKind::ProjectedCubicCurveCubicCurveC2FirstDerivativePolynomial,
+                        role: SketchResidualFormRole::ExactProof,
+                        strategy: Some(
+                            SketchResidualStrategy::ProjectedCubicCurveCubicCurveC2Continuity,
+                        ),
+                        residual,
+                    }
+                }));
+                forms.extend(parts.c2.second_derivative.into_iter().map(|residual| {
+                    SketchResidualForm {
+                        kind: SketchResidualFormKind::ProjectedCubicCurveCubicCurveC2SecondDerivativePolynomial,
+                        role: SketchResidualFormRole::ExactProof,
+                        strategy: Some(
+                            SketchResidualStrategy::ProjectedCubicCurveCubicCurveC2Continuity,
+                        ),
+                        residual,
+                    }
+                }));
+                SketchResidualFormsReport {
+                    constraint: handle,
+                    status: SketchResidualFormsStatus::Generated,
+                    forms,
+                    diagnostics,
+                }
+            }
             SketchConstraintKind::ArcLineTangent2 {
                 arc,
                 arc_endpoint,
@@ -7995,6 +8130,75 @@ impl SketchSolveProblem {
                         format!("{} c2 second derivative {axis}", constraint.name),
                         residual,
                         SketchResidualStrategy::CubicCubicC2Continuity,
+                    );
+                }
+            }
+            SketchConstraintKind::ProjectedCubicCurveCubicCurveC2Continuity3 {
+                workplane,
+                first,
+                first_parameter,
+                second,
+                second_parameter,
+            } => {
+                // Projected parametric C2 keeps the same strict retained
+                // parameterization as ordinary cubic C2, but proves every
+                // coordinate after exact workplane projection.
+                let Some(parts) = self.projected_cubic_curve_cubic_curve_c2_exprs(
+                    workplane,
+                    first,
+                    first_parameter,
+                    second,
+                    second_parameter,
+                    constraint,
+                    rows,
+                ) else {
+                    return;
+                };
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} workplane unit quaternion", constraint.name),
+                    unit_quaternion_residual(&parts.quaternion),
+                    SketchResidualStrategy::WorkplaneUnitQuaternion,
+                );
+                for (axis, residual) in parts.c2.point.into_iter().enumerate() {
+                    self.push_residual(
+                        problem,
+                        rows,
+                        constraint,
+                        format!(
+                            "{} projected 3D c2 point coordinate {axis}",
+                            constraint.name
+                        ),
+                        residual,
+                        SketchResidualStrategy::ProjectedCubicCurveCubicCurveC2Continuity,
+                    );
+                }
+                for (axis, residual) in parts.c2.first_derivative.into_iter().enumerate() {
+                    self.push_residual(
+                        problem,
+                        rows,
+                        constraint,
+                        format!(
+                            "{} projected 3D c2 first derivative {axis}",
+                            constraint.name
+                        ),
+                        residual,
+                        SketchResidualStrategy::ProjectedCubicCurveCubicCurveC2Continuity,
+                    );
+                }
+                for (axis, residual) in parts.c2.second_derivative.into_iter().enumerate() {
+                    self.push_residual(
+                        problem,
+                        rows,
+                        constraint,
+                        format!(
+                            "{} projected 3D c2 second derivative {axis}",
+                            constraint.name
+                        ),
+                        residual,
+                        SketchResidualStrategy::ProjectedCubicCurveCubicCurveC2Continuity,
                     );
                 }
             }
@@ -10255,6 +10459,54 @@ impl SketchSolveProblem {
         })
     }
 
+    #[allow(clippy::too_many_arguments)]
+    fn projected_cubic_curve_cubic_curve_c2_exprs(
+        &self,
+        workplane: SketchEntityHandle,
+        first: SketchEntityHandle,
+        first_parameter: SketchParameterHandle,
+        second: SketchEntityHandle,
+        second_parameter: SketchParameterHandle,
+        constraint: &SketchConstraint,
+        rows: &mut Vec<SketchGeneratedRow>,
+    ) -> Option<ProjectedCubicCubicC2Exprs> {
+        let (origin, quaternion) =
+            self.workplane_origin_and_quaternion(workplane, constraint, rows)?;
+        let first = self.projected_cubic3_point_tangent_exprs(
+            first,
+            first_parameter,
+            &origin,
+            &quaternion,
+            constraint,
+            rows,
+        )?;
+        let second = self.projected_cubic3_point_tangent_exprs(
+            second,
+            second_parameter,
+            &origin,
+            &quaternion,
+            constraint,
+            rows,
+        )?;
+        Some(ProjectedCubicCubicC2Exprs {
+            quaternion,
+            c2: CubicCubicC2Exprs {
+                point: [
+                    first.point[0].clone() - second.point[0].clone(),
+                    first.point[1].clone() - second.point[1].clone(),
+                ],
+                first_derivative: [
+                    first.tangent[0].clone() - second.tangent[0].clone(),
+                    first.tangent[1].clone() - second.tangent[1].clone(),
+                ],
+                second_derivative: [
+                    first.second_derivative[0].clone() - second.second_derivative[0].clone(),
+                    first.second_derivative[1].clone() - second.second_derivative[1].clone(),
+                ],
+            },
+        })
+    }
+
     fn cubic_cubic_tangent_exprs(
         &self,
         first: SketchEntityHandle,
@@ -10726,6 +10978,12 @@ struct ProjectedCubicLineTangentExprs {
 struct ProjectedCubicCubicTangentExprs {
     quaternion: [Expr; 4],
     tangent: CubicCubicTangentExprs,
+}
+
+#[derive(Clone, Debug)]
+struct ProjectedCubicCubicC2Exprs {
+    quaternion: [Expr; 4],
+    c2: CubicCubicC2Exprs,
 }
 
 #[derive(Clone, Debug)]
