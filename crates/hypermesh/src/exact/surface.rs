@@ -10675,44 +10675,23 @@ fn arrange_coplanar_simple_surface_component_holed_difference(
             {
                 components.extend(opened);
             } else {
-                let (removed_openings, mut cut_polygons) =
-                    materialize_simple_source_side_cutter_difference_core(
+                components.extend(
+                    materialize_simple_source_side_cutter_component_holed_difference(
                         component,
                         &side_removed,
-                    )?;
-                for polygon in &mut cut_polygons {
-                    orient_polygon_ccw(polygon, projection)?;
-                }
-                let holes_by_cut = assign_holes_to_side_cutter_split_outputs(
-                    &hole_rings,
-                    &cut_polygons,
-                    &removed_openings,
-                    projection,
-                )?;
-                components.extend(
-                    cut_polygons
-                        .into_iter()
-                        .zip(holes_by_cut)
-                        .map(|(outer, holes)| CoplanarConvexHoledComponent { outer, holes }),
+                        &hole_rings,
+                        "coplanar nonconvex source component-holed side-cutter difference",
+                    )?,
                 );
             }
         } else {
-            let (removed_openings, mut cut_polygons) =
-                materialize_simple_source_side_cutter_difference_core(component, &side_removed)?;
-            for polygon in &mut cut_polygons {
-                orient_polygon_ccw(polygon, projection)?;
-            }
-            let holes_by_cut = assign_holes_to_side_cutter_split_outputs(
-                &hole_rings,
-                &cut_polygons,
-                &removed_openings,
-                projection,
-            )?;
             components.extend(
-                cut_polygons
-                    .into_iter()
-                    .zip(holes_by_cut)
-                    .map(|(outer, holes)| CoplanarConvexHoledComponent { outer, holes }),
+                materialize_simple_source_side_cutter_component_holed_difference(
+                    component,
+                    &side_removed,
+                    &hole_rings,
+                    "coplanar nonconvex source clipped component-holed side-cutter difference",
+                )?,
             );
         }
     }
@@ -10813,6 +10792,65 @@ fn materialize_simple_source_removed_opening_hole_contact_component_holed_differ
         .collect::<Vec<_>>();
     let holes_by_cut = assign_holes_to_side_cutter_split_outputs(
         &retained_holes,
+        &cut_polygons,
+        &removed_openings,
+        projection,
+    )?;
+    Some(
+        cut_polygons
+            .into_iter()
+            .zip(holes_by_cut)
+            .map(|(outer, holes)| CoplanarConvexHoledComponent { outer, holes })
+            .collect(),
+    )
+}
+
+/// Replay nonconvex simple-source side cutters while retaining strict holes.
+///
+/// This helper is the component-holed counterpart to
+/// [`materialize_simple_source_side_cutter_difference_core`] and
+/// [`materialize_simple_source_side_cutter_point_touch_difference_core`]. It
+/// first tries the ordinary disjoint-loop replay. If exact point-only contacts
+/// between removed openings split the retained source into branch components,
+/// it retries with the branch-aware replay and keeps those shared vertices in
+/// the emitted outer loops. In both cases holes are assigned only by exact
+/// strict containment in one retained loop or consumed by exactly one removed
+/// opening.
+///
+/// That separation is the retained-object discipline from Yap, "Towards Exact
+/// Geometric Computation," *Computational Geometry* 7.1-2 (1997): point
+/// branches may widen the topological carrier, but strict hole ownership still
+/// has to replay from exact source facts. The boundary reconstruction is the
+/// Weiler-Atherton retained-fragment traversal cited by the no-hole
+/// side-cutter materializers, and hole triangulation remains delegated to the
+/// exact `hypertri` earcut adapter following Held's FIST algorithm.
+#[cfg(feature = "exact-triangulation")]
+fn materialize_simple_source_side_cutter_component_holed_difference(
+    component: &SimpleSurfaceComponent,
+    side_removed: &[Vec<Point3>],
+    hole_rings: &[Vec<Point3>],
+    label: &'static str,
+) -> Option<Vec<CoplanarConvexHoledComponent>> {
+    if side_removed.is_empty() || hole_rings.is_empty() {
+        return None;
+    }
+    let projection = component.projection;
+    let (removed_openings, mut cut_polygons) = if let Some(replay) =
+        materialize_simple_source_side_cutter_difference_core(component, side_removed)
+    {
+        replay
+    } else {
+        materialize_simple_source_side_cutter_point_touch_difference_core(
+            component,
+            side_removed,
+            label,
+        )?
+    };
+    for polygon in &mut cut_polygons {
+        orient_polygon_ccw(polygon, projection)?;
+    }
+    let holes_by_cut = assign_holes_to_side_cutter_split_outputs(
+        hole_rings,
         &cut_polygons,
         &removed_openings,
         projection,

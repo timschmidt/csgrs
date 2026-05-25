@@ -4633,6 +4633,80 @@ fn exercise_component_coplanar_difference() {
         )
         .unwrap();
 
+    let nonconvex_point_branch_left = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            0, 0, 0, 20, 0, 0, 20, 20, 0, 12, 20, 0, 12, 12, 0, 8, 12, 0, 8, 20, 0, 0, 20, 0,
+            20, 12, 0, 0, 12, 0,
+        ],
+        &[
+            0, 1, 8, 0, 8, 4, 0, 4, 5, 0, 5, 9, //
+            9, 5, 6, 9, 6, 7, //
+            4, 8, 2, 4, 2, 3,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("nonconvex point-branch component-holed source fixture must import");
+    let nonconvex_point_branch_hole_and_cutters = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            3, 1, 0, 5, 1, 0, 5, 3, 0, 3, 3, 0, //
+            -2, 4, 0, 8, 4, 0, 10, 10, 0, -2, 10, 0, //
+            10, 10, 0, 22, 10, 0, 22, 16, 0, 14, 16, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7, //
+            8, 9, 10, 8, 10, 11,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("nonconvex point-branch component-holed right fixture must import");
+    assert!(
+        arrange_coplanar_surface_multi_difference(
+            &nonconvex_point_branch_left,
+            &nonconvex_point_branch_hole_and_cutters,
+        )
+        .is_none()
+    );
+    let nonconvex_point_branch_holed =
+        arrange_coplanar_convex_surface_component_holed_difference(
+            &nonconvex_point_branch_left,
+            &nonconvex_point_branch_hole_and_cutters,
+        )
+        .expect("nonconvex point-branch side cutters should retain unrelated holes");
+    nonconvex_point_branch_holed.validate().unwrap();
+    nonconvex_point_branch_holed
+        .validate_against_sources(
+            &nonconvex_point_branch_left,
+            &nonconvex_point_branch_hole_and_cutters,
+        )
+        .unwrap();
+    assert!(
+        nonconvex_point_branch_holed.components.len() >= 2
+            && nonconvex_point_branch_holed
+                .components
+                .iter()
+                .map(|component| component.holes.len())
+                .sum::<usize>()
+                == 1
+    );
+    let nonconvex_point_branch_holed_preflight = preflight_boolean_exact(
+        &nonconvex_point_branch_left,
+        &nonconvex_point_branch_hole_and_cutters,
+        ExactBooleanOperation::Difference,
+    )
+    .expect("nonconvex point-branch component-holed preflight should classify shortcut");
+    nonconvex_point_branch_holed_preflight.validate().unwrap();
+    nonconvex_point_branch_holed_preflight
+        .validate_against_sources(
+            &nonconvex_point_branch_left,
+            &nonconvex_point_branch_hole_and_cutters,
+        )
+        .unwrap();
+    assert_eq!(
+        nonconvex_point_branch_holed_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
+    );
+
     let nonconvex_source_crossing_opening = ExactMesh::from_i64_triangles_with_policy(
         &[4, 10, 0, 12, 10, 0, 12, 14, 0, 4, 14, 0],
         &[0, 1, 2, 0, 2, 3],

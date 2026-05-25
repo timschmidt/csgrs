@@ -5107,6 +5107,21 @@ fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
             ValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap();
+        let nonconvex_point_touch_component_holed_right =
+            ExactMesh::from_i64_triangles_with_policy(
+                &[
+                    3, 1, 0, 5, 1, 0, 5, 3, 0, 3, 3, 0, //
+                    -2, 4, 0, 8, 4, 0, 10, 10, 0, -2, 10, 0, //
+                    10, 10, 0, 22, 10, 0, 22, 16, 0, 14, 16, 0,
+                ],
+                &[
+                    0, 1, 2, 0, 2, 3, //
+                    4, 5, 6, 4, 6, 7, //
+                    8, 9, 10, 8, 10, 11,
+                ],
+                ValidationPolicy::ALLOW_BOUNDARY,
+            )
+            .unwrap();
         let incidental_side_cutter_right = ExactMesh::from_i64_triangles_with_policy(
             &[
                 0, 8, 0, 8, 8, 0, 8, 12, 0, 0, 12, 0, //
@@ -6323,6 +6338,29 @@ fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
                         hypermesh::exact::boolean_exact(
                             &nonconvex_point_touch_side_cutter_left,
                             &point_touch_side_cutter_right,
+                            hypermesh::exact::ExactBooleanOperation::Difference,
+                            ValidationPolicy::ALLOW_BOUNDARY,
+                        )
+                        .unwrap(),
+                        arrange_coplanar_convex_surface_component_holed_difference(
+                            &nonconvex_point_touch_side_cutter_left,
+                            &nonconvex_point_touch_component_holed_right,
+                        )
+                        .map(|output| {
+                            output.validate_against_sources(
+                                &nonconvex_point_touch_side_cutter_left,
+                                &nonconvex_point_touch_component_holed_right,
+                            )
+                        }),
+                        hypermesh::exact::preflight_boolean_exact(
+                            &nonconvex_point_touch_side_cutter_left,
+                            &nonconvex_point_touch_component_holed_right,
+                            hypermesh::exact::ExactBooleanOperation::Difference,
+                        )
+                        .map(|report| report.validate()),
+                        hypermesh::exact::boolean_exact(
+                            &nonconvex_point_touch_side_cutter_left,
+                            &nonconvex_point_touch_component_holed_right,
                             hypermesh::exact::ExactBooleanOperation::Difference,
                             ValidationPolicy::ALLOW_BOUNDARY,
                         )

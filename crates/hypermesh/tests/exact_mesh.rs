@@ -17753,6 +17753,127 @@ fn exact_coplanar_component_holed_difference_materializes_nonconvex_source_disk_
         hypermesh::exact::ExactBooleanSupport::
             CertifiedCoplanarConvexSurfaceComponentHoledDifference
     );
+
+    let nonconvex_point_branch_left = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            0, 0, 0, 20, 0, 0, 20, 20, 0, 12, 20, 0, 12, 12, 0, 8, 12, 0, 8, 20, 0, 0, 20, 0, 20,
+            12, 0, 0, 12, 0,
+        ],
+        &[
+            0, 1, 8, 0, 8, 4, 0, 4, 5, 0, 5, 9, //
+            9, 5, 6, 9, 6, 7, //
+            4, 8, 2, 4, 2, 3,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let nonconvex_point_branch_hole_and_cutters = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            3, 1, 0, 5, 1, 0, 5, 3, 0, 3, 3, 0, //
+            -2, 4, 0, 8, 4, 0, 10, 10, 0, -2, 10, 0, //
+            10, 10, 0, 22, 10, 0, 22, 16, 0, 14, 16, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7, //
+            8, 9, 10, 8, 10, 11,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_multi_difference(
+            &nonconvex_point_branch_left,
+            &nonconvex_point_branch_hole_and_cutters,
+        )
+        .is_none()
+    );
+    let point_branch_holed =
+        hypermesh::exact::arrange_coplanar_convex_surface_component_holed_difference(
+            &nonconvex_point_branch_left,
+            &nonconvex_point_branch_hole_and_cutters,
+        )
+        .expect("nonconvex point-branch side cutters should retain strict source holes");
+    point_branch_holed.validate().unwrap();
+    point_branch_holed
+        .validate_against_sources(
+            &nonconvex_point_branch_left,
+            &nonconvex_point_branch_hole_and_cutters,
+        )
+        .unwrap();
+    assert!(point_branch_holed.components.len() >= 2);
+    assert_eq!(
+        point_branch_holed
+            .components
+            .iter()
+            .map(|component| component.holes.len())
+            .sum::<usize>(),
+        1
+    );
+    let branch_loop_count = point_branch_holed
+        .components
+        .iter()
+        .filter(|component| {
+            component.outer.iter().any(|point| {
+                real_eq(&point.x, &ExactReal::from(10)) && real_eq(&point.y, &ExactReal::from(10))
+            })
+        })
+        .count();
+    assert!(
+        branch_loop_count >= 2,
+        "component-holed branch outputs must duplicate the exact branch vertex"
+    );
+    let mut stale_point_branch_holed = point_branch_holed.clone();
+    stale_point_branch_holed.components[0].holes.clear();
+    assert!(
+        stale_point_branch_holed
+            .validate_against_sources(
+                &nonconvex_point_branch_left,
+                &nonconvex_point_branch_hole_and_cutters,
+            )
+            .is_err()
+    );
+    let point_branch_holed_preflight = hypermesh::exact::preflight_boolean_exact(
+        &nonconvex_point_branch_left,
+        &nonconvex_point_branch_hole_and_cutters,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    point_branch_holed_preflight.validate().unwrap();
+    point_branch_holed_preflight
+        .validate_against_sources(
+            &nonconvex_point_branch_left,
+            &nonconvex_point_branch_hole_and_cutters,
+        )
+        .unwrap();
+    assert_eq!(
+        point_branch_holed_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::
+            CertifiedCoplanarConvexSurfaceComponentHoledDifference
+    );
+    let point_branch_holed_result = hypermesh::exact::boolean_exact(
+        &nonconvex_point_branch_left,
+        &nonconvex_point_branch_hole_and_cutters,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    point_branch_holed_result
+        .validate_operation_against_sources(
+            &nonconvex_point_branch_left,
+            &nonconvex_point_branch_hole_and_cutters,
+            hypermesh::exact::ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        point_branch_holed_result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::
+                CoplanarConvexSurfaceComponentHoledDifference
+        }
+    );
 }
 
 #[cfg(feature = "exact-triangulation")]
