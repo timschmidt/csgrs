@@ -19,7 +19,7 @@ use std::collections::BTreeMap;
 
 use crate::{
     ChunkAddress, ChunkLocalAddress, ChunkPageSummary, ChunkShape, GridFrame, HypervoxelError,
-    HypervoxelResult, SparseVoxelGrid, VoxelAddress, VoxelAggregateFacts, VoxelCell,
+    HypervoxelResult, QueryRegion, SparseVoxelGrid, VoxelAddress, VoxelAggregateFacts, VoxelCell,
 };
 
 /// Exact cells stored in one chunk page.
@@ -83,6 +83,32 @@ pub struct ChunkPagedSparseStorageReport {
     pub aggregate: VoxelAggregateFacts,
     /// Whether this chunk-paged backend can replay exact sparse storage.
     pub exact_chunk_storage_ready: bool,
+}
+
+/// Exact page-pruned region aggregate query report.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ChunkPagedRegionAggregateReport {
+    /// Queried integer address region.
+    pub region: QueryRegion,
+    /// Number of occupied pages inspected by the page filter.
+    pub tested_pages: usize,
+    /// Pages certified disjoint from the region by integer page bounds.
+    pub rejected_pages: usize,
+    /// Pages whose integer bounds may overlap the region.
+    pub candidate_pages: usize,
+    /// Candidate pages whose depth differs from the query depth and therefore
+    /// could not be rejected by same-depth page bounds.
+    pub cross_depth_candidate_pages: usize,
+    /// Explicit cells tested after page filtering.
+    pub tested_cells: usize,
+    /// Explicit cells whose addresses are inside the query region.
+    pub matched_cells: usize,
+    /// Whether all page decisions were exact same-depth integer range tests.
+    pub exact_page_filter_ready: bool,
+    /// Aggregate facts for matched explicit cells.
+    pub aggregate: VoxelAggregateFacts,
+    /// Whether this query has non-vacuous exact page/storage evidence.
+    pub exact_region_query_ready: bool,
 }
 
 /// Sparse grid cells grouped by exact integer chunk pages.
@@ -212,6 +238,81 @@ impl ChunkPagedSparseGrid {
     pub fn pages(&self) -> impl Iterator<Item = (&ChunkAddress, &ChunkPagedSparsePage)> {
         self.pages.iter()
     }
+
+    /// Returns aggregate facts for explicitly stored cells in a query region,
+    /// using exact integer page bounds to skip disjoint pages.
+    ///
+    /// The page filter is an acceleration stage only. It may prove a page
+    /// disjoint from a same-depth [`QueryRegion`], but aggregate membership is
+    /// still decided by the exact [`QueryRegion::contains`] address predicate
+    /// for every candidate cell. This is the storage-query analogue of Yap,
+    /// "Towards Exact Geometric Computation," *Computational Geometry*
+    /// 7(1-2), 1997: the optimized representation proposes less work, while
+    /// retained integer addresses decide the object facts. The hierarchical
+    /// page layout follows the spatial subdivision role described by Samet,
+    /// *The Design and Analysis of Spatial Data Structures*, Addison-Wesley,
+    /// 1990, but without floating bounding boxes or tolerance predicates.
+    pub fn query_region_aggregate(
+        &self,
+        region: &QueryRegion,
+    ) -> HypervoxelResult<ChunkPagedRegionAggregateReport> {
+        if region.depth > self.frame.depth() {
+            return Err(HypervoxelError::DepthOutsideFrame {
+                depth: region.depth,
+                frame_depth: self.frame.depth(),
+            });
+        }
+
+        let mut tested_pages = 0_usize;
+        let mut rejected_pages = 0_usize;
+        let mut candidate_pages = 0_usize;
+        let mut cross_depth_candidate_pages = 0_usize;
+        let mut tested_cells = 0_usize;
+        let mut matched_cells = 0_usize;
+        let mut matched = Vec::new();
+
+        for page in self.pages.values() {
+            tested_pages += 1;
+            match page_relation_to_region(page.chunk, self.shape, region) {
+                PageRegionRelation::Disjoint => {
+                    rejected_pages += 1;
+                    continue;
+                }
+                PageRegionRelation::Candidate { cross_depth } => {
+                    candidate_pages += 1;
+                    cross_depth_candidate_pages += usize::from(cross_depth);
+                }
+            }
+
+            for (address, cell) in &page.cells {
+                tested_cells += 1;
+                if region.contains(*address) {
+                    matched_cells += 1;
+                    matched.push(cell);
+                }
+            }
+        }
+
+        let exact_page_filter_ready = cross_depth_candidate_pages == 0;
+        let aggregate = VoxelAggregateFacts::from_cells(matched);
+        let exact_region_query_ready = self.report.exact_chunk_storage_ready
+            && exact_page_filter_ready
+            && matched_cells > 0
+            && !aggregate.has_unknown
+            && !aggregate.has_lossy;
+        Ok(ChunkPagedRegionAggregateReport {
+            region: region.clone(),
+            tested_pages,
+            rejected_pages,
+            candidate_pages,
+            cross_depth_candidate_pages,
+            tested_cells,
+            matched_cells,
+            exact_page_filter_ready,
+            aggregate,
+            exact_region_query_ready,
+        })
+    }
 }
 
 impl ChunkPagedSparsePage {
@@ -298,4 +399,39 @@ fn validate_address_in_frame(address: VoxelAddress, frame: &GridFrame) -> Hyperv
         });
     }
     Ok(())
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum PageRegionRelation {
+    Disjoint,
+    Candidate { cross_depth: bool },
+}
+
+fn page_relation_to_region(
+    chunk: ChunkAddress,
+    shape: ChunkShape,
+    region: &QueryRegion,
+) -> PageRegionRelation {
+    if chunk.depth != region.depth {
+        return PageRegionRelation::Candidate { cross_depth: true };
+    }
+
+    let shift = shape.log2_cells.min(chunk.depth);
+    let extent = 1_u64 << shift;
+    let page_min = [
+        chunk.xyz[0] << shift,
+        chunk.xyz[1] << shift,
+        chunk.xyz[2] << shift,
+    ];
+    let page_max = [
+        page_min[0] + extent - 1,
+        page_min[1] + extent - 1,
+        page_min[2] + extent - 1,
+    ];
+
+    if (0..3).any(|axis| page_max[axis] < region.min[axis] || page_min[axis] > region.max[axis]) {
+        PageRegionRelation::Disjoint
+    } else {
+        PageRegionRelation::Candidate { cross_depth: false }
+    }
 }

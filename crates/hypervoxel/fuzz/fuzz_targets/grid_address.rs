@@ -116,6 +116,17 @@ fuzz_target!(|data: (u8, u64, u64, u64)| {
         paged_grid.get(first_small_address).unwrap().occupancy,
         grid.get(first_small_address).unwrap().occupancy
     );
+    let paged_region = paged_grid
+        .query_region_aggregate(&QueryRegion {
+            min: [0, 0, 0],
+            max: [small_cells - 1, small_cells - 1, small_cells - 1],
+            depth: small_depth,
+        })
+        .unwrap();
+    assert_eq!(paged_region.matched_cells as u64, covered_cell_count);
+    assert_eq!(paged_region.aggregate.child_count as u64, covered_cell_count);
+    assert!(paged_region.exact_page_filter_ready);
+    assert!(paged_region.exact_region_query_ready);
     let halfspace =
         ExactHalfSpace::new([Real::from(1), Real::from(0), Real::from(0)], Real::from(1), None);
     assert!(halfspace.report().exact_halfspace_ready);

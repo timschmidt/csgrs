@@ -779,6 +779,24 @@ fn bench_batches_field_facts_and_sweeps(c: &mut Criterion) {
                 .collect::<Vec<_>>()
         })
     });
+    c.bench_function("chunk_paged_region_aggregate", |b| {
+        let shape = ChunkShape::new(3).unwrap();
+        let paged = ChunkPagedSparseGrid::from_sparse_grid(&grid, shape).unwrap();
+        let region = QueryRegion {
+            min: [0, 0, 0],
+            max: [31, 31, 31],
+            depth: 6,
+        };
+        b.iter(|| {
+            let report = paged.query_region_aggregate(&region).unwrap();
+            (
+                report.rejected_pages,
+                report.tested_cells,
+                report.matched_cells,
+                report.exact_region_query_ready,
+            )
+        })
+    });
     c.bench_function("chunk_local_address_split", |b| {
         let shape = ChunkShape::new(3).unwrap();
         b.iter(|| {

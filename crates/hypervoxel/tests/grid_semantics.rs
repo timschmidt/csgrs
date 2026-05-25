@@ -7,7 +7,7 @@ use hypervoxel::{
     GridCoordinateSystem, GridFrame, GridFrameManifest, GridHandedness, GridSource,
     HypervoxelError, ImageStackContainer, ImageStackManifest, LegacyAdapterKind,
     LegacyAdapterStatus, LengthUnit, MaterialRegionId, OccupancyState, PreparedSparseVoxelGridExt,
-    PreparedVoxelGrid, QuantizationPolicy, SideTableLinkStatus, SparseVoxelGrid,
+    PreparedVoxelGrid, QuantizationPolicy, QueryRegion, SideTableLinkStatus, SparseVoxelGrid,
     StorageReplayStatus, VoxelAddress, VoxelAggregateFacts, VoxelArtifactId, VoxelArtifactManifest,
     VoxelArtifactRole, VoxelCell, VoxelChannelMapping, VoxelHandoffDomain, VoxelIndexConvention,
     VoxelInterchangeFormat, VoxelInterchangeManifest, VoxelIoCompression, VoxelIoMetadata,
@@ -178,6 +178,34 @@ fn chunk_paged_sparse_storage_replays_exact_addresses_and_payload_blockers() {
     assert!(first_page.exact_local_recompose_ready);
     assert!(first_page.exact_page_replay_ready);
 
+    let region = QueryRegion {
+        min: [0, 0, 0],
+        max: [3, 3, 3],
+        depth: 4,
+    };
+    let region_report = paged.query_region_aggregate(&region).unwrap();
+    assert_eq!(region_report.tested_pages, 2);
+    assert_eq!(region_report.rejected_pages, 1);
+    assert_eq!(region_report.candidate_pages, 1);
+    assert_eq!(region_report.cross_depth_candidate_pages, 0);
+    assert_eq!(region_report.tested_cells, 2);
+    assert_eq!(region_report.matched_cells, 2);
+    assert!(region_report.exact_page_filter_ready);
+    assert!(region_report.exact_region_query_ready);
+    assert_eq!(region_report.aggregate.child_count, 2);
+
+    let disjoint_region = QueryRegion {
+        min: [12, 12, 12],
+        max: [15, 15, 15],
+        depth: 4,
+    };
+    let empty_region = paged.query_region_aggregate(&disjoint_region).unwrap();
+    assert_eq!(empty_region.rejected_pages, 2);
+    assert_eq!(empty_region.tested_cells, 0);
+    assert_eq!(empty_region.matched_cells, 0);
+    assert!(empty_region.exact_page_filter_ready);
+    assert!(!empty_region.exact_region_query_ready);
+
     let mut blocked = grid.clone();
     blocked
         .set(
@@ -189,6 +217,19 @@ fn chunk_paged_sparse_storage_replays_exact_addresses_and_payload_blockers() {
     assert!(blocked.report().has_unknown);
     assert!(!blocked.report().exact_payload_replay_ready);
     assert!(!blocked.report().exact_chunk_storage_ready);
+
+    let mut coarse_grid = SparseVoxelGrid::new(frame.clone());
+    coarse_grid
+        .set(
+            VoxelAddress::new(2, [1, 1, 1]).unwrap(),
+            VoxelCell::material(MaterialRegionId(9)),
+        )
+        .unwrap();
+    let coarse_paged = ChunkPagedSparseGrid::from_sparse_grid(&coarse_grid, shape).unwrap();
+    let cross_depth = coarse_paged.query_region_aggregate(&region).unwrap();
+    assert_eq!(cross_depth.cross_depth_candidate_pages, 1);
+    assert!(!cross_depth.exact_page_filter_ready);
+    assert!(!cross_depth.exact_region_query_ready);
 }
 
 #[test]
