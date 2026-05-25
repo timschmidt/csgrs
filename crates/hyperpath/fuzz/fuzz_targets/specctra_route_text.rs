@@ -2,9 +2,10 @@
 
 use hyperpath::{NetId, parse_specctra_grid_trace_records};
 use hyperpath::{
-    SpecctraGridRouteRecords, SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraLayerAlias,
-    SpecctraNetAlias, TraceLayer, ViaDrillIntent, import_specctra_text_route,
-    parse_specctra_grid_route_records, serialize_specctra_grid_route_records,
+    SpecctraGridKeepoutRecord, SpecctraGridKeepoutShape, SpecctraGridRouteRecords,
+    SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraLayerAlias, SpecctraNetAlias,
+    TraceLayer, ViaDrillIntent, import_specctra_text_route, parse_specctra_grid_route_records,
+    serialize_specctra_grid_route_records,
 };
 use libfuzzer_sys::fuzz_target;
 
@@ -57,6 +58,15 @@ fuzz_target!(|data: &[u8]| {
                     0 => ViaDrillIntent::Unspecified,
                     1 => ViaDrillIntent::Plated,
                     _ => ViaDrillIntent::NonPlated,
+                },
+                grid_denominator: denominator,
+            }],
+            keepouts: vec![SpecctraGridKeepoutRecord {
+                layer: Some(layer),
+                shape: SpecctraGridKeepoutShape::Circle {
+                    x: x2,
+                    y: y2,
+                    radius: i64::from(data[15] % 32),
                 },
                 grid_denominator: denominator,
             }],

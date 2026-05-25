@@ -8,9 +8,10 @@ use hyperpath::{
     PcbConvexBoardOutline, PcbConvexPad, PcbObroundPad, PcbOrientedRectPad,
     PcbOrthogonalBoardOutline, PcbRectPad, PcbRoundedRectPad, PcbTrace, PcbViaStack,
     QuadraticBezier, RationalQuadraticBezier, RectangularPocket, SourceLengthUnit,
-    SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraLayerAlias, SpecctraNetAlias,
-    SweptLineSegment, TangentSpan, TraceLayer, ViaDrillIntent, arrange_cubic_beziers,
-    arrange_explicit_arcs, arrange_line_segments, arrange_line_segments_with_explicit_arcs,
+    SpecctraGridKeepoutRecord, SpecctraGridKeepoutShape, SpecctraGridTraceRecord,
+    SpecctraGridViaRecord, SpecctraLayerAlias, SpecctraNetAlias, SweptLineSegment, TangentSpan,
+    TraceLayer, ViaDrillIntent, arrange_cubic_beziers, arrange_explicit_arcs,
+    arrange_line_segments, arrange_line_segments_with_explicit_arcs,
     arrange_line_segments_with_quadratic_beziers,
     arrange_line_segments_with_rational_quadratic_beziers, arrange_quadratic_beziers,
     arrange_rational_quadratic_beziers, build_alternating_detour_meander, build_g1_join_problem,
@@ -42,8 +43,9 @@ use hyperpath::{
     offset_axis_aligned_segment, offset_cardinal_arc, offset_cubic_bezier_sample,
     offset_explicit_arc, offset_higher_order_bezier_sample, offset_quadratic_bezier_sample,
     parse_specctra_grid_route_records, parse_specctra_grid_trace_records,
-    serialize_specctra_grid_route_records, serialize_specctra_grid_trace_records,
-    serialize_specctra_grid_via_records, specctra_grid_trace_record, specctra_grid_via_record,
+    serialize_specctra_grid_keepout_records, serialize_specctra_grid_route_records,
+    serialize_specctra_grid_trace_records, serialize_specctra_grid_via_records,
+    specctra_grid_keepout_record, specctra_grid_trace_record, specctra_grid_via_record,
     subtract_rectangular_region,
 };
 use hyperreal::{Rational, Real};
@@ -999,9 +1001,43 @@ fn path_predicates(c: &mut Criterion) {
             grid_denominator: 10,
         }],
         vias: vec![via_record_text],
+        keepouts: vec![SpecctraGridKeepoutRecord {
+            layer: Some(TraceLayer(1)),
+            shape: SpecctraGridKeepoutShape::Circle {
+                x: 500,
+                y: 250,
+                radius: 100,
+            },
+            grid_denominator: 10,
+        }],
     });
     c.bench_function("specctra_grid_mixed_route_text_parse", |b| {
         b.iter(|| parse_specctra_grid_route_records(&mixed_text))
+    });
+    let keepout_text = serialize_specctra_grid_keepout_records(&[SpecctraGridKeepoutRecord {
+        layer: Some(TraceLayer(1)),
+        shape: SpecctraGridKeepoutShape::Rect {
+            min_x: -100,
+            min_y: -50,
+            max_x: 100,
+            max_y: 50,
+        },
+        grid_denominator: 10,
+    }]);
+    c.bench_function("specctra_grid_keepout_text_parse", |b| {
+        b.iter(|| parse_specctra_grid_route_records(&keepout_text))
+    });
+    let exact_keepout = SpecctraGridKeepoutRecord {
+        layer: None,
+        shape: SpecctraGridKeepoutShape::Circle {
+            x: 100,
+            y: 200,
+            radius: 50,
+        },
+        grid_denominator: 10,
+    };
+    c.bench_function("specctra_grid_keepout_exact_lift", |b| {
+        b.iter(|| specctra_grid_keepout_record(exact_keepout))
     });
     let envelope_path_text = concat!(
         "(session \"bench board\"",

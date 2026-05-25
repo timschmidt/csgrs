@@ -18,10 +18,11 @@ use hyperpath::{
     PocketLinkGraphError, PocketPlanError, PocketPlanStopReason, PocketRingSide, QuadraticBezier,
     RationalQuadraticBezier, RationalQuadraticBezierError, RectangularPocket,
     RectangularRegionRelation, RouteCertificationError, SegmentParameterOrder, SourceLengthUnit,
-    SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraImportError, SpecctraLayerAlias,
-    SpecctraNetAlias, SpecctraParseError, SupportFootprintStatus, SupportPlanError,
-    SweptLineSegment, TangentAlignment, TangentJoinClass, TangentJoinReport, TangentSpan,
-    TraceLayer, ViaAnnularRingReport, ViaDrillIntent, ViaDrillPolicyClass, ViaLayerSpanRelation,
+    SpecctraGridKeepoutRecord, SpecctraGridKeepoutShape, SpecctraGridTraceRecord,
+    SpecctraGridViaRecord, SpecctraImportError, SpecctraLayerAlias, SpecctraNetAlias,
+    SpecctraParseError, SupportFootprintStatus, SupportPlanError, SweptLineSegment,
+    TangentAlignment, TangentJoinClass, TangentJoinReport, TangentSpan, TraceLayer,
+    ViaAnnularRingReport, ViaDrillIntent, ViaDrillPolicyClass, ViaLayerSpanRelation,
     ViaLayerTransitionClass, arrange_cubic_beziers, arrange_explicit_arcs, arrange_line_segments,
     arrange_line_segments_with_explicit_arcs, arrange_line_segments_with_quadratic_beziers,
     arrange_line_segments_with_rational_quadratic_beziers, arrange_quadratic_beziers,
@@ -49,14 +50,16 @@ use hyperpath::{
     classify_meander_candidate_slots, classify_meander_candidate_slots_with_keepouts,
     classify_meander_placement_slots, classify_meander_placement_slots_with_keepouts,
     classify_tangent_alignment, classify_tangent_chain, classify_tangent_join,
-    export_specctra_trace_record, import_specctra_text_route, import_specctra_trace_record,
-    import_specctra_via_record, intersect_axis_aligned_line_quadratic_bezier,
+    export_specctra_trace_record, import_specctra_keepout_record, import_specctra_text_route,
+    import_specctra_trace_record, import_specctra_via_record,
+    intersect_axis_aligned_line_quadratic_bezier,
     intersect_axis_aligned_line_rational_quadratic_bezier, intersect_rectangular_regions,
     offset_axis_aligned_segment, offset_cardinal_arc, offset_cubic_bezier_sample,
     offset_explicit_arc, offset_higher_order_bezier_sample, offset_quadratic_bezier_sample,
     parse_specctra_grid_route_records, parse_specctra_grid_trace_records,
-    serialize_specctra_grid_route_records, serialize_specctra_grid_trace_records,
-    serialize_specctra_grid_via_records, specctra_grid_trace_record, specctra_grid_via_record,
+    serialize_specctra_grid_keepout_records, serialize_specctra_grid_route_records,
+    serialize_specctra_grid_trace_records, serialize_specctra_grid_via_records,
+    specctra_grid_keepout_record, specctra_grid_trace_record, specctra_grid_via_record,
     subtract_rectangular_region, tangent_cross, tangent_dot, tangent_norm_squared,
 };
 use hyperreal::{Rational, Real};
@@ -4853,6 +4856,7 @@ fn specctra_grid_route_text_round_trips_vias_and_wires() {
         layer_aliases: Vec::new(),
         traces: vec![wire],
         vias: vec![via],
+        keepouts: Vec::new(),
     });
     let parsed = parse_specctra_grid_route_records(&text).unwrap();
     let route = import_specctra_text_route(&text).unwrap();
@@ -4864,6 +4868,65 @@ fn specctra_grid_route_text_round_trips_vias_and_wires() {
     assert_eq!(route.vias()[0].start_layer(), TraceLayer(0));
     assert_eq!(route.vias()[0].end_layer(), TraceLayer(3));
     assert_eq!(route.vias()[0].drill_intent(), ViaDrillIntent::Plated);
+}
+
+#[test]
+fn specctra_grid_route_text_round_trips_retained_keepouts() {
+    let rect = SpecctraGridKeepoutRecord {
+        layer: Some(TraceLayer(2)),
+        shape: SpecctraGridKeepoutShape::Rect {
+            min_x: -10,
+            min_y: 0,
+            max_x: 20,
+            max_y: 30,
+        },
+        grid_denominator: 10,
+    };
+    let circle = SpecctraGridKeepoutRecord {
+        layer: None,
+        shape: SpecctraGridKeepoutShape::Circle {
+            x: 25,
+            y: 30,
+            radius: 5,
+        },
+        grid_denominator: 10,
+    };
+    let text = serialize_specctra_grid_route_records(&hyperpath::SpecctraGridRouteRecords {
+        net_aliases: Vec::new(),
+        layer_aliases: Vec::new(),
+        traces: Vec::new(),
+        vias: Vec::new(),
+        keepouts: vec![rect, circle],
+    });
+    let parsed = parse_specctra_grid_route_records(&text).unwrap();
+
+    assert_eq!(parsed.keepouts, vec![rect, circle]);
+    let exact_rect = specctra_grid_keepout_record(rect).unwrap();
+    let exact_circle = specctra_grid_keepout_record(circle).unwrap();
+    assert_eq!(exact_rect.layer, Some(TraceLayer(2)));
+    assert_eq!(exact_rect.provenance, exact_circle.provenance);
+    assert_eq!(
+        exact_rect.keepout,
+        MeanderKeepout::Rectangular(MeanderObstacle {
+            min: pq(-10, 10, 0, 10),
+            max: pq(20, 10, 30, 10),
+        })
+    );
+    assert_eq!(
+        exact_circle.keepout,
+        MeanderKeepout::Circular {
+            center: pq(25, 10, 30, 10),
+            radius: rq(5, 10),
+        }
+    );
+    assert_eq!(
+        import_specctra_keepout_record(&exact_circle),
+        exact_circle.keepout
+    );
+    assert_eq!(
+        serialize_specctra_grid_keepout_records(&[rect, circle]),
+        text
+    );
 }
 
 #[test]
@@ -4891,6 +4954,7 @@ fn specctra_grid_route_text_round_trips_net_aliases() {
         layer_aliases: vec![layer_alias.clone()],
         traces: vec![wire],
         vias: Vec::new(),
+        keepouts: Vec::new(),
     });
     let parsed = parse_specctra_grid_route_records(&text).unwrap();
     let route = import_specctra_text_route(&text).unwrap();
@@ -5053,6 +5117,21 @@ fn specctra_grid_route_text_rejects_malformed_and_invalid_routes() {
     assert_eq!(
         parse_specctra_grid_route_records("(routes (layer 1 F_Cu) (layer 2 F_Cu))").unwrap_err(),
         SpecctraParseError::InvalidLayerAlias
+    );
+    assert_eq!(
+        parse_specctra_grid_route_records("(routes (keepout (rect 10 0 0 10) (grid 1)))")
+            .unwrap_err(),
+        SpecctraParseError::InvalidKeepoutBounds
+    );
+    assert_eq!(
+        parse_specctra_grid_route_records("(routes (keepout (circle 0 0 -1) (grid 1)))")
+            .unwrap_err(),
+        SpecctraParseError::NegativeRadius
+    );
+    assert_eq!(
+        parse_specctra_grid_route_records("(routes (keepout (circle 0 0 1) (grid 0)))")
+            .unwrap_err(),
+        SpecctraParseError::InvalidGrid
     );
     assert_eq!(
         parse_specctra_grid_route_records("(routes (net 1 \"unterminated))").unwrap_err(),
@@ -5361,6 +5440,7 @@ proptest! {
             layer_aliases: Vec::new(),
             traces: Vec::new(),
             vias: Vec::new(),
+            keepouts: Vec::new(),
         });
         let parsed = parse_specctra_grid_route_records(&text).unwrap();
 
@@ -5383,6 +5463,7 @@ proptest! {
             layer_aliases: vec![alias.clone()],
             traces: Vec::new(),
             vias: Vec::new(),
+            keepouts: Vec::new(),
         });
         let parsed = parse_specctra_grid_route_records(&text).unwrap();
 
@@ -5390,6 +5471,32 @@ proptest! {
         prop_assert!(parsed.net_aliases.is_empty());
         prop_assert!(parsed.traces.is_empty());
         prop_assert!(parsed.vias.is_empty());
+    }
+
+    #[test]
+    fn specctra_grid_keepouts_round_trip_generated_rectangles(
+        min_x in -100_i16..=100,
+        min_y in -100_i16..=100,
+        width in 0_i16..=100,
+        height in 0_i16..=100,
+        denominator in 1_u16..=100,
+    ) {
+        let record = SpecctraGridKeepoutRecord {
+            layer: Some(TraceLayer(2)),
+            shape: SpecctraGridKeepoutShape::Rect {
+                min_x: i64::from(min_x),
+                min_y: i64::from(min_y),
+                max_x: i64::from(min_x) + i64::from(width),
+                max_y: i64::from(min_y) + i64::from(height),
+            },
+            grid_denominator: u64::from(denominator),
+        };
+        let text = serialize_specctra_grid_keepout_records(&[record]);
+        let parsed = parse_specctra_grid_route_records(&text).unwrap();
+        let exact = specctra_grid_keepout_record(record).unwrap();
+
+        prop_assert_eq!(parsed.keepouts, vec![record]);
+        prop_assert_eq!(import_specctra_keepout_record(&exact), exact.keepout);
     }
 
     #[test]
