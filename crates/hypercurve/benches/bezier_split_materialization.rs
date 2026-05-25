@@ -48,11 +48,42 @@ fn main() -> CurveResult<()> {
         elapsed / iterations
     );
 
-    let algebraic_polynomial = decided(BezierParameterPolynomial::try_new_power_basis(
+    let linear_algebraic_polynomial = decided(BezierParameterPolynomial::try_new_power_basis(
         vec![r(-1), r(2)],
         &policy,
     )?);
-    let algebraic_interval = decided(BezierParameterInterval::try_new(q(2, 5), q(3, 5), &policy)?);
+    let linear_algebraic_interval =
+        decided(BezierParameterInterval::try_new(q(2, 5), q(3, 5), &policy)?);
+    let linear_algebraic =
+        BezierParameter2::algebraic(decided(BezierAlgebraicParameter2::try_isolate(
+            linear_algebraic_polynomial,
+            linear_algebraic_interval,
+            &policy,
+        )?));
+    let linear_algebraic_parameters = [
+        decided(BezierParameter2::exact(q(1, 4), &policy)?),
+        linear_algebraic,
+        decided(BezierParameter2::exact(q(3, 4), &policy)?),
+    ];
+
+    let started = Instant::now();
+    let mut promoted = 0_usize;
+    for _ in 0..iterations {
+        let materialization =
+            decided(curve.split_at_parameters(&linear_algebraic_parameters, &policy)?);
+        promoted += black_box(usize::from(materialization.is_fully_materialized()));
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "bezier_split_linear_algebraic_promotion_cubic: {iterations} iterations in {elapsed:?} ({:?}/iter), promoted={promoted}",
+        elapsed / iterations
+    );
+
+    let algebraic_polynomial = decided(BezierParameterPolynomial::try_new_power_basis(
+        vec![r(-1), r(0), r(2)],
+        &policy,
+    )?);
+    let algebraic_interval = decided(BezierParameterInterval::try_new(q(2, 3), q(3, 4), &policy)?);
     let algebraic = BezierParameter2::algebraic(decided(BezierAlgebraicParameter2::try_isolate(
         algebraic_polynomial,
         algebraic_interval,

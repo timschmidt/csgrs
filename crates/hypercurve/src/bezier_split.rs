@@ -15,7 +15,10 @@
 //! affine for polynomial Beziers and homogeneous for rational Beziers, matching
 //! de Casteljau, "Outillage methodes calcul," Andre Citroen Automobiles SA
 //! (1959), and the rational Bezier treatment in Farin, *Curves and Surfaces
-//! for Computer-Aided Geometric Design* (5th ed., 2002).
+//! for Computer-Aided Geometric Design* (5th ed., 2002). Algebraic parameters
+//! whose defining equation is certified linear are first promoted to their
+//! represented [`Real`] root, so the same exact subdivision path handles that
+//! materializable algebraic subset without approximating nonlinear roots.
 
 use std::cmp::Ordering;
 
@@ -369,7 +372,11 @@ where
     ];
     for parameter in parameters {
         validate_parameter(parameter, policy)?;
-        push_boundary(&mut boundaries, parameter.clone(), policy)?;
+        let parameter = match parameter.clone().promote_represented_linear_root(policy)? {
+            Classification::Decided(parameter) => parameter,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        push_boundary(&mut boundaries, parameter, policy)?;
     }
     match sort_boundaries(&mut boundaries, policy)? {
         Classification::Decided(()) => {}

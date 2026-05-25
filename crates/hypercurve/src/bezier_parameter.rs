@@ -16,6 +16,11 @@
 //! 11 (1829). Hypercurve intentionally stores the validated interval with the
 //! parameter so later Bezier boolean and offset APIs can carry a certificate
 //! rather than re-solving the root from scratch.
+//! Linear defining polynomials are additionally recoverable as represented
+//! [`Real`] values when the exact quotient is certified to be the singleton
+//! root. That is the first narrow "true algebraic root materialization" bridge:
+//! it keeps Yap's construction/decision separation, but it avoids retaining an
+//! algebraic wrapper when the exact root already lives in the scalar tower.
 
 use std::cmp::Ordering;
 
@@ -222,6 +227,54 @@ impl BezierAlgebraicParameter2 {
     pub const fn root_count(&self) -> usize {
         self.root_count
     }
+
+    /// Returns the represented root when this isolator is a certified linear equation.
+    ///
+    /// For a defining polynomial `c0 + c1 t`, the root is `-c0/c1`.  The
+    /// quotient is accepted only when it is certified to lie in `[0, 1]`, lie
+    /// inside the stored isolating interval, and evaluate the defining
+    /// polynomial to zero.  Higher-degree polynomials return `None` even when
+    /// they happen to have a rational root, because extracting those roots
+    /// needs a separate exact factorization/resultant step rather than an
+    /// opportunistic approximation.  This is the small exact materialization
+    /// bridge allowed by Yap's construction/decision model; see Yap, "Towards
+    /// Exact Geometric Computation," *Computational Geometry* 7(1-2), 3-23
+    /// (1997).
+    pub fn represented_linear_root(
+        &self,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<Option<Real>>> {
+        if self.polynomial.degree() != 1 {
+            return Ok(Classification::Decided(None));
+        }
+
+        let constant = &self.polynomial.coefficients()[0];
+        let slope = &self.polynomial.coefficients()[1];
+        if is_zero(slope, policy) != Some(false) {
+            return Ok(Classification::Uncertain(UncertaintyReason::RealSign));
+        }
+        let root = ((Real::zero() - constant) / slope.clone())?;
+        match in_closed_unit_interval(&root, policy) {
+            Some(true) => {}
+            Some(false) => return Ok(Classification::Decided(None)),
+            None => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
+        }
+        match (
+            compare_reals(self.interval.start(), &root, policy),
+            compare_reals(&root, self.interval.end(), policy),
+        ) {
+            (Some(Ordering::Greater), _) | (_, Some(Ordering::Greater)) => {
+                return Ok(Classification::Decided(None));
+            }
+            (Some(_), Some(_)) => {}
+            _ => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
+        }
+        match real_sign(&self.polynomial.evaluate(&root), policy) {
+            Some(RealSign::Zero) => Ok(Classification::Decided(Some(root))),
+            Some(_) => Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+            None => Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        }
+    }
 }
 
 impl BezierParameter2 {
@@ -250,6 +303,30 @@ impl BezierParameter2 {
     /// Returns true for a directly represented exact parameter.
     pub const fn is_exact(&self) -> bool {
         matches!(self, Self::Exact(_))
+    }
+
+    /// Promotes a linearly defined algebraic parameter to a represented exact value.
+    ///
+    /// Nonlinear algebraic parameters are returned unchanged. Linear parameters
+    /// are promoted only through [`BezierAlgebraicParameter2::represented_linear_root`],
+    /// so callers get native materialization exactly when the stored algebraic
+    /// certificate proves a scalar root already representable by [`Real`].
+    pub fn promote_represented_linear_root(
+        self,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<Self>> {
+        match self {
+            Self::Exact(_) => Ok(Classification::Decided(self)),
+            Self::Algebraic(parameter) => match parameter.represented_linear_root(policy)? {
+                Classification::Decided(Some(root)) => {
+                    Ok(Classification::Decided(Self::Exact(root)))
+                }
+                Classification::Decided(None) => {
+                    Ok(Classification::Decided(Self::Algebraic(parameter)))
+                }
+                Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+            },
+        }
     }
 
     /// Returns the known enclosing interval.

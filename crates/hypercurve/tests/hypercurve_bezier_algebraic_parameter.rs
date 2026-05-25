@@ -57,6 +57,41 @@ fn linear_midpoint_root_is_a_valid_algebraic_parameter() {
 }
 
 #[test]
+fn linear_algebraic_parameter_recovers_represented_root() {
+    let parameter = isolate(polynomial(vec![r(-1), r(2)]), interval(q(2, 5), q(3, 5)));
+
+    assert_eq!(
+        parameter.represented_linear_root(&policy()).unwrap(),
+        Classification::Decided(Some(q(1, 2)))
+    );
+    assert_eq!(
+        BezierParameter2::algebraic(parameter)
+            .promote_represented_linear_root(&policy())
+            .unwrap(),
+        Classification::Decided(BezierParameter2::Exact(q(1, 2)))
+    );
+}
+
+#[test]
+fn nonlinear_algebraic_parameter_does_not_claim_represented_root() {
+    let parameter = isolate(
+        polynomial(vec![r(-1), r(0), r(2)]),
+        interval(q(2, 3), q(3, 4)),
+    );
+
+    assert_eq!(
+        parameter.represented_linear_root(&policy()).unwrap(),
+        Classification::Decided(None)
+    );
+    assert!(matches!(
+        BezierParameter2::algebraic(parameter)
+            .promote_represented_linear_root(&policy())
+            .unwrap(),
+        Classification::Decided(BezierParameter2::Algebraic(_))
+    ));
+}
+
+#[test]
 fn quadratic_singleton_isolator_is_validated_by_sturm_count() {
     // p(t) = t^2 - 2t + 1/2 has one root in [0, 1/2] and the other outside
     // that interval. The exact value is intentionally not materialized.

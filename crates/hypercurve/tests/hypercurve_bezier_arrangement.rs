@@ -35,11 +35,11 @@ fn exact(value: Real) -> BezierParameter2 {
     decided(BezierParameter2::exact(value, &policy()).unwrap())
 }
 
-fn algebraic_midpoint() -> BezierParameter2 {
+fn algebraic_sqrt_half() -> BezierParameter2 {
     let polynomial = decided(
-        BezierParameterPolynomial::try_new_power_basis(vec![r(-1), r(2)], &policy()).unwrap(),
+        BezierParameterPolynomial::try_new_power_basis(vec![r(-1), r(0), r(2)], &policy()).unwrap(),
     );
-    let interval = decided(BezierParameterInterval::try_new(q(2, 5), q(3, 5), &policy()).unwrap());
+    let interval = decided(BezierParameterInterval::try_new(q(2, 3), q(3, 4), &policy()).unwrap());
     BezierParameter2::algebraic(decided(
         BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy()).unwrap(),
     ))
@@ -385,7 +385,7 @@ fn algebraic_split_boundary_blocks_graph_traversal() {
     let curve = QuadraticBezier2::new(p(0, 0), p(2, 4), p(4, 0));
     let split = decided(
         curve
-            .split_at_parameters(&[algebraic_midpoint(), exact(q(3, 4))], &policy())
+            .split_at_parameters(&[algebraic_sqrt_half(), exact(q(4, 5))], &policy())
             .unwrap(),
     );
     let graph = BezierArrangementGraph2::from_split_materializations(&[split]);

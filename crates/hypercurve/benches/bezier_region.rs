@@ -45,15 +45,14 @@ fn line_fragment(
     )
 }
 
-fn algebraic_linear_parameter(
-    numerator: i32,
-    denominator: i32,
+fn algebraic_polynomial_parameter(
+    coefficients: Vec<Real>,
     interval_start: Real,
     interval_end: Real,
     policy: &CurvePolicy,
 ) -> CurveResult<BezierParameter2> {
     let polynomial = decided(BezierParameterPolynomial::try_new_power_basis(
-        vec![r(-numerator), r(denominator)],
+        coefficients,
         policy,
     )?);
     let interval = decided(BezierParameterInterval::try_new(
@@ -128,11 +127,10 @@ fn main() -> CurveResult<()> {
     );
 
     let algebraic_split = decided(upper.split_at_parameters(
-        &[algebraic_linear_parameter(
-            1,
-            4,
-            q(1, 5),
-            q(3, 10),
+        &[algebraic_polynomial_parameter(
+            vec![r(-1), r(0), r(2)],
+            q(2, 3),
+            q(3, 4),
             &policy,
         )?],
         &policy,

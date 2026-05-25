@@ -53,6 +53,56 @@ fn algebraic_midpoint_interval(start: Real, end: Real) -> BezierParameter2 {
     }
 }
 
+fn algebraic_sqrt_half_interval() -> BezierParameter2 {
+    algebraic_sqrt_half_interval_between(q(2, 3), q(3, 4))
+}
+
+fn algebraic_sqrt_half_interval_between(start: Real, end: Real) -> BezierParameter2 {
+    let polynomial =
+        match BezierParameterPolynomial::try_new_power_basis(vec![r(-1), r(0), r(2)], &policy())
+            .unwrap()
+        {
+            Classification::Decided(polynomial) => polynomial,
+            Classification::Uncertain(reason) => {
+                panic!("polynomial unexpectedly uncertain: {reason:?}")
+            }
+        };
+    let interval = match BezierParameterInterval::try_new(start, end, &policy()).unwrap() {
+        Classification::Decided(interval) => interval,
+        Classification::Uncertain(reason) => panic!("interval unexpectedly uncertain: {reason:?}"),
+    };
+    match BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy()).unwrap() {
+        Classification::Decided(parameter) => BezierParameter2::algebraic(parameter),
+        Classification::Uncertain(reason) => {
+            panic!("algebraic parameter unexpectedly uncertain: {reason:?}")
+        }
+    }
+}
+
+fn algebraic_cubic_midpoint_interval() -> BezierParameter2 {
+    let polynomial = match BezierParameterPolynomial::try_new_power_basis(
+        vec![r(-1), r(2), r(-1), r(2)],
+        &policy(),
+    )
+    .unwrap()
+    {
+        Classification::Decided(polynomial) => polynomial,
+        Classification::Uncertain(reason) => {
+            panic!("polynomial unexpectedly uncertain: {reason:?}")
+        }
+    };
+    let interval = match BezierParameterInterval::try_new(q(2, 5), q(3, 5), &policy()).unwrap() {
+        Classification::Decided(interval) => interval,
+        Classification::Uncertain(reason) => panic!("interval unexpectedly uncertain: {reason:?}"),
+    };
+    match BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy()).unwrap() {
+        Classification::Decided(parameter) => BezierParameter2::algebraic(parameter),
+        Classification::Uncertain(reason) => {
+            panic!("algebraic parameter unexpectedly uncertain: {reason:?}")
+        }
+    }
+}
+
 fn assert_polynomial_endpoint_image(image: &Option<BezierAlgebraicEndpointImage2>) {
     let image = image
         .as_ref()
@@ -168,14 +218,41 @@ fn exact_rational_quadratic_split_preserves_conic_endpoint_evaluation() {
 }
 
 #[test]
+fn linear_algebraic_boundary_materializes_native_subcurves() {
+    let curve = QuadraticBezier2::new(p(0, 0), p(2, 4), p(4, 0));
+    let materialization = match curve
+        .split_at_parameters(&[algebraic_midpoint_interval(q(2, 5), q(3, 5))], &policy())
+        .unwrap()
+    {
+        Classification::Decided(value) => value,
+        Classification::Uncertain(reason) => panic!("split unexpectedly uncertain: {reason:?}"),
+    };
+
+    assert!(materialization.is_fully_materialized());
+    assert!(!materialization.has_algebraic_endpoint_images());
+    assert_eq!(materialization.fragments().len(), 2);
+    let BezierSplitFragment2::Materialized {
+        start,
+        end,
+        curve: BezierSubcurve2::Quadratic(left),
+    } = &materialization.fragments()[0]
+    else {
+        panic!("first fragment should be native after linear-root promotion");
+    };
+    assert_eq!(start.as_exact(), Some(&r(0)));
+    assert_eq!(end.as_exact(), Some(&q(1, 2)));
+    assert_eq!(left.end(), &curve.point_at(q(1, 2)));
+}
+
+#[test]
 fn algebraic_boundary_carries_endpoint_images_without_approximate_materialization() {
     let curve = QuadraticBezier2::new(p(0, 0), p(2, 4), p(4, 0));
     let materialization = match curve
         .split_at_parameters(
             &[
                 exact(q(1, 4)),
-                algebraic_midpoint_interval(q(2, 5), q(3, 5)),
-                exact(q(3, 4)),
+                algebraic_sqrt_half_interval(),
+                exact(q(4, 5)),
             ],
             &policy(),
         )
@@ -227,8 +304,8 @@ fn rational_algebraic_boundary_carries_conic_endpoint_images() {
         .split_at_parameters(
             &[
                 exact(q(1, 4)),
-                algebraic_midpoint_interval(q(2, 5), q(3, 5)),
-                exact(q(3, 4)),
+                algebraic_sqrt_half_interval(),
+                exact(q(4, 5)),
             ],
             &policy(),
         )
@@ -259,7 +336,7 @@ fn rational_algebraic_boundary_with_zero_denominator_stays_unresolved() {
     let curve =
         RationalQuadraticBezier2::try_unit_end_weights(p(0, 0), p(1, 1), p(2, 0), r(-1)).unwrap();
     let materialization = match curve
-        .split_at_parameters(&[algebraic_midpoint_interval(q(2, 5), q(3, 5))], &policy())
+        .split_at_parameters(&[algebraic_cubic_midpoint_interval()], &policy())
         .unwrap()
     {
         Classification::Decided(value) => value,
@@ -278,7 +355,10 @@ fn rational_algebraic_boundary_with_zero_denominator_stays_unresolved() {
 fn broad_algebraic_interval_refuses_to_order_against_endpoints() {
     let curve = QuadraticBezier2::new(p(0, 0), p(2, 4), p(4, 0));
     let split = curve
-        .split_at_parameters(&[algebraic_midpoint_interval(r(0), r(1))], &policy())
+        .split_at_parameters(
+            &[algebraic_sqrt_half_interval_between(r(0), r(1))],
+            &policy(),
+        )
         .unwrap();
 
     assert_eq!(

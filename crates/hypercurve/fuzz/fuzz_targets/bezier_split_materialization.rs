@@ -42,7 +42,10 @@ fuzz_target!(|data: &[u8]| {
         let start = unit_from_byte(data[7].min(data[8]));
         let end = unit_from_byte(data[7].max(data[8]));
         if let Ok(Classification::Decided(polynomial)) =
-            BezierParameterPolynomial::try_new_power_basis(vec![Real::from(-1_i32), Real::from(2_i32)], &policy)
+            BezierParameterPolynomial::try_new_power_basis(
+                vec![Real::from(-1_i32), Real::from(2_i32)],
+                &policy,
+            )
             && let Ok(Classification::Decided(interval)) =
                 BezierParameterInterval::try_new(start, end, &policy)
             && let Ok(Classification::Decided(algebraic)) =
@@ -50,6 +53,22 @@ fuzz_target!(|data: &[u8]| {
         {
             parameters.push(BezierParameter2::algebraic(algebraic));
         }
+    }
+    if data[9] & 2 == 2
+        && let Ok(Classification::Decided(polynomial)) =
+            BezierParameterPolynomial::try_new_power_basis(
+                vec![Real::from(-1_i32), Real::from(0_i32), Real::from(2_i32)],
+                &policy,
+            )
+        && let Ok(Classification::Decided(interval)) = BezierParameterInterval::try_new(
+            (Real::from(2_i32) / Real::from(3_i32)).unwrap(),
+            (Real::from(3_i32) / Real::from(4_i32)).unwrap(),
+            &policy,
+        )
+        && let Ok(Classification::Decided(algebraic)) =
+            BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy)
+    {
+        parameters.push(BezierParameter2::algebraic(algebraic));
     }
 
     if let Ok(Classification::Decided(materialization)) =

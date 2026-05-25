@@ -56,11 +56,11 @@ fn algebraic_midpoint_parameter() -> BezierAlgebraicParameter2 {
     decided(BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy()).unwrap())
 }
 
-fn algebraic_quarter_parameter() -> BezierAlgebraicParameter2 {
+fn algebraic_sqrt_half_parameter() -> BezierAlgebraicParameter2 {
     let polynomial = decided(
-        BezierParameterPolynomial::try_new_power_basis(vec![r(-1), r(4)], &policy()).unwrap(),
+        BezierParameterPolynomial::try_new_power_basis(vec![r(-1), r(0), r(2)], &policy()).unwrap(),
     );
-    let interval = decided(BezierParameterInterval::try_new(q(1, 5), q(3, 10), &policy()).unwrap());
+    let interval = decided(BezierParameterInterval::try_new(q(2, 3), q(3, 4), &policy()).unwrap());
     decided(BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy()).unwrap())
 }
 
@@ -533,7 +533,7 @@ fn retained_curve_envelope_uses_source_bounds_for_algebraic_split_fragments() {
     let split = decided(
         curve
             .split_at_parameters(
-                &[BezierParameter2::algebraic(algebraic_midpoint_parameter())],
+                &[BezierParameter2::algebraic(algebraic_sqrt_half_parameter())],
                 &policy(),
             )
             .unwrap(),
@@ -557,7 +557,7 @@ fn retained_curve_envelope_uses_algebraic_parameter_interval_hull() {
     let split = decided(
         curve
             .split_at_parameters(
-                &[BezierParameter2::algebraic(algebraic_quarter_parameter())],
+                &[BezierParameter2::algebraic(algebraic_sqrt_half_parameter())],
                 &policy(),
             )
             .unwrap(),
@@ -570,7 +570,7 @@ fn retained_curve_envelope_uses_algebraic_parameter_interval_hull() {
     ));
 
     assert_eq!(envelope.envelope().min(), &p(0, 0));
-    assert_eq!(envelope.envelope().max(), &Point2::new(q(6, 5), q(42, 25)));
+    assert_eq!(envelope.envelope().max(), &Point2::new(q(3, 1), q(2, 1)));
     assert_eq!(envelope.exact_fragment_count(), 1);
 }
 
