@@ -2,9 +2,9 @@ use std::hint::black_box;
 use std::time::Instant;
 
 use hypercurve::{
-    BezierArrangementGraph2, BezierParameter2, BezierRegion2, BezierRetainedEndpointEnvelope2,
-    BezierRetainedRegion2, Classification, CurvePolicy, CurveResult, Point2, QuadraticBezier2,
-    Real,
+    BezierArrangementGraph2, BezierParameter2, BezierRegion2, BezierRetainedCurveEnvelope2,
+    BezierRetainedEndpointEnvelope2, BezierRetainedRegion2, Classification, CurvePolicy,
+    CurveResult, Point2, QuadraticBezier2, Real,
 };
 
 fn r(value: i32) -> Real {
@@ -63,6 +63,11 @@ fn main() -> CurveResult<()> {
         retained_checksum ^= black_box(format!("{:?}", region.signed_area()?).len());
         if let Classification::Decided(envelope) =
             BezierRetainedEndpointEnvelope2::from_region(&region, &policy)
+        {
+            retained_checksum ^= black_box(format!("{:?}", envelope.envelope()).len());
+        }
+        if let Classification::Decided(envelope) =
+            BezierRetainedCurveEnvelope2::from_region(&region, &policy)
         {
             retained_checksum ^= black_box(format!("{:?}", envelope.envelope()).len());
         }

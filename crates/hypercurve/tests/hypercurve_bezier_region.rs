@@ -1,9 +1,9 @@
 use hypercurve::{
     BezierAlgebraicEndpointImage2, BezierAlgebraicParameter2, BezierArrangementFragment2,
     BezierArrangementGraph2, BezierParameter2, BezierParameterInterval, BezierParameterPolynomial,
-    BezierRegion2, BezierRetainedBoundaryLoop2, BezierRetainedEndpointEnvelope2,
-    BezierRetainedRegion2, BezierSplitFragment2, Classification, CurvePolicy, Point2,
-    QuadraticBezier2, RationalQuadraticBezier2, Real, UncertaintyReason,
+    BezierRegion2, BezierRetainedBoundaryLoop2, BezierRetainedCurveEnvelope2,
+    BezierRetainedEndpointEnvelope2, BezierRetainedRegion2, BezierSplitFragment2, Classification,
+    CurvePolicy, Point2, QuadraticBezier2, RationalQuadraticBezier2, Real, UncertaintyReason,
 };
 use proptest::prelude::*;
 
@@ -119,6 +119,35 @@ fn conic_region_boundary_materializes_but_area_is_explicitly_unsupported() {
 }
 
 #[test]
+fn retained_curve_envelope_includes_native_bezier_interior_extrema() {
+    let upper = QuadraticBezier2::new(p(0, 0), p(2, 4), p(4, 0));
+    let lower = QuadraticBezier2::new(p(4, 0), p(2, -4), p(0, 0));
+    let graph = BezierArrangementGraph2::from_split_materializations(&[
+        decided(upper.split_at_parameters(&[], &policy()).unwrap()),
+        decided(lower.split_at_parameters(&[], &policy()).unwrap()),
+    ]);
+    let traversal = decided(graph.traverse_retained_with_tangent_order(&policy()));
+    let retained = decided(BezierRetainedRegion2::from_retained_arrangement_traversal(
+        &graph, &traversal,
+    ));
+
+    let endpoint_envelope = decided(BezierRetainedEndpointEnvelope2::from_region(
+        &retained,
+        &policy(),
+    ));
+    assert_eq!(endpoint_envelope.envelope().min(), &p(0, 0));
+    assert_eq!(endpoint_envelope.envelope().max(), &p(4, 0));
+
+    let curve_envelope = decided(BezierRetainedCurveEnvelope2::from_region(
+        &retained,
+        &policy(),
+    ));
+    assert_eq!(curve_envelope.envelope().min(), &p(0, -2));
+    assert_eq!(curve_envelope.envelope().max(), &p(4, 2));
+    assert_eq!(curve_envelope.exact_fragment_count(), 2);
+}
+
+#[test]
 fn retained_region_materializes_closed_algebraic_carrier_loop_without_area_sampling() {
     let parameter = BezierParameter2::algebraic(algebraic_midpoint_parameter());
     let p0_right = algebraic_image(&line_midpoint_curve(-1, 0, 1));
@@ -164,6 +193,10 @@ fn retained_region_materializes_closed_algebraic_carrier_loop_without_area_sampl
     assert_eq!(envelope.algebraic_endpoint_count(), 4);
     assert_eq!(envelope.native_endpoint_count(), 0);
     assert!(envelope.has_algebraic_endpoints());
+    assert_eq!(
+        BezierRetainedCurveEnvelope2::from_region(&retained, &policy()),
+        Classification::Uncertain(UncertaintyReason::Unsupported)
+    );
 }
 
 #[test]

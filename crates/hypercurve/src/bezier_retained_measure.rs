@@ -6,11 +6,18 @@
 //! endpoints only: native endpoints contribute exact point coordinates, and
 //! algebraic endpoint images contribute the certified isolating intervals of
 //! their represented coordinates.  It never samples an algebraic root and it
-//! does not claim curve-interior extrema.  This is the construction/decision
-//! split advocated by Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7(1-2), 3-23 (1997); endpoint intervals are
-//! retained exact objects, while callers decide how to consume the conservative
-//! envelope.  The broad-phase role mirrors Bentley and Ottmann's sweep-line
+//! does not claim curve-interior extrema.
+//!
+//! A curve envelope is stronger: it consumes only materialized native
+//! Bezier/conic carriers and includes exact coordinate extrema from derivative
+//! roots.  Polynomial Bezier extrema use the Bernstein derivative identities
+//! described by Farin, *Curves and Surfaces for CAGD* (5th ed., 2002), and the
+//! rational-quadratic path reuses the crate's quotient-derivative conic bounds.
+//! Algebraic endpoint-image fragments remain explicit unsupported evidence for
+//! this measurement because their curve-interior extrema are not yet
+//! represented.  This is the construction/decision split advocated by Yap,
+//! "Towards Exact Geometric Computation," *Computational Geometry* 7(1-2),
+//! 3-23 (1997).  The broad-phase role mirrors Bentley and Ottmann's sweep-line
 //! candidate filters, "Algorithms for Reporting and Counting Geometric
 //! Intersections," *IEEE Transactions on Computers* C-28(9), 643-647 (1979).
 
@@ -20,8 +27,65 @@ use hypersolve::AlgebraicRootRepresentation;
 use crate::classify::compare_reals;
 use crate::{
     Aabb2, BezierEndpointPointImage2, BezierRetainedBoundaryLoop2, BezierRetainedRegion2,
-    BezierSplitFragment2, Classification, CurvePolicy, Point2, UncertaintyReason,
+    BezierSplitFragment2, BezierSubcurve2, Classification, CurvePolicy, Point2, UncertaintyReason,
 };
+
+/// Exact curve-interior envelope for materialized retained Bezier/conic carriers.
+///
+/// This is a full curve envelope for retained boundary loops whose fragments
+/// are already native subcurves.  Quadratic and cubic polynomial Beziers
+/// contribute endpoint and derivative-root extrema; rational quadratics
+/// contribute their certified quotient-derivative conic bounds.  Algebraic
+/// endpoint-image fragments are deliberately rejected as unsupported because an
+/// endpoint image is not enough evidence for curve-interior extrema.
+#[derive(Clone, Debug, PartialEq)]
+pub struct BezierRetainedCurveEnvelope2 {
+    envelope: Aabb2,
+    exact_fragment_count: usize,
+}
+
+impl BezierRetainedCurveEnvelope2 {
+    /// Constructs a curve-interior envelope for a retained region.
+    ///
+    /// Empty regions are unsupported because there is no finite neutral
+    /// envelope. Any retained algebraic endpoint-image fragment returns
+    /// `Unsupported` until its curve-interior extrema are represented exactly.
+    pub fn from_region(
+        region: &BezierRetainedRegion2,
+        policy: &CurvePolicy,
+    ) -> Classification<Self> {
+        let mut accumulator = CurveEnvelopeAccumulator::default();
+        for boundary_loop in region.boundary_loops() {
+            match accumulator.include_loop(boundary_loop, policy) {
+                Classification::Decided(()) => {}
+                Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+            }
+        }
+        accumulator.finish()
+    }
+
+    /// Constructs a curve-interior envelope for one retained boundary loop.
+    pub fn from_loop(
+        boundary_loop: &BezierRetainedBoundaryLoop2,
+        policy: &CurvePolicy,
+    ) -> Classification<Self> {
+        let mut accumulator = CurveEnvelopeAccumulator::default();
+        match accumulator.include_loop(boundary_loop, policy) {
+            Classification::Decided(()) => accumulator.finish(),
+            Classification::Uncertain(reason) => Classification::Uncertain(reason),
+        }
+    }
+
+    /// Returns the exact curve-interior envelope.
+    pub const fn envelope(&self) -> &Aabb2 {
+        &self.envelope
+    }
+
+    /// Returns how many native retained fragments contributed exact bounds.
+    pub const fn exact_fragment_count(&self) -> usize {
+        self.exact_fragment_count
+    }
+}
 
 /// Exact endpoint envelope for a retained Bezier region or loop.
 #[derive(Clone, Debug, PartialEq)]
@@ -113,6 +177,76 @@ struct EndpointEnvelopeAccumulator {
     max_y: Option<Real>,
     native_endpoint_count: usize,
     algebraic_endpoint_count: usize,
+}
+
+#[derive(Default)]
+struct CurveEnvelopeAccumulator {
+    envelope: Option<Aabb2>,
+    exact_fragment_count: usize,
+}
+
+impl CurveEnvelopeAccumulator {
+    fn include_loop(
+        &mut self,
+        boundary_loop: &BezierRetainedBoundaryLoop2,
+        policy: &CurvePolicy,
+    ) -> Classification<()> {
+        for fragment in boundary_loop.fragments() {
+            match self.include_fragment(fragment, policy) {
+                Classification::Decided(()) => {}
+                Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+            }
+        }
+        Classification::Decided(())
+    }
+
+    fn include_fragment(
+        &mut self,
+        fragment: &BezierSplitFragment2,
+        policy: &CurvePolicy,
+    ) -> Classification<()> {
+        let BezierSplitFragment2::Materialized { curve, .. } = fragment else {
+            return Classification::Uncertain(match fragment {
+                BezierSplitFragment2::AlgebraicEndpointImages { .. } => {
+                    UncertaintyReason::Unsupported
+                }
+                BezierSplitFragment2::Unresolved { .. } => UncertaintyReason::Boundary,
+                BezierSplitFragment2::Materialized { .. } => unreachable!(),
+            });
+        };
+
+        let curve_box = match retained_curve_bounds(curve, policy) {
+            Classification::Decided(curve_box) => curve_box,
+            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+        };
+        self.envelope = match self.envelope.take() {
+            Some(envelope) => match envelope.union(&curve_box, policy) {
+                Classification::Decided(merged) => Some(merged),
+                Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+            },
+            None => Some(curve_box),
+        };
+        self.exact_fragment_count += 1;
+        Classification::Decided(())
+    }
+
+    fn finish(self) -> Classification<BezierRetainedCurveEnvelope2> {
+        let Some(envelope) = self.envelope else {
+            return Classification::Uncertain(UncertaintyReason::Unsupported);
+        };
+        Classification::Decided(BezierRetainedCurveEnvelope2 {
+            envelope,
+            exact_fragment_count: self.exact_fragment_count,
+        })
+    }
+}
+
+fn retained_curve_bounds(curve: &BezierSubcurve2, policy: &CurvePolicy) -> Classification<Aabb2> {
+    match curve {
+        BezierSubcurve2::Quadratic(curve) => curve.certified_bounds(policy),
+        BezierSubcurve2::Cubic(curve) => curve.certified_bounds(policy),
+        BezierSubcurve2::RationalQuadratic(curve) => curve.certified_bounds(policy),
+    }
 }
 
 impl EndpointEnvelopeAccumulator {

@@ -1,8 +1,9 @@
 #![no_main]
 
 use hypercurve::{
-    BezierArrangementGraph2, BezierParameter2, BezierRegion2, BezierRetainedEndpointEnvelope2,
-    BezierRetainedRegion2, Classification, CurvePolicy, Point2, QuadraticBezier2, Real,
+    BezierArrangementGraph2, BezierParameter2, BezierRegion2, BezierRetainedCurveEnvelope2,
+    BezierRetainedEndpointEnvelope2, BezierRetainedRegion2, Classification, CurvePolicy, Point2,
+    QuadraticBezier2, Real,
 };
 use libfuzzer_sys::fuzz_target;
 
@@ -58,6 +59,7 @@ fuzz_target!(|data: &[u8]| {
             .map(|region| {
                 let _ = region.signed_area();
                 let _ = BezierRetainedEndpointEnvelope2::from_region(&region, &policy);
+                let _ = BezierRetainedCurveEnvelope2::from_region(&region, &policy);
             });
     }
 });
