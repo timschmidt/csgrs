@@ -639,7 +639,7 @@ fuzz_target!(|data: &[u8]| {
                         PredicatePolicy::default(),
                     ) {
                         if let Ok(report) = build_cam_support_clip_program(
-                            support,
+                            support.clone(),
                             Real::from(left_min[2]),
                             Real::from(left_max[2]),
                             boundary,
@@ -654,6 +654,31 @@ fuzz_target!(|data: &[u8]| {
                                 .result
                                 .validate()
                                 .unwrap();
+                        }
+                    }
+                    if data[15] & 8 == 8 {
+                        let z_min = Real::from(left_min[2]);
+                        let z_max = Real::from(left_max[2]);
+                        if let Ok(clip_prism) = hyperpath::RectangularPrism::new(
+                            support.footprint.clone(),
+                            z_min.clone(),
+                            z_max.clone(),
+                            PredicatePolicy::default(),
+                        )
+                            && let Ok(handoff) = PathExactMeshHandoffSource::from_exact_mesh(
+                                clip_prism.to_exact_mesh().unwrap(),
+                            )
+                            && let Ok(boundary) = CamSupportClipBoundary::exact_handoff(handoff)
+                            && let Ok(report) = build_cam_support_clip_program(
+                                support,
+                                z_min,
+                                z_max,
+                                boundary,
+                                PredicatePolicy::default(),
+                            )
+                        {
+                            report.validate_replay(PredicatePolicy::default()).unwrap();
+                            report.program.steps.last().unwrap().result.validate().unwrap();
                         }
                     }
                 }
@@ -703,6 +728,36 @@ fuzz_target!(|data: &[u8]| {
                                     .result
                                     .validate()
                                     .unwrap();
+                            }
+                        }
+                        if data[15] & 16 == 16 {
+                            let z_min = Real::from(left_min[2]);
+                            let z_max = Real::from(left_max[2]);
+                            if let Ok(pocket) = hyperpath::RectangularPocket::new(
+                                infill_min.clone(),
+                                infill_max.clone(),
+                            )
+                                && let Ok(clip_prism) = hyperpath::RectangularPrism::new(
+                                    pocket,
+                                    z_min.clone(),
+                                    z_max.clone(),
+                                    PredicatePolicy::default(),
+                                )
+                                && let Ok(handoff) = PathExactMeshHandoffSource::from_exact_mesh(
+                                    clip_prism.to_exact_mesh().unwrap(),
+                                )
+                                && let Ok(boundary) =
+                                    CamSupportClipBoundary::exact_handoff(handoff)
+                                && let Ok(report) = build_cam_infill_clip_program(
+                                    infill_graph.clone(),
+                                    z_min,
+                                    z_max,
+                                    boundary,
+                                    PredicatePolicy::default(),
+                                )
+                            {
+                                report.validate_replay(PredicatePolicy::default()).unwrap();
+                                report.program.steps.last().unwrap().result.validate().unwrap();
                             }
                         }
                         let simple_mid = Point2::new(

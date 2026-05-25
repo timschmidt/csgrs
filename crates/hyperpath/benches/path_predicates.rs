@@ -736,6 +736,32 @@ fn path_predicates(c: &mut Criterion) {
             report.validate_replay(PredicatePolicy::default())
         })
     });
+    let cam_exact_clip_handoff = PathExactMeshHandoffSource::from_exact_mesh(
+        rectangular_prism_from_i64_bounds(
+            [875, 875, 0],
+            [3_125, 2_125, 500],
+            PredicatePolicy::default(),
+        )
+        .unwrap()
+        .to_exact_mesh()
+        .unwrap(),
+    )
+    .unwrap();
+    let cam_exact_clip_boundary =
+        CamSupportClipBoundary::exact_handoff(cam_exact_clip_handoff.clone()).unwrap();
+    c.bench_function("cam_exact_handoff_support_clip_program_replay", |b| {
+        b.iter(|| {
+            let report = build_cam_support_clip_program(
+                support_plan.clone(),
+                r(0),
+                r(500),
+                cam_exact_clip_boundary.clone(),
+                PredicatePolicy::default(),
+            )
+            .unwrap();
+            report.validate_replay(PredicatePolicy::default())
+        })
+    });
     let clip_infill_plan = build_rectangular_bead_plan(
         RectangularPocket::new(p(0, 0), p(10_000, 2_000)).unwrap(),
         BeadFillAxis::Horizontal,
@@ -760,6 +786,32 @@ fn path_predicates(c: &mut Criterion) {
                 r(0),
                 r(500),
                 infill_clip_boundary.clone(),
+                PredicatePolicy::default(),
+            )
+            .unwrap();
+            report.validate_replay(PredicatePolicy::default())
+        })
+    });
+    let cam_exact_infill_clip = PathExactMeshHandoffSource::from_exact_mesh(
+        rectangular_prism_from_i64_bounds(
+            [0, 0, 0],
+            [10_000, 2_000, 500],
+            PredicatePolicy::default(),
+        )
+        .unwrap()
+        .to_exact_mesh()
+        .unwrap(),
+    )
+    .unwrap();
+    let cam_exact_infill_boundary =
+        CamSupportClipBoundary::exact_handoff(cam_exact_infill_clip).unwrap();
+    c.bench_function("cam_exact_handoff_infill_clip_program_replay", |b| {
+        b.iter(|| {
+            let report = build_cam_infill_clip_program(
+                clip_infill_graph.clone(),
+                r(0),
+                r(500),
+                cam_exact_infill_boundary.clone(),
                 PredicatePolicy::default(),
             )
             .unwrap();

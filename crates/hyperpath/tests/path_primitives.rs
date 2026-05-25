@@ -4057,6 +4057,80 @@ fn cam_support_clip_program_intersects_retained_support_with_polygon_boundaries(
 }
 
 #[test]
+fn cam_exact_handoff_clip_boundary_replays_support_and_infill_slabs() {
+    let clip_handoff = PathExactMeshHandoffSource::from_exact_mesh(
+        prism([2, 2, 0], [8, 8, 3]).to_exact_mesh().unwrap(),
+    )
+    .unwrap();
+    let exact_boundary = CamSupportClipBoundary::exact_handoff(clip_handoff.clone())
+        .expect("exact clip handoff should retain package evidence");
+    assert!(exact_boundary.exact_facts().all_exact_rational);
+
+    let support = build_rectangular_support_plan(
+        RectangularPocket::new(p(3, 3), p(7, 7)).unwrap(),
+        RectangularPocket::new(p(0, 0), p(12, 12)).unwrap(),
+        r(1),
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    let support_report = build_cam_support_clip_program(
+        support,
+        r(0),
+        r(3),
+        exact_boundary.clone(),
+        PredicatePolicy::default(),
+    )
+    .expect("exact handoff boundary should clip support");
+    support_report
+        .validate_replay(PredicatePolicy::default())
+        .unwrap();
+    assert!(support_report.mesh().unwrap().facts().mesh.closed_manifold);
+
+    let plan = build_rectangular_bead_plan(
+        RectangularPocket::new(p(2, 2), p(8, 4)).unwrap(),
+        BeadFillAxis::Horizontal,
+        r(2),
+        r(2),
+        8,
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    let graph =
+        build_rectangular_serpentine_infill_graph(plan, PredicatePolicy::default()).unwrap();
+    let infill_report = build_cam_infill_clip_program(
+        graph,
+        r(0),
+        r(3),
+        exact_boundary,
+        PredicatePolicy::default(),
+    )
+    .expect("exact handoff boundary should clip infill");
+    infill_report
+        .validate_replay(PredicatePolicy::default())
+        .unwrap();
+    assert!(infill_report.mesh().unwrap().facts().mesh.closed_manifold);
+
+    let wrong_z_boundary = CamSupportClipBoundary::exact_handoff(clip_handoff).unwrap();
+    let support = build_rectangular_support_plan(
+        RectangularPocket::new(p(3, 3), p(7, 7)).unwrap(),
+        RectangularPocket::new(p(0, 0), p(12, 12)).unwrap(),
+        r(1),
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert!(matches!(
+        build_cam_support_clip_program(
+            support,
+            r(0),
+            r(4),
+            wrong_z_boundary,
+            PredicatePolicy::default(),
+        ),
+        Err(PathMeshBooleanError::MeshHandoff(_))
+    ));
+}
+
+#[test]
 fn cam_support_clip_program_rejects_invalid_boundaries_and_height() {
     assert_eq!(
         CamSupportClipBoundary::convex(

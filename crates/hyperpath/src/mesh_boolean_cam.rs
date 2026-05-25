@@ -24,6 +24,7 @@ use crate::cam::{
     PocketPlanError, RectangularInfillGraph, RectangularPocket, RectangularSupportPlan,
 };
 use crate::mesh_boolean::{PathMeshBooleanError, PathMeshBooleanOperation, RectangularPrism};
+use crate::mesh_boolean_handoff::PathExactMeshHandoffSource;
 use crate::mesh_boolean_holes::validate_strict_orthogonal_holes;
 use crate::mesh_boolean_polygon::{
     ConvexPolygonPrism, OrthogonalPolygonPrism, SimplePolygonPrism,
@@ -96,6 +97,21 @@ pub struct CamRestMaterialProgramReport {
     pub program: PathMeshBooleanProgramReport,
 }
 
+/// Retained CAM clip boundary whose exact topology is owned by a `hypermesh` handoff.
+///
+/// This is the CAM-side intake for curved additive support/infill clipping
+/// envelopes produced by a curve or arrangement owner outside `hyperpath`.
+/// `hyperpath` retains the handoff as an opaque exact closed solid and checks
+/// its Z slab at replay time. That follows Yap, "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7.1-2 (1997): cached topology is
+/// useful only while the exact object and package evidence still replay, and
+/// curve flattening must not be smuggled into a path-domain boolean API.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CamExactClipBoundaryHandoff {
+    handoff: PathExactMeshHandoffSource,
+    exact: RealExactSetFacts,
+}
+
 /// Retained straight-edge clipping boundary for additive support footprints.
 ///
 /// The boundary is a 2D CAM object, not a cached mesh. It is lowered into a
@@ -144,6 +160,8 @@ pub enum CamSupportClipBoundary {
         /// Exact-set facts for retained coordinates.
         exact: RealExactSetFacts,
     },
+    /// Exact closed-solid clipping envelope produced outside `hyperpath`.
+    ExactHandoff(CamExactClipBoundaryHandoff),
 }
 
 /// Exact additive support-footprint clipping program.
@@ -308,6 +326,52 @@ impl CamOrthogonalIslandPocketCutter {
     }
 }
 
+impl CamExactClipBoundaryHandoff {
+    /// Construct a retained exact clip boundary from a `hypermesh` handoff.
+    ///
+    /// The constructor validates the generic exact mesh handoff immediately and
+    /// records exact-set facts for the retained mesh coordinates. The final
+    /// support/infill program still checks the requested Z interval when it
+    /// lowers the boundary, because a valid clip envelope for one layer slab is
+    /// not automatically valid for another.
+    pub fn new(handoff: PathExactMeshHandoffSource) -> Result<Self, PathMeshBooleanError> {
+        let mesh = handoff.to_exact_mesh()?;
+        let points = mesh
+            .vertices()
+            .iter()
+            .flat_map(|point| {
+                let coordinates = &point.coordinates().0;
+                [&coordinates[0], &coordinates[1], &coordinates[2]]
+            })
+            .collect::<Vec<_>>();
+        Ok(Self {
+            handoff,
+            exact: Real::exact_set_facts(points),
+        })
+    }
+
+    /// Return the retained exact mesh handoff.
+    pub const fn handoff(&self) -> &PathExactMeshHandoffSource {
+        &self.handoff
+    }
+
+    /// Return exact-set facts for retained mesh coordinates.
+    pub const fn exact_facts(&self) -> &RealExactSetFacts {
+        &self.exact
+    }
+
+    /// Lower this exact handoff into a generic path mesh-boolean source.
+    pub fn to_path_source(
+        &self,
+        z_min: &Real,
+        z_max: &Real,
+        policy: PredicatePolicy,
+    ) -> Result<PathMeshBooleanSource, PathMeshBooleanError> {
+        validate_handoff_z_slab(&self.handoff, z_min, z_max, policy)?;
+        Ok(self.handoff.clone().into())
+    }
+}
+
 impl CamSupportClipBoundary {
     /// Construct a retained strictly convex support clipping boundary.
     pub fn convex(
@@ -433,6 +497,20 @@ impl CamSupportClipBoundary {
         })
     }
 
+    /// Construct a retained exact clip boundary from a `hypermesh` handoff.
+    ///
+    /// Use this for curved or arrangement-produced clipping envelopes whose
+    /// topology has already been accepted by `hypermesh`. The handoff is
+    /// opaque to `hyperpath`; replay only validates the package and Z slab
+    /// before intersecting support or infill material with it.
+    pub fn exact_handoff(
+        handoff: PathExactMeshHandoffSource,
+    ) -> Result<Self, PathMeshBooleanError> {
+        Ok(Self::ExactHandoff(CamExactClipBoundaryHandoff::new(
+            handoff,
+        )?))
+    }
+
     /// Return retained boundary vertices.
     pub fn vertices(&self) -> &[Point2] {
         match self {
@@ -440,6 +518,7 @@ impl CamSupportClipBoundary {
             | Self::Orthogonal { vertices, .. }
             | Self::Simple { vertices, .. } => vertices,
             Self::HoledSimple { outer, .. } => outer,
+            Self::ExactHandoff(_) => &[],
         }
     }
 
@@ -458,6 +537,7 @@ impl CamSupportClipBoundary {
             | Self::Orthogonal { provenance, .. }
             | Self::Simple { provenance, .. }
             | Self::HoledSimple { provenance, .. } => *provenance,
+            Self::ExactHandoff(_) => PathProvenance::native(),
         }
     }
 
@@ -468,6 +548,7 @@ impl CamSupportClipBoundary {
             | Self::Orthogonal { exact, .. }
             | Self::Simple { exact, .. }
             | Self::HoledSimple { exact, .. } => exact,
+            Self::ExactHandoff(source) => source.exact_facts(),
         }
     }
 
@@ -502,6 +583,7 @@ impl CamSupportClipBoundary {
             Self::HoledSimple { .. } => Err(PathMeshBooleanError::Replay(
                 "holed CAM clip boundaries require mixed intersection/difference replay".into(),
             )),
+            Self::ExactHandoff(source) => source.to_path_source(&z_min, &z_max, policy),
         }
     }
 
@@ -900,6 +982,28 @@ fn loops_exact_facts(outer: &[Point2], holes: &[Vec<Point2>]) -> RealExactSetFac
         values.extend(hole.iter().flat_map(|point| [&point.x, &point.y]));
     }
     Real::exact_set_facts(values)
+}
+
+fn validate_handoff_z_slab(
+    handoff: &PathExactMeshHandoffSource,
+    z_min: &Real,
+    z_max: &Real,
+    policy: PredicatePolicy,
+) -> Result<(), PathMeshBooleanError> {
+    let mesh = handoff.to_exact_mesh()?;
+    let Some(bounds) = &mesh.bounds().mesh else {
+        return Err(PathMeshBooleanError::MeshHandoff(
+            "CAM exact clip handoff has no mesh bounds".into(),
+        ));
+    };
+    if compare_reals_with_policy(&bounds.min.z, z_min, policy).value() != Some(Ordering::Equal)
+        || compare_reals_with_policy(&bounds.max.z, z_max, policy).value() != Some(Ordering::Equal)
+    {
+        return Err(PathMeshBooleanError::MeshHandoff(
+            "CAM exact clip handoff does not match the requested Z slab".into(),
+        ));
+    }
+    Ok(())
 }
 
 fn infill_clip_exact_facts(
