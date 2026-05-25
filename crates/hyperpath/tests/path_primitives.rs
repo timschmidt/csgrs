@@ -14,6 +14,7 @@ use hyperpath::{
     LineCubicBezierAlgebraicBreakpointDomain, LineCubicBezierIntersectionClass,
     LineExplicitArcIntersectionClass, LineOffsetError, LinePathSegment,
     LineQuadraticBezierIntersectionClass, LineRationalQuadraticBezierIntersectionClass,
+    LineRationalQuadraticBezierInverseBoundarySource, LineRationalQuadraticBezierInverseRootDomain,
     LineRationalQuadraticBezierSupportOverlapMonotonicity, LookaheadFeedSchedule, MeanderError,
     MeanderKeepout, MeanderObstacle, MeanderPlacementCandidate, NetId, OffsetSide, PathProvenance,
     PathSourceFormat, PcbBoardOutline, PcbCardinalRectPad, PcbCircularBoardOutline, PcbCircularPad,
@@ -1137,6 +1138,15 @@ fn line_rational_quadratic_bezier_arrangement_splits_monotone_support_overlap() 
             .monotonicity,
         LineRationalQuadraticBezierSupportOverlapMonotonicity::Monotone
     );
+    assert!(
+        report.events[0]
+            .intersection
+            .support_overlap
+            .as_ref()
+            .unwrap()
+            .inverse_boundary_roots
+            .is_empty()
+    );
     assert_eq!(report.support_overlaps.len(), 1);
     assert_eq!(report.line_breakpoints[0].len(), 2);
     assert_eq!(report.conic_breakpoints[0].len(), 4);
@@ -1148,7 +1158,7 @@ fn line_rational_quadratic_bezier_arrangement_splits_monotone_support_overlap() 
 #[test]
 fn line_rational_quadratic_bezier_arrangement_keeps_nonmonotone_support_overlap_unknown() {
     let conic = RationalQuadraticBezier::new(p(0, 0), p(8, 0), p(0, 0), r(1)).unwrap();
-    let line = LinePathSegment::new(p(2, 0), p(6, 0));
+    let line = LinePathSegment::new(p(1, 0), p(3, 0));
 
     let report = arrange_line_segments_with_rational_quadratic_beziers(
         &[line],
@@ -1174,14 +1184,79 @@ fn line_rational_quadratic_bezier_arrangement_keeps_nonmonotone_support_overlap_
         support_overlap.hodograph_numerator_controls,
         [r(8), r(0), r(-8)]
     );
+    assert_eq!(support_overlap.inverse_boundary_roots.len(), 2);
+    assert_eq!(
+        support_overlap.inverse_boundary_roots[0].source,
+        LineRationalQuadraticBezierInverseBoundarySource::SegmentStart
+    );
+    assert_eq!(support_overlap.inverse_boundary_roots[0].value, r(1));
+    assert_eq!(support_overlap.inverse_boundary_roots[0].roots.len(), 2);
+    assert!(
+        support_overlap.inverse_boundary_roots[0]
+            .roots
+            .iter()
+            .all(|root| {
+                root.parameter_domain
+                    == LineRationalQuadraticBezierInverseRootDomain::InsideUnitInterval
+            })
+    );
+    assert_eq!(
+        support_overlap.inverse_boundary_roots[1].source,
+        LineRationalQuadraticBezierInverseBoundarySource::SegmentEnd
+    );
+    assert_eq!(support_overlap.inverse_boundary_roots[1].value, r(3));
+    assert_eq!(support_overlap.inverse_boundary_roots[1].roots.len(), 2);
+    assert!(
+        support_overlap.inverse_boundary_roots[1]
+            .roots
+            .iter()
+            .all(|root| {
+                root.parameter_domain
+                    == LineRationalQuadraticBezierInverseRootDomain::InsideUnitInterval
+            })
+    );
     assert_eq!(report.support_overlaps.len(), 1);
     assert_eq!(
         report.support_overlaps[0].overlap.monotonicity,
         LineRationalQuadraticBezierSupportOverlapMonotonicity::NonMonotone
     );
+    assert_eq!(
+        report.support_overlaps[0]
+            .overlap
+            .inverse_boundary_roots
+            .len(),
+        2
+    );
     assert_eq!(report.line_breakpoints[0].len(), 2);
     assert_eq!(report.conic_breakpoints[0].len(), 2);
     assert_eq!(report.conic_fragments.len(), 1);
+}
+
+#[test]
+fn line_rational_quadratic_bezier_overlap_retains_empty_inverse_boundary_evidence() {
+    let conic = RationalQuadraticBezier::new(p(0, 0), p(8, 0), p(0, 0), r(1)).unwrap();
+    let line = LinePathSegment::new(p(5, 0), p(6, 0));
+
+    let report = arrange_line_segments_with_rational_quadratic_beziers(
+        &[line],
+        &[conic],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    let support_overlap = report.events[0]
+        .intersection
+        .support_overlap
+        .as_ref()
+        .unwrap();
+    assert_eq!(
+        support_overlap.monotonicity,
+        LineRationalQuadraticBezierSupportOverlapMonotonicity::NonMonotone
+    );
+    assert_eq!(support_overlap.inverse_boundary_roots.len(), 2);
+    assert_eq!(support_overlap.inverse_boundary_roots[0].value, r(5));
+    assert!(support_overlap.inverse_boundary_roots[0].roots.is_empty());
+    assert_eq!(support_overlap.inverse_boundary_roots[1].value, r(6));
+    assert!(support_overlap.inverse_boundary_roots[1].roots.is_empty());
 }
 
 #[test]
@@ -9576,6 +9651,23 @@ proptest! {
         prop_assert_eq!(
             report.support_overlaps[0].overlap.monotonicity,
             LineRationalQuadraticBezierSupportOverlapMonotonicity::NonMonotone
+        );
+        prop_assert_eq!(report.support_overlaps[0].overlap.inverse_boundary_roots.len(), 2);
+        prop_assert!(
+            report.support_overlaps[0]
+                .overlap
+                .inverse_boundary_roots
+                .iter()
+                .all(|boundary| !boundary.roots.is_empty())
+        );
+        prop_assert!(
+            report.support_overlaps[0]
+                .overlap
+                .inverse_boundary_roots
+                .iter()
+                .flat_map(|boundary| boundary.roots.iter())
+                .all(|root| root.parameter_domain
+                    == LineRationalQuadraticBezierInverseRootDomain::InsideUnitInterval)
         );
         prop_assert_eq!(report.line_breakpoints[0].len(), 2);
         prop_assert_eq!(report.conic_breakpoints[0].len(), 2);

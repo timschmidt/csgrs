@@ -225,6 +225,63 @@ pub enum LineRationalQuadraticBezierSupportOverlapMonotonicity {
     Unknown,
 }
 
+/// Segment endpoint that induced a retained conic inverse-boundary equation.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum LineRationalQuadraticBezierInverseBoundarySource {
+    /// The boundary value comes from the line segment start point.
+    SegmentStart,
+    /// The boundary value comes from the line segment end point.
+    SegmentEnd,
+}
+
+/// Certified relationship between a represented conic inverse root and `[0, 1]`.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum LineRationalQuadraticBezierInverseRootDomain {
+    /// The isolating interval is certified inside the retained conic domain.
+    InsideUnitInterval,
+    /// The isolating interval is certified outside the retained conic domain.
+    OutsideUnitInterval,
+    /// The isolating interval straddles a domain boundary or comparison failed.
+    Unknown,
+}
+
+/// Retained algebraic root of a rational-quadratic line-image inverse equation.
+///
+/// The parameter represents one root of
+/// `N_v(t) - value * W(t) == 0`, where `N_v/W` is the conic coordinate that
+/// varies along the retained line support. Roots are represented with
+/// `hypersolve` Sturm isolation rather than converted to primitive floats.
+/// This follows Yap, "Towards Exact Geometric Computation" (1997): an exact
+/// algebraic object may be reported even when current topology code cannot yet
+/// order and split with it. The univariate isolation step is the classical
+/// Sturm sequence approach; see Sturm (1835) and Collins and Loos, "Real
+/// Zeros of Polynomials" (1982).
+#[derive(Clone, Debug, PartialEq)]
+pub struct LineRationalQuadraticBezierAlgebraicInverseRoot {
+    /// Certified domain relationship for the conic parameter.
+    pub parameter_domain: LineRationalQuadraticBezierInverseRootDomain,
+    /// Represented algebraic conic parameter.
+    pub parameter: AlgebraicRootRepresentation,
+}
+
+/// Retained inverse-root evidence for one line-segment boundary value.
+///
+/// A nonmonotone same-support rational quadratic can cross the same segment
+/// boundary multiple times. Retaining every represented root lets later path
+/// cell scheduling replay branch ownership without pretending the boundary has
+/// a unique affine inverse. This is the exact object/report split advocated by
+/// Yap (1997), with the homogeneous rational conic equation described by
+/// Farouki, *Pythagorean Hodograph Curves* (2008).
+#[derive(Clone, Debug, PartialEq)]
+pub struct LineRationalQuadraticBezierInverseBoundaryRoots {
+    /// Which line endpoint supplied the retained boundary value.
+    pub source: LineRationalQuadraticBezierInverseBoundarySource,
+    /// Exact varying-coordinate value on the retained line support.
+    pub value: Real,
+    /// Represented roots of `N_v(t) - value * W(t) == 0`.
+    pub roots: Vec<LineRationalQuadraticBezierAlgebraicInverseRoot>,
+}
+
 /// Retained same-support line/conic overlap evidence.
 ///
 /// A rational quadratic conic lies on a retained axis-aligned line support when
@@ -250,6 +307,9 @@ pub struct LineRationalQuadraticBezierSupportOverlap {
     pub hodograph_numerator_controls: [Real; 3],
     /// Certified monotonicity status of the rational line image.
     pub monotonicity: LineRationalQuadraticBezierSupportOverlapMonotonicity,
+    /// Algebraic inverse-root evidence for line segment boundaries retained
+    /// when the same-support conic image is not certified monotone.
+    pub inverse_boundary_roots: Vec<LineRationalQuadraticBezierInverseBoundaryRoots>,
 }
 
 /// Exact line/rational-quadratic event witness.
@@ -1313,6 +1373,34 @@ fn classify_algebraic_root_unit_domain(
     }
 }
 
+fn classify_rational_quadratic_inverse_root_domain(
+    root: &AlgebraicRootRepresentation,
+    policy: PredicatePolicy,
+) -> LineRationalQuadraticBezierInverseRootDomain {
+    if let Some(exact) = &root.interval.exact_root {
+        return match parameter_in_unit_interval(exact, policy) {
+            Some(true) => LineRationalQuadraticBezierInverseRootDomain::InsideUnitInterval,
+            Some(false) => LineRationalQuadraticBezierInverseRootDomain::OutsideUnitInterval,
+            None => LineRationalQuadraticBezierInverseRootDomain::Unknown,
+        };
+    }
+    let lower_zero = compare_reals_with_policy(&root.interval.lower, &Real::zero(), policy).value();
+    let upper_one = compare_reals_with_policy(&root.interval.upper, &Real::one(), policy).value();
+    let upper_zero = compare_reals_with_policy(&root.interval.upper, &Real::zero(), policy).value();
+    let lower_one = compare_reals_with_policy(&root.interval.lower, &Real::one(), policy).value();
+    if matches!(lower_zero, Some(Ordering::Equal | Ordering::Greater))
+        && matches!(upper_one, Some(Ordering::Equal | Ordering::Less))
+    {
+        LineRationalQuadraticBezierInverseRootDomain::InsideUnitInterval
+    } else if matches!(upper_zero, Some(Ordering::Less))
+        || matches!(lower_one, Some(Ordering::Greater))
+    {
+        LineRationalQuadraticBezierInverseRootDomain::OutsideUnitInterval
+    } else {
+        LineRationalQuadraticBezierInverseRootDomain::Unknown
+    }
+}
+
 fn rational_conic_support_coefficient(
     point: &Point2,
     weight: &Real,
@@ -1516,7 +1604,8 @@ fn rational_quadratic_line_overlap_report(
     if !rational_quadratic_same_support(curve, axis, &fixed, policy)? {
         return None;
     }
-    let support_overlap = rational_quadratic_support_overlap(curve, axis, fixed.clone(), policy);
+    let support_overlap =
+        rational_quadratic_support_overlap(segment, curve, axis, fixed.clone(), policy);
     if support_overlap.monotonicity
         != LineRationalQuadraticBezierSupportOverlapMonotonicity::Monotone
     {
@@ -1746,18 +1835,121 @@ fn rational_quadratic_same_support(
 }
 
 fn rational_quadratic_support_overlap(
+    segment: &LinePathSegment,
     curve: &RationalQuadraticBezier,
     axis: Axis,
     fixed: Real,
     policy: PredicatePolicy,
 ) -> LineRationalQuadraticBezierSupportOverlap {
     let controls = rational_quadratic_hodograph_numerator_controls(curve, axis);
+    let monotonicity = classify_rational_quadratic_hodograph_controls(&controls, policy);
+    let inverse_boundary_roots =
+        if monotonicity == LineRationalQuadraticBezierSupportOverlapMonotonicity::Monotone {
+            Vec::new()
+        } else {
+            rational_quadratic_inverse_boundary_roots(segment, curve, axis, policy)
+        };
     LineRationalQuadraticBezierSupportOverlap {
         axis,
         fixed,
-        monotonicity: classify_rational_quadratic_hodograph_controls(&controls, policy),
+        monotonicity,
         hodograph_numerator_controls: controls,
+        inverse_boundary_roots,
     }
+}
+
+fn rational_quadratic_inverse_boundary_roots(
+    segment: &LinePathSegment,
+    curve: &RationalQuadraticBezier,
+    axis: Axis,
+    policy: PredicatePolicy,
+) -> Vec<LineRationalQuadraticBezierInverseBoundaryRoots> {
+    let boundaries = [
+        (
+            LineRationalQuadraticBezierInverseBoundarySource::SegmentStart,
+            varying_coordinate(segment.start(), axis),
+        ),
+        (
+            LineRationalQuadraticBezierInverseBoundarySource::SegmentEnd,
+            varying_coordinate(segment.end(), axis),
+        ),
+    ];
+    let mut retained = Vec::with_capacity(2);
+    for (source, value) in boundaries {
+        if retained.iter().any(
+            |existing: &LineRationalQuadraticBezierInverseBoundaryRoots| {
+                compare_reals_with_policy(&existing.value, &value, policy).value()
+                    == Some(Ordering::Equal)
+            },
+        ) {
+            continue;
+        }
+        retained.push(LineRationalQuadraticBezierInverseBoundaryRoots {
+            source,
+            roots: represent_rational_quadratic_inverse_roots(curve, axis, value.clone(), policy),
+            value,
+        });
+    }
+    retained
+}
+
+fn represent_rational_quadratic_inverse_roots(
+    curve: &RationalQuadraticBezier,
+    axis: Axis,
+    fixed: Real,
+    policy: PredicatePolicy,
+) -> Vec<LineRationalQuadraticBezierAlgebraicInverseRoot> {
+    // The inverse equation is formed in homogeneous coordinates:
+    // `N_v(t) - value * W(t) == 0`. We retain represented algebraic roots even
+    // when there are two branch candidates for the same segment boundary. That
+    // keeps the data in Yap's exact-computation model: exact proposal first,
+    // topology only after later predicates can order and split the branches.
+    let q0 = rational_conic_varying_coefficient(curve.start(), &Real::one(), axis, &fixed);
+    let q1 =
+        rational_conic_varying_coefficient(curve.control(), curve.control_weight(), axis, &fixed);
+    let q2 = rational_conic_varying_coefficient(curve.end(), &Real::one(), axis, &fixed);
+    let a = q0.clone() - Real::from(2) * q1.clone() + q2.clone();
+    let b = Real::from(2) * (q1 - q0.clone());
+    let c = q0;
+    let zero = Real::zero();
+    let a_zero = compare_reals_with_policy(&a, &zero, policy).value();
+    let b_zero = compare_reals_with_policy(&b, &zero, policy).value();
+    let c_zero = compare_reals_with_policy(&c, &zero, policy).value();
+    if matches!(a_zero, Some(Ordering::Equal))
+        && matches!(b_zero, Some(Ordering::Equal))
+        && matches!(c_zero, Some(Ordering::Equal))
+    {
+        return Vec::new();
+    }
+    if a_zero.is_none() || b_zero.is_none() || c_zero.is_none() {
+        return Vec::new();
+    }
+
+    let mut problem = Problem::default();
+    let parameter = problem.add_variable("line_conic_inverse_parameter", Real::zero());
+    let t = Expr::symbol(parameter.into(), "line_conic_inverse_parameter");
+    let residual = Expr::real(c) + Expr::real(b) * t.clone() + Expr::real(a) * t.clone().powi(2);
+    problem.add_constraint(Constraint::equality(
+        "line rational quadratic inverse root",
+        residual,
+    ));
+    let prepared = PreparedProblem::new(&problem);
+    represent_univariate_algebraic_roots(
+        &prepared,
+        RootIsolationConfig {
+            policy,
+            max_interval_width: Some((Real::one() / Real::from(1024)).expect("nonzero width")),
+            max_refinement_steps: 64,
+            ..RootIsolationConfig::default()
+        },
+    )
+    .into_iter()
+    .flat_map(|report| report.roots)
+    .map(|root| LineRationalQuadraticBezierAlgebraicInverseRoot {
+        parameter_domain: classify_rational_quadratic_inverse_root_domain(&root, policy),
+        parameter: root,
+    })
+    .collect()
 }
 
 fn rational_quadratic_hodograph_numerator_controls(
