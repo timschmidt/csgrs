@@ -8119,12 +8119,21 @@ fn arrange_coplanar_simple_surface_point_touch_difference(
                 "coplanar nonconvex source point-touch side-cutter difference",
             )?
             .1
-        } else {
+        } else if let Some(polygons) =
             materialize_simple_source_side_cutter_point_touch_difference_consuming_holes(
                 component,
                 &removed,
                 &holes,
                 "coplanar nonconvex source point-touch consumed-hole side-cutter difference",
+            )
+        {
+            polygons
+        } else {
+            materialize_simple_source_side_cutter_point_touch_difference_consuming_hole_contacts(
+                component,
+                &removed,
+                &holes,
+                "coplanar nonconvex source point-touch straddling-hole side-cutter difference",
             )?
         };
         emitted_branch = true;
@@ -11163,6 +11172,121 @@ fn materialize_simple_source_side_cutter_point_touch_difference_consuming_holes(
             return None;
         }
     }
+    for polygon in &mut cut_polygons {
+        orient_polygon_ccw(polygon, projection)?;
+        validate_projected_simple_loop(polygon, projection, label).ok()?;
+    }
+    validate_simple_component_loops_disjoint_allowing_vertex_point_touches(
+        &cut_polygons,
+        projection,
+        label,
+    )
+    .ok()?;
+    sort_polygons_for_replay(&mut cut_polygons, projection);
+    Some(cut_polygons)
+}
+
+/// Replay nonconvex source point branches that consume straddling holes.
+///
+/// This is the contact/overlap sibling of
+/// [`materialize_simple_source_side_cutter_point_touch_difference_consuming_holes`].
+/// A strict source hole that is not wholly inside one branch opening may still
+/// be deleted when exact topology proves that it positively overlaps or
+/// shares positive-length boundary with exactly one removed opening. That
+/// opening and its owned holes are first replayed as one exact removed-region
+/// union; only then does the branch-aware side-cutter replay stitch the final
+/// retained loops. Point-only hole contact is rejected because it does not
+/// name a 2D removed object, and holes touching multiple openings stay with
+/// the future planar-cell extractor.
+///
+/// The policy is Yap's retained-object discipline from "Towards Exact
+/// Geometric Computation," *Computational Geometry* 7.1-2 (1997): omitting a
+/// ring requires exact object ownership, not a sampled witness. The
+/// opening/hole unions and retained branch loops use the same
+/// Weiler-Atherton retained-fragment replay cited by
+/// [`materialize_simple_polygon_union_group`] and
+/// [`materialize_simple_source_side_cutter_point_touch_difference_core`],
+/// with segment contacts classified by the Guigue-Devillers
+/// orientation-predicate tests used throughout this module.
+#[cfg(feature = "exact-triangulation")]
+fn materialize_simple_source_side_cutter_point_touch_difference_consuming_hole_contacts(
+    component: &SimpleSurfaceComponent,
+    side_removed: &[Vec<Point3>],
+    holes: &[ComponentHoleCandidate],
+    label: &'static str,
+) -> Option<Vec<Vec<Point3>>> {
+    if side_removed.len() < 2 || holes.is_empty() {
+        return None;
+    }
+    let projection = component.projection;
+    let mut openings = Vec::with_capacity(side_removed.len());
+    for opening in side_removed {
+        let mut region = opening.clone();
+        orient_polygon_ccw(&mut region, projection)?;
+        region = simplify_projected_polygon(region, projection);
+        validate_projected_simple_loop(&region, projection, label).ok()?;
+        if !polygon_lies_in_closed_simple_polygon(&region, &component.boundary, projection)? {
+            return None;
+        }
+        if simple_boundary_attachment_count(&component.boundary, &region, projection)? == 0 {
+            return None;
+        }
+        openings.push(region);
+    }
+
+    let mut holes_by_opening = vec![Vec::<Vec<Point3>>::new(); openings.len()];
+    for hole in holes {
+        if !polygon_strictly_inside_simple_polygon(&hole.ring, &component.boundary, projection)? {
+            return None;
+        }
+        let mut hole_region = hole.ring.clone();
+        orient_polygon_ccw(&mut hole_region, projection)?;
+        hole_region = simplify_projected_polygon(hole_region, projection);
+        validate_projected_simple_loop(&hole_region, projection, label).ok()?;
+
+        let mut owner = None;
+        for (opening_index, opening) in openings.iter().enumerate() {
+            match simple_polygon_interaction(&hole_region, opening, projection)? {
+                SimplePolygonInteraction::Disjoint => {}
+                SimplePolygonInteraction::PointOnly => return None,
+                SimplePolygonInteraction::Connected => {
+                    if owner.replace(opening_index).is_some() {
+                        return None;
+                    }
+                }
+            }
+        }
+        holes_by_opening[owner?].push(hole_region);
+    }
+
+    let mut merged_openings = Vec::with_capacity(openings.len());
+    for (opening, owned_holes) in openings.into_iter().zip(holes_by_opening) {
+        let mut merged = if owned_holes.is_empty() {
+            opening
+        } else {
+            let mut group_polygons = Vec::with_capacity(1 + owned_holes.len());
+            group_polygons.push(opening);
+            group_polygons.extend(owned_holes);
+            let group = (0..group_polygons.len()).collect::<Vec<_>>();
+            materialize_simple_polygon_union_group(&group_polygons, &group, projection, label)?
+        };
+        orient_polygon_ccw(&mut merged, projection)?;
+        merged = simplify_projected_polygon(merged, projection);
+        validate_projected_simple_loop(&merged, projection, label).ok()?;
+        if !polygon_lies_in_closed_simple_polygon(&merged, &component.boundary, projection)? {
+            return None;
+        }
+        if simple_boundary_attachment_count(&component.boundary, &merged, projection)? == 0 {
+            return None;
+        }
+        merged_openings.push(merged);
+    }
+
+    let (_, mut cut_polygons) = materialize_simple_source_side_cutter_point_touch_difference_core(
+        component,
+        &merged_openings,
+        label,
+    )?;
     for polygon in &mut cut_polygons {
         orient_polygon_ccw(polygon, projection)?;
         validate_projected_simple_loop(polygon, projection, label).ok()?;

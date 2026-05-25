@@ -17590,6 +17590,117 @@ fn exact_coplanar_convex_surface_difference_materializes_multiple_component_cuts
         )
         .unwrap();
 
+    let nonconvex_point_branch_straddling_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            7, 9, 0, 9, 9, 0, 9, 11, 0, 7, 11, 0, //
+            -2, 4, 0, 8, 4, 0, 10, 10, 0, -2, 10, 0, //
+            10, 10, 0, 22, 10, 0, 22, 16, 0, 14, 16, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7, //
+            8, 9, 10, 8, 10, 11,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_multi_difference(
+            &nonconvex_point_branch_left,
+            &nonconvex_point_branch_straddling_hole,
+        )
+        .is_none()
+    );
+    assert!(
+        hypermesh::exact::arrange_coplanar_convex_surface_component_holed_difference(
+            &nonconvex_point_branch_left,
+            &nonconvex_point_branch_straddling_hole,
+        )
+        .is_none()
+    );
+    let nonconvex_straddling_branch =
+        hypermesh::exact::arrange_coplanar_surface_point_touch_difference(
+            &nonconvex_point_branch_left,
+            &nonconvex_point_branch_straddling_hole,
+        )
+        .expect("nonconvex point-touch side cutters should consume an owned straddling hole");
+    nonconvex_straddling_branch.validate().unwrap();
+    nonconvex_straddling_branch
+        .validate_difference_against_sources(
+            &nonconvex_point_branch_left,
+            &nonconvex_point_branch_straddling_hole,
+        )
+        .unwrap();
+    assert!(nonconvex_straddling_branch.polygons.len() >= 2);
+    assert!(nonconvex_straddling_branch.polygons.iter().all(|polygon| {
+        polygon.iter().all(|point| {
+            !(real_eq(&point.x, &ExactReal::from(7)) && real_eq(&point.y, &ExactReal::from(9)))
+        })
+    }));
+    let straddling_branch_loop_count = nonconvex_straddling_branch
+        .polygons
+        .iter()
+        .filter(|polygon| {
+            polygon.iter().any(|point| {
+                real_eq(&point.x, &ExactReal::from(10)) && real_eq(&point.y, &ExactReal::from(10))
+            })
+        })
+        .count();
+    assert!(
+        straddling_branch_loop_count >= 2,
+        "straddling-hole replay must preserve the exact point branch"
+    );
+    let mut stale_nonconvex_straddling = nonconvex_straddling_branch.clone();
+    stale_nonconvex_straddling.polygons.pop();
+    assert!(
+        stale_nonconvex_straddling
+            .validate_difference_against_sources(
+                &nonconvex_point_branch_left,
+                &nonconvex_point_branch_straddling_hole,
+            )
+            .is_err()
+    );
+    let nonconvex_straddling_preflight = hypermesh::exact::preflight_boolean_exact(
+        &nonconvex_point_branch_left,
+        &nonconvex_point_branch_straddling_hole,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    nonconvex_straddling_preflight.validate().unwrap();
+    nonconvex_straddling_preflight
+        .validate_against_sources(
+            &nonconvex_point_branch_left,
+            &nonconvex_point_branch_straddling_hole,
+        )
+        .unwrap();
+    assert_eq!(
+        nonconvex_straddling_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchDifference
+    );
+    let nonconvex_straddling_result = hypermesh::exact::boolean_exact(
+        &nonconvex_point_branch_left,
+        &nonconvex_point_branch_straddling_hole,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    nonconvex_straddling_result
+        .validate_operation_against_sources(
+            &nonconvex_point_branch_left,
+            &nonconvex_point_branch_straddling_hole,
+            hypermesh::exact::ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        nonconvex_straddling_result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut:
+                hypermesh::exact::ExactBooleanShortcutKind::CoplanarSurfacePointTouchDifference
+        }
+    );
+
     let multi_component_nonconvex_point_branch_left = ExactMesh::from_i64_triangles_with_policy(
         &[
             0, 0, 0, 20, 0, 0, 20, 20, 0, 12, 20, 0, 12, 12, 0, 8, 12, 0, 8, 20, 0, 0, 20, 0, 20,
