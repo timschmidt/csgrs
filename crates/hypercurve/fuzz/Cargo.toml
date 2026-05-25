@@ -73,10 +73,3 @@ path = "fuzz_targets/planar_pcurve.rs"
 test = false
 doc = false
 bench = false
-
-[[bin]]
-name = "analytic_surface"
-path = "fuzz_targets/analytic_surface.rs"
-test = false
-doc = false
-bench = false

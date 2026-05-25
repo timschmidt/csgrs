@@ -7,7 +7,6 @@
 //! Geometric Predicates" (*Discrete & Computational Geometry* 18(3), 305-363,
 //! 1997).
 
-mod analytic_surface;
 mod bbox;
 mod bezier;
 mod bezier_algebraic_image;
@@ -61,11 +60,6 @@ mod transform;
 #[cfg(feature = "triangulation")]
 mod triangulation;
 
-pub use analytic_surface::{
-    Axis3, Point3, RetainedAnalyticPoleRelation3, RetainedAnalyticSeamRelation3,
-    RetainedAnalyticSurfaceIdentity3, RetainedCylinderAxialDomain3, RetainedCylinderFrame3,
-    RetainedCylinderPointRelation3, RetainedCylinderPointReport3, SignedAxis3,
-};
 pub use bbox::Aabb2;
 pub use bezier::{BezierEndpoint, CubicBezier2, EndpointTangent2, QuadraticBezier2};
 pub use bezier_algebraic_image::{
