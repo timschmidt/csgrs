@@ -96,6 +96,30 @@ fn main() -> CurveResult<()> {
         elapsed / iterations
     );
 
+    let mut same_tangent_materializations = Vec::new();
+    for curve in [
+        QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0)),
+        QuadraticBezier2::new(p(2, 0), p(3, 1), p(4, 0)),
+        QuadraticBezier2::new(p(2, 0), p(4, 2), p(5, 0)),
+    ] {
+        same_tangent_materializations.push(decided(curve.split_at_parameters(&[], &policy)?));
+    }
+    let same_tangent_graph =
+        BezierArrangementGraph2::from_split_materializations(&same_tangent_materializations);
+    let started = Instant::now();
+    let mut same_tangent_total = 0_usize;
+    for _ in 0..iterations {
+        let traversal = decided(same_tangent_graph.traverse_with_tangent_order(&policy));
+        same_tangent_total += black_box(traversal.len());
+        let retained = decided(same_tangent_graph.traverse_retained_with_tangent_order(&policy));
+        same_tangent_total += black_box(retained.len());
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "bezier_arrangement_same_tangent_order: {iterations} iterations in {elapsed:?} ({:?}/iter), total={same_tangent_total}",
+        elapsed / iterations
+    );
+
     let algebraic_parameter =
         BezierParameter2::algebraic(decided(BezierAlgebraicParameter2::try_isolate(
             decided(BezierParameterPolynomial::try_new_power_basis(

@@ -381,6 +381,7 @@ struct EndpointData {
     end: Point2,
     start_tangent: TangentVector,
     end_tangent: TangentVector,
+    start_second_derivative: Option<TangentVector>,
 }
 
 #[derive(Clone, Debug)]
@@ -395,6 +396,7 @@ struct RetainedEndpointData {
     end: Option<RetainedEndpointKey>,
     start_tangent: Option<RetainedTangentVector>,
     end_tangent: Option<RetainedTangentVector>,
+    start_second_derivative: Option<TangentVector>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -434,6 +436,7 @@ fn retained_endpoint_data(
                 end: Some(RetainedEndpointKey::Exact(Box::new(data.end))),
                 start_tangent: Some(RetainedTangentVector::Native(Box::new(data.start_tangent))),
                 end_tangent: Some(RetainedTangentVector::Native(Box::new(data.end_tangent))),
+                start_second_derivative: data.start_second_derivative,
             })),
             Classification::Uncertain(reason) => Some(Classification::Uncertain(reason)),
         },
@@ -475,6 +478,7 @@ fn retained_endpoint_data(
                 end,
                 start_tangent,
                 end_tangent,
+                start_second_derivative: None,
             }))
         }
         BezierSplitFragment2::Unresolved { .. } => None,
@@ -744,7 +748,18 @@ fn choose_retained_tangent_successor(
             Classification::Decided(TurnOrdering::FirstBeforeSecond) => best = candidate,
             Classification::Decided(TurnOrdering::SecondBeforeFirst) => {}
             Classification::Decided(TurnOrdering::SameDirection) => {
-                return Classification::Uncertain(UncertaintyReason::Boundary);
+                match compare_retained_same_tangent_second_order(
+                    &endpoints[candidate],
+                    &endpoints[best],
+                    policy,
+                ) {
+                    Classification::Decided(TurnOrdering::FirstBeforeSecond) => best = candidate,
+                    Classification::Decided(TurnOrdering::SecondBeforeFirst) => {}
+                    Classification::Decided(TurnOrdering::SameDirection) => {
+                        return Classification::Uncertain(UncertaintyReason::Boundary);
+                    }
+                    Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+                }
             }
             Classification::Uncertain(reason) => return Classification::Uncertain(reason),
         }
@@ -826,7 +841,20 @@ fn choose_tangent_successor(
             Classification::Decided(TurnOrdering::FirstBeforeSecond) => best = candidate,
             Classification::Decided(TurnOrdering::SecondBeforeFirst) => {}
             Classification::Decided(TurnOrdering::SameDirection) => {
-                return Classification::Uncertain(UncertaintyReason::Boundary);
+                match compare_same_tangent_second_order(
+                    &endpoints[candidate].start_tangent,
+                    endpoints[candidate].start_second_derivative.as_ref(),
+                    &endpoints[best].start_tangent,
+                    endpoints[best].start_second_derivative.as_ref(),
+                    policy,
+                ) {
+                    Classification::Decided(TurnOrdering::FirstBeforeSecond) => best = candidate,
+                    Classification::Decided(TurnOrdering::SecondBeforeFirst) => {}
+                    Classification::Decided(TurnOrdering::SameDirection) => {
+                        return Classification::Uncertain(UncertaintyReason::Boundary);
+                    }
+                    Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+                }
             }
             Classification::Uncertain(reason) => return Classification::Uncertain(reason),
         }
@@ -915,6 +943,105 @@ fn compare_retained_turn_from_base(
     }
 }
 
+fn compare_retained_same_tangent_second_order(
+    first: &RetainedEndpointData,
+    second: &RetainedEndpointData,
+    policy: &CurvePolicy,
+) -> Classification<TurnOrdering> {
+    match (&first.start_tangent, &second.start_tangent) {
+        (
+            Some(RetainedTangentVector::Native(first_tangent)),
+            Some(RetainedTangentVector::Native(second_tangent)),
+        ) => compare_same_tangent_second_order(
+            first_tangent,
+            first.start_second_derivative.as_ref(),
+            second_tangent,
+            second.start_second_derivative.as_ref(),
+            policy,
+        ),
+        _ => Classification::Decided(TurnOrdering::SameDirection),
+    }
+}
+
+fn compare_same_tangent_second_order(
+    first_tangent: &TangentVector,
+    first_second_derivative: Option<&TangentVector>,
+    second_tangent: &TangentVector,
+    second_second_derivative: Option<&TangentVector>,
+    policy: &CurvePolicy,
+) -> Classification<TurnOrdering> {
+    let Some(first_second_derivative) = first_second_derivative else {
+        return Classification::Decided(TurnOrdering::SameDirection);
+    };
+    let Some(second_second_derivative) = second_second_derivative else {
+        return Classification::Decided(TurnOrdering::SameDirection);
+    };
+
+    // Same first-order directions need a higher-order local witness.  For
+    // polynomial Bezier arcs we compare signed curvature
+    // `cross(B'(0), B''(0)) / |B'(0)|^3` exactly by clearing denominators:
+    // the sign gives the side of departure and the squared, speed-scaled
+    // magnitude orders arcs departing on the same side.  This is the
+    // expression underlying standard parametric curvature, used here only as
+    // an exact predicate in Yap's EGC sense; see Yap, "Towards Exact Geometric
+    // Computation," Computational Geometry 7(1-2), 3-23 (1997).
+    let first_cross = cross_vectors(first_tangent, first_second_derivative);
+    let second_cross = cross_vectors(second_tangent, second_second_derivative);
+    let first_sign = match real_sign(&first_cross, policy) {
+        Some(sign) => sign,
+        None => return Classification::Uncertain(UncertaintyReason::RealSign),
+    };
+    let second_sign = match real_sign(&second_cross, policy) {
+        Some(sign) => sign,
+        None => return Classification::Uncertain(UncertaintyReason::RealSign),
+    };
+
+    match (first_sign, second_sign) {
+        (RealSign::Zero, _) | (_, RealSign::Zero) => {
+            Classification::Decided(TurnOrdering::SameDirection)
+        }
+        (RealSign::Positive, RealSign::Negative) => {
+            Classification::Decided(TurnOrdering::FirstBeforeSecond)
+        }
+        (RealSign::Negative, RealSign::Positive) => {
+            Classification::Decided(TurnOrdering::SecondBeforeFirst)
+        }
+        (RealSign::Positive, RealSign::Positive) | (RealSign::Negative, RealSign::Negative) => {
+            compare_same_side_curvature_magnitude(
+                first_tangent,
+                &first_cross,
+                second_tangent,
+                &second_cross,
+                policy,
+            )
+        }
+    }
+}
+
+fn compare_same_side_curvature_magnitude(
+    first_tangent: &TangentVector,
+    first_cross: &Real,
+    second_tangent: &TangentVector,
+    second_cross: &Real,
+    policy: &CurvePolicy,
+) -> Classification<TurnOrdering> {
+    let first_speed_sq = speed_squared(first_tangent);
+    let second_speed_sq = speed_squared(second_tangent);
+    if !definitely_nonzero(&first_speed_sq, policy) || !definitely_nonzero(&second_speed_sq, policy)
+    {
+        return Classification::Uncertain(UncertaintyReason::RealSign);
+    }
+
+    let first_scaled = first_cross * first_cross * cube(&second_speed_sq);
+    let second_scaled = second_cross * second_cross * cube(&first_speed_sq);
+    match real_sign(&(first_scaled - second_scaled), policy) {
+        Some(RealSign::Negative) => Classification::Decided(TurnOrdering::FirstBeforeSecond),
+        Some(RealSign::Positive) => Classification::Decided(TurnOrdering::SecondBeforeFirst),
+        Some(RealSign::Zero) => Classification::Decided(TurnOrdering::SameDirection),
+        None => Classification::Uncertain(UncertaintyReason::RealSign),
+    }
+}
+
 fn turn_half(base: &TangentVector, candidate: &TangentVector, policy: &CurvePolicy) -> Option<u8> {
     match real_sign(&cross_vectors(base, candidate), policy)? {
         RealSign::Positive => Some(0),
@@ -988,16 +1115,28 @@ impl BezierSubcurve2 {
 
     fn endpoint_data(&self, policy: &CurvePolicy) -> Classification<EndpointData> {
         let (start, end) = self.endpoints();
-        let (start_tangent, end_tangent) = match self {
-            Self::Quadratic(curve) => (
-                TangentVector::from_endpoint_tangent(curve.endpoint_tangent(BezierEndpoint::Start)),
-                TangentVector::from_endpoint_tangent(curve.endpoint_tangent(BezierEndpoint::End)),
-            ),
+        let (start_tangent, end_tangent, start_second_derivative) = match self {
+            Self::Quadratic(curve) => {
+                let second_derivative = quadratic_second_derivative(curve);
+                (
+                    TangentVector::from_endpoint_tangent(
+                        curve.endpoint_tangent(BezierEndpoint::Start),
+                    ),
+                    TangentVector::from_endpoint_tangent(
+                        curve.endpoint_tangent(BezierEndpoint::End),
+                    ),
+                    Some(second_derivative),
+                )
+            }
             Self::Cubic(curve) => (
                 TangentVector::from_endpoint_tangent(curve.endpoint_tangent(BezierEndpoint::Start)),
                 TangentVector::from_endpoint_tangent(curve.endpoint_tangent(BezierEndpoint::End)),
+                Some(cubic_start_second_derivative(curve)),
             ),
-            Self::RationalQuadratic(curve) => rational_endpoint_tangents(curve),
+            Self::RationalQuadratic(curve) => {
+                let (start_tangent, end_tangent) = rational_endpoint_tangents(curve);
+                (start_tangent, end_tangent, None)
+            }
         };
 
         if !start_tangent.is_nonzero(policy) || !end_tangent.is_nonzero(policy) {
@@ -1009,6 +1148,7 @@ impl BezierSubcurve2 {
             end,
             start_tangent,
             end_tangent,
+            start_second_derivative,
         })
     }
 }
@@ -1030,6 +1170,22 @@ impl TangentVector {
             }
         }
     }
+}
+
+fn quadratic_second_derivative(curve: &crate::QuadraticBezier2) -> TangentVector {
+    let two = Real::from(2_i8);
+    let dx = &two * ((curve.start().x() - (&two * curve.control().x())) + curve.end().x());
+    let dy = &two * ((curve.start().y() - (&two * curve.control().y())) + curve.end().y());
+    TangentVector { dx, dy }
+}
+
+fn cubic_start_second_derivative(curve: &crate::CubicBezier2) -> TangentVector {
+    let six = Real::from(6_i8);
+    let dx = &six
+        * ((curve.start().x() - (Real::from(2_i8) * curve.control1().x())) + curve.control2().x());
+    let dy = &six
+        * ((curve.start().y() - (Real::from(2_i8) * curve.control1().y())) + curve.control2().y());
+    TangentVector { dx, dy }
 }
 
 fn rational_endpoint_tangents(
@@ -1058,4 +1214,20 @@ fn cross_vectors(left: &TangentVector, right: &TangentVector) -> Real {
 
 fn dot_vectors(left: &TangentVector, right: &TangentVector) -> Real {
     (&left.dx * &right.dx) + (&left.dy * &right.dy)
+}
+
+fn speed_squared(vector: &TangentVector) -> Real {
+    (&vector.dx * &vector.dx) + (&vector.dy * &vector.dy)
+}
+
+fn cube(value: &Real) -> Real {
+    value * value * value
+}
+
+fn definitely_nonzero(value: &Real, policy: &CurvePolicy) -> bool {
+    match value.zero_status() {
+        ZeroStatus::NonZero => true,
+        ZeroStatus::Zero => false,
+        ZeroStatus::Unknown => is_zero(value, policy) == Some(false),
+    }
 }

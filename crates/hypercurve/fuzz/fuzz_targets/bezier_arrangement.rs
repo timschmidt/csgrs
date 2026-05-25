@@ -66,4 +66,22 @@ fuzz_target!(|data: &[u8]| {
         let _ = report.line_overlap_splits(&policy);
         let _ = report.linear_bezier_overlap_splits(&graph, &policy);
     });
+
+    let same_tangent_curves = [
+        QuadraticBezier2::new(point(128, 128), point(129, 128), point(130, 128)),
+        QuadraticBezier2::new(point(130, 128), point(131, 129), point(132, 128)),
+        QuadraticBezier2::new(point(130, 128), point(132, 130), point(133, 128)),
+    ];
+    let mut same_tangent_materializations = Vec::new();
+    for curve in same_tangent_curves {
+        if let Ok(Classification::Decided(materialization)) =
+            curve.split_at_parameters(&[], &policy)
+        {
+            same_tangent_materializations.push(materialization);
+        }
+    }
+    let same_tangent_graph =
+        BezierArrangementGraph2::from_split_materializations(&same_tangent_materializations);
+    let _ = same_tangent_graph.traverse_with_tangent_order(&policy);
+    let _ = same_tangent_graph.traverse_retained_with_tangent_order(&policy);
 });
