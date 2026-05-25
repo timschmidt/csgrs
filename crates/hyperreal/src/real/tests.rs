@@ -1953,9 +1953,7 @@ mod tests {
         let right = [Real::pi(), Real::e()];
         let expected = &left[1] * &right[1];
         let actual = Real::dot2_refs([&left[0], &left[1]], [&right[0], &right[1]]);
-        assert!(
-            (actual.to_f64_approx().unwrap() - expected.to_f64_approx().unwrap()).abs() < 1e-12
-        )
+        assert!((actual.to_f64_approx().unwrap() - expected.to_f64_approx().unwrap()).abs() < 1e-12)
     }
 
     #[test]
@@ -1969,8 +1967,7 @@ mod tests {
         let zero_minus = Computable::zero().atan2(Computable::one().negate());
         assert_eq!(zero_minus.approx(-30), Computable::pi().approx(-30));
         let plus_y = Computable::one().atan2(Computable::zero());
-        let half_pi = Computable::pi()
-            .multiply(Computable::one().add(Computable::one()).inverse());
+        let half_pi = Computable::pi().multiply(Computable::one().add(Computable::one()).inverse());
         assert_eq!(plus_y.approx(-30), half_pi.approx(-30));
     }
 

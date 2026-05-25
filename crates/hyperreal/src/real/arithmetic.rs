@@ -4135,9 +4135,7 @@ impl Real {
             let squared = base.clone().powi(int * BigInt::from(2_u8))?;
             let one = Rational::one();
             crate::trace_dispatch!("real", "tanh", "integer-log-collapse");
-            return Ok(Self::new(
-                (squared.clone() - one.clone()) / (squared + one),
-            ));
+            return Ok(Self::new((squared.clone() - one.clone()) / (squared + one)));
         }
         crate::trace_dispatch!("real", "tanh", "generic-exp-identity");
         let positive = self.clone().exp()?;
