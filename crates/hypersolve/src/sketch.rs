@@ -828,6 +828,26 @@ pub enum SketchConstraintKind {
         /// Second 3D line segment.
         b: SketchEntityHandle,
     },
+    /// Projected 3D line length equal to a retained 2D circle/arc radius.
+    ///
+    /// Lowering projects the retained 3D line direction into the workplane
+    /// `U/V` frame and emits `|dir_uv|^2 - radius^2 == 0` plus the workplane
+    /// unit-quaternion guard. This is the exact workplane counterpart of a
+    /// line-length/radius equality relation: it keeps the circle or arc
+    /// radius carrier visible and avoids manufacturing a helper 2D line or
+    /// accepting rounded projected lengths. The proof boundary follows Yap,
+    /// "Towards Exact Geometric Computation" (1997), while the workplane axes
+    /// use Shoemake, "Animating Rotation with Quaternion Curves" (1985). The
+    /// circle/arc radius vocabulary follows Bouma et al., "A Geometric
+    /// Constraint Solver" (1995).
+    ProjectedLineRadiusEquality3 {
+        /// Workplane entity that supplies origin and normal/quaternion.
+        workplane: SketchEntityHandle,
+        /// 3D line segment whose projected length is compared.
+        line: SketchEntityHandle,
+        /// Retained 2D circle or circular-arc entity supplying the radius.
+        curve: SketchEntityHandle,
+    },
     /// Bounded projected length for a 3D line segment in a retained workplane.
     ///
     /// Bounds are exact projected line lengths. Lowering validates
@@ -1934,6 +1954,8 @@ pub enum SketchResidualStrategy {
     BoundedSquaredProjectedPointLineDistance,
     /// Squared equality between 3D line lengths after exact workplane projection.
     SquaredProjectedLineLengthEquality,
+    /// Squared equality between projected 3D line length and retained circle/arc radius.
+    SquaredProjectedLineRadiusEquality,
     /// Squared projected 3D line-length inequality after exact workplane projection.
     BoundedSquaredProjectedLineLength,
     /// Squared ratio between 3D line lengths after exact workplane projection.
@@ -2125,6 +2147,8 @@ pub enum SketchResidualFormKind {
     BoundedSquaredProjectedPointLineDistancePolynomial,
     /// Squared projected line-length equality polynomial proof row.
     SquaredProjectedLineLengthEqualityPolynomial,
+    /// Squared projected line-length to retained circle/arc radius proof row.
+    SquaredProjectedLineRadiusEqualityPolynomial,
     /// Squared projected line-length range inequality proof row.
     BoundedSquaredProjectedLineLengthPolynomial,
     /// Squared projected line-length ratio polynomial proof row.
@@ -2887,6 +2911,17 @@ impl SketchSolveProblem {
         b: SketchEntityHandle,
     ) -> SketchConstraintHandle {
         distance::projected_equal_length_lines3(self, name, workplane, a, b).handle
+    }
+
+    /// Add a workplane-projected line-length to circle/arc radius equality.
+    pub fn add_projected_line_radius_equality3(
+        &mut self,
+        name: impl Into<String>,
+        workplane: SketchEntityHandle,
+        line: SketchEntityHandle,
+        curve: SketchEntityHandle,
+    ) -> SketchConstraintHandle {
+        distance::projected_line_radius_equality3(self, name, workplane, line, curve).handle
     }
 
     /// Add a bounded workplane-projected length constraint for one 3D line.
@@ -4743,6 +4778,49 @@ impl SketchSolveProblem {
                                 SketchResidualStrategy::SquaredProjectedLineLengthEquality,
                             ),
                             residual: parts.first_squared - parts.second_squared,
+                        },
+                    ],
+                    diagnostics,
+                }
+            }
+            SketchConstraintKind::ProjectedLineRadiusEquality3 {
+                workplane,
+                line,
+                curve,
+            } => {
+                let mut diagnostics = Vec::new();
+                let Some(parts) = self.projected_line_radius_equality_exprs(
+                    workplane,
+                    line,
+                    curve,
+                    constraint,
+                    &mut diagnostics,
+                ) else {
+                    return SketchResidualFormsReport {
+                        constraint: handle,
+                        status: SketchResidualFormsStatus::InvalidInputs,
+                        forms: Vec::new(),
+                        diagnostics,
+                    };
+                };
+                SketchResidualFormsReport {
+                    constraint: handle,
+                    status: SketchResidualFormsStatus::Generated,
+                    forms: vec![
+                        SketchResidualForm {
+                            kind: SketchResidualFormKind::WorkplaneUnitQuaternionPolynomial,
+                            role: SketchResidualFormRole::ExactProof,
+                            strategy: Some(SketchResidualStrategy::WorkplaneUnitQuaternion),
+                            residual: unit_quaternion_residual(&parts.quaternion),
+                        },
+                        SketchResidualForm {
+                            kind:
+                                SketchResidualFormKind::SquaredProjectedLineRadiusEqualityPolynomial,
+                            role: SketchResidualFormRole::ExactProof,
+                            strategy: Some(
+                                SketchResidualStrategy::SquaredProjectedLineRadiusEquality,
+                            ),
+                            residual: parts.line_squared - parts.radius.clone() * parts.radius,
                         },
                     ],
                     diagnostics,
@@ -7530,6 +7608,37 @@ impl SketchSolveProblem {
                     format!("{} projected line length equality", constraint.name),
                     parts.first_squared - parts.second_squared,
                     SketchResidualStrategy::SquaredProjectedLineLengthEquality,
+                );
+            }
+            SketchConstraintKind::ProjectedLineRadiusEquality3 {
+                workplane,
+                line,
+                curve,
+            } => {
+                // Compare a projected 3D line length directly to a retained
+                // circle/arc radius. The radius carrier is replayed as source
+                // geometry, while the workplane guard keeps the projected
+                // metric explicit instead of relying on rounded U/V lengths.
+                let Some(parts) = self
+                    .projected_line_radius_equality_exprs(workplane, line, curve, constraint, rows)
+                else {
+                    return;
+                };
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} workplane unit", constraint.name),
+                    unit_quaternion_residual(&parts.quaternion),
+                    SketchResidualStrategy::WorkplaneUnitQuaternion,
+                );
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} projected line radius equality", constraint.name),
+                    parts.line_squared - parts.radius.clone() * parts.radius,
+                    SketchResidualStrategy::SquaredProjectedLineRadiusEquality,
                 );
             }
             SketchConstraintKind::ProjectedLineLengthRange3 {
@@ -10755,6 +10864,24 @@ impl SketchSolveProblem {
         })
     }
 
+    fn projected_line_radius_equality_exprs(
+        &self,
+        workplane: SketchEntityHandle,
+        line: SketchEntityHandle,
+        curve: SketchEntityHandle,
+        constraint: &SketchConstraint,
+        rows: &mut Vec<SketchGeneratedRow>,
+    ) -> Option<ProjectedLineRadiusEqualityExprs> {
+        let quaternion = self.workplane_quaternion(workplane, constraint, rows)?;
+        let direction = self.line3_direction(line, constraint, rows)?;
+        let radius = self.circle_or_arc_radius_expr(curve, constraint, rows)?;
+        Some(ProjectedLineRadiusEqualityExprs {
+            line_squared: projected_direction_squared_length(&direction, &quaternion),
+            radius,
+            quaternion,
+        })
+    }
+
     fn projected_line_length_range_exprs(
         &self,
         workplane: SketchEntityHandle,
@@ -12230,6 +12357,13 @@ struct ProjectedLineLengthEqualityExprs {
     quaternion: [Expr; 4],
     first_squared: Expr,
     second_squared: Expr,
+}
+
+#[derive(Clone, Debug)]
+struct ProjectedLineRadiusEqualityExprs {
+    quaternion: [Expr; 4],
+    line_squared: Expr,
+    radius: Expr,
 }
 
 #[derive(Clone, Debug)]

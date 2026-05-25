@@ -1612,6 +1612,36 @@ pub mod distance {
         }
     }
 
+    /// Add a retained workplane-projected line-length to circle/arc radius relation.
+    ///
+    /// Lowering projects the retained 3D line direction into the workplane
+    /// `U/V` frame and replays `|dir_uv|^2 - radius^2 == 0` beside the
+    /// unit-quaternion guard. Yap (1997) keeps both the workplane proof and
+    /// the radius carrier explicit; Shoemake (1985) supplies the quaternion
+    /// frame, and Bouma et al. (1995) motivates preserving line/radius
+    /// equality as a source relation instead of hiding it behind helper
+    /// geometry.
+    pub fn projected_line_radius_equality3(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        workplane: SketchEntityHandle,
+        line: SketchEntityHandle,
+        curve: SketchEntityHandle,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::ProjectedLineRadiusEquality3 {
+            workplane,
+            line,
+            curve,
+        };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Distance,
+            strategy: SketchResidualStrategy::SquaredProjectedLineRadiusEquality,
+            kind,
+        }
+    }
+
     /// Add a bounded retained workplane-projected line-length relation.
     ///
     /// Bounds are exact projected line lengths. Lowering validates

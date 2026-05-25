@@ -4244,6 +4244,85 @@ proptest! {
     }
 
     #[test]
+    fn sketch_projected_line_radius_equality_identity_workplane_matches_arc_radius(
+        sx in -12_i16..=12,
+        sy in -12_i16..=12,
+        radius in 1_i16..=12,
+        sign in 0_u8..=1,
+        z0 in -12_i16..=12,
+        z1 in -12_i16..=12,
+        cx in -8_i16..=8,
+        cy in -8_i16..=8,
+        bad_delta in 1_i16..=4,
+    ) {
+        let sx = i64::from(sx);
+        let sy = i64::from(sy);
+        let radius = i64::from(radius);
+        let ux = if sign == 0 { radius } else { -radius };
+        let z0 = i64::from(z0);
+        let z1 = i64::from(z1);
+        let cx = i64::from(cx);
+        let cy = i64::from(cy);
+        let bad_delta = i64::from(bad_delta);
+        let mut sketch = SketchSolveProblem::new();
+        let origin = sketch.add_point3d("origin", Real::from(0), Real::from(0), Real::from(0));
+        let normal = sketch.add_normal3d("normal", Real::from(1), Real::from(0), Real::from(0), Real::from(0));
+        let workplane = sketch.add_workplane("workplane", origin, normal);
+        let start3 = sketch.add_point3d("start3", Real::from(sx), Real::from(sy), Real::from(z0));
+        let end3 = sketch.add_point3d("end3", Real::from(sx + ux), Real::from(sy), Real::from(z1));
+        let line = sketch.add_line_segment3("line", start3, end3);
+        let center = sketch.add_point2d("center", Real::from(cx), Real::from(cy));
+        let start = sketch.add_point2d("start", Real::from(cx + radius), Real::from(cy));
+        let end = sketch.add_point2d("end", Real::from(cx), Real::from(cy + radius));
+        let radius_entity = sketch.add_distance("radius", Real::from(radius));
+        let bad_radius = sketch.add_distance("bad radius", Real::from(radius + bad_delta));
+        let arc = sketch.add_arc_of_circle2("arc", center, start, end, radius_entity);
+        let bad_circle = sketch.add_circle2("bad circle", center, bad_radius);
+        let handle =
+            sketch.add_projected_line_radius_equality3("projected line radius", workplane, line, arc);
+        sketch.add_projected_line_radius_equality3(
+            "bad projected line radius",
+            workplane,
+            line,
+            bad_circle,
+        );
+
+        let lowered = sketch.lower_to_problem();
+        let certification = certify_candidate(
+            &PreparedProblem::new(&lowered.problem),
+            &context_from_problem(&lowered.problem),
+        );
+        let forms = sketch.residual_forms_for_constraint(handle);
+
+        prop_assert_eq!(lowered.rows[0].strategy, Some(SketchResidualStrategy::WorkplaneUnitQuaternion));
+        prop_assert_eq!(
+            lowered.rows[1].strategy,
+            Some(SketchResidualStrategy::SquaredProjectedLineRadiusEquality)
+        );
+        prop_assert_eq!(
+            lowered.rows[3].strategy,
+            Some(SketchResidualStrategy::SquaredProjectedLineRadiusEquality)
+        );
+        let unit_zero = matches!(
+            certification.rows[0].status,
+            CertifiedCandidateStatus::CertifiedZero { .. }
+        );
+        let valid_zero = matches!(
+            certification.rows[1].status,
+            CertifiedCandidateStatus::CertifiedZero { .. }
+        );
+        prop_assert!(unit_zero);
+        prop_assert!(valid_zero);
+        prop_assert!(!certification.all_satisfied());
+        prop_assert_eq!(forms.status, SketchResidualFormsStatus::Generated);
+        prop_assert_eq!(forms.forms.len(), 2);
+        prop_assert_eq!(
+            forms.forms[1].kind,
+            SketchResidualFormKind::SquaredProjectedLineRadiusEqualityPolynomial
+        );
+    }
+
+    #[test]
     fn sketch_projected_line_length_range_identity_workplane_matches_horizontal_bounds(
         lx in -12_i16..=12,
         ly in -12_i16..=12,
