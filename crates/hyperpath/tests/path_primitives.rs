@@ -14,9 +14,9 @@ use hyperpath::{
     MeanderPlacementCandidate, NetId, OffsetSide, PathProvenance, PathSourceFormat,
     PcbBoardOutline, PcbCardinalRectPad, PcbCircularBoardOutline, PcbCircularPad,
     PcbConvexBoardOutline, PcbConvexPad, PcbObroundPad, PcbOrientedRectPad,
-    PcbOrthogonalBoardOutline, PcbRectPad, PcbRoundedRectPad, PcbTrace, PcbViaStack,
-    PocketLinkGraphError, PocketPlanError, PocketPlanStopReason, PocketRingSide, QuadraticBezier,
-    RationalQuadraticBezier, RationalQuadraticBezierError, RectangularPocket,
+    PcbOrthogonalBoardOutline, PcbOrthogonalPad, PcbRectPad, PcbRoundedRectPad, PcbTrace,
+    PcbViaStack, PocketLinkGraphError, PocketPlanError, PocketPlanStopReason, PocketRingSide,
+    QuadraticBezier, RationalQuadraticBezier, RationalQuadraticBezierError, RectangularPocket,
     RectangularRegionRelation, RouteCertificationError, SegmentParameterOrder, SourceLengthUnit,
     SpecctraGridKeepoutRecord, SpecctraGridKeepoutShape, SpecctraGridTraceRecord,
     SpecctraGridViaRecord, SpecctraImportError, SpecctraLayerAlias, SpecctraNetAlias,
@@ -39,14 +39,16 @@ use hyperpath::{
     certify_tangent_alignment_candidate, check_cardinal_rect_pad_board_clearance,
     check_circular_pad_board_clearance, check_circular_pad_circular_board_clearance,
     check_convex_pad_board_clearance, check_obround_pad_board_clearance,
-    check_oriented_rect_pad_board_clearance, check_rect_pad_board_clearance,
-    check_rounded_rect_pad_board_clearance, check_trace_board_clearance,
-    check_trace_cardinal_rect_pad_clearance, check_trace_circular_board_clearance,
-    check_trace_clearance, check_trace_convex_board_clearance, check_trace_convex_pad_clearance,
+    check_oriented_rect_pad_board_clearance, check_orthogonal_pad_board_clearance,
+    check_rect_pad_board_clearance, check_rounded_rect_pad_board_clearance,
+    check_trace_board_clearance, check_trace_cardinal_rect_pad_clearance,
+    check_trace_circular_board_clearance, check_trace_clearance,
+    check_trace_convex_board_clearance, check_trace_convex_pad_clearance,
     check_trace_obround_pad_clearance, check_trace_oriented_rect_pad_clearance,
-    check_trace_orthogonal_board_clearance, check_trace_pad_clearance,
-    check_trace_rect_pad_clearance, check_trace_rounded_rect_pad_clearance,
-    check_trace_via_clearance, check_trace_via_drill_clearance, check_via_drill_board_clearance,
+    check_trace_orthogonal_board_clearance, check_trace_orthogonal_pad_clearance,
+    check_trace_pad_clearance, check_trace_rect_pad_clearance,
+    check_trace_rounded_rect_pad_clearance, check_trace_via_clearance,
+    check_trace_via_drill_clearance, check_via_drill_board_clearance,
     classify_meander_candidate_slots, classify_meander_candidate_slots_with_keepouts,
     classify_meander_placement_slots, classify_meander_placement_slots_with_keepouts,
     classify_tangent_alignment, classify_tangent_chain, classify_tangent_join,
@@ -2443,6 +2445,95 @@ fn pcb_trace_convex_pad_clearance_reports_overlap_and_not_applicable() {
 }
 
 #[test]
+fn pcb_orthogonal_pad_validates_nonconvex_simple_footprints() {
+    let pad = PcbOrthogonalPad::new(
+        NetId(2),
+        TraceLayer(0),
+        vec![p(0, 0), p(6, 0), p(6, 2), p(2, 2), p(2, 6), p(0, 6)],
+    )
+    .unwrap();
+    assert_eq!(pad.vertices().len(), 6);
+    assert_eq!(pad.orientation(), BoardContourOrientation::CounterClockwise);
+    assert!(pad.facts().exact.all_exact_rational);
+
+    let diagonal = PcbOrthogonalPad::new(
+        NetId(2),
+        TraceLayer(0),
+        vec![p(0, 0), p(4, 2), p(4, 4), p(0, 4)],
+    )
+    .expect_err("diagonal orthogonal pad edge must be rejected");
+    assert_eq!(diagonal, BoardContourError::NonOrthogonal);
+
+    let bowtie = PcbOrthogonalPad::new(
+        NetId(2),
+        TraceLayer(0),
+        vec![
+            p(0, 0),
+            p(4, 0),
+            p(4, 4),
+            p(2, 4),
+            p(2, -1),
+            p(1, -1),
+            p(1, 4),
+            p(0, 4),
+        ],
+    )
+    .expect_err("self-intersecting orthogonal pad must be rejected");
+    assert_eq!(bowtie, BoardContourError::SelfIntersecting);
+}
+
+#[test]
+fn pcb_trace_orthogonal_pad_clearance_handles_nonconvex_notches_exactly() {
+    let pad = PcbOrthogonalPad::new(
+        NetId(2),
+        TraceLayer(0),
+        vec![p(0, 0), p(6, 0), p(6, 2), p(2, 2), p(2, 6), p(0, 6)],
+    )
+    .unwrap();
+    let through_copper = trace(1, 0, p(1, 1), p(5, 1), 1);
+    let through_notch = trace(1, 0, p(3, 4), p(6, 4), 1);
+    let near_notch_wall = trace(1, 0, p(3, 3), p(6, 3), 1);
+
+    assert_eq!(
+        check_trace_orthogonal_pad_clearance(
+            &through_copper,
+            &pad,
+            &r(0),
+            PredicatePolicy::default()
+        )
+        .status,
+        ClearanceStatus::NoShortViolation
+    );
+    assert_eq!(
+        check_trace_orthogonal_pad_clearance(
+            &through_notch,
+            &pad,
+            &r(0),
+            PredicatePolicy::default()
+        )
+        .status,
+        ClearanceStatus::CertifiedClear
+    );
+    assert_eq!(
+        check_trace_orthogonal_pad_clearance(
+            &near_notch_wall,
+            &pad,
+            &r(2),
+            PredicatePolicy::default()
+        )
+        .status,
+        ClearanceStatus::ClearanceViolation
+    );
+
+    let same_net = trace(2, 0, p(1, 1), p(5, 1), 1);
+    assert_eq!(
+        check_trace_orthogonal_pad_clearance(&same_net, &pad, &r(0), PredicatePolicy::default())
+            .status,
+        ClearanceStatus::NotApplicable
+    );
+}
+
+#[test]
 fn pcb_rect_pad_rejects_negative_extent() {
     let error = PcbRectPad::new(NetId(1), TraceLayer(0), p(0, 0), r(-1), r(1))
         .expect_err("negative rectangular pad width must be rejected");
@@ -3045,6 +3136,27 @@ fn pcb_convex_pad_board_clearance_uses_vertex_extrema() {
         check_convex_pad_board_clearance(&pad, &board, &r(6), PredicatePolicy::default());
     assert_eq!(violation.status, ClearanceStatus::ClearanceViolation);
     assert_eq!(violation.copper_gap, Some(r(5)));
+}
+
+#[test]
+fn pcb_orthogonal_pad_board_clearance_uses_vertex_extrema() {
+    let board = PcbBoardOutline::new(p(-1, -1), p(10, 10)).unwrap();
+    let pad = PcbOrthogonalPad::new(
+        NetId(1),
+        TraceLayer(0),
+        vec![p(0, 0), p(6, 0), p(6, 2), p(2, 2), p(2, 6), p(0, 6)],
+    )
+    .unwrap();
+
+    let clear =
+        check_orthogonal_pad_board_clearance(&pad, &board, &r(1), PredicatePolicy::default());
+    assert_eq!(clear.status, ClearanceStatus::CertifiedClear);
+    assert_eq!(clear.copper_gap, Some(r(1)));
+
+    let violation =
+        check_orthogonal_pad_board_clearance(&pad, &board, &r(2), PredicatePolicy::default());
+    assert_eq!(violation.status, ClearanceStatus::ClearanceViolation);
+    assert_eq!(violation.copper_gap, Some(r(1)));
 }
 
 #[test]
@@ -7054,6 +7166,52 @@ proptest! {
             check_trace_convex_pad_clearance(
                 &trace,
                 &convex,
+                &r(i64::from(clearance)),
+                PredicatePolicy::default(),
+            ).status,
+            check_trace_rect_pad_clearance(
+                &trace,
+                &rect,
+                &r(i64::from(clearance)),
+                PredicatePolicy::default(),
+            ).status
+        );
+    }
+
+    #[test]
+    fn orthogonal_rect_pad_matches_rect_for_generated_trace_gaps(
+        pad_y in 5_i16..=40,
+        width in 2_i16..=30,
+        height in 2_i16..=30,
+        clearance in 0_i16..=20,
+    ) {
+        prop_assume!(width % 2 == 0);
+        prop_assume!(height % 2 == 0);
+        let trace = trace(1, 0, p(0, 0), p(40, 0), 2);
+        let rect = PcbRectPad::new(
+            NetId(2),
+            TraceLayer(0),
+            p(20, i64::from(pad_y)),
+            r(i64::from(width)),
+            r(i64::from(height)),
+        ).unwrap();
+        let half_width = i64::from(width) / 2;
+        let half_height = i64::from(height) / 2;
+        let orthogonal = PcbOrthogonalPad::new(
+            NetId(2),
+            TraceLayer(0),
+            vec![
+                p(20 - half_width, i64::from(pad_y) - half_height),
+                p(20 + half_width, i64::from(pad_y) - half_height),
+                p(20 + half_width, i64::from(pad_y) + half_height),
+                p(20 - half_width, i64::from(pad_y) + half_height),
+            ],
+        ).unwrap();
+
+        prop_assert_eq!(
+            check_trace_orthogonal_pad_clearance(
+                &trace,
+                &orthogonal,
                 &r(i64::from(clearance)),
                 PredicatePolicy::default(),
             ).status,

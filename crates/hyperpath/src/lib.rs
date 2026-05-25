@@ -20,6 +20,7 @@ pub mod pcb_circular_board;
 pub mod pcb_convex_pad;
 pub mod pcb_obround_pad;
 pub mod pcb_oriented;
+pub mod pcb_orthogonal_pad;
 pub mod provenance;
 pub mod routing;
 pub mod segment;
@@ -130,6 +131,10 @@ pub use pcb_obround_pad::{
 pub use pcb_oriented::{
     PcbOrientedRectPad, PcbOrientedRectPadFacts, check_oriented_rect_pad_board_clearance,
     check_trace_oriented_rect_pad_clearance,
+};
+pub use pcb_orthogonal_pad::{
+    PcbOrthogonalPad, PcbOrthogonalPadFacts, check_orthogonal_pad_board_clearance,
+    check_trace_orthogonal_pad_clearance,
 };
 pub use provenance::{
     ConstructionStamp, PathProvenance, PathSourceFormat, SourceGrid, SourceLengthUnit,

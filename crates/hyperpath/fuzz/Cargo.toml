@@ -103,3 +103,10 @@ path = "fuzz_targets/routing_keepout.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "pcb_orthogonal_pad"
+path = "fuzz_targets/pcb_orthogonal_pad.rs"
+test = false
+doc = false
+bench = false
