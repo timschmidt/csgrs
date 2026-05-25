@@ -26,6 +26,7 @@ use hyperreal::{Real, RealExactSetFacts};
 
 use crate::cam::{PocketPlanError, RectangularPocket};
 use crate::mesh_boolean::{PathMeshBooleanError, PathMeshBooleanOperation, RectangularPrism};
+use crate::mesh_boolean_handoff::PathExactMeshHandoffSource;
 use crate::mesh_boolean_holes::validate_strict_orthogonal_holes;
 use crate::mesh_boolean_polygon::{ConvexPolygonPrism, OrthogonalPolygonPrism};
 use crate::mesh_boolean_program::{
@@ -62,12 +63,41 @@ pub struct PcbLayerSlab {
     pub z_max: Real,
 }
 
+/// Retained PCB copper whose exact topology is owned by a `hypermesh` handoff.
+///
+/// This is the PCB-facing admission path for rounded pads, curved pads, and
+/// other copper producers that can emit exact closed-solid mesh packages before
+/// `hyperpath` has native arrangement carriers for their source geometry. The
+/// carrier retains net/layer semantics in `hyperpath`, while
+/// [`PathExactMeshHandoffSource`] retains the package replay evidence. Boolean
+/// lowering validates the handoff against the requested [`PcbLayerZModel`] so a
+/// source produced for one PCB layer cannot be silently reused on another.
+#[derive(Clone, Debug, PartialEq)]
+pub struct PcbExactCopperHandoffSource {
+    net: NetId,
+    layer: TraceLayer,
+    handoff: PathExactMeshHandoffSource,
+}
+
+/// Retained board clipping solid whose topology is owned by a `hypermesh` handoff.
+///
+/// Straight-edge outlines remain represented by [`PcbCopperBoardClipOutline`]
+/// variants above, but curved/non-orthogonal board producers can now hand over
+/// an exact closed-solid board slab without giving `hyperpath` mesh topology
+/// ownership. Replaying the board clip revalidates both the handoff package and
+/// the exact layer Z interval before the board slab is intersected with copper.
+#[derive(Clone, Debug, PartialEq)]
+pub struct PcbExactBoardHandoffOutline {
+    layer: TraceLayer,
+    handoff: PathExactMeshHandoffSource,
+}
+
 /// Retained PCB copper source supported by the exact mesh-boolean handoff.
 ///
 /// This enum keeps PCB semantics attached until the final lowering step. It is
-/// intentionally narrower than all PCB geometry: circular/rounded pads and
-/// holed copper pours need curved or arrangement evidence before they can
-/// become mesh-boolean operands without approximation.
+/// intentionally narrower than all PCB geometry: circular/rounded pads need
+/// native curved arrangements or an exact [`PcbExactCopperHandoffSource`]
+/// package before they can become mesh-boolean operands without approximation.
 #[derive(Clone, Debug, PartialEq)]
 pub enum PcbCopperBooleanSource {
     /// Axis-aligned retained trace.
@@ -80,6 +110,8 @@ pub enum PcbCopperBooleanSource {
     ConvexPolyPad(PcbConvexPolyPad),
     /// Simple orthogonal polygonal pad or copper zone.
     OrthogonalPolyPad(PcbOrthogonalPolyPad),
+    /// Exact closed-solid copper package produced outside `hyperpath`.
+    ExactHandoff(PcbExactCopperHandoffSource),
 }
 
 /// Exact PCB copper-union program for one net on one layer.
@@ -216,6 +248,8 @@ pub enum PcbCopperBoardClipOutline {
     Convex(PcbConvexBoardOutline),
     /// Simple orthogonal board outline, including rectilinear notches.
     Orthogonal(PcbOrthogonalBoardOutline),
+    /// Exact closed-solid board slab package produced outside `hyperpath`.
+    ExactHandoff(PcbExactBoardHandoffOutline),
 }
 
 /// Accepted evidence for the final copper/board intersection step.
@@ -388,6 +422,88 @@ impl PcbHoledOrthogonalCopperSource {
     }
 }
 
+impl PcbExactCopperHandoffSource {
+    /// Construct a retained PCB copper operand from an exact mesh handoff.
+    ///
+    /// The handoff itself has already proven closed-solid package readiness.
+    /// Net and layer are PCB semantics, so they are retained here and checked
+    /// by same-net/layer union builders before any mesh boolean is requested.
+    pub const fn new(net: NetId, layer: TraceLayer, handoff: PathExactMeshHandoffSource) -> Self {
+        Self {
+            net,
+            layer,
+            handoff,
+        }
+    }
+
+    /// Return source net.
+    pub const fn net(&self) -> NetId {
+        self.net
+    }
+
+    /// Return source layer.
+    pub const fn layer(&self) -> TraceLayer {
+        self.layer
+    }
+
+    /// Return the retained exact mesh handoff.
+    pub const fn handoff(&self) -> &PathExactMeshHandoffSource {
+        &self.handoff
+    }
+
+    /// Lower this exact handoff into a generic path mesh-boolean source.
+    ///
+    /// This validates both replayability and the exact PCB layer slab before
+    /// exposing the source to boolean code. That follows Yap, "Towards Exact
+    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997): cached
+    /// topology is admissible only while the retained exact object facts still
+    /// replay, and domain metadata cannot be inferred from a mesh by convention.
+    pub fn to_path_source(
+        &self,
+        z_model: &PcbLayerZModel,
+        policy: PredicatePolicy,
+    ) -> Result<PathMeshBooleanSource, PathMeshBooleanError> {
+        validate_handoff_layer_slab(&self.handoff, &z_model.slab_for_layer(self.layer), policy)?;
+        Ok(self.handoff.clone().into())
+    }
+}
+
+impl PcbExactBoardHandoffOutline {
+    /// Construct a retained board clipping slab from an exact mesh handoff.
+    ///
+    /// The layer is explicit because board clipping in this module intersects
+    /// copper with a layer-local board slab. Full stack-height board bodies can
+    /// be represented by producer crates, but this path admits only the exact
+    /// slab matching the copper layer being clipped.
+    pub const fn new(layer: TraceLayer, handoff: PathExactMeshHandoffSource) -> Self {
+        Self { layer, handoff }
+    }
+
+    /// Return the copper layer this board slab clips.
+    pub const fn layer(&self) -> TraceLayer {
+        self.layer
+    }
+
+    /// Return the retained exact mesh handoff.
+    pub const fn handoff(&self) -> &PathExactMeshHandoffSource {
+        &self.handoff
+    }
+
+    /// Lower this exact board handoff into a generic path mesh-boolean source.
+    pub fn to_path_source(
+        &self,
+        z_model: &PcbLayerZModel,
+        layer: TraceLayer,
+        policy: PredicatePolicy,
+    ) -> Result<PathMeshBooleanSource, PathMeshBooleanError> {
+        if self.layer != layer {
+            return Err(PathMeshBooleanError::MixedPcbLayers);
+        }
+        validate_handoff_layer_slab(&self.handoff, &z_model.slab_for_layer(layer), policy)?;
+        Ok(self.handoff.clone().into())
+    }
+}
+
 impl PcbHoledCopperBooleanProgramReport {
     /// Rebuild hole containment, source lowering, and boolean evidence.
     pub fn validate_replay(&self, policy: PredicatePolicy) -> Result<(), PathMeshBooleanError> {
@@ -548,6 +664,7 @@ impl PcbCopperBoardClipOutline {
                 policy,
             )?
             .into()),
+            Self::ExactHandoff(outline) => outline.to_path_source(z_model, layer, policy),
         }
     }
 }
@@ -626,6 +743,7 @@ impl PcbCopperBooleanSource {
             Self::CardinalRectPad(source) => source.net(),
             Self::ConvexPolyPad(source) => source.net(),
             Self::OrthogonalPolyPad(source) => source.net(),
+            Self::ExactHandoff(source) => source.net(),
         }
     }
 
@@ -637,6 +755,7 @@ impl PcbCopperBooleanSource {
             Self::CardinalRectPad(source) => source.layer(),
             Self::ConvexPolyPad(source) => source.layer(),
             Self::OrthogonalPolyPad(source) => source.layer(),
+            Self::ExactHandoff(source) => source.layer(),
         }
     }
 
@@ -658,6 +777,7 @@ impl PcbCopperBooleanSource {
             Self::OrthogonalPolyPad(source) => {
                 pcb_orthogonal_poly_pad_mesh_boolean_source(source, z_model, policy)
             }
+            Self::ExactHandoff(source) => source.to_path_source(z_model, policy),
         }
     }
 }
@@ -1111,6 +1231,29 @@ fn materialize_composite_copper_source(
         source,
         holed_program,
     })
+}
+
+fn validate_handoff_layer_slab(
+    handoff: &PathExactMeshHandoffSource,
+    slab: &PcbLayerSlab,
+    policy: PredicatePolicy,
+) -> Result<(), PathMeshBooleanError> {
+    let mesh = handoff.to_exact_mesh()?;
+    let Some(bounds) = &mesh.bounds().mesh else {
+        return Err(PathMeshBooleanError::MeshHandoff(
+            "PCB exact handoff source has no mesh bounds".into(),
+        ));
+    };
+    if compare_reals_with_policy(&bounds.min.z, &slab.z_min, policy).value()
+        != Some(Ordering::Equal)
+        || compare_reals_with_policy(&bounds.max.z, &slab.z_max, policy).value()
+            != Some(Ordering::Equal)
+    {
+        return Err(PathMeshBooleanError::MeshHandoff(
+            "PCB exact handoff source does not match the requested layer slab".into(),
+        ));
+    }
+    Ok(())
 }
 
 fn validate_holes_strictly_inside_outer(

@@ -8,9 +8,10 @@ use hyperpath::{
     OffsetSide, PathExactMeshHandoffSource, PathMeshBooleanOperation, PathMeshBooleanProgramStep,
     PathProvenance, PathSourceFormat, PcbBoardOutline, PcbCardinalRectPad, PcbCircularPad,
     PcbCompositeCopperBooleanSource, PcbConvexBoardOutline, PcbConvexPolyPad,
-    PcbCopperBoardClipOutline, PcbCopperBooleanSource, PcbHoledOrthogonalCopperSource,
-    PcbLayerZModel, PcbOrthogonalBoardOutline, PcbOrthogonalPolyPad, PcbRectPad, PcbTrace,
-    PcbViaStack, QuadraticBezier, RationalQuadraticBezier, RectangularPocket, SourceLengthUnit,
+    PcbCopperBoardClipOutline, PcbCopperBooleanSource, PcbExactBoardHandoffOutline,
+    PcbExactCopperHandoffSource, PcbHoledOrthogonalCopperSource, PcbLayerZModel,
+    PcbOrthogonalBoardOutline, PcbOrthogonalPolyPad, PcbRectPad, PcbTrace, PcbViaStack,
+    QuadraticBezier, RationalQuadraticBezier, RectangularPocket, SourceLengthUnit,
     SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraLayerAlias, SpecctraNetAlias,
     SweptLineSegment, TangentSpan, TraceLayer, ViaDrillIntent, boolean_path_mesh_program,
     boolean_path_mesh_sources, boolean_rectangular_prism_chain, boolean_rectangular_prisms,
@@ -976,6 +977,29 @@ fn path_predicates(c: &mut Criterion) {
             report.validate_replay(PredicatePolicy::default())
         })
     });
+    let pcb_exact_handoff = PathExactMeshHandoffSource::from_exact_mesh(
+        rectangular_prism_from_i64_bounds([0, 0, 0], [8_000, 6_000, 2], PredicatePolicy::default())
+            .unwrap()
+            .to_exact_mesh()
+            .unwrap(),
+    )
+    .unwrap();
+    let pcb_handoff_copper =
+        PcbExactCopperHandoffSource::new(NetId(7), TraceLayer(0), pcb_exact_handoff.clone());
+    c.bench_function("pcb_exact_handoff_copper_union_program_replay", |b| {
+        b.iter(|| {
+            let report = build_pcb_copper_union_program(
+                vec![
+                    PcbCopperBooleanSource::ExactHandoff(pcb_handoff_copper.clone()),
+                    PcbCopperBooleanSource::CardinalRectPad(pcb_pad.clone()),
+                ],
+                pcb_z.clone(),
+                PredicatePolicy::default(),
+            )
+            .unwrap();
+            report.validate_replay(PredicatePolicy::default())
+        })
+    });
     let pcb_polygon = PcbConvexPolyPad::new(
         NetId(7),
         TraceLayer(0),
@@ -1105,6 +1129,32 @@ fn path_predicates(c: &mut Criterion) {
                     ),
                 )],
                 PcbCopperBoardClipOutline::Orthogonal(pcb_board_clip_outline.clone()),
+                pcb_z.clone(),
+                PredicatePolicy::default(),
+            )
+            .unwrap();
+            report.validate_replay(PredicatePolicy::default())
+        })
+    });
+    c.bench_function("pcb_exact_handoff_board_clip_program_replay", |b| {
+        b.iter(|| {
+            let report = build_pcb_copper_board_clip_program(
+                vec![PcbCompositeCopperBooleanSource::Solid(
+                    PcbCopperBooleanSource::RectPad(
+                        PcbRectPad::new(
+                            NetId(7),
+                            TraceLayer(0),
+                            p(4_000, 3_000),
+                            r(8_000),
+                            r(6_000),
+                        )
+                        .unwrap(),
+                    ),
+                )],
+                PcbCopperBoardClipOutline::ExactHandoff(PcbExactBoardHandoffOutline::new(
+                    TraceLayer(0),
+                    pcb_exact_handoff.clone(),
+                )),
                 pcb_z.clone(),
                 PredicatePolicy::default(),
             )

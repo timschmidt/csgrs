@@ -6,9 +6,10 @@ use hyperpath::{
     CamRestMaterialCutter, CamSupportClipBoundary, CardinalRotation, LinePathSegment, NetId,
     PathExactMeshHandoffSource, PathMeshBooleanOperation, PathMeshBooleanProgramStep,
     PcbCardinalRectPad, PcbCompositeCopperBooleanSource, PcbConvexPolyPad,
-    PcbCopperBoardClipOutline, PcbCopperBooleanSource, PcbHoledOrthogonalCopperSource,
-    PcbLayerZModel, PcbOrthogonalBoardOutline, PcbOrthogonalPolyPad, PcbRectPad, PcbTrace,
-    SweptLineSegment, TraceLayer, boolean_path_mesh_program, boolean_path_mesh_sources,
+    PcbCopperBoardClipOutline, PcbCopperBooleanSource, PcbExactBoardHandoffOutline,
+    PcbExactCopperHandoffSource, PcbHoledOrthogonalCopperSource, PcbLayerZModel,
+    PcbOrthogonalBoardOutline, PcbOrthogonalPolyPad, PcbRectPad, PcbTrace, SweptLineSegment,
+    TraceLayer, boolean_path_mesh_program, boolean_path_mesh_sources,
     boolean_rectangular_prism_chain, boolean_rectangular_prisms,
     boolean_rectangular_prisms_with_boundary_policy, build_cam_infill_clip_program,
     build_cam_rest_material_program, build_cam_support_clip_program,
@@ -240,6 +241,74 @@ fuzz_target!(|data: &[u8]| {
                 ) {
                     program.validate_replay().unwrap();
                     program.steps.last().unwrap().result.validate().unwrap();
+                }
+            }
+        }
+
+        if data[15] & 2 == 2 {
+            let slab = z_model.slab_for_layer(layer);
+            let min = Point2::new(Real::from(coord(6)), Real::from(coord(7)));
+            let max = Point2::new(
+                min.x.clone() + Real::from(extent(9)),
+                min.y.clone() + Real::from(extent(10)),
+            );
+            if let Ok(pocket) = hyperpath::RectangularPocket::new(min.clone(), max.clone())
+                && let Ok(prism) = hyperpath::RectangularPrism::new(
+                    pocket,
+                    slab.z_min.clone(),
+                    slab.z_max.clone(),
+                    PredicatePolicy::default(),
+                )
+                && let Ok(handoff) =
+                    PathExactMeshHandoffSource::from_exact_mesh(prism.to_exact_mesh().unwrap())
+            {
+                let copper = PcbExactCopperHandoffSource::new(
+                    NetId(u32::from(data[16])),
+                    layer,
+                    handoff.clone(),
+                );
+                let pad = PcbRectPad::new(
+                    NetId(u32::from(data[16])),
+                    layer,
+                    Point2::new(max.x.clone(), max.y.clone()),
+                    Real::from(extent(11)),
+                    Real::from(extent(12)),
+                )
+                .unwrap();
+                if let Ok(report) = build_pcb_copper_union_program(
+                    vec![
+                        PcbCopperBooleanSource::ExactHandoff(copper),
+                        PcbCopperBooleanSource::RectPad(pad),
+                    ],
+                    z_model.clone(),
+                    PredicatePolicy::default(),
+                ) {
+                    report.validate_replay(PredicatePolicy::default()).unwrap();
+                    report.program.steps.last().unwrap().result.validate().unwrap();
+                }
+                if data[15] & 4 == 4 {
+                    let board = PcbCopperBoardClipOutline::ExactHandoff(
+                        PcbExactBoardHandoffOutline::new(layer, handoff),
+                    );
+                    let pad = PcbRectPad::new(
+                        NetId(u32::from(data[16])),
+                        layer,
+                        Point2::new(min.x.clone(), min.y.clone()),
+                        Real::from(extent(11)),
+                        Real::from(extent(12)),
+                    )
+                    .unwrap();
+                    if let Ok(report) = build_pcb_copper_board_clip_program(
+                        vec![PcbCompositeCopperBooleanSource::Solid(
+                            PcbCopperBooleanSource::RectPad(pad),
+                        )],
+                        board,
+                        z_model.clone(),
+                        PredicatePolicy::default(),
+                    ) {
+                        report.validate_replay(PredicatePolicy::default()).unwrap();
+                        report.clip_step.result.validate().unwrap();
+                    }
                 }
             }
         }

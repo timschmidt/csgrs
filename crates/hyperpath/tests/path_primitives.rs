@@ -14,16 +14,17 @@ use hyperpath::{
     PathMeshBooleanProgramStep, PathMeshBooleanSource, PathProvenance, PathSourceFormat,
     PcbBoardOutline, PcbCardinalRectPad, PcbCircularPad, PcbCompositeCopperBooleanSource,
     PcbConvexBoardOutline, PcbConvexPolyPad, PcbCopperBoardClipOutline, PcbCopperBooleanSource,
-    PcbHoledOrthogonalCopperSource, PcbLayerZModel, PcbOrthogonalBoardOutline,
-    PcbOrthogonalPolyPad, PcbRectPad, PcbTrace, PcbViaStack, PocketPlanError, PocketPlanStopReason,
-    QuadraticBezier, RationalQuadraticBezier, RationalQuadraticBezierError, RectangularInfillGraph,
-    RectangularPocket, RectangularRegionRelation, RouteCertificationError, SegmentParameterOrder,
-    SourceLengthUnit, SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraImportError,
-    SpecctraLayerAlias, SpecctraNetAlias, SpecctraParseError, SupportFootprintStatus,
-    SupportPlanError, SweptLineSegment, TangentAlignment, TangentJoinClass, TangentJoinReport,
-    TangentSpan, TraceLayer, ViaAnnularRingReport, ViaDrillIntent, ViaDrillPolicyClass,
-    ViaLayerSpanRelation, ViaLayerTransitionClass, boolean_path_mesh_program,
-    boolean_path_mesh_sources, boolean_rectangular_prism_chain, boolean_rectangular_prisms,
+    PcbExactBoardHandoffOutline, PcbExactCopperHandoffSource, PcbHoledOrthogonalCopperSource,
+    PcbLayerZModel, PcbOrthogonalBoardOutline, PcbOrthogonalPolyPad, PcbRectPad, PcbTrace,
+    PcbViaStack, PocketPlanError, PocketPlanStopReason, QuadraticBezier, RationalQuadraticBezier,
+    RationalQuadraticBezierError, RectangularInfillGraph, RectangularPocket,
+    RectangularRegionRelation, RouteCertificationError, SegmentParameterOrder, SourceLengthUnit,
+    SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraImportError, SpecctraLayerAlias,
+    SpecctraNetAlias, SpecctraParseError, SupportFootprintStatus, SupportPlanError,
+    SweptLineSegment, TangentAlignment, TangentJoinClass, TangentJoinReport, TangentSpan,
+    TraceLayer, ViaAnnularRingReport, ViaDrillIntent, ViaDrillPolicyClass, ViaLayerSpanRelation,
+    ViaLayerTransitionClass, boolean_path_mesh_program, boolean_path_mesh_sources,
+    boolean_rectangular_prism_chain, boolean_rectangular_prisms,
     boolean_rectangular_prisms_with_boundary_policy, build_alternating_detour_meander,
     build_cam_infill_clip_program, build_cam_rest_material_program, build_cam_support_clip_program,
     build_g1_join_problem, build_length_match_problem, build_multi_detour_meander,
@@ -455,6 +456,83 @@ fn pcb_mesh_boolean_sources_replay_trace_and_cardinal_pad_layers() {
     report.validate_replay().unwrap();
     assert!(report.mesh().unwrap().facts().mesh.closed_manifold);
     assert!(report.steps[0].result.validate().is_ok());
+}
+
+#[test]
+fn pcb_exact_copper_handoff_sources_replay_net_layer_and_slab_evidence() {
+    let z_model = PcbLayerZModel::new(r(0), r(10), r(2), PredicatePolicy::default()).unwrap();
+    let opaque_copper = PathExactMeshHandoffSource::from_exact_mesh(
+        prism([0, 0, 0], [8, 8, 2]).to_exact_mesh().unwrap(),
+    )
+    .unwrap();
+    let handoff_source = PcbExactCopperHandoffSource::new(NetId(7), TraceLayer(0), opaque_copper);
+    let pad = PcbRectPad::new(NetId(7), TraceLayer(0), p(7, 4), r(4), r(4)).unwrap();
+    let report = build_pcb_copper_union_program(
+        vec![
+            PcbCopperBooleanSource::ExactHandoff(handoff_source.clone()),
+            PcbCopperBooleanSource::RectPad(pad),
+        ],
+        z_model.clone(),
+        PredicatePolicy::default(),
+    )
+    .expect("opaque exact copper should union with same-net retained copper");
+    report.validate_replay(PredicatePolicy::default()).unwrap();
+    assert!(report.program.mesh().unwrap().facts().mesh.closed_manifold);
+
+    let wrong_stack = PcbLayerZModel::new(r(0), r(10), r(3), PredicatePolicy::default()).unwrap();
+    assert!(matches!(
+        handoff_source.to_path_source(&wrong_stack, PredicatePolicy::default()),
+        Err(PathMeshBooleanError::MeshHandoff(_))
+    ));
+
+    let wrong_layer =
+        PcbExactCopperHandoffSource::new(NetId(7), TraceLayer(1), handoff_source.handoff().clone());
+    assert!(matches!(
+        wrong_layer.to_path_source(&z_model, PredicatePolicy::default()),
+        Err(PathMeshBooleanError::MeshHandoff(_))
+    ));
+}
+
+#[test]
+fn pcb_exact_board_handoff_outline_clips_copper_and_rejects_layer_mismatch() {
+    let z_model = PcbLayerZModel::new(r(0), r(10), r(2), PredicatePolicy::default()).unwrap();
+    let copper = PcbRectPad::new(NetId(9), TraceLayer(0), p(5, 5), r(8), r(8)).unwrap();
+    let board_handoff = PathExactMeshHandoffSource::from_exact_mesh(
+        prism([2, 2, 0], [8, 8, 2]).to_exact_mesh().unwrap(),
+    )
+    .unwrap();
+    let board = PcbCopperBoardClipOutline::ExactHandoff(PcbExactBoardHandoffOutline::new(
+        TraceLayer(0),
+        board_handoff.clone(),
+    ));
+    let report = build_pcb_copper_board_clip_program(
+        vec![PcbCompositeCopperBooleanSource::Solid(
+            PcbCopperBooleanSource::RectPad(copper),
+        )],
+        board,
+        z_model.clone(),
+        PredicatePolicy::default(),
+    )
+    .expect("opaque exact board slab should clip retained copper");
+    report.validate_replay(PredicatePolicy::default()).unwrap();
+    assert!(report.mesh().facts().mesh.closed_manifold);
+
+    let wrong_layer_board = PcbCopperBoardClipOutline::ExactHandoff(
+        PcbExactBoardHandoffOutline::new(TraceLayer(1), board_handoff),
+    );
+    let copper = PcbRectPad::new(NetId(9), TraceLayer(0), p(5, 5), r(8), r(8)).unwrap();
+    assert_eq!(
+        build_pcb_copper_board_clip_program(
+            vec![PcbCompositeCopperBooleanSource::Solid(
+                PcbCopperBooleanSource::RectPad(copper),
+            )],
+            wrong_layer_board,
+            z_model,
+            PredicatePolicy::default(),
+        )
+        .unwrap_err(),
+        PathMeshBooleanError::MixedPcbLayers
+    );
 }
 
 #[test]
