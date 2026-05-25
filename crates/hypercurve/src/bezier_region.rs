@@ -19,8 +19,8 @@
 use hyperreal::Real;
 
 use crate::{
-    BezierArrangementGraph2, BezierArrangementTraversal2, BezierSplitFragment2, BezierSubcurve2,
-    Classification, CurveResult, UncertaintyReason,
+    BezierArrangementGraph2, BezierArrangementTraversal2, BezierRetainedLinearOverlapTraversal2,
+    BezierSplitFragment2, BezierSubcurve2, Classification, CurveResult, UncertaintyReason,
 };
 
 /// A closed native Bezier/conic boundary loop.
@@ -142,6 +142,25 @@ impl BezierRegion2 {
         }
 
         Classification::Decided(Self::new(loops))
+    }
+
+    /// Materializes a native region from a resolved linear-overlap traversal.
+    ///
+    /// This consumes the refined graph carried by
+    /// [`BezierRetainedLinearOverlapTraversal2`] instead of asking callers to
+    /// manually pair a derived traversal with the derived graph.  It remains a
+    /// native-region constructor: if any accepted refined fragment is only an
+    /// algebraic endpoint-image carrier, the result is explicit boundary
+    /// uncertainty.  The split/refine/traverse evidence stays separate from
+    /// region materialization in Yap's exact-computation sense; see Yap,
+    /// "Towards Exact Geometric Computation," *Computational Geometry*
+    /// 7(1-2), 3-23 (1997).  The positive-dimensional overlap is consumed
+    /// only after the Foster, Hormann, and Popa (2019) degeneracy is recorded
+    /// as a resolved span on the refinement report.
+    pub fn from_retained_linear_overlap_traversal(
+        traversal: &BezierRetainedLinearOverlapTraversal2,
+    ) -> Classification<Self> {
+        Self::from_arrangement_traversal(traversal.refinement().graph(), traversal.traversal())
     }
 
     /// Returns retained native boundary loops.
@@ -271,6 +290,24 @@ impl BezierRetainedRegion2 {
         }
 
         Classification::Decided(Self::new(loops))
+    }
+
+    /// Materializes retained region carriers from a resolved linear-overlap traversal.
+    ///
+    /// The input object already stores both proof stages: exact refinement at
+    /// certified linear-overlap endpoints and duplicate-subfragment traversal
+    /// over the refined graph.  This constructor keeps that graph/traversal
+    /// association intact while accepting both materialized native fragments
+    /// and algebraic endpoint-image carriers as retained exact objects.  It
+    /// still rejects unresolved carriers, open chains, and invalid refined
+    /// indices rather than sampling or repairing them.
+    pub fn from_retained_linear_overlap_traversal(
+        traversal: &BezierRetainedLinearOverlapTraversal2,
+    ) -> Classification<Self> {
+        Self::from_retained_arrangement_traversal(
+            traversal.refinement().graph(),
+            traversal.traversal(),
+        )
     }
 
     /// Returns retained boundary loops.

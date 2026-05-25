@@ -2,9 +2,10 @@ use std::hint::black_box;
 use std::time::Instant;
 
 use hypercurve::{
-    BezierArrangementGraph2, BezierParameter2, BezierRegion2, BezierRetainedCurveEnvelope2,
-    BezierRetainedEndpointEnvelope2, BezierRetainedRegion2, Classification, CurvePolicy,
-    CurveResult, Point2, QuadraticBezier2, Real,
+    BezierArrangementFragment2, BezierArrangementGraph2, BezierParameter2, BezierRegion2,
+    BezierRetainedCurveEnvelope2, BezierRetainedEndpointEnvelope2, BezierRetainedRegion2,
+    BezierSplitFragment2, BezierSubcurve2, Classification, CurvePolicy, CurveResult, Point2,
+    QuadraticBezier2, Real,
 };
 
 fn r(value: i32) -> Real {
@@ -24,6 +25,23 @@ fn decided<T>(classification: Classification<T>) -> T {
         Classification::Decided(value) => value,
         Classification::Uncertain(reason) => panic!("benchmark unexpectedly uncertain: {reason:?}"),
     }
+}
+
+fn line_fragment(
+    source_curve_index: usize,
+    start: Point2,
+    control: Point2,
+    end: Point2,
+) -> BezierArrangementFragment2 {
+    BezierArrangementFragment2::new(
+        source_curve_index,
+        0,
+        BezierSplitFragment2::Materialized {
+            start: BezierParameter2::Exact(r(0)),
+            end: BezierParameter2::Exact(r(1)),
+            curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(start, control, end)),
+        },
+    )
 }
 
 fn main() -> CurveResult<()> {
@@ -75,6 +93,33 @@ fn main() -> CurveResult<()> {
     let elapsed = started.elapsed();
     println!(
         "bezier_retained_region_materialization: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={retained_checksum}",
+        elapsed / iterations
+    );
+
+    let overlap_graph = BezierArrangementGraph2::new(vec![
+        line_fragment(0, p(0, 0), p(2, 0), p(4, 0)),
+        line_fragment(1, p(2, 0), p(3, 0), p(4, 0)),
+        line_fragment(2, p(4, 0), p(4, 1), p(4, 2)),
+        line_fragment(3, p(4, 2), p(2, 2), p(0, 2)),
+        line_fragment(4, p(0, 2), p(0, 1), p(0, 0)),
+    ]);
+    let overlap_traversal =
+        decided(overlap_graph.traverse_retained_splitting_linear_overlaps(&policy));
+    let started = Instant::now();
+    let mut overlap_checksum = 0_usize;
+    for _ in 0..iterations {
+        let native = decided(BezierRegion2::from_retained_linear_overlap_traversal(
+            &overlap_traversal,
+        ));
+        overlap_checksum ^= black_box(format!("{:?}", native.signed_area()?).len());
+        let retained = decided(
+            BezierRetainedRegion2::from_retained_linear_overlap_traversal(&overlap_traversal),
+        );
+        overlap_checksum ^= black_box(format!("{:?}", retained.signed_area()?).len());
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "bezier_resolved_overlap_region_materialization: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={overlap_checksum}",
         elapsed / iterations
     );
 

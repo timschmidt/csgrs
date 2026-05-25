@@ -62,4 +62,17 @@ fuzz_target!(|data: &[u8]| {
                 let _ = BezierRetainedCurveEnvelope2::from_region(&region, &policy);
             });
     }
+    if let Classification::Decided(traversal) =
+        graph.traverse_retained_splitting_linear_overlaps(&policy)
+    {
+        let _ = BezierRegion2::from_retained_linear_overlap_traversal(&traversal)
+            .map(|region| region.signed_area());
+        let _ = BezierRetainedRegion2::from_retained_linear_overlap_traversal(&traversal).map(
+            |region| {
+                let _ = region.signed_area();
+                let _ = BezierRetainedEndpointEnvelope2::from_region(&region, &policy);
+                let _ = BezierRetainedCurveEnvelope2::from_region(&region, &policy);
+            },
+        );
+    }
 });

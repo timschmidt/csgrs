@@ -51,6 +51,25 @@ fn line_midpoint_curve(start_x: i32, mid_x: i32, end_x: i32) -> QuadraticBezier2
     QuadraticBezier2::new(p(start_x, 0), p(mid_x, 0), p(end_x, 0))
 }
 
+fn materialized_line_fragment(
+    source_curve_index: usize,
+    start: Point2,
+    midpoint: Point2,
+    end: Point2,
+) -> BezierArrangementFragment2 {
+    BezierArrangementFragment2::new(
+        source_curve_index,
+        0,
+        BezierSplitFragment2::Materialized {
+            start: exact(r(0)),
+            end: exact(r(1)),
+            curve: hypercurve::BezierSubcurve2::Quadratic(QuadraticBezier2::new(
+                start, midpoint, end,
+            )),
+        },
+    )
+}
+
 #[test]
 fn closed_polynomial_arrangement_materializes_retained_region_with_exact_area() {
     let upper = QuadraticBezier2::new(p(0, 0), p(2, 4), p(4, 0));
@@ -116,6 +135,38 @@ fn conic_region_boundary_materializes_but_area_is_explicitly_unsupported() {
     assert_eq!(region.len(), 1);
     assert_eq!(region.boundary_loops()[0].len(), 4);
     assert_eq!(region.signed_area().unwrap(), None);
+}
+
+#[test]
+fn resolved_linear_overlap_traversal_materializes_native_and_retained_regions() {
+    let graph = BezierArrangementGraph2::new(vec![
+        materialized_line_fragment(0, p(0, 0), p(2, 0), p(4, 0)),
+        materialized_line_fragment(1, p(2, 0), p(3, 0), p(4, 0)),
+        materialized_line_fragment(2, p(4, 0), p(4, 1), p(4, 2)),
+        materialized_line_fragment(3, p(4, 2), p(2, 2), p(0, 2)),
+        materialized_line_fragment(4, p(0, 2), p(0, 1), p(0, 0)),
+    ]);
+
+    assert_eq!(
+        graph.traverse_retained_deduplicating_materialized_overlaps(&policy()),
+        Classification::Uncertain(UncertaintyReason::Boundary)
+    );
+    let traversal = decided(graph.traverse_retained_splitting_linear_overlaps(&policy()));
+    assert_eq!(traversal.refinement().resolved_overlaps().len(), 1);
+
+    let retained =
+        decided(BezierRetainedRegion2::from_retained_linear_overlap_traversal(&traversal));
+    assert_eq!(retained.len(), 1);
+    assert_eq!(retained.boundary_loops()[0].len(), 5);
+    assert!(!retained.has_algebraic_fragments());
+    assert_eq!(retained.signed_area().unwrap(), Some(r(8)));
+
+    let native = decided(BezierRegion2::from_retained_linear_overlap_traversal(
+        &traversal,
+    ));
+    assert_eq!(native.len(), 1);
+    assert_eq!(native.boundary_loops()[0].len(), 5);
+    assert_eq!(native.signed_area().unwrap(), Some(r(8)));
 }
 
 #[test]
