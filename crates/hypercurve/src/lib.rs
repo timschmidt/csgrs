@@ -55,7 +55,8 @@ pub use bbox::Aabb2;
 pub use bezier::{BezierEndpoint, CubicBezier2, EndpointTangent2, QuadraticBezier2};
 pub use bezier_algebraic_image::{
     BezierAlgebraicCoordinateImage, BezierAlgebraicImageStatus, BezierAlgebraicPointImage2,
-    BezierAlgebraicTangentImage2,
+    BezierAlgebraicRationalCoordinateImage, BezierAlgebraicTangentImage2,
+    RationalBezierAlgebraicPointImage2, RationalBezierAlgebraicTangentImage2,
 };
 pub use bezier_arrangement::{
     BezierArrangementChain2, BezierArrangementFragment2, BezierArrangementGraph2,

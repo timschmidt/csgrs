@@ -3,7 +3,7 @@ use std::time::Instant;
 
 use hypercurve::{
     BezierAlgebraicParameter2, BezierParameterInterval, BezierParameterPolynomial, Classification,
-    CurvePolicy, CurveResult, Point2, QuadraticBezier2, Real,
+    CurvePolicy, CurveResult, Point2, QuadraticBezier2, RationalQuadraticBezier2, Real,
 };
 
 fn r(value: i32) -> Real {
@@ -80,6 +80,28 @@ fn main() -> CurveResult<()> {
     let elapsed = started.elapsed();
     println!(
         "bezier_algebraic_point_tangent_image: {iterations} iterations in {elapsed:?} ({:?}/iter), transformed={transformed}",
+        elapsed / iterations
+    );
+
+    let conic = RationalQuadraticBezier2::try_new(
+        Point2::from_values(0, 0),
+        Point2::from_values(2, 4),
+        Point2::from_values(6, 0),
+        r(1),
+        r(2),
+        r(3),
+    )?;
+    let started = Instant::now();
+    let mut rational_transformed = 0_usize;
+    for _ in 0..iterations {
+        let point = conic.point_at_algebraic_parameter(&midpoint, &policy)?;
+        let tangent = conic.tangent_at_algebraic_parameter(&midpoint, &policy)?;
+        rational_transformed +=
+            black_box(point.x().is_some() as usize + tangent.dx().is_some() as usize);
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "rational_bezier_algebraic_point_tangent_image: {iterations} iterations in {elapsed:?} ({:?}/iter), transformed={rational_transformed}",
         elapsed / iterations
     );
 

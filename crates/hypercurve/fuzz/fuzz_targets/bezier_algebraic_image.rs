@@ -3,7 +3,7 @@
 use hypercurve::{
     BezierAlgebraicImageStatus, BezierAlgebraicParameter2, BezierParameterInterval,
     BezierParameterPolynomial, Classification, CurveError, CurvePolicy, Point2, QuadraticBezier2,
-    Real,
+    RationalQuadraticBezier2, Real,
 };
 use libfuzzer_sys::fuzz_target;
 
@@ -31,7 +31,8 @@ fuzz_target!(|data: &[u8]| {
         return;
     }
     let policy = CurvePolicy::certified();
-    let curve = if data[6] & 1 == 0 {
+    let mode = data[6] % 3;
+    let curve = if mode == 0 {
         QuadraticBezier2::new(
             Point2::from_values(control(data[0]), control(data[1])),
             Point2::from_values(control(data[2]), control(data[3])),
@@ -46,8 +47,17 @@ fuzz_target!(|data: &[u8]| {
             Point2::new(q(1, 16), r(2)),
         )
     };
+    let conic = RationalQuadraticBezier2::try_new(
+        Point2::from_values(control(data[0]), control(data[1])),
+        Point2::from_values(control(data[2]), control(data[3])),
+        Point2::from_values(control(data[4]), control(data[5])),
+        r(1),
+        if mode == 2 { r(-1) } else { r(2) },
+        r(1),
+    )
+    .ok();
 
-    let (polynomial_coefficients, start, end) = if data[6] & 1 == 0 {
+    let (polynomial_coefficients, start, end) = if mode == 0 || mode == 2 {
         (vec![r(-1), r(2)], q(2, 5), q(3, 5))
     } else {
         (vec![r(-1), r(0), r(2)], q(1, 2), r(1))
@@ -80,12 +90,36 @@ fuzz_target!(|data: &[u8]| {
         .tangent_at_algebraic_parameter(&parameter, &policy)
         .expect("valid algebraic parameter should produce a tangent report");
 
-    if data[6] & 1 == 0 {
+    if mode == 0 {
         assert_eq!(point.status(), BezierAlgebraicImageStatus::Transformed);
         assert_eq!(tangent.status(), BezierAlgebraicImageStatus::Transformed);
         assert!(point.x().unwrap().representation().is_some());
         assert!(point.y().unwrap().representation().is_some());
-    } else {
+    } else if mode == 1 {
         assert_eq!(point.status(), BezierAlgebraicImageStatus::XImageFailed);
+    }
+
+    if let Some(conic) = conic {
+        let rational_point = conic
+            .point_at_algebraic_parameter(&parameter, &policy)
+            .expect("valid algebraic parameter should produce a rational point report");
+        let rational_tangent = conic
+            .tangent_at_algebraic_parameter(&parameter, &policy)
+            .expect("valid algebraic parameter should produce a rational tangent report");
+        if mode == 2 {
+            assert_eq!(
+                rational_point.status(),
+                BezierAlgebraicImageStatus::XImageFailed
+            );
+        } else {
+            assert_eq!(
+                rational_point.status(),
+                BezierAlgebraicImageStatus::Transformed
+            );
+            assert_eq!(
+                rational_tangent.status(),
+                BezierAlgebraicImageStatus::Transformed
+            );
+        }
     }
 });
