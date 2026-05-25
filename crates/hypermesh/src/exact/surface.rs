@@ -6148,6 +6148,23 @@ pub fn arrange_coplanar_surface_component_difference(
     Some(arrangement)
 }
 
+/// Replay source-local coplanar difference loops for the multi-output artifacts.
+///
+/// This helper is the shared object builder for no-hole multi/component
+/// differences. Each left component is handled independently: it may be
+/// retained unchanged, dropped when exactly covered, opened by side cutters,
+/// split into several loops, or consume strict right-side holes through a
+/// certified removed opening. The source-local side-cutter case is important
+/// for multi-component operands: a component whose side cutters replay as one
+/// nonconvex loop can now be emitted beside unrelated retained source loops
+/// instead of being forced through the single-loop side-cutter artifact.
+///
+/// The policy follows Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997): this function promotes only loops
+/// produced by exact source-component replay and exact area/topology checks.
+/// Side-cutter openings use the Weiler-Atherton retained-fragment traversal
+/// from Weiler and Atherton, "Hidden Surface Removal Using Polygon Area
+/// Sorting," *SIGGRAPH Computer Graphics* 11.2 (1977).
 #[cfg(feature = "exact-triangulation")]
 fn coplanar_surface_difference_polygons(
     left: &ExactMesh,
@@ -6337,6 +6354,13 @@ fn coplanar_surface_difference_polygons(
                     "coplanar nonconvex multi-component side-cutter difference",
                 ) {
                     remnants
+                } else if let Some((_, opening)) = materialize_nonrectilinear_side_cutter_opening(
+                    component,
+                    &cutter_indices,
+                    &right_components,
+                    "coplanar source-local side-cutter opening difference",
+                ) {
+                    vec![opening]
                 } else {
                     materialize_component_multi_cutter_difference(
                         component,

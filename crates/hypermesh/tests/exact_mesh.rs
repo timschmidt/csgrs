@@ -16482,6 +16482,101 @@ fn exact_coplanar_convex_surface_difference_materializes_multiple_component_cuts
         }
     );
 
+    let multi_component_side_opening_left = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            0, 0, 0, 20, 0, 0, 20, 20, 0, 0, 20, 0, //
+            30, 0, 0, 40, 0, 0, 40, 10, 0, 30, 10, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_side_cutter_difference(
+            &multi_component_side_opening_left,
+            &side_opening_cutters,
+        )
+        .is_none()
+    );
+    let multi_component_side_opening = hypermesh::exact::arrange_coplanar_surface_multi_difference(
+        &multi_component_side_opening_left,
+        &side_opening_cutters,
+    )
+    .expect("source-local side-cutter opening should retain unrelated components");
+    multi_component_side_opening.validate().unwrap();
+    multi_component_side_opening
+        .validate_difference_against_sources(
+            &multi_component_side_opening_left,
+            &side_opening_cutters,
+        )
+        .unwrap();
+    assert_eq!(multi_component_side_opening.polygons.len(), 2);
+    assert!(multi_component_side_opening.polygons.iter().any(|polygon| {
+        polygon.iter().any(|point| {
+            real_eq(&point.x, &ExactReal::from(30)) && real_eq(&point.y, &ExactReal::from(0))
+        })
+    }));
+    assert!(multi_component_side_opening.polygons.iter().any(|polygon| {
+        polygon.iter().any(|point| {
+            real_eq(&point.x, &ExactReal::from(9)) && real_eq(&point.y, &ExactReal::from(4))
+        })
+    }));
+    let mut stale_multi_component_side_opening = multi_component_side_opening.clone();
+    stale_multi_component_side_opening
+        .polygons
+        .retain(|polygon| {
+            !polygon
+                .iter()
+                .any(|point| real_eq(&point.x, &ExactReal::from(30)))
+        });
+    assert!(
+        stale_multi_component_side_opening
+            .validate_difference_against_sources(
+                &multi_component_side_opening_left,
+                &side_opening_cutters,
+            )
+            .is_err()
+    );
+    let multi_component_side_opening_preflight = hypermesh::exact::preflight_boolean_exact(
+        &multi_component_side_opening_left,
+        &side_opening_cutters,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    multi_component_side_opening_preflight.validate().unwrap();
+    multi_component_side_opening_preflight
+        .validate_against_sources(&multi_component_side_opening_left, &side_opening_cutters)
+        .unwrap();
+    assert_eq!(
+        multi_component_side_opening_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceMultiDifference
+    );
+    let multi_component_side_opening_result = hypermesh::exact::boolean_exact(
+        &multi_component_side_opening_left,
+        &side_opening_cutters,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    multi_component_side_opening_result
+        .validate_operation_against_sources(
+            &multi_component_side_opening_left,
+            &side_opening_cutters,
+            hypermesh::exact::ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        multi_component_side_opening_result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::CoplanarSurfaceMultiDifference
+        }
+    );
+
     let component_opening_left = ExactMesh::from_i64_triangles_with_policy(
         &[
             0, 0, 0, 4, 0, 0, 4, 4, 0, 0, 4, 0, //

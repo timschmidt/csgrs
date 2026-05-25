@@ -3886,6 +3886,66 @@ fn exercise_side_cutter_opening_without_holes() {
         )
         .unwrap();
 
+    let multi_component_side_opening_left = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            0, 0, 0, 20, 0, 0, 20, 20, 0, 0, 20, 0, //
+            30, 0, 0, 40, 0, 0, 40, 10, 0, 30, 10, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("multi-component side-cutter opening source fixture must import");
+    assert!(
+        arrange_coplanar_surface_side_cutter_difference(
+            &multi_component_side_opening_left,
+            &cutters,
+        )
+        .is_none()
+    );
+    let multi_component_side_opening = arrange_coplanar_surface_multi_difference(
+        &multi_component_side_opening_left,
+        &cutters,
+    )
+    .expect("source-local side-cutter opening should emit multi-difference");
+    multi_component_side_opening.validate().unwrap();
+    multi_component_side_opening
+        .validate_difference_against_sources(&multi_component_side_opening_left, &cutters)
+        .unwrap();
+    assert_eq!(multi_component_side_opening.polygons.len(), 2);
+    let multi_component_side_opening_preflight = preflight_boolean_exact(
+        &multi_component_side_opening_left,
+        &cutters,
+        ExactBooleanOperation::Difference,
+    )
+    .expect("source-local side-cutter opening preflight should classify shortcut");
+    multi_component_side_opening_preflight.validate().unwrap();
+    multi_component_side_opening_preflight
+        .validate_against_sources(&multi_component_side_opening_left, &cutters)
+        .unwrap();
+    assert_eq!(
+        multi_component_side_opening_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarSurfaceMultiDifference
+    );
+    let multi_component_side_opening_result = hypermesh::exact::boolean_exact(
+        &multi_component_side_opening_left,
+        &cutters,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("source-local side-cutter opening boolean should materialize");
+    multi_component_side_opening_result
+        .validate_operation_against_sources(
+            &multi_component_side_opening_left,
+            &cutters,
+            ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+
     let point_only = ExactMesh::from_i64_triangles_with_policy(
         &[
             -2, 4, 0, 8, 4, 0, 10, 10, 0, -2, 10, 0, //
