@@ -218,10 +218,12 @@ pub use triangle_mesh::{
 };
 pub use triangle_prepared::{
     PreparedExactTriangle, PreparedExactTriangleSolidMesh, PreparedExactTriangleSolidMeshReport,
-    PreparedRayParityAttemptReport, PreparedTriangleSolidAxisSweepVoxelizationReport,
-    PreparedTriangleSolidCellReport, PreparedTriangleSolidComponentVoxelizationReport,
-    PreparedTriangleSolidVoxelizationReport, classify_cell_against_prepared_triangle_solid_mesh,
+    PreparedRayParityAttemptReport, PreparedTriangleSolidAdaptiveAxisSweepVoxelizationReport,
+    PreparedTriangleSolidAxisSweepVoxelizationReport, PreparedTriangleSolidCellReport,
+    PreparedTriangleSolidComponentVoxelizationReport, PreparedTriangleSolidVoxelizationReport,
+    classify_cell_against_prepared_triangle_solid_mesh,
     voxelize_prepared_exact_triangle_solid_mesh,
+    voxelize_prepared_exact_triangle_solid_mesh_by_adaptive_axis_sweeps,
     voxelize_prepared_exact_triangle_solid_mesh_by_axis_sweeps,
     voxelize_prepared_exact_triangle_solid_mesh_by_components,
     voxelize_prepared_exact_triangle_solid_mesh_by_verified_components,

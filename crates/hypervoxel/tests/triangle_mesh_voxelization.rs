@@ -7,6 +7,7 @@ use hypervoxel::{
     classify_cell_against_triangle_solid_mesh, classify_cell_against_triangle_surface_mesh,
     voxelize_exact_triangle_solid_mesh, voxelize_exact_triangle_surface_mesh,
     voxelize_prepared_exact_triangle_solid_mesh,
+    voxelize_prepared_exact_triangle_solid_mesh_by_adaptive_axis_sweeps,
     voxelize_prepared_exact_triangle_solid_mesh_by_axis_sweeps,
     voxelize_prepared_exact_triangle_solid_mesh_by_components,
     voxelize_prepared_exact_triangle_solid_mesh_by_verified_components,
@@ -478,6 +479,59 @@ fn axis_sweep_prepared_triangle_solid_batches_exact_row_parity() {
     assert!(lossy_report.aggregate.has_lossy);
     assert!(!lossy_report.exact_topology_ready());
     assert!(lossy_sweep.exact_axis_sweep_ready);
+}
+
+#[test]
+fn adaptive_axis_sweep_tries_three_exact_arrangement_axes_before_fallback() {
+    let frame = frame(3);
+    let solid = ExactTriangleSolidMesh::new(cube_surface(2, 6, &frame), true);
+    let prepared = PreparedExactTriangleSolidMesh::prepare(solid).unwrap();
+    let (per_cell_grid, per_cell_report, per_cell_schedule) =
+        voxelize_prepared_exact_triangle_solid_mesh(
+            frame.clone(),
+            &prepared,
+            MaterialRegionId(4),
+            VoxelizationPolicy::conservative_cover(),
+        )
+        .unwrap();
+    let (x_sweep_grid, _, x_sweep) = voxelize_prepared_exact_triangle_solid_mesh_by_axis_sweeps(
+        frame.clone(),
+        &prepared,
+        MaterialRegionId(4),
+        VoxelizationPolicy::conservative_cover(),
+    )
+    .unwrap();
+    let (adaptive_grid, adaptive_report, adaptive) =
+        voxelize_prepared_exact_triangle_solid_mesh_by_adaptive_axis_sweeps(
+            frame,
+            &prepared,
+            MaterialRegionId(4),
+            VoxelizationPolicy::conservative_cover(),
+        )
+        .unwrap();
+
+    assert_eq!(adaptive_grid, per_cell_grid);
+    assert_eq!(adaptive_grid, x_sweep_grid);
+    assert_eq!(
+        adaptive_report.predicate_certificates,
+        per_cell_report.predicate_certificates
+    );
+    assert_eq!(adaptive.boundary_cells, x_sweep.boundary_cells);
+    assert_eq!(adaptive.open_cells, x_sweep.open_cells);
+    assert_eq!(
+        adaptive.sweep_classified_cells + adaptive.fallback_cells,
+        adaptive.open_cells
+    );
+    assert!(adaptive.axis_sweep_rows.iter().all(|rows| *rows > 0));
+    assert!(adaptive.axis_certified_sweep_rows[0] > 0);
+    assert!(adaptive.axis_certified_sweep_rows.iter().sum::<usize>() > 0);
+    assert!(adaptive.fallback_cells <= x_sweep.fallback_cells);
+    assert!(adaptive.row_ray_triangle_tests <= per_cell_schedule.ray_triangle_tests);
+    assert_eq!(adaptive.fallback_unknown_cells, 0);
+    assert_eq!(adaptive.fallback_boundary_regression_cells, 0);
+    assert_eq!(adaptive.row_parameter_order_unknowns, 0);
+    assert!(adaptive.exact_adaptive_axis_sweep_ready);
+    assert!(adaptive_report.exact_topology_ready());
 }
 
 #[test]

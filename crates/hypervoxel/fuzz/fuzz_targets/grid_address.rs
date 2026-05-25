@@ -9,13 +9,13 @@ use hypervoxel::{
     AddressRay, AxisPermutationTransform, ChunkAddress, ChunkPageSummary, ChunkPagedSparseGrid, ChunkShape,
     CompressedStorageKind, CompressedStorageManifest, DeterministicSnapshot, ExactAabb3,
     ExactAffineTransform, ExactBox, ExactConvexHalfSpaceSet, ExactHalfSpace,
-    ContinuousFieldVoxelCell, ContinuousFieldVoxelManifest, FieldAggregateFacts,
-    FieldEnvelopeFacts, FieldSampleId, FieldSampleRecord, FreshnessStatus, GridAabbHandoff,
-    GridBasis, GridCoordinateSystem,
+    ExactTriangle3, ExactTriangleSolidMesh, ExactTriangleSurfaceMesh, ContinuousFieldVoxelCell,
+    ContinuousFieldVoxelManifest, FieldAggregateFacts, FieldEnvelopeFacts, FieldSampleId,
+    FieldSampleRecord, FreshnessStatus, GridAabbHandoff, GridBasis, GridCoordinateSystem,
     GridFrame, GridFrameManifest, GridHandedness, GridSource, ImageStackContainer,
     ImageStackManifest, LegacyAdapterKind, LegacyAdapterStatus, LengthUnit,
-    MaterialDisplayPalette, MaterialRegionId, MaterialRegionRecord, PreparedSparseVoxelGridExt,
-    PreparedVoxelGrid, PreviewExportFormat, PreviewExportManifest, PreviewScalarPolicy, ProcessGridArtifact,
+    MaterialDisplayPalette, MaterialRegionId, MaterialRegionRecord, PreparedExactTriangleSolidMesh,
+    PreparedSparseVoxelGridExt, PreparedVoxelGrid, PreviewExportFormat, PreviewExportManifest, PreviewScalarPolicy, ProcessGridArtifact,
     ProcessGridRole, ProcessStateId, ProcessStateRecord, QuantizationPolicy, QueryRegion, SignedAxis, SupportDirection,
     SparseVoxelGrid, SvoVoxelGrid, SweptVolumeProvenance, VoxelAddress, VoxelArtifactId, VoxelArtifactManifest,
     VoxelArtifactRole, VoxelCandidateKind, VoxelCandidateManifest, VoxelCell, VoxelChannelMapping, VoxelEditBatch,
@@ -35,7 +35,8 @@ use hypervoxel::{
     query_material_regions, report_material_region_metadata, sample_manhattan_distance_field,
     sample_signed_manhattan_distance_field, select_lod_cells, sweep_address_segment,
     trace_address_ray, voxel_neighbors6, voxelize_exact_box, voxelize_exact_convex_halfspace_set,
-    voxelize_exact_halfspace, VoxelAggregateFacts,
+    voxelize_exact_halfspace, voxelize_prepared_exact_triangle_solid_mesh,
+    voxelize_prepared_exact_triangle_solid_mesh_by_adaptive_axis_sweeps, VoxelAggregateFacts,
 };
 use libfuzzer_sys::fuzz_target;
 
@@ -201,6 +202,66 @@ fuzz_target!(|data: (u8, u64, u64, u64)| {
     assert!(report.predicate_certificates.is_fully_certified());
     assert!(report.exact_topology_ready());
     assert!(!report.source_replay_ready());
+    let triangle_frame = GridFrame::builder()
+        .depth(2)
+        .source(GridSource::new("fuzz:adaptive-axis-sweep", u64::from(depth_raw) + 17))
+        .build()
+        .unwrap();
+    let p = |x, y, z| [Real::from(x), Real::from(y), Real::from(z)];
+    let tri = |vertices| ExactTriangle3::new(vertices, Some(0));
+    let triangle_surface = ExactTriangleSurfaceMesh::new(
+        vec![
+            tri([p(1, 1, 1), p(1, 3, 3), p(1, 3, 1)]),
+            tri([p(1, 1, 1), p(1, 1, 3), p(1, 3, 3)]),
+            tri([p(3, 1, 1), p(3, 3, 1), p(3, 1, 3)]),
+            tri([p(3, 3, 1), p(3, 3, 3), p(3, 1, 3)]),
+            tri([p(1, 1, 1), p(3, 1, 1), p(1, 1, 3)]),
+            tri([p(3, 1, 1), p(3, 1, 3), p(1, 1, 3)]),
+            tri([p(1, 3, 1), p(1, 3, 3), p(3, 3, 1)]),
+            tri([p(3, 3, 1), p(1, 3, 3), p(3, 3, 3)]),
+            tri([p(1, 1, 1), p(1, 3, 1), p(3, 1, 1)]),
+            tri([p(3, 1, 1), p(1, 3, 1), p(3, 3, 1)]),
+            tri([p(1, 1, 3), p(3, 1, 3), p(1, 3, 3)]),
+            tri([p(3, 1, 3), p(3, 3, 3), p(1, 3, 3)]),
+        ],
+        triangle_frame.source().cloned(),
+        true,
+    );
+    let triangle_solid = ExactTriangleSolidMesh::new(triangle_surface, true);
+    let prepared_triangle = PreparedExactTriangleSolidMesh::prepare(triangle_solid).unwrap();
+    let (triangle_per_cell, triangle_per_cell_report, _) =
+        voxelize_prepared_exact_triangle_solid_mesh(
+            triangle_frame.clone(),
+            &prepared_triangle,
+            MaterialRegionId(6),
+            VoxelizationPolicy::conservative_cover(),
+        )
+        .unwrap();
+    let (triangle_adaptive, triangle_adaptive_report, adaptive_sweep) =
+        voxelize_prepared_exact_triangle_solid_mesh_by_adaptive_axis_sweeps(
+            triangle_frame,
+            &prepared_triangle,
+            MaterialRegionId(6),
+            VoxelizationPolicy::conservative_cover(),
+        )
+        .unwrap();
+    assert_eq!(triangle_adaptive, triangle_per_cell);
+    assert_eq!(
+        triangle_adaptive_report.predicate_certificates,
+        triangle_per_cell_report.predicate_certificates
+    );
+    assert_eq!(
+        adaptive_sweep.sweep_classified_cells + adaptive_sweep.fallback_cells,
+        adaptive_sweep.open_cells
+    );
+    assert_eq!(
+        adaptive_sweep.exact_adaptive_axis_sweep_ready,
+        adaptive_sweep.boundary_unknown_cells == 0
+            && adaptive_sweep.fallback_unknown_cells == 0
+            && adaptive_sweep.fallback_boundary_regression_cells == 0
+            && adaptive_sweep.row_parameter_order_unknowns == 0
+            && adaptive_sweep.classified_cells > 0
+    );
     assert!(report.aggregate.occupancy_interval.lower <= report.aggregate.occupancy_interval.upper);
     assert_eq!(
         report.aggregate.occupancy_interval.total_cells,
