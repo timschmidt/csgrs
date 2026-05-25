@@ -92,6 +92,22 @@ pub struct PcbExactBoardHandoffOutline {
     handoff: PathExactMeshHandoffSource,
 }
 
+/// Retained board cutout whose exact topology is owned by a `hypermesh` handoff.
+///
+/// Use this for curved slots, routed mechanical openings, or other internal
+/// board cutouts emitted by an exact topology producer outside `hyperpath`.
+/// The handoff is opaque here: replay validates the closed-solid package and
+/// the target PCB layer slab before the cutout can subtract copper. This is
+/// the same exact-object boundary advocated by Yap, "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7.1-2 (1997), with regularized
+/// subtraction following Requicha, "Representations for Rigid Solids: Theory,
+/// Methods, and Systems," *ACM Computing Surveys* 12.4 (1980).
+#[derive(Clone, Debug, PartialEq)]
+pub struct PcbExactBoardCutoutHandoff {
+    handoff: PathExactMeshHandoffSource,
+    exact: RealExactSetFacts,
+}
+
 /// Retained orthogonal board outline with strict internal cutouts.
 ///
 /// PCB board clipping is not always a single outer loop: slots, keep-out
@@ -105,7 +121,17 @@ pub struct PcbExactBoardHandoffOutline {
 pub struct PcbHoledOrthogonalBoardClipOutline {
     outer: PcbOrthogonalBoardOutline,
     holes: Vec<PcbOrthogonalBoardOutline>,
+    exact_cutouts: Vec<PcbExactBoardCutoutHandoff>,
     exact: RealExactSetFacts,
+}
+
+/// Retained board cutout used by board-clip replay.
+#[derive(Clone, Debug, PartialEq)]
+pub enum PcbBoardClipCutout {
+    /// Exact orthogonal cutout loop retained by `hyperpath`.
+    Orthogonal(PcbOrthogonalBoardOutline),
+    /// Exact cutout package produced outside `hyperpath`.
+    ExactHandoff(PcbExactBoardCutoutHandoff),
 }
 
 /// Retained PCB copper source supported by the exact mesh-boolean handoff.
@@ -291,8 +317,8 @@ pub struct PcbCopperBoardClipStepReport {
 pub struct PcbCopperBoardClipVoidStepReport {
     /// Zero-based retained board-hole index.
     pub index: usize,
-    /// Retained orthogonal board void loop.
-    pub hole: PcbOrthogonalBoardOutline,
+    /// Retained board cutout source.
+    pub cutout: PcbBoardClipCutout,
     /// Exact `hypermesh` preflight report for accumulator/hole slab.
     pub preflight: ExactBooleanPreflight,
     /// Accepted exact copper-minus-board-void result.
@@ -542,6 +568,34 @@ impl PcbExactBoardHandoffOutline {
     }
 }
 
+impl PcbExactBoardCutoutHandoff {
+    /// Construct a retained exact board cutout from a `hypermesh` handoff.
+    pub fn new(handoff: PathExactMeshHandoffSource) -> Result<Self, PathMeshBooleanError> {
+        let exact = handoff_mesh_exact_facts(&handoff)?;
+        Ok(Self { handoff, exact })
+    }
+
+    /// Return the retained exact mesh handoff.
+    pub const fn handoff(&self) -> &PathExactMeshHandoffSource {
+        &self.handoff
+    }
+
+    /// Return exact-set facts for retained cutout mesh coordinates.
+    pub const fn exact_facts(&self) -> &RealExactSetFacts {
+        &self.exact
+    }
+
+    /// Lower this exact cutout into a generic path mesh-boolean source.
+    pub fn to_path_source(
+        &self,
+        slab: &PcbLayerSlab,
+        policy: PredicatePolicy,
+    ) -> Result<PathMeshBooleanSource, PathMeshBooleanError> {
+        validate_handoff_layer_slab(&self.handoff, slab, policy)?;
+        Ok(self.handoff.clone().into())
+    }
+}
+
 impl PcbHoledOrthogonalBoardClipOutline {
     /// Construct a retained orthogonal board clip outline with strict cutouts.
     ///
@@ -557,7 +611,22 @@ impl PcbHoledOrthogonalBoardClipOutline {
         hole_vertices: Vec<Vec<Point2>>,
         policy: PredicatePolicy,
     ) -> Result<Self, PathMeshBooleanError> {
-        if hole_vertices.is_empty() {
+        Self::with_exact_cutouts(outer_vertices, hole_vertices, Vec::new(), policy)
+    }
+
+    /// Construct a retained orthogonal board clip outline with exact cutouts.
+    ///
+    /// Orthogonal holes are proven strictly inside the outer loop here. Exact
+    /// handoff cutouts are package-validated at construction and layer-slab
+    /// validated when the board clip is replayed; their internal topology is
+    /// owned by the producing crate and `hypermesh`, not by `hyperpath`.
+    pub fn with_exact_cutouts(
+        outer_vertices: Vec<Point2>,
+        hole_vertices: Vec<Vec<Point2>>,
+        exact_cutouts: Vec<PcbExactBoardCutoutHandoff>,
+        policy: PredicatePolicy,
+    ) -> Result<Self, PathMeshBooleanError> {
+        if hole_vertices.is_empty() && exact_cutouts.is_empty() {
             return Err(PathMeshBooleanError::EmptyPolygonHoles);
         }
         let outer = PcbOrthogonalBoardOutline::new(outer_vertices)
@@ -569,11 +638,14 @@ impl PcbHoledOrthogonalBoardClipOutline {
                     .map_err(path_error_from_board_contour_error)
             })
             .collect::<Result<Vec<_>, _>>()?;
-        validate_board_cutouts_strictly_inside_outer(&outer, &holes, policy)?;
-        let exact = holed_board_exact_facts(&outer, &holes);
+        if !holes.is_empty() {
+            validate_board_cutouts_strictly_inside_outer(&outer, &holes, policy)?;
+        }
+        let exact = holed_board_exact_facts(&outer, &holes, &exact_cutouts);
         Ok(Self {
             outer,
             holes,
+            exact_cutouts,
             exact,
         })
     }
@@ -588,9 +660,43 @@ impl PcbHoledOrthogonalBoardClipOutline {
         &self.holes
     }
 
+    /// Return retained exact handoff board cutouts.
+    pub fn exact_cutouts(&self) -> &[PcbExactBoardCutoutHandoff] {
+        &self.exact_cutouts
+    }
+
+    /// Return all retained board cutouts in replay order.
+    pub fn cutouts(&self) -> Vec<PcbBoardClipCutout> {
+        self.holes
+            .iter()
+            .cloned()
+            .map(PcbBoardClipCutout::Orthogonal)
+            .chain(
+                self.exact_cutouts
+                    .iter()
+                    .cloned()
+                    .map(PcbBoardClipCutout::ExactHandoff),
+            )
+            .collect()
+    }
+
     /// Return exact-set facts for all retained board loop coordinates.
     pub const fn exact_facts(&self) -> &RealExactSetFacts {
         &self.exact
+    }
+}
+
+impl PcbBoardClipCutout {
+    /// Lower this retained cutout into a layer-aware subtractive source.
+    pub fn to_path_source(
+        &self,
+        slab: &PcbLayerSlab,
+        policy: PredicatePolicy,
+    ) -> Result<PathMeshBooleanSource, PathMeshBooleanError> {
+        match self {
+            Self::Orthogonal(outline) => pcb_orthogonal_board_outline_source(outline, slab, policy),
+            Self::ExactHandoff(handoff) => handoff.to_path_source(slab, policy),
+        }
     }
 }
 
@@ -766,11 +872,11 @@ impl PcbCopperBoardClipOutline {
         }
     }
 
-    /// Return retained board cutout loops when this outline carries holes.
-    pub fn cutout_holes(&self) -> &[PcbOrthogonalBoardOutline] {
+    /// Return retained board cutout sources when this outline carries holes.
+    pub fn cutouts(&self) -> Vec<PcbBoardClipCutout> {
         match self {
-            Self::HoledOrthogonal(outline) => outline.holes(),
-            _ => &[],
+            Self::HoledOrthogonal(outline) => outline.cutouts(),
+            _ => Vec::new(),
         }
     }
 }
@@ -848,8 +954,8 @@ impl PcbCopperBoardClipProgramReport {
                     "retained PCB board-cutout step index no longer matches order".into(),
                 ));
             }
-            let hole_source = pcb_orthogonal_board_outline_source(&step.hole, &slab, policy)?;
-            let hole_mesh = hole_source.to_exact_mesh()?;
+            let cutout_source = step.cutout.to_path_source(&slab, policy)?;
+            let hole_mesh = cutout_source.to_exact_mesh()?;
             step.preflight
                 .validate_against_sources(&accumulator, &hole_mesh)
                 .map_err(|error| PathMeshBooleanError::Replay(format!("{error:?}")))?;
@@ -1185,9 +1291,10 @@ pub fn build_pcb_copper_board_clip_program(
     accumulator = clip_step.result.mesh.clone();
 
     let slab = z_model.slab_for_layer(layer);
-    let mut void_steps = Vec::with_capacity(outline.cutout_holes().len());
-    for (index, hole) in outline.cutout_holes().iter().enumerate() {
-        let hole_source = pcb_orthogonal_board_outline_source(hole, &slab, policy)?;
+    let cutouts = outline.cutouts();
+    let mut void_steps = Vec::with_capacity(cutouts.len());
+    for (index, cutout) in cutouts.into_iter().enumerate() {
+        let hole_source = cutout.to_path_source(&slab, policy)?;
         let hole_mesh = hole_source.to_exact_mesh()?;
         let operation = PathMeshBooleanOperation::Difference.to_hypermesh();
         let preflight = preflight_boolean_exact(&accumulator, &hole_mesh, operation)
@@ -1215,7 +1322,7 @@ pub fn build_pcb_copper_board_clip_program(
         accumulator = result.mesh.clone();
         void_steps.push(PcbCopperBoardClipVoidStepReport {
             index,
-            hole: hole.clone(),
+            cutout,
             preflight,
             result,
         });
@@ -1407,20 +1514,54 @@ fn holed_orthogonal_exact_facts(
 fn holed_board_exact_facts(
     outer: &PcbOrthogonalBoardOutline,
     holes: &[PcbOrthogonalBoardOutline],
+    exact_cutouts: &[PcbExactBoardCutoutHandoff],
 ) -> RealExactSetFacts {
-    let mut values = outer
+    let mut values = Vec::new();
+    let mut refs = outer
         .vertices()
         .iter()
         .flat_map(|point| [&point.x, &point.y])
         .collect::<Vec<_>>();
     for hole in holes {
-        values.extend(
+        refs.extend(
             hole.vertices()
                 .iter()
                 .flat_map(|point| [&point.x, &point.y]),
         );
     }
-    Real::exact_set_facts(values)
+    for exact_cutout in exact_cutouts {
+        if let Ok(mesh) = exact_cutout.handoff().to_exact_mesh() {
+            for point in mesh.vertices() {
+                let coordinates = &point.coordinates().0;
+                values.extend([
+                    coordinates[0].clone(),
+                    coordinates[1].clone(),
+                    coordinates[2].clone(),
+                ]);
+            }
+        }
+    }
+    refs.extend(values.iter());
+    Real::exact_set_facts(refs)
+}
+
+fn handoff_mesh_exact_facts(
+    handoff: &PathExactMeshHandoffSource,
+) -> Result<RealExactSetFacts, PathMeshBooleanError> {
+    let mesh = handoff.to_exact_mesh()?;
+    let values = mesh
+        .vertices()
+        .iter()
+        .flat_map(|point| {
+            let coordinates = &point.coordinates().0;
+            [
+                coordinates[0].clone(),
+                coordinates[1].clone(),
+                coordinates[2].clone(),
+            ]
+        })
+        .collect::<Vec<_>>();
+    Ok(Real::exact_set_facts(values.iter().collect::<Vec<_>>()))
 }
 
 fn materialize_composite_copper_source(

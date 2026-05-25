@@ -12,8 +12,9 @@ use hyperpath::{
     MeanderError, MeanderObstacle, MeanderPlacementCandidate, NetId, OffsetSide,
     PathExactMeshHandoffSource, PathMeshBooleanError, PathMeshBooleanOperation,
     PathMeshBooleanProgramStep, PathMeshBooleanSource, PathProvenance, PathSourceFormat,
-    PcbBoardOutline, PcbCardinalRectPad, PcbCircularPad, PcbCompositeCopperBooleanSource,
-    PcbConvexBoardOutline, PcbConvexPolyPad, PcbCopperBoardClipOutline, PcbCopperBooleanSource,
+    PcbBoardClipCutout, PcbBoardOutline, PcbCardinalRectPad, PcbCircularPad,
+    PcbCompositeCopperBooleanSource, PcbConvexBoardOutline, PcbConvexPolyPad,
+    PcbCopperBoardClipOutline, PcbCopperBooleanSource, PcbExactBoardCutoutHandoff,
     PcbExactBoardHandoffOutline, PcbExactCopperHandoffSource, PcbHoledOrthogonalBoardClipOutline,
     PcbHoledOrthogonalCopperSource, PcbLayerZModel, PcbOrthogonalBoardOutline,
     PcbOrthogonalPolyPad, PcbRectPad, PcbTrace, PcbViaStack, PocketPlanError, PocketPlanStopReason,
@@ -964,17 +965,90 @@ fn pcb_copper_board_clip_program_subtracts_retained_board_cutouts() {
     assert!(report.union_steps.is_empty());
     assert_eq!(report.void_steps.len(), 1);
     assert_eq!(report.void_steps[0].index, 0);
-    assert_eq!(report.void_steps[0].hole, board.holes()[0]);
+    assert_eq!(
+        report.void_steps[0].cutout,
+        PcbBoardClipCutout::Orthogonal(board.holes()[0].clone())
+    );
     assert!(report.clip_step.result.validate().is_ok());
     assert!(report.void_steps[0].result.validate().is_ok());
     assert!(report.mesh().facts().mesh.closed_manifold);
 
     let mut stale = report.clone();
-    stale.void_steps[0].hole =
-        PcbOrthogonalBoardOutline::new(vec![p(9, 3), p(12, 3), p(12, 7), p(9, 7)]).unwrap();
+    stale.void_steps[0].cutout = PcbBoardClipCutout::Orthogonal(
+        PcbOrthogonalBoardOutline::new(vec![p(9, 3), p(12, 3), p(12, 7), p(9, 7)]).unwrap(),
+    );
     assert!(matches!(
         stale.validate_replay(PredicatePolicy::default()),
         Err(PathMeshBooleanError::Replay(_))
+    ));
+}
+
+#[test]
+fn pcb_copper_board_clip_program_subtracts_exact_handoff_board_cutouts() {
+    let z_model = PcbLayerZModel::new(r(0), r(10), r(2), PredicatePolicy::default()).unwrap();
+    let cutout_handoff = PathExactMeshHandoffSource::from_exact_mesh(
+        prism([8, 3, 0], [12, 7, 2]).to_exact_mesh().unwrap(),
+    )
+    .unwrap();
+    let cutout = PcbExactBoardCutoutHandoff::new(cutout_handoff.clone())
+        .expect("exact board cutout handoff should retain package evidence");
+    assert!(cutout.exact_facts().all_exact_rational);
+    let board = PcbHoledOrthogonalBoardClipOutline::with_exact_cutouts(
+        vec![p(0, 0), p(20, 0), p(20, 10), p(0, 10)],
+        vec![],
+        vec![cutout.clone()],
+        PredicatePolicy::default(),
+    )
+    .expect("exact internal board cutout should be retained");
+    assert!(board.holes().is_empty());
+    assert_eq!(board.exact_cutouts(), &[cutout.clone()]);
+
+    let report = build_pcb_copper_board_clip_program(
+        vec![PcbCompositeCopperBooleanSource::Solid(
+            PcbCopperBooleanSource::RectPad(
+                PcbRectPad::new(NetId(17), TraceLayer(0), p(10, 5), r(20), r(10)).unwrap(),
+            ),
+        )],
+        PcbCopperBoardClipOutline::HoledOrthogonal(board),
+        z_model.clone(),
+        PredicatePolicy::default(),
+    )
+    .expect("same-net copper should subtract exact cutout handoff");
+    report.validate_replay(PredicatePolicy::default()).unwrap();
+    assert_eq!(report.void_steps.len(), 1);
+    assert_eq!(
+        report.void_steps[0].cutout,
+        PcbBoardClipCutout::ExactHandoff(cutout)
+    );
+    assert!(report.void_steps[0].result.validate().is_ok());
+    assert!(report.mesh().facts().mesh.closed_manifold);
+
+    let wrong_z_cutout = PcbExactBoardCutoutHandoff::new(
+        PathExactMeshHandoffSource::from_exact_mesh(
+            prism([8, 3, 0], [12, 7, 3]).to_exact_mesh().unwrap(),
+        )
+        .unwrap(),
+    )
+    .unwrap();
+    let wrong_z_board = PcbHoledOrthogonalBoardClipOutline::with_exact_cutouts(
+        vec![p(0, 0), p(20, 0), p(20, 10), p(0, 10)],
+        vec![],
+        vec![wrong_z_cutout],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert!(matches!(
+        build_pcb_copper_board_clip_program(
+            vec![PcbCompositeCopperBooleanSource::Solid(
+                PcbCopperBooleanSource::RectPad(
+                    PcbRectPad::new(NetId(17), TraceLayer(0), p(10, 5), r(20), r(10)).unwrap(),
+                ),
+            )],
+            PcbCopperBoardClipOutline::HoledOrthogonal(wrong_z_board),
+            z_model,
+            PredicatePolicy::default(),
+        ),
+        Err(PathMeshBooleanError::MeshHandoff(_))
     ));
 }
 

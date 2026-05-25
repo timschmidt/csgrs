@@ -8,8 +8,8 @@ use hyperpath::{
     OffsetSide, PathExactMeshHandoffSource, PathMeshBooleanOperation, PathMeshBooleanProgramStep,
     PathProvenance, PathSourceFormat, PcbBoardOutline, PcbCardinalRectPad, PcbCircularPad,
     PcbCompositeCopperBooleanSource, PcbConvexBoardOutline, PcbConvexPolyPad,
-    PcbCopperBoardClipOutline, PcbCopperBooleanSource, PcbExactBoardHandoffOutline,
-    PcbExactCopperHandoffSource, PcbHoledOrthogonalBoardClipOutline,
+    PcbCopperBoardClipOutline, PcbCopperBooleanSource, PcbExactBoardCutoutHandoff,
+    PcbExactBoardHandoffOutline, PcbExactCopperHandoffSource, PcbHoledOrthogonalBoardClipOutline,
     PcbHoledOrthogonalCopperSource, PcbLayerZModel, PcbOrthogonalBoardOutline,
     PcbOrthogonalPolyPad, PcbRectPad, PcbTrace, PcbViaStack, QuadraticBezier,
     RationalQuadraticBezier, RectangularPocket, SourceLengthUnit, SpecctraGridTraceRecord,
@@ -1215,6 +1215,50 @@ fn path_predicates(c: &mut Criterion) {
                     ),
                 )],
                 PcbCopperBoardClipOutline::HoledOrthogonal(pcb_holed_board_clip_outline.clone()),
+                pcb_z.clone(),
+                PredicatePolicy::default(),
+            )
+            .unwrap();
+            report.validate_replay(PredicatePolicy::default())
+        })
+    });
+    let pcb_exact_cutout = PcbExactBoardCutoutHandoff::new(
+        PathExactMeshHandoffSource::from_exact_mesh(
+            rectangular_prism_from_i64_bounds(
+                [7_000, 3_000, 0],
+                [12_000, 6_000, 2_000],
+                PredicatePolicy::default(),
+            )
+            .unwrap()
+            .to_exact_mesh()
+            .unwrap(),
+        )
+        .unwrap(),
+    )
+    .unwrap();
+    let pcb_exact_cutout_board = PcbHoledOrthogonalBoardClipOutline::with_exact_cutouts(
+        vec![p(0, 0), p(19_000, 0), p(19_000, 9_000), p(0, 9_000)],
+        vec![],
+        vec![pcb_exact_cutout],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    c.bench_function("pcb_exact_cutout_board_clip_program_replay", |b| {
+        b.iter(|| {
+            let report = build_pcb_copper_board_clip_program(
+                vec![PcbCompositeCopperBooleanSource::Solid(
+                    PcbCopperBooleanSource::RectPad(
+                        PcbRectPad::new(
+                            NetId(7),
+                            TraceLayer(0),
+                            p(9_500, 4_500),
+                            r(19_000),
+                            r(9_000),
+                        )
+                        .unwrap(),
+                    ),
+                )],
+                PcbCopperBoardClipOutline::HoledOrthogonal(pcb_exact_cutout_board.clone()),
                 pcb_z.clone(),
                 PredicatePolicy::default(),
             )

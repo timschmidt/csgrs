@@ -6,8 +6,8 @@ use hyperpath::{
     CamRestMaterialCutter, CamSupportClipBoundary, CardinalRotation, LinePathSegment, NetId,
     PathExactMeshHandoffSource, PathMeshBooleanOperation, PathMeshBooleanProgramStep,
     PcbCardinalRectPad, PcbCompositeCopperBooleanSource, PcbConvexPolyPad,
-    PcbCopperBoardClipOutline, PcbCopperBooleanSource, PcbExactBoardHandoffOutline,
-    PcbExactCopperHandoffSource, PcbHoledOrthogonalBoardClipOutline,
+    PcbCopperBoardClipOutline, PcbCopperBooleanSource, PcbExactBoardCutoutHandoff,
+    PcbExactBoardHandoffOutline, PcbExactCopperHandoffSource, PcbHoledOrthogonalBoardClipOutline,
     PcbHoledOrthogonalCopperSource, PcbLayerZModel, PcbOrthogonalBoardOutline,
     PcbOrthogonalPolyPad, PcbRectPad, PcbTrace, SweptLineSegment, TraceLayer,
     boolean_path_mesh_program, boolean_path_mesh_sources, boolean_rectangular_prism_chain,
@@ -619,6 +619,70 @@ fuzz_target!(|data: &[u8]| {
                                 for step in &report.void_steps {
                                     step.result.validate().unwrap();
                                 }
+                            }
+                        }
+                    }
+                    if data[15] & 128 == 128 {
+                        let slab = z_model.slab_for_layer(layer);
+                        let outer_min = Point2::new(min_x.clone(), min_y.clone());
+                        let outer_max = Point2::new(
+                            min_x.clone() + Real::from(6),
+                            min_y.clone() + Real::from(6),
+                        );
+                        let hole_min = Point2::new(
+                            outer_min.x.clone() + Real::from(2),
+                            outer_min.y.clone() + Real::from(2),
+                        );
+                        let hole_max = Point2::new(
+                            outer_min.x.clone() + Real::from(4),
+                            outer_min.y.clone() + Real::from(4),
+                        );
+                        if let Ok(hole_pocket) =
+                            hyperpath::RectangularPocket::new(hole_min, hole_max)
+                            && let Ok(hole_prism) = hyperpath::RectangularPrism::new(
+                                hole_pocket,
+                                slab.z_min,
+                                slab.z_max,
+                                PredicatePolicy::default(),
+                            )
+                            && let Ok(handoff) = PathExactMeshHandoffSource::from_exact_mesh(
+                                hole_prism.to_exact_mesh().unwrap(),
+                            )
+                            && let Ok(cutout) = PcbExactBoardCutoutHandoff::new(handoff)
+                            && let Ok(board) =
+                                PcbHoledOrthogonalBoardClipOutline::with_exact_cutouts(
+                                    vec![
+                                        outer_min.clone(),
+                                        Point2::new(outer_max.x.clone(), outer_min.y.clone()),
+                                        outer_max.clone(),
+                                        Point2::new(outer_min.x.clone(), outer_max.y.clone()),
+                                    ],
+                                    vec![],
+                                    vec![cutout],
+                                    PredicatePolicy::default(),
+                                )
+                        {
+                            let pad = PcbRectPad::new(
+                                NetId(u32::from(data[16])),
+                                layer,
+                                Point2::new(
+                                    outer_min.x.clone() + Real::from(3),
+                                    outer_min.y.clone() + Real::from(3),
+                                ),
+                                Real::from(6),
+                                Real::from(6),
+                            )
+                            .unwrap();
+                            if let Ok(report) = build_pcb_copper_board_clip_program(
+                                vec![PcbCompositeCopperBooleanSource::Solid(
+                                    PcbCopperBooleanSource::RectPad(pad),
+                                )],
+                                PcbCopperBoardClipOutline::HoledOrthogonal(board),
+                                z_model.clone(),
+                                PredicatePolicy::default(),
+                            ) {
+                                report.validate_replay(PredicatePolicy::default()).unwrap();
+                                assert!(report.mesh().facts().mesh.closed_manifold);
                             }
                         }
                     }
