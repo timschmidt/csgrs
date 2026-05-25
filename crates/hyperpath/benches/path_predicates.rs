@@ -435,6 +435,15 @@ fn path_predicates(c: &mut Criterion) {
             )
         })
     });
+    c.bench_function("line_cubic_bezier_algebraic_sequence_readiness", |b| {
+        b.iter(|| {
+            arrange_line_segments_with_cubic_beziers(
+                std::slice::from_ref(&line_cubic_three_root_line),
+                std::slice::from_ref(&line_cubic_three_root),
+                PredicatePolicy::default(),
+            )
+        })
+    });
     let quintic = HigherOrderBezier::quintic(
         p(0, 0),
         p(200, 100),

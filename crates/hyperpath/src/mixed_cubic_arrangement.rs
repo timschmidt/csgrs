@@ -10,6 +10,7 @@
 //! scheduler can order and materialize algebraic split parameters directly.
 
 use std::cmp::Ordering;
+use std::collections::BTreeMap;
 
 use hyperlimit::{Point2, PredicatePolicy, compare_reals_with_policy, point2_equal_with_policy};
 use hyperreal::{Real, RealExactSetFacts};
@@ -136,6 +137,64 @@ pub struct LineCubicBezierAlgebraicBreakpointOrder {
     pub line_order: Option<LineCubicBezierAlgebraicBreakpointOrderClass>,
 }
 
+/// Source parameter space for an ordered retained algebraic breakpoint sequence.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum LineCubicBezierAlgebraicBreakpointSequenceSource {
+    /// Breakpoints ordered by normalized parameter on a retained line segment.
+    Line(usize),
+    /// Breakpoints ordered by source parameter on a retained cubic Bezier.
+    Curve(usize),
+}
+
+/// Sequence readiness for represented algebraic line/cubic breakpoints.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum LineCubicBezierAlgebraicBreakpointSequenceClass {
+    /// All pairwise comparisons for this source were certified, so `breakpoints` is sorted.
+    Ordered,
+    /// At least one pair was equal, missing, or undecidable; insertion order is retained.
+    Ambiguous,
+}
+
+/// Exact blocker that prevents a retained algebraic breakpoint sequence from being sorted.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum LineCubicBezierAlgebraicBreakpointSequenceBlocker {
+    /// Pairwise order evidence was not emitted for this same-source pair.
+    MissingOrder { left: usize, right: usize },
+    /// Pairwise order evidence exists but the isolated algebraic intervals still overlap.
+    UnknownOrder { left: usize, right: usize },
+    /// Distinct retained candidates collapsed to the same represented source parameter.
+    EqualOrder { left: usize, right: usize },
+}
+
+/// Ordered retained algebraic breakpoint indices for one line or cubic source.
+///
+/// This is a readiness report for future algebraic split materialization, not
+/// a fragment list. The indices address
+/// [`LineCubicBezierArrangementReport::algebraic_breakpoints`]. When the
+/// sequence is [`LineCubicBezierAlgebraicBreakpointSequenceClass::Ordered`],
+/// every pair on the same source has exact order evidence and `breakpoints` is
+/// sorted in that source parameter. When it is ambiguous, blockers describe the
+/// missing or undecidable comparisons and the original discovery order is
+/// preserved.
+///
+/// The design follows Yap, "Towards Exact Geometric Computation" (1997): exact
+/// algebraic decisions are retained as first-class certificates and uncertain
+/// decisions remain explicit. The pairwise certificates consumed here are
+/// Sturm-isolated root comparisons in the sense of Collins and Loos, "Real
+/// Zeros of Polynomials" (1982), with line-parameter images constructed by the
+/// Sylvester resultant of Sylvester (1853).
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct LineCubicBezierAlgebraicBreakpointSequence {
+    /// Source whose parameter orders this sequence.
+    pub source: LineCubicBezierAlgebraicBreakpointSequenceSource,
+    /// Breakpoint indices, sorted only when `class == Ordered`.
+    pub breakpoints: Vec<usize>,
+    /// Whether this source sequence is ready for exact algebraic split construction.
+    pub class: LineCubicBezierAlgebraicBreakpointSequenceClass,
+    /// Exact reasons that prevented sorting.
+    pub blockers: Vec<LineCubicBezierAlgebraicBreakpointSequenceBlocker>,
+}
+
 /// Exact breakpoint on one arranged cubic Bezier.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CubicBezierRealBreakpoint {
@@ -220,6 +279,8 @@ pub struct LineCubicBezierArrangementReport {
     pub algebraic_breakpoints: Vec<LineCubicBezierAlgebraicBreakpoint>,
     /// Pairwise exact order evidence for retained algebraic breakpoints.
     pub algebraic_breakpoint_orders: Vec<LineCubicBezierAlgebraicBreakpointOrder>,
+    /// Per-source retained algebraic breakpoint sequences derived from exact order evidence.
+    pub algebraic_breakpoint_sequences: Vec<LineCubicBezierAlgebraicBreakpointSequence>,
     /// Sorted line breakpoints induced by line endpoints and certified events.
     pub line_breakpoints: Vec<Vec<MixedCubicLineArrangementBreakpoint>>,
     /// Sorted cubic breakpoints induced by curve endpoints and certified events.
@@ -306,6 +367,8 @@ pub fn arrange_line_segments_with_cubic_beziers_and_provenance(
     sort_and_dedup_cubic_breakpoints(&mut cubic_breakpoints, policy)?;
     let algebraic_breakpoint_orders =
         algebraic_cubic_breakpoint_orders(&algebraic_breakpoints, policy);
+    let algebraic_breakpoint_sequences =
+        algebraic_cubic_breakpoint_sequences(&algebraic_breakpoints, &algebraic_breakpoint_orders);
     let line_fragments = build_line_fragments(&line_breakpoints, policy)?;
     let cubic_fragments = build_cubic_fragments(&cubic_breakpoints, curves, policy)?;
     let facts = LineCubicBezierArrangementFacts {
@@ -320,6 +383,7 @@ pub fn arrange_line_segments_with_cubic_beziers_and_provenance(
         events,
         algebraic_breakpoints,
         algebraic_breakpoint_orders,
+        algebraic_breakpoint_sequences,
         line_breakpoints,
         cubic_breakpoints,
         line_fragments,
@@ -566,6 +630,166 @@ fn algebraic_cubic_breakpoint_orders(
         }
     }
     orders
+}
+
+fn algebraic_cubic_breakpoint_sequences(
+    breakpoints: &[LineCubicBezierAlgebraicBreakpoint],
+    orders: &[LineCubicBezierAlgebraicBreakpointOrder],
+) -> Vec<LineCubicBezierAlgebraicBreakpointSequence> {
+    let mut curve_breakpoints: BTreeMap<usize, Vec<usize>> = BTreeMap::new();
+    let mut line_breakpoints: BTreeMap<usize, Vec<usize>> = BTreeMap::new();
+    for (index, breakpoint) in breakpoints.iter().enumerate() {
+        curve_breakpoints
+            .entry(breakpoint.curve)
+            .or_default()
+            .push(index);
+        line_breakpoints
+            .entry(breakpoint.line)
+            .or_default()
+            .push(index);
+    }
+
+    let mut sequences = Vec::new();
+    for (curve, indices) in curve_breakpoints {
+        sequences.push(algebraic_cubic_breakpoint_sequence_for_source(
+            LineCubicBezierAlgebraicBreakpointSequenceSource::Curve(curve),
+            indices,
+            orders,
+        ));
+    }
+    for (line, indices) in line_breakpoints {
+        sequences.push(algebraic_cubic_breakpoint_sequence_for_source(
+            LineCubicBezierAlgebraicBreakpointSequenceSource::Line(line),
+            indices,
+            orders,
+        ));
+    }
+    sequences
+}
+
+fn algebraic_cubic_breakpoint_sequence_for_source(
+    source: LineCubicBezierAlgebraicBreakpointSequenceSource,
+    mut indices: Vec<usize>,
+    orders: &[LineCubicBezierAlgebraicBreakpointOrder],
+) -> LineCubicBezierAlgebraicBreakpointSequence {
+    let mut blockers = Vec::new();
+    for left_index in 0..indices.len() {
+        for right_index in (left_index + 1)..indices.len() {
+            let left = indices[left_index];
+            let right = indices[right_index];
+            match algebraic_cubic_order_between(source, left, right, orders) {
+                Some(LineCubicBezierAlgebraicBreakpointOrderClass::Before)
+                | Some(LineCubicBezierAlgebraicBreakpointOrderClass::After) => {}
+                Some(LineCubicBezierAlgebraicBreakpointOrderClass::Equal) => {
+                    blockers.push(
+                        LineCubicBezierAlgebraicBreakpointSequenceBlocker::EqualOrder {
+                            left,
+                            right,
+                        },
+                    );
+                }
+                Some(LineCubicBezierAlgebraicBreakpointOrderClass::Unknown) => {
+                    blockers.push(
+                        LineCubicBezierAlgebraicBreakpointSequenceBlocker::UnknownOrder {
+                            left,
+                            right,
+                        },
+                    );
+                }
+                None => {
+                    blockers.push(
+                        LineCubicBezierAlgebraicBreakpointSequenceBlocker::MissingOrder {
+                            left,
+                            right,
+                        },
+                    );
+                }
+            }
+        }
+    }
+
+    let class = if blockers.is_empty() {
+        indices.sort_by(|left, right| {
+            algebraic_cubic_ordering_for_sort(source, *left, *right, orders)
+                .expect("algebraic source order was certified before sorting")
+        });
+        LineCubicBezierAlgebraicBreakpointSequenceClass::Ordered
+    } else {
+        LineCubicBezierAlgebraicBreakpointSequenceClass::Ambiguous
+    };
+
+    LineCubicBezierAlgebraicBreakpointSequence {
+        source,
+        breakpoints: indices,
+        class,
+        blockers,
+    }
+}
+
+fn algebraic_cubic_ordering_for_sort(
+    source: LineCubicBezierAlgebraicBreakpointSequenceSource,
+    left: usize,
+    right: usize,
+    orders: &[LineCubicBezierAlgebraicBreakpointOrder],
+) -> Option<Ordering> {
+    if left == right {
+        return Some(Ordering::Equal);
+    }
+    match algebraic_cubic_order_between(source, left, right, orders)? {
+        LineCubicBezierAlgebraicBreakpointOrderClass::Before => Some(Ordering::Less),
+        LineCubicBezierAlgebraicBreakpointOrderClass::After => Some(Ordering::Greater),
+        LineCubicBezierAlgebraicBreakpointOrderClass::Equal => Some(Ordering::Equal),
+        LineCubicBezierAlgebraicBreakpointOrderClass::Unknown => None,
+    }
+}
+
+fn algebraic_cubic_order_between(
+    source: LineCubicBezierAlgebraicBreakpointSequenceSource,
+    left: usize,
+    right: usize,
+    orders: &[LineCubicBezierAlgebraicBreakpointOrder],
+) -> Option<LineCubicBezierAlgebraicBreakpointOrderClass> {
+    let direct = orders
+        .iter()
+        .find(|order| order.left == left && order.right == right)
+        .and_then(|order| algebraic_cubic_order_for_source(source, order));
+    if direct.is_some() {
+        return direct;
+    }
+    orders
+        .iter()
+        .find(|order| order.left == right && order.right == left)
+        .and_then(|order| algebraic_cubic_order_for_source(source, order))
+        .map(reverse_algebraic_cubic_order)
+}
+
+fn algebraic_cubic_order_for_source(
+    source: LineCubicBezierAlgebraicBreakpointSequenceSource,
+    order: &LineCubicBezierAlgebraicBreakpointOrder,
+) -> Option<LineCubicBezierAlgebraicBreakpointOrderClass> {
+    match source {
+        LineCubicBezierAlgebraicBreakpointSequenceSource::Line(_) => order.line_order,
+        LineCubicBezierAlgebraicBreakpointSequenceSource::Curve(_) => order.cubic_order,
+    }
+}
+
+fn reverse_algebraic_cubic_order(
+    order: LineCubicBezierAlgebraicBreakpointOrderClass,
+) -> LineCubicBezierAlgebraicBreakpointOrderClass {
+    match order {
+        LineCubicBezierAlgebraicBreakpointOrderClass::Before => {
+            LineCubicBezierAlgebraicBreakpointOrderClass::After
+        }
+        LineCubicBezierAlgebraicBreakpointOrderClass::After => {
+            LineCubicBezierAlgebraicBreakpointOrderClass::Before
+        }
+        LineCubicBezierAlgebraicBreakpointOrderClass::Equal => {
+            LineCubicBezierAlgebraicBreakpointOrderClass::Equal
+        }
+        LineCubicBezierAlgebraicBreakpointOrderClass::Unknown => {
+            LineCubicBezierAlgebraicBreakpointOrderClass::Unknown
+        }
+    }
 }
 
 fn compare_algebraic_cubic_parameters(

@@ -6,7 +6,8 @@ use hyperlimit::{PredicatePolicy, compare_reals_with_policy};
 use hyperpath::{
     BezierParameter, CubicBezier, LineCubicAlgebraicPointDomain, LineCubicAlgebraicRootDomain,
     LineCubicBezierAlgebraicBreakpointDomain, LineCubicBezierAlgebraicBreakpointOrderClass,
-    LineCubicBezierIntersectionClass, LinePathSegment, LineQuadraticBezierIntersectionClass,
+    LineCubicBezierAlgebraicBreakpointSequenceClass, LineCubicBezierIntersectionClass,
+    LinePathSegment, LineQuadraticBezierIntersectionClass,
     LineRationalQuadraticBezierAlgebraicBreakpointDomain,
     LineRationalQuadraticBezierAlgebraicBreakpointOrderClass,
     LineRationalQuadraticBezierIntersectionClass, LineRationalQuadraticBezierInverseRootDomain,
@@ -246,6 +247,19 @@ fuzz_target!(|data: &[u8]| {
             .algebraic_breakpoint_orders
             .is_empty()
     );
+    assert_eq!(
+        algebraic_mixed_report.algebraic_breakpoint_sequences.len(),
+        2
+    );
+    assert!(
+        algebraic_mixed_report
+            .algebraic_breakpoint_sequences
+            .iter()
+            .all(|sequence| sequence.class
+                == LineCubicBezierAlgebraicBreakpointSequenceClass::Ordered
+                && sequence.breakpoints == vec![0]
+                && sequence.blockers.is_empty())
+    );
     let three_root_cubic = CubicBezier::new(
         hyperlimit::Point2::new(r(0), Real::new(Rational::new(-2) / Rational::new(25))),
         hyperlimit::Point2::new(
@@ -275,6 +289,16 @@ fuzz_target!(|data: &[u8]| {
                     && order.line_order
                         == Some(LineCubicBezierAlgebraicBreakpointOrderClass::Before)
             })
+    );
+    assert_eq!(three_root_report.algebraic_breakpoint_sequences.len(), 2);
+    assert!(
+        three_root_report
+            .algebraic_breakpoint_sequences
+            .iter()
+            .all(|sequence| sequence.class
+                == LineCubicBezierAlgebraicBreakpointSequenceClass::Ordered
+                && sequence.breakpoints == vec![0, 1, 2]
+                && sequence.blockers.is_empty())
     );
 
     let weight = r(i64::from(data[11] % 16));
