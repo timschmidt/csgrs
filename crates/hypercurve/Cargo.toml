@@ -60,6 +60,10 @@ name = "bezier_split_materialization"
 harness = false
 
 [[bench]]
+name = "bezier_tangent_order"
+harness = false
+
+[[bench]]
 name = "offset"
 harness = false
 

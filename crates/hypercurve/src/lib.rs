@@ -20,6 +20,7 @@ mod bezier_parameter;
 mod bezier_region;
 mod bezier_split;
 mod bezier_split_endpoint;
+mod bezier_tangent_order;
 mod bezier_topology;
 mod boolean;
 mod boolean_boundary;
@@ -82,6 +83,12 @@ pub use bezier_region::{BezierBoundaryLoop2, BezierRegion2};
 pub use bezier_split::{BezierSplitFragment2, BezierSplitMaterialization2, BezierSubcurve2};
 pub use bezier_split_endpoint::{
     BezierAlgebraicEndpointImage2, BezierEndpointPointImage2, BezierEndpointTangentImage2,
+};
+pub use bezier_tangent_order::{
+    BezierAlgebraicScalarSignReport, BezierAlgebraicTangentOrderReport,
+    BezierAlgebraicTangentOrderStatus, BezierAlgebraicTangentVector2,
+    BezierAlgebraicTangentVectorReport, BezierAlgebraicTangentVectorStatus,
+    BezierTangentTurnOrdering2, compare_algebraic_tangent_turn_from_base,
 };
 pub use bezier_topology::{
     Axis2, BezierCurveIntersectionPoint, BezierCurveIntersectionRegion, BezierCurveRelation,

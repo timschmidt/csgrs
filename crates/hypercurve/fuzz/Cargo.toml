@@ -33,6 +33,13 @@ doc = false
 bench = false
 
 [[bin]]
+name = "bezier_tangent_order"
+path = "fuzz_targets/bezier_tangent_order.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
 name = "bezier_arrangement"
 path = "fuzz_targets/bezier_arrangement.rs"
 test = false
