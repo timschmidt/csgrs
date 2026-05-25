@@ -2417,7 +2417,7 @@ fn exercise_same_outer_component_holed_coplanar_intersection() {
     );
 
     let overlapping_hole = ExactMesh::from_i64_triangles_with_policy(
-        &[3, 2, 0, 5, 2, 0, 5, 4, 0, 3, 4, 0],
+        &[3, 3, 0, 5, 3, 0, 5, 6, 0, 3, 6, 0],
         &[0, 1, 2, 0, 2, 3],
         ValidationPolicy::ALLOW_BOUNDARY,
     )
@@ -2434,7 +2434,7 @@ fn exercise_same_outer_component_holed_coplanar_intersection() {
         .unwrap();
     assert_eq!(overlap_intersection.components.len(), 1);
     assert_eq!(overlap_intersection.components[0].holes.len(), 1);
-    assert_eq!(overlap_intersection.components[0].holes[0].len(), 4);
+    assert_eq!(overlap_intersection.components[0].holes[0].len(), 8);
     let overlap_preflight =
         preflight_boolean_exact(&left, &overlapping, ExactBooleanOperation::Intersection)
             .expect("same-outer rectangular overlap preflight should classify shortcut");
@@ -2457,20 +2457,6 @@ fn exercise_same_outer_component_holed_coplanar_intersection() {
         ExactBoundaryBooleanPolicy::Reject,
     )
     .unwrap();
-
-    let corner_overlapping_hole = ExactMesh::from_i64_triangles_with_policy(
-        &[3, 3, 0, 5, 3, 0, 5, 6, 0, 3, 6, 0],
-        &[0, 1, 2, 0, 2, 3],
-        ValidationPolicy::ALLOW_BOUNDARY,
-    )
-    .expect("same-outer corner-overlapping hole fixture must import");
-    let corner_overlapping =
-        arrange_coplanar_convex_surface_holed_difference(&outer, &corner_overlapping_hole)
-            .expect("same-outer corner-overlapping annulus should materialize")
-            .mesh;
-    assert!(
-        arrange_coplanar_surface_component_holed_intersection(&left, &corner_overlapping).is_none()
-    );
 
     let small_hole = ExactMesh::from_i64_triangles_with_policy(
         &[4, 4, 0, 6, 4, 0, 6, 6, 0, 4, 6, 0],

@@ -3274,8 +3274,8 @@ pub fn arrange_coplanar_surface_component_holed_intersection(
 /// and disjoint holes are retained independently. The bounded rectangular
 /// overlap case is also accepted when both overlapping holes are exact
 /// projected axis-aligned rectangles and their removed union replays as one
-/// convex retained hole. Touching, crossing, nonrectangular partial overlaps,
-/// and nonconvex removed-hole unions reject to the general planar arrangement
+/// exact simple orthogonal retained hole. Touching, crossing, or
+/// nonrectangular partial overlaps reject to the general planar arrangement
 /// layer. This is a legitimate Boolean intersection because the complement of
 /// each retained hole is part of the source object: intersecting two
 /// equal-outer holed sheets removes the union of their holes.
@@ -3322,6 +3322,7 @@ fn arrange_coplanar_surface_component_holed_same_outer_intersection(
                     projection,
                 )?;
                 sort_polygons_for_replay(&mut holes, projection);
+                split_outer_for_single_orthogonal_hole_bridge(&mut outer, &holes, projection)?;
                 retained_components.push(CoplanarConvexHoledComponent { outer, holes });
                 continue;
             }
@@ -3461,13 +3462,100 @@ fn same_outer_intersection_rectangular_hole_union(
         "coplanar same-outer rectangular intersection hole union",
     )
     .ok()?;
-    validate_projected_strictly_convex_loop(
-        &union,
+    Some(union)
+}
+
+/// Add an exact retained bridge point to a rectangular outer ring.
+///
+/// A nonconvex retained hole may need an explicit outer endpoint for the
+/// keyhole triangulation to use every retained boundary vertex. The split
+/// point is constructed exactly on the source outer boundary, horizontally
+/// aligned with the leftmost retained-hole vertex, and then validated by the
+/// ordinary component-holed output checks. This is still Yap-style retained
+/// state ("Towards Exact Geometric Computation," *Computational Geometry*
+/// 7.1-2, 1997): the bridge point is an exact construction fact, not a
+/// tolerance weld. The keyhole reduction follows Held, "FIST: Fast
+/// Industrial-Strength Triangulation of Polygons," *Algorithmica* 30 (2001).
+#[cfg(feature = "exact-triangulation")]
+fn split_outer_for_single_orthogonal_hole_bridge(
+    outer: &mut Vec<Point3>,
+    holes: &[Vec<Point3>],
+    projection: CoplanarProjection,
+) -> Option<()> {
+    let [hole] = holes else {
+        return Some(());
+    };
+    if validate_projected_strictly_convex_loop(
+        hole,
         projection,
-        "coplanar same-outer rectangular intersection hole union",
+        "coplanar same-outer retained-hole bridge",
+    )
+    .is_ok()
+    {
+        return Some(());
+    }
+    let outer_rect = projected_axis_aligned_rectangle(outer, projection)?;
+    if !projected_polygon_edges_are_axis_aligned(hole, projection)? {
+        return None;
+    }
+
+    let mut chosen_projected = project_point(hole.first()?, projection);
+    for point in hole.iter().skip(1) {
+        let projected = project_point(point, projection);
+        match real_order(&projected.x, &chosen_projected.x)? {
+            Ordering::Less => {
+                chosen_projected = projected;
+            }
+            Ordering::Equal => {
+                if real_order(&projected.y, &chosen_projected.y)? == Ordering::Greater {
+                    chosen_projected = projected;
+                }
+            }
+            Ordering::Greater => {}
+        }
+    }
+    if real_order(&outer_rect.min.y, &chosen_projected.y)? != Ordering::Less
+        || real_order(&chosen_projected.y, &outer_rect.max.y)? != Ordering::Less
+        || real_order(&outer_rect.min.x, &chosen_projected.x)? != Ordering::Less
+    {
+        return None;
+    }
+    let bridge = point_from_projection(
+        &outer_rect.min.x,
+        &chosen_projected.y,
+        &outer_rect.dropped,
+        projection,
+    );
+    if outer.iter().any(|point| points_equal(point, &bridge)) {
+        return Some(());
+    }
+    let split = split_polygon_at_boundary_points(outer, &[bridge], projection)?;
+    validate_projected_simple_loop(
+        &split,
+        projection,
+        "coplanar same-outer retained outer bridge split",
     )
     .ok()?;
-    Some(union)
+    *outer = split;
+    Some(())
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn projected_polygon_edges_are_axis_aligned(
+    polygon: &[Point3],
+    projection: CoplanarProjection,
+) -> Option<bool> {
+    if polygon.len() < 3 {
+        return Some(false);
+    }
+    for edge in 0..polygon.len() {
+        let start = project_point(&polygon[edge], projection);
+        let end = project_point(&polygon[(edge + 1) % polygon.len()], projection);
+        if !real_equal(&start.x, &end.x) && !real_equal(&start.y, &end.y) {
+            return Some(false);
+        }
+    }
+    Some(true)
 }
 
 #[cfg(feature = "exact-triangulation")]
@@ -5274,7 +5362,6 @@ fn projected_axis_aligned_rectangle(
         None
     }
 }
-
 #[cfg(feature = "exact-triangulation")]
 fn rectangle_strip_union_polygon(
     rectangles: &[ProjectedRectangle],
@@ -16942,7 +17029,7 @@ fn component_holed_component_to_earcut_open_mesh(
     component: &CoplanarConvexHoledComponent,
     projection: CoplanarProjection,
 ) -> Option<ExactMesh> {
-    let earcut_mesh = match component.holes.len() {
+    let raw_earcut_mesh = match component.holes.len() {
         0 => polygon_to_earcut_open_mesh(&component.outer, projection),
         1 => polygon_to_earcut_open_mesh_with_hole(
             &component.outer,
@@ -16956,6 +17043,8 @@ fn component_holed_component_to_earcut_open_mesh(
             "exact coplanar convex component-holed sub-arrangement",
         ),
     };
+    let earcut_mesh = raw_earcut_mesh
+        .and_then(|mesh| discard_component_holed_hole_fill_triangles(mesh, component));
     if component.holes.is_empty() {
         return earcut_mesh;
     }
@@ -16970,6 +17059,65 @@ fn component_holed_component_to_earcut_open_mesh(
     });
     let keyhole = component_holed_component_to_keyholed_open_mesh(component, projection);
     earcut_mesh.or(keyhole)
+}
+
+/// Remove triangulator cells that lie wholly inside retained hole rings.
+///
+/// Direct holed earcut can emit a triangle made entirely from vertices of a
+/// nonconvex retained hole. Such a cell is useful to the triangulator's
+/// internal proof, but it is not part of the materialized surface. Filtering
+/// those cells before the full retained-boundary validator keeps the output in
+/// Yap's retained object model from "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997): the hole boundary remains exact
+/// exported topology, and any remaining invalid triangulation is still
+/// rejected by the same boundary, area, and source-replay checks. This is the
+/// same keyhole/earcut discipline described by Held, "FIST: Fast
+/// Industrial-Strength Triangulation of Polygons," *Algorithmica* 30 (2001),
+/// with an explicit retained-hole guard.
+#[cfg(feature = "exact-triangulation")]
+fn discard_component_holed_hole_fill_triangles(
+    mesh: ExactMesh,
+    component: &CoplanarConvexHoledComponent,
+) -> Option<ExactMesh> {
+    if component.holes.is_empty() {
+        return Some(mesh);
+    }
+    let retained_vertices =
+        component.outer.len() + component.holes.iter().map(Vec::len).sum::<usize>();
+    if mesh.vertices().len() != retained_vertices {
+        return None;
+    }
+
+    let mut cursor = component.outer.len();
+    let mut hole_ranges = Vec::with_capacity(component.holes.len());
+    for hole in &component.holes {
+        let end = cursor + hole.len();
+        hole_ranges.push(cursor..end);
+        cursor = end;
+    }
+    let triangles = mesh
+        .triangles()
+        .iter()
+        .filter(|triangle| {
+            !hole_ranges
+                .iter()
+                .any(|range| triangle.0.iter().all(|index| range.contains(index)))
+        })
+        .cloned()
+        .collect::<Vec<_>>();
+    if triangles.len() == mesh.triangles().len() {
+        return Some(mesh);
+    }
+    if triangles.is_empty() {
+        return None;
+    }
+    ExactMesh::new_with_policy(
+        mesh.vertices().to_vec(),
+        triangles,
+        SourceProvenance::exact("exact coplanar component-holed filtered earcut arrangement"),
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .ok()
 }
 
 /// Triangulate a one-hole retained component by opening it along a bridge.
@@ -17058,6 +17206,16 @@ fn component_holed_keyhole_mesh_for_bridge(
         index_map.push(index);
     }
 
+    if let Some(mesh) = component_holed_keyhole_mesh_from_ear_clip(
+        outer,
+        hole,
+        &keyhole_points,
+        &index_map,
+        projection,
+    ) {
+        return Some(mesh);
+    }
+
     let vertices2 = keyhole_points
         .iter()
         .map(|point| project_for_hypertri(point, projection))
@@ -17107,6 +17265,168 @@ fn component_holed_keyhole_mesh_for_bridge(
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .ok()
+}
+
+#[cfg(feature = "exact-triangulation")]
+/// Build a retained-ring mesh from the local keyhole ear clipper.
+///
+/// The returned mesh uses exactly the original outer and hole vertices; the
+/// duplicated bridge endpoints in the weakly simple keyhole walk are only a
+/// construction device. The surrounding component-holed validator must still
+/// prove retained-ring usage, boundary equality, and area equality before this
+/// mesh is accepted.
+fn component_holed_keyhole_mesh_from_ear_clip(
+    outer: &[Point3],
+    hole: &[Point3],
+    keyhole_points: &[Point3],
+    index_map: &[usize],
+    projection: CoplanarProjection,
+) -> Option<ExactMesh> {
+    let keyhole_triangles =
+        retained_keyhole_ear_clip_triangles(keyhole_points, index_map, outer.len(), projection)?;
+    if keyhole_triangles.is_empty() {
+        return None;
+    }
+    let points = outer.iter().chain(hole).cloned().collect::<Vec<_>>();
+    let vertices = points
+        .iter()
+        .map(|point| ExactPoint3::new(point.x.clone(), point.y.clone(), point.z.clone()))
+        .collect::<Vec<_>>();
+    ExactMesh::new_with_policy(
+        vertices,
+        keyhole_triangles,
+        SourceProvenance::exact("exact coplanar keyholed ear-clipped holed arrangement"),
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .ok()
+}
+
+/// Ear-clip a weakly simple keyhole polygon back onto retained rings.
+///
+/// The bridge endpoints appear twice in the keyhole walk but map to one outer
+/// vertex and one hole vertex. Generic triangulators may simplify those exact
+/// duplicates or a reflex retained corner away. This local clipper keeps the
+/// weakly simple walk as the combinatorial object and tests ears with exact
+/// orientation and point-in-triangle predicates, then maps duplicate bridge
+/// copies back to the retained rings. That is the same retained-state rule
+/// from Yap, "Towards Exact Geometric Computation," *Computational Geometry*
+/// 7.1-2 (1997), while the ear-clipping theorem is the polygon triangulation
+/// basis used by Held, "FIST: Fast Industrial-Strength Triangulation of
+/// Polygons," *Algorithmica* 30 (2001).
+#[cfg(feature = "exact-triangulation")]
+fn retained_keyhole_ear_clip_triangles(
+    keyhole_points: &[Point3],
+    index_map: &[usize],
+    hole_start: usize,
+    projection: CoplanarProjection,
+) -> Option<Vec<Triangle>> {
+    if keyhole_points.len() != index_map.len() || keyhole_points.len() < 3 {
+        return None;
+    }
+    let mut ring = (0..keyhole_points.len()).collect::<Vec<_>>();
+    let mut triangles = Vec::with_capacity(keyhole_points.len().saturating_sub(2));
+    while ring.len() > 3 {
+        let mut clipped = false;
+        for cursor in 0..ring.len() {
+            let prev = ring[(cursor + ring.len() - 1) % ring.len()];
+            let curr = ring[cursor];
+            let next = ring[(cursor + 1) % ring.len()];
+            if !is_positive_projected_triangle(keyhole_points, [prev, curr, next], projection)? {
+                continue;
+            }
+            let ear = triangle_points(keyhole_points, [prev, curr, next]);
+            let mut blocked = false;
+            for &candidate in &ring {
+                if candidate == prev || candidate == curr || candidate == next {
+                    continue;
+                }
+                if points_equal(&keyhole_points[candidate], &keyhole_points[prev])
+                    || points_equal(&keyhole_points[candidate], &keyhole_points[curr])
+                    || points_equal(&keyhole_points[candidate], &keyhole_points[next])
+                {
+                    continue;
+                }
+                match point_in_projected_triangle(&keyhole_points[candidate], &ear, projection)? {
+                    TriangleLocation::Outside | TriangleLocation::Degenerate => {}
+                    TriangleLocation::Inside
+                    | TriangleLocation::OnEdge
+                    | TriangleLocation::OnVertex => {
+                        blocked = true;
+                        break;
+                    }
+                }
+            }
+            if blocked {
+                continue;
+            }
+            let mapped = [
+                *index_map.get(prev)?,
+                *index_map.get(curr)?,
+                *index_map.get(next)?,
+            ];
+            if mapped.iter().all(|&index| index >= hole_start) {
+                continue;
+            }
+            push_mapped_keyhole_triangle(
+                keyhole_points,
+                index_map,
+                hole_start,
+                &mut triangles,
+                [prev, curr, next],
+                projection,
+            )?;
+            ring.remove(cursor);
+            clipped = true;
+            break;
+        }
+        if !clipped {
+            return None;
+        }
+    }
+    push_mapped_keyhole_triangle(
+        keyhole_points,
+        index_map,
+        hole_start,
+        &mut triangles,
+        [ring[0], ring[1], ring[2]],
+        projection,
+    )?;
+    Some(triangles)
+}
+
+#[cfg(feature = "exact-triangulation")]
+/// Map one keyhole ear back to the retained outer/hole vertex set.
+///
+/// Ears wholly inside the retained hole are triangulator artifacts and are not
+/// emitted; rejecting them before removing an ear keeps reflex hole vertices
+/// available for valid exterior ears in [`retained_keyhole_ear_clip_triangles`].
+fn push_mapped_keyhole_triangle(
+    keyhole_points: &[Point3],
+    index_map: &[usize],
+    hole_start: usize,
+    triangles: &mut Vec<Triangle>,
+    keyhole_triangle: [usize; 3],
+    projection: CoplanarProjection,
+) -> Option<()> {
+    let mapped = [
+        *index_map.get(keyhole_triangle[0])?,
+        *index_map.get(keyhole_triangle[1])?,
+        *index_map.get(keyhole_triangle[2])?,
+    ];
+    if mapped[0] == mapped[1] || mapped[1] == mapped[2] || mapped[2] == mapped[0] {
+        return Some(());
+    }
+    if mapped.iter().all(|&index| index >= hole_start) {
+        return Some(());
+    }
+    let cell = triangle_points(keyhole_points, keyhole_triangle);
+    let signed_area = projected_area2_signed(&cell, projection)?;
+    match compare_reals(&signed_area, &ExactReal::from(0)).value()? {
+        Ordering::Greater => triangles.push(Triangle(mapped)),
+        Ordering::Less => triangles.push(Triangle([mapped[2], mapped[1], mapped[0]])),
+        Ordering::Equal => {}
+    }
+    Some(())
 }
 
 #[cfg(feature = "exact-triangulation")]

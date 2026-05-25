@@ -25977,7 +25977,7 @@ fn exact_coplanar_component_holed_intersection_merges_same_outer_holes() {
     );
 
     let overlapping_hole = ExactMesh::from_i64_triangles_with_policy(
-        &[3, 2, 0, 5, 2, 0, 5, 4, 0, 3, 4, 0],
+        &[3, 3, 0, 5, 3, 0, 5, 6, 0, 3, 6, 0],
         &[0, 1, 2, 0, 2, 3],
         ValidationPolicy::ALLOW_BOUNDARY,
     )
@@ -26000,7 +26000,7 @@ fn exact_coplanar_component_holed_intersection_merges_same_outer_holes() {
         .unwrap();
     assert_eq!(overlap_intersection.components.len(), 1);
     assert_eq!(overlap_intersection.components[0].holes.len(), 1);
-    assert_eq!(overlap_intersection.components[0].holes[0].len(), 4);
+    assert_eq!(overlap_intersection.components[0].holes[0].len(), 8);
     assert!(
         overlap_intersection.components[0].holes[0]
             .iter()
@@ -26042,27 +26042,6 @@ fn exact_coplanar_component_holed_intersection_merges_same_outer_holes() {
         hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
     )
     .unwrap();
-
-    let corner_overlapping_hole = ExactMesh::from_i64_triangles_with_policy(
-        &[3, 3, 0, 5, 3, 0, 5, 6, 0, 3, 6, 0],
-        &[0, 1, 2, 0, 2, 3],
-        ValidationPolicy::ALLOW_BOUNDARY,
-    )
-    .unwrap();
-    let corner_overlapping = hypermesh::exact::arrange_coplanar_convex_surface_holed_difference(
-        &outer,
-        &corner_overlapping_hole,
-    )
-    .expect("corner-overlapping annulus fixture should materialize")
-    .mesh;
-    assert!(
-        hypermesh::exact::arrange_coplanar_surface_component_holed_intersection(
-            &left,
-            &corner_overlapping,
-        )
-        .is_none(),
-        "nonconvex retained-hole unions still need the planar-cell triangulation path"
-    );
 
     let touching_hole = ExactMesh::from_i64_triangles_with_policy(
         &[4, 2, 0, 6, 2, 0, 6, 4, 0, 4, 4, 0],
