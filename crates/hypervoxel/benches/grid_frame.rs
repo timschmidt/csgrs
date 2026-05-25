@@ -20,7 +20,7 @@ use hypervoxel::{
     VoxelFieldCouplingManifest, VoxelHandoffDomain, VoxelHandoffManifest, VoxelIndexConvention,
     VoxelIoCompression, VoxelIoMetadata, VoxelMemoryBudgetManifest, VoxelSideTables,
     VoxelSliceNaming, VoxelSliceOrdering, VoxelSpatialAggregateFacts, VoxelTraceDimension,
-    VoxelTraceManifest, VoxelizationAudit, VoxelizationPolicy,
+    VoxelTraceManifest, VoxelizationAudit, VoxelizationPolicy, audit_chunk_paged_material_regions,
     chunk_paged_greedy_face_patch_plan_with_report, classify_chunk_paged_support_mask,
     classify_support_mask, continuous_field_address, diff_chunk_paged_sparse_grids,
     diff_sparse_grids, extract_chunk_paged_exposed_faces_with_report, extract_exposed_faces,
@@ -743,6 +743,19 @@ fn bench_batches_field_facts_and_sweeps(c: &mut Criterion) {
                 report.resolved_records,
                 report.is_complete(),
                 report.certainty,
+            )
+        })
+    });
+    c.bench_function("chunk_paged_material_region_audit", |b| {
+        let paged =
+            ChunkPagedSparseGrid::from_sparse_grid(&grid, ChunkShape::new(3).unwrap()).unwrap();
+        b.iter(|| {
+            let report = audit_chunk_paged_material_regions(&paged, &side_tables);
+            (
+                report.tested_pages,
+                report.material_payload_cells,
+                report.metadata.resolved_records,
+                report.exact_paged_material_audit_ready,
             )
         })
     });

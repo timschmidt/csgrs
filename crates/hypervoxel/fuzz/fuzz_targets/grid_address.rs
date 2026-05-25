@@ -23,9 +23,9 @@ use hypervoxel::{
     VoxelIndexConvention, VoxelIoCompression, VoxelIoMetadata, VoxelMemoryBudgetManifest,
     VoxelSideTables, VoxelSliceNaming, VoxelSliceOrdering, VoxelSpatialAggregateFacts,
     VoxelTraceDimension, VoxelTraceManifest, VoxelizationAudit, VoxelizationPolicy,
-    chunk_paged_greedy_face_patch_plan_with_report, classify_chunk_paged_support_mask,
-    classify_support_mask, continuous_field_address, diff_chunk_paged_sparse_grids,
-    extract_chunk_paged_exposed_faces_with_report,
+    audit_chunk_paged_material_regions, chunk_paged_greedy_face_patch_plan_with_report,
+    classify_chunk_paged_support_mask, classify_support_mask, continuous_field_address,
+    diff_chunk_paged_sparse_grids, extract_chunk_paged_exposed_faces_with_report,
     diff_sparse_grids, extract_exposed_faces, greedy_face_patch_plan, lookup_material_display_colors,
     extract_exposed_faces_with_report, lossy_obj_from_quad_mesh, lossy_quad_mesh_from_faces, query_field_samples,
     query_material_regions, report_material_region_metadata, sample_manhattan_distance_field,
@@ -1183,6 +1183,23 @@ fuzz_target!(|data: (u8, u64, u64, u64)| {
     if material_metadata.is_complete() {
         assert!(material_metadata.has_material_regions);
     }
+    let paged_edited = ChunkPagedSparseGrid::from_sparse_grid(
+        &edited,
+        ChunkShape::new(small_depth.min(2)).unwrap(),
+    )
+    .unwrap();
+    let paged_material = audit_chunk_paged_material_regions(&paged_edited, &side_tables);
+    assert_eq!(paged_material.query, material_query);
+    assert_eq!(paged_material.metadata, material_metadata);
+    assert_eq!(
+        paged_material.exact_paged_material_audit_ready,
+        paged_edited.report().exact_chunk_storage_ready
+            && paged_material.tested_cells > 0
+            && paged_material.unknown_cells == 0
+            && paged_material.lossy_cells == 0
+            && material_query.is_fully_resolved()
+            && material_metadata.is_complete()
+    );
     let color_report = lookup_material_display_colors(&material_query, &MaterialDisplayPalette::default());
     assert_eq!(
         color_report.complete_display_palette_ready,
@@ -1196,6 +1213,17 @@ fuzz_target!(|data: (u8, u64, u64, u64)| {
         report_material_region_metadata(&empty_material_query, &side_tables);
     assert!(!empty_material_metadata.has_material_regions);
     assert!(!empty_material_metadata.is_complete());
+    let empty_paged_material = audit_chunk_paged_material_regions(
+        &ChunkPagedSparseGrid::from_sparse_grid(
+            &SparseVoxelGrid::new(report.frame.clone()),
+            ChunkShape::new(small_depth.min(2)).unwrap(),
+        )
+        .unwrap(),
+        &side_tables,
+    );
+    assert_eq!(empty_paged_material.query, empty_material_query);
+    assert_eq!(empty_paged_material.metadata, empty_material_metadata);
+    assert!(!empty_paged_material.exact_paged_material_audit_ready);
     let empty_color_report =
         lookup_material_display_colors(&empty_material_query, &MaterialDisplayPalette::default());
     assert!(!empty_color_report.has_material_regions);

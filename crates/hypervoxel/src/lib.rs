@@ -29,6 +29,7 @@ mod cell;
 mod chunk;
 mod chunk_diff;
 mod chunk_faces;
+mod chunk_material;
 mod chunk_storage;
 mod chunk_support;
 mod compression;
@@ -92,6 +93,7 @@ pub use chunk_faces::{
     ChunkPagedExactFaceExtractionReport, ChunkPagedGreedyFacePatchReport,
     chunk_paged_greedy_face_patch_plan_with_report, extract_chunk_paged_exposed_faces_with_report,
 };
+pub use chunk_material::{ChunkPagedMaterialAuditReport, audit_chunk_paged_material_regions};
 pub use chunk_storage::{
     ChunkPagedAabbBroadPhaseReport, ChunkPagedConnectedComponentReport,
     ChunkPagedManhattanBandReport, ChunkPagedRegionAggregateReport, ChunkPagedSparseGrid,

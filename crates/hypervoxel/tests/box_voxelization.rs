@@ -11,10 +11,11 @@ use hypervoxel::{
     ProcessStateRecord, QuantizationPolicy, QueryRegion, SideTableLinkStatus, SnapshotFormat,
     SparseVoxelGrid, StorageReplayStatus, VoxelAddress, VoxelAggregateFacts, VoxelCell,
     VoxelHandoffDomain, VoxelHandoffManifest, VoxelMemoryBudgetManifest, VoxelSideTables,
-    VoxelizationAudit, VoxelizationPolicy, diff_chunk_paged_sparse_grids, diff_sparse_grids,
-    extract_exposed_faces, extract_exposed_faces_with_report, greedy_face_patch_plan,
-    lookup_material_display_colors, lossy_obj_from_quad_mesh, lossy_quad_mesh_from_faces,
-    query_material_regions, report_material_region_metadata, sample_manhattan_distance_field,
+    VoxelizationAudit, VoxelizationPolicy, audit_chunk_paged_material_regions,
+    diff_chunk_paged_sparse_grids, diff_sparse_grids, extract_exposed_faces,
+    extract_exposed_faces_with_report, greedy_face_patch_plan, lookup_material_display_colors,
+    lossy_obj_from_quad_mesh, lossy_quad_mesh_from_faces, query_material_regions,
+    report_material_region_metadata, sample_manhattan_distance_field,
     sample_signed_manhattan_distance_field, select_lod_cells, voxel_neighbors6, voxelize_exact_box,
     voxelize_exact_convex_halfspace_set, voxelize_exact_halfspace,
 };
@@ -554,6 +555,40 @@ fn material_query_reports_missing_side_table_records_without_interpreting_materi
     );
     assert!(!metadata.is_complete());
     assert_eq!(metadata.certainty, AggregateCertainty::Unknown);
+    let paged = ChunkPagedSparseGrid::from_sparse_grid(&grid, ChunkShape::new(1).unwrap()).unwrap();
+    let paged_material = audit_chunk_paged_material_regions(&paged, &side_tables);
+    assert_eq!(paged_material.query, report);
+    assert_eq!(paged_material.metadata, metadata);
+    assert_eq!(paged_material.tested_pages, 2);
+    assert_eq!(paged_material.tested_cells, 2);
+    assert_eq!(paged_material.material_payload_cells, 2);
+    assert_eq!(paged_material.non_material_payload_cells, 0);
+    assert_eq!(paged_material.unknown_cells, 0);
+    assert_eq!(paged_material.lossy_cells, 0);
+    assert!(!paged_material.exact_paged_material_audit_ready);
+
+    let mut blocked_grid = grid.clone();
+    blocked_grid
+        .set(
+            VoxelAddress::new(2, [3, 1, 1]).unwrap(),
+            VoxelCell::unknown(),
+        )
+        .unwrap();
+    blocked_grid
+        .set(
+            VoxelAddress::new(2, [0, 1, 1]).unwrap(),
+            VoxelCell::lossy_adapter_value(77),
+        )
+        .unwrap();
+    let blocked_paged =
+        ChunkPagedSparseGrid::from_sparse_grid(&blocked_grid, ChunkShape::new(1).unwrap()).unwrap();
+    let blocked_material = audit_chunk_paged_material_regions(&blocked_paged, &side_tables);
+    assert_eq!(blocked_material.query, report);
+    assert_eq!(blocked_material.material_payload_cells, 2);
+    assert_eq!(blocked_material.non_material_payload_cells, 2);
+    assert_eq!(blocked_material.unknown_cells, 1);
+    assert_eq!(blocked_material.lossy_cells, 1);
+    assert!(!blocked_material.exact_paged_material_audit_ready);
 
     let mut palette = MaterialDisplayPalette::default();
     palette.insert(
@@ -599,6 +634,16 @@ fn material_query_reports_missing_side_table_records_without_interpreting_materi
     let empty_colors = lookup_material_display_colors(&empty_query, &palette);
     assert!(!empty_colors.has_material_regions);
     assert!(!empty_colors.complete_display_palette_ready);
+    let empty_paged = ChunkPagedSparseGrid::from_sparse_grid(
+        &SparseVoxelGrid::new(frame()),
+        ChunkShape::new(1).unwrap(),
+    )
+    .unwrap();
+    let empty_material = audit_chunk_paged_material_regions(&empty_paged, &side_tables);
+    assert_eq!(empty_material.tested_pages, 0);
+    assert_eq!(empty_material.tested_cells, 0);
+    assert!(!empty_material.query.has_references());
+    assert!(!empty_material.exact_paged_material_audit_ready);
 }
 
 #[test]
@@ -625,6 +670,15 @@ fn material_metadata_report_accepts_only_explicit_density_and_provenance() {
     assert!(metadata.is_complete());
     assert_eq!(metadata.records_with_density, [MaterialRegionId(7)].into());
     assert_eq!(metadata.certainty, AggregateCertainty::Exact);
+    let paged = ChunkPagedSparseGrid::from_sparse_grid(&grid, ChunkShape::new(1).unwrap()).unwrap();
+    let paged_material = audit_chunk_paged_material_regions(&paged, &side_tables);
+    assert_eq!(paged_material.query, query);
+    assert_eq!(paged_material.metadata, metadata);
+    assert_eq!(
+        paged_material.referenced_regions,
+        [MaterialRegionId(7)].into()
+    );
+    assert!(paged_material.exact_paged_material_audit_ready);
 }
 
 #[test]
