@@ -624,6 +624,27 @@ pub enum SketchConstraintKind {
         /// Retained 2D circle entity in workplane coordinates.
         circle: SketchEntityHandle,
     },
+    /// Projected 3D point concentric with a retained 2D circle or arc.
+    ///
+    /// The retained 3D point is projected into exact workplane `U/V`
+    /// coordinates and equated with the retained center of a 2D circle or
+    /// circular arc. This is a workplane counterpart of
+    /// [`SketchConstraintKind::Concentric2`] for constructions where the
+    /// center is authored as a 3D point. Lowering emits the workplane
+    /// unit-quaternion guard plus two exact center-coordinate rows; it does
+    /// not infer radius equality or arc validity. That separation follows
+    /// Yap, "Towards Exact Geometric Computation" (1997), with the frame axes
+    /// from Shoemake, "Animating Rotation with Quaternion Curves" (1985), and
+    /// the explicit concentric relation vocabulary from Bouma et al.,
+    /// "A Geometric Constraint Solver" (1995).
+    ProjectedPointConcentric3 {
+        /// Workplane entity that supplies origin and normal/quaternion.
+        workplane: SketchEntityHandle,
+        /// 3D point entity projected into the workplane as the center.
+        point: SketchEntityHandle,
+        /// Retained 2D circle or circular-arc entity in workplane coordinates.
+        curve: SketchEntityHandle,
+    },
     /// Line/circle tangency after projecting a 3D line into a workplane.
     ///
     /// The retained 3D line segment is projected into the workplane `U/V`
@@ -1957,6 +1978,8 @@ pub enum SketchResidualStrategy {
     RadiusEquality,
     /// Exact retained circle/arc center coordinate equality package.
     Concentricity,
+    /// Exact workplane-projected 3D point to circle/arc center equality package.
+    ProjectedConcentricity,
     /// Incidence represented as a squared-distance polynomial.
     SquaredIncidence,
     /// Exact point-on-arc incidence and branch package.
@@ -2146,6 +2169,8 @@ pub enum SketchResidualFormKind {
     CircleCircleTangencyPolynomial,
     /// Exact retained circle/arc center coordinate equality row.
     ConcentricCenterCoordinatePolynomial,
+    /// Exact projected 3D point to retained circle/arc center coordinate row.
+    ProjectedConcentricCenterCoordinatePolynomial,
     /// Point-on-arc endpoint-on-radius proof row.
     ArcIncidenceEndpointRadiusPolynomial,
     /// Point-on-arc point-on-radius proof row.
@@ -3035,6 +3060,17 @@ impl SketchSolveProblem {
         b: SketchEntityHandle,
     ) -> SketchConstraintHandle {
         distance::concentric2(self, name, a, b).handle
+    }
+
+    /// Add a retained projected 3D point-to-circle/arc center relation.
+    pub fn add_projected_point_concentric3(
+        &mut self,
+        name: impl Into<String>,
+        workplane: SketchEntityHandle,
+        point: SketchEntityHandle,
+        curve: SketchEntityHandle,
+    ) -> SketchConstraintHandle {
+        distance::projected_point_concentric3(self, name, workplane, point, curve).handle
     }
 
     /// Add a horizontal 2D line constraint.
@@ -4522,6 +4558,45 @@ impl SketchSolveProblem {
                             residual: parts.incidence,
                         },
                     ],
+                    diagnostics,
+                }
+            }
+            SketchConstraintKind::ProjectedPointConcentric3 {
+                workplane,
+                point,
+                curve,
+            } => {
+                let mut diagnostics = Vec::new();
+                let Some(parts) = self.projected_point_concentric_exprs(
+                    workplane,
+                    point,
+                    curve,
+                    constraint,
+                    &mut diagnostics,
+                ) else {
+                    return SketchResidualFormsReport {
+                        constraint: handle,
+                        status: SketchResidualFormsStatus::InvalidInputs,
+                        forms: Vec::new(),
+                        diagnostics,
+                    };
+                };
+                let mut forms = vec![SketchResidualForm {
+                    kind: SketchResidualFormKind::WorkplaneUnitQuaternionPolynomial,
+                    role: SketchResidualFormRole::ExactProof,
+                    strategy: Some(SketchResidualStrategy::WorkplaneUnitQuaternion),
+                    residual: unit_quaternion_residual(&parts.quaternion),
+                }];
+                forms.extend(parts.center.into_iter().map(|residual| SketchResidualForm {
+                    kind: SketchResidualFormKind::ProjectedConcentricCenterCoordinatePolynomial,
+                    role: SketchResidualFormRole::ExactProof,
+                    strategy: Some(SketchResidualStrategy::ProjectedConcentricity),
+                    residual,
+                }));
+                SketchResidualFormsReport {
+                    constraint: handle,
+                    status: SketchResidualFormsStatus::Generated,
+                    forms,
                     diagnostics,
                 }
             }
@@ -7123,6 +7198,43 @@ impl SketchSolveProblem {
                     parts.incidence,
                     SketchResidualStrategy::ProjectedSquaredIncidence,
                 );
+            }
+            SketchConstraintKind::ProjectedPointConcentric3 {
+                workplane,
+                point,
+                curve,
+            } => {
+                // This is a projected center-coincidence proof package: the
+                // retained workplane supplies certified U/V coordinates, and
+                // the retained circle/arc supplies the exact 2D center. The
+                // relation stays separate from point-on-circle incidence and
+                // radius equality so diagnostics preserve the source intent.
+                let Some(parts) = self
+                    .projected_point_concentric_exprs(workplane, point, curve, constraint, rows)
+                else {
+                    return;
+                };
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} workplane unit", constraint.name),
+                    unit_quaternion_residual(&parts.quaternion),
+                    SketchResidualStrategy::WorkplaneUnitQuaternion,
+                );
+                for (axis, residual) in parts.center.into_iter().enumerate() {
+                    self.push_residual(
+                        problem,
+                        rows,
+                        constraint,
+                        format!(
+                            "{} projected concentric center coordinate {axis}",
+                            constraint.name
+                        ),
+                        residual,
+                        SketchResidualStrategy::ProjectedConcentricity,
+                    );
+                }
             }
             SketchConstraintKind::ProjectedLineCircleTangent3 {
                 workplane,
@@ -10195,6 +10307,34 @@ impl SketchSolveProblem {
         })
     }
 
+    fn projected_point_concentric_exprs(
+        &self,
+        workplane: SketchEntityHandle,
+        point: SketchEntityHandle,
+        curve: SketchEntityHandle,
+        constraint: &SketchConstraint,
+        rows: &mut Vec<SketchGeneratedRow>,
+    ) -> Option<ProjectedPointConcentricExprs> {
+        let (origin, quaternion) =
+            self.workplane_origin_and_quaternion(workplane, constraint, rows)?;
+        let point = self.point3_coordinates(point, constraint, rows)?;
+        let center = self.circle_or_arc_center_expr(curve, constraint, rows)?;
+        let delta = [
+            point.exprs[0].clone() - origin.exprs[0].clone(),
+            point.exprs[1].clone() - origin.exprs[1].clone(),
+            point.exprs[2].clone() - origin.exprs[2].clone(),
+        ];
+        let (u_axis, v_axis, _) = quaternion_frame_axes_expr(&quaternion);
+        let projected = [dot3_expr(&delta, &u_axis), dot3_expr(&delta, &v_axis)];
+        Some(ProjectedPointConcentricExprs {
+            center: [
+                projected[0].clone() - center.exprs[0].clone(),
+                projected[1].clone() - center.exprs[1].clone(),
+            ],
+            quaternion,
+        })
+    }
+
     fn projected_point_arc_incidence_exprs(
         &self,
         workplane: SketchEntityHandle,
@@ -11966,6 +12106,12 @@ struct ProjectedPointDistanceExprs {
 struct ProjectedPointCircleIncidenceExprs {
     quaternion: [Expr; 4],
     incidence: Expr,
+}
+
+#[derive(Clone, Debug)]
+struct ProjectedPointConcentricExprs {
+    quaternion: [Expr; 4],
+    center: [Expr; 2],
 }
 
 #[derive(Clone, Debug)]

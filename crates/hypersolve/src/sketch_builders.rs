@@ -1556,6 +1556,36 @@ pub mod distance {
         }
     }
 
+    /// Add a projected 3D point-to-circle/arc center relation.
+    ///
+    /// The 3D point is projected through a retained workplane and replayed
+    /// against the exact retained center coordinates of a circle or circular
+    /// arc. The workplane unit guard is part of the generated proof package,
+    /// following Yap (1997), and the U/V frame uses Shoemake's quaternion
+    /// rotation matrix. The relation is kept distinct from point-on-circle and
+    /// radius equality so the SolveSpace-style concentric intent described by
+    /// Bouma et al. (1995) remains visible in diagnostics.
+    pub fn projected_point_concentric3(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        workplane: SketchEntityHandle,
+        point: SketchEntityHandle,
+        curve: SketchEntityHandle,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::ProjectedPointConcentric3 {
+            workplane,
+            point,
+            curve,
+        };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Distance,
+            strategy: SketchResidualStrategy::ProjectedConcentricity,
+            kind,
+        }
+    }
+
     /// Add a retained workplane-projected equal-length relation for 3D lines.
     ///
     /// Lowering projects both retained 3D line directions into the workplane

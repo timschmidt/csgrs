@@ -7133,6 +7133,121 @@ fn sketch_projected_point_on_circle_replays_workplane_and_incidence_rows() {
 }
 
 #[test]
+fn sketch_projected_point_concentric_replays_workplane_and_center_rows() {
+    let mut sketch = SketchSolveProblem::new();
+    let origin3 = sketch.add_point3d("origin3", real(10), real(20), real(30));
+    let normal = sketch.add_normal3d("identity normal", real(1), real(0), real(0), real(0));
+    let workplane = sketch.add_workplane("workplane", origin3, normal);
+    let center = sketch.add_point2d("center", real(2), real(3));
+    let shifted_center = sketch.add_point2d("shifted center", real(7), real(3));
+    let start = sketch.add_point2d("start", real(6), real(3));
+    let end = sketch.add_point2d("end", real(2), real(7));
+    let radius = sketch.add_distance("radius", real(4));
+    let arc = sketch.add_arc_of_circle2("arc", center, start, end, radius);
+    let shifted_circle = sketch.add_circle2("shifted circle", shifted_center, radius);
+    let projected_center = sketch.add_point3d("projected center", real(12), real(23), real(99));
+
+    let valid = sketch_distance_builders::projected_point_concentric3(
+        &mut sketch,
+        "projected point concentric",
+        workplane,
+        projected_center,
+        arc,
+    );
+    sketch.add_projected_point_concentric3(
+        "bad projected point concentric",
+        workplane,
+        projected_center,
+        shifted_circle,
+    );
+    let wrong = sketch.add_projected_point_concentric3(
+        "wrong projected point concentric",
+        workplane,
+        projected_center,
+        radius,
+    );
+
+    assert_eq!(valid.family, hypersolve::SketchConstraintFamily::Distance);
+    assert_eq!(
+        valid.strategy,
+        SketchResidualStrategy::ProjectedConcentricity
+    );
+    assert_eq!(
+        valid.kind,
+        SketchConstraintKind::ProjectedPointConcentric3 {
+            workplane,
+            point: projected_center,
+            curve: arc,
+        }
+    );
+
+    let lowered = sketch.lower_to_problem();
+    let certification = certify_candidate(
+        &PreparedProblem::new(&lowered.problem),
+        &context_from_problem(&lowered.problem),
+    );
+
+    assert_eq!(lowered.problem.constraints.len(), 6);
+    assert_eq!(lowered.rows.len(), 7);
+    assert_eq!(
+        lowered.rows[0].strategy,
+        Some(SketchResidualStrategy::WorkplaneUnitQuaternion)
+    );
+    assert!(
+        lowered.rows[1..3]
+            .iter()
+            .all(|row| row.strategy == Some(SketchResidualStrategy::ProjectedConcentricity))
+    );
+    assert!(
+        lowered.rows[4..6]
+            .iter()
+            .all(|row| row.strategy == Some(SketchResidualStrategy::ProjectedConcentricity))
+    );
+    assert_eq!(
+        lowered.rows.last().unwrap().status,
+        SketchGeneratedRowStatus::WrongEntityKind {
+            handle: radius,
+            expected: "circle or circular arc",
+        }
+    );
+    assert!(matches!(
+        certification.rows[0].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+    assert!(matches!(
+        certification.rows[1].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+    assert!(matches!(
+        certification.rows[2].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+    assert!(matches!(
+        certification.rows[4].status,
+        CertifiedCandidateStatus::CertifiedViolation { .. }
+    ));
+    assert!(matches!(
+        certification.rows[5].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+
+    let forms = sketch.residual_forms_for_constraint(valid.handle);
+    assert_eq!(forms.status, SketchResidualFormsStatus::Generated);
+    assert_eq!(forms.forms.len(), 3);
+    assert_eq!(
+        forms.forms[0].kind,
+        SketchResidualFormKind::WorkplaneUnitQuaternionPolynomial
+    );
+    assert!(forms.forms[1..].iter().all(|form| {
+        form.kind == SketchResidualFormKind::ProjectedConcentricCenterCoordinatePolynomial
+            && form.role == SketchResidualFormRole::ExactProof
+            && form.strategy == Some(SketchResidualStrategy::ProjectedConcentricity)
+    }));
+    let wrong_forms = sketch.residual_forms_for_constraint(wrong);
+    assert_eq!(wrong_forms.status, SketchResidualFormsStatus::InvalidInputs);
+}
+
+#[test]
 fn sketch_projected_point_on_line_replays_workplane_and_collinearity_rows() {
     let mut sketch = SketchSolveProblem::new();
     let origin3 = sketch.add_point3d("origin3", real(1), real(2), real(3));

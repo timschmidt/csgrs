@@ -3520,6 +3520,102 @@ proptest! {
     }
 
     #[test]
+    fn sketch_projected_point_concentric_rows_match_identity_workplane_centers(
+        ox in -4_i16..=4,
+        oy in -4_i16..=4,
+        oz in -4_i16..=4,
+        cx in -8_i16..=8,
+        cy in -8_i16..=8,
+        radius in 1_i16..=12,
+        normal_offset in -8_i16..=8,
+        dx in -6_i16..=6,
+        dy in -6_i16..=6,
+    ) {
+        let ox = i64::from(ox);
+        let oy = i64::from(oy);
+        let oz = i64::from(oz);
+        let cx = i64::from(cx);
+        let cy = i64::from(cy);
+        let radius = i64::from(radius);
+        let normal_offset = i64::from(normal_offset);
+        let dx = i64::from(dx);
+        let dy = i64::from(dy);
+        let mut sketch = SketchSolveProblem::new();
+        let origin = sketch.add_point3d("origin", Real::from(ox), Real::from(oy), Real::from(oz));
+        let normal = sketch.add_normal3d(
+            "normal",
+            Real::from(1),
+            Real::from(0),
+            Real::from(0),
+            Real::from(0),
+        );
+        let workplane = sketch.add_workplane("workplane", origin, normal);
+        let center = sketch.add_point2d("center", Real::from(cx), Real::from(cy));
+        let start = sketch.add_point2d("start", Real::from(cx + radius), Real::from(cy));
+        let end = sketch.add_point2d("end", Real::from(cx), Real::from(cy + radius));
+        let radius_entity = sketch.add_distance("radius", Real::from(radius));
+        let arc = sketch.add_arc_of_circle2("arc", center, start, end, radius_entity);
+        let point = sketch.add_point3d(
+            "point",
+            Real::from(ox + cx),
+            Real::from(oy + cy),
+            Real::from(oz + normal_offset),
+        );
+        let handle =
+            sketch.add_projected_point_concentric3("projected point concentric", workplane, point, arc);
+        if dx != 0 || dy != 0 {
+            let shifted_center =
+                sketch.add_point2d("shifted center", Real::from(cx + dx), Real::from(cy + dy));
+            let shifted = sketch.add_circle2("shifted", shifted_center, radius_entity);
+            sketch.add_projected_point_concentric3(
+                "bad projected point concentric",
+                workplane,
+                point,
+                shifted,
+            );
+        }
+
+        let lowered = sketch.lower_to_problem();
+        let certification = certify_candidate(
+            &PreparedProblem::new(&lowered.problem),
+            &context_from_problem(&lowered.problem),
+        );
+        let forms = sketch.residual_forms_for_constraint(handle);
+
+        prop_assert_eq!(lowered.rows[0].strategy, Some(SketchResidualStrategy::WorkplaneUnitQuaternion));
+        prop_assert_eq!(lowered.rows[1].strategy, Some(SketchResidualStrategy::ProjectedConcentricity));
+        prop_assert_eq!(lowered.rows[2].strategy, Some(SketchResidualStrategy::ProjectedConcentricity));
+        let unit_zero = matches!(
+            certification.rows[0].status,
+            CertifiedCandidateStatus::CertifiedZero { .. }
+        );
+        let x_zero = matches!(
+            certification.rows[1].status,
+            CertifiedCandidateStatus::CertifiedZero { .. }
+        );
+        let y_zero = matches!(
+            certification.rows[2].status,
+            CertifiedCandidateStatus::CertifiedZero { .. }
+        );
+        prop_assert!(unit_zero);
+        prop_assert!(x_zero);
+        prop_assert!(y_zero);
+        if dx != 0 || dy != 0 {
+            prop_assert!(!certification.all_satisfied());
+        }
+        prop_assert_eq!(forms.status, SketchResidualFormsStatus::Generated);
+        prop_assert_eq!(forms.forms.len(), 3);
+        prop_assert_eq!(
+            forms.forms[1].kind,
+            SketchResidualFormKind::ProjectedConcentricCenterCoordinatePolynomial
+        );
+        prop_assert_eq!(
+            forms.forms[2].kind,
+            SketchResidualFormKind::ProjectedConcentricCenterCoordinatePolynomial
+        );
+    }
+
+    #[test]
     fn sketch_projected_point_on_line_rows_replay_identity_workplane_collinearity(
         ox in -4_i16..=4,
         oy in -4_i16..=4,

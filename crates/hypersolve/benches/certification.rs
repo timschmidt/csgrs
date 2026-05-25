@@ -350,6 +350,43 @@ fn sketch_problem_with_concentric_relations(row_count: usize) -> hypersolve::Ske
     sketch
 }
 
+fn sketch_problem_with_projected_point_concentric_relations(
+    row_count: usize,
+) -> hypersolve::SketchSolveProblem {
+    let mut sketch = hypersolve::SketchSolveProblem::new();
+    let origin = sketch.add_point3d("projected.concentric.origin", r(0), r(0), r(0));
+    let normal = sketch.add_normal3d("projected.concentric.normal", r(1), r(0), r(0), r(0));
+    let workplane = sketch.add_workplane("projected.concentric.workplane", origin, normal);
+    for index in 0..row_count {
+        let y = index as i64;
+        let center = sketch.add_point2d(format!("projected.concentric{index}.center"), r(2), r(y));
+        let start = sketch.add_point2d(format!("projected.concentric{index}.start"), r(7), r(y));
+        let end = sketch.add_point2d(format!("projected.concentric{index}.end"), r(2), r(y + 5));
+        let point = sketch.add_point3d(
+            format!("projected.concentric{index}.point"),
+            r(2),
+            r(y),
+            r(index as i64 + 11),
+        );
+        let radius = sketch.add_distance(format!("projected.concentric{index}.radius"), r(5));
+        let arc = sketch.add_arc_of_circle2(
+            format!("projected.concentric{index}.arc"),
+            center,
+            start,
+            end,
+            radius,
+        );
+        hypersolve::sketch_distance_builders::projected_point_concentric3(
+            &mut sketch,
+            format!("projected point concentric {index}"),
+            workplane,
+            point,
+            arc,
+        );
+    }
+    sketch
+}
+
 fn sketch_problem_with_length_ratio_and_point_line(
     row_count: usize,
 ) -> hypersolve::SketchSolveProblem {
@@ -2304,6 +2341,11 @@ fn certification(c: &mut Criterion) {
     c.bench_function("sketch_concentric_lowering", |b| {
         b.iter(|| concentric_sketch.lower_to_problem())
     });
+    let projected_point_concentric_sketch =
+        sketch_problem_with_projected_point_concentric_relations(16);
+    c.bench_function("sketch_projected_point_concentric_lowering", |b| {
+        b.iter(|| projected_point_concentric_sketch.lower_to_problem())
+    });
     let length_ratio_point_line_sketch = sketch_problem_with_length_ratio_and_point_line(16);
     c.bench_function("sketch_length_ratio_point_line_lowering", |b| {
         b.iter(|| length_ratio_point_line_sketch.lower_to_problem())
@@ -2613,6 +2655,24 @@ fn certification(c: &mut Criterion) {
         b.iter(|| {
             for handle in &concentric_form_handles {
                 let _ = concentric_sketch.residual_forms_for_constraint(*handle);
+            }
+        })
+    });
+    let projected_point_concentric_form_handles = projected_point_concentric_sketch
+        .constraints()
+        .iter()
+        .filter(|constraint| {
+            matches!(
+                constraint.kind,
+                hypersolve::SketchConstraintKind::ProjectedPointConcentric3 { .. }
+            )
+        })
+        .map(|constraint| constraint.handle)
+        .collect::<Vec<_>>();
+    c.bench_function("sketch_projected_point_concentric_residual_forms", |b| {
+        b.iter(|| {
+            for handle in &projected_point_concentric_form_handles {
+                let _ = projected_point_concentric_sketch.residual_forms_for_constraint(*handle);
             }
         })
     });
