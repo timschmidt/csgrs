@@ -5,9 +5,11 @@ use std::cmp::Ordering;
 use hyperlimit::{PredicatePolicy, compare_reals_with_policy};
 use hyperpath::{
     BezierParameter, CubicBezier, LinePathSegment, LineQuadraticBezierIntersectionClass,
-    QuadraticBezier, RationalQuadraticBezier, arrange_cubic_beziers,
-    arrange_line_segments_with_quadratic_beziers, arrange_quadratic_beziers,
+    LineRationalQuadraticBezierIntersectionClass, QuadraticBezier, RationalQuadraticBezier,
+    arrange_cubic_beziers, arrange_line_segments_with_quadratic_beziers,
+    arrange_line_segments_with_rational_quadratic_beziers, arrange_quadratic_beziers,
     arrange_rational_quadratic_beziers, intersect_axis_aligned_line_quadratic_bezier,
+    intersect_axis_aligned_line_rational_quadratic_bezier,
 };
 use hyperreal::{Rational, Real};
 use libfuzzer_sys::fuzz_target;
@@ -123,6 +125,56 @@ fuzz_target!(|data: &[u8]| {
         weight,
     )
     .unwrap();
+    let conic_horizontal = LinePathSegment::new(
+        p(signed(data[12]), signed(data[13])),
+        p(signed(data[16]), signed(data[13])),
+    );
+    let conic_intersection_report = intersect_axis_aligned_line_rational_quadratic_bezier(
+        &conic_horizontal,
+        &conic,
+        PredicatePolicy::default(),
+    );
+    for event in &conic_intersection_report.intersections {
+        assert_eq!(
+            compare_reals_with_policy(
+                &event.point.y,
+                &conic_horizontal.start().y,
+                PredicatePolicy::default()
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
+    }
+
+    let secant_conic = RationalQuadraticBezier::new(p(0, 0), p(4, 8), p(8, 0), r(1)).unwrap();
+    let secant_line = LinePathSegment::new(p(0, 3), p(8, 3));
+    let secant_report = arrange_line_segments_with_rational_quadratic_beziers(
+        &[secant_line],
+        &[secant_conic],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert_eq!(
+        secant_report.events[0].class,
+        LineRationalQuadraticBezierIntersectionClass::TwoPoints
+    );
+    assert_eq!(secant_report.conic_breakpoints[0].len(), 4);
+    assert_eq!(secant_report.conic_fragments.len(), 3);
+
+    let tangent_conic = RationalQuadraticBezier::new(p(0, 0), p(4, 4), p(8, 0), r(1)).unwrap();
+    let tangent_line = LinePathSegment::new(p(0, 2), p(8, 2));
+    let tangent_report = arrange_line_segments_with_rational_quadratic_beziers(
+        &[tangent_line],
+        &[tangent_conic],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert_eq!(
+        tangent_report.events[0].class,
+        LineRationalQuadraticBezierIntersectionClass::Tangent
+    );
+    assert_eq!(tangent_report.conic_breakpoints[0].len(), 3);
+
     let r_report =
         arrange_rational_quadratic_beziers(&[conic], &[vec![t]], PredicatePolicy::default())
             .unwrap();

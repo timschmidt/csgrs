@@ -13,6 +13,7 @@ pub mod bezier;
 pub mod bezier_arrangement;
 pub mod cam;
 pub mod mixed_bezier_arrangement;
+pub mod mixed_conic_arrangement;
 pub mod offset;
 pub mod pcb;
 pub mod pcb_circular_board;
@@ -56,12 +57,15 @@ pub use bezier_arrangement::{
     BezierArrangementBreakpoint, BezierArrangementError, CubicBezierArrangementFragment,
     CubicBezierArrangementReport, HomogeneousPoint2, LineQuadraticBezierIntersection,
     LineQuadraticBezierIntersectionClass, LineQuadraticBezierIntersectionReport,
-    QuadraticBezierArrangementFragment, QuadraticBezierArrangementReport,
-    RationalQuadraticBezierArrangementFragment, RationalQuadraticBezierArrangementReport,
-    arrange_cubic_beziers, arrange_cubic_beziers_with_provenance, arrange_quadratic_beziers,
+    LineRationalQuadraticBezierIntersection, LineRationalQuadraticBezierIntersectionClass,
+    LineRationalQuadraticBezierIntersectionReport, QuadraticBezierArrangementFragment,
+    QuadraticBezierArrangementReport, RationalQuadraticBezierArrangementFragment,
+    RationalQuadraticBezierArrangementReport, arrange_cubic_beziers,
+    arrange_cubic_beziers_with_provenance, arrange_quadratic_beziers,
     arrange_quadratic_beziers_with_provenance, arrange_rational_quadratic_beziers,
     arrange_rational_quadratic_beziers_with_provenance,
     intersect_axis_aligned_line_quadratic_bezier,
+    intersect_axis_aligned_line_rational_quadratic_bezier,
 };
 pub use cam::{
     AdditiveBeadLine, AdditiveInfillLink, BeadFillAxis, BeadPlanError, InfillGraphError,
@@ -78,6 +82,14 @@ pub use mixed_bezier_arrangement::{
     MixedLineArrangementBreakpoint, MixedLineArrangementFragment, QuadraticBezierRealBreakpoint,
     QuadraticBezierRealFragment, arrange_line_segments_with_quadratic_beziers,
     arrange_line_segments_with_quadratic_beziers_and_provenance,
+};
+pub use mixed_conic_arrangement::{
+    LineRationalQuadraticBezierArrangementError, LineRationalQuadraticBezierArrangementEvent,
+    LineRationalQuadraticBezierArrangementFacts, LineRationalQuadraticBezierArrangementReport,
+    MixedConicLineArrangementBreakpoint, MixedConicLineArrangementFragment,
+    RationalQuadraticBezierRealBreakpoint, RationalQuadraticBezierRealFragment,
+    arrange_line_segments_with_rational_quadratic_beziers,
+    arrange_line_segments_with_rational_quadratic_beziers_and_provenance,
 };
 pub use offset::{
     ArcOffsetCandidate, ArcOffsetError, BezierOffsetError, BezierOffsetSampleCandidate,

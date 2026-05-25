@@ -9,11 +9,12 @@ use hyperpath::{
     ExplicitCircularArc, HigherOrderBezier, HigherOrderBezierError, InfillGraphError,
     LineArcArrangementEventClass, LineArrangementError, LineArrangementEventClass,
     LineExplicitArcIntersectionClass, LineOffsetError, LinePathSegment,
-    LineQuadraticBezierIntersectionClass, MeanderError, MeanderObstacle, MeanderPlacementCandidate,
-    NetId, OffsetSide, PathProvenance, PathSourceFormat, PcbBoardOutline, PcbCardinalRectPad,
-    PcbCircularBoardOutline, PcbCircularPad, PcbConvexBoardOutline, PcbConvexPad, PcbObroundPad,
-    PcbOrientedRectPad, PcbOrthogonalBoardOutline, PcbRectPad, PcbRoundedRectPad, PcbTrace,
-    PcbViaStack, PocketPlanError, PocketPlanStopReason, QuadraticBezier, RationalQuadraticBezier,
+    LineQuadraticBezierIntersectionClass, LineRationalQuadraticBezierIntersectionClass,
+    MeanderError, MeanderObstacle, MeanderPlacementCandidate, NetId, OffsetSide, PathProvenance,
+    PathSourceFormat, PcbBoardOutline, PcbCardinalRectPad, PcbCircularBoardOutline, PcbCircularPad,
+    PcbConvexBoardOutline, PcbConvexPad, PcbObroundPad, PcbOrientedRectPad,
+    PcbOrthogonalBoardOutline, PcbRectPad, PcbRoundedRectPad, PcbTrace, PcbViaStack,
+    PocketPlanError, PocketPlanStopReason, QuadraticBezier, RationalQuadraticBezier,
     RationalQuadraticBezierError, RectangularPocket, RectangularRegionRelation,
     RouteCertificationError, SegmentParameterOrder, SourceLengthUnit, SpecctraGridTraceRecord,
     SpecctraGridViaRecord, SpecctraImportError, SpecctraLayerAlias, SpecctraNetAlias,
@@ -22,9 +23,9 @@ use hyperpath::{
     ViaAnnularRingReport, ViaDrillIntent, ViaDrillPolicyClass, ViaLayerSpanRelation,
     ViaLayerTransitionClass, arrange_cubic_beziers, arrange_explicit_arcs, arrange_line_segments,
     arrange_line_segments_with_explicit_arcs, arrange_line_segments_with_quadratic_beziers,
-    arrange_quadratic_beziers, arrange_rational_quadratic_beziers,
-    build_alternating_detour_meander, build_g1_join_problem, build_length_match_problem,
-    build_multi_detour_meander, build_nonuniform_detour_meander,
+    arrange_line_segments_with_rational_quadratic_beziers, arrange_quadratic_beziers,
+    arrange_rational_quadratic_beziers, build_alternating_detour_meander, build_g1_join_problem,
+    build_length_match_problem, build_multi_detour_meander, build_nonuniform_detour_meander,
     build_obstacle_aware_detour_meander, build_oriented_tangent_alignment_problem,
     build_rectangular_bead_plan, build_rectangular_pocket_plan,
     build_rectangular_serpentine_infill_graph, build_rectangular_support_plan,
@@ -45,7 +46,8 @@ use hyperpath::{
     classify_meander_candidate_slots, classify_meander_placement_slots, classify_tangent_alignment,
     classify_tangent_chain, classify_tangent_join, export_specctra_trace_record,
     import_specctra_text_route, import_specctra_trace_record, import_specctra_via_record,
-    intersect_axis_aligned_line_quadratic_bezier, intersect_rectangular_regions,
+    intersect_axis_aligned_line_quadratic_bezier,
+    intersect_axis_aligned_line_rational_quadratic_bezier, intersect_rectangular_regions,
     offset_axis_aligned_segment, offset_cardinal_arc, offset_cubic_bezier_sample,
     offset_explicit_arc, offset_higher_order_bezier_sample, offset_quadratic_bezier_sample,
     parse_specctra_grid_route_records, parse_specctra_grid_trace_records,
@@ -695,6 +697,97 @@ fn line_quadratic_bezier_arrangement_rejects_degenerate_line_order() {
         err,
         hyperpath::LineQuadraticBezierArrangementError::DegenerateLine { line: 0 }
     );
+}
+
+#[test]
+fn line_rational_quadratic_bezier_intersection_finds_exact_conic_secants() {
+    let conic = RationalQuadraticBezier::new(p(0, 0), p(4, 8), p(8, 0), r(1)).unwrap();
+    let line = LinePathSegment::new(p(0, 3), p(8, 3));
+
+    let report = intersect_axis_aligned_line_rational_quadratic_bezier(
+        &line,
+        &conic,
+        PredicatePolicy::default(),
+    );
+
+    assert_eq!(
+        report.class,
+        LineRationalQuadraticBezierIntersectionClass::TwoPoints
+    );
+    assert_eq!(report.intersections.len(), 2);
+    assert_eq!(report.intersections[0].parameter, rq(1, 4));
+    assert_eq!(report.intersections[0].point, p(2, 3));
+    assert_eq!(report.intersections[1].parameter, rq(3, 4));
+    assert_eq!(report.intersections[1].point, p(6, 3));
+}
+
+#[test]
+fn line_rational_quadratic_bezier_intersection_classifies_tangent() {
+    let conic = RationalQuadraticBezier::new(p(0, 0), p(4, 4), p(8, 0), r(1)).unwrap();
+    let line = LinePathSegment::new(p(0, 2), p(8, 2));
+
+    let report = intersect_axis_aligned_line_rational_quadratic_bezier(
+        &line,
+        &conic,
+        PredicatePolicy::default(),
+    );
+
+    assert_eq!(
+        report.class,
+        LineRationalQuadraticBezierIntersectionClass::Tangent
+    );
+    assert_eq!(report.intersections.len(), 1);
+    assert_eq!(report.intersections[0].parameter, rq(1, 2));
+    assert_eq!(report.intersections[0].point, p(4, 2));
+}
+
+#[test]
+fn line_rational_quadratic_bezier_arrangement_emits_homogeneous_fragments() {
+    let conic = RationalQuadraticBezier::new(p(0, 0), p(4, 8), p(8, 0), r(1)).unwrap();
+    let line = LinePathSegment::new(p(0, 3), p(8, 3));
+
+    let report = arrange_line_segments_with_rational_quadratic_beziers(
+        &[line],
+        &[conic],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+
+    assert_eq!(
+        report.events[0].class,
+        LineRationalQuadraticBezierIntersectionClass::TwoPoints
+    );
+    assert_eq!(report.line_breakpoints[0].len(), 4);
+    assert_eq!(report.conic_breakpoints[0].len(), 4);
+    assert_eq!(report.line_fragments.len(), 3);
+    assert_eq!(report.conic_fragments.len(), 3);
+    assert_eq!(report.conic_breakpoints[0][1].parameter, rq(1, 4));
+    assert_eq!(report.conic_breakpoints[0][2].parameter, rq(3, 4));
+    assert_eq!(report.conic_fragments[0].end.point, p(2, 3));
+    assert_eq!(report.conic_fragments[1].start.point, p(2, 3));
+    assert_eq!(report.conic_fragments[1].end.point, p(6, 3));
+    assert_eq!(report.conic_fragments[2].start.point, p(6, 3));
+}
+
+#[test]
+fn line_rational_quadratic_bezier_arrangement_keeps_support_overlap_unknown() {
+    let conic = RationalQuadraticBezier::new(p(0, 0), p(4, 0), p(8, 0), r(2)).unwrap();
+    let line = LinePathSegment::new(p(2, 0), p(6, 0));
+
+    let report = arrange_line_segments_with_rational_quadratic_beziers(
+        &[line],
+        &[conic],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+
+    assert_eq!(
+        report.events[0].class,
+        LineRationalQuadraticBezierIntersectionClass::Unknown
+    );
+    assert_eq!(report.line_breakpoints[0].len(), 2);
+    assert_eq!(report.conic_breakpoints[0].len(), 2);
+    assert_eq!(report.conic_fragments.len(), 1);
 }
 
 #[test]
@@ -6564,6 +6657,44 @@ proptest! {
         prop_assert_eq!(report.line_fragments.len(), 1);
         prop_assert_eq!(report.bezier_fragments.len(), 3);
         prop_assert_eq!(report.bezier_breakpoints[0].len(), 4);
+    }
+
+    #[test]
+    fn line_rational_quadratic_bezier_arrangement_generated_tangencies_split_once(
+        x0 in -20_i16..=20,
+        width in 1_i16..=40,
+        lift in 1_i16..=40,
+        weight in 1_i16..=8,
+    ) {
+        let start_x = i64::from(x0);
+        let width = i64::from(width);
+        let lift = i64::from(lift);
+        let conic = RationalQuadraticBezier::new(
+            p(start_x, 0),
+            p(start_x + width, lift),
+            p(start_x + 2 * width, 0),
+            r(i64::from(weight)),
+        ).unwrap();
+        let tangent_y = rq(i64::from(weight) * lift, i64::from(weight) + 1);
+        let line = LinePathSegment::new(
+            Point2::new(r(start_x), tangent_y.clone()),
+            Point2::new(r(start_x + 2 * width), tangent_y),
+        );
+
+        let report = arrange_line_segments_with_rational_quadratic_beziers(
+            &[line],
+            &[conic],
+            PredicatePolicy::default(),
+        ).unwrap();
+
+        prop_assert_eq!(report.events[0].class, LineRationalQuadraticBezierIntersectionClass::Tangent);
+        prop_assert_eq!(report.conic_breakpoints[0].len(), 3);
+        prop_assert_eq!(report.conic_breakpoints[0][1].parameter.clone(), rq(1, 2));
+        prop_assert_eq!(report.conic_fragments.len(), 2);
+        prop_assert_eq!(
+            &report.conic_fragments[0].end.point,
+            &report.conic_fragments[1].start.point
+        );
     }
 
     #[test]
