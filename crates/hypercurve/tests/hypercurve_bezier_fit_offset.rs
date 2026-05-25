@@ -82,8 +82,10 @@ fn bezier_area_prefix_sums_answer_exact_ranges() {
         area_prefixes.range_contribution(0..2).unwrap(),
         area_prefixes.total().clone()
     );
+    let reversed_start = 2;
+    let reversed_end = 1;
     assert_eq!(
-        area_prefixes.range_contribution(2..1),
+        area_prefixes.range_contribution(reversed_start..reversed_end),
         Err(CurveError::InvalidBezierRange)
     );
 

@@ -27,6 +27,7 @@ use crate::{
 };
 
 /// A native Bezier subcurve produced by exact split materialization.
+#[allow(clippy::large_enum_variant)]
 #[derive(Clone, Debug, PartialEq)]
 pub enum BezierSubcurve2 {
     /// Polynomial quadratic Bezier subcurve.
@@ -38,6 +39,7 @@ pub enum BezierSubcurve2 {
 }
 
 /// One fragment between adjacent split boundaries.
+#[allow(clippy::large_enum_variant)]
 #[derive(Clone, Debug, PartialEq)]
 pub enum BezierSplitFragment2 {
     /// Both boundaries were represented exactly and the native subcurve exists.

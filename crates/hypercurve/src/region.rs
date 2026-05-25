@@ -386,7 +386,7 @@ fn contour_role_area(
 
     match certified_absolute_area(area, policy)? {
         Classification::Decided(area) => Ok(Classification::Decided(Some(area))),
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
     }
 }
 

@@ -65,6 +65,7 @@ pub struct BezierAlgebraicParameter2 {
 }
 
 /// Exact Bezier parameter carrier.
+#[allow(clippy::large_enum_variant)]
 #[derive(Clone, Debug, PartialEq)]
 pub enum BezierParameter2 {
     /// A parameter represented directly by `Real`.

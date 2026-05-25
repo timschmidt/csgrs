@@ -3,7 +3,7 @@ use std::time::Instant;
 
 use hypercurve::{
     BezierAlgebraicParameter2, BezierParameterInterval, BezierParameterPolynomial, Classification,
-    CurvePolicy, CurveResult, Real,
+    CurvePolicy, CurveResult, Point2, QuadraticBezier2, Real,
 };
 
 fn r(value: i32) -> Real {
@@ -51,6 +51,35 @@ fn main() -> CurveResult<()> {
     let elapsed = started.elapsed();
     println!(
         "bezier_algebraic_parameter_sturm: {iterations} iterations in {elapsed:?} ({:?}/iter), total={total}",
+        elapsed / iterations
+    );
+
+    let midpoint_polynomial = decided(BezierParameterPolynomial::try_new_power_basis(
+        vec![r(-1), r(2)],
+        &policy,
+    )?);
+    let midpoint_interval = decided(BezierParameterInterval::try_new(q(2, 5), q(3, 5), &policy)?);
+    let midpoint = decided(BezierAlgebraicParameter2::try_isolate(
+        midpoint_polynomial,
+        midpoint_interval,
+        &policy,
+    )?);
+    let curve = QuadraticBezier2::new(
+        Point2::from_values(0, 0),
+        Point2::from_values(1, 3),
+        Point2::from_values(4, 0),
+    );
+
+    let started = Instant::now();
+    let mut transformed = 0_usize;
+    for _ in 0..iterations {
+        let point = curve.point_at_algebraic_parameter(&midpoint, &policy)?;
+        let tangent = curve.tangent_at_algebraic_parameter(&midpoint, &policy)?;
+        transformed += black_box(point.x().is_some() as usize + tangent.dx().is_some() as usize);
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "bezier_algebraic_point_tangent_image: {iterations} iterations in {elapsed:?} ({:?}/iter), transformed={transformed}",
         elapsed / iterations
     );
 

@@ -9,6 +9,7 @@
 
 mod bbox;
 mod bezier;
+mod bezier_algebraic_image;
 mod bezier_arrangement;
 mod bezier_fit;
 mod bezier_flatten;
@@ -52,6 +53,10 @@ mod triangulation;
 
 pub use bbox::Aabb2;
 pub use bezier::{BezierEndpoint, CubicBezier2, EndpointTangent2, QuadraticBezier2};
+pub use bezier_algebraic_image::{
+    BezierAlgebraicCoordinateImage, BezierAlgebraicImageStatus, BezierAlgebraicPointImage2,
+    BezierAlgebraicTangentImage2,
+};
 pub use bezier_arrangement::{
     BezierArrangementChain2, BezierArrangementFragment2, BezierArrangementGraph2,
     BezierArrangementTraversal2,

@@ -326,10 +326,12 @@ fn materialized_endpoint_data(
     Some(curve.endpoint_data(policy))
 }
 
+type EndpointAdjacency = (Vec<Option<usize>>, Vec<Option<usize>>);
+
 fn endpoint_adjacency(
     endpoints: &[(Point2, Point2)],
     policy: &CurvePolicy,
-) -> Classification<(Vec<Option<usize>>, Vec<Option<usize>>)> {
+) -> Classification<EndpointAdjacency> {
     let mut successors = vec![None; endpoints.len()];
     let mut predecessors = vec![None; endpoints.len()];
 

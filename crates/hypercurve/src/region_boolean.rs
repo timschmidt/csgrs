@@ -183,6 +183,7 @@ pub(crate) fn coextensive_axis_rect_region_boolean(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn strip_boolean_region(
     first_min: Real,
     first_max: Real,
@@ -299,6 +300,7 @@ fn strip_boolean_region(
     Classification::Decided(Region2::from_material_contours(contours))
 }
 
+#[allow(clippy::too_many_arguments)]
 fn strip_difference_contours(
     first_min: Real,
     first_max: Real,
@@ -319,16 +321,16 @@ fn strip_difference_contours(
         let Ok(end) = end else {
             return Classification::Uncertain(end.unwrap_err());
         };
-        if real_lt(&first_min, &end, policy).unwrap_or(false) {
-            if let Some(contour) = oriented_strip_rect(
+        if real_lt(&first_min, &end, policy).unwrap_or(false)
+            && let Some(contour) = oriented_strip_rect(
                 first_min.clone(),
                 cross_min.clone(),
                 end,
                 cross_max.clone(),
                 horizontal,
-            ) {
-                contours.push(contour);
-            }
+            )
+        {
+            contours.push(contour);
         }
     }
     let right_kept = real_lt(&second_max, &first_max, policy).ok_or(UncertaintyReason::Ordering);
@@ -340,12 +342,11 @@ fn strip_difference_contours(
         let Ok(start) = start else {
             return Classification::Uncertain(start.unwrap_err());
         };
-        if real_lt(&start, &first_max, policy).unwrap_or(false) {
-            if let Some(contour) =
+        if real_lt(&start, &first_max, policy).unwrap_or(false)
+            && let Some(contour) =
                 oriented_strip_rect(start, cross_min, first_max, cross_max, horizontal)
-            {
-                contours.push(contour);
-            }
+        {
+            contours.push(contour);
         }
     }
     Classification::Decided(contours)
