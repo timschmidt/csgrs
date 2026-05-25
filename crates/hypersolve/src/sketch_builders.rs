@@ -1769,6 +1769,41 @@ pub mod distance {
         }
     }
 
+    /// Add a projected point-pair distance-ratio relation.
+    ///
+    /// Lowering preserves the retained point pairs and replays
+    /// `|a-b|_uv^2*den^2 - |c-d|_uv^2*num^2 == 0` after validating
+    /// nonnegative numerator and positive denominator semantics. This is the
+    /// point-pair counterpart of projected line-length ratios. Yap (1997)
+    /// supplies the exact replay boundary and Shoemake (1985) supplies the
+    /// retained unit-quaternion workplane frame.
+    pub fn projected_point_distance_ratio3(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        workplane: SketchEntityHandle,
+        first: (SketchEntityHandle, SketchEntityHandle),
+        second: (SketchEntityHandle, SketchEntityHandle),
+        numerator: Real,
+        denominator: Real,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::ProjectedPointDistanceRatio3 {
+            workplane,
+            a: first.0,
+            b: first.1,
+            c: second.0,
+            d: second.1,
+            numerator,
+            denominator,
+        };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Distance,
+            strategy: SketchResidualStrategy::SquaredProjectedPointDistanceRatio,
+            kind,
+        }
+    }
+
     /// Add a retained workplane-projected length-difference relation for 3D lines.
     ///
     /// The retained relation is `length(longer_uv) = length(shorter_uv) +

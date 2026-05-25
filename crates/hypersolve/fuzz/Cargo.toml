@@ -105,6 +105,13 @@ doc = false
 bench = false
 
 [[bin]]
+name = "sketch_projected_point_distance_ratio"
+path = "fuzz_targets/sketch_projected_point_distance_ratio.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
 name = "sketch_projected_length_difference"
 path = "fuzz_targets/sketch_projected_length_difference.rs"
 test = false
