@@ -46,6 +46,11 @@ pub enum HypervoxelError {
         /// Human-readable validation failure.
         reason: &'static str,
     },
+    /// Continuous-field rows failed exact storage-admission checks.
+    InvalidContinuousFieldMaterialization {
+        /// Human-readable validation failure.
+        reason: &'static str,
+    },
 }
 
 impl fmt::Display for HypervoxelError {
@@ -98,6 +103,12 @@ impl fmt::Display for HypervoxelError {
             ),
             Self::InvalidSourceGeometry { reason } => {
                 write!(f, "invalid exact source geometry: {reason}")
+            }
+            Self::InvalidContinuousFieldMaterialization { reason } => {
+                write!(
+                    f,
+                    "invalid exact continuous-field materialization: {reason}"
+                )
             }
         }
     }

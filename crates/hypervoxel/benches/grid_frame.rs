@@ -861,6 +861,38 @@ fn bench_batches_field_facts_and_sweeps(c: &mut Criterion) {
     c.bench_function("continuous_field_voxel_interchange_report", |b| {
         b.iter(|| continuous_manifest.interchange_report(&continuous_interchange))
     });
+    let exact_intake_frame = GridFrame::builder()
+        .depth(3)
+        .source(GridSource::new("sdf:bench-direct", 1))
+        .build()
+        .unwrap();
+    let exact_intake_source = exact_intake_frame.source().cloned();
+    let mut exact_intake_rows = Vec::new();
+    for z in 0..8 {
+        for y in 0..8 {
+            for x in 0..8 {
+                exact_intake_rows.push(ContinuousFieldVoxelCell::new(
+                    continuous_field_address(&exact_intake_frame, [x, y, z]).unwrap(),
+                    VoxelCell::material(MaterialRegionId(3)),
+                ));
+            }
+        }
+    }
+    let exact_intake_manifest = ContinuousFieldVoxelManifest {
+        frame: exact_intake_frame,
+        source: exact_intake_source.clone(),
+        expected_source: exact_intake_source,
+        expected_cell_count: exact_intake_rows.len(),
+        cells: exact_intake_rows,
+    };
+    c.bench_function("continuous_field_exact_sparse_materialization", |b| {
+        b.iter(|| {
+            let prepared = exact_intake_manifest
+                .materialize_exact_sparse_grid()
+                .unwrap();
+            (prepared.storage.len(), prepared.aggregate.has_lossy)
+        })
+    });
     c.bench_function("lattice_aabb_handoff", |b| {
         b.iter(|| {
             GridAabbHandoff::from_address(grid.frame(), VoxelAddress::new(6, [1, 2, 3]).unwrap())

@@ -195,12 +195,14 @@ fn continuous_field_voxel_manifest_accepts_exact_sdf_cell_rows() {
     assert_eq!(report.frame_validated_cell_count, 3);
     assert!(report.finest_depth_only);
     assert!(report.complete_expected_cover);
+    assert!(!report.complete_frame_cover);
     assert!(report.exact_cell_evidence_ready);
-    assert!(report.exact_materialization_ready);
+    assert!(!report.exact_materialization_ready);
     assert_eq!(report.predicate_certificates.inside_cells, 1);
     assert_eq!(report.predicate_certificates.outside_cells, 1);
     assert_eq!(report.predicate_certificates.boundary_cells, 1);
     assert_eq!(report.predicate_certificates.unknown_cells, 0);
+    assert!(manifest.materialize_exact_sparse_grid().is_err());
 
     let prepared = manifest.materialize_sparse_grid().unwrap();
     assert_eq!(
@@ -209,6 +211,34 @@ fn continuous_field_voxel_manifest_accepts_exact_sdf_cell_rows() {
     );
     assert!(prepared.report.as_ref().unwrap().exact_topology_ready());
     assert_eq!(prepared.storage.len(), 2);
+
+    let mut full_cover = Vec::new();
+    for z in 0..2 {
+        for y in 0..2 {
+            for x in 0..2 {
+                full_cover.push(ContinuousFieldVoxelCell::new(
+                    continuous_field_address(&frame, [x, y, z]).unwrap(),
+                    VoxelCell::material(MaterialRegionId(1)),
+                ));
+            }
+        }
+    }
+    let full_manifest = ContinuousFieldVoxelManifest {
+        frame: frame.clone(),
+        source: frame.source().cloned(),
+        expected_source: frame.source().cloned(),
+        expected_cell_count: full_cover.len(),
+        cells: full_cover,
+    };
+    assert!(full_manifest.report().exact_materialization_ready);
+    assert_eq!(
+        full_manifest
+            .materialize_exact_sparse_grid()
+            .unwrap()
+            .storage
+            .len(),
+        8
+    );
 }
 
 #[test]

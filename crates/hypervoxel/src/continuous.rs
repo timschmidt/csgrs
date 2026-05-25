@@ -106,6 +106,36 @@ pub struct ContinuousFieldVoxelInterchangeReport {
     pub exact_interchange_ready: bool,
 }
 
+/// Exact storage-admission blocker for continuous-field voxel rows.
+///
+/// This enum is intentionally more specific than a boolean readiness flag.
+/// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
+/// 7(1-2), 1997, treats exactness as a property of the represented geometric
+/// system, so a downstream storage owner must be able to distinguish stale
+/// source replay from duplicate rows, lossy payloads, or an incomplete frame
+/// cover before admitting a sampled artifact as exact topology.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum ContinuousFieldMaterializationBlocker {
+    /// Source freshness is stale or unknown.
+    SourceNotCurrent,
+    /// Supplied row count does not match the producer's expected row count.
+    IncompleteExpectedCover,
+    /// Supplied row count does not cover every finest-depth cell in the frame.
+    IncompleteFrameCover,
+    /// One or more addresses appeared more than once.
+    DuplicateAddresses,
+    /// At least one address was outside the retained frame depth.
+    AddressOutsideFrame,
+    /// At least one row was not a finest-depth cell.
+    NonFinestDepthRows,
+    /// One or more cells carry unknown or lossy evidence.
+    NonExactCellEvidence,
+    /// Predicate accounting contains unknown or vacuous outcomes.
+    UncertifiedPredicates,
+    /// Aggregate facts contain unknown or lossy payload state.
+    NonExactAggregate,
+}
+
 /// Intake report for externally classified continuous-field cells.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ContinuousFieldVoxelReport {
@@ -123,8 +153,12 @@ pub struct ContinuousFieldVoxelReport {
     pub finest_depth_only: bool,
     /// Whether the supplied rows exactly match the expected row count.
     pub complete_expected_cover: bool,
+    /// Whether supplied rows cover every finest-depth cell in the frame.
+    pub complete_frame_cover: bool,
     /// Whether every supplied cell has exact-ready cell evidence.
     pub exact_cell_evidence_ready: bool,
+    /// Blockers that prevent direct exact storage admission.
+    pub materialization_blockers: Vec<ContinuousFieldMaterializationBlocker>,
     /// Whether this intake can be materialized as exact voxel evidence.
     pub exact_materialization_ready: bool,
     /// Predicate-style accounting derived from conservative occupancy rows.
@@ -178,6 +212,9 @@ impl ContinuousFieldVoxelManifest {
         let supplied_cell_count = self.cells.len();
         let complete_expected_cover =
             self.expected_cell_count > 0 && supplied_cell_count == self.expected_cell_count;
+        let expected_frame_cells = frame_cell_count(&self.frame);
+        let complete_frame_cover = expected_frame_cells == Some(supplied_cell_count)
+            && expected_frame_cells == Some(self.expected_cell_count);
         let predicate_certificates = VoxelPredicateCertificateReport::from_counts(
             inside_cells,
             outside_cells,
@@ -185,15 +222,42 @@ impl ContinuousFieldVoxelManifest {
             unknown_cells,
         );
         let aggregate = VoxelAggregateFacts::from_cells(self.cells.iter().map(|row| &row.cell));
-        let exact_materialization_ready = freshness == FreshnessStatus::Current
-            && duplicate_address_count == 0
-            && frame_validated_cell_count == supplied_cell_count
-            && finest_depth_only
-            && complete_expected_cover
-            && exact_cell_evidence_ready
-            && predicate_certificates.is_fully_certified()
-            && !aggregate.has_unknown
-            && !aggregate.has_lossy;
+        let mut materialization_blockers = Vec::new();
+        if freshness != FreshnessStatus::Current {
+            materialization_blockers.push(ContinuousFieldMaterializationBlocker::SourceNotCurrent);
+        }
+        if !complete_expected_cover {
+            materialization_blockers
+                .push(ContinuousFieldMaterializationBlocker::IncompleteExpectedCover);
+        }
+        if !complete_frame_cover {
+            materialization_blockers
+                .push(ContinuousFieldMaterializationBlocker::IncompleteFrameCover);
+        }
+        if duplicate_address_count > 0 {
+            materialization_blockers
+                .push(ContinuousFieldMaterializationBlocker::DuplicateAddresses);
+        }
+        if frame_validated_cell_count != supplied_cell_count {
+            materialization_blockers
+                .push(ContinuousFieldMaterializationBlocker::AddressOutsideFrame);
+        }
+        if !finest_depth_only {
+            materialization_blockers
+                .push(ContinuousFieldMaterializationBlocker::NonFinestDepthRows);
+        }
+        if !exact_cell_evidence_ready {
+            materialization_blockers
+                .push(ContinuousFieldMaterializationBlocker::NonExactCellEvidence);
+        }
+        if !predicate_certificates.is_fully_certified() {
+            materialization_blockers
+                .push(ContinuousFieldMaterializationBlocker::UncertifiedPredicates);
+        }
+        if aggregate.has_unknown || aggregate.has_lossy {
+            materialization_blockers.push(ContinuousFieldMaterializationBlocker::NonExactAggregate);
+        }
+        let exact_materialization_ready = materialization_blockers.is_empty();
 
         ContinuousFieldVoxelReport {
             freshness,
@@ -203,7 +267,9 @@ impl ContinuousFieldVoxelManifest {
             frame_validated_cell_count,
             finest_depth_only,
             complete_expected_cover,
+            complete_frame_cover,
             exact_cell_evidence_ready,
+            materialization_blockers,
             exact_materialization_ready,
             predicate_certificates,
             aggregate,
@@ -289,6 +355,26 @@ impl ContinuousFieldVoxelManifest {
         Ok(PreparedVoxelGrid::new(self.frame.clone(), grid, aggregate)
             .with_report(self.voxelization_report()))
     }
+
+    /// Admit rows into sparse storage only when exact replay is complete.
+    ///
+    /// Unlike [`Self::materialize_sparse_grid`], this is a hard gate for
+    /// producer handoffs such as frame-aware `hypersdf` cell reports. It
+    /// rejects stale, duplicate, incomplete, unknown, and lossy rows before
+    /// allocating the returned prepared grid. That keeps storage admission at
+    /// Yap's EGC boundary: exact/certified source predicates may become
+    /// topology, while unresolved or approximate rows remain reports.
+    pub fn materialize_exact_sparse_grid(
+        &self,
+    ) -> HypervoxelResult<PreparedVoxelGrid<SparseVoxelGrid>> {
+        let report = self.report();
+        if !report.exact_materialization_ready {
+            return Err(HypervoxelError::InvalidContinuousFieldMaterialization {
+                reason: first_materialization_blocker_reason(&report.materialization_blockers),
+            });
+        }
+        self.materialize_sparse_grid()
+    }
 }
 
 /// Build a finest-depth address for a continuous-field intake row.
@@ -306,4 +392,47 @@ pub fn continuous_field_address(
         },
         other => other,
     })
+}
+
+fn frame_cell_count(frame: &GridFrame) -> Option<usize> {
+    let cells_per_axis = frame.cells_per_axis();
+    cells_per_axis
+        .checked_mul(cells_per_axis)
+        .and_then(|area| area.checked_mul(cells_per_axis))
+        .and_then(|volume| usize::try_from(volume).ok())
+}
+
+fn first_materialization_blocker_reason(
+    blockers: &[ContinuousFieldMaterializationBlocker],
+) -> &'static str {
+    match blockers.first() {
+        Some(ContinuousFieldMaterializationBlocker::SourceNotCurrent) => {
+            "source freshness is not current"
+        }
+        Some(ContinuousFieldMaterializationBlocker::IncompleteExpectedCover) => {
+            "supplied rows do not match expected row count"
+        }
+        Some(ContinuousFieldMaterializationBlocker::IncompleteFrameCover) => {
+            "supplied rows do not cover the full frame"
+        }
+        Some(ContinuousFieldMaterializationBlocker::DuplicateAddresses) => {
+            "duplicate addresses are present"
+        }
+        Some(ContinuousFieldMaterializationBlocker::AddressOutsideFrame) => {
+            "address is outside the frame"
+        }
+        Some(ContinuousFieldMaterializationBlocker::NonFinestDepthRows) => {
+            "non-finest-depth rows are present"
+        }
+        Some(ContinuousFieldMaterializationBlocker::NonExactCellEvidence) => {
+            "unknown or lossy cell evidence is present"
+        }
+        Some(ContinuousFieldMaterializationBlocker::UncertifiedPredicates) => {
+            "predicate accounting is not fully certified"
+        }
+        Some(ContinuousFieldMaterializationBlocker::NonExactAggregate) => {
+            "aggregate contains unknown or lossy state"
+        }
+        None => "materialization blockers were not reported",
+    }
 }

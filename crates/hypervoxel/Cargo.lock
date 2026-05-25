@@ -2951,14 +2951,14 @@ dependencies = [
 
 [[package]]
 name = "hyperlattice"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "hyperreal",
 ]
 
 [[package]]
 name = "hyperlimit"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "hyperlattice",
  "hyperreal",
@@ -2966,9 +2966,7 @@ dependencies = [
 
 [[package]]
 name = "hyperreal"
-version = "0.12.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f4b9ddf47ab5da108be9603c7133280420b7a948f5dd51db7398c3a8c93f98ef"
+version = "0.13.0"
 dependencies = [
  "ciborium",
  "num",
@@ -2978,7 +2976,7 @@ dependencies = [
 
 [[package]]
 name = "hypervoxel"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "criterion",
  "glam",
@@ -5575,7 +5573,7 @@ checksum = "0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a"
 
 [[package]]
 name = "voxelis"
-version = "25.4.0"
+version = "25.5.0"
 dependencies = [
  "bitflags 2.11.1",
  "byteorder",
@@ -5588,14 +5586,14 @@ dependencies = [
  "rayon",
  "rustc-hash 2.1.1",
  "tracy-client",
- "voxelis-memory 25.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "voxelis-memory",
  "wide",
  "zstd",
 ]
 
 [[package]]
 name = "voxelis-bevy"
-version = "25.4.0"
+version = "25.5.0"
 dependencies = [
  "bevy",
  "bevy_egui",
@@ -5611,7 +5609,7 @@ dependencies = [
 
 [[package]]
 name = "voxelis-math"
-version = "25.4.0"
+version = "25.5.0"
 dependencies = [
  "glam",
  "tracy-client",
@@ -5619,20 +5617,14 @@ dependencies = [
 
 [[package]]
 name = "voxelis-memory"
-version = "25.4.0"
+version = "25.5.0"
 dependencies = [
  "tracy-client",
 ]
 
 [[package]]
-name = "voxelis-memory"
-version = "25.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c5f721aa094c58da48cbae05f27725b215fb2c8bdd10b1d74d2111cd4a4ddada"
-
-[[package]]
 name = "voxelis-voxelize"
-version = "25.4.0"
+version = "25.5.0"
 dependencies = [
  "crossbeam",
  "glam",
@@ -5646,7 +5638,7 @@ dependencies = [
 
 [[package]]
 name = "vtm-export"
-version = "25.4.0"
+version = "25.5.0"
 dependencies = [
  "tracy-client",
  "voxelis",
@@ -5654,7 +5646,7 @@ dependencies = [
 
 [[package]]
 name = "vtm-viewer"
-version = "25.4.0"
+version = "25.5.0"
 dependencies = [
  "bevy",
  "bevy_egui",
@@ -5672,7 +5664,7 @@ dependencies = [
 
 [[package]]
 name = "vtm-voxelize"
-version = "25.4.0"
+version = "25.5.0"
 dependencies = [
  "tracy-client",
  "voxelis",

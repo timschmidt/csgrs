@@ -83,9 +83,10 @@ pub use compression::{
     VoxelMemoryBudgetManifest, VoxelMemoryBudgetReport,
 };
 pub use continuous::{
-    ContinuousFieldVoxelCell, ContinuousFieldVoxelInterchangeManifest,
-    ContinuousFieldVoxelInterchangeReport, ContinuousFieldVoxelManifest,
-    ContinuousFieldVoxelReport, ContinuousFieldVoxelRowOrder, continuous_field_address,
+    ContinuousFieldMaterializationBlocker, ContinuousFieldVoxelCell,
+    ContinuousFieldVoxelInterchangeManifest, ContinuousFieldVoxelInterchangeReport,
+    ContinuousFieldVoxelManifest, ContinuousFieldVoxelReport, ContinuousFieldVoxelRowOrder,
+    continuous_field_address,
 };
 pub use coupling::{VoxelFieldCouplingKind, VoxelFieldCouplingManifest, VoxelFieldCouplingReport};
 pub use differential::{SparseGridDiffReport, diff_sparse_grids};

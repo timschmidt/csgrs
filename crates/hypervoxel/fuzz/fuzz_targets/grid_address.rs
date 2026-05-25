@@ -6,7 +6,8 @@ use hypervoxel::{
     CertifiedVectorInterval,
     AddressRay, AxisPermutationTransform, ChunkAddress, ChunkPageSummary, ChunkShape,
     CompressedStorageKind, CompressedStorageManifest, DeterministicSnapshot, ExactAabb3,
-    ExactAffineTransform, ExactBox, ExactConvexHalfSpaceSet, ExactHalfSpace, FieldAggregateFacts,
+    ExactAffineTransform, ExactBox, ExactConvexHalfSpaceSet, ExactHalfSpace,
+    ContinuousFieldVoxelCell, ContinuousFieldVoxelManifest, FieldAggregateFacts,
     FieldEnvelopeFacts, FieldSampleId, FieldSampleRecord, FreshnessStatus, GridAabbHandoff,
     GridBasis, GridCoordinateSystem,
     GridFrame, GridFrameManifest, GridHandedness, GridSource, ImageStackContainer,
@@ -20,7 +21,7 @@ use hypervoxel::{
     VoxelIndexConvention, VoxelIoCompression, VoxelIoMetadata, VoxelMemoryBudgetManifest,
     VoxelSideTables, VoxelSliceNaming, VoxelSliceOrdering, VoxelSpatialAggregateFacts,
     VoxelTraceDimension, VoxelTraceManifest, VoxelizationAudit, VoxelizationPolicy,
-    classify_support_mask,
+    classify_support_mask, continuous_field_address,
     diff_sparse_grids, extract_exposed_faces, greedy_face_patch_plan, lookup_material_display_colors,
     extract_exposed_faces_with_report, lossy_obj_from_quad_mesh, lossy_quad_mesh_from_faces, query_field_samples,
     query_material_regions, report_material_region_metadata, sample_manhattan_distance_field,
@@ -170,6 +171,32 @@ fuzz_target!(|data: (u8, u64, u64, u64)| {
         report.predicate_certificates.classified_cells(),
         usize::try_from(1_u64 << (3 * u32::from(small_depth))).unwrap()
     );
+    let intake_frame = GridFrame::builder()
+        .depth(1)
+        .source(GridSource::new("fuzz:sdf", u64::from(depth_raw) + 1))
+        .build()
+        .unwrap();
+    let intake_source = intake_frame.source().cloned();
+    let mut intake_rows = Vec::new();
+    for iz in 0..2 {
+        for iy in 0..2 {
+            for ix in 0..2 {
+                intake_rows.push(ContinuousFieldVoxelCell::new(
+                    continuous_field_address(&intake_frame, [ix, iy, iz]).unwrap(),
+                    VoxelCell::material(MaterialRegionId(42)),
+                ));
+            }
+        }
+    }
+    let intake = ContinuousFieldVoxelManifest {
+        frame: intake_frame,
+        source: intake_source.clone(),
+        expected_source: intake_source,
+        expected_cell_count: intake_rows.len(),
+        cells: intake_rows,
+    };
+    assert!(intake.report().exact_materialization_ready);
+    assert!(intake.materialize_exact_sparse_grid().is_ok());
     let cell_report = VoxelCell::material(MaterialRegionId(u32::from(depth_raw))).report();
     assert!(cell_report.payload_matches_occupancy);
     assert!(cell_report.exact_cell_evidence_ready);

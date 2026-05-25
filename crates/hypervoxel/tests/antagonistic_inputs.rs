@@ -117,7 +117,11 @@ proptest! {
         prop_assert_eq!(report.freshness, FreshnessStatus::Current);
         prop_assert!(report.finest_depth_only);
         prop_assert!(report.exact_cell_evidence_ready);
-        prop_assert_eq!(report.exact_materialization_ready, report.duplicate_address_count == 0);
+        prop_assert_eq!(
+            report.exact_materialization_ready,
+            report.duplicate_address_count == 0
+                && n == (cells_per_axis * cells_per_axis * cells_per_axis) as usize
+        );
 
         let cells_per_axis = 1_u64 << depth;
         let interchange = ContinuousFieldVoxelInterchangeManifest {

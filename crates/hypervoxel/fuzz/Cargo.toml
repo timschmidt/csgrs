@@ -25,3 +25,10 @@ path = "fuzz_targets/grid_address.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "continuous_field_materialization"
+path = "fuzz_targets/continuous_field_materialization.rs"
+test = false
+doc = false
+bench = false
