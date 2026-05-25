@@ -10,8 +10,8 @@ use hyperpath::{
     LineExplicitArcIntersectionClass, LineOffsetError, LinePathSegment, MeanderError,
     MeanderObstacle, MeanderPlacementCandidate, NetId, OffsetSide, PathProvenance,
     PathSourceFormat, PcbBoardOutline, PcbCardinalRectPad, PcbCircularPad, PcbConvexBoardOutline,
-    PcbOrthogonalBoardOutline, PcbRectPad, PcbRoundedRectPad, PcbTrace, PcbViaStack,
-    PocketPlanError, PocketPlanStopReason, QuadraticBezier, RationalQuadraticBezier,
+    PcbOrientedRectPad, PcbOrthogonalBoardOutline, PcbRectPad, PcbRoundedRectPad, PcbTrace,
+    PcbViaStack, PocketPlanError, PocketPlanStopReason, QuadraticBezier, RationalQuadraticBezier,
     RationalQuadraticBezierError, RectangularPocket, RectangularRegionRelation,
     RouteCertificationError, SegmentParameterOrder, SourceLengthUnit, SpecctraGridTraceRecord,
     SpecctraGridViaRecord, SpecctraImportError, SpecctraLayerAlias, SpecctraNetAlias,
@@ -27,12 +27,13 @@ use hyperpath::{
     certify_differential_pair_skew, certify_g1_chain, certify_g1_join_candidate,
     certify_length_extension, certify_tangent_alignment_candidate,
     check_cardinal_rect_pad_board_clearance, check_circular_pad_board_clearance,
-    check_rect_pad_board_clearance, check_rounded_rect_pad_board_clearance,
-    check_trace_board_clearance, check_trace_cardinal_rect_pad_clearance, check_trace_clearance,
-    check_trace_convex_board_clearance, check_trace_orthogonal_board_clearance,
-    check_trace_pad_clearance, check_trace_rect_pad_clearance,
-    check_trace_rounded_rect_pad_clearance, check_trace_via_clearance,
-    check_trace_via_drill_clearance, check_via_drill_board_clearance,
+    check_oriented_rect_pad_board_clearance, check_rect_pad_board_clearance,
+    check_rounded_rect_pad_board_clearance, check_trace_board_clearance,
+    check_trace_cardinal_rect_pad_clearance, check_trace_clearance,
+    check_trace_convex_board_clearance, check_trace_oriented_rect_pad_clearance,
+    check_trace_orthogonal_board_clearance, check_trace_pad_clearance,
+    check_trace_rect_pad_clearance, check_trace_rounded_rect_pad_clearance,
+    check_trace_via_clearance, check_trace_via_drill_clearance, check_via_drill_board_clearance,
     classify_meander_candidate_slots, classify_meander_placement_slots, classify_tangent_alignment,
     classify_tangent_chain, classify_tangent_join, export_specctra_trace_record,
     import_specctra_text_route, import_specctra_trace_record, import_specctra_via_record,
@@ -51,8 +52,16 @@ fn r(value: i64) -> Real {
     Real::new(Rational::new(value))
 }
 
+fn rq(numerator: i64, denominator: i64) -> Real {
+    Real::new(Rational::new(numerator) / Rational::new(denominator))
+}
+
 fn p(x: i64, y: i64) -> Point2 {
     Point2::new(r(x), r(y))
+}
+
+fn pq(x_num: i64, x_den: i64, y_num: i64, y_den: i64) -> Point2 {
+    Point2::new(rq(x_num, x_den), rq(y_num, y_den))
 }
 
 fn trace(net: u32, layer: u16, start: Point2, end: Point2, width: i64) -> PcbTrace {
@@ -1734,6 +1743,112 @@ fn pcb_cardinal_rect_pad_rejects_negative_extent() {
 }
 
 #[test]
+fn pcb_oriented_rect_pad_accepts_exact_pythagorean_axis() {
+    let pad = PcbOrientedRectPad::new(
+        NetId(2),
+        TraceLayer(0),
+        p(0, 0),
+        r(10),
+        r(4),
+        Point2::new(rq(3, 5), rq(4, 5)),
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+
+    assert_eq!(pad.local_x(), &Point2::new(rq(3, 5), rq(4, 5)));
+    assert_eq!(pad.local_y(), Point2::new(rq(-4, 5), rq(3, 5)));
+    assert_eq!(pad.facts().local_x_length_squared, r(1));
+}
+
+#[test]
+fn pcb_oriented_rect_pad_rejects_non_unit_axis_and_negative_extent() {
+    let non_unit = PcbOrientedRectPad::new(
+        NetId(2),
+        TraceLayer(0),
+        p(0, 0),
+        r(10),
+        r(4),
+        Point2::new(r(1), r(1)),
+        PredicatePolicy::default(),
+    )
+    .expect_err("non-unit orientation must not be normalized silently");
+    assert_eq!(
+        non_unit,
+        "oriented rect pad local x axis must be exact unit length"
+    );
+
+    let negative = PcbOrientedRectPad::new(
+        NetId(2),
+        TraceLayer(0),
+        p(0, 0),
+        r(-10),
+        r(4),
+        Point2::new(r(1), r(0)),
+        PredicatePolicy::default(),
+    )
+    .expect_err("negative oriented pad width must be rejected");
+    assert_eq!(negative, "oriented rect pad width must be nonnegative");
+}
+
+#[test]
+fn pcb_trace_oriented_rect_pad_clearance_certifies_rotated_gap() {
+    let pad = PcbOrientedRectPad::new(
+        NetId(2),
+        TraceLayer(0),
+        p(0, 0),
+        r(10),
+        r(4),
+        Point2::new(rq(3, 5), rq(4, 5)),
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    let trace = PcbTrace::new(
+        NetId(1),
+        TraceLayer(0),
+        SweptLineSegment::new(
+            LinePathSegment::new(pq(-58, 5, -19, 5), pq(2, 5, 61, 5)),
+            r(2),
+        )
+        .unwrap(),
+    );
+
+    let tangent =
+        check_trace_oriented_rect_pad_clearance(&trace, &pad, &r(4), PredicatePolicy::default());
+    assert_eq!(tangent.status, ClearanceStatus::CertifiedClear);
+
+    let violation =
+        check_trace_oriented_rect_pad_clearance(&trace, &pad, &r(5), PredicatePolicy::default());
+    assert_eq!(violation.status, ClearanceStatus::ClearanceViolation);
+}
+
+#[test]
+fn pcb_trace_oriented_rect_pad_clearance_reports_rotated_overlap() {
+    let pad = PcbOrientedRectPad::new(
+        NetId(2),
+        TraceLayer(0),
+        p(0, 0),
+        r(10),
+        r(4),
+        Point2::new(rq(3, 5), rq(4, 5)),
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    let trace = PcbTrace::new(
+        NetId(1),
+        TraceLayer(0),
+        SweptLineSegment::new(
+            LinePathSegment::new(pq(-38, 5, -34, 5), pq(22, 5, 46, 5)),
+            r(2),
+        )
+        .unwrap(),
+    );
+
+    let report =
+        check_trace_oriented_rect_pad_clearance(&trace, &pad, &r(0), PredicatePolicy::default());
+    assert_eq!(report.status, ClearanceStatus::NoShortViolation);
+}
+
+#[test]
 fn pcb_board_outline_rejects_reversed_bounds_and_retains_provenance() {
     let provenance = PathProvenance::fixed_grid(PathSourceFormat::KiCad, 1_000_000).unwrap();
     let board = PcbBoardOutline::with_provenance(p(0, 0), p(20, 10), provenance).unwrap();
@@ -2092,6 +2207,31 @@ fn pcb_cardinal_rect_pad_board_clearance_uses_rotated_extents() {
         .status,
         ClearanceStatus::ClearanceViolation
     );
+}
+
+#[test]
+fn pcb_oriented_rect_pad_board_clearance_uses_rotated_corner_extrema() {
+    let board = PcbBoardOutline::new(p(-10, -10), p(10, 10)).unwrap();
+    let pad = PcbOrientedRectPad::new(
+        NetId(1),
+        TraceLayer(0),
+        p(0, 0),
+        r(10),
+        r(4),
+        Point2::new(rq(3, 5), rq(4, 5)),
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+
+    let clear =
+        check_oriented_rect_pad_board_clearance(&pad, &board, &r(4), PredicatePolicy::default());
+    assert_eq!(clear.status, ClearanceStatus::CertifiedClear);
+    assert_eq!(clear.copper_gap, Some(rq(24, 5)));
+
+    let violation =
+        check_oriented_rect_pad_board_clearance(&pad, &board, &r(5), PredicatePolicy::default());
+    assert_eq!(violation.status, ClearanceStatus::ClearanceViolation);
+    assert_eq!(violation.copper_gap, Some(rq(24, 5)));
 }
 
 #[test]
@@ -5112,6 +5252,77 @@ proptest! {
                 &r(i64::from(clearance)),
                 PredicatePolicy::default(),
             ).status
+        );
+    }
+
+    #[test]
+    fn oriented_rect_axis_aligned_matches_rect_for_generated_trace_gaps(
+        pad_y in 5_i16..=40,
+        width in 0_i16..=30,
+        height in 0_i16..=30,
+        clearance in 0_i16..=20,
+    ) {
+        let trace = trace(1, 0, p(0, 0), p(40, 0), 2);
+        let rect = PcbRectPad::new(
+            NetId(2),
+            TraceLayer(0),
+            p(20, i64::from(pad_y)),
+            r(i64::from(width)),
+            r(i64::from(height)),
+        ).unwrap();
+        let oriented = PcbOrientedRectPad::new(
+            NetId(2),
+            TraceLayer(0),
+            p(20, i64::from(pad_y)),
+            r(i64::from(width)),
+            r(i64::from(height)),
+            Point2::new(r(1), r(0)),
+            PredicatePolicy::default(),
+        ).unwrap();
+
+        prop_assert_eq!(
+            check_trace_oriented_rect_pad_clearance(
+                &trace,
+                &oriented,
+                &r(i64::from(clearance)),
+                PredicatePolicy::default(),
+            ).status,
+            check_trace_rect_pad_clearance(
+                &trace,
+                &rect,
+                &r(i64::from(clearance)),
+                PredicatePolicy::default(),
+            ).status
+        );
+    }
+
+    #[test]
+    fn oriented_rect_board_clearance_accepts_generated_pythagorean_interior_pads(
+        x in -20_i16..=20,
+        y in -20_i16..=20,
+        width in 0_i16..=20,
+        height in 0_i16..=20,
+        clearance in 0_i16..=20,
+    ) {
+        let board = PcbBoardOutline::new(p(-100, -100), p(100, 100)).unwrap();
+        let pad = PcbOrientedRectPad::new(
+            NetId(1),
+            TraceLayer(0),
+            p(i64::from(x), i64::from(y)),
+            r(i64::from(width)),
+            r(i64::from(height)),
+            Point2::new(rq(3, 5), rq(4, 5)),
+            PredicatePolicy::default(),
+        ).unwrap();
+
+        prop_assert_eq!(
+            check_oriented_rect_pad_board_clearance(
+                &pad,
+                &board,
+                &r(i64::from(clearance)),
+                PredicatePolicy::default(),
+            ).status,
+            ClearanceStatus::CertifiedClear
         );
     }
 

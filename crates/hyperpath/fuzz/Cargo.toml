@@ -26,3 +26,10 @@ path = "fuzz_targets/pcb_rounded_rect_pad.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "pcb_oriented_rect_pad"
+path = "fuzz_targets/pcb_oriented_rect_pad.rs"
+test = false
+doc = false
+bench = false

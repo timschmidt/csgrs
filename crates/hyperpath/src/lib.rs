@@ -12,6 +12,7 @@ pub mod bezier;
 pub mod cam;
 pub mod offset;
 pub mod pcb;
+pub mod pcb_oriented;
 pub mod provenance;
 pub mod routing;
 pub mod segment;
@@ -65,6 +66,10 @@ pub use pcb::{
     check_trace_pad_clearance, check_trace_rect_pad_clearance,
     check_trace_rounded_rect_pad_clearance, check_trace_via_clearance,
     check_trace_via_drill_clearance, check_via_drill_board_clearance,
+};
+pub use pcb_oriented::{
+    PcbOrientedRectPad, PcbOrientedRectPadFacts, check_oriented_rect_pad_board_clearance,
+    check_trace_oriented_rect_pad_clearance,
 };
 pub use provenance::{
     ConstructionStamp, PathProvenance, PathSourceFormat, SourceGrid, SourceLengthUnit,
