@@ -429,7 +429,7 @@ pub fn intersect_axis_aligned_line_quadratic_bezier(
     let roots = match solve_quadratic_coordinate_roots(curve, axis, fixed.clone(), policy) {
         Some(roots) => roots,
         None => {
-            return degree_elevated_line_overlap_report(segment, curve, axis, fixed, policy)
+            return quadratic_line_overlap_report(segment, curve, axis, fixed, policy)
                 .unwrap_or_else(line_quadratic_unknown_report);
         }
     };
@@ -1014,24 +1014,13 @@ fn solve_quadratic_roots(a: Real, b: Real, c: Real, policy: PredicatePolicy) -> 
     }
 }
 
-fn degree_elevated_line_overlap_report(
+fn quadratic_line_overlap_report(
     segment: &LinePathSegment,
     curve: &QuadraticBezier,
     axis: Axis,
     fixed: Real,
     policy: PredicatePolicy,
 ) -> Option<LineQuadraticBezierIntersectionReport> {
-    // A collinear quadratic Bezier can be a nonlinear line image. Promoting
-    // arbitrary nonlinear overlap would require an exact inverse-parameter
-    // construction. This branch is intentionally limited to degree-elevated
-    // line segments, where `p1 = (p0 + p2) / 2` makes the Bezier parameter the
-    // affine line parameter. This is the same retained-object boundary called
-    // for by Yap, "Towards Exact Geometric Computation" (1997): overlap is
-    // promoted only when its witnesses are exact objects, otherwise `Unknown`
-    // is preserved.
-    if !is_degree_elevated_line(curve, policy)? {
-        return None;
-    }
     if compare_reals_with_policy(&support_coordinate(curve.start(), axis), &fixed, policy)
         .value()?
         != Ordering::Equal
@@ -1043,6 +1032,9 @@ fn degree_elevated_line_overlap_report(
             class: LineQuadraticBezierIntersectionClass::Disjoint,
             intersections: Vec::new(),
         });
+    }
+    if !quadratic_line_image_monotone(curve, axis, policy)? {
+        return None;
     }
 
     let curve_a = varying_coordinate(curve.start(), axis);
@@ -1065,7 +1057,7 @@ fn degree_elevated_line_overlap_report(
             intersections: Vec::new(),
         }),
         Ordering::Equal => {
-            let parameter = line_image_parameter(curve, axis, &overlap_min, policy)?;
+            let parameter = quadratic_line_image_parameter(curve, axis, &overlap_min, policy)?;
             let point = point_from_axis(axis, fixed, overlap_min);
             Some(LineQuadraticBezierIntersectionReport {
                 class: LineQuadraticBezierIntersectionClass::OnePoint,
@@ -1075,11 +1067,11 @@ fn degree_elevated_line_overlap_report(
         Ordering::Less => {
             let mut intersections = vec![
                 LineQuadraticBezierIntersection {
-                    parameter: line_image_parameter(curve, axis, &overlap_min, policy)?,
+                    parameter: quadratic_line_image_parameter(curve, axis, &overlap_min, policy)?,
                     point: point_from_axis(axis, fixed.clone(), overlap_min),
                 },
                 LineQuadraticBezierIntersection {
-                    parameter: line_image_parameter(curve, axis, &overlap_max, policy)?,
+                    parameter: quadratic_line_image_parameter(curve, axis, &overlap_max, policy)?,
                     point: point_from_axis(axis, fixed, overlap_max),
                 },
             ];
@@ -1260,6 +1252,33 @@ fn is_degree_elevated_line(curve: &QuadraticBezier, policy: PredicatePolicy) -> 
     )
 }
 
+fn quadratic_line_image_monotone(
+    curve: &QuadraticBezier,
+    axis: Axis,
+    policy: PredicatePolicy,
+) -> Option<bool> {
+    // For a same-support quadratic Bezier, the varying coordinate has
+    // derivative `2((p1-p0)(1-t) + (p2-p1)t)`. Certifying the two Bernstein
+    // derivative controls have a common nonzero sign proves a one-dimensional
+    // monotone image. This is the exact inverse condition used by
+    // Farouki-Rajan Bernstein sign reasoning and the object/predicate split in
+    // Yap (1997): a nonlinear overlap is accepted only when each retained
+    // coordinate has a unique replayable source parameter.
+    if is_degree_elevated_line(curve, policy)? {
+        return Some(true);
+    }
+    let first = varying_coordinate(curve.control(), axis) - varying_coordinate(curve.start(), axis);
+    let second = varying_coordinate(curve.end(), axis) - varying_coordinate(curve.control(), axis);
+    let signs = [
+        compare_reals_with_policy(&first, &Real::zero(), policy).value()?,
+        compare_reals_with_policy(&second, &Real::zero(), policy).value()?,
+    ];
+    let nonnegative = signs.iter().all(|sign| *sign != Ordering::Less);
+    let nonpositive = signs.iter().all(|sign| *sign != Ordering::Greater);
+    let nonconstant = signs.iter().any(|sign| *sign != Ordering::Equal);
+    Some(nonconstant && (nonnegative || nonpositive))
+}
+
 fn is_degree_elevated_cubic_line(curve: &CubicBezier, policy: PredicatePolicy) -> Option<bool> {
     let three_x1 = Real::from(3) * curve.control0().x.clone();
     let three_y1 = Real::from(3) * curve.control0().y.clone();
@@ -1289,6 +1308,61 @@ fn line_image_parameter(
     match compare_reals_with_policy(&denominator, &Real::zero(), policy).value()? {
         Ordering::Equal => None,
         Ordering::Less | Ordering::Greater => ((value.clone() - start) / denominator).ok(),
+    }
+}
+
+fn solve_quadratic_varying_roots(
+    curve: &QuadraticBezier,
+    axis: Axis,
+    fixed: Real,
+    policy: PredicatePolicy,
+) -> Option<Vec<Real>> {
+    let p0 = varying_coordinate(curve.start(), axis);
+    let p1 = varying_coordinate(curve.control(), axis);
+    let p2 = varying_coordinate(curve.end(), axis);
+    let a = p0.clone() - Real::from(2) * p1.clone() + p2.clone();
+    let b = Real::from(2) * (p1 - p0.clone());
+    let c = p0 - fixed;
+    match compare_reals_with_policy(&a, &Real::zero(), policy).value()? {
+        Ordering::Equal => solve_linear_root(b, c, policy),
+        Ordering::Less | Ordering::Greater => solve_quadratic_roots(a, b, c, policy),
+    }
+}
+
+fn quadratic_line_image_parameter(
+    curve: &QuadraticBezier,
+    axis: Axis,
+    value: &Real,
+    policy: PredicatePolicy,
+) -> Option<Real> {
+    if is_degree_elevated_line(curve, policy)? {
+        return line_image_parameter(curve, axis, value, policy);
+    }
+    let roots = solve_quadratic_varying_roots(curve, axis, value.clone(), policy)?;
+    let mut accepted: Vec<Real> = Vec::new();
+    for root in roots {
+        match parameter_in_unit_interval(&root, policy) {
+            Some(true) => {}
+            Some(false) => continue,
+            None => return None,
+        }
+        let mut duplicate = false;
+        for existing in &accepted {
+            match compare_reals_with_policy(existing, &root, policy).value()? {
+                Ordering::Equal => {
+                    duplicate = true;
+                    break;
+                }
+                Ordering::Less | Ordering::Greater => {}
+            }
+        }
+        if !duplicate {
+            accepted.push(root);
+        }
+    }
+    match accepted.len() {
+        1 => accepted.pop(),
+        _ => None,
     }
 }
 

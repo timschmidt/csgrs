@@ -111,6 +111,19 @@ fuzz_target!(|data: &[u8]| {
         LineQuadraticBezierIntersectionClass::Overlap
     );
     assert_eq!(overlap_report.bezier_breakpoints[0].len(), 4);
+    let nonlinear_overlap_curve = QuadraticBezier::new(p(0, 0), p(2, 0), p(8, 0));
+    let nonlinear_overlap_line = LinePathSegment::new(p(2, 0), p(6, 0));
+    let nonlinear_overlap_report = arrange_line_segments_with_quadratic_beziers(
+        &[nonlinear_overlap_line],
+        &[nonlinear_overlap_curve],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert_eq!(
+        nonlinear_overlap_report.events[0].class,
+        LineQuadraticBezierIntersectionClass::Overlap
+    );
+    assert_eq!(nonlinear_overlap_report.bezier_breakpoints[0].len(), 4);
 
     let cubic = CubicBezier::new(
         p(signed(data[1]), signed(data[2])),

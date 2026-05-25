@@ -253,6 +253,18 @@ fn path_predicates(c: &mut Criterion) {
             )
         })
     });
+    let line_quadratic_nonlinear_overlap_line = LinePathSegment::new(p(250, 0), p(750, 0));
+    let line_quadratic_nonlinear_overlap_curve =
+        QuadraticBezier::new(p(0, 0), p(300, 0), p(1000, 0));
+    c.bench_function("line_quadratic_bezier_nonlinear_overlap_promotion", |b| {
+        b.iter(|| {
+            arrange_line_segments_with_quadratic_beziers(
+                std::slice::from_ref(&line_quadratic_nonlinear_overlap_line),
+                std::slice::from_ref(&line_quadratic_nonlinear_overlap_curve),
+                PredicatePolicy::default(),
+            )
+        })
+    });
     let bezier_events = vec![vec![
         BezierParameter::new(1, 4).unwrap(),
         BezierParameter::new(1, 2).unwrap(),
