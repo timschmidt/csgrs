@@ -8,6 +8,8 @@
 //! replayable object facts, not approximate acceleration hints that may change
 //! topology silently.
 
+use std::collections::VecDeque;
+
 use hyperlimit::{
     Aabb3Intersection, RayTriangleIntersection, classify_aabb3_intersection,
     classify_ray_triangle3_intersection_report,
@@ -209,6 +211,25 @@ pub fn classify_cell_against_prepared_triangle_solid_mesh(
     }
 
     let bounds = address.bounds(frame)?;
+    let boundary = classify_cell_boundary_against_prepared_triangle_solid(&bounds, prepared)?;
+
+    if boundary.classifier != VoxelTriangleSolidClassifier::Outside {
+        return Ok(boundary);
+    }
+
+    let (classifier, ray_attempts) =
+        classify_point_against_prepared_triangle_solid_by_ray(&bounds.center(), prepared)?;
+    Ok(PreparedTriangleSolidCellReport {
+        classifier,
+        ray_attempts,
+        ..boundary
+    })
+}
+
+fn classify_cell_boundary_against_prepared_triangle_solid(
+    bounds: &crate::CellBounds,
+    prepared: &PreparedExactTriangleSolidMesh,
+) -> HypervoxelResult<PreparedTriangleSolidCellReport> {
     let cell_min = point3(&bounds.min);
     let cell_max = point3(&bounds.max);
     let mut boundary_aabb_rejections = 0_usize;
@@ -232,7 +253,7 @@ pub fn classify_cell_against_prepared_triangle_solid_mesh(
         }
 
         boundary_triangle_tests += 1;
-        match triangle_intersects_cell(&triangle.triangle, &bounds)? {
+        match triangle_intersects_cell(&triangle.triangle, bounds)? {
             TriangleCellIntersection::Intersects => {
                 return Ok(PreparedTriangleSolidCellReport {
                     classifier: VoxelTriangleSolidClassifier::Boundary,
@@ -257,14 +278,12 @@ pub fn classify_cell_against_prepared_triangle_solid_mesh(
         });
     }
 
-    let (classifier, ray_attempts) =
-        classify_point_against_prepared_triangle_solid_by_ray(&bounds.center(), prepared)?;
     Ok(PreparedTriangleSolidCellReport {
-        classifier,
+        classifier: VoxelTriangleSolidClassifier::Outside,
         boundary_aabb_rejections,
         boundary_triangle_tests,
         boundary_unknown,
-        ray_attempts,
+        ray_attempts: Vec::new(),
     })
 }
 
@@ -386,6 +405,160 @@ pub fn voxelize_prepared_exact_triangle_solid_mesh(
     Ok((grid, report, prepared_report))
 }
 
+/// Voxelize a prepared exact closed triangle solid by connected non-boundary
+/// components.
+///
+/// This is the first arrangement-style accelerator above the per-cell parity
+/// path. It performs the exact boundary classification for every cell, labels
+/// connected components of cells proven disjoint from the boundary, marks
+/// components touching the grid boundary as exterior, and ray-classifies only
+/// one representative cell for every remaining component. The component
+/// labeling follows the 6-neighbor digital topology model used by Rosenfeld
+/// and Pfaltz, "Sequential Operations in Digital Picture Processing," *JACM*
+/// 13(4), 1966. The topology-changing decisions remain gated by Yap's exact
+/// computation discipline: boundary predicates and representative parity
+/// queries must be proof-producing, otherwise the whole component is reported
+/// as unknown.
+pub fn voxelize_prepared_exact_triangle_solid_mesh_by_components(
+    frame: GridFrame,
+    prepared: &PreparedExactTriangleSolidMesh,
+    material: MaterialRegionId,
+    policy: VoxelizationPolicy,
+) -> HypervoxelResult<(
+    SparseVoxelGrid,
+    VoxelizationReport,
+    PreparedTriangleSolidComponentVoxelizationReport,
+)> {
+    if !prepared.report.exact_prepared_solid_ready {
+        return Err(HypervoxelError::InvalidSourceGeometry {
+            reason: "prepared triangle solid mesh is not exact-ready",
+        });
+    }
+
+    let cells_per_axis = frame.cells_per_axis();
+    let total_cells =
+        usize::try_from(cells_per_axis.pow(3)).map_err(|_| HypervoxelError::AddressOverflow)?;
+    let mut classifiers = vec![VoxelTriangleSolidClassifier::Unknown; total_cells];
+    let mut open = vec![false; total_cells];
+    let mut visited = vec![false; total_cells];
+    let mut component_report = PreparedTriangleSolidComponentVoxelizationReport {
+        classified_cells: total_cells,
+        ..PreparedTriangleSolidComponentVoxelizationReport::default()
+    };
+
+    for z in 0..cells_per_axis {
+        for y in 0..cells_per_axis {
+            for x in 0..cells_per_axis {
+                let address = VoxelAddress::new(frame.depth(), [x, y, z])?;
+                let bounds = address.bounds(&frame)?;
+                let boundary =
+                    classify_cell_boundary_against_prepared_triangle_solid(&bounds, prepared)?;
+                let index = cell_index(cells_per_axis, [x, y, z])?;
+                component_report.boundary_aabb_rejections += boundary.boundary_aabb_rejections;
+                component_report.boundary_triangle_tests += boundary.boundary_triangle_tests;
+                match boundary.classifier {
+                    VoxelTriangleSolidClassifier::Boundary => {
+                        classifiers[index] = VoxelTriangleSolidClassifier::Boundary;
+                        component_report.boundary_cells += 1;
+                    }
+                    VoxelTriangleSolidClassifier::Unknown => {
+                        classifiers[index] = VoxelTriangleSolidClassifier::Unknown;
+                        component_report.boundary_unknown_cells += 1;
+                    }
+                    VoxelTriangleSolidClassifier::Outside => {
+                        open[index] = true;
+                        component_report.open_cells += 1;
+                    }
+                    VoxelTriangleSolidClassifier::Inside => unreachable!(
+                        "boundary-only prepared classification never emits inside cells"
+                    ),
+                }
+            }
+        }
+    }
+
+    for z in 0..cells_per_axis {
+        for y in 0..cells_per_axis {
+            for x in 0..cells_per_axis {
+                let index = cell_index(cells_per_axis, [x, y, z])?;
+                if !open[index] || visited[index] {
+                    continue;
+                }
+
+                let mut queue = VecDeque::new();
+                let mut component = Vec::new();
+                let mut touches_frame_boundary = false;
+                visited[index] = true;
+                queue.push_back([x, y, z]);
+                while let Some(coords) = queue.pop_front() {
+                    component.push(coords);
+                    touches_frame_boundary |= coords
+                        .iter()
+                        .any(|&axis| axis == 0 || axis + 1 == cells_per_axis);
+
+                    for neighbor in component_neighbors(cells_per_axis, coords) {
+                        let neighbor_index = cell_index(cells_per_axis, neighbor)?;
+                        if open[neighbor_index] && !visited[neighbor_index] {
+                            visited[neighbor_index] = true;
+                            queue.push_back(neighbor);
+                        }
+                    }
+                }
+
+                component_report.components += 1;
+                let classifier = if touches_frame_boundary {
+                    component_report.exterior_components += 1;
+                    component_report.outside_components += 1;
+                    VoxelTriangleSolidClassifier::Outside
+                } else {
+                    component_report.ray_classified_components += 1;
+                    let representative = component[0];
+                    let address = VoxelAddress::new(frame.depth(), representative)?;
+                    let cell = classify_cell_against_prepared_triangle_solid_mesh(
+                        address, &frame, prepared,
+                    )?;
+                    component_report.component_ray_attempts += cell.ray_attempts.len();
+                    component_report.component_ray_triangle_tests += cell.ray_triangle_tests();
+                    component_report.ambiguous_component_ray_attempts += cell
+                        .ray_attempts
+                        .iter()
+                        .filter(|attempt| !attempt.certified)
+                        .count();
+                    match cell.classifier {
+                        VoxelTriangleSolidClassifier::Inside => {
+                            component_report.inside_components += 1;
+                            VoxelTriangleSolidClassifier::Inside
+                        }
+                        VoxelTriangleSolidClassifier::Outside => {
+                            component_report.outside_components += 1;
+                            VoxelTriangleSolidClassifier::Outside
+                        }
+                        VoxelTriangleSolidClassifier::Unknown
+                        | VoxelTriangleSolidClassifier::Boundary => {
+                            component_report.unknown_components += 1;
+                            VoxelTriangleSolidClassifier::Unknown
+                        }
+                    }
+                };
+
+                for coords in component {
+                    let index = cell_index(cells_per_axis, coords)?;
+                    classifiers[index] = classifier;
+                }
+            }
+        }
+    }
+
+    materialize_component_classifiers(
+        frame,
+        prepared.solid.surface.source.clone(),
+        policy,
+        material,
+        &classifiers,
+        component_report,
+    )
+}
+
 /// Aggregate prepared-schedule evidence over a voxelization pass.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct PreparedTriangleSolidVoxelizationReport {
@@ -403,6 +576,43 @@ pub struct PreparedTriangleSolidVoxelizationReport {
     pub ambiguous_ray_attempts: usize,
 }
 
+/// Aggregate connected-component schedule evidence over a prepared
+/// triangle-solid voxelization pass.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct PreparedTriangleSolidComponentVoxelizationReport {
+    /// Number of cells classified.
+    pub classified_cells: usize,
+    /// Number of cells proven to intersect the retained triangle boundary.
+    pub boundary_cells: usize,
+    /// Number of cells whose boundary relation was undecided.
+    pub boundary_unknown_cells: usize,
+    /// Number of cells proven disjoint from the retained triangle boundary.
+    pub open_cells: usize,
+    /// Total exact AABB broad-phase rejections in the boundary pass.
+    pub boundary_aabb_rejections: usize,
+    /// Total exact triangle/cell narrow-phase tests in the boundary pass.
+    pub boundary_triangle_tests: usize,
+    /// Number of connected open-cell components.
+    pub components: usize,
+    /// Number of open components touching the frame boundary.
+    pub exterior_components: usize,
+    /// Number of non-exterior components classified by representative ray.
+    pub ray_classified_components: usize,
+    /// Number of components classified as inside.
+    pub inside_components: usize,
+    /// Number of components classified as outside.
+    pub outside_components: usize,
+    /// Number of components that remained unknown.
+    pub unknown_components: usize,
+    /// Total exact ray-parity attempts used for representative cells.
+    pub component_ray_attempts: usize,
+    /// Total exact ray/triangle predicates used for representative cells.
+    pub component_ray_triangle_tests: usize,
+    /// Number of ambiguous representative ray attempts skipped before a
+    /// certified parity decision or component unknown.
+    pub ambiguous_component_ray_attempts: usize,
+}
+
 impl PreparedTriangleSolidVoxelizationReport {
     fn accumulate(&mut self, cell: &PreparedTriangleSolidCellReport) {
         self.classified_cells += 1;
@@ -416,6 +626,137 @@ impl PreparedTriangleSolidVoxelizationReport {
             .filter(|attempt| !attempt.certified)
             .count();
     }
+}
+
+fn materialize_component_classifiers(
+    frame: GridFrame,
+    source: Option<crate::GridSource>,
+    policy: VoxelizationPolicy,
+    material: MaterialRegionId,
+    classifiers: &[VoxelTriangleSolidClassifier],
+    component_report: PreparedTriangleSolidComponentVoxelizationReport,
+) -> HypervoxelResult<(
+    SparseVoxelGrid,
+    VoxelizationReport,
+    PreparedTriangleSolidComponentVoxelizationReport,
+)> {
+    let mut grid = SparseVoxelGrid::new(frame.clone());
+    let mut inside_cells = 0_usize;
+    let mut outside_cells = 0_usize;
+    let mut boundary_cells = 0_usize;
+    let mut unknown_cells = 0_usize;
+    let mut predicate_boundary_cells = 0_usize;
+    let mut predicate_unknown_cells = 0_usize;
+    let cells_per_axis = frame.cells_per_axis();
+
+    for z in 0..cells_per_axis {
+        for y in 0..cells_per_axis {
+            for x in 0..cells_per_axis {
+                let index = cell_index(cells_per_axis, [x, y, z])?;
+                let classifier = classifiers[index];
+                match classifier {
+                    VoxelTriangleSolidClassifier::Inside => inside_cells += 1,
+                    VoxelTriangleSolidClassifier::Outside => outside_cells += 1,
+                    VoxelTriangleSolidClassifier::Boundary => predicate_boundary_cells += 1,
+                    VoxelTriangleSolidClassifier::Unknown => predicate_unknown_cells += 1,
+                }
+
+                let cell = match (policy.quantization, policy.boundary, classifier) {
+                    (_, _, VoxelTriangleSolidClassifier::Outside) => VoxelCell::empty(),
+                    (_, _, VoxelTriangleSolidClassifier::Unknown) => {
+                        unknown_cells += 1;
+                        VoxelCell::unknown()
+                    }
+                    (_, _, VoxelTriangleSolidClassifier::Inside) => VoxelCell::material(material),
+                    (
+                        QuantizationPolicy::ConservativeInterior,
+                        _,
+                        VoxelTriangleSolidClassifier::Boundary,
+                    ) => {
+                        boundary_cells += 1;
+                        match policy.boundary {
+                            BoundaryPolicy::BoundaryAsUnknown => {
+                                unknown_cells += 1;
+                                VoxelCell::unknown()
+                            }
+                            _ => VoxelCell::empty(),
+                        }
+                    }
+                    (
+                        _,
+                        BoundaryPolicy::BoundaryAsUnknown,
+                        VoxelTriangleSolidClassifier::Boundary,
+                    ) => {
+                        boundary_cells += 1;
+                        unknown_cells += 1;
+                        VoxelCell::unknown()
+                    }
+                    (
+                        _,
+                        BoundaryPolicy::LossySideChoice,
+                        VoxelTriangleSolidClassifier::Boundary,
+                    ) => {
+                        boundary_cells += 1;
+                        VoxelCell {
+                            occupancy: OccupancyState::LossyAdapterValue,
+                            payload: VoxelPayload::LossyAdapterValue(material.0),
+                        }
+                    }
+                    (_, BoundaryPolicy::KeepBoundary, VoxelTriangleSolidClassifier::Boundary) => {
+                        boundary_cells += 1;
+                        VoxelCell::boundary(VoxelPayload::MaterialRegion(material))
+                    }
+                };
+
+                if cell.occupancy != OccupancyState::Empty {
+                    grid.set(VoxelAddress::new(frame.depth(), [x, y, z])?, cell)?;
+                }
+            }
+        }
+    }
+
+    let aggregate = VoxelAggregateFacts::from_explicit_cells_in_frame(
+        classifiers.len(),
+        grid.iter().map(|(_, cell)| cell),
+    )?;
+    let report = VoxelizationReport {
+        source,
+        frame,
+        policy,
+        aggregate,
+        unknown_cells,
+        boundary_cells,
+        predicate_certificates: VoxelPredicateCertificateReport::from_counts(
+            inside_cells,
+            outside_cells,
+            predicate_boundary_cells,
+            predicate_unknown_cells,
+        ),
+        legacy_adapter: None,
+    };
+    Ok((grid, report, component_report))
+}
+
+fn cell_index(cells_per_axis: u64, coords: [u64; 3]) -> HypervoxelResult<usize> {
+    usize::try_from((coords[2] * cells_per_axis + coords[1]) * cells_per_axis + coords[0])
+        .map_err(|_| HypervoxelError::AddressOverflow)
+}
+
+fn component_neighbors(cells_per_axis: u64, coords: [u64; 3]) -> Vec<[u64; 3]> {
+    let mut neighbors = Vec::with_capacity(6);
+    for axis in 0..3 {
+        if coords[axis] > 0 {
+            let mut neighbor = coords;
+            neighbor[axis] -= 1;
+            neighbors.push(neighbor);
+        }
+        if coords[axis] + 1 < cells_per_axis {
+            let mut neighbor = coords;
+            neighbor[axis] += 1;
+            neighbors.push(neighbor);
+        }
+    }
+    neighbors
 }
 
 fn classify_point_against_prepared_triangle_solid_by_ray(

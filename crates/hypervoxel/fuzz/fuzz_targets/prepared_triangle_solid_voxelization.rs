@@ -5,6 +5,7 @@ use hypervoxel::{
     ExactTriangle3, ExactTriangleSolidMesh, ExactTriangleSurfaceMesh, GridFrame, GridSource,
     MaterialRegionId, PreparedExactTriangleSolidMesh, VoxelizationPolicy,
     voxelize_exact_triangle_solid_mesh, voxelize_prepared_exact_triangle_solid_mesh,
+    voxelize_prepared_exact_triangle_solid_mesh_by_components,
 };
 use libfuzzer_sys::fuzz_target;
 
@@ -63,7 +64,14 @@ fuzz_target!(|data: (u8, u8, u8, bool)| {
     )
     .unwrap();
     let (_, prepared_report, schedule) = voxelize_prepared_exact_triangle_solid_mesh(
-        frame,
+        frame.clone(),
+        &prepared,
+        MaterialRegionId(1),
+        VoxelizationPolicy::conservative_cover(),
+    )
+    .unwrap();
+    let (_, component_report, components) = voxelize_prepared_exact_triangle_solid_mesh_by_components(
+        frame.clone(),
         &prepared,
         MaterialRegionId(1),
         VoxelizationPolicy::conservative_cover(),
@@ -73,6 +81,13 @@ fuzz_target!(|data: (u8, u8, u8, bool)| {
         prepared_report.predicate_certificates,
         ordinary_report.predicate_certificates
     );
+    assert_eq!(
+        component_report.predicate_certificates,
+        ordinary_report.predicate_certificates
+    );
     assert_eq!(prepared_report.unknown_cells, ordinary_report.unknown_cells);
+    assert_eq!(component_report.unknown_cells, ordinary_report.unknown_cells);
     assert!(schedule.boundary_aabb_rejections > 0);
+    assert!(components.boundary_aabb_rejections > 0);
+    assert!(components.component_ray_triangle_tests <= schedule.ray_triangle_tests);
 });

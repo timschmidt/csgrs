@@ -29,6 +29,7 @@ use hypervoxel::{
     trace_address_ray, voxelize_exact_box, voxelize_exact_convex_halfspace_set,
     voxelize_exact_halfspace, voxelize_exact_triangle_solid_mesh,
     voxelize_exact_triangle_surface_mesh, voxelize_prepared_exact_triangle_solid_mesh,
+    voxelize_prepared_exact_triangle_solid_mesh_by_components,
 };
 
 fn r(n: i32) -> Real {
@@ -255,6 +256,20 @@ fn bench_exact_box_voxelization(c: &mut Criterion) {
             .unwrap()
         })
     });
+    c.bench_function(
+        "component_prepared_exact_triangle_solid_mesh_voxelization",
+        |b| {
+            b.iter(|| {
+                voxelize_prepared_exact_triangle_solid_mesh_by_components(
+                    frame.clone(),
+                    &prepared_triangle_solid,
+                    MaterialRegionId(10),
+                    VoxelizationPolicy::conservative_cover(),
+                )
+                .unwrap()
+            })
+        },
+    );
 }
 
 fn bench_svo_path_copy_edits(c: &mut Criterion) {

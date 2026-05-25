@@ -7,6 +7,7 @@ use hypervoxel::{
     classify_cell_against_triangle_solid_mesh, classify_cell_against_triangle_surface_mesh,
     voxelize_exact_triangle_solid_mesh, voxelize_exact_triangle_surface_mesh,
     voxelize_prepared_exact_triangle_solid_mesh,
+    voxelize_prepared_exact_triangle_solid_mesh_by_components,
 };
 use proptest::prelude::*;
 
@@ -343,6 +344,47 @@ fn prepared_triangle_solid_replays_cube_with_exact_schedule_report() {
     assert!(schedule.ambiguous_ray_attempts > 0);
     assert!(schedule.ambiguous_ray_attempts < schedule.ray_attempts);
     assert!(prepared_report.exact_topology_ready());
+}
+
+#[test]
+fn component_prepared_triangle_solid_classifies_components_with_fewer_rays() {
+    let frame = frame(3);
+    let solid = ExactTriangleSolidMesh::new(cube_surface(2, 6, &frame), true);
+    let prepared = PreparedExactTriangleSolidMesh::prepare(solid).unwrap();
+    let (per_cell_grid, per_cell_report, per_cell_schedule) =
+        voxelize_prepared_exact_triangle_solid_mesh(
+            frame.clone(),
+            &prepared,
+            MaterialRegionId(4),
+            VoxelizationPolicy::conservative_cover(),
+        )
+        .unwrap();
+    let (component_grid, component_report, components) =
+        voxelize_prepared_exact_triangle_solid_mesh_by_components(
+            frame,
+            &prepared,
+            MaterialRegionId(4),
+            VoxelizationPolicy::conservative_cover(),
+        )
+        .unwrap();
+
+    assert_eq!(component_grid.len(), per_cell_grid.len());
+    assert_eq!(
+        component_report.predicate_certificates,
+        per_cell_report.predicate_certificates
+    );
+    assert_eq!(component_report.unknown_cells, 0);
+    assert_eq!(components.classified_cells, 512);
+    assert_eq!(components.boundary_cells, 208);
+    assert_eq!(components.open_cells, 304);
+    assert_eq!(components.components, 2);
+    assert_eq!(components.exterior_components, 1);
+    assert_eq!(components.ray_classified_components, 1);
+    assert_eq!(components.inside_components, 1);
+    assert_eq!(components.outside_components, 1);
+    assert_eq!(components.unknown_components, 0);
+    assert!(components.component_ray_triangle_tests < per_cell_schedule.ray_triangle_tests);
+    assert!(component_report.exact_topology_ready());
 }
 
 #[test]
