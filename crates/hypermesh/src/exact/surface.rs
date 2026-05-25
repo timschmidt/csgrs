@@ -3269,12 +3269,13 @@ pub fn arrange_coplanar_surface_component_holed_intersection(
 ///
 /// This is the holed/holed sibling of the source-disk clip certificate. It
 /// accepts only equal retained outer rings; the result keeps that outer ring
-/// and the exact union of both operands' disjoint retained holes. Identical
-/// holes are deduplicated, while touching, crossing, overlapping, or nested
-/// non-identical holes reject to the general planar arrangement layer. This is
-/// a legitimate Boolean intersection because the complement of each retained
-/// hole is part of the source object: intersecting two equal-outer holed
-/// sheets removes the union of their holes.
+/// and the exact union of both operands' retained holes. Identical holes are
+/// deduplicated, strictly nested holes collapse to the larger removed region,
+/// and disjoint holes are retained independently. Touching, crossing, or
+/// partially overlapping hole boundaries reject to the general planar
+/// arrangement layer. This is a legitimate Boolean intersection because the
+/// complement of each retained hole is part of the source object:
+/// intersecting two equal-outer holed sheets removes the union of their holes.
 ///
 /// Boundary rings still come from exact mesh incidence and the final retained
 /// area must equal the pairwise source-triangle intersection area. That is the
@@ -3371,23 +3372,7 @@ fn merged_same_outer_intersection_holes(
         orient_polygon_cw(hole, projection)?;
     }
     for right_hole in &right.holes {
-        if holes
-            .iter()
-            .any(|left_hole| polygons_equal(left_hole, right_hole))
-        {
-            continue;
-        }
-        for left_hole in &holes {
-            match simple_polygon_interaction(left_hole, right_hole, projection)? {
-                SimplePolygonInteraction::Disjoint => {}
-                SimplePolygonInteraction::PointOnly | SimplePolygonInteraction::Connected => {
-                    return None;
-                }
-            }
-        }
-        let mut retained = right_hole.clone();
-        orient_polygon_cw(&mut retained, projection)?;
-        holes.push(retained);
+        insert_same_outer_intersection_hole(&mut holes, right_hole, projection)?;
     }
     validate_component_loops_disjoint(
         &holes,
@@ -3396,6 +3381,41 @@ fn merged_same_outer_intersection_holes(
     )
     .ok()?;
     Some(holes)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn insert_same_outer_intersection_hole(
+    holes: &mut Vec<Vec<Point3>>,
+    candidate: &[Point3],
+    projection: CoplanarProjection,
+) -> Option<()> {
+    if holes.iter().any(|hole| polygons_equal(hole, candidate)) {
+        return Some(());
+    }
+
+    let mut index = 0;
+    while index < holes.len() {
+        if polygon_strictly_inside_simple_polygon(&holes[index], candidate, projection)? {
+            holes.remove(index);
+            continue;
+        }
+        if polygon_strictly_inside_simple_polygon(candidate, &holes[index], projection)? {
+            return Some(());
+        }
+        match simple_polygon_interaction(&holes[index], candidate, projection)? {
+            SimplePolygonInteraction::Disjoint => {
+                index += 1;
+            }
+            SimplePolygonInteraction::PointOnly | SimplePolygonInteraction::Connected => {
+                return None;
+            }
+        }
+    }
+
+    let mut retained = candidate.to_vec();
+    orient_polygon_cw(&mut retained, projection)?;
+    holes.push(retained);
+    Some(())
 }
 
 #[cfg(feature = "exact-triangulation")]

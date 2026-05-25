@@ -2427,6 +2427,37 @@ fn exercise_same_outer_component_holed_coplanar_intersection() {
         .mesh;
     assert!(arrange_coplanar_surface_component_holed_intersection(&left, &overlapping).is_none());
 
+    let small_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[4, 4, 0, 6, 4, 0, 6, 6, 0, 4, 6, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("same-outer nested small hole fixture must import");
+    let large_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[3, 3, 0, 7, 3, 0, 7, 7, 0, 3, 7, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("same-outer nested large hole fixture must import");
+    let small = arrange_coplanar_convex_surface_holed_difference(&outer, &small_hole)
+        .expect("same-outer small-hole annulus should materialize")
+        .mesh;
+    let large = arrange_coplanar_convex_surface_holed_difference(&outer, &large_hole)
+        .expect("same-outer large-hole annulus should materialize")
+        .mesh;
+    let nested = arrange_coplanar_surface_component_holed_intersection(&small, &large)
+        .expect("same-outer nested-hole intersection should retain the larger hole");
+    nested.validate().unwrap();
+    nested
+        .validate_intersection_against_sources(&small, &large)
+        .unwrap();
+    let nested_reverse = arrange_coplanar_surface_component_holed_intersection(&large, &small)
+        .expect("same-outer nested-hole intersection should be symmetric");
+    nested_reverse.validate().unwrap();
+    nested_reverse
+        .validate_intersection_against_sources(&large, &small)
+        .unwrap();
+
     let preflight = preflight_boolean_exact(&left, &right, ExactBooleanOperation::Intersection)
         .expect("same-outer holed intersection preflight should classify shortcut");
     preflight.validate().unwrap();

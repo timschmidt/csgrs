@@ -26013,6 +26013,55 @@ fn exact_coplanar_component_holed_intersection_merges_same_outer_holes() {
         "point or edge contact between retained holes is not a disjoint-hole union"
     );
 
+    let small_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[4, 4, 0, 6, 4, 0, 6, 6, 0, 4, 6, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let large_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[3, 3, 0, 7, 3, 0, 7, 7, 0, 3, 7, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let small =
+        hypermesh::exact::arrange_coplanar_convex_surface_holed_difference(&outer, &small_hole)
+            .expect("small-hole annulus fixture should materialize")
+            .mesh;
+    let large =
+        hypermesh::exact::arrange_coplanar_convex_surface_holed_difference(&outer, &large_hole)
+            .expect("large-hole annulus fixture should materialize")
+            .mesh;
+    let nested =
+        hypermesh::exact::arrange_coplanar_surface_component_holed_intersection(&small, &large)
+            .expect("same-outer nested holes should collapse to the larger removed region");
+    nested.validate().unwrap();
+    nested
+        .validate_intersection_against_sources(&small, &large)
+        .unwrap();
+    assert_eq!(nested.components.len(), 1);
+    assert_eq!(nested.components[0].holes.len(), 1);
+    assert!(
+        nested.components[0].holes[0]
+            .iter()
+            .any(|point| real_eq(&point.x, &ExactReal::from(3)))
+    );
+    assert!(
+        !nested.components[0].holes[0]
+            .iter()
+            .any(|point| real_eq(&point.x, &ExactReal::from(4)))
+    );
+    let nested_reverse =
+        hypermesh::exact::arrange_coplanar_surface_component_holed_intersection(&large, &small)
+            .expect("same-outer nested-hole intersection should be symmetric");
+    nested_reverse.validate().unwrap();
+    nested_reverse
+        .validate_intersection_against_sources(&large, &small)
+        .unwrap();
+    assert_eq!(nested_reverse.components.len(), 1);
+    assert_eq!(nested_reverse.components[0].holes.len(), 1);
+
     let preflight = hypermesh::exact::preflight_boolean_exact(
         &left,
         &right,
