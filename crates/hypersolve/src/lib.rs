@@ -42,6 +42,7 @@ mod sketch_arc_length;
 mod sketch_arc_tangent;
 pub mod sketch_builders;
 pub mod sketch_certificates;
+mod sketch_circle_tangent;
 mod sketch_cubic_tangent;
 pub mod sketch_degeneracy;
 pub mod sketch_domains;
@@ -251,15 +252,15 @@ pub use root_isolation::{
 };
 pub use sketch::{
     SketchArcEndpoint, SketchArcLengthSweep, SketchArcOfCircle2, SketchArcPointSweep,
-    SketchArcTangencyBranch, SketchCircle2, SketchConstraint, SketchConstraintHandle,
-    SketchConstraintKind, SketchCubic2, SketchDistance, SketchEntity, SketchEntityDomain,
-    SketchEntityHandle, SketchEntityKind, SketchGeneratedRow, SketchGeneratedRowStatus,
-    SketchGroupHandle, SketchLineEndpoint, SketchLineSegment2, SketchLineSegment3,
-    SketchLoweringReport, SketchNormal2, SketchNormal3, SketchParameter, SketchParameterDomain,
-    SketchParameterHandle, SketchPoint2, SketchPoint3, SketchResidualForm, SketchResidualFormKind,
-    SketchResidualFormRole, SketchResidualFormsReport, SketchResidualFormsStatus,
-    SketchResidualStrategy, SketchRoundTripMetadata, SketchRoundTripRole, SketchSolveProblem,
-    SketchTangentOrientation, SketchWorkplane,
+    SketchArcTangencyBranch, SketchCircle2, SketchCircleTangencyBranch, SketchConstraint,
+    SketchConstraintHandle, SketchConstraintKind, SketchCubic2, SketchDistance, SketchEntity,
+    SketchEntityDomain, SketchEntityHandle, SketchEntityKind, SketchGeneratedRow,
+    SketchGeneratedRowStatus, SketchGroupHandle, SketchLineEndpoint, SketchLineSegment2,
+    SketchLineSegment3, SketchLoweringReport, SketchNormal2, SketchNormal3, SketchParameter,
+    SketchParameterDomain, SketchParameterHandle, SketchPoint2, SketchPoint3, SketchResidualForm,
+    SketchResidualFormKind, SketchResidualFormRole, SketchResidualFormsReport,
+    SketchResidualFormsStatus, SketchResidualStrategy, SketchRoundTripMetadata,
+    SketchRoundTripRole, SketchSolveProblem, SketchTangentOrientation, SketchWorkplane,
 };
 pub use sketch_builders::{
     SketchConstraintBuildReport, SketchConstraintFamily, angle as sketch_angle_builders,

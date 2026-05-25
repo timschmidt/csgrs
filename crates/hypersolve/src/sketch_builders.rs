@@ -13,8 +13,9 @@ use hyperreal::Real;
 
 use crate::sketch::{
     SketchArcEndpoint, SketchArcLengthSweep, SketchArcPointSweep, SketchArcTangencyBranch,
-    SketchConstraintHandle, SketchConstraintKind, SketchEntityHandle, SketchLineEndpoint,
-    SketchParameterHandle, SketchResidualStrategy, SketchSolveProblem, SketchTangentOrientation,
+    SketchCircleTangencyBranch, SketchConstraintHandle, SketchConstraintKind, SketchEntityHandle,
+    SketchLineEndpoint, SketchParameterHandle, SketchResidualStrategy, SketchSolveProblem,
+    SketchTangentOrientation,
 };
 
 /// High-level constraint family retained before residual lowering.
@@ -374,6 +375,35 @@ pub mod tangency {
             handle,
             family: SketchConstraintFamily::Tangency,
             strategy: SketchResidualStrategy::ProjectedLineCircleTangency,
+            kind,
+        }
+    }
+
+    /// Add retained 2D circle/circle tangency with explicit branch evidence.
+    ///
+    /// External tangency replays `|center_b-center_a|^2 == (r_a+r_b)^2`;
+    /// internal tangency replays `|center_b-center_a|^2 == (r_a-r_b)^2`.
+    /// The branch is retained by the caller instead of inferred from rounded
+    /// center distances. This follows Yap, "Towards Exact Geometric
+    /// Computation" (1997), and the explicit branch object mirrors Bouma et
+    /// al.'s geometric-constraint-solver vocabulary (1995).
+    pub fn circle_circle_tangent2(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        first: SketchEntityHandle,
+        second: SketchEntityHandle,
+        branch: SketchCircleTangencyBranch,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::CircleCircleTangent2 {
+            first,
+            second,
+            branch,
+        };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Tangency,
+            strategy: SketchResidualStrategy::CircleCircleTangency,
             kind,
         }
     }

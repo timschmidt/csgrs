@@ -10,7 +10,7 @@ use hypersolve::{
     LinearAdapterKind, LinearAdapterPrecision, LinearBackend, MultivariateQuadraticKrawczykStatus,
     PreparedProblem, PreparedSolverBlock, Problem, ProposalEngineKind, ProposalEnginePrecision,
     RootIsolationStatus, RootMultiplicityStatus, SketchArcEndpoint, SketchArcLengthSweep,
-    SketchArcPointSweep, SketchArcTangencyBranch, SketchConstraintKind,
+    SketchArcPointSweep, SketchArcTangencyBranch, SketchCircleTangencyBranch, SketchConstraintKind,
     SketchConstructionCertificateStatus, SketchDegeneracyKind, SketchDegeneracyStatus,
     SketchEntityDomain, SketchEntityDomainKind, SketchEntityDomainStatus, SketchEntityHandle,
     SketchEntityKind, SketchFailedConstraintStatus, SketchGeneratedRowStatus, SketchLineEndpoint,
@@ -7208,6 +7208,100 @@ fn sketch_projected_line_circle_tangent_replays_workplane_and_tangency_rows() {
         SketchResidualFormKind::ProjectedLineCircleTangencyPolynomial
     );
     assert_eq!(forms.forms[1].role, SketchResidualFormRole::ExactProof);
+
+    let wrong_forms = sketch.residual_forms_for_constraint(wrong);
+    assert_eq!(wrong_forms.status, SketchResidualFormsStatus::InvalidInputs);
+}
+
+#[test]
+fn sketch_circle_circle_tangent_replays_internal_external_branch_rows() {
+    let mut sketch = SketchSolveProblem::new();
+    let left_center = sketch.add_point2d("left center", real(0), real(0));
+    let external_center = sketch.add_point2d("external center", real(8), real(0));
+    let internal_center = sketch.add_point2d("internal center", real(2), real(0));
+    let bad_center = sketch.add_point2d("bad center", real(7), real(0));
+    let radius5 = sketch.add_distance("radius five", real(5));
+    let radius3 = sketch.add_distance("radius three", real(3));
+    let left = sketch.add_circle2("left circle", left_center, radius5);
+    let external = sketch.add_circle2("external circle", external_center, radius3);
+    let internal = sketch.add_circle2("internal circle", internal_center, radius3);
+    let bad = sketch.add_circle2("bad circle", bad_center, radius3);
+    let valid = sketch_tangency_builders::circle_circle_tangent2(
+        &mut sketch,
+        "external circle tangent",
+        left,
+        external,
+        SketchCircleTangencyBranch::External,
+    );
+    sketch.add_circle_circle_tangent2(
+        "internal circle tangent",
+        left,
+        internal,
+        SketchCircleTangencyBranch::Internal,
+    );
+    sketch.add_circle_circle_tangent2(
+        "bad external circle tangent",
+        left,
+        bad,
+        SketchCircleTangencyBranch::External,
+    );
+    let wrong = sketch.add_circle_circle_tangent2(
+        "wrong circle tangent kind",
+        left,
+        radius3,
+        SketchCircleTangencyBranch::External,
+    );
+
+    assert_eq!(valid.family, hypersolve::SketchConstraintFamily::Tangency);
+    assert_eq!(valid.strategy, SketchResidualStrategy::CircleCircleTangency);
+
+    let lowered = sketch.lower_to_problem();
+    let certification = certify_candidate(
+        &PreparedProblem::new(&lowered.problem),
+        &context_from_problem(&lowered.problem),
+    );
+    assert_eq!(lowered.problem.constraints.len(), 3);
+    assert_eq!(lowered.rows.len(), 4);
+    assert!(lowered.rows[..3].iter().all(|row| {
+        row.strategy == Some(SketchResidualStrategy::CircleCircleTangency)
+            && row.status == SketchGeneratedRowStatus::Generated
+    }));
+    assert_eq!(
+        lowered.rows.last().unwrap().status,
+        SketchGeneratedRowStatus::WrongEntityKind {
+            handle: radius3,
+            expected: "circle",
+        }
+    );
+    assert!(matches!(
+        certification.rows[0].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+    assert!(matches!(
+        certification.rows[1].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+    assert!(matches!(
+        certification.rows[2].status,
+        CertifiedCandidateStatus::CertifiedViolation { .. }
+    ));
+
+    let context = context_from_problem(&lowered.problem);
+    let forms = sketch.residual_forms_for_constraint(valid.handle);
+    assert_eq!(forms.status, SketchResidualFormsStatus::Generated);
+    assert_eq!(forms.forms.len(), 1);
+    assert_eq!(
+        forms.forms[0].kind,
+        SketchResidualFormKind::CircleCircleTangencyPolynomial
+    );
+    assert_eq!(forms.forms[0].role, SketchResidualFormRole::ExactProof);
+    assert_eq!(
+        forms.forms[0]
+            .residual
+            .eval_real(context.bindings())
+            .unwrap(),
+        Real::zero()
+    );
 
     let wrong_forms = sketch.residual_forms_for_constraint(wrong);
     assert_eq!(wrong_forms.status, SketchResidualFormsStatus::InvalidInputs);

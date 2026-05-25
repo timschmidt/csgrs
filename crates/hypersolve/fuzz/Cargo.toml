@@ -182,6 +182,13 @@ doc = false
 bench = false
 
 [[bin]]
+name = "sketch_circle_circle_tangent"
+path = "fuzz_targets/sketch_circle_circle_tangent.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
 name = "sketch_projected_line_symmetry"
 path = "fuzz_targets/sketch_projected_line_symmetry.rs"
 test = false

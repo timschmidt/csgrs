@@ -6,10 +6,11 @@ use hypersolve::{
     IntervalBoxCertificationStatus, MultivariateQuadraticKrawczykStatus, PreparedProblem,
     PreparedSolverBlock, Problem, ProposalEngineKind, ProposalEnginePrecision,
     ProposalEngineReport, RootIsolationStatus, SketchArcEndpoint, SketchArcLengthSweep,
-    SketchArcPointSweep, SketchArcTangencyBranch, SketchConstructionCertificateStatus,
-    SketchDegeneracyKind, SketchDegeneracyStatus, SketchEntityDomain, SketchEntityDomainKind,
-    SketchEntityDomainStatus, SketchFailedConstraintStatus, SketchGeneratedRowStatus,
-    SketchLineEndpoint, SketchParameterDomain, SketchParameterDomainStatus, SketchResidualFormKind,
+    SketchArcPointSweep, SketchArcTangencyBranch, SketchCircleTangencyBranch,
+    SketchConstructionCertificateStatus, SketchDegeneracyKind, SketchDegeneracyStatus,
+    SketchEntityDomain, SketchEntityDomainKind, SketchEntityDomainStatus,
+    SketchFailedConstraintStatus, SketchGeneratedRowStatus, SketchLineEndpoint,
+    SketchParameterDomain, SketchParameterDomainStatus, SketchResidualFormKind,
     SketchResidualFormRole, SketchResidualFormsStatus, SketchResidualStrategy,
     SketchRoundTripMetadata, SketchSolveProblem, SketchTangentOrientation,
     SketchUnitToleranceStatus, SketchWorkplaneFrameStatus, SolverBlockRowKind, SolverConfig,
@@ -3597,6 +3598,107 @@ proptest! {
             forms.forms[1].kind,
             SketchResidualFormKind::ProjectedLineCircleTangencyPolynomial
         );
+    }
+
+    #[test]
+    fn sketch_circle_circle_tangent_rows_match_generated_internal_external_contacts(
+        cx in -8_i16..=8,
+        cy in -8_i16..=8,
+        first_radius in 2_i16..=12,
+        second_radius in 1_i16..=8,
+        vertical in -4_i16..=4,
+    ) {
+        let cx = i64::from(cx);
+        let cy = i64::from(cy);
+        let first_radius = i64::from(first_radius);
+        let second_radius = i64::from(second_radius);
+        let vertical = i64::from(vertical);
+        let mut sketch = SketchSolveProblem::new();
+        let first_center = sketch.add_point2d("first center", Real::from(cx), Real::from(cy));
+        let external_center = sketch.add_point2d(
+            "external center",
+            Real::from(cx + first_radius + second_radius),
+            Real::from(cy),
+        );
+        let internal_offset = first_radius - second_radius;
+        let internal_center = sketch.add_point2d(
+            "internal center",
+            Real::from(cx + internal_offset),
+            Real::from(cy),
+        );
+        let first_radius_entity = sketch.add_distance("first radius", Real::from(first_radius));
+        let second_radius_entity = sketch.add_distance("second radius", Real::from(second_radius));
+        let first = sketch.add_circle2("first", first_center, first_radius_entity);
+        let external = sketch.add_circle2("external", external_center, second_radius_entity);
+        let internal = sketch.add_circle2("internal", internal_center, second_radius_entity);
+        let external_handle = sketch.add_circle_circle_tangent2(
+            "external tangent",
+            first,
+            external,
+            SketchCircleTangencyBranch::External,
+        );
+        let internal_handle = sketch.add_circle_circle_tangent2(
+            "internal tangent",
+            first,
+            internal,
+            SketchCircleTangencyBranch::Internal,
+        );
+        if vertical != 0 {
+            let bad_center = sketch.add_point2d(
+                "bad center",
+                Real::from(cx + first_radius + second_radius),
+                Real::from(cy + vertical),
+            );
+            let bad = sketch.add_circle2("bad", bad_center, second_radius_entity);
+            sketch.add_circle_circle_tangent2(
+                "bad tangent",
+                first,
+                bad,
+                SketchCircleTangencyBranch::External,
+            );
+        }
+
+        let lowered = sketch.lower_to_problem();
+        let context = context_from_problem(&lowered.problem);
+        let certification = certify_candidate(&PreparedProblem::new(&lowered.problem), &context);
+        let external_forms = sketch.residual_forms_for_constraint(external_handle);
+        let internal_forms = sketch.residual_forms_for_constraint(internal_handle);
+
+        let all_circle_tangent_rows = lowered.rows[..2].iter().all(|row| {
+            row.strategy == Some(SketchResidualStrategy::CircleCircleTangency)
+                && row.status == SketchGeneratedRowStatus::Generated
+        });
+        prop_assert!(all_circle_tangent_rows);
+        let external_certified = matches!(
+            certification.rows[0].status,
+            CertifiedCandidateStatus::CertifiedZero { .. }
+        );
+        let internal_certified = matches!(
+            certification.rows[1].status,
+            CertifiedCandidateStatus::CertifiedZero { .. }
+        );
+        prop_assert!(external_certified);
+        prop_assert!(internal_certified);
+        if vertical != 0 {
+            let bad_violated = matches!(
+                certification.rows[2].status,
+                CertifiedCandidateStatus::CertifiedViolation { .. }
+            );
+            prop_assert!(bad_violated);
+        }
+        for forms in [external_forms, internal_forms] {
+            prop_assert_eq!(forms.status, SketchResidualFormsStatus::Generated);
+            prop_assert_eq!(forms.forms.len(), 1);
+            prop_assert_eq!(
+                forms.forms[0].kind,
+                SketchResidualFormKind::CircleCircleTangencyPolynomial
+            );
+            prop_assert_eq!(forms.forms[0].role, SketchResidualFormRole::ExactProof);
+            prop_assert_eq!(
+                forms.forms[0].residual.eval_real(context.bindings()).unwrap(),
+                Real::zero()
+            );
+        }
     }
 
     #[test]

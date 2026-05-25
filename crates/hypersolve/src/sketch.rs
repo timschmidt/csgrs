@@ -28,6 +28,7 @@ use crate::sketch_arc_tangent::{
 use crate::sketch_builders::{
     angle, distance, incidence, objective, orientation, ranges, symmetry, tangency,
 };
+use crate::sketch_circle_tangent::{CircleCircleTangentExprs, circle_circle_tangent_exprs};
 use crate::sketch_cubic_tangent::{CubicPointTangentExprs, cubic_point_tangent_exprs};
 use crate::sketch_oriented_angle::{OrientedAngleExprs, oriented_angle_exprs};
 use crate::sketch_projection::{
@@ -380,6 +381,17 @@ pub enum SketchArcTangencyBranch {
     OppositeRadiusDirection,
 }
 
+/// Explicit retained branch for circle/circle tangency.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum SketchCircleTangencyBranch {
+    /// The circles touch externally, certified by
+    /// `|center_b-center_a|^2 == (r_a+r_b)^2`.
+    External,
+    /// One circle touches the other internally, certified by
+    /// `|center_b-center_a|^2 == (r_a-r_b)^2`.
+    Internal,
+}
+
 /// Explicit retained branch for circular arc-length constraints.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum SketchArcLengthSweep {
@@ -632,6 +644,26 @@ pub enum SketchConstraintKind {
         line: SketchEntityHandle,
         /// Retained 2D circle entity in workplane coordinates.
         circle: SketchEntityHandle,
+    },
+    /// Retained 2D circle/circle tangency with an explicit internal/external branch.
+    ///
+    /// Lowering emits the branch-specific polynomial
+    /// `|center_b-center_a|^2 - (r_a+r_b)^2 == 0` for external tangency or
+    /// `|center_b-center_a|^2 - (r_a-r_b)^2 == 0` for internal tangency.
+    /// The branch is retained source evidence, not a floating contact
+    /// classifier. No square root, center-distance normalization, or absolute
+    /// value is used in the proof row; radius positivity and nondegenerate
+    /// circle policy remain explicit domain obligations. This follows Yap,
+    /// "Towards Exact Geometric Computation" (1997), and the explicit branch
+    /// vocabulary follows Bouma et al., "A Geometric Constraint Solver"
+    /// (1995).
+    CircleCircleTangent2 {
+        /// First retained 2D circle.
+        first: SketchEntityHandle,
+        /// Second retained 2D circle.
+        second: SketchEntityHandle,
+        /// Internal or external tangency branch.
+        branch: SketchCircleTangencyBranch,
     },
     /// Point-on-arc incidence after projecting a 3D point into a workplane.
     ///
@@ -1880,6 +1912,8 @@ pub enum SketchResidualStrategy {
     ProjectedSquaredIncidence,
     /// Exact projected 3D line/circle tangency package.
     ProjectedLineCircleTangency,
+    /// Exact retained 2D circle/circle tangency package.
+    CircleCircleTangency,
     /// Exact projected point-on-arc incidence and branch package.
     ProjectedPointArcIncidence,
     /// Exact point-on-line collinearity proof row.
@@ -2089,6 +2123,8 @@ pub enum SketchResidualFormKind {
     ProjectedPointLineIncidencePolynomial,
     /// Denominator-cleared projected 3D line/circle tangency proof row.
     ProjectedLineCircleTangencyPolynomial,
+    /// Branch-specific retained 2D circle/circle tangency proof row.
+    CircleCircleTangencyPolynomial,
     /// Point-on-arc endpoint-on-radius proof row.
     ArcIncidenceEndpointRadiusPolynomial,
     /// Point-on-arc point-on-radius proof row.
@@ -3588,6 +3624,20 @@ impl SketchSolveProblem {
         tangency::projected_line_circle_tangent3(self, name, workplane, line, circle).handle
     }
 
+    /// Add a retained 2D circle/circle tangent relation.
+    ///
+    /// The explicit branch selects external `(r_a+r_b)` or internal
+    /// `(r_a-r_b)` center-distance replay without square roots.
+    pub fn add_circle_circle_tangent2(
+        &mut self,
+        name: impl Into<String>,
+        first: SketchEntityHandle,
+        second: SketchEntityHandle,
+        branch: SketchCircleTangencyBranch,
+    ) -> SketchConstraintHandle {
+        tangency::circle_circle_tangent2(self, name, first, second, branch).handle
+    }
+
     /// Add a retained projected 3D point-on-2D-circular-arc incidence constraint.
     pub fn add_projected_point_on_arc3(
         &mut self,
@@ -4204,6 +4254,38 @@ impl SketchSolveProblem {
                             residual: parts.tangency,
                         },
                     ],
+                    diagnostics,
+                }
+            }
+            SketchConstraintKind::CircleCircleTangent2 {
+                first,
+                second,
+                branch,
+            } => {
+                let mut diagnostics = Vec::new();
+                let Some(parts) = self.circle_circle_tangent_exprs(
+                    first,
+                    second,
+                    branch,
+                    constraint,
+                    &mut diagnostics,
+                ) else {
+                    return SketchResidualFormsReport {
+                        constraint: handle,
+                        status: SketchResidualFormsStatus::InvalidInputs,
+                        forms: Vec::new(),
+                        diagnostics,
+                    };
+                };
+                SketchResidualFormsReport {
+                    constraint: handle,
+                    status: SketchResidualFormsStatus::Generated,
+                    forms: vec![SketchResidualForm {
+                        kind: SketchResidualFormKind::CircleCircleTangencyPolynomial,
+                        role: SketchResidualFormRole::ExactProof,
+                        strategy: Some(SketchResidualStrategy::CircleCircleTangency),
+                        residual: parts.tangency,
+                    }],
                     diagnostics,
                 }
             }
@@ -7016,6 +7098,30 @@ impl SketchSolveProblem {
                     format!("{} projected line circle tangent", constraint.name),
                     parts.tangency,
                     SketchResidualStrategy::ProjectedLineCircleTangency,
+                );
+            }
+            SketchConstraintKind::CircleCircleTangent2 {
+                first,
+                second,
+                branch,
+            } => {
+                // Circle/circle tangency is branch-sensitive even without an
+                // explicit endpoint. External and internal contact use
+                // different squared radius sums/differences, so the retained
+                // branch is replayed as a polynomial rather than inferred
+                // from a floating center-distance classifier.
+                let Some(parts) =
+                    self.circle_circle_tangent_exprs(first, second, branch, constraint, rows)
+                else {
+                    return;
+                };
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} circle circle tangent", constraint.name),
+                    parts.tangency,
+                    SketchResidualStrategy::CircleCircleTangency,
                 );
             }
             SketchConstraintKind::ProjectedPointOnArc3 {
@@ -10113,6 +10219,45 @@ impl SketchSolveProblem {
         })
     }
 
+    fn circle_circle_tangent_exprs(
+        &self,
+        first: SketchEntityHandle,
+        second: SketchEntityHandle,
+        branch: SketchCircleTangencyBranch,
+        constraint: &SketchConstraint,
+        rows: &mut Vec<SketchGeneratedRow>,
+    ) -> Option<CircleCircleTangentExprs> {
+        let first = self.circle2_parts(first, constraint, rows)?;
+        let second = self.circle2_parts(second, constraint, rows)?;
+        Some(circle_circle_tangent_exprs(
+            &coordinate_exprs2(&first.center),
+            first.radius,
+            &coordinate_exprs2(&second.center),
+            second.radius,
+            matches!(branch, SketchCircleTangencyBranch::External),
+        ))
+    }
+
+    fn circle2_parts(
+        &self,
+        handle: SketchEntityHandle,
+        constraint: &SketchConstraint,
+        rows: &mut Vec<SketchGeneratedRow>,
+    ) -> Option<CirclePartsExprs> {
+        let Some(entity) = self.entity(handle) else {
+            rows.push(missing_entity_row(constraint, handle));
+            return None;
+        };
+        let SketchEntityKind::Circle2(circle) = &entity.kind else {
+            rows.push(wrong_entity_row(constraint, entity.handle, "circle"));
+            return None;
+        };
+        Some(CirclePartsExprs {
+            center: self.point2_coordinates(circle.center, constraint, rows)?,
+            radius: self.distance_expr(circle.radius, constraint, rows)?,
+        })
+    }
+
     fn projected_point_range_exprs(
         &self,
         workplane: SketchEntityHandle,
@@ -11602,6 +11747,12 @@ struct CubicLineTangentExprs {
     endpoint_incidence: [Expr; 2],
     tangent_cross: Expr,
     tangent_dot: Expr,
+}
+
+#[derive(Clone, Debug)]
+struct CirclePartsExprs {
+    center: CoordinateExprs,
+    radius: Expr,
 }
 
 #[derive(Clone, Debug)]

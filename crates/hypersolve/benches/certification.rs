@@ -1084,6 +1084,38 @@ fn sketch_problem_with_arc_arc_tangent_relations(
     sketch
 }
 
+fn sketch_problem_with_circle_circle_tangent_relations(
+    row_count: usize,
+) -> hypersolve::SketchSolveProblem {
+    let mut sketch = hypersolve::SketchSolveProblem::new();
+    for index in 0..row_count {
+        let x = index as i64 * 12;
+        let first_center = sketch.add_point2d(format!("circlecircle{index}.first"), r(x), r(0));
+        let second_center =
+            sketch.add_point2d(format!("circlecircle{index}.second"), r(x + 8), r(0));
+        let first_radius = sketch.add_distance(format!("circlecircle{index}.first_radius"), r(5));
+        let second_radius = sketch.add_distance(format!("circlecircle{index}.second_radius"), r(3));
+        let first = sketch.add_circle2(
+            format!("circlecircle{index}.first_circle"),
+            first_center,
+            first_radius,
+        );
+        let second = sketch.add_circle2(
+            format!("circlecircle{index}.second_circle"),
+            second_center,
+            second_radius,
+        );
+        hypersolve::sketch_tangency_builders::circle_circle_tangent2(
+            &mut sketch,
+            format!("circle circle tangent {index}"),
+            first,
+            second,
+            hypersolve::SketchCircleTangencyBranch::External,
+        );
+    }
+    sketch
+}
+
 fn sketch_problem_with_arc_cubic_tangent_relations(
     row_count: usize,
 ) -> hypersolve::SketchSolveProblem {
@@ -2350,6 +2382,10 @@ fn certification(c: &mut Criterion) {
     c.bench_function("sketch_arc_arc_tangent_lowering", |b| {
         b.iter(|| arc_arc_tangent_sketch.lower_to_problem())
     });
+    let circle_circle_tangent_sketch = sketch_problem_with_circle_circle_tangent_relations(16);
+    c.bench_function("sketch_circle_circle_tangent_lowering", |b| {
+        b.iter(|| circle_circle_tangent_sketch.lower_to_problem())
+    });
     let arc_cubic_tangent_sketch = sketch_problem_with_arc_cubic_tangent_relations(16);
     c.bench_function("sketch_arc_cubic_tangent_lowering", |b| {
         b.iter(|| arc_cubic_tangent_sketch.lower_to_problem())
@@ -3082,6 +3118,24 @@ fn certification(c: &mut Criterion) {
         b.iter(|| {
             for handle in &arc_arc_tangent_form_handles {
                 let _ = arc_arc_tangent_sketch.residual_forms_for_constraint(*handle);
+            }
+        })
+    });
+    let circle_circle_tangent_form_handles = circle_circle_tangent_sketch
+        .constraints()
+        .iter()
+        .filter(|constraint| {
+            matches!(
+                constraint.kind,
+                hypersolve::SketchConstraintKind::CircleCircleTangent2 { .. }
+            )
+        })
+        .map(|constraint| constraint.handle)
+        .collect::<Vec<_>>();
+    c.bench_function("sketch_circle_circle_tangent_residual_forms", |b| {
+        b.iter(|| {
+            for handle in &circle_circle_tangent_form_handles {
+                let _ = circle_circle_tangent_sketch.residual_forms_for_constraint(*handle);
             }
         })
     });
