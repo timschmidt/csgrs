@@ -10004,6 +10004,13 @@ fn exact_boolean_volumetric_winding_materialization(c: &mut Criterion) {
                             ValidationPolicy::CLOSED,
                         )
                         .unwrap(),
+                        hypermesh::exact::boolean_exact(
+                            &boundary_contained_convex_inner,
+                            &boundary_contained_convex_outer,
+                            hypermesh::exact::ExactBooleanOperation::Difference,
+                            ValidationPolicy::CLOSED,
+                        )
+                        .unwrap(),
                     )
                 })
             },

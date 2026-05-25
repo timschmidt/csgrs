@@ -10710,18 +10710,9 @@ fn exact_convex_boundary_containment_consumes_coplanar_volumetric_union_intersec
     difference.validate_against_sources(&outer, &inner).unwrap();
     assert_eq!(
         difference.support,
-        hypermesh::exact::ExactBooleanSupport::CertifiedWindingMaterialized
+        hypermesh::exact::ExactBooleanSupport::CertifiedConvexContainment
     );
-    let difference_evidence = difference
-        .coplanar_volumetric_evidence
-        .as_ref()
-        .expect("boundary-touching difference retains coplanar-volumetric evidence");
-    difference_evidence.validate().unwrap();
-    assert!(
-        difference_evidence
-            .obstacle
-            .requires_coplanar_volumetric_cells()
-    );
+    assert!(difference.coplanar_volumetric_evidence.is_none());
 
     let difference_result = hypermesh::exact::boolean_exact(
         &outer,
@@ -10742,10 +10733,37 @@ fn exact_convex_boundary_containment_consumes_coplanar_volumetric_union_intersec
         .unwrap();
     assert_eq!(
         difference_result.kind,
-        hypermesh::exact::ExactBooleanResultKind::WindingMaterialized {
-            operation: hypermesh::exact::ExactBooleanOperation::Difference
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ConvexContainment
         }
     );
+    assert!(difference_result.mesh.facts().mesh.closed_manifold);
+    assert!(difference_result.mesh.triangles().len() > outer.triangles().len());
+
+    let reverse_difference = hypermesh::exact::boolean_exact(
+        &inner,
+        &outer,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap();
+    reverse_difference.validate().unwrap();
+    reverse_difference
+        .validate_operation_against_sources(
+            &inner,
+            &outer,
+            hypermesh::exact::ExactBooleanOperation::Difference,
+            ValidationPolicy::CLOSED,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        reverse_difference.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ConvexContainment
+        }
+    );
+    assert!(reverse_difference.mesh.triangles().is_empty());
 }
 
 #[cfg(feature = "exact-triangulation")]
@@ -23029,13 +23047,42 @@ fn exact_named_booleans_materialize_single_cap_convex_difference() {
         difference.mesh.triangles().len()
     );
 
-    let unsupported_reverse = hypermesh::exact::boolean_exact(
+    let reverse_preflight = hypermesh::exact::preflight_boolean_exact(
+        &cutter,
+        &left,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    reverse_preflight.validate().unwrap();
+    assert_eq!(
+        reverse_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedConvexContainment
+    );
+
+    let reverse = hypermesh::exact::boolean_exact(
         &cutter,
         &left,
         hypermesh::exact::ExactBooleanOperation::Difference,
         ValidationPolicy::CLOSED,
+    )
+    .unwrap();
+    reverse.validate().unwrap();
+    reverse
+        .validate_operation_against_sources(
+            &cutter,
+            &left,
+            hypermesh::exact::ExactBooleanOperation::Difference,
+            ValidationPolicy::CLOSED,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        reverse.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ConvexContainment
+        }
     );
-    assert!(unsupported_reverse.is_err());
+    assert!(reverse.mesh.triangles().is_empty());
 }
 
 #[cfg(feature = "exact-triangulation")]

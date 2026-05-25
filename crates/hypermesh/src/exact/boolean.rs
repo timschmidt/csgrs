@@ -54,7 +54,8 @@ use super::cells::triangulate_all_face_cells_with_cdt;
 use super::construction::SegmentPlaneRelation;
 #[cfg(feature = "exact-triangulation")]
 use super::contained_adjacent::{
-    has_contained_face_adjacent_union, replay_contained_face_adjacent_union,
+    has_contained_boundary_difference, has_contained_face_adjacent_union,
+    materialize_contained_boundary_difference, replay_contained_face_adjacent_union,
 };
 #[cfg(feature = "exact-triangulation")]
 use super::convex::{intersect_closed_convex_solids, subtract_closed_convex_solids_single_cap};
@@ -4257,6 +4258,14 @@ fn boolean_convex_containment_meshes(
                 validation,
             )?
         }
+        (_, _, ExactBooleanOperation::Difference)
+            if convex_boundary_containment_is_supported(&left_in_right, &right_in_left) =>
+        {
+            empty_mesh(
+                "empty exact convex boundary containment difference",
+                validation,
+            )?
+        }
         (_, _, ExactBooleanOperation::Union)
             if convex_boundary_containment_is_supported(&right_in_left, &left_in_right) =>
         {
@@ -4274,6 +4283,17 @@ fn boolean_convex_containment_meshes(
                 "exact convex boundary containment intersection keeps inner right",
                 validation,
             )?
+        }
+        (_, _, ExactBooleanOperation::Difference)
+            if convex_boundary_containment_is_supported(&right_in_left, &left_in_right)
+                && has_contained_boundary_difference(left, right) =>
+        {
+            let Some(difference) =
+                materialize_contained_boundary_difference(left, right, validation)
+            else {
+                return Ok(None);
+            };
+            difference.mesh
         }
         (_, _, ExactBooleanOperation::SelectedRegions(_)) => unreachable!("handled by caller"),
         _ => return Ok(None),
@@ -4719,11 +4739,20 @@ fn certified_convex_boolean_support(
         });
     }
 
+    let left_boundary_inside_right =
+        convex_boundary_containment_is_supported(&left_in_right, &right_in_left);
+    let right_boundary_inside_left =
+        convex_boundary_containment_is_supported(&right_in_left, &left_in_right);
     if matches!(
         operation,
         ExactBooleanOperation::Union | ExactBooleanOperation::Intersection
-    ) && (convex_boundary_containment_is_supported(&left_in_right, &right_in_left)
-        || convex_boundary_containment_is_supported(&right_in_left, &left_in_right))
+    ) && (left_boundary_inside_right || right_boundary_inside_left)
+    {
+        return Ok(Some(ExactBooleanSupport::CertifiedConvexContainment));
+    }
+    if operation == ExactBooleanOperation::Difference
+        && (left_boundary_inside_right
+            || (right_boundary_inside_left && has_contained_boundary_difference(left, right)))
     {
         return Ok(Some(ExactBooleanSupport::CertifiedConvexContainment));
     }
