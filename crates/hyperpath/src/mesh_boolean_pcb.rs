@@ -701,10 +701,14 @@ impl PcbHoledOrthogonalBoardClipOutline {
 
     /// Construct a retained orthogonal board clip outline with exact cutouts.
     ///
-    /// Orthogonal holes are proven strictly inside the outer loop here. Exact
-    /// handoff cutouts are package-validated at construction and layer-slab
-    /// validated when the board clip is replayed; their internal topology is
-    /// owned by the producing crate and `hypermesh`, not by `hyperpath`.
+    /// Orthogonal holes and exact cutout XY bounding boxes are proven strictly
+    /// inside the outer loop and disjoint from each other here. Exact handoff
+    /// cutouts are package-validated at construction and layer-slab validated
+    /// when the board clip is replayed; their internal topology is owned by the
+    /// producing crate and `hypermesh`, not by `hyperpath`. The conservative
+    /// bounding-box preflight follows Yap, "Towards Exact Geometric
+    /// Computation," *Computational Geometry* 7.1-2 (1997): reject ambiguous
+    /// domain placement before accepting derived mesh topology.
     pub fn with_exact_cutouts(
         outer_vertices: Vec<Point2>,
         hole_vertices: Vec<Vec<Point2>>,
@@ -723,9 +727,12 @@ impl PcbHoledOrthogonalBoardClipOutline {
                     .map_err(path_error_from_board_contour_error)
             })
             .collect::<Result<Vec<_>, _>>()?;
-        if !holes.is_empty() {
-            validate_board_cutouts_strictly_inside_outer(&outer, &holes, policy)?;
-        }
+        validate_board_cutouts_and_exact_handoffs_strictly_inside_outer(
+            &outer,
+            &holes,
+            &exact_cutouts,
+            policy,
+        )?;
         let exact = holed_board_exact_facts(&outer, &holes, &exact_cutouts);
         Ok(Self {
             outer,
@@ -1741,6 +1748,16 @@ fn exact_void_footprint_loops(
         .collect()
 }
 
+fn exact_board_cutout_footprint_loops(
+    exact_cutouts: &[PcbExactBoardCutoutHandoff],
+    policy: PredicatePolicy,
+) -> Result<Vec<Vec<Point2>>, PathMeshBooleanError> {
+    exact_cutouts
+        .iter()
+        .map(|cutout| exact_handoff_footprint_loop(cutout.handoff(), policy))
+        .collect()
+}
+
 fn exact_handoff_footprint_loop(
     handoff: &PathExactMeshHandoffSource,
     policy: PredicatePolicy,
@@ -1748,7 +1765,7 @@ fn exact_handoff_footprint_loop(
     let mesh = handoff.to_exact_mesh()?;
     let Some(bounds) = &mesh.bounds().mesh else {
         return Err(PathMeshBooleanError::MeshHandoff(
-            "PCB exact copper void handoff has no mesh bounds".into(),
+            "PCB exact cutout handoff has no mesh bounds".into(),
         ));
     };
     if compare_reals_with_policy(&bounds.min.x, &bounds.max.x, policy).value()
@@ -1766,14 +1783,17 @@ fn exact_handoff_footprint_loop(
     ])
 }
 
-fn validate_board_cutouts_strictly_inside_outer(
+fn validate_board_cutouts_and_exact_handoffs_strictly_inside_outer(
     outer: &PcbOrthogonalBoardOutline,
     holes: &[PcbOrthogonalBoardOutline],
+    exact_cutouts: &[PcbExactBoardCutoutHandoff],
     policy: PredicatePolicy,
 ) -> Result<(), PathMeshBooleanError> {
-    let hole_vertices = holes
+    let exact_cutout_footprints = exact_board_cutout_footprint_loops(exact_cutouts, policy)?;
+    let all_cutout_footprints = holes
         .iter()
         .map(|hole| hole.vertices().to_vec())
+        .chain(exact_cutout_footprints)
         .collect::<Vec<_>>();
-    validate_strict_orthogonal_holes(outer.vertices(), &hole_vertices, policy)
+    validate_strict_orthogonal_holes(outer.vertices(), &all_cutout_footprints, policy)
 }

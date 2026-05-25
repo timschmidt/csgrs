@@ -717,7 +717,28 @@ fuzz_target!(|data: &[u8]| {
                                         outer_max.clone(),
                                         Point2::new(outer_min.x.clone(), outer_max.y.clone()),
                                     ],
-                                    vec![],
+                                    if data[15] & 64 == 64 {
+                                        vec![vec![
+                                            Point2::new(
+                                                outer_min.x.clone() + Real::one(),
+                                                outer_min.y.clone() + Real::one(),
+                                            ),
+                                            Point2::new(
+                                                outer_min.x.clone() + Real::from(2),
+                                                outer_min.y.clone() + Real::one(),
+                                            ),
+                                            Point2::new(
+                                                outer_min.x.clone() + Real::from(2),
+                                                outer_min.y.clone() + Real::from(2),
+                                            ),
+                                            Point2::new(
+                                                outer_min.x.clone() + Real::one(),
+                                                outer_min.y.clone() + Real::from(2),
+                                            ),
+                                        ]]
+                                    } else {
+                                        Vec::new()
+                                    },
                                     vec![cutout],
                                     PredicatePolicy::default(),
                                 )

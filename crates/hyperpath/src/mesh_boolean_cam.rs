@@ -736,12 +736,16 @@ impl CamSupportClipBoundary {
 
     /// Construct a retained holed clip boundary with exact cutout packages.
     ///
-    /// Straight-edge holes are proven strictly inside the retained outer loop.
+    /// Straight-edge holes and exact cutout XY bounding boxes are proven
+    /// strictly inside the retained outer loop and disjoint from each other.
     /// Exact cutouts are package-validated here and Z-slab checked at replay,
     /// because their topology is owned by the producer that emitted the
     /// `hypermesh` handoff. This admits curved or arrangement-owned internal
     /// support/infill clipping voids without moving mesh topology into
-    /// `hyperpath`.
+    /// `hyperpath`. The conservative bounding-footprint check follows Yap,
+    /// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+    /// (1997): reject ambiguous retained-source placement before asking
+    /// `hypermesh` to accept derived topology.
     pub fn holed_simple_with_exact_cutouts(
         outer: Vec<Point2>,
         holes: Vec<Vec<Point2>>,
@@ -752,11 +756,7 @@ impl CamSupportClipBoundary {
         if holes.is_empty() && exact_cutouts.is_empty() {
             return Err(PathMeshBooleanError::EmptyPolygonHoles);
         }
-        if !holes.is_empty() {
-            validate_strict_simple_polygon_holes(&outer, &holes, policy)?;
-        } else {
-            SimplePolygonPrism::new(outer.clone(), Real::zero(), Real::one(), provenance, policy)?;
-        }
+        validate_clip_cutouts_strictly_inside_outer(&outer, &holes, &exact_cutouts, policy)?;
         let exact = clip_boundary_exact_facts(&outer, &holes, &exact_cutouts);
         Ok(Self::HoledSimple {
             outer,
@@ -1316,6 +1316,16 @@ fn exact_island_footprint_loops(
         .collect()
 }
 
+fn exact_clip_cutout_footprint_loops(
+    exact_cutouts: &[CamExactClipCutoutHandoff],
+    policy: PredicatePolicy,
+) -> Result<Vec<Vec<Point2>>, PathMeshBooleanError> {
+    exact_cutouts
+        .iter()
+        .map(|cutout| exact_handoff_footprint_loop(cutout.handoff(), policy))
+        .collect()
+}
+
 fn exact_handoff_footprint_loop(
     handoff: &PathExactMeshHandoffSource,
     policy: PredicatePolicy,
@@ -1323,7 +1333,7 @@ fn exact_handoff_footprint_loop(
     let mesh = handoff.to_exact_mesh()?;
     let Some(bounds) = &mesh.bounds().mesh else {
         return Err(PathMeshBooleanError::MeshHandoff(
-            "CAM exact island handoff has no mesh bounds".into(),
+            "CAM exact cutout/island handoff has no mesh bounds".into(),
         ));
     };
     if compare_reals_with_policy(&bounds.min.x, &bounds.max.x, policy).value()
@@ -1354,6 +1364,21 @@ fn loops_exact_facts(outer: &[Point2], holes: &[Vec<Point2>]) -> RealExactSetFac
         values.extend(hole.iter().flat_map(|point| [&point.x, &point.y]));
     }
     Real::exact_set_facts(values)
+}
+
+fn validate_clip_cutouts_strictly_inside_outer(
+    outer: &[Point2],
+    holes: &[Vec<Point2>],
+    exact_cutouts: &[CamExactClipCutoutHandoff],
+    policy: PredicatePolicy,
+) -> Result<(), PathMeshBooleanError> {
+    let exact_cutout_footprints = exact_clip_cutout_footprint_loops(exact_cutouts, policy)?;
+    let all_cutout_footprints = holes
+        .iter()
+        .cloned()
+        .chain(exact_cutout_footprints)
+        .collect::<Vec<_>>();
+    validate_strict_simple_polygon_holes(outer, &all_cutout_footprints, policy)
 }
 
 fn clip_boundary_exact_facts(

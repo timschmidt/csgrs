@@ -1110,6 +1110,42 @@ fn pcb_copper_board_clip_program_subtracts_exact_handoff_board_cutouts() {
         ),
         Err(PathMeshBooleanError::MeshHandoff(_))
     ));
+
+    let outside_cutout = PcbExactBoardCutoutHandoff::new(
+        PathExactMeshHandoffSource::from_exact_mesh(
+            prism([18, 3, 0], [24, 7, 2]).to_exact_mesh().unwrap(),
+        )
+        .unwrap(),
+    )
+    .unwrap();
+    assert_eq!(
+        PcbHoledOrthogonalBoardClipOutline::with_exact_cutouts(
+            vec![p(0, 0), p(20, 0), p(20, 10), p(0, 10)],
+            Vec::new(),
+            vec![outside_cutout],
+            PredicatePolicy::default()
+        )
+        .unwrap_err(),
+        PathMeshBooleanError::PolygonHoleOutsideOuter
+    );
+
+    let overlapping_cutout = PcbExactBoardCutoutHandoff::new(
+        PathExactMeshHandoffSource::from_exact_mesh(
+            prism([10, 4, 0], [15, 8, 2]).to_exact_mesh().unwrap(),
+        )
+        .unwrap(),
+    )
+    .unwrap();
+    assert_eq!(
+        PcbHoledOrthogonalBoardClipOutline::with_exact_cutouts(
+            vec![p(0, 0), p(20, 0), p(20, 10), p(0, 10)],
+            vec![vec![p(8, 3), p(12, 3), p(12, 7), p(8, 7)]],
+            vec![overlapping_cutout],
+            PredicatePolicy::default()
+        )
+        .unwrap_err(),
+        PathMeshBooleanError::PolygonHoleOverlap
+    );
 }
 
 #[test]
@@ -4633,6 +4669,42 @@ fn cam_support_clip_program_rejects_invalid_boundaries_and_height() {
                 vec![p(2, 2), p(5, 2), p(5, 5), p(2, 5)],
                 vec![p(4, 4), p(7, 4), p(7, 7), p(4, 7)],
             ],
+            PredicatePolicy::default()
+        )
+        .unwrap_err(),
+        PathMeshBooleanError::PolygonHoleOverlap
+    );
+    let outside_cutout = CamExactClipCutoutHandoff::new(
+        PathExactMeshHandoffSource::from_exact_mesh(
+            prism([6, 2, 0], [10, 5, 3]).to_exact_mesh().unwrap(),
+        )
+        .unwrap(),
+    )
+    .unwrap();
+    assert_eq!(
+        CamSupportClipBoundary::holed_simple_with_exact_cutouts(
+            vec![p(0, 0), p(8, 0), p(8, 8), p(0, 8)],
+            Vec::new(),
+            vec![outside_cutout],
+            PathProvenance::native(),
+            PredicatePolicy::default()
+        )
+        .unwrap_err(),
+        PathMeshBooleanError::PolygonHoleOutsideOuter
+    );
+    let overlapping_cutout = CamExactClipCutoutHandoff::new(
+        PathExactMeshHandoffSource::from_exact_mesh(
+            prism([4, 4, 0], [7, 7, 3]).to_exact_mesh().unwrap(),
+        )
+        .unwrap(),
+    )
+    .unwrap();
+    assert_eq!(
+        CamSupportClipBoundary::holed_simple_with_exact_cutouts(
+            vec![p(0, 0), p(8, 0), p(8, 8), p(0, 8)],
+            vec![vec![p(2, 2), p(5, 2), p(5, 5), p(2, 5)]],
+            vec![overlapping_cutout],
+            PathProvenance::native(),
             PredicatePolicy::default()
         )
         .unwrap_err(),

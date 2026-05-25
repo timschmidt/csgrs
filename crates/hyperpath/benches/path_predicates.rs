@@ -780,7 +780,7 @@ fn path_predicates(c: &mut Criterion) {
     let cam_exact_cutout_boundary = CamSupportClipBoundary::holed_simple_with_exact_cutouts(
         vec![p(875, 875), p(3_125, 875), p(3_125, 2_125), p(875, 2_125)],
         vec![],
-        vec![cam_exact_cutout],
+        vec![cam_exact_cutout.clone()],
         PathProvenance::native(),
         PredicatePolicy::default(),
     )
@@ -792,6 +792,32 @@ fn path_predicates(c: &mut Criterion) {
                 r(0),
                 r(500),
                 cam_exact_cutout_boundary.clone(),
+                PredicatePolicy::default(),
+            )
+            .unwrap();
+            report.validate_replay(PredicatePolicy::default())
+        })
+    });
+    let cam_mixed_cutout_boundary = CamSupportClipBoundary::holed_simple_with_exact_cutouts(
+        vec![p(875, 875), p(3_125, 875), p(3_125, 2_125), p(875, 2_125)],
+        vec![vec![
+            p(950, 950),
+            p(1_250, 950),
+            p(1_250, 1_150),
+            p(950, 1_150),
+        ]],
+        vec![cam_exact_cutout],
+        PathProvenance::native(),
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    c.bench_function("cam_mixed_cutout_support_clip_program_replay", |b| {
+        b.iter(|| {
+            let report = build_cam_support_clip_program(
+                support_plan.clone(),
+                r(0),
+                r(500),
+                cam_mixed_cutout_boundary.clone(),
                 PredicatePolicy::default(),
             )
             .unwrap();
@@ -1317,7 +1343,7 @@ fn path_predicates(c: &mut Criterion) {
     let pcb_exact_cutout_board = PcbHoledOrthogonalBoardClipOutline::with_exact_cutouts(
         vec![p(0, 0), p(19_000, 0), p(19_000, 9_000), p(0, 9_000)],
         vec![],
-        vec![pcb_exact_cutout],
+        vec![pcb_exact_cutout.clone()],
         PredicatePolicy::default(),
     )
     .unwrap();
@@ -1337,6 +1363,41 @@ fn path_predicates(c: &mut Criterion) {
                     ),
                 )],
                 PcbCopperBoardClipOutline::HoledOrthogonal(pcb_exact_cutout_board.clone()),
+                pcb_z.clone(),
+                PredicatePolicy::default(),
+            )
+            .unwrap();
+            report.validate_replay(PredicatePolicy::default())
+        })
+    });
+    let pcb_mixed_cutout_board = PcbHoledOrthogonalBoardClipOutline::with_exact_cutouts(
+        vec![p(0, 0), p(19_000, 0), p(19_000, 9_000), p(0, 9_000)],
+        vec![vec![
+            p(2_000, 1_000),
+            p(4_000, 1_000),
+            p(4_000, 2_500),
+            p(2_000, 2_500),
+        ]],
+        vec![pcb_exact_cutout],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    c.bench_function("pcb_mixed_cutout_board_clip_program_replay", |b| {
+        b.iter(|| {
+            let report = build_pcb_copper_board_clip_program(
+                vec![PcbCompositeCopperBooleanSource::Solid(
+                    PcbCopperBooleanSource::RectPad(
+                        PcbRectPad::new(
+                            NetId(7),
+                            TraceLayer(0),
+                            p(9_500, 4_500),
+                            r(19_000),
+                            r(9_000),
+                        )
+                        .unwrap(),
+                    ),
+                )],
+                PcbCopperBoardClipOutline::HoledOrthogonal(pcb_mixed_cutout_board.clone()),
                 pcb_z.clone(),
                 PredicatePolicy::default(),
             )
