@@ -2,7 +2,7 @@
 
 use hypercurve::{
     Classification, CurvePolicy, Point2, PolynomialBSplineCurve2, RationalBSplineCurve2,
-    RationalQuadraticBSplineCurve2, Real,
+    RationalQuadraticBSplineCurve2, Real, RetainedBSplineSpanFactReport2,
 };
 use libfuzzer_sys::fuzz_target;
 
@@ -12,6 +12,22 @@ fn r(value: i32) -> Real {
 
 fn point(x: u8, y: u8) -> Point2 {
     Point2::new(r(x as i32 - 128), r(y as i32 - 128))
+}
+
+fn touch_span_fact_report(report: &RetainedBSplineSpanFactReport2) {
+    for span in report.span_facts() {
+        let _ = span.span_index();
+        let _ = span.knot_interval();
+        let _ = span.bounds();
+        let _ = span.x_monotonicity();
+        let _ = span.y_monotonicity();
+        let _ = span.topology_status();
+        if let Some(weights) = span.weight_domain() {
+            let _ = weights.weight_count();
+            let _ = weights.certified_nonzero_count();
+            let _ = weights.all_weights_certified_nonzero();
+        }
+    }
 }
 
 fuzz_target!(|data: &[u8]| {
@@ -45,7 +61,17 @@ fuzz_target!(|data: &[u8]| {
             let _ = profile.endpoints();
             let _ = profile.cache_summary();
         });
-        let _ = spline.extract_bezier_spans(&policy);
+        let _ = spline.extract_bezier_spans(&policy).map(|classification| {
+            let Classification::Decided(extraction) = classification else {
+                return;
+            };
+            let _ = extraction.span_fact_report(&policy).map(|classification| {
+                let Classification::Decided(report) = classification else {
+                    return;
+                };
+                touch_span_fact_report(&report);
+            });
+        });
     }
     let weights = controls
         .iter()
@@ -62,6 +88,12 @@ fuzz_target!(|data: &[u8]| {
     {
         if let Ok(Classification::Decided(extraction)) = spline.extract_bezier_spans(&policy) {
             let _ = spline.retained_curve_profile(1, &policy);
+            let _ = extraction.span_fact_report(&policy).map(|classification| {
+                let Classification::Decided(report) = classification else {
+                    return;
+                };
+                touch_span_fact_report(&report);
+            });
             let _ = extraction.native_topology_report(&policy).map(|classification| {
                 let Classification::Decided(report) = classification else {
                     return;
@@ -83,6 +115,16 @@ fuzz_target!(|data: &[u8]| {
             RationalQuadraticBSplineCurve2::try_new(controls, weights, knots, &policy)
     {
         let _ = spline.retained_curve_profile(2, &policy);
-        let _ = spline.extract_bezier_spans(&policy);
+        let _ = spline.extract_bezier_spans(&policy).map(|classification| {
+            let Classification::Decided(extraction) = classification else {
+                return;
+            };
+            let _ = extraction.span_fact_report(&policy).map(|classification| {
+                let Classification::Decided(report) = classification else {
+                    return;
+                };
+                touch_span_fact_report(&report);
+            });
+        });
     }
 });

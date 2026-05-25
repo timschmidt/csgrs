@@ -17,9 +17,9 @@ use hyperreal::Real;
 
 use crate::classify::{compare_reals, is_zero};
 use crate::{
-    BezierSubcurve2, Classification, CubicBezier2, CurveError, CurvePolicy, CurveResult, Point2,
-    QuadraticBezier2, RationalQuadraticBezier2, RetainedCurveCacheSummary2, RetainedCurveFamily2,
-    RetainedCurveIdentity2, RetainedCurvePeriodicity1, RetainedCurveProfile2,
+    Aabb2, Axis2, BezierSubcurve2, Classification, CubicBezier2, CurveError, CurvePolicy,
+    CurveResult, Point2, QuadraticBezier2, RationalQuadraticBezier2, RetainedCurveCacheSummary2,
+    RetainedCurveFamily2, RetainedCurveIdentity2, RetainedCurvePeriodicity1, RetainedCurveProfile2,
     RetainedEndpointEvidence2, RetainedParameterDomain1, RetainedTopologyStatus,
     RetainedTrimInterval1, UncertaintyReason,
 };
@@ -138,6 +138,53 @@ pub struct RationalBezierSpanTopologyReport2 {
     knot_end: Real,
     status: RetainedTopologyStatus,
     native_subcurve: Option<BezierSubcurve2>,
+}
+
+/// Certified or retained monotonicity evidence for one extracted spline span.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum RetainedSpanAxisMonotonicity {
+    /// The span is certified monotone along this axis.
+    CertifiedMonotone,
+    /// Exact topology found interior extrema, so the span is not monotone.
+    HasInteriorExtrema,
+    /// The span is retained evidence and no exact monotone package exists yet.
+    Unsupported,
+}
+
+/// Nonzero-weight evidence for a retained rational span.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct RetainedSpanWeightDomainReport2 {
+    weight_count: usize,
+    certified_nonzero_count: usize,
+    all_weights_certified_nonzero: bool,
+}
+
+/// Span-local facts produced from B-spline/NURBS Bezier extraction.
+///
+/// These facts are a retained CAD broad-phase package, not topology by
+/// themselves.  Native Bezier/conic spans use their exact derivative-root
+/// bounds and monotone predicates. Retained rational spans without native
+/// topology expose conservative control-hull bounds plus explicit unsupported
+/// monotone status. This follows the construction/predicate separation in
+/// Chee Yap, "Towards Exact Geometric Computation", and keeps the span-local
+/// Bernstein evidence required by Gerald Farin, "Curves and Surfaces for CAGD",
+/// visible to callers.
+#[derive(Clone, Debug, PartialEq)]
+pub struct RetainedBSplineSpanFacts2 {
+    span_index: usize,
+    knot_start: Real,
+    knot_end: Real,
+    bounds: Aabb2,
+    x_monotonicity: RetainedSpanAxisMonotonicity,
+    y_monotonicity: RetainedSpanAxisMonotonicity,
+    topology_status: RetainedTopologyStatus,
+    weight_domain: Option<RetainedSpanWeightDomainReport2>,
+}
+
+/// Span-local fact report for one B-spline/NURBS extraction.
+#[derive(Clone, Debug, PartialEq)]
+pub struct RetainedBSplineSpanFactReport2 {
+    span_facts: Vec<RetainedBSplineSpanFacts2>,
 }
 
 /// One exact rational Bezier span extracted from a retained NURBS curve.
@@ -325,6 +372,14 @@ impl PolynomialBSplineBezierExtraction2 {
     pub const fn inserted_knot_count(&self) -> usize {
         self.inserted_knot_count
     }
+
+    /// Returns span-local bounds and monotonicity facts for extracted Bezier spans.
+    pub fn span_fact_report(
+        &self,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<RetainedBSplineSpanFactReport2>> {
+        native_span_fact_report(&self.spans, &self.refined_knots, self.degree, policy)
+    }
 }
 
 impl RationalQuadraticBSplineCurve2 {
@@ -504,6 +559,42 @@ impl RationalQuadraticBSplineBezierExtraction2 {
     /// Returns how many knots were inserted to produce the rational Bezier form.
     pub const fn inserted_knot_count(&self) -> usize {
         self.inserted_knot_count
+    }
+
+    /// Returns span-local bounds, monotonicity, and weight-domain facts.
+    pub fn span_fact_report(
+        &self,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<RetainedBSplineSpanFactReport2>> {
+        let mut report = match native_span_fact_report(&self.spans, &self.refined_knots, 2, policy)?
+        {
+            Classification::Decided(report) => report,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        let mut fact_index = 0_usize;
+        for knot_index in 2..self.refined_knots.len().saturating_sub(1) {
+            if compare_reals(
+                &self.refined_knots[knot_index],
+                &self.refined_knots[knot_index + 1],
+                policy,
+            ) != Some(Ordering::Less)
+            {
+                continue;
+            }
+            let Some(fact) = report.span_facts.get_mut(fact_index) else {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            };
+            let start = knot_index - 2;
+            fact.weight_domain = Some(weight_domain_report(
+                &self.refined_weights[start..=knot_index],
+                policy,
+            )?);
+            fact_index += 1;
+        }
+        if fact_index != report.span_facts.len() {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        }
+        Ok(Classification::Decided(report))
     }
 }
 
@@ -770,6 +861,168 @@ impl RationalBSplineBezierExtraction2 {
     /// Returns how many knots were inserted to produce Bezier form.
     pub const fn inserted_knot_count(&self) -> usize {
         self.inserted_knot_count
+    }
+
+    /// Returns span-local bounds, monotonicity, and weight-domain facts.
+    ///
+    /// Native rational quadratic and equal-weight cubic spans reuse exact
+    /// Bezier/conic monotone-root bounds. Retained rational spans without
+    /// native topology publish their exact control-hull AABB and nonzero
+    /// weight-domain evidence, but keep monotonicity marked unsupported.
+    pub fn span_fact_report(
+        &self,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<RetainedBSplineSpanFactReport2>> {
+        let topology = match self.native_topology_report(policy)? {
+            Classification::Decided(report) => report,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        let mut facts = Vec::with_capacity(self.spans.len());
+        for (span_index, span) in self.spans.iter().enumerate() {
+            let topology_report = &topology.span_reports()[span_index];
+            let (bounds, x_monotonicity, y_monotonicity) =
+                if let Some(native) = topology_report.native_subcurve() {
+                    let bounds = match subcurve_certified_bounds(native, policy) {
+                        Classification::Decided(bounds) => bounds,
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    };
+                    (
+                        bounds,
+                        subcurve_axis_monotonicity(native, Axis2::X, policy),
+                        subcurve_axis_monotonicity(native, Axis2::Y, policy),
+                    )
+                } else {
+                    let bounds = match Aabb2::from_points(span.control_points(), policy) {
+                        Classification::Decided(bounds) => bounds,
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    };
+                    (
+                        bounds,
+                        RetainedSpanAxisMonotonicity::Unsupported,
+                        RetainedSpanAxisMonotonicity::Unsupported,
+                    )
+                };
+            facts.push(RetainedBSplineSpanFacts2::new(
+                span_index,
+                span.knot_start.clone(),
+                span.knot_end.clone(),
+                bounds,
+                x_monotonicity,
+                y_monotonicity,
+                topology_report.status(),
+                Some(weight_domain_report(span.weights(), policy)?),
+            ));
+        }
+        Ok(Classification::Decided(
+            RetainedBSplineSpanFactReport2::new(facts),
+        ))
+    }
+}
+
+impl RetainedSpanWeightDomainReport2 {
+    /// Constructs a retained span weight-domain report.
+    pub const fn new(
+        weight_count: usize,
+        certified_nonzero_count: usize,
+        all_weights_certified_nonzero: bool,
+    ) -> Self {
+        Self {
+            weight_count,
+            certified_nonzero_count,
+            all_weights_certified_nonzero,
+        }
+    }
+
+    /// Returns the number of weights in the span.
+    pub const fn weight_count(&self) -> usize {
+        self.weight_count
+    }
+
+    /// Returns how many weights were certified nonzero.
+    pub const fn certified_nonzero_count(&self) -> usize {
+        self.certified_nonzero_count
+    }
+
+    /// Returns true when every span weight is certified nonzero.
+    pub const fn all_weights_certified_nonzero(&self) -> bool {
+        self.all_weights_certified_nonzero
+    }
+}
+
+impl RetainedBSplineSpanFacts2 {
+    /// Constructs one span-local facts record.
+    #[allow(clippy::too_many_arguments)]
+    pub const fn new(
+        span_index: usize,
+        knot_start: Real,
+        knot_end: Real,
+        bounds: Aabb2,
+        x_monotonicity: RetainedSpanAxisMonotonicity,
+        y_monotonicity: RetainedSpanAxisMonotonicity,
+        topology_status: RetainedTopologyStatus,
+        weight_domain: Option<RetainedSpanWeightDomainReport2>,
+    ) -> Self {
+        Self {
+            span_index,
+            knot_start,
+            knot_end,
+            bounds,
+            x_monotonicity,
+            y_monotonicity,
+            topology_status,
+            weight_domain,
+        }
+    }
+
+    /// Returns the span index in extraction order.
+    pub const fn span_index(&self) -> usize {
+        self.span_index
+    }
+
+    /// Returns the source knot interval.
+    pub fn knot_interval(&self) -> (&Real, &Real) {
+        (&self.knot_start, &self.knot_end)
+    }
+
+    /// Returns the certified or conservative span AABB.
+    pub const fn bounds(&self) -> &Aabb2 {
+        &self.bounds
+    }
+
+    /// Returns x-axis monotonicity evidence.
+    pub const fn x_monotonicity(&self) -> RetainedSpanAxisMonotonicity {
+        self.x_monotonicity
+    }
+
+    /// Returns y-axis monotonicity evidence.
+    pub const fn y_monotonicity(&self) -> RetainedSpanAxisMonotonicity {
+        self.y_monotonicity
+    }
+
+    /// Returns the span topology status.
+    pub const fn topology_status(&self) -> RetainedTopologyStatus {
+        self.topology_status
+    }
+
+    /// Returns rational weight-domain evidence when the span is rational.
+    pub const fn weight_domain(&self) -> Option<&RetainedSpanWeightDomainReport2> {
+        self.weight_domain.as_ref()
+    }
+}
+
+impl RetainedBSplineSpanFactReport2 {
+    /// Constructs a span-local fact report.
+    pub const fn new(span_facts: Vec<RetainedBSplineSpanFacts2>) -> Self {
+        Self { span_facts }
+    }
+
+    /// Returns facts in extraction order.
+    pub fn span_facts(&self) -> &[RetainedBSplineSpanFacts2] {
+        &self.span_facts
     }
 }
 
@@ -1160,6 +1413,99 @@ fn has_positive_span(
         }
     }
     Ok(false)
+}
+
+fn native_span_fact_report(
+    spans: &[BezierSubcurve2],
+    refined_knots: &[Real],
+    degree: usize,
+    policy: &CurvePolicy,
+) -> CurveResult<Classification<RetainedBSplineSpanFactReport2>> {
+    let mut facts = Vec::with_capacity(spans.len());
+    let mut span_index = 0_usize;
+    for knot_index in degree..refined_knots.len().saturating_sub(1) {
+        if compare_reals(
+            &refined_knots[knot_index],
+            &refined_knots[knot_index + 1],
+            policy,
+        ) != Some(Ordering::Less)
+        {
+            continue;
+        }
+        let Some(span) = spans.get(span_index) else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        let bounds = match subcurve_certified_bounds(span, policy) {
+            Classification::Decided(bounds) => bounds,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        facts.push(RetainedBSplineSpanFacts2::new(
+            span_index,
+            refined_knots[knot_index].clone(),
+            refined_knots[knot_index + 1].clone(),
+            bounds,
+            subcurve_axis_monotonicity(span, Axis2::X, policy),
+            subcurve_axis_monotonicity(span, Axis2::Y, policy),
+            RetainedTopologyStatus::NativeExact,
+            None,
+        ));
+        span_index += 1;
+    }
+    if span_index != spans.len() {
+        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+    }
+    Ok(Classification::Decided(
+        RetainedBSplineSpanFactReport2::new(facts),
+    ))
+}
+
+fn subcurve_certified_bounds(
+    curve: &BezierSubcurve2,
+    policy: &CurvePolicy,
+) -> Classification<Aabb2> {
+    match curve {
+        BezierSubcurve2::Quadratic(curve) => curve.certified_bounds(policy),
+        BezierSubcurve2::Cubic(curve) => curve.certified_bounds(policy),
+        BezierSubcurve2::RationalQuadratic(curve) => curve.certified_bounds(policy),
+    }
+}
+
+fn subcurve_axis_monotonicity(
+    curve: &BezierSubcurve2,
+    axis: Axis2,
+    policy: &CurvePolicy,
+) -> RetainedSpanAxisMonotonicity {
+    let roots = match curve {
+        BezierSubcurve2::Quadratic(curve) => curve.axis_monotone_parameters(axis, policy),
+        BezierSubcurve2::Cubic(curve) => curve.axis_monotone_parameters(axis, policy),
+        BezierSubcurve2::RationalQuadratic(curve) => curve.axis_monotone_parameters(axis, policy),
+    };
+    match roots {
+        Classification::Decided(roots) if roots.is_empty() => {
+            RetainedSpanAxisMonotonicity::CertifiedMonotone
+        }
+        Classification::Decided(_) => RetainedSpanAxisMonotonicity::HasInteriorExtrema,
+        Classification::Uncertain(_) => RetainedSpanAxisMonotonicity::Unsupported,
+    }
+}
+
+fn weight_domain_report(
+    weights: &[Real],
+    policy: &CurvePolicy,
+) -> CurveResult<RetainedSpanWeightDomainReport2> {
+    let mut certified_nonzero_count = 0_usize;
+    for weight in weights {
+        match is_zero(weight, policy) {
+            Some(false) => certified_nonzero_count += 1,
+            Some(true) => return Err(CurveError::ZeroRationalBezierWeight),
+            None => {}
+        }
+    }
+    Ok(RetainedSpanWeightDomainReport2::new(
+        weights.len(),
+        certified_nonzero_count,
+        certified_nonzero_count == weights.len(),
+    ))
 }
 
 fn bspline_parameter_domain(

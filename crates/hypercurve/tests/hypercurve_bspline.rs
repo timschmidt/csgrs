@@ -1,8 +1,8 @@
 use hypercurve::{
     BezierBoundaryLoop2, BezierRegion2, BezierSubcurve2, Classification, CurveError, CurvePolicy,
     Point2, PolynomialBSplineCurve2, RationalBSplineCurve2, RationalQuadraticBSplineCurve2, Real,
-    RetainedCurveFamily2, RetainedCurvePeriodicity1, RetainedTopologyStatus, RetainedTrimDirection,
-    RetainedTrimInterval1,
+    RetainedCurveFamily2, RetainedCurvePeriodicity1, RetainedSpanAxisMonotonicity,
+    RetainedTopologyStatus, RetainedTrimDirection, RetainedTrimInterval1,
 };
 
 fn r(value: i32) -> Real {
@@ -500,6 +500,123 @@ fn retained_rational_cubic_profile_keeps_unsupported_spans_as_evidence() {
     assert_eq!(profile.cache_summary().span_count(), 2);
     assert_eq!(profile.cache_summary().native_span_count(), 0);
     assert_eq!(profile.cache_summary().retained_span_count(), 2);
+}
+
+#[test]
+fn retained_bspline_span_facts_report_native_bounds_and_monotonicity() {
+    let spline = decided(
+        PolynomialBSplineCurve2::try_new(
+            2,
+            vec![p(0, 0), p(1, 0), p(2, 0)],
+            vec![r(0), r(0), r(0), r(1), r(1), r(1)],
+            &policy(),
+        )
+        .unwrap(),
+    );
+    let extraction = decided(spline.extract_bezier_spans(&policy()).unwrap());
+    let facts = decided(extraction.span_fact_report(&policy()).unwrap());
+
+    assert_eq!(facts.span_facts().len(), 1);
+    let span = &facts.span_facts()[0];
+    assert_eq!(span.knot_interval(), (&r(0), &r(1)));
+    assert_eq!(span.bounds().min(), &p(0, 0));
+    assert_eq!(span.bounds().max(), &p(2, 0));
+    assert_eq!(
+        span.x_monotonicity(),
+        RetainedSpanAxisMonotonicity::CertifiedMonotone
+    );
+    assert_eq!(
+        span.y_monotonicity(),
+        RetainedSpanAxisMonotonicity::CertifiedMonotone
+    );
+    assert_eq!(span.topology_status(), RetainedTopologyStatus::NativeExact);
+    assert!(span.weight_domain().is_none());
+}
+
+#[test]
+fn retained_rational_quadratic_span_facts_include_weight_domain() {
+    let spline = decided(
+        RationalQuadraticBSplineCurve2::try_new(
+            vec![p(0, 0), p(1, 1), p(2, 0)],
+            vec![r(1), r(2), r(3)],
+            vec![r(0), r(0), r(0), r(1), r(1), r(1)],
+            &policy(),
+        )
+        .unwrap(),
+    );
+    let extraction = decided(spline.extract_bezier_spans(&policy()).unwrap());
+    let facts = decided(extraction.span_fact_report(&policy()).unwrap());
+    let weight_domain = facts.span_facts()[0]
+        .weight_domain()
+        .expect("rational span reports weights");
+
+    assert_eq!(weight_domain.weight_count(), 3);
+    assert_eq!(weight_domain.certified_nonzero_count(), 3);
+    assert!(weight_domain.all_weights_certified_nonzero());
+    assert_eq!(
+        facts.span_facts()[0].topology_status(),
+        RetainedTopologyStatus::NativeExact
+    );
+}
+
+#[test]
+fn retained_rational_quadratic_span_facts_follow_refined_knot_windows() {
+    let spline = decided(
+        RationalQuadraticBSplineCurve2::try_new(
+            vec![p(0, 0), p(2, 4), p(4, 4), p(6, 0)],
+            vec![r(1), r(2), r(4), r(1)],
+            vec![r(0), r(0), r(0), r(1), r(2), r(2), r(2)],
+            &policy(),
+        )
+        .unwrap(),
+    );
+    let extraction = decided(spline.extract_bezier_spans(&policy()).unwrap());
+    let facts = decided(extraction.span_fact_report(&policy()).unwrap());
+
+    assert_eq!(facts.span_facts().len(), 2);
+    assert_eq!(facts.span_facts()[0].knot_interval(), (&r(0), &r(1)));
+    assert_eq!(facts.span_facts()[1].knot_interval(), (&r(1), &r(2)));
+    assert!(
+        facts
+            .span_facts()
+            .iter()
+            .all(|span| span
+                .weight_domain()
+                .is_some_and(|weights| weights.weight_count() == 3
+                    && weights.certified_nonzero_count() == 3
+                    && weights.all_weights_certified_nonzero()))
+    );
+}
+
+#[test]
+fn retained_rational_cubic_span_facts_keep_control_hull_and_unsupported_monotonicity() {
+    let spline = decided(
+        RationalBSplineCurve2::try_new(
+            3,
+            vec![p(0, 0), p(1, 3), p(3, 3), p(5, 3), p(6, 0)],
+            vec![r(1), r(2), r(4), r(8), r(16)],
+            vec![r(0), r(0), r(0), r(0), r(1), r(2), r(2), r(2), r(2)],
+            &policy(),
+        )
+        .unwrap(),
+    );
+    let extraction = decided(spline.extract_bezier_spans(&policy()).unwrap());
+    let facts = decided(extraction.span_fact_report(&policy()).unwrap());
+
+    assert_eq!(facts.span_facts().len(), 2);
+    assert!(facts.span_facts().iter().all(|span| {
+        span.topology_status() == RetainedTopologyStatus::Unsupported
+            && span.x_monotonicity() == RetainedSpanAxisMonotonicity::Unsupported
+            && span.y_monotonicity() == RetainedSpanAxisMonotonicity::Unsupported
+            && span
+                .weight_domain()
+                .is_some_and(|weights| weights.all_weights_certified_nonzero())
+    }));
+    assert_eq!(facts.span_facts()[0].bounds().min(), &p(0, 0));
+    assert_eq!(
+        facts.span_facts()[0].bounds().max(),
+        &Point2::new(q(11, 3), r(3))
+    );
 }
 
 #[test]

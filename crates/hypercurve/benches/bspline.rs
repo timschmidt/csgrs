@@ -36,10 +36,12 @@ fn main() -> CurveResult<()> {
     for _ in 0..iterations {
         let extraction = decided(spline.extract_bezier_spans(&policy)?);
         let profile = decided(spline.retained_curve_profile(0, &policy)?);
+        let facts = decided(extraction.span_fact_report(&policy)?);
         checksum ^= black_box(
             extraction.spans().len()
                 + extraction.inserted_knot_count()
-                + profile.cache_summary().span_count(),
+                + profile.cache_summary().span_count()
+                + facts.span_facts().len(),
         );
     }
     let elapsed = started.elapsed();
@@ -59,10 +61,16 @@ fn main() -> CurveResult<()> {
     for _ in 0..iterations {
         let extraction = decided(rational.extract_bezier_spans(&policy)?);
         let profile = decided(rational.retained_curve_profile(1, &policy)?);
+        let facts = decided(extraction.span_fact_report(&policy)?);
         rational_checksum ^= black_box(
             extraction.spans().len()
                 + extraction.inserted_knot_count()
-                + profile.cache_summary().native_span_count(),
+                + profile.cache_summary().native_span_count()
+                + facts
+                    .span_facts()
+                    .iter()
+                    .filter(|span| span.weight_domain().is_some())
+                    .count(),
         );
     }
     let elapsed = started.elapsed();
@@ -83,11 +91,13 @@ fn main() -> CurveResult<()> {
     for _ in 0..iterations {
         let extraction = decided(rational_cubic.extract_bezier_spans(&policy)?);
         let profile = decided(rational_cubic.retained_curve_profile(2, &policy)?);
+        let facts = decided(extraction.span_fact_report(&policy)?);
         rational_cubic_checksum ^= black_box(
             extraction.spans().len()
                 + extraction.inserted_knot_count()
                 + extraction.refined_weights().len()
-                + profile.cache_summary().retained_span_count(),
+                + profile.cache_summary().retained_span_count()
+                + facts.span_facts().len(),
         );
     }
     let elapsed = started.elapsed();

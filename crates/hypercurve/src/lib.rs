@@ -127,7 +127,8 @@ pub use bspline::{
     PolynomialBSplineBezierExtraction2, PolynomialBSplineCurve2, RationalBSplineBezierExtraction2,
     RationalBSplineCurve2, RationalBSplineNativeTopologyReport2, RationalBezierSpan2,
     RationalBezierSpanTopologyReport2, RationalQuadraticBSplineBezierExtraction2,
-    RationalQuadraticBSplineCurve2,
+    RationalQuadraticBSplineCurve2, RetainedBSplineSpanFactReport2, RetainedBSplineSpanFacts2,
+    RetainedSpanAxisMonotonicity, RetainedSpanWeightDomainReport2,
 };
 pub use bulge::BulgeVertex2;
 pub use classify::{Classification, LineSide, UncertaintyReason};
