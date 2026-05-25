@@ -3751,6 +3751,85 @@ fn exercise_consumed_hole_side_cutter_openings() {
         ExactBooleanSupport::CertifiedCoplanarSurfaceMultiDifference
     );
 
+    let single_split_consumed = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            9, 10, 0, 11, 10, 0, 11, 11, 0, 9, 11, 0, //
+            -2, 8, 0, 22, 8, 0, 22, 15, 0, -2, 12, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("single side-to-side consumed-hole fixture must import");
+    assert!(
+        arrange_coplanar_surface_cutter_hole_contact_difference(&left, &single_split_consumed)
+            .is_none()
+    );
+    assert!(
+        arrange_coplanar_convex_surface_component_holed_difference(
+            &left,
+            &single_split_consumed,
+        )
+        .is_none()
+    );
+    let single_split_no_hole =
+        arrange_coplanar_surface_multi_difference(&left, &single_split_consumed)
+            .expect("one consumed side-to-side cutter should emit split no-hole loops");
+    single_split_no_hole.validate().unwrap();
+    single_split_no_hole
+        .validate_difference_against_sources(&left, &single_split_consumed)
+        .unwrap();
+    assert_eq!(single_split_no_hole.polygons.len(), 2);
+    let single_split_preflight =
+        preflight_boolean_exact(&left, &single_split_consumed, ExactBooleanOperation::Difference)
+            .expect("single side-to-side consumed-hole split should classify multi-difference");
+    single_split_preflight.validate().unwrap();
+    assert_eq!(
+        single_split_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarSurfaceMultiDifference
+    );
+
+    let single_split_retained = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            15, 16, 0, 17, 16, 0, 17, 18, 0, 15, 18, 0, //
+            9, 10, 0, 11, 10, 0, 11, 11, 0, 9, 11, 0, //
+            -2, 8, 0, 22, 8, 0, 22, 15, 0, -2, 12, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7, //
+            8, 9, 10, 8, 10, 11,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("single side-to-side retained-and-consumed-hole fixture must import");
+    let single_split_holed =
+        arrange_coplanar_convex_surface_component_holed_difference(&left, &single_split_retained)
+            .expect("one consumed side-to-side cutter should split while retaining holes");
+    single_split_holed.validate().unwrap();
+    single_split_holed
+        .validate_against_sources(&left, &single_split_retained)
+        .unwrap();
+    assert_eq!(single_split_holed.components.len(), 2);
+    assert_eq!(
+        single_split_holed
+            .components
+            .iter()
+            .map(|component| component.holes.len())
+            .sum::<usize>(),
+        1
+    );
+    let single_split_holed_preflight =
+        preflight_boolean_exact(&left, &single_split_retained, ExactBooleanOperation::Difference)
+            .expect("single side-to-side retained-hole split should classify component-holed");
+    single_split_holed_preflight.validate().unwrap();
+    assert_eq!(
+        single_split_holed_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
+    );
+
     let multi_branch_all_consumed = ExactMesh::from_i64_triangles_with_policy(
         &[
             13, 9, 0, 17, 9, 0, 17, 13, 0, 13, 13, 0, //

@@ -6046,10 +6046,14 @@ fn arrange_coplanar_convex_surface_component_difference(
 /// they are not prefiltered away because their exact union can be the
 /// materialized removed object. A strict interior right component may also be
 /// consumed by a cutter/hole-contact opening on the same left component, but
-/// only when that local replay emits no retained holes. Hole-producing cuts,
-/// outside clipping against a nonconvex source boundary, point-only boundary
-/// contacts, overlapping output loops, and self-intersections remain explicit
-/// planar-arrangement work. This follows Yap, "Towards Exact Geometric
+/// only when that local replay emits no retained holes. A consumed strict
+/// hole can force this artifact even when the retained split loops themselves
+/// are convex: the convex multi-difference certificate cannot name the
+/// removed hole owner, so this retained multi-surface object carries that
+/// topology. Hole-producing cuts, outside clipping against a nonconvex source
+/// boundary, point-only boundary contacts, overlapping output loops, and
+/// self-intersections remain explicit planar-arrangement work. This follows
+/// Yap, "Towards Exact Geometric
 /// Computation," *Computational Geometry* 7.1-2 (1997): the system may
 /// broaden the object model only when the exact construction history and
 /// output topology are both retained. The boundary-fragment replay is the
@@ -6072,7 +6076,8 @@ pub fn arrange_coplanar_surface_multi_difference(
             "coplanar nonconvex multi-component difference",
         )
         .is_ok()
-    }) {
+    }) && arrange_coplanar_convex_surface_multi_difference(left, right).is_some()
+    {
         return None;
     }
     let mesh = polygons_to_earcut_open_mesh_with_label(
@@ -6309,6 +6314,16 @@ fn coplanar_surface_difference_polygons(
                         )
                     {
                         polygons.extend(opened);
+                    } else if let Some(remnants) =
+                        materialize_side_cutter_multi_component_difference_consuming_holes(
+                            component,
+                            &cutter_indices,
+                            &holes,
+                            &right_components,
+                            "coplanar single side-to-side consumed-hole split difference",
+                        )
+                    {
+                        polygons.extend(remnants);
                     } else if let Some(opened) =
                         materialize_side_cutter_opening_difference_consuming_holes(
                             component,
@@ -11829,13 +11844,13 @@ fn materialize_side_cutter_opening_difference_consuming_holes(
 /// Replay a non-rectilinear side-cutter split while owning strict holes.
 ///
 /// The side-cutter split helper proves the no-hole case where several
-/// side-attached cutters divide one convex source sheet into two or more
-/// simple retained loops. This helper lifts the same exact cell evidence into
-/// the component/holed artifact: after the split loops are replayed, each
-/// strict hole must be owned by exactly one retained output loop or wholly
-/// consumed by exactly one removed side opening. Boundary contact, overlap
-/// with several removed openings, or holes that straddle a split boundary stay
-/// outside this bounded certificate.
+/// side-attached cutters, or one side-to-side cutter, divide one convex source
+/// sheet into two or more simple retained loops. This helper lifts the same
+/// exact cell evidence into the component/holed artifact: after the split
+/// loops are replayed, each strict hole must be owned by exactly one retained
+/// output loop or wholly consumed by exactly one removed side opening.
+/// Boundary contact, overlap with several removed openings, or holes that
+/// straddle a split boundary stay outside this bounded certificate.
 ///
 /// The construction follows Yap's retained-object rule from "Towards Exact
 /// Geometric Computation," *Computational Geometry* 7.1-2 (1997): the wider
@@ -11852,7 +11867,7 @@ fn materialize_side_cutter_multi_component_holed_difference(
     holes: &[ComponentHoleCandidate],
     right_components: &[ConvexUnionComponent],
 ) -> Option<Vec<CoplanarConvexHoledComponent>> {
-    if cut_indices.len() < 2 || holes.is_empty() {
+    if cut_indices.is_empty() || holes.is_empty() {
         return None;
     }
     let projection = component.projection;
@@ -12103,11 +12118,14 @@ fn materialize_side_cutter_multi_component_difference(
 ///
 /// This is the no-hole counterpart to
 /// [`materialize_side_cutter_multi_component_holed_difference`]. The retained
-/// geometry is still the exact multi-output side-cutter split, but every
-/// strict interior right component must be wholly owned by exactly one removed
-/// side opening. If any ring would survive in a retained output, touch a split
-/// boundary, or have multiple possible owners, this helper rejects so the
-/// component/holed or later planar-cell materializer owns that topology.
+/// geometry is still the exact multi-output side-cutter split. That split may
+/// be caused by several side-attached removed openings, or by one
+/// side-to-side non-rectilinear cutter whose clipped removed loop separates
+/// the source. Every strict interior right component must be wholly owned by
+/// exactly one removed side opening. If any ring would survive in a retained
+/// output, touch a split boundary, or have multiple possible owners, this
+/// helper rejects so the component/holed or later planar-cell materializer
+/// owns that topology.
 ///
 /// The distinction is Yap's retained-object discipline from "Towards Exact
 /// Geometric Computation," *Computational Geometry* 7.1-2 (1997): removing a
@@ -12123,7 +12141,7 @@ fn materialize_side_cutter_multi_component_difference_consuming_holes(
     right_components: &[ConvexUnionComponent],
     label: &'static str,
 ) -> Option<Vec<Vec<Point3>>> {
-    if cut_indices.len() < 2 || holes.is_empty() {
+    if cut_indices.is_empty() || holes.is_empty() {
         return None;
     }
     let projection = component.projection;
