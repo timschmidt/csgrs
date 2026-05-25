@@ -49,10 +49,17 @@ fuzz_target!(|data: &[u8]| {
         Ok(report) => {
             assert_eq!(report.events.len(), 1);
             assert_eq!(report.line_breakpoints.len(), 1);
+            assert_eq!(report.arc_breakpoints.len(), 1);
             assert!(!report.line_breakpoints[0].is_empty());
+            assert!(!report.arc_breakpoints[0].is_empty());
             for point in &report.events[0].points {
                 assert!(
                     report.line_breakpoints[0]
+                        .iter()
+                        .any(|breakpoint| &breakpoint.point == point)
+                );
+                assert!(
+                    report.arc_breakpoints[0]
                         .iter()
                         .any(|breakpoint| &breakpoint.point == point)
                 );
@@ -77,5 +84,7 @@ fuzz_target!(|data: &[u8]| {
     assert_eq!(report.events[1].class, LineArcArrangementEventClass::Secant);
     assert_eq!(report.line_breakpoints[0].len(), 4);
     assert_eq!(report.line_breakpoints[1].len(), 4);
+    assert_eq!(report.arc_breakpoints[0].len(), 4);
     assert_eq!(report.line_fragments.len(), 6);
+    assert_eq!(report.arc_fragments.len(), 4);
 });

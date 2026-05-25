@@ -289,7 +289,19 @@ fn line_arc_arrangement_splits_axis_lines_at_arc_events() {
             .collect::<Vec<_>>(),
         vec![p(-5, 5), p(0, 5), p(5, 5)]
     );
+    assert_eq!(
+        report.arc_breakpoints[0]
+            .iter()
+            .map(|breakpoint| breakpoint.point.clone())
+            .collect::<Vec<_>>(),
+        vec![p(5, 0), p(0, 5), p(-5, 0)]
+    );
     assert_eq!(report.line_fragments.len(), 5);
+    assert_eq!(report.arc_fragments.len(), 3);
+    assert_eq!(report.arc_fragments[0].arc.start(), &p(5, 0));
+    assert_eq!(report.arc_fragments[0].arc.end(), &p(0, 5));
+    assert_eq!(report.arc_fragments[1].arc.start(), &p(0, 5));
+    assert_eq!(report.arc_fragments[1].arc.end(), &p(-5, 0));
 }
 
 #[test]
@@ -306,7 +318,9 @@ fn line_arc_arrangement_reports_unknown_for_non_axis_line() {
         LineArcArrangementEventClass::Unknown
     );
     assert_eq!(report.line_breakpoints[0].len(), 2);
+    assert_eq!(report.arc_breakpoints[0].len(), 1);
     assert_eq!(report.line_fragments.len(), 1);
+    assert_eq!(report.arc_fragments.len(), 1);
 }
 
 #[test]
@@ -6405,9 +6419,13 @@ proptest! {
         prop_assert_eq!(report.events[0].class, LineArcArrangementEventClass::Secant);
         prop_assert_eq!(report.events[0].points.len(), 2);
         prop_assert_eq!(report.line_breakpoints[0].len(), 4);
+        prop_assert_eq!(report.arc_breakpoints[0].len(), 2);
         prop_assert_eq!(report.line_fragments.len(), 3);
+        prop_assert_eq!(report.arc_fragments.len(), 2);
         prop_assert!(report.line_breakpoints[0].iter().any(|breakpoint| breakpoint.point == p(cx - radius, cy)));
         prop_assert!(report.line_breakpoints[0].iter().any(|breakpoint| breakpoint.point == p(cx + radius, cy)));
+        prop_assert!(report.arc_breakpoints[0].iter().any(|breakpoint| breakpoint.point == p(cx - radius, cy)));
+        prop_assert!(report.arc_breakpoints[0].iter().any(|breakpoint| breakpoint.point == p(cx + radius, cy)));
     }
 
     #[test]

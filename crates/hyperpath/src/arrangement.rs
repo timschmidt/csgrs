@@ -54,6 +54,12 @@ pub enum LineArrangementError {
     UndecidableParameterOrder { segment: usize },
     /// The same geometric point could not be de-duplicated exactly.
     UndecidablePointEquality,
+    /// A split witness was not certified on the referenced arc.
+    SplitPointOffArc { arc: usize },
+    /// Exact ordering along an explicit arc sweep was undecidable.
+    UndecidableArcOrder { arc: usize },
+    /// A retained explicit sub-arc could not be reconstructed from certified endpoints.
+    ArcFragmentConstruction,
 }
 
 /// Errors that prevent explicit-arc arrangement cleanup from producing trusted splits.
@@ -217,14 +223,16 @@ pub struct LineArrangementReport {
 /// Retained mixed line/arc arrangement schedule for the axis-aligned line subset.
 ///
 /// This report is intentionally narrower than a full circular-arc arrangement
-/// graph. It schedules exact line/arc events and line split fragments so later
-/// CAM/EDA stages can consume certified witnesses without flattening the arc or
-/// constructing planar cells in `hyperpath`. The exact line/circle solve is the
-/// retained axis-aligned branch described by CGAL-style circular-arc
-/// arrangements, while acceptance follows Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997): every event point is
-/// replayed against exact segment bounds and exact arc-sweep predicates before
-/// it can split a source line.
+/// graph. It schedules exact line/arc events and split fragments on both the
+/// retained lines and retained explicit arcs so later CAM/EDA stages can
+/// consume certified witnesses without flattening the arc or constructing
+/// planar cells in `hyperpath`. The exact line/circle solve is the retained
+/// axis-aligned branch described by CGAL-style circular-arc arrangements, while
+/// acceptance follows Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997): every event point is replayed against
+/// exact segment bounds and exact arc-sweep predicates before it can split a
+/// source carrier. Full-circle arc fragments reuse the exact retained branch
+/// cut ordering from the arc-only scheduler instead of sampled angles.
 #[derive(Clone, Debug, PartialEq)]
 pub struct LineArcArrangementReport {
     /// Retained input line segments.
@@ -235,8 +243,12 @@ pub struct LineArcArrangementReport {
     pub events: Vec<LineArcArrangementEvent>,
     /// Sorted line breakpoints induced by line endpoints and line/arc events.
     pub line_breakpoints: Vec<Vec<LineArrangementBreakpoint>>,
+    /// Sorted arc breakpoints induced by arc endpoints and line/arc events.
+    pub arc_breakpoints: Vec<Vec<ExplicitArcArrangementBreakpoint>>,
     /// Positive-length line fragments induced by exact line/arc split points.
     pub line_fragments: Vec<LineArrangementFragment>,
+    /// Positive-length explicit-arc fragments induced by exact line/arc split points.
+    pub arc_fragments: Vec<ExplicitArcArrangementFragment>,
     /// Cached exact facts for retained line endpoints and emitted line fragments.
     pub facts: LineArrangementFacts,
 }
@@ -354,10 +366,10 @@ pub fn arrange_line_segments_with_provenance(
 
 /// Arrange retained line segments against retained explicit circular arcs.
 ///
-/// Only line fragments are emitted because ordering points along arbitrary arc
-/// sweeps is a later mixed-curve arrangement problem. The event list still
-/// records exact arc witnesses, so a downstream curve-aware scheduler can
-/// promote them without recomputing the line/circle predicates.
+/// Certified event witnesses are replayed on both source families. Line
+/// fragments use exact segment parameters; arc fragments use the same exact
+/// sweep-order predicates as [`arrange_explicit_arcs`], including retained
+/// branch-cut ordering for full circles.
 pub fn arrange_line_segments_with_explicit_arcs(
     lines: &[LinePathSegment],
     arcs: &[ExplicitCircularArc],
@@ -391,6 +403,8 @@ pub fn arrange_line_segments_with_explicit_arcs_and_provenance(
     }
 
     let mut line_breakpoints = seed_endpoint_breakpoints(lines, policy)?;
+    let mut arc_breakpoints =
+        seed_arc_endpoint_breakpoints(arcs, policy).map_err(line_arc_error_from_arc_error)?;
     let mut events = Vec::new();
     for (line_index, line) in lines.iter().enumerate() {
         for (arc_index, arc) in arcs.iter().enumerate() {
@@ -400,6 +414,7 @@ pub fn arrange_line_segments_with_explicit_arcs_and_provenance(
                 arc_index,
                 arc,
                 &mut line_breakpoints,
+                &mut arc_breakpoints,
                 policy,
             )?;
             events.push(event);
@@ -407,7 +422,11 @@ pub fn arrange_line_segments_with_explicit_arcs_and_provenance(
     }
 
     sort_and_dedup_breakpoints(&mut line_breakpoints, policy)?;
+    sort_and_dedup_arc_breakpoints(&mut arc_breakpoints, arcs, policy)
+        .map_err(line_arc_error_from_arc_error)?;
     let line_fragments = build_fragments(&line_breakpoints, policy)?;
+    let arc_fragments = build_arc_fragments(arcs, &arc_breakpoints, policy)
+        .map_err(line_arc_error_from_arc_error)?;
     let endpoint_refs = lines
         .iter()
         .flat_map(|segment| {
@@ -419,7 +438,7 @@ pub fn arrange_line_segments_with_explicit_arcs_and_provenance(
             ]
         })
         .collect::<Vec<_>>();
-    let fragment_refs = line_fragments
+    let mut fragment_refs = line_fragments
         .iter()
         .flat_map(|fragment| {
             [
@@ -430,6 +449,14 @@ pub fn arrange_line_segments_with_explicit_arcs_and_provenance(
             ]
         })
         .collect::<Vec<_>>();
+    fragment_refs.extend(arc_fragments.iter().flat_map(|fragment| {
+        [
+            &fragment.arc.start().x,
+            &fragment.arc.start().y,
+            &fragment.arc.end().x,
+            &fragment.arc.end().y,
+        ]
+    }));
     let facts = LineArrangementFacts {
         endpoint_exact: Real::exact_set_facts(endpoint_refs),
         fragment_exact: Real::exact_set_facts(fragment_refs),
@@ -440,7 +467,9 @@ pub fn arrange_line_segments_with_explicit_arcs_and_provenance(
         arcs: arcs.to_vec(),
         events,
         line_breakpoints,
+        arc_breakpoints,
         line_fragments,
+        arc_fragments,
         facts,
     })
 }
@@ -577,6 +606,7 @@ fn classify_line_arc_arrangement_event(
     arc_index: usize,
     arc: &ExplicitCircularArc,
     line_breakpoints: &mut [Vec<LineArrangementBreakpoint>],
+    arc_breakpoints: &mut [Vec<ExplicitArcArrangementBreakpoint>],
     policy: PredicatePolicy,
 ) -> Result<LineArcArrangementEvent, LineArrangementError> {
     let report = arc.intersect_axis_aligned_segment(line, policy);
@@ -591,6 +621,8 @@ fn classify_line_arc_arrangement_event(
         LineExplicitArcIntersectionClass::Tangent | LineExplicitArcIntersectionClass::Secant => {
             for point in &report.points {
                 add_breakpoint(line_breakpoints, line_index, line, point.clone(), policy)?;
+                add_arc_breakpoint(arc_breakpoints, arc_index, arc, point.clone(), policy)
+                    .map_err(line_arc_error_from_arc_error)?;
             }
             Ok(LineArcArrangementEvent {
                 line: line_index,
@@ -616,6 +648,23 @@ fn classify_line_arc_arrangement_event(
             line_arc_intersection: Some(report.class),
             points: Vec::new(),
         }),
+    }
+}
+
+fn line_arc_error_from_arc_error(error: ExplicitArcArrangementError) -> LineArrangementError {
+    match error {
+        ExplicitArcArrangementError::SplitPointOffArc { arc } => {
+            LineArrangementError::SplitPointOffArc { arc }
+        }
+        ExplicitArcArrangementError::UndecidableArcOrder { arc } => {
+            LineArrangementError::UndecidableArcOrder { arc }
+        }
+        ExplicitArcArrangementError::UndecidablePointEquality => {
+            LineArrangementError::UndecidablePointEquality
+        }
+        ExplicitArcArrangementError::FragmentConstruction => {
+            LineArrangementError::ArcFragmentConstruction
+        }
     }
 }
 
