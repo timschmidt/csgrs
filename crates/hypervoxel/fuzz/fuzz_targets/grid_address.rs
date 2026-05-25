@@ -4,7 +4,7 @@ use hyperreal::Real;
 use hypervoxel::{
     AdapterNumericContract, AdapterToleranceStatus, AggregateCertainty, CertifiedFieldInterval,
     CertifiedVectorInterval,
-    AddressRay, AxisPermutationTransform, ChunkAddress, ChunkPageSummary, ChunkShape,
+    AddressRay, AxisPermutationTransform, ChunkAddress, ChunkPageSummary, ChunkPagedSparseGrid, ChunkShape,
     CompressedStorageKind, CompressedStorageManifest, DeterministicSnapshot, ExactAabb3,
     ExactAffineTransform, ExactBox, ExactConvexHalfSpaceSet, ExactHalfSpace,
     ContinuousFieldVoxelCell, ContinuousFieldVoxelManifest, FieldAggregateFacts,
@@ -105,6 +105,17 @@ fuzz_target!(|data: (u8, u64, u64, u64)| {
         covered_cell_count
     );
     assert_eq!(report.predicate_certificates.boundary_cells, 0);
+    let paged_grid = ChunkPagedSparseGrid::from_sparse_grid(&grid, ChunkShape::new(small_depth.min(2)).unwrap()).unwrap();
+    assert_eq!(paged_grid.len() as u64, covered_cell_count);
+    assert_eq!(paged_grid.report().summary.stored_cells as u64, covered_cell_count);
+    assert!(paged_grid.report().exact_address_replay_ready);
+    assert!(paged_grid.report().exact_payload_replay_ready);
+    assert!(paged_grid.report().exact_chunk_storage_ready);
+    let first_small_address = VoxelAddress::new(small_depth, [0, 0, 0]).unwrap();
+    assert_eq!(
+        paged_grid.get(first_small_address).unwrap().occupancy,
+        grid.get(first_small_address).unwrap().occupancy
+    );
     let halfspace =
         ExactHalfSpace::new([Real::from(1), Real::from(0), Real::from(0)], Real::from(1), None);
     assert!(halfspace.report().exact_halfspace_ready);

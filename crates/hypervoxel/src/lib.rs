@@ -27,6 +27,7 @@ mod batch;
 mod candidate;
 mod cell;
 mod chunk;
+mod chunk_storage;
 mod compression;
 mod continuous;
 mod coupling;
@@ -83,6 +84,10 @@ pub use cell::{
     VoxelPayload,
 };
 pub use chunk::{ChunkAddress, ChunkLocalAddress, ChunkPageSummary, ChunkShape};
+pub use chunk_storage::{
+    ChunkPagedSparseGrid, ChunkPagedSparsePage, ChunkPagedSparsePageReport,
+    ChunkPagedSparseStorageReport,
+};
 pub use compression::{
     CompressedStorageKind, CompressedStorageManifest, CompressedStorageReport, StorageReplayStatus,
     VoxelMemoryBudgetManifest, VoxelMemoryBudgetReport,

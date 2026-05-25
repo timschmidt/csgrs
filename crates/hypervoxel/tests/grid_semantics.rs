@@ -1,19 +1,20 @@
 use hyperreal::{Rational, Real};
 use hypervoxel::{
     AdapterNumericContract, AdapterScalarPrecision, AdapterToleranceStatus, AggregateCertainty,
-    BoundaryPolicy, ChunkAddress, ChunkPageSummary, ChunkShape, ContinuousFieldVoxelCell,
-    ContinuousFieldVoxelInterchangeManifest, ContinuousFieldVoxelManifest,
-    ContinuousFieldVoxelRowOrder, FreshnessStatus, GridBasis, GridCoordinateSystem, GridFrame,
-    GridFrameManifest, GridHandedness, GridSource, HypervoxelError, ImageStackContainer,
-    ImageStackManifest, LegacyAdapterKind, LegacyAdapterStatus, LengthUnit, MaterialRegionId,
-    OccupancyState, PreparedSparseVoxelGridExt, PreparedVoxelGrid, QuantizationPolicy,
-    SideTableLinkStatus, SparseVoxelGrid, StorageReplayStatus, VoxelAddress, VoxelAggregateFacts,
-    VoxelArtifactId, VoxelArtifactManifest, VoxelArtifactRole, VoxelCell, VoxelChannelMapping,
-    VoxelHandoffDomain, VoxelIndexConvention, VoxelInterchangeFormat, VoxelInterchangeManifest,
-    VoxelIoCompression, VoxelIoMetadata, VoxelIoMetadataStatus, VoxelIoPaletteStatus,
-    VoxelIoPayloadStatus, VoxelPayload, VoxelPredicateCertificateReport, VoxelSliceNaming,
-    VoxelSliceOrdering, VoxelSpatialAggregateFacts, VoxelTraceDimension, VoxelTraceManifest,
-    VoxelizationPolicy, VoxelizationReport, continuous_field_address,
+    BoundaryPolicy, ChunkAddress, ChunkPageSummary, ChunkPagedSparseGrid, ChunkShape,
+    ContinuousFieldVoxelCell, ContinuousFieldVoxelInterchangeManifest,
+    ContinuousFieldVoxelManifest, ContinuousFieldVoxelRowOrder, FreshnessStatus, GridBasis,
+    GridCoordinateSystem, GridFrame, GridFrameManifest, GridHandedness, GridSource,
+    HypervoxelError, ImageStackContainer, ImageStackManifest, LegacyAdapterKind,
+    LegacyAdapterStatus, LengthUnit, MaterialRegionId, OccupancyState, PreparedSparseVoxelGridExt,
+    PreparedVoxelGrid, QuantizationPolicy, SideTableLinkStatus, SparseVoxelGrid,
+    StorageReplayStatus, VoxelAddress, VoxelAggregateFacts, VoxelArtifactId, VoxelArtifactManifest,
+    VoxelArtifactRole, VoxelCell, VoxelChannelMapping, VoxelHandoffDomain, VoxelIndexConvention,
+    VoxelInterchangeFormat, VoxelInterchangeManifest, VoxelIoCompression, VoxelIoMetadata,
+    VoxelIoMetadataStatus, VoxelIoPaletteStatus, VoxelIoPayloadStatus, VoxelPayload,
+    VoxelPredicateCertificateReport, VoxelSliceNaming, VoxelSliceOrdering,
+    VoxelSpatialAggregateFacts, VoxelTraceDimension, VoxelTraceManifest, VoxelizationPolicy,
+    VoxelizationReport, continuous_field_address,
 };
 
 use hypervoxel::SvoVoxelGrid;
@@ -131,6 +132,63 @@ fn chunk_page_summary_partitions_addresses_without_world_coordinates() {
             max_supported: 21
         }
     );
+}
+
+#[test]
+fn chunk_paged_sparse_storage_replays_exact_addresses_and_payload_blockers() {
+    let frame = frame(4);
+    let shape = ChunkShape::new(2).unwrap();
+    let a = VoxelAddress::new(4, [0, 0, 0]).unwrap();
+    let b = VoxelAddress::new(4, [3, 3, 3]).unwrap();
+    let c = VoxelAddress::new(4, [4, 0, 0]).unwrap();
+    let absent = VoxelAddress::new(4, [8, 8, 8]).unwrap();
+    let mut grid = SparseVoxelGrid::new(frame.clone());
+    grid.set(a, VoxelCell::material(MaterialRegionId(1)))
+        .unwrap();
+    grid.set(
+        b,
+        VoxelCell::boundary(VoxelPayload::MaterialRegion(MaterialRegionId(1))),
+    )
+    .unwrap();
+    grid.set(c, VoxelCell::material(MaterialRegionId(2)))
+        .unwrap();
+
+    let paged = ChunkPagedSparseGrid::from_sparse_grid(&grid, shape).unwrap();
+    let report = paged.report();
+    assert_eq!(paged.len(), 3);
+    assert_eq!(paged.page_count(), 2);
+    assert_eq!(report.summary.stored_cells, 3);
+    assert_eq!(report.summary.page_count, 2);
+    assert_eq!(report.finest_depth_cells, 3);
+    assert_eq!(report.non_finest_depth_cells, 0);
+    assert!(report.exact_address_replay_ready);
+    assert!(report.exact_payload_replay_ready);
+    assert!(report.exact_chunk_storage_ready);
+    assert_eq!(report.aggregate.child_count, 3);
+    assert_eq!(paged.get(a).unwrap().occupancy, OccupancyState::Filled);
+    assert_eq!(paged.get(absent).unwrap().occupancy, OccupancyState::Empty);
+
+    let first_page = paged
+        .page(ChunkAddress::containing(a, shape))
+        .unwrap()
+        .report(&frame);
+    assert_eq!(first_page.stored_cells, 2);
+    assert_eq!(first_page.finest_depth_cells, 2);
+    assert!(first_page.local_addresses_in_bounds);
+    assert!(first_page.exact_local_recompose_ready);
+    assert!(first_page.exact_page_replay_ready);
+
+    let mut blocked = grid.clone();
+    blocked
+        .set(
+            VoxelAddress::new(4, [4, 1, 0]).unwrap(),
+            VoxelCell::unknown(),
+        )
+        .unwrap();
+    let blocked = ChunkPagedSparseGrid::from_sparse_grid(&blocked, shape).unwrap();
+    assert!(blocked.report().has_unknown);
+    assert!(!blocked.report().exact_payload_replay_ready);
+    assert!(!blocked.report().exact_chunk_storage_ready);
 }
 
 #[test]

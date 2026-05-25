@@ -3,8 +3,8 @@ use hyperreal::{Rational, Real};
 use hypervoxel::{
     AdapterNumericContract, AdapterToleranceStatus, AddressRay, AggregateCertainty,
     AxisPermutationTransform, CertifiedFieldInterval, CertifiedVectorInterval, ChunkAddress,
-    ChunkPageSummary, ChunkShape, CompressedStorageKind, CompressedStorageManifest,
-    ContinuousFieldVoxelCell, ContinuousFieldVoxelInterchangeManifest,
+    ChunkPageSummary, ChunkPagedSparseGrid, ChunkShape, CompressedStorageKind,
+    CompressedStorageManifest, ContinuousFieldVoxelCell, ContinuousFieldVoxelInterchangeManifest,
     ContinuousFieldVoxelManifest, ContinuousFieldVoxelRowOrder, DeterministicSnapshot, ExactAabb3,
     ExactAffineTransform, ExactBox, ExactConvexHalfSpaceSet, ExactHalfSpace, ExactTriangle3,
     ExactTriangleSolidMesh, ExactTriangleSurfaceMesh, FieldAggregateFacts, FieldEnvelopeFacts,
@@ -755,6 +755,28 @@ fn bench_batches_field_facts_and_sweeps(c: &mut Criterion) {
                 report.exact_page_cover_ready,
                 report.page_capacity_cells,
             )
+        })
+    });
+    c.bench_function("chunk_paged_sparse_grid_build_and_report", |b| {
+        let shape = ChunkShape::new(3).unwrap();
+        b.iter(|| {
+            let paged = ChunkPagedSparseGrid::from_sparse_grid(&grid, shape).unwrap();
+            (
+                paged.page_count(),
+                paged.report().exact_address_replay_ready,
+                paged.report().exact_chunk_storage_ready,
+            )
+        })
+    });
+    c.bench_function("chunk_paged_sparse_grid_lookup", |b| {
+        let shape = ChunkShape::new(3).unwrap();
+        let paged = ChunkPagedSparseGrid::from_sparse_grid(&grid, shape).unwrap();
+        let addresses = grid.iter().map(|(address, _)| *address).collect::<Vec<_>>();
+        b.iter(|| {
+            addresses
+                .iter()
+                .map(|address| paged.get(*address).unwrap().occupancy)
+                .collect::<Vec<_>>()
         })
     });
     c.bench_function("chunk_local_address_split", |b| {
