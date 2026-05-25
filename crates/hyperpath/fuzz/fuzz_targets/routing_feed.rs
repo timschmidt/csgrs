@@ -2,9 +2,11 @@
 
 use hyperlimit::{Point2, PredicatePolicy};
 use hyperpath::{
-    AccelerationLimitedFeedProfileClass, LinePathSegment, RouteCertificationError,
-    certify_acceleration_limited_feed_time, certify_constant_feed_time,
-    certify_symmetric_jerk_limited_feed_time,
+    AccelerationLimitedFeedProfileClass, ArcDirection, ExplicitCircularArc, FeedPathElement,
+    LinePathSegment, RouteCertificationError, certify_acceleration_limited_feed_time,
+    certify_acceleration_limited_feed_time_for_path, certify_constant_feed_time,
+    certify_constant_feed_time_for_path, certify_symmetric_jerk_limited_feed_time,
+    certify_symmetric_jerk_limited_feed_time_for_path,
 };
 use hyperreal::{Rational, Real};
 use libfuzzer_sys::fuzz_target;
@@ -32,6 +34,14 @@ fuzz_target!(|data: &[u8]| {
     let constant =
         certify_constant_feed_time(&route, r(feed), r(time), PredicatePolicy::default()).unwrap();
     assert!(constant.certification.all_satisfied());
+    let mixed_constant = certify_constant_feed_time_for_path(
+        &[FeedPathElement::Line(route[0].clone())],
+        r(feed),
+        r(time),
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert!(mixed_constant.certification.all_satisfied());
 
     let accel_scale = positive(data[2], 8);
     let triangular_time = positive(data[3], 20);
@@ -51,6 +61,15 @@ fuzz_target!(|data: &[u8]| {
         AccelerationLimitedFeedProfileClass::Triangular
     );
     assert!(triangular.certification.all_satisfied());
+    let triangular_mixed = certify_acceleration_limited_feed_time_for_path(
+        &[FeedPathElement::Line(triangular_route[0].clone())],
+        r(acceleration * triangular_time),
+        r(acceleration),
+        r(triangular_time),
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert!(triangular_mixed.certification.all_satisfied());
 
     let max_feed = positive(data[4], 20);
     let cruise_time = positive(data[5], 20);
@@ -99,6 +118,29 @@ fuzz_target!(|data: &[u8]| {
     )
     .unwrap();
     assert!(jerk_report.certification.all_satisfied());
+    let radius = (r(2) / Real::pi()).unwrap();
+    let arc = ExplicitCircularArc::new(
+        p(0, 0),
+        radius.clone(),
+        Point2::new(radius.clone(), r(0)),
+        Point2::new(-radius, r(0)),
+        ArcDirection::Ccw,
+    )
+    .unwrap();
+    let mixed_jerk_route = vec![
+        FeedPathElement::Line(LinePathSegment::new(p(0, 0), p(jerk_length - 2, 0))),
+        FeedPathElement::ExplicitArc(arc),
+    ];
+    let mixed_jerk_report = certify_symmetric_jerk_limited_feed_time_for_path(
+        &mixed_jerk_route,
+        r(jerk * quarter_time * quarter_time),
+        r(jerk * quarter_time),
+        r(jerk),
+        r(jerk_time),
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert!(mixed_jerk_report.certification.all_satisfied());
 
     let limited_report = certify_symmetric_jerk_limited_feed_time(
         &jerk_route,

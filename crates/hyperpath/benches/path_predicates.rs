@@ -2,10 +2,10 @@ use criterion::{Criterion, criterion_group, criterion_main};
 use hyperlimit::{Point2, PredicatePolicy};
 use hyperpath::{
     ArcDirection, BeadFillAxis, BezierParameter, CardinalPoint, CardinalRotation, CircularArc,
-    ConstructionStamp, CubicBezier, ExplicitCircularArc, HigherOrderBezier, LinePathSegment,
-    MeanderKeepout, MeanderObstacle, MeanderPlacementCandidate, NetId, OffsetSide, PathProvenance,
-    PathSourceFormat, PcbBoardOutline, PcbCardinalRectPad, PcbCircularBoardOutline, PcbCircularPad,
-    PcbConvexBoardOutline, PcbConvexPad, PcbObroundPad, PcbOrientedRectPad,
+    ConstructionStamp, CubicBezier, ExplicitCircularArc, FeedPathElement, HigherOrderBezier,
+    LinePathSegment, MeanderKeepout, MeanderObstacle, MeanderPlacementCandidate, NetId, OffsetSide,
+    PathProvenance, PathSourceFormat, PcbBoardOutline, PcbCardinalRectPad, PcbCircularBoardOutline,
+    PcbCircularPad, PcbConvexBoardOutline, PcbConvexPad, PcbObroundPad, PcbOrientedRectPad,
     PcbOrthogonalBoardOutline, PcbOrthogonalPad, PcbRectPad, PcbRoundedRectPad, PcbTrace,
     PcbViaStack, QuadraticBezier, RationalQuadraticBezier, RectangularPocket, SourceLengthUnit,
     SpecctraGridKeepoutRecord, SpecctraGridKeepoutShape, SpecctraGridTraceRecord,
@@ -21,17 +21,18 @@ use hyperpath::{
     build_rectangular_pocket_link_graph, build_rectangular_pocket_plan,
     build_rectangular_serpentine_infill_graph, build_rectangular_support_plan,
     build_single_detour_meander, build_tangent_alignment_problem,
-    certify_acceleration_limited_feed_time, certify_constant_feed_time,
+    certify_acceleration_limited_feed_time, certify_acceleration_limited_feed_time_for_path,
+    certify_constant_feed_time, certify_constant_feed_time_for_path,
     certify_differential_pair_skew, certify_g1_chain, certify_g1_join_candidate,
     certify_length_extension, certify_symmetric_jerk_limited_feed_time,
-    certify_tangent_alignment_candidate, check_cardinal_rect_pad_board_clearance,
-    check_circular_pad_board_clearance, check_circular_pad_circular_board_clearance,
-    check_convex_pad_board_clearance, check_obround_pad_board_clearance,
-    check_oriented_rect_pad_board_clearance, check_orthogonal_pad_board_clearance,
-    check_rect_pad_board_clearance, check_rounded_rect_pad_board_clearance,
-    check_trace_board_clearance, check_trace_cardinal_rect_pad_clearance,
-    check_trace_circular_board_clearance, check_trace_clearance,
-    check_trace_convex_board_clearance, check_trace_convex_pad_clearance,
+    certify_symmetric_jerk_limited_feed_time_for_path, certify_tangent_alignment_candidate,
+    check_cardinal_rect_pad_board_clearance, check_circular_pad_board_clearance,
+    check_circular_pad_circular_board_clearance, check_convex_pad_board_clearance,
+    check_obround_pad_board_clearance, check_oriented_rect_pad_board_clearance,
+    check_orthogonal_pad_board_clearance, check_rect_pad_board_clearance,
+    check_rounded_rect_pad_board_clearance, check_trace_board_clearance,
+    check_trace_cardinal_rect_pad_clearance, check_trace_circular_board_clearance,
+    check_trace_clearance, check_trace_convex_board_clearance, check_trace_convex_pad_clearance,
     check_trace_obround_pad_clearance, check_trace_oriented_rect_pad_clearance,
     check_trace_orthogonal_board_clearance, check_trace_orthogonal_pad_clearance,
     check_trace_pad_clearance, check_trace_rect_pad_clearance,
@@ -798,11 +799,60 @@ fn path_predicates(c: &mut Criterion) {
     c.bench_function("constant_feed_time_certification", |b| {
         b.iter(|| certify_constant_feed_time(&feed_route, r(250), r(3), PredicatePolicy::default()))
     });
+    let mixed_radius = (r(10) / Real::pi()).unwrap();
+    let mixed_feed_route = vec![
+        FeedPathElement::Line(LinePathSegment::new(p(0, 0), p(740, 0))),
+        FeedPathElement::ExplicitArc(
+            ExplicitCircularArc::new(
+                p(0, 0),
+                mixed_radius.clone(),
+                Point2::new(mixed_radius.clone(), r(0)),
+                Point2::new(-mixed_radius, r(0)),
+                ArcDirection::Ccw,
+            )
+            .unwrap(),
+        ),
+    ];
+    c.bench_function("mixed_path_constant_feed_time_certification", |b| {
+        b.iter(|| {
+            certify_constant_feed_time_for_path(
+                &mixed_feed_route,
+                r(250),
+                r(3),
+                PredicatePolicy::default(),
+            )
+        })
+    });
     let acceleration_triangular_route = vec![LinePathSegment::new(p(0, 0), p(9, 0))];
     c.bench_function("acceleration_limited_feed_time_triangular", |b| {
         b.iter(|| {
             certify_acceleration_limited_feed_time(
                 &acceleration_triangular_route,
+                r(10),
+                r(4),
+                r(3),
+                PredicatePolicy::default(),
+            )
+        })
+    });
+    let mixed_accel_radius = (r(4) / Real::pi()).unwrap();
+    let mixed_acceleration_route = vec![
+        FeedPathElement::Line(LinePathSegment::new(p(0, 0), p(5, 0))),
+        FeedPathElement::ExplicitArc(
+            ExplicitCircularArc::new(
+                p(0, 0),
+                mixed_accel_radius.clone(),
+                Point2::new(mixed_accel_radius.clone(), r(0)),
+                Point2::new(-mixed_accel_radius, r(0)),
+                ArcDirection::Ccw,
+            )
+            .unwrap(),
+        ),
+    ];
+    c.bench_function("mixed_path_acceleration_limited_feed_time", |b| {
+        b.iter(|| {
+            certify_acceleration_limited_feed_time_for_path(
+                &mixed_acceleration_route,
                 r(10),
                 r(4),
                 r(3),
@@ -827,6 +877,32 @@ fn path_predicates(c: &mut Criterion) {
         b.iter(|| {
             certify_symmetric_jerk_limited_feed_time(
                 &jerk_feed_route,
+                r(400),
+                r(100),
+                r(16),
+                r(20),
+                PredicatePolicy::default(),
+            )
+        })
+    });
+    let mixed_jerk_radius = (r(10) / Real::pi()).unwrap();
+    let mixed_jerk_route = vec![
+        FeedPathElement::Line(LinePathSegment::new(p(0, 0), p(3990, 0))),
+        FeedPathElement::ExplicitArc(
+            ExplicitCircularArc::new(
+                p(0, 0),
+                mixed_jerk_radius.clone(),
+                Point2::new(mixed_jerk_radius.clone(), r(0)),
+                Point2::new(-mixed_jerk_radius, r(0)),
+                ArcDirection::Ccw,
+            )
+            .unwrap(),
+        ),
+    ];
+    c.bench_function("mixed_path_symmetric_jerk_limited_feed_time", |b| {
+        b.iter(|| {
+            certify_symmetric_jerk_limited_feed_time_for_path(
+                &mixed_jerk_route,
                 r(400),
                 r(100),
                 r(16),

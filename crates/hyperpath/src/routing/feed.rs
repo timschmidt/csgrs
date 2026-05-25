@@ -22,10 +22,31 @@ use hypersolve::{
     certify_candidate, context_from_problem,
 };
 
+use crate::arc::ExplicitCircularArc;
 use crate::segment::LinePathSegment;
 use crate::solve::symmetric_jerk_limited_feed_time_equation;
 
-use super::{RouteCertificationError, route_axis_length};
+use super::{
+    AccelerationLimitedFeedTimeReport, ConstantFeedTimeReport, RouteCertificationError,
+    acceleration_limited_feed_time_equation, classify_acceleration_limited_profile,
+    route_axis_length,
+};
+
+/// Retained feed-replay path element for exact mixed line/arc routes.
+///
+/// This is a metric carrier, not a topology materializer. Lines contribute
+/// their certified axis-aligned length, and explicit circular arcs contribute
+/// [`ExplicitCircularArc::certified_sweep_length`]. That keeps Farouki's
+/// curve-length and path-parameterization view compatible with Yap's exact
+/// object/predicate boundary: unsupported line directions or undecidable arc
+/// sweep lengths reject before any feed residual is replayed.
+#[derive(Clone, Debug, PartialEq)]
+pub enum FeedPathElement {
+    /// Exact line path segment, accepted only when axis-aligned.
+    Line(LinePathSegment),
+    /// Exact explicit circular arc with a certified symbolic sweep length.
+    ExplicitArc(ExplicitCircularArc),
+}
 
 /// Exact symmetric jerk-limited traversal time certification report.
 ///
@@ -60,6 +81,129 @@ pub struct JerkLimitedFeedTimeReport {
     pub certification: CandidateCertificationReport,
 }
 
+/// Certify constant-feed traversal time for a retained mixed line/arc route.
+///
+/// This is the curved-segment counterpart of
+/// [`super::certify_constant_feed_time`]. The route length is first replayed
+/// from retained path objects: axis-aligned lines use exact coordinate
+/// differences, while explicit circular arcs use symbolic `pi`/`acos` sweep
+/// lengths when the arc sweep class is certified. The feed residual remains
+/// `length - feed * time = 0`, so invalid process parameters and unsupported
+/// geometry are reported before solver replay.
+pub fn certify_constant_feed_time_for_path(
+    route: &[FeedPathElement],
+    feed_rate: Real,
+    target_time: Real,
+    policy: PredicatePolicy,
+) -> Result<ConstantFeedTimeReport, RouteCertificationError> {
+    if route.is_empty() {
+        return Err(RouteCertificationError::EmptyRoute);
+    }
+    require_positive_feed(&feed_rate)?;
+    if target_time.structural_facts().sign == Some(RealSign::Negative) {
+        return Err(RouteCertificationError::NegativeTime);
+    }
+    let path_length = route_path_length(route, policy)?;
+    let mut problem = Problem::default();
+    let time = problem.add_variable("time", target_time.clone());
+    problem.add_constraint(crate::solve::constant_feed_time_equation(
+        "constant feed time",
+        path_length.clone(),
+        feed_rate.clone(),
+        time,
+    ));
+    let prepared = PreparedProblem::new(&problem);
+    let context = context_from_problem(&problem);
+    Ok(ConstantFeedTimeReport {
+        path_length,
+        feed_rate,
+        target_time,
+        certification: certify_candidate(&prepared, &context),
+    })
+}
+
+/// Certify symmetric acceleration-limited traversal for a mixed line/arc route.
+///
+/// The profile classification is still the exact comparison
+/// `acceleration * length` versus `max_feed^2`; the only change from the
+/// line-only API is that `length` may include certified circular-arc sweep
+/// terms. No sampling, chord approximation, or controller lookahead is
+/// introduced.
+pub fn certify_acceleration_limited_feed_time_for_path(
+    route: &[FeedPathElement],
+    max_feed_rate: Real,
+    acceleration: Real,
+    target_time: Real,
+    policy: PredicatePolicy,
+) -> Result<AccelerationLimitedFeedTimeReport, RouteCertificationError> {
+    if route.is_empty() {
+        return Err(RouteCertificationError::EmptyRoute);
+    }
+    require_positive_feed(&max_feed_rate)?;
+    require_positive_acceleration(&acceleration)?;
+    if target_time.structural_facts().sign == Some(RealSign::Negative) {
+        return Err(RouteCertificationError::NegativeTime);
+    }
+    let path_length = route_path_length(route, policy)?;
+    let profile =
+        classify_acceleration_limited_profile(&path_length, &max_feed_rate, &acceleration, policy)
+            .ok_or(RouteCertificationError::UnknownFeedProfile)?;
+    let mut problem = Problem::default();
+    let time = problem.add_variable("time", target_time.clone());
+    problem.add_constraint(acceleration_limited_feed_time_equation(
+        "acceleration limited feed time",
+        path_length.clone(),
+        max_feed_rate.clone(),
+        acceleration.clone(),
+        time,
+        profile,
+    ));
+    let prepared = PreparedProblem::new(&problem);
+    let context = context_from_problem(&problem);
+    Ok(AccelerationLimitedFeedTimeReport {
+        path_length,
+        max_feed_rate,
+        acceleration,
+        target_time,
+        profile,
+        certification: certify_candidate(&prepared, &context),
+    })
+}
+
+/// Certify a symmetric four-phase jerk-limited feed profile for a mixed route.
+///
+/// The S-curve equations are identical to
+/// [`certify_symmetric_jerk_limited_feed_time`], but retained explicit arcs may
+/// contribute exact symbolic sweep length. This directly addresses curved
+/// route feed replay without converting arcs to polylines.
+pub fn certify_symmetric_jerk_limited_feed_time_for_path(
+    route: &[FeedPathElement],
+    max_feed_rate: Real,
+    max_acceleration: Real,
+    jerk: Real,
+    target_time: Real,
+    policy: PredicatePolicy,
+) -> Result<JerkLimitedFeedTimeReport, RouteCertificationError> {
+    if route.is_empty() {
+        return Err(RouteCertificationError::EmptyRoute);
+    }
+    require_positive_feed(&max_feed_rate)?;
+    require_positive_acceleration(&max_acceleration)?;
+    require_positive_jerk(&jerk)?;
+    if target_time.structural_facts().sign == Some(RealSign::Negative) {
+        return Err(RouteCertificationError::NegativeTime);
+    }
+
+    let path_length = route_path_length(route, policy)?;
+    build_jerk_limited_report(
+        path_length,
+        max_feed_rate,
+        max_acceleration,
+        jerk,
+        target_time,
+    )
+}
+
 /// Certify a symmetric four-phase jerk-limited feed traversal time.
 ///
 /// The retained route is measured as exact axis-aligned length. The candidate
@@ -91,6 +235,22 @@ pub fn certify_symmetric_jerk_limited_feed_time(
 
     let path_length = route_axis_length(route, policy)
         .ok_or(RouteCertificationError::UnsupportedRouteGeometry)?;
+    build_jerk_limited_report(
+        path_length,
+        max_feed_rate,
+        max_acceleration,
+        jerk,
+        target_time,
+    )
+}
+
+fn build_jerk_limited_report(
+    path_length: Real,
+    max_feed_rate: Real,
+    max_acceleration: Real,
+    jerk: Real,
+    target_time: Real,
+) -> Result<JerkLimitedFeedTimeReport, RouteCertificationError> {
     let peak_feed_rate = (jerk.clone() * target_time.clone() * target_time.clone()
         / Real::from(16))
     .map_err(|_| RouteCertificationError::UnsupportedDivision)?;
@@ -130,6 +290,29 @@ pub fn certify_symmetric_jerk_limited_feed_time(
         peak_acceleration,
         certification: certify_candidate(&prepared, &context),
     })
+}
+
+fn route_path_length(
+    route: &[FeedPathElement],
+    policy: PredicatePolicy,
+) -> Result<Real, RouteCertificationError> {
+    route.iter().try_fold(Real::zero(), |sum, element| {
+        element_length(element, policy).map(|length| sum + length)
+    })
+}
+
+fn element_length(
+    element: &FeedPathElement,
+    policy: PredicatePolicy,
+) -> Result<Real, RouteCertificationError> {
+    match element {
+        FeedPathElement::Line(segment) => segment
+            .axis_length(policy)
+            .ok_or(RouteCertificationError::UnsupportedRouteGeometry),
+        FeedPathElement::ExplicitArc(arc) => arc
+            .certified_sweep_length()
+            .ok_or(RouteCertificationError::UnsupportedRouteGeometry),
+    }
 }
 
 fn peak_feed_limit_constraint(

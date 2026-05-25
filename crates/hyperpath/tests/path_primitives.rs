@@ -6,14 +6,14 @@ use hyperpath::{
     ClearanceStatus, ConstructionStamp, CubicBezier, DrillBoardClearanceReport,
     ExplicitArcArrangementClass, ExplicitArcIntersectionClass, ExplicitArcOverlapClass,
     ExplicitArcPointClassification, ExplicitArcSweepClass, ExplicitArcTangentClass,
-    ExplicitCircleRelationClass, ExplicitCircularArc, HigherOrderBezier, HigherOrderBezierError,
-    InfillGraphError, JerkLimitedFeedTimeReport, LineArcArrangementEventClass,
-    LineArrangementError, LineArrangementEventClass, LineExplicitArcIntersectionClass,
-    LineOffsetError, LinePathSegment, LineQuadraticBezierIntersectionClass,
-    LineRationalQuadraticBezierIntersectionClass, MeanderError, MeanderKeepout, MeanderObstacle,
-    MeanderPlacementCandidate, NetId, OffsetSide, PathProvenance, PathSourceFormat,
-    PcbBoardOutline, PcbCardinalRectPad, PcbCircularBoardOutline, PcbCircularPad,
-    PcbConvexBoardOutline, PcbConvexPad, PcbObroundPad, PcbOrientedRectPad,
+    ExplicitCircleRelationClass, ExplicitCircularArc, FeedPathElement, HigherOrderBezier,
+    HigherOrderBezierError, InfillGraphError, JerkLimitedFeedTimeReport,
+    LineArcArrangementEventClass, LineArrangementError, LineArrangementEventClass,
+    LineExplicitArcIntersectionClass, LineOffsetError, LinePathSegment,
+    LineQuadraticBezierIntersectionClass, LineRationalQuadraticBezierIntersectionClass,
+    MeanderError, MeanderKeepout, MeanderObstacle, MeanderPlacementCandidate, NetId, OffsetSide,
+    PathProvenance, PathSourceFormat, PcbBoardOutline, PcbCardinalRectPad, PcbCircularBoardOutline,
+    PcbCircularPad, PcbConvexBoardOutline, PcbConvexPad, PcbObroundPad, PcbOrientedRectPad,
     PcbOrthogonalBoardOutline, PcbOrthogonalPad, PcbRectPad, PcbRoundedRectPad, PcbTrace,
     PcbViaStack, PocketLinkGraphError, PocketPlanError, PocketPlanStopReason, PocketRingSide,
     QuadraticBezier, RationalQuadraticBezier, RationalQuadraticBezierError, RectangularPocket,
@@ -33,17 +33,18 @@ use hyperpath::{
     build_rectangular_pocket_link_graph, build_rectangular_pocket_plan,
     build_rectangular_serpentine_infill_graph, build_rectangular_support_plan,
     build_single_detour_meander, build_tangent_alignment_problem,
-    certify_acceleration_limited_feed_time, certify_constant_feed_time,
+    certify_acceleration_limited_feed_time, certify_acceleration_limited_feed_time_for_path,
+    certify_constant_feed_time, certify_constant_feed_time_for_path,
     certify_differential_pair_skew, certify_g1_chain, certify_g1_join_candidate,
     certify_length_extension, certify_symmetric_jerk_limited_feed_time,
-    certify_tangent_alignment_candidate, check_cardinal_rect_pad_board_clearance,
-    check_circular_pad_board_clearance, check_circular_pad_circular_board_clearance,
-    check_convex_pad_board_clearance, check_obround_pad_board_clearance,
-    check_oriented_rect_pad_board_clearance, check_orthogonal_pad_board_clearance,
-    check_rect_pad_board_clearance, check_rounded_rect_pad_board_clearance,
-    check_trace_board_clearance, check_trace_cardinal_rect_pad_clearance,
-    check_trace_circular_board_clearance, check_trace_clearance,
-    check_trace_convex_board_clearance, check_trace_convex_pad_clearance,
+    certify_symmetric_jerk_limited_feed_time_for_path, certify_tangent_alignment_candidate,
+    check_cardinal_rect_pad_board_clearance, check_circular_pad_board_clearance,
+    check_circular_pad_circular_board_clearance, check_convex_pad_board_clearance,
+    check_obround_pad_board_clearance, check_oriented_rect_pad_board_clearance,
+    check_orthogonal_pad_board_clearance, check_rect_pad_board_clearance,
+    check_rounded_rect_pad_board_clearance, check_trace_board_clearance,
+    check_trace_cardinal_rect_pad_clearance, check_trace_circular_board_clearance,
+    check_trace_clearance, check_trace_convex_board_clearance, check_trace_convex_pad_clearance,
     check_trace_obround_pad_clearance, check_trace_oriented_rect_pad_clearance,
     check_trace_orthogonal_board_clearance, check_trace_orthogonal_pad_clearance,
     check_trace_pad_clearance, check_trace_rect_pad_clearance,
@@ -3865,6 +3866,30 @@ fn constant_feed_time_replays_exact_axis_length() {
 }
 
 #[test]
+fn mixed_path_constant_feed_replays_exact_arc_length() {
+    let radius = (r(10) / Real::pi()).unwrap();
+    let arc = ExplicitCircularArc::new(
+        p(0, 0),
+        radius.clone(),
+        Point2::new(radius.clone(), r(0)),
+        Point2::new(-radius, r(0)),
+        ArcDirection::Ccw,
+    )
+    .unwrap();
+    let route = vec![
+        FeedPathElement::Line(LinePathSegment::new(p(0, 0), p(5, 0))),
+        FeedPathElement::ExplicitArc(arc),
+    ];
+    let report =
+        certify_constant_feed_time_for_path(&route, r(5), r(3), PredicatePolicy::default())
+            .unwrap();
+
+    assert_eq!(report.path_length, r(15));
+    assert_eq!(report.feed_rate, r(5));
+    assert!(report.certification.all_satisfied());
+}
+
+#[test]
 fn constant_feed_time_rejects_invalid_inputs() {
     let route = vec![LinePathSegment::new(p(0, 0), p(10, 0))];
     let diagonal = vec![LinePathSegment::new(p(0, 0), p(3, 4))];
@@ -3888,6 +3913,19 @@ fn constant_feed_time_rejects_invalid_inputs() {
     );
     assert_eq!(
         certify_constant_feed_time(&diagonal, r(1), r(5), PredicatePolicy::default()).unwrap_err(),
+        RouteCertificationError::UnsupportedRouteGeometry
+    );
+}
+
+#[test]
+fn mixed_path_feed_replay_rejects_unsupported_line_elements() {
+    let diagonal = vec![FeedPathElement::Line(LinePathSegment::new(
+        p(0, 0),
+        p(3, 4),
+    ))];
+    assert_eq!(
+        certify_constant_feed_time_for_path(&diagonal, r(1), r(5), PredicatePolicy::default())
+            .unwrap_err(),
         RouteCertificationError::UnsupportedRouteGeometry
     );
 }
@@ -3941,6 +3979,64 @@ fn acceleration_limited_feed_time_replays_triangular_and_trapezoidal_profiles() 
     )
     .unwrap();
     assert!(wrong.certification.has_certified_violation());
+}
+
+#[test]
+fn mixed_path_acceleration_and_jerk_feed_replay_accept_curves() {
+    let radius = (r(4) / Real::pi()).unwrap();
+    let half_arc = ExplicitCircularArc::new(
+        p(0, 0),
+        radius.clone(),
+        Point2::new(radius.clone(), r(0)),
+        Point2::new(-radius, r(0)),
+        ArcDirection::Ccw,
+    )
+    .unwrap();
+    let acceleration_route = vec![
+        FeedPathElement::Line(LinePathSegment::new(p(0, 0), p(5, 0))),
+        FeedPathElement::ExplicitArc(half_arc),
+    ];
+    let triangular = certify_acceleration_limited_feed_time_for_path(
+        &acceleration_route,
+        r(10),
+        r(4),
+        r(3),
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert_eq!(triangular.path_length, r(9));
+    assert_eq!(
+        triangular.profile,
+        AccelerationLimitedFeedProfileClass::Triangular
+    );
+    assert!(triangular.certification.all_satisfied());
+
+    let jerk_radius = (r(10) / Real::pi()).unwrap();
+    let jerk_arc = ExplicitCircularArc::new(
+        p(0, 0),
+        jerk_radius.clone(),
+        Point2::new(jerk_radius.clone(), r(0)),
+        Point2::new(-jerk_radius, r(0)),
+        ArcDirection::Ccw,
+    )
+    .unwrap();
+    let jerk_route = vec![
+        FeedPathElement::Line(LinePathSegment::new(p(0, 0), p(98, 0))),
+        FeedPathElement::ExplicitArc(jerk_arc),
+    ];
+    let jerk = certify_symmetric_jerk_limited_feed_time_for_path(
+        &jerk_route,
+        r(18),
+        r(6),
+        r(2),
+        r(12),
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert_eq!(jerk.path_length, r(108));
+    assert_eq!(jerk.peak_feed_rate, r(18));
+    assert_eq!(jerk.peak_acceleration, r(6));
+    assert!(jerk.certification.all_satisfied());
 }
 
 #[test]
