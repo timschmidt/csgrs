@@ -12,10 +12,10 @@ use hypervoxel::{
     SparseVoxelGrid, StorageReplayStatus, VoxelAddress, VoxelAggregateFacts, VoxelCell,
     VoxelHandoffDomain, VoxelHandoffManifest, VoxelMemoryBudgetManifest, VoxelSideTables,
     VoxelizationAudit, VoxelizationPolicy, audit_chunk_paged_material_regions,
-    diff_chunk_paged_sparse_grids, diff_sparse_grids, extract_exposed_faces,
-    extract_exposed_faces_with_report, greedy_face_patch_plan, lookup_material_display_colors,
-    lossy_obj_from_quad_mesh, lossy_quad_mesh_from_faces, query_material_regions,
-    report_material_region_metadata, sample_manhattan_distance_field,
+    audit_chunk_paged_process_states, diff_chunk_paged_sparse_grids, diff_sparse_grids,
+    extract_exposed_faces, extract_exposed_faces_with_report, greedy_face_patch_plan,
+    lookup_material_display_colors, lossy_obj_from_quad_mesh, lossy_quad_mesh_from_faces,
+    query_material_regions, report_material_region_metadata, sample_manhattan_distance_field,
     sample_signed_manhattan_distance_field, select_lod_cells, voxel_neighbors6, voxelize_exact_box,
     voxelize_exact_convex_halfspace_set, voxelize_exact_halfspace,
 };
@@ -451,6 +451,118 @@ fn deterministic_snapshot_is_stable_and_includes_side_tables() {
     assert!(text.contains("material 9"));
     assert!(text.contains("field_sample 3"));
     assert!(text.contains("process_state 5"));
+}
+
+#[test]
+fn chunk_paged_process_state_audit_preserves_side_table_boundaries() {
+    let mut grid = SparseVoxelGrid::new(frame());
+    grid.set(
+        VoxelAddress::new(2, [1, 1, 1]).unwrap(),
+        VoxelCell::process_state(ProcessStateId(5)),
+    )
+    .unwrap();
+    grid.set(
+        VoxelAddress::new(2, [2, 1, 1]).unwrap(),
+        VoxelCell::process_state(ProcessStateId(6)),
+    )
+    .unwrap();
+    let mut side_tables = VoxelSideTables::default();
+    side_tables.insert_process_state(
+        ProcessStateId(5),
+        ProcessStateRecord {
+            label: "gelled".into(),
+            provenance: "fixture".into(),
+        },
+    );
+    side_tables.insert_process_state(
+        ProcessStateId(6),
+        ProcessStateRecord {
+            label: String::new(),
+            provenance: String::new(),
+        },
+    );
+
+    let paged = ChunkPagedSparseGrid::from_sparse_grid(&grid, ChunkShape::new(1).unwrap()).unwrap();
+    let audit = audit_chunk_paged_process_states(&paged, &side_tables);
+    assert_eq!(audit.tested_pages, 2);
+    assert_eq!(audit.tested_cells, 2);
+    assert_eq!(audit.process_payload_cells, 2);
+    assert_eq!(audit.non_process_payload_cells, 0);
+    assert_eq!(
+        audit.referenced_states,
+        [ProcessStateId(5), ProcessStateId(6)].into()
+    );
+    assert_eq!(audit.resolved_records, 2);
+    assert_eq!(audit.empty_labels, [ProcessStateId(6)].into());
+    assert_eq!(audit.empty_provenance, [ProcessStateId(6)].into());
+    assert!(!audit.is_complete());
+    assert!(!audit.exact_paged_process_audit_ready);
+
+    grid.set(
+        VoxelAddress::new(2, [3, 1, 1]).unwrap(),
+        VoxelCell::process_state(ProcessStateId(7)),
+    )
+    .unwrap();
+    grid.set(
+        VoxelAddress::new(2, [0, 1, 1]).unwrap(),
+        VoxelCell::unknown(),
+    )
+    .unwrap();
+    grid.set(
+        VoxelAddress::new(2, [0, 2, 1]).unwrap(),
+        VoxelCell::lossy_adapter_value(12),
+    )
+    .unwrap();
+    let blocked_paged =
+        ChunkPagedSparseGrid::from_sparse_grid(&grid, ChunkShape::new(1).unwrap()).unwrap();
+    let blocked = audit_chunk_paged_process_states(&blocked_paged, &side_tables);
+    assert_eq!(blocked.process_payload_cells, 3);
+    assert_eq!(blocked.non_process_payload_cells, 2);
+    assert_eq!(blocked.missing_records, [ProcessStateId(7)].into());
+    assert_eq!(blocked.unknown_cells, 1);
+    assert_eq!(blocked.lossy_cells, 1);
+    assert!(!blocked.exact_paged_process_audit_ready);
+
+    side_tables.insert_process_state(
+        ProcessStateId(6),
+        ProcessStateRecord {
+            label: "cured".into(),
+            provenance: "fixture".into(),
+        },
+    );
+    let ready_grid = {
+        let mut ready = SparseVoxelGrid::new(frame());
+        ready
+            .set(
+                VoxelAddress::new(2, [1, 1, 1]).unwrap(),
+                VoxelCell::process_state(ProcessStateId(5)),
+            )
+            .unwrap();
+        ready
+            .set(
+                VoxelAddress::new(2, [2, 1, 1]).unwrap(),
+                VoxelCell::process_state(ProcessStateId(6)),
+            )
+            .unwrap();
+        ready
+    };
+    let ready_paged =
+        ChunkPagedSparseGrid::from_sparse_grid(&ready_grid, ChunkShape::new(1).unwrap()).unwrap();
+    let ready = audit_chunk_paged_process_states(&ready_paged, &side_tables);
+    assert!(ready.is_complete());
+    assert!(ready.exact_paged_process_audit_ready);
+
+    let empty_paged = ChunkPagedSparseGrid::from_sparse_grid(
+        &SparseVoxelGrid::new(frame()),
+        ChunkShape::new(1).unwrap(),
+    )
+    .unwrap();
+    let empty = audit_chunk_paged_process_states(&empty_paged, &side_tables);
+    assert_eq!(empty.tested_pages, 0);
+    assert_eq!(empty.tested_cells, 0);
+    assert!(!empty.has_process_states);
+    assert!(!empty.is_complete());
+    assert!(!empty.exact_paged_process_audit_ready);
 }
 
 #[test]

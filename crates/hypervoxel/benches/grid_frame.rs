@@ -13,15 +13,16 @@ use hypervoxel::{
     ImageStackContainer, ImageStackManifest, LegacyAdapterKind, LegacyAdapterStatus, LengthUnit,
     MaterialDisplayPalette, MaterialRegionId, MaterialRegionRecord, PreparedExactTriangleSolidMesh,
     PreparedSparseVoxelGridExt, PreparedVoxelGrid, PreviewExportFormat, PreviewExportManifest,
-    PreviewScalarPolicy, ProcessGridArtifact, ProcessGridRole, QuantizationPolicy, QueryRegion,
-    SignedAxis, SparseVoxelGrid, SupportDirection, SvoVoxelGrid, SweptVolumeProvenance,
-    VoxelAddress, VoxelArtifactId, VoxelArtifactManifest, VoxelArtifactRole, VoxelCandidateKind,
-    VoxelCandidateManifest, VoxelCell, VoxelChannelMapping, VoxelEditBatch, VoxelFieldCouplingKind,
-    VoxelFieldCouplingManifest, VoxelHandoffDomain, VoxelHandoffManifest, VoxelIndexConvention,
-    VoxelIoCompression, VoxelIoMetadata, VoxelMemoryBudgetManifest, VoxelSideTables,
-    VoxelSliceNaming, VoxelSliceOrdering, VoxelSpatialAggregateFacts, VoxelTraceDimension,
-    VoxelTraceManifest, VoxelizationAudit, VoxelizationPolicy, audit_chunk_paged_field_samples,
-    audit_chunk_paged_material_regions, chunk_paged_greedy_face_patch_plan_with_report,
+    PreviewScalarPolicy, ProcessGridArtifact, ProcessGridRole, ProcessStateId, ProcessStateRecord,
+    QuantizationPolicy, QueryRegion, SignedAxis, SparseVoxelGrid, SupportDirection, SvoVoxelGrid,
+    SweptVolumeProvenance, VoxelAddress, VoxelArtifactId, VoxelArtifactManifest, VoxelArtifactRole,
+    VoxelCandidateKind, VoxelCandidateManifest, VoxelCell, VoxelChannelMapping, VoxelEditBatch,
+    VoxelFieldCouplingKind, VoxelFieldCouplingManifest, VoxelHandoffDomain, VoxelHandoffManifest,
+    VoxelIndexConvention, VoxelIoCompression, VoxelIoMetadata, VoxelMemoryBudgetManifest,
+    VoxelSideTables, VoxelSliceNaming, VoxelSliceOrdering, VoxelSpatialAggregateFacts,
+    VoxelTraceDimension, VoxelTraceManifest, VoxelizationAudit, VoxelizationPolicy,
+    audit_chunk_paged_field_samples, audit_chunk_paged_material_regions,
+    audit_chunk_paged_process_states, chunk_paged_greedy_face_patch_plan_with_report,
     classify_chunk_paged_support_mask, classify_support_mask, continuous_field_address,
     diff_chunk_paged_sparse_grids, diff_sparse_grids,
     extract_chunk_paged_exposed_faces_with_report, extract_exposed_faces,
@@ -696,6 +697,18 @@ fn bench_batches_field_facts_and_sweeps(c: &mut Criterion) {
             provenance: "bench".into(),
         },
     );
+    grid.set(
+        VoxelAddress::new(6, [1, 1, 0]).unwrap(),
+        VoxelCell::process_state(ProcessStateId(3)),
+    )
+    .unwrap();
+    side_tables.insert_process_state(
+        ProcessStateId(3),
+        ProcessStateRecord {
+            label: "bench-process".into(),
+            provenance: "bench".into(),
+        },
+    );
     c.bench_function("field_sample_interval_aggregate", |b| {
         b.iter(|| {
             let facts = FieldAggregateFacts::from_grid(&grid, &side_tables).unwrap();
@@ -770,6 +783,19 @@ fn bench_batches_field_facts_and_sweeps(c: &mut Criterion) {
                 report.material_payload_cells,
                 report.metadata.resolved_records,
                 report.exact_paged_material_audit_ready,
+            )
+        })
+    });
+    c.bench_function("chunk_paged_process_state_audit", |b| {
+        let paged =
+            ChunkPagedSparseGrid::from_sparse_grid(&grid, ChunkShape::new(3).unwrap()).unwrap();
+        b.iter(|| {
+            let report = audit_chunk_paged_process_states(&paged, &side_tables);
+            (
+                report.tested_pages,
+                report.process_payload_cells,
+                report.resolved_records,
+                report.exact_paged_process_audit_ready,
             )
         })
     });

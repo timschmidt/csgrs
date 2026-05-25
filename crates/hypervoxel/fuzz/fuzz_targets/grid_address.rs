@@ -16,7 +16,7 @@ use hypervoxel::{
     ImageStackManifest, LegacyAdapterKind, LegacyAdapterStatus, LengthUnit,
     MaterialDisplayPalette, MaterialRegionId, MaterialRegionRecord, PreparedSparseVoxelGridExt,
     PreparedVoxelGrid, PreviewExportFormat, PreviewExportManifest, PreviewScalarPolicy, ProcessGridArtifact,
-    ProcessGridRole, QuantizationPolicy, QueryRegion, SignedAxis, SupportDirection,
+    ProcessGridRole, ProcessStateId, ProcessStateRecord, QuantizationPolicy, QueryRegion, SignedAxis, SupportDirection,
     SparseVoxelGrid, SvoVoxelGrid, SweptVolumeProvenance, VoxelAddress, VoxelArtifactId, VoxelArtifactManifest,
     VoxelArtifactRole, VoxelCandidateKind, VoxelCandidateManifest, VoxelCell, VoxelChannelMapping, VoxelEditBatch,
     VoxelFieldCouplingKind, VoxelFieldCouplingManifest, VoxelHandoffDomain, VoxelHandoffManifest,
@@ -24,6 +24,7 @@ use hypervoxel::{
     VoxelSideTables, VoxelSliceNaming, VoxelSliceOrdering, VoxelSpatialAggregateFacts,
     VoxelTraceDimension, VoxelTraceManifest, VoxelizationAudit, VoxelizationPolicy,
     audit_chunk_paged_field_samples, audit_chunk_paged_material_regions,
+    audit_chunk_paged_process_states,
     chunk_paged_greedy_face_patch_plan_with_report, classify_chunk_paged_support_mask,
     classify_support_mask, continuous_field_address, diff_chunk_paged_sparse_grids,
     extract_chunk_paged_exposed_faces_with_report,
@@ -1138,6 +1139,21 @@ fuzz_target!(|data: (u8, u64, u64, u64)| {
             },
         },
     );
+    side_tables.insert_process_state(
+        ProcessStateId(9),
+        ProcessStateRecord {
+            label: if depth_raw & 4 == 0 {
+                "fuzz-process".into()
+            } else {
+                String::new()
+            },
+            provenance: if depth_raw & 8 == 0 {
+                "fuzz".into()
+            } else {
+                String::new()
+            },
+        },
+    );
     let field_facts = FieldAggregateFacts::from_grid(&edited, &side_tables).unwrap();
     if field_facts.certified_field_bounds_ready {
         assert!(field_facts.has_field_samples);
@@ -1182,6 +1198,42 @@ fuzz_target!(|data: (u8, u64, u64, u64)| {
     assert_eq!(empty_paged_field.query, empty_field_query);
     assert_eq!(empty_paged_field.aggregate, empty_field_facts);
     assert!(!empty_paged_field.exact_paged_field_audit_ready);
+    let mut process_grid =
+        SparseVoxelGrid::new(GridFrame::builder().depth(small_depth).build().unwrap());
+    process_grid
+        .set(
+            VoxelAddress::new(small_depth, [0, 0, 0]).unwrap(),
+            VoxelCell::process_state(ProcessStateId(9)),
+        )
+        .unwrap();
+    let paged_process_grid = ChunkPagedSparseGrid::from_sparse_grid(
+        &process_grid,
+        ChunkShape::new(small_depth.min(2)).unwrap(),
+    )
+    .unwrap();
+    let process_audit = audit_chunk_paged_process_states(&paged_process_grid, &side_tables);
+    assert_eq!(process_audit.process_payload_cells, 1);
+    assert_eq!(process_audit.non_process_payload_cells, 0);
+    assert_eq!(process_audit.has_process_states, true);
+    assert_eq!(
+        process_audit.exact_paged_process_audit_ready,
+        paged_process_grid.report().exact_chunk_storage_ready
+            && process_audit.tested_cells > 0
+            && process_audit.unknown_cells == 0
+            && process_audit.lossy_cells == 0
+            && process_audit.is_complete()
+    );
+    let empty_process_audit = audit_chunk_paged_process_states(
+        &ChunkPagedSparseGrid::from_sparse_grid(
+            &SparseVoxelGrid::new(report.frame.clone()),
+            ChunkShape::new(small_depth.min(2)).unwrap(),
+        )
+        .unwrap(),
+        &side_tables,
+    );
+    assert_eq!(empty_process_audit.tested_cells, 0);
+    assert!(!empty_process_audit.has_process_states);
+    assert!(!empty_process_audit.exact_paged_process_audit_ready);
     let vector_envelope = CertifiedVectorInterval {
         components: vec![CertifiedFieldInterval {
             lower: Real::from(0),
