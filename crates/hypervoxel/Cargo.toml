@@ -30,9 +30,11 @@ default-members = ["voxelis", "voxelis-memory"]
 hyperreal = { path = "../hyperreal" }
 hyperlattice = { path = "../hyperlattice" }
 hyperlimit = { path = "../hyperlimit" }
+hypermesh = { path = "../hypermesh", optional = true }
 # hyperreal = { version = "0.13.0" }
 # hyperlattice = { version = "0.6.0" }
 # hyperlimit = { version = "0.4.0" }
+# hypermesh = { version = "0.3.0", optional = true }
 voxelis = { path = "voxelis", optional = true }
 # voxelis = { version = "25.5.0", optional = true }
 glam = { workspace = true, optional = true }
@@ -43,6 +45,7 @@ proptest = "1.7.0"
 
 [features]
 default = []
+hypermesh-adapter = ["dep:hypermesh"]
 legacy-voxelis = ["dep:voxelis", "dep:glam"]
 
 [[bench]]

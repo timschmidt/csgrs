@@ -38,6 +38,8 @@ mod field;
 mod frame;
 mod halfspace;
 mod handoff;
+#[cfg(feature = "hypermesh-adapter")]
+mod hypermesh_adapter;
 mod io_manifest;
 mod legacy;
 mod lod;
@@ -114,6 +116,11 @@ pub use halfspace::{
 };
 pub use handoff::{
     SideTableLinkStatus, VoxelHandoffDomain, VoxelHandoffManifest, VoxelHandoffReport,
+};
+#[cfg(feature = "hypermesh-adapter")]
+pub use hypermesh_adapter::{
+    HypermeshTriangleSolidAdapter, HypermeshTriangleSolidAdapterBlocker,
+    HypermeshTriangleSolidAdapterReport, adapt_hypermesh_exact_solid,
 };
 pub use io_manifest::{
     ImageStackContainer, ImageStackManifest, VoxelChannelMapping, VoxelIndexConvention,

@@ -124,6 +124,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "hypermesh"
+version = "0.3.0"
+dependencies = [
+ "hyperlattice",
+ "hyperlimit",
+ "hyperreal",
+]
+
+[[package]]
 name = "hyperreal"
 version = "0.13.0"
 dependencies = [
@@ -139,6 +148,7 @@ version = "0.3.0"
 dependencies = [
  "hyperlattice",
  "hyperlimit",
+ "hypermesh",
  "hyperreal",
 ]
 
@@ -147,6 +157,7 @@ name = "hypervoxel-fuzz"
 version = "0.1.0"
 dependencies = [
  "arbitrary",
+ "hypermesh",
  "hyperreal",
  "hypervoxel",
  "libfuzzer-sys",

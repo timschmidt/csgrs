@@ -14,10 +14,12 @@ arbitrary = { version = "1", features = ["derive"] }
 libfuzzer-sys = "0.4"
 # Hyper sibling dependency switch: keep both local path and crates.io lines; do not remove either.
 # Development mode uses the local path lines. For release, comment those and uncomment the crates.io lines.
-hypervoxel = { path = ".." }
+hypervoxel = { path = "..", features = ["hypermesh-adapter"] }
 hyperreal = { path = "../../hyperreal" }
+hypermesh = { path = "../../hypermesh" }
 # hypervoxel = "0.3.0"
 # hyperreal = "0.13.0"
+# hypermesh = "0.3.0"
 
 [[bin]]
 name = "grid_address"
@@ -50,6 +52,13 @@ bench = false
 [[bin]]
 name = "prepared_triangle_solid_voxelization"
 path = "fuzz_targets/prepared_triangle_solid_voxelization.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "hypermesh_adapter"
+path = "fuzz_targets/hypermesh_adapter.rs"
 test = false
 doc = false
 bench = false

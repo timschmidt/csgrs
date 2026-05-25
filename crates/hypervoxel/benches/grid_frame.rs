@@ -1138,6 +1138,40 @@ fn bench_batches_field_facts_and_sweeps(c: &mut Criterion) {
     });
 }
 
+fn bench_hypermesh_exact_adapter(c: &mut Criterion) {
+    #[cfg(feature = "hypermesh-adapter")]
+    {
+        use hypermesh::exact::ExactMesh;
+        use hypervoxel::adapt_hypermesh_exact_solid;
+
+        let mesh = ExactMesh::from_i64_triangles(
+            &[
+                0, 0, 0, //
+                2, 0, 0, //
+                0, 2, 0, //
+                0, 0, 2,
+            ],
+            &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
+        )
+        .unwrap();
+        let handoff = mesh.solid_handoff().unwrap();
+        c.bench_function("hypermesh_exact_solid_adapter", |b| {
+            b.iter(|| {
+                adapt_hypermesh_exact_solid(
+                    &mesh,
+                    Some(&handoff),
+                    Some(GridSource::new("bench:hypermesh", 1)),
+                )
+                .unwrap()
+            })
+        });
+    }
+    #[cfg(not(feature = "hypermesh-adapter"))]
+    {
+        let _ = c;
+    }
+}
+
 criterion_group!(
     benches,
     bench_cell_bounds,
@@ -1146,6 +1180,7 @@ criterion_group!(
     bench_svo_path_copy_edits,
     bench_exposed_face_extraction,
     bench_connectivity_and_export_adapters,
-    bench_batches_field_facts_and_sweeps
+    bench_batches_field_facts_and_sweeps,
+    bench_hypermesh_exact_adapter
 );
 criterion_main!(benches);

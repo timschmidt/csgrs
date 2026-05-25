@@ -2965,6 +2965,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "hypermesh"
+version = "0.3.0"
+dependencies = [
+ "hyperlattice",
+ "hyperlimit",
+ "hyperreal",
+]
+
+[[package]]
 name = "hyperreal"
 version = "0.13.0"
 dependencies = [
@@ -2982,6 +2991,7 @@ dependencies = [
  "glam",
  "hyperlattice",
  "hyperlimit",
+ "hypermesh",
  "hyperreal",
  "proptest",
  "voxelis",
