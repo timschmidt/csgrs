@@ -6,7 +6,7 @@
 //! storage or frame semantics in this crate.
 
 use hypervoxel::{
-    ContinuousFieldVoxelCell, ContinuousFieldVoxelManifest, GridFrame, HypervoxelError,
+    ContinuousFieldVoxelCell, ContinuousFieldVoxelManifest, GridFrame, GridSource, HypervoxelError,
     HypervoxelResult, MaterialRegionId, VoxelCell, VoxelPayload, continuous_field_address,
 };
 
@@ -33,10 +33,15 @@ pub fn continuous_field_manifest_from_sdf(
             voxel_cell_from_sdf(cell.occupancy, material),
         ));
     }
+    let source = report
+        .grid
+        .source
+        .as_ref()
+        .map(|source| GridSource::new(source.id.clone(), source.version));
     Ok(ContinuousFieldVoxelManifest {
         frame,
-        source: None,
-        expected_source: None,
+        source: source.clone(),
+        expected_source: source,
         expected_cell_count: report.cell_count,
         cells,
     })
