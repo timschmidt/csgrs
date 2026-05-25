@@ -1053,6 +1053,76 @@ fn svo_dag_reuses_collapsed_empty_subtrees_and_preserves_aggregates() {
 }
 
 #[test]
+fn svo_sparse_replay_expands_collapsed_leaves_and_reports_blockers() {
+    let frame = frame(3);
+    let mut grid = SvoVoxelGrid::new(frame.clone());
+    let coarse = VoxelAddress::new(1, [0, 0, 0]).unwrap();
+    let far = VoxelAddress::new(3, [7, 7, 7]).unwrap();
+    grid.set(coarse, VoxelCell::material(MaterialRegionId(3)))
+        .unwrap();
+    grid.set(
+        far,
+        VoxelCell::boundary(VoxelPayload::MaterialRegion(MaterialRegionId(4))),
+    )
+    .unwrap();
+
+    let (sparse, replay) = grid.replay_sparse_grid_with_report().unwrap();
+    assert_eq!(replay.frame_depth, 3);
+    assert_eq!(replay.logical_leaf_cells, 512);
+    assert!(replay.storage.exact_dag_replay_ready);
+    assert!(replay.aggregate_replay_matches_root);
+    assert!(replay.exact_sparse_replay_ready);
+    assert_eq!(replay.expanded_non_empty_leaf_cells, sparse.len());
+    assert_eq!(replay.materialized_sparse_cells, sparse.len());
+    assert_eq!(replay.exact_payload_cells, sparse.len());
+    assert_eq!(replay.unknown_leaf_cells, 0);
+    assert_eq!(replay.lossy_leaf_cells, 0);
+    assert!(replay.max_expanded_remaining_depth > 0);
+    assert_eq!(
+        sparse
+            .get(VoxelAddress::new(3, [0, 0, 0]).unwrap())
+            .unwrap(),
+        VoxelCell::material(MaterialRegionId(3))
+    );
+    assert_eq!(
+        sparse
+            .get(VoxelAddress::new(3, [3, 3, 3]).unwrap())
+            .unwrap(),
+        VoxelCell::material(MaterialRegionId(3))
+    );
+    assert_eq!(sparse.get(far).unwrap().occupancy, OccupancyState::Boundary);
+    assert_eq!(
+        sparse
+            .get(VoxelAddress::new(3, [4, 4, 4]).unwrap())
+            .unwrap(),
+        VoxelCell::empty()
+    );
+
+    let empty = SvoVoxelGrid::new(frame.clone());
+    let (empty_sparse, empty_replay) = empty.replay_sparse_grid_with_report().unwrap();
+    assert_eq!(empty_sparse.len(), 0);
+    assert_eq!(empty_replay.skipped_empty_leaf_cells, 512);
+    assert!(empty_replay.aggregate_replay_matches_root);
+    assert!(!empty_replay.storage.has_materialized_evidence);
+    assert!(!empty_replay.exact_sparse_replay_ready);
+
+    let mut blocked = SvoVoxelGrid::new(frame);
+    blocked
+        .set(
+            VoxelAddress::new(2, [1, 1, 1]).unwrap(),
+            VoxelCell::lossy_adapter_value(9),
+        )
+        .unwrap();
+    let (blocked_sparse, blocked_replay) = blocked.replay_sparse_grid_with_report().unwrap();
+    assert_eq!(blocked_sparse.len(), 8);
+    assert_eq!(blocked_replay.lossy_leaf_cells, 8);
+    assert_eq!(blocked_replay.exact_payload_cells, 0);
+    assert!(blocked_replay.aggregate_replay_matches_root);
+    assert!(!blocked_replay.storage.exact_dag_replay_ready);
+    assert!(!blocked_replay.exact_sparse_replay_ready);
+}
+
+#[test]
 fn voxelization_report_exposes_freshness_and_legacy_status() {
     let frame = frame(2);
     let aggregate = VoxelAggregateFacts::from_cells([&VoxelCell::material(MaterialRegionId(3))]);

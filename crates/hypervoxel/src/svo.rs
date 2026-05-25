@@ -11,8 +11,8 @@
 use std::collections::BTreeMap;
 
 use crate::{
-    GridFrame, HypervoxelError, HypervoxelResult, VoxelAddress, VoxelAggregateFacts, VoxelCell,
-    VoxelEditReport,
+    GridFrame, HypervoxelError, HypervoxelResult, OccupancyState, SparseVoxelGrid, VoxelAddress,
+    VoxelAggregateFacts, VoxelCell, VoxelEditReport,
 };
 
 /// Interned SVO node identifier.
@@ -115,6 +115,61 @@ pub struct SvoStorageReport {
     pub exact_dag_replay_ready: bool,
 }
 
+/// Exact sparse-grid replay report for an interned SVO-DAG.
+///
+/// The SVO-DAG is a compressed representation; this report proves how it
+/// expands back to the canonical sparse-grid object facts. Empty collapsed
+/// leaves remain implicit sparse absence, while non-empty collapsed leaves are
+/// expanded to full-resolution frame leaves. This follows Yap, "Towards Exact
+/// Geometric Computation," *Computational Geometry* 7(1-2), 1997: compression
+/// can accelerate and share storage, but exact consumers need a replayable
+/// object representation and explicit blockers. The path-copy/interner idea is
+/// inherited from voxel DAG work such as Kämpe, Sintorn, and Assarsson,
+/// "High Resolution Sparse Voxel DAGs," *ACM Transactions on Graphics* 32(4),
+/// 2013, but the readiness bit here is semantic, not a rendering claim.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct SvoSparseReplayReport {
+    /// Frame depth represented by the replay.
+    pub frame_depth: u8,
+    /// Logical full-resolution leaf cells represented by the frame.
+    pub logical_leaf_cells: usize,
+    /// Root SVO storage report used as source evidence.
+    pub storage: SvoStorageReport,
+    /// Number of SVO nodes visited by replay traversal.
+    pub visited_nodes: usize,
+    /// Number of branch nodes visited.
+    pub visited_branches: usize,
+    /// Number of leaf nodes visited.
+    pub visited_leaves: usize,
+    /// Full-resolution empty cells represented by skipped collapsed leaves.
+    pub skipped_empty_leaf_cells: usize,
+    /// Full-resolution non-empty cells represented by expanded leaves.
+    pub expanded_non_empty_leaf_cells: usize,
+    /// Explicit cells written to the sparse replay.
+    pub materialized_sparse_cells: usize,
+    /// Non-empty expanded cells whose payloads were exact-ready.
+    pub exact_payload_cells: usize,
+    /// Non-empty expanded cells carrying unknown evidence.
+    pub unknown_leaf_cells: usize,
+    /// Non-empty expanded cells carrying lossy adapter evidence.
+    pub lossy_leaf_cells: usize,
+    /// Largest remaining collapsed depth expanded by any non-empty leaf.
+    pub max_expanded_remaining_depth: u8,
+    /// Aggregate facts recomputed from the replayed sparse grid.
+    pub replay_aggregate: VoxelAggregateFacts,
+    /// Whether replayed sparse aggregate counts match the SVO root aggregate.
+    ///
+    /// Parent SVO aggregates can conservatively mark representation-level
+    /// mixed subtrees even when the fully expanded sparse replay has exact
+    /// filled/empty counts. This flag compares the semantic occupancy counts,
+    /// material set, and unknown/lossy/boundary blockers that must survive
+    /// replay, while both full aggregate packets remain available for audit.
+    pub aggregate_replay_matches_root: bool,
+    /// Whether the SVO-DAG can be consumed as exact sparse-grid replay
+    /// evidence.
+    pub exact_sparse_replay_ready: bool,
+}
+
 /// Exact semantic sparse voxel octree with DAG interning.
 #[derive(Clone, Debug, PartialEq)]
 pub struct SvoVoxelGrid {
@@ -191,6 +246,65 @@ impl SvoVoxelGrid {
             has_materialized_evidence,
             exact_dag_replay_ready,
         }
+    }
+
+    /// Replays this SVO-DAG into canonical sparse-grid storage with an exact
+    /// expansion report.
+    ///
+    /// This is intentionally a semantic replay operation rather than a fast
+    /// iterator over physical nodes. A collapsed non-empty leaf at a coarser
+    /// address represents every descendant full-resolution cell with the same
+    /// exact payload, so replay expands those descendants and then recomputes
+    /// sparse-grid aggregate facts. Collapsed empty leaves are counted but not
+    /// inserted, matching [`SparseVoxelGrid`]'s implicit-empty convention.
+    pub fn replay_sparse_grid_with_report(
+        &self,
+    ) -> HypervoxelResult<(SparseVoxelGrid, SvoSparseReplayReport)> {
+        let mut sparse = SparseVoxelGrid::new(self.frame.clone());
+        let mut counters = SvoSparseReplayCounters::default();
+        self.replay_node_to_sparse(
+            self.root,
+            0,
+            [0, 0, 0],
+            self.frame.depth(),
+            &mut sparse,
+            &mut counters,
+        )?;
+
+        let logical_leaf_cells = logical_leaf_cells(self.frame.depth());
+        let replay_aggregate = VoxelAggregateFacts::from_explicit_cells_in_frame(
+            logical_leaf_cells,
+            sparse.iter().map(|(_, cell)| cell),
+        )?;
+        let storage = self.report();
+        let aggregate_replay_matches_root =
+            replay_aggregate_matches_root(&replay_aggregate, &storage.root_aggregate);
+        let exact_sparse_replay_ready = storage.exact_dag_replay_ready
+            && aggregate_replay_matches_root
+            && counters.materialized_sparse_cells == counters.expanded_non_empty_leaf_cells
+            && counters.unknown_leaf_cells == 0
+            && counters.lossy_leaf_cells == 0
+            && counters.exact_payload_cells == counters.expanded_non_empty_leaf_cells;
+
+        let report = SvoSparseReplayReport {
+            frame_depth: self.frame.depth(),
+            logical_leaf_cells,
+            storage,
+            visited_nodes: counters.visited_nodes,
+            visited_branches: counters.visited_branches,
+            visited_leaves: counters.visited_leaves,
+            skipped_empty_leaf_cells: counters.skipped_empty_leaf_cells,
+            expanded_non_empty_leaf_cells: counters.expanded_non_empty_leaf_cells,
+            materialized_sparse_cells: counters.materialized_sparse_cells,
+            exact_payload_cells: counters.exact_payload_cells,
+            unknown_leaf_cells: counters.unknown_leaf_cells,
+            lossy_leaf_cells: counters.lossy_leaf_cells,
+            max_expanded_remaining_depth: counters.max_expanded_remaining_depth,
+            replay_aggregate,
+            aggregate_replay_matches_root,
+            exact_sparse_replay_ready,
+        };
+        Ok((sparse, report))
     }
 
     /// Reads a cell from the SVO, returning exact empty for collapsed empty
@@ -337,6 +451,117 @@ impl SvoVoxelGrid {
             self.set_recursive(children[child as usize], address, current_depth + 1, cell)?;
         Ok(self.intern_branch(children))
     }
+
+    fn replay_node_to_sparse(
+        &self,
+        node_id: SvoNodeId,
+        current_depth: u8,
+        origin: [u64; 3],
+        remaining_depth: u8,
+        sparse: &mut SparseVoxelGrid,
+        counters: &mut SvoSparseReplayCounters,
+    ) -> HypervoxelResult<()> {
+        counters.visited_nodes += 1;
+        match self.node(node_id) {
+            SvoNode::Leaf { cell, .. } => {
+                counters.visited_leaves += 1;
+                let represented_cells = logical_leaf_cells(remaining_depth);
+                if cell.occupancy == OccupancyState::Empty {
+                    counters.skipped_empty_leaf_cells += represented_cells;
+                    return Ok(());
+                }
+                counters.expanded_non_empty_leaf_cells += represented_cells;
+                counters.max_expanded_remaining_depth =
+                    counters.max_expanded_remaining_depth.max(remaining_depth);
+                let cell_report = cell.report();
+                counters.unknown_leaf_cells +=
+                    usize::from(cell_report.has_unknown) * represented_cells;
+                counters.lossy_leaf_cells += usize::from(cell_report.has_lossy) * represented_cells;
+                counters.exact_payload_cells +=
+                    usize::from(cell_report.exact_cell_evidence_ready) * represented_cells;
+                replay_leaf_block(
+                    sparse,
+                    self.frame.depth(),
+                    origin,
+                    remaining_depth,
+                    *cell,
+                    counters,
+                )
+            }
+            SvoNode::Branch { children, .. } => {
+                counters.visited_branches += 1;
+                let child_remaining = remaining_depth - 1;
+                let child_extent = 1_u64 << child_remaining;
+                for child in 0..8_u8 {
+                    let child_origin = [
+                        origin[0] + child_extent * u64::from(child & 0b001),
+                        origin[1] + child_extent * u64::from((child & 0b010) >> 1),
+                        origin[2] + child_extent * u64::from((child & 0b100) >> 2),
+                    ];
+                    self.replay_node_to_sparse(
+                        children[child as usize],
+                        current_depth + 1,
+                        child_origin,
+                        child_remaining,
+                        sparse,
+                        counters,
+                    )?;
+                }
+                Ok(())
+            }
+        }
+    }
+}
+
+#[derive(Default)]
+struct SvoSparseReplayCounters {
+    visited_nodes: usize,
+    visited_branches: usize,
+    visited_leaves: usize,
+    skipped_empty_leaf_cells: usize,
+    expanded_non_empty_leaf_cells: usize,
+    materialized_sparse_cells: usize,
+    exact_payload_cells: usize,
+    unknown_leaf_cells: usize,
+    lossy_leaf_cells: usize,
+    max_expanded_remaining_depth: u8,
+}
+
+fn replay_leaf_block(
+    sparse: &mut SparseVoxelGrid,
+    frame_depth: u8,
+    origin: [u64; 3],
+    remaining_depth: u8,
+    cell: VoxelCell,
+    counters: &mut SvoSparseReplayCounters,
+) -> HypervoxelResult<()> {
+    let extent = 1_u64 << remaining_depth;
+    for z in origin[2]..origin[2] + extent {
+        for y in origin[1]..origin[1] + extent {
+            for x in origin[0]..origin[0] + extent {
+                sparse.set(VoxelAddress::new(frame_depth, [x, y, z])?, cell)?;
+                counters.materialized_sparse_cells += 1;
+            }
+        }
+    }
+    Ok(())
+}
+
+fn replay_aggregate_matches_root(replay: &VoxelAggregateFacts, root: &VoxelAggregateFacts) -> bool {
+    replay.child_count == root.child_count
+        && replay.all_empty == root.all_empty
+        && replay.all_filled == root.all_filled
+        && replay.has_boundary == root.has_boundary
+        && replay.has_unknown == root.has_unknown
+        && replay.has_lossy == root.has_lossy
+        && replay.material_regions == root.material_regions
+        && replay.occupancy_interval.total_cells == root.occupancy_interval.total_cells
+        && replay.occupancy_interval.definite_filled_cells
+            == root.occupancy_interval.definite_filled_cells
+        && replay.occupancy_interval.possible_occupied_cells
+            == root.occupancy_interval.possible_occupied_cells
+        && replay.occupancy_interval.lower == root.occupancy_interval.lower
+        && replay.occupancy_interval.upper == root.occupancy_interval.upper
 }
 
 fn logical_leaf_cells(remaining_depth: u8) -> usize {

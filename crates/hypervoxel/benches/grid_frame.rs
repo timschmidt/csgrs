@@ -393,6 +393,26 @@ fn bench_svo_path_copy_edits(c: &mut Criterion) {
             )
         })
     });
+    c.bench_function("semantic_svo_sparse_replay", |b| {
+        let mut grid = SvoVoxelGrid::new(frame.clone());
+        for i in 0..64 {
+            let address = VoxelAddress::new(6, [i, (i * 3) % 64, (i * 7) % 64]).unwrap();
+            grid.set_with_report(
+                address,
+                VoxelCell::material(MaterialRegionId((i % 4) as u32)),
+            )
+            .unwrap();
+        }
+        b.iter(|| {
+            let (_, report) = grid.replay_sparse_grid_with_report().unwrap();
+            (
+                report.visited_nodes,
+                report.materialized_sparse_cells,
+                report.aggregate_replay_matches_root,
+                report.exact_sparse_replay_ready,
+            )
+        })
+    });
 }
 
 fn bench_exposed_face_extraction(c: &mut Criterion) {

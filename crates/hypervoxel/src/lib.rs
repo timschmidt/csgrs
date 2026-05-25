@@ -202,7 +202,9 @@ pub use surface_topology::{
     ExactSurfaceEdge, ExactSurfaceFaceKey, ExactSurfaceVertex, ExactVoxelSurfaceTopologyReport,
     audit_exact_voxel_surface_topology,
 };
-pub use svo::{SvoDagStats, SvoEditReport, SvoNodeId, SvoStorageReport, SvoVoxelGrid};
+pub use svo::{
+    SvoDagStats, SvoEditReport, SvoNodeId, SvoSparseReplayReport, SvoStorageReport, SvoVoxelGrid,
+};
 pub use trace::{VoxelTraceDimension, VoxelTraceManifest, VoxelTraceReport};
 pub use transform::{AxisPermutationTransform, SignedAxis};
 pub use triangle_mesh::{

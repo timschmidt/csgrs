@@ -227,6 +227,19 @@ fuzz_target!(|data: (u8, u64, u64, u64)| {
     assert!(svo_report.root_aggregate_covers_frame);
     assert!(svo_report.has_materialized_evidence);
     assert!(svo_report.exact_dag_replay_ready);
+    let (svo_sparse, svo_replay) = svo.replay_sparse_grid_with_report().unwrap();
+    assert_eq!(svo_sparse.get(svo_address).unwrap(), VoxelCell::material(MaterialRegionId(5)));
+    assert_eq!(svo_replay.logical_leaf_cells, svo_report.logical_leaf_cells);
+    assert!(svo_replay.aggregate_replay_matches_root);
+    assert_eq!(svo_replay.materialized_sparse_cells, svo_sparse.len());
+    assert_eq!(
+        svo_replay.exact_sparse_replay_ready,
+        svo_report.exact_dag_replay_ready
+            && svo_replay.aggregate_replay_matches_root
+            && svo_replay.unknown_leaf_cells == 0
+            && svo_replay.lossy_leaf_cells == 0
+            && svo_replay.exact_payload_cells == svo_replay.expanded_non_empty_leaf_cells
+    );
     assert_eq!(
         svo_report.logical_leaf_cells,
         usize::try_from(1_u64 << (3 * u32::from(small_depth))).unwrap()
