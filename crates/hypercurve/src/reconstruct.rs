@@ -18,7 +18,10 @@ use std::f64::consts::PI;
 
 use hyperreal::Real;
 
-use crate::{BulgeVertex2, Contour2, CurveError, CurveResult, CurveString2, FillRule, Point2};
+use crate::{
+    BulgeVertex2, Contour2, CurveError, CurveResult, CurveString2, FillRule, Point2,
+    RetainedImportFormat2, RetainedImportRecord2, RetainedSourceTolerance2,
+};
 
 const DEFAULT_DISTANCE_TOLERANCE: f64 = 1e-6;
 const DEFAULT_RELATIVE_TOLERANCE: f64 = 1e-9;
@@ -55,12 +58,14 @@ pub struct PolylineReconstructionOptions {
 #[derive(Clone, Debug, PartialEq)]
 pub struct FiniteCurveStringImport2 {
     curve: CurveString2,
+    record: RetainedImportRecord2,
 }
 
 /// Result of importing a finite closed line ring.
 #[derive(Clone, Debug, PartialEq)]
 pub struct FiniteContourImport2 {
     contour: Contour2,
+    record: RetainedImportRecord2,
 }
 
 impl PolylineReconstructionOptions {
@@ -109,9 +114,19 @@ impl FiniteCurveStringImport2 {
         &self.curve
     }
 
+    /// Returns retained import evidence for the finite source.
+    pub const fn record(&self) -> &RetainedImportRecord2 {
+        &self.record
+    }
+
     /// Consumes the import result and returns the native curve string.
     pub fn into_curve_string(self) -> CurveString2 {
         self.curve
+    }
+
+    /// Consumes the import result and returns both native geometry and evidence.
+    pub fn into_parts(self) -> (CurveString2, RetainedImportRecord2) {
+        (self.curve, self.record)
     }
 }
 
@@ -121,9 +136,19 @@ impl FiniteContourImport2 {
         &self.contour
     }
 
+    /// Returns retained import evidence for the finite source.
+    pub const fn record(&self) -> &RetainedImportRecord2 {
+        &self.record
+    }
+
     /// Consumes the import result and returns the native contour.
     pub fn into_contour(self) -> Contour2 {
         self.contour
+    }
+
+    /// Consumes the import result and returns both native geometry and evidence.
+    pub fn into_parts(self) -> (Contour2, RetainedImportRecord2) {
+        (self.contour, self.record)
     }
 }
 
@@ -234,20 +259,53 @@ impl CurveString2 {
     /// native segments. All non-duplicate points are promoted through [`Real`]
     /// before constructing exact-aware line segments.
     pub fn import_finite_line_string(points: &[[f64; 2]]) -> CurveResult<FiniteCurveStringImport2> {
+        Self::import_finite_line_string_with_source(
+            points,
+            RetainedImportFormat2::FinitePolyline,
+            0,
+            None,
+        )
+    }
+
+    /// Imports an open finite line string with retained source metadata.
+    ///
+    /// This method is the adapter hook for STEP/DXF readers that already
+    /// decoded a finite polyline or faceted curve preview. The source handle
+    /// and tolerance are retained as lossy import evidence; the emitted line
+    /// segments are still the only native geometry, and the record keeps
+    /// [`RetainedTopologyStatus::ImportedLossy`](crate::RetainedTopologyStatus::ImportedLossy)
+    /// visible to callers.
+    pub fn import_finite_line_string_with_source(
+        points: &[[f64; 2]],
+        format: RetainedImportFormat2,
+        source_index: u64,
+        source_tolerance: Option<RetainedSourceTolerance2>,
+    ) -> CurveResult<FiniteCurveStringImport2> {
         if points.len() < 2 {
             return Err(CurveError::InsufficientVertices);
         }
 
         let mut segments = Vec::with_capacity(points.len() - 1);
+        let mut discarded_duplicate_count = 0_usize;
         for edge in points.windows(2) {
             let start = point_from_finite_xy(edge[0])?;
             let end = point_from_finite_xy(edge[1])?;
             if let Ok(line) = crate::LineSeg2::try_new(start, end) {
                 segments.push(crate::Segment2::Line(line));
+            } else {
+                discarded_duplicate_count += 1;
             }
         }
         let curve = Self::try_new(segments)?;
-        Ok(FiniteCurveStringImport2 { curve })
+        let record = RetainedImportRecord2::try_new(
+            format,
+            source_index,
+            source_tolerance,
+            points.len(),
+            curve.len(),
+            discarded_duplicate_count,
+        )?;
+        Ok(FiniteCurveStringImport2 { curve, record })
     }
 
     /// Reconstructs an open curve string from sampled polyline points.
@@ -329,13 +387,40 @@ impl Contour2 {
     /// construction. The emitted native contour remains the exact topology
     /// carrier.
     pub fn import_finite_ring(points: &[[f64; 2]]) -> CurveResult<FiniteContourImport2> {
-        Self::import_finite_ring_with_fill_rule(points, FillRule::NonZero)
+        Self::import_finite_ring_with_source(
+            points,
+            FillRule::NonZero,
+            RetainedImportFormat2::FinitePolyline,
+            0,
+            None,
+        )
     }
 
     /// Imports a closed finite line ring with an explicit fill rule.
     pub fn import_finite_ring_with_fill_rule(
         points: &[[f64; 2]],
         fill_rule: FillRule,
+    ) -> CurveResult<FiniteContourImport2> {
+        Self::import_finite_ring_with_source(
+            points,
+            fill_rule,
+            RetainedImportFormat2::FinitePolyline,
+            0,
+            None,
+        )
+    }
+
+    /// Imports a closed finite ring with retained source metadata.
+    ///
+    /// A repeated closing point is counted as discarded source metadata in the
+    /// retained record. It is not allowed to become a zero-length native edge,
+    /// matching the exact-object boundary described by Yap.
+    pub fn import_finite_ring_with_source(
+        points: &[[f64; 2]],
+        fill_rule: FillRule,
+        format: RetainedImportFormat2,
+        source_index: u64,
+        source_tolerance: Option<RetainedSourceTolerance2>,
     ) -> CurveResult<FiniteContourImport2> {
         if points.len() < 3 {
             return Err(CurveError::InsufficientVertices);
@@ -362,7 +447,16 @@ impl Contour2 {
             })
             .collect::<CurveResult<Vec<_>>>()?;
         let contour = Self::from_bulge_vertices_with_fill_rule(&vertices, fill_rule)?;
-        Ok(FiniteContourImport2 { contour })
+        let discarded_duplicate_count = usize::from(repeated_closing_point);
+        let record = RetainedImportRecord2::try_new(
+            format,
+            source_index,
+            source_tolerance,
+            points.len(),
+            contour.len(),
+            discarded_duplicate_count,
+        )?;
+        Ok(FiniteContourImport2 { contour, record })
     }
 
     /// Reconstructs a closed contour from sampled polyline points using the

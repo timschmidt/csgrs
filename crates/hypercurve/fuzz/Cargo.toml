@@ -59,3 +59,10 @@ path = "fuzz_targets/bspline.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "retained_import"
+path = "fuzz_targets/retained_import.rs"
+test = false
+doc = false
+bench = false

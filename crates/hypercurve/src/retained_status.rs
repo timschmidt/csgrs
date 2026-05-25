@@ -37,4 +37,9 @@ impl RetainedTopologyStatus {
     pub const fn is_retained_evidence(self) -> bool {
         matches!(self, Self::Unsupported | Self::Unresolved)
     }
+
+    /// Returns true when the object crossed a lossy import boundary.
+    pub const fn is_imported_lossy(self) -> bool {
+        matches!(self, Self::ImportedLossy)
+    }
 }

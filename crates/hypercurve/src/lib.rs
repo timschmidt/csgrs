@@ -50,6 +50,7 @@ mod region_events;
 mod region_fragments;
 mod region_nesting;
 mod retained_curve;
+mod retained_import;
 mod retained_status;
 mod segment;
 mod self_intersect;
@@ -175,6 +176,7 @@ pub use retained_curve::{
     RetainedCurvePeriodicity1, RetainedCurveProfile2, RetainedEndpointEvidence2,
     RetainedParameterDomain1, RetainedTrimDirection, RetainedTrimInterval1,
 };
+pub use retained_import::{RetainedImportFormat2, RetainedImportRecord2, RetainedSourceTolerance2};
 pub use retained_status::RetainedTopologyStatus;
 pub use segment::{CircularArc2, LineSeg2, Segment2};
 pub use split::{ContourSplitMap, ContourSplitMarkers, SegmentSplitMarker, SegmentSplitPoint};

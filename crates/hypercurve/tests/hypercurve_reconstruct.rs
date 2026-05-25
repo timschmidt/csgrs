@@ -1,6 +1,6 @@
 use hypercurve::{
     BulgeVertex2, Contour2, CurveError, CurveString2, FillRule, Point2,
-    PolylineReconstructionOptions, Real, Segment2,
+    PolylineReconstructionOptions, Real, RetainedImportFormat2, RetainedSourceTolerance2, Segment2,
 };
 
 fn r(value: f64) -> Real {
@@ -171,4 +171,60 @@ fn reconstruction_rejects_invalid_options() {
     let err = CurveString2::reconstruct_from_polyline(&points, options)
         .expect_err("min_arc_points below three is invalid");
     assert_eq!(err, CurveError::InvalidReconstructionOptions);
+}
+
+#[test]
+fn finite_line_string_import_preserves_step_tolerance_evidence() {
+    let tolerance = RetainedSourceTolerance2::try_new(1.0e-5, 1.0e-8).unwrap();
+    let import = CurveString2::import_finite_line_string_with_source(
+        &[[0.0, 0.0], [0.0, 0.0], [2.0, 0.0]],
+        RetainedImportFormat2::Step,
+        42,
+        Some(tolerance),
+    )
+    .unwrap();
+    let record = import.record();
+
+    assert_eq!(import.curve_string().len(), 1);
+    assert_eq!(record.format(), RetainedImportFormat2::Step);
+    assert_eq!(record.source_index(), 42);
+    assert_eq!(record.source_tolerance(), Some(tolerance));
+    assert_eq!(record.input_point_count(), 3);
+    assert_eq!(record.emitted_segment_count(), 1);
+    assert_eq!(record.discarded_duplicate_count(), 1);
+    assert!(record.topology_status().is_imported_lossy());
+}
+
+#[test]
+fn finite_ring_import_preserves_dxf_handle_and_closure_evidence() {
+    let tolerance = RetainedSourceTolerance2::try_new(0.0, 1.0e-7).unwrap();
+    let import = Contour2::import_finite_ring_with_source(
+        &[[0.0, 0.0], [4.0, 0.0], [4.0, 3.0], [0.0, 0.0]],
+        FillRule::EvenOdd,
+        RetainedImportFormat2::Dxf,
+        0xabc,
+        Some(tolerance),
+    )
+    .unwrap();
+    let record = import.record();
+
+    assert_eq!(import.contour().len(), 3);
+    assert_eq!(import.contour().fill_rule(), FillRule::EvenOdd);
+    assert_eq!(record.format(), RetainedImportFormat2::Dxf);
+    assert_eq!(record.source_index(), 0xabc);
+    assert_eq!(record.source_tolerance().unwrap().relative(), 1.0e-7);
+    assert_eq!(record.discarded_duplicate_count(), 1);
+    assert!(record.topology_status().is_imported_lossy());
+}
+
+#[test]
+fn source_tolerance_rejects_nonfinite_or_negative_values() {
+    assert_eq!(
+        RetainedSourceTolerance2::try_new(f64::NAN, 0.0).unwrap_err(),
+        CurveError::InvalidImportRecord
+    );
+    assert_eq!(
+        RetainedSourceTolerance2::try_new(0.0, -1.0).unwrap_err(),
+        CurveError::InvalidImportRecord
+    );
 }
