@@ -1,6 +1,7 @@
 use hypercurve::{
     BezierAlgebraicEndpointImage2, BezierAlgebraicParameter2, BezierArrangementGraph2,
-    BezierParameter2, BezierParameterInterval, BezierParameterPolynomial, BezierSplitFragment2,
+    BezierParameter2, BezierParameterInterval, BezierParameterPolynomial,
+    BezierRetainedOverlapRelation2, BezierRetainedOverlapReport2, BezierSplitFragment2,
     BezierSubcurve2, Classification, CubicBezier2, CurvePolicy, Point2, QuadraticBezier2, Real,
     UncertaintyReason,
 };
@@ -266,6 +267,117 @@ fn retained_tangent_order_rejects_equal_algebraic_successors() {
         graph.traverse_retained_with_tangent_order(&policy()),
         Classification::Uncertain(UncertaintyReason::Boundary)
     );
+}
+
+#[test]
+fn retained_overlap_report_finds_identical_materialized_fragments() {
+    let curve = QuadraticBezier2::new(p(0, 0), p(1, 2), p(2, 0));
+    let first = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(curve.clone()),
+    };
+    let second = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(curve),
+    };
+    let graph = BezierArrangementGraph2::new(vec![
+        hypercurve::BezierArrangementFragment2::new(0, 0, first),
+        hypercurve::BezierArrangementFragment2::new(1, 0, second),
+    ]);
+
+    let report = decided(BezierRetainedOverlapReport2::from_graph(&graph, &policy()));
+
+    assert_eq!(report.len(), 1);
+    assert_eq!(report.overlaps()[0].first_fragment_index(), 0);
+    assert_eq!(report.overlaps()[0].second_fragment_index(), 1);
+    assert!(matches!(
+        report.overlaps()[0].relation(),
+        BezierRetainedOverlapRelation2::SameControlPolygon
+    ));
+}
+
+#[test]
+fn retained_overlap_report_finds_reversed_degree_elevated_same_image() {
+    let quadratic = QuadraticBezier2::new(p(0, 0), p(2, 4), p(4, 0));
+    let cubic_reversed = CubicBezier2::new(
+        p(4, 0),
+        Point2::new(q(8, 3), q(8, 3)),
+        Point2::new(q(4, 3), q(8, 3)),
+        p(0, 0),
+    );
+    let graph = BezierArrangementGraph2::new(vec![
+        hypercurve::BezierArrangementFragment2::new(
+            0,
+            0,
+            BezierSplitFragment2::Materialized {
+                start: exact(r(0)),
+                end: exact(r(1)),
+                curve: BezierSubcurve2::Quadratic(quadratic),
+            },
+        ),
+        hypercurve::BezierArrangementFragment2::new(
+            1,
+            0,
+            BezierSplitFragment2::Materialized {
+                start: exact(r(0)),
+                end: exact(r(1)),
+                curve: BezierSubcurve2::Cubic(cubic_reversed),
+            },
+        ),
+    ]);
+
+    let report = decided(BezierRetainedOverlapReport2::from_graph(&graph, &policy()));
+
+    assert_eq!(report.len(), 1);
+    assert!(matches!(
+        report.overlaps()[0].relation(),
+        BezierRetainedOverlapRelation2::SameCurveImage
+    ));
+}
+
+#[test]
+fn retained_overlap_report_separates_endpoint_touch_from_overlap() {
+    let first = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(1, 1), p(2, 0))),
+    };
+    let second = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(2, 0), p(3, -1), p(4, 0))),
+    };
+    let graph = BezierArrangementGraph2::new(vec![
+        hypercurve::BezierArrangementFragment2::new(0, 0, first),
+        hypercurve::BezierArrangementFragment2::new(1, 0, second),
+    ]);
+
+    let report = decided(BezierRetainedOverlapReport2::from_graph(&graph, &policy()));
+
+    assert!(report.is_empty());
+}
+
+#[test]
+fn retained_overlap_report_does_not_sample_algebraic_endpoint_image_fragments() {
+    let parameter = algebraic_midpoint_parameter();
+    let algebraic = BezierParameter2::algebraic(parameter.clone());
+    let curve = through_origin_with_midpoint_tangent(1, 0);
+    let fragment = BezierSplitFragment2::AlgebraicEndpointImages {
+        start: algebraic.clone(),
+        end: algebraic,
+        start_image: Some(algebraic_endpoint_image(&curve, &parameter)),
+        end_image: Some(algebraic_endpoint_image(&curve, &parameter)),
+    };
+    let graph = BezierArrangementGraph2::new(vec![
+        hypercurve::BezierArrangementFragment2::new(0, 0, fragment.clone()),
+        hypercurve::BezierArrangementFragment2::new(1, 0, fragment),
+    ]);
+
+    let report = decided(BezierRetainedOverlapReport2::from_graph(&graph, &policy()));
+
+    assert!(report.is_empty());
 }
 
 proptest! {

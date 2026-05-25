@@ -3,8 +3,8 @@ use std::time::Instant;
 
 use hypercurve::{
     BezierAlgebraicParameter2, BezierArrangementGraph2, BezierParameter2, BezierParameterInterval,
-    BezierParameterPolynomial, Classification, CurvePolicy, CurveResult, Point2, QuadraticBezier2,
-    Real,
+    BezierParameterPolynomial, BezierRetainedOverlapReport2, Classification, CurvePolicy,
+    CurveResult, Point2, QuadraticBezier2, Real,
 };
 
 fn r(value: i32) -> Real {
@@ -46,6 +46,12 @@ fn main() -> CurveResult<()> {
     for _ in 0..iterations {
         let traversal = decided(graph.traverse_with_tangent_order(&policy));
         total += black_box(traversal.len());
+        total += black_box(
+            match BezierRetainedOverlapReport2::from_graph(&graph, &policy) {
+                Classification::Decided(report) => report.len(),
+                Classification::Uncertain(_) => 0,
+            },
+        );
     }
     let elapsed = started.elapsed();
     println!(

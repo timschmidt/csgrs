@@ -19,6 +19,7 @@ mod bezier_offset;
 mod bezier_parameter;
 mod bezier_region;
 mod bezier_retained_measure;
+mod bezier_retained_overlap;
 mod bezier_split;
 mod bezier_split_endpoint;
 mod bezier_tangent_order;
@@ -84,6 +85,9 @@ pub use bezier_region::{
     BezierBoundaryLoop2, BezierRegion2, BezierRetainedBoundaryLoop2, BezierRetainedRegion2,
 };
 pub use bezier_retained_measure::{BezierRetainedCurveEnvelope2, BezierRetainedEndpointEnvelope2};
+pub use bezier_retained_overlap::{
+    BezierRetainedOverlap2, BezierRetainedOverlapRelation2, BezierRetainedOverlapReport2,
+};
 pub use bezier_split::{BezierSplitFragment2, BezierSplitMaterialization2, BezierSubcurve2};
 pub use bezier_split_endpoint::{
     BezierAlgebraicEndpointImage2, BezierEndpointPointImage2, BezierEndpointTangentImage2,
