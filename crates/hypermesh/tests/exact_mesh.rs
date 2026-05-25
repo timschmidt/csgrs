@@ -17654,6 +17654,147 @@ fn exact_coplanar_convex_surface_difference_materializes_multiple_component_cuts
         }
     );
 
+    let multi_component_grouped_left = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            0, 0, 0, 30, 0, 0, 30, 30, 0, 0, 30, 0, //
+            40, 0, 0, 50, 0, 0, 50, 10, 0, 40, 10, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let multi_component_grouped_right = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            11, 11, 0, 13, 11, 0, 13, 13, 0, 11, 13, 0, //
+            -2, 8, 0, 12, 8, 0, 12, 12, 0, -2, 12, 0, //
+            12, 12, 0, 32, 12, 0, 32, 16, 0, 14, 16, 0, //
+            12, 16, 0, 14, 16, 0, 14, 32, 0, 12, 32, 0, //
+            43, 3, 0, 45, 3, 0, 45, 5, 0, 43, 5, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7, //
+            8, 9, 10, 8, 10, 11, //
+            12, 13, 14, 12, 14, 15, //
+            16, 17, 18, 16, 18, 19,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_point_touch_difference(
+            &multi_component_grouped_left,
+            &multi_component_grouped_right,
+        )
+        .is_none()
+    );
+    let multi_component_grouped =
+        hypermesh::exact::arrange_coplanar_convex_surface_component_holed_difference(
+            &multi_component_grouped_left,
+            &multi_component_grouped_right,
+        )
+        .expect("component-holed replay should carry an all-consumed grouped branch beside a sibling retained hole");
+    multi_component_grouped.validate().unwrap();
+    multi_component_grouped
+        .validate_against_sources(
+            &multi_component_grouped_left,
+            &multi_component_grouped_right,
+        )
+        .unwrap();
+    assert_eq!(
+        multi_component_grouped
+            .components
+            .iter()
+            .map(|component| component.holes.len())
+            .sum::<usize>(),
+        1
+    );
+    assert!(
+        multi_component_grouped
+            .components
+            .iter()
+            .filter(|component| {
+                component.outer.iter().any(|point| {
+                    real_eq(&point.x, &ExactReal::from(14))
+                        && real_eq(&point.y, &ExactReal::from(16))
+                })
+            })
+            .count()
+            >= 2
+    );
+    assert!(multi_component_grouped.components.iter().any(|component| {
+        component.holes.len() == 1
+            && component.holes[0].iter().any(|point| {
+                real_eq(&point.x, &ExactReal::from(43)) && real_eq(&point.y, &ExactReal::from(3))
+            })
+    }));
+    assert!(!multi_component_grouped.components.iter().any(|component| {
+        component.holes.iter().any(|hole| {
+            hole.iter().any(|point| {
+                real_eq(&point.x, &ExactReal::from(11)) && real_eq(&point.y, &ExactReal::from(11))
+            })
+        })
+    }));
+    let mut stale_multi_component_grouped = multi_component_grouped.clone();
+    stale_multi_component_grouped.components[0].holes.push(vec![
+        p3(11, 11, 0),
+        p3(13, 11, 0),
+        p3(13, 13, 0),
+        p3(11, 13, 0),
+    ]);
+    assert!(
+        stale_multi_component_grouped
+            .validate_against_sources(
+                &multi_component_grouped_left,
+                &multi_component_grouped_right
+            )
+            .is_err()
+    );
+    let multi_component_grouped_preflight = hypermesh::exact::preflight_boolean_exact(
+        &multi_component_grouped_left,
+        &multi_component_grouped_right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    multi_component_grouped_preflight.validate().unwrap();
+    multi_component_grouped_preflight
+        .validate_against_sources(
+            &multi_component_grouped_left,
+            &multi_component_grouped_right,
+        )
+        .unwrap();
+    assert_eq!(
+        multi_component_grouped_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::
+            CertifiedCoplanarConvexSurfaceComponentHoledDifference
+    );
+    let multi_component_grouped_result = hypermesh::exact::boolean_exact(
+        &multi_component_grouped_left,
+        &multi_component_grouped_right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    multi_component_grouped_result
+        .validate_operation_against_sources(
+            &multi_component_grouped_left,
+            &multi_component_grouped_right,
+            hypermesh::exact::ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        multi_component_grouped_result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::
+                CoplanarConvexSurfaceComponentHoledDifference
+        }
+    );
+
     let multi_component_point_branch_left = ExactMesh::from_i64_triangles_with_policy(
         &[
             0, 0, 0, 20, 0, 0, 20, 20, 0, 0, 20, 0, //
@@ -18301,6 +18442,158 @@ fn exact_coplanar_convex_surface_difference_materializes_multiple_component_cuts
             hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
         )
         .unwrap();
+
+    let multi_component_nonconvex_grouped_left = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            0, 0, 0, 30, 0, 0, 30, 26, 0, 30, 30, 0, 22, 30, 0, 22, 26, 0, 20, 26, 0, 20, 30, 0, 0,
+            30, 0, 0, 26, 0, //
+            40, 0, 0, 50, 0, 0, 50, 10, 0, 40, 10, 0,
+        ],
+        &[
+            0, 1, 2, //
+            0, 2, 5, //
+            0, 5, 6, //
+            0, 6, 9, //
+            9, 6, 7, //
+            9, 7, 8, //
+            5, 2, 3, //
+            5, 3, 4, //
+            10, 11, 12, 10, 12, 13,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let multi_component_nonconvex_grouped_right = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            11, 11, 0, 13, 11, 0, 13, 13, 0, 11, 13, 0, //
+            -2, 8, 0, 12, 8, 0, 12, 12, 0, -2, 12, 0, //
+            12, 12, 0, 32, 12, 0, 32, 16, 0, 14, 16, 0, //
+            12, 16, 0, 14, 16, 0, 14, 32, 0, 12, 32, 0, //
+            43, 3, 0, 45, 3, 0, 45, 5, 0, 43, 5, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7, //
+            8, 9, 10, 8, 10, 11, //
+            12, 13, 14, 12, 14, 15, //
+            16, 17, 18, 16, 18, 19,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_point_touch_difference(
+            &multi_component_nonconvex_grouped_left,
+            &multi_component_nonconvex_grouped_right,
+        )
+        .is_none()
+    );
+    let multi_component_nonconvex_grouped =
+        hypermesh::exact::arrange_coplanar_convex_surface_component_holed_difference(
+            &multi_component_nonconvex_grouped_left,
+            &multi_component_nonconvex_grouped_right,
+        )
+        .expect("simple-source component-holed replay should carry an all-consumed grouped branch beside a sibling retained hole");
+    multi_component_nonconvex_grouped.validate().unwrap();
+    multi_component_nonconvex_grouped
+        .validate_against_sources(
+            &multi_component_nonconvex_grouped_left,
+            &multi_component_nonconvex_grouped_right,
+        )
+        .unwrap();
+    assert_eq!(
+        multi_component_nonconvex_grouped
+            .components
+            .iter()
+            .map(|component| component.holes.len())
+            .sum::<usize>(),
+        1
+    );
+    assert!(
+        multi_component_nonconvex_grouped
+            .components
+            .iter()
+            .filter(|component| {
+                component.outer.iter().any(|point| {
+                    real_eq(&point.x, &ExactReal::from(14))
+                        && real_eq(&point.y, &ExactReal::from(16))
+                })
+            })
+            .count()
+            >= 2
+    );
+    assert!(
+        multi_component_nonconvex_grouped
+            .components
+            .iter()
+            .any(|component| {
+                component.holes.len() == 1
+                    && component.holes[0].iter().any(|point| {
+                        real_eq(&point.x, &ExactReal::from(43))
+                            && real_eq(&point.y, &ExactReal::from(3))
+                    })
+            })
+    );
+    let mut stale_multi_component_nonconvex_grouped = multi_component_nonconvex_grouped.clone();
+    stale_multi_component_nonconvex_grouped.components[0]
+        .holes
+        .push(vec![
+            p3(11, 11, 0),
+            p3(13, 11, 0),
+            p3(13, 13, 0),
+            p3(11, 13, 0),
+        ]);
+    assert!(
+        stale_multi_component_nonconvex_grouped
+            .validate_against_sources(
+                &multi_component_nonconvex_grouped_left,
+                &multi_component_nonconvex_grouped_right,
+            )
+            .is_err()
+    );
+    let multi_component_nonconvex_grouped_preflight = hypermesh::exact::preflight_boolean_exact(
+        &multi_component_nonconvex_grouped_left,
+        &multi_component_nonconvex_grouped_right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    multi_component_nonconvex_grouped_preflight
+        .validate()
+        .unwrap();
+    multi_component_nonconvex_grouped_preflight
+        .validate_against_sources(
+            &multi_component_nonconvex_grouped_left,
+            &multi_component_nonconvex_grouped_right,
+        )
+        .unwrap();
+    assert_eq!(
+        multi_component_nonconvex_grouped_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::
+            CertifiedCoplanarConvexSurfaceComponentHoledDifference
+    );
+    let multi_component_nonconvex_grouped_result = hypermesh::exact::boolean_exact(
+        &multi_component_nonconvex_grouped_left,
+        &multi_component_nonconvex_grouped_right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    multi_component_nonconvex_grouped_result
+        .validate_operation_against_sources(
+            &multi_component_nonconvex_grouped_left,
+            &multi_component_nonconvex_grouped_right,
+            hypermesh::exact::ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        multi_component_nonconvex_grouped_result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::
+                CoplanarConvexSurfaceComponentHoledDifference
+        }
+    );
 
     let nonconvex_grouped_retained_right = ExactMesh::from_i64_triangles_with_policy(
         &[

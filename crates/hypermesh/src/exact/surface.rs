@@ -10532,8 +10532,10 @@ fn exact_max_real(left: &ExactReal, right: &ExactReal) -> Option<ExactReal> {
 /// replay strictly inside the opened ring. A point-branch component whose
 /// local strict holes are all consumed by exact branch-opening ownership may
 /// be emitted with empty hole lists when another source component retains a
-/// real strict hole; the final certificate still owns at least one retained
-/// ring. A nonconvex left component may be
+/// real strict hole. The same carrier may expose grouped point-branch
+/// straddling-hole components whose local rings were all consumed by a simple
+/// removed-object replay; the final certificate still owns at least one
+/// retained ring. A nonconvex left component may be
 /// consumed through the bounded source-disk path when its mesh boundary
 /// replays as one exact simple loop, each cutter is wholly source-owned with
 /// positive-length side ownership, and strict holes are retained in exactly
@@ -10772,6 +10774,23 @@ pub fn arrange_coplanar_convex_surface_component_holed_difference(
                 }));
                 continue;
             }
+            if let Some(branch_polygons) =
+                materialize_side_cutter_point_touch_difference_consuming_hole_contact_groups(
+                    component,
+                    &cut_indices,
+                    &holes,
+                    &right_components,
+                    "coplanar component-holed source-local grouped point-touch straddling-hole side-cutter split",
+                )
+            {
+                components.extend(branch_polygons.into_iter().map(|outer| {
+                    CoplanarConvexHoledComponent {
+                        outer,
+                        holes: Vec::new(),
+                    }
+                }));
+                continue;
+            }
             if !component_relevant_right_regions_are_disjoint(
                 &cut_indices,
                 &holes,
@@ -10878,12 +10897,14 @@ pub fn arrange_coplanar_convex_surface_component_holed_difference(
 /// opening strictly contains it or an exact removed-region contact group
 /// connects it to a side-owned opening. A component whose local point-branch
 /// holes are all consumed may still be emitted with empty hole lists when a
-/// sibling component retains a strict hole; that is just source-local
-/// retained topology carried by the component-holed wrapper, not an empty
-/// holed certificate. Point-only contact may be replayed only as incidental
-/// lower-dimensional evidence inside a positive-connected removed group;
-/// point-only connectivity, ambiguous ownership, non-simple branch outputs,
-/// and unsupported boundary-straddling holes remain outside this certificate.
+/// sibling component retains a strict hole; this includes grouped
+/// straddling-hole point branches after the group replays as a simple removed
+/// object. That is source-local retained topology carried by the
+/// component-holed wrapper, not an empty holed certificate. Point-only contact
+/// may be replayed only as incidental lower-dimensional evidence inside a
+/// positive-connected removed group; point-only connectivity, ambiguous
+/// ownership, non-simple branch outputs, and unsupported boundary-straddling
+/// holes remain outside this certificate.
 ///
 /// The source disk is retained object state in Yap's sense: topology is read
 /// from mesh incidence and replayed by exact containment/area predicates; see
@@ -11055,6 +11076,18 @@ fn arrange_coplanar_simple_surface_component_holed_difference(
                 &side_removed,
                 &holes,
                 "coplanar nonconvex source component-holed source-local point-touch straddling-hole side-cutter difference",
+            )
+        {
+            components.extend(opened.into_iter().map(|outer| CoplanarConvexHoledComponent {
+                outer,
+                holes: Vec::new(),
+            }));
+        } else if let Some(opened) =
+            materialize_simple_source_side_cutter_point_touch_difference_consuming_hole_contact_groups(
+                component,
+                &side_removed,
+                &holes,
+                "coplanar nonconvex source component-holed source-local grouped point-touch straddling-hole side-cutter difference",
             )
         {
             components.extend(opened.into_iter().map(|outer| CoplanarConvexHoledComponent {
