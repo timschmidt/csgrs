@@ -6099,9 +6099,12 @@ pub fn arrange_coplanar_surface_multi_difference(
 /// The shortcut deliberately refuses cases already handled by
 /// [`arrange_single_triangle_coplanar_difference`],
 /// [`arrange_coplanar_convex_surface_difference`], and
-/// [`arrange_coplanar_surface_cutter_hole_contact_difference`] or
-/// [`arrange_coplanar_surface_side_cutter_difference`], and it still rejects
-/// holes, point-only branch contacts, and multiple retained loops.
+/// [`arrange_coplanar_surface_cutter_hole_contact_difference`], and the
+/// multi-cutter form of [`arrange_coplanar_surface_side_cutter_difference`],
+/// and it still rejects holes, point-only branch contacts, and multiple
+/// retained loops. A one-cutter side opening may still replay here first,
+/// preserving older convex/component arrangement classification while the
+/// direct side-cutter artifact remains available for explicit validation.
 ///
 /// The loop is promoted only after exact source-component replay and retained
 /// area/topology checks, following Yap, "Towards Exact Geometric
@@ -6113,10 +6116,12 @@ pub fn arrange_coplanar_surface_component_difference(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Option<CoplanarSurfaceArrangement> {
+    let multi_cutter_side_difference = matches!(connected_face_component_meshes(right), Some(components) if components.len() >= 2)
+        && arrange_coplanar_surface_side_cutter_difference(left, right).is_some();
     if arrange_single_triangle_coplanar_difference(left, right).is_some()
         || arrange_coplanar_convex_surface_difference(left, right).is_some()
         || arrange_coplanar_surface_cutter_hole_contact_difference(left, right).is_some()
-        || arrange_coplanar_surface_side_cutter_difference(left, right).is_some()
+        || multi_cutter_side_difference
     {
         return None;
     }
@@ -6317,6 +6322,15 @@ fn coplanar_surface_difference_polygons(
                         )
                     {
                         polygons.extend(difference.polygons);
+                    } else if let Some((_, opening)) =
+                        materialize_nonrectilinear_side_cutter_opening(
+                            component,
+                            &cutter_indices,
+                            &right_components,
+                            "coplanar source-local single side-cutter opening difference",
+                        )
+                    {
+                        polygons.push(opening);
                     } else {
                         return None;
                     }
@@ -7619,7 +7633,7 @@ fn collect_simple_removed_difference_fragments(
 /// This is the no-hole sibling of
 /// [`arrange_coplanar_convex_surface_component_holed_difference`]'s
 /// non-rectilinear side-cutter opening path. A single convex source component
-/// is cut by two or more side-attached convex right components. Their clipped
+/// is cut by one or more side-attached convex right components. Their clipped
 /// material is replayed as one or more exact removed openings, each attached
 /// to the outer boundary, and the retained boundary is accepted only if it
 /// stitches into one nonconvex simple loop with exact area replay:
@@ -7627,9 +7641,12 @@ fn collect_simple_removed_difference_fragments(
 ///
 /// The helper deliberately rejects strict interior right components, fully
 /// rectangular cutter sets, point-only cutter contacts, convex remnants, and
-/// multi-loop remnants. Rectangular cases belong to the orthogonal cell
-/// materializer; branch and split cases remain for the general planar-cell
-/// materializer. This follows Yap, "Towards Exact Geometric Computation,"
+/// multi-loop remnants. Single-triangle corner cuts stay with the older
+/// triangle arrangement certificate so widening this artifact does not reorder
+/// exact support classification. Rectangular cases belong to the orthogonal
+/// cell materializer; branch and split cases remain for the general
+/// planar-cell materializer. This follows Yap, "Towards Exact Geometric
+/// Computation,"
 /// *Computational Geometry* 7.1-2 (1997): topology is promoted only from
 /// retained exact boundary and area facts. The boundary splice follows the
 /// Weiler-Atherton retained-fragment construction; see Weiler and Atherton,
@@ -7642,7 +7659,10 @@ pub fn arrange_coplanar_surface_side_cutter_difference(
 ) -> Option<CoplanarSurfaceArrangement> {
     let left_components = connected_face_component_meshes(left)?;
     let right_components = connected_face_component_meshes(right)?;
-    if left_components.len() != 1 || right_components.len() < 2 {
+    if left_components.len() != 1 || right_components.is_empty() {
+        return None;
+    }
+    if right_components.len() == 1 && left.triangles().len() == 1 && right.triangles().len() == 1 {
         return None;
     }
 
@@ -7697,7 +7717,7 @@ pub fn arrange_coplanar_surface_side_cutter_difference(
             ConvexUnionComponentRelation::PositiveArea => cut_indices.push(right_index),
         }
     }
-    if cut_indices.len() < 2 {
+    if cut_indices.is_empty() {
         return None;
     }
 

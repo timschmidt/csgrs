@@ -3845,9 +3845,52 @@ fn exercise_side_cutter_opening_without_holes() {
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .expect("side-cutter opening right fixture must import");
+    let single_cutter = ExactMesh::from_i64_triangles_with_policy(
+        &[-2, 4, 0, 9, 4, 0, 7, 10, 0, -2, 10, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("single side-cutter opening right fixture must import");
 
     assert!(arrange_coplanar_surface_multi_difference(&left, &cutters).is_none());
     assert!(arrange_coplanar_surface_cutter_hole_contact_difference(&left, &cutters).is_none());
+    let single_opening = arrange_coplanar_surface_side_cutter_difference(&left, &single_cutter)
+        .expect("one side cutter should materialize one nonconvex no-hole loop");
+    single_opening.validate().unwrap();
+    single_opening
+        .validate_side_cutter_difference_against_sources(&left, &single_cutter)
+        .unwrap();
+    let single_preflight = preflight_boolean_exact(
+        &left,
+        &single_cutter,
+        ExactBooleanOperation::Difference,
+    )
+    .expect("single side-cutter opening preflight should classify shortcut");
+    single_preflight.validate().unwrap();
+    single_preflight
+        .validate_against_sources(&left, &single_cutter)
+        .unwrap();
+    assert_eq!(
+        single_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceArrangementDifference
+    );
+    let single_result = hypermesh::exact::boolean_exact(
+        &left,
+        &single_cutter,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("single side-cutter opening boolean should materialize");
+    single_result
+        .validate_operation_against_sources(
+            &left,
+            &single_cutter,
+            ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+
     let opening = arrange_coplanar_surface_side_cutter_difference(&left, &cutters)
         .expect("side-cutter opening should materialize one nonconvex no-hole loop");
     opening.validate().unwrap();
@@ -3940,6 +3983,54 @@ fn exercise_side_cutter_opening_without_holes() {
         .validate_operation_against_sources(
             &multi_component_side_opening_left,
             &cutters,
+            ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+
+    assert!(
+        arrange_coplanar_surface_side_cutter_difference(
+            &multi_component_side_opening_left,
+            &single_cutter,
+        )
+        .is_none()
+    );
+    let multi_component_single_opening = arrange_coplanar_surface_multi_difference(
+        &multi_component_side_opening_left,
+        &single_cutter,
+    )
+    .expect("source-local single side-cutter opening should emit multi-difference");
+    multi_component_single_opening.validate().unwrap();
+    multi_component_single_opening
+        .validate_difference_against_sources(&multi_component_side_opening_left, &single_cutter)
+        .unwrap();
+    assert_eq!(multi_component_single_opening.polygons.len(), 2);
+    let multi_component_single_preflight = preflight_boolean_exact(
+        &multi_component_side_opening_left,
+        &single_cutter,
+        ExactBooleanOperation::Difference,
+    )
+    .expect("source-local single side-cutter preflight should classify shortcut");
+    multi_component_single_preflight.validate().unwrap();
+    multi_component_single_preflight
+        .validate_against_sources(&multi_component_side_opening_left, &single_cutter)
+        .unwrap();
+    assert_eq!(
+        multi_component_single_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarSurfaceMultiDifference
+    );
+    let multi_component_single_result = hypermesh::exact::boolean_exact(
+        &multi_component_side_opening_left,
+        &single_cutter,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("source-local single side-cutter boolean should materialize");
+    multi_component_single_result
+        .validate_operation_against_sources(
+            &multi_component_side_opening_left,
+            &single_cutter,
             ExactBooleanOperation::Difference,
             ValidationPolicy::ALLOW_BOUNDARY,
             ExactBoundaryBooleanPolicy::Reject,
