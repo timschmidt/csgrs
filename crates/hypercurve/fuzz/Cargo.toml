@@ -66,3 +66,10 @@ path = "fuzz_targets/retained_import.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "planar_pcurve"
+path = "fuzz_targets/planar_pcurve.rs"
+test = false
+doc = false
+bench = false

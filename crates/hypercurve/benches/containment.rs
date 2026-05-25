@@ -3,7 +3,8 @@ use std::time::Instant;
 
 use hypercurve::{
     BulgeVertex2, CircularArc2, Classification, Contour2, ContourPointLocation, CurvePolicy,
-    CurveResult, LineSeg2, LineSide, Point2, Real, Region2, RegionPointLocation,
+    CurveResult, LineSeg2, LineSide, PlanarPcurveImageRelation2, Point2, Real, Region2,
+    RegionPointLocation, RetainedPlanarSurfaceIdentity2, RetainedPlanarTrimLoop2,
 };
 
 fn s(value: i32) -> Real {
@@ -232,6 +233,36 @@ fn bench_sparse_region_filled_area(iterations: u32) -> CurveResult<()> {
     Ok(())
 }
 
+fn bench_planar_trim_loop_image_equality(iterations: u32) -> CurveResult<()> {
+    let surface = RetainedPlanarSurfaceIdentity2::new(3);
+    let first = RetainedPlanarTrimLoop2::new(surface, rectangle(0, 0, 10, 10));
+    let rotated = RetainedPlanarTrimLoop2::new(
+        surface,
+        Contour2::from_bulge_vertices(&[
+            vertex(10, 10),
+            vertex(0, 10),
+            vertex(0, 0),
+            vertex(10, 0),
+        ])?,
+    );
+    let started = Instant::now();
+    let mut same_count = 0_usize;
+
+    for _ in 0..iterations {
+        let report = first.image_equality_report(&rotated);
+        if report.relation() == PlanarPcurveImageRelation2::SameDirected {
+            same_count += black_box(report.segment_count());
+        }
+    }
+
+    let elapsed = started.elapsed();
+    println!(
+        "planar_trim_loop_image_equality: {iterations} iterations in {elapsed:?} ({:?}/iter), same={same_count}",
+        elapsed / iterations
+    );
+    Ok(())
+}
+
 fn bench_prepared_sparse_region_single_hit(iterations: u32) -> CurveResult<()> {
     let region = sparse_region(120);
     let point = p(612, 2);
@@ -267,5 +298,6 @@ fn main() -> CurveResult<()> {
     bench_sparse_region_single_hit(10_000)?;
     bench_prepared_sparse_region_single_hit(10_000)?;
     bench_sparse_region_filled_area(10_000)?;
+    bench_planar_trim_loop_image_equality(100_000)?;
     Ok(())
 }

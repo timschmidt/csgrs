@@ -38,6 +38,7 @@ mod finite_projection;
 mod fragment;
 mod intersect;
 mod offset;
+mod planar_pcurve;
 mod point;
 mod policy;
 mod prepared;
@@ -155,6 +156,10 @@ pub use intersect::{
     LineLineIntersection, ParamRange, SegmentIntersection,
 };
 pub use offset::OffsetCap;
+pub use planar_pcurve::{
+    PlanarPcurveImageEqualityReport2, PlanarPcurveImageRelation2, RetainedPlanarPcurve2,
+    RetainedPlanarSurfaceIdentity2, RetainedPlanarTrimLoop2,
+};
 pub use point::Point2;
 pub use policy::{CurvePolicy, NumericMode, Tolerance};
 pub use prepared::{
