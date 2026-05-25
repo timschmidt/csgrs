@@ -1,6 +1,8 @@
 use hypercurve::{
-    BulgeVertex2, Contour2, CurveString2, FillRule, PlanarPcurveImageRelation2, Point2, Real,
-    RetainedPlanarPcurve2, RetainedPlanarSurfaceIdentity2, RetainedPlanarTrimLoop2,
+    BulgeVertex2, Classification, Contour2, CurveError, CurvePolicy, CurveString2, FillRule,
+    PlanarPcurveImageRelation2, Point2, Real, RetainedPlanarFace2,
+    RetainedPlanarFacePointLocation2, RetainedPlanarPcurve2, RetainedPlanarSurfaceIdentity2,
+    RetainedPlanarTrimLoop2,
 };
 
 fn r(value: i32) -> Real {
@@ -29,6 +31,14 @@ fn rectangle(points: &[(i32, i32)], fill_rule: FillRule) -> Contour2 {
         .map(|&(x, y)| vertex(x, y))
         .collect::<Vec<_>>();
     Contour2::from_bulge_vertices_with_fill_rule(&vertices, fill_rule).unwrap()
+}
+
+fn policy() -> CurvePolicy {
+    CurvePolicy::certified()
+}
+
+fn trim(surface: RetainedPlanarSurfaceIdentity2, points: &[(i32, i32)]) -> RetainedPlanarTrimLoop2 {
+    RetainedPlanarTrimLoop2::new(surface, rectangle(points, FillRule::NonZero))
 }
 
 #[test]
@@ -116,4 +126,100 @@ fn planar_trim_loop_equality_reports_reversed_and_different_images() {
         first.image_equality_report(&different).relation(),
         PlanarPcurveImageRelation2::Different
     );
+}
+
+#[test]
+fn retained_planar_face_classifies_uv_points_against_material_and_holes() {
+    let surface = RetainedPlanarSurfaceIdentity2::new(21);
+    let face = RetainedPlanarFace2::try_new(
+        surface,
+        vec![trim(surface, &[(0, 0), (10, 0), (10, 10), (0, 10)])],
+        vec![trim(surface, &[(3, 3), (7, 3), (7, 7), (3, 7)])],
+    )
+    .unwrap();
+
+    let inside = decided(
+        face.classify_uv_point(surface, &p(1, 1), &policy())
+            .unwrap(),
+    );
+    assert_eq!(inside.location(), RetainedPlanarFacePointLocation2::Inside);
+    assert_eq!(inside.surface(), Some(surface));
+    assert_eq!(inside.material_loop_count(), 1);
+    assert_eq!(inside.hole_loop_count(), 1);
+
+    let in_hole = decided(
+        face.classify_uv_point(surface, &p(5, 5), &policy())
+            .unwrap(),
+    );
+    assert_eq!(
+        in_hole.location(),
+        RetainedPlanarFacePointLocation2::Outside
+    );
+    assert!(in_hole.location().is_trim_classification());
+
+    let boundary = decided(
+        face.classify_uv_point(surface, &p(3, 5), &policy())
+            .unwrap(),
+    );
+    assert_eq!(
+        boundary.location(),
+        RetainedPlanarFacePointLocation2::Boundary
+    );
+
+    let outside = decided(
+        face.classify_uv_point(surface, &p(12, 5), &policy())
+            .unwrap(),
+    );
+    assert_eq!(
+        outside.location(),
+        RetainedPlanarFacePointLocation2::Outside
+    );
+}
+
+#[test]
+fn retained_planar_face_reports_surface_mismatch_before_trim_classification() {
+    let surface = RetainedPlanarSurfaceIdentity2::new(31);
+    let face = RetainedPlanarFace2::try_new(
+        surface,
+        vec![trim(surface, &[(0, 0), (4, 0), (4, 4), (0, 4)])],
+        Vec::new(),
+    )
+    .unwrap();
+
+    let report = decided(
+        face.classify_uv_point(RetainedPlanarSurfaceIdentity2::new(32), &p(1, 1), &policy())
+            .unwrap(),
+    );
+    assert_eq!(
+        report.location(),
+        RetainedPlanarFacePointLocation2::SurfaceMismatch
+    );
+    assert_eq!(report.surface(), None);
+    assert!(!report.location().is_trim_classification());
+}
+
+#[test]
+fn retained_planar_face_rejects_missing_material_or_mixed_surface_trims() {
+    let surface = RetainedPlanarSurfaceIdentity2::new(41);
+    let other = RetainedPlanarSurfaceIdentity2::new(42);
+    assert_eq!(
+        RetainedPlanarFace2::try_new(surface, Vec::new(), Vec::new()).unwrap_err(),
+        CurveError::InvalidPlanarFace
+    );
+    assert_eq!(
+        RetainedPlanarFace2::try_new(
+            surface,
+            vec![trim(surface, &[(0, 0), (4, 0), (4, 4), (0, 4)])],
+            vec![trim(other, &[(1, 1), (2, 1), (2, 2), (1, 2)])],
+        )
+        .unwrap_err(),
+        CurveError::InvalidPlanarFace
+    );
+}
+
+fn decided<T>(classification: Classification<T>) -> T {
+    match classification {
+        Classification::Decided(value) => value,
+        Classification::Uncertain(reason) => panic!("unexpected uncertainty: {reason:?}"),
+    }
 }

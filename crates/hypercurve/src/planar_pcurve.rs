@@ -8,7 +8,10 @@
 //! *Computational Geometry* 7(1-2), 3-23 (1997), and the pcurve-on-surface
 //! representation used in Piegl and Tiller, *The NURBS Book* (2nd ed., 1997).
 
-use crate::{Contour2, CurveString2, Segment2};
+use crate::{
+    Classification, Contour2, CurveError, CurvePolicy, CurveResult, CurveString2, Point2,
+    RegionPointLocation, RegionView2, Segment2, UncertaintyReason,
+};
 
 /// Opaque identity of a retained planar support surface.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -53,6 +56,36 @@ pub struct RetainedPlanarPcurve2 {
 pub struct RetainedPlanarTrimLoop2 {
     surface: RetainedPlanarSurfaceIdentity2,
     contour: Contour2,
+}
+
+/// Retained planar face assembled from material and hole pcurve trim loops.
+#[derive(Clone, Debug, PartialEq)]
+pub struct RetainedPlanarFace2 {
+    surface: RetainedPlanarSurfaceIdentity2,
+    material_loops: Vec<RetainedPlanarTrimLoop2>,
+    hole_loops: Vec<RetainedPlanarTrimLoop2>,
+}
+
+/// Point classification result for a retained planar face.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum RetainedPlanarFacePointLocation2 {
+    /// The query was made against a different retained support surface.
+    SurfaceMismatch,
+    /// The UV point is outside the retained face.
+    Outside,
+    /// The UV point lies on a material or hole trim boundary.
+    Boundary,
+    /// The UV point is inside the retained face.
+    Inside,
+}
+
+/// Evidence report for an exact UV point-in-face query.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct RetainedPlanarFacePointReport2 {
+    location: RetainedPlanarFacePointLocation2,
+    surface: Option<RetainedPlanarSurfaceIdentity2>,
+    material_loop_count: usize,
+    hole_loop_count: usize,
 }
 
 impl RetainedPlanarSurfaceIdentity2 {
@@ -193,6 +226,157 @@ impl RetainedPlanarTrimLoop2 {
             };
         let segment_count = usize::from(relation.is_same_image()) * self.contour.len();
         PlanarPcurveImageEqualityReport2::new(relation, Some(self.surface), segment_count)
+    }
+}
+
+impl RetainedPlanarFace2 {
+    /// Constructs a retained planar face from material and hole trim loops.
+    ///
+    /// Every trim loop must reference the same retained planar support surface.
+    /// This validates the support-surface part of the BREP face before any
+    /// point-in-face predicate is allowed to consume UV topology. That is the
+    /// construction/predicate boundary from Yap, "Towards Exact Geometric
+    /// Computation" (1997), applied to planar pcurves as described by Piegl
+    /// and Tiller, *The NURBS Book* (2nd ed., 1997).
+    pub fn try_new(
+        surface: RetainedPlanarSurfaceIdentity2,
+        material_loops: Vec<RetainedPlanarTrimLoop2>,
+        hole_loops: Vec<RetainedPlanarTrimLoop2>,
+    ) -> CurveResult<Self> {
+        if material_loops.is_empty() {
+            return Err(CurveError::InvalidPlanarFace);
+        }
+        if material_loops
+            .iter()
+            .chain(hole_loops.iter())
+            .any(|trim| trim.surface != surface)
+        {
+            return Err(CurveError::InvalidPlanarFace);
+        }
+        Ok(Self {
+            surface,
+            material_loops,
+            hole_loops,
+        })
+    }
+
+    /// Returns the retained planar support surface.
+    pub const fn surface(&self) -> RetainedPlanarSurfaceIdentity2 {
+        self.surface
+    }
+
+    /// Returns material trim loops.
+    pub fn material_loops(&self) -> &[RetainedPlanarTrimLoop2] {
+        &self.material_loops
+    }
+
+    /// Returns hole trim loops.
+    pub fn hole_loops(&self) -> &[RetainedPlanarTrimLoop2] {
+        &self.hole_loops
+    }
+
+    /// Classifies a UV point against this retained planar face.
+    ///
+    /// The query first checks retained support-surface identity. Only matching
+    /// surfaces are passed to the exact UV region classifier, which checks trim
+    /// boundaries before winding/inside status. This preserves the BREP
+    /// distinction between support-surface agreement and trim containment
+    /// rather than collapsing both into a sampled point-in-polygon test.
+    pub fn classify_uv_point(
+        &self,
+        query_surface: RetainedPlanarSurfaceIdentity2,
+        uv: &Point2,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<RetainedPlanarFacePointReport2>> {
+        if query_surface != self.surface {
+            return Ok(Classification::Decided(
+                RetainedPlanarFacePointReport2::new(
+                    RetainedPlanarFacePointLocation2::SurfaceMismatch,
+                    None,
+                    self.material_loops.len(),
+                    self.hole_loops.len(),
+                ),
+            ));
+        }
+
+        let material = self
+            .material_loops
+            .iter()
+            .map(|trim| trim.contour())
+            .collect::<Vec<_>>();
+        let holes = self
+            .hole_loops
+            .iter()
+            .map(|trim| trim.contour())
+            .collect::<Vec<_>>();
+        let region = RegionView2::from_contours(material, holes);
+        let location = match region.classify_point(uv, policy) {
+            Classification::Decided(RegionPointLocation::Outside) => {
+                RetainedPlanarFacePointLocation2::Outside
+            }
+            Classification::Decided(RegionPointLocation::Boundary) => {
+                RetainedPlanarFacePointLocation2::Boundary
+            }
+            Classification::Decided(RegionPointLocation::Inside) => {
+                RetainedPlanarFacePointLocation2::Inside
+            }
+            Classification::Uncertain(UncertaintyReason::Boundary) => {
+                RetainedPlanarFacePointLocation2::Boundary
+            }
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        Ok(Classification::Decided(
+            RetainedPlanarFacePointReport2::new(
+                location,
+                Some(self.surface),
+                self.material_loops.len(),
+                self.hole_loops.len(),
+            ),
+        ))
+    }
+}
+
+impl RetainedPlanarFacePointLocation2 {
+    /// Returns true when the query reached an exact inside/outside/boundary result.
+    pub const fn is_trim_classification(self) -> bool {
+        !matches!(self, Self::SurfaceMismatch)
+    }
+}
+
+impl RetainedPlanarFacePointReport2 {
+    /// Constructs a retained planar face point-query report.
+    pub const fn new(
+        location: RetainedPlanarFacePointLocation2,
+        surface: Option<RetainedPlanarSurfaceIdentity2>,
+        material_loop_count: usize,
+        hole_loop_count: usize,
+    ) -> Self {
+        Self {
+            location,
+            surface,
+            material_loop_count,
+            hole_loop_count,
+        }
+    }
+
+    /// Returns the exact query location or blocker.
+    pub const fn location(&self) -> RetainedPlanarFacePointLocation2 {
+        self.location
+    }
+
+    /// Returns the matching retained surface when the query reached trim classification.
+    pub const fn surface(&self) -> Option<RetainedPlanarSurfaceIdentity2> {
+        self.surface
+    }
+
+    /// Returns the number of material trim loops in the face.
+    pub const fn material_loop_count(&self) -> usize {
+        self.material_loop_count
+    }
+
+    /// Returns the number of hole trim loops in the face.
+    pub const fn hole_loop_count(&self) -> usize {
+        self.hole_loop_count
     }
 }
 

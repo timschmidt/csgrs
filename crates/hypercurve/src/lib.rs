@@ -157,7 +157,8 @@ pub use intersect::{
 };
 pub use offset::OffsetCap;
 pub use planar_pcurve::{
-    PlanarPcurveImageEqualityReport2, PlanarPcurveImageRelation2, RetainedPlanarPcurve2,
+    PlanarPcurveImageEqualityReport2, PlanarPcurveImageRelation2, RetainedPlanarFace2,
+    RetainedPlanarFacePointLocation2, RetainedPlanarFacePointReport2, RetainedPlanarPcurve2,
     RetainedPlanarSurfaceIdentity2, RetainedPlanarTrimLoop2,
 };
 pub use point::Point2;

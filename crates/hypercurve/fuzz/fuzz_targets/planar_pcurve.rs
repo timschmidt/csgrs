@@ -2,7 +2,7 @@
 
 use hypercurve::{
     BulgeVertex2, Contour2, CurveString2, FillRule, Point2, Real, RetainedPlanarPcurve2,
-    RetainedPlanarSurfaceIdentity2, RetainedPlanarTrimLoop2,
+    RetainedPlanarFace2, RetainedPlanarSurfaceIdentity2, RetainedPlanarTrimLoop2,
 };
 use libfuzzer_sys::fuzz_target;
 
@@ -56,12 +56,29 @@ fuzz_target!(|data: &[u8]| {
         if let Ok(rotated) =
             Contour2::from_bulge_vertices_with_fill_rule(&rotated_vertices, FillRule::EvenOdd)
         {
-            let first = RetainedPlanarTrimLoop2::new(surface, contour);
+            let first = RetainedPlanarTrimLoop2::new(surface, contour.clone());
             let second = RetainedPlanarTrimLoop2::new(surface, rotated);
             let report = first.image_equality_report(&second);
             let _ = report.relation();
             let _ = report.surface();
             let _ = report.segment_count();
+
+            let face = RetainedPlanarFace2::try_new(
+                surface,
+                vec![RetainedPlanarTrimLoop2::new(surface, contour)],
+                Vec::new(),
+            );
+            if let Ok(face) = face {
+                let report = face.classify_uv_point(surface, &point(data[1], data[2]), &Default::default());
+                if let Ok(classification) = report {
+                    let _ = classification.map(|report| {
+                        let _ = report.location();
+                        let _ = report.surface();
+                        let _ = report.material_loop_count();
+                        let _ = report.hole_loop_count();
+                    });
+                }
+            }
         }
     }
 });
