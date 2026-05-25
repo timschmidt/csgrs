@@ -76,6 +76,8 @@ pub struct BezierAlgebraicEndpointImage2 {
     parameter: BezierAlgebraicParameter2,
     point: BezierEndpointPointImage2,
     tangent: BezierEndpointTangentImage2,
+    second_derivative: Option<Box<BezierEndpointTangentImage2>>,
+    third_derivative: Option<Box<BezierEndpointTangentImage2>>,
 }
 
 impl BezierAlgebraicEndpointImage2 {
@@ -93,6 +95,10 @@ impl BezierAlgebraicEndpointImage2 {
             tangent: BezierEndpointTangentImage2::Polynomial(
                 curve.tangent_at_algebraic_parameter(parameter, policy)?,
             ),
+            second_derivative: Some(Box::new(BezierEndpointTangentImage2::Polynomial(
+                curve.second_derivative_at_algebraic_parameter(parameter, policy)?,
+            ))),
+            third_derivative: None,
         })
     }
 
@@ -110,6 +116,12 @@ impl BezierAlgebraicEndpointImage2 {
             tangent: BezierEndpointTangentImage2::Polynomial(
                 curve.tangent_at_algebraic_parameter(parameter, policy)?,
             ),
+            second_derivative: Some(Box::new(BezierEndpointTangentImage2::Polynomial(
+                curve.second_derivative_at_algebraic_parameter(parameter, policy)?,
+            ))),
+            third_derivative: Some(Box::new(BezierEndpointTangentImage2::Polynomial(
+                curve.third_derivative_at_algebraic_parameter(parameter, policy)?,
+            ))),
         })
     }
 
@@ -127,6 +139,8 @@ impl BezierAlgebraicEndpointImage2 {
             tangent: BezierEndpointTangentImage2::RationalQuadratic(
                 curve.tangent_at_algebraic_parameter(parameter, policy)?,
             ),
+            second_derivative: None,
+            third_derivative: None,
         })
     }
 
@@ -143,6 +157,17 @@ impl BezierAlgebraicEndpointImage2 {
     /// Returns the exact tangent image at the endpoint.
     pub const fn tangent(&self) -> &BezierEndpointTangentImage2 {
         &self.tangent
+    }
+
+    /// Returns exact second-derivative endpoint evidence when the source curve
+    /// family can currently construct it.
+    pub fn second_derivative(&self) -> Option<&BezierEndpointTangentImage2> {
+        self.second_derivative.as_deref()
+    }
+
+    /// Returns exact third-derivative endpoint evidence when retained.
+    pub fn third_derivative(&self) -> Option<&BezierEndpointTangentImage2> {
+        self.third_derivative.as_deref()
     }
 
     /// Returns true when both point and tangent images were constructed.

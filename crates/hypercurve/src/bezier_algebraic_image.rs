@@ -277,6 +277,25 @@ impl QuadraticBezier2 {
     ) -> CurveResult<BezierAlgebraicTangentImage2> {
         tangent_image(parameter, quadratic_tangent_coefficients(self), policy)
     }
+
+    /// Evaluates this quadratic Bezier's second derivative at an isolated
+    /// algebraic parameter.
+    ///
+    /// The second derivative of a polynomial quadratic Bezier is constant, but
+    /// it is still returned as a represented coordinate image so arrangement
+    /// predicates can combine it with represented endpoint tangents without
+    /// crossing Yap's construction/decision boundary.
+    pub fn second_derivative_at_algebraic_parameter(
+        &self,
+        parameter: &BezierAlgebraicParameter2,
+        policy: &CurvePolicy,
+    ) -> CurveResult<BezierAlgebraicTangentImage2> {
+        tangent_image(
+            parameter,
+            second_derivative_polynomials(quadratic_tangent_coefficients(self)),
+            policy,
+        )
+    }
 }
 
 impl CubicBezier2 {
@@ -302,6 +321,45 @@ impl CubicBezier2 {
         policy: &CurvePolicy,
     ) -> CurveResult<BezierAlgebraicTangentImage2> {
         tangent_image(parameter, cubic_tangent_coefficients(self), policy)
+    }
+
+    /// Evaluates this cubic Bezier's second derivative at an isolated
+    /// algebraic parameter.
+    ///
+    /// The coordinate polynomials are derived by differentiating the cubic
+    /// tangent polynomial. Keeping the image represented lets local branch
+    /// order compare signed curvature exactly instead of sampling the
+    /// isolating interval; see Yap (1997) and Farin (2002).
+    pub fn second_derivative_at_algebraic_parameter(
+        &self,
+        parameter: &BezierAlgebraicParameter2,
+        policy: &CurvePolicy,
+    ) -> CurveResult<BezierAlgebraicTangentImage2> {
+        tangent_image(
+            parameter,
+            second_derivative_polynomials(cubic_tangent_coefficients(self)),
+            policy,
+        )
+    }
+
+    /// Evaluates this cubic Bezier's third derivative at an isolated algebraic
+    /// parameter.
+    ///
+    /// Cubic third derivatives are constant. The represented image is retained
+    /// for the same reason as the second derivative: arrangement code can
+    /// consume exact evidence and explicitly defer unresolved signs.
+    pub fn third_derivative_at_algebraic_parameter(
+        &self,
+        parameter: &BezierAlgebraicParameter2,
+        policy: &CurvePolicy,
+    ) -> CurveResult<BezierAlgebraicTangentImage2> {
+        tangent_image(
+            parameter,
+            second_derivative_polynomials(second_derivative_polynomials(
+                cubic_tangent_coefficients(self),
+            )),
+            policy,
+        )
     }
 }
 
@@ -533,6 +591,31 @@ fn coordinate_image(
     coefficients: Vec<Real>,
     policy: &CurvePolicy,
 ) -> Option<BezierAlgebraicCoordinateImage> {
+    if let Some(parameter_value) = parameter.exact_rational_witness() {
+        let value = evaluate_power_polynomial(&coefficients, parameter_value);
+        let representation = exact_real_representation(&value);
+        return Some(BezierAlgebraicCoordinateImage {
+            report: AlgebraicRootPolynomialImageReport {
+                status: AlgebraicRootPolynomialImageStatus::Transformed,
+                image_coefficients: coefficients.clone(),
+                representation: Some(representation),
+                message: None,
+            },
+            coefficients,
+        });
+    }
+    if coefficients.len() == 1 {
+        let representation = exact_real_representation(&coefficients[0]);
+        return Some(BezierAlgebraicCoordinateImage {
+            report: AlgebraicRootPolynomialImageReport {
+                status: AlgebraicRootPolynomialImageStatus::Transformed,
+                image_coefficients: coefficients.clone(),
+                representation: Some(representation),
+                message: None,
+            },
+            coefficients,
+        });
+    }
     let report = transform_algebraic_root_polynomial_image(
         parameter,
         &coefficients,
@@ -565,6 +648,35 @@ fn rational_coordinate_image(
             report,
         },
     )
+}
+
+fn exact_real_representation(value: &Real) -> AlgebraicRootRepresentation {
+    AlgebraicRootRepresentation {
+        constraint_index: 0,
+        symbol: SymbolId(0),
+        interval_index: 0,
+        polynomial_coefficients: vec![Real::zero() - value, Real::one()],
+        interval: IsolatedRootInterval {
+            lower: value.clone(),
+            upper: value.clone(),
+            exact_root: Some(value.clone()),
+            distinct_root_count: 1,
+        },
+        kind: AlgebraicRootKind::ExactRationalWitness,
+        validation: AlgebraicRootValidationReport {
+            status: AlgebraicRootValidationStatus::Valid,
+            message: None,
+        },
+    }
+}
+
+fn evaluate_power_polynomial(coefficients: &[Real], parameter: &Real) -> Real {
+    coefficients
+        .iter()
+        .rev()
+        .fold(Real::zero(), |accumulator, coefficient| {
+            (accumulator * parameter) + coefficient
+        })
 }
 
 fn parameter_representation(
@@ -746,6 +858,10 @@ fn derivative_polynomials(polynomials: CoordinatePolynomials) -> CoordinatePolyn
         x: derivative_coefficients(&polynomials.x),
         y: derivative_coefficients(&polynomials.y),
     }
+}
+
+fn second_derivative_polynomials(polynomials: CoordinatePolynomials) -> CoordinatePolynomials {
+    derivative_polynomials(polynomials)
 }
 
 fn derivative_coefficients(coefficients: &[Real]) -> Vec<Real> {

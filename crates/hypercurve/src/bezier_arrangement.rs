@@ -22,14 +22,19 @@
 //! order is not certified, traversal stops instead of guessing.
 
 use hyperreal::{Real, RealSign};
-use hypersolve::AlgebraicRootRepresentation;
+use hypersolve::{
+    AlgebraicRootArithmeticOp, AlgebraicRootArithmeticStatus, AlgebraicRootRepresentation,
+    arithmetic_algebraic_root_representations,
+};
 
 use crate::classify::{is_zero, real_sign};
 use crate::{
-    BezierAlgebraicTangentOrderStatus, BezierAlgebraicTangentVector2, BezierEndpoint,
-    BezierEndpointPointImage2, BezierEndpointTangentImage2, BezierSplitFragment2,
-    BezierSplitMaterialization2, BezierSubcurve2, BezierTangentTurnOrdering2, Classification,
-    CurvePolicy, Point2, UncertaintyReason, ZeroStatus, compare_algebraic_tangent_turn_from_base,
+    BezierAlgebraicSameTangentOrderStatus, BezierAlgebraicTangentOrderStatus,
+    BezierAlgebraicTangentVector2, BezierEndpoint, BezierEndpointPointImage2,
+    BezierEndpointTangentImage2, BezierSplitFragment2, BezierSplitMaterialization2,
+    BezierSubcurve2, BezierTangentTurnOrdering2, Classification, CurvePolicy, Point2,
+    UncertaintyReason, ZeroStatus, compare_algebraic_same_tangent_second_order,
+    compare_algebraic_tangent_turn_from_base,
 };
 
 /// One retained Bezier arrangement fragment with source provenance.
@@ -397,8 +402,8 @@ struct RetainedEndpointData {
     end: Option<RetainedEndpointKey>,
     start_tangent: Option<RetainedTangentVector>,
     end_tangent: Option<RetainedTangentVector>,
-    start_second_derivative: Option<TangentVector>,
-    start_third_derivative: Option<TangentVector>,
+    start_second_derivative: Option<RetainedTangentVector>,
+    start_third_derivative: Option<RetainedTangentVector>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -438,8 +443,14 @@ fn retained_endpoint_data(
                 end: Some(RetainedEndpointKey::Exact(Box::new(data.end))),
                 start_tangent: Some(RetainedTangentVector::Native(Box::new(data.start_tangent))),
                 end_tangent: Some(RetainedTangentVector::Native(Box::new(data.end_tangent))),
-                start_second_derivative: data.start_second_derivative,
-                start_third_derivative: data.start_third_derivative,
+                start_second_derivative: data
+                    .start_second_derivative
+                    .map(Box::new)
+                    .map(RetainedTangentVector::Native),
+                start_third_derivative: data
+                    .start_third_derivative
+                    .map(Box::new)
+                    .map(RetainedTangentVector::Native),
             })),
             Classification::Uncertain(reason) => Some(Classification::Uncertain(reason)),
         },
@@ -476,13 +487,37 @@ fn retained_endpoint_data(
                 },
                 None => None,
             };
+            let start_second_derivative = match start_image
+                .as_ref()
+                .and_then(|image| image.second_derivative())
+            {
+                Some(image) => match retained_algebraic_tangent(image) {
+                    Some(tangent) => Some(tangent),
+                    None => {
+                        return Some(Classification::Uncertain(UncertaintyReason::Boundary));
+                    }
+                },
+                None => None,
+            };
+            let start_third_derivative = match start_image
+                .as_ref()
+                .and_then(|image| image.third_derivative())
+            {
+                Some(image) => match retained_algebraic_tangent(image) {
+                    Some(tangent) => Some(tangent),
+                    None => {
+                        return Some(Classification::Uncertain(UncertaintyReason::Boundary));
+                    }
+                },
+                None => None,
+            };
             Some(Classification::Decided(RetainedEndpointData {
                 start,
                 end,
                 start_tangent,
                 end_tangent,
-                start_second_derivative: None,
-                start_third_derivative: None,
+                start_second_derivative,
+                start_third_derivative,
             }))
         }
         BezierSplitFragment2::Unresolved { .. } => None,
@@ -960,14 +995,71 @@ fn compare_retained_same_tangent_second_order(
             Some(RetainedTangentVector::Native(second_tangent)),
         ) => compare_same_tangent_second_order(
             first_tangent,
-            first.start_second_derivative.as_ref(),
-            first.start_third_derivative.as_ref(),
+            retained_native_vector(first.start_second_derivative.as_ref()),
+            retained_native_vector(first.start_third_derivative.as_ref()),
             second_tangent,
-            second.start_second_derivative.as_ref(),
-            second.start_third_derivative.as_ref(),
+            retained_native_vector(second.start_second_derivative.as_ref()),
+            retained_native_vector(second.start_third_derivative.as_ref()),
             policy,
         ),
+        (
+            Some(RetainedTangentVector::Algebraic(first_tangent)),
+            Some(RetainedTangentVector::Algebraic(second_tangent)),
+        ) => match (
+            retained_algebraic_vector(first.start_second_derivative.as_ref()),
+            retained_algebraic_vector(second.start_second_derivative.as_ref()),
+        ) {
+            (Some(first_second_derivative), Some(second_second_derivative)) => {
+                match compare_algebraic_same_tangent_second_order(
+                    first_tangent,
+                    first_second_derivative,
+                    second_tangent,
+                    second_second_derivative,
+                    policy,
+                ) {
+                    Classification::Decided(report) => match report.status {
+                        BezierAlgebraicSameTangentOrderStatus::Ordered => match report.ordering {
+                            Some(BezierTangentTurnOrdering2::FirstBeforeSecond) => {
+                                Classification::Decided(TurnOrdering::FirstBeforeSecond)
+                            }
+                            Some(BezierTangentTurnOrdering2::SecondBeforeFirst) => {
+                                Classification::Decided(TurnOrdering::SecondBeforeFirst)
+                            }
+                            None => Classification::Uncertain(UncertaintyReason::Boundary),
+                        },
+                        BezierAlgebraicSameTangentOrderStatus::SameDirection => {
+                            Classification::Decided(TurnOrdering::SameDirection)
+                        }
+                        BezierAlgebraicSameTangentOrderStatus::ZeroTangent
+                        | BezierAlgebraicSameTangentOrderStatus::SignUndecided => {
+                            Classification::Uncertain(UncertaintyReason::RealSign)
+                        }
+                        BezierAlgebraicSameTangentOrderStatus::ArithmeticFailed => {
+                            Classification::Uncertain(UncertaintyReason::Unsupported)
+                        }
+                    },
+                    Classification::Uncertain(reason) => Classification::Uncertain(reason),
+                }
+            }
+            _ => Classification::Decided(TurnOrdering::SameDirection),
+        },
         _ => Classification::Decided(TurnOrdering::SameDirection),
+    }
+}
+
+fn retained_native_vector(vector: Option<&RetainedTangentVector>) -> Option<&TangentVector> {
+    match vector {
+        Some(RetainedTangentVector::Native(vector)) => Some(vector),
+        _ => None,
+    }
+}
+
+fn retained_algebraic_vector(
+    vector: Option<&RetainedTangentVector>,
+) -> Option<&BezierAlgebraicTangentVector2> {
+    match vector {
+        Some(RetainedTangentVector::Algebraic(vector)) => Some(vector),
+        _ => None,
     }
 }
 
@@ -1173,7 +1265,10 @@ fn retained_endpoints_equal(
                 x: right_x,
                 y: right_y,
             },
-        ) => Some(left_x == right_x && left_y == right_y),
+        ) => Some(
+            represented_roots_equal(left_x, right_x, policy)?
+                && represented_roots_equal(left_y, right_y, policy)?,
+        ),
         (RetainedEndpointKey::Exact(point), RetainedEndpointKey::Algebraic { x, y })
         | (RetainedEndpointKey::Algebraic { x, y }, RetainedEndpointKey::Exact(point)) => {
             let x_witness = x.exact_rational_witness()?;
@@ -1188,6 +1283,57 @@ fn retained_endpoints_equal(
 
 fn compare_reals_equal(left: &Real, right: &Real, policy: &CurvePolicy) -> Option<bool> {
     Some(crate::classify::compare_reals(left, right, policy)? == std::cmp::Ordering::Equal)
+}
+
+fn represented_roots_equal(
+    left: &AlgebraicRootRepresentation,
+    right: &AlgebraicRootRepresentation,
+    policy: &CurvePolicy,
+) -> Option<bool> {
+    if left == right {
+        return Some(true);
+    }
+    if let (Some(left_witness), Some(right_witness)) = (
+        left.exact_rational_witness(),
+        right.exact_rational_witness(),
+    ) {
+        return compare_reals_equal(left_witness, right_witness, policy);
+    }
+
+    // Algebraic endpoint images produced from different curve expressions can
+    // represent the same point without having byte-identical construction
+    // payloads. Subtract the represented roots and certify the sign of the
+    // exact difference; this keeps endpoint gluing inside Yap's exact
+    // construction/decision model instead of comparing interval samples.
+    let difference = arithmetic_algebraic_root_representations(
+        left,
+        Some(right),
+        AlgebraicRootArithmeticOp::Subtract,
+    );
+    if !matches!(
+        difference.status,
+        AlgebraicRootArithmeticStatus::ComputedExactRationalWitness
+            | AlgebraicRootArithmeticStatus::ComputedRepresentation
+    ) {
+        return None;
+    }
+    if let Some(exact) = difference.exact_result.as_ref() {
+        return compare_reals_equal(exact, &Real::zero(), policy);
+    }
+    let representation = difference.result_representation.as_ref()?;
+    let lower =
+        crate::classify::compare_reals(&representation.interval.lower, &Real::zero(), policy)?;
+    let upper =
+        crate::classify::compare_reals(&representation.interval.upper, &Real::zero(), policy)?;
+    if lower == std::cmp::Ordering::Equal && upper == std::cmp::Ordering::Equal {
+        Some(true)
+    } else if matches!(lower, std::cmp::Ordering::Greater)
+        || matches!(upper, std::cmp::Ordering::Less)
+    {
+        Some(false)
+    } else {
+        None
+    }
 }
 
 impl BezierSubcurve2 {

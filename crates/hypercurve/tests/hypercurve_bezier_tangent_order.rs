@@ -1,9 +1,10 @@
 use hypercurve::{
-    BezierAlgebraicParameter2, BezierAlgebraicTangentOrderStatus, BezierAlgebraicTangentVector2,
+    BezierAlgebraicParameter2, BezierAlgebraicSameTangentOrderStatus,
+    BezierAlgebraicTangentOrderStatus, BezierAlgebraicTangentVector2,
     BezierAlgebraicTangentVectorReport, BezierAlgebraicTangentVectorStatus,
     BezierEndpointTangentImage2, BezierParameterInterval, BezierParameterPolynomial,
     BezierTangentTurnOrdering2, Classification, CurvePolicy, Point2, QuadraticBezier2, Real,
-    compare_algebraic_tangent_turn_from_base,
+    compare_algebraic_same_tangent_second_order, compare_algebraic_tangent_turn_from_base,
 };
 
 fn r(value: i32) -> Real {
@@ -162,6 +163,61 @@ fn algebraic_tangent_order_rejects_zero_tangent() {
     assert_eq!(
         report.status,
         BezierAlgebraicTangentOrderStatus::ZeroTangent
+    );
+    assert!(report.ordering.is_none());
+}
+
+#[test]
+fn algebraic_same_tangent_order_uses_second_derivative_side_witness() {
+    let tangent = tangent_vector(&horizontal());
+    let upward_second = BezierAlgebraicTangentVector2::new(
+        tangent.dx().clone(),
+        tangent_vector(&upward()).dy().clone(),
+    );
+    let downward_second = BezierAlgebraicTangentVector2::new(
+        tangent.dx().clone(),
+        tangent_vector(&downward()).dy().clone(),
+    );
+
+    let report = decided(compare_algebraic_same_tangent_second_order(
+        &tangent,
+        &upward_second,
+        &tangent,
+        &downward_second,
+        &policy(),
+    ));
+
+    assert_eq!(
+        report.status,
+        BezierAlgebraicSameTangentOrderStatus::Ordered
+    );
+    assert_eq!(
+        report.ordering,
+        Some(BezierTangentTurnOrdering2::FirstBeforeSecond)
+    );
+    assert!(report.first_curvature_cross.unwrap().sign.unwrap().is_gt());
+    assert!(report.second_curvature_cross.unwrap().sign.unwrap().is_lt());
+}
+
+#[test]
+fn algebraic_same_tangent_order_rejects_equal_second_order_evidence() {
+    let tangent = tangent_vector(&horizontal());
+    let upward_second = BezierAlgebraicTangentVector2::new(
+        tangent.dx().clone(),
+        tangent_vector(&upward()).dy().clone(),
+    );
+
+    let report = decided(compare_algebraic_same_tangent_second_order(
+        &tangent,
+        &upward_second,
+        &tangent,
+        &upward_second,
+        &policy(),
+    ));
+
+    assert_eq!(
+        report.status,
+        BezierAlgebraicSameTangentOrderStatus::SameDirection
     );
     assert!(report.ordering.is_none());
 }

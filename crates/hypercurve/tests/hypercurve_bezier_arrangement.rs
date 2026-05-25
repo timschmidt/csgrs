@@ -57,6 +57,14 @@ fn through_origin_with_midpoint_tangent(dx: i32, dy: i32) -> QuadraticBezier2 {
     QuadraticBezier2::new(p(-dx, -dy), p(0, 0), p(dx, dy))
 }
 
+fn through_origin_with_horizontal_midpoint_tangent(curvature: i32) -> QuadraticBezier2 {
+    QuadraticBezier2::new(
+        Point2::new(r(-1), r(curvature)),
+        Point2::new(r(0), r(-curvature)),
+        Point2::new(r(1), r(curvature)),
+    )
+}
+
 fn algebraic_endpoint_image(
     curve: &QuadraticBezier2,
     parameter: &BezierAlgebraicParameter2,
@@ -449,6 +457,43 @@ fn retained_tangent_order_rejects_equal_algebraic_successors() {
         graph.traverse_retained_with_tangent_order(&policy()),
         Classification::Uncertain(UncertaintyReason::Boundary)
     );
+}
+
+#[test]
+fn retained_tangent_order_uses_algebraic_second_order_for_equal_successors() {
+    let parameter = algebraic_midpoint_parameter();
+    let algebraic = BezierParameter2::algebraic(parameter.clone());
+    let incoming_curve = through_origin_with_midpoint_tangent(1, 0);
+    let upward_curve = through_origin_with_horizontal_midpoint_tangent(1);
+    let downward_curve = through_origin_with_horizontal_midpoint_tangent(-1);
+    let incoming = BezierSplitFragment2::AlgebraicEndpointImages {
+        start: exact(r(0)),
+        end: algebraic.clone(),
+        start_image: None,
+        end_image: Some(algebraic_endpoint_image(&incoming_curve, &parameter)),
+    };
+    let upward = BezierSplitFragment2::AlgebraicEndpointImages {
+        start: algebraic.clone(),
+        end: exact(r(1)),
+        start_image: Some(algebraic_endpoint_image(&upward_curve, &parameter)),
+        end_image: None,
+    };
+    let downward = BezierSplitFragment2::AlgebraicEndpointImages {
+        start: algebraic,
+        end: exact(r(1)),
+        start_image: Some(algebraic_endpoint_image(&downward_curve, &parameter)),
+        end_image: None,
+    };
+    let graph = BezierArrangementGraph2::new(vec![
+        hypercurve::BezierArrangementFragment2::new(0, 0, incoming),
+        hypercurve::BezierArrangementFragment2::new(1, 0, upward),
+        hypercurve::BezierArrangementFragment2::new(2, 0, downward),
+    ]);
+
+    let traversal = decided(graph.traverse_retained_with_tangent_order(&policy()));
+    assert_eq!(traversal.len(), 2);
+    assert_eq!(traversal.chains()[0].fragment_indices(), &[0, 1]);
+    assert_eq!(traversal.chains()[1].fragment_indices(), &[2]);
 }
 
 #[test]

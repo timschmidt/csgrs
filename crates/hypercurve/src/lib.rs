@@ -101,10 +101,12 @@ pub use bezier_split_endpoint::{
     BezierAlgebraicEndpointImage2, BezierEndpointPointImage2, BezierEndpointTangentImage2,
 };
 pub use bezier_tangent_order::{
+    BezierAlgebraicSameTangentOrderReport, BezierAlgebraicSameTangentOrderStatus,
     BezierAlgebraicScalarSignReport, BezierAlgebraicTangentOrderReport,
     BezierAlgebraicTangentOrderStatus, BezierAlgebraicTangentVector2,
     BezierAlgebraicTangentVectorReport, BezierAlgebraicTangentVectorStatus,
-    BezierTangentTurnOrdering2, compare_algebraic_tangent_turn_from_base,
+    BezierTangentTurnOrdering2, compare_algebraic_same_tangent_second_order,
+    compare_algebraic_tangent_turn_from_base,
 };
 pub use bezier_topology::{
     Axis2, BezierCurveIntersectionPoint, BezierCurveIntersectionRegion, BezierCurveRelation,
