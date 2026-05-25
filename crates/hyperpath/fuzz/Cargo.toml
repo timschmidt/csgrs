@@ -54,3 +54,10 @@ path = "fuzz_targets/pcb_convex_pad.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "line_arrangement"
+path = "fuzz_targets/line_arrangement.rs"
+test = false
+doc = false
+bench = false

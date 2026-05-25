@@ -8,6 +8,7 @@
 //! predicates certify the topology before the candidate becomes output.
 
 pub mod arc;
+pub mod arrangement;
 pub mod bezier;
 pub mod cam;
 pub mod offset;
@@ -33,6 +34,11 @@ pub use arc::{
     ExplicitArcTangentReport, ExplicitCircleRelationClass, ExplicitCircleRelationReport,
     ExplicitCircularArc, ExplicitCircularArcFacts, LineExplicitArcIntersectionClass,
     LineExplicitArcIntersectionReport,
+};
+pub use arrangement::{
+    LineArrangementBreakpoint, LineArrangementError, LineArrangementEvent,
+    LineArrangementEventClass, LineArrangementFacts, LineArrangementFragment,
+    LineArrangementReport, arrange_line_segments, arrange_line_segments_with_provenance,
 };
 pub use bezier::{
     BezierParameter, BezierParameterError, CubicBezier, CubicBezierFacts, HigherOrderBezier,

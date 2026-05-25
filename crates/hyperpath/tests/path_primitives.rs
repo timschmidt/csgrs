@@ -7,26 +7,26 @@ use hyperpath::{
     ExplicitArcIntersectionClass, ExplicitArcOverlapClass, ExplicitArcPointClassification,
     ExplicitArcSweepClass, ExplicitArcTangentClass, ExplicitCircleRelationClass,
     ExplicitCircularArc, HigherOrderBezier, HigherOrderBezierError, InfillGraphError,
-    LineExplicitArcIntersectionClass, LineOffsetError, LinePathSegment, MeanderError,
-    MeanderObstacle, MeanderPlacementCandidate, NetId, OffsetSide, PathProvenance,
-    PathSourceFormat, PcbBoardOutline, PcbCardinalRectPad, PcbCircularBoardOutline, PcbCircularPad,
-    PcbConvexBoardOutline, PcbConvexPad, PcbObroundPad, PcbOrientedRectPad,
-    PcbOrthogonalBoardOutline, PcbRectPad, PcbRoundedRectPad, PcbTrace, PcbViaStack,
-    PocketPlanError, PocketPlanStopReason, QuadraticBezier, RationalQuadraticBezier,
+    LineArrangementError, LineArrangementEventClass, LineExplicitArcIntersectionClass,
+    LineOffsetError, LinePathSegment, MeanderError, MeanderObstacle, MeanderPlacementCandidate,
+    NetId, OffsetSide, PathProvenance, PathSourceFormat, PcbBoardOutline, PcbCardinalRectPad,
+    PcbCircularBoardOutline, PcbCircularPad, PcbConvexBoardOutline, PcbConvexPad, PcbObroundPad,
+    PcbOrientedRectPad, PcbOrthogonalBoardOutline, PcbRectPad, PcbRoundedRectPad, PcbTrace,
+    PcbViaStack, PocketPlanError, PocketPlanStopReason, QuadraticBezier, RationalQuadraticBezier,
     RationalQuadraticBezierError, RectangularPocket, RectangularRegionRelation,
     RouteCertificationError, SegmentParameterOrder, SourceLengthUnit, SpecctraGridTraceRecord,
     SpecctraGridViaRecord, SpecctraImportError, SpecctraLayerAlias, SpecctraNetAlias,
     SpecctraParseError, SupportFootprintStatus, SupportPlanError, SweptLineSegment,
     TangentAlignment, TangentJoinClass, TangentJoinReport, TangentSpan, TraceLayer,
     ViaAnnularRingReport, ViaDrillIntent, ViaDrillPolicyClass, ViaLayerSpanRelation,
-    ViaLayerTransitionClass, build_alternating_detour_meander, build_g1_join_problem,
-    build_length_match_problem, build_multi_detour_meander, build_nonuniform_detour_meander,
-    build_obstacle_aware_detour_meander, build_oriented_tangent_alignment_problem,
-    build_rectangular_bead_plan, build_rectangular_pocket_plan,
-    build_rectangular_serpentine_infill_graph, build_rectangular_support_plan,
-    build_single_detour_meander, build_tangent_alignment_problem, certify_constant_feed_time,
-    certify_differential_pair_skew, certify_g1_chain, certify_g1_join_candidate,
-    certify_length_extension, certify_tangent_alignment_candidate,
+    ViaLayerTransitionClass, arrange_line_segments, build_alternating_detour_meander,
+    build_g1_join_problem, build_length_match_problem, build_multi_detour_meander,
+    build_nonuniform_detour_meander, build_obstacle_aware_detour_meander,
+    build_oriented_tangent_alignment_problem, build_rectangular_bead_plan,
+    build_rectangular_pocket_plan, build_rectangular_serpentine_infill_graph,
+    build_rectangular_support_plan, build_single_detour_meander, build_tangent_alignment_problem,
+    certify_constant_feed_time, certify_differential_pair_skew, certify_g1_chain,
+    certify_g1_join_candidate, certify_length_extension, certify_tangent_alignment_candidate,
     check_cardinal_rect_pad_board_clearance, check_circular_pad_board_clearance,
     check_circular_pad_circular_board_clearance, check_convex_pad_board_clearance,
     check_obround_pad_board_clearance, check_oriented_rect_pad_board_clearance,
@@ -168,6 +168,86 @@ fn segment_parameter_order_respects_reversed_direction() {
         segment.compare_points_along(&p(2, 0), &p(8, 0), PredicatePolicy::default()),
         SegmentParameterOrder::After
     );
+}
+
+#[test]
+fn line_arrangement_splits_crossings_touches_and_overlaps() {
+    let horizontal = LinePathSegment::new(p(0, 0), p(10, 0));
+    let vertical = LinePathSegment::new(p(5, -5), p(5, 5));
+    let endpoint_touch = LinePathSegment::new(p(10, 0), p(12, 2));
+    let overlap = LinePathSegment::new(p(3, 0), p(8, 0));
+
+    let report = arrange_line_segments(
+        &[horizontal, vertical, endpoint_touch, overlap],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+
+    assert_eq!(report.events.len(), 6);
+    assert_eq!(
+        report.events[0].class,
+        LineArrangementEventClass::ProperCrossing
+    );
+    assert_eq!(report.events[0].point.as_ref().unwrap(), &p(5, 0));
+    assert_eq!(
+        report.events[1].class,
+        LineArrangementEventClass::EndpointTouch
+    );
+    assert_eq!(report.events[1].point.as_ref().unwrap(), &p(10, 0));
+    assert_eq!(
+        report.events[2].class,
+        LineArrangementEventClass::CollinearOverlap
+    );
+    assert_eq!(report.events[2].overlap.as_ref().unwrap().start(), &p(3, 0));
+    assert_eq!(report.events[2].overlap.as_ref().unwrap().end(), &p(8, 0));
+
+    assert_eq!(
+        report.breakpoints[0]
+            .iter()
+            .map(|breakpoint| breakpoint.point.clone())
+            .collect::<Vec<_>>(),
+        vec![p(0, 0), p(3, 0), p(5, 0), p(8, 0), p(10, 0)]
+    );
+    assert!(report.fragments.iter().any(|fragment| {
+        fragment.source_segment == 0
+            && fragment.segment.start() == &p(3, 0)
+            && fragment.segment.end() == &p(5, 0)
+    }));
+    assert!(report.fragments.iter().any(|fragment| {
+        fragment.source_segment == 1
+            && fragment.segment.start() == &p(5, -5)
+            && fragment.segment.end() == &p(5, 0)
+    }));
+}
+
+#[test]
+fn line_arrangement_rejects_degenerate_segment() {
+    assert_eq!(
+        arrange_line_segments(
+            &[LinePathSegment::new(p(1, 1), p(1, 1))],
+            PredicatePolicy::default(),
+        )
+        .unwrap_err(),
+        LineArrangementError::DegenerateSegment { segment: 0 }
+    );
+}
+
+#[test]
+fn line_arrangement_handles_rational_proper_crossing() {
+    let shallow = LinePathSegment::new(p(0, 0), p(6, 2));
+    let steep = LinePathSegment::new(p(0, 2), p(6, 0));
+
+    let report = arrange_line_segments(&[shallow, steep], PredicatePolicy::default()).unwrap();
+
+    assert_eq!(
+        report.events[0].class,
+        LineArrangementEventClass::ProperCrossing
+    );
+    assert_eq!(report.events[0].point.as_ref().unwrap(), &p(3, 1));
+    assert_eq!(report.breakpoints[0][1].point, p(3, 1));
+    assert_eq!(report.breakpoints[0][1].parameter_numerator, r(20));
+    assert_eq!(report.breakpoints[0][1].parameter_denominator, r(40));
+    assert_eq!(report.fragments.len(), 4);
 }
 
 #[test]
@@ -5827,6 +5907,63 @@ proptest! {
         prop_assert_eq!(segment.direction_vector(), expected.clone());
         prop_assert_eq!(segment.start_tangent(), expected.clone());
         prop_assert_eq!(segment.end_tangent(), expected);
+    }
+
+    #[test]
+    fn line_arrangement_generated_axis_crossings_split_both_segments(
+        x in -50_i16..=50,
+        y in -50_i16..=50,
+        horizontal_half in 1_i16..=50,
+        vertical_half in 1_i16..=50,
+    ) {
+        let x = i64::from(x);
+        let y = i64::from(y);
+        let horizontal_half = i64::from(horizontal_half);
+        let vertical_half = i64::from(vertical_half);
+        let horizontal = LinePathSegment::new(
+            p(x - horizontal_half, y),
+            p(x + horizontal_half, y),
+        );
+        let vertical = LinePathSegment::new(
+            p(x, y - vertical_half),
+            p(x, y + vertical_half),
+        );
+
+        let report = arrange_line_segments(&[horizontal, vertical], PredicatePolicy::default()).unwrap();
+
+        prop_assert_eq!(report.events[0].class, LineArrangementEventClass::ProperCrossing);
+        prop_assert_eq!(report.events[0].point.as_ref().unwrap(), &p(x, y));
+        prop_assert_eq!(report.breakpoints[0].len(), 3);
+        prop_assert_eq!(report.breakpoints[1].len(), 3);
+        prop_assert_eq!(report.fragments.len(), 4);
+    }
+
+    #[test]
+    fn line_arrangement_generated_collinear_overlap_splits_union_endpoints(
+        a in -100_i16..=80,
+        len_a in 4_i16..=80,
+        offset in 1_i16..=20,
+        len_b in 2_i16..=80,
+    ) {
+        prop_assume!(offset < len_a);
+        let a = i64::from(a);
+        let len_a = i64::from(len_a);
+        let offset = i64::from(offset);
+        let len_b = i64::from(len_b);
+        let first = LinePathSegment::new(p(a, 7), p(a + len_a, 7));
+        let second = LinePathSegment::new(p(a + offset, 7), p(a + offset + len_b, 7));
+
+        let report = arrange_line_segments(&[first, second], PredicatePolicy::default()).unwrap();
+
+        prop_assert!(matches!(
+            report.events[0].class,
+            LineArrangementEventClass::CollinearOverlap | LineArrangementEventClass::EndpointTouch
+        ));
+        if report.events[0].class == LineArrangementEventClass::CollinearOverlap {
+            let overlap = report.events[0].overlap.as_ref().unwrap();
+            prop_assert_eq!(overlap.start(), &p(a + offset, 7));
+            prop_assert!(report.breakpoints[0].iter().any(|breakpoint| breakpoint.point == p(a + offset, 7)));
+        }
     }
 
     #[test]
