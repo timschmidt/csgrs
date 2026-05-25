@@ -11,9 +11,9 @@ use hyperpath::{
     SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraLayerAlias, SpecctraNetAlias,
     SweptLineSegment, TangentSpan, TraceLayer, ViaDrillIntent, arrange_cubic_beziers,
     arrange_explicit_arcs, arrange_line_segments, arrange_line_segments_with_explicit_arcs,
-    arrange_quadratic_beziers, arrange_rational_quadratic_beziers,
-    build_alternating_detour_meander, build_g1_join_problem, build_length_match_problem,
-    build_multi_detour_meander, build_nonuniform_detour_meander,
+    arrange_line_segments_with_quadratic_beziers, arrange_quadratic_beziers,
+    arrange_rational_quadratic_beziers, build_alternating_detour_meander, build_g1_join_problem,
+    build_length_match_problem, build_multi_detour_meander, build_nonuniform_detour_meander,
     build_obstacle_aware_detour_meander, build_oriented_tangent_alignment_problem,
     build_rectangular_bead_plan, build_rectangular_pocket_plan,
     build_rectangular_serpentine_infill_graph, build_rectangular_support_plan,
@@ -213,6 +213,15 @@ fn path_predicates(c: &mut Criterion) {
             intersect_axis_aligned_line_quadratic_bezier(
                 &line_quadratic_line,
                 &bezier,
+                PredicatePolicy::default(),
+            )
+        })
+    });
+    c.bench_function("line_quadratic_bezier_arrangement_cleanup", |b| {
+        b.iter(|| {
+            arrange_line_segments_with_quadratic_beziers(
+                std::slice::from_ref(&line_quadratic_line),
+                std::slice::from_ref(&bezier),
                 PredicatePolicy::default(),
             )
         })

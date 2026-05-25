@@ -12,6 +12,7 @@ pub mod arrangement;
 pub mod bezier;
 pub mod bezier_arrangement;
 pub mod cam;
+pub mod mixed_bezier_arrangement;
 pub mod offset;
 pub mod pcb;
 pub mod pcb_circular_board;
@@ -70,6 +71,13 @@ pub use cam::{
     RegionBooleanError, SupportFootprintStatus, SupportPlanError, build_rectangular_bead_plan,
     build_rectangular_pocket_plan, build_rectangular_serpentine_infill_graph,
     build_rectangular_support_plan, intersect_rectangular_regions, subtract_rectangular_region,
+};
+pub use mixed_bezier_arrangement::{
+    LineQuadraticBezierArrangementError, LineQuadraticBezierArrangementEvent,
+    LineQuadraticBezierArrangementFacts, LineQuadraticBezierArrangementReport,
+    MixedLineArrangementBreakpoint, MixedLineArrangementFragment, QuadraticBezierRealBreakpoint,
+    QuadraticBezierRealFragment, arrange_line_segments_with_quadratic_beziers,
+    arrange_line_segments_with_quadratic_beziers_and_provenance,
 };
 pub use offset::{
     ArcOffsetCandidate, ArcOffsetError, BezierOffsetError, BezierOffsetSampleCandidate,

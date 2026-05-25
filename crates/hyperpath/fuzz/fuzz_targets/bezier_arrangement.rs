@@ -5,7 +5,8 @@ use std::cmp::Ordering;
 use hyperlimit::{PredicatePolicy, compare_reals_with_policy};
 use hyperpath::{
     BezierParameter, CubicBezier, LinePathSegment, QuadraticBezier, RationalQuadraticBezier,
-    arrange_cubic_beziers, arrange_quadratic_beziers, arrange_rational_quadratic_beziers,
+    arrange_cubic_beziers, arrange_line_segments_with_quadratic_beziers,
+    arrange_quadratic_beziers, arrange_rational_quadratic_beziers,
     intersect_axis_aligned_line_quadratic_bezier,
 };
 use hyperreal::{Rational, Real};
@@ -58,8 +59,27 @@ fuzz_target!(|data: &[u8]| {
     );
     for event in &intersection_report.intersections {
         assert_eq!(
-            compare_reals_with_policy(&event.point.y, &horizontal.start().y, PredicatePolicy::default()).value(),
+            compare_reals_with_policy(
+                &event.point.y,
+                &horizontal.start().y,
+                PredicatePolicy::default()
+            )
+            .value(),
             Some(Ordering::Equal)
+        );
+    }
+    let mixed_report = arrange_line_segments_with_quadratic_beziers(
+        std::slice::from_ref(&horizontal),
+        std::slice::from_ref(&quadratic),
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert_eq!(mixed_report.events.len(), 1);
+    for window in mixed_report.bezier_breakpoints[0].windows(2) {
+        assert!(
+            compare_reals_with_policy(&window[0].parameter, &window[1].parameter, PredicatePolicy::default())
+                .value()
+                .is_some()
         );
     }
 

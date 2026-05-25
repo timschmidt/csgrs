@@ -21,9 +21,10 @@ use hyperpath::{
     TangentAlignment, TangentJoinClass, TangentJoinReport, TangentSpan, TraceLayer,
     ViaAnnularRingReport, ViaDrillIntent, ViaDrillPolicyClass, ViaLayerSpanRelation,
     ViaLayerTransitionClass, arrange_cubic_beziers, arrange_explicit_arcs, arrange_line_segments,
-    arrange_line_segments_with_explicit_arcs, arrange_quadratic_beziers,
-    arrange_rational_quadratic_beziers, build_alternating_detour_meander, build_g1_join_problem,
-    build_length_match_problem, build_multi_detour_meander, build_nonuniform_detour_meander,
+    arrange_line_segments_with_explicit_arcs, arrange_line_segments_with_quadratic_beziers,
+    arrange_quadratic_beziers, arrange_rational_quadratic_beziers,
+    build_alternating_detour_meander, build_g1_join_problem, build_length_match_problem,
+    build_multi_detour_meander, build_nonuniform_detour_meander,
     build_obstacle_aware_detour_meander, build_oriented_tangent_alignment_problem,
     build_rectangular_bead_plan, build_rectangular_pocket_plan,
     build_rectangular_serpentine_infill_graph, build_rectangular_support_plan,
@@ -554,6 +555,109 @@ fn line_quadratic_bezier_intersection_returns_unknown_for_non_axis_line() {
 
     assert_eq!(report.class, LineQuadraticBezierIntersectionClass::Unknown);
     assert!(report.intersections.is_empty());
+}
+
+#[test]
+fn line_quadratic_bezier_arrangement_splits_certified_secant_roots() {
+    let curve = QuadraticBezier::new(p(0, 0), p(4, 8), p(8, 0));
+    let line = LinePathSegment::new(p(0, 3), p(8, 3));
+
+    let report =
+        arrange_line_segments_with_quadratic_beziers(&[line], &[curve], PredicatePolicy::default())
+            .unwrap();
+
+    assert_eq!(
+        report.events[0].class,
+        LineQuadraticBezierIntersectionClass::TwoPoints
+    );
+    assert_eq!(report.line_breakpoints[0].len(), 4);
+    assert_eq!(report.bezier_breakpoints[0].len(), 4);
+    assert_eq!(report.line_fragments.len(), 3);
+    assert_eq!(report.bezier_fragments.len(), 3);
+    assert_eq!(report.line_breakpoints[0][0].point, p(0, 3));
+    assert_eq!(report.line_breakpoints[0][1].point, p(2, 3));
+    assert_eq!(report.line_breakpoints[0][2].point, p(6, 3));
+    assert_eq!(report.line_breakpoints[0][3].point, p(8, 3));
+    assert_eq!(report.bezier_breakpoints[0][0].parameter, r(0));
+    assert_eq!(report.bezier_breakpoints[0][1].parameter, rq(1, 4));
+    assert_eq!(report.bezier_breakpoints[0][2].parameter, rq(3, 4));
+    assert_eq!(report.bezier_breakpoints[0][3].parameter, r(1));
+    assert_eq!(report.bezier_fragments[0].curve.end(), &p(2, 3));
+    assert_eq!(report.bezier_fragments[1].curve.start(), &p(2, 3));
+    assert_eq!(report.bezier_fragments[1].curve.end(), &p(6, 3));
+    assert_eq!(report.bezier_fragments[2].curve.start(), &p(6, 3));
+}
+
+#[test]
+fn line_quadratic_bezier_arrangement_records_unrepresented_secant_unknown() {
+    let curve = QuadraticBezier::new(p(0, 0), p(4, 4), p(8, 0));
+    let line = LinePathSegment::new(p(0, 1), p(8, 1));
+
+    let report =
+        arrange_line_segments_with_quadratic_beziers(&[line], &[curve], PredicatePolicy::default())
+            .unwrap();
+
+    assert_eq!(
+        report.events[0].class,
+        LineQuadraticBezierIntersectionClass::Unknown
+    );
+    assert_eq!(report.line_breakpoints[0].len(), 2);
+    assert_eq!(report.bezier_breakpoints[0].len(), 2);
+}
+
+#[test]
+fn line_quadratic_bezier_arrangement_splits_tangent_curve_once() {
+    let curve = QuadraticBezier::new(p(0, 0), p(4, 4), p(8, 0));
+    let line = LinePathSegment::new(p(0, 2), p(8, 2));
+
+    let report =
+        arrange_line_segments_with_quadratic_beziers(&[line], &[curve], PredicatePolicy::default())
+            .unwrap();
+
+    assert_eq!(
+        report.events[0].class,
+        LineQuadraticBezierIntersectionClass::Tangent
+    );
+    assert_eq!(report.line_breakpoints[0].len(), 3);
+    assert_eq!(report.bezier_breakpoints[0].len(), 3);
+    assert_eq!(report.bezier_breakpoints[0][1].parameter, rq(1, 2));
+    assert_eq!(report.bezier_fragments.len(), 2);
+    assert_eq!(report.bezier_fragments[0].curve.end(), &p(4, 2));
+    assert_eq!(report.bezier_fragments[1].curve.start(), &p(4, 2));
+}
+
+#[test]
+fn line_quadratic_bezier_arrangement_keeps_overlap_unknown_unsplit() {
+    let curve = QuadraticBezier::new(p(0, 0), p(4, 0), p(8, 0));
+    let line = LinePathSegment::new(p(2, 0), p(6, 0));
+
+    let report =
+        arrange_line_segments_with_quadratic_beziers(&[line], &[curve], PredicatePolicy::default())
+            .unwrap();
+
+    assert_eq!(
+        report.events[0].class,
+        LineQuadraticBezierIntersectionClass::Unknown
+    );
+    assert_eq!(report.line_breakpoints[0].len(), 2);
+    assert_eq!(report.bezier_breakpoints[0].len(), 2);
+    assert_eq!(report.line_fragments.len(), 1);
+    assert_eq!(report.bezier_fragments.len(), 1);
+}
+
+#[test]
+fn line_quadratic_bezier_arrangement_rejects_degenerate_line_order() {
+    let curve = QuadraticBezier::new(p(0, 0), p(4, 8), p(8, 0));
+    let line = LinePathSegment::new(p(2, 3), p(2, 3));
+
+    let err =
+        arrange_line_segments_with_quadratic_beziers(&[line], &[curve], PredicatePolicy::default())
+            .unwrap_err();
+
+    assert_eq!(
+        err,
+        hyperpath::LineQuadraticBezierArrangementError::DegenerateLine { line: 0 }
+    );
 }
 
 #[test]
@@ -6356,6 +6460,39 @@ proptest! {
         prop_assert_eq!(report.intersections[0].point.clone(), curve.start().clone());
         prop_assert_eq!(report.intersections[1].parameter.clone(), r(1));
         prop_assert_eq!(report.intersections[1].point.clone(), curve.end().clone());
+    }
+
+    #[test]
+    fn line_quadratic_bezier_arrangement_generated_tangencies_split_once(
+        x0 in -20_i16..=20,
+        width in 1_i16..=40,
+        lift in 1_i16..=40,
+    ) {
+        let start_x = i64::from(x0);
+        let width = i64::from(width);
+        let lift = i64::from(lift);
+        let curve = QuadraticBezier::new(
+            p(start_x, 0),
+            p(start_x + width, lift),
+            p(start_x + 2 * width, 0),
+        );
+        let line = LinePathSegment::new(
+            pq(start_x * 2, 2, lift, 2),
+            pq((start_x + 2 * width) * 2, 2, lift, 2),
+        );
+
+        let report = arrange_line_segments_with_quadratic_beziers(
+            &[line],
+            &[curve],
+            PredicatePolicy::default(),
+        ).unwrap();
+
+        prop_assert_eq!(report.events[0].class, LineQuadraticBezierIntersectionClass::Tangent);
+        prop_assert_eq!(report.line_breakpoints[0].len(), 3);
+        prop_assert_eq!(report.bezier_breakpoints[0].len(), 3);
+        prop_assert_eq!(report.bezier_breakpoints[0][1].parameter.clone(), rq(1, 2));
+        prop_assert_eq!(report.bezier_fragments.len(), 2);
+        prop_assert_eq!(report.bezier_fragments[0].curve.end(), report.bezier_fragments[1].curve.start());
     }
 
     #[test]
