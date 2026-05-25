@@ -21,14 +21,14 @@ use hyperpath::{
     build_rectangular_support_plan, build_single_detour_meander, build_tangent_alignment_problem,
     certify_acceleration_limited_feed_time, certify_constant_feed_time,
     certify_differential_pair_skew, certify_g1_chain, certify_g1_join_candidate,
-    certify_length_extension, certify_tangent_alignment_candidate,
-    check_cardinal_rect_pad_board_clearance, check_circular_pad_board_clearance,
-    check_circular_pad_circular_board_clearance, check_convex_pad_board_clearance,
-    check_obround_pad_board_clearance, check_oriented_rect_pad_board_clearance,
-    check_rect_pad_board_clearance, check_rounded_rect_pad_board_clearance,
-    check_trace_board_clearance, check_trace_cardinal_rect_pad_clearance,
-    check_trace_circular_board_clearance, check_trace_clearance,
-    check_trace_convex_board_clearance, check_trace_convex_pad_clearance,
+    certify_length_extension, certify_symmetric_jerk_limited_feed_time,
+    certify_tangent_alignment_candidate, check_cardinal_rect_pad_board_clearance,
+    check_circular_pad_board_clearance, check_circular_pad_circular_board_clearance,
+    check_convex_pad_board_clearance, check_obround_pad_board_clearance,
+    check_oriented_rect_pad_board_clearance, check_rect_pad_board_clearance,
+    check_rounded_rect_pad_board_clearance, check_trace_board_clearance,
+    check_trace_cardinal_rect_pad_clearance, check_trace_circular_board_clearance,
+    check_trace_clearance, check_trace_convex_board_clearance, check_trace_convex_pad_clearance,
     check_trace_obround_pad_clearance, check_trace_oriented_rect_pad_clearance,
     check_trace_orthogonal_board_clearance, check_trace_pad_clearance,
     check_trace_rect_pad_clearance, check_trace_rounded_rect_pad_clearance,
@@ -779,6 +779,19 @@ fn path_predicates(c: &mut Criterion) {
                 r(100),
                 r(10),
                 r(25),
+                PredicatePolicy::default(),
+            )
+        })
+    });
+    let jerk_feed_route = vec![LinePathSegment::new(p(0, 0), p(4000, 0))];
+    c.bench_function("symmetric_jerk_limited_feed_time", |b| {
+        b.iter(|| {
+            certify_symmetric_jerk_limited_feed_time(
+                &jerk_feed_route,
+                r(400),
+                r(100),
+                r(16),
+                r(20),
                 PredicatePolicy::default(),
             )
         })

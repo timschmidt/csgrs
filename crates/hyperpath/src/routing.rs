@@ -23,6 +23,11 @@ use crate::offset::{LineOffsetError, OffsetSide, offset_axis_aligned_segment};
 use crate::segment::{Axis, LinePathSegment};
 use crate::solve::{constant_feed_time_equation, differential_pair_skew_equation};
 
+mod feed;
+
+pub use feed::JerkLimitedFeedTimeReport;
+pub use feed::certify_symmetric_jerk_limited_feed_time;
+
 /// Exact length-match solve model for one continuous extension parameter.
 #[derive(Clone, Debug)]
 pub struct LengthMatchProblem {
@@ -411,6 +416,12 @@ pub enum RouteCertificationError {
     NegativeTime,
     /// Exact comparison could not choose the acceleration-limited profile.
     UnknownFeedProfile,
+    /// Jerk limit was structurally negative.
+    NegativeJerk,
+    /// Jerk limit was structurally zero.
+    ZeroJerk,
+    /// Exact scalar division failed while deriving feed-profile facts.
+    UnsupportedDivision,
 }
 
 /// Build a one-bump rectangular meander from an exact extra length.

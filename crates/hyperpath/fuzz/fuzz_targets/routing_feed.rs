@@ -4,6 +4,7 @@ use hyperlimit::{Point2, PredicatePolicy};
 use hyperpath::{
     AccelerationLimitedFeedProfileClass, LinePathSegment, RouteCertificationError,
     certify_acceleration_limited_feed_time, certify_constant_feed_time,
+    certify_symmetric_jerk_limited_feed_time,
 };
 use hyperreal::{Rational, Real};
 use libfuzzer_sys::fuzz_target;
@@ -21,7 +22,7 @@ fn positive(byte: u8, max: i64) -> i64 {
 }
 
 fuzz_target!(|data: &[u8]| {
-    if data.len() < 6 {
+    if data.len() < 8 {
         return;
     }
 
@@ -82,4 +83,31 @@ fuzz_target!(|data: &[u8]| {
         .unwrap_err(),
         RouteCertificationError::UnsupportedRouteGeometry
     );
+
+    let jerk = positive(data[6], 8);
+    let quarter_time = positive(data[7], 16);
+    let jerk_length = 2 * jerk * quarter_time * quarter_time * quarter_time;
+    let jerk_time = 4 * quarter_time;
+    let jerk_route = vec![LinePathSegment::new(p(0, 0), p(jerk_length, 0))];
+    let jerk_report = certify_symmetric_jerk_limited_feed_time(
+        &jerk_route,
+        r(jerk * quarter_time * quarter_time),
+        r(jerk * quarter_time),
+        r(jerk),
+        r(jerk_time),
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert!(jerk_report.certification.all_satisfied());
+
+    let limited_report = certify_symmetric_jerk_limited_feed_time(
+        &jerk_route,
+        r(1),
+        r(1),
+        r(jerk),
+        r(jerk_time),
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert!(limited_report.certification.has_certified_violation());
 });

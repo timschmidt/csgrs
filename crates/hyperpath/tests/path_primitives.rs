@@ -7,11 +7,12 @@ use hyperpath::{
     ExplicitArcArrangementClass, ExplicitArcIntersectionClass, ExplicitArcOverlapClass,
     ExplicitArcPointClassification, ExplicitArcSweepClass, ExplicitArcTangentClass,
     ExplicitCircleRelationClass, ExplicitCircularArc, HigherOrderBezier, HigherOrderBezierError,
-    InfillGraphError, LineArcArrangementEventClass, LineArrangementError,
-    LineArrangementEventClass, LineExplicitArcIntersectionClass, LineOffsetError, LinePathSegment,
-    LineQuadraticBezierIntersectionClass, LineRationalQuadraticBezierIntersectionClass,
-    MeanderError, MeanderObstacle, MeanderPlacementCandidate, NetId, OffsetSide, PathProvenance,
-    PathSourceFormat, PcbBoardOutline, PcbCardinalRectPad, PcbCircularBoardOutline, PcbCircularPad,
+    InfillGraphError, JerkLimitedFeedTimeReport, LineArcArrangementEventClass,
+    LineArrangementError, LineArrangementEventClass, LineExplicitArcIntersectionClass,
+    LineOffsetError, LinePathSegment, LineQuadraticBezierIntersectionClass,
+    LineRationalQuadraticBezierIntersectionClass, MeanderError, MeanderObstacle,
+    MeanderPlacementCandidate, NetId, OffsetSide, PathProvenance, PathSourceFormat,
+    PcbBoardOutline, PcbCardinalRectPad, PcbCircularBoardOutline, PcbCircularPad,
     PcbConvexBoardOutline, PcbConvexPad, PcbObroundPad, PcbOrientedRectPad,
     PcbOrthogonalBoardOutline, PcbRectPad, PcbRoundedRectPad, PcbTrace, PcbViaStack,
     PocketLinkGraphError, PocketPlanError, PocketPlanStopReason, PocketRingSide, QuadraticBezier,
@@ -32,14 +33,14 @@ use hyperpath::{
     build_rectangular_support_plan, build_single_detour_meander, build_tangent_alignment_problem,
     certify_acceleration_limited_feed_time, certify_constant_feed_time,
     certify_differential_pair_skew, certify_g1_chain, certify_g1_join_candidate,
-    certify_length_extension, certify_tangent_alignment_candidate,
-    check_cardinal_rect_pad_board_clearance, check_circular_pad_board_clearance,
-    check_circular_pad_circular_board_clearance, check_convex_pad_board_clearance,
-    check_obround_pad_board_clearance, check_oriented_rect_pad_board_clearance,
-    check_rect_pad_board_clearance, check_rounded_rect_pad_board_clearance,
-    check_trace_board_clearance, check_trace_cardinal_rect_pad_clearance,
-    check_trace_circular_board_clearance, check_trace_clearance,
-    check_trace_convex_board_clearance, check_trace_convex_pad_clearance,
+    certify_length_extension, certify_symmetric_jerk_limited_feed_time,
+    certify_tangent_alignment_candidate, check_cardinal_rect_pad_board_clearance,
+    check_circular_pad_board_clearance, check_circular_pad_circular_board_clearance,
+    check_convex_pad_board_clearance, check_obround_pad_board_clearance,
+    check_oriented_rect_pad_board_clearance, check_rect_pad_board_clearance,
+    check_rounded_rect_pad_board_clearance, check_trace_board_clearance,
+    check_trace_cardinal_rect_pad_clearance, check_trace_circular_board_clearance,
+    check_trace_clearance, check_trace_convex_board_clearance, check_trace_convex_pad_clearance,
     check_trace_obround_pad_clearance, check_trace_oriented_rect_pad_clearance,
     check_trace_orthogonal_board_clearance, check_trace_pad_clearance,
     check_trace_rect_pad_clearance, check_trace_rounded_rect_pad_clearance,
@@ -3906,6 +3907,168 @@ fn acceleration_limited_feed_time_handles_boundary_and_rejects_invalid_inputs() 
 }
 
 #[test]
+fn symmetric_jerk_limited_feed_time_replays_cubic_s_curve_profile() {
+    let route = vec![LinePathSegment::new(p(0, 0), p(16, 0))];
+    let report: JerkLimitedFeedTimeReport = certify_symmetric_jerk_limited_feed_time(
+        &route,
+        r(16),
+        r(4),
+        r(1),
+        r(8),
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+
+    assert_eq!(report.path_length, r(16));
+    assert_eq!(report.max_feed_rate, r(16));
+    assert_eq!(report.max_acceleration, r(4));
+    assert_eq!(report.jerk, r(1));
+    assert_eq!(report.target_time, r(8));
+    assert_eq!(report.peak_feed_rate, r(4));
+    assert_eq!(report.peak_acceleration, r(2));
+    assert!(report.certification.all_satisfied());
+
+    let wrong_time = certify_symmetric_jerk_limited_feed_time(
+        &route,
+        r(16),
+        r(4),
+        r(1),
+        r(7),
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert!(wrong_time.certification.has_certified_violation());
+
+    let too_slow_for_limits = certify_symmetric_jerk_limited_feed_time(
+        &route,
+        r(3),
+        r(1),
+        r(1),
+        r(8),
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert_eq!(too_slow_for_limits.peak_feed_rate, r(4));
+    assert_eq!(too_slow_for_limits.peak_acceleration, r(2));
+    assert!(too_slow_for_limits.certification.has_certified_violation());
+}
+
+#[test]
+fn symmetric_jerk_limited_feed_time_rejects_invalid_inputs() {
+    let route = vec![LinePathSegment::new(p(0, 0), p(32, 0))];
+    let diagonal = vec![LinePathSegment::new(p(0, 0), p(3, 4))];
+
+    assert_eq!(
+        certify_symmetric_jerk_limited_feed_time(
+            &[],
+            r(16),
+            r(4),
+            r(1),
+            r(8),
+            PredicatePolicy::default()
+        )
+        .unwrap_err(),
+        RouteCertificationError::EmptyRoute
+    );
+    assert_eq!(
+        certify_symmetric_jerk_limited_feed_time(
+            &route,
+            r(-1),
+            r(4),
+            r(1),
+            r(8),
+            PredicatePolicy::default()
+        )
+        .unwrap_err(),
+        RouteCertificationError::NegativeFeedRate
+    );
+    assert_eq!(
+        certify_symmetric_jerk_limited_feed_time(
+            &route,
+            Real::zero(),
+            r(4),
+            r(1),
+            r(8),
+            PredicatePolicy::default()
+        )
+        .unwrap_err(),
+        RouteCertificationError::ZeroFeedRate
+    );
+    assert_eq!(
+        certify_symmetric_jerk_limited_feed_time(
+            &route,
+            r(16),
+            r(-1),
+            r(1),
+            r(8),
+            PredicatePolicy::default()
+        )
+        .unwrap_err(),
+        RouteCertificationError::NegativeAcceleration
+    );
+    assert_eq!(
+        certify_symmetric_jerk_limited_feed_time(
+            &route,
+            r(16),
+            Real::zero(),
+            r(1),
+            r(8),
+            PredicatePolicy::default()
+        )
+        .unwrap_err(),
+        RouteCertificationError::ZeroAcceleration
+    );
+    assert_eq!(
+        certify_symmetric_jerk_limited_feed_time(
+            &route,
+            r(16),
+            r(4),
+            r(-1),
+            r(8),
+            PredicatePolicy::default()
+        )
+        .unwrap_err(),
+        RouteCertificationError::NegativeJerk
+    );
+    assert_eq!(
+        certify_symmetric_jerk_limited_feed_time(
+            &route,
+            r(16),
+            r(4),
+            Real::zero(),
+            r(8),
+            PredicatePolicy::default()
+        )
+        .unwrap_err(),
+        RouteCertificationError::ZeroJerk
+    );
+    assert_eq!(
+        certify_symmetric_jerk_limited_feed_time(
+            &route,
+            r(16),
+            r(4),
+            r(1),
+            r(-1),
+            PredicatePolicy::default()
+        )
+        .unwrap_err(),
+        RouteCertificationError::NegativeTime
+    );
+    assert_eq!(
+        certify_symmetric_jerk_limited_feed_time(
+            &diagonal,
+            r(16),
+            r(4),
+            r(1),
+            r(8),
+            PredicatePolicy::default()
+        )
+        .unwrap_err(),
+        RouteCertificationError::UnsupportedRouteGeometry
+    );
+}
+
+#[test]
 fn single_detour_meander_adds_exact_length_and_certifies_target() {
     let source = LinePathSegment::new(p(0, 0), p(10, 0));
     let meander =
@@ -5718,6 +5881,32 @@ proptest! {
 
         prop_assert_eq!(report.path_length, r(path_length));
         prop_assert_eq!(report.profile, AccelerationLimitedFeedProfileClass::Trapezoidal);
+        prop_assert!(report.certification.all_satisfied());
+    }
+
+    #[test]
+    fn symmetric_jerk_limited_feed_time_generated_profiles_certify(
+        jerk in 1_i16..=6,
+        quarter_time in 1_i16..=10,
+    ) {
+        let jerk = i64::from(jerk);
+        let total_time = 4 * i64::from(quarter_time);
+        let path_length = jerk * i64::from(quarter_time).pow(3) * 2;
+        let peak_feed = jerk * i64::from(quarter_time).pow(2);
+        let peak_acceleration = jerk * i64::from(quarter_time);
+        let route = vec![LinePathSegment::new(p(0, 0), p(path_length, 0))];
+        let report = certify_symmetric_jerk_limited_feed_time(
+            &route,
+            r(peak_feed),
+            r(peak_acceleration),
+            r(jerk),
+            r(total_time),
+            PredicatePolicy::default(),
+        ).unwrap();
+
+        prop_assert_eq!(report.path_length, r(path_length));
+        prop_assert_eq!(report.peak_feed_rate, r(peak_feed));
+        prop_assert_eq!(report.peak_acceleration, r(peak_acceleration));
         prop_assert!(report.certification.all_satisfied());
     }
 

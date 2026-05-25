@@ -136,14 +136,15 @@ pub use provenance::{
 };
 pub use routing::{
     AccelerationLimitedFeedProfileClass, AccelerationLimitedFeedTimeReport, ConstantFeedTimeReport,
-    DifferentialPairSkewReport, LengthMatchProblem, MeanderCandidatePlacementReport, MeanderError,
-    MeanderObstacle, MeanderPlacementCandidate, MeanderPlacementReport, MeanderPlacementSlot,
-    MultiDetourMeander, NonUniformDetourMeander, ObstacleAwareDetourMeander,
-    RouteCertificationError, SingleDetourMeander, build_alternating_detour_meander,
-    build_length_match_problem, build_multi_detour_meander, build_nonuniform_detour_meander,
-    build_obstacle_aware_detour_meander, build_single_detour_meander,
-    certify_acceleration_limited_feed_time, certify_constant_feed_time,
-    certify_differential_pair_skew, certify_length_extension, classify_meander_candidate_slots,
+    DifferentialPairSkewReport, JerkLimitedFeedTimeReport, LengthMatchProblem,
+    MeanderCandidatePlacementReport, MeanderError, MeanderObstacle, MeanderPlacementCandidate,
+    MeanderPlacementReport, MeanderPlacementSlot, MultiDetourMeander, NonUniformDetourMeander,
+    ObstacleAwareDetourMeander, RouteCertificationError, SingleDetourMeander,
+    build_alternating_detour_meander, build_length_match_problem, build_multi_detour_meander,
+    build_nonuniform_detour_meander, build_obstacle_aware_detour_meander,
+    build_single_detour_meander, certify_acceleration_limited_feed_time,
+    certify_constant_feed_time, certify_differential_pair_skew, certify_length_extension,
+    certify_symmetric_jerk_limited_feed_time, classify_meander_candidate_slots,
     classify_meander_placement_slots,
 };
 pub use segment::{Axis, LinePathSegment, LinePathSegmentFacts, SegmentParameterOrder};
@@ -152,6 +153,7 @@ pub use solve::{
     center_clearance_squared_constraint, constant_feed_time_equation,
     differential_pair_skew_equation, length_match_equation, rectangular_difference_area_equation,
     rectangular_region_area_equation, rectangular_region_containment_constraints,
+    symmetric_jerk_limited_feed_time_equation,
 };
 pub use specctra::{
     SpecctraGridRouteRecords, SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraImportError,

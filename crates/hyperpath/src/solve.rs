@@ -123,6 +123,28 @@ pub fn constant_feed_time_equation(
     )
 }
 
+/// Build the four-phase jerk-limited S-curve residual.
+///
+/// The retained profile is the symmetric rest-to-rest sequence `+j, -j, -j,
+/// +j` with equal quarter-duration phases. For total time `T`, path length
+/// `L`, and jerk magnitude `j`, exact integration gives `L = j*T^3/32`.
+/// Returning the denominator-free residual `j*T^3 - 32*L = 0` keeps the
+/// certification in Yap's exact predicate layer and avoids sampled controller
+/// traces.
+pub fn symmetric_jerk_limited_feed_time_equation(
+    name: impl Into<String>,
+    path_length: Real,
+    jerk: Real,
+    time: VariableId,
+) -> Constraint {
+    let time_expr = Expr::symbol(time.into(), "time");
+    Constraint::equality(
+        name,
+        Expr::real(jerk) * time_expr.clone() * time_expr.clone() * time_expr
+            - Expr::real(Real::from(32) * path_length),
+    )
+}
+
 /// Build exact residuals for replaying one local curve-offset sample.
 pub fn bezier_offset_sample_constraints(
     name_prefix: impl AsRef<str>,
