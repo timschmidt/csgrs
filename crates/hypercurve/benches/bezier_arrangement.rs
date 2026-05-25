@@ -52,6 +52,12 @@ fn main() -> CurveResult<()> {
                 Classification::Uncertain(_) => 0,
             },
         );
+        total += black_box(
+            match graph.traverse_retained_deduplicating_materialized_overlaps(&policy) {
+                Classification::Decided(report) => report.shadowed_fragment_indices().len(),
+                Classification::Uncertain(_) => 0,
+            },
+        );
     }
     let elapsed = started.elapsed();
     println!(

@@ -51,5 +51,6 @@ fuzz_target!(|data: &[u8]| {
     let _ = graph.traverse_branch_free(&policy);
     let _ = graph.traverse_with_tangent_order(&policy);
     let _ = graph.traverse_retained_with_tangent_order(&policy);
+    let _ = graph.traverse_retained_deduplicating_materialized_overlaps(&policy);
     let _ = BezierRetainedOverlapReport2::from_graph(&graph, &policy);
 });

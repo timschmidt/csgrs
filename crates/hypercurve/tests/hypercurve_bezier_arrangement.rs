@@ -380,6 +380,80 @@ fn retained_overlap_report_does_not_sample_algebraic_endpoint_image_fragments() 
     assert!(report.is_empty());
 }
 
+#[test]
+fn retained_overlap_traversal_deduplicates_oriented_duplicate_loop_edges() {
+    let edges = [
+        QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0)),
+        QuadraticBezier2::new(p(2, 0), p(2, 1), p(2, 2)),
+        QuadraticBezier2::new(p(2, 2), p(1, 2), p(0, 2)),
+        QuadraticBezier2::new(p(0, 2), p(0, 1), p(0, 0)),
+    ];
+    let mut fragments = Vec::new();
+    for (edge_index, edge) in edges.iter().cloned().enumerate() {
+        for duplicate_index in 0..2 {
+            fragments.push(hypercurve::BezierArrangementFragment2::new(
+                edge_index,
+                duplicate_index,
+                BezierSplitFragment2::Materialized {
+                    start: exact(r(0)),
+                    end: exact(r(1)),
+                    curve: BezierSubcurve2::Quadratic(edge.clone()),
+                },
+            ));
+        }
+    }
+    let graph = BezierArrangementGraph2::new(fragments);
+
+    assert_eq!(
+        graph.traverse_retained_with_tangent_order(&policy()),
+        Classification::Uncertain(UncertaintyReason::Boundary)
+    );
+    let overlap_traversal =
+        decided(graph.traverse_retained_deduplicating_materialized_overlaps(&policy()));
+
+    assert_eq!(overlap_traversal.overlap_report().len(), 4);
+    assert_eq!(overlap_traversal.shadowed_fragment_indices(), &[1, 3, 5, 7]);
+    assert_eq!(overlap_traversal.traversal().len(), 1);
+    assert_eq!(overlap_traversal.traversal().closed_count(), 1);
+    assert_eq!(
+        overlap_traversal.traversal().chains()[0].fragment_indices(),
+        &[0, 2, 4, 6]
+    );
+}
+
+#[test]
+fn retained_overlap_traversal_rejects_reversed_duplicate_as_ownership_boundary() {
+    let forward = QuadraticBezier2::new(p(0, 0), p(1, 2), p(2, 0));
+    let reversed = QuadraticBezier2::new(p(2, 0), p(1, 2), p(0, 0));
+    let graph = BezierArrangementGraph2::new(vec![
+        hypercurve::BezierArrangementFragment2::new(
+            0,
+            0,
+            BezierSplitFragment2::Materialized {
+                start: exact(r(0)),
+                end: exact(r(1)),
+                curve: BezierSubcurve2::Quadratic(forward),
+            },
+        ),
+        hypercurve::BezierArrangementFragment2::new(
+            1,
+            0,
+            BezierSplitFragment2::Materialized {
+                start: exact(r(0)),
+                end: exact(r(1)),
+                curve: BezierSubcurve2::Quadratic(reversed),
+            },
+        ),
+    ]);
+
+    let report = decided(BezierRetainedOverlapReport2::from_graph(&graph, &policy()));
+    assert_eq!(report.len(), 1);
+    assert_eq!(
+        graph.traverse_retained_deduplicating_materialized_overlaps(&policy()),
+        Classification::Uncertain(UncertaintyReason::Boundary)
+    );
+}
+
 proptest! {
     #[test]
     fn open_quadratic_chain_stays_one_nonclosed_chain(

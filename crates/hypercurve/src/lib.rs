@@ -87,6 +87,7 @@ pub use bezier_region::{
 pub use bezier_retained_measure::{BezierRetainedCurveEnvelope2, BezierRetainedEndpointEnvelope2};
 pub use bezier_retained_overlap::{
     BezierRetainedOverlap2, BezierRetainedOverlapRelation2, BezierRetainedOverlapReport2,
+    BezierRetainedOverlapTraversal2,
 };
 pub use bezier_split::{BezierSplitFragment2, BezierSplitMaterialization2, BezierSubcurve2};
 pub use bezier_split_endpoint::{
