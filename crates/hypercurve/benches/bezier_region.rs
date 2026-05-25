@@ -2,8 +2,8 @@ use std::hint::black_box;
 use std::time::Instant;
 
 use hypercurve::{
-    BezierArrangementGraph2, BezierParameter2, BezierRegion2, Classification, CurvePolicy,
-    CurveResult, Point2, QuadraticBezier2, Real,
+    BezierArrangementGraph2, BezierParameter2, BezierRegion2, BezierRetainedRegion2,
+    Classification, CurvePolicy, CurveResult, Point2, QuadraticBezier2, Real,
 };
 
 fn r(value: i32) -> Real {
@@ -48,6 +48,22 @@ fn main() -> CurveResult<()> {
     let elapsed = started.elapsed();
     println!(
         "bezier_region_materialization: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={checksum}",
+        elapsed / iterations
+    );
+
+    let retained_traversal = decided(graph.traverse_retained_with_tangent_order(&policy));
+    let started = Instant::now();
+    let mut retained_checksum = 0_usize;
+    for _ in 0..iterations {
+        let region = decided(BezierRetainedRegion2::from_retained_arrangement_traversal(
+            &graph,
+            &retained_traversal,
+        ));
+        retained_checksum ^= black_box(format!("{:?}", region.signed_area()?).len());
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "bezier_retained_region_materialization: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={retained_checksum}",
         elapsed / iterations
     );
 

@@ -1,6 +1,8 @@
 use hypercurve::{
-    BezierArrangementGraph2, BezierParameter2, BezierRegion2, Classification, CurvePolicy, Point2,
-    QuadraticBezier2, RationalQuadraticBezier2, Real, UncertaintyReason,
+    BezierAlgebraicEndpointImage2, BezierAlgebraicParameter2, BezierArrangementFragment2,
+    BezierArrangementGraph2, BezierParameter2, BezierParameterInterval, BezierParameterPolynomial,
+    BezierRegion2, BezierRetainedRegion2, BezierSplitFragment2, Classification, CurvePolicy,
+    Point2, QuadraticBezier2, RationalQuadraticBezier2, Real, UncertaintyReason,
 };
 use proptest::prelude::*;
 
@@ -29,6 +31,23 @@ fn decided<T>(classification: Classification<T>) -> T {
 
 fn exact(value: Real) -> BezierParameter2 {
     decided(BezierParameter2::exact(value, &policy()).unwrap())
+}
+
+fn algebraic_midpoint_parameter() -> BezierAlgebraicParameter2 {
+    let polynomial = decided(
+        BezierParameterPolynomial::try_new_power_basis(vec![r(-1), r(2)], &policy()).unwrap(),
+    );
+    let interval = decided(BezierParameterInterval::try_new(q(2, 5), q(3, 5), &policy()).unwrap());
+    decided(BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy()).unwrap())
+}
+
+fn algebraic_image(curve: &QuadraticBezier2) -> BezierAlgebraicEndpointImage2 {
+    BezierAlgebraicEndpointImage2::quadratic(curve, &algebraic_midpoint_parameter(), &policy())
+        .unwrap()
+}
+
+fn line_midpoint_curve(start_x: i32, mid_x: i32, end_x: i32) -> QuadraticBezier2 {
+    QuadraticBezier2::new(p(start_x, 0), p(mid_x, 0), p(end_x, 0))
 }
 
 #[test]
@@ -96,6 +115,66 @@ fn conic_region_boundary_materializes_but_area_is_explicitly_unsupported() {
     assert_eq!(region.len(), 1);
     assert_eq!(region.boundary_loops()[0].len(), 4);
     assert_eq!(region.signed_area().unwrap(), None);
+}
+
+#[test]
+fn retained_region_materializes_closed_algebraic_carrier_loop_without_area_sampling() {
+    let parameter = BezierParameter2::algebraic(algebraic_midpoint_parameter());
+    let p0_right = algebraic_image(&line_midpoint_curve(-1, 0, 1));
+    let p1_right = algebraic_image(&line_midpoint_curve(0, 1, 2));
+    let p1_left = algebraic_image(&line_midpoint_curve(2, 1, 0));
+    let p0_left = algebraic_image(&line_midpoint_curve(1, 0, -1));
+    let first = BezierSplitFragment2::AlgebraicEndpointImages {
+        start: parameter.clone(),
+        end: parameter.clone(),
+        start_image: Some(p0_right),
+        end_image: Some(p1_right),
+    };
+    let second = BezierSplitFragment2::AlgebraicEndpointImages {
+        start: parameter.clone(),
+        end: parameter,
+        start_image: Some(p1_left),
+        end_image: Some(p0_left),
+    };
+    let graph = BezierArrangementGraph2::new(vec![
+        BezierArrangementFragment2::new(0, 0, first),
+        BezierArrangementFragment2::new(1, 0, second),
+    ]);
+    let traversal = decided(graph.traverse_retained_with_tangent_order(&policy()));
+
+    assert_eq!(
+        BezierRegion2::from_arrangement_traversal(&graph, &traversal),
+        Classification::Uncertain(UncertaintyReason::Boundary)
+    );
+    let retained = decided(BezierRetainedRegion2::from_retained_arrangement_traversal(
+        &graph, &traversal,
+    ));
+
+    assert_eq!(retained.len(), 1);
+    assert_eq!(retained.boundary_loops()[0].len(), 2);
+    assert!(retained.has_algebraic_fragments());
+    assert_eq!(retained.signed_area().unwrap(), None);
+}
+
+#[test]
+fn retained_region_rejects_unresolved_carriers_even_when_marked_closed() {
+    let parameter = BezierParameter2::algebraic(algebraic_midpoint_parameter());
+    let graph = BezierArrangementGraph2::new(vec![BezierArrangementFragment2::new(
+        0,
+        0,
+        BezierSplitFragment2::Unresolved {
+            start: parameter.clone(),
+            end: parameter,
+        },
+    )]);
+    let traversal = hypercurve::BezierArrangementTraversal2::new(vec![
+        hypercurve::BezierArrangementChain2::new(vec![0], true),
+    ]);
+
+    assert_eq!(
+        BezierRetainedRegion2::from_retained_arrangement_traversal(&graph, &traversal),
+        Classification::Uncertain(UncertaintyReason::Boundary)
+    );
 }
 
 proptest! {

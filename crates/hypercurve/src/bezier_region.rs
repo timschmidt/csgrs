@@ -35,6 +35,30 @@ pub struct BezierRegion2 {
     boundary_loops: Vec<BezierBoundaryLoop2>,
 }
 
+/// A closed retained Bezier/conic boundary loop.
+///
+/// Unlike [`BezierBoundaryLoop2`], this carrier may contain
+/// [`BezierSplitFragment2::AlgebraicEndpointImages`] fragments.  It is a
+/// concrete exact-object region boundary in Yap's sense: the algebraic pieces
+/// remain replayable construction evidence, not sampled coordinates.
+#[derive(Clone, Debug, PartialEq)]
+pub struct BezierRetainedBoundaryLoop2 {
+    fragments: Vec<BezierSplitFragment2>,
+}
+
+/// A higher-order retained region built from accepted native/algebraic carriers.
+///
+/// This is the first region object for decided retained traversals containing
+/// algebraic endpoint-image fragments. It intentionally does not flatten or
+/// approximate those fragments and it does not claim a finite area integral for
+/// them. See Yap, "Towards Exact Geometric Computation," *Computational
+/// Geometry* 7(1-2), 3-23 (1997), for the construction/decision separation;
+/// native polynomial subloops reuse the Green-integral path described above.
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct BezierRetainedRegion2 {
+    boundary_loops: Vec<BezierRetainedBoundaryLoop2>,
+}
+
 impl BezierBoundaryLoop2 {
     /// Constructs a closed boundary loop from native Bezier/conic fragments.
     pub const fn new(fragments: Vec<BezierSubcurve2>) -> Self {
@@ -141,6 +165,143 @@ impl BezierRegion2 {
     }
 
     /// Returns the exact signed area when all loops have implemented area integrals.
+    pub fn signed_area(&self) -> CurveResult<Option<Real>> {
+        let mut total = Real::zero();
+        for boundary_loop in &self.boundary_loops {
+            let Some(area) = boundary_loop.signed_area()? else {
+                return Ok(None);
+            };
+            total = &total + &area;
+        }
+        Ok(Some(total))
+    }
+}
+
+impl BezierRetainedBoundaryLoop2 {
+    /// Constructs a retained boundary loop from accepted split fragments.
+    pub const fn new(fragments: Vec<BezierSplitFragment2>) -> Self {
+        Self { fragments }
+    }
+
+    /// Returns retained split fragments in loop order.
+    pub fn fragments(&self) -> &[BezierSplitFragment2] {
+        &self.fragments
+    }
+
+    /// Consumes the loop and returns retained split fragments.
+    pub fn into_fragments(self) -> Vec<BezierSplitFragment2> {
+        self.fragments
+    }
+
+    /// Returns the number of retained fragments in the loop.
+    pub fn len(&self) -> usize {
+        self.fragments.len()
+    }
+
+    /// Returns true when the loop contains no fragments.
+    pub fn is_empty(&self) -> bool {
+        self.fragments.is_empty()
+    }
+
+    /// Returns true when any retained fragment has algebraic endpoint images.
+    pub fn has_algebraic_fragments(&self) -> bool {
+        self.fragments.iter().any(|fragment| {
+            matches!(
+                fragment,
+                BezierSplitFragment2::AlgebraicEndpointImages { .. }
+            )
+        })
+    }
+
+    /// Returns exact signed area only for fully native polynomial loops.
+    pub fn signed_area(&self) -> CurveResult<Option<Real>> {
+        let mut total = Real::zero();
+        for fragment in &self.fragments {
+            let BezierSplitFragment2::Materialized { curve, .. } = fragment else {
+                return Ok(None);
+            };
+            let Some(contribution) = curve.signed_area_contribution()? else {
+                return Ok(None);
+            };
+            total = &total + &contribution;
+        }
+        Ok(Some(total))
+    }
+}
+
+impl BezierRetainedRegion2 {
+    /// Constructs a retained region from retained boundary loops.
+    pub const fn new(boundary_loops: Vec<BezierRetainedBoundaryLoop2>) -> Self {
+        Self { boundary_loops }
+    }
+
+    /// Materializes retained region carriers from a decided retained traversal.
+    ///
+    /// Every traversal chain must be closed. Materialized native fragments and
+    /// algebraic endpoint-image fragments are accepted as exact carriers;
+    /// unresolved fragments remain explicit boundary uncertainty. This mirrors
+    /// [`BezierRegion2::from_arrangement_traversal`] but preserves algebraic
+    /// carriers instead of requiring native subcurves.
+    pub fn from_retained_arrangement_traversal(
+        graph: &BezierArrangementGraph2,
+        traversal: &BezierArrangementTraversal2,
+    ) -> Classification<Self> {
+        let mut loops = Vec::with_capacity(traversal.chains().len());
+        for chain in traversal.chains() {
+            if !chain.is_closed() {
+                return Classification::Uncertain(UncertaintyReason::Boundary);
+            }
+
+            let mut fragments = Vec::with_capacity(chain.len());
+            for index in chain.fragment_indices() {
+                let Some(fragment) = graph.fragments().get(*index) else {
+                    return Classification::Uncertain(UncertaintyReason::Unsupported);
+                };
+                match fragment.fragment() {
+                    BezierSplitFragment2::Materialized { .. }
+                    | BezierSplitFragment2::AlgebraicEndpointImages { .. } => {
+                        fragments.push(fragment.fragment().clone());
+                    }
+                    BezierSplitFragment2::Unresolved { .. } => {
+                        return Classification::Uncertain(UncertaintyReason::Boundary);
+                    }
+                }
+            }
+            loops.push(BezierRetainedBoundaryLoop2::new(fragments));
+        }
+
+        Classification::Decided(Self::new(loops))
+    }
+
+    /// Returns retained boundary loops.
+    pub fn boundary_loops(&self) -> &[BezierRetainedBoundaryLoop2] {
+        &self.boundary_loops
+    }
+
+    /// Consumes the region and returns retained boundary loops.
+    pub fn into_boundary_loops(self) -> Vec<BezierRetainedBoundaryLoop2> {
+        self.boundary_loops
+    }
+
+    /// Returns true when the region has no boundary loops.
+    pub fn is_empty(&self) -> bool {
+        self.boundary_loops.is_empty()
+    }
+
+    /// Returns the number of retained boundary loops.
+    pub fn len(&self) -> usize {
+        self.boundary_loops.len()
+    }
+
+    /// Returns true when any boundary loop retains algebraic endpoint images.
+    pub fn has_algebraic_fragments(&self) -> bool {
+        self.boundary_loops
+            .iter()
+            .any(BezierRetainedBoundaryLoop2::has_algebraic_fragments)
+    }
+
+    /// Returns exact signed area only when all retained loops are native
+    /// polynomial loops with implemented Green integrals.
     pub fn signed_area(&self) -> CurveResult<Option<Real>> {
         let mut total = Real::zero();
         for boundary_loop in &self.boundary_loops {
