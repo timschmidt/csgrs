@@ -6664,6 +6664,9 @@ fn exact_boolean_coplanar_orthogonal_surface_cells(c: &mut Criterion) {
         let intersection_right = rect_surface_i64(&[(0, 0, 6, 6)]);
         let holed_left = rect_surface_i64(&[(0, 0, 10, 10), (10, 0, 12, 2)]);
         let holed_right = rect_surface_i64(&[(2, 2, 4, 4)]);
+        let nested_left = rect_surface_i64(&[(0, 0, 10, 10)]);
+        let nested_right =
+            rect_surface_i64(&[(2, 2, 8, 4), (2, 6, 8, 8), (2, 4, 4, 6), (6, 4, 8, 6)]);
         let graph_left = rect_surface_i64(&[(0, 0, 12, 10)]);
         let graph_right =
             rect_surface_i64(&[(3, 3, 5, 5), (7, 3, 9, 5), (5, 4, 7, 5), (-1, 4, 3, 5)]);
@@ -6703,6 +6706,8 @@ fn exact_boolean_coplanar_orthogonal_surface_cells(c: &mut Criterion) {
                 );
                 let difference =
                     arrange_coplanar_orthogonal_surface_difference(&holed_left, &holed_right);
+                let nested_difference =
+                    arrange_coplanar_orthogonal_surface_difference(&nested_left, &nested_right);
                 let graph_difference =
                     arrange_coplanar_orthogonal_surface_difference(&graph_left, &graph_right);
                 let graph_contact_fallback =
@@ -6737,6 +6742,13 @@ fn exact_boolean_coplanar_orthogonal_surface_cells(c: &mut Criterion) {
                 let difference_result = hypermesh::exact::boolean_exact(
                     &holed_left,
                     &holed_right,
+                    hypermesh::exact::ExactBooleanOperation::Difference,
+                    ValidationPolicy::ALLOW_BOUNDARY,
+                )
+                .unwrap();
+                let nested_difference_result = hypermesh::exact::boolean_exact(
+                    &nested_left,
+                    &nested_right,
                     hypermesh::exact::ExactBooleanOperation::Difference,
                     ValidationPolicy::ALLOW_BOUNDARY,
                 )
@@ -6830,6 +6842,23 @@ fn exact_boolean_coplanar_orthogonal_surface_cells(c: &mut Criterion) {
                     difference_result.validate_operation_against_sources(
                         &holed_left,
                         &holed_right,
+                        hypermesh::exact::ExactBooleanOperation::Difference,
+                        ValidationPolicy::ALLOW_BOUNDARY,
+                        hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+                    ),
+                    nested_difference
+                        .as_ref()
+                        .map(|output| output.validate_against_sources(&nested_left, &nested_right)),
+                    nested_difference.as_ref().map(|output| output.validate()),
+                    hypermesh::exact::preflight_boolean_exact(
+                        &nested_left,
+                        &nested_right,
+                        hypermesh::exact::ExactBooleanOperation::Difference,
+                    )
+                    .map(|report| report.validate()),
+                    nested_difference_result.validate_operation_against_sources(
+                        &nested_left,
+                        &nested_right,
                         hypermesh::exact::ExactBooleanOperation::Difference,
                         ValidationPolicy::ALLOW_BOUNDARY,
                         hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
@@ -6929,6 +6958,13 @@ fn exact_boolean_coplanar_affine_surface_cells(c: &mut Criterion) {
         let holed_left =
             affine_rect_surface_i64(&[(0, 0, 10, 10), (10, 0, 12, 2)], origin, basis_u, basis_v);
         let holed_right = affine_rect_surface_i64(&[(2, 2, 4, 4)], origin, basis_u, basis_v);
+        let nested_left = affine_rect_surface_i64(&[(0, 0, 10, 10)], origin, basis_u, basis_v);
+        let nested_right = affine_rect_surface_i64(
+            &[(2, 2, 8, 4), (2, 6, 8, 8), (2, 4, 4, 6), (6, 4, 8, 6)],
+            origin,
+            basis_u,
+            basis_v,
+        );
         let branch_left = affine_rect_surface_i64(&[(0, 0, 4, 4)], origin, basis_u, basis_v);
         let branch_right =
             affine_rect_surface_i64(&[(0, 2, 2, 4), (2, 0, 4, 2)], origin, basis_u, basis_v);
@@ -6968,6 +7004,8 @@ fn exact_boolean_coplanar_affine_surface_cells(c: &mut Criterion) {
                 );
                 let difference =
                     arrange_coplanar_affine_surface_difference(&holed_left, &holed_right);
+                let nested_difference =
+                    arrange_coplanar_affine_surface_difference(&nested_left, &nested_right);
                 let branch_difference =
                     arrange_coplanar_affine_surface_difference(&branch_left, &branch_right);
                 let union_result = hypermesh::exact::boolean_exact(
@@ -7025,6 +7063,15 @@ fn exact_boolean_coplanar_affine_surface_cells(c: &mut Criterion) {
                     hypermesh::exact::preflight_boolean_exact(
                         &holed_left,
                         &holed_right,
+                        hypermesh::exact::ExactBooleanOperation::Difference,
+                    )
+                    .map(|report| report.validate()),
+                    nested_difference
+                        .as_ref()
+                        .map(|output| output.validate_against_sources(&nested_left, &nested_right)),
+                    hypermesh::exact::preflight_boolean_exact(
+                        &nested_left,
+                        &nested_right,
                         hypermesh::exact::ExactBooleanOperation::Difference,
                     )
                     .map(|report| report.validate()),

@@ -6060,6 +6060,36 @@ fn exercise_component_coplanar_difference() {
         ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceDifference
     );
 
+    let nested_left = rect_surface_i64(&[(0, 0, 10, 10)]);
+    let nested_right = rect_surface_i64(&[
+        (2, 2, 8, 4),
+        (2, 6, 8, 8),
+        (2, 4, 4, 6),
+        (6, 4, 8, 6),
+    ]);
+    let nested_difference =
+        arrange_coplanar_orthogonal_surface_difference(&nested_left, &nested_right)
+            .expect("orthogonal nested island difference fixture should materialize");
+    nested_difference.validate().unwrap();
+    nested_difference
+        .validate_against_sources(&nested_left, &nested_right)
+        .unwrap();
+    assert_eq!(nested_difference.components.len(), 2);
+    assert!(
+        nested_difference
+            .components
+            .iter()
+            .any(|component| component.holes.len() == 1)
+    );
+    let nested_preflight =
+        preflight_boolean_exact(&nested_left, &nested_right, ExactBooleanOperation::Difference)
+            .expect("orthogonal nested island preflight should classify shortcut");
+    nested_preflight.validate().unwrap();
+    assert_eq!(
+        nested_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceDifference
+    );
+
     let graph_left = rect_surface_i64(&[(0, 0, 12, 10)]);
     let graph_right = rect_surface_i64(&[(3, 3, 5, 5), (7, 3, 9, 5), (5, 4, 7, 5), (-1, 4, 3, 5)]);
     assert!(
@@ -6262,6 +6292,37 @@ fn exercise_component_coplanar_difference() {
     affine_difference
         .validate_against_sources(&affine_holed_left, &affine_holed_right)
         .unwrap();
+    let affine_nested_left = affine_rect_surface_i64(&[(0, 0, 10, 10)], origin, basis_u, basis_v);
+    let affine_nested_right = affine_rect_surface_i64(
+        &[
+            (2, 2, 8, 4),
+            (2, 6, 8, 8),
+            (2, 4, 4, 6),
+            (6, 4, 8, 6),
+        ],
+        origin,
+        basis_u,
+        basis_v,
+    );
+    let affine_nested_difference =
+        arrange_coplanar_affine_surface_difference(&affine_nested_left, &affine_nested_right)
+            .expect("affine nested island difference fixture should materialize");
+    affine_nested_difference.validate().unwrap();
+    affine_nested_difference
+        .validate_against_sources(&affine_nested_left, &affine_nested_right)
+        .unwrap();
+    assert_eq!(affine_nested_difference.components.len(), 2);
+    let affine_nested_preflight = preflight_boolean_exact(
+        &affine_nested_left,
+        &affine_nested_right,
+        ExactBooleanOperation::Difference,
+    )
+    .expect("affine nested island preflight should classify shortcut");
+    affine_nested_preflight.validate().unwrap();
+    assert_eq!(
+        affine_nested_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarAffineSurfaceDifference
+    );
     let affine_graph_left = affine_rect_surface_i64(&[(0, 0, 12, 10)], origin, basis_u, basis_v);
     let affine_graph_right = affine_rect_surface_i64(
         &[(3, 3, 5, 5), (7, 3, 9, 5), (5, 4, 7, 5), (-1, 4, 3, 5)],

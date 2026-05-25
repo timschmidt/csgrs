@@ -15,6 +15,9 @@
 //! grid facts that justified the set boundary. Retained output components may
 //! meet at exact grid vertices only; those branch points are kept as separate
 //! component vertices instead of being welded into non-manifold mesh topology.
+//! Components may also be nested strictly inside retained holes: an island in a
+//! removed rectilinear ring is separate output topology, not an overlap with the
+//! containing component.
 //!
 //! The grid subdivision is the orthogonal analogue of the arrangement viewpoint
 //! in de Berg, Cheong, van Kreveld, and Overmars, *Computational Geometry:
@@ -69,11 +72,13 @@ pub struct CoplanarOrthogonalSurfaceComponent {
 /// an exact axis-aligned cell replay proves the topology. Components that meet
 /// only at exact grid vertices are retained as separate components with
 /// duplicated coordinates, which is the cell-complex analogue of the bounded
-/// point-touch branch artifact in [`crate::exact::surface`]. Positive-length
-/// component contact, nesting, and hole/boundary contact stay rejected because
-/// they require a stronger planar-subdivision object. Cases outside that model
-/// stay explicit planar-arrangement work instead of being decided by a tolerance
-/// polygon kernel.
+/// point-touch branch artifact in [`crate::exact::surface`]. Components nested
+/// strictly inside retained holes are also accepted, which covers rectilinear
+/// island outputs without requiring a general non-rectilinear
+/// planar-subdivision object. Positive-length component contact and
+/// hole/boundary contact stay rejected. Cases outside that model stay explicit
+/// planar-arrangement work instead of being decided by a tolerance polygon
+/// kernel.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CoplanarOrthogonalSurfaceArrangement {
     /// Projection plane used by the exact cell grid.
@@ -1058,11 +1063,9 @@ fn validate_components(
     }
     for left in 0..components.len() {
         for right in left + 1..components.len() {
-            match loop_contact(
-                &components[left].outer,
-                &components[right].outer,
-                projection,
-            )? {
+            let left_component = &components[left];
+            let right_component = &components[right];
+            match loop_contact(&left_component.outer, &right_component.outer, projection)? {
                 LoopContact::Disjoint | LoopContact::PointOnly => {}
                 LoopContact::PositiveLengthOrArea => {
                     return Err(orthogonal_error(
@@ -1070,16 +1073,111 @@ fn validate_components(
                     ));
                 }
             }
-            let witness = components[right]
+            validate_cross_component_hole_boundaries(left_component, right_component, projection)?;
+            let right_witness = right_component
                 .outer
                 .first()
                 .ok_or_else(|| orthogonal_error("orthogonal outer loop is empty"))?;
-            if point_strictly_inside_loop(witness, &components[left].outer, projection)? {
-                return Err(orthogonal_error("orthogonal output components are nested"));
+            let left_witness = left_component
+                .outer
+                .first()
+                .ok_or_else(|| orthogonal_error("orthogonal outer loop is empty"))?;
+            let right_inside_left =
+                point_strictly_inside_loop(right_witness, &left_component.outer, projection)?;
+            let left_inside_right =
+                point_strictly_inside_loop(left_witness, &right_component.outer, projection)?;
+            match (right_inside_left, left_inside_right) {
+                (false, false) => {}
+                (true, false) => {
+                    if !component_strictly_inside_retained_hole(
+                        right_component,
+                        left_component,
+                        projection,
+                    )? {
+                        return Err(orthogonal_error(
+                            "orthogonal nested component is not inside a retained hole",
+                        ));
+                    }
+                }
+                (false, true) => {
+                    if !component_strictly_inside_retained_hole(
+                        left_component,
+                        right_component,
+                        projection,
+                    )? {
+                        return Err(orthogonal_error(
+                            "orthogonal nested component is not inside a retained hole",
+                        ));
+                    }
+                }
+                (true, true) => {
+                    return Err(orthogonal_error(
+                        "orthogonal output components overlap by mutual nesting",
+                    ));
+                }
             }
         }
     }
     Ok(())
+}
+
+/// Validate cross-component contact with retained hole boundaries.
+///
+/// Orthogonal cell extraction may produce a filled island inside a removed
+/// rectilinear ring. Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997), requires that this relationship stay
+/// explicit in retained object topology: the island's outer loop must be
+/// strictly separated from the containing hole boundary. A touch or shared
+/// edge would be a higher-valence planar subdivision that this bounded
+/// materializer does not claim to own.
+fn validate_cross_component_hole_boundaries(
+    left: &CoplanarOrthogonalSurfaceComponent,
+    right: &CoplanarOrthogonalSurfaceComponent,
+    projection: CoplanarProjection,
+) -> Result<(), MeshError> {
+    for hole in &left.holes {
+        if loop_edges_intersect(hole, &right.outer, projection)? {
+            return Err(orthogonal_error(
+                "orthogonal output component touches a retained hole boundary",
+            ));
+        }
+    }
+    for hole in &right.holes {
+        if loop_edges_intersect(hole, &left.outer, projection)? {
+            return Err(orthogonal_error(
+                "orthogonal output component touches a retained hole boundary",
+            ));
+        }
+    }
+    Ok(())
+}
+
+/// Return whether `inner` is strictly contained by one hole of `outer`.
+///
+/// This is the exact rectilinear island case: the inner component is not part
+/// of `outer`'s filled area, but is still a valid output component because it
+/// lies in a retained void of `outer`. The test deliberately uses one witness
+/// plus exact edge separation. For simple loops, a witness inside the hole and
+/// no boundary crossing proves the whole outer loop of `inner` stays in that
+/// hole; de Berg, Cheong, van Kreveld, and Overmars' planar-subdivision model
+/// justifies treating that as a finite cell-complex relation.
+fn component_strictly_inside_retained_hole(
+    inner: &CoplanarOrthogonalSurfaceComponent,
+    outer: &CoplanarOrthogonalSurfaceComponent,
+    projection: CoplanarProjection,
+) -> Result<bool, MeshError> {
+    let witness = inner
+        .outer
+        .first()
+        .ok_or_else(|| orthogonal_error("orthogonal outer loop is empty"))?;
+    for hole in &outer.holes {
+        if point_strictly_inside_loop(witness, hole, projection)?
+            && !loop_edges_intersect(&inner.outer, hole, projection)?
+        {
+            return Ok(true);
+        }
+    }
+    Ok(false)
 }
 
 fn validate_component_mesh(

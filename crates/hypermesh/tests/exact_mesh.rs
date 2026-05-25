@@ -21169,6 +21169,102 @@ fn exact_coplanar_orthogonal_surface_cells_materialize_nonconvex_outputs() {
         }
     );
 
+    let nested_left = rect_surface_i64(&[(0, 0, 10, 10)]);
+    let nested_right = rect_surface_i64(&[(2, 2, 8, 4), (2, 6, 8, 8), (2, 4, 4, 6), (6, 4, 8, 6)]);
+    let nested_difference = hypermesh::exact::arrange_coplanar_orthogonal_surface_difference(
+        &nested_left,
+        &nested_right,
+    )
+    .expect("orthogonal ring cutter should retain a nested island component inside a hole");
+    nested_difference.validate().unwrap();
+    nested_difference
+        .validate_against_sources(&nested_left, &nested_right)
+        .unwrap();
+    assert_eq!(nested_difference.components.len(), 2);
+    assert!(
+        nested_difference
+            .components
+            .iter()
+            .any(|component| component.holes.len() == 1)
+    );
+    assert!(nested_difference.components.iter().any(|component| {
+        component.holes.is_empty()
+            && component.outer.iter().any(|point| {
+                real_eq(&point.x, &ExactReal::from(4)) && real_eq(&point.y, &ExactReal::from(4))
+            })
+    }));
+    let mut stale_nested = nested_difference.clone();
+    let island = stale_nested
+        .components
+        .iter()
+        .position(|component| component.holes.is_empty())
+        .unwrap();
+    stale_nested.components.remove(island);
+    assert!(stale_nested.validate().is_err());
+    let nested_preflight = hypermesh::exact::preflight_boolean_exact(
+        &nested_left,
+        &nested_right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    nested_preflight.validate().unwrap();
+    nested_preflight
+        .validate_against_sources(&nested_left, &nested_right)
+        .unwrap();
+    assert_eq!(
+        nested_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceDifference
+    );
+    let nested_result = hypermesh::exact::boolean_exact(
+        &nested_left,
+        &nested_right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    nested_result.validate().unwrap();
+    assert_eq!(
+        nested_result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut:
+                hypermesh::exact::ExactBooleanShortcutKind::CoplanarOrthogonalSurfaceDifference
+        }
+    );
+
+    let invalid_nested_without_hole = hypermesh::exact::CoplanarOrthogonalSurfaceArrangement {
+        projection: CoplanarProjection::Xy,
+        operation: hypermesh::exact::CoplanarOrthogonalSurfaceOperation::Difference,
+        components: vec![
+            hypermesh::exact::CoplanarOrthogonalSurfaceComponent {
+                outer: vec![p3(0, 0, 0), p3(6, 0, 0), p3(6, 6, 0), p3(0, 6, 0)],
+                holes: Vec::new(),
+            },
+            hypermesh::exact::CoplanarOrthogonalSurfaceComponent {
+                outer: vec![p3(2, 2, 0), p3(4, 2, 0), p3(4, 4, 0), p3(2, 4, 0)],
+                holes: Vec::new(),
+            },
+        ],
+        mesh: rect_surface_i64(&[(0, 0, 6, 6), (2, 2, 4, 4)]),
+    };
+    assert!(invalid_nested_without_hole.validate().is_err());
+
+    let invalid_hole_boundary_touch = hypermesh::exact::CoplanarOrthogonalSurfaceArrangement {
+        projection: CoplanarProjection::Xy,
+        operation: hypermesh::exact::CoplanarOrthogonalSurfaceOperation::Difference,
+        components: vec![
+            hypermesh::exact::CoplanarOrthogonalSurfaceComponent {
+                outer: vec![p3(0, 0, 0), p3(6, 0, 0), p3(6, 6, 0), p3(0, 6, 0)],
+                holes: vec![vec![p3(4, 4, 0), p3(4, 2, 0), p3(2, 2, 0), p3(2, 4, 0)]],
+            },
+            hypermesh::exact::CoplanarOrthogonalSurfaceComponent {
+                outer: vec![p3(4, 3, 0), p3(5, 3, 0), p3(5, 4, 0), p3(4, 4, 0)],
+                holes: Vec::new(),
+            },
+        ],
+        mesh: rect_surface_i64(&[(0, 0, 6, 6), (4, 3, 5, 4)]),
+    };
+    assert!(invalid_hole_boundary_touch.validate().is_err());
+
     let graph_left = rect_surface_i64(&[(0, 0, 12, 10)]);
     let graph_right = rect_surface_i64(&[(3, 3, 5, 5), (7, 3, 9, 5), (5, 4, 7, 5), (-1, 4, 3, 5)]);
     assert!(
@@ -21503,6 +21599,51 @@ fn exact_coplanar_affine_surface_cells_materialize_rotated_nonconvex_outputs() {
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
             shortcut: hypermesh::exact::ExactBooleanShortcutKind::CoplanarAffineSurfaceDifference
         }
+    );
+
+    let nested_left = affine_rect_surface_i64(&[(0, 0, 10, 10)], origin, basis_u, basis_v);
+    let nested_right = affine_rect_surface_i64(
+        &[(2, 2, 8, 4), (2, 6, 8, 8), (2, 4, 4, 6), (6, 4, 8, 6)],
+        origin,
+        basis_u,
+        basis_v,
+    );
+    let nested_difference =
+        hypermesh::exact::arrange_coplanar_affine_surface_difference(&nested_left, &nested_right)
+            .expect("rotated ring cutter should retain an island inside an affine hole");
+    nested_difference.validate().unwrap();
+    nested_difference
+        .validate_against_sources(&nested_left, &nested_right)
+        .unwrap();
+    assert_eq!(nested_difference.components.len(), 2);
+    assert!(
+        nested_difference
+            .components
+            .iter()
+            .any(|component| component.holes.len() == 1)
+    );
+    let affine_island_corner =
+        Point3::new(ExactReal::from(4), ExactReal::from(12), ExactReal::from(0));
+    assert!(nested_difference.components.iter().any(|component| {
+        component.holes.is_empty()
+            && component
+                .outer
+                .iter()
+                .any(|point| point == &affine_island_corner)
+    }));
+    let nested_preflight = hypermesh::exact::preflight_boolean_exact(
+        &nested_left,
+        &nested_right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    nested_preflight.validate().unwrap();
+    nested_preflight
+        .validate_against_sources(&nested_left, &nested_right)
+        .unwrap();
+    assert_eq!(
+        nested_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarAffineSurfaceDifference
     );
 
     let graph_left = affine_rect_surface_i64(&[(0, 0, 12, 10)], origin, basis_u, basis_v);
