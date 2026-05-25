@@ -3,10 +3,11 @@
 use hyperlimit::{Point2, PredicatePolicy};
 use hyperpath::{
     AccelerationLimitedFeedProfileClass, ArcDirection, ExplicitCircularArc, FeedPathElement,
-    LinePathSegment, LookaheadFeedSchedule, RouteCertificationError, TangentSpan,
-    certify_acceleration_limited_feed_time, certify_acceleration_limited_feed_time_for_path,
-    certify_constant_feed_time, certify_constant_feed_time_for_path,
-    certify_corner_lookahead_limits, certify_lookahead_feed_schedule,
+    JerkRampSpanProposal, LinePathSegment, LookaheadFeedSchedule, RouteCertificationError,
+    TangentSpan, certify_acceleration_limited_feed_time,
+    certify_acceleration_limited_feed_time_for_path, certify_constant_feed_time,
+    certify_constant_feed_time_for_path, certify_corner_lookahead_limits,
+    certify_jerk_ramp_feed_schedule, certify_lookahead_feed_schedule,
     certify_symmetric_jerk_limited_feed_time, certify_symmetric_jerk_limited_feed_time_for_path,
 };
 use hyperreal::{Rational, Real};
@@ -204,4 +205,29 @@ fuzz_target!(|data: &[u8]| {
     )
     .unwrap();
     assert!(schedule_report.all_satisfied());
+
+    let ramp_time = 2 * positive(data[1], 8);
+    let ramp_acceleration = positive(data[2], 6);
+    let ramp_length = ramp_acceleration * ramp_time * ramp_time / 2;
+    let ramp_route = vec![FeedPathElement::Line(LinePathSegment::new(
+        p(0, 0),
+        p(ramp_length, 0),
+    ))];
+    let ramp = JerkRampSpanProposal {
+        start_feed: Real::zero(),
+        end_feed: r(ramp_acceleration * ramp_time),
+        start_acceleration: r(ramp_acceleration),
+        end_acceleration: r(ramp_acceleration),
+        traversal_time: r(ramp_time),
+    };
+    let ramp_report = certify_jerk_ramp_feed_schedule(
+        &ramp_route,
+        &[ramp],
+        r(ramp_acceleration * ramp_time),
+        r(ramp_acceleration),
+        r(1),
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert!(ramp_report.all_satisfied());
 });

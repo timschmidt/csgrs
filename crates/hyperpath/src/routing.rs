@@ -24,6 +24,7 @@ use crate::segment::{Axis, LinePathSegment};
 use crate::solve::{constant_feed_time_equation, differential_pair_skew_equation};
 
 mod feed;
+mod jerk_schedule;
 mod lookahead;
 mod orthogonal_keepout;
 
@@ -32,6 +33,10 @@ pub use feed::{
     FeedPathElement, JerkLimitedFeedTimeReport, certify_acceleration_limited_feed_time_for_path,
     certify_constant_feed_time_for_path, certify_corner_lookahead_limits,
     certify_symmetric_jerk_limited_feed_time, certify_symmetric_jerk_limited_feed_time_for_path,
+};
+pub use jerk_schedule::{
+    JerkRampFeedScheduleReport, JerkRampSpanProposal, JerkRampSpanReport,
+    certify_jerk_ramp_feed_schedule,
 };
 pub use lookahead::{
     LookaheadFeedSchedule, LookaheadFeedScheduleReport, LookaheadSpanTransitionReport,
@@ -498,6 +503,8 @@ pub enum RouteCertificationError {
     ZeroAcceleration,
     /// Candidate traversal time was structurally negative.
     NegativeTime,
+    /// Candidate traversal time was structurally zero where positive time is required.
+    ZeroTime,
     /// Exact comparison could not choose the acceleration-limited profile.
     UnknownFeedProfile,
     /// Jerk limit was structurally negative.

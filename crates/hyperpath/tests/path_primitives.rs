@@ -8,8 +8,8 @@ use hyperpath::{
     ExplicitArcOverlapClass, ExplicitArcPointClassification, ExplicitArcSweepClass,
     ExplicitArcTangentClass, ExplicitCircleRelationClass, ExplicitCircularArc, FeedPathElement,
     HigherOrderBezier, HigherOrderBezierError, InfillGraphError, JerkLimitedFeedTimeReport,
-    LineArcArrangementEventClass, LineArrangementError, LineArrangementEventClass,
-    LineExplicitArcIntersectionClass, LineOffsetError, LinePathSegment,
+    JerkRampSpanProposal, LineArcArrangementEventClass, LineArrangementError,
+    LineArrangementEventClass, LineExplicitArcIntersectionClass, LineOffsetError, LinePathSegment,
     LineQuadraticBezierIntersectionClass, LineRationalQuadraticBezierIntersectionClass,
     LookaheadFeedSchedule, MeanderError, MeanderKeepout, MeanderObstacle,
     MeanderPlacementCandidate, NetId, OffsetSide, PathProvenance, PathSourceFormat,
@@ -37,16 +37,16 @@ use hyperpath::{
     certify_acceleration_limited_feed_time, certify_acceleration_limited_feed_time_for_path,
     certify_constant_feed_time, certify_constant_feed_time_for_path,
     certify_corner_lookahead_limits, certify_differential_pair_skew, certify_g1_chain,
-    certify_g1_join_candidate, certify_length_extension, certify_lookahead_feed_schedule,
-    certify_symmetric_jerk_limited_feed_time, certify_symmetric_jerk_limited_feed_time_for_path,
-    certify_tangent_alignment_candidate, check_cardinal_rect_pad_board_clearance,
-    check_circular_pad_board_clearance, check_circular_pad_circular_board_clearance,
-    check_convex_pad_board_clearance, check_obround_pad_board_clearance,
-    check_oriented_rect_pad_board_clearance, check_orthogonal_pad_board_clearance,
-    check_rect_pad_board_clearance, check_rounded_rect_pad_board_clearance,
-    check_trace_board_clearance, check_trace_cardinal_rect_pad_clearance,
-    check_trace_circular_board_clearance, check_trace_clearance,
-    check_trace_convex_board_clearance, check_trace_convex_pad_clearance,
+    certify_g1_join_candidate, certify_jerk_ramp_feed_schedule, certify_length_extension,
+    certify_lookahead_feed_schedule, certify_symmetric_jerk_limited_feed_time,
+    certify_symmetric_jerk_limited_feed_time_for_path, certify_tangent_alignment_candidate,
+    check_cardinal_rect_pad_board_clearance, check_circular_pad_board_clearance,
+    check_circular_pad_circular_board_clearance, check_convex_pad_board_clearance,
+    check_obround_pad_board_clearance, check_oriented_rect_pad_board_clearance,
+    check_orthogonal_pad_board_clearance, check_rect_pad_board_clearance,
+    check_rounded_rect_pad_board_clearance, check_trace_board_clearance,
+    check_trace_cardinal_rect_pad_clearance, check_trace_circular_board_clearance,
+    check_trace_clearance, check_trace_convex_board_clearance, check_trace_convex_pad_clearance,
     check_trace_obround_pad_clearance, check_trace_oriented_rect_pad_clearance,
     check_trace_orthogonal_board_clearance, check_trace_orthogonal_pad_clearance,
     check_trace_pad_clearance, check_trace_rect_pad_clearance,
@@ -4656,6 +4656,191 @@ fn lookahead_feed_schedule_rejects_shape_and_invalid_process_inputs() {
 }
 
 #[test]
+fn jerk_ramp_feed_schedule_certifies_constant_acceleration_span() {
+    let line = LinePathSegment::new(p(0, 0), p(50, 0));
+    let route = vec![FeedPathElement::Line(line)];
+    let proposal = JerkRampSpanProposal {
+        start_feed: Real::zero(),
+        end_feed: r(10),
+        start_acceleration: r(1),
+        end_acceleration: r(1),
+        traversal_time: r(10),
+    };
+    let report = certify_jerk_ramp_feed_schedule(
+        &route,
+        std::slice::from_ref(&proposal),
+        r(12),
+        r(1),
+        r(1),
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+
+    assert_eq!(report.spans.len(), 1);
+    assert_eq!(report.spans[0].path_length, r(50));
+    assert_eq!(report.spans[0].proposal, proposal);
+    assert!(report.all_satisfied());
+    assert_eq!(report.first_unsatisfied_span(), None);
+}
+
+#[test]
+fn jerk_ramp_feed_schedule_reports_distance_velocity_and_jerk_violations() {
+    let route = vec![FeedPathElement::Line(LinePathSegment::new(
+        p(0, 0),
+        p(51, 0),
+    ))];
+    let distance_mismatch = JerkRampSpanProposal {
+        start_feed: Real::zero(),
+        end_feed: r(10),
+        start_acceleration: r(1),
+        end_acceleration: r(1),
+        traversal_time: r(10),
+    };
+    let distance_report = certify_jerk_ramp_feed_schedule(
+        &route,
+        &[distance_mismatch],
+        r(12),
+        r(1),
+        r(1),
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert!(
+        distance_report.spans[0]
+            .certification
+            .has_certified_violation()
+    );
+    assert_eq!(distance_report.first_unsatisfied_span(), Some(0));
+
+    let velocity_mismatch_route = vec![FeedPathElement::Line(LinePathSegment::new(
+        p(0, 0),
+        p(50, 0),
+    ))];
+    let velocity_mismatch = JerkRampSpanProposal {
+        start_feed: Real::zero(),
+        end_feed: r(9),
+        start_acceleration: r(1),
+        end_acceleration: r(1),
+        traversal_time: r(10),
+    };
+    let velocity_report = certify_jerk_ramp_feed_schedule(
+        &velocity_mismatch_route,
+        &[velocity_mismatch],
+        r(12),
+        r(1),
+        r(1),
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert!(
+        velocity_report.spans[0]
+            .certification
+            .has_certified_violation()
+    );
+
+    let jerk_route = vec![FeedPathElement::Line(LinePathSegment::new(
+        p(0, 0),
+        p(6, 0),
+    ))];
+    let jerk_mismatch = JerkRampSpanProposal {
+        start_feed: r(3),
+        end_feed: r(3),
+        start_acceleration: r(-2),
+        end_acceleration: r(2),
+        traversal_time: r(3),
+    };
+    let jerk_report = certify_jerk_ramp_feed_schedule(
+        &jerk_route,
+        &[jerk_mismatch],
+        r(4),
+        r(2),
+        r(1),
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert!(jerk_report.spans[0].certification.has_certified_violation());
+}
+
+#[test]
+fn jerk_ramp_feed_schedule_rejects_shape_and_invalid_inputs() {
+    let line = LinePathSegment::new(p(0, 0), p(10, 0));
+    let route = vec![FeedPathElement::Line(line)];
+    let valid = JerkRampSpanProposal {
+        start_feed: Real::zero(),
+        end_feed: r(10),
+        start_acceleration: r(1),
+        end_acceleration: r(1),
+        traversal_time: r(10),
+    };
+    assert_eq!(
+        certify_jerk_ramp_feed_schedule(&[], &[], r(1), r(1), r(1), PredicatePolicy::default())
+            .unwrap_err(),
+        RouteCertificationError::EmptyRoute
+    );
+    assert_eq!(
+        certify_jerk_ramp_feed_schedule(&route, &[], r(1), r(1), r(1), PredicatePolicy::default())
+            .unwrap_err(),
+        RouteCertificationError::ScheduleShapeMismatch
+    );
+    let negative_feed = JerkRampSpanProposal {
+        start_feed: r(-1),
+        ..valid.clone()
+    };
+    assert_eq!(
+        certify_jerk_ramp_feed_schedule(
+            &route,
+            &[negative_feed],
+            r(1),
+            r(1),
+            r(1),
+            PredicatePolicy::default()
+        )
+        .unwrap_err(),
+        RouteCertificationError::NegativeFeedRate
+    );
+    let zero_time = JerkRampSpanProposal {
+        traversal_time: Real::zero(),
+        ..valid.clone()
+    };
+    assert_eq!(
+        certify_jerk_ramp_feed_schedule(
+            &route,
+            &[zero_time],
+            r(1),
+            r(1),
+            r(1),
+            PredicatePolicy::default()
+        )
+        .unwrap_err(),
+        RouteCertificationError::ZeroTime
+    );
+    assert_eq!(
+        certify_jerk_ramp_feed_schedule(
+            &route,
+            &[valid.clone()],
+            Real::zero(),
+            r(1),
+            r(1),
+            PredicatePolicy::default()
+        )
+        .unwrap_err(),
+        RouteCertificationError::ZeroFeedRate
+    );
+    assert_eq!(
+        certify_jerk_ramp_feed_schedule(
+            &route,
+            &[valid],
+            r(1),
+            r(1),
+            Real::zero(),
+            PredicatePolicy::default()
+        )
+        .unwrap_err(),
+        RouteCertificationError::ZeroJerk
+    );
+}
+
+#[test]
 fn single_detour_meander_adds_exact_length_and_certifies_target() {
     let source = LinePathSegment::new(p(0, 0), p(10, 0));
     let meander =
@@ -6924,6 +7109,38 @@ proptest! {
             && i64::from(end_feed) <= i64::from(max_feed)
             && (end_sq - start_sq).abs() <= budget;
         prop_assert_eq!(report.all_satisfied(), expected);
+    }
+
+    #[test]
+    fn jerk_ramp_generated_constant_acceleration_spans_certify(
+        start_feed in 0_i16..=20,
+        acceleration in 1_i16..=8,
+        half_time in 1_i16..=8,
+    ) {
+        let start_feed = i64::from(start_feed);
+        let acceleration = i64::from(acceleration);
+        let time = 2 * i64::from(half_time);
+        let end_feed = start_feed + acceleration * time;
+        let length = start_feed * time + acceleration * time * time / 2;
+        let route = vec![FeedPathElement::Line(LinePathSegment::new(p(0, 0), p(length, 0)))];
+        let proposal = JerkRampSpanProposal {
+            start_feed: r(start_feed),
+            end_feed: r(end_feed),
+            start_acceleration: r(acceleration),
+            end_acceleration: r(acceleration),
+            traversal_time: r(time),
+        };
+        let report = certify_jerk_ramp_feed_schedule(
+            &route,
+            &[proposal],
+            r(end_feed),
+            r(acceleration),
+            r(1),
+            PredicatePolicy::default(),
+        ).unwrap();
+
+        prop_assert_eq!(report.spans[0].path_length.clone(), r(length));
+        prop_assert!(report.all_satisfied());
     }
 
     #[test]

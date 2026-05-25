@@ -3,7 +3,7 @@ use hyperlimit::{Point2, PredicatePolicy};
 use hyperpath::{
     ArcDirection, BeadFillAxis, BezierParameter, CardinalPoint, CardinalRotation, CircularArc,
     ConstructionStamp, CubicBezier, ExplicitCircularArc, FeedPathElement, HigherOrderBezier,
-    LinePathSegment, LookaheadFeedSchedule, MeanderKeepout, MeanderObstacle,
+    JerkRampSpanProposal, LinePathSegment, LookaheadFeedSchedule, MeanderKeepout, MeanderObstacle,
     MeanderPlacementCandidate, NetId, OffsetSide, PathProvenance, PathSourceFormat,
     PcbBoardOutline, PcbCardinalRectPad, PcbCircularBoardOutline, PcbCircularPad,
     PcbConvexBoardOutline, PcbConvexPad, PcbObroundPad, PcbOrientedRectPad,
@@ -25,16 +25,16 @@ use hyperpath::{
     certify_acceleration_limited_feed_time, certify_acceleration_limited_feed_time_for_path,
     certify_constant_feed_time, certify_constant_feed_time_for_path,
     certify_corner_lookahead_limits, certify_differential_pair_skew, certify_g1_chain,
-    certify_g1_join_candidate, certify_length_extension, certify_lookahead_feed_schedule,
-    certify_symmetric_jerk_limited_feed_time, certify_symmetric_jerk_limited_feed_time_for_path,
-    certify_tangent_alignment_candidate, check_cardinal_rect_pad_board_clearance,
-    check_circular_pad_board_clearance, check_circular_pad_circular_board_clearance,
-    check_convex_pad_board_clearance, check_obround_pad_board_clearance,
-    check_oriented_rect_pad_board_clearance, check_orthogonal_pad_board_clearance,
-    check_rect_pad_board_clearance, check_rounded_rect_pad_board_clearance,
-    check_trace_board_clearance, check_trace_cardinal_rect_pad_clearance,
-    check_trace_circular_board_clearance, check_trace_clearance,
-    check_trace_convex_board_clearance, check_trace_convex_pad_clearance,
+    certify_g1_join_candidate, certify_jerk_ramp_feed_schedule, certify_length_extension,
+    certify_lookahead_feed_schedule, certify_symmetric_jerk_limited_feed_time,
+    certify_symmetric_jerk_limited_feed_time_for_path, certify_tangent_alignment_candidate,
+    check_cardinal_rect_pad_board_clearance, check_circular_pad_board_clearance,
+    check_circular_pad_circular_board_clearance, check_convex_pad_board_clearance,
+    check_obround_pad_board_clearance, check_oriented_rect_pad_board_clearance,
+    check_orthogonal_pad_board_clearance, check_rect_pad_board_clearance,
+    check_rounded_rect_pad_board_clearance, check_trace_board_clearance,
+    check_trace_cardinal_rect_pad_clearance, check_trace_circular_board_clearance,
+    check_trace_clearance, check_trace_convex_board_clearance, check_trace_convex_pad_clearance,
     check_trace_obround_pad_clearance, check_trace_oriented_rect_pad_clearance,
     check_trace_orthogonal_board_clearance, check_trace_orthogonal_pad_clearance,
     check_trace_pad_clearance, check_trace_rect_pad_clearance,
@@ -949,6 +949,29 @@ fn path_predicates(c: &mut Criterion) {
                 &lookahead_schedule,
                 r(20),
                 r(25),
+                PredicatePolicy::default(),
+            )
+        })
+    });
+    let jerk_ramp_route = vec![FeedPathElement::Line(LinePathSegment::new(
+        p(0, 0),
+        p(5000, 0),
+    ))];
+    let jerk_ramp = JerkRampSpanProposal {
+        start_feed: r(0),
+        end_feed: r(100),
+        start_acceleration: r(1),
+        end_acceleration: r(1),
+        traversal_time: r(100),
+    };
+    c.bench_function("jerk_ramp_feed_schedule_certification", |b| {
+        b.iter(|| {
+            certify_jerk_ramp_feed_schedule(
+                &jerk_ramp_route,
+                std::slice::from_ref(&jerk_ramp),
+                r(100),
+                r(1),
+                r(1),
                 PredicatePolicy::default(),
             )
         })

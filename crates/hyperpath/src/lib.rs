@@ -143,6 +143,7 @@ pub use routing::{
     AccelerationLimitedFeedProfileClass, AccelerationLimitedFeedTimeReport, ConstantFeedTimeReport,
     CornerLookaheadJoinClass, CornerLookaheadJoinReport, CornerLookaheadLimitReport,
     DifferentialPairSkewReport, FeedPathElement, JerkLimitedFeedTimeReport,
+    JerkRampFeedScheduleReport, JerkRampSpanProposal, JerkRampSpanReport,
     KeepoutAwareDetourMeander, LengthMatchProblem, LookaheadFeedSchedule,
     LookaheadFeedScheduleReport, LookaheadSpanTransitionReport, MeanderCandidatePlacementReport,
     MeanderError, MeanderKeepout, MeanderKeepoutCandidatePlacementReport,
@@ -154,11 +155,11 @@ pub use routing::{
     build_obstacle_aware_detour_meander, build_single_detour_meander,
     certify_acceleration_limited_feed_time, certify_acceleration_limited_feed_time_for_path,
     certify_constant_feed_time, certify_constant_feed_time_for_path,
-    certify_corner_lookahead_limits, certify_differential_pair_skew, certify_length_extension,
-    certify_lookahead_feed_schedule, certify_symmetric_jerk_limited_feed_time,
-    certify_symmetric_jerk_limited_feed_time_for_path, classify_meander_candidate_slots,
-    classify_meander_candidate_slots_with_keepouts, classify_meander_placement_slots,
-    classify_meander_placement_slots_with_keepouts,
+    certify_corner_lookahead_limits, certify_differential_pair_skew,
+    certify_jerk_ramp_feed_schedule, certify_length_extension, certify_lookahead_feed_schedule,
+    certify_symmetric_jerk_limited_feed_time, certify_symmetric_jerk_limited_feed_time_for_path,
+    classify_meander_candidate_slots, classify_meander_candidate_slots_with_keepouts,
+    classify_meander_placement_slots, classify_meander_placement_slots_with_keepouts,
 };
 pub use segment::{Axis, LinePathSegment, LinePathSegmentFacts, SegmentParameterOrder};
 pub use solve::{
