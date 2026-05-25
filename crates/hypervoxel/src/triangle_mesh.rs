@@ -1,10 +1,10 @@
 //! Exact triangle-surface voxelization handoff.
 //!
 //! This module is the first `hypervoxel` consumer-side path for exact
-//! mesh/BREP-style triangle evidence. It deliberately materializes only a
-//! conservative surface cover: cells whose exact AABBs intersect retained
-//! source triangles become boundary cells, while solid interior filling remains
-//! a separate winding/arrangement problem for accepted solid handoffs.
+//! mesh/BREP-style triangle evidence. It materializes two related handoffs:
+//! a conservative surface cover, where cells whose exact AABBs intersect
+//! retained source triangles become boundary cells, and a closed-solid cover,
+//! where strict non-boundary cells are filled by exact ray-parity tests.
 //!
 //! The cell/triangle test is a composition of exact predicates: AABB broad
 //! phase, exact 3D point-in-triangle tests, and exact triangle/triangle tests
@@ -19,11 +19,12 @@
 //! floating-point tests.
 
 use hyperlimit::{
-    Aabb3Intersection, Aabb3PointLocation, PredicateOutcome, Triangle3Location,
-    TriangleTriangleIntersection, classify_aabb3_intersection, classify_point_aabb3,
-    classify_point_triangle3, classify_triangle_triangle3_points_with_policy,
+    Aabb3Intersection, Aabb3PointLocation, PredicateOutcome, RayTriangleIntersection,
+    Triangle3Location, TriangleTriangleIntersection, classify_aabb3_intersection,
+    classify_point_aabb3, classify_point_triangle3, classify_ray_triangle3_intersection_report,
+    classify_triangle_triangle3_points_with_policy,
 };
-use hyperreal::Real;
+use hyperreal::{Rational, Real};
 
 use crate::{
     BoundaryPolicy, CellBounds, GridFrame, GridSource, HypervoxelError, HypervoxelResult,
@@ -154,6 +155,53 @@ pub struct ExactTriangleSurfaceMeshReport {
     pub exact_triangle_source_ready: bool,
 }
 
+/// Exact closed triangle-solid handoff from a mesh/BREP owner.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactTriangleSolidMesh {
+    /// Retained source surface triangles.
+    pub surface: ExactTriangleSurfaceMesh,
+    /// Whether the producer reported exact closed-solid replay for these
+    /// triangles.
+    pub exact_closed_solid_replay_available: bool,
+}
+
+impl ExactTriangleSolidMesh {
+    /// Creates an exact closed triangle-solid handoff.
+    pub const fn new(
+        surface: ExactTriangleSurfaceMesh,
+        exact_closed_solid_replay_available: bool,
+    ) -> Self {
+        Self {
+            surface,
+            exact_closed_solid_replay_available,
+        }
+    }
+
+    /// Reports whether this retained triangle set is ready for exact solid
+    /// filling.
+    pub fn report(&self) -> ExactTriangleSolidMeshReport {
+        let surface = self.surface.report();
+        let exact_solid_source_ready =
+            surface.exact_triangle_source_ready && self.exact_closed_solid_replay_available;
+        ExactTriangleSolidMeshReport {
+            surface,
+            exact_closed_solid_replay_available: self.exact_closed_solid_replay_available,
+            exact_solid_source_ready,
+        }
+    }
+}
+
+/// Preflight report for an [`ExactTriangleSolidMesh`].
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ExactTriangleSolidMeshReport {
+    /// Surface-triangle source readiness.
+    pub surface: ExactTriangleSurfaceMeshReport,
+    /// Whether producer-side closed-solid replay was available.
+    pub exact_closed_solid_replay_available: bool,
+    /// Whether this handoff can drive exact solid filling.
+    pub exact_solid_source_ready: bool,
+}
+
 /// Classification of one cell against a retained triangle surface.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum VoxelTriangleMeshClassifier {
@@ -162,6 +210,20 @@ pub enum VoxelTriangleMeshClassifier {
     /// Cell AABB intersects one or more retained triangles.
     Boundary,
     /// At least one predicate needed to prove disjointness was undecided.
+    Unknown,
+}
+
+/// Classification of one cell against a retained closed triangle solid.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum VoxelTriangleSolidClassifier {
+    /// Cell AABB is outside the solid and disjoint from its boundary.
+    Outside,
+    /// Cell center is inside the solid and the cell AABB is disjoint from the
+    /// retained triangle boundary.
+    Inside,
+    /// Cell AABB intersects one or more retained boundary triangles.
+    Boundary,
+    /// Exact inside/outside or boundary evidence was ambiguous.
     Unknown,
 }
 
@@ -187,6 +249,38 @@ pub fn classify_cell_against_triangle_surface_mesh(
     } else {
         VoxelTriangleMeshClassifier::Outside
     })
+}
+
+/// Classifies one cell against an exact retained closed triangle solid.
+///
+/// Boundary cells are detected first by the exact surface-cover classifier.
+/// Non-boundary cells are classified by exact ray-parity queries from the exact
+/// cell center. Proper ray/triangle intersections are counted by unique exact
+/// ray parameter; boundary touches and coplanar ray events cause that ray to be
+/// skipped, and the classifier returns [`VoxelTriangleSolidClassifier::Unknown`]
+/// only when every configured exact rational ray is ambiguous. This is the
+/// standard parity point-in-polyhedron idea, but guarded at Yap's
+/// exact-computation boundary: ambiguous combinatorial events remain explicit
+/// instead of being repaired with floating epsilons. See Yap (1997) and the
+/// ray/triangle decomposition of Moller and Trumbore, "Fast, Minimum Storage
+/// Ray/Triangle Intersection," *Journal of Graphics Tools* 2(1), 1997.
+pub fn classify_cell_against_triangle_solid_mesh(
+    address: VoxelAddress,
+    frame: &GridFrame,
+    mesh: &ExactTriangleSolidMesh,
+) -> HypervoxelResult<VoxelTriangleSolidClassifier> {
+    match classify_cell_against_triangle_surface_mesh(address, frame, &mesh.surface)? {
+        VoxelTriangleMeshClassifier::Boundary => return Ok(VoxelTriangleSolidClassifier::Boundary),
+        VoxelTriangleMeshClassifier::Unknown => return Ok(VoxelTriangleSolidClassifier::Unknown),
+        VoxelTriangleMeshClassifier::Outside => {}
+    }
+
+    let bounds = address.bounds(frame)?;
+    match classify_point_against_triangle_solid_by_ray(&bounds.center(), mesh)? {
+        RayParityPointClassification::Outside => Ok(VoxelTriangleSolidClassifier::Outside),
+        RayParityPointClassification::Inside => Ok(VoxelTriangleSolidClassifier::Inside),
+        RayParityPointClassification::Unknown => Ok(VoxelTriangleSolidClassifier::Unknown),
+    }
 }
 
 /// Voxelizes a retained triangle surface as exact boundary cells.
@@ -316,11 +410,264 @@ pub fn voxelize_exact_triangle_surface_mesh(
     Ok((grid, report))
 }
 
+/// Voxelizes a retained closed triangle solid into exact filled and boundary
+/// cells.
+pub fn voxelize_exact_triangle_solid_mesh(
+    frame: GridFrame,
+    mesh: &ExactTriangleSolidMesh,
+    material: MaterialRegionId,
+    policy: VoxelizationPolicy,
+) -> HypervoxelResult<(SparseVoxelGrid, VoxelizationReport)> {
+    let source_report = mesh.report();
+    validate_surface_source_report(&source_report.surface)?;
+    if !source_report.exact_closed_solid_replay_available {
+        return Err(HypervoxelError::InvalidSourceGeometry {
+            reason: "triangle solid mesh lacks exact closed-solid replay",
+        });
+    }
+
+    let mut grid = SparseVoxelGrid::new(frame.clone());
+    let mut inside_cells = 0_usize;
+    let mut outside_cells = 0_usize;
+    let mut boundary_cells = 0_usize;
+    let mut unknown_cells = 0_usize;
+    let mut predicate_boundary_cells = 0_usize;
+    let mut predicate_unknown_cells = 0_usize;
+    let cells_per_axis = frame.cells_per_axis();
+
+    for z in 0..cells_per_axis {
+        for y in 0..cells_per_axis {
+            for x in 0..cells_per_axis {
+                let address = VoxelAddress::new(frame.depth(), [x, y, z])?;
+                let classifier =
+                    match classify_cell_against_triangle_solid_mesh(address, &frame, mesh) {
+                        Ok(classifier) => classifier,
+                        Err(HypervoxelError::UnknownOrdering { .. })
+                        | Err(HypervoxelError::UnknownScalarOrdering { .. }) => {
+                            VoxelTriangleSolidClassifier::Unknown
+                        }
+                        Err(err) => return Err(err),
+                    };
+                match classifier {
+                    VoxelTriangleSolidClassifier::Inside => inside_cells += 1,
+                    VoxelTriangleSolidClassifier::Outside => outside_cells += 1,
+                    VoxelTriangleSolidClassifier::Boundary => predicate_boundary_cells += 1,
+                    VoxelTriangleSolidClassifier::Unknown => predicate_unknown_cells += 1,
+                }
+
+                let cell = match (policy.quantization, policy.boundary, classifier) {
+                    (_, _, VoxelTriangleSolidClassifier::Outside) => VoxelCell::empty(),
+                    (_, _, VoxelTriangleSolidClassifier::Unknown) => {
+                        unknown_cells += 1;
+                        VoxelCell::unknown()
+                    }
+                    (_, _, VoxelTriangleSolidClassifier::Inside) => VoxelCell::material(material),
+                    (
+                        QuantizationPolicy::ConservativeInterior,
+                        _,
+                        VoxelTriangleSolidClassifier::Boundary,
+                    ) => {
+                        boundary_cells += 1;
+                        match policy.boundary {
+                            BoundaryPolicy::BoundaryAsUnknown => {
+                                unknown_cells += 1;
+                                VoxelCell::unknown()
+                            }
+                            _ => VoxelCell::empty(),
+                        }
+                    }
+                    (
+                        _,
+                        BoundaryPolicy::BoundaryAsUnknown,
+                        VoxelTriangleSolidClassifier::Boundary,
+                    ) => {
+                        boundary_cells += 1;
+                        unknown_cells += 1;
+                        VoxelCell::unknown()
+                    }
+                    (
+                        _,
+                        BoundaryPolicy::LossySideChoice,
+                        VoxelTriangleSolidClassifier::Boundary,
+                    ) => {
+                        boundary_cells += 1;
+                        VoxelCell {
+                            occupancy: OccupancyState::LossyAdapterValue,
+                            payload: VoxelPayload::LossyAdapterValue(material.0),
+                        }
+                    }
+                    (_, BoundaryPolicy::KeepBoundary, VoxelTriangleSolidClassifier::Boundary) => {
+                        boundary_cells += 1;
+                        VoxelCell::boundary(VoxelPayload::MaterialRegion(material))
+                    }
+                };
+
+                if cell.occupancy != OccupancyState::Empty {
+                    grid.set(address, cell)?;
+                }
+            }
+        }
+    }
+
+    let aggregate = VoxelAggregateFacts::from_explicit_cells_in_frame(
+        usize::try_from(cells_per_axis.pow(3)).map_err(|_| HypervoxelError::AddressOverflow)?,
+        grid.iter().map(|(_, cell)| cell),
+    )?;
+    let report = VoxelizationReport {
+        source: mesh.surface.source.clone(),
+        frame,
+        policy,
+        aggregate,
+        unknown_cells,
+        boundary_cells,
+        predicate_certificates: VoxelPredicateCertificateReport::from_counts(
+            inside_cells,
+            outside_cells,
+            predicate_boundary_cells,
+            predicate_unknown_cells,
+        ),
+        legacy_adapter: None,
+    };
+    Ok((grid, report))
+}
+
+fn validate_surface_source_report(
+    source_report: &ExactTriangleSurfaceMeshReport,
+) -> HypervoxelResult<()> {
+    if source_report.empty_triangle_set {
+        return Err(HypervoxelError::InvalidSourceGeometry {
+            reason: "triangle surface mesh has no triangles",
+        });
+    }
+    if source_report.degenerate_triangle_count > 0 {
+        return Err(HypervoxelError::InvalidSourceGeometry {
+            reason: "triangle surface mesh contains degenerate triangles",
+        });
+    }
+    if source_report.unknown_triangle_count > 0 {
+        return Err(HypervoxelError::InvalidSourceGeometry {
+            reason: "triangle surface mesh has uncertified triangle predicates",
+        });
+    }
+    if !source_report.exact_source_replay_available {
+        return Err(HypervoxelError::InvalidSourceGeometry {
+            reason: "triangle surface mesh lacks exact source replay",
+        });
+    }
+    Ok(())
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum TriangleCellIntersection {
     Disjoint,
     Intersects,
     Unknown,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum RayParityPointClassification {
+    Outside,
+    Inside,
+    Unknown,
+}
+
+fn classify_point_against_triangle_solid_by_ray(
+    point: &[Real; 3],
+    mesh: &ExactTriangleSolidMesh,
+) -> HypervoxelResult<RayParityPointClassification> {
+    // The direction family is an exact finite retry set, not a symbolic
+    // perturbation. Each ray is either a proof-producing parity query or an
+    // explicit ambiguous event. This follows Yap's (1997) separation between
+    // certified predicates and unresolved combinatorics while still avoiding a
+    // brittle single-ray dependency for common grid-aligned solids.
+    for direction in ray_parity_directions() {
+        match classify_point_against_triangle_solid_by_single_ray(point, mesh, &direction)? {
+            RayParityPointClassification::Unknown => {}
+            decided => return Ok(decided),
+        }
+    }
+
+    Ok(RayParityPointClassification::Unknown)
+}
+
+fn classify_point_against_triangle_solid_by_single_ray(
+    point: &[Real; 3],
+    mesh: &ExactTriangleSolidMesh,
+    direction: &hyperlimit::Point3,
+) -> HypervoxelResult<RayParityPointClassification> {
+    let origin = point3(point);
+    let mut parameters: Vec<Real> = Vec::new();
+
+    for triangle in &mesh.surface.triangles {
+        let points = triangle.points();
+        let report = classify_ray_triangle3_intersection_report(
+            &origin, direction, &points[0], &points[1], &points[2],
+        )
+        .value()
+        .ok_or(HypervoxelError::UnknownScalarOrdering {
+            field: "triangle-solid-ray",
+        })?;
+        match report.relation {
+            RayTriangleIntersection::Disjoint => {}
+            RayTriangleIntersection::Proper => {
+                let Some(parameter) = report.parameter else {
+                    return Ok(RayParityPointClassification::Unknown);
+                };
+                insert_unique_parameter(&mut parameters, parameter)?;
+            }
+            RayTriangleIntersection::BoundaryTouch | RayTriangleIntersection::Coplanar => {
+                return Ok(RayParityPointClassification::Unknown);
+            }
+        }
+    }
+
+    if parameters.len() % 2 == 0 {
+        Ok(RayParityPointClassification::Outside)
+    } else {
+        Ok(RayParityPointClassification::Inside)
+    }
+}
+
+fn ray_parity_directions() -> [hyperlimit::Point3; 7] {
+    [
+        rational_direction([1, 2, 3], 1),
+        rational_direction([1, 3, 5], 1),
+        rational_direction([2, 5, 7], 1),
+        rational_direction([3, 7, 11], 1),
+        rational_direction([5, 11, 17], 1),
+        rational_direction([7, 13, 19], 1),
+        rational_direction([11, 17, 23], 1),
+    ]
+}
+
+fn rational_direction(numerators: [i64; 3], denominator: u64) -> hyperlimit::Point3 {
+    hyperlimit::Point3::new(
+        Rational::fraction(numerators[0], denominator)
+            .expect("positive literal denominator")
+            .into(),
+        Rational::fraction(numerators[1], denominator)
+            .expect("positive literal denominator")
+            .into(),
+        Rational::fraction(numerators[2], denominator)
+            .expect("positive literal denominator")
+            .into(),
+    )
+}
+
+fn insert_unique_parameter(parameters: &mut Vec<Real>, parameter: Real) -> HypervoxelResult<()> {
+    for existing in parameters.iter() {
+        match hyperlimit::compare_reals(existing, &parameter).value() {
+            Some(core::cmp::Ordering::Equal) => return Ok(()),
+            Some(_) => {}
+            None => {
+                return Err(HypervoxelError::UnknownScalarOrdering {
+                    field: "triangle-solid-ray-parameter",
+                });
+            }
+        }
+    }
+    parameters.push(parameter);
+    Ok(())
 }
 
 fn triangle_intersects_cell(

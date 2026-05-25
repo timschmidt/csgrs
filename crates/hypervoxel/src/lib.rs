@@ -165,8 +165,10 @@ pub use svo::{SvoDagStats, SvoEditReport, SvoNodeId, SvoStorageReport, SvoVoxelG
 pub use trace::{VoxelTraceDimension, VoxelTraceManifest, VoxelTraceReport};
 pub use transform::{AxisPermutationTransform, SignedAxis};
 pub use triangle_mesh::{
-    ExactTriangle3, ExactTriangle3Report, ExactTriangleSurfaceMesh, ExactTriangleSurfaceMeshReport,
-    VoxelTriangleMeshClassifier, classify_cell_against_triangle_surface_mesh,
+    ExactTriangle3, ExactTriangle3Report, ExactTriangleSolidMesh, ExactTriangleSolidMeshReport,
+    ExactTriangleSurfaceMesh, ExactTriangleSurfaceMeshReport, VoxelTriangleMeshClassifier,
+    VoxelTriangleSolidClassifier, classify_cell_against_triangle_solid_mesh,
+    classify_cell_against_triangle_surface_mesh, voxelize_exact_triangle_solid_mesh,
     voxelize_exact_triangle_surface_mesh,
 };
 #[cfg(feature = "legacy-voxelis")]

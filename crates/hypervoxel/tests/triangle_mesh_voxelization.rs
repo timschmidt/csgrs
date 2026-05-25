@@ -1,9 +1,10 @@
 use hyperreal::{Rational, Real};
 use hypervoxel::{
-    BoundaryPolicy, ExactTriangle3, ExactTriangleSurfaceMesh, GridFrame, GridSource,
-    HypervoxelError, MaterialRegionId, OccupancyState, QuantizationPolicy, VoxelAddress,
-    VoxelTriangleMeshClassifier, VoxelizationPolicy, classify_cell_against_triangle_surface_mesh,
-    voxelize_exact_triangle_surface_mesh,
+    BoundaryPolicy, ExactTriangle3, ExactTriangleSolidMesh, ExactTriangleSurfaceMesh, GridFrame,
+    GridSource, HypervoxelError, MaterialRegionId, OccupancyState, QuantizationPolicy,
+    VoxelAddress, VoxelTriangleMeshClassifier, VoxelTriangleSolidClassifier, VoxelizationPolicy,
+    classify_cell_against_triangle_solid_mesh, classify_cell_against_triangle_surface_mesh,
+    voxelize_exact_triangle_solid_mesh, voxelize_exact_triangle_surface_mesh,
 };
 use proptest::prelude::*;
 
@@ -25,6 +26,25 @@ fn frame(depth: u8) -> GridFrame {
 
 fn tri(vertices: [[Real; 3]; 3]) -> ExactTriangle3 {
     ExactTriangle3::new(vertices, Some(0))
+}
+
+fn cube_surface(min: i64, max: i64, frame: &GridFrame) -> ExactTriangleSurfaceMesh {
+    let p = |x, y, z| [r(x), r(y), r(z)];
+    let triangles = vec![
+        tri([p(min, min, min), p(min, max, max), p(min, max, min)]),
+        tri([p(min, min, min), p(min, min, max), p(min, max, max)]),
+        tri([p(max, min, min), p(max, max, min), p(max, min, max)]),
+        tri([p(max, max, min), p(max, max, max), p(max, min, max)]),
+        tri([p(min, min, min), p(max, min, min), p(min, min, max)]),
+        tri([p(max, min, min), p(max, min, max), p(min, min, max)]),
+        tri([p(min, max, min), p(min, max, max), p(max, max, min)]),
+        tri([p(max, max, min), p(min, max, max), p(max, max, max)]),
+        tri([p(min, min, min), p(min, max, min), p(max, min, min)]),
+        tri([p(max, min, min), p(min, max, min), p(max, max, min)]),
+        tri([p(min, min, max), p(max, min, max), p(min, max, max)]),
+        tri([p(max, min, max), p(max, max, max), p(min, max, max)]),
+    ];
+    ExactTriangleSurfaceMesh::new(triangles, frame.source().cloned(), true)
 }
 
 #[test]
@@ -196,6 +216,70 @@ fn triangle_surface_boundary_policy_keeps_unknown_and_lossy_edges_named() {
             .all(|(_, cell)| cell.occupancy == OccupancyState::LossyAdapterValue)
     );
     assert!(!lossy_report.exact_topology_ready());
+}
+
+#[test]
+fn exact_triangle_solid_voxelizes_closed_cube_boundary_and_interior() {
+    let frame = frame(3);
+    let solid = ExactTriangleSolidMesh::new(cube_surface(2, 6, &frame), true);
+
+    let center = classify_cell_against_triangle_solid_mesh(
+        VoxelAddress::new(3, [3, 3, 3]).unwrap(),
+        &frame,
+        &solid,
+    )
+    .unwrap();
+    let outside = classify_cell_against_triangle_solid_mesh(
+        VoxelAddress::new(3, [0, 0, 0]).unwrap(),
+        &frame,
+        &solid,
+    )
+    .unwrap();
+    let boundary = classify_cell_against_triangle_solid_mesh(
+        VoxelAddress::new(3, [2, 3, 3]).unwrap(),
+        &frame,
+        &solid,
+    )
+    .unwrap();
+
+    assert_eq!(center, VoxelTriangleSolidClassifier::Inside);
+    assert_eq!(outside, VoxelTriangleSolidClassifier::Outside);
+    assert_eq!(boundary, VoxelTriangleSolidClassifier::Boundary);
+
+    let (grid, report) = voxelize_exact_triangle_solid_mesh(
+        frame,
+        &solid,
+        MaterialRegionId(4),
+        VoxelizationPolicy::conservative_cover(),
+    )
+    .unwrap();
+    assert_eq!(report.unknown_cells, 0);
+    assert_eq!(report.predicate_certificates.inside_cells, 8);
+    // The conservative cover uses closed cell AABBs. A cube face lying on a
+    // grid plane is therefore boundary evidence for cells on both incident
+    // sides of that plane, leaving only the 2x2x2 strict interior as filled.
+    assert_eq!(report.predicate_certificates.boundary_cells, 208);
+    assert_eq!(grid.len(), 216);
+    assert!(report.exact_topology_ready());
+}
+
+#[test]
+fn exact_triangle_solid_rejects_missing_closed_solid_replay() {
+    let frame = frame(2);
+    let solid = ExactTriangleSolidMesh::new(cube_surface(1, 3, &frame), false);
+
+    assert!(!solid.report().exact_solid_source_ready);
+    assert_eq!(
+        voxelize_exact_triangle_solid_mesh(
+            frame,
+            &solid,
+            MaterialRegionId(1),
+            VoxelizationPolicy::conservative_cover(),
+        ),
+        Err(HypervoxelError::InvalidSourceGeometry {
+            reason: "triangle solid mesh lacks exact closed-solid replay"
+        })
+    );
 }
 
 proptest! {
