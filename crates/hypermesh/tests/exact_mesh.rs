@@ -20402,6 +20402,114 @@ fn exact_coplanar_component_holed_difference_accepts_multiple_side_cutter_openin
         )
         .is_none()
     );
+
+    let point_branch_openings_plus_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            2, 1, 0, 4, 1, 0, 4, 3, 0, 2, 3, 0, //
+            -2, 4, 0, 8, 4, 0, 10, 10, 0, -2, 10, 0, //
+            10, 10, 0, 22, 10, 0, 22, 16, 0, 14, 16, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7, //
+            8, 9, 10, 8, 10, 11,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_multi_difference(
+            &left,
+            &point_branch_openings_plus_hole,
+        )
+        .is_none()
+    );
+    let point_branch_holed =
+        hypermesh::exact::arrange_coplanar_convex_surface_component_holed_difference(
+            &left,
+            &point_branch_openings_plus_hole,
+        )
+        .expect("point-branch side cutters should split while retaining unrelated strict holes");
+    point_branch_holed.validate().unwrap();
+    point_branch_holed
+        .validate_against_sources(&left, &point_branch_openings_plus_hole)
+        .unwrap();
+    assert!(point_branch_holed.components.len() >= 2);
+    assert_eq!(
+        point_branch_holed
+            .components
+            .iter()
+            .map(|component| component.holes.len())
+            .sum::<usize>(),
+        1
+    );
+    let branch_loop_count = point_branch_holed
+        .components
+        .iter()
+        .filter(|component| {
+            component.outer.iter().any(|point| {
+                real_eq(&point.x, &ExactReal::from(10)) && real_eq(&point.y, &ExactReal::from(10))
+            })
+        })
+        .count();
+    assert!(
+        branch_loop_count >= 2,
+        "component-holed convex branch outputs must duplicate the exact branch vertex"
+    );
+    assert!(
+        point_branch_holed
+            .components
+            .iter()
+            .flat_map(|component| component.holes.iter())
+            .flatten()
+            .any(|point| real_eq(&point.x, &ExactReal::from(2))
+                && real_eq(&point.y, &ExactReal::from(1)))
+    );
+    let mut stale_point_branch = point_branch_holed.clone();
+    stale_point_branch.components[0].holes.clear();
+    assert!(
+        stale_point_branch
+            .validate_against_sources(&left, &point_branch_openings_plus_hole)
+            .is_err()
+    );
+    let point_branch_preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &point_branch_openings_plus_hole,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    point_branch_preflight.validate().unwrap();
+    point_branch_preflight
+        .validate_against_sources(&left, &point_branch_openings_plus_hole)
+        .unwrap();
+    assert_eq!(
+        point_branch_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::
+            CertifiedCoplanarConvexSurfaceComponentHoledDifference
+    );
+    let point_branch_result = hypermesh::exact::boolean_exact(
+        &left,
+        &point_branch_openings_plus_hole,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    point_branch_result
+        .validate_operation_against_sources(
+            &left,
+            &point_branch_openings_plus_hole,
+            hypermesh::exact::ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        point_branch_result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::
+                CoplanarConvexSurfaceComponentHoledDifference
+        }
+    );
 }
 
 #[cfg(feature = "exact-triangulation")]

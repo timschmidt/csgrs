@@ -10420,6 +10420,17 @@ pub fn arrange_coplanar_convex_surface_component_holed_difference(
                 components.extend(split_components);
                 continue;
             }
+            if let Some(branch_components) =
+                materialize_side_cutter_point_touch_component_holed_difference(
+                    component,
+                    &cut_indices,
+                    &holes,
+                    &right_components,
+                )
+            {
+                components.extend(branch_components);
+                continue;
+            }
             if !component_relevant_right_regions_are_disjoint(
                 &cut_indices,
                 &holes,
@@ -11647,6 +11658,71 @@ fn materialize_side_cutter_multi_component_holed_difference(
     )
 }
 
+/// Replay point-branch side cutters while retaining strict holes.
+///
+/// This is the component-holed sibling of
+/// [`materialize_side_cutter_point_touch_difference_core`]. The ordinary
+/// component-holed side-cutter split requires disjoint retained loops; this
+/// bounded artifact accepts the exact branch case where clipped side openings
+/// meet only at retained vertices and the final outer loops duplicate those
+/// branch coordinates. Strict holes are still assigned by exact containment in
+/// one retained loop or consumed by exactly one removed opening.
+///
+/// The branch replay uses the same Weiler-Atherton retained-fragment walk as
+/// the no-hole point-touch difference. The hole-ownership rule follows Yap,
+/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+/// (1997): adding a branch carrier does not license sampled hole assignment.
+/// Every retained/consumed ring is named by exact predicates before the
+/// `hypertri` earcut handoff triangulates the holed components, following
+/// Held, "FIST: Fast Industrial-Strength Triangulation of Polygons,"
+/// *Algorithmica* 30 (2001).
+#[cfg(feature = "exact-triangulation")]
+fn materialize_side_cutter_point_touch_component_holed_difference(
+    component: &ConvexUnionComponent,
+    cut_indices: &[usize],
+    holes: &[ComponentHoleCandidate],
+    right_components: &[ConvexUnionComponent],
+) -> Option<Vec<CoplanarConvexHoledComponent>> {
+    if cut_indices.len() < 2 || holes.is_empty() {
+        return None;
+    }
+    let projection = component.projection;
+    let (removed_openings, mut cut_polygons) = materialize_side_cutter_point_touch_difference_core(
+        component,
+        cut_indices,
+        right_components,
+        "coplanar component-holed point-touch side-cutter split",
+    )?;
+    certify_removed_openings_collectively_split_source_component(
+        &component.hull,
+        &removed_openings,
+        projection,
+    )?;
+    for polygon in &mut cut_polygons {
+        orient_polygon_ccw(polygon, projection)?;
+    }
+    let hole_rings = holes
+        .iter()
+        .map(|hole| hole.ring.clone())
+        .collect::<Vec<_>>();
+    let holes_by_cut = assign_holes_to_side_cutter_split_outputs(
+        &hole_rings,
+        &cut_polygons,
+        &removed_openings,
+        projection,
+    )?;
+    if holes_by_cut.iter().all(Vec::is_empty) {
+        return None;
+    }
+    Some(
+        cut_polygons
+            .into_iter()
+            .zip(holes_by_cut)
+            .map(|(outer, holes)| CoplanarConvexHoledComponent { outer, holes })
+            .collect(),
+    )
+}
+
 /// Replay non-rectilinear side cutters as removed openings and one output loop.
 ///
 /// The returned pair is `(removed_openings, output)`. Each removed opening is
@@ -12102,6 +12178,15 @@ fn convex_boundary_attachment_count(
     removed: &[Point3],
     projection: CoplanarProjection,
 ) -> Option<usize> {
+    Some(convex_boundary_attachment_edges(outer, removed, projection)?.len())
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn convex_boundary_attachment_edges(
+    outer: &[Point3],
+    removed: &[Point3],
+    projection: CoplanarProjection,
+) -> Option<Vec<usize>> {
     let mut attached_outer_edges = Vec::new();
     for outer_edge in 0..outer.len() {
         let outer_start = project_point(&outer[outer_edge], projection);
@@ -12129,7 +12214,7 @@ fn convex_boundary_attachment_count(
             }
         }
     }
-    Some(attached_outer_edges.len())
+    Some(attached_outer_edges)
 }
 
 /// Certify that retained replay is a source-splitting removed topology.
@@ -12157,6 +12242,37 @@ fn certify_removed_openings_split_source_component(
         )?);
     }
     if max_attachment_count < 2 {
+        return None;
+    }
+    Some(())
+}
+
+/// Certify that branch openings split a source by owning several sides.
+///
+/// A point-branch cutter graph can contain several simple removed openings
+/// rather than one merged side-to-side opening. Accepting any point contact
+/// would mistake two same-side bays for a source split. This gate therefore
+/// collects exact positive-length source-boundary attachments across all
+/// branch openings and requires at least two distinct source edges before a
+/// component-holed branch artifact can be emitted. The distinction follows
+/// Yap's retained-object boundary from "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997): branch topology is promoted only
+/// after exact source-side ownership names the split.
+#[cfg(feature = "exact-triangulation")]
+fn certify_removed_openings_collectively_split_source_component(
+    outer: &[Point3],
+    removed_openings: &[Vec<Point3>],
+    projection: CoplanarProjection,
+) -> Option<()> {
+    let mut attached_outer_edges = Vec::new();
+    for opening in removed_openings {
+        for edge in convex_boundary_attachment_edges(outer, opening, projection)? {
+            if !attached_outer_edges.contains(&edge) {
+                attached_outer_edges.push(edge);
+            }
+        }
+    }
+    if attached_outer_edges.len() < 2 {
         return None;
     }
     Some(())

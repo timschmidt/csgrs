@@ -5380,6 +5380,57 @@ fn exercise_component_coplanar_difference() {
         ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
     );
 
+    let point_branch_side_cutters_with_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            2, 1, 0, 4, 1, 0, 4, 3, 0, 2, 3, 0, //
+            -2, 4, 0, 8, 4, 0, 10, 10, 0, -2, 10, 0, //
+            10, 10, 0, 22, 10, 0, 22, 16, 0, 14, 16, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7, //
+            8, 9, 10, 8, 10, 11,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("point-branch component-holed side-cutter fixture must import");
+    assert!(
+        arrange_coplanar_surface_multi_difference(&channel_left, &point_branch_side_cutters_with_hole)
+            .is_none()
+    );
+    let point_branch_holed = arrange_coplanar_convex_surface_component_holed_difference(
+        &channel_left,
+        &point_branch_side_cutters_with_hole,
+    )
+    .expect("point-branch side-cutter split should retain unrelated strict holes");
+    point_branch_holed.validate().unwrap();
+    point_branch_holed
+        .validate_against_sources(&channel_left, &point_branch_side_cutters_with_hole)
+        .unwrap();
+    assert!(
+        point_branch_holed.components.len() >= 2
+            && point_branch_holed
+                .components
+                .iter()
+                .map(|component| component.holes.len())
+                .sum::<usize>()
+                == 1
+    );
+    let point_branch_holed_preflight = preflight_boolean_exact(
+        &channel_left,
+        &point_branch_side_cutters_with_hole,
+        ExactBooleanOperation::Difference,
+    )
+    .expect("point-branch component-holed preflight should classify shortcut");
+    point_branch_holed_preflight.validate().unwrap();
+    point_branch_holed_preflight
+        .validate_against_sources(&channel_left, &point_branch_side_cutters_with_hole)
+        .unwrap();
+    assert_eq!(
+        point_branch_holed_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
+    );
+
     let nonrectilinear_channel_with_consumed_hole = ExactMesh::from_i64_triangles_with_policy(
         &[
             2, 17, 0, 4, 17, 0, 4, 19, 0, 2, 19, 0, //
