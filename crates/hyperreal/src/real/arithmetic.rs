@@ -546,9 +546,6 @@ impl Class {
             Log2(base) => {
                 Self::ln_computable(base).multiply(Self::ln_computable(&rationals::TWO).inverse())
             }
-            Log2(base) => {
-                Self::ln_computable(base).multiply(Self::ln_computable(&*rationals::TWO).inverse())
-            }
             SinPi(rational) => {
                 let argument =
                     Computable::multiply(Computable::pi(), Computable::rational(rational.clone()));

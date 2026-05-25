@@ -1800,18 +1800,15 @@ mod tests {
     #[test]
     fn dot2_refs_matches_pairwise_rational_arithmetic() {
         let left = [
-            Real::new(Rational::fraction(6, 5).unwrap()),
-            Real::new(Rational::fraction(-7, 10).unwrap()),
+            &Real::new(Rational::fraction(6, 5).unwrap()),
+            &Real::new(Rational::fraction(-7, 10).unwrap()),
         ];
         let right = [
-            Real::new(Rational::fraction(-4, 5).unwrap()),
-            Real::new(Rational::fraction(11, 10).unwrap()),
+            &Real::new(Rational::fraction(-4, 5).unwrap()),
+            &Real::new(Rational::fraction(11, 10).unwrap()),
         ];
-        let expected = &(&left[0] * &right[0]) + &(&left[1] * &right[1]);
-        for value in values {
-            let sign = value.abs().best_sign();
-            assert_ne!(sign, num::bigint::Sign::Minus);
-        }
+        let expected = &(left[0] * right[0]) + &(left[1] * right[1]);
+        assert_eq!(Real::dot2_refs(left, right), expected);
     }
 
     #[test]
@@ -1930,13 +1927,9 @@ mod tests {
 
     #[test]
     fn rational_atan2_axes_and_origin() {
-        assert_eq!(Rational::zero().atan2(Rational::zero()), Real::zero());
-        assert_eq!(Rational::zero().atan2(Rational::new(2)), Real::zero());
-        assert_eq!(Rational::zero().atan2(Rational::new(-2)), Real::pi());
-        assert_eq!(
-            Real::dot2_refs([&left[0], &left[1]], [&right[0], &right[1]]),
-            expected,
-        );
+        assert_eq!(Real::zero().atan2(Real::zero()), Real::zero());
+        assert_eq!(Real::zero().atan2(Real::from(2)), Real::zero());
+        assert_eq!(Real::zero().atan2(Real::from(-2)), Real::pi());
     }
 
     #[test]
@@ -1947,6 +1940,10 @@ mod tests {
         let actual = Real::dot2_refs([&left[0], &left[1]], [&right[0], &right[1]]);
         assert!(
             (actual.to_f64_approx().unwrap() - expected.to_f64_approx().unwrap()).abs() < 1e-12
+        );
+        assert_eq!(
+            Real::dot2_refs([&left[0], &left[1]], [&right[0], &right[1]]),
+            expected,
         );
     }
 
@@ -1961,6 +1958,7 @@ mod tests {
         )
     }
 
+    #[test]
     fn computable_atan2_axes() {
         use crate::Computable;
         use num::Zero;
