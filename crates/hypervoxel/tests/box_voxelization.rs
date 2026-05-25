@@ -12,7 +12,8 @@ use hypervoxel::{
     SparseVoxelGrid, StorageReplayStatus, VoxelAddress, VoxelAggregateFacts, VoxelCell,
     VoxelHandoffDomain, VoxelHandoffManifest, VoxelMemoryBudgetManifest, VoxelSideTables,
     VoxelizationAudit, VoxelizationPolicy, audit_chunk_paged_material_regions,
-    audit_chunk_paged_process_states, certify_chunk_paged_handoff, chunk_paged_binary_snapshot_v1,
+    audit_chunk_paged_process_states, audit_exact_voxel_surface_topology,
+    certify_chunk_paged_handoff, chunk_paged_binary_snapshot_v1,
     chunk_paged_run_length_snapshot_v1, diff_chunk_paged_sparse_grids, diff_sparse_grids,
     extract_exposed_faces, extract_exposed_faces_with_report, greedy_face_patch_plan,
     lookup_material_display_colors, lossy_obj_from_quad_mesh, lossy_quad_mesh_from_faces,
@@ -1244,6 +1245,63 @@ fn exposed_faces_are_exact_before_lossy_mesh_export() {
     assert_eq!(empty_shell.exact_faces, 0);
     assert!(!empty_shell.has_exact_faces);
     assert!(!empty_shell.exact_shell_ready);
+}
+
+#[test]
+fn exact_voxel_surface_topology_reports_closed_duplicate_open_and_mixed_shells() {
+    let mut grid = SparseVoxelGrid::new(frame());
+    grid.set(
+        VoxelAddress::new(2, [1, 1, 1]).unwrap(),
+        VoxelCell::material(MaterialRegionId(1)),
+    )
+    .unwrap();
+    let shell = extract_exposed_faces_with_report(&grid).unwrap();
+    assert_eq!(shell.exact_faces, 6);
+    assert!(shell.exact_shell_ready);
+
+    let topology = audit_exact_voxel_surface_topology(&shell.faces);
+    assert_eq!(topology.input_faces, 6);
+    assert_eq!(topology.audited_faces, 6);
+    assert_eq!(topology.common_depth, Some(2));
+    assert_eq!(topology.vertices.len(), 8);
+    assert_eq!(topology.edges.len(), 12);
+    assert_eq!(topology.face_edge_records, 24);
+    assert_eq!(topology.manifold_edges, 12);
+    assert!(topology.boundary_edges.is_empty());
+    assert!(topology.nonmanifold_edges.is_empty());
+    assert!(topology.exact_surface_topology_ready);
+
+    let empty = audit_exact_voxel_surface_topology(&[]);
+    assert_eq!(empty.input_faces, 0);
+    assert!(!empty.exact_surface_topology_ready);
+
+    let mut duplicate_faces = shell.faces.clone();
+    duplicate_faces.push(shell.faces[0].clone());
+    let duplicate = audit_exact_voxel_surface_topology(&duplicate_faces);
+    assert_eq!(duplicate.input_faces, 7);
+    assert_eq!(duplicate.unique_faces, 6);
+    assert_eq!(duplicate.duplicate_faces.len(), 1);
+    assert_eq!(duplicate.nonmanifold_edges.len(), 4);
+    assert!(!duplicate.exact_surface_topology_ready);
+
+    let mut open_faces = shell.faces.clone();
+    open_faces.pop();
+    let open = audit_exact_voxel_surface_topology(&open_faces);
+    assert_eq!(open.input_faces, 5);
+    assert_eq!(open.boundary_edges.len(), 4);
+    assert!(!open.exact_surface_topology_ready);
+
+    let mut mixed_faces = shell.faces.clone();
+    mixed_faces.push(hypervoxel::ExactVoxelFace {
+        address: VoxelAddress::root(),
+        side: hypervoxel::VoxelFaceSide::XNeg,
+        cell_bounds: VoxelAddress::root().bounds(grid.frame()).unwrap(),
+    });
+    let mixed = audit_exact_voxel_surface_topology(&mixed_faces);
+    assert_eq!(mixed.input_faces, 7);
+    assert_eq!(mixed.mixed_depth_faces, 1);
+    assert_eq!(mixed.audited_faces, 6);
+    assert!(!mixed.exact_surface_topology_ready);
 }
 
 #[test]

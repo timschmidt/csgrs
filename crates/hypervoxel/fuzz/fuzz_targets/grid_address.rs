@@ -24,10 +24,11 @@ use hypervoxel::{
     VoxelSideTables, VoxelSliceNaming, VoxelSliceOrdering, VoxelSpatialAggregateFacts,
     VoxelTraceDimension, VoxelTraceManifest, VoxelizationAudit, VoxelizationPolicy,
     audit_chunk_paged_field_samples, audit_chunk_paged_material_regions,
-    audit_chunk_paged_process_states, certify_chunk_paged_handoff, chunk_paged_binary_snapshot_v1,
+    audit_chunk_paged_process_states, audit_exact_voxel_surface_topology,
+    certify_chunk_paged_handoff, chunk_paged_binary_snapshot_v1,
     chunk_paged_run_length_snapshot_v1, chunk_paged_greedy_face_patch_plan_with_report,
-    classify_chunk_paged_support_mask, classify_support_mask, continuous_field_address, diff_chunk_paged_sparse_grids,
-    extract_chunk_paged_exposed_faces_with_report,
+    classify_chunk_paged_support_mask, classify_support_mask, continuous_field_address,
+    diff_chunk_paged_sparse_grids, extract_chunk_paged_exposed_faces_with_report,
     diff_sparse_grids, extract_exposed_faces, greedy_face_patch_plan, lookup_material_display_colors,
     extract_exposed_faces_with_report, lossy_obj_from_quad_mesh, lossy_quad_mesh_from_faces, query_field_samples,
     query_material_regions, report_material_region_metadata, sample_manhattan_distance_field,
@@ -294,6 +295,19 @@ fuzz_target!(|data: (u8, u64, u64, u64)| {
     assert_eq!(shell.has_exact_faces, shell.exact_faces > 0);
     assert_eq!(shell.faces, faces);
     assert!(shell.exact_shell_ready);
+    let topology = audit_exact_voxel_surface_topology(&shell.faces);
+    assert_eq!(topology.input_faces, shell.exact_faces);
+    assert_eq!(
+        topology.exact_surface_topology_ready,
+        shell.exact_shell_ready
+            && topology.input_faces > 0
+            && topology.mixed_depth_faces == 0
+            && topology.duplicate_faces.is_empty()
+            && topology.degenerate_faces.is_empty()
+            && topology.boundary_edges.is_empty()
+            && topology.nonmanifold_edges.is_empty()
+    );
+    assert_eq!(topology.face_edge_records, topology.audited_faces * 4);
     let paged_shell = extract_chunk_paged_exposed_faces_with_report(&paged_grid).unwrap();
     assert_eq!(paged_shell.exact_faces, shell.exact_faces);
     assert_eq!(paged_shell.has_exact_faces, shell.has_exact_faces);

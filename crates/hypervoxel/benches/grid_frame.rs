@@ -22,7 +22,8 @@ use hypervoxel::{
     VoxelSideTables, VoxelSliceNaming, VoxelSliceOrdering, VoxelSpatialAggregateFacts,
     VoxelTraceDimension, VoxelTraceManifest, VoxelizationAudit, VoxelizationPolicy,
     audit_chunk_paged_field_samples, audit_chunk_paged_material_regions,
-    audit_chunk_paged_process_states, certify_chunk_paged_handoff, chunk_paged_binary_snapshot_v1,
+    audit_chunk_paged_process_states, audit_exact_voxel_surface_topology,
+    certify_chunk_paged_handoff, chunk_paged_binary_snapshot_v1,
     chunk_paged_greedy_face_patch_plan_with_report, chunk_paged_run_length_snapshot_v1,
     classify_chunk_paged_support_mask, classify_support_mask, continuous_field_address,
     diff_chunk_paged_sparse_grids, diff_sparse_grids,
@@ -984,6 +985,18 @@ fn bench_batches_field_facts_and_sweeps(c: &mut Criterion) {
                 report.page_hits,
                 report.page_misses,
                 report.exact_paged_shell_ready,
+            )
+        })
+    });
+    c.bench_function("exact_voxel_surface_topology_audit", |b| {
+        let faces = extract_exposed_faces(&grid).unwrap();
+        b.iter(|| {
+            let report = audit_exact_voxel_surface_topology(&faces);
+            (
+                report.vertices.len(),
+                report.edges.len(),
+                report.manifold_edges,
+                report.exact_surface_topology_ready,
             )
         })
     });
