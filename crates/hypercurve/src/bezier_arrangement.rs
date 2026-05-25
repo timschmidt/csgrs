@@ -382,6 +382,7 @@ struct EndpointData {
     start_tangent: TangentVector,
     end_tangent: TangentVector,
     start_second_derivative: Option<TangentVector>,
+    start_third_derivative: Option<TangentVector>,
 }
 
 #[derive(Clone, Debug)]
@@ -397,6 +398,7 @@ struct RetainedEndpointData {
     start_tangent: Option<RetainedTangentVector>,
     end_tangent: Option<RetainedTangentVector>,
     start_second_derivative: Option<TangentVector>,
+    start_third_derivative: Option<TangentVector>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -437,6 +439,7 @@ fn retained_endpoint_data(
                 start_tangent: Some(RetainedTangentVector::Native(Box::new(data.start_tangent))),
                 end_tangent: Some(RetainedTangentVector::Native(Box::new(data.end_tangent))),
                 start_second_derivative: data.start_second_derivative,
+                start_third_derivative: data.start_third_derivative,
             })),
             Classification::Uncertain(reason) => Some(Classification::Uncertain(reason)),
         },
@@ -479,6 +482,7 @@ fn retained_endpoint_data(
                 start_tangent,
                 end_tangent,
                 start_second_derivative: None,
+                start_third_derivative: None,
             }))
         }
         BezierSplitFragment2::Unresolved { .. } => None,
@@ -844,8 +848,10 @@ fn choose_tangent_successor(
                 match compare_same_tangent_second_order(
                     &endpoints[candidate].start_tangent,
                     endpoints[candidate].start_second_derivative.as_ref(),
+                    endpoints[candidate].start_third_derivative.as_ref(),
                     &endpoints[best].start_tangent,
                     endpoints[best].start_second_derivative.as_ref(),
+                    endpoints[best].start_third_derivative.as_ref(),
                     policy,
                 ) {
                     Classification::Decided(TurnOrdering::FirstBeforeSecond) => best = candidate,
@@ -955,8 +961,10 @@ fn compare_retained_same_tangent_second_order(
         ) => compare_same_tangent_second_order(
             first_tangent,
             first.start_second_derivative.as_ref(),
+            first.start_third_derivative.as_ref(),
             second_tangent,
             second.start_second_derivative.as_ref(),
+            second.start_third_derivative.as_ref(),
             policy,
         ),
         _ => Classification::Decided(TurnOrdering::SameDirection),
@@ -966,8 +974,10 @@ fn compare_retained_same_tangent_second_order(
 fn compare_same_tangent_second_order(
     first_tangent: &TangentVector,
     first_second_derivative: Option<&TangentVector>,
+    first_third_derivative: Option<&TangentVector>,
     second_tangent: &TangentVector,
     second_second_derivative: Option<&TangentVector>,
+    second_third_derivative: Option<&TangentVector>,
     policy: &CurvePolicy,
 ) -> Classification<TurnOrdering> {
     let Some(first_second_derivative) = first_second_derivative else {
@@ -997,6 +1007,13 @@ fn compare_same_tangent_second_order(
     };
 
     match (first_sign, second_sign) {
+        (RealSign::Zero, RealSign::Zero) => compare_same_tangent_third_order(
+            first_tangent,
+            first_third_derivative,
+            second_tangent,
+            second_third_derivative,
+            policy,
+        ),
         (RealSign::Zero, _) | (_, RealSign::Zero) => {
             Classification::Decided(TurnOrdering::SameDirection)
         }
@@ -1008,6 +1025,62 @@ fn compare_same_tangent_second_order(
         }
         (RealSign::Positive, RealSign::Positive) | (RealSign::Negative, RealSign::Negative) => {
             compare_same_side_curvature_magnitude(
+                first_tangent,
+                &first_cross,
+                second_tangent,
+                &second_cross,
+                policy,
+            )
+        }
+    }
+}
+
+fn compare_same_tangent_third_order(
+    first_tangent: &TangentVector,
+    first_third_derivative: Option<&TangentVector>,
+    second_tangent: &TangentVector,
+    second_third_derivative: Option<&TangentVector>,
+    policy: &CurvePolicy,
+) -> Classification<TurnOrdering> {
+    let Some(first_third_derivative) = first_third_derivative else {
+        return Classification::Decided(TurnOrdering::SameDirection);
+    };
+    let Some(second_third_derivative) = second_third_derivative else {
+        return Classification::Decided(TurnOrdering::SameDirection);
+    };
+
+    // If `cross(B'(0), B''(0))` vanishes for both candidates, a cubic Bezier
+    // can still peel away at third order.  We compare
+    // `cross(B'(0), B'''(0))` as an exact Taylor witness and scale same-side
+    // magnitudes by speed to avoid treating a parameter-speed change as a
+    // topology decision.  The derivative identities are the polynomial Bezier
+    // endpoint formulas from Farin, *Curves and Surfaces for CAGD* (5th ed.,
+    // 2002); using them only after exact sign certification follows Yap,
+    // "Towards Exact Geometric Computation," Computational Geometry 7(1-2),
+    // 3-23 (1997).
+    let first_cross = cross_vectors(first_tangent, first_third_derivative);
+    let second_cross = cross_vectors(second_tangent, second_third_derivative);
+    let first_sign = match real_sign(&first_cross, policy) {
+        Some(sign) => sign,
+        None => return Classification::Uncertain(UncertaintyReason::RealSign),
+    };
+    let second_sign = match real_sign(&second_cross, policy) {
+        Some(sign) => sign,
+        None => return Classification::Uncertain(UncertaintyReason::RealSign),
+    };
+
+    match (first_sign, second_sign) {
+        (RealSign::Zero, _) | (_, RealSign::Zero) => {
+            Classification::Decided(TurnOrdering::SameDirection)
+        }
+        (RealSign::Positive, RealSign::Negative) => {
+            Classification::Decided(TurnOrdering::FirstBeforeSecond)
+        }
+        (RealSign::Negative, RealSign::Positive) => {
+            Classification::Decided(TurnOrdering::SecondBeforeFirst)
+        }
+        (RealSign::Positive, RealSign::Positive) | (RealSign::Negative, RealSign::Negative) => {
+            compare_same_side_third_order_magnitude(
                 first_tangent,
                 &first_cross,
                 second_tangent,
@@ -1034,6 +1107,30 @@ fn compare_same_side_curvature_magnitude(
 
     let first_scaled = first_cross * first_cross * cube(&second_speed_sq);
     let second_scaled = second_cross * second_cross * cube(&first_speed_sq);
+    match real_sign(&(first_scaled - second_scaled), policy) {
+        Some(RealSign::Negative) => Classification::Decided(TurnOrdering::FirstBeforeSecond),
+        Some(RealSign::Positive) => Classification::Decided(TurnOrdering::SecondBeforeFirst),
+        Some(RealSign::Zero) => Classification::Decided(TurnOrdering::SameDirection),
+        None => Classification::Uncertain(UncertaintyReason::RealSign),
+    }
+}
+
+fn compare_same_side_third_order_magnitude(
+    first_tangent: &TangentVector,
+    first_cross: &Real,
+    second_tangent: &TangentVector,
+    second_cross: &Real,
+    policy: &CurvePolicy,
+) -> Classification<TurnOrdering> {
+    let first_speed_sq = speed_squared(first_tangent);
+    let second_speed_sq = speed_squared(second_tangent);
+    if !definitely_nonzero(&first_speed_sq, policy) || !definitely_nonzero(&second_speed_sq, policy)
+    {
+        return Classification::Uncertain(UncertaintyReason::RealSign);
+    }
+
+    let first_scaled = first_cross * first_cross * square(&second_speed_sq);
+    let second_scaled = second_cross * second_cross * square(&first_speed_sq);
     match real_sign(&(first_scaled - second_scaled), policy) {
         Some(RealSign::Negative) => Classification::Decided(TurnOrdering::FirstBeforeSecond),
         Some(RealSign::Positive) => Classification::Decided(TurnOrdering::SecondBeforeFirst),
@@ -1115,29 +1212,36 @@ impl BezierSubcurve2 {
 
     fn endpoint_data(&self, policy: &CurvePolicy) -> Classification<EndpointData> {
         let (start, end) = self.endpoints();
-        let (start_tangent, end_tangent, start_second_derivative) = match self {
-            Self::Quadratic(curve) => {
-                let second_derivative = quadratic_second_derivative(curve);
-                (
+        let (start_tangent, end_tangent, start_second_derivative, start_third_derivative) =
+            match self {
+                Self::Quadratic(curve) => {
+                    let second_derivative = quadratic_second_derivative(curve);
+                    (
+                        TangentVector::from_endpoint_tangent(
+                            curve.endpoint_tangent(BezierEndpoint::Start),
+                        ),
+                        TangentVector::from_endpoint_tangent(
+                            curve.endpoint_tangent(BezierEndpoint::End),
+                        ),
+                        Some(second_derivative),
+                        None,
+                    )
+                }
+                Self::Cubic(curve) => (
                     TangentVector::from_endpoint_tangent(
                         curve.endpoint_tangent(BezierEndpoint::Start),
                     ),
                     TangentVector::from_endpoint_tangent(
                         curve.endpoint_tangent(BezierEndpoint::End),
                     ),
-                    Some(second_derivative),
-                )
-            }
-            Self::Cubic(curve) => (
-                TangentVector::from_endpoint_tangent(curve.endpoint_tangent(BezierEndpoint::Start)),
-                TangentVector::from_endpoint_tangent(curve.endpoint_tangent(BezierEndpoint::End)),
-                Some(cubic_start_second_derivative(curve)),
-            ),
-            Self::RationalQuadratic(curve) => {
-                let (start_tangent, end_tangent) = rational_endpoint_tangents(curve);
-                (start_tangent, end_tangent, None)
-            }
-        };
+                    Some(cubic_start_second_derivative(curve)),
+                    Some(cubic_third_derivative(curve)),
+                ),
+                Self::RationalQuadratic(curve) => {
+                    let (start_tangent, end_tangent) = rational_endpoint_tangents(curve);
+                    (start_tangent, end_tangent, None, None)
+                }
+            };
 
         if !start_tangent.is_nonzero(policy) || !end_tangent.is_nonzero(policy) {
             return Classification::Uncertain(UncertaintyReason::RealSign);
@@ -1149,6 +1253,7 @@ impl BezierSubcurve2 {
             start_tangent,
             end_tangent,
             start_second_derivative,
+            start_third_derivative,
         })
     }
 }
@@ -1188,6 +1293,18 @@ fn cubic_start_second_derivative(curve: &crate::CubicBezier2) -> TangentVector {
     TangentVector { dx, dy }
 }
 
+fn cubic_third_derivative(curve: &crate::CubicBezier2) -> TangentVector {
+    let six = Real::from(6_i8);
+    let three = Real::from(3_i8);
+    let dx = &six
+        * (((curve.end().x() - (&three * curve.control2().x())) + (&three * curve.control1().x()))
+            - curve.start().x());
+    let dy = &six
+        * (((curve.end().y() - (&three * curve.control2().y())) + (&three * curve.control1().y()))
+            - curve.start().y());
+    TangentVector { dx, dy }
+}
+
 fn rational_endpoint_tangents(
     curve: &crate::RationalQuadraticBezier2,
 ) -> (TangentVector, TangentVector) {
@@ -1222,6 +1339,10 @@ fn speed_squared(vector: &TangentVector) -> Real {
 
 fn cube(value: &Real) -> Real {
     value * value * value
+}
+
+fn square(value: &Real) -> Real {
+    value * value
 }
 
 fn definitely_nonzero(value: &Real, policy: &CurvePolicy) -> bool {

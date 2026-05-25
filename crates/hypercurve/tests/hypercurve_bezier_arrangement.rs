@@ -214,6 +214,73 @@ fn tangent_ordered_traversal_rejects_equal_second_order_outgoing_tangents() {
 }
 
 #[test]
+fn tangent_ordered_traversal_uses_third_order_for_cubic_same_tangent_inflections() {
+    let first = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0))),
+    };
+    let upward = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Cubic(CubicBezier2::new(p(2, 0), p(3, 0), p(4, 0), p(5, 1))),
+    };
+    let downward = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Cubic(CubicBezier2::new(p(2, 0), p(3, 0), p(4, 0), p(5, -1))),
+    };
+    let graph = BezierArrangementGraph2::new(vec![
+        hypercurve::BezierArrangementFragment2::new(0, 0, first),
+        hypercurve::BezierArrangementFragment2::new(1, 0, upward),
+        hypercurve::BezierArrangementFragment2::new(2, 0, downward),
+    ]);
+
+    let traversal = decided(graph.traverse_with_tangent_order(&policy()));
+    assert_eq!(traversal.len(), 2);
+    assert_eq!(traversal.chains()[0].fragment_indices(), &[0, 1]);
+    assert_eq!(traversal.chains()[1].fragment_indices(), &[2]);
+
+    let retained_traversal = decided(graph.traverse_retained_with_tangent_order(&policy()));
+    assert_eq!(retained_traversal.len(), 2);
+    assert_eq!(retained_traversal.chains()[0].fragment_indices(), &[0, 1]);
+    assert_eq!(retained_traversal.chains()[1].fragment_indices(), &[2]);
+}
+
+#[test]
+fn tangent_ordered_traversal_rejects_equal_third_order_cubic_successors() {
+    let first = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0))),
+    };
+    let first_out = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Cubic(CubicBezier2::new(p(2, 0), p(3, 0), p(4, 0), p(5, 1))),
+    };
+    let second_out = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Cubic(CubicBezier2::new(p(2, 0), p(3, 0), p(4, 0), p(5, 1))),
+    };
+    let graph = BezierArrangementGraph2::new(vec![
+        hypercurve::BezierArrangementFragment2::new(0, 0, first),
+        hypercurve::BezierArrangementFragment2::new(1, 0, first_out),
+        hypercurve::BezierArrangementFragment2::new(2, 0, second_out),
+    ]);
+
+    assert_eq!(
+        graph.traverse_with_tangent_order(&policy()),
+        Classification::Uncertain(UncertaintyReason::Boundary)
+    );
+    assert_eq!(
+        graph.traverse_retained_with_tangent_order(&policy()),
+        Classification::Uncertain(UncertaintyReason::Boundary)
+    );
+}
+
+#[test]
 fn algebraic_split_boundary_blocks_graph_traversal() {
     let curve = QuadraticBezier2::new(p(0, 0), p(2, 4), p(4, 0));
     let split = decided(

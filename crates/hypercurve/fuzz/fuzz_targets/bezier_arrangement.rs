@@ -2,7 +2,7 @@
 
 use hypercurve::{
     BezierArrangementGraph2, BezierParameter2, BezierRetainedOverlapReport2, Classification,
-    CurvePolicy, Point2, QuadraticBezier2, Real,
+    CubicBezier2, CurvePolicy, Point2, QuadraticBezier2, Real,
 };
 use libfuzzer_sys::fuzz_target;
 
@@ -84,4 +84,31 @@ fuzz_target!(|data: &[u8]| {
         BezierArrangementGraph2::from_split_materializations(&same_tangent_materializations);
     let _ = same_tangent_graph.traverse_with_tangent_order(&policy);
     let _ = same_tangent_graph.traverse_retained_with_tangent_order(&policy);
+
+    let cubic_same_tangent_curves = [
+        CubicBezier2::new(
+            point(130, 128),
+            point(131, 128),
+            point(132, 128),
+            point(133, 129),
+        ),
+        CubicBezier2::new(
+            point(130, 128),
+            point(131, 128),
+            point(132, 128),
+            point(133, 127),
+        ),
+    ];
+    let mut cubic_materializations = same_tangent_materializations[..1].to_vec();
+    for curve in cubic_same_tangent_curves {
+        if let Ok(Classification::Decided(materialization)) =
+            curve.split_at_parameters(&[], &policy)
+        {
+            cubic_materializations.push(materialization);
+        }
+    }
+    let cubic_same_tangent_graph =
+        BezierArrangementGraph2::from_split_materializations(&cubic_materializations);
+    let _ = cubic_same_tangent_graph.traverse_with_tangent_order(&policy);
+    let _ = cubic_same_tangent_graph.traverse_retained_with_tangent_order(&policy);
 });

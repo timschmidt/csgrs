@@ -3,8 +3,8 @@ use std::time::Instant;
 
 use hypercurve::{
     BezierAlgebraicParameter2, BezierArrangementGraph2, BezierParameter2, BezierParameterInterval,
-    BezierParameterPolynomial, BezierRetainedOverlapReport2, Classification, CurvePolicy,
-    CurveResult, Point2, QuadraticBezier2, Real,
+    BezierParameterPolynomial, BezierRetainedOverlapReport2, Classification, CubicBezier2,
+    CurvePolicy, CurveResult, Point2, QuadraticBezier2, Real,
 };
 
 fn r(value: i32) -> Real {
@@ -117,6 +117,33 @@ fn main() -> CurveResult<()> {
     let elapsed = started.elapsed();
     println!(
         "bezier_arrangement_same_tangent_order: {iterations} iterations in {elapsed:?} ({:?}/iter), total={same_tangent_total}",
+        elapsed / iterations
+    );
+
+    let mut cubic_same_tangent_materializations = Vec::new();
+    cubic_same_tangent_materializations.push(decided(
+        QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0)).split_at_parameters(&[], &policy)?,
+    ));
+    for curve in [
+        CubicBezier2::new(p(2, 0), p(3, 0), p(4, 0), p(5, 1)),
+        CubicBezier2::new(p(2, 0), p(3, 0), p(4, 0), p(5, -1)),
+    ] {
+        cubic_same_tangent_materializations.push(decided(curve.split_at_parameters(&[], &policy)?));
+    }
+    let cubic_same_tangent_graph =
+        BezierArrangementGraph2::from_split_materializations(&cubic_same_tangent_materializations);
+    let started = Instant::now();
+    let mut cubic_same_tangent_total = 0_usize;
+    for _ in 0..iterations {
+        let traversal = decided(cubic_same_tangent_graph.traverse_with_tangent_order(&policy));
+        cubic_same_tangent_total += black_box(traversal.len());
+        let retained =
+            decided(cubic_same_tangent_graph.traverse_retained_with_tangent_order(&policy));
+        cubic_same_tangent_total += black_box(retained.len());
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "bezier_arrangement_cubic_same_tangent_order: {iterations} iterations in {elapsed:?} ({:?}/iter), total={cubic_same_tangent_total}",
         elapsed / iterations
     );
 
