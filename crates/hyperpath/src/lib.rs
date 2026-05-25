@@ -139,7 +139,8 @@ pub use pcb_orthogonal_pad::{
 };
 pub use ph::{
     CubicPhFacts, CubicPhInverseLengthReport, CubicPythagoreanHodograph, PhCurveError,
-    certify_cubic_ph_inverse_length,
+    QuinticPhFacts, QuinticPhInverseLengthReport, QuinticPythagoreanHodograph,
+    certify_cubic_ph_inverse_length, certify_quintic_ph_inverse_length,
 };
 pub use provenance::{
     ConstructionStamp, PathProvenance, PathSourceFormat, SourceGrid, SourceLengthUnit,

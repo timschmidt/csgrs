@@ -326,6 +326,7 @@ fn element_length(
             .certified_sweep_length()
             .ok_or(RouteCertificationError::UnsupportedRouteGeometry),
         FeedPathElement::CubicPh(curve) => Ok(curve.exact_length()),
+        FeedPathElement::QuinticPh(curve) => Ok(curve.exact_length()),
     }
 }
 

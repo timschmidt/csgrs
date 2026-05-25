@@ -4,12 +4,13 @@ use hyperlimit::{Point2, PredicatePolicy};
 use hyperpath::{
     AccelerationLimitedFeedProfileClass, ArcDirection, CubicPythagoreanHodograph,
     ExplicitCircularArc, FeedPathElement, JerkRampPhaseProposal, JerkRampSpanProposal,
-    LinePathSegment, LookaheadFeedSchedule, RouteCertificationError, TangentSpan,
-    certify_acceleration_limited_feed_time, certify_acceleration_limited_feed_time_for_path,
-    certify_constant_feed_time, certify_constant_feed_time_for_path,
-    certify_corner_lookahead_limits, certify_cubic_ph_inverse_length,
-    certify_jerk_ramp_feed_schedule, certify_lookahead_feed_schedule,
-    certify_multi_phase_jerk_ramp_feed_schedule, certify_symmetric_jerk_limited_feed_time,
+    LinePathSegment, LookaheadFeedSchedule, QuinticPythagoreanHodograph, RouteCertificationError,
+    TangentSpan, certify_acceleration_limited_feed_time,
+    certify_acceleration_limited_feed_time_for_path, certify_constant_feed_time,
+    certify_constant_feed_time_for_path, certify_corner_lookahead_limits,
+    certify_cubic_ph_inverse_length, certify_jerk_ramp_feed_schedule,
+    certify_lookahead_feed_schedule, certify_multi_phase_jerk_ramp_feed_schedule,
+    certify_quintic_ph_inverse_length, certify_symmetric_jerk_limited_feed_time,
     certify_symmetric_jerk_limited_feed_time_for_path,
 };
 use hyperreal::{Rational, Real};
@@ -297,4 +298,31 @@ fuzz_target!(|data: &[u8]| {
     )
     .unwrap();
     assert!(ph_feed.certification.all_satisfied());
+
+    let quintic_ph = QuinticPythagoreanHodograph::new(
+        p(0, 0),
+        r(ph_root),
+        Real::zero(),
+        Real::zero(),
+        Real::zero(),
+        Real::zero(),
+        Real::zero(),
+    )
+    .unwrap();
+    let quintic_inverse = certify_quintic_ph_inverse_length(
+        &quintic_ph,
+        rq(ph_root * ph_root, 2),
+        hyperpath::BezierParameter::new(1, 2).unwrap(),
+    )
+    .unwrap();
+    assert!(quintic_inverse.certification.all_satisfied());
+    let quintic_route = vec![FeedPathElement::QuinticPh(quintic_ph)];
+    let quintic_feed = certify_constant_feed_time_for_path(
+        &quintic_route,
+        r(ph_root * ph_root),
+        r(1),
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert!(quintic_feed.certification.all_satisfied());
 });

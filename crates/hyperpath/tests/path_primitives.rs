@@ -18,15 +18,16 @@ use hyperpath::{
     PcbConvexBoardOutline, PcbConvexPad, PcbObroundPad, PcbOrientedRectPad,
     PcbOrthogonalBoardOutline, PcbOrthogonalPad, PcbRectPad, PcbRoundedRectPad, PcbTrace,
     PcbViaStack, PhCurveError, PocketLinkGraphError, PocketPlanError, PocketPlanStopReason,
-    PocketRingSide, QuadraticBezier, RationalQuadraticBezier, RationalQuadraticBezierError,
-    RectangularPocket, RectangularRegionRelation, RouteCertificationError, SegmentParameterOrder,
-    SourceLengthUnit, SpecctraGridKeepoutRecord, SpecctraGridKeepoutShape, SpecctraGridTraceRecord,
-    SpecctraGridViaRecord, SpecctraImportError, SpecctraLayerAlias, SpecctraNetAlias,
-    SpecctraParseError, SupportFootprintStatus, SupportPlanError, SweptLineSegment,
-    TangentAlignment, TangentJoinClass, TangentJoinReport, TangentSpan, TraceLayer,
-    ViaAnnularRingReport, ViaDrillIntent, ViaDrillPolicyClass, ViaLayerSpanRelation,
-    ViaLayerTransitionClass, arrange_cubic_beziers, arrange_explicit_arcs, arrange_line_segments,
-    arrange_line_segments_with_explicit_arcs, arrange_line_segments_with_quadratic_beziers,
+    PocketRingSide, QuadraticBezier, QuinticPythagoreanHodograph, RationalQuadraticBezier,
+    RationalQuadraticBezierError, RectangularPocket, RectangularRegionRelation,
+    RouteCertificationError, SegmentParameterOrder, SourceLengthUnit, SpecctraGridKeepoutRecord,
+    SpecctraGridKeepoutShape, SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraImportError,
+    SpecctraLayerAlias, SpecctraNetAlias, SpecctraParseError, SupportFootprintStatus,
+    SupportPlanError, SweptLineSegment, TangentAlignment, TangentJoinClass, TangentJoinReport,
+    TangentSpan, TraceLayer, ViaAnnularRingReport, ViaDrillIntent, ViaDrillPolicyClass,
+    ViaLayerSpanRelation, ViaLayerTransitionClass, arrange_cubic_beziers, arrange_explicit_arcs,
+    arrange_line_segments, arrange_line_segments_with_explicit_arcs,
+    arrange_line_segments_with_quadratic_beziers,
     arrange_line_segments_with_rational_quadratic_beziers, arrange_quadratic_beziers,
     arrange_rational_quadratic_beziers, build_alternating_detour_meander, build_g1_join_problem,
     build_keepout_aware_detour_meander, build_length_match_problem, build_multi_detour_meander,
@@ -40,15 +41,16 @@ use hyperpath::{
     certify_corner_lookahead_limits, certify_cubic_ph_inverse_length,
     certify_differential_pair_skew, certify_g1_chain, certify_g1_join_candidate,
     certify_jerk_ramp_feed_schedule, certify_length_extension, certify_lookahead_feed_schedule,
-    certify_multi_phase_jerk_ramp_feed_schedule, certify_symmetric_jerk_limited_feed_time,
-    certify_symmetric_jerk_limited_feed_time_for_path, certify_tangent_alignment_candidate,
-    check_cardinal_rect_pad_board_clearance, check_circular_pad_board_clearance,
-    check_circular_pad_circular_board_clearance, check_convex_pad_board_clearance,
-    check_obround_pad_board_clearance, check_oriented_rect_pad_board_clearance,
-    check_orthogonal_pad_board_clearance, check_rect_pad_board_clearance,
-    check_rounded_rect_pad_board_clearance, check_trace_board_clearance,
-    check_trace_cardinal_rect_pad_clearance, check_trace_circular_board_clearance,
-    check_trace_clearance, check_trace_convex_board_clearance, check_trace_convex_pad_clearance,
+    certify_multi_phase_jerk_ramp_feed_schedule, certify_quintic_ph_inverse_length,
+    certify_symmetric_jerk_limited_feed_time, certify_symmetric_jerk_limited_feed_time_for_path,
+    certify_tangent_alignment_candidate, check_cardinal_rect_pad_board_clearance,
+    check_circular_pad_board_clearance, check_circular_pad_circular_board_clearance,
+    check_convex_pad_board_clearance, check_obround_pad_board_clearance,
+    check_oriented_rect_pad_board_clearance, check_orthogonal_pad_board_clearance,
+    check_rect_pad_board_clearance, check_rounded_rect_pad_board_clearance,
+    check_trace_board_clearance, check_trace_cardinal_rect_pad_clearance,
+    check_trace_circular_board_clearance, check_trace_clearance,
+    check_trace_convex_board_clearance, check_trace_convex_pad_clearance,
     check_trace_obround_pad_clearance, check_trace_oriented_rect_pad_clearance,
     check_trace_orthogonal_board_clearance, check_trace_orthogonal_pad_clearance,
     check_trace_pad_clearance, check_trace_rect_pad_clearance,
@@ -1347,6 +1349,67 @@ fn mixed_path_feed_replay_accepts_native_cubic_ph_length() {
         certify_constant_feed_time_for_path(&route, r(1), r(1), PredicatePolicy::default())
             .unwrap();
     assert_eq!(report.path_length, r(1));
+    assert!(report.certification.all_satisfied());
+}
+
+#[test]
+fn quintic_ph_retains_exact_length_endpoint_and_inverse_length() {
+    let curve = QuinticPythagoreanHodograph::new(
+        p(0, 0),
+        r(1),
+        r(1),
+        Real::zero(),
+        Real::zero(),
+        Real::zero(),
+        Real::zero(),
+    )
+    .unwrap();
+
+    assert_eq!(curve.start(), &p(0, 0));
+    assert_eq!(curve.end(), &Point2::new(rq(7, 3), Real::zero()));
+    assert_eq!(curve.exact_length(), rq(7, 3));
+    assert_eq!(
+        curve
+            .partial_length(BezierParameter::new(1, 2).unwrap())
+            .unwrap(),
+        rq(19, 24)
+    );
+
+    let inverse =
+        certify_quintic_ph_inverse_length(&curve, rq(19, 24), BezierParameter::new(1, 2).unwrap())
+            .unwrap();
+    assert!(inverse.certification.all_satisfied());
+
+    let wrong =
+        certify_quintic_ph_inverse_length(&curve, r(1), BezierParameter::new(1, 2).unwrap())
+            .unwrap();
+    assert!(wrong.certification.has_certified_violation());
+}
+
+#[test]
+fn mixed_path_feed_replay_accepts_native_quintic_ph_length() {
+    let ph = QuinticPythagoreanHodograph::new(
+        p(0, 0),
+        r(1),
+        r(1),
+        Real::zero(),
+        Real::zero(),
+        Real::zero(),
+        Real::zero(),
+    )
+    .unwrap();
+    let route = vec![
+        FeedPathElement::QuinticPh(ph),
+        FeedPathElement::Line(LinePathSegment::new(
+            Point2::new(rq(7, 3), Real::zero()),
+            Point2::new(r(3), Real::zero()),
+        )),
+    ];
+
+    let report =
+        certify_constant_feed_time_for_path(&route, r(1), r(3), PredicatePolicy::default())
+            .unwrap();
+    assert_eq!(report.path_length, r(3));
     assert!(report.certification.all_satisfied());
 }
 
@@ -7488,6 +7551,30 @@ proptest! {
         let parameter = BezierParameter::new(numerator, 16).unwrap();
         let target = rq(speed_root * speed_root * numerator, 16);
         let report = certify_cubic_ph_inverse_length(&curve, target, parameter).unwrap();
+
+        prop_assert_eq!(curve.exact_length(), r(speed_root * speed_root));
+        prop_assert!(report.certification.all_satisfied());
+    }
+
+    #[test]
+    fn quintic_ph_generated_constant_hodograph_inverse_length_certifies(
+        speed_root in 1_i16..=20,
+        numerator in 0_i16..=16,
+    ) {
+        let speed_root = i64::from(speed_root);
+        let numerator = i64::from(numerator);
+        let curve = QuinticPythagoreanHodograph::new(
+            p(0, 0),
+            r(speed_root),
+            Real::zero(),
+            Real::zero(),
+            Real::zero(),
+            Real::zero(),
+            Real::zero(),
+        ).unwrap();
+        let parameter = BezierParameter::new(numerator, 16).unwrap();
+        let target = rq(speed_root * speed_root * numerator, 16);
+        let report = certify_quintic_ph_inverse_length(&curve, target, parameter).unwrap();
 
         prop_assert_eq!(curve.exact_length(), r(speed_root * speed_root));
         prop_assert!(report.certification.all_satisfied());
