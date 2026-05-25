@@ -545,6 +545,38 @@ pub mod tangency {
         }
     }
 
+    /// Add projected geometric G2 continuity between retained 3D cubics.
+    ///
+    /// The retained 3D control nets are projected into the workplane before
+    /// exact Bernstein point, tangent, and second-derivative replay. Signed
+    /// curvature is compared after clearing speed denominators, following Yap
+    /// (1997), Shoemake's quaternion frame, and Farin's Bernstein/de Casteljau
+    /// derivative construction.
+    pub fn projected_cubic_curve_cubic_curve_g2_continuity3(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        workplane: SketchEntityHandle,
+        first: SketchEntityHandle,
+        first_parameter: SketchParameterHandle,
+        second: SketchEntityHandle,
+        second_parameter: SketchParameterHandle,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::ProjectedCubicCurveCubicCurveG2Continuity3 {
+            workplane,
+            first,
+            first_parameter,
+            second,
+            second_parameter,
+        };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Tangency,
+            strategy: SketchResidualStrategy::ProjectedCubicCurveCubicCurveG2Continuity,
+            kind,
+        }
+    }
+
     /// Add a retained 2D cubic-Bezier/cubic-Bezier tangent relation.
     ///
     /// The two curve points `B_a(t_a)` and `B_b(t_b)` are constrained to
