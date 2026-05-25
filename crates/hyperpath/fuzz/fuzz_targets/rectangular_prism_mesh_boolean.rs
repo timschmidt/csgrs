@@ -3,9 +3,9 @@
 use hyperlimit::{Point2, PredicatePolicy};
 use hyperpath::{
     AxisAlignedSweptSegmentPrism, BeadFillAxis, CamExactClipCutoutHandoff,
-    CamOrthogonalIslandPocketCutter, CamRestMaterialCutter, CamSupportClipBoundary,
-    CardinalRotation, LinePathSegment, NetId, PathExactMeshHandoffSource, PathMeshBooleanOperation,
-    PathMeshBooleanProgramStep, PathProvenance, PcbCardinalRectPad,
+    CamExactRestMaterialIslandHandoff, CamOrthogonalIslandPocketCutter, CamRestMaterialCutter,
+    CamSupportClipBoundary, CardinalRotation, LinePathSegment, NetId, PathExactMeshHandoffSource,
+    PathMeshBooleanOperation, PathMeshBooleanProgramStep, PathProvenance, PcbCardinalRectPad,
     PcbCompositeCopperBooleanSource, PcbConvexPolyPad, PcbCopperBoardClipOutline,
     PcbCopperBooleanSource, PcbExactBoardCutoutHandoff, PcbExactBoardHandoffOutline,
     PcbExactCopperHandoffSource, PcbHoledOrthogonalBoardClipOutline,
@@ -285,7 +285,14 @@ fuzz_target!(|data: &[u8]| {
                     PredicatePolicy::default(),
                 ) {
                     report.validate_replay(PredicatePolicy::default()).unwrap();
-                    report.program.steps.last().unwrap().result.validate().unwrap();
+                    report
+                        .program
+                        .steps
+                        .last()
+                        .unwrap()
+                        .result
+                        .validate()
+                        .unwrap();
                 }
                 if data[15] & 4 == 4 {
                     let board = PcbCopperBoardClipOutline::ExactHandoff(
@@ -785,11 +792,9 @@ fuzz_target!(|data: &[u8]| {
                             z_min.clone(),
                             z_max.clone(),
                             PredicatePolicy::default(),
-                        )
-                            && let Ok(handoff) = PathExactMeshHandoffSource::from_exact_mesh(
-                                clip_prism.to_exact_mesh().unwrap(),
-                            )
-                            && let Ok(boundary) = CamSupportClipBoundary::exact_handoff(handoff)
+                        ) && let Ok(handoff) = PathExactMeshHandoffSource::from_exact_mesh(
+                            clip_prism.to_exact_mesh().unwrap(),
+                        ) && let Ok(boundary) = CamSupportClipBoundary::exact_handoff(handoff)
                             && let Ok(report) = build_cam_support_clip_program(
                                 support.clone(),
                                 z_min,
@@ -799,7 +804,14 @@ fuzz_target!(|data: &[u8]| {
                             )
                         {
                             report.validate_replay(PredicatePolicy::default()).unwrap();
-                            report.program.steps.last().unwrap().result.validate().unwrap();
+                            report
+                                .program
+                                .steps
+                                .last()
+                                .unwrap()
+                                .result
+                                .validate()
+                                .unwrap();
                         }
                     }
                     if data[15] & 1 == 1 {
@@ -909,18 +921,15 @@ fuzz_target!(|data: &[u8]| {
                             if let Ok(pocket) = hyperpath::RectangularPocket::new(
                                 infill_min.clone(),
                                 infill_max.clone(),
-                            )
-                                && let Ok(clip_prism) = hyperpath::RectangularPrism::new(
-                                    pocket,
-                                    z_min.clone(),
-                                    z_max.clone(),
-                                    PredicatePolicy::default(),
-                                )
-                                && let Ok(handoff) = PathExactMeshHandoffSource::from_exact_mesh(
-                                    clip_prism.to_exact_mesh().unwrap(),
-                                )
-                                && let Ok(boundary) =
-                                    CamSupportClipBoundary::exact_handoff(handoff)
+                            ) && let Ok(clip_prism) = hyperpath::RectangularPrism::new(
+                                pocket,
+                                z_min.clone(),
+                                z_max.clone(),
+                                PredicatePolicy::default(),
+                            ) && let Ok(handoff) = PathExactMeshHandoffSource::from_exact_mesh(
+                                clip_prism.to_exact_mesh().unwrap(),
+                            ) && let Ok(boundary) =
+                                CamSupportClipBoundary::exact_handoff(handoff)
                                 && let Ok(report) = build_cam_infill_clip_program(
                                     infill_graph.clone(),
                                     z_min,
@@ -930,7 +939,14 @@ fuzz_target!(|data: &[u8]| {
                                 )
                             {
                                 report.validate_replay(PredicatePolicy::default()).unwrap();
-                                report.program.steps.last().unwrap().result.validate().unwrap();
+                                report
+                                    .program
+                                    .steps
+                                    .last()
+                                    .unwrap()
+                                    .result
+                                    .validate()
+                                    .unwrap();
                             }
                         }
                         let simple_mid = Point2::new(
@@ -1025,10 +1041,10 @@ fuzz_target!(|data: &[u8]| {
                     outer_min.clone(),
                     Point2::new(outer_min.x.clone() + outer_w.clone(), outer_min.y.clone()),
                     Point2::new(
-                        outer_min.x.clone() + outer_w,
+                        outer_min.x.clone() + outer_w.clone(),
                         outer_min.y.clone() + outer_h.clone(),
                     ),
-                    Point2::new(outer_min.x, outer_min.y + outer_h),
+                    Point2::new(outer_min.x.clone(), outer_min.y.clone() + outer_h.clone()),
                 ],
                 vec![vec![
                     island_min.clone(),
@@ -1037,10 +1053,13 @@ fuzz_target!(|data: &[u8]| {
                         island_min.y.clone(),
                     ),
                     Point2::new(
-                        island_min.x.clone() + island_w,
+                        island_min.x.clone() + island_w.clone(),
                         island_min.y.clone() + island_h.clone(),
                     ),
-                    Point2::new(island_min.x, island_min.y + island_h),
+                    Point2::new(
+                        island_min.x.clone(),
+                        island_min.y.clone() + island_h.clone(),
+                    ),
                 ]],
                 PredicatePolicy::default(),
             ) {
@@ -1085,6 +1104,69 @@ fuzz_target!(|data: &[u8]| {
                             z_min.clone(),
                             z_max.clone(),
                             vec![cutter],
+                            PredicatePolicy::default(),
+                        )
+                    {
+                        report.validate_replay(PredicatePolicy::default()).unwrap();
+                        report
+                            .program
+                            .steps
+                            .last()
+                            .unwrap()
+                            .result
+                            .validate()
+                            .unwrap();
+                    }
+                }
+                if data[15] & 64 == 64 {
+                    let z_min = Real::from(left_min[2]);
+                    let z_max = Real::from(left_max[2]);
+                    let exact_island_min = Point2::new(
+                        island_min.x.clone() + Real::one(),
+                        island_min.y.clone() + Real::one(),
+                    );
+                    let exact_island_max = Point2::new(
+                        island_min.x.clone() + island_w.clone() - Real::one(),
+                        island_min.y.clone() + island_h.clone() - Real::one(),
+                    );
+                    if let Ok(exact_island_pocket) =
+                        hyperpath::RectangularPocket::new(exact_island_min, exact_island_max)
+                        && let Ok(exact_island_prism) = hyperpath::RectangularPrism::new(
+                            exact_island_pocket,
+                            z_min.clone(),
+                            z_max.clone(),
+                            PredicatePolicy::default(),
+                        )
+                        && let Ok(handoff) = PathExactMeshHandoffSource::from_exact_mesh(
+                            exact_island_prism.to_exact_mesh().unwrap(),
+                        )
+                        && let Ok(exact_island) = CamExactRestMaterialIslandHandoff::new(handoff)
+                        && let Ok(island_pocket) =
+                            CamOrthogonalIslandPocketCutter::with_exact_islands(
+                                vec![
+                                    outer_min.clone(),
+                                    Point2::new(
+                                        outer_min.x.clone() + outer_w.clone(),
+                                        outer_min.y.clone(),
+                                    ),
+                                    Point2::new(
+                                        outer_min.x.clone() + outer_w.clone(),
+                                        outer_min.y.clone() + outer_h.clone(),
+                                    ),
+                                    Point2::new(
+                                        outer_min.x.clone(),
+                                        outer_min.y.clone() + outer_h.clone(),
+                                    ),
+                                ],
+                                Vec::new(),
+                                vec![exact_island],
+                                PredicatePolicy::default(),
+                            )
+                        && let Ok(report) = build_cam_rest_material_program(
+                            stock.clone(),
+                            z_min.clone(),
+                            z_max.clone(),
+                            vec![CamRestMaterialCutter::OrthogonalIslandPocket(island_pocket)],
                             PredicatePolicy::default(),
                         )
                     {

@@ -52,6 +52,21 @@ pub struct CamExactRestMaterialCutterHandoff {
     exact: RealExactSetFacts,
 }
 
+/// Retained material island whose exact topology is owned by a `hypermesh` handoff.
+///
+/// This is the additive half of an island-pocket rest-material operation. The
+/// outer pocket is still subtracted by `hyperpath`, but curved or otherwise
+/// non-orthogonal retained islands may be supplied as exact closed-solid
+/// handoffs and unioned back during replay. Following Yap, "Towards Exact
+/// Geometric Computation," *Computational Geometry* 7.1-2 (1997), the handoff
+/// remains the exact object evidence; `hyperpath` only performs domain
+/// preflight and asks `hypermesh` to own topology acceptance.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CamExactRestMaterialIslandHandoff {
+    handoff: PathExactMeshHandoffSource,
+    exact: RealExactSetFacts,
+}
+
 /// Retained subtractive CAM cutter source.
 ///
 /// Rectangular pocket cutters represent exact box removals. Axis-aligned sweep
@@ -86,6 +101,7 @@ pub enum CamRestMaterialCutter {
 pub struct CamOrthogonalIslandPocketCutter {
     outer: Vec<Point2>,
     islands: Vec<Vec<Point2>>,
+    exact_islands: Vec<CamExactRestMaterialIslandHandoff>,
     provenance: PathProvenance,
     exact: RealExactSetFacts,
 }
@@ -333,6 +349,43 @@ impl CamExactRestMaterialCutterHandoff {
     }
 }
 
+impl CamExactRestMaterialIslandHandoff {
+    /// Construct a retained exact material island from a `hypermesh` handoff.
+    ///
+    /// The package is checked immediately so stale or malformed handoffs cannot
+    /// enter the retained CAM model. [`CamOrthogonalIslandPocketCutter`] then
+    /// performs the path-domain footprint preflight, and final program replay
+    /// checks the requested Z slab. That staged acceptance mirrors Yap,
+    /// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+    /// (1997): exact sources are retained, while derived topology is accepted
+    /// only when every replay boundary still validates.
+    pub fn new(handoff: PathExactMeshHandoffSource) -> Result<Self, PathMeshBooleanError> {
+        let exact = handoff_mesh_exact_facts(&handoff)?;
+        Ok(Self { handoff, exact })
+    }
+
+    /// Return the retained exact mesh handoff.
+    pub const fn handoff(&self) -> &PathExactMeshHandoffSource {
+        &self.handoff
+    }
+
+    /// Return exact-set facts for retained mesh coordinates.
+    pub const fn exact_facts(&self) -> &RealExactSetFacts {
+        &self.exact
+    }
+
+    /// Lower this exact island into a generic path mesh-boolean source.
+    pub fn to_path_source(
+        &self,
+        z_min: &Real,
+        z_max: &Real,
+        policy: PredicatePolicy,
+    ) -> Result<PathMeshBooleanSource, PathMeshBooleanError> {
+        validate_handoff_z_slab(&self.handoff, z_min, z_max, policy)?;
+        Ok(self.handoff.clone().into())
+    }
+}
+
 impl CamOrthogonalIslandPocketCutter {
     /// Construct a retained orthogonal pocket with strict material islands.
     ///
@@ -346,7 +399,33 @@ impl CamOrthogonalIslandPocketCutter {
         islands: Vec<Vec<Point2>>,
         policy: PredicatePolicy,
     ) -> Result<Self, PathMeshBooleanError> {
-        Self::with_provenance(outer, islands, PathProvenance::native(), policy)
+        Self::with_exact_islands(outer, islands, Vec::new(), policy)
+    }
+
+    /// Construct a retained orthogonal pocket with strict straight and exact islands.
+    ///
+    /// Exact island handoffs are conservatively preflighted by their exact mesh
+    /// XY bounding boxes: every box must be a strict non-overlapping hole
+    /// inside the orthogonal outer loop alongside the retained straight islands.
+    /// This intentionally rejects some valid curved islands whose bounding boxes
+    /// overlap. The rejection is the price of keeping `hyperpath` from
+    /// re-implementing mesh arrangements while still enforcing the CAM contract
+    /// before `hypermesh` receives a union step. The regularized
+    /// `stock - outer + islands` semantics are Requicha solids; the exact
+    /// evidence boundary is Yap's EGC discipline.
+    pub fn with_exact_islands(
+        outer: Vec<Point2>,
+        islands: Vec<Vec<Point2>>,
+        exact_islands: Vec<CamExactRestMaterialIslandHandoff>,
+        policy: PredicatePolicy,
+    ) -> Result<Self, PathMeshBooleanError> {
+        Self::with_provenance_and_exact_islands(
+            outer,
+            islands,
+            exact_islands,
+            PathProvenance::native(),
+            policy,
+        )
     }
 
     /// Construct a retained orthogonal pocket with explicit provenance.
@@ -356,15 +435,33 @@ impl CamOrthogonalIslandPocketCutter {
         provenance: PathProvenance,
         policy: PredicatePolicy,
     ) -> Result<Self, PathMeshBooleanError> {
+        Self::with_provenance_and_exact_islands(outer, islands, Vec::new(), provenance, policy)
+    }
+
+    /// Construct a retained orthogonal pocket with explicit provenance and exact islands.
+    pub fn with_provenance_and_exact_islands(
+        outer: Vec<Point2>,
+        islands: Vec<Vec<Point2>>,
+        exact_islands: Vec<CamExactRestMaterialIslandHandoff>,
+        provenance: PathProvenance,
+        policy: PredicatePolicy,
+    ) -> Result<Self, PathMeshBooleanError> {
         validate_orthogonal_loop_shape(&outer, provenance, policy)?;
         for island in &islands {
             validate_orthogonal_loop_shape(island, provenance, policy)?;
         }
-        validate_strict_orthogonal_holes(&outer, &islands, policy)?;
-        let exact = island_pocket_exact_facts(&outer, &islands);
+        let exact_island_footprints = exact_island_footprint_loops(&exact_islands, policy)?;
+        let all_island_footprints = islands
+            .iter()
+            .cloned()
+            .chain(exact_island_footprints)
+            .collect::<Vec<_>>();
+        validate_strict_orthogonal_holes(&outer, &all_island_footprints, policy)?;
+        let exact = island_pocket_exact_facts(&outer, &islands, &exact_islands);
         Ok(Self {
             outer,
             islands,
+            exact_islands,
             provenance,
             exact,
         })
@@ -378,6 +475,11 @@ impl CamOrthogonalIslandPocketCutter {
     /// Return retained material island loops.
     pub fn islands(&self) -> &[Vec<Point2>] {
         &self.islands
+    }
+
+    /// Return retained exact material island handoffs.
+    pub fn exact_islands(&self) -> &[CamExactRestMaterialIslandHandoff] {
+        &self.exact_islands
     }
 
     /// Return source provenance.
@@ -405,7 +507,8 @@ impl CamOrthogonalIslandPocketCutter {
         z_max: Real,
         policy: PredicatePolicy,
     ) -> Result<Vec<PathMeshBooleanSource>, PathMeshBooleanError> {
-        self.islands
+        let mut sources = self
+            .islands
             .iter()
             .map(|island| {
                 orthogonal_loop_path_source(
@@ -416,7 +519,11 @@ impl CamOrthogonalIslandPocketCutter {
                     policy,
                 )
             })
-            .collect()
+            .collect::<Result<Vec<_>, _>>()?;
+        for exact_island in &self.exact_islands {
+            sources.push(exact_island.to_path_source(&z_min, &z_max, policy)?);
+        }
+        Ok(sources)
     }
 }
 
@@ -1076,6 +1183,17 @@ fn rest_material_exact_facts(
                 for island in &source.islands {
                     values.extend(island.iter().flat_map(|point| [&point.x, &point.y]));
                 }
+                for exact_island in &source.exact_islands {
+                    let mesh = exact_island.handoff().to_exact_mesh()?;
+                    for point in mesh.vertices() {
+                        let coordinates = &point.coordinates().0;
+                        handoff_values.extend([
+                            coordinates[0].clone(),
+                            coordinates[1].clone(),
+                            coordinates[2].clone(),
+                        ]);
+                    }
+                }
             }
             CamRestMaterialCutter::ExactHandoff(source) => {
                 let mesh = source.handoff().to_exact_mesh()?;
@@ -1159,7 +1277,12 @@ fn infill_segment_path_source(
     Ok(AxisAlignedSweptSegmentPrism::new(swept, z_min, z_max, policy)?.into())
 }
 
-fn island_pocket_exact_facts(outer: &[Point2], islands: &[Vec<Point2>]) -> RealExactSetFacts {
+fn island_pocket_exact_facts(
+    outer: &[Point2],
+    islands: &[Vec<Point2>],
+    exact_islands: &[CamExactRestMaterialIslandHandoff],
+) -> RealExactSetFacts {
+    let mut handoff_values = Vec::new();
     let mut values = outer
         .iter()
         .flat_map(|point| [&point.x, &point.y])
@@ -1167,7 +1290,55 @@ fn island_pocket_exact_facts(outer: &[Point2], islands: &[Vec<Point2>]) -> RealE
     for island in islands {
         values.extend(island.iter().flat_map(|point| [&point.x, &point.y]));
     }
+    for exact_island in exact_islands {
+        if let Ok(mesh) = exact_island.handoff().to_exact_mesh() {
+            for point in mesh.vertices() {
+                let coordinates = &point.coordinates().0;
+                handoff_values.extend([
+                    coordinates[0].clone(),
+                    coordinates[1].clone(),
+                    coordinates[2].clone(),
+                ]);
+            }
+        }
+    }
+    values.extend(handoff_values.iter());
     Real::exact_set_facts(values)
+}
+
+fn exact_island_footprint_loops(
+    exact_islands: &[CamExactRestMaterialIslandHandoff],
+    policy: PredicatePolicy,
+) -> Result<Vec<Vec<Point2>>, PathMeshBooleanError> {
+    exact_islands
+        .iter()
+        .map(|island| exact_handoff_footprint_loop(island.handoff(), policy))
+        .collect()
+}
+
+fn exact_handoff_footprint_loop(
+    handoff: &PathExactMeshHandoffSource,
+    policy: PredicatePolicy,
+) -> Result<Vec<Point2>, PathMeshBooleanError> {
+    let mesh = handoff.to_exact_mesh()?;
+    let Some(bounds) = &mesh.bounds().mesh else {
+        return Err(PathMeshBooleanError::MeshHandoff(
+            "CAM exact island handoff has no mesh bounds".into(),
+        ));
+    };
+    if compare_reals_with_policy(&bounds.min.x, &bounds.max.x, policy).value()
+        != Some(Ordering::Less)
+        || compare_reals_with_policy(&bounds.min.y, &bounds.max.y, policy).value()
+            != Some(Ordering::Less)
+    {
+        return Err(PathMeshBooleanError::DegenerateFootprint);
+    }
+    Ok(vec![
+        Point2::new(bounds.min.x.clone(), bounds.min.y.clone()),
+        Point2::new(bounds.max.x.clone(), bounds.min.y.clone()),
+        Point2::new(bounds.max.x.clone(), bounds.max.y.clone()),
+        Point2::new(bounds.min.x.clone(), bounds.max.y.clone()),
+    ])
 }
 
 fn loop_exact_facts(vertices: &[Point2]) -> RealExactSetFacts {

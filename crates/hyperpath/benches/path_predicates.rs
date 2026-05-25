@@ -2,10 +2,10 @@ use criterion::{Criterion, criterion_group, criterion_main};
 use hyperlimit::{Point2, PredicatePolicy};
 use hyperpath::{
     ArcDirection, AxisAlignedSweptSegmentPrism, BeadFillAxis, BezierParameter,
-    CamExactClipCutoutHandoff, CamOrthogonalIslandPocketCutter, CamRestMaterialCutter,
-    CamSupportClipBoundary, CardinalPoint, CardinalRotation, CircularArc, ConstructionStamp,
-    CubicBezier, ExplicitCircularArc, HigherOrderBezier, LinePathSegment, MeanderObstacle,
-    MeanderPlacementCandidate, NetId, OffsetSide, PathExactMeshHandoffSource,
+    CamExactClipCutoutHandoff, CamExactRestMaterialIslandHandoff, CamOrthogonalIslandPocketCutter,
+    CamRestMaterialCutter, CamSupportClipBoundary, CardinalPoint, CardinalRotation, CircularArc,
+    ConstructionStamp, CubicBezier, ExplicitCircularArc, HigherOrderBezier, LinePathSegment,
+    MeanderObstacle, MeanderPlacementCandidate, NetId, OffsetSide, PathExactMeshHandoffSource,
     PathMeshBooleanOperation, PathMeshBooleanProgramStep, PathProvenance, PathSourceFormat,
     PcbBoardOutline, PcbCardinalRectPad, PcbCircularPad, PcbCompositeCopperBooleanSource,
     PcbConvexBoardOutline, PcbConvexPolyPad, PcbCopperBoardClipOutline, PcbCopperBooleanSource,
@@ -1415,6 +1415,54 @@ fn path_predicates(c: &mut Criterion) {
             report.validate_replay(PredicatePolicy::default())
         })
     });
+    let cam_exact_island_handoff = PathExactMeshHandoffSource::from_exact_mesh(
+        rectangular_prism_from_i64_bounds(
+            [12_000, 4_000, 0],
+            [15_000, 8_000, 2_000],
+            PredicatePolicy::default(),
+        )
+        .unwrap()
+        .to_exact_mesh()
+        .unwrap(),
+    )
+    .unwrap();
+    let cam_exact_island =
+        CamExactRestMaterialIslandHandoff::new(cam_exact_island_handoff).unwrap();
+    let cam_exact_island_pocket = CamOrthogonalIslandPocketCutter::with_exact_islands(
+        vec![
+            p(2_000, 1_000),
+            p(18_000, 1_000),
+            p(18_000, 10_000),
+            p(2_000, 10_000),
+        ],
+        vec![vec![
+            p(5_000, 3_000),
+            p(8_000, 3_000),
+            p(8_000, 6_000),
+            p(5_000, 6_000),
+        ]],
+        vec![cam_exact_island],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    c.bench_function(
+        "cam_exact_island_pocket_rest_material_program_replay",
+        |b| {
+            b.iter(|| {
+                let report = build_cam_rest_material_program(
+                    cam_stock.clone(),
+                    r(0),
+                    r(2_000),
+                    vec![CamRestMaterialCutter::OrthogonalIslandPocket(
+                        cam_exact_island_pocket.clone(),
+                    )],
+                    PredicatePolicy::default(),
+                )
+                .unwrap();
+                report.validate_replay(PredicatePolicy::default())
+            })
+        },
+    );
 
     let arc = CircularArc::cardinal(
         p(0, 0),

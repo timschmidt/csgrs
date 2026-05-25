@@ -2,31 +2,31 @@ use hyperlimit::{Point2, PredicatePolicy};
 use hyperpath::{
     ArcDirection, ArcOffsetError, Axis, AxisAlignedSweptSegmentPrism, BeadFillAxis, BeadPlanError,
     BezierOffsetError, BezierParameter, BezierParameterError, BoardContourError,
-    BoardContourOrientation, CamExactClipCutoutHandoff, CamOrthogonalIslandPocketCutter,
-    CamRestMaterialCutter, CamSupportClipBoundary, CamSupportClipCutout, CardinalPoint,
-    CardinalRotation, CircularArc, CircularArcError, ClearanceStatus, ConstructionStamp,
-    CubicBezier, DrillBoardClearanceReport, ExplicitArcArrangementClass,
-    ExplicitArcIntersectionClass, ExplicitArcOverlapClass, ExplicitArcPointClassification,
-    ExplicitArcSweepClass, ExplicitArcTangentClass, ExplicitCircleRelationClass,
-    ExplicitCircularArc, HigherOrderBezier, HigherOrderBezierError, InfillGraphError,
-    LineExplicitArcIntersectionClass, LineOffsetError, LinePathSegment, MeanderError,
-    MeanderObstacle, MeanderPlacementCandidate, NetId, OffsetSide, PathExactMeshHandoffSource,
-    PathMeshBooleanError, PathMeshBooleanOperation, PathMeshBooleanProgramStep,
-    PathMeshBooleanSource, PathProvenance, PathSourceFormat, PcbBoardClipCutout, PcbBoardOutline,
-    PcbCardinalRectPad, PcbCircularPad, PcbCompositeCopperBooleanSource, PcbConvexBoardOutline,
-    PcbConvexPolyPad, PcbCopperBoardClipOutline, PcbCopperBooleanSource,
-    PcbExactBoardCutoutHandoff, PcbExactBoardHandoffOutline, PcbExactCopperHandoffSource,
-    PcbHoledOrthogonalBoardClipOutline, PcbHoledOrthogonalCopperSource, PcbLayerZModel,
-    PcbOrthogonalBoardOutline, PcbOrthogonalPolyPad, PcbRectPad, PcbTrace, PcbViaStack,
-    PocketPlanError, PocketPlanStopReason, QuadraticBezier, RationalQuadraticBezier,
-    RationalQuadraticBezierError, RectangularInfillGraph, RectangularPocket,
-    RectangularRegionRelation, RouteCertificationError, SegmentParameterOrder, SourceLengthUnit,
-    SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraImportError, SpecctraLayerAlias,
-    SpecctraNetAlias, SpecctraParseError, SupportFootprintStatus, SupportPlanError,
-    SweptLineSegment, TangentAlignment, TangentJoinClass, TangentJoinReport, TangentSpan,
-    TraceLayer, ViaAnnularRingReport, ViaDrillIntent, ViaDrillPolicyClass, ViaLayerSpanRelation,
-    ViaLayerTransitionClass, boolean_path_mesh_program, boolean_path_mesh_sources,
-    boolean_rectangular_prism_chain, boolean_rectangular_prisms,
+    BoardContourOrientation, CamExactClipCutoutHandoff, CamExactRestMaterialIslandHandoff,
+    CamOrthogonalIslandPocketCutter, CamRestMaterialCutter, CamSupportClipBoundary,
+    CamSupportClipCutout, CardinalPoint, CardinalRotation, CircularArc, CircularArcError,
+    ClearanceStatus, ConstructionStamp, CubicBezier, DrillBoardClearanceReport,
+    ExplicitArcArrangementClass, ExplicitArcIntersectionClass, ExplicitArcOverlapClass,
+    ExplicitArcPointClassification, ExplicitArcSweepClass, ExplicitArcTangentClass,
+    ExplicitCircleRelationClass, ExplicitCircularArc, HigherOrderBezier, HigherOrderBezierError,
+    InfillGraphError, LineExplicitArcIntersectionClass, LineOffsetError, LinePathSegment,
+    MeanderError, MeanderObstacle, MeanderPlacementCandidate, NetId, OffsetSide,
+    PathExactMeshHandoffSource, PathMeshBooleanError, PathMeshBooleanOperation,
+    PathMeshBooleanProgramStep, PathMeshBooleanSource, PathProvenance, PathSourceFormat,
+    PcbBoardClipCutout, PcbBoardOutline, PcbCardinalRectPad, PcbCircularPad,
+    PcbCompositeCopperBooleanSource, PcbConvexBoardOutline, PcbConvexPolyPad,
+    PcbCopperBoardClipOutline, PcbCopperBooleanSource, PcbExactBoardCutoutHandoff,
+    PcbExactBoardHandoffOutline, PcbExactCopperHandoffSource, PcbHoledOrthogonalBoardClipOutline,
+    PcbHoledOrthogonalCopperSource, PcbLayerZModel, PcbOrthogonalBoardOutline,
+    PcbOrthogonalPolyPad, PcbRectPad, PcbTrace, PcbViaStack, PocketPlanError, PocketPlanStopReason,
+    QuadraticBezier, RationalQuadraticBezier, RationalQuadraticBezierError, RectangularInfillGraph,
+    RectangularPocket, RectangularRegionRelation, RouteCertificationError, SegmentParameterOrder,
+    SourceLengthUnit, SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraImportError,
+    SpecctraLayerAlias, SpecctraNetAlias, SpecctraParseError, SupportFootprintStatus,
+    SupportPlanError, SweptLineSegment, TangentAlignment, TangentJoinClass, TangentJoinReport,
+    TangentSpan, TraceLayer, ViaAnnularRingReport, ViaDrillIntent, ViaDrillPolicyClass,
+    ViaLayerSpanRelation, ViaLayerTransitionClass, boolean_path_mesh_program,
+    boolean_path_mesh_sources, boolean_rectangular_prism_chain, boolean_rectangular_prisms,
     boolean_rectangular_prisms_with_boundary_policy, build_alternating_detour_meander,
     build_cam_infill_clip_program, build_cam_rest_material_program, build_cam_support_clip_program,
     build_g1_join_problem, build_length_match_problem, build_multi_detour_meander,
@@ -1502,6 +1502,68 @@ fn cam_rest_material_program_replays_orthogonal_island_pocket() {
 }
 
 #[test]
+fn cam_rest_material_program_replays_exact_island_pocket_handoffs() {
+    let stock = RectangularPocket::new(p(0, 0), p(24, 14)).unwrap();
+    let exact_island_handoff = PathExactMeshHandoffSource::from_exact_mesh(
+        prism([14, 5, 0], [18, 10, 5]).to_exact_mesh().unwrap(),
+    )
+    .unwrap();
+    let exact_island = CamExactRestMaterialIslandHandoff::new(exact_island_handoff.clone())
+        .expect("exact material island should retain mesh evidence");
+    assert!(exact_island.exact_facts().all_exact_rational);
+    let island_pocket = CamOrthogonalIslandPocketCutter::with_exact_islands(
+        vec![p(3, 2), p(21, 2), p(21, 12), p(3, 12)],
+        vec![vec![p(6, 4), p(9, 4), p(9, 7), p(6, 7)]],
+        vec![exact_island.clone()],
+        PredicatePolicy::default(),
+    )
+    .expect("exact island bounding footprint is strictly inside the pocket");
+    assert_eq!(island_pocket.islands().len(), 1);
+    assert_eq!(island_pocket.exact_islands(), &[exact_island]);
+
+    let report = build_cam_rest_material_program(
+        stock,
+        r(0),
+        r(5),
+        vec![CamRestMaterialCutter::OrthogonalIslandPocket(island_pocket)],
+        PredicatePolicy::default(),
+    )
+    .expect("stock minus pocket plus straight and exact islands should replay");
+    report.validate_replay(PredicatePolicy::default()).unwrap();
+    assert_eq!(report.program.steps.len(), 3);
+    assert_eq!(
+        report.program.steps[0].operation,
+        PathMeshBooleanOperation::Difference
+    );
+    assert!(
+        report.program.steps[1..]
+            .iter()
+            .all(|step| step.operation == PathMeshBooleanOperation::Union)
+    );
+    assert!(report.program.mesh().unwrap().facts().mesh.closed_manifold);
+
+    let wrong_z_pocket = CamOrthogonalIslandPocketCutter::with_exact_islands(
+        vec![p(3, 2), p(21, 2), p(21, 12), p(3, 12)],
+        Vec::new(),
+        vec![CamExactRestMaterialIslandHandoff::new(exact_island_handoff).unwrap()],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert!(matches!(
+        build_cam_rest_material_program(
+            RectangularPocket::new(p(0, 0), p(24, 14)).unwrap(),
+            r(0),
+            r(6),
+            vec![CamRestMaterialCutter::OrthogonalIslandPocket(
+                wrong_z_pocket
+            )],
+            PredicatePolicy::default(),
+        ),
+        Err(PathMeshBooleanError::MeshHandoff(_))
+    ));
+}
+
+#[test]
 fn cam_orthogonal_island_pocket_rejects_ambiguous_islands() {
     assert_eq!(
         CamOrthogonalIslandPocketCutter::new(
@@ -1523,6 +1585,20 @@ fn cam_orthogonal_island_pocket_rejects_ambiguous_islands() {
         )
         .unwrap_err(),
         PathMeshBooleanError::PolygonHoleOverlap
+    );
+    let outside_handoff = PathExactMeshHandoffSource::from_exact_mesh(
+        prism([8, 2, 0], [13, 5, 4]).to_exact_mesh().unwrap(),
+    )
+    .unwrap();
+    assert_eq!(
+        CamOrthogonalIslandPocketCutter::with_exact_islands(
+            vec![p(0, 0), p(10, 0), p(10, 8), p(0, 8)],
+            Vec::new(),
+            vec![CamExactRestMaterialIslandHandoff::new(outside_handoff).unwrap()],
+            PredicatePolicy::default()
+        )
+        .unwrap_err(),
+        PathMeshBooleanError::PolygonHoleOutsideOuter
     );
 }
 
