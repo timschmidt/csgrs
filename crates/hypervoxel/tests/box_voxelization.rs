@@ -15,9 +15,10 @@ use hypervoxel::{
     audit_chunk_paged_process_states, audit_exact_voxel_surface_topology,
     certify_chunk_paged_handoff, chunk_paged_binary_snapshot_v1,
     chunk_paged_run_length_snapshot_v1, diff_chunk_paged_sparse_grids, diff_sparse_grids,
-    extract_exposed_faces, extract_exposed_faces_with_report, greedy_face_patch_plan,
-    lookup_material_display_colors, lossy_obj_from_quad_mesh, lossy_quad_mesh_from_faces,
-    query_material_regions, report_material_region_metadata, sample_manhattan_distance_field,
+    exact_voxel_surface_triangle_mesh_from_faces, extract_exposed_faces,
+    extract_exposed_faces_with_report, greedy_face_patch_plan, lookup_material_display_colors,
+    lossy_obj_from_quad_mesh, lossy_quad_mesh_from_faces, query_material_regions,
+    report_material_region_metadata, sample_manhattan_distance_field,
     sample_signed_manhattan_distance_field, select_lod_cells, voxel_neighbors6, voxelize_exact_box,
     voxelize_exact_convex_halfspace_set, voxelize_exact_halfspace,
 };
@@ -1270,10 +1271,30 @@ fn exact_voxel_surface_topology_reports_closed_duplicate_open_and_mixed_shells()
     assert!(topology.boundary_edges.is_empty());
     assert!(topology.nonmanifold_edges.is_empty());
     assert!(topology.exact_surface_topology_ready);
+    let mesh = exact_voxel_surface_triangle_mesh_from_faces(&shell.faces);
+    assert_eq!(mesh.report.topology, topology);
+    assert_eq!(mesh.report.input_faces, shell.exact_faces);
+    assert_eq!(mesh.vertices.len(), 8);
+    assert_eq!(mesh.triangles.len(), 12);
+    assert_eq!(mesh.report.exact_vertices, 8);
+    assert_eq!(mesh.report.exact_triangles, 12);
+    assert_eq!(mesh.report.face_triangle_records, 12);
+    assert!(mesh.report.exact_face_identity_preserved);
+    assert!(mesh.report.exact_triangle_surface_mesh_ready);
+    for pair in mesh.triangles.chunks_exact(2) {
+        assert_eq!(pair[0].source_face, pair[1].source_face);
+        assert_eq!(pair[0].split, 0);
+        assert_eq!(pair[1].split, 1);
+    }
 
     let empty = audit_exact_voxel_surface_topology(&[]);
     assert_eq!(empty.input_faces, 0);
     assert!(!empty.exact_surface_topology_ready);
+    let empty_mesh = exact_voxel_surface_triangle_mesh_from_faces(&[]);
+    assert!(empty_mesh.vertices.is_empty());
+    assert!(empty_mesh.triangles.is_empty());
+    assert!(!empty_mesh.report.exact_face_identity_preserved);
+    assert!(!empty_mesh.report.exact_triangle_surface_mesh_ready);
 
     let mut duplicate_faces = shell.faces.clone();
     duplicate_faces.push(shell.faces[0].clone());
@@ -1283,6 +1304,11 @@ fn exact_voxel_surface_topology_reports_closed_duplicate_open_and_mixed_shells()
     assert_eq!(duplicate.duplicate_faces.len(), 1);
     assert_eq!(duplicate.nonmanifold_edges.len(), 4);
     assert!(!duplicate.exact_surface_topology_ready);
+    let duplicate_mesh = exact_voxel_surface_triangle_mesh_from_faces(&duplicate_faces);
+    assert!(duplicate_mesh.vertices.is_empty());
+    assert!(duplicate_mesh.triangles.is_empty());
+    assert_eq!(duplicate_mesh.report.topology, duplicate);
+    assert!(!duplicate_mesh.report.exact_triangle_surface_mesh_ready);
 
     let mut open_faces = shell.faces.clone();
     open_faces.pop();
@@ -1290,6 +1316,10 @@ fn exact_voxel_surface_topology_reports_closed_duplicate_open_and_mixed_shells()
     assert_eq!(open.input_faces, 5);
     assert_eq!(open.boundary_edges.len(), 4);
     assert!(!open.exact_surface_topology_ready);
+    let open_mesh = exact_voxel_surface_triangle_mesh_from_faces(&open_faces);
+    assert!(open_mesh.vertices.is_empty());
+    assert_eq!(open_mesh.report.topology, open);
+    assert!(!open_mesh.report.exact_triangle_surface_mesh_ready);
 
     let mut mixed_faces = shell.faces.clone();
     mixed_faces.push(hypervoxel::ExactVoxelFace {
@@ -1302,6 +1332,10 @@ fn exact_voxel_surface_topology_reports_closed_duplicate_open_and_mixed_shells()
     assert_eq!(mixed.mixed_depth_faces, 1);
     assert_eq!(mixed.audited_faces, 6);
     assert!(!mixed.exact_surface_topology_ready);
+    let mixed_mesh = exact_voxel_surface_triangle_mesh_from_faces(&mixed_faces);
+    assert!(mixed_mesh.triangles.is_empty());
+    assert_eq!(mixed_mesh.report.topology, mixed);
+    assert!(!mixed_mesh.report.exact_triangle_surface_mesh_ready);
 }
 
 #[test]

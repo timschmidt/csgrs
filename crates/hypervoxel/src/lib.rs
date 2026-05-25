@@ -65,6 +65,7 @@ mod solid;
 mod spatial;
 mod storage;
 mod support;
+mod surface_mesh;
 mod surface_topology;
 mod svo;
 mod svo_surface;
@@ -198,6 +199,10 @@ pub use storage::{SparseVoxelGrid, VoxelEditReport};
 pub use support::{
     SupportCellReport, SupportCellStatus, SupportDirection, SupportMaskReport,
     classify_support_mask,
+};
+pub use surface_mesh::{
+    ExactSurfaceTriangle, ExactVoxelSurfaceTriangleMesh, ExactVoxelSurfaceTriangleMeshReport,
+    exact_voxel_surface_triangle_mesh_from_faces,
 };
 pub use surface_topology::{
     ExactSurfaceEdge, ExactSurfaceFaceKey, ExactSurfaceVertex, ExactVoxelSurfaceTopologyReport,

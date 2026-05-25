@@ -26,7 +26,7 @@ use hypervoxel::{
     certify_chunk_paged_handoff, chunk_paged_binary_snapshot_v1,
     chunk_paged_greedy_face_patch_plan_with_report, chunk_paged_run_length_snapshot_v1,
     classify_chunk_paged_support_mask, classify_support_mask, continuous_field_address,
-    diff_chunk_paged_sparse_grids, diff_sparse_grids,
+    diff_chunk_paged_sparse_grids, diff_sparse_grids, exact_voxel_surface_triangle_mesh_from_faces,
     extract_chunk_paged_exposed_faces_with_report, extract_exposed_faces,
     extract_exposed_faces_with_report, extract_svo_exposed_faces_with_report,
     greedy_face_patch_plan, lookup_material_display_colors, lossy_obj_from_quad_mesh,
@@ -1072,6 +1072,18 @@ fn bench_batches_field_facts_and_sweeps(c: &mut Criterion) {
                 report.edges.len(),
                 report.manifold_edges,
                 report.exact_surface_topology_ready,
+            )
+        })
+    });
+    c.bench_function("exact_voxel_surface_triangle_mesh_handoff", |b| {
+        let faces = extract_exposed_faces(&grid).unwrap();
+        b.iter(|| {
+            let mesh = exact_voxel_surface_triangle_mesh_from_faces(&faces);
+            (
+                mesh.report.exact_vertices,
+                mesh.report.exact_triangles,
+                mesh.report.exact_face_identity_preserved,
+                mesh.report.exact_triangle_surface_mesh_ready,
             )
         })
     });

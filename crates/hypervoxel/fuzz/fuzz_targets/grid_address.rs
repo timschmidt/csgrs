@@ -30,8 +30,9 @@ use hypervoxel::{
     classify_chunk_paged_support_mask, classify_support_mask, continuous_field_address,
     diff_chunk_paged_sparse_grids, diff_sparse_grids,
     extract_chunk_paged_exposed_faces_with_report, extract_exposed_faces,
-    extract_exposed_faces_with_report, extract_svo_exposed_faces_with_report,
-    greedy_face_patch_plan, lookup_material_display_colors, lossy_obj_from_quad_mesh, lossy_quad_mesh_from_faces, query_field_samples,
+    exact_voxel_surface_triangle_mesh_from_faces, extract_exposed_faces_with_report,
+    extract_svo_exposed_faces_with_report, greedy_face_patch_plan,
+    lookup_material_display_colors, lossy_obj_from_quad_mesh, lossy_quad_mesh_from_faces, query_field_samples,
     query_material_regions, report_material_region_metadata, sample_manhattan_distance_field,
     sample_signed_manhattan_distance_field, select_lod_cells, sweep_address_segment,
     trace_address_ray, voxel_neighbors6, voxelize_exact_box, voxelize_exact_convex_halfspace_set,
@@ -414,6 +415,22 @@ fuzz_target!(|data: (u8, u64, u64, u64)| {
             && topology.nonmanifold_edges.is_empty()
     );
     assert_eq!(topology.face_edge_records, topology.audited_faces * 4);
+    let exact_surface_mesh = exact_voxel_surface_triangle_mesh_from_faces(&shell.faces);
+    assert_eq!(exact_surface_mesh.report.topology, topology);
+    assert_eq!(
+        exact_surface_mesh.report.exact_triangle_surface_mesh_ready,
+        topology.exact_surface_topology_ready
+    );
+    if exact_surface_mesh.report.exact_triangle_surface_mesh_ready {
+        assert_eq!(exact_surface_mesh.triangles.len(), shell.exact_faces * 2);
+        assert_eq!(
+            exact_surface_mesh.report.face_triangle_records,
+            exact_surface_mesh.triangles.len()
+        );
+        assert!(exact_surface_mesh.report.exact_face_identity_preserved);
+    } else {
+        assert!(exact_surface_mesh.triangles.is_empty());
+    }
     let paged_shell = extract_chunk_paged_exposed_faces_with_report(&paged_grid).unwrap();
     assert_eq!(paged_shell.exact_faces, shell.exact_faces);
     assert_eq!(paged_shell.has_exact_faces, shell.has_exact_faces);
