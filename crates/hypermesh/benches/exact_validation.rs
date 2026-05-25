@@ -6672,6 +6672,29 @@ fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
                         )
                         .unwrap(),
                         arrange_coplanar_surface_point_touch_difference(
+                            &contact_opening_holed_left,
+                            &point_touch_straddling_hole_side_cutter_right,
+                        )
+                        .map(|output| {
+                            output.validate_difference_against_sources(
+                                &contact_opening_holed_left,
+                                &point_touch_straddling_hole_side_cutter_right,
+                            )
+                        }),
+                        hypermesh::exact::preflight_boolean_exact(
+                            &contact_opening_holed_left,
+                            &point_touch_straddling_hole_side_cutter_right,
+                            hypermesh::exact::ExactBooleanOperation::Difference,
+                        )
+                        .map(|report| report.validate()),
+                        hypermesh::exact::boolean_exact(
+                            &contact_opening_holed_left,
+                            &point_touch_straddling_hole_side_cutter_right,
+                            hypermesh::exact::ExactBooleanOperation::Difference,
+                            ValidationPolicy::ALLOW_BOUNDARY,
+                        )
+                        .unwrap(),
+                        arrange_coplanar_surface_point_touch_difference(
                             &multi_component_point_touch_left,
                             &point_touch_side_cutter_right,
                         )

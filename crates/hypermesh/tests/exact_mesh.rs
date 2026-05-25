@@ -17284,6 +17284,114 @@ fn exact_coplanar_convex_surface_difference_materializes_multiple_component_cuts
         }
     );
 
+    let point_branch_straddling_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            7, 9, 0, 9, 9, 0, 9, 11, 0, 7, 11, 0, //
+            -2, 4, 0, 8, 4, 0, 10, 10, 0, -2, 10, 0, //
+            10, 10, 0, 22, 10, 0, 22, 16, 0, 14, 16, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7, //
+            8, 9, 10, 8, 10, 11,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_side_cutter_difference(
+            &side_opening_left,
+            &point_branch_straddling_hole,
+        )
+        .is_none()
+    );
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_multi_difference(
+            &side_opening_left,
+            &point_branch_straddling_hole,
+        )
+        .is_none()
+    );
+    assert!(
+        hypermesh::exact::arrange_coplanar_convex_surface_component_holed_difference(
+            &side_opening_left,
+            &point_branch_straddling_hole,
+        )
+        .is_none()
+    );
+    let straddling_branch = hypermesh::exact::arrange_coplanar_surface_point_touch_difference(
+        &side_opening_left,
+        &point_branch_straddling_hole,
+    )
+    .expect("point-touch side cutters should consume an owned straddling strict hole");
+    straddling_branch.validate().unwrap();
+    straddling_branch
+        .validate_difference_against_sources(&side_opening_left, &point_branch_straddling_hole)
+        .unwrap();
+    assert!(straddling_branch.polygons.len() >= 2);
+    assert!(straddling_branch.polygons.iter().all(|polygon| {
+        polygon.iter().all(|point| {
+            !(real_eq(&point.x, &ExactReal::from(7)) && real_eq(&point.y, &ExactReal::from(9)))
+        })
+    }));
+    let straddling_branch_loop_count = straddling_branch
+        .polygons
+        .iter()
+        .filter(|polygon| {
+            polygon.iter().any(|point| {
+                real_eq(&point.x, &ExactReal::from(10)) && real_eq(&point.y, &ExactReal::from(10))
+            })
+        })
+        .count();
+    assert!(
+        straddling_branch_loop_count >= 2,
+        "the straddling-hole path must still retain duplicated branch vertices"
+    );
+    let mut stale_straddling_branch = straddling_branch.clone();
+    stale_straddling_branch.polygons.pop();
+    assert!(
+        stale_straddling_branch
+            .validate_difference_against_sources(&side_opening_left, &point_branch_straddling_hole)
+            .is_err()
+    );
+    let straddling_branch_preflight = hypermesh::exact::preflight_boolean_exact(
+        &side_opening_left,
+        &point_branch_straddling_hole,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    straddling_branch_preflight.validate().unwrap();
+    straddling_branch_preflight
+        .validate_against_sources(&side_opening_left, &point_branch_straddling_hole)
+        .unwrap();
+    assert_eq!(
+        straddling_branch_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchDifference
+    );
+    let straddling_branch_result = hypermesh::exact::boolean_exact(
+        &side_opening_left,
+        &point_branch_straddling_hole,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    straddling_branch_result
+        .validate_operation_against_sources(
+            &side_opening_left,
+            &point_branch_straddling_hole,
+            hypermesh::exact::ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        straddling_branch_result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut:
+                hypermesh::exact::ExactBooleanShortcutKind::CoplanarSurfacePointTouchDifference
+        }
+    );
+
     let multi_component_point_branch_left = ExactMesh::from_i64_triangles_with_policy(
         &[
             0, 0, 0, 20, 0, 0, 20, 20, 0, 0, 20, 0, //
