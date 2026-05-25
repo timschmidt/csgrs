@@ -10,9 +10,9 @@ use hyperpath::{
     PcbBoardOutline, PcbCardinalRectPad, PcbCircularPad, PcbCompositeCopperBooleanSource,
     PcbConvexBoardOutline, PcbConvexPolyPad, PcbCopperBoardClipOutline, PcbCopperBooleanSource,
     PcbExactBoardCutoutHandoff, PcbExactBoardHandoffOutline, PcbExactCopperHandoffSource,
-    PcbHoledOrthogonalBoardClipOutline, PcbHoledOrthogonalCopperSource, PcbLayerZModel,
-    PcbOrthogonalBoardOutline, PcbOrthogonalPolyPad, PcbRectPad, PcbTrace, PcbViaStack,
-    QuadraticBezier, RationalQuadraticBezier, RectangularPocket, SourceLengthUnit,
+    PcbExactCopperVoidHandoff, PcbHoledOrthogonalBoardClipOutline, PcbHoledOrthogonalCopperSource,
+    PcbLayerZModel, PcbOrthogonalBoardOutline, PcbOrthogonalPolyPad, PcbRectPad, PcbTrace,
+    PcbViaStack, QuadraticBezier, RationalQuadraticBezier, RectangularPocket, SourceLengthUnit,
     SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraLayerAlias, SpecctraNetAlias,
     SweptLineSegment, TangentSpan, TraceLayer, ViaDrillIntent, boolean_path_mesh_program,
     boolean_path_mesh_sources, boolean_rectangular_prism_chain, boolean_rectangular_prisms,
@@ -1172,6 +1172,48 @@ fn path_predicates(c: &mut Criterion) {
         b.iter(|| {
             let report = build_pcb_holed_orthogonal_copper_program(
                 pcb_holed.clone(),
+                pcb_z.clone(),
+                PredicatePolicy::default(),
+            )
+            .unwrap();
+            report.validate_replay(PredicatePolicy::default())
+        })
+    });
+    let pcb_exact_void_handoff = PathExactMeshHandoffSource::from_exact_mesh(
+        rectangular_prism_from_i64_bounds(
+            [16_000, 3_000, 0],
+            [18_000, 6_000, 1_000],
+            PredicatePolicy::default(),
+        )
+        .unwrap()
+        .to_exact_mesh()
+        .unwrap(),
+    )
+    .unwrap();
+    let pcb_exact_void = PcbExactCopperVoidHandoff::new(pcb_exact_void_handoff).unwrap();
+    let pcb_exact_void_holed = PcbHoledOrthogonalCopperSource::with_exact_voids(
+        NetId(7),
+        TraceLayer(0),
+        vec![
+            p(10_000, 0),
+            p(20_000, 0),
+            p(20_000, 8_000),
+            p(10_000, 8_000),
+        ],
+        vec![vec![
+            p(12_000, 2_000),
+            p(14_000, 2_000),
+            p(14_000, 4_000),
+            p(12_000, 4_000),
+        ]],
+        vec![pcb_exact_void],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    c.bench_function("pcb_exact_void_holed_copper_program_replay", |b| {
+        b.iter(|| {
+            let report = build_pcb_holed_orthogonal_copper_program(
+                pcb_exact_void_holed.clone(),
                 pcb_z.clone(),
                 PredicatePolicy::default(),
             )

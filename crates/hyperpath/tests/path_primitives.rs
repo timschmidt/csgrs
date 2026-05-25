@@ -16,17 +16,18 @@ use hyperpath::{
     PcbBoardClipCutout, PcbBoardOutline, PcbCardinalRectPad, PcbCircularPad,
     PcbCompositeCopperBooleanSource, PcbConvexBoardOutline, PcbConvexPolyPad,
     PcbCopperBoardClipOutline, PcbCopperBooleanSource, PcbExactBoardCutoutHandoff,
-    PcbExactBoardHandoffOutline, PcbExactCopperHandoffSource, PcbHoledOrthogonalBoardClipOutline,
-    PcbHoledOrthogonalCopperSource, PcbLayerZModel, PcbOrthogonalBoardOutline,
-    PcbOrthogonalPolyPad, PcbRectPad, PcbTrace, PcbViaStack, PocketPlanError, PocketPlanStopReason,
-    QuadraticBezier, RationalQuadraticBezier, RationalQuadraticBezierError, RectangularInfillGraph,
-    RectangularPocket, RectangularRegionRelation, RouteCertificationError, SegmentParameterOrder,
-    SourceLengthUnit, SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraImportError,
-    SpecctraLayerAlias, SpecctraNetAlias, SpecctraParseError, SupportFootprintStatus,
-    SupportPlanError, SweptLineSegment, TangentAlignment, TangentJoinClass, TangentJoinReport,
-    TangentSpan, TraceLayer, ViaAnnularRingReport, ViaDrillIntent, ViaDrillPolicyClass,
-    ViaLayerSpanRelation, ViaLayerTransitionClass, boolean_path_mesh_program,
-    boolean_path_mesh_sources, boolean_rectangular_prism_chain, boolean_rectangular_prisms,
+    PcbExactBoardHandoffOutline, PcbExactCopperHandoffSource, PcbExactCopperVoidHandoff,
+    PcbHoledOrthogonalBoardClipOutline, PcbHoledOrthogonalCopperSource, PcbLayerZModel,
+    PcbOrthogonalBoardOutline, PcbOrthogonalPolyPad, PcbRectPad, PcbTrace, PcbViaStack,
+    PocketPlanError, PocketPlanStopReason, QuadraticBezier, RationalQuadraticBezier,
+    RationalQuadraticBezierError, RectangularInfillGraph, RectangularPocket,
+    RectangularRegionRelation, RouteCertificationError, SegmentParameterOrder, SourceLengthUnit,
+    SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraImportError, SpecctraLayerAlias,
+    SpecctraNetAlias, SpecctraParseError, SupportFootprintStatus, SupportPlanError,
+    SweptLineSegment, TangentAlignment, TangentJoinClass, TangentJoinReport, TangentSpan,
+    TraceLayer, ViaAnnularRingReport, ViaDrillIntent, ViaDrillPolicyClass, ViaLayerSpanRelation,
+    ViaLayerTransitionClass, boolean_path_mesh_program, boolean_path_mesh_sources,
+    boolean_rectangular_prism_chain, boolean_rectangular_prisms,
     boolean_rectangular_prisms_with_boundary_policy, build_alternating_detour_meander,
     build_cam_infill_clip_program, build_cam_rest_material_program, build_cam_support_clip_program,
     build_g1_join_problem, build_length_match_problem, build_multi_detour_meander,
@@ -759,6 +760,64 @@ fn pcb_holed_orthogonal_copper_program_replays_outer_minus_voids() {
 }
 
 #[test]
+fn pcb_holed_copper_program_replays_exact_void_handoffs() {
+    let z_model = PcbLayerZModel::new(r(0), r(10), r(2), PredicatePolicy::default()).unwrap();
+    let exact_void_handoff = PathExactMeshHandoffSource::from_exact_mesh(
+        prism([9, 4, 0], [12, 8, 2]).to_exact_mesh().unwrap(),
+    )
+    .unwrap();
+    let exact_void = PcbExactCopperVoidHandoff::new(exact_void_handoff.clone())
+        .expect("exact copper void should retain package evidence");
+    assert!(exact_void.exact_facts().all_exact_rational);
+    let source = PcbHoledOrthogonalCopperSource::with_exact_voids(
+        NetId(13),
+        TraceLayer(0),
+        vec![p(0, 0), p(14, 0), p(14, 10), p(0, 10)],
+        vec![vec![p(3, 2), p(6, 2), p(6, 5), p(3, 5)]],
+        vec![exact_void.clone()],
+        PredicatePolicy::default(),
+    )
+    .expect("exact void footprint should be strictly inside copper");
+    assert_eq!(source.holes().len(), 1);
+    assert_eq!(source.exact_voids(), &[exact_void]);
+
+    let report = build_pcb_holed_orthogonal_copper_program(
+        source,
+        z_model.clone(),
+        PredicatePolicy::default(),
+    )
+    .expect("holed copper should subtract orthogonal and exact voids");
+    report.validate_replay(PredicatePolicy::default()).unwrap();
+    assert_eq!(report.program.steps.len(), 2);
+    assert!(
+        report
+            .program
+            .steps
+            .iter()
+            .all(|step| step.operation == PathMeshBooleanOperation::Difference)
+    );
+    assert!(report.program.mesh().unwrap().facts().mesh.closed_manifold);
+
+    let wrong_slab_source = PcbHoledOrthogonalCopperSource::with_exact_voids(
+        NetId(13),
+        TraceLayer(1),
+        vec![p(0, 0), p(14, 0), p(14, 10), p(0, 10)],
+        Vec::new(),
+        vec![PcbExactCopperVoidHandoff::new(exact_void_handoff).unwrap()],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert!(matches!(
+        build_pcb_holed_orthogonal_copper_program(
+            wrong_slab_source,
+            z_model,
+            PredicatePolicy::default()
+        ),
+        Err(PathMeshBooleanError::MeshHandoff(_))
+    ));
+}
+
+#[test]
 fn pcb_composite_copper_boolean_program_unions_solid_and_holed_sources() {
     let z_model = PcbLayerZModel::new(r(0), r(10), r(2), PredicatePolicy::default()).unwrap();
     let holed = PcbHoledOrthogonalCopperSource::new(
@@ -1347,6 +1406,22 @@ fn pcb_holed_orthogonal_copper_rejects_empty_outside_touching_and_overlapping_ho
         )
         .unwrap_err(),
         PathMeshBooleanError::PolygonHoleOverlap
+    );
+    let outside_exact_void = PathExactMeshHandoffSource::from_exact_mesh(
+        prism([8, 2, 0], [13, 5, 2]).to_exact_mesh().unwrap(),
+    )
+    .unwrap();
+    assert_eq!(
+        PcbHoledOrthogonalCopperSource::with_exact_voids(
+            NetId(1),
+            TraceLayer(0),
+            vec![p(0, 0), p(10, 0), p(10, 10), p(0, 10)],
+            Vec::new(),
+            vec![PcbExactCopperVoidHandoff::new(outside_exact_void).unwrap()],
+            PredicatePolicy::default()
+        )
+        .unwrap_err(),
+        PathMeshBooleanError::PolygonHoleOutsideOuter
     );
 }
 

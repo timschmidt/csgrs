@@ -8,7 +8,7 @@ use hyperpath::{
     PathMeshBooleanOperation, PathMeshBooleanProgramStep, PathProvenance, PcbCardinalRectPad,
     PcbCompositeCopperBooleanSource, PcbConvexPolyPad, PcbCopperBoardClipOutline,
     PcbCopperBooleanSource, PcbExactBoardCutoutHandoff, PcbExactBoardHandoffOutline,
-    PcbExactCopperHandoffSource, PcbHoledOrthogonalBoardClipOutline,
+    PcbExactCopperHandoffSource, PcbExactCopperVoidHandoff, PcbHoledOrthogonalBoardClipOutline,
     PcbHoledOrthogonalCopperSource, PcbLayerZModel, PcbOrthogonalBoardOutline,
     PcbOrthogonalPolyPad, PcbRectPad, PcbTrace, SweptLineSegment, TraceLayer,
     boolean_path_mesh_program, boolean_path_mesh_sources, boolean_rectangular_prism_chain,
@@ -517,6 +517,58 @@ fuzz_target!(|data: &[u8]| {
                         .result
                         .validate()
                         .unwrap();
+                }
+                if data[15] & 16 == 16 {
+                    let copper_slab = z_model.slab_for_layer(layer);
+                    let exact_void_min = Point2::new(
+                        min_x.clone() + Real::from(extent(9)) + Real::one(),
+                        min_y.clone() + Real::from(extent(10)) + Real::one(),
+                    );
+                    let exact_void_max = Point2::new(
+                        exact_void_min.x.clone() + Real::from(extent(11)),
+                        exact_void_min.y.clone() + Real::from(extent(12)),
+                    );
+                    if let Ok(exact_void_pocket) =
+                        hyperpath::RectangularPocket::new(exact_void_min, exact_void_max)
+                        && let Ok(exact_void_prism) = hyperpath::RectangularPrism::new(
+                            exact_void_pocket,
+                            copper_slab.z_min.clone(),
+                            copper_slab.z_max.clone(),
+                            PredicatePolicy::default(),
+                        )
+                        && let Ok(handoff) = PathExactMeshHandoffSource::from_exact_mesh(
+                            exact_void_prism.to_exact_mesh().unwrap(),
+                        )
+                        && let Ok(exact_void) = PcbExactCopperVoidHandoff::new(handoff)
+                        && let Ok(exact_source) = PcbHoledOrthogonalCopperSource::with_exact_voids(
+                            NetId(u32::from(data[16])),
+                            layer,
+                            vec![
+                                Point2::new(min_x.clone(), min_y.clone()),
+                                Point2::new(min_x.clone() + w.clone(), min_y.clone()),
+                                Point2::new(min_x.clone() + w.clone(), min_y.clone() + h.clone()),
+                                Point2::new(min_x.clone(), min_y.clone() + h.clone()),
+                            ],
+                            Vec::new(),
+                            vec![exact_void],
+                            PredicatePolicy::default(),
+                        )
+                        && let Ok(report) = build_pcb_holed_orthogonal_copper_program(
+                            exact_source,
+                            z_model.clone(),
+                            PredicatePolicy::default(),
+                        )
+                    {
+                        report.validate_replay(PredicatePolicy::default()).unwrap();
+                        report
+                            .program
+                            .steps
+                            .last()
+                            .unwrap()
+                            .result
+                            .validate()
+                            .unwrap();
+                    }
                 }
                 let trace_start =
                     Point2::new(min_x.clone() + Real::from(extent(11)), min_y.clone());

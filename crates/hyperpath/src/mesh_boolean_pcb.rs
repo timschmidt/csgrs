@@ -79,6 +79,22 @@ pub struct PcbExactCopperHandoffSource {
     handoff: PathExactMeshHandoffSource,
 }
 
+/// Retained PCB copper void whose exact topology is owned by a `hypermesh` handoff.
+///
+/// This is the subtractive companion to [`PcbExactCopperHandoffSource`]. It is
+/// intended for rounded thermal relief gaps, curved copper keepouts, imported
+/// routed slots, or other copper void producers that can emit an exact
+/// closed-solid package before `hyperpath` has a native curved arrangement
+/// carrier. Following Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997), `hyperpath` retains the object and
+/// PCB metadata, performs domain preflight, and leaves topology acceptance to
+/// `hypermesh`.
+#[derive(Clone, Debug, PartialEq)]
+pub struct PcbExactCopperVoidHandoff {
+    handoff: PathExactMeshHandoffSource,
+    exact: RealExactSetFacts,
+}
+
 /// Retained board clipping solid whose topology is owned by a `hypermesh` handoff.
 ///
 /// Straight-edge outlines remain represented by [`PcbCopperBoardClipOutline`]
@@ -190,6 +206,7 @@ pub struct PcbHoledOrthogonalCopperSource {
     layer: TraceLayer,
     outer: PcbOrthogonalPolyPad,
     holes: Vec<PcbOrthogonalPolyPad>,
+    exact_voids: Vec<PcbExactCopperVoidHandoff>,
     exact: RealExactSetFacts,
 }
 
@@ -437,7 +454,35 @@ impl PcbHoledOrthogonalCopperSource {
         hole_vertices: Vec<Vec<Point2>>,
         policy: PredicatePolicy,
     ) -> Result<Self, PathMeshBooleanError> {
-        if hole_vertices.is_empty() {
+        Self::with_exact_voids(
+            net,
+            layer,
+            outer_vertices,
+            hole_vertices,
+            Vec::new(),
+            policy,
+        )
+    }
+
+    /// Construct a retained orthogonal copper source with strict holes and exact voids.
+    ///
+    /// Exact void handoffs are conservatively preflighted by their exact mesh
+    /// XY bounding boxes: every box must be strictly inside the retained outer
+    /// copper loop and disjoint from every retained orthogonal or exact void
+    /// footprint. This rejects some valid curved void arrangements whose boxes
+    /// overlap, but it keeps `hyperpath` on the path-domain side of Yap's exact
+    /// geometric computation boundary instead of importing mesh arrangements
+    /// from `hypermesh`. The final boolean replay still validates the exact
+    /// layer slab before each handoff is used.
+    pub fn with_exact_voids(
+        net: NetId,
+        layer: TraceLayer,
+        outer_vertices: Vec<Point2>,
+        hole_vertices: Vec<Vec<Point2>>,
+        exact_voids: Vec<PcbExactCopperVoidHandoff>,
+        policy: PredicatePolicy,
+    ) -> Result<Self, PathMeshBooleanError> {
+        if hole_vertices.is_empty() && exact_voids.is_empty() {
             return Err(PathMeshBooleanError::EmptyPolygonHoles);
         }
         let outer = PcbOrthogonalPolyPad::new(net, layer, outer_vertices)
@@ -449,13 +494,14 @@ impl PcbHoledOrthogonalCopperSource {
                     .map_err(path_error_from_board_contour_error)
             })
             .collect::<Result<Vec<_>, _>>()?;
-        validate_holes_strictly_inside_outer(&outer, &holes, policy)?;
-        let exact = holed_orthogonal_exact_facts(&outer, &holes);
+        validate_holes_and_exact_voids_strictly_inside_outer(&outer, &holes, &exact_voids, policy)?;
+        let exact = holed_orthogonal_exact_facts(&outer, &holes, &exact_voids);
         Ok(Self {
             net,
             layer,
             outer,
             holes,
+            exact_voids,
             exact,
         })
     }
@@ -480,9 +526,48 @@ impl PcbHoledOrthogonalCopperSource {
         &self.holes
     }
 
+    /// Return retained exact copper void handoffs.
+    pub fn exact_voids(&self) -> &[PcbExactCopperVoidHandoff] {
+        &self.exact_voids
+    }
+
     /// Return exact-set facts for all retained loop coordinates.
     pub const fn exact_facts(&self) -> &RealExactSetFacts {
         &self.exact
+    }
+}
+
+impl PcbExactCopperVoidHandoff {
+    /// Construct a retained exact copper void from a `hypermesh` handoff.
+    ///
+    /// The handoff package is validated immediately and its exact coordinates
+    /// are retained in the source facts. Containment against the owning copper
+    /// source and layer-slab compatibility are deliberately separate checks:
+    /// source construction validates the path-domain footprint, while replay
+    /// validates the slab requested by [`PcbLayerZModel`].
+    pub fn new(handoff: PathExactMeshHandoffSource) -> Result<Self, PathMeshBooleanError> {
+        let exact = handoff_mesh_exact_facts(&handoff)?;
+        Ok(Self { handoff, exact })
+    }
+
+    /// Return the retained exact mesh handoff.
+    pub const fn handoff(&self) -> &PathExactMeshHandoffSource {
+        &self.handoff
+    }
+
+    /// Return exact-set facts for retained void mesh coordinates.
+    pub const fn exact_facts(&self) -> &RealExactSetFacts {
+        &self.exact
+    }
+
+    /// Lower this exact void into a generic path mesh-boolean source.
+    pub fn to_path_source(
+        &self,
+        slab: &PcbLayerSlab,
+        policy: PredicatePolicy,
+    ) -> Result<PathMeshBooleanSource, PathMeshBooleanError> {
+        validate_handoff_layer_slab(&self.handoff, slab, policy)?;
+        Ok(self.handoff.clone().into())
     }
 }
 
@@ -1091,9 +1176,14 @@ pub fn build_pcb_holed_orthogonal_copper_program(
     z_model: PcbLayerZModel,
     policy: PredicatePolicy,
 ) -> Result<PcbHoledCopperBooleanProgramReport, PathMeshBooleanError> {
-    validate_holes_strictly_inside_outer(source.outer(), source.holes(), policy)?;
+    validate_holes_and_exact_voids_strictly_inside_outer(
+        source.outer(),
+        source.holes(),
+        source.exact_voids(),
+        policy,
+    )?;
     let initial = pcb_orthogonal_poly_pad_mesh_boolean_source(source.outer(), &z_model, policy)?;
-    let steps = source
+    let mut steps = source
         .holes()
         .iter()
         .map(|hole| {
@@ -1102,6 +1192,13 @@ pub fn build_pcb_holed_orthogonal_copper_program(
             })
         })
         .collect::<Result<Vec<_>, _>>()?;
+    let slab = z_model.slab_for_layer(source.layer());
+    for exact_void in source.exact_voids() {
+        steps.push(PathMeshBooleanProgramStep::new(
+            PathMeshBooleanOperation::Difference,
+            exact_void.to_path_source(&slab, policy)?,
+        ));
+    }
     let program = boolean_path_mesh_program(initial, steps)?;
     Ok(PcbHoledCopperBooleanProgramReport {
         net: source.net(),
@@ -1495,7 +1592,9 @@ fn path_error_from_board_contour_error(error: BoardContourError) -> PathMeshBool
 fn holed_orthogonal_exact_facts(
     outer: &PcbOrthogonalPolyPad,
     holes: &[PcbOrthogonalPolyPad],
+    exact_voids: &[PcbExactCopperVoidHandoff],
 ) -> RealExactSetFacts {
+    let mut handoff_values = Vec::new();
     let mut values = outer
         .vertices()
         .iter()
@@ -1508,6 +1607,19 @@ fn holed_orthogonal_exact_facts(
                 .flat_map(|point| [&point.x, &point.y]),
         );
     }
+    for exact_void in exact_voids {
+        if let Ok(mesh) = exact_void.handoff().to_exact_mesh() {
+            for point in mesh.vertices() {
+                let coordinates = &point.coordinates().0;
+                handoff_values.extend([
+                    coordinates[0].clone(),
+                    coordinates[1].clone(),
+                    coordinates[2].clone(),
+                ]);
+            }
+        }
+    }
+    values.extend(handoff_values.iter());
     Real::exact_set_facts(values)
 }
 
@@ -1604,16 +1716,54 @@ fn validate_handoff_layer_slab(
     Ok(())
 }
 
-fn validate_holes_strictly_inside_outer(
+fn validate_holes_and_exact_voids_strictly_inside_outer(
     outer: &PcbOrthogonalPolyPad,
     holes: &[PcbOrthogonalPolyPad],
+    exact_voids: &[PcbExactCopperVoidHandoff],
     policy: PredicatePolicy,
 ) -> Result<(), PathMeshBooleanError> {
-    let hole_vertices = holes
+    let exact_void_footprints = exact_void_footprint_loops(exact_voids, policy)?;
+    let all_void_footprints = holes
         .iter()
         .map(|hole| hole.vertices().to_vec())
+        .chain(exact_void_footprints)
         .collect::<Vec<_>>();
-    validate_strict_orthogonal_holes(outer.vertices(), &hole_vertices, policy)
+    validate_strict_orthogonal_holes(outer.vertices(), &all_void_footprints, policy)
+}
+
+fn exact_void_footprint_loops(
+    exact_voids: &[PcbExactCopperVoidHandoff],
+    policy: PredicatePolicy,
+) -> Result<Vec<Vec<Point2>>, PathMeshBooleanError> {
+    exact_voids
+        .iter()
+        .map(|void| exact_handoff_footprint_loop(void.handoff(), policy))
+        .collect()
+}
+
+fn exact_handoff_footprint_loop(
+    handoff: &PathExactMeshHandoffSource,
+    policy: PredicatePolicy,
+) -> Result<Vec<Point2>, PathMeshBooleanError> {
+    let mesh = handoff.to_exact_mesh()?;
+    let Some(bounds) = &mesh.bounds().mesh else {
+        return Err(PathMeshBooleanError::MeshHandoff(
+            "PCB exact copper void handoff has no mesh bounds".into(),
+        ));
+    };
+    if compare_reals_with_policy(&bounds.min.x, &bounds.max.x, policy).value()
+        != Some(Ordering::Less)
+        || compare_reals_with_policy(&bounds.min.y, &bounds.max.y, policy).value()
+            != Some(Ordering::Less)
+    {
+        return Err(PathMeshBooleanError::DegenerateFootprint);
+    }
+    Ok(vec![
+        Point2::new(bounds.min.x.clone(), bounds.min.y.clone()),
+        Point2::new(bounds.max.x.clone(), bounds.min.y.clone()),
+        Point2::new(bounds.max.x.clone(), bounds.max.y.clone()),
+        Point2::new(bounds.min.x.clone(), bounds.max.y.clone()),
+    ])
 }
 
 fn validate_board_cutouts_strictly_inside_outer(
