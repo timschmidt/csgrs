@@ -828,6 +828,20 @@ fn bench_batches_field_facts_and_sweeps(c: &mut Criterion) {
             )
         })
     });
+    c.bench_function("chunk_paged_manhattan_band", |b| {
+        let shape = ChunkShape::new(3).unwrap();
+        let paged = ChunkPagedSparseGrid::from_sparse_grid(&grid, shape).unwrap();
+        let seed = grid.iter().next().map(|(address, _)| *address).unwrap();
+        b.iter(|| {
+            let report = paged.query_manhattan_band(seed, 4).unwrap();
+            (
+                report.distances.len(),
+                report.page_hits,
+                report.page_misses,
+                report.exact_distance_band_ready,
+            )
+        })
+    });
     c.bench_function("chunk_local_address_split", |b| {
         let shape = ChunkShape::new(3).unwrap();
         b.iter(|| {

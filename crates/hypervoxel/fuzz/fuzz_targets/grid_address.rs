@@ -153,6 +153,16 @@ fuzz_target!(|data: (u8, u64, u64, u64)| {
         covered_cell_count > 0
     );
     assert_eq!(paged_component.aggregate.child_count as u64, covered_cell_count);
+    let paged_band = paged_grid
+        .query_manhattan_band(first_small_address, u32::from(small_depth) + 3)
+        .unwrap();
+    assert_eq!(paged_band.distances.len() as u64, covered_cell_count);
+    assert_eq!(paged_band.has_reached_cells, covered_cell_count > 0);
+    assert_eq!(
+        paged_band.exact_distance_band_ready,
+        covered_cell_count > 0
+    );
+    assert_eq!(paged_band.aggregate.child_count as u64, covered_cell_count);
     let halfspace =
         ExactHalfSpace::new([Real::from(1), Real::from(0), Real::from(0)], Real::from(1), None);
     assert!(halfspace.report().exact_halfspace_ready);

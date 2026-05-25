@@ -166,6 +166,37 @@ pub struct ChunkPagedConnectedComponentReport {
     pub exact_component_ready: bool,
 }
 
+/// Exact bounded Manhattan-distance traversal over chunk-paged storage.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ChunkPagedManhattanBandReport {
+    /// Seed address.
+    pub seed: VoxelAddress,
+    /// Maximum six-neighbor distance explored.
+    pub max_distance: u32,
+    /// Reached explicit non-empty addresses and exact lattice distances.
+    pub distances: BTreeMap<VoxelAddress, u32>,
+    /// Whether the seed reached at least one non-empty cell.
+    pub has_reached_cells: bool,
+    /// Number of neighbor edges tested by the traversal.
+    pub neighbor_edges: usize,
+    /// Number of neighbor checks whose target page existed.
+    pub page_hits: usize,
+    /// Number of neighbor checks whose target page was absent.
+    pub page_misses: usize,
+    /// Number of neighbor checks that crossed an integer page boundary.
+    pub cross_page_edges: usize,
+    /// Number of in-page or candidate-page neighbors that were exact empty.
+    pub empty_neighbors: usize,
+    /// Whether any reached cell carries explicit unknown evidence.
+    pub has_unknown: bool,
+    /// Whether any reached cell came from a lossy adapter.
+    pub has_lossy: bool,
+    /// Aggregate facts over reached cells.
+    pub aggregate: VoxelAggregateFacts,
+    /// Whether this traversal is exact bounded Manhattan-distance evidence.
+    pub exact_distance_band_ready: bool,
+}
+
 /// Sparse grid cells grouped by exact integer chunk pages.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ChunkPagedSparseGrid {
@@ -552,6 +583,112 @@ impl ChunkPagedSparseGrid {
             has_lossy,
             aggregate,
             exact_component_ready,
+        })
+    }
+
+    /// Returns a bounded six-connected Manhattan-distance band over explicit
+    /// non-empty cells.
+    ///
+    /// The metric is exact integer graph distance on the 6-neighbor voxel
+    /// lattice, matching Rosenfeld and Pfaltz, "Distance functions on digital
+    /// pictures," *Pattern Recognition* 1(1), 1968. Chunk pages only
+    /// accelerate absence checks; a present page does not certify a neighbor
+    /// until the exact address lookup succeeds. This preserves the
+    /// precision-driven model in Yap, "Towards Exact Geometric Computation,"
+    /// by keeping unknown/lossy cells and storage page evidence visible in the
+    /// report instead of letting an accelerator decide topology.
+    pub fn query_manhattan_band(
+        &self,
+        seed: VoxelAddress,
+        max_distance: u32,
+    ) -> HypervoxelResult<ChunkPagedManhattanBandReport> {
+        validate_address_in_frame(seed, &self.frame)?;
+        let mut page_hits = 0_usize;
+        let mut page_misses = 0_usize;
+        let seed_cell = self.get_with_page_probe(seed, &mut page_hits, &mut page_misses)?;
+        if seed_cell.occupancy == OccupancyState::Empty {
+            return Ok(ChunkPagedManhattanBandReport {
+                seed,
+                max_distance,
+                distances: BTreeMap::new(),
+                has_reached_cells: false,
+                neighbor_edges: 0,
+                page_hits,
+                page_misses,
+                cross_page_edges: 0,
+                empty_neighbors: 0,
+                has_unknown: false,
+                has_lossy: false,
+                aggregate: VoxelAggregateFacts::from_cells(std::iter::empty::<&VoxelCell>()),
+                exact_distance_band_ready: false,
+            });
+        }
+
+        let mut seen = BTreeSet::new();
+        let mut distances = BTreeMap::new();
+        let mut reached = BTreeMap::new();
+        let mut queue = VecDeque::new();
+        let mut neighbor_edges = 0_usize;
+        let mut cross_page_edges = 0_usize;
+        let mut empty_neighbors = 0_usize;
+        let mut has_unknown = seed_cell.report().has_unknown;
+        let mut has_lossy = seed_cell.report().has_lossy;
+
+        seen.insert(seed);
+        distances.insert(seed, 0);
+        reached.insert(seed, seed_cell);
+        queue.push_back((seed, 0_u32));
+
+        while let Some((address, distance)) = queue.pop_front() {
+            if distance == max_distance {
+                continue;
+            }
+            let source_page = ChunkAddress::containing(address, self.shape);
+            for neighbor in voxel_neighbors6(address) {
+                neighbor_edges += 1;
+                if ChunkAddress::containing(neighbor, self.shape) != source_page {
+                    cross_page_edges += 1;
+                }
+                if !seen.insert(neighbor) {
+                    continue;
+                }
+                let cell = self.get_with_page_probe(neighbor, &mut page_hits, &mut page_misses)?;
+                if cell.occupancy == OccupancyState::Empty {
+                    empty_neighbors += 1;
+                    continue;
+                }
+                let next_distance = distance.saturating_add(1);
+                let cell_report = cell.report();
+                has_unknown |= cell_report.has_unknown;
+                has_lossy |= cell_report.has_lossy;
+                distances.insert(neighbor, next_distance);
+                reached.insert(neighbor, cell);
+                queue.push_back((neighbor, next_distance));
+            }
+        }
+
+        let aggregate = VoxelAggregateFacts::from_cells(reached.values());
+        let has_reached_cells = !distances.is_empty();
+        let exact_distance_band_ready = has_reached_cells
+            && self.report.exact_chunk_storage_ready
+            && !has_unknown
+            && !has_lossy
+            && aggregate.certainty != crate::AggregateCertainty::Unknown
+            && aggregate.certainty != crate::AggregateCertainty::Lossy;
+        Ok(ChunkPagedManhattanBandReport {
+            seed,
+            max_distance,
+            distances,
+            has_reached_cells,
+            neighbor_edges,
+            page_hits,
+            page_misses,
+            cross_page_edges,
+            empty_neighbors,
+            has_unknown,
+            has_lossy,
+            aggregate,
+            exact_distance_band_ready,
         })
     }
 

@@ -277,6 +277,16 @@ fn chunk_paged_sparse_storage_replays_exact_addresses_and_payload_blockers() {
     assert!(component.page_misses > 0);
     assert!(component.cross_page_edges > 0);
     assert_eq!(component.aggregate.child_count, 3);
+    let band = component_pages.query_manhattan_band(s0, 3).unwrap();
+    assert_eq!(band.distances.len(), 3);
+    assert_eq!(band.distances[&s0], 0);
+    assert_eq!(band.distances[&s1], 1);
+    assert_eq!(band.distances[&s2], 2);
+    assert!(band.has_reached_cells);
+    assert!(band.exact_distance_band_ready);
+    assert!(band.page_hits > 0);
+    assert!(band.page_misses > 0);
+    assert!(band.cross_page_edges > 0);
 
     let empty_component = component_pages
         .query_connected_component(VoxelAddress::new(4, [0, 0, 0]).unwrap())
@@ -294,6 +304,10 @@ fn chunk_paged_sparse_storage_replays_exact_addresses_and_payload_blockers() {
     assert_eq!(blocked_component.addresses, vec![s0, s1, s2]);
     assert!(blocked_component.has_unknown);
     assert!(!blocked_component.exact_component_ready);
+    let blocked_band = blocked_component_pages.query_manhattan_band(s0, 2).unwrap();
+    assert_eq!(blocked_band.distances.len(), 3);
+    assert!(blocked_band.has_unknown);
+    assert!(!blocked_band.exact_distance_band_ready);
 }
 
 #[test]

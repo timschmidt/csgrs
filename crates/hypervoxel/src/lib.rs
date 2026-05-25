@@ -86,8 +86,8 @@ pub use cell::{
 pub use chunk::{ChunkAddress, ChunkLocalAddress, ChunkPageSummary, ChunkShape};
 pub use chunk_storage::{
     ChunkPagedAabbBroadPhaseReport, ChunkPagedConnectedComponentReport,
-    ChunkPagedRegionAggregateReport, ChunkPagedSparseGrid, ChunkPagedSparsePage,
-    ChunkPagedSparsePageReport, ChunkPagedSparseStorageReport,
+    ChunkPagedManhattanBandReport, ChunkPagedRegionAggregateReport, ChunkPagedSparseGrid,
+    ChunkPagedSparsePage, ChunkPagedSparsePageReport, ChunkPagedSparseStorageReport,
 };
 pub use compression::{
     CompressedStorageKind, CompressedStorageManifest, CompressedStorageReport, StorageReplayStatus,
