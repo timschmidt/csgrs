@@ -15,6 +15,7 @@ use crate::bezier::RationalQuadraticBezier;
 use crate::bezier_arrangement::{
     HomogeneousPoint2, LineRationalQuadraticBezierIntersection,
     LineRationalQuadraticBezierIntersectionClass, LineRationalQuadraticBezierIntersectionReport,
+    LineRationalQuadraticBezierSupportOverlap,
     intersect_axis_aligned_line_rational_quadratic_bezier,
 };
 use crate::provenance::PathProvenance;
@@ -44,6 +45,26 @@ pub struct LineRationalQuadraticBezierArrangementEvent {
     pub class: LineRationalQuadraticBezierIntersectionClass,
     /// Raw exact line/conic predicate report.
     pub intersection: LineRationalQuadraticBezierIntersectionReport,
+}
+
+/// Retained same-support line/conic overlap candidate.
+///
+/// These candidates are copied from the predicate report whenever a rational
+/// quadratic conic is certified to lie on an axis-aligned line support. They
+/// are retained even when monotonicity is non-certified and the event remains
+/// [`LineRationalQuadraticBezierIntersectionClass::Unknown`]. This keeps the
+/// exact homogeneous support and hodograph-numerator evidence available to
+/// later algebraic ordering work, following Yap, "Towards Exact Geometric
+/// Computation" (1997), instead of collapsing nonmonotone conic overlaps into
+/// a lossy sampled approximation.
+#[derive(Clone, Debug, PartialEq)]
+pub struct LineRationalQuadraticBezierSupportOverlapCandidate {
+    /// Line segment index.
+    pub line: usize,
+    /// Rational quadratic conic index.
+    pub curve: usize,
+    /// Retained same-support overlap evidence.
+    pub overlap: LineRationalQuadraticBezierSupportOverlap,
 }
 
 /// Exact breakpoint on one arranged rational quadratic conic.
@@ -127,6 +148,8 @@ pub struct LineRationalQuadraticBezierArrangementReport {
     pub curves: Vec<RationalQuadraticBezier>,
     /// Certified or unknown pairwise events.
     pub events: Vec<LineRationalQuadraticBezierArrangementEvent>,
+    /// Retained same-support conic overlap candidates.
+    pub support_overlaps: Vec<LineRationalQuadraticBezierSupportOverlapCandidate>,
     /// Sorted line breakpoints induced by line endpoints and certified events.
     pub line_breakpoints: Vec<Vec<MixedConicLineArrangementBreakpoint>>,
     /// Sorted conic breakpoints induced by endpoints and certified events.
@@ -166,6 +189,7 @@ pub fn arrange_line_segments_with_rational_quadratic_beziers_and_provenance(
     let mut line_breakpoints = seed_line_breakpoints(lines);
     let mut conic_breakpoints = seed_conic_breakpoints(curves);
     let mut events = Vec::new();
+    let mut support_overlaps = Vec::new();
 
     for (line_index, line) in lines.iter().enumerate() {
         for (curve_index, curve) in curves.iter().enumerate() {
@@ -187,6 +211,13 @@ pub fn arrange_line_segments_with_rational_quadratic_beziers_and_provenance(
                         policy,
                     )?;
                 }
+            }
+            if let Some(overlap) = &intersection.support_overlap {
+                support_overlaps.push(LineRationalQuadraticBezierSupportOverlapCandidate {
+                    line: line_index,
+                    curve: curve_index,
+                    overlap: overlap.clone(),
+                });
             }
             events.push(LineRationalQuadraticBezierArrangementEvent {
                 line: line_index,
@@ -211,6 +242,7 @@ pub fn arrange_line_segments_with_rational_quadratic_beziers_and_provenance(
         lines: lines.to_vec(),
         curves: curves.to_vec(),
         events,
+        support_overlaps,
         line_breakpoints,
         conic_breakpoints,
         line_fragments,

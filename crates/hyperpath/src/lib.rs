@@ -65,9 +65,11 @@ pub use bezier_arrangement::{
     LineQuadraticBezierIntersection, LineQuadraticBezierIntersectionClass,
     LineQuadraticBezierIntersectionReport, LineRationalQuadraticBezierIntersection,
     LineRationalQuadraticBezierIntersectionClass, LineRationalQuadraticBezierIntersectionReport,
-    QuadraticBezierArrangementFragment, QuadraticBezierArrangementReport,
-    RationalQuadraticBezierArrangementFragment, RationalQuadraticBezierArrangementReport,
-    arrange_cubic_beziers, arrange_cubic_beziers_with_provenance, arrange_quadratic_beziers,
+    LineRationalQuadraticBezierSupportOverlap,
+    LineRationalQuadraticBezierSupportOverlapMonotonicity, QuadraticBezierArrangementFragment,
+    QuadraticBezierArrangementReport, RationalQuadraticBezierArrangementFragment,
+    RationalQuadraticBezierArrangementReport, arrange_cubic_beziers,
+    arrange_cubic_beziers_with_provenance, arrange_quadratic_beziers,
     arrange_quadratic_beziers_with_provenance, arrange_rational_quadratic_beziers,
     arrange_rational_quadratic_beziers_with_provenance, intersect_axis_aligned_line_cubic_bezier,
     intersect_axis_aligned_line_quadratic_bezier,
@@ -94,9 +96,9 @@ pub use mixed_bezier_arrangement::{
 pub use mixed_conic_arrangement::{
     LineRationalQuadraticBezierArrangementError, LineRationalQuadraticBezierArrangementEvent,
     LineRationalQuadraticBezierArrangementFacts, LineRationalQuadraticBezierArrangementReport,
-    MixedConicLineArrangementBreakpoint, MixedConicLineArrangementFragment,
-    RationalQuadraticBezierRealBreakpoint, RationalQuadraticBezierRealFragment,
-    arrange_line_segments_with_rational_quadratic_beziers,
+    LineRationalQuadraticBezierSupportOverlapCandidate, MixedConicLineArrangementBreakpoint,
+    MixedConicLineArrangementFragment, RationalQuadraticBezierRealBreakpoint,
+    RationalQuadraticBezierRealFragment, arrange_line_segments_with_rational_quadratic_beziers,
     arrange_line_segments_with_rational_quadratic_beziers_and_provenance,
 };
 pub use mixed_cubic_arrangement::{

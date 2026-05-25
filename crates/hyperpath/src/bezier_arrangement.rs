@@ -214,6 +214,44 @@ pub enum LineRationalQuadraticBezierIntersectionClass {
     Unknown,
 }
 
+/// Certified monotonicity of a same-support rational-quadratic line image.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum LineRationalQuadraticBezierSupportOverlapMonotonicity {
+    /// The rational hodograph numerator has one certified nonzero sign.
+    Monotone,
+    /// The rational hodograph numerator changes sign or is exactly constant.
+    NonMonotone,
+    /// Exact sign comparison of the hodograph numerator did not decide.
+    Unknown,
+}
+
+/// Retained same-support line/conic overlap evidence.
+///
+/// A rational quadratic conic lies on a retained axis-aligned line support when
+/// each homogeneous support coefficient `N_i - line W_i` is exactly zero.
+/// Promotion to concrete overlap topology additionally needs a one-dimensional
+/// inverse for the varying coordinate. The `hodograph_numerator_controls`
+/// field stores the Bernstein controls of `N'(t)W(t)-N(t)W'(t)` for that
+/// varying coordinate, which is the rational-curve derivative numerator.
+///
+/// This follows Yap, "Towards Exact Geometric Computation" (1997): the exact
+/// evidence is retained when topology is unsupported. The homogeneous rational
+/// derivative is the standard conic/Bezier construction described by Farouki,
+/// *Pythagorean Hodograph Curves* (2008), and the Bernstein sign certificate is
+/// the same variation-diminishing predicate style used in Bezier arrangement
+/// kernels.
+#[derive(Clone, Debug, PartialEq)]
+pub struct LineRationalQuadraticBezierSupportOverlap {
+    /// Axis-aligned line family used for the support equation.
+    pub axis: Axis,
+    /// Exact retained line support coordinate.
+    pub fixed: Real,
+    /// Bernstein controls of the rational varying-coordinate derivative numerator.
+    pub hodograph_numerator_controls: [Real; 3],
+    /// Certified monotonicity status of the rational line image.
+    pub monotonicity: LineRationalQuadraticBezierSupportOverlapMonotonicity,
+}
+
 /// Exact line/rational-quadratic event witness.
 #[derive(Clone, Debug, PartialEq)]
 pub struct LineRationalQuadraticBezierIntersection {
@@ -244,6 +282,8 @@ pub struct LineRationalQuadraticBezierIntersectionReport {
     pub class: LineRationalQuadraticBezierIntersectionClass,
     /// Certified witnesses in increasing conic-parameter order.
     pub intersections: Vec<LineRationalQuadraticBezierIntersection>,
+    /// Retained support-overlap evidence when the conic lies on the line support.
+    pub support_overlap: Option<LineRationalQuadraticBezierSupportOverlap>,
 }
 
 /// Exact breakpoint on one retained Bezier/conic source.
@@ -665,6 +705,7 @@ pub fn intersect_axis_aligned_line_rational_quadratic_bezier(
     LineRationalQuadraticBezierIntersectionReport {
         class,
         intersections,
+        support_overlap: None,
     }
 }
 
@@ -1475,8 +1516,15 @@ fn rational_quadratic_line_overlap_report(
     if !rational_quadratic_same_support(curve, axis, &fixed, policy)? {
         return None;
     }
-    if !rational_quadratic_line_image_monotone(curve, axis, policy)? {
-        return None;
+    let support_overlap = rational_quadratic_support_overlap(curve, axis, fixed.clone(), policy);
+    if support_overlap.monotonicity
+        != LineRationalQuadraticBezierSupportOverlapMonotonicity::Monotone
+    {
+        return Some(LineRationalQuadraticBezierIntersectionReport {
+            class: LineRationalQuadraticBezierIntersectionClass::Unknown,
+            intersections: Vec::new(),
+            support_overlap: Some(support_overlap),
+        });
     }
 
     let curve_a = varying_coordinate(curve.start(), axis);
@@ -1497,6 +1545,7 @@ fn rational_quadratic_line_overlap_report(
         Ordering::Greater => Some(LineRationalQuadraticBezierIntersectionReport {
             class: LineRationalQuadraticBezierIntersectionClass::Disjoint,
             intersections: Vec::new(),
+            support_overlap: Some(support_overlap),
         }),
         Ordering::Equal => {
             let parameter =
@@ -1505,6 +1554,7 @@ fn rational_quadratic_line_overlap_report(
             Some(LineRationalQuadraticBezierIntersectionReport {
                 class: LineRationalQuadraticBezierIntersectionClass::OnePoint,
                 intersections: vec![LineRationalQuadraticBezierIntersection { parameter, point }],
+                support_overlap: Some(support_overlap),
             })
         }
         Ordering::Less => {
@@ -1532,6 +1582,7 @@ fn rational_quadratic_line_overlap_report(
             Some(LineRationalQuadraticBezierIntersectionReport {
                 class: LineRationalQuadraticBezierIntersectionClass::Overlap,
                 intersections,
+                support_overlap: Some(support_overlap),
             })
         }
     }
@@ -1694,26 +1745,54 @@ fn rational_quadratic_same_support(
     )
 }
 
-fn rational_quadratic_line_image_monotone(
+fn rational_quadratic_support_overlap(
     curve: &RationalQuadraticBezier,
     axis: Axis,
+    fixed: Real,
     policy: PredicatePolicy,
-) -> Option<bool> {
+) -> LineRationalQuadraticBezierSupportOverlap {
+    let controls = rational_quadratic_hodograph_numerator_controls(curve, axis);
+    LineRationalQuadraticBezierSupportOverlap {
+        axis,
+        fixed,
+        monotonicity: classify_rational_quadratic_hodograph_controls(&controls, policy),
+        hodograph_numerator_controls: controls,
+    }
+}
+
+fn rational_quadratic_hodograph_numerator_controls(
+    curve: &RationalQuadraticBezier,
+    axis: Axis,
+) -> [Real; 3] {
     let start = varying_coordinate(curve.start(), axis);
     let control = varying_coordinate(curve.control(), axis);
     let end = varying_coordinate(curve.end(), axis);
-    let first = curve.control_weight().clone() * (control.clone() - start.clone());
-    let second = end.clone() - start;
-    let third = curve.control_weight().clone() * (end - control);
-    let signs = [
-        compare_reals_with_policy(&first, &Real::zero(), policy).value()?,
-        compare_reals_with_policy(&second, &Real::zero(), policy).value()?,
-        compare_reals_with_policy(&third, &Real::zero(), policy).value()?,
-    ];
+    [
+        curve.control_weight().clone() * (control.clone() - start.clone()),
+        end.clone() - start,
+        curve.control_weight().clone() * (end - control),
+    ]
+}
+
+fn classify_rational_quadratic_hodograph_controls(
+    controls: &[Real; 3],
+    policy: PredicatePolicy,
+) -> LineRationalQuadraticBezierSupportOverlapMonotonicity {
+    let mut signs = Vec::with_capacity(3);
+    for control in controls {
+        let Some(sign) = compare_reals_with_policy(control, &Real::zero(), policy).value() else {
+            return LineRationalQuadraticBezierSupportOverlapMonotonicity::Unknown;
+        };
+        signs.push(sign);
+    }
     let nonnegative = signs.iter().all(|sign| *sign != Ordering::Less);
     let nonpositive = signs.iter().all(|sign| *sign != Ordering::Greater);
     let nonconstant = signs.iter().any(|sign| *sign != Ordering::Equal);
-    Some(nonconstant && (nonnegative || nonpositive))
+    if nonconstant && (nonnegative || nonpositive) {
+        LineRationalQuadraticBezierSupportOverlapMonotonicity::Monotone
+    } else {
+        LineRationalQuadraticBezierSupportOverlapMonotonicity::NonMonotone
+    }
 }
 
 fn solve_rational_quadratic_varying_roots(
@@ -2120,5 +2199,6 @@ fn line_rational_quadratic_unknown_report() -> LineRationalQuadraticBezierInters
     LineRationalQuadraticBezierIntersectionReport {
         class: LineRationalQuadraticBezierIntersectionClass::Unknown,
         intersections: Vec::new(),
+        support_overlap: None,
     }
 }

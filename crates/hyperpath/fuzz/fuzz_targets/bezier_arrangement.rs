@@ -7,8 +7,9 @@ use hyperpath::{
     BezierParameter, CubicBezier, LineCubicAlgebraicPointDomain, LineCubicAlgebraicRootDomain,
     LineCubicBezierAlgebraicBreakpointDomain, LineCubicBezierIntersectionClass, LinePathSegment,
     LineQuadraticBezierIntersectionClass, LineRationalQuadraticBezierIntersectionClass,
-    QuadraticBezier, RationalQuadraticBezier, arrange_cubic_beziers,
-    arrange_line_segments_with_cubic_beziers, arrange_line_segments_with_quadratic_beziers,
+    LineRationalQuadraticBezierSupportOverlapMonotonicity, QuadraticBezier,
+    RationalQuadraticBezier, arrange_cubic_beziers, arrange_line_segments_with_cubic_beziers,
+    arrange_line_segments_with_quadratic_beziers,
     arrange_line_segments_with_rational_quadratic_beziers, arrange_quadratic_beziers,
     arrange_rational_quadratic_beziers, intersect_axis_aligned_line_cubic_bezier,
     intersect_axis_aligned_line_quadratic_bezier,
@@ -311,6 +312,16 @@ fuzz_target!(|data: &[u8]| {
         overlap_report.events[0].class,
         LineRationalQuadraticBezierIntersectionClass::Overlap
     );
+    assert_eq!(
+        overlap_report.events[0]
+            .intersection
+            .support_overlap
+            .as_ref()
+            .unwrap()
+            .monotonicity,
+        LineRationalQuadraticBezierSupportOverlapMonotonicity::Monotone
+    );
+    assert_eq!(overlap_report.support_overlaps.len(), 1);
     assert_eq!(overlap_report.conic_breakpoints[0].len(), 4);
 
     let nonmonotone_conic = RationalQuadraticBezier::new(p(0, 0), p(8, 0), p(0, 0), r(1)).unwrap();
@@ -323,6 +334,11 @@ fuzz_target!(|data: &[u8]| {
     assert_eq!(
         nonmonotone_report.events[0].class,
         LineRationalQuadraticBezierIntersectionClass::Unknown
+    );
+    assert_eq!(nonmonotone_report.support_overlaps.len(), 1);
+    assert_eq!(
+        nonmonotone_report.support_overlaps[0].overlap.monotonicity,
+        LineRationalQuadraticBezierSupportOverlapMonotonicity::NonMonotone
     );
 
     let r_report =

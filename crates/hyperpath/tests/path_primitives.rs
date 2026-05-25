@@ -14,9 +14,9 @@ use hyperpath::{
     LineCubicBezierAlgebraicBreakpointDomain, LineCubicBezierIntersectionClass,
     LineExplicitArcIntersectionClass, LineOffsetError, LinePathSegment,
     LineQuadraticBezierIntersectionClass, LineRationalQuadraticBezierIntersectionClass,
-    LookaheadFeedSchedule, MeanderError, MeanderKeepout, MeanderObstacle,
-    MeanderPlacementCandidate, NetId, OffsetSide, PathProvenance, PathSourceFormat,
-    PcbBoardOutline, PcbCardinalRectPad, PcbCircularBoardOutline, PcbCircularPad,
+    LineRationalQuadraticBezierSupportOverlapMonotonicity, LookaheadFeedSchedule, MeanderError,
+    MeanderKeepout, MeanderObstacle, MeanderPlacementCandidate, NetId, OffsetSide, PathProvenance,
+    PathSourceFormat, PcbBoardOutline, PcbCardinalRectPad, PcbCircularBoardOutline, PcbCircularPad,
     PcbConvexBoardOutline, PcbConvexPad, PcbObroundPad, PcbOrientedRectPad,
     PcbOrthogonalBoardOutline, PcbOrthogonalPad, PcbRectPad, PcbRoundedRectPad, PcbTrace,
     PcbViaStack, PhCurveError, PocketLinkGraphError, PocketPlanError, PocketPlanStopReason,
@@ -1128,6 +1128,16 @@ fn line_rational_quadratic_bezier_arrangement_splits_monotone_support_overlap() 
         report.events[0].class,
         LineRationalQuadraticBezierIntersectionClass::Overlap
     );
+    assert_eq!(
+        report.events[0]
+            .intersection
+            .support_overlap
+            .as_ref()
+            .unwrap()
+            .monotonicity,
+        LineRationalQuadraticBezierSupportOverlapMonotonicity::Monotone
+    );
+    assert_eq!(report.support_overlaps.len(), 1);
     assert_eq!(report.line_breakpoints[0].len(), 2);
     assert_eq!(report.conic_breakpoints[0].len(), 4);
     assert_eq!(report.conic_breakpoints[0][1].parameter, rq(1, 4));
@@ -1150,6 +1160,24 @@ fn line_rational_quadratic_bezier_arrangement_keeps_nonmonotone_support_overlap_
     assert_eq!(
         report.events[0].class,
         LineRationalQuadraticBezierIntersectionClass::Unknown
+    );
+    let support_overlap = report.events[0]
+        .intersection
+        .support_overlap
+        .as_ref()
+        .unwrap();
+    assert_eq!(
+        support_overlap.monotonicity,
+        LineRationalQuadraticBezierSupportOverlapMonotonicity::NonMonotone
+    );
+    assert_eq!(
+        support_overlap.hodograph_numerator_controls,
+        [r(8), r(0), r(-8)]
+    );
+    assert_eq!(report.support_overlaps.len(), 1);
+    assert_eq!(
+        report.support_overlaps[0].overlap.monotonicity,
+        LineRationalQuadraticBezierSupportOverlapMonotonicity::NonMonotone
     );
     assert_eq!(report.line_breakpoints[0].len(), 2);
     assert_eq!(report.conic_breakpoints[0].len(), 2);
@@ -9517,6 +9545,40 @@ proptest! {
         prop_assert_eq!(report.conic_breakpoints[0][2].parameter.clone(), rq(3, 4));
         prop_assert_eq!(report.line_fragments.len(), 1);
         prop_assert_eq!(report.conic_fragments.len(), 3);
+    }
+
+    #[test]
+    fn line_rational_quadratic_bezier_arrangement_generated_nonmonotone_overlaps_retain_evidence(
+        x0 in -20_i16..=20,
+        width in 2_i16..=40,
+    ) {
+        let start_x = i64::from(x0);
+        let width = i64::from(width);
+        let conic = RationalQuadraticBezier::new(
+            p(start_x, 0),
+            p(start_x + width, 0),
+            p(start_x, 0),
+            r(1),
+        ).unwrap();
+        let line = LinePathSegment::new(
+            Point2::new(rq(4 * start_x + width, 4), r(0)),
+            Point2::new(rq(4 * start_x + 2 * width, 4), r(0)),
+        );
+
+        let report = arrange_line_segments_with_rational_quadratic_beziers(
+            &[line],
+            &[conic],
+            PredicatePolicy::default(),
+        ).unwrap();
+
+        prop_assert_eq!(report.events[0].class, LineRationalQuadraticBezierIntersectionClass::Unknown);
+        prop_assert_eq!(report.support_overlaps.len(), 1);
+        prop_assert_eq!(
+            report.support_overlaps[0].overlap.monotonicity,
+            LineRationalQuadraticBezierSupportOverlapMonotonicity::NonMonotone
+        );
+        prop_assert_eq!(report.line_breakpoints[0].len(), 2);
+        prop_assert_eq!(report.conic_breakpoints[0].len(), 2);
     }
 
     #[test]
