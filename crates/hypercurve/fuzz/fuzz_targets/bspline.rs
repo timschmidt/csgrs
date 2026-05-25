@@ -35,6 +35,16 @@ fuzz_target!(|data: &[u8]| {
     if let Ok(Classification::Decided(spline)) =
         PolynomialBSplineCurve2::try_new(degree, controls.clone(), knots.clone(), &policy)
     {
+        let _ = spline.retained_curve_profile(0, &policy).map(|classification| {
+            let Classification::Decided(profile) = classification else {
+                return;
+            };
+            let _ = profile.identity();
+            let _ = profile.domain();
+            let _ = profile.trim();
+            let _ = profile.endpoints();
+            let _ = profile.cache_summary();
+        });
         let _ = spline.extract_bezier_spans(&policy);
     }
     let weights = controls
@@ -51,6 +61,7 @@ fuzz_target!(|data: &[u8]| {
     )
     {
         if let Ok(Classification::Decided(extraction)) = spline.extract_bezier_spans(&policy) {
+            let _ = spline.retained_curve_profile(1, &policy);
             let _ = extraction.native_topology_report(&policy).map(|classification| {
                 let Classification::Decided(report) = classification else {
                     return;
@@ -71,6 +82,7 @@ fuzz_target!(|data: &[u8]| {
         && let Ok(Classification::Decided(spline)) =
             RationalQuadraticBSplineCurve2::try_new(controls, weights, knots, &policy)
     {
+        let _ = spline.retained_curve_profile(2, &policy);
         let _ = spline.extract_bezier_spans(&policy);
     }
 });

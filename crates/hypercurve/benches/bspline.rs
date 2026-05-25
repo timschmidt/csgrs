@@ -35,7 +35,12 @@ fn main() -> CurveResult<()> {
     let mut checksum = 0_usize;
     for _ in 0..iterations {
         let extraction = decided(spline.extract_bezier_spans(&policy)?);
-        checksum ^= black_box(extraction.spans().len() + extraction.inserted_knot_count());
+        let profile = decided(spline.retained_curve_profile(0, &policy)?);
+        checksum ^= black_box(
+            extraction.spans().len()
+                + extraction.inserted_knot_count()
+                + profile.cache_summary().span_count(),
+        );
     }
     let elapsed = started.elapsed();
     println!(
@@ -53,7 +58,12 @@ fn main() -> CurveResult<()> {
     let mut rational_checksum = 0_usize;
     for _ in 0..iterations {
         let extraction = decided(rational.extract_bezier_spans(&policy)?);
-        rational_checksum ^= black_box(extraction.spans().len() + extraction.inserted_knot_count());
+        let profile = decided(rational.retained_curve_profile(1, &policy)?);
+        rational_checksum ^= black_box(
+            extraction.spans().len()
+                + extraction.inserted_knot_count()
+                + profile.cache_summary().native_span_count(),
+        );
     }
     let elapsed = started.elapsed();
     println!(
@@ -72,10 +82,12 @@ fn main() -> CurveResult<()> {
     let mut rational_cubic_checksum = 0_usize;
     for _ in 0..iterations {
         let extraction = decided(rational_cubic.extract_bezier_spans(&policy)?);
+        let profile = decided(rational_cubic.retained_curve_profile(2, &policy)?);
         rational_cubic_checksum ^= black_box(
             extraction.spans().len()
                 + extraction.inserted_knot_count()
-                + extraction.refined_weights().len(),
+                + extraction.refined_weights().len()
+                + profile.cache_summary().retained_span_count(),
         );
     }
     let elapsed = started.elapsed();

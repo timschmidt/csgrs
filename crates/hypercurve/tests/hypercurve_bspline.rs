@@ -1,7 +1,8 @@
 use hypercurve::{
     BezierBoundaryLoop2, BezierRegion2, BezierSubcurve2, Classification, CurveError, CurvePolicy,
     Point2, PolynomialBSplineCurve2, RationalBSplineCurve2, RationalQuadraticBSplineCurve2, Real,
-    RetainedTopologyStatus,
+    RetainedCurveFamily2, RetainedCurvePeriodicity1, RetainedTopologyStatus, RetainedTrimDirection,
+    RetainedTrimInterval1,
 };
 
 fn r(value: i32) -> Real {
@@ -430,6 +431,97 @@ fn equal_weight_rational_cubic_topology_report_names_native_exact_spans() {
 
     let native = decided(extraction.native_subcurves(&policy()).unwrap());
     assert_eq!(native.len(), report.span_reports().len());
+}
+
+#[test]
+fn retained_bspline_profile_reports_exact_domain_trim_and_endpoints() {
+    let spline = decided(
+        PolynomialBSplineCurve2::try_new(
+            3,
+            vec![p(0, 0), p(1, 3), p(3, 3), p(5, 3), p(6, 0)],
+            vec![r(0), r(0), r(0), r(0), r(1), r(2), r(2), r(2), r(2)],
+            &policy(),
+        )
+        .unwrap(),
+    );
+    let profile = decided(spline.retained_curve_profile(42, &policy()).unwrap());
+
+    assert_eq!(
+        profile.identity().family(),
+        RetainedCurveFamily2::PolynomialBSpline
+    );
+    assert_eq!(profile.identity().source_index(), 42);
+    assert_eq!(profile.domain().start(), &r(0));
+    assert_eq!(profile.domain().end(), &r(2));
+    assert_eq!(profile.trim().start(), &r(0));
+    assert_eq!(profile.trim().end(), &r(2));
+    assert_eq!(profile.trim().direction(), RetainedTrimDirection::Forward);
+    assert_eq!(
+        profile.periodicity(),
+        &RetainedCurvePeriodicity1::NonPeriodic
+    );
+    assert_eq!(
+        profile.topology_status(),
+        RetainedTopologyStatus::NativeExact
+    );
+    assert_eq!(profile.endpoints().start_parameter(), &r(0));
+    assert_eq!(profile.endpoints().end_parameter(), &r(2));
+    assert_eq!(profile.endpoints().start_point(), &p(0, 0));
+    assert_eq!(profile.endpoints().end_point(), &p(6, 0));
+    assert_eq!(profile.cache_summary().control_count(), 5);
+    assert_eq!(profile.cache_summary().knot_count(), 9);
+    assert_eq!(profile.cache_summary().span_count(), 2);
+    assert_eq!(profile.cache_summary().native_span_count(), 2);
+    assert_eq!(profile.cache_summary().retained_span_count(), 0);
+}
+
+#[test]
+fn retained_rational_cubic_profile_keeps_unsupported_spans_as_evidence() {
+    let spline = decided(
+        RationalBSplineCurve2::try_new(
+            3,
+            vec![p(0, 0), p(1, 3), p(3, 3), p(5, 3), p(6, 0)],
+            vec![r(1), r(2), r(4), r(8), r(16)],
+            vec![r(0), r(0), r(0), r(0), r(1), r(2), r(2), r(2), r(2)],
+            &policy(),
+        )
+        .unwrap(),
+    );
+    let profile = decided(spline.retained_curve_profile(7, &policy()).unwrap());
+
+    assert_eq!(
+        profile.identity().family(),
+        RetainedCurveFamily2::RationalBSpline
+    );
+    assert_eq!(
+        profile.topology_status(),
+        RetainedTopologyStatus::Unsupported
+    );
+    assert_eq!(profile.cache_summary().span_count(), 2);
+    assert_eq!(profile.cache_summary().native_span_count(), 0);
+    assert_eq!(profile.cache_summary().retained_span_count(), 2);
+}
+
+#[test]
+fn retained_trim_interval_rejects_out_of_domain_and_accepts_reversal() {
+    let spline = decided(
+        PolynomialBSplineCurve2::try_new(
+            2,
+            vec![p(0, 0), p(1, 2), p(3, 2), p(4, 0)],
+            vec![r(0), r(0), r(0), r(1), r(2), r(2), r(2)],
+            &policy(),
+        )
+        .unwrap(),
+    );
+    let profile = decided(spline.retained_curve_profile(9, &policy()).unwrap());
+    let reversed =
+        decided(RetainedTrimInterval1::try_new(r(2), r(0), profile.domain(), &policy()).unwrap());
+
+    assert_eq!(reversed.direction(), RetainedTrimDirection::Reversed);
+    assert_eq!(
+        RetainedTrimInterval1::try_new(r(3), r(0), profile.domain(), &policy()),
+        Err(CurveError::InvalidBezierRange)
+    );
 }
 
 #[test]
