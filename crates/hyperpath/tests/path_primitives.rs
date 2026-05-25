@@ -18,6 +18,9 @@ use hyperpath::{
     LineExplicitArcIntersectionClass, LineOffsetError, LinePathSegment,
     LineQuadraticBezierIntersectionClass, LineRationalQuadraticBezierAlgebraicBreakpointDomain,
     LineRationalQuadraticBezierAlgebraicBreakpointOrderClass,
+    LineRationalQuadraticBezierAlgebraicBreakpointSequenceBlocker,
+    LineRationalQuadraticBezierAlgebraicBreakpointSequenceClass,
+    LineRationalQuadraticBezierAlgebraicBreakpointSequenceSource,
     LineRationalQuadraticBezierIntersectionClass, LineRationalQuadraticBezierInverseBoundarySource,
     LineRationalQuadraticBezierInverseRootDomain,
     LineRationalQuadraticBezierSupportOverlapMonotonicity, LookaheadFeedSchedule, MeanderError,
@@ -1397,6 +1400,46 @@ fn line_rational_quadratic_bezier_arrangement_keeps_nonmonotone_support_overlap_
         report.algebraic_breakpoint_orders[5].order,
         LineRationalQuadraticBezierAlgebraicBreakpointOrderClass::Before
     );
+    assert_eq!(report.algebraic_breakpoint_sequences.len(), 2);
+    let curve_sequence = report
+        .algebraic_breakpoint_sequences
+        .iter()
+        .find(|sequence| {
+            sequence.source
+                == LineRationalQuadraticBezierAlgebraicBreakpointSequenceSource::Curve(0)
+        })
+        .unwrap();
+    assert_eq!(
+        curve_sequence.class,
+        LineRationalQuadraticBezierAlgebraicBreakpointSequenceClass::Ordered
+    );
+    assert_eq!(curve_sequence.breakpoints, vec![0, 2, 3, 1]);
+    assert!(curve_sequence.blockers.is_empty());
+    let line_sequence = report
+        .algebraic_breakpoint_sequences
+        .iter()
+        .find(|sequence| {
+            sequence.source == LineRationalQuadraticBezierAlgebraicBreakpointSequenceSource::Line(0)
+        })
+        .unwrap();
+    assert_eq!(
+        line_sequence.class,
+        LineRationalQuadraticBezierAlgebraicBreakpointSequenceClass::Ambiguous
+    );
+    assert_eq!(line_sequence.breakpoints, vec![0, 1, 2, 3]);
+    assert_eq!(
+        line_sequence.blockers,
+        vec![
+            LineRationalQuadraticBezierAlgebraicBreakpointSequenceBlocker::EqualOrder {
+                left: 0,
+                right: 1
+            },
+            LineRationalQuadraticBezierAlgebraicBreakpointSequenceBlocker::EqualOrder {
+                left: 2,
+                right: 3
+            },
+        ]
+    );
     assert_eq!(report.line_breakpoints[0].len(), 2);
     assert_eq!(report.conic_breakpoints[0].len(), 2);
     assert_eq!(report.conic_fragments.len(), 1);
@@ -1429,6 +1472,7 @@ fn line_rational_quadratic_bezier_overlap_retains_empty_inverse_boundary_evidenc
     assert!(support_overlap.inverse_boundary_roots[1].roots.is_empty());
     assert!(report.algebraic_breakpoints.is_empty());
     assert!(report.algebraic_breakpoint_orders.is_empty());
+    assert!(report.algebraic_breakpoint_sequences.is_empty());
 }
 
 #[test]
@@ -9866,6 +9910,27 @@ proptest! {
                 .iter()
                 .all(|order| order.order
                     != LineRationalQuadraticBezierAlgebraicBreakpointOrderClass::Unknown)
+        );
+        prop_assert_eq!(report.algebraic_breakpoint_sequences.len(), 2);
+        prop_assert!(
+            report
+                .algebraic_breakpoint_sequences
+                .iter()
+                .any(|sequence| sequence.source
+                    == LineRationalQuadraticBezierAlgebraicBreakpointSequenceSource::Curve(0)
+                    && sequence.class
+                        == LineRationalQuadraticBezierAlgebraicBreakpointSequenceClass::Ordered
+                    && sequence.blockers.is_empty())
+        );
+        prop_assert!(
+            report
+                .algebraic_breakpoint_sequences
+                .iter()
+                .any(|sequence| sequence.source
+                    == LineRationalQuadraticBezierAlgebraicBreakpointSequenceSource::Line(0)
+                    && sequence.class
+                        == LineRationalQuadraticBezierAlgebraicBreakpointSequenceClass::Ambiguous
+                    && !sequence.blockers.is_empty())
         );
         prop_assert_eq!(report.line_breakpoints[0].len(), 2);
         prop_assert_eq!(report.conic_breakpoints[0].len(), 2);

@@ -7,6 +7,7 @@
 //! boolean materialization; those are downstream responsibilities.
 
 use std::cmp::Ordering;
+use std::collections::BTreeMap;
 
 use hyperlimit::{Point2, PredicatePolicy, compare_reals_with_policy, point2_equal_with_policy};
 use hyperreal::{Real, RealExactSetFacts};
@@ -154,6 +155,63 @@ pub struct LineRationalQuadraticBezierAlgebraicBreakpointOrder {
     pub order: LineRationalQuadraticBezierAlgebraicBreakpointOrderClass,
 }
 
+/// Source parameter space for a retained line/conic algebraic breakpoint sequence.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum LineRationalQuadraticBezierAlgebraicBreakpointSequenceSource {
+    /// Breakpoints ordered by exact retained line parameter.
+    Line(usize),
+    /// Breakpoints ordered by represented rational-quadratic source parameter.
+    Curve(usize),
+}
+
+/// Sequence readiness for retained algebraic line/conic breakpoints.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum LineRationalQuadraticBezierAlgebraicBreakpointSequenceClass {
+    /// Every same-source pair had certified strict order, so `breakpoints` is sorted.
+    Ordered,
+    /// A pair was equal, missing, or undecidable; insertion order is retained.
+    Ambiguous,
+}
+
+/// Exact blocker that prevents a retained conic algebraic sequence from being sorted.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum LineRationalQuadraticBezierAlgebraicBreakpointSequenceBlocker {
+    /// Same-curve represented-parameter order was not emitted for this pair.
+    MissingOrder { left: usize, right: usize },
+    /// Same-curve represented-parameter intervals overlap or comparison did not decide.
+    UnknownOrder { left: usize, right: usize },
+    /// Distinct retained candidates have the same source parameter on this sequence.
+    EqualOrder { left: usize, right: usize },
+}
+
+/// Ordered retained algebraic line/conic breakpoint indices for one source.
+///
+/// The indices address
+/// [`LineRationalQuadraticBezierArrangementReport::algebraic_breakpoints`].
+/// Curve sequences consume represented conic-parameter order evidence; line
+/// sequences use the exact retained endpoint parameter (`0` or `1`) attached
+/// to each nonmonotone overlap boundary. This deliberately remains evidence:
+/// it does not mutate [`LineRationalQuadraticBezierArrangementReport::conic_breakpoints`]
+/// or emit homogeneous fragments at algebraic parameters.
+///
+/// This follows Yap, "Towards Exact Geometric Computation" (1997): exact
+/// retained objects carry replayable certificates, while equality and
+/// undecidable order remain explicit blockers. The represented conic roots use
+/// the Sturm/Collins-Loos univariate model from Collins and Loos, "Real Zeros
+/// of Polynomials" (1982); the rational conic boundary equation is kept in
+/// homogeneous form as in Farouki, *Pythagorean Hodograph Curves* (2008).
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct LineRationalQuadraticBezierAlgebraicBreakpointSequence {
+    /// Source whose parameter orders this sequence.
+    pub source: LineRationalQuadraticBezierAlgebraicBreakpointSequenceSource,
+    /// Breakpoint indices, sorted only when `class == Ordered`.
+    pub breakpoints: Vec<usize>,
+    /// Whether this source sequence is ready for exact algebraic split construction.
+    pub class: LineRationalQuadraticBezierAlgebraicBreakpointSequenceClass,
+    /// Exact reasons that prevented sorting.
+    pub blockers: Vec<LineRationalQuadraticBezierAlgebraicBreakpointSequenceBlocker>,
+}
+
 /// Exact breakpoint on one arranged rational quadratic conic.
 #[derive(Clone, Debug, PartialEq)]
 pub struct RationalQuadraticBezierRealBreakpoint {
@@ -241,6 +299,8 @@ pub struct LineRationalQuadraticBezierArrangementReport {
     pub algebraic_breakpoints: Vec<LineRationalQuadraticBezierAlgebraicBreakpoint>,
     /// Pairwise exact order evidence for retained algebraic conic breakpoints.
     pub algebraic_breakpoint_orders: Vec<LineRationalQuadraticBezierAlgebraicBreakpointOrder>,
+    /// Per-source retained algebraic breakpoint sequences derived from exact order evidence.
+    pub algebraic_breakpoint_sequences: Vec<LineRationalQuadraticBezierAlgebraicBreakpointSequence>,
     /// Sorted line breakpoints induced by line endpoints and certified events.
     pub line_breakpoints: Vec<Vec<MixedConicLineArrangementBreakpoint>>,
     /// Sorted conic breakpoints induced by endpoints and certified events.
@@ -329,6 +389,11 @@ pub fn arrange_line_segments_with_rational_quadratic_beziers_and_provenance(
     sort_and_dedup_conic_breakpoints(&mut conic_breakpoints, policy)?;
     let algebraic_breakpoint_orders =
         algebraic_conic_breakpoint_orders(&algebraic_breakpoints, policy);
+    let algebraic_breakpoint_sequences = algebraic_conic_breakpoint_sequences(
+        &algebraic_breakpoints,
+        &algebraic_breakpoint_orders,
+        policy,
+    );
     let line_fragments = build_line_fragments(&line_breakpoints, policy)?;
     let conic_fragments = build_conic_fragments(&conic_breakpoints, curves, policy)?;
     let facts = LineRationalQuadraticBezierArrangementFacts {
@@ -344,6 +409,7 @@ pub fn arrange_line_segments_with_rational_quadratic_beziers_and_provenance(
         support_overlaps,
         algebraic_breakpoints,
         algebraic_breakpoint_orders,
+        algebraic_breakpoint_sequences,
         line_breakpoints,
         conic_breakpoints,
         line_fragments,
@@ -482,6 +548,200 @@ fn algebraic_conic_breakpoint_orders(
         }
     }
     orders
+}
+
+fn algebraic_conic_breakpoint_sequences(
+    breakpoints: &[LineRationalQuadraticBezierAlgebraicBreakpoint],
+    orders: &[LineRationalQuadraticBezierAlgebraicBreakpointOrder],
+    policy: PredicatePolicy,
+) -> Vec<LineRationalQuadraticBezierAlgebraicBreakpointSequence> {
+    let mut curve_breakpoints: BTreeMap<usize, Vec<usize>> = BTreeMap::new();
+    let mut line_breakpoints: BTreeMap<usize, Vec<usize>> = BTreeMap::new();
+    for (index, breakpoint) in breakpoints.iter().enumerate() {
+        curve_breakpoints
+            .entry(breakpoint.curve)
+            .or_default()
+            .push(index);
+        line_breakpoints
+            .entry(breakpoint.line)
+            .or_default()
+            .push(index);
+    }
+
+    let mut sequences = Vec::new();
+    for (curve, indices) in curve_breakpoints {
+        sequences.push(algebraic_conic_breakpoint_sequence_for_source(
+            LineRationalQuadraticBezierAlgebraicBreakpointSequenceSource::Curve(curve),
+            indices,
+            breakpoints,
+            orders,
+            policy,
+        ));
+    }
+    for (line, indices) in line_breakpoints {
+        sequences.push(algebraic_conic_breakpoint_sequence_for_source(
+            LineRationalQuadraticBezierAlgebraicBreakpointSequenceSource::Line(line),
+            indices,
+            breakpoints,
+            orders,
+            policy,
+        ));
+    }
+    sequences
+}
+
+fn algebraic_conic_breakpoint_sequence_for_source(
+    source: LineRationalQuadraticBezierAlgebraicBreakpointSequenceSource,
+    mut indices: Vec<usize>,
+    breakpoints: &[LineRationalQuadraticBezierAlgebraicBreakpoint],
+    orders: &[LineRationalQuadraticBezierAlgebraicBreakpointOrder],
+    policy: PredicatePolicy,
+) -> LineRationalQuadraticBezierAlgebraicBreakpointSequence {
+    let mut blockers = Vec::new();
+    for left_index in 0..indices.len() {
+        for right_index in (left_index + 1)..indices.len() {
+            let left = indices[left_index];
+            let right = indices[right_index];
+            match algebraic_conic_order_between(source, left, right, breakpoints, orders, policy) {
+                Some(LineRationalQuadraticBezierAlgebraicBreakpointOrderClass::Before)
+                | Some(LineRationalQuadraticBezierAlgebraicBreakpointOrderClass::After) => {}
+                Some(LineRationalQuadraticBezierAlgebraicBreakpointOrderClass::Equal) => {
+                    blockers.push(
+                        LineRationalQuadraticBezierAlgebraicBreakpointSequenceBlocker::EqualOrder {
+                            left,
+                            right,
+                        },
+                    );
+                }
+                Some(LineRationalQuadraticBezierAlgebraicBreakpointOrderClass::Unknown) => {
+                    blockers.push(
+                        LineRationalQuadraticBezierAlgebraicBreakpointSequenceBlocker::UnknownOrder {
+                            left,
+                            right,
+                        },
+                    );
+                }
+                None => {
+                    blockers.push(
+                        LineRationalQuadraticBezierAlgebraicBreakpointSequenceBlocker::MissingOrder {
+                            left,
+                            right,
+                        },
+                    );
+                }
+            }
+        }
+    }
+
+    let class = if blockers.is_empty() {
+        indices.sort_by(|left, right| {
+            algebraic_conic_ordering_for_sort(source, *left, *right, breakpoints, orders, policy)
+                .expect("algebraic conic source order was certified before sorting")
+        });
+        LineRationalQuadraticBezierAlgebraicBreakpointSequenceClass::Ordered
+    } else {
+        LineRationalQuadraticBezierAlgebraicBreakpointSequenceClass::Ambiguous
+    };
+
+    LineRationalQuadraticBezierAlgebraicBreakpointSequence {
+        source,
+        breakpoints: indices,
+        class,
+        blockers,
+    }
+}
+
+fn algebraic_conic_ordering_for_sort(
+    source: LineRationalQuadraticBezierAlgebraicBreakpointSequenceSource,
+    left: usize,
+    right: usize,
+    breakpoints: &[LineRationalQuadraticBezierAlgebraicBreakpoint],
+    orders: &[LineRationalQuadraticBezierAlgebraicBreakpointOrder],
+    policy: PredicatePolicy,
+) -> Option<Ordering> {
+    if left == right {
+        return Some(Ordering::Equal);
+    }
+    match algebraic_conic_order_between(source, left, right, breakpoints, orders, policy)? {
+        LineRationalQuadraticBezierAlgebraicBreakpointOrderClass::Before => Some(Ordering::Less),
+        LineRationalQuadraticBezierAlgebraicBreakpointOrderClass::After => Some(Ordering::Greater),
+        LineRationalQuadraticBezierAlgebraicBreakpointOrderClass::Equal => Some(Ordering::Equal),
+        LineRationalQuadraticBezierAlgebraicBreakpointOrderClass::Unknown => None,
+    }
+}
+
+fn algebraic_conic_order_between(
+    source: LineRationalQuadraticBezierAlgebraicBreakpointSequenceSource,
+    left: usize,
+    right: usize,
+    breakpoints: &[LineRationalQuadraticBezierAlgebraicBreakpoint],
+    orders: &[LineRationalQuadraticBezierAlgebraicBreakpointOrder],
+    policy: PredicatePolicy,
+) -> Option<LineRationalQuadraticBezierAlgebraicBreakpointOrderClass> {
+    match source {
+        LineRationalQuadraticBezierAlgebraicBreakpointSequenceSource::Line(_) => {
+            compare_exact_conic_line_parameters(
+                &breakpoints[left].line_parameter,
+                &breakpoints[right].line_parameter,
+                policy,
+            )
+        }
+        LineRationalQuadraticBezierAlgebraicBreakpointSequenceSource::Curve(curve) => {
+            algebraic_conic_curve_order_between(curve, left, right, orders)
+        }
+    }
+}
+
+fn compare_exact_conic_line_parameters(
+    left: &Real,
+    right: &Real,
+    policy: PredicatePolicy,
+) -> Option<LineRationalQuadraticBezierAlgebraicBreakpointOrderClass> {
+    Some(
+        match compare_reals_with_policy(left, right, policy).value()? {
+            Ordering::Less => LineRationalQuadraticBezierAlgebraicBreakpointOrderClass::Before,
+            Ordering::Equal => LineRationalQuadraticBezierAlgebraicBreakpointOrderClass::Equal,
+            Ordering::Greater => LineRationalQuadraticBezierAlgebraicBreakpointOrderClass::After,
+        },
+    )
+}
+
+fn algebraic_conic_curve_order_between(
+    curve: usize,
+    left: usize,
+    right: usize,
+    orders: &[LineRationalQuadraticBezierAlgebraicBreakpointOrder],
+) -> Option<LineRationalQuadraticBezierAlgebraicBreakpointOrderClass> {
+    let direct = orders
+        .iter()
+        .find(|order| order.curve == curve && order.left == left && order.right == right)
+        .map(|order| order.order);
+    if direct.is_some() {
+        return direct;
+    }
+    orders
+        .iter()
+        .find(|order| order.curve == curve && order.left == right && order.right == left)
+        .map(|order| reverse_algebraic_conic_order(order.order))
+}
+
+fn reverse_algebraic_conic_order(
+    order: LineRationalQuadraticBezierAlgebraicBreakpointOrderClass,
+) -> LineRationalQuadraticBezierAlgebraicBreakpointOrderClass {
+    match order {
+        LineRationalQuadraticBezierAlgebraicBreakpointOrderClass::Before => {
+            LineRationalQuadraticBezierAlgebraicBreakpointOrderClass::After
+        }
+        LineRationalQuadraticBezierAlgebraicBreakpointOrderClass::After => {
+            LineRationalQuadraticBezierAlgebraicBreakpointOrderClass::Before
+        }
+        LineRationalQuadraticBezierAlgebraicBreakpointOrderClass::Equal => {
+            LineRationalQuadraticBezierAlgebraicBreakpointOrderClass::Equal
+        }
+        LineRationalQuadraticBezierAlgebraicBreakpointOrderClass::Unknown => {
+            LineRationalQuadraticBezierAlgebraicBreakpointOrderClass::Unknown
+        }
+    }
 }
 
 fn compare_algebraic_conic_parameters(

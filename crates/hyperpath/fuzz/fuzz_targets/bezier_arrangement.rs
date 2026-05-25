@@ -10,6 +10,8 @@ use hyperpath::{
     LinePathSegment, LineQuadraticBezierIntersectionClass,
     LineRationalQuadraticBezierAlgebraicBreakpointDomain,
     LineRationalQuadraticBezierAlgebraicBreakpointOrderClass,
+    LineRationalQuadraticBezierAlgebraicBreakpointSequenceClass,
+    LineRationalQuadraticBezierAlgebraicBreakpointSequenceSource,
     LineRationalQuadraticBezierIntersectionClass, LineRationalQuadraticBezierInverseRootDomain,
     LineRationalQuadraticBezierSupportOverlapMonotonicity, QuadraticBezier,
     RationalQuadraticBezier, arrange_cubic_beziers, arrange_line_segments_with_cubic_beziers,
@@ -430,6 +432,27 @@ fuzz_target!(|data: &[u8]| {
     assert_ne!(
         nonmonotone_report.algebraic_breakpoint_orders[0].order,
         LineRationalQuadraticBezierAlgebraicBreakpointOrderClass::Unknown
+    );
+    assert_eq!(nonmonotone_report.algebraic_breakpoint_sequences.len(), 2);
+    assert!(
+        nonmonotone_report
+            .algebraic_breakpoint_sequences
+            .iter()
+            .any(|sequence| sequence.source
+                == LineRationalQuadraticBezierAlgebraicBreakpointSequenceSource::Curve(0)
+                && sequence.class
+                    == LineRationalQuadraticBezierAlgebraicBreakpointSequenceClass::Ordered
+                && sequence.blockers.is_empty())
+    );
+    assert!(
+        nonmonotone_report
+            .algebraic_breakpoint_sequences
+            .iter()
+            .any(|sequence| sequence.source
+                == LineRationalQuadraticBezierAlgebraicBreakpointSequenceSource::Line(0)
+                && sequence.class
+                    == LineRationalQuadraticBezierAlgebraicBreakpointSequenceClass::Ambiguous
+                && !sequence.blockers.is_empty())
     );
 
     let r_report =
