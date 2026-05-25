@@ -1,5 +1,10 @@
 #![no_main]
 
+#[cfg(feature = "exact-triangulation")]
+use std::cmp::Ordering;
+
+#[cfg(feature = "exact-triangulation")]
+use hyperlimit::{Point3, compare_reals};
 use hypermesh::exact::{
     CoplanarAffineSurfaceArrangement, CoplanarAffineSurfaceBasis, CoplanarArrangementOperation,
     CoplanarOrthogonalSurfaceArrangement, CoplanarOrthogonalSurfaceComponent,
@@ -1418,7 +1423,7 @@ fuzz_target!(|data: &[u8]| {
 
 #[cfg(feature = "exact-triangulation")]
 fn exercise_deterministic_case(selector: u8) {
-    match selector % 36 {
+    match selector % 37 {
         0 => exercise_partial_convex_union_boundary(),
         1 => exercise_face_interior_steiner_boundary(),
         2 => exercise_multi_component_coplanar_union(),
@@ -1454,7 +1459,8 @@ fn exercise_deterministic_case(selector: u8) {
         32 => exercise_overlapping_component_holed_coplanar_union(),
         33 => exercise_nonconvex_overlap_component_holed_coplanar_union(),
         34 => exercise_point_branch_component_holed_coplanar_union(),
-        _ => exercise_nonrectangular_component_union_hull_coverage(),
+        35 => exercise_nonrectangular_component_union_hull_coverage(),
+        _ => exercise_nonconvex_coplanar_volumetric_difference_fan_split(),
     }
 }
 
@@ -11247,6 +11253,70 @@ fn exercise_non_rectilinear_coplanar_volumetric_materialization() {
         .unwrap();
     assert!(fan_difference.containing_faces.len() > 1);
     assert_eq!(fan_difference.contained_faces.len(), 2);
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn exercise_nonconvex_coplanar_volumetric_difference_fan_split() {
+    let left = upward_l_prism_i64([[0, 0], [8, 0], [8, 3], [3, 3], [3, 8], [0, 8]], 5);
+    let right = tetrahedron_i64([1, 1, 0], [7, 1, 0], [1, 7, 0], [1, 1, 5]);
+    let graph = build_intersection_graph(&left, &right)
+        .expect("nonconvex coplanar-volumetric graph should build");
+    graph.validate().expect("graph should validate locally");
+    graph
+        .validate_against_meshes(&left, &right)
+        .expect("graph should replay against sources");
+    assert!(graph.face_pairs.iter().any(|pair| {
+        pair.relation == hypermesh::exact::MeshFacePairRelation::CoplanarOverlapping
+    }));
+
+    for operation in [
+        ExactBooleanOperation::Union,
+        ExactBooleanOperation::Intersection,
+        ExactBooleanOperation::Difference,
+    ] {
+        let preflight = preflight_boolean_exact(&left, &right, operation)
+            .expect("nonconvex coplanar-volumetric preflight should build");
+        preflight.validate().unwrap();
+        preflight.validate_against_sources(&left, &right).unwrap();
+        assert_eq!(
+            preflight.support,
+            ExactBooleanSupport::CertifiedWindingMaterialized
+        );
+        let result =
+            hypermesh::exact::boolean_exact(&left, &right, operation, ValidationPolicy::CLOSED)
+                .expect("nonconvex coplanar-volumetric boolean should materialize");
+        result
+            .validate_operation_against_sources(
+                &left,
+                &right,
+                operation,
+                ValidationPolicy::CLOSED,
+                ExactBoundaryBooleanPolicy::Reject,
+            )
+            .unwrap();
+        assert!(result.mesh.facts().mesh.closed_manifold);
+        if operation == ExactBooleanOperation::Difference {
+            assert!(assembly_has_duplicate_exact_point(&result.assembly));
+        }
+    }
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn assembly_has_duplicate_exact_point(assembly: &ExactBooleanAssemblyPlan) -> bool {
+    assembly.vertices.iter().enumerate().any(|(left_index, left)| {
+        assembly
+            .vertices
+            .iter()
+            .skip(left_index + 1)
+            .any(|right| exact_point3_eq(&left.point, &right.point))
+    })
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn exact_point3_eq(left: &Point3, right: &Point3) -> bool {
+    compare_reals(&left.x, &right.x).value() == Some(Ordering::Equal)
+        && compare_reals(&left.y, &right.y).value() == Some(Ordering::Equal)
+        && compare_reals(&left.z, &right.z).value() == Some(Ordering::Equal)
 }
 
 #[cfg(feature = "exact-triangulation")]

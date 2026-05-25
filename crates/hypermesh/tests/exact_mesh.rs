@@ -956,6 +956,30 @@ fn combine_exact_meshes(meshes: &[ExactMesh], label: &'static str) -> ExactMesh 
     .unwrap()
 }
 
+#[cfg(feature = "exact-triangulation")]
+fn assembly_has_duplicate_exact_point(
+    assembly: &hypermesh::exact::ExactBooleanAssemblyPlan,
+) -> bool {
+    assembly
+        .vertices
+        .iter()
+        .enumerate()
+        .any(|(left_index, left)| {
+            assembly
+                .vertices
+                .iter()
+                .skip(left_index + 1)
+                .any(|right| exact_point3_eq(&left.point, &right.point))
+        })
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn exact_point3_eq(left: &Point3, right: &Point3) -> bool {
+    compare_reals(&left.x, &right.x).value() == Some(Ordering::Equal)
+        && compare_reals(&left.y, &right.y).value() == Some(Ordering::Equal)
+        && compare_reals(&left.z, &right.z).value() == Some(Ordering::Equal)
+}
+
 fn base_fan_tetrahedron_i64(
     a: [i64; 3],
     b: [i64; 3],
@@ -10569,7 +10593,6 @@ fn exact_non_rectilinear_coplanar_volumetric_overlap_splits_source_faces() {
                 )
             })
     }));
-
     for operation in [
         hypermesh::exact::ExactBooleanOperation::Union,
         hypermesh::exact::ExactBooleanOperation::Intersection,
@@ -10640,6 +10663,82 @@ fn exact_non_rectilinear_coplanar_volumetric_overlap_splits_source_faces() {
             .map(|triangulation| triangulation.triangles.len() / 3)
             .sum::<usize>();
         assert!(retained_cell_triangles > left.triangles().len() + right.triangles().len());
+    }
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[test]
+fn exact_nonconvex_coplanar_volumetric_overlap_materializes_from_winding_cells() {
+    let left = upward_l_prism_i64([[0, 0], [8, 0], [8, 3], [3, 3], [3, 8], [0, 8]], 5);
+    let right = tetrahedron_i64([1, 1, 0], [7, 1, 0], [1, 7, 0], [1, 1, 5]);
+
+    let graph = build_intersection_graph(&left, &right).unwrap();
+    graph.validate().unwrap();
+    graph.validate_against_meshes(&left, &right).unwrap();
+    assert!(graph.face_pairs.iter().any(|pair| {
+        pair.relation == hypermesh::exact::MeshFacePairRelation::CoplanarOverlapping
+    }));
+    assert!(graph.face_pairs.iter().any(|pair| {
+        pair.relation == hypermesh::exact::MeshFacePairRelation::Candidate
+            && pair.events.iter().any(|event| {
+                matches!(
+                    event,
+                    IntersectionEvent::SegmentPlane {
+                        relation: SegmentPlaneRelation::ProperCrossing,
+                        ..
+                    }
+                )
+            })
+    }));
+
+    for operation in [
+        hypermesh::exact::ExactBooleanOperation::Union,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    ] {
+        let preflight =
+            hypermesh::exact::preflight_boolean_exact(&left, &right, operation).unwrap();
+        preflight.validate().unwrap();
+        preflight.validate_against_sources(&left, &right).unwrap();
+        assert_eq!(
+            preflight.support,
+            hypermesh::exact::ExactBooleanSupport::CertifiedWindingMaterialized
+        );
+        assert!(preflight.blocker.is_none());
+        let evidence = preflight
+            .coplanar_volumetric_evidence
+            .as_ref()
+            .expect("nonconvex coplanar-volumetric materialization retains evidence");
+        evidence.validate().unwrap();
+        assert_eq!(
+            evidence.obstacle,
+            CoplanarVolumetricCellObstacle::MixedCoplanarAndCrossingCells
+        );
+
+        let result =
+            hypermesh::exact::boolean_exact(&left, &right, operation, ValidationPolicy::CLOSED)
+                .unwrap();
+        result.validate().unwrap();
+        result
+            .validate_operation_against_sources(
+                &left,
+                &right,
+                operation,
+                ValidationPolicy::CLOSED,
+                hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+            )
+            .unwrap();
+        assert_eq!(
+            result.kind,
+            hypermesh::exact::ExactBooleanResultKind::WindingMaterialized { operation }
+        );
+        assert!(result.mesh.facts().mesh.closed_manifold);
+        if operation == hypermesh::exact::ExactBooleanOperation::Difference {
+            assert!(
+                assembly_has_duplicate_exact_point(&result.assembly),
+                "difference must split point-contact fans into distinct exact vertices"
+            );
+        }
     }
 }
 

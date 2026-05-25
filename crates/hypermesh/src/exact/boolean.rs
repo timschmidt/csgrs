@@ -890,14 +890,16 @@ pub fn preflight_boolean_exact(
     if let Some((region_classifications, triangulations, _volumetric_classifications)) =
         volumetric_winding_region_plan_from_graph(&graph, left, right)?.filter(
             |(_, triangulations, volumetric_classifications)| {
-                volumetric_classifications
+                let decided = volumetric_classifications
                     .iter()
-                    .all(|classification| classification.relation.is_materialization_decided())
-                    && operation_retains_any_volumetric_region(
-                        operation,
-                        triangulations,
-                        volumetric_classifications,
-                    )
+                    .all(|classification| classification.relation.is_materialization_decided());
+                let retains = operation_retains_any_volumetric_region(
+                    operation,
+                    triangulations,
+                    volumetric_classifications,
+                );
+                decided
+                    && retains
                     && volumetric_plan_materializes_operation(
                         operation,
                         triangulations,
@@ -4525,7 +4527,7 @@ fn boolean_volumetric_winding_regions(
         return Ok(None);
     }
 
-    let assembly =
+    let mut assembly =
         ExactBooleanAssemblyPlan::from_region_triangulations_with_triangle_retention_and_sources(
             &triangulations,
             left,
@@ -4546,6 +4548,13 @@ fn boolean_volumetric_winding_regions(
                 format!("exact winding region assembly failed: {error}"),
             ))
         })?;
+    assembly.split_disconnected_vertex_fans().map_err(|error| {
+        MeshError::one(MeshDiagnostic::new(
+            Severity::Error,
+            DiagnosticKind::IndexOutOfBounds,
+            format!("exact winding region vertex-fan split failed: {error}"),
+        ))
+    })?;
     let mesh = match assembly.checked_to_exact_mesh_with_sources(left, right, validation) {
         Ok(mesh) => mesh,
         Err(_error)
@@ -4656,7 +4665,7 @@ fn volumetric_plan_materializes_operation(
     right: &ExactMesh,
     validation: ValidationPolicy,
 ) -> bool {
-    let Ok(assembly) =
+    let Ok(mut assembly) =
         ExactBooleanAssemblyPlan::from_region_triangulations_with_triangle_retention_and_sources(
             triangulations,
             left,
@@ -4673,6 +4682,9 @@ fn volumetric_plan_materializes_operation(
     else {
         return false;
     };
+    if assembly.split_disconnected_vertex_fans().is_err() {
+        return false;
+    }
     assembly
         .checked_to_exact_mesh_with_sources(left, right, validation)
         .is_ok()

@@ -9913,6 +9913,9 @@ fn exact_boolean_volumetric_winding_materialization(c: &mut Criterion) {
             tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
         let non_rectilinear_coplanar_right =
             tetrahedron_i64([1, 1, 0], [5, 1, 0], [1, 5, 0], [1, 1, 4]);
+        let nonconvex_coplanar_left =
+            upward_l_prism_i64([[0, 0], [8, 0], [8, 3], [3, 3], [3, 8], [0, 8]], 5);
+        let nonconvex_coplanar_right = tetrahedron_i64([1, 1, 0], [7, 1, 0], [1, 7, 0], [1, 1, 5]);
         let boundary_contained_convex_outer =
             tetrahedron_i64([0, 0, 0], [8, 0, 0], [0, 8, 0], [0, 0, 8]);
         let boundary_contained_convex_inner =
@@ -10397,6 +10400,37 @@ fn exact_boolean_volumetric_winding_materialization(c: &mut Criterion) {
                         non_rectilinear_wrong_operation.validate().is_err(),
                         non_rectilinear_wrong_orientation.validate().is_err(),
                     )
+                })
+            },
+        );
+
+        c.bench_function(
+            "exact_boolean_nonconvex_coplanar_volumetric_fan_split",
+            |b| {
+                b.iter(|| {
+                    let preflight = hypermesh::exact::preflight_boolean_exact(
+                        &nonconvex_coplanar_left,
+                        &nonconvex_coplanar_right,
+                        hypermesh::exact::ExactBooleanOperation::Difference,
+                    )
+                    .unwrap();
+                    let result = hypermesh::exact::boolean_exact(
+                        &nonconvex_coplanar_left,
+                        &nonconvex_coplanar_right,
+                        hypermesh::exact::ExactBooleanOperation::Difference,
+                        ValidationPolicy::CLOSED,
+                    )
+                    .unwrap();
+                    result
+                        .validate_operation_against_sources(
+                            &nonconvex_coplanar_left,
+                            &nonconvex_coplanar_right,
+                            hypermesh::exact::ExactBooleanOperation::Difference,
+                            ValidationPolicy::CLOSED,
+                            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+                        )
+                        .unwrap();
+                    (preflight, result.mesh.triangles().len())
                 })
             },
         );

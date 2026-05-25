@@ -16,7 +16,7 @@
 //! 8.1 (2003), but routed through `hyperlimit::orient3d_report`.
 
 #[cfg(feature = "exact-triangulation")]
-use std::cmp::Ordering;
+use std::{cmp::Ordering, collections::BTreeMap};
 
 use hyperlimit::{PlaneSide, Point3, orient3d_report};
 #[cfg(feature = "exact-triangulation")]
@@ -800,6 +800,51 @@ impl ExactBooleanAssemblyPlan {
         validate_assembly_source_face_incidence(self, left, right)
     }
 
+    /// Split exact-equal assembly vertices whose retained triangle fans are
+    /// disconnected.
+    ///
+    /// The default assembly welds exact-equal coordinates globally. That is the
+    /// right handoff for ordinary edge-adjacent output, but winding-materialized
+    /// booleans can produce regularized differences where two closed sheets touch
+    /// at one exact coordinate while remaining distinct topological vertices. A
+    /// global weld turns that point contact into a non-manifold vertex even
+    /// though each incident fan is separately valid. This method replays only the
+    /// retained triangle adjacency around each welded vertex and duplicates the
+    /// vertex for every disconnected fan component.
+    ///
+    /// This is a topological decision made from exact combinatorial evidence:
+    /// triangles are joined in a fan only when they share a retained output edge.
+    /// No coordinate perturbation is introduced, and cloned vertices retain the
+    /// same exact point and source witness. That preserves the object/predicate
+    /// boundary advocated by Yap, "Towards Exact Geometric Computation,"
+    /// *Computational Geometry* 7.1-2 (1997), while allowing the mesh topology to
+    /// represent point contacts as separate vertices.
+    pub fn split_disconnected_vertex_fans(&mut self) -> hypertri::Result<usize> {
+        let original_vertex_count = self.vertices.len();
+        let mut cloned_vertices = 0;
+        for vertex in 0..original_vertex_count {
+            let incident = incident_triangles(self, vertex);
+            if incident.len() <= 1 {
+                continue;
+            }
+            let components = vertex_fan_components(self, vertex, &incident);
+            if components.len() <= 1 {
+                continue;
+            }
+            for component in components.into_iter().skip(1) {
+                let clone = self.vertices[vertex].clone();
+                let clone_index = self.vertices.len();
+                self.vertices.push(clone);
+                for triangle in component {
+                    replace_triangle_vertex(&mut self.triangles[triangle], vertex, clone_index);
+                }
+                cloned_vertices += 1;
+            }
+        }
+        self.validate()?;
+        Ok(cloned_vertices)
+    }
+
     /// Recompute this assembly plan from source meshes and a region selection.
     ///
     /// Local validation and source-face incidence prove that this plan is
@@ -1391,6 +1436,94 @@ fn remap_region_vertex(
     let index = vertices.len() - 1;
     remap[region_vertex] = Some(index);
     Ok(index)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn incident_triangles(assembly: &ExactBooleanAssemblyPlan, vertex: usize) -> Vec<usize> {
+    assembly
+        .triangles
+        .iter()
+        .enumerate()
+        .filter_map(|(triangle_index, triangle)| {
+            triangle
+                .vertices
+                .contains(&vertex)
+                .then_some(triangle_index)
+        })
+        .collect()
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn vertex_fan_components(
+    assembly: &ExactBooleanAssemblyPlan,
+    vertex: usize,
+    incident: &[usize],
+) -> Vec<Vec<usize>> {
+    let mut fan = DisjointTriangleFan::new(incident.len());
+    let mut edge_uses = BTreeMap::<usize, Vec<usize>>::new();
+    for (local_triangle, &triangle_index) in incident.iter().enumerate() {
+        for &corner in &assembly.triangles[triangle_index].vertices {
+            if corner != vertex {
+                edge_uses.entry(corner).or_default().push(local_triangle);
+            }
+        }
+    }
+    for uses in edge_uses.values() {
+        if let [left, right] = uses.as_slice() {
+            fan.union(*left, *right);
+        }
+    }
+
+    let mut components = BTreeMap::<usize, Vec<usize>>::new();
+    for (local_triangle, &triangle_index) in incident.iter().enumerate() {
+        components
+            .entry(fan.find(local_triangle))
+            .or_default()
+            .push(triangle_index);
+    }
+    components.into_values().collect()
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn replace_triangle_vertex(triangle: &mut ExactOutputTriangle, old: usize, new: usize) {
+    for vertex in &mut triangle.vertices {
+        if *vertex == old {
+            *vertex = new;
+        }
+    }
+}
+
+#[cfg(feature = "exact-triangulation")]
+struct DisjointTriangleFan {
+    parent: Vec<usize>,
+}
+
+#[cfg(feature = "exact-triangulation")]
+impl DisjointTriangleFan {
+    fn new(len: usize) -> Self {
+        Self {
+            parent: (0..len).collect(),
+        }
+    }
+
+    fn find(&mut self, index: usize) -> usize {
+        let parent = self.parent[index];
+        if parent == index {
+            index
+        } else {
+            let root = self.find(parent);
+            self.parent[index] = root;
+            root
+        }
+    }
+
+    fn union(&mut self, left: usize, right: usize) {
+        let left_root = self.find(left);
+        let right_root = self.find(right);
+        if left_root != right_root {
+            self.parent[right_root] = left_root;
+        }
+    }
 }
 
 fn classify_region_against_face_plane(
