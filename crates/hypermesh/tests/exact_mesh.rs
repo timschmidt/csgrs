@@ -26585,6 +26585,115 @@ fn exact_coplanar_component_holed_difference_materializes_nested_same_outer_hole
         "hole boundary contact is not a strict nested-hole difference"
     );
 
+    let partial_outer = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 12, 0, 0, 12, 12, 0, 0, 12, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let retained_and_cutting_left_holes = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            4, 4, 0, 6, 4, 0, 6, 6, 0, 4, 6, 0, //
+            8, 1, 0, 11, 1, 0, 11, 5, 0, 8, 5, 0,
+        ],
+        &[0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let partial_right_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[2, 2, 0, 10, 2, 0, 10, 10, 0, 2, 10, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let partial_left = hypermesh::exact::arrange_coplanar_convex_surface_multi_holed_difference(
+        &partial_outer,
+        &retained_and_cutting_left_holes,
+    )
+    .expect("retained-plus-cutting left holes should materialize")
+    .mesh;
+    let partial_right = hypermesh::exact::arrange_coplanar_convex_surface_holed_difference(
+        &partial_outer,
+        &partial_right_hole,
+    )
+    .expect("large right hole should materialize")
+    .mesh;
+    let partial_difference = hypermesh::exact::arrange_coplanar_surface_component_holed_difference(
+        &partial_left,
+        &partial_right,
+    )
+    .expect("rectangular partial overlap should retain a holed orthogonal remnant");
+    partial_difference.validate().unwrap();
+    partial_difference
+        .validate_surface_difference_against_sources(&partial_left, &partial_right)
+        .unwrap();
+    assert_eq!(partial_difference.components.len(), 1);
+    assert_eq!(partial_difference.components[0].holes.len(), 1);
+    assert!(
+        partial_difference.components[0].outer.len() > 4,
+        "the partially cut right hole should replay as a nonconvex orthogonal outer ring"
+    );
+    assert!(
+        partial_difference.components[0]
+            .outer
+            .iter()
+            .any(|point| real_eq(&point.x, &ExactReal::from(8)))
+    );
+    let partial_preflight = hypermesh::exact::preflight_boolean_exact(
+        &partial_left,
+        &partial_right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .expect("partial component-holed preflight should classify shortcut");
+    partial_preflight.validate().unwrap();
+    partial_preflight
+        .validate_against_sources(&partial_left, &partial_right)
+        .unwrap();
+    assert_eq!(
+        partial_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
+    );
+    hypermesh::exact::boolean_exact(
+        &partial_left,
+        &partial_right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("partial component-holed difference should materialize")
+    .validate_operation_against_sources(
+        &partial_left,
+        &partial_right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
+
+    let retained_and_nonrect_cutting_left_holes = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            4, 4, 0, 6, 4, 0, 6, 6, 0, 4, 6, 0, //
+            8, 1, 0, 11, 1, 0, 11, 5, 0,
+        ],
+        &[0, 1, 2, 0, 2, 3, 4, 5, 6],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let nonrect_partial_left =
+        hypermesh::exact::arrange_coplanar_convex_surface_multi_holed_difference(
+            &partial_outer,
+            &retained_and_nonrect_cutting_left_holes,
+        )
+        .expect("retained-plus-nonrectangular left holes should materialize")
+        .mesh;
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_component_holed_difference(
+            &nonrect_partial_left,
+            &partial_right,
+        )
+        .is_none(),
+        "nonrectangular partial hole overlap is outside the bounded certificate"
+    );
+
     let preflight = hypermesh::exact::preflight_boolean_exact(
         &left,
         &right,

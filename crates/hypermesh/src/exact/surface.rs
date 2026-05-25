@@ -3880,11 +3880,14 @@ fn coplanar_mesh_pairwise_intersection_area2(
 /// When two source-owned holed surfaces replay the same exact outer boundary,
 /// `(outer - left_holes) - (outer - right_holes)` equals the portion of the
 /// right holes not removed by the left holes. This certificate accepts the
-/// nested/disjoint case only: every emitted component is a right retained hole
-/// boundary, with strict left retained holes nested inside it. Identical
-/// right/left holes and right holes strictly inside a left hole contribute no
-/// area; partial overlap, point contact, edge contact, and crossing hole
-/// boundaries reject to the general planar arrangement layer.
+/// nested/disjoint case plus the bounded projected-rectangle overlap case:
+/// every emitted component is either a right retained hole boundary, or the
+/// exact orthogonal remnant of a right retained hole after subtracting
+/// overlapping left retained rectangles. Strict left retained holes nested in
+/// the remnant stay as holes. Identical right/left holes and right holes
+/// strictly inside a left hole contribute no area; point contact, edge contact,
+/// nonrectangular overlap, and crossing boundaries outside this bounded
+/// certificate reject to the general planar arrangement layer.
 ///
 /// The source rings are recovered by exact mesh incidence, and the final area
 /// equation is replayed as `area(left) - area(left ∩ right) == area(output)`.
@@ -3982,6 +3985,7 @@ fn same_outer_holed_difference_components(
     for right_hole in &right.holes {
         let mut swallowed = false;
         let mut holes = Vec::new();
+        let mut rectangular_cutters = Vec::new();
         for left_hole in &left.holes {
             if polygons_equal(left_hole, right_hole)
                 || polygon_strictly_inside_simple_polygon(right_hole, left_hole, projection)?
@@ -3997,16 +4001,83 @@ fn same_outer_holed_difference_components(
             }
             match simple_polygon_interaction(left_hole, right_hole, projection)? {
                 SimplePolygonInteraction::Disjoint => {}
-                SimplePolygonInteraction::PointOnly | SimplePolygonInteraction::Connected => {
-                    return None;
+                SimplePolygonInteraction::PointOnly => return None,
+                SimplePolygonInteraction::Connected => {
+                    let right_rect = projected_axis_aligned_rectangle(right_hole, projection)?;
+                    let left_rect = projected_axis_aligned_rectangle(left_hole, projection)?;
+                    if !rectangles_overlap_with_positive_area(&right_rect, &left_rect)? {
+                        return None;
+                    }
+                    rectangular_cutters.push(left_rect);
                 }
             }
         }
         if swallowed {
             continue;
         }
-        let mut outer = right_hole.clone();
-        orient_polygon_ccw(&mut outer, projection)?;
+        if rectangular_cutters.is_empty() {
+            let mut outer = right_hole.clone();
+            orient_polygon_ccw(&mut outer, projection)?;
+            sort_polygons_for_replay(&mut holes, projection);
+            components.push(CoplanarConvexHoledComponent { outer, holes });
+        } else {
+            components.extend(same_outer_holed_rectangular_difference_components(
+                right_hole,
+                holes,
+                &rectangular_cutters,
+                projection,
+            )?);
+        }
+    }
+    Some(components)
+}
+
+/// Materialize a same-outer holed difference whose right hole is cut by
+/// projected axis-aligned left holes.
+///
+/// This is the component-holed sibling of
+/// [`axis_aligned_rectangle_difference_polygons`]. It keeps the same Yap-style
+/// exact-computation boundary from Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997): all topology comes from retained
+/// source rings plus exact predicates, and the caller still replays the final
+/// area equation. The orthogonal cells are the finite arrangement described by
+/// de Berg, Cheong, van Kreveld, and Overmars, *Computational Geometry:
+/// Algorithms and Applications*, 3rd ed. (2008), Chapter 2. Each retained
+/// hole is assigned only if it is strictly inside exactly one remnant loop, so
+/// crossing/touching cases cannot be smuggled into the component-holed artifact.
+#[cfg(feature = "exact-triangulation")]
+fn same_outer_holed_rectangular_difference_components(
+    source: &[Point3],
+    retained_holes: Vec<Vec<Point3>>,
+    cutters: &[ProjectedRectangle],
+    projection: CoplanarProjection,
+) -> Option<Vec<CoplanarConvexHoledComponent>> {
+    let source_rect = projected_axis_aligned_rectangle(source, projection)?;
+    let mut remnants =
+        axis_aligned_rectangle_difference_polygons(&source_rect, cutters, projection)?;
+    if remnants.is_empty() {
+        return None;
+    }
+    for remnant in &mut remnants {
+        orient_polygon_ccw(remnant, projection)?;
+    }
+
+    let mut assigned_holes = vec![Vec::new(); remnants.len()];
+    for retained_hole in retained_holes {
+        let mut containing_remnant = None;
+        for (index, remnant) in remnants.iter().enumerate() {
+            if polygon_strictly_inside_simple_polygon(&retained_hole, remnant, projection)? {
+                if containing_remnant.replace(index).is_some() {
+                    return None;
+                }
+            }
+        }
+        let index = containing_remnant?;
+        assigned_holes[index].push(retained_hole);
+    }
+
+    let mut components = Vec::new();
+    for (outer, mut holes) in remnants.into_iter().zip(assigned_holes) {
         sort_polygons_for_replay(&mut holes, projection);
         components.push(CoplanarConvexHoledComponent { outer, holes });
     }

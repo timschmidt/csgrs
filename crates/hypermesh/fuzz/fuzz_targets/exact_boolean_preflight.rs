@@ -2562,6 +2562,69 @@ fn exercise_same_outer_component_holed_coplanar_difference() {
         .mesh;
     assert!(arrange_coplanar_surface_component_holed_difference(&left, &crossing).is_none());
 
+    let partial_outer = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 12, 0, 0, 12, 12, 0, 0, 12, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("partial same-outer outer fixture must import");
+    let retained_and_cutting_left_holes = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            4, 4, 0, 6, 4, 0, 6, 6, 0, 4, 6, 0, //
+            8, 1, 0, 11, 1, 0, 11, 5, 0, 8, 5, 0,
+        ],
+        &[0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("partial same-outer left holes fixture must import");
+    let partial_right_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[2, 2, 0, 10, 2, 0, 10, 10, 0, 2, 10, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("partial same-outer right hole fixture must import");
+    let partial_left = arrange_coplanar_convex_surface_multi_holed_difference(
+        &partial_outer,
+        &retained_and_cutting_left_holes,
+    )
+    .expect("partial same-outer multi-holed left should materialize")
+    .mesh;
+    let partial_right =
+        arrange_coplanar_convex_surface_holed_difference(&partial_outer, &partial_right_hole)
+            .expect("partial same-outer right should materialize")
+            .mesh;
+    let partial_difference =
+        arrange_coplanar_surface_component_holed_difference(&partial_left, &partial_right)
+            .expect("partial rectangular overlap should retain a holed orthogonal remnant");
+    partial_difference.validate().unwrap();
+    partial_difference
+        .validate_surface_difference_against_sources(&partial_left, &partial_right)
+        .unwrap();
+    assert_eq!(partial_difference.components.len(), 1);
+    assert_eq!(partial_difference.components[0].holes.len(), 1);
+    assert!(partial_difference.components[0].outer.len() > 4);
+
+    let retained_and_nonrect_cutting_left_holes = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            4, 4, 0, 6, 4, 0, 6, 6, 0, 4, 6, 0, //
+            8, 1, 0, 11, 1, 0, 11, 5, 0,
+        ],
+        &[0, 1, 2, 0, 2, 3, 4, 5, 6],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("partial same-outer nonrect left holes fixture must import");
+    let nonrect_partial_left = arrange_coplanar_convex_surface_multi_holed_difference(
+        &partial_outer,
+        &retained_and_nonrect_cutting_left_holes,
+    )
+    .expect("partial same-outer nonrect left should materialize")
+    .mesh;
+    assert!(arrange_coplanar_surface_component_holed_difference(
+        &nonrect_partial_left,
+        &partial_right,
+    )
+    .is_none());
+
     let preflight = preflight_boolean_exact(&left, &right, ExactBooleanOperation::Difference)
         .expect("same-outer holed difference preflight should classify shortcut");
     preflight.validate().unwrap();
@@ -2580,6 +2643,33 @@ fn exercise_same_outer_component_holed_coplanar_difference() {
     .validate_operation_against_sources(
         &left,
         &right,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
+
+    let partial_preflight =
+        preflight_boolean_exact(&partial_left, &partial_right, ExactBooleanOperation::Difference)
+            .expect("partial same-outer holed difference preflight should classify shortcut");
+    partial_preflight.validate().unwrap();
+    partial_preflight
+        .validate_against_sources(&partial_left, &partial_right)
+        .unwrap();
+    assert_eq!(
+        partial_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
+    );
+    hypermesh::exact::boolean_exact(
+        &partial_left,
+        &partial_right,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("partial same-outer holed difference should materialize")
+    .validate_operation_against_sources(
+        &partial_left,
+        &partial_right,
         ExactBooleanOperation::Difference,
         ValidationPolicy::ALLOW_BOUNDARY,
         ExactBoundaryBooleanPolicy::Reject,
