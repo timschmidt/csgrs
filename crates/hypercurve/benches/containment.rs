@@ -3,10 +3,11 @@ use std::time::Instant;
 
 use hypercurve::{
     BulgeVertex2, CircularArc2, Classification, Contour2, ContourPointLocation, CurvePolicy,
-    CurveResult, CurveString2, LineSeg2, LineSide, PlanarPcurveImageRelation2, Point2, Real,
-    Region2, RegionPointLocation, RetainedPlanarFace2, RetainedPlanarFaceEdgeUseRelation2,
-    RetainedPlanarFacePointLocation2, RetainedPlanarPcurve2, RetainedPlanarSurfaceIdentity2,
-    RetainedPlanarTrimLoop2,
+    CurveResult, CurveString2, LineSeg2, LineSide, PlanarPcurveImageRelation2, Point2, Point3,
+    Real, Region2, RegionPointLocation, RetainedAnalyticSurfaceIdentity3,
+    RetainedCylinderAxialDomain3, RetainedCylinderFrame3, RetainedCylinderPointRelation3,
+    RetainedPlanarFace2, RetainedPlanarFaceEdgeUseRelation2, RetainedPlanarFacePointLocation2,
+    RetainedPlanarPcurve2, RetainedPlanarSurfaceIdentity2, RetainedPlanarTrimLoop2, SignedAxis3,
 };
 
 fn s(value: i32) -> Real {
@@ -15,6 +16,10 @@ fn s(value: i32) -> Real {
 
 fn p(x: i32, y: i32) -> Point2 {
     Point2::new(s(x), s(y))
+}
+
+fn p3(x: i32, y: i32, z: i32) -> Point3 {
+    Point3::new(s(x), s(y), s(z))
 }
 
 fn vertex(x: i32, y: i32) -> BulgeVertex2 {
@@ -386,6 +391,40 @@ fn bench_prepared_retained_planar_face_edge_use_query(iterations: u32) -> CurveR
     Ok(())
 }
 
+fn bench_retained_cylinder_point_query(iterations: u32) -> CurveResult<()> {
+    let policy = CurvePolicy::certified();
+    let frame = RetainedCylinderFrame3::try_new(
+        RetainedAnalyticSurfaceIdentity3::new(11),
+        p3(0, 0, 0),
+        SignedAxis3::PosZ,
+        SignedAxis3::PosX,
+        s(25),
+        RetainedCylinderAxialDomain3::bounded(s(-10), s(10), &policy)?,
+        &policy,
+    )?;
+    let point = p3(5, 0, 3);
+    let started = Instant::now();
+    let mut seam_count = 0_usize;
+
+    for _ in 0..iterations {
+        match frame.classify_point(&point, &policy) {
+            Classification::Decided(report)
+                if report.relation() == RetainedCylinderPointRelation3::OnSeam =>
+            {
+                seam_count += black_box(1);
+            }
+            other => panic!("retained cylinder benchmark expected seam report, got {other:?}"),
+        }
+    }
+
+    let elapsed = started.elapsed();
+    println!(
+        "retained_cylinder_point_query: {iterations} iterations in {elapsed:?} ({:?}/iter), seam={seam_count}",
+        elapsed / iterations
+    );
+    Ok(())
+}
+
 fn bench_prepared_sparse_region_single_hit(iterations: u32) -> CurveResult<()> {
     let region = sparse_region(120);
     let point = p(612, 2);
@@ -425,5 +464,6 @@ fn main() -> CurveResult<()> {
     bench_retained_planar_face_point_query(100_000)?;
     bench_prepared_retained_planar_face_point_query(100_000)?;
     bench_prepared_retained_planar_face_edge_use_query(100_000)?;
+    bench_retained_cylinder_point_query(100_000)?;
     Ok(())
 }

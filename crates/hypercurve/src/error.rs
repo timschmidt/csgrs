@@ -36,6 +36,8 @@ pub enum CurveError {
     InvalidImportRecord,
     /// Retained planar face trim metadata is inconsistent.
     InvalidPlanarFace,
+    /// Retained analytic surface frame metadata is inconsistent.
+    InvalidAnalyticSurfaceFrame,
     /// A finite affine transform is not a nonsingular planar similarity.
     InvalidSimilarityTransform,
     /// A Bezier parameter is certified outside the closed unit interval.
@@ -85,6 +87,9 @@ impl fmt::Display for CurveError {
             }
             Self::InvalidImportRecord => write!(f, "retained import record is invalid"),
             Self::InvalidPlanarFace => write!(f, "retained planar face is invalid"),
+            Self::InvalidAnalyticSurfaceFrame => {
+                write!(f, "retained analytic surface frame is invalid")
+            }
             Self::InvalidSimilarityTransform => {
                 write!(f, "affine transform is not a planar similarity")
             }
