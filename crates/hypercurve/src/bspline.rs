@@ -532,6 +532,35 @@ impl RationalBSplineBezierExtraction2 {
         &self.spans
     }
 
+    /// Converts every retained rational Bezier span that has native topology.
+    ///
+    /// This is a conservative bridge from retained NURBS evidence into the
+    /// existing Bezier/conic topology kernel.  Degree-two spans are native
+    /// rational quadratic Beziers.  Degree-three spans are native polynomial
+    /// cubics only when all span weights are certified equal, because the
+    /// homogeneous scale then cancels from the rational map.  Non-uniform
+    /// rational cubics and higher-degree spans remain retained evidence and
+    /// return explicit unsupported uncertainty instead of being sampled or
+    /// flattened.  This is the Yap EGC boundary applied to NURBS consumption:
+    /// branch into topology only after an exact representation-preserving
+    /// construction; see Yap, "Towards Exact Geometric Computation,"
+    /// *Computational Geometry* 7(1-2), 3-23 (1997).  The homogeneous Bezier
+    /// interpretation follows Farin, *Curves and Surfaces for CAGD* (5th ed.,
+    /// 2002).
+    pub fn native_subcurves(
+        &self,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<Vec<BezierSubcurve2>>> {
+        let mut subcurves = Vec::with_capacity(self.spans.len());
+        for span in &self.spans {
+            match span.native_subcurve(policy)? {
+                Classification::Decided(subcurve) => subcurves.push(subcurve),
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            }
+        }
+        Ok(Classification::Decided(subcurves))
+    }
+
     /// Returns how many knots were inserted to produce Bezier form.
     pub const fn inserted_knot_count(&self) -> usize {
         self.inserted_knot_count
@@ -557,6 +586,53 @@ impl RationalBezierSpan2 {
     /// Returns the source knot interval covered by this Bezier span.
     pub fn knot_interval(&self) -> (&Real, &Real) {
         (&self.knot_start, &self.knot_end)
+    }
+
+    /// Converts this retained rational Bezier span into native topology when exact.
+    ///
+    /// Degree-two spans map directly to [`RationalQuadraticBezier2`].  A
+    /// degree-three rational span maps to [`CubicBezier2`] only when all
+    /// homogeneous weights are exactly equal, because the rational Bezier basis
+    /// denominator is then the same common scale on the full parameter
+    /// interval.  Every other case stays unsupported retained evidence rather
+    /// than leaking an approximate topology object.
+    pub fn native_subcurve(
+        &self,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<BezierSubcurve2>> {
+        if self.control_points.len() != self.degree + 1 || self.weights.len() != self.degree + 1 {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        }
+        match self.degree {
+            2 => {
+                let curve = RationalQuadraticBezier2::try_new(
+                    self.control_points[0].clone(),
+                    self.control_points[1].clone(),
+                    self.control_points[2].clone(),
+                    self.weights[0].clone(),
+                    self.weights[1].clone(),
+                    self.weights[2].clone(),
+                )?;
+                Ok(Classification::Decided(BezierSubcurve2::RationalQuadratic(
+                    curve,
+                )))
+            }
+            3 => match weights_are_all_equal(&self.weights, policy) {
+                Classification::Decided(true) => Ok(Classification::Decided(
+                    BezierSubcurve2::Cubic(CubicBezier2::new(
+                        self.control_points[0].clone(),
+                        self.control_points[1].clone(),
+                        self.control_points[2].clone(),
+                        self.control_points[3].clone(),
+                    )),
+                )),
+                Classification::Decided(false) => {
+                    Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
+                }
+                Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+            },
+            _ => Ok(Classification::Uncertain(UncertaintyReason::Unsupported)),
+        }
     }
 }
 
@@ -777,6 +853,20 @@ fn knot_multiplicity(knots: &[Real], knot: &Real, policy: &CurvePolicy) -> Curve
         }
     }
     Ok(count)
+}
+
+fn weights_are_all_equal(weights: &[Real], policy: &CurvePolicy) -> Classification<bool> {
+    let Some(first) = weights.first() else {
+        return Classification::Uncertain(UncertaintyReason::Unsupported);
+    };
+    for weight in &weights[1..] {
+        match compare_reals(first, weight, policy) {
+            Some(Ordering::Equal) => {}
+            Some(Ordering::Less | Ordering::Greater) => return Classification::Decided(false),
+            None => return Classification::Uncertain(UncertaintyReason::Ordering),
+        }
+    }
+    Classification::Decided(true)
 }
 
 fn find_insertion_span(

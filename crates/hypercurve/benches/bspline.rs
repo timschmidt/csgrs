@@ -84,5 +84,25 @@ fn main() -> CurveResult<()> {
         elapsed / iterations
     );
 
+    let equal_weight_rational_cubic = decided(RationalBSplineCurve2::try_new(
+        3,
+        vec![p(0, 0), p(1, 3), p(3, 3), p(5, 3), p(6, 0)],
+        vec![r(5), r(5), r(5), r(5), r(5)],
+        vec![r(0), r(0), r(0), r(0), r(1), r(2), r(2), r(2), r(2)],
+        &policy,
+    )?);
+    let started = Instant::now();
+    let mut native_checksum = 0_usize;
+    for _ in 0..iterations {
+        let extraction = decided(equal_weight_rational_cubic.extract_bezier_spans(&policy)?);
+        let native = decided(extraction.native_subcurves(&policy)?);
+        native_checksum ^= black_box(native.len() + extraction.inserted_knot_count());
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "rational_cubic_bspline_native_subcurves: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={native_checksum}",
+        elapsed / iterations
+    );
+
     Ok(())
 }

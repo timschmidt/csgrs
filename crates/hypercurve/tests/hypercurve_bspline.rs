@@ -307,6 +307,90 @@ fn equal_weight_retained_rational_cubic_matches_polynomial_cubic_spans() {
 }
 
 #[test]
+fn retained_rational_quadratic_spans_promote_to_native_conic_topology() {
+    let spline = decided(
+        RationalBSplineCurve2::try_new(
+            2,
+            vec![p(0, 0), p(2, 4), p(4, 0)],
+            vec![r(1), r(2), r(3)],
+            vec![r(0), r(0), r(0), r(1), r(1), r(1)],
+            &policy(),
+        )
+        .unwrap(),
+    );
+    let extraction = decided(spline.extract_bezier_spans(&policy()).unwrap());
+    let native = decided(extraction.native_subcurves(&policy()).unwrap());
+
+    assert_eq!(native.len(), 1);
+    match &native[0] {
+        BezierSubcurve2::RationalQuadratic(curve) => {
+            assert_point_eq(curve.start(), &p(0, 0));
+            assert_point_eq(curve.control(), &p(2, 4));
+            assert_point_eq(curve.end(), &p(4, 0));
+        }
+        other => panic!("expected native rational quadratic span, got {other:?}"),
+    }
+}
+
+#[test]
+fn equal_weight_retained_rational_cubic_spans_feed_native_region_area() {
+    let upper = decided(
+        RationalBSplineCurve2::try_new(
+            3,
+            vec![p(0, 0), p(1, 3), p(5, 3), p(6, 0)],
+            vec![r(7), r(7), r(7), r(7)],
+            vec![r(0), r(0), r(0), r(0), r(1), r(1), r(1), r(1)],
+            &policy(),
+        )
+        .unwrap(),
+    );
+    let lower = decided(
+        RationalBSplineCurve2::try_new(
+            3,
+            vec![p(6, 0), p(5, -3), p(1, -3), p(0, 0)],
+            vec![r(7), r(7), r(7), r(7)],
+            vec![r(0), r(0), r(0), r(0), r(1), r(1), r(1), r(1)],
+            &policy(),
+        )
+        .unwrap(),
+    );
+    let mut fragments = Vec::new();
+    fragments.extend(decided(
+        decided(upper.extract_bezier_spans(&policy()).unwrap())
+            .native_subcurves(&policy())
+            .unwrap(),
+    ));
+    fragments.extend(decided(
+        decided(lower.extract_bezier_spans(&policy()).unwrap())
+            .native_subcurves(&policy())
+            .unwrap(),
+    ));
+    let region = BezierRegion2::new(vec![BezierBoundaryLoop2::new(fragments)]);
+
+    assert!(region.signed_area().unwrap().is_some());
+}
+
+#[test]
+fn nonuniform_retained_rational_cubic_spans_do_not_promote_to_native_topology() {
+    let spline = decided(
+        RationalBSplineCurve2::try_new(
+            3,
+            vec![p(0, 0), p(1, 3), p(3, 3), p(5, 3), p(6, 0)],
+            vec![r(1), r(2), r(4), r(8), r(16)],
+            vec![r(0), r(0), r(0), r(0), r(1), r(2), r(2), r(2), r(2)],
+            &policy(),
+        )
+        .unwrap(),
+    );
+    let extraction = decided(spline.extract_bezier_spans(&policy()).unwrap());
+
+    assert_eq!(
+        extraction.native_subcurves(&policy()).unwrap(),
+        Classification::Uncertain(hypercurve::UncertaintyReason::Unsupported)
+    );
+}
+
+#[test]
 fn retained_rational_bspline_rejects_unsupported_degree_and_zero_weight() {
     assert_eq!(
         RationalBSplineCurve2::try_new(

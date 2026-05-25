@@ -45,7 +45,9 @@ fuzz_target!(|data: &[u8]| {
     if let Ok(Classification::Decided(spline)) =
         RationalBSplineCurve2::try_new(degree, controls.clone(), weights.clone(), knots.clone(), &policy)
     {
-        let _ = spline.extract_bezier_spans(&policy);
+        if let Ok(Classification::Decided(extraction)) = spline.extract_bezier_spans(&policy) {
+            let _ = extraction.native_subcurves(&policy);
+        }
     }
     if degree == 2
         && let Ok(Classification::Decided(spline)) =
