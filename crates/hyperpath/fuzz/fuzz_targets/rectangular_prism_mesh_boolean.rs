@@ -4,11 +4,11 @@ use hyperlimit::{Point2, PredicatePolicy};
 use hyperpath::{
     AxisAlignedSweptSegmentPrism, BeadFillAxis, CamOrthogonalIslandPocketCutter,
     CamRestMaterialCutter, CamSupportClipBoundary, CardinalRotation, LinePathSegment, NetId,
-    PathMeshBooleanOperation, PathMeshBooleanProgramStep, PcbCardinalRectPad,
-    PcbCompositeCopperBooleanSource, PcbConvexPolyPad, PcbCopperBoardClipOutline,
-    PcbCopperBooleanSource, PcbHoledOrthogonalCopperSource, PcbLayerZModel,
-    PcbOrthogonalBoardOutline, PcbOrthogonalPolyPad, PcbRectPad, PcbTrace, SweptLineSegment,
-    TraceLayer, boolean_path_mesh_program, boolean_path_mesh_sources,
+    PathExactMeshHandoffSource, PathMeshBooleanOperation, PathMeshBooleanProgramStep,
+    PcbCardinalRectPad, PcbCompositeCopperBooleanSource, PcbConvexPolyPad,
+    PcbCopperBoardClipOutline, PcbCopperBooleanSource, PcbHoledOrthogonalCopperSource,
+    PcbLayerZModel, PcbOrthogonalBoardOutline, PcbOrthogonalPolyPad, PcbRectPad, PcbTrace,
+    SweptLineSegment, TraceLayer, boolean_path_mesh_program, boolean_path_mesh_sources,
     boolean_rectangular_prism_chain, boolean_rectangular_prisms,
     boolean_rectangular_prisms_with_boundary_policy, build_cam_infill_clip_program,
     build_cam_rest_material_program, build_cam_support_clip_program,
@@ -68,6 +68,29 @@ fuzz_target!(|data: &[u8]| {
     if let Ok(report) = result {
         report.validate_replay().unwrap();
         report.result.validate().unwrap();
+    }
+
+    if data.len() >= 20 && data[15] & 1 == 1 {
+        let Ok(left) =
+            rectangular_prism_from_i64_bounds(left_min, left_max, PredicatePolicy::default())
+        else {
+            return;
+        };
+        let Ok(right) =
+            rectangular_prism_from_i64_bounds(right_min, right_max, PredicatePolicy::default())
+        else {
+            return;
+        };
+        if let Ok(handoff) =
+            PathExactMeshHandoffSource::from_exact_mesh(left.to_exact_mesh().unwrap())
+        {
+            if let Ok(chain) =
+                boolean_path_mesh_sources(vec![handoff.into(), right.into()], operation)
+            {
+                chain.validate_replay().unwrap();
+                chain.steps.last().unwrap().result.validate().unwrap();
+            }
+        }
     }
 
     if data.len() >= 20 && data[14] & 1 == 1 {

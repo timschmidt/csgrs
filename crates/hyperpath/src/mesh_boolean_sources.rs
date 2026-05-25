@@ -19,6 +19,7 @@ use hyperreal::{Real, RealExactSetFacts};
 
 use crate::cam::{PocketPlanError, RectangularPocket};
 use crate::mesh_boolean::{PathMeshBooleanError, PathMeshBooleanOperation, RectangularPrism};
+use crate::mesh_boolean_handoff::PathExactMeshHandoffSource;
 use crate::mesh_boolean_polygon::{ConvexPolygonPrism, OrthogonalPolygonPrism, SimplePolygonPrism};
 use crate::provenance::PathProvenance;
 use crate::segment::Axis;
@@ -58,6 +59,8 @@ pub enum PathMeshBooleanSource {
     SimplePolygonPrism(SimplePolygonPrism),
     /// Axis-aligned swept trace/tool slab.
     AxisAlignedSweptSegmentPrism(AxisAlignedSweptSegmentPrism),
+    /// Opaque exact `hypermesh` closed solid with retained handoff evidence.
+    ExactMeshHandoff(PathExactMeshHandoffSource),
 }
 
 /// One certified step in a heterogeneous source boolean chain.
@@ -248,6 +251,12 @@ impl From<SimplePolygonPrism> for PathMeshBooleanSource {
     }
 }
 
+impl From<PathExactMeshHandoffSource> for PathMeshBooleanSource {
+    fn from(value: PathExactMeshHandoffSource) -> Self {
+        Self::ExactMeshHandoff(value)
+    }
+}
+
 impl PathMeshBooleanSource {
     /// Derive the exact `hypermesh` operand for this retained source.
     pub fn to_exact_mesh(&self) -> Result<ExactMesh, PathMeshBooleanError> {
@@ -257,6 +266,7 @@ impl PathMeshBooleanSource {
             Self::OrthogonalPolygonPrism(source) => source.to_exact_mesh(),
             Self::SimplePolygonPrism(source) => source.to_exact_mesh(),
             Self::AxisAlignedSweptSegmentPrism(source) => source.to_exact_mesh(),
+            Self::ExactMeshHandoff(source) => source.to_exact_mesh(),
         }
     }
 }

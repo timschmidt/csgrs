@@ -12,6 +12,7 @@ pub mod bezier;
 pub mod cam;
 pub mod mesh_boolean;
 pub mod mesh_boolean_cam;
+pub mod mesh_boolean_handoff;
 mod mesh_boolean_holes;
 pub mod mesh_boolean_pcb;
 pub mod mesh_boolean_polygon;
@@ -62,6 +63,7 @@ pub use mesh_boolean_cam::{
     build_cam_infill_clip_program, build_cam_rest_material_program, build_cam_support_clip_program,
     cam_rectangular_pocket_cutter_from_i64_bounds,
 };
+pub use mesh_boolean_handoff::PathExactMeshHandoffSource;
 pub use mesh_boolean_pcb::{
     PcbCompositeCopperBooleanProgramReport, PcbCompositeCopperBooleanSource,
     PcbCompositeCopperBooleanStepReport, PcbCompositeCopperMaterialization,

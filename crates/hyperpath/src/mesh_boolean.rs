@@ -108,6 +108,8 @@ pub enum PathMeshBooleanError {
     InvalidScalar,
     /// `hypermesh` rejected the derived exact prism mesh.
     MeshConstruction(String),
+    /// A retained exact `hypermesh` package was missing, stale, or not solid.
+    MeshHandoff(String),
     /// `hypermesh` could not produce exact boolean preflight evidence.
     Preflight(String),
     /// `hypermesh` could not materialize the exact boolean.

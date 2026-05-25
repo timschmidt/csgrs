@@ -10,20 +10,20 @@ use hyperpath::{
     ExplicitCircleRelationClass, ExplicitCircularArc, HigherOrderBezier, HigherOrderBezierError,
     InfillGraphError, LineExplicitArcIntersectionClass, LineOffsetError, LinePathSegment,
     MeanderError, MeanderObstacle, MeanderPlacementCandidate, NetId, OffsetSide,
-    PathMeshBooleanError, PathMeshBooleanOperation, PathMeshBooleanProgramStep,
-    PathMeshBooleanSource, PathProvenance, PathSourceFormat, PcbBoardOutline, PcbCardinalRectPad,
-    PcbCircularPad, PcbCompositeCopperBooleanSource, PcbConvexBoardOutline, PcbConvexPolyPad,
-    PcbCopperBoardClipOutline, PcbCopperBooleanSource, PcbHoledOrthogonalCopperSource,
-    PcbLayerZModel, PcbOrthogonalBoardOutline, PcbOrthogonalPolyPad, PcbRectPad, PcbTrace,
-    PcbViaStack, PocketPlanError, PocketPlanStopReason, QuadraticBezier, RationalQuadraticBezier,
-    RationalQuadraticBezierError, RectangularInfillGraph, RectangularPocket,
-    RectangularRegionRelation, RouteCertificationError, SegmentParameterOrder, SourceLengthUnit,
-    SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraImportError, SpecctraLayerAlias,
-    SpecctraNetAlias, SpecctraParseError, SupportFootprintStatus, SupportPlanError,
-    SweptLineSegment, TangentAlignment, TangentJoinClass, TangentJoinReport, TangentSpan,
-    TraceLayer, ViaAnnularRingReport, ViaDrillIntent, ViaDrillPolicyClass, ViaLayerSpanRelation,
-    ViaLayerTransitionClass, boolean_path_mesh_program, boolean_path_mesh_sources,
-    boolean_rectangular_prism_chain, boolean_rectangular_prisms,
+    PathExactMeshHandoffSource, PathMeshBooleanError, PathMeshBooleanOperation,
+    PathMeshBooleanProgramStep, PathMeshBooleanSource, PathProvenance, PathSourceFormat,
+    PcbBoardOutline, PcbCardinalRectPad, PcbCircularPad, PcbCompositeCopperBooleanSource,
+    PcbConvexBoardOutline, PcbConvexPolyPad, PcbCopperBoardClipOutline, PcbCopperBooleanSource,
+    PcbHoledOrthogonalCopperSource, PcbLayerZModel, PcbOrthogonalBoardOutline,
+    PcbOrthogonalPolyPad, PcbRectPad, PcbTrace, PcbViaStack, PocketPlanError, PocketPlanStopReason,
+    QuadraticBezier, RationalQuadraticBezier, RationalQuadraticBezierError, RectangularInfillGraph,
+    RectangularPocket, RectangularRegionRelation, RouteCertificationError, SegmentParameterOrder,
+    SourceLengthUnit, SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraImportError,
+    SpecctraLayerAlias, SpecctraNetAlias, SpecctraParseError, SupportFootprintStatus,
+    SupportPlanError, SweptLineSegment, TangentAlignment, TangentJoinClass, TangentJoinReport,
+    TangentSpan, TraceLayer, ViaAnnularRingReport, ViaDrillIntent, ViaDrillPolicyClass,
+    ViaLayerSpanRelation, ViaLayerTransitionClass, boolean_path_mesh_program,
+    boolean_path_mesh_sources, boolean_rectangular_prism_chain, boolean_rectangular_prisms,
     boolean_rectangular_prisms_with_boundary_policy, build_alternating_detour_meander,
     build_cam_infill_clip_program, build_cam_rest_material_program, build_cam_support_clip_program,
     build_g1_join_problem, build_length_match_problem, build_multi_detour_meander,
@@ -292,6 +292,54 @@ fn swept_segment_slab_boolean_source_replays_with_rectangular_prisms() {
     assert!(matches!(
         stale_source.validate_replay(),
         Err(PathMeshBooleanError::Replay(_))
+    ));
+}
+
+#[test]
+fn exact_mesh_handoff_source_replays_package_before_boolean_use() {
+    let opaque_left_mesh = prism([0, 0, 0], [10, 10, 4]).to_exact_mesh().unwrap();
+    let opaque_left =
+        PathExactMeshHandoffSource::from_exact_mesh(opaque_left_mesh).expect("solid handoff");
+    assert!(
+        opaque_left
+            .domain_summary()
+            .has_domain(hypermesh::exact::ExactMeshConsumerDomain::Solid)
+    );
+
+    let retained_right = prism([4, 2, 0], [12, 8, 4]);
+    let report = boolean_path_mesh_sources(
+        vec![opaque_left.clone().into(), retained_right.clone().into()],
+        PathMeshBooleanOperation::Intersection,
+    )
+    .expect("opaque hypermesh exact solid should compose with path source");
+    report.validate_replay().unwrap();
+    assert_eq!(report.steps.len(), 1);
+    assert!(report.mesh().unwrap().facts().mesh.closed_manifold);
+
+    let mut stale_source_order = report.clone();
+    stale_source_order.sources[1] = prism([30, 30, 0], [34, 34, 4]).into();
+    assert!(matches!(
+        stale_source_order.validate_replay(),
+        Err(PathMeshBooleanError::Replay(_))
+    ));
+}
+
+#[test]
+fn exact_mesh_handoff_source_rejects_stale_or_non_solid_packages() {
+    let left_mesh = prism([0, 0, 0], [10, 10, 4]).to_exact_mesh().unwrap();
+    let right_mesh = prism([20, 20, 0], [30, 30, 4]).to_exact_mesh().unwrap();
+    let wrong_package = hypermesh::exact::exact_mesh_handoff_package(&right_mesh).unwrap();
+    assert!(matches!(
+        PathExactMeshHandoffSource::new(left_mesh.clone(), wrong_package),
+        Err(PathMeshBooleanError::MeshHandoff(_))
+    ));
+
+    let mut missing_solid_package =
+        hypermesh::exact::exact_mesh_handoff_package(&left_mesh).unwrap();
+    missing_solid_package.solid = None;
+    assert!(matches!(
+        PathExactMeshHandoffSource::new(left_mesh, missing_solid_package),
+        Err(PathMeshBooleanError::MeshHandoff(_))
     ));
 }
 

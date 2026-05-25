@@ -5,8 +5,8 @@ use hyperpath::{
     CamOrthogonalIslandPocketCutter, CamRestMaterialCutter, CamSupportClipBoundary, CardinalPoint,
     CardinalRotation, CircularArc, ConstructionStamp, CubicBezier, ExplicitCircularArc,
     HigherOrderBezier, LinePathSegment, MeanderObstacle, MeanderPlacementCandidate, NetId,
-    OffsetSide, PathMeshBooleanOperation, PathMeshBooleanProgramStep, PathProvenance,
-    PathSourceFormat, PcbBoardOutline, PcbCardinalRectPad, PcbCircularPad,
+    OffsetSide, PathExactMeshHandoffSource, PathMeshBooleanOperation, PathMeshBooleanProgramStep,
+    PathProvenance, PathSourceFormat, PcbBoardOutline, PcbCardinalRectPad, PcbCircularPad,
     PcbCompositeCopperBooleanSource, PcbConvexBoardOutline, PcbConvexPolyPad,
     PcbCopperBoardClipOutline, PcbCopperBooleanSource, PcbHoledOrthogonalCopperSource,
     PcbLayerZModel, PcbOrthogonalBoardOutline, PcbOrthogonalPolyPad, PcbRectPad, PcbTrace,
@@ -891,6 +891,18 @@ fn path_predicates(c: &mut Criterion) {
             let report = boolean_path_mesh_sources(
                 vec![swept_slab.clone().into(), prism_right.clone().into()],
                 PathMeshBooleanOperation::Union,
+            )
+            .unwrap();
+            report.validate_replay()
+        })
+    });
+    let opaque_handoff =
+        PathExactMeshHandoffSource::from_exact_mesh(prism_left.to_exact_mesh().unwrap()).unwrap();
+    c.bench_function("exact_mesh_handoff_source_intersection_replay", |b| {
+        b.iter(|| {
+            let report = boolean_path_mesh_sources(
+                vec![opaque_handoff.clone().into(), prism_right.clone().into()],
+                PathMeshBooleanOperation::Intersection,
             )
             .unwrap();
             report.validate_replay()
