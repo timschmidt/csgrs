@@ -1579,6 +1579,9 @@ pub enum ExactBooleanSupport {
     CertifiedOpenSurfaceDisjoint,
     /// Open non-coplanar surfaces were unioned by exact split-region assembly.
     CertifiedOpenSurfaceArrangementUnion,
+    /// Open non-coplanar surfaces were differenced by retaining the left split
+    /// regions and discarding lower-dimensional crossing curves.
+    CertifiedOpenSurfaceArrangementDifference,
     /// A named operation was answered by certified closed-convex containment.
     CertifiedConvexContainment,
     /// Intersection was materialized for two overlapping closed convex solids.
@@ -1818,9 +1821,19 @@ impl ExactBooleanPreflight {
                 }
                 no_region_facts(self.region_count, &self.region_classifications)
             }
-            ExactBooleanSupport::CertifiedOpenSurfaceArrangementUnion => {
+            ExactBooleanSupport::CertifiedOpenSurfaceArrangementUnion
+            | ExactBooleanSupport::CertifiedOpenSurfaceArrangementDifference => {
+                let expected_operation = match self.support {
+                    ExactBooleanSupport::CertifiedOpenSurfaceArrangementUnion => {
+                        ExactBooleanOperation::Union
+                    }
+                    ExactBooleanSupport::CertifiedOpenSurfaceArrangementDifference => {
+                        ExactBooleanOperation::Difference
+                    }
+                    _ => unreachable!("matched open-surface arrangement support"),
+                };
                 if operation_is_selected_region(self.operation)
-                    || self.operation != ExactBooleanOperation::Union
+                    || self.operation != expected_operation
                     || self.graph_had_unknowns
                     || self.blocker.is_some()
                     || self.retained_face_pairs == 0

@@ -6689,6 +6689,43 @@ fn exercise_face_interior_steiner_boundary() {
         }
     );
 
+    let difference = preflight_boolean_exact(
+        &crossing_left,
+        &crossing_right,
+        ExactBooleanOperation::Difference,
+    )
+    .expect("open-surface crossing difference preflight should classify arrangement difference");
+    difference.validate().unwrap();
+    difference
+        .validate_against_sources(&crossing_left, &crossing_right)
+        .unwrap();
+    assert_eq!(
+        difference.support,
+        ExactBooleanSupport::CertifiedOpenSurfaceArrangementDifference
+    );
+    let difference_result = hypermesh::exact::boolean_exact(
+        &crossing_left,
+        &crossing_right,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("open-surface crossing difference should retain left split regions");
+    difference_result
+        .validate_operation_against_sources(
+            &crossing_left,
+            &crossing_right,
+            ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        difference_result.kind,
+        hypermesh::exact::ExactBooleanResultKind::SelectedRegions {
+            selection: ExactRegionSelection::KeepLeft,
+        }
+    );
+
     let intersection = preflight_boolean_exact(
         &crossing_left,
         &crossing_right,

@@ -4907,6 +4907,58 @@ fn exact_face_region_triangulates_through_feature_gated_hypertri() {
         hypermesh::exact::ExactReportValidationError::SourceReplayMismatch
     );
 
+    let named_difference = hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    named_difference.validate().unwrap();
+    named_difference
+        .validate_operation_against_sources(
+            &left,
+            &right,
+            hypermesh::exact::ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        named_difference.kind,
+        hypermesh::exact::ExactBooleanResultKind::SelectedRegions {
+            selection: hypermesh::exact::ExactRegionSelection::KeepLeft
+        }
+    );
+    let left_split = left_only
+        .checked_to_exact_mesh_with_sources(&left, &right, ValidationPolicy::ALLOW_BOUNDARY)
+        .unwrap();
+    assert_eq!(named_difference.mesh, left_split);
+
+    let difference_preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    difference_preflight.validate().unwrap();
+    difference_preflight
+        .validate_against_sources(&left, &right)
+        .unwrap();
+    assert_eq!(
+        difference_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedOpenSurfaceArrangementDifference
+    );
+    assert!(difference_preflight.blocker.is_none());
+    assert_eq!(difference_preflight.region_count, region_plan.regions.len());
+    let mut relabeled_difference_preflight = difference_preflight.clone();
+    relabeled_difference_preflight.support =
+        hypermesh::exact::ExactBooleanSupport::CertifiedOpenSurfaceArrangementUnion;
+    assert_eq!(
+        relabeled_difference_preflight.validate().unwrap_err(),
+        hypermesh::exact::ExactReportValidationError::StatusEvidenceMismatch
+    );
+
     let unsupported_intersection = hypermesh::exact::boolean_exact(
         &left,
         &right,

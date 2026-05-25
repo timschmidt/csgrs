@@ -791,13 +791,13 @@ pub fn preflight_boolean_exact(
             coplanar_volumetric_evidence: None,
         });
     }
-    if let Some((region_classifications, _triangulations)) =
-        open_surface_arrangement_union_plan_from_graph(&graph, left, right, operation)?
+    if let Some((support, region_classifications, _triangulations)) =
+        open_surface_arrangement_plan_from_graph(&graph, left, right, operation)?
     {
         let region_count = unique_classified_region_count(&region_classifications);
         return Ok(ExactBooleanPreflight {
             operation,
-            support: ExactBooleanSupport::CertifiedOpenSurfaceArrangementUnion,
+            support,
             graph_had_unknowns,
             retained_face_pairs,
             retained_events,
@@ -1729,7 +1729,7 @@ pub fn boolean_exact_with_boundary_policy(
                 return Ok(result);
             }
             if let Some(result) =
-                boolean_open_surface_arrangement_union_meshes(left, right, operation, validation)?
+                boolean_open_surface_arrangement_meshes(left, right, operation, validation)?
             {
                 return Ok(result);
             }
@@ -2980,45 +2980,54 @@ fn mesh_is_open_surface(mesh: &ExactMesh) -> bool {
 }
 
 #[cfg(feature = "exact-triangulation")]
-/// Retained split-region artifacts that certify an open-surface union.
-type OpenSurfaceArrangementUnionPlan = (
+/// Retained split-region artifacts that certify an open-surface arrangement.
+type OpenSurfaceArrangementPlan = (
+    ExactBooleanSupport,
     Vec<FaceRegionPlaneClassification>,
     Vec<FaceRegionTriangulation>,
 );
 
-/// Materialize a named union for crossing open surfaces from exact face splits.
+/// Materialize a named arrangement boolean for crossing open surfaces.
 ///
 /// This is deliberately narrower than general surface booleans: both operands
 /// must already be accepted open manifold surfaces, the graph must contain
 /// proper non-coplanar crossings, and coplanar/boundary-only cases stay on
 /// their existing artifacts. The policy follows Yap, "Towards Exact Geometric
 /// Computation," *Computational Geometry* 7.1-2 (1997): a non-volumetric
-/// surface union retains every certified split region instead of inventing a
-/// closed-mesh winding decision.
+/// surface union retains every certified split region, while regularized
+/// difference retains the left split regions and discards the lower-dimensional
+/// crossing curve that triangle meshes cannot represent as an area cell.
 #[cfg(feature = "exact-triangulation")]
-fn boolean_open_surface_arrangement_union_meshes(
+fn boolean_open_surface_arrangement_meshes(
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
     let graph = build_intersection_graph(left, right)?;
-    let Some((_region_classifications, _triangulations)) =
-        open_surface_arrangement_union_plan_from_graph(&graph, left, right, operation)?
+    let Some((_support, _region_classifications, _triangulations)) =
+        open_surface_arrangement_plan_from_graph(&graph, left, right, operation)?
     else {
         return Ok(None);
     };
 
-    // Open-surface union is a surface arrangement, not a closed-volumetric
-    // inside/outside decision. Yap, "Towards Exact Geometric Computation,"
-    // Comput. Geom. 7.1-2 (1997), requires the policy boundary to remain
-    // explicit: every split face region is retained, and no winding label is
+    let selection = match operation {
+        ExactBooleanOperation::Union => ExactRegionSelection::KeepAll,
+        ExactBooleanOperation::Difference => ExactRegionSelection::KeepLeft,
+        ExactBooleanOperation::Intersection | ExactBooleanOperation::SelectedRegions(_) => {
+            unreachable!("open-surface arrangement plan filters unsupported operations")
+        }
+    };
+    // Open-surface arrangement is not a closed-volumetric inside/outside
+    // decision. Yap, "Towards Exact Geometric Computation," Comput. Geom.
+    // 7.1-2 (1997), requires the policy boundary to remain explicit: selected
+    // split regions are retained by surface operation, and no winding label is
     // invented for a mesh that has no closed volume.
     let result = boolean_selected_regions(
         left,
         right,
         ExactBooleanPolicy {
-            selection: ExactRegionSelection::KeepAll,
+            selection,
             validation,
             reject_unknowns: true,
         },
@@ -3029,13 +3038,13 @@ fn boolean_open_surface_arrangement_union_meshes(
             MeshError::one(MeshDiagnostic::new(
                 Severity::Error,
                 DiagnosticKind::UnsupportedExactOperation,
-                format!("open-surface union source replay failed: {error:?}"),
+                format!("open-surface arrangement source replay failed: {error:?}"),
             ))
         })?;
     Ok(Some(result))
 }
 
-/// Build the retained exact split-region plan for open-surface union.
+/// Build the retained exact split-region plan for open-surface arrangement.
 ///
 /// The returned classifications are not used to decide inside/outside; they
 /// are retained proof-producing side facts that make the arrangement replayable
@@ -3043,16 +3052,22 @@ fn boolean_open_surface_arrangement_union_meshes(
 /// exact-state discipline from "Towards Exact Geometric Computation,"
 /// *Computational Geometry* 7.1-2 (1997).
 #[cfg(feature = "exact-triangulation")]
-fn open_surface_arrangement_union_plan_from_graph(
+fn open_surface_arrangement_plan_from_graph(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
-) -> Result<Option<OpenSurfaceArrangementUnionPlan>, MeshError> {
-    if operation != ExactBooleanOperation::Union
-        || !mesh_is_open_surface(left)
-        || !mesh_is_open_surface(right)
-    {
+) -> Result<Option<OpenSurfaceArrangementPlan>, MeshError> {
+    let support = match operation {
+        ExactBooleanOperation::Union => ExactBooleanSupport::CertifiedOpenSurfaceArrangementUnion,
+        ExactBooleanOperation::Difference => {
+            ExactBooleanSupport::CertifiedOpenSurfaceArrangementDifference
+        }
+        ExactBooleanOperation::Intersection | ExactBooleanOperation::SelectedRegions(_) => {
+            return Ok(None);
+        }
+    };
+    if !mesh_is_open_surface(left) || !mesh_is_open_surface(right) {
         return Ok(None);
     }
     let counts = graph_relation_counts(graph);
@@ -3082,10 +3097,10 @@ fn open_surface_arrangement_union_plan_from_graph(
             MeshError::one(MeshDiagnostic::new(
                 Severity::Error,
                 DiagnosticKind::DegenerateTriangle,
-                format!("open-surface union triangulation failed: {error}"),
+                format!("open-surface arrangement triangulation failed: {error}"),
             ))
         })?;
-    Ok(Some((region_classifications, triangulations)))
+    Ok(Some((support, region_classifications, triangulations)))
 }
 
 /// Return whether the graph contains a genuine non-coplanar surface crossing.

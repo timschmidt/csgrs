@@ -2447,7 +2447,7 @@ fn exact_boolean_selected_regions(c: &mut Criterion) {
                 (mesh, validation)
             })
         });
-        c.bench_function("exact_open_surface_arrangement_union", |b| {
+        c.bench_function("exact_open_surface_arrangement_union_difference", |b| {
             b.iter(|| {
                 let preflight = hypermesh::exact::preflight_boolean_exact(
                     &left,
@@ -2469,7 +2469,34 @@ fn exact_boolean_selected_regions(c: &mut Criterion) {
                     ValidationPolicy::ALLOW_BOUNDARY,
                     hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
                 );
-                (preflight, result, validation)
+                let difference_preflight = hypermesh::exact::preflight_boolean_exact(
+                    &left,
+                    &right,
+                    hypermesh::exact::ExactBooleanOperation::Difference,
+                )
+                .unwrap();
+                let difference = hypermesh::exact::boolean_exact(
+                    &left,
+                    &right,
+                    hypermesh::exact::ExactBooleanOperation::Difference,
+                    ValidationPolicy::ALLOW_BOUNDARY,
+                )
+                .unwrap();
+                let difference_validation = difference.validate_operation_against_sources(
+                    &left,
+                    &right,
+                    hypermesh::exact::ExactBooleanOperation::Difference,
+                    ValidationPolicy::ALLOW_BOUNDARY,
+                    hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+                );
+                (
+                    preflight,
+                    result,
+                    validation,
+                    difference_preflight,
+                    difference,
+                    difference_validation,
+                )
             })
         });
         c.bench_function("exact_selected_region_duplicate_validation", |b| {
