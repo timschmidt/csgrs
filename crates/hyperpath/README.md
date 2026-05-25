@@ -70,7 +70,7 @@ before downstream crates accept the path as ready.
 - Offset candidate types cover axis-aligned segments, cardinal arcs, explicit arcs, and
   sampled Bezier offsets.
 - CAM types describe rectangular pocket, bead, infill, support, and rectangular-region
-  boolean plans.
+  set-algebra planning records.
 - PCB types describe traces, pads, vias, board outlines, clearance reports, annular
   ring checks, via drill policy, and layer-span reports.
 - Routing helpers describe length matching, meanders, obstacle-aware detours,
@@ -111,7 +111,8 @@ Implemented today:
   swept-segment, and tangent-chain carriers;
 - source-grid, construction-stamp, source-format, and provenance records;
 - line, arc, Bezier, and cardinal offset candidate APIs;
-- CAM rectangular pocket, bead, infill, support, and region-boolean helpers;
+- CAM rectangular pocket, bead, infill, support, and rectangular region
+  set-algebra helpers;
 - PCB trace, pad, via, board-outline, clearance, via-policy, annular-ring, and
   layer-span reports;
 - length-match, meander, obstacle-aware detour, differential-pair skew, constant
@@ -197,9 +198,9 @@ toolpath.push(rectangular_region_area_equation("pocket area", pocket, Real::from
 ```
 
 For CAM use `RectangularPocket`, bead/infill/support planners, and rectangular-region
-boolean reports. For PCB use trace, pad, via, board-outline, clearance, annular-ring,
-layer-span, and Specctra route records. For smooth paths use tangent and G1 chain
-certification helpers.
+set-algebra reports. For PCB use trace, pad, via, board-outline, clearance,
+annular-ring, layer-span, and Specctra route records. For smooth paths use tangent and
+G1 chain certification helpers.
 
 ## References
 

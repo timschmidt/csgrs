@@ -4006,7 +4006,7 @@ proptest! {
     }
 
     #[test]
-    fn rectangular_region_boolean_generated_inner_cut_removes_exact_area(
+    fn rectangular_region_set_algebra_generated_inner_cut_removes_exact_area(
         x0 in 0_i16..=20,
         y0 in 0_i16..=20,
         width in 1_i16..=20,

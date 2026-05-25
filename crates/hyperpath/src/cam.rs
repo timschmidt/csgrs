@@ -93,8 +93,9 @@ pub enum BeadFillAxis {
 /// One exact additive bead centerline inside a rectangular region.
 ///
 /// This is a deposition schedule primitive, not a complete additive process
-/// plan. Later region booleans, bead overlap policy, starts/stops, supports,
-/// and thermal/process constraints still need exact predicates before output.
+/// plan. Later region set algebra, bead overlap policy, starts/stops,
+/// supports, and thermal/process constraints still need exact predicates
+/// before output.
 #[derive(Clone, Debug, PartialEq)]
 pub struct AdditiveBeadLine {
     /// Zero-based bead index.
@@ -235,13 +236,13 @@ pub enum RectangularRegionRelation {
 
 /// Exact closed intersection of two rectangular regions.
 ///
-/// This is the first retained rectangular region-boolean carrier for additive
-/// clipping and support/infill planning. General polygon booleans still belong
-/// to an arrangement layer, but exact rectangle/rectangle operations are a
-/// useful Yap-style primitive: construct the candidate region, classify it by
-/// exact comparisons, and keep the predicate result visible to downstream
-/// callers. This mirrors CGAL arrangement practice where topology decisions
-/// are explicit predicates rather than tolerance side effects.
+/// This is a retained rectangular set-algebra carrier for additive clipping
+/// and support/infill planning. It does not materialize mesh topology or run a
+/// solid boolean. Exact rectangle/rectangle operations are a useful Yap-style
+/// primitive: construct the candidate region, classify it by exact
+/// comparisons, and keep the predicate result visible to downstream callers.
+/// This mirrors CGAL arrangement practice where topology decisions are
+/// explicit predicates rather than tolerance side effects.
 #[derive(Clone, Debug, PartialEq)]
 pub struct RectangularRegionIntersection {
     /// First input region.
@@ -275,7 +276,7 @@ pub struct RectangularRegionDifference {
     pub relation: RectangularRegionRelation,
 }
 
-/// Errors while constructing exact rectangular region booleans.
+/// Errors while constructing exact rectangular region set-algebra reports.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum RegionBooleanError {
     /// Exact comparison could not decide a required ordering.
@@ -400,7 +401,7 @@ pub fn build_rectangular_pocket_plan(
 /// The first bead centerline is inset by `bead_width / 2` from the low side of
 /// the pitch axis, and later beads advance by `spacing`. This is the additive
 /// analogue of the pocket-ring scheduler: it creates exact candidate
-/// centerlines for infill/skin planning while leaving region booleans,
+/// centerlines for infill/skin planning while leaving region set algebra,
 /// supports, corner starts/stops, and process validation to downstream exact
 /// predicates.
 pub fn build_rectangular_bead_plan(
@@ -545,9 +546,10 @@ pub fn build_rectangular_serpentine_infill_graph(
 /// Build and classify an exact rectangular support footprint.
 ///
 /// The support footprint is the overhang rectangle expanded by `xy_margin` in
-/// X and Y. The function does not clip to the base: clipping is a boolean
-/// arrangement operation and should be represented explicitly later. Instead,
-/// this returns the exact expanded footprint plus a containment status.
+/// X and Y. The function does not clip to the base: clipping is an arrangement
+/// or mesh-domain operation and should be represented explicitly later.
+/// Instead, this returns the exact expanded footprint plus a containment
+/// status.
 pub fn build_rectangular_support_plan(
     overhang: RectangularPocket,
     base: RectangularPocket,
