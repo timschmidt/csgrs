@@ -872,7 +872,7 @@ fuzz_target!(|data: &[u8]| {
                 PredicatePolicy::default(),
             ) {
                 if let Ok(report) = build_cam_rest_material_program(
-                    stock,
+                    stock.clone(),
                     Real::from(left_min[2]),
                     Real::from(left_max[2]),
                     vec![CamRestMaterialCutter::OrthogonalIslandPocket(island_pocket)],
@@ -887,6 +887,44 @@ fuzz_target!(|data: &[u8]| {
                         .result
                         .validate()
                         .unwrap();
+                }
+                if data[15] & 32 == 32 {
+                    let z_min = Real::from(left_min[2]);
+                    let z_max = Real::from(left_max[2]);
+                    let cutter_min =
+                        Point2::new(Real::from(right_min[0]), Real::from(right_min[1]));
+                    let cutter_max =
+                        Point2::new(Real::from(right_max[0]), Real::from(right_max[1]));
+                    if let Ok(cutter_pocket) =
+                        hyperpath::RectangularPocket::new(cutter_min, cutter_max)
+                        && let Ok(cutter_prism) = hyperpath::RectangularPrism::new(
+                            cutter_pocket,
+                            z_min.clone(),
+                            z_max.clone(),
+                            PredicatePolicy::default(),
+                        )
+                        && let Ok(handoff) = PathExactMeshHandoffSource::from_exact_mesh(
+                            cutter_prism.to_exact_mesh().unwrap(),
+                        )
+                        && let Ok(cutter) = CamRestMaterialCutter::exact_handoff(handoff)
+                        && let Ok(report) = build_cam_rest_material_program(
+                            stock.clone(),
+                            z_min.clone(),
+                            z_max.clone(),
+                            vec![cutter],
+                            PredicatePolicy::default(),
+                        )
+                    {
+                        report.validate_replay(PredicatePolicy::default()).unwrap();
+                        report
+                            .program
+                            .steps
+                            .last()
+                            .unwrap()
+                            .result
+                            .validate()
+                            .unwrap();
+                    }
                 }
             }
         }

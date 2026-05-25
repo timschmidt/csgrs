@@ -58,10 +58,11 @@ pub use mesh_boolean::{
     boolean_rectangular_prisms_with_boundary_policy, rectangular_prism_from_i64_bounds,
 };
 pub use mesh_boolean_cam::{
-    CamExactClipBoundaryHandoff, CamInfillClipProgramReport, CamOrthogonalIslandPocketCutter,
-    CamRestMaterialCutter, CamRestMaterialProgramReport, CamSupportClipBoundary,
-    CamSupportClipProgramReport, build_cam_infill_clip_program, build_cam_rest_material_program,
-    build_cam_support_clip_program, cam_rectangular_pocket_cutter_from_i64_bounds,
+    CamExactClipBoundaryHandoff, CamExactRestMaterialCutterHandoff, CamInfillClipProgramReport,
+    CamOrthogonalIslandPocketCutter, CamRestMaterialCutter, CamRestMaterialProgramReport,
+    CamSupportClipBoundary, CamSupportClipProgramReport, build_cam_infill_clip_program,
+    build_cam_rest_material_program, build_cam_support_clip_program,
+    cam_rectangular_pocket_cutter_from_i64_bounds,
 };
 pub use mesh_boolean_handoff::PathExactMeshHandoffSource;
 pub use mesh_boolean_pcb::{

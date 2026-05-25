@@ -1244,6 +1244,51 @@ fn cam_rest_material_program_replays_stock_minus_retained_cutters() {
 }
 
 #[test]
+fn cam_rest_material_program_subtracts_exact_handoff_cutters_with_z_replay() {
+    let stock = RectangularPocket::new(p(0, 0), p(20, 12)).unwrap();
+    let cutter_handoff = PathExactMeshHandoffSource::from_exact_mesh(
+        prism([4, 3, 0], [12, 9, 4]).to_exact_mesh().unwrap(),
+    )
+    .unwrap();
+    let cutter = CamRestMaterialCutter::exact_handoff(cutter_handoff.clone())
+        .expect("exact cutter handoff should retain package evidence");
+    match &cutter {
+        CamRestMaterialCutter::ExactHandoff(source) => {
+            assert!(source.exact_facts().all_exact_rational);
+        }
+        _ => unreachable!("constructor must return exact handoff cutter"),
+    }
+
+    let report = build_cam_rest_material_program(
+        stock,
+        r(0),
+        r(4),
+        vec![cutter],
+        PredicatePolicy::default(),
+    )
+    .expect("stock minus exact cutter handoff should replay");
+    report.validate_replay(PredicatePolicy::default()).unwrap();
+    assert_eq!(report.program.steps.len(), 1);
+    assert_eq!(
+        report.program.steps[0].operation,
+        PathMeshBooleanOperation::Difference
+    );
+    assert!(report.program.mesh().unwrap().facts().mesh.closed_manifold);
+
+    let wrong_z_cutter = CamRestMaterialCutter::exact_handoff(cutter_handoff).unwrap();
+    assert!(matches!(
+        build_cam_rest_material_program(
+            RectangularPocket::new(p(0, 0), p(20, 12)).unwrap(),
+            r(0),
+            r(5),
+            vec![wrong_z_cutter],
+            PredicatePolicy::default(),
+        ),
+        Err(PathMeshBooleanError::MeshHandoff(_))
+    ));
+}
+
+#[test]
 fn cam_rest_material_program_replays_orthogonal_island_pocket() {
     let stock = RectangularPocket::new(p(0, 0), p(24, 14)).unwrap();
     let island_pocket = CamOrthogonalIslandPocketCutter::new(

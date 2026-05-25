@@ -37,12 +37,28 @@ use crate::mesh_boolean_sources::{AxisAlignedSweptSegmentPrism, PathMeshBooleanS
 use crate::provenance::PathProvenance;
 use crate::swept::SweptLineSegment;
 
+/// Retained subtractive CAM cutter whose exact topology is owned by a `hypermesh` handoff.
+///
+/// Use this for non-axis or curved cutter sweeps emitted by a dedicated cutter
+/// or arrangement producer. The source is opaque to `hyperpath`; replay checks
+/// the exact handoff package and the requested rest-material Z slab before the
+/// cutter can participate in a regularized solid difference. This keeps the
+/// implementation aligned with Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997): exact object evidence may cross
+/// crate boundaries, but topology ownership remains with `hypermesh`.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CamExactRestMaterialCutterHandoff {
+    handoff: PathExactMeshHandoffSource,
+    exact: RealExactSetFacts,
+}
+
 /// Retained subtractive CAM cutter source.
 ///
 /// Rectangular pocket cutters represent exact box removals. Axis-aligned sweep
 /// cutters represent retained straight tool-center passes with exact width.
-/// Non-axis-aligned and curved cutters remain future arrangement evidence
-/// rather than approximate mesh sources.
+/// Non-axis-aligned and curved cutters enter through [`Self::ExactHandoff`]
+/// after a topology-owning producer has emitted an accepted exact mesh handoff;
+/// they are never approximated locally from primitive floating geometry.
 #[derive(Clone, Debug, PartialEq)]
 pub enum CamRestMaterialCutter {
     /// Exact rectangular pocket cutter footprint.
@@ -51,6 +67,8 @@ pub enum CamRestMaterialCutter {
     AxisAlignedSweep(SweptLineSegment),
     /// Exact orthogonal pocket boundary with retained material islands.
     OrthogonalIslandPocket(CamOrthogonalIslandPocketCutter),
+    /// Exact closed-solid cutter package produced outside `hyperpath`.
+    ExactHandoff(CamExactRestMaterialCutterHandoff),
 }
 
 /// Retained orthogonal CAM pocket cutter with exact material islands.
@@ -212,6 +230,21 @@ pub struct CamInfillClipProgramReport {
 }
 
 impl CamRestMaterialCutter {
+    /// Construct a retained exact cutter from a `hypermesh` handoff.
+    ///
+    /// This is the subtractive companion to
+    /// [`CamSupportClipBoundary::exact_handoff`]. It lets non-axis and curved
+    /// cutter producers feed exact closed-solid packages into rest-material
+    /// programs without adding mesh construction or curve flattening to
+    /// `hyperpath`.
+    pub fn exact_handoff(
+        handoff: PathExactMeshHandoffSource,
+    ) -> Result<Self, PathMeshBooleanError> {
+        Ok(Self::ExactHandoff(CamExactRestMaterialCutterHandoff::new(
+            handoff,
+        )?))
+    }
+
     /// Lower a single-operation cutter into a generic path mesh-boolean source.
     ///
     /// Island pockets deliberately do not implement this one-source lowering:
@@ -235,7 +268,37 @@ impl CamRestMaterialCutter {
             Self::OrthogonalIslandPocket(_) => Err(PathMeshBooleanError::Replay(
                 "orthogonal island pocket requires mixed-operation rest-material replay".into(),
             )),
+            Self::ExactHandoff(source) => source.to_path_source(&z_min, &z_max, policy),
         }
+    }
+}
+
+impl CamExactRestMaterialCutterHandoff {
+    /// Construct a retained exact cutter from a `hypermesh` handoff.
+    pub fn new(handoff: PathExactMeshHandoffSource) -> Result<Self, PathMeshBooleanError> {
+        let exact = handoff_mesh_exact_facts(&handoff)?;
+        Ok(Self { handoff, exact })
+    }
+
+    /// Return the retained exact mesh handoff.
+    pub const fn handoff(&self) -> &PathExactMeshHandoffSource {
+        &self.handoff
+    }
+
+    /// Return exact-set facts for retained mesh coordinates.
+    pub const fn exact_facts(&self) -> &RealExactSetFacts {
+        &self.exact
+    }
+
+    /// Lower this exact handoff into a generic path mesh-boolean source.
+    pub fn to_path_source(
+        &self,
+        z_min: &Real,
+        z_max: &Real,
+        policy: PredicatePolicy,
+    ) -> Result<PathMeshBooleanSource, PathMeshBooleanError> {
+        validate_handoff_z_slab(&self.handoff, z_min, z_max, policy)?;
+        Ok(self.handoff.clone().into())
     }
 }
 
@@ -335,19 +398,8 @@ impl CamExactClipBoundaryHandoff {
     /// lowers the boundary, because a valid clip envelope for one layer slab is
     /// not automatically valid for another.
     pub fn new(handoff: PathExactMeshHandoffSource) -> Result<Self, PathMeshBooleanError> {
-        let mesh = handoff.to_exact_mesh()?;
-        let points = mesh
-            .vertices()
-            .iter()
-            .flat_map(|point| {
-                let coordinates = &point.coordinates().0;
-                [&coordinates[0], &coordinates[1], &coordinates[2]]
-            })
-            .collect::<Vec<_>>();
-        Ok(Self {
-            handoff,
-            exact: Real::exact_set_facts(points),
-        })
+        let exact = handoff_mesh_exact_facts(&handoff)?;
+        Ok(Self { handoff, exact })
     }
 
     /// Return the retained exact mesh handoff.
@@ -749,7 +801,7 @@ pub fn build_cam_rest_material_program(
         }
     }
     let program = boolean_path_mesh_program(stock_prism.into(), steps)?;
-    let exact = rest_material_exact_facts(&stock, &z_min, &z_max, &cutters);
+    let exact = rest_material_exact_facts(&stock, &z_min, &z_max, &cutters)?;
     Ok(CamRestMaterialProgramReport {
         stock,
         z_min,
@@ -854,7 +906,7 @@ fn rest_material_exact_facts(
     z_min: &Real,
     z_max: &Real,
     cutters: &[CamRestMaterialCutter],
-) -> RealExactSetFacts {
+) -> Result<RealExactSetFacts, PathMeshBooleanError> {
     let mut values = vec![
         &stock.min().x,
         &stock.min().y,
@@ -863,6 +915,7 @@ fn rest_material_exact_facts(
         z_min,
         z_max,
     ];
+    let mut handoff_values = Vec::new();
     for cutter in cutters {
         match cutter {
             CamRestMaterialCutter::RectangularPocket(pocket) => {
@@ -888,9 +941,21 @@ fn rest_material_exact_facts(
                     values.extend(island.iter().flat_map(|point| [&point.x, &point.y]));
                 }
             }
+            CamRestMaterialCutter::ExactHandoff(source) => {
+                let mesh = source.handoff().to_exact_mesh()?;
+                for point in mesh.vertices() {
+                    let coordinates = &point.coordinates().0;
+                    handoff_values.extend([
+                        coordinates[0].clone(),
+                        coordinates[1].clone(),
+                        coordinates[2].clone(),
+                    ]);
+                }
+            }
         }
     }
-    Real::exact_set_facts(values)
+    values.extend(handoff_values.iter());
+    Ok(Real::exact_set_facts(values))
 }
 
 fn validate_orthogonal_loop_shape(
@@ -982,6 +1047,25 @@ fn loops_exact_facts(outer: &[Point2], holes: &[Vec<Point2>]) -> RealExactSetFac
         values.extend(hole.iter().flat_map(|point| [&point.x, &point.y]));
     }
     Real::exact_set_facts(values)
+}
+
+fn handoff_mesh_exact_facts(
+    handoff: &PathExactMeshHandoffSource,
+) -> Result<RealExactSetFacts, PathMeshBooleanError> {
+    let mesh = handoff.to_exact_mesh()?;
+    let values = mesh
+        .vertices()
+        .iter()
+        .flat_map(|point| {
+            let coordinates = &point.coordinates().0;
+            [
+                coordinates[0].clone(),
+                coordinates[1].clone(),
+                coordinates[2].clone(),
+            ]
+        })
+        .collect::<Vec<_>>();
+    Ok(Real::exact_set_facts(values.iter().collect::<Vec<_>>()))
 }
 
 fn validate_handoff_z_slab(

@@ -1237,6 +1237,31 @@ fn path_predicates(c: &mut Criterion) {
             report.validate_replay(PredicatePolicy::default())
         })
     });
+    let cam_rest_handoff = PathExactMeshHandoffSource::from_exact_mesh(
+        rectangular_prism_from_i64_bounds(
+            [2_000, 2_000, 0],
+            [6_000, 5_000, 2_000],
+            PredicatePolicy::default(),
+        )
+        .unwrap()
+        .to_exact_mesh()
+        .unwrap(),
+    )
+    .unwrap();
+    let cam_rest_handoff_cutter = CamRestMaterialCutter::exact_handoff(cam_rest_handoff).unwrap();
+    c.bench_function("cam_exact_handoff_rest_material_program_replay", |b| {
+        b.iter(|| {
+            let report = build_cam_rest_material_program(
+                cam_stock.clone(),
+                r(0),
+                r(2_000),
+                vec![cam_rest_handoff_cutter.clone()],
+                PredicatePolicy::default(),
+            )
+            .unwrap();
+            report.validate_replay(PredicatePolicy::default())
+        })
+    });
     let cam_island_pocket = CamOrthogonalIslandPocketCutter::new(
         vec![
             p(2_000, 1_000),
