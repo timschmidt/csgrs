@@ -18,7 +18,7 @@ use hyperreal::Real;
 use crate::classify::{compare_reals, is_zero};
 use crate::{
     BezierSubcurve2, Classification, CubicBezier2, CurveError, CurvePolicy, CurveResult, Point2,
-    QuadraticBezier2, RationalQuadraticBezier2, UncertaintyReason,
+    QuadraticBezier2, RationalQuadraticBezier2, RetainedTopologyStatus, UncertaintyReason,
 };
 
 /// Exact polynomial B-spline curve in the plane.
@@ -108,6 +108,33 @@ pub struct RationalBSplineBezierExtraction2 {
     refined_knots: Vec<Real>,
     spans: Vec<RationalBezierSpan2>,
     inserted_knot_count: usize,
+}
+
+/// Native-topology audit report for a retained rational B-spline extraction.
+///
+/// This report is deliberately stronger than a direct `Vec<BezierSubcurve2>`:
+/// every retained rational Bezier span contributes a status, and only spans
+/// with [`RetainedTopologyStatus::NativeExact`] contribute a native subcurve.
+/// Nonuniform rational cubics and higher-degree rational Beziers therefore
+/// remain visible exact evidence instead of disappearing behind a generic
+/// unsupported return. This follows Yap's retained-object discipline, while
+/// the degree/equal-weight promotion rules are the homogeneous Bezier
+/// identities described by Farin, *Curves and Surfaces for CAGD* (5th ed.,
+/// 2002).
+#[derive(Clone, Debug, PartialEq)]
+pub struct RationalBSplineNativeTopologyReport2 {
+    span_reports: Vec<RationalBezierSpanTopologyReport2>,
+}
+
+/// Native-topology audit report for one retained rational Bezier span.
+#[derive(Clone, Debug, PartialEq)]
+pub struct RationalBezierSpanTopologyReport2 {
+    span_index: usize,
+    degree: usize,
+    knot_start: Real,
+    knot_end: Real,
+    status: RetainedTopologyStatus,
+    native_subcurve: Option<BezierSubcurve2>,
 }
 
 /// One exact rational Bezier span extracted from a retained NURBS curve.
@@ -551,19 +578,118 @@ impl RationalBSplineBezierExtraction2 {
         &self,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<Vec<BezierSubcurve2>>> {
-        let mut subcurves = Vec::with_capacity(self.spans.len());
-        for span in &self.spans {
-            match span.native_subcurve(policy)? {
-                Classification::Decided(subcurve) => subcurves.push(subcurve),
+        let report = match self.native_topology_report(policy)? {
+            Classification::Decided(report) => report,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        if !report.is_fully_native_exact() {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        }
+        Ok(Classification::Decided(report.into_native_subcurves()))
+    }
+
+    /// Returns a per-span native-topology status report.
+    ///
+    /// Use this when retained NURBS evidence must be inspected without forcing
+    /// every span to promote to native topology. The report keeps unsupported
+    /// nonuniform rational cubic and higher-degree spans as explicit retained
+    /// evidence rather than sampling or flattening them.
+    pub fn native_topology_report(
+        &self,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<RationalBSplineNativeTopologyReport2>> {
+        let mut span_reports = Vec::with_capacity(self.spans.len());
+        for (span_index, span) in self.spans.iter().enumerate() {
+            match span.native_topology_report(span_index, policy)? {
+                Classification::Decided(report) => span_reports.push(report),
                 Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
             }
         }
-        Ok(Classification::Decided(subcurves))
+        Ok(Classification::Decided(
+            RationalBSplineNativeTopologyReport2::new(span_reports),
+        ))
     }
 
     /// Returns how many knots were inserted to produce Bezier form.
     pub const fn inserted_knot_count(&self) -> usize {
         self.inserted_knot_count
+    }
+}
+
+impl RationalBSplineNativeTopologyReport2 {
+    /// Constructs a rational B-spline topology report from per-span reports.
+    pub const fn new(span_reports: Vec<RationalBezierSpanTopologyReport2>) -> Self {
+        Self { span_reports }
+    }
+
+    /// Returns the per-span topology reports in source parameter order.
+    pub fn span_reports(&self) -> &[RationalBezierSpanTopologyReport2] {
+        &self.span_reports
+    }
+
+    /// Returns true when every retained span promoted to exact native topology.
+    pub fn is_fully_native_exact(&self) -> bool {
+        self.span_reports
+            .iter()
+            .all(|report| report.status().is_native_exact())
+    }
+
+    /// Consumes the report and returns only native subcurves.
+    ///
+    /// Call this only after [`Self::is_fully_native_exact`] succeeds. If a
+    /// caller ignores that precondition, non-native spans are still not
+    /// synthesized.
+    pub fn into_native_subcurves(self) -> Vec<BezierSubcurve2> {
+        self.span_reports
+            .into_iter()
+            .filter_map(|report| report.native_subcurve)
+            .collect()
+    }
+}
+
+impl RationalBezierSpanTopologyReport2 {
+    /// Constructs one retained span topology report.
+    pub const fn new(
+        span_index: usize,
+        degree: usize,
+        knot_start: Real,
+        knot_end: Real,
+        status: RetainedTopologyStatus,
+        native_subcurve: Option<BezierSubcurve2>,
+    ) -> Self {
+        Self {
+            span_index,
+            degree,
+            knot_start,
+            knot_end,
+            status,
+            native_subcurve,
+        }
+    }
+
+    /// Returns the span index within the extraction report.
+    pub const fn span_index(&self) -> usize {
+        self.span_index
+    }
+
+    /// Returns the retained rational Bezier degree.
+    pub const fn degree(&self) -> usize {
+        self.degree
+    }
+
+    /// Returns the source knot interval covered by this span.
+    pub fn knot_interval(&self) -> (&Real, &Real) {
+        (&self.knot_start, &self.knot_end)
+    }
+
+    /// Returns the span's topology-readiness status.
+    pub const fn status(&self) -> RetainedTopologyStatus {
+        self.status
+    }
+
+    /// Returns the exact native subcurve when one exists.
+    pub const fn native_subcurve(&self) -> Option<&BezierSubcurve2> {
+        self.native_subcurve.as_ref()
     }
 }
 
@@ -600,8 +726,32 @@ impl RationalBezierSpan2 {
         &self,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<BezierSubcurve2>> {
+        match self.native_topology_report(0, policy)? {
+            Classification::Decided(report) => match report.native_subcurve {
+                Some(subcurve) => Ok(Classification::Decided(subcurve)),
+                None => Ok(Classification::Uncertain(UncertaintyReason::Unsupported)),
+            },
+            Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+        }
+    }
+
+    /// Returns the exact native-topology status for this retained rational span.
+    pub fn native_topology_report(
+        &self,
+        span_index: usize,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<RationalBezierSpanTopologyReport2>> {
         if self.control_points.len() != self.degree + 1 || self.weights.len() != self.degree + 1 {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            return Ok(Classification::Decided(
+                RationalBezierSpanTopologyReport2::new(
+                    span_index,
+                    self.degree,
+                    self.knot_start.clone(),
+                    self.knot_end.clone(),
+                    RetainedTopologyStatus::Unsupported,
+                    None,
+                ),
+            ));
         }
         match self.degree {
             2 => {
@@ -613,25 +763,55 @@ impl RationalBezierSpan2 {
                     self.weights[1].clone(),
                     self.weights[2].clone(),
                 )?;
-                Ok(Classification::Decided(BezierSubcurve2::RationalQuadratic(
-                    curve,
-                )))
+                Ok(Classification::Decided(
+                    RationalBezierSpanTopologyReport2::new(
+                        span_index,
+                        self.degree,
+                        self.knot_start.clone(),
+                        self.knot_end.clone(),
+                        RetainedTopologyStatus::NativeExact,
+                        Some(BezierSubcurve2::RationalQuadratic(curve)),
+                    ),
+                ))
             }
             3 => match weights_are_all_equal(&self.weights, policy) {
                 Classification::Decided(true) => Ok(Classification::Decided(
-                    BezierSubcurve2::Cubic(CubicBezier2::new(
-                        self.control_points[0].clone(),
-                        self.control_points[1].clone(),
-                        self.control_points[2].clone(),
-                        self.control_points[3].clone(),
-                    )),
+                    RationalBezierSpanTopologyReport2::new(
+                        span_index,
+                        self.degree,
+                        self.knot_start.clone(),
+                        self.knot_end.clone(),
+                        RetainedTopologyStatus::NativeExact,
+                        Some(BezierSubcurve2::Cubic(CubicBezier2::new(
+                            self.control_points[0].clone(),
+                            self.control_points[1].clone(),
+                            self.control_points[2].clone(),
+                            self.control_points[3].clone(),
+                        ))),
+                    ),
                 )),
-                Classification::Decided(false) => {
-                    Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
-                }
+                Classification::Decided(false) => Ok(Classification::Decided(
+                    RationalBezierSpanTopologyReport2::new(
+                        span_index,
+                        self.degree,
+                        self.knot_start.clone(),
+                        self.knot_end.clone(),
+                        RetainedTopologyStatus::Unsupported,
+                        None,
+                    ),
+                )),
                 Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
             },
-            _ => Ok(Classification::Uncertain(UncertaintyReason::Unsupported)),
+            _ => Ok(Classification::Decided(
+                RationalBezierSpanTopologyReport2::new(
+                    span_index,
+                    self.degree,
+                    self.knot_start.clone(),
+                    self.knot_end.clone(),
+                    RetainedTopologyStatus::Unsupported,
+                    None,
+                ),
+            )),
         }
     }
 }

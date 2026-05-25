@@ -95,12 +95,38 @@ fn main() -> CurveResult<()> {
     let mut native_checksum = 0_usize;
     for _ in 0..iterations {
         let extraction = decided(equal_weight_rational_cubic.extract_bezier_spans(&policy)?);
+        let report = decided(extraction.native_topology_report(&policy)?);
         let native = decided(extraction.native_subcurves(&policy)?);
-        native_checksum ^= black_box(native.len() + extraction.inserted_knot_count());
+        native_checksum ^= black_box(
+            native.len()
+                + report.span_reports().len()
+                + usize::from(report.is_fully_native_exact())
+                + extraction.inserted_knot_count(),
+        );
     }
     let elapsed = started.elapsed();
     println!(
         "rational_cubic_bspline_native_subcurves: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={native_checksum}",
+        elapsed / iterations
+    );
+
+    let started = Instant::now();
+    let mut retained_status_checksum = 0_usize;
+    for _ in 0..iterations {
+        let extraction = decided(rational_cubic.extract_bezier_spans(&policy)?);
+        let report = decided(extraction.native_topology_report(&policy)?);
+        retained_status_checksum ^= black_box(
+            report.span_reports().len()
+                + report
+                    .span_reports()
+                    .iter()
+                    .filter(|span| span.status().is_retained_evidence())
+                    .count(),
+        );
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "rational_cubic_bspline_topology_status_report: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={retained_status_checksum}",
         elapsed / iterations
     );
 

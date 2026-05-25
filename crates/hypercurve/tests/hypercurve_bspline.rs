@@ -1,6 +1,7 @@
 use hypercurve::{
     BezierBoundaryLoop2, BezierRegion2, BezierSubcurve2, Classification, CurveError, CurvePolicy,
     Point2, PolynomialBSplineCurve2, RationalBSplineCurve2, RationalQuadraticBSplineCurve2, Real,
+    RetainedTopologyStatus,
 };
 
 fn r(value: i32) -> Real {
@@ -383,11 +384,52 @@ fn nonuniform_retained_rational_cubic_spans_do_not_promote_to_native_topology() 
         .unwrap(),
     );
     let extraction = decided(spline.extract_bezier_spans(&policy()).unwrap());
+    let report = decided(extraction.native_topology_report(&policy()).unwrap());
+
+    assert!(!report.is_fully_native_exact());
+    assert_eq!(report.span_reports().len(), extraction.spans().len());
+    assert!(report.span_reports().iter().all(|span| {
+        span.degree() == 3
+            && span.status() == RetainedTopologyStatus::Unsupported
+            && span.native_subcurve().is_none()
+            && span.status().is_retained_evidence()
+    }));
 
     assert_eq!(
         extraction.native_subcurves(&policy()).unwrap(),
         Classification::Uncertain(hypercurve::UncertaintyReason::Unsupported)
     );
+}
+
+#[test]
+fn equal_weight_rational_cubic_topology_report_names_native_exact_spans() {
+    let spline = decided(
+        RationalBSplineCurve2::try_new(
+            3,
+            vec![p(0, 0), p(1, 3), p(3, 3), p(5, 3), p(6, 0)],
+            vec![r(5), r(5), r(5), r(5), r(5)],
+            vec![r(0), r(0), r(0), r(0), r(1), r(2), r(2), r(2), r(2)],
+            &policy(),
+        )
+        .unwrap(),
+    );
+    let extraction = decided(spline.extract_bezier_spans(&policy()).unwrap());
+    let report = decided(extraction.native_topology_report(&policy()).unwrap());
+
+    assert!(report.is_fully_native_exact());
+    assert_eq!(report.span_reports().len(), 2);
+    for (index, span) in report.span_reports().iter().enumerate() {
+        assert_eq!(span.span_index(), index);
+        assert_eq!(span.degree(), 3);
+        assert_eq!(span.status(), RetainedTopologyStatus::NativeExact);
+        assert!(matches!(
+            span.native_subcurve(),
+            Some(BezierSubcurve2::Cubic(_))
+        ));
+    }
+
+    let native = decided(extraction.native_subcurves(&policy()).unwrap());
+    assert_eq!(native.len(), report.span_reports().len());
 }
 
 #[test]

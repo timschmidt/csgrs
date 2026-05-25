@@ -42,10 +42,28 @@ fuzz_target!(|data: &[u8]| {
         .enumerate()
         .map(|(index, _)| Real::from(((data[index % data.len()] % 7) as i32) + 1))
         .collect::<Vec<_>>();
-    if let Ok(Classification::Decided(spline)) =
-        RationalBSplineCurve2::try_new(degree, controls.clone(), weights.clone(), knots.clone(), &policy)
+    if let Ok(Classification::Decided(spline)) = RationalBSplineCurve2::try_new(
+        degree,
+        controls.clone(),
+        weights.clone(),
+        knots.clone(),
+        &policy,
+    )
     {
         if let Ok(Classification::Decided(extraction)) = spline.extract_bezier_spans(&policy) {
+            let _ = extraction.native_topology_report(&policy).map(|classification| {
+                let Classification::Decided(report) = classification else {
+                    return;
+                };
+                for span in report.span_reports() {
+                    let _ = span.span_index();
+                    let _ = span.degree();
+                    let _ = span.knot_interval();
+                    let _ = span.status();
+                    let _ = span.native_subcurve();
+                }
+                let _ = report.is_fully_native_exact();
+            });
             let _ = extraction.native_subcurves(&policy);
         }
     }

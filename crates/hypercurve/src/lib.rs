@@ -49,6 +49,7 @@ mod region_boolean;
 mod region_events;
 mod region_fragments;
 mod region_nesting;
+mod retained_status;
 mod segment;
 mod self_intersect;
 mod split;
@@ -123,7 +124,8 @@ pub use boolean_boundary::{
 };
 pub use bspline::{
     PolynomialBSplineBezierExtraction2, PolynomialBSplineCurve2, RationalBSplineBezierExtraction2,
-    RationalBSplineCurve2, RationalBezierSpan2, RationalQuadraticBSplineBezierExtraction2,
+    RationalBSplineCurve2, RationalBSplineNativeTopologyReport2, RationalBezierSpan2,
+    RationalBezierSpanTopologyReport2, RationalQuadraticBSplineBezierExtraction2,
     RationalQuadraticBSplineCurve2,
 };
 pub use bulge::BulgeVertex2;
@@ -166,6 +168,7 @@ pub use region_events::{
     RegionSide,
 };
 pub use region_fragments::{RegionContourFragments, RegionFragmentSet};
+pub use retained_status::RetainedTopologyStatus;
 pub use segment::{CircularArc2, LineSeg2, Segment2};
 pub use split::{ContourSplitMap, ContourSplitMarkers, SegmentSplitMarker, SegmentSplitPoint};
 pub use transform::Similarity2;
