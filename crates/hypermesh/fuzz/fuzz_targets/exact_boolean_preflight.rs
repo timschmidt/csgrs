@@ -3179,6 +3179,45 @@ fn exercise_consumed_hole_side_cutter_openings() {
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .expect("consumed-hole side-cutter opening left fixture must import");
+    let single_retained_and_consumed = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            15, 16, 0, 17, 16, 0, 17, 18, 0, 15, 18, 0, //
+            4, 8, 0, 5, 8, 0, 5, 9, 0, 4, 9, 0, //
+            -2, 4, 0, 9, 4, 0, 7, 10, 0, -2, 10, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7, //
+            8, 9, 10, 8, 10, 11,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("single retained-and-consumed side-cutter fixture must import");
+    let single_holed = arrange_coplanar_convex_surface_component_holed_difference(
+        &left,
+        &single_retained_and_consumed,
+    )
+    .expect("single side opening should retain and consume exact strict holes");
+    single_holed.validate().unwrap();
+    single_holed
+        .validate_against_sources(&left, &single_retained_and_consumed)
+        .unwrap();
+    assert_eq!(single_holed.components[0].holes.len(), 1);
+    let single_holed_preflight = preflight_boolean_exact(
+        &left,
+        &single_retained_and_consumed,
+        ExactBooleanOperation::Difference,
+    )
+    .expect("single retained-and-consumed side opening preflight should classify shortcut");
+    single_holed_preflight.validate().unwrap();
+    single_holed_preflight
+        .validate_against_sources(&left, &single_retained_and_consumed)
+        .unwrap();
+    assert_eq!(
+        single_holed_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
+    );
+
     let retained_and_consumed = ExactMesh::from_i64_triangles_with_policy(
         &[
             15, 16, 0, 17, 16, 0, 17, 18, 0, 15, 18, 0, //

@@ -21036,6 +21036,102 @@ fn exact_coplanar_component_holed_difference_omits_holes_consumed_by_side_cutter
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
+    let single_retained_and_consumed = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            15, 16, 0, 17, 16, 0, 17, 18, 0, 15, 18, 0, //
+            4, 8, 0, 5, 8, 0, 5, 9, 0, 4, 9, 0, //
+            -2, 4, 0, 9, 4, 0, 7, 10, 0, -2, 10, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7, //
+            8, 9, 10, 8, 10, 11,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_cutter_hole_contact_difference(
+            &left,
+            &single_retained_and_consumed,
+        )
+        .is_none()
+    );
+    let single_holed =
+        hypermesh::exact::arrange_coplanar_convex_surface_component_holed_difference(
+            &left,
+            &single_retained_and_consumed,
+        )
+        .expect("one side opening should consume owned holes while retaining unrelated holes");
+    single_holed.validate().unwrap();
+    single_holed
+        .validate_against_sources(&left, &single_retained_and_consumed)
+        .unwrap();
+    assert_eq!(single_holed.components.len(), 1);
+    assert_eq!(single_holed.components[0].holes.len(), 1);
+    assert!(
+        single_holed.components[0].holes[0]
+            .iter()
+            .any(|point| real_eq(&point.x, &ExactReal::from(15))
+                && real_eq(&point.y, &ExactReal::from(16)))
+    );
+    assert!(
+        !single_holed.components[0].holes[0]
+            .iter()
+            .any(|point| real_eq(&point.x, &ExactReal::from(4))
+                && real_eq(&point.y, &ExactReal::from(8)))
+    );
+    let mut stale_single_holed = single_holed.clone();
+    stale_single_holed.components[0].holes.push(vec![
+        p3(4, 8, 0),
+        p3(5, 8, 0),
+        p3(5, 9, 0),
+        p3(4, 9, 0),
+    ]);
+    assert!(
+        stale_single_holed
+            .validate_against_sources(&left, &single_retained_and_consumed)
+            .is_err()
+    );
+    let single_holed_preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &single_retained_and_consumed,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    single_holed_preflight.validate().unwrap();
+    single_holed_preflight
+        .validate_against_sources(&left, &single_retained_and_consumed)
+        .unwrap();
+    assert_eq!(
+        single_holed_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::
+            CertifiedCoplanarConvexSurfaceComponentHoledDifference
+    );
+    let single_holed_result = hypermesh::exact::boolean_exact(
+        &left,
+        &single_retained_and_consumed,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    single_holed_result
+        .validate_operation_against_sources(
+            &left,
+            &single_retained_and_consumed,
+            hypermesh::exact::ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        single_holed_result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::
+                CoplanarConvexSurfaceComponentHoledDifference
+        }
+    );
+
     let retained_and_consumed = ExactMesh::from_i64_triangles_with_policy(
         &[
             15, 16, 0, 17, 16, 0, 17, 18, 0, 15, 18, 0, //

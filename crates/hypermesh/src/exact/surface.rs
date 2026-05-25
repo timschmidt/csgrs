@@ -11696,11 +11696,11 @@ fn materialize_cutter_hole_contact_multi_component_difference_consuming_holes(
 /// Replay non-rectilinear side-cutter openings while retaining strict holes.
 ///
 /// This is the cutter-only sibling of
-/// [`materialize_cutter_hole_contact_component_holed_difference`]. Several
-/// side-attached convex cutters may overlap or touch along positive-length
-/// boundaries inside each connected group, but a group is promoted only after
-/// its clipped regions replay as one exact simple union loop. Disconnected
-/// groups become independent side openings through
+/// [`materialize_cutter_hole_contact_component_holed_difference`]. One or
+/// more side-attached convex cutters may overlap or touch along
+/// positive-length boundaries inside each connected group, but a group is
+/// promoted only after its clipped regions replay as one exact simple union
+/// loop. Disconnected groups become independent side openings through
 /// [`multi_side_opened_difference_polygon`]. The final output area must
 /// satisfy `area(component) = area(opened) + sum(area(opening_i))` exactly.
 /// Strict holes are then classified by exact containment: holes inside the
@@ -11728,7 +11728,7 @@ fn materialize_connected_multi_cutter_component_holed_difference(
     holes: &[ComponentHoleCandidate],
     right_components: &[ConvexUnionComponent],
 ) -> Option<Vec<CoplanarConvexHoledComponent>> {
-    if cut_indices.len() < 2 || holes.is_empty() {
+    if cut_indices.is_empty() || holes.is_empty() {
         return None;
     }
     let projection = component.projection;
