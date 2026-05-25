@@ -2359,6 +2359,35 @@ fn sketch_problem_with_projected_length_point_line_distances(
     sketch
 }
 
+fn sketch_problem_with_projected_point_distance_point_line_distances(
+    row_count: usize,
+) -> hypersolve::SketchSolveProblem {
+    let mut sketch = hypersolve::SketchSolveProblem::new();
+    let origin = sketch.add_point3d("project-ppl.origin", r(0), r(0), r(0));
+    let normal = sketch.add_normal3d("project-ppl.normal", r(1), r(0), r(0), r(0));
+    let workplane = sketch.add_workplane("project-ppl.workplane", origin, normal);
+    for index in 0..row_count {
+        let y = index as i64;
+        let a = sketch.add_point3d(format!("projppl{index}.a"), r(0), r(y + 10), r(-y));
+        let b = sketch.add_point3d(format!("projppl{index}.b"), r(5), r(y + 10), r(12 + y));
+        let point = sketch.add_point3d(format!("projppl{index}.point"), r(0), r(y + 5), r(30 - y));
+        let dist0 = sketch.add_point3d(format!("projppl{index}.dist0"), r(-8), r(y), r(y));
+        let dist1 = sketch.add_point3d(format!("projppl{index}.dist1"), r(8), r(y), r(99 - y));
+        let distance_line =
+            sketch.add_line_segment3(format!("projppl{index}.distance"), dist0, dist1);
+        hypersolve::sketch_distance_builders::projected_equal_point_distance_point_line_distance3(
+            &mut sketch,
+            format!("projected point distance point-line distance {index}"),
+            workplane,
+            a,
+            b,
+            point,
+            distance_line,
+        );
+    }
+    sketch
+}
+
 fn sketch_problem_with_projected_equal_point_line_distances(
     row_count: usize,
 ) -> hypersolve::SketchSolveProblem {
@@ -2760,6 +2789,12 @@ fn certification(c: &mut Criterion) {
     c.bench_function(
         "sketch_projected_length_point_line_distance_lowering",
         |b| b.iter(|| projected_length_point_line_distance_sketch.lower_to_problem()),
+    );
+    let projected_point_distance_point_line_distance_sketch =
+        sketch_problem_with_projected_point_distance_point_line_distances(16);
+    c.bench_function(
+        "sketch_projected_point_distance_point_line_distance_lowering",
+        |b| b.iter(|| projected_point_distance_point_line_distance_sketch.lower_to_problem()),
     );
     let projected_equal_point_line_distance_sketch =
         sketch_problem_with_projected_equal_point_line_distances(16);
@@ -3748,6 +3783,31 @@ fn certification(c: &mut Criterion) {
             b.iter(|| {
                 for handle in &projected_length_point_line_distance_form_handles {
                     let _ = projected_length_point_line_distance_sketch
+                        .residual_forms_for_constraint(*handle);
+                }
+            })
+        },
+    );
+    let projected_point_distance_point_line_distance_form_handles =
+        projected_point_distance_point_line_distance_sketch
+            .constraints()
+            .iter()
+            .filter(|constraint| {
+                matches!(
+                    constraint.kind,
+                    hypersolve::SketchConstraintKind::ProjectedEqualPointDistancePointLineDistance3 {
+                        ..
+                    }
+                )
+            })
+            .map(|constraint| constraint.handle)
+            .collect::<Vec<_>>();
+    c.bench_function(
+        "sketch_projected_point_distance_point_line_distance_residual_forms",
+        |b| {
+            b.iter(|| {
+                for handle in &projected_point_distance_point_line_distance_form_handles {
+                    let _ = projected_point_distance_point_line_distance_sketch
                         .residual_forms_for_constraint(*handle);
                 }
             })

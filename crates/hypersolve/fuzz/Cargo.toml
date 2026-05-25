@@ -224,6 +224,13 @@ doc = false
 bench = false
 
 [[bin]]
+name = "sketch_projected_equal_point_distance_point_line_distance"
+path = "fuzz_targets/sketch_projected_equal_point_distance_point_line_distance.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
 name = "sketch_projected_line_symmetry"
 path = "fuzz_targets/sketch_projected_line_symmetry.rs"
 test = false

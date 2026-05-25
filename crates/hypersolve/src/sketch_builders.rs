@@ -1833,6 +1833,39 @@ pub mod distance {
         }
     }
 
+    /// Add equality between projected point-pair distance and point-line distance.
+    ///
+    /// Lowering projects both retained carriers into the same workplane and
+    /// replays `|a-b|_uv^2*|line_uv|^2 - cross_uv^2 == 0`. This is the
+    /// point-pair counterpart of projected line-length/point-line equality:
+    /// callers keep authored point pairs instead of manufacturing helper
+    /// line geometry. Yap (1997) supplies the exact replay boundary, and
+    /// Shoemake (1985) supplies the unit-quaternion workplane frame.
+    pub fn projected_equal_point_distance_point_line_distance3(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        workplane: SketchEntityHandle,
+        a: SketchEntityHandle,
+        b: SketchEntityHandle,
+        point: SketchEntityHandle,
+        line: SketchEntityHandle,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::ProjectedEqualPointDistancePointLineDistance3 {
+            workplane,
+            a,
+            b,
+            point,
+            line,
+        };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Distance,
+            strategy: SketchResidualStrategy::SquaredProjectedPointDistancePointLineDistance,
+            kind,
+        }
+    }
+
     /// Add equality between two retained projected 3D point-line distances.
     ///
     /// Lowering projects both point/line pairs into the same retained
