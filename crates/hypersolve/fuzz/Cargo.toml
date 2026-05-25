@@ -231,6 +231,13 @@ doc = false
 bench = false
 
 [[bin]]
+name = "sketch_projected_point_distance_difference"
+path = "fuzz_targets/sketch_projected_point_distance_difference.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
 name = "sketch_projected_line_symmetry"
 path = "fuzz_targets/sketch_projected_line_symmetry.rs"
 test = false

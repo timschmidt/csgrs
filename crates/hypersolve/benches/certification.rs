@@ -2330,6 +2330,32 @@ fn sketch_problem_with_projected_length_differences(
     sketch
 }
 
+fn sketch_problem_with_projected_point_distance_differences(
+    row_count: usize,
+) -> hypersolve::SketchSolveProblem {
+    let mut sketch = hypersolve::SketchSolveProblem::new();
+    let origin = sketch.add_point3d("project-point-diff.origin", r(0), r(0), r(0));
+    let normal = sketch.add_normal3d("project-point-diff.normal", r(1), r(0), r(0), r(0));
+    let workplane = sketch.add_workplane("project-point-diff.workplane", origin, normal);
+    for index in 0..row_count {
+        let y = index as i64;
+        let long0 = sketch.add_point3d(format!("projpdiff{index}.l0"), r(0), r(y), r(-y));
+        let long1 = sketch.add_point3d(format!("projpdiff{index}.l1"), r(10), r(y), r(12 + y));
+        let short0 = sketch.add_point3d(format!("projpdiff{index}.s0"), r(20), r(y + 4), r(y));
+        let short1 = sketch.add_point3d(format!("projpdiff{index}.s1"), r(25), r(y + 4), r(99 - y));
+        let difference = sketch.add_distance(format!("projpdiff{index}.d"), r(5));
+        hypersolve::sketch_distance_builders::projected_point_distance_difference3(
+            &mut sketch,
+            format!("projected point distance difference {index}"),
+            workplane,
+            (long0, long1),
+            (short0, short1),
+            difference,
+        );
+    }
+    sketch
+}
+
 fn sketch_problem_with_projected_length_point_line_distances(
     row_count: usize,
 ) -> hypersolve::SketchSolveProblem {
@@ -2783,6 +2809,11 @@ fn certification(c: &mut Criterion) {
     let projected_length_difference_sketch = sketch_problem_with_projected_length_differences(16);
     c.bench_function("sketch_projected_length_difference_lowering", |b| {
         b.iter(|| projected_length_difference_sketch.lower_to_problem())
+    });
+    let projected_point_distance_difference_sketch =
+        sketch_problem_with_projected_point_distance_differences(16);
+    c.bench_function("sketch_projected_point_distance_difference_lowering", |b| {
+        b.iter(|| projected_point_distance_difference_sketch.lower_to_problem())
     });
     let projected_length_point_line_distance_sketch =
         sketch_problem_with_projected_length_point_line_distances(16);
@@ -3765,6 +3796,29 @@ fn certification(c: &mut Criterion) {
             }
         })
     });
+    let projected_point_distance_difference_form_handles =
+        projected_point_distance_difference_sketch
+            .constraints()
+            .iter()
+            .filter(|constraint| {
+                matches!(
+                    constraint.kind,
+                    hypersolve::SketchConstraintKind::ProjectedPointDistanceDifference3 { .. }
+                )
+            })
+            .map(|constraint| constraint.handle)
+            .collect::<Vec<_>>();
+    c.bench_function(
+        "sketch_projected_point_distance_difference_residual_forms",
+        |b| {
+            b.iter(|| {
+                for handle in &projected_point_distance_difference_form_handles {
+                    let _ = projected_point_distance_difference_sketch
+                        .residual_forms_for_constraint(*handle);
+                }
+            })
+        },
+    );
     let projected_length_point_line_distance_form_handles =
         projected_length_point_line_distance_sketch
             .constraints()

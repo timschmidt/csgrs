@@ -6652,6 +6652,116 @@ fn sketch_projected_length_difference_lines3_lowers_exact_workplane_rows() {
 }
 
 #[test]
+fn sketch_projected_point_distance_difference3_lowers_exact_workplane_rows() {
+    let mut sketch = SketchSolveProblem::new();
+    let origin = sketch.add_point3d("origin", real(0), real(0), real(0));
+    let normal = sketch.add_normal3d("normal", real(1), real(0), real(0), real(0));
+    let workplane = sketch.add_workplane("workplane", origin, normal);
+    let long0 = sketch.add_point3d("long0", real(0), real(0), real(7));
+    let long1 = sketch.add_point3d("long1", real(6), real(8), real(12));
+    let short0 = sketch.add_point3d("short0", real(20), real(20), real(-3));
+    let short1 = sketch.add_point3d("short1", real(23), real(24), real(50));
+    let bad0 = sketch.add_point3d("bad0", real(0), real(0), real(0));
+    let bad1 = sketch.add_point3d("bad1", real(8), real(0), real(0));
+    let difference = sketch.add_distance("difference", real(5));
+    let valid = sketch_distance_builders::projected_point_distance_difference3(
+        &mut sketch,
+        "projected point difference",
+        workplane,
+        (long0, long1),
+        (short0, short1),
+        difference,
+    );
+    sketch.add_projected_point_distance_difference3(
+        "violated projected point difference",
+        workplane,
+        (bad0, bad1),
+        (short0, short1),
+        difference,
+    );
+    let wrong_line = sketch.add_line_segment3("wrong line", long0, long1);
+    let wrong = sketch.add_projected_point_distance_difference3(
+        "wrong projected point difference",
+        workplane,
+        (long0, wrong_line),
+        (short0, short1),
+        difference,
+    );
+
+    assert_eq!(valid.family, hypersolve::SketchConstraintFamily::Distance);
+    assert_eq!(
+        valid.strategy,
+        SketchResidualStrategy::SquaredProjectedPointDistanceDifference
+    );
+    assert_eq!(
+        valid.kind,
+        SketchConstraintKind::ProjectedPointDistanceDifference3 {
+            workplane,
+            longer_a: long0,
+            longer_b: long1,
+            shorter_a: short0,
+            shorter_b: short1,
+            difference,
+        }
+    );
+
+    let report = sketch.lower_to_problem();
+    let certification = certify_candidate(
+        &PreparedProblem::new(&report.problem),
+        &context_from_problem(&report.problem),
+    );
+
+    assert_eq!(report.problem.constraints.len(), 6);
+    assert_eq!(report.rows.len(), 7);
+    assert_eq!(
+        report.rows[1].strategy,
+        Some(SketchResidualStrategy::SquaredProjectedPointDistanceDifference)
+    );
+    assert_eq!(
+        report.problem.constraints[2].kind,
+        ConstraintKind::GreaterOrEqual
+    );
+    assert_eq!(
+        report.rows[4].strategy,
+        Some(SketchResidualStrategy::SquaredProjectedPointDistanceDifference)
+    );
+    assert_eq!(
+        report.rows.last().unwrap().status,
+        SketchGeneratedRowStatus::WrongEntityKind {
+            handle: wrong_line,
+            expected: "point",
+        }
+    );
+    assert!(matches!(
+        certification.rows[1].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+    assert!(matches!(
+        certification.rows[2].status,
+        CertifiedCandidateStatus::CertifiedSatisfiedInequality { .. }
+    ));
+    assert!(matches!(
+        certification.rows[4].status,
+        CertifiedCandidateStatus::CertifiedViolation { .. }
+    ));
+
+    let forms = sketch.residual_forms_for_constraint(valid.handle);
+    assert_eq!(forms.status, SketchResidualFormsStatus::Generated);
+    assert_eq!(forms.forms.len(), 3);
+    assert_eq!(
+        forms.forms[1].kind,
+        SketchResidualFormKind::SquaredProjectedPointDistanceDifferencePolynomial
+    );
+    assert_eq!(
+        forms.forms[2].kind,
+        SketchResidualFormKind::ProjectedPointDistanceDifferenceBranchPredicate
+    );
+    assert_eq!(forms.forms[2].role, SketchResidualFormRole::ExactProof);
+    let wrong_forms = sketch.residual_forms_for_constraint(wrong);
+    assert_eq!(wrong_forms.status, SketchResidualFormsStatus::InvalidInputs);
+}
+
+#[test]
 fn sketch_projected_equal_length_point_line_distance3_lowers_exact_workplane_rows() {
     let mut sketch = SketchSolveProblem::new();
     let origin = sketch.add_point3d("origin", real(0), real(0), real(0));

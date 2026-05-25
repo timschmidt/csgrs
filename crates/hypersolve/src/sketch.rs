@@ -978,6 +978,32 @@ pub enum SketchConstraintKind {
         /// Distance entity for the exact projected length difference.
         difference: SketchEntityHandle,
     },
+    /// Projected 3D point-pair distance-difference relation in a retained workplane.
+    ///
+    /// The retained relation is `distance(longer_a,longer_b)_uv =
+    /// distance(shorter_a,shorter_b)_uv + difference`. Lowering reuses the
+    /// square-root-free proof package `(L + S - d^2)^2 - 4LS == 0` plus
+    /// `L - S - d^2 >= 0`, where `L` and `S` are projected squared
+    /// point-pair distances. This is the point-pair counterpart of
+    /// [`SketchConstraintKind::ProjectedLengthDifferenceLines3`], preserving
+    /// authored points instead of helper line segments. Yap, "Towards Exact
+    /// Geometric Computation" (1997), supplies the exact replay boundary;
+    /// Shoemake, "Animating Rotation with Quaternion Curves" (1985), supplies
+    /// the unit-quaternion workplane frame.
+    ProjectedPointDistanceDifference3 {
+        /// Workplane entity that supplies origin and normal/quaternion.
+        workplane: SketchEntityHandle,
+        /// First endpoint of the longer projected point-pair distance.
+        longer_a: SketchEntityHandle,
+        /// Second endpoint of the longer projected point-pair distance.
+        longer_b: SketchEntityHandle,
+        /// First endpoint of the shorter projected point-pair distance.
+        shorter_a: SketchEntityHandle,
+        /// Second endpoint of the shorter projected point-pair distance.
+        shorter_b: SketchEntityHandle,
+        /// Distance entity for the exact projected distance difference.
+        difference: SketchEntityHandle,
+    },
     /// Equality between a projected 3D line length and projected point-line distance.
     ///
     /// The retained relation is
@@ -2035,6 +2061,8 @@ pub enum SketchResidualStrategy {
     SquaredProjectedLineLengthRatio,
     /// Squared 3D line length difference after exact workplane projection.
     SquaredProjectedLineLengthDifference,
+    /// Squared projected point-pair distance difference after exact workplane projection.
+    SquaredProjectedPointDistanceDifference,
     /// Squared equality between projected 3D line length and projected point-line distance.
     SquaredProjectedLineLengthPointLineDistance,
     /// Squared equality between projected point-pair distance and point-line distance.
@@ -2236,6 +2264,10 @@ pub enum SketchResidualFormKind {
     SquaredProjectedLineLengthDifferencePolynomial,
     /// Projected line-length difference branch predicate.
     ProjectedLineLengthDifferenceBranchPredicate,
+    /// Squared projected point-pair distance difference polynomial proof row.
+    SquaredProjectedPointDistanceDifferencePolynomial,
+    /// Projected point-pair distance difference branch predicate.
+    ProjectedPointDistanceDifferenceBranchPredicate,
     /// Polynomial endpoint-on-radius proof row for line/minor-arc length.
     LineArcLengthEndpointRadiusPolynomial,
     /// Exact symbolic squared `line - radius * acos(cos(endpoint angle))` proof row.
@@ -3413,6 +3445,25 @@ impl SketchSolveProblem {
         difference: SketchEntityHandle,
     ) -> SketchConstraintHandle {
         distance::projected_length_difference_lines3(
+            self, name, workplane, longer, shorter, difference,
+        )
+        .handle
+    }
+
+    /// Add a workplane-projected distance-difference constraint for two point pairs.
+    ///
+    /// Lowering emits the unit-workplane guard, a square-root-free polynomial
+    /// equality, and the exact branch inequality selecting the longer
+    /// point-pair distance.
+    pub fn add_projected_point_distance_difference3(
+        &mut self,
+        name: impl Into<String>,
+        workplane: SketchEntityHandle,
+        longer: (SketchEntityHandle, SketchEntityHandle),
+        shorter: (SketchEntityHandle, SketchEntityHandle),
+        difference: SketchEntityHandle,
+    ) -> SketchConstraintHandle {
+        distance::projected_point_distance_difference3(
             self, name, workplane, longer, shorter, difference,
         )
         .handle
@@ -5219,6 +5270,67 @@ impl SketchSolveProblem {
                             role: SketchResidualFormRole::ExactProof,
                             strategy: Some(
                                 SketchResidualStrategy::SquaredProjectedLineLengthDifference,
+                            ),
+                            residual: parts.first_squared - parts.second_squared - difference_squared,
+                        },
+                    ],
+                    diagnostics,
+                }
+            }
+            SketchConstraintKind::ProjectedPointDistanceDifference3 {
+                workplane,
+                longer_a,
+                longer_b,
+                shorter_a,
+                shorter_b,
+                difference,
+            } => {
+                let mut diagnostics = Vec::new();
+                let Some((parts, difference)) = self.projected_point_distance_difference_exprs(
+                    workplane,
+                    (longer_a, longer_b),
+                    (shorter_a, shorter_b),
+                    difference,
+                    constraint,
+                    &mut diagnostics,
+                ) else {
+                    return SketchResidualFormsReport {
+                        constraint: handle,
+                        status: SketchResidualFormsStatus::InvalidInputs,
+                        forms: Vec::new(),
+                        diagnostics,
+                    };
+                };
+                let difference_squared = difference.clone() * difference;
+                let sum_minus_difference = parts.first_squared.clone()
+                    + parts.second_squared.clone()
+                    - difference_squared.clone();
+                SketchResidualFormsReport {
+                    constraint: handle,
+                    status: SketchResidualFormsStatus::Generated,
+                    forms: vec![
+                        SketchResidualForm {
+                            kind: SketchResidualFormKind::WorkplaneUnitQuaternionPolynomial,
+                            role: SketchResidualFormRole::ExactProof,
+                            strategy: Some(SketchResidualStrategy::WorkplaneUnitQuaternion),
+                            residual: unit_quaternion_residual(&parts.quaternion),
+                        },
+                        SketchResidualForm {
+                            kind: SketchResidualFormKind::SquaredProjectedPointDistanceDifferencePolynomial,
+                            role: SketchResidualFormRole::ExactProof,
+                            strategy: Some(
+                                SketchResidualStrategy::SquaredProjectedPointDistanceDifference,
+                            ),
+                            residual: sum_minus_difference.clone() * sum_minus_difference
+                                - Expr::int(4)
+                                    * parts.first_squared.clone()
+                                    * parts.second_squared.clone(),
+                        },
+                        SketchResidualForm {
+                            kind: SketchResidualFormKind::ProjectedPointDistanceDifferenceBranchPredicate,
+                            role: SketchResidualFormRole::ExactProof,
+                            strategy: Some(
+                                SketchResidualStrategy::SquaredProjectedPointDistanceDifference,
                             ),
                             residual: parts.first_squared - parts.second_squared - difference_squared,
                         },
@@ -8127,6 +8239,61 @@ impl SketchSolveProblem {
                     format!("{} projected longer branch", constraint.name),
                     parts.first_squared - parts.second_squared - difference_squared,
                     SketchResidualStrategy::SquaredProjectedLineLengthDifference,
+                    ConstraintKind::GreaterOrEqual,
+                    Real::one(),
+                );
+            }
+            SketchConstraintKind::ProjectedPointDistanceDifference3 {
+                workplane,
+                longer_a,
+                longer_b,
+                shorter_a,
+                shorter_b,
+                difference,
+            } => {
+                // This is the point-pair counterpart of projected line-length
+                // difference. The square-root-free equality row proves the
+                // metric relation, and the branch inequality makes the
+                // intended longer point-pair explicit instead of implicit in
+                // a proposal solver.
+                let Some((parts, difference)) = self.projected_point_distance_difference_exprs(
+                    workplane,
+                    (longer_a, longer_b),
+                    (shorter_a, shorter_b),
+                    difference,
+                    constraint,
+                    rows,
+                ) else {
+                    return;
+                };
+                let difference_squared = difference.clone() * difference;
+                let sum_minus_difference = parts.first_squared.clone()
+                    + parts.second_squared.clone()
+                    - difference_squared.clone();
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} workplane unit", constraint.name),
+                    unit_quaternion_residual(&parts.quaternion),
+                    SketchResidualStrategy::WorkplaneUnitQuaternion,
+                );
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} projected point squared difference", constraint.name),
+                    sum_minus_difference.clone() * sum_minus_difference
+                        - Expr::int(4) * parts.first_squared.clone() * parts.second_squared.clone(),
+                    SketchResidualStrategy::SquaredProjectedPointDistanceDifference,
+                );
+                self.push_residual_with_kind(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} projected point longer branch", constraint.name),
+                    parts.first_squared - parts.second_squared - difference_squared,
+                    SketchResidualStrategy::SquaredProjectedPointDistanceDifference,
                     ConstraintKind::GreaterOrEqual,
                     Real::one(),
                 );
@@ -11229,6 +11396,31 @@ impl SketchSolveProblem {
             distance_denominator,
             radius,
         })
+    }
+
+    fn projected_point_distance_difference_exprs(
+        &self,
+        workplane: SketchEntityHandle,
+        longer: (SketchEntityHandle, SketchEntityHandle),
+        shorter: (SketchEntityHandle, SketchEntityHandle),
+        difference: SketchEntityHandle,
+        constraint: &SketchConstraint,
+        rows: &mut Vec<SketchGeneratedRow>,
+    ) -> Option<(ProjectedEqualPointPointDistancesExprs, Expr)> {
+        let quaternion = self.workplane_quaternion(workplane, constraint, rows)?;
+        let first_squared =
+            self.projected_point_pair_distance_squared(longer, &quaternion, constraint, rows)?;
+        let second_squared =
+            self.projected_point_pair_distance_squared(shorter, &quaternion, constraint, rows)?;
+        let difference = self.distance_expr(difference, constraint, rows)?;
+        Some((
+            ProjectedEqualPointPointDistancesExprs {
+                quaternion,
+                first_squared,
+                second_squared,
+            },
+            difference,
+        ))
     }
 
     fn projected_equal_point_line_distances_exprs(

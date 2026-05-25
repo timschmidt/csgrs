@@ -1800,6 +1800,39 @@ pub mod distance {
         }
     }
 
+    /// Add a projected point-pair distance-difference relation.
+    ///
+    /// Lowering preserves the retained point pairs and replays
+    /// `(L+S-d^2)^2 - 4LS == 0` plus `L-S-d^2 >= 0`, where `L` and `S` are
+    /// projected squared point-pair distances. This is the point-pair
+    /// counterpart of projected line-length differences. Yap (1997) supplies
+    /// the exact replay boundary and Shoemake (1985) supplies the retained
+    /// unit-quaternion workplane frame.
+    pub fn projected_point_distance_difference3(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        workplane: SketchEntityHandle,
+        longer: (SketchEntityHandle, SketchEntityHandle),
+        shorter: (SketchEntityHandle, SketchEntityHandle),
+        difference: SketchEntityHandle,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::ProjectedPointDistanceDifference3 {
+            workplane,
+            longer_a: longer.0,
+            longer_b: longer.1,
+            shorter_a: shorter.0,
+            shorter_b: shorter.1,
+            difference,
+        };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Distance,
+            strategy: SketchResidualStrategy::SquaredProjectedPointDistanceDifference,
+            kind,
+        }
+    }
+
     /// Add a retained projected line-length to point-line-distance equality.
     ///
     /// The retained relation is
