@@ -3932,6 +3932,67 @@ fn exercise_side_cutter_opening_without_holes() {
         .unwrap();
     assert_eq!(point_branch_result.mesh, point_branch.mesh);
 
+    let multi_component_point_branch_left = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            0, 0, 0, 20, 0, 0, 20, 20, 0, 0, 20, 0, //
+            30, 0, 0, 40, 0, 0, 40, 10, 0, 30, 10, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("multi-component point-branch source fixture must import");
+    assert!(
+        arrange_coplanar_surface_multi_difference(&multi_component_point_branch_left, &point_only)
+            .is_none()
+    );
+    let multi_component_point_branch = arrange_coplanar_surface_point_touch_difference(
+        &multi_component_point_branch_left,
+        &point_only,
+    )
+    .expect("source-local point-touch side-cutter difference should materialize");
+    multi_component_point_branch.validate().unwrap();
+    multi_component_point_branch
+        .validate_difference_against_sources(&multi_component_point_branch_left, &point_only)
+        .unwrap();
+    assert!(multi_component_point_branch.polygons.len() >= 3);
+    let multi_component_point_branch_preflight = preflight_boolean_exact(
+        &multi_component_point_branch_left,
+        &point_only,
+        ExactBooleanOperation::Difference,
+    )
+    .expect("source-local point-touch side-cutter preflight should classify shortcut");
+    multi_component_point_branch_preflight.validate().unwrap();
+    multi_component_point_branch_preflight
+        .validate_against_sources(&multi_component_point_branch_left, &point_only)
+        .unwrap();
+    assert_eq!(
+        multi_component_point_branch_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchDifference
+    );
+    let multi_component_point_branch_result = hypermesh::exact::boolean_exact(
+        &multi_component_point_branch_left,
+        &point_only,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("source-local point-touch side-cutter boolean should materialize");
+    multi_component_point_branch_result
+        .validate_operation_against_sources(
+            &multi_component_point_branch_left,
+            &point_only,
+            ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        multi_component_point_branch_result.mesh,
+        multi_component_point_branch.mesh
+    );
+
     let nonconvex_left = ExactMesh::from_i64_triangles_with_policy(
         &[
             0, 0, 0, 20, 0, 0, 20, 20, 0, 12, 20, 0, 12, 12, 0, 8, 12, 0, 8, 20, 0, 0, 20, 0,

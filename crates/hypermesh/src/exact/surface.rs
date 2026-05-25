@@ -7706,6 +7706,17 @@ pub fn arrange_coplanar_surface_side_cutter_difference(
 /// leaves retained simple loops that share those branch coordinates. The mesh
 /// duplicates branch coordinates across component loops and validates the
 /// exact area equation before export.
+///
+/// The certificate is source-local. A multi-component left operand may retain
+/// unaffected convex source components while one or more other components
+/// produce point-branch remnants. This is still not a general planar
+/// arrangement: strict interior holes, boundary-only ambiguities, and
+/// non-branch single-cut remnants stay on their narrower artifacts. The
+/// retained-object split follows Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997): every emitted loop is either an
+/// unchanged exact source hull or the replay of a local branch subtraction.
+/// The branch subtraction itself uses the Weiler-Atherton retained-fragment
+/// walk cited by [`materialize_side_cutter_point_touch_difference_core`].
 #[cfg(feature = "exact-triangulation")]
 pub fn arrange_coplanar_surface_point_touch_difference(
     left: &ExactMesh,
@@ -7713,12 +7724,15 @@ pub fn arrange_coplanar_surface_point_touch_difference(
 ) -> Option<CoplanarSurfacePointTouchDifference> {
     let left_components = connected_face_component_meshes(left)?;
     let right_components = connected_face_component_meshes(right)?;
-    if left_components.len() != 1 || right_components.len() < 2 {
+    if left_components.is_empty() || right_components.len() < 2 {
         return None;
     }
 
-    let Some(left_component) =
-        ConvexUnionComponent::from_mesh(MultiUnionSide::Left, left_components[0].clone())
+    let Some(left_components) = left_components
+        .iter()
+        .cloned()
+        .map(|mesh| ConvexUnionComponent::from_mesh(MultiUnionSide::Left, mesh))
+        .collect::<Option<Vec<_>>>()
     else {
         return arrange_coplanar_simple_surface_point_touch_difference(
             left_components,
@@ -7729,61 +7743,106 @@ pub fn arrange_coplanar_surface_point_touch_difference(
         .into_iter()
         .map(|mesh| ConvexUnionComponent::from_mesh(MultiUnionSide::Right, mesh))
         .collect::<Option<Vec<_>>>()?;
-    let projection = left_component.projection;
-    if right_components
+    let projection = left_components.first()?.projection;
+    if left_components
         .iter()
         .any(|component| component.projection != projection)
+        || right_components
+            .iter()
+            .any(|component| component.projection != projection)
     {
         return None;
     }
+    let left_hulls = left_components
+        .iter()
+        .map(|component| component.hull.clone())
+        .collect::<Vec<_>>();
+    validate_component_loops_disjoint(
+        &left_hulls,
+        projection,
+        "coplanar point-touch surface difference",
+    )
+    .ok()?;
 
-    let mut cut_indices = Vec::new();
-    for (right_index, right_component) in right_components.iter().enumerate() {
-        if polygons_equal(&left_component.hull, &right_component.hull)
-            || polygon_in_closed_convex_polygon(
-                &left_component.hull,
+    let mut polygons = Vec::new();
+    let mut emitted_branch = false;
+    for left_component in &left_components {
+        let mut dropped = false;
+        let mut cut_indices = Vec::new();
+        for (right_index, right_component) in right_components.iter().enumerate() {
+            if polygons_equal(&left_component.hull, &right_component.hull)
+                || polygon_in_closed_convex_polygon(
+                    &left_component.hull,
+                    &right_component.hull,
+                    projection,
+                )?
+            {
+                if dropped || !cut_indices.is_empty() {
+                    return None;
+                }
+                dropped = true;
+                continue;
+            }
+            if polygon_in_closed_convex_polygon(
                 &right_component.hull,
+                &left_component.hull,
                 projection,
-            )?
-        {
-            return None;
-        }
-        if polygon_in_closed_convex_polygon(
-            &right_component.hull,
-            &left_component.hull,
-            projection,
-        )? {
-            if convex_polygons_touch_on_positive_boundary(
+            )? {
+                if dropped {
+                    return None;
+                }
+                if convex_polygons_touch_on_positive_boundary(
+                    &left_component.hull,
+                    &right_component.hull,
+                    projection,
+                )? {
+                    cut_indices.push(right_index);
+                    continue;
+                }
+                return None;
+            }
+
+            match convex_union_component_relation(
                 &left_component.hull,
                 &right_component.hull,
                 projection,
             )? {
-                cut_indices.push(right_index);
-                continue;
+                ConvexUnionComponentRelation::Disjoint => {}
+                ConvexUnionComponentRelation::BoundaryOnly => return None,
+                ConvexUnionComponentRelation::PositiveArea => {
+                    if dropped {
+                        return None;
+                    }
+                    cut_indices.push(right_index);
+                }
             }
+        }
+        if dropped {
+            continue;
+        }
+        if cut_indices.is_empty() {
+            polygons.push(left_component.hull.clone());
+            continue;
+        }
+        if cut_indices.len() < 2 {
             return None;
         }
-
-        match convex_union_component_relation(
-            &left_component.hull,
-            &right_component.hull,
-            projection,
-        )? {
-            ConvexUnionComponentRelation::Disjoint => {}
-            ConvexUnionComponentRelation::BoundaryOnly => return None,
-            ConvexUnionComponentRelation::PositiveArea => cut_indices.push(right_index),
-        }
+        let (_, mut branch_polygons) = materialize_side_cutter_point_touch_difference_core(
+            left_component,
+            &cut_indices,
+            &right_components,
+            "coplanar point-touch side-cutter difference",
+        )?;
+        emitted_branch = true;
+        polygons.append(&mut branch_polygons);
     }
-    if cut_indices.len() < 2 {
+    if !emitted_branch || polygons.is_empty() {
         return None;
     }
-
-    let (_, polygons) = materialize_side_cutter_point_touch_difference_core(
-        &left_component,
-        &cut_indices,
-        &right_components,
-        "coplanar point-touch side-cutter difference",
-    )?;
+    for polygon in &mut polygons {
+        orient_polygon_ccw(polygon, projection)?;
+    }
+    sort_polygons_for_replay(&mut polygons, projection);
     let mesh = polygons_to_earcut_open_mesh_with_label(
         &polygons,
         projection,
