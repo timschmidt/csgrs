@@ -4769,6 +4769,18 @@ fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
             )
             .unwrap()
             .mesh;
+        let same_outer_disjoint_single_hole = ExactMesh::from_i64_triangles_with_policy(
+            &[1, 1, 0, 3, 1, 0, 3, 3, 0, 1, 3, 0],
+            &[0, 1, 2, 0, 2, 3],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let same_outer_disjoint_single_right = arrange_coplanar_convex_surface_holed_difference(
+            &single_component_holed_left,
+            &same_outer_disjoint_single_hole,
+        )
+        .unwrap()
+        .mesh;
         let nonrectilinear_channel_holed_left = ExactMesh::from_i64_triangles_with_policy(
             &[0, 0, 0, 20, 0, 0, 20, 20, 0, 0, 20, 0],
             &[0, 1, 2, 0, 2, 3],
@@ -6129,6 +6141,22 @@ fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
                         hypermesh::exact::preflight_boolean_exact(
                             &same_outer_nested_left,
                             &same_outer_disjoint_multi_right,
+                            hypermesh::exact::ExactBooleanOperation::Difference,
+                        )
+                        .map(|report| report.validate()),
+                        arrange_coplanar_surface_component_difference(
+                            &same_outer_nested_left,
+                            &same_outer_disjoint_single_right,
+                        )
+                        .map(|output| {
+                            output.validate_component_difference_against_sources(
+                                &same_outer_nested_left,
+                                &same_outer_disjoint_single_right,
+                            )
+                        }),
+                        hypermesh::exact::preflight_boolean_exact(
+                            &same_outer_nested_left,
+                            &same_outer_disjoint_single_right,
                             hypermesh::exact::ExactBooleanOperation::Difference,
                         )
                         .map(|report| report.validate()),

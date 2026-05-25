@@ -1468,6 +1468,7 @@ fn exercise_deterministic_case(selector: u8) {
         38 => exercise_same_outer_component_holed_coplanar_intersection(),
         39 => exercise_same_outer_component_holed_coplanar_difference(),
         40 => exercise_same_outer_holed_coplanar_multi_difference(),
+        41 => exercise_same_outer_holed_coplanar_component_difference(),
         _ => exercise_nonconvex_coplanar_volumetric_difference_fan_split(),
     }
 }
@@ -2590,6 +2591,78 @@ fn exercise_same_outer_holed_coplanar_multi_difference() {
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .expect("same-outer holed multi-difference should materialize")
+    .validate_operation_against_sources(
+        &left,
+        &right,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn exercise_same_outer_holed_coplanar_component_difference() {
+    let outer = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 10, 0, 0, 10, 10, 0, 0, 10, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("same-outer holed component-difference outer fixture must import");
+    let left_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[4, 4, 0, 6, 4, 0, 6, 6, 0, 4, 6, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("same-outer holed component-difference left hole fixture must import");
+    let right_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[1, 1, 0, 3, 1, 0, 3, 3, 0, 1, 3, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("same-outer holed component-difference right hole fixture must import");
+    let left = arrange_coplanar_convex_surface_holed_difference(&outer, &left_hole)
+        .expect("same-outer one-hole left should materialize")
+        .mesh;
+    let right = arrange_coplanar_convex_surface_holed_difference(&outer, &right_hole)
+        .expect("same-outer one-hole right should materialize")
+        .mesh;
+
+    assert!(arrange_coplanar_surface_component_holed_difference(&left, &right).is_none());
+    assert!(arrange_coplanar_surface_multi_difference(&left, &right).is_none());
+    let difference = arrange_coplanar_surface_component_difference(&left, &right)
+        .expect("same-outer single right hole should materialize as one filled component");
+    difference.validate().unwrap();
+    difference
+        .validate_component_difference_against_sources(&left, &right)
+        .unwrap();
+
+    let touching_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[6, 4, 0, 8, 4, 0, 8, 6, 0, 6, 6, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("same-outer touching hole fixture must import");
+    let touching = arrange_coplanar_convex_surface_holed_difference(&outer, &touching_hole)
+        .expect("same-outer touching annulus should materialize")
+        .mesh;
+    assert!(arrange_coplanar_surface_component_difference(&left, &touching).is_none());
+
+    let preflight = preflight_boolean_exact(&left, &right, ExactBooleanOperation::Difference)
+        .expect("same-outer holed component-difference preflight should classify shortcut");
+    preflight.validate().unwrap();
+    preflight.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementDifference
+    );
+    hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("same-outer holed component-difference should materialize")
     .validate_operation_against_sources(
         &left,
         &right,

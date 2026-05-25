@@ -26322,6 +26322,164 @@ fn exact_coplanar_multi_difference_materializes_same_outer_disjoint_hole_fills()
 
 #[cfg(feature = "exact-triangulation")]
 #[test]
+fn exact_coplanar_component_difference_materializes_same_outer_single_hole_fill() {
+    let outer = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 10, 0, 0, 10, 10, 0, 0, 10, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let left_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[4, 4, 0, 6, 4, 0, 6, 6, 0, 4, 6, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let right_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[1, 1, 0, 3, 1, 0, 3, 3, 0, 1, 3, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let left =
+        hypermesh::exact::arrange_coplanar_convex_surface_holed_difference(&outer, &left_hole)
+            .expect("left annulus should materialize")
+            .mesh;
+    let right =
+        hypermesh::exact::arrange_coplanar_convex_surface_holed_difference(&outer, &right_hole)
+            .expect("right annulus should materialize")
+            .mesh;
+
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_component_holed_difference(&left, &right)
+            .is_none(),
+        "a disjoint right hole becomes a filled component, not a holed component"
+    );
+    assert!(
+        hypermesh::exact::arrange_coplanar_convex_surface_difference(&left, &right).is_none(),
+        "source-holed same-outer subtraction must not be claimed by convex difference"
+    );
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_cutter_hole_contact_difference(&left, &right)
+            .is_none(),
+        "source-holed same-outer subtraction must not be claimed as cutter/hole contact"
+    );
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_multi_difference(&left, &right).is_none(),
+        "one filled hole belongs on the simple-loop component artifact"
+    );
+
+    let difference = hypermesh::exact::arrange_coplanar_surface_component_difference(&left, &right)
+        .expect("same-outer single disjoint right hole should materialize as one filled loop");
+    difference.validate().unwrap();
+    difference
+        .validate_component_difference_against_sources(&left, &right)
+        .unwrap();
+    assert_eq!(difference.polygon.len(), 4);
+    assert!(
+        difference
+            .polygon
+            .iter()
+            .any(|point| real_eq(&point.x, &ExactReal::from(1)))
+    );
+
+    let mut stale = difference.clone();
+    stale.polygon.reverse();
+    assert!(stale.validate().is_err());
+    assert!(
+        stale
+            .validate_component_difference_against_sources(&left, &right)
+            .is_err()
+    );
+
+    let crossing_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[5, 3, 0, 8, 3, 0, 8, 6, 0, 5, 6, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let crossing =
+        hypermesh::exact::arrange_coplanar_convex_surface_holed_difference(&outer, &crossing_hole)
+            .expect("crossing annulus should materialize")
+            .mesh;
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_component_difference(&left, &crossing).is_none(),
+        "partial retained-hole overlap is not a filled-hole certificate"
+    );
+
+    let touching_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[6, 4, 0, 8, 4, 0, 8, 6, 0, 6, 6, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let touching =
+        hypermesh::exact::arrange_coplanar_convex_surface_holed_difference(&outer, &touching_hole)
+            .expect("touching annulus should materialize")
+            .mesh;
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_component_difference(&left, &touching).is_none(),
+        "hole boundary contact is not a filled-hole certificate"
+    );
+
+    let containing_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[3, 3, 0, 7, 3, 0, 7, 7, 0, 3, 7, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let containing = hypermesh::exact::arrange_coplanar_convex_surface_holed_difference(
+        &outer,
+        &containing_hole,
+    )
+    .expect("containing annulus should materialize")
+    .mesh;
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_component_difference(&left, &containing)
+            .is_none(),
+        "a right hole containing a left hole must stay on the holed artifact"
+    );
+
+    let preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    preflight.validate().unwrap();
+    preflight.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementDifference
+    );
+
+    let result = hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    result
+        .validate_operation_against_sources(
+            &left,
+            &right,
+            hypermesh::exact::ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut:
+                hypermesh::exact::ExactBooleanShortcutKind::CoplanarSurfaceArrangementDifference
+        }
+    );
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[test]
 fn exact_named_booleans_handle_empty_operands() {
     let empty =
         ExactMesh::from_i64_triangles_with_policy(&[], &[], ValidationPolicy::ALLOW_BOUNDARY)

@@ -2179,7 +2179,7 @@ fn boolean_coplanar_component_difference(
     difference.validate_component_difference_against_sources(left, right)?;
     let mesh = copy_mesh(
         &difference.mesh,
-        "exact coplanar nonconvex component difference",
+        "exact coplanar component difference",
         validation,
     )?;
     Ok(certified_shortcut_result(

@@ -1334,13 +1334,14 @@ pub struct CoplanarSurfacePointTouchDifference {
 ///
 /// This is the single-component counterpart to
 /// [`CoplanarSurfaceMultiArrangement`]. It covers bounded cases where the
-/// output is neither convex nor holed, but still has one retained simple loop
-/// that can be audited directly. Producers include cutter/hole-contact
-/// differences, where a side-attached cutter opens a strictly contained hole
-/// to the outer boundary, and side-cutter-only differences, where exact
-/// non-rectilinear cutter openings carve one nonconvex simple remnant without
-/// retained hole rings. The output keeps that loop as exact topology and
-/// triangulates it through `hypertri`'s FIST-style earcut handoff. See Held,
+/// output has one retained simple loop that can be audited directly. Producers
+/// include cutter/hole-contact differences, where a side-attached cutter opens
+/// a strictly contained hole to the outer boundary; side-cutter-only
+/// differences, where exact non-rectilinear cutter openings carve one
+/// nonconvex simple remnant without retained hole rings; and the bounded
+/// same-outer holed subtraction whose result is one filled source-owned hole.
+/// The output keeps that loop as exact topology and triangulates it through
+/// `hypertri`'s FIST-style earcut handoff. See Held,
 /// "FIST: Fast Industrial-Strength Triangulation of Polygons,"
 /// *Algorithmica* 30 (2001), and Yap, "Towards Exact Geometric Computation,"
 /// *Computational Geometry* 7.1-2 (1997).
@@ -1920,19 +1921,19 @@ impl CoplanarSurfacePointTouchDifference {
 
 #[cfg(feature = "exact-triangulation")]
 impl CoplanarSurfaceArrangement {
-    /// Validate the retained nonconvex simple loop and mesh.
+    /// Validate the retained simple loop and mesh.
     ///
     /// The artifact deliberately does not require convexity. It does require
     /// one positive-area, counter-clockwise, self-disjoint loop whose
-    /// triangulated mesh has exactly the same boundary. This keeps the
-    /// nonconvex output inside Yap's exact-state discipline: callers receive a
-    /// replayable combinatorial object, not only a triangle soup.
+    /// triangulated mesh has exactly the same boundary. This keeps the output
+    /// inside Yap's exact-state discipline: callers receive a replayable
+    /// combinatorial object, not only a triangle soup.
     pub fn validate(&self) -> Result<(), MeshError> {
         validate_coplanar_surface_output(
             self.projection,
             &self.polygon,
             &self.mesh,
-            "coplanar nonconvex simple-loop arrangement",
+            "coplanar simple-loop arrangement",
         )
     }
 
@@ -2030,15 +2031,16 @@ impl CoplanarSurfaceArrangement {
         }
     }
 
-    /// Validate this nonconvex component-difference loop against its sources.
+    /// Validate this component-difference loop against its sources.
     ///
     /// This replay is intentionally narrower than arbitrary planar
     /// subtraction: it rebuilds the exact connected source components, drops
-    /// wholly covered components, and then requires the one retained nonconvex
-    /// remnant to match this loop and triangulation exactly. Keeping that
-    /// construction history attached to the artifact is the certified-object
-    /// boundary required by Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7.1-2 (1997).
+    /// wholly covered components, and then requires the one retained remnant
+    /// or source-holed filled-hole component to match this loop and
+    /// triangulation exactly. Keeping that construction history attached to
+    /// the artifact is the certified-object boundary required by Yap,
+    /// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+    /// (1997).
     pub fn validate_component_difference_against_sources(
         &self,
         left: &ExactMesh,
@@ -2048,7 +2050,7 @@ impl CoplanarSurfaceArrangement {
         let replay =
             arrange_coplanar_surface_component_difference(left, right).ok_or_else(|| {
                 surface_validation_error(
-                    "coplanar nonconvex simple-loop arrangement",
+                    "coplanar simple-loop arrangement",
                     "source replay did not reproduce a component-difference loop",
                 )
             })?;
@@ -2056,7 +2058,7 @@ impl CoplanarSurfaceArrangement {
             Ok(())
         } else {
             Err(surface_validation_error(
-                "coplanar nonconvex simple-loop arrangement",
+                "coplanar simple-loop arrangement",
                 "retained component difference does not match source replay",
             ))
         }
@@ -3914,7 +3916,7 @@ fn same_outer_holed_no_hole_difference_polygons(
             }
         }
     }
-    if polygons.len() < 2 {
+    if polygons.is_empty() {
         return None;
     }
     sort_polygons_for_replay(&mut polygons, projection);
@@ -7163,7 +7165,7 @@ pub fn arrange_coplanar_surface_multi_difference(
     Some(arrangement)
 }
 
-/// Certify a nonconvex single-loop coplanar component difference.
+/// Certify a single-loop coplanar component difference.
 ///
 /// This is the single-output counterpart to
 /// [`arrange_coplanar_surface_multi_difference`]. It covers the bounded case
@@ -7176,15 +7178,19 @@ pub fn arrange_coplanar_surface_multi_difference(
 /// [`arrange_coplanar_surface_cutter_hole_contact_difference`], and the
 /// multi-cutter form of [`arrange_coplanar_surface_side_cutter_difference`],
 /// and it still rejects holes, point-only branch contacts, and multiple
-/// retained loops. A one-cutter side opening may still replay here first,
-/// preserving older convex/component arrangement classification while the
-/// direct side-cutter artifact remains available for explicit validation.
+/// retained loops except for the separate source-holed case where exactly one
+/// right retained hole becomes a filled output component. A one-cutter side
+/// opening may still replay here first, preserving older convex/component
+/// arrangement classification while the direct side-cutter artifact remains
+/// available for explicit validation.
 ///
 /// The loop is promoted only after exact source-component replay and retained
 /// area/topology checks, following Yap, "Towards Exact Geometric
 /// Computation," *Computational Geometry* 7.1-2 (1997). The boundary
 /// construction underneath is the Weiler-Atherton retained-fragment model
-/// cited by the multi-difference path.
+/// cited by the multi-difference path; the same-outer source-holed case uses
+/// retained mesh-incidence rings plus the exact Sutherland-Hodgman area replay
+/// cited by [`same_outer_holed_no_hole_difference_polygons`].
 #[cfg(feature = "exact-triangulation")]
 pub fn arrange_coplanar_surface_component_difference(
     left: &ExactMesh,
@@ -7199,25 +7205,39 @@ pub fn arrange_coplanar_surface_component_difference(
     {
         return None;
     }
-    let (projection, mut polygons) = coplanar_surface_difference_polygons(left, right)?;
+    let source_holed_filled_hole = same_outer_holed_no_hole_difference_polygons(left, right);
+    let (projection, mut polygons, allow_convex_single, label) =
+        if let Some((projection, polygons)) = source_holed_filled_hole {
+            (
+                projection,
+                polygons,
+                true,
+                "exact coplanar same-outer filled-hole difference",
+            )
+        } else {
+            let (projection, polygons) = coplanar_surface_difference_polygons(left, right)?;
+            (
+                projection,
+                polygons,
+                false,
+                "exact coplanar nonconvex component difference",
+            )
+        };
     if polygons.len() != 1 {
         return None;
     }
     let polygon = polygons.pop()?;
-    if validate_projected_strictly_convex_loop(
-        &polygon,
-        projection,
-        "coplanar nonconvex component difference",
-    )
-    .is_ok()
+    if !allow_convex_single
+        && validate_projected_strictly_convex_loop(
+            &polygon,
+            projection,
+            "coplanar nonconvex component difference",
+        )
+        .is_ok()
     {
         return None;
     }
-    let mesh = polygon_to_earcut_open_mesh_with_label(
-        &polygon,
-        projection,
-        "exact coplanar nonconvex component difference",
-    )?;
+    let mesh = polygon_to_earcut_open_mesh_with_label(&polygon, projection, label)?;
     let arrangement = CoplanarSurfaceArrangement {
         projection,
         polygon,
