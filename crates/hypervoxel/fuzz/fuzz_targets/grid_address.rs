@@ -1,5 +1,7 @@
 #![no_main]
 
+use std::collections::BTreeSet;
+
 use hyperreal::Real;
 use hypervoxel::{
     AdapterNumericContract, AdapterToleranceStatus, AggregateCertainty, CertifiedFieldInterval,
@@ -21,7 +23,7 @@ use hypervoxel::{
     VoxelIndexConvention, VoxelIoCompression, VoxelIoMetadata, VoxelMemoryBudgetManifest,
     VoxelSideTables, VoxelSliceNaming, VoxelSliceOrdering, VoxelSpatialAggregateFacts,
     VoxelTraceDimension, VoxelTraceManifest, VoxelizationAudit, VoxelizationPolicy,
-    classify_support_mask, continuous_field_address,
+    classify_support_mask, continuous_field_address, extract_chunk_paged_exposed_faces_with_report,
     diff_sparse_grids, extract_exposed_faces, greedy_face_patch_plan, lookup_material_display_colors,
     extract_exposed_faces_with_report, lossy_obj_from_quad_mesh, lossy_quad_mesh_from_faces, query_field_samples,
     query_material_regions, report_material_region_metadata, sample_manhattan_distance_field,
@@ -288,6 +290,23 @@ fuzz_target!(|data: (u8, u64, u64, u64)| {
     assert_eq!(shell.has_exact_faces, shell.exact_faces > 0);
     assert_eq!(shell.faces, faces);
     assert!(shell.exact_shell_ready);
+    let paged_shell = extract_chunk_paged_exposed_faces_with_report(&paged_grid).unwrap();
+    assert_eq!(paged_shell.exact_faces, shell.exact_faces);
+    assert_eq!(paged_shell.has_exact_faces, shell.has_exact_faces);
+    assert_eq!(paged_shell.tested_cells, grid.len());
+    assert_eq!(paged_shell.tested_sides, grid.len() * 6);
+    assert_eq!(paged_shell.exact_paged_shell_ready, shell.exact_shell_ready);
+    let shell_keys = shell
+        .faces
+        .iter()
+        .map(|face| (face.address, face.side.integer_normal()))
+        .collect::<BTreeSet<_>>();
+    let paged_shell_keys = paged_shell
+        .faces
+        .iter()
+        .map(|face| (face.address, face.side.integer_normal()))
+        .collect::<BTreeSet<_>>();
+    assert_eq!(paged_shell_keys, shell_keys);
     let empty_shell = extract_exposed_faces_with_report(&SparseVoxelGrid::new(report.frame.clone())).unwrap();
     assert_eq!(empty_shell.exact_faces, 0);
     assert!(!empty_shell.has_exact_faces);

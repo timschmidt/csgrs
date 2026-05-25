@@ -21,14 +21,15 @@ use hypervoxel::{
     VoxelIoCompression, VoxelIoMetadata, VoxelMemoryBudgetManifest, VoxelSideTables,
     VoxelSliceNaming, VoxelSliceOrdering, VoxelSpatialAggregateFacts, VoxelTraceDimension,
     VoxelTraceManifest, VoxelizationAudit, VoxelizationPolicy, classify_support_mask,
-    continuous_field_address, diff_sparse_grids, extract_exposed_faces,
-    extract_exposed_faces_with_report, greedy_face_patch_plan, lookup_material_display_colors,
-    lossy_obj_from_quad_mesh, lossy_quad_mesh_from_faces, query_field_samples,
-    query_material_regions, report_material_region_metadata, sample_manhattan_distance_field,
-    sample_signed_manhattan_distance_field, select_lod_cells, sweep_address_segment,
-    trace_address_ray, voxelize_exact_box, voxelize_exact_convex_halfspace_set,
-    voxelize_exact_halfspace, voxelize_exact_triangle_solid_mesh,
-    voxelize_exact_triangle_surface_mesh, voxelize_prepared_exact_triangle_solid_mesh,
+    continuous_field_address, diff_sparse_grids, extract_chunk_paged_exposed_faces_with_report,
+    extract_exposed_faces, extract_exposed_faces_with_report, greedy_face_patch_plan,
+    lookup_material_display_colors, lossy_obj_from_quad_mesh, lossy_quad_mesh_from_faces,
+    query_field_samples, query_material_regions, report_material_region_metadata,
+    sample_manhattan_distance_field, sample_signed_manhattan_distance_field, select_lod_cells,
+    sweep_address_segment, trace_address_ray, voxelize_exact_box,
+    voxelize_exact_convex_halfspace_set, voxelize_exact_halfspace,
+    voxelize_exact_triangle_solid_mesh, voxelize_exact_triangle_surface_mesh,
+    voxelize_prepared_exact_triangle_solid_mesh,
     voxelize_prepared_exact_triangle_solid_mesh_by_components,
     voxelize_prepared_exact_triangle_solid_mesh_by_verified_components,
 };
@@ -839,6 +840,19 @@ fn bench_batches_field_facts_and_sweeps(c: &mut Criterion) {
                 report.page_hits,
                 report.page_misses,
                 report.exact_distance_band_ready,
+            )
+        })
+    });
+    c.bench_function("chunk_paged_exposed_face_extraction", |b| {
+        let shape = ChunkShape::new(3).unwrap();
+        let paged = ChunkPagedSparseGrid::from_sparse_grid(&grid, shape).unwrap();
+        b.iter(|| {
+            let report = extract_chunk_paged_exposed_faces_with_report(&paged).unwrap();
+            (
+                report.exact_faces,
+                report.page_hits,
+                report.page_misses,
+                report.exact_paged_shell_ready,
             )
         })
     });

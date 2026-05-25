@@ -27,6 +27,7 @@ mod batch;
 mod candidate;
 mod cell;
 mod chunk;
+mod chunk_faces;
 mod chunk_storage;
 mod compression;
 mod continuous;
@@ -84,6 +85,9 @@ pub use cell::{
     VoxelPayload,
 };
 pub use chunk::{ChunkAddress, ChunkLocalAddress, ChunkPageSummary, ChunkShape};
+pub use chunk_faces::{
+    ChunkPagedExactFaceExtractionReport, extract_chunk_paged_exposed_faces_with_report,
+};
 pub use chunk_storage::{
     ChunkPagedAabbBroadPhaseReport, ChunkPagedConnectedComponentReport,
     ChunkPagedManhattanBandReport, ChunkPagedRegionAggregateReport, ChunkPagedSparseGrid,

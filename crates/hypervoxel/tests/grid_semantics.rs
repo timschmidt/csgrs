@@ -14,7 +14,8 @@ use hypervoxel::{
     VoxelIoMetadataStatus, VoxelIoPaletteStatus, VoxelIoPayloadStatus, VoxelPayload,
     VoxelPredicateCertificateReport, VoxelSliceNaming, VoxelSliceOrdering,
     VoxelSpatialAggregateFacts, VoxelTraceDimension, VoxelTraceManifest, VoxelizationPolicy,
-    VoxelizationReport, continuous_field_address,
+    VoxelizationReport, continuous_field_address, extract_chunk_paged_exposed_faces_with_report,
+    extract_exposed_faces_with_report,
 };
 
 use hypervoxel::SvoVoxelGrid;
@@ -287,6 +288,19 @@ fn chunk_paged_sparse_storage_replays_exact_addresses_and_payload_blockers() {
     assert!(band.page_hits > 0);
     assert!(band.page_misses > 0);
     assert!(band.cross_page_edges > 0);
+    let paged_shell = extract_chunk_paged_exposed_faces_with_report(&component_pages).unwrap();
+    let sparse_shell = extract_exposed_faces_with_report(&component_grid).unwrap();
+    assert_eq!(paged_shell.exact_faces, 20);
+    assert_eq!(paged_shell.exact_faces, sparse_shell.exact_faces);
+    assert_eq!(paged_shell.faces, sparse_shell.faces);
+    assert_eq!(paged_shell.tested_pages, component_pages.page_count());
+    assert_eq!(paged_shell.tested_cells, component_pages.len());
+    assert_eq!(paged_shell.tested_sides, component_pages.len() * 6);
+    assert!(paged_shell.has_exact_faces);
+    assert!(paged_shell.exact_paged_shell_ready);
+    assert!(paged_shell.page_hits > 0);
+    assert!(paged_shell.page_misses > 0);
+    assert!(paged_shell.cross_page_sides > 0);
 
     let empty_component = component_pages
         .query_connected_component(VoxelAddress::new(4, [0, 0, 0]).unwrap())
@@ -308,6 +322,12 @@ fn chunk_paged_sparse_storage_replays_exact_addresses_and_payload_blockers() {
     assert_eq!(blocked_band.distances.len(), 3);
     assert!(blocked_band.has_unknown);
     assert!(!blocked_band.exact_distance_band_ready);
+    let blocked_shell =
+        extract_chunk_paged_exposed_faces_with_report(&blocked_component_pages).unwrap();
+    assert_eq!(blocked_shell.exact_faces, 16);
+    assert_eq!(blocked_shell.skipped_unknown_cells, 1);
+    assert_eq!(blocked_shell.unknown_neighbor_sides, 2);
+    assert!(!blocked_shell.exact_paged_shell_ready);
 }
 
 #[test]
