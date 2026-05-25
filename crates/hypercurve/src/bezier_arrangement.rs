@@ -1239,7 +1239,18 @@ impl BezierSubcurve2 {
                 ),
                 Self::RationalQuadratic(curve) => {
                     let (start_tangent, end_tangent) = rational_endpoint_tangents(curve);
-                    (start_tangent, end_tangent, None, None)
+                    let start_second_derivative = match rational_start_second_derivative(curve) {
+                        Classification::Decided(derivative) => derivative,
+                        Classification::Uncertain(reason) => {
+                            return Classification::Uncertain(reason);
+                        }
+                    };
+                    (
+                        start_tangent,
+                        end_tangent,
+                        Some(start_second_derivative),
+                        None,
+                    )
                 }
             };
 
@@ -1303,6 +1314,70 @@ fn cubic_third_derivative(curve: &crate::CubicBezier2) -> TangentVector {
         * (((curve.end().y() - (&three * curve.control2().y())) + (&three * curve.control1().y()))
             - curve.start().y());
     TangentVector { dx, dy }
+}
+
+/// Returns the affine second derivative at `t = 0` for a rational quadratic.
+///
+/// A conic Bezier is evaluated as a homogeneous quotient `R(t) = N(t) / W(t)`.
+/// For same-tangent branch vertices we need the local Taylor coefficient used
+/// by the signed-curvature witness in [`compare_same_tangent_second_order`].
+/// The quotient derivative
+/// `R'' = (N''W - NW'') / W^2 - 2W'(N'W - NW') / W^3` is evaluated exactly in
+/// the scalar model; no floating approximation is introduced. The Bernstein
+/// endpoint derivatives are the rational Bezier identities from Farin,
+/// *Curves and Surfaces for CAGD* (5th ed., 2002), and refusing unsupported
+/// divisions preserves Yap's exact-computation boundary from "Towards Exact
+/// Geometric Computation," *Computational Geometry* 7(1-2), 3-23 (1997).
+fn rational_start_second_derivative(
+    curve: &crate::RationalQuadraticBezier2,
+) -> Classification<TangentVector> {
+    let dx = match rational_start_second_derivative_coordinate(
+        curve.start().x(),
+        curve.control().x(),
+        curve.end().x(),
+        curve.start_weight(),
+        curve.control_weight(),
+        curve.end_weight(),
+    ) {
+        Ok(value) => value,
+        Err(reason) => return Classification::Uncertain(reason),
+    };
+    let dy = match rational_start_second_derivative_coordinate(
+        curve.start().y(),
+        curve.control().y(),
+        curve.end().y(),
+        curve.start_weight(),
+        curve.control_weight(),
+        curve.end_weight(),
+    ) {
+        Ok(value) => value,
+        Err(reason) => return Classification::Uncertain(reason),
+    };
+    Classification::Decided(TangentVector { dx, dy })
+}
+
+fn rational_start_second_derivative_coordinate(
+    p0: &Real,
+    p1: &Real,
+    p2: &Real,
+    w0: &Real,
+    w1: &Real,
+    w2: &Real,
+) -> Result<Real, UncertaintyReason> {
+    let two = Real::from(2_i8);
+    let n0 = w0 * p0;
+    let n1 = &two * ((w1 * p1) - (w0 * p0));
+    let n2 = &two * (((w0 * p0) - (&two * (w1 * p1))) + (w2 * p2));
+    let d1 = &two * (w1 - w0);
+    let d2 = &two * ((w0 - (&two * w1)) + w2);
+    let w0_squared = w0 * w0;
+    let w0_cubed = &w0_squared * w0;
+    let first_numerator = (&n2 * w0) - (&n0 * &d2);
+    let second_inner = (&n1 * w0) - (&n0 * &d1);
+    let second_numerator = (&two * &d1) * second_inner;
+    let first_term = (first_numerator / w0_squared).map_err(|_| UncertaintyReason::Unsupported)?;
+    let second_term = (second_numerator / w0_cubed).map_err(|_| UncertaintyReason::Unsupported)?;
+    Ok(first_term - second_term)
 }
 
 fn rational_endpoint_tangents(

@@ -4,7 +4,7 @@ use std::time::Instant;
 use hypercurve::{
     BezierAlgebraicParameter2, BezierArrangementGraph2, BezierParameter2, BezierParameterInterval,
     BezierParameterPolynomial, BezierRetainedOverlapReport2, Classification, CubicBezier2,
-    CurvePolicy, CurveResult, Point2, QuadraticBezier2, Real,
+    CurvePolicy, CurveResult, Point2, QuadraticBezier2, RationalQuadraticBezier2, Real,
 };
 
 fn r(value: i32) -> Real {
@@ -144,6 +144,35 @@ fn main() -> CurveResult<()> {
     let elapsed = started.elapsed();
     println!(
         "bezier_arrangement_cubic_same_tangent_order: {iterations} iterations in {elapsed:?} ({:?}/iter), total={cubic_same_tangent_total}",
+        elapsed / iterations
+    );
+
+    let mut rational_same_tangent_materializations = Vec::new();
+    rational_same_tangent_materializations.push(decided(
+        QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0)).split_at_parameters(&[], &policy)?,
+    ));
+    for curve in [
+        RationalQuadraticBezier2::try_new(p(2, 0), p(3, 0), p(4, 1), r(1), r(2), r(3))?,
+        RationalQuadraticBezier2::try_new(p(2, 0), p(3, 0), p(4, -1), r(1), r(2), r(3))?,
+    ] {
+        rational_same_tangent_materializations
+            .push(decided(curve.split_at_parameters(&[], &policy)?));
+    }
+    let rational_same_tangent_graph = BezierArrangementGraph2::from_split_materializations(
+        &rational_same_tangent_materializations,
+    );
+    let started = Instant::now();
+    let mut rational_same_tangent_total = 0_usize;
+    for _ in 0..iterations {
+        let traversal = decided(rational_same_tangent_graph.traverse_with_tangent_order(&policy));
+        rational_same_tangent_total += black_box(traversal.len());
+        let retained =
+            decided(rational_same_tangent_graph.traverse_retained_with_tangent_order(&policy));
+        rational_same_tangent_total += black_box(retained.len());
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "bezier_arrangement_rational_same_tangent_order: {iterations} iterations in {elapsed:?} ({:?}/iter), total={rational_same_tangent_total}",
         elapsed / iterations
     );
 

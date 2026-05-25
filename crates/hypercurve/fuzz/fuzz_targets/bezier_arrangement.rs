@@ -2,7 +2,7 @@
 
 use hypercurve::{
     BezierArrangementGraph2, BezierParameter2, BezierRetainedOverlapReport2, Classification,
-    CubicBezier2, CurvePolicy, Point2, QuadraticBezier2, Real,
+    CubicBezier2, CurvePolicy, Point2, QuadraticBezier2, RationalQuadraticBezier2, Real,
 };
 use libfuzzer_sys::fuzz_target;
 
@@ -111,4 +111,35 @@ fuzz_target!(|data: &[u8]| {
         BezierArrangementGraph2::from_split_materializations(&cubic_materializations);
     let _ = cubic_same_tangent_graph.traverse_with_tangent_order(&policy);
     let _ = cubic_same_tangent_graph.traverse_retained_with_tangent_order(&policy);
+
+    let rational_same_tangent_curves = [
+        RationalQuadraticBezier2::try_new(
+            point(130, 128),
+            point(131, 128),
+            point(132, 129),
+            Real::from(1_i8),
+            Real::from(2_i8),
+            Real::from(3_i8),
+        ),
+        RationalQuadraticBezier2::try_new(
+            point(130, 128),
+            point(131, 128),
+            point(132, 127),
+            Real::from(1_i8),
+            Real::from(2_i8),
+            Real::from(3_i8),
+        ),
+    ];
+    let mut rational_materializations = same_tangent_materializations[..1].to_vec();
+    for curve in rational_same_tangent_curves.into_iter().flatten() {
+        if let Ok(Classification::Decided(materialization)) =
+            curve.split_at_parameters(&[], &policy)
+        {
+            rational_materializations.push(materialization);
+        }
+    }
+    let rational_same_tangent_graph =
+        BezierArrangementGraph2::from_split_materializations(&rational_materializations);
+    let _ = rational_same_tangent_graph.traverse_with_tangent_order(&policy);
+    let _ = rational_same_tangent_graph.traverse_retained_with_tangent_order(&policy);
 });
