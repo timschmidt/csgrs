@@ -29,7 +29,7 @@ use hypersolve::AlgebraicRootRepresentation;
 
 use crate::classify::compare_reals;
 use crate::{
-    Aabb2, BezierEndpointPointImage2, BezierParameter2, BezierRetainedBoundaryLoop2,
+    Aabb2, Axis2, BezierEndpointPointImage2, BezierParameter2, BezierRetainedBoundaryLoop2,
     BezierRetainedRegion2, BezierSplitFragment2, BezierSubcurve2, Classification, CurvePolicy,
     Point2, UncertaintyReason,
 };
@@ -220,12 +220,21 @@ impl CurveEnvelopeAccumulator {
                 start,
                 end,
                 source_curve,
+                start_image,
+                end_image,
                 ..
             } => {
                 let Some(source_curve) = source_curve else {
                     return Classification::Uncertain(UncertaintyReason::Unsupported);
                 };
-                match retained_algebraic_source_interval_bounds(source_curve, start, end, policy) {
+                match retained_algebraic_source_bounds(
+                    source_curve,
+                    start,
+                    end,
+                    start_image.as_ref(),
+                    end_image.as_ref(),
+                    policy,
+                ) {
                     Classification::Decided(curve_box) => curve_box,
                     Classification::Uncertain(reason) => return Classification::Uncertain(reason),
                 }
@@ -271,6 +280,196 @@ fn retained_algebraic_source_interval_bounds(
         Classification::Uncertain(reason) => return Classification::Uncertain(reason),
     };
     retained_curve_bounds(&subcurve, policy)
+}
+
+fn retained_algebraic_source_bounds(
+    source_curve: &BezierSubcurve2,
+    start: &BezierParameter2,
+    end: &BezierParameter2,
+    start_image: Option<&crate::BezierAlgebraicEndpointImage2>,
+    end_image: Option<&crate::BezierAlgebraicEndpointImage2>,
+    policy: &CurvePolicy,
+) -> Classification<Aabb2> {
+    match retained_algebraic_source_extrema_bounds(
+        source_curve,
+        start,
+        end,
+        start_image,
+        end_image,
+        policy,
+    ) {
+        Classification::Decided(Some(bounds)) => Classification::Decided(bounds),
+        Classification::Decided(None) => {
+            retained_algebraic_source_interval_bounds(source_curve, start, end, policy)
+        }
+        Classification::Uncertain(reason) => Classification::Uncertain(reason),
+    }
+}
+
+/// Builds a retained algebraic-fragment envelope from endpoint images and
+/// certified source-curve extrema.
+///
+/// This is stronger than the interval-hull fallback because it keeps the
+/// algebraic endpoint coordinates as constructed exact objects and admits only
+/// derivative roots whose exact parameter is certified inside the retained
+/// range.  That is Yap's object/predicate boundary: construct endpoint and
+/// extremum evidence first, then branch only on certified ordering.  The
+/// derivative-root extrema are the standard Bezier bounds from Farin (2002).
+fn retained_algebraic_source_extrema_bounds(
+    source_curve: &BezierSubcurve2,
+    start: &BezierParameter2,
+    end: &BezierParameter2,
+    start_image: Option<&crate::BezierAlgebraicEndpointImage2>,
+    end_image: Option<&crate::BezierAlgebraicEndpointImage2>,
+    policy: &CurvePolicy,
+) -> Classification<Option<Aabb2>> {
+    let Some(start_endpoint) =
+        parameter_endpoint_interval(source_curve, start, start_image, policy)
+    else {
+        return Classification::Decided(None);
+    };
+    let Some(end_endpoint) = parameter_endpoint_interval(source_curve, end, end_image, policy)
+    else {
+        return Classification::Decided(None);
+    };
+
+    let mut accumulator = EndpointEnvelopeAccumulator::default();
+    match accumulator.include_endpoint(start_endpoint, policy) {
+        Classification::Decided(()) => {}
+        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+    }
+    match accumulator.include_endpoint(end_endpoint, policy) {
+        Classification::Decided(()) => {}
+        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+    }
+
+    let monotone_parameters = match retained_curve_monotone_parameters(source_curve, policy) {
+        Classification::Decided(parameters) => parameters,
+        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+    };
+    for parameter in monotone_parameters {
+        match exact_parameter_inside_retained_range(start, end, &parameter, policy) {
+            Some(true) => {
+                let point = match source_curve_point_at(source_curve, parameter, policy) {
+                    Classification::Decided(point) => point,
+                    Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+                };
+                match accumulator.include_endpoint(native_endpoint_interval(&point), policy) {
+                    Classification::Decided(()) => {}
+                    Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+                }
+            }
+            Some(false) => {}
+            None => return Classification::Decided(None),
+        }
+    }
+
+    match accumulator.finish(policy) {
+        Classification::Decided(envelope) => Classification::Decided(Some(envelope.envelope)),
+        Classification::Uncertain(reason) => Classification::Uncertain(reason),
+    }
+}
+
+/// Returns endpoint interval evidence for an exact or algebraic fragment
+/// boundary.
+///
+/// Exact parameters are evaluated directly on the source curve. Algebraic
+/// parameters consume their retained endpoint image; if that image is absent,
+/// the caller must fall back to a coarser retained source envelope.
+fn parameter_endpoint_interval(
+    source_curve: &BezierSubcurve2,
+    parameter: &BezierParameter2,
+    image: Option<&crate::BezierAlgebraicEndpointImage2>,
+    policy: &CurvePolicy,
+) -> Option<EndpointInterval> {
+    match parameter {
+        BezierParameter2::Exact(value) => {
+            match source_curve_point_at(source_curve, value.clone(), policy) {
+                Classification::Decided(point) => Some(native_endpoint_interval(&point)),
+                Classification::Uncertain(_) => None,
+            }
+        }
+        BezierParameter2::Algebraic(_) => {
+            image.and_then(|image| algebraic_endpoint_interval(image.point()))
+        }
+    }
+}
+
+/// Returns unique exact source parameters where x or y can have a local
+/// extremum.
+fn retained_curve_monotone_parameters(
+    source_curve: &BezierSubcurve2,
+    policy: &CurvePolicy,
+) -> Classification<Vec<Real>> {
+    let mut parameters = Vec::new();
+    for axis in [Axis2::X, Axis2::Y] {
+        let axis_parameters = match source_curve {
+            BezierSubcurve2::Quadratic(curve) => curve.axis_monotone_parameters(axis, policy),
+            BezierSubcurve2::Cubic(curve) => curve.axis_monotone_parameters(axis, policy),
+            BezierSubcurve2::RationalQuadratic(curve) => {
+                curve.axis_monotone_parameters(axis, policy)
+            }
+        };
+        let axis_parameters = match axis_parameters {
+            Classification::Decided(axis_parameters) => axis_parameters,
+            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+        };
+        for parameter in axis_parameters {
+            if push_unique_real(&mut parameters, parameter, policy).is_none() {
+                return Classification::Uncertain(UncertaintyReason::Ordering);
+            }
+        }
+    }
+    Classification::Decided(parameters)
+}
+
+/// Certifies whether an exact source parameter lies inside an ordered retained
+/// fragment range.
+///
+/// The comparison uses [`BezierParameter2::cmp_by_interval`], so overlapping
+/// isolating intervals deliberately produce `None` and force the conservative
+/// interval-hull fallback instead of sampling the algebraic root.
+fn exact_parameter_inside_retained_range(
+    start: &BezierParameter2,
+    end: &BezierParameter2,
+    parameter: &Real,
+    policy: &CurvePolicy,
+) -> Option<bool> {
+    let parameter = BezierParameter2::Exact(parameter.clone());
+    let start_cmp = match start.cmp_by_interval(&parameter, policy).ok()? {
+        Classification::Decided(ordering) => ordering,
+        Classification::Uncertain(_) => return None,
+    };
+    let end_cmp = match parameter.cmp_by_interval(end, policy).ok()? {
+        Classification::Decided(ordering) => ordering,
+        Classification::Uncertain(_) => return None,
+    };
+    Some(start_cmp != std::cmp::Ordering::Greater && end_cmp != std::cmp::Ordering::Greater)
+}
+
+/// Evaluates a retained source curve at an exact Bezier parameter.
+fn source_curve_point_at(
+    source_curve: &BezierSubcurve2,
+    parameter: Real,
+    policy: &CurvePolicy,
+) -> Classification<Point2> {
+    match source_curve {
+        BezierSubcurve2::Quadratic(curve) => Classification::Decided(curve.point_at(parameter)),
+        BezierSubcurve2::Cubic(curve) => Classification::Decided(curve.point_at(parameter)),
+        BezierSubcurve2::RationalQuadratic(curve) => curve.point_at(parameter, policy),
+    }
+}
+
+/// Pushes an exact parameter unless an equal one is already present.
+fn push_unique_real(values: &mut Vec<Real>, value: Real, policy: &CurvePolicy) -> Option<()> {
+    if values
+        .iter()
+        .any(|existing| compare_reals(existing, &value, policy) == Some(std::cmp::Ordering::Equal))
+    {
+        return Some(());
+    }
+    values.push(value);
+    Some(())
 }
 
 fn parameter_interval_hull(
@@ -486,19 +685,97 @@ fn native_endpoint_interval(point: &Point2) -> EndpointInterval {
 }
 
 fn algebraic_endpoint_interval(point: &BezierEndpointPointImage2) -> Option<EndpointInterval> {
-    let (x, y) = match point {
-        BezierEndpointPointImage2::Polynomial(point) => {
-            (point.x()?.representation()?, point.y()?.representation()?)
+    match point {
+        BezierEndpointPointImage2::Polynomial(point) => Some(EndpointInterval {
+            x: polynomial_coordinate_interval(
+                point.x()?,
+                point.parameter().polynomial_coefficients.as_slice(),
+            ),
+            y: polynomial_coordinate_interval(
+                point.y()?,
+                point.parameter().polynomial_coefficients.as_slice(),
+            ),
+            kind: EndpointIntervalKind::Algebraic,
+        }),
+        BezierEndpointPointImage2::RationalQuadratic(point) => Some(EndpointInterval {
+            x: represented_coordinate_interval(point.x()?.representation()?),
+            y: represented_coordinate_interval(point.y()?.representation()?),
+            kind: EndpointIntervalKind::Algebraic,
+        }),
+    }
+}
+
+/// Returns the tightest interval currently available for a polynomial
+/// coordinate image.
+///
+/// When the coordinate polynomial has constant remainder modulo the algebraic
+/// parameter's defining polynomial, the endpoint coordinate is that exact
+/// rational constant.  This is the elementary quotient-ring identity
+/// `p(alpha) = c` whenever `p(t) - c` is a multiple of the minimal replay
+/// polynomial for `alpha`; the construction stays symbolic in the sense of Yap
+/// (1997) and avoids widening to the parameter isolating interval.  Otherwise
+/// the represented-root isolating interval remains the conservative evidence.
+fn polynomial_coordinate_interval(
+    coordinate: &crate::BezierAlgebraicCoordinateImage,
+    parameter_polynomial: &[Real],
+) -> CoordinateInterval {
+    if let Some(exact) =
+        polynomial_image_constant_remainder(coordinate.coefficients(), parameter_polynomial)
+    {
+        return CoordinateInterval {
+            lower: exact.clone(),
+            upper: exact,
+        };
+    }
+    represented_coordinate_interval(
+        coordinate
+            .representation()
+            .expect("transformed polynomial endpoint image has a coordinate representation"),
+    )
+}
+
+fn polynomial_image_constant_remainder(coefficients: &[Real], modulus: &[Real]) -> Option<Real> {
+    let remainder = polynomial_remainder(coefficients, modulus)?;
+    match remainder.as_slice() {
+        [] => Some(Real::zero()),
+        [constant] => Some(constant.clone()),
+        _ => None,
+    }
+}
+
+fn polynomial_remainder(coefficients: &[Real], modulus: &[Real]) -> Option<Vec<Real>> {
+    let mut remainder = trim_polynomial(coefficients)?;
+    let modulus = trim_polynomial(modulus)?;
+    if modulus.len() < 2 {
+        return None;
+    }
+    let leading = modulus.last()?;
+    while remainder.len() >= modulus.len() {
+        let shift = remainder.len() - modulus.len();
+        let factor = (remainder.last()?.clone() / leading.clone()).ok()?;
+        for (index, coefficient) in modulus.iter().enumerate() {
+            let target = shift + index;
+            remainder[target] = &remainder[target] - &(&factor * coefficient);
         }
-        BezierEndpointPointImage2::RationalQuadratic(point) => {
-            (point.x()?.representation()?, point.y()?.representation()?)
-        }
-    };
-    Some(EndpointInterval {
-        x: represented_coordinate_interval(x),
-        y: represented_coordinate_interval(y),
-        kind: EndpointIntervalKind::Algebraic,
-    })
+        trim_polynomial_in_place(&mut remainder)?;
+    }
+    Some(remainder)
+}
+
+fn trim_polynomial(coefficients: &[Real]) -> Option<Vec<Real>> {
+    let mut trimmed = coefficients.to_vec();
+    trim_polynomial_in_place(&mut trimmed)?;
+    Some(trimmed)
+}
+
+fn trim_polynomial_in_place(coefficients: &mut Vec<Real>) -> Option<()> {
+    while coefficients.last().is_some_and(|coefficient| {
+        compare_reals(coefficient, &Real::zero(), &CurvePolicy::certified())
+            == Some(std::cmp::Ordering::Equal)
+    }) {
+        coefficients.pop();
+    }
+    Some(())
 }
 
 fn represented_coordinate_interval(root: &AlgebraicRootRepresentation) -> CoordinateInterval {

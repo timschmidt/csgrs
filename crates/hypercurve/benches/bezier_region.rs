@@ -152,6 +152,34 @@ fn main() -> CurveResult<()> {
         elapsed / iterations
     );
 
+    let exact_endpoint_algebraic_curve = QuadraticBezier2::new(p(0, 0), p(0, 0), p(8, 0));
+    let exact_endpoint_split = decided(exact_endpoint_algebraic_curve.split_at_parameters(
+        &[algebraic_polynomial_parameter(
+            vec![r(-1), r(0), r(8)],
+            q(1, 3),
+            q(2, 5),
+            &policy,
+        )?],
+        &policy,
+    )?);
+    let exact_endpoint_loop =
+        BezierRetainedBoundaryLoop2::new(vec![exact_endpoint_split.fragments()[0].clone()]);
+    let started = Instant::now();
+    let mut algebraic_exact_endpoint_checksum = 0_usize;
+    for _ in 0..iterations {
+        let envelope = decided(BezierRetainedCurveEnvelope2::from_loop(
+            &exact_endpoint_loop,
+            &policy,
+        ));
+        algebraic_exact_endpoint_checksum ^=
+            black_box(format!("{:?}", envelope.envelope()).len() + envelope.exact_fragment_count());
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "bezier_retained_algebraic_exact_endpoint_envelope: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={algebraic_exact_endpoint_checksum}",
+        elapsed / iterations
+    );
+
     let overlap_graph = BezierArrangementGraph2::new(vec![
         line_fragment(0, p(0, 0), p(2, 0), p(4, 0)),
         line_fragment(1, p(2, 0), p(3, 0), p(4, 0)),

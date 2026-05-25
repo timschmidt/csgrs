@@ -49,6 +49,34 @@ fn algebraic_sqrt_half(policy: &CurvePolicy) -> Option<BezierParameter2> {
     Some(BezierParameter2::algebraic(parameter))
 }
 
+fn algebraic_sqrt_eighth(policy: &CurvePolicy) -> Option<BezierParameter2> {
+    let polynomial = match BezierParameterPolynomial::try_new_power_basis(
+        vec![
+            Real::from(-1_i32),
+            Real::from(0_i32),
+            Real::from(8_i32),
+        ],
+        policy,
+    )
+    .ok()?
+    {
+        Classification::Decided(polynomial) => polynomial,
+        Classification::Uncertain(_) => return None,
+    };
+    let interval =
+        match BezierParameterInterval::try_new(rational(1, 3), rational(2, 5), policy).ok()? {
+            Classification::Decided(interval) => interval,
+            Classification::Uncertain(_) => return None,
+        };
+    let parameter = match BezierAlgebraicParameter2::try_isolate(polynomial, interval, policy)
+        .ok()?
+    {
+        Classification::Decided(parameter) => parameter,
+        Classification::Uncertain(_) => return None,
+    };
+    Some(BezierParameter2::algebraic(parameter))
+}
+
 fuzz_target!(|data: &[u8]| {
     if data.len() < 8 {
         return;
@@ -77,6 +105,14 @@ fuzz_target!(|data: &[u8]| {
             materializations.push(materialization);
         }
         if let Some(algebraic) = algebraic_sqrt_half(&policy)
+            && let Ok(Classification::Decided(split)) =
+                curve.split_at_parameters(&[algebraic], &policy)
+            && let Some(fragment) = split.fragments().first()
+        {
+            let loop_ = BezierRetainedBoundaryLoop2::new(vec![fragment.clone()]);
+            let _ = BezierRetainedCurveEnvelope2::from_loop(&loop_, &policy);
+        }
+        if let Some(algebraic) = algebraic_sqrt_eighth(&policy)
             && let Ok(Classification::Decided(split)) =
                 curve.split_at_parameters(&[algebraic], &policy)
             && let Some(fragment) = split.fragments().first()
