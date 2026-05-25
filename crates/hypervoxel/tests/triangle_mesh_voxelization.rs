@@ -306,7 +306,8 @@ fn prepared_triangle_solid_replays_cube_with_exact_schedule_report() {
     assert_eq!(interior.boundary_triangle_tests, 0);
     assert_eq!(interior.ray_attempts.len(), 1);
     assert!(interior.ray_attempts[0].certified);
-    assert_eq!(interior.ray_attempts[0].triangle_tests, 12);
+    assert_eq!(interior.ray_attempts[0].ray_aabb_rejections, 10);
+    assert_eq!(interior.ray_attempts[0].triangle_tests, 2);
 
     let boundary = classify_cell_against_prepared_triangle_solid_mesh(
         VoxelAddress::new(3, [2, 3, 3]).unwrap(),
@@ -341,6 +342,8 @@ fn prepared_triangle_solid_replays_cube_with_exact_schedule_report() {
     );
     assert_eq!(schedule.classified_cells, 512);
     assert!(schedule.boundary_aabb_rejections > schedule.boundary_triangle_tests);
+    assert!(schedule.ray_aabb_rejections > 0);
+    assert!(schedule.ray_triangle_tests < schedule.ray_attempts * 12);
     assert!(schedule.ambiguous_ray_attempts > 0);
     assert!(schedule.ambiguous_ray_attempts < schedule.ray_attempts);
     assert!(prepared_report.exact_topology_ready());
@@ -383,6 +386,7 @@ fn component_prepared_triangle_solid_classifies_components_with_fewer_rays() {
     assert_eq!(components.inside_components, 1);
     assert_eq!(components.outside_components, 1);
     assert_eq!(components.unknown_components, 0);
+    assert!(components.component_ray_aabb_rejections > 0);
     assert!(components.component_ray_triangle_tests < per_cell_schedule.ray_triangle_tests);
     assert!(component_report.exact_topology_ready());
 }

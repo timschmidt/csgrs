@@ -48,6 +48,7 @@ mod mesh;
 mod path;
 mod process;
 mod query;
+mod ray_schedule;
 mod report;
 mod serialize;
 mod side_table;

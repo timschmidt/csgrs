@@ -274,6 +274,15 @@ fn bench_exact_box_voxelization(c: &mut Criterion) {
     let triangle_solid = ExactTriangleSolidMesh::new(cube_surface, true);
     let prepared_triangle_solid =
         PreparedExactTriangleSolidMesh::prepare(triangle_solid.clone()).unwrap();
+    let (_, _, prepared_schedule_probe) = voxelize_prepared_exact_triangle_solid_mesh(
+        frame.clone(),
+        &prepared_triangle_solid,
+        MaterialRegionId(10),
+        VoxelizationPolicy::conservative_cover(),
+    )
+    .unwrap();
+    assert!(prepared_schedule_probe.ray_aabb_rejections > 0);
+    assert!(prepared_schedule_probe.ray_triangle_tests < prepared_schedule_probe.ray_attempts * 12);
     c.bench_function("exact_triangle_solid_mesh_voxelization", |b| {
         b.iter(|| {
             voxelize_exact_triangle_solid_mesh(

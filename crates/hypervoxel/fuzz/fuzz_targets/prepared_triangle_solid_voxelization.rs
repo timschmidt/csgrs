@@ -88,6 +88,9 @@ fuzz_target!(|data: (u8, u8, u8, bool)| {
     assert_eq!(prepared_report.unknown_cells, ordinary_report.unknown_cells);
     assert_eq!(component_report.unknown_cells, ordinary_report.unknown_cells);
     assert!(schedule.boundary_aabb_rejections > 0);
+    assert!(schedule.ray_aabb_rejections > 0);
+    assert!(schedule.ray_triangle_tests < schedule.ray_attempts * 12);
     assert!(components.boundary_aabb_rejections > 0);
+    assert!(components.component_ray_aabb_rejections <= schedule.ray_aabb_rejections);
     assert!(components.component_ray_triangle_tests <= schedule.ray_triangle_tests);
 });

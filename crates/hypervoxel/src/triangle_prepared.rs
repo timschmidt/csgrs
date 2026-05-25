@@ -16,6 +16,7 @@ use hyperlimit::{
 };
 use hyperreal::Real;
 
+use crate::ray_schedule::{RayAabbIntersection, classify_ray_aabb_intersection};
 use crate::triangle_mesh::{
     ExactTriangle3, ExactTriangleSolidMesh, TriangleCellIntersection, VoxelTriangleSolidClassifier,
     insert_unique_parameter, point3, ray_parity_directions, triangle_bounds,
@@ -183,6 +184,8 @@ impl PreparedTriangleSolidCellReport {
 pub struct PreparedRayParityAttemptReport {
     /// Direction index in the deterministic exact rational retry set.
     pub direction_index: usize,
+    /// Triangle AABBs rejected by exact ray/slab broad-phase scheduling.
+    pub ray_aabb_rejections: usize,
     /// Number of exact ray/triangle predicates evaluated.
     pub triangle_tests: usize,
     /// Number of proper ray/triangle intersections before unique-parameter
@@ -518,6 +521,11 @@ pub fn voxelize_prepared_exact_triangle_solid_mesh_by_components(
                         address, &frame, prepared,
                     )?;
                     component_report.component_ray_attempts += cell.ray_attempts.len();
+                    component_report.component_ray_aabb_rejections += cell
+                        .ray_attempts
+                        .iter()
+                        .map(|attempt| attempt.ray_aabb_rejections)
+                        .sum::<usize>();
                     component_report.component_ray_triangle_tests += cell.ray_triangle_tests();
                     component_report.ambiguous_component_ray_attempts += cell
                         .ray_attempts
@@ -570,6 +578,8 @@ pub struct PreparedTriangleSolidVoxelizationReport {
     pub boundary_triangle_tests: usize,
     /// Total exact ray-parity attempts.
     pub ray_attempts: usize,
+    /// Total triangle AABBs rejected by exact ray/slab broad-phase scheduling.
+    pub ray_aabb_rejections: usize,
     /// Total exact ray/triangle predicates.
     pub ray_triangle_tests: usize,
     /// Number of ambiguous ray attempts.
@@ -606,6 +616,9 @@ pub struct PreparedTriangleSolidComponentVoxelizationReport {
     pub unknown_components: usize,
     /// Total exact ray-parity attempts used for representative cells.
     pub component_ray_attempts: usize,
+    /// Total triangle AABBs rejected by exact ray/slab broad-phase scheduling
+    /// for representative cells.
+    pub component_ray_aabb_rejections: usize,
     /// Total exact ray/triangle predicates used for representative cells.
     pub component_ray_triangle_tests: usize,
     /// Number of ambiguous representative ray attempts skipped before a
@@ -619,6 +632,11 @@ impl PreparedTriangleSolidVoxelizationReport {
         self.boundary_aabb_rejections += cell.boundary_aabb_rejections;
         self.boundary_triangle_tests += cell.boundary_triangle_tests;
         self.ray_attempts += cell.ray_attempts.len();
+        self.ray_aabb_rejections += cell
+            .ray_attempts
+            .iter()
+            .map(|attempt| attempt.ray_aabb_rejections)
+            .sum::<usize>();
         self.ray_triangle_tests += cell.ray_triangle_tests();
         self.ambiguous_ray_attempts += cell
             .ray_attempts
@@ -791,9 +809,11 @@ fn classify_point_against_prepared_triangle_solid_by_single_ray(
     direction_index: usize,
 ) -> HypervoxelResult<(VoxelTriangleSolidClassifier, PreparedRayParityAttemptReport)> {
     let origin = point3(point);
+    let direction_components = point_components(direction);
     let mut parameters: Vec<Real> = Vec::new();
     let mut attempt = PreparedRayParityAttemptReport {
         direction_index,
+        ray_aabb_rejections: 0,
         triangle_tests: 0,
         proper_intersections: 0,
         unique_parameters: 0,
@@ -803,6 +823,14 @@ fn classify_point_against_prepared_triangle_solid_by_single_ray(
     };
 
     for triangle in &prepared.triangles {
+        match classify_ray_aabb_intersection(point, &direction_components, &triangle.bounds)? {
+            RayAabbIntersection::Disjoint => {
+                attempt.ray_aabb_rejections += 1;
+                continue;
+            }
+            RayAabbIntersection::Intersects => {}
+        }
+
         attempt.triangle_tests += 1;
         let report = classify_ray_triangle3_intersection_report(
             &origin,
@@ -843,4 +871,8 @@ fn classify_point_against_prepared_triangle_solid_by_single_ray(
         VoxelTriangleSolidClassifier::Inside
     };
     Ok((classifier, attempt))
+}
+
+fn point_components(point: &hyperlimit::Point3) -> [Real; 3] {
+    [point.x.clone(), point.y.clone(), point.z.clone()]
 }
