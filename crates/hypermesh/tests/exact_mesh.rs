@@ -22124,6 +22124,133 @@ fn exact_coplanar_component_holed_difference_omits_holes_consumed_by_side_cutter
         }
     );
 
+    let point_branch_straddling_retained = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            2, 1, 0, 4, 1, 0, 4, 3, 0, 2, 3, 0, //
+            7, 9, 0, 9, 9, 0, 9, 11, 0, 7, 11, 0, //
+            -2, 4, 0, 8, 4, 0, 10, 10, 0, -2, 10, 0, //
+            10, 10, 0, 22, 10, 0, 22, 16, 0, 14, 16, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7, //
+            8, 9, 10, 8, 10, 11, //
+            12, 13, 14, 12, 14, 15,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_multi_difference(
+            &left,
+            &point_branch_straddling_retained,
+        )
+        .is_none()
+    );
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_point_touch_difference(
+            &left,
+            &point_branch_straddling_retained,
+        )
+        .is_none()
+    );
+    let point_branch_straddling =
+        hypermesh::exact::arrange_coplanar_convex_surface_component_holed_difference(
+            &left,
+            &point_branch_straddling_retained,
+        )
+        .expect("point-branch split should consume straddling holes and retain unrelated holes");
+    point_branch_straddling.validate().unwrap();
+    point_branch_straddling
+        .validate_against_sources(&left, &point_branch_straddling_retained)
+        .unwrap();
+    assert!(point_branch_straddling.components.len() >= 2);
+    assert_eq!(
+        point_branch_straddling
+            .components
+            .iter()
+            .map(|component| component.holes.len())
+            .sum::<usize>(),
+        1
+    );
+    assert!(point_branch_straddling.components.iter().any(|component| {
+        component.holes.iter().any(|hole| {
+            hole.iter().any(|point| {
+                real_eq(&point.x, &ExactReal::from(2)) && real_eq(&point.y, &ExactReal::from(1))
+            })
+        })
+    }));
+    assert!(!point_branch_straddling.components.iter().any(|component| {
+        component.holes.iter().any(|hole| {
+            hole.iter().any(|point| {
+                real_eq(&point.x, &ExactReal::from(7)) && real_eq(&point.y, &ExactReal::from(9))
+            })
+        })
+    }));
+    let point_branch_straddling_loop_count = point_branch_straddling
+        .components
+        .iter()
+        .filter(|component| {
+            component.outer.iter().any(|point| {
+                real_eq(&point.x, &ExactReal::from(10)) && real_eq(&point.y, &ExactReal::from(10))
+            })
+        })
+        .count();
+    assert!(
+        point_branch_straddling_loop_count >= 2,
+        "component-holed straddling replay must preserve duplicated branch vertices"
+    );
+    let mut stale_point_branch_straddling = point_branch_straddling.clone();
+    stale_point_branch_straddling.components[0].holes.push(vec![
+        p3(7, 9, 0),
+        p3(9, 9, 0),
+        p3(9, 11, 0),
+        p3(7, 11, 0),
+    ]);
+    assert!(
+        stale_point_branch_straddling
+            .validate_against_sources(&left, &point_branch_straddling_retained)
+            .is_err()
+    );
+    let point_branch_straddling_preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &point_branch_straddling_retained,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    point_branch_straddling_preflight.validate().unwrap();
+    point_branch_straddling_preflight
+        .validate_against_sources(&left, &point_branch_straddling_retained)
+        .unwrap();
+    assert_eq!(
+        point_branch_straddling_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::
+            CertifiedCoplanarConvexSurfaceComponentHoledDifference
+    );
+    let point_branch_straddling_result = hypermesh::exact::boolean_exact(
+        &left,
+        &point_branch_straddling_retained,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    point_branch_straddling_result
+        .validate_operation_against_sources(
+            &left,
+            &point_branch_straddling_retained,
+            hypermesh::exact::ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        point_branch_straddling_result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::
+                CoplanarConvexSurfaceComponentHoledDifference
+        }
+    );
+
     let split_straddling_hole = ExactMesh::from_i64_triangles_with_policy(
         &[
             15, 16, 0, 17, 16, 0, 17, 18, 0, 15, 18, 0, //
