@@ -3851,6 +3851,129 @@ fn same_outer_holed_difference_components(
     Some(components)
 }
 
+/// Replay same-outer holed differences whose output contains only filled holes.
+///
+/// This is the no-hole sibling of
+/// [`arrange_coplanar_surface_component_holed_difference`]. For two holed
+/// sheets with the same retained outer ring,
+/// `(outer - left_holes) - (outer - right_holes)` includes each right-side
+/// retained hole that is disjoint from every left-side retained hole. Those
+/// holes become ordinary filled output components, not retained holes. If a
+/// right hole strictly contains a left hole, the output is holed and belongs to
+/// the component-holed artifact instead; if rings overlap or touch, the case
+/// remains general planar-arrangement work.
+///
+/// The certificate follows Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997): source boundary rings are recovered
+/// from exact mesh incidence, topology changes are named by retained source
+/// rings, and the result is accepted only after exact area replay. The area
+/// replay sums pairwise Sutherland-Hodgman triangle clips (Sutherland and
+/// Hodgman, "Reentrant Polygon Clipping," *Communications of the ACM* 17.1,
+/// 1974) and triangulates retained simple loops through the same FIST-style
+/// earcut handoff described by Held, "FIST: Fast Industrial-Strength
+/// Triangulation of Polygons," *Algorithmica* 30 (2001).
+#[cfg(feature = "exact-triangulation")]
+fn same_outer_holed_no_hole_difference_polygons(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Option<(CoplanarProjection, Vec<Vec<Point3>>)> {
+    if left.triangles().is_empty() || right.triangles().is_empty() {
+        return None;
+    }
+    let (projection, left_components) = source_holed_surface_components_from_mesh(left)?;
+    let (right_projection, right_components) = source_holed_surface_components_from_mesh(right)?;
+    if projection != right_projection {
+        return None;
+    }
+    if !coplanar_mesh_faces_have_disjoint_interiors(left, projection)?
+        || !coplanar_mesh_faces_have_disjoint_interiors(right, projection)?
+    {
+        return None;
+    }
+
+    let mut polygons = Vec::new();
+    for left_component in &left_components {
+        for right_component in &right_components {
+            if polygons_equal(&left_component.outer, &right_component.outer) {
+                polygons.extend(same_outer_holed_no_hole_difference_rings(
+                    left_component,
+                    right_component,
+                    projection,
+                )?);
+                continue;
+            }
+            match simple_polygon_interaction(
+                &left_component.outer,
+                &right_component.outer,
+                projection,
+            )? {
+                SimplePolygonInteraction::Disjoint => {}
+                SimplePolygonInteraction::PointOnly | SimplePolygonInteraction::Connected => {
+                    return None;
+                }
+            }
+        }
+    }
+    if polygons.len() < 2 {
+        return None;
+    }
+    sort_polygons_for_replay(&mut polygons, projection);
+    validate_simple_component_loops_disjoint(
+        &polygons,
+        projection,
+        "coplanar same-outer holed no-hole difference",
+    )
+    .ok()?;
+
+    let left_area = mesh_projected_area2(left, projection)?;
+    let intersection_area = coplanar_mesh_pairwise_intersection_area2(left, right, projection)?;
+    let difference_area = sub(&left_area, &intersection_area);
+    let retained_area = polygons
+        .iter()
+        .try_fold(ExactReal::from(0), |area, polygon| {
+            Some(add(&area, &projected_area2_abs(polygon, projection)?))
+        })?;
+    if compare_reals(&difference_area, &retained_area).value() != Some(Ordering::Equal) {
+        return None;
+    }
+    Some((projection, polygons))
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn same_outer_holed_no_hole_difference_rings(
+    left: &SourceHoledSurfaceComponent,
+    right: &SourceHoledSurfaceComponent,
+    projection: CoplanarProjection,
+) -> Option<Vec<Vec<Point3>>> {
+    let mut polygons = Vec::new();
+    for right_hole in &right.holes {
+        let mut contributes = true;
+        for left_hole in &left.holes {
+            if polygons_equal(left_hole, right_hole)
+                || polygon_strictly_inside_simple_polygon(right_hole, left_hole, projection)?
+            {
+                contributes = false;
+                break;
+            }
+            if polygon_strictly_inside_simple_polygon(left_hole, right_hole, projection)? {
+                return None;
+            }
+            match simple_polygon_interaction(left_hole, right_hole, projection)? {
+                SimplePolygonInteraction::Disjoint => {}
+                SimplePolygonInteraction::PointOnly | SimplePolygonInteraction::Connected => {
+                    return None;
+                }
+            }
+        }
+        if contributes {
+            let mut polygon = right_hole.clone();
+            orient_polygon_ccw(&mut polygon, projection)?;
+            polygons.push(polygon);
+        }
+    }
+    Some(polygons)
+}
+
 #[cfg(feature = "exact-triangulation")]
 fn arrange_coplanar_convex_surface_pairwise_triangle_multi_intersection(
     left: &ExactMesh,
@@ -6971,7 +7094,7 @@ fn arrange_coplanar_convex_surface_component_difference(
     Some(arrangement)
 }
 
-/// Certify a nonconvex multi-component coplanar difference.
+/// Certify a multi-component coplanar difference.
 ///
 /// This is the bounded output-model step beyond the convex component
 /// difference certificate. Source topology is first decomposed into disjoint
@@ -6992,8 +7115,11 @@ fn arrange_coplanar_convex_surface_component_difference(
 /// hole can force this artifact even when the retained split loops themselves
 /// are convex: the convex multi-difference certificate cannot name the
 /// removed hole owner, so this retained multi-surface object carries that
-/// topology. Hole-producing cuts, outside clipping against a nonconvex source
-/// boundary, point-only boundary contacts, overlapping output loops, and
+/// topology. Same-outer source-holed differences may also emit filled
+/// right-hole components when every emitted ring is disjoint from the left
+/// retained holes; holed remnants stay on the component-holed artifact.
+/// Hole-producing cuts, outside clipping against a nonconvex source boundary,
+/// point-only boundary contacts, overlapping output loops, and
 /// self-intersections remain explicit planar-arrangement work. This follows
 /// Yap, "Towards Exact Geometric
 /// Computation," *Computational Geometry* 7.1-2 (1997): the system may
@@ -7007,7 +7133,8 @@ pub fn arrange_coplanar_surface_multi_difference(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Option<CoplanarSurfaceMultiArrangement> {
-    let (projection, polygons) = coplanar_surface_difference_polygons(left, right)?;
+    let (projection, polygons) = coplanar_surface_difference_polygons(left, right)
+        .or_else(|| same_outer_holed_no_hole_difference_polygons(left, right))?;
     if polygons.len() < 2 {
         return None;
     }
@@ -7025,7 +7152,7 @@ pub fn arrange_coplanar_surface_multi_difference(
     let mesh = polygons_to_earcut_open_mesh_with_label(
         &polygons,
         projection,
-        "exact coplanar nonconvex multi-component arrangement",
+        "exact coplanar multi-component difference arrangement",
     )?;
     let arrangement = CoplanarSurfaceMultiArrangement {
         projection,

@@ -4753,6 +4753,22 @@ fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
         )
         .unwrap()
         .mesh;
+        let same_outer_disjoint_multi_holes = ExactMesh::from_i64_triangles_with_policy(
+            &[
+                1, 1, 0, 2, 1, 0, 2, 2, 0, 1, 2, 0, //
+                7, 7, 0, 9, 7, 0, 9, 9, 0, 7, 9, 0,
+            ],
+            &[0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let same_outer_disjoint_multi_right =
+            arrange_coplanar_convex_surface_multi_holed_difference(
+                &single_component_holed_left,
+                &same_outer_disjoint_multi_holes,
+            )
+            .unwrap()
+            .mesh;
         let nonrectilinear_channel_holed_left = ExactMesh::from_i64_triangles_with_policy(
             &[0, 0, 0, 20, 0, 0, 20, 20, 0, 0, 20, 0],
             &[0, 1, 2, 0, 2, 3],
@@ -6097,6 +6113,22 @@ fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
                         hypermesh::exact::preflight_boolean_exact(
                             &same_outer_nested_left,
                             &same_outer_nested_right,
+                            hypermesh::exact::ExactBooleanOperation::Difference,
+                        )
+                        .map(|report| report.validate()),
+                        arrange_coplanar_surface_multi_difference(
+                            &same_outer_nested_left,
+                            &same_outer_disjoint_multi_right,
+                        )
+                        .map(|output| {
+                            output.validate_difference_against_sources(
+                                &same_outer_nested_left,
+                                &same_outer_disjoint_multi_right,
+                            )
+                        }),
+                        hypermesh::exact::preflight_boolean_exact(
+                            &same_outer_nested_left,
+                            &same_outer_disjoint_multi_right,
                             hypermesh::exact::ExactBooleanOperation::Difference,
                         )
                         .map(|report| report.validate()),
