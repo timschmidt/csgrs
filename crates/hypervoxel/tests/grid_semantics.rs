@@ -14,8 +14,8 @@ use hypervoxel::{
     VoxelIoMetadataStatus, VoxelIoPaletteStatus, VoxelIoPayloadStatus, VoxelPayload,
     VoxelPredicateCertificateReport, VoxelSliceNaming, VoxelSliceOrdering,
     VoxelSpatialAggregateFacts, VoxelTraceDimension, VoxelTraceManifest, VoxelizationPolicy,
-    VoxelizationReport, continuous_field_address, extract_chunk_paged_exposed_faces_with_report,
-    extract_exposed_faces_with_report,
+    VoxelizationReport, chunk_paged_greedy_face_patch_plan_with_report, continuous_field_address,
+    extract_chunk_paged_exposed_faces_with_report, extract_exposed_faces_with_report,
 };
 
 use hypervoxel::SvoVoxelGrid;
@@ -301,6 +301,17 @@ fn chunk_paged_sparse_storage_replays_exact_addresses_and_payload_blockers() {
     assert!(paged_shell.page_hits > 0);
     assert!(paged_shell.page_misses > 0);
     assert!(paged_shell.cross_page_sides > 0);
+    let paged_patches =
+        chunk_paged_greedy_face_patch_plan_with_report(&component_pages, "component shell")
+            .unwrap();
+    assert_eq!(paged_patches.shell, paged_shell);
+    assert_eq!(paged_patches.plan.exact_faces, paged_shell.exact_faces);
+    assert_eq!(paged_patches.patch_area_faces, paged_shell.exact_faces);
+    assert_eq!(paged_patches.duplicate_patch_faces, 0);
+    assert_eq!(paged_patches.missing_shell_faces, 0);
+    assert_eq!(paged_patches.extra_patch_faces, 0);
+    assert!(paged_patches.plan.patches.len() < paged_shell.exact_faces);
+    assert!(paged_patches.exact_patch_cover_ready);
 
     let empty_component = component_pages
         .query_connected_component(VoxelAddress::new(4, [0, 0, 0]).unwrap())
@@ -328,6 +339,13 @@ fn chunk_paged_sparse_storage_replays_exact_addresses_and_payload_blockers() {
     assert_eq!(blocked_shell.skipped_unknown_cells, 1);
     assert_eq!(blocked_shell.unknown_neighbor_sides, 2);
     assert!(!blocked_shell.exact_paged_shell_ready);
+    let blocked_patches =
+        chunk_paged_greedy_face_patch_plan_with_report(&blocked_component_pages, "blocked shell")
+            .unwrap();
+    assert_eq!(blocked_patches.patch_area_faces, blocked_shell.exact_faces);
+    assert_eq!(blocked_patches.missing_shell_faces, 0);
+    assert_eq!(blocked_patches.extra_patch_faces, 0);
+    assert!(!blocked_patches.exact_patch_cover_ready);
 }
 
 #[test]

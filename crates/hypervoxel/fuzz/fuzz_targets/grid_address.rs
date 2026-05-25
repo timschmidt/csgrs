@@ -23,7 +23,8 @@ use hypervoxel::{
     VoxelIndexConvention, VoxelIoCompression, VoxelIoMetadata, VoxelMemoryBudgetManifest,
     VoxelSideTables, VoxelSliceNaming, VoxelSliceOrdering, VoxelSpatialAggregateFacts,
     VoxelTraceDimension, VoxelTraceManifest, VoxelizationAudit, VoxelizationPolicy,
-    classify_support_mask, continuous_field_address, extract_chunk_paged_exposed_faces_with_report,
+    chunk_paged_greedy_face_patch_plan_with_report, classify_support_mask,
+    continuous_field_address, extract_chunk_paged_exposed_faces_with_report,
     diff_sparse_grids, extract_exposed_faces, greedy_face_patch_plan, lookup_material_display_colors,
     extract_exposed_faces_with_report, lossy_obj_from_quad_mesh, lossy_quad_mesh_from_faces, query_field_samples,
     query_material_regions, report_material_region_metadata, sample_manhattan_distance_field,
@@ -307,6 +308,18 @@ fuzz_target!(|data: (u8, u64, u64, u64)| {
         .map(|face| (face.address, face.side.integer_normal()))
         .collect::<BTreeSet<_>>();
     assert_eq!(paged_shell_keys, shell_keys);
+    let paged_patch_plan =
+        chunk_paged_greedy_face_patch_plan_with_report(&paged_grid, "fuzz paged preview").unwrap();
+    assert_eq!(paged_patch_plan.shell.exact_faces, shell.exact_faces);
+    assert_eq!(paged_patch_plan.plan.exact_faces, shell.exact_faces);
+    assert_eq!(paged_patch_plan.patch_area_faces, shell.exact_faces);
+    assert_eq!(paged_patch_plan.duplicate_patch_faces, 0);
+    assert_eq!(paged_patch_plan.missing_shell_faces, 0);
+    assert_eq!(paged_patch_plan.extra_patch_faces, 0);
+    assert_eq!(
+        paged_patch_plan.exact_patch_cover_ready,
+        paged_shell.exact_paged_shell_ready
+    );
     let empty_shell = extract_exposed_faces_with_report(&SparseVoxelGrid::new(report.frame.clone())).unwrap();
     assert_eq!(empty_shell.exact_faces, 0);
     assert!(!empty_shell.has_exact_faces);

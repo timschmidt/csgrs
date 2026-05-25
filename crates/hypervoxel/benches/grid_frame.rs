@@ -20,7 +20,8 @@ use hypervoxel::{
     VoxelFieldCouplingManifest, VoxelHandoffDomain, VoxelHandoffManifest, VoxelIndexConvention,
     VoxelIoCompression, VoxelIoMetadata, VoxelMemoryBudgetManifest, VoxelSideTables,
     VoxelSliceNaming, VoxelSliceOrdering, VoxelSpatialAggregateFacts, VoxelTraceDimension,
-    VoxelTraceManifest, VoxelizationAudit, VoxelizationPolicy, classify_support_mask,
+    VoxelTraceManifest, VoxelizationAudit, VoxelizationPolicy,
+    chunk_paged_greedy_face_patch_plan_with_report, classify_support_mask,
     continuous_field_address, diff_sparse_grids, extract_chunk_paged_exposed_faces_with_report,
     extract_exposed_faces, extract_exposed_faces_with_report, greedy_face_patch_plan,
     lookup_material_display_colors, lossy_obj_from_quad_mesh, lossy_quad_mesh_from_faces,
@@ -853,6 +854,21 @@ fn bench_batches_field_facts_and_sweeps(c: &mut Criterion) {
                 report.page_hits,
                 report.page_misses,
                 report.exact_paged_shell_ready,
+            )
+        })
+    });
+    c.bench_function("chunk_paged_greedy_face_patch_cover", |b| {
+        let shape = ChunkShape::new(3).unwrap();
+        let paged = ChunkPagedSparseGrid::from_sparse_grid(&grid, shape).unwrap();
+        b.iter(|| {
+            let report =
+                chunk_paged_greedy_face_patch_plan_with_report(&paged, "bench paged preview")
+                    .unwrap();
+            (
+                report.plan.patches.len(),
+                report.patch_area_faces,
+                report.missing_shell_faces,
+                report.exact_patch_cover_ready,
             )
         })
     });

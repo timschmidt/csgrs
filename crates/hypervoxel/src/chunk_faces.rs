@@ -6,9 +6,10 @@
 //! absence checks but cannot decide shell topology by themselves.
 
 use crate::{
-    ChunkAddress, ChunkPagedSparseGrid, ExactVoxelFace, HypervoxelResult, OccupancyState,
-    VoxelAddress, VoxelFaceSide,
+    ChunkAddress, ChunkPagedSparseGrid, ExactVoxelFace, GreedyFacePatchPlan, HypervoxelError,
+    HypervoxelResult, OccupancyState, VoxelAddress, VoxelFaceSide, greedy_face_patch_plan,
 };
+use std::collections::BTreeSet;
 
 /// Report from exact exposed-face extraction over chunk-paged storage.
 ///
@@ -54,6 +55,36 @@ pub struct ChunkPagedExactFaceExtractionReport {
     /// Whether non-empty extracted shell facts can be consumed as exact
     /// page-backed grid-boundary evidence.
     pub exact_paged_shell_ready: bool,
+}
+
+/// Page-backed greedy face-patch plan with exact cover replay.
+///
+/// Greedy rectangle merging is a display/storage compression strategy, not a
+/// new boundary predicate. This report therefore keeps both the exact paged
+/// shell and the greedy plan, then expands every emitted patch back into exact
+/// face keys and compares that set with the extracted shell. The cover audit
+/// follows Yap, "Towards Exact Geometric Computation," *Computational
+/// Geometry* 7(1-2), 1997, by validating the compressed representation against
+/// retained object facts. The rectangle-generation heuristic is the voxel
+/// meshing idea described by Mikola Lysenko, "Meshing in a Minecraft Game,"
+/// 2012, but used here only after exact face extraction.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ChunkPagedGreedyFacePatchReport {
+    /// Exact page-backed shell consumed by the patch planner.
+    pub shell: ChunkPagedExactFaceExtractionReport,
+    /// Deterministic greedy patch plan.
+    pub plan: GreedyFacePatchPlan,
+    /// Number of face slots covered by expanded greedy patches.
+    pub patch_area_faces: usize,
+    /// Number of expanded patch face slots that repeated a previous patch slot.
+    pub duplicate_patch_faces: usize,
+    /// Exact shell faces not covered by any expanded patch.
+    pub missing_shell_faces: usize,
+    /// Expanded patch face slots that were not present in the exact shell.
+    pub extra_patch_faces: usize,
+    /// Whether the greedy patch plan is a lossless exact cover of the
+    /// page-backed shell and the shell itself is exact-ready.
+    pub exact_patch_cover_ready: bool,
 }
 
 /// Extracts exact exposed faces from a chunk-paged sparse grid.
@@ -162,6 +193,64 @@ pub fn extract_chunk_paged_exposed_faces_with_report(
     })
 }
 
+/// Builds a page-backed greedy face-patch plan and audits its exact cover.
+///
+/// The returned patches are still exact integer rectangles over voxel face
+/// keys. They may be lowered to a lossy display mesh later, but this function
+/// does not treat renderer vertices as geometry evidence. Instead it verifies
+/// that patch compression covers exactly the same combinatorial faces returned
+/// by [`extract_chunk_paged_exposed_faces_with_report`].
+pub fn chunk_paged_greedy_face_patch_plan_with_report(
+    grid: &ChunkPagedSparseGrid,
+    policy: impl Into<String>,
+) -> HypervoxelResult<ChunkPagedGreedyFacePatchReport> {
+    let shell = extract_chunk_paged_exposed_faces_with_report(grid)?;
+    let plan = greedy_face_patch_plan(&shell.faces, policy);
+    let shell_keys = shell.faces.iter().map(face_key).collect::<BTreeSet<_>>();
+    let mut patch_keys = BTreeSet::new();
+    let mut patch_area_faces = 0_usize;
+    let mut duplicate_patch_faces = 0_usize;
+
+    for patch in &plan.patches {
+        for u in patch.u_min..patch.u_max {
+            for v in patch.v_min..patch.v_max {
+                patch_area_faces = patch_area_faces
+                    .checked_add(1)
+                    .ok_or(HypervoxelError::AddressOverflow)?;
+                let key = FaceKey {
+                    side: patch.side,
+                    depth: patch.depth,
+                    plane: patch.plane,
+                    u,
+                    v,
+                };
+                if !patch_keys.insert(key) {
+                    duplicate_patch_faces += 1;
+                }
+            }
+        }
+    }
+
+    let missing_shell_faces = shell_keys.difference(&patch_keys).count();
+    let extra_patch_faces = patch_keys.difference(&shell_keys).count();
+    let exact_patch_cover_ready = shell.exact_paged_shell_ready
+        && plan.exact_faces == shell.exact_faces
+        && patch_area_faces == shell.exact_faces
+        && duplicate_patch_faces == 0
+        && missing_shell_faces == 0
+        && extra_patch_faces == 0;
+
+    Ok(ChunkPagedGreedyFacePatchReport {
+        shell,
+        plan,
+        patch_area_faces,
+        duplicate_patch_faces,
+        missing_shell_faces,
+        extra_patch_faces,
+        exact_patch_cover_ready,
+    })
+}
+
 const FACE_SIDES: [VoxelFaceSide; 6] = [
     VoxelFaceSide::XNeg,
     VoxelFaceSide::XPos,
@@ -185,4 +274,32 @@ fn neighbor_address(address: VoxelAddress, side: VoxelFaceSide) -> Option<VoxelA
         }
     }
     VoxelAddress::new(address.depth, xyz).ok()
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+struct FaceKey {
+    side: VoxelFaceSide,
+    depth: u8,
+    plane: u64,
+    u: u64,
+    v: u64,
+}
+
+fn face_key(face: &ExactVoxelFace) -> FaceKey {
+    let [x, y, z] = face.address.xyz;
+    let (plane, u, v) = match face.side {
+        VoxelFaceSide::XNeg => (x, y, z),
+        VoxelFaceSide::XPos => (x + 1, y, z),
+        VoxelFaceSide::YNeg => (y, x, z),
+        VoxelFaceSide::YPos => (y + 1, x, z),
+        VoxelFaceSide::ZNeg => (z, x, y),
+        VoxelFaceSide::ZPos => (z + 1, x, y),
+    };
+    FaceKey {
+        side: face.side,
+        depth: face.address.depth,
+        plane,
+        u,
+        v,
+    }
 }

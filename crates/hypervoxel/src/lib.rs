@@ -86,7 +86,8 @@ pub use cell::{
 };
 pub use chunk::{ChunkAddress, ChunkLocalAddress, ChunkPageSummary, ChunkShape};
 pub use chunk_faces::{
-    ChunkPagedExactFaceExtractionReport, extract_chunk_paged_exposed_faces_with_report,
+    ChunkPagedExactFaceExtractionReport, ChunkPagedGreedyFacePatchReport,
+    chunk_paged_greedy_face_patch_plan_with_report, extract_chunk_paged_exposed_faces_with_report,
 };
 pub use chunk_storage::{
     ChunkPagedAabbBroadPhaseReport, ChunkPagedConnectedComponentReport,
