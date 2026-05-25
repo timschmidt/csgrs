@@ -10517,6 +10517,110 @@ fn exact_non_rectilinear_coplanar_volumetric_overlap_splits_source_faces() {
 
 #[cfg(feature = "exact-triangulation")]
 #[test]
+fn exact_convex_boundary_containment_consumes_coplanar_volumetric_union_intersection() {
+    let outer = tetrahedron_i64([0, 0, 0], [8, 0, 0], [0, 8, 0], [0, 0, 8]);
+    let inner = tetrahedron_i64([1, 1, 0], [3, 1, 0], [1, 3, 0], [1, 1, 2]);
+
+    let evidence = certify_coplanar_volumetric_cell_evidence(&outer, &inner).unwrap();
+    evidence.validate().unwrap();
+    evidence.validate_against_sources(&outer, &inner).unwrap();
+    assert!(evidence.obstacle.requires_coplanar_volumetric_cells());
+    assert!(evidence.same_side_coplanar_overlapping_pairs > 0);
+    assert_eq!(
+        hypermesh::exact::classify_mesh_vertices_against_convex_solid(&inner, &outer),
+        hypermesh::exact::ConvexSolidMeshRelation::BoundaryOrMixed
+    );
+
+    for (operation, expected_mesh) in [
+        (hypermesh::exact::ExactBooleanOperation::Union, &outer),
+        (
+            hypermesh::exact::ExactBooleanOperation::Intersection,
+            &inner,
+        ),
+    ] {
+        let preflight =
+            hypermesh::exact::preflight_boolean_exact(&outer, &inner, operation).unwrap();
+        preflight.validate().unwrap();
+        preflight.validate_against_sources(&outer, &inner).unwrap();
+        assert_eq!(
+            preflight.support,
+            hypermesh::exact::ExactBooleanSupport::CertifiedConvexContainment
+        );
+        assert!(preflight.coplanar_volumetric_evidence.is_none());
+
+        let result =
+            hypermesh::exact::boolean_exact(&outer, &inner, operation, ValidationPolicy::CLOSED)
+                .unwrap();
+        result.validate().unwrap();
+        result
+            .validate_operation_against_sources(
+                &outer,
+                &inner,
+                operation,
+                ValidationPolicy::CLOSED,
+                hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+            )
+            .unwrap();
+        assert_eq!(
+            result.kind,
+            hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+                shortcut: hypermesh::exact::ExactBooleanShortcutKind::ConvexContainment
+            }
+        );
+        assert_eq!(result.mesh.vertices(), expected_mesh.vertices());
+        assert_eq!(result.mesh.triangles(), expected_mesh.triangles());
+    }
+
+    let difference = hypermesh::exact::preflight_boolean_exact(
+        &outer,
+        &inner,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    difference.validate().unwrap();
+    difference.validate_against_sources(&outer, &inner).unwrap();
+    assert_eq!(
+        difference.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedWindingMaterialized
+    );
+    let difference_evidence = difference
+        .coplanar_volumetric_evidence
+        .as_ref()
+        .expect("boundary-touching difference retains coplanar-volumetric evidence");
+    difference_evidence.validate().unwrap();
+    assert!(
+        difference_evidence
+            .obstacle
+            .requires_coplanar_volumetric_cells()
+    );
+
+    let difference_result = hypermesh::exact::boolean_exact(
+        &outer,
+        &inner,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap();
+    difference_result.validate().unwrap();
+    difference_result
+        .validate_operation_against_sources(
+            &outer,
+            &inner,
+            hypermesh::exact::ExactBooleanOperation::Difference,
+            ValidationPolicy::CLOSED,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        difference_result.kind,
+        hypermesh::exact::ExactBooleanResultKind::WindingMaterialized {
+            operation: hypermesh::exact::ExactBooleanOperation::Difference
+        }
+    );
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[test]
 fn exact_coplanar_volumetric_cell_evidence_reports_mixed_and_boundary_cases() {
     let left = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
     let right = tetrahedron_i64([1, 1, 0], [5, 1, 0], [1, 5, 0], [1, 1, 4]);

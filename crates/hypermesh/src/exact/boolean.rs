@@ -97,7 +97,10 @@ use super::reports::{
 #[cfg(feature = "exact-triangulation")]
 use super::scalar::ExactReal;
 #[cfg(feature = "exact-triangulation")]
-use super::solid::{ConvexSolidMeshRelation, classify_mesh_vertices_against_convex_solid};
+use super::solid::{
+    ConvexSolidMeshClassification, ConvexSolidMeshRelation, ConvexSolidPointRelation,
+    classify_mesh_vertices_against_convex_solid_report,
+};
 #[cfg(feature = "exact-triangulation")]
 use super::surface::{
     CoplanarArrangementOperation, CoplanarConvexSurfaceContainment, CoplanarSurfaceContainment,
@@ -643,11 +646,13 @@ pub fn preflight_boolean_exact(
         }
         ExactBooleanOperation::Union
         | ExactBooleanOperation::Intersection
-        | ExactBooleanOperation::Difference => certified_convex_boolean_support(left, right)?
-            .or_else(|| certified_convex_intersection_support(left, right, operation))
-            .or_else(|| certified_convex_single_cap_difference_support(left, right, operation))
-            .or(certified_winding_boolean_support(left, right)?)
-            .unwrap_or(ExactBooleanSupport::RequiresCertifiedWinding),
+        | ExactBooleanOperation::Difference => {
+            certified_convex_boolean_support(left, right, operation)?
+                .or_else(|| certified_convex_intersection_support(left, right, operation))
+                .or_else(|| certified_convex_single_cap_difference_support(left, right, operation))
+                .or(certified_winding_boolean_support(left, right)?)
+                .unwrap_or(ExactBooleanSupport::RequiresCertifiedWinding)
+        }
     };
 
     if matches!(
@@ -3981,13 +3986,13 @@ fn boolean_convex_containment_meshes(
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
-    let Some(support) = certified_convex_boolean_support(left, right)? else {
+    let Some(support) = certified_convex_boolean_support(left, right, operation)? else {
         return Ok(None);
     };
 
-    let left_in_right = classify_mesh_vertices_against_convex_solid(left, right);
-    let right_in_left = classify_mesh_vertices_against_convex_solid(right, left);
-    let mesh = match (left_in_right, right_in_left, operation) {
+    let left_in_right = classify_mesh_vertices_against_convex_solid_report(left, right);
+    let right_in_left = classify_mesh_vertices_against_convex_solid_report(right, left);
+    let mesh = match (left_in_right.relation, right_in_left.relation, operation) {
         (ConvexSolidMeshRelation::StrictlyInside, _, ExactBooleanOperation::Union) => copy_mesh(
             right,
             "exact convex containment union keeps outer right",
@@ -4049,6 +4054,42 @@ fn boolean_convex_containment_meshes(
             "exact convex separated difference keeps left",
             validation,
         )?,
+        (_, _, ExactBooleanOperation::Union)
+            if convex_boundary_containment_is_supported(&left_in_right, &right_in_left) =>
+        {
+            copy_mesh(
+                right,
+                "exact convex boundary containment union keeps outer right",
+                validation,
+            )?
+        }
+        (_, _, ExactBooleanOperation::Intersection)
+            if convex_boundary_containment_is_supported(&left_in_right, &right_in_left) =>
+        {
+            copy_mesh(
+                left,
+                "exact convex boundary containment intersection keeps inner left",
+                validation,
+            )?
+        }
+        (_, _, ExactBooleanOperation::Union)
+            if convex_boundary_containment_is_supported(&right_in_left, &left_in_right) =>
+        {
+            copy_mesh(
+                left,
+                "exact convex boundary containment union keeps outer left",
+                validation,
+            )?
+        }
+        (_, _, ExactBooleanOperation::Intersection)
+            if convex_boundary_containment_is_supported(&right_in_left, &left_in_right) =>
+        {
+            copy_mesh(
+                right,
+                "exact convex boundary containment intersection keeps inner right",
+                validation,
+            )?
+        }
         (_, _, ExactBooleanOperation::SelectedRegions(_)) => unreachable!("handled by caller"),
         _ => return Ok(None),
     };
@@ -4470,24 +4511,76 @@ fn certified_convex_single_cap_difference_support(
 fn certified_convex_boolean_support(
     left: &ExactMesh,
     right: &ExactMesh,
+    operation: ExactBooleanOperation,
 ) -> Result<Option<ExactBooleanSupport>, MeshError> {
     let graph = build_intersection_graph(left, right)?;
-    if graph.has_unknowns() || !graph.face_pairs.is_empty() {
+    let relation_counts = graph_relation_counts(&graph);
+    if graph.has_unknowns() || relation_counts.construction_failed_events > 0 {
         return Ok(None);
     }
 
-    let left_in_right = classify_mesh_vertices_against_convex_solid(left, right);
-    let right_in_left = classify_mesh_vertices_against_convex_solid(right, left);
-    Ok(match (left_in_right, right_in_left) {
-        (ConvexSolidMeshRelation::StrictlyInside, _)
-        | (_, ConvexSolidMeshRelation::StrictlyInside) => {
-            Some(ExactBooleanSupport::CertifiedConvexContainment)
-        }
-        (ConvexSolidMeshRelation::Outside, ConvexSolidMeshRelation::Outside) => {
-            Some(ExactBooleanSupport::CertifiedConvexSeparated)
-        }
-        _ => None,
-    })
+    let left_in_right = classify_mesh_vertices_against_convex_solid_report(left, right);
+    let right_in_left = classify_mesh_vertices_against_convex_solid_report(right, left);
+    if graph.face_pairs.is_empty() {
+        return Ok(match (left_in_right.relation, right_in_left.relation) {
+            (ConvexSolidMeshRelation::StrictlyInside, _)
+            | (_, ConvexSolidMeshRelation::StrictlyInside) => {
+                Some(ExactBooleanSupport::CertifiedConvexContainment)
+            }
+            (ConvexSolidMeshRelation::Outside, ConvexSolidMeshRelation::Outside) => {
+                Some(ExactBooleanSupport::CertifiedConvexSeparated)
+            }
+            _ => None,
+        });
+    }
+
+    if matches!(
+        operation,
+        ExactBooleanOperation::Union | ExactBooleanOperation::Intersection
+    ) && (convex_boundary_containment_is_supported(&left_in_right, &right_in_left)
+        || convex_boundary_containment_is_supported(&right_in_left, &left_in_right))
+    {
+        return Ok(Some(ExactBooleanSupport::CertifiedConvexContainment));
+    }
+
+    Ok(None)
+}
+
+/// Return whether one certified convex solid is contained in another while
+/// touching its boundary.
+///
+/// This is the bounded coplanar-volumetric containment case. Yap, "Towards
+/// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997),
+/// argues that such topology decisions must be retained as exact predicate
+/// facts: every subject vertex is certified inside or on the container, at
+/// least one vertex is exactly on the boundary, the container has at least one
+/// vertex outside the subject so the relation is not relabeled equality, and
+/// both meshes have been certified as convex solids by the two retained
+/// reports. Convexity is the key promotion gate: once every vertex of one
+/// convex solid is inside or on the other convex solid, a separate sampled
+/// graph traversal is not allowed to veto the containment with a stale
+/// tolerance-style crossing interpretation.
+#[cfg(feature = "exact-triangulation")]
+fn convex_boundary_containment_is_supported(
+    subject_in_container: &ConvexSolidMeshClassification,
+    container_in_subject: &ConvexSolidMeshClassification,
+) -> bool {
+    subject_in_container.solid_facts.is_certified_convex()
+        && container_in_subject.solid_facts.is_certified_convex()
+        && subject_in_container.vertices.iter().all(|vertex| {
+            matches!(
+                vertex.relation,
+                ConvexSolidPointRelation::Inside | ConvexSolidPointRelation::Boundary
+            )
+        })
+        && subject_in_container
+            .vertices
+            .iter()
+            .any(|vertex| matches!(vertex.relation, ConvexSolidPointRelation::Boundary))
+        && container_in_subject
+            .vertices
+            .iter()
+            .any(|vertex| matches!(vertex.relation, ConvexSolidPointRelation::Outside))
 }
 
 #[cfg(feature = "exact-triangulation")]

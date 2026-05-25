@@ -9423,6 +9423,10 @@ fn exact_boolean_volumetric_winding_materialization(c: &mut Criterion) {
             tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
         let non_rectilinear_coplanar_right =
             tetrahedron_i64([1, 1, 0], [5, 1, 0], [1, 5, 0], [1, 1, 4]);
+        let boundary_contained_convex_outer =
+            tetrahedron_i64([0, 0, 0], [8, 0, 0], [0, 8, 0], [0, 0, 8]);
+        let boundary_contained_convex_inner =
+            tetrahedron_i64([1, 1, 0], [3, 1, 0], [1, 3, 0], [1, 1, 2]);
 
         let slab_right = ExactMesh::from_i64_triangles(
             &[
@@ -9899,6 +9903,55 @@ fn exact_boolean_volumetric_winding_materialization(c: &mut Criterion) {
                         .unwrap(),
                         non_rectilinear_wrong_operation.validate().is_err(),
                         non_rectilinear_wrong_orientation.validate().is_err(),
+                    )
+                })
+            },
+        );
+
+        c.bench_function(
+            "exact_boolean_convex_boundary_containment_coplanar_cells",
+            |b| {
+                b.iter(|| {
+                    (
+                        hypermesh::exact::preflight_boolean_exact(
+                            &boundary_contained_convex_outer,
+                            &boundary_contained_convex_inner,
+                            hypermesh::exact::ExactBooleanOperation::Union,
+                        )
+                        .unwrap(),
+                        hypermesh::exact::boolean_exact(
+                            &boundary_contained_convex_outer,
+                            &boundary_contained_convex_inner,
+                            hypermesh::exact::ExactBooleanOperation::Union,
+                            ValidationPolicy::CLOSED,
+                        )
+                        .unwrap(),
+                        hypermesh::exact::preflight_boolean_exact(
+                            &boundary_contained_convex_outer,
+                            &boundary_contained_convex_inner,
+                            hypermesh::exact::ExactBooleanOperation::Intersection,
+                        )
+                        .unwrap(),
+                        hypermesh::exact::boolean_exact(
+                            &boundary_contained_convex_outer,
+                            &boundary_contained_convex_inner,
+                            hypermesh::exact::ExactBooleanOperation::Intersection,
+                            ValidationPolicy::CLOSED,
+                        )
+                        .unwrap(),
+                        hypermesh::exact::preflight_boolean_exact(
+                            &boundary_contained_convex_outer,
+                            &boundary_contained_convex_inner,
+                            hypermesh::exact::ExactBooleanOperation::Difference,
+                        )
+                        .unwrap(),
+                        hypermesh::exact::boolean_exact(
+                            &boundary_contained_convex_outer,
+                            &boundary_contained_convex_inner,
+                            hypermesh::exact::ExactBooleanOperation::Difference,
+                            ValidationPolicy::CLOSED,
+                        )
+                        .unwrap(),
                     )
                 })
             },

@@ -10447,6 +10447,70 @@ fn exercise_non_rectilinear_coplanar_volumetric_materialization() {
             }
         }
     }
+
+    let outer = tetrahedron_i64([0, 0, 0], [8, 0, 0], [0, 8, 0], [0, 0, 8]);
+    let inner = tetrahedron_i64([1, 1, 0], [3, 1, 0], [1, 3, 0], [1, 1, 2]);
+    let evidence = certify_coplanar_volumetric_cell_evidence(&outer, &inner)
+        .expect("boundary-contained convex solids should expose coplanar-volumetric evidence");
+    evidence.validate().unwrap();
+    evidence.validate_against_sources(&outer, &inner).unwrap();
+    assert!(evidence.obstacle.requires_coplanar_volumetric_cells());
+    assert_eq!(
+        classify_mesh_vertices_against_convex_solid(&inner, &outer),
+        hypermesh::exact::ConvexSolidMeshRelation::BoundaryOrMixed
+    );
+
+    for (operation, support, shortcut) in [
+        (
+            ExactBooleanOperation::Union,
+            ExactBooleanSupport::CertifiedConvexContainment,
+            true,
+        ),
+        (
+            ExactBooleanOperation::Intersection,
+            ExactBooleanSupport::CertifiedConvexContainment,
+            true,
+        ),
+        (
+            ExactBooleanOperation::Difference,
+            ExactBooleanSupport::CertifiedWindingMaterialized,
+            false,
+        ),
+    ] {
+        let preflight = preflight_boolean_exact(&outer, &inner, operation)
+            .expect("boundary-contained convex preflight should classify exactly");
+        preflight.validate().unwrap();
+        preflight.validate_against_sources(&outer, &inner).unwrap();
+        assert_eq!(preflight.support, support);
+        assert_eq!(preflight.coplanar_volumetric_evidence.is_none(), shortcut);
+
+        let result =
+            hypermesh::exact::boolean_exact(&outer, &inner, operation, ValidationPolicy::CLOSED)
+                .expect("boundary-contained convex boolean should materialize");
+        result.validate().unwrap();
+        result
+            .validate_operation_against_sources(
+                &outer,
+                &inner,
+                operation,
+                ValidationPolicy::CLOSED,
+                ExactBoundaryBooleanPolicy::Reject,
+            )
+            .unwrap();
+        if shortcut {
+            assert_eq!(
+                result.kind,
+                hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+                    shortcut: hypermesh::exact::ExactBooleanShortcutKind::ConvexContainment,
+                }
+            );
+        } else {
+            assert_eq!(
+                result.kind,
+                hypermesh::exact::ExactBooleanResultKind::WindingMaterialized { operation }
+            );
+        }
+    }
 }
 
 #[cfg(feature = "exact-triangulation")]
