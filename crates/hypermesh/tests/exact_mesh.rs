@@ -4852,11 +4852,27 @@ fn exact_face_region_triangulates_through_feature_gated_hypertri() {
         .unwrap();
     assert_eq!(
         named_union.kind,
-        hypermesh::exact::ExactBooleanResultKind::SelectedRegions {
-            selection: hypermesh::exact::ExactRegionSelection::KeepAll
+        hypermesh::exact::ExactBooleanResultKind::OpenSurfaceArrangement {
+            operation: hypermesh::exact::ExactBooleanOperation::Union
         }
     );
     assert_eq!(named_union.mesh, output);
+    let mut wrong_named_union = named_union.clone();
+    wrong_named_union.kind = hypermesh::exact::ExactBooleanResultKind::OpenSurfaceArrangement {
+        operation: hypermesh::exact::ExactBooleanOperation::Difference,
+    };
+    assert_eq!(
+        wrong_named_union.validate().unwrap_err(),
+        hypermesh::exact::ExactReportValidationError::SelectedRegionAssemblyViolatesSelection
+    );
+    let mut invalid_named_union = named_union.clone();
+    invalid_named_union.kind = hypermesh::exact::ExactBooleanResultKind::OpenSurfaceArrangement {
+        operation: hypermesh::exact::ExactBooleanOperation::Intersection,
+    };
+    assert_eq!(
+        invalid_named_union.validate().unwrap_err(),
+        hypermesh::exact::ExactReportValidationError::StatusEvidenceMismatch
+    );
 
     let preflight = hypermesh::exact::preflight_boolean_exact(
         &left,
@@ -4926,8 +4942,8 @@ fn exact_face_region_triangulates_through_feature_gated_hypertri() {
         .unwrap();
     assert_eq!(
         named_difference.kind,
-        hypermesh::exact::ExactBooleanResultKind::SelectedRegions {
-            selection: hypermesh::exact::ExactRegionSelection::KeepLeft
+        hypermesh::exact::ExactBooleanResultKind::OpenSurfaceArrangement {
+            operation: hypermesh::exact::ExactBooleanOperation::Difference
         }
     );
     let left_split = left_only

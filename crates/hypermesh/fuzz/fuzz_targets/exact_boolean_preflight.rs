@@ -6684,8 +6684,8 @@ fn exercise_face_interior_steiner_boundary() {
         .unwrap();
     assert_eq!(
         union.kind,
-        hypermesh::exact::ExactBooleanResultKind::SelectedRegions {
-            selection: ExactRegionSelection::KeepAll,
+        hypermesh::exact::ExactBooleanResultKind::OpenSurfaceArrangement {
+            operation: ExactBooleanOperation::Union,
         }
     );
 
@@ -6721,8 +6721,8 @@ fn exercise_face_interior_steiner_boundary() {
         .unwrap();
     assert_eq!(
         difference_result.kind,
-        hypermesh::exact::ExactBooleanResultKind::SelectedRegions {
-            selection: ExactRegionSelection::KeepLeft,
+        hypermesh::exact::ExactBooleanResultKind::OpenSurfaceArrangement {
+            operation: ExactBooleanOperation::Difference,
         }
     );
 

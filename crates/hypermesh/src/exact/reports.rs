@@ -597,6 +597,19 @@ pub enum ExactBooleanResultKind {
         /// a triangle-mesh output.
         operation: ExactBooleanOperation,
     },
+    /// The result came from exact split-region assembly for an open-surface
+    /// named boolean.
+    ///
+    /// Open non-coplanar surfaces do not enclose volumes, so the retained
+    /// region classifications are proof-producing arrangement facts rather
+    /// than winding facts. Keeping this as a named result kind, instead of
+    /// relabeling it as caller-selected regions, preserves the operation
+    /// boundary required by Yap, "Towards Exact Geometric Computation,"
+    /// *Computational Geometry* 7.1-2 (1997).
+    OpenSurfaceArrangement {
+        /// Named open-surface operation executed by split-region assembly.
+        operation: ExactBooleanOperation,
+    },
     /// The result was produced by materializing split regions after exact
     /// closed-mesh winding classified each source region against the opposite
     /// operand.
@@ -838,6 +851,7 @@ impl ExactBooleanResult {
         let retains_region_artifacts = matches!(
             self.kind,
             ExactBooleanResultKind::SelectedRegions { .. }
+                | ExactBooleanResultKind::OpenSurfaceArrangement { .. }
                 | ExactBooleanResultKind::WindingMaterialized { .. }
         );
         let retains_volumetric_artifacts = matches!(
@@ -1049,7 +1063,14 @@ impl ExactBooleanResult {
             )?;
         }
 
-        let ExactBooleanResultKind::SelectedRegions { selection } = self.kind else {
+        let selection = match self.kind {
+            ExactBooleanResultKind::SelectedRegions { selection } => Some(selection),
+            ExactBooleanResultKind::OpenSurfaceArrangement { operation } => {
+                Some(open_surface_arrangement_selection(operation)?)
+            }
+            _ => None,
+        };
+        let Some(selection) = selection else {
             return Ok(());
         };
 
@@ -1084,6 +1105,7 @@ impl ExactBooleanResult {
         if matches!(
             self.kind,
             ExactBooleanResultKind::SelectedRegions { .. }
+                | ExactBooleanResultKind::OpenSurfaceArrangement { .. }
                 | ExactBooleanResultKind::WindingMaterialized { .. }
         ) {
             self.assembly
@@ -1144,6 +1166,19 @@ impl ExactBooleanResult {
             Ok(())
         } else {
             Err(ExactReportValidationError::SourceReplayMismatch)
+        }
+    }
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn open_surface_arrangement_selection(
+    operation: ExactBooleanOperation,
+) -> Result<ExactRegionSelection, ExactReportValidationError> {
+    match operation {
+        ExactBooleanOperation::Union => Ok(ExactRegionSelection::KeepAll),
+        ExactBooleanOperation::Difference => Ok(ExactRegionSelection::KeepLeft),
+        ExactBooleanOperation::Intersection | ExactBooleanOperation::SelectedRegions(_) => {
+            Err(ExactReportValidationError::StatusEvidenceMismatch)
         }
     }
 }

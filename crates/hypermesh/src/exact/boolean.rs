@@ -3032,6 +3032,10 @@ fn boolean_open_surface_arrangement_meshes(
             reject_unknowns: true,
         },
     )?;
+    let result = ExactBooleanResult {
+        kind: ExactBooleanResultKind::OpenSurfaceArrangement { operation },
+        ..result
+    };
     result
         .validate_against_sources(left, right)
         .map_err(|error| {
