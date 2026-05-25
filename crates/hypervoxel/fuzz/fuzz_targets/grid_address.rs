@@ -33,7 +33,8 @@ use hypervoxel::{
     extract_chunk_paged_exposed_faces_with_report, extract_exposed_faces,
     exact_voxel_surface_triangle_mesh_from_faces, extract_exposed_faces_with_report,
     extract_svo_exposed_faces_with_report, greedy_face_patch_plan,
-    lookup_material_display_colors, lossy_obj_from_quad_mesh, lossy_quad_mesh_from_faces, query_field_samples,
+    lookup_material_display_colors, lossy_obj_from_quad_mesh, lossy_quad_mesh_from_faces,
+    materialize_legacy_voxelis_u8_chunk_paged_storage, query_field_samples,
     query_material_regions, report_material_region_metadata, sample_manhattan_distance_field,
     sample_signed_manhattan_distance_field, select_lod_cells, sweep_address_segment,
     trace_address_ray, voxel_neighbors6, voxelize_exact_box, voxelize_exact_convex_halfspace_set,
@@ -43,6 +44,10 @@ use hypervoxel::{
     VoxelAggregateFacts,
 };
 use libfuzzer_sys::fuzz_target;
+use voxelis::{
+    MaxDepth, VoxInterner,
+    spatial::{VoxOpsWrite, VoxTree},
+};
 
 fuzz_target!(|data: (u8, u64, u64, u64)| {
     let (depth_raw, x, y, z) = data;
@@ -572,6 +577,40 @@ fuzz_target!(|data: (u8, u64, u64, u64)| {
     assert_eq!(
         paged_diff_report.compared_addresses,
         diff_report.compared_addresses
+    );
+
+    let legacy_depth = (depth_raw % 3) + 1;
+    let legacy_cells = 1_u64 << legacy_depth;
+    let legacy_xyz = [x % legacy_cells, y % legacy_cells, z % legacy_cells];
+    let mut legacy_interner = VoxInterner::<u8>::with_memory_budget(8192);
+    let mut legacy_tree = VoxTree::<u8>::new(MaxDepth::new(legacy_depth));
+    let legacy_value = depth_raw.wrapping_add(1);
+    assert!(legacy_tree.set(
+        &mut legacy_interner,
+        glam::IVec3::new(
+            legacy_xyz[0] as i32,
+            legacy_xyz[1] as i32,
+            legacy_xyz[2] as i32
+        ),
+        legacy_value,
+    ));
+    let (legacy_paged, legacy_report) = materialize_legacy_voxelis_u8_chunk_paged_storage(
+        &legacy_tree,
+        &legacy_interner,
+        GridFrame::builder().depth(legacy_depth).build().unwrap(),
+        ChunkShape::new(depth_raw % 3).unwrap(),
+    )
+    .unwrap();
+    assert_eq!(legacy_report.scanned_cells, legacy_report.replayed_cells);
+    assert_eq!(legacy_report.materialized_cells, 1);
+    assert_eq!(legacy_report.paging_mismatch_cells, 0);
+    assert!(legacy_report.exhaustive_chunk_port_ready);
+    assert!(!legacy_report.exact_voxelization_ready);
+    assert_eq!(
+        legacy_paged
+            .get(VoxelAddress::new(legacy_depth, legacy_xyz).unwrap())
+            .unwrap(),
+        VoxelCell::material(MaterialRegionId(u32::from(legacy_value)))
     );
     assert_eq!(paged_diff_report.mismatch_count, diff_report.mismatch_count);
     assert!(paged_diff_report.exact_page_diff_ready);

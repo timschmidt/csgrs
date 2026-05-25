@@ -19,6 +19,7 @@ use voxelis::{
 };
 
 use crate::{
+    ChunkPagedSparseGrid, ChunkPagedSparseStorageReport, ChunkShape, GridFrame, HypervoxelError,
     HypervoxelResult, LegacyAdapterKind, LegacyAdapterStatus, MaterialRegionId, SparseVoxelGrid,
     VoxelAddress, VoxelCell,
 };
@@ -61,6 +62,48 @@ pub struct LegacyVoxelisStorageDiffReport {
     /// This remains false by construction. Legacy storage can provide
     /// differential evidence for a port, but exact voxelization belongs to the
     /// Hyper predicate/report path.
+    pub exact_voxelization_ready: bool,
+}
+
+/// Exhaustive Hyper chunk-paged materialization report for a legacy `voxelis` tree.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct LegacyVoxelisChunkPagedMaterializationReport {
+    /// Hyper frame depth requested by the caller.
+    pub frame_depth: u8,
+    /// Legacy tree depth reported through `voxelis`' own configuration API.
+    pub legacy_depth: u8,
+    /// Whether the legacy tree and Hyper frame describe the same leaf depth.
+    pub legacy_depth_matches_frame: bool,
+    /// Number of frame leaf cells enumerated from the legacy tree.
+    pub scanned_cells: usize,
+    /// Number of legacy zero/default cells interpreted as implicit empty.
+    pub empty_cells: usize,
+    /// Number of nonzero legacy cells materialized into Hyper sparse storage.
+    pub materialized_cells: usize,
+    /// Number of nonzero cells whose `u8` value was promoted to a Hyper
+    /// material-region id.
+    pub material_region_cells: usize,
+    /// Number of frame cells replayed through the produced chunk-paged backend.
+    pub replayed_cells: usize,
+    /// Number of replayed cells whose paged Hyper payload differed from the
+    /// legacy value at the same integer address.
+    pub paging_mismatch_cells: usize,
+    /// Exact chunk-paged storage evidence for the produced Hyper backend.
+    pub storage: ChunkPagedSparseStorageReport,
+    /// Explicit adapter status for the harvested legacy materialization.
+    pub adapter: LegacyAdapterStatus,
+    /// Whether the legacy storage was exhaustively ported into Hyper
+    /// chunk-paged storage without changing address or payload facts.
+    ///
+    /// This is a storage-port readiness bit only. It says the `voxelis` SVO-DAG
+    /// values have been replayed into Hyper's exact integer page model. It does
+    /// not promote the legacy source to exact geometry or exact voxelization.
+    pub exhaustive_chunk_port_ready: bool,
+    /// Whether the ported legacy storage can stand in for exact voxelization.
+    ///
+    /// This remains false by construction. Yap's EGC model requires the
+    /// source predicates and construction history to be replayed explicitly;
+    /// harvested storage values alone are not geometric truth.
     pub exact_voxelization_ready: bool,
 }
 
@@ -137,10 +180,141 @@ where
     })
 }
 
+/// Exhaustively materializes a legacy `voxelis::VoxTree<u8>` into Hyper pages.
+///
+/// This is the storage-port counterpart to [`compare_legacy_voxelis_u8_samples`].
+/// The legacy tree is scanned over every finest-depth frame address, nonzero
+/// `u8` values are promoted to [`MaterialRegionId`] payloads, and the resulting
+/// [`SparseVoxelGrid`] is immediately lowered into [`ChunkPagedSparseGrid`].
+/// The function then replays every frame cell through the paged backend and
+/// compares it to the original legacy lookup.
+///
+/// The design follows Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7(1-2), 1997: the performance-oriented `voxelis`
+/// SVO-DAG may propose a storage representation, but the Hyper object facts
+/// are accepted only after exact integer address replay through the target
+/// model. It also mirrors the spatial-subdivision discipline described by
+/// Samet, *The Design and Analysis of Spatial Data Structures*,
+/// Addison-Wesley, 1990, while keeping page coordinates as integer evidence
+/// rather than metric approximations.
+pub fn materialize_legacy_voxelis_u8_chunk_paged_storage(
+    tree: &VoxTree<u8>,
+    interner: &VoxInterner<u8>,
+    frame: GridFrame,
+    shape: ChunkShape,
+) -> HypervoxelResult<(
+    ChunkPagedSparseGrid,
+    LegacyVoxelisChunkPagedMaterializationReport,
+)> {
+    let frame_depth = frame.depth();
+    let legacy_depth = tree.max_depth(Lod::new(0)).max();
+    let legacy_depth_matches_frame = legacy_depth == frame_depth;
+    let cells_per_axis = checked_cells_per_axis(frame_depth)?;
+    let mut sparse = SparseVoxelGrid::new(frame);
+    let mut scanned_cells = 0_usize;
+    let mut empty_cells = 0_usize;
+    let mut materialized_cells = 0_usize;
+    let mut material_region_cells = 0_usize;
+
+    if legacy_depth_matches_frame {
+        for z in 0..cells_per_axis {
+            for y in 0..cells_per_axis {
+                for x in 0..cells_per_axis {
+                    scanned_cells += 1;
+                    let address = VoxelAddress::new(frame_depth, [x, y, z])?;
+                    let legacy = tree
+                        .get(interner, ivec3_from_xyz([x, y, z])?)
+                        .unwrap_or_default();
+                    if legacy == 0 {
+                        empty_cells += 1;
+                        continue;
+                    }
+                    sparse.set(address, legacy_u8_cell(legacy))?;
+                    materialized_cells += 1;
+                    material_region_cells += 1;
+                }
+            }
+        }
+    }
+
+    let paged = ChunkPagedSparseGrid::from_sparse_grid(&sparse, shape)?;
+    let mut replayed_cells = 0_usize;
+    let mut paging_mismatch_cells = 0_usize;
+    if legacy_depth_matches_frame {
+        for z in 0..cells_per_axis {
+            for y in 0..cells_per_axis {
+                for x in 0..cells_per_axis {
+                    replayed_cells += 1;
+                    let address = VoxelAddress::new(frame_depth, [x, y, z])?;
+                    let legacy = legacy_u8_cell(
+                        tree.get(interner, ivec3_from_xyz([x, y, z])?)
+                            .unwrap_or_default(),
+                    );
+                    if paged.get(address)? != legacy {
+                        paging_mismatch_cells += 1;
+                    }
+                }
+            }
+        }
+    }
+
+    let storage = paged.report().clone();
+    let exhaustive_chunk_port_ready = legacy_depth_matches_frame
+        && scanned_cells > 0
+        && scanned_cells == replayed_cells
+        && scanned_cells == logical_frame_cells(frame_depth)?
+        && empty_cells + materialized_cells == scanned_cells
+        && materialized_cells == storage.summary.stored_cells
+        && paging_mismatch_cells == 0
+        && storage.exact_chunk_storage_ready;
+    let report = LegacyVoxelisChunkPagedMaterializationReport {
+        frame_depth,
+        legacy_depth,
+        legacy_depth_matches_frame,
+        scanned_cells,
+        empty_cells,
+        materialized_cells,
+        material_region_cells,
+        replayed_cells,
+        paging_mismatch_cells,
+        storage,
+        adapter: LegacyAdapterStatus::lossy(
+            LegacyAdapterKind::VoxelisStorage,
+            "exhaustive legacy voxelis u8 chunk-paged materialization",
+        ),
+        exhaustive_chunk_port_ready,
+        exact_voxelization_ready: false,
+    };
+    Ok((paged, report))
+}
+
 fn legacy_u8_cell(value: u8) -> VoxelCell {
     if value == 0 {
         VoxelCell::empty()
     } else {
         VoxelCell::material(MaterialRegionId(u32::from(value)))
     }
+}
+
+fn checked_cells_per_axis(depth: u8) -> HypervoxelResult<u64> {
+    1_u64
+        .checked_shl(u32::from(depth))
+        .ok_or(HypervoxelError::AddressOverflow)
+}
+
+fn logical_frame_cells(depth: u8) -> HypervoxelResult<usize> {
+    usize::try_from(
+        checked_cells_per_axis(depth)?
+            .checked_pow(3)
+            .ok_or(HypervoxelError::AddressOverflow)?,
+    )
+    .map_err(|_| HypervoxelError::AddressOverflow)
+}
+
+fn ivec3_from_xyz(xyz: [u64; 3]) -> HypervoxelResult<IVec3> {
+    Ok(IVec3::new(
+        i32::try_from(xyz[0]).map_err(|_| HypervoxelError::AddressOverflow)?,
+        i32::try_from(xyz[1]).map_err(|_| HypervoxelError::AddressOverflow)?,
+        i32::try_from(xyz[2]).map_err(|_| HypervoxelError::AddressOverflow)?,
+    ))
 }

@@ -773,6 +773,24 @@ fn bench_connectivity_and_export_adapters(c: &mut Criterion) {
                 )
             })
         });
+        c.bench_function("legacy_voxelis_u8_chunk_paged_materialization", |b| {
+            b.iter(|| {
+                let (_, report) = hypervoxel::materialize_legacy_voxelis_u8_chunk_paged_storage(
+                    &legacy_tree,
+                    &interner,
+                    GridFrame::builder().depth(4).build().unwrap(),
+                    ChunkShape::new(2).unwrap(),
+                )
+                .unwrap();
+                (
+                    report.exhaustive_chunk_port_ready,
+                    report.scanned_cells,
+                    report.replayed_cells,
+                    report.materialized_cells,
+                    report.paging_mismatch_cells,
+                )
+            })
+        });
     }
 }
 
