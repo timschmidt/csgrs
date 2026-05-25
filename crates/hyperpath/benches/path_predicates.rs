@@ -5,8 +5,8 @@ use hyperpath::{
     ConstructionStamp, CubicBezier, ExplicitCircularArc, HigherOrderBezier, LinePathSegment,
     MeanderObstacle, MeanderPlacementCandidate, NetId, OffsetSide, PathProvenance,
     PathSourceFormat, PcbBoardOutline, PcbCardinalRectPad, PcbCircularBoardOutline, PcbCircularPad,
-    PcbConvexBoardOutline, PcbOrientedRectPad, PcbOrthogonalBoardOutline, PcbRectPad,
-    PcbRoundedRectPad, PcbTrace, PcbViaStack, QuadraticBezier, RationalQuadraticBezier,
+    PcbConvexBoardOutline, PcbObroundPad, PcbOrientedRectPad, PcbOrthogonalBoardOutline,
+    PcbRectPad, PcbRoundedRectPad, PcbTrace, PcbViaStack, QuadraticBezier, RationalQuadraticBezier,
     RectangularPocket, SourceLengthUnit, SpecctraGridTraceRecord, SpecctraGridViaRecord,
     SpecctraLayerAlias, SpecctraNetAlias, SweptLineSegment, TangentSpan, TraceLayer,
     ViaDrillIntent, build_alternating_detour_meander, build_g1_join_problem,
@@ -18,14 +18,15 @@ use hyperpath::{
     certify_differential_pair_skew, certify_g1_chain, certify_g1_join_candidate,
     certify_length_extension, certify_tangent_alignment_candidate,
     check_cardinal_rect_pad_board_clearance, check_circular_pad_board_clearance,
-    check_circular_pad_circular_board_clearance, check_oriented_rect_pad_board_clearance,
-    check_rect_pad_board_clearance, check_rounded_rect_pad_board_clearance,
-    check_trace_board_clearance, check_trace_cardinal_rect_pad_clearance,
-    check_trace_circular_board_clearance, check_trace_clearance,
-    check_trace_convex_board_clearance, check_trace_oriented_rect_pad_clearance,
-    check_trace_orthogonal_board_clearance, check_trace_pad_clearance,
-    check_trace_rect_pad_clearance, check_trace_rounded_rect_pad_clearance,
-    check_trace_via_clearance, check_trace_via_drill_clearance, check_via_drill_board_clearance,
+    check_circular_pad_circular_board_clearance, check_obround_pad_board_clearance,
+    check_oriented_rect_pad_board_clearance, check_rect_pad_board_clearance,
+    check_rounded_rect_pad_board_clearance, check_trace_board_clearance,
+    check_trace_cardinal_rect_pad_clearance, check_trace_circular_board_clearance,
+    check_trace_clearance, check_trace_convex_board_clearance, check_trace_obround_pad_clearance,
+    check_trace_oriented_rect_pad_clearance, check_trace_orthogonal_board_clearance,
+    check_trace_pad_clearance, check_trace_rect_pad_clearance,
+    check_trace_rounded_rect_pad_clearance, check_trace_via_clearance,
+    check_trace_via_drill_clearance, check_via_drill_board_clearance,
     classify_meander_candidate_slots, classify_meander_placement_slots, classify_tangent_alignment,
     classify_tangent_chain, classify_tangent_join, import_specctra_trace_record,
     import_specctra_via_record, intersect_rectangular_regions, offset_axis_aligned_segment,
@@ -415,6 +416,23 @@ fn path_predicates(c: &mut Criterion) {
             )
         })
     });
+    let obround_pad = PcbObroundPad::new(
+        NetId(2),
+        TraceLayer(0),
+        LinePathSegment::new(p(480, 0), p(520, 30)),
+        r(8),
+    )
+    .unwrap();
+    c.bench_function("trace_obround_pad_clearance_exact", |b| {
+        b.iter(|| {
+            check_trace_obround_pad_clearance(
+                &oriented_trace,
+                &obround_pad,
+                &r(3),
+                PredicatePolicy::default(),
+            )
+        })
+    });
     let board = PcbBoardOutline::new(p(-100, -100), p(1100, 100)).unwrap();
     c.bench_function("trace_board_edge_clearance_exact", |b| {
         b.iter(|| check_trace_board_clearance(&first, &board, &r(25), PredicatePolicy::default()))
@@ -520,6 +538,16 @@ fn path_predicates(c: &mut Criterion) {
         b.iter(|| {
             check_oriented_rect_pad_board_clearance(
                 &oriented_rect,
+                &board,
+                &r(25),
+                PredicatePolicy::default(),
+            )
+        })
+    });
+    c.bench_function("obround_pad_board_edge_clearance_exact", |b| {
+        b.iter(|| {
+            check_obround_pad_board_clearance(
+                &obround_pad,
                 &board,
                 &r(25),
                 PredicatePolicy::default(),

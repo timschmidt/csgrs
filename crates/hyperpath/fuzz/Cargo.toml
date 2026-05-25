@@ -40,3 +40,10 @@ path = "fuzz_targets/pcb_circular_board.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "pcb_obround_pad"
+path = "fuzz_targets/pcb_obround_pad.rs"
+test = false
+doc = false
+bench = false
