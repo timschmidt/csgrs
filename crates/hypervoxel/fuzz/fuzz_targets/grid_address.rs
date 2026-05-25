@@ -24,7 +24,8 @@ use hypervoxel::{
     VoxelSideTables, VoxelSliceNaming, VoxelSliceOrdering, VoxelSpatialAggregateFacts,
     VoxelTraceDimension, VoxelTraceManifest, VoxelizationAudit, VoxelizationPolicy,
     chunk_paged_greedy_face_patch_plan_with_report, classify_chunk_paged_support_mask,
-    classify_support_mask, continuous_field_address, extract_chunk_paged_exposed_faces_with_report,
+    classify_support_mask, continuous_field_address, diff_chunk_paged_sparse_grids,
+    extract_chunk_paged_exposed_faces_with_report,
     diff_sparse_grids, extract_exposed_faces, greedy_face_patch_plan, lookup_material_display_colors,
     extract_exposed_faces_with_report, lossy_obj_from_quad_mesh, lossy_quad_mesh_from_faces, query_field_samples,
     query_material_regions, report_material_region_metadata, sample_manhattan_distance_field,
@@ -354,6 +355,19 @@ fuzz_target!(|data: (u8, u64, u64, u64)| {
     assert_eq!(diff_report.mismatch_count, 0);
     assert_eq!(diff_report.compared_addresses, grid.len());
     assert_eq!(diff_report.has_compared_addresses, diff_report.compared_addresses > 0);
+    let paged_diff_report = diff_chunk_paged_sparse_grids(&paged_grid, &paged_grid);
+    assert_eq!(
+        paged_diff_report.semantic_equivalence_ready,
+        diff_report.semantic_equivalence_ready && paged_grid.report().exact_chunk_storage_ready
+    );
+    assert_eq!(paged_diff_report.frame_matches, diff_report.frame_matches);
+    assert!(paged_diff_report.shape_matches);
+    assert_eq!(
+        paged_diff_report.compared_addresses,
+        diff_report.compared_addresses
+    );
+    assert_eq!(paged_diff_report.mismatch_count, diff_report.mismatch_count);
+    assert!(paged_diff_report.exact_page_diff_ready);
     let empty_diff = diff_sparse_grids(
         &SparseVoxelGrid::new(report.frame.clone()),
         &SparseVoxelGrid::new(report.frame.clone()),
@@ -361,6 +375,22 @@ fuzz_target!(|data: (u8, u64, u64, u64)| {
     assert_eq!(empty_diff.compared_addresses, 0);
     assert!(!empty_diff.has_compared_addresses);
     assert!(!empty_diff.semantic_equivalence_ready);
+    let empty_paged_diff = diff_chunk_paged_sparse_grids(
+        &ChunkPagedSparseGrid::from_sparse_grid(
+            &SparseVoxelGrid::new(report.frame.clone()),
+            ChunkShape::new(small_depth.min(2)).unwrap(),
+        )
+        .unwrap(),
+        &ChunkPagedSparseGrid::from_sparse_grid(
+            &SparseVoxelGrid::new(report.frame.clone()),
+            ChunkShape::new(small_depth.min(2)).unwrap(),
+        )
+        .unwrap(),
+    );
+    assert_eq!(empty_paged_diff.compared_addresses, 0);
+    assert!(!empty_paged_diff.has_compared_addresses);
+    assert!(empty_paged_diff.exact_page_diff_ready);
+    assert!(!empty_paged_diff.semantic_equivalence_ready);
     let chunk_summary = ChunkPageSummary::from_addresses(
         ChunkShape::new(small_depth.min(2)).unwrap(),
         grid.iter().map(|(address, _)| *address),

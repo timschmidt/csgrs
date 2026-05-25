@@ -1,22 +1,22 @@
 use hyperlimit::Aabb3Intersection;
 use hyperreal::{Rational, Real};
 use hypervoxel::{
-    AggregateCertainty, BoundaryPolicy, CompressedStorageKind, CompressedStorageManifest,
-    DeterministicSnapshot, ExactAabb3, ExactBox, ExactConvexHalfSpaceSet, ExactHalfSpace,
-    FieldSampleId, FieldSampleRecord, FreshnessStatus, GridAabbHandoff, GridFrame, GridSource,
-    HypervoxelError, LatticeAabbHandoff, LossyMeshExportReport, MaterialDisplayColor,
-    MaterialDisplayPalette, MaterialRegionId, MaterialRegionRecord, OccupancyState,
-    PreparedSparseVoxelGridExt, PreparedVoxelGrid, PreviewExportFormat, PreviewExportManifest,
-    PreviewScalarPolicy, ProcessStateId, ProcessStateRecord, QuantizationPolicy, QueryRegion,
-    SideTableLinkStatus, SnapshotFormat, SparseVoxelGrid, StorageReplayStatus, VoxelAddress,
-    VoxelAggregateFacts, VoxelCell, VoxelHandoffDomain, VoxelHandoffManifest,
-    VoxelMemoryBudgetManifest, VoxelSideTables, VoxelizationAudit, VoxelizationPolicy,
-    diff_sparse_grids, extract_exposed_faces, extract_exposed_faces_with_report,
-    greedy_face_patch_plan, lookup_material_display_colors, lossy_obj_from_quad_mesh,
-    lossy_quad_mesh_from_faces, query_material_regions, report_material_region_metadata,
-    sample_manhattan_distance_field, sample_signed_manhattan_distance_field, select_lod_cells,
-    voxel_neighbors6, voxelize_exact_box, voxelize_exact_convex_halfspace_set,
-    voxelize_exact_halfspace,
+    AggregateCertainty, BoundaryPolicy, ChunkPagedSparseGrid, ChunkShape, CompressedStorageKind,
+    CompressedStorageManifest, DeterministicSnapshot, ExactAabb3, ExactBox,
+    ExactConvexHalfSpaceSet, ExactHalfSpace, FieldSampleId, FieldSampleRecord, FreshnessStatus,
+    GridAabbHandoff, GridFrame, GridSource, HypervoxelError, LatticeAabbHandoff,
+    LossyMeshExportReport, MaterialDisplayColor, MaterialDisplayPalette, MaterialRegionId,
+    MaterialRegionRecord, OccupancyState, PreparedSparseVoxelGridExt, PreparedVoxelGrid,
+    PreviewExportFormat, PreviewExportManifest, PreviewScalarPolicy, ProcessStateId,
+    ProcessStateRecord, QuantizationPolicy, QueryRegion, SideTableLinkStatus, SnapshotFormat,
+    SparseVoxelGrid, StorageReplayStatus, VoxelAddress, VoxelAggregateFacts, VoxelCell,
+    VoxelHandoffDomain, VoxelHandoffManifest, VoxelMemoryBudgetManifest, VoxelSideTables,
+    VoxelizationAudit, VoxelizationPolicy, diff_chunk_paged_sparse_grids, diff_sparse_grids,
+    extract_exposed_faces, extract_exposed_faces_with_report, greedy_face_patch_plan,
+    lookup_material_display_colors, lossy_obj_from_quad_mesh, lossy_quad_mesh_from_faces,
+    query_material_regions, report_material_region_metadata, sample_manhattan_distance_field,
+    sample_signed_manhattan_distance_field, select_lod_cells, voxel_neighbors6, voxelize_exact_box,
+    voxelize_exact_convex_halfspace_set, voxelize_exact_halfspace,
 };
 
 fn r(n: i32) -> Real {
@@ -653,12 +653,47 @@ fn sparse_grid_diff_reports_semantic_storage_mismatches() {
     assert_eq!(diff.mismatch_count, 2);
     assert_eq!(diff.differing_cells, vec![address]);
     assert_eq!(diff.only_right.len(), 1);
+    let paged_left =
+        ChunkPagedSparseGrid::from_sparse_grid(&left, ChunkShape::new(1).unwrap()).unwrap();
+    let paged_right =
+        ChunkPagedSparseGrid::from_sparse_grid(&right, ChunkShape::new(1).unwrap()).unwrap();
+    let paged_diff = diff_chunk_paged_sparse_grids(&paged_left, &paged_right);
+    assert!(!paged_diff.is_equal());
+    assert!(paged_diff.frame_matches);
+    assert!(paged_diff.shape_matches);
+    assert_eq!(paged_diff.left_pages, 1);
+    assert_eq!(paged_diff.right_pages, 2);
+    assert_eq!(paged_diff.shared_pages, 1);
+    assert_eq!(paged_diff.only_right_pages.len(), 1);
+    assert_eq!(paged_diff.compared_addresses, diff.compared_addresses);
+    assert_eq!(paged_diff.only_left, diff.only_left);
+    assert_eq!(paged_diff.only_right, diff.only_right);
+    assert_eq!(paged_diff.differing_cells, diff.differing_cells);
+    assert_eq!(paged_diff.mismatch_count, diff.mismatch_count);
+    assert!(paged_diff.exact_page_diff_ready);
+    assert!(!paged_diff.semantic_equivalence_ready);
 
     let equal = diff_sparse_grids(&left, &left);
     assert!(equal.frame_matches);
     assert!(equal.has_compared_addresses);
     assert!(equal.semantic_equivalence_ready);
     assert_eq!(equal.mismatch_count, 0);
+    let paged_equal = diff_chunk_paged_sparse_grids(&paged_left, &paged_left);
+    assert!(paged_equal.frame_matches);
+    assert!(paged_equal.shape_matches);
+    assert!(paged_equal.exact_page_diff_ready);
+    assert!(paged_equal.semantic_equivalence_ready);
+    assert_eq!(paged_equal.mismatch_count, 0);
+
+    let differently_paged_left =
+        ChunkPagedSparseGrid::from_sparse_grid(&left, ChunkShape::new(2).unwrap()).unwrap();
+    let shape_diff = diff_chunk_paged_sparse_grids(&paged_left, &differently_paged_left);
+    assert!(shape_diff.frame_matches);
+    assert!(!shape_diff.shape_matches);
+    assert_eq!(shape_diff.compared_addresses, 1);
+    assert_eq!(shape_diff.mismatch_count, 1);
+    assert!(!shape_diff.exact_page_diff_ready);
+    assert!(!shape_diff.semantic_equivalence_ready);
 
     let empty_left = SparseVoxelGrid::new(frame());
     let empty_right = SparseVoxelGrid::new(frame());
@@ -669,6 +704,18 @@ fn sparse_grid_diff_reports_semantic_storage_mismatches() {
     assert_eq!(empty_equal.mismatch_count, 0);
     assert!(!empty_equal.semantic_equivalence_ready);
     assert!(!empty_equal.is_equal());
+    let empty_paged_left =
+        ChunkPagedSparseGrid::from_sparse_grid(&empty_left, ChunkShape::new(1).unwrap()).unwrap();
+    let empty_paged_right =
+        ChunkPagedSparseGrid::from_sparse_grid(&empty_right, ChunkShape::new(1).unwrap()).unwrap();
+    let empty_paged = diff_chunk_paged_sparse_grids(&empty_paged_left, &empty_paged_right);
+    assert!(empty_paged.frame_matches);
+    assert!(empty_paged.shape_matches);
+    assert_eq!(empty_paged.left_pages, 0);
+    assert_eq!(empty_paged.compared_addresses, 0);
+    assert!(!empty_paged.has_compared_addresses);
+    assert!(empty_paged.exact_page_diff_ready);
+    assert!(!empty_paged.semantic_equivalence_ready);
 
     let shifted_frame = GridFrame::builder()
         .origin([r(1), r(0), r(0)])
@@ -685,6 +732,15 @@ fn sparse_grid_diff_reports_semantic_storage_mismatches() {
     assert_eq!(frame_diff.compared_addresses, 1);
     assert_eq!(frame_diff.mismatch_count, 1);
     assert!(!frame_diff.semantic_equivalence_ready);
+    let shifted_paged =
+        ChunkPagedSparseGrid::from_sparse_grid(&shifted, ChunkShape::new(1).unwrap()).unwrap();
+    let paged_frame_diff = diff_chunk_paged_sparse_grids(&paged_left, &shifted_paged);
+    assert!(!paged_frame_diff.frame_matches);
+    assert!(paged_frame_diff.shape_matches);
+    assert_eq!(paged_frame_diff.compared_addresses, 1);
+    assert_eq!(paged_frame_diff.mismatch_count, 1);
+    assert!(!paged_frame_diff.exact_page_diff_ready);
+    assert!(!paged_frame_diff.semantic_equivalence_ready);
 }
 
 #[test]

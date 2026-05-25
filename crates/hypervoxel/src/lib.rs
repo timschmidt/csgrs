@@ -27,6 +27,7 @@ mod batch;
 mod candidate;
 mod cell;
 mod chunk;
+mod chunk_diff;
 mod chunk_faces;
 mod chunk_storage;
 mod chunk_support;
@@ -86,6 +87,7 @@ pub use cell::{
     VoxelPayload,
 };
 pub use chunk::{ChunkAddress, ChunkLocalAddress, ChunkPageSummary, ChunkShape};
+pub use chunk_diff::{ChunkPagedSparseGridDiffReport, diff_chunk_paged_sparse_grids};
 pub use chunk_faces::{
     ChunkPagedExactFaceExtractionReport, ChunkPagedGreedyFacePatchReport,
     chunk_paged_greedy_face_patch_plan_with_report, extract_chunk_paged_exposed_faces_with_report,

@@ -22,8 +22,8 @@ use hypervoxel::{
     VoxelSliceNaming, VoxelSliceOrdering, VoxelSpatialAggregateFacts, VoxelTraceDimension,
     VoxelTraceManifest, VoxelizationAudit, VoxelizationPolicy,
     chunk_paged_greedy_face_patch_plan_with_report, classify_chunk_paged_support_mask,
-    classify_support_mask, continuous_field_address, diff_sparse_grids,
-    extract_chunk_paged_exposed_faces_with_report, extract_exposed_faces,
+    classify_support_mask, continuous_field_address, diff_chunk_paged_sparse_grids,
+    diff_sparse_grids, extract_chunk_paged_exposed_faces_with_report, extract_exposed_faces,
     extract_exposed_faces_with_report, greedy_face_patch_plan, lookup_material_display_colors,
     lossy_obj_from_quad_mesh, lossy_quad_mesh_from_faces, query_field_samples,
     query_material_regions, report_material_region_metadata, sample_manhattan_distance_field,
@@ -588,6 +588,20 @@ fn bench_connectivity_and_export_adapters(c: &mut Criterion) {
                 report.frame_matches,
                 report.mismatch_count,
                 report.compared_addresses,
+            )
+        })
+    });
+    c.bench_function("chunk_paged_sparse_grid_diff", |b| {
+        let paged =
+            ChunkPagedSparseGrid::from_sparse_grid(&grid, ChunkShape::new(3).unwrap()).unwrap();
+        b.iter(|| {
+            let report = diff_chunk_paged_sparse_grids(&paged, &paged);
+            (
+                report.semantic_equivalence_ready,
+                report.exact_page_diff_ready,
+                report.shared_pages,
+                report.compared_addresses,
+                report.mismatch_count,
             )
         })
     });
