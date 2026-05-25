@@ -32,3 +32,10 @@ path = "fuzz_targets/continuous_field_materialization.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "triangle_surface_voxelization"
+path = "fuzz_targets/triangle_surface_voxelization.rs"
+test = false
+doc = false
+bench = false

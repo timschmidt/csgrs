@@ -56,6 +56,7 @@ mod support;
 mod svo;
 mod trace;
 mod transform;
+mod triangle_mesh;
 #[cfg(feature = "legacy-voxelis")]
 mod voxelis_adapter;
 mod voxelize;
@@ -163,6 +164,11 @@ pub use support::{
 pub use svo::{SvoDagStats, SvoEditReport, SvoNodeId, SvoStorageReport, SvoVoxelGrid};
 pub use trace::{VoxelTraceDimension, VoxelTraceManifest, VoxelTraceReport};
 pub use transform::{AxisPermutationTransform, SignedAxis};
+pub use triangle_mesh::{
+    ExactTriangle3, ExactTriangle3Report, ExactTriangleSurfaceMesh, ExactTriangleSurfaceMeshReport,
+    VoxelTriangleMeshClassifier, classify_cell_against_triangle_surface_mesh,
+    voxelize_exact_triangle_surface_mesh,
+};
 #[cfg(feature = "legacy-voxelis")]
 pub use voxelis_adapter::{LegacyVoxelisStorageDiffReport, compare_legacy_voxelis_u8_samples};
 pub use voxelize::{ExactBox, ExactBoxReport, VoxelBoxClassifier, voxelize_exact_box};

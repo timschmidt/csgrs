@@ -6,16 +6,17 @@ use hypervoxel::{
     ChunkPageSummary, ChunkShape, CompressedStorageKind, CompressedStorageManifest,
     ContinuousFieldVoxelCell, ContinuousFieldVoxelInterchangeManifest,
     ContinuousFieldVoxelManifest, ContinuousFieldVoxelRowOrder, DeterministicSnapshot, ExactAabb3,
-    ExactAffineTransform, ExactBox, ExactConvexHalfSpaceSet, ExactHalfSpace, FieldAggregateFacts,
-    FieldEnvelopeFacts, FieldSampleId, FieldSampleRecord, FreshnessStatus, GridAabbHandoff,
-    GridBasis, GridCoordinateSystem, GridFrame, GridFrameManifest, GridHandedness, GridSource,
-    ImageStackContainer, ImageStackManifest, LegacyAdapterKind, LegacyAdapterStatus, LengthUnit,
-    MaterialDisplayPalette, MaterialRegionId, MaterialRegionRecord, PreparedSparseVoxelGridExt,
-    PreparedVoxelGrid, PreviewExportFormat, PreviewExportManifest, PreviewScalarPolicy,
-    ProcessGridArtifact, ProcessGridRole, QuantizationPolicy, QueryRegion, SignedAxis,
-    SparseVoxelGrid, SupportDirection, SvoVoxelGrid, SweptVolumeProvenance, VoxelAddress,
-    VoxelArtifactId, VoxelArtifactManifest, VoxelArtifactRole, VoxelCandidateKind,
-    VoxelCandidateManifest, VoxelCell, VoxelChannelMapping, VoxelEditBatch, VoxelFieldCouplingKind,
+    ExactAffineTransform, ExactBox, ExactConvexHalfSpaceSet, ExactHalfSpace, ExactTriangle3,
+    ExactTriangleSurfaceMesh, FieldAggregateFacts, FieldEnvelopeFacts, FieldSampleId,
+    FieldSampleRecord, FreshnessStatus, GridAabbHandoff, GridBasis, GridCoordinateSystem,
+    GridFrame, GridFrameManifest, GridHandedness, GridSource, ImageStackContainer,
+    ImageStackManifest, LegacyAdapterKind, LegacyAdapterStatus, LengthUnit, MaterialDisplayPalette,
+    MaterialRegionId, MaterialRegionRecord, PreparedSparseVoxelGridExt, PreparedVoxelGrid,
+    PreviewExportFormat, PreviewExportManifest, PreviewScalarPolicy, ProcessGridArtifact,
+    ProcessGridRole, QuantizationPolicy, QueryRegion, SignedAxis, SparseVoxelGrid,
+    SupportDirection, SvoVoxelGrid, SweptVolumeProvenance, VoxelAddress, VoxelArtifactId,
+    VoxelArtifactManifest, VoxelArtifactRole, VoxelCandidateKind, VoxelCandidateManifest,
+    VoxelCell, VoxelChannelMapping, VoxelEditBatch, VoxelFieldCouplingKind,
     VoxelFieldCouplingManifest, VoxelHandoffDomain, VoxelHandoffManifest, VoxelIndexConvention,
     VoxelIoCompression, VoxelIoMetadata, VoxelMemoryBudgetManifest, VoxelSideTables,
     VoxelSliceNaming, VoxelSliceOrdering, VoxelSpatialAggregateFacts, VoxelTraceDimension,
@@ -26,7 +27,7 @@ use hypervoxel::{
     query_material_regions, report_material_region_metadata, sample_manhattan_distance_field,
     sample_signed_manhattan_distance_field, select_lod_cells, sweep_address_segment,
     trace_address_ray, voxelize_exact_box, voxelize_exact_convex_halfspace_set,
-    voxelize_exact_halfspace,
+    voxelize_exact_halfspace, voxelize_exact_triangle_surface_mesh,
 };
 
 fn r(n: i32) -> Real {
@@ -175,6 +176,35 @@ fn bench_exact_box_voxelization(c: &mut Criterion) {
                 frame.clone(),
                 &solid,
                 MaterialRegionId(1),
+                VoxelizationPolicy::conservative_cover(),
+            )
+            .unwrap()
+        })
+    });
+    let triangle_mesh = ExactTriangleSurfaceMesh::new(
+        vec![
+            ExactTriangle3::new(
+                [[r(4), r(4), r(8)], [r(12), r(4), r(8)], [r(4), r(12), r(8)]],
+                Some(0),
+            ),
+            ExactTriangle3::new(
+                [
+                    [r(12), r(4), r(8)],
+                    [r(12), r(12), r(8)],
+                    [r(4), r(12), r(8)],
+                ],
+                Some(1),
+            ),
+        ],
+        frame.source().cloned(),
+        true,
+    );
+    c.bench_function("exact_triangle_surface_mesh_voxelization", |b| {
+        b.iter(|| {
+            voxelize_exact_triangle_surface_mesh(
+                frame.clone(),
+                &triangle_mesh,
+                MaterialRegionId(9),
                 VoxelizationPolicy::conservative_cover(),
             )
             .unwrap()
