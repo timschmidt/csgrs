@@ -1128,6 +1128,34 @@ pub enum SketchConstraintKind {
         /// Signed orientation branch for the projected outgoing line tangent.
         orientation: SketchTangentOrientation,
     },
+    /// 2D circular-arc endpoint tangent to a projected 3D cubic Bezier.
+    ///
+    /// Lowering proves the workplane unit-quaternion guard, projects the 3D
+    /// cubic control net relative to the retained workplane origin, evaluates
+    /// the projected cubic point and derivative exactly in Bernstein form, and
+    /// replays the selected arc endpoint-on-radius, projected
+    /// cubic/endpoint incidence, radius/derivative perpendicularity, and
+    /// signed tangent-orientation rows. No projected derivative, radius
+    /// vector, workplane axis, or angle is normalized. This follows Yap,
+    /// "Towards Exact Geometric Computation" (1997), by retaining the
+    /// workplane, arc endpoint, cubic carrier, parameter, and branch as proof
+    /// objects. The workplane frame follows Shoemake, "Animating Rotation with
+    /// Quaternion Curves" (1985), and the Bernstein derivative follows Farin,
+    /// *Curves and Surfaces for CAGD*, 5th ed. (2002).
+    ProjectedArcCubicCurveTangent3 {
+        /// Workplane entity that supplies origin and normal/quaternion.
+        workplane: SketchEntityHandle,
+        /// Circular arc entity in workplane coordinates.
+        arc: SketchEntityHandle,
+        /// Endpoint of the arc where tangency is enforced.
+        arc_endpoint: SketchArcEndpoint,
+        /// Retained 3D cubic Bezier entity.
+        cubic: SketchEntityHandle,
+        /// Curve parameter used for projected point and derivative evaluation.
+        parameter: SketchParameterHandle,
+        /// Signed orientation branch for the projected outgoing cubic tangent.
+        orientation: SketchTangentOrientation,
+    },
     /// 2D circular-arc endpoint tangent to another circular-arc endpoint.
     ///
     /// Lowering emits selected endpoint-on-radius rows for both arcs, endpoint
@@ -1875,6 +1903,8 @@ pub enum SketchResidualStrategy {
     ArcLineTangent,
     /// Exact workplane-projected endpoint/radius/tangent package for arc-line tangency.
     ProjectedArcLineTangent,
+    /// Exact workplane-projected 3D cubic/arc endpoint tangent package.
+    ProjectedArcCubicCurveTangent,
     /// Exact endpoint/radius/radius-branch package for retained arc-arc tangency.
     ArcArcTangent,
     /// Exact endpoint/radius/cubic-derivative package for retained arc-cubic tangency.
@@ -2086,6 +2116,14 @@ pub enum SketchResidualFormKind {
     ProjectedArcLineTangentRadiusPerpendicularPolynomial,
     /// Exact signed projected orientation predicate for projected arc-line tangency.
     ProjectedArcLineTangentOrientationPredicate,
+    /// Exact selected endpoint-on-radius row for projected 3D cubic/arc tangency.
+    ProjectedArcCubicCurveTangentEndpointRadiusPolynomial,
+    /// Exact projected cubic point/arc endpoint incidence row.
+    ProjectedArcCubicCurveTangentEndpointIncidencePolynomial,
+    /// Exact projected radius/cubic derivative perpendicularity row.
+    ProjectedArcCubicCurveTangentRadiusPerpendicularPolynomial,
+    /// Exact signed projected orientation predicate for projected cubic/arc tangency.
+    ProjectedArcCubicCurveTangentOrientationPredicate,
     /// Exact selected endpoint-on-radius proof row for arc-arc tangency.
     ArcArcTangentEndpointRadiusPolynomial,
     /// Exact selected endpoint coordinate-incidence proof row for arc-arc tangency.
@@ -3013,6 +3051,35 @@ impl SketchSolveProblem {
             arc_endpoint,
             line,
             line_endpoint,
+            orientation,
+        )
+        .handle
+    }
+
+    /// Add a retained 3D/workplane arc/cubic tangent relation.
+    ///
+    /// The projected 3D cubic point must coincide with the selected arc
+    /// endpoint, and the projected cubic derivative replays exact
+    /// radius-perpendicularity plus the signed tangent branch.
+    #[allow(clippy::too_many_arguments)]
+    pub fn add_projected_arc_cubic_curve_tangent3(
+        &mut self,
+        name: impl Into<String>,
+        workplane: SketchEntityHandle,
+        arc: SketchEntityHandle,
+        arc_endpoint: SketchArcEndpoint,
+        cubic: SketchEntityHandle,
+        parameter: SketchParameterHandle,
+        orientation: SketchTangentOrientation,
+    ) -> SketchConstraintHandle {
+        tangency::projected_arc_cubic_curve_tangent3(
+            self,
+            name,
+            workplane,
+            arc,
+            arc_endpoint,
+            cubic,
+            parameter,
             orientation,
         )
         .handle
@@ -6381,6 +6448,77 @@ impl SketchSolveProblem {
                     diagnostics,
                 }
             }
+            SketchConstraintKind::ProjectedArcCubicCurveTangent3 {
+                workplane,
+                arc,
+                arc_endpoint,
+                cubic,
+                parameter,
+                orientation,
+            } => {
+                let mut diagnostics = Vec::new();
+                let Some(parts) = self.projected_arc_cubic_curve_tangent_exprs(
+                    workplane,
+                    arc,
+                    arc_endpoint,
+                    cubic,
+                    parameter,
+                    orientation,
+                    constraint,
+                    &mut diagnostics,
+                ) else {
+                    return SketchResidualFormsReport {
+                        constraint: handle,
+                        status: SketchResidualFormsStatus::InvalidInputs,
+                        forms: Vec::new(),
+                        diagnostics,
+                    };
+                };
+                let mut forms = vec![
+                    SketchResidualForm {
+                        kind: SketchResidualFormKind::WorkplaneUnitQuaternionPolynomial,
+                        role: SketchResidualFormRole::ExactProof,
+                        strategy: Some(SketchResidualStrategy::WorkplaneUnitQuaternion),
+                        residual: unit_quaternion_residual(&parts.quaternion),
+                    },
+                    SketchResidualForm {
+                        kind: SketchResidualFormKind::ProjectedArcCubicCurveTangentEndpointRadiusPolynomial,
+                        role: SketchResidualFormRole::ExactProof,
+                        strategy: Some(SketchResidualStrategy::ProjectedArcCubicCurveTangent),
+                        residual: parts.tangent.arc_endpoint_radius,
+                    },
+                    SketchResidualForm {
+                        kind: SketchResidualFormKind::ProjectedArcCubicCurveTangentEndpointIncidencePolynomial,
+                        role: SketchResidualFormRole::ExactProof,
+                        strategy: Some(SketchResidualStrategy::ProjectedArcCubicCurveTangent),
+                        residual: parts.tangent.endpoint_incidence[0].clone(),
+                    },
+                    SketchResidualForm {
+                        kind: SketchResidualFormKind::ProjectedArcCubicCurveTangentEndpointIncidencePolynomial,
+                        role: SketchResidualFormRole::ExactProof,
+                        strategy: Some(SketchResidualStrategy::ProjectedArcCubicCurveTangent),
+                        residual: parts.tangent.endpoint_incidence[1].clone(),
+                    },
+                    SketchResidualForm {
+                        kind: SketchResidualFormKind::ProjectedArcCubicCurveTangentRadiusPerpendicularPolynomial,
+                        role: SketchResidualFormRole::ExactProof,
+                        strategy: Some(SketchResidualStrategy::ProjectedArcCubicCurveTangent),
+                        residual: parts.tangent.radius_perpendicular,
+                    },
+                ];
+                forms.push(SketchResidualForm {
+                    kind: SketchResidualFormKind::ProjectedArcCubicCurveTangentOrientationPredicate,
+                    role: SketchResidualFormRole::ExactProof,
+                    strategy: Some(SketchResidualStrategy::ProjectedArcCubicCurveTangent),
+                    residual: parts.tangent.orientation,
+                });
+                SketchResidualFormsReport {
+                    constraint: handle,
+                    status: SketchResidualFormsStatus::Generated,
+                    forms,
+                    diagnostics,
+                }
+            }
             _ => SketchResidualFormsReport {
                 constraint: handle,
                 status: SketchResidualFormsStatus::UnsupportedConstraint,
@@ -8550,6 +8688,78 @@ impl SketchSolveProblem {
                     Real::one(),
                 );
             }
+            SketchConstraintKind::ProjectedArcCubicCurveTangent3 {
+                workplane,
+                arc,
+                arc_endpoint,
+                cubic,
+                parameter,
+                orientation,
+            } => {
+                // Projected arc/cubic tangency uses the same retained
+                // endpoint/radius/perpendicular/orientation rows as ordinary
+                // arc/cubic tangency, after projecting the native 3D cubic
+                // control net through the certified workplane frame.
+                let Some(parts) = self.projected_arc_cubic_curve_tangent_exprs(
+                    workplane,
+                    arc,
+                    arc_endpoint,
+                    cubic,
+                    parameter,
+                    orientation,
+                    constraint,
+                    rows,
+                ) else {
+                    return;
+                };
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} workplane unit", constraint.name),
+                    unit_quaternion_residual(&parts.quaternion),
+                    SketchResidualStrategy::WorkplaneUnitQuaternion,
+                );
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} projected arc cubic endpoint radius", constraint.name),
+                    parts.tangent.arc_endpoint_radius,
+                    SketchResidualStrategy::ProjectedArcCubicCurveTangent,
+                );
+                for (axis, residual) in parts.tangent.endpoint_incidence.into_iter().enumerate() {
+                    self.push_residual(
+                        problem,
+                        rows,
+                        constraint,
+                        format!(
+                            "{} projected cubic endpoint coordinate {axis}",
+                            constraint.name
+                        ),
+                        residual,
+                        SketchResidualStrategy::ProjectedArcCubicCurveTangent,
+                    );
+                }
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} projected cubic radius perpendicular", constraint.name),
+                    parts.tangent.radius_perpendicular,
+                    SketchResidualStrategy::ProjectedArcCubicCurveTangent,
+                );
+                self.push_residual_with_kind(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} projected cubic tangent orientation", constraint.name),
+                    parts.tangent.orientation,
+                    SketchResidualStrategy::ProjectedArcCubicCurveTangent,
+                    ConstraintKind::GreaterOrEqual,
+                    Real::one(),
+                );
+            }
             SketchConstraintKind::EqualAngleLines2 { a, b, c, d } => {
                 // Equal unsigned angle is certified by squared cosine equality
                 // rather than by evaluating an inverse trig function. This is
@@ -10055,6 +10265,42 @@ impl SketchSolveProblem {
     }
 
     #[allow(clippy::too_many_arguments)]
+    fn projected_arc_cubic_curve_tangent_exprs(
+        &self,
+        workplane: SketchEntityHandle,
+        arc: SketchEntityHandle,
+        arc_endpoint: SketchArcEndpoint,
+        cubic: SketchEntityHandle,
+        parameter: SketchParameterHandle,
+        orientation: SketchTangentOrientation,
+        constraint: &SketchConstraint,
+        rows: &mut Vec<SketchGeneratedRow>,
+    ) -> Option<ProjectedArcCubicCurveTangentExprs> {
+        let (origin, quaternion) =
+            self.workplane_origin_and_quaternion(workplane, constraint, rows)?;
+        let arc = self.arc2_endpoint_parts(arc, arc_endpoint, constraint, rows)?;
+        let cubic = self.projected_cubic3_point_tangent_exprs(
+            cubic,
+            parameter,
+            &origin,
+            &quaternion,
+            constraint,
+            rows,
+        )?;
+        Some(ProjectedArcCubicCurveTangentExprs {
+            quaternion,
+            tangent: arc_cubic_tangent_exprs(
+                &coordinate_exprs2(&arc.center),
+                &coordinate_exprs2(&arc.endpoint),
+                arc.radius,
+                &cubic.point,
+                &cubic.tangent,
+                tangent_orientation_sign(orientation),
+            ),
+        })
+    }
+
+    #[allow(clippy::too_many_arguments)]
     fn arc_cubic_tangent_exprs(
         &self,
         arc: SketchEntityHandle,
@@ -11192,6 +11438,12 @@ struct ProjectedLineCircleTangentExprs {
 struct ProjectedArcLineTangentExprs {
     quaternion: [Expr; 4],
     tangent: ArcLineTangentExprs,
+}
+
+#[derive(Clone, Debug)]
+struct ProjectedArcCubicCurveTangentExprs {
+    quaternion: [Expr; 4],
+    tangent: ArcCubicTangentExprs,
 }
 
 #[derive(Clone, Debug)]

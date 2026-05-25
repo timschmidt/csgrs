@@ -378,6 +378,42 @@ pub mod tangency {
         }
     }
 
+    /// Add retained 3D/workplane arc-cubic tangency with endpoint and branch data.
+    ///
+    /// The projected 3D cubic point is constrained to the selected retained
+    /// 2D arc endpoint, and the projected cubic derivative is checked with
+    /// exact radius-perpendicularity and a signed orientation predicate. The
+    /// workplane guard, endpoint-on-radius, incidence, perpendicularity, and
+    /// branch rows follow Yap (1997), Shoemake's quaternion frame, and Farin's
+    /// Bernstein/de Casteljau derivative construction.
+    #[allow(clippy::too_many_arguments)]
+    pub fn projected_arc_cubic_curve_tangent3(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        workplane: SketchEntityHandle,
+        arc: SketchEntityHandle,
+        arc_endpoint: SketchArcEndpoint,
+        cubic: SketchEntityHandle,
+        parameter: SketchParameterHandle,
+        orientation: SketchTangentOrientation,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::ProjectedArcCubicCurveTangent3 {
+            workplane,
+            arc,
+            arc_endpoint,
+            cubic,
+            parameter,
+            orientation,
+        };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Tangency,
+            strategy: SketchResidualStrategy::ProjectedArcCubicCurveTangent,
+            kind,
+        }
+    }
+
     /// Add a retained 2D cubic-Bezier/line tangent relation.
     ///
     /// The selected line endpoint is constrained to the exact cubic point

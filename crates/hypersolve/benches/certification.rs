@@ -958,6 +958,46 @@ fn sketch_problem_with_projected_arc_line_tangent_relations(
     sketch
 }
 
+fn sketch_problem_with_projected_arc_cubic_curve_tangent_relations(
+    row_count: usize,
+) -> hypersolve::SketchSolveProblem {
+    let mut sketch = hypersolve::SketchSolveProblem::new();
+    let origin = sketch.add_point3d("project-arccubic.origin", r(0), r(0), r(0));
+    let normal = sketch.add_normal3d("project-arccubic.normal", r(1), r(0), r(0), r(0));
+    let workplane = sketch.add_workplane("project-arccubic.workplane", origin, normal);
+    for index in 0..row_count {
+        let x = index as i64;
+        let center = sketch.add_point2d(format!("project-arccubic{index}.center"), r(x), r(0));
+        let start = sketch.add_point2d(format!("project-arccubic{index}.start"), r(x + 5), r(0));
+        let end = sketch.add_point2d(format!("project-arccubic{index}.end"), r(x), r(5));
+        let radius = sketch.add_distance(format!("project-arccubic{index}.radius"), r(5));
+        let arc = sketch.add_arc_of_circle2(
+            format!("project-arccubic{index}.arc"),
+            center,
+            start,
+            end,
+            radius,
+        );
+        let p0 = sketch.add_point3d(format!("project-arccubic{index}.p0"), r(x + 5), r(0), r(3));
+        let p1 = sketch.add_point3d(format!("project-arccubic{index}.p1"), r(x + 5), r(1), r(5));
+        let p2 = sketch.add_point3d(format!("project-arccubic{index}.p2"), r(x + 5), r(2), r(7));
+        let p3 = sketch.add_point3d(format!("project-arccubic{index}.p3"), r(x + 5), r(3), r(11));
+        let cubic = sketch.add_cubic3(format!("project-arccubic{index}.cubic"), p0, p1, p2, p3);
+        let parameter = sketch.add_parameter(format!("project-arccubic{index}.t"), r(0));
+        hypersolve::sketch_tangency_builders::projected_arc_cubic_curve_tangent3(
+            &mut sketch,
+            format!("projected arc cubic tangent {index}"),
+            workplane,
+            arc,
+            hypersolve::SketchArcEndpoint::Start,
+            cubic,
+            parameter,
+            hypersolve::SketchTangentOrientation::CounterClockwise,
+        );
+    }
+    sketch
+}
+
 fn sketch_problem_with_arc_arc_tangent_relations(
     row_count: usize,
 ) -> hypersolve::SketchSolveProblem {
@@ -2250,6 +2290,11 @@ fn certification(c: &mut Criterion) {
     c.bench_function("sketch_projected_arc_line_tangent_lowering", |b| {
         b.iter(|| projected_arc_line_tangent_sketch.lower_to_problem())
     });
+    let projected_arc_cubic_curve_tangent_sketch =
+        sketch_problem_with_projected_arc_cubic_curve_tangent_relations(16);
+    c.bench_function("sketch_projected_arc_cubic_curve_tangent_lowering", |b| {
+        b.iter(|| projected_arc_cubic_curve_tangent_sketch.lower_to_problem())
+    });
     let arc_arc_tangent_sketch = sketch_problem_with_arc_arc_tangent_relations(16);
     c.bench_function("sketch_arc_arc_tangent_lowering", |b| {
         b.iter(|| arc_arc_tangent_sketch.lower_to_problem())
@@ -2924,6 +2969,28 @@ fn certification(c: &mut Criterion) {
             }
         })
     });
+    let projected_arc_cubic_curve_tangent_form_handles = projected_arc_cubic_curve_tangent_sketch
+        .constraints()
+        .iter()
+        .filter(|constraint| {
+            matches!(
+                constraint.kind,
+                hypersolve::SketchConstraintKind::ProjectedArcCubicCurveTangent3 { .. }
+            )
+        })
+        .map(|constraint| constraint.handle)
+        .collect::<Vec<_>>();
+    c.bench_function(
+        "sketch_projected_arc_cubic_curve_tangent_residual_forms",
+        |b| {
+            b.iter(|| {
+                for handle in &projected_arc_cubic_curve_tangent_form_handles {
+                    let _ = projected_arc_cubic_curve_tangent_sketch
+                        .residual_forms_for_constraint(*handle);
+                }
+            })
+        },
+    );
     let arc_arc_tangent_form_handles = arc_arc_tangent_sketch
         .constraints()
         .iter()
