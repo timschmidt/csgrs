@@ -2,8 +2,7 @@
 
 use hyperlimit::PredicatePolicy;
 use hyperpath::{
-    ArcDirection, ExplicitArcArrangementClass, ExplicitArcArrangementError, ExplicitCircularArc,
-    arrange_explicit_arcs,
+    ArcDirection, ExplicitArcArrangementClass, ExplicitCircularArc, arrange_explicit_arcs,
 };
 use hyperreal::{Rational, Real};
 use libfuzzer_sys::fuzz_target;
@@ -96,8 +95,8 @@ fuzz_target!(|data: &[u8]| {
         ArcDirection::Ccw,
     )
     .unwrap();
-    assert!(matches!(
-        arrange_explicit_arcs(&[full], PredicatePolicy::default()),
-        Err(ExplicitArcArrangementError::FullCircleArcUnsupported { arc: 0 })
-    ));
+    let report = arrange_explicit_arcs(&[full], PredicatePolicy::default()).unwrap();
+    assert_eq!(report.breakpoints[0].len(), 1);
+    assert_eq!(report.fragments.len(), 1);
+    assert!(report.fragments[0].arc.facts().known_full_circle);
 });

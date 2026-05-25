@@ -4,12 +4,12 @@ use hyperpath::{
     BezierParameter, BezierParameterError, BoardContourError, BoardContourOrientation,
     CardinalPoint, CardinalRotation, CircularArc, CircularArcError, ClearanceStatus,
     ConstructionStamp, CubicBezier, DrillBoardClearanceReport, ExplicitArcArrangementClass,
-    ExplicitArcArrangementError, ExplicitArcIntersectionClass, ExplicitArcOverlapClass,
-    ExplicitArcPointClassification, ExplicitArcSweepClass, ExplicitArcTangentClass,
-    ExplicitCircleRelationClass, ExplicitCircularArc, HigherOrderBezier, HigherOrderBezierError,
-    InfillGraphError, LineArcArrangementEventClass, LineArrangementError,
-    LineArrangementEventClass, LineExplicitArcIntersectionClass, LineOffsetError, LinePathSegment,
-    MeanderError, MeanderObstacle, MeanderPlacementCandidate, NetId, OffsetSide, PathProvenance,
+    ExplicitArcIntersectionClass, ExplicitArcOverlapClass, ExplicitArcPointClassification,
+    ExplicitArcSweepClass, ExplicitArcTangentClass, ExplicitCircleRelationClass,
+    ExplicitCircularArc, HigherOrderBezier, HigherOrderBezierError, InfillGraphError,
+    LineArcArrangementEventClass, LineArrangementError, LineArrangementEventClass,
+    LineExplicitArcIntersectionClass, LineOffsetError, LinePathSegment, MeanderError,
+    MeanderObstacle, MeanderPlacementCandidate, NetId, OffsetSide, PathProvenance,
     PathSourceFormat, PcbBoardOutline, PcbCardinalRectPad, PcbCircularBoardOutline, PcbCircularPad,
     PcbConvexBoardOutline, PcbConvexPad, PcbObroundPad, PcbOrientedRectPad,
     PcbOrthogonalBoardOutline, PcbRectPad, PcbRoundedRectPad, PcbTrace, PcbViaStack,
@@ -365,14 +365,51 @@ fn explicit_arc_arrangement_promotes_same_circle_overlap_boundaries() {
 }
 
 #[test]
-fn explicit_arc_arrangement_rejects_full_circle_without_branch_cut() {
+fn explicit_arc_arrangement_uses_full_circle_start_as_branch_cut() {
     let full =
         ExplicitCircularArc::new(p(0, 0), r(5), p(5, 0), p(5, 0), ArcDirection::Ccw).unwrap();
+    let top_half =
+        ExplicitCircularArc::new(p(0, 0), r(5), p(5, 0), p(-5, 0), ArcDirection::Ccw).unwrap();
+
+    let report = arrange_explicit_arcs(&[full, top_half], PredicatePolicy::default()).unwrap();
 
     assert_eq!(
-        arrange_explicit_arcs(&[full], PredicatePolicy::default()).unwrap_err(),
-        ExplicitArcArrangementError::FullCircleArcUnsupported { arc: 0 }
+        report.events[0].class,
+        ExplicitArcArrangementClass::SameCircleFirstCoversSecond
     );
+    assert_eq!(
+        report.breakpoints[0]
+            .iter()
+            .map(|breakpoint| breakpoint.point.clone())
+            .collect::<Vec<_>>(),
+        vec![p(5, 0), p(-5, 0)]
+    );
+    assert_eq!(report.fragments.len(), 3);
+    assert_eq!(report.fragments[1].arc.start(), &p(-5, 0));
+    assert_eq!(report.fragments[1].arc.end(), &p(5, 0));
+}
+
+#[test]
+fn explicit_arc_arrangement_orders_full_circle_secant_points_from_branch() {
+    let full_left =
+        ExplicitCircularArc::new(p(-3, 0), r(5), p(-3, -5), p(-3, -5), ArcDirection::Ccw).unwrap();
+    let right =
+        ExplicitCircularArc::new(p(3, 0), r(5), p(3, 5), p(3, -5), ArcDirection::Ccw).unwrap();
+
+    let report = arrange_explicit_arcs(&[full_left, right], PredicatePolicy::default()).unwrap();
+
+    assert_eq!(
+        report.events[0].class,
+        ExplicitArcArrangementClass::DifferentCircleTwoPoints
+    );
+    assert_eq!(
+        report.breakpoints[0]
+            .iter()
+            .map(|breakpoint| breakpoint.point.clone())
+            .collect::<Vec<_>>(),
+        vec![p(-3, -5), p(0, -4), p(0, 4)]
+    );
+    assert_eq!(report.fragments.len(), 6);
 }
 
 #[test]

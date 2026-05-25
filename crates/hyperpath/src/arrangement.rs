@@ -17,8 +17,9 @@ use hyperlimit::{
 use hyperreal::{Real, RealExactSetFacts};
 
 use crate::arc::{
-    ExplicitArcArrangementClass, ExplicitArcArrangementReport, ExplicitArcIntersectionClass,
-    ExplicitArcPointClassification, ExplicitCircularArc, LineExplicitArcIntersectionClass,
+    ArcDirection, ExplicitArcArrangementClass, ExplicitArcArrangementReport,
+    ExplicitArcIntersectionClass, ExplicitArcPointClassification, ExplicitCircularArc,
+    LineExplicitArcIntersectionClass,
 };
 use crate::provenance::PathProvenance;
 use crate::segment::LinePathSegment;
@@ -58,8 +59,6 @@ pub enum LineArrangementError {
 /// Errors that prevent explicit-arc arrangement cleanup from producing trusted splits.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ExplicitArcArrangementError {
-    /// Full-circle arcs need an explicit angular branch cut before split ordering.
-    FullCircleArcUnsupported { arc: usize },
     /// A split witness was not certified on the referenced arc.
     SplitPointOffArc { arc: usize },
     /// Exact ordering along an arc sweep was undecidable.
@@ -250,10 +249,12 @@ pub struct LineArcArrangementReport {
 /// contribute exact point witnesses from the retained radical-axis/tangent
 /// construction. Same-circle positive overlaps contribute the endpoints that
 /// delimit the shared sweep. Breakpoint ordering is accepted only for non-full
-/// explicit arcs and is certified by exact sub-arc containment predicates,
-/// following Yap, "Towards Exact Geometric Computation," *Computational
-/// Geometry* 7.1-2 (1997), and the CGAL circular-arc arrangement split between
-/// exact curve objects and exact topology predicates.
+/// explicit arcs and is certified by exact sub-arc containment predicates.
+/// Full circles use their retained start point as a branch cut and sort by
+/// exact oriented half-turn and cross-product predicates, rather than by
+/// sampled angles. This follows Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997), and the CGAL circular-arc
+/// arrangement split between exact curve objects and exact topology predicates.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExplicitArcSetArrangementReport {
     /// Retained input explicit arcs.
@@ -446,10 +447,9 @@ pub fn arrange_line_segments_with_explicit_arcs_and_provenance(
 
 /// Arrange retained explicit circular arcs into pair events and sub-arc fragments.
 ///
-/// Full-circle arcs are rejected for now because a full circle has no retained
-/// start/end order unless the caller supplies a branch cut. Non-full arcs keep
-/// their authored direction and are split only at exact witnesses certified by
-/// existing arc/arc predicates.
+/// Full-circle arcs use the retained coincident start/end point as a branch
+/// cut. Non-full arcs keep their authored direction and all arcs are split
+/// only at exact witnesses certified by existing arc/arc predicates.
 pub fn arrange_explicit_arcs(
     arcs: &[ExplicitCircularArc],
     policy: PredicatePolicy,
@@ -463,12 +463,6 @@ pub fn arrange_explicit_arcs_with_provenance(
     policy: PredicatePolicy,
     provenance: PathProvenance,
 ) -> Result<ExplicitArcSetArrangementReport, ExplicitArcArrangementError> {
-    for (index, arc) in arcs.iter().enumerate() {
-        if arc.facts().known_full_circle {
-            return Err(ExplicitArcArrangementError::FullCircleArcUnsupported { arc: index });
-        }
-    }
-
     let mut breakpoints = seed_arc_endpoint_breakpoints(arcs, policy)?;
     let mut events = Vec::new();
     for first in 0..arcs.len() {
@@ -851,6 +845,9 @@ fn compare_arc_breakpoints(
     if point2_equal_with_policy(&left.point, &right.point, policy).value() == Some(true) {
         return Ok(Ordering::Equal);
     }
+    if arc.facts().known_full_circle {
+        return compare_full_circle_breakpoints(left, right, arc, policy);
+    }
     if point2_equal_with_policy(&left.point, arc.start(), policy).value() == Some(true)
         || point2_equal_with_policy(&right.point, arc.end(), policy).value() == Some(true)
     {
@@ -882,6 +879,71 @@ fn compare_arc_breakpoints(
     }
 }
 
+fn compare_full_circle_breakpoints(
+    left: &ExplicitArcArrangementBreakpoint,
+    right: &ExplicitArcArrangementBreakpoint,
+    arc: &ExplicitCircularArc,
+    policy: PredicatePolicy,
+) -> Result<Ordering, ExplicitArcArrangementError> {
+    // Full-circle ordering uses the retained start radial as a branch cut.
+    // Points are first partitioned by exact directed half-turn, then ordered
+    // inside a half-turn by an exact cross-product sign. This is the same
+    // predicate-only discipline Yap advocates for EGC and mirrors the
+    // circular-arc traits in CGAL: no angle sampling or tolerance sort is used.
+    if point2_equal_with_policy(&left.point, arc.start(), policy).value() == Some(true) {
+        return Ok(Ordering::Less);
+    }
+    if point2_equal_with_policy(&right.point, arc.start(), policy).value() == Some(true) {
+        return Ok(Ordering::Greater);
+    }
+    let left_half = full_circle_half_turn_rank(arc, &left.point, policy)?;
+    let right_half = full_circle_half_turn_rank(arc, &right.point, policy)?;
+    match left_half.cmp(&right_half) {
+        Ordering::Less | Ordering::Greater => return Ok(left_half.cmp(&right_half)),
+        Ordering::Equal => {}
+    }
+    let left_radial = radial_vector(arc.center(), &left.point);
+    let right_radial = radial_vector(arc.center(), &right.point);
+    match compare_reals_with_policy(
+        &directed_cross(&left_radial, &right_radial, arc.direction()),
+        &Real::zero(),
+        policy,
+    )
+    .value()
+    {
+        Some(Ordering::Greater) => Ok(Ordering::Less),
+        Some(Ordering::Less) => Ok(Ordering::Greater),
+        Some(Ordering::Equal) | None => {
+            Err(ExplicitArcArrangementError::UndecidableArcOrder { arc: left.arc })
+        }
+    }
+}
+
+fn full_circle_half_turn_rank(
+    arc: &ExplicitCircularArc,
+    point: &Point2,
+    policy: PredicatePolicy,
+) -> Result<u8, ExplicitArcArrangementError> {
+    let branch = radial_vector(arc.center(), arc.start());
+    let radial = radial_vector(arc.center(), point);
+    let y = directed_cross(&branch, &radial, arc.direction());
+    match compare_reals_with_policy(&y, &Real::zero(), policy).value() {
+        Some(Ordering::Greater) => Ok(0),
+        Some(Ordering::Less) => Ok(1),
+        Some(Ordering::Equal) => {
+            let x = dot(&branch, &radial);
+            match compare_reals_with_policy(&x, &Real::zero(), policy).value() {
+                Some(Ordering::Less) => Ok(0),
+                Some(Ordering::Greater) => Ok(0),
+                Some(Ordering::Equal) | None => {
+                    Err(ExplicitArcArrangementError::UndecidableArcOrder { arc: 0 })
+                }
+            }
+        }
+        None => Err(ExplicitArcArrangementError::UndecidableArcOrder { arc: 0 }),
+    }
+}
+
 fn build_arc_fragments(
     arcs: &[ExplicitCircularArc],
     breakpoints: &[Vec<ExplicitArcArrangementBreakpoint>],
@@ -889,6 +951,16 @@ fn build_arc_fragments(
 ) -> Result<Vec<ExplicitArcArrangementFragment>, ExplicitArcArrangementError> {
     let mut fragments = Vec::new();
     for points in breakpoints {
+        if points.len() == 1 && arcs[points[0].arc].facts().known_full_circle {
+            let source = &arcs[points[0].arc];
+            fragments.push(ExplicitArcArrangementFragment {
+                source_arc: points[0].arc,
+                start: points[0].clone(),
+                end: points[0].clone(),
+                arc: source.clone(),
+            });
+            continue;
+        }
         for window in points.windows(2) {
             if point2_equal_with_policy(&window[0].point, &window[1].point, policy).value()
                 == Some(true)
@@ -909,6 +981,26 @@ fn build_arc_fragments(
                 source_arc: window[0].arc,
                 start: window[0].clone(),
                 end: window[1].clone(),
+                arc: fragment,
+            });
+        }
+        if points.len() > 1 && arcs[points[0].arc].facts().known_full_circle {
+            let first = points.first().expect("len checked");
+            let last = points.last().expect("len checked");
+            let source = &arcs[first.arc];
+            let fragment = ExplicitCircularArc::with_provenance(
+                source.center().clone(),
+                source.radius().clone(),
+                last.point.clone(),
+                first.point.clone(),
+                source.direction(),
+                source.provenance(),
+            )
+            .map_err(|_| ExplicitArcArrangementError::FragmentConstruction)?;
+            fragments.push(ExplicitArcArrangementFragment {
+                source_arc: first.arc,
+                start: last.clone(),
+                end: first.clone(),
                 arc: fragment,
             });
         }
@@ -1179,6 +1271,21 @@ fn squared_norm(vector: &Point2) -> Real {
     )
 }
 
+fn radial_vector(center: &Point2, point: &Point2) -> Point2 {
+    Point2::new(
+        point.x.clone() - center.x.clone(),
+        point.y.clone() - center.y.clone(),
+    )
+}
+
 fn dot(first: &Point2, second: &Point2) -> Real {
     Real::signed_product_sum([true, true], [[&first.x, &second.x], [&first.y, &second.y]])
+}
+
+fn directed_cross(first: &Point2, second: &Point2, direction: ArcDirection) -> Real {
+    let cross = first.x.clone() * second.y.clone() - first.y.clone() * second.x.clone();
+    match direction {
+        ArcDirection::Ccw => cross,
+        ArcDirection::Cw => -cross,
+    }
 }
