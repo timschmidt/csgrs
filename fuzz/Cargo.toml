@@ -160,3 +160,10 @@ path = "fuzz_targets/fuzz_vertex_quality.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "fuzz_part_blueprint"
+path = "fuzz_targets/fuzz_part_blueprint.rs"
+test = false
+doc = false
+bench = false

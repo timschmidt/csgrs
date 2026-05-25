@@ -37,6 +37,7 @@ pub mod errors;
 pub(crate) mod hyper_math;
 pub mod io;
 pub mod mesh;
+pub mod parts;
 pub mod polygon;
 #[cfg(feature = "sketch")]
 pub mod sketch;
