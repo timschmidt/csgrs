@@ -628,6 +628,49 @@ fuzz_target!(|data: &[u8]| {
                             PredicatePolicy::default(),
                         ) {
                             if let Ok(report) = build_cam_infill_clip_program(
+                                infill_graph.clone(),
+                                Real::from(left_min[2]),
+                                Real::from(left_max[2]),
+                                boundary,
+                                PredicatePolicy::default(),
+                            ) {
+                                report.validate_replay(PredicatePolicy::default()).unwrap();
+                                report
+                                    .program
+                                    .steps
+                                    .last()
+                                    .unwrap()
+                                    .result
+                                    .validate()
+                                    .unwrap();
+                            }
+                        }
+                        let holed_outer_min =
+                            Point2::new(infill_min.x.clone(), infill_min.y.clone() - Real::from(1));
+                        let holed_outer_max =
+                            Point2::new(infill_max.x.clone(), infill_max.y.clone() + Real::from(1));
+                        let hole_min =
+                            Point2::new(infill_min.x.clone() + Real::from(1), infill_min.y.clone());
+                        let hole_max = Point2::new(
+                            infill_min.x.clone() + Real::from(3),
+                            infill_min.y.clone() + Real::from(2),
+                        );
+                        if let Ok(boundary) = CamSupportClipBoundary::holed_simple(
+                            vec![
+                                holed_outer_min.clone(),
+                                Point2::new(holed_outer_max.x.clone(), holed_outer_min.y.clone()),
+                                holed_outer_max.clone(),
+                                Point2::new(holed_outer_min.x.clone(), holed_outer_max.y.clone()),
+                            ],
+                            vec![vec![
+                                hole_min.clone(),
+                                Point2::new(hole_max.x.clone(), hole_min.y.clone()),
+                                hole_max.clone(),
+                                Point2::new(hole_min.x.clone(), hole_max.y.clone()),
+                            ]],
+                            PredicatePolicy::default(),
+                        ) {
+                            if let Ok(report) = build_cam_infill_clip_program(
                                 infill_graph,
                                 Real::from(left_min[2]),
                                 Real::from(left_max[2]),

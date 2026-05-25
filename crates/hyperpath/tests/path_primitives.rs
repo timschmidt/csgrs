@@ -3632,6 +3632,47 @@ fn cam_infill_clip_program_unions_retained_beads_and_clips_boundary() {
         .validate_replay(PredicatePolicy::default())
         .unwrap();
     assert!(simple_report.mesh().unwrap().facts().mesh.closed_manifold);
+
+    let holed = CamSupportClipBoundary::holed_simple(
+        vec![p(0, -1), p(10, -1), p(10, 3), p(0, 3)],
+        vec![vec![p(4, 0), p(6, 0), p(6, 2), p(4, 2)]],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert_eq!(holed.hole_vertices().len(), 1);
+    let holed_report = build_cam_infill_clip_program(
+        build_rectangular_serpentine_infill_graph(
+            build_rectangular_bead_plan(
+                RectangularPocket::new(p(0, 0), p(10, 2)).unwrap(),
+                BeadFillAxis::Horizontal,
+                r(2),
+                r(2),
+                8,
+                PredicatePolicy::default(),
+            )
+            .unwrap(),
+            PredicatePolicy::default(),
+        )
+        .unwrap(),
+        r(0),
+        r(3),
+        holed,
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    holed_report
+        .validate_replay(PredicatePolicy::default())
+        .unwrap();
+    assert_eq!(holed_report.program.steps.len(), 2);
+    assert_eq!(
+        holed_report.program.steps[0].operation,
+        PathMeshBooleanOperation::Intersection
+    );
+    assert_eq!(
+        holed_report.program.steps[1].operation,
+        PathMeshBooleanOperation::Difference
+    );
+    assert!(holed_report.mesh().unwrap().facts().mesh.closed_manifold);
 }
 
 #[test]
@@ -3852,6 +3893,41 @@ fn cam_support_clip_program_intersects_retained_support_with_polygon_boundaries(
         .validate_replay(PredicatePolicy::default())
         .unwrap();
     assert!(simple_report.mesh().unwrap().facts().mesh.closed_manifold);
+
+    let holed = CamSupportClipBoundary::holed_simple(
+        vec![p(2, 2), p(8, 2), p(8, 8), p(2, 8)],
+        vec![vec![p(4, 4), p(6, 4), p(6, 6), p(4, 6)]],
+        PredicatePolicy::default(),
+    )
+    .expect("holed support clip boundary should retain outer and void loops");
+    assert!(holed.exact_facts().all_exact_rational);
+    let holed_report = build_cam_support_clip_program(
+        build_rectangular_support_plan(
+            RectangularPocket::new(p(3, 3), p(7, 7)).unwrap(),
+            RectangularPocket::new(p(0, 0), p(12, 12)).unwrap(),
+            r(1),
+            PredicatePolicy::default(),
+        )
+        .unwrap(),
+        r(0),
+        r(3),
+        holed,
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    holed_report
+        .validate_replay(PredicatePolicy::default())
+        .unwrap();
+    assert_eq!(holed_report.program.steps.len(), 2);
+    assert_eq!(
+        holed_report.program.steps[0].operation,
+        PathMeshBooleanOperation::Intersection
+    );
+    assert_eq!(
+        holed_report.program.steps[1].operation,
+        PathMeshBooleanOperation::Difference
+    );
+    assert!(holed_report.mesh().unwrap().facts().mesh.closed_manifold);
 }
 
 #[test]
@@ -3888,6 +3964,36 @@ fn cam_support_clip_program_rejects_invalid_boundaries_and_height() {
         )
         .unwrap_err(),
         PathMeshBooleanError::PolygonTriangulationFailed
+    );
+    assert_eq!(
+        CamSupportClipBoundary::holed_simple(
+            vec![p(0, 0), p(8, 0), p(8, 8), p(0, 8)],
+            vec![],
+            PredicatePolicy::default()
+        )
+        .unwrap_err(),
+        PathMeshBooleanError::EmptyPolygonHoles
+    );
+    assert_eq!(
+        CamSupportClipBoundary::holed_simple(
+            vec![p(0, 0), p(8, 0), p(8, 8), p(0, 8)],
+            vec![vec![p(6, 6), p(10, 6), p(10, 10), p(6, 10)]],
+            PredicatePolicy::default()
+        )
+        .unwrap_err(),
+        PathMeshBooleanError::PolygonHoleOutsideOuter
+    );
+    assert_eq!(
+        CamSupportClipBoundary::holed_simple(
+            vec![p(0, 0), p(8, 0), p(8, 8), p(0, 8)],
+            vec![
+                vec![p(2, 2), p(5, 2), p(5, 5), p(2, 5)],
+                vec![p(4, 4), p(7, 4), p(7, 7), p(4, 7)],
+            ],
+            PredicatePolicy::default()
+        )
+        .unwrap_err(),
+        PathMeshBooleanError::PolygonHoleOverlap
     );
 }
 

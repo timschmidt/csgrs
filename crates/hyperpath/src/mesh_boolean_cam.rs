@@ -25,7 +25,10 @@ use crate::cam::{
 };
 use crate::mesh_boolean::{PathMeshBooleanError, PathMeshBooleanOperation, RectangularPrism};
 use crate::mesh_boolean_holes::validate_strict_orthogonal_holes;
-use crate::mesh_boolean_polygon::{ConvexPolygonPrism, OrthogonalPolygonPrism, SimplePolygonPrism};
+use crate::mesh_boolean_polygon::{
+    ConvexPolygonPrism, OrthogonalPolygonPrism, SimplePolygonPrism,
+    validate_strict_simple_polygon_holes,
+};
 use crate::mesh_boolean_program::{
     PathMeshBooleanProgramReport, PathMeshBooleanProgramStep, boolean_path_mesh_program,
 };
@@ -126,6 +129,17 @@ pub enum CamSupportClipBoundary {
         /// Retained boundary vertices.
         vertices: Vec<Point2>,
         /// Source provenance shared by the retained loop.
+        provenance: PathProvenance,
+        /// Exact-set facts for retained coordinates.
+        exact: RealExactSetFacts,
+    },
+    /// Simple hole-free straight-edge outer clip boundary with retained void loops.
+    HoledSimple {
+        /// Retained outer boundary vertices.
+        outer: Vec<Point2>,
+        /// Retained void-loop vertices.
+        holes: Vec<Vec<Point2>>,
+        /// Source provenance shared by all retained loops.
         provenance: PathProvenance,
         /// Exact-set facts for retained coordinates.
         exact: RealExactSetFacts,
@@ -387,12 +401,53 @@ impl CamSupportClipBoundary {
         })
     }
 
+    /// Construct a retained holed straight-edge clipping boundary.
+    ///
+    /// A holed boundary is not lowered as one approximate mesh. It replays as
+    /// `material ∩ outer - hole_0 - ...`, preserving each loop as an exact
+    /// source object. This follows Requicha's regularized set semantics for
+    /// solids and Yap's EGC discipline: the accepted topology is reusable only
+    /// while the outer and every void loop replay through exact predicates.
+    pub fn holed_simple(
+        outer: Vec<Point2>,
+        holes: Vec<Vec<Point2>>,
+        policy: PredicatePolicy,
+    ) -> Result<Self, PathMeshBooleanError> {
+        Self::holed_simple_with_provenance(outer, holes, PathProvenance::native(), policy)
+    }
+
+    /// Construct a retained holed straight-edge clipping boundary with provenance.
+    pub fn holed_simple_with_provenance(
+        outer: Vec<Point2>,
+        holes: Vec<Vec<Point2>>,
+        provenance: PathProvenance,
+        policy: PredicatePolicy,
+    ) -> Result<Self, PathMeshBooleanError> {
+        validate_strict_simple_polygon_holes(&outer, &holes, policy)?;
+        let exact = loops_exact_facts(&outer, &holes);
+        Ok(Self::HoledSimple {
+            outer,
+            holes,
+            provenance,
+            exact,
+        })
+    }
+
     /// Return retained boundary vertices.
     pub fn vertices(&self) -> &[Point2] {
         match self {
             Self::Convex { vertices, .. }
             | Self::Orthogonal { vertices, .. }
             | Self::Simple { vertices, .. } => vertices,
+            Self::HoledSimple { outer, .. } => outer,
+        }
+    }
+
+    /// Return retained void-loop vertices for holed boundaries.
+    pub fn hole_vertices(&self) -> &[Vec<Point2>] {
+        match self {
+            Self::HoledSimple { holes, .. } => holes,
+            _ => &[],
         }
     }
 
@@ -401,7 +456,8 @@ impl CamSupportClipBoundary {
         match self {
             Self::Convex { provenance, .. }
             | Self::Orthogonal { provenance, .. }
-            | Self::Simple { provenance, .. } => *provenance,
+            | Self::Simple { provenance, .. }
+            | Self::HoledSimple { provenance, .. } => *provenance,
         }
     }
 
@@ -410,7 +466,8 @@ impl CamSupportClipBoundary {
         match self {
             Self::Convex { exact, .. }
             | Self::Orthogonal { exact, .. }
-            | Self::Simple { exact, .. } => exact,
+            | Self::Simple { exact, .. }
+            | Self::HoledSimple { exact, .. } => exact,
         }
     }
 
@@ -442,6 +499,56 @@ impl CamSupportClipBoundary {
                 SimplePolygonPrism::new(vertices.clone(), z_min, z_max, *provenance, policy)?
                     .into(),
             ),
+            Self::HoledSimple { .. } => Err(PathMeshBooleanError::Replay(
+                "holed CAM clip boundaries require mixed intersection/difference replay".into(),
+            )),
+        }
+    }
+
+    fn to_program_steps(
+        &self,
+        z_min: Real,
+        z_max: Real,
+        policy: PredicatePolicy,
+    ) -> Result<Vec<PathMeshBooleanProgramStep>, PathMeshBooleanError> {
+        match self {
+            Self::HoledSimple {
+                outer,
+                holes,
+                provenance,
+                ..
+            } => {
+                let mut steps = Vec::with_capacity(holes.len() + 1);
+                steps.push(PathMeshBooleanProgramStep::new(
+                    PathMeshBooleanOperation::Intersection,
+                    SimplePolygonPrism::new(
+                        outer.clone(),
+                        z_min.clone(),
+                        z_max.clone(),
+                        *provenance,
+                        policy,
+                    )?
+                    .into(),
+                ));
+                for hole in holes {
+                    steps.push(PathMeshBooleanProgramStep::new(
+                        PathMeshBooleanOperation::Difference,
+                        SimplePolygonPrism::new(
+                            hole.clone(),
+                            z_min.clone(),
+                            z_max.clone(),
+                            *provenance,
+                            policy,
+                        )?
+                        .into(),
+                    ));
+                }
+                Ok(steps)
+            }
+            _ => Ok(vec![PathMeshBooleanProgramStep::new(
+                PathMeshBooleanOperation::Intersection,
+                self.to_path_source(z_min, z_max, policy)?,
+            )]),
         }
     }
 }
@@ -594,14 +701,8 @@ pub fn build_cam_support_clip_program(
         z_max.clone(),
         policy,
     )?;
-    let boundary_source = boundary.to_path_source(z_min.clone(), z_max.clone(), policy)?;
-    let program = boolean_path_mesh_program(
-        support_prism.into(),
-        vec![PathMeshBooleanProgramStep::new(
-            PathMeshBooleanOperation::Intersection,
-            boundary_source,
-        )],
-    )?;
+    let steps = boundary.to_program_steps(z_min.clone(), z_max.clone(), policy)?;
+    let program = boolean_path_mesh_program(support_prism.into(), steps)?;
     Ok(CamSupportClipProgramReport {
         support,
         z_min,
@@ -637,10 +738,7 @@ pub fn build_cam_infill_clip_program(
         .into_iter()
         .map(|source| PathMeshBooleanProgramStep::new(PathMeshBooleanOperation::Union, source))
         .collect::<Vec<_>>();
-    steps.push(PathMeshBooleanProgramStep::new(
-        PathMeshBooleanOperation::Intersection,
-        boundary.to_path_source(z_min.clone(), z_max.clone(), policy)?,
-    ));
+    steps.extend(boundary.to_program_steps(z_min.clone(), z_max.clone(), policy)?);
     let exact = infill_clip_exact_facts(&graph, &boundary, &z_min, &z_max);
     let program = boolean_path_mesh_program(initial, steps)?;
     Ok(CamInfillClipProgramReport {
@@ -790,7 +888,18 @@ fn island_pocket_exact_facts(outer: &[Point2], islands: &[Vec<Point2>]) -> RealE
 }
 
 fn loop_exact_facts(vertices: &[Point2]) -> RealExactSetFacts {
-    Real::exact_set_facts(vertices.iter().flat_map(|point| [&point.x, &point.y]))
+    loops_exact_facts(vertices, &[])
+}
+
+fn loops_exact_facts(outer: &[Point2], holes: &[Vec<Point2>]) -> RealExactSetFacts {
+    let mut values = outer
+        .iter()
+        .flat_map(|point| [&point.x, &point.y])
+        .collect::<Vec<_>>();
+    for hole in holes {
+        values.extend(hole.iter().flat_map(|point| [&point.x, &point.y]));
+    }
+    Real::exact_set_facts(values)
 }
 
 fn infill_clip_exact_facts(
@@ -822,5 +931,8 @@ fn infill_clip_exact_facts(
             .iter()
             .flat_map(|point| [&point.x, &point.y]),
     );
+    for hole in boundary.hole_vertices() {
+        values.extend(hole.iter().flat_map(|point| [&point.x, &point.y]));
+    }
     Real::exact_set_facts(values)
 }

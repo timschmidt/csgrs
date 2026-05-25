@@ -81,8 +81,9 @@ before downstream crates accept the path as ready.
   boolean programs, same-net/layer PCB copper union programs, and CAM
   stock-minus-cutter plus orthogonal island-pocket rest-material programs,
   and clip retained additive support footprints and infill graphs to convex,
-  orthogonal, or simple hole-free straight-edge boundaries through `hypermesh`,
-  and replay exact evidence before exposing accepted output topology.
+  orthogonal, simple hole-free, or holed simple straight-edge boundaries
+  through `hypermesh`, and replay exact evidence before exposing accepted
+  output topology.
 - PCB types describe traces, pads, vias, board outlines, clearance reports, annular
   ring checks, via drill policy, and layer-span reports.
 - Routing helpers describe length matching, meanders, obstacle-aware detours,
@@ -125,9 +126,10 @@ Implemented today:
 - line, arc, Bezier, and cardinal offset candidate APIs;
 - CAM rectangular pocket, bead, infill, support, and region-boolean helpers;
 - retained CAM stock/cutter rest-material mesh-boolean programs, retained
-  additive support/infill clipping programs, and strictly convex/simple
-  orthogonal/simple straight-edge polygon prism sources plus holed orthogonal
-  difference programs for PCB copper booleans;
+  additive support/infill clipping programs including holed simple clip
+  envelopes, and strictly convex/simple orthogonal/simple straight-edge polygon
+  prism sources plus holed orthogonal difference programs for PCB copper
+  booleans;
 - PCB trace, pad, via, board-outline, clearance, via-policy, annular-ring, and
   layer-span reports;
 - length-match, meander, obstacle-aware detour, differential-pair skew, constant

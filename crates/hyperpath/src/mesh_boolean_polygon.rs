@@ -480,6 +480,44 @@ pub fn simple_polygon_prism_from_i64_vertices(
     )
 }
 
+/// Validate strict containment and disjointness for simple polygon holes.
+///
+/// This is the hole counterpart to [`SimplePolygonPrism`]. Every hole loop is
+/// first validated as a simple polygon, then every hole vertex must classify as
+/// strictly interior to the outer loop, and no outer/hole or hole/hole edge may
+/// touch or cross. The ray-crossing predicate follows Shimrat, "Algorithm 112:
+/// Position of Point Relative to Polygon," *Communications of the ACM* 5.8
+/// (1962), as corrected and surveyed by Haines, "Point in Polygon Strategies,"
+/// *Graphics Gems IV* (1994). Exact orientation and interval predicates keep
+/// this validation on Yap's exact-object side of the mesh handoff.
+pub(crate) fn validate_strict_simple_polygon_holes(
+    outer: &[Point2],
+    holes: &[Vec<Point2>],
+    policy: PredicatePolicy,
+) -> Result<(), PathMeshBooleanError> {
+    if holes.is_empty() {
+        return Err(PathMeshBooleanError::EmptyPolygonHoles);
+    }
+    SimplePolygonPrism::new(
+        outer.to_vec(),
+        Real::zero(),
+        Real::one(),
+        PathProvenance::native(),
+        policy,
+    )?;
+    for hole in holes {
+        SimplePolygonPrism::new(
+            hole.clone(),
+            Real::zero(),
+            Real::one(),
+            PathProvenance::native(),
+            policy,
+        )?;
+    }
+    validate_simple_holes_strictly_inside_outer(outer, holes, policy)?;
+    validate_simple_holes_pairwise_disjoint(holes, policy)
+}
+
 fn polygon_signed_area_twice(vertices: &[Point2]) -> Real {
     let mut area = Real::zero();
     for index in 0..vertices.len() {
@@ -488,6 +526,125 @@ fn polygon_signed_area_twice(vertices: &[Point2]) -> Real {
         area = area + current.x.clone() * next.y.clone() - next.x.clone() * current.y.clone();
     }
     area
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum SimplePolygonPointLocation {
+    Inside,
+    Boundary,
+    Outside,
+}
+
+fn validate_simple_holes_strictly_inside_outer(
+    outer: &[Point2],
+    holes: &[Vec<Point2>],
+    policy: PredicatePolicy,
+) -> Result<(), PathMeshBooleanError> {
+    for hole in holes {
+        for point in hole {
+            if classify_point_in_simple_polygon(point, outer, policy)?
+                != SimplePolygonPointLocation::Inside
+            {
+                return Err(PathMeshBooleanError::PolygonHoleOutsideOuter);
+            }
+        }
+        if loops_have_edge_intersection(outer, hole, policy)? {
+            return Err(PathMeshBooleanError::PolygonHoleOutsideOuter);
+        }
+    }
+    Ok(())
+}
+
+fn validate_simple_holes_pairwise_disjoint(
+    holes: &[Vec<Point2>],
+    policy: PredicatePolicy,
+) -> Result<(), PathMeshBooleanError> {
+    for left in 0..holes.len() {
+        for right in left + 1..holes.len() {
+            if loops_have_edge_intersection(&holes[left], &holes[right], policy)? {
+                return Err(PathMeshBooleanError::PolygonHoleOverlap);
+            }
+            if holes[left].iter().any(|point| {
+                classify_point_in_simple_polygon(point, &holes[right], policy)
+                    == Ok(SimplePolygonPointLocation::Inside)
+            }) || holes[right].iter().any(|point| {
+                classify_point_in_simple_polygon(point, &holes[left], policy)
+                    == Ok(SimplePolygonPointLocation::Inside)
+            }) {
+                return Err(PathMeshBooleanError::PolygonHoleOverlap);
+            }
+        }
+    }
+    Ok(())
+}
+
+fn classify_point_in_simple_polygon(
+    point: &Point2,
+    vertices: &[Point2],
+    policy: PredicatePolicy,
+) -> Result<SimplePolygonPointLocation, PathMeshBooleanError> {
+    let mut inside = false;
+    for index in 0..vertices.len() {
+        let start = &vertices[index];
+        let end = &vertices[(index + 1) % vertices.len()];
+        let orientation = orient_order(start, end, point, policy)?;
+        if orientation == Ordering::Equal && point_on_segment_closed(point, start, end, policy)? {
+            return Ok(SimplePolygonPointLocation::Boundary);
+        }
+
+        let start_above = compare_reals_with_policy(&start.y, &point.y, policy)
+            .value()
+            .ok_or(PathMeshBooleanError::UnknownPolygonOrientation)?
+            == Ordering::Greater;
+        let end_above = compare_reals_with_policy(&end.y, &point.y, policy)
+            .value()
+            .ok_or(PathMeshBooleanError::UnknownPolygonOrientation)?
+            == Ordering::Greater;
+        if start_above == end_above {
+            continue;
+        }
+
+        let upward = compare_reals_with_policy(&start.y, &end.y, policy)
+            .value()
+            .ok_or(PathMeshBooleanError::UnknownPolygonOrientation)?
+            == Ordering::Less;
+        let ray_crosses_right = if upward {
+            orientation == Ordering::Greater
+        } else {
+            orientation == Ordering::Less
+        };
+        if ray_crosses_right {
+            inside = !inside;
+        }
+    }
+    Ok(if inside {
+        SimplePolygonPointLocation::Inside
+    } else {
+        SimplePolygonPointLocation::Outside
+    })
+}
+
+fn loops_have_edge_intersection(
+    left: &[Point2],
+    right: &[Point2],
+    policy: PredicatePolicy,
+) -> Result<bool, PathMeshBooleanError> {
+    for left_index in 0..left.len() {
+        let left_next = (left_index + 1) % left.len();
+        for right_index in 0..right.len() {
+            let right_next = (right_index + 1) % right.len();
+            if segments_intersect_closed(
+                &left[left_index],
+                &left[left_next],
+                &right[right_index],
+                &right[right_next],
+                policy,
+            )? {
+                return Ok(true);
+            }
+        }
+    }
+    Ok(false)
 }
 
 fn validate_simple_polygon_edges(
