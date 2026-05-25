@@ -456,6 +456,7 @@ fuzz_target!(|data: &[u8]| {
                     == LineRationalQuadraticBezierAlgebraicBreakpointSequenceClass::Ambiguous
                 && !sequence.blockers.is_empty())
     );
+    assert_eq!(nonmonotone_report.algebraic_source_spans.len(), 3);
 
     let r_report =
         arrange_rational_quadratic_beziers(&[conic], &[vec![t]], PredicatePolicy::default())

@@ -212,6 +212,46 @@ pub struct LineRationalQuadraticBezierAlgebraicBreakpointSequence {
     pub blockers: Vec<LineRationalQuadraticBezierAlgebraicBreakpointSequenceBlocker>,
 }
 
+/// Boundary of a retained line/conic algebraic source span.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum LineRationalQuadraticBezierAlgebraicSourceSpanBoundary {
+    /// The exact source parameter `0`.
+    SourceStart,
+    /// An index in [`LineRationalQuadraticBezierArrangementReport::algebraic_breakpoints`].
+    Breakpoint(usize),
+    /// The exact source parameter `1`.
+    SourceEnd,
+}
+
+/// Conservative source-parameter interval between ordered conic algebraic breakpoints.
+///
+/// Spans are emitted only from ordered retained algebraic sequences. A span is
+/// not a homogeneous conic fragment and does not insert represented roots into
+/// [`LineRationalQuadraticBezierArrangementReport::conic_breakpoints`]. It
+/// stores a conservative interval hull between adjacent certified boundaries:
+/// exact `0`/`1` endpoints or the retained Sturm isolating interval of a
+/// represented conic root.
+///
+/// This keeps Yap's object/predicate separation from "Towards Exact Geometric
+/// Computation" (1997): the scheduler reports exact replay evidence for later
+/// construction without sampling a nonlinear algebraic boundary. The root
+/// intervals follow Collins and Loos, "Real Zeros of Polynomials" (1982), and
+/// the rational quadratic remains in the homogeneous model described by
+/// Farouki, *Pythagorean Hodograph Curves* (2008).
+#[derive(Clone, Debug, PartialEq)]
+pub struct LineRationalQuadraticBezierAlgebraicSourceSpan {
+    /// Source whose parameter space owns this span.
+    pub source: LineRationalQuadraticBezierAlgebraicBreakpointSequenceSource,
+    /// Left adjacent boundary.
+    pub left: LineRationalQuadraticBezierAlgebraicSourceSpanBoundary,
+    /// Right adjacent boundary.
+    pub right: LineRationalQuadraticBezierAlgebraicSourceSpanBoundary,
+    /// Conservative lower source parameter bound.
+    pub parameter_lower: Real,
+    /// Conservative upper source parameter bound.
+    pub parameter_upper: Real,
+}
+
 /// Exact breakpoint on one arranged rational quadratic conic.
 #[derive(Clone, Debug, PartialEq)]
 pub struct RationalQuadraticBezierRealBreakpoint {
@@ -301,6 +341,8 @@ pub struct LineRationalQuadraticBezierArrangementReport {
     pub algebraic_breakpoint_orders: Vec<LineRationalQuadraticBezierAlgebraicBreakpointOrder>,
     /// Per-source retained algebraic breakpoint sequences derived from exact order evidence.
     pub algebraic_breakpoint_sequences: Vec<LineRationalQuadraticBezierAlgebraicBreakpointSequence>,
+    /// Conservative source spans induced by certified algebraic breakpoint sequences.
+    pub algebraic_source_spans: Vec<LineRationalQuadraticBezierAlgebraicSourceSpan>,
     /// Sorted line breakpoints induced by line endpoints and certified events.
     pub line_breakpoints: Vec<Vec<MixedConicLineArrangementBreakpoint>>,
     /// Sorted conic breakpoints induced by endpoints and certified events.
@@ -394,6 +436,8 @@ pub fn arrange_line_segments_with_rational_quadratic_beziers_and_provenance(
         &algebraic_breakpoint_orders,
         policy,
     );
+    let algebraic_source_spans =
+        algebraic_conic_source_spans(&algebraic_breakpoints, &algebraic_breakpoint_sequences);
     let line_fragments = build_line_fragments(&line_breakpoints, policy)?;
     let conic_fragments = build_conic_fragments(&conic_breakpoints, curves, policy)?;
     let facts = LineRationalQuadraticBezierArrangementFacts {
@@ -410,6 +454,7 @@ pub fn arrange_line_segments_with_rational_quadratic_beziers_and_provenance(
         algebraic_breakpoints,
         algebraic_breakpoint_orders,
         algebraic_breakpoint_sequences,
+        algebraic_source_spans,
         line_breakpoints,
         conic_breakpoints,
         line_fragments,
@@ -741,6 +786,74 @@ fn reverse_algebraic_conic_order(
         LineRationalQuadraticBezierAlgebraicBreakpointOrderClass::Unknown => {
             LineRationalQuadraticBezierAlgebraicBreakpointOrderClass::Unknown
         }
+    }
+}
+
+fn algebraic_conic_source_spans(
+    breakpoints: &[LineRationalQuadraticBezierAlgebraicBreakpoint],
+    sequences: &[LineRationalQuadraticBezierAlgebraicBreakpointSequence],
+) -> Vec<LineRationalQuadraticBezierAlgebraicSourceSpan> {
+    let mut spans = Vec::new();
+    for sequence in sequences {
+        if sequence.class != LineRationalQuadraticBezierAlgebraicBreakpointSequenceClass::Ordered {
+            continue;
+        }
+        let mut boundaries = Vec::with_capacity(sequence.breakpoints.len() + 2);
+        boundaries.push(LineRationalQuadraticBezierAlgebraicSourceSpanBoundary::SourceStart);
+        boundaries.extend(
+            sequence
+                .breakpoints
+                .iter()
+                .copied()
+                .map(LineRationalQuadraticBezierAlgebraicSourceSpanBoundary::Breakpoint),
+        );
+        boundaries.push(LineRationalQuadraticBezierAlgebraicSourceSpanBoundary::SourceEnd);
+
+        for pair in boundaries.windows(2) {
+            let Some((parameter_lower, _)) =
+                algebraic_conic_boundary_interval(sequence.source, pair[0], breakpoints)
+            else {
+                continue;
+            };
+            let Some((_, parameter_upper)) =
+                algebraic_conic_boundary_interval(sequence.source, pair[1], breakpoints)
+            else {
+                continue;
+            };
+            spans.push(LineRationalQuadraticBezierAlgebraicSourceSpan {
+                source: sequence.source,
+                left: pair[0],
+                right: pair[1],
+                parameter_lower,
+                parameter_upper,
+            });
+        }
+    }
+    spans
+}
+
+fn algebraic_conic_boundary_interval(
+    source: LineRationalQuadraticBezierAlgebraicBreakpointSequenceSource,
+    boundary: LineRationalQuadraticBezierAlgebraicSourceSpanBoundary,
+    breakpoints: &[LineRationalQuadraticBezierAlgebraicBreakpoint],
+) -> Option<(Real, Real)> {
+    match boundary {
+        LineRationalQuadraticBezierAlgebraicSourceSpanBoundary::SourceStart => {
+            Some((Real::zero(), Real::zero()))
+        }
+        LineRationalQuadraticBezierAlgebraicSourceSpanBoundary::SourceEnd => {
+            Some((Real::one(), Real::one()))
+        }
+        LineRationalQuadraticBezierAlgebraicSourceSpanBoundary::Breakpoint(index) => match source {
+            LineRationalQuadraticBezierAlgebraicBreakpointSequenceSource::Curve(_) => {
+                let interval = &breakpoints.get(index)?.conic_parameter.interval;
+                Some((interval.lower.clone(), interval.upper.clone()))
+            }
+            LineRationalQuadraticBezierAlgebraicBreakpointSequenceSource::Line(_) => {
+                let parameter = breakpoints.get(index)?.line_parameter.clone();
+                Some((parameter.clone(), parameter))
+            }
+        },
     }
 }
 

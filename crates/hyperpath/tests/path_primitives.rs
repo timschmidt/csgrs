@@ -22,6 +22,7 @@ use hyperpath::{
     LineRationalQuadraticBezierAlgebraicBreakpointSequenceBlocker,
     LineRationalQuadraticBezierAlgebraicBreakpointSequenceClass,
     LineRationalQuadraticBezierAlgebraicBreakpointSequenceSource,
+    LineRationalQuadraticBezierAlgebraicSourceSpanBoundary,
     LineRationalQuadraticBezierIntersectionClass, LineRationalQuadraticBezierInverseBoundarySource,
     LineRationalQuadraticBezierInverseRootDomain,
     LineRationalQuadraticBezierSupportOverlapMonotonicity, LookaheadFeedSchedule, MeanderError,
@@ -1495,6 +1496,35 @@ fn line_rational_quadratic_bezier_arrangement_keeps_nonmonotone_support_overlap_
             },
         ]
     );
+    assert_eq!(report.algebraic_source_spans.len(), 5);
+    let curve_spans: Vec<_> = report
+        .algebraic_source_spans
+        .iter()
+        .filter(|span| {
+            span.source == LineRationalQuadraticBezierAlgebraicBreakpointSequenceSource::Curve(0)
+        })
+        .collect();
+    assert_eq!(curve_spans.len(), 5);
+    assert_eq!(
+        curve_spans[0].left,
+        LineRationalQuadraticBezierAlgebraicSourceSpanBoundary::SourceStart
+    );
+    assert_eq!(
+        curve_spans[0].right,
+        LineRationalQuadraticBezierAlgebraicSourceSpanBoundary::Breakpoint(0)
+    );
+    assert_eq!(
+        curve_spans[4].left,
+        LineRationalQuadraticBezierAlgebraicSourceSpanBoundary::Breakpoint(1)
+    );
+    assert_eq!(
+        curve_spans[4].right,
+        LineRationalQuadraticBezierAlgebraicSourceSpanBoundary::SourceEnd
+    );
+    assert!(
+        report.algebraic_source_spans.iter().all(|span| span.source
+            != LineRationalQuadraticBezierAlgebraicBreakpointSequenceSource::Line(0))
+    );
     assert_eq!(report.line_breakpoints[0].len(), 2);
     assert_eq!(report.conic_breakpoints[0].len(), 2);
     assert_eq!(report.conic_fragments.len(), 1);
@@ -1528,6 +1558,7 @@ fn line_rational_quadratic_bezier_overlap_retains_empty_inverse_boundary_evidenc
     assert!(report.algebraic_breakpoints.is_empty());
     assert!(report.algebraic_breakpoint_orders.is_empty());
     assert!(report.algebraic_breakpoint_sequences.is_empty());
+    assert!(report.algebraic_source_spans.is_empty());
 }
 
 #[test]
@@ -9987,6 +10018,7 @@ proptest! {
                         == LineRationalQuadraticBezierAlgebraicBreakpointSequenceClass::Ambiguous
                     && !sequence.blockers.is_empty())
         );
+        prop_assert_eq!(report.algebraic_source_spans.len(), 4);
         prop_assert_eq!(report.line_breakpoints[0].len(), 2);
         prop_assert_eq!(report.conic_breakpoints[0].len(), 2);
     }
