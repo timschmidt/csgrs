@@ -2,11 +2,12 @@ use std::hint::black_box;
 use std::time::Instant;
 
 use hypercurve::{
-    BezierAlgebraicParameter2, BezierArrangementFragment2, BezierArrangementGraph2,
-    BezierParameter2, BezierParameterInterval, BezierParameterPolynomial, BezierRegion2,
-    BezierRetainedBoundaryLoop2, BezierRetainedCurveEnvelope2, BezierRetainedEndpointEnvelope2,
-    BezierRetainedRegion2, BezierSplitFragment2, BezierSubcurve2, Classification, CurvePolicy,
-    CurveResult, Point2, QuadraticBezier2, RationalQuadraticBezier2, Real,
+    BezierAlgebraicEndpointImage2, BezierAlgebraicParameter2, BezierArrangementFragment2,
+    BezierArrangementGraph2, BezierParameter2, BezierParameterInterval, BezierParameterPolynomial,
+    BezierRegion2, BezierRetainedBoundaryLoop2, BezierRetainedCurveEnvelope2,
+    BezierRetainedEndpointEnvelope2, BezierRetainedRegion2, BezierSplitFragment2, BezierSubcurve2,
+    Classification, CurvePolicy, CurveResult, Point2, QuadraticBezier2, RationalQuadraticBezier2,
+    Real,
 };
 
 fn r(value: i32) -> Real {
@@ -63,6 +64,40 @@ fn algebraic_polynomial_parameter(
     Ok(BezierParameter2::algebraic(decided(
         BezierAlgebraicParameter2::try_isolate(polynomial, interval, policy)?,
     )))
+}
+
+fn algebraic_midpoint_root(policy: &CurvePolicy) -> CurveResult<BezierAlgebraicParameter2> {
+    let polynomial = decided(BezierParameterPolynomial::try_new_power_basis(
+        vec![r(-1), r(2)],
+        policy,
+    )?);
+    let interval = decided(BezierParameterInterval::try_new(q(2, 5), q(3, 5), policy)?);
+    Ok(decided(BezierAlgebraicParameter2::try_isolate(
+        polynomial, interval, policy,
+    )?))
+}
+
+fn algebraic_constant_point_image(
+    point: Point2,
+    policy: &CurvePolicy,
+) -> CurveResult<BezierAlgebraicEndpointImage2> {
+    let curve = QuadraticBezier2::new(point.clone(), point.clone(), point);
+    BezierAlgebraicEndpointImage2::quadratic(&curve, &algebraic_midpoint_root(policy)?, policy)
+}
+
+fn retained_algebraic_line_fragment(
+    start: Point2,
+    end: Point2,
+    policy: &CurvePolicy,
+) -> CurveResult<BezierSplitFragment2> {
+    let parameter = BezierParameter2::algebraic(algebraic_midpoint_root(policy)?);
+    Ok(BezierSplitFragment2::AlgebraicEndpointImages {
+        start: parameter.clone(),
+        end: parameter,
+        source_curve: None,
+        start_image: Some(algebraic_constant_point_image(start, policy)?),
+        end_image: Some(algebraic_constant_point_image(end, policy)?),
+    })
 }
 
 fn main() -> CurveResult<()> {
@@ -177,6 +212,41 @@ fn main() -> CurveResult<()> {
     let elapsed = started.elapsed();
     println!(
         "bezier_retained_algebraic_exact_endpoint_envelope: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={algebraic_exact_endpoint_checksum}",
+        elapsed / iterations
+    );
+
+    let algebraic_line_region = BezierRetainedRegion2::new(vec![
+        BezierRetainedBoundaryLoop2::new(vec![
+            retained_algebraic_line_fragment(p(-3, -3), p(3, -3), &policy)?,
+            retained_algebraic_line_fragment(p(3, -3), p(3, 3), &policy)?,
+            retained_algebraic_line_fragment(p(3, 3), p(-3, 3), &policy)?,
+            retained_algebraic_line_fragment(p(-3, 3), p(-3, -3), &policy)?,
+        ]),
+        BezierRetainedBoundaryLoop2::new(vec![
+            retained_algebraic_line_fragment(p(-1, -1), p(1, -1), &policy)?,
+            retained_algebraic_line_fragment(p(1, -1), p(1, 1), &policy)?,
+            retained_algebraic_line_fragment(p(1, 1), p(-1, 1), &policy)?,
+            retained_algebraic_line_fragment(p(-1, 1), p(-1, -1), &policy)?,
+        ]),
+    ]);
+    let started = Instant::now();
+    let mut algebraic_line_role_checksum = 0_usize;
+    for _ in 0..iterations {
+        if let Classification::Decided(report) =
+            algebraic_line_region.line_image_role_report(&policy)?
+        {
+            algebraic_line_role_checksum ^= black_box(
+                report.roles().len()
+                    + report.material_loop_indices().len()
+                    + report.hole_loop_indices().len(),
+            );
+            algebraic_line_role_checksum ^=
+                black_box(format!("{:?}", report.to_region().filled_area(&policy)?).len());
+        }
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "bezier_retained_algebraic_line_role_report: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={algebraic_line_role_checksum}",
         elapsed / iterations
     );
 

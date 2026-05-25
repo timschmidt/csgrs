@@ -77,6 +77,22 @@ fn algebraic_image(curve: &QuadraticBezier2) -> BezierAlgebraicEndpointImage2 {
         .unwrap()
 }
 
+fn algebraic_constant_point_image(point: Point2) -> BezierAlgebraicEndpointImage2 {
+    let curve = QuadraticBezier2::new(point.clone(), point.clone(), point);
+    algebraic_image(&curve)
+}
+
+fn retained_algebraic_line_fragment(start: Point2, end: Point2) -> BezierSplitFragment2 {
+    let parameter = BezierParameter2::algebraic(algebraic_midpoint_parameter());
+    BezierSplitFragment2::AlgebraicEndpointImages {
+        start: parameter.clone(),
+        end: parameter,
+        source_curve: None,
+        start_image: Some(algebraic_constant_point_image(start)),
+        end_image: Some(algebraic_constant_point_image(end)),
+    }
+}
+
 fn line_midpoint_curve(start_x: i32, mid_x: i32, end_x: i32) -> QuadraticBezier2 {
     QuadraticBezier2::new(p(start_x, 0), p(mid_x, 0), p(end_x, 0))
 }
@@ -324,6 +340,70 @@ fn retained_line_image_role_report_assigns_nested_material_and_hole() {
     assert_eq!(
         report.to_region().filled_area(&policy()).unwrap(),
         Classification::Decided(Some(r(32)))
+    );
+}
+
+#[test]
+fn retained_line_image_role_report_accepts_exact_algebraic_endpoint_carriers() {
+    let outer = BezierRetainedBoundaryLoop2::new(vec![
+        retained_algebraic_line_fragment(p(0, 0), p(6, 0)),
+        retained_algebraic_line_fragment(p(6, 0), p(6, 6)),
+        retained_algebraic_line_fragment(p(6, 6), p(0, 6)),
+        retained_algebraic_line_fragment(p(0, 6), p(0, 0)),
+    ]);
+    let same_orientation_inner = BezierRetainedBoundaryLoop2::new(vec![
+        retained_algebraic_line_fragment(p(2, 2), p(4, 2)),
+        retained_algebraic_line_fragment(p(4, 2), p(4, 4)),
+        retained_algebraic_line_fragment(p(4, 4), p(2, 4)),
+        retained_algebraic_line_fragment(p(2, 4), p(2, 2)),
+    ]);
+    let retained = BezierRetainedRegion2::new(vec![outer, same_orientation_inner]);
+
+    let report = decided(retained.line_image_role_report(&policy()).unwrap());
+
+    assert_eq!(
+        report.roles(),
+        &[
+            BezierRetainedRegionLoopRole::Material,
+            BezierRetainedRegionLoopRole::Hole
+        ]
+    );
+    assert_eq!(report.material_loop_indices(), vec![0]);
+    assert_eq!(report.hole_loop_indices(), vec![1]);
+    assert_eq!(
+        report.to_region().filled_area(&policy()).unwrap(),
+        Classification::Decided(Some(r(32)))
+    );
+    assert_eq!(
+        retained.signed_area_role_report(&policy()).unwrap(),
+        Classification::Uncertain(UncertaintyReason::Unsupported)
+    );
+}
+
+#[test]
+fn retained_line_image_role_report_rejects_nonrational_algebraic_endpoint() {
+    let parameter = BezierParameter2::algebraic(algebraic_sqrt_half_parameter());
+    let nonrational_x = QuadraticBezier2::new(p(0, 0), Point2::new(q(1, 2), r(0)), p(1, 0));
+    let fragment = BezierSplitFragment2::AlgebraicEndpointImages {
+        start: parameter.clone(),
+        end: parameter,
+        source_curve: None,
+        start_image: Some(
+            BezierAlgebraicEndpointImage2::quadratic(
+                &nonrational_x,
+                &algebraic_sqrt_half_parameter(),
+                &policy(),
+            )
+            .unwrap(),
+        ),
+        end_image: Some(algebraic_constant_point_image(p(1, 0))),
+    };
+    let retained =
+        BezierRetainedRegion2::new(vec![BezierRetainedBoundaryLoop2::new(vec![fragment])]);
+
+    assert_eq!(
+        retained.line_image_role_report(&policy()).unwrap(),
+        Classification::Uncertain(UncertaintyReason::Unsupported)
     );
 }
 

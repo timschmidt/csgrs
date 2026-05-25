@@ -21,10 +21,11 @@ use hyperreal::{Real, RealSign};
 
 use crate::classify::{compare_reals, real_sign};
 use crate::{
-    Aabb2, BezierArrangementGraph2, BezierArrangementTraversal2, BezierLineContactKind,
-    BezierLineContactRelation, BezierRetainedLinearOverlapTraversal2, BezierSplitFragment2,
-    BezierSubcurve2, Classification, Contour2, ContourPointLocation, CurvePolicy, CurveResult,
-    LineSeg2, Point2, Region2, Segment2, UncertaintyReason,
+    Aabb2, BezierArrangementGraph2, BezierArrangementTraversal2, BezierEndpointPointImage2,
+    BezierLineContactKind, BezierLineContactRelation, BezierParameter2,
+    BezierRetainedLinearOverlapTraversal2, BezierSplitFragment2, BezierSubcurve2, Classification,
+    Contour2, ContourPointLocation, CurvePolicy, CurveResult, LineSeg2, Point2, Region2, Segment2,
+    UncertaintyReason,
 };
 
 /// A closed native Bezier/conic boundary loop.
@@ -525,11 +526,13 @@ impl BezierRetainedRegion2 {
 
     /// Assigns material/hole roles for retained loops that are exact line images.
     ///
-    /// Every retained fragment must be a materialized polynomial Bezier that is
-    /// exactly a degree elevation of its endpoint line segment.  The method
-    /// lowers those loops to native line contours and assigns even-odd nesting
-    /// roles with exact point-in-contour decisions.  It rejects conics,
-    /// nonlinear Bezier arcs, algebraic endpoint-image carriers, unresolved
+    /// Every retained fragment must either be a materialized polynomial Bezier
+    /// that is exactly a degree elevation of its endpoint line segment, or an
+    /// algebraic endpoint-image carrier whose contributed endpoints are exact
+    /// rational point witnesses. The method lowers those loops to native line
+    /// contours and assigns even-odd nesting roles with exact point-in-contour
+    /// decisions.  It rejects conics, nonlinear Bezier arcs, algebraic
+    /// endpoint-image carriers without exact rational endpoints, unresolved
     /// fragments, boundary-touching loops, and uncertain predicate signs.
     pub fn line_image_role_report(
         &self,
@@ -700,16 +703,118 @@ fn retained_line_loop_to_contour(
 ) -> CurveResult<Classification<Contour2>> {
     let mut segments = Vec::with_capacity(boundary_loop.fragments().len());
     for fragment in boundary_loop.fragments() {
-        let BezierSplitFragment2::Materialized { curve, .. } = fragment else {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        let (start, end) = match retained_line_fragment_endpoints(fragment, policy) {
+            Classification::Decided(endpoints) => endpoints,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
-        let (start, end) = curve.endpoints();
-        if !subcurve_is_linearly_parameterized(curve, policy) {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-        }
         segments.push(Segment2::Line(LineSeg2::try_new(start, end)?));
     }
     Contour2::try_new(segments).map(Classification::Decided)
+}
+
+/// Returns exact line-segment endpoints for a retained line-image fragment.
+///
+/// Materialized polynomial fragments must be certified degree elevations of
+/// their endpoint segment. Algebraic endpoint-image fragments are accepted
+/// only when the endpoint point evidence has exact rational witnesses, or when
+/// an exact boundary parameter can be replayed against the retained source
+/// curve. This follows Yap's retained-object discipline: algebraic endpoints
+/// become line-contour topology only through exact construction evidence, not
+/// by sampling isolating intervals. The linear-control identities are the
+/// standard Bernstein degree-elevation formulas from Farin, *Curves and
+/// Surfaces for CAGD* (5th ed., 2002).
+fn retained_line_fragment_endpoints(
+    fragment: &BezierSplitFragment2,
+    policy: &CurvePolicy,
+) -> Classification<(Point2, Point2)> {
+    match fragment {
+        BezierSplitFragment2::Materialized { curve, .. } => {
+            if !subcurve_is_linearly_parameterized(curve, policy) {
+                return Classification::Uncertain(UncertaintyReason::Unsupported);
+            }
+            Classification::Decided(curve.endpoints())
+        }
+        BezierSplitFragment2::AlgebraicEndpointImages {
+            start,
+            end,
+            source_curve,
+            start_image,
+            end_image,
+        } => {
+            let start = match retained_line_endpoint_point(
+                start,
+                start_image.as_ref(),
+                source_curve,
+                policy,
+            ) {
+                Classification::Decided(point) => point,
+                Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+            };
+            let end =
+                match retained_line_endpoint_point(end, end_image.as_ref(), source_curve, policy) {
+                    Classification::Decided(point) => point,
+                    Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+                };
+            Classification::Decided((start, end))
+        }
+        BezierSplitFragment2::Unresolved { .. } => {
+            Classification::Uncertain(UncertaintyReason::Boundary)
+        }
+    }
+}
+
+fn retained_line_endpoint_point(
+    parameter: &BezierParameter2,
+    image: Option<&crate::BezierAlgebraicEndpointImage2>,
+    source_curve: &Option<BezierSubcurve2>,
+    policy: &CurvePolicy,
+) -> Classification<Point2> {
+    match parameter {
+        BezierParameter2::Exact(value) => {
+            let Some(source_curve) = source_curve else {
+                return Classification::Uncertain(UncertaintyReason::Unsupported);
+            };
+            subcurve_point_at(source_curve, value.clone(), policy)
+        }
+        BezierParameter2::Algebraic(_) => {
+            let Some(image) = image else {
+                return Classification::Uncertain(UncertaintyReason::Boundary);
+            };
+            match exact_rational_point_from_image(image.point()) {
+                Some(point) => Classification::Decided(point),
+                None => Classification::Uncertain(UncertaintyReason::Unsupported),
+            }
+        }
+    }
+}
+
+fn exact_rational_point_from_image(point: &BezierEndpointPointImage2) -> Option<Point2> {
+    match point {
+        BezierEndpointPointImage2::Polynomial(point) => Some(Point2::new(
+            point
+                .x()?
+                .representation()?
+                .exact_rational_witness()?
+                .clone(),
+            point
+                .y()?
+                .representation()?
+                .exact_rational_witness()?
+                .clone(),
+        )),
+        BezierEndpointPointImage2::RationalQuadratic(point) => Some(Point2::new(
+            point
+                .x()?
+                .representation()?
+                .exact_rational_witness()?
+                .clone(),
+            point
+                .y()?
+                .representation()?
+                .exact_rational_witness()?
+                .clone(),
+        )),
+    }
 }
 
 fn retained_line_loop_roles(

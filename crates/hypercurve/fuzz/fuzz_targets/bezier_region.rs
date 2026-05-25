@@ -1,11 +1,11 @@
 #![no_main]
 
 use hypercurve::{
-    BezierAlgebraicParameter2, BezierArrangementGraph2, BezierParameter2,
-    BezierParameterInterval, BezierParameterPolynomial, BezierRegion2,
+    BezierAlgebraicEndpointImage2, BezierAlgebraicParameter2, BezierArrangementGraph2,
+    BezierParameter2, BezierParameterInterval, BezierParameterPolynomial, BezierRegion2,
     BezierRetainedBoundaryLoop2, BezierRetainedCurveEnvelope2, BezierRetainedEndpointEnvelope2,
-    BezierRetainedRegion2, Classification, CurvePolicy, Point2, QuadraticBezier2,
-    RationalQuadraticBezier2, Real,
+    BezierRetainedRegion2, BezierSplitFragment2, Classification, CurvePolicy, Point2,
+    QuadraticBezier2, RationalQuadraticBezier2, Real,
 };
 use libfuzzer_sys::fuzz_target;
 
@@ -75,6 +75,50 @@ fn algebraic_sqrt_eighth(policy: &CurvePolicy) -> Option<BezierParameter2> {
         Classification::Uncertain(_) => return None,
     };
     Some(BezierParameter2::algebraic(parameter))
+}
+
+fn algebraic_midpoint_root(policy: &CurvePolicy) -> Option<BezierAlgebraicParameter2> {
+    let polynomial = match BezierParameterPolynomial::try_new_power_basis(
+        vec![Real::from(-1_i32), Real::from(2_i32)],
+        policy,
+    )
+    .ok()?
+    {
+        Classification::Decided(polynomial) => polynomial,
+        Classification::Uncertain(_) => return None,
+    };
+    let interval =
+        match BezierParameterInterval::try_new(rational(2, 5), rational(3, 5), policy).ok()? {
+            Classification::Decided(interval) => interval,
+            Classification::Uncertain(_) => return None,
+        };
+    match BezierAlgebraicParameter2::try_isolate(polynomial, interval, policy).ok()? {
+        Classification::Decided(parameter) => Some(parameter),
+        Classification::Uncertain(_) => None,
+    }
+}
+
+fn constant_point_image(
+    point: Point2,
+    policy: &CurvePolicy,
+) -> Option<BezierAlgebraicEndpointImage2> {
+    let curve = QuadraticBezier2::new(point.clone(), point.clone(), point);
+    BezierAlgebraicEndpointImage2::quadratic(&curve, &algebraic_midpoint_root(policy)?, policy).ok()
+}
+
+fn algebraic_line_fragment(
+    start: Point2,
+    end: Point2,
+    policy: &CurvePolicy,
+) -> Option<BezierSplitFragment2> {
+    let parameter = BezierParameter2::algebraic(algebraic_midpoint_root(policy)?);
+    Some(BezierSplitFragment2::AlgebraicEndpointImages {
+        start: parameter.clone(),
+        end: parameter,
+        source_curve: None,
+        start_image: Some(constant_point_image(start, policy)?),
+        end_image: Some(constant_point_image(end, policy)?),
+    })
 }
 
 fuzz_target!(|data: &[u8]| {
@@ -154,6 +198,34 @@ fuzz_target!(|data: &[u8]| {
                 let _ = BezierRetainedCurveEnvelope2::from_region(&region, &policy);
             },
         );
+    }
+
+    let algebraic_outer = [
+        (Point2::new(rational(-3, 1), rational(-3, 1)), Point2::new(rational(3, 1), rational(-3, 1))),
+        (Point2::new(rational(3, 1), rational(-3, 1)), Point2::new(rational(3, 1), rational(3, 1))),
+        (Point2::new(rational(3, 1), rational(3, 1)), Point2::new(rational(-3, 1), rational(3, 1))),
+        (Point2::new(rational(-3, 1), rational(3, 1)), Point2::new(rational(-3, 1), rational(-3, 1))),
+    ];
+    let algebraic_inner = [
+        (Point2::new(rational(-1, 1), rational(-1, 1)), Point2::new(rational(1, 1), rational(-1, 1))),
+        (Point2::new(rational(1, 1), rational(-1, 1)), Point2::new(rational(1, 1), rational(1, 1))),
+        (Point2::new(rational(1, 1), rational(1, 1)), Point2::new(rational(-1, 1), rational(1, 1))),
+        (Point2::new(rational(-1, 1), rational(1, 1)), Point2::new(rational(-1, 1), rational(-1, 1))),
+    ];
+    let outer = algebraic_outer
+        .into_iter()
+        .filter_map(|(start, end)| algebraic_line_fragment(start, end, &policy))
+        .collect::<Vec<_>>();
+    let inner = algebraic_inner
+        .into_iter()
+        .filter_map(|(start, end)| algebraic_line_fragment(start, end, &policy))
+        .collect::<Vec<_>>();
+    if outer.len() == 4 && inner.len() == 4 {
+        let region = BezierRetainedRegion2::new(vec![
+            BezierRetainedBoundaryLoop2::new(outer),
+            BezierRetainedBoundaryLoop2::new(inner),
+        ]);
+        let _ = region.line_image_role_report(&policy);
     }
 
     for chunk in data.chunks(9).take(4) {
