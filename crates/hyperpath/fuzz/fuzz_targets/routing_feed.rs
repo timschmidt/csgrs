@@ -3,18 +3,23 @@
 use hyperlimit::{Point2, PredicatePolicy};
 use hyperpath::{
     AccelerationLimitedFeedProfileClass, ArcDirection, ExplicitCircularArc, FeedPathElement,
-    JerkRampSpanProposal, LinePathSegment, LookaheadFeedSchedule, RouteCertificationError,
-    TangentSpan, certify_acceleration_limited_feed_time,
+    JerkRampPhaseProposal, JerkRampSpanProposal, LinePathSegment, LookaheadFeedSchedule,
+    RouteCertificationError, TangentSpan, certify_acceleration_limited_feed_time,
     certify_acceleration_limited_feed_time_for_path, certify_constant_feed_time,
     certify_constant_feed_time_for_path, certify_corner_lookahead_limits,
     certify_jerk_ramp_feed_schedule, certify_lookahead_feed_schedule,
-    certify_symmetric_jerk_limited_feed_time, certify_symmetric_jerk_limited_feed_time_for_path,
+    certify_multi_phase_jerk_ramp_feed_schedule, certify_symmetric_jerk_limited_feed_time,
+    certify_symmetric_jerk_limited_feed_time_for_path,
 };
 use hyperreal::{Rational, Real};
 use libfuzzer_sys::fuzz_target;
 
 fn r(value: i64) -> Real {
     Real::new(Rational::new(value))
+}
+
+fn rq(numerator: i64, denominator: i64) -> Real {
+    Real::new(Rational::new(numerator) / Rational::new(denominator))
 }
 
 fn p(x: i64, y: i64) -> Point2 {
@@ -230,4 +235,44 @@ fuzz_target!(|data: &[u8]| {
     )
     .unwrap();
     assert!(ramp_report.all_satisfied());
+
+    let phase_acceleration = positive(data[2], 6);
+    let phase_time = positive(data[3], 8);
+    let phase_length = phase_acceleration * phase_time * phase_time;
+    let phase_route = vec![FeedPathElement::Line(LinePathSegment::new(
+        p(0, 0),
+        p(phase_length, 0),
+    ))];
+    let phase_schedule = vec![vec![
+        JerkRampPhaseProposal {
+            path_length: rq(phase_acceleration * phase_time * phase_time, 6),
+            ramp: JerkRampSpanProposal {
+                start_feed: Real::zero(),
+                end_feed: rq(phase_acceleration * phase_time, 2),
+                start_acceleration: Real::zero(),
+                end_acceleration: r(phase_acceleration),
+                traversal_time: r(phase_time),
+            },
+        },
+        JerkRampPhaseProposal {
+            path_length: rq(5 * phase_acceleration * phase_time * phase_time, 6),
+            ramp: JerkRampSpanProposal {
+                start_feed: rq(phase_acceleration * phase_time, 2),
+                end_feed: r(phase_acceleration * phase_time),
+                start_acceleration: r(phase_acceleration),
+                end_acceleration: Real::zero(),
+                traversal_time: r(phase_time),
+            },
+        },
+    ]];
+    let phase_report = certify_multi_phase_jerk_ramp_feed_schedule(
+        &phase_route,
+        &phase_schedule,
+        r(phase_acceleration * phase_time),
+        r(phase_acceleration),
+        r(phase_acceleration),
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert!(phase_report.all_satisfied());
 });

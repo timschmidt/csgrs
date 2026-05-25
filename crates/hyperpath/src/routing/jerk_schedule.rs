@@ -67,6 +67,54 @@ pub struct JerkRampFeedScheduleReport {
     pub spans: Vec<JerkRampSpanReport>,
 }
 
+/// Exact constant-jerk phase proposal inside one retained route element.
+///
+/// A multi-phase controller schedule splits one path element into exact scalar
+/// phase lengths. Each phase then reuses [`JerkRampSpanProposal`] for the
+/// constant-jerk kinematics, and the element-level report certifies that
+/// adjacent phase endpoint states match and that phase lengths sum to the
+/// retained route length.
+#[derive(Clone, Debug, PartialEq)]
+pub struct JerkRampPhaseProposal {
+    /// Exact path length assigned to this phase.
+    pub path_length: Real,
+    /// Exact constant-jerk kinematic proposal for this phase.
+    pub ramp: JerkRampSpanProposal,
+}
+
+/// Exact replay report for one constant-jerk phase.
+#[derive(Clone, Debug)]
+pub struct JerkRampPhaseReport {
+    /// Zero-based phase index within the retained route element.
+    pub index: u64,
+    /// Exact phase proposal replayed by `hypersolve`.
+    pub proposal: JerkRampPhaseProposal,
+    /// Exact solver report for this phase's local kinematic rows.
+    pub certification: CandidateCertificationReport,
+}
+
+/// Exact multi-phase replay report for one retained route element.
+#[derive(Clone, Debug)]
+pub struct JerkRampElementPhaseReport {
+    /// Zero-based retained route element index.
+    pub index: u64,
+    /// Exact retained route element length.
+    pub route_length: Real,
+    /// Per-phase constant-jerk replay reports.
+    pub phases: Vec<JerkRampPhaseReport>,
+    /// Exact replay that phase lengths sum to [`Self::route_length`].
+    pub length_certification: CandidateCertificationReport,
+    /// Exact replay that adjacent phase feed and acceleration states match.
+    pub continuity: Vec<CandidateCertificationReport>,
+}
+
+/// Exact retained multi-phase jerk schedule report.
+#[derive(Clone, Debug)]
+pub struct MultiPhaseJerkRampFeedScheduleReport {
+    /// Per-route-element multi-phase certifications.
+    pub elements: Vec<JerkRampElementPhaseReport>,
+}
+
 impl JerkRampFeedScheduleReport {
     /// Return whether every span proposal satisfies the exact replay rows.
     pub fn all_satisfied(&self) -> bool {
@@ -80,6 +128,43 @@ impl JerkRampFeedScheduleReport {
         self.spans
             .iter()
             .position(|span| !span.certification.all_satisfied())
+    }
+}
+
+impl JerkRampElementPhaseReport {
+    /// Return whether this retained element's phases, length, and continuity certify.
+    pub fn all_satisfied(&self) -> bool {
+        self.phases
+            .iter()
+            .all(|phase| phase.certification.all_satisfied())
+            && self.length_certification.all_satisfied()
+            && self
+                .continuity
+                .iter()
+                .all(CandidateCertificationReport::all_satisfied)
+    }
+
+    /// Return the first phase with a certified violation or undecided row.
+    pub fn first_unsatisfied_phase(&self) -> Option<usize> {
+        self.phases
+            .iter()
+            .position(|phase| !phase.certification.all_satisfied())
+    }
+}
+
+impl MultiPhaseJerkRampFeedScheduleReport {
+    /// Return whether every retained element's multi-phase schedule certifies.
+    pub fn all_satisfied(&self) -> bool {
+        self.elements
+            .iter()
+            .all(JerkRampElementPhaseReport::all_satisfied)
+    }
+
+    /// Return the first retained element with a certified violation or undecided row.
+    pub fn first_unsatisfied_element(&self) -> Option<usize> {
+        self.elements
+            .iter()
+            .position(|element| !element.all_satisfied())
     }
 }
 
@@ -134,6 +219,72 @@ pub fn certify_jerk_ramp_feed_schedule(
     }
 
     Ok(JerkRampFeedScheduleReport { spans })
+}
+
+/// Certify a retained multi-phase constant-jerk feed schedule.
+///
+/// This is the multi-phase counterpart of [`certify_jerk_ramp_feed_schedule`].
+/// The caller supplies an exact phase chain for each retained route element.
+/// Every phase is certified by the constant-jerk rows from Erkorkmaz and
+/// Altintas (2001), then the element report replays two additional exact
+/// facts: phase lengths sum to the retained path length, and adjacent phases
+/// have identical feed and acceleration states. Following Yap's exact
+/// computation paradigm, a controller's phase decomposition remains a
+/// candidate until all local kinematic, continuity, and path-length predicates
+/// are certified exactly.
+pub fn certify_multi_phase_jerk_ramp_feed_schedule(
+    route: &[FeedPathElement],
+    phases: &[Vec<JerkRampPhaseProposal>],
+    max_feed_rate: Real,
+    max_acceleration: Real,
+    max_jerk: Real,
+    policy: PredicatePolicy,
+) -> Result<MultiPhaseJerkRampFeedScheduleReport, RouteCertificationError> {
+    if route.is_empty() {
+        return Err(RouteCertificationError::EmptyRoute);
+    }
+    if route.len() != phases.len() || phases.iter().any(Vec::is_empty) {
+        return Err(RouteCertificationError::ScheduleShapeMismatch);
+    }
+    require_positive_feed(&max_feed_rate)?;
+    require_positive_acceleration(&max_acceleration)?;
+    require_positive_jerk(&max_jerk)?;
+
+    let mut elements = Vec::with_capacity(route.len());
+    for (index, (element, element_phases)) in route.iter().zip(phases).enumerate() {
+        let route_length = element_length(element, policy)?;
+        let mut phase_reports = Vec::with_capacity(element_phases.len());
+        for (phase_index, phase) in element_phases.iter().enumerate() {
+            validate_phase(phase)?;
+            let certification = certify_jerk_ramp_span_candidate(
+                phase.path_length.clone(),
+                &phase.ramp,
+                max_feed_rate.clone(),
+                max_acceleration.clone(),
+                max_jerk.clone(),
+            );
+            phase_reports.push(JerkRampPhaseReport {
+                index: phase_index as u64,
+                proposal: phase.clone(),
+                certification,
+            });
+        }
+        let length_certification =
+            certify_phase_length_sum(route_length.clone(), element_phases.iter());
+        let continuity = element_phases
+            .windows(2)
+            .map(certify_phase_continuity)
+            .collect();
+        elements.push(JerkRampElementPhaseReport {
+            index: index as u64,
+            route_length,
+            phases: phase_reports,
+            length_certification,
+            continuity,
+        });
+    }
+
+    Ok(MultiPhaseJerkRampFeedScheduleReport { elements })
 }
 
 fn certify_jerk_ramp_span_candidate(
@@ -214,6 +365,53 @@ fn certify_jerk_ramp_span_candidate(
     let prepared = PreparedProblem::new(&problem);
     let context = context_from_problem(&problem);
     certify_candidate(&prepared, &context)
+}
+
+fn certify_phase_length_sum<'a>(
+    route_length: Real,
+    phases: impl Iterator<Item = &'a JerkRampPhaseProposal>,
+) -> CandidateCertificationReport {
+    let mut problem = Problem::default();
+    let mut sum = Expr::real(Real::zero());
+    for (index, phase) in phases.enumerate() {
+        let name = format!("phase_{index}_length");
+        let variable = problem.add_variable(name.clone(), phase.path_length.clone());
+        sum = sum + Expr::symbol(variable.into(), name);
+    }
+    problem.add_constraint(Constraint::equality(
+        "multi phase jerk length sum",
+        sum - Expr::real(route_length),
+    ));
+    certify_problem(problem)
+}
+
+fn certify_phase_continuity(pair: &[JerkRampPhaseProposal]) -> CandidateCertificationReport {
+    let mut problem = Problem::default();
+    let first_end_feed = problem.add_variable("first_end_feed", pair[0].ramp.end_feed.clone());
+    let second_start_feed =
+        problem.add_variable("second_start_feed", pair[1].ramp.start_feed.clone());
+    let first_end_acceleration = problem.add_variable(
+        "first_end_acceleration",
+        pair[0].ramp.end_acceleration.clone(),
+    );
+    let second_start_acceleration = problem.add_variable(
+        "second_start_acceleration",
+        pair[1].ramp.start_acceleration.clone(),
+    );
+    problem.add_constraint(Constraint::equality(
+        "multi phase jerk feed continuity",
+        Expr::symbol(first_end_feed.into(), "first_end_feed")
+            - Expr::symbol(second_start_feed.into(), "second_start_feed"),
+    ));
+    problem.add_constraint(Constraint::equality(
+        "multi phase jerk acceleration continuity",
+        Expr::symbol(first_end_acceleration.into(), "first_end_acceleration")
+            - Expr::symbol(
+                second_start_acceleration.into(),
+                "second_start_acceleration",
+            ),
+    ));
+    certify_problem(problem)
 }
 
 fn element_length(
@@ -371,6 +569,22 @@ fn validate_proposal(proposal: &JerkRampSpanProposal) -> Result<(), RouteCertifi
         Some(RealSign::Zero) => Err(RouteCertificationError::ZeroTime),
         _ => Ok(()),
     }
+}
+
+fn validate_phase(phase: &JerkRampPhaseProposal) -> Result<(), RouteCertificationError> {
+    match phase.path_length.structural_facts().sign {
+        Some(RealSign::Negative) | Some(RealSign::Zero) => {
+            return Err(RouteCertificationError::UnsupportedRouteGeometry);
+        }
+        _ => {}
+    }
+    validate_proposal(&phase.ramp)
+}
+
+fn certify_problem(problem: Problem) -> CandidateCertificationReport {
+    let prepared = PreparedProblem::new(&problem);
+    let context = context_from_problem(&problem);
+    certify_candidate(&prepared, &context)
 }
 
 fn require_nonnegative_feed(value: &Real) -> Result<(), RouteCertificationError> {

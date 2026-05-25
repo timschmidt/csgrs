@@ -35,8 +35,10 @@ pub use feed::{
     certify_symmetric_jerk_limited_feed_time, certify_symmetric_jerk_limited_feed_time_for_path,
 };
 pub use jerk_schedule::{
-    JerkRampFeedScheduleReport, JerkRampSpanProposal, JerkRampSpanReport,
-    certify_jerk_ramp_feed_schedule,
+    JerkRampElementPhaseReport, JerkRampFeedScheduleReport, JerkRampPhaseProposal,
+    JerkRampPhaseReport, JerkRampSpanProposal, JerkRampSpanReport,
+    MultiPhaseJerkRampFeedScheduleReport, certify_jerk_ramp_feed_schedule,
+    certify_multi_phase_jerk_ramp_feed_schedule,
 };
 pub use lookahead::{
     LookaheadFeedSchedule, LookaheadFeedScheduleReport, LookaheadSpanTransitionReport,

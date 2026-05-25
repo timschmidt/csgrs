@@ -8,12 +8,12 @@ use hyperpath::{
     ExplicitArcOverlapClass, ExplicitArcPointClassification, ExplicitArcSweepClass,
     ExplicitArcTangentClass, ExplicitCircleRelationClass, ExplicitCircularArc, FeedPathElement,
     HigherOrderBezier, HigherOrderBezierError, InfillGraphError, JerkLimitedFeedTimeReport,
-    JerkRampSpanProposal, LineArcArrangementEventClass, LineArrangementError,
-    LineArrangementEventClass, LineExplicitArcIntersectionClass, LineOffsetError, LinePathSegment,
-    LineQuadraticBezierIntersectionClass, LineRationalQuadraticBezierIntersectionClass,
-    LookaheadFeedSchedule, MeanderError, MeanderKeepout, MeanderObstacle,
-    MeanderPlacementCandidate, NetId, OffsetSide, PathProvenance, PathSourceFormat,
-    PcbBoardOutline, PcbCardinalRectPad, PcbCircularBoardOutline, PcbCircularPad,
+    JerkRampPhaseProposal, JerkRampSpanProposal, LineArcArrangementEventClass,
+    LineArrangementError, LineArrangementEventClass, LineExplicitArcIntersectionClass,
+    LineOffsetError, LinePathSegment, LineQuadraticBezierIntersectionClass,
+    LineRationalQuadraticBezierIntersectionClass, LookaheadFeedSchedule, MeanderError,
+    MeanderKeepout, MeanderObstacle, MeanderPlacementCandidate, NetId, OffsetSide, PathProvenance,
+    PathSourceFormat, PcbBoardOutline, PcbCardinalRectPad, PcbCircularBoardOutline, PcbCircularPad,
     PcbConvexBoardOutline, PcbConvexPad, PcbObroundPad, PcbOrientedRectPad,
     PcbOrthogonalBoardOutline, PcbOrthogonalPad, PcbRectPad, PcbRoundedRectPad, PcbTrace,
     PcbViaStack, PocketLinkGraphError, PocketPlanError, PocketPlanStopReason, PocketRingSide,
@@ -38,15 +38,16 @@ use hyperpath::{
     certify_constant_feed_time, certify_constant_feed_time_for_path,
     certify_corner_lookahead_limits, certify_differential_pair_skew, certify_g1_chain,
     certify_g1_join_candidate, certify_jerk_ramp_feed_schedule, certify_length_extension,
-    certify_lookahead_feed_schedule, certify_symmetric_jerk_limited_feed_time,
-    certify_symmetric_jerk_limited_feed_time_for_path, certify_tangent_alignment_candidate,
-    check_cardinal_rect_pad_board_clearance, check_circular_pad_board_clearance,
-    check_circular_pad_circular_board_clearance, check_convex_pad_board_clearance,
-    check_obround_pad_board_clearance, check_oriented_rect_pad_board_clearance,
-    check_orthogonal_pad_board_clearance, check_rect_pad_board_clearance,
-    check_rounded_rect_pad_board_clearance, check_trace_board_clearance,
-    check_trace_cardinal_rect_pad_clearance, check_trace_circular_board_clearance,
-    check_trace_clearance, check_trace_convex_board_clearance, check_trace_convex_pad_clearance,
+    certify_lookahead_feed_schedule, certify_multi_phase_jerk_ramp_feed_schedule,
+    certify_symmetric_jerk_limited_feed_time, certify_symmetric_jerk_limited_feed_time_for_path,
+    certify_tangent_alignment_candidate, check_cardinal_rect_pad_board_clearance,
+    check_circular_pad_board_clearance, check_circular_pad_circular_board_clearance,
+    check_convex_pad_board_clearance, check_obround_pad_board_clearance,
+    check_oriented_rect_pad_board_clearance, check_orthogonal_pad_board_clearance,
+    check_rect_pad_board_clearance, check_rounded_rect_pad_board_clearance,
+    check_trace_board_clearance, check_trace_cardinal_rect_pad_clearance,
+    check_trace_circular_board_clearance, check_trace_clearance,
+    check_trace_convex_board_clearance, check_trace_convex_pad_clearance,
     check_trace_obround_pad_clearance, check_trace_oriented_rect_pad_clearance,
     check_trace_orthogonal_board_clearance, check_trace_orthogonal_pad_clearance,
     check_trace_pad_clearance, check_trace_rect_pad_clearance,
@@ -4841,6 +4842,216 @@ fn jerk_ramp_feed_schedule_rejects_shape_and_invalid_inputs() {
 }
 
 #[test]
+fn multi_phase_jerk_ramp_schedule_certifies_length_sum_and_continuity() {
+    let route = vec![FeedPathElement::Line(LinePathSegment::new(
+        p(0, 0),
+        p(200, 0),
+    ))];
+    let phases = vec![vec![
+        JerkRampPhaseProposal {
+            path_length: rq(100, 3),
+            ramp: JerkRampSpanProposal {
+                start_feed: Real::zero(),
+                end_feed: r(10),
+                start_acceleration: Real::zero(),
+                end_acceleration: r(2),
+                traversal_time: r(10),
+            },
+        },
+        JerkRampPhaseProposal {
+            path_length: rq(500, 3),
+            ramp: JerkRampSpanProposal {
+                start_feed: r(10),
+                end_feed: r(20),
+                start_acceleration: r(2),
+                end_acceleration: Real::zero(),
+                traversal_time: r(10),
+            },
+        },
+    ]];
+    let report = certify_multi_phase_jerk_ramp_feed_schedule(
+        &route,
+        &phases,
+        r(20),
+        r(2),
+        r(1),
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+
+    assert_eq!(report.elements.len(), 1);
+    assert_eq!(report.elements[0].route_length, r(200));
+    assert_eq!(report.elements[0].phases.len(), 2);
+    assert_eq!(report.elements[0].continuity.len(), 1);
+    assert!(report.all_satisfied());
+    assert_eq!(report.first_unsatisfied_element(), None);
+    assert_eq!(report.elements[0].first_unsatisfied_phase(), None);
+}
+
+#[test]
+fn multi_phase_jerk_ramp_schedule_reports_sum_continuity_and_phase_violations() {
+    let base = vec![
+        JerkRampPhaseProposal {
+            path_length: rq(100, 3),
+            ramp: JerkRampSpanProposal {
+                start_feed: Real::zero(),
+                end_feed: r(10),
+                start_acceleration: Real::zero(),
+                end_acceleration: r(2),
+                traversal_time: r(10),
+            },
+        },
+        JerkRampPhaseProposal {
+            path_length: rq(500, 3),
+            ramp: JerkRampSpanProposal {
+                start_feed: r(10),
+                end_feed: r(20),
+                start_acceleration: r(2),
+                end_acceleration: Real::zero(),
+                traversal_time: r(10),
+            },
+        },
+    ];
+    let length_route = vec![FeedPathElement::Line(LinePathSegment::new(
+        p(0, 0),
+        p(201, 0),
+    ))];
+    let length_report = certify_multi_phase_jerk_ramp_feed_schedule(
+        &length_route,
+        std::slice::from_ref(&base),
+        r(20),
+        r(2),
+        r(1),
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert!(
+        length_report.elements[0]
+            .length_certification
+            .has_certified_violation()
+    );
+    assert_eq!(length_report.first_unsatisfied_element(), Some(0));
+
+    let continuity_route = vec![FeedPathElement::Line(LinePathSegment::new(
+        p(0, 0),
+        p(210, 0),
+    ))];
+    let continuity_phases = vec![vec![
+        base[0].clone(),
+        JerkRampPhaseProposal {
+            path_length: rq(530, 3),
+            ramp: JerkRampSpanProposal {
+                start_feed: r(11),
+                end_feed: r(21),
+                start_acceleration: r(2),
+                end_acceleration: Real::zero(),
+                traversal_time: r(10),
+            },
+        },
+    ]];
+    let continuity_report = certify_multi_phase_jerk_ramp_feed_schedule(
+        &continuity_route,
+        &continuity_phases,
+        r(25),
+        r(2),
+        r(1),
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert!(continuity_report.elements[0].continuity[0].has_certified_violation());
+
+    let phase_violation = vec![vec![
+        base[0].clone(),
+        JerkRampPhaseProposal {
+            path_length: rq(500, 3),
+            ramp: JerkRampSpanProposal {
+                start_feed: r(10),
+                end_feed: r(30),
+                start_acceleration: r(2),
+                end_acceleration: Real::zero(),
+                traversal_time: r(10),
+            },
+        },
+    ]];
+    let phase_report = certify_multi_phase_jerk_ramp_feed_schedule(
+        &vec![FeedPathElement::Line(LinePathSegment::new(
+            p(0, 0),
+            p(200, 0),
+        ))],
+        &phase_violation,
+        r(30),
+        r(2),
+        r(1),
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert!(
+        phase_report.elements[0].phases[1]
+            .certification
+            .has_certified_violation()
+    );
+    assert_eq!(phase_report.elements[0].first_unsatisfied_phase(), Some(1));
+}
+
+#[test]
+fn multi_phase_jerk_ramp_schedule_rejects_shape_and_invalid_phase_inputs() {
+    let route = vec![FeedPathElement::Line(LinePathSegment::new(
+        p(0, 0),
+        p(1, 0),
+    ))];
+    let valid_phase = JerkRampPhaseProposal {
+        path_length: r(1),
+        ramp: JerkRampSpanProposal {
+            start_feed: Real::zero(),
+            end_feed: r(1),
+            start_acceleration: r(1),
+            end_acceleration: r(1),
+            traversal_time: r(1),
+        },
+    };
+    assert_eq!(
+        certify_multi_phase_jerk_ramp_feed_schedule(
+            &[],
+            &[],
+            r(1),
+            r(1),
+            r(1),
+            PredicatePolicy::default()
+        )
+        .unwrap_err(),
+        RouteCertificationError::EmptyRoute
+    );
+    assert_eq!(
+        certify_multi_phase_jerk_ramp_feed_schedule(
+            &route,
+            &[vec![]],
+            r(1),
+            r(1),
+            r(1),
+            PredicatePolicy::default()
+        )
+        .unwrap_err(),
+        RouteCertificationError::ScheduleShapeMismatch
+    );
+    let bad_length = JerkRampPhaseProposal {
+        path_length: Real::zero(),
+        ..valid_phase.clone()
+    };
+    assert_eq!(
+        certify_multi_phase_jerk_ramp_feed_schedule(
+            &route,
+            &[vec![bad_length]],
+            r(1),
+            r(1),
+            r(1),
+            PredicatePolicy::default()
+        )
+        .unwrap_err(),
+        RouteCertificationError::UnsupportedRouteGeometry
+    );
+}
+
+#[test]
 fn single_detour_meander_adds_exact_length_and_certifies_target() {
     let source = LinePathSegment::new(p(0, 0), p(10, 0));
     let meander =
@@ -7140,6 +7351,52 @@ proptest! {
         ).unwrap();
 
         prop_assert_eq!(report.spans[0].path_length.clone(), r(length));
+        prop_assert!(report.all_satisfied());
+    }
+
+    #[test]
+    fn multi_phase_jerk_ramp_generated_two_phase_profiles_certify(
+        acceleration in 1_i16..=8,
+        time in 1_i16..=12,
+    ) {
+        let acceleration = i64::from(acceleration);
+        let time = i64::from(time);
+        let total_length = acceleration * time * time;
+        let mid_feed = acceleration * time / 2;
+        let end_feed = acceleration * time;
+        let route = vec![FeedPathElement::Line(LinePathSegment::new(p(0, 0), p(total_length, 0)))];
+        let phases = vec![vec![
+            JerkRampPhaseProposal {
+                path_length: rq(acceleration * time * time, 6),
+                ramp: JerkRampSpanProposal {
+                    start_feed: Real::zero(),
+                    end_feed: rq(acceleration * time, 2),
+                    start_acceleration: Real::zero(),
+                    end_acceleration: r(acceleration),
+                    traversal_time: r(time),
+                },
+            },
+            JerkRampPhaseProposal {
+                path_length: rq(5 * acceleration * time * time, 6),
+                ramp: JerkRampSpanProposal {
+                    start_feed: rq(acceleration * time, 2),
+                    end_feed: r(end_feed),
+                    start_acceleration: r(acceleration),
+                    end_acceleration: Real::zero(),
+                    traversal_time: r(time),
+                },
+            },
+        ]];
+        let report = certify_multi_phase_jerk_ramp_feed_schedule(
+            &route,
+            &phases,
+            r(end_feed.max(mid_feed)),
+            r(acceleration),
+            r(acceleration),
+            PredicatePolicy::default(),
+        ).unwrap();
+
+        prop_assert_eq!(report.elements[0].route_length.clone(), r(total_length));
         prop_assert!(report.all_satisfied());
     }
 

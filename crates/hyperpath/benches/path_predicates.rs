@@ -3,9 +3,9 @@ use hyperlimit::{Point2, PredicatePolicy};
 use hyperpath::{
     ArcDirection, BeadFillAxis, BezierParameter, CardinalPoint, CardinalRotation, CircularArc,
     ConstructionStamp, CubicBezier, ExplicitCircularArc, FeedPathElement, HigherOrderBezier,
-    JerkRampSpanProposal, LinePathSegment, LookaheadFeedSchedule, MeanderKeepout, MeanderObstacle,
-    MeanderPlacementCandidate, NetId, OffsetSide, PathProvenance, PathSourceFormat,
-    PcbBoardOutline, PcbCardinalRectPad, PcbCircularBoardOutline, PcbCircularPad,
+    JerkRampPhaseProposal, JerkRampSpanProposal, LinePathSegment, LookaheadFeedSchedule,
+    MeanderKeepout, MeanderObstacle, MeanderPlacementCandidate, NetId, OffsetSide, PathProvenance,
+    PathSourceFormat, PcbBoardOutline, PcbCardinalRectPad, PcbCircularBoardOutline, PcbCircularPad,
     PcbConvexBoardOutline, PcbConvexPad, PcbObroundPad, PcbOrientedRectPad,
     PcbOrthogonalBoardOutline, PcbOrthogonalPad, PcbRectPad, PcbRoundedRectPad, PcbTrace,
     PcbViaStack, QuadraticBezier, RationalQuadraticBezier, RectangularPocket, SourceLengthUnit,
@@ -26,15 +26,16 @@ use hyperpath::{
     certify_constant_feed_time, certify_constant_feed_time_for_path,
     certify_corner_lookahead_limits, certify_differential_pair_skew, certify_g1_chain,
     certify_g1_join_candidate, certify_jerk_ramp_feed_schedule, certify_length_extension,
-    certify_lookahead_feed_schedule, certify_symmetric_jerk_limited_feed_time,
-    certify_symmetric_jerk_limited_feed_time_for_path, certify_tangent_alignment_candidate,
-    check_cardinal_rect_pad_board_clearance, check_circular_pad_board_clearance,
-    check_circular_pad_circular_board_clearance, check_convex_pad_board_clearance,
-    check_obround_pad_board_clearance, check_oriented_rect_pad_board_clearance,
-    check_orthogonal_pad_board_clearance, check_rect_pad_board_clearance,
-    check_rounded_rect_pad_board_clearance, check_trace_board_clearance,
-    check_trace_cardinal_rect_pad_clearance, check_trace_circular_board_clearance,
-    check_trace_clearance, check_trace_convex_board_clearance, check_trace_convex_pad_clearance,
+    certify_lookahead_feed_schedule, certify_multi_phase_jerk_ramp_feed_schedule,
+    certify_symmetric_jerk_limited_feed_time, certify_symmetric_jerk_limited_feed_time_for_path,
+    certify_tangent_alignment_candidate, check_cardinal_rect_pad_board_clearance,
+    check_circular_pad_board_clearance, check_circular_pad_circular_board_clearance,
+    check_convex_pad_board_clearance, check_obround_pad_board_clearance,
+    check_oriented_rect_pad_board_clearance, check_orthogonal_pad_board_clearance,
+    check_rect_pad_board_clearance, check_rounded_rect_pad_board_clearance,
+    check_trace_board_clearance, check_trace_cardinal_rect_pad_clearance,
+    check_trace_circular_board_clearance, check_trace_clearance,
+    check_trace_convex_board_clearance, check_trace_convex_pad_clearance,
     check_trace_obround_pad_clearance, check_trace_oriented_rect_pad_clearance,
     check_trace_orthogonal_board_clearance, check_trace_orthogonal_pad_clearance,
     check_trace_pad_clearance, check_trace_rect_pad_clearance,
@@ -971,6 +972,44 @@ fn path_predicates(c: &mut Criterion) {
                 std::slice::from_ref(&jerk_ramp),
                 r(100),
                 r(1),
+                r(1),
+                PredicatePolicy::default(),
+            )
+        })
+    });
+    let multi_phase_jerk_route = vec![FeedPathElement::Line(LinePathSegment::new(
+        p(0, 0),
+        p(200, 0),
+    ))];
+    let multi_phase_jerk = vec![vec![
+        JerkRampPhaseProposal {
+            path_length: rq(100, 3),
+            ramp: JerkRampSpanProposal {
+                start_feed: r(0),
+                end_feed: r(10),
+                start_acceleration: r(0),
+                end_acceleration: r(2),
+                traversal_time: r(10),
+            },
+        },
+        JerkRampPhaseProposal {
+            path_length: rq(500, 3),
+            ramp: JerkRampSpanProposal {
+                start_feed: r(10),
+                end_feed: r(20),
+                start_acceleration: r(2),
+                end_acceleration: r(0),
+                traversal_time: r(10),
+            },
+        },
+    ]];
+    c.bench_function("multi_phase_jerk_ramp_schedule_certification", |b| {
+        b.iter(|| {
+            certify_multi_phase_jerk_ramp_feed_schedule(
+                &multi_phase_jerk_route,
+                &multi_phase_jerk,
+                r(20),
+                r(2),
                 r(1),
                 PredicatePolicy::default(),
             )
