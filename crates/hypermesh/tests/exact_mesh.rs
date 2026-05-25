@@ -17176,6 +17176,114 @@ fn exact_coplanar_convex_surface_difference_materializes_multiple_component_cuts
         point_branch_difference.mesh.triangles()
     );
 
+    let point_branch_consumed_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            2, 5, 0, 3, 5, 0, 3, 6, 0, 2, 6, 0, //
+            -2, 4, 0, 8, 4, 0, 10, 10, 0, -2, 10, 0, //
+            10, 10, 0, 22, 10, 0, 22, 16, 0, 14, 16, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7, //
+            8, 9, 10, 8, 10, 11,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_side_cutter_difference(
+            &side_opening_left,
+            &point_branch_consumed_hole,
+        )
+        .is_none()
+    );
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_multi_difference(
+            &side_opening_left,
+            &point_branch_consumed_hole,
+        )
+        .is_none()
+    );
+    assert!(
+        hypermesh::exact::arrange_coplanar_convex_surface_component_holed_difference(
+            &side_opening_left,
+            &point_branch_consumed_hole,
+        )
+        .is_none()
+    );
+    let consumed_branch = hypermesh::exact::arrange_coplanar_surface_point_touch_difference(
+        &side_opening_left,
+        &point_branch_consumed_hole,
+    )
+    .expect("point-touch side cutters should consume owned strict holes without losing branches");
+    consumed_branch.validate().unwrap();
+    consumed_branch
+        .validate_difference_against_sources(&side_opening_left, &point_branch_consumed_hole)
+        .unwrap();
+    assert!(consumed_branch.polygons.len() >= 2);
+    assert!(consumed_branch.polygons.iter().all(|polygon| {
+        polygon.iter().all(|point| {
+            !(real_eq(&point.x, &ExactReal::from(2)) && real_eq(&point.y, &ExactReal::from(5)))
+        })
+    }));
+    let consumed_branch_loop_count = consumed_branch
+        .polygons
+        .iter()
+        .filter(|polygon| {
+            polygon.iter().any(|point| {
+                real_eq(&point.x, &ExactReal::from(10)) && real_eq(&point.y, &ExactReal::from(10))
+            })
+        })
+        .count();
+    assert!(
+        consumed_branch_loop_count >= 2,
+        "the consumed-hole path must still retain duplicated branch vertices"
+    );
+    let mut stale_consumed_branch = consumed_branch.clone();
+    stale_consumed_branch.polygons.pop();
+    assert!(
+        stale_consumed_branch
+            .validate_difference_against_sources(&side_opening_left, &point_branch_consumed_hole)
+            .is_err()
+    );
+    let consumed_branch_preflight = hypermesh::exact::preflight_boolean_exact(
+        &side_opening_left,
+        &point_branch_consumed_hole,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    consumed_branch_preflight.validate().unwrap();
+    consumed_branch_preflight
+        .validate_against_sources(&side_opening_left, &point_branch_consumed_hole)
+        .unwrap();
+    assert_eq!(
+        consumed_branch_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchDifference
+    );
+    let consumed_branch_result = hypermesh::exact::boolean_exact(
+        &side_opening_left,
+        &point_branch_consumed_hole,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    consumed_branch_result
+        .validate_operation_against_sources(
+            &side_opening_left,
+            &point_branch_consumed_hole,
+            hypermesh::exact::ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        consumed_branch_result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut:
+                hypermesh::exact::ExactBooleanShortcutKind::CoplanarSurfacePointTouchDifference
+        }
+    );
+
     let multi_component_point_branch_left = ExactMesh::from_i64_triangles_with_policy(
         &[
             0, 0, 0, 20, 0, 0, 20, 20, 0, 0, 20, 0, //
@@ -17400,6 +17508,87 @@ fn exact_coplanar_convex_surface_difference_materializes_multiple_component_cuts
                 hypermesh::exact::ExactBooleanShortcutKind::CoplanarSurfacePointTouchDifference
         }
     );
+
+    let nonconvex_point_branch_consumed_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            2, 5, 0, 3, 5, 0, 3, 6, 0, 2, 6, 0, //
+            -2, 4, 0, 8, 4, 0, 10, 10, 0, -2, 10, 0, //
+            10, 10, 0, 22, 10, 0, 22, 16, 0, 14, 16, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7, //
+            8, 9, 10, 8, 10, 11,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_multi_difference(
+            &nonconvex_point_branch_left,
+            &nonconvex_point_branch_consumed_hole,
+        )
+        .is_none()
+    );
+    assert!(
+        hypermesh::exact::arrange_coplanar_convex_surface_component_holed_difference(
+            &nonconvex_point_branch_left,
+            &nonconvex_point_branch_consumed_hole,
+        )
+        .is_none()
+    );
+    let nonconvex_consumed_branch =
+        hypermesh::exact::arrange_coplanar_surface_point_touch_difference(
+            &nonconvex_point_branch_left,
+            &nonconvex_point_branch_consumed_hole,
+        )
+        .expect("nonconvex point-touch side cutters should consume owned strict holes");
+    nonconvex_consumed_branch.validate().unwrap();
+    nonconvex_consumed_branch
+        .validate_difference_against_sources(
+            &nonconvex_point_branch_left,
+            &nonconvex_point_branch_consumed_hole,
+        )
+        .unwrap();
+    assert!(nonconvex_consumed_branch.polygons.len() >= 2);
+    assert!(nonconvex_consumed_branch.polygons.iter().all(|polygon| {
+        polygon.iter().all(|point| {
+            !(real_eq(&point.x, &ExactReal::from(2)) && real_eq(&point.y, &ExactReal::from(5)))
+        })
+    }));
+    let nonconvex_consumed_branch_preflight = hypermesh::exact::preflight_boolean_exact(
+        &nonconvex_point_branch_left,
+        &nonconvex_point_branch_consumed_hole,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    nonconvex_consumed_branch_preflight.validate().unwrap();
+    nonconvex_consumed_branch_preflight
+        .validate_against_sources(
+            &nonconvex_point_branch_left,
+            &nonconvex_point_branch_consumed_hole,
+        )
+        .unwrap();
+    assert_eq!(
+        nonconvex_consumed_branch_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchDifference
+    );
+    let nonconvex_consumed_branch_result = hypermesh::exact::boolean_exact(
+        &nonconvex_point_branch_left,
+        &nonconvex_point_branch_consumed_hole,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    nonconvex_consumed_branch_result
+        .validate_operation_against_sources(
+            &nonconvex_point_branch_left,
+            &nonconvex_point_branch_consumed_hole,
+            hypermesh::exact::ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
 
     let multi_component_nonconvex_point_branch_left = ExactMesh::from_i64_triangles_with_policy(
         &[

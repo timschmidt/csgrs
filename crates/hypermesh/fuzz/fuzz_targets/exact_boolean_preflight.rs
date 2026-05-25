@@ -4239,6 +4239,52 @@ fn exercise_side_cutter_opening_without_holes() {
         .unwrap();
     assert_eq!(point_branch_result.mesh, point_branch.mesh);
 
+    let point_branch_consumed_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            2, 5, 0, 3, 5, 0, 3, 6, 0, 2, 6, 0, //
+            -2, 4, 0, 8, 4, 0, 10, 10, 0, -2, 10, 0, //
+            10, 10, 0, 22, 10, 0, 22, 16, 0, 14, 16, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7, //
+            8, 9, 10, 8, 10, 11,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("point-branch consumed-hole side-cutter fixture must import");
+    assert!(
+        arrange_coplanar_surface_multi_difference(&left, &point_branch_consumed_hole).is_none()
+    );
+    assert!(
+        arrange_coplanar_convex_surface_component_holed_difference(
+            &left,
+            &point_branch_consumed_hole,
+        )
+        .is_none()
+    );
+    let point_branch_consumed =
+        arrange_coplanar_surface_point_touch_difference(&left, &point_branch_consumed_hole)
+            .expect("point-touch side cutters should consume owned strict holes");
+    point_branch_consumed.validate().unwrap();
+    point_branch_consumed
+        .validate_difference_against_sources(&left, &point_branch_consumed_hole)
+        .unwrap();
+    let point_branch_consumed_preflight = preflight_boolean_exact(
+        &left,
+        &point_branch_consumed_hole,
+        ExactBooleanOperation::Difference,
+    )
+    .expect("point-touch consumed-hole preflight should classify shortcut");
+    point_branch_consumed_preflight.validate().unwrap();
+    point_branch_consumed_preflight
+        .validate_against_sources(&left, &point_branch_consumed_hole)
+        .unwrap();
+    assert_eq!(
+        point_branch_consumed_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchDifference
+    );
+
     let multi_component_point_branch_left = ExactMesh::from_i64_triangles_with_policy(
         &[
             0, 0, 0, 20, 0, 0, 20, 20, 0, 0, 20, 0, //
@@ -4350,6 +4396,25 @@ fn exercise_side_cutter_opening_without_holes() {
         )
         .unwrap();
     assert_eq!(nonconvex_point_branch_result.mesh, nonconvex_point_branch.mesh);
+
+    let nonconvex_point_branch_consumed =
+        arrange_coplanar_surface_point_touch_difference(&nonconvex_left, &point_branch_consumed_hole)
+            .expect("nonconvex point-touch side cutters should consume owned strict holes");
+    nonconvex_point_branch_consumed.validate().unwrap();
+    nonconvex_point_branch_consumed
+        .validate_difference_against_sources(&nonconvex_left, &point_branch_consumed_hole)
+        .unwrap();
+    let nonconvex_consumed_preflight = preflight_boolean_exact(
+        &nonconvex_left,
+        &point_branch_consumed_hole,
+        ExactBooleanOperation::Difference,
+    )
+    .expect("nonconvex point-touch consumed-hole preflight should classify shortcut");
+    nonconvex_consumed_preflight.validate().unwrap();
+    assert_eq!(
+        nonconvex_consumed_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchDifference
+    );
 
     let multi_component_nonconvex_left = ExactMesh::from_i64_triangles_with_policy(
         &[

@@ -7793,13 +7793,16 @@ pub fn arrange_coplanar_surface_side_cutter_difference(
 /// The certificate is source-local. A multi-component left operand may retain
 /// unaffected convex source components while one or more other components
 /// produce point-branch remnants. This is still not a general planar
-/// arrangement: strict interior holes, boundary-only ambiguities, and
-/// non-branch single-cut remnants stay on their narrower artifacts. The
-/// retained-object split follows Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997): every emitted loop is either an
-/// unchanged exact source hull or the replay of a local branch subtraction.
-/// The branch subtraction itself uses the Weiler-Atherton retained-fragment
-/// walk cited by [`materialize_side_cutter_point_touch_difference_core`].
+/// arrangement: retained holes, boundary-only ambiguities, and non-branch
+/// single-cut remnants stay on their narrower artifacts. Strict interior
+/// holes may be deleted here only when exact containment proves every ring is
+/// wholly owned by one removed branch opening. The retained-object split
+/// follows Yap, "Towards Exact Geometric Computation," *Computational
+/// Geometry* 7.1-2 (1997): every emitted loop is either an unchanged exact
+/// source hull or the replay of a local branch subtraction, and every omitted
+/// ring has a named removed owner. The branch subtraction itself uses the
+/// Weiler-Atherton retained-fragment walk cited by
+/// [`materialize_side_cutter_point_touch_difference_core`].
 #[cfg(feature = "exact-triangulation")]
 pub fn arrange_coplanar_surface_point_touch_difference(
     left: &ExactMesh,
@@ -7852,6 +7855,7 @@ pub fn arrange_coplanar_surface_point_touch_difference(
     for left_component in &left_components {
         let mut dropped = false;
         let mut cut_indices = Vec::new();
+        let mut holes = Vec::new();
         for (right_index, right_component) in right_components.iter().enumerate() {
             if polygons_equal(&left_component.hull, &right_component.hull)
                 || polygon_in_closed_convex_polygon(
@@ -7882,6 +7886,16 @@ pub fn arrange_coplanar_surface_point_touch_difference(
                     cut_indices.push(right_index);
                     continue;
                 }
+                if polygon_strictly_inside_convex_polygon(
+                    &right_component.hull,
+                    &left_component.hull,
+                    projection,
+                )? {
+                    let mut ring = right_component.hull.clone();
+                    orient_polygon_cw(&mut ring, projection)?;
+                    holes.push(ComponentHoleCandidate { ring, right_index });
+                    continue;
+                }
                 return None;
             }
 
@@ -7904,18 +7918,32 @@ pub fn arrange_coplanar_surface_point_touch_difference(
             continue;
         }
         if cut_indices.is_empty() {
+            if !holes.is_empty() {
+                return None;
+            }
             polygons.push(left_component.hull.clone());
             continue;
         }
         if cut_indices.len() < 2 {
             return None;
         }
-        let (_, mut branch_polygons) = materialize_side_cutter_point_touch_difference_core(
-            left_component,
-            &cut_indices,
-            &right_components,
-            "coplanar point-touch side-cutter difference",
-        )?;
+        let mut branch_polygons = if holes.is_empty() {
+            materialize_side_cutter_point_touch_difference_core(
+                left_component,
+                &cut_indices,
+                &right_components,
+                "coplanar point-touch side-cutter difference",
+            )?
+            .1
+        } else {
+            materialize_side_cutter_point_touch_difference_consuming_holes(
+                left_component,
+                &cut_indices,
+                &holes,
+                &right_components,
+                "coplanar point-touch consumed-hole side-cutter difference",
+            )?
+        };
         emitted_branch = true;
         polygons.append(&mut branch_polygons);
     }
@@ -7957,10 +7985,12 @@ pub fn arrange_coplanar_surface_point_touch_difference(
 /// mesh is exported. This follows Yap's retained-object requirement from
 /// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
 /// (1997): a point branch is accepted only when exact topology, containment,
-/// and area facts name the output object. For multi-component simple-source
-/// operands this remains source-local: unaffected disks are copied as exact
-/// retained loops, covered disks may be dropped, and only the components with
-/// branch side cutters are replayed by the branch subtraction core.
+/// and area facts name the output object. Strict holes may be omitted only
+/// when the same exact branch replay proves that one removed opening owns the
+/// entire ring. For multi-component simple-source operands this remains
+/// source-local: unaffected disks are copied as exact retained loops, covered
+/// disks may be dropped, and only the components with branch side cutters are
+/// replayed by the branch subtraction core.
 #[cfg(feature = "exact-triangulation")]
 fn arrange_coplanar_simple_surface_point_touch_difference(
     left_component_meshes: Vec<ExactMesh>,
@@ -8003,7 +8033,8 @@ fn arrange_coplanar_simple_surface_point_touch_difference(
     for component in &mut left_components {
         let mut dropped = false;
         let mut removed = Vec::new();
-        for right_component in &right_components {
+        let mut holes = Vec::new();
+        for (right_index, right_component) in right_components.iter().enumerate() {
             if polygons_equal(&component.boundary, &right_component.hull)
                 || polygon_in_closed_convex_polygon(
                     &component.boundary,
@@ -8031,6 +8062,16 @@ fn arrange_coplanar_simple_surface_point_touch_difference(
                     projection,
                 )? == 0
                 {
+                    if polygon_strictly_inside_simple_polygon(
+                        &right_component.hull,
+                        &component.boundary,
+                        projection,
+                    )? {
+                        let mut ring = right_component.hull.clone();
+                        orient_polygon_cw(&mut ring, projection)?;
+                        holes.push(ComponentHoleCandidate { ring, right_index });
+                        continue;
+                    }
                     return None;
                 }
                 let mut cutter = right_component.hull.clone();
@@ -8062,18 +8103,30 @@ fn arrange_coplanar_simple_surface_point_touch_difference(
             continue;
         }
         if removed.is_empty() {
+            if !holes.is_empty() {
+                return None;
+            }
             polygons.push(component.boundary.clone());
             continue;
         }
         if removed.len() < 2 {
             return None;
         }
-        let (_, mut branch_polygons) =
+        let mut branch_polygons = if holes.is_empty() {
             materialize_simple_source_side_cutter_point_touch_difference_core(
                 component,
                 &removed,
                 "coplanar nonconvex source point-touch side-cutter difference",
-            )?;
+            )?
+            .1
+        } else {
+            materialize_simple_source_side_cutter_point_touch_difference_consuming_holes(
+                component,
+                &removed,
+                &holes,
+                "coplanar nonconvex source point-touch consumed-hole side-cutter difference",
+            )?
+        };
         emitted_branch = true;
         polygons.append(&mut branch_polygons);
     }
@@ -11067,6 +11120,63 @@ fn materialize_simple_source_side_cutter_component_holed_difference(
     )
 }
 
+/// Replay nonconvex source point branches whose strict holes are all consumed.
+///
+/// This is the no-hole sibling of
+/// [`materialize_simple_source_side_cutter_component_holed_difference`]. The
+/// branch replay still owns the hard topology: point-only removed-opening
+/// contacts are retained as duplicated output vertices, while positive
+/// removed contacts are merged before the final retained-fragment walk. The
+/// only extra permission granted here is deletion of strict source holes, and
+/// that is allowed only when exact simple-polygon containment names exactly
+/// one removed opening as the owner of every omitted ring.
+///
+/// This is the retained-object rule from Yap, "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7.1-2 (1997), applied to branch
+/// topology: branch vertices and consumed rings are object facts carried by
+/// the certificate, not sampled side effects. The boundary replay remains the
+/// Weiler-Atherton traversal cited by
+/// [`materialize_simple_source_side_cutter_point_touch_difference_core`].
+#[cfg(feature = "exact-triangulation")]
+fn materialize_simple_source_side_cutter_point_touch_difference_consuming_holes(
+    component: &SimpleSurfaceComponent,
+    side_removed: &[Vec<Point3>],
+    holes: &[ComponentHoleCandidate],
+    label: &'static str,
+) -> Option<Vec<Vec<Point3>>> {
+    if side_removed.len() < 2 || holes.is_empty() {
+        return None;
+    }
+    let projection = component.projection;
+    let (removed_openings, mut cut_polygons) =
+        materialize_simple_source_side_cutter_point_touch_difference_core(
+            component,
+            side_removed,
+            label,
+        )?;
+    for hole in holes {
+        if !hole_strictly_consumed_by_one_removed_opening(
+            &hole.ring,
+            &removed_openings,
+            projection,
+        )? {
+            return None;
+        }
+    }
+    for polygon in &mut cut_polygons {
+        orient_polygon_ccw(polygon, projection)?;
+        validate_projected_simple_loop(polygon, projection, label).ok()?;
+    }
+    validate_simple_component_loops_disjoint_allowing_vertex_point_touches(
+        &cut_polygons,
+        projection,
+        label,
+    )
+    .ok()?;
+    sort_polygons_for_replay(&mut cut_polygons, projection);
+    Some(cut_polygons)
+}
+
 /// Replay a nonconvex source difference whose strict holes are all consumed.
 ///
 /// The public no-hole artifact must not route through a component-holed object
@@ -11965,6 +12075,69 @@ fn materialize_side_cutter_point_touch_component_holed_difference(
             .map(|(outer, holes)| CoplanarConvexHoledComponent { outer, holes })
             .collect(),
     )
+}
+
+/// Replay point-branch side cutters whose strict holes are all consumed.
+///
+/// [`CoplanarSurfacePointTouchDifference`] is the only existing surface
+/// artifact that can honestly retain these outputs: the retained loops share
+/// exact branch vertices, so a disjoint multi-difference would erase topology.
+/// This helper therefore reuses
+/// [`materialize_side_cutter_point_touch_difference_core`] and merely adds the
+/// no-retained-hole ownership gate. Every strict hole must be wholly inside
+/// exactly one removed branch opening before it may be omitted from the
+/// output; retained holes stay with
+/// [`materialize_side_cutter_point_touch_component_holed_difference`].
+///
+/// Yap's "Towards Exact Geometric Computation," *Computational Geometry*
+/// 7.1-2 (1997), is the policy boundary: deleting a ring is a certified
+/// object-level fact, not a consequence of a representative point. The branch
+/// loops themselves are still stitched by the Weiler-Atherton retained-edge
+/// replay cited by [`materialize_side_cutter_point_touch_difference_core`].
+#[cfg(feature = "exact-triangulation")]
+fn materialize_side_cutter_point_touch_difference_consuming_holes(
+    component: &ConvexUnionComponent,
+    cut_indices: &[usize],
+    holes: &[ComponentHoleCandidate],
+    right_components: &[ConvexUnionComponent],
+    label: &'static str,
+) -> Option<Vec<Vec<Point3>>> {
+    if cut_indices.len() < 2 || holes.is_empty() {
+        return None;
+    }
+    let projection = component.projection;
+    let (removed_openings, mut cut_polygons) = materialize_side_cutter_point_touch_difference_core(
+        component,
+        cut_indices,
+        right_components,
+        label,
+    )?;
+    certify_removed_openings_collectively_split_source_component(
+        &component.hull,
+        &removed_openings,
+        projection,
+    )?;
+    for hole in holes {
+        if !hole_strictly_consumed_by_one_removed_opening(
+            &hole.ring,
+            &removed_openings,
+            projection,
+        )? {
+            return None;
+        }
+    }
+    for polygon in &mut cut_polygons {
+        orient_polygon_ccw(polygon, projection)?;
+        validate_projected_simple_loop(polygon, projection, label).ok()?;
+    }
+    validate_simple_component_loops_disjoint_allowing_vertex_point_touches(
+        &cut_polygons,
+        projection,
+        label,
+    )
+    .ok()?;
+    sort_polygons_for_replay(&mut cut_polygons, projection);
+    Some(cut_polygons)
 }
 
 /// Replay non-rectilinear side cutters as removed openings and one output loop.
