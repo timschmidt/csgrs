@@ -1,8 +1,8 @@
 #![no_main]
 
 use hypercurve::{
-    BezierArrangementGraph2, BezierParameter2, BezierRegion2, BezierRetainedRegion2,
-    Classification, CurvePolicy, Point2, QuadraticBezier2, Real,
+    BezierArrangementGraph2, BezierParameter2, BezierRegion2, BezierRetainedEndpointEnvelope2,
+    BezierRetainedRegion2, Classification, CurvePolicy, Point2, QuadraticBezier2, Real,
 };
 use libfuzzer_sys::fuzz_target;
 
@@ -55,6 +55,9 @@ fuzz_target!(|data: &[u8]| {
     if let Classification::Decided(traversal) = graph.traverse_retained_with_tangent_order(&policy)
     {
         let _ = BezierRetainedRegion2::from_retained_arrangement_traversal(&graph, &traversal)
-            .map(|region| region.signed_area());
+            .map(|region| {
+                let _ = region.signed_area();
+                let _ = BezierRetainedEndpointEnvelope2::from_region(&region, &policy);
+            });
     }
 });

@@ -1,8 +1,9 @@
 use hypercurve::{
     BezierAlgebraicEndpointImage2, BezierAlgebraicParameter2, BezierArrangementFragment2,
     BezierArrangementGraph2, BezierParameter2, BezierParameterInterval, BezierParameterPolynomial,
-    BezierRegion2, BezierRetainedRegion2, BezierSplitFragment2, Classification, CurvePolicy,
-    Point2, QuadraticBezier2, RationalQuadraticBezier2, Real, UncertaintyReason,
+    BezierRegion2, BezierRetainedBoundaryLoop2, BezierRetainedEndpointEnvelope2,
+    BezierRetainedRegion2, BezierSplitFragment2, Classification, CurvePolicy, Point2,
+    QuadraticBezier2, RationalQuadraticBezier2, Real, UncertaintyReason,
 };
 use proptest::prelude::*;
 
@@ -154,6 +155,15 @@ fn retained_region_materializes_closed_algebraic_carrier_loop_without_area_sampl
     assert_eq!(retained.boundary_loops()[0].len(), 2);
     assert!(retained.has_algebraic_fragments());
     assert_eq!(retained.signed_area().unwrap(), None);
+    let envelope = decided(BezierRetainedEndpointEnvelope2::from_region(
+        &retained,
+        &policy(),
+    ));
+    assert_eq!(envelope.envelope().min(), &p(0, 0));
+    assert_eq!(envelope.envelope().max(), &p(1, 0));
+    assert_eq!(envelope.algebraic_endpoint_count(), 4);
+    assert_eq!(envelope.native_endpoint_count(), 0);
+    assert!(envelope.has_algebraic_endpoints());
 }
 
 #[test]
@@ -173,6 +183,24 @@ fn retained_region_rejects_unresolved_carriers_even_when_marked_closed() {
 
     assert_eq!(
         BezierRetainedRegion2::from_retained_arrangement_traversal(&graph, &traversal),
+        Classification::Uncertain(UncertaintyReason::Boundary)
+    );
+}
+
+#[test]
+fn retained_endpoint_envelope_rejects_incomplete_algebraic_endpoint_evidence() {
+    let parameter = BezierParameter2::algebraic(algebraic_midpoint_parameter());
+    let partial = BezierSplitFragment2::AlgebraicEndpointImages {
+        start: parameter.clone(),
+        end: parameter,
+        start_image: Some(algebraic_image(&line_midpoint_curve(-1, 0, 1))),
+        end_image: None,
+    };
+    let retained =
+        BezierRetainedRegion2::new(vec![BezierRetainedBoundaryLoop2::new(vec![partial])]);
+
+    assert_eq!(
+        BezierRetainedEndpointEnvelope2::from_region(&retained, &policy()),
         Classification::Uncertain(UncertaintyReason::Boundary)
     );
 }
