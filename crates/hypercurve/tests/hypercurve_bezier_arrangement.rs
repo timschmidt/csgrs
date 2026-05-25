@@ -889,10 +889,14 @@ fn retained_linear_overlap_refinement_reports_reversed_span_orientation() {
         resolved.extent(),
         BezierRetainedLineOverlapExtent2::PartialFirstFullSecond
     );
+    let traversal = decided(graph.traverse_retained_splitting_linear_overlaps(&policy()));
     assert_eq!(
-        graph.traverse_retained_splitting_linear_overlaps(&policy()),
-        Classification::Uncertain(UncertaintyReason::Boundary)
+        traversal.refined_traversal().shadowed_fragment_indices(),
+        &[1, 2]
     );
+    assert_eq!(traversal.traversal().len(), 1);
+    assert_eq!(traversal.traversal().closed_count(), 0);
+    assert_eq!(traversal.traversal().chains()[0].fragment_indices(), &[0]);
 }
 
 #[test]
@@ -960,6 +964,79 @@ fn retained_linear_overlap_traversal_splits_and_consumes_duplicate_span_in_loop(
     assert_eq!(
         traversal.refinement().refined_fragments()[2].local_range(),
         &hypercurve::ParamRange::new(r(0), r(1))
+    );
+}
+
+#[test]
+fn retained_linear_overlap_traversal_cancels_reversed_internal_span_in_loop() {
+    let left_bottom = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0))),
+    };
+    let shared_up = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(2, 0), p(2, 1), p(2, 2))),
+    };
+    let left_top = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(2, 2), p(1, 2), p(0, 2))),
+    };
+    let left_edge = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 2), p(0, 1), p(0, 0))),
+    };
+    let right_bottom = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(2, 0), p(3, 0), p(4, 0))),
+    };
+    let right_edge = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(4, 0), p(4, 1), p(4, 2))),
+    };
+    let right_top = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(4, 2), p(3, 2), p(2, 2))),
+    };
+    let shared_down = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(2, 2), p(2, 1), p(2, 0))),
+    };
+    let graph = BezierArrangementGraph2::new(vec![
+        hypercurve::BezierArrangementFragment2::new(0, 0, left_bottom),
+        hypercurve::BezierArrangementFragment2::new(0, 1, shared_up),
+        hypercurve::BezierArrangementFragment2::new(0, 2, left_top),
+        hypercurve::BezierArrangementFragment2::new(0, 3, left_edge),
+        hypercurve::BezierArrangementFragment2::new(1, 0, right_bottom),
+        hypercurve::BezierArrangementFragment2::new(1, 1, right_edge),
+        hypercurve::BezierArrangementFragment2::new(1, 2, right_top),
+        hypercurve::BezierArrangementFragment2::new(1, 3, shared_down),
+    ]);
+
+    assert_eq!(
+        graph.traverse_retained_deduplicating_materialized_overlaps(&policy()),
+        Classification::Uncertain(UncertaintyReason::Boundary)
+    );
+    let traversal = decided(graph.traverse_retained_splitting_linear_overlaps(&policy()));
+
+    assert_eq!(traversal.refinement().overlap_report().len(), 1);
+    assert!(traversal.refinement().resolved_overlaps().is_empty());
+    assert_eq!(
+        traversal.refined_traversal().shadowed_fragment_indices(),
+        &[1, 7]
+    );
+    assert_eq!(traversal.traversal().len(), 1);
+    assert_eq!(traversal.traversal().closed_count(), 1);
+    assert_eq!(
+        traversal.traversal().chains()[0].fragment_indices(),
+        &[0, 4, 5, 6, 2, 3]
     );
 }
 

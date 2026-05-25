@@ -2,9 +2,11 @@ use std::hint::black_box;
 use std::time::Instant;
 
 use hypercurve::{
-    BezierAlgebraicParameter2, BezierArrangementGraph2, BezierParameter2, BezierParameterInterval,
-    BezierParameterPolynomial, BezierRetainedOverlapReport2, Classification, CubicBezier2,
-    CurvePolicy, CurveResult, Point2, QuadraticBezier2, RationalQuadraticBezier2, Real,
+    BezierAlgebraicParameter2, BezierArrangementFragment2, BezierArrangementGraph2,
+    BezierParameter2, BezierParameterInterval, BezierParameterPolynomial,
+    BezierRetainedOverlapReport2, BezierSplitFragment2, BezierSubcurve2, Classification,
+    CubicBezier2, CurvePolicy, CurveResult, Point2, QuadraticBezier2, RationalQuadraticBezier2,
+    Real,
 };
 
 fn r(value: i32) -> Real {
@@ -24,6 +26,23 @@ fn decided<T>(classification: Classification<T>) -> T {
         Classification::Decided(value) => value,
         Classification::Uncertain(reason) => panic!("benchmark unexpectedly uncertain: {reason:?}"),
     }
+}
+
+fn line_fragment(
+    source: usize,
+    start: Point2,
+    control: Point2,
+    end: Point2,
+) -> BezierArrangementFragment2 {
+    BezierArrangementFragment2::new(
+        source,
+        0,
+        BezierSplitFragment2::Materialized {
+            start: BezierParameter2::Exact(r(0)),
+            end: BezierParameter2::Exact(r(1)),
+            curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(start, control, end)),
+        },
+    )
 }
 
 fn main() -> CurveResult<()> {
@@ -93,6 +112,37 @@ fn main() -> CurveResult<()> {
     let elapsed = started.elapsed();
     println!(
         "bezier_arrangement_tangent_order: {iterations} iterations in {elapsed:?} ({:?}/iter), total={total}",
+        elapsed / iterations
+    );
+
+    let reversed_internal_overlap_graph = BezierArrangementGraph2::new(vec![
+        line_fragment(0, p(0, 0), p(1, 0), p(2, 0)),
+        line_fragment(0, p(2, 0), p(2, 1), p(2, 2)),
+        line_fragment(0, p(2, 2), p(1, 2), p(0, 2)),
+        line_fragment(0, p(0, 2), p(0, 1), p(0, 0)),
+        line_fragment(1, p(2, 0), p(3, 0), p(4, 0)),
+        line_fragment(1, p(4, 0), p(4, 1), p(4, 2)),
+        line_fragment(1, p(4, 2), p(3, 2), p(2, 2)),
+        line_fragment(1, p(2, 2), p(2, 1), p(2, 0)),
+    ]);
+    let started = Instant::now();
+    let mut reversed_overlap_total = 0_usize;
+    for _ in 0..iterations {
+        let traversal = decided(
+            reversed_internal_overlap_graph.traverse_retained_splitting_linear_overlaps(&policy),
+        );
+        reversed_overlap_total += black_box(
+            traversal.traversal().len()
+                + traversal.traversal().closed_count()
+                + traversal
+                    .refined_traversal()
+                    .shadowed_fragment_indices()
+                    .len(),
+        );
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "bezier_arrangement_reversed_linear_overlap_cancellation: {iterations} iterations in {elapsed:?} ({:?}/iter), total={reversed_overlap_total}",
         elapsed / iterations
     );
 

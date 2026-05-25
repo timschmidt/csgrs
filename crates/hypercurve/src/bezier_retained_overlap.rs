@@ -621,10 +621,16 @@ impl BezierArrangementGraph2 {
     /// Traverses after resolving certified linearly-parameterized overlaps.
     ///
     /// This method handles the conservative case where overlap endpoints split
-    /// the graph into ordinary subfragments and the shared overlap subfragment
-    /// is a same-oriented exact duplicate.  Reversed overlaps, nonlinear line
-    /// images, algebraic endpoint-image fragments without native subcurves, and
-    /// remaining branch ambiguities still return explicit uncertainty.
+    /// the graph into ordinary subfragments. Same-oriented overlap spans shadow
+    /// one duplicate copy; opposite-oriented spans cancel both copies because
+    /// they represent the same positive-dimensional boundary traversed in
+    /// opposite directions.  The cancellation is applied only to
+    /// [`BezierRetainedResolvedLinearOverlap2`] records produced by exact
+    /// refinement, preserving Yap's object/predicate separation and the
+    /// overlap-degeneracy discipline of Foster, Hormann, and Popa (2019).
+    /// Nonlinear line images, algebraic endpoint-image fragments without native
+    /// subcurves, and remaining branch ambiguities still return explicit
+    /// uncertainty.
     pub fn traverse_retained_splitting_linear_overlaps(
         &self,
         policy: &CurvePolicy,
@@ -638,6 +644,12 @@ impl BezierArrangementGraph2 {
             .traverse_retained_deduplicating_materialized_overlaps(policy)
         {
             Classification::Decided(traversal) => traversal,
+            Classification::Uncertain(UncertaintyReason::Boundary) => {
+                match traverse_consuming_resolved_linear_overlaps(&refinement, policy) {
+                    Classification::Decided(traversal) => traversal,
+                    Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+                }
+            }
             Classification::Uncertain(reason) => return Classification::Uncertain(reason),
         };
         Classification::Decided(BezierRetainedLinearOverlapTraversal2::new(
@@ -1245,6 +1257,95 @@ fn duplicate_shadow_indices(
             .filter_map(|(index, shadowed)| shadowed.then_some(index))
             .collect(),
     )
+}
+
+fn traverse_consuming_resolved_linear_overlaps(
+    refinement: &BezierRetainedLinearOverlapSplitGraph2,
+    policy: &CurvePolicy,
+) -> Classification<BezierRetainedOverlapTraversal2> {
+    let consumed_fragment_indices =
+        match refined_overlap_consumed_indices(refinement.graph(), policy) {
+            Classification::Decided(indices) => indices,
+            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+        };
+    if consumed_fragment_indices.is_empty() {
+        return Classification::Uncertain(UncertaintyReason::Boundary);
+    }
+    let (filtered, original_indices) =
+        filtered_graph(refinement.graph(), &consumed_fragment_indices);
+    if filtered.is_empty() {
+        return Classification::Uncertain(UncertaintyReason::Boundary);
+    }
+    let filtered_traversal = match filtered.traverse_retained_with_tangent_order(policy) {
+        Classification::Decided(traversal) => traversal,
+        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+    };
+    Classification::Decided(BezierRetainedOverlapTraversal2 {
+        traversal: remap_traversal_indices(filtered_traversal, &original_indices),
+        overlap_report: refinement.overlap_report().clone(),
+        shadowed_fragment_indices: consumed_fragment_indices,
+    })
+}
+
+fn refined_overlap_consumed_indices(
+    graph: &BezierArrangementGraph2,
+    policy: &CurvePolicy,
+) -> Classification<Vec<usize>> {
+    let report = match BezierRetainedOverlapReport2::from_graph(graph, policy) {
+        Classification::Decided(report) => report,
+        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+    };
+    let mut consumed = vec![false; graph.len()];
+    for overlap in report.overlaps() {
+        if !overlap_relation_can_shadow_duplicate(overlap.relation()) {
+            return Classification::Uncertain(UncertaintyReason::Boundary);
+        }
+        let orientation = match refined_overlap_orientation(
+            graph,
+            overlap.first_fragment_index(),
+            overlap.second_fragment_index(),
+            policy,
+        ) {
+            Classification::Decided(orientation) => orientation,
+            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+        };
+        match orientation {
+            BezierRetainedOverlapOrientation2::Same => {
+                if let Classification::Uncertain(reason) =
+                    mark_consumed(&mut consumed, overlap.second_fragment_index())
+                {
+                    return Classification::Uncertain(reason);
+                }
+            }
+            BezierRetainedOverlapOrientation2::Opposite => {
+                if let Classification::Uncertain(reason) =
+                    mark_consumed(&mut consumed, overlap.first_fragment_index())
+                {
+                    return Classification::Uncertain(reason);
+                }
+                if let Classification::Uncertain(reason) =
+                    mark_consumed(&mut consumed, overlap.second_fragment_index())
+                {
+                    return Classification::Uncertain(reason);
+                }
+            }
+        }
+    }
+    Classification::Decided(
+        consumed
+            .into_iter()
+            .enumerate()
+            .filter_map(|(index, consumed)| consumed.then_some(index))
+            .collect(),
+    )
+}
+
+fn mark_consumed(consumed: &mut [bool], index: usize) -> Classification<()> {
+    let Some(slot) = consumed.get_mut(index) else {
+        return Classification::Uncertain(UncertaintyReason::Unsupported);
+    };
+    *slot = true;
+    Classification::Decided(())
 }
 
 fn overlap_relation_can_shadow_duplicate(relation: &BezierRetainedOverlapRelation2) -> bool {

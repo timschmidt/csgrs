@@ -1,7 +1,8 @@
 #![no_main]
 
 use hypercurve::{
-    BezierArrangementGraph2, BezierParameter2, BezierRetainedOverlapReport2, Classification,
+    BezierArrangementFragment2, BezierArrangementGraph2, BezierParameter2,
+    BezierRetainedOverlapReport2, BezierSplitFragment2, BezierSubcurve2, Classification,
     CubicBezier2, CurvePolicy, Point2, QuadraticBezier2, RationalQuadraticBezier2, Real,
 };
 use libfuzzer_sys::fuzz_target;
@@ -16,6 +17,26 @@ fn unit_from_byte(byte: u8) -> Real {
 
 fn point(x: u8, y: u8) -> Point2 {
     Point2::new(real_from_byte(x), real_from_byte(y))
+}
+
+fn exact_zero() -> BezierParameter2 {
+    BezierParameter2::Exact(Real::zero())
+}
+
+fn exact_one() -> BezierParameter2 {
+    BezierParameter2::Exact(Real::one())
+}
+
+fn line_fragment(source: usize, start: Point2, control: Point2, end: Point2) -> BezierArrangementFragment2 {
+    BezierArrangementFragment2::new(
+        source,
+        0,
+        BezierSplitFragment2::Materialized {
+            start: exact_zero(),
+            end: exact_one(),
+            curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(start, control, end)),
+        },
+    )
 }
 
 fuzz_target!(|data: &[u8]| {
@@ -66,6 +87,18 @@ fuzz_target!(|data: &[u8]| {
         let _ = report.line_overlap_splits(&policy);
         let _ = report.linear_bezier_overlap_splits(&graph, &policy);
     });
+
+    let reversed_internal_overlap_graph = BezierArrangementGraph2::new(vec![
+        line_fragment(0, point(128, 128), point(129, 128), point(130, 128)),
+        line_fragment(0, point(130, 128), point(130, 129), point(130, 130)),
+        line_fragment(0, point(130, 130), point(129, 130), point(128, 130)),
+        line_fragment(0, point(128, 130), point(128, 129), point(128, 128)),
+        line_fragment(1, point(130, 128), point(131, 128), point(132, 128)),
+        line_fragment(1, point(132, 128), point(132, 129), point(132, 130)),
+        line_fragment(1, point(132, 130), point(131, 130), point(130, 130)),
+        line_fragment(1, point(130, 130), point(130, 129), point(130, 128)),
+    ]);
+    let _ = reversed_internal_overlap_graph.traverse_retained_splitting_linear_overlaps(&policy);
 
     let same_tangent_curves = [
         QuadraticBezier2::new(point(128, 128), point(129, 128), point(130, 128)),

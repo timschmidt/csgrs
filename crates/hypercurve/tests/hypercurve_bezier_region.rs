@@ -272,6 +272,39 @@ fn resolved_linear_overlap_traversal_materializes_native_and_retained_regions() 
 }
 
 #[test]
+fn reversed_internal_overlap_traversal_materializes_union_boundary() {
+    let graph = BezierArrangementGraph2::new(vec![
+        materialized_line_fragment(0, p(0, 0), p(1, 0), p(2, 0)),
+        materialized_line_fragment(0, p(2, 0), p(2, 1), p(2, 2)),
+        materialized_line_fragment(0, p(2, 2), p(1, 2), p(0, 2)),
+        materialized_line_fragment(0, p(0, 2), p(0, 1), p(0, 0)),
+        materialized_line_fragment(1, p(2, 0), p(3, 0), p(4, 0)),
+        materialized_line_fragment(1, p(4, 0), p(4, 1), p(4, 2)),
+        materialized_line_fragment(1, p(4, 2), p(3, 2), p(2, 2)),
+        materialized_line_fragment(1, p(2, 2), p(2, 1), p(2, 0)),
+    ]);
+
+    let traversal = decided(graph.traverse_retained_splitting_linear_overlaps(&policy()));
+    assert_eq!(
+        traversal.refined_traversal().shadowed_fragment_indices(),
+        &[1, 7]
+    );
+
+    let retained =
+        decided(BezierRetainedRegion2::from_retained_linear_overlap_traversal(&traversal));
+    assert_eq!(retained.len(), 1);
+    assert_eq!(retained.boundary_loops()[0].len(), 6);
+    assert_eq!(retained.signed_area().unwrap(), Some(r(8)));
+
+    let native = decided(BezierRegion2::from_retained_linear_overlap_traversal(
+        &traversal,
+    ));
+    assert_eq!(native.len(), 1);
+    assert_eq!(native.boundary_loops()[0].len(), 6);
+    assert_eq!(native.signed_area().unwrap(), Some(r(8)));
+}
+
+#[test]
 fn retained_line_image_role_report_assigns_nested_material_and_hole() {
     let outer = retained_line_loop(&[p(0, 0), p(6, 0), p(6, 6), p(0, 6)]);
     let same_orientation_inner = retained_line_loop(&[p(2, 2), p(4, 2), p(4, 4), p(2, 4)]);
