@@ -2,12 +2,13 @@
 
 use hyperlimit::{Point2, PredicatePolicy};
 use hyperpath::{
-    AxisAlignedSweptSegmentPrism, BeadFillAxis, CamOrthogonalIslandPocketCutter,
-    CamRestMaterialCutter, CamSupportClipBoundary, CardinalRotation, LinePathSegment, NetId,
-    PathExactMeshHandoffSource, PathMeshBooleanOperation, PathMeshBooleanProgramStep,
-    PcbCardinalRectPad, PcbCompositeCopperBooleanSource, PcbConvexPolyPad,
-    PcbCopperBoardClipOutline, PcbCopperBooleanSource, PcbExactBoardCutoutHandoff,
-    PcbExactBoardHandoffOutline, PcbExactCopperHandoffSource, PcbHoledOrthogonalBoardClipOutline,
+    AxisAlignedSweptSegmentPrism, BeadFillAxis, CamExactClipCutoutHandoff,
+    CamOrthogonalIslandPocketCutter, CamRestMaterialCutter, CamSupportClipBoundary,
+    CardinalRotation, LinePathSegment, NetId, PathExactMeshHandoffSource, PathMeshBooleanOperation,
+    PathMeshBooleanProgramStep, PathProvenance, PcbCardinalRectPad,
+    PcbCompositeCopperBooleanSource, PcbConvexPolyPad, PcbCopperBoardClipOutline,
+    PcbCopperBooleanSource, PcbExactBoardCutoutHandoff, PcbExactBoardHandoffOutline,
+    PcbExactCopperHandoffSource, PcbHoledOrthogonalBoardClipOutline,
     PcbHoledOrthogonalCopperSource, PcbLayerZModel, PcbOrthogonalBoardOutline,
     PcbOrthogonalPolyPad, PcbRectPad, PcbTrace, SweptLineSegment, TraceLayer,
     boolean_path_mesh_program, boolean_path_mesh_sources, boolean_rectangular_prism_chain,
@@ -790,7 +791,7 @@ fuzz_target!(|data: &[u8]| {
                             )
                             && let Ok(boundary) = CamSupportClipBoundary::exact_handoff(handoff)
                             && let Ok(report) = build_cam_support_clip_program(
-                                support,
+                                support.clone(),
                                 z_min,
                                 z_max,
                                 boundary,
@@ -799,6 +800,58 @@ fuzz_target!(|data: &[u8]| {
                         {
                             report.validate_replay(PredicatePolicy::default()).unwrap();
                             report.program.steps.last().unwrap().result.validate().unwrap();
+                        }
+                    }
+                    if data[15] & 1 == 1 {
+                        let z_min = Real::from(left_min[2]);
+                        let z_max = Real::from(left_max[2]);
+                        let cutout_min = min.clone();
+                        let cutout_max = Point2::new(
+                            cutout_min.x.clone() + Real::from(1),
+                            cutout_min.y.clone() + Real::from(1),
+                        );
+                        if let Ok(cutout_pocket) =
+                            hyperpath::RectangularPocket::new(cutout_min, cutout_max)
+                            && let Ok(cutout_prism) = hyperpath::RectangularPrism::new(
+                                cutout_pocket,
+                                z_min.clone(),
+                                z_max.clone(),
+                                PredicatePolicy::default(),
+                            )
+                            && let Ok(handoff) = PathExactMeshHandoffSource::from_exact_mesh(
+                                cutout_prism.to_exact_mesh().unwrap(),
+                            )
+                            && let Ok(cutout) = CamExactClipCutoutHandoff::new(handoff)
+                            && let Ok(boundary) =
+                                CamSupportClipBoundary::holed_simple_with_exact_cutouts(
+                                    vec![
+                                        min.clone(),
+                                        Point2::new(max.x.clone(), min.y.clone()),
+                                        max.clone(),
+                                        Point2::new(min.x.clone(), max.y.clone()),
+                                    ],
+                                    vec![],
+                                    vec![cutout],
+                                    PathProvenance::native(),
+                                    PredicatePolicy::default(),
+                                )
+                            && let Ok(report) = build_cam_support_clip_program(
+                                support,
+                                z_min,
+                                z_max,
+                                boundary,
+                                PredicatePolicy::default(),
+                            )
+                        {
+                            report.validate_replay(PredicatePolicy::default()).unwrap();
+                            report
+                                .program
+                                .steps
+                                .last()
+                                .unwrap()
+                                .result
+                                .validate()
+                                .unwrap();
                         }
                     }
                 }

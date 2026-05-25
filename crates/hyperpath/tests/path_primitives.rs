@@ -2,30 +2,31 @@ use hyperlimit::{Point2, PredicatePolicy};
 use hyperpath::{
     ArcDirection, ArcOffsetError, Axis, AxisAlignedSweptSegmentPrism, BeadFillAxis, BeadPlanError,
     BezierOffsetError, BezierParameter, BezierParameterError, BoardContourError,
-    BoardContourOrientation, CamOrthogonalIslandPocketCutter, CamRestMaterialCutter,
-    CamSupportClipBoundary, CardinalPoint, CardinalRotation, CircularArc, CircularArcError,
-    ClearanceStatus, ConstructionStamp, CubicBezier, DrillBoardClearanceReport,
-    ExplicitArcArrangementClass, ExplicitArcIntersectionClass, ExplicitArcOverlapClass,
-    ExplicitArcPointClassification, ExplicitArcSweepClass, ExplicitArcTangentClass,
-    ExplicitCircleRelationClass, ExplicitCircularArc, HigherOrderBezier, HigherOrderBezierError,
-    InfillGraphError, LineExplicitArcIntersectionClass, LineOffsetError, LinePathSegment,
-    MeanderError, MeanderObstacle, MeanderPlacementCandidate, NetId, OffsetSide,
-    PathExactMeshHandoffSource, PathMeshBooleanError, PathMeshBooleanOperation,
-    PathMeshBooleanProgramStep, PathMeshBooleanSource, PathProvenance, PathSourceFormat,
-    PcbBoardClipCutout, PcbBoardOutline, PcbCardinalRectPad, PcbCircularPad,
-    PcbCompositeCopperBooleanSource, PcbConvexBoardOutline, PcbConvexPolyPad,
-    PcbCopperBoardClipOutline, PcbCopperBooleanSource, PcbExactBoardCutoutHandoff,
-    PcbExactBoardHandoffOutline, PcbExactCopperHandoffSource, PcbHoledOrthogonalBoardClipOutline,
-    PcbHoledOrthogonalCopperSource, PcbLayerZModel, PcbOrthogonalBoardOutline,
-    PcbOrthogonalPolyPad, PcbRectPad, PcbTrace, PcbViaStack, PocketPlanError, PocketPlanStopReason,
-    QuadraticBezier, RationalQuadraticBezier, RationalQuadraticBezierError, RectangularInfillGraph,
-    RectangularPocket, RectangularRegionRelation, RouteCertificationError, SegmentParameterOrder,
-    SourceLengthUnit, SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraImportError,
-    SpecctraLayerAlias, SpecctraNetAlias, SpecctraParseError, SupportFootprintStatus,
-    SupportPlanError, SweptLineSegment, TangentAlignment, TangentJoinClass, TangentJoinReport,
-    TangentSpan, TraceLayer, ViaAnnularRingReport, ViaDrillIntent, ViaDrillPolicyClass,
-    ViaLayerSpanRelation, ViaLayerTransitionClass, boolean_path_mesh_program,
-    boolean_path_mesh_sources, boolean_rectangular_prism_chain, boolean_rectangular_prisms,
+    BoardContourOrientation, CamExactClipCutoutHandoff, CamOrthogonalIslandPocketCutter,
+    CamRestMaterialCutter, CamSupportClipBoundary, CamSupportClipCutout, CardinalPoint,
+    CardinalRotation, CircularArc, CircularArcError, ClearanceStatus, ConstructionStamp,
+    CubicBezier, DrillBoardClearanceReport, ExplicitArcArrangementClass,
+    ExplicitArcIntersectionClass, ExplicitArcOverlapClass, ExplicitArcPointClassification,
+    ExplicitArcSweepClass, ExplicitArcTangentClass, ExplicitCircleRelationClass,
+    ExplicitCircularArc, HigherOrderBezier, HigherOrderBezierError, InfillGraphError,
+    LineExplicitArcIntersectionClass, LineOffsetError, LinePathSegment, MeanderError,
+    MeanderObstacle, MeanderPlacementCandidate, NetId, OffsetSide, PathExactMeshHandoffSource,
+    PathMeshBooleanError, PathMeshBooleanOperation, PathMeshBooleanProgramStep,
+    PathMeshBooleanSource, PathProvenance, PathSourceFormat, PcbBoardClipCutout, PcbBoardOutline,
+    PcbCardinalRectPad, PcbCircularPad, PcbCompositeCopperBooleanSource, PcbConvexBoardOutline,
+    PcbConvexPolyPad, PcbCopperBoardClipOutline, PcbCopperBooleanSource,
+    PcbExactBoardCutoutHandoff, PcbExactBoardHandoffOutline, PcbExactCopperHandoffSource,
+    PcbHoledOrthogonalBoardClipOutline, PcbHoledOrthogonalCopperSource, PcbLayerZModel,
+    PcbOrthogonalBoardOutline, PcbOrthogonalPolyPad, PcbRectPad, PcbTrace, PcbViaStack,
+    PocketPlanError, PocketPlanStopReason, QuadraticBezier, RationalQuadraticBezier,
+    RationalQuadraticBezierError, RectangularInfillGraph, RectangularPocket,
+    RectangularRegionRelation, RouteCertificationError, SegmentParameterOrder, SourceLengthUnit,
+    SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraImportError, SpecctraLayerAlias,
+    SpecctraNetAlias, SpecctraParseError, SupportFootprintStatus, SupportPlanError,
+    SweptLineSegment, TangentAlignment, TangentJoinClass, TangentJoinReport, TangentSpan,
+    TraceLayer, ViaAnnularRingReport, ViaDrillIntent, ViaDrillPolicyClass, ViaLayerSpanRelation,
+    ViaLayerTransitionClass, boolean_path_mesh_program, boolean_path_mesh_sources,
+    boolean_rectangular_prism_chain, boolean_rectangular_prisms,
     boolean_rectangular_prisms_with_boundary_policy, build_alternating_detour_meander,
     build_cam_infill_clip_program, build_cam_rest_material_program, build_cam_support_clip_program,
     build_g1_join_problem, build_length_match_problem, build_multi_detour_meander,
@@ -4313,6 +4314,105 @@ fn cam_exact_handoff_clip_boundary_replays_support_and_infill_slabs() {
     assert!(matches!(
         build_cam_support_clip_program(
             support,
+            r(0),
+            r(4),
+            wrong_z_boundary,
+            PredicatePolicy::default(),
+        ),
+        Err(PathMeshBooleanError::MeshHandoff(_))
+    ));
+}
+
+#[test]
+fn cam_exact_handoff_clip_cutouts_replay_support_and_infill_slabs() {
+    let cutout_handoff = PathExactMeshHandoffSource::from_exact_mesh(
+        prism([4, 4, 0], [6, 6, 3]).to_exact_mesh().unwrap(),
+    )
+    .unwrap();
+    let cutout = CamExactClipCutoutHandoff::new(cutout_handoff.clone())
+        .expect("exact clip cutout handoff should retain package evidence");
+    assert!(cutout.exact_facts().all_exact_rational);
+    let boundary = CamSupportClipBoundary::holed_simple_with_exact_cutouts(
+        vec![p(2, 2), p(8, 2), p(8, 8), p(2, 8)],
+        vec![],
+        vec![cutout.clone()],
+        PathProvenance::native(),
+        PredicatePolicy::default(),
+    )
+    .expect("exact clip cutout should be retained");
+    assert!(boundary.hole_vertices().is_empty());
+    assert_eq!(boundary.exact_cutouts(), &[cutout.clone()]);
+    assert_eq!(
+        boundary.cutouts(),
+        vec![CamSupportClipCutout::ExactHandoff(cutout.clone())]
+    );
+
+    let support = build_rectangular_support_plan(
+        RectangularPocket::new(p(3, 3), p(7, 7)).unwrap(),
+        RectangularPocket::new(p(0, 0), p(12, 12)).unwrap(),
+        r(1),
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    let support_report = build_cam_support_clip_program(
+        support,
+        r(0),
+        r(3),
+        boundary.clone(),
+        PredicatePolicy::default(),
+    )
+    .expect("exact cutout boundary should clip support");
+    support_report
+        .validate_replay(PredicatePolicy::default())
+        .unwrap();
+    assert_eq!(support_report.program.steps.len(), 2);
+    assert_eq!(
+        support_report.program.steps[0].operation,
+        PathMeshBooleanOperation::Intersection
+    );
+    assert_eq!(
+        support_report.program.steps[1].operation,
+        PathMeshBooleanOperation::Difference
+    );
+    assert!(support_report.mesh().unwrap().facts().mesh.closed_manifold);
+
+    let plan = build_rectangular_bead_plan(
+        RectangularPocket::new(p(2, 2), p(8, 4)).unwrap(),
+        BeadFillAxis::Horizontal,
+        r(2),
+        r(2),
+        8,
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    let graph =
+        build_rectangular_serpentine_infill_graph(plan, PredicatePolicy::default()).unwrap();
+    let infill_report =
+        build_cam_infill_clip_program(graph, r(0), r(3), boundary, PredicatePolicy::default())
+            .expect("exact cutout boundary should clip infill");
+    infill_report
+        .validate_replay(PredicatePolicy::default())
+        .unwrap();
+    assert!(infill_report.mesh().unwrap().facts().mesh.closed_manifold);
+
+    let wrong_z_cutout = CamExactClipCutoutHandoff::new(cutout_handoff).unwrap();
+    let wrong_z_boundary = CamSupportClipBoundary::holed_simple_with_exact_cutouts(
+        vec![p(2, 2), p(8, 2), p(8, 8), p(2, 8)],
+        vec![],
+        vec![wrong_z_cutout],
+        PathProvenance::native(),
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert!(matches!(
+        build_cam_support_clip_program(
+            build_rectangular_support_plan(
+                RectangularPocket::new(p(3, 3), p(7, 7)).unwrap(),
+                RectangularPocket::new(p(0, 0), p(12, 12)).unwrap(),
+                r(1),
+                PredicatePolicy::default(),
+            )
+            .unwrap(),
             r(0),
             r(4),
             wrong_z_boundary,

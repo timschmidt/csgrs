@@ -130,6 +130,35 @@ pub struct CamExactClipBoundaryHandoff {
     exact: RealExactSetFacts,
 }
 
+/// Retained CAM clip cutout whose exact topology is owned by a `hypermesh` handoff.
+///
+/// Use this for curved support/infill voids or non-straight internal clipping
+/// islands emitted by an exact arrangement producer. The cutout remains opaque
+/// to `hyperpath`; replay validates the handoff package and requested Z slab
+/// before subtracting it from the clipped additive material. This follows Yap,
+/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+/// (1997): exact object evidence may cross crate boundaries, but topology
+/// ownership stays with `hypermesh`.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CamExactClipCutoutHandoff {
+    handoff: PathExactMeshHandoffSource,
+    exact: RealExactSetFacts,
+}
+
+/// Retained internal cutout for additive CAM clip replay.
+#[derive(Clone, Debug, PartialEq)]
+pub enum CamSupportClipCutout {
+    /// Simple straight-edge cutout loop retained by `hyperpath`.
+    Simple {
+        /// Retained cutout vertices.
+        vertices: Vec<Point2>,
+        /// Source provenance for the retained loop.
+        provenance: PathProvenance,
+    },
+    /// Exact cutout package produced outside `hyperpath`.
+    ExactHandoff(CamExactClipCutoutHandoff),
+}
+
 /// Retained straight-edge clipping boundary for additive support footprints.
 ///
 /// The boundary is a 2D CAM object, not a cached mesh. It is lowered into a
@@ -173,6 +202,8 @@ pub enum CamSupportClipBoundary {
         outer: Vec<Point2>,
         /// Retained void-loop vertices.
         holes: Vec<Vec<Point2>>,
+        /// Retained exact cutout packages.
+        exact_cutouts: Vec<CamExactClipCutoutHandoff>,
         /// Source provenance shared by all retained loops.
         provenance: PathProvenance,
         /// Exact-set facts for retained coordinates.
@@ -424,6 +455,60 @@ impl CamExactClipBoundaryHandoff {
     }
 }
 
+impl CamExactClipCutoutHandoff {
+    /// Construct a retained exact clip cutout from a `hypermesh` handoff.
+    pub fn new(handoff: PathExactMeshHandoffSource) -> Result<Self, PathMeshBooleanError> {
+        let exact = handoff_mesh_exact_facts(&handoff)?;
+        Ok(Self { handoff, exact })
+    }
+
+    /// Return the retained exact mesh handoff.
+    pub const fn handoff(&self) -> &PathExactMeshHandoffSource {
+        &self.handoff
+    }
+
+    /// Return exact-set facts for retained cutout mesh coordinates.
+    pub const fn exact_facts(&self) -> &RealExactSetFacts {
+        &self.exact
+    }
+
+    /// Lower this exact cutout into a generic path mesh-boolean source.
+    pub fn to_path_source(
+        &self,
+        z_min: &Real,
+        z_max: &Real,
+        policy: PredicatePolicy,
+    ) -> Result<PathMeshBooleanSource, PathMeshBooleanError> {
+        validate_handoff_z_slab(&self.handoff, z_min, z_max, policy)?;
+        Ok(self.handoff.clone().into())
+    }
+}
+
+impl CamSupportClipCutout {
+    /// Lower this retained cutout into a subtractive source over the requested Z slab.
+    pub fn to_path_source(
+        &self,
+        z_min: &Real,
+        z_max: &Real,
+        policy: PredicatePolicy,
+    ) -> Result<PathMeshBooleanSource, PathMeshBooleanError> {
+        match self {
+            Self::Simple {
+                vertices,
+                provenance,
+            } => Ok(SimplePolygonPrism::new(
+                vertices.clone(),
+                z_min.clone(),
+                z_max.clone(),
+                *provenance,
+                policy,
+            )?
+            .into()),
+            Self::ExactHandoff(source) => source.to_path_source(z_min, z_max, policy),
+        }
+    }
+}
+
 impl CamSupportClipBoundary {
     /// Construct a retained strictly convex support clipping boundary.
     pub fn convex(
@@ -539,11 +624,37 @@ impl CamSupportClipBoundary {
         provenance: PathProvenance,
         policy: PredicatePolicy,
     ) -> Result<Self, PathMeshBooleanError> {
-        validate_strict_simple_polygon_holes(&outer, &holes, policy)?;
-        let exact = loops_exact_facts(&outer, &holes);
+        Self::holed_simple_with_exact_cutouts(outer, holes, Vec::new(), provenance, policy)
+    }
+
+    /// Construct a retained holed clip boundary with exact cutout packages.
+    ///
+    /// Straight-edge holes are proven strictly inside the retained outer loop.
+    /// Exact cutouts are package-validated here and Z-slab checked at replay,
+    /// because their topology is owned by the producer that emitted the
+    /// `hypermesh` handoff. This admits curved or arrangement-owned internal
+    /// support/infill clipping voids without moving mesh topology into
+    /// `hyperpath`.
+    pub fn holed_simple_with_exact_cutouts(
+        outer: Vec<Point2>,
+        holes: Vec<Vec<Point2>>,
+        exact_cutouts: Vec<CamExactClipCutoutHandoff>,
+        provenance: PathProvenance,
+        policy: PredicatePolicy,
+    ) -> Result<Self, PathMeshBooleanError> {
+        if holes.is_empty() && exact_cutouts.is_empty() {
+            return Err(PathMeshBooleanError::EmptyPolygonHoles);
+        }
+        if !holes.is_empty() {
+            validate_strict_simple_polygon_holes(&outer, &holes, policy)?;
+        } else {
+            SimplePolygonPrism::new(outer.clone(), Real::zero(), Real::one(), provenance, policy)?;
+        }
+        let exact = clip_boundary_exact_facts(&outer, &holes, &exact_cutouts);
         Ok(Self::HoledSimple {
             outer,
             holes,
+            exact_cutouts,
             provenance,
             exact,
         })
@@ -579,6 +690,40 @@ impl CamSupportClipBoundary {
         match self {
             Self::HoledSimple { holes, .. } => holes,
             _ => &[],
+        }
+    }
+
+    /// Return retained exact cutout packages for holed boundaries.
+    pub fn exact_cutouts(&self) -> &[CamExactClipCutoutHandoff] {
+        match self {
+            Self::HoledSimple { exact_cutouts, .. } => exact_cutouts,
+            _ => &[],
+        }
+    }
+
+    /// Return retained cutouts in replay order.
+    pub fn cutouts(&self) -> Vec<CamSupportClipCutout> {
+        match self {
+            Self::HoledSimple {
+                holes,
+                exact_cutouts,
+                provenance,
+                ..
+            } => holes
+                .iter()
+                .cloned()
+                .map(|vertices| CamSupportClipCutout::Simple {
+                    vertices,
+                    provenance: *provenance,
+                })
+                .chain(
+                    exact_cutouts
+                        .iter()
+                        .cloned()
+                        .map(CamSupportClipCutout::ExactHandoff),
+                )
+                .collect(),
+            _ => Vec::new(),
         }
     }
 
@@ -647,12 +792,10 @@ impl CamSupportClipBoundary {
     ) -> Result<Vec<PathMeshBooleanProgramStep>, PathMeshBooleanError> {
         match self {
             Self::HoledSimple {
-                outer,
-                holes,
-                provenance,
-                ..
+                outer, provenance, ..
             } => {
-                let mut steps = Vec::with_capacity(holes.len() + 1);
+                let cutouts = self.cutouts();
+                let mut steps = Vec::with_capacity(cutouts.len() + 1);
                 steps.push(PathMeshBooleanProgramStep::new(
                     PathMeshBooleanOperation::Intersection,
                     SimplePolygonPrism::new(
@@ -664,17 +807,10 @@ impl CamSupportClipBoundary {
                     )?
                     .into(),
                 ));
-                for hole in holes {
+                for cutout in cutouts {
                     steps.push(PathMeshBooleanProgramStep::new(
                         PathMeshBooleanOperation::Difference,
-                        SimplePolygonPrism::new(
-                            hole.clone(),
-                            z_min.clone(),
-                            z_max.clone(),
-                            *provenance,
-                            policy,
-                        )?
-                        .into(),
+                        cutout.to_path_source(&z_min, &z_max, policy)?,
                     ));
                 }
                 Ok(steps)
@@ -1049,6 +1185,35 @@ fn loops_exact_facts(outer: &[Point2], holes: &[Vec<Point2>]) -> RealExactSetFac
     Real::exact_set_facts(values)
 }
 
+fn clip_boundary_exact_facts(
+    outer: &[Point2],
+    holes: &[Vec<Point2>],
+    exact_cutouts: &[CamExactClipCutoutHandoff],
+) -> RealExactSetFacts {
+    let mut values = Vec::new();
+    let mut refs = outer
+        .iter()
+        .flat_map(|point| [&point.x, &point.y])
+        .collect::<Vec<_>>();
+    for hole in holes {
+        refs.extend(hole.iter().flat_map(|point| [&point.x, &point.y]));
+    }
+    for exact_cutout in exact_cutouts {
+        if let Ok(mesh) = exact_cutout.handoff().to_exact_mesh() {
+            for point in mesh.vertices() {
+                let coordinates = &point.coordinates().0;
+                values.extend([
+                    coordinates[0].clone(),
+                    coordinates[1].clone(),
+                    coordinates[2].clone(),
+                ]);
+            }
+        }
+    }
+    refs.extend(values.iter());
+    Real::exact_set_facts(refs)
+}
+
 fn handoff_mesh_exact_facts(
     handoff: &PathExactMeshHandoffSource,
 ) -> Result<RealExactSetFacts, PathMeshBooleanError> {
@@ -1122,5 +1287,19 @@ fn infill_clip_exact_facts(
     for hole in boundary.hole_vertices() {
         values.extend(hole.iter().flat_map(|point| [&point.x, &point.y]));
     }
+    let mut exact_cutout_values = Vec::new();
+    for exact_cutout in boundary.exact_cutouts() {
+        if let Ok(mesh) = exact_cutout.handoff().to_exact_mesh() {
+            for point in mesh.vertices() {
+                let coordinates = &point.coordinates().0;
+                exact_cutout_values.extend([
+                    coordinates[0].clone(),
+                    coordinates[1].clone(),
+                    coordinates[2].clone(),
+                ]);
+            }
+        }
+    }
+    values.extend(exact_cutout_values.iter());
     Real::exact_set_facts(values)
 }
