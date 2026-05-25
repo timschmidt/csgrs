@@ -96,3 +96,10 @@ path = "fuzz_targets/cam_pocket_link.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "routing_keepout"
+path = "fuzz_targets/routing_keepout.rs"
+test = false
+doc = false
+bench = false

@@ -10,7 +10,7 @@ use hyperpath::{
     InfillGraphError, JerkLimitedFeedTimeReport, LineArcArrangementEventClass,
     LineArrangementError, LineArrangementEventClass, LineExplicitArcIntersectionClass,
     LineOffsetError, LinePathSegment, LineQuadraticBezierIntersectionClass,
-    LineRationalQuadraticBezierIntersectionClass, MeanderError, MeanderObstacle,
+    LineRationalQuadraticBezierIntersectionClass, MeanderError, MeanderKeepout, MeanderObstacle,
     MeanderPlacementCandidate, NetId, OffsetSide, PathProvenance, PathSourceFormat,
     PcbBoardOutline, PcbCardinalRectPad, PcbCircularBoardOutline, PcbCircularPad,
     PcbConvexBoardOutline, PcbConvexPad, PcbObroundPad, PcbOrientedRectPad,
@@ -26,11 +26,12 @@ use hyperpath::{
     arrange_line_segments_with_explicit_arcs, arrange_line_segments_with_quadratic_beziers,
     arrange_line_segments_with_rational_quadratic_beziers, arrange_quadratic_beziers,
     arrange_rational_quadratic_beziers, build_alternating_detour_meander, build_g1_join_problem,
-    build_length_match_problem, build_multi_detour_meander, build_nonuniform_detour_meander,
-    build_obstacle_aware_detour_meander, build_oriented_tangent_alignment_problem,
-    build_rectangular_bead_plan, build_rectangular_pocket_link_graph,
-    build_rectangular_pocket_plan, build_rectangular_serpentine_infill_graph,
-    build_rectangular_support_plan, build_single_detour_meander, build_tangent_alignment_problem,
+    build_keepout_aware_detour_meander, build_length_match_problem, build_multi_detour_meander,
+    build_nonuniform_detour_meander, build_obstacle_aware_detour_meander,
+    build_oriented_tangent_alignment_problem, build_rectangular_bead_plan,
+    build_rectangular_pocket_link_graph, build_rectangular_pocket_plan,
+    build_rectangular_serpentine_infill_graph, build_rectangular_support_plan,
+    build_single_detour_meander, build_tangent_alignment_problem,
     certify_acceleration_limited_feed_time, certify_constant_feed_time,
     certify_differential_pair_skew, certify_g1_chain, certify_g1_join_candidate,
     certify_length_extension, certify_symmetric_jerk_limited_feed_time,
@@ -45,10 +46,11 @@ use hyperpath::{
     check_trace_orthogonal_board_clearance, check_trace_pad_clearance,
     check_trace_rect_pad_clearance, check_trace_rounded_rect_pad_clearance,
     check_trace_via_clearance, check_trace_via_drill_clearance, check_via_drill_board_clearance,
-    classify_meander_candidate_slots, classify_meander_placement_slots, classify_tangent_alignment,
-    classify_tangent_chain, classify_tangent_join, export_specctra_trace_record,
-    import_specctra_text_route, import_specctra_trace_record, import_specctra_via_record,
-    intersect_axis_aligned_line_quadratic_bezier,
+    classify_meander_candidate_slots, classify_meander_candidate_slots_with_keepouts,
+    classify_meander_placement_slots, classify_meander_placement_slots_with_keepouts,
+    classify_tangent_alignment, classify_tangent_chain, classify_tangent_join,
+    export_specctra_trace_record, import_specctra_text_route, import_specctra_trace_record,
+    import_specctra_via_record, intersect_axis_aligned_line_quadratic_bezier,
     intersect_axis_aligned_line_rational_quadratic_bezier, intersect_rectangular_regions,
     offset_axis_aligned_segment, offset_cardinal_arc, offset_cubic_bezier_sample,
     offset_explicit_arc, offset_higher_order_bezier_sample, offset_quadratic_bezier_sample,
@@ -4391,6 +4393,76 @@ fn meander_placement_slots_report_exact_side_blockage() {
 }
 
 #[test]
+fn meander_keepout_slots_block_against_exact_circular_obstacles() {
+    let source = LinePathSegment::new(p(0, 0), p(12, 0));
+    let keepout = MeanderKeepout::Circular {
+        center: p(2, 2),
+        radius: r(1),
+    };
+    let report = classify_meander_placement_slots_with_keepouts(
+        &source,
+        r(2),
+        3,
+        OffsetSide::Left,
+        vec![keepout.clone()],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+
+    assert_eq!(report.source, source);
+    assert_eq!(report.amplitude, r(2));
+    assert_eq!(report.keepouts, vec![keepout]);
+    assert_eq!(report.slots.len(), 3);
+    assert!(report.slots[0].preferred_blocked);
+    assert!(!report.slots[0].opposite_blocked);
+    assert_eq!(report.slots[0].selected_side, Some(OffsetSide::Right));
+    assert_eq!(report.slots[1].selected_side, Some(OffsetSide::Left));
+    assert_eq!(report.slots[2].selected_side, Some(OffsetSide::Left));
+}
+
+#[test]
+fn keepout_aware_detour_meander_routes_around_round_keepouts() {
+    let source = LinePathSegment::new(p(0, 0), p(12, 0));
+    let keepout = MeanderKeepout::Circular {
+        center: p(2, 2),
+        radius: r(1),
+    };
+    let routed = build_keepout_aware_detour_meander(
+        &source,
+        r(12),
+        3,
+        OffsetSide::Left,
+        vec![keepout.clone()],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+
+    assert_eq!(
+        routed.selected_sides,
+        vec![OffsetSide::Right, OffsetSide::Left, OffsetSide::Left]
+    );
+    assert_eq!(routed.keepouts, vec![keepout]);
+    assert_eq!(routed.meander.bump_count, 3);
+    assert_eq!(routed.meander.amplitude, r(2));
+    assert_eq!(routed.meander.segments[0].end(), &p(0, -2));
+    assert_eq!(routed.meander.segments[1].end(), &p(4, -2));
+    assert_eq!(
+        routed
+            .meander
+            .exact_axis_length(PredicatePolicy::default())
+            .unwrap(),
+        r(24)
+    );
+    assert!(
+        routed
+            .meander
+            .certify_target_length(r(24), PredicatePolicy::default())
+            .unwrap()
+            .all_satisfied()
+    );
+}
+
+#[test]
 fn meander_candidate_slots_accept_arbitrary_windows_and_amplitudes() {
     let first = MeanderPlacementCandidate {
         base: LinePathSegment::new(p(0, 0), p(3, 0)),
@@ -4419,6 +4491,42 @@ fn meander_candidate_slots_accept_arbitrary_windows_and_amplitudes() {
     assert_eq!(report.slots[0].selected_side, Some(OffsetSide::Left));
     assert_eq!(report.slots[1].base, second.base);
     assert_eq!(report.slots[1].amplitude, r(3));
+    assert!(report.slots[1].preferred_blocked);
+    assert!(!report.slots[1].opposite_blocked);
+    assert_eq!(report.slots[1].selected_side, Some(OffsetSide::Right));
+}
+
+#[test]
+fn meander_candidate_slots_accept_mixed_keepout_shapes() {
+    let first = MeanderPlacementCandidate {
+        base: LinePathSegment::new(p(0, 0), p(3, 0)),
+        amplitude: r(1),
+    };
+    let second = MeanderPlacementCandidate {
+        base: LinePathSegment::new(p(5, 0), p(11, 0)),
+        amplitude: r(3),
+    };
+    let keepouts = vec![
+        MeanderKeepout::Rectangular(MeanderObstacle {
+            min: p(20, 20),
+            max: p(30, 30),
+        }),
+        MeanderKeepout::Circular {
+            center: p(8, 3),
+            radius: r(1),
+        },
+    ];
+    let report = classify_meander_candidate_slots_with_keepouts(
+        vec![first.clone(), second.clone()],
+        OffsetSide::Left,
+        keepouts.clone(),
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+
+    assert_eq!(report.keepouts, keepouts);
+    assert_eq!(report.slots.len(), 2);
+    assert_eq!(report.slots[0].selected_side, Some(OffsetSide::Left));
     assert!(report.slots[1].preferred_blocked);
     assert!(!report.slots[1].opposite_blocked);
     assert_eq!(report.slots[1].selected_side, Some(OffsetSide::Right));
@@ -4533,6 +4641,23 @@ fn obstacle_aware_detour_meander_rejects_blocked_or_invalid_keepouts() {
         )
         .unwrap_err(),
         MeanderError::InvalidObstacleBounds
+    );
+
+    let invalid_disc = MeanderKeepout::Circular {
+        center: p(0, 0),
+        radius: r(-1),
+    };
+    assert_eq!(
+        classify_meander_placement_slots_with_keepouts(
+            &source,
+            r(2),
+            1,
+            OffsetSide::Left,
+            vec![invalid_disc],
+            PredicatePolicy::default()
+        )
+        .unwrap_err(),
+        MeanderError::NegativeObstacleRadius
     );
 }
 
@@ -6066,6 +6191,31 @@ proptest! {
             prop_assert!(!slot.opposite_blocked);
             prop_assert_eq!(slot.selected_side, Some(OffsetSide::Left));
         }
+    }
+
+    #[test]
+    fn meander_keepout_slots_generated_round_obstacles_block_preferred_side(
+        radius in 1_i16..=5,
+        bump_count in 1_u64..=8,
+    ) {
+        let source = LinePathSegment::new(p(0, 0), p(80, 0));
+        let keepout = MeanderKeepout::Circular {
+            center: p(5, 10),
+            radius: r(i64::from(radius)),
+        };
+        let report = classify_meander_placement_slots_with_keepouts(
+            &source,
+            r(10),
+            bump_count,
+            OffsetSide::Left,
+            vec![keepout],
+            PredicatePolicy::default(),
+        ).unwrap();
+
+        prop_assert_eq!(report.slots.len(), bump_count as usize);
+        prop_assert!(report.slots[0].preferred_blocked);
+        prop_assert!(!report.slots[0].opposite_blocked);
+        prop_assert_eq!(report.slots[0].selected_side, Some(OffsetSide::Right));
     }
 
     #[test]

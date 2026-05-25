@@ -3,7 +3,7 @@ use hyperlimit::{Point2, PredicatePolicy};
 use hyperpath::{
     ArcDirection, BeadFillAxis, BezierParameter, CardinalPoint, CardinalRotation, CircularArc,
     ConstructionStamp, CubicBezier, ExplicitCircularArc, HigherOrderBezier, LinePathSegment,
-    MeanderObstacle, MeanderPlacementCandidate, NetId, OffsetSide, PathProvenance,
+    MeanderKeepout, MeanderObstacle, MeanderPlacementCandidate, NetId, OffsetSide, PathProvenance,
     PathSourceFormat, PcbBoardOutline, PcbCardinalRectPad, PcbCircularBoardOutline, PcbCircularPad,
     PcbConvexBoardOutline, PcbConvexPad, PcbObroundPad, PcbOrientedRectPad,
     PcbOrthogonalBoardOutline, PcbRectPad, PcbRoundedRectPad, PcbTrace, PcbViaStack,
@@ -14,11 +14,12 @@ use hyperpath::{
     arrange_line_segments_with_quadratic_beziers,
     arrange_line_segments_with_rational_quadratic_beziers, arrange_quadratic_beziers,
     arrange_rational_quadratic_beziers, build_alternating_detour_meander, build_g1_join_problem,
-    build_length_match_problem, build_multi_detour_meander, build_nonuniform_detour_meander,
-    build_obstacle_aware_detour_meander, build_oriented_tangent_alignment_problem,
-    build_rectangular_bead_plan, build_rectangular_pocket_link_graph,
-    build_rectangular_pocket_plan, build_rectangular_serpentine_infill_graph,
-    build_rectangular_support_plan, build_single_detour_meander, build_tangent_alignment_problem,
+    build_keepout_aware_detour_meander, build_length_match_problem, build_multi_detour_meander,
+    build_nonuniform_detour_meander, build_obstacle_aware_detour_meander,
+    build_oriented_tangent_alignment_problem, build_rectangular_bead_plan,
+    build_rectangular_pocket_link_graph, build_rectangular_pocket_plan,
+    build_rectangular_serpentine_infill_graph, build_rectangular_support_plan,
+    build_single_detour_meander, build_tangent_alignment_problem,
     certify_acceleration_limited_feed_time, certify_constant_feed_time,
     certify_differential_pair_skew, certify_g1_chain, certify_g1_join_candidate,
     certify_length_extension, certify_symmetric_jerk_limited_feed_time,
@@ -33,7 +34,8 @@ use hyperpath::{
     check_trace_orthogonal_board_clearance, check_trace_pad_clearance,
     check_trace_rect_pad_clearance, check_trace_rounded_rect_pad_clearance,
     check_trace_via_clearance, check_trace_via_drill_clearance, check_via_drill_board_clearance,
-    classify_meander_candidate_slots, classify_meander_placement_slots, classify_tangent_alignment,
+    classify_meander_candidate_slots, classify_meander_placement_slots,
+    classify_meander_placement_slots_with_keepouts, classify_tangent_alignment,
     classify_tangent_chain, classify_tangent_join, import_specctra_trace_record,
     import_specctra_via_record, intersect_axis_aligned_line_quadratic_bezier,
     intersect_axis_aligned_line_rational_quadratic_bezier, intersect_rectangular_regions,
@@ -862,6 +864,34 @@ fn path_predicates(c: &mut Criterion) {
                 4,
                 OffsetSide::Left,
                 meander_obstacles.clone(),
+                PredicatePolicy::default(),
+            )
+        })
+    });
+    let meander_keepouts = vec![MeanderKeepout::Circular {
+        center: p(100, 25),
+        radius: r(20),
+    }];
+    c.bench_function("keepout_aware_detour_meander_exact_build", |b| {
+        b.iter(|| {
+            build_keepout_aware_detour_meander(
+                &tune_source,
+                r(250),
+                4,
+                OffsetSide::Left,
+                meander_keepouts.clone(),
+                PredicatePolicy::default(),
+            )
+        })
+    });
+    c.bench_function("meander_keepout_slot_classification", |b| {
+        b.iter(|| {
+            classify_meander_placement_slots_with_keepouts(
+                &tune_source,
+                r(25),
+                4,
+                OffsetSide::Left,
+                meander_keepouts.clone(),
                 PredicatePolicy::default(),
             )
         })

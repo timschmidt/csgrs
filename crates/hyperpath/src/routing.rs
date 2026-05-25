@@ -136,6 +136,28 @@ pub struct MeanderObstacle {
     pub max: Point2,
 }
 
+/// Exact retained keepout shape used by meander placement.
+///
+/// This is still a routing-scheduler object, not a full copper or stock
+/// boolean. Rectangular keepouts preserve the legacy [`MeanderObstacle`] model;
+/// circular keepouts add exact disc predicates for vias, drills, round pads,
+/// and machine exclusion zones without polygonal approximation. Lee/Hightower
+/// style search may propose these candidates, but Yap's exact-computation
+/// boundary is preserved by rejecting undecidable comparisons before a route is
+/// committed.
+#[derive(Clone, Debug, PartialEq)]
+pub enum MeanderKeepout {
+    /// Axis-aligned rectangular keepout.
+    Rectangular(MeanderObstacle),
+    /// Circular/disc keepout with exact center and radius.
+    Circular {
+        /// Exact disc center.
+        center: Point2,
+        /// Exact nonnegative disc radius.
+        radius: Real,
+    },
+}
+
 /// Exact obstacle-aware rectangular-detour meander candidate.
 ///
 /// The carrier records the side selected for each bump so an autorouter can
@@ -150,6 +172,22 @@ pub struct ObstacleAwareDetourMeander {
     pub selected_sides: Vec<OffsetSide>,
     /// Obstacles considered during side selection.
     pub obstacles: Vec<MeanderObstacle>,
+}
+
+/// Exact rectangular-detour meander routed against generalized keepouts.
+///
+/// This is the retained-shape counterpart of [`ObstacleAwareDetourMeander`].
+/// It records the exact keepout shapes used for side selection so downstream
+/// route review can audit whether rectangular or circular predicate decisions
+/// drove the emitted candidate.
+#[derive(Clone, Debug, PartialEq)]
+pub struct KeepoutAwareDetourMeander {
+    /// Repeated-detour geometry produced after side scheduling.
+    pub meander: MultiDetourMeander,
+    /// Side selected for each bump in traversal order.
+    pub selected_sides: Vec<OffsetSide>,
+    /// Keepouts considered during side selection.
+    pub keepouts: Vec<MeanderKeepout>,
 }
 
 /// Exact caller-supplied meander placement candidate.
@@ -213,6 +251,28 @@ pub struct MeanderPlacementReport {
 pub struct MeanderCandidatePlacementReport {
     /// Obstacles considered during scheduling.
     pub obstacles: Vec<MeanderObstacle>,
+    /// Per-candidate placement decisions.
+    pub slots: Vec<MeanderPlacementSlot>,
+}
+
+/// Exact placement report for equal candidates against generalized keepouts.
+#[derive(Clone, Debug, PartialEq)]
+pub struct MeanderKeepoutPlacementReport {
+    /// Source segment being scheduled.
+    pub source: LinePathSegment,
+    /// Exact detour amplitude considered for every slot.
+    pub amplitude: Real,
+    /// Keepouts considered during scheduling.
+    pub keepouts: Vec<MeanderKeepout>,
+    /// Per-window placement decisions.
+    pub slots: Vec<MeanderPlacementSlot>,
+}
+
+/// Exact placement report for arbitrary candidates against generalized keepouts.
+#[derive(Clone, Debug, PartialEq)]
+pub struct MeanderKeepoutCandidatePlacementReport {
+    /// Keepouts considered during scheduling.
+    pub keepouts: Vec<MeanderKeepout>,
     /// Per-candidate placement decisions.
     pub slots: Vec<MeanderPlacementSlot>,
 }
@@ -391,6 +451,8 @@ pub enum MeanderError {
     Offset(LineOffsetError),
     /// Obstacle bounds were not exactly ordered.
     InvalidObstacleBounds,
+    /// Circular keepout radius was structurally negative.
+    NegativeObstacleRadius,
     /// A bump could not be placed on either side without hitting a keepout.
     ObstacleConflict,
     /// Obstacle intersection could not be decided exactly.
@@ -623,6 +685,93 @@ pub fn build_obstacle_aware_detour_meander(
     })
 }
 
+/// Build a repeated rectangular meander while choosing sides around keepouts.
+///
+/// This generalized variant accepts retained rectangular and circular keepouts.
+/// Circular keepouts are tested by exact segment-to-disc distance predicates
+/// for the three candidate bump legs. That extends obstacle-aware routing
+/// beyond rectangular keepouts without moving copper clipping, board booleans,
+/// or pad topology into `hyperpath`.
+pub fn build_keepout_aware_detour_meander(
+    source: &LinePathSegment,
+    extra_length: Real,
+    bump_count: u64,
+    preferred_side: OffsetSide,
+    keepouts: Vec<MeanderKeepout>,
+    policy: PredicatePolicy,
+) -> Result<KeepoutAwareDetourMeander, MeanderError> {
+    validate_keepouts(&keepouts, policy)?;
+    if bump_count == 0 {
+        return Err(MeanderError::ZeroBumps);
+    }
+    match extra_length.structural_facts().sign {
+        Some(hyperreal::RealSign::Negative) => return Err(MeanderError::NegativeExtraLength),
+        Some(hyperreal::RealSign::Zero) => {
+            let meander = MultiDetourMeander {
+                source: source.clone(),
+                extra_length,
+                bump_count,
+                amplitude: Real::zero(),
+                segments: vec![source.clone()],
+            };
+            return Ok(KeepoutAwareDetourMeander {
+                meander,
+                selected_sides: Vec::new(),
+                keepouts,
+            });
+        }
+        _ => {}
+    }
+
+    source
+        .axis_length(policy)
+        .ok_or(MeanderError::UnsupportedSourceGeometry)?;
+    let axis = source
+        .facts()
+        .axis_aligned
+        .ok_or(MeanderError::UnsupportedSourceGeometry)?;
+    let bump_count_i64 = i64::try_from(bump_count).map_err(|_| MeanderError::BumpCountTooLarge)?;
+    let divisor = Real::from(2) * Real::from(bump_count_i64);
+    let amplitude =
+        (extra_length.clone() / divisor).map_err(|_| MeanderError::UnsupportedDivision)?;
+    let bump_divisor = Real::from(bump_count_i64);
+    let step_x = match axis {
+        Axis::X => ((source.end().x.clone() - source.start().x.clone()) / bump_divisor.clone())
+            .map_err(|_| MeanderError::UnsupportedDivision)?,
+        Axis::Y => Real::zero(),
+    };
+    let step_y = match axis {
+        Axis::X => Real::zero(),
+        Axis::Y => ((source.end().y.clone() - source.start().y.clone()) / bump_divisor)
+            .map_err(|_| MeanderError::UnsupportedDivision)?,
+    };
+
+    let selected_sides = classify_meander_placement_slots_with_keepout_step(
+        source,
+        amplitude,
+        bump_count,
+        preferred_side,
+        keepouts.clone(),
+        step_x,
+        step_y,
+        policy,
+    )?
+    .slots
+    .into_iter()
+    .map(|slot| slot.selected_side.ok_or(MeanderError::ObstacleConflict))
+    .collect::<Result<Vec<_>, _>>()?;
+
+    let meander =
+        build_multi_detour_meander_with_side(source, extra_length, bump_count, policy, |index| {
+            selected_sides[index as usize]
+        })?;
+    Ok(KeepoutAwareDetourMeander {
+        meander,
+        selected_sides,
+        keepouts,
+    })
+}
+
 /// Classify equal meander placement windows against retained obstacles.
 ///
 /// The function does not emit route geometry. It only splits the source into
@@ -696,6 +845,77 @@ pub fn classify_meander_candidate_slots(
     }
     let slots = classify_meander_candidates(&candidates, preferred_side, &obstacles, policy)?;
     Ok(MeanderCandidatePlacementReport { obstacles, slots })
+}
+
+/// Classify equal meander placement windows against generalized keepouts.
+///
+/// Rectangular keepouts are tested by exact AABB separation. Circular keepouts
+/// are tested by exact squared segment-to-disc distance, so round obstacles can
+/// drive side selection without flattening to a sampled polygon.
+pub fn classify_meander_placement_slots_with_keepouts(
+    source: &LinePathSegment,
+    amplitude: Real,
+    bump_count: u64,
+    preferred_side: OffsetSide,
+    keepouts: Vec<MeanderKeepout>,
+    policy: PredicatePolicy,
+) -> Result<MeanderKeepoutPlacementReport, MeanderError> {
+    validate_keepouts(&keepouts, policy)?;
+    if bump_count == 0 {
+        return Err(MeanderError::ZeroBumps);
+    }
+    if amplitude.structural_facts().sign == Some(hyperreal::RealSign::Negative) {
+        return Err(MeanderError::NegativeAmplitude);
+    }
+    source
+        .axis_length(policy)
+        .ok_or(MeanderError::UnsupportedSourceGeometry)?;
+    let axis = source
+        .facts()
+        .axis_aligned
+        .ok_or(MeanderError::UnsupportedSourceGeometry)?;
+    let bump_count_i64 = i64::try_from(bump_count).map_err(|_| MeanderError::BumpCountTooLarge)?;
+    let bump_divisor = Real::from(bump_count_i64);
+    let step_x = match axis {
+        Axis::X => ((source.end().x.clone() - source.start().x.clone()) / bump_divisor.clone())
+            .map_err(|_| MeanderError::UnsupportedDivision)?,
+        Axis::Y => Real::zero(),
+    };
+    let step_y = match axis {
+        Axis::X => Real::zero(),
+        Axis::Y => ((source.end().y.clone() - source.start().y.clone()) / bump_divisor)
+            .map_err(|_| MeanderError::UnsupportedDivision)?,
+    };
+    classify_meander_placement_slots_with_keepout_step(
+        source,
+        amplitude,
+        bump_count,
+        preferred_side,
+        keepouts,
+        step_x,
+        step_y,
+        policy,
+    )
+}
+
+/// Classify arbitrary exact meander placement candidates against keepouts.
+///
+/// This is the generalized retained-shape predicate layer behind
+/// [`classify_meander_candidate_slots`]. It accepts the same exact candidate
+/// windows but tests them against rectangular and circular keepouts.
+pub fn classify_meander_candidate_slots_with_keepouts(
+    candidates: Vec<MeanderPlacementCandidate>,
+    preferred_side: OffsetSide,
+    keepouts: Vec<MeanderKeepout>,
+    policy: PredicatePolicy,
+) -> Result<MeanderKeepoutCandidatePlacementReport, MeanderError> {
+    validate_keepouts(&keepouts, policy)?;
+    if candidates.is_empty() {
+        return Err(MeanderError::ZeroBumps);
+    }
+    let slots =
+        classify_meander_candidates_with_keepouts(&candidates, preferred_side, &keepouts, policy)?;
+    Ok(MeanderKeepoutCandidatePlacementReport { keepouts, slots })
 }
 
 /// Certify exact differential-pair skew for retained axis-aligned routes.
@@ -1055,10 +1275,50 @@ fn classify_meander_placement_slots_with_step(
     })
 }
 
+fn classify_meander_placement_slots_with_keepout_step(
+    source: &LinePathSegment,
+    amplitude: Real,
+    bump_count: u64,
+    preferred_side: OffsetSide,
+    keepouts: Vec<MeanderKeepout>,
+    step_x: Real,
+    step_y: Real,
+    policy: PredicatePolicy,
+) -> Result<MeanderKeepoutPlacementReport, MeanderError> {
+    let mut candidates = Vec::with_capacity(bump_count as usize);
+    for index in 0..bump_count {
+        let start = meander_split_point(source.start(), &step_x, &step_y, index)?;
+        let end = meander_split_point(source.start(), &step_x, &step_y, index + 1)?;
+        let base = LinePathSegment::with_provenance(start, end, source.provenance());
+        candidates.push(MeanderPlacementCandidate {
+            base,
+            amplitude: amplitude.clone(),
+        });
+    }
+    let slots =
+        classify_meander_candidates_with_keepouts(&candidates, preferred_side, &keepouts, policy)?;
+    Ok(MeanderKeepoutPlacementReport {
+        source: source.clone(),
+        amplitude,
+        keepouts,
+        slots,
+    })
+}
+
 fn classify_meander_candidates(
     candidates: &[MeanderPlacementCandidate],
     preferred_side: OffsetSide,
     obstacles: &[MeanderObstacle],
+    policy: PredicatePolicy,
+) -> Result<Vec<MeanderPlacementSlot>, MeanderError> {
+    let keepouts = rectangular_keepouts(obstacles);
+    classify_meander_candidates_with_keepouts(candidates, preferred_side, &keepouts, policy)
+}
+
+fn classify_meander_candidates_with_keepouts(
+    candidates: &[MeanderPlacementCandidate],
+    preferred_side: OffsetSide,
+    keepouts: &[MeanderKeepout],
     policy: PredicatePolicy,
 ) -> Result<Vec<MeanderPlacementSlot>, MeanderError> {
     let mut slots = Vec::with_capacity(candidates.len());
@@ -1080,14 +1340,14 @@ fn classify_meander_candidates(
             &candidate.base,
             &candidate.amplitude,
             preferred_side,
-            obstacles,
+            keepouts,
             policy,
         )?;
         let opposite_blocked = candidate_bump_blocked(
             &candidate.base,
             &candidate.amplitude,
             opposite,
-            obstacles,
+            keepouts,
             policy,
         )?;
         let selected_side = if !preferred_blocked {
@@ -1116,7 +1376,7 @@ fn candidate_bump_blocked(
     base: &LinePathSegment,
     amplitude: &Real,
     side: OffsetSide,
-    obstacles: &[MeanderObstacle],
+    keepouts: &[MeanderKeepout],
     policy: PredicatePolicy,
 ) -> Result<bool, MeanderError> {
     let offset = offset_axis_aligned_segment(base, amplitude.clone(), side, policy)
@@ -1141,9 +1401,17 @@ fn candidate_bump_blocked(
             if blocked {
                 Ok(true)
             } else {
-                segment_intersects_any_obstacle(segment, obstacles, policy)
+                segment_intersects_any_keepout(segment, keepouts, policy)
             }
         })
+}
+
+fn rectangular_keepouts(obstacles: &[MeanderObstacle]) -> Vec<MeanderKeepout> {
+    obstacles
+        .iter()
+        .cloned()
+        .map(MeanderKeepout::Rectangular)
+        .collect()
 }
 
 fn validate_obstacles(
@@ -1166,18 +1434,52 @@ fn validate_obstacles(
     Ok(())
 }
 
-fn segment_intersects_any_obstacle(
+fn validate_keepouts(
+    keepouts: &[MeanderKeepout],
+    policy: PredicatePolicy,
+) -> Result<(), MeanderError> {
+    for keepout in keepouts {
+        match keepout {
+            MeanderKeepout::Rectangular(obstacle) => {
+                validate_obstacles(std::slice::from_ref(obstacle), policy)?;
+            }
+            MeanderKeepout::Circular { radius, .. } => {
+                if radius.structural_facts().sign == Some(hyperreal::RealSign::Negative) {
+                    return Err(MeanderError::NegativeObstacleRadius);
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
+fn segment_intersects_any_keepout(
     segment: &LinePathSegment,
-    obstacles: &[MeanderObstacle],
+    keepouts: &[MeanderKeepout],
     policy: PredicatePolicy,
 ) -> Result<bool, MeanderError> {
-    obstacles.iter().try_fold(false, |blocked, obstacle| {
+    keepouts.iter().try_fold(false, |blocked, keepout| {
         if blocked {
             Ok(true)
         } else {
-            segment_intersects_obstacle(segment, obstacle, policy)
+            segment_intersects_keepout(segment, keepout, policy)
         }
     })
+}
+
+fn segment_intersects_keepout(
+    segment: &LinePathSegment,
+    keepout: &MeanderKeepout,
+    policy: PredicatePolicy,
+) -> Result<bool, MeanderError> {
+    match keepout {
+        MeanderKeepout::Rectangular(obstacle) => {
+            segment_intersects_obstacle(segment, obstacle, policy)
+        }
+        MeanderKeepout::Circular { center, radius } => {
+            segment_intersects_circular_keepout(segment, center, radius, policy)
+        }
+    }
 }
 
 fn segment_intersects_obstacle(
@@ -1193,6 +1495,51 @@ fn segment_intersects_obstacle(
     let separated_above =
         strict_less_with_policy(&obstacle.max.y, &segment.bounds_min().y, policy)?;
     Ok(!(separated_left || separated_right || separated_below || separated_above))
+}
+
+fn segment_intersects_circular_keepout(
+    segment: &LinePathSegment,
+    center: &Point2,
+    radius: &Real,
+    policy: PredicatePolicy,
+) -> Result<bool, MeanderError> {
+    let dx = distance_to_interval(
+        &center.x,
+        &segment.bounds_min().x,
+        &segment.bounds_max().x,
+        policy,
+    )?;
+    let dy = distance_to_interval(
+        &center.y,
+        &segment.bounds_min().y,
+        &segment.bounds_max().y,
+        policy,
+    )?;
+    let distance_squared = dx.clone() * dx + dy.clone() * dy;
+    let radius_squared = radius.clone() * radius.clone();
+    match compare_reals_with_policy(&distance_squared, &radius_squared, policy).value() {
+        Some(Ordering::Less | Ordering::Equal) => Ok(true),
+        Some(Ordering::Greater) => Ok(false),
+        None => Err(MeanderError::ObstacleDecisionUnknown),
+    }
+}
+
+fn distance_to_interval(
+    coordinate: &Real,
+    min: &Real,
+    max: &Real,
+    policy: PredicatePolicy,
+) -> Result<Real, MeanderError> {
+    match compare_reals_with_policy(coordinate, min, policy).value() {
+        Some(Ordering::Less) => return Ok(min.clone() - coordinate.clone()),
+        Some(Ordering::Equal | Ordering::Greater) => {}
+        None => return Err(MeanderError::ObstacleDecisionUnknown),
+    }
+    match compare_reals_with_policy(max, coordinate, policy).value() {
+        Some(Ordering::Less) => Ok(coordinate.clone() - max.clone()),
+        Some(Ordering::Equal | Ordering::Greater) => Ok(Real::zero()),
+        None => Err(MeanderError::ObstacleDecisionUnknown),
+    }
 }
 
 fn strict_less_with_policy(
