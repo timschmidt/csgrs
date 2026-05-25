@@ -21,9 +21,10 @@ use hyperreal::{Real, RealSign};
 
 use crate::classify::{compare_reals, real_sign};
 use crate::{
-    BezierArrangementGraph2, BezierArrangementTraversal2, BezierRetainedLinearOverlapTraversal2,
-    BezierSplitFragment2, BezierSubcurve2, Classification, Contour2, ContourPointLocation,
-    CurvePolicy, CurveResult, LineSeg2, Point2, Region2, Segment2, UncertaintyReason,
+    Aabb2, BezierArrangementGraph2, BezierArrangementTraversal2, BezierLineContactKind,
+    BezierLineContactRelation, BezierRetainedLinearOverlapTraversal2, BezierSplitFragment2,
+    BezierSubcurve2, Classification, Contour2, ContourPointLocation, CurvePolicy, CurveResult,
+    LineSeg2, Point2, Region2, Segment2, UncertaintyReason,
 };
 
 /// A closed native Bezier/conic boundary loop.
@@ -108,6 +109,27 @@ pub struct BezierRetainedSignedAreaRoleReport2 {
     signed_areas: Vec<Real>,
 }
 
+/// Exact nesting-derived role assignment for native retained curved loops.
+///
+/// Unlike [`BezierRetainedLineRegionRoleReport2`], this report does not lower
+/// nonlinear loops to line contours. Unlike
+/// [`BezierRetainedSignedAreaRoleReport2`], it does not trust authored
+/// orientation to distinguish material from holes. It chooses an exact
+/// representative point on each candidate loop and classifies it against every
+/// other native Bezier/conic loop by counting certified ray crossings. Boundary
+/// hits, tangent-only ray contacts, algebraic carriers, unresolved line-contact
+/// predicates, and unsupported area/zero-area loops remain explicit
+/// uncertainty. The crossing rule is the exact-object analogue of the
+/// point-in-polygon method surveyed by Hormann and Agathos, "The Point in
+/// Polygon Problem for Arbitrary Polygons," *Computational Geometry* 20(3),
+/// 131-144 (2001); all branch decisions follow Yap, "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7(1-2), 3-23 (1997).
+#[derive(Clone, Debug, PartialEq)]
+pub struct BezierRetainedCurvedNestingRoleReport2 {
+    roles: Vec<BezierRetainedRegionLoopRole>,
+    sample_points: Vec<Point2>,
+}
+
 impl BezierRetainedLineRegionRoleReport2 {
     /// Constructs a retained line-image role report.
     pub const fn new(roles: Vec<BezierRetainedRegionLoopRole>, contours: Vec<Contour2>) -> Self {
@@ -182,6 +204,48 @@ impl BezierRetainedSignedAreaRoleReport2 {
     /// Returns exact signed areas used as orientation evidence.
     pub fn signed_areas(&self) -> &[Real] {
         &self.signed_areas
+    }
+
+    /// Returns loop indices assigned as material.
+    pub fn material_loop_indices(&self) -> Vec<usize> {
+        self.roles
+            .iter()
+            .enumerate()
+            .filter_map(|(index, role)| {
+                (*role == BezierRetainedRegionLoopRole::Material).then_some(index)
+            })
+            .collect()
+    }
+
+    /// Returns loop indices assigned as holes.
+    pub fn hole_loop_indices(&self) -> Vec<usize> {
+        self.roles
+            .iter()
+            .enumerate()
+            .filter_map(|(index, role)| {
+                (*role == BezierRetainedRegionLoopRole::Hole).then_some(index)
+            })
+            .collect()
+    }
+}
+
+impl BezierRetainedCurvedNestingRoleReport2 {
+    /// Constructs a retained curved-loop nesting role report.
+    pub const fn new(roles: Vec<BezierRetainedRegionLoopRole>, sample_points: Vec<Point2>) -> Self {
+        Self {
+            roles,
+            sample_points,
+        }
+    }
+
+    /// Returns one assigned role per retained boundary loop.
+    pub fn roles(&self) -> &[BezierRetainedRegionLoopRole] {
+        &self.roles
+    }
+
+    /// Returns exact sample points used for nesting classification.
+    pub fn sample_points(&self) -> &[Point2] {
+        &self.sample_points
     }
 
     /// Returns loop indices assigned as material.
@@ -523,6 +587,72 @@ impl BezierRetainedRegion2 {
         ))
     }
 
+    /// Assigns material/hole roles by exact curved-loop nesting.
+    ///
+    /// Each retained loop must be fully native and have a nonzero implemented
+    /// signed area. The area is used only to reject degenerate/unsupported
+    /// loops; role parity comes from exact containment depth. This makes
+    /// same-orientation nested nonlinear loops classify as material/hole by
+    /// topology instead of by their authored orientation.
+    pub fn curved_nesting_role_report(
+        &self,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<BezierRetainedCurvedNestingRoleReport2>> {
+        let mut native_loops = Vec::with_capacity(self.boundary_loops.len());
+        let mut sample_points = Vec::with_capacity(self.boundary_loops.len());
+        for boundary_loop in &self.boundary_loops {
+            let native_loop = match retained_loop_to_native(boundary_loop) {
+                Some(loop_) => loop_,
+                None => return Ok(Classification::Uncertain(UncertaintyReason::Unsupported)),
+            };
+            let Some(area) = native_loop.signed_area()? else {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            };
+            match real_sign(&area, policy) {
+                Some(RealSign::Positive | RealSign::Negative) => {}
+                Some(RealSign::Zero) => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                }
+                None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+            }
+            let sample = match native_loop_sample_point(&native_loop, policy) {
+                Classification::Decided(point) => point,
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            };
+            sample_points.push(sample);
+            native_loops.push(native_loop);
+        }
+
+        let mut roles = Vec::with_capacity(native_loops.len());
+        for (candidate_index, sample) in sample_points.iter().enumerate() {
+            let mut depth = 0_usize;
+            for (container_index, container) in native_loops.iter().enumerate() {
+                if candidate_index == container_index {
+                    continue;
+                }
+                match classify_point_against_native_loop(container, sample, policy)? {
+                    Classification::Decided(ContourPointLocation::Inside) => depth += 1,
+                    Classification::Decided(ContourPointLocation::Outside) => {}
+                    Classification::Decided(ContourPointLocation::Boundary) => {
+                        return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                    }
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+            }
+            roles.push(if depth.is_multiple_of(2) {
+                BezierRetainedRegionLoopRole::Material
+            } else {
+                BezierRetainedRegionLoopRole::Hole
+            });
+        }
+
+        Ok(Classification::Decided(
+            BezierRetainedCurvedNestingRoleReport2::new(roles, sample_points),
+        ))
+    }
+
     /// Returns retained boundary loops.
     pub fn boundary_loops(&self) -> &[BezierRetainedBoundaryLoop2] {
         &self.boundary_loops
@@ -614,6 +744,176 @@ fn retained_line_loop_roles(
         });
     }
     Ok(Classification::Decided(roles))
+}
+
+fn retained_loop_to_native(
+    boundary_loop: &BezierRetainedBoundaryLoop2,
+) -> Option<BezierBoundaryLoop2> {
+    let mut fragments = Vec::with_capacity(boundary_loop.fragments().len());
+    for fragment in boundary_loop.fragments() {
+        let BezierSplitFragment2::Materialized { curve, .. } = fragment else {
+            return None;
+        };
+        fragments.push(curve.clone());
+    }
+    Some(BezierBoundaryLoop2::new(fragments))
+}
+
+fn native_loop_sample_point(
+    boundary_loop: &BezierBoundaryLoop2,
+    policy: &CurvePolicy,
+) -> Classification<Point2> {
+    let Some(fragment) = boundary_loop.fragments().first() else {
+        return Classification::Uncertain(UncertaintyReason::Unsupported);
+    };
+    let half =
+        (Real::one() / Real::from(2_i8)).expect("division by positive integer constant is defined");
+    subcurve_point_at(fragment, half, policy)
+}
+
+fn classify_point_against_native_loop(
+    boundary_loop: &BezierBoundaryLoop2,
+    point: &Point2,
+    policy: &CurvePolicy,
+) -> CurveResult<Classification<ContourPointLocation>> {
+    let ray = match horizontal_ray_past_loop(boundary_loop, point, policy) {
+        Classification::Decided(ray) => ray,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let mut crossings = 0_usize;
+    for fragment in boundary_loop.fragments() {
+        if subcurve_contains_point(fragment, point, policy)? {
+            return Ok(Classification::Decided(ContourPointLocation::Boundary));
+        }
+        let relation = match subcurve_relation_to_line_with_contacts(fragment, &ray, policy) {
+            Classification::Decided(relation) => relation,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        match relation {
+            BezierLineContactRelation::ControlHullDisjoint { .. } => {}
+            BezierLineContactRelation::OnSupportingLine => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            }
+            BezierLineContactRelation::Contacts { contacts } => {
+                for contact in contacts {
+                    if contact.kind() != BezierLineContactKind::Crossing {
+                        continue;
+                    }
+                    let parameter_cmp = compare_reals(contact.parameter(), &Real::one(), policy);
+                    if matches!(parameter_cmp, Some(std::cmp::Ordering::Equal)) {
+                        continue;
+                    }
+                    if parameter_cmp.is_none() {
+                        return Ok(Classification::Uncertain(UncertaintyReason::RealSign));
+                    }
+                    let contact_point =
+                        match subcurve_point_at(fragment, contact.parameter().clone(), policy) {
+                            Classification::Decided(point) => point,
+                            Classification::Uncertain(reason) => {
+                                return Ok(Classification::Uncertain(reason));
+                            }
+                        };
+                    match compare_reals(contact_point.x(), point.x(), policy) {
+                        Some(std::cmp::Ordering::Greater) => crossings += 1,
+                        Some(std::cmp::Ordering::Equal) => {
+                            return Ok(Classification::Decided(ContourPointLocation::Boundary));
+                        }
+                        Some(std::cmp::Ordering::Less) => {}
+                        None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+                    }
+                }
+            }
+            BezierLineContactRelation::IsolatedIntersections { .. }
+            | BezierLineContactRelation::Unresolved => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            }
+        }
+    }
+
+    Ok(Classification::Decided(if crossings.is_multiple_of(2) {
+        ContourPointLocation::Outside
+    } else {
+        ContourPointLocation::Inside
+    }))
+}
+
+fn horizontal_ray_past_loop(
+    boundary_loop: &BezierBoundaryLoop2,
+    point: &Point2,
+    policy: &CurvePolicy,
+) -> Classification<LineSeg2> {
+    let mut right_x = point.x() + Real::one();
+    for fragment in boundary_loop.fragments() {
+        let bounds = match subcurve_bounds(fragment, policy) {
+            Classification::Decided(bounds) => bounds,
+            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+        };
+        if matches!(
+            compare_reals(bounds.max_x(), &right_x, policy),
+            Some(std::cmp::Ordering::Greater)
+        ) {
+            right_x = bounds.max_x() + Real::one();
+        } else if compare_reals(bounds.max_x(), &right_x, policy).is_none() {
+            return Classification::Uncertain(UncertaintyReason::Ordering);
+        }
+    }
+    match LineSeg2::try_new(point.clone(), Point2::new(right_x, point.y().clone())) {
+        Ok(ray) => Classification::Decided(ray),
+        Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
+    }
+}
+
+fn subcurve_bounds(curve: &BezierSubcurve2, policy: &CurvePolicy) -> Classification<Aabb2> {
+    match curve {
+        BezierSubcurve2::Quadratic(curve) => curve.certified_bounds(policy),
+        BezierSubcurve2::Cubic(curve) => curve.certified_bounds(policy),
+        BezierSubcurve2::RationalQuadratic(curve) => curve.certified_bounds(policy),
+    }
+}
+
+fn subcurve_point_at(
+    curve: &BezierSubcurve2,
+    parameter: Real,
+    policy: &CurvePolicy,
+) -> Classification<Point2> {
+    match curve {
+        BezierSubcurve2::Quadratic(curve) => Classification::Decided(curve.point_at(parameter)),
+        BezierSubcurve2::Cubic(curve) => Classification::Decided(curve.point_at(parameter)),
+        BezierSubcurve2::RationalQuadratic(curve) => curve.point_at(parameter, policy),
+    }
+}
+
+fn subcurve_contains_point(
+    curve: &BezierSubcurve2,
+    point: &Point2,
+    policy: &CurvePolicy,
+) -> CurveResult<bool> {
+    let classification = match curve {
+        BezierSubcurve2::Quadratic(curve) => curve.contains_point(point, policy),
+        BezierSubcurve2::Cubic(_) => Classification::Decided(false),
+        BezierSubcurve2::RationalQuadratic(curve) => curve.contains_point(point, policy),
+    };
+    match classification {
+        Classification::Decided(value) => Ok(value),
+        Classification::Uncertain(UncertaintyReason::Unsupported) => Ok(false),
+        Classification::Uncertain(reason) => Err(crate::CurveError::Topology(format!(
+            "could not certify retained curved-loop boundary point query: {reason:?}"
+        ))),
+    }
+}
+
+fn subcurve_relation_to_line_with_contacts(
+    curve: &BezierSubcurve2,
+    line: &LineSeg2,
+    policy: &CurvePolicy,
+) -> Classification<BezierLineContactRelation> {
+    match curve {
+        BezierSubcurve2::Quadratic(curve) => curve.relation_to_line_with_contacts(line, policy),
+        BezierSubcurve2::Cubic(curve) => curve.relation_to_line_with_contacts(line, policy),
+        BezierSubcurve2::RationalQuadratic(curve) => {
+            curve.relation_to_line_with_contacts(line, policy)
+        }
+    }
 }
 
 fn subcurve_is_linearly_parameterized(curve: &BezierSubcurve2, policy: &CurvePolicy) -> bool {

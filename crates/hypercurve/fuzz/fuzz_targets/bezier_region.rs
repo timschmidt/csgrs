@@ -60,6 +60,7 @@ fuzz_target!(|data: &[u8]| {
                 let _ = region.signed_area();
                 let _ = region.line_image_role_report(&policy);
                 let _ = region.signed_area_role_report(&policy);
+                let _ = region.curved_nesting_role_report(&policy);
                 let _ = BezierRetainedEndpointEnvelope2::from_region(&region, &policy);
                 let _ = BezierRetainedCurveEnvelope2::from_region(&region, &policy);
             });
@@ -74,6 +75,7 @@ fuzz_target!(|data: &[u8]| {
                 let _ = region.signed_area();
                 let _ = region.line_image_role_report(&policy);
                 let _ = region.signed_area_role_report(&policy);
+                let _ = region.curved_nesting_role_report(&policy);
                 let _ = BezierRetainedEndpointEnvelope2::from_region(&region, &policy);
                 let _ = BezierRetainedCurveEnvelope2::from_region(&region, &policy);
             },

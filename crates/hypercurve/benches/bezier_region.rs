@@ -95,6 +95,9 @@ fn main() -> CurveResult<()> {
         if let Classification::Decided(report) = region.signed_area_role_report(&policy)? {
             retained_checksum ^= black_box(report.roles().len() + report.signed_areas().len());
         }
+        if let Classification::Decided(report) = region.curved_nesting_role_report(&policy)? {
+            retained_checksum ^= black_box(report.roles().len() + report.sample_points().len());
+        }
     }
     let elapsed = started.elapsed();
     println!(
@@ -129,6 +132,9 @@ fn main() -> CurveResult<()> {
         }
         if let Classification::Decided(report) = retained.signed_area_role_report(&policy)? {
             overlap_checksum ^= black_box(report.roles().len());
+        }
+        if let Classification::Decided(report) = retained.curved_nesting_role_report(&policy)? {
+            overlap_checksum ^= black_box(report.roles().len() + report.sample_points().len());
         }
     }
     let elapsed = started.elapsed();

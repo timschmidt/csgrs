@@ -416,6 +416,38 @@ fn retained_signed_area_role_report_accepts_nonlinear_bezier_loops() {
 }
 
 #[test]
+fn retained_curved_nesting_role_report_assigns_same_orientation_nonlinear_hole() {
+    let material = retained_quadratic_lens_loop(0, 8, 4, true);
+    let same_orientation_inner = retained_quadratic_lens_loop(2, 6, 1, true);
+    let retained = BezierRetainedRegion2::new(vec![material, same_orientation_inner]);
+
+    let signed_area = decided(retained.signed_area_role_report(&policy()).unwrap());
+    assert_eq!(
+        signed_area.roles(),
+        &[
+            BezierRetainedRegionLoopRole::Material,
+            BezierRetainedRegionLoopRole::Material
+        ]
+    );
+
+    let nesting = decided(retained.curved_nesting_role_report(&policy()).unwrap());
+    assert_eq!(
+        nesting.roles(),
+        &[
+            BezierRetainedRegionLoopRole::Material,
+            BezierRetainedRegionLoopRole::Hole
+        ]
+    );
+    assert_eq!(nesting.material_loop_indices(), vec![0]);
+    assert_eq!(nesting.hole_loop_indices(), vec![1]);
+    assert_eq!(nesting.sample_points().len(), 2);
+    assert_eq!(
+        retained.line_image_role_report(&policy()).unwrap(),
+        Classification::Uncertain(UncertaintyReason::Unsupported)
+    );
+}
+
+#[test]
 fn retained_signed_area_role_report_rejects_zero_area_and_algebraic_loops() {
     let zero = BezierRetainedRegion2::new(vec![BezierRetainedBoundaryLoop2::new(vec![
         BezierSplitFragment2::Materialized {
