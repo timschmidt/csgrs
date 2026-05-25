@@ -770,8 +770,31 @@ fn line_rational_quadratic_bezier_arrangement_emits_homogeneous_fragments() {
 }
 
 #[test]
-fn line_rational_quadratic_bezier_arrangement_keeps_support_overlap_unknown() {
+fn line_rational_quadratic_bezier_arrangement_splits_monotone_support_overlap() {
     let conic = RationalQuadraticBezier::new(p(0, 0), p(4, 0), p(8, 0), r(2)).unwrap();
+    let line = LinePathSegment::new(Point2::new(rq(28, 11), r(0)), Point2::new(rq(60, 11), r(0)));
+
+    let report = arrange_line_segments_with_rational_quadratic_beziers(
+        &[line],
+        &[conic],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+
+    assert_eq!(
+        report.events[0].class,
+        LineRationalQuadraticBezierIntersectionClass::Overlap
+    );
+    assert_eq!(report.line_breakpoints[0].len(), 2);
+    assert_eq!(report.conic_breakpoints[0].len(), 4);
+    assert_eq!(report.conic_breakpoints[0][1].parameter, rq(1, 4));
+    assert_eq!(report.conic_breakpoints[0][2].parameter, rq(3, 4));
+    assert_eq!(report.conic_fragments.len(), 3);
+}
+
+#[test]
+fn line_rational_quadratic_bezier_arrangement_keeps_nonmonotone_support_overlap_unknown() {
+    let conic = RationalQuadraticBezier::new(p(0, 0), p(8, 0), p(0, 0), r(1)).unwrap();
     let line = LinePathSegment::new(p(2, 0), p(6, 0));
 
     let report = arrange_line_segments_with_rational_quadratic_beziers(
@@ -6695,6 +6718,40 @@ proptest! {
             &report.conic_fragments[0].end.point,
             &report.conic_fragments[1].start.point
         );
+    }
+
+    #[test]
+    fn line_rational_quadratic_bezier_arrangement_generated_monotone_overlaps_split(
+        x0 in -20_i16..=20,
+        width in 1_i16..=40,
+        weight in 1_i16..=8,
+    ) {
+        let start_x = i64::from(x0);
+        let width = i64::from(width);
+        let weight = i64::from(weight);
+        let conic = RationalQuadraticBezier::new(
+            p(start_x, 0),
+            p(start_x + width, 0),
+            p(start_x + 2 * width, 0),
+            r(weight),
+        ).unwrap();
+        let left = conic.eval(BezierParameter::new(1, 4).unwrap()).unwrap();
+        let right = conic.eval(BezierParameter::new(3, 4).unwrap()).unwrap();
+        let line = LinePathSegment::new(left, right);
+
+        let report = arrange_line_segments_with_rational_quadratic_beziers(
+            &[line],
+            &[conic],
+            PredicatePolicy::default(),
+        ).unwrap();
+
+        prop_assert_eq!(report.events[0].class, LineRationalQuadraticBezierIntersectionClass::Overlap);
+        prop_assert_eq!(report.events[0].intersection.intersections.len(), 2);
+        prop_assert_eq!(report.conic_breakpoints[0].len(), 4);
+        prop_assert_eq!(report.conic_breakpoints[0][1].parameter.clone(), rq(1, 4));
+        prop_assert_eq!(report.conic_breakpoints[0][2].parameter.clone(), rq(3, 4));
+        prop_assert_eq!(report.line_fragments.len(), 1);
+        prop_assert_eq!(report.conic_fragments.len(), 3);
     }
 
     #[test]

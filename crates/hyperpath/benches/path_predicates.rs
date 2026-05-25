@@ -292,6 +292,18 @@ fn path_predicates(c: &mut Criterion) {
             )
         })
     });
+    let line_conic_overlap =
+        RationalQuadraticBezier::new(p(0, 0), p(500, 0), p(1000, 0), r(2)).unwrap();
+    let line_conic_overlap_line = LinePathSegment::new(pq(3500, 11, 0, 1), pq(7500, 11, 0, 1));
+    c.bench_function("line_rational_quadratic_bezier_overlap_promotion", |b| {
+        b.iter(|| {
+            arrange_line_segments_with_rational_quadratic_beziers(
+                std::slice::from_ref(&line_conic_overlap_line),
+                std::slice::from_ref(&line_conic_overlap),
+                PredicatePolicy::default(),
+            )
+        })
+    });
     let cubic = CubicBezier::new(p(0, 0), p(300, 300), p(700, 300), p(1000, 0));
     c.bench_function("cubic_bezier_exact_eval", |b| b.iter(|| cubic.eval(half)));
     c.bench_function("cubic_bezier_exact_hodograph", |b| {

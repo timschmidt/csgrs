@@ -175,6 +175,36 @@ fuzz_target!(|data: &[u8]| {
     );
     assert_eq!(tangent_report.conic_breakpoints[0].len(), 3);
 
+    let overlap_conic = RationalQuadraticBezier::new(p(0, 0), p(4, 0), p(8, 0), r(2)).unwrap();
+    let overlap_line = LinePathSegment::new(
+        hyperlimit::Point2::new(Real::new(Rational::new(28) / Rational::new(11)), r(0)),
+        hyperlimit::Point2::new(Real::new(Rational::new(60) / Rational::new(11)), r(0)),
+    );
+    let overlap_report = arrange_line_segments_with_rational_quadratic_beziers(
+        &[overlap_line],
+        &[overlap_conic],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert_eq!(
+        overlap_report.events[0].class,
+        LineRationalQuadraticBezierIntersectionClass::Overlap
+    );
+    assert_eq!(overlap_report.conic_breakpoints[0].len(), 4);
+
+    let nonmonotone_conic =
+        RationalQuadraticBezier::new(p(0, 0), p(8, 0), p(0, 0), r(1)).unwrap();
+    let nonmonotone_report = arrange_line_segments_with_rational_quadratic_beziers(
+        &[LinePathSegment::new(p(2, 0), p(6, 0))],
+        &[nonmonotone_conic],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert_eq!(
+        nonmonotone_report.events[0].class,
+        LineRationalQuadraticBezierIntersectionClass::Unknown
+    );
+
     let r_report =
         arrange_rational_quadratic_beziers(&[conic], &[vec![t]], PredicatePolicy::default())
             .unwrap();

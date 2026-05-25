@@ -85,6 +85,9 @@ pub enum LineRationalQuadraticBezierIntersectionClass {
     OnePoint,
     /// The line crosses the conic at two certified points inside the segment bounds.
     TwoPoints,
+    /// The segment and a monotone rational-quadratic line image overlap over a
+    /// positive-length interval with certified endpoint witnesses.
+    Overlap,
     /// The exact predicate package cannot certify the relation.
     Unknown,
 }
@@ -104,7 +107,10 @@ pub struct LineRationalQuadraticBezierIntersection {
 /// conic equation before dividing by weight: for a horizontal line, for example,
 /// it solves `Y(t) - y_line W(t) = 0` as an exact scalar quadratic. Candidate
 /// roots are accepted only after parameter-domain, nonzero-weight, and
-/// segment-bound replay. This follows Yap, "Towards Exact Geometric
+/// segment-bound replay. Same-support overlaps are promoted only for certified
+/// monotone rational line images, where exact endpoint parameters can be
+/// recovered by replaying the one-dimensional rational equation. This follows
+/// Yap, "Towards Exact Geometric
 /// Computation," *Computational Geometry* 7.1-2 (1997), by keeping the exact
 /// conic object and returning `Unknown` instead of flattening or dividing
 /// undecidable denominators. The homogeneous construction is the standard
@@ -424,9 +430,13 @@ pub fn intersect_axis_aligned_line_rational_quadratic_bezier(
         Axis::X => segment.start().y.clone(),
         Axis::Y => segment.start().x.clone(),
     };
-    let roots = match solve_rational_quadratic_coordinate_roots(curve, axis, fixed, policy) {
+    let roots = match solve_rational_quadratic_coordinate_roots(curve, axis, fixed.clone(), policy)
+    {
         Some(roots) => roots,
-        None => return line_rational_quadratic_unknown_report(),
+        None => {
+            return rational_quadratic_line_overlap_report(segment, curve, axis, fixed, policy)
+                .unwrap_or_else(line_rational_quadratic_unknown_report);
+        }
     };
     let mut intersections = Vec::new();
     for parameter in roots {
@@ -946,6 +956,86 @@ fn degree_elevated_line_overlap_report(
     }
 }
 
+fn rational_quadratic_line_overlap_report(
+    segment: &LinePathSegment,
+    curve: &RationalQuadraticBezier,
+    axis: Axis,
+    fixed: Real,
+    policy: PredicatePolicy,
+) -> Option<LineRationalQuadraticBezierIntersectionReport> {
+    // A rational quadratic can lie exactly on the retained line support while
+    // using a nonlinear projective parameterization. Yap's exact-computation
+    // model requires us to keep that distinction: we promote overlap only when
+    // a Bernstein-sign monotonicity certificate proves that each retained
+    // coordinate value has a single replayable source parameter. The derivative
+    // sign test uses the rational Bezier hodograph numerator
+    // `N'(t)W(t)-N(t)W'(t)` in Bernstein form; see Farouki, *Pythagorean
+    // Hodograph Curves* (2008), for the homogeneous rational-curve derivative.
+    if !rational_quadratic_same_support(curve, axis, &fixed, policy)? {
+        return None;
+    }
+    if !rational_quadratic_line_image_monotone(curve, axis, policy)? {
+        return None;
+    }
+
+    let curve_a = varying_coordinate(curve.start(), axis);
+    let curve_b = varying_coordinate(curve.end(), axis);
+    let segment_a = varying_coordinate(segment.start(), axis);
+    let segment_b = varying_coordinate(segment.end(), axis);
+    let overlap_min = max_real(
+        &min_real(&curve_a, &curve_b, policy)?,
+        &min_real(&segment_a, &segment_b, policy)?,
+        policy,
+    )?;
+    let overlap_max = min_real(
+        &max_real(&curve_a, &curve_b, policy)?,
+        &max_real(&segment_a, &segment_b, policy)?,
+        policy,
+    )?;
+    match compare_reals_with_policy(&overlap_min, &overlap_max, policy).value()? {
+        Ordering::Greater => Some(LineRationalQuadraticBezierIntersectionReport {
+            class: LineRationalQuadraticBezierIntersectionClass::Disjoint,
+            intersections: Vec::new(),
+        }),
+        Ordering::Equal => {
+            let parameter =
+                rational_quadratic_line_image_parameter(curve, axis, &overlap_min, policy)?;
+            let point = point_from_axis(axis, fixed, overlap_min);
+            Some(LineRationalQuadraticBezierIntersectionReport {
+                class: LineRationalQuadraticBezierIntersectionClass::OnePoint,
+                intersections: vec![LineRationalQuadraticBezierIntersection { parameter, point }],
+            })
+        }
+        Ordering::Less => {
+            let mut intersections = vec![
+                LineRationalQuadraticBezierIntersection {
+                    parameter: rational_quadratic_line_image_parameter(
+                        curve,
+                        axis,
+                        &overlap_min,
+                        policy,
+                    )?,
+                    point: point_from_axis(axis, fixed.clone(), overlap_min),
+                },
+                LineRationalQuadraticBezierIntersection {
+                    parameter: rational_quadratic_line_image_parameter(
+                        curve,
+                        axis,
+                        &overlap_max,
+                        policy,
+                    )?,
+                    point: point_from_axis(axis, fixed, overlap_max),
+                },
+            ];
+            sort_rational_quadratic_intersections(&mut intersections, policy)?;
+            Some(LineRationalQuadraticBezierIntersectionReport {
+                class: LineRationalQuadraticBezierIntersectionClass::Overlap,
+                intersections,
+            })
+        }
+    }
+}
+
 fn is_degree_elevated_line(curve: &QuadraticBezier, policy: PredicatePolicy) -> Option<bool> {
     let x_mid = Real::from(2) * curve.control().x.clone();
     let y_mid = Real::from(2) * curve.control().y.clone();
@@ -969,6 +1059,112 @@ fn line_image_parameter(
     match compare_reals_with_policy(&denominator, &Real::zero(), policy).value()? {
         Ordering::Equal => None,
         Ordering::Less | Ordering::Greater => ((value.clone() - start) / denominator).ok(),
+    }
+}
+
+fn rational_quadratic_same_support(
+    curve: &RationalQuadraticBezier,
+    axis: Axis,
+    fixed: &Real,
+    policy: PredicatePolicy,
+) -> Option<bool> {
+    let q0 = rational_conic_support_coefficient(curve.start(), &Real::one(), axis, fixed);
+    let q1 =
+        rational_conic_support_coefficient(curve.control(), curve.control_weight(), axis, fixed);
+    let q2 = rational_conic_support_coefficient(curve.end(), &Real::one(), axis, fixed);
+    Some(
+        compare_reals_with_policy(&q0, &Real::zero(), policy).value()? == Ordering::Equal
+            && compare_reals_with_policy(&q1, &Real::zero(), policy).value()? == Ordering::Equal
+            && compare_reals_with_policy(&q2, &Real::zero(), policy).value()? == Ordering::Equal,
+    )
+}
+
+fn rational_quadratic_line_image_monotone(
+    curve: &RationalQuadraticBezier,
+    axis: Axis,
+    policy: PredicatePolicy,
+) -> Option<bool> {
+    let start = varying_coordinate(curve.start(), axis);
+    let control = varying_coordinate(curve.control(), axis);
+    let end = varying_coordinate(curve.end(), axis);
+    let first = curve.control_weight().clone() * (control.clone() - start.clone());
+    let second = end.clone() - start;
+    let third = curve.control_weight().clone() * (end - control);
+    let signs = [
+        compare_reals_with_policy(&first, &Real::zero(), policy).value()?,
+        compare_reals_with_policy(&second, &Real::zero(), policy).value()?,
+        compare_reals_with_policy(&third, &Real::zero(), policy).value()?,
+    ];
+    let nonnegative = signs.iter().all(|sign| *sign != Ordering::Less);
+    let nonpositive = signs.iter().all(|sign| *sign != Ordering::Greater);
+    let nonconstant = signs.iter().any(|sign| *sign != Ordering::Equal);
+    Some(nonconstant && (nonnegative || nonpositive))
+}
+
+fn solve_rational_quadratic_varying_roots(
+    curve: &RationalQuadraticBezier,
+    axis: Axis,
+    fixed: Real,
+    policy: PredicatePolicy,
+) -> Option<Vec<Real>> {
+    let q0 = rational_conic_varying_coefficient(curve.start(), &Real::one(), axis, &fixed);
+    let q1 =
+        rational_conic_varying_coefficient(curve.control(), curve.control_weight(), axis, &fixed);
+    let q2 = rational_conic_varying_coefficient(curve.end(), &Real::one(), axis, &fixed);
+    let a = q0.clone() - Real::from(2) * q1.clone() + q2.clone();
+    let b = Real::from(2) * (q1 - q0.clone());
+    let c = q0;
+    match compare_reals_with_policy(&a, &Real::zero(), policy).value()? {
+        Ordering::Equal => solve_linear_root(b, c, policy),
+        Ordering::Less | Ordering::Greater => solve_quadratic_roots(a, b, c, policy),
+    }
+}
+
+fn rational_conic_varying_coefficient(
+    point: &Point2,
+    weight: &Real,
+    axis: Axis,
+    fixed: &Real,
+) -> Real {
+    weight.clone() * (varying_coordinate(point, axis) - fixed.clone())
+}
+
+fn rational_quadratic_line_image_parameter(
+    curve: &RationalQuadraticBezier,
+    axis: Axis,
+    value: &Real,
+    policy: PredicatePolicy,
+) -> Option<Real> {
+    let roots = solve_rational_quadratic_varying_roots(curve, axis, value.clone(), policy)?;
+    let mut accepted: Vec<Real> = Vec::new();
+    for root in roots {
+        match parameter_in_unit_interval(&root, policy) {
+            Some(true) => {}
+            Some(false) => continue,
+            None => return None,
+        }
+        let point = eval_rational_quadratic_at_real(curve, &root, policy)?;
+        match compare_reals_with_policy(&varying_coordinate(&point, axis), value, policy).value()? {
+            Ordering::Equal => {}
+            Ordering::Less | Ordering::Greater => continue,
+        }
+        let mut duplicate = false;
+        for existing in &accepted {
+            match compare_reals_with_policy(existing, &root, policy).value()? {
+                Ordering::Equal => {
+                    duplicate = true;
+                    break;
+                }
+                Ordering::Less | Ordering::Greater => {}
+            }
+        }
+        if !duplicate {
+            accepted.push(root);
+        }
+    }
+    match accepted.len() {
+        1 => accepted.pop(),
+        _ => None,
     }
 }
 
