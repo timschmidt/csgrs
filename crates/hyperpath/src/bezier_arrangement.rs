@@ -74,6 +74,58 @@ pub struct LineQuadraticBezierIntersectionReport {
     pub intersections: Vec<LineQuadraticBezierIntersection>,
 }
 
+/// Certified class for a retained line segment against a cubic Bezier.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum LineCubicBezierIntersectionClass {
+    /// The segment and curve are certified disjoint.
+    Disjoint,
+    /// The line is tangent to the curve at one certified point.
+    Tangent,
+    /// The line crosses the curve at one certified point inside the segment bounds.
+    OnePoint,
+    /// The line crosses the curve at two certified points inside the segment bounds.
+    TwoPoints,
+    /// The line crosses the curve at three certified points inside the segment bounds.
+    ThreePoints,
+    /// The segment and a degree-elevated linear cubic Bezier overlap over a
+    /// positive-length interval with certified endpoint witnesses.
+    Overlap,
+    /// The exact predicate package cannot certify the relation.
+    Unknown,
+}
+
+/// Exact line/cubic-Bezier event witness.
+#[derive(Clone, Debug, PartialEq)]
+pub struct LineCubicBezierIntersection {
+    /// Exact cubic Bezier parameter in `[0, 1]`.
+    pub parameter: Real,
+    /// Exact point on the retained Bezier and line segment.
+    pub point: Point2,
+}
+
+/// Exact event report for an axis-aligned line segment and cubic Bezier.
+///
+/// The retained line is substituted into one cubic Bezier coordinate. Constant,
+/// linear, and quadratic support polynomials are solved exactly and replayed
+/// against the parameter and segment domains. True cubic roots stay
+/// [`LineCubicBezierIntersectionClass::Unknown`] until `hypersolve` exposes a
+/// represented cubic-root package for path arrangements. Same-support overlaps
+/// are promoted only for degree-elevated straight cubic images, where endpoint
+/// coordinates invert to exact affine parameters.
+///
+/// This follows Yap, "Towards Exact Geometric Computation," *Computational
+/// Geometry* 7.1-2 (1997): unsupported algebraic discovery is reported instead
+/// of sampled. The Bezier restriction/replay rows use the retained polynomial
+/// object discipline described by de Casteljau subdivision and by Farouki,
+/// *Pythagorean Hodograph Curves* (2008).
+#[derive(Clone, Debug, PartialEq)]
+pub struct LineCubicBezierIntersectionReport {
+    /// Certified intersection class.
+    pub class: LineCubicBezierIntersectionClass,
+    /// Certified witnesses in increasing cubic-parameter order.
+    pub intersections: Vec<LineCubicBezierIntersection>,
+}
+
 /// Certified class for a retained line segment against a rational quadratic conic.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum LineRationalQuadraticBezierIntersectionClass {
@@ -412,6 +464,67 @@ pub fn intersect_axis_aligned_line_quadratic_bezier(
         _ => LineQuadraticBezierIntersectionClass::Unknown,
     };
     LineQuadraticBezierIntersectionReport {
+        class,
+        intersections,
+    }
+}
+
+/// Intersect an axis-aligned line segment with a cubic Bezier exactly where
+/// the retained support equation has degree at most two.
+pub fn intersect_axis_aligned_line_cubic_bezier(
+    segment: &LinePathSegment,
+    curve: &CubicBezier,
+    policy: PredicatePolicy,
+) -> LineCubicBezierIntersectionReport {
+    let Some(axis) = segment.facts().axis_aligned else {
+        return line_cubic_unknown_report();
+    };
+    let fixed = match axis {
+        Axis::X => segment.start().y.clone(),
+        Axis::Y => segment.start().x.clone(),
+    };
+    let roots =
+        match solve_cubic_coordinate_roots_up_to_quadratic(curve, axis, fixed.clone(), policy) {
+            Some(roots) => roots,
+            None => {
+                return degree_elevated_cubic_line_overlap_report(
+                    segment, curve, axis, fixed, policy,
+                )
+                .unwrap_or_else(line_cubic_unknown_report);
+            }
+        };
+    let mut intersections = Vec::new();
+    for parameter in roots {
+        match parameter_in_unit_interval(&parameter, policy) {
+            Some(true) => {}
+            Some(false) => continue,
+            None => return line_cubic_unknown_report(),
+        }
+        let point = eval_cubic_at_real(curve, &parameter);
+        match point_inside_segment_bounds(&point, segment, policy) {
+            Some(true) => {}
+            Some(false) => continue,
+            None => return line_cubic_unknown_report(),
+        }
+        if push_unique_cubic_intersection(&mut intersections, parameter, point, policy).is_none() {
+            return line_cubic_unknown_report();
+        }
+    }
+    if sort_cubic_intersections(&mut intersections, policy).is_none() {
+        return line_cubic_unknown_report();
+    }
+    let class = match intersections.len() {
+        0 => LineCubicBezierIntersectionClass::Disjoint,
+        1 => match cubic_roots_are_tangent_up_to_quadratic(curve, axis, segment, policy) {
+            Some(true) => LineCubicBezierIntersectionClass::Tangent,
+            Some(false) => LineCubicBezierIntersectionClass::OnePoint,
+            None => return line_cubic_unknown_report(),
+        },
+        2 => LineCubicBezierIntersectionClass::TwoPoints,
+        3 => LineCubicBezierIntersectionClass::ThreePoints,
+        _ => LineCubicBezierIntersectionClass::Unknown,
+    };
+    LineCubicBezierIntersectionReport {
         class,
         intersections,
     }
@@ -844,6 +957,29 @@ fn solve_rational_quadratic_coordinate_roots(
     }
 }
 
+fn solve_cubic_coordinate_roots_up_to_quadratic(
+    curve: &CubicBezier,
+    axis: Axis,
+    fixed: Real,
+    policy: PredicatePolicy,
+) -> Option<Vec<Real>> {
+    let p0 = coordinate(curve.start(), axis);
+    let p1 = coordinate(curve.control0(), axis);
+    let p2 = coordinate(curve.control1(), axis);
+    let p3 = coordinate(curve.end(), axis);
+    let a = -p0.clone() + Real::from(3) * p1.clone() - Real::from(3) * p2.clone() + p3;
+    let b = Real::from(3) * p0.clone() - Real::from(6) * p1.clone() + Real::from(3) * p2;
+    let c = Real::from(3) * (p1 - p0.clone());
+    let d = p0 - fixed;
+    match compare_reals_with_policy(&a, &Real::zero(), policy).value()? {
+        Ordering::Equal => match compare_reals_with_policy(&b, &Real::zero(), policy).value()? {
+            Ordering::Equal => solve_linear_root(c, d, policy),
+            Ordering::Less | Ordering::Greater => solve_quadratic_roots(b, c, d, policy),
+        },
+        Ordering::Less | Ordering::Greater => None,
+    }
+}
+
 fn rational_conic_support_coefficient(
     point: &Point2,
     weight: &Real,
@@ -956,6 +1092,83 @@ fn degree_elevated_line_overlap_report(
     }
 }
 
+fn degree_elevated_cubic_line_overlap_report(
+    segment: &LinePathSegment,
+    curve: &CubicBezier,
+    axis: Axis,
+    fixed: Real,
+    policy: PredicatePolicy,
+) -> Option<LineCubicBezierIntersectionReport> {
+    // The exact cubic line-support equation may vanish identically for both
+    // true nonlinear line images and degree-elevated straight segments. We
+    // promote only the degree-elevated straight case:
+    // `p1 = (2*p0+p3)/3` and `p2 = (p0+2*p3)/3`. Then `B(t)` is exactly the
+    // affine line image and endpoint overlap values invert without solving a
+    // cubic. This is the same Yap-style retained-object boundary used for the
+    // quadratic overlap branch above.
+    if !is_degree_elevated_cubic_line(curve, policy)? {
+        return None;
+    }
+    if compare_reals_with_policy(&support_coordinate(curve.start(), axis), &fixed, policy)
+        .value()?
+        != Ordering::Equal
+        || compare_reals_with_policy(&support_coordinate(curve.end(), axis), &fixed, policy)
+            .value()?
+            != Ordering::Equal
+    {
+        return Some(LineCubicBezierIntersectionReport {
+            class: LineCubicBezierIntersectionClass::Disjoint,
+            intersections: Vec::new(),
+        });
+    }
+
+    let curve_a = varying_coordinate(curve.start(), axis);
+    let curve_b = varying_coordinate(curve.end(), axis);
+    let segment_a = varying_coordinate(segment.start(), axis);
+    let segment_b = varying_coordinate(segment.end(), axis);
+    let overlap_min = max_real(
+        &min_real(&curve_a, &curve_b, policy)?,
+        &min_real(&segment_a, &segment_b, policy)?,
+        policy,
+    )?;
+    let overlap_max = min_real(
+        &max_real(&curve_a, &curve_b, policy)?,
+        &max_real(&segment_a, &segment_b, policy)?,
+        policy,
+    )?;
+    match compare_reals_with_policy(&overlap_min, &overlap_max, policy).value()? {
+        Ordering::Greater => Some(LineCubicBezierIntersectionReport {
+            class: LineCubicBezierIntersectionClass::Disjoint,
+            intersections: Vec::new(),
+        }),
+        Ordering::Equal => {
+            let parameter = cubic_line_image_parameter(curve, axis, &overlap_min, policy)?;
+            let point = point_from_axis(axis, fixed, overlap_min);
+            Some(LineCubicBezierIntersectionReport {
+                class: LineCubicBezierIntersectionClass::OnePoint,
+                intersections: vec![LineCubicBezierIntersection { parameter, point }],
+            })
+        }
+        Ordering::Less => {
+            let mut intersections = vec![
+                LineCubicBezierIntersection {
+                    parameter: cubic_line_image_parameter(curve, axis, &overlap_min, policy)?,
+                    point: point_from_axis(axis, fixed.clone(), overlap_min),
+                },
+                LineCubicBezierIntersection {
+                    parameter: cubic_line_image_parameter(curve, axis, &overlap_max, policy)?,
+                    point: point_from_axis(axis, fixed, overlap_max),
+                },
+            ];
+            sort_cubic_intersections(&mut intersections, policy)?;
+            Some(LineCubicBezierIntersectionReport {
+                class: LineCubicBezierIntersectionClass::Overlap,
+                intersections,
+            })
+        }
+    }
+}
+
 fn rational_quadratic_line_overlap_report(
     segment: &LinePathSegment,
     curve: &RationalQuadraticBezier,
@@ -1047,8 +1260,40 @@ fn is_degree_elevated_line(curve: &QuadraticBezier, policy: PredicatePolicy) -> 
     )
 }
 
+fn is_degree_elevated_cubic_line(curve: &CubicBezier, policy: PredicatePolicy) -> Option<bool> {
+    let three_x1 = Real::from(3) * curve.control0().x.clone();
+    let three_y1 = Real::from(3) * curve.control0().y.clone();
+    let three_x2 = Real::from(3) * curve.control1().x.clone();
+    let three_y2 = Real::from(3) * curve.control1().y.clone();
+    let first_x = Real::from(2) * curve.start().x.clone() + curve.end().x.clone();
+    let first_y = Real::from(2) * curve.start().y.clone() + curve.end().y.clone();
+    let second_x = curve.start().x.clone() + Real::from(2) * curve.end().x.clone();
+    let second_y = curve.start().y.clone() + Real::from(2) * curve.end().y.clone();
+    Some(
+        compare_reals_with_policy(&three_x1, &first_x, policy).value()? == Ordering::Equal
+            && compare_reals_with_policy(&three_y1, &first_y, policy).value()? == Ordering::Equal
+            && compare_reals_with_policy(&three_x2, &second_x, policy).value()? == Ordering::Equal
+            && compare_reals_with_policy(&three_y2, &second_y, policy).value()? == Ordering::Equal,
+    )
+}
+
 fn line_image_parameter(
     curve: &QuadraticBezier,
+    axis: Axis,
+    value: &Real,
+    policy: PredicatePolicy,
+) -> Option<Real> {
+    let start = varying_coordinate(curve.start(), axis);
+    let end = varying_coordinate(curve.end(), axis);
+    let denominator = end - start.clone();
+    match compare_reals_with_policy(&denominator, &Real::zero(), policy).value()? {
+        Ordering::Equal => None,
+        Ordering::Less | Ordering::Greater => ((value.clone() - start) / denominator).ok(),
+    }
+}
+
+fn cubic_line_image_parameter(
+    curve: &CubicBezier,
     axis: Axis,
     value: &Real,
     policy: PredicatePolicy,
@@ -1219,6 +1464,36 @@ fn rational_quadratic_roots_are_tangent(
     )
 }
 
+fn cubic_roots_are_tangent_up_to_quadratic(
+    curve: &CubicBezier,
+    axis: Axis,
+    segment: &LinePathSegment,
+    policy: PredicatePolicy,
+) -> Option<bool> {
+    let fixed = match axis {
+        Axis::X => segment.start().y.clone(),
+        Axis::Y => segment.start().x.clone(),
+    };
+    let p0 = coordinate(curve.start(), axis);
+    let p1 = coordinate(curve.control0(), axis);
+    let p2 = coordinate(curve.control1(), axis);
+    let p3 = coordinate(curve.end(), axis);
+    let a = -p0.clone() + Real::from(3) * p1.clone() - Real::from(3) * p2.clone() + p3;
+    let b = Real::from(3) * p0.clone() - Real::from(6) * p1.clone() + Real::from(3) * p2;
+    let c = Real::from(3) * (p1 - p0.clone());
+    let d = p0 - fixed;
+    if compare_reals_with_policy(&a, &Real::zero(), policy).value()? != Ordering::Equal {
+        return None;
+    }
+    if compare_reals_with_policy(&b, &Real::zero(), policy).value()? == Ordering::Equal {
+        return Some(false);
+    }
+    let discriminant = c.clone() * c - Real::from(4) * b * d;
+    Some(
+        compare_reals_with_policy(&discriminant, &Real::zero(), policy).value()? == Ordering::Equal,
+    )
+}
+
 fn parameter_in_unit_interval(parameter: &Real, policy: PredicatePolicy) -> Option<bool> {
     let lower = compare_reals_with_policy(parameter, &Real::zero(), policy).value()?;
     let upper = compare_reals_with_policy(parameter, &Real::one(), policy).value()?;
@@ -1309,6 +1584,26 @@ fn eval_quadratic_at_real(curve: &QuadraticBezier, parameter: &Real) -> Point2 {
     )
 }
 
+fn eval_cubic_at_real(curve: &CubicBezier, parameter: &Real) -> Point2 {
+    let one_minus_t = Real::one() - parameter.clone();
+    let omt2 = one_minus_t.clone() * one_minus_t.clone();
+    let omt3 = omt2.clone() * one_minus_t.clone();
+    let t2 = parameter.clone() * parameter.clone();
+    let t3 = t2.clone() * parameter.clone();
+    let control0_weight = Real::from(3) * omt2 * parameter.clone();
+    let control1_weight = Real::from(3) * one_minus_t * t2;
+    Point2::new(
+        curve.start().x.clone() * omt3.clone()
+            + curve.control0().x.clone() * control0_weight.clone()
+            + curve.control1().x.clone() * control1_weight.clone()
+            + curve.end().x.clone() * t3.clone(),
+        curve.start().y.clone() * omt3
+            + curve.control0().y.clone() * control0_weight
+            + curve.control1().y.clone() * control1_weight
+            + curve.end().y.clone() * t3,
+    )
+}
+
 fn eval_rational_quadratic_at_real(
     curve: &RationalQuadraticBezier,
     parameter: &Real,
@@ -1373,6 +1668,44 @@ fn sort_rational_quadratic_intersections(
     Some(())
 }
 
+fn push_unique_cubic_intersection(
+    intersections: &mut Vec<LineCubicBezierIntersection>,
+    parameter: Real,
+    point: Point2,
+    policy: PredicatePolicy,
+) -> Option<()> {
+    for existing in intersections.iter() {
+        match point2_equal_with_policy(&existing.point, &point, policy).value()? {
+            true => return Some(()),
+            false => {}
+        }
+    }
+    intersections.push(LineCubicBezierIntersection { parameter, point });
+    Some(())
+}
+
+fn sort_cubic_intersections(
+    intersections: &mut [LineCubicBezierIntersection],
+    policy: PredicatePolicy,
+) -> Option<()> {
+    for left in 0..intersections.len() {
+        for right in (left + 1)..intersections.len() {
+            compare_reals_with_policy(
+                &intersections[left].parameter,
+                &intersections[right].parameter,
+                policy,
+            )
+            .value()?;
+        }
+    }
+    intersections.sort_by(|left, right| {
+        compare_reals_with_policy(&left.parameter, &right.parameter, policy)
+            .value()
+            .expect("pairwise line/cubic parameter order was certified before sorting")
+    });
+    Some(())
+}
+
 fn coordinate(point: &Point2, axis: Axis) -> Real {
     match axis {
         Axis::X => point.y.clone(),
@@ -1401,6 +1734,13 @@ fn point_from_axis(axis: Axis, fixed: Real, varying: Real) -> Point2 {
 fn line_quadratic_unknown_report() -> LineQuadraticBezierIntersectionReport {
     LineQuadraticBezierIntersectionReport {
         class: LineQuadraticBezierIntersectionClass::Unknown,
+        intersections: Vec::new(),
+    }
+}
+
+fn line_cubic_unknown_report() -> LineCubicBezierIntersectionReport {
+    LineCubicBezierIntersectionReport {
+        class: LineCubicBezierIntersectionClass::Unknown,
         intersections: Vec::new(),
     }
 }

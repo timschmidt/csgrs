@@ -4,11 +4,13 @@ use std::cmp::Ordering;
 
 use hyperlimit::{PredicatePolicy, compare_reals_with_policy};
 use hyperpath::{
-    BezierParameter, CubicBezier, LinePathSegment, LineQuadraticBezierIntersectionClass,
-    LineRationalQuadraticBezierIntersectionClass, QuadraticBezier, RationalQuadraticBezier,
-    arrange_cubic_beziers, arrange_line_segments_with_quadratic_beziers,
+    BezierParameter, CubicBezier, LineCubicBezierIntersectionClass, LinePathSegment,
+    LineQuadraticBezierIntersectionClass, LineRationalQuadraticBezierIntersectionClass,
+    QuadraticBezier, RationalQuadraticBezier, arrange_cubic_beziers,
+    arrange_line_segments_with_cubic_beziers, arrange_line_segments_with_quadratic_beziers,
     arrange_line_segments_with_rational_quadratic_beziers, arrange_quadratic_beziers,
-    arrange_rational_quadratic_beziers, intersect_axis_aligned_line_quadratic_bezier,
+    arrange_rational_quadratic_beziers, intersect_axis_aligned_line_cubic_bezier,
+    intersect_axis_aligned_line_quadratic_bezier,
     intersect_axis_aligned_line_rational_quadratic_bezier,
 };
 use hyperreal::{Rational, Real};
@@ -20,6 +22,13 @@ fn r(value: i64) -> Real {
 
 fn p(x: i64, y: i64) -> hyperlimit::Point2 {
     hyperlimit::Point2::new(r(x), r(y))
+}
+
+fn pq(x_num: i64, x_den: i64, y_num: i64, y_den: i64) -> hyperlimit::Point2 {
+    hyperlimit::Point2::new(
+        Real::new(Rational::new(x_num) / Rational::new(x_den)),
+        Real::new(Rational::new(y_num) / Rational::new(y_den)),
+    )
 }
 
 fn signed(byte: u8) -> i64 {
@@ -116,6 +125,50 @@ fuzz_target!(|data: &[u8]| {
     assert_eq!(c_report.fragments[0].curve.end(), &cubic.eval(t));
     assert_eq!(c_report.fragments[1].curve.start(), &cubic.eval(t));
     assert_eq!(c_report.fragments[1].curve.end(), cubic.end());
+
+    let reducible_cubic = CubicBezier::new(p(0, 0), pq(8, 3, 4, 1), pq(16, 3, 4, 1), p(8, 0));
+    let cubic_secant_line = LinePathSegment::new(pq(0, 1, 9, 4), pq(8, 1, 9, 4));
+    let cubic_intersection_report = intersect_axis_aligned_line_cubic_bezier(
+        &cubic_secant_line,
+        &reducible_cubic,
+        PredicatePolicy::default(),
+    );
+    for event in &cubic_intersection_report.intersections {
+        assert_eq!(
+            compare_reals_with_policy(
+                &event.point.y,
+                &cubic_secant_line.start().y,
+                PredicatePolicy::default()
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
+    }
+    let cubic_mixed_report = arrange_line_segments_with_cubic_beziers(
+        &[cubic_secant_line],
+        &[reducible_cubic],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert_eq!(
+        cubic_mixed_report.events[0].class,
+        LineCubicBezierIntersectionClass::TwoPoints
+    );
+    assert_eq!(cubic_mixed_report.cubic_fragments.len(), 3);
+
+    let cubic_overlap_curve = CubicBezier::new(p(0, 0), pq(8, 3, 0, 1), pq(16, 3, 0, 1), p(8, 0));
+    let cubic_overlap_line = LinePathSegment::new(p(2, 0), p(6, 0));
+    let cubic_overlap_report = arrange_line_segments_with_cubic_beziers(
+        &[cubic_overlap_line],
+        &[cubic_overlap_curve],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert_eq!(
+        cubic_overlap_report.events[0].class,
+        LineCubicBezierIntersectionClass::Overlap
+    );
+    assert_eq!(cubic_overlap_report.cubic_breakpoints[0].len(), 4);
 
     let weight = r(i64::from(data[11] % 16));
     let conic = RationalQuadraticBezier::new(

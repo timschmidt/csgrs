@@ -10,11 +10,11 @@ use hyperpath::{
     ExplicitCircularArc, FeedPathElement, HigherOrderBezier, HigherOrderBezierError,
     InfillGraphError, JerkLimitedFeedTimeReport, JerkRampPhaseProposal, JerkRampSpanProposal,
     LineArcArrangementEventClass, LineArrangementError, LineArrangementEventClass,
-    LineExplicitArcIntersectionClass, LineOffsetError, LinePathSegment,
-    LineQuadraticBezierIntersectionClass, LineRationalQuadraticBezierIntersectionClass,
-    LookaheadFeedSchedule, MeanderError, MeanderKeepout, MeanderObstacle,
-    MeanderPlacementCandidate, NetId, OffsetSide, PathProvenance, PathSourceFormat,
-    PcbBoardOutline, PcbCardinalRectPad, PcbCircularBoardOutline, PcbCircularPad,
+    LineCubicBezierIntersectionClass, LineExplicitArcIntersectionClass, LineOffsetError,
+    LinePathSegment, LineQuadraticBezierIntersectionClass,
+    LineRationalQuadraticBezierIntersectionClass, LookaheadFeedSchedule, MeanderError,
+    MeanderKeepout, MeanderObstacle, MeanderPlacementCandidate, NetId, OffsetSide, PathProvenance,
+    PathSourceFormat, PcbBoardOutline, PcbCardinalRectPad, PcbCircularBoardOutline, PcbCircularPad,
     PcbConvexBoardOutline, PcbConvexPad, PcbObroundPad, PcbOrientedRectPad,
     PcbOrthogonalBoardOutline, PcbOrthogonalPad, PcbRectPad, PcbRoundedRectPad, PcbTrace,
     PcbViaStack, PhCurveError, PocketLinkGraphError, PocketPlanError, PocketPlanStopReason,
@@ -26,8 +26,8 @@ use hyperpath::{
     SupportPlanError, SweptLineSegment, TangentAlignment, TangentJoinClass, TangentJoinReport,
     TangentSpan, TraceLayer, ViaAnnularRingReport, ViaDrillIntent, ViaDrillPolicyClass,
     ViaLayerSpanRelation, ViaLayerTransitionClass, arrange_cubic_beziers, arrange_explicit_arcs,
-    arrange_line_segments, arrange_line_segments_with_explicit_arcs,
-    arrange_line_segments_with_quadratic_beziers,
+    arrange_line_segments, arrange_line_segments_with_cubic_beziers,
+    arrange_line_segments_with_explicit_arcs, arrange_line_segments_with_quadratic_beziers,
     arrange_line_segments_with_rational_quadratic_beziers, arrange_quadratic_beziers,
     arrange_rational_quadratic_beziers, build_alternating_detour_meander, build_g1_join_problem,
     build_keepout_aware_detour_meander, build_length_match_problem, build_multi_detour_meander,
@@ -61,7 +61,7 @@ use hyperpath::{
     classify_tangent_alignment, classify_tangent_chain, classify_tangent_join,
     export_specctra_trace_record, import_specctra_keepout_record, import_specctra_text_route,
     import_specctra_trace_record, import_specctra_via_record,
-    intersect_axis_aligned_line_quadratic_bezier,
+    intersect_axis_aligned_line_cubic_bezier, intersect_axis_aligned_line_quadratic_bezier,
     intersect_axis_aligned_line_rational_quadratic_bezier, intersect_rectangular_regions,
     offset_axis_aligned_segment, offset_cardinal_arc, offset_cubic_bezier_sample,
     offset_explicit_arc, offset_higher_order_bezier_sample, offset_quadratic_bezier_sample,
@@ -712,6 +712,130 @@ fn line_quadratic_bezier_arrangement_rejects_degenerate_line_order() {
     assert_eq!(
         err,
         hyperpath::LineQuadraticBezierArrangementError::DegenerateLine { line: 0 }
+    );
+}
+
+#[test]
+fn line_cubic_bezier_intersection_finds_quadratic_secant_events() {
+    let curve = CubicBezier::new(p(0, 0), pq(8, 3, 4, 1), pq(16, 3, 4, 1), p(8, 0));
+    let line = LinePathSegment::new(pq(0, 1, 9, 4), pq(8, 1, 9, 4));
+
+    let report =
+        intersect_axis_aligned_line_cubic_bezier(&line, &curve, PredicatePolicy::default());
+
+    assert_eq!(report.class, LineCubicBezierIntersectionClass::TwoPoints);
+    assert_eq!(report.intersections.len(), 2);
+    assert_eq!(report.intersections[0].parameter, rq(1, 4));
+    assert_eq!(report.intersections[0].point, pq(2, 1, 9, 4));
+    assert_eq!(report.intersections[1].parameter, rq(3, 4));
+    assert_eq!(report.intersections[1].point, pq(6, 1, 9, 4));
+}
+
+#[test]
+fn line_cubic_bezier_intersection_classifies_quadratic_tangent() {
+    let tangent_curve = CubicBezier::new(p(0, 0), pq(8, 3, 4, 1), pq(16, 3, 4, 1), p(8, 0));
+    let tangent_line = LinePathSegment::new(p(0, 3), p(8, 3));
+
+    let report = intersect_axis_aligned_line_cubic_bezier(
+        &tangent_line,
+        &tangent_curve,
+        PredicatePolicy::default(),
+    );
+
+    assert_eq!(report.class, LineCubicBezierIntersectionClass::Tangent);
+    assert_eq!(report.intersections.len(), 1);
+    assert_eq!(report.intersections[0].parameter, rq(1, 2));
+    assert_eq!(report.intersections[0].point, p(4, 3));
+}
+
+#[test]
+fn line_cubic_bezier_intersection_promotes_degree_elevated_overlap() {
+    let curve = CubicBezier::new(p(0, 0), pq(8, 3, 0, 1), pq(16, 3, 0, 1), p(8, 0));
+    let line = LinePathSegment::new(p(2, 0), p(6, 0));
+
+    let report =
+        intersect_axis_aligned_line_cubic_bezier(&line, &curve, PredicatePolicy::default());
+
+    assert_eq!(report.class, LineCubicBezierIntersectionClass::Overlap);
+    assert_eq!(report.intersections.len(), 2);
+    assert_eq!(report.intersections[0].parameter, rq(1, 4));
+    assert_eq!(report.intersections[0].point, p(2, 0));
+    assert_eq!(report.intersections[1].parameter, rq(3, 4));
+    assert_eq!(report.intersections[1].point, p(6, 0));
+}
+
+#[test]
+fn line_cubic_bezier_arrangement_splits_certified_quadratic_events() {
+    let curve = CubicBezier::new(p(0, 0), pq(8, 3, 4, 1), pq(16, 3, 4, 1), p(8, 0));
+    let line = LinePathSegment::new(pq(0, 1, 9, 4), pq(8, 1, 9, 4));
+
+    let report =
+        arrange_line_segments_with_cubic_beziers(&[line], &[curve], PredicatePolicy::default())
+            .unwrap();
+
+    assert_eq!(
+        report.events[0].class,
+        LineCubicBezierIntersectionClass::TwoPoints
+    );
+    assert_eq!(report.line_breakpoints[0].len(), 4);
+    assert_eq!(report.cubic_breakpoints[0].len(), 4);
+    assert_eq!(report.line_fragments.len(), 3);
+    assert_eq!(report.cubic_fragments.len(), 3);
+    assert_eq!(report.cubic_breakpoints[0][1].parameter, rq(1, 4));
+    assert_eq!(report.cubic_breakpoints[0][2].parameter, rq(3, 4));
+    assert_eq!(report.cubic_fragments[0].curve.end(), &pq(2, 1, 9, 4));
+    assert_eq!(report.cubic_fragments[1].curve.start(), &pq(2, 1, 9, 4));
+    assert_eq!(report.cubic_fragments[1].curve.end(), &pq(6, 1, 9, 4));
+}
+
+#[test]
+fn line_cubic_bezier_arrangement_keeps_true_cubic_roots_unknown() {
+    let curve = CubicBezier::new(p(0, 0), p(2, 0), p(6, 4), p(8, 0));
+    let line = LinePathSegment::new(p(0, 1), p(8, 1));
+
+    let report =
+        arrange_line_segments_with_cubic_beziers(&[line], &[curve], PredicatePolicy::default())
+            .unwrap();
+
+    assert_eq!(
+        report.events[0].class,
+        LineCubicBezierIntersectionClass::Unknown
+    );
+    assert_eq!(report.line_breakpoints[0].len(), 2);
+    assert_eq!(report.cubic_breakpoints[0].len(), 2);
+}
+
+#[test]
+fn line_cubic_bezier_arrangement_splits_degree_elevated_overlap() {
+    let curve = CubicBezier::new(p(0, 0), pq(8, 3, 0, 1), pq(16, 3, 0, 1), p(8, 0));
+    let line = LinePathSegment::new(p(2, 0), p(6, 0));
+
+    let report =
+        arrange_line_segments_with_cubic_beziers(&[line], &[curve], PredicatePolicy::default())
+            .unwrap();
+
+    assert_eq!(
+        report.events[0].class,
+        LineCubicBezierIntersectionClass::Overlap
+    );
+    assert_eq!(report.line_fragments.len(), 1);
+    assert_eq!(report.cubic_fragments.len(), 3);
+    assert_eq!(report.cubic_breakpoints[0][1].parameter, rq(1, 4));
+    assert_eq!(report.cubic_breakpoints[0][2].parameter, rq(3, 4));
+}
+
+#[test]
+fn line_cubic_bezier_arrangement_rejects_degenerate_line_order() {
+    let curve = CubicBezier::new(p(0, 0), p(2, 4), p(6, 4), p(8, 0));
+    let line = LinePathSegment::new(p(2, 3), p(2, 3));
+
+    let err =
+        arrange_line_segments_with_cubic_beziers(&[line], &[curve], PredicatePolicy::default())
+            .unwrap_err();
+
+    assert_eq!(
+        err,
+        hyperpath::LineCubicBezierArrangementError::DegenerateLine { line: 0 }
     );
 }
 
@@ -8929,6 +9053,73 @@ proptest! {
         prop_assert_eq!(report.line_fragments.len(), 1);
         prop_assert_eq!(report.bezier_fragments.len(), 3);
         prop_assert_eq!(report.bezier_breakpoints[0].len(), 4);
+    }
+
+    #[test]
+    fn line_cubic_bezier_arrangement_generated_quadratic_secants_split(
+        x0 in -20_i16..=20,
+        width in 2_i16..=40,
+        lift in 1_i16..=40,
+    ) {
+        let start_x = i64::from(x0);
+        let width = i64::from(width);
+        let lift = i64::from(lift);
+        let curve = CubicBezier::new(
+            p(start_x, 0),
+            Point2::new(rq(3 * start_x + width, 3), r(lift)),
+            Point2::new(rq(3 * start_x + 2 * width, 3), r(lift)),
+            p(start_x + width, 0),
+        );
+        let secant_y = rq(9 * lift, 16);
+        let line = LinePathSegment::new(
+            Point2::new(r(start_x), secant_y.clone()),
+            Point2::new(r(start_x + width), secant_y),
+        );
+
+        let report = arrange_line_segments_with_cubic_beziers(
+            &[line],
+            &[curve],
+            PredicatePolicy::default(),
+        ).unwrap();
+
+        prop_assert_eq!(report.events[0].class, LineCubicBezierIntersectionClass::TwoPoints);
+        prop_assert_eq!(report.events[0].intersection.intersections.len(), 2);
+        prop_assert_eq!(report.cubic_breakpoints[0].len(), 4);
+        prop_assert_eq!(report.cubic_breakpoints[0][1].parameter.clone(), rq(1, 4));
+        prop_assert_eq!(report.cubic_breakpoints[0][2].parameter.clone(), rq(3, 4));
+        prop_assert_eq!(report.line_fragments.len(), 3);
+        prop_assert_eq!(report.cubic_fragments.len(), 3);
+    }
+
+    #[test]
+    fn line_cubic_bezier_arrangement_generated_degree_elevated_overlaps_split(
+        x0 in -20_i16..=20,
+        width in 4_i16..=40,
+    ) {
+        let start_x = i64::from(x0);
+        let width = i64::from(width);
+        let curve = CubicBezier::new(
+            p(start_x, 0),
+            Point2::new(rq(3 * start_x + width, 3), r(0)),
+            Point2::new(rq(3 * start_x + 2 * width, 3), r(0)),
+            p(start_x + width, 0),
+        );
+        let line = LinePathSegment::new(
+            p(start_x + width / 4, 0),
+            p(start_x + (3 * width) / 4, 0),
+        );
+
+        let report = arrange_line_segments_with_cubic_beziers(
+            &[line],
+            &[curve],
+            PredicatePolicy::default(),
+        ).unwrap();
+
+        prop_assert_eq!(report.events[0].class, LineCubicBezierIntersectionClass::Overlap);
+        prop_assert_eq!(report.events[0].intersection.intersections.len(), 2);
+        prop_assert_eq!(report.line_fragments.len(), 1);
+        prop_assert_eq!(report.cubic_fragments.len(), 3);
+        prop_assert_eq!(report.cubic_breakpoints[0].len(), 4);
     }
 
     #[test]

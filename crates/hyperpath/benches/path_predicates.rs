@@ -13,8 +13,8 @@ use hyperpath::{
     RectangularPocket, SourceLengthUnit, SpecctraGridKeepoutRecord, SpecctraGridKeepoutShape,
     SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraLayerAlias, SpecctraNetAlias,
     SweptLineSegment, TangentSpan, TraceLayer, ViaDrillIntent, arrange_cubic_beziers,
-    arrange_explicit_arcs, arrange_line_segments, arrange_line_segments_with_explicit_arcs,
-    arrange_line_segments_with_quadratic_beziers,
+    arrange_explicit_arcs, arrange_line_segments, arrange_line_segments_with_cubic_beziers,
+    arrange_line_segments_with_explicit_arcs, arrange_line_segments_with_quadratic_beziers,
     arrange_line_segments_with_rational_quadratic_beziers, arrange_quadratic_beziers,
     arrange_rational_quadratic_beziers, build_alternating_detour_meander, build_g1_join_problem,
     build_keepout_aware_detour_meander, build_length_match_problem, build_multi_detour_meander,
@@ -46,7 +46,8 @@ use hyperpath::{
     classify_meander_candidate_slots, classify_meander_placement_slots,
     classify_meander_placement_slots_with_keepouts, classify_tangent_alignment,
     classify_tangent_chain, classify_tangent_join, import_specctra_trace_record,
-    import_specctra_via_record, intersect_axis_aligned_line_quadratic_bezier,
+    import_specctra_via_record, intersect_axis_aligned_line_cubic_bezier,
+    intersect_axis_aligned_line_quadratic_bezier,
     intersect_axis_aligned_line_rational_quadratic_bezier, intersect_rectangular_regions,
     offset_axis_aligned_segment, offset_cardinal_arc, offset_cubic_bezier_sample,
     offset_explicit_arc, offset_higher_order_bezier_sample, offset_quadratic_bezier_sample,
@@ -330,6 +331,43 @@ fn path_predicates(c: &mut Criterion) {
             arrange_cubic_beziers(
                 std::slice::from_ref(&cubic),
                 &bezier_events,
+                PredicatePolicy::default(),
+            )
+        })
+    });
+    let line_cubic = CubicBezier::new(
+        p(0, 0),
+        pq(1000, 3, 500, 1),
+        pq(2000, 3, 500, 1),
+        p(1000, 0),
+    );
+    let line_cubic_line = LinePathSegment::new(pq(0, 1, 375, 1), pq(1000, 1, 375, 1));
+    c.bench_function("line_cubic_bezier_exact_events", |b| {
+        b.iter(|| {
+            intersect_axis_aligned_line_cubic_bezier(
+                &line_cubic_line,
+                &line_cubic,
+                PredicatePolicy::default(),
+            )
+        })
+    });
+    c.bench_function("line_cubic_bezier_arrangement_cleanup", |b| {
+        b.iter(|| {
+            arrange_line_segments_with_cubic_beziers(
+                std::slice::from_ref(&line_cubic_line),
+                std::slice::from_ref(&line_cubic),
+                PredicatePolicy::default(),
+            )
+        })
+    });
+    let line_cubic_overlap =
+        CubicBezier::new(p(0, 0), pq(1000, 3, 0, 1), pq(2000, 3, 0, 1), p(1000, 0));
+    let line_cubic_overlap_line = LinePathSegment::new(p(250, 0), p(750, 0));
+    c.bench_function("line_cubic_bezier_overlap_promotion", |b| {
+        b.iter(|| {
+            arrange_line_segments_with_cubic_beziers(
+                std::slice::from_ref(&line_cubic_overlap_line),
+                std::slice::from_ref(&line_cubic_overlap),
                 PredicatePolicy::default(),
             )
         })
