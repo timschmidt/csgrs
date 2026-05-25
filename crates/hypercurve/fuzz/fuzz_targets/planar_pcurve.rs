@@ -95,6 +95,27 @@ fuzz_target!(|data: &[u8]| {
                         let _ = report.hole_loop_count();
                     });
                 }
+
+                if vertices.len() >= 2
+                    && let Ok(edge_curve) = CurveString2::from_bulge_vertices(&vertices[..2])
+                {
+                    let edge = RetainedPlanarPcurve2::new(surface, edge_curve);
+                    let report = face.edge_use_report(&edge);
+                    let _ = report.relation();
+                    let _ = report.surface();
+                    let _ = report.trim_role();
+                    let _ = report.trim_loop_index();
+                    let _ = report.trim_segment_index();
+                    let _ = report.segment_count();
+
+                    let prepared_report = prepared.edge_use_report(&edge);
+                    let _ = prepared_report.relation();
+                    let _ = prepared_report.surface();
+                    let _ = prepared_report.trim_role();
+                    let _ = prepared_report.trim_loop_index();
+                    let _ = prepared_report.trim_segment_index();
+                    let _ = prepared_report.segment_count();
+                }
             }
         }
     }

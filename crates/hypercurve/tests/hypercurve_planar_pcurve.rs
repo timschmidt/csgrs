@@ -1,8 +1,8 @@
 use hypercurve::{
     BulgeVertex2, Classification, Contour2, CurveError, CurvePolicy, CurveString2, FillRule,
     PlanarPcurveImageRelation2, Point2, Real, RetainedPlanarFace2,
-    RetainedPlanarFacePointLocation2, RetainedPlanarPcurve2, RetainedPlanarSurfaceIdentity2,
-    RetainedPlanarTrimLoop2,
+    RetainedPlanarFaceEdgeUseRelation2, RetainedPlanarFacePointLocation2, RetainedPlanarPcurve2,
+    RetainedPlanarSurfaceIdentity2, RetainedPlanarTrimLoop2, RetainedPlanarTrimLoopRole2,
 };
 
 fn r(value: i32) -> Real {
@@ -252,6 +252,141 @@ fn prepared_retained_planar_face_blocks_surface_mismatch_before_cached_region() 
     assert_eq!(report.material_loop_count(), 1);
     assert_eq!(report.hole_loop_count(), 0);
     assert!(!report.location().is_trim_classification());
+}
+
+#[test]
+fn retained_planar_face_reports_material_and_hole_edge_uses() {
+    let surface = RetainedPlanarSurfaceIdentity2::new(71);
+    let face = RetainedPlanarFace2::try_new(
+        surface,
+        vec![trim(surface, &[(0, 0), (10, 0), (10, 10), (0, 10)])],
+        vec![trim(surface, &[(3, 3), (7, 3), (7, 7), (3, 7)])],
+    )
+    .unwrap();
+
+    let material = RetainedPlanarPcurve2::new(surface, open_curve(&[(10, 0), (10, 10)]));
+    let material_report = face.edge_use_report(&material);
+    assert_eq!(
+        material_report.relation(),
+        RetainedPlanarFaceEdgeUseRelation2::BoundarySameDirected
+    );
+    assert!(material_report.relation().is_boundary());
+    assert!(!material_report.relation().is_reversed());
+    assert_eq!(material_report.surface(), Some(surface));
+    assert_eq!(
+        material_report.trim_role(),
+        Some(RetainedPlanarTrimLoopRole2::Material)
+    );
+    assert_eq!(material_report.trim_loop_index(), Some(0));
+    assert_eq!(material_report.trim_segment_index(), Some(1));
+    assert_eq!(material_report.segment_count(), 1);
+
+    let reversed_hole = RetainedPlanarPcurve2::new(surface, open_curve(&[(7, 7), (7, 3)]));
+    let hole_report = face.edge_use_report(&reversed_hole);
+    assert_eq!(
+        hole_report.relation(),
+        RetainedPlanarFaceEdgeUseRelation2::BoundarySameReversed
+    );
+    assert!(hole_report.relation().is_reversed());
+    assert_eq!(
+        hole_report.trim_role(),
+        Some(RetainedPlanarTrimLoopRole2::Hole)
+    );
+    assert!(hole_report.trim_role().unwrap().is_hole());
+    assert_eq!(hole_report.trim_loop_index(), Some(0));
+    assert_eq!(hole_report.trim_segment_index(), Some(1));
+}
+
+#[test]
+fn retained_planar_face_edge_use_accepts_cyclic_multisegment_subchains() {
+    let surface = RetainedPlanarSurfaceIdentity2::new(81);
+    let face = RetainedPlanarFace2::try_new(
+        surface,
+        vec![trim(surface, &[(0, 0), (4, 0), (4, 4), (0, 4)])],
+        Vec::new(),
+    )
+    .unwrap();
+
+    let wraps_closure = RetainedPlanarPcurve2::new(surface, open_curve(&[(0, 4), (0, 0), (4, 0)]));
+    let report = face.edge_use_report(&wraps_closure);
+    assert_eq!(
+        report.relation(),
+        RetainedPlanarFaceEdgeUseRelation2::BoundarySameDirected
+    );
+    assert_eq!(report.trim_segment_index(), Some(3));
+    assert_eq!(report.segment_count(), 2);
+
+    let reversed_wrap = RetainedPlanarPcurve2::new(surface, open_curve(&[(4, 0), (0, 0), (0, 4)]));
+    let report = face.edge_use_report(&reversed_wrap);
+    assert_eq!(
+        report.relation(),
+        RetainedPlanarFaceEdgeUseRelation2::BoundarySameReversed
+    );
+    assert_eq!(report.trim_segment_index(), Some(0));
+    assert_eq!(report.segment_count(), 2);
+}
+
+#[test]
+fn retained_planar_face_edge_use_rejects_surface_mismatch_and_nonboundary_chords() {
+    let surface = RetainedPlanarSurfaceIdentity2::new(91);
+    let face = RetainedPlanarFace2::try_new(
+        surface,
+        vec![trim(surface, &[(0, 0), (4, 0), (4, 4), (0, 4)])],
+        Vec::new(),
+    )
+    .unwrap();
+
+    let wrong_surface = RetainedPlanarPcurve2::new(
+        RetainedPlanarSurfaceIdentity2::new(92),
+        open_curve(&[(0, 0), (4, 0)]),
+    );
+    let report = face.edge_use_report(&wrong_surface);
+    assert_eq!(
+        report.relation(),
+        RetainedPlanarFaceEdgeUseRelation2::SurfaceMismatch
+    );
+    assert_eq!(report.surface(), None);
+    assert_eq!(report.segment_count(), 0);
+
+    let diagonal = RetainedPlanarPcurve2::new(surface, open_curve(&[(0, 0), (4, 4)]));
+    let report = face.edge_use_report(&diagonal);
+    assert_eq!(
+        report.relation(),
+        RetainedPlanarFaceEdgeUseRelation2::NotTrimBoundary
+    );
+    assert_eq!(report.surface(), Some(surface));
+    assert_eq!(report.trim_role(), None);
+    assert_eq!(report.segment_count(), 0);
+}
+
+#[test]
+fn prepared_retained_planar_face_edge_use_matches_plain_report() {
+    let surface = RetainedPlanarSurfaceIdentity2::new(101);
+    let face = RetainedPlanarFace2::try_new(
+        surface,
+        vec![trim(surface, &[(0, 0), (6, 0), (6, 6), (0, 6)])],
+        vec![trim(surface, &[(2, 2), (4, 2), (4, 4), (2, 4)])],
+    )
+    .unwrap();
+    let policy = policy();
+    let prepared = face.prepare_topology_queries(&policy);
+    let queries = [
+        RetainedPlanarPcurve2::new(surface, open_curve(&[(0, 0), (6, 0)])),
+        RetainedPlanarPcurve2::new(surface, open_curve(&[(4, 4), (4, 2)])),
+        RetainedPlanarPcurve2::new(surface, open_curve(&[(0, 0), (6, 6)])),
+        RetainedPlanarPcurve2::new(
+            RetainedPlanarSurfaceIdentity2::new(102),
+            open_curve(&[(0, 0), (6, 0)]),
+        ),
+    ];
+
+    for query in &queries {
+        assert_eq!(
+            prepared.edge_use_report(query),
+            face.edge_use_report(query),
+            "prepared edge-use report diverged for {query:?}"
+        );
+    }
 }
 
 #[test]

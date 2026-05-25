@@ -158,8 +158,9 @@ pub use intersect::{
 pub use offset::OffsetCap;
 pub use planar_pcurve::{
     PlanarPcurveImageEqualityReport2, PlanarPcurveImageRelation2, PreparedRetainedPlanarFace2,
-    RetainedPlanarFace2, RetainedPlanarFacePointLocation2, RetainedPlanarFacePointReport2,
-    RetainedPlanarPcurve2, RetainedPlanarSurfaceIdentity2, RetainedPlanarTrimLoop2,
+    RetainedPlanarFace2, RetainedPlanarFaceEdgeUseRelation2, RetainedPlanarFaceEdgeUseReport2,
+    RetainedPlanarFacePointLocation2, RetainedPlanarFacePointReport2, RetainedPlanarPcurve2,
+    RetainedPlanarSurfaceIdentity2, RetainedPlanarTrimLoop2, RetainedPlanarTrimLoopRole2,
 };
 pub use point::Point2;
 pub use policy::{CurvePolicy, NumericMode, Tolerance};

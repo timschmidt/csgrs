@@ -3,9 +3,10 @@ use std::time::Instant;
 
 use hypercurve::{
     BulgeVertex2, CircularArc2, Classification, Contour2, ContourPointLocation, CurvePolicy,
-    CurveResult, LineSeg2, LineSide, PlanarPcurveImageRelation2, Point2, Real, Region2,
-    RegionPointLocation, RetainedPlanarFace2, RetainedPlanarFacePointLocation2,
-    RetainedPlanarSurfaceIdentity2, RetainedPlanarTrimLoop2,
+    CurveResult, CurveString2, LineSeg2, LineSide, PlanarPcurveImageRelation2, Point2, Real,
+    Region2, RegionPointLocation, RetainedPlanarFace2, RetainedPlanarFaceEdgeUseRelation2,
+    RetainedPlanarFacePointLocation2, RetainedPlanarPcurve2, RetainedPlanarSurfaceIdentity2,
+    RetainedPlanarTrimLoop2,
 };
 
 fn s(value: i32) -> Real {
@@ -28,6 +29,14 @@ fn rectangle(xmin: i32, ymin: i32, xmax: i32, ymax: i32) -> Contour2 {
         vertex(xmin, ymax),
     ])
     .unwrap()
+}
+
+fn curve_string(points: &[(i32, i32)]) -> CurveString2 {
+    let vertices = points
+        .iter()
+        .map(|&(x, y)| vertex(x, y))
+        .collect::<Vec<_>>();
+    CurveString2::from_bulge_vertices(&vertices).unwrap()
 }
 
 fn sparse_region(contour_count: i32) -> Region2 {
@@ -343,6 +352,40 @@ fn bench_prepared_retained_planar_face_point_query(iterations: u32) -> CurveResu
     Ok(())
 }
 
+fn bench_prepared_retained_planar_face_edge_use_query(iterations: u32) -> CurveResult<()> {
+    let surface = RetainedPlanarSurfaceIdentity2::new(7);
+    let face = RetainedPlanarFace2::try_new(
+        surface,
+        vec![RetainedPlanarTrimLoop2::new(
+            surface,
+            rectangle(0, 0, 100, 100),
+        )],
+        vec![RetainedPlanarTrimLoop2::new(
+            surface,
+            rectangle(40, 40, 60, 60),
+        )],
+    )?;
+    let edge = RetainedPlanarPcurve2::new(surface, curve_string(&[(0, 100), (0, 0), (100, 0)]));
+    let policy = CurvePolicy::certified();
+    let prepared = face.prepare_topology_queries(&policy);
+    let started = Instant::now();
+    let mut boundary_count = 0_usize;
+
+    for _ in 0..iterations {
+        let report = prepared.edge_use_report(&edge);
+        if report.relation() == RetainedPlanarFaceEdgeUseRelation2::BoundarySameDirected {
+            boundary_count += black_box(report.segment_count());
+        }
+    }
+
+    let elapsed = started.elapsed();
+    println!(
+        "prepared_retained_planar_face_edge_use_query: {iterations} iterations in {elapsed:?} ({:?}/iter), boundary={boundary_count}",
+        elapsed / iterations
+    );
+    Ok(())
+}
+
 fn bench_prepared_sparse_region_single_hit(iterations: u32) -> CurveResult<()> {
     let region = sparse_region(120);
     let point = p(612, 2);
@@ -381,5 +424,6 @@ fn main() -> CurveResult<()> {
     bench_planar_trim_loop_image_equality(100_000)?;
     bench_retained_planar_face_point_query(100_000)?;
     bench_prepared_retained_planar_face_point_query(100_000)?;
+    bench_prepared_retained_planar_face_edge_use_query(100_000)?;
     Ok(())
 }

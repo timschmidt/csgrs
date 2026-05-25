@@ -103,6 +103,42 @@ pub struct RetainedPlanarFacePointReport2 {
     hole_loop_count: usize,
 }
 
+/// Role of the retained trim loop that owns a matched pcurve edge-use.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum RetainedPlanarTrimLoopRole2 {
+    /// The matched pcurve lies on a material trim loop.
+    Material,
+    /// The matched pcurve lies on a hole trim loop.
+    Hole,
+}
+
+/// Exact edge-use agreement between a retained planar pcurve and face trims.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum RetainedPlanarFaceEdgeUseRelation2 {
+    /// The query was made against a different retained support surface.
+    SurfaceMismatch,
+    /// The pcurve's exact UV image matches a contiguous trim subchain in the
+    /// same traversal direction.
+    BoundarySameDirected,
+    /// The pcurve's exact UV image matches a contiguous trim subchain in the
+    /// opposite traversal direction.
+    BoundarySameReversed,
+    /// The support surface matches, but the pcurve image is not a retained
+    /// trim-boundary subchain of this face.
+    NotTrimBoundary,
+}
+
+/// Evidence report for a retained planar pcurve edge-use query.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct RetainedPlanarFaceEdgeUseReport2 {
+    relation: RetainedPlanarFaceEdgeUseRelation2,
+    surface: Option<RetainedPlanarSurfaceIdentity2>,
+    trim_role: Option<RetainedPlanarTrimLoopRole2>,
+    trim_loop_index: Option<usize>,
+    trim_segment_index: Option<usize>,
+    segment_count: usize,
+}
+
 impl RetainedPlanarSurfaceIdentity2 {
     /// Constructs an opaque retained planar surface identity.
     pub const fn new(source_index: u64) -> Self {
@@ -370,6 +406,33 @@ impl RetainedPlanarFace2 {
             self.hole_loops.len(),
         )
     }
+
+    /// Reports whether an open retained planar pcurve is a face trim edge-use.
+    ///
+    /// This predicate is structural over retained UV segments: the pcurve must
+    /// be an exact contiguous subchain of a material or hole trim loop, either
+    /// directed or reversed. It deliberately does not project, sample, or
+    /// overlap-split arbitrary curves. That mirrors Yap's EGC requirement that
+    /// combinatorial topology be accepted only after replaying exact
+    /// construction evidence, and it follows the BREP pcurve edge-use model
+    /// described by Piegl and Tiller, *The NURBS Book* (2nd ed., 1997).
+    pub fn edge_use_report(
+        &self,
+        pcurve: &RetainedPlanarPcurve2,
+    ) -> RetainedPlanarFaceEdgeUseReport2 {
+        if pcurve.surface != self.surface {
+            return RetainedPlanarFaceEdgeUseReport2::new(
+                RetainedPlanarFaceEdgeUseRelation2::SurfaceMismatch,
+                None,
+                None,
+                None,
+                None,
+                0,
+            );
+        }
+
+        face_edge_use_report_from_loops(self, pcurve.curve.segments())
+    }
 }
 
 impl<'a> PreparedRetainedPlanarFace2<'a> {
@@ -428,12 +491,118 @@ impl<'a> PreparedRetainedPlanarFace2<'a> {
             self.hole_loop_count(),
         )
     }
+
+    /// Reports whether an open retained planar pcurve is a prepared face trim edge-use.
+    ///
+    /// Preparation does not change the proof obligation: support-surface
+    /// identity is still checked first, and the accepted edge-use must replay
+    /// as an exact contiguous UV subchain of a retained trim. The prepared face
+    /// owns the borrowed trim structure needed by future broad-phase segment
+    /// filters while keeping this exact image predicate authoritative.
+    pub fn edge_use_report(
+        &self,
+        pcurve: &RetainedPlanarPcurve2,
+    ) -> RetainedPlanarFaceEdgeUseReport2 {
+        if pcurve.surface != self.face.surface {
+            return RetainedPlanarFaceEdgeUseReport2::new(
+                RetainedPlanarFaceEdgeUseRelation2::SurfaceMismatch,
+                None,
+                None,
+                None,
+                None,
+                0,
+            );
+        }
+
+        face_edge_use_report_from_loops(self.face, pcurve.curve.segments())
+    }
 }
 
 impl RetainedPlanarFacePointLocation2 {
     /// Returns true when the query reached an exact inside/outside/boundary result.
     pub const fn is_trim_classification(self) -> bool {
         !matches!(self, Self::SurfaceMismatch)
+    }
+}
+
+impl RetainedPlanarTrimLoopRole2 {
+    /// Returns true for material loops.
+    pub const fn is_material(self) -> bool {
+        matches!(self, Self::Material)
+    }
+
+    /// Returns true for hole loops.
+    pub const fn is_hole(self) -> bool {
+        matches!(self, Self::Hole)
+    }
+}
+
+impl RetainedPlanarFaceEdgeUseRelation2 {
+    /// Returns true when the pcurve is certified as a retained trim boundary.
+    pub const fn is_boundary(self) -> bool {
+        matches!(
+            self,
+            Self::BoundarySameDirected | Self::BoundarySameReversed
+        )
+    }
+
+    /// Returns true when the matched boundary image has opposite traversal.
+    pub const fn is_reversed(self) -> bool {
+        matches!(self, Self::BoundarySameReversed)
+    }
+}
+
+impl RetainedPlanarFaceEdgeUseReport2 {
+    /// Constructs a retained planar face edge-use report.
+    pub const fn new(
+        relation: RetainedPlanarFaceEdgeUseRelation2,
+        surface: Option<RetainedPlanarSurfaceIdentity2>,
+        trim_role: Option<RetainedPlanarTrimLoopRole2>,
+        trim_loop_index: Option<usize>,
+        trim_segment_index: Option<usize>,
+        segment_count: usize,
+    ) -> Self {
+        Self {
+            relation,
+            surface,
+            trim_role,
+            trim_loop_index,
+            trim_segment_index,
+            segment_count,
+        }
+    }
+
+    /// Returns the certified edge-use relation or blocker.
+    pub const fn relation(&self) -> RetainedPlanarFaceEdgeUseRelation2 {
+        self.relation
+    }
+
+    /// Returns the matching retained surface when edge-use matching ran.
+    pub const fn surface(&self) -> Option<RetainedPlanarSurfaceIdentity2> {
+        self.surface
+    }
+
+    /// Returns the role of the matched trim loop, when boundary evidence exists.
+    pub const fn trim_role(&self) -> Option<RetainedPlanarTrimLoopRole2> {
+        self.trim_role
+    }
+
+    /// Returns the matched trim loop index inside its material or hole bin.
+    pub const fn trim_loop_index(&self) -> Option<usize> {
+        self.trim_loop_index
+    }
+
+    /// Returns the matched trim segment index where the pcurve traversal starts.
+    ///
+    /// For reversed matches, this is the original trim segment whose reversed
+    /// image supplies the first pcurve segment.
+    pub const fn trim_segment_index(&self) -> Option<usize> {
+        self.trim_segment_index
+    }
+
+    /// Returns the number of pcurve segments accepted as trim-boundary evidence.
+    pub const fn segment_count(&self) -> usize {
+        self.segment_count
     }
 }
 
@@ -508,6 +677,96 @@ fn same_reversed_segment_cycle(first: &[Segment2], second: &[Segment2]) -> bool 
         first.iter().enumerate().all(|(index, segment)| {
             let reversed_index = (offset + len - 1 - index) % len;
             segment == &second[reversed_index].reversed()
+        })
+    })
+}
+
+fn face_edge_use_report_from_loops(
+    face: &RetainedPlanarFace2,
+    query_segments: &[Segment2],
+) -> RetainedPlanarFaceEdgeUseReport2 {
+    for (loop_index, trim) in face.material_loops.iter().enumerate() {
+        if let Some((relation, segment_index)) =
+            segment_subchain_relation(query_segments, trim.contour.segments())
+        {
+            return RetainedPlanarFaceEdgeUseReport2::new(
+                relation,
+                Some(face.surface),
+                Some(RetainedPlanarTrimLoopRole2::Material),
+                Some(loop_index),
+                Some(segment_index),
+                query_segments.len(),
+            );
+        }
+    }
+    for (loop_index, trim) in face.hole_loops.iter().enumerate() {
+        if let Some((relation, segment_index)) =
+            segment_subchain_relation(query_segments, trim.contour.segments())
+        {
+            return RetainedPlanarFaceEdgeUseReport2::new(
+                relation,
+                Some(face.surface),
+                Some(RetainedPlanarTrimLoopRole2::Hole),
+                Some(loop_index),
+                Some(segment_index),
+                query_segments.len(),
+            );
+        }
+    }
+
+    RetainedPlanarFaceEdgeUseReport2::new(
+        RetainedPlanarFaceEdgeUseRelation2::NotTrimBoundary,
+        Some(face.surface),
+        None,
+        None,
+        None,
+        0,
+    )
+}
+
+fn segment_subchain_relation(
+    query_segments: &[Segment2],
+    loop_segments: &[Segment2],
+) -> Option<(RetainedPlanarFaceEdgeUseRelation2, usize)> {
+    if query_segments.is_empty() || query_segments.len() > loop_segments.len() {
+        return None;
+    }
+    if let Some(segment_index) = directed_segment_subchain_start(query_segments, loop_segments) {
+        return Some((
+            RetainedPlanarFaceEdgeUseRelation2::BoundarySameDirected,
+            segment_index,
+        ));
+    }
+    reversed_segment_subchain_start(query_segments, loop_segments).map(|segment_index| {
+        (
+            RetainedPlanarFaceEdgeUseRelation2::BoundarySameReversed,
+            segment_index,
+        )
+    })
+}
+
+fn directed_segment_subchain_start(
+    query_segments: &[Segment2],
+    loop_segments: &[Segment2],
+) -> Option<usize> {
+    let len = loop_segments.len();
+    (0..len).find(|&offset| {
+        query_segments
+            .iter()
+            .enumerate()
+            .all(|(index, segment)| segment == &loop_segments[(offset + index) % len])
+    })
+}
+
+fn reversed_segment_subchain_start(
+    query_segments: &[Segment2],
+    loop_segments: &[Segment2],
+) -> Option<usize> {
+    let len = loop_segments.len();
+    (0..len).find(|&offset| {
+        query_segments.iter().enumerate().all(|(index, segment)| {
+            let loop_index = (offset + len - index) % len;
+            segment == &loop_segments[loop_index].reversed()
         })
     })
 }
