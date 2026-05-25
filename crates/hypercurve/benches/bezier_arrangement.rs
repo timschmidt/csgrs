@@ -48,7 +48,13 @@ fn main() -> CurveResult<()> {
         total += black_box(traversal.len());
         total += black_box(
             match BezierRetainedOverlapReport2::from_graph(&graph, &policy) {
-                Classification::Decided(report) => report.len(),
+                Classification::Decided(report) => {
+                    let split_count = match report.line_overlap_splits(&policy) {
+                        Classification::Decided(splits) => splits.len(),
+                        Classification::Uncertain(_) => 0,
+                    };
+                    report.len() + split_count
+                }
                 Classification::Uncertain(_) => 0,
             },
         );

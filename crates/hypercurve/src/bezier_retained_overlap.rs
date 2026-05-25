@@ -22,7 +22,7 @@ use crate::classify::is_zero;
 use crate::{
     BezierArrangementChain2, BezierArrangementGraph2, BezierArrangementTraversal2,
     BezierCurveRelation, BezierSplitFragment2, BezierSubcurve2, Classification, CurvePolicy,
-    LineLineIntersection, Point2, UncertaintyReason,
+    LineLineIntersection, LineSeg2, ParamRange, Point2, UncertaintyReason,
 };
 
 /// Exact positive-dimensional overlap relation between two arrangement fragments.
@@ -89,6 +89,91 @@ pub struct BezierRetainedOverlapTraversal2 {
     traversal: BezierArrangementTraversal2,
     overlap_report: BezierRetainedOverlapReport2,
     shadowed_fragment_indices: Vec<usize>,
+}
+
+/// Certified extent class for a retained line-image overlap.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum BezierRetainedLineOverlapExtent2 {
+    /// The overlap covers both line-image fragments.
+    FullBoth,
+    /// The overlap covers the first fragment and a strict subrange of the second.
+    FullFirstPartialSecond,
+    /// The overlap covers a strict subrange of the first and the whole second.
+    PartialFirstFullSecond,
+    /// The overlap is a strict subrange of both fragments.
+    PartialBoth,
+}
+
+/// Exact split evidence for a positive-dimensional line-image overlap.
+///
+/// The stored ranges are the affine parameters of the certified line-segment
+/// images, not arbitrary sampled Bezier parameters.  This is the next overlap
+/// ownership artifact after pair reporting: future graph splitting can consume
+/// the overlap segment endpoints and exact affine ranges while still refusing
+/// to conflate them with curve parameters for non-affine line-image Beziers.
+/// That distinction is the Yap exact-object boundary in practice; see Yap
+/// (1997).  The positive-dimensional segment itself is the ordinary collinear
+/// overlap from exact line-line intersection, a standard clipping degeneracy
+/// discussed by Foster, Hormann, and Popa (2019).
+#[derive(Clone, Debug, PartialEq)]
+pub struct BezierRetainedLineOverlapSplit2 {
+    first_fragment_index: usize,
+    second_fragment_index: usize,
+    overlap_segment: LineSeg2,
+    first_line_range: ParamRange,
+    second_line_range: ParamRange,
+    extent: BezierRetainedLineOverlapExtent2,
+}
+
+impl BezierRetainedLineOverlapSplit2 {
+    /// Constructs exact line-image split evidence.
+    pub const fn new(
+        first_fragment_index: usize,
+        second_fragment_index: usize,
+        overlap_segment: LineSeg2,
+        first_line_range: ParamRange,
+        second_line_range: ParamRange,
+        extent: BezierRetainedLineOverlapExtent2,
+    ) -> Self {
+        Self {
+            first_fragment_index,
+            second_fragment_index,
+            overlap_segment,
+            first_line_range,
+            second_line_range,
+            extent,
+        }
+    }
+
+    /// Returns the lower graph-fragment index.
+    pub const fn first_fragment_index(&self) -> usize {
+        self.first_fragment_index
+    }
+
+    /// Returns the higher graph-fragment index.
+    pub const fn second_fragment_index(&self) -> usize {
+        self.second_fragment_index
+    }
+
+    /// Returns the exact overlap segment.
+    pub const fn overlap_segment(&self) -> &LineSeg2 {
+        &self.overlap_segment
+    }
+
+    /// Returns the affine line range on the first fragment image.
+    pub const fn first_line_range(&self) -> &ParamRange {
+        &self.first_line_range
+    }
+
+    /// Returns the affine line range on the second fragment image.
+    pub const fn second_line_range(&self) -> &ParamRange {
+        &self.second_line_range
+    }
+
+    /// Returns whether the overlap is full or partial on each side.
+    pub const fn extent(&self) -> BezierRetainedLineOverlapExtent2 {
+        self.extent
+    }
 }
 
 impl BezierArrangementGraph2 {
@@ -231,6 +316,70 @@ impl BezierRetainedOverlapReport2 {
     pub fn len(&self) -> usize {
         self.overlaps.len()
     }
+
+    /// Extracts exact line-image overlap split evidence from this report.
+    ///
+    /// Same-control and same-curve-image overlaps are full curve-image
+    /// degeneracies and do not have line affine ranges here.  Only
+    /// [`BezierRetainedOverlapRelation2::LineSegmentOverlap`] contributes.
+    pub fn line_overlap_splits(
+        &self,
+        policy: &CurvePolicy,
+    ) -> Classification<Vec<BezierRetainedLineOverlapSplit2>> {
+        let mut splits = Vec::new();
+        for overlap in &self.overlaps {
+            let BezierRetainedOverlapRelation2::LineSegmentOverlap { intersection } =
+                overlap.relation()
+            else {
+                continue;
+            };
+            let LineLineIntersection::Overlap {
+                segment,
+                a_range,
+                b_range,
+            } = intersection.as_ref()
+            else {
+                return Classification::Uncertain(UncertaintyReason::Boundary);
+            };
+            let extent = match line_overlap_extent(a_range, b_range, policy) {
+                Some(extent) => extent,
+                None => return Classification::Uncertain(UncertaintyReason::Ordering),
+            };
+            splits.push(BezierRetainedLineOverlapSplit2::new(
+                overlap.first_fragment_index(),
+                overlap.second_fragment_index(),
+                segment.clone(),
+                a_range.clone(),
+                b_range.clone(),
+                extent,
+            ));
+        }
+        Classification::Decided(splits)
+    }
+}
+
+fn line_overlap_extent(
+    first: &ParamRange,
+    second: &ParamRange,
+    policy: &CurvePolicy,
+) -> Option<BezierRetainedLineOverlapExtent2> {
+    let first_full = unit_range(first, policy)?;
+    let second_full = unit_range(second, policy)?;
+    Some(match (first_full, second_full) {
+        (true, true) => BezierRetainedLineOverlapExtent2::FullBoth,
+        (true, false) => BezierRetainedLineOverlapExtent2::FullFirstPartialSecond,
+        (false, true) => BezierRetainedLineOverlapExtent2::PartialFirstFullSecond,
+        (false, false) => BezierRetainedLineOverlapExtent2::PartialBoth,
+    })
+}
+
+fn unit_range(range: &ParamRange, policy: &CurvePolicy) -> Option<bool> {
+    Some(
+        crate::classify::compare_reals(range.start(), &hyperreal::Real::zero(), policy)?
+            == std::cmp::Ordering::Equal
+            && crate::classify::compare_reals(range.end(), &hyperreal::Real::one(), policy)?
+                == std::cmp::Ordering::Equal,
+    )
 }
 
 fn duplicate_shadow_indices(

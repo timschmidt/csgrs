@@ -1,9 +1,9 @@
 use hypercurve::{
     BezierAlgebraicEndpointImage2, BezierAlgebraicParameter2, BezierArrangementGraph2,
     BezierParameter2, BezierParameterInterval, BezierParameterPolynomial,
-    BezierRetainedOverlapRelation2, BezierRetainedOverlapReport2, BezierSplitFragment2,
-    BezierSubcurve2, Classification, CubicBezier2, CurvePolicy, Point2, QuadraticBezier2, Real,
-    UncertaintyReason,
+    BezierRetainedLineOverlapExtent2, BezierRetainedOverlapRelation2, BezierRetainedOverlapReport2,
+    BezierSplitFragment2, BezierSubcurve2, Classification, CubicBezier2, CurvePolicy, Point2,
+    QuadraticBezier2, Real, UncertaintyReason,
 };
 use proptest::prelude::*;
 
@@ -357,6 +357,73 @@ fn retained_overlap_report_separates_endpoint_touch_from_overlap() {
     let report = decided(BezierRetainedOverlapReport2::from_graph(&graph, &policy()));
 
     assert!(report.is_empty());
+}
+
+#[test]
+fn retained_overlap_report_extracts_partial_line_image_split_ranges() {
+    let first = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(2, 0), p(4, 0))),
+    };
+    let second = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(2, 0), p(4, 0), p(6, 0))),
+    };
+    let graph = BezierArrangementGraph2::new(vec![
+        hypercurve::BezierArrangementFragment2::new(0, 0, first),
+        hypercurve::BezierArrangementFragment2::new(1, 0, second),
+    ]);
+    let report = decided(BezierRetainedOverlapReport2::from_graph(&graph, &policy()));
+
+    let splits = decided(report.line_overlap_splits(&policy()));
+
+    assert_eq!(splits.len(), 1);
+    assert_eq!(splits[0].first_fragment_index(), 0);
+    assert_eq!(splits[0].second_fragment_index(), 1);
+    assert_eq!(splits[0].overlap_segment().start(), &p(2, 0));
+    assert_eq!(splits[0].overlap_segment().end(), &p(4, 0));
+    assert_eq!(splits[0].first_line_range().start(), &q(1, 2));
+    assert_eq!(splits[0].first_line_range().end(), &r(1));
+    assert_eq!(splits[0].second_line_range().start(), &r(0));
+    assert_eq!(splits[0].second_line_range().end(), &q(1, 2));
+    assert_eq!(
+        splits[0].extent(),
+        BezierRetainedLineOverlapExtent2::PartialBoth
+    );
+    assert_eq!(
+        graph.traverse_retained_deduplicating_materialized_overlaps(&policy()),
+        Classification::Uncertain(UncertaintyReason::Boundary)
+    );
+}
+
+#[test]
+fn retained_overlap_report_does_not_call_same_curve_image_a_line_split() {
+    let curve = QuadraticBezier2::new(p(0, 0), p(1, 2), p(2, 0));
+    let graph = BezierArrangementGraph2::new(vec![
+        hypercurve::BezierArrangementFragment2::new(
+            0,
+            0,
+            BezierSplitFragment2::Materialized {
+                start: exact(r(0)),
+                end: exact(r(1)),
+                curve: BezierSubcurve2::Quadratic(curve.clone()),
+            },
+        ),
+        hypercurve::BezierArrangementFragment2::new(
+            1,
+            0,
+            BezierSplitFragment2::Materialized {
+                start: exact(r(0)),
+                end: exact(r(1)),
+                curve: BezierSubcurve2::Quadratic(curve),
+            },
+        ),
+    ]);
+    let report = decided(BezierRetainedOverlapReport2::from_graph(&graph, &policy()));
+
+    assert!(decided(report.line_overlap_splits(&policy())).is_empty());
 }
 
 #[test]
