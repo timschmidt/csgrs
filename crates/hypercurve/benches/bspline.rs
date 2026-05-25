@@ -3,7 +3,7 @@ use std::time::Instant;
 
 use hypercurve::{
     Classification, CurvePolicy, CurveResult, Point2, PolynomialBSplineCurve2,
-    RationalQuadraticBSplineCurve2, Real,
+    RationalBSplineCurve2, RationalQuadraticBSplineCurve2, Real,
 };
 
 fn r(value: i32) -> Real {
@@ -58,6 +58,29 @@ fn main() -> CurveResult<()> {
     let elapsed = started.elapsed();
     println!(
         "rational_quadratic_bspline_bezier_extraction: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={rational_checksum}",
+        elapsed / iterations
+    );
+
+    let rational_cubic = decided(RationalBSplineCurve2::try_new(
+        3,
+        vec![p(0, 0), p(1, 3), p(3, 3), p(5, 3), p(6, 0)],
+        vec![r(1), r(2), r(4), r(8), r(16)],
+        vec![r(0), r(0), r(0), r(0), r(1), r(2), r(2), r(2), r(2)],
+        &policy,
+    )?);
+    let started = Instant::now();
+    let mut rational_cubic_checksum = 0_usize;
+    for _ in 0..iterations {
+        let extraction = decided(rational_cubic.extract_bezier_spans(&policy)?);
+        rational_cubic_checksum ^= black_box(
+            extraction.spans().len()
+                + extraction.inserted_knot_count()
+                + extraction.refined_weights().len(),
+        );
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "rational_cubic_bspline_bezier_extraction: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={rational_cubic_checksum}",
         elapsed / iterations
     );
 

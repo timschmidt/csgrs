@@ -1,8 +1,8 @@
 #![no_main]
 
 use hypercurve::{
-    Classification, CurvePolicy, Point2, PolynomialBSplineCurve2, RationalQuadraticBSplineCurve2,
-    Real,
+    Classification, CurvePolicy, Point2, PolynomialBSplineCurve2, RationalBSplineCurve2,
+    RationalQuadraticBSplineCurve2, Real,
 };
 use libfuzzer_sys::fuzz_target;
 
@@ -37,16 +37,20 @@ fuzz_target!(|data: &[u8]| {
     {
         let _ = spline.extract_bezier_spans(&policy);
     }
-    if degree == 2 {
-        let weights = controls
-            .iter()
-            .enumerate()
-            .map(|(index, _)| Real::from(((data[index % data.len()] % 7) as i32) + 1))
-            .collect::<Vec<_>>();
-        if let Ok(Classification::Decided(spline)) =
+    let weights = controls
+        .iter()
+        .enumerate()
+        .map(|(index, _)| Real::from(((data[index % data.len()] % 7) as i32) + 1))
+        .collect::<Vec<_>>();
+    if let Ok(Classification::Decided(spline)) =
+        RationalBSplineCurve2::try_new(degree, controls.clone(), weights.clone(), knots.clone(), &policy)
+    {
+        let _ = spline.extract_bezier_spans(&policy);
+    }
+    if degree == 2
+        && let Ok(Classification::Decided(spline)) =
             RationalQuadraticBSplineCurve2::try_new(controls, weights, knots, &policy)
-        {
-            let _ = spline.extract_bezier_spans(&policy);
-        }
+    {
+        let _ = spline.extract_bezier_spans(&policy);
     }
 });

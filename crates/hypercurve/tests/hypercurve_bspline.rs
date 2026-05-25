@@ -1,6 +1,6 @@
 use hypercurve::{
     BezierBoundaryLoop2, BezierRegion2, BezierSubcurve2, Classification, CurveError, CurvePolicy,
-    Point2, PolynomialBSplineCurve2, RationalQuadraticBSplineCurve2, Real,
+    Point2, PolynomialBSplineCurve2, RationalBSplineCurve2, RationalQuadraticBSplineCurve2, Real,
 };
 
 fn r(value: i32) -> Real {
@@ -240,6 +240,100 @@ fn equal_weight_quadratic_nurbs_matches_polynomial_bspline_spans() {
             [&Real::one(), &Real::one(), &Real::one()]
         );
     }
+}
+
+#[test]
+fn retained_rational_cubic_bspline_extracts_bezier_span_reports() {
+    let spline = decided(
+        RationalBSplineCurve2::try_new(
+            3,
+            vec![p(0, 0), p(1, 3), p(3, 3), p(5, 3), p(6, 0)],
+            vec![r(1), r(2), r(4), r(8), r(16)],
+            vec![r(0), r(0), r(0), r(0), r(1), r(2), r(2), r(2), r(2)],
+            &policy(),
+        )
+        .unwrap(),
+    );
+    let extraction = decided(spline.extract_bezier_spans(&policy()).unwrap());
+
+    assert_eq!(spline.degree(), 3);
+    assert_eq!(extraction.degree(), 3);
+    assert_eq!(extraction.inserted_knot_count(), 2);
+    assert_eq!(extraction.refined_control_points().len(), 7);
+    assert_eq!(extraction.refined_weights().len(), 7);
+    assert_eq!(extraction.spans().len(), 2);
+    for span in extraction.spans() {
+        assert_eq!(span.degree(), 3);
+        assert_eq!(span.control_points().len(), 4);
+        assert_eq!(span.weights().len(), 4);
+    }
+    assert_eq!(extraction.spans()[0].knot_interval(), (&r(0), &r(1)));
+    assert_eq!(extraction.spans()[1].knot_interval(), (&r(1), &r(2)));
+    assert_point_eq(
+        &extraction.spans()[0].control_points()[3],
+        &extraction.spans()[1].control_points()[0],
+    );
+    assert_eq!(
+        extraction.spans()[0].weights()[3],
+        extraction.spans()[1].weights()[0]
+    );
+}
+
+#[test]
+fn equal_weight_retained_rational_cubic_matches_polynomial_cubic_spans() {
+    let controls = vec![p(0, 0), p(1, 3), p(3, 3), p(5, 3), p(6, 0)];
+    let knots = vec![r(0), r(0), r(0), r(0), r(1), r(2), r(2), r(2), r(2)];
+    let polynomial = decided(
+        PolynomialBSplineCurve2::try_new(3, controls.clone(), knots.clone(), &policy()).unwrap(),
+    );
+    let rational = decided(
+        RationalBSplineCurve2::try_new(3, controls, vec![r(1); 5], knots, &policy()).unwrap(),
+    );
+    let polynomial = decided(polynomial.extract_bezier_spans(&policy()).unwrap());
+    let rational = decided(rational.extract_bezier_spans(&policy()).unwrap());
+
+    assert_eq!(rational.spans().len(), polynomial.spans().len());
+    for (polynomial_span, rational_span) in polynomial.spans().iter().zip(rational.spans()) {
+        let BezierSubcurve2::Cubic(polynomial) = polynomial_span else {
+            panic!("expected polynomial cubic")
+        };
+        assert_eq!(rational_span.degree(), 3);
+        assert_point_eq(polynomial.start(), &rational_span.control_points()[0]);
+        assert_point_eq(polynomial.control1(), &rational_span.control_points()[1]);
+        assert_point_eq(polynomial.control2(), &rational_span.control_points()[2]);
+        assert_point_eq(polynomial.end(), &rational_span.control_points()[3]);
+        assert_eq!(rational_span.weights(), &[r(1), r(1), r(1), r(1)]);
+    }
+}
+
+#[test]
+fn retained_rational_bspline_rejects_unsupported_degree_and_zero_weight() {
+    assert_eq!(
+        RationalBSplineCurve2::try_new(
+            1,
+            vec![p(0, 0), p(1, 1)],
+            vec![r(1), r(1)],
+            vec![r(0), r(0), r(1), r(1)],
+            &policy(),
+        )
+        .unwrap(),
+        Classification::Uncertain(hypercurve::UncertaintyReason::Unsupported)
+    );
+    assert_eq!(
+        RationalBSplineCurve2::try_new(usize::MAX, Vec::new(), Vec::new(), Vec::new(), &policy())
+            .unwrap(),
+        Classification::Uncertain(hypercurve::UncertaintyReason::Unsupported)
+    );
+    assert_eq!(
+        RationalBSplineCurve2::try_new(
+            3,
+            vec![p(0, 0), p(1, 3), p(3, 3), p(5, 3), p(6, 0)],
+            vec![r(1), r(2), r(0), r(8), r(16)],
+            vec![r(0), r(0), r(0), r(0), r(1), r(2), r(2), r(2), r(2)],
+            &policy(),
+        ),
+        Err(CurveError::ZeroRationalBezierWeight)
+    );
 }
 
 #[test]

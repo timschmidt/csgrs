@@ -119,8 +119,9 @@ pub use boolean_boundary::{
     BooleanBoundaryLoopSet, DirectedBooleanFragment,
 };
 pub use bspline::{
-    PolynomialBSplineBezierExtraction2, PolynomialBSplineCurve2,
-    RationalQuadraticBSplineBezierExtraction2, RationalQuadraticBSplineCurve2,
+    PolynomialBSplineBezierExtraction2, PolynomialBSplineCurve2, RationalBSplineBezierExtraction2,
+    RationalBSplineCurve2, RationalBezierSpan2, RationalQuadraticBSplineBezierExtraction2,
+    RationalQuadraticBSplineCurve2,
 };
 pub use bulge::BulgeVertex2;
 pub use classify::{Classification, LineSide, UncertaintyReason};
