@@ -53,12 +53,14 @@ pub use bezier::{
 };
 pub use bezier_arrangement::{
     BezierArrangementBreakpoint, BezierArrangementError, CubicBezierArrangementFragment,
-    CubicBezierArrangementReport, HomogeneousPoint2, QuadraticBezierArrangementFragment,
-    QuadraticBezierArrangementReport, RationalQuadraticBezierArrangementFragment,
-    RationalQuadraticBezierArrangementReport, arrange_cubic_beziers,
-    arrange_cubic_beziers_with_provenance, arrange_quadratic_beziers,
+    CubicBezierArrangementReport, HomogeneousPoint2, LineQuadraticBezierIntersection,
+    LineQuadraticBezierIntersectionClass, LineQuadraticBezierIntersectionReport,
+    QuadraticBezierArrangementFragment, QuadraticBezierArrangementReport,
+    RationalQuadraticBezierArrangementFragment, RationalQuadraticBezierArrangementReport,
+    arrange_cubic_beziers, arrange_cubic_beziers_with_provenance, arrange_quadratic_beziers,
     arrange_quadratic_beziers_with_provenance, arrange_rational_quadratic_beziers,
     arrange_rational_quadratic_beziers_with_provenance,
+    intersect_axis_aligned_line_quadratic_bezier,
 };
 pub use cam::{
     AdditiveBeadLine, AdditiveInfillLink, BeadFillAxis, BeadPlanError, InfillGraphError,

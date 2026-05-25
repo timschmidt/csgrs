@@ -1,9 +1,12 @@
 #![no_main]
 
-use hyperlimit::PredicatePolicy;
+use std::cmp::Ordering;
+
+use hyperlimit::{PredicatePolicy, compare_reals_with_policy};
 use hyperpath::{
-    BezierParameter, CubicBezier, QuadraticBezier, RationalQuadraticBezier, arrange_cubic_beziers,
-    arrange_quadratic_beziers, arrange_rational_quadratic_beziers,
+    BezierParameter, CubicBezier, LinePathSegment, QuadraticBezier, RationalQuadraticBezier,
+    arrange_cubic_beziers, arrange_quadratic_beziers, arrange_rational_quadratic_beziers,
+    intersect_axis_aligned_line_quadratic_bezier,
 };
 use hyperreal::{Rational, Real};
 use libfuzzer_sys::fuzz_target;
@@ -43,6 +46,22 @@ fuzz_target!(|data: &[u8]| {
     assert_eq!(q_report.fragments[0].curve.end(), &quadratic.eval(t));
     assert_eq!(q_report.fragments[1].curve.start(), &quadratic.eval(t));
     assert_eq!(q_report.fragments[1].curve.end(), quadratic.end());
+
+    let horizontal = LinePathSegment::new(
+        p(signed(data[1]), signed(data[2])),
+        p(signed(data[5]), signed(data[2])),
+    );
+    let intersection_report = intersect_axis_aligned_line_quadratic_bezier(
+        &horizontal,
+        &quadratic,
+        PredicatePolicy::default(),
+    );
+    for event in &intersection_report.intersections {
+        assert_eq!(
+            compare_reals_with_policy(&event.point.y, &horizontal.start().y, PredicatePolicy::default()).value(),
+            Some(Ordering::Equal)
+        );
+    }
 
     let cubic = CubicBezier::new(
         p(signed(data[1]), signed(data[2])),

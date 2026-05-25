@@ -8,12 +8,12 @@ use hyperpath::{
     ExplicitArcSweepClass, ExplicitArcTangentClass, ExplicitCircleRelationClass,
     ExplicitCircularArc, HigherOrderBezier, HigherOrderBezierError, InfillGraphError,
     LineArcArrangementEventClass, LineArrangementError, LineArrangementEventClass,
-    LineExplicitArcIntersectionClass, LineOffsetError, LinePathSegment, MeanderError,
-    MeanderObstacle, MeanderPlacementCandidate, NetId, OffsetSide, PathProvenance,
-    PathSourceFormat, PcbBoardOutline, PcbCardinalRectPad, PcbCircularBoardOutline, PcbCircularPad,
-    PcbConvexBoardOutline, PcbConvexPad, PcbObroundPad, PcbOrientedRectPad,
-    PcbOrthogonalBoardOutline, PcbRectPad, PcbRoundedRectPad, PcbTrace, PcbViaStack,
-    PocketPlanError, PocketPlanStopReason, QuadraticBezier, RationalQuadraticBezier,
+    LineExplicitArcIntersectionClass, LineOffsetError, LinePathSegment,
+    LineQuadraticBezierIntersectionClass, MeanderError, MeanderObstacle, MeanderPlacementCandidate,
+    NetId, OffsetSide, PathProvenance, PathSourceFormat, PcbBoardOutline, PcbCardinalRectPad,
+    PcbCircularBoardOutline, PcbCircularPad, PcbConvexBoardOutline, PcbConvexPad, PcbObroundPad,
+    PcbOrientedRectPad, PcbOrthogonalBoardOutline, PcbRectPad, PcbRoundedRectPad, PcbTrace,
+    PcbViaStack, PocketPlanError, PocketPlanStopReason, QuadraticBezier, RationalQuadraticBezier,
     RationalQuadraticBezierError, RectangularPocket, RectangularRegionRelation,
     RouteCertificationError, SegmentParameterOrder, SourceLengthUnit, SpecctraGridTraceRecord,
     SpecctraGridViaRecord, SpecctraImportError, SpecctraLayerAlias, SpecctraNetAlias,
@@ -44,13 +44,13 @@ use hyperpath::{
     classify_meander_candidate_slots, classify_meander_placement_slots, classify_tangent_alignment,
     classify_tangent_chain, classify_tangent_join, export_specctra_trace_record,
     import_specctra_text_route, import_specctra_trace_record, import_specctra_via_record,
-    intersect_rectangular_regions, offset_axis_aligned_segment, offset_cardinal_arc,
-    offset_cubic_bezier_sample, offset_explicit_arc, offset_higher_order_bezier_sample,
-    offset_quadratic_bezier_sample, parse_specctra_grid_route_records,
-    parse_specctra_grid_trace_records, serialize_specctra_grid_route_records,
-    serialize_specctra_grid_trace_records, serialize_specctra_grid_via_records,
-    specctra_grid_trace_record, specctra_grid_via_record, subtract_rectangular_region,
-    tangent_cross, tangent_dot, tangent_norm_squared,
+    intersect_axis_aligned_line_quadratic_bezier, intersect_rectangular_regions,
+    offset_axis_aligned_segment, offset_cardinal_arc, offset_cubic_bezier_sample,
+    offset_explicit_arc, offset_higher_order_bezier_sample, offset_quadratic_bezier_sample,
+    parse_specctra_grid_route_records, parse_specctra_grid_trace_records,
+    serialize_specctra_grid_route_records, serialize_specctra_grid_trace_records,
+    serialize_specctra_grid_via_records, specctra_grid_trace_record, specctra_grid_via_record,
+    subtract_rectangular_region, tangent_cross, tangent_dot, tangent_norm_squared,
 };
 use hyperreal::{Rational, Real};
 use proptest::prelude::*;
@@ -483,6 +483,77 @@ fn rational_quadratic_bezier_arrangement_emits_homogeneous_fragments() {
         report.fragments[1].start_control,
         report.fragments[0].end_control
     );
+}
+
+#[test]
+fn line_quadratic_bezier_intersection_finds_endpoint_events() {
+    let curve = QuadraticBezier::new(p(0, 0), p(4, 4), p(8, 0));
+    let line = LinePathSegment::new(p(0, 0), p(8, 0));
+
+    let report =
+        intersect_axis_aligned_line_quadratic_bezier(&line, &curve, PredicatePolicy::default());
+
+    assert_eq!(
+        report.class,
+        LineQuadraticBezierIntersectionClass::TwoPoints
+    );
+    assert_eq!(report.intersections.len(), 2);
+    assert_eq!(report.intersections[0].parameter, r(0));
+    assert_eq!(report.intersections[0].point, p(0, 0));
+    assert_eq!(report.intersections[1].parameter, r(1));
+    assert_eq!(report.intersections[1].point, p(8, 0));
+}
+
+#[test]
+fn line_quadratic_bezier_intersection_classifies_tangent_event() {
+    let curve = QuadraticBezier::new(p(0, 0), p(4, 4), p(8, 0));
+    let line = LinePathSegment::new(p(0, 2), p(8, 2));
+
+    let report =
+        intersect_axis_aligned_line_quadratic_bezier(&line, &curve, PredicatePolicy::default());
+
+    assert_eq!(report.class, LineQuadraticBezierIntersectionClass::Tangent);
+    assert_eq!(report.intersections.len(), 1);
+    assert_eq!(report.intersections[0].parameter, rq(1, 2));
+    assert_eq!(report.intersections[0].point, p(4, 2));
+}
+
+#[test]
+fn line_quadratic_bezier_intersection_clips_to_segment_bounds() {
+    let curve = QuadraticBezier::new(p(0, 0), p(4, 4), p(8, 0));
+    let line = LinePathSegment::new(p(-1, 0), p(1, 0));
+
+    let report =
+        intersect_axis_aligned_line_quadratic_bezier(&line, &curve, PredicatePolicy::default());
+
+    assert_eq!(report.class, LineQuadraticBezierIntersectionClass::OnePoint);
+    assert_eq!(report.intersections.len(), 1);
+    assert_eq!(report.intersections[0].parameter, r(0));
+    assert_eq!(report.intersections[0].point, p(0, 0));
+}
+
+#[test]
+fn line_quadratic_bezier_intersection_returns_unknown_for_overlap_support() {
+    let curve = QuadraticBezier::new(p(0, 0), p(4, 0), p(8, 0));
+    let line = LinePathSegment::new(p(2, 0), p(6, 0));
+
+    let report =
+        intersect_axis_aligned_line_quadratic_bezier(&line, &curve, PredicatePolicy::default());
+
+    assert_eq!(report.class, LineQuadraticBezierIntersectionClass::Unknown);
+    assert!(report.intersections.is_empty());
+}
+
+#[test]
+fn line_quadratic_bezier_intersection_returns_unknown_for_non_axis_line() {
+    let curve = QuadraticBezier::new(p(0, 0), p(4, 4), p(8, 0));
+    let line = LinePathSegment::new(p(0, 0), p(8, 1));
+
+    let report =
+        intersect_axis_aligned_line_quadratic_bezier(&line, &curve, PredicatePolicy::default());
+
+    assert_eq!(report.class, LineQuadraticBezierIntersectionClass::Unknown);
+    assert!(report.intersections.is_empty());
 }
 
 #[test]
@@ -6258,6 +6329,33 @@ proptest! {
         prop_assert_eq!(report.fragments[0].curve.end(), &curve.eval(parameter));
         prop_assert_eq!(report.fragments[1].curve.start(), &curve.eval(parameter));
         prop_assert_eq!(report.fragments[1].curve.end(), curve.end());
+    }
+
+    #[test]
+    fn line_quadratic_bezier_generated_endpoint_events_survive_scale(
+        x0 in -20_i16..=20,
+        width in 1_i16..=40,
+        lift in 1_i16..=40,
+    ) {
+        let start_x = i64::from(x0);
+        let width = i64::from(width);
+        let lift = i64::from(lift);
+        let curve = QuadraticBezier::new(
+            p(start_x, 0),
+            p(start_x + width, lift),
+            p(start_x + 2 * width, 0),
+        );
+        let line = LinePathSegment::new(p(start_x, 0), p(start_x + 2 * width, 0));
+
+        let report =
+            intersect_axis_aligned_line_quadratic_bezier(&line, &curve, PredicatePolicy::default());
+
+        prop_assert_eq!(report.class, LineQuadraticBezierIntersectionClass::TwoPoints);
+        prop_assert_eq!(report.intersections.len(), 2);
+        prop_assert_eq!(report.intersections[0].parameter.clone(), r(0));
+        prop_assert_eq!(report.intersections[0].point.clone(), curve.start().clone());
+        prop_assert_eq!(report.intersections[1].parameter.clone(), r(1));
+        prop_assert_eq!(report.intersections[1].point.clone(), curve.end().clone());
     }
 
     #[test]

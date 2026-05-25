@@ -9,11 +9,12 @@
 
 use std::cmp::Ordering;
 
-use hyperlimit::{Point2, PredicatePolicy, compare_reals_with_policy};
+use hyperlimit::{Point2, PredicatePolicy, compare_reals_with_policy, point2_equal_with_policy};
 use hyperreal::{Real, RealExactSetFacts};
 
 use crate::bezier::{BezierParameter, CubicBezier, QuadraticBezier, RationalQuadraticBezier};
 use crate::provenance::PathProvenance;
+use crate::segment::{Axis, LinePathSegment};
 
 /// Errors while building retained Bezier arrangement fragments.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -24,6 +25,50 @@ pub enum BezierArrangementError {
     UndecidableParameterOrder,
     /// A rational conic homogeneous endpoint had zero weight.
     HomogeneousDenominatorFailure,
+}
+
+/// Certified class for a retained line segment against a quadratic Bezier.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum LineQuadraticBezierIntersectionClass {
+    /// The segment and curve are certified disjoint.
+    Disjoint,
+    /// The line is tangent to the curve at one certified point.
+    Tangent,
+    /// The line crosses the curve at one certified point inside the segment bounds.
+    OnePoint,
+    /// The line crosses the curve at two certified points inside the segment bounds.
+    TwoPoints,
+    /// The exact predicate package cannot certify the relation.
+    Unknown,
+}
+
+/// Exact line/quadratic-Bezier event witness.
+#[derive(Clone, Debug, PartialEq)]
+pub struct LineQuadraticBezierIntersection {
+    /// Exact Bezier parameter in `[0, 1]`.
+    pub parameter: Real,
+    /// Exact point on the retained Bezier and line segment.
+    pub point: Point2,
+}
+
+/// Exact event report for an axis-aligned line segment and quadratic Bezier.
+///
+/// This is a discovered-event predicate for the mixed line/Bezier arrangement
+/// work. For an axis-aligned retained line, one Bezier coordinate gives an
+/// exact scalar quadratic `a t^2 + b t + c = 0`; roots are accepted only after
+/// exact parameter-domain and segment-bound replay. This is the standard
+/// implicit-line/substitution step used by Bezier arrangement algorithms, with
+/// the Yap exact-computation rule applied directly: the report returns exact
+/// witnesses or `Unknown`, never a tolerance-polyline approximation. See Yap,
+/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+/// (1997), and de Casteljau subdivision as used in Farouki, *Pythagorean
+/// Hodograph Curves* (2008), for the retained-curve object discipline.
+#[derive(Clone, Debug, PartialEq)]
+pub struct LineQuadraticBezierIntersectionReport {
+    /// Certified intersection class.
+    pub class: LineQuadraticBezierIntersectionClass,
+    /// Certified witnesses in increasing Bezier-parameter order.
+    pub intersections: Vec<LineQuadraticBezierIntersection>,
 }
 
 /// Exact breakpoint on one retained Bezier/conic source.
@@ -244,6 +289,75 @@ pub fn arrange_rational_quadratic_beziers_with_provenance(
         fragment_exact,
         provenance,
     })
+}
+
+/// Intersect an axis-aligned line segment with a quadratic Bezier exactly.
+///
+/// The returned witnesses are exact `Real` parameter/point objects. A retained
+/// horizontal segment substitutes `B_y(t) = y_line`; a retained vertical segment
+/// substitutes `B_x(t) = x_line`. The resulting scalar quadratic is solved in
+/// the object layer and every candidate root is replayed against `[0, 1]` and
+/// the closed segment bounds before it becomes topology. If the curve lies on
+/// the supporting line, the function returns [`LineQuadraticBezierIntersectionClass::Unknown`]
+/// because positive-length overlap ownership belongs to the later mixed-curve
+/// arrangement graph.
+///
+/// This follows Yap's "Towards Exact Geometric Computation" rule that
+/// geometric decisions should be made by exact predicates over retained
+/// objects, not sampled approximations. The Bezier substitution is the standard
+/// Bernstein-polynomial line incidence test used in curve arrangement kernels;
+/// see also Farouki, *Pythagorean Hodograph Curves* (2008), for preserving
+/// polynomial curve objects through exact downstream processing.
+pub fn intersect_axis_aligned_line_quadratic_bezier(
+    segment: &LinePathSegment,
+    curve: &QuadraticBezier,
+    policy: PredicatePolicy,
+) -> LineQuadraticBezierIntersectionReport {
+    let Some(axis) = segment.facts().axis_aligned else {
+        return line_quadratic_unknown_report();
+    };
+    let fixed = match axis {
+        Axis::X => segment.start().y.clone(),
+        Axis::Y => segment.start().x.clone(),
+    };
+    let roots = match solve_quadratic_coordinate_roots(curve, axis, fixed, policy) {
+        Some(roots) => roots,
+        None => return line_quadratic_unknown_report(),
+    };
+    let mut intersections = Vec::new();
+    for parameter in roots {
+        match parameter_in_unit_interval(&parameter, policy) {
+            Some(true) => {}
+            Some(false) => continue,
+            None => return line_quadratic_unknown_report(),
+        }
+        let point = eval_quadratic_at_real(curve, &parameter);
+        match point_inside_segment_bounds(&point, segment, policy) {
+            Some(true) => {}
+            Some(false) => continue,
+            None => return line_quadratic_unknown_report(),
+        }
+        if push_unique_intersection(&mut intersections, parameter, point, policy).is_none() {
+            return line_quadratic_unknown_report();
+        }
+    }
+    if sort_line_quadratic_intersections(&mut intersections, policy).is_none() {
+        return line_quadratic_unknown_report();
+    }
+    let class = match intersections.len() {
+        0 => LineQuadraticBezierIntersectionClass::Disjoint,
+        1 => match roots_are_tangent(curve, axis, segment, policy) {
+            Some(true) => LineQuadraticBezierIntersectionClass::Tangent,
+            Some(false) => LineQuadraticBezierIntersectionClass::OnePoint,
+            None => return line_quadratic_unknown_report(),
+        },
+        2 => LineQuadraticBezierIntersectionClass::TwoPoints,
+        _ => LineQuadraticBezierIntersectionClass::Unknown,
+    };
+    LineQuadraticBezierIntersectionReport {
+        class,
+        intersections,
+    }
 }
 
 fn validate_inputs(curves_len: usize, events_len: usize) -> Result<(), BezierArrangementError> {
@@ -573,4 +687,176 @@ fn rational_quadratic_fragment_facts(
 
 fn div_real(numerator: Real, denominator: Real) -> Result<Real, BezierArrangementError> {
     (numerator / denominator).map_err(|_| BezierArrangementError::HomogeneousDenominatorFailure)
+}
+
+fn solve_quadratic_coordinate_roots(
+    curve: &QuadraticBezier,
+    axis: Axis,
+    fixed: Real,
+    policy: PredicatePolicy,
+) -> Option<Vec<Real>> {
+    let p0 = coordinate(curve.start(), axis);
+    let p1 = coordinate(curve.control(), axis);
+    let p2 = coordinate(curve.end(), axis);
+    let a = p0.clone() - Real::from(2) * p1.clone() + p2.clone();
+    let b = Real::from(2) * (p1 - p0.clone());
+    let c = p0 - fixed;
+    match compare_reals_with_policy(&a, &Real::zero(), policy).value()? {
+        Ordering::Equal => solve_linear_root(b, c, policy),
+        Ordering::Less | Ordering::Greater => solve_quadratic_roots(a, b, c, policy),
+    }
+}
+
+fn solve_linear_root(b: Real, c: Real, policy: PredicatePolicy) -> Option<Vec<Real>> {
+    match compare_reals_with_policy(&b, &Real::zero(), policy).value()? {
+        Ordering::Equal => match compare_reals_with_policy(&c, &Real::zero(), policy).value()? {
+            Ordering::Equal => None,
+            Ordering::Less | Ordering::Greater => Some(Vec::new()),
+        },
+        Ordering::Less | Ordering::Greater => Some(vec![(-c / b).ok()?]),
+    }
+}
+
+fn solve_quadratic_roots(a: Real, b: Real, c: Real, policy: PredicatePolicy) -> Option<Vec<Real>> {
+    let discriminant = b.clone() * b.clone() - Real::from(4) * a.clone() * c;
+    match compare_reals_with_policy(&discriminant, &Real::zero(), policy).value()? {
+        Ordering::Less => Some(Vec::new()),
+        Ordering::Equal => Some(vec![((-b) / (Real::from(2) * a)).ok()?]),
+        Ordering::Greater => {
+            let root = discriminant.sqrt().ok()?;
+            let denominator = Real::from(2) * a;
+            let first = ((-b.clone() - root.clone()) / denominator.clone()).ok()?;
+            let second = ((-b + root) / denominator).ok()?;
+            Some(vec![first, second])
+        }
+    }
+}
+
+fn roots_are_tangent(
+    curve: &QuadraticBezier,
+    axis: Axis,
+    segment: &LinePathSegment,
+    policy: PredicatePolicy,
+) -> Option<bool> {
+    let fixed = match axis {
+        Axis::X => segment.start().y.clone(),
+        Axis::Y => segment.start().x.clone(),
+    };
+    let p0 = coordinate(curve.start(), axis);
+    let p1 = coordinate(curve.control(), axis);
+    let p2 = coordinate(curve.end(), axis);
+    let a = p0.clone() - Real::from(2) * p1.clone() + p2.clone();
+    let b = Real::from(2) * (p1 - p0.clone());
+    let c = p0 - fixed;
+    if compare_reals_with_policy(&a, &Real::zero(), policy).value()? == Ordering::Equal {
+        return Some(false);
+    }
+    let discriminant = b.clone() * b - Real::from(4) * a * c;
+    Some(
+        compare_reals_with_policy(&discriminant, &Real::zero(), policy).value()? == Ordering::Equal,
+    )
+}
+
+fn parameter_in_unit_interval(parameter: &Real, policy: PredicatePolicy) -> Option<bool> {
+    let lower = compare_reals_with_policy(parameter, &Real::zero(), policy).value()?;
+    let upper = compare_reals_with_policy(parameter, &Real::one(), policy).value()?;
+    Some(!matches!(lower, Ordering::Less) && !matches!(upper, Ordering::Greater))
+}
+
+fn point_inside_segment_bounds(
+    point: &Point2,
+    segment: &LinePathSegment,
+    policy: PredicatePolicy,
+) -> Option<bool> {
+    let x_min = min_real(&segment.start().x, &segment.end().x, policy)?;
+    let x_max = max_real(&segment.start().x, &segment.end().x, policy)?;
+    let y_min = min_real(&segment.start().y, &segment.end().y, policy)?;
+    let y_max = max_real(&segment.start().y, &segment.end().y, policy)?;
+    Some(
+        compare_reals_with_policy(&point.x, &x_min, policy).value()? != Ordering::Less
+            && compare_reals_with_policy(&point.x, &x_max, policy).value()? != Ordering::Greater
+            && compare_reals_with_policy(&point.y, &y_min, policy).value()? != Ordering::Less
+            && compare_reals_with_policy(&point.y, &y_max, policy).value()? != Ordering::Greater,
+    )
+}
+
+fn min_real(first: &Real, second: &Real, policy: PredicatePolicy) -> Option<Real> {
+    match compare_reals_with_policy(first, second, policy).value()? {
+        Ordering::Less | Ordering::Equal => Some(first.clone()),
+        Ordering::Greater => Some(second.clone()),
+    }
+}
+
+fn max_real(first: &Real, second: &Real, policy: PredicatePolicy) -> Option<Real> {
+    match compare_reals_with_policy(first, second, policy).value()? {
+        Ordering::Less | Ordering::Equal => Some(second.clone()),
+        Ordering::Greater => Some(first.clone()),
+    }
+}
+
+fn push_unique_intersection(
+    intersections: &mut Vec<LineQuadraticBezierIntersection>,
+    parameter: Real,
+    point: Point2,
+    policy: PredicatePolicy,
+) -> Option<()> {
+    for existing in intersections.iter() {
+        match point2_equal_with_policy(&existing.point, &point, policy).value()? {
+            true => return Some(()),
+            false => {}
+        }
+    }
+    intersections.push(LineQuadraticBezierIntersection { parameter, point });
+    Some(())
+}
+
+fn sort_line_quadratic_intersections(
+    intersections: &mut [LineQuadraticBezierIntersection],
+    policy: PredicatePolicy,
+) -> Option<()> {
+    for left in 0..intersections.len() {
+        for right in (left + 1)..intersections.len() {
+            compare_reals_with_policy(
+                &intersections[left].parameter,
+                &intersections[right].parameter,
+                policy,
+            )
+            .value()?;
+        }
+    }
+    intersections.sort_by(|left, right| {
+        compare_reals_with_policy(&left.parameter, &right.parameter, policy)
+            .value()
+            .expect("pairwise line/quadratic parameter order was certified before sorting")
+    });
+    Some(())
+}
+
+fn eval_quadratic_at_real(curve: &QuadraticBezier, parameter: &Real) -> Point2 {
+    let one_minus_t = Real::one() - parameter.clone();
+    let start_weight = one_minus_t.clone() * one_minus_t.clone();
+    let control_weight = Real::from(2) * one_minus_t * parameter.clone();
+    let end_weight = parameter.clone() * parameter.clone();
+    Point2::new(
+        curve.start().x.clone() * start_weight.clone()
+            + curve.control().x.clone() * control_weight.clone()
+            + curve.end().x.clone() * end_weight.clone(),
+        curve.start().y.clone() * start_weight
+            + curve.control().y.clone() * control_weight
+            + curve.end().y.clone() * end_weight,
+    )
+}
+
+fn coordinate(point: &Point2, axis: Axis) -> Real {
+    match axis {
+        Axis::X => point.y.clone(),
+        Axis::Y => point.x.clone(),
+    }
+}
+
+fn line_quadratic_unknown_report() -> LineQuadraticBezierIntersectionReport {
+    LineQuadraticBezierIntersectionReport {
+        class: LineQuadraticBezierIntersectionClass::Unknown,
+        intersections: Vec::new(),
+    }
 }

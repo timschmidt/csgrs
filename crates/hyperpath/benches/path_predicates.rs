@@ -33,13 +33,13 @@ use hyperpath::{
     check_trace_via_clearance, check_trace_via_drill_clearance, check_via_drill_board_clearance,
     classify_meander_candidate_slots, classify_meander_placement_slots, classify_tangent_alignment,
     classify_tangent_chain, classify_tangent_join, import_specctra_trace_record,
-    import_specctra_via_record, intersect_rectangular_regions, offset_axis_aligned_segment,
-    offset_cardinal_arc, offset_cubic_bezier_sample, offset_explicit_arc,
-    offset_higher_order_bezier_sample, offset_quadratic_bezier_sample,
-    parse_specctra_grid_route_records, parse_specctra_grid_trace_records,
-    serialize_specctra_grid_route_records, serialize_specctra_grid_trace_records,
-    serialize_specctra_grid_via_records, specctra_grid_trace_record, specctra_grid_via_record,
-    subtract_rectangular_region,
+    import_specctra_via_record, intersect_axis_aligned_line_quadratic_bezier,
+    intersect_rectangular_regions, offset_axis_aligned_segment, offset_cardinal_arc,
+    offset_cubic_bezier_sample, offset_explicit_arc, offset_higher_order_bezier_sample,
+    offset_quadratic_bezier_sample, parse_specctra_grid_route_records,
+    parse_specctra_grid_trace_records, serialize_specctra_grid_route_records,
+    serialize_specctra_grid_trace_records, serialize_specctra_grid_via_records,
+    specctra_grid_trace_record, specctra_grid_via_record, subtract_rectangular_region,
 };
 use hyperreal::{Rational, Real};
 
@@ -206,6 +206,16 @@ fn path_predicates(c: &mut Criterion) {
     });
     c.bench_function("quadratic_bezier_exact_speed_squared", |b| {
         b.iter(|| bezier.speed_squared(half))
+    });
+    let line_quadratic_line = LinePathSegment::new(p(0, 0), p(1000, 0));
+    c.bench_function("line_quadratic_bezier_exact_events", |b| {
+        b.iter(|| {
+            intersect_axis_aligned_line_quadratic_bezier(
+                &line_quadratic_line,
+                &bezier,
+                PredicatePolicy::default(),
+            )
+        })
     });
     let bezier_events = vec![vec![
         BezierParameter::new(1, 4).unwrap(),
