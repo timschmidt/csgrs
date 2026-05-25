@@ -106,6 +106,15 @@ pub enum BezierRetainedLineOverlapExtent2 {
     PartialBoth,
 }
 
+/// Orientation of two refined fragments that carry the same overlap image.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum BezierRetainedOverlapOrientation2 {
+    /// The two overlap subfragments have equal start and end endpoint order.
+    Same,
+    /// The second overlap subfragment has the opposite endpoint order.
+    Opposite,
+}
+
 /// Exact split evidence for a positive-dimensional line-image overlap.
 ///
 /// The stored ranges are the affine parameters of the certified line-segment
@@ -177,6 +186,29 @@ pub struct BezierRetainedLinearOverlapSplitGraph2 {
     refined_fragments: Vec<BezierRetainedOverlapRefinedFragment2>,
     overlap_report: BezierRetainedOverlapReport2,
     split_plan: Vec<BezierRetainedLinearOverlapSplit2>,
+    resolved_overlaps: Vec<BezierRetainedResolvedLinearOverlap2>,
+}
+
+/// One resolved overlap span after exact linear-overlap graph refinement.
+///
+/// This is the ownership handoff record for the refined graph: it names the
+/// two refined graph-fragment indices that cover the same positive-dimensional
+/// image, keeps their original graph provenance and exact local parameter
+/// ranges, and records same/opposite orientation.  It is intentionally a
+/// report object rather than an ownership decision.  Yap (1997) requires this
+/// sort of constructed evidence to remain explicit before a later topological
+/// consumer decides which boundary copy, if any, owns the shared span.
+#[derive(Clone, Debug, PartialEq)]
+pub struct BezierRetainedResolvedLinearOverlap2 {
+    first_refined_fragment_index: usize,
+    second_refined_fragment_index: usize,
+    first_original_fragment_index: usize,
+    second_original_fragment_index: usize,
+    first_local_range: ParamRange,
+    second_local_range: ParamRange,
+    overlap_segment: LineSeg2,
+    orientation: BezierRetainedOverlapOrientation2,
+    extent: BezierRetainedLineOverlapExtent2,
 }
 
 /// Traversal through a graph whose certified linear overlaps were refined.
@@ -274,12 +306,14 @@ impl BezierRetainedLinearOverlapSplitGraph2 {
         refined_fragments: Vec<BezierRetainedOverlapRefinedFragment2>,
         overlap_report: BezierRetainedOverlapReport2,
         split_plan: Vec<BezierRetainedLinearOverlapSplit2>,
+        resolved_overlaps: Vec<BezierRetainedResolvedLinearOverlap2>,
     ) -> Self {
         Self {
             graph,
             refined_fragments,
             overlap_report,
             split_plan,
+            resolved_overlaps,
         }
     }
 
@@ -303,6 +337,11 @@ impl BezierRetainedLinearOverlapSplitGraph2 {
         &self.split_plan
     }
 
+    /// Returns resolved refined-fragment overlap spans.
+    pub fn resolved_overlaps(&self) -> &[BezierRetainedResolvedLinearOverlap2] {
+        &self.resolved_overlaps
+    }
+
     /// Consumes this refinement and returns all parts.
     pub fn into_parts(
         self,
@@ -311,13 +350,88 @@ impl BezierRetainedLinearOverlapSplitGraph2 {
         Vec<BezierRetainedOverlapRefinedFragment2>,
         BezierRetainedOverlapReport2,
         Vec<BezierRetainedLinearOverlapSplit2>,
+        Vec<BezierRetainedResolvedLinearOverlap2>,
     ) {
         (
             self.graph,
             self.refined_fragments,
             self.overlap_report,
             self.split_plan,
+            self.resolved_overlaps,
         )
+    }
+}
+
+impl BezierRetainedResolvedLinearOverlap2 {
+    /// Constructs one resolved refined-overlap span.
+    #[allow(clippy::too_many_arguments)]
+    pub const fn new(
+        first_refined_fragment_index: usize,
+        second_refined_fragment_index: usize,
+        first_original_fragment_index: usize,
+        second_original_fragment_index: usize,
+        first_local_range: ParamRange,
+        second_local_range: ParamRange,
+        overlap_segment: LineSeg2,
+        orientation: BezierRetainedOverlapOrientation2,
+        extent: BezierRetainedLineOverlapExtent2,
+    ) -> Self {
+        Self {
+            first_refined_fragment_index,
+            second_refined_fragment_index,
+            first_original_fragment_index,
+            second_original_fragment_index,
+            first_local_range,
+            second_local_range,
+            overlap_segment,
+            orientation,
+            extent,
+        }
+    }
+
+    /// Returns the refined graph-fragment index for the first overlap side.
+    pub const fn first_refined_fragment_index(&self) -> usize {
+        self.first_refined_fragment_index
+    }
+
+    /// Returns the refined graph-fragment index for the second overlap side.
+    pub const fn second_refined_fragment_index(&self) -> usize {
+        self.second_refined_fragment_index
+    }
+
+    /// Returns the original graph-fragment index for the first overlap side.
+    pub const fn first_original_fragment_index(&self) -> usize {
+        self.first_original_fragment_index
+    }
+
+    /// Returns the original graph-fragment index for the second overlap side.
+    pub const fn second_original_fragment_index(&self) -> usize {
+        self.second_original_fragment_index
+    }
+
+    /// Returns the exact local range on the first original fragment.
+    pub const fn first_local_range(&self) -> &ParamRange {
+        &self.first_local_range
+    }
+
+    /// Returns the exact local range on the second original fragment.
+    pub const fn second_local_range(&self) -> &ParamRange {
+        &self.second_local_range
+    }
+
+    /// Returns the exact shared segment image.
+    pub const fn overlap_segment(&self) -> &LineSeg2 {
+        &self.overlap_segment
+    }
+
+    /// Returns the relative endpoint orientation of the refined overlap span.
+    pub const fn orientation(&self) -> BezierRetainedOverlapOrientation2 {
+        self.orientation
+    }
+
+    /// Returns whether the original overlap was full or partial on each side.
+    pub const fn extent(&self) -> BezierRetainedLineOverlapExtent2 {
+        self.extent
     }
 }
 
@@ -490,11 +604,17 @@ impl BezierArrangementGraph2 {
             Classification::Decided(refinement) => refinement,
             Classification::Uncertain(reason) => return Classification::Uncertain(reason),
         };
+        let resolved_overlaps =
+            match resolved_linear_overlap_spans(&graph, &refined_fragments, &split_plan, policy) {
+                Classification::Decided(resolved) => resolved,
+                Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+            };
         Classification::Decided(BezierRetainedLinearOverlapSplitGraph2::new(
             graph,
             refined_fragments,
             overlap_report,
             split_plan,
+            resolved_overlaps,
         ))
     }
 
@@ -917,6 +1037,141 @@ fn refine_graph_at_boundaries(
     ))
 }
 
+fn resolved_linear_overlap_spans(
+    graph: &BezierArrangementGraph2,
+    refined_fragments: &[BezierRetainedOverlapRefinedFragment2],
+    split_plan: &[BezierRetainedLinearOverlapSplit2],
+    policy: &CurvePolicy,
+) -> Classification<Vec<BezierRetainedResolvedLinearOverlap2>> {
+    let mut resolved = Vec::with_capacity(split_plan.len());
+    for split in split_plan {
+        let first_refined_fragment_index = match find_refined_fragment_for_range(
+            refined_fragments,
+            split.first_fragment_index(),
+            split.first_bezier_range(),
+            policy,
+        ) {
+            Some(index) => index,
+            None => return Classification::Uncertain(UncertaintyReason::Boundary),
+        };
+        let second_refined_fragment_index = match find_refined_fragment_for_range(
+            refined_fragments,
+            split.second_fragment_index(),
+            split.second_bezier_range(),
+            policy,
+        ) {
+            Some(index) => index,
+            None => return Classification::Uncertain(UncertaintyReason::Boundary),
+        };
+        let orientation = match refined_overlap_orientation(
+            graph,
+            first_refined_fragment_index,
+            second_refined_fragment_index,
+            policy,
+        ) {
+            Classification::Decided(orientation) => orientation,
+            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+        };
+        resolved.push(BezierRetainedResolvedLinearOverlap2::new(
+            first_refined_fragment_index,
+            second_refined_fragment_index,
+            split.first_fragment_index(),
+            split.second_fragment_index(),
+            split.first_bezier_range().clone(),
+            split.second_bezier_range().clone(),
+            split.overlap_segment().clone(),
+            orientation,
+            split.extent(),
+        ));
+    }
+    Classification::Decided(resolved)
+}
+
+fn find_refined_fragment_for_range(
+    refined_fragments: &[BezierRetainedOverlapRefinedFragment2],
+    original_fragment_index: usize,
+    target_range: &ParamRange,
+    policy: &CurvePolicy,
+) -> Option<usize> {
+    refined_fragments
+        .iter()
+        .enumerate()
+        .find_map(|(refined_index, refined)| {
+            (refined.original_fragment_index() == original_fragment_index
+                && ranges_match_even_if_reversed(refined.local_range(), target_range, policy)
+                    == Some(true))
+            .then_some(refined_index)
+        })
+}
+
+fn ranges_match_even_if_reversed(
+    refined_range: &ParamRange,
+    target_range: &ParamRange,
+    policy: &CurvePolicy,
+) -> Option<bool> {
+    let (target_start, target_end) = normalized_range_bounds(target_range, policy)?;
+    Some(
+        compare_reals(refined_range.start(), target_start, policy)? == std::cmp::Ordering::Equal
+            && compare_reals(refined_range.end(), target_end, policy)? == std::cmp::Ordering::Equal,
+    )
+}
+
+fn normalized_range_bounds<'a>(
+    range: &'a ParamRange,
+    policy: &CurvePolicy,
+) -> Option<(&'a Real, &'a Real)> {
+    match compare_reals(range.start(), range.end(), policy)? {
+        std::cmp::Ordering::Less | std::cmp::Ordering::Equal => Some((range.start(), range.end())),
+        std::cmp::Ordering::Greater => Some((range.end(), range.start())),
+    }
+}
+
+fn refined_overlap_orientation(
+    graph: &BezierArrangementGraph2,
+    first_index: usize,
+    second_index: usize,
+    policy: &CurvePolicy,
+) -> Classification<BezierRetainedOverlapOrientation2> {
+    let first = match graph.fragments().get(first_index) {
+        Some(fragment) => match materialized_endpoints(fragment.fragment()) {
+            Some(endpoints) => endpoints,
+            None => return Classification::Uncertain(UncertaintyReason::Boundary),
+        },
+        None => return Classification::Uncertain(UncertaintyReason::Unsupported),
+    };
+    let second = match graph.fragments().get(second_index) {
+        Some(fragment) => match materialized_endpoints(fragment.fragment()) {
+            Some(endpoints) => endpoints,
+            None => return Classification::Uncertain(UncertaintyReason::Boundary),
+        },
+        None => return Classification::Uncertain(UncertaintyReason::Unsupported),
+    };
+
+    let same = match (
+        points_equal(&first.0, &second.0, policy),
+        points_equal(&first.1, &second.1, policy),
+    ) {
+        (Some(start), Some(end)) => start && end,
+        _ => return Classification::Uncertain(UncertaintyReason::Ordering),
+    };
+    if same {
+        return Classification::Decided(BezierRetainedOverlapOrientation2::Same);
+    }
+
+    let opposite = match (
+        points_equal(&first.0, &second.1, policy),
+        points_equal(&first.1, &second.0, policy),
+    ) {
+        (Some(start), Some(end)) => start && end,
+        _ => return Classification::Uncertain(UncertaintyReason::Ordering),
+    };
+    if opposite {
+        return Classification::Decided(BezierRetainedOverlapOrientation2::Opposite);
+    }
+
+    Classification::Uncertain(UncertaintyReason::Boundary)
+}
+
 fn subcurve_between_local(
     curve: &BezierSubcurve2,
     start: &Real,
@@ -945,12 +1200,15 @@ fn compose_source_parameter(source_start: &Real, source_end: &Real, local: &Real
 }
 
 fn unit_range(range: &ParamRange, policy: &CurvePolicy) -> Option<bool> {
-    Some(
-        crate::classify::compare_reals(range.start(), &hyperreal::Real::zero(), policy)?
-            == std::cmp::Ordering::Equal
-            && crate::classify::compare_reals(range.end(), &hyperreal::Real::one(), policy)?
-                == std::cmp::Ordering::Equal,
-    )
+    let forward = crate::classify::compare_reals(range.start(), &hyperreal::Real::zero(), policy)?
+        == std::cmp::Ordering::Equal
+        && crate::classify::compare_reals(range.end(), &hyperreal::Real::one(), policy)?
+            == std::cmp::Ordering::Equal;
+    let reversed = crate::classify::compare_reals(range.start(), &hyperreal::Real::one(), policy)?
+        == std::cmp::Ordering::Equal
+        && crate::classify::compare_reals(range.end(), &hyperreal::Real::zero(), policy)?
+            == std::cmp::Ordering::Equal;
+    Some(forward || reversed)
 }
 
 fn duplicate_shadow_indices(

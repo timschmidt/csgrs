@@ -1,9 +1,10 @@
 use hypercurve::{
     BezierAlgebraicEndpointImage2, BezierAlgebraicParameter2, BezierArrangementGraph2,
     BezierParameter2, BezierParameterInterval, BezierParameterPolynomial,
-    BezierRetainedLineOverlapExtent2, BezierRetainedOverlapRelation2, BezierRetainedOverlapReport2,
-    BezierSplitFragment2, BezierSubcurve2, Classification, CubicBezier2, CurvePolicy, Point2,
-    QuadraticBezier2, Real, UncertaintyReason,
+    BezierRetainedLineOverlapExtent2, BezierRetainedOverlapOrientation2,
+    BezierRetainedOverlapRelation2, BezierRetainedOverlapReport2, BezierSplitFragment2,
+    BezierSubcurve2, Classification, CubicBezier2, CurvePolicy, Point2, QuadraticBezier2, Real,
+    UncertaintyReason,
 };
 use proptest::prelude::*;
 
@@ -411,8 +412,21 @@ fn retained_overlap_report_extracts_partial_line_image_split_ranges() {
     let refinement = decided(graph.split_retained_linear_overlaps(&policy()));
     assert_eq!(refinement.overlap_report().len(), 1);
     assert_eq!(refinement.split_plan().len(), 1);
+    assert_eq!(refinement.resolved_overlaps().len(), 1);
     assert_eq!(refinement.graph().len(), 4);
     assert_eq!(refinement.refined_fragments().len(), 4);
+    assert_eq!(
+        refinement.resolved_overlaps()[0].first_refined_fragment_index(),
+        1
+    );
+    assert_eq!(
+        refinement.resolved_overlaps()[0].second_refined_fragment_index(),
+        2
+    );
+    assert_eq!(
+        refinement.resolved_overlaps()[0].orientation(),
+        BezierRetainedOverlapOrientation2::Same
+    );
     assert_eq!(
         refinement.refined_fragments()[0].original_fragment_index(),
         0
@@ -473,6 +487,56 @@ fn retained_overlap_report_extracts_partial_line_image_split_ranges() {
 }
 
 #[test]
+fn retained_linear_overlap_refinement_reports_reversed_span_orientation() {
+    let first = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(2, 0), p(4, 0))),
+    };
+    let reversed_overlap = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(4, 0), p(3, 0), p(2, 0))),
+    };
+    let graph = BezierArrangementGraph2::new(vec![
+        hypercurve::BezierArrangementFragment2::new(0, 0, first),
+        hypercurve::BezierArrangementFragment2::new(1, 0, reversed_overlap),
+    ]);
+
+    let refinement = decided(graph.split_retained_linear_overlaps(&policy()));
+
+    assert_eq!(refinement.graph().len(), 3);
+    assert_eq!(refinement.resolved_overlaps().len(), 1);
+    let resolved = &refinement.resolved_overlaps()[0];
+    assert_eq!(resolved.first_refined_fragment_index(), 1);
+    assert_eq!(resolved.second_refined_fragment_index(), 2);
+    assert_eq!(resolved.first_original_fragment_index(), 0);
+    assert_eq!(resolved.second_original_fragment_index(), 1);
+    assert_eq!(
+        resolved.first_local_range(),
+        &hypercurve::ParamRange::new(q(1, 2), r(1))
+    );
+    assert_eq!(
+        resolved.second_local_range(),
+        &hypercurve::ParamRange::new(r(1), r(0))
+    );
+    assert_eq!(resolved.overlap_segment().start(), &p(2, 0));
+    assert_eq!(resolved.overlap_segment().end(), &p(4, 0));
+    assert_eq!(
+        resolved.orientation(),
+        BezierRetainedOverlapOrientation2::Opposite
+    );
+    assert_eq!(
+        resolved.extent(),
+        BezierRetainedLineOverlapExtent2::PartialFirstFullSecond
+    );
+    assert_eq!(
+        graph.traverse_retained_splitting_linear_overlaps(&policy()),
+        Classification::Uncertain(UncertaintyReason::Boundary)
+    );
+}
+
+#[test]
 fn retained_linear_overlap_traversal_splits_and_consumes_duplicate_span_in_loop() {
     let bottom = BezierSplitFragment2::Materialized {
         start: exact(r(0)),
@@ -515,6 +579,11 @@ fn retained_linear_overlap_traversal_splits_and_consumes_duplicate_span_in_loop(
 
     assert_eq!(traversal.refinement().graph().len(), 6);
     assert_eq!(traversal.refinement().split_plan().len(), 1);
+    assert_eq!(traversal.refinement().resolved_overlaps().len(), 1);
+    assert_eq!(
+        traversal.refinement().resolved_overlaps()[0].orientation(),
+        BezierRetainedOverlapOrientation2::Same
+    );
     assert_eq!(
         traversal.refined_traversal().shadowed_fragment_indices(),
         &[2]

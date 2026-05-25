@@ -71,7 +71,9 @@ fn main() -> CurveResult<()> {
         );
         total += black_box(match graph.split_retained_linear_overlaps(&policy) {
             Classification::Decided(refinement) => {
-                refinement.graph().len() + refinement.refined_fragments().len()
+                refinement.graph().len()
+                    + refinement.refined_fragments().len()
+                    + refinement.resolved_overlaps().len()
             }
             Classification::Uncertain(_) => 0,
         });

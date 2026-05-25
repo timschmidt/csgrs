@@ -89,8 +89,9 @@ pub use bezier_retained_overlap::{
     BezierRetainedLineOverlapExtent2, BezierRetainedLineOverlapSplit2,
     BezierRetainedLinearOverlapSplit2, BezierRetainedLinearOverlapSplitGraph2,
     BezierRetainedLinearOverlapTraversal2, BezierRetainedOverlap2,
-    BezierRetainedOverlapRefinedFragment2, BezierRetainedOverlapRelation2,
-    BezierRetainedOverlapReport2, BezierRetainedOverlapTraversal2,
+    BezierRetainedOverlapOrientation2, BezierRetainedOverlapRefinedFragment2,
+    BezierRetainedOverlapRelation2, BezierRetainedOverlapReport2, BezierRetainedOverlapTraversal2,
+    BezierRetainedResolvedLinearOverlap2,
 };
 pub use bezier_split::{BezierSplitFragment2, BezierSplitMaterialization2, BezierSubcurve2};
 pub use bezier_split_endpoint::{
