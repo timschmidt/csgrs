@@ -67,7 +67,7 @@ impl ExactTriangle3 {
         }
     }
 
-    fn points(&self) -> [hyperlimit::Point3; 3] {
+    pub(crate) fn points(&self) -> [hyperlimit::Point3; 3] {
         [
             point3(&self.vertices[0]),
             point3(&self.vertices[1]),
@@ -558,7 +558,7 @@ fn validate_surface_source_report(
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-enum TriangleCellIntersection {
+pub(crate) enum TriangleCellIntersection {
     Disjoint,
     Intersects,
     Unknown,
@@ -628,7 +628,7 @@ fn classify_point_against_triangle_solid_by_single_ray(
     }
 }
 
-fn ray_parity_directions() -> [hyperlimit::Point3; 7] {
+pub(crate) fn ray_parity_directions() -> [hyperlimit::Point3; 7] {
     [
         rational_direction([1, 2, 3], 1),
         rational_direction([1, 3, 5], 1),
@@ -654,7 +654,10 @@ fn rational_direction(numerators: [i64; 3], denominator: u64) -> hyperlimit::Poi
     )
 }
 
-fn insert_unique_parameter(parameters: &mut Vec<Real>, parameter: Real) -> HypervoxelResult<()> {
+pub(crate) fn insert_unique_parameter(
+    parameters: &mut Vec<Real>,
+    parameter: Real,
+) -> HypervoxelResult<()> {
     for existing in parameters.iter() {
         match hyperlimit::compare_reals(existing, &parameter).value() {
             Some(core::cmp::Ordering::Equal) => return Ok(()),
@@ -670,7 +673,7 @@ fn insert_unique_parameter(parameters: &mut Vec<Real>, parameter: Real) -> Hyper
     Ok(())
 }
 
-fn triangle_intersects_cell(
+pub(crate) fn triangle_intersects_cell(
     triangle: &ExactTriangle3,
     bounds: &CellBounds,
 ) -> HypervoxelResult<TriangleCellIntersection> {
@@ -754,7 +757,7 @@ fn point_in_aabb(
     ))
 }
 
-fn triangle_bounds(triangle: &ExactTriangle3) -> HypervoxelResult<crate::ExactAabb3> {
+pub(crate) fn triangle_bounds(triangle: &ExactTriangle3) -> HypervoxelResult<crate::ExactAabb3> {
     let mut min = triangle.vertices[0].clone();
     let mut max = triangle.vertices[0].clone();
     for vertex in triangle.vertices.iter().skip(1) {
@@ -837,6 +840,6 @@ fn aabb_face_triangles(corners: &[hyperlimit::Point3; 8]) -> [[&hyperlimit::Poin
     ]
 }
 
-fn point3(values: &[Real; 3]) -> hyperlimit::Point3 {
+pub(crate) fn point3(values: &[Real; 3]) -> hyperlimit::Point3 {
     hyperlimit::Point3::new(values[0].clone(), values[1].clone(), values[2].clone())
 }

@@ -57,6 +57,7 @@ mod svo;
 mod trace;
 mod transform;
 mod triangle_mesh;
+mod triangle_prepared;
 #[cfg(feature = "legacy-voxelis")]
 mod voxelis_adapter;
 mod voxelize;
@@ -170,6 +171,12 @@ pub use triangle_mesh::{
     VoxelTriangleSolidClassifier, classify_cell_against_triangle_solid_mesh,
     classify_cell_against_triangle_surface_mesh, voxelize_exact_triangle_solid_mesh,
     voxelize_exact_triangle_surface_mesh,
+};
+pub use triangle_prepared::{
+    PreparedExactTriangle, PreparedExactTriangleSolidMesh, PreparedExactTriangleSolidMeshReport,
+    PreparedRayParityAttemptReport, PreparedTriangleSolidCellReport,
+    PreparedTriangleSolidVoxelizationReport, classify_cell_against_prepared_triangle_solid_mesh,
+    voxelize_prepared_exact_triangle_solid_mesh,
 };
 #[cfg(feature = "legacy-voxelis")]
 pub use voxelis_adapter::{LegacyVoxelisStorageDiffReport, compare_legacy_voxelis_u8_samples};

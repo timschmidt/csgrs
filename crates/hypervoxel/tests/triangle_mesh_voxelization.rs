@@ -1,10 +1,12 @@
 use hyperreal::{Rational, Real};
 use hypervoxel::{
     BoundaryPolicy, ExactTriangle3, ExactTriangleSolidMesh, ExactTriangleSurfaceMesh, GridFrame,
-    GridSource, HypervoxelError, MaterialRegionId, OccupancyState, QuantizationPolicy,
-    VoxelAddress, VoxelTriangleMeshClassifier, VoxelTriangleSolidClassifier, VoxelizationPolicy,
+    GridSource, HypervoxelError, MaterialRegionId, OccupancyState, PreparedExactTriangleSolidMesh,
+    QuantizationPolicy, VoxelAddress, VoxelTriangleMeshClassifier, VoxelTriangleSolidClassifier,
+    VoxelizationPolicy, classify_cell_against_prepared_triangle_solid_mesh,
     classify_cell_against_triangle_solid_mesh, classify_cell_against_triangle_surface_mesh,
     voxelize_exact_triangle_solid_mesh, voxelize_exact_triangle_surface_mesh,
+    voxelize_prepared_exact_triangle_solid_mesh,
 };
 use proptest::prelude::*;
 
@@ -276,6 +278,80 @@ fn exact_triangle_solid_rejects_missing_closed_solid_replay() {
             MaterialRegionId(1),
             VoxelizationPolicy::conservative_cover(),
         ),
+        Err(HypervoxelError::InvalidSourceGeometry {
+            reason: "triangle solid mesh lacks exact closed-solid replay"
+        })
+    );
+}
+
+#[test]
+fn prepared_triangle_solid_replays_cube_with_exact_schedule_report() {
+    let frame = frame(3);
+    let solid = ExactTriangleSolidMesh::new(cube_surface(2, 6, &frame), true);
+    let prepared = PreparedExactTriangleSolidMesh::prepare(solid.clone()).unwrap();
+
+    assert!(prepared.report().exact_prepared_solid_ready);
+    assert_eq!(prepared.report().prepared_triangle_count, 12);
+    assert_eq!(prepared.report().unknown_bound_count, 0);
+
+    let interior = classify_cell_against_prepared_triangle_solid_mesh(
+        VoxelAddress::new(3, [3, 3, 3]).unwrap(),
+        &frame,
+        &prepared,
+    )
+    .unwrap();
+    assert_eq!(interior.classifier, VoxelTriangleSolidClassifier::Inside);
+    assert_eq!(interior.boundary_aabb_rejections, 12);
+    assert_eq!(interior.boundary_triangle_tests, 0);
+    assert_eq!(interior.ray_attempts.len(), 1);
+    assert!(interior.ray_attempts[0].certified);
+    assert_eq!(interior.ray_attempts[0].triangle_tests, 12);
+
+    let boundary = classify_cell_against_prepared_triangle_solid_mesh(
+        VoxelAddress::new(3, [2, 3, 3]).unwrap(),
+        &frame,
+        &prepared,
+    )
+    .unwrap();
+    assert_eq!(boundary.classifier, VoxelTriangleSolidClassifier::Boundary);
+    assert!(boundary.boundary_triangle_tests > 0);
+    assert!(boundary.ray_attempts.is_empty());
+
+    let (ordinary_grid, ordinary_report) = voxelize_exact_triangle_solid_mesh(
+        frame.clone(),
+        &solid,
+        MaterialRegionId(4),
+        VoxelizationPolicy::conservative_cover(),
+    )
+    .unwrap();
+    let (prepared_grid, prepared_report, schedule) = voxelize_prepared_exact_triangle_solid_mesh(
+        frame,
+        &prepared,
+        MaterialRegionId(4),
+        VoxelizationPolicy::conservative_cover(),
+    )
+    .unwrap();
+
+    assert_eq!(prepared_grid.len(), ordinary_grid.len());
+    assert_eq!(prepared_report.unknown_cells, ordinary_report.unknown_cells);
+    assert_eq!(
+        prepared_report.predicate_certificates,
+        ordinary_report.predicate_certificates
+    );
+    assert_eq!(schedule.classified_cells, 512);
+    assert!(schedule.boundary_aabb_rejections > schedule.boundary_triangle_tests);
+    assert!(schedule.ambiguous_ray_attempts > 0);
+    assert!(schedule.ambiguous_ray_attempts < schedule.ray_attempts);
+    assert!(prepared_report.exact_topology_ready());
+}
+
+#[test]
+fn prepared_triangle_solid_rejects_non_solid_source_replay() {
+    let frame = frame(2);
+    let solid = ExactTriangleSolidMesh::new(cube_surface(1, 3, &frame), false);
+
+    assert_eq!(
+        PreparedExactTriangleSolidMesh::prepare(solid),
         Err(HypervoxelError::InvalidSourceGeometry {
             reason: "triangle solid mesh lacks exact closed-solid replay"
         })

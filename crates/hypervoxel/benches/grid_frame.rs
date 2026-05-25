@@ -11,11 +11,11 @@ use hypervoxel::{
     FieldSampleId, FieldSampleRecord, FreshnessStatus, GridAabbHandoff, GridBasis,
     GridCoordinateSystem, GridFrame, GridFrameManifest, GridHandedness, GridSource,
     ImageStackContainer, ImageStackManifest, LegacyAdapterKind, LegacyAdapterStatus, LengthUnit,
-    MaterialDisplayPalette, MaterialRegionId, MaterialRegionRecord, PreparedSparseVoxelGridExt,
-    PreparedVoxelGrid, PreviewExportFormat, PreviewExportManifest, PreviewScalarPolicy,
-    ProcessGridArtifact, ProcessGridRole, QuantizationPolicy, QueryRegion, SignedAxis,
-    SparseVoxelGrid, SupportDirection, SvoVoxelGrid, SweptVolumeProvenance, VoxelAddress,
-    VoxelArtifactId, VoxelArtifactManifest, VoxelArtifactRole, VoxelCandidateKind,
+    MaterialDisplayPalette, MaterialRegionId, MaterialRegionRecord, PreparedExactTriangleSolidMesh,
+    PreparedSparseVoxelGridExt, PreparedVoxelGrid, PreviewExportFormat, PreviewExportManifest,
+    PreviewScalarPolicy, ProcessGridArtifact, ProcessGridRole, QuantizationPolicy, QueryRegion,
+    SignedAxis, SparseVoxelGrid, SupportDirection, SvoVoxelGrid, SweptVolumeProvenance,
+    VoxelAddress, VoxelArtifactId, VoxelArtifactManifest, VoxelArtifactRole, VoxelCandidateKind,
     VoxelCandidateManifest, VoxelCell, VoxelChannelMapping, VoxelEditBatch, VoxelFieldCouplingKind,
     VoxelFieldCouplingManifest, VoxelHandoffDomain, VoxelHandoffManifest, VoxelIndexConvention,
     VoxelIoCompression, VoxelIoMetadata, VoxelMemoryBudgetManifest, VoxelSideTables,
@@ -28,7 +28,7 @@ use hypervoxel::{
     sample_signed_manhattan_distance_field, select_lod_cells, sweep_address_segment,
     trace_address_ray, voxelize_exact_box, voxelize_exact_convex_halfspace_set,
     voxelize_exact_halfspace, voxelize_exact_triangle_solid_mesh,
-    voxelize_exact_triangle_surface_mesh,
+    voxelize_exact_triangle_surface_mesh, voxelize_prepared_exact_triangle_solid_mesh,
 };
 
 fn r(n: i32) -> Real {
@@ -231,11 +231,24 @@ fn bench_exact_box_voxelization(c: &mut Criterion) {
         true,
     );
     let triangle_solid = ExactTriangleSolidMesh::new(cube_surface, true);
+    let prepared_triangle_solid =
+        PreparedExactTriangleSolidMesh::prepare(triangle_solid.clone()).unwrap();
     c.bench_function("exact_triangle_solid_mesh_voxelization", |b| {
         b.iter(|| {
             voxelize_exact_triangle_solid_mesh(
                 frame.clone(),
                 &triangle_solid,
+                MaterialRegionId(10),
+                VoxelizationPolicy::conservative_cover(),
+            )
+            .unwrap()
+        })
+    });
+    c.bench_function("prepared_exact_triangle_solid_mesh_voxelization", |b| {
+        b.iter(|| {
+            voxelize_prepared_exact_triangle_solid_mesh(
+                frame.clone(),
+                &prepared_triangle_solid,
                 MaterialRegionId(10),
                 VoxelizationPolicy::conservative_cover(),
             )

@@ -46,3 +46,10 @@ path = "fuzz_targets/triangle_solid_voxelization.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "prepared_triangle_solid_voxelization"
+path = "fuzz_targets/prepared_triangle_solid_voxelization.rs"
+test = false
+doc = false
+bench = false
