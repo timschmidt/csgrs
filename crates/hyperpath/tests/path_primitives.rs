@@ -3,9 +3,9 @@ use hyperpath::{
     ArcDirection, ArcOffsetError, Axis, AxisAlignedSweptSegmentPrism, BeadFillAxis, BeadPlanError,
     BezierOffsetError, BezierParameter, BezierParameterError, BoardContourError,
     BoardContourOrientation, CamExactClipCutoutHandoff, CamExactRestMaterialIslandHandoff,
-    CamOrthogonalIslandPocketCutter, CamRestMaterialCutter, CamSupportClipBoundary,
-    CamSupportClipCutout, CardinalPoint, CardinalRotation, CircularArc, CircularArcError,
-    ClearanceStatus, ConstructionStamp, CubicBezier, DrillBoardClearanceReport,
+    CamExactRestMaterialStockHandoff, CamOrthogonalIslandPocketCutter, CamRestMaterialCutter,
+    CamSupportClipBoundary, CamSupportClipCutout, CardinalPoint, CardinalRotation, CircularArc,
+    CircularArcError, ClearanceStatus, ConstructionStamp, CubicBezier, DrillBoardClearanceReport,
     ExplicitArcArrangementClass, ExplicitArcIntersectionClass, ExplicitArcOverlapClass,
     ExplicitArcPointClassification, ExplicitArcSweepClass, ExplicitArcTangentClass,
     ExplicitCircleRelationClass, ExplicitCircularArc, HigherOrderBezier, HigherOrderBezierError,
@@ -29,16 +29,17 @@ use hyperpath::{
     ViaLayerTransitionClass, boolean_path_mesh_program, boolean_path_mesh_sources,
     boolean_rectangular_prism_chain, boolean_rectangular_prisms,
     boolean_rectangular_prisms_with_boundary_policy, build_alternating_detour_meander,
-    build_cam_infill_clip_program, build_cam_rest_material_program, build_cam_support_clip_program,
-    build_g1_join_problem, build_length_match_problem, build_multi_detour_meander,
-    build_nonuniform_detour_meander, build_obstacle_aware_detour_meander,
-    build_oriented_tangent_alignment_problem, build_pcb_composite_copper_union_program,
-    build_pcb_copper_board_clip_program, build_pcb_copper_union_program,
-    build_pcb_holed_orthogonal_copper_program, build_rectangular_bead_plan,
-    build_rectangular_pocket_plan, build_rectangular_serpentine_infill_graph,
-    build_rectangular_support_plan, build_single_detour_meander, build_tangent_alignment_problem,
-    certify_constant_feed_time, certify_differential_pair_skew, certify_g1_chain,
-    certify_g1_join_candidate, certify_length_extension, certify_tangent_alignment_candidate,
+    build_cam_exact_stock_rest_material_program, build_cam_infill_clip_program,
+    build_cam_rest_material_program, build_cam_support_clip_program, build_g1_join_problem,
+    build_length_match_problem, build_multi_detour_meander, build_nonuniform_detour_meander,
+    build_obstacle_aware_detour_meander, build_oriented_tangent_alignment_problem,
+    build_pcb_composite_copper_union_program, build_pcb_copper_board_clip_program,
+    build_pcb_copper_union_program, build_pcb_holed_orthogonal_copper_program,
+    build_rectangular_bead_plan, build_rectangular_pocket_plan,
+    build_rectangular_serpentine_infill_graph, build_rectangular_support_plan,
+    build_single_detour_meander, build_tangent_alignment_problem, certify_constant_feed_time,
+    certify_differential_pair_skew, certify_g1_chain, certify_g1_join_candidate,
+    certify_length_extension, certify_tangent_alignment_candidate,
     check_cardinal_rect_pad_board_clearance, check_circular_pad_board_clearance,
     check_rect_pad_board_clearance, check_trace_board_clearance,
     check_trace_cardinal_rect_pad_clearance, check_trace_clearance,
@@ -1545,6 +1546,96 @@ fn cam_rest_material_program_subtracts_exact_handoff_cutters_with_z_replay() {
         ),
         Err(PathMeshBooleanError::MeshHandoff(_))
     ));
+}
+
+#[test]
+fn cam_exact_stock_rest_material_program_replays_handoff_stock_and_cutters() {
+    let stock_handoff = PathExactMeshHandoffSource::from_exact_mesh(
+        prism([0, 0, 0], [20, 12, 4]).to_exact_mesh().unwrap(),
+    )
+    .unwrap();
+    let stock = CamExactRestMaterialStockHandoff::new(stock_handoff.clone())
+        .expect("exact stock handoff should retain package evidence");
+    assert!(stock.exact_facts().all_exact_rational);
+    let cutter = CamRestMaterialCutter::RectangularPocket(
+        RectangularPocket::new(p(4, 3), p(12, 9)).unwrap(),
+    );
+
+    let report = build_cam_exact_stock_rest_material_program(
+        stock.clone(),
+        r(0),
+        r(4),
+        vec![cutter],
+        PredicatePolicy::default(),
+    )
+    .expect("exact stock minus retained cutter should replay");
+    report.validate_replay(PredicatePolicy::default()).unwrap();
+    assert_eq!(report.stock, stock);
+    assert_eq!(report.program.steps.len(), 1);
+    assert_eq!(
+        report.program.steps[0].operation,
+        PathMeshBooleanOperation::Difference
+    );
+    assert!(report.mesh().unwrap().facts().mesh.closed_manifold);
+    assert!(report.exact.all_exact_rational);
+
+    let island = CamOrthogonalIslandPocketCutter::new(
+        vec![p(2, 2), p(18, 2), p(18, 10), p(2, 10)],
+        vec![vec![p(7, 4), p(10, 4), p(10, 7), p(7, 7)]],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    let island_report = build_cam_exact_stock_rest_material_program(
+        CamExactRestMaterialStockHandoff::new(stock_handoff.clone()).unwrap(),
+        r(0),
+        r(4),
+        vec![CamRestMaterialCutter::OrthogonalIslandPocket(island)],
+        PredicatePolicy::default(),
+    )
+    .expect("exact stock should replay mixed difference/union island cutter");
+    island_report
+        .validate_replay(PredicatePolicy::default())
+        .unwrap();
+    assert_eq!(island_report.program.steps.len(), 2);
+    assert_eq!(
+        island_report.program.steps[0].operation,
+        PathMeshBooleanOperation::Difference
+    );
+    assert_eq!(
+        island_report.program.steps[1].operation,
+        PathMeshBooleanOperation::Union
+    );
+
+    let wrong_z_stock = CamExactRestMaterialStockHandoff::new(stock_handoff).unwrap();
+    assert!(matches!(
+        build_cam_exact_stock_rest_material_program(
+            wrong_z_stock,
+            r(0),
+            r(5),
+            vec![CamRestMaterialCutter::RectangularPocket(
+                RectangularPocket::new(p(4, 3), p(12, 9)).unwrap()
+            )],
+            PredicatePolicy::default(),
+        ),
+        Err(PathMeshBooleanError::MeshHandoff(_))
+    ));
+    assert_eq!(
+        build_cam_exact_stock_rest_material_program(
+            CamExactRestMaterialStockHandoff::new(
+                PathExactMeshHandoffSource::from_exact_mesh(
+                    prism([0, 0, 0], [20, 12, 4]).to_exact_mesh().unwrap()
+                )
+                .unwrap()
+            )
+            .unwrap(),
+            r(0),
+            r(4),
+            Vec::new(),
+            PredicatePolicy::default(),
+        )
+        .unwrap_err(),
+        PathMeshBooleanError::NotEnoughSources
+    );
 }
 
 #[test]

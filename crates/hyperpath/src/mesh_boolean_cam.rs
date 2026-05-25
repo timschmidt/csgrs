@@ -67,6 +67,22 @@ pub struct CamExactRestMaterialIslandHandoff {
     exact: RealExactSetFacts,
 }
 
+/// Retained CAM rest-material stock whose exact topology is owned by a `hypermesh` handoff.
+///
+/// Rectangular stock remains the common 2.5D fixture path, but rough castings,
+/// imported setup stock, and curved stock envelopes need a topology-safe intake
+/// that does not move mesh ownership into `hyperpath`. This handoff is the
+/// stock-side companion to [`CamExactRestMaterialCutterHandoff`]. It follows
+/// Yap, "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+/// (1997): the exact stock object is retained with package evidence, and the
+/// accepted boolean topology is trusted only while replay can validate the
+/// handoff and requested Z slab.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CamExactRestMaterialStockHandoff {
+    handoff: PathExactMeshHandoffSource,
+    exact: RealExactSetFacts,
+}
+
 /// Retained subtractive CAM cutter source.
 ///
 /// Rectangular pocket cutters represent exact box removals. Axis-aligned sweep
@@ -124,6 +140,28 @@ pub struct CamRestMaterialProgramReport {
     ///
     /// Simple cutters subtract one source each. Island pockets expand to one
     /// outer subtraction followed by island union steps during replay.
+    pub cutters: Vec<CamRestMaterialCutter>,
+    /// Exact-set facts for retained stock, cutter, and Z scalar inputs.
+    pub exact: RealExactSetFacts,
+    /// Accepted exact mesh-boolean program.
+    pub program: PathMeshBooleanProgramReport,
+}
+
+/// Exact rest-material boolean program for opaque exact stock.
+///
+/// This is the retained-source equivalent of [`CamRestMaterialProgramReport`]
+/// when stock topology comes from a `hypermesh` handoff instead of a rectangular
+/// pocket. Cutter replay remains identical: simple cutters subtract one source,
+/// and island pockets expand to `difference outer` followed by `union islands`.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CamExactStockRestMaterialProgramReport {
+    /// Retained exact stock handoff.
+    pub stock: CamExactRestMaterialStockHandoff,
+    /// Exact lower stock/cutter Z face.
+    pub z_min: Real,
+    /// Exact upper stock/cutter Z face.
+    pub z_max: Real,
+    /// Retained cutter sources in program order.
     pub cutters: Vec<CamRestMaterialCutter>,
     /// Exact-set facts for retained stock, cutter, and Z scalar inputs.
     pub exact: RealExactSetFacts,
@@ -375,6 +413,39 @@ impl CamExactRestMaterialIslandHandoff {
     }
 
     /// Lower this exact island into a generic path mesh-boolean source.
+    pub fn to_path_source(
+        &self,
+        z_min: &Real,
+        z_max: &Real,
+        policy: PredicatePolicy,
+    ) -> Result<PathMeshBooleanSource, PathMeshBooleanError> {
+        validate_handoff_z_slab(&self.handoff, z_min, z_max, policy)?;
+        Ok(self.handoff.clone().into())
+    }
+}
+
+impl CamExactRestMaterialStockHandoff {
+    /// Construct retained exact stock from a `hypermesh` handoff.
+    ///
+    /// The handoff is package-validated immediately and its exact mesh
+    /// coordinates are retained as source facts. Program replay still validates
+    /// the requested Z slab before this stock can seed a rest-material boolean.
+    pub fn new(handoff: PathExactMeshHandoffSource) -> Result<Self, PathMeshBooleanError> {
+        let exact = handoff_mesh_exact_facts(&handoff)?;
+        Ok(Self { handoff, exact })
+    }
+
+    /// Return the retained exact mesh handoff.
+    pub const fn handoff(&self) -> &PathExactMeshHandoffSource {
+        &self.handoff
+    }
+
+    /// Return exact-set facts for retained stock mesh coordinates.
+    pub const fn exact_facts(&self) -> &RealExactSetFacts {
+        &self.exact
+    }
+
+    /// Lower this exact stock into a generic path mesh-boolean source.
     pub fn to_path_source(
         &self,
         z_min: &Real,
@@ -949,6 +1020,30 @@ impl CamRestMaterialProgramReport {
     }
 }
 
+impl CamExactStockRestMaterialProgramReport {
+    /// Rebuild exact-stock lowering, cutter lowering, and boolean evidence.
+    pub fn validate_replay(&self, policy: PredicatePolicy) -> Result<(), PathMeshBooleanError> {
+        let replayed = build_cam_exact_stock_rest_material_program(
+            self.stock.clone(),
+            self.z_min.clone(),
+            self.z_max.clone(),
+            self.cutters.clone(),
+            policy,
+        )?;
+        if replayed.program != self.program || replayed.exact != self.exact {
+            return Err(PathMeshBooleanError::Replay(
+                "retained CAM exact-stock rest-material program no longer matches replay".into(),
+            ));
+        }
+        self.program.validate_replay()
+    }
+
+    /// Return the final accepted exact rest-material mesh.
+    pub fn mesh(&self) -> Option<&hypermesh::exact::ExactMesh> {
+        self.program.mesh()
+    }
+}
+
 impl CamSupportClipProgramReport {
     /// Rebuild support-footprint lowering, clip-boundary lowering, and exact evidence.
     pub fn validate_replay(&self, policy: PredicatePolicy) -> Result<(), PathMeshBooleanError> {
@@ -1018,34 +1113,45 @@ pub fn build_cam_rest_material_program(
         return Err(PathMeshBooleanError::DegenerateHeight);
     }
     let stock_prism = RectangularPrism::new(stock.clone(), z_min.clone(), z_max.clone(), policy)?;
-    let mut steps = Vec::new();
-    for cutter in &cutters {
-        match cutter {
-            CamRestMaterialCutter::OrthogonalIslandPocket(source) => {
-                let outer = source.outer_path_source(z_min.clone(), z_max.clone(), policy)?;
-                steps.push(PathMeshBooleanProgramStep::new(
-                    PathMeshBooleanOperation::Difference,
-                    outer,
-                ));
-                for island in source.island_path_sources(z_min.clone(), z_max.clone(), policy)? {
-                    steps.push(PathMeshBooleanProgramStep::new(
-                        PathMeshBooleanOperation::Union,
-                        island,
-                    ));
-                }
-            }
-            _ => {
-                let right = cutter.to_path_source(z_min.clone(), z_max.clone(), policy)?;
-                steps.push(PathMeshBooleanProgramStep::new(
-                    PathMeshBooleanOperation::Difference,
-                    right,
-                ));
-            }
-        }
-    }
+    let steps = cam_rest_material_program_steps(&cutters, z_min.clone(), z_max.clone(), policy)?;
     let program = boolean_path_mesh_program(stock_prism.into(), steps)?;
     let exact = rest_material_exact_facts(&stock, &z_min, &z_max, &cutters)?;
     Ok(CamRestMaterialProgramReport {
+        stock,
+        z_min,
+        z_max,
+        cutters,
+        exact,
+        program,
+    })
+}
+
+/// Build an exact rest-material difference program from opaque exact stock.
+///
+/// This is the handoff-stock companion to [`build_cam_rest_material_program`].
+/// It admits curved or imported setup stock as an exact closed-solid operand
+/// while keeping all cutter semantics in retained `hyperpath` sources. The
+/// initial stock handoff is validated against the requested Z slab before any
+/// boolean step is attempted; cutter handoffs and island handoffs are validated
+/// by the same replay path as rectangular stock programs.
+pub fn build_cam_exact_stock_rest_material_program(
+    stock: CamExactRestMaterialStockHandoff,
+    z_min: Real,
+    z_max: Real,
+    cutters: Vec<CamRestMaterialCutter>,
+    policy: PredicatePolicy,
+) -> Result<CamExactStockRestMaterialProgramReport, PathMeshBooleanError> {
+    if cutters.is_empty() {
+        return Err(PathMeshBooleanError::NotEnoughSources);
+    }
+    if compare_reals_with_policy(&z_min, &z_max, policy).value() != Some(Ordering::Less) {
+        return Err(PathMeshBooleanError::DegenerateHeight);
+    }
+    let initial = stock.to_path_source(&z_min, &z_max, policy)?;
+    let steps = cam_rest_material_program_steps(&cutters, z_min.clone(), z_max.clone(), policy)?;
+    let program = boolean_path_mesh_program(initial, steps)?;
+    let exact = exact_stock_rest_material_exact_facts(&stock, &z_min, &z_max, &cutters)?;
+    Ok(CamExactStockRestMaterialProgramReport {
         stock,
         z_min,
         z_max,
@@ -1150,7 +1256,7 @@ fn rest_material_exact_facts(
     z_max: &Real,
     cutters: &[CamRestMaterialCutter],
 ) -> Result<RealExactSetFacts, PathMeshBooleanError> {
-    let mut values = vec![
+    let mut refs = vec![
         &stock.min().x,
         &stock.min().y,
         &stock.max().x,
@@ -1158,11 +1264,43 @@ fn rest_material_exact_facts(
         z_min,
         z_max,
     ];
+    let handoff_values = rest_material_cutter_exact_values(&mut refs, cutters)?;
+    refs.extend(handoff_values.iter());
+    Ok(Real::exact_set_facts(refs))
+}
+
+fn exact_stock_rest_material_exact_facts(
+    stock: &CamExactRestMaterialStockHandoff,
+    z_min: &Real,
+    z_max: &Real,
+    cutters: &[CamRestMaterialCutter],
+) -> Result<RealExactSetFacts, PathMeshBooleanError> {
+    let mut stock_values = Vec::new();
+    let stock_mesh = stock.handoff().to_exact_mesh()?;
+    for point in stock_mesh.vertices() {
+        let coordinates = &point.coordinates().0;
+        stock_values.extend([
+            coordinates[0].clone(),
+            coordinates[1].clone(),
+            coordinates[2].clone(),
+        ]);
+    }
+    let mut refs = vec![z_min, z_max];
+    refs.extend(stock_values.iter());
+    let handoff_values = rest_material_cutter_exact_values(&mut refs, cutters)?;
+    refs.extend(handoff_values.iter());
+    Ok(Real::exact_set_facts(refs))
+}
+
+fn rest_material_cutter_exact_values<'a>(
+    refs: &mut Vec<&'a Real>,
+    cutters: &'a [CamRestMaterialCutter],
+) -> Result<Vec<Real>, PathMeshBooleanError> {
     let mut handoff_values = Vec::new();
     for cutter in cutters {
         match cutter {
             CamRestMaterialCutter::RectangularPocket(pocket) => {
-                values.extend([
+                refs.extend([
                     &pocket.min().x,
                     &pocket.min().y,
                     &pocket.max().x,
@@ -1170,7 +1308,7 @@ fn rest_material_exact_facts(
                 ]);
             }
             CamRestMaterialCutter::AxisAlignedSweep(swept) => {
-                values.extend([
+                refs.extend([
                     &swept.centerline().start().x,
                     &swept.centerline().start().y,
                     &swept.centerline().end().x,
@@ -1179,9 +1317,9 @@ fn rest_material_exact_facts(
                 ]);
             }
             CamRestMaterialCutter::OrthogonalIslandPocket(source) => {
-                values.extend(source.outer.iter().flat_map(|point| [&point.x, &point.y]));
+                refs.extend(source.outer.iter().flat_map(|point| [&point.x, &point.y]));
                 for island in &source.islands {
-                    values.extend(island.iter().flat_map(|point| [&point.x, &point.y]));
+                    refs.extend(island.iter().flat_map(|point| [&point.x, &point.y]));
                 }
                 for exact_island in &source.exact_islands {
                     let mesh = exact_island.handoff().to_exact_mesh()?;
@@ -1208,8 +1346,41 @@ fn rest_material_exact_facts(
             }
         }
     }
-    values.extend(handoff_values.iter());
-    Ok(Real::exact_set_facts(values))
+    Ok(handoff_values)
+}
+
+fn cam_rest_material_program_steps(
+    cutters: &[CamRestMaterialCutter],
+    z_min: Real,
+    z_max: Real,
+    policy: PredicatePolicy,
+) -> Result<Vec<PathMeshBooleanProgramStep>, PathMeshBooleanError> {
+    let mut steps = Vec::new();
+    for cutter in cutters {
+        match cutter {
+            CamRestMaterialCutter::OrthogonalIslandPocket(source) => {
+                let outer = source.outer_path_source(z_min.clone(), z_max.clone(), policy)?;
+                steps.push(PathMeshBooleanProgramStep::new(
+                    PathMeshBooleanOperation::Difference,
+                    outer,
+                ));
+                for island in source.island_path_sources(z_min.clone(), z_max.clone(), policy)? {
+                    steps.push(PathMeshBooleanProgramStep::new(
+                        PathMeshBooleanOperation::Union,
+                        island,
+                    ));
+                }
+            }
+            _ => {
+                let right = cutter.to_path_source(z_min.clone(), z_max.clone(), policy)?;
+                steps.push(PathMeshBooleanProgramStep::new(
+                    PathMeshBooleanOperation::Difference,
+                    right,
+                ));
+            }
+        }
+    }
+    Ok(steps)
 }
 
 fn validate_orthogonal_loop_shape(

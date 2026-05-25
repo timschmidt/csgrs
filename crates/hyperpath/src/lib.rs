@@ -59,9 +59,11 @@ pub use mesh_boolean::{
 };
 pub use mesh_boolean_cam::{
     CamExactClipBoundaryHandoff, CamExactClipCutoutHandoff, CamExactRestMaterialCutterHandoff,
-    CamExactRestMaterialIslandHandoff, CamInfillClipProgramReport, CamOrthogonalIslandPocketCutter,
-    CamRestMaterialCutter, CamRestMaterialProgramReport, CamSupportClipBoundary,
-    CamSupportClipCutout, CamSupportClipProgramReport, build_cam_infill_clip_program,
+    CamExactRestMaterialIslandHandoff, CamExactRestMaterialStockHandoff,
+    CamExactStockRestMaterialProgramReport, CamInfillClipProgramReport,
+    CamOrthogonalIslandPocketCutter, CamRestMaterialCutter, CamRestMaterialProgramReport,
+    CamSupportClipBoundary, CamSupportClipCutout, CamSupportClipProgramReport,
+    build_cam_exact_stock_rest_material_program, build_cam_infill_clip_program,
     build_cam_rest_material_program, build_cam_support_clip_program,
     cam_rectangular_pocket_cutter_from_i64_bounds,
 };

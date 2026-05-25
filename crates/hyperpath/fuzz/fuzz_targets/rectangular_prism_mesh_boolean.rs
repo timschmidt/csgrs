@@ -3,9 +3,10 @@
 use hyperlimit::{Point2, PredicatePolicy};
 use hyperpath::{
     AxisAlignedSweptSegmentPrism, BeadFillAxis, CamExactClipCutoutHandoff,
-    CamExactRestMaterialIslandHandoff, CamOrthogonalIslandPocketCutter, CamRestMaterialCutter,
-    CamSupportClipBoundary, CardinalRotation, LinePathSegment, NetId, PathExactMeshHandoffSource,
-    PathMeshBooleanOperation, PathMeshBooleanProgramStep, PathProvenance, PcbCardinalRectPad,
+    CamExactRestMaterialIslandHandoff, CamExactRestMaterialStockHandoff,
+    CamOrthogonalIslandPocketCutter, CamRestMaterialCutter, CamSupportClipBoundary,
+    CardinalRotation, LinePathSegment, NetId, PathExactMeshHandoffSource, PathMeshBooleanOperation,
+    PathMeshBooleanProgramStep, PathProvenance, PcbCardinalRectPad,
     PcbCompositeCopperBooleanSource, PcbConvexPolyPad, PcbCopperBoardClipOutline,
     PcbCopperBooleanSource, PcbExactBoardCutoutHandoff, PcbExactBoardHandoffOutline,
     PcbExactCopperHandoffSource, PcbExactCopperVoidHandoff, PcbHoledOrthogonalBoardClipOutline,
@@ -13,7 +14,8 @@ use hyperpath::{
     PcbOrthogonalPolyPad, PcbRectPad, PcbTrace, SweptLineSegment, TraceLayer,
     boolean_path_mesh_program, boolean_path_mesh_sources, boolean_rectangular_prism_chain,
     boolean_rectangular_prisms, boolean_rectangular_prisms_with_boundary_policy,
-    build_cam_infill_clip_program, build_cam_rest_material_program, build_cam_support_clip_program,
+    build_cam_exact_stock_rest_material_program, build_cam_infill_clip_program,
+    build_cam_rest_material_program, build_cam_support_clip_program,
     build_pcb_composite_copper_union_program, build_pcb_copper_board_clip_program,
     build_pcb_copper_union_program, build_pcb_holed_orthogonal_copper_program,
     build_rectangular_bead_plan, build_rectangular_serpentine_infill_graph,
@@ -1177,6 +1179,41 @@ fuzz_target!(|data: &[u8]| {
                             z_min.clone(),
                             z_max.clone(),
                             vec![cutter],
+                            PredicatePolicy::default(),
+                        )
+                    {
+                        report.validate_replay(PredicatePolicy::default()).unwrap();
+                        report
+                            .program
+                            .steps
+                            .last()
+                            .unwrap()
+                            .result
+                            .validate()
+                            .unwrap();
+                    }
+                }
+                if data[15] & 4 == 4 {
+                    let z_min = Real::from(left_min[2]);
+                    let z_max = Real::from(left_max[2]);
+                    if let Ok(stock_prism) = hyperpath::RectangularPrism::new(
+                        stock.clone(),
+                        z_min.clone(),
+                        z_max.clone(),
+                        PredicatePolicy::default(),
+                    ) && let Ok(stock_handoff) = PathExactMeshHandoffSource::from_exact_mesh(
+                        stock_prism.to_exact_mesh().unwrap(),
+                    ) && let Ok(exact_stock) =
+                        CamExactRestMaterialStockHandoff::new(stock_handoff)
+                        && let Ok(cutter_pocket) = hyperpath::RectangularPocket::new(
+                            Point2::new(Real::from(right_min[0]), Real::from(right_min[1])),
+                            Point2::new(Real::from(right_max[0]), Real::from(right_max[1])),
+                        )
+                        && let Ok(report) = build_cam_exact_stock_rest_material_program(
+                            exact_stock,
+                            z_min.clone(),
+                            z_max.clone(),
+                            vec![CamRestMaterialCutter::RectangularPocket(cutter_pocket)],
                             PredicatePolicy::default(),
                         )
                     {

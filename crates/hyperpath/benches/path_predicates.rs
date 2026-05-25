@@ -2,31 +2,32 @@ use criterion::{Criterion, criterion_group, criterion_main};
 use hyperlimit::{Point2, PredicatePolicy};
 use hyperpath::{
     ArcDirection, AxisAlignedSweptSegmentPrism, BeadFillAxis, BezierParameter,
-    CamExactClipCutoutHandoff, CamExactRestMaterialIslandHandoff, CamOrthogonalIslandPocketCutter,
-    CamRestMaterialCutter, CamSupportClipBoundary, CardinalPoint, CardinalRotation, CircularArc,
-    ConstructionStamp, CubicBezier, ExplicitCircularArc, HigherOrderBezier, LinePathSegment,
-    MeanderObstacle, MeanderPlacementCandidate, NetId, OffsetSide, PathExactMeshHandoffSource,
-    PathMeshBooleanOperation, PathMeshBooleanProgramStep, PathProvenance, PathSourceFormat,
-    PcbBoardOutline, PcbCardinalRectPad, PcbCircularPad, PcbCompositeCopperBooleanSource,
-    PcbConvexBoardOutline, PcbConvexPolyPad, PcbCopperBoardClipOutline, PcbCopperBooleanSource,
-    PcbExactBoardCutoutHandoff, PcbExactBoardHandoffOutline, PcbExactCopperHandoffSource,
-    PcbExactCopperVoidHandoff, PcbHoledOrthogonalBoardClipOutline, PcbHoledOrthogonalCopperSource,
-    PcbLayerZModel, PcbOrthogonalBoardOutline, PcbOrthogonalPolyPad, PcbRectPad, PcbTrace,
-    PcbViaStack, QuadraticBezier, RationalQuadraticBezier, RectangularPocket, SourceLengthUnit,
+    CamExactClipCutoutHandoff, CamExactRestMaterialIslandHandoff, CamExactRestMaterialStockHandoff,
+    CamOrthogonalIslandPocketCutter, CamRestMaterialCutter, CamSupportClipBoundary, CardinalPoint,
+    CardinalRotation, CircularArc, ConstructionStamp, CubicBezier, ExplicitCircularArc,
+    HigherOrderBezier, LinePathSegment, MeanderObstacle, MeanderPlacementCandidate, NetId,
+    OffsetSide, PathExactMeshHandoffSource, PathMeshBooleanOperation, PathMeshBooleanProgramStep,
+    PathProvenance, PathSourceFormat, PcbBoardOutline, PcbCardinalRectPad, PcbCircularPad,
+    PcbCompositeCopperBooleanSource, PcbConvexBoardOutline, PcbConvexPolyPad,
+    PcbCopperBoardClipOutline, PcbCopperBooleanSource, PcbExactBoardCutoutHandoff,
+    PcbExactBoardHandoffOutline, PcbExactCopperHandoffSource, PcbExactCopperVoidHandoff,
+    PcbHoledOrthogonalBoardClipOutline, PcbHoledOrthogonalCopperSource, PcbLayerZModel,
+    PcbOrthogonalBoardOutline, PcbOrthogonalPolyPad, PcbRectPad, PcbTrace, PcbViaStack,
+    QuadraticBezier, RationalQuadraticBezier, RectangularPocket, SourceLengthUnit,
     SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraLayerAlias, SpecctraNetAlias,
     SweptLineSegment, TangentSpan, TraceLayer, ViaDrillIntent, boolean_path_mesh_program,
     boolean_path_mesh_sources, boolean_rectangular_prism_chain, boolean_rectangular_prisms,
-    build_alternating_detour_meander, build_cam_infill_clip_program,
-    build_cam_rest_material_program, build_cam_support_clip_program, build_g1_join_problem,
-    build_length_match_problem, build_multi_detour_meander, build_nonuniform_detour_meander,
-    build_obstacle_aware_detour_meander, build_oriented_tangent_alignment_problem,
-    build_pcb_composite_copper_union_program, build_pcb_copper_board_clip_program,
-    build_pcb_copper_union_program, build_pcb_holed_orthogonal_copper_program,
-    build_rectangular_bead_plan, build_rectangular_pocket_plan,
-    build_rectangular_serpentine_infill_graph, build_rectangular_support_plan,
-    build_single_detour_meander, build_tangent_alignment_problem, certify_constant_feed_time,
-    certify_differential_pair_skew, certify_g1_chain, certify_g1_join_candidate,
-    certify_length_extension, certify_tangent_alignment_candidate,
+    build_alternating_detour_meander, build_cam_exact_stock_rest_material_program,
+    build_cam_infill_clip_program, build_cam_rest_material_program, build_cam_support_clip_program,
+    build_g1_join_problem, build_length_match_problem, build_multi_detour_meander,
+    build_nonuniform_detour_meander, build_obstacle_aware_detour_meander,
+    build_oriented_tangent_alignment_problem, build_pcb_composite_copper_union_program,
+    build_pcb_copper_board_clip_program, build_pcb_copper_union_program,
+    build_pcb_holed_orthogonal_copper_program, build_rectangular_bead_plan,
+    build_rectangular_pocket_plan, build_rectangular_serpentine_infill_graph,
+    build_rectangular_support_plan, build_single_detour_meander, build_tangent_alignment_problem,
+    certify_constant_feed_time, certify_differential_pair_skew, certify_g1_chain,
+    certify_g1_join_candidate, certify_length_extension, certify_tangent_alignment_candidate,
     check_cardinal_rect_pad_board_clearance, check_circular_pad_board_clearance,
     check_rect_pad_board_clearance, check_trace_board_clearance,
     check_trace_cardinal_rect_pad_clearance, check_trace_clearance,
@@ -1473,6 +1474,33 @@ fn path_predicates(c: &mut Criterion) {
                 r(0),
                 r(2_000),
                 vec![cam_rest_handoff_cutter.clone()],
+                PredicatePolicy::default(),
+            )
+            .unwrap();
+            report.validate_replay(PredicatePolicy::default())
+        })
+    });
+    let cam_exact_stock = CamExactRestMaterialStockHandoff::new(
+        PathExactMeshHandoffSource::from_exact_mesh(
+            rectangular_prism_from_i64_bounds(
+                [0, 0, 0],
+                [20_000, 12_000, 2_000],
+                PredicatePolicy::default(),
+            )
+            .unwrap()
+            .to_exact_mesh()
+            .unwrap(),
+        )
+        .unwrap(),
+    )
+    .unwrap();
+    c.bench_function("cam_exact_stock_rest_material_program_replay", |b| {
+        b.iter(|| {
+            let report = build_cam_exact_stock_rest_material_program(
+                cam_exact_stock.clone(),
+                r(0),
+                r(2_000),
+                vec![CamRestMaterialCutter::RectangularPocket(cam_pocket.clone())],
                 PredicatePolicy::default(),
             )
             .unwrap();
