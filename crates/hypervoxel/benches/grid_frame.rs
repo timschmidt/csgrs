@@ -20,10 +20,11 @@ use hypervoxel::{
     VoxelFieldCouplingManifest, VoxelHandoffDomain, VoxelHandoffManifest, VoxelIndexConvention,
     VoxelIoCompression, VoxelIoMetadata, VoxelMemoryBudgetManifest, VoxelSideTables,
     VoxelSliceNaming, VoxelSliceOrdering, VoxelSpatialAggregateFacts, VoxelTraceDimension,
-    VoxelTraceManifest, VoxelizationAudit, VoxelizationPolicy, audit_chunk_paged_material_regions,
-    chunk_paged_greedy_face_patch_plan_with_report, classify_chunk_paged_support_mask,
-    classify_support_mask, continuous_field_address, diff_chunk_paged_sparse_grids,
-    diff_sparse_grids, extract_chunk_paged_exposed_faces_with_report, extract_exposed_faces,
+    VoxelTraceManifest, VoxelizationAudit, VoxelizationPolicy, audit_chunk_paged_field_samples,
+    audit_chunk_paged_material_regions, chunk_paged_greedy_face_patch_plan_with_report,
+    classify_chunk_paged_support_mask, classify_support_mask, continuous_field_address,
+    diff_chunk_paged_sparse_grids, diff_sparse_grids,
+    extract_chunk_paged_exposed_faces_with_report, extract_exposed_faces,
     extract_exposed_faces_with_report, greedy_face_patch_plan, lookup_material_display_colors,
     lossy_obj_from_quad_mesh, lossy_quad_mesh_from_faces, query_field_samples,
     query_material_regions, report_material_region_metadata, sample_manhattan_distance_field,
@@ -730,6 +731,19 @@ fn bench_batches_field_facts_and_sweeps(c: &mut Criterion) {
     });
     c.bench_function("field_sample_side_table_query", |b| {
         b.iter(|| query_field_samples(&grid, &side_tables))
+    });
+    c.bench_function("chunk_paged_field_sample_audit", |b| {
+        let paged =
+            ChunkPagedSparseGrid::from_sparse_grid(&grid, ChunkShape::new(3).unwrap()).unwrap();
+        b.iter(|| {
+            let report = audit_chunk_paged_field_samples(&paged, &side_tables).unwrap();
+            (
+                report.tested_pages,
+                report.field_payload_cells,
+                report.aggregate.sample_cell_count,
+                report.exact_paged_field_audit_ready,
+            )
+        })
     });
     c.bench_function("material_region_side_table_query", |b| {
         b.iter(|| query_material_regions(&grid, &side_tables))

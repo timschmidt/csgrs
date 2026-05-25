@@ -7,9 +7,9 @@ use hypervoxel::{
     OccupancyState, PreparedVoxelGrid, ProcessGridArtifact, ProcessGridRole, SignedAxis,
     SparseVoxelGrid, SupportCellStatus, SupportDirection, SweptVolumeProvenance, VoxelAddress,
     VoxelCandidateKind, VoxelCandidateManifest, VoxelCell, VoxelEditBatch, VoxelFieldCouplingKind,
-    VoxelFieldCouplingManifest, VoxelSideTables, classify_chunk_paged_support_mask,
-    classify_support_mask, query_field_samples, sweep_address_segment, trace_address_ray,
-    trace_address_segment,
+    VoxelFieldCouplingManifest, VoxelSideTables, audit_chunk_paged_field_samples,
+    classify_chunk_paged_support_mask, classify_support_mask, query_field_samples,
+    sweep_address_segment, trace_address_ray, trace_address_segment,
 };
 
 fn r(n: i32) -> Real {
@@ -63,12 +63,29 @@ fn field_aggregate_unions_certified_side_table_bounds() {
     assert!(facts.has_field_samples);
     assert_eq!(facts.certainty, AggregateCertainty::Certified);
     assert!(facts.certified_field_bounds_ready);
-    let interval = facts.interval.unwrap();
+    let interval = facts.interval.as_ref().unwrap();
     assert_eq!(interval.lower, rf(1, 4));
     let ball = interval.enclosing_ball();
     assert_eq!(ball.center, rf(3, 4));
     assert_eq!(ball.radius, rf(1, 2));
     assert_eq!(facts.missing_records, 0);
+    let query = query_field_samples(&grid, &side_tables);
+    assert!(query.is_fully_resolved());
+    let paged = ChunkPagedSparseGrid::from_sparse_grid(&grid, ChunkShape::new(1).unwrap()).unwrap();
+    let paged_field = audit_chunk_paged_field_samples(&paged, &side_tables).unwrap();
+    assert_eq!(paged_field.query, query);
+    assert_eq!(paged_field.aggregate, facts);
+    assert_eq!(paged_field.tested_pages, 2);
+    assert_eq!(paged_field.tested_cells, 2);
+    assert_eq!(paged_field.field_payload_cells, 2);
+    assert_eq!(paged_field.non_field_payload_cells, 0);
+    assert_eq!(paged_field.unknown_cells, 0);
+    assert_eq!(paged_field.lossy_cells, 0);
+    assert_eq!(
+        paged_field.referenced_samples,
+        [FieldSampleId(1), FieldSampleId(2)].into()
+    );
+    assert!(paged_field.exact_paged_field_audit_ready);
 }
 
 #[test]
@@ -171,6 +188,47 @@ fn field_aggregate_reports_missing_records_and_bounds_as_unknown() {
     assert!(query.missing_bounds.contains(&FieldSampleId(1)));
     assert!(query.missing_records.contains(&FieldSampleId(2)));
     assert!(!query.is_fully_resolved());
+    let paged = ChunkPagedSparseGrid::from_sparse_grid(&grid, ChunkShape::new(1).unwrap()).unwrap();
+    let paged_field = audit_chunk_paged_field_samples(&paged, &side_tables).unwrap();
+    assert_eq!(paged_field.query, query);
+    assert_eq!(paged_field.aggregate, facts);
+    assert_eq!(paged_field.field_payload_cells, 2);
+    assert_eq!(paged_field.non_field_payload_cells, 0);
+    assert!(!paged_field.exact_paged_field_audit_ready);
+
+    let mut blocked_grid = grid.clone();
+    blocked_grid
+        .set(
+            VoxelAddress::new(3, [3, 1, 1]).unwrap(),
+            VoxelCell::unknown(),
+        )
+        .unwrap();
+    blocked_grid
+        .set(
+            VoxelAddress::new(3, [4, 1, 1]).unwrap(),
+            VoxelCell::lossy_adapter_value(9),
+        )
+        .unwrap();
+    let blocked_paged =
+        ChunkPagedSparseGrid::from_sparse_grid(&blocked_grid, ChunkShape::new(1).unwrap()).unwrap();
+    let blocked_field = audit_chunk_paged_field_samples(&blocked_paged, &side_tables).unwrap();
+    assert_eq!(blocked_field.query, query);
+    assert_eq!(blocked_field.field_payload_cells, 2);
+    assert_eq!(blocked_field.non_field_payload_cells, 2);
+    assert_eq!(blocked_field.unknown_cells, 1);
+    assert_eq!(blocked_field.lossy_cells, 1);
+    assert!(!blocked_field.exact_paged_field_audit_ready);
+
+    let empty_paged = ChunkPagedSparseGrid::from_sparse_grid(
+        &SparseVoxelGrid::new(frame()),
+        ChunkShape::new(1).unwrap(),
+    )
+    .unwrap();
+    let empty_paged_field = audit_chunk_paged_field_samples(&empty_paged, &side_tables).unwrap();
+    assert_eq!(empty_paged_field.tested_pages, 0);
+    assert_eq!(empty_paged_field.tested_cells, 0);
+    assert!(empty_paged_field.query.is_fully_resolved());
+    assert!(!empty_paged_field.exact_paged_field_audit_ready);
 }
 
 #[test]
@@ -194,6 +252,13 @@ fn inverted_field_interval_is_rejected_before_it_can_certify_grid_state() {
 
     assert!(matches!(
         FieldAggregateFacts::from_grid(&grid, &side_tables),
+        Err(HypervoxelError::UnknownScalarOrdering {
+            field: "inverted field interval"
+        })
+    ));
+    let paged = ChunkPagedSparseGrid::from_sparse_grid(&grid, ChunkShape::new(1).unwrap()).unwrap();
+    assert!(matches!(
+        audit_chunk_paged_field_samples(&paged, &side_tables),
         Err(HypervoxelError::UnknownScalarOrdering {
             field: "inverted field interval"
         })

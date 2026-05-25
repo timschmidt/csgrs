@@ -23,9 +23,10 @@ use hypervoxel::{
     VoxelIndexConvention, VoxelIoCompression, VoxelIoMetadata, VoxelMemoryBudgetManifest,
     VoxelSideTables, VoxelSliceNaming, VoxelSliceOrdering, VoxelSpatialAggregateFacts,
     VoxelTraceDimension, VoxelTraceManifest, VoxelizationAudit, VoxelizationPolicy,
-    audit_chunk_paged_material_regions, chunk_paged_greedy_face_patch_plan_with_report,
-    classify_chunk_paged_support_mask, classify_support_mask, continuous_field_address,
-    diff_chunk_paged_sparse_grids, extract_chunk_paged_exposed_faces_with_report,
+    audit_chunk_paged_field_samples, audit_chunk_paged_material_regions,
+    chunk_paged_greedy_face_patch_plan_with_report, classify_chunk_paged_support_mask,
+    classify_support_mask, continuous_field_address, diff_chunk_paged_sparse_grids,
+    extract_chunk_paged_exposed_faces_with_report,
     diff_sparse_grids, extract_exposed_faces, greedy_face_patch_plan, lookup_material_display_colors,
     extract_exposed_faces_with_report, lossy_obj_from_quad_mesh, lossy_quad_mesh_from_faces, query_field_samples,
     query_material_regions, report_material_region_metadata, sample_manhattan_distance_field,
@@ -1149,6 +1150,38 @@ fuzz_target!(|data: (u8, u64, u64, u64)| {
     assert_eq!(empty_field_facts.sample_cell_count, 0);
     assert!(!empty_field_facts.has_field_samples);
     assert!(!empty_field_facts.certified_field_bounds_ready);
+    let field_query = query_field_samples(&edited, &side_tables);
+    let paged_edited = ChunkPagedSparseGrid::from_sparse_grid(
+        &edited,
+        ChunkShape::new(small_depth.min(2)).unwrap(),
+    )
+    .unwrap();
+    let paged_field = audit_chunk_paged_field_samples(&paged_edited, &side_tables).unwrap();
+    assert_eq!(paged_field.query, field_query);
+    assert_eq!(paged_field.aggregate, field_facts);
+    assert_eq!(
+        paged_field.exact_paged_field_audit_ready,
+        paged_edited.report().exact_chunk_storage_ready
+            && paged_field.tested_cells > 0
+            && paged_field.unknown_cells == 0
+            && paged_field.lossy_cells == 0
+            && field_query.is_fully_resolved()
+            && field_facts.certified_field_bounds_ready
+    );
+    let empty_field_query =
+        query_field_samples(&SparseVoxelGrid::new(report.frame.clone()), &side_tables);
+    let empty_paged_field = audit_chunk_paged_field_samples(
+        &ChunkPagedSparseGrid::from_sparse_grid(
+            &SparseVoxelGrid::new(report.frame.clone()),
+            ChunkShape::new(small_depth.min(2)).unwrap(),
+        )
+        .unwrap(),
+        &side_tables,
+    )
+    .unwrap();
+    assert_eq!(empty_paged_field.query, empty_field_query);
+    assert_eq!(empty_paged_field.aggregate, empty_field_facts);
+    assert!(!empty_paged_field.exact_paged_field_audit_ready);
     let vector_envelope = CertifiedVectorInterval {
         components: vec![CertifiedFieldInterval {
             lower: Real::from(0),
@@ -1183,11 +1216,6 @@ fuzz_target!(|data: (u8, u64, u64, u64)| {
     if material_metadata.is_complete() {
         assert!(material_metadata.has_material_regions);
     }
-    let paged_edited = ChunkPagedSparseGrid::from_sparse_grid(
-        &edited,
-        ChunkShape::new(small_depth.min(2)).unwrap(),
-    )
-    .unwrap();
     let paged_material = audit_chunk_paged_material_regions(&paged_edited, &side_tables);
     assert_eq!(paged_material.query, material_query);
     assert_eq!(paged_material.metadata, material_metadata);
