@@ -24,6 +24,7 @@ use crate::segment::{Axis, LinePathSegment};
 use crate::solve::{constant_feed_time_equation, differential_pair_skew_equation};
 
 mod feed;
+mod lookahead;
 mod orthogonal_keepout;
 
 pub use feed::{
@@ -31,6 +32,10 @@ pub use feed::{
     FeedPathElement, JerkLimitedFeedTimeReport, certify_acceleration_limited_feed_time_for_path,
     certify_constant_feed_time_for_path, certify_corner_lookahead_limits,
     certify_symmetric_jerk_limited_feed_time, certify_symmetric_jerk_limited_feed_time_for_path,
+};
+pub use lookahead::{
+    LookaheadFeedSchedule, LookaheadFeedScheduleReport, LookaheadSpanTransitionReport,
+    certify_lookahead_feed_schedule,
 };
 use orthogonal_keepout::{
     segment_intersects_orthogonal_keepout, validate_orthogonal_keepout_vertices,
@@ -505,6 +510,8 @@ pub enum RouteCertificationError {
     NegativeCornerRadius,
     /// Corner radius was structurally zero.
     ZeroCornerRadius,
+    /// Lookahead schedule vectors do not match the retained route shape.
+    ScheduleShapeMismatch,
 }
 
 /// Build a one-bump rectangular meander from an exact extra length.

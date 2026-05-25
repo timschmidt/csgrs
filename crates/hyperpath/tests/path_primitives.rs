@@ -11,9 +11,10 @@ use hyperpath::{
     LineArcArrangementEventClass, LineArrangementError, LineArrangementEventClass,
     LineExplicitArcIntersectionClass, LineOffsetError, LinePathSegment,
     LineQuadraticBezierIntersectionClass, LineRationalQuadraticBezierIntersectionClass,
-    MeanderError, MeanderKeepout, MeanderObstacle, MeanderPlacementCandidate, NetId, OffsetSide,
-    PathProvenance, PathSourceFormat, PcbBoardOutline, PcbCardinalRectPad, PcbCircularBoardOutline,
-    PcbCircularPad, PcbConvexBoardOutline, PcbConvexPad, PcbObroundPad, PcbOrientedRectPad,
+    LookaheadFeedSchedule, MeanderError, MeanderKeepout, MeanderObstacle,
+    MeanderPlacementCandidate, NetId, OffsetSide, PathProvenance, PathSourceFormat,
+    PcbBoardOutline, PcbCardinalRectPad, PcbCircularBoardOutline, PcbCircularPad,
+    PcbConvexBoardOutline, PcbConvexPad, PcbObroundPad, PcbOrientedRectPad,
     PcbOrthogonalBoardOutline, PcbOrthogonalPad, PcbRectPad, PcbRoundedRectPad, PcbTrace,
     PcbViaStack, PocketLinkGraphError, PocketPlanError, PocketPlanStopReason, PocketRingSide,
     QuadraticBezier, RationalQuadraticBezier, RationalQuadraticBezierError, RectangularPocket,
@@ -36,15 +37,16 @@ use hyperpath::{
     certify_acceleration_limited_feed_time, certify_acceleration_limited_feed_time_for_path,
     certify_constant_feed_time, certify_constant_feed_time_for_path,
     certify_corner_lookahead_limits, certify_differential_pair_skew, certify_g1_chain,
-    certify_g1_join_candidate, certify_length_extension, certify_symmetric_jerk_limited_feed_time,
-    certify_symmetric_jerk_limited_feed_time_for_path, certify_tangent_alignment_candidate,
-    check_cardinal_rect_pad_board_clearance, check_circular_pad_board_clearance,
-    check_circular_pad_circular_board_clearance, check_convex_pad_board_clearance,
-    check_obround_pad_board_clearance, check_oriented_rect_pad_board_clearance,
-    check_orthogonal_pad_board_clearance, check_rect_pad_board_clearance,
-    check_rounded_rect_pad_board_clearance, check_trace_board_clearance,
-    check_trace_cardinal_rect_pad_clearance, check_trace_circular_board_clearance,
-    check_trace_clearance, check_trace_convex_board_clearance, check_trace_convex_pad_clearance,
+    certify_g1_join_candidate, certify_length_extension, certify_lookahead_feed_schedule,
+    certify_symmetric_jerk_limited_feed_time, certify_symmetric_jerk_limited_feed_time_for_path,
+    certify_tangent_alignment_candidate, check_cardinal_rect_pad_board_clearance,
+    check_circular_pad_board_clearance, check_circular_pad_circular_board_clearance,
+    check_convex_pad_board_clearance, check_obround_pad_board_clearance,
+    check_oriented_rect_pad_board_clearance, check_orthogonal_pad_board_clearance,
+    check_rect_pad_board_clearance, check_rounded_rect_pad_board_clearance,
+    check_trace_board_clearance, check_trace_cardinal_rect_pad_clearance,
+    check_trace_circular_board_clearance, check_trace_clearance,
+    check_trace_convex_board_clearance, check_trace_convex_pad_clearance,
     check_trace_obround_pad_clearance, check_trace_oriented_rect_pad_clearance,
     check_trace_orthogonal_board_clearance, check_trace_orthogonal_pad_clearance,
     check_trace_pad_clearance, check_trace_rect_pad_clearance,
@@ -4467,6 +4469,193 @@ fn corner_lookahead_limits_reject_invalid_inputs_and_uncertified_joins() {
 }
 
 #[test]
+fn lookahead_feed_schedule_certifies_local_corner_and_span_speed_nodes() {
+    let line0 = LinePathSegment::new(p(0, 0), p(10, 0));
+    let line1 = LinePathSegment::new(p(10, 0), p(10, 20));
+    let line2 = LinePathSegment::new(p(10, 20), p(30, 20));
+    let route = vec![
+        FeedPathElement::Line(line0.clone()),
+        FeedPathElement::Line(line1.clone()),
+        FeedPathElement::Line(line2.clone()),
+    ];
+    let spans = vec![
+        TangentSpan::from_line_segment(&line0),
+        TangentSpan::from_line_segment(&line1),
+        TangentSpan::from_line_segment(&line2),
+    ];
+    let schedule = LookaheadFeedSchedule {
+        entry_feed: Real::zero(),
+        corner_feeds: vec![r(4), r(4)],
+        corner_radii: vec![r(4), r(4)],
+        exit_feed: Real::zero(),
+    };
+    let report = certify_lookahead_feed_schedule(
+        &route,
+        &spans,
+        &schedule,
+        r(5),
+        r(4),
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+
+    assert_eq!(report.corners.joins.len(), 2);
+    assert_eq!(report.spans.len(), 3);
+    assert_eq!(
+        report.corners.joins[0].class,
+        CornerLookaheadJoinClass::RadiusLimitedCorner
+    );
+    assert_eq!(report.spans[0].path_length, r(10));
+    assert_eq!(report.spans[0].start_feed, Real::zero());
+    assert_eq!(report.spans[0].end_feed, r(4));
+    assert!(report.all_satisfied());
+    assert_eq!(report.first_unsatisfied_span(), None);
+}
+
+#[test]
+fn lookahead_feed_schedule_reports_corner_and_transition_violations() {
+    let line0 = LinePathSegment::new(p(0, 0), p(1, 0));
+    let line1 = LinePathSegment::new(p(1, 0), p(1, 1));
+    let route = vec![
+        FeedPathElement::Line(line0.clone()),
+        FeedPathElement::Line(line1.clone()),
+    ];
+    let spans = vec![
+        TangentSpan::from_line_segment(&line0),
+        TangentSpan::from_line_segment(&line1),
+    ];
+    let transition_violation = LookaheadFeedSchedule {
+        entry_feed: Real::zero(),
+        corner_feeds: vec![r(10)],
+        corner_radii: vec![r(100)],
+        exit_feed: r(10),
+    };
+    let transition_report = certify_lookahead_feed_schedule(
+        &route,
+        &spans,
+        &transition_violation,
+        r(20),
+        r(1),
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert!(transition_report.corners.all_satisfied());
+    assert!(
+        transition_report.spans[0]
+            .certification
+            .has_certified_violation()
+    );
+    assert_eq!(transition_report.first_unsatisfied_span(), Some(0));
+
+    let corner_violation = LookaheadFeedSchedule {
+        entry_feed: Real::zero(),
+        corner_feeds: vec![r(5)],
+        corner_radii: vec![r(1)],
+        exit_feed: Real::zero(),
+    };
+    let corner_report = certify_lookahead_feed_schedule(
+        &route,
+        &spans,
+        &corner_violation,
+        r(20),
+        r(4),
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert!(
+        corner_report.corners.joins[0]
+            .certification
+            .has_certified_violation()
+    );
+}
+
+#[test]
+fn lookahead_feed_schedule_rejects_shape_and_invalid_process_inputs() {
+    let line = LinePathSegment::new(p(0, 0), p(10, 0));
+    let route = vec![FeedPathElement::Line(line.clone())];
+    let spans = vec![TangentSpan::from_line_segment(&line)];
+    let valid_schedule = LookaheadFeedSchedule {
+        entry_feed: Real::zero(),
+        corner_feeds: vec![],
+        corner_radii: vec![],
+        exit_feed: Real::zero(),
+    };
+
+    assert_eq!(
+        certify_lookahead_feed_schedule(
+            &[],
+            &[],
+            &valid_schedule,
+            r(1),
+            r(1),
+            PredicatePolicy::default()
+        )
+        .unwrap_err(),
+        RouteCertificationError::EmptyRoute
+    );
+    let wrong_shape = LookaheadFeedSchedule {
+        entry_feed: Real::zero(),
+        corner_feeds: vec![r(1)],
+        corner_radii: vec![],
+        exit_feed: Real::zero(),
+    };
+    assert_eq!(
+        certify_lookahead_feed_schedule(
+            &route,
+            &spans,
+            &wrong_shape,
+            r(1),
+            r(1),
+            PredicatePolicy::default()
+        )
+        .unwrap_err(),
+        RouteCertificationError::ScheduleShapeMismatch
+    );
+    let negative_entry = LookaheadFeedSchedule {
+        entry_feed: r(-1),
+        corner_feeds: vec![],
+        corner_radii: vec![],
+        exit_feed: Real::zero(),
+    };
+    assert_eq!(
+        certify_lookahead_feed_schedule(
+            &route,
+            &spans,
+            &negative_entry,
+            r(1),
+            r(1),
+            PredicatePolicy::default()
+        )
+        .unwrap_err(),
+        RouteCertificationError::NegativeFeedRate
+    );
+    assert_eq!(
+        certify_lookahead_feed_schedule(
+            &route,
+            &spans,
+            &valid_schedule,
+            Real::zero(),
+            r(1),
+            PredicatePolicy::default()
+        )
+        .unwrap_err(),
+        RouteCertificationError::ZeroFeedRate
+    );
+    assert_eq!(
+        certify_lookahead_feed_schedule(
+            &route,
+            &spans,
+            &valid_schedule,
+            r(1),
+            Real::zero(),
+            PredicatePolicy::default()
+        )
+        .unwrap_err(),
+        RouteCertificationError::ZeroAcceleration
+    );
+}
+
+#[test]
 fn single_detour_meander_adds_exact_length_and_certifies_target() {
     let source = LinePathSegment::new(p(0, 0), p(10, 0));
     let meander =
@@ -6699,6 +6888,41 @@ proptest! {
         prop_assert_eq!(report.joins[0].class, CornerLookaheadJoinClass::RadiusLimitedCorner);
         let expected = i64::from(feed) <= i64::from(max_feed)
             && i64::from(feed).pow(2) <= i64::from(acceleration) * i64::from(radius);
+        prop_assert_eq!(report.all_satisfied(), expected);
+    }
+
+    #[test]
+    fn lookahead_feed_schedule_generated_span_bound_matches_integer_oracle(
+        length in 1_i16..=50,
+        start_feed in 0_i16..=30,
+        end_feed in 0_i16..=30,
+        max_feed in 1_i16..=30,
+        acceleration in 1_i16..=30,
+    ) {
+        let line = LinePathSegment::new(p(0, 0), p(i64::from(length), 0));
+        let route = vec![FeedPathElement::Line(line.clone())];
+        let spans = vec![TangentSpan::from_line_segment(&line)];
+        let schedule = LookaheadFeedSchedule {
+            entry_feed: r(i64::from(start_feed)),
+            corner_feeds: vec![],
+            corner_radii: vec![],
+            exit_feed: r(i64::from(end_feed)),
+        };
+        let report = certify_lookahead_feed_schedule(
+            &route,
+            &spans,
+            &schedule,
+            r(i64::from(max_feed)),
+            r(i64::from(acceleration)),
+            PredicatePolicy::default(),
+        ).unwrap();
+
+        let start_sq = i64::from(start_feed).pow(2);
+        let end_sq = i64::from(end_feed).pow(2);
+        let budget = 2 * i64::from(acceleration) * i64::from(length);
+        let expected = i64::from(start_feed) <= i64::from(max_feed)
+            && i64::from(end_feed) <= i64::from(max_feed)
+            && (end_sq - start_sq).abs() <= budget;
         prop_assert_eq!(report.all_satisfied(), expected);
     }
 

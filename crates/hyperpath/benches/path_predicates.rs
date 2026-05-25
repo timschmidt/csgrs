@@ -3,9 +3,10 @@ use hyperlimit::{Point2, PredicatePolicy};
 use hyperpath::{
     ArcDirection, BeadFillAxis, BezierParameter, CardinalPoint, CardinalRotation, CircularArc,
     ConstructionStamp, CubicBezier, ExplicitCircularArc, FeedPathElement, HigherOrderBezier,
-    LinePathSegment, MeanderKeepout, MeanderObstacle, MeanderPlacementCandidate, NetId, OffsetSide,
-    PathProvenance, PathSourceFormat, PcbBoardOutline, PcbCardinalRectPad, PcbCircularBoardOutline,
-    PcbCircularPad, PcbConvexBoardOutline, PcbConvexPad, PcbObroundPad, PcbOrientedRectPad,
+    LinePathSegment, LookaheadFeedSchedule, MeanderKeepout, MeanderObstacle,
+    MeanderPlacementCandidate, NetId, OffsetSide, PathProvenance, PathSourceFormat,
+    PcbBoardOutline, PcbCardinalRectPad, PcbCircularBoardOutline, PcbCircularPad,
+    PcbConvexBoardOutline, PcbConvexPad, PcbObroundPad, PcbOrientedRectPad,
     PcbOrthogonalBoardOutline, PcbOrthogonalPad, PcbRectPad, PcbRoundedRectPad, PcbTrace,
     PcbViaStack, QuadraticBezier, RationalQuadraticBezier, RectangularPocket, SourceLengthUnit,
     SpecctraGridKeepoutRecord, SpecctraGridKeepoutShape, SpecctraGridTraceRecord,
@@ -24,15 +25,16 @@ use hyperpath::{
     certify_acceleration_limited_feed_time, certify_acceleration_limited_feed_time_for_path,
     certify_constant_feed_time, certify_constant_feed_time_for_path,
     certify_corner_lookahead_limits, certify_differential_pair_skew, certify_g1_chain,
-    certify_g1_join_candidate, certify_length_extension, certify_symmetric_jerk_limited_feed_time,
-    certify_symmetric_jerk_limited_feed_time_for_path, certify_tangent_alignment_candidate,
-    check_cardinal_rect_pad_board_clearance, check_circular_pad_board_clearance,
-    check_circular_pad_circular_board_clearance, check_convex_pad_board_clearance,
-    check_obround_pad_board_clearance, check_oriented_rect_pad_board_clearance,
-    check_orthogonal_pad_board_clearance, check_rect_pad_board_clearance,
-    check_rounded_rect_pad_board_clearance, check_trace_board_clearance,
-    check_trace_cardinal_rect_pad_clearance, check_trace_circular_board_clearance,
-    check_trace_clearance, check_trace_convex_board_clearance, check_trace_convex_pad_clearance,
+    certify_g1_join_candidate, certify_length_extension, certify_lookahead_feed_schedule,
+    certify_symmetric_jerk_limited_feed_time, certify_symmetric_jerk_limited_feed_time_for_path,
+    certify_tangent_alignment_candidate, check_cardinal_rect_pad_board_clearance,
+    check_circular_pad_board_clearance, check_circular_pad_circular_board_clearance,
+    check_convex_pad_board_clearance, check_obround_pad_board_clearance,
+    check_oriented_rect_pad_board_clearance, check_orthogonal_pad_board_clearance,
+    check_rect_pad_board_clearance, check_rounded_rect_pad_board_clearance,
+    check_trace_board_clearance, check_trace_cardinal_rect_pad_clearance,
+    check_trace_circular_board_clearance, check_trace_clearance,
+    check_trace_convex_board_clearance, check_trace_convex_pad_clearance,
     check_trace_obround_pad_clearance, check_trace_oriented_rect_pad_clearance,
     check_trace_orthogonal_board_clearance, check_trace_orthogonal_pad_clearance,
     check_trace_pad_clearance, check_trace_rect_pad_clearance,
@@ -924,6 +926,29 @@ fn path_predicates(c: &mut Criterion) {
                 r(20),
                 r(25),
                 r(4),
+                PredicatePolicy::default(),
+            )
+        })
+    });
+    let lookahead_route = vec![
+        FeedPathElement::Line(LinePathSegment::new(p(0, 0), p(100, 0))),
+        FeedPathElement::Line(LinePathSegment::new(p(100, 0), p(100, 100))),
+        FeedPathElement::Line(LinePathSegment::new(p(100, 100), p(150, 100))),
+    ];
+    let lookahead_schedule = LookaheadFeedSchedule {
+        entry_feed: r(0),
+        corner_feeds: vec![r(10), r(10)],
+        corner_radii: vec![r(4), r(4)],
+        exit_feed: r(0),
+    };
+    c.bench_function("lookahead_feed_schedule_certification", |b| {
+        b.iter(|| {
+            certify_lookahead_feed_schedule(
+                &lookahead_route,
+                &corner_lookahead_spans,
+                &lookahead_schedule,
+                r(20),
+                r(25),
                 PredicatePolicy::default(),
             )
         })

@@ -3,9 +3,10 @@
 use hyperlimit::{Point2, PredicatePolicy};
 use hyperpath::{
     AccelerationLimitedFeedProfileClass, ArcDirection, ExplicitCircularArc, FeedPathElement,
-    LinePathSegment, RouteCertificationError, TangentSpan, certify_acceleration_limited_feed_time,
-    certify_acceleration_limited_feed_time_for_path, certify_constant_feed_time,
-    certify_constant_feed_time_for_path, certify_corner_lookahead_limits,
+    LinePathSegment, LookaheadFeedSchedule, RouteCertificationError, TangentSpan,
+    certify_acceleration_limited_feed_time, certify_acceleration_limited_feed_time_for_path,
+    certify_constant_feed_time, certify_constant_feed_time_for_path,
+    certify_corner_lookahead_limits, certify_lookahead_feed_schedule,
     certify_symmetric_jerk_limited_feed_time, certify_symmetric_jerk_limited_feed_time_for_path,
 };
 use hyperreal::{Rational, Real};
@@ -183,4 +184,24 @@ fuzz_target!(|data: &[u8]| {
     )
     .unwrap();
     assert!(reversal_report.all_satisfied());
+
+    let schedule_line = LinePathSegment::new(p(0, 0), p(corner_feed * corner_feed, 0));
+    let schedule_route = vec![FeedPathElement::Line(schedule_line.clone())];
+    let schedule_spans = vec![TangentSpan::from_line_segment(&schedule_line)];
+    let schedule = LookaheadFeedSchedule {
+        entry_feed: Real::zero(),
+        corner_feeds: vec![],
+        corner_radii: vec![],
+        exit_feed: r(corner_feed),
+    };
+    let schedule_report = certify_lookahead_feed_schedule(
+        &schedule_route,
+        &schedule_spans,
+        &schedule,
+        r(corner_feed),
+        r(1),
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert!(schedule_report.all_satisfied());
 });
