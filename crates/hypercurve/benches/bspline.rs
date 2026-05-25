@@ -1,0 +1,44 @@
+use std::hint::black_box;
+use std::time::Instant;
+
+use hypercurve::{Classification, CurvePolicy, CurveResult, Point2, PolynomialBSplineCurve2, Real};
+
+fn r(value: i32) -> Real {
+    value.into()
+}
+
+fn p(x: i32, y: i32) -> Point2 {
+    Point2::new(r(x), r(y))
+}
+
+fn decided<T>(classification: Classification<T>) -> T {
+    match classification {
+        Classification::Decided(value) => value,
+        Classification::Uncertain(reason) => panic!("benchmark unexpectedly uncertain: {reason:?}"),
+    }
+}
+
+fn main() -> CurveResult<()> {
+    let policy = CurvePolicy::certified();
+    let spline = decided(PolynomialBSplineCurve2::try_new(
+        3,
+        vec![p(0, 0), p(1, 3), p(3, 3), p(5, 3), p(6, 0)],
+        vec![r(0), r(0), r(0), r(0), r(1), r(2), r(2), r(2), r(2)],
+        &policy,
+    )?);
+
+    let iterations = 20_000_u32;
+    let started = Instant::now();
+    let mut checksum = 0_usize;
+    for _ in 0..iterations {
+        let extraction = decided(spline.extract_bezier_spans(&policy)?);
+        checksum ^= black_box(extraction.spans().len() + extraction.inserted_knot_count());
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "bspline_bezier_extraction: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={checksum}",
+        elapsed / iterations
+    );
+
+    Ok(())
+}

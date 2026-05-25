@@ -44,6 +44,8 @@ pub enum CurveError {
     InvalidBezierAlgebraicParameter,
     /// A requested Bezier arc length is certified outside the curve length range.
     InvalidBezierArcLengthTarget,
+    /// A polynomial B-spline has invalid degree, knot, or control-net structure.
+    InvalidBSpline,
     /// Polyline reconstruction needs coordinates with finite `f64` approximations.
     NonFiniteReconstructionPoint,
     /// Finite projection needs coordinates with finite `f64` approximations.
@@ -97,6 +99,7 @@ impl fmt::Display for CurveError {
                     "Bezier arc-length target is outside the certified length range"
                 )
             }
+            Self::InvalidBSpline => write!(f, "B-spline degree, knots, or controls are invalid"),
             Self::NonFiniteReconstructionPoint => {
                 write!(f, "polyline reconstruction point is not finite")
             }
