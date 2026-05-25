@@ -291,6 +291,25 @@ fuzz_target!(|data: (u8, u64, u64, u64)| {
     assert!(svo_report.exact_dag_replay_ready);
     let (svo_sparse, svo_replay) = svo.replay_sparse_grid_with_report().unwrap();
     assert_eq!(svo_sparse.get(svo_address).unwrap(), VoxelCell::material(MaterialRegionId(5)));
+    let (compacted_svo, compaction) =
+        SvoVoxelGrid::from_sparse_grid_with_report(&svo_sparse).unwrap();
+    let (compacted_sparse, compacted_replay) =
+        compacted_svo.replay_sparse_grid_with_report().unwrap();
+    assert_eq!(compacted_sparse, svo_sparse);
+    assert_eq!(compaction.sparse_replay, compacted_replay);
+    assert_eq!(compaction.source_cells, svo_sparse.len());
+    assert_eq!(compaction.finest_depth_cells, svo_sparse.len());
+    assert_eq!(compaction.non_finest_depth_cells, 0);
+    assert!(compaction.semantic_round_trip_matches_source);
+    assert_eq!(
+        compaction.exact_svo_compaction_ready,
+        compaction.source_cells > 0
+            && compaction.exact_payload_cells == compaction.source_cells
+            && compaction.unknown_cells == 0
+            && compaction.lossy_cells == 0
+            && compacted_replay.exact_sparse_replay_ready
+            && compaction.semantic_round_trip_matches_source
+    );
     assert_eq!(svo_replay.logical_leaf_cells, svo_report.logical_leaf_cells);
     assert!(svo_replay.aggregate_replay_matches_root);
     assert_eq!(svo_replay.materialized_sparse_cells, svo_sparse.len());

@@ -204,7 +204,8 @@ pub use surface_topology::{
     audit_exact_voxel_surface_topology,
 };
 pub use svo::{
-    SvoDagStats, SvoEditReport, SvoNodeId, SvoSparseReplayReport, SvoStorageReport, SvoVoxelGrid,
+    SvoCompactionReport, SvoDagStats, SvoEditReport, SvoNodeId, SvoSparseReplayReport,
+    SvoStorageReport, SvoVoxelGrid,
 };
 pub use svo_surface::{SvoSurfaceReplayReport, extract_svo_exposed_faces_with_report};
 pub use trace::{VoxelTraceDimension, VoxelTraceManifest, VoxelTraceReport};

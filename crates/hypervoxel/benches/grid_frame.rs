@@ -429,6 +429,27 @@ fn bench_svo_path_copy_edits(c: &mut Criterion) {
             )
         })
     });
+    c.bench_function("semantic_sparse_to_svo_compaction", |b| {
+        let mut sparse = SparseVoxelGrid::new(frame.clone());
+        for i in 0..64 {
+            let address = VoxelAddress::new(6, [i, (i * 3) % 64, (i * 7) % 64]).unwrap();
+            sparse
+                .set(
+                    address,
+                    VoxelCell::material(MaterialRegionId((i % 4) as u32)),
+                )
+                .unwrap();
+        }
+        b.iter(|| {
+            let (_, report) = SvoVoxelGrid::from_sparse_grid_with_report(&sparse).unwrap();
+            (
+                report.source_cells,
+                report.compacted_nodes,
+                report.semantic_round_trip_matches_source,
+                report.exact_svo_compaction_ready,
+            )
+        })
+    });
     c.bench_function("semantic_svo_surface_replay", |b| {
         let surface_frame = GridFrame::builder().depth(4).build().unwrap();
         let mut grid = SvoVoxelGrid::new(surface_frame);

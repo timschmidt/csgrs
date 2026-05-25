@@ -1123,6 +1123,80 @@ fn svo_sparse_replay_expands_collapsed_leaves_and_reports_blockers() {
 }
 
 #[test]
+fn sparse_to_svo_compaction_round_trips_only_canonical_finest_exact_cells() {
+    let frame = frame(3);
+    let mut sparse = SparseVoxelGrid::new(frame.clone());
+    for address in [
+        VoxelAddress::new(3, [0, 0, 0]).unwrap(),
+        VoxelAddress::new(3, [1, 0, 0]).unwrap(),
+        VoxelAddress::new(3, [6, 7, 5]).unwrap(),
+    ] {
+        sparse
+            .set(address, VoxelCell::material(MaterialRegionId(11)))
+            .unwrap();
+    }
+    sparse
+        .set(
+            VoxelAddress::new(3, [7, 7, 7]).unwrap(),
+            VoxelCell::boundary(VoxelPayload::MaterialRegion(MaterialRegionId(12))),
+        )
+        .unwrap();
+
+    let (svo, compaction) = SvoVoxelGrid::from_sparse_grid_with_report(&sparse).unwrap();
+    let (round_trip, replay) = svo.replay_sparse_grid_with_report().unwrap();
+    assert_eq!(round_trip, sparse);
+    assert_eq!(compaction.sparse_replay, replay);
+    assert_eq!(compaction.source_cells, 4);
+    assert_eq!(compaction.finest_depth_cells, 4);
+    assert_eq!(compaction.non_finest_depth_cells, 0);
+    assert_eq!(compaction.exact_payload_cells, 4);
+    assert_eq!(compaction.unknown_cells, 0);
+    assert_eq!(compaction.lossy_cells, 0);
+    assert_eq!(compaction.applied_edits, 4);
+    assert_eq!(compaction.compacted_nodes, svo.stats().nodes);
+    assert!(compaction.semantic_round_trip_matches_source);
+    assert!(compaction.storage.exact_dag_replay_ready);
+    assert!(compaction.sparse_replay.exact_sparse_replay_ready);
+    assert!(compaction.exact_svo_compaction_ready);
+
+    let empty = SparseVoxelGrid::new(frame.clone());
+    let (empty_svo, empty_report) = SvoVoxelGrid::from_sparse_grid_with_report(&empty).unwrap();
+    assert_eq!(empty_svo.replay_sparse_grid_with_report().unwrap().0, empty);
+    assert_eq!(empty_report.source_cells, 0);
+    assert!(empty_report.semantic_round_trip_matches_source);
+    assert!(!empty_report.storage.has_materialized_evidence);
+    assert!(!empty_report.exact_svo_compaction_ready);
+
+    let mut coarse = SparseVoxelGrid::new(frame.clone());
+    coarse
+        .set(
+            VoxelAddress::new(1, [0, 0, 0]).unwrap(),
+            VoxelCell::material(MaterialRegionId(13)),
+        )
+        .unwrap();
+    let (_, coarse_report) = SvoVoxelGrid::from_sparse_grid_with_report(&coarse).unwrap();
+    assert_eq!(coarse_report.source_cells, 1);
+    assert_eq!(coarse_report.non_finest_depth_cells, 1);
+    assert_eq!(coarse_report.sparse_replay.materialized_sparse_cells, 64);
+    assert!(!coarse_report.semantic_round_trip_matches_source);
+    assert!(!coarse_report.exact_svo_compaction_ready);
+
+    let mut lossy = SparseVoxelGrid::new(frame);
+    lossy
+        .set(
+            VoxelAddress::new(3, [2, 2, 2]).unwrap(),
+            VoxelCell::lossy_adapter_value(9),
+        )
+        .unwrap();
+    let (_, lossy_report) = SvoVoxelGrid::from_sparse_grid_with_report(&lossy).unwrap();
+    assert_eq!(lossy_report.lossy_cells, 1);
+    assert_eq!(lossy_report.exact_payload_cells, 0);
+    assert!(lossy_report.semantic_round_trip_matches_source);
+    assert!(!lossy_report.sparse_replay.exact_sparse_replay_ready);
+    assert!(!lossy_report.exact_svo_compaction_ready);
+}
+
+#[test]
 fn svo_surface_replay_extracts_exact_shell_after_sparse_expansion() {
     let frame = frame(2);
     let mut grid = SvoVoxelGrid::new(frame.clone());

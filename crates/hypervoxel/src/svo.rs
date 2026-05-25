@@ -170,6 +170,64 @@ pub struct SvoSparseReplayReport {
     pub exact_sparse_replay_ready: bool,
 }
 
+/// Exact sparse-to-SVO-DAG compaction report.
+///
+/// This report is the import-side counterpart to [`SvoSparseReplayReport`]:
+/// it records how canonical sparse cells were admitted into compressed SVO-DAG
+/// storage and then replayed back to sparse storage for semantic comparison.
+/// The design follows Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7(1-2), 1997: compression is exact only when it
+/// preserves replayable object facts and reports blockers instead of repairing
+/// them. The DAG interning strategy follows Kämpe, Sintorn, and Assarsson,
+/// "High Resolution Sparse Voxel DAGs," *ACM Transactions on Graphics* 32(4),
+/// 2013, but this readiness report is about Hyper voxel semantics rather than
+/// rendering throughput.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct SvoCompactionReport {
+    /// Explicit non-empty sparse cells offered for compaction.
+    pub source_cells: usize,
+    /// Source cells already at the frame depth.
+    pub finest_depth_cells: usize,
+    /// Source cells coarser than the frame depth.
+    ///
+    /// Sparse-grid storage treats an explicit coarse address as a stored fact
+    /// at that address, while SVO replay expands collapsed non-empty leaves to
+    /// finest-depth descendants. Coarse source cells are therefore accepted
+    /// into storage for audit, but they block exact sparse round-trip
+    /// readiness.
+    pub non_finest_depth_cells: usize,
+    /// Source cells whose payloads are exact-ready.
+    pub exact_payload_cells: usize,
+    /// Source cells carrying unknown evidence.
+    pub unknown_cells: usize,
+    /// Source cells carrying lossy adapter evidence.
+    pub lossy_cells: usize,
+    /// Number of path-copy edits applied to the SVO.
+    pub applied_edits: usize,
+    /// Edits that were semantic no-ops against the current SVO state.
+    pub semantic_noops: usize,
+    /// Edits that changed the canonical root node.
+    pub root_changes: usize,
+    /// Number of interned nodes after compaction.
+    pub compacted_nodes: usize,
+    /// Number of unique interned leaves after compaction.
+    pub compacted_leaves: usize,
+    /// Number of unique interned branches after compaction.
+    pub compacted_branches: usize,
+    /// Source explicit-cell count minus compacted node count when positive.
+    pub node_savings_vs_sparse_cells: usize,
+    /// SVO storage report after compaction.
+    pub storage: SvoStorageReport,
+    /// Replay report from the compacted SVO back to canonical sparse storage.
+    pub sparse_replay: SvoSparseReplayReport,
+    /// Whether replayed sparse storage is exactly the same as the source
+    /// sparse storage.
+    pub semantic_round_trip_matches_source: bool,
+    /// Whether sparse-to-SVO compaction can be consumed as exact replay
+    /// evidence.
+    pub exact_svo_compaction_ready: bool,
+}
+
 /// Exact semantic sparse voxel octree with DAG interning.
 #[derive(Clone, Debug, PartialEq)]
 pub struct SvoVoxelGrid {
@@ -192,6 +250,79 @@ impl SvoVoxelGrid {
         let root = grid.intern_leaf(VoxelCell::empty(), frame_depth);
         grid.root = root;
         grid
+    }
+
+    /// Compacts canonical sparse-grid storage into an interned SVO-DAG.
+    ///
+    /// The compactor path-copies every explicit sparse cell into a fresh SVO,
+    /// preserving the original [`VoxelCell`] evidence. It then replays the SVO
+    /// back to sparse storage and compares that replay with the source grid.
+    /// This round trip is the exactness gate: DAG interning and collapsed
+    /// leaves are allowed to change representation size, but not the object
+    /// facts accepted by sparse-grid consumers.
+    pub fn from_sparse_grid_with_report(
+        source: &SparseVoxelGrid,
+    ) -> HypervoxelResult<(Self, SvoCompactionReport)> {
+        let mut grid = Self::new(source.frame().clone());
+        let mut source_cells = 0_usize;
+        let mut finest_depth_cells = 0_usize;
+        let mut non_finest_depth_cells = 0_usize;
+        let mut exact_payload_cells = 0_usize;
+        let mut unknown_cells = 0_usize;
+        let mut lossy_cells = 0_usize;
+        let mut applied_edits = 0_usize;
+        let mut semantic_noops = 0_usize;
+        let mut root_changes = 0_usize;
+
+        for (address, cell) in source.iter() {
+            source_cells += 1;
+            if address.depth == source.frame().depth() {
+                finest_depth_cells += 1;
+            } else {
+                non_finest_depth_cells += 1;
+            }
+            let cell_report = cell.report();
+            exact_payload_cells += usize::from(cell_report.exact_cell_evidence_ready);
+            unknown_cells += usize::from(cell_report.has_unknown);
+            lossy_cells += usize::from(cell_report.has_lossy);
+
+            let edit = grid.set_with_report(*address, *cell)?;
+            applied_edits += 1;
+            semantic_noops += usize::from(edit.edit.semantic_noop);
+            root_changes += usize::from(edit.root_changed);
+        }
+
+        let stats = grid.stats();
+        let (replayed_sparse, sparse_replay) = grid.replay_sparse_grid_with_report()?;
+        let storage = sparse_replay.storage.clone();
+        let semantic_round_trip_matches_source = &replayed_sparse == source;
+        let exact_svo_compaction_ready = source_cells > 0
+            && non_finest_depth_cells == 0
+            && unknown_cells == 0
+            && lossy_cells == 0
+            && exact_payload_cells == source_cells
+            && sparse_replay.exact_sparse_replay_ready
+            && semantic_round_trip_matches_source;
+        let report = SvoCompactionReport {
+            source_cells,
+            finest_depth_cells,
+            non_finest_depth_cells,
+            exact_payload_cells,
+            unknown_cells,
+            lossy_cells,
+            applied_edits,
+            semantic_noops,
+            root_changes,
+            compacted_nodes: stats.nodes,
+            compacted_leaves: stats.leaves,
+            compacted_branches: stats.branches,
+            node_savings_vs_sparse_cells: source_cells.saturating_sub(stats.nodes),
+            storage,
+            sparse_replay,
+            semantic_round_trip_matches_source,
+            exact_svo_compaction_ready,
+        };
+        Ok((grid, report))
     }
 
     /// Returns the grid frame.
