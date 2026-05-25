@@ -1066,6 +1066,40 @@ impl CoplanarConvexComponentHoledArrangement {
             ))
         }
     }
+
+    /// Validate this component-holed intersection against its exact sources.
+    ///
+    /// The intersection producer is a bounded source-owned sheet clip: one
+    /// operand must replay as a triangulated coplanar surface with retained
+    /// boundary holes, and the other as simple source disks that lie strictly
+    /// inside a source outer ring while strictly containing every retained
+    /// hole they expose. Replaying from the sources keeps the retained rings
+    /// tied to their exact mesh incidence and exact area predicates, following
+    /// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
+    /// 7.1-2 (1997), instead of treating the triangulated output as an
+    /// unproved planar arrangement.
+    pub fn validate_intersection_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<(), MeshError> {
+        self.validate()?;
+        let replay = arrange_coplanar_surface_component_holed_intersection(left, right)
+            .ok_or_else(|| {
+                surface_validation_error(
+                    "coplanar component-holed intersection arrangement",
+                    "source replay did not reproduce a component-holed intersection",
+                )
+            })?;
+        if self == &replay {
+            Ok(())
+        } else {
+            Err(surface_validation_error(
+                "coplanar component-holed intersection arrangement",
+                "retained component-holed intersection does not match source replay",
+            ))
+        }
+    }
 }
 
 /// Exact simple-loop arrangement output for convex coplanar surface booleans.
@@ -2749,6 +2783,127 @@ fn order_single_mesh_boundary_loop(mesh: &ExactMesh) -> Option<Vec<usize>> {
     }
 }
 
+/// Recover all boundary rings of one open triangulated coplanar component.
+///
+/// This is the multi-ring sibling of [`order_single_mesh_boundary_loop`]. It
+/// deliberately stays in mesh topology until each boundary cycle has been
+/// recovered: boundary edges must have one incident triangle, interior edges
+/// must have two, and every boundary vertex must have degree two. That is the
+/// exact structural object Yap asks algorithms to retain in "Towards Exact
+/// Geometric Computation," *Computational Geometry* 7.1-2 (1997). The caller
+/// is still responsible for deciding which cycle is the outer ring by exact
+/// projected containment predicates; this helper only certifies incidence.
+#[cfg(feature = "exact-triangulation")]
+fn order_mesh_boundary_loops(mesh: &ExactMesh) -> Option<Vec<Vec<usize>>> {
+    let mut edge_counts: Vec<((usize, usize), usize)> = Vec::new();
+    for triangle in mesh.triangles() {
+        for (a, b) in [
+            (triangle.0[0], triangle.0[1]),
+            (triangle.0[1], triangle.0[2]),
+            (triangle.0[2], triangle.0[0]),
+        ] {
+            let edge = canonical_edge(a, b);
+            if let Some((_, count)) = edge_counts
+                .iter_mut()
+                .find(|(candidate, _)| *candidate == edge)
+            {
+                *count += 1;
+            } else {
+                edge_counts.push((edge, 1));
+            }
+        }
+    }
+    if edge_counts
+        .iter()
+        .any(|(_, count)| *count == 0 || *count > 2)
+    {
+        return None;
+    }
+    let boundary_edges = edge_counts
+        .into_iter()
+        .filter_map(|(edge, count)| (count == 1).then_some(edge))
+        .collect::<Vec<_>>();
+    if boundary_edges.len() < 3 {
+        return None;
+    }
+
+    let mut boundary_vertices = Vec::new();
+    for &(a, b) in &boundary_edges {
+        if !boundary_vertices.contains(&a) {
+            boundary_vertices.push(a);
+        }
+        if !boundary_vertices.contains(&b) {
+            boundary_vertices.push(b);
+        }
+    }
+    for &vertex in &boundary_vertices {
+        let degree = boundary_edges
+            .iter()
+            .filter(|(a, b)| *a == vertex || *b == vertex)
+            .count();
+        if degree != 2 {
+            return None;
+        }
+    }
+
+    let mut used = vec![false; boundary_edges.len()];
+    let mut loops = Vec::new();
+    while let Some(seed) = used.iter().position(|used| !*used) {
+        let (a, b) = boundary_edges[seed];
+        let start = a.min(b);
+        let mut previous = None;
+        let mut current = start;
+        let mut loop_vertices = Vec::new();
+        loop {
+            loop_vertices.push(current);
+            let mut candidates = boundary_edges
+                .iter()
+                .enumerate()
+                .filter_map(|(index, (edge_a, edge_b))| {
+                    if used[index] {
+                        return None;
+                    }
+                    if *edge_a == current {
+                        Some((index, *edge_b))
+                    } else if *edge_b == current {
+                        Some((index, *edge_a))
+                    } else {
+                        None
+                    }
+                })
+                .collect::<Vec<_>>();
+            candidates.sort_by_key(|(_, next)| *next);
+            let (edge_index, next) = match previous {
+                Some(previous) => candidates
+                    .into_iter()
+                    .find(|(_, candidate)| *candidate != previous)?,
+                None => candidates.into_iter().next()?,
+            };
+            used[edge_index] = true;
+            if next == start {
+                break;
+            }
+            if loop_vertices.contains(&next) {
+                return None;
+            }
+            previous = Some(current);
+            current = next;
+            if loop_vertices.len() > boundary_edges.len() {
+                return None;
+            }
+        }
+        if loop_vertices.len() < 3 {
+            return None;
+        }
+        loops.push(loop_vertices);
+    }
+    if loops.is_empty() || used.iter().any(|used| !*used) {
+        None
+    } else {
+        Some(loops)
+    }
+}
+
 /// Certify and materialize the positive-area intersection of convex coplanar surfaces.
 ///
 /// This is the multi-face counterpart to
@@ -3033,6 +3188,362 @@ fn coplanar_mesh_faces_have_disjoint_interiors(
         }
     }
     Some(true)
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[derive(Clone, Debug)]
+struct SourceHoledSurfaceComponent {
+    outer: Vec<Point3>,
+    holes: Vec<Vec<Point3>>,
+}
+
+/// Certify and materialize a bounded holed coplanar surface intersection.
+///
+/// This materializer covers the source-owned case left open by whole-mesh
+/// containment: one operand replays as an open coplanar sheet with exact
+/// boundary holes, while the other operand replays as simple coplanar source
+/// disks lying strictly inside a source outer ring. A disk contributes an
+/// output component only when it strictly contains at least one retained
+/// source hole and is disjoint from every other source hole. Partial
+/// hole/disk overlap, boundary contact, nested source holes, and any crossing
+/// of a source outer boundary return `None`; those are general planar
+/// arrangement inputs, not this certificate.
+///
+/// The retained rings are imported from mesh incidence, the disk/source
+/// ownership facts are exact simple-polygon predicates, and the final area is
+/// replayed by summing every pairwise triangle intersection. That is the
+/// object/predicate separation advocated by Yap, "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7.1-2 (1997). Local triangle clips
+/// use the exact Sutherland-Hodgman model already used by the convex
+/// intersection path; see Sutherland and Hodgman, "Reentrant Polygon
+/// Clipping," *Communications of the ACM* 17.1 (1974). Holed output
+/// triangulation is delegated to `hypertri`'s exact earcut adapter, following
+/// Held, "FIST: Fast Industrial-Strength Triangulation of Polygons,"
+/// *Algorithmica* 30 (2001).
+#[cfg(feature = "exact-triangulation")]
+pub fn arrange_coplanar_surface_component_holed_intersection(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Option<CoplanarConvexComponentHoledArrangement> {
+    arrange_coplanar_surface_component_holed_intersection_oriented(left, right)
+        .or_else(|| arrange_coplanar_surface_component_holed_intersection_oriented(right, left))
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn arrange_coplanar_surface_component_holed_intersection_oriented(
+    holed_source: &ExactMesh,
+    clip_source: &ExactMesh,
+) -> Option<CoplanarConvexComponentHoledArrangement> {
+    if holed_source.triangles().is_empty() || clip_source.triangles().is_empty() {
+        return None;
+    }
+    let (projection, holed_components) = source_holed_surface_components_from_mesh(holed_source)?;
+    if !coplanar_mesh_faces_have_disjoint_interiors(holed_source, projection)?
+        || !coplanar_mesh_faces_have_disjoint_interiors(clip_source, projection)?
+    {
+        return None;
+    }
+    let clip_components = connected_face_component_meshes(clip_source)?
+        .into_iter()
+        .map(SimpleSurfaceComponent::from_mesh)
+        .collect::<Option<Vec<_>>>()?;
+    if clip_components.is_empty()
+        || clip_components
+            .iter()
+            .any(|component| component.projection != projection)
+    {
+        return None;
+    }
+    let clip_boundaries = clip_components
+        .iter()
+        .map(|component| component.boundary.clone())
+        .collect::<Vec<_>>();
+    validate_simple_component_loops_disjoint(
+        &clip_boundaries,
+        projection,
+        "coplanar component-holed intersection clip source",
+    )
+    .ok()?;
+
+    let mut retained_components = Vec::new();
+    for clip_component in &clip_components {
+        let mut owner = None;
+        let mut touched_outer = false;
+        for (source_index, source_component) in holed_components.iter().enumerate() {
+            if simple_polygon_interaction(
+                &clip_component.boundary,
+                &source_component.outer,
+                projection,
+            )? != SimplePolygonInteraction::Disjoint
+            {
+                touched_outer = true;
+            }
+            if polygon_strictly_inside_simple_polygon(
+                &clip_component.boundary,
+                &source_component.outer,
+                projection,
+            )? {
+                if owner.is_some() {
+                    return None;
+                }
+                owner = Some(source_index);
+            }
+        }
+        let Some(owner) = owner else {
+            if touched_outer {
+                return None;
+            }
+            continue;
+        };
+        let source_component = &holed_components[owner];
+        let mut retained_holes = Vec::new();
+        for hole in &source_component.holes {
+            if polygon_strictly_inside_simple_polygon(hole, &clip_component.boundary, projection)? {
+                let mut retained = hole.clone();
+                orient_polygon_cw(&mut retained, projection)?;
+                retained_holes.push(retained);
+                continue;
+            }
+            match simple_polygon_interaction(hole, &clip_component.boundary, projection)? {
+                SimplePolygonInteraction::Disjoint => {}
+                SimplePolygonInteraction::PointOnly | SimplePolygonInteraction::Connected => {
+                    return None;
+                }
+            }
+        }
+        if retained_holes.is_empty() {
+            return None;
+        }
+        let mut outer = clip_component.boundary.clone();
+        orient_polygon_ccw(&mut outer, projection)?;
+        sort_polygons_for_replay(&mut retained_holes, projection);
+        retained_components.push(CoplanarConvexHoledComponent {
+            outer,
+            holes: retained_holes,
+        });
+    }
+    if retained_components.is_empty() {
+        return None;
+    }
+    sort_components_for_replay(&mut retained_components, projection);
+    let intersection_area =
+        coplanar_mesh_pairwise_intersection_area2(holed_source, clip_source, projection)?;
+    let retained_area = component_holed_components_area2(&retained_components, projection)?;
+    if compare_reals(&intersection_area, &retained_area).value() != Some(Ordering::Equal) {
+        return None;
+    }
+    let mesh = component_holed_components_to_earcut_open_mesh(&retained_components, projection)?;
+    let arrangement = CoplanarConvexComponentHoledArrangement {
+        projection,
+        components: retained_components,
+        mesh,
+    };
+    arrangement.validate().ok()?;
+    Some(arrangement)
+}
+
+/// Import source-owned holed components from exact mesh boundary rings.
+///
+/// A connected component is accepted only when one recovered boundary loop
+/// strictly contains all other recovered loops. The outer loop is oriented
+/// counter-clockwise, hole loops are oriented clockwise, and exact mesh area
+/// must equal `outer - holes`. This prevents a locally plausible ring set from
+/// standing in for a different triangulated source, preserving Yap's retained
+/// topology contract.
+#[cfg(feature = "exact-triangulation")]
+fn source_holed_surface_components_from_mesh(
+    mesh: &ExactMesh,
+) -> Option<(CoplanarProjection, Vec<SourceHoledSurfaceComponent>)> {
+    let component_meshes = connected_face_component_meshes(mesh)?;
+    let mut projection = None;
+    let mut components = Vec::new();
+    for component_mesh in component_meshes {
+        if component_mesh.triangles().is_empty() {
+            return None;
+        }
+        for face in 0..component_mesh.triangles().len() {
+            let classification = classify_mesh_triangle_against_retained_face_plane(
+                &component_mesh,
+                0,
+                &component_mesh,
+                face,
+            )
+            .ok()?;
+            if classification.relation != TrianglePlaneRelation::Coplanar {
+                return None;
+            }
+        }
+        let component_projection = choose_mesh_projection(&component_mesh)?;
+        match projection {
+            Some(expected) if expected != component_projection => return None,
+            None => projection = Some(component_projection),
+            Some(_) => {}
+        }
+        let rings = order_mesh_boundary_loops(&component_mesh)?;
+        if rings.len() < 2 {
+            return None;
+        }
+        let mut ring_points = rings
+            .into_iter()
+            .map(|ring| {
+                let mut points = ring
+                    .into_iter()
+                    .map(|index| {
+                        component_mesh
+                            .vertices()
+                            .get(index)
+                            .map(ExactPoint3::to_hyperlimit_point)
+                    })
+                    .collect::<Option<Vec<_>>>()?;
+                points = simplify_projected_polygon(points, component_projection);
+                validate_projected_simple_loop(
+                    &points,
+                    component_projection,
+                    "coplanar source-holed surface component",
+                )
+                .ok()?;
+                Some(points)
+            })
+            .collect::<Option<Vec<_>>>()?;
+
+        let mut outer_index = None;
+        for candidate in 0..ring_points.len() {
+            let mut candidate_outer = ring_points[candidate].clone();
+            orient_polygon_ccw(&mut candidate_outer, component_projection)?;
+            let mut contains_all = true;
+            for (other_index, other) in ring_points.iter().enumerate() {
+                if other_index == candidate {
+                    continue;
+                }
+                if !polygon_strictly_inside_simple_polygon(
+                    other,
+                    &candidate_outer,
+                    component_projection,
+                )? {
+                    contains_all = false;
+                    break;
+                }
+            }
+            if contains_all {
+                if outer_index.is_some() {
+                    return None;
+                }
+                outer_index = Some(candidate);
+            }
+        }
+        let outer_index = outer_index?;
+        let mut outer = ring_points.swap_remove(outer_index);
+        orient_polygon_ccw(&mut outer, component_projection)?;
+        let mut holes = ring_points;
+        for hole in &mut holes {
+            orient_polygon_cw(hole, component_projection)?;
+            validate_projected_strictly_convex_loop(
+                hole,
+                component_projection,
+                "coplanar source-holed surface component",
+            )
+            .ok()?;
+        }
+        validate_component_loops_disjoint(
+            &holes,
+            component_projection,
+            "coplanar source-holed surface component",
+        )
+        .ok()?;
+        let component = SourceHoledSurfaceComponent { outer, holes };
+        let retained_area = component_holed_component_area2(
+            &CoplanarConvexHoledComponent {
+                outer: component.outer.clone(),
+                holes: component.holes.clone(),
+            },
+            component_projection,
+        )?;
+        let mesh_area = mesh_projected_area2(&component_mesh, component_projection)?;
+        if compare_reals(&mesh_area, &retained_area).value() != Some(Ordering::Equal) {
+            return None;
+        }
+        components.push(component);
+    }
+    if components.is_empty()
+        || components
+            .iter()
+            .all(|component| component.holes.is_empty())
+    {
+        return None;
+    }
+    let projection = projection?;
+    let outers = components
+        .iter()
+        .map(|component| component.outer.clone())
+        .collect::<Vec<_>>();
+    validate_simple_component_loops_disjoint(
+        &outers,
+        projection,
+        "coplanar source-holed surface components",
+    )
+    .ok()?;
+    Some((projection, components))
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn component_holed_components_area2(
+    components: &[CoplanarConvexHoledComponent],
+    projection: CoplanarProjection,
+) -> Option<ExactReal> {
+    components
+        .iter()
+        .try_fold(ExactReal::from(0), |area, component| {
+            Some(add(
+                &area,
+                &component_holed_component_area2(component, projection)?,
+            ))
+        })
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn component_holed_component_area2(
+    component: &CoplanarConvexHoledComponent,
+    projection: CoplanarProjection,
+) -> Option<ExactReal> {
+    let outer_area = projected_area2_abs(&component.outer, projection)?;
+    let hole_area = component
+        .holes
+        .iter()
+        .try_fold(ExactReal::from(0), |area, hole| {
+            Some(add(&area, &projected_area2_abs(hole, projection)?))
+        })?;
+    if compare_reals(&outer_area, &hole_area).value() != Some(Ordering::Greater) {
+        return None;
+    }
+    Some(sub(&outer_area, &hole_area))
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn coplanar_mesh_pairwise_intersection_area2(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    projection: CoplanarProjection,
+) -> Option<ExactReal> {
+    let mut area = ExactReal::from(0);
+    for left_face in 0..left.triangles().len() {
+        let left_triangle = single_face_mesh(left, left_face)?;
+        for right_face in 0..right.triangles().len() {
+            let right_triangle = single_face_mesh(right, right_face)?;
+            let Some((clip_projection, clip)) =
+                pairwise_coplanar_triangle_intersection_polygon(&left_triangle, &right_triangle)
+            else {
+                continue;
+            };
+            if clip_projection != projection {
+                return None;
+            }
+            let clip_area = projected_area2_abs(&clip, projection)?;
+            if compare_reals(&clip_area, &ExactReal::from(0)).value() == Some(Ordering::Greater) {
+                area = add(&area, &clip_area);
+            }
+        }
+    }
+    Some(area)
 }
 
 #[cfg(feature = "exact-triangulation")]

@@ -25789,6 +25789,143 @@ fn exact_coplanar_mesh_containment_preserves_holed_intersection() {
 
 #[cfg(feature = "exact-triangulation")]
 #[test]
+fn exact_coplanar_component_holed_intersection_materializes_clipped_annulus() {
+    let outer = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 10, 0, 0, 10, 10, 0, 0, 10, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let removed_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[4, 4, 0, 6, 4, 0, 6, 6, 0, 4, 6, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let annulus =
+        hypermesh::exact::arrange_coplanar_convex_surface_holed_difference(&outer, &removed_hole)
+            .expect("one-hole source fixture should materialize")
+            .mesh;
+    let clipper = ExactMesh::from_i64_triangles_with_policy(
+        &[2, 1, 0, 9, 2, 0, 8, 9, 0, 1, 8, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+
+    let intersection =
+        hypermesh::exact::arrange_coplanar_surface_component_holed_intersection(&annulus, &clipper)
+            .expect("source-owned clipper should retain the annulus hole");
+    intersection.validate().unwrap();
+    intersection
+        .validate_intersection_against_sources(&annulus, &clipper)
+        .unwrap();
+    assert_eq!(intersection.components.len(), 1);
+    assert_eq!(intersection.components[0].holes.len(), 1);
+    assert!(
+        intersection.components[0]
+            .outer
+            .iter()
+            .any(|point| real_eq(&point.x, &ExactReal::from(9)))
+    );
+    assert!(
+        intersection.components[0].holes[0]
+            .iter()
+            .any(|point| real_eq(&point.x, &ExactReal::from(4)))
+    );
+
+    let reversed =
+        hypermesh::exact::arrange_coplanar_surface_component_holed_intersection(&clipper, &annulus)
+            .expect("component-holed intersection should be symmetric");
+    reversed.validate().unwrap();
+    assert_eq!(reversed, intersection);
+
+    let crossing_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[3, 3, 0, 5, 3, 0, 5, 7, 0, 3, 7, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_component_holed_intersection(
+            &annulus,
+            &crossing_hole,
+        )
+        .is_none(),
+        "partial hole overlap must remain a full planar-arrangement case"
+    );
+
+    let hole_edge_touch = ExactMesh::from_i64_triangles_with_policy(
+        &[2, 2, 0, 4, 2, 0, 4, 8, 0, 2, 8, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_component_holed_intersection(
+            &annulus,
+            &hole_edge_touch,
+        )
+        .is_none(),
+        "hole boundary contact is not a retained strict-hole certificate"
+    );
+
+    let no_retained_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[1, 1, 0, 3, 1, 0, 3, 3, 0, 1, 3, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_component_holed_intersection(
+            &annulus,
+            &no_retained_hole,
+        )
+        .is_none(),
+        "the component-holed artifact must not swallow a no-hole intersection"
+    );
+
+    let preflight = hypermesh::exact::preflight_boolean_exact(
+        &annulus,
+        &clipper,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+    )
+    .unwrap();
+    preflight.validate().unwrap();
+    preflight
+        .validate_against_sources(&annulus, &clipper)
+        .unwrap();
+    assert_eq!(
+        preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
+    );
+
+    let result = hypermesh::exact::boolean_exact(
+        &annulus,
+        &clipper,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    result
+        .validate_operation_against_sources(
+            &annulus,
+            &clipper,
+            hypermesh::exact::ExactBooleanOperation::Intersection,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::CoplanarSurfaceIntersection
+        }
+    );
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[test]
 fn exact_named_booleans_handle_empty_operands() {
     let empty =
         ExactMesh::from_i64_triangles_with_policy(&[], &[], ValidationPolicy::ALLOW_BOUNDARY)

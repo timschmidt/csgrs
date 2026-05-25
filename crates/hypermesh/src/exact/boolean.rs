@@ -113,7 +113,9 @@ use super::surface::{
     arrange_coplanar_convex_surface_multi_holed_difference,
     arrange_coplanar_convex_surface_multi_intersection,
     arrange_coplanar_convex_surface_multi_union, arrange_coplanar_convex_surface_union,
-    arrange_coplanar_surface_component_difference, arrange_coplanar_surface_component_holed_union,
+    arrange_coplanar_surface_component_difference,
+    arrange_coplanar_surface_component_holed_intersection,
+    arrange_coplanar_surface_component_holed_union,
     arrange_coplanar_surface_component_intersection, arrange_coplanar_surface_component_union,
     arrange_coplanar_surface_cutter_hole_contact_difference,
     arrange_coplanar_surface_multi_component_intersection,
@@ -386,6 +388,11 @@ pub fn preflight_boolean_exact(
         ExactBooleanOperation::Intersection
             if arrange_coplanar_surface_component_intersection(left, right).is_some()
                 || arrange_coplanar_surface_multi_component_intersection(left, right).is_some() =>
+        {
+            ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
+        }
+        ExactBooleanOperation::Intersection
+            if arrange_coplanar_surface_component_holed_intersection(left, right).is_some() =>
         {
             ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
         }
@@ -2263,6 +2270,20 @@ fn boolean_coplanar_surface_intersection(
             let mesh = copy_mesh(
                 &intersection.mesh,
                 "exact coplanar nonconvex multi-component intersection",
+                validation,
+            )?;
+            return Ok(Some(certified_shortcut_result(
+                mesh,
+                ExactBooleanShortcutKind::CoplanarSurfaceIntersection,
+            )));
+        }
+        if let Some(intersection) =
+            arrange_coplanar_surface_component_holed_intersection(left, right)
+        {
+            intersection.validate_intersection_against_sources(left, right)?;
+            let mesh = copy_mesh(
+                &intersection.mesh,
+                "exact coplanar component-holed surface intersection",
                 validation,
             )?;
             return Ok(Some(certified_shortcut_result(

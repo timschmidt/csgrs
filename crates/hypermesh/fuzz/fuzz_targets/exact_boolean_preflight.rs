@@ -24,8 +24,10 @@ use hypermesh::exact::{
     arrange_coplanar_convex_surface_multi_union, arrange_coplanar_convex_surface_union,
     arrange_coplanar_orthogonal_surface_difference,
     arrange_coplanar_orthogonal_surface_intersection, arrange_coplanar_orthogonal_surface_union,
-    arrange_coplanar_surface_component_difference, arrange_coplanar_surface_component_holed_union,
-    arrange_coplanar_surface_component_intersection, arrange_coplanar_surface_component_union,
+    arrange_coplanar_surface_component_difference,
+    arrange_coplanar_surface_component_holed_intersection,
+    arrange_coplanar_surface_component_holed_union, arrange_coplanar_surface_component_intersection,
+    arrange_coplanar_surface_component_union,
     arrange_coplanar_surface_cutter_hole_contact_difference,
     arrange_coplanar_surface_multi_component_intersection,
     arrange_coplanar_surface_multi_component_union, arrange_coplanar_surface_multi_difference,
@@ -1461,6 +1463,7 @@ fn exercise_deterministic_case(selector: u8) {
         34 => exercise_point_branch_component_holed_coplanar_union(),
         35 => exercise_nonrectangular_component_union_hull_coverage(),
         36 => exercise_holed_coplanar_mesh_containment(),
+        37 => exercise_component_holed_coplanar_intersection(),
         _ => exercise_nonconvex_coplanar_volumetric_difference_fan_split(),
     }
 }
@@ -2273,6 +2276,92 @@ fn exercise_holed_coplanar_mesh_containment() {
     .validate_operation_against_sources(
         &annulus,
         &cover,
+        ExactBooleanOperation::Intersection,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn exercise_component_holed_coplanar_intersection() {
+    let outer = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 10, 0, 0, 10, 10, 0, 0, 10, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("component-holed intersection outer fixture must import");
+    let hole = ExactMesh::from_i64_triangles_with_policy(
+        &[4, 4, 0, 6, 4, 0, 6, 6, 0, 4, 6, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("component-holed intersection hole fixture must import");
+    let annulus = arrange_coplanar_convex_surface_holed_difference(&outer, &hole)
+        .expect("component-holed intersection fixture should materialize an annulus")
+        .mesh;
+    let clipper = ExactMesh::from_i64_triangles_with_policy(
+        &[2, 1, 0, 9, 2, 0, 8, 9, 0, 1, 8, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("component-holed intersection clipper fixture must import");
+
+    let intersection =
+        arrange_coplanar_surface_component_holed_intersection(&annulus, &clipper)
+            .expect("source-owned clipper should expose the annulus hole");
+    intersection.validate().unwrap();
+    intersection
+        .validate_intersection_against_sources(&annulus, &clipper)
+        .unwrap();
+    assert_eq!(intersection.components.len(), 1);
+    assert_eq!(intersection.components[0].holes.len(), 1);
+    assert_eq!(
+        arrange_coplanar_surface_component_holed_intersection(&clipper, &annulus),
+        Some(intersection)
+    );
+
+    let crossing_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[3, 3, 0, 5, 3, 0, 5, 7, 0, 3, 7, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("component-holed crossing-hole fixture must import");
+    assert!(
+        arrange_coplanar_surface_component_holed_intersection(&annulus, &crossing_hole).is_none()
+    );
+
+    let no_retained_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[1, 1, 0, 3, 1, 0, 3, 3, 0, 1, 3, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("component-holed no-hole fixture must import");
+    assert!(
+        arrange_coplanar_surface_component_holed_intersection(&annulus, &no_retained_hole)
+            .is_none()
+    );
+
+    let preflight = preflight_boolean_exact(&annulus, &clipper, ExactBooleanOperation::Intersection)
+        .expect("component-holed intersection preflight should classify shortcut");
+    preflight.validate().unwrap();
+    preflight
+        .validate_against_sources(&annulus, &clipper)
+        .unwrap();
+    assert_eq!(
+        preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
+    );
+    hypermesh::exact::boolean_exact(
+        &annulus,
+        &clipper,
+        ExactBooleanOperation::Intersection,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("component-holed intersection should materialize")
+    .validate_operation_against_sources(
+        &annulus,
+        &clipper,
         ExactBooleanOperation::Intersection,
         ValidationPolicy::ALLOW_BOUNDARY,
         ExactBoundaryBooleanPolicy::Reject,

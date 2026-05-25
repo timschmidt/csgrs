@@ -17,7 +17,9 @@ use hypermesh::exact::{
     arrange_coplanar_convex_surface_multi_union, arrange_coplanar_convex_surface_union,
     arrange_coplanar_orthogonal_surface_difference,
     arrange_coplanar_orthogonal_surface_intersection, arrange_coplanar_orthogonal_surface_union,
-    arrange_coplanar_surface_component_difference, arrange_coplanar_surface_component_holed_union,
+    arrange_coplanar_surface_component_difference,
+    arrange_coplanar_surface_component_holed_intersection,
+    arrange_coplanar_surface_component_holed_union,
     arrange_coplanar_surface_component_intersection, arrange_coplanar_surface_component_union,
     arrange_coplanar_surface_cutter_hole_contact_difference,
     arrange_coplanar_surface_multi_component_intersection,
@@ -8885,6 +8887,30 @@ fn exact_boolean_coplanar_surface_intersection(c: &mut Criterion) {
             ValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap();
+        let holed_intersection_outer = ExactMesh::from_i64_triangles_with_policy(
+            &[0, 0, 0, 10, 0, 0, 10, 10, 0, 0, 10, 0],
+            &[0, 1, 2, 0, 2, 3],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let holed_intersection_hole = ExactMesh::from_i64_triangles_with_policy(
+            &[4, 4, 0, 6, 4, 0, 6, 6, 0, 4, 6, 0],
+            &[0, 1, 2, 0, 2, 3],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let holed_intersection_annulus = arrange_coplanar_convex_surface_holed_difference(
+            &holed_intersection_outer,
+            &holed_intersection_hole,
+        )
+        .unwrap()
+        .mesh;
+        let holed_intersection_clipper = ExactMesh::from_i64_triangles_with_policy(
+            &[2, 1, 0, 9, 2, 0, 8, 9, 0, 1, 8, 0],
+            &[0, 1, 2, 0, 2, 3],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
 
         c.bench_function("exact_boolean_coplanar_surface_intersection", |b| {
             b.iter(|| {
@@ -9022,6 +9048,22 @@ fn exact_boolean_coplanar_surface_intersection(c: &mut Criterion) {
                             &nonconvex_multi_intersection_right,
                         )
                     }),
+                    arrange_coplanar_surface_component_holed_intersection(
+                        &holed_intersection_annulus,
+                        &holed_intersection_clipper,
+                    )
+                    .map(|output| {
+                        output.validate_intersection_against_sources(
+                            &holed_intersection_annulus,
+                            &holed_intersection_clipper,
+                        )
+                    }),
+                    hypermesh::exact::preflight_boolean_exact(
+                        &holed_intersection_annulus,
+                        &holed_intersection_clipper,
+                        hypermesh::exact::ExactBooleanOperation::Intersection,
+                    )
+                    .map(|report| report.validate()),
                     hypermesh::exact::boolean_exact(
                         &nonconvex_multi_intersection_left,
                         &nonconvex_multi_intersection_right,
