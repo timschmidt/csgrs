@@ -16,6 +16,7 @@ use hyperlimit::{
 };
 use hyperreal::{Real, RealExactSetFacts};
 
+use crate::arc::{ExplicitCircularArc, LineExplicitArcIntersectionClass};
 use crate::provenance::PathProvenance;
 use crate::segment::LinePathSegment;
 
@@ -49,6 +50,19 @@ pub enum LineArrangementError {
     UndecidableParameterOrder { segment: usize },
     /// The same geometric point could not be de-duplicated exactly.
     UndecidablePointEquality,
+}
+
+/// Exact event class for one retained line segment against one explicit arc.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum LineArcArrangementEventClass {
+    /// The retained segment and arc are certified disjoint.
+    Disjoint,
+    /// The line segment touches the arc at one certified point.
+    Tangent,
+    /// The line segment crosses the arc at two certified points.
+    Secant,
+    /// The current exact predicates cannot decide the relation.
+    Unknown,
 }
 
 /// Exact facts cached for one arranged line path set.
@@ -105,6 +119,21 @@ pub struct LineArrangementEvent {
     pub overlap: Option<LinePathSegment>,
 }
 
+/// Pairwise arrangement event between one line segment and one explicit arc.
+#[derive(Clone, Debug, PartialEq)]
+pub struct LineArcArrangementEvent {
+    /// Line segment index.
+    pub line: usize,
+    /// Explicit arc index.
+    pub arc: usize,
+    /// Certified line/arc event class.
+    pub class: LineArcArrangementEventClass,
+    /// Raw axis-aligned line/arc classifier value when available.
+    pub line_arc_intersection: Option<LineExplicitArcIntersectionClass>,
+    /// Certified intersection points in line construction order.
+    pub points: Vec<Point2>,
+}
+
 /// Retained line arrangement schedule and split fragments.
 ///
 /// The report is a Yap-style exact object package: input geometry is preserved,
@@ -128,6 +157,33 @@ pub struct LineArrangementReport {
     /// Positive-length split fragments. Point fragments are intentionally omitted.
     pub fragments: Vec<LineArrangementFragment>,
     /// Cached exact facts for the retained arrangement schedule.
+    pub facts: LineArrangementFacts,
+}
+
+/// Retained mixed line/arc arrangement schedule for the axis-aligned line subset.
+///
+/// This report is intentionally narrower than a full circular-arc arrangement
+/// graph. It schedules exact line/arc events and line split fragments so later
+/// CAM/EDA stages can consume certified witnesses without flattening the arc or
+/// constructing planar cells in `hyperpath`. The exact line/circle solve is the
+/// retained axis-aligned branch described by CGAL-style circular-arc
+/// arrangements, while acceptance follows Yap, "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7.1-2 (1997): every event point is
+/// replayed against exact segment bounds and exact arc-sweep predicates before
+/// it can split a source line.
+#[derive(Clone, Debug, PartialEq)]
+pub struct LineArcArrangementReport {
+    /// Retained input line segments.
+    pub lines: Vec<LinePathSegment>,
+    /// Retained input explicit arcs.
+    pub arcs: Vec<ExplicitCircularArc>,
+    /// Certified or unknown line/arc pair events.
+    pub events: Vec<LineArcArrangementEvent>,
+    /// Sorted line breakpoints induced by line endpoints and line/arc events.
+    pub line_breakpoints: Vec<Vec<LineArrangementBreakpoint>>,
+    /// Positive-length line fragments induced by exact line/arc split points.
+    pub line_fragments: Vec<LineArrangementFragment>,
+    /// Cached exact facts for retained line endpoints and emitted line fragments.
     pub facts: LineArrangementFacts,
 }
 
@@ -210,6 +266,147 @@ pub fn arrange_line_segments_with_provenance(
         fragments,
         facts,
     })
+}
+
+/// Arrange retained line segments against retained explicit circular arcs.
+///
+/// Only line fragments are emitted because ordering points along arbitrary arc
+/// sweeps is a later mixed-curve arrangement problem. The event list still
+/// records exact arc witnesses, so a downstream curve-aware scheduler can
+/// promote them without recomputing the line/circle predicates.
+pub fn arrange_line_segments_with_explicit_arcs(
+    lines: &[LinePathSegment],
+    arcs: &[ExplicitCircularArc],
+    policy: PredicatePolicy,
+) -> Result<LineArcArrangementReport, LineArrangementError> {
+    arrange_line_segments_with_explicit_arcs_and_provenance(
+        lines,
+        arcs,
+        policy,
+        PathProvenance::native(),
+    )
+}
+
+/// Arrange retained line segments against explicit arcs with source provenance.
+pub fn arrange_line_segments_with_explicit_arcs_and_provenance(
+    lines: &[LinePathSegment],
+    arcs: &[ExplicitCircularArc],
+    policy: PredicatePolicy,
+    provenance: PathProvenance,
+) -> Result<LineArcArrangementReport, LineArrangementError> {
+    for (index, line) in lines.iter().enumerate() {
+        if line.facts().known_degenerate == Some(true) {
+            return Err(LineArrangementError::DegenerateSegment { segment: index });
+        }
+        if matches!(
+            compare_reals_with_policy(&line.length_squared(), &Real::zero(), policy).value(),
+            Some(Ordering::Equal)
+        ) {
+            return Err(LineArrangementError::DegenerateSegment { segment: index });
+        }
+    }
+
+    let mut line_breakpoints = seed_endpoint_breakpoints(lines, policy)?;
+    let mut events = Vec::new();
+    for (line_index, line) in lines.iter().enumerate() {
+        for (arc_index, arc) in arcs.iter().enumerate() {
+            let event = classify_line_arc_arrangement_event(
+                line_index,
+                line,
+                arc_index,
+                arc,
+                &mut line_breakpoints,
+                policy,
+            )?;
+            events.push(event);
+        }
+    }
+
+    sort_and_dedup_breakpoints(&mut line_breakpoints, policy)?;
+    let line_fragments = build_fragments(&line_breakpoints, policy)?;
+    let endpoint_refs = lines
+        .iter()
+        .flat_map(|segment| {
+            [
+                &segment.start().x,
+                &segment.start().y,
+                &segment.end().x,
+                &segment.end().y,
+            ]
+        })
+        .collect::<Vec<_>>();
+    let fragment_refs = line_fragments
+        .iter()
+        .flat_map(|fragment| {
+            [
+                &fragment.segment.start().x,
+                &fragment.segment.start().y,
+                &fragment.segment.end().x,
+                &fragment.segment.end().y,
+            ]
+        })
+        .collect::<Vec<_>>();
+    let facts = LineArrangementFacts {
+        endpoint_exact: Real::exact_set_facts(endpoint_refs),
+        fragment_exact: Real::exact_set_facts(fragment_refs),
+        provenance,
+    };
+    Ok(LineArcArrangementReport {
+        lines: lines.to_vec(),
+        arcs: arcs.to_vec(),
+        events,
+        line_breakpoints,
+        line_fragments,
+        facts,
+    })
+}
+
+fn classify_line_arc_arrangement_event(
+    line_index: usize,
+    line: &LinePathSegment,
+    arc_index: usize,
+    arc: &ExplicitCircularArc,
+    line_breakpoints: &mut [Vec<LineArrangementBreakpoint>],
+    policy: PredicatePolicy,
+) -> Result<LineArcArrangementEvent, LineArrangementError> {
+    let report = arc.intersect_axis_aligned_segment(line, policy);
+    match report.class {
+        LineExplicitArcIntersectionClass::Disjoint => Ok(LineArcArrangementEvent {
+            line: line_index,
+            arc: arc_index,
+            class: LineArcArrangementEventClass::Disjoint,
+            line_arc_intersection: Some(report.class),
+            points: Vec::new(),
+        }),
+        LineExplicitArcIntersectionClass::Tangent | LineExplicitArcIntersectionClass::Secant => {
+            for point in &report.points {
+                add_breakpoint(line_breakpoints, line_index, line, point.clone(), policy)?;
+            }
+            Ok(LineArcArrangementEvent {
+                line: line_index,
+                arc: arc_index,
+                class: match report.class {
+                    LineExplicitArcIntersectionClass::Tangent => {
+                        LineArcArrangementEventClass::Tangent
+                    }
+                    LineExplicitArcIntersectionClass::Secant => {
+                        LineArcArrangementEventClass::Secant
+                    }
+                    LineExplicitArcIntersectionClass::Disjoint
+                    | LineExplicitArcIntersectionClass::Unknown => unreachable!("matched above"),
+                },
+                line_arc_intersection: Some(report.class),
+                points: report.points,
+            })
+        }
+        LineExplicitArcIntersectionClass::Unknown => Ok(LineArcArrangementEvent {
+            line: line_index,
+            arc: arc_index,
+            class: LineArcArrangementEventClass::Unknown,
+            line_arc_intersection: Some(report.class),
+            points: Vec::new(),
+        }),
+    }
 }
 
 fn classify_line_arrangement_event(

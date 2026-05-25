@@ -10,14 +10,14 @@ use hyperpath::{
     QuadraticBezier, RationalQuadraticBezier, RectangularPocket, SourceLengthUnit,
     SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraLayerAlias, SpecctraNetAlias,
     SweptLineSegment, TangentSpan, TraceLayer, ViaDrillIntent, arrange_line_segments,
-    build_alternating_detour_meander, build_g1_join_problem, build_length_match_problem,
-    build_multi_detour_meander, build_nonuniform_detour_meander,
-    build_obstacle_aware_detour_meander, build_oriented_tangent_alignment_problem,
-    build_rectangular_bead_plan, build_rectangular_pocket_plan,
-    build_rectangular_serpentine_infill_graph, build_rectangular_support_plan,
-    build_single_detour_meander, build_tangent_alignment_problem, certify_constant_feed_time,
-    certify_differential_pair_skew, certify_g1_chain, certify_g1_join_candidate,
-    certify_length_extension, certify_tangent_alignment_candidate,
+    arrange_line_segments_with_explicit_arcs, build_alternating_detour_meander,
+    build_g1_join_problem, build_length_match_problem, build_multi_detour_meander,
+    build_nonuniform_detour_meander, build_obstacle_aware_detour_meander,
+    build_oriented_tangent_alignment_problem, build_rectangular_bead_plan,
+    build_rectangular_pocket_plan, build_rectangular_serpentine_infill_graph,
+    build_rectangular_support_plan, build_single_detour_meander, build_tangent_alignment_problem,
+    certify_constant_feed_time, certify_differential_pair_skew, certify_g1_chain,
+    certify_g1_join_candidate, certify_length_extension, certify_tangent_alignment_candidate,
     check_cardinal_rect_pad_board_clearance, check_circular_pad_board_clearance,
     check_circular_pad_circular_board_clearance, check_convex_pad_board_clearance,
     check_obround_pad_board_clearance, check_oriented_rect_pad_board_clearance,
@@ -126,6 +126,23 @@ fn path_predicates(c: &mut Criterion) {
     ];
     c.bench_function("line_arrangement_exact_cleanup", |b| {
         b.iter(|| arrange_line_segments(&line_arrangement_segments, PredicatePolicy::default()))
+    });
+    let line_arc_lines = vec![
+        LinePathSegment::new(p(-600, 0), p(600, 0)),
+        LinePathSegment::new(p(0, -600), p(0, 600)),
+        LinePathSegment::new(p(-500, 500), p(500, 500)),
+    ];
+    let line_arc_arcs = vec![
+        ExplicitCircularArc::new(p(0, 0), r(500), p(500, 0), p(500, 0), ArcDirection::Ccw).unwrap(),
+    ];
+    c.bench_function("line_arc_arrangement_axis_cleanup", |b| {
+        b.iter(|| {
+            arrange_line_segments_with_explicit_arcs(
+                &line_arc_lines,
+                &line_arc_arcs,
+                PredicatePolicy::default(),
+            )
+        })
     });
     let tangent_span_arc =
         ExplicitCircularArc::new(p(0, 0), r(5), p(3, 4), p(-3, 4), ArcDirection::Ccw).unwrap();

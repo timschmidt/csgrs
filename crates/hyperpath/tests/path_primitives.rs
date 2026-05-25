@@ -7,26 +7,28 @@ use hyperpath::{
     ExplicitArcIntersectionClass, ExplicitArcOverlapClass, ExplicitArcPointClassification,
     ExplicitArcSweepClass, ExplicitArcTangentClass, ExplicitCircleRelationClass,
     ExplicitCircularArc, HigherOrderBezier, HigherOrderBezierError, InfillGraphError,
-    LineArrangementError, LineArrangementEventClass, LineExplicitArcIntersectionClass,
-    LineOffsetError, LinePathSegment, MeanderError, MeanderObstacle, MeanderPlacementCandidate,
-    NetId, OffsetSide, PathProvenance, PathSourceFormat, PcbBoardOutline, PcbCardinalRectPad,
-    PcbCircularBoardOutline, PcbCircularPad, PcbConvexBoardOutline, PcbConvexPad, PcbObroundPad,
-    PcbOrientedRectPad, PcbOrthogonalBoardOutline, PcbRectPad, PcbRoundedRectPad, PcbTrace,
-    PcbViaStack, PocketPlanError, PocketPlanStopReason, QuadraticBezier, RationalQuadraticBezier,
+    LineArcArrangementEventClass, LineArrangementError, LineArrangementEventClass,
+    LineExplicitArcIntersectionClass, LineOffsetError, LinePathSegment, MeanderError,
+    MeanderObstacle, MeanderPlacementCandidate, NetId, OffsetSide, PathProvenance,
+    PathSourceFormat, PcbBoardOutline, PcbCardinalRectPad, PcbCircularBoardOutline, PcbCircularPad,
+    PcbConvexBoardOutline, PcbConvexPad, PcbObroundPad, PcbOrientedRectPad,
+    PcbOrthogonalBoardOutline, PcbRectPad, PcbRoundedRectPad, PcbTrace, PcbViaStack,
+    PocketPlanError, PocketPlanStopReason, QuadraticBezier, RationalQuadraticBezier,
     RationalQuadraticBezierError, RectangularPocket, RectangularRegionRelation,
     RouteCertificationError, SegmentParameterOrder, SourceLengthUnit, SpecctraGridTraceRecord,
     SpecctraGridViaRecord, SpecctraImportError, SpecctraLayerAlias, SpecctraNetAlias,
     SpecctraParseError, SupportFootprintStatus, SupportPlanError, SweptLineSegment,
     TangentAlignment, TangentJoinClass, TangentJoinReport, TangentSpan, TraceLayer,
     ViaAnnularRingReport, ViaDrillIntent, ViaDrillPolicyClass, ViaLayerSpanRelation,
-    ViaLayerTransitionClass, arrange_line_segments, build_alternating_detour_meander,
-    build_g1_join_problem, build_length_match_problem, build_multi_detour_meander,
-    build_nonuniform_detour_meander, build_obstacle_aware_detour_meander,
-    build_oriented_tangent_alignment_problem, build_rectangular_bead_plan,
-    build_rectangular_pocket_plan, build_rectangular_serpentine_infill_graph,
-    build_rectangular_support_plan, build_single_detour_meander, build_tangent_alignment_problem,
-    certify_constant_feed_time, certify_differential_pair_skew, certify_g1_chain,
-    certify_g1_join_candidate, certify_length_extension, certify_tangent_alignment_candidate,
+    ViaLayerTransitionClass, arrange_line_segments, arrange_line_segments_with_explicit_arcs,
+    build_alternating_detour_meander, build_g1_join_problem, build_length_match_problem,
+    build_multi_detour_meander, build_nonuniform_detour_meander,
+    build_obstacle_aware_detour_meander, build_oriented_tangent_alignment_problem,
+    build_rectangular_bead_plan, build_rectangular_pocket_plan,
+    build_rectangular_serpentine_infill_graph, build_rectangular_support_plan,
+    build_single_detour_meander, build_tangent_alignment_problem, certify_constant_feed_time,
+    certify_differential_pair_skew, certify_g1_chain, certify_g1_join_candidate,
+    certify_length_extension, certify_tangent_alignment_candidate,
     check_cardinal_rect_pad_board_clearance, check_circular_pad_board_clearance,
     check_circular_pad_circular_board_clearance, check_convex_pad_board_clearance,
     check_obround_pad_board_clearance, check_oriented_rect_pad_board_clearance,
@@ -248,6 +250,61 @@ fn line_arrangement_handles_rational_proper_crossing() {
     assert_eq!(report.breakpoints[0][1].parameter_numerator, r(20));
     assert_eq!(report.breakpoints[0][1].parameter_denominator, r(40));
     assert_eq!(report.fragments.len(), 4);
+}
+
+#[test]
+fn line_arc_arrangement_splits_axis_lines_at_arc_events() {
+    let line = LinePathSegment::new(p(-6, 0), p(6, 0));
+    let tangent = LinePathSegment::new(p(-5, 5), p(5, 5));
+    let arc = ExplicitCircularArc::new(p(0, 0), r(5), p(5, 0), p(5, 0), ArcDirection::Ccw).unwrap();
+
+    let report = arrange_line_segments_with_explicit_arcs(
+        &[line, tangent],
+        &[arc],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+
+    assert_eq!(report.events.len(), 2);
+    assert_eq!(report.events[0].class, LineArcArrangementEventClass::Secant);
+    assert_eq!(report.events[0].points, vec![p(5, 0), p(-5, 0)]);
+    assert_eq!(
+        report.events[1].class,
+        LineArcArrangementEventClass::Tangent
+    );
+    assert_eq!(report.events[1].points, vec![p(0, 5)]);
+    assert_eq!(
+        report.line_breakpoints[0]
+            .iter()
+            .map(|breakpoint| breakpoint.point.clone())
+            .collect::<Vec<_>>(),
+        vec![p(-6, 0), p(-5, 0), p(5, 0), p(6, 0)]
+    );
+    assert_eq!(
+        report.line_breakpoints[1]
+            .iter()
+            .map(|breakpoint| breakpoint.point.clone())
+            .collect::<Vec<_>>(),
+        vec![p(-5, 5), p(0, 5), p(5, 5)]
+    );
+    assert_eq!(report.line_fragments.len(), 5);
+}
+
+#[test]
+fn line_arc_arrangement_reports_unknown_for_non_axis_line() {
+    let diagonal = LinePathSegment::new(p(-5, -5), p(5, 5));
+    let arc = ExplicitCircularArc::new(p(0, 0), r(5), p(5, 0), p(5, 0), ArcDirection::Ccw).unwrap();
+
+    let report =
+        arrange_line_segments_with_explicit_arcs(&[diagonal], &[arc], PredicatePolicy::default())
+            .unwrap();
+
+    assert_eq!(
+        report.events[0].class,
+        LineArcArrangementEventClass::Unknown
+    );
+    assert_eq!(report.line_breakpoints[0].len(), 2);
+    assert_eq!(report.line_fragments.len(), 1);
 }
 
 #[test]
@@ -5964,6 +6021,40 @@ proptest! {
             prop_assert_eq!(overlap.start(), &p(a + offset, 7));
             prop_assert!(report.breakpoints[0].iter().any(|breakpoint| breakpoint.point == p(a + offset, 7)));
         }
+    }
+
+    #[test]
+    fn line_arc_arrangement_generated_full_circle_axis_secants_split_line(
+        cx in -50_i16..=50,
+        cy in -50_i16..=50,
+        radius in 1_i16..=40,
+        pad in 1_i16..=40,
+    ) {
+        let cx = i64::from(cx);
+        let cy = i64::from(cy);
+        let radius = i64::from(radius);
+        let pad = i64::from(pad);
+        let line = LinePathSegment::new(
+            p(cx - radius - pad, cy),
+            p(cx + radius + pad, cy),
+        );
+        let arc = ExplicitCircularArc::new(
+            p(cx, cy),
+            r(radius),
+            p(cx + radius, cy),
+            p(cx + radius, cy),
+            ArcDirection::Ccw,
+        )
+        .unwrap();
+
+        let report = arrange_line_segments_with_explicit_arcs(&[line], &[arc], PredicatePolicy::default()).unwrap();
+
+        prop_assert_eq!(report.events[0].class, LineArcArrangementEventClass::Secant);
+        prop_assert_eq!(report.events[0].points.len(), 2);
+        prop_assert_eq!(report.line_breakpoints[0].len(), 4);
+        prop_assert_eq!(report.line_fragments.len(), 3);
+        prop_assert!(report.line_breakpoints[0].iter().any(|breakpoint| breakpoint.point == p(cx - radius, cy)));
+        prop_assert!(report.line_breakpoints[0].iter().any(|breakpoint| breakpoint.point == p(cx + radius, cy)));
     }
 
     #[test]

@@ -61,3 +61,10 @@ path = "fuzz_targets/line_arrangement.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "line_arc_arrangement"
+path = "fuzz_targets/line_arc_arrangement.rs"
+test = false
+doc = false
+bench = false
