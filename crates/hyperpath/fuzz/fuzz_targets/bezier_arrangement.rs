@@ -4,10 +4,10 @@ use std::cmp::Ordering;
 
 use hyperlimit::{PredicatePolicy, compare_reals_with_policy};
 use hyperpath::{
-    BezierParameter, CubicBezier, LinePathSegment, QuadraticBezier, RationalQuadraticBezier,
-    arrange_cubic_beziers, arrange_line_segments_with_quadratic_beziers,
-    arrange_quadratic_beziers, arrange_rational_quadratic_beziers,
-    intersect_axis_aligned_line_quadratic_bezier,
+    BezierParameter, CubicBezier, LinePathSegment, LineQuadraticBezierIntersectionClass,
+    QuadraticBezier, RationalQuadraticBezier, arrange_cubic_beziers,
+    arrange_line_segments_with_quadratic_beziers, arrange_quadratic_beziers,
+    arrange_rational_quadratic_beziers, intersect_axis_aligned_line_quadratic_bezier,
 };
 use hyperreal::{Rational, Real};
 use libfuzzer_sys::fuzz_target;
@@ -77,11 +77,29 @@ fuzz_target!(|data: &[u8]| {
     assert_eq!(mixed_report.events.len(), 1);
     for window in mixed_report.bezier_breakpoints[0].windows(2) {
         assert!(
-            compare_reals_with_policy(&window[0].parameter, &window[1].parameter, PredicatePolicy::default())
-                .value()
-                .is_some()
+            compare_reals_with_policy(
+                &window[0].parameter,
+                &window[1].parameter,
+                PredicatePolicy::default()
+            )
+            .value()
+            .is_some()
         );
     }
+
+    let overlap_curve = QuadraticBezier::new(p(0, 0), p(4, 0), p(8, 0));
+    let overlap_line = LinePathSegment::new(p(2, 0), p(6, 0));
+    let overlap_report = arrange_line_segments_with_quadratic_beziers(
+        &[overlap_line],
+        &[overlap_curve],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert_eq!(
+        overlap_report.events[0].class,
+        LineQuadraticBezierIntersectionClass::Overlap
+    );
+    assert_eq!(overlap_report.bezier_breakpoints[0].len(), 4);
 
     let cubic = CubicBezier::new(
         p(signed(data[1]), signed(data[2])),

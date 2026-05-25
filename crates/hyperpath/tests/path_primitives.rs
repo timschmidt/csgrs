@@ -548,15 +548,19 @@ fn line_quadratic_bezier_intersection_clips_to_segment_bounds() {
 }
 
 #[test]
-fn line_quadratic_bezier_intersection_returns_unknown_for_overlap_support() {
+fn line_quadratic_bezier_intersection_promotes_degree_elevated_overlap() {
     let curve = QuadraticBezier::new(p(0, 0), p(4, 0), p(8, 0));
     let line = LinePathSegment::new(p(2, 0), p(6, 0));
 
     let report =
         intersect_axis_aligned_line_quadratic_bezier(&line, &curve, PredicatePolicy::default());
 
-    assert_eq!(report.class, LineQuadraticBezierIntersectionClass::Unknown);
-    assert!(report.intersections.is_empty());
+    assert_eq!(report.class, LineQuadraticBezierIntersectionClass::Overlap);
+    assert_eq!(report.intersections.len(), 2);
+    assert_eq!(report.intersections[0].parameter, rq(1, 4));
+    assert_eq!(report.intersections[0].point, p(2, 0));
+    assert_eq!(report.intersections[1].parameter, rq(3, 4));
+    assert_eq!(report.intersections[1].point, p(6, 0));
 }
 
 #[test]
@@ -641,8 +645,29 @@ fn line_quadratic_bezier_arrangement_splits_tangent_curve_once() {
 }
 
 #[test]
-fn line_quadratic_bezier_arrangement_keeps_overlap_unknown_unsplit() {
+fn line_quadratic_bezier_arrangement_splits_degree_elevated_overlap() {
     let curve = QuadraticBezier::new(p(0, 0), p(4, 0), p(8, 0));
+    let line = LinePathSegment::new(p(2, 0), p(6, 0));
+
+    let report =
+        arrange_line_segments_with_quadratic_beziers(&[line], &[curve], PredicatePolicy::default())
+            .unwrap();
+
+    assert_eq!(
+        report.events[0].class,
+        LineQuadraticBezierIntersectionClass::Overlap
+    );
+    assert_eq!(report.line_breakpoints[0].len(), 2);
+    assert_eq!(report.bezier_breakpoints[0].len(), 4);
+    assert_eq!(report.line_fragments.len(), 1);
+    assert_eq!(report.bezier_fragments.len(), 3);
+    assert_eq!(report.bezier_breakpoints[0][1].parameter, rq(1, 4));
+    assert_eq!(report.bezier_breakpoints[0][2].parameter, rq(3, 4));
+}
+
+#[test]
+fn line_quadratic_bezier_arrangement_keeps_nonlinear_line_image_overlap_unknown() {
+    let curve = QuadraticBezier::new(p(0, 0), p(2, 0), p(8, 0));
     let line = LinePathSegment::new(p(2, 0), p(6, 0));
 
     let report =
@@ -655,8 +680,6 @@ fn line_quadratic_bezier_arrangement_keeps_overlap_unknown_unsplit() {
     );
     assert_eq!(report.line_breakpoints[0].len(), 2);
     assert_eq!(report.bezier_breakpoints[0].len(), 2);
-    assert_eq!(report.line_fragments.len(), 1);
-    assert_eq!(report.bezier_fragments.len(), 1);
 }
 
 #[test]
@@ -6511,6 +6534,36 @@ proptest! {
         prop_assert_eq!(report.bezier_breakpoints[0][1].parameter.clone(), rq(1, 2));
         prop_assert_eq!(report.bezier_fragments.len(), 2);
         prop_assert_eq!(report.bezier_fragments[0].curve.end(), report.bezier_fragments[1].curve.start());
+    }
+
+    #[test]
+    fn line_quadratic_bezier_arrangement_generated_degree_elevated_overlaps_split(
+        x0 in -20_i16..=20,
+        width in 4_i16..=40,
+    ) {
+        let start_x = i64::from(x0);
+        let width = i64::from(width);
+        let curve = QuadraticBezier::new(
+            p(start_x, 0),
+            p(start_x + width, 0),
+            p(start_x + 2 * width, 0),
+        );
+        let line = LinePathSegment::new(
+            p(start_x + width / 2, 0),
+            p(start_x + width + width / 2, 0),
+        );
+
+        let report = arrange_line_segments_with_quadratic_beziers(
+            &[line],
+            &[curve],
+            PredicatePolicy::default(),
+        ).unwrap();
+
+        prop_assert_eq!(report.events[0].class, LineQuadraticBezierIntersectionClass::Overlap);
+        prop_assert_eq!(report.events[0].intersection.intersections.len(), 2);
+        prop_assert_eq!(report.line_fragments.len(), 1);
+        prop_assert_eq!(report.bezier_fragments.len(), 3);
+        prop_assert_eq!(report.bezier_breakpoints[0].len(), 4);
     }
 
     #[test]

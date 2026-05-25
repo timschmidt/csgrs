@@ -38,6 +38,9 @@ pub enum LineQuadraticBezierIntersectionClass {
     OnePoint,
     /// The line crosses the curve at two certified points inside the segment bounds.
     TwoPoints,
+    /// The segment and a degree-elevated linear quadratic Bezier overlap over a
+    /// positive-length interval with certified endpoint witnesses.
+    Overlap,
     /// The exact predicate package cannot certify the relation.
     Unknown,
 }
@@ -297,10 +300,11 @@ pub fn arrange_rational_quadratic_beziers_with_provenance(
 /// horizontal segment substitutes `B_y(t) = y_line`; a retained vertical segment
 /// substitutes `B_x(t) = x_line`. The resulting scalar quadratic is solved in
 /// the object layer and every candidate root is replayed against `[0, 1]` and
-/// the closed segment bounds before it becomes topology. If the curve lies on
-/// the supporting line, the function returns [`LineQuadraticBezierIntersectionClass::Unknown`]
-/// because positive-length overlap ownership belongs to the later mixed-curve
-/// arrangement graph.
+/// the closed segment bounds before it becomes topology. If a support-line
+/// overlap is a degree-elevated line segment, the overlap interval is promoted
+/// to exact endpoint witnesses. Nonlinear collinear Bezier images still return
+/// [`LineQuadraticBezierIntersectionClass::Unknown`] because they need a later
+/// exact inverse-parameter construction.
 ///
 /// This follows Yap's "Towards Exact Geometric Computation" rule that
 /// geometric decisions should be made by exact predicates over retained
@@ -320,9 +324,12 @@ pub fn intersect_axis_aligned_line_quadratic_bezier(
         Axis::X => segment.start().y.clone(),
         Axis::Y => segment.start().x.clone(),
     };
-    let roots = match solve_quadratic_coordinate_roots(curve, axis, fixed, policy) {
+    let roots = match solve_quadratic_coordinate_roots(curve, axis, fixed.clone(), policy) {
         Some(roots) => roots,
-        None => return line_quadratic_unknown_report(),
+        None => {
+            return degree_elevated_line_overlap_report(segment, curve, axis, fixed, policy)
+                .unwrap_or_else(line_quadratic_unknown_report);
+        }
     };
     let mut intersections = Vec::new();
     for parameter in roots {
@@ -732,6 +739,110 @@ fn solve_quadratic_roots(a: Real, b: Real, c: Real, policy: PredicatePolicy) -> 
     }
 }
 
+fn degree_elevated_line_overlap_report(
+    segment: &LinePathSegment,
+    curve: &QuadraticBezier,
+    axis: Axis,
+    fixed: Real,
+    policy: PredicatePolicy,
+) -> Option<LineQuadraticBezierIntersectionReport> {
+    // A collinear quadratic Bezier can be a nonlinear line image. Promoting
+    // arbitrary nonlinear overlap would require an exact inverse-parameter
+    // construction. This branch is intentionally limited to degree-elevated
+    // line segments, where `p1 = (p0 + p2) / 2` makes the Bezier parameter the
+    // affine line parameter. This is the same retained-object boundary called
+    // for by Yap, "Towards Exact Geometric Computation" (1997): overlap is
+    // promoted only when its witnesses are exact objects, otherwise `Unknown`
+    // is preserved.
+    if !is_degree_elevated_line(curve, policy)? {
+        return None;
+    }
+    if compare_reals_with_policy(&support_coordinate(curve.start(), axis), &fixed, policy)
+        .value()?
+        != Ordering::Equal
+        || compare_reals_with_policy(&support_coordinate(curve.end(), axis), &fixed, policy)
+            .value()?
+            != Ordering::Equal
+    {
+        return Some(LineQuadraticBezierIntersectionReport {
+            class: LineQuadraticBezierIntersectionClass::Disjoint,
+            intersections: Vec::new(),
+        });
+    }
+
+    let curve_a = varying_coordinate(curve.start(), axis);
+    let curve_b = varying_coordinate(curve.end(), axis);
+    let segment_a = varying_coordinate(segment.start(), axis);
+    let segment_b = varying_coordinate(segment.end(), axis);
+    let overlap_min = max_real(
+        &min_real(&curve_a, &curve_b, policy)?,
+        &min_real(&segment_a, &segment_b, policy)?,
+        policy,
+    )?;
+    let overlap_max = min_real(
+        &max_real(&curve_a, &curve_b, policy)?,
+        &max_real(&segment_a, &segment_b, policy)?,
+        policy,
+    )?;
+    match compare_reals_with_policy(&overlap_min, &overlap_max, policy).value()? {
+        Ordering::Greater => Some(LineQuadraticBezierIntersectionReport {
+            class: LineQuadraticBezierIntersectionClass::Disjoint,
+            intersections: Vec::new(),
+        }),
+        Ordering::Equal => {
+            let parameter = line_image_parameter(curve, axis, &overlap_min, policy)?;
+            let point = point_from_axis(axis, fixed, overlap_min);
+            Some(LineQuadraticBezierIntersectionReport {
+                class: LineQuadraticBezierIntersectionClass::OnePoint,
+                intersections: vec![LineQuadraticBezierIntersection { parameter, point }],
+            })
+        }
+        Ordering::Less => {
+            let mut intersections = vec![
+                LineQuadraticBezierIntersection {
+                    parameter: line_image_parameter(curve, axis, &overlap_min, policy)?,
+                    point: point_from_axis(axis, fixed.clone(), overlap_min),
+                },
+                LineQuadraticBezierIntersection {
+                    parameter: line_image_parameter(curve, axis, &overlap_max, policy)?,
+                    point: point_from_axis(axis, fixed, overlap_max),
+                },
+            ];
+            sort_line_quadratic_intersections(&mut intersections, policy)?;
+            Some(LineQuadraticBezierIntersectionReport {
+                class: LineQuadraticBezierIntersectionClass::Overlap,
+                intersections,
+            })
+        }
+    }
+}
+
+fn is_degree_elevated_line(curve: &QuadraticBezier, policy: PredicatePolicy) -> Option<bool> {
+    let x_mid = Real::from(2) * curve.control().x.clone();
+    let y_mid = Real::from(2) * curve.control().y.clone();
+    let x_sum = curve.start().x.clone() + curve.end().x.clone();
+    let y_sum = curve.start().y.clone() + curve.end().y.clone();
+    Some(
+        compare_reals_with_policy(&x_mid, &x_sum, policy).value()? == Ordering::Equal
+            && compare_reals_with_policy(&y_mid, &y_sum, policy).value()? == Ordering::Equal,
+    )
+}
+
+fn line_image_parameter(
+    curve: &QuadraticBezier,
+    axis: Axis,
+    value: &Real,
+    policy: PredicatePolicy,
+) -> Option<Real> {
+    let start = varying_coordinate(curve.start(), axis);
+    let end = varying_coordinate(curve.end(), axis);
+    let denominator = end - start.clone();
+    match compare_reals_with_policy(&denominator, &Real::zero(), policy).value()? {
+        Ordering::Equal => None,
+        Ordering::Less | Ordering::Greater => ((value.clone() - start) / denominator).ok(),
+    }
+}
+
 fn roots_are_tangent(
     curve: &QuadraticBezier,
     axis: Axis,
@@ -851,6 +962,24 @@ fn coordinate(point: &Point2, axis: Axis) -> Real {
     match axis {
         Axis::X => point.y.clone(),
         Axis::Y => point.x.clone(),
+    }
+}
+
+fn support_coordinate(point: &Point2, axis: Axis) -> Real {
+    coordinate(point, axis)
+}
+
+fn varying_coordinate(point: &Point2, axis: Axis) -> Real {
+    match axis {
+        Axis::X => point.x.clone(),
+        Axis::Y => point.y.clone(),
+    }
+}
+
+fn point_from_axis(axis: Axis, fixed: Real, varying: Real) -> Point2 {
+    match axis {
+        Axis::X => Point2::new(varying, fixed),
+        Axis::Y => Point2::new(fixed, varying),
     }
 }
 
