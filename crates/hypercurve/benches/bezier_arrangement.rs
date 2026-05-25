@@ -69,6 +69,12 @@ fn main() -> CurveResult<()> {
                 Classification::Uncertain(_) => 0,
             },
         );
+        total += black_box(match graph.split_retained_linear_overlaps(&policy) {
+            Classification::Decided(refinement) => {
+                refinement.graph().len() + refinement.refined_fragments().len()
+            }
+            Classification::Uncertain(_) => 0,
+        });
     }
     let elapsed = started.elapsed();
     println!(

@@ -23,8 +23,8 @@ use hyperreal::Real;
 use crate::classify::{compare_reals, is_zero};
 use crate::{
     BezierArrangementChain2, BezierArrangementGraph2, BezierArrangementTraversal2,
-    BezierCurveRelation, BezierSplitFragment2, BezierSubcurve2, Classification, CurvePolicy,
-    LineLineIntersection, LineSeg2, ParamRange, Point2, UncertaintyReason,
+    BezierCurveRelation, BezierParameter2, BezierSplitFragment2, BezierSubcurve2, Classification,
+    CurvePolicy, LineLineIntersection, LineSeg2, ParamRange, Point2, UncertaintyReason,
 };
 
 /// Exact positive-dimensional overlap relation between two arrangement fragments.
@@ -148,6 +148,37 @@ pub struct BezierRetainedLinearOverlapSplit2 {
     extent: BezierRetainedLineOverlapExtent2,
 }
 
+/// One fragment in a graph refined by certified linear-overlap split points.
+///
+/// The `local_range` is measured in the original retained graph fragment's
+/// Bezier parameter, not in the source curve's global parameter.  That makes
+/// the provenance replayable even after repeated graph refinements: each
+/// refined carrier says exactly which original fragment and exact local
+/// interval produced it.
+#[derive(Clone, Debug, PartialEq)]
+pub struct BezierRetainedOverlapRefinedFragment2 {
+    original_fragment_index: usize,
+    local_range: ParamRange,
+}
+
+/// Graph refined at all certified linearly-parameterized overlap endpoints.
+///
+/// This is an ownership-preparation artifact.  It does not decide which side
+/// owns an overlap and it does not traverse through positive-dimensional
+/// degeneracies.  It only turns exact split evidence into a new retained graph
+/// whose fragment boundaries include the overlap endpoints.  Per Yap (1997),
+/// that keeps the constructed subcurves exact and report-bearing before any
+/// topology consumer chooses ownership.  The subcurves are materialized by de
+/// Casteljau subdivision, de Casteljau (1959), using the Bernstein identities
+/// summarized by Farin (2002).
+#[derive(Clone, Debug, PartialEq)]
+pub struct BezierRetainedLinearOverlapSplitGraph2 {
+    graph: BezierArrangementGraph2,
+    refined_fragments: Vec<BezierRetainedOverlapRefinedFragment2>,
+    overlap_report: BezierRetainedOverlapReport2,
+    split_plan: Vec<BezierRetainedLinearOverlapSplit2>,
+}
+
 impl BezierRetainedLinearOverlapSplit2 {
     /// Constructs exact Bezier-parameter split evidence for a linear overlap.
     pub const fn new(
@@ -196,6 +227,80 @@ impl BezierRetainedLinearOverlapSplit2 {
     /// Returns whether the overlap is full or partial on each side.
     pub const fn extent(&self) -> BezierRetainedLineOverlapExtent2 {
         self.extent
+    }
+}
+
+impl BezierRetainedOverlapRefinedFragment2 {
+    /// Constructs provenance for one refined overlap-split graph fragment.
+    pub const fn new(original_fragment_index: usize, local_range: ParamRange) -> Self {
+        Self {
+            original_fragment_index,
+            local_range,
+        }
+    }
+
+    /// Returns the fragment index in the graph that was refined.
+    pub const fn original_fragment_index(&self) -> usize {
+        self.original_fragment_index
+    }
+
+    /// Returns the exact local range in the original retained fragment.
+    pub const fn local_range(&self) -> &ParamRange {
+        &self.local_range
+    }
+}
+
+impl BezierRetainedLinearOverlapSplitGraph2 {
+    /// Constructs a retained graph refinement and its replay metadata.
+    pub const fn new(
+        graph: BezierArrangementGraph2,
+        refined_fragments: Vec<BezierRetainedOverlapRefinedFragment2>,
+        overlap_report: BezierRetainedOverlapReport2,
+        split_plan: Vec<BezierRetainedLinearOverlapSplit2>,
+    ) -> Self {
+        Self {
+            graph,
+            refined_fragments,
+            overlap_report,
+            split_plan,
+        }
+    }
+
+    /// Returns the refined retained arrangement graph.
+    pub const fn graph(&self) -> &BezierArrangementGraph2 {
+        &self.graph
+    }
+
+    /// Returns provenance for every fragment in [`Self::graph`].
+    pub fn refined_fragments(&self) -> &[BezierRetainedOverlapRefinedFragment2] {
+        &self.refined_fragments
+    }
+
+    /// Returns the overlap report consumed to build the split plan.
+    pub const fn overlap_report(&self) -> &BezierRetainedOverlapReport2 {
+        &self.overlap_report
+    }
+
+    /// Returns the certified linear-overlap splits used for refinement.
+    pub fn split_plan(&self) -> &[BezierRetainedLinearOverlapSplit2] {
+        &self.split_plan
+    }
+
+    /// Consumes this refinement and returns all parts.
+    pub fn into_parts(
+        self,
+    ) -> (
+        BezierArrangementGraph2,
+        Vec<BezierRetainedOverlapRefinedFragment2>,
+        BezierRetainedOverlapReport2,
+        Vec<BezierRetainedLinearOverlapSplit2>,
+    ) {
+        (
+            self.graph,
+            self.refined_fragments,
+            self.overlap_report,
+            self.split_plan,
+        )
     }
 }
 
@@ -296,6 +401,46 @@ impl BezierArrangementGraph2 {
             overlap_report,
             shadowed_fragment_indices,
         })
+    }
+
+    /// Splits retained materialized fragments at certified linear-overlap endpoints.
+    ///
+    /// The method is deliberately narrower than a full overlap walker: it
+    /// requires all line-image overlaps in the report to have exact Bezier
+    /// parameter ranges from [`BezierRetainedOverlapReport2::linear_bezier_overlap_splits`].
+    /// It then inserts the range endpoints into the affected fragments and
+    /// materializes exact subcurves with de Casteljau subdivision.  Same-image
+    /// duplicate overlaps are reported but do not add boundaries; nonlinear
+    /// line images, unresolved endpoint carriers, or uncertain ordering remain
+    /// explicit uncertainty.
+    pub fn split_retained_linear_overlaps(
+        &self,
+        policy: &CurvePolicy,
+    ) -> Classification<BezierRetainedLinearOverlapSplitGraph2> {
+        let overlap_report = match BezierRetainedOverlapReport2::from_graph(self, policy) {
+            Classification::Decided(report) => report,
+            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+        };
+        let split_plan = match overlap_report.linear_bezier_overlap_splits(self, policy) {
+            Classification::Decided(split_plan) => split_plan,
+            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+        };
+        let boundaries = match linear_overlap_boundaries(self.len(), &split_plan, policy) {
+            Classification::Decided(boundaries) => boundaries,
+            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+        };
+
+        let (graph, refined_fragments) = match refine_graph_at_boundaries(self, &boundaries, policy)
+        {
+            Classification::Decided(refinement) => refinement,
+            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+        };
+        Classification::Decided(BezierRetainedLinearOverlapSplitGraph2::new(
+            graph,
+            refined_fragments,
+            overlap_report,
+            split_plan,
+        ))
     }
 }
 
@@ -538,6 +683,182 @@ fn line_overlap_extent(
         (false, true) => BezierRetainedLineOverlapExtent2::PartialFirstFullSecond,
         (false, false) => BezierRetainedLineOverlapExtent2::PartialBoth,
     })
+}
+
+fn linear_overlap_boundaries(
+    fragment_count: usize,
+    split_plan: &[BezierRetainedLinearOverlapSplit2],
+    policy: &CurvePolicy,
+) -> Classification<Vec<Vec<Real>>> {
+    let mut boundaries = vec![vec![Real::zero(), Real::one()]; fragment_count];
+    for split in split_plan {
+        if !push_boundary(
+            &mut boundaries,
+            split.first_fragment_index(),
+            split.first_bezier_range().start().clone(),
+            policy,
+        ) || !push_boundary(
+            &mut boundaries,
+            split.first_fragment_index(),
+            split.first_bezier_range().end().clone(),
+            policy,
+        ) || !push_boundary(
+            &mut boundaries,
+            split.second_fragment_index(),
+            split.second_bezier_range().start().clone(),
+            policy,
+        ) || !push_boundary(
+            &mut boundaries,
+            split.second_fragment_index(),
+            split.second_bezier_range().end().clone(),
+            policy,
+        ) {
+            return Classification::Uncertain(UncertaintyReason::Unsupported);
+        }
+    }
+
+    for fragment_boundaries in &mut boundaries {
+        match sort_and_dedup_boundaries(fragment_boundaries, policy) {
+            Some(()) => {}
+            None => return Classification::Uncertain(UncertaintyReason::Ordering),
+        }
+    }
+    Classification::Decided(boundaries)
+}
+
+fn push_boundary(
+    boundaries: &mut [Vec<Real>],
+    fragment_index: usize,
+    boundary: Real,
+    _policy: &CurvePolicy,
+) -> bool {
+    let Some(fragment_boundaries) = boundaries.get_mut(fragment_index) else {
+        return false;
+    };
+    fragment_boundaries.push(boundary);
+    true
+}
+
+fn sort_and_dedup_boundaries(boundaries: &mut Vec<Real>, policy: &CurvePolicy) -> Option<()> {
+    for index in 1..boundaries.len() {
+        let mut cursor = index;
+        while cursor > 0 {
+            match compare_reals(&boundaries[cursor], &boundaries[cursor - 1], policy)? {
+                std::cmp::Ordering::Less => {
+                    boundaries.swap(cursor, cursor - 1);
+                    cursor -= 1;
+                }
+                std::cmp::Ordering::Equal | std::cmp::Ordering::Greater => break,
+            }
+        }
+    }
+
+    let mut deduped = Vec::with_capacity(boundaries.len());
+    for boundary in boundaries.drain(..) {
+        if deduped.last().is_some_and(|last| {
+            compare_reals(last, &boundary, policy) == Some(std::cmp::Ordering::Equal)
+        }) {
+            continue;
+        }
+        deduped.push(boundary);
+    }
+    *boundaries = deduped;
+    Some(())
+}
+
+fn refine_graph_at_boundaries(
+    graph: &BezierArrangementGraph2,
+    boundaries: &[Vec<Real>],
+    policy: &CurvePolicy,
+) -> Classification<(
+    BezierArrangementGraph2,
+    Vec<BezierRetainedOverlapRefinedFragment2>,
+)> {
+    let mut refined_graph_fragments = Vec::new();
+    let mut refined_fragments = Vec::new();
+
+    for (original_index, arrangement_fragment) in graph.fragments().iter().enumerate() {
+        let Some(fragment_boundaries) = boundaries.get(original_index) else {
+            return Classification::Uncertain(UncertaintyReason::Unsupported);
+        };
+        if fragment_boundaries.len() <= 2 {
+            refined_graph_fragments.push(arrangement_fragment.clone());
+            refined_fragments.push(BezierRetainedOverlapRefinedFragment2::new(
+                original_index,
+                ParamRange::new(Real::zero(), Real::one()),
+            ));
+            continue;
+        }
+
+        let BezierSplitFragment2::Materialized { start, end, curve } =
+            arrangement_fragment.fragment()
+        else {
+            return Classification::Uncertain(UncertaintyReason::Boundary);
+        };
+        let (Some(source_start), Some(source_end)) = (start.as_exact(), end.as_exact()) else {
+            return Classification::Uncertain(UncertaintyReason::Unsupported);
+        };
+
+        for pair in fragment_boundaries.windows(2) {
+            let local_start = pair[0].clone();
+            let local_end = pair[1].clone();
+            if compare_reals(&local_start, &local_end, policy) == Some(std::cmp::Ordering::Equal) {
+                continue;
+            }
+            let subcurve = match subcurve_between_local(curve, &local_start, &local_end, policy) {
+                Classification::Decided(subcurve) => subcurve,
+                Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+            };
+            let refined_start = compose_source_parameter(source_start, source_end, &local_start);
+            let refined_end = compose_source_parameter(source_start, source_end, &local_end);
+            let local_range = ParamRange::new(local_start, local_end);
+            refined_graph_fragments.push(crate::BezierArrangementFragment2::new(
+                arrangement_fragment.source_curve_index(),
+                arrangement_fragment.source_fragment_index(),
+                BezierSplitFragment2::Materialized {
+                    start: BezierParameter2::Exact(refined_start),
+                    end: BezierParameter2::Exact(refined_end),
+                    curve: subcurve,
+                },
+            ));
+            refined_fragments.push(BezierRetainedOverlapRefinedFragment2::new(
+                original_index,
+                local_range,
+            ));
+        }
+    }
+
+    Classification::Decided((
+        BezierArrangementGraph2::new(refined_graph_fragments),
+        refined_fragments,
+    ))
+}
+
+fn subcurve_between_local(
+    curve: &BezierSubcurve2,
+    start: &Real,
+    end: &Real,
+    policy: &CurvePolicy,
+) -> Classification<BezierSubcurve2> {
+    let result = match curve {
+        BezierSubcurve2::Quadratic(curve) => curve
+            .subcurve_between_exact(start, end, policy)
+            .map(BezierSubcurve2::Quadratic),
+        BezierSubcurve2::Cubic(curve) => curve
+            .subcurve_between_exact(start, end, policy)
+            .map(BezierSubcurve2::Cubic),
+        BezierSubcurve2::RationalQuadratic(curve) => curve
+            .subcurve_between_exact(start, end, policy)
+            .map(BezierSubcurve2::RationalQuadratic),
+    };
+    match result {
+        Ok(curve) => Classification::Decided(curve),
+        Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
+    }
+}
+
+fn compose_source_parameter(source_start: &Real, source_end: &Real, local: &Real) -> Real {
+    source_start + (&(source_end - source_start) * local)
 }
 
 fn unit_range(range: &ParamRange, policy: &CurvePolicy) -> Option<bool> {

@@ -407,6 +407,69 @@ fn retained_overlap_report_extracts_partial_line_image_split_ranges() {
         bezier_splits[0].extent(),
         BezierRetainedLineOverlapExtent2::PartialBoth
     );
+
+    let refinement = decided(graph.split_retained_linear_overlaps(&policy()));
+    assert_eq!(refinement.overlap_report().len(), 1);
+    assert_eq!(refinement.split_plan().len(), 1);
+    assert_eq!(refinement.graph().len(), 4);
+    assert_eq!(refinement.refined_fragments().len(), 4);
+    assert_eq!(
+        refinement.refined_fragments()[0].original_fragment_index(),
+        0
+    );
+    assert_eq!(
+        refinement.refined_fragments()[0].local_range(),
+        &hypercurve::ParamRange::new(r(0), q(1, 2))
+    );
+    assert_eq!(
+        refinement.refined_fragments()[1].original_fragment_index(),
+        0
+    );
+    assert_eq!(
+        refinement.refined_fragments()[1].local_range(),
+        &hypercurve::ParamRange::new(q(1, 2), r(1))
+    );
+    assert_eq!(
+        refinement.refined_fragments()[2].original_fragment_index(),
+        1
+    );
+    assert_eq!(
+        refinement.refined_fragments()[2].local_range(),
+        &hypercurve::ParamRange::new(r(0), q(1, 2))
+    );
+    assert_eq!(
+        refinement.refined_fragments()[3].original_fragment_index(),
+        1
+    );
+    assert_eq!(
+        refinement.refined_fragments()[3].local_range(),
+        &hypercurve::ParamRange::new(q(1, 2), r(1))
+    );
+    let refined = refinement.graph().fragments();
+    let BezierSplitFragment2::Materialized {
+        start,
+        end,
+        curve: BezierSubcurve2::Quadratic(overlap_from_first),
+    } = refined[1].fragment()
+    else {
+        panic!("expected exact quadratic overlap fragment from first curve");
+    };
+    assert_eq!(start, &exact(q(1, 2)));
+    assert_eq!(end, &exact(r(1)));
+    assert_eq!(overlap_from_first.start(), &p(2, 0));
+    assert_eq!(overlap_from_first.end(), &p(4, 0));
+    let BezierSplitFragment2::Materialized {
+        start,
+        end,
+        curve: BezierSubcurve2::Quadratic(overlap_from_second),
+    } = refined[2].fragment()
+    else {
+        panic!("expected exact quadratic overlap fragment from second curve");
+    };
+    assert_eq!(start, &exact(r(0)));
+    assert_eq!(end, &exact(q(1, 2)));
+    assert_eq!(overlap_from_second.start(), &p(2, 0));
+    assert_eq!(overlap_from_second.end(), &p(4, 0));
 }
 
 #[test]
@@ -458,6 +521,10 @@ fn retained_overlap_report_rejects_nonlinear_line_image_bezier_ranges() {
     assert_eq!(decided(report.line_overlap_splits(&policy())).len(), 1);
     assert_eq!(
         report.linear_bezier_overlap_splits(&graph, &policy()),
+        Classification::Uncertain(UncertaintyReason::Unsupported)
+    );
+    assert_eq!(
+        graph.split_retained_linear_overlaps(&policy()),
         Classification::Uncertain(UncertaintyReason::Unsupported)
     );
 }
