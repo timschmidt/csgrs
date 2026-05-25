@@ -11,7 +11,6 @@
 
 use core::cmp::Ordering;
 
-use hyperlimit::{Aabb3Intersection, PredicateOutcome};
 use hyperreal::Real;
 
 use crate::{
@@ -121,56 +120,42 @@ fn certified_cmp(left: &Real, right: &Real, axis: usize) -> HypervoxelResult<Ord
 }
 
 /// Classifies one cell against an exact axis-aligned box.
+///
+/// Voxel cells are treated as half-open finite volumes
+/// `[min, max) x [min, max) x [min, max)`. This avoids promoting a zero-volume
+/// touch on an integer grid plane into stored boundary topology for exact box
+/// fixtures: a box `[1, 3)^3` covers exactly the cells with coordinates `1`
+/// and `2` on each axis, while a fractional box such as `[1/2, 5/2)^3` still
+/// produces conservative partial-overlap boundary cells. This is an exact
+/// object-level convention, not an epsilon shift, following Yap, "Towards
+/// Exact Geometric Computation," *Computational Geometry* 7(1-2), 1997: the
+/// cell model is named and all comparisons remain proof-producing.
 pub fn classify_cell_against_box(
     address: VoxelAddress,
     frame: &GridFrame,
     exact_box: &ExactBox,
 ) -> HypervoxelResult<VoxelBoxClassifier> {
     let bounds = address.bounds(frame)?;
-    let relation = decide(
-        hyperlimit::classify_aabb3_intersection(
-            &point3(&bounds.min),
-            &point3(&bounds.max),
-            &point3(&exact_box.min),
-            &point3(&exact_box.max),
-        ),
-        0,
-    )?;
-    if relation == Aabb3Intersection::Disjoint {
-        return Ok(VoxelBoxClassifier::Outside);
+    let mut fully_inside = true;
+    for axis in 0..3 {
+        if certified_cmp(&bounds.max[axis], &exact_box.min[axis], axis)? != Ordering::Greater {
+            return Ok(VoxelBoxClassifier::Outside);
+        }
+        if certified_cmp(&bounds.min[axis], &exact_box.max[axis], axis)? != Ordering::Less {
+            return Ok(VoxelBoxClassifier::Outside);
+        }
+        if certified_cmp(&bounds.min[axis], &exact_box.min[axis], axis)? == Ordering::Less
+            || certified_cmp(&bounds.max[axis], &exact_box.max[axis], axis)? == Ordering::Greater
+        {
+            fully_inside = false;
+        }
     }
 
-    let min_inside = decide(
-        hyperlimit::classify_point_aabb3(
-            &point3(&exact_box.min),
-            &point3(&exact_box.max),
-            &point3(&bounds.min),
-        ),
-        0,
-    )?;
-    let max_inside = decide(
-        hyperlimit::classify_point_aabb3(
-            &point3(&exact_box.min),
-            &point3(&exact_box.max),
-            &point3(&bounds.max),
-        ),
-        0,
-    )?;
-    if min_inside.is_inside_or_boundary() && max_inside.is_inside_or_boundary() {
+    if fully_inside {
         Ok(VoxelBoxClassifier::Inside)
     } else {
         Ok(VoxelBoxClassifier::Boundary)
     }
-}
-
-fn decide<T>(outcome: PredicateOutcome<T>, axis: usize) -> HypervoxelResult<T> {
-    outcome
-        .value()
-        .ok_or(HypervoxelError::UnknownOrdering { axis })
-}
-
-fn point3(values: &[Real; 3]) -> hyperlimit::Point3 {
-    hyperlimit::Point3::new(values[0].clone(), values[1].clone(), values[2].clone())
 }
 
 /// Voxelizes an exact axis-aligned box into a semantic sparse grid.

@@ -95,6 +95,16 @@ fuzz_target!(|data: (u8, u64, u64, u64)| {
         VoxelizationPolicy::conservative_cover(),
     )
     .unwrap();
+    let small_cells = 1_u64 << small_depth;
+    let covered_cells_per_axis = cells.min(8).min(small_cells);
+    let covered_cell_count = covered_cells_per_axis.pow(3);
+    assert_eq!(grid.len() as u64, covered_cell_count);
+    assert_eq!(report.boundary_cells, 0);
+    assert_eq!(
+        report.predicate_certificates.inside_cells as u64,
+        covered_cell_count
+    );
+    assert_eq!(report.predicate_certificates.boundary_cells, 0);
     let halfspace =
         ExactHalfSpace::new([Real::from(1), Real::from(0), Real::from(0)], Real::from(1), None);
     assert!(halfspace.report().exact_halfspace_ready);

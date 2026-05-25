@@ -36,6 +36,10 @@ fn r(n: i32) -> Real {
     n.into()
 }
 
+fn rf(n: i64, d: u64) -> Real {
+    Rational::fraction(n, d).unwrap().into()
+}
+
 fn frame() -> GridFrame {
     GridFrame::builder()
         .origin([r(0), r(0), r(0)])
@@ -128,6 +132,15 @@ fn bench_exact_box_voxelization(c: &mut Criterion) {
         .build()
         .unwrap();
     let exact_box = ExactBox::new([r(3), r(3), r(3)], [r(11), r(11), r(11)], None);
+    let (integer_grid, integer_report) = voxelize_exact_box(
+        frame.clone(),
+        &exact_box,
+        MaterialRegionId(1),
+        VoxelizationPolicy::conservative_cover(),
+    )
+    .unwrap();
+    assert_eq!(integer_grid.len(), 512);
+    assert_eq!(integer_report.boundary_cells, 0);
 
     c.bench_function("exact_box_voxelization_conservative_cover", |b| {
         b.iter(|| {
@@ -140,6 +153,33 @@ fn bench_exact_box_voxelization(c: &mut Criterion) {
             .unwrap()
         })
     });
+    let fractional_box = ExactBox::new(
+        [rf(7, 2), rf(7, 2), rf(7, 2)],
+        [rf(21, 2), rf(21, 2), rf(21, 2)],
+        None,
+    );
+    let (_, fractional_report) = voxelize_exact_box(
+        frame.clone(),
+        &fractional_box,
+        MaterialRegionId(1),
+        VoxelizationPolicy::conservative_cover(),
+    )
+    .unwrap();
+    assert!(fractional_report.boundary_cells > 0);
+    c.bench_function(
+        "fractional_exact_box_voxelization_conservative_cover",
+        |b| {
+            b.iter(|| {
+                voxelize_exact_box(
+                    frame.clone(),
+                    &fractional_box,
+                    MaterialRegionId(1),
+                    VoxelizationPolicy::conservative_cover(),
+                )
+                .unwrap()
+            })
+        },
+    );
 
     let halfspace = ExactHalfSpace::new([r(1), r(0), r(0)], r(8), None);
     c.bench_function("exact_box_source_report", |b| b.iter(|| exact_box.report()));

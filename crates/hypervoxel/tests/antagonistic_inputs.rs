@@ -1,9 +1,10 @@
 use hyperreal::{Rational, Real};
 use hypervoxel::{
     ContinuousFieldVoxelCell, ContinuousFieldVoxelInterchangeManifest,
-    ContinuousFieldVoxelManifest, ContinuousFieldVoxelRowOrder, FreshnessStatus,
-    GridCoordinateSystem, GridFrame, GridSource, HypervoxelError, LengthUnit, VoxelAddress,
-    VoxelCell, continuous_field_address,
+    ContinuousFieldVoxelManifest, ContinuousFieldVoxelRowOrder, ExactBox, FreshnessStatus,
+    GridCoordinateSystem, GridFrame, GridSource, HypervoxelError, LengthUnit, MaterialRegionId,
+    OccupancyState, VoxelAddress, VoxelCell, VoxelizationPolicy, continuous_field_address,
+    voxelize_exact_box,
 };
 use proptest::prelude::*;
 
@@ -57,6 +58,79 @@ fn exact_bounds_survive_large_negative_origin_and_prime_denominator_pitch() {
 
     assert_eq!(bounds.min[0], real_fraction(-10_000 * 97 + 63, 97));
     assert_eq!(bounds.max[2], real_fraction(5 * 97 + 62 * 3, 97));
+}
+
+#[test]
+fn integer_aligned_exact_box_uses_half_open_cell_volume() {
+    let frame = GridFrame::builder().depth(2).build().unwrap();
+    let exact_box = ExactBox::new(
+        [Real::from(1), Real::from(1), Real::from(1)],
+        [Real::from(3), Real::from(3), Real::from(3)],
+        None,
+    );
+
+    let (grid, report) = voxelize_exact_box(
+        frame,
+        &exact_box,
+        MaterialRegionId(4),
+        VoxelizationPolicy::conservative_cover(),
+    )
+    .unwrap();
+
+    assert_eq!(grid.len(), 8);
+    assert_eq!(report.boundary_cells, 0);
+    assert_eq!(report.unknown_cells, 0);
+    assert_eq!(report.predicate_certificates.inside_cells, 8);
+    assert_eq!(report.predicate_certificates.boundary_cells, 0);
+    assert_eq!(report.predicate_certificates.unknown_cells, 0);
+    assert_eq!(report.predicate_certificates.outside_cells, 56);
+    assert!(report.exact_topology_ready());
+
+    let outside_low = VoxelAddress::new(2, [0, 1, 1]).unwrap();
+    let outside_high = VoxelAddress::new(2, [3, 1, 1]).unwrap();
+    let inside = VoxelAddress::new(2, [1, 1, 1]).unwrap();
+    assert_eq!(
+        grid.get(outside_low).unwrap().occupancy,
+        OccupancyState::Empty
+    );
+    assert_eq!(
+        grid.get(outside_high).unwrap().occupancy,
+        OccupancyState::Empty
+    );
+    assert_eq!(grid.get(inside).unwrap().occupancy, OccupancyState::Filled);
+}
+
+#[test]
+fn fractional_exact_box_keeps_conservative_boundary_cells() {
+    let frame = GridFrame::builder().depth(2).build().unwrap();
+    let exact_box = ExactBox::new(
+        [
+            real_fraction(1, 2),
+            real_fraction(1, 2),
+            real_fraction(1, 2),
+        ],
+        [
+            real_fraction(5, 2),
+            real_fraction(5, 2),
+            real_fraction(5, 2),
+        ],
+        None,
+    );
+
+    let (grid, report) = voxelize_exact_box(
+        frame,
+        &exact_box,
+        MaterialRegionId(5),
+        VoxelizationPolicy::conservative_cover(),
+    )
+    .unwrap();
+
+    assert_eq!(grid.len(), 27);
+    assert_eq!(report.predicate_certificates.inside_cells, 1);
+    assert_eq!(report.predicate_certificates.boundary_cells, 26);
+    assert_eq!(report.boundary_cells, 26);
+    assert_eq!(report.unknown_cells, 0);
+    assert!(report.exact_topology_ready());
 }
 
 proptest! {
