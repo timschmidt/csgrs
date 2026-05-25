@@ -1244,6 +1244,113 @@ proptest! {
     }
 
     #[test]
+    fn sketch_projected_arc_cubic_curve_second_order_contact_rows_match_projected_circle_jets(
+        ox in -4_i16..=4,
+        oy in -4_i16..=4,
+        oz in -4_i16..=4,
+        cx in -8_i16..=8,
+        cy in -8_i16..=8,
+        radius in 1_i16..=8,
+        z0 in -6_i16..=6,
+        z1 in -6_i16..=6,
+        z2 in -6_i16..=6,
+        z3 in -6_i16..=6,
+    ) {
+        let ox = i64::from(ox);
+        let oy = i64::from(oy);
+        let oz = i64::from(oz);
+        let cx = i64::from(cx);
+        let cy = i64::from(cy);
+        let radius = i64::from(radius);
+        let z0 = i64::from(z0);
+        let z1 = i64::from(z1);
+        let z2 = i64::from(z2);
+        let z3 = i64::from(z3);
+        let mut sketch = SketchSolveProblem::new();
+        let origin = sketch.add_point3d("origin", Real::from(ox), Real::from(oy), Real::from(oz));
+        let normal = sketch.add_normal3d("normal", Real::one(), Real::zero(), Real::zero(), Real::zero());
+        let workplane = sketch.add_workplane("workplane", origin, normal);
+        let center = sketch.add_point2d("center", Real::from(cx), Real::from(cy));
+        let start = sketch.add_point2d("start", Real::from(cx + radius), Real::from(cy));
+        let end = sketch.add_point2d("end", Real::from(cx), Real::from(cy + radius));
+        let radius_entity = sketch.add_distance("radius", Real::from(radius));
+        let arc = sketch.add_arc_of_circle2("arc", center, start, end, radius_entity);
+        let tangent_step = 10 * radius;
+        let p0 = sketch.add_point3d(
+            "p0",
+            Real::from(ox + cx + radius),
+            Real::from(oy + cy),
+            Real::from(oz + z0),
+        );
+        let p1 = sketch.add_point3d(
+            "p1",
+            Real::from(ox + cx + radius),
+            Real::from(oy + cy + tangent_step),
+            Real::from(oz + z1),
+        );
+        let p2 = sketch.add_point3d(
+            "p2",
+            Real::from(ox + cx - 149 * radius),
+            Real::from(oy + cy + 2 * tangent_step),
+            Real::from(oz + z2),
+        );
+        let p3 = sketch.add_point3d(
+            "p3",
+            Real::from(ox + cx - 299 * radius),
+            Real::from(oy + cy + 3 * tangent_step),
+            Real::from(oz + z3),
+        );
+        let cubic = sketch.add_cubic3("cubic", p0, p1, p2, p3);
+        let parameter = sketch.add_parameter("t", Real::zero());
+        let handle = sketch.add_projected_arc_cubic_curve_second_order_contact3(
+            "projected arc cubic second order contact",
+            workplane,
+            arc,
+            SketchArcEndpoint::Start,
+            cubic,
+            parameter,
+            SketchTangentOrientation::CounterClockwise,
+        );
+
+        let lowered = sketch.lower_to_problem();
+        let context = context_from_problem(&lowered.problem);
+        let certification = certify_candidate(&PreparedProblem::new(&lowered.problem), &context);
+        let forms = sketch.residual_forms_for_constraint(handle);
+
+        prop_assert_eq!(lowered.rows.len(), 7);
+        prop_assert_eq!(
+            lowered.rows[0].strategy,
+            Some(SketchResidualStrategy::WorkplaneUnitQuaternion)
+        );
+        let all_projected_contact_rows = lowered.rows[1..].iter().all(|row| {
+            row.strategy == Some(SketchResidualStrategy::ProjectedArcCubicCurveSecondOrderContact)
+                && row.status == SketchGeneratedRowStatus::Generated
+        });
+        prop_assert!(all_projected_contact_rows);
+        prop_assert!(certification.all_satisfied());
+        prop_assert_eq!(forms.status, SketchResidualFormsStatus::Generated);
+        prop_assert_eq!(forms.forms.len(), 7);
+        for form in &forms.forms[..5] {
+            prop_assert_eq!(form.role, SketchResidualFormRole::ExactProof);
+            prop_assert_eq!(form.residual.eval_real(context.bindings()).unwrap(), Real::zero());
+        }
+        prop_assert_eq!(
+            forms.forms[5].kind,
+            SketchResidualFormKind::ProjectedArcCubicCurveSecondOrderOrientationPredicate
+        );
+        let orientation = forms.forms[5].residual.eval_real(context.bindings()).unwrap();
+        prop_assert_eq!(orientation.structural_facts().sign, Some(RealSign::Positive));
+        prop_assert_eq!(
+            forms.forms[6].kind,
+            SketchResidualFormKind::ProjectedArcCubicCurveSecondOrderContactPolynomial
+        );
+        prop_assert_eq!(
+            forms.forms[6].residual.eval_real(context.bindings()).unwrap(),
+            Real::zero()
+        );
+    }
+
+    #[test]
     fn sketch_arc_cubic_second_order_contact_rows_match_generated_circle_jets(
         cx in -8_i16..=8,
         cy in -8_i16..=8,

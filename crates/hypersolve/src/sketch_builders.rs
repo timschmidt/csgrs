@@ -414,6 +414,43 @@ pub mod tangency {
         }
     }
 
+    /// Add retained 3D/workplane arc-cubic second-order contact.
+    ///
+    /// The projected 3D cubic point, first derivative, and second derivative
+    /// are replayed against the selected retained 2D arc endpoint. The proof
+    /// package extends projected arc/cubic tangency with the differentiated
+    /// circle-incidence row `B'(t).B'(t) + (B(t)-C).B''(t) == 0`, keeping
+    /// curvature-sensitive evidence polynomial and denominator-free. This
+    /// follows Yap (1997), Shoemake's quaternion frame (1985), and Farin's
+    /// Bernstein/de Casteljau derivative construction (2002).
+    #[allow(clippy::too_many_arguments)]
+    pub fn projected_arc_cubic_curve_second_order_contact3(
+        sketch: &mut SketchSolveProblem,
+        name: impl Into<String>,
+        workplane: SketchEntityHandle,
+        arc: SketchEntityHandle,
+        arc_endpoint: SketchArcEndpoint,
+        cubic: SketchEntityHandle,
+        parameter: SketchParameterHandle,
+        orientation: SketchTangentOrientation,
+    ) -> SketchConstraintBuildReport {
+        let kind = SketchConstraintKind::ProjectedArcCubicCurveSecondOrderContact3 {
+            workplane,
+            arc,
+            arc_endpoint,
+            cubic,
+            parameter,
+            orientation,
+        };
+        let handle = sketch.add_constraint(name, kind.clone(), false, true);
+        SketchConstraintBuildReport {
+            handle,
+            family: SketchConstraintFamily::Tangency,
+            strategy: SketchResidualStrategy::ProjectedArcCubicCurveSecondOrderContact,
+            kind,
+        }
+    }
+
     /// Add a retained 2D cubic-Bezier/line tangent relation.
     ///
     /// The selected line endpoint is constrained to the exact cubic point

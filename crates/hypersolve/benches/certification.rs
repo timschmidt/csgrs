@@ -998,6 +998,51 @@ fn sketch_problem_with_projected_arc_cubic_curve_tangent_relations(
     sketch
 }
 
+fn sketch_problem_with_projected_arc_cubic_curve_second_order_relations(
+    row_count: usize,
+) -> hypersolve::SketchSolveProblem {
+    let mut sketch = hypersolve::SketchSolveProblem::new();
+    let origin = sketch.add_point3d("project-arcg2.origin", r(0), r(0), r(0));
+    let normal = sketch.add_normal3d("project-arcg2.normal", r(1), r(0), r(0), r(0));
+    let workplane = sketch.add_workplane("project-arcg2.workplane", origin, normal);
+    for index in 0..row_count {
+        let x = index as i64;
+        let center = sketch.add_point2d(format!("project-arcg2{index}.center"), r(x), r(0));
+        let start = sketch.add_point2d(format!("project-arcg2{index}.start"), r(x + 5), r(0));
+        let end = sketch.add_point2d(format!("project-arcg2{index}.end"), r(x), r(5));
+        let radius = sketch.add_distance(format!("project-arcg2{index}.radius"), r(5));
+        let arc = sketch.add_arc_of_circle2(
+            format!("project-arcg2{index}.arc"),
+            center,
+            start,
+            end,
+            radius,
+        );
+        let p0 = sketch.add_point3d(format!("project-arcg2{index}.p0"), r(x + 5), r(0), r(3));
+        let p1 = sketch.add_point3d(format!("project-arcg2{index}.p1"), r(x + 5), r(50), r(5));
+        let p2 = sketch.add_point3d(format!("project-arcg2{index}.p2"), r(x - 745), r(100), r(7));
+        let p3 = sketch.add_point3d(
+            format!("project-arcg2{index}.p3"),
+            r(x - 1495),
+            r(150),
+            r(11),
+        );
+        let cubic = sketch.add_cubic3(format!("project-arcg2{index}.cubic"), p0, p1, p2, p3);
+        let parameter = sketch.add_parameter(format!("project-arcg2{index}.t"), r(0));
+        hypersolve::sketch_tangency_builders::projected_arc_cubic_curve_second_order_contact3(
+            &mut sketch,
+            format!("projected arc cubic second order contact {index}"),
+            workplane,
+            arc,
+            hypersolve::SketchArcEndpoint::Start,
+            cubic,
+            parameter,
+            hypersolve::SketchTangentOrientation::CounterClockwise,
+        );
+    }
+    sketch
+}
+
 fn sketch_problem_with_arc_arc_tangent_relations(
     row_count: usize,
 ) -> hypersolve::SketchSolveProblem {
@@ -2295,6 +2340,12 @@ fn certification(c: &mut Criterion) {
     c.bench_function("sketch_projected_arc_cubic_curve_tangent_lowering", |b| {
         b.iter(|| projected_arc_cubic_curve_tangent_sketch.lower_to_problem())
     });
+    let projected_arc_cubic_curve_second_order_sketch =
+        sketch_problem_with_projected_arc_cubic_curve_second_order_relations(16);
+    c.bench_function(
+        "sketch_projected_arc_cubic_curve_second_order_lowering",
+        |b| b.iter(|| projected_arc_cubic_curve_second_order_sketch.lower_to_problem()),
+    );
     let arc_arc_tangent_sketch = sketch_problem_with_arc_arc_tangent_relations(16);
     c.bench_function("sketch_arc_arc_tangent_lowering", |b| {
         b.iter(|| arc_arc_tangent_sketch.lower_to_problem())
@@ -2986,6 +3037,31 @@ fn certification(c: &mut Criterion) {
             b.iter(|| {
                 for handle in &projected_arc_cubic_curve_tangent_form_handles {
                     let _ = projected_arc_cubic_curve_tangent_sketch
+                        .residual_forms_for_constraint(*handle);
+                }
+            })
+        },
+    );
+    let projected_arc_cubic_curve_second_order_form_handles =
+        projected_arc_cubic_curve_second_order_sketch
+            .constraints()
+            .iter()
+            .filter(|constraint| {
+                matches!(
+                    constraint.kind,
+                    hypersolve::SketchConstraintKind::ProjectedArcCubicCurveSecondOrderContact3 {
+                        ..
+                    }
+                )
+            })
+            .map(|constraint| constraint.handle)
+            .collect::<Vec<_>>();
+    c.bench_function(
+        "sketch_projected_arc_cubic_curve_second_order_residual_forms",
+        |b| {
+            b.iter(|| {
+                for handle in &projected_arc_cubic_curve_second_order_form_handles {
+                    let _ = projected_arc_cubic_curve_second_order_sketch
                         .residual_forms_for_constraint(*handle);
                 }
             })

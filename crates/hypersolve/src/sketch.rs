@@ -1156,6 +1156,35 @@ pub enum SketchConstraintKind {
         /// Signed orientation branch for the projected outgoing cubic tangent.
         orientation: SketchTangentOrientation,
     },
+    /// 2D circular-arc endpoint second-order contact with a projected 3D cubic.
+    ///
+    /// This is the workplane-projected counterpart of
+    /// [`SketchConstraintKind::ArcCubicSecondOrderContact2`]. Lowering proves
+    /// the retained unit-quaternion frame, projects the native 3D cubic
+    /// control net into the workplane, evaluates `B(t)`, `B'(t)`, and
+    /// `B''(t)` exactly in Bernstein form, and replays endpoint radius,
+    /// projected endpoint incidence, radius/derivative perpendicularity,
+    /// signed tangent orientation, and the differentiated circle-incidence
+    /// row `B'(t).B'(t) + (B(t)-C).B''(t) == 0`. No projected vector, speed,
+    /// radius, or curvature is normalized. The exact replay boundary follows
+    /// Yap, "Towards Exact Geometric Computation" (1997); the workplane frame
+    /// follows Shoemake, "Animating Rotation with Quaternion Curves" (1985);
+    /// and the Bezier derivative control nets follow Farin, *Curves and
+    /// Surfaces for CAGD*, 5th ed. (2002).
+    ProjectedArcCubicCurveSecondOrderContact3 {
+        /// Workplane entity that supplies origin and normal/quaternion.
+        workplane: SketchEntityHandle,
+        /// Circular arc entity in workplane coordinates.
+        arc: SketchEntityHandle,
+        /// Endpoint of the arc where contact is enforced.
+        arc_endpoint: SketchArcEndpoint,
+        /// Retained 3D cubic Bezier entity.
+        cubic: SketchEntityHandle,
+        /// Curve parameter used for projected point/derivative evaluation.
+        parameter: SketchParameterHandle,
+        /// Signed orientation branch for the projected outgoing cubic tangent.
+        orientation: SketchTangentOrientation,
+    },
     /// 2D circular-arc endpoint tangent to another circular-arc endpoint.
     ///
     /// Lowering emits selected endpoint-on-radius rows for both arcs, endpoint
@@ -1905,6 +1934,8 @@ pub enum SketchResidualStrategy {
     ProjectedArcLineTangent,
     /// Exact workplane-projected 3D cubic/arc endpoint tangent package.
     ProjectedArcCubicCurveTangent,
+    /// Exact workplane-projected 3D cubic/arc second-order contact package.
+    ProjectedArcCubicCurveSecondOrderContact,
     /// Exact endpoint/radius/radius-branch package for retained arc-arc tangency.
     ArcArcTangent,
     /// Exact endpoint/radius/cubic-derivative package for retained arc-cubic tangency.
@@ -2124,6 +2155,16 @@ pub enum SketchResidualFormKind {
     ProjectedArcCubicCurveTangentRadiusPerpendicularPolynomial,
     /// Exact signed projected orientation predicate for projected cubic/arc tangency.
     ProjectedArcCubicCurveTangentOrientationPredicate,
+    /// Exact selected endpoint-on-radius row for projected 3D cubic/arc second-order contact.
+    ProjectedArcCubicCurveSecondOrderEndpointRadiusPolynomial,
+    /// Exact projected cubic point/arc endpoint incidence row for second-order contact.
+    ProjectedArcCubicCurveSecondOrderEndpointIncidencePolynomial,
+    /// Exact projected radius/cubic derivative perpendicularity row for second-order contact.
+    ProjectedArcCubicCurveSecondOrderRadiusPerpendicularPolynomial,
+    /// Exact signed projected orientation predicate for projected second-order contact.
+    ProjectedArcCubicCurveSecondOrderOrientationPredicate,
+    /// Exact projected differentiated circle-incidence row for second-order contact.
+    ProjectedArcCubicCurveSecondOrderContactPolynomial,
     /// Exact selected endpoint-on-radius proof row for arc-arc tangency.
     ArcArcTangentEndpointRadiusPolynomial,
     /// Exact selected endpoint coordinate-incidence proof row for arc-arc tangency.
@@ -3073,6 +3114,36 @@ impl SketchSolveProblem {
         orientation: SketchTangentOrientation,
     ) -> SketchConstraintHandle {
         tangency::projected_arc_cubic_curve_tangent3(
+            self,
+            name,
+            workplane,
+            arc,
+            arc_endpoint,
+            cubic,
+            parameter,
+            orientation,
+        )
+        .handle
+    }
+
+    /// Add retained projected second-order contact between a 2D arc endpoint
+    /// and a native 3D cubic Bezier.
+    ///
+    /// The 3D cubic control net is projected into the retained workplane
+    /// before replaying tangent contact and the exact differentiated
+    /// circle-incidence row for the projected second derivative.
+    #[allow(clippy::too_many_arguments)]
+    pub fn add_projected_arc_cubic_curve_second_order_contact3(
+        &mut self,
+        name: impl Into<String>,
+        workplane: SketchEntityHandle,
+        arc: SketchEntityHandle,
+        arc_endpoint: SketchArcEndpoint,
+        cubic: SketchEntityHandle,
+        parameter: SketchParameterHandle,
+        orientation: SketchTangentOrientation,
+    ) -> SketchConstraintHandle {
+        tangency::projected_arc_cubic_curve_second_order_contact3(
             self,
             name,
             workplane,
@@ -6519,6 +6590,86 @@ impl SketchSolveProblem {
                     diagnostics,
                 }
             }
+            SketchConstraintKind::ProjectedArcCubicCurveSecondOrderContact3 {
+                workplane,
+                arc,
+                arc_endpoint,
+                cubic,
+                parameter,
+                orientation,
+            } => {
+                let mut diagnostics = Vec::new();
+                let Some(parts) = self.projected_arc_cubic_curve_second_order_contact_exprs(
+                    workplane,
+                    arc,
+                    arc_endpoint,
+                    cubic,
+                    parameter,
+                    orientation,
+                    constraint,
+                    &mut diagnostics,
+                ) else {
+                    return SketchResidualFormsReport {
+                        constraint: handle,
+                        status: SketchResidualFormsStatus::InvalidInputs,
+                        forms: Vec::new(),
+                        diagnostics,
+                    };
+                };
+                let mut forms = vec![
+                    SketchResidualForm {
+                        kind: SketchResidualFormKind::WorkplaneUnitQuaternionPolynomial,
+                        role: SketchResidualFormRole::ExactProof,
+                        strategy: Some(SketchResidualStrategy::WorkplaneUnitQuaternion),
+                        residual: unit_quaternion_residual(&parts.quaternion),
+                    },
+                    SketchResidualForm {
+                        kind: SketchResidualFormKind::ProjectedArcCubicCurveSecondOrderEndpointRadiusPolynomial,
+                        role: SketchResidualFormRole::ExactProof,
+                        strategy: Some(SketchResidualStrategy::ProjectedArcCubicCurveSecondOrderContact),
+                        residual: parts.contact.arc_endpoint_radius,
+                    },
+                    SketchResidualForm {
+                        kind: SketchResidualFormKind::ProjectedArcCubicCurveSecondOrderEndpointIncidencePolynomial,
+                        role: SketchResidualFormRole::ExactProof,
+                        strategy: Some(SketchResidualStrategy::ProjectedArcCubicCurveSecondOrderContact),
+                        residual: parts.contact.endpoint_incidence[0].clone(),
+                    },
+                    SketchResidualForm {
+                        kind: SketchResidualFormKind::ProjectedArcCubicCurveSecondOrderEndpointIncidencePolynomial,
+                        role: SketchResidualFormRole::ExactProof,
+                        strategy: Some(SketchResidualStrategy::ProjectedArcCubicCurveSecondOrderContact),
+                        residual: parts.contact.endpoint_incidence[1].clone(),
+                    },
+                    SketchResidualForm {
+                        kind: SketchResidualFormKind::ProjectedArcCubicCurveSecondOrderRadiusPerpendicularPolynomial,
+                        role: SketchResidualFormRole::ExactProof,
+                        strategy: Some(SketchResidualStrategy::ProjectedArcCubicCurveSecondOrderContact),
+                        residual: parts.contact.radius_perpendicular,
+                    },
+                    SketchResidualForm {
+                        kind: SketchResidualFormKind::ProjectedArcCubicCurveSecondOrderOrientationPredicate,
+                        role: SketchResidualFormRole::ExactProof,
+                        strategy: Some(SketchResidualStrategy::ProjectedArcCubicCurveSecondOrderContact),
+                        residual: parts.contact.orientation,
+                    },
+                ];
+                forms.push(SketchResidualForm {
+                    kind:
+                        SketchResidualFormKind::ProjectedArcCubicCurveSecondOrderContactPolynomial,
+                    role: SketchResidualFormRole::ExactProof,
+                    strategy: Some(
+                        SketchResidualStrategy::ProjectedArcCubicCurveSecondOrderContact,
+                    ),
+                    residual: parts.contact.second_order_contact,
+                });
+                SketchResidualFormsReport {
+                    constraint: handle,
+                    status: SketchResidualFormsStatus::Generated,
+                    forms,
+                    diagnostics,
+                }
+            }
             _ => SketchResidualFormsReport {
                 constraint: handle,
                 status: SketchResidualFormsStatus::UnsupportedConstraint,
@@ -8760,6 +8911,90 @@ impl SketchSolveProblem {
                     Real::one(),
                 );
             }
+            SketchConstraintKind::ProjectedArcCubicCurveSecondOrderContact3 {
+                workplane,
+                arc,
+                arc_endpoint,
+                cubic,
+                parameter,
+                orientation,
+            } => {
+                // This is the projected version of retained second-order
+                // arc/cubic contact: exact workplane projection first, then
+                // the same tangent and differentiated circle-incidence rows
+                // used by the 2D package. The circle-contact row avoids
+                // curvature division, matching Yap's proof/replay boundary.
+                let Some(parts) = self.projected_arc_cubic_curve_second_order_contact_exprs(
+                    workplane,
+                    arc,
+                    arc_endpoint,
+                    cubic,
+                    parameter,
+                    orientation,
+                    constraint,
+                    rows,
+                ) else {
+                    return;
+                };
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} workplane unit", constraint.name),
+                    unit_quaternion_residual(&parts.quaternion),
+                    SketchResidualStrategy::WorkplaneUnitQuaternion,
+                );
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} projected arc cubic endpoint radius", constraint.name),
+                    parts.contact.arc_endpoint_radius,
+                    SketchResidualStrategy::ProjectedArcCubicCurveSecondOrderContact,
+                );
+                for (axis, residual) in parts.contact.endpoint_incidence.into_iter().enumerate() {
+                    self.push_residual(
+                        problem,
+                        rows,
+                        constraint,
+                        format!(
+                            "{} projected cubic endpoint coordinate {axis}",
+                            constraint.name
+                        ),
+                        residual,
+                        SketchResidualStrategy::ProjectedArcCubicCurveSecondOrderContact,
+                    );
+                }
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} projected cubic radius perpendicular", constraint.name),
+                    parts.contact.radius_perpendicular,
+                    SketchResidualStrategy::ProjectedArcCubicCurveSecondOrderContact,
+                );
+                self.push_residual_with_kind(
+                    problem,
+                    rows,
+                    constraint,
+                    format!("{} projected cubic tangent orientation", constraint.name),
+                    parts.contact.orientation,
+                    SketchResidualStrategy::ProjectedArcCubicCurveSecondOrderContact,
+                    ConstraintKind::GreaterOrEqual,
+                    Real::one(),
+                );
+                self.push_residual(
+                    problem,
+                    rows,
+                    constraint,
+                    format!(
+                        "{} projected cubic second order circle contact",
+                        constraint.name
+                    ),
+                    parts.contact.second_order_contact,
+                    SketchResidualStrategy::ProjectedArcCubicCurveSecondOrderContact,
+                );
+            }
             SketchConstraintKind::EqualAngleLines2 { a, b, c, d } => {
                 // Equal unsigned angle is certified by squared cosine equality
                 // rather than by evaluating an inverse trig function. This is
@@ -10301,6 +10536,43 @@ impl SketchSolveProblem {
     }
 
     #[allow(clippy::too_many_arguments)]
+    fn projected_arc_cubic_curve_second_order_contact_exprs(
+        &self,
+        workplane: SketchEntityHandle,
+        arc: SketchEntityHandle,
+        arc_endpoint: SketchArcEndpoint,
+        cubic: SketchEntityHandle,
+        parameter: SketchParameterHandle,
+        orientation: SketchTangentOrientation,
+        constraint: &SketchConstraint,
+        rows: &mut Vec<SketchGeneratedRow>,
+    ) -> Option<ProjectedArcCubicCurveSecondOrderContactExprs> {
+        let (origin, quaternion) =
+            self.workplane_origin_and_quaternion(workplane, constraint, rows)?;
+        let arc = self.arc2_endpoint_parts(arc, arc_endpoint, constraint, rows)?;
+        let cubic = self.projected_cubic3_point_tangent_exprs(
+            cubic,
+            parameter,
+            &origin,
+            &quaternion,
+            constraint,
+            rows,
+        )?;
+        Some(ProjectedArcCubicCurveSecondOrderContactExprs {
+            quaternion,
+            contact: arc_cubic_second_order_contact_exprs(
+                &coordinate_exprs2(&arc.center),
+                &coordinate_exprs2(&arc.endpoint),
+                arc.radius,
+                &cubic.point,
+                &cubic.tangent,
+                &cubic.second_derivative,
+                tangent_orientation_sign(orientation),
+            ),
+        })
+    }
+
+    #[allow(clippy::too_many_arguments)]
     fn arc_cubic_tangent_exprs(
         &self,
         arc: SketchEntityHandle,
@@ -11444,6 +11716,12 @@ struct ProjectedArcLineTangentExprs {
 struct ProjectedArcCubicCurveTangentExprs {
     quaternion: [Expr; 4],
     tangent: ArcCubicTangentExprs,
+}
+
+#[derive(Clone, Debug)]
+struct ProjectedArcCubicCurveSecondOrderContactExprs {
+    quaternion: [Expr; 4],
+    contact: ArcCubicSecondOrderContactExprs,
 }
 
 #[derive(Clone, Debug)]
