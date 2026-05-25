@@ -9,12 +9,13 @@
 //! adapter exists; see Yap, "Towards Exact Geometric Computation,"
 //! *Computational Geometry* 7(1-2), 3-23 (1997).
 //!
-//! Exact area is currently exposed for polynomial Bezier loops using
-//! Green's-theorem boundary integrals, the same identities used by
-//! [`crate::BezierAreaMoments2`]. That follows Farin's Bernstein polynomial
-//! identities in *Curves and Surfaces for CAGD* (5th ed., 2002). Rational conic
-//! loops are still concrete boundary loops, but their area returns `None`
-//! until rational integral support is added rather than silently sampling.
+//! Exact area is exposed for polynomial Bezier loops and rational quadratic
+//! conic loops whose homogeneous denominator is certified away from projective
+//! zero on `[0, 1]`. Both use Green's-theorem boundary integrals, the same
+//! identities used by [`crate::BezierAreaMoments2`]. That follows Farin's
+//! Bernstein and rational Bezier identities in *Curves and Surfaces for CAGD*
+//! (5th ed., 2002). Unsupported conic denominator cases still return `None`
+//! rather than silently sampling.
 
 use hyperreal::Real;
 
@@ -171,10 +172,11 @@ impl BezierBoundaryLoop2 {
         self.fragments.is_empty()
     }
 
-    /// Returns the exact signed area for polynomial-only loops.
+    /// Returns the exact signed area for loops with implemented area integrals.
     ///
-    /// Rational quadratic conics are retained exactly but currently return
-    /// `None` here because the rational Green integral is not implemented.
+    /// Polynomial Beziers use exact polynomial Green integrals. Rational
+    /// quadratics use the homogeneous rational Green integral when their
+    /// denominator is certified nonzero on the affine parameter interval.
     pub fn signed_area(&self) -> CurveResult<Option<Real>> {
         let mut total = Real::zero();
         for fragment in &self.fragments {
@@ -318,7 +320,7 @@ impl BezierRetainedBoundaryLoop2 {
         })
     }
 
-    /// Returns exact signed area only for fully native polynomial loops.
+    /// Returns exact signed area only for fully native loops with implemented integrals.
     pub fn signed_area(&self) -> CurveResult<Option<Real>> {
         let mut total = Real::zero();
         for fragment in &self.fragments {
@@ -569,7 +571,7 @@ impl BezierSubcurve2 {
         match self {
             Self::Quadratic(curve) => curve.signed_area_contribution().map(Some),
             Self::Cubic(curve) => curve.signed_area_contribution().map(Some),
-            Self::RationalQuadratic(_) => Ok(None),
+            Self::RationalQuadratic(curve) => curve.signed_area_contribution(),
         }
     }
 }

@@ -3,7 +3,7 @@
 use hypercurve::{
     BezierArrangementGraph2, BezierParameter2, BezierRegion2, BezierRetainedCurveEnvelope2,
     BezierRetainedEndpointEnvelope2, BezierRetainedRegion2, Classification, CurvePolicy, Point2,
-    QuadraticBezier2, Real,
+    QuadraticBezier2, RationalQuadraticBezier2, Real,
 };
 use libfuzzer_sys::fuzz_target;
 
@@ -76,5 +76,20 @@ fuzz_target!(|data: &[u8]| {
                 let _ = BezierRetainedCurveEnvelope2::from_region(&region, &policy);
             },
         );
+    }
+
+    for chunk in data.chunks(9).take(4) {
+        if chunk.len() < 9 {
+            break;
+        }
+        let weight = Real::from((chunk[8] % 31) as i32 + 1);
+        if let Ok(conic) = RationalQuadraticBezier2::try_unit_end_weights(
+            point(chunk[0], chunk[1]),
+            point(chunk[2], chunk[3]),
+            point(chunk[4], chunk[5]),
+            weight,
+        ) {
+            let _ = conic.signed_area_contribution();
+        }
     }
 });

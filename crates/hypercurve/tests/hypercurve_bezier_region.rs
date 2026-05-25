@@ -31,6 +31,19 @@ fn decided<T>(classification: Classification<T>) -> T {
     }
 }
 
+fn assert_real_eq(left: &Real, right: &Real) {
+    assert_eq!(left.partial_cmp(right), Some(std::cmp::Ordering::Equal));
+}
+
+fn assert_real_close(left: &Real, right: &Real, tolerance: f64) {
+    let left = left.to_f64_lossy().expect("left Real is approximable");
+    let right = right.to_f64_lossy().expect("right Real is approximable");
+    assert!(
+        (left - right).abs() <= tolerance,
+        "expected {left} to be within {tolerance} of {right}"
+    );
+}
+
 fn exact(value: Real) -> BezierParameter2 {
     decided(BezierParameter2::exact(value, &policy()).unwrap())
 }
@@ -139,7 +152,37 @@ fn open_arrangement_chain_does_not_materialize_region() {
 }
 
 #[test]
-fn conic_region_boundary_materializes_but_area_is_explicitly_unsupported() {
+fn quarter_circle_rational_conic_area_is_exact_symbolic_sector() {
+    let sqrt_two = Real::from(2_i8).sqrt().unwrap();
+    let weight = (sqrt_two / Real::from(2_i8)).unwrap();
+    let quarter =
+        RationalQuadraticBezier2::try_unit_end_weights(p(1, 0), p(1, 1), p(0, 1), weight).unwrap();
+
+    let area = quarter
+        .signed_area_contribution()
+        .unwrap()
+        .expect("quarter-circle conic area is supported");
+    assert_real_close(&area, &(Real::pi() / Real::from(4_i8)).unwrap(), 1.0e-12);
+}
+
+#[test]
+fn equal_weight_rational_quadratic_area_matches_polynomial_exactly() {
+    let conic =
+        RationalQuadraticBezier2::try_unit_end_weights(p(0, 0), p(2, 3), p(4, 0), r(1)).unwrap();
+    let polynomial = QuadraticBezier2::new(p(0, 0), p(2, 3), p(4, 0));
+    let rational_area = conic
+        .signed_area_contribution()
+        .unwrap()
+        .expect("equal-weight rational quadratic has polynomial denominator");
+
+    assert_real_eq(
+        &rational_area,
+        &polynomial.signed_area_contribution().unwrap(),
+    );
+}
+
+#[test]
+fn conic_region_boundary_materializes_with_exact_area() {
     let upper =
         RationalQuadraticBezier2::try_unit_end_weights(p(0, 0), p(2, 2), p(4, 0), q(1, 2)).unwrap();
     let lower = RationalQuadraticBezier2::try_unit_end_weights(p(4, 0), p(2, -2), p(0, 0), q(1, 2))
@@ -162,7 +205,22 @@ fn conic_region_boundary_materializes_but_area_is_explicitly_unsupported() {
 
     assert_eq!(region.len(), 1);
     assert_eq!(region.boundary_loops()[0].len(), 4);
-    assert_eq!(region.signed_area().unwrap(), None);
+    let sqrt_three = Real::from(3_i8).sqrt().unwrap();
+    let expected = (Real::from(8_i8) / Real::from(3_i8)).unwrap()
+        - ((Real::from(32_i8) * sqrt_three * Real::pi()) / Real::from(27_i8)).unwrap();
+    let area = region
+        .signed_area()
+        .unwrap()
+        .expect("same-sign conic region area is supported");
+    assert_real_close(&area, &expected, 1.0e-12);
+}
+
+#[test]
+fn conic_area_rejects_uncertified_projective_denominator() {
+    let conic =
+        RationalQuadraticBezier2::try_new(p(0, 0), p(1, 2), p(2, 0), r(1), r(-1), r(1)).unwrap();
+
+    assert_eq!(conic.signed_area_contribution().unwrap(), None);
 }
 
 #[test]

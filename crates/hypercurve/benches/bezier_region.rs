@@ -5,7 +5,7 @@ use hypercurve::{
     BezierArrangementFragment2, BezierArrangementGraph2, BezierParameter2, BezierRegion2,
     BezierRetainedCurveEnvelope2, BezierRetainedEndpointEnvelope2, BezierRetainedRegion2,
     BezierSplitFragment2, BezierSubcurve2, Classification, CurvePolicy, CurveResult, Point2,
-    QuadraticBezier2, Real,
+    QuadraticBezier2, RationalQuadraticBezier2, Real,
 };
 
 fn r(value: i32) -> Real {
@@ -128,6 +128,30 @@ fn main() -> CurveResult<()> {
     let elapsed = started.elapsed();
     println!(
         "bezier_resolved_overlap_region_materialization: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={overlap_checksum}",
+        elapsed / iterations
+    );
+
+    let conic_upper =
+        RationalQuadraticBezier2::try_unit_end_weights(p(0, 0), p(2, 2), p(4, 0), q(1, 2))?;
+    let conic_lower =
+        RationalQuadraticBezier2::try_unit_end_weights(p(4, 0), p(2, -2), p(0, 0), q(1, 2))?;
+    let conic_graph = BezierArrangementGraph2::from_split_materializations(&[
+        decided(conic_upper.split_at_parameters(std::slice::from_ref(&half), &policy)?),
+        decided(conic_lower.split_at_parameters(std::slice::from_ref(&half), &policy)?),
+    ]);
+    let conic_traversal = decided(conic_graph.traverse_branch_free(&policy));
+    let started = Instant::now();
+    let mut conic_checksum = 0_usize;
+    for _ in 0..iterations {
+        let region = decided(BezierRegion2::from_arrangement_traversal(
+            &conic_graph,
+            &conic_traversal,
+        ));
+        conic_checksum ^= black_box(format!("{:?}", region.signed_area()?).len());
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "bezier_conic_region_exact_area: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={conic_checksum}",
         elapsed / iterations
     );
 

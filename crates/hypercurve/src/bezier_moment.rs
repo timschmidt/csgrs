@@ -1,23 +1,28 @@
-//! Exact area and moment-style adapters for polynomial Bezier segments.
+//! Exact area and moment-style adapters for Bezier and conic segments.
 //!
 //! A Bezier segment's signed area contribution is the Green's-theorem boundary
 //! integral `1/2 * integral(x dy - y dx)`. We evaluate that integral exactly by
 //! converting the Bezier coordinates from Bernstein to power form and
-//! integrating the resulting polynomial. This preserves the exact object
-//! structure required by Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7.1-2 (1997), and supplies the area facts needed by
-//! fitting/simplification pipelines discussed by Raph Levien, "Simplifying
-//! Bezier paths" (2021). The Bezier polynomial identities follow Farin,
-//! *Curves and Surfaces for Computer-Aided Geometric Design* (5th ed., 2002).
+//! integrating the resulting polynomial. Rational quadratic conics use the same
+//! Green integral in homogeneous coordinates: `x = Nx/W`, `y = Ny/W`, so
+//! `x dy - y dx = (Nx dNy - Ny dNx) / W^2`. The resulting rational integral is
+//! evaluated symbolically with exact `atan`/`ln`/`sqrt` branches after the
+//! Bernstein weights certify that `W` has no projective zero on `[0, 1]`.
+//! This preserves the exact object structure required by Yap, "Towards Exact
+//! Geometric Computation," *Computational Geometry* 7.1-2 (1997), and supplies
+//! the area facts needed by fitting/simplification pipelines discussed by Raph
+//! Levien, "Simplifying Bezier paths" (2021). The polynomial and rational
+//! Bezier identities follow Farin, *Curves and Surfaces for Computer-Aided
+//! Geometric Design* (5th ed., 2002).
 
 use std::ops::Range;
 
 use hyperreal::Real;
 
-use crate::classify::in_closed_unit_interval;
+use crate::classify::{compare_reals, in_closed_unit_interval, real_sign};
 use crate::{
     Classification, CubicBezier2, CurveError, CurvePolicy, CurveResult, Point2, QuadraticBezier2,
-    UncertaintyReason,
+    RationalQuadraticBezier2, RealSign, UncertaintyReason,
 };
 
 /// Exact Green's-theorem area and first-moment boundary contributions.
@@ -306,6 +311,27 @@ impl CubicBezier2 {
     }
 }
 
+impl RationalQuadraticBezier2 {
+    /// Returns this rational quadratic's exact signed-area boundary contribution.
+    ///
+    /// The contribution is the Green integral
+    /// `1/2 * integral((Nx dNy - Ny dNx) / W^2)`, where `Nx`, `Ny`, and `W`
+    /// are the weighted Bernstein numerator and denominator polynomials.  The
+    /// implementation keeps the conic in homogeneous form until the final exact
+    /// rational integral, following Yap's exact-geometric-computation boundary
+    /// from "Towards Exact Geometric Computation" (1997).  The homogeneous
+    /// rational Bezier identities follow Farin, *Curves and Surfaces for
+    /// Computer-Aided Geometric Design* (5th ed., 2002).
+    ///
+    /// `None` means the current exact object model cannot certify a finite
+    /// affine integral: this happens when the weights do not have one proven
+    /// nonzero sign, or when a symbolic transcendental branch reports a domain
+    /// boundary.  It is deliberately not a sampled fallback.
+    pub fn signed_area_contribution(&self) -> CurveResult<Option<Real>> {
+        rational_quadratic_signed_area_contribution(self)
+    }
+}
+
 fn prefix_signed_area_for_controls(
     controls: Vec<Point2>,
     t: Real,
@@ -364,6 +390,322 @@ fn area_moments_for_controls(controls: &[&Point2]) -> CurveResult<BezierAreaMome
         x_moment: (x_moment_integral / Real::from(2_i8))?,
         y_moment: (Real::zero() - (y_moment_integral / Real::from(2_i8))?),
     })
+}
+
+fn rational_quadratic_signed_area_contribution(
+    curve: &RationalQuadraticBezier2,
+) -> CurveResult<Option<Real>> {
+    let policy = CurvePolicy::certified();
+    if !weights_have_one_nonzero_sign(curve.weights(), &policy)? {
+        return Ok(None);
+    }
+
+    let weights = curve.weights();
+    let controls = curve.control_points();
+    let x_weighted = [
+        controls[0].x() * weights[0],
+        controls[1].x() * weights[1],
+        controls[2].x() * weights[2],
+    ];
+    let y_weighted = [
+        controls[0].y() * weights[0],
+        controls[1].y() * weights[1],
+        controls[2].y() * weights[2],
+    ];
+    let w = quadratic_bernstein_power_coefficients([
+        weights[0].clone(),
+        weights[1].clone(),
+        weights[2].clone(),
+    ]);
+    let nx = quadratic_bernstein_power_coefficients(x_weighted);
+    let ny = quadratic_bernstein_power_coefficients(y_weighted);
+    let numerator = polynomial_difference(
+        &polynomial_product(&nx, &derivative_coefficients(&ny)),
+        &polynomial_product(&ny, &derivative_coefficients(&nx)),
+    );
+
+    let Some(integral) = integrate_quadratic_over_quadratic_square(&numerator, &w, &policy)? else {
+        return Ok(None);
+    };
+    Ok(Some((integral / Real::from(2_i8))?))
+}
+
+fn weights_have_one_nonzero_sign(weights: [&Real; 3], policy: &CurvePolicy) -> CurveResult<bool> {
+    let mut expected = None;
+    for weight in weights {
+        let Some(sign) = real_sign(weight, policy) else {
+            return Ok(false);
+        };
+        match sign {
+            RealSign::Positive | RealSign::Negative => {
+                if let Some(expected) = expected {
+                    if expected != sign {
+                        return Ok(false);
+                    }
+                } else {
+                    expected = Some(sign);
+                }
+            }
+            RealSign::Zero => return Ok(false),
+        }
+    }
+    Ok(expected.is_some())
+}
+
+fn quadratic_bernstein_power_coefficients(values: [Real; 3]) -> [Real; 3] {
+    let two = Real::from(2_i8);
+    let c = values[0].clone();
+    let b = &two * &(&values[1] - &values[0]);
+    let a = &values[0] - &(&two * &values[1]) + &values[2];
+    [c, b, a]
+}
+
+fn polynomial_difference(first: &[Real], second: &[Real]) -> Vec<Real> {
+    (0..first.len().max(second.len()))
+        .map(|degree| {
+            first.get(degree).cloned().unwrap_or_else(Real::zero)
+                - second.get(degree).cloned().unwrap_or_else(Real::zero)
+        })
+        .collect()
+}
+
+fn integrate_quadratic_over_quadratic_square(
+    numerator: &[Real],
+    denominator: &[Real; 3],
+    policy: &CurvePolicy,
+) -> CurveResult<Option<Real>> {
+    let m0 = coefficient(numerator, 0);
+    let m1 = coefficient(numerator, 1);
+    let m2 = coefficient(numerator, 2);
+    let c = &denominator[0];
+    let b = &denominator[1];
+    let a = &denominator[2];
+
+    if compare_reals(a, &Real::zero(), policy) == Some(std::cmp::Ordering::Equal) {
+        return integrate_quadratic_over_linear_square(&m0, &m1, &m2, b, c, policy);
+    }
+
+    let four = Real::from(4_i8);
+    let two = Real::from(2_i8);
+    let delta = &(&four * a * c) - &(b * b);
+    if compare_reals(&delta, &Real::zero(), policy) == Some(std::cmp::Ordering::Equal) {
+        return integrate_quadratic_over_repeated_quadratic_square(&m0, &m1, &m2, a, b);
+    }
+
+    let m2_over_a = match m2.clone() / a {
+        Ok(value) => value,
+        Err(_) => return Ok(None),
+    };
+    let two_a = &two * a;
+    let b_m1_over_two_a = match (b * &m1) / &two_a {
+        Ok(value) => value,
+        Err(_) => return Ok(None),
+    };
+    let c_m2_over_a = c * &m2_over_a;
+    let k_numerator = &m0 + &c_m2_over_a - &b_m1_over_two_a;
+    let k_denominator = &(&two * c) - &((b * b) / &two_a)?;
+    let k = match k_numerator / k_denominator {
+        Ok(value) => value,
+        Err(_) => return Ok(None),
+    };
+    let u = &k - &m2_over_a;
+    let v = match (&(&k * b) - &m1) / &two_a {
+        Ok(value) => value,
+        Err(_) => return Ok(None),
+    };
+    let derivative_part = rational_linear_over_quadratic_at(&u, &v, a, b, c, &Real::one())?
+        - rational_linear_over_quadratic_at(&u, &v, a, b, c, &Real::zero())?;
+    let Some(inverse_integral) = integrate_inverse_quadratic(a, b, &delta, policy)? else {
+        return Ok(None);
+    };
+    Ok(Some(derivative_part + k * inverse_integral))
+}
+
+fn integrate_quadratic_over_linear_square(
+    m0: &Real,
+    m1: &Real,
+    m2: &Real,
+    b: &Real,
+    c: &Real,
+    policy: &CurvePolicy,
+) -> CurveResult<Option<Real>> {
+    if compare_reals(b, &Real::zero(), policy) == Some(std::cmp::Ordering::Equal) {
+        let denominator = c * c;
+        let polynomial_integral = integrate_polynomial(&[m0.clone(), m1.clone(), m2.clone()])?;
+        return match polynomial_integral / denominator {
+            Ok(value) => Ok(Some(value)),
+            Err(_) => Ok(None),
+        };
+    }
+
+    let b2 = b * b;
+    let b3 = &b2 * b;
+    let a_term = match m2.clone() / &b3 {
+        Ok(value) => value,
+        Err(_) => return Ok(None),
+    };
+    let m1_over_b2 = match m1.clone() / &b2 {
+        Ok(value) => value,
+        Err(_) => return Ok(None),
+    };
+    let two_c_m2_over_b3 = match (Real::from(2_i8) * c * m2) / &b3 {
+        Ok(value) => value,
+        Err(_) => return Ok(None),
+    };
+    let b_term = m1_over_b2 - two_c_m2_over_b3;
+    let c2_m2_over_b3 = match (c * c * m2) / &b3 {
+        Ok(value) => value,
+        Err(_) => return Ok(None),
+    };
+    let c_m1_over_b2 = match (c * m1) / &b2 {
+        Ok(value) => value,
+        Err(_) => return Ok(None),
+    };
+    let m0_over_b = match m0.clone() / b {
+        Ok(value) => value,
+        Err(_) => return Ok(None),
+    };
+    let c_term = c2_m2_over_b3 - c_m1_over_b2 + m0_over_b;
+    let u0 = c.clone();
+    let u1 = b + c;
+    let log_ratio = match (u1.clone() / &u0).and_then(Real::ln) {
+        Ok(value) => value,
+        Err(_) => return Ok(None),
+    };
+    let reciprocal_delta = match (Real::one() / &u1, Real::one() / &u0) {
+        (Ok(upper), Ok(lower)) => upper - lower,
+        _ => return Ok(None),
+    };
+    Ok(Some(
+        a_term * (&u1 - &u0) + b_term * log_ratio - c_term * reciprocal_delta,
+    ))
+}
+
+fn integrate_quadratic_over_repeated_quadratic_square(
+    m0: &Real,
+    m1: &Real,
+    m2: &Real,
+    a: &Real,
+    b: &Real,
+) -> CurveResult<Option<Real>> {
+    let two = Real::from(2_i8);
+    let three = Real::from(3_i8);
+    let r = match (Real::zero() - b) / &(two.clone() * a) {
+        Ok(value) => value,
+        Err(_) => return Ok(None),
+    };
+    let a2 = a * a;
+    let shifted_b = &(two * &r * m2) + m1;
+    let shifted_c = &(m2 * &r * &r) + &(m1 * &r) + m0;
+    let primitive = |t: Real| -> CurveResult<Option<Real>> {
+        let u = t - &r;
+        let u2 = &u * &u;
+        let u3 = &u2 * &u;
+        let first = match (Real::zero() - m2) / &u {
+            Ok(value) => value,
+            Err(_) => return Ok(None),
+        };
+        let second = match (Real::zero() - &shifted_b) / &(Real::from(2_i8) * &u2) {
+            Ok(value) => value,
+            Err(_) => return Ok(None),
+        };
+        let third = match (Real::zero() - &shifted_c) / &(three.clone() * &u3) {
+            Ok(value) => value,
+            Err(_) => return Ok(None),
+        };
+        match (first + second + third) / &a2 {
+            Ok(value) => Ok(Some(value)),
+            Err(_) => Ok(None),
+        }
+    };
+    let Some(upper) = primitive(Real::one())? else {
+        return Ok(None);
+    };
+    let Some(lower) = primitive(Real::zero())? else {
+        return Ok(None);
+    };
+    Ok(Some(upper - lower))
+}
+
+fn integrate_inverse_quadratic(
+    a: &Real,
+    b: &Real,
+    delta: &Real,
+    policy: &CurvePolicy,
+) -> CurveResult<Option<Real>> {
+    match compare_reals(delta, &Real::zero(), policy) {
+        Some(std::cmp::Ordering::Greater) => {
+            let sqrt_delta = match delta.clone().sqrt() {
+                Ok(value) => value,
+                Err(_) => return Ok(None),
+            };
+            let upper = match ((Real::from(2_i8) * a + b) / &sqrt_delta).and_then(Real::atan) {
+                Ok(value) => value,
+                Err(_) => return Ok(None),
+            };
+            let lower = match (b.clone() / &sqrt_delta).and_then(Real::atan) {
+                Ok(value) => value,
+                Err(_) => return Ok(None),
+            };
+            Ok(Some((Real::from(2_i8) * (upper - lower) / sqrt_delta)?))
+        }
+        Some(std::cmp::Ordering::Less) => {
+            let discriminant = Real::zero() - delta;
+            let sqrt_discriminant = match discriminant.sqrt() {
+                Ok(value) => value,
+                Err(_) => return Ok(None),
+            };
+            let ratio_at = |t: Real| -> CurveResult<Option<Real>> {
+                let u = Real::from(2_i8) * a * &t + b;
+                let numerator = &u - &sqrt_discriminant;
+                let denominator = &u + &sqrt_discriminant;
+                match numerator / denominator {
+                    Ok(value) => Ok(Some(value)),
+                    Err(_) => Ok(None),
+                }
+            };
+            let Some(upper_ratio) = ratio_at(Real::one())? else {
+                return Ok(None);
+            };
+            let Some(lower_ratio) = ratio_at(Real::zero())? else {
+                return Ok(None);
+            };
+            let log_ratio = match (upper_ratio / lower_ratio).and_then(Real::ln) {
+                Ok(value) => value,
+                Err(_) => return Ok(None),
+            };
+            Ok(Some((log_ratio / sqrt_discriminant)?))
+        }
+        Some(std::cmp::Ordering::Equal) => {
+            let upper = match Real::from(-2_i8) / &(Real::from(2_i8) * a + b) {
+                Ok(value) => value,
+                Err(_) => return Ok(None),
+            };
+            let lower = match Real::from(-2_i8) / b {
+                Ok(value) => value,
+                Err(_) => return Ok(None),
+            };
+            Ok(Some(upper - lower))
+        }
+        None => Ok(None),
+    }
+}
+
+fn rational_linear_over_quadratic_at(
+    u: &Real,
+    v: &Real,
+    a: &Real,
+    b: &Real,
+    c: &Real,
+    t: &Real,
+) -> CurveResult<Real> {
+    let numerator = u * t + v;
+    let denominator = a * t * t + b * t + c;
+    (numerator / denominator).map_err(CurveError::from)
+}
+
+fn coefficient(coefficients: &[Real], degree: usize) -> Real {
+    coefficients.get(degree).cloned().unwrap_or_else(Real::zero)
 }
 
 fn integrate_polynomial_difference(first: &[Real], second: &[Real]) -> CurveResult<Real> {
