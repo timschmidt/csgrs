@@ -53,7 +53,12 @@ fn main() -> CurveResult<()> {
                         Classification::Decided(splits) => splits.len(),
                         Classification::Uncertain(_) => 0,
                     };
-                    report.len() + split_count
+                    let bezier_split_count =
+                        match report.linear_bezier_overlap_splits(&graph, &policy) {
+                            Classification::Decided(splits) => splits.len(),
+                            Classification::Uncertain(_) => 0,
+                        };
+                    report.len() + split_count + bezier_split_count
                 }
                 Classification::Uncertain(_) => 0,
             },

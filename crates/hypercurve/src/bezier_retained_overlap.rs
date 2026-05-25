@@ -18,7 +18,9 @@
 //! intersections," *Computers & Graphics: X* 2, 100007 (2019): an overlap is a
 //! first-class event, not an arbitrary successor choice.
 
-use crate::classify::is_zero;
+use hyperreal::Real;
+
+use crate::classify::{compare_reals, is_zero};
 use crate::{
     BezierArrangementChain2, BezierArrangementGraph2, BezierArrangementTraversal2,
     BezierCurveRelation, BezierSplitFragment2, BezierSubcurve2, Classification, CurvePolicy,
@@ -123,6 +125,78 @@ pub struct BezierRetainedLineOverlapSplit2 {
     first_line_range: ParamRange,
     second_line_range: ParamRange,
     extent: BezierRetainedLineOverlapExtent2,
+}
+
+/// Exact Bezier-parameter split evidence for a linearly parameterized overlap.
+///
+/// This is stronger than [`BezierRetainedLineOverlapSplit2`]: the ranges are
+/// certified to be valid Bezier parameters, not merely affine coordinates on
+/// the endpoint line segment.  The promotion is permitted only for polynomial
+/// Bezier control nets that are exact degree elevations of a line segment:
+/// quadratic controls `(P0, (P0 + P2)/2, P2)` or cubic controls
+/// `(P0, (2P0 + P3)/3, (P0 + 2P3)/3, P3)`.  These are the standard Bernstein
+/// degree-elevation identities in Farin (2002).  Per Yap (1997), general
+/// collinear-but-nonlinear line images stay exact line-image evidence until a
+/// separate inverse-parameter construction exists.
+#[derive(Clone, Debug, PartialEq)]
+pub struct BezierRetainedLinearOverlapSplit2 {
+    first_fragment_index: usize,
+    second_fragment_index: usize,
+    overlap_segment: LineSeg2,
+    first_bezier_range: ParamRange,
+    second_bezier_range: ParamRange,
+    extent: BezierRetainedLineOverlapExtent2,
+}
+
+impl BezierRetainedLinearOverlapSplit2 {
+    /// Constructs exact Bezier-parameter split evidence for a linear overlap.
+    pub const fn new(
+        first_fragment_index: usize,
+        second_fragment_index: usize,
+        overlap_segment: LineSeg2,
+        first_bezier_range: ParamRange,
+        second_bezier_range: ParamRange,
+        extent: BezierRetainedLineOverlapExtent2,
+    ) -> Self {
+        Self {
+            first_fragment_index,
+            second_fragment_index,
+            overlap_segment,
+            first_bezier_range,
+            second_bezier_range,
+            extent,
+        }
+    }
+
+    /// Returns the lower graph-fragment index.
+    pub const fn first_fragment_index(&self) -> usize {
+        self.first_fragment_index
+    }
+
+    /// Returns the higher graph-fragment index.
+    pub const fn second_fragment_index(&self) -> usize {
+        self.second_fragment_index
+    }
+
+    /// Returns the exact overlap segment.
+    pub const fn overlap_segment(&self) -> &LineSeg2 {
+        &self.overlap_segment
+    }
+
+    /// Returns the exact Bezier parameter range on the first fragment.
+    pub const fn first_bezier_range(&self) -> &ParamRange {
+        &self.first_bezier_range
+    }
+
+    /// Returns the exact Bezier parameter range on the second fragment.
+    pub const fn second_bezier_range(&self) -> &ParamRange {
+        &self.second_bezier_range
+    }
+
+    /// Returns whether the overlap is full or partial on each side.
+    pub const fn extent(&self) -> BezierRetainedLineOverlapExtent2 {
+        self.extent
+    }
 }
 
 impl BezierRetainedLineOverlapSplit2 {
@@ -356,6 +430,99 @@ impl BezierRetainedOverlapReport2 {
         }
         Classification::Decided(splits)
     }
+
+    /// Promotes exact line-image overlaps to Bezier-parameter split evidence.
+    ///
+    /// This succeeds only when every line-image overlap in the report is backed
+    /// by materialized polynomial Bezier fragments with certified linear
+    /// parameterization.  A single nonlinear line image makes the result
+    /// unsupported rather than partially emitted, because callers use this
+    /// method as a complete graph-splitting precondition.
+    pub fn linear_bezier_overlap_splits(
+        &self,
+        graph: &BezierArrangementGraph2,
+        policy: &CurvePolicy,
+    ) -> Classification<Vec<BezierRetainedLinearOverlapSplit2>> {
+        let line_splits = match self.line_overlap_splits(policy) {
+            Classification::Decided(splits) => splits,
+            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+        };
+        let mut promoted = Vec::new();
+        for split in line_splits {
+            if !fragment_is_linearly_parameterized(graph, split.first_fragment_index(), policy)
+                || !fragment_is_linearly_parameterized(graph, split.second_fragment_index(), policy)
+            {
+                return Classification::Uncertain(UncertaintyReason::Unsupported);
+            }
+            promoted.push(BezierRetainedLinearOverlapSplit2::new(
+                split.first_fragment_index(),
+                split.second_fragment_index(),
+                split.overlap_segment().clone(),
+                split.first_line_range().clone(),
+                split.second_line_range().clone(),
+                split.extent(),
+            ));
+        }
+        Classification::Decided(promoted)
+    }
+}
+
+fn fragment_is_linearly_parameterized(
+    graph: &BezierArrangementGraph2,
+    fragment_index: usize,
+    policy: &CurvePolicy,
+) -> bool {
+    let Some(fragment) = graph.fragments().get(fragment_index) else {
+        return false;
+    };
+    let BezierSplitFragment2::Materialized { curve, .. } = fragment.fragment() else {
+        return false;
+    };
+    match curve {
+        BezierSubcurve2::Quadratic(curve) => {
+            point_coordinates_equal(
+                curve.control(),
+                &midpoint(curve.start(), curve.end()),
+                policy,
+            ) == Some(true)
+        }
+        BezierSubcurve2::Cubic(curve) => {
+            point_coordinates_equal(
+                curve.control1(),
+                &linear_control(curve.start(), curve.end(), 1, 3),
+                policy,
+            ) == Some(true)
+                && point_coordinates_equal(
+                    curve.control2(),
+                    &linear_control(curve.start(), curve.end(), 2, 3),
+                    policy,
+                ) == Some(true)
+        }
+        BezierSubcurve2::RationalQuadratic(_) => false,
+    }
+}
+
+fn midpoint(start: &Point2, end: &Point2) -> Point2 {
+    linear_control(start, end, 1, 2)
+}
+
+fn linear_control(start: &Point2, end: &Point2, numerator: i32, denominator: i32) -> Point2 {
+    let numerator = Real::from(numerator);
+    let denominator = Real::from(denominator);
+    let complement = &denominator - &numerator;
+    Point2::new(
+        (((&complement * start.x()) + (&numerator * end.x())) / &denominator)
+            .expect("positive integer denominator is nonzero"),
+        (((&complement * start.y()) + (&numerator * end.y())) / denominator)
+            .expect("positive integer denominator is nonzero"),
+    )
+}
+
+fn point_coordinates_equal(left: &Point2, right: &Point2, policy: &CurvePolicy) -> Option<bool> {
+    Some(
+        compare_reals(left.x(), right.x(), policy)? == std::cmp::Ordering::Equal
+            && compare_reals(left.y(), right.y(), policy)? == std::cmp::Ordering::Equal,
+    )
 }
 
 fn line_overlap_extent(

@@ -396,6 +396,17 @@ fn retained_overlap_report_extracts_partial_line_image_split_ranges() {
         graph.traverse_retained_deduplicating_materialized_overlaps(&policy()),
         Classification::Uncertain(UncertaintyReason::Boundary)
     );
+
+    let bezier_splits = decided(report.linear_bezier_overlap_splits(&graph, &policy()));
+    assert_eq!(bezier_splits.len(), 1);
+    assert_eq!(bezier_splits[0].first_bezier_range().start(), &q(1, 2));
+    assert_eq!(bezier_splits[0].first_bezier_range().end(), &r(1));
+    assert_eq!(bezier_splits[0].second_bezier_range().start(), &r(0));
+    assert_eq!(bezier_splits[0].second_bezier_range().end(), &q(1, 2));
+    assert_eq!(
+        bezier_splits[0].extent(),
+        BezierRetainedLineOverlapExtent2::PartialBoth
+    );
 }
 
 #[test]
@@ -424,6 +435,31 @@ fn retained_overlap_report_does_not_call_same_curve_image_a_line_split() {
     let report = decided(BezierRetainedOverlapReport2::from_graph(&graph, &policy()));
 
     assert!(decided(report.line_overlap_splits(&policy())).is_empty());
+}
+
+#[test]
+fn retained_overlap_report_rejects_nonlinear_line_image_bezier_ranges() {
+    let first = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(1, 0), p(4, 0))),
+    };
+    let second = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(1, 0), p(3, 0), p(5, 0))),
+    };
+    let graph = BezierArrangementGraph2::new(vec![
+        hypercurve::BezierArrangementFragment2::new(0, 0, first),
+        hypercurve::BezierArrangementFragment2::new(1, 0, second),
+    ]);
+    let report = decided(BezierRetainedOverlapReport2::from_graph(&graph, &policy()));
+
+    assert_eq!(decided(report.line_overlap_splits(&policy())).len(), 1);
+    assert_eq!(
+        report.linear_bezier_overlap_splits(&graph, &policy()),
+        Classification::Uncertain(UncertaintyReason::Unsupported)
+    );
 }
 
 #[test]
