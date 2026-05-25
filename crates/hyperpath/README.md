@@ -78,7 +78,9 @@ before downstream crates accept the path as ready.
 - `PcbConstraintSet`, `ToolpathConstraintSet`, `RectangularRegion`, and residual builders
   lower PCB/CAM semantics into `hypersolve` without moving domain ownership out of
   `hyperpath`.
-- Specctra import/export records provide a text/grid route handoff surface.
+- Specctra import/export records provide a text/grid route handoff surface,
+  including retained route envelopes, quoted aliases, vias, and multi-segment
+  path wires.
 
 ## Precision Model
 

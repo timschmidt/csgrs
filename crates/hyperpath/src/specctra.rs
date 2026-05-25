@@ -3,11 +3,12 @@
 //! DSN/SES exchange is an autorouter boundary: Lee and Hightower style search
 //! may produce route candidates outside the exact stack, but those candidates
 //! should enter `hyperpath` as fixed-grid exact geometry before clearance
-//! predicates certify topology. This module intentionally models validated
-//! route records rather than a complete S-expression parser; a parser can
-//! lower tokens into these exact records without changing predicate code. The
-//! boundary follows Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7.1-2 (1997).
+//! predicates certify topology. This module models validated route records and
+//! a conservative S-expression subset: canonical `(routes ...)` records,
+//! DSN/SES-style envelopes that contain route records, and multi-segment
+//! `(path ...)` wires. It deliberately lowers syntax to exact fixed-grid
+//! records before geometry import. The boundary follows Yap, "Towards Exact
+//! Geometric Computation," *Computational Geometry* 7.1-2 (1997).
 
 use hyperlimit::Point2;
 use hyperreal::{Rational, Real};
@@ -16,6 +17,7 @@ use std::fmt::Write;
 use crate::pcb::{NetId, PcbTrace, PcbViaStack, TraceLayer, ViaDrillIntent};
 use crate::provenance::{PathProvenance, PathSourceFormat};
 use crate::segment::LinePathSegment;
+use crate::specctra_syntax::{is_bare_atom, tokenize, write_atom};
 use crate::swept::SweptLineSegment;
 
 /// Exact route-level net alias retained from a Specctra DSN/SES-style file.
@@ -391,6 +393,52 @@ pub struct SpecctraGridRouteRecords {
     pub vias: Vec<SpecctraGridViaRecord>,
 }
 
+impl SpecctraGridRouteRecords {
+    /// Return whether the document contained no retained geometry or aliases.
+    pub fn is_empty(&self) -> bool {
+        self.net_aliases.is_empty()
+            && self.layer_aliases.is_empty()
+            && self.traces.is_empty()
+            && self.vias.is_empty()
+    }
+
+    fn extend(&mut self, other: Self) -> Result<(), SpecctraParseError> {
+        for alias in other.net_aliases {
+            self.push_net_alias(alias)?;
+        }
+        for alias in other.layer_aliases {
+            self.push_layer_alias(alias)?;
+        }
+        self.traces.extend(other.traces);
+        self.vias.extend(other.vias);
+        Ok(())
+    }
+
+    fn push_net_alias(&mut self, alias: SpecctraNetAlias) -> Result<(), SpecctraParseError> {
+        if self
+            .net_aliases
+            .iter()
+            .any(|existing| existing.net == alias.net || existing.name == alias.name)
+        {
+            return Err(SpecctraParseError::InvalidNetAlias);
+        }
+        self.net_aliases.push(alias);
+        Ok(())
+    }
+
+    fn push_layer_alias(&mut self, alias: SpecctraLayerAlias) -> Result<(), SpecctraParseError> {
+        if self
+            .layer_aliases
+            .iter()
+            .any(|existing| existing.layer == alias.layer || existing.name == alias.name)
+        {
+            return Err(SpecctraParseError::InvalidLayerAlias);
+        }
+        self.layer_aliases.push(alias);
+        Ok(())
+    }
+}
+
 /// Serialize mixed fixed-grid wire/via records into one canonical route form.
 ///
 /// This is still a deliberately small DSN/SES subset, but the mixed serializer
@@ -418,9 +466,11 @@ pub fn serialize_specctra_grid_route_records(records: &SpecctraGridRouteRecords)
 ///
 /// Supported records have the form
 /// `(routes (wire (net N) (layer L) (start X Y) (end X Y) (width W) (grid D)))`.
-/// A full Specctra parser can lower richer syntax into `SpecctraGridTraceRecord`
-/// later; this subset exists so exact route import/export can be tested and
-/// benchmarked without adding a lossy or permissive text boundary.
+/// DSN/SES route envelopes such as `(session "name" (routes ...))` are also
+/// accepted, and `(wire (net N) (path L W X0 Y0 X1 Y1 ... Xn Yn) (grid D))`
+/// lowers a retained polyline into one exact trace record per consecutive
+/// point pair. This keeps autorouter path output as source-grid integers
+/// rather than sampled or rounded path geometry.
 pub fn parse_specctra_grid_trace_records(
     input: &str,
 ) -> Result<Vec<SpecctraGridTraceRecord>, SpecctraParseError> {
@@ -439,41 +489,9 @@ pub fn parse_specctra_grid_trace_records(
 pub fn parse_specctra_grid_route_records(
     input: &str,
 ) -> Result<SpecctraGridRouteRecords, SpecctraParseError> {
-    let tokens = tokenize(input);
+    let tokens = tokenize(input)?;
     let mut parser = Parser::new(&tokens);
-    parser.expect("(")?;
-    parser.expect("routes")?;
-    let mut records = SpecctraGridRouteRecords::default();
-    while parser.peek() == Some("(") {
-        match parser.peek_record_kind()? {
-            "net" => {
-                let alias = parser.parse_net_alias()?;
-                if records
-                    .net_aliases
-                    .iter()
-                    .any(|existing| existing.net == alias.net || existing.name == alias.name)
-                {
-                    return Err(SpecctraParseError::InvalidNetAlias);
-                }
-                records.net_aliases.push(alias);
-            }
-            "layer" => {
-                let alias = parser.parse_layer_alias()?;
-                if records
-                    .layer_aliases
-                    .iter()
-                    .any(|existing| existing.layer == alias.layer || existing.name == alias.name)
-                {
-                    return Err(SpecctraParseError::InvalidLayerAlias);
-                }
-                records.layer_aliases.push(alias);
-            }
-            "wire" => records.traces.push(parser.parse_wire()?),
-            "via" => records.vias.push(parser.parse_via()?),
-            _ => return Err(SpecctraParseError::InvalidSyntax),
-        }
-    }
-    parser.expect(")")?;
+    let records = parser.parse_document()?;
     if parser.peek().is_some() {
         return Err(SpecctraParseError::InvalidSyntax);
     }
@@ -503,13 +521,15 @@ fn grid_real(value: i64, denominator: u64) -> Result<Real, SpecctraImportError> 
 }
 
 fn write_net_alias(output: &mut String, alias: &SpecctraNetAlias) {
-    write!(output, " (net {} {})", alias.net.0, alias.name)
-        .expect("writing to a String cannot fail");
+    write!(output, " (net {} ", alias.net.0).expect("writing to a String cannot fail");
+    write_atom(output, &alias.name);
+    output.push(')');
 }
 
 fn write_layer_alias(output: &mut String, alias: &SpecctraLayerAlias) {
-    write!(output, " (layer {} {})", alias.layer.0, alias.name)
-        .expect("writing to a String cannot fail");
+    write!(output, " (layer {} ", alias.layer.0).expect("writing to a String cannot fail");
+    write_atom(output, &alias.name);
+    output.push(')');
 }
 
 fn write_wire_record(output: &mut String, record: &SpecctraGridTraceRecord) {
@@ -553,31 +573,6 @@ fn drill_intent_atom(intent: ViaDrillIntent) -> &'static str {
     }
 }
 
-fn tokenize(input: &str) -> Vec<String> {
-    let mut tokens = Vec::new();
-    let mut current = String::new();
-    for character in input.chars() {
-        match character {
-            '(' | ')' => {
-                if !current.is_empty() {
-                    tokens.push(std::mem::take(&mut current));
-                }
-                tokens.push(character.to_string());
-            }
-            c if c.is_whitespace() => {
-                if !current.is_empty() {
-                    tokens.push(std::mem::take(&mut current));
-                }
-            }
-            c => current.push(c),
-        }
-    }
-    if !current.is_empty() {
-        tokens.push(current);
-    }
-    tokens
-}
-
 struct Parser<'a> {
     tokens: &'a [String],
     index: usize,
@@ -586,6 +581,88 @@ struct Parser<'a> {
 impl<'a> Parser<'a> {
     fn new(tokens: &'a [String]) -> Self {
         Self { tokens, index: 0 }
+    }
+
+    fn parse_document(&mut self) -> Result<SpecctraGridRouteRecords, SpecctraParseError> {
+        self.expect("(")?;
+        let root = self.next()?;
+        let records = if root == "routes" {
+            self.parse_routes_body()?
+        } else {
+            self.parse_envelope_body()?
+        };
+        self.expect(")")?;
+        if records.is_empty() {
+            return Err(SpecctraParseError::InvalidSyntax);
+        }
+        Ok(records)
+    }
+
+    fn parse_routes_body(&mut self) -> Result<SpecctraGridRouteRecords, SpecctraParseError> {
+        let mut records = SpecctraGridRouteRecords::default();
+        while self.peek() == Some("(") {
+            match self.peek_record_kind()? {
+                "net" => {
+                    let alias = self.parse_net_alias()?;
+                    records.push_net_alias(alias)?;
+                }
+                "layer" => {
+                    let alias = self.parse_layer_alias()?;
+                    records.push_layer_alias(alias)?;
+                }
+                "wire" => records.traces.extend(self.parse_wire()?),
+                "via" => records.vias.push(self.parse_via()?),
+                _ => return Err(SpecctraParseError::InvalidSyntax),
+            }
+        }
+        Ok(records)
+    }
+
+    fn parse_envelope_body(&mut self) -> Result<SpecctraGridRouteRecords, SpecctraParseError> {
+        let mut records = SpecctraGridRouteRecords::default();
+        while self.peek().is_some() && self.peek() != Some(")") {
+            if self.peek() == Some("(") {
+                if self.peek_record_kind()? == "routes" {
+                    self.expect("(")?;
+                    self.expect("routes")?;
+                    let nested = self.parse_routes_body()?;
+                    self.expect(")")?;
+                    records.extend(nested)?;
+                } else {
+                    let nested = self.parse_unknown_group_for_routes()?;
+                    records.extend(nested)?;
+                }
+            } else {
+                self.next()?;
+            }
+        }
+        Ok(records)
+    }
+
+    fn parse_unknown_group_for_routes(
+        &mut self,
+    ) -> Result<SpecctraGridRouteRecords, SpecctraParseError> {
+        self.expect("(")?;
+        self.next()?;
+        let mut records = SpecctraGridRouteRecords::default();
+        while self.peek().is_some() && self.peek() != Some(")") {
+            if self.peek() == Some("(") {
+                if self.peek_record_kind()? == "routes" {
+                    self.expect("(")?;
+                    self.expect("routes")?;
+                    let nested = self.parse_routes_body()?;
+                    self.expect(")")?;
+                    records.extend(nested)?;
+                } else {
+                    let nested = self.parse_unknown_group_for_routes()?;
+                    records.extend(nested)?;
+                }
+            } else {
+                self.next()?;
+            }
+        }
+        self.expect(")")?;
+        Ok(records)
     }
 
     fn peek(&self) -> Option<&str> {
@@ -649,29 +726,55 @@ impl<'a> Parser<'a> {
         })
     }
 
-    fn parse_wire(&mut self) -> Result<SpecctraGridTraceRecord, SpecctraParseError> {
+    fn parse_wire(&mut self) -> Result<Vec<SpecctraGridTraceRecord>, SpecctraParseError> {
         self.expect("(")?;
         self.expect("wire")?;
-        let net = self.parse_u32_field("net")?;
-        let layer = self.parse_u16_field("layer")?;
-        let (start_x, start_y) = self.parse_i64_pair_field("start")?;
-        let (end_x, end_y) = self.parse_i64_pair_field("end")?;
-        let width = self.parse_i64_field("width")?;
-        let grid_denominator = self.parse_u64_field("grid")?;
+        let mut net = None;
+        let mut layer = None;
+        let mut start = None;
+        let mut end = None;
+        let mut width = None;
+        let mut grid_denominator = None;
+        let mut path = None;
+        while self.peek() == Some("(") {
+            match self
+                .peek_field_name()
+                .ok_or(SpecctraParseError::InvalidSyntax)?
+            {
+                "net" => set_once(&mut net, self.parse_u32_field("net")?)?,
+                "layer" => set_once(&mut layer, self.parse_u16_field("layer")?)?,
+                "start" => set_once(&mut start, self.parse_i64_pair_field("start")?)?,
+                "end" => set_once(&mut end, self.parse_i64_pair_field("end")?)?,
+                "width" => set_once(&mut width, self.parse_i64_field("width")?)?,
+                "grid" => set_once(&mut grid_denominator, self.parse_u64_field("grid")?)?,
+                "path" => set_once(&mut path, self.parse_path_field()?)?,
+                _ => return Err(SpecctraParseError::InvalidSyntax),
+            }
+        }
         self.expect(")")?;
+        let net = net.ok_or(SpecctraParseError::InvalidSyntax)?;
+        let grid_denominator = grid_denominator.ok_or(SpecctraParseError::InvalidSyntax)?;
         if grid_denominator == 0 {
             return Err(SpecctraParseError::InvalidGrid);
         }
-        Ok(SpecctraGridTraceRecord {
+        if let Some(path) = path {
+            if layer.is_some() || start.is_some() || end.is_some() || width.is_some() {
+                return Err(SpecctraParseError::InvalidSyntax);
+            }
+            return path.into_records(NetId(net), grid_denominator);
+        }
+        let (start_x, start_y) = start.ok_or(SpecctraParseError::InvalidSyntax)?;
+        let (end_x, end_y) = end.ok_or(SpecctraParseError::InvalidSyntax)?;
+        Ok(vec![SpecctraGridTraceRecord {
             net: NetId(net),
-            layer: TraceLayer(layer),
+            layer: TraceLayer(layer.ok_or(SpecctraParseError::InvalidSyntax)?),
             start_x,
             start_y,
             end_x,
             end_y,
-            width,
+            width: width.ok_or(SpecctraParseError::InvalidSyntax)?,
             grid_denominator,
-        })
+        }])
     }
 
     fn parse_via(&mut self) -> Result<SpecctraGridViaRecord, SpecctraParseError> {
@@ -724,6 +827,31 @@ impl<'a> Parser<'a> {
         };
         self.expect(")")?;
         Ok(intent)
+    }
+
+    fn parse_path_field(&mut self) -> Result<SpecctraPathWire, SpecctraParseError> {
+        self.expect("(")?;
+        self.expect("path")?;
+        let layer = self.parse_u16()?;
+        let width = self.parse_i64()?;
+        let mut points = Vec::new();
+        while self.peek().is_some() && self.peek() != Some(")") {
+            let x = self.parse_i64()?;
+            if self.peek() == Some(")") {
+                return Err(SpecctraParseError::InvalidSyntax);
+            }
+            let y = self.parse_i64()?;
+            points.push((x, y));
+        }
+        self.expect(")")?;
+        if points.len() < 2 {
+            return Err(SpecctraParseError::InvalidSyntax);
+        }
+        Ok(SpecctraPathWire {
+            layer: TraceLayer(layer),
+            width,
+            points,
+        })
     }
 
     fn parse_i64_field(&mut self, name: &str) -> Result<i64, SpecctraParseError> {
@@ -796,9 +924,46 @@ impl<'a> Parser<'a> {
     }
 }
 
+struct SpecctraPathWire {
+    layer: TraceLayer,
+    width: i64,
+    points: Vec<(i64, i64)>,
+}
+
+impl SpecctraPathWire {
+    fn into_records(
+        self,
+        net: NetId,
+        grid_denominator: u64,
+    ) -> Result<Vec<SpecctraGridTraceRecord>, SpecctraParseError> {
+        Ok(self
+            .points
+            .windows(2)
+            .map(|pair| SpecctraGridTraceRecord {
+                net,
+                layer: self.layer,
+                start_x: pair[0].0,
+                start_y: pair[0].1,
+                end_x: pair[1].0,
+                end_y: pair[1].1,
+                width: self.width,
+                grid_denominator,
+            })
+            .collect())
+    }
+}
+
+fn set_once<T>(slot: &mut Option<T>, value: T) -> Result<(), SpecctraParseError> {
+    if slot.replace(value).is_some() {
+        return Err(SpecctraParseError::InvalidSyntax);
+    }
+    Ok(())
+}
+
 fn is_valid_alias_name(name: &str) -> bool {
     !name.is_empty()
-        && name
-            .chars()
-            .all(|character| !character.is_whitespace() && character != '(' && character != ')')
+        && (is_bare_atom(name)
+            || !name
+                .chars()
+                .any(|character| character == '(' || character == ')'))
 }

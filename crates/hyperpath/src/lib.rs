@@ -17,6 +17,7 @@ pub mod routing;
 pub mod segment;
 pub mod solve;
 pub mod specctra;
+mod specctra_syntax;
 pub mod swept;
 pub mod tangent;
 

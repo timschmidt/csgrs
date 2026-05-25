@@ -638,6 +638,18 @@ fn path_predicates(c: &mut Criterion) {
     c.bench_function("specctra_grid_mixed_route_text_parse", |b| {
         b.iter(|| parse_specctra_grid_route_records(&mixed_text))
     });
+    let envelope_path_text = concat!(
+        "(session \"bench board\"",
+        " (metadata (ignored yes))",
+        " (routes",
+        "  (net 3 \"CLK P\")",
+        "  (layer 1 \"F.Cu signal\")",
+        "  (wire (net 3) (path 1 8 0 0 1000 0 1000 500 1500 500) (grid 10))",
+        "  (via (net 3) (layers 0 3) (at 1000 0) (land 24) (drill 10) (intent plated) (grid 10))))",
+    );
+    c.bench_function("specctra_envelope_path_route_text_parse", |b| {
+        b.iter(|| parse_specctra_grid_route_records(envelope_path_text))
+    });
 
     let offset_source = LinePathSegment::new(p(0, 0), p(1000, 0));
     c.bench_function("axis_aligned_line_offset_exact", |b| {

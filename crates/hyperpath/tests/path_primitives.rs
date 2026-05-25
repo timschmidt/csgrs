@@ -3275,6 +3275,93 @@ fn specctra_grid_route_text_round_trips_net_aliases() {
 }
 
 #[test]
+fn specctra_grid_route_text_parses_quoted_aliases_comments_and_envelopes() {
+    let input = r#"
+        (session "demo board"
+          ; unrelated DSN/SES metadata must not affect retained route objects
+          (placement (component U1 (at 10 20)))
+          (autoroute
+            (routes
+              (net 7 "USB DP")
+              (layer 3 "F.Cu signal")
+              (wire (net 7) (layer 3) (start 0 10) (end 50 10) (width 6) (grid 10))
+              (via (net 7) (layers 0 3) (at 50 10) (land 12) (drill 6)
+                   (intent nonplated) (grid 10)))))"#;
+
+    let parsed = parse_specctra_grid_route_records(input).unwrap();
+    let route = import_specctra_text_route(input).unwrap();
+    let serialized = serialize_specctra_grid_route_records(&parsed);
+    let reparsed = parse_specctra_grid_route_records(&serialized).unwrap();
+
+    assert_eq!(
+        parsed.net_aliases,
+        vec![SpecctraNetAlias {
+            net: NetId(7),
+            name: "USB DP".to_owned()
+        }]
+    );
+    assert_eq!(
+        parsed.layer_aliases,
+        vec![SpecctraLayerAlias {
+            layer: TraceLayer(3),
+            name: "F.Cu signal".to_owned()
+        }]
+    );
+    assert_eq!(parsed.traces.len(), 1);
+    assert_eq!(parsed.vias.len(), 1);
+    assert_eq!(parsed.vias[0].drill_intent, ViaDrillIntent::NonPlated);
+    assert_eq!(route.traces().len(), 1);
+    assert_eq!(route.vias().len(), 1);
+    assert_eq!(reparsed, parsed);
+}
+
+#[test]
+fn specctra_path_wire_lowers_to_exact_consecutive_segments() {
+    let text = "(pcb \"board\" (library ignored) (routes \
+        (wire (net 3) (path 2 8 0 0 10 0 10 10 -5 10) (grid 4))))";
+    let parsed = parse_specctra_grid_route_records(text).unwrap();
+    let route = import_specctra_text_route(text).unwrap();
+
+    assert_eq!(
+        parsed.traces,
+        vec![
+            SpecctraGridTraceRecord {
+                net: NetId(3),
+                layer: TraceLayer(2),
+                start_x: 0,
+                start_y: 0,
+                end_x: 10,
+                end_y: 0,
+                width: 8,
+                grid_denominator: 4,
+            },
+            SpecctraGridTraceRecord {
+                net: NetId(3),
+                layer: TraceLayer(2),
+                start_x: 10,
+                start_y: 0,
+                end_x: 10,
+                end_y: 10,
+                width: 8,
+                grid_denominator: 4,
+            },
+            SpecctraGridTraceRecord {
+                net: NetId(3),
+                layer: TraceLayer(2),
+                start_x: 10,
+                start_y: 10,
+                end_x: -5,
+                end_y: 10,
+                width: 8,
+                grid_denominator: 4,
+            },
+        ]
+    );
+    assert_eq!(route.traces().len(), 3);
+    assert_eq!(route.traces()[0].swept().width(), &r(2));
+}
+
+#[test]
 fn specctra_grid_route_text_rejects_malformed_and_invalid_routes() {
     assert_eq!(
         parse_specctra_grid_trace_records("(routes (wire (net 1)))").unwrap_err(),
@@ -3339,6 +3426,26 @@ fn specctra_grid_route_text_rejects_malformed_and_invalid_routes() {
     assert_eq!(
         parse_specctra_grid_route_records("(routes (layer 1 F_Cu) (layer 2 F_Cu))").unwrap_err(),
         SpecctraParseError::InvalidLayerAlias
+    );
+    assert_eq!(
+        parse_specctra_grid_route_records("(routes (net 1 \"unterminated))").unwrap_err(),
+        SpecctraParseError::InvalidSyntax
+    );
+    assert_eq!(
+        parse_specctra_grid_route_records("(routes (wire (net 1) (path 0 1 0 0 1) (grid 1)))")
+            .unwrap_err(),
+        SpecctraParseError::InvalidSyntax
+    );
+    assert_eq!(
+        parse_specctra_grid_route_records(
+            "(routes (wire (net 1) (path 0 1 0 0 1 1) (layer 0) (grid 1)))"
+        )
+        .unwrap_err(),
+        SpecctraParseError::InvalidSyntax
+    );
+    assert_eq!(
+        parse_specctra_grid_route_records("(session \"empty\" (library ignored))").unwrap_err(),
+        SpecctraParseError::InvalidSyntax
     );
 }
 
@@ -3548,6 +3655,33 @@ proptest! {
         let text = serialize_specctra_grid_trace_records(&records);
         prop_assert_eq!(parse_specctra_grid_trace_records(&text).unwrap(), records);
         prop_assert_eq!(import_specctra_text_route(&text).unwrap().traces().len(), 1);
+    }
+
+    #[test]
+    fn specctra_path_wire_generated_points_lower_to_segment_count(
+        net in 0_u32..=64,
+        layer in 0_u16..=16,
+        x0 in -100_i16..=100,
+        y0 in -100_i16..=100,
+        x1 in -100_i16..=100,
+        y1 in -100_i16..=100,
+        x2 in -100_i16..=100,
+        y2 in -100_i16..=100,
+        width in 0_i16..=64,
+        grid_denominator in 1_u64..=10_000,
+    ) {
+        let text = format!(
+            "(session generated (routes (wire (net {net}) (path {layer} {width} {x0} {y0} {x1} {y1} {x2} {y2}) (grid {grid_denominator}))))"
+        );
+        let parsed = parse_specctra_grid_route_records(&text).unwrap();
+        let route = import_specctra_text_route(&text).unwrap();
+
+        prop_assert_eq!(parsed.traces.len(), 2);
+        prop_assert_eq!(route.traces().len(), 2);
+        prop_assert_eq!(parsed.traces[0].end_x, i64::from(x1));
+        prop_assert_eq!(parsed.traces[0].end_y, i64::from(y1));
+        prop_assert_eq!(parsed.traces[1].start_x, i64::from(x1));
+        prop_assert_eq!(parsed.traces[1].start_y, i64::from(y1));
     }
 
     #[test]
