@@ -45,12 +45,22 @@ fn line_fragment(
     )
 }
 
-fn algebraic_midpoint(policy: &CurvePolicy) -> CurveResult<BezierParameter2> {
+fn algebraic_linear_parameter(
+    numerator: i32,
+    denominator: i32,
+    interval_start: Real,
+    interval_end: Real,
+    policy: &CurvePolicy,
+) -> CurveResult<BezierParameter2> {
     let polynomial = decided(BezierParameterPolynomial::try_new_power_basis(
-        vec![r(-1), r(2)],
+        vec![r(-numerator), r(denominator)],
         policy,
     )?);
-    let interval = decided(BezierParameterInterval::try_new(q(2, 5), q(3, 5), policy)?);
+    let interval = decided(BezierParameterInterval::try_new(
+        interval_start,
+        interval_end,
+        policy,
+    )?);
     Ok(BezierParameter2::algebraic(decided(
         BezierAlgebraicParameter2::try_isolate(polynomial, interval, policy)?,
     )))
@@ -117,8 +127,16 @@ fn main() -> CurveResult<()> {
         elapsed / iterations
     );
 
-    let algebraic_split =
-        decided(upper.split_at_parameters(&[algebraic_midpoint(&policy)?], &policy)?);
+    let algebraic_split = decided(upper.split_at_parameters(
+        &[algebraic_linear_parameter(
+            1,
+            4,
+            q(1, 5),
+            q(3, 10),
+            &policy,
+        )?],
+        &policy,
+    )?);
     let algebraic_loop = BezierRetainedBoundaryLoop2::new(algebraic_split.fragments().to_vec());
     let started = Instant::now();
     let mut algebraic_envelope_checksum = 0_usize;

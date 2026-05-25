@@ -56,6 +56,14 @@ fn algebraic_midpoint_parameter() -> BezierAlgebraicParameter2 {
     decided(BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy()).unwrap())
 }
 
+fn algebraic_quarter_parameter() -> BezierAlgebraicParameter2 {
+    let polynomial = decided(
+        BezierParameterPolynomial::try_new_power_basis(vec![r(-1), r(4)], &policy()).unwrap(),
+    );
+    let interval = decided(BezierParameterInterval::try_new(q(1, 5), q(3, 10), &policy()).unwrap());
+    decided(BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy()).unwrap())
+}
+
 fn algebraic_image(curve: &QuadraticBezier2) -> BezierAlgebraicEndpointImage2 {
     BezierAlgebraicEndpointImage2::quadratic(curve, &algebraic_midpoint_parameter(), &policy())
         .unwrap()
@@ -541,6 +549,29 @@ fn retained_curve_envelope_uses_source_bounds_for_algebraic_split_fragments() {
     assert_eq!(curve_envelope.envelope().min(), &p(0, 0));
     assert_eq!(curve_envelope.envelope().max(), &p(4, 2));
     assert_eq!(curve_envelope.exact_fragment_count(), 2);
+}
+
+#[test]
+fn retained_curve_envelope_uses_algebraic_parameter_interval_hull() {
+    let curve = QuadraticBezier2::new(p(0, 0), p(2, 4), p(4, 0));
+    let split = decided(
+        curve
+            .split_at_parameters(
+                &[BezierParameter2::algebraic(algebraic_quarter_parameter())],
+                &policy(),
+            )
+            .unwrap(),
+    );
+    let first_fragment_loop = BezierRetainedBoundaryLoop2::new(vec![split.fragments()[0].clone()]);
+
+    let envelope = decided(BezierRetainedCurveEnvelope2::from_loop(
+        &first_fragment_loop,
+        &policy(),
+    ));
+
+    assert_eq!(envelope.envelope().min(), &p(0, 0));
+    assert_eq!(envelope.envelope().max(), &Point2::new(q(6, 5), q(42, 25)));
+    assert_eq!(envelope.exact_fragment_count(), 1);
 }
 
 #[test]

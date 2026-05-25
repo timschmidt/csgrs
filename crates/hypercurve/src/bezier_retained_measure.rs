@@ -14,31 +14,34 @@
 //! by Farin, *Curves and Surfaces for CAGD* (5th ed., 2002), and the
 //! rational-quadratic path reuses the crate's quotient-derivative conic bounds.
 //! Algebraic endpoint-image fragments can also contribute when they retain the
-//! source curve that generated the algebraic split: the envelope includes the
-//! exact source-curve bounds as a conservative overbound of the algebraic
-//! subrange.  Fragments without source-curve evidence remain unsupported. This
-//! is the construction/decision split advocated by Yap, "Towards Exact
-//! Geometric Computation," *Computational Geometry* 7(1-2), 3-23 (1997).  The
-//! broad-phase role mirrors Bentley and Ottmann's sweep-line candidate filters,
-//! "Algorithms for Reporting and Counting Geometric Intersections," *IEEE
-//! Transactions on Computers* C-28(9), 643-647 (1979).
+//! source curve that generated the algebraic split: the envelope materializes
+//! the source subcurve over the certified parameter-interval hull and then
+//! includes that exact native bound as a conservative overbound of the true
+//! algebraic subrange.  Fragments without source-curve evidence remain
+//! unsupported. This is the construction/decision split advocated by Yap,
+//! "Towards Exact Geometric Computation," *Computational Geometry* 7(1-2),
+//! 3-23 (1997).  The broad-phase role mirrors Bentley and Ottmann's sweep-line
+//! candidate filters, "Algorithms for Reporting and Counting Geometric
+//! Intersections," *IEEE Transactions on Computers* C-28(9), 643-647 (1979).
 
 use hyperreal::Real;
 use hypersolve::AlgebraicRootRepresentation;
 
 use crate::classify::compare_reals;
 use crate::{
-    Aabb2, BezierEndpointPointImage2, BezierRetainedBoundaryLoop2, BezierRetainedRegion2,
-    BezierSplitFragment2, BezierSubcurve2, Classification, CurvePolicy, Point2, UncertaintyReason,
+    Aabb2, BezierEndpointPointImage2, BezierParameter2, BezierRetainedBoundaryLoop2,
+    BezierRetainedRegion2, BezierSplitFragment2, BezierSubcurve2, Classification, CurvePolicy,
+    Point2, UncertaintyReason,
 };
 
 /// Exact curve-interior envelope for retained Bezier/conic carriers.
 ///
 /// Native subcurves contribute endpoint and derivative-root extrema. Algebraic
 /// endpoint-image fragments contribute only when they carry their source
-/// curve; in that case the source curve's certified bounds conservatively
-/// overbound the algebraic subrange. Endpoint images alone are still rejected
-/// because they do not prove any interior extrema.
+/// curve; in that case the certified parameter intervals choose a native
+/// source subcurve whose bounds conservatively overbound the algebraic
+/// subrange. Endpoint images alone are still rejected because they do not prove
+/// any interior extrema.
 #[derive(Clone, Debug, PartialEq)]
 pub struct BezierRetainedCurveEnvelope2 {
     envelope: Aabb2,
@@ -206,22 +209,30 @@ impl CurveEnvelopeAccumulator {
         fragment: &BezierSplitFragment2,
         policy: &CurvePolicy,
     ) -> Classification<()> {
-        let curve = match fragment {
-            BezierSplitFragment2::Materialized { curve, .. } => curve,
-            BezierSplitFragment2::AlgebraicEndpointImages { source_curve, .. } => {
+        let curve_box = match fragment {
+            BezierSplitFragment2::Materialized { curve, .. } => {
+                match retained_curve_bounds(curve, policy) {
+                    Classification::Decided(curve_box) => curve_box,
+                    Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+                }
+            }
+            BezierSplitFragment2::AlgebraicEndpointImages {
+                start,
+                end,
+                source_curve,
+                ..
+            } => {
                 let Some(source_curve) = source_curve else {
                     return Classification::Uncertain(UncertaintyReason::Unsupported);
                 };
-                source_curve
+                match retained_algebraic_source_interval_bounds(source_curve, start, end, policy) {
+                    Classification::Decided(curve_box) => curve_box,
+                    Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+                }
             }
             BezierSplitFragment2::Unresolved { .. } => {
                 return Classification::Uncertain(UncertaintyReason::Boundary);
             }
-        };
-
-        let curve_box = match retained_curve_bounds(curve, policy) {
-            Classification::Decided(curve_box) => curve_box,
-            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
         };
         self.envelope = match self.envelope.take() {
             Some(envelope) => match envelope.union(&curve_box, policy) {
@@ -242,6 +253,82 @@ impl CurveEnvelopeAccumulator {
             envelope,
             exact_fragment_count: self.exact_fragment_count,
         })
+    }
+}
+
+fn retained_algebraic_source_interval_bounds(
+    source_curve: &BezierSubcurve2,
+    start: &BezierParameter2,
+    end: &BezierParameter2,
+    policy: &CurvePolicy,
+) -> Classification<Aabb2> {
+    let (range_start, range_end) = match parameter_interval_hull(start, end, policy) {
+        Classification::Decided(range) => range,
+        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+    };
+    let subcurve = match subcurve_between_exact(source_curve, &range_start, &range_end, policy) {
+        Classification::Decided(subcurve) => subcurve,
+        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+    };
+    retained_curve_bounds(&subcurve, policy)
+}
+
+fn parameter_interval_hull(
+    start: &BezierParameter2,
+    end: &BezierParameter2,
+    policy: &CurvePolicy,
+) -> Classification<(Real, Real)> {
+    let start_interval = match start.known_interval(policy) {
+        Ok(Classification::Decided(interval)) => interval,
+        Ok(Classification::Uncertain(reason)) => return Classification::Uncertain(reason),
+        Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
+    };
+    let end_interval = match end.known_interval(policy) {
+        Ok(Classification::Decided(interval)) => interval,
+        Ok(Classification::Uncertain(reason)) => return Classification::Uncertain(reason),
+        Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
+    };
+
+    let lower = match compare_reals(start_interval.start(), end_interval.start(), policy) {
+        Some(std::cmp::Ordering::Greater) => end_interval.start().clone(),
+        Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal) => {
+            start_interval.start().clone()
+        }
+        None => return Classification::Uncertain(UncertaintyReason::Ordering),
+    };
+    let upper = match compare_reals(start_interval.end(), end_interval.end(), policy) {
+        Some(std::cmp::Ordering::Less) => end_interval.end().clone(),
+        Some(std::cmp::Ordering::Greater | std::cmp::Ordering::Equal) => {
+            start_interval.end().clone()
+        }
+        None => return Classification::Uncertain(UncertaintyReason::Ordering),
+    };
+    if compare_reals(&lower, &upper, policy) == Some(std::cmp::Ordering::Greater) {
+        return Classification::Uncertain(UncertaintyReason::Ordering);
+    }
+    Classification::Decided((lower, upper))
+}
+
+fn subcurve_between_exact(
+    curve: &BezierSubcurve2,
+    start: &Real,
+    end: &Real,
+    policy: &CurvePolicy,
+) -> Classification<BezierSubcurve2> {
+    let result = match curve {
+        BezierSubcurve2::Quadratic(curve) => curve
+            .subcurve_between_exact(start, end, policy)
+            .map(BezierSubcurve2::Quadratic),
+        BezierSubcurve2::Cubic(curve) => curve
+            .subcurve_between_exact(start, end, policy)
+            .map(BezierSubcurve2::Cubic),
+        BezierSubcurve2::RationalQuadratic(curve) => curve
+            .subcurve_between_exact(start, end, policy)
+            .map(BezierSubcurve2::RationalQuadratic),
+    };
+    match result {
+        Ok(curve) => Classification::Decided(curve),
+        Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
     }
 }
 

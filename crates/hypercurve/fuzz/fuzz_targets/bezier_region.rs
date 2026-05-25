@@ -1,9 +1,11 @@
 #![no_main]
 
 use hypercurve::{
-    BezierArrangementGraph2, BezierParameter2, BezierRegion2, BezierRetainedCurveEnvelope2,
-    BezierRetainedEndpointEnvelope2, BezierRetainedRegion2, Classification, CurvePolicy, Point2,
-    QuadraticBezier2, RationalQuadraticBezier2, Real,
+    BezierAlgebraicParameter2, BezierArrangementGraph2, BezierParameter2,
+    BezierParameterInterval, BezierParameterPolynomial, BezierRegion2,
+    BezierRetainedBoundaryLoop2, BezierRetainedCurveEnvelope2, BezierRetainedEndpointEnvelope2,
+    BezierRetainedRegion2, Classification, CurvePolicy, Point2, QuadraticBezier2,
+    RationalQuadraticBezier2, Real,
 };
 use libfuzzer_sys::fuzz_target;
 
@@ -15,8 +17,36 @@ fn unit_from_byte(byte: u8) -> Real {
     (Real::from((byte % 17) as i32) / Real::from(16_i32)).unwrap()
 }
 
+fn rational(numerator: i32, denominator: i32) -> Real {
+    (Real::from(numerator) / Real::from(denominator)).unwrap()
+}
+
 fn point(x: u8, y: u8) -> Point2 {
     Point2::new(real_from_byte(x), real_from_byte(y))
+}
+
+fn algebraic_quarter(policy: &CurvePolicy) -> Option<BezierParameter2> {
+    let polynomial = match BezierParameterPolynomial::try_new_power_basis(
+        vec![Real::from(-1_i32), Real::from(4_i32)],
+        policy,
+    )
+    .ok()?
+    {
+        Classification::Decided(polynomial) => polynomial,
+        Classification::Uncertain(_) => return None,
+    };
+    let interval =
+        match BezierParameterInterval::try_new(rational(1, 5), rational(3, 10), policy).ok()? {
+            Classification::Decided(interval) => interval,
+            Classification::Uncertain(_) => return None,
+        };
+    let parameter = match BezierAlgebraicParameter2::try_isolate(polynomial, interval, policy)
+        .ok()?
+    {
+        Classification::Decided(parameter) => parameter,
+        Classification::Uncertain(_) => return None,
+    };
+    Some(BezierParameter2::algebraic(parameter))
 }
 
 fuzz_target!(|data: &[u8]| {
@@ -45,6 +75,14 @@ fuzz_target!(|data: &[u8]| {
             curve.split_at_parameters(&parameters, &policy)
         {
             materializations.push(materialization);
+        }
+        if let Some(algebraic) = algebraic_quarter(&policy)
+            && let Ok(Classification::Decided(split)) =
+                curve.split_at_parameters(&[algebraic], &policy)
+            && let Some(fragment) = split.fragments().first()
+        {
+            let loop_ = BezierRetainedBoundaryLoop2::new(vec![fragment.clone()]);
+            let _ = BezierRetainedCurveEnvelope2::from_loop(&loop_, &policy);
         }
     }
 
