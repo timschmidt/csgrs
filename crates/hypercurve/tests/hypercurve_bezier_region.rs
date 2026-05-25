@@ -326,6 +326,137 @@ fn retained_line_image_role_report_rejects_nonlinear_line_image_loop() {
     );
 }
 
+fn retained_quadratic_lens_loop(
+    left_x: i32,
+    right_x: i32,
+    height: i32,
+    material_orientation: bool,
+) -> BezierRetainedBoundaryLoop2 {
+    let upper = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: hypercurve::BezierSubcurve2::Quadratic(QuadraticBezier2::new(
+            p(left_x, 0),
+            p((left_x + right_x) / 2, height),
+            p(right_x, 0),
+        )),
+    };
+    let lower = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: hypercurve::BezierSubcurve2::Quadratic(QuadraticBezier2::new(
+            p(right_x, 0),
+            p((left_x + right_x) / 2, -height),
+            p(left_x, 0),
+        )),
+    };
+    if material_orientation {
+        BezierRetainedBoundaryLoop2::new(vec![upper, lower])
+    } else {
+        let BezierSplitFragment2::Materialized {
+            curve: hypercurve::BezierSubcurve2::Quadratic(upper),
+            ..
+        } = upper
+        else {
+            unreachable!()
+        };
+        let BezierSplitFragment2::Materialized {
+            curve: hypercurve::BezierSubcurve2::Quadratic(lower),
+            ..
+        } = lower
+        else {
+            unreachable!()
+        };
+        BezierRetainedBoundaryLoop2::new(vec![
+            BezierSplitFragment2::Materialized {
+                start: exact(r(0)),
+                end: exact(r(1)),
+                curve: hypercurve::BezierSubcurve2::Quadratic(QuadraticBezier2::new(
+                    lower.end().clone(),
+                    lower.control().clone(),
+                    lower.start().clone(),
+                )),
+            },
+            BezierSplitFragment2::Materialized {
+                start: exact(r(0)),
+                end: exact(r(1)),
+                curve: hypercurve::BezierSubcurve2::Quadratic(QuadraticBezier2::new(
+                    upper.end().clone(),
+                    upper.control().clone(),
+                    upper.start().clone(),
+                )),
+            },
+        ])
+    }
+}
+
+#[test]
+fn retained_signed_area_role_report_accepts_nonlinear_bezier_loops() {
+    let material = retained_quadratic_lens_loop(0, 8, 4, true);
+    let hole = retained_quadratic_lens_loop(2, 6, 1, false);
+    let retained = BezierRetainedRegion2::new(vec![material, hole]);
+
+    let report = decided(retained.signed_area_role_report(&policy()).unwrap());
+
+    assert_eq!(
+        report.roles(),
+        &[
+            BezierRetainedRegionLoopRole::Material,
+            BezierRetainedRegionLoopRole::Hole
+        ]
+    );
+    assert_eq!(report.material_loop_indices(), vec![0]);
+    assert_eq!(report.hole_loop_indices(), vec![1]);
+    assert_eq!(report.signed_areas()[0], q(-64, 3));
+    assert_eq!(report.signed_areas()[1], q(8, 3));
+    assert_eq!(
+        retained.line_image_role_report(&policy()).unwrap(),
+        Classification::Uncertain(UncertaintyReason::Unsupported)
+    );
+}
+
+#[test]
+fn retained_signed_area_role_report_rejects_zero_area_and_algebraic_loops() {
+    let zero = BezierRetainedRegion2::new(vec![BezierRetainedBoundaryLoop2::new(vec![
+        BezierSplitFragment2::Materialized {
+            start: exact(r(0)),
+            end: exact(r(1)),
+            curve: hypercurve::BezierSubcurve2::Quadratic(QuadraticBezier2::new(
+                p(0, 0),
+                p(1, 0),
+                p(2, 0),
+            )),
+        },
+        BezierSplitFragment2::Materialized {
+            start: exact(r(0)),
+            end: exact(r(1)),
+            curve: hypercurve::BezierSubcurve2::Quadratic(QuadraticBezier2::new(
+                p(2, 0),
+                p(1, 0),
+                p(0, 0),
+            )),
+        },
+    ])]);
+    assert_eq!(
+        zero.signed_area_role_report(&policy()).unwrap(),
+        Classification::Uncertain(UncertaintyReason::Boundary)
+    );
+
+    let parameter = BezierParameter2::algebraic(algebraic_midpoint_parameter());
+    let algebraic = BezierRetainedRegion2::new(vec![BezierRetainedBoundaryLoop2::new(vec![
+        BezierSplitFragment2::AlgebraicEndpointImages {
+            start: parameter.clone(),
+            end: parameter,
+            start_image: Some(algebraic_image(&line_midpoint_curve(-1, 0, 1))),
+            end_image: Some(algebraic_image(&line_midpoint_curve(0, 1, 2))),
+        },
+    ])]);
+    assert_eq!(
+        algebraic.signed_area_role_report(&policy()).unwrap(),
+        Classification::Uncertain(UncertaintyReason::Unsupported)
+    );
+}
+
 #[test]
 fn retained_curve_envelope_includes_native_bezier_interior_extrema() {
     let upper = QuadraticBezier2::new(p(0, 0), p(2, 4), p(4, 0));

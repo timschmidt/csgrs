@@ -17,9 +17,9 @@
 //! (5th ed., 2002). Unsupported conic denominator cases still return `None`
 //! rather than silently sampling.
 
-use hyperreal::Real;
+use hyperreal::{Real, RealSign};
 
-use crate::classify::compare_reals;
+use crate::classify::{compare_reals, real_sign};
 use crate::{
     BezierArrangementGraph2, BezierArrangementTraversal2, BezierRetainedLinearOverlapTraversal2,
     BezierSplitFragment2, BezierSubcurve2, Classification, Contour2, ContourPointLocation,
@@ -89,6 +89,25 @@ pub struct BezierRetainedLineRegionRoleReport2 {
     contours: Vec<Contour2>,
 }
 
+/// Exact orientation-derived role assignment for native retained Bezier loops.
+///
+/// This report is broader than [`BezierRetainedLineRegionRoleReport2`]: it
+/// accepts native polynomial Bezier and rational quadratic conic loops whenever
+/// their exact Green-integral signed area is implemented and nonzero.  It is
+/// intentionally narrower than full curved-loop nesting: it assigns roles from
+/// the authored loop orientation only, returns the signed areas as evidence,
+/// and rejects algebraic, unresolved, zero-area, or unsupported-area loops.
+/// That keeps the construction/decision boundary explicit in Yap's sense; see
+/// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
+/// 7(1-2), 3-23 (1997).  The signed-area evidence comes from Green's theorem
+/// and Bernstein/rational Bezier identities as described by Farin, *Curves and
+/// Surfaces for CAGD* (5th ed., 2002).
+#[derive(Clone, Debug, PartialEq)]
+pub struct BezierRetainedSignedAreaRoleReport2 {
+    roles: Vec<BezierRetainedRegionLoopRole>,
+    signed_areas: Vec<Real>,
+}
+
 impl BezierRetainedLineRegionRoleReport2 {
     /// Constructs a retained line-image role report.
     pub const fn new(roles: Vec<BezierRetainedRegionLoopRole>, contours: Vec<Contour2>) -> Self {
@@ -143,6 +162,48 @@ impl BezierRetainedLineRegionRoleReport2 {
             }
         }
         Region2::new(material, holes)
+    }
+}
+
+impl BezierRetainedSignedAreaRoleReport2 {
+    /// Constructs a retained signed-area role report.
+    pub const fn new(roles: Vec<BezierRetainedRegionLoopRole>, signed_areas: Vec<Real>) -> Self {
+        Self {
+            roles,
+            signed_areas,
+        }
+    }
+
+    /// Returns one assigned role per retained boundary loop.
+    pub fn roles(&self) -> &[BezierRetainedRegionLoopRole] {
+        &self.roles
+    }
+
+    /// Returns exact signed areas used as orientation evidence.
+    pub fn signed_areas(&self) -> &[Real] {
+        &self.signed_areas
+    }
+
+    /// Returns loop indices assigned as material.
+    pub fn material_loop_indices(&self) -> Vec<usize> {
+        self.roles
+            .iter()
+            .enumerate()
+            .filter_map(|(index, role)| {
+                (*role == BezierRetainedRegionLoopRole::Material).then_some(index)
+            })
+            .collect()
+    }
+
+    /// Returns loop indices assigned as holes.
+    pub fn hole_loop_indices(&self) -> Vec<usize> {
+        self.roles
+            .iter()
+            .enumerate()
+            .filter_map(|(index, role)| {
+                (*role == BezierRetainedRegionLoopRole::Hole).then_some(index)
+            })
+            .collect()
     }
 }
 
@@ -425,6 +486,40 @@ impl BezierRetainedRegion2 {
         };
         Ok(Classification::Decided(
             BezierRetainedLineRegionRoleReport2::new(roles, contours),
+        ))
+    }
+
+    /// Assigns material/hole roles from exact native loop signed-area orientation.
+    ///
+    /// A negative signed area is treated as a material loop and a positive
+    /// signed area as a hole loop, matching the current Bezier region boundary
+    /// convention used by [`BezierRegion2::signed_area`].  This method is a
+    /// report-bearing orientation adapter: it does not infer nesting and it
+    /// does not sample nonlinear loops.  Use [`Self::line_image_role_report`]
+    /// when exact line-image nesting is required.
+    pub fn signed_area_role_report(
+        &self,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<BezierRetainedSignedAreaRoleReport2>> {
+        let mut roles = Vec::with_capacity(self.boundary_loops.len());
+        let mut signed_areas = Vec::with_capacity(self.boundary_loops.len());
+        for boundary_loop in &self.boundary_loops {
+            let Some(area) = boundary_loop.signed_area()? else {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            };
+            let role = match real_sign(&area, policy) {
+                Some(RealSign::Negative) => BezierRetainedRegionLoopRole::Material,
+                Some(RealSign::Positive) => BezierRetainedRegionLoopRole::Hole,
+                Some(RealSign::Zero) => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                }
+                None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+            };
+            roles.push(role);
+            signed_areas.push(area);
+        }
+        Ok(Classification::Decided(
+            BezierRetainedSignedAreaRoleReport2::new(roles, signed_areas),
         ))
     }
 

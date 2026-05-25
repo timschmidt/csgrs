@@ -92,6 +92,9 @@ fn main() -> CurveResult<()> {
         if let Classification::Decided(report) = region.line_image_role_report(&policy)? {
             retained_checksum ^= black_box(report.roles().len());
         }
+        if let Classification::Decided(report) = region.signed_area_role_report(&policy)? {
+            retained_checksum ^= black_box(report.roles().len() + report.signed_areas().len());
+        }
     }
     let elapsed = started.elapsed();
     println!(
@@ -123,6 +126,9 @@ fn main() -> CurveResult<()> {
             overlap_checksum ^= black_box(usize::from(
                 report.to_region().filled_area(&policy)?.is_decided(),
             ));
+        }
+        if let Classification::Decided(report) = retained.signed_area_role_report(&policy)? {
+            overlap_checksum ^= black_box(report.roles().len());
         }
     }
     let elapsed = started.elapsed();
