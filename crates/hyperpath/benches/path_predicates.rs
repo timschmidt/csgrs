@@ -334,7 +334,7 @@ fn path_predicates(c: &mut Criterion) {
         RationalQuadraticBezier::new(p(0, 0), p(1000, 0), p(0, 0), r(1)).unwrap();
     let line_conic_nonmonotone_line = LinePathSegment::new(p(125, 0), p(375, 0));
     c.bench_function(
-        "line_rational_quadratic_bezier_inverse_boundary_evidence",
+        "line_rational_quadratic_bezier_algebraic_order_evidence",
         |b| {
             b.iter(|| {
                 arrange_line_segments_with_rational_quadratic_beziers(

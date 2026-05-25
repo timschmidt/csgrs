@@ -118,6 +118,42 @@ pub struct LineRationalQuadraticBezierAlgebraicBreakpoint {
     pub domain: LineRationalQuadraticBezierAlgebraicBreakpointDomain,
 }
 
+/// Certified order relation between two represented conic breakpoint candidates.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum LineRationalQuadraticBezierAlgebraicBreakpointOrderClass {
+    /// The left breakpoint parameter is certified before the right parameter.
+    Before,
+    /// The represented parameters are certified equal.
+    Equal,
+    /// The left breakpoint parameter is certified after the right parameter.
+    After,
+    /// The isolating intervals overlap or exact comparison did not decide.
+    Unknown,
+}
+
+/// Pairwise ordering evidence for retained algebraic conic breakpoint candidates.
+///
+/// The order is certified only from exact root witnesses or from separated
+/// Sturm isolating intervals. It is deliberately not used to mutate
+/// [`LineRationalQuadraticBezierArrangementReport::conic_breakpoints`], because
+/// represented conic parameters still need exact homogeneous subcurve
+/// materialization before they can become topology. This is the same
+/// object/predicate boundary advocated by Yap, "Towards Exact Geometric
+/// Computation" (1997): report exact ordering evidence when available, and
+/// keep uncertainty explicit. The isolating-interval comparison follows the
+/// Sturm/Collins-Loos univariate root model used by `hypersolve`.
+#[derive(Clone, Debug, PartialEq)]
+pub struct LineRationalQuadraticBezierAlgebraicBreakpointOrder {
+    /// Rational quadratic conic index shared by both candidates.
+    pub curve: usize,
+    /// Index in [`LineRationalQuadraticBezierArrangementReport::algebraic_breakpoints`].
+    pub left: usize,
+    /// Index in [`LineRationalQuadraticBezierArrangementReport::algebraic_breakpoints`].
+    pub right: usize,
+    /// Certified order relation between the represented conic parameters.
+    pub order: LineRationalQuadraticBezierAlgebraicBreakpointOrderClass,
+}
+
 /// Exact breakpoint on one arranged rational quadratic conic.
 #[derive(Clone, Debug, PartialEq)]
 pub struct RationalQuadraticBezierRealBreakpoint {
@@ -203,6 +239,8 @@ pub struct LineRationalQuadraticBezierArrangementReport {
     pub support_overlaps: Vec<LineRationalQuadraticBezierSupportOverlapCandidate>,
     /// Algebraic conic breakpoint candidates retained from nonmonotone overlap boundaries.
     pub algebraic_breakpoints: Vec<LineRationalQuadraticBezierAlgebraicBreakpoint>,
+    /// Pairwise exact order evidence for retained algebraic conic breakpoints.
+    pub algebraic_breakpoint_orders: Vec<LineRationalQuadraticBezierAlgebraicBreakpointOrder>,
     /// Sorted line breakpoints induced by line endpoints and certified events.
     pub line_breakpoints: Vec<Vec<MixedConicLineArrangementBreakpoint>>,
     /// Sorted conic breakpoints induced by endpoints and certified events.
@@ -289,6 +327,8 @@ pub fn arrange_line_segments_with_rational_quadratic_beziers_and_provenance(
 
     sort_and_dedup_line_breakpoints(&mut line_breakpoints, policy)?;
     sort_and_dedup_conic_breakpoints(&mut conic_breakpoints, policy)?;
+    let algebraic_breakpoint_orders =
+        algebraic_conic_breakpoint_orders(&algebraic_breakpoints, policy);
     let line_fragments = build_line_fragments(&line_breakpoints, policy)?;
     let conic_fragments = build_conic_fragments(&conic_breakpoints, curves, policy)?;
     let facts = LineRationalQuadraticBezierArrangementFacts {
@@ -303,6 +343,7 @@ pub fn arrange_line_segments_with_rational_quadratic_beziers_and_provenance(
         events,
         support_overlaps,
         algebraic_breakpoints,
+        algebraic_breakpoint_orders,
         line_breakpoints,
         conic_breakpoints,
         line_fragments,
@@ -415,6 +456,66 @@ fn point_from_axis(axis: Axis, fixed: Real, varying: Real) -> Point2 {
     match axis {
         Axis::X => Point2::new(varying, fixed),
         Axis::Y => Point2::new(fixed, varying),
+    }
+}
+
+fn algebraic_conic_breakpoint_orders(
+    breakpoints: &[LineRationalQuadraticBezierAlgebraicBreakpoint],
+    policy: PredicatePolicy,
+) -> Vec<LineRationalQuadraticBezierAlgebraicBreakpointOrder> {
+    let mut orders = Vec::new();
+    for left in 0..breakpoints.len() {
+        for right in (left + 1)..breakpoints.len() {
+            if breakpoints[left].curve != breakpoints[right].curve {
+                continue;
+            }
+            orders.push(LineRationalQuadraticBezierAlgebraicBreakpointOrder {
+                curve: breakpoints[left].curve,
+                left,
+                right,
+                order: compare_algebraic_conic_parameters(
+                    &breakpoints[left].conic_parameter,
+                    &breakpoints[right].conic_parameter,
+                    policy,
+                ),
+            });
+        }
+    }
+    orders
+}
+
+fn compare_algebraic_conic_parameters(
+    left: &AlgebraicRootRepresentation,
+    right: &AlgebraicRootRepresentation,
+    policy: PredicatePolicy,
+) -> LineRationalQuadraticBezierAlgebraicBreakpointOrderClass {
+    if let (Some(left_exact), Some(right_exact)) =
+        (&left.interval.exact_root, &right.interval.exact_root)
+    {
+        return match compare_reals_with_policy(left_exact, right_exact, policy).value() {
+            Some(Ordering::Less) => {
+                LineRationalQuadraticBezierAlgebraicBreakpointOrderClass::Before
+            }
+            Some(Ordering::Equal) => {
+                LineRationalQuadraticBezierAlgebraicBreakpointOrderClass::Equal
+            }
+            Some(Ordering::Greater) => {
+                LineRationalQuadraticBezierAlgebraicBreakpointOrderClass::After
+            }
+            None => LineRationalQuadraticBezierAlgebraicBreakpointOrderClass::Unknown,
+        };
+    }
+    match compare_reals_with_policy(&left.interval.upper, &right.interval.lower, policy).value() {
+        Some(Ordering::Less) => {
+            return LineRationalQuadraticBezierAlgebraicBreakpointOrderClass::Before;
+        }
+        Some(Ordering::Equal | Ordering::Greater) | None => {}
+    }
+    match compare_reals_with_policy(&right.interval.upper, &left.interval.lower, policy).value() {
+        Some(Ordering::Less) => LineRationalQuadraticBezierAlgebraicBreakpointOrderClass::After,
+        Some(Ordering::Equal | Ordering::Greater) | None => {
+            LineRationalQuadraticBezierAlgebraicBreakpointOrderClass::Unknown
+        }
     }
 }
 

@@ -98,6 +98,8 @@ pub use mixed_bezier_arrangement::{
 pub use mixed_conic_arrangement::{
     LineRationalQuadraticBezierAlgebraicBreakpoint,
     LineRationalQuadraticBezierAlgebraicBreakpointDomain,
+    LineRationalQuadraticBezierAlgebraicBreakpointOrder,
+    LineRationalQuadraticBezierAlgebraicBreakpointOrderClass,
     LineRationalQuadraticBezierArrangementError, LineRationalQuadraticBezierArrangementEvent,
     LineRationalQuadraticBezierArrangementFacts, LineRationalQuadraticBezierArrangementReport,
     LineRationalQuadraticBezierSupportOverlapCandidate, MixedConicLineArrangementBreakpoint,
