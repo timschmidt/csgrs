@@ -1577,6 +1577,8 @@ pub enum ExactBooleanSupport {
     /// A named operation was answered by exact no-intersection facts for open
     /// surface meshes.
     CertifiedOpenSurfaceDisjoint,
+    /// Open non-coplanar surfaces were unioned by exact split-region assembly.
+    CertifiedOpenSurfaceArrangementUnion,
     /// A named operation was answered by certified closed-convex containment.
     CertifiedConvexContainment,
     /// Intersection was materialized for two overlapping closed convex solids.
@@ -1815,6 +1817,20 @@ impl ExactBooleanPreflight {
                     return Err(ExactReportValidationError::StatusEvidenceMismatch);
                 }
                 no_region_facts(self.region_count, &self.region_classifications)
+            }
+            ExactBooleanSupport::CertifiedOpenSurfaceArrangementUnion => {
+                if operation_is_selected_region(self.operation)
+                    || self.operation != ExactBooleanOperation::Union
+                    || self.graph_had_unknowns
+                    || self.blocker.is_some()
+                    || self.retained_face_pairs == 0
+                {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
+                if self.arrangement_readiness.is_some() {
+                    return Err(ExactReportValidationError::UnexpectedArrangementReadiness);
+                }
+                checked_region_facts(self.region_count, &self.region_classifications)
             }
             ExactBooleanSupport::CertifiedAxisAlignedBoxCellUnion
             | ExactBooleanSupport::CertifiedAxisAlignedBoxCellDifference => {

@@ -4833,19 +4833,30 @@ fn exact_face_region_triangulates_through_feature_gated_hypertri() {
         hypermesh::exact::ExactReportValidationError::OutputMeshAssemblyMismatch
     );
 
-    let unsupported = hypermesh::exact::boolean_exact(
+    let named_union = hypermesh::exact::boolean_exact(
         &left,
         &right,
         hypermesh::exact::ExactBooleanOperation::Union,
         ValidationPolicy::ALLOW_BOUNDARY,
     )
-    .unwrap_err();
-    assert!(
-        unsupported
-            .diagnostics
-            .iter()
-            .any(|diagnostic| diagnostic.kind == DiagnosticKind::UnsupportedExactOperation)
+    .unwrap();
+    named_union.validate().unwrap();
+    named_union
+        .validate_operation_against_sources(
+            &left,
+            &right,
+            hypermesh::exact::ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        named_union.kind,
+        hypermesh::exact::ExactBooleanResultKind::SelectedRegions {
+            selection: hypermesh::exact::ExactRegionSelection::KeepAll
+        }
     );
+    assert_eq!(named_union.mesh, output);
 
     let preflight = hypermesh::exact::preflight_boolean_exact(
         &left,
@@ -4857,7 +4868,7 @@ fn exact_face_region_triangulates_through_feature_gated_hypertri() {
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::exact::ExactBooleanSupport::RequiresCertifiedWinding
+        hypermesh::exact::ExactBooleanSupport::CertifiedOpenSurfaceArrangementUnion
     );
     assert!(!preflight.graph_had_unknowns);
     assert!(preflight.retained_face_pairs > 0);
@@ -4873,7 +4884,57 @@ fn exact_face_region_triangulates_through_feature_gated_hypertri() {
             .iter()
             .all(|classification| classification.all_proof_producing())
     );
-    let blocker = preflight.blocker.as_ref().unwrap();
+    assert!(preflight.blocker.is_none());
+    let mut wrong_operation_preflight = preflight.clone();
+    wrong_operation_preflight.operation = hypermesh::exact::ExactBooleanOperation::Intersection;
+    assert_eq!(
+        wrong_operation_preflight.validate().unwrap_err(),
+        hypermesh::exact::ExactReportValidationError::StatusEvidenceMismatch
+    );
+    let mut missing_region_preflight = preflight.clone();
+    missing_region_preflight.region_classifications.clear();
+    assert_eq!(
+        missing_region_preflight.validate().unwrap_err(),
+        hypermesh::exact::ExactReportValidationError::MissingRegionFacts
+    );
+    let mut relabeled_preflight = preflight.clone();
+    relabeled_preflight.support =
+        hypermesh::exact::ExactBooleanSupport::CertifiedWindingMaterialized;
+    assert_eq!(
+        relabeled_preflight
+            .validate_against_sources(&left, &right)
+            .unwrap_err(),
+        hypermesh::exact::ExactReportValidationError::SourceReplayMismatch
+    );
+
+    let unsupported_intersection = hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap_err();
+    assert!(
+        unsupported_intersection
+            .diagnostics
+            .iter()
+            .any(|diagnostic| diagnostic.kind == DiagnosticKind::UnsupportedExactOperation)
+    );
+    let intersection_preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+    )
+    .unwrap();
+    intersection_preflight.validate().unwrap();
+    intersection_preflight
+        .validate_against_sources(&left, &right)
+        .unwrap();
+    assert_eq!(
+        intersection_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::RequiresCertifiedWinding
+    );
+    let blocker = intersection_preflight.blocker.as_ref().unwrap();
     assert_eq!(
         blocker.kind,
         hypermesh::exact::ExactBooleanBlockerKind::NeedsWinding

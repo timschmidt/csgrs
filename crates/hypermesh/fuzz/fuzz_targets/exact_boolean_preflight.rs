@@ -6639,6 +6639,67 @@ fn exercise_face_interior_steiner_boundary() {
     )
     .unwrap();
     assert!(bad.validate_source_face_incidence(&mesh, &mesh).is_err());
+
+    let crossing_left = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 2, 0, 0, 0, 2, 0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let crossing_right = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, -1, 2, 0, 1, 0, 2, 1],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let preflight =
+        preflight_boolean_exact(&crossing_left, &crossing_right, ExactBooleanOperation::Union)
+            .expect("open-surface crossing union preflight should classify arrangement union");
+    preflight.validate().unwrap();
+    preflight
+        .validate_against_sources(&crossing_left, &crossing_right)
+        .unwrap();
+    assert_eq!(
+        preflight.support,
+        ExactBooleanSupport::CertifiedOpenSurfaceArrangementUnion
+    );
+    assert!(preflight.blocker.is_none());
+    assert!(preflight.region_count > 0);
+
+    let union = hypermesh::exact::boolean_exact(
+        &crossing_left,
+        &crossing_right,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("open-surface crossing union should materialize from split regions");
+    union
+        .validate_operation_against_sources(
+            &crossing_left,
+            &crossing_right,
+            ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        union.kind,
+        hypermesh::exact::ExactBooleanResultKind::SelectedRegions {
+            selection: ExactRegionSelection::KeepAll,
+        }
+    );
+
+    let intersection = preflight_boolean_exact(
+        &crossing_left,
+        &crossing_right,
+        ExactBooleanOperation::Intersection,
+    )
+    .expect("open-surface crossing intersection preflight should stay outside union shortcut");
+    intersection.validate().unwrap();
+    assert_eq!(
+        intersection.support,
+        ExactBooleanSupport::RequiresCertifiedWinding
+    );
 }
 
 #[cfg(feature = "exact-triangulation")]
