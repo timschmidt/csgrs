@@ -10719,6 +10719,17 @@ pub fn arrange_coplanar_convex_surface_component_holed_difference(
                 components.extend(branch_components);
                 continue;
             }
+            if let Some(branch_components) =
+                materialize_side_cutter_point_touch_component_holed_difference_consuming_hole_contact_groups(
+                    component,
+                    &cut_indices,
+                    &holes,
+                    &right_components,
+                )
+            {
+                components.extend(branch_components);
+                continue;
+            }
             if let Some(branch_polygons) =
                 materialize_side_cutter_point_touch_difference_consuming_holes(
                     component,
@@ -12579,6 +12590,195 @@ fn materialize_side_cutter_point_touch_component_holed_difference_consuming_hole
             component,
             &merged_openings,
             "coplanar component-holed point-touch straddling-hole side-cutter split",
+        )?;
+    certify_removed_openings_collectively_split_source_component(
+        &component.hull,
+        &removed_openings,
+        projection,
+    )?;
+    for polygon in &mut cut_polygons {
+        orient_polygon_ccw(polygon, projection)?;
+    }
+    let holes_by_cut = assign_holes_to_side_cutter_split_outputs(
+        &retained_holes,
+        &cut_polygons,
+        &removed_openings,
+        projection,
+    )?;
+    if holes_by_cut.iter().all(Vec::is_empty) {
+        return None;
+    }
+    Some(
+        cut_polygons
+            .into_iter()
+            .zip(holes_by_cut)
+            .map(|(outer, holes)| CoplanarConvexHoledComponent { outer, holes })
+            .collect(),
+    )
+}
+
+/// Replay grouped straddling-hole ownership while retaining unrelated holes.
+///
+/// This is the component-holed sibling of
+/// [`materialize_side_cutter_point_touch_difference_consuming_hole_contact_groups`].
+/// It accepts a bounded higher-order branch case: strict rings that are
+/// disjoint from every removed opening remain retained holes, while a strict
+/// ring with positive-dimensional contact to several side openings may be
+/// consumed when the whole cutter/ring contact group replays as one simple
+/// removed object. Point-only hole contact is rejected, and hole-only contact
+/// groups are rejected because they do not name a removed object.
+///
+/// The policy follows Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997): a ring is either retained as an
+/// exact output object or deleted only after exact predicates identify the
+/// removed object that owns it. The grouped removed object is built by the
+/// Weiler-Atherton retained-fragment construction cited by
+/// [`materialize_simple_polygon_union_group`], and contact dimensionality is
+/// certified by the Guigue-Devillers orientation-predicate classifier exposed
+/// through [`simple_polygon_interaction`]. Final holed output is still
+/// triangulated only after exact ring assignment, following Held, "FIST: Fast
+/// Industrial-Strength Triangulation of Polygons," *Algorithmica* 30 (2001).
+#[cfg(feature = "exact-triangulation")]
+fn materialize_side_cutter_point_touch_component_holed_difference_consuming_hole_contact_groups(
+    component: &ConvexUnionComponent,
+    cut_indices: &[usize],
+    holes: &[ComponentHoleCandidate],
+    right_components: &[ConvexUnionComponent],
+) -> Option<Vec<CoplanarConvexHoledComponent>> {
+    if cut_indices.len() < 2 || holes.is_empty() {
+        return None;
+    }
+    let projection = component.projection;
+    let label = "coplanar component-holed grouped point-touch straddling-hole side-cutter split";
+    let mut regions = Vec::with_capacity(cut_indices.len() + holes.len());
+    let mut all_clipped_cutters_are_rectangles = true;
+    for &right_index in cut_indices {
+        let mut clipped = convex_polygon_intersection_boundary(
+            &right_components.get(right_index)?.hull,
+            &component.hull,
+            projection,
+        )?;
+        if clipped.len() < 3 {
+            return None;
+        }
+        orient_polygon_ccw(&mut clipped, projection)?;
+        clipped = simplify_projected_polygon(clipped, projection);
+        validate_projected_simple_loop(&clipped, projection, label).ok()?;
+        all_clipped_cutters_are_rectangles &=
+            projected_axis_aligned_rectangle(&clipped, projection).is_some();
+        regions.push(RemovedRegionCandidate {
+            right_index,
+            is_cutter: true,
+            region: clipped,
+        });
+    }
+    if all_clipped_cutters_are_rectangles {
+        return None;
+    }
+    for (hole_index, hole) in holes.iter().enumerate() {
+        if !polygon_strictly_inside_convex_polygon(&hole.ring, &component.hull, projection)? {
+            return None;
+        }
+        let mut region = hole.ring.clone();
+        orient_polygon_ccw(&mut region, projection)?;
+        region = simplify_projected_polygon(region, projection);
+        validate_projected_simple_loop(&region, projection, label).ok()?;
+        regions.push(RemovedRegionCandidate {
+            right_index: hole_index,
+            is_cutter: false,
+            region,
+        });
+    }
+
+    let mut contact_graph = UnionFind::new(regions.len());
+    for left in 0..regions.len() {
+        for right in left + 1..regions.len() {
+            match simple_polygon_interaction(
+                &regions[left].region,
+                &regions[right].region,
+                projection,
+            )? {
+                SimplePolygonInteraction::Disjoint => {}
+                SimplePolygonInteraction::PointOnly => {
+                    if !regions[left].is_cutter || !regions[right].is_cutter {
+                        return None;
+                    }
+                }
+                SimplePolygonInteraction::Connected => contact_graph.union(left, right),
+            }
+        }
+    }
+
+    let mut groups: Vec<(usize, Vec<usize>)> = Vec::new();
+    for index in 0..regions.len() {
+        let root = contact_graph.find(index);
+        if let Some((_, members)) = groups.iter_mut().find(|(candidate, _)| *candidate == root) {
+            members.push(index);
+        } else {
+            groups.push((root, vec![index]));
+        }
+    }
+    groups.sort_by_key(|(_, members)| members.first().copied().unwrap_or(usize::MAX));
+
+    let mut retained_holes = Vec::new();
+    let mut removed_openings = Vec::new();
+    let mut saw_multi_opening_consumed_group = false;
+    for (_, group) in groups {
+        let cutter_count = group
+            .iter()
+            .filter(|&&index| regions[index].is_cutter)
+            .count();
+        let hole_count = group
+            .iter()
+            .filter(|&&index| !regions[index].is_cutter)
+            .count();
+        if cutter_count == 0 {
+            if hole_count != 1 || group.len() != 1 {
+                return None;
+            }
+            let mut retained = regions[group[0]].region.clone();
+            orient_polygon_cw(&mut retained, projection)?;
+            retained_holes.push(retained);
+            continue;
+        }
+        if hole_count > 0 && cutter_count > 1 {
+            saw_multi_opening_consumed_group = true;
+        }
+
+        let mut opening = if group.len() == 1 {
+            regions[group[0]].region.clone()
+        } else {
+            let polygons = group
+                .iter()
+                .map(|&index| regions[index].region.clone())
+                .collect::<Vec<_>>();
+            let all = (0..polygons.len()).collect::<Vec<_>>();
+            materialize_simple_polygon_union_group(&polygons, &all, projection, label)?
+        };
+        orient_polygon_ccw(&mut opening, projection)?;
+        opening = simplify_projected_polygon(opening, projection);
+        validate_projected_simple_loop(&opening, projection, label).ok()?;
+        if convex_boundary_attachment_count(&component.hull, &opening, projection)? == 0 {
+            return None;
+        }
+        for point in &opening {
+            if convex_polygon_location(point, &component.hull, projection)?
+                == ConvexPolygonLocation::Outside
+            {
+                return None;
+            }
+        }
+        removed_openings.push(opening);
+    }
+    if !saw_multi_opening_consumed_group || retained_holes.is_empty() {
+        return None;
+    }
+
+    let (removed_openings, mut cut_polygons) =
+        materialize_side_cutter_point_touch_removed_openings_core(
+            component,
+            &removed_openings,
+            label,
         )?;
     certify_removed_openings_collectively_split_source_component(
         &component.hull,

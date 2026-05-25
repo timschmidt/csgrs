@@ -17511,6 +17511,149 @@ fn exact_coplanar_convex_surface_difference_materializes_multiple_component_cuts
         }
     );
 
+    let grouped_straddling_retained_right = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            3, 3, 0, 5, 3, 0, 5, 5, 0, 3, 5, 0, //
+            11, 11, 0, 13, 11, 0, 13, 13, 0, 11, 13, 0, //
+            -2, 8, 0, 12, 8, 0, 12, 12, 0, -2, 12, 0, //
+            12, 12, 0, 32, 12, 0, 32, 16, 0, 14, 16, 0, //
+            12, 16, 0, 14, 16, 0, 14, 32, 0, 12, 32, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7, //
+            8, 9, 10, 8, 10, 11, //
+            12, 13, 14, 12, 14, 15, //
+            16, 17, 18, 16, 18, 19,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_point_touch_difference(
+            &grouped_straddling_branch_left,
+            &grouped_straddling_retained_right,
+        )
+        .is_none()
+    );
+    let grouped_straddling_retained =
+        hypermesh::exact::arrange_coplanar_convex_surface_component_holed_difference(
+            &grouped_straddling_branch_left,
+            &grouped_straddling_retained_right,
+        )
+        .expect("grouped branch straddling-hole consumption should retain unrelated strict holes");
+    grouped_straddling_retained.validate().unwrap();
+    grouped_straddling_retained
+        .validate_against_sources(
+            &grouped_straddling_branch_left,
+            &grouped_straddling_retained_right,
+        )
+        .unwrap();
+    assert!(grouped_straddling_retained.components.len() >= 2);
+    assert_eq!(
+        grouped_straddling_retained
+            .components
+            .iter()
+            .map(|component| component.holes.len())
+            .sum::<usize>(),
+        1
+    );
+    assert!(
+        grouped_straddling_retained
+            .components
+            .iter()
+            .any(|component| {
+                component.holes.iter().any(|hole| {
+                    hole.iter().any(|point| {
+                        real_eq(&point.x, &ExactReal::from(3))
+                            && real_eq(&point.y, &ExactReal::from(3))
+                    })
+                })
+            })
+    );
+    assert!(
+        !grouped_straddling_retained
+            .components
+            .iter()
+            .any(|component| {
+                component.holes.iter().any(|hole| {
+                    hole.iter().any(|point| {
+                        real_eq(&point.x, &ExactReal::from(11))
+                            && real_eq(&point.y, &ExactReal::from(11))
+                    })
+                })
+            })
+    );
+    let grouped_retained_branch_count = grouped_straddling_retained
+        .components
+        .iter()
+        .filter(|component| {
+            component.outer.iter().any(|point| {
+                real_eq(&point.x, &ExactReal::from(14)) && real_eq(&point.y, &ExactReal::from(16))
+            })
+        })
+        .count();
+    assert!(
+        grouped_retained_branch_count >= 2,
+        "component-holed grouped replay must preserve the remaining branch vertex"
+    );
+    let mut stale_grouped_retained = grouped_straddling_retained.clone();
+    stale_grouped_retained.components[0].holes.push(vec![
+        p3(11, 11, 0),
+        p3(13, 11, 0),
+        p3(13, 13, 0),
+        p3(11, 13, 0),
+    ]);
+    assert!(
+        stale_grouped_retained
+            .validate_against_sources(
+                &grouped_straddling_branch_left,
+                &grouped_straddling_retained_right,
+            )
+            .is_err()
+    );
+    let grouped_retained_preflight = hypermesh::exact::preflight_boolean_exact(
+        &grouped_straddling_branch_left,
+        &grouped_straddling_retained_right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    grouped_retained_preflight.validate().unwrap();
+    grouped_retained_preflight
+        .validate_against_sources(
+            &grouped_straddling_branch_left,
+            &grouped_straddling_retained_right,
+        )
+        .unwrap();
+    assert_eq!(
+        grouped_retained_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::
+            CertifiedCoplanarConvexSurfaceComponentHoledDifference
+    );
+    let grouped_retained_result = hypermesh::exact::boolean_exact(
+        &grouped_straddling_branch_left,
+        &grouped_straddling_retained_right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    grouped_retained_result
+        .validate_operation_against_sources(
+            &grouped_straddling_branch_left,
+            &grouped_straddling_retained_right,
+            hypermesh::exact::ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        grouped_retained_result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::
+                CoplanarConvexSurfaceComponentHoledDifference
+        }
+    );
+
     let multi_component_point_branch_left = ExactMesh::from_i64_triangles_with_policy(
         &[
             0, 0, 0, 20, 0, 0, 20, 20, 0, 0, 20, 0, //

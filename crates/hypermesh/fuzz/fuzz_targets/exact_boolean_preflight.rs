@@ -4409,6 +4409,86 @@ fn exercise_side_cutter_opening_without_holes() {
         )
         .unwrap();
 
+    let grouped_straddling_retained_right = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            3, 3, 0, 5, 3, 0, 5, 5, 0, 3, 5, 0, //
+            11, 11, 0, 13, 11, 0, 13, 13, 0, 11, 13, 0, //
+            -2, 8, 0, 12, 8, 0, 12, 12, 0, -2, 12, 0, //
+            12, 12, 0, 32, 12, 0, 32, 16, 0, 14, 16, 0, //
+            12, 16, 0, 14, 16, 0, 14, 32, 0, 12, 32, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7, //
+            8, 9, 10, 8, 10, 11, //
+            12, 13, 14, 12, 14, 15, //
+            16, 17, 18, 16, 18, 19,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("grouped point-branch retained-hole cutter fixture must import");
+    assert!(
+        arrange_coplanar_surface_point_touch_difference(
+            &grouped_straddling_branch_left,
+            &grouped_straddling_retained_right,
+        )
+        .is_none()
+    );
+    let grouped_straddling_retained =
+        arrange_coplanar_convex_surface_component_holed_difference(
+            &grouped_straddling_branch_left,
+            &grouped_straddling_retained_right,
+        )
+        .expect("component-holed replay should retain unrelated holes in grouped branch case");
+    grouped_straddling_retained.validate().unwrap();
+    grouped_straddling_retained
+        .validate_against_sources(
+            &grouped_straddling_branch_left,
+            &grouped_straddling_retained_right,
+        )
+        .unwrap();
+    assert_eq!(
+        grouped_straddling_retained
+            .components
+            .iter()
+            .map(|component| component.holes.len())
+            .sum::<usize>(),
+        1
+    );
+    let grouped_retained_preflight = preflight_boolean_exact(
+        &grouped_straddling_branch_left,
+        &grouped_straddling_retained_right,
+        ExactBooleanOperation::Difference,
+    )
+    .expect("grouped retained-hole preflight should classify component-holed shortcut");
+    grouped_retained_preflight.validate().unwrap();
+    grouped_retained_preflight
+        .validate_against_sources(
+            &grouped_straddling_branch_left,
+            &grouped_straddling_retained_right,
+        )
+        .unwrap();
+    assert_eq!(
+        grouped_retained_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
+    );
+    let grouped_retained_result = hypermesh::exact::boolean_exact(
+        &grouped_straddling_branch_left,
+        &grouped_straddling_retained_right,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("grouped retained-hole boolean should materialize");
+    grouped_retained_result
+        .validate_operation_against_sources(
+            &grouped_straddling_branch_left,
+            &grouped_straddling_retained_right,
+            ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+
     let point_branch_straddling_retained = ExactMesh::from_i64_triangles_with_policy(
         &[
             2, 1, 0, 4, 1, 0, 4, 3, 0, 2, 3, 0, //
