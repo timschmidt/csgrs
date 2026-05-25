@@ -2,9 +2,10 @@
 //!
 //! This module is the first consumer of [`BezierParameter2`]. It materializes
 //! polynomial and rational Bezier subcurves when both range boundaries are
-//! represented [`Real`](hyperreal::Real) values, and it carries algebraic
-//! boundaries forward as certified unresolved fragments when a split root is
-//! only known by an isolating interval. That is intentional: Yap's exact
+//! represented [`Real`](hyperreal::Real) values. For algebraic boundaries it
+//! now consumes the boundary into exact endpoint point/tangent images when
+//! that construction is certified, otherwise it carries the interval forward
+//! as an unresolved fragment. That is intentional: Yap's exact
 //! geometric-computation model requires exact objects to survive until the
 //! kernel has a certified operation for them, rather than converting algebraic
 //! roots to finite approximations; see Yap, "Towards Exact Geometric
@@ -22,8 +23,9 @@ use hyperreal::Real;
 
 use crate::classify::{compare_reals, in_closed_unit_interval, is_zero};
 use crate::{
-    BezierParameter2, Classification, CubicBezier2, CurveError, CurvePolicy, CurveResult, Point2,
-    QuadraticBezier2, RationalQuadraticBezier2,
+    BezierAlgebraicEndpointImage2, BezierAlgebraicParameter2, BezierParameter2, Classification,
+    CubicBezier2, CurveError, CurvePolicy, CurveResult, Point2, QuadraticBezier2,
+    RationalQuadraticBezier2,
 };
 
 /// A native Bezier subcurve produced by exact split materialization.
@@ -50,6 +52,18 @@ pub enum BezierSplitFragment2 {
         end: BezierParameter2,
         /// Native subcurve over this range.
         curve: BezierSubcurve2,
+    },
+    /// At least one boundary is algebraic, and its exact endpoint images were
+    /// constructed without making a native subcurve.
+    AlgebraicEndpointImages {
+        /// Start split boundary in the original parameter space.
+        start: BezierParameter2,
+        /// End split boundary in the original parameter space.
+        end: BezierParameter2,
+        /// Exact point/tangent image when the start boundary is algebraic.
+        start_image: Option<BezierAlgebraicEndpointImage2>,
+        /// Exact point/tangent image when the end boundary is algebraic.
+        end_image: Option<BezierAlgebraicEndpointImage2>,
     },
     /// At least one boundary is algebraic and must be carried forward.
     Unresolved {
@@ -90,6 +104,17 @@ impl BezierSplitMaterialization2 {
             .iter()
             .any(|fragment| matches!(fragment, BezierSplitFragment2::Unresolved { .. }))
     }
+
+    /// Returns true when at least one algebraic-boundary fragment carries
+    /// exact endpoint point/tangent images.
+    pub fn has_algebraic_endpoint_images(&self) -> bool {
+        self.fragments.iter().any(|fragment| {
+            matches!(
+                fragment,
+                BezierSplitFragment2::AlgebraicEndpointImages { .. }
+            )
+        })
+    }
 }
 
 impl QuadraticBezier2 {
@@ -99,11 +124,16 @@ impl QuadraticBezier2 {
         parameters: &[BezierParameter2],
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<BezierSplitMaterialization2>> {
-        split_curve_at_parameters(parameters, policy, |start, end| {
-            Ok(BezierSubcurve2::Quadratic(
-                self.subcurve_between_exact(start, end, policy)?,
-            ))
-        })
+        split_curve_at_parameters(
+            parameters,
+            policy,
+            |start, end| {
+                Ok(BezierSubcurve2::Quadratic(
+                    self.subcurve_between_exact(start, end, policy)?,
+                ))
+            },
+            |parameter| BezierAlgebraicEndpointImage2::quadratic(self, parameter, policy),
+        )
     }
 
     /// Materializes the exact subcurve over `[start, end]`.
@@ -157,11 +187,16 @@ impl CubicBezier2 {
         parameters: &[BezierParameter2],
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<BezierSplitMaterialization2>> {
-        split_curve_at_parameters(parameters, policy, |start, end| {
-            Ok(BezierSubcurve2::Cubic(
-                self.subcurve_between_exact(start, end, policy)?,
-            ))
-        })
+        split_curve_at_parameters(
+            parameters,
+            policy,
+            |start, end| {
+                Ok(BezierSubcurve2::Cubic(
+                    self.subcurve_between_exact(start, end, policy)?,
+                ))
+            },
+            |parameter| BezierAlgebraicEndpointImage2::cubic(self, parameter, policy),
+        )
     }
 
     /// Materializes the exact subcurve over `[start, end]`.
@@ -223,11 +258,16 @@ impl RationalQuadraticBezier2 {
         parameters: &[BezierParameter2],
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<BezierSplitMaterialization2>> {
-        split_curve_at_parameters(parameters, policy, |start, end| {
-            Ok(BezierSubcurve2::RationalQuadratic(
-                self.subcurve_between_exact(start, end, policy)?,
-            ))
-        })
+        split_curve_at_parameters(
+            parameters,
+            policy,
+            |start, end| {
+                Ok(BezierSubcurve2::RationalQuadratic(
+                    self.subcurve_between_exact(start, end, policy)?,
+                ))
+            },
+            |parameter| BezierAlgebraicEndpointImage2::rational_quadratic(self, parameter, policy),
+        )
     }
 
     /// Materializes the exact conic subcurve over `[start, end]`.
@@ -301,13 +341,15 @@ impl RationalQuadraticBezier2 {
     }
 }
 
-fn split_curve_at_parameters<F>(
+fn split_curve_at_parameters<F, G>(
     parameters: &[BezierParameter2],
     policy: &CurvePolicy,
     mut materialize: F,
+    mut endpoint_image: G,
 ) -> CurveResult<Classification<BezierSplitMaterialization2>>
 where
     F: FnMut(&Real, &Real) -> CurveResult<BezierSubcurve2>,
+    G: FnMut(&BezierAlgebraicParameter2) -> CurveResult<BezierAlgebraicEndpointImage2>,
 {
     let mut boundaries = vec![
         BezierParameter2::Exact(Real::zero()),
@@ -331,13 +373,45 @@ where
                 let curve = materialize(start_exact, end_exact)?;
                 fragments.push(BezierSplitFragment2::Materialized { start, end, curve });
             }
-            _ => fragments.push(BezierSplitFragment2::Unresolved { start, end }),
+            _ => {
+                let start_image = endpoint_image_for(&start, &mut endpoint_image)?;
+                let end_image = endpoint_image_for(&end, &mut endpoint_image)?;
+                if start_image
+                    .as_ref()
+                    .is_none_or(BezierAlgebraicEndpointImage2::is_transformed)
+                    && end_image
+                        .as_ref()
+                        .is_none_or(BezierAlgebraicEndpointImage2::is_transformed)
+                {
+                    fragments.push(BezierSplitFragment2::AlgebraicEndpointImages {
+                        start,
+                        end,
+                        start_image,
+                        end_image,
+                    });
+                } else {
+                    fragments.push(BezierSplitFragment2::Unresolved { start, end });
+                }
+            }
         }
     }
 
     Ok(Classification::Decided(BezierSplitMaterialization2::new(
         fragments,
     )))
+}
+
+fn endpoint_image_for<G>(
+    parameter: &BezierParameter2,
+    endpoint_image: &mut G,
+) -> CurveResult<Option<BezierAlgebraicEndpointImage2>>
+where
+    G: FnMut(&BezierAlgebraicParameter2) -> CurveResult<BezierAlgebraicEndpointImage2>,
+{
+    match parameter {
+        BezierParameter2::Exact(_) => Ok(None),
+        BezierParameter2::Algebraic(parameter) => Ok(Some(endpoint_image(parameter)?)),
+    }
 }
 
 fn validate_parameter(parameter: &BezierParameter2, policy: &CurvePolicy) -> CurveResult<()> {

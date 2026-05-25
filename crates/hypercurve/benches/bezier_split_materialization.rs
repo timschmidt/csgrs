@@ -2,7 +2,9 @@ use std::hint::black_box;
 use std::time::Instant;
 
 use hypercurve::{
-    BezierParameter2, Classification, CubicBezier2, CurvePolicy, CurveResult, Point2, Real,
+    BezierAlgebraicParameter2, BezierParameter2, BezierParameterInterval,
+    BezierParameterPolynomial, Classification, CubicBezier2, CurvePolicy, CurveResult, Point2,
+    Real,
 };
 
 fn r(value: i32) -> Real {
@@ -43,6 +45,34 @@ fn main() -> CurveResult<()> {
     let elapsed = started.elapsed();
     println!(
         "bezier_split_materialization_cubic: {iterations} iterations in {elapsed:?} ({:?}/iter), total={total}",
+        elapsed / iterations
+    );
+
+    let algebraic_polynomial = decided(BezierParameterPolynomial::try_new_power_basis(
+        vec![r(-1), r(2)],
+        &policy,
+    )?);
+    let algebraic_interval = decided(BezierParameterInterval::try_new(q(2, 5), q(3, 5), &policy)?);
+    let algebraic = BezierParameter2::algebraic(decided(BezierAlgebraicParameter2::try_isolate(
+        algebraic_polynomial,
+        algebraic_interval,
+        &policy,
+    )?));
+    let algebraic_parameters = [
+        decided(BezierParameter2::exact(q(1, 4), &policy)?),
+        algebraic,
+        decided(BezierParameter2::exact(q(3, 4), &policy)?),
+    ];
+
+    let started = Instant::now();
+    let mut retained = 0_usize;
+    for _ in 0..iterations {
+        let materialization = decided(curve.split_at_parameters(&algebraic_parameters, &policy)?);
+        retained += black_box(usize::from(materialization.has_algebraic_endpoint_images()));
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "bezier_split_algebraic_endpoint_images_cubic: {iterations} iterations in {elapsed:?} ({:?}/iter), retained={retained}",
         elapsed / iterations
     );
 

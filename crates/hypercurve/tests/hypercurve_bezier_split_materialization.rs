@@ -1,7 +1,9 @@
 use hypercurve::{
-    BezierAlgebraicParameter2, BezierParameter2, BezierParameterInterval,
-    BezierParameterPolynomial, BezierSplitFragment2, BezierSubcurve2, Classification, CubicBezier2,
-    CurvePolicy, Point2, QuadraticBezier2, RationalQuadraticBezier2, Real, UncertaintyReason,
+    BezierAlgebraicEndpointImage2, BezierAlgebraicImageStatus, BezierAlgebraicParameter2,
+    BezierEndpointPointImage2, BezierEndpointTangentImage2, BezierParameter2,
+    BezierParameterInterval, BezierParameterPolynomial, BezierSplitFragment2, BezierSubcurve2,
+    Classification, CubicBezier2, CurvePolicy, Point2, QuadraticBezier2, RationalQuadraticBezier2,
+    Real, UncertaintyReason,
 };
 use proptest::prelude::*;
 
@@ -48,6 +50,56 @@ fn algebraic_midpoint_interval(start: Real, end: Real) -> BezierParameter2 {
         Classification::Uncertain(reason) => {
             panic!("algebraic parameter unexpectedly uncertain: {reason:?}")
         }
+    }
+}
+
+fn assert_polynomial_endpoint_image(image: &Option<BezierAlgebraicEndpointImage2>) {
+    let image = image
+        .as_ref()
+        .expect("algebraic boundary should retain an endpoint image");
+    assert!(image.is_transformed());
+    match image.point() {
+        BezierEndpointPointImage2::Polynomial(point) => {
+            assert_eq!(point.status(), BezierAlgebraicImageStatus::Transformed);
+            assert!(point.x().and_then(|x| x.representation()).is_some());
+            assert!(point.y().and_then(|y| y.representation()).is_some());
+        }
+        BezierEndpointPointImage2::RationalQuadratic(_) => {
+            panic!("expected polynomial point image")
+        }
+    }
+    match image.tangent() {
+        BezierEndpointTangentImage2::Polynomial(tangent) => {
+            assert_eq!(tangent.status(), BezierAlgebraicImageStatus::Transformed);
+            assert!(tangent.dx().and_then(|dx| dx.representation()).is_some());
+            assert!(tangent.dy().and_then(|dy| dy.representation()).is_some());
+        }
+        BezierEndpointTangentImage2::RationalQuadratic(_) => {
+            panic!("expected polynomial tangent image")
+        }
+    }
+}
+
+fn assert_rational_endpoint_image(image: &Option<BezierAlgebraicEndpointImage2>) {
+    let image = image
+        .as_ref()
+        .expect("algebraic boundary should retain a rational endpoint image");
+    assert!(image.is_transformed());
+    match image.point() {
+        BezierEndpointPointImage2::RationalQuadratic(point) => {
+            assert_eq!(point.status(), BezierAlgebraicImageStatus::Transformed);
+            assert!(point.x().and_then(|x| x.representation()).is_some());
+            assert!(point.y().and_then(|y| y.representation()).is_some());
+        }
+        BezierEndpointPointImage2::Polynomial(_) => panic!("expected rational point image"),
+    }
+    match image.tangent() {
+        BezierEndpointTangentImage2::RationalQuadratic(tangent) => {
+            assert_eq!(tangent.status(), BezierAlgebraicImageStatus::Transformed);
+            assert!(tangent.dx().and_then(|dx| dx.representation()).is_some());
+            assert!(tangent.dy().and_then(|dy| dy.representation()).is_some());
+        }
+        BezierEndpointTangentImage2::Polynomial(_) => panic!("expected rational tangent image"),
     }
 }
 
@@ -116,7 +168,7 @@ fn exact_rational_quadratic_split_preserves_conic_endpoint_evaluation() {
 }
 
 #[test]
-fn algebraic_boundary_is_carried_without_approximate_materialization() {
+fn algebraic_boundary_carries_endpoint_images_without_approximate_materialization() {
     let curve = QuadraticBezier2::new(p(0, 0), p(2, 4), p(4, 0));
     let materialization = match curve
         .split_at_parameters(
@@ -133,18 +185,85 @@ fn algebraic_boundary_is_carried_without_approximate_materialization() {
         Classification::Uncertain(reason) => panic!("split unexpectedly uncertain: {reason:?}"),
     };
 
-    assert!(materialization.has_unresolved_fragments());
+    assert!(!materialization.has_unresolved_fragments());
+    assert!(materialization.has_algebraic_endpoint_images());
     assert_eq!(materialization.fragments().len(), 4);
     assert!(matches!(
         materialization.fragments()[0],
         BezierSplitFragment2::Materialized { .. }
     ));
+    let BezierSplitFragment2::AlgebraicEndpointImages {
+        start_image,
+        end_image,
+        ..
+    } = &materialization.fragments()[1]
+    else {
+        panic!("left algebraic fragment should carry endpoint images");
+    };
+    assert!(start_image.is_none());
+    assert_polynomial_endpoint_image(end_image);
+
+    let BezierSplitFragment2::AlgebraicEndpointImages {
+        start_image,
+        end_image,
+        ..
+    } = &materialization.fragments()[2]
+    else {
+        panic!("right algebraic fragment should carry endpoint images");
+    };
+    assert_polynomial_endpoint_image(start_image);
+    assert!(end_image.is_none());
+}
+
+#[test]
+fn rational_algebraic_boundary_carries_conic_endpoint_images() {
+    let curve =
+        RationalQuadraticBezier2::try_unit_end_weights(p(1, 0), p(1, 1), p(0, 1), q(1, 2)).unwrap();
+    let materialization = match curve
+        .split_at_parameters(
+            &[
+                exact(q(1, 4)),
+                algebraic_midpoint_interval(q(2, 5), q(3, 5)),
+                exact(q(3, 4)),
+            ],
+            &policy(),
+        )
+        .unwrap()
+    {
+        Classification::Decided(value) => value,
+        Classification::Uncertain(reason) => panic!("split unexpectedly uncertain: {reason:?}"),
+    };
+
+    assert!(!materialization.has_unresolved_fragments());
+    assert!(materialization.has_algebraic_endpoint_images());
+    let BezierSplitFragment2::AlgebraicEndpointImages {
+        start_image,
+        end_image,
+        ..
+    } = &materialization.fragments()[1]
+    else {
+        panic!("rational fragment should carry endpoint images");
+    };
+    assert!(start_image.is_none());
+    assert_rational_endpoint_image(end_image);
+}
+
+#[test]
+fn rational_algebraic_boundary_with_zero_denominator_stays_unresolved() {
+    let curve =
+        RationalQuadraticBezier2::try_unit_end_weights(p(0, 0), p(1, 1), p(2, 0), r(-1)).unwrap();
+    let materialization = match curve
+        .split_at_parameters(&[algebraic_midpoint_interval(q(2, 5), q(3, 5))], &policy())
+        .unwrap()
+    {
+        Classification::Decided(value) => value,
+        Classification::Uncertain(reason) => panic!("split unexpectedly uncertain: {reason:?}"),
+    };
+
+    assert!(materialization.has_unresolved_fragments());
+    assert!(!materialization.has_algebraic_endpoint_images());
     assert!(matches!(
-        materialization.fragments()[1],
-        BezierSplitFragment2::Unresolved { .. }
-    ));
-    assert!(matches!(
-        materialization.fragments()[2],
+        materialization.fragments()[0],
         BezierSplitFragment2::Unresolved { .. }
     ));
 }

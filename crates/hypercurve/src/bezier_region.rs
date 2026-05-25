@@ -108,7 +108,8 @@ impl BezierRegion2 {
                     BezierSplitFragment2::Materialized { curve, .. } => {
                         fragments.push(curve.clone());
                     }
-                    BezierSplitFragment2::Unresolved { .. } => {
+                    BezierSplitFragment2::AlgebraicEndpointImages { .. }
+                    | BezierSplitFragment2::Unresolved { .. } => {
                         return Classification::Uncertain(UncertaintyReason::Boundary);
                     }
                 }

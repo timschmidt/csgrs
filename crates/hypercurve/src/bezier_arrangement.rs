@@ -298,7 +298,8 @@ impl BezierArrangementTraversal2 {
 fn materialized_endpoints(fragment: &BezierSplitFragment2) -> Option<(Point2, Point2)> {
     match fragment {
         BezierSplitFragment2::Materialized { curve, .. } => Some(curve.endpoints()),
-        BezierSplitFragment2::Unresolved { .. } => None,
+        BezierSplitFragment2::AlgebraicEndpointImages { .. }
+        | BezierSplitFragment2::Unresolved { .. } => None,
     }
 }
 
@@ -320,10 +321,11 @@ fn materialized_endpoint_data(
     fragment: &BezierSplitFragment2,
     policy: &CurvePolicy,
 ) -> Option<Classification<EndpointData>> {
-    let BezierSplitFragment2::Materialized { curve, .. } = fragment else {
-        return None;
-    };
-    Some(curve.endpoint_data(policy))
+    match fragment {
+        BezierSplitFragment2::Materialized { curve, .. } => Some(curve.endpoint_data(policy)),
+        BezierSplitFragment2::AlgebraicEndpointImages { .. }
+        | BezierSplitFragment2::Unresolved { .. } => None,
+    }
 }
 
 type EndpointAdjacency = (Vec<Option<usize>>, Vec<Option<usize>>);

@@ -19,6 +19,7 @@ mod bezier_offset;
 mod bezier_parameter;
 mod bezier_region;
 mod bezier_split;
+mod bezier_split_endpoint;
 mod bezier_topology;
 mod boolean;
 mod boolean_boundary;
@@ -79,6 +80,9 @@ pub use bezier_parameter::{
 };
 pub use bezier_region::{BezierBoundaryLoop2, BezierRegion2};
 pub use bezier_split::{BezierSplitFragment2, BezierSplitMaterialization2, BezierSubcurve2};
+pub use bezier_split_endpoint::{
+    BezierAlgebraicEndpointImage2, BezierEndpointPointImage2, BezierEndpointTangentImage2,
+};
 pub use bezier_topology::{
     Axis2, BezierCurveIntersectionPoint, BezierCurveIntersectionRegion, BezierCurveRelation,
     BezierCuspClassification, BezierGraphContact, BezierInflectionClassification,

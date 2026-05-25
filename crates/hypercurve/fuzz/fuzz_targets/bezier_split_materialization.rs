@@ -2,7 +2,8 @@
 
 use hypercurve::{
     BezierAlgebraicParameter2, BezierParameter2, BezierParameterInterval,
-    BezierParameterPolynomial, Classification, CurvePolicy, Point2, QuadraticBezier2, Real,
+    BezierParameterPolynomial, BezierSplitFragment2, Classification, CurvePolicy, Point2,
+    QuadraticBezier2, Real,
 };
 use libfuzzer_sys::fuzz_target;
 
@@ -51,5 +52,33 @@ fuzz_target!(|data: &[u8]| {
         }
     }
 
-    let _ = curve.split_at_parameters(&parameters, &policy);
+    if let Ok(Classification::Decided(materialization)) =
+        curve.split_at_parameters(&parameters, &policy)
+    {
+        for fragment in materialization.fragments() {
+            match fragment {
+                BezierSplitFragment2::Materialized { start, end, .. } => {
+                    assert!(start.is_exact());
+                    assert!(end.is_exact());
+                }
+                BezierSplitFragment2::AlgebraicEndpointImages {
+                    start,
+                    end,
+                    start_image,
+                    end_image,
+                } => {
+                    assert!(start_image.is_some() || end_image.is_some());
+                    if !start.is_exact() {
+                        assert!(start_image.as_ref().is_some_and(|image| image.is_transformed()));
+                    }
+                    if !end.is_exact() {
+                        assert!(end_image.as_ref().is_some_and(|image| image.is_transformed()));
+                    }
+                }
+                BezierSplitFragment2::Unresolved { start, end } => {
+                    assert!(!start.is_exact() || !end.is_exact());
+                }
+            }
+        }
+    }
 });
