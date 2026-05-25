@@ -12,8 +12,9 @@ use std::cmp::Ordering;
 use hyperlimit::{Point2, PredicatePolicy, compare_reals_with_policy, point2_equal_with_policy};
 use hyperreal::{Real, RealExactSetFacts};
 use hypersolve::{
+    AlgebraicRootPolynomialImageReport, AlgebraicRootPolynomialImageStatus,
     AlgebraicRootRepresentation, Constraint, Expr, PreparedProblem, Problem, RootIsolationConfig,
-    represent_univariate_algebraic_roots,
+    represent_univariate_algebraic_roots, transform_algebraic_root_polynomial_image,
 };
 
 use crate::bezier::{BezierParameter, CubicBezier, QuadraticBezier, RationalQuadraticBezier};
@@ -118,19 +119,54 @@ pub enum LineCubicAlgebraicRootDomain {
     Unknown,
 }
 
+/// Exact segment-domain status for the algebraic image of a line/cubic root.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum LineCubicAlgebraicPointDomain {
+    /// The support equation and varying-coordinate image certify the point inside segment bounds.
+    InsideSegmentBounds,
+    /// The varying-coordinate image is certified outside the retained segment bounds.
+    OutsideSegmentBounds,
+    /// Image construction or exact interval comparison did not decide.
+    Unknown,
+}
+
+/// Represented algebraic point image for a line/cubic support root.
+///
+/// The `x` and `y` fields are `hypersolve` polynomial-image reports for
+/// `B_x(alpha)` and `B_y(alpha)`, where `alpha` is the represented cubic
+/// support root. They are retained even when topology remains
+/// [`LineCubicBezierIntersectionClass::Unknown`]. This is the Yap EGC
+/// separation in concrete form: the exact algebraic object is carried forward,
+/// while only certified order predicates may later turn it into a split event.
+/// The image construction uses the resultant-based algebraic image described
+/// by Sylvester (1853), Collins and Loos, "Real Zeros of Polynomials" (1982),
+/// and Yap, "Towards Exact Geometric Computation" (1997).
+#[derive(Clone, Debug, PartialEq)]
+pub struct LineCubicBezierAlgebraicPointImage {
+    /// Exact represented image for the curve's x-coordinate at the support root.
+    pub x: AlgebraicRootPolynomialImageReport,
+    /// Exact represented image for the curve's y-coordinate at the support root.
+    pub y: AlgebraicRootPolynomialImageReport,
+    /// Certified relation of the algebraic point image to the retained line segment bounds.
+    pub segment_domain: LineCubicAlgebraicPointDomain,
+}
+
 /// Represented algebraic root of the line/cubic support equation.
 ///
 /// This is retained event evidence, not a split breakpoint. The parameter is
 /// an algebraic object represented by its exact support polynomial and a
-/// Sturm-isolated interval from `hypersolve`. Until the path layer has exact
-/// algebraic point-image ordering for line bounds, these roots keep the
-/// topological relation [`LineCubicBezierIntersectionClass::Unknown`].
+/// Sturm-isolated interval from `hypersolve`. Its point image is also retained
+/// as exact resultant evidence; until a downstream scheduler consumes those
+/// image intervals as topology, these roots keep the topological relation
+/// [`LineCubicBezierIntersectionClass::Unknown`].
 #[derive(Clone, Debug, PartialEq)]
 pub struct LineCubicBezierAlgebraicSupportRoot {
     /// Represented algebraic parameter root for the cubic support equation.
     pub parameter: AlgebraicRootRepresentation,
     /// Whether the root's isolating interval is certified inside `[0, 1]`.
     pub parameter_domain: LineCubicAlgebraicRootDomain,
+    /// Represented algebraic point image for the root.
+    pub point_image: LineCubicBezierAlgebraicPointImage,
 }
 
 /// Exact event report for an axis-aligned line segment and cubic Bezier.
@@ -138,9 +174,10 @@ pub struct LineCubicBezierAlgebraicSupportRoot {
 /// The retained line is substituted into one cubic Bezier coordinate. Constant,
 /// linear, and quadratic support polynomials are solved exactly and replayed
 /// against the parameter and segment domains. True cubic support roots are
-/// retained as represented algebraic parameters, but the topological class
-/// remains [`LineCubicBezierIntersectionClass::Unknown`] until exact algebraic
-/// point-image ordering can clip them against segment bounds. Same-support
+/// retained as represented algebraic parameters with exact algebraic point
+/// images, but the topological class remains
+/// [`LineCubicBezierIntersectionClass::Unknown`] until the mixed scheduler
+/// consumes that image evidence as concrete breakpoints. Same-support
 /// overlaps are promoted only for degree-elevated straight cubic images, where
 /// endpoint coordinates invert to exact affine parameters.
 ///
@@ -528,7 +565,7 @@ pub fn intersect_axis_aligned_line_cubic_bezier(
                     policy,
                 )
                 .unwrap_or_else(|| {
-                    true_cubic_algebraic_support_report(curve, axis, fixed, policy)
+                    true_cubic_algebraic_support_report(segment, curve, axis, fixed, policy)
                 });
             }
         };
@@ -1029,7 +1066,35 @@ fn cubic_coordinate_polynomial(
     (a, b, c, d)
 }
 
+#[derive(Clone, Copy)]
+enum PointCoordinate {
+    X,
+    Y,
+}
+
+fn cubic_point_coordinate_polynomial(
+    curve: &CubicBezier,
+    coordinate: PointCoordinate,
+) -> Vec<Real> {
+    let p0 = point_coordinate(curve.start(), coordinate);
+    let p1 = point_coordinate(curve.control0(), coordinate);
+    let p2 = point_coordinate(curve.control1(), coordinate);
+    let p3 = point_coordinate(curve.end(), coordinate);
+    let a = -p0.clone() + Real::from(3) * p1.clone() - Real::from(3) * p2.clone() + p3;
+    let b = Real::from(3) * p0.clone() - Real::from(6) * p1.clone() + Real::from(3) * p2;
+    let c = Real::from(3) * (p1 - p0.clone());
+    vec![p0, c, b, a]
+}
+
+fn point_coordinate(point: &Point2, coordinate: PointCoordinate) -> Real {
+    match coordinate {
+        PointCoordinate::X => point.x.clone(),
+        PointCoordinate::Y => point.y.clone(),
+    }
+}
+
 fn true_cubic_algebraic_support_report(
+    segment: &LinePathSegment,
     curve: &CubicBezier,
     axis: Axis,
     fixed: Real,
@@ -1067,15 +1132,115 @@ fn true_cubic_algebraic_support_report(
     )
     .into_iter()
     .flat_map(|report| report.roots)
-    .map(|root| LineCubicBezierAlgebraicSupportRoot {
-        parameter_domain: classify_algebraic_root_unit_domain(&root, policy),
-        parameter: root,
+    .map(|root| {
+        let point_image = cubic_algebraic_point_image(curve, segment, axis, &root, policy);
+        LineCubicBezierAlgebraicSupportRoot {
+            parameter_domain: classify_algebraic_root_unit_domain(&root, policy),
+            parameter: root,
+            point_image,
+        }
     })
     .collect();
     LineCubicBezierIntersectionReport {
         class: LineCubicBezierIntersectionClass::Unknown,
         intersections: Vec::new(),
         algebraic_support_roots: roots,
+    }
+}
+
+fn cubic_algebraic_point_image(
+    curve: &CubicBezier,
+    segment: &LinePathSegment,
+    axis: Axis,
+    root: &AlgebraicRootRepresentation,
+    policy: PredicatePolicy,
+) -> LineCubicBezierAlgebraicPointImage {
+    // `hypersolve` constructs `q(alpha)` by eliminating the source parameter
+    // with a Sylvester resultant and then validating the mapped isolating
+    // interval. We use it independently for x and y so later path scheduling
+    // can replay bound checks without sampling the cubic. See Sylvester
+    // (1853), Collins and Loos (1982), and Yap (1997).
+    let x = transform_algebraic_root_polynomial_image(
+        root,
+        &cubic_point_coordinate_polynomial(curve, PointCoordinate::X),
+        policy,
+    );
+    let y = transform_algebraic_root_polynomial_image(
+        root,
+        &cubic_point_coordinate_polynomial(curve, PointCoordinate::Y),
+        policy,
+    );
+    let segment_domain = classify_algebraic_point_segment_domain(&x, &y, segment, axis, policy);
+    LineCubicBezierAlgebraicPointImage {
+        x,
+        y,
+        segment_domain,
+    }
+}
+
+fn classify_algebraic_point_segment_domain(
+    x: &AlgebraicRootPolynomialImageReport,
+    y: &AlgebraicRootPolynomialImageReport,
+    segment: &LinePathSegment,
+    axis: Axis,
+    policy: PredicatePolicy,
+) -> LineCubicAlgebraicPointDomain {
+    // The fixed coordinate is certified by the support equation itself. Its
+    // transformed image may still be a narrow isolating interval around the
+    // line constant, so segment-bound clipping uses the varying coordinate
+    // image and the retained axis-aligned segment bounds.
+    let varying_image = match axis {
+        Axis::X => x,
+        Axis::Y => y,
+    };
+    let Some(varying_representation) = transformed_image_representation(varying_image) else {
+        return LineCubicAlgebraicPointDomain::Unknown;
+    };
+    let (bound_min, bound_max) = match axis {
+        Axis::X => (&segment.bounds_min().x, &segment.bounds_max().x),
+        Axis::Y => (&segment.bounds_min().y, &segment.bounds_max().y),
+    };
+    match algebraic_interval_against_closed_bounds(
+        &varying_representation.interval.lower,
+        &varying_representation.interval.upper,
+        bound_min,
+        bound_max,
+        policy,
+    ) {
+        Some(true) => LineCubicAlgebraicPointDomain::InsideSegmentBounds,
+        Some(false) => LineCubicAlgebraicPointDomain::OutsideSegmentBounds,
+        None => LineCubicAlgebraicPointDomain::Unknown,
+    }
+}
+
+fn transformed_image_representation(
+    image: &AlgebraicRootPolynomialImageReport,
+) -> Option<&AlgebraicRootRepresentation> {
+    (image.status == AlgebraicRootPolynomialImageStatus::Transformed)
+        .then_some(image.representation.as_ref())
+        .flatten()
+}
+
+fn algebraic_interval_against_closed_bounds(
+    lower: &Real,
+    upper: &Real,
+    bound_min: &Real,
+    bound_max: &Real,
+    policy: PredicatePolicy,
+) -> Option<bool> {
+    let lower_inside = compare_reals_with_policy(lower, bound_min, policy).value()?;
+    let upper_inside = compare_reals_with_policy(upper, bound_max, policy).value()?;
+    if matches!(lower_inside, Ordering::Equal | Ordering::Greater)
+        && matches!(upper_inside, Ordering::Equal | Ordering::Less)
+    {
+        return Some(true);
+    }
+    let upper_before_min = compare_reals_with_policy(upper, bound_min, policy).value()?;
+    let lower_after_max = compare_reals_with_policy(lower, bound_max, policy).value()?;
+    if matches!(upper_before_min, Ordering::Less) || matches!(lower_after_max, Ordering::Greater) {
+        Some(false)
+    } else {
+        None
     }
 }
 

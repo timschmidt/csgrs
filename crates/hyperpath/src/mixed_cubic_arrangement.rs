@@ -3,8 +3,10 @@
 //! This module is a retained split scheduler, not a planar-cell extractor and
 //! not a boolean operation. It promotes certified line/cubic Bezier events into
 //! exact line breakpoints and exact cubic `Real`-parameter breakpoints, then
-//! emits positive-length fragments. True cubic support roots that are not yet
-//! represented by the scalar layer remain explicit `Unknown` events.
+//! emits positive-length fragments. True cubic support roots are retained by
+//! the predicate layer as represented algebraic parameters and point images,
+//! but remain explicit `Unknown` events here until this scheduler can consume
+//! algebraic image ordering as concrete breakpoints.
 
 use std::cmp::Ordering;
 

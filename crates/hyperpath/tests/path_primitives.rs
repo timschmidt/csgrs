@@ -1,4 +1,4 @@
-use hyperlimit::{Point2, PredicatePolicy};
+use hyperlimit::{Point2, PredicatePolicy, compare_reals_with_policy};
 use hyperpath::{
     AccelerationLimitedFeedProfileClass, ArcDirection, ArcOffsetError, Axis, BeadFillAxis,
     BeadPlanError, BezierOffsetError, BezierParameter, BezierParameterError, BoardContourError,
@@ -10,7 +10,7 @@ use hyperpath::{
     ExplicitCircularArc, FeedPathElement, HigherOrderBezier, HigherOrderBezierError,
     InfillGraphError, JerkLimitedFeedTimeReport, JerkRampPhaseProposal, JerkRampSpanProposal,
     LineArcArrangementEventClass, LineArrangementError, LineArrangementEventClass,
-    LineCubicAlgebraicRootDomain, LineCubicBezierIntersectionClass,
+    LineCubicAlgebraicPointDomain, LineCubicAlgebraicRootDomain, LineCubicBezierIntersectionClass,
     LineExplicitArcIntersectionClass, LineOffsetError, LinePathSegment,
     LineQuadraticBezierIntersectionClass, LineRationalQuadraticBezierIntersectionClass,
     LookaheadFeedSchedule, MeanderError, MeanderKeepout, MeanderObstacle,
@@ -73,6 +73,7 @@ use hyperpath::{
     subtract_rectangular_region, tangent_cross, tangent_dot, tangent_norm_squared,
 };
 use hyperreal::{Rational, Real};
+use hypersolve::AlgebraicRootPolynomialImageStatus;
 use proptest::prelude::*;
 
 fn r(value: i64) -> Real {
@@ -89,6 +90,23 @@ fn p(x: i64, y: i64) -> Point2 {
 
 fn pq(x_num: i64, x_den: i64, y_num: i64, y_den: i64) -> Point2 {
     Point2::new(rq(x_num, x_den), rq(y_num, y_den))
+}
+
+fn assert_interval_contains(value: Real, lower: &Real, upper: &Real) {
+    assert!(
+        matches!(
+            compare_reals_with_policy(lower, &value, PredicatePolicy::default()).value(),
+            Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
+        ),
+        "lower bound should be <= expected value"
+    );
+    assert!(
+        matches!(
+            compare_reals_with_policy(&value, upper, PredicatePolicy::default()).value(),
+            Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
+        ),
+        "expected value should be <= upper bound"
+    );
 }
 
 fn trace(net: u32, layer: u16, start: Point2, end: Point2, width: i64) -> PcbTrace {
@@ -873,6 +891,23 @@ fn line_cubic_bezier_intersection_retains_true_cubic_algebraic_support_roots() {
             .distinct_root_count,
         1
     );
+    let point_image = &report.algebraic_support_roots[0].point_image;
+    assert_eq!(
+        &point_image.x.status,
+        &AlgebraicRootPolynomialImageStatus::Transformed
+    );
+    assert_eq!(
+        &point_image.y.status,
+        &AlgebraicRootPolynomialImageStatus::Transformed
+    );
+    assert_eq!(
+        point_image.segment_domain,
+        LineCubicAlgebraicPointDomain::InsideSegmentBounds
+    );
+    let x_image = &point_image.x.representation.as_ref().unwrap().interval;
+    let y_image = &point_image.y.representation.as_ref().unwrap().interval;
+    assert_interval_contains(rq(1, 2), &x_image.lower, &x_image.upper);
+    assert_interval_contains(rq(1, 8), &y_image.lower, &y_image.upper);
 }
 
 #[test]
@@ -890,6 +925,43 @@ fn line_cubic_bezier_intersection_marks_outside_algebraic_support_roots() {
         report.algebraic_support_roots[0].parameter_domain,
         LineCubicAlgebraicRootDomain::OutsideUnitInterval
     );
+    assert_eq!(
+        report.algebraic_support_roots[0].point_image.segment_domain,
+        LineCubicAlgebraicPointDomain::OutsideSegmentBounds
+    );
+}
+
+#[test]
+fn line_cubic_bezier_intersection_keeps_algebraic_point_image_without_topology_promotion() {
+    let curve = CubicBezier::new(p(0, 0), pq(1, 3, 0, 1), pq(2, 3, 0, 1), p(1, 1));
+    let line = LinePathSegment::new(pq(0, 1, 1, 2), pq(1, 1, 1, 2));
+
+    let report =
+        intersect_axis_aligned_line_cubic_bezier(&line, &curve, PredicatePolicy::default());
+
+    assert_eq!(report.class, LineCubicBezierIntersectionClass::Unknown);
+    assert!(report.intersections.is_empty());
+    assert_eq!(report.algebraic_support_roots.len(), 1);
+    let root = &report.algebraic_support_roots[0];
+    assert_eq!(
+        root.parameter_domain,
+        LineCubicAlgebraicRootDomain::InsideUnitInterval
+    );
+    assert_eq!(
+        &root.point_image.x.status,
+        &AlgebraicRootPolynomialImageStatus::Transformed
+    );
+    assert_eq!(
+        &root.point_image.y.status,
+        &AlgebraicRootPolynomialImageStatus::Transformed
+    );
+    assert_eq!(
+        root.point_image.segment_domain,
+        LineCubicAlgebraicPointDomain::InsideSegmentBounds
+    );
+    assert!(root.point_image.x.representation.as_ref().is_some());
+    let y_image = &root.point_image.y.representation.as_ref().unwrap().interval;
+    assert_interval_contains(rq(1, 2), &y_image.lower, &y_image.upper);
 }
 
 #[test]
@@ -9246,6 +9318,20 @@ proptest! {
                 .interval
                 .distinct_root_count,
             1
+        );
+        prop_assert_eq!(
+            &report.algebraic_support_roots[0].point_image.x.status,
+            &AlgebraicRootPolynomialImageStatus::Transformed
+        );
+        prop_assert_eq!(
+            &report.algebraic_support_roots[0].point_image.y.status,
+            &AlgebraicRootPolynomialImageStatus::Transformed
+        );
+        prop_assert_eq!(
+            report.algebraic_support_roots[0]
+                .point_image
+                .segment_domain,
+            LineCubicAlgebraicPointDomain::InsideSegmentBounds
         );
     }
 

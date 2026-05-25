@@ -11,6 +11,7 @@ cargo-fuzz = true
 hyperlimit = { path = "../../hyperlimit" }
 hyperpath = { path = ".." }
 hyperreal = { path = "../../hyperreal" }
+hypersolve = { path = "../../hypersolve" }
 libfuzzer-sys = "0.4"
 
 [[bin]]
