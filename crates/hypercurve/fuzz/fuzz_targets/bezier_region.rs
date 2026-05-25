@@ -58,6 +58,7 @@ fuzz_target!(|data: &[u8]| {
         let _ = BezierRetainedRegion2::from_retained_arrangement_traversal(&graph, &traversal)
             .map(|region| {
                 let _ = region.signed_area();
+                let _ = region.line_image_role_report(&policy);
                 let _ = BezierRetainedEndpointEnvelope2::from_region(&region, &policy);
                 let _ = BezierRetainedCurveEnvelope2::from_region(&region, &policy);
             });
@@ -70,6 +71,7 @@ fuzz_target!(|data: &[u8]| {
         let _ = BezierRetainedRegion2::from_retained_linear_overlap_traversal(&traversal).map(
             |region| {
                 let _ = region.signed_area();
+                let _ = region.line_image_role_report(&policy);
                 let _ = BezierRetainedEndpointEnvelope2::from_region(&region, &policy);
                 let _ = BezierRetainedCurveEnvelope2::from_region(&region, &policy);
             },

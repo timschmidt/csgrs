@@ -2,8 +2,9 @@ use hypercurve::{
     BezierAlgebraicEndpointImage2, BezierAlgebraicParameter2, BezierArrangementFragment2,
     BezierArrangementGraph2, BezierParameter2, BezierParameterInterval, BezierParameterPolynomial,
     BezierRegion2, BezierRetainedBoundaryLoop2, BezierRetainedCurveEnvelope2,
-    BezierRetainedEndpointEnvelope2, BezierRetainedRegion2, BezierSplitFragment2, Classification,
-    CurvePolicy, Point2, QuadraticBezier2, RationalQuadraticBezier2, Real, UncertaintyReason,
+    BezierRetainedEndpointEnvelope2, BezierRetainedRegion2, BezierRetainedRegionLoopRole,
+    BezierSplitFragment2, Classification, CurvePolicy, Point2, QuadraticBezier2,
+    RationalQuadraticBezier2, Real, UncertaintyReason,
 };
 use proptest::prelude::*;
 
@@ -68,6 +69,33 @@ fn materialized_line_fragment(
             )),
         },
     )
+}
+
+fn retained_line_loop(vertices: &[Point2]) -> BezierRetainedBoundaryLoop2 {
+    let mut fragments = Vec::new();
+    for edge in vertices.windows(2) {
+        fragments.push(BezierSplitFragment2::Materialized {
+            start: exact(r(0)),
+            end: exact(r(1)),
+            curve: hypercurve::BezierSubcurve2::Quadratic(QuadraticBezier2::new(
+                edge[0].clone(),
+                edge[0].lerp(&edge[1], q(1, 2)),
+                edge[1].clone(),
+            )),
+        });
+    }
+    let first = vertices.first().expect("test loop has vertices");
+    let last = vertices.last().expect("test loop has vertices");
+    fragments.push(BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: hypercurve::BezierSubcurve2::Quadratic(QuadraticBezier2::new(
+            last.clone(),
+            last.lerp(first, q(1, 2)),
+            first.clone(),
+        )),
+    });
+    BezierRetainedBoundaryLoop2::new(fragments)
 }
 
 #[test]
@@ -167,6 +195,77 @@ fn resolved_linear_overlap_traversal_materializes_native_and_retained_regions() 
     assert_eq!(native.len(), 1);
     assert_eq!(native.boundary_loops()[0].len(), 5);
     assert_eq!(native.signed_area().unwrap(), Some(r(8)));
+}
+
+#[test]
+fn retained_line_image_role_report_assigns_nested_material_and_hole() {
+    let outer = retained_line_loop(&[p(0, 0), p(6, 0), p(6, 6), p(0, 6)]);
+    let same_orientation_inner = retained_line_loop(&[p(2, 2), p(4, 2), p(4, 4), p(2, 4)]);
+    let retained = BezierRetainedRegion2::new(vec![outer, same_orientation_inner]);
+
+    let report = decided(retained.line_image_role_report(&policy()).unwrap());
+
+    assert_eq!(
+        report.roles(),
+        &[
+            BezierRetainedRegionLoopRole::Material,
+            BezierRetainedRegionLoopRole::Hole
+        ]
+    );
+    assert_eq!(report.material_loop_indices(), vec![0]);
+    assert_eq!(report.hole_loop_indices(), vec![1]);
+    assert_eq!(
+        report.to_region().filled_area(&policy()).unwrap(),
+        Classification::Decided(Some(r(32)))
+    );
+}
+
+#[test]
+fn retained_line_image_role_report_rejects_nonlinear_line_image_loop() {
+    let nonlinear_edge = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: hypercurve::BezierSubcurve2::Quadratic(QuadraticBezier2::new(
+            p(0, 0),
+            p(1, 0),
+            p(4, 0),
+        )),
+    };
+    let retained = BezierRetainedRegion2::new(vec![BezierRetainedBoundaryLoop2::new(vec![
+        nonlinear_edge,
+        BezierSplitFragment2::Materialized {
+            start: exact(r(0)),
+            end: exact(r(1)),
+            curve: hypercurve::BezierSubcurve2::Quadratic(QuadraticBezier2::new(
+                p(4, 0),
+                p(4, 2),
+                p(4, 4),
+            )),
+        },
+        BezierSplitFragment2::Materialized {
+            start: exact(r(0)),
+            end: exact(r(1)),
+            curve: hypercurve::BezierSubcurve2::Quadratic(QuadraticBezier2::new(
+                p(4, 4),
+                p(2, 4),
+                p(0, 4),
+            )),
+        },
+        BezierSplitFragment2::Materialized {
+            start: exact(r(0)),
+            end: exact(r(1)),
+            curve: hypercurve::BezierSubcurve2::Quadratic(QuadraticBezier2::new(
+                p(0, 4),
+                p(0, 2),
+                p(0, 0),
+            )),
+        },
+    ])]);
+
+    assert_eq!(
+        retained.line_image_role_report(&policy()).unwrap(),
+        Classification::Uncertain(UncertaintyReason::Unsupported)
+    );
 }
 
 #[test]

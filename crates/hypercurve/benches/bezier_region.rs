@@ -89,6 +89,9 @@ fn main() -> CurveResult<()> {
         {
             retained_checksum ^= black_box(format!("{:?}", envelope.envelope()).len());
         }
+        if let Classification::Decided(report) = region.line_image_role_report(&policy)? {
+            retained_checksum ^= black_box(report.roles().len());
+        }
     }
     let elapsed = started.elapsed();
     println!(
@@ -116,6 +119,11 @@ fn main() -> CurveResult<()> {
             BezierRetainedRegion2::from_retained_linear_overlap_traversal(&overlap_traversal),
         );
         overlap_checksum ^= black_box(format!("{:?}", retained.signed_area()?).len());
+        if let Classification::Decided(report) = retained.line_image_role_report(&policy)? {
+            overlap_checksum ^= black_box(usize::from(
+                report.to_region().filled_area(&policy)?.is_decided(),
+            ));
+        }
     }
     let elapsed = started.elapsed();
     println!(

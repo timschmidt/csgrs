@@ -82,7 +82,8 @@ pub use bezier_parameter::{
     BezierAlgebraicParameter2, BezierParameter2, BezierParameterInterval, BezierParameterPolynomial,
 };
 pub use bezier_region::{
-    BezierBoundaryLoop2, BezierRegion2, BezierRetainedBoundaryLoop2, BezierRetainedRegion2,
+    BezierBoundaryLoop2, BezierRegion2, BezierRetainedBoundaryLoop2,
+    BezierRetainedLineRegionRoleReport2, BezierRetainedRegion2, BezierRetainedRegionLoopRole,
 };
 pub use bezier_retained_measure::{BezierRetainedCurveEnvelope2, BezierRetainedEndpointEnvelope2};
 pub use bezier_retained_overlap::{
