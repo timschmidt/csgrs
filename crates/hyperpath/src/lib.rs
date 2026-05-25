@@ -58,7 +58,8 @@ pub use mesh_boolean::{
 };
 pub use mesh_boolean_cam::{
     CamOrthogonalIslandPocketCutter, CamRestMaterialCutter, CamRestMaterialProgramReport,
-    build_cam_rest_material_program, cam_rectangular_pocket_cutter_from_i64_bounds,
+    CamSupportClipBoundary, CamSupportClipProgramReport, build_cam_rest_material_program,
+    build_cam_support_clip_program, cam_rectangular_pocket_cutter_from_i64_bounds,
 };
 pub use mesh_boolean_pcb::{
     PcbCompositeCopperBooleanProgramReport, PcbCompositeCopperBooleanSource,

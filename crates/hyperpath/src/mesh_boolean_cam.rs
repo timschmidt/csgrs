@@ -20,10 +20,10 @@ use std::cmp::Ordering;
 use hyperlimit::{Point2, PredicatePolicy, compare_reals_with_policy};
 use hyperreal::{Real, RealExactSetFacts};
 
-use crate::cam::{PocketPlanError, RectangularPocket};
+use crate::cam::{PocketPlanError, RectangularPocket, RectangularSupportPlan};
 use crate::mesh_boolean::{PathMeshBooleanError, PathMeshBooleanOperation, RectangularPrism};
 use crate::mesh_boolean_holes::validate_strict_orthogonal_holes;
-use crate::mesh_boolean_polygon::OrthogonalPolygonPrism;
+use crate::mesh_boolean_polygon::{ConvexPolygonPrism, OrthogonalPolygonPrism};
 use crate::mesh_boolean_program::{
     PathMeshBooleanProgramReport, PathMeshBooleanProgramStep, boolean_path_mesh_program,
 };
@@ -88,6 +88,57 @@ pub struct CamRestMaterialProgramReport {
     /// Exact-set facts for retained stock, cutter, and Z scalar inputs.
     pub exact: RealExactSetFacts,
     /// Accepted exact mesh-boolean program.
+    pub program: PathMeshBooleanProgramReport,
+}
+
+/// Retained straight-edge clipping boundary for additive support footprints.
+///
+/// The boundary is a 2D CAM object, not a cached mesh. It is lowered into a
+/// layer slab only when an exact support-clip program is replayed. This keeps
+/// the support pipeline in the exact-object discipline advocated by Yap,
+/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+/// (1997), while the clipping operation itself remains a Requicha regularized
+/// solid intersection.
+#[derive(Clone, Debug, PartialEq)]
+pub enum CamSupportClipBoundary {
+    /// Strictly convex straight-edge clip boundary.
+    Convex {
+        /// Retained boundary vertices.
+        vertices: Vec<Point2>,
+        /// Source provenance shared by the retained loop.
+        provenance: PathProvenance,
+        /// Exact-set facts for retained coordinates.
+        exact: RealExactSetFacts,
+    },
+    /// Simple orthogonal clip boundary.
+    Orthogonal {
+        /// Retained boundary vertices.
+        vertices: Vec<Point2>,
+        /// Source provenance shared by the retained loop.
+        provenance: PathProvenance,
+        /// Exact-set facts for retained coordinates.
+        exact: RealExactSetFacts,
+    },
+}
+
+/// Exact additive support-footprint clipping program.
+///
+/// A rectangular support plan is retained as the source request, then its
+/// expanded footprint is intersected with a retained straight-edge boundary.
+/// This is the bounded support counterpart to rest-material programs: topology
+/// belongs to `hypermesh`, and this report remains valid only while replay can
+/// regenerate the same exact boolean evidence from the retained support plan.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CamSupportClipProgramReport {
+    /// Retained support footprint request.
+    pub support: RectangularSupportPlan,
+    /// Exact lower support slab face.
+    pub z_min: Real,
+    /// Exact upper support slab face.
+    pub z_max: Real,
+    /// Retained clipping boundary.
+    pub boundary: CamSupportClipBoundary,
+    /// Accepted exact support/boundary intersection program.
     pub program: PathMeshBooleanProgramReport,
 }
 
@@ -206,6 +257,110 @@ impl CamOrthogonalIslandPocketCutter {
     }
 }
 
+impl CamSupportClipBoundary {
+    /// Construct a retained strictly convex support clipping boundary.
+    pub fn convex(
+        vertices: Vec<Point2>,
+        policy: PredicatePolicy,
+    ) -> Result<Self, PathMeshBooleanError> {
+        Self::convex_with_provenance(vertices, PathProvenance::native(), policy)
+    }
+
+    /// Construct a retained strictly convex support clipping boundary with provenance.
+    pub fn convex_with_provenance(
+        vertices: Vec<Point2>,
+        provenance: PathProvenance,
+        policy: PredicatePolicy,
+    ) -> Result<Self, PathMeshBooleanError> {
+        ConvexPolygonPrism::new(
+            vertices.clone(),
+            Real::zero(),
+            Real::one(),
+            provenance,
+            policy,
+        )?;
+        let exact = loop_exact_facts(&vertices);
+        Ok(Self::Convex {
+            vertices,
+            provenance,
+            exact,
+        })
+    }
+
+    /// Construct a retained simple orthogonal support clipping boundary.
+    pub fn orthogonal(
+        vertices: Vec<Point2>,
+        policy: PredicatePolicy,
+    ) -> Result<Self, PathMeshBooleanError> {
+        Self::orthogonal_with_provenance(vertices, PathProvenance::native(), policy)
+    }
+
+    /// Construct a retained simple orthogonal support clipping boundary with provenance.
+    pub fn orthogonal_with_provenance(
+        vertices: Vec<Point2>,
+        provenance: PathProvenance,
+        policy: PredicatePolicy,
+    ) -> Result<Self, PathMeshBooleanError> {
+        OrthogonalPolygonPrism::new(
+            vertices.clone(),
+            Real::zero(),
+            Real::one(),
+            provenance,
+            policy,
+        )?;
+        let exact = loop_exact_facts(&vertices);
+        Ok(Self::Orthogonal {
+            vertices,
+            provenance,
+            exact,
+        })
+    }
+
+    /// Return retained boundary vertices.
+    pub fn vertices(&self) -> &[Point2] {
+        match self {
+            Self::Convex { vertices, .. } | Self::Orthogonal { vertices, .. } => vertices,
+        }
+    }
+
+    /// Return retained source provenance.
+    pub const fn provenance(&self) -> PathProvenance {
+        match self {
+            Self::Convex { provenance, .. } | Self::Orthogonal { provenance, .. } => *provenance,
+        }
+    }
+
+    /// Return exact-set facts for retained boundary coordinates.
+    pub const fn exact_facts(&self) -> &RealExactSetFacts {
+        match self {
+            Self::Convex { exact, .. } | Self::Orthogonal { exact, .. } => exact,
+        }
+    }
+
+    fn to_path_source(
+        &self,
+        z_min: Real,
+        z_max: Real,
+        policy: PredicatePolicy,
+    ) -> Result<PathMeshBooleanSource, PathMeshBooleanError> {
+        match self {
+            Self::Convex {
+                vertices,
+                provenance,
+                ..
+            } => Ok(
+                ConvexPolygonPrism::new(vertices.clone(), z_min, z_max, *provenance, policy)?
+                    .into(),
+            ),
+            Self::Orthogonal {
+                vertices,
+                provenance,
+                ..
+            } => orthogonal_loop_path_source(vertices, z_min, z_max, *provenance, policy),
+        }
+    }
+}
+
 impl CamRestMaterialProgramReport {
     /// Rebuild stock/cutter lowering and exact boolean evidence.
     pub fn validate_replay(&self, policy: PredicatePolicy) -> Result<(), PathMeshBooleanError> {
@@ -222,6 +377,30 @@ impl CamRestMaterialProgramReport {
             ));
         }
         self.program.validate_replay()
+    }
+}
+
+impl CamSupportClipProgramReport {
+    /// Rebuild support-footprint lowering, clip-boundary lowering, and exact evidence.
+    pub fn validate_replay(&self, policy: PredicatePolicy) -> Result<(), PathMeshBooleanError> {
+        let replayed = build_cam_support_clip_program(
+            self.support.clone(),
+            self.z_min.clone(),
+            self.z_max.clone(),
+            self.boundary.clone(),
+            policy,
+        )?;
+        if replayed.program != self.program {
+            return Err(PathMeshBooleanError::Replay(
+                "retained CAM support clip program no longer matches replay".into(),
+            ));
+        }
+        self.program.validate_replay()
+    }
+
+    /// Return the final accepted exact clipped support mesh.
+    pub fn mesh(&self) -> Option<&hypermesh::exact::ExactMesh> {
+        self.program.mesh()
     }
 }
 
@@ -279,6 +458,46 @@ pub fn build_cam_rest_material_program(
         z_max,
         cutters,
         exact,
+        program,
+    })
+}
+
+/// Build an exact additive support clipping program.
+///
+/// The expanded rectangular support footprint seeds the accumulator. The
+/// retained boundary is then intersected as a second source. This is a bounded
+/// first step toward arbitrary polygon additive support clipping: no raster
+/// mask or tolerance polygon is introduced, and replay must rebuild both
+/// operands exactly before the accepted mesh can be reused.
+pub fn build_cam_support_clip_program(
+    support: RectangularSupportPlan,
+    z_min: Real,
+    z_max: Real,
+    boundary: CamSupportClipBoundary,
+    policy: PredicatePolicy,
+) -> Result<CamSupportClipProgramReport, PathMeshBooleanError> {
+    if compare_reals_with_policy(&z_min, &z_max, policy).value() != Some(Ordering::Less) {
+        return Err(PathMeshBooleanError::DegenerateHeight);
+    }
+    let support_prism = RectangularPrism::new(
+        support.footprint.clone(),
+        z_min.clone(),
+        z_max.clone(),
+        policy,
+    )?;
+    let boundary_source = boundary.to_path_source(z_min.clone(), z_max.clone(), policy)?;
+    let program = boolean_path_mesh_program(
+        support_prism.into(),
+        vec![PathMeshBooleanProgramStep::new(
+            PathMeshBooleanOperation::Intersection,
+            boundary_source,
+        )],
+    )?;
+    Ok(CamSupportClipProgramReport {
+        support,
+        z_min,
+        z_max,
+        boundary,
         program,
     })
 }
@@ -377,4 +596,8 @@ fn island_pocket_exact_facts(outer: &[Point2], islands: &[Vec<Point2>]) -> RealE
         values.extend(island.iter().flat_map(|point| [&point.x, &point.y]));
     }
     Real::exact_set_facts(values)
+}
+
+fn loop_exact_facts(vertices: &[Point2]) -> RealExactSetFacts {
+    Real::exact_set_facts(vertices.iter().flat_map(|point| [&point.x, &point.y]))
 }

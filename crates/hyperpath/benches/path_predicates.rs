@@ -2,19 +2,20 @@ use criterion::{Criterion, criterion_group, criterion_main};
 use hyperlimit::{Point2, PredicatePolicy};
 use hyperpath::{
     ArcDirection, AxisAlignedSweptSegmentPrism, BeadFillAxis, BezierParameter,
-    CamOrthogonalIslandPocketCutter, CamRestMaterialCutter, CardinalPoint, CardinalRotation,
-    CircularArc, ConstructionStamp, CubicBezier, ExplicitCircularArc, HigherOrderBezier,
-    LinePathSegment, MeanderObstacle, MeanderPlacementCandidate, NetId, OffsetSide,
-    PathMeshBooleanOperation, PathMeshBooleanProgramStep, PathProvenance, PathSourceFormat,
-    PcbBoardOutline, PcbCardinalRectPad, PcbCircularPad, PcbCompositeCopperBooleanSource,
-    PcbConvexBoardOutline, PcbConvexPolyPad, PcbCopperBoardClipOutline, PcbCopperBooleanSource,
-    PcbHoledOrthogonalCopperSource, PcbLayerZModel, PcbOrthogonalBoardOutline,
-    PcbOrthogonalPolyPad, PcbRectPad, PcbTrace, PcbViaStack, QuadraticBezier,
-    RationalQuadraticBezier, RectangularPocket, SourceLengthUnit, SpecctraGridTraceRecord,
-    SpecctraGridViaRecord, SpecctraLayerAlias, SpecctraNetAlias, SweptLineSegment, TangentSpan,
-    TraceLayer, ViaDrillIntent, boolean_path_mesh_program, boolean_path_mesh_sources,
-    boolean_rectangular_prism_chain, boolean_rectangular_prisms, build_alternating_detour_meander,
-    build_cam_rest_material_program, build_g1_join_problem, build_length_match_problem,
+    CamOrthogonalIslandPocketCutter, CamRestMaterialCutter, CamSupportClipBoundary, CardinalPoint,
+    CardinalRotation, CircularArc, ConstructionStamp, CubicBezier, ExplicitCircularArc,
+    HigherOrderBezier, LinePathSegment, MeanderObstacle, MeanderPlacementCandidate, NetId,
+    OffsetSide, PathMeshBooleanOperation, PathMeshBooleanProgramStep, PathProvenance,
+    PathSourceFormat, PcbBoardOutline, PcbCardinalRectPad, PcbCircularPad,
+    PcbCompositeCopperBooleanSource, PcbConvexBoardOutline, PcbConvexPolyPad,
+    PcbCopperBoardClipOutline, PcbCopperBooleanSource, PcbHoledOrthogonalCopperSource,
+    PcbLayerZModel, PcbOrthogonalBoardOutline, PcbOrthogonalPolyPad, PcbRectPad, PcbTrace,
+    PcbViaStack, QuadraticBezier, RationalQuadraticBezier, RectangularPocket, SourceLengthUnit,
+    SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraLayerAlias, SpecctraNetAlias,
+    SweptLineSegment, TangentSpan, TraceLayer, ViaDrillIntent, boolean_path_mesh_program,
+    boolean_path_mesh_sources, boolean_rectangular_prism_chain, boolean_rectangular_prisms,
+    build_alternating_detour_meander, build_cam_rest_material_program,
+    build_cam_support_clip_program, build_g1_join_problem, build_length_match_problem,
     build_multi_detour_meander, build_nonuniform_detour_meander,
     build_obstacle_aware_detour_meander, build_oriented_tangent_alignment_problem,
     build_pcb_composite_copper_union_program, build_pcb_copper_board_clip_program,
@@ -707,6 +708,31 @@ fn path_predicates(c: &mut Criterion) {
                 r(125),
                 PredicatePolicy::default(),
             )
+        })
+    });
+    let support_plan = build_rectangular_support_plan(
+        support_overhang.clone(),
+        support_base.clone(),
+        r(125),
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    let support_clip_boundary = CamSupportClipBoundary::orthogonal(
+        vec![p(875, 875), p(3_125, 875), p(3_125, 2_125), p(875, 2_125)],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    c.bench_function("cam_support_clip_program_replay", |b| {
+        b.iter(|| {
+            let report = build_cam_support_clip_program(
+                support_plan.clone(),
+                r(0),
+                r(500),
+                support_clip_boundary.clone(),
+                PredicatePolicy::default(),
+            )
+            .unwrap();
+            report.validate_replay(PredicatePolicy::default())
         })
     });
     c.bench_function("rectangular_region_intersection", |b| {

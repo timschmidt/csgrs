@@ -2,17 +2,17 @@ use hyperlimit::{Point2, PredicatePolicy};
 use hyperpath::{
     ArcDirection, ArcOffsetError, Axis, AxisAlignedSweptSegmentPrism, BeadFillAxis, BeadPlanError,
     BezierOffsetError, BezierParameter, BezierParameterError, BoardContourError,
-    BoardContourOrientation, CamOrthogonalIslandPocketCutter, CamRestMaterialCutter, CardinalPoint,
-    CardinalRotation, CircularArc, CircularArcError, ClearanceStatus, ConstructionStamp,
-    CubicBezier, DrillBoardClearanceReport, ExplicitArcArrangementClass,
-    ExplicitArcIntersectionClass, ExplicitArcOverlapClass, ExplicitArcPointClassification,
-    ExplicitArcSweepClass, ExplicitArcTangentClass, ExplicitCircleRelationClass,
-    ExplicitCircularArc, HigherOrderBezier, HigherOrderBezierError, InfillGraphError,
-    LineExplicitArcIntersectionClass, LineOffsetError, LinePathSegment, MeanderError,
-    MeanderObstacle, MeanderPlacementCandidate, NetId, OffsetSide, PathMeshBooleanError,
-    PathMeshBooleanOperation, PathMeshBooleanProgramStep, PathMeshBooleanSource, PathProvenance,
-    PathSourceFormat, PcbBoardOutline, PcbCardinalRectPad, PcbCircularPad,
-    PcbCompositeCopperBooleanSource, PcbConvexBoardOutline, PcbConvexPolyPad,
+    BoardContourOrientation, CamOrthogonalIslandPocketCutter, CamRestMaterialCutter,
+    CamSupportClipBoundary, CardinalPoint, CardinalRotation, CircularArc, CircularArcError,
+    ClearanceStatus, ConstructionStamp, CubicBezier, DrillBoardClearanceReport,
+    ExplicitArcArrangementClass, ExplicitArcIntersectionClass, ExplicitArcOverlapClass,
+    ExplicitArcPointClassification, ExplicitArcSweepClass, ExplicitArcTangentClass,
+    ExplicitCircleRelationClass, ExplicitCircularArc, HigherOrderBezier, HigherOrderBezierError,
+    InfillGraphError, LineExplicitArcIntersectionClass, LineOffsetError, LinePathSegment,
+    MeanderError, MeanderObstacle, MeanderPlacementCandidate, NetId, OffsetSide,
+    PathMeshBooleanError, PathMeshBooleanOperation, PathMeshBooleanProgramStep,
+    PathMeshBooleanSource, PathProvenance, PathSourceFormat, PcbBoardOutline, PcbCardinalRectPad,
+    PcbCircularPad, PcbCompositeCopperBooleanSource, PcbConvexBoardOutline, PcbConvexPolyPad,
     PcbCopperBoardClipOutline, PcbCopperBooleanSource, PcbHoledOrthogonalCopperSource,
     PcbLayerZModel, PcbOrthogonalBoardOutline, PcbOrthogonalPolyPad, PcbRectPad, PcbTrace,
     PcbViaStack, PocketPlanError, PocketPlanStopReason, QuadraticBezier, RationalQuadraticBezier,
@@ -25,8 +25,8 @@ use hyperpath::{
     ViaLayerTransitionClass, boolean_path_mesh_program, boolean_path_mesh_sources,
     boolean_rectangular_prism_chain, boolean_rectangular_prisms,
     boolean_rectangular_prisms_with_boundary_policy, build_alternating_detour_meander,
-    build_cam_rest_material_program, build_g1_join_problem, build_length_match_problem,
-    build_multi_detour_meander, build_nonuniform_detour_meander,
+    build_cam_rest_material_program, build_cam_support_clip_program, build_g1_join_problem,
+    build_length_match_problem, build_multi_detour_meander, build_nonuniform_detour_meander,
     build_obstacle_aware_detour_meander, build_oriented_tangent_alignment_problem,
     build_pcb_composite_copper_union_program, build_pcb_copper_board_clip_program,
     build_pcb_copper_union_program, build_pcb_holed_orthogonal_copper_program,
@@ -3522,6 +3522,108 @@ fn rectangular_support_plan_rejects_negative_margin() {
         )
         .unwrap_err(),
         SupportPlanError::NegativeMargin
+    );
+}
+
+#[test]
+fn cam_support_clip_program_intersects_retained_support_with_polygon_boundaries() {
+    let support = build_rectangular_support_plan(
+        RectangularPocket::new(p(3, 3), p(7, 7)).unwrap(),
+        RectangularPocket::new(p(0, 0), p(12, 12)).unwrap(),
+        r(1),
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    let convex = CamSupportClipBoundary::convex(
+        vec![p(2, 2), p(8, 2), p(8, 8), p(2, 8)],
+        PredicatePolicy::default(),
+    )
+    .expect("convex support clip boundary should be retained");
+    assert!(convex.exact_facts().all_exact_rational);
+
+    let report = build_cam_support_clip_program(
+        support.clone(),
+        r(0),
+        r(3),
+        convex,
+        PredicatePolicy::default(),
+    )
+    .expect("support footprint should clip through exact mesh booleans");
+    report.validate_replay(PredicatePolicy::default()).unwrap();
+    assert_eq!(report.support, support);
+    assert_eq!(report.program.steps.len(), 1);
+    assert_eq!(
+        report.program.steps[0].operation,
+        PathMeshBooleanOperation::Intersection
+    );
+    assert!(report.mesh().unwrap().facts().mesh.closed_manifold);
+    assert!(report.program.steps[0].result.validate().is_ok());
+
+    let mut stale = report.clone();
+    stale.z_max = r(4);
+    assert!(matches!(
+        stale.validate_replay(PredicatePolicy::default()),
+        Err(PathMeshBooleanError::Replay(_))
+    ));
+
+    let orthogonal = CamSupportClipBoundary::orthogonal(
+        vec![p(2, 2), p(8, 2), p(8, 8), p(2, 8)],
+        PredicatePolicy::default(),
+    )
+    .expect("orthogonal support clip boundary should be retained");
+    let orthogonal_report = build_cam_support_clip_program(
+        build_rectangular_support_plan(
+            RectangularPocket::new(p(3, 3), p(7, 7)).unwrap(),
+            RectangularPocket::new(p(0, 0), p(12, 12)).unwrap(),
+            r(1),
+            PredicatePolicy::default(),
+        )
+        .unwrap(),
+        r(0),
+        r(3),
+        orthogonal,
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    orthogonal_report
+        .validate_replay(PredicatePolicy::default())
+        .unwrap();
+    assert!(
+        orthogonal_report
+            .mesh()
+            .unwrap()
+            .facts()
+            .mesh
+            .closed_manifold
+    );
+}
+
+#[test]
+fn cam_support_clip_program_rejects_invalid_boundaries_and_height() {
+    assert_eq!(
+        CamSupportClipBoundary::convex(
+            vec![p(0, 0), p(4, 0), p(2, 1), p(4, 4), p(0, 4)],
+            PredicatePolicy::default()
+        )
+        .unwrap_err(),
+        PathMeshBooleanError::NonConvexPolygon
+    );
+    let support = build_rectangular_support_plan(
+        RectangularPocket::new(p(3, 3), p(7, 7)).unwrap(),
+        RectangularPocket::new(p(0, 0), p(12, 12)).unwrap(),
+        r(1),
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    let boundary = CamSupportClipBoundary::orthogonal(
+        vec![p(2, 2), p(8, 2), p(8, 8), p(2, 8)],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert_eq!(
+        build_cam_support_clip_program(support, r(3), r(3), boundary, PredicatePolicy::default())
+            .unwrap_err(),
+        PathMeshBooleanError::DegenerateHeight
     );
 }
 

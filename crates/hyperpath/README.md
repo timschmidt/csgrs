@@ -79,8 +79,9 @@ before downstream crates accept the path as ready.
   composite same-net/layer union programs, clip copper to retained convex or
   orthogonal board outlines, fold multi-source boolean chains, mixed-operation
   boolean programs, same-net/layer PCB copper union programs, and CAM
-  stock-minus-cutter plus orthogonal island-pocket rest-material programs
-  through `hypermesh`, and replay exact evidence before
+  stock-minus-cutter plus orthogonal island-pocket rest-material programs,
+  and clip retained additive support footprints to convex or orthogonal
+  boundaries through `hypermesh`, and replay exact evidence before
   exposing accepted output topology.
 - PCB types describe traces, pads, vias, board outlines, clearance reports, annular
   ring checks, via drill policy, and layer-span reports.

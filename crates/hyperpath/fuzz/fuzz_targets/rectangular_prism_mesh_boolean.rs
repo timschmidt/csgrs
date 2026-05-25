@@ -3,13 +3,14 @@
 use hyperlimit::{Point2, PredicatePolicy};
 use hyperpath::{
     AxisAlignedSweptSegmentPrism, CamOrthogonalIslandPocketCutter, CamRestMaterialCutter,
-    CardinalRotation, LinePathSegment, NetId, PathMeshBooleanOperation, PathMeshBooleanProgramStep,
-    PcbCardinalRectPad, PcbCompositeCopperBooleanSource, PcbCopperBoardClipOutline,
+    CamSupportClipBoundary, CardinalRotation, LinePathSegment, NetId, PathMeshBooleanOperation,
+    PathMeshBooleanProgramStep, PcbCardinalRectPad, PcbCompositeCopperBooleanSource, PcbCopperBoardClipOutline,
     PcbConvexPolyPad, PcbCopperBooleanSource, PcbHoledOrthogonalCopperSource, PcbLayerZModel,
     PcbOrthogonalBoardOutline, PcbOrthogonalPolyPad, PcbRectPad, PcbTrace, SweptLineSegment, TraceLayer,
     boolean_path_mesh_program, boolean_path_mesh_sources,
     boolean_rectangular_prism_chain, boolean_rectangular_prisms,
     boolean_rectangular_prisms_with_boundary_policy, build_cam_rest_material_program,
+    build_cam_support_clip_program,
     build_pcb_composite_copper_union_program, build_pcb_copper_board_clip_program,
     build_pcb_copper_union_program, build_pcb_holed_orthogonal_copper_program,
     pcb_cardinal_rect_pad_mesh_boolean_source, pcb_trace_mesh_boolean_source,
@@ -466,6 +467,43 @@ fuzz_target!(|data: &[u8]| {
                 ) {
                     report.validate_replay(PredicatePolicy::default()).unwrap();
                     report.program.steps.last().unwrap().result.validate().unwrap();
+                }
+            }
+            let support_overhang_min =
+                Point2::new(Real::from(left_min[0]) + Real::from(1), Real::from(left_min[1]) + Real::from(1));
+            let support_overhang_max =
+                Point2::new(support_overhang_min.x.clone() + Real::from(2), support_overhang_min.y.clone() + Real::from(2));
+            if let Ok(overhang) =
+                hyperpath::RectangularPocket::new(support_overhang_min, support_overhang_max)
+            {
+                if let Ok(support) = hyperpath::build_rectangular_support_plan(
+                    overhang,
+                    stock.clone(),
+                    Real::zero(),
+                    PredicatePolicy::default(),
+                ) {
+                    let min = support.footprint.min().clone();
+                    let max = support.footprint.max().clone();
+                    if let Ok(boundary) = CamSupportClipBoundary::orthogonal(
+                        vec![
+                            min.clone(),
+                            Point2::new(max.x.clone(), min.y.clone()),
+                            max.clone(),
+                            Point2::new(min.x.clone(), max.y.clone()),
+                        ],
+                        PredicatePolicy::default(),
+                    ) {
+                        if let Ok(report) = build_cam_support_clip_program(
+                            support,
+                            Real::from(left_min[2]),
+                            Real::from(left_max[2]),
+                            boundary,
+                            PredicatePolicy::default(),
+                        ) {
+                            report.validate_replay(PredicatePolicy::default()).unwrap();
+                            report.program.steps.last().unwrap().result.validate().unwrap();
+                        }
+                    }
                 }
             }
             let outer_min = Point2::new(Real::from(left_min[0]), Real::from(left_min[1]));
