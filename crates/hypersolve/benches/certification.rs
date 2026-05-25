@@ -462,6 +462,74 @@ fn sketch_problem_with_projected_point_radius_relations(
     sketch
 }
 
+fn sketch_problem_with_projected_point_line_radius_relations(
+    row_count: usize,
+) -> hypersolve::SketchSolveProblem {
+    let mut sketch = hypersolve::SketchSolveProblem::new();
+    let origin = sketch.add_point3d("projected.point.line.radius.origin", r(0), r(0), r(0));
+    let normal = sketch.add_normal3d("projected.point.line.radius.normal", r(1), r(0), r(0), r(0));
+    let workplane = sketch.add_workplane("projected.point.line.radius.workplane", origin, normal);
+    for index in 0..row_count {
+        let y = index as i64;
+        let point = sketch.add_point3d(
+            format!("projected.point.line.radius{index}.point"),
+            r(2),
+            r(y + 3),
+            r(7),
+        );
+        let line_start = sketch.add_point3d(
+            format!("projected.point.line.radius{index}.line.start"),
+            r(0),
+            r(y),
+            r(1),
+        );
+        let line_end = sketch.add_point3d(
+            format!("projected.point.line.radius{index}.line.end"),
+            r(5),
+            r(y),
+            r(11),
+        );
+        let line = sketch.add_line_segment3(
+            format!("projected.point.line.radius{index}.line"),
+            line_start,
+            line_end,
+        );
+        let center = sketch.add_point2d(
+            format!("projected.point.line.radius{index}.center"),
+            r(0),
+            r(0),
+        );
+        let start = sketch.add_point2d(
+            format!("projected.point.line.radius{index}.start"),
+            r(3),
+            r(0),
+        );
+        let end = sketch.add_point2d(
+            format!("projected.point.line.radius{index}.end"),
+            r(0),
+            r(3),
+        );
+        let radius =
+            sketch.add_distance(format!("projected.point.line.radius{index}.radius"), r(3));
+        let arc = sketch.add_arc_of_circle2(
+            format!("projected.point.line.radius{index}.arc"),
+            center,
+            start,
+            end,
+            radius,
+        );
+        hypersolve::sketch_distance_builders::projected_point_line_radius_equality3(
+            &mut sketch,
+            format!("projected point-line radius {index}"),
+            workplane,
+            point,
+            line,
+            arc,
+        );
+    }
+    sketch
+}
+
 fn sketch_problem_with_length_ratio_and_point_line(
     row_count: usize,
 ) -> hypersolve::SketchSolveProblem {
@@ -2429,6 +2497,11 @@ fn certification(c: &mut Criterion) {
     c.bench_function("sketch_projected_point_radius_lowering", |b| {
         b.iter(|| projected_point_radius_sketch.lower_to_problem())
     });
+    let projected_point_line_radius_sketch =
+        sketch_problem_with_projected_point_line_radius_relations(16);
+    c.bench_function("sketch_projected_point_line_radius_lowering", |b| {
+        b.iter(|| projected_point_line_radius_sketch.lower_to_problem())
+    });
     let length_ratio_point_line_sketch = sketch_problem_with_length_ratio_and_point_line(16);
     c.bench_function("sketch_length_ratio_point_line_lowering", |b| {
         b.iter(|| length_ratio_point_line_sketch.lower_to_problem())
@@ -2792,6 +2865,24 @@ fn certification(c: &mut Criterion) {
         b.iter(|| {
             for handle in &projected_point_radius_form_handles {
                 let _ = projected_point_radius_sketch.residual_forms_for_constraint(*handle);
+            }
+        })
+    });
+    let projected_point_line_radius_form_handles = projected_point_line_radius_sketch
+        .constraints()
+        .iter()
+        .filter(|constraint| {
+            matches!(
+                constraint.kind,
+                hypersolve::SketchConstraintKind::ProjectedPointLineRadiusEquality3 { .. }
+            )
+        })
+        .map(|constraint| constraint.handle)
+        .collect::<Vec<_>>();
+    c.bench_function("sketch_projected_point_line_radius_residual_forms", |b| {
+        b.iter(|| {
+            for handle in &projected_point_line_radius_form_handles {
+                let _ = projected_point_line_radius_sketch.residual_forms_for_constraint(*handle);
             }
         })
     });

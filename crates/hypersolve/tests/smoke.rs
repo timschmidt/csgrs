@@ -5895,6 +5895,116 @@ fn sketch_projected_point_line_distance_lowers_exact_workplane_rows() {
 }
 
 #[test]
+fn sketch_projected_point_line_radius_equality_lowers_exact_workplane_rows() {
+    let mut sketch = SketchSolveProblem::new();
+    let origin = sketch.add_point3d("origin", real(0), real(0), real(10));
+    let normal = sketch.add_normal3d("normal", real(1), real(0), real(0), real(0));
+    let workplane = sketch.add_workplane("workplane", origin, normal);
+    let point = sketch.add_point3d("point", real(2), real(3), real(17));
+    let bad_point = sketch.add_point3d("bad point", real(2), real(4), real(17));
+    let line_start = sketch.add_point3d("line start", real(0), real(0), real(-5));
+    let line_end = sketch.add_point3d("line end", real(4), real(0), real(99));
+    let line = sketch.add_line_segment3("line", line_start, line_end);
+    let center = sketch.add_point2d("center", real(2), real(3));
+    let start = sketch.add_point2d("start", real(5), real(3));
+    let end = sketch.add_point2d("end", real(2), real(6));
+    let radius = sketch.add_distance("radius", real(3));
+    let arc = sketch.add_arc_of_circle2("arc", center, start, end, radius);
+
+    let valid = sketch_distance_builders::projected_point_line_radius_equality3(
+        &mut sketch,
+        "projected point-line radius equality",
+        workplane,
+        point,
+        line,
+        arc,
+    );
+    sketch.add_projected_point_line_radius_equality3(
+        "bad projected point-line radius equality",
+        workplane,
+        bad_point,
+        line,
+        arc,
+    );
+    let wrong = sketch.add_projected_point_line_radius_equality3(
+        "wrong projected point-line radius equality",
+        workplane,
+        point,
+        line,
+        radius,
+    );
+
+    assert_eq!(valid.family, hypersolve::SketchConstraintFamily::Distance);
+    assert_eq!(
+        valid.strategy,
+        SketchResidualStrategy::SquaredProjectedPointLineRadiusEquality
+    );
+    assert_eq!(
+        valid.kind,
+        SketchConstraintKind::ProjectedPointLineRadiusEquality3 {
+            workplane,
+            point,
+            line,
+            curve: arc,
+        }
+    );
+
+    let report = sketch.lower_to_problem();
+    let certification = certify_candidate(
+        &PreparedProblem::new(&report.problem),
+        &context_from_problem(&report.problem),
+    );
+
+    assert_eq!(report.problem.constraints.len(), 4);
+    assert_eq!(report.rows.len(), 5);
+    assert_eq!(
+        report.rows[0].strategy,
+        Some(SketchResidualStrategy::WorkplaneUnitQuaternion)
+    );
+    assert_eq!(
+        report.rows[1].strategy,
+        Some(SketchResidualStrategy::SquaredProjectedPointLineRadiusEquality)
+    );
+    assert_eq!(
+        report.rows[3].strategy,
+        Some(SketchResidualStrategy::SquaredProjectedPointLineRadiusEquality)
+    );
+    assert_eq!(
+        report.rows.last().unwrap().status,
+        SketchGeneratedRowStatus::WrongEntityKind {
+            handle: radius,
+            expected: "circle or circular arc",
+        }
+    );
+    assert!(matches!(
+        certification.rows[1].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+    assert!(matches!(
+        certification.rows[3].status,
+        CertifiedCandidateStatus::CertifiedViolation { .. }
+    ));
+
+    let forms = sketch.residual_forms_for_constraint(valid.handle);
+    assert_eq!(forms.status, SketchResidualFormsStatus::Generated);
+    assert_eq!(forms.forms.len(), 2);
+    assert_eq!(
+        forms.forms[0].kind,
+        SketchResidualFormKind::WorkplaneUnitQuaternionPolynomial
+    );
+    assert_eq!(
+        forms.forms[1].kind,
+        SketchResidualFormKind::SquaredProjectedPointLineRadiusEqualityPolynomial
+    );
+    assert_eq!(
+        forms.forms[1].strategy,
+        Some(SketchResidualStrategy::SquaredProjectedPointLineRadiusEquality)
+    );
+    let wrong_forms = sketch.residual_forms_for_constraint(wrong);
+    assert_eq!(wrong_forms.status, SketchResidualFormsStatus::InvalidInputs);
+}
+
+#[test]
 fn sketch_projected_point_line_distance_ranges_lower_to_exact_inequalities() {
     let mut sketch = SketchSolveProblem::new();
     let origin = sketch.add_point3d("origin", real(0), real(0), real(10));
