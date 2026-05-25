@@ -5,8 +5,9 @@ use std::cmp::Ordering;
 use hyperlimit::{PredicatePolicy, compare_reals_with_policy};
 use hyperpath::{
     BezierParameter, CubicBezier, LineCubicAlgebraicPointDomain, LineCubicAlgebraicRootDomain,
-    LineCubicBezierAlgebraicBreakpointDomain, LineCubicBezierIntersectionClass, LinePathSegment,
-    LineQuadraticBezierIntersectionClass, LineRationalQuadraticBezierAlgebraicBreakpointDomain,
+    LineCubicBezierAlgebraicBreakpointDomain, LineCubicBezierAlgebraicBreakpointOrderClass,
+    LineCubicBezierIntersectionClass, LinePathSegment, LineQuadraticBezierIntersectionClass,
+    LineRationalQuadraticBezierAlgebraicBreakpointDomain,
     LineRationalQuadraticBezierAlgebraicBreakpointOrderClass,
     LineRationalQuadraticBezierIntersectionClass, LineRationalQuadraticBezierInverseRootDomain,
     LineRationalQuadraticBezierSupportOverlapMonotonicity, QuadraticBezier,
@@ -239,6 +240,41 @@ fuzz_target!(|data: &[u8]| {
             .line_parameter
             .status,
         &AlgebraicRootPolynomialImageStatus::Transformed
+    );
+    assert!(
+        algebraic_mixed_report
+            .algebraic_breakpoint_orders
+            .is_empty()
+    );
+    let three_root_cubic = CubicBezier::new(
+        hyperlimit::Point2::new(r(0), Real::new(Rational::new(-2) / Rational::new(25))),
+        hyperlimit::Point2::new(
+            Real::new(Rational::new(1) / Rational::new(3)),
+            Real::new(Rational::new(7) / Rational::new(50)),
+        ),
+        hyperlimit::Point2::new(
+            Real::new(Rational::new(2) / Rational::new(3)),
+            Real::new(Rational::new(-7) / Rational::new(50)),
+        ),
+        hyperlimit::Point2::new(r(1), Real::new(Rational::new(2) / Rational::new(25))),
+    );
+    let three_root_report = arrange_line_segments_with_cubic_beziers(
+        &[LinePathSegment::new(p(0, 0), p(1, 0))],
+        &[three_root_cubic],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert_eq!(three_root_report.algebraic_breakpoints.len(), 3);
+    assert_eq!(three_root_report.algebraic_breakpoint_orders.len(), 3);
+    assert!(
+        three_root_report
+            .algebraic_breakpoint_orders
+            .iter()
+            .all(|order| {
+                order.cubic_order == Some(LineCubicBezierAlgebraicBreakpointOrderClass::Before)
+                    && order.line_order
+                        == Some(LineCubicBezierAlgebraicBreakpointOrderClass::Before)
+            })
     );
 
     let weight = r(i64::from(data[11] % 16));

@@ -11,9 +11,10 @@ use hyperpath::{
     InfillGraphError, JerkLimitedFeedTimeReport, JerkRampPhaseProposal, JerkRampSpanProposal,
     LineArcArrangementEventClass, LineArrangementError, LineArrangementEventClass,
     LineCubicAlgebraicPointDomain, LineCubicAlgebraicRootDomain,
-    LineCubicBezierAlgebraicBreakpointDomain, LineCubicBezierIntersectionClass,
-    LineExplicitArcIntersectionClass, LineOffsetError, LinePathSegment,
-    LineQuadraticBezierIntersectionClass, LineRationalQuadraticBezierAlgebraicBreakpointDomain,
+    LineCubicBezierAlgebraicBreakpointDomain, LineCubicBezierAlgebraicBreakpointOrderClass,
+    LineCubicBezierIntersectionClass, LineExplicitArcIntersectionClass, LineOffsetError,
+    LinePathSegment, LineQuadraticBezierIntersectionClass,
+    LineRationalQuadraticBezierAlgebraicBreakpointDomain,
     LineRationalQuadraticBezierAlgebraicBreakpointOrderClass,
     LineRationalQuadraticBezierIntersectionClass, LineRationalQuadraticBezierInverseBoundarySource,
     LineRationalQuadraticBezierInverseRootDomain,
@@ -888,6 +889,48 @@ fn line_cubic_bezier_arrangement_keeps_true_cubic_roots_unknown() {
         &line_parameter.interval.lower,
         &line_parameter.interval.upper,
     );
+    assert!(report.algebraic_breakpoint_orders.is_empty());
+    assert_eq!(report.line_breakpoints[0].len(), 2);
+    assert_eq!(report.cubic_breakpoints[0].len(), 2);
+}
+
+#[test]
+fn line_cubic_bezier_arrangement_orders_multiple_algebraic_breakpoints() {
+    let curve = CubicBezier::new(
+        Point2::new(r(0), rq(-2, 25)),
+        Point2::new(rq(1, 3), rq(7, 50)),
+        Point2::new(rq(2, 3), rq(-7, 50)),
+        Point2::new(r(1), rq(2, 25)),
+    );
+    let line = LinePathSegment::new(p(0, 0), p(1, 0));
+
+    let report =
+        arrange_line_segments_with_cubic_beziers(&[line], &[curve], PredicatePolicy::default())
+            .unwrap();
+
+    assert_eq!(
+        report.events[0].class,
+        LineCubicBezierIntersectionClass::Unknown
+    );
+    assert_eq!(report.algebraic_breakpoints.len(), 3);
+    assert!(
+        report
+            .algebraic_breakpoints
+            .iter()
+            .all(|breakpoint| breakpoint.domain
+                == LineCubicBezierAlgebraicBreakpointDomain::InsideLineAndCurve)
+    );
+    assert_eq!(report.algebraic_breakpoint_orders.len(), 3);
+    for order in &report.algebraic_breakpoint_orders {
+        assert_eq!(
+            order.cubic_order,
+            Some(LineCubicBezierAlgebraicBreakpointOrderClass::Before)
+        );
+        assert_eq!(
+            order.line_order,
+            Some(LineCubicBezierAlgebraicBreakpointOrderClass::Before)
+        );
+    }
     assert_eq!(report.line_breakpoints[0].len(), 2);
     assert_eq!(report.cubic_breakpoints[0].len(), 2);
 }

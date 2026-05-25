@@ -96,6 +96,46 @@ pub struct LineCubicBezierAlgebraicBreakpoint {
     pub domain: LineCubicBezierAlgebraicBreakpointDomain,
 }
 
+/// Certified order relation between two represented line/cubic breakpoint candidates.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum LineCubicBezierAlgebraicBreakpointOrderClass {
+    /// The left breakpoint parameter is certified before the right parameter.
+    Before,
+    /// The represented parameters are certified equal from exact root witnesses.
+    Equal,
+    /// The left breakpoint parameter is certified after the right parameter.
+    After,
+    /// The isolating intervals overlap or exact comparison did not decide.
+    Unknown,
+}
+
+/// Pairwise ordering evidence for retained algebraic line/cubic breakpoints.
+///
+/// A candidate carries two relevant represented values: the cubic source
+/// parameter and the normalized line parameter image. The scheduler records a
+/// curve order only when two candidates share a cubic source, and a line order
+/// only when they share a retained line. Orders are certified from exact root
+/// witnesses or separated Sturm/resultant isolating intervals; overlapping
+/// intervals stay [`LineCubicBezierAlgebraicBreakpointOrderClass::Unknown`].
+///
+/// This follows Yap, "Towards Exact Geometric Computation" (1997): exact
+/// algebraic order evidence is retained as a report, but it does not mutate
+/// the concrete `Real` breakpoint lists until construction can consume the
+/// represented roots without sampling. The polynomial images are the
+/// Sylvester-resultant construction used by Sylvester (1853) and Collins and
+/// Loos, "Real Zeros of Polynomials" (1982).
+#[derive(Clone, Debug, PartialEq)]
+pub struct LineCubicBezierAlgebraicBreakpointOrder {
+    /// Index in [`LineCubicBezierArrangementReport::algebraic_breakpoints`].
+    pub left: usize,
+    /// Index in [`LineCubicBezierArrangementReport::algebraic_breakpoints`].
+    pub right: usize,
+    /// Same-curve order, when both candidates came from the same cubic.
+    pub cubic_order: Option<LineCubicBezierAlgebraicBreakpointOrderClass>,
+    /// Same-line order, when both candidates came from the same line.
+    pub line_order: Option<LineCubicBezierAlgebraicBreakpointOrderClass>,
+}
+
 /// Exact breakpoint on one arranged cubic Bezier.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CubicBezierRealBreakpoint {
@@ -178,6 +218,8 @@ pub struct LineCubicBezierArrangementReport {
     pub events: Vec<LineCubicBezierArrangementEvent>,
     /// Algebraic breakpoint candidates retained from true cubic support roots.
     pub algebraic_breakpoints: Vec<LineCubicBezierAlgebraicBreakpoint>,
+    /// Pairwise exact order evidence for retained algebraic breakpoints.
+    pub algebraic_breakpoint_orders: Vec<LineCubicBezierAlgebraicBreakpointOrder>,
     /// Sorted line breakpoints induced by line endpoints and certified events.
     pub line_breakpoints: Vec<Vec<MixedCubicLineArrangementBreakpoint>>,
     /// Sorted cubic breakpoints induced by curve endpoints and certified events.
@@ -262,6 +304,8 @@ pub fn arrange_line_segments_with_cubic_beziers_and_provenance(
 
     sort_and_dedup_line_breakpoints(&mut line_breakpoints, policy)?;
     sort_and_dedup_cubic_breakpoints(&mut cubic_breakpoints, policy)?;
+    let algebraic_breakpoint_orders =
+        algebraic_cubic_breakpoint_orders(&algebraic_breakpoints, policy);
     let line_fragments = build_line_fragments(&line_breakpoints, policy)?;
     let cubic_fragments = build_cubic_fragments(&cubic_breakpoints, curves, policy)?;
     let facts = LineCubicBezierArrangementFacts {
@@ -275,6 +319,7 @@ pub fn arrange_line_segments_with_cubic_beziers_and_provenance(
         curves: curves.to_vec(),
         events,
         algebraic_breakpoints,
+        algebraic_breakpoint_orders,
         line_breakpoints,
         cubic_breakpoints,
         line_fragments,
@@ -486,6 +531,115 @@ fn interval_inside_unit(lower: &Real, upper: &Real, policy: PredicatePolicy) -> 
         Some(false)
     } else {
         None
+    }
+}
+
+fn algebraic_cubic_breakpoint_orders(
+    breakpoints: &[LineCubicBezierAlgebraicBreakpoint],
+    policy: PredicatePolicy,
+) -> Vec<LineCubicBezierAlgebraicBreakpointOrder> {
+    let mut orders = Vec::new();
+    for left in 0..breakpoints.len() {
+        for right in (left + 1)..breakpoints.len() {
+            let cubic_order = (breakpoints[left].curve == breakpoints[right].curve).then(|| {
+                compare_algebraic_cubic_parameters(
+                    &breakpoints[left].cubic_parameter,
+                    &breakpoints[right].cubic_parameter,
+                    policy,
+                )
+            });
+            let line_order = (breakpoints[left].line == breakpoints[right].line).then(|| {
+                compare_algebraic_polynomial_images(
+                    &breakpoints[left].line_parameter,
+                    &breakpoints[right].line_parameter,
+                    policy,
+                )
+            });
+            if cubic_order.is_some() || line_order.is_some() {
+                orders.push(LineCubicBezierAlgebraicBreakpointOrder {
+                    left,
+                    right,
+                    cubic_order,
+                    line_order,
+                });
+            }
+        }
+    }
+    orders
+}
+
+fn compare_algebraic_cubic_parameters(
+    left: &AlgebraicRootRepresentation,
+    right: &AlgebraicRootRepresentation,
+    policy: PredicatePolicy,
+) -> LineCubicBezierAlgebraicBreakpointOrderClass {
+    compare_algebraic_intervals(
+        left.interval.exact_root.as_ref(),
+        &left.interval.lower,
+        &left.interval.upper,
+        right.interval.exact_root.as_ref(),
+        &right.interval.lower,
+        &right.interval.upper,
+        policy,
+    )
+}
+
+fn compare_algebraic_polynomial_images(
+    left: &AlgebraicRootPolynomialImageReport,
+    right: &AlgebraicRootPolynomialImageReport,
+    policy: PredicatePolicy,
+) -> LineCubicBezierAlgebraicBreakpointOrderClass {
+    let Some(left_representation) = transformed_image_representation(left) else {
+        return LineCubicBezierAlgebraicBreakpointOrderClass::Unknown;
+    };
+    let Some(right_representation) = transformed_image_representation(right) else {
+        return LineCubicBezierAlgebraicBreakpointOrderClass::Unknown;
+    };
+    compare_algebraic_intervals(
+        left_representation.interval.exact_root.as_ref(),
+        &left_representation.interval.lower,
+        &left_representation.interval.upper,
+        right_representation.interval.exact_root.as_ref(),
+        &right_representation.interval.lower,
+        &right_representation.interval.upper,
+        policy,
+    )
+}
+
+fn transformed_image_representation(
+    image: &AlgebraicRootPolynomialImageReport,
+) -> Option<&AlgebraicRootRepresentation> {
+    (image.status == AlgebraicRootPolynomialImageStatus::Transformed)
+        .then_some(image.representation.as_ref())
+        .flatten()
+}
+
+fn compare_algebraic_intervals(
+    left_exact: Option<&Real>,
+    left_lower: &Real,
+    left_upper: &Real,
+    right_exact: Option<&Real>,
+    right_lower: &Real,
+    right_upper: &Real,
+    policy: PredicatePolicy,
+) -> LineCubicBezierAlgebraicBreakpointOrderClass {
+    if let (Some(left_exact), Some(right_exact)) = (left_exact, right_exact) {
+        return match compare_reals_with_policy(left_exact, right_exact, policy).value() {
+            Some(Ordering::Less) => LineCubicBezierAlgebraicBreakpointOrderClass::Before,
+            Some(Ordering::Equal) => LineCubicBezierAlgebraicBreakpointOrderClass::Equal,
+            Some(Ordering::Greater) => LineCubicBezierAlgebraicBreakpointOrderClass::After,
+            None => LineCubicBezierAlgebraicBreakpointOrderClass::Unknown,
+        };
+    }
+    match compare_reals_with_policy(left_upper, right_lower, policy).value() {
+        Some(Ordering::Less) => return LineCubicBezierAlgebraicBreakpointOrderClass::Before,
+        Some(Ordering::Equal | Ordering::Greater) | None => {}
+    }
+    match compare_reals_with_policy(right_upper, left_lower, policy).value() {
+        Some(Ordering::Less) => LineCubicBezierAlgebraicBreakpointOrderClass::After,
+        Some(Ordering::Equal | Ordering::Greater) | None => {
+            LineCubicBezierAlgebraicBreakpointOrderClass::Unknown
+        }
     }
 }
 

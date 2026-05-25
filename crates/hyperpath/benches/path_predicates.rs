@@ -419,6 +419,22 @@ fn path_predicates(c: &mut Criterion) {
             )
         })
     });
+    let line_cubic_three_root = CubicBezier::new(
+        pq(0, 1, -2, 25),
+        pq(1, 3, 7, 50),
+        pq(2, 3, -7, 50),
+        pq(1, 1, 2, 25),
+    );
+    let line_cubic_three_root_line = LinePathSegment::new(p(0, 0), p(1, 0));
+    c.bench_function("line_cubic_bezier_algebraic_order_evidence", |b| {
+        b.iter(|| {
+            arrange_line_segments_with_cubic_beziers(
+                std::slice::from_ref(&line_cubic_three_root_line),
+                std::slice::from_ref(&line_cubic_three_root),
+                PredicatePolicy::default(),
+            )
+        })
+    });
     let quintic = HigherOrderBezier::quintic(
         p(0, 0),
         p(200, 100),
