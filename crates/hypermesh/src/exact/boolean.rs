@@ -54,8 +54,9 @@ use super::cells::triangulate_all_face_cells_with_cdt;
 use super::construction::SegmentPlaneRelation;
 #[cfg(feature = "exact-triangulation")]
 use super::contained_adjacent::{
-    has_contained_boundary_difference, has_contained_face_adjacent_union,
-    materialize_contained_boundary_difference, replay_contained_face_adjacent_union,
+    ContainedBoundaryDifferenceError, has_contained_boundary_difference,
+    has_contained_face_adjacent_union, materialize_contained_boundary_difference,
+    replay_contained_face_adjacent_union,
 };
 #[cfg(feature = "exact-triangulation")]
 use super::convex::{intersect_closed_convex_solids, subtract_closed_convex_solids_single_cap};
@@ -657,6 +658,7 @@ pub fn preflight_boolean_exact(
             certified_convex_boolean_support(left, right, operation)?
                 .or_else(|| certified_convex_intersection_support(left, right, operation))
                 .or_else(|| certified_convex_single_cap_difference_support(left, right, operation))
+                .or_else(|| certified_contained_boundary_difference_support(left, right, operation))
                 .or(certified_winding_boolean_support(left, right)?)
                 .unwrap_or(ExactBooleanSupport::RequiresCertifiedWinding)
         }
@@ -710,6 +712,7 @@ pub fn preflight_boolean_exact(
             | ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellDifference
             | ExactBooleanSupport::CertifiedFullFaceAdjacentUnion
             | ExactBooleanSupport::CertifiedContainedFaceAdjacentUnion
+            | ExactBooleanSupport::CertifiedContainedBoundaryDifference
             | ExactBooleanSupport::CertifiedContainedFaceAdjacentIntersection
             | ExactBooleanSupport::CertifiedContainedFaceAdjacentDifference
             | ExactBooleanSupport::CertifiedFullFaceAdjacentIntersection
@@ -1747,6 +1750,11 @@ pub fn boolean_exact_with_boundary_policy(
             }
             if let Some(result) =
                 boolean_convex_containment_meshes(left, right, operation, validation)?
+            {
+                return Ok(result);
+            }
+            if let Some(result) =
+                boolean_contained_boundary_difference_meshes(left, right, operation, validation)?
             {
                 return Ok(result);
             }
@@ -3344,6 +3352,48 @@ fn boolean_contained_face_adjacent_difference(
 }
 
 #[cfg(feature = "exact-triangulation")]
+/// Materialize a boundary-contained closed-solid difference.
+///
+/// This is the nonconvex-capable sibling of the convex boundary-containment
+/// difference: the removed solid is certified inside the left container by
+/// exact winding replay and touches the container through same-oriented
+/// source-owned caps. The output replaces those container caps with exact
+/// holed remnants and appends the removed shell reversed, following Yap,
+/// "Towards Exact Geometric Computation," *Comput. Geom.* 7.1-2 (1997), by
+/// materializing only the retained exact cap object instead of inferring a
+/// cavity from approximate representatives.
+fn boolean_contained_boundary_difference_meshes(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    if operation != ExactBooleanOperation::Difference {
+        return Ok(None);
+    }
+    let Some(difference) = materialize_contained_boundary_difference(left, right, validation)
+    else {
+        return Ok(None);
+    };
+    difference
+        .validate_against_sources(left, right)
+        .map_err(contained_boundary_difference_error)?;
+    Ok(Some(certified_shortcut_result(
+        difference.mesh,
+        ExactBooleanShortcutKind::ContainedBoundaryDifference,
+    )))
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn contained_boundary_difference_error(error: ContainedBoundaryDifferenceError) -> MeshError {
+    MeshError::one(MeshDiagnostic::new(
+        Severity::Error,
+        DiagnosticKind::UnsupportedExactOperation,
+        format!("exact contained-boundary difference/source replay failed: {error:?}"),
+    ))
+}
+
+#[cfg(feature = "exact-triangulation")]
 /// Materialize the empty regularized intersection for certified adjacency.
 ///
 /// Regularized solid booleans drop lower-dimensional boundary contact from
@@ -4727,6 +4777,20 @@ fn certified_convex_single_cap_difference_support(
             if subtract_closed_convex_solids_single_cap(left, right).is_some() =>
         {
             Some(ExactBooleanSupport::CertifiedConvexSingleCapDifference)
+        }
+        _ => None,
+    }
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn certified_contained_boundary_difference_support(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+) -> Option<ExactBooleanSupport> {
+    match operation {
+        ExactBooleanOperation::Difference if has_contained_boundary_difference(left, right) => {
+            Some(ExactBooleanSupport::CertifiedContainedBoundaryDifference)
         }
         _ => None,
     }

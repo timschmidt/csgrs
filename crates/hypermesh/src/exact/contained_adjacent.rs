@@ -1,11 +1,13 @@
 //! Exact contained-face adjacency materialization for closed solids.
 //!
 //! Full-face adjacency can delete matching source faces directly. This module
-//! handles the next bounded coplanar-volumetric case: one closed solid has a
-//! triangular boundary face that strictly contains an opposite-oriented
-//! triangular boundary face of the other solid. The regularized union removes
-//! the contained face and replaces the containing face with an exact one-hole
-//! triangulation, welding the hole to the contained solid's side faces.
+//! handles the next bounded coplanar-volumetric cases: one closed solid has a
+//! source-owned boundary patch that strictly contains an opposite-oriented
+//! boundary cap of the other solid, or a contained solid touches its container
+//! through same-oriented source-owned boundary caps. The regularized union
+//! removes the contained cap and replaces the containing patch with an exact
+//! holed triangulation; the boundary-contained difference keeps the holed
+//! container cap and appends the removed shell reversed as an inward cavity.
 //!
 //! The shortcut is intentionally narrow. It replays exact boundary-only
 //! winding evidence, retained graph events, strict point-in-triangle facts, and
@@ -90,7 +92,7 @@ pub struct ContainedFaceAdjacentUnion {
 /// "FIST: Fast Industrial-Strength Triangulation of Polygons," *Algorithmica*
 /// 30 (2001), for the planar ring triangulation model.
 #[derive(Clone, Debug, PartialEq)]
-pub(crate) struct ContainedBoundaryDifference {
+pub struct ContainedBoundaryDifference {
     /// First container face replaced by a holed cap remnant.
     pub containing_face: usize,
     /// First removed-solid face deleted from the reversed cavity shell.
@@ -106,6 +108,17 @@ pub(crate) struct ContainedBoundaryDifference {
 /// Validation failure for a retained contained-face adjacency materialization.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ContainedFaceAdjacentUnionError {
+    /// The retained output mesh no longer validates as an exact mesh.
+    OutputMesh(ExactMeshValidationError),
+    /// The retained output mesh is locally valid but is not a closed manifold.
+    OutputNotClosed,
+    /// Recomputing the materialization from source meshes did not reproduce it.
+    SourceReplayMismatch,
+}
+
+/// Validation failure for a retained boundary-contained difference.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ContainedBoundaryDifferenceError {
     /// The retained output mesh no longer validates as an exact mesh.
     OutputMesh(ExactMeshValidationError),
     /// The retained output mesh is locally valid but is not a closed manifold.
@@ -152,6 +165,47 @@ impl ContainedFaceAdjacentUnion {
     }
 }
 
+impl ContainedBoundaryDifference {
+    /// Validate the retained cavity output without consulting source operands.
+    ///
+    /// The local check proves only that the retained mesh is still a coherent
+    /// closed exact object. [`Self::validate_against_sources`] replays the
+    /// source-owned caps and the reversed removed shell, keeping the artifact in
+    /// the predicate/object discipline described by Yap, "Towards Exact
+    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997).
+    pub fn validate(&self) -> Result<(), ContainedBoundaryDifferenceError> {
+        self.mesh
+            .validate_retained_state()
+            .map_err(ContainedBoundaryDifferenceError::OutputMesh)?;
+        if !self.mesh.facts().mesh.closed_manifold {
+            return Err(ContainedBoundaryDifferenceError::OutputNotClosed);
+        }
+        Ok(())
+    }
+
+    /// Validate this retained difference by replaying the exact source
+    /// certificate.
+    pub fn validate_against_sources(
+        &self,
+        container: &ExactMesh,
+        removed: &ExactMesh,
+    ) -> Result<(), ContainedBoundaryDifferenceError> {
+        self.validate()?;
+        let Some(replay) = materialize_contained_boundary_difference(
+            container,
+            removed,
+            self.mesh.validation_policy(),
+        ) else {
+            return Err(ContainedBoundaryDifferenceError::SourceReplayMismatch);
+        };
+        if self == &replay {
+            Ok(())
+        } else {
+            Err(ContainedBoundaryDifferenceError::SourceReplayMismatch)
+        }
+    }
+}
+
 /// Return whether the sources can be unioned by contained-face adjacency.
 pub fn has_contained_face_adjacent_union(left: &ExactMesh, right: &ExactMesh) -> bool {
     materialize_contained_face_adjacent_union(left, right, ValidationPolicy::CLOSED).is_some()
@@ -159,10 +213,7 @@ pub fn has_contained_face_adjacent_union(left: &ExactMesh, right: &ExactMesh) ->
 
 /// Return whether `container - removed` has a bounded exact boundary-cavity
 /// materialization.
-pub(crate) fn has_contained_boundary_difference(
-    container: &ExactMesh,
-    removed: &ExactMesh,
-) -> bool {
+pub fn has_contained_boundary_difference(container: &ExactMesh, removed: &ExactMesh) -> bool {
     materialize_contained_boundary_difference(container, removed, ValidationPolicy::CLOSED)
         .is_some()
 }
@@ -207,7 +258,7 @@ pub fn materialize_contained_face_adjacent_union(
 /// outward normals, while a removed solid inside the container has the same
 /// outward normal on the shared cap. The removed non-cap faces are therefore
 /// appended reversed to form the inward-facing cavity wall.
-pub(crate) fn materialize_contained_boundary_difference(
+pub fn materialize_contained_boundary_difference(
     container: &ExactMesh,
     removed: &ExactMesh,
     validation: ValidationPolicy,
@@ -234,10 +285,7 @@ pub(crate) fn materialize_contained_boundary_difference(
         containing_faces: certificate.containing_faces(),
         mesh,
     };
-    difference.mesh.validate_retained_state().ok()?;
-    if !difference.mesh.facts().mesh.closed_manifold {
-        return None;
-    }
+    difference.validate().ok()?;
     Some(difference)
 }
 
@@ -290,16 +338,21 @@ fn contained_face_adjacency_certificate(
     right: &ExactMesh,
     pairs: &[FacePairEvents],
 ) -> Option<ContainedFaceAdjacencyCertificate> {
-    let certificate = single_face_contained_adjacency_certificate(left, right, pairs)
-        .or_else(|| component_contained_adjacency_certificate(left, right, pairs))?;
-    if pairs
-        .iter()
-        .all(|pair| contained_adjacency_contact_pair(left, right, pair, &certificate))
+    for certificate in [
+        single_face_contained_adjacency_certificate(left, right, pairs),
+        component_contained_adjacency_certificate(left, right, pairs),
+    ]
+    .into_iter()
+    .flatten()
     {
-        Some(certificate)
-    } else {
-        None
+        if pairs
+            .iter()
+            .all(|pair| contained_adjacency_contact_pair(left, right, pair, &certificate))
+        {
+            return Some(certificate);
+        }
     }
+    None
 }
 
 fn contained_boundary_difference_certificate(
@@ -307,17 +360,20 @@ fn contained_boundary_difference_certificate(
     removed: &ExactMesh,
     pairs: &[FacePairEvents],
 ) -> Option<ContainedFaceAdjacencyCertificate> {
-    let certificate = single_face_contained_boundary_difference_certificate(
-        container, removed, pairs,
-    )
-    .or_else(|| component_contained_boundary_difference_certificate(container, removed, pairs))?;
-    if pairs.iter().all(|pair| {
-        contained_boundary_difference_contact_pair(container, removed, pair, &certificate)
-    }) {
-        Some(certificate)
-    } else {
-        None
+    for certificate in [
+        single_face_contained_boundary_difference_certificate(container, removed, pairs),
+        component_contained_boundary_difference_certificate(container, removed, pairs),
+    ]
+    .into_iter()
+    .flatten()
+    {
+        if pairs.iter().all(|pair| {
+            contained_boundary_difference_contact_pair(container, removed, pair, &certificate)
+        }) {
+            return Some(certificate);
+        }
     }
+    None
 }
 
 fn single_face_contained_adjacency_certificate(

@@ -11185,6 +11185,68 @@ fn exercise_non_rectilinear_coplanar_volumetric_materialization() {
         }
     );
     assert!(reverse_difference.mesh.triangles().is_empty());
+
+    let nonconvex_container =
+        upward_l_prism_i64([[0, 0], [8, 0], [8, 3], [3, 3], [3, 8], [0, 8]], 8);
+    let boundary_cutter = axis_aligned_box_i64([1, 3, 4], [2, 4, 8]);
+    let boundary_difference = hypermesh::exact::materialize_contained_boundary_difference(
+        &nonconvex_container,
+        &boundary_cutter,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("nonconvex boundary-contained difference should replay");
+    boundary_difference.validate().unwrap();
+    boundary_difference
+        .validate_against_sources(&nonconvex_container, &boundary_cutter)
+        .unwrap();
+    assert_eq!(boundary_difference.containing_faces.len(), 1);
+    assert_eq!(boundary_difference.contained_faces.len(), 2);
+    let preflight = preflight_boolean_exact(
+        &nonconvex_container,
+        &boundary_cutter,
+        ExactBooleanOperation::Difference,
+    )
+    .expect("nonconvex boundary-contained preflight should classify");
+    preflight.validate().unwrap();
+    preflight
+        .validate_against_sources(&nonconvex_container, &boundary_cutter)
+        .unwrap();
+    assert_eq!(
+        preflight.support,
+        ExactBooleanSupport::CertifiedContainedBoundaryDifference
+    );
+    let result = hypermesh::exact::boolean_exact(
+        &nonconvex_container,
+        &boundary_cutter,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("nonconvex boundary-contained difference should materialize");
+    result
+        .validate_operation_against_sources(
+            &nonconvex_container,
+            &boundary_cutter,
+            ExactBooleanOperation::Difference,
+            ValidationPolicy::CLOSED,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(result.mesh, boundary_difference.mesh);
+
+    let fan_container = top_subdivided_axis_aligned_box_i64([0, 0, 0], [8, 8, 8]);
+    let fan_removed = axis_aligned_box_i64([1, 1, 4], [7, 7, 8]);
+    let fan_difference = hypermesh::exact::materialize_contained_boundary_difference(
+        &fan_container,
+        &fan_removed,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("component certificate should handle a cap spanning multiple source faces");
+    fan_difference.validate().unwrap();
+    fan_difference
+        .validate_against_sources(&fan_container, &fan_removed)
+        .unwrap();
+    assert!(fan_difference.containing_faces.len() > 1);
+    assert_eq!(fan_difference.contained_faces.len(), 2);
 }
 
 #[cfg(feature = "exact-triangulation")]

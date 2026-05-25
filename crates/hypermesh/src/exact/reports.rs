@@ -752,6 +752,9 @@ pub enum ExactBooleanShortcutKind {
     /// Certified regularized union of closed solids sharing one strictly
     /// contained opposite-oriented triangular boundary face.
     ContainedFaceAdjacentUnion,
+    /// Certified difference of a closed container and a contained closed solid
+    /// sharing same-oriented source-owned boundary caps.
+    ContainedBoundaryDifference,
     /// Certified empty regularized intersection of closed solids whose only
     /// overlap is an exact contained-face boundary contact.
     ContainedFaceAdjacentIntersection,
@@ -1587,6 +1590,9 @@ pub enum ExactBooleanSupport {
     /// Union was materialized by replacing one containing boundary face with a
     /// holed remnant and deleting the strictly contained opposite face.
     CertifiedContainedFaceAdjacentUnion,
+    /// Difference was materialized by replacing container boundary caps with
+    /// holed remnants and appending the removed shell reversed as a cavity.
+    CertifiedContainedBoundaryDifference,
     /// Intersection was certified empty because adjacent closed solids only
     /// share exact contained-face boundary contact.
     CertifiedContainedFaceAdjacentIntersection,
@@ -1820,6 +1826,7 @@ impl ExactBooleanPreflight {
             | ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellDifference
             | ExactBooleanSupport::CertifiedFullFaceAdjacentUnion
             | ExactBooleanSupport::CertifiedContainedFaceAdjacentUnion
+            | ExactBooleanSupport::CertifiedContainedBoundaryDifference
             | ExactBooleanSupport::CertifiedContainedFaceAdjacentIntersection
             | ExactBooleanSupport::CertifiedContainedFaceAdjacentDifference
             | ExactBooleanSupport::CertifiedFullFaceAdjacentIntersection

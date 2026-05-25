@@ -351,6 +351,57 @@ fn l_prism_pair_i64() -> (ExactMesh, ExactMesh) {
 }
 
 #[cfg(feature = "exact-triangulation")]
+fn upward_l_prism_i64(points: [[i64; 2]; 6], top_z: i64) -> ExactMesh {
+    ExactMesh::from_i64_triangles(
+        &[
+            points[0][0],
+            points[0][1],
+            0,
+            points[1][0],
+            points[1][1],
+            0,
+            points[2][0],
+            points[2][1],
+            0,
+            points[3][0],
+            points[3][1],
+            0,
+            points[4][0],
+            points[4][1],
+            0,
+            points[5][0],
+            points[5][1],
+            0,
+            points[0][0],
+            points[0][1],
+            top_z,
+            points[1][0],
+            points[1][1],
+            top_z,
+            points[2][0],
+            points[2][1],
+            top_z,
+            points[3][0],
+            points[3][1],
+            top_z,
+            points[4][0],
+            points[4][1],
+            top_z,
+            points[5][0],
+            points[5][1],
+            top_z,
+        ],
+        &[
+            0, 3, 1, 1, 3, 2, 0, 5, 3, 3, 5, 4, //
+            6, 7, 8, 6, 8, 9, 6, 9, 11, 9, 10, 11, //
+            0, 1, 7, 0, 7, 6, 1, 2, 8, 1, 8, 7, 2, 3, 9, 2, 9, 8, //
+            3, 4, 10, 3, 10, 9, 4, 5, 11, 4, 11, 10, 5, 0, 6, 5, 6, 11,
+        ],
+    )
+    .unwrap()
+}
+
+#[cfg(feature = "exact-triangulation")]
 fn upward_pentagonal_pyramid_i64(
     a: [i64; 3],
     b: [i64; 3],
@@ -9866,6 +9917,9 @@ fn exact_boolean_volumetric_winding_materialization(c: &mut Criterion) {
             tetrahedron_i64([0, 0, 0], [8, 0, 0], [0, 8, 0], [0, 0, 8]);
         let boundary_contained_convex_inner =
             tetrahedron_i64([1, 1, 0], [3, 1, 0], [1, 3, 0], [1, 1, 2]);
+        let boundary_contained_nonconvex_outer =
+            upward_l_prism_i64([[0, 0], [8, 0], [8, 3], [3, 3], [3, 8], [0, 8]], 8);
+        let boundary_contained_nonconvex_inner = axis_aligned_box_i64([1, 3, 4], [2, 4, 8]);
 
         let slab_right = ExactMesh::from_i64_triangles(
             &[
@@ -10397,6 +10451,55 @@ fn exact_boolean_volumetric_winding_materialization(c: &mut Criterion) {
                             hypermesh::exact::ExactBooleanOperation::Difference,
                             ValidationPolicy::CLOSED,
                         )
+                        .unwrap(),
+                    )
+                })
+            },
+        );
+
+        c.bench_function(
+            "exact_boolean_nonconvex_boundary_containment_difference",
+            |b| {
+                b.iter(|| {
+                    (
+                        hypermesh::exact::materialize_contained_boundary_difference(
+                            &boundary_contained_nonconvex_outer,
+                            &boundary_contained_nonconvex_inner,
+                            ValidationPolicy::CLOSED,
+                        )
+                        .map(|difference| {
+                            difference
+                                .validate_against_sources(
+                                    &boundary_contained_nonconvex_outer,
+                                    &boundary_contained_nonconvex_inner,
+                                )
+                                .unwrap();
+                            difference.mesh.triangles().len()
+                        }),
+                        hypermesh::exact::preflight_boolean_exact(
+                            &boundary_contained_nonconvex_outer,
+                            &boundary_contained_nonconvex_inner,
+                            hypermesh::exact::ExactBooleanOperation::Difference,
+                        )
+                        .unwrap(),
+                        hypermesh::exact::boolean_exact(
+                            &boundary_contained_nonconvex_outer,
+                            &boundary_contained_nonconvex_inner,
+                            hypermesh::exact::ExactBooleanOperation::Difference,
+                            ValidationPolicy::CLOSED,
+                        )
+                        .map(|result| {
+                            result
+                                .validate_operation_against_sources(
+                                    &boundary_contained_nonconvex_outer,
+                                    &boundary_contained_nonconvex_inner,
+                                    hypermesh::exact::ExactBooleanOperation::Difference,
+                                    ValidationPolicy::CLOSED,
+                                    hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+                                )
+                                .unwrap();
+                            result.mesh.triangles().len()
+                        })
                         .unwrap(),
                     )
                 })

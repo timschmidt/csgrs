@@ -956,7 +956,6 @@ fn combine_exact_meshes(meshes: &[ExactMesh], label: &'static str) -> ExactMesh 
     .unwrap()
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn base_fan_tetrahedron_i64(
     a: [i64; 3],
     b: [i64; 3],
@@ -10764,6 +10763,115 @@ fn exact_convex_boundary_containment_consumes_coplanar_volumetric_union_intersec
         }
     );
     assert!(reverse_difference.mesh.triangles().is_empty());
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[test]
+fn exact_nonconvex_boundary_containment_difference_materializes_cavity() {
+    let container = upward_l_prism_i64([[0, 0], [8, 0], [8, 3], [3, 3], [3, 8], [0, 8]], 8);
+    let removed = axis_aligned_box_i64([1, 3, 4], [2, 4, 8]);
+
+    let direct = hypermesh::exact::materialize_contained_boundary_difference(
+        &container,
+        &removed,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("nonconvex container with a source-owned boundary cavity should materialize");
+    direct.validate().unwrap();
+    direct
+        .validate_against_sources(&container, &removed)
+        .unwrap();
+    assert_eq!(direct.containing_faces.len(), 1);
+    assert_eq!(direct.contained_faces.len(), 2);
+
+    let preflight = hypermesh::exact::preflight_boolean_exact(
+        &container,
+        &removed,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    preflight.validate().unwrap();
+    preflight
+        .validate_against_sources(&container, &removed)
+        .unwrap();
+    assert_eq!(
+        preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedContainedBoundaryDifference
+    );
+    assert!(preflight.coplanar_volumetric_evidence.is_none());
+
+    let result = hypermesh::exact::boolean_exact(
+        &container,
+        &removed,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap();
+    result.validate().unwrap();
+    result
+        .validate_operation_against_sources(
+            &container,
+            &removed,
+            hypermesh::exact::ExactBooleanOperation::Difference,
+            ValidationPolicy::CLOSED,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ContainedBoundaryDifference
+        }
+    );
+    assert_eq!(result.mesh, direct.mesh);
+    assert!(result.mesh.facts().mesh.closed_manifold);
+    assert!(result.mesh.triangles().len() > container.triangles().len());
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[test]
+fn exact_boundary_containment_component_certificate_handles_multi_face_cap() {
+    let container = top_subdivided_axis_aligned_box_i64([0, 0, 0], [8, 8, 8]);
+    let removed = axis_aligned_box_i64([1, 1, 4], [7, 7, 8]);
+
+    let direct = hypermesh::exact::materialize_contained_boundary_difference(
+        &container,
+        &removed,
+        ValidationPolicy::CLOSED,
+    )
+    .expect(
+        "component cap certificate should handle one contained cap spanning multiple source faces",
+    );
+    direct.validate().unwrap();
+    direct
+        .validate_against_sources(&container, &removed)
+        .unwrap();
+    assert!(direct.containing_faces.len() > 1);
+    assert_eq!(direct.contained_faces.len(), 2);
+
+    let result = hypermesh::exact::boolean_exact(
+        &container,
+        &removed,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap();
+    result
+        .validate_operation_against_sources(
+            &container,
+            &removed,
+            hypermesh::exact::ExactBooleanOperation::Difference,
+            ValidationPolicy::CLOSED,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ConvexContainment
+        }
+    );
+    assert_eq!(result.mesh, direct.mesh);
 }
 
 #[cfg(feature = "exact-triangulation")]

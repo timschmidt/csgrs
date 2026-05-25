@@ -125,7 +125,9 @@ pub use construction::{
 };
 #[cfg(feature = "exact-triangulation")]
 pub use contained_adjacent::{
-    ContainedFaceAdjacentUnion, ContainedFaceAdjacentUnionError, has_contained_face_adjacent_union,
+    ContainedBoundaryDifference, ContainedBoundaryDifferenceError, ContainedFaceAdjacentUnion,
+    ContainedFaceAdjacentUnionError, has_contained_boundary_difference,
+    has_contained_face_adjacent_union, materialize_contained_boundary_difference,
     materialize_contained_face_adjacent_union,
 };
 pub use convex::{
