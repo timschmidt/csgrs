@@ -133,14 +133,16 @@ pub use provenance::{
     ConstructionStamp, PathProvenance, PathSourceFormat, SourceGrid, SourceLengthUnit,
 };
 pub use routing::{
-    ConstantFeedTimeReport, DifferentialPairSkewReport, LengthMatchProblem,
-    MeanderCandidatePlacementReport, MeanderError, MeanderObstacle, MeanderPlacementCandidate,
-    MeanderPlacementReport, MeanderPlacementSlot, MultiDetourMeander, NonUniformDetourMeander,
-    ObstacleAwareDetourMeander, RouteCertificationError, SingleDetourMeander,
-    build_alternating_detour_meander, build_length_match_problem, build_multi_detour_meander,
-    build_nonuniform_detour_meander, build_obstacle_aware_detour_meander,
-    build_single_detour_meander, certify_constant_feed_time, certify_differential_pair_skew,
-    certify_length_extension, classify_meander_candidate_slots, classify_meander_placement_slots,
+    AccelerationLimitedFeedProfileClass, AccelerationLimitedFeedTimeReport, ConstantFeedTimeReport,
+    DifferentialPairSkewReport, LengthMatchProblem, MeanderCandidatePlacementReport, MeanderError,
+    MeanderObstacle, MeanderPlacementCandidate, MeanderPlacementReport, MeanderPlacementSlot,
+    MultiDetourMeander, NonUniformDetourMeander, ObstacleAwareDetourMeander,
+    RouteCertificationError, SingleDetourMeander, build_alternating_detour_meander,
+    build_length_match_problem, build_multi_detour_meander, build_nonuniform_detour_meander,
+    build_obstacle_aware_detour_meander, build_single_detour_meander,
+    certify_acceleration_limited_feed_time, certify_constant_feed_time,
+    certify_differential_pair_skew, certify_length_extension, classify_meander_candidate_slots,
+    classify_meander_placement_slots,
 };
 pub use segment::{Axis, LinePathSegment, LinePathSegmentFacts, SegmentParameterOrder};
 pub use solve::{

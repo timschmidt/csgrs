@@ -82,3 +82,10 @@ path = "fuzz_targets/bezier_arrangement.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "routing_feed"
+path = "fuzz_targets/routing_feed.rs"
+test = false
+doc = false
+bench = false

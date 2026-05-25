@@ -1,14 +1,14 @@
 use hyperlimit::{Point2, PredicatePolicy};
 use hyperpath::{
-    ArcDirection, ArcOffsetError, Axis, BeadFillAxis, BeadPlanError, BezierOffsetError,
-    BezierParameter, BezierParameterError, BoardContourError, BoardContourOrientation,
-    CardinalPoint, CardinalRotation, CircularArc, CircularArcError, ClearanceStatus,
-    ConstructionStamp, CubicBezier, DrillBoardClearanceReport, ExplicitArcArrangementClass,
-    ExplicitArcIntersectionClass, ExplicitArcOverlapClass, ExplicitArcPointClassification,
-    ExplicitArcSweepClass, ExplicitArcTangentClass, ExplicitCircleRelationClass,
-    ExplicitCircularArc, HigherOrderBezier, HigherOrderBezierError, InfillGraphError,
-    LineArcArrangementEventClass, LineArrangementError, LineArrangementEventClass,
-    LineExplicitArcIntersectionClass, LineOffsetError, LinePathSegment,
+    AccelerationLimitedFeedProfileClass, ArcDirection, ArcOffsetError, Axis, BeadFillAxis,
+    BeadPlanError, BezierOffsetError, BezierParameter, BezierParameterError, BoardContourError,
+    BoardContourOrientation, CardinalPoint, CardinalRotation, CircularArc, CircularArcError,
+    ClearanceStatus, ConstructionStamp, CubicBezier, DrillBoardClearanceReport,
+    ExplicitArcArrangementClass, ExplicitArcIntersectionClass, ExplicitArcOverlapClass,
+    ExplicitArcPointClassification, ExplicitArcSweepClass, ExplicitArcTangentClass,
+    ExplicitCircleRelationClass, ExplicitCircularArc, HigherOrderBezier, HigherOrderBezierError,
+    InfillGraphError, LineArcArrangementEventClass, LineArrangementError,
+    LineArrangementEventClass, LineExplicitArcIntersectionClass, LineOffsetError, LinePathSegment,
     LineQuadraticBezierIntersectionClass, LineRationalQuadraticBezierIntersectionClass,
     MeanderError, MeanderObstacle, MeanderPlacementCandidate, NetId, OffsetSide, PathProvenance,
     PathSourceFormat, PcbBoardOutline, PcbCardinalRectPad, PcbCircularBoardOutline, PcbCircularPad,
@@ -29,7 +29,8 @@ use hyperpath::{
     build_obstacle_aware_detour_meander, build_oriented_tangent_alignment_problem,
     build_rectangular_bead_plan, build_rectangular_pocket_plan,
     build_rectangular_serpentine_infill_graph, build_rectangular_support_plan,
-    build_single_detour_meander, build_tangent_alignment_problem, certify_constant_feed_time,
+    build_single_detour_meander, build_tangent_alignment_problem,
+    certify_acceleration_limited_feed_time, certify_constant_feed_time,
     certify_differential_pair_skew, certify_g1_chain, certify_g1_join_candidate,
     certify_length_extension, certify_tangent_alignment_candidate,
     check_cardinal_rect_pad_board_clearance, check_circular_pad_board_clearance,
@@ -3680,6 +3681,137 @@ fn constant_feed_time_rejects_invalid_inputs() {
 }
 
 #[test]
+fn acceleration_limited_feed_time_replays_triangular_and_trapezoidal_profiles() {
+    let triangular_route = vec![LinePathSegment::new(p(0, 0), p(9, 0))];
+    let triangular = certify_acceleration_limited_feed_time(
+        &triangular_route,
+        r(10),
+        r(4),
+        r(3),
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert_eq!(triangular.path_length, r(9));
+    assert_eq!(triangular.max_feed_rate, r(10));
+    assert_eq!(triangular.acceleration, r(4));
+    assert_eq!(triangular.target_time, r(3));
+    assert_eq!(
+        triangular.profile,
+        AccelerationLimitedFeedProfileClass::Triangular
+    );
+    assert!(triangular.certification.all_satisfied());
+
+    let trapezoid_route = vec![
+        LinePathSegment::new(p(0, 0), p(75, 0)),
+        LinePathSegment::new(p(75, 0), p(75, 25)),
+    ];
+    let trapezoid = certify_acceleration_limited_feed_time(
+        &trapezoid_route,
+        r(10),
+        r(5),
+        r(12),
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert_eq!(trapezoid.path_length, r(100));
+    assert_eq!(
+        trapezoid.profile,
+        AccelerationLimitedFeedProfileClass::Trapezoidal
+    );
+    assert!(trapezoid.certification.all_satisfied());
+
+    let wrong = certify_acceleration_limited_feed_time(
+        &trapezoid_route,
+        r(10),
+        r(5),
+        r(11),
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert!(wrong.certification.has_certified_violation());
+}
+
+#[test]
+fn acceleration_limited_feed_time_handles_boundary_and_rejects_invalid_inputs() {
+    let route = vec![LinePathSegment::new(p(0, 0), p(25, 0))];
+    let boundary = certify_acceleration_limited_feed_time(
+        &route,
+        r(10),
+        r(4),
+        r(5),
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert_eq!(
+        boundary.profile,
+        AccelerationLimitedFeedProfileClass::Boundary
+    );
+    assert!(boundary.certification.all_satisfied());
+
+    let diagonal = vec![LinePathSegment::new(p(0, 0), p(3, 4))];
+    assert_eq!(
+        certify_acceleration_limited_feed_time(&[], r(1), r(1), r(1), PredicatePolicy::default())
+            .unwrap_err(),
+        RouteCertificationError::EmptyRoute
+    );
+    assert_eq!(
+        certify_acceleration_limited_feed_time(
+            &route,
+            r(-1),
+            r(1),
+            r(1),
+            PredicatePolicy::default()
+        )
+        .unwrap_err(),
+        RouteCertificationError::NegativeFeedRate
+    );
+    assert_eq!(
+        certify_acceleration_limited_feed_time(
+            &route,
+            r(1),
+            Real::zero(),
+            r(1),
+            PredicatePolicy::default()
+        )
+        .unwrap_err(),
+        RouteCertificationError::ZeroAcceleration
+    );
+    assert_eq!(
+        certify_acceleration_limited_feed_time(
+            &route,
+            r(1),
+            r(-1),
+            r(1),
+            PredicatePolicy::default()
+        )
+        .unwrap_err(),
+        RouteCertificationError::NegativeAcceleration
+    );
+    assert_eq!(
+        certify_acceleration_limited_feed_time(
+            &route,
+            r(1),
+            r(1),
+            r(-1),
+            PredicatePolicy::default()
+        )
+        .unwrap_err(),
+        RouteCertificationError::NegativeTime
+    );
+    assert_eq!(
+        certify_acceleration_limited_feed_time(
+            &diagonal,
+            r(1),
+            r(1),
+            r(1),
+            PredicatePolicy::default()
+        )
+        .unwrap_err(),
+        RouteCertificationError::UnsupportedRouteGeometry
+    );
+}
+
+#[test]
 fn single_detour_meander_adds_exact_length_and_certifies_target() {
     let source = LinePathSegment::new(p(0, 0), p(10, 0));
     let meander =
@@ -5399,6 +5531,52 @@ proptest! {
         ).unwrap();
 
         prop_assert_eq!(report.path_length, r(path_length));
+        prop_assert!(report.certification.all_satisfied());
+    }
+
+    #[test]
+    fn acceleration_limited_feed_time_generated_triangular_profiles_certify(
+        accel_scale in 1_i16..=8,
+        time in 1_i16..=20,
+    ) {
+        let acceleration = 4 * i64::from(accel_scale);
+        let time = i64::from(time);
+        let path_length = i64::from(accel_scale) * time * time;
+        let max_feed = acceleration * time;
+        let route = vec![LinePathSegment::new(p(0, 0), p(path_length, 0))];
+        let report = certify_acceleration_limited_feed_time(
+            &route,
+            r(max_feed),
+            r(acceleration),
+            r(time),
+            PredicatePolicy::default(),
+        ).unwrap();
+
+        prop_assert_eq!(report.path_length, r(path_length));
+        prop_assert_eq!(report.profile, AccelerationLimitedFeedProfileClass::Triangular);
+        prop_assert!(report.certification.all_satisfied());
+    }
+
+    #[test]
+    fn acceleration_limited_feed_time_generated_trapezoidal_profiles_certify(
+        max_feed in 1_i16..=20,
+        cruise_time in 1_i16..=20,
+    ) {
+        let max_feed = i64::from(max_feed);
+        let cruise_time = i64::from(cruise_time);
+        let path_length = max_feed * max_feed + max_feed * cruise_time;
+        let target_time = 2 * max_feed + cruise_time;
+        let route = vec![LinePathSegment::new(p(0, 0), p(path_length, 0))];
+        let report = certify_acceleration_limited_feed_time(
+            &route,
+            r(max_feed),
+            r(1),
+            r(target_time),
+            PredicatePolicy::default(),
+        ).unwrap();
+
+        prop_assert_eq!(report.path_length, r(path_length));
+        prop_assert_eq!(report.profile, AccelerationLimitedFeedProfileClass::Trapezoidal);
         prop_assert!(report.certification.all_satisfied());
     }
 

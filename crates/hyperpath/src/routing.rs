@@ -10,10 +10,12 @@
 //! background, see Yan, Ma, and Wong, "Advances in PCB Routing," *Journal of
 //! Information Processing* 2014.
 
+use std::cmp::Ordering;
+
 use hyperlimit::{Point2, PredicatePolicy, compare_reals_with_policy};
 use hyperreal::Real;
 use hypersolve::{
-    CandidateCertificationReport, Constraint, Expr, PreparedProblem, Problem, SymbolId,
+    CandidateCertificationReport, Constraint, Expr, PreparedProblem, Problem, SymbolId, VariableId,
     certify_candidate, context_from_problem,
 };
 
@@ -251,6 +253,48 @@ pub struct ConstantFeedTimeReport {
     pub certification: CandidateCertificationReport,
 }
 
+/// Exact acceleration-limited feed profile class.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum AccelerationLimitedFeedProfileClass {
+    /// The move is too short to reach the requested maximum feed rate.
+    Triangular,
+    /// The move reaches maximum feed rate for a positive-length cruise span.
+    Trapezoidal,
+    /// The move reaches maximum feed rate exactly at the accel/decel switch.
+    Boundary,
+    /// Exact comparison could not choose a retained profile equation.
+    Unknown,
+}
+
+/// Exact acceleration-limited traversal time certification report.
+///
+/// This report models a symmetric rest-to-rest speed profile over retained
+/// axis-aligned path geometry. It classifies the profile by the exact
+/// comparison `acceleration * path_length` against `max_feed^2`; then it
+/// replays a denominator-free residual through `hypersolve`. For a triangular
+/// profile the residual is `a*t^2 - 4L = 0`; for a trapezoidal profile it is
+/// `a*v*t - a*L - v^2 = 0`. Keeping the profile equation explicit follows
+/// Yap, "Towards Exact Geometric Computation," by separating proposed process
+/// parameters from certified path facts. The rest-to-rest speed model is the
+/// CAM/feed-rate counterpart of the hodograph-first view in Farouki,
+/// *Pythagorean Hodograph Curves* (2008): speed laws are certified algebraic
+/// objects, not sampled controller traces.
+#[derive(Clone, Debug)]
+pub struct AccelerationLimitedFeedTimeReport {
+    /// Exact retained route length.
+    pub path_length: Real,
+    /// Exact maximum feed rate.
+    pub max_feed_rate: Real,
+    /// Exact positive acceleration limit.
+    pub acceleration: Real,
+    /// Exact candidate traversal time.
+    pub target_time: Real,
+    /// Certified profile class used to build the replay residual.
+    pub profile: AccelerationLimitedFeedProfileClass,
+    /// Exact solver replay report for the selected feed profile equation.
+    pub certification: CandidateCertificationReport,
+}
+
 impl SingleDetourMeander {
     /// Return the exact total axis-aligned path length.
     pub fn exact_axis_length(&self, policy: PredicatePolicy) -> Result<Real, MeanderError> {
@@ -359,8 +403,14 @@ pub enum RouteCertificationError {
     NegativeFeedRate,
     /// Feed rate was structurally zero.
     ZeroFeedRate,
+    /// Acceleration limit was structurally negative.
+    NegativeAcceleration,
+    /// Acceleration limit was structurally zero.
+    ZeroAcceleration,
     /// Candidate traversal time was structurally negative.
     NegativeTime,
+    /// Exact comparison could not choose the acceleration-limited profile.
+    UnknownFeedProfile,
 }
 
 /// Build a one-bump rectangular meander from an exact extra length.
@@ -718,6 +768,72 @@ pub fn certify_constant_feed_time(
         path_length,
         feed_rate,
         target_time,
+        certification: certify_candidate(&prepared, &context),
+    })
+}
+
+/// Certify a symmetric acceleration-limited feed traversal time.
+///
+/// The retained route is measured as exact axis-aligned length. The profile
+/// starts and ends at rest and uses a single exact acceleration limit in both
+/// directions. If `acceleration * path_length < max_feed_rate^2`, the move is
+/// triangular and never cruises. If the comparison is greater, the move has a
+/// trapezoidal cruise plateau. Equality is retained as an explicit boundary
+/// class. This is process-parameter replay only: controller blending,
+/// lookahead, jerk limits, cutter engagement, and material constraints remain
+/// separate exact reports before any CAM output is accepted.
+pub fn certify_acceleration_limited_feed_time(
+    route: &[LinePathSegment],
+    max_feed_rate: Real,
+    acceleration: Real,
+    target_time: Real,
+    policy: PredicatePolicy,
+) -> Result<AccelerationLimitedFeedTimeReport, RouteCertificationError> {
+    if route.is_empty() {
+        return Err(RouteCertificationError::EmptyRoute);
+    }
+    match max_feed_rate.structural_facts().sign {
+        Some(hyperreal::RealSign::Negative) => {
+            return Err(RouteCertificationError::NegativeFeedRate);
+        }
+        Some(hyperreal::RealSign::Zero) => return Err(RouteCertificationError::ZeroFeedRate),
+        _ => {}
+    }
+    match acceleration.structural_facts().sign {
+        Some(hyperreal::RealSign::Negative) => {
+            return Err(RouteCertificationError::NegativeAcceleration);
+        }
+        Some(hyperreal::RealSign::Zero) => {
+            return Err(RouteCertificationError::ZeroAcceleration);
+        }
+        _ => {}
+    }
+    if target_time.structural_facts().sign == Some(hyperreal::RealSign::Negative) {
+        return Err(RouteCertificationError::NegativeTime);
+    }
+    let path_length = route_axis_length(route, policy)
+        .ok_or(RouteCertificationError::UnsupportedRouteGeometry)?;
+    let profile =
+        classify_acceleration_limited_profile(&path_length, &max_feed_rate, &acceleration, policy)
+            .ok_or(RouteCertificationError::UnknownFeedProfile)?;
+    let mut problem = Problem::default();
+    let time = problem.add_variable("time", target_time.clone());
+    problem.add_constraint(acceleration_limited_feed_time_equation(
+        "acceleration limited feed time",
+        path_length.clone(),
+        max_feed_rate.clone(),
+        acceleration.clone(),
+        time,
+        profile,
+    ));
+    let prepared = PreparedProblem::new(&problem);
+    let context = context_from_problem(&problem);
+    Ok(AccelerationLimitedFeedTimeReport {
+        path_length,
+        max_feed_rate,
+        acceleration,
+        target_time,
+        profile,
         certification: certify_candidate(&prepared, &context),
     })
 }
@@ -1103,6 +1219,49 @@ fn route_axis_length(segments: &[LinePathSegment], policy: PredicatePolicy) -> O
         .try_fold(Real::zero(), |sum, length| {
             length.map(|length| sum + length)
         })
+}
+
+fn classify_acceleration_limited_profile(
+    path_length: &Real,
+    max_feed_rate: &Real,
+    acceleration: &Real,
+    policy: PredicatePolicy,
+) -> Option<AccelerationLimitedFeedProfileClass> {
+    let accel_distance_product = acceleration.clone() * path_length.clone();
+    let feed_squared = max_feed_rate.clone() * max_feed_rate.clone();
+    match compare_reals_with_policy(&accel_distance_product, &feed_squared, policy).value()? {
+        Ordering::Less => Some(AccelerationLimitedFeedProfileClass::Triangular),
+        Ordering::Equal => Some(AccelerationLimitedFeedProfileClass::Boundary),
+        Ordering::Greater => Some(AccelerationLimitedFeedProfileClass::Trapezoidal),
+    }
+}
+
+fn acceleration_limited_feed_time_equation(
+    name: impl Into<String>,
+    path_length: Real,
+    max_feed_rate: Real,
+    acceleration: Real,
+    time: VariableId,
+    profile: AccelerationLimitedFeedProfileClass,
+) -> Constraint {
+    let time_expr = Expr::symbol(time.into(), "time");
+    match profile {
+        AccelerationLimitedFeedProfileClass::Triangular => Constraint::equality(
+            name,
+            Expr::real(acceleration) * time_expr.clone() * time_expr
+                - Expr::real(Real::from(4) * path_length),
+        ),
+        AccelerationLimitedFeedProfileClass::Boundary
+        | AccelerationLimitedFeedProfileClass::Trapezoidal => Constraint::equality(
+            name,
+            Expr::real(acceleration.clone()) * Expr::real(max_feed_rate.clone()) * time_expr
+                - Expr::real(acceleration * path_length)
+                - Expr::real(max_feed_rate.clone() * max_feed_rate),
+        ),
+        AccelerationLimitedFeedProfileClass::Unknown => {
+            Constraint::equality(name, Expr::real(Real::zero()))
+        }
+    }
 }
 
 fn meander_split_point(

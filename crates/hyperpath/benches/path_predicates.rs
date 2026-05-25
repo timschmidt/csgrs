@@ -18,7 +18,8 @@ use hyperpath::{
     build_obstacle_aware_detour_meander, build_oriented_tangent_alignment_problem,
     build_rectangular_bead_plan, build_rectangular_pocket_plan,
     build_rectangular_serpentine_infill_graph, build_rectangular_support_plan,
-    build_single_detour_meander, build_tangent_alignment_problem, certify_constant_feed_time,
+    build_single_detour_meander, build_tangent_alignment_problem,
+    certify_acceleration_limited_feed_time, certify_constant_feed_time,
     certify_differential_pair_skew, certify_g1_chain, certify_g1_join_candidate,
     certify_length_extension, certify_tangent_alignment_candidate,
     check_cardinal_rect_pad_board_clearance, check_circular_pad_board_clearance,
@@ -757,6 +758,30 @@ fn path_predicates(c: &mut Criterion) {
     ];
     c.bench_function("constant_feed_time_certification", |b| {
         b.iter(|| certify_constant_feed_time(&feed_route, r(250), r(3), PredicatePolicy::default()))
+    });
+    let acceleration_triangular_route = vec![LinePathSegment::new(p(0, 0), p(9, 0))];
+    c.bench_function("acceleration_limited_feed_time_triangular", |b| {
+        b.iter(|| {
+            certify_acceleration_limited_feed_time(
+                &acceleration_triangular_route,
+                r(10),
+                r(4),
+                r(3),
+                PredicatePolicy::default(),
+            )
+        })
+    });
+    let acceleration_feed_route = vec![LinePathSegment::new(p(0, 0), p(1500, 0))];
+    c.bench_function("acceleration_limited_feed_time_trapezoidal", |b| {
+        b.iter(|| {
+            certify_acceleration_limited_feed_time(
+                &acceleration_feed_route,
+                r(100),
+                r(10),
+                r(25),
+                PredicatePolicy::default(),
+            )
+        })
     });
     c.bench_function("single_detour_meander_exact_build", |b| {
         b.iter(|| {
