@@ -16684,6 +16684,116 @@ fn exact_coplanar_convex_surface_difference_materializes_multiple_component_cuts
         point_branch_difference.mesh.triangles()
     );
 
+    let nonconvex_point_branch_left = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            0, 0, 0, 20, 0, 0, 20, 20, 0, 12, 20, 0, 12, 12, 0, 8, 12, 0, 8, 20, 0, 0, 20, 0, 20,
+            12, 0, 0, 12, 0,
+        ],
+        &[
+            0, 1, 8, 0, 8, 4, 0, 4, 5, 0, 5, 9, //
+            9, 5, 6, 9, 6, 7, //
+            4, 8, 2, 4, 2, 3,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let nonconvex_point_branch_right = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            -2, 4, 0, 8, 4, 0, 10, 10, 0, -2, 10, 0, //
+            10, 10, 0, 22, 10, 0, 22, 16, 0, 14, 16, 0,
+        ],
+        &[0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_side_cutter_difference(
+            &nonconvex_point_branch_left,
+            &nonconvex_point_branch_right,
+        )
+        .is_none()
+    );
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_multi_difference(
+            &nonconvex_point_branch_left,
+            &nonconvex_point_branch_right,
+        )
+        .is_none()
+    );
+    let nonconvex_point_branch = hypermesh::exact::arrange_coplanar_surface_point_touch_difference(
+        &nonconvex_point_branch_left,
+        &nonconvex_point_branch_right,
+    )
+    .expect("nonconvex source point-touch side cutters should retain branch loops");
+    nonconvex_point_branch.validate().unwrap();
+    nonconvex_point_branch
+        .validate_difference_against_sources(
+            &nonconvex_point_branch_left,
+            &nonconvex_point_branch_right,
+        )
+        .unwrap();
+    assert!(nonconvex_point_branch.polygons.len() >= 2);
+    let nonconvex_branch_loop_count = nonconvex_point_branch
+        .polygons
+        .iter()
+        .filter(|polygon| {
+            polygon.iter().any(|point| {
+                real_eq(&point.x, &ExactReal::from(10)) && real_eq(&point.y, &ExactReal::from(10))
+            })
+        })
+        .count();
+    assert!(
+        nonconvex_branch_loop_count >= 2,
+        "nonconvex point branch must remain duplicated across retained loops"
+    );
+    let mut stale_nonconvex_point_branch = nonconvex_point_branch.clone();
+    stale_nonconvex_point_branch.polygons.pop();
+    assert!(
+        stale_nonconvex_point_branch
+            .validate_difference_against_sources(
+                &nonconvex_point_branch_left,
+                &nonconvex_point_branch_right,
+            )
+            .is_err()
+    );
+    let nonconvex_point_branch_preflight = hypermesh::exact::preflight_boolean_exact(
+        &nonconvex_point_branch_left,
+        &nonconvex_point_branch_right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    nonconvex_point_branch_preflight.validate().unwrap();
+    nonconvex_point_branch_preflight
+        .validate_against_sources(&nonconvex_point_branch_left, &nonconvex_point_branch_right)
+        .unwrap();
+    assert_eq!(
+        nonconvex_point_branch_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchDifference
+    );
+    let nonconvex_point_branch_result = hypermesh::exact::boolean_exact(
+        &nonconvex_point_branch_left,
+        &nonconvex_point_branch_right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    nonconvex_point_branch_result
+        .validate_operation_against_sources(
+            &nonconvex_point_branch_left,
+            &nonconvex_point_branch_right,
+            hypermesh::exact::ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        nonconvex_point_branch_result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut:
+                hypermesh::exact::ExactBooleanShortcutKind::CoplanarSurfacePointTouchDifference
+        }
+    );
+
     let preflight = hypermesh::exact::preflight_boolean_exact(
         &left,
         &right,

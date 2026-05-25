@@ -6940,6 +6940,168 @@ fn materialize_simple_source_side_cutter_difference_core(
     Some((removed, polygons))
 }
 
+/// Replay a nonconvex source side-cutter split with exact point branches.
+///
+/// This is deliberately separate from
+/// [`materialize_simple_source_side_cutter_difference_core`]. The ordinary
+/// simple-source path requires retained loops and removed openings to be
+/// pairwise disjoint. A point-branch difference is a different certified
+/// object: removed openings may touch only at exact vertices, and the retained
+/// loops may duplicate those branch coordinates across components. Positive
+/// removed contacts are still merged into simple openings first, while
+/// point-only contacts are kept as branch facts rather than graph edges.
+///
+/// Retained fragments follow Weiler and Atherton, "Hidden Surface Removal
+/// Using Polygon Area Sorting," *SIGGRAPH Computer Graphics* 11.2 (1977).
+/// Segment/contact decisions are exact orientation-predicate decisions in the
+/// sense of Guigue and Devillers, "Fast and Robust Triangle-Triangle Overlap
+/// Test Using Orientation Predicates," *Journal of Graphics Tools* 8.1
+/// (2003). The final promotion gate is Yap's exact-object rule from "Towards
+/// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997): the
+/// source area must equal retained plus removed area exactly.
+#[cfg(feature = "exact-triangulation")]
+fn materialize_simple_source_side_cutter_point_touch_difference_core(
+    component: &SimpleSurfaceComponent,
+    removed: &[Vec<Point3>],
+    label: &'static str,
+) -> Option<(Vec<Vec<Point3>>, Vec<Vec<Point3>>)> {
+    if removed.len() < 2 {
+        return None;
+    }
+    let projection = component.projection;
+    let mut removed = removed.to_vec();
+    for polygon in &mut removed {
+        orient_polygon_ccw(polygon, projection)?;
+        validate_projected_simple_loop(polygon, projection, label).ok()?;
+        if !polygon_lies_in_closed_simple_polygon(polygon, &component.boundary, projection)? {
+            return None;
+        }
+        if simple_boundary_attachment_count(&component.boundary, polygon, projection)? == 0 {
+            return None;
+        }
+    }
+
+    let (mut removed, saw_point_contact) =
+        merge_connected_simple_removed_openings_allowing_branches(
+            &removed,
+            projection,
+            "coplanar nonconvex source point-touch removed-opening union",
+        )?;
+    if !saw_point_contact || removed.len() < 2 {
+        return None;
+    }
+    for polygon in &mut removed {
+        orient_polygon_ccw(polygon, projection)?;
+        *polygon = simplify_projected_polygon(polygon.clone(), projection);
+        validate_projected_simple_loop(polygon, projection, label).ok()?;
+        if !polygon_lies_in_closed_simple_polygon(polygon, &component.boundary, projection)? {
+            return None;
+        }
+        if simple_boundary_attachment_count(&component.boundary, polygon, projection)? == 0 {
+            return None;
+        }
+    }
+    validate_simple_component_loops_disjoint_allowing_vertex_point_touches(
+        &removed, projection, label,
+    )
+    .ok()?;
+
+    let mut fragments = Vec::new();
+    collect_outer_difference_fragments(&component.boundary, &removed, projection, &mut fragments)?;
+    for index in 0..removed.len() {
+        collect_simple_removed_difference_fragments(
+            index,
+            &component.boundary,
+            &removed,
+            projection,
+            &mut fragments,
+        )?;
+    }
+    let mut polygons = stitch_branching_simple_loops(fragments, projection)?;
+    if polygons.len() < 2 || !final_loops_have_only_point_touches(&polygons, projection)? {
+        return None;
+    }
+
+    let mut output_area = ExactReal::from(0);
+    for polygon in &mut polygons {
+        orient_polygon_ccw(polygon, projection)?;
+        *polygon = simplify_projected_polygon(polygon.clone(), projection);
+        validate_projected_simple_loop(polygon, projection, label).ok()?;
+        output_area = add(&output_area, &projected_area2_abs(polygon, projection)?);
+    }
+    validate_simple_component_loops_disjoint_allowing_vertex_point_touches(
+        &polygons, projection, label,
+    )
+    .ok()?;
+
+    let mut removed_area = ExactReal::from(0);
+    for polygon in &removed {
+        removed_area = add(&removed_area, &projected_area2_abs(polygon, projection)?);
+    }
+    if compare_reals(&add(&output_area, &removed_area), &component.area2_abs).value()
+        != Some(Ordering::Equal)
+    {
+        return None;
+    }
+    sort_polygons_for_replay(&mut polygons, projection);
+    Some((removed, polygons))
+}
+
+/// Merge positive-connected simple removed openings without erasing branches.
+///
+/// Ordinary simple-source removal treats point-only opening contacts as
+/// unsupported, because there is no single simple removed loop to subtract.
+/// The point-touch artifact needs the opposite policy: positive-dimensional
+/// contacts are still merged into one removed opening, but point-only contacts
+/// merely authorize the branch-aware retained-loop walk. The returned boolean
+/// records whether at least one exact point-only contact was observed.
+#[cfg(feature = "exact-triangulation")]
+fn merge_connected_simple_removed_openings_allowing_branches(
+    openings: &[Vec<Point3>],
+    projection: CoplanarProjection,
+    label: &'static str,
+) -> Option<(Vec<Vec<Point3>>, bool)> {
+    if openings.len() < 2 {
+        return Some((openings.to_vec(), false));
+    }
+    let mut contact_graph = UnionFind::new(openings.len());
+    let mut saw_point_contact = false;
+    for left in 0..openings.len() {
+        for right in left + 1..openings.len() {
+            match simple_polygon_interaction(&openings[left], &openings[right], projection)? {
+                SimplePolygonInteraction::Disjoint => {}
+                SimplePolygonInteraction::PointOnly => saw_point_contact = true,
+                SimplePolygonInteraction::Connected => contact_graph.union(left, right),
+            }
+        }
+    }
+
+    let mut groups: Vec<(usize, Vec<usize>)> = Vec::new();
+    for index in 0..openings.len() {
+        let root = contact_graph.find(index);
+        if let Some((_, members)) = groups.iter_mut().find(|(candidate, _)| *candidate == root) {
+            members.push(index);
+        } else {
+            groups.push((root, vec![index]));
+        }
+    }
+    groups.sort_by_key(|(_, members)| members.first().copied().unwrap_or(usize::MAX));
+
+    let mut merged = Vec::with_capacity(groups.len());
+    for (_, members) in groups {
+        let mut opening = if members.len() == 1 {
+            openings[members[0]].clone()
+        } else {
+            materialize_simple_removed_opening_union_group(openings, &members, projection, label)?
+        };
+        orient_polygon_ccw(&mut opening, projection)?;
+        opening = simplify_projected_polygon(opening, projection);
+        validate_projected_simple_loop(&opening, projection, label).ok()?;
+        merged.push(opening);
+    }
+    Some((merged, saw_point_contact))
+}
+
 /// Merge connected removed openings before subtracting from a simple source.
 ///
 /// Clipped crossing cutters can overlap after `source ∩ cutter` replay even
@@ -7555,8 +7717,14 @@ pub fn arrange_coplanar_surface_point_touch_difference(
         return None;
     }
 
-    let left_component =
-        ConvexUnionComponent::from_mesh(MultiUnionSide::Left, left_components.into_iter().next()?)?;
+    let Some(left_component) =
+        ConvexUnionComponent::from_mesh(MultiUnionSide::Left, left_components[0].clone())
+    else {
+        return arrange_coplanar_simple_surface_point_touch_difference(
+            left_components,
+            right_components,
+        );
+    };
     let right_components = right_components
         .into_iter()
         .map(|mesh| ConvexUnionComponent::from_mesh(MultiUnionSide::Right, mesh))
@@ -7620,6 +7788,114 @@ pub fn arrange_coplanar_surface_point_touch_difference(
         &polygons,
         projection,
         "exact coplanar point-touch side-cutter difference",
+    )?;
+    let arrangement = CoplanarSurfacePointTouchDifference {
+        projection,
+        polygons,
+        mesh,
+    };
+    arrangement.validate().ok()?;
+    Some(arrangement)
+}
+
+/// Certify point-branch side-cutter differences on simple nonconvex disks.
+///
+/// The convex-source point-touch difference above proves branch topology by
+/// clipping convex cutters against one convex outer boundary. This sibling
+/// keeps the same public artifact but imports the left side through
+/// [`SimpleSurfaceComponent`]: the exact mesh boundary must replay as one
+/// source-owned disk, each removed opening must be contained in that disk and
+/// own positive-length source boundary, and point-only contact between removed
+/// openings is retained as branch evidence instead of connectivity.
+///
+/// Positive-dimensional removed contacts are merged first; point-only contacts
+/// remain explicit groups. Retained output loops are then stitched from exact
+/// source and removed-boundary fragments with the branch-aware
+/// Weiler-Atherton walk, and the exact area equation is replayed before the
+/// mesh is exported. This follows Yap's retained-object requirement from
+/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+/// (1997): a point branch is accepted only when exact topology, containment,
+/// and area facts name the output object.
+#[cfg(feature = "exact-triangulation")]
+fn arrange_coplanar_simple_surface_point_touch_difference(
+    left_component_meshes: Vec<ExactMesh>,
+    right_component_meshes: Vec<ExactMesh>,
+) -> Option<CoplanarSurfacePointTouchDifference> {
+    if left_component_meshes.len() != 1 || right_component_meshes.len() < 2 {
+        return None;
+    }
+    let component = SimpleSurfaceComponent::from_mesh(left_component_meshes.into_iter().next()?)?;
+    let right_components = right_component_meshes
+        .into_iter()
+        .map(|mesh| ConvexUnionComponent::from_mesh(MultiUnionSide::Right, mesh))
+        .collect::<Option<Vec<_>>>()?;
+    let projection = component.projection;
+    if right_components
+        .iter()
+        .any(|component| component.projection != projection)
+    {
+        return None;
+    }
+
+    let mut removed = Vec::new();
+    for right_component in &right_components {
+        if polygons_equal(&component.boundary, &right_component.hull)
+            || polygon_in_closed_convex_polygon(
+                &component.boundary,
+                &right_component.hull,
+                projection,
+            )?
+        {
+            return None;
+        }
+        if polygon_lies_in_closed_simple_polygon(
+            &right_component.hull,
+            &component.boundary,
+            projection,
+        )? {
+            if simple_boundary_attachment_count(
+                &component.boundary,
+                &right_component.hull,
+                projection,
+            )? == 0
+            {
+                return None;
+            }
+            let mut cutter = right_component.hull.clone();
+            orient_polygon_ccw(&mut cutter, projection)?;
+            removed.push(cutter);
+            continue;
+        }
+        match simple_source_convex_region_relation(
+            &component.boundary,
+            &right_component.hull,
+            projection,
+        )? {
+            SimpleSourceConvexRegionRelation::Disjoint => {}
+            SimpleSourceConvexRegionRelation::BoundaryOnly => return None,
+            SimpleSourceConvexRegionRelation::UnsupportedCrossing => {
+                let mut clipped = simple_source_convex_crossing_removed_openings(
+                    &component,
+                    &right_component.hull,
+                    "coplanar nonconvex source point-touch clipped side-cutter difference",
+                )?;
+                removed.append(&mut clipped);
+            }
+        }
+    }
+    if removed.len() < 2 {
+        return None;
+    }
+
+    let (_, polygons) = materialize_simple_source_side_cutter_point_touch_difference_core(
+        &component,
+        &removed,
+        "coplanar nonconvex source point-touch side-cutter difference",
+    )?;
+    let mesh = polygons_to_earcut_open_mesh_with_label(
+        &polygons,
+        projection,
+        "exact coplanar nonconvex source point-touch side-cutter difference",
     )?;
     let arrangement = CoplanarSurfacePointTouchDifference {
         projection,
