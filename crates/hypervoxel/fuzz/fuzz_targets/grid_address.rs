@@ -24,7 +24,7 @@ use hypervoxel::{
     VoxelSideTables, VoxelSliceNaming, VoxelSliceOrdering, VoxelSpatialAggregateFacts,
     VoxelTraceDimension, VoxelTraceManifest, VoxelizationAudit, VoxelizationPolicy,
     audit_chunk_paged_field_samples, audit_chunk_paged_material_regions,
-    audit_chunk_paged_process_states, chunk_paged_binary_snapshot_v1,
+    audit_chunk_paged_process_states, certify_chunk_paged_handoff, chunk_paged_binary_snapshot_v1,
     chunk_paged_run_length_snapshot_v1, chunk_paged_greedy_face_patch_plan_with_report,
     classify_chunk_paged_support_mask, classify_support_mask, continuous_field_address, diff_chunk_paged_sparse_grids,
     extract_chunk_paged_exposed_faces_with_report,
@@ -1308,6 +1308,44 @@ fuzz_target!(|data: (u8, u64, u64, u64)| {
             && material_query.is_fully_resolved()
             && material_metadata.is_complete()
     );
+    let handoff_source = GridSource::new("fuzz:paged-handoff", u64::from(depth_raw) + 1);
+    let paged_handoff = certify_chunk_paged_handoff(
+        &paged_edited,
+        &side_tables,
+        VoxelHandoffDomain::Hyperphysics,
+        Some(handoff_source.clone()),
+        Some(handoff_source.clone()),
+    )
+    .unwrap();
+    assert_eq!(paged_handoff.freshness, FreshnessStatus::Current);
+    assert!(
+        paged_handoff.complete_side_table_links <= paged_handoff.supplied_side_table_links
+    );
+    assert!(
+        paged_handoff.supplied_side_table_links <= paged_handoff.required_side_table_links
+    );
+    assert_eq!(
+        paged_handoff.side_table_evidence_ready,
+        paged_handoff.required_side_table_links == paged_handoff.complete_side_table_links
+    );
+    assert_eq!(
+        paged_handoff.exact_paged_handoff_ready,
+        paged_edited.report().exact_chunk_storage_ready
+            && paged_handoff.snapshot.exact_paged_snapshot_ready
+            && paged_handoff.side_table_evidence_ready
+            && paged_handoff.domain_report.exact_handoff_ready
+    );
+    let stale_paged_handoff = certify_chunk_paged_handoff(
+        &paged_edited,
+        &side_tables,
+        VoxelHandoffDomain::Hyperphysics,
+        Some(GridSource::new("fuzz:paged-handoff", u64::from(depth_raw))),
+        Some(handoff_source),
+    )
+    .unwrap();
+    assert_eq!(stale_paged_handoff.freshness, FreshnessStatus::Stale);
+    assert!(!stale_paged_handoff.domain_report.exact_handoff_ready);
+    assert!(!stale_paged_handoff.exact_paged_handoff_ready);
     let color_report = lookup_material_display_colors(&material_query, &MaterialDisplayPalette::default());
     assert_eq!(
         color_report.complete_display_palette_ready,

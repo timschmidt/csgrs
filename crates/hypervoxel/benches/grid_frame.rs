@@ -22,7 +22,7 @@ use hypervoxel::{
     VoxelSideTables, VoxelSliceNaming, VoxelSliceOrdering, VoxelSpatialAggregateFacts,
     VoxelTraceDimension, VoxelTraceManifest, VoxelizationAudit, VoxelizationPolicy,
     audit_chunk_paged_field_samples, audit_chunk_paged_material_regions,
-    audit_chunk_paged_process_states, chunk_paged_binary_snapshot_v1,
+    audit_chunk_paged_process_states, certify_chunk_paged_handoff, chunk_paged_binary_snapshot_v1,
     chunk_paged_greedy_face_patch_plan_with_report, chunk_paged_run_length_snapshot_v1,
     classify_chunk_paged_support_mask, classify_support_mask, continuous_field_address,
     diff_chunk_paged_sparse_grids, diff_sparse_grids,
@@ -823,6 +823,27 @@ fn bench_batches_field_facts_and_sweeps(c: &mut Criterion) {
                 report.process_payload_cells,
                 report.resolved_records,
                 report.exact_paged_process_audit_ready,
+            )
+        })
+    });
+    c.bench_function("chunk_paged_domain_handoff_certificate", |b| {
+        let paged =
+            ChunkPagedSparseGrid::from_sparse_grid(&grid, ChunkShape::new(3).unwrap()).unwrap();
+        let source = GridSource::new("bench:paged-handoff", 1);
+        b.iter(|| {
+            let report = certify_chunk_paged_handoff(
+                &paged,
+                &side_tables,
+                VoxelHandoffDomain::Hyperphysics,
+                Some(source.clone()),
+                Some(source.clone()),
+            )
+            .unwrap();
+            (
+                report.required_side_table_links,
+                report.complete_side_table_links,
+                report.snapshot.replayed_cells,
+                report.exact_paged_handoff_ready,
             )
         })
     });

@@ -30,6 +30,7 @@ mod chunk;
 mod chunk_diff;
 mod chunk_faces;
 mod chunk_field;
+mod chunk_handoff;
 mod chunk_material;
 mod chunk_process;
 mod chunk_snapshot;
@@ -97,6 +98,7 @@ pub use chunk_faces::{
     chunk_paged_greedy_face_patch_plan_with_report, extract_chunk_paged_exposed_faces_with_report,
 };
 pub use chunk_field::{ChunkPagedFieldAuditReport, audit_chunk_paged_field_samples};
+pub use chunk_handoff::{ChunkPagedHandoffReport, certify_chunk_paged_handoff};
 pub use chunk_material::{ChunkPagedMaterialAuditReport, audit_chunk_paged_material_regions};
 pub use chunk_process::{ChunkPagedProcessStateAuditReport, audit_chunk_paged_process_states};
 pub use chunk_snapshot::{

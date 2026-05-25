@@ -12,7 +12,7 @@ use hypervoxel::{
     SparseVoxelGrid, StorageReplayStatus, VoxelAddress, VoxelAggregateFacts, VoxelCell,
     VoxelHandoffDomain, VoxelHandoffManifest, VoxelMemoryBudgetManifest, VoxelSideTables,
     VoxelizationAudit, VoxelizationPolicy, audit_chunk_paged_material_regions,
-    audit_chunk_paged_process_states, chunk_paged_binary_snapshot_v1,
+    audit_chunk_paged_process_states, certify_chunk_paged_handoff, chunk_paged_binary_snapshot_v1,
     chunk_paged_run_length_snapshot_v1, diff_chunk_paged_sparse_grids, diff_sparse_grids,
     extract_exposed_faces, extract_exposed_faces_with_report, greedy_face_patch_plan,
     lookup_material_display_colors, lossy_obj_from_quad_mesh, lossy_quad_mesh_from_faces,
@@ -564,6 +564,165 @@ fn chunk_paged_process_state_audit_preserves_side_table_boundaries() {
     assert!(!empty.has_process_states);
     assert!(!empty.is_complete());
     assert!(!empty.exact_paged_process_audit_ready);
+}
+
+#[test]
+fn chunk_paged_handoff_certifies_storage_snapshot_and_side_tables() {
+    let source = GridSource::new("paged:handoff", 4);
+    let mut side_tables = VoxelSideTables::default();
+    side_tables.insert_material(
+        MaterialRegionId(7),
+        MaterialRegionRecord {
+            label: "steel".into(),
+            density: Some(r(8)),
+            provenance: "lot:A".into(),
+        },
+    );
+    side_tables.insert_field_sample(
+        FieldSampleId(11),
+        FieldSampleRecord {
+            label: "temperature".into(),
+            lower: Some(r(20)),
+            upper: Some(r(21)),
+            provenance: "probe:A".into(),
+        },
+    );
+    side_tables.insert_process_state(
+        ProcessStateId(3),
+        ProcessStateRecord {
+            label: "roughing".into(),
+            provenance: "cam:A".into(),
+        },
+    );
+
+    let mut grid = SparseVoxelGrid::new(frame());
+    grid.set(
+        VoxelAddress::new(2, [0, 0, 0]).unwrap(),
+        VoxelCell::material(MaterialRegionId(7)),
+    )
+    .unwrap();
+    grid.set(
+        VoxelAddress::new(2, [1, 0, 0]).unwrap(),
+        VoxelCell::field_sample(FieldSampleId(11)),
+    )
+    .unwrap();
+    grid.set(
+        VoxelAddress::new(2, [0, 1, 0]).unwrap(),
+        VoxelCell::process_state(ProcessStateId(3)),
+    )
+    .unwrap();
+    let paged = ChunkPagedSparseGrid::from_sparse_grid(&grid, ChunkShape::new(1).unwrap()).unwrap();
+
+    let report = certify_chunk_paged_handoff(
+        &paged,
+        &side_tables,
+        VoxelHandoffDomain::Hyperphysics,
+        Some(source.clone()),
+        Some(source.clone()),
+    )
+    .unwrap();
+    assert_eq!(report.domain, VoxelHandoffDomain::Hyperphysics);
+    assert_eq!(report.freshness, FreshnessStatus::Current);
+    assert_eq!(report.required_side_table_links, 3);
+    assert_eq!(report.supplied_side_table_links, 3);
+    assert_eq!(report.complete_side_table_links, 3);
+    assert!(report.side_table_evidence_ready);
+    assert!(report.storage.exact_chunk_storage_ready);
+    assert!(report.snapshot.exact_paged_snapshot_ready);
+    assert!(report.material.exact_paged_material_audit_ready);
+    assert!(report.field.exact_paged_field_audit_ready);
+    assert!(report.process.exact_paged_process_audit_ready);
+    assert!(report.domain_report.has_aggregate_evidence);
+    assert_eq!(
+        report.domain_report.side_table_links,
+        SideTableLinkStatus::Complete
+    );
+    assert!(report.domain_report.exact_handoff_ready);
+    assert!(report.exact_paged_handoff_ready);
+
+    let mut incomplete_side_tables = side_tables.clone();
+    incomplete_side_tables.insert_material(
+        MaterialRegionId(7),
+        MaterialRegionRecord {
+            label: "steel".into(),
+            density: None,
+            provenance: "lot:A".into(),
+        },
+    );
+    let incomplete = certify_chunk_paged_handoff(
+        &paged,
+        &incomplete_side_tables,
+        VoxelHandoffDomain::Hyperphysics,
+        Some(source.clone()),
+        Some(source.clone()),
+    )
+    .unwrap();
+    assert_eq!(incomplete.required_side_table_links, 3);
+    assert_eq!(incomplete.supplied_side_table_links, 3);
+    assert_eq!(incomplete.complete_side_table_links, 2);
+    assert_eq!(
+        incomplete.domain_report.side_table_links,
+        SideTableLinkStatus::Missing
+    );
+    assert!(!incomplete.side_table_evidence_ready);
+    assert!(!incomplete.exact_paged_handoff_ready);
+
+    let stale = certify_chunk_paged_handoff(
+        &paged,
+        &side_tables,
+        VoxelHandoffDomain::Hyperphysics,
+        Some(GridSource::new("paged:handoff", 3)),
+        Some(source.clone()),
+    )
+    .unwrap();
+    assert_eq!(stale.freshness, FreshnessStatus::Stale);
+    assert!(!stale.domain_report.exact_handoff_ready);
+    assert!(!stale.exact_paged_handoff_ready);
+
+    let mut uncertain_grid = grid.clone();
+    uncertain_grid
+        .set(
+            VoxelAddress::new(2, [1, 1, 0]).unwrap(),
+            VoxelCell::unknown(),
+        )
+        .unwrap();
+    let uncertain_paged =
+        ChunkPagedSparseGrid::from_sparse_grid(&uncertain_grid, ChunkShape::new(1).unwrap())
+            .unwrap();
+    let uncertain = certify_chunk_paged_handoff(
+        &uncertain_paged,
+        &side_tables,
+        VoxelHandoffDomain::Hyperphysics,
+        Some(source.clone()),
+        Some(source.clone()),
+    )
+    .unwrap();
+    assert!(uncertain.storage.has_unknown);
+    assert!(!uncertain.storage.exact_chunk_storage_ready);
+    assert!(!uncertain.snapshot.exact_paged_snapshot_ready);
+    assert!(!uncertain.domain_report.exact_handoff_ready);
+    assert!(!uncertain.exact_paged_handoff_ready);
+
+    let empty_paged = ChunkPagedSparseGrid::from_sparse_grid(
+        &SparseVoxelGrid::new(frame()),
+        ChunkShape::new(1).unwrap(),
+    )
+    .unwrap();
+    let empty = certify_chunk_paged_handoff(
+        &empty_paged,
+        &side_tables,
+        VoxelHandoffDomain::Hyperphysics,
+        Some(source.clone()),
+        Some(source),
+    )
+    .unwrap();
+    assert_eq!(empty.required_side_table_links, 0);
+    assert_eq!(
+        empty.domain_report.side_table_links,
+        SideTableLinkStatus::NotRequired
+    );
+    assert!(!empty.domain_report.has_aggregate_evidence);
+    assert!(!empty.exact_paged_handoff_ready);
 }
 
 #[test]
