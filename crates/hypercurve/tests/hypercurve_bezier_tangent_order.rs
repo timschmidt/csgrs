@@ -1,11 +1,11 @@
 use hypercurve::{
-    BezierAlgebraicParameter2, BezierAlgebraicSameTangentOrderStatus,
-    BezierAlgebraicTangentOrderStatus, BezierAlgebraicTangentVector2,
-    BezierAlgebraicTangentVectorReport, BezierAlgebraicTangentVectorStatus,
-    BezierEndpointTangentImage2, BezierParameterInterval, BezierParameterPolynomial,
-    BezierTangentTurnOrdering2, Classification, CurvePolicy, Point2, QuadraticBezier2, Real,
-    compare_algebraic_same_tangent_second_order, compare_algebraic_same_tangent_third_order,
-    compare_algebraic_tangent_turn_from_base,
+    BezierAlgebraicEndpointImage2, BezierAlgebraicParameter2,
+    BezierAlgebraicSameTangentOrderStatus, BezierAlgebraicTangentOrderStatus,
+    BezierAlgebraicTangentVector2, BezierAlgebraicTangentVectorReport,
+    BezierAlgebraicTangentVectorStatus, BezierEndpointTangentImage2, BezierParameterInterval,
+    BezierParameterPolynomial, BezierTangentTurnOrdering2, Classification, CurvePolicy, Point2,
+    QuadraticBezier2, RationalQuadraticBezier2, Real, compare_algebraic_same_tangent_second_order,
+    compare_algebraic_same_tangent_third_order, compare_algebraic_tangent_turn_from_base,
 };
 
 fn r(value: i32) -> Real {
@@ -54,6 +54,17 @@ fn sqrt_half_parameter() -> BezierAlgebraicParameter2 {
     )
 }
 
+fn algebraic_midpoint_parameter() -> BezierAlgebraicParameter2 {
+    decided(
+        BezierAlgebraicParameter2::try_isolate(
+            polynomial(vec![r(-1), r(2)]),
+            interval(q(2, 5), q(3, 5)),
+            &policy(),
+        )
+        .unwrap(),
+    )
+}
+
 fn tangent_vector(curve: &QuadraticBezier2) -> BezierAlgebraicTangentVector2 {
     let parameter = sqrt_half_parameter();
     let tangent = curve
@@ -67,6 +78,32 @@ fn tangent_vector(curve: &QuadraticBezier2) -> BezierAlgebraicTangentVector2 {
     vector.unwrap()
 }
 
+fn rational_endpoint_vectors(
+    curve: &RationalQuadraticBezier2,
+) -> (BezierAlgebraicTangentVector2, BezierAlgebraicTangentVector2) {
+    let image = BezierAlgebraicEndpointImage2::rational_quadratic(
+        curve,
+        &algebraic_midpoint_parameter(),
+        &policy(),
+    )
+    .unwrap();
+    let tangent = BezierAlgebraicTangentVector2::from_endpoint_image(image.tangent());
+    assert_eq!(
+        tangent.status,
+        BezierAlgebraicTangentVectorStatus::Extracted
+    );
+    let second_derivative = BezierAlgebraicTangentVector2::from_endpoint_image(
+        image
+            .second_derivative()
+            .expect("rational conic endpoint should retain second derivative evidence"),
+    );
+    assert_eq!(
+        second_derivative.status,
+        BezierAlgebraicTangentVectorStatus::Extracted
+    );
+    (tangent.vector.unwrap(), second_derivative.vector.unwrap())
+}
+
 fn horizontal() -> QuadraticBezier2 {
     QuadraticBezier2::new(p(r(0), r(0)), p(q(1, 2), r(0)), p(r(1), r(0)))
 }
@@ -77,6 +114,18 @@ fn upward() -> QuadraticBezier2 {
 
 fn downward() -> QuadraticBezier2 {
     QuadraticBezier2::new(p(r(0), r(0)), p(r(0), q(-1, 2)), p(r(0), r(-1)))
+}
+
+fn rational_horizontal_midpoint_inflection(curvature: i32) -> RationalQuadraticBezier2 {
+    RationalQuadraticBezier2::try_new(
+        Point2::new(r(-1), r(curvature)),
+        Point2::new(r(0), r(-curvature)),
+        Point2::new(r(1), r(curvature)),
+        r(1),
+        r(1),
+        r(1),
+    )
+    .unwrap()
 }
 
 #[test]
@@ -184,6 +233,33 @@ fn algebraic_same_tangent_order_uses_second_derivative_side_witness() {
         &tangent,
         &upward_second,
         &tangent,
+        &downward_second,
+        &policy(),
+    ));
+
+    assert_eq!(
+        report.status,
+        BezierAlgebraicSameTangentOrderStatus::Ordered
+    );
+    assert_eq!(
+        report.ordering,
+        Some(BezierTangentTurnOrdering2::FirstBeforeSecond)
+    );
+    assert!(report.first_curvature_cross.unwrap().sign.unwrap().is_gt());
+    assert!(report.second_curvature_cross.unwrap().sign.unwrap().is_lt());
+}
+
+#[test]
+fn rational_algebraic_same_tangent_order_uses_second_derivative_side_witness() {
+    let upward = rational_horizontal_midpoint_inflection(1);
+    let downward = rational_horizontal_midpoint_inflection(-1);
+    let (upward_tangent, upward_second) = rational_endpoint_vectors(&upward);
+    let (downward_tangent, downward_second) = rational_endpoint_vectors(&downward);
+
+    let report = decided(compare_algebraic_same_tangent_second_order(
+        &upward_tangent,
+        &upward_second,
+        &downward_tangent,
         &downward_second,
         &policy(),
     ));

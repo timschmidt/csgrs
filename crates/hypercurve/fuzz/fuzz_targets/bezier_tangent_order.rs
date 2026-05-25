@@ -3,9 +3,9 @@
 use hypercurve::{
     BezierAlgebraicParameter2, BezierAlgebraicTangentOrderStatus,
     BezierAlgebraicTangentVector2, BezierEndpointTangentImage2, BezierParameterInterval,
-    BezierParameterPolynomial, Classification, CurvePolicy, Point2, QuadraticBezier2, Real,
-    compare_algebraic_same_tangent_second_order, compare_algebraic_same_tangent_third_order,
-    compare_algebraic_tangent_turn_from_base,
+    BezierParameterPolynomial, Classification, CurvePolicy, Point2, QuadraticBezier2,
+    RationalQuadraticBezier2, Real, compare_algebraic_same_tangent_second_order,
+    compare_algebraic_same_tangent_third_order, compare_algebraic_tangent_turn_from_base,
 };
 use libfuzzer_sys::fuzz_target;
 
@@ -42,6 +42,20 @@ fn second_vector_from_curve(
     BezierAlgebraicTangentVector2::from_endpoint_image(&BezierEndpointTangentImage2::Polynomial(
         tangent,
     ))
+    .vector
+}
+
+fn second_vector_from_rational_curve(
+    curve: &RationalQuadraticBezier2,
+    parameter: &BezierAlgebraicParameter2,
+    policy: &CurvePolicy,
+) -> Option<BezierAlgebraicTangentVector2> {
+    let tangent = curve
+        .second_derivative_at_algebraic_parameter(parameter, policy)
+        .ok()?;
+    BezierAlgebraicTangentVector2::from_endpoint_image(
+        &BezierEndpointTangentImage2::RationalQuadratic(tangent),
+    )
     .vector
 }
 
@@ -108,6 +122,44 @@ fuzz_target!(|data: &[u8]| {
         &first_second,
         &second,
         &second_second,
+        &policy,
+    );
+
+    let Ok(first_rational) = RationalQuadraticBezier2::try_new(
+        point(data[0], data[1]),
+        point(data[2], data[3]),
+        point(data[4], data[5]),
+        Real::one(),
+        Real::from((data[0] % 7) as i32 + 1),
+        Real::one(),
+    ) else {
+        return;
+    };
+    let Ok(second_rational) = RationalQuadraticBezier2::try_new(
+        point(data[6], data[7]),
+        point(data[8], data[9]),
+        point(data[10], data[11]),
+        Real::one(),
+        Real::from((data[1] % 7) as i32 + 1),
+        Real::one(),
+    ) else {
+        return;
+    };
+    let Some(first_rational_second) =
+        second_vector_from_rational_curve(&first_rational, &parameter, &policy)
+    else {
+        return;
+    };
+    let Some(second_rational_second) =
+        second_vector_from_rational_curve(&second_rational, &parameter, &policy)
+    else {
+        return;
+    };
+    let _ = compare_algebraic_same_tangent_second_order(
+        &first,
+        &first_rational_second,
+        &second,
+        &second_rational_second,
         &policy,
     );
 });

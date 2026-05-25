@@ -151,6 +151,60 @@ fn assert_rational_endpoint_image(image: &Option<BezierAlgebraicEndpointImage2>)
         }
         BezierEndpointTangentImage2::Polynomial(_) => panic!("expected rational tangent image"),
     }
+    if let Some(second_derivative) = image.second_derivative() {
+        match second_derivative {
+            BezierEndpointTangentImage2::RationalQuadratic(second_derivative) => {
+                assert_eq!(
+                    second_derivative.status(),
+                    BezierAlgebraicImageStatus::Transformed
+                );
+                assert!(
+                    second_derivative
+                        .dx()
+                        .and_then(|dx| dx.representation())
+                        .is_some()
+                );
+                assert!(
+                    second_derivative
+                        .dy()
+                        .and_then(|dy| dy.representation())
+                        .is_some()
+                );
+            }
+            BezierEndpointTangentImage2::Polynomial(_) => {
+                panic!("expected rational second derivative image")
+            }
+        }
+    }
+}
+
+fn assert_rational_second_derivative_endpoint_image(image: &BezierAlgebraicEndpointImage2) {
+    match image
+        .second_derivative()
+        .expect("expected rational second derivative image")
+    {
+        BezierEndpointTangentImage2::RationalQuadratic(second_derivative) => {
+            assert_eq!(
+                second_derivative.status(),
+                BezierAlgebraicImageStatus::Transformed
+            );
+            assert!(
+                second_derivative
+                    .dx()
+                    .and_then(|dx| dx.representation())
+                    .is_some()
+            );
+            assert!(
+                second_derivative
+                    .dy()
+                    .and_then(|dy| dy.representation())
+                    .is_some()
+            );
+        }
+        BezierEndpointTangentImage2::Polynomial(_) => {
+            panic!("expected rational second derivative image")
+        }
+    }
 }
 
 #[test]
@@ -329,6 +383,21 @@ fn rational_algebraic_boundary_carries_conic_endpoint_images() {
     assert!(source_curve.is_some());
     assert!(start_image.is_none());
     assert_rational_endpoint_image(end_image);
+}
+
+#[test]
+fn rational_algebraic_endpoint_retains_second_derivative_when_constructed() {
+    let curve =
+        RationalQuadraticBezier2::try_new(p(-1, 1), p(0, -1), p(1, 1), r(1), r(1), r(1)).unwrap();
+    let parameter = match algebraic_midpoint_interval(q(2, 5), q(3, 5)) {
+        BezierParameter2::Algebraic(parameter) => parameter,
+        BezierParameter2::Exact(_) => panic!("expected algebraic parameter"),
+    };
+    let image =
+        BezierAlgebraicEndpointImage2::rational_quadratic(&curve, &parameter, &policy()).unwrap();
+
+    assert_rational_endpoint_image(&Some(image.clone()));
+    assert_rational_second_derivative_endpoint_image(&image);
 }
 
 #[test]

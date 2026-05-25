@@ -135,6 +135,9 @@ fn rational_quadratic_point_and_tangent_images_retain_quotient_evidence() {
     let tangent = conic
         .tangent_at_algebraic_parameter(&parameter, &policy())
         .unwrap();
+    let second_derivative = conic
+        .second_derivative_at_algebraic_parameter(&parameter, &policy())
+        .unwrap();
 
     assert_eq!(point.status(), BezierAlgebraicImageStatus::Transformed);
     assert_eq!(
@@ -159,6 +162,30 @@ fn rational_quadratic_point_and_tangent_images_retain_quotient_evidence() {
     );
     assert!(tangent.dx().unwrap().representation().unwrap().is_valid());
     assert!(tangent.dy().unwrap().representation().unwrap().is_valid());
+    assert_eq!(
+        second_derivative.status(),
+        BezierAlgebraicImageStatus::Transformed
+    );
+    assert_eq!(
+        second_derivative.dx().unwrap().denominator_coefficients(),
+        &[r(1), r(6), r(12), r(8), r(0), r(0), r(0)]
+    );
+    assert!(
+        second_derivative
+            .dx()
+            .unwrap()
+            .representation()
+            .unwrap()
+            .is_valid()
+    );
+    assert!(
+        second_derivative
+            .dy()
+            .unwrap()
+            .representation()
+            .unwrap()
+            .is_valid()
+    );
 }
 
 #[test]

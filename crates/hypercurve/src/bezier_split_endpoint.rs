@@ -131,6 +131,8 @@ impl BezierAlgebraicEndpointImage2 {
         parameter: &BezierAlgebraicParameter2,
         policy: &CurvePolicy,
     ) -> CurveResult<Self> {
+        let second_derivative =
+            curve.second_derivative_at_algebraic_parameter(parameter, policy)?;
         Ok(Self {
             parameter: parameter.clone(),
             point: BezierEndpointPointImage2::RationalQuadratic(
@@ -139,7 +141,11 @@ impl BezierAlgebraicEndpointImage2 {
             tangent: BezierEndpointTangentImage2::RationalQuadratic(
                 curve.tangent_at_algebraic_parameter(parameter, policy)?,
             ),
-            second_derivative: None,
+            second_derivative: (second_derivative.status()
+                == BezierAlgebraicImageStatus::Transformed)
+                .then_some(Box::new(BezierEndpointTangentImage2::RationalQuadratic(
+                    second_derivative,
+                ))),
             third_derivative: None,
         })
     }

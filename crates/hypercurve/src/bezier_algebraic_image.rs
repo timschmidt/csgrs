@@ -396,6 +396,27 @@ impl RationalQuadraticBezier2 {
     ) -> CurveResult<RationalBezierAlgebraicTangentImage2> {
         rational_tangent_image(parameter, rational_tangent_coefficients(self), policy)
     }
+
+    /// Evaluates this rational quadratic's affine second derivative vector.
+    ///
+    /// For one coordinate `R(t) = N(t)/D(t)`, the retained numerator is
+    /// `(A'(t)D(t) - 2A(t)D'(t))` over `D(t)^3`, where
+    /// `A(t) = N'(t)D(t) - N(t)D'(t)`.  This is the differentiated quotient
+    /// identity for homogeneous rational Beziers described by Farin, *Curves
+    /// and Surfaces for CAGD* (5th ed., 2002).  The result remains a
+    /// represented rational image of the algebraic parameter, preserving
+    /// Yap's construction/decision boundary instead of sampling the conic.
+    pub fn second_derivative_at_algebraic_parameter(
+        &self,
+        parameter: &BezierAlgebraicParameter2,
+        policy: &CurvePolicy,
+    ) -> CurveResult<RationalBezierAlgebraicTangentImage2> {
+        rational_tangent_image(
+            parameter,
+            rational_second_derivative_coefficients(self),
+            policy,
+        )
+    }
 }
 
 fn point_image(
@@ -831,6 +852,40 @@ fn rational_tangent_coefficients(curve: &RationalQuadraticBezier2) -> RationalTa
     }
 }
 
+fn rational_second_derivative_coefficients(
+    curve: &RationalQuadraticBezier2,
+) -> RationalTangentPolynomials {
+    let point = rational_point_coefficients(curve);
+    let denominator_derivative = derivative_coefficients(&point.denominator);
+    let denominator_squared = multiply_polynomials(&point.denominator, &point.denominator);
+    let denominator_cubed = multiply_polynomials(&denominator_squared, &point.denominator);
+    let dx_first_numerator = rational_derivative_numerator(
+        &point.x_numerator,
+        &point.denominator,
+        &denominator_derivative,
+    );
+    let dy_first_numerator = rational_derivative_numerator(
+        &point.y_numerator,
+        &point.denominator,
+        &denominator_derivative,
+    );
+    let dx_numerator = rational_second_derivative_numerator(
+        &dx_first_numerator,
+        &point.denominator,
+        &denominator_derivative,
+    );
+    let dy_numerator = rational_second_derivative_numerator(
+        &dy_first_numerator,
+        &point.denominator,
+        &denominator_derivative,
+    );
+    RationalTangentPolynomials {
+        dx_numerator,
+        dy_numerator,
+        denominator: denominator_cubed,
+    }
+}
+
 fn quadratic_power_coefficients(p0: &Real, p1: &Real, p2: &Real, two: &Real) -> Vec<Real> {
     vec![p0.clone(), two * &(p1 - p0), p0 - &(two * p1) + p2]
 }
@@ -884,6 +939,23 @@ fn rational_derivative_numerator(
     )
 }
 
+fn rational_second_derivative_numerator(
+    first_derivative_numerator: &[Real],
+    denominator: &[Real],
+    denominator_derivative: &[Real],
+) -> Vec<Real> {
+    subtract_polynomials(
+        &multiply_polynomials(
+            &derivative_coefficients(first_derivative_numerator),
+            denominator,
+        ),
+        &scale_polynomial(
+            &multiply_polynomials(first_derivative_numerator, denominator_derivative),
+            Real::from(2_i8),
+        ),
+    )
+}
+
 fn multiply_polynomials(left: &[Real], right: &[Real]) -> Vec<Real> {
     let mut result = vec![Real::zero(); left.len() + right.len() - 1];
     for (left_degree, left_coefficient) in left.iter().enumerate() {
@@ -904,6 +976,13 @@ fn subtract_polynomials(left: &[Real], right: &[Real]) -> Vec<Real> {
         result[index] = result[index].clone() - coefficient;
     }
     result
+}
+
+fn scale_polynomial(coefficients: &[Real], scale: Real) -> Vec<Real> {
+    coefficients
+        .iter()
+        .map(|coefficient| coefficient * &scale)
+        .collect()
 }
 
 #[derive(Clone, Debug)]

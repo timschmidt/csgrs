@@ -74,6 +74,20 @@ fn through_origin_with_horizontal_midpoint_tangent_and_third_order(third_y: i32)
     )
 }
 
+fn rational_through_origin_with_horizontal_midpoint_tangent(
+    curvature: i32,
+) -> RationalQuadraticBezier2 {
+    RationalQuadraticBezier2::try_new(
+        Point2::new(r(-1), r(curvature)),
+        Point2::new(r(0), r(-curvature)),
+        Point2::new(r(1), r(curvature)),
+        r(1),
+        r(1),
+        r(1),
+    )
+    .unwrap()
+}
+
 fn algebraic_endpoint_image(
     curve: &QuadraticBezier2,
     parameter: &BezierAlgebraicParameter2,
@@ -86,6 +100,13 @@ fn algebraic_cubic_endpoint_image(
     parameter: &BezierAlgebraicParameter2,
 ) -> BezierAlgebraicEndpointImage2 {
     BezierAlgebraicEndpointImage2::cubic(curve, parameter, &policy()).unwrap()
+}
+
+fn algebraic_rational_endpoint_image(
+    curve: &RationalQuadraticBezier2,
+    parameter: &BezierAlgebraicParameter2,
+) -> BezierAlgebraicEndpointImage2 {
+    BezierAlgebraicEndpointImage2::rational_quadratic(curve, parameter, &policy()).unwrap()
 }
 
 #[test]
@@ -507,6 +528,49 @@ fn retained_tangent_order_uses_algebraic_second_order_for_equal_successors() {
         end: exact(r(1)),
         source_curve: None,
         start_image: Some(algebraic_endpoint_image(&downward_curve, &parameter)),
+        end_image: None,
+    };
+    let graph = BezierArrangementGraph2::new(vec![
+        hypercurve::BezierArrangementFragment2::new(0, 0, incoming),
+        hypercurve::BezierArrangementFragment2::new(1, 0, upward),
+        hypercurve::BezierArrangementFragment2::new(2, 0, downward),
+    ]);
+
+    let traversal = decided(graph.traverse_retained_with_tangent_order(&policy()));
+    assert_eq!(traversal.len(), 2);
+    assert_eq!(traversal.chains()[0].fragment_indices(), &[0, 1]);
+    assert_eq!(traversal.chains()[1].fragment_indices(), &[2]);
+}
+
+#[test]
+fn retained_tangent_order_uses_rational_algebraic_second_order_for_equal_successors() {
+    let parameter = algebraic_midpoint_parameter();
+    let algebraic = BezierParameter2::algebraic(parameter.clone());
+    let incoming_curve = through_origin_with_midpoint_tangent(1, 0);
+    let upward_curve = rational_through_origin_with_horizontal_midpoint_tangent(1);
+    let downward_curve = rational_through_origin_with_horizontal_midpoint_tangent(-1);
+    let incoming = BezierSplitFragment2::AlgebraicEndpointImages {
+        start: exact(r(0)),
+        end: algebraic.clone(),
+        source_curve: None,
+        start_image: None,
+        end_image: Some(algebraic_endpoint_image(&incoming_curve, &parameter)),
+    };
+    let upward = BezierSplitFragment2::AlgebraicEndpointImages {
+        start: algebraic.clone(),
+        end: exact(r(1)),
+        source_curve: None,
+        start_image: Some(algebraic_rational_endpoint_image(&upward_curve, &parameter)),
+        end_image: None,
+    };
+    let downward = BezierSplitFragment2::AlgebraicEndpointImages {
+        start: algebraic,
+        end: exact(r(1)),
+        source_curve: None,
+        start_image: Some(algebraic_rational_endpoint_image(
+            &downward_curve,
+            &parameter,
+        )),
         end_image: None,
     };
     let graph = BezierArrangementGraph2::new(vec![
