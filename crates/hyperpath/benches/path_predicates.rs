@@ -278,6 +278,17 @@ fn path_predicates(c: &mut Criterion) {
             )
         })
     });
+    let line_quadratic_cell_line = LinePathSegment::new(p(0, 0), p(1000, 0));
+    let line_quadratic_cell_curve = QuadraticBezier::new(p(0, 0), p(500, 1000), p(1000, 0));
+    c.bench_function("line_quadratic_bezier_exact_cell_graph", |b| {
+        b.iter(|| {
+            arrange_line_segments_with_quadratic_beziers(
+                std::slice::from_ref(&line_quadratic_cell_line),
+                std::slice::from_ref(&line_quadratic_cell_curve),
+                PredicatePolicy::default(),
+            )
+        })
+    });
     let line_quadratic_overlap_line = LinePathSegment::new(p(250, 0), p(750, 0));
     let line_quadratic_overlap_curve = QuadraticBezier::new(p(0, 0), p(500, 0), p(1000, 0));
     c.bench_function("line_quadratic_bezier_overlap_promotion", |b| {

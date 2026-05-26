@@ -17,6 +17,9 @@ use crate::bezier_arrangement::{
     LineQuadraticBezierIntersection, LineQuadraticBezierIntersectionClass,
     LineQuadraticBezierIntersectionReport, intersect_axis_aligned_line_quadratic_bezier,
 };
+use crate::curve_cell::{
+    CurveArrangementCellError, CurveArrangementCellGraph, build_line_quadratic_cell_graph,
+};
 use crate::provenance::PathProvenance;
 use crate::segment::LinePathSegment;
 
@@ -31,6 +34,10 @@ pub enum LineQuadraticBezierArrangementError {
     UndecidableBezierOrder { curve: usize },
     /// The same geometric point could not be de-duplicated exactly.
     UndecidablePointEquality,
+    /// Exact tangent ordering of incident mixed line/quadratic fragments was undecidable.
+    UndecidableCellOrder { vertex: usize },
+    /// Exact polynomial Green-integral area replay was unavailable for a retained cell edge.
+    UndecidableCellArea { edge: usize },
 }
 
 /// Exact event between one retained line segment and one quadratic Bezier.
@@ -107,7 +114,7 @@ pub struct LineQuadraticBezierArrangementFacts {
     pub provenance: PathProvenance,
 }
 
-/// Retained mixed line/quadratic-Bezier arrangement schedule.
+/// Retained mixed line/quadratic-Bezier arrangement schedule and cell graph.
 ///
 /// The report promotes exact event witnesses from
 /// [`intersect_axis_aligned_line_quadratic_bezier`] into split fragments on
@@ -116,7 +123,9 @@ pub struct LineQuadraticBezierArrangementFacts {
 /// breakpoints here are arbitrary exact [`Real`] roots, so secants at
 /// irrational parameters can still become retained quadratic sub-curves. The
 /// sub-curves are reconstructed from exact endpoint and derivative data via de
-/// Casteljau's affine restriction identities.
+/// Casteljau's affine restriction identities, then scheduled into a retained
+/// curve cell graph whose line and quadratic edges are ordered by exact
+/// tangents and whose nonzero face walks replay exact Green-integral area.
 ///
 /// This is a Yap-style exact object package: uncertain line/Bezier relations
 /// remain explicit `Unknown` events and never create topology. Certified
@@ -140,6 +149,8 @@ pub struct LineQuadraticBezierArrangementReport {
     pub line_fragments: Vec<MixedLineArrangementFragment>,
     /// Positive-length quadratic Bezier fragments.
     pub bezier_fragments: Vec<QuadraticBezierRealFragment>,
+    /// Exact retained curve cell graph induced by split line and quadratic fragments.
+    pub cell_graph: CurveArrangementCellGraph,
     /// Cached exact facts for the retained schedule.
     pub facts: LineQuadraticBezierArrangementFacts,
 }
@@ -203,6 +214,8 @@ pub fn arrange_line_segments_with_quadratic_beziers_and_provenance(
     sort_and_dedup_bezier_breakpoints(&mut bezier_breakpoints, policy)?;
     let line_fragments = build_line_fragments(&line_breakpoints, policy)?;
     let bezier_fragments = build_bezier_fragments(&bezier_breakpoints, curves, policy)?;
+    let cell_graph = build_line_quadratic_cell_graph(&line_fragments, &bezier_fragments, policy)
+        .map_err(line_quadratic_error_from_curve_cell_error)?;
     let facts = LineQuadraticBezierArrangementFacts {
         input_exact: input_exact_facts(lines, curves),
         fragment_exact: fragment_exact_facts(&line_fragments, &bezier_fragments),
@@ -217,8 +230,25 @@ pub fn arrange_line_segments_with_quadratic_beziers_and_provenance(
         bezier_breakpoints,
         line_fragments,
         bezier_fragments,
+        cell_graph,
         facts,
     })
+}
+
+fn line_quadratic_error_from_curve_cell_error(
+    error: CurveArrangementCellError,
+) -> LineQuadraticBezierArrangementError {
+    match error {
+        CurveArrangementCellError::UndecidablePointEquality => {
+            LineQuadraticBezierArrangementError::UndecidablePointEquality
+        }
+        CurveArrangementCellError::UndecidableCellOrder { vertex } => {
+            LineQuadraticBezierArrangementError::UndecidableCellOrder { vertex }
+        }
+        CurveArrangementCellError::UndecidableCellArea { edge } => {
+            LineQuadraticBezierArrangementError::UndecidableCellArea { edge }
+        }
+    }
 }
 
 fn reject_degenerate_lines(

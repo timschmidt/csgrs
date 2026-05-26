@@ -4,9 +4,9 @@ use std::cmp::Ordering;
 
 use hyperlimit::{PredicatePolicy, compare_reals_with_policy};
 use hyperpath::{
-    BezierParameter, CubicBezier, LineCubicAlgebraicPointDomain, LineCubicAlgebraicRootDomain,
-    LineCubicBezierAlgebraicBreakpointDomain, LineCubicBezierAlgebraicBreakpointOrderClass,
-    LineCubicBezierAlgebraicBreakpointSequenceClass,
+    BezierParameter, CubicBezier, CurveArrangementCellFaceClass, LineCubicAlgebraicPointDomain,
+    LineCubicAlgebraicRootDomain, LineCubicBezierAlgebraicBreakpointDomain,
+    LineCubicBezierAlgebraicBreakpointOrderClass, LineCubicBezierAlgebraicBreakpointSequenceClass,
     LineCubicBezierAlgebraicOverlapBreakpointDomain,
     LineCubicBezierAlgebraicOverlapBreakpointSequenceClass,
     LineCubicBezierAlgebraicOverlapBreakpointSequenceSource, LineCubicBezierIntersectionClass,
@@ -98,6 +98,10 @@ fuzz_target!(|data: &[u8]| {
     )
     .unwrap();
     assert_eq!(mixed_report.events.len(), 1);
+    assert_eq!(
+        mixed_report.cell_graph.half_edges.len(),
+        mixed_report.cell_graph.edges.len() * 2
+    );
     for window in mixed_report.bezier_breakpoints[0].windows(2) {
         assert!(
             compare_reals_with_policy(
@@ -123,6 +127,23 @@ fuzz_target!(|data: &[u8]| {
         LineQuadraticBezierIntersectionClass::Overlap
     );
     assert_eq!(overlap_report.bezier_breakpoints[0].len(), 4);
+    assert_eq!(
+        overlap_report.cell_graph.half_edges.len(),
+        overlap_report.cell_graph.edges.len() * 2
+    );
+    let closed_curve = QuadraticBezier::new(p(0, 0), p(4, 8), p(8, 0));
+    let closed_line = LinePathSegment::new(p(0, 0), p(8, 0));
+    let closed_report = arrange_line_segments_with_quadratic_beziers(
+        &[closed_line],
+        &[closed_curve],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert!(closed_report.cell_graph.faces.iter().any(|face| {
+        face.class == CurveArrangementCellFaceClass::Bounded
+            && face.signed_area_twice
+                == Real::new(Rational::new(64) / Rational::new(3))
+    }));
     let nonlinear_overlap_curve = QuadraticBezier::new(p(0, 0), p(2, 0), p(8, 0));
     let nonlinear_overlap_line = LinePathSegment::new(p(2, 0), p(6, 0));
     let nonlinear_overlap_report = arrange_line_segments_with_quadratic_beziers(

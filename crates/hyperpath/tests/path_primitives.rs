@@ -861,6 +861,40 @@ fn line_quadratic_bezier_arrangement_splits_certified_secant_roots() {
     assert_eq!(report.bezier_fragments[1].curve.start(), &p(2, 3));
     assert_eq!(report.bezier_fragments[1].curve.end(), &p(6, 3));
     assert_eq!(report.bezier_fragments[2].curve.start(), &p(6, 3));
+    assert_eq!(report.cell_graph.vertices.len(), 6);
+    assert_eq!(report.cell_graph.edges.len(), 6);
+    assert_eq!(report.cell_graph.half_edges.len(), 12);
+}
+
+#[test]
+fn line_quadratic_bezier_cell_graph_schedules_parabolic_face() {
+    let curve = QuadraticBezier::new(p(0, 0), p(4, 8), p(8, 0));
+    let chord = LinePathSegment::new(p(0, 0), p(8, 0));
+
+    let report = arrange_line_segments_with_quadratic_beziers(
+        &[chord],
+        &[curve],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+
+    assert_eq!(
+        report.events[0].class,
+        LineQuadraticBezierIntersectionClass::TwoPoints
+    );
+    assert_eq!(report.line_fragments.len(), 1);
+    assert_eq!(report.bezier_fragments.len(), 1);
+    assert_eq!(report.cell_graph.vertices.len(), 2);
+    assert_eq!(report.cell_graph.edges.len(), 2);
+    assert_eq!(report.cell_graph.half_edges.len(), 4);
+    assert_eq!(report.cell_graph.faces.len(), 2);
+    assert!(report.cell_graph.faces.iter().any(|face| {
+        face.class == CurveArrangementCellFaceClass::Bounded && face.signed_area_twice == rq(64, 3)
+    }));
+    assert!(report.cell_graph.faces.iter().any(|face| {
+        face.class == CurveArrangementCellFaceClass::Exterior
+            && face.signed_area_twice == -rq(64, 3)
+    }));
 }
 
 #[test]

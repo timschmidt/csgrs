@@ -14,6 +14,7 @@ use hyperreal::Real;
 
 use crate::arc::ArcDirection;
 use crate::arrangement::{ExplicitArcArrangementFragment, LineArrangementFragment};
+use crate::mixed_bezier_arrangement::{MixedLineArrangementFragment, QuadraticBezierRealFragment};
 
 /// Errors that prevent retained curve cell scheduling from producing trusted topology.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -45,15 +46,18 @@ pub enum CurveArrangementCellEdgeKind {
     Line,
     /// Explicit circular-arc fragment edge.
     ExplicitArc,
+    /// Polynomial quadratic Bezier fragment edge.
+    QuadraticBezier,
 }
 
 /// Exact edge in a retained mixed curve cell graph.
 ///
 /// The edge keeps the source fragment indices that realize the geometry. A
-/// line edge indexes [`crate::arrangement::LineArcArrangementReport::line_fragments`];
-/// an explicit-arc edge indexes
-/// [`crate::arrangement::LineArcArrangementReport::arc_fragments`]. For arcs,
-/// `start` and `end` follow the retained arc direction.
+/// line edge indexes the corresponding report's line-fragment array, an
+/// explicit-arc edge indexes the arc-fragment array, and a quadratic-Bezier
+/// edge indexes
+/// [`crate::mixed_bezier_arrangement::LineQuadraticBezierArrangementReport::bezier_fragments`].
+/// For curved edges, `start` and `end` follow the retained curve direction.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct CurveArrangementCellEdge {
     /// Source curve family.
@@ -71,8 +75,9 @@ pub struct CurveArrangementCellEdge {
 /// Local order is certified from the outgoing tangent vector, not from a
 /// sampled angle. For circular arcs, the exact radial vector is rotated into a
 /// tangent, matching the local-order predicates used by exact circular-arc
-/// arrangement kernels such as CGAL Arrangement_on_surface_2; for line
-/// fragments the chord vector is the tangent.
+/// arrangement kernels such as CGAL Arrangement_on_surface_2; for quadratic
+/// Beziers, the endpoint hodograph is used as Farouki's polynomial-curve
+/// model prescribes; for line fragments the chord vector is the tangent.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct CurveArrangementHalfEdge {
     /// Undirected cell edge index.
@@ -102,9 +107,10 @@ pub enum CurveArrangementCellFaceClass {
 /// `integral(x dy - y dx)` over the walked boundary. Line edges contribute the
 /// ordinary shoelace term. Explicit circular arcs contribute the exact center
 /// translation term plus the signed retained circular sweep `r^2 theta`,
-/// represented as `radius * certified_sweep_length()`. This follows the
-/// Green-integral area formula used by exact curved arrangements while keeping
-/// Yap's rule that uncertified analytic area stays explicit.
+/// represented as `radius * certified_sweep_length()`. Polynomial quadratic
+/// Beziers contribute the exact Bernstein Green integral
+/// `(cross(P0,P1) + cross(P0,P2) + cross(P1,P2)) / 3`. These are exact
+/// curved-arrangement area formulas, kept inside Yap's retained-object model.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveArrangementCellFace {
     /// Half-edges traversed in order.
@@ -115,7 +121,8 @@ pub struct CurveArrangementCellFace {
     pub class: CurveArrangementCellFaceClass,
 }
 
-/// Retained exact cell graph for line and/or explicit circular-arc fragments.
+/// Retained exact cell graph for line, explicit circular-arc, and quadratic
+/// Bezier fragments.
 ///
 /// This graph schedules topology for downstream CAM/PCB consumers in both
 /// mixed line/arc and arc-only arrangements. It does not decide fill rules,
@@ -139,19 +146,47 @@ pub(crate) fn build_line_arc_cell_graph(
     arc_fragments: &[ExplicitArcArrangementFragment],
     policy: PredicatePolicy,
 ) -> Result<CurveArrangementCellGraph, CurveArrangementCellError> {
-    build_curve_cell_graph(line_fragments, arc_fragments, policy)
+    build_curve_cell_graph(line_fragments, arc_fragments, &[], policy)
+}
+
+pub(crate) fn build_line_quadratic_cell_graph(
+    line_fragments: &[MixedLineArrangementFragment],
+    bezier_fragments: &[QuadraticBezierRealFragment],
+    policy: PredicatePolicy,
+) -> Result<CurveArrangementCellGraph, CurveArrangementCellError> {
+    let converted_lines = line_fragments
+        .iter()
+        .map(|fragment| LineArrangementFragment {
+            source_segment: fragment.source_line,
+            start: crate::arrangement::LineArrangementBreakpoint {
+                segment: fragment.start.line,
+                point: fragment.start.point.clone(),
+                parameter_numerator: fragment.start.parameter_numerator.clone(),
+                parameter_denominator: fragment.start.parameter_denominator.clone(),
+            },
+            end: crate::arrangement::LineArrangementBreakpoint {
+                segment: fragment.end.line,
+                point: fragment.end.point.clone(),
+                parameter_numerator: fragment.end.parameter_numerator.clone(),
+                parameter_denominator: fragment.end.parameter_denominator.clone(),
+            },
+            segment: fragment.segment.clone(),
+        })
+        .collect::<Vec<_>>();
+    build_curve_cell_graph(&converted_lines, &[], bezier_fragments, policy)
 }
 
 pub(crate) fn build_explicit_arc_cell_graph(
     arc_fragments: &[ExplicitArcArrangementFragment],
     policy: PredicatePolicy,
 ) -> Result<CurveArrangementCellGraph, CurveArrangementCellError> {
-    build_curve_cell_graph(&[], arc_fragments, policy)
+    build_curve_cell_graph(&[], arc_fragments, &[], policy)
 }
 
 fn build_curve_cell_graph(
     line_fragments: &[LineArrangementFragment],
     arc_fragments: &[ExplicitArcArrangementFragment],
+    bezier_fragments: &[QuadraticBezierRealFragment],
     policy: PredicatePolicy,
 ) -> Result<CurveArrangementCellGraph, CurveArrangementCellError> {
     let mut vertices = Vec::new();
@@ -193,6 +228,20 @@ fn build_curve_cell_graph(
         });
     }
 
+    for (fragment_index, fragment) in bezier_fragments.iter().enumerate() {
+        let start = curve_vertex_index(&mut vertices, fragment.curve.start(), policy)?;
+        let end = curve_vertex_index(&mut vertices, fragment.curve.end(), policy)?;
+        if start == end {
+            continue;
+        }
+        edges.push(CurveArrangementCellEdge {
+            kind: CurveArrangementCellEdgeKind::QuadraticBezier,
+            start,
+            end,
+            fragments: vec![fragment_index],
+        });
+    }
+
     let mut half_edges = Vec::with_capacity(edges.len() * 2);
     for (edge_index, edge) in edges.iter().enumerate() {
         let forward = half_edges.len();
@@ -223,6 +272,7 @@ fn build_curve_cell_graph(
             &half_edges,
             line_fragments,
             arc_fragments,
+            bezier_fragments,
             policy,
         )?;
     }
@@ -233,6 +283,7 @@ fn build_curve_cell_graph(
         &half_edges,
         line_fragments,
         arc_fragments,
+        bezier_fragments,
         policy,
     )?;
 
@@ -271,6 +322,7 @@ fn sort_curve_outgoing_half_edges(
     half_edges: &[CurveArrangementHalfEdge],
     line_fragments: &[LineArrangementFragment],
     arc_fragments: &[ExplicitArcArrangementFragment],
+    bezier_fragments: &[QuadraticBezierRealFragment],
     policy: PredicatePolicy,
 ) -> Result<(), CurveArrangementCellError> {
     let mut outgoing = std::mem::take(&mut vertices[vertex].outgoing_half_edges);
@@ -283,6 +335,7 @@ fn sort_curve_outgoing_half_edges(
                 half_edges,
                 line_fragments,
                 arc_fragments,
+                bezier_fragments,
                 policy,
             )
             .ok_or(CurveArrangementCellError::UndecidableCellOrder { vertex })?;
@@ -296,6 +349,7 @@ fn sort_curve_outgoing_half_edges(
             half_edges,
             line_fragments,
             arc_fragments,
+            bezier_fragments,
             policy,
         )
         .expect("curve half-edge order was certified before sorting")
@@ -311,15 +365,31 @@ fn compare_curve_half_edge_angle(
     half_edges: &[CurveArrangementHalfEdge],
     line_fragments: &[LineArrangementFragment],
     arc_fragments: &[ExplicitArcArrangementFragment],
+    bezier_fragments: &[QuadraticBezierRealFragment],
     policy: PredicatePolicy,
 ) -> Option<Ordering> {
     if left == right {
         return Some(Ordering::Equal);
     }
-    let left_vector =
-        curve_half_edge_tangent(left, edges, half_edges, line_fragments, arc_fragments);
-    let right_vector =
-        curve_half_edge_tangent(right, edges, half_edges, line_fragments, arc_fragments);
+    let left_vector = curve_half_edge_tangent(
+        left,
+        edges,
+        half_edges,
+        line_fragments,
+        arc_fragments,
+        bezier_fragments,
+    );
+    let right_vector = curve_half_edge_tangent(
+        right,
+        edges,
+        half_edges,
+        line_fragments,
+        arc_fragments,
+        bezier_fragments,
+    );
+    if vector_is_zero(&left_vector, policy)? || vector_is_zero(&right_vector, policy)? {
+        return None;
+    }
     let left_upper = direction_upper_half(&left_vector.x, &left_vector.y, policy)?;
     let right_upper = direction_upper_half(&right_vector.x, &right_vector.y, policy)?;
     match (left_upper, right_upper) {
@@ -341,6 +411,7 @@ fn curve_half_edge_tangent(
     half_edges: &[CurveArrangementHalfEdge],
     line_fragments: &[LineArrangementFragment],
     arc_fragments: &[ExplicitArcArrangementFragment],
+    bezier_fragments: &[QuadraticBezierRealFragment],
 ) -> Point2 {
     let half = &half_edges[half_edge];
     let edge = &edges[half.edge];
@@ -368,7 +439,24 @@ fn curve_half_edge_tangent(
                 Point2::new(-tangent.x, -tangent.y)
             }
         }
+        CurveArrangementCellEdgeKind::QuadraticBezier => {
+            let fragment = &bezier_fragments[edge.fragments[0]];
+            if half_edge < half.twin {
+                quadratic_start_tangent(fragment)
+            } else {
+                let tangent = quadratic_end_tangent(fragment);
+                Point2::new(-tangent.x, -tangent.y)
+            }
+        }
     }
+}
+
+fn vector_is_zero(vector: &Point2, policy: PredicatePolicy) -> Option<bool> {
+    Some(
+        compare_reals_with_policy(&vector.x, &Real::zero(), policy).value()? == Ordering::Equal
+            && compare_reals_with_policy(&vector.y, &Real::zero(), policy).value()?
+                == Ordering::Equal,
+    )
 }
 
 fn direction_upper_half(dx: &Real, dy: &Real, policy: PredicatePolicy) -> Option<bool> {
@@ -408,6 +496,7 @@ fn curve_cell_faces(
     half_edges: &[CurveArrangementHalfEdge],
     line_fragments: &[LineArrangementFragment],
     arc_fragments: &[ExplicitArcArrangementFragment],
+    bezier_fragments: &[QuadraticBezierRealFragment],
     policy: PredicatePolicy,
 ) -> Result<Vec<CurveArrangementCellFace>, CurveArrangementCellError> {
     let mut visited = vec![false; half_edges.len()];
@@ -442,6 +531,7 @@ fn curve_cell_faces(
             half_edges,
             line_fragments,
             arc_fragments,
+            bezier_fragments,
         )
         .ok_or(CurveArrangementCellError::UndecidableCellArea {
             edge: half_edges[start].edge,
@@ -475,6 +565,7 @@ fn signed_curve_face_area_twice(
     half_edges: &[CurveArrangementHalfEdge],
     line_fragments: &[LineArrangementFragment],
     arc_fragments: &[ExplicitArcArrangementFragment],
+    bezier_fragments: &[QuadraticBezierRealFragment],
 ) -> Option<Real> {
     let mut area = Real::zero();
     for half_edge in cycle {
@@ -486,6 +577,7 @@ fn signed_curve_face_area_twice(
                 half_edges,
                 line_fragments,
                 arc_fragments,
+                bezier_fragments,
             )?;
     }
     Some(area)
@@ -498,6 +590,7 @@ fn signed_curve_half_edge_area_twice(
     half_edges: &[CurveArrangementHalfEdge],
     _line_fragments: &[LineArrangementFragment],
     arc_fragments: &[ExplicitArcArrangementFragment],
+    bezier_fragments: &[QuadraticBezierRealFragment],
 ) -> Option<Real> {
     let half = &half_edges[half_edge];
     let edge = &edges[half.edge];
@@ -512,6 +605,15 @@ fn signed_curve_half_edge_area_twice(
             let forward = half_edge < half.twin;
             let contribution = explicit_arc_area_twice(fragment, forward)?;
             Some(contribution)
+        }
+        CurveArrangementCellEdgeKind::QuadraticBezier => {
+            let fragment = &bezier_fragments[edge.fragments[0]];
+            let contribution = quadratic_bezier_area_twice(fragment);
+            if half_edge < half.twin {
+                Some(contribution)
+            } else {
+                Some(-contribution)
+            }
         }
     }
 }
@@ -531,4 +633,30 @@ fn explicit_arc_area_twice(
         (ArcDirection::Cw, true) | (ArcDirection::Ccw, false) => -sweep,
     };
     Some(center_term + signed_sweep)
+}
+
+fn quadratic_start_tangent(fragment: &QuadraticBezierRealFragment) -> Point2 {
+    Point2::new(
+        Real::from(2) * (fragment.curve.control().x.clone() - fragment.curve.start().x.clone()),
+        Real::from(2) * (fragment.curve.control().y.clone() - fragment.curve.start().y.clone()),
+    )
+}
+
+fn quadratic_end_tangent(fragment: &QuadraticBezierRealFragment) -> Point2 {
+    Point2::new(
+        Real::from(2) * (fragment.curve.end().x.clone() - fragment.curve.control().x.clone()),
+        Real::from(2) * (fragment.curve.end().y.clone() - fragment.curve.control().y.clone()),
+    )
+}
+
+fn quadratic_bezier_area_twice(fragment: &QuadraticBezierRealFragment) -> Real {
+    let p0 = fragment.curve.start();
+    let p1 = fragment.curve.control();
+    let p2 = fragment.curve.end();
+    ((cross(p0, p1) + cross(p0, p2) + cross(p1, p2)) / Real::from(3))
+        .expect("nonzero Green-integral denominator")
+}
+
+fn cross(first: &Point2, second: &Point2) -> Real {
+    first.x.clone() * second.y.clone() - first.y.clone() * second.x.clone()
 }
