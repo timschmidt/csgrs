@@ -64,6 +64,13 @@ doc = false
 bench = false
 
 [[bin]]
+name = "pcb_via_fabrication"
+path = "fuzz_targets/pcb_via_fabrication.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
 name = "line_arrangement"
 path = "fuzz_targets/line_arrangement.rs"
 test = false

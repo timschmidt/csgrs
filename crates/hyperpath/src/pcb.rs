@@ -22,6 +22,13 @@ use crate::provenance::PathProvenance;
 use crate::segment::{Axis, LinePathSegment, real_sign};
 use crate::swept::SweptLineSegment;
 
+mod drill_policy;
+
+pub use drill_policy::{
+    ViaAspectRatioReport, ViaFabricationAcceptance, ViaFabricationError, ViaFabricationPolicy,
+    ViaFabricationReport, ViaTransitionPolicyReport, certify_via_fabrication_policy,
+};
+
 /// Stable PCB net identifier.
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct NetId(pub u32);

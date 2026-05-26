@@ -38,7 +38,8 @@ use hyperpath::{
     SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraImportError, SpecctraLayerAlias,
     SpecctraNetAlias, SpecctraParseError, SupportFootprintStatus, SupportPlanError,
     SweptLineSegment, TangentAlignment, TangentJoinClass, TangentJoinReport, TangentSpan,
-    TraceLayer, ViaAnnularRingReport, ViaDrillIntent, ViaDrillPolicyClass, ViaLayerSpanRelation,
+    TraceLayer, ViaAnnularRingReport, ViaAspectRatioReport, ViaDrillIntent, ViaDrillPolicyClass,
+    ViaFabricationAcceptance, ViaFabricationError, ViaFabricationPolicy, ViaLayerSpanRelation,
     ViaLayerTransitionClass, arrange_cubic_beziers, arrange_explicit_arcs, arrange_line_segments,
     arrange_line_segments_with_cubic_beziers, arrange_line_segments_with_explicit_arcs,
     arrange_line_segments_with_quadratic_beziers,
@@ -58,14 +59,15 @@ use hyperpath::{
     certify_multi_phase_jerk_ramp_feed_schedule, certify_quintic_ph_g1_smoothing,
     certify_quintic_ph_g1_smoothing_between, certify_quintic_ph_inverse_length,
     certify_symmetric_jerk_limited_feed_time, certify_symmetric_jerk_limited_feed_time_for_path,
-    certify_tangent_alignment_candidate, check_cardinal_rect_pad_board_clearance,
-    check_circular_pad_board_clearance, check_circular_pad_circular_board_clearance,
-    check_circular_pad_obround_board_clearance, check_convex_pad_board_clearance,
-    check_obround_pad_board_clearance, check_oriented_rect_pad_board_clearance,
-    check_orthogonal_pad_board_clearance, check_rect_pad_board_clearance,
-    check_rounded_rect_pad_board_clearance, check_trace_board_clearance,
-    check_trace_cardinal_rect_pad_clearance, check_trace_circular_board_clearance,
-    check_trace_clearance, check_trace_convex_board_clearance, check_trace_convex_pad_clearance,
+    certify_tangent_alignment_candidate, certify_via_fabrication_policy,
+    check_cardinal_rect_pad_board_clearance, check_circular_pad_board_clearance,
+    check_circular_pad_circular_board_clearance, check_circular_pad_obround_board_clearance,
+    check_convex_pad_board_clearance, check_obround_pad_board_clearance,
+    check_oriented_rect_pad_board_clearance, check_orthogonal_pad_board_clearance,
+    check_rect_pad_board_clearance, check_rounded_rect_pad_board_clearance,
+    check_trace_board_clearance, check_trace_cardinal_rect_pad_clearance,
+    check_trace_circular_board_clearance, check_trace_clearance,
+    check_trace_convex_board_clearance, check_trace_convex_pad_clearance,
     check_trace_obround_board_clearance, check_trace_obround_pad_clearance,
     check_trace_oriented_rect_pad_clearance, check_trace_orthogonal_board_clearance,
     check_trace_orthogonal_pad_clearance, check_trace_pad_clearance,
@@ -3213,6 +3215,155 @@ fn pcb_via_drill_policy_separates_plated_nonplated_and_missing_intent() {
     );
     assert_eq!(unspecified_report.intent, ViaDrillIntent::Unspecified);
     assert_eq!(unspecified_report.annular_ring, None);
+}
+
+#[test]
+fn pcb_via_fabrication_policy_accepts_certified_plated_through_via() {
+    let via = PcbViaStack::with_drill(NetId(1), TraceLayer(0), TraceLayer(3), p(0, 0), r(20), r(4))
+        .unwrap();
+    let policy = ViaFabricationPolicy::through_only(4, r(24), r(3), r(6));
+    let report = certify_via_fabrication_policy(&via, &policy, PredicatePolicy::default()).unwrap();
+
+    assert_eq!(
+        report.transition_policy.transition.class,
+        ViaLayerTransitionClass::ThroughVia
+    );
+    assert!(report.transition_policy.allowed);
+    assert_eq!(
+        report.drill_policy.class,
+        ViaDrillPolicyClass::PlatedCopperVia
+    );
+    assert_eq!(
+        report.drill_policy.annular_ring,
+        Some(ViaAnnularRingReport::Certified)
+    );
+    assert_eq!(report.aspect_ratio, ViaAspectRatioReport::Certified);
+    assert_eq!(report.acceptance, ViaFabricationAcceptance::Accepted);
+}
+
+#[test]
+fn pcb_via_fabrication_policy_reports_transition_annular_aspect_and_intent_failures() {
+    let blind =
+        PcbViaStack::with_drill(NetId(1), TraceLayer(0), TraceLayer(1), p(0, 0), r(20), r(4))
+            .unwrap();
+    let through_only = ViaFabricationPolicy::through_only(4, r(24), r(3), r(6));
+    let blind_report =
+        certify_via_fabrication_policy(&blind, &through_only, PredicatePolicy::default()).unwrap();
+    assert_eq!(
+        blind_report.transition_policy.transition.class,
+        ViaLayerTransitionClass::BlindVia
+    );
+    assert!(!blind_report.transition_policy.allowed);
+    assert_eq!(blind_report.acceptance, ViaFabricationAcceptance::Rejected);
+
+    let poor_ring =
+        PcbViaStack::with_drill(NetId(1), TraceLayer(0), TraceLayer(3), p(0, 0), r(8), r(4))
+            .unwrap();
+    let poor_ring_report =
+        certify_via_fabrication_policy(&poor_ring, &through_only, PredicatePolicy::default())
+            .unwrap();
+    assert_eq!(
+        poor_ring_report.drill_policy.annular_ring,
+        Some(ViaAnnularRingReport::Violation)
+    );
+    assert_eq!(
+        poor_ring_report.acceptance,
+        ViaFabricationAcceptance::Rejected
+    );
+
+    let poor_aspect =
+        PcbViaStack::with_drill(NetId(1), TraceLayer(0), TraceLayer(3), p(0, 0), r(20), r(3))
+            .unwrap();
+    let poor_aspect_report =
+        certify_via_fabrication_policy(&poor_aspect, &through_only, PredicatePolicy::default())
+            .unwrap();
+    assert_eq!(
+        poor_aspect_report.aspect_ratio,
+        ViaAspectRatioReport::Violation
+    );
+    assert_eq!(
+        poor_aspect_report.acceptance,
+        ViaFabricationAcceptance::Rejected
+    );
+
+    let non_plated = PcbViaStack::with_drill_intent(
+        NetId(1),
+        TraceLayer(0),
+        TraceLayer(3),
+        p(0, 0),
+        r(20),
+        r(4),
+        ViaDrillIntent::NonPlated,
+    )
+    .unwrap();
+    let non_plated_report =
+        certify_via_fabrication_policy(&non_plated, &through_only, PredicatePolicy::default())
+            .unwrap();
+    assert_eq!(
+        non_plated_report.drill_policy.class,
+        ViaDrillPolicyClass::NonPlatedMechanicalHole
+    );
+    assert_eq!(
+        non_plated_report.acceptance,
+        ViaFabricationAcceptance::Rejected
+    );
+}
+
+#[test]
+fn pcb_via_fabrication_policy_reports_unknown_and_invalid_inputs() {
+    let missing = PcbViaStack::new(NetId(1), TraceLayer(0), TraceLayer(3), p(0, 0), r(20)).unwrap();
+    let policy = ViaFabricationPolicy::through_only(4, r(24), r(3), r(6));
+    let missing_report =
+        certify_via_fabrication_policy(&missing, &policy, PredicatePolicy::default()).unwrap();
+    assert_eq!(
+        missing_report.aspect_ratio,
+        ViaAspectRatioReport::UnknownNoDrill
+    );
+    assert_eq!(missing_report.acceptance, ViaFabricationAcceptance::Unknown);
+
+    let outside =
+        PcbViaStack::with_drill(NetId(1), TraceLayer(0), TraceLayer(4), p(0, 0), r(20), r(4))
+            .unwrap();
+    assert_eq!(
+        certify_via_fabrication_policy(&outside, &policy, PredicatePolicy::default()).unwrap_err(),
+        ViaFabricationError::ViaOutsideBoardStackup
+    );
+    assert_eq!(
+        certify_via_fabrication_policy(
+            &missing,
+            &ViaFabricationPolicy::through_only(0, r(24), r(3), r(6)),
+            PredicatePolicy::default()
+        )
+        .unwrap_err(),
+        ViaFabricationError::InvalidBoardLayerCount
+    );
+    assert_eq!(
+        certify_via_fabrication_policy(
+            &missing,
+            &ViaFabricationPolicy::through_only(4, r(0), r(3), r(6)),
+            PredicatePolicy::default()
+        )
+        .unwrap_err(),
+        ViaFabricationError::NonPositiveBoardThickness
+    );
+    assert_eq!(
+        certify_via_fabrication_policy(
+            &missing,
+            &ViaFabricationPolicy::through_only(4, r(24), r(3), r(0)),
+            PredicatePolicy::default()
+        )
+        .unwrap_err(),
+        ViaFabricationError::NonPositiveAspectRatio
+    );
+    assert_eq!(
+        certify_via_fabrication_policy(
+            &missing,
+            &ViaFabricationPolicy::through_only(4, r(24), r(-1), r(6)),
+            PredicatePolicy::default()
+        )
+        .unwrap_err(),
+        ViaFabricationError::NegativeAnnularRing
+    );
 }
 
 #[test]
@@ -7754,6 +7905,68 @@ proptest! {
         prop_assert_eq!(report.intent, ViaDrillIntent::Plated);
         prop_assert_eq!(report.drill_diameter, Some(r(i64::from(drill))));
         prop_assert_eq!(report.annular_ring, Some(expected));
+    }
+
+    #[test]
+    fn via_fabrication_policy_generated_through_vias_match_exact_rules(
+        land in 0_i16..=96,
+        drill in 0_i16..=48,
+        board_thickness in 1_i16..=96,
+        minimum in 0_i16..=24,
+        aspect in 1_i16..=16,
+    ) {
+        let land = i64::from(land);
+        let drill = i64::from(drill);
+        let board_thickness = i64::from(board_thickness);
+        let minimum = i64::from(minimum);
+        let aspect = i64::from(aspect);
+        let via = PcbViaStack::with_drill(
+            NetId(1),
+            TraceLayer(0),
+            TraceLayer(3),
+            p(0, 0),
+            r(land),
+            r(drill),
+        ).unwrap();
+        let policy = ViaFabricationPolicy::through_only(
+            4,
+            r(board_thickness),
+            r(minimum),
+            r(aspect),
+        );
+        let report = certify_via_fabrication_policy(
+            &via,
+            &policy,
+            PredicatePolicy::default(),
+        ).unwrap();
+        let annular_ok = land >= drill + 2 * minimum;
+        let aspect_ok = board_thickness <= drill * aspect;
+
+        prop_assert!(report.transition_policy.allowed);
+        prop_assert_eq!(
+            report.drill_policy.annular_ring,
+            Some(if annular_ok {
+                ViaAnnularRingReport::Certified
+            } else {
+                ViaAnnularRingReport::Violation
+            })
+        );
+        prop_assert_eq!(
+            report.aspect_ratio,
+            if aspect_ok {
+                ViaAspectRatioReport::Certified
+            } else {
+                ViaAspectRatioReport::Violation
+            }
+        );
+        prop_assert_eq!(
+            report.acceptance,
+            if annular_ok && aspect_ok {
+                ViaFabricationAcceptance::Accepted
+            } else {
+                ViaFabricationAcceptance::Rejected
+            }
+        );
     }
 
     #[test]

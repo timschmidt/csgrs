@@ -13,7 +13,7 @@ use hyperpath::{
     RectangularPocket, SourceLengthUnit, SpecctraGridArcWireRecord, SpecctraGridKeepoutRecord,
     SpecctraGridKeepoutShape, SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraLayerAlias,
     SpecctraNetAlias, SweptLineSegment, TangentSpan, TraceLayer, ViaDrillIntent,
-    arrange_cubic_beziers, arrange_explicit_arcs, arrange_line_segments,
+    ViaFabricationPolicy, arrange_cubic_beziers, arrange_explicit_arcs, arrange_line_segments,
     arrange_line_segments_with_cubic_beziers, arrange_line_segments_with_explicit_arcs,
     arrange_line_segments_with_quadratic_beziers,
     arrange_line_segments_with_rational_quadratic_beziers, arrange_quadratic_beziers,
@@ -32,14 +32,14 @@ use hyperpath::{
     certify_multi_phase_jerk_ramp_feed_schedule, certify_quintic_ph_g1_smoothing,
     certify_quintic_ph_inverse_length, certify_symmetric_jerk_limited_feed_time,
     certify_symmetric_jerk_limited_feed_time_for_path, certify_tangent_alignment_candidate,
-    check_cardinal_rect_pad_board_clearance, check_circular_pad_board_clearance,
-    check_circular_pad_circular_board_clearance, check_circular_pad_obround_board_clearance,
-    check_convex_pad_board_clearance, check_obround_pad_board_clearance,
-    check_oriented_rect_pad_board_clearance, check_orthogonal_pad_board_clearance,
-    check_rect_pad_board_clearance, check_rounded_rect_pad_board_clearance,
-    check_trace_board_clearance, check_trace_cardinal_rect_pad_clearance,
-    check_trace_circular_board_clearance, check_trace_clearance,
-    check_trace_convex_board_clearance, check_trace_convex_pad_clearance,
+    certify_via_fabrication_policy, check_cardinal_rect_pad_board_clearance,
+    check_circular_pad_board_clearance, check_circular_pad_circular_board_clearance,
+    check_circular_pad_obround_board_clearance, check_convex_pad_board_clearance,
+    check_obround_pad_board_clearance, check_oriented_rect_pad_board_clearance,
+    check_orthogonal_pad_board_clearance, check_rect_pad_board_clearance,
+    check_rounded_rect_pad_board_clearance, check_trace_board_clearance,
+    check_trace_cardinal_rect_pad_clearance, check_trace_circular_board_clearance,
+    check_trace_clearance, check_trace_convex_board_clearance, check_trace_convex_pad_clearance,
     check_trace_obround_board_clearance, check_trace_obround_pad_clearance,
     check_trace_oriented_rect_pad_clearance, check_trace_orthogonal_board_clearance,
     check_trace_orthogonal_pad_clearance, check_trace_pad_clearance,
@@ -682,6 +682,16 @@ fn path_predicates(c: &mut Criterion) {
     });
     c.bench_function("via_drill_policy_classification", |b| {
         b.iter(|| drilled_via.classify_drill_policy(&r(3), PredicatePolicy::default()))
+    });
+    let via_fabrication_policy = ViaFabricationPolicy::through_only(4, r(24), r(3), r(6));
+    c.bench_function("via_fabrication_policy_certification", |b| {
+        b.iter(|| {
+            certify_via_fabrication_policy(
+                &drilled_via,
+                &via_fabrication_policy,
+                PredicatePolicy::default(),
+            )
+        })
     });
 
     let rect = PcbRectPad::new(NetId(2), TraceLayer(0), p(500, 6), r(10), r(2)).unwrap();
