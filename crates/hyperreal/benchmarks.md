@@ -117,10 +117,8 @@ Low-level approximation kernels and deep expression-tree stress cases.
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `computable_transcendentals/legacy_exp_one_p128` | 2.893 us | 2.873 us - 2.918 us | Runs the legacy direct exp series for input 1 at p=-128. |
 | `computable_transcendentals/e_constant_cold_p128` | 41.40 ns | 41.04 ns - 41.84 ns | Approximates the shared e constant from a fresh clone. |
 | `computable_transcendentals/e_constant_cached_p128` | 31.63 ns | 29.14 ns - 34.38 ns | Repeats a cached approximation of e. |
-| `computable_transcendentals/legacy_exp_half_p128` | 2.505 us | 2.484 us - 2.529 us | Runs the legacy direct exp series for input 1/2 at p=-128. |
 | `computable_transcendentals/exp_cold_p128` | 3.754 us | 3.748 us - 3.761 us | Approximates exp(7/5) from a fresh clone. |
 | `computable_transcendentals/exp_cached_p128` | 21.87 ns | 21.82 ns - 21.93 ns | Repeats a cached exp(7/5) approximation. |
 | `computable_transcendentals/exp_large_cold_p128` | 7.266 us | 7.241 us - 7.294 us | Approximates exp(128), exercising large-argument reduction. |

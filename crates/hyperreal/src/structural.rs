@@ -401,7 +401,7 @@ pub enum RationalStorageClass {
 /// Conservative primitive floating-point range classification.
 ///
 /// These facts are intentionally conservative and opt-in. A previous broad
-/// `to_f64_approx` preflight regressed dense symbolic conversions, so the facts
+/// `to_f64_lossy` preflight regressed dense symbolic conversions, so the facts
 /// are exposed for callers that can amortize the query rather than being used
 /// unconditionally in conversion hot paths.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

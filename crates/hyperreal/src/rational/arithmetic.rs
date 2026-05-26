@@ -80,7 +80,7 @@ impl<'de> Deserialize<'de> for Rational {
 
 static ONE: LazyLock<BigUint> = LazyLock::new(BigUint::one);
 // Small positive constants use their narrow primitive source type; this keeps
-// construction direct and avoids the older `ToBigUint` conversion shim.
+// construction direct and avoids an intermediate `ToBigUint` conversion.
 static TWO: LazyLock<BigUint> = LazyLock::new(|| BigUint::from(2_u8));
 static FIVE: LazyLock<BigUint> = LazyLock::new(|| BigUint::from(5_u8));
 static TEN: LazyLock<BigUint> = LazyLock::new(|| BigUint::from(10_u8));
@@ -1236,7 +1236,7 @@ impl Rational {
         }
     }
 
-    pub(crate) fn to_f64_approx(&self) -> Option<f64> {
+    pub(crate) fn to_f64_lossy(&self) -> Option<f64> {
         // Fast borrowed approximate conversion for modest rationals. If either
         // side cannot fit through num-traits' f64 conversion, callers fall back
         // to the general Computable approximation path.

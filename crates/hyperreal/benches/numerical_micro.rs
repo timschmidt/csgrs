@@ -1,6 +1,5 @@
 use criterion::{BatchSize, Criterion, black_box, criterion_group, criterion_main};
 use hyperreal::{Computable, Rational};
-use num::Signed;
 use num::bigint::{BigInt, BigUint};
 use std::ops::Neg;
 
@@ -129,20 +128,12 @@ const NUMERICAL_MICRO_GROUPS: &[BenchGroupDoc] = &[
         description: "Low-level approximation kernels and deep expression-tree stress cases.",
         benches: &[
             BenchDoc {
-                name: "legacy_exp_one_p128",
-                description: "Runs the legacy direct exp series for input 1 at p=-128.",
-            },
-            BenchDoc {
                 name: "e_constant_cold_p128",
                 description: "Approximates the shared e constant from a fresh clone.",
             },
             BenchDoc {
                 name: "e_constant_cached_p128",
                 description: "Repeats a cached approximation of e.",
-            },
-            BenchDoc {
-                name: "legacy_exp_half_p128",
-                description: "Runs the legacy direct exp series for input 1/2 at p=-128.",
             },
             BenchDoc {
                 name: "exp_cold_p128",
@@ -580,45 +571,6 @@ fn inverse_half_product_chain(depth: usize) -> Computable {
     deep_half_product_chain(depth).inverse()
 }
 
-fn bench_scale(n: BigInt, p: i32) -> BigInt {
-    if p >= 0 {
-        n << p
-    } else {
-        let shifted = n >> (-p - 1);
-        (shifted + BigInt::from(1_u8)) >> 1
-    }
-}
-
-fn bound_log2(n: i32) -> i32 {
-    let abs_n = n.abs();
-    let ans = ((abs_n + 1) as f64).ln() / 2.0_f64.ln();
-    ans.ceil() as i32
-}
-
-fn legacy_exp_rational(input: &Rational, p: i32) -> BigInt {
-    if p >= 1 {
-        return BigInt::from(0_u8);
-    }
-
-    let iterations_needed = -p / 2 + 2;
-    let calc_precision = p - bound_log2(2 * iterations_needed) - 4;
-    let op_prec = p - 3;
-    let op_appr = input.shifted_big_integer(-op_prec);
-    let scaled_1 = BigInt::from(1_u8) << -calc_precision;
-    let max_trunc_error = BigInt::from(1_u8) << (p - 4 - calc_precision);
-    let mut current_term = scaled_1.clone();
-    let mut sum = scaled_1;
-    let mut n: i32 = 0;
-
-    while current_term.abs() > max_trunc_error {
-        n += 1;
-        current_term = bench_scale(current_term * &op_appr, op_prec) / n;
-        sum += &current_term;
-    }
-
-    bench_scale(sum, calc_precision - p)
-}
-
 fn perturbed_scaled_product_chain(depth: usize) -> Computable {
     let scale = Computable::rational(Rational::fraction(7, 8).unwrap());
     let epsilon = Computable::rational(Rational::fraction(1, 1024).unwrap());
@@ -879,10 +831,6 @@ fn bench_computable_transcendentals(c: &mut Criterion) {
     let p = -128;
     let trig_p = -96;
 
-    let e_input = Rational::one();
-    group.bench_function("legacy_exp_one_p128", |b| {
-        b.iter(|| black_box(legacy_exp_rational(&e_input, p)))
-    });
     group.bench_function("e_constant_cold_p128", |b| {
         b.iter_batched(
             || Computable::rational(Rational::one()).exp(),
@@ -894,11 +842,6 @@ fn bench_computable_transcendentals(c: &mut Criterion) {
     e_cached.approx(p);
     group.bench_function("e_constant_cached_p128", |b| {
         b.iter(|| black_box(e_cached.approx(p)))
-    });
-
-    let exp_half_input = Rational::fraction(1, 2).unwrap();
-    group.bench_function("legacy_exp_half_p128", |b| {
-        b.iter(|| black_box(legacy_exp_rational(&exp_half_input, p)))
     });
 
     let exp_input = Computable::rational(Rational::fraction(7, 5).unwrap());

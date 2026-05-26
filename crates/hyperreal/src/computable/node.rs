@@ -2694,9 +2694,9 @@ impl Computable {
 
     fn ln_shared_or_smooth_rational(rational: &Rational) -> Option<Self> {
         // Shared logs for small smooth bases reuse one approximation cache
-        // across all expressions. Extracting the integer once prevents the
-        // older pattern of constructing several candidate rationals just to
-        // reject them. Smooth-factor decomposition below remains exact.
+        // across all expressions. Extracting the integer once avoids
+        // constructing several candidate rationals just to reject them.
+        // Smooth-factor decomposition below remains exact.
         if let Some(integer) = rational.to_integer_i64() {
             match integer {
                 2 => {
@@ -3056,7 +3056,7 @@ impl Computable {
         {
             // Perfect rational squares stay exact. For scaled sqrt(2)/sqrt(3)
             // residuals, keep the irrational part shared and the exact scale
-            // symbolic. Plain sqrt(2) and sqrt(3) deliberately stay on the old
+            // symbolic. Plain sqrt(2) and sqrt(3) deliberately stay on the
             // generic node because repeated cached approximation of a single
             // node is faster than a thread-local shared-cache lookup.
             let (root, rest) = rational.extract_square_reduced();

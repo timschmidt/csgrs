@@ -12,7 +12,6 @@ mod approximation;
 mod constants;
 mod format;
 mod node;
-mod symbolic;
 
 pub use node::Computable;
 pub use node::Precision;

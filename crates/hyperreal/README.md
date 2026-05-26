@@ -329,7 +329,6 @@ Supported conversions include:
 - finite `f32`/`f64` to `Rational` and `Real` by exact IEEE-754 decoding;
 - `Real` to `f32`/`f64` by approximation;
 - `Real::to_f32_lossy()` and `Real::to_f64_lossy()` for borrowed primitive exports;
-- `Real::to_f64_approx()` as a compatibility spelling for older callers.
 
 Float import rejects `NaN` and infinities. Borrowed lossy export returns `None` when no
 finite primitive-float approximation can be produced. Scientific notation is not a

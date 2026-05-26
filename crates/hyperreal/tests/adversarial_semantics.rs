@@ -33,7 +33,7 @@ fn assert_same_semantics(left: &Real, right: &Real) {
     assert_eq!(left.structural_facts(), right.structural_facts());
     assert_eq!(left.zero_status(), right.zero_status());
     assert_eq!(left.refine_sign_until(-64), right.refine_sign_until(-64));
-    assert_eq!(left.to_f64_approx(), right.to_f64_approx());
+    assert_eq!(left.to_f64_lossy(), right.to_f64_lossy());
 }
 
 #[test]
@@ -53,7 +53,7 @@ fn scalar_fact_queries_are_stable_across_repeated_and_warmed_access() {
 
     for value in values {
         assert_stable_facts(&value);
-        let _ = value.to_f64_approx();
+        let _ = value.to_f64_lossy();
         let _ = value.refine_sign_until(-128);
         assert_stable_facts(&value);
     }

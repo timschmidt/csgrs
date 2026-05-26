@@ -1390,7 +1390,7 @@ mod tests {
     #[test]
     fn log2_ln_quotient_ignores_warmed_numerator_cache() {
         let numerator = Real::new(Rational::new(5)).ln().unwrap();
-        let warmed = numerator.to_f64_approx().unwrap();
+        let warmed = numerator.to_f64_lossy().unwrap();
         assert!((warmed - 5.0_f64.ln()).abs() < 1e-12);
 
         let denominator = Real::new(Rational::new(2)).ln().unwrap();
@@ -1749,9 +1749,7 @@ mod tests {
         );
         let expected = &(&pi * &half * &e) - &(&e * &third * &pi) + &(&zero * &neg_five * &pi);
 
-        assert!(
-            (actual.to_f64_approx().unwrap() - expected.to_f64_approx().unwrap()).abs() < 1e-12
-        );
+        assert!((actual.to_f64_lossy().unwrap() - expected.to_f64_lossy().unwrap()).abs() < 1e-12);
     }
 
     #[test]
@@ -1777,24 +1775,18 @@ mod tests {
             [&left[0], &left[1], &left[2], &left[3]],
             [&right[0], &right[1], &right[2], &right[3]],
         );
-        assert!(
-            (actual.to_f64_approx().unwrap() - expected.to_f64_approx().unwrap()).abs() < 1e-12
-        );
+        assert!((actual.to_f64_lossy().unwrap() - expected.to_f64_lossy().unwrap()).abs() < 1e-12);
 
         let expected = &(&left[0] * &right[0]) + &(&left[1] * &right[1]) + &(&left[2] * &right[2]);
         let actual = Real::dot3_refs(
             [&left[0], &left[1], &left[2]],
             [&right[0], &right[1], &right[2]],
         );
-        assert!(
-            (actual.to_f64_approx().unwrap() - expected.to_f64_approx().unwrap()).abs() < 1e-12
-        );
+        assert!((actual.to_f64_lossy().unwrap() - expected.to_f64_lossy().unwrap()).abs() < 1e-12);
 
         let expected = &(&left[0] * &right[0]) + &(&left[1] * &right[1]);
         let actual = Real::dot2_refs([&left[0], &left[1]], [&right[0], &right[1]]);
-        assert!(
-            (actual.to_f64_approx().unwrap() - expected.to_f64_approx().unwrap()).abs() < 1e-12
-        );
+        assert!((actual.to_f64_lossy().unwrap() - expected.to_f64_lossy().unwrap()).abs() < 1e-12);
     }
 
     #[test]
@@ -1928,7 +1920,7 @@ mod tests {
         let got = y.atan2(Real::one());
         let expected = tiny.atan2(Real::one());
         assert_ne!(got, Real::zero());
-        assert_eq!(got.to_f64_approx(), expected.to_f64_approx());
+        assert_eq!(got.to_f64_lossy(), expected.to_f64_lossy());
     }
 
     #[test]
@@ -1956,9 +1948,7 @@ mod tests {
         let right = [Real::e(), Real::pi()];
         let expected = &(&left[0] * &right[0]) + &(&left[1] * &right[1]);
         let actual = Real::dot2_refs([&left[0], &left[1]], [&right[0], &right[1]]);
-        assert!(
-            (actual.to_f64_approx().unwrap() - expected.to_f64_approx().unwrap()).abs() < 1e-12
-        );
+        assert!((actual.to_f64_lossy().unwrap() - expected.to_f64_lossy().unwrap()).abs() < 1e-12);
         assert_eq!(
             Real::dot2_refs([&left[0], &left[1]], [&right[0], &right[1]]),
             expected,
@@ -1971,7 +1961,7 @@ mod tests {
         let right = [Real::pi(), Real::e()];
         let expected = &left[1] * &right[1];
         let actual = Real::dot2_refs([&left[0], &left[1]], [&right[0], &right[1]]);
-        assert!((actual.to_f64_approx().unwrap() - expected.to_f64_approx().unwrap()).abs() < 1e-12)
+        assert!((actual.to_f64_lossy().unwrap() - expected.to_f64_lossy().unwrap()).abs() < 1e-12)
     }
 
     #[test]
@@ -2075,8 +2065,6 @@ mod tests {
         ];
         let expected = Real::dot2_refs([&left[0], &left[1]], [&right[0], &right[1]]);
         let actual = Real::active_dot2_refs([&left[0], &left[1]], [&right[0], &right[1]]);
-        assert!(
-            (actual.to_f64_approx().unwrap() - expected.to_f64_approx().unwrap()).abs() < 1e-12
-        );
+        assert!((actual.to_f64_lossy().unwrap() - expected.to_f64_lossy().unwrap()).abs() < 1e-12);
     }
 }

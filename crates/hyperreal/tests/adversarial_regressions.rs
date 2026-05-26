@@ -109,6 +109,6 @@ fn compare_and_equality_do_not_conflate_nearby_cancellation_values() {
 
     assert_ne!(pi_error, Real::zero());
     assert_ne!(sqrt_error, Real::zero());
-    assert_ne!(pi_error.to_f64_approx(), Some(0.0));
-    assert_ne!(sqrt_error.to_f64_approx(), Some(0.0));
+    assert_ne!(pi_error.to_f64_lossy(), Some(0.0));
+    assert_ne!(sqrt_error.to_f64_lossy(), Some(0.0));
 }

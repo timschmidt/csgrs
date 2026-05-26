@@ -216,7 +216,7 @@ impl Real {
             return value;
         }
 
-        let value = self.to_f32_approx_uncached();
+        let value = self.to_f32_lossy_uncached();
         #[cfg(feature = "cached-f32-approx")]
         if matches!(
             self.primitive_approx_cache.get(),
@@ -228,17 +228,7 @@ impl Real {
         value
     }
 
-    /// Return a finite borrowed `f32` approximation, or `None` on overflow.
-    ///
-    /// This compatibility name is intentionally documented as lossy. Prefer
-    /// [`Real::to_f32_lossy`] at new API boundaries so primitive-float export is
-    /// visibly separated from certified predicate/sign APIs.
-    #[inline]
-    pub fn to_f32_approx(&self) -> Option<f32> {
-        self.to_f32_lossy()
-    }
-
-    fn to_f32_approx_uncached(&self) -> Option<f32> {
+    fn to_f32_lossy_uncached(&self) -> Option<f32> {
         const NEG_BITS: u32 = 0x8000_0000;
         const EXP_BITS: u32 = 0x7f80_0000;
 
@@ -371,31 +361,21 @@ impl Real {
             return value;
         }
 
-        let value = self.to_f64_approx_uncached();
+        let value = self.to_f64_lossy_uncached();
         #[cfg(feature = "cached-f64-approx")]
         self.primitive_approx_cache
             .set(PrimitiveApproxCache::F64(value));
         value
     }
 
-    /// Return a finite borrowed `f64` approximation, or `None` on overflow.
-    ///
-    /// This compatibility name is intentionally documented as lossy. Prefer
-    /// [`Real::to_f64_lossy`] at new API boundaries so primitive-float export is
-    /// visibly separated from certified predicate/sign APIs.
-    #[inline]
-    pub fn to_f64_approx(&self) -> Option<f64> {
-        self.to_f64_lossy()
-    }
-
-    fn to_f64_approx_uncached(&self) -> Option<f64> {
+    fn to_f64_lossy_uncached(&self) -> Option<f64> {
         const NEG_BITS: u64 = 0x8000_0000_0000_0000;
         const EXP_BITS: u64 = 0x7ff0_0000_0000_0000;
 
         use crate::real::Class;
 
         if matches!(self.class, Class::One)
-            && let fast @ Some(_) = self.rational.to_f64_approx()
+            && let fast @ Some(_) = self.rational.to_f64_lossy()
         {
             // Exact rationals can often be rounded to f64 without touching the
             // lazy computable tree. This matters for matrix/predicate code that
@@ -408,7 +388,7 @@ impl Real {
                 Class::Pi => Some(std::f64::consts::PI),
                 Class::PiInv => Some(1.0 / std::f64::consts::PI),
                 Class::PiPow(power) => Some(std::f64::consts::PI.powi(i32::from(*power))),
-                Class::Sqrt(radicand) => radicand.to_f64_approx().map(f64::sqrt),
+                Class::Sqrt(radicand) => radicand.to_f64_lossy().map(f64::sqrt),
                 _ => None,
             };
             if let Some(value) = value
@@ -420,23 +400,23 @@ impl Real {
             return Some(std::f64::consts::TAU);
         }
 
-        if let Some(scale) = self.rational.to_f64_approx() {
+        if let Some(scale) = self.rational.to_f64_lossy() {
             let value = match &self.class {
                 Class::Pi => Some(scale * std::f64::consts::PI),
                 Class::PiInv => Some(scale / std::f64::consts::PI),
                 Class::PiPow(power) => Some(scale * std::f64::consts::PI.powi(i32::from(*power))),
-                Class::Exp(exp) => exp.to_f64_approx().map(|exp| scale * exp.exp()),
+                Class::Exp(exp) => exp.to_f64_lossy().map(|exp| scale * exp.exp()),
                 Class::PiExp(exp) => exp
-                    .to_f64_approx()
+                    .to_f64_lossy()
                     .map(|exp| scale * std::f64::consts::PI * exp.exp()),
                 Class::PiInvExp(exp) => exp
-                    .to_f64_approx()
+                    .to_f64_lossy()
                     .map(|exp| scale / std::f64::consts::PI * exp.exp()),
                 Class::Sqrt(radicand) => radicand
-                    .to_f64_approx()
+                    .to_f64_lossy()
                     .map(|radicand| scale * radicand.sqrt()),
                 Class::PiSqrt(radicand) => radicand
-                    .to_f64_approx()
+                    .to_f64_lossy()
                     .map(|radicand| scale * std::f64::consts::PI * radicand.sqrt()),
                 _ => None,
             };
@@ -724,23 +704,19 @@ mod tests {
     }
 
     #[test]
-    fn borrowed_f64_approx_finite_values() {
+    fn borrowed_f64_lossy_finite_values() {
         let half = Real::new(Rational::fraction(1, 2).unwrap());
-        assert_eq!(half.to_f64_approx(), Some(0.5));
         assert_eq!(half.to_f64_lossy(), Some(0.5));
 
         let one_third = Real::new(Rational::fraction(1, 3).unwrap());
-        assert_eq!(one_third.to_f64_approx(), Some(1.0 / 3.0));
         assert_eq!(one_third.to_f64_lossy(), Some(1.0 / 3.0));
 
-        let pi = Real::pi().to_f64_approx().unwrap();
-        let pi_lossy = Real::pi().to_f64_lossy().unwrap();
+        let pi = Real::pi().to_f64_lossy().unwrap();
         assert!(std::f64::consts::PI.to_bits().abs_diff(pi.to_bits()) < 2);
-        assert!(std::f64::consts::PI.to_bits().abs_diff(pi_lossy.to_bits()) < 2);
     }
 
     #[test]
-    fn borrowed_lossy_float_exports_match_compatibility_approx_names() {
+    fn borrowed_lossy_float_exports_are_repeatable() {
         let values = [
             Real::from(0),
             Real::new(Rational::fraction(1, 7).unwrap()),
@@ -749,39 +725,38 @@ mod tests {
         ];
 
         for value in values {
-            assert_eq!(
-                value.to_f32_lossy().map(f32::to_bits),
-                value.to_f32_approx().map(f32::to_bits)
-            );
-            assert_eq!(
-                value.to_f64_lossy().map(f64::to_bits),
-                value.to_f64_approx().map(f64::to_bits)
-            );
+            let first_f32 = value.to_f32_lossy().map(f32::to_bits);
+            let second_f32 = value.to_f32_lossy().map(f32::to_bits);
+            assert_eq!(first_f32, second_f32);
+
+            let first_f64 = value.to_f64_lossy().map(f64::to_bits);
+            let second_f64 = value.to_f64_lossy().map(f64::to_bits);
+            assert_eq!(first_f64, second_f64);
         }
     }
 
     #[test]
-    fn borrowed_f64_approx_underflow_and_overflow() {
+    fn borrowed_f64_lossy_underflow_and_overflow() {
         let tiny = Real::new(
             Rational::from_bigint_fraction(BigInt::from(1), num::BigUint::from(1_u8) << 1200)
                 .unwrap(),
         );
-        assert_eq!(tiny.to_f64_approx(), Some(0.0));
+        assert_eq!(tiny.to_f64_lossy(), Some(0.0));
 
         let negative_tiny = -tiny;
-        assert_eq!(negative_tiny.to_f64_approx(), Some(0.0));
+        assert_eq!(negative_tiny.to_f64_lossy(), Some(0.0));
 
         let huge = Real::new(Rational::from_bigint(BigInt::from(1_u8) << 1200));
-        assert_eq!(huge.to_f64_approx(), None);
+        assert_eq!(huge.to_f64_lossy(), None);
 
         let negative_huge = -huge;
-        assert_eq!(negative_huge.to_f64_approx(), None);
+        assert_eq!(negative_huge.to_f64_lossy(), None);
     }
 
     #[test]
-    fn borrowed_f64_approx_tracks_negative_finite_values() {
+    fn borrowed_f64_lossy_tracks_negative_finite_values() {
         let value = -(Real::new(Rational::new(2)).sqrt().unwrap());
-        let approx = value.to_f64_approx().unwrap();
+        let approx = value.to_f64_lossy().unwrap();
         assert!(approx.is_sign_negative());
         assert!((approx + std::f64::consts::SQRT_2).abs() < 1e-15);
     }
@@ -791,14 +766,14 @@ mod tests {
     fn primitive_approx_cache_fills_and_upgrades() {
         let value = Real::pi();
 
-        let f32_value = value.to_f32_approx().unwrap();
+        let f32_value = value.to_f32_lossy().unwrap();
         assert!(std::f32::consts::PI.to_bits().abs_diff(f32_value.to_bits()) < 2);
         assert!(matches!(
             value.primitive_approx_cache.get(),
             PrimitiveApproxCache::F32(Some(_))
         ));
 
-        let f64_value = value.to_f64_approx().unwrap();
+        let f64_value = value.to_f64_lossy().unwrap();
         assert!(std::f64::consts::PI.to_bits().abs_diff(f64_value.to_bits()) < 2);
         assert!(matches!(
             value.primitive_approx_cache.get(),
@@ -811,7 +786,7 @@ mod tests {
     fn primitive_approx_cache_keeps_overflow_state() {
         let huge = Real::new(Rational::from_bigint(BigInt::from(1_u8) << 1200));
 
-        assert_eq!(huge.to_f64_approx(), None);
+        assert_eq!(huge.to_f64_lossy(), None);
         assert!(matches!(
             huge.primitive_approx_cache.get(),
             PrimitiveApproxCache::F64(None)
@@ -823,7 +798,7 @@ mod tests {
     fn primitive_approx_cache_keeps_f32_overflow_state() {
         let huge = Real::new(Rational::from_bigint(BigInt::from(1_u8) << 200));
 
-        assert_eq!(huge.to_f32_approx(), None);
+        assert_eq!(huge.to_f32_lossy(), None);
         assert!(matches!(
             huge.primitive_approx_cache.get(),
             PrimitiveApproxCache::F32(None)
@@ -837,7 +812,7 @@ mod tests {
         use std::sync::atomic::AtomicBool;
 
         let mut value = Real::pi();
-        assert!(value.to_f64_approx().is_some());
+        assert!(value.to_f64_lossy().is_some());
         assert!(matches!(
             value.primitive_approx_cache.get(),
             PrimitiveApproxCache::F64(Some(_))
@@ -858,10 +833,10 @@ mod tests {
         #[cfg(feature = "cached-f64-approx")]
         fn cached_f64_matches_uncached_for_rationals(rational in finite_rational_strategy()) {
             let value = Real::new(rational.clone());
-            let expected = Real::new(rational).to_f64_approx_uncached();
+            let expected = Real::new(rational).to_f64_lossy_uncached();
 
-            prop_assert_eq!(value.to_f64_approx().map(f64::to_bits), expected.map(f64::to_bits));
-            prop_assert_eq!(value.to_f64_approx().map(f64::to_bits), expected.map(f64::to_bits));
+            prop_assert_eq!(value.to_f64_lossy().map(f64::to_bits), expected.map(f64::to_bits));
+            prop_assert_eq!(value.to_f64_lossy().map(f64::to_bits), expected.map(f64::to_bits));
             prop_assert!(matches!(
                 value.primitive_approx_cache.get(),
                 PrimitiveApproxCache::F64(_)
@@ -872,10 +847,10 @@ mod tests {
         #[cfg(feature = "cached-f32-approx")]
         fn cached_f32_matches_uncached_for_rationals(rational in finite_rational_strategy()) {
             let value = Real::new(rational.clone());
-            let expected = Real::new(rational).to_f32_approx_uncached();
+            let expected = Real::new(rational).to_f32_lossy_uncached();
 
-            prop_assert_eq!(value.to_f32_approx().map(f32::to_bits), expected.map(f32::to_bits));
-            prop_assert_eq!(value.to_f32_approx().map(f32::to_bits), expected.map(f32::to_bits));
+            prop_assert_eq!(value.to_f32_lossy().map(f32::to_bits), expected.map(f32::to_bits));
+            prop_assert_eq!(value.to_f32_lossy().map(f32::to_bits), expected.map(f32::to_bits));
             prop_assert!(matches!(
                 value.primitive_approx_cache.get(),
                 PrimitiveApproxCache::F32(_)
@@ -886,15 +861,15 @@ mod tests {
         #[cfg(all(feature = "cached-f32-approx", feature = "cached-f64-approx"))]
         fn f32_then_f64_cache_upgrade_matches_uncached(rational in finite_rational_strategy()) {
             let value = Real::new(rational.clone());
-            let expected_f32 = Real::new(rational.clone()).to_f32_approx_uncached();
-            let expected_f64 = Real::new(rational).to_f64_approx_uncached();
+            let expected_f32 = Real::new(rational.clone()).to_f32_lossy_uncached();
+            let expected_f64 = Real::new(rational).to_f64_lossy_uncached();
 
-            prop_assert_eq!(value.to_f32_approx().map(f32::to_bits), expected_f32.map(f32::to_bits));
+            prop_assert_eq!(value.to_f32_lossy().map(f32::to_bits), expected_f32.map(f32::to_bits));
             prop_assert!(matches!(
                 value.primitive_approx_cache.get(),
                 PrimitiveApproxCache::F32(_)
             ));
-            prop_assert_eq!(value.to_f64_approx().map(f64::to_bits), expected_f64.map(f64::to_bits));
+            prop_assert_eq!(value.to_f64_lossy().map(f64::to_bits), expected_f64.map(f64::to_bits));
             prop_assert!(matches!(
                 value.primitive_approx_cache.get(),
                 PrimitiveApproxCache::F64(_)
@@ -905,26 +880,26 @@ mod tests {
         #[cfg(feature = "cached-f64-approx")]
         fn cached_f64_is_not_reused_after_negation(rational in nonzero_finite_rational_strategy()) {
             let value = Real::new(rational.clone());
-            let cached_positive = value.to_f64_approx();
+            let cached_positive = value.to_f64_lossy();
             let negated_ref = -&value;
-            let expected_ref = Real::new(-rational.clone()).to_f64_approx_uncached();
+            let expected_ref = Real::new(-rational.clone()).to_f64_lossy_uncached();
 
             prop_assume!(cached_positive.map(f64::to_bits) != expected_ref.map(f64::to_bits));
             prop_assert!(matches!(
                 negated_ref.primitive_approx_cache.get(),
                 PrimitiveApproxCache::Empty
             ));
-            prop_assert_eq!(negated_ref.to_f64_approx().map(f64::to_bits), expected_ref.map(f64::to_bits));
+            prop_assert_eq!(negated_ref.to_f64_lossy().map(f64::to_bits), expected_ref.map(f64::to_bits));
 
             let owned = Real::new(rational.clone());
-            let _ = owned.to_f64_approx();
+            let _ = owned.to_f64_lossy();
             let negated_owned = -owned;
-            let expected_owned = Real::new(-rational).to_f64_approx_uncached();
+            let expected_owned = Real::new(-rational).to_f64_lossy_uncached();
             prop_assert!(matches!(
                 negated_owned.primitive_approx_cache.get(),
                 PrimitiveApproxCache::Empty
             ));
-            prop_assert_eq!(negated_owned.to_f64_approx().map(f64::to_bits), expected_owned.map(f64::to_bits));
+            prop_assert_eq!(negated_owned.to_f64_lossy().map(f64::to_bits), expected_owned.map(f64::to_bits));
         }
     }
 }

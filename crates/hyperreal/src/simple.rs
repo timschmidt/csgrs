@@ -533,11 +533,11 @@ impl Simple {
     fn operator(chars: &mut Peekable<Chars>) -> Result<Operator, &'static str> {
         use Operator::*;
         match Self::consume_operator_token(chars).as_str() {
-            "log10" | "log" => Ok(Log10),
-            "log2" | "lg" => Ok(Log2),
-            "ln" | "l" => Ok(Ln),
-            "exp" | "e" => Ok(Exp),
-            "sqrt" | "s" => Ok(Sqrt),
+            "log10" => Ok(Log10),
+            "log2" => Ok(Log2),
+            "ln" => Ok(Ln),
+            "exp" => Ok(Exp),
+            "sqrt" => Ok(Sqrt),
             "cos" => Ok(Cos),
             "sin" => Ok(Sin),
             "pow" => Ok(Pow),
@@ -701,7 +701,7 @@ mod tests {
 
     #[test]
     fn missing_close() {
-        let xpr: Result<Simple, &str> = "(+ (* (e 4) (e 6))".parse();
+        let xpr: Result<Simple, &str> = "(+ (* (exp 4) (exp 6))".parse();
         assert_eq!(xpr, Err("Incomplete expression"))
     }
 
@@ -718,15 +718,10 @@ mod tests {
     fn parse_named_operators() {
         let cases = [
             "(ln 5)",
-            "(l 5)",
-            "(log 5)",
             "(log10 5)",
             "(log2 5)",
-            "(lg 5)",
             "(exp 5)",
-            "(e 5)",
             "(sqrt 5)",
-            "(s 5)",
             "(cos 5)",
             "(sin 5)",
             "(tan 5)",
@@ -741,6 +736,14 @@ mod tests {
         for case in cases {
             let parsed: Result<Simple, &str> = case.parse();
             assert!(parsed.is_ok(), "{case}");
+        }
+    }
+
+    #[test]
+    fn parser_rejects_removed_short_operator_names() {
+        for case in ["(l 5)", "(log 5)", "(lg 5)", "(e 5)", "(s 5)"] {
+            let parsed: Result<Simple, &str> = case.parse();
+            assert_eq!(parsed, Err("No such operator"), "{case}");
         }
     }
 
@@ -825,7 +828,7 @@ mod tests {
     #[test]
     fn ln_e() {
         let empty = HashMap::new();
-        let xpr: Simple = "(l (* (e 4) (e 6)))".parse().unwrap();
+        let xpr: Simple = "(ln (* (exp 4) (exp 6)))".parse().unwrap();
         let result = xpr.evaluate(&empty).unwrap();
         assert!(result.is_integer());
         let ans = format!("{result}");
@@ -833,32 +836,28 @@ mod tests {
     }
 
     #[test]
-    fn log_aliases_parse_as_log10() {
+    fn log10_parses_as_base10() {
         let empty = HashMap::new();
-        for case in ["(log 100)", "(log10 100)"] {
-            let xpr: Simple = case.parse().unwrap();
-            let result = xpr.evaluate(&empty).unwrap();
-            assert!(result.is_integer(), "{case}");
-            assert_eq!(format!("{result}"), "2", "{case}");
-        }
+        let xpr: Simple = "(log10 100)".parse().unwrap();
+        let result = xpr.evaluate(&empty).unwrap();
+        assert!(result.is_integer());
+        assert_eq!(format!("{result}"), "2");
     }
 
     #[test]
-    fn log2_aliases_parse_as_base2() {
+    fn log2_parses_as_base2() {
         let empty = HashMap::new();
-        for case in ["(log2 1024)", "(lg 1024)"] {
-            let xpr: Simple = case.parse().unwrap();
-            let result = xpr.evaluate(&empty).unwrap();
-            assert!(result.is_integer(), "{case}");
-            assert_eq!(format!("{result}"), "10", "{case}");
-        }
+        let xpr: Simple = "(log2 1024)".parse().unwrap();
+        let result = xpr.evaluate(&empty).unwrap();
+        assert!(result.is_integer());
+        assert_eq!(format!("{result}"), "10");
     }
 
     #[test]
     fn log2_parser_rejects_bad_domain_and_arity() {
         let empty = HashMap::new();
 
-        let negative: Simple = "(lg -1)".parse().unwrap();
+        let negative: Simple = "(log2 -1)".parse().unwrap();
         assert_eq!(negative.evaluate(&empty), Err(Problem::NotANumber));
 
         let wrong_arity: Simple = "(log2 2 4)".parse().unwrap();

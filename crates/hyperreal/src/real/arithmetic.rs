@@ -193,7 +193,7 @@ impl Class {
     }
 
     fn make_const_product(pi_power: i16, exp_power: Rational) -> (Class, Computable) {
-        // Normalize back to the smaller legacy variants whenever possible.
+        // Normalize back to the smaller dedicated variants whenever possible.
         // Rarer signed pi powers stay boxed; direct `pi`, `1/pi`, `e^q`,
         // and one-pi-factor products have smaller dedicated variants.
         if pi_power == 0 {
@@ -298,7 +298,7 @@ impl Class {
     fn const_product_parts(&self) -> Option<(i16, Rational)> {
         // A lightweight deconstructor for the pi^n * e^q family. This is the
         // single point that lets newer classes (`1/pi`, `e^q/pi`) participate
-        // in old multiplication/division reductions without growing more arms.
+        // in multiplication/division reductions without growing more arms.
         match self {
             One => Some((0, Rational::zero())),
             Pi => Some((1, Rational::zero())),
@@ -379,7 +379,7 @@ impl Class {
         // rows. For the dominant square-free residuals 2 and 3, reuse the
         // canonical shared sqrt computable so costly approximations are warmed
         // once and then multiplied by the symbolic pi/e factors. Plain `sqrt(2)`
-        // and `pi*sqrt(2)` stay on their older direct constructors above; those
+        // and `pi*sqrt(2)` stay on their direct constructors above; those
         // tighter one-node paths benchmark faster for isolated scalar use.
         radicand
             .to_integer_i64()
@@ -395,7 +395,7 @@ impl Class {
         // This is a factored positive class: the rational scale carries all sign
         // information, while the inner pi/e/sqrt product stays non-zero. Keeping
         // the common `pi*sqrt(n)` and plain `sqrt(n)` variants avoids regressing
-        // the old tight arms.
+        // the tight scalar arms.
         if radicand == *rationals::ONE {
             return Self::make_const_product(pi_power, exp_power);
         }
@@ -3156,7 +3156,7 @@ impl Real {
                     // sqrt(a^2 * r) = a*sqrt(r). For scaled sqrt(2)/sqrt(3),
                     // reuse the canonical shared computable so matrix/vector
                     // clones do not rebuild the same expensive approximation.
-                    // Unscaled sqrt(2)/sqrt(3) keep the old local node because
+                    // Unscaled sqrt(2)/sqrt(3) keep the local node because
                     // repeated cached approximation of one node is faster.
                     crate::trace_dispatch!("real", "sqrt", "scaled-shared-sqrt-constant");
                     return Ok(Self {
@@ -5525,7 +5525,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                 }
             }
             (Pi, Exp(r)) | (Exp(r), Pi) => {
-                // pi*e^q has a compact legacy class because it is a frequent
+                // pi*e^q has a compact class because it is a frequent
                 // endpoint of exact transcendental simplification.
                 let (class, computable) = Class::make_pi_exp(r.clone());
                 let rational = &self.rational * &other.rational;
