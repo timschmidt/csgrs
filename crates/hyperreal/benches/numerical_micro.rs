@@ -828,7 +828,7 @@ fn bench_computable_compare(c: &mut Criterion) {
     let minus_pi = Computable::pi().negate();
     let pi = Computable::pi();
     group.bench_function("compare_to_opposite_sign", |b| {
-        b.iter(|| black_box(minus_pi.compare_to(&pi)))
+        b.iter(|| black_box(minus_pi.try_compare_to(&pi)))
     });
 
     let base = Computable::pi();
@@ -839,7 +839,7 @@ fn bench_computable_compare(c: &mut Criterion) {
             BigInt::from(1_u8) << 200,
         )));
     group.bench_function("compare_to_exact_msd_gap", |b| {
-        b.iter(|| black_box(huge.compare_to(&base)))
+        b.iter(|| black_box(huge.try_compare_to(&base)))
     });
 
     let left = Computable::rational(Rational::fraction(-7, 8).unwrap());

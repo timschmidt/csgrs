@@ -4437,34 +4437,43 @@ impl Computable {
         }
     }
 
-    /// Do not call this function if `self` and `other` may be the same.
-    pub fn compare_to(&self, other: &Self) -> Ordering {
+    /// Try to compare two computable values exactly.
+    ///
+    /// Returns `None` when bounded refinement cannot prove an ordering. This is
+    /// the public comparison API for callers that may be comparing equal or
+    /// semantically equivalent values.
+    pub fn try_compare_to(&self, other: &Self) -> Option<Ordering> {
+        if Self::internal_structural_eq(self, other) {
+            return Some(Ordering::Equal);
+        }
+
         // Keep exact leaf comparisons allocation-free for the hot path where both
         // operands are already exact. This avoids creating temporary rationals
         // on every comparator call.
         if let Some(order) = self.exact_rational_leaf_cmp(other) {
             crate::trace_dispatch!("computable", "compare_to", "exact-rational");
-            return order;
+            return Some(order);
         }
 
         if let (Some(left), Some(right)) = (self.exact_rational(), other.exact_rational()) {
             // Exact rationals compare directly; escalating to approximate comparison here is
             // both slower and can burn cache precision unnecessarily.
             crate::trace_dispatch!("computable", "compare_to", "exact-rational");
-            return left
-                .partial_cmp(&right)
-                .expect("exact rationals should be comparable");
+            return Some(
+                left.partial_cmp(&right)
+                    .expect("exact rationals should be comparable"),
+            );
         }
 
         if let (Some(left), Some(right)) = (self.exact_sign(), other.exact_sign()) {
             match (left, right) {
                 (Sign::Minus, Sign::Plus | Sign::NoSign) | (Sign::NoSign, Sign::Plus) => {
                     crate::trace_dispatch!("computable", "compare_to", "exact-sign-opposite");
-                    return Ordering::Less;
+                    return Some(Ordering::Less);
                 }
                 (Sign::Plus, Sign::Minus | Sign::NoSign) | (Sign::NoSign, Sign::Minus) => {
                     crate::trace_dispatch!("computable", "compare_to", "exact-sign-opposite");
-                    return Ordering::Greater;
+                    return Some(Ordering::Greater);
                 }
                 _ => {}
             }
@@ -4480,11 +4489,11 @@ impl Computable {
                 // Same-sign values with different most-significant digits have a known
                 // order without evaluating either value to a requested precision.
                 crate::trace_dispatch!("computable", "compare_to", "exact-sign-msd-gap");
-                return match left {
+                return Some(match left {
                     Sign::Plus => left_msd.cmp(&right_msd),
                     Sign::Minus => right_msd.cmp(&left_msd),
                     Sign::NoSign => unreachable!(),
-                };
+                });
             }
         }
 
@@ -4496,13 +4505,13 @@ impl Computable {
             match (left, right) {
                 (Sign::Minus, Sign::Plus) | (Sign::NoSign, Sign::Plus) => {
                     crate::trace_dispatch!("computable", "compare_to", "cheap-bound-opposite-sign");
-                    return Ordering::Less;
+                    return Some(Ordering::Less);
                 }
                 (Sign::Plus, Sign::Minus) | (Sign::Plus, Sign::NoSign) => {
                     crate::trace_dispatch!("computable", "compare_to", "cheap-bound-opposite-sign");
-                    return Ordering::Greater;
+                    return Some(Ordering::Greater);
                 }
-                (Sign::NoSign, Sign::NoSign) => return Ordering::Equal,
+                (Sign::NoSign, Sign::NoSign) => return Some(Ordering::Equal),
                 _ => {}
             }
             if left == right
@@ -4513,11 +4522,11 @@ impl Computable {
                 // Same-sign structural bounds can decide exact ordering
                 // before entering tolerance refinement.
                 crate::trace_dispatch!("computable", "compare_to", "cheap-bound-msd-gap");
-                return match left {
+                return Some(match left {
                     Sign::Plus => left_msd.cmp(&right_msd),
                     Sign::Minus => right_msd.cmp(&left_msd),
                     Sign::NoSign => Ordering::Equal,
-                };
+                });
             }
         }
         crate::trace_dispatch!("computable", "compare_to", "approx-refinement");
@@ -4525,11 +4534,11 @@ impl Computable {
         while tolerance > Precision::MIN {
             let order = self.compare_absolute(other, tolerance);
             if order != Ordering::Equal {
-                return order;
+                return Some(order);
             }
             tolerance *= 2;
         }
-        panic!("Apparently called Computable::compare_to on equal values");
+        None
     }
 
     /// Compare two values to a specified tolerance (more negative numbers are more precise).
@@ -4813,9 +4822,9 @@ mod tests {
         let five = Computable::integer(five.clone());
         let four = Computable::integer(four.clone());
 
-        assert_eq!(six.compare_to(&five), Ordering::Greater);
-        assert_eq!(five.compare_to(&six), Ordering::Less);
-        assert_eq!(four.compare_to(&six), Ordering::Less);
+        assert_eq!(six.try_compare_to(&five), Some(Ordering::Greater));
+        assert_eq!(five.try_compare_to(&six), Some(Ordering::Less));
+        assert_eq!(four.try_compare_to(&six), Some(Ordering::Less));
     }
 
     #[test]
@@ -5138,11 +5147,21 @@ mod tests {
     fn compare_to_uses_exact_sign_and_rational_shortcuts() {
         let minus_pi = Computable::pi().negate();
         let pi = Computable::pi();
-        assert_eq!(minus_pi.compare_to(&pi), Ordering::Less);
+        assert_eq!(minus_pi.try_compare_to(&pi), Some(Ordering::Less));
 
         let left = Computable::rational(Rational::fraction(7, 8).unwrap());
         let right = Computable::rational(Rational::fraction(9, 10).unwrap());
-        assert_eq!(left.compare_to(&right), Ordering::Less);
+        assert_eq!(left.try_compare_to(&right), Some(Ordering::Less));
+    }
+
+    #[test]
+    fn try_compare_to_handles_identical_symbolic_values() {
+        let pi = Computable::pi();
+        assert_eq!(pi.try_compare_to(&pi), Some(Ordering::Equal));
+
+        let left = Computable::rational(Rational::fraction(3, 7).unwrap());
+        let right = Computable::rational(Rational::fraction(3, 7).unwrap());
+        assert_eq!(left.try_compare_to(&right), Some(Ordering::Equal));
     }
 
     #[test]
@@ -5154,13 +5173,16 @@ mod tests {
             .multiply(Computable::rational(Rational::from_bigint(
                 BigInt::from(1_u8) << 200,
             )));
-        assert_eq!(huge.compare_to(&base), Ordering::Greater);
-        assert_eq!(base.compare_to(&huge), Ordering::Less);
+        assert_eq!(huge.try_compare_to(&base), Some(Ordering::Greater));
+        assert_eq!(base.try_compare_to(&huge), Some(Ordering::Less));
 
         let minus_base = base.negate();
         let minus_huge = huge.negate();
-        assert_eq!(minus_huge.compare_to(&minus_base), Ordering::Less);
-        assert_eq!(minus_base.compare_to(&minus_huge), Ordering::Greater);
+        assert_eq!(minus_huge.try_compare_to(&minus_base), Some(Ordering::Less));
+        assert_eq!(
+            minus_base.try_compare_to(&minus_huge),
+            Some(Ordering::Greater)
+        );
     }
 
     #[test]

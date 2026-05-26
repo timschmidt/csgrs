@@ -542,8 +542,8 @@ fn collect_rows(filters: &[String]) -> BTreeMap<String, hyperreal::dispatch_trac
         || {
             let minus_pi = Computable::pi().negate();
             let pi = Computable::pi();
-            black_box(minus_pi.compare_to(&pi));
-            black_box(pi.compare_to(&minus_pi));
+            black_box(minus_pi.try_compare_to(&pi));
+            black_box(pi.try_compare_to(&minus_pi));
         },
     );
     trace_row(
@@ -557,9 +557,9 @@ fn collect_rows(filters: &[String]) -> BTreeMap<String, hyperreal::dispatch_trac
                 .multiply(Computable::rational(Rational::from_bigint(
                     BigInt::from(1_u8) << 200,
                 )));
-            black_box(huge.compare_to(&base));
-            black_box(base.compare_to(&huge));
-            black_box(huge.negate().compare_to(&base.negate()));
+            black_box(huge.try_compare_to(&base));
+            black_box(base.try_compare_to(&huge));
+            black_box(huge.negate().try_compare_to(&base.negate()));
         },
     );
     trace_row(
@@ -569,9 +569,9 @@ fn collect_rows(filters: &[String]) -> BTreeMap<String, hyperreal::dispatch_trac
         || {
             let lhs = Computable::rational(rational(3, 7));
             let rhs = Computable::rational(rational(2, 7));
-            black_box(rhs.compare_to(&lhs));
-            black_box(lhs.compare_to(&rhs));
-            black_box(lhs.compare_to(&lhs));
+            black_box(rhs.try_compare_to(&lhs));
+            black_box(lhs.try_compare_to(&rhs));
+            black_box(lhs.try_compare_to(&lhs));
         },
     );
     trace_row(

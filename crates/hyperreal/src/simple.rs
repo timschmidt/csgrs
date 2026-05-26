@@ -681,7 +681,16 @@ impl std::str::FromStr for Simple {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let mut chars = s.chars().peekable();
-        Simple::parse(&mut chars)
+        let parsed = Simple::parse(&mut chars)?;
+        while let Some(c) = chars.peek() {
+            match c {
+                ' ' | '\t' => {
+                    chars.next();
+                }
+                _ => return Err("Trailing input after expression"),
+            }
+        }
+        Ok(parsed)
     }
 }
 
@@ -694,6 +703,15 @@ mod tests {
     fn missing_close() {
         let xpr: Result<Simple, &str> = "(+ (* (e 4) (e 6))".parse();
         assert_eq!(xpr, Err("Incomplete expression"))
+    }
+
+    #[test]
+    fn parse_rejects_trailing_input() {
+        let xpr: Result<Simple, &str> = "(+ 1 2) junk".parse();
+        assert_eq!(xpr, Err("Trailing input after expression"));
+
+        let xpr: Result<Simple, &str> = "(+ 1 2) \t".parse();
+        assert!(xpr.is_ok());
     }
 
     #[test]

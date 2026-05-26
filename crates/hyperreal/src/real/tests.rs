@@ -1978,8 +1978,8 @@ mod tests {
     fn computable_atan2_axes() {
         use crate::Computable;
         use num::Zero;
-        // compare_to(&equal) on Computable can loop forever (kernel docs warn
-        // about this), so axis cases are validated through approx values.
+        // Axis cases are validated through approximations because these values
+        // exercise the symbolic zero branches in the computable kernel.
         let zero_plus = Computable::zero().atan2(Computable::one());
         assert!(zero_plus.approx(-30).is_zero());
         let zero_minus = Computable::zero().atan2(Computable::one().negate());

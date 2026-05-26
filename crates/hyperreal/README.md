@@ -167,7 +167,7 @@ control. `hyperreal` uses several small performance strategies together:
 
 ## Current Status
 
-Version `0.12.0` is active and benchmark-driven. Current implementation work includes:
+Version `0.13.0` is active and benchmark-driven. Current implementation work includes:
 
 - exact rational and dyadic fast paths;
 - dedicated constructors and cached constants for common zeros, ones, `pi`, `tau`, `e`,
