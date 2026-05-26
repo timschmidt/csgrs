@@ -22,6 +22,8 @@ pub mod affine_surface;
 pub mod artifact;
 pub mod audit;
 pub mod boolean;
+#[cfg(feature = "exact-triangulation")]
+pub mod boolmesh;
 pub mod bounds;
 #[cfg(feature = "exact-triangulation")]
 pub mod box_solid;
@@ -114,6 +116,14 @@ pub use boolean::{
     certify_open_surface_disjoint_report, certify_planar_arrangement_report,
     certify_refinement_report, certify_same_surface_report, certify_winding_readiness_report,
     preflight_boolean_exact,
+};
+#[cfg(feature = "exact-triangulation")]
+pub use boolmesh::{
+    ExactBoolMeshBoolean03, ExactBoolMeshBoolean45Stage, ExactBoolMeshEdgeEvent,
+    ExactBoolMeshExecution, ExactBoolMeshFacePair, ExactBoolMeshKernelStage,
+    ExactBoolMeshPointConstruction, ExactBoolMeshPortBlocker, ExactBoolMeshSide,
+    ExactBoolMeshSourceVertex, ExactBoolMeshValidationError, ExactBoolMeshWorkspace,
+    exact_boolmesh_workspace, execute_exact_boolmesh_bounds_disjoint,
 };
 pub use bounds::{AabbIntersectionKind, BoundsValidationError, ExactAabb3, MeshBounds};
 #[cfg(feature = "exact-triangulation")]

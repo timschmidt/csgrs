@@ -36,6 +36,8 @@ use super::affine_surface::{
     arrange_coplanar_affine_surface_union,
 };
 #[cfg(feature = "exact-triangulation")]
+use super::boolmesh::execute_exact_boolmesh_bounds_disjoint;
+#[cfg(feature = "exact-triangulation")]
 use super::bounds::AabbIntersectionKind;
 #[cfg(feature = "exact-triangulation")]
 use super::box_solid::{
@@ -5229,23 +5231,18 @@ fn boolean_disjoint_meshes(
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<ExactBooleanResult, MeshError> {
-    let mesh = match operation {
-        ExactBooleanOperation::Union => concatenate_meshes(left, right, validation)?,
-        ExactBooleanOperation::Intersection => {
-            empty_mesh("empty exact disjoint intersection", validation)?
-        }
-        ExactBooleanOperation::Difference => ExactMesh::new_with_policy(
-            left.vertices().to_vec(),
-            left.triangles().to_vec(),
-            super::provenance::SourceProvenance::exact("exact disjoint left difference"),
-            validation,
-        )?,
-        ExactBooleanOperation::SelectedRegions(_) => unreachable!("handled by caller"),
-    };
+    let execution = execute_exact_boolmesh_bounds_disjoint(left, right, operation, validation)
+        .map_err(|error| {
+            MeshError::one(MeshDiagnostic::new(
+                Severity::Error,
+                DiagnosticKind::UnsupportedExactOperation,
+                format!("exact boolmesh bounds-disjoint slice failed: {error:?}"),
+            ))
+        })?;
 
     Ok(certified_shortcut_result(
-        mesh,
-        ExactBooleanShortcutKind::BoundsDisjoint,
+        execution.mesh,
+        execution.shortcut,
     ))
 }
 

@@ -182,6 +182,28 @@ fuzz_target!(|data: &[u8]| {
     }
     let _ = right.provenance().validate();
 
+    for operation in [
+        ExactBooleanOperation::Union,
+        ExactBooleanOperation::Intersection,
+        ExactBooleanOperation::Difference,
+    ] {
+        let workspace = hypermesh::exact::exact_boolmesh_workspace(&left, &right, operation);
+        let _ = workspace.validate_against_sources(&left, &right);
+        let mut corrupted = workspace.clone();
+        corrupted.boolean03.w30.push(0);
+        assert!(corrupted.validate_against_sources(&left, &right).is_err());
+        if workspace.is_certified_bounds_disjoint() {
+            let execution = hypermesh::exact::execute_exact_boolmesh_bounds_disjoint(
+                &left,
+                &right,
+                operation,
+                ValidationPolicy::ALLOW_BOUNDARY,
+            )
+            .expect("certified disjoint boolmesh slice should execute");
+            execution.validate_against_sources(&left, &right).unwrap();
+        }
+    }
+
     if left.facts().mesh.closed_manifold && !right.vertices().is_empty() {
         let point = right.vertices()[0].to_hyperlimit_point();
         let point_winding =
@@ -1426,7 +1448,7 @@ fuzz_target!(|data: &[u8]| {
 
 #[cfg(feature = "exact-triangulation")]
 fn exercise_deterministic_case(selector: u8) {
-    match selector % 45 {
+    match selector % 46 {
         0 => exercise_partial_convex_union_boundary(),
         1 => exercise_face_interior_steiner_boundary(),
         2 => exercise_multi_component_coplanar_union(),
@@ -1472,6 +1494,7 @@ fn exercise_deterministic_case(selector: u8) {
         42 => exercise_same_outer_holed_coplanar_component_difference(),
         43 => exercise_same_outer_holed_coplanar_filled_union(),
         44 => exercise_same_outer_holed_coplanar_retained_union(),
+        45 => exercise_exact_boolmesh_bounds_disjoint_port(),
         _ => exercise_nonconvex_coplanar_volumetric_difference_fan_split(),
     }
 }
@@ -1479,6 +1502,38 @@ fn exercise_deterministic_case(selector: u8) {
 #[cfg(not(feature = "exact-triangulation"))]
 fn exercise_deterministic_case(_: u8) {
     exercise_partial_convex_union_boundary();
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn exercise_exact_boolmesh_bounds_disjoint_port() {
+    let left = ExactMesh::from_i64_triangles(
+        &[0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 2],
+        &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
+    )
+    .expect("deterministic boolmesh left fixture must import");
+    let right = ExactMesh::from_i64_triangles(
+        &[10, 0, 0, 12, 0, 0, 10, 2, 0, 10, 0, 2],
+        &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
+    )
+    .expect("deterministic boolmesh right fixture must import");
+
+    for operation in [
+        ExactBooleanOperation::Union,
+        ExactBooleanOperation::Intersection,
+        ExactBooleanOperation::Difference,
+    ] {
+        let workspace = hypermesh::exact::exact_boolmesh_workspace(&left, &right, operation);
+        workspace.validate_against_sources(&left, &right).unwrap();
+        assert!(workspace.is_certified_bounds_disjoint());
+        let execution = hypermesh::exact::execute_exact_boolmesh_bounds_disjoint(
+            &left,
+            &right,
+            operation,
+            ValidationPolicy::CLOSED,
+        )
+        .expect("deterministic bounds-disjoint boolmesh slice should execute");
+        execution.validate_against_sources(&left, &right).unwrap();
+    }
 }
 
 fn exercise_partial_convex_union_boundary() {

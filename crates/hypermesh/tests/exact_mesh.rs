@@ -33050,3 +33050,113 @@ fn real_between_unit(value: &ExactReal) -> bool {
         Some(Ordering::Less | Ordering::Equal)
     )
 }
+
+#[test]
+#[cfg(feature = "exact-triangulation")]
+fn exact_boolmesh_workspace_executes_bounds_disjoint_slice() {
+    let left = tetrahedron_i64([0, 0, 0], [2, 0, 0], [0, 2, 0], [0, 0, 2]);
+    let right = tetrahedron_i64([10, 0, 0], [12, 0, 0], [10, 2, 0], [10, 0, 2]);
+
+    let workspace = hypermesh::exact::exact_boolmesh_workspace(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+    );
+    workspace.validate_against_sources(&left, &right).unwrap();
+    assert!(workspace.is_certified_bounds_disjoint());
+    assert!(workspace.boolean03.p1q2.is_empty());
+    assert!(workspace.boolean03.p2q1.is_empty());
+    assert_eq!(workspace.boolean03.w03.len(), left.vertices().len());
+    assert_eq!(workspace.boolean03.w30.len(), right.vertices().len());
+
+    let union = hypermesh::exact::execute_exact_boolmesh_bounds_disjoint(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap();
+    union.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        union.shortcut,
+        hypermesh::exact::ExactBooleanShortcutKind::BoundsDisjoint
+    );
+    assert_eq!(
+        union.mesh.triangles().len(),
+        left.triangles().len() + right.triangles().len()
+    );
+
+    let intersection = hypermesh::exact::execute_exact_boolmesh_bounds_disjoint(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap();
+    assert!(intersection.mesh.triangles().is_empty());
+
+    let difference = hypermesh::exact::execute_exact_boolmesh_bounds_disjoint(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap();
+    assert_eq!(difference.mesh.vertices(), left.vertices());
+    assert_eq!(difference.mesh.triangles(), left.triangles());
+}
+
+#[test]
+#[cfg(feature = "exact-triangulation")]
+fn exact_boolmesh_workspace_blocks_non_disjoint_at_kernel12() {
+    let left = tetrahedron_i64([0, 0, 0], [2, 0, 0], [0, 2, 0], [0, 0, 2]);
+    let right = tetrahedron_i64([1, 0, 0], [3, 0, 0], [1, 2, 0], [1, 0, 2]);
+
+    let workspace = hypermesh::exact::exact_boolmesh_workspace(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+    );
+    workspace.validate_against_sources(&left, &right).unwrap();
+    let blocker = workspace
+        .blocker
+        .as_ref()
+        .expect("overlapping bounds must name the next boolmesh stage");
+    assert_eq!(
+        blocker.stage,
+        hypermesh::exact::ExactBoolMeshKernelStage::Kernel12
+    );
+    assert!(blocker.candidate_face_pairs > 0);
+
+    let execution = hypermesh::exact::execute_exact_boolmesh_bounds_disjoint(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+    );
+    assert_eq!(
+        execution.unwrap_err(),
+        hypermesh::exact::ExactBoolMeshValidationError::RequiresKernel12
+    );
+}
+
+#[test]
+#[cfg(feature = "exact-triangulation")]
+fn exact_boolmesh_workspace_rejects_stale_replay() {
+    let left = tetrahedron_i64([0, 0, 0], [2, 0, 0], [0, 2, 0], [0, 0, 2]);
+    let right = tetrahedron_i64([10, 0, 0], [12, 0, 0], [10, 2, 0], [10, 0, 2]);
+    let mut workspace = hypermesh::exact::exact_boolmesh_workspace(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    );
+    workspace.validate_against_sources(&left, &right).unwrap();
+
+    workspace.boolean03.w03.push(0);
+    assert_eq!(
+        workspace
+            .validate_against_sources(&left, &right)
+            .unwrap_err(),
+        hypermesh::exact::ExactBoolMeshValidationError::LeftWindingCountMismatch
+    );
+}

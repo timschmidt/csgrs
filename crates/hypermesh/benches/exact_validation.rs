@@ -13001,6 +13001,46 @@ fn exact_boolean_convex_single_cap_difference(c: &mut Criterion) {
     }
 }
 
+fn exact_boolmesh_bounds_disjoint_port(c: &mut Criterion) {
+    #[cfg(feature = "exact-triangulation")]
+    {
+        let left = ExactMesh::from_i64_triangles(
+            &[0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 2],
+            &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
+        )
+        .unwrap();
+        let right = ExactMesh::from_i64_triangles(
+            &[10, 0, 0, 12, 0, 0, 10, 2, 0, 10, 0, 2],
+            &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
+        )
+        .unwrap();
+
+        c.bench_function("exact_boolmesh_bounds_disjoint_port", |b| {
+            b.iter(|| {
+                let workspace = hypermesh::exact::exact_boolmesh_workspace(
+                    &left,
+                    &right,
+                    hypermesh::exact::ExactBooleanOperation::Union,
+                );
+                workspace.validate_against_sources(&left, &right).unwrap();
+                let execution = hypermesh::exact::execute_exact_boolmesh_bounds_disjoint(
+                    &left,
+                    &right,
+                    hypermesh::exact::ExactBooleanOperation::Union,
+                    ValidationPolicy::CLOSED,
+                )
+                .unwrap();
+                execution.validate_against_sources(&left, &right).unwrap();
+                execution.mesh.triangles().len()
+            })
+        });
+    }
+    #[cfg(not(feature = "exact-triangulation"))]
+    {
+        let _ = c;
+    }
+}
+
 fn legacy_boolean_adapter_report(c: &mut Criterion) {
     #[cfg(feature = "legacy-boolean")]
     {
@@ -13103,6 +13143,7 @@ criterion_group!(
     exact_boolean_convex_intersection,
     exact_boolean_volumetric_winding_materialization,
     exact_boolean_convex_single_cap_difference,
+    exact_boolmesh_bounds_disjoint_port,
     legacy_boolean_adapter_report
 );
 criterion_main!(benches);
