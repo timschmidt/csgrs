@@ -263,6 +263,53 @@ pub(crate) fn build_line_cubic_cell_graph(
     build_curve_cell_graph_with_cubics(&converted_lines, &[], &[], cubic_fragments, policy)
 }
 
+pub(crate) fn build_line_mixed_bezier_cell_graph(
+    line_fragments: &[MixedLineArrangementFragment],
+    bezier_fragments: &[QuadraticBezierRealFragment],
+    cubic_fragments: &[CubicBezierRealFragment],
+    conic_fragments: &[RationalQuadraticBezierRealFragment],
+    policy: PredicatePolicy,
+) -> Result<CurveArrangementCellGraph, CurveArrangementCellError> {
+    let converted_lines = line_fragments
+        .iter()
+        .map(|fragment| LineArrangementFragment {
+            source_segment: fragment.source_line,
+            start: crate::arrangement::LineArrangementBreakpoint {
+                segment: fragment.start.line,
+                point: fragment.start.point.clone(),
+                parameter_numerator: fragment.start.parameter_numerator.clone(),
+                parameter_denominator: fragment.start.parameter_denominator.clone(),
+            },
+            end: crate::arrangement::LineArrangementBreakpoint {
+                segment: fragment.end.line,
+                point: fragment.end.point.clone(),
+                parameter_numerator: fragment.end.parameter_numerator.clone(),
+                parameter_denominator: fragment.end.parameter_denominator.clone(),
+            },
+            segment: fragment.segment.clone(),
+        })
+        .collect::<Vec<_>>();
+    let converted_conics = conic_fragments
+        .iter()
+        .map(|fragment| RationalQuadraticCellFragment {
+            start_point: fragment.start.point.clone(),
+            end_point: fragment.end.point.clone(),
+            start_control: fragment.start_control.clone(),
+            control: fragment.control.clone(),
+            end_control: fragment.end_control.clone(),
+        })
+        .collect::<Vec<_>>();
+    build_curve_cell_graph_full(
+        &converted_lines,
+        &[],
+        bezier_fragments,
+        cubic_fragments,
+        &converted_conics,
+        FaceAreaMode::SkipUnavailable,
+        policy,
+    )
+}
+
 pub(crate) fn build_cubic_cell_graph(
     cubic_fragments: &[CubicBezierArrangementFragment],
     policy: PredicatePolicy,

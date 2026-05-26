@@ -10,15 +10,16 @@ use hyperpath::{
     LineCubicBezierAlgebraicOverlapBreakpointDomain,
     LineCubicBezierAlgebraicOverlapBreakpointSequenceClass,
     LineCubicBezierAlgebraicOverlapBreakpointSequenceSource, LineCubicBezierIntersectionClass,
-    LineCubicBezierSupportOverlapMonotonicity, LinePathSegment, LineQuadraticBezierIntersectionClass,
+    LineCubicBezierSupportOverlapMonotonicity, LineMixedBezierArrangementError, LinePathSegment,
+    LineQuadraticBezierIntersectionClass,
     LineRationalQuadraticBezierAlgebraicBreakpointDomain,
     LineRationalQuadraticBezierAlgebraicBreakpointOrderClass,
     LineRationalQuadraticBezierAlgebraicBreakpointSequenceClass,
     LineRationalQuadraticBezierAlgebraicBreakpointSequenceSource,
     LineRationalQuadraticBezierIntersectionClass, LineRationalQuadraticBezierInverseRootDomain,
-    LineRationalQuadraticBezierSupportOverlapMonotonicity, QuadraticBezier,
+    LineRationalQuadraticBezierSupportOverlapMonotonicity, MixedCurveFragmentRef, QuadraticBezier,
     RationalQuadraticBezier, arrange_cubic_beziers, arrange_line_segments_with_cubic_beziers,
-    arrange_line_segments_with_quadratic_beziers,
+    arrange_line_segments_with_mixed_beziers, arrange_line_segments_with_quadratic_beziers,
     arrange_line_segments_with_rational_quadratic_beziers, arrange_quadratic_beziers,
     arrange_rational_quadratic_beziers, intersect_axis_aligned_line_cubic_bezier,
     intersect_axis_aligned_line_quadratic_bezier,
@@ -249,6 +250,42 @@ fuzz_target!(|data: &[u8]| {
     assert_eq!(c_loop_report.cell_graph.vertices.len(), 2);
     assert_eq!(c_loop_report.cell_graph.edges.len(), 2);
     assert_eq!(c_loop_report.cell_graph.faces.len(), 2);
+
+    let mixed_line = LinePathSegment::new(p(0, 0), p(20, 0));
+    let mixed_quadratic = QuadraticBezier::new(p(0, 0), p(2, 4), p(4, 0));
+    let mixed_cubic = CubicBezier::new(p(8, 0), p(8, 3), p(12, 3), p(12, 0));
+    let mixed_conic =
+        RationalQuadraticBezier::new(p(16, 0), p(18, 4), p(20, 0), r(2)).unwrap();
+    let mixed_report = arrange_line_segments_with_mixed_beziers(
+        &[mixed_line],
+        &[mixed_quadratic],
+        &[mixed_cubic],
+        &[mixed_conic],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert_eq!(mixed_report.line_breakpoints[0].len(), 6);
+    assert_eq!(mixed_report.cell_graph.edges.len(), 8);
+    assert_eq!(
+        mixed_report.cell_graph.half_edges.len(),
+        mixed_report.cell_graph.edges.len() * 2
+    );
+
+    let overlapping_mixed_error = arrange_line_segments_with_mixed_beziers(
+        &[LinePathSegment::new(p(0, 0), p(8, 0))],
+        &[QuadraticBezier::new(p(0, 0), p(4, 8), p(8, 0))],
+        &[CubicBezier::new(p(0, 0), p(0, 4), p(8, 4), p(8, 0))],
+        &[],
+        PredicatePolicy::default(),
+    )
+    .unwrap_err();
+    assert_eq!(
+        overlapping_mixed_error,
+        LineMixedBezierArrangementError::UnsupportedCurveCurveInteraction {
+            left: MixedCurveFragmentRef::Quadratic(0),
+            right: MixedCurveFragmentRef::Cubic(0),
+        }
+    );
 
     let cubic_overlap_curve = CubicBezier::new(p(0, 0), pq(8, 3, 0, 1), pq(16, 3, 0, 1), p(8, 0));
     let cubic_overlap_line = LinePathSegment::new(p(2, 0), p(6, 0));

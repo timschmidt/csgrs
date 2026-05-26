@@ -16,6 +16,7 @@ pub mod curve_cell;
 pub mod mixed_bezier_arrangement;
 pub mod mixed_conic_arrangement;
 pub mod mixed_cubic_arrangement;
+pub mod mixed_curve_arrangement;
 pub mod offset;
 pub mod pcb;
 pub mod pcb_circular_board;
@@ -153,6 +154,12 @@ pub use mixed_cubic_arrangement::{
     LineCubicBezierSupportOverlapCandidate, MixedCubicLineArrangementBreakpoint,
     MixedCubicLineArrangementFragment, arrange_line_segments_with_cubic_beziers,
     arrange_line_segments_with_cubic_beziers_and_provenance,
+};
+pub use mixed_curve_arrangement::{
+    LineMixedBezierArrangementError, LineMixedBezierArrangementFacts,
+    LineMixedBezierArrangementReport, MixedCurveFragmentRef,
+    arrange_line_segments_with_mixed_beziers,
+    arrange_line_segments_with_mixed_beziers_and_provenance,
 };
 pub use offset::{
     ArcOffsetCandidate, ArcOffsetError, BezierOffsetError, BezierOffsetSampleCandidate,
