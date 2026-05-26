@@ -26911,6 +26911,127 @@ fn exact_coplanar_component_holed_union_retains_same_outer_common_holes() {
     )
     .unwrap();
 
+    let affine_origin = (0, 0, 0);
+    let affine_basis_u = (2, 1, 0);
+    let affine_basis_v = (-1, 2, 0);
+    let affine_outer = affine_rect_surface_i64(
+        &[(0, 0, 14, 14)],
+        affine_origin,
+        affine_basis_u,
+        affine_basis_v,
+    );
+    let affine_left_hole = affine_rect_surface_i64(
+        &[(3, 2, 12, 5), (8, 5, 12, 10)],
+        affine_origin,
+        affine_basis_u,
+        affine_basis_v,
+    );
+    let affine_right_hole = affine_rect_surface_i64(
+        &[(7, 4, 13, 12)],
+        affine_origin,
+        affine_basis_u,
+        affine_basis_v,
+    );
+    let affine_left = hypermesh::exact::arrange_coplanar_affine_surface_difference(
+        &affine_outer,
+        &affine_left_hole,
+    )
+    .expect("affine nonconvex same-outer left hole should materialize")
+    .mesh;
+    let affine_right = hypermesh::exact::arrange_coplanar_affine_surface_difference(
+        &affine_outer,
+        &affine_right_hole,
+    )
+    .expect("affine crossing same-outer right hole should materialize")
+    .mesh;
+    assert!(
+        hypermesh::exact::arrange_coplanar_orthogonal_surface_union(&affine_left, &affine_right)
+            .is_none(),
+        "non-axis-aligned retained-hole edges must not be claimed by the orthogonal union"
+    );
+    let affine_union = hypermesh::exact::arrange_coplanar_surface_component_holed_union(
+        &affine_left,
+        &affine_right,
+    )
+    .expect("nonrectilinear nonconvex retained-hole overlap should replay as one retained hole");
+    affine_union.validate().unwrap();
+    affine_union
+        .validate_union_against_sources(&affine_left, &affine_right)
+        .unwrap();
+    assert_eq!(affine_union.components.len(), 1);
+    assert_eq!(affine_union.components[0].holes.len(), 1);
+    assert!(
+        affine_union.components[0].holes[0].len() > 4,
+        "the retained common hole should carry the nonconvex clipped boundary"
+    );
+    let affine_reverse = hypermesh::exact::arrange_coplanar_surface_component_holed_union(
+        &affine_right,
+        &affine_left,
+    )
+    .expect("nonrectilinear nonconvex retained-hole overlap should be symmetric");
+    affine_reverse.validate().unwrap();
+    affine_reverse
+        .validate_union_against_sources(&affine_right, &affine_left)
+        .unwrap();
+    let mut stale_affine = affine_union.clone();
+    stale_affine.components[0].holes[0].reverse();
+    assert!(stale_affine.validate().is_err());
+    assert!(
+        stale_affine
+            .validate_union_against_sources(&affine_left, &affine_right)
+            .is_err()
+    );
+    let affine_preflight = hypermesh::exact::preflight_boolean_exact(
+        &affine_left,
+        &affine_right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+    )
+    .expect("nonrectilinear nonconvex retained-union preflight should classify shortcut");
+    affine_preflight.validate().unwrap();
+    affine_preflight
+        .validate_against_sources(&affine_left, &affine_right)
+        .unwrap();
+    assert_eq!(
+        affine_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
+    );
+    hypermesh::exact::boolean_exact(
+        &affine_left,
+        &affine_right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("nonrectilinear nonconvex retained-hole union should materialize")
+    .validate_operation_against_sources(
+        &affine_left,
+        &affine_right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
+
+    let affine_touching_hole = affine_rect_surface_i64(
+        &[(12, 3, 13, 7)],
+        affine_origin,
+        affine_basis_u,
+        affine_basis_v,
+    );
+    let affine_touching = hypermesh::exact::arrange_coplanar_affine_surface_difference(
+        &affine_outer,
+        &affine_touching_hole,
+    )
+    .expect("affine touching retained-hole source should materialize")
+    .mesh;
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_component_holed_union(
+            &affine_left,
+            &affine_touching
+        )
+        .is_none(),
+        "non-axis-aligned retained-hole edge contact is not a retained area certificate"
+    );
+
     let orthogonal_outer = rect_surface_i64(&[(0, 0, 10, 10)]);
     let orthogonal_left_hole = rect_surface_i64(&[(2, 2, 6, 6), (6, 2, 8, 4)]);
     let orthogonal_right_hole = rect_surface_i64(&[(4, 3, 9, 7)]);

@@ -4935,7 +4935,7 @@ fn same_outer_holed_simple_no_hole_difference_polygons(
 
     let mut removed = Vec::new();
     for cutter in cutters {
-        let mut clipped = simple_retained_hole_intersection_openings(
+        let mut clipped = simple_retained_hole_intersection_polygons(
             &source,
             cutter,
             projection,
@@ -5024,30 +5024,41 @@ fn same_outer_holed_simple_no_hole_difference_polygons(
     Some(polygons)
 }
 
-/// Clip one simple retained hole against another as removed openings.
+/// Intersect two simple retained holes as exact simple loops.
 ///
 /// The resulting loops are the positive-area components of `source ∩ cutter`.
-/// They are later subtracted from `source`, so the caller additionally checks
-/// side attachment and no-hole output. This helper only certifies the exact
+/// Same-outer retained-hole union imports those loops as retained holes, while
+/// same-outer no-hole subtraction treats them as removed openings and applies
+/// additional side-attachment checks. This helper only certifies the exact
 /// intersection boundary: source fragments whose midpoints lie in the cutter
 /// plus cutter fragments whose midpoints lie in the source. That is the
-/// retained-boundary fragment rule from Weiler-Atherton, promoted only under
-/// Yap's exact-object model.
+/// retained-boundary fragment rule from Weiler and Atherton, "Hidden Surface
+/// Removal Using Polygon Area Sorting," *SIGGRAPH Computer Graphics* 11.2
+/// (1977), promoted only under Yap's exact-object model from "Towards Exact
+/// Geometric Computation," *Computational Geometry* 7.1-2 (1997). Point and
+/// segment events are split by exact orientation predicates in the style of
+/// Guigue and Devillers, "Fast and Robust Triangle-Triangle Overlap Test
+/// Using Orientation Predicates," *Journal of Graphics Tools* 8.1 (2003).
 #[cfg(feature = "exact-triangulation")]
-fn simple_retained_hole_intersection_openings(
+fn simple_retained_hole_intersection_polygons(
     source: &[Point3],
     cutter: &[Point3],
     projection: CoplanarProjection,
     label: &'static str,
 ) -> Option<Vec<Vec<Point3>>> {
+    let mut source = source.to_vec();
+    orient_polygon_ccw(&mut source, projection)?;
+    source = simplify_projected_polygon(source, projection);
+    validate_projected_simple_loop(&source, projection, label).ok()?;
+
     let mut cutter = cutter.to_vec();
     orient_polygon_ccw(&mut cutter, projection)?;
     cutter = simplify_projected_polygon(cutter, projection);
     validate_projected_simple_loop(&cutter, projection, label).ok()?;
 
     let mut fragments = Vec::new();
-    collect_simple_intersection_boundary_fragments(source, &cutter, projection, &mut fragments)?;
-    collect_simple_intersection_boundary_fragments(&cutter, source, projection, &mut fragments)?;
+    collect_simple_intersection_boundary_fragments(&source, &cutter, projection, &mut fragments)?;
+    collect_simple_intersection_boundary_fragments(&cutter, &source, projection, &mut fragments)?;
 
     let mut openings = if let Some(opening) = stitch_simple_loop(fragments.clone(), projection) {
         vec![opening]
@@ -5464,10 +5475,14 @@ fn same_outer_holed_filled_union_polygons(
 /// exact positive-area intersection of two strictly convex retained source
 /// holes. Bounded rectilinear nonconvex overlaps may also be retained when the
 /// exact orthogonal cell replay emits one or more simple no-hole intersection
-/// components. Holes that are strictly disjoint are filled by the opposite
-/// operand. Touching, crossing non-orthogonal partial-overlap, and higher-order
-/// hole relations reject to the general planar arrangement layer because their
-/// output boundary is not a bounded retained-cell certificate.
+/// components. The remaining bounded simple-ring fallback accepts
+/// non-rectilinear nonconvex retained-hole intersections only when exact
+/// retained-boundary fragments stitch one or more simple positive-area
+/// retained loops. Holes that are strictly disjoint are filled by the opposite
+/// operand. Touching, higher-order hole relations, and intersections that
+/// would need holed or branched retained regions reject to the general planar
+/// arrangement layer because their output boundary is not a bounded retained
+/// simple-ring certificate.
 ///
 /// This follows Yap, "Towards Exact Geometric Computation," *Computational
 /// Geometry* 7.1-2 (1997): the topology is expressed in source-owned objects
@@ -5479,8 +5494,11 @@ fn same_outer_holed_filled_union_polygons(
 /// Guigue and Devillers, "Fast and Robust Triangle-Triangle Overlap Test
 /// Using Orientation Predicates," *Journal of Graphics Tools* 8.1 (2003), so
 /// point/edge-only hole contact remains lower-dimensional evidence instead of
-/// a retained hole. The retained holed rings are triangulated through the same
-/// FIST-style
+/// a retained hole. The simple-ring fallback uses the same Weiler-Atherton
+/// retained-boundary fragment walk as the no-hole difference path (Weiler and
+/// Atherton, "Hidden Surface Removal Using Polygon Area Sorting," *SIGGRAPH
+/// Computer Graphics* 11.2, 1977), with exact area replay as the promotion
+/// gate. The retained holed rings are triangulated through the same FIST-style
 /// `hypertri` earcut handoff described by Held, "FIST: Fast
 /// Industrial-Strength Triangulation of Polygons," *Algorithmica* 30 (2001).
 #[cfg(feature = "exact-triangulation")]
@@ -5626,6 +5644,14 @@ fn same_outer_retained_union_holes(
                             .or_else(|| {
                                 orthogonal_retained_hole_intersection_polygons(
                                     left_hole, right_hole, projection,
+                                )
+                            })
+                            .or_else(|| {
+                                simple_retained_hole_intersection_polygons(
+                                    left_hole,
+                                    right_hole,
+                                    projection,
+                                    "coplanar same-outer simple retained-hole union",
                                 )
                             })?
                     }

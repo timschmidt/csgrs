@@ -3803,6 +3803,73 @@ fn exercise_same_outer_holed_coplanar_retained_union() {
     )
     .unwrap();
 
+    let origin = (0, 0, 0);
+    let basis_u = (2, 1, 0);
+    let basis_v = (-1, 2, 0);
+    let affine_outer = affine_rect_surface_i64(&[(0, 0, 14, 14)], origin, basis_u, basis_v);
+    let affine_left_hole =
+        affine_rect_surface_i64(&[(3, 2, 12, 5), (8, 5, 12, 10)], origin, basis_u, basis_v);
+    let affine_right_hole = affine_rect_surface_i64(&[(7, 4, 13, 12)], origin, basis_u, basis_v);
+    let affine_left =
+        arrange_coplanar_affine_surface_difference(&affine_outer, &affine_left_hole)
+            .expect("same-outer affine nonconvex retained-union left should materialize")
+            .mesh;
+    let affine_right =
+        arrange_coplanar_affine_surface_difference(&affine_outer, &affine_right_hole)
+            .expect("same-outer affine retained-union right should materialize")
+            .mesh;
+    assert!(arrange_coplanar_orthogonal_surface_union(&affine_left, &affine_right).is_none());
+    let affine_union = arrange_coplanar_surface_component_holed_union(&affine_left, &affine_right)
+        .expect("same-outer affine nonconvex retained-hole overlap should materialize");
+    affine_union.validate().unwrap();
+    affine_union
+        .validate_union_against_sources(&affine_left, &affine_right)
+        .unwrap();
+    assert_eq!(affine_union.components.len(), 1);
+    assert_eq!(affine_union.components[0].holes.len(), 1);
+    let affine_reverse =
+        arrange_coplanar_surface_component_holed_union(&affine_right, &affine_left)
+            .expect("same-outer affine retained-hole overlap should be symmetric");
+    affine_reverse.validate().unwrap();
+    affine_reverse
+        .validate_union_against_sources(&affine_right, &affine_left)
+        .unwrap();
+    let affine_preflight =
+        preflight_boolean_exact(&affine_left, &affine_right, ExactBooleanOperation::Union)
+            .expect("same-outer affine retained-union preflight should classify shortcut");
+    affine_preflight.validate().unwrap();
+    affine_preflight
+        .validate_against_sources(&affine_left, &affine_right)
+        .unwrap();
+    assert_eq!(
+        affine_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
+    );
+    hypermesh::exact::boolean_exact(
+        &affine_left,
+        &affine_right,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("same-outer affine retained union should materialize")
+    .validate_operation_against_sources(
+        &affine_left,
+        &affine_right,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
+    let affine_touching_hole =
+        affine_rect_surface_i64(&[(12, 3, 13, 7)], origin, basis_u, basis_v);
+    let affine_touching =
+        arrange_coplanar_affine_surface_difference(&affine_outer, &affine_touching_hole)
+            .expect("same-outer affine touching retained-union source should materialize")
+            .mesh;
+    assert!(
+        arrange_coplanar_surface_component_holed_union(&affine_left, &affine_touching).is_none()
+    );
+
     let orthogonal_preflight = preflight_boolean_exact(
         &orthogonal_left,
         &orthogonal_right,
