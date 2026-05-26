@@ -7,7 +7,7 @@ use hyperpath::{
     LinePathSegment, LookaheadFeedSchedule, MeanderKeepout, MeanderObstacle,
     MeanderPlacementCandidate, NetId, OffsetSide, PathProvenance, PathSourceFormat,
     PcbBoardOutline, PcbCardinalRectPad, PcbCircularBoardOutline, PcbCircularPad,
-    PcbConvexBoardOutline, PcbConvexPad, PcbObroundPad, PcbOrientedRectPad,
+    PcbConvexBoardOutline, PcbConvexPad, PcbObroundBoardOutline, PcbObroundPad, PcbOrientedRectPad,
     PcbOrthogonalBoardOutline, PcbOrthogonalPad, PcbRectPad, PcbRoundedRectPad, PcbTrace,
     PcbViaStack, QuadraticBezier, QuinticPythagoreanHodograph, RationalQuadraticBezier,
     RectangularPocket, SourceLengthUnit, SpecctraGridKeepoutRecord, SpecctraGridKeepoutShape,
@@ -32,17 +32,18 @@ use hyperpath::{
     certify_quintic_ph_inverse_length, certify_symmetric_jerk_limited_feed_time,
     certify_symmetric_jerk_limited_feed_time_for_path, certify_tangent_alignment_candidate,
     check_cardinal_rect_pad_board_clearance, check_circular_pad_board_clearance,
-    check_circular_pad_circular_board_clearance, check_convex_pad_board_clearance,
-    check_obround_pad_board_clearance, check_oriented_rect_pad_board_clearance,
-    check_orthogonal_pad_board_clearance, check_rect_pad_board_clearance,
-    check_rounded_rect_pad_board_clearance, check_trace_board_clearance,
-    check_trace_cardinal_rect_pad_clearance, check_trace_circular_board_clearance,
-    check_trace_clearance, check_trace_convex_board_clearance, check_trace_convex_pad_clearance,
-    check_trace_obround_pad_clearance, check_trace_oriented_rect_pad_clearance,
-    check_trace_orthogonal_board_clearance, check_trace_orthogonal_pad_clearance,
-    check_trace_pad_clearance, check_trace_rect_pad_clearance,
-    check_trace_rounded_rect_pad_clearance, check_trace_via_clearance,
-    check_trace_via_drill_clearance, check_via_drill_board_clearance,
+    check_circular_pad_circular_board_clearance, check_circular_pad_obround_board_clearance,
+    check_convex_pad_board_clearance, check_obround_pad_board_clearance,
+    check_oriented_rect_pad_board_clearance, check_orthogonal_pad_board_clearance,
+    check_rect_pad_board_clearance, check_rounded_rect_pad_board_clearance,
+    check_trace_board_clearance, check_trace_cardinal_rect_pad_clearance,
+    check_trace_circular_board_clearance, check_trace_clearance,
+    check_trace_convex_board_clearance, check_trace_convex_pad_clearance,
+    check_trace_obround_board_clearance, check_trace_obround_pad_clearance,
+    check_trace_oriented_rect_pad_clearance, check_trace_orthogonal_board_clearance,
+    check_trace_orthogonal_pad_clearance, check_trace_pad_clearance,
+    check_trace_rect_pad_clearance, check_trace_rounded_rect_pad_clearance,
+    check_trace_via_clearance, check_trace_via_drill_clearance, check_via_drill_board_clearance,
     classify_meander_candidate_slots, classify_meander_placement_slots,
     classify_meander_placement_slots_with_keepouts, classify_tangent_alignment,
     classify_tangent_chain, classify_tangent_join, import_specctra_trace_record,
@@ -875,6 +876,28 @@ fn path_predicates(c: &mut Criterion) {
             check_circular_pad_circular_board_clearance(
                 &pad,
                 &circular_board,
+                &r(25),
+                PredicatePolicy::default(),
+            )
+        })
+    });
+    let obround_board =
+        PcbObroundBoardOutline::new(LinePathSegment::new(p(0, 0), p(1000, 0)), r(600)).unwrap();
+    c.bench_function("trace_obround_board_edge_clearance_exact", |b| {
+        b.iter(|| {
+            check_trace_obround_board_clearance(
+                &oriented_trace,
+                &obround_board,
+                &r(25),
+                PredicatePolicy::default(),
+            )
+        })
+    });
+    c.bench_function("circular_pad_obround_board_edge_clearance_exact", |b| {
+        b.iter(|| {
+            check_circular_pad_obround_board_clearance(
+                &pad,
+                &obround_board,
                 &r(25),
                 PredicatePolicy::default(),
             )

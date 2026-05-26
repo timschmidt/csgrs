@@ -43,6 +43,13 @@ doc = false
 bench = false
 
 [[bin]]
+name = "pcb_obround_board"
+path = "fuzz_targets/pcb_obround_board.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
 name = "pcb_obround_pad"
 path = "fuzz_targets/pcb_obround_pad.rs"
 test = false

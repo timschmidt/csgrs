@@ -19,6 +19,7 @@ pub mod offset;
 pub mod pcb;
 pub mod pcb_circular_board;
 pub mod pcb_convex_pad;
+pub mod pcb_obround_board;
 pub mod pcb_obround_pad;
 pub mod pcb_oriented;
 pub mod pcb_orthogonal_pad;
@@ -157,6 +158,10 @@ pub use pcb_circular_board::{
 pub use pcb_convex_pad::{
     PcbConvexPad, PcbConvexPadFacts, check_convex_pad_board_clearance,
     check_trace_convex_pad_clearance,
+};
+pub use pcb_obround_board::{
+    PcbObroundBoardOutline, PcbObroundBoardOutlineFacts,
+    check_circular_pad_obround_board_clearance, check_trace_obround_board_clearance,
 };
 pub use pcb_obround_pad::{
     PcbObroundPad, PcbObroundPadFacts, check_obround_pad_board_clearance,
