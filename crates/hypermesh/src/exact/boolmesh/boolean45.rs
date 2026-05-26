@@ -21,9 +21,11 @@ use crate::exact::mesh::{ExactMesh, Triangle};
 
 use super::{
     ExactBoolMeshBoolean03, ExactBoolMeshBoolean45Stage, ExactBoolMeshEdgeEvent,
-    ExactBoolMeshEdgeFacePair, ExactBoolMeshOutputVertexAllocation,
+    ExactBoolMeshEdgeFacePair, ExactBoolMeshFacePair, ExactBoolMeshFacePairPointRun,
+    ExactBoolMeshNewEdgeVertexStage, ExactBoolMeshOutputVertexAllocation,
     ExactBoolMeshOutputVertexOrigin, ExactBoolMeshPairUpStage, ExactBoolMeshPairedEdgeFragment,
-    ExactBoolMeshSide, ExactBoolMeshSourceEdgeRun, ExactBoolMeshSourceVertex,
+    ExactBoolMeshRoutedEdgePoint, ExactBoolMeshSide, ExactBoolMeshSourceEdgePointRun,
+    ExactBoolMeshSourceEdgeRun, ExactBoolMeshSourceVertex,
 };
 
 /// Build the exact `boolean45::size_output` staging record.
@@ -43,6 +45,9 @@ use super::{
 /// `exclusive_scan` ranges and `duplicate_verts` calls; exact coordinate
 /// construction is deferred, which is the separation between topology and
 /// numeric objects required by Yap's exact-computation paradigm.
+/// The new-edge routing is the exact counterpart to `add_new_edge_verts`:
+/// every allocated crossing vertex is placed into one source-edge bucket and
+/// two left/right face-pair buckets before later pairing/emission stages.
 pub(super) fn size_output_stage(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -71,6 +76,8 @@ pub(super) fn size_output_stage(
         .map(|crossing| crossing_sign * crossing)
         .collect::<Vec<_>>();
     let vertex_allocation = allocate_output_vertices(&i03, &i30, &i12, &i21);
+    let new_edge_vertices =
+        route_new_edge_vertices(left, right, boolean03, &vertex_allocation, &i12, &i21);
 
     let mut left_face_halfedge_counts = retained_vertex_counts(left.triangles(), &i03);
     let mut right_face_halfedge_counts = retained_vertex_counts(right.triangles(), &i30);
@@ -119,6 +126,7 @@ pub(super) fn size_output_stage(
         face_halfedge_offsets,
         source_face_to_output_face,
         vertex_allocation,
+        new_edge_vertices,
         vertices_from_left: i03.iter().map(|value| signed_abs(*value)).sum(),
         vertices_from_right: i30.iter().map(|value| signed_abs(*value)).sum(),
         inserted_intersection_vertices: i12
@@ -219,6 +227,13 @@ fn side_key(side: ExactBoolMeshSide) -> u8 {
     match side {
         ExactBoolMeshSide::Left => 0,
         ExactBoolMeshSide::Right => 1,
+    }
+}
+
+fn side_from_key(side: u8) -> ExactBoolMeshSide {
+    match side {
+        0 => ExactBoolMeshSide::Left,
+        _ => ExactBoolMeshSide::Right,
     }
 }
 
@@ -324,6 +339,159 @@ where
             Some(start)
         })
         .collect()
+}
+
+fn route_new_edge_vertices(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    boolean03: &ExactBoolMeshBoolean03,
+    allocation: &ExactBoolMeshOutputVertexAllocation,
+    i12: &[i32],
+    i21: &[i32],
+) -> ExactBoolMeshNewEdgeVertexStage {
+    let mut source_edge_runs =
+        BTreeMap::<(u8, usize, usize), Vec<ExactBoolMeshRoutedEdgePoint>>::new();
+    let mut face_pair_runs = BTreeMap::<(usize, usize), Vec<ExactBoolMeshRoutedEdgePoint>>::new();
+    let mut missing_source_edge_adjacencies = 0;
+
+    for (event, (pair, signed_count)) in boolean03.p1q2.iter().zip(i12.iter()).enumerate() {
+        missing_source_edge_adjacencies += route_crossing_vertices(
+            pair,
+            *signed_count,
+            allocation.p1q2_output_starts[event],
+            event,
+            left,
+            true,
+            &allocation.output_vertex_origins,
+            &mut source_edge_runs,
+            &mut face_pair_runs,
+        );
+    }
+    let collision_offset = boolean03.p1q2.len();
+    for (event, (pair, signed_count)) in boolean03.p2q1.iter().zip(i21.iter()).enumerate() {
+        missing_source_edge_adjacencies += route_crossing_vertices(
+            pair,
+            *signed_count,
+            allocation.p2q1_output_starts[event],
+            collision_offset + event,
+            right,
+            false,
+            &allocation.output_vertex_origins,
+            &mut source_edge_runs,
+            &mut face_pair_runs,
+        );
+    }
+
+    ExactBoolMeshNewEdgeVertexStage {
+        source_edge_runs: source_edge_runs
+            .into_iter()
+            .map(
+                |((side_key, tail, head), points)| ExactBoolMeshSourceEdgePointRun {
+                    side: side_from_key(side_key),
+                    tail,
+                    head,
+                    points,
+                },
+            )
+            .collect(),
+        face_pair_runs: face_pair_runs
+            .into_iter()
+            .map(
+                |((left_face, right_face), points)| ExactBoolMeshFacePairPointRun {
+                    face_pair: ExactBoolMeshFacePair {
+                        left_face,
+                        right_face,
+                    },
+                    points,
+                },
+            )
+            .collect(),
+        missing_source_edge_adjacencies,
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+fn route_crossing_vertices(
+    pair: &ExactBoolMeshEdgeFacePair,
+    signed_count: i32,
+    start: Option<usize>,
+    collision: usize,
+    edge_mesh: &ExactMesh,
+    fwd: bool,
+    origins: &[ExactBoolMeshOutputVertexOrigin],
+    source_edge_runs: &mut BTreeMap<(u8, usize, usize), Vec<ExactBoolMeshRoutedEdgePoint>>,
+    face_pair_runs: &mut BTreeMap<(usize, usize), Vec<ExactBoolMeshRoutedEdgePoint>>,
+) -> usize {
+    let count = signed_abs(signed_count);
+    if count == 0 {
+        return 0;
+    }
+    let Some(start) = start else {
+        return 1;
+    };
+
+    let dir = signed_count < 0;
+    let source_key = (side_key(pair.edge_side), pair.edge[0], pair.edge[1]);
+    let primary_edge_face = match pair.edge_side {
+        ExactBoolMeshSide::Left => pair.face_pair.left_face,
+        ExactBoolMeshSide::Right => pair.face_pair.right_face,
+    };
+    let incident_faces = incident_faces_for_edge(edge_mesh.triangles(), pair.edge);
+    let mut missing_source_edge_adjacencies =
+        usize::from(!incident_faces.contains(&primary_edge_face));
+    let paired_edge_face = incident_faces
+        .iter()
+        .copied()
+        .find(|face| *face != primary_edge_face);
+    if paired_edge_face.is_none() {
+        missing_source_edge_adjacencies += 1;
+    }
+
+    for copy in 0..count {
+        let output_vertex = start + copy;
+        let Some(origin) = origins.get(output_vertex).copied() else {
+            continue;
+        };
+        let source_point = ExactBoolMeshRoutedEdgePoint {
+            output_vertex,
+            collision,
+            is_tail: dir,
+            origin,
+        };
+        source_edge_runs
+            .entry(source_key)
+            .or_default()
+            .push(source_point);
+
+        let primary_point = ExactBoolMeshRoutedEdgePoint {
+            is_tail: if fwd { !dir } else { dir },
+            ..source_point
+        };
+        face_pair_runs
+            .entry(face_pair_key(pair, primary_edge_face))
+            .or_default()
+            .push(primary_point);
+
+        if let Some(paired_edge_face) = paired_edge_face {
+            let paired_point = ExactBoolMeshRoutedEdgePoint {
+                is_tail: if fwd { dir } else { !dir },
+                ..source_point
+            };
+            face_pair_runs
+                .entry(face_pair_key(pair, paired_edge_face))
+                .or_default()
+                .push(paired_point);
+        }
+    }
+
+    missing_source_edge_adjacencies
+}
+
+fn face_pair_key(pair: &ExactBoolMeshEdgeFacePair, edge_face: usize) -> (usize, usize) {
+    match pair.edge_side {
+        ExactBoolMeshSide::Left => (edge_face, pair.face),
+        ExactBoolMeshSide::Right => (pair.face, edge_face),
+    }
 }
 
 fn count_crossing_vertex(
