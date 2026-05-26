@@ -24,8 +24,8 @@ use hypervoxel::{
     VoxelSideTables, VoxelSliceNaming, VoxelSliceOrdering, VoxelSpatialAggregateFacts,
     VoxelTraceDimension, VoxelTraceManifest, VoxelizationAudit, VoxelizationPolicy,
     audit_chunk_paged_field_samples, audit_chunk_paged_material_regions,
-    audit_chunk_paged_process_states, audit_exact_voxel_surface_topology,
-    certify_chunk_paged_handoff, chunk_paged_binary_snapshot_v1,
+    audit_chunk_paged_process_states, audit_exact_surface_triangle_mesh_vocabulary,
+    audit_exact_voxel_surface_topology, certify_chunk_paged_handoff, chunk_paged_binary_snapshot_v1,
     chunk_paged_exact_surface_triangle_mesh_with_report,
     chunk_paged_run_length_snapshot_v1, chunk_paged_greedy_face_patch_plan_with_report,
     classify_chunk_paged_support_mask, classify_support_mask, continuous_field_address,
@@ -464,6 +464,22 @@ fuzz_target!(|data: (u8, u64, u64, u64)| {
     } else {
         assert!(exact_surface_mesh.triangles.is_empty());
     }
+    let mesh_vocabulary = audit_exact_surface_triangle_mesh_vocabulary(&exact_surface_mesh);
+    assert_eq!(
+        mesh_vocabulary.exact_shared_mesh_vocabulary_ready,
+        exact_surface_mesh
+            .report
+            .exact_triangle_surface_mesh_ready
+            && mesh_vocabulary.out_of_bounds_indices.is_empty()
+            && mesh_vocabulary.degenerate_triangles.is_empty()
+            && mesh_vocabulary.invalid_split_triangles.is_empty()
+            && mesh_vocabulary.duplicate_source_splits.is_empty()
+            && mesh_vocabulary
+                .source_faces_with_wrong_triangle_count
+                .is_empty()
+            && mesh_vocabulary.boundary_index_edges.is_empty()
+            && mesh_vocabulary.nonmanifold_index_edges.is_empty()
+    );
     let paged_shell = extract_chunk_paged_exposed_faces_with_report(&paged_grid).unwrap();
     assert_eq!(paged_shell.exact_faces, shell.exact_faces);
     assert_eq!(paged_shell.has_exact_faces, shell.has_exact_faces);
@@ -489,9 +505,8 @@ fuzz_target!(|data: (u8, u64, u64, u64)| {
         paged_surface_mesh.exact_paged_triangle_mesh_ready,
         paged_surface_mesh.shell.exact_paged_shell_ready
             && paged_surface_mesh
-                .mesh
-                .report
-                .exact_triangle_surface_mesh_ready
+                .vocabulary
+                .exact_shared_mesh_vocabulary_ready
     );
     let paged_patch_plan =
         chunk_paged_greedy_face_patch_plan_with_report(&paged_grid, "fuzz paged preview").unwrap();

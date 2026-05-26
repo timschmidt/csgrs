@@ -13,8 +13,9 @@
 //! exact grid-lattice vertices replacing primitive-float coordinates.
 
 use crate::{
-    ChunkPagedExactFaceExtractionReport, ChunkPagedSparseGrid, ExactVoxelSurfaceTriangleMesh,
-    HypervoxelResult, exact_voxel_surface_triangle_mesh_from_faces,
+    ChunkPagedExactFaceExtractionReport, ChunkPagedSparseGrid,
+    ExactSurfaceTriangleMeshVocabularyReport, ExactVoxelSurfaceTriangleMesh, HypervoxelResult,
+    audit_exact_surface_triangle_mesh_vocabulary, exact_voxel_surface_triangle_mesh_from_faces,
     extract_chunk_paged_exposed_faces_with_report,
 };
 
@@ -25,8 +26,10 @@ pub struct ChunkPagedExactSurfaceTriangleMeshReport {
     pub shell: ChunkPagedExactFaceExtractionReport,
     /// Exact indexed triangle mesh produced from the shell.
     pub mesh: ExactVoxelSurfaceTriangleMesh,
+    /// Shared indexed mesh vocabulary audit over the emitted triangle mesh.
+    pub vocabulary: ExactSurfaceTriangleMeshVocabularyReport,
     /// Whether page-backed shell extraction and exact triangle mesh handoff
-    /// both produced replay-ready evidence.
+    /// both produced replay-ready shared vocabulary evidence.
     pub exact_paged_triangle_mesh_ready: bool,
 }
 
@@ -42,11 +45,13 @@ pub fn chunk_paged_exact_surface_triangle_mesh_with_report(
 ) -> HypervoxelResult<ChunkPagedExactSurfaceTriangleMeshReport> {
     let shell = extract_chunk_paged_exposed_faces_with_report(grid)?;
     let mesh = exact_voxel_surface_triangle_mesh_from_faces(&shell.faces);
+    let vocabulary = audit_exact_surface_triangle_mesh_vocabulary(&mesh);
     let exact_paged_triangle_mesh_ready =
-        shell.exact_paged_shell_ready && mesh.report.exact_triangle_surface_mesh_ready;
+        shell.exact_paged_shell_ready && vocabulary.exact_shared_mesh_vocabulary_ready;
     Ok(ChunkPagedExactSurfaceTriangleMeshReport {
         shell,
         mesh,
+        vocabulary,
         exact_paged_triangle_mesh_ready,
     })
 }

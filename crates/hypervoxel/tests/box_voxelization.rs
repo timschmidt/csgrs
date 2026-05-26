@@ -12,13 +12,14 @@ use hypervoxel::{
     SparseVoxelGrid, StorageReplayStatus, VoxelAddress, VoxelAggregateFacts, VoxelCell,
     VoxelHandoffDomain, VoxelHandoffManifest, VoxelMemoryBudgetManifest, VoxelSideTables,
     VoxelizationAudit, VoxelizationPolicy, audit_chunk_paged_material_regions,
-    audit_chunk_paged_process_states, audit_exact_voxel_surface_topology,
-    certify_chunk_paged_handoff, chunk_paged_binary_snapshot_v1,
-    chunk_paged_exact_surface_triangle_mesh_with_report, chunk_paged_run_length_snapshot_v1,
-    diff_chunk_paged_sparse_grids, diff_sparse_grids, exact_voxel_surface_triangle_mesh_from_faces,
-    extract_exposed_faces, extract_exposed_faces_with_report, greedy_face_patch_plan,
-    lookup_material_display_colors, lossy_obj_from_quad_mesh, lossy_quad_mesh_from_faces,
-    query_material_regions, report_material_region_metadata, sample_manhattan_distance_field,
+    audit_chunk_paged_process_states, audit_exact_surface_triangle_mesh_vocabulary,
+    audit_exact_voxel_surface_topology, certify_chunk_paged_handoff,
+    chunk_paged_binary_snapshot_v1, chunk_paged_exact_surface_triangle_mesh_with_report,
+    chunk_paged_run_length_snapshot_v1, diff_chunk_paged_sparse_grids, diff_sparse_grids,
+    exact_voxel_surface_triangle_mesh_from_faces, extract_exposed_faces,
+    extract_exposed_faces_with_report, greedy_face_patch_plan, lookup_material_display_colors,
+    lossy_obj_from_quad_mesh, lossy_quad_mesh_from_faces, query_material_regions,
+    report_material_region_metadata, sample_manhattan_distance_field,
     sample_signed_manhattan_distance_field, select_lod_cells, voxel_neighbors6, voxelize_exact_box,
     voxelize_exact_convex_halfspace_set, voxelize_exact_halfspace,
 };
@@ -1268,6 +1269,12 @@ fn chunk_paged_exact_surface_triangle_mesh_preserves_page_shell_evidence() {
     assert_eq!(paged_mesh.mesh, sparse_mesh);
     assert!(paged_mesh.shell.exact_paged_shell_ready);
     assert!(paged_mesh.mesh.report.exact_triangle_surface_mesh_ready);
+    assert!(paged_mesh.vocabulary.exact_shared_mesh_vocabulary_ready);
+    assert_eq!(paged_mesh.vocabulary.source_faces, sparse_shell.exact_faces);
+    assert_eq!(
+        paged_mesh.vocabulary.input_triangles,
+        sparse_shell.exact_faces * 2
+    );
     assert!(paged_mesh.exact_paged_triangle_mesh_ready);
     assert!(paged_mesh.shell.page_hits > 0);
     assert!(paged_mesh.shell.cross_page_sides > 0);
@@ -1282,6 +1289,7 @@ fn chunk_paged_exact_surface_triangle_mesh_preserves_page_shell_evidence() {
     assert!(empty.mesh.triangles.is_empty());
     assert!(!empty.shell.exact_paged_shell_ready);
     assert!(!empty.mesh.report.exact_triangle_surface_mesh_ready);
+    assert!(!empty.vocabulary.exact_shared_mesh_vocabulary_ready);
     assert!(!empty.exact_paged_triangle_mesh_ready);
 
     let mut blocked_grid = grid;
@@ -1297,6 +1305,7 @@ fn chunk_paged_exact_surface_triangle_mesh_preserves_page_shell_evidence() {
     assert!(blocked.shell.skipped_lossy_cells > 0);
     assert!(!blocked.shell.exact_paged_shell_ready);
     assert!(!blocked.mesh.report.exact_triangle_surface_mesh_ready);
+    assert!(!blocked.vocabulary.exact_shared_mesh_vocabulary_ready);
     assert!(!blocked.exact_paged_triangle_mesh_ready);
 }
 
@@ -1338,6 +1347,62 @@ fn exact_voxel_surface_topology_reports_closed_duplicate_open_and_mixed_shells()
         assert_eq!(pair[0].split, 0);
         assert_eq!(pair[1].split, 1);
     }
+    let vocabulary = audit_exact_surface_triangle_mesh_vocabulary(&mesh);
+    assert_eq!(vocabulary.input_vertices, 8);
+    assert_eq!(vocabulary.input_triangles, 12);
+    assert_eq!(vocabulary.source_faces, 6);
+    assert_eq!(vocabulary.topology_source_faces, 6);
+    assert_eq!(vocabulary.referenced_vertices, 8);
+    assert_eq!(vocabulary.triangle_edge_records, 36);
+    assert_eq!(vocabulary.unique_index_edges, 18);
+    assert_eq!(vocabulary.manifold_index_edges, 18);
+    assert!(vocabulary.out_of_bounds_indices.is_empty());
+    assert!(vocabulary.degenerate_triangles.is_empty());
+    assert!(vocabulary.invalid_split_triangles.is_empty());
+    assert!(vocabulary.duplicate_source_splits.is_empty());
+    assert!(vocabulary.source_faces_with_wrong_triangle_count.is_empty());
+    assert!(vocabulary.boundary_index_edges.is_empty());
+    assert!(vocabulary.nonmanifold_index_edges.is_empty());
+    assert!(vocabulary.exact_shared_mesh_vocabulary_ready);
+
+    let mut out_of_bounds_mesh = mesh.clone();
+    out_of_bounds_mesh.triangles[0].vertices[0] = u32::MAX;
+    let out_of_bounds = audit_exact_surface_triangle_mesh_vocabulary(&out_of_bounds_mesh);
+    assert_eq!(out_of_bounds.out_of_bounds_indices, vec![(0, u32::MAX)]);
+    assert!(!out_of_bounds.exact_shared_mesh_vocabulary_ready);
+
+    let mut degenerate_mesh = mesh.clone();
+    degenerate_mesh.triangles[1].vertices[1] = degenerate_mesh.triangles[1].vertices[0];
+    let degenerate = audit_exact_surface_triangle_mesh_vocabulary(&degenerate_mesh);
+    assert_eq!(degenerate.degenerate_triangles, vec![1]);
+    assert!(!degenerate.exact_shared_mesh_vocabulary_ready);
+
+    let mut bad_split_mesh = mesh.clone();
+    bad_split_mesh.triangles[2].split = 2;
+    let bad_split = audit_exact_surface_triangle_mesh_vocabulary(&bad_split_mesh);
+    assert_eq!(bad_split.invalid_split_triangles, vec![2]);
+    assert!(!bad_split.exact_shared_mesh_vocabulary_ready);
+
+    let mut duplicate_split_mesh = mesh.clone();
+    duplicate_split_mesh.triangles[1].split = duplicate_split_mesh.triangles[0].split;
+    let duplicate_split = audit_exact_surface_triangle_mesh_vocabulary(&duplicate_split_mesh);
+    assert_eq!(duplicate_split.duplicate_source_splits.len(), 1);
+    assert_eq!(
+        duplicate_split.source_faces_with_wrong_triangle_count,
+        Vec::<(hypervoxel::ExactSurfaceFaceKey, usize)>::new()
+    );
+    assert!(!duplicate_split.exact_shared_mesh_vocabulary_ready);
+
+    let mut missing_triangle_mesh = mesh.clone();
+    let removed = missing_triangle_mesh.triangles.pop().unwrap();
+    let missing_triangle = audit_exact_surface_triangle_mesh_vocabulary(&missing_triangle_mesh);
+    assert_eq!(missing_triangle.input_triangles, 11);
+    assert_eq!(
+        missing_triangle.source_faces_with_wrong_triangle_count,
+        vec![(removed.source_face, 1)]
+    );
+    assert!(!missing_triangle.boundary_index_edges.is_empty());
+    assert!(!missing_triangle.exact_shared_mesh_vocabulary_ready);
 
     let empty = audit_exact_voxel_surface_topology(&[]);
     assert_eq!(empty.input_faces, 0);
@@ -1347,6 +1412,9 @@ fn exact_voxel_surface_topology_reports_closed_duplicate_open_and_mixed_shells()
     assert!(empty_mesh.triangles.is_empty());
     assert!(!empty_mesh.report.exact_face_identity_preserved);
     assert!(!empty_mesh.report.exact_triangle_surface_mesh_ready);
+    let empty_vocabulary = audit_exact_surface_triangle_mesh_vocabulary(&empty_mesh);
+    assert_eq!(empty_vocabulary.input_triangles, 0);
+    assert!(!empty_vocabulary.exact_shared_mesh_vocabulary_ready);
 
     let mut duplicate_faces = shell.faces.clone();
     duplicate_faces.push(shell.faces[0].clone());

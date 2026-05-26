@@ -22,9 +22,9 @@ use hypervoxel::{
     VoxelSideTables, VoxelSliceNaming, VoxelSliceOrdering, VoxelSpatialAggregateFacts,
     VoxelTraceDimension, VoxelTraceManifest, VoxelizationAudit, VoxelizationPolicy,
     audit_chunk_paged_field_samples, audit_chunk_paged_material_regions,
-    audit_chunk_paged_process_states, audit_exact_voxel_surface_topology,
-    certify_chunk_paged_handoff, chunk_paged_binary_snapshot_v1,
-    chunk_paged_exact_surface_triangle_mesh_with_report,
+    audit_chunk_paged_process_states, audit_exact_surface_triangle_mesh_vocabulary,
+    audit_exact_voxel_surface_topology, certify_chunk_paged_handoff,
+    chunk_paged_binary_snapshot_v1, chunk_paged_exact_surface_triangle_mesh_with_report,
     chunk_paged_greedy_face_patch_plan_with_report, chunk_paged_run_length_snapshot_v1,
     classify_chunk_paged_support_mask, classify_support_mask, continuous_field_address,
     diff_chunk_paged_sparse_grids, diff_sparse_grids, exact_voxel_surface_triangle_mesh_from_faces,
@@ -1121,6 +1121,19 @@ fn bench_batches_field_facts_and_sweeps(c: &mut Criterion) {
             )
         })
     });
+    c.bench_function("exact_surface_triangle_mesh_vocabulary_audit", |b| {
+        let faces = extract_exposed_faces(&grid).unwrap();
+        let mesh = exact_voxel_surface_triangle_mesh_from_faces(&faces);
+        b.iter(|| {
+            let report = audit_exact_surface_triangle_mesh_vocabulary(&mesh);
+            (
+                report.referenced_vertices,
+                report.unique_index_edges,
+                report.manifold_index_edges,
+                report.exact_shared_mesh_vocabulary_ready,
+            )
+        })
+    });
     c.bench_function("chunk_paged_exact_surface_triangle_mesh_handoff", |b| {
         let paged =
             ChunkPagedSparseGrid::from_sparse_grid(&grid, ChunkShape::new(3).unwrap()).unwrap();
@@ -1129,7 +1142,7 @@ fn bench_batches_field_facts_and_sweeps(c: &mut Criterion) {
             (
                 report.shell.exact_faces,
                 report.mesh.report.exact_triangles,
-                report.mesh.report.exact_face_identity_preserved,
+                report.vocabulary.unique_index_edges,
                 report.exact_paged_triangle_mesh_ready,
             )
         })

@@ -68,6 +68,7 @@ mod storage;
 mod support;
 mod surface_mesh;
 mod surface_topology;
+mod surface_vocabulary;
 mod svo;
 mod svo_surface;
 mod trace;
@@ -211,6 +212,10 @@ pub use surface_mesh::{
 pub use surface_topology::{
     ExactSurfaceEdge, ExactSurfaceFaceKey, ExactSurfaceVertex, ExactVoxelSurfaceTopologyReport,
     audit_exact_voxel_surface_topology,
+};
+pub use surface_vocabulary::{
+    ExactSurfaceTriangleMeshEdge, ExactSurfaceTriangleMeshVocabularyReport,
+    audit_exact_surface_triangle_mesh_vocabulary,
 };
 pub use svo::{
     SvoCompactionReport, SvoDagStats, SvoEditReport, SvoNodeId, SvoSparseReplayReport,
