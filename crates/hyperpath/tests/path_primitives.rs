@@ -15,7 +15,11 @@ use hyperpath::{
     LineCubicBezierAlgebraicBreakpointSequenceBlocker,
     LineCubicBezierAlgebraicBreakpointSequenceClass,
     LineCubicBezierAlgebraicBreakpointSequenceSource,
-    LineCubicBezierAlgebraicOverlapBreakpointDomain, LineCubicBezierAlgebraicSourceSpanBoundary,
+    LineCubicBezierAlgebraicOverlapBreakpointDomain,
+    LineCubicBezierAlgebraicOverlapBreakpointOrderClass,
+    LineCubicBezierAlgebraicOverlapBreakpointSequenceClass,
+    LineCubicBezierAlgebraicOverlapBreakpointSequenceSource,
+    LineCubicBezierAlgebraicOverlapSourceSpanBoundary, LineCubicBezierAlgebraicSourceSpanBoundary,
     LineCubicBezierIntersectionClass, LineCubicBezierInverseBoundarySource,
     LineCubicBezierSupportOverlapMonotonicity, LineExplicitArcIntersectionClass, LineOffsetError,
     LinePathSegment, LineQuadraticBezierIntersectionClass,
@@ -970,6 +974,68 @@ fn line_cubic_bezier_arrangement_retains_same_support_overlap_boundaries() {
                     && breakpoint.domain
                         == LineCubicBezierAlgebraicOverlapBreakpointDomain::InsideLineAndCurve
             })
+    );
+    assert_eq!(report.algebraic_overlap_breakpoint_orders.len(), 1);
+    assert_eq!(
+        report.algebraic_overlap_breakpoint_orders[0].cubic_order,
+        Some(LineCubicBezierAlgebraicOverlapBreakpointOrderClass::Before)
+    );
+    assert_eq!(
+        report.algebraic_overlap_breakpoint_orders[0].line_order,
+        Some(LineCubicBezierAlgebraicOverlapBreakpointOrderClass::Before)
+    );
+    assert_eq!(report.algebraic_overlap_breakpoint_sequences.len(), 2);
+    let curve_sequence = report
+        .algebraic_overlap_breakpoint_sequences
+        .iter()
+        .find(|sequence| {
+            sequence.source == LineCubicBezierAlgebraicOverlapBreakpointSequenceSource::Curve(0)
+        })
+        .unwrap();
+    assert_eq!(
+        curve_sequence.class,
+        LineCubicBezierAlgebraicOverlapBreakpointSequenceClass::Ordered
+    );
+    assert_eq!(curve_sequence.breakpoints.len(), 2);
+    let line_sequence = report
+        .algebraic_overlap_breakpoint_sequences
+        .iter()
+        .find(|sequence| {
+            sequence.source == LineCubicBezierAlgebraicOverlapBreakpointSequenceSource::Line(0)
+        })
+        .unwrap();
+    assert_eq!(
+        line_sequence.class,
+        LineCubicBezierAlgebraicOverlapBreakpointSequenceClass::Ordered
+    );
+    assert_eq!(line_sequence.breakpoints, curve_sequence.breakpoints);
+    let curve_spans: Vec<_> = report
+        .algebraic_overlap_source_spans
+        .iter()
+        .filter(|span| {
+            span.source == LineCubicBezierAlgebraicOverlapBreakpointSequenceSource::Curve(0)
+        })
+        .collect();
+    assert_eq!(curve_spans.len(), 3);
+    assert_eq!(
+        curve_spans[0].left,
+        LineCubicBezierAlgebraicOverlapSourceSpanBoundary::SourceStart
+    );
+    assert_eq!(
+        curve_spans[0].right,
+        LineCubicBezierAlgebraicOverlapSourceSpanBoundary::Breakpoint(
+            curve_sequence.breakpoints[0]
+        )
+    );
+    assert_eq!(
+        curve_spans[2].left,
+        LineCubicBezierAlgebraicOverlapSourceSpanBoundary::Breakpoint(
+            curve_sequence.breakpoints[1]
+        )
+    );
+    assert_eq!(
+        curve_spans[2].right,
+        LineCubicBezierAlgebraicOverlapSourceSpanBoundary::SourceEnd
     );
     assert_eq!(report.line_breakpoints[0].len(), 2);
     assert_eq!(report.cubic_breakpoints[0].len(), 2);
@@ -11428,6 +11494,9 @@ proptest! {
                 .all(|breakpoint| breakpoint.domain
                     == LineCubicBezierAlgebraicOverlapBreakpointDomain::OutsideCubic)
         );
+        prop_assert!(report.algebraic_overlap_breakpoint_orders.is_empty());
+        prop_assert!(report.algebraic_overlap_breakpoint_sequences.is_empty());
+        prop_assert!(report.algebraic_overlap_source_spans.is_empty());
         prop_assert_eq!(report.events[0].intersection.intersections[0].parameter.clone(), r(0));
         prop_assert_eq!(report.events[0].intersection.intersections[1].parameter.clone(), r(1));
         prop_assert_eq!(report.line_fragments.len(), 3);

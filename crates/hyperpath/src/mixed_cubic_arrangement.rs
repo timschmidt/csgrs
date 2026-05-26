@@ -164,6 +164,137 @@ pub struct LineCubicBezierAlgebraicOverlapBreakpoint {
     pub domain: LineCubicBezierAlgebraicOverlapBreakpointDomain,
 }
 
+/// Certified order relation between two retained cubic overlap-boundary roots.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum LineCubicBezierAlgebraicOverlapBreakpointOrderClass {
+    /// The left retained boundary root is certified before the right root.
+    Before,
+    /// The retained roots are certified equal.
+    Equal,
+    /// The left retained boundary root is certified after the right root.
+    After,
+    /// The isolating intervals overlap or exact comparison did not decide.
+    Unknown,
+}
+
+/// Pairwise ordering evidence for retained cubic overlap-boundary roots.
+///
+/// Same-support overlap roots carry two source parameters: the exact line
+/// endpoint parameter (`0` or `1`) and the represented cubic inverse root.
+/// This report records exact pairwise order on either source when both
+/// candidates are certified in-domain. It deliberately does not mutate
+/// [`LineCubicBezierArrangementReport::line_breakpoints`] or
+/// [`LineCubicBezierArrangementReport::cubic_breakpoints`].
+///
+/// This is the Yap object/predicate boundary from "Towards Exact Geometric
+/// Computation" (1997): the exact roots and their order certificates are kept
+/// as replay evidence, while concrete topology waits for an algebraic split
+/// materializer. Represented root comparisons follow the Sturm/Collins-Loos
+/// isolating-interval model used by `hypersolve`.
+#[derive(Clone, Debug, PartialEq)]
+pub struct LineCubicBezierAlgebraicOverlapBreakpointOrder {
+    /// Index in [`LineCubicBezierArrangementReport::algebraic_overlap_breakpoints`].
+    pub left: usize,
+    /// Index in [`LineCubicBezierArrangementReport::algebraic_overlap_breakpoints`].
+    pub right: usize,
+    /// Same-cubic order, when both candidates came from the same cubic.
+    pub cubic_order: Option<LineCubicBezierAlgebraicOverlapBreakpointOrderClass>,
+    /// Same-line order, when both candidates came from the same line.
+    pub line_order: Option<LineCubicBezierAlgebraicOverlapBreakpointOrderClass>,
+}
+
+/// Source parameter space for retained cubic overlap-boundary sequences.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum LineCubicBezierAlgebraicOverlapBreakpointSequenceSource {
+    /// Breakpoints ordered by exact endpoint parameter on a retained line.
+    Line(usize),
+    /// Breakpoints ordered by represented source parameter on a retained cubic.
+    Curve(usize),
+}
+
+/// Sequence readiness for retained cubic overlap-boundary roots.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum LineCubicBezierAlgebraicOverlapBreakpointSequenceClass {
+    /// Every same-source pair had certified strict order, so `breakpoints` is sorted.
+    Ordered,
+    /// A pair was equal, missing, or undecidable; insertion order is retained.
+    Ambiguous,
+}
+
+/// Exact blocker that prevents a retained cubic overlap-boundary sequence from being sorted.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum LineCubicBezierAlgebraicOverlapBreakpointSequenceBlocker {
+    /// Same-source order evidence was not emitted for this pair.
+    MissingOrder { left: usize, right: usize },
+    /// Same-source represented intervals overlap or comparison did not decide.
+    UnknownOrder { left: usize, right: usize },
+    /// Distinct retained candidates have the same source parameter.
+    EqualOrder { left: usize, right: usize },
+}
+
+/// Ordered retained cubic overlap-boundary breakpoint indices for one source.
+///
+/// The indices address
+/// [`LineCubicBezierArrangementReport::algebraic_overlap_breakpoints`].
+/// Only candidates certified
+/// [`LineCubicBezierAlgebraicOverlapBreakpointDomain::InsideLineAndCurve`]
+/// can produce an ordered sequence. Outside and unknown roots remain retained
+/// on the report as exact evidence, but are omitted from readiness sequences
+/// and never become span boundaries.
+///
+/// This follows Yap, "Towards Exact Geometric Computation" (1997): exact
+/// objects are not discarded, but topological readiness is stated separately.
+/// The represented cubic roots use Collins and Loos, "Real Zeros of
+/// Polynomials" (1982), via `hypersolve` isolating intervals.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct LineCubicBezierAlgebraicOverlapBreakpointSequence {
+    /// Source whose parameter orders this sequence.
+    pub source: LineCubicBezierAlgebraicOverlapBreakpointSequenceSource,
+    /// Breakpoint indices, sorted only when `class == Ordered`.
+    pub breakpoints: Vec<usize>,
+    /// Whether this source sequence is ready for exact algebraic split construction.
+    pub class: LineCubicBezierAlgebraicOverlapBreakpointSequenceClass,
+    /// Exact reasons that prevented sorting.
+    pub blockers: Vec<LineCubicBezierAlgebraicOverlapBreakpointSequenceBlocker>,
+}
+
+/// Boundary of a retained cubic overlap-boundary source span.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum LineCubicBezierAlgebraicOverlapSourceSpanBoundary {
+    /// The exact source parameter `0`.
+    SourceStart,
+    /// An index in [`LineCubicBezierArrangementReport::algebraic_overlap_breakpoints`].
+    Breakpoint(usize),
+    /// The exact source parameter `1`.
+    SourceEnd,
+}
+
+/// Conservative source-parameter interval between ordered cubic overlap boundaries.
+///
+/// Spans are emitted only for ordered in-domain overlap-boundary sequences.
+/// They are not line or cubic fragments; they are retained interval hulls that
+/// later algebraic split construction can replay. Line spans use exact
+/// endpoint parameters, and cubic spans use the retained Sturm isolating
+/// intervals of the inverse-boundary roots.
+///
+/// This is the same retained-object discipline advocated by Yap, "Towards
+/// Exact Geometric Computation" (1997): exact algebraic candidates advance
+/// scheduling without being converted to sampled breakpoints. The root
+/// intervals follow Collins and Loos, "Real Zeros of Polynomials" (1982).
+#[derive(Clone, Debug, PartialEq)]
+pub struct LineCubicBezierAlgebraicOverlapSourceSpan {
+    /// Source whose parameter space owns this span.
+    pub source: LineCubicBezierAlgebraicOverlapBreakpointSequenceSource,
+    /// Left adjacent boundary.
+    pub left: LineCubicBezierAlgebraicOverlapSourceSpanBoundary,
+    /// Right adjacent boundary.
+    pub right: LineCubicBezierAlgebraicOverlapSourceSpanBoundary,
+    /// Conservative lower source parameter bound.
+    pub parameter_lower: Real,
+    /// Conservative upper source parameter bound.
+    pub parameter_upper: Real,
+}
+
 /// Certified order relation between two represented line/cubic breakpoint candidates.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum LineCubicBezierAlgebraicBreakpointOrderClass {
@@ -421,6 +552,13 @@ pub struct LineCubicBezierArrangementReport {
     pub algebraic_breakpoints: Vec<LineCubicBezierAlgebraicBreakpoint>,
     /// Algebraic cubic breakpoint candidates retained from same-support overlap boundaries.
     pub algebraic_overlap_breakpoints: Vec<LineCubicBezierAlgebraicOverlapBreakpoint>,
+    /// Pairwise exact order evidence for retained algebraic cubic overlap boundaries.
+    pub algebraic_overlap_breakpoint_orders: Vec<LineCubicBezierAlgebraicOverlapBreakpointOrder>,
+    /// Per-source retained cubic overlap-boundary sequences derived from exact order evidence.
+    pub algebraic_overlap_breakpoint_sequences:
+        Vec<LineCubicBezierAlgebraicOverlapBreakpointSequence>,
+    /// Conservative source spans induced by certified cubic overlap-boundary sequences.
+    pub algebraic_overlap_source_spans: Vec<LineCubicBezierAlgebraicOverlapSourceSpan>,
     /// Pairwise exact order evidence for retained algebraic breakpoints.
     pub algebraic_breakpoint_orders: Vec<LineCubicBezierAlgebraicBreakpointOrder>,
     /// Per-source retained algebraic breakpoint sequences derived from exact order evidence.
@@ -533,6 +671,16 @@ pub fn arrange_line_segments_with_cubic_beziers_and_provenance(
         algebraic_cubic_breakpoint_sequences(&algebraic_breakpoints, &algebraic_breakpoint_orders);
     let algebraic_source_spans =
         algebraic_cubic_source_spans(&algebraic_breakpoints, &algebraic_breakpoint_sequences);
+    let algebraic_overlap_breakpoint_orders =
+        algebraic_cubic_overlap_breakpoint_orders(&algebraic_overlap_breakpoints, policy);
+    let algebraic_overlap_breakpoint_sequences = algebraic_cubic_overlap_breakpoint_sequences(
+        &algebraic_overlap_breakpoints,
+        &algebraic_overlap_breakpoint_orders,
+    );
+    let algebraic_overlap_source_spans = algebraic_cubic_overlap_source_spans(
+        &algebraic_overlap_breakpoints,
+        &algebraic_overlap_breakpoint_sequences,
+    );
     let algebraic_endpoint_envelopes = algebraic_cubic_endpoint_envelopes(
         lines,
         curves,
@@ -555,6 +703,9 @@ pub fn arrange_line_segments_with_cubic_beziers_and_provenance(
         support_overlaps,
         algebraic_breakpoints,
         algebraic_overlap_breakpoints,
+        algebraic_overlap_breakpoint_orders,
+        algebraic_overlap_breakpoint_sequences,
+        algebraic_overlap_source_spans,
         algebraic_breakpoint_orders,
         algebraic_breakpoint_sequences,
         algebraic_source_spans,
@@ -694,6 +845,282 @@ fn point_from_axis(axis: Axis, fixed: Real, varying: Real) -> Point2 {
     match axis {
         Axis::X => Point2::new(varying, fixed),
         Axis::Y => Point2::new(fixed, varying),
+    }
+}
+
+fn algebraic_cubic_overlap_breakpoint_orders(
+    breakpoints: &[LineCubicBezierAlgebraicOverlapBreakpoint],
+    policy: PredicatePolicy,
+) -> Vec<LineCubicBezierAlgebraicOverlapBreakpointOrder> {
+    let mut orders = Vec::new();
+    for left in 0..breakpoints.len() {
+        for right in (left + 1)..breakpoints.len() {
+            if !algebraic_cubic_overlap_breakpoint_is_in_domain(&breakpoints[left])
+                || !algebraic_cubic_overlap_breakpoint_is_in_domain(&breakpoints[right])
+            {
+                continue;
+            }
+            let cubic_order = (breakpoints[left].curve == breakpoints[right].curve).then(|| {
+                compare_algebraic_cubic_overlap_parameters(
+                    &breakpoints[left].cubic_parameter,
+                    &breakpoints[right].cubic_parameter,
+                    policy,
+                )
+            });
+            let line_order = (breakpoints[left].line == breakpoints[right].line).then(|| {
+                compare_exact_cubic_overlap_line_parameters(
+                    &breakpoints[left].line_parameter,
+                    &breakpoints[right].line_parameter,
+                    policy,
+                )
+            });
+            if cubic_order.is_some() || line_order.is_some() {
+                orders.push(LineCubicBezierAlgebraicOverlapBreakpointOrder {
+                    left,
+                    right,
+                    cubic_order,
+                    line_order,
+                });
+            }
+        }
+    }
+    orders
+}
+
+fn algebraic_cubic_overlap_breakpoint_is_in_domain(
+    breakpoint: &LineCubicBezierAlgebraicOverlapBreakpoint,
+) -> bool {
+    breakpoint.domain == LineCubicBezierAlgebraicOverlapBreakpointDomain::InsideLineAndCurve
+}
+
+fn algebraic_cubic_overlap_breakpoint_sequences(
+    breakpoints: &[LineCubicBezierAlgebraicOverlapBreakpoint],
+    orders: &[LineCubicBezierAlgebraicOverlapBreakpointOrder],
+) -> Vec<LineCubicBezierAlgebraicOverlapBreakpointSequence> {
+    let mut curve_breakpoints: BTreeMap<usize, Vec<usize>> = BTreeMap::new();
+    let mut line_breakpoints: BTreeMap<usize, Vec<usize>> = BTreeMap::new();
+    for (index, breakpoint) in breakpoints.iter().enumerate() {
+        if !algebraic_cubic_overlap_breakpoint_is_in_domain(breakpoint) {
+            continue;
+        }
+        curve_breakpoints
+            .entry(breakpoint.curve)
+            .or_default()
+            .push(index);
+        line_breakpoints
+            .entry(breakpoint.line)
+            .or_default()
+            .push(index);
+    }
+
+    let mut sequences = Vec::new();
+    for (curve, indices) in curve_breakpoints {
+        sequences.push(algebraic_cubic_overlap_breakpoint_sequence_for_source(
+            LineCubicBezierAlgebraicOverlapBreakpointSequenceSource::Curve(curve),
+            indices,
+            orders,
+        ));
+    }
+    for (line, indices) in line_breakpoints {
+        sequences.push(algebraic_cubic_overlap_breakpoint_sequence_for_source(
+            LineCubicBezierAlgebraicOverlapBreakpointSequenceSource::Line(line),
+            indices,
+            orders,
+        ));
+    }
+    sequences
+}
+
+fn algebraic_cubic_overlap_breakpoint_sequence_for_source(
+    source: LineCubicBezierAlgebraicOverlapBreakpointSequenceSource,
+    mut indices: Vec<usize>,
+    orders: &[LineCubicBezierAlgebraicOverlapBreakpointOrder],
+) -> LineCubicBezierAlgebraicOverlapBreakpointSequence {
+    let mut blockers = Vec::new();
+    for left_index in 0..indices.len() {
+        for right_index in (left_index + 1)..indices.len() {
+            let left = indices[left_index];
+            let right = indices[right_index];
+            match algebraic_cubic_overlap_order_between(source, left, right, orders) {
+                Some(LineCubicBezierAlgebraicOverlapBreakpointOrderClass::Before)
+                | Some(LineCubicBezierAlgebraicOverlapBreakpointOrderClass::After) => {}
+                Some(LineCubicBezierAlgebraicOverlapBreakpointOrderClass::Equal) => {
+                    blockers.push(
+                        LineCubicBezierAlgebraicOverlapBreakpointSequenceBlocker::EqualOrder {
+                            left,
+                            right,
+                        },
+                    );
+                }
+                Some(LineCubicBezierAlgebraicOverlapBreakpointOrderClass::Unknown) => {
+                    blockers.push(
+                        LineCubicBezierAlgebraicOverlapBreakpointSequenceBlocker::UnknownOrder {
+                            left,
+                            right,
+                        },
+                    );
+                }
+                None => {
+                    blockers.push(
+                        LineCubicBezierAlgebraicOverlapBreakpointSequenceBlocker::MissingOrder {
+                            left,
+                            right,
+                        },
+                    );
+                }
+            }
+        }
+    }
+
+    let class = if blockers.is_empty() {
+        indices.sort_by(|left, right| {
+            algebraic_cubic_overlap_ordering_for_sort(source, *left, *right, orders)
+                .expect("algebraic overlap source order was certified before sorting")
+        });
+        LineCubicBezierAlgebraicOverlapBreakpointSequenceClass::Ordered
+    } else {
+        LineCubicBezierAlgebraicOverlapBreakpointSequenceClass::Ambiguous
+    };
+
+    LineCubicBezierAlgebraicOverlapBreakpointSequence {
+        source,
+        breakpoints: indices,
+        class,
+        blockers,
+    }
+}
+
+fn algebraic_cubic_overlap_ordering_for_sort(
+    source: LineCubicBezierAlgebraicOverlapBreakpointSequenceSource,
+    left: usize,
+    right: usize,
+    orders: &[LineCubicBezierAlgebraicOverlapBreakpointOrder],
+) -> Option<Ordering> {
+    if left == right {
+        return Some(Ordering::Equal);
+    }
+    match algebraic_cubic_overlap_order_between(source, left, right, orders)? {
+        LineCubicBezierAlgebraicOverlapBreakpointOrderClass::Before => Some(Ordering::Less),
+        LineCubicBezierAlgebraicOverlapBreakpointOrderClass::After => Some(Ordering::Greater),
+        LineCubicBezierAlgebraicOverlapBreakpointOrderClass::Equal => Some(Ordering::Equal),
+        LineCubicBezierAlgebraicOverlapBreakpointOrderClass::Unknown => None,
+    }
+}
+
+fn algebraic_cubic_overlap_order_between(
+    source: LineCubicBezierAlgebraicOverlapBreakpointSequenceSource,
+    left: usize,
+    right: usize,
+    orders: &[LineCubicBezierAlgebraicOverlapBreakpointOrder],
+) -> Option<LineCubicBezierAlgebraicOverlapBreakpointOrderClass> {
+    let direct = orders
+        .iter()
+        .find(|order| order.left == left && order.right == right)
+        .and_then(|order| algebraic_cubic_overlap_order_for_source(source, order));
+    if direct.is_some() {
+        return direct;
+    }
+    orders
+        .iter()
+        .find(|order| order.left == right && order.right == left)
+        .and_then(|order| algebraic_cubic_overlap_order_for_source(source, order))
+        .map(reverse_algebraic_cubic_overlap_order)
+}
+
+fn algebraic_cubic_overlap_order_for_source(
+    source: LineCubicBezierAlgebraicOverlapBreakpointSequenceSource,
+    order: &LineCubicBezierAlgebraicOverlapBreakpointOrder,
+) -> Option<LineCubicBezierAlgebraicOverlapBreakpointOrderClass> {
+    match source {
+        LineCubicBezierAlgebraicOverlapBreakpointSequenceSource::Line(_) => order.line_order,
+        LineCubicBezierAlgebraicOverlapBreakpointSequenceSource::Curve(_) => order.cubic_order,
+    }
+}
+
+fn reverse_algebraic_cubic_overlap_order(
+    order: LineCubicBezierAlgebraicOverlapBreakpointOrderClass,
+) -> LineCubicBezierAlgebraicOverlapBreakpointOrderClass {
+    match order {
+        LineCubicBezierAlgebraicOverlapBreakpointOrderClass::Before => {
+            LineCubicBezierAlgebraicOverlapBreakpointOrderClass::After
+        }
+        LineCubicBezierAlgebraicOverlapBreakpointOrderClass::After => {
+            LineCubicBezierAlgebraicOverlapBreakpointOrderClass::Before
+        }
+        LineCubicBezierAlgebraicOverlapBreakpointOrderClass::Equal => {
+            LineCubicBezierAlgebraicOverlapBreakpointOrderClass::Equal
+        }
+        LineCubicBezierAlgebraicOverlapBreakpointOrderClass::Unknown => {
+            LineCubicBezierAlgebraicOverlapBreakpointOrderClass::Unknown
+        }
+    }
+}
+
+fn algebraic_cubic_overlap_source_spans(
+    breakpoints: &[LineCubicBezierAlgebraicOverlapBreakpoint],
+    sequences: &[LineCubicBezierAlgebraicOverlapBreakpointSequence],
+) -> Vec<LineCubicBezierAlgebraicOverlapSourceSpan> {
+    let mut spans = Vec::new();
+    for sequence in sequences {
+        if sequence.class != LineCubicBezierAlgebraicOverlapBreakpointSequenceClass::Ordered {
+            continue;
+        }
+        let mut boundaries = Vec::with_capacity(sequence.breakpoints.len() + 2);
+        boundaries.push(LineCubicBezierAlgebraicOverlapSourceSpanBoundary::SourceStart);
+        boundaries.extend(
+            sequence
+                .breakpoints
+                .iter()
+                .copied()
+                .map(LineCubicBezierAlgebraicOverlapSourceSpanBoundary::Breakpoint),
+        );
+        boundaries.push(LineCubicBezierAlgebraicOverlapSourceSpanBoundary::SourceEnd);
+
+        for pair in boundaries.windows(2) {
+            let Some((parameter_lower, _)) =
+                algebraic_cubic_overlap_boundary_interval(sequence.source, pair[0], breakpoints)
+            else {
+                continue;
+            };
+            let Some((_, parameter_upper)) =
+                algebraic_cubic_overlap_boundary_interval(sequence.source, pair[1], breakpoints)
+            else {
+                continue;
+            };
+            spans.push(LineCubicBezierAlgebraicOverlapSourceSpan {
+                source: sequence.source,
+                left: pair[0],
+                right: pair[1],
+                parameter_lower,
+                parameter_upper,
+            });
+        }
+    }
+    spans
+}
+
+fn algebraic_cubic_overlap_boundary_interval(
+    source: LineCubicBezierAlgebraicOverlapBreakpointSequenceSource,
+    boundary: LineCubicBezierAlgebraicOverlapSourceSpanBoundary,
+    breakpoints: &[LineCubicBezierAlgebraicOverlapBreakpoint],
+) -> Option<(Real, Real)> {
+    match boundary {
+        LineCubicBezierAlgebraicOverlapSourceSpanBoundary::SourceStart => {
+            Some((Real::zero(), Real::zero()))
+        }
+        LineCubicBezierAlgebraicOverlapSourceSpanBoundary::SourceEnd => {
+            Some((Real::one(), Real::one()))
+        }
+        LineCubicBezierAlgebraicOverlapSourceSpanBoundary::Breakpoint(index) => match source {
+            LineCubicBezierAlgebraicOverlapBreakpointSequenceSource::Curve(_) => {
+                let interval = &breakpoints.get(index)?.cubic_parameter.interval;
+                Some((interval.lower.clone(), interval.upper.clone()))
+            }
+            LineCubicBezierAlgebraicOverlapBreakpointSequenceSource::Line(_) => {
+                let parameter = &breakpoints.get(index)?.line_parameter;
+                Some((parameter.clone(), parameter.clone()))
+            }
+        },
     }
 }
 
@@ -1226,6 +1653,40 @@ fn compare_algebraic_cubic_parameters(
         &right.interval.upper,
         policy,
     )
+}
+
+fn compare_algebraic_cubic_overlap_parameters(
+    left: &AlgebraicRootRepresentation,
+    right: &AlgebraicRootRepresentation,
+    policy: PredicatePolicy,
+) -> LineCubicBezierAlgebraicOverlapBreakpointOrderClass {
+    match compare_algebraic_cubic_parameters(left, right, policy) {
+        LineCubicBezierAlgebraicBreakpointOrderClass::Before => {
+            LineCubicBezierAlgebraicOverlapBreakpointOrderClass::Before
+        }
+        LineCubicBezierAlgebraicBreakpointOrderClass::Equal => {
+            LineCubicBezierAlgebraicOverlapBreakpointOrderClass::Equal
+        }
+        LineCubicBezierAlgebraicBreakpointOrderClass::After => {
+            LineCubicBezierAlgebraicOverlapBreakpointOrderClass::After
+        }
+        LineCubicBezierAlgebraicBreakpointOrderClass::Unknown => {
+            LineCubicBezierAlgebraicOverlapBreakpointOrderClass::Unknown
+        }
+    }
+}
+
+fn compare_exact_cubic_overlap_line_parameters(
+    left: &Real,
+    right: &Real,
+    policy: PredicatePolicy,
+) -> LineCubicBezierAlgebraicOverlapBreakpointOrderClass {
+    match compare_reals_with_policy(left, right, policy).value() {
+        Some(Ordering::Less) => LineCubicBezierAlgebraicOverlapBreakpointOrderClass::Before,
+        Some(Ordering::Equal) => LineCubicBezierAlgebraicOverlapBreakpointOrderClass::Equal,
+        Some(Ordering::Greater) => LineCubicBezierAlgebraicOverlapBreakpointOrderClass::After,
+        None => LineCubicBezierAlgebraicOverlapBreakpointOrderClass::Unknown,
+    }
 }
 
 fn compare_algebraic_polynomial_images(

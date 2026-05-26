@@ -7,9 +7,10 @@ use hyperpath::{
     BezierParameter, CubicBezier, LineCubicAlgebraicPointDomain, LineCubicAlgebraicRootDomain,
     LineCubicBezierAlgebraicBreakpointDomain, LineCubicBezierAlgebraicBreakpointOrderClass,
     LineCubicBezierAlgebraicBreakpointSequenceClass,
-    LineCubicBezierAlgebraicOverlapBreakpointDomain, LineCubicBezierIntersectionClass,
-    LineCubicBezierSupportOverlapMonotonicity, LinePathSegment,
-    LineQuadraticBezierIntersectionClass,
+    LineCubicBezierAlgebraicOverlapBreakpointDomain,
+    LineCubicBezierAlgebraicOverlapBreakpointSequenceClass,
+    LineCubicBezierAlgebraicOverlapBreakpointSequenceSource, LineCubicBezierIntersectionClass,
+    LineCubicBezierSupportOverlapMonotonicity, LinePathSegment, LineQuadraticBezierIntersectionClass,
     LineRationalQuadraticBezierAlgebraicBreakpointDomain,
     LineRationalQuadraticBezierAlgebraicBreakpointOrderClass,
     LineRationalQuadraticBezierAlgebraicBreakpointSequenceClass,
@@ -248,6 +249,18 @@ fuzz_target!(|data: &[u8]| {
             .any(|breakpoint| breakpoint.domain
                 == LineCubicBezierAlgebraicOverlapBreakpointDomain::InsideLineAndCurve)
     );
+    assert!(
+        nonlinear_cubic_mixed_inner_report
+            .algebraic_overlap_breakpoint_sequences
+            .iter()
+            .any(|sequence| sequence.source
+                == LineCubicBezierAlgebraicOverlapBreakpointSequenceSource::Curve(0)
+                && sequence.class
+                    == LineCubicBezierAlgebraicOverlapBreakpointSequenceClass::Ordered)
+    );
+    assert!(!nonlinear_cubic_mixed_inner_report
+        .algebraic_overlap_source_spans
+        .is_empty());
     let algebraic_cubic = CubicBezier::new(p(0, 0), pq(1, 3, 0, 1), pq(2, 3, 0, 1), p(1, 1));
     let algebraic_line = LinePathSegment::new(pq(0, 1, 1, 8), pq(1, 1, 1, 8));
     let algebraic_report = intersect_axis_aligned_line_cubic_bezier(
