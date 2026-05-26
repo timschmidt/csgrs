@@ -2968,6 +2968,49 @@ fn exercise_same_outer_component_holed_coplanar_intersection_with_island() {
         arrange_coplanar_surface_component_holed_intersection(&left, &point_touch_right).is_none()
     );
 
+    let branch_outer = rect_surface_i64(&[(0, 0, 5, 5)]);
+    let branch_holes = rect_surface_i64(&[
+        (1, 2, 2, 3),
+        (1, 3, 2, 4),
+        (2, 1, 3, 2),
+        (2, 3, 3, 4),
+        (3, 1, 4, 2),
+        (3, 2, 4, 3),
+        (3, 3, 4, 4),
+    ]);
+    let branch_source =
+        arrange_coplanar_orthogonal_surface_difference(&branch_outer, &branch_holes)
+            .expect("point-branched retained-hole source should materialize")
+            .mesh;
+    let branch_intersection =
+        arrange_coplanar_surface_component_holed_intersection(&branch_source, &branch_outer)
+            .expect("point-branched retained-hole island should survive equal-outer clipping");
+    branch_intersection.validate().unwrap();
+    branch_intersection
+        .validate_intersection_against_sources(&branch_source, &branch_outer)
+        .unwrap();
+    assert_eq!(branch_intersection.components.len(), 2);
+    assert!(
+        branch_intersection
+            .components
+            .iter()
+            .any(|component| component.holes.is_empty())
+    );
+    let branch_reverse =
+        arrange_coplanar_surface_component_holed_intersection(&branch_outer, &branch_source)
+            .expect("point-branched retained-hole island clipping should be symmetric");
+    branch_reverse.validate().unwrap();
+    branch_reverse
+        .validate_intersection_against_sources(&branch_outer, &branch_source)
+        .unwrap();
+    let branch_preflight =
+        preflight_boolean_exact(&branch_source, &branch_outer, ExactBooleanOperation::Intersection)
+            .expect("point-branched retained-hole island preflight should classify shortcut");
+    branch_preflight.validate().unwrap();
+    branch_preflight
+        .validate_against_sources(&branch_source, &branch_outer)
+        .unwrap();
+
     let affine_origin = (0, 0, 0);
     let affine_basis_u = (2, 1, 0);
     let affine_basis_v = (-1, 2, 0);

@@ -27531,6 +27531,119 @@ fn exact_coplanar_component_holed_intersection_materializes_same_outer_orthogona
 
 #[cfg(feature = "exact-triangulation")]
 #[test]
+fn exact_coplanar_component_holed_intersection_materializes_same_outer_point_branch_hole_island() {
+    let outer = rect_surface_i64(&[(0, 0, 5, 5)]);
+    let branch_holes = rect_surface_i64(&[
+        (1, 2, 2, 3),
+        (1, 3, 2, 4),
+        (2, 1, 3, 2),
+        (2, 3, 3, 4),
+        (3, 1, 4, 2),
+        (3, 2, 4, 3),
+        (3, 3, 4, 4),
+    ]);
+    let branch_source =
+        hypermesh::exact::arrange_coplanar_orthogonal_surface_difference(&outer, &branch_holes)
+            .expect("point-branched source fixture should materialize")
+            .mesh;
+
+    let intersection = hypermesh::exact::arrange_coplanar_surface_component_holed_intersection(
+        &branch_source,
+        &outer,
+    )
+    .expect("point-branched retained-hole island should be a component-holed output");
+    intersection.validate().unwrap();
+    intersection
+        .validate_intersection_against_sources(&branch_source, &outer)
+        .unwrap();
+    assert_eq!(intersection.components.len(), 2);
+    let main = intersection
+        .components
+        .iter()
+        .find(|component| !component.holes.is_empty())
+        .expect("main component should retain the branched removed owner");
+    let island = intersection
+        .components
+        .iter()
+        .find(|component| component.holes.is_empty())
+        .expect("point-branched void should be retained as an island component");
+    let branch = p3(2, 2, 0);
+    assert!(
+        main.holes[0].iter().any(|point| {
+            real_eq(&point.x, &branch.x)
+                && real_eq(&point.y, &branch.y)
+                && real_eq(&point.z, &branch.z)
+        }),
+        "the retained hole boundary must keep the exact branch point"
+    );
+    assert!(
+        island.outer.iter().any(|point| {
+            real_eq(&point.x, &branch.x)
+                && real_eq(&point.y, &branch.y)
+                && real_eq(&point.z, &branch.z)
+        }),
+        "the island boundary must duplicate the same exact branch point"
+    );
+
+    let reverse = hypermesh::exact::arrange_coplanar_surface_component_holed_intersection(
+        &outer,
+        &branch_source,
+    )
+    .expect("point-branched retained-hole island should be symmetric");
+    reverse.validate().unwrap();
+    reverse
+        .validate_intersection_against_sources(&outer, &branch_source)
+        .unwrap();
+    assert_eq!(reverse.components.len(), 2);
+
+    let mut stale = intersection.clone();
+    let island_index = stale
+        .components
+        .iter()
+        .position(|component| component.holes.is_empty())
+        .expect("fixture should retain a point-branched island component");
+    stale.components.remove(island_index);
+    assert!(
+        stale
+            .validate_intersection_against_sources(&branch_source, &outer)
+            .is_err(),
+        "source replay must reject an omitted point-branched island"
+    );
+
+    let preflight = hypermesh::exact::preflight_boolean_exact(
+        &branch_source,
+        &outer,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+    )
+    .expect("point-branched retained-hole island preflight should classify shortcut");
+    preflight.validate().unwrap();
+    preflight
+        .validate_against_sources(&branch_source, &outer)
+        .unwrap();
+    assert_eq!(
+        preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
+    );
+
+    hypermesh::exact::boolean_exact(
+        &branch_source,
+        &outer,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("point-branched retained-hole island boolean should materialize")
+    .validate_operation_against_sources(
+        &branch_source,
+        &outer,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[test]
 fn exact_coplanar_component_holed_intersection_materializes_nonrectilinear_hole_island() {
     let origin = (0, 0, 0);
     let basis_u = (2, 1, 0);
