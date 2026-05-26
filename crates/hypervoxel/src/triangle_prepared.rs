@@ -2725,8 +2725,17 @@ pub struct PreparedTriangleSolidComponentConsensusVoxelizationReport {
     pub retry_consensus_cells: usize,
     /// Deterministic retry directions attempted for enclosed components.
     pub retry_direction_attempts: usize,
+    /// Retry directions that accepted one component with certified consensus.
+    pub retry_successful_direction_attempts: usize,
+    /// Retry directions that failed because of unknown, conflicting, or absent
+    /// certified component evidence.
+    pub retry_failed_direction_attempts: usize,
     /// Per-cell exact ray attempts consumed by retry consensus probes.
     pub retry_ray_attempts: usize,
+    /// Retry-probed cells whose ray produced certified non-unknown evidence.
+    pub retry_certified_cells: usize,
+    /// Cells in accepted retry-consensus directions.
+    pub retry_successful_cells: usize,
     /// Exact ray/AABB broad-phase rejections consumed by retry probes.
     pub retry_ray_aabb_rejections: usize,
     /// Exact ray/triangle predicates consumed by retry probes.
@@ -3241,6 +3250,7 @@ fn classify_component_by_retry_ray_consensus(
         let mut component_vote = None::<VoxelTriangleSolidClassifier>;
         let mut direction_unknowns = 0_usize;
         let mut direction_conflicts = 0_usize;
+        let mut direction_certified = 0_usize;
 
         for coords in component {
             let point = VoxelAddress::new(frame.depth(), *coords)?
@@ -3261,6 +3271,7 @@ fn classify_component_by_retry_ray_consensus(
                 direction_unknowns += 1;
                 continue;
             }
+            direction_certified += 1;
             match component_vote {
                 Some(existing) if existing != classifier => direction_conflicts += 1,
                 Some(_) => {}
@@ -3270,9 +3281,14 @@ fn classify_component_by_retry_ray_consensus(
 
         if direction_unknowns == 0 && direction_conflicts == 0 {
             if let Some(classifier) = component_vote {
+                component_report.retry_successful_direction_attempts += 1;
+                component_report.retry_certified_cells += direction_certified;
+                component_report.retry_successful_cells += component.len();
                 return Ok(Some(classifier));
             }
         }
+        component_report.retry_failed_direction_attempts += 1;
+        component_report.retry_certified_cells += direction_certified;
         component_report.retry_unknown_cells += direction_unknowns;
         component_report.retry_conflicting_cells += direction_conflicts;
     }

@@ -347,6 +347,24 @@ fuzz_target!(|data: (u8, u8, u8, bool)| {
     );
     assert_eq!(adaptive_local.fallback_unknown_cells, 0);
     assert_eq!(adaptive_local.fallback_boundary_regression_cells, 0);
+    assert_eq!(
+        adaptive_local.retry_direction_attempts,
+        adaptive_local.retry_successful_direction_attempts
+            + adaptive_local.retry_failed_direction_attempts
+    );
+    assert_eq!(
+        adaptive_local.retry_successful_direction_attempts,
+        adaptive_local.retry_consensus_components
+    );
+    assert_eq!(
+        adaptive_local.retry_successful_cells,
+        adaptive_local.retry_consensus_cells
+    );
+    assert_eq!(
+        adaptive_local.retry_ray_attempts,
+        adaptive_local.retry_certified_cells + adaptive_local.retry_unknown_cells
+    );
+    assert!(adaptive_local.retry_conflicting_cells <= adaptive_local.retry_certified_cells);
     let adaptive_attempted_rows = adaptive_local.axis_sweep_rows.iter().sum::<usize>();
     assert_eq!(adaptive_local.row_plan_rows, adaptive_attempted_rows);
     assert!(adaptive_local.row_plan_axes > 0);
@@ -400,4 +418,7 @@ fuzz_target!(|data: (u8, u8, u8, bool)| {
     assert!(verified_adaptive_local
         .component_audit
         .row_plan_accounting_matches);
+    assert!(verified_adaptive_local
+        .component_audit
+        .retry_direction_accounting_matches);
 });

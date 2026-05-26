@@ -1023,6 +1023,24 @@ fn adaptive_local_component_consensus_stops_after_complete_component_proof() {
     assert!(adaptive_component.retry_ray_triangle_tests > 0);
     assert!(adaptive_component.retry_consensus_components > 0);
     assert!(adaptive_component.retry_consensus_cells > 0);
+    assert_eq!(
+        adaptive_component.retry_direction_attempts,
+        adaptive_component.retry_successful_direction_attempts
+            + adaptive_component.retry_failed_direction_attempts
+    );
+    assert_eq!(
+        adaptive_component.retry_successful_direction_attempts,
+        adaptive_component.retry_consensus_components
+    );
+    assert_eq!(
+        adaptive_component.retry_successful_cells,
+        adaptive_component.retry_consensus_cells
+    );
+    assert_eq!(
+        adaptive_component.retry_ray_attempts,
+        adaptive_component.retry_certified_cells + adaptive_component.retry_unknown_cells
+    );
+    assert!(adaptive_component.retry_conflicting_cells <= adaptive_component.retry_certified_cells);
     assert_component_row_cache_accounting(&adaptive_component);
     assert!(adaptive_component.row_candidate_triangles > 0);
     assert!(adaptive_component.row_candidate_aabb_rejections > 0);
@@ -1052,6 +1070,7 @@ fn adaptive_local_component_consensus_stops_after_complete_component_proof() {
     assert!(verified.component_audit.row_plan_accounting_matches);
     assert!(verified.component_audit.component_accounting_matches);
     assert!(verified.component_audit.retry_subset_matches);
+    assert!(verified.component_audit.retry_direction_accounting_matches);
     assert_eq!(verified.component_consensus, adaptive_component);
     assert_eq!(verified.verifier, per_cell_schedule);
     assert!(verified.exact_verified_component_consensus_ready);
