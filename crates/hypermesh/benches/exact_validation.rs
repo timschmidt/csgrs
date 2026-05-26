@@ -5009,6 +5009,24 @@ fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
             )
             .unwrap()
             .mesh;
+        let same_outer_orthogonal_intersection_outer = rect_surface_i64(&[(0, 0, 20, 20)]);
+        let same_outer_orthogonal_intersection_left_hole =
+            rect_surface_i64(&[(4, 4, 12, 8), (4, 8, 8, 16)]);
+        let same_outer_orthogonal_intersection_right_hole = rect_surface_i64(&[(8, 6, 16, 10)]);
+        let same_outer_orthogonal_intersection_left =
+            arrange_coplanar_orthogonal_surface_difference(
+                &same_outer_orthogonal_intersection_outer,
+                &same_outer_orthogonal_intersection_left_hole,
+            )
+            .unwrap()
+            .mesh;
+        let same_outer_orthogonal_intersection_right =
+            arrange_coplanar_orthogonal_surface_difference(
+                &same_outer_orthogonal_intersection_outer,
+                &same_outer_orthogonal_intersection_right_hole,
+            )
+            .unwrap()
+            .mesh;
         let same_outer_disconnected_intersection_outer = ExactMesh::from_i64_triangles_with_policy(
             &[0, 0, 0, 20, 0, 0, 20, 20, 0, 0, 20, 0],
             &[0, 1, 2, 0, 2, 3],
@@ -6613,6 +6631,22 @@ fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
                         hypermesh::exact::preflight_boolean_exact(
                             &same_outer_bridge_intersection_left,
                             &same_outer_bridge_intersection_nonrect_right,
+                            hypermesh::exact::ExactBooleanOperation::Intersection,
+                        )
+                        .map(|report| report.validate()),
+                        arrange_coplanar_surface_component_holed_intersection(
+                            &same_outer_orthogonal_intersection_left,
+                            &same_outer_orthogonal_intersection_right,
+                        )
+                        .map(|output| {
+                            output.validate_intersection_against_sources(
+                                &same_outer_orthogonal_intersection_left,
+                                &same_outer_orthogonal_intersection_right,
+                            )
+                        }),
+                        hypermesh::exact::preflight_boolean_exact(
+                            &same_outer_orthogonal_intersection_left,
+                            &same_outer_orthogonal_intersection_right,
                             hypermesh::exact::ExactBooleanOperation::Intersection,
                         )
                         .map(|report| report.validate()),

@@ -3274,14 +3274,16 @@ pub fn arrange_coplanar_surface_component_holed_intersection(
 /// and disjoint holes are retained independently. Bounded overlap components
 /// are accepted when all participating retained holes are strictly convex,
 /// their positive-area overlap graph is connected, and their removed union
-/// replays as one exact simple retained hole. Multiple disconnected overlap
-/// clusters are accepted only when each cluster independently replays as a
-/// retained hole and the resulting holes are mutually disjoint. Touching,
-/// crossing, edge-contact clusters, or nonconvex partial overlaps reject to
-/// the general planar arrangement layer. This is a legitimate Boolean
-/// intersection because the complement of each retained hole is part of the
-/// source object: intersecting two equal-outer holed sheets removes the union
-/// of their holes.
+/// replays as one exact simple retained hole. Rectilinear nonconvex connected
+/// clusters may also replay through the exact orthogonal cell path when the
+/// removed union has one simple outer boundary and no island holes. Multiple
+/// disconnected overlap clusters are accepted only when each cluster
+/// independently replays as a retained hole and the resulting holes are
+/// mutually disjoint. Touching, crossing, edge-contact clusters, or
+/// non-rectilinear nonconvex partial overlaps reject to the general planar
+/// arrangement layer. This is a legitimate Boolean intersection because the
+/// complement of each retained hole is part of the source object: intersecting
+/// two equal-outer holed sheets removes the union of their holes.
 ///
 /// Boundary rings still come from exact mesh incidence and the final retained
 /// area must equal the pairwise source-triangle intersection area. That is the
@@ -3519,9 +3521,9 @@ fn same_outer_intersection_convex_hole_union_component(
     if holes.len() < 2 {
         return None;
     }
-    let mut union = connected_convex_overlap_union_polygon(holes, projection).or_else(|| {
-        same_outer_intersection_rectangle_strip_hole_union_component(holes, projection)
-    })?;
+    let mut union = connected_convex_overlap_union_polygon(holes, projection)
+        .or_else(|| same_outer_intersection_rectangle_strip_hole_union_component(holes, projection))
+        .or_else(|| same_outer_intersection_orthogonal_hole_union_component(holes, projection))?;
     union = simplify_projected_polygon(union, projection);
     orient_polygon_cw(&mut union, projection)?;
     canonicalize_polygon_start_by_min_projected_point(&mut union, projection);
@@ -3577,6 +3579,99 @@ fn same_outer_intersection_rectangle_strip_hole_union_component(
     }
     rectangle_strip_union_polygon(&rectangles, projection, StripVariableAxis::U)
         .or_else(|| rectangle_strip_union_polygon(&rectangles, projection, StripVariableAxis::V))
+}
+
+/// Replay a connected rectilinear retained-hole union as one removed ring.
+///
+/// Same-outer intersection computes `outer - union(left_holes, right_holes)`.
+/// The convex fragment stitcher and rectangle-strip helper above cover many
+/// connected components, but a source-owned retained hole can already be a
+/// rectilinear nonconvex loop. This fallback imports that bounded case through
+/// the exact orthogonal cell arrangement: each source hole is triangulated as
+/// a retained simple loop, all but the first are merged into the right operand,
+/// and a binary orthogonal union extracts the removed component boundary.
+///
+/// The helper rejects if the removed union has multiple components or any
+/// hole/island, because `CoplanarConvexHoledComponent` can encode the removed
+/// object only as one retained hole ring. The construction keeps Yap's
+/// predicate/construction separation from "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7.1-2 (1997): exact retained source
+/// loops name the candidate topology, the orthogonal cell complex performs the
+/// finite arrangement, and the caller still replays the full Boolean area
+/// equation. The rectilinear subdivision is the arrangement model described by
+/// de Berg, Cheong, van Kreveld, and Overmars, *Computational Geometry:
+/// Algorithms and Applications*, 3rd ed. (2008), Chapter 2; temporary
+/// simple-loop triangulation uses Held, "FIST: Fast Industrial-Strength
+/// Triangulation of Polygons," *Algorithmica* 30 (2001), via `hypertri`.
+#[cfg(feature = "exact-triangulation")]
+fn same_outer_intersection_orthogonal_hole_union_component(
+    holes: &[Vec<Point3>],
+    projection: CoplanarProjection,
+) -> Option<Vec<Point3>> {
+    if holes.len() < 2 {
+        return None;
+    }
+    let meshes = holes
+        .iter()
+        .map(|hole| {
+            simple_loop_mesh_for_orthogonal_replay(
+                hole,
+                projection,
+                "exact same-outer orthogonal retained-hole intersection source",
+            )
+        })
+        .collect::<Option<Vec<_>>>()?;
+    let mut overlap_graph = UnionFind::new(holes.len());
+    for left_index in 0..holes.len() {
+        for right_index in left_index + 1..holes.len() {
+            match simple_polygon_interaction(&holes[left_index], &holes[right_index], projection)? {
+                SimplePolygonInteraction::Disjoint => {}
+                SimplePolygonInteraction::PointOnly => return None,
+                SimplePolygonInteraction::Connected => {
+                    let intersection_area = coplanar_mesh_pairwise_intersection_area2(
+                        &meshes[left_index],
+                        &meshes[right_index],
+                        projection,
+                    )?;
+                    if compare_reals(&intersection_area, &ExactReal::from(0)).value()
+                        == Some(Ordering::Greater)
+                    {
+                        overlap_graph.union(left_index, right_index);
+                    } else {
+                        return None;
+                    }
+                }
+            }
+        }
+    }
+    let root = overlap_graph.find(0);
+    if (1..holes.len()).any(|index| overlap_graph.find(index) != root) {
+        return None;
+    }
+    let left = meshes.first()?;
+    let right = merge_component_meshes(
+        meshes.iter().skip(1).collect::<Vec<_>>(),
+        "exact same-outer orthogonal retained-hole intersection union",
+    )?;
+    let arrangement =
+        super::orthogonal_surface::arrange_coplanar_orthogonal_surface_union(left, &right)?;
+    if arrangement.projection != projection || arrangement.components.len() != 1 {
+        return None;
+    }
+    let component = arrangement.components.into_iter().next()?;
+    if !component.holes.is_empty() {
+        return None;
+    }
+    let mut union = simplify_projected_polygon(component.outer, projection);
+    orient_polygon_cw(&mut union, projection)?;
+    canonicalize_polygon_start_by_min_projected_point(&mut union, projection);
+    validate_projected_simple_loop(
+        &union,
+        projection,
+        "coplanar same-outer orthogonal intersection hole union",
+    )
+    .ok()?;
+    Some(union)
 }
 
 /// Add exact retained bridge points to a rectangular outer ring.
