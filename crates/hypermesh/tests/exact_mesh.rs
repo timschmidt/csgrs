@@ -33068,6 +33068,26 @@ fn exact_boolmesh_workspace_executes_bounds_disjoint_slice() {
     assert!(workspace.boolean03.p2q1.is_empty());
     assert_eq!(workspace.boolean03.w03.len(), left.vertices().len());
     assert_eq!(workspace.boolean03.w30.len(), right.vertices().len());
+    let size_output = workspace
+        .boolean45
+        .as_ref()
+        .expect("bounds-disjoint union still runs boolmesh size_output");
+    assert_eq!(size_output.vertices_from_left, left.vertices().len());
+    assert_eq!(size_output.vertices_from_right, right.vertices().len());
+    assert_eq!(size_output.inserted_intersection_vertices, 0);
+    assert_eq!(size_output.source_edge_incident_gaps, 0);
+    assert_eq!(
+        size_output
+            .source_face_to_output_face
+            .iter()
+            .flatten()
+            .count(),
+        left.triangles().len() + right.triangles().len()
+    );
+    assert_eq!(
+        size_output.face_halfedge_offsets.last().copied(),
+        Some((left.triangles().len() + right.triangles().len()) * 3)
+    );
 
     let union = hypermesh::exact::execute_exact_boolmesh_bounds_disjoint(
         &left,
@@ -33094,6 +33114,18 @@ fn exact_boolmesh_workspace_executes_bounds_disjoint_slice() {
     )
     .unwrap();
     assert!(intersection.mesh.triangles().is_empty());
+    let intersection_workspace = hypermesh::exact::exact_boolmesh_workspace(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+    );
+    let intersection_size_output = intersection_workspace.boolean45.as_ref().unwrap();
+    assert_eq!(intersection_size_output.vertices_from_left, 0);
+    assert_eq!(intersection_size_output.vertices_from_right, 0);
+    assert_eq!(
+        intersection_size_output.face_halfedge_offsets.as_slice(),
+        &[0]
+    );
 
     let difference = hypermesh::exact::execute_exact_boolmesh_bounds_disjoint(
         &left,
@@ -33104,6 +33136,25 @@ fn exact_boolmesh_workspace_executes_bounds_disjoint_slice() {
     .unwrap();
     assert_eq!(difference.mesh.vertices(), left.vertices());
     assert_eq!(difference.mesh.triangles(), left.triangles());
+    let difference_workspace = hypermesh::exact::exact_boolmesh_workspace(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    );
+    let difference_size_output = difference_workspace.boolean45.as_ref().unwrap();
+    assert_eq!(
+        difference_size_output.vertices_from_left,
+        left.vertices().len()
+    );
+    assert_eq!(difference_size_output.vertices_from_right, 0);
+    assert_eq!(
+        difference_size_output
+            .source_face_to_output_face
+            .iter()
+            .flatten()
+            .count(),
+        left.triangles().len()
+    );
 }
 
 #[test]
@@ -33212,6 +33263,24 @@ fn exact_boolmesh_kernel12_discovers_skew_edge_face_events() {
         workspace.boolean03.p1q2.len() + workspace.boolean03.p2q1.len()
     );
     assert!(!workspace.pair_up.source_edge_runs.is_empty());
+    let size_output = workspace
+        .boolean45
+        .as_ref()
+        .expect("kernel12 crossings feed boolmesh size_output");
+    assert_eq!(size_output.vertices_from_left, 0);
+    assert_eq!(size_output.vertices_from_right, 0);
+    assert_eq!(
+        size_output.inserted_intersection_vertices,
+        workspace.boolean03.p1q2.len() + workspace.boolean03.p2q1.len()
+    );
+    assert_eq!(size_output.source_edge_incident_gaps, 0);
+    assert_eq!(size_output.face_halfedge_offsets.first().copied(), Some(0));
+    assert!(
+        size_output
+            .face_halfedge_offsets
+            .windows(2)
+            .all(|window| window[0] <= window[1])
+    );
     for run in &workspace.pair_up.source_edge_runs {
         assert!(run.events.windows(2).all(|window| matches!(
             compare_reals(&window[0].parameter, &window[1].parameter).value(),
@@ -33262,6 +33331,33 @@ fn exact_boolmesh_kernel12_discovers_skew_edge_face_events() {
             .validate_against_sources(&left, &right)
             .unwrap_err(),
         hypermesh::exact::ExactBoolMeshValidationError::PairUpRunEventMismatch
+    );
+
+    let mut malformed_size_output = workspace.clone();
+    malformed_size_output
+        .boolean45
+        .as_mut()
+        .unwrap()
+        .face_halfedge_offsets
+        .push(usize::MAX);
+    assert_eq!(
+        malformed_size_output
+            .validate_against_sources(&left, &right)
+            .unwrap_err(),
+        hypermesh::exact::ExactBoolMeshValidationError::Boolean45OffsetMismatch
+    );
+
+    let mut stale_size_output = workspace.clone();
+    stale_size_output
+        .boolean45
+        .as_mut()
+        .unwrap()
+        .vertices_from_left += 1;
+    assert_eq!(
+        stale_size_output
+            .validate_against_sources(&left, &right)
+            .unwrap_err(),
+        hypermesh::exact::ExactBoolMeshValidationError::Boolean45SizeCountMismatch
     );
 }
 

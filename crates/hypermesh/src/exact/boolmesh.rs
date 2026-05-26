@@ -42,7 +42,7 @@ use super::validation::ValidationPolicy;
 #[cfg(feature = "exact-triangulation")]
 use super::{AabbIntersectionKind, MeshError};
 #[cfg(feature = "exact-triangulation")]
-use boolean45::pair_source_edge_events;
+use boolean45::{pair_source_edge_events, size_output_stage};
 #[cfg(feature = "exact-triangulation")]
 use hyperlimit::{PlaneSide, Point3, PredicateOutcome};
 #[cfg(feature = "exact-triangulation")]
@@ -327,6 +327,10 @@ pub struct ExactBoolMeshBoolean03 {
 #[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ExactBoolMeshBoolean45Stage {
+    /// Halfedge contribution count for each retained left source face.
+    pub left_face_halfedge_counts: Vec<usize>,
+    /// Halfedge contribution count for each retained right source face.
+    pub right_face_halfedge_counts: Vec<usize>,
     /// Per-output-face starting halfedge offsets, legacy `ih_per_f`.
     pub face_halfedge_offsets: Vec<usize>,
     /// Source-face to output-face map, legacy `face_pq2r`.
@@ -337,6 +341,13 @@ pub struct ExactBoolMeshBoolean45Stage {
     pub vertices_from_right: usize,
     /// Number of exact intersection vertices inserted by the port.
     pub inserted_intersection_vertices: usize,
+    /// Source-edge events whose owner edge was not incident to two faces.
+    ///
+    /// Legacy boolmesh indexes the paired halfedge directly.  The exact port
+    /// derives the same adjacency from source triangles and records non-closed
+    /// or non-manifold deviations so the later halfedge materializer has a
+    /// checked blocker hook instead of guessing.
+    pub source_edge_incident_gaps: usize,
 }
 
 /// Exact boolmesh workspace for one pair of operands.
@@ -411,6 +422,17 @@ impl ExactBoolMeshWorkspace {
         let kernel12 = discover_kernel12_events(left, right);
         let kernel12_lowering = lower_kernel12_events(&kernel12.events);
         let pair_up = pair_source_edge_events(kernel12_lowering.source_edge_events.clone());
+        let boolean03 = ExactBoolMeshBoolean03 {
+            p1q2: kernel12_lowering.p1q2,
+            p2q1: kernel12_lowering.p2q1,
+            x12: kernel12_lowering.x12,
+            x21: kernel12_lowering.x21,
+            v12: kernel12_lowering.v12,
+            v21: kernel12_lowering.v21,
+            w03: vec![0; left.vertices().len()],
+            w30: vec![0; right.vertices().len()],
+        };
+        let boolean45 = Some(size_output_stage(left, right, &boolean03, operation));
         let blocker = if candidate_face_pairs.is_empty() && !mesh_bounds_unknown {
             None
         } else if mesh_bounds_unknown
@@ -443,18 +465,9 @@ impl ExactBoolMeshWorkspace {
             kernel12_unknown_events: kernel12.unknown_events,
             kernel12_construction_failures: kernel12.construction_failures,
             kernel12_coplanar_events: kernel12.coplanar_events,
-            boolean03: ExactBoolMeshBoolean03 {
-                p1q2: kernel12_lowering.p1q2,
-                p2q1: kernel12_lowering.p2q1,
-                x12: kernel12_lowering.x12,
-                x21: kernel12_lowering.x21,
-                v12: kernel12_lowering.v12,
-                v21: kernel12_lowering.v21,
-                w03: vec![0; left.vertices().len()],
-                w30: vec![0; right.vertices().len()],
-            },
+            boolean03,
             pair_up,
-            boolean45: None,
+            boolean45,
             blocker,
         }
     }
@@ -502,6 +515,15 @@ impl ExactBoolMeshWorkspace {
             return Err(ExactBoolMeshValidationError::PairUpEventCountMismatch);
         }
         validate_pair_up_stage(&self.pair_up, self.left_vertices, self.right_vertices)?;
+        if let Some(stage) = &self.boolean45 {
+            validate_boolean45_stage(
+                stage,
+                &self.boolean03,
+                self.operation,
+                self.left_faces,
+                self.right_faces,
+            )?;
+        }
         for pair in &self.candidate_face_pairs {
             if pair.left_face >= self.left_faces || pair.right_face >= self.right_faces {
                 return Err(ExactBoolMeshValidationError::FacePairOutOfBounds);
@@ -637,6 +659,14 @@ pub enum ExactBoolMeshValidationError {
     PairUpRunCountMismatch,
     /// A paired edge run names a missing source edge endpoint.
     PairUpEdgeOutOfBounds,
+    /// A `boolean45::size_output` stage has stale face-count vectors.
+    Boolean45FaceCountMismatch,
+    /// A `boolean45::size_output` stage has a stale source-face map.
+    Boolean45FaceMapMismatch,
+    /// A `boolean45::size_output` stage has stale halfedge offsets.
+    Boolean45OffsetMismatch,
+    /// A `boolean45::size_output` stage has stale retained/new vertex totals.
+    Boolean45SizeCountMismatch,
     /// Blocker candidate counts do not match retained candidates.
     BlockerCountMismatch,
     /// A non-disjoint workspace had no named boolmesh-stage blocker.
@@ -953,6 +983,122 @@ fn validate_pair_up_stage(
         return Err(ExactBoolMeshValidationError::PairUpRunCountMismatch);
     }
     Ok(())
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn validate_boolean45_stage(
+    stage: &ExactBoolMeshBoolean45Stage,
+    boolean03: &ExactBoolMeshBoolean03,
+    operation: ExactBooleanOperation,
+    left_faces: usize,
+    right_faces: usize,
+) -> Result<(), ExactBoolMeshValidationError> {
+    if stage.left_face_halfedge_counts.len() != left_faces
+        || stage.right_face_halfedge_counts.len() != right_faces
+    {
+        return Err(ExactBoolMeshValidationError::Boolean45FaceCountMismatch);
+    }
+    if stage.source_face_to_output_face.len() != left_faces + right_faces {
+        return Err(ExactBoolMeshValidationError::Boolean45FaceMapMismatch);
+    }
+
+    let mut expected_output_face = 0;
+    for count in stage
+        .left_face_halfedge_counts
+        .iter()
+        .chain(stage.right_face_halfedge_counts.iter())
+    {
+        let mapped = stage.source_face_to_output_face[expected_output_face];
+        if *count == 0 {
+            if mapped.is_some() {
+                return Err(ExactBoolMeshValidationError::Boolean45FaceMapMismatch);
+            }
+        } else if mapped
+            != Some(expected_output_face_count_before(
+                stage,
+                expected_output_face,
+            ))
+        {
+            return Err(ExactBoolMeshValidationError::Boolean45FaceMapMismatch);
+        }
+        expected_output_face += 1;
+    }
+
+    let output_face_count = stage.source_face_to_output_face.iter().flatten().count();
+    if stage.face_halfedge_offsets.len() != output_face_count + 1
+        || stage.face_halfedge_offsets.first() != Some(&0)
+    {
+        return Err(ExactBoolMeshValidationError::Boolean45OffsetMismatch);
+    }
+    if stage
+        .face_halfedge_offsets
+        .windows(2)
+        .any(|window| window[0] > window[1])
+    {
+        return Err(ExactBoolMeshValidationError::Boolean45OffsetMismatch);
+    }
+    let expected_total = stage
+        .left_face_halfedge_counts
+        .iter()
+        .chain(stage.right_face_halfedge_counts.iter())
+        .filter(|count| **count > 0)
+        .sum::<usize>();
+    if stage.face_halfedge_offsets.last() != Some(&expected_total) {
+        return Err(ExactBoolMeshValidationError::Boolean45OffsetMismatch);
+    }
+    let (left_base, right_base, crossing_sign) = boolean45_operation_coefficients(operation);
+    let expected_left_vertices = boolean03
+        .w03
+        .iter()
+        .map(|winding| signed_abs_i32(left_base + crossing_sign * winding))
+        .sum::<usize>();
+    let expected_right_vertices = boolean03
+        .w30
+        .iter()
+        .map(|winding| signed_abs_i32(right_base + crossing_sign * winding))
+        .sum::<usize>();
+    let expected_intersection_vertices = boolean03
+        .x12
+        .iter()
+        .chain(boolean03.x21.iter())
+        .map(|crossing| signed_abs_i32(crossing_sign * crossing))
+        .sum::<usize>();
+    if stage.vertices_from_left != expected_left_vertices
+        || stage.vertices_from_right != expected_right_vertices
+        || stage.inserted_intersection_vertices != expected_intersection_vertices
+    {
+        return Err(ExactBoolMeshValidationError::Boolean45SizeCountMismatch);
+    }
+    Ok(())
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn expected_output_face_count_before(
+    stage: &ExactBoolMeshBoolean45Stage,
+    source_face: usize,
+) -> usize {
+    stage
+        .left_face_halfedge_counts
+        .iter()
+        .chain(stage.right_face_halfedge_counts.iter())
+        .take(source_face)
+        .filter(|count| **count > 0)
+        .count()
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn boolean45_operation_coefficients(operation: ExactBooleanOperation) -> (i32, i32, i32) {
+    match operation {
+        ExactBooleanOperation::Union => (1, 1, -1),
+        ExactBooleanOperation::Intersection => (0, 0, 1),
+        ExactBooleanOperation::Difference => (1, 0, -1),
+        ExactBooleanOperation::SelectedRegions(_) => (0, 0, 1),
+    }
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn signed_abs_i32(value: i32) -> usize {
+    value.unsigned_abs() as usize
 }
 
 #[cfg(feature = "exact-triangulation")]

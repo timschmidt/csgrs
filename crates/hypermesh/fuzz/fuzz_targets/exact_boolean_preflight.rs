@@ -1551,6 +1551,13 @@ fn exercise_exact_boolmesh_bounds_disjoint_port() {
         let workspace = hypermesh::exact::exact_boolmesh_workspace(&left, &right, operation);
         workspace.validate_against_sources(&left, &right).unwrap();
         assert!(workspace.is_certified_bounds_disjoint());
+        let size_output = workspace
+            .boolean45
+            .as_ref()
+            .expect("bounds-disjoint boolmesh workspace must size output");
+        assert_eq!(size_output.inserted_intersection_vertices, 0);
+        assert_eq!(size_output.source_edge_incident_gaps, 0);
+        assert!(size_output.face_halfedge_offsets.windows(2).all(|window| window[0] <= window[1]));
         let execution = hypermesh::exact::execute_exact_boolmesh_bounds_disjoint(
             &left,
             &right,
@@ -1593,6 +1600,16 @@ fn exercise_exact_boolmesh_kernel12_port() {
         !workspace.boolean03.p1q2.is_empty() || !workspace.boolean03.p2q1.is_empty(),
         "deterministic kernel12 fixture must lower proper crossings"
     );
+    let size_output = workspace
+        .boolean45
+        .as_ref()
+        .expect("kernel12 boolmesh workspace must size output");
+    assert_eq!(
+        size_output.inserted_intersection_vertices,
+        workspace.boolean03.p1q2.len() + workspace.boolean03.p2q1.len()
+    );
+    assert_eq!(size_output.source_edge_incident_gaps, 0);
+    assert!(size_output.face_halfedge_offsets.windows(2).all(|window| window[0] <= window[1]));
     assert_eq!(
         workspace
             .pair_up
@@ -1602,6 +1619,14 @@ fn exercise_exact_boolmesh_kernel12_port() {
             .sum::<usize>(),
         workspace.boolean03.p1q2.len() + workspace.boolean03.p2q1.len()
     );
+    let mut malformed = workspace.clone();
+    malformed
+        .boolean45
+        .as_mut()
+        .unwrap()
+        .source_face_to_output_face
+        .push(Some(0));
+    assert!(malformed.validate_against_sources(&left, &right).is_err());
 }
 
 fn exercise_partial_convex_union_boundary() {

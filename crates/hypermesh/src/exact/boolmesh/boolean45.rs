@@ -16,10 +16,112 @@ use std::collections::BTreeMap;
 
 use hyperlimit::compare_reals;
 
+use crate::exact::boolean::ExactBooleanOperation;
+use crate::exact::mesh::{ExactMesh, Triangle};
+
 use super::{
-    ExactBoolMeshEdgeEvent, ExactBoolMeshPairUpStage, ExactBoolMeshPairedEdgeFragment,
+    ExactBoolMeshBoolean03, ExactBoolMeshBoolean45Stage, ExactBoolMeshEdgeEvent,
+    ExactBoolMeshEdgeFacePair, ExactBoolMeshPairUpStage, ExactBoolMeshPairedEdgeFragment,
     ExactBoolMeshSide, ExactBoolMeshSourceEdgeRun,
 };
+
+/// Build the exact `boolean45::size_output` staging record.
+///
+/// This is a direct structural port of legacy boolmesh `size_output`: first
+/// compute operation-signed `i03`/`i30` retained-vertex counters from `w03` and
+/// `w30`, then count `i12`/`i21` crossing vertices onto both incident source
+/// faces and the opposite triangle face.  The only intentional difference is
+/// that source-edge adjacency is recovered from exact source triangles instead
+/// of indexing the primitive halfedge array.
+///
+/// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
+/// 7.1-2 (1997), motivates keeping this as replayable integer topology
+/// staging rather than constructing coordinates during sizing.  The counting
+/// semantics themselves follow the boolmesh `boolean45::size_output` kernel.
+pub(super) fn size_output_stage(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    boolean03: &ExactBoolMeshBoolean03,
+    operation: ExactBooleanOperation,
+) -> ExactBoolMeshBoolean45Stage {
+    let (left_base, right_base, crossing_sign) = operation_coefficients(operation);
+    let i03 = boolean03
+        .w03
+        .iter()
+        .map(|winding| left_base + crossing_sign * winding)
+        .collect::<Vec<_>>();
+    let i30 = boolean03
+        .w30
+        .iter()
+        .map(|winding| right_base + crossing_sign * winding)
+        .collect::<Vec<_>>();
+    let i12 = boolean03
+        .x12
+        .iter()
+        .map(|crossing| crossing_sign * crossing)
+        .collect::<Vec<_>>();
+    let i21 = boolean03
+        .x21
+        .iter()
+        .map(|crossing| crossing_sign * crossing)
+        .collect::<Vec<_>>();
+
+    let mut left_face_halfedge_counts = retained_vertex_counts(left.triangles(), &i03);
+    let mut right_face_halfedge_counts = retained_vertex_counts(right.triangles(), &i30);
+    let mut source_edge_incident_gaps = 0;
+
+    for (pair, signed_count) in boolean03.p1q2.iter().zip(i12.iter()) {
+        source_edge_incident_gaps += count_crossing_vertex(
+            pair,
+            signed_abs(*signed_count),
+            left,
+            &mut left_face_halfedge_counts,
+            &mut right_face_halfedge_counts,
+        );
+    }
+    for (pair, signed_count) in boolean03.p2q1.iter().zip(i21.iter()) {
+        source_edge_incident_gaps += count_crossing_vertex(
+            pair,
+            signed_abs(*signed_count),
+            right,
+            &mut right_face_halfedge_counts,
+            &mut left_face_halfedge_counts,
+        );
+    }
+
+    let source_face_counts = left_face_halfedge_counts
+        .iter()
+        .chain(right_face_halfedge_counts.iter())
+        .copied()
+        .collect::<Vec<_>>();
+    let mut source_face_to_output_face = vec![None; source_face_counts.len()];
+    let mut face_halfedge_offsets = vec![0];
+    let mut output_face = 0;
+    let mut halfedge_sum = 0;
+    for (source_face, count) in source_face_counts.iter().enumerate() {
+        if *count > 0 {
+            source_face_to_output_face[source_face] = Some(output_face);
+            output_face += 1;
+            halfedge_sum += *count;
+            face_halfedge_offsets.push(halfedge_sum);
+        }
+    }
+
+    ExactBoolMeshBoolean45Stage {
+        left_face_halfedge_counts,
+        right_face_halfedge_counts,
+        face_halfedge_offsets,
+        source_face_to_output_face,
+        vertices_from_left: i03.iter().map(|value| signed_abs(*value)).sum(),
+        vertices_from_right: i30.iter().map(|value| signed_abs(*value)).sum(),
+        inserted_intersection_vertices: i12
+            .iter()
+            .chain(i21.iter())
+            .map(|value| signed_abs(*value))
+            .sum(),
+        source_edge_incident_gaps,
+    }
+}
 
 /// Pair lowered source-edge events with exact parameter ordering.
 ///
@@ -111,4 +213,81 @@ fn side_key(side: ExactBoolMeshSide) -> u8 {
         ExactBoolMeshSide::Left => 0,
         ExactBoolMeshSide::Right => 1,
     }
+}
+
+fn operation_coefficients(operation: ExactBooleanOperation) -> (i32, i32, i32) {
+    match operation {
+        ExactBooleanOperation::Union => (1, 1, -1),
+        ExactBooleanOperation::Intersection => (0, 0, 1),
+        ExactBooleanOperation::Difference => (1, 0, -1),
+        ExactBooleanOperation::SelectedRegions(_) => (0, 0, 1),
+    }
+}
+
+fn retained_vertex_counts(triangles: &[Triangle], vertex_counts: &[i32]) -> Vec<usize> {
+    triangles
+        .iter()
+        .map(|triangle| {
+            triangle
+                .0
+                .iter()
+                .filter_map(|vertex| vertex_counts.get(*vertex))
+                .map(|count| signed_abs(*count))
+                .sum()
+        })
+        .collect()
+}
+
+fn count_crossing_vertex(
+    pair: &ExactBoolMeshEdgeFacePair,
+    increment: usize,
+    edge_mesh: &ExactMesh,
+    edge_face_counts: &mut [usize],
+    opposite_face_counts: &mut [usize],
+) -> usize {
+    let incident_faces = incident_faces_for_edge(edge_mesh.triangles(), pair.edge);
+    for face in &incident_faces {
+        if let Some(count) = edge_face_counts.get_mut(*face) {
+            *count += increment;
+        }
+    }
+    if let Some(count) = opposite_face_counts.get_mut(pair.face) {
+        *count += increment;
+    }
+
+    usize::from(incident_faces.len() != 2)
+}
+
+fn incident_faces_for_edge(triangles: &[Triangle], edge: [usize; 2]) -> Vec<usize> {
+    let key = canonical_edge(edge);
+    triangles
+        .iter()
+        .enumerate()
+        .filter_map(|(face, triangle)| {
+            triangle_edges(*triangle)
+                .iter()
+                .any(|candidate| canonical_edge(*candidate) == key)
+                .then_some(face)
+        })
+        .collect()
+}
+
+fn triangle_edges(triangle: Triangle) -> [[usize; 2]; 3] {
+    [
+        [triangle.0[0], triangle.0[1]],
+        [triangle.0[1], triangle.0[2]],
+        [triangle.0[2], triangle.0[0]],
+    ]
+}
+
+fn canonical_edge(edge: [usize; 2]) -> [usize; 2] {
+    if edge[0] <= edge[1] {
+        edge
+    } else {
+        [edge[1], edge[0]]
+    }
+}
+
+fn signed_abs(value: i32) -> usize {
+    value.unsigned_abs() as usize
 }

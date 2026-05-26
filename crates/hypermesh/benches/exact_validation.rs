@@ -13024,6 +13024,7 @@ fn exact_boolmesh_bounds_disjoint_port(c: &mut Criterion) {
                     hypermesh::exact::ExactBooleanOperation::Union,
                 );
                 workspace.validate_against_sources(&left, &right).unwrap();
+                let size_output = workspace.boolean45.as_ref().unwrap();
                 let execution = hypermesh::exact::execute_exact_boolmesh_bounds_disjoint(
                     &left,
                     &right,
@@ -13033,6 +13034,9 @@ fn exact_boolmesh_bounds_disjoint_port(c: &mut Criterion) {
                 .unwrap();
                 execution.validate_against_sources(&left, &right).unwrap();
                 execution.mesh.triangles().len()
+                    + size_output.face_halfedge_offsets.len()
+                    + size_output.vertices_from_left
+                    + size_output.vertices_from_right
             })
         });
     }
@@ -13082,6 +13086,15 @@ fn exact_boolmesh_kernel12_port(c: &mut Criterion) {
                     + workspace.boolean03.p1q2.len()
                     + workspace.boolean03.p2q1.len()
                     + workspace.pair_up.source_edge_runs.len()
+                    + workspace
+                        .boolean45
+                        .as_ref()
+                        .map(|stage| {
+                            stage.face_halfedge_offsets.len()
+                                + stage.inserted_intersection_vertices
+                                + stage.source_face_to_output_face.len()
+                        })
+                        .unwrap_or(0)
             })
         });
     }
