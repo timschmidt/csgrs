@@ -281,6 +281,32 @@ pub struct LineRationalQuadraticBezierAlgebraicEndpointEnvelope {
     pub y_upper: Real,
 }
 
+/// Exact native conic breakpoint promoted from a retained algebraic root.
+///
+/// A retained nonmonotone line/conic overlap boundary may still carry an
+/// exact rational root witness in its Sturm isolator. In that case the mixed
+/// scheduler can replay the root as an ordinary homogeneous conic split
+/// parameter while keeping non-rational represented roots retained-only.
+///
+/// This is a narrow materialization step under Yap, "Towards Exact Geometric
+/// Computation" (1997): the conversion is allowed only when the represented
+/// root already includes an exact rational witness and is certified inside the
+/// conic domain. The root witness itself is produced by the Collins-Loos real
+/// root isolation discipline used by `hypersolve`; the emitted fragment is
+/// still the homogeneous rational quadratic object described by Farouki,
+/// *Pythagorean Hodograph Curves* (2008).
+#[derive(Clone, Debug, PartialEq)]
+pub struct LineRationalQuadraticBezierExactAlgebraicBreakpointPromotion {
+    /// Index in [`LineRationalQuadraticBezierArrangementReport::algebraic_breakpoints`].
+    pub algebraic_breakpoint: usize,
+    /// Rational quadratic conic index.
+    pub curve: usize,
+    /// Exact promoted source parameter.
+    pub parameter: Real,
+    /// Exact point attached to the retained overlap boundary.
+    pub point: Point2,
+}
+
 /// Exact breakpoint on one arranged rational quadratic conic.
 #[derive(Clone, Debug, PartialEq)]
 pub struct RationalQuadraticBezierRealBreakpoint {
@@ -374,6 +400,9 @@ pub struct LineRationalQuadraticBezierArrangementReport {
     pub algebraic_source_spans: Vec<LineRationalQuadraticBezierAlgebraicSourceSpan>,
     /// Conservative endpoint coordinate envelopes for retained algebraic source spans.
     pub algebraic_endpoint_envelopes: Vec<LineRationalQuadraticBezierAlgebraicEndpointEnvelope>,
+    /// Exact algebraic roots promoted into native conic breakpoints.
+    pub exact_algebraic_breakpoint_promotions:
+        Vec<LineRationalQuadraticBezierExactAlgebraicBreakpointPromotion>,
     /// Sorted line breakpoints induced by line endpoints and certified events.
     pub line_breakpoints: Vec<Vec<MixedConicLineArrangementBreakpoint>>,
     /// Sorted conic breakpoints induced by endpoints and certified events.
@@ -458,6 +487,11 @@ pub fn arrange_line_segments_with_rational_quadratic_beziers_and_provenance(
         }
     }
 
+    let exact_algebraic_breakpoint_promotions = promote_exact_algebraic_conic_breakpoints(
+        &mut conic_breakpoints,
+        &algebraic_breakpoints,
+        policy,
+    )?;
     sort_and_dedup_line_breakpoints(&mut line_breakpoints, policy)?;
     sort_and_dedup_conic_breakpoints(&mut conic_breakpoints, policy)?;
     let algebraic_breakpoint_orders =
@@ -494,6 +528,7 @@ pub fn arrange_line_segments_with_rational_quadratic_beziers_and_provenance(
         algebraic_breakpoint_sequences,
         algebraic_source_spans,
         algebraic_endpoint_envelopes,
+        exact_algebraic_breakpoint_promotions,
         line_breakpoints,
         conic_breakpoints,
         line_fragments,
@@ -607,6 +642,43 @@ fn point_from_axis(axis: Axis, fixed: Real, varying: Real) -> Point2 {
         Axis::X => Point2::new(varying, fixed),
         Axis::Y => Point2::new(fixed, varying),
     }
+}
+
+fn promote_exact_algebraic_conic_breakpoints(
+    conic_breakpoints: &mut [Vec<RationalQuadraticBezierRealBreakpoint>],
+    algebraic_breakpoints: &[LineRationalQuadraticBezierAlgebraicBreakpoint],
+    policy: PredicatePolicy,
+) -> Result<
+    Vec<LineRationalQuadraticBezierExactAlgebraicBreakpointPromotion>,
+    LineRationalQuadraticBezierArrangementError,
+> {
+    let mut promotions = Vec::new();
+    for (index, breakpoint) in algebraic_breakpoints.iter().enumerate() {
+        if breakpoint.domain
+            != LineRationalQuadraticBezierAlgebraicBreakpointDomain::InsideLineAndCurve
+        {
+            continue;
+        }
+        let Some(parameter) = breakpoint.conic_parameter.interval.exact_root.clone() else {
+            continue;
+        };
+        insert_exact_conic_breakpoint(
+            &mut conic_breakpoints[breakpoint.curve],
+            breakpoint.curve,
+            parameter.clone(),
+            breakpoint.point.clone(),
+            policy,
+        )?;
+        promotions.push(
+            LineRationalQuadraticBezierExactAlgebraicBreakpointPromotion {
+                algebraic_breakpoint: index,
+                curve: breakpoint.curve,
+                parameter,
+                point: breakpoint.point.clone(),
+            },
+        );
+    }
+    Ok(promotions)
 }
 
 fn algebraic_conic_breakpoint_orders(
@@ -1072,8 +1144,24 @@ fn insert_conic_breakpoint(
     event: &LineRationalQuadraticBezierIntersection,
     policy: PredicatePolicy,
 ) -> Result<(), LineRationalQuadraticBezierArrangementError> {
+    insert_exact_conic_breakpoint(
+        breakpoints,
+        curve_index,
+        event.parameter.clone(),
+        event.point.clone(),
+        policy,
+    )
+}
+
+fn insert_exact_conic_breakpoint(
+    breakpoints: &mut Vec<RationalQuadraticBezierRealBreakpoint>,
+    curve_index: usize,
+    parameter: Real,
+    point: Point2,
+    policy: PredicatePolicy,
+) -> Result<(), LineRationalQuadraticBezierArrangementError> {
     for existing in breakpoints.iter() {
-        match compare_reals_with_policy(&existing.parameter, &event.parameter, policy).value() {
+        match compare_reals_with_policy(&existing.parameter, &parameter, policy).value() {
             Some(Ordering::Equal) => return Ok(()),
             Some(Ordering::Less | Ordering::Greater) => {}
             None => {
@@ -1087,8 +1175,8 @@ fn insert_conic_breakpoint(
     }
     breakpoints.push(RationalQuadraticBezierRealBreakpoint {
         curve: curve_index,
-        parameter: event.parameter.clone(),
-        point: event.point.clone(),
+        parameter,
+        point,
     });
     Ok(())
 }

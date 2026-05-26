@@ -1865,8 +1865,20 @@ fn line_rational_quadratic_bezier_arrangement_keeps_nonmonotone_support_overlap_
                 && envelope.y_upper == r(0))
     );
     assert_eq!(report.line_breakpoints[0].len(), 2);
-    assert_eq!(report.conic_breakpoints[0].len(), 2);
-    assert_eq!(report.conic_fragments.len(), 1);
+    assert!(
+        report
+            .exact_algebraic_breakpoint_promotions
+            .iter()
+            .any(|promotion| promotion.parameter == rq(1, 4) && promotion.point == p(3, 0))
+    );
+    assert!(
+        report
+            .exact_algebraic_breakpoint_promotions
+            .iter()
+            .any(|promotion| promotion.parameter == rq(3, 4) && promotion.point == p(3, 0))
+    );
+    assert_eq!(report.conic_breakpoints[0].len(), 4);
+    assert_eq!(report.conic_fragments.len(), 3);
 }
 
 #[test]
@@ -1899,6 +1911,59 @@ fn line_rational_quadratic_bezier_overlap_retains_empty_inverse_boundary_evidenc
     assert!(report.algebraic_breakpoint_sequences.is_empty());
     assert!(report.algebraic_source_spans.is_empty());
     assert!(report.algebraic_endpoint_envelopes.is_empty());
+}
+
+#[test]
+fn line_rational_quadratic_bezier_arrangement_promotes_exact_algebraic_roots() {
+    let conic = RationalQuadraticBezier::new(p(0, 0), p(8, 0), p(0, 0), r(1)).unwrap();
+    let line = LinePathSegment::new(p(0, 0), p(3, 0));
+
+    let report = arrange_line_segments_with_rational_quadratic_beziers(
+        &[line],
+        &[conic],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+
+    assert_eq!(
+        report.events[0].class,
+        LineRationalQuadraticBezierIntersectionClass::Unknown
+    );
+    assert_eq!(report.support_overlaps.len(), 1);
+    assert!(
+        report
+            .algebraic_breakpoints
+            .iter()
+            .all(|breakpoint| breakpoint.domain
+                == LineRationalQuadraticBezierAlgebraicBreakpointDomain::InsideLineAndCurve)
+    );
+    assert!(
+        report
+            .exact_algebraic_breakpoint_promotions
+            .iter()
+            .any(|promotion| promotion.parameter == rq(1, 4) && promotion.point == p(3, 0))
+    );
+    assert!(
+        report
+            .exact_algebraic_breakpoint_promotions
+            .iter()
+            .any(|promotion| promotion.parameter == rq(3, 4) && promotion.point == p(3, 0))
+    );
+    assert!(
+        report
+            .exact_algebraic_breakpoint_promotions
+            .iter()
+            .all(|promotion| {
+                report.algebraic_breakpoints[promotion.algebraic_breakpoint].curve
+                    == promotion.curve
+            })
+    );
+    assert_eq!(report.conic_breakpoints[0].len(), 4);
+    assert_eq!(report.conic_breakpoints[0][1].parameter, rq(1, 4));
+    assert_eq!(report.conic_breakpoints[0][1].point, p(3, 0));
+    assert_eq!(report.conic_breakpoints[0][2].parameter, rq(3, 4));
+    assert_eq!(report.conic_breakpoints[0][2].point, p(3, 0));
+    assert_eq!(report.conic_fragments.len(), 3);
 }
 
 #[test]

@@ -116,6 +116,7 @@ pub use mixed_conic_arrangement::{
     LineRationalQuadraticBezierAlgebraicSourceSpanBoundary,
     LineRationalQuadraticBezierArrangementError, LineRationalQuadraticBezierArrangementEvent,
     LineRationalQuadraticBezierArrangementFacts, LineRationalQuadraticBezierArrangementReport,
+    LineRationalQuadraticBezierExactAlgebraicBreakpointPromotion,
     LineRationalQuadraticBezierSupportOverlapCandidate, MixedConicLineArrangementBreakpoint,
     MixedConicLineArrangementFragment, RationalQuadraticBezierRealBreakpoint,
     RationalQuadraticBezierRealFragment, arrange_line_segments_with_rational_quadratic_beziers,

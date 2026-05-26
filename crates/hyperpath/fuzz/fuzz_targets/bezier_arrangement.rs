@@ -541,6 +541,18 @@ fuzz_target!(|data: &[u8]| {
         nonmonotone_report.algebraic_endpoint_envelopes.len(),
         nonmonotone_report.algebraic_source_spans.len()
     );
+    let exact_root_conic = RationalQuadraticBezier::new(p(0, 0), p(8, 0), p(0, 0), r(1)).unwrap();
+    let exact_root_report = arrange_line_segments_with_rational_quadratic_beziers(
+        &[LinePathSegment::new(p(0, 0), p(3, 0))],
+        &[exact_root_conic],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert!(exact_root_report
+        .exact_algebraic_breakpoint_promotions
+        .iter()
+        .any(|promotion| promotion.parameter == Real::new(Rational::new(1) / Rational::new(4))));
+    assert_eq!(exact_root_report.conic_breakpoints[0].len(), 4);
 
     let r_report =
         arrange_rational_quadratic_beziers(&[conic], &[vec![t]], PredicatePolicy::default())
