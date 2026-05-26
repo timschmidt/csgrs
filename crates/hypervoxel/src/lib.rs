@@ -37,6 +37,7 @@ mod chunk_snapshot;
 mod chunk_storage;
 mod chunk_support;
 mod chunk_surface_mesh;
+mod component_row_plan;
 mod compression;
 mod continuous;
 mod coupling;

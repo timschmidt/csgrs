@@ -142,6 +142,12 @@ fn assert_component_row_cache_accounting(
     report: &hypervoxel::PreparedTriangleSolidComponentConsensusVoxelizationReport,
 ) {
     let attempted_rows = report.axis_sweep_rows.iter().sum::<usize>();
+    assert_eq!(report.row_plan_rows, attempted_rows);
+    assert!(report.row_plan_axes > 0);
+    assert!(report.row_plan_cell_memberships >= attempted_rows);
+    assert_eq!(report.row_plan_duplicate_memberships, 0);
+    assert_eq!(report.row_plan_missing_memberships, 0);
+    assert_eq!(report.row_plan_min_axis_violations, 0);
     assert_eq!(report.row_cache_lookups, attempted_rows);
     assert_eq!(report.row_cache_misses, report.row_candidate_scheduled_rows);
     assert_eq!(
@@ -934,6 +940,7 @@ fn local_component_consensus_schedules_only_component_rows() {
     );
     assert!(verified.component_audit.row_cache_accounting_matches);
     assert!(verified.component_audit.row_window_accounting_matches);
+    assert!(verified.component_audit.row_plan_accounting_matches);
     assert!(verified.component_audit.row_candidate_schedule_matches);
     assert!(verified.component_audit.row_candidate_rejections_match);
     assert_eq!(verified.component_consensus, local_component);
@@ -1042,6 +1049,7 @@ fn adaptive_local_component_consensus_stops_after_complete_component_proof() {
     );
     assert!(verified.component_audit.row_cache_accounting_matches);
     assert!(verified.component_audit.row_window_accounting_matches);
+    assert!(verified.component_audit.row_plan_accounting_matches);
     assert!(verified.component_audit.component_accounting_matches);
     assert!(verified.component_audit.retry_subset_matches);
     assert_eq!(verified.component_consensus, adaptive_component);
@@ -1120,6 +1128,7 @@ fn local_component_consensus_reuses_exact_row_certificates_across_components() {
     );
     assert!(verified.component_audit.row_cache_accounting_matches);
     assert!(verified.component_audit.row_window_accounting_matches);
+    assert!(verified.component_audit.row_plan_accounting_matches);
     assert!(verified.component_audit.row_candidate_schedule_matches);
     assert!(verified.component_audit.row_candidate_rejections_match);
     assert!(verified.exact_verified_component_consensus_ready);

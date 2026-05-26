@@ -18,6 +18,7 @@ use hyperlimit::{
 
 use hyperreal::Real;
 
+use crate::component_row_plan::plan_component_axis_rows;
 use crate::ray_schedule::{
     RayAabbIntersection, RayAabbWindowIntersection, classify_ray_aabb_intersection,
     classify_ray_aabb_intersection_from_lower,
@@ -1393,6 +1394,9 @@ pub fn voxelize_prepared_exact_triangle_solid_mesh_by_component_consensus(
         && component_report.fallback_unknown_cells == 0
         && component_report.fallback_boundary_regression_cells == 0
         && component_report.row_parameter_order_unknowns == 0
+        && component_report.row_plan_duplicate_memberships == 0
+        && component_report.row_plan_missing_memberships == 0
+        && component_report.row_plan_min_axis_violations == 0
         && component_report.classified_cells > 0;
 
     let (grid, report) = materialize_prepared_classifiers(
@@ -1595,36 +1599,33 @@ pub fn voxelize_prepared_exact_triangle_solid_mesh_by_local_component_consensus(
                 let mut votes = vec![None::<VoxelTriangleSolidClassifier>; component.len()];
                 let mut vote_conflicts = vec![false; component.len()];
                 for axis in 0..3 {
-                    let [row_axis_a, row_axis_b] = perpendicular_axes(axis);
-                    let mut rows: Vec<([u64; 2], Vec<usize>)> = Vec::new();
-                    for (component_index, coords) in component.iter().enumerate() {
-                        let key = [coords[row_axis_a], coords[row_axis_b]];
-                        if let Some((_, indices)) = rows.iter_mut().find(|(row, _)| *row == key) {
-                            indices.push(component_index);
-                        } else {
-                            rows.push((key, vec![component_index]));
-                        }
-                    }
+                    let plan = plan_component_axis_rows(axis, &component);
+                    component_report.row_plan_axes += 1;
+                    component_report.row_plan_rows += plan.report.planned_rows;
+                    component_report.row_plan_cell_memberships += plan.report.row_cell_memberships;
+                    component_report.row_plan_duplicate_memberships +=
+                        plan.report.duplicate_memberships.len();
+                    component_report.row_plan_missing_memberships +=
+                        plan.report.missing_memberships.len();
+                    component_report.row_plan_min_axis_violations +=
+                        plan.report.min_axis_coord_violations;
 
-                    if rows.is_empty() {
+                    if plan.rows.is_empty() {
                         component_report.axis_empty_sweep_rows[axis] += 1;
                         continue;
                     }
 
-                    for (row_key, indices) in rows {
+                    for row_membership in plan.rows {
                         component_report.axis_sweep_rows[axis] += 1;
+                        let [row_axis_a, row_axis_b] = perpendicular_axes(axis);
                         let mut origin_coords = [0_u64; 3];
-                        origin_coords[row_axis_a] = row_key[0];
-                        origin_coords[row_axis_b] = row_key[1];
+                        origin_coords[row_axis_a] = row_membership.row[0];
+                        origin_coords[row_axis_b] = row_membership.row[1];
                         let row_origin = VoxelAddress::new(frame.depth(), origin_coords)?
                             .bounds(&frame)?
                             .center();
-                        let min_axis_coord = indices
-                            .iter()
-                            .map(|&component_index| component[component_index][axis])
-                            .min()
-                            .expect("component row has at least one cell");
-                        let mut min_axis_coords = component[indices[0]];
+                        let min_axis_coord = row_membership.min_axis_coord;
+                        let mut min_axis_coords = component[row_membership.component_indices[0]];
                         min_axis_coords[axis] = min_axis_coord;
                         let min_axis_threshold = VoxelAddress::new(frame.depth(), min_axis_coords)?
                             .bounds(&frame)?
@@ -1632,7 +1633,7 @@ pub fn voxelize_prepared_exact_triangle_solid_mesh_by_local_component_consensus(
                             .clone()
                             - &row_origin[axis];
                         component_report.row_cache_lookups += 1;
-                        let row_key = ComponentAxisRowKey::new(axis, row_key);
+                        let row_key = ComponentAxisRowKey::new(axis, row_membership.row);
                         let (row, cache_hit, broadened_miss) = row_cache
                             .get_or_insert_window_with(row_key, min_axis_coord, || {
                                 classify_component_consensus_axis_row_with_candidate_schedule(
@@ -1655,7 +1656,7 @@ pub fn voxelize_prepared_exact_triangle_solid_mesh_by_local_component_consensus(
                         match row {
                             AxisRowParity::Certified { parameters } => {
                                 component_report.axis_certified_sweep_rows[axis] += 1;
-                                for component_index in indices {
+                                for component_index in row_membership.component_indices {
                                     let coords = component[component_index];
                                     let address = VoxelAddress::new(frame.depth(), coords)?;
                                     let center = address.bounds(&frame)?.center();
@@ -1678,7 +1679,8 @@ pub fn voxelize_prepared_exact_triangle_solid_mesh_by_local_component_consensus(
                             }
                             AxisRowParity::Ambiguous => {
                                 component_report.axis_ambiguous_sweep_rows[axis] += 1;
-                                component_report.deferred_ambiguous_cells += indices.len();
+                                component_report.deferred_ambiguous_cells +=
+                                    row_membership.component_indices.len();
                             }
                         }
                     }
@@ -1734,6 +1736,9 @@ pub fn voxelize_prepared_exact_triangle_solid_mesh_by_local_component_consensus(
         && component_report.fallback_unknown_cells == 0
         && component_report.fallback_boundary_regression_cells == 0
         && component_report.row_parameter_order_unknowns == 0
+        && component_report.row_plan_duplicate_memberships == 0
+        && component_report.row_plan_missing_memberships == 0
+        && component_report.row_plan_min_axis_violations == 0
         && component_report.classified_cells > 0;
 
     let (grid, report) = materialize_prepared_classifiers(
@@ -1936,36 +1941,33 @@ pub fn voxelize_prepared_exact_triangle_solid_mesh_by_adaptive_local_component_c
                 let mut final_conflicts = 0_usize;
 
                 for axis in 0..3 {
-                    let [row_axis_a, row_axis_b] = perpendicular_axes(axis);
-                    let mut rows: Vec<([u64; 2], Vec<usize>)> = Vec::new();
-                    for (component_index, coords) in component.iter().enumerate() {
-                        let key = [coords[row_axis_a], coords[row_axis_b]];
-                        if let Some((_, indices)) = rows.iter_mut().find(|(row, _)| *row == key) {
-                            indices.push(component_index);
-                        } else {
-                            rows.push((key, vec![component_index]));
-                        }
-                    }
+                    let plan = plan_component_axis_rows(axis, &component);
+                    component_report.row_plan_axes += 1;
+                    component_report.row_plan_rows += plan.report.planned_rows;
+                    component_report.row_plan_cell_memberships += plan.report.row_cell_memberships;
+                    component_report.row_plan_duplicate_memberships +=
+                        plan.report.duplicate_memberships.len();
+                    component_report.row_plan_missing_memberships +=
+                        plan.report.missing_memberships.len();
+                    component_report.row_plan_min_axis_violations +=
+                        plan.report.min_axis_coord_violations;
 
-                    if rows.is_empty() {
+                    if plan.rows.is_empty() {
                         component_report.axis_empty_sweep_rows[axis] += 1;
                         continue;
                     }
 
-                    for (row_key, indices) in rows {
+                    for row_membership in plan.rows {
                         component_report.axis_sweep_rows[axis] += 1;
+                        let [row_axis_a, row_axis_b] = perpendicular_axes(axis);
                         let mut origin_coords = [0_u64; 3];
-                        origin_coords[row_axis_a] = row_key[0];
-                        origin_coords[row_axis_b] = row_key[1];
+                        origin_coords[row_axis_a] = row_membership.row[0];
+                        origin_coords[row_axis_b] = row_membership.row[1];
                         let row_origin = VoxelAddress::new(frame.depth(), origin_coords)?
                             .bounds(&frame)?
                             .center();
-                        let min_axis_coord = indices
-                            .iter()
-                            .map(|&component_index| component[component_index][axis])
-                            .min()
-                            .expect("component row has at least one cell");
-                        let mut min_axis_coords = component[indices[0]];
+                        let min_axis_coord = row_membership.min_axis_coord;
+                        let mut min_axis_coords = component[row_membership.component_indices[0]];
                         min_axis_coords[axis] = min_axis_coord;
                         let min_axis_threshold = VoxelAddress::new(frame.depth(), min_axis_coords)?
                             .bounds(&frame)?
@@ -1973,7 +1975,7 @@ pub fn voxelize_prepared_exact_triangle_solid_mesh_by_adaptive_local_component_c
                             .clone()
                             - &row_origin[axis];
                         component_report.row_cache_lookups += 1;
-                        let row_key = ComponentAxisRowKey::new(axis, row_key);
+                        let row_key = ComponentAxisRowKey::new(axis, row_membership.row);
                         let (row, cache_hit, broadened_miss) = row_cache
                             .get_or_insert_window_with(row_key, min_axis_coord, || {
                                 classify_component_consensus_axis_row_with_candidate_schedule(
@@ -1996,7 +1998,7 @@ pub fn voxelize_prepared_exact_triangle_solid_mesh_by_adaptive_local_component_c
                         match row {
                             AxisRowParity::Certified { parameters } => {
                                 component_report.axis_certified_sweep_rows[axis] += 1;
-                                for component_index in indices {
+                                for component_index in row_membership.component_indices {
                                     let coords = component[component_index];
                                     let address = VoxelAddress::new(frame.depth(), coords)?;
                                     let center = address.bounds(&frame)?.center();
@@ -2019,7 +2021,8 @@ pub fn voxelize_prepared_exact_triangle_solid_mesh_by_adaptive_local_component_c
                             }
                             AxisRowParity::Ambiguous => {
                                 component_report.axis_ambiguous_sweep_rows[axis] += 1;
-                                component_report.deferred_ambiguous_cells += indices.len();
+                                component_report.deferred_ambiguous_cells +=
+                                    row_membership.component_indices.len();
                             }
                         }
                     }
@@ -2100,6 +2103,9 @@ pub fn voxelize_prepared_exact_triangle_solid_mesh_by_adaptive_local_component_c
         && component_report.fallback_unknown_cells == 0
         && component_report.fallback_boundary_regression_cells == 0
         && component_report.row_parameter_order_unknowns == 0
+        && component_report.row_plan_duplicate_memberships == 0
+        && component_report.row_plan_missing_memberships == 0
+        && component_report.row_plan_min_axis_violations == 0
         && component_report.classified_cells > 0;
 
     let (grid, report) = materialize_prepared_classifiers(
@@ -2746,6 +2752,18 @@ pub struct PreparedTriangleSolidComponentConsensusVoxelizationReport {
     pub axis_sweep_rows: [usize; 3],
     /// Per-axis rows with no open cells.
     pub axis_empty_sweep_rows: [usize; 3],
+    /// Component-axis row plans retained as exact schedule evidence.
+    pub row_plan_axes: usize,
+    /// Component-local rows emitted by retained row plans.
+    pub row_plan_rows: usize,
+    /// Component cell-to-row memberships emitted by retained row plans.
+    pub row_plan_cell_memberships: usize,
+    /// Duplicate component cell memberships found while planning rows.
+    pub row_plan_duplicate_memberships: usize,
+    /// Missing component cell memberships found while planning rows.
+    pub row_plan_missing_memberships: usize,
+    /// Rows whose retained minimum sweep coordinate failed exact replay.
+    pub row_plan_min_axis_violations: usize,
     /// Per-axis rows accepted by certified exact crossing sequences.
     pub axis_certified_sweep_rows: [usize; 3],
     /// Per-axis rows rejected because they hit an ambiguous arrangement event.

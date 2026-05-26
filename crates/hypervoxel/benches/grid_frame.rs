@@ -445,6 +445,13 @@ fn bench_exact_box_voxelization(c: &mut Criterion) {
         row_cache_probe.row_window_scheduled_rows,
         row_cache_probe.row_candidate_scheduled_rows
     );
+    assert_eq!(
+        row_cache_probe.row_plan_rows,
+        row_cache_probe.axis_sweep_rows.iter().sum::<usize>()
+    );
+    assert_eq!(row_cache_probe.row_plan_duplicate_memberships, 0);
+    assert_eq!(row_cache_probe.row_plan_missing_memberships, 0);
+    assert_eq!(row_cache_probe.row_plan_min_axis_violations, 0);
     assert!(row_cache_probe.row_window_aabb_rejections > 0);
     c.bench_function("prepared_triangle_solid_component_consensus_audit", |b| {
         b.iter(|| {

@@ -295,6 +295,12 @@ fuzz_target!(|data: (u8, u8, u8, bool)| {
     assert_eq!(local_component.fallback_unknown_cells, 0);
     assert_eq!(local_component.fallback_boundary_regression_cells, 0);
     let local_attempted_rows = local_component.axis_sweep_rows.iter().sum::<usize>();
+    assert_eq!(local_component.row_plan_rows, local_attempted_rows);
+    assert!(local_component.row_plan_axes > 0);
+    assert!(local_component.row_plan_cell_memberships >= local_attempted_rows);
+    assert_eq!(local_component.row_plan_duplicate_memberships, 0);
+    assert_eq!(local_component.row_plan_missing_memberships, 0);
+    assert_eq!(local_component.row_plan_min_axis_violations, 0);
     assert_eq!(
         local_component.row_cache_lookups,
         local_attempted_rows
@@ -331,6 +337,7 @@ fuzz_target!(|data: (u8, u8, u8, bool)| {
         .exact_component_consensus_audit_ready);
     assert!(verified_local.component_audit.row_cache_accounting_matches);
     assert!(verified_local.component_audit.row_window_accounting_matches);
+    assert!(verified_local.component_audit.row_plan_accounting_matches);
     assert_eq!(
         adaptive_local.consensus_cells
             + adaptive_local.exterior_cells
@@ -341,6 +348,12 @@ fuzz_target!(|data: (u8, u8, u8, bool)| {
     assert_eq!(adaptive_local.fallback_unknown_cells, 0);
     assert_eq!(adaptive_local.fallback_boundary_regression_cells, 0);
     let adaptive_attempted_rows = adaptive_local.axis_sweep_rows.iter().sum::<usize>();
+    assert_eq!(adaptive_local.row_plan_rows, adaptive_attempted_rows);
+    assert!(adaptive_local.row_plan_axes > 0);
+    assert!(adaptive_local.row_plan_cell_memberships >= adaptive_attempted_rows);
+    assert_eq!(adaptive_local.row_plan_duplicate_memberships, 0);
+    assert_eq!(adaptive_local.row_plan_missing_memberships, 0);
+    assert_eq!(adaptive_local.row_plan_min_axis_violations, 0);
     assert_eq!(
         adaptive_local.row_cache_lookups,
         adaptive_attempted_rows
@@ -384,4 +397,7 @@ fuzz_target!(|data: (u8, u8, u8, bool)| {
     assert!(verified_adaptive_local
         .component_audit
         .row_window_accounting_matches);
+    assert!(verified_adaptive_local
+        .component_audit
+        .row_plan_accounting_matches);
 });
