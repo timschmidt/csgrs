@@ -3272,15 +3272,17 @@ pub fn arrange_coplanar_surface_component_holed_intersection(
 /// and the exact union of both operands' retained holes. Identical holes are
 /// deduplicated, strictly nested holes collapse to the larger removed region,
 /// and disjoint holes are retained independently. Bounded overlap components
-/// are accepted when all participating retained holes are strictly convex,
-/// their positive-area overlap graph is connected, and their removed union
-/// replays as one exact simple retained hole. Rectilinear nonconvex connected
-/// clusters may also replay through the exact orthogonal cell path when the
-/// removed union has one simple outer boundary and no island holes. Multiple
-/// disconnected overlap clusters are accepted only when each cluster
+/// are accepted when all participating retained holes have a connected
+/// positive-area overlap graph and their removed union replays as one exact
+/// simple retained hole. Strictly convex clusters use the convex fragment
+/// certificate, rectilinear nonconvex clusters use the exact orthogonal cell
+/// path, and the remaining bounded simple-loop fallback accepts
+/// non-rectilinear nonconvex clusters when exposed retained-boundary
+/// fragments stitch one simple loop whose exact source-union area closes.
+/// Multiple disconnected overlap clusters are accepted only when each cluster
 /// independently replays as a retained hole and the resulting holes are
-/// mutually disjoint. Touching, crossing, edge-contact clusters, or
-/// non-rectilinear nonconvex partial overlaps reject to the general planar
+/// mutually disjoint. Touching, edge-contact clusters, holed removed unions,
+/// and branched retained-boundary unions reject to the general planar
 /// arrangement layer. This is a legitimate Boolean intersection because the
 /// complement of each retained hole is part of the source object: intersecting
 /// two equal-outer holed sheets removes the union of their holes.
@@ -3523,6 +3525,7 @@ fn same_outer_intersection_convex_hole_union_component(
     }
     let mut union = connected_convex_overlap_union_polygon(holes, projection)
         .or_else(|| same_outer_intersection_rectangle_strip_hole_union_component(holes, projection))
+        .or_else(|| same_outer_intersection_simple_hole_union_component(holes, projection))
         .or_else(|| same_outer_intersection_orthogonal_hole_union_component(holes, projection))?;
     union = simplify_projected_polygon(union, projection);
     orient_polygon_cw(&mut union, projection)?;
@@ -3533,6 +3536,98 @@ fn same_outer_intersection_convex_hole_union_component(
         "coplanar same-outer convex intersection hole union",
     )
     .ok()?;
+    Some(union)
+}
+
+/// Replay a connected simple retained-hole union as one removed ring.
+///
+/// Same-outer intersection removes `union(left_holes, right_holes)`. The
+/// convex and orthogonal helpers above cover structured clusters; this
+/// fallback covers the bounded non-axis-aligned simple-loop case, including
+/// clusters whose nonconvex removed boundary is represented by several exact
+/// source rings. It builds the exterior boundary from source fragments whose
+/// midpoints are outside every other retained hole, the Weiler-Atherton
+/// retained-fragment idea from Weiler and Atherton, "Hidden Surface Removal
+/// Using Polygon Area Sorting," *SIGGRAPH Computer Graphics* 11.2 (1977).
+/// Segment events use exact orientation predicates in the style of Guigue and
+/// Devillers, "Fast and Robust Triangle-Triangle Overlap Test Using
+/// Orientation Predicates," *Journal of Graphics Tools* 8.1 (2003).
+///
+/// The helper is intentionally not a full planar arrangement extractor. Every
+/// source pair in the cluster must be connected through positive-area
+/// overlap; point-only contacts reject, and positive-length boundary contacts
+/// never create connectivity. The stitched loop is then compared to the exact
+/// union area of the source loops, using the local exact
+/// triangulation-plus-inclusion-exclusion replay from
+/// [`component_holed_union_source_area2`]. That final equality is the Yap
+/// promotion gate from "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997): the retained removed owner is named
+/// only when exact objects, exact predicates, and exact area agree.
+#[cfg(feature = "exact-triangulation")]
+fn same_outer_intersection_simple_hole_union_component(
+    holes: &[Vec<Point3>],
+    projection: CoplanarProjection,
+) -> Option<Vec<Point3>> {
+    if holes.len() < 2 {
+        return None;
+    }
+
+    let mut regions = holes.to_vec();
+    let mut has_non_axis_aligned_edge = false;
+    for region in &mut regions {
+        orient_polygon_ccw(region, projection)?;
+        *region = simplify_projected_polygon(core::mem::take(region), projection);
+        validate_projected_simple_loop(
+            region,
+            projection,
+            "coplanar same-outer simple retained-hole intersection union",
+        )
+        .ok()?;
+        has_non_axis_aligned_edge |= polygon_has_non_axis_aligned_edge(region, projection)?;
+    }
+    if !has_non_axis_aligned_edge {
+        return None;
+    }
+
+    let mut overlap_graph = UnionFind::new(regions.len());
+    for left in 0..regions.len() {
+        for right in left + 1..regions.len() {
+            match simple_polygon_contact(&regions[left], &regions[right], projection)? {
+                SimplePolygonContact::Disjoint => {}
+                SimplePolygonContact::PositiveArea => overlap_graph.union(left, right),
+                SimplePolygonContact::PositiveLengthBoundary => {}
+                SimplePolygonContact::PointOnly => return None,
+            }
+        }
+    }
+    let root = overlap_graph.find(0);
+    for index in 1..regions.len() {
+        if overlap_graph.find(index) != root {
+            return None;
+        }
+    }
+
+    let group = (0..regions.len()).collect::<Vec<_>>();
+    let mut union = materialize_simple_polygon_union_group(
+        &regions,
+        &group,
+        projection,
+        "coplanar same-outer simple retained-hole intersection union",
+    )?;
+    orient_polygon_ccw(&mut union, projection)?;
+    union = simplify_projected_polygon(union, projection);
+    validate_projected_simple_loop(
+        &union,
+        projection,
+        "coplanar same-outer simple retained-hole intersection union",
+    )
+    .ok()?;
+
+    let source_union_area = component_holed_union_source_area2(&regions, projection, true)?;
+    let replay_area = projected_area2_abs(&union, projection)?;
+    if compare_reals(&source_union_area, &replay_area).value()? != Ordering::Equal {
+        return None;
+    }
     Some(union)
 }
 
@@ -3674,7 +3769,7 @@ fn same_outer_intersection_orthogonal_hole_union_component(
     Some(union)
 }
 
-/// Add exact retained bridge points to a rectangular outer ring.
+/// Add exact retained bridge points to an outer ring.
 ///
 /// Same-outer intersection can produce several disconnected merged retained
 /// holes. Some are convex rectangles and others are nonconvex exact unions of
@@ -3682,14 +3777,18 @@ fn same_outer_intersection_orthogonal_hole_union_component(
 /// triangulation needs an exact outer endpoint for each nonconvex retained
 /// hole so every bridge/reflex boundary vertex remains available to validation.
 /// For each nonconvex hole, the split point is constructed exactly on the
-/// source outer boundary, horizontally aligned with the lexicographically
-/// leftmost retained-hole vertex, and then the ordinary component-holed source
-/// replay accepts or rejects the final mesh. The bridge point is a
-/// triangulation aid, not Boolean topology. This follows Yap, "Towards Exact
-/// Geometric Computation," *Computational Geometry* 7.1-2 (1997): it is
-/// retained exact construction state, not a tolerance weld. The keyhole/bridge
-/// reduction follows Held, "FIST: Fast Industrial-Strength Triangulation of
-/// Polygons," *Algorithmica* 30 (2001).
+/// source outer boundary, horizontally aligned in the active projection with
+/// the lexicographically leftmost retained-hole vertex, and then the ordinary
+/// component-holed source replay accepts or rejects the final mesh. Axis-
+/// aligned outers use the rectangle endpoint directly; affine and other
+/// simple outer rings compute the exact crossing parameter on the leftmost
+/// candidate edge and interpolate the retained 3D point.
+///
+/// The bridge point is a triangulation aid, not Boolean topology. This
+/// follows Yap, "Towards Exact Geometric Computation," *Computational
+/// Geometry* 7.1-2 (1997): it is retained exact construction state, not a
+/// tolerance weld. The keyhole/bridge reduction follows Held, "FIST: Fast
+/// Industrial-Strength Triangulation of Polygons," *Algorithmica* 30 (2001).
 #[cfg(feature = "exact-triangulation")]
 fn split_outer_for_retained_hole_bridges(
     outer: &mut Vec<Point3>,
@@ -3717,7 +3816,6 @@ fn split_outer_for_retained_hole_bridge(
     {
         return Some(());
     }
-    let outer_rect = projected_axis_aligned_boundary_rectangle(outer, projection)?;
     let mut chosen_projected = project_point(hole.first()?, projection);
     for point in hole.iter().skip(1) {
         let projected = project_point(point, projection);
@@ -3733,18 +3831,22 @@ fn split_outer_for_retained_hole_bridge(
             Ordering::Greater => {}
         }
     }
-    if real_order(&outer_rect.min.y, &chosen_projected.y)? != Ordering::Less
-        || real_order(&chosen_projected.y, &outer_rect.max.y)? != Ordering::Less
-        || real_order(&outer_rect.min.x, &chosen_projected.x)? != Ordering::Less
-    {
-        return None;
-    }
-    let bridge = point_from_projection(
-        &outer_rect.min.x,
-        &chosen_projected.y,
-        &outer_rect.dropped,
-        projection,
-    );
+    let bridge = retained_hole_bridge_point_on_outer(outer, &chosen_projected, projection)
+        .or_else(|| {
+            let outer_rect = projected_axis_aligned_boundary_rectangle(outer, projection)?;
+            if real_order(&outer_rect.min.y, &chosen_projected.y)? != Ordering::Less
+                || real_order(&chosen_projected.y, &outer_rect.max.y)? != Ordering::Less
+                || real_order(&outer_rect.min.x, &chosen_projected.x)? != Ordering::Less
+            {
+                return None;
+            }
+            Some(point_from_projection(
+                &outer_rect.min.x,
+                &chosen_projected.y,
+                &outer_rect.dropped,
+                projection,
+            ))
+        })?;
     if outer.iter().any(|point| points_equal(point, &bridge)) {
         return Some(());
     }
@@ -3757,6 +3859,51 @@ fn split_outer_for_retained_hole_bridge(
     .ok()?;
     *outer = split;
     Some(())
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn retained_hole_bridge_point_on_outer(
+    outer: &[Point3],
+    hole_anchor: &Point2,
+    projection: CoplanarProjection,
+) -> Option<Point3> {
+    let zero = ExactReal::from(0);
+    let one = ExactReal::from(1);
+    let mut bridge = None::<(Point3, Point2)>;
+    for edge in 0..outer.len() {
+        let start = &outer[edge];
+        let end = &outer[(edge + 1) % outer.len()];
+        let start_projected = project_point(start, projection);
+        let end_projected = project_point(end, projection);
+        let dy = sub(&end_projected.y, &start_projected.y);
+        if real_equal(&dy, &zero) {
+            continue;
+        }
+        let t = (sub(&hole_anchor.y, &start_projected.y) / &dy).ok()?;
+        if real_order(&zero, &t)? != Ordering::Less || real_order(&t, &one)? != Ordering::Less {
+            continue;
+        }
+        let x_at_y = add(
+            &start_projected.x,
+            &mul(&t, &sub(&end_projected.x, &start_projected.x)),
+        );
+        if real_order(&x_at_y, &hole_anchor.x)? != Ordering::Less {
+            continue;
+        }
+        let candidate = interpolate3(start, end, &t);
+        let candidate_projected = project_point(&candidate, projection);
+        if !real_equal(&candidate_projected.y, &hole_anchor.y)
+            || !real_equal(&candidate_projected.x, &x_at_y)
+        {
+            return None;
+        }
+        match &bridge {
+            Some((_, current))
+                if real_order(&current.x, &candidate_projected.x)? != Ordering::Less => {}
+            _ => bridge = Some((candidate, candidate_projected)),
+        }
+    }
+    bridge.map(|(point, _)| point)
 }
 
 #[cfg(feature = "exact-triangulation")]

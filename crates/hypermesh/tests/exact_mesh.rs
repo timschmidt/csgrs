@@ -26281,6 +26281,137 @@ fn exact_coplanar_component_holed_intersection_merges_same_outer_holes() {
     )
     .unwrap();
 
+    let affine_origin = (0, 0, 0);
+    let affine_basis_u = (2, 1, 0);
+    let affine_basis_v = (-1, 2, 0);
+    let affine_outer = affine_rect_surface_i64(
+        &[(0, 0, 20, 20)],
+        affine_origin,
+        affine_basis_u,
+        affine_basis_v,
+    );
+    let affine_left_hole = affine_rect_surface_i64(
+        &[(4, 4, 12, 8), (4, 8, 8, 16)],
+        affine_origin,
+        affine_basis_u,
+        affine_basis_v,
+    );
+    let affine_right_hole = affine_rect_surface_i64(
+        &[(6, 6, 16, 10)],
+        affine_origin,
+        affine_basis_u,
+        affine_basis_v,
+    );
+    let affine_left = hypermesh::exact::arrange_coplanar_affine_surface_difference(
+        &affine_outer,
+        &affine_left_hole,
+    )
+    .expect("affine same-outer nonconvex intersection left fixture should materialize")
+    .mesh;
+    let affine_right = hypermesh::exact::arrange_coplanar_affine_surface_difference(
+        &affine_outer,
+        &affine_right_hole,
+    )
+    .expect("affine same-outer nonconvex intersection right fixture should materialize")
+    .mesh;
+    assert!(
+        hypermesh::exact::arrange_coplanar_orthogonal_surface_intersection(
+            &affine_left,
+            &affine_right
+        )
+        .is_none(),
+        "non-axis-aligned retained holes must not be claimed by the orthogonal intersection"
+    );
+    let affine_intersection =
+        hypermesh::exact::arrange_coplanar_surface_component_holed_intersection(
+            &affine_left,
+            &affine_right,
+        )
+        .expect("nonrectilinear nonconvex retained-hole union should replay as one hole");
+    affine_intersection.validate().unwrap();
+    affine_intersection
+        .validate_intersection_against_sources(&affine_left, &affine_right)
+        .unwrap();
+    assert_eq!(affine_intersection.components.len(), 1);
+    assert_eq!(affine_intersection.components[0].holes.len(), 1);
+    assert!(
+        affine_intersection.components[0].holes[0].len() > 6,
+        "the retained removed union should preserve exact nonconvex split vertices"
+    );
+    let affine_reverse = hypermesh::exact::arrange_coplanar_surface_component_holed_intersection(
+        &affine_right,
+        &affine_left,
+    )
+    .expect("nonrectilinear nonconvex retained-hole union should be symmetric");
+    affine_reverse.validate().unwrap();
+    affine_reverse
+        .validate_intersection_against_sources(&affine_right, &affine_left)
+        .unwrap();
+    assert_eq!(affine_reverse.components.len(), 1);
+    assert_eq!(affine_reverse.components[0].holes.len(), 1);
+    assert_eq!(
+        affine_reverse.components[0].holes[0].len(),
+        affine_intersection.components[0].holes[0].len()
+    );
+    let mut stale_affine = affine_intersection.clone();
+    stale_affine.components[0].holes[0].reverse();
+    assert!(stale_affine.validate().is_err());
+    assert!(
+        stale_affine
+            .validate_intersection_against_sources(&affine_left, &affine_right)
+            .is_err()
+    );
+    let affine_preflight = hypermesh::exact::preflight_boolean_exact(
+        &affine_left,
+        &affine_right,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+    )
+    .expect("nonrectilinear retained-hole intersection preflight should classify shortcut");
+    affine_preflight.validate().unwrap();
+    affine_preflight
+        .validate_against_sources(&affine_left, &affine_right)
+        .unwrap();
+    assert_eq!(
+        affine_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
+    );
+    hypermesh::exact::boolean_exact(
+        &affine_left,
+        &affine_right,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("nonrectilinear retained-hole intersection boolean should materialize")
+    .validate_operation_against_sources(
+        &affine_left,
+        &affine_right,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
+
+    let affine_touching_hole = affine_rect_surface_i64(
+        &[(12, 6, 16, 10)],
+        affine_origin,
+        affine_basis_u,
+        affine_basis_v,
+    );
+    let affine_touching = hypermesh::exact::arrange_coplanar_affine_surface_difference(
+        &affine_outer,
+        &affine_touching_hole,
+    )
+    .expect("affine edge-contact retained-hole source should materialize")
+    .mesh;
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_component_holed_intersection(
+            &affine_left,
+            &affine_touching
+        )
+        .is_none(),
+        "retained-hole edge contact is lower-dimensional evidence, not a removed union area"
+    );
+
     let disconnected_outer = ExactMesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 20, 0, 0, 20, 20, 0, 0, 20, 0],
         &[0, 1, 2, 0, 2, 3],
