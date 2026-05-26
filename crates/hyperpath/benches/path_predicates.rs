@@ -1515,6 +1515,28 @@ fn path_predicates(c: &mut Criterion) {
     c.bench_function("specctra_grid_route_rule_exact_lift", |b| {
         b.iter(|| hyperpath::specctra_grid_route_rule_record(route_rule_record))
     });
+    let audited_trace = specctra_grid_trace_record(SpecctraGridTraceRecord {
+        net: NetId(3),
+        layer: TraceLayer(1),
+        start_x: 0,
+        start_y: 0,
+        end_x: 1000,
+        end_y: 0,
+        width: 8,
+        grid_denominator: 10,
+    })
+    .unwrap();
+    let audited_rule = hyperpath::specctra_grid_route_rule_record(route_rule_record).unwrap();
+    c.bench_function("specctra_route_rule_width_audit", |b| {
+        b.iter(|| {
+            hyperpath::audit_specctra_route_rule_widths(
+                std::slice::from_ref(&audited_trace),
+                &[],
+                std::slice::from_ref(&audited_rule),
+                PredicatePolicy::default(),
+            )
+        })
+    });
     let exact_polygon_keepout = SpecctraGridKeepoutRecord {
         layer: Some(TraceLayer(1)),
         shape: SpecctraGridKeepoutShape::Polygon {

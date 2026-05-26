@@ -37,20 +37,23 @@ use hyperpath::{
     SpecctraGridArcWireRecord, SpecctraGridKeepoutRecord, SpecctraGridKeepoutShape,
     SpecctraGridRouteRuleRecord, SpecctraGridTraceRecord, SpecctraGridViaRecord,
     SpecctraImportError, SpecctraLayerAlias, SpecctraNetAlias, SpecctraParseError,
-    SupportFootprintStatus, SupportPlanError, SweptLineSegment, TangentAlignment, TangentJoinClass,
-    TangentJoinReport, TangentSpan, TraceLayer, ViaAnnularRingReport, ViaAspectRatioReport,
-    ViaDrillIntent, ViaDrillPolicyClass, ViaFabricationAcceptance, ViaFabricationError,
-    ViaFabricationPolicy, ViaLayerSpanRelation, ViaLayerTransitionClass, arrange_cubic_beziers,
-    arrange_explicit_arcs, arrange_line_segments, arrange_line_segments_with_cubic_beziers,
-    arrange_line_segments_with_explicit_arcs, arrange_line_segments_with_quadratic_beziers,
+    SpecctraRouteRuleAuditError, SpecctraRouteRuleItemKind, SpecctraRouteRuleScopeClass,
+    SpecctraRouteRuleWidthStatus, SupportFootprintStatus, SupportPlanError, SweptLineSegment,
+    TangentAlignment, TangentJoinClass, TangentJoinReport, TangentSpan, TraceLayer,
+    ViaAnnularRingReport, ViaAspectRatioReport, ViaDrillIntent, ViaDrillPolicyClass,
+    ViaFabricationAcceptance, ViaFabricationError, ViaFabricationPolicy, ViaLayerSpanRelation,
+    ViaLayerTransitionClass, arrange_cubic_beziers, arrange_explicit_arcs, arrange_line_segments,
+    arrange_line_segments_with_cubic_beziers, arrange_line_segments_with_explicit_arcs,
+    arrange_line_segments_with_quadratic_beziers,
     arrange_line_segments_with_rational_quadratic_beziers, arrange_quadratic_beziers,
-    arrange_rational_quadratic_beziers, build_alternating_detour_meander, build_g1_join_problem,
-    build_keepout_aware_detour_meander, build_length_match_problem, build_multi_detour_meander,
-    build_nonuniform_detour_meander, build_obstacle_aware_detour_meander,
-    build_oriented_tangent_alignment_problem, build_rectangular_bead_plan,
-    build_rectangular_pocket_link_graph, build_rectangular_pocket_plan,
-    build_rectangular_rest_material_graph, build_rectangular_serpentine_infill_graph,
-    build_rectangular_support_plan, build_single_detour_meander, build_tangent_alignment_problem,
+    arrange_rational_quadratic_beziers, audit_specctra_route_rule_widths,
+    build_alternating_detour_meander, build_g1_join_problem, build_keepout_aware_detour_meander,
+    build_length_match_problem, build_multi_detour_meander, build_nonuniform_detour_meander,
+    build_obstacle_aware_detour_meander, build_oriented_tangent_alignment_problem,
+    build_rectangular_bead_plan, build_rectangular_pocket_link_graph,
+    build_rectangular_pocket_plan, build_rectangular_rest_material_graph,
+    build_rectangular_serpentine_infill_graph, build_rectangular_support_plan,
+    build_single_detour_meander, build_tangent_alignment_problem,
     certify_acceleration_limited_feed_time, certify_acceleration_limited_feed_time_for_path,
     certify_constant_feed_time, certify_constant_feed_time_for_path,
     certify_corner_lookahead_limits, certify_cubic_ph_inverse_length,
@@ -7501,6 +7504,171 @@ fn specctra_grid_route_text_round_trips_retained_route_rules() {
 }
 
 #[test]
+fn specctra_route_rule_audit_selects_scoped_width_rules_for_traces_and_arcs() {
+    let trace = specctra_grid_trace_record(SpecctraGridTraceRecord {
+        net: NetId(7),
+        layer: TraceLayer(3),
+        start_x: 0,
+        start_y: 0,
+        end_x: 10,
+        end_y: 0,
+        width: 8,
+        grid_denominator: 10,
+    })
+    .unwrap();
+    let arc = specctra_grid_arc_wire_record(SpecctraGridArcWireRecord {
+        net: NetId(7),
+        layer: TraceLayer(4),
+        center_x: 0,
+        center_y: 0,
+        start_x: 10,
+        start_y: 0,
+        end_x: 0,
+        end_y: 10,
+        radius: 10,
+        direction: ArcDirection::Ccw,
+        width: 9,
+        grid_denominator: 10,
+    })
+    .unwrap();
+    let rules = [
+        SpecctraGridRouteRuleRecord {
+            net: None,
+            layer: None,
+            clearance: 2,
+            width: 4,
+            grid_denominator: 10,
+        },
+        SpecctraGridRouteRuleRecord {
+            net: None,
+            layer: Some(TraceLayer(3)),
+            clearance: 3,
+            width: 6,
+            grid_denominator: 10,
+        },
+        SpecctraGridRouteRuleRecord {
+            net: Some(NetId(7)),
+            layer: None,
+            clearance: 4,
+            width: 7,
+            grid_denominator: 10,
+        },
+        SpecctraGridRouteRuleRecord {
+            net: Some(NetId(7)),
+            layer: Some(TraceLayer(3)),
+            clearance: 5,
+            width: 8,
+            grid_denominator: 10,
+        },
+    ]
+    .into_iter()
+    .map(specctra_grid_route_rule_record)
+    .collect::<Result<Vec<_>, _>>()
+    .unwrap();
+    let report = audit_specctra_route_rule_widths(
+        std::slice::from_ref(&trace),
+        std::slice::from_ref(&arc),
+        &rules,
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+
+    assert!(report.all_widths_certified());
+    assert_eq!(report.first_width_violation(), None);
+    assert_eq!(report.items.len(), 2);
+    assert_eq!(report.items[0].item_kind, SpecctraRouteRuleItemKind::Trace);
+    assert_eq!(
+        report.items[0].selected_scope,
+        Some(SpecctraRouteRuleScopeClass::NetLayer)
+    );
+    assert_eq!(report.items[0].selected_rule_indices, vec![3]);
+    assert_eq!(report.items[0].effective_width, Some(rq(8, 10)));
+    assert_eq!(report.items[0].effective_clearance, Some(rq(5, 10)));
+    assert_eq!(
+        report.items[0].width_status,
+        SpecctraRouteRuleWidthStatus::Certified
+    );
+    assert_eq!(report.items[1].item_kind, SpecctraRouteRuleItemKind::Arc);
+    assert_eq!(
+        report.items[1].selected_scope,
+        Some(SpecctraRouteRuleScopeClass::Net)
+    );
+    assert_eq!(report.items[1].selected_rule_indices, vec![2]);
+    assert_eq!(report.items[1].effective_width, Some(rq(7, 10)));
+}
+
+#[test]
+fn specctra_route_rule_audit_reports_width_violations_unruled_items_and_bad_inputs() {
+    let trace = specctra_grid_trace_record(SpecctraGridTraceRecord {
+        net: NetId(9),
+        layer: TraceLayer(2),
+        start_x: 0,
+        start_y: 0,
+        end_x: 10,
+        end_y: 0,
+        width: 4,
+        grid_denominator: 10,
+    })
+    .unwrap();
+    let matching_rule = specctra_grid_route_rule_record(SpecctraGridRouteRuleRecord {
+        net: Some(NetId(9)),
+        layer: Some(TraceLayer(2)),
+        clearance: 3,
+        width: 6,
+        grid_denominator: 10,
+    })
+    .unwrap();
+    let unmatching_rule = specctra_grid_route_rule_record(SpecctraGridRouteRuleRecord {
+        net: Some(NetId(1)),
+        layer: Some(TraceLayer(2)),
+        clearance: 1,
+        width: 1,
+        grid_denominator: 10,
+    })
+    .unwrap();
+
+    let violation = audit_specctra_route_rule_widths(
+        std::slice::from_ref(&trace),
+        &[],
+        std::slice::from_ref(&matching_rule),
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert!(!violation.all_widths_certified());
+    assert_eq!(
+        violation.items[0].width_status,
+        SpecctraRouteRuleWidthStatus::Violation
+    );
+    assert_eq!(violation.first_width_violation().unwrap().item_index, 0);
+
+    let unruled = audit_specctra_route_rule_widths(
+        std::slice::from_ref(&trace),
+        &[],
+        std::slice::from_ref(&unmatching_rule),
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert!(unruled.has_unruled_item());
+    assert_eq!(
+        unruled.items[0].width_status,
+        SpecctraRouteRuleWidthStatus::NoApplicableRule
+    );
+
+    let bad_rule = hyperpath::SpecctraRouteRuleRecord {
+        net: None,
+        layer: None,
+        clearance: r(0),
+        width: r(-1),
+        provenance: PathProvenance::native(),
+    };
+    assert_eq!(
+        audit_specctra_route_rule_widths(&[trace], &[], &[bad_rule], PredicatePolicy::default())
+            .unwrap_err(),
+        SpecctraRouteRuleAuditError::NegativeRuleValue
+    );
+}
+
+#[test]
 fn specctra_grid_route_text_round_trips_net_aliases() {
     let alias = SpecctraNetAlias {
         net: NetId(7),
@@ -8295,6 +8463,54 @@ proptest! {
         prop_assert_eq!(exact.layer, record.layer);
         prop_assert_eq!(exact.clearance, rq(i64::from(clearance), denominator_i64));
         prop_assert_eq!(exact.width, rq(i64::from(width), denominator_i64));
+    }
+
+    #[test]
+    fn specctra_route_rule_audit_generated_widths_match_integer_order(
+        trace_width in 0_i16..=64,
+        rule_width in 0_i16..=64,
+        clearance in 0_i16..=64,
+        denominator in 1_u16..=100,
+    ) {
+        let trace = specctra_grid_trace_record(SpecctraGridTraceRecord {
+            net: NetId(3),
+            layer: TraceLayer(1),
+            start_x: 0,
+            start_y: 0,
+            end_x: 10,
+            end_y: 0,
+            width: i64::from(trace_width),
+            grid_denominator: u64::from(denominator),
+        }).unwrap();
+        let rule = specctra_grid_route_rule_record(SpecctraGridRouteRuleRecord {
+            net: Some(NetId(3)),
+            layer: Some(TraceLayer(1)),
+            clearance: i64::from(clearance),
+            width: i64::from(rule_width),
+            grid_denominator: u64::from(denominator),
+        }).unwrap();
+        let report = audit_specctra_route_rule_widths(
+            std::slice::from_ref(&trace),
+            &[],
+            std::slice::from_ref(&rule),
+            PredicatePolicy::default(),
+        ).unwrap();
+        let expected_status = if trace_width >= rule_width {
+            SpecctraRouteRuleWidthStatus::Certified
+        } else {
+            SpecctraRouteRuleWidthStatus::Violation
+        };
+
+        prop_assert_eq!(report.items.len(), 1);
+        prop_assert_eq!(
+            report.items[0].selected_scope,
+            Some(SpecctraRouteRuleScopeClass::NetLayer)
+        );
+        prop_assert_eq!(report.items[0].width_status, expected_status);
+        prop_assert_eq!(
+            report.all_widths_certified(),
+            expected_status == SpecctraRouteRuleWidthStatus::Certified
+        );
     }
 
     #[test]

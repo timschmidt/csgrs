@@ -22,6 +22,14 @@ use crate::segment::LinePathSegment;
 use crate::specctra_syntax::{is_bare_atom, tokenize, write_atom};
 use crate::swept::SweptLineSegment;
 
+mod rule_audit;
+
+pub use rule_audit::{
+    SpecctraRouteRuleAudit, SpecctraRouteRuleAuditError, SpecctraRouteRuleItemAudit,
+    SpecctraRouteRuleItemKind, SpecctraRouteRuleScopeClass, SpecctraRouteRuleWidthStatus,
+    audit_specctra_route_rule_widths,
+};
+
 /// Exact route-level net alias retained from a Specctra DSN/SES-style file.
 ///
 /// Real DSN/SES files carry human net names as well as router-internal

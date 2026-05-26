@@ -29,6 +29,13 @@ doc = false
 bench = false
 
 [[bin]]
+name = "specctra_route_rule_audit"
+path = "fuzz_targets/specctra_route_rule_audit.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
 name = "pcb_rounded_rect_pad"
 path = "fuzz_targets/pcb_rounded_rect_pad.rs"
 test = false
