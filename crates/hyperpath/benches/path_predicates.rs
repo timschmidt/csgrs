@@ -326,6 +326,18 @@ fn path_predicates(c: &mut Criterion) {
             )
         })
     });
+    let quadratic_loop_upper = QuadraticBezier::new(p(0, 0), p(500, 1000), p(1000, 0));
+    let quadratic_loop_lower = QuadraticBezier::new(p(1000, 0), p(500, -1000), p(0, 0));
+    c.bench_function("quadratic_bezier_arrangement_exact_cell_graph", |b| {
+        b.iter(|| {
+            arrange_quadratic_beziers(
+                &[quadratic_loop_upper.clone(), quadratic_loop_lower.clone()],
+                &[vec![], vec![]],
+                PredicatePolicy::default(),
+            )
+            .map(|report| report.cell_graph)
+        })
+    });
     let conic = RationalQuadraticBezier::new(p(0, 0), p(500, 200), p(1000, 0), r(2)).unwrap();
     c.bench_function("rational_quadratic_bezier_exact_eval", |b| {
         b.iter(|| conic.eval(half))
@@ -493,6 +505,18 @@ fn path_predicates(c: &mut Criterion) {
                 &bezier_events,
                 PredicatePolicy::default(),
             )
+        })
+    });
+    let cubic_loop_upper = CubicBezier::new(p(0, 0), p(0, 500), p(1000, 500), p(1000, 0));
+    let cubic_loop_lower = CubicBezier::new(p(1000, 0), p(1000, -500), p(0, -500), p(0, 0));
+    c.bench_function("cubic_bezier_arrangement_exact_cell_graph", |b| {
+        b.iter(|| {
+            arrange_cubic_beziers(
+                &[cubic_loop_upper.clone(), cubic_loop_lower.clone()],
+                &[vec![], vec![]],
+                PredicatePolicy::default(),
+            )
+            .map(|report| report.cell_graph)
         })
     });
     let line_cubic = CubicBezier::new(

@@ -710,6 +710,13 @@ fn quadratic_bezier_arrangement_splits_at_rational_events() {
     assert_eq!(report.fragments[0].curve.end(), &p(4, 4));
     assert_eq!(report.fragments[1].curve.start(), &p(4, 4));
     assert_eq!(report.fragments[1].curve.end(), &p(8, 0));
+    assert_eq!(report.cell_graph.vertices.len(), 3);
+    assert_eq!(report.cell_graph.edges.len(), 2);
+    assert_eq!(report.cell_graph.half_edges.len(), 4);
+    assert_eq!(report.cell_graph.faces.len(), 0);
+    assert!(report.cell_graph.edges.iter().all(|edge| {
+        edge.kind == CurveArrangementCellEdgeKind::QuadraticBezier && edge.fragments.len() == 1
+    }));
 }
 
 #[test]
@@ -732,6 +739,91 @@ fn cubic_bezier_arrangement_sorts_and_dedups_parameters() {
     assert_eq!(report.fragments[1].curve.start(), &curve.eval(one_third));
     assert_eq!(report.fragments[1].curve.end(), &curve.eval(two_thirds));
     assert_eq!(report.fragments[2].curve.end(), curve.end());
+    assert_eq!(report.cell_graph.vertices.len(), 4);
+    assert_eq!(report.cell_graph.edges.len(), 3);
+    assert_eq!(report.cell_graph.half_edges.len(), 6);
+    assert_eq!(report.cell_graph.faces.len(), 0);
+    assert!(report.cell_graph.edges.iter().all(|edge| {
+        edge.kind == CurveArrangementCellEdgeKind::CubicBezier && edge.fragments.len() == 1
+    }));
+}
+
+#[test]
+fn quadratic_bezier_arrangement_cell_graph_schedules_closed_loop() {
+    let upper = QuadraticBezier::new(p(0, 0), p(4, 8), p(8, 0));
+    let lower = QuadraticBezier::new(p(8, 0), p(4, -8), p(0, 0));
+
+    let report = arrange_quadratic_beziers(
+        &[upper, lower],
+        &[vec![], vec![]],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+
+    assert_eq!(report.fragments.len(), 2);
+    assert_eq!(report.cell_graph.vertices.len(), 2);
+    assert_eq!(report.cell_graph.edges.len(), 2);
+    assert_eq!(report.cell_graph.half_edges.len(), 4);
+    assert_eq!(report.cell_graph.faces.len(), 2);
+    assert!(report.cell_graph.faces.iter().any(|face| {
+        face.class == CurveArrangementCellFaceClass::Bounded
+            && compare_reals_with_policy(
+                &face.signed_area_twice,
+                &Real::new(Rational::new(128) / Rational::new(3)),
+                PredicatePolicy::default(),
+            )
+            .value()
+                == Some(std::cmp::Ordering::Equal)
+    }));
+    assert!(report.cell_graph.faces.iter().any(|face| {
+        face.class == CurveArrangementCellFaceClass::Exterior
+            && compare_reals_with_policy(
+                &face.signed_area_twice,
+                &Real::new(-(Rational::new(128) / Rational::new(3))),
+                PredicatePolicy::default(),
+            )
+            .value()
+                == Some(std::cmp::Ordering::Equal)
+    }));
+}
+
+#[test]
+fn cubic_bezier_arrangement_cell_graph_schedules_closed_loop() {
+    let upper = CubicBezier::new(p(0, 0), p(0, 4), p(8, 4), p(8, 0));
+    let lower = CubicBezier::new(p(8, 0), p(8, -4), p(0, -4), p(0, 0));
+
+    let report = arrange_cubic_beziers(
+        &[upper, lower],
+        &[vec![], vec![]],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+
+    assert_eq!(report.fragments.len(), 2);
+    assert_eq!(report.cell_graph.vertices.len(), 2);
+    assert_eq!(report.cell_graph.edges.len(), 2);
+    assert_eq!(report.cell_graph.half_edges.len(), 4);
+    assert_eq!(report.cell_graph.faces.len(), 2);
+    assert!(report.cell_graph.faces.iter().any(|face| {
+        face.class == CurveArrangementCellFaceClass::Bounded
+            && compare_reals_with_policy(
+                &face.signed_area_twice,
+                &Real::new(Rational::new(384) / Rational::new(5)),
+                PredicatePolicy::default(),
+            )
+            .value()
+                == Some(std::cmp::Ordering::Equal)
+    }));
+    assert!(report.cell_graph.faces.iter().any(|face| {
+        face.class == CurveArrangementCellFaceClass::Exterior
+            && compare_reals_with_policy(
+                &face.signed_area_twice,
+                &Real::new(-(Rational::new(384) / Rational::new(5))),
+                PredicatePolicy::default(),
+            )
+            .value()
+                == Some(std::cmp::Ordering::Equal)
+    }));
 }
 
 #[test]
@@ -755,6 +847,86 @@ fn rational_quadratic_bezier_arrangement_emits_homogeneous_fragments() {
         report.fragments[1].start_control,
         report.fragments[0].end_control
     );
+    assert_eq!(report.cell_graph.vertices.len(), 3);
+    assert_eq!(report.cell_graph.edges.len(), 2);
+    assert_eq!(report.cell_graph.half_edges.len(), 4);
+    assert_eq!(report.cell_graph.faces.len(), 0);
+    assert!(report.cell_graph.edges.iter().all(|edge| {
+        edge.kind == CurveArrangementCellEdgeKind::RationalQuadraticBezier
+            && edge.fragments.len() == 1
+    }));
+}
+
+#[test]
+fn rational_quadratic_bezier_arrangement_open_split_chain_has_no_bridge_faces() {
+    let curve = RationalQuadraticBezier::new(p(0, 0), p(5, 2), p(10, 0), r(2)).unwrap();
+
+    let report = arrange_rational_quadratic_beziers(
+        &[curve],
+        &[vec![
+            BezierParameter::new(1, 4).unwrap(),
+            BezierParameter::new(1, 2).unwrap(),
+            BezierParameter::new(3, 4).unwrap(),
+        ]],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+
+    assert_eq!(report.fragments.len(), 4);
+    assert_eq!(report.cell_graph.vertices.len(), 5);
+    assert_eq!(report.cell_graph.edges.len(), 4);
+    assert_eq!(report.cell_graph.half_edges.len(), 8);
+    assert_eq!(report.cell_graph.faces.len(), 0);
+}
+
+#[test]
+fn rational_quadratic_bezier_arrangement_cell_graph_schedules_closed_conic_loop() {
+    let upper = RationalQuadraticBezier::new(p(0, 0), p(4, 8), p(8, 0), r(2)).unwrap();
+    let lower = RationalQuadraticBezier::new(p(8, 0), p(4, -8), p(0, 0), r(2)).unwrap();
+
+    let report = arrange_rational_quadratic_beziers(
+        &[upper, lower],
+        &[vec![], vec![]],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+
+    assert!(
+        report
+            .breakpoints
+            .iter()
+            .all(|breakpoints| breakpoints.len() == 2)
+    );
+    assert_eq!(report.fragments.len(), 2);
+    assert_eq!(report.cell_graph.vertices.len(), 2);
+    assert_eq!(report.cell_graph.edges.len(), 2);
+    assert_eq!(report.cell_graph.half_edges.len(), 4);
+    assert_eq!(
+        report.cell_graph.edges[0].kind,
+        CurveArrangementCellEdgeKind::RationalQuadraticBezier
+    );
+    assert_eq!(report.cell_graph.edges[0].fragments, vec![0]);
+    assert_eq!(report.cell_graph.faces.len(), 2);
+    assert!(report.cell_graph.faces.iter().any(|face| {
+        face.class == CurveArrangementCellFaceClass::Bounded
+            && compare_reals_with_policy(
+                &face.signed_area_twice,
+                &Real::zero(),
+                PredicatePolicy::default(),
+            )
+            .value()
+                == Some(std::cmp::Ordering::Greater)
+    }));
+    assert!(report.cell_graph.faces.iter().any(|face| {
+        face.class == CurveArrangementCellFaceClass::Exterior
+            && compare_reals_with_policy(
+                &face.signed_area_twice,
+                &Real::zero(),
+                PredicatePolicy::default(),
+            )
+            .value()
+                == Some(std::cmp::Ordering::Less)
+    }));
 }
 
 #[test]

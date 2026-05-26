@@ -14,12 +14,19 @@ use hyperreal::Real;
 
 use crate::arc::ArcDirection;
 use crate::arrangement::{ExplicitArcArrangementFragment, LineArrangementFragment};
-use crate::bezier_arrangement::HomogeneousPoint2;
-use crate::mixed_bezier_arrangement::{MixedLineArrangementFragment, QuadraticBezierRealFragment};
+use crate::bezier_arrangement::{
+    CubicBezierArrangementFragment, HomogeneousPoint2, QuadraticBezierArrangementFragment,
+    RationalQuadraticBezierArrangementFragment,
+};
+use crate::mixed_bezier_arrangement::{
+    MixedLineArrangementFragment, QuadraticBezierRealBreakpoint, QuadraticBezierRealFragment,
+};
 use crate::mixed_conic_arrangement::{
     MixedConicLineArrangementFragment, RationalQuadraticBezierRealFragment,
 };
-use crate::mixed_cubic_arrangement::{CubicBezierRealFragment, MixedCubicLineArrangementFragment};
+use crate::mixed_cubic_arrangement::{
+    CubicBezierRealBreakpoint, CubicBezierRealFragment, MixedCubicLineArrangementFragment,
+};
 
 /// Errors that prevent retained curve cell scheduling from producing trusted topology.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -205,6 +212,30 @@ pub(crate) fn build_line_quadratic_cell_graph(
     build_curve_cell_graph(&converted_lines, &[], bezier_fragments, policy)
 }
 
+pub(crate) fn build_quadratic_cell_graph(
+    bezier_fragments: &[QuadraticBezierArrangementFragment],
+    policy: PredicatePolicy,
+) -> Result<CurveArrangementCellGraph, CurveArrangementCellError> {
+    let converted_beziers = bezier_fragments
+        .iter()
+        .map(|fragment| QuadraticBezierRealFragment {
+            source_curve: fragment.source,
+            start: QuadraticBezierRealBreakpoint {
+                curve: fragment.source,
+                parameter: fragment.start.parameter.to_real(),
+                point: fragment.curve.start().clone(),
+            },
+            end: QuadraticBezierRealBreakpoint {
+                curve: fragment.source,
+                parameter: fragment.end.parameter.to_real(),
+                point: fragment.curve.end().clone(),
+            },
+            curve: fragment.curve.clone(),
+        })
+        .collect::<Vec<_>>();
+    build_curve_cell_graph(&[], &[], &converted_beziers, policy)
+}
+
 pub(crate) fn build_line_cubic_cell_graph(
     line_fragments: &[MixedCubicLineArrangementFragment],
     cubic_fragments: &[CubicBezierRealFragment],
@@ -232,6 +263,30 @@ pub(crate) fn build_line_cubic_cell_graph(
     build_curve_cell_graph_with_cubics(&converted_lines, &[], &[], cubic_fragments, policy)
 }
 
+pub(crate) fn build_cubic_cell_graph(
+    cubic_fragments: &[CubicBezierArrangementFragment],
+    policy: PredicatePolicy,
+) -> Result<CurveArrangementCellGraph, CurveArrangementCellError> {
+    let converted_cubics = cubic_fragments
+        .iter()
+        .map(|fragment| CubicBezierRealFragment {
+            source_curve: fragment.source,
+            start: CubicBezierRealBreakpoint {
+                curve: fragment.source,
+                parameter: fragment.start.parameter.to_real(),
+                point: fragment.curve.start().clone(),
+            },
+            end: CubicBezierRealBreakpoint {
+                curve: fragment.source,
+                parameter: fragment.end.parameter.to_real(),
+                point: fragment.curve.end().clone(),
+            },
+            curve: fragment.curve.clone(),
+        })
+        .collect::<Vec<_>>();
+    build_curve_cell_graph_with_cubics(&[], &[], &[], &converted_cubics, policy)
+}
+
 pub(crate) fn build_line_rational_quadratic_cell_graph(
     line_fragments: &[MixedConicLineArrangementFragment],
     conic_fragments: &[RationalQuadraticBezierRealFragment],
@@ -256,12 +311,41 @@ pub(crate) fn build_line_rational_quadratic_cell_graph(
             segment: fragment.segment.clone(),
         })
         .collect::<Vec<_>>();
+    let converted_conics = conic_fragments
+        .iter()
+        .map(|fragment| RationalQuadraticCellFragment {
+            start_point: fragment.start.point.clone(),
+            end_point: fragment.end.point.clone(),
+            start_control: fragment.start_control.clone(),
+            control: fragment.control.clone(),
+            end_control: fragment.end_control.clone(),
+        })
+        .collect::<Vec<_>>();
     build_curve_cell_graph_full(
         &converted_lines,
         &[],
         &[],
         &[],
-        conic_fragments,
+        &converted_conics,
+        FaceAreaMode::SkipUnavailable,
+        policy,
+    )
+}
+
+pub(crate) fn build_rational_quadratic_cell_graph(
+    conic_fragments: &[RationalQuadraticBezierArrangementFragment],
+    policy: PredicatePolicy,
+) -> Result<CurveArrangementCellGraph, CurveArrangementCellError> {
+    let converted_conics = conic_fragments
+        .iter()
+        .map(|fragment| rational_quadratic_cell_fragment_from_arrangement(fragment, policy))
+        .collect::<Result<Vec<_>, _>>()?;
+    build_curve_cell_graph_full(
+        &[],
+        &[],
+        &[],
+        &[],
+        &converted_conics,
         FaceAreaMode::SkipUnavailable,
         policy,
     )
@@ -307,12 +391,21 @@ enum FaceAreaMode {
     SkipUnavailable,
 }
 
+#[derive(Clone, Debug, PartialEq)]
+struct RationalQuadraticCellFragment {
+    start_point: Point2,
+    end_point: Point2,
+    start_control: HomogeneousPoint2,
+    control: HomogeneousPoint2,
+    end_control: HomogeneousPoint2,
+}
+
 fn build_curve_cell_graph_full(
     line_fragments: &[LineArrangementFragment],
     arc_fragments: &[ExplicitArcArrangementFragment],
     bezier_fragments: &[QuadraticBezierRealFragment],
     cubic_fragments: &[CubicBezierRealFragment],
-    conic_fragments: &[RationalQuadraticBezierRealFragment],
+    conic_fragments: &[RationalQuadraticCellFragment],
     face_area_mode: FaceAreaMode,
     policy: PredicatePolicy,
 ) -> Result<CurveArrangementCellGraph, CurveArrangementCellError> {
@@ -384,8 +477,8 @@ fn build_curve_cell_graph_full(
     }
 
     for (fragment_index, fragment) in conic_fragments.iter().enumerate() {
-        let start = curve_vertex_index(&mut vertices, &fragment.start.point, policy)?;
-        let end = curve_vertex_index(&mut vertices, &fragment.end.point, policy)?;
+        let start = curve_vertex_index(&mut vertices, &fragment.start_point, policy)?;
+        let end = curve_vertex_index(&mut vertices, &fragment.end_point, policy)?;
         if start == end {
             continue;
         }
@@ -484,7 +577,7 @@ fn sort_curve_outgoing_half_edges(
     arc_fragments: &[ExplicitArcArrangementFragment],
     bezier_fragments: &[QuadraticBezierRealFragment],
     cubic_fragments: &[CubicBezierRealFragment],
-    conic_fragments: &[RationalQuadraticBezierRealFragment],
+    conic_fragments: &[RationalQuadraticCellFragment],
     policy: PredicatePolicy,
 ) -> Result<(), CurveArrangementCellError> {
     let mut outgoing = std::mem::take(&mut vertices[vertex].outgoing_half_edges);
@@ -533,7 +626,7 @@ fn compare_curve_half_edge_angle(
     arc_fragments: &[ExplicitArcArrangementFragment],
     bezier_fragments: &[QuadraticBezierRealFragment],
     cubic_fragments: &[CubicBezierRealFragment],
-    conic_fragments: &[RationalQuadraticBezierRealFragment],
+    conic_fragments: &[RationalQuadraticCellFragment],
     policy: PredicatePolicy,
 ) -> Option<Ordering> {
     if left == right {
@@ -585,7 +678,7 @@ fn curve_half_edge_tangent(
     arc_fragments: &[ExplicitArcArrangementFragment],
     bezier_fragments: &[QuadraticBezierRealFragment],
     cubic_fragments: &[CubicBezierRealFragment],
-    conic_fragments: &[RationalQuadraticBezierRealFragment],
+    conic_fragments: &[RationalQuadraticCellFragment],
 ) -> Point2 {
     let half = &half_edges[half_edge];
     let edge = &edges[half.edge];
@@ -690,7 +783,7 @@ fn curve_cell_faces(
     arc_fragments: &[ExplicitArcArrangementFragment],
     bezier_fragments: &[QuadraticBezierRealFragment],
     cubic_fragments: &[CubicBezierRealFragment],
-    conic_fragments: &[RationalQuadraticBezierRealFragment],
+    conic_fragments: &[RationalQuadraticCellFragment],
     face_area_mode: FaceAreaMode,
     policy: PredicatePolicy,
 ) -> Result<Vec<CurveArrangementCellFace>, CurveArrangementCellError> {
@@ -719,8 +812,12 @@ fn curve_cell_faces(
         if current != start {
             continue;
         }
+        let area_cycle = cycle_without_canceling_twins(&cycle, half_edges);
+        if area_cycle.is_empty() {
+            continue;
+        }
         let area = signed_curve_face_area_twice(
-            &cycle,
+            &area_cycle,
             vertices,
             edges,
             half_edges,
@@ -762,6 +859,21 @@ fn curve_cell_faces(
     Ok(faces)
 }
 
+fn cycle_without_canceling_twins(
+    cycle: &[usize],
+    half_edges: &[CurveArrangementHalfEdge],
+) -> Vec<usize> {
+    // Bridge spikes in a planar half-edge walk appear as an edge and its twin
+    // in the same cycle. They are retained in the face walk for topology
+    // replay, but their Green-integral contributions cancel exactly, so area
+    // certification evaluates only the non-canceling boundary.
+    cycle
+        .iter()
+        .copied()
+        .filter(|half_edge| !cycle.contains(&half_edges[*half_edge].twin))
+        .collect()
+}
+
 fn signed_curve_face_area_twice(
     cycle: &[usize],
     vertices: &[CurveArrangementCellVertex],
@@ -771,7 +883,7 @@ fn signed_curve_face_area_twice(
     arc_fragments: &[ExplicitArcArrangementFragment],
     bezier_fragments: &[QuadraticBezierRealFragment],
     cubic_fragments: &[CubicBezierRealFragment],
-    conic_fragments: &[RationalQuadraticBezierRealFragment],
+    conic_fragments: &[RationalQuadraticCellFragment],
     policy: PredicatePolicy,
 ) -> Option<Real> {
     let mut area = Real::zero();
@@ -802,7 +914,7 @@ fn signed_curve_half_edge_area_twice(
     arc_fragments: &[ExplicitArcArrangementFragment],
     bezier_fragments: &[QuadraticBezierRealFragment],
     cubic_fragments: &[CubicBezierRealFragment],
-    conic_fragments: &[RationalQuadraticBezierRealFragment],
+    conic_fragments: &[RationalQuadraticCellFragment],
     policy: PredicatePolicy,
 ) -> Option<Real> {
     let half = &half_edges[half_edge];
@@ -866,6 +978,34 @@ fn explicit_arc_area_twice(
     Some(center_term + signed_sweep)
 }
 
+fn rational_quadratic_cell_fragment_from_arrangement(
+    fragment: &RationalQuadraticBezierArrangementFragment,
+    policy: PredicatePolicy,
+) -> Result<RationalQuadraticCellFragment, CurveArrangementCellError> {
+    Ok(RationalQuadraticCellFragment {
+        start_point: affine_point_from_homogeneous(&fragment.start_control, policy)?,
+        end_point: affine_point_from_homogeneous(&fragment.end_control, policy)?,
+        start_control: fragment.start_control.clone(),
+        control: fragment.control.clone(),
+        end_control: fragment.end_control.clone(),
+    })
+}
+
+fn affine_point_from_homogeneous(
+    point: &HomogeneousPoint2,
+    policy: PredicatePolicy,
+) -> Result<Point2, CurveArrangementCellError> {
+    match compare_reals_with_policy(&point.w, &Real::zero(), policy).value() {
+        Some(Ordering::Equal) | None => Err(CurveArrangementCellError::UndecidablePointEquality),
+        Some(Ordering::Less | Ordering::Greater) => Ok(Point2::new(
+            (point.x.clone() / point.w.clone())
+                .map_err(|_| CurveArrangementCellError::UndecidablePointEquality)?,
+            (point.y.clone() / point.w.clone())
+                .map_err(|_| CurveArrangementCellError::UndecidablePointEquality)?,
+        )),
+    }
+}
+
 fn quadratic_start_tangent(fragment: &QuadraticBezierRealFragment) -> Point2 {
     Point2::new(
         Real::from(2) * (fragment.curve.control().x.clone() - fragment.curve.start().x.clone()),
@@ -902,11 +1042,11 @@ fn cubic_end_tangent(fragment: &CubicBezierRealFragment) -> Point2 {
     )
 }
 
-fn rational_quadratic_start_tangent(fragment: &RationalQuadraticBezierRealFragment) -> Point2 {
+fn rational_quadratic_start_tangent(fragment: &RationalQuadraticCellFragment) -> Point2 {
     homogeneous_endpoint_tangent(&fragment.start_control, &fragment.control)
 }
 
-fn rational_quadratic_end_tangent(fragment: &RationalQuadraticBezierRealFragment) -> Point2 {
+fn rational_quadratic_end_tangent(fragment: &RationalQuadraticCellFragment) -> Point2 {
     homogeneous_endpoint_tangent(&fragment.control, &fragment.end_control)
 }
 
@@ -918,7 +1058,7 @@ fn homogeneous_endpoint_tangent(from: &HomogeneousPoint2, to: &HomogeneousPoint2
 }
 
 fn rational_quadratic_bezier_area_twice(
-    fragment: &RationalQuadraticBezierRealFragment,
+    fragment: &RationalQuadraticCellFragment,
     policy: PredicatePolicy,
 ) -> Option<Real> {
     let x = homogeneous_quadratic_power_coefficients(

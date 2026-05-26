@@ -70,6 +70,11 @@ fuzz_target!(|data: &[u8]| {
     assert_eq!(q_report.fragments[0].curve.end(), &quadratic.eval(t));
     assert_eq!(q_report.fragments[1].curve.start(), &quadratic.eval(t));
     assert_eq!(q_report.fragments[1].curve.end(), quadratic.end());
+    assert_eq!(
+        q_report.cell_graph.half_edges.len(),
+        q_report.cell_graph.edges.len() * 2
+    );
+    assert!(q_report.cell_graph.faces.is_empty());
 
     let horizontal = LinePathSegment::new(
         p(signed(data[1]), signed(data[2])),
@@ -171,6 +176,11 @@ fuzz_target!(|data: &[u8]| {
     assert_eq!(c_report.fragments[0].curve.end(), &cubic.eval(t));
     assert_eq!(c_report.fragments[1].curve.start(), &cubic.eval(t));
     assert_eq!(c_report.fragments[1].curve.end(), cubic.end());
+    assert_eq!(
+        c_report.cell_graph.half_edges.len(),
+        c_report.cell_graph.edges.len() * 2
+    );
+    assert!(c_report.cell_graph.faces.is_empty());
 
     let reducible_cubic = CubicBezier::new(p(0, 0), pq(8, 3, 4, 1), pq(16, 3, 4, 1), p(8, 0));
     let cubic_secant_line = LinePathSegment::new(pq(0, 1, 9, 4), pq(8, 1, 9, 4));
@@ -218,6 +228,27 @@ fuzz_target!(|data: &[u8]| {
             && face.signed_area_twice
                 == Real::new(Rational::new(192) / Rational::new(5))
     }));
+
+    let q_upper = QuadraticBezier::new(p(0, 0), p(4, 8), p(8, 0));
+    let q_lower = QuadraticBezier::new(p(8, 0), p(4, -8), p(0, 0));
+    let q_loop_report = arrange_quadratic_beziers(
+        &[q_upper, q_lower],
+        &[vec![], vec![]],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert_eq!(q_loop_report.cell_graph.vertices.len(), 2);
+    assert_eq!(q_loop_report.cell_graph.edges.len(), 2);
+    assert_eq!(q_loop_report.cell_graph.faces.len(), 2);
+
+    let c_upper = CubicBezier::new(p(0, 0), p(0, 4), p(8, 4), p(8, 0));
+    let c_lower = CubicBezier::new(p(8, 0), p(8, -4), p(0, -4), p(0, 0));
+    let c_loop_report =
+        arrange_cubic_beziers(&[c_upper, c_lower], &[vec![], vec![]], PredicatePolicy::default())
+            .unwrap();
+    assert_eq!(c_loop_report.cell_graph.vertices.len(), 2);
+    assert_eq!(c_loop_report.cell_graph.edges.len(), 2);
+    assert_eq!(c_loop_report.cell_graph.faces.len(), 2);
 
     let cubic_overlap_curve = CubicBezier::new(p(0, 0), pq(8, 3, 0, 1), pq(16, 3, 0, 1), p(8, 0));
     let cubic_overlap_line = LinePathSegment::new(p(2, 0), p(6, 0));
@@ -514,7 +545,7 @@ fuzz_target!(|data: &[u8]| {
     let log_area_conic = RationalQuadraticBezier::new(p(0, 0), p(4, 8), p(8, 0), r(2)).unwrap();
     let log_area_report = arrange_line_segments_with_rational_quadratic_beziers(
         &[LinePathSegment::new(p(0, 0), p(8, 0))],
-        &[log_area_conic],
+        &[log_area_conic.clone()],
         PredicatePolicy::default(),
     )
     .unwrap();
@@ -649,8 +680,24 @@ fuzz_target!(|data: &[u8]| {
         arrange_rational_quadratic_beziers(&[conic], &[vec![t]], PredicatePolicy::default())
             .unwrap();
     assert_eq!(r_report.fragments.len(), 2);
+    assert_eq!(r_report.cell_graph.edges.len(), 2);
+    assert_eq!(
+        r_report.cell_graph.half_edges.len(),
+        r_report.cell_graph.edges.len() * 2
+    );
     assert_eq!(
         r_report.fragments[0].end_control,
         r_report.fragments[1].start_control
     );
+
+    let lower_conic = RationalQuadraticBezier::new(p(8, 0), p(4, -8), p(0, 0), r(2)).unwrap();
+    let conic_loop_report = arrange_rational_quadratic_beziers(
+        &[log_area_conic, lower_conic],
+        &[vec![], vec![]],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert_eq!(conic_loop_report.cell_graph.vertices.len(), 2);
+    assert_eq!(conic_loop_report.cell_graph.edges.len(), 2);
+    assert_eq!(conic_loop_report.cell_graph.faces.len(), 2);
 });

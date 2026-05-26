@@ -18,6 +18,10 @@ use hypersolve::{
 };
 
 use crate::bezier::{BezierParameter, CubicBezier, QuadraticBezier, RationalQuadraticBezier};
+use crate::curve_cell::{
+    CurveArrangementCellError, CurveArrangementCellGraph, build_cubic_cell_graph,
+    build_quadratic_cell_graph, build_rational_quadratic_cell_graph,
+};
 use crate::provenance::PathProvenance;
 use crate::segment::{Axis, LinePathSegment};
 
@@ -30,6 +34,12 @@ pub enum BezierArrangementError {
     UndecidableParameterOrder,
     /// A rational conic homogeneous endpoint had zero weight.
     HomogeneousDenominatorFailure,
+    /// The same retained conic endpoint could not be de-duplicated exactly.
+    UndecidablePointEquality,
+    /// Exact tangent ordering around a retained conic cell vertex was undecidable.
+    UndecidableCellOrder { vertex: usize },
+    /// Exact conic Green-integral face-area replay was unavailable for a retained edge.
+    UndecidableCellArea { edge: usize },
 }
 
 /// Certified class for a retained line segment against a quadratic Bezier.
@@ -515,6 +525,17 @@ pub struct QuadraticBezierArrangementReport {
     pub fragments: Vec<QuadraticBezierArrangementFragment>,
     /// Exact-set facts across emitted fragment control points.
     pub fragment_exact: RealExactSetFacts,
+    /// Retained polynomial-Bezier topology graph over exact fragments.
+    ///
+    /// Vertices are de-duplicated by exact endpoint equality, edges retain
+    /// fragment provenance, half-edges are sorted by exact endpoint
+    /// hodographs, and nonzero faces replay polynomial Green-integral area.
+    /// This follows Yap, "Towards Exact Geometric Computation" (1997), by
+    /// promoting split Bezier objects into topology only after exact predicate
+    /// replay; the hodograph/Green-integral formulas are the standard
+    /// polynomial curve identities used by Farouki, *Pythagorean Hodograph
+    /// Curves* (2008).
+    pub cell_graph: CurveArrangementCellGraph,
     /// Source provenance for the schedule.
     pub provenance: PathProvenance,
 }
@@ -530,6 +551,15 @@ pub struct CubicBezierArrangementReport {
     pub fragments: Vec<CubicBezierArrangementFragment>,
     /// Exact-set facts across emitted fragment control points.
     pub fragment_exact: RealExactSetFacts,
+    /// Retained polynomial-Bezier topology graph over exact cubic fragments.
+    ///
+    /// The graph uses exact cubic endpoint hodographs for local angular order
+    /// and exact power-basis integration of `x dy - y dx` for face replay.
+    /// No sampled chord or flattening tolerance is topology evidence. This is
+    /// the object/predicate separation required by Yap, "Towards Exact
+    /// Geometric Computation" (1997), with the polynomial hodograph machinery
+    /// described by Farouki, *Pythagorean Hodograph Curves* (2008).
+    pub cell_graph: CurveArrangementCellGraph,
     /// Source provenance for the schedule.
     pub provenance: PathProvenance,
 }
@@ -552,6 +582,18 @@ pub struct RationalQuadraticBezierArrangementReport {
     pub fragments: Vec<RationalQuadraticBezierArrangementFragment>,
     /// Exact-set facts across emitted homogeneous controls.
     pub fragment_exact: RealExactSetFacts,
+    /// Retained conic-only topology graph over homogeneous fragments.
+    ///
+    /// Vertices are recovered by certified homogeneous affine division, edges
+    /// retain fragment provenance, half-edges are sorted by exact homogeneous
+    /// endpoint tangents, and nonzero faces replay the same rational conic
+    /// Green-integral evidence used by mixed line/conic cell scheduling. This
+    /// follows Yap, "Towards Exact Geometric Computation" (1997), by keeping
+    /// topology and exact predicates as retained evidence rather than
+    /// flattening conics into sampled polylines; the homogeneous conic carrier
+    /// is the rational Bezier representation described by Farouki,
+    /// *Pythagorean Hodograph Curves* (2008).
+    pub cell_graph: CurveArrangementCellGraph,
     /// Source provenance for the schedule.
     pub provenance: PathProvenance,
 }
@@ -576,11 +618,14 @@ pub fn arrange_quadratic_beziers_with_provenance(
     let breakpoints = sorted_breakpoints(events, policy)?;
     let fragments = build_quadratic_fragments(curves, &breakpoints, policy)?;
     let fragment_exact = quadratic_fragment_facts(&fragments);
+    let cell_graph = build_quadratic_cell_graph(&fragments, policy)
+        .map_err(bezier_error_from_curve_cell_error)?;
     Ok(QuadraticBezierArrangementReport {
         curves: curves.to_vec(),
         breakpoints,
         fragments,
         fragment_exact,
+        cell_graph,
         provenance,
     })
 }
@@ -605,11 +650,14 @@ pub fn arrange_cubic_beziers_with_provenance(
     let breakpoints = sorted_breakpoints(events, policy)?;
     let fragments = build_cubic_fragments(curves, &breakpoints, policy)?;
     let fragment_exact = cubic_fragment_facts(&fragments);
+    let cell_graph =
+        build_cubic_cell_graph(&fragments, policy).map_err(bezier_error_from_curve_cell_error)?;
     Ok(CubicBezierArrangementReport {
         curves: curves.to_vec(),
         breakpoints,
         fragments,
         fragment_exact,
+        cell_graph,
         provenance,
     })
 }
@@ -639,13 +687,30 @@ pub fn arrange_rational_quadratic_beziers_with_provenance(
     let breakpoints = sorted_breakpoints(events, policy)?;
     let fragments = build_rational_quadratic_fragments(curves, &breakpoints, policy)?;
     let fragment_exact = rational_quadratic_fragment_facts(&fragments);
+    let cell_graph = build_rational_quadratic_cell_graph(&fragments, policy)
+        .map_err(bezier_error_from_curve_cell_error)?;
     Ok(RationalQuadraticBezierArrangementReport {
         curves: curves.to_vec(),
         breakpoints,
         fragments,
         fragment_exact,
+        cell_graph,
         provenance,
     })
+}
+
+fn bezier_error_from_curve_cell_error(error: CurveArrangementCellError) -> BezierArrangementError {
+    match error {
+        CurveArrangementCellError::UndecidablePointEquality => {
+            BezierArrangementError::UndecidablePointEquality
+        }
+        CurveArrangementCellError::UndecidableCellOrder { vertex } => {
+            BezierArrangementError::UndecidableCellOrder { vertex }
+        }
+        CurveArrangementCellError::UndecidableCellArea { edge } => {
+            BezierArrangementError::UndecidableCellArea { edge }
+        }
+    }
 }
 
 /// Intersect an axis-aligned line segment with a quadratic Bezier exactly.
