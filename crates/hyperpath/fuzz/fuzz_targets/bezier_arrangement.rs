@@ -314,6 +314,20 @@ fuzz_target!(|data: &[u8]| {
             && separation.endpoint_tangent_class
                 == Some(MixedCurveEndpointTangentClass::Collinear)));
 
+    let endpoint_ccw_contact_report = arrange_line_segments_with_mixed_beziers(
+        &[LinePathSegment::new(p(0, 0), p(8, 0))],
+        &[QuadraticBezier::new(p(0, 0), p(2, 1), p(4, 0))],
+        &[CubicBezier::new(p(4, 0), p(5, -2), p(7, -2), p(8, 0))],
+        &[],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert!(endpoint_ccw_contact_report
+        .fragment_separations
+        .iter()
+        .any(|separation| separation.endpoint_tangent_class
+            == Some(MixedCurveEndpointTangentClass::CounterClockwise)));
+
     let endpoint_edge_contact_error = arrange_line_segments_with_mixed_beziers(
         &[LinePathSegment::new(p(0, 0), p(8, 0))],
         &[QuadraticBezier::new(p(0, 0), p(2, 2), p(4, 0))],

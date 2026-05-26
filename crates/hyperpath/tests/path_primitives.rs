@@ -2428,6 +2428,27 @@ fn line_mixed_bezier_arrangement_accepts_certified_endpoint_corner_contact() {
             .iter()
             .any(|vertex| vertex.point == p(4, 0))
     );
+
+    let noncollinear_quadratic = QuadraticBezier::new(p(0, 0), p(2, 1), p(4, 0));
+    let noncollinear_cubic = CubicBezier::new(p(4, 0), p(5, -2), p(7, -2), p(8, 0));
+    let noncollinear_report = arrange_line_segments_with_mixed_beziers(
+        &[LinePathSegment::new(p(0, 0), p(8, 0))],
+        &[noncollinear_quadratic],
+        &[noncollinear_cubic],
+        &[],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+
+    assert!(
+        noncollinear_report
+            .fragment_separations
+            .iter()
+            .any(|separation| separation.class
+                == MixedCurveFragmentSeparationClass::EndpointContact
+                && separation.endpoint_tangent_class
+                    == Some(MixedCurveEndpointTangentClass::CounterClockwise))
+    );
 }
 
 #[test]
