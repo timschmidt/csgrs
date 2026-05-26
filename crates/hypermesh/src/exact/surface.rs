@@ -3925,14 +3925,16 @@ fn coplanar_mesh_pairwise_intersection_area2(
 /// When two source-owned holed surfaces replay the same exact outer boundary,
 /// `(outer - left_holes) - (outer - right_holes)` equals the portion of the
 /// right holes not removed by the left holes. This certificate accepts the
-/// nested/disjoint case plus the bounded projected-rectangle overlap case:
-/// every emitted component is either a right retained hole boundary, or the
-/// exact orthogonal remnant of a right retained hole after subtracting
-/// overlapping left retained rectangles. Strict left retained holes nested in
-/// the remnant stay as holes. Identical right/left holes and right holes
-/// strictly inside a left hole contribute no area; point contact, edge contact,
-/// nonrectangular overlap, and crossing boundaries outside this bounded
-/// certificate reject to the general planar arrangement layer.
+/// nested/disjoint case plus bounded positive-area convex overlaps: every
+/// emitted component is either a right retained hole boundary, the exact
+/// retained-fragment remnant of a right retained hole after subtracting
+/// clipped left convex holes, or the older exact orthogonal remnant of a right
+/// retained hole after subtracting overlapping left retained rectangles.
+/// Strict left retained holes nested in the remnant stay as holes. Identical
+/// right/left holes and right holes strictly inside a left hole contribute no
+/// area; point contact, edge contact, nonconvex overlap, and crossing
+/// boundaries outside this bounded certificate reject to the general planar
+/// arrangement layer.
 ///
 /// The source rings are recovered by exact mesh incidence, and the final area
 /// equation is replayed as `area(left) - area(left ∩ right) == area(output)`.
@@ -3940,7 +3942,13 @@ fn coplanar_mesh_pairwise_intersection_area2(
 /// Geometry* 7.1-2 (1997): output topology is emitted only with retained
 /// source objects and exact predicate/area proof. Local face intersections use
 /// Sutherland and Hodgman, "Reentrant Polygon Clipping," *Communications of
-/// the ACM* 17.1 (1974), and holed output triangulation follows Held, "FIST:
+/// the ACM* 17.1 (1974). Convex partial subtraction uses the retained
+/// boundary-fragment traversal of Weiler and Atherton, "Hidden Surface Removal
+/// Using Polygon Area Sorting," *SIGGRAPH Computer Graphics* 11.2 (1977), with
+/// exact segment predicates in the style of Guigue and Devillers, "Fast and
+/// Robust Triangle-Triangle Overlap Test Using Orientation Predicates,"
+/// *Journal of Graphics Tools* 8.1 (2003). Holed output triangulation follows
+/// Held, "FIST:
 /// Fast Industrial-Strength Triangulation of Polygons," *Algorithmica* 30
 /// (2001), through `hypertri`'s exact earcut adapter.
 #[cfg(feature = "exact-triangulation")]
@@ -4034,6 +4042,7 @@ fn same_outer_holed_difference_components(
     for right_hole in &right.holes {
         let mut swallowed = false;
         let mut holes = Vec::new();
+        let mut convex_cutters = Vec::new();
         let mut rectangular_cutters = Vec::new();
         for left_hole in &left.holes {
             if polygons_equal(left_hole, right_hole)
@@ -4052,30 +4061,46 @@ fn same_outer_holed_difference_components(
                 SimplePolygonInteraction::Disjoint => {}
                 SimplePolygonInteraction::PointOnly => return None,
                 SimplePolygonInteraction::Connected => {
-                    let right_rect = projected_axis_aligned_rectangle(right_hole, projection)?;
-                    let left_rect = projected_axis_aligned_rectangle(left_hole, projection)?;
-                    if !rectangles_overlap_with_positive_area(&right_rect, &left_rect)? {
-                        return None;
+                    if let (Some(right_rect), Some(left_rect)) = (
+                        projected_axis_aligned_rectangle(right_hole, projection),
+                        projected_axis_aligned_rectangle(left_hole, projection),
+                    ) {
+                        if !rectangles_overlap_with_positive_area(&right_rect, &left_rect)? {
+                            return None;
+                        }
+                        rectangular_cutters.push(left_rect);
+                    } else {
+                        convex_cutters.push(convex_retained_hole_intersection_polygon(
+                            left_hole, right_hole, projection,
+                        )?);
                     }
-                    rectangular_cutters.push(left_rect);
                 }
             }
         }
         if swallowed {
             continue;
         }
-        if rectangular_cutters.is_empty() {
+        if rectangular_cutters.is_empty() && convex_cutters.is_empty() {
             let mut outer = right_hole.clone();
             orient_polygon_ccw(&mut outer, projection)?;
             sort_polygons_for_replay(&mut holes, projection);
             components.push(CoplanarConvexHoledComponent { outer, holes });
-        } else {
+        } else if !rectangular_cutters.is_empty() && convex_cutters.is_empty() {
             components.extend(same_outer_holed_rectangular_difference_components(
                 right_hole,
                 holes,
                 &rectangular_cutters,
                 projection,
             )?);
+        } else if rectangular_cutters.is_empty() {
+            components.extend(same_outer_holed_convex_difference_components(
+                right_hole,
+                holes,
+                &convex_cutters,
+                projection,
+            )?);
+        } else {
+            return None;
         }
     }
     Some(components)
@@ -4133,6 +4158,146 @@ fn same_outer_holed_rectangular_difference_components(
     Some(components)
 }
 
+/// Materialize a right retained hole minus clipped convex left-hole cutters.
+///
+/// Same-outer subtraction turns `(outer - left_holes) - (outer - right_holes)`
+/// into `right_hole - left_holes`. This helper owns the bounded case where
+/// each partial left-hole overlap has already been clipped exactly to the
+/// right retained hole. The result is accepted only if the clipped convex
+/// cutters attach to the source boundary, stitch into simple retained
+/// components, and satisfy the exact area equation in
+/// [`multi_side_opened_difference_polygons`]. That is the Yap retained-object
+/// boundary from "Towards Exact Geometric Computation," *Computational
+/// Geometry* 7.1-2 (1997): no witness point decides the topology; retained
+/// source rings, exact clipping, exact segment predicates, and exact area
+/// replay do.
+///
+/// The fragment walk is the Weiler-Atherton boundary traversal from Weiler and
+/// Atherton, "Hidden Surface Removal Using Polygon Area Sorting," *SIGGRAPH
+/// Computer Graphics* 11.2 (1977), and the clipped convex regions are produced
+/// with the Sutherland-Hodgman half-plane clipping model, "Reentrant Polygon
+/// Clipping," *Communications of the ACM* 17.1 (1974).
+#[cfg(feature = "exact-triangulation")]
+fn same_outer_holed_convex_difference_components(
+    source: &[Point3],
+    retained_holes: Vec<Vec<Point3>>,
+    cutters: &[Vec<Point3>],
+    projection: CoplanarProjection,
+) -> Option<Vec<CoplanarConvexHoledComponent>> {
+    let remnants = convex_cut_difference_polygons(
+        source,
+        cutters,
+        projection,
+        "coplanar same-outer convex hole difference",
+    )?;
+    if remnants.is_empty() {
+        return None;
+    }
+
+    let mut assigned_holes = vec![Vec::new(); remnants.len()];
+    for retained_hole in retained_holes {
+        let mut containing_remnant = None;
+        for (index, remnant) in remnants.iter().enumerate() {
+            if polygon_strictly_inside_simple_polygon(&retained_hole, remnant, projection)? {
+                if containing_remnant.replace(index).is_some() {
+                    return None;
+                }
+            }
+        }
+        let index = containing_remnant?;
+        assigned_holes[index].push(retained_hole);
+    }
+
+    let mut components = Vec::new();
+    for (mut outer, mut holes) in remnants.into_iter().zip(assigned_holes) {
+        orient_polygon_ccw(&mut outer, projection)?;
+        sort_polygons_for_replay(&mut holes, projection);
+        components.push(CoplanarConvexHoledComponent { outer, holes });
+    }
+    Some(components)
+}
+
+/// Subtract one or more clipped convex cutters from a convex retained source.
+///
+/// A single clipped cutter is handled by the same exact convex difference
+/// boundary fragments used for ordinary convex coplanar differences. Several
+/// cutters route through [`multi_side_opened_difference_polygons`], which
+/// requires retained boundary attachment and exact area replay for the whole
+/// set. Keeping these two cases explicit avoids pretending this is a general
+/// planar subdivision while still accepting the common nonrectangular
+/// corner-cut topology. The predicate/construction split follows Yap,
+/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+/// (1997), and the single-cutter boundary walk is the same
+/// Weiler-Atherton-style retained fragment traversal used by
+/// [`arrange_coplanar_convex_surface_difference`].
+#[cfg(feature = "exact-triangulation")]
+fn convex_cut_difference_polygons(
+    source: &[Point3],
+    cutters: &[Vec<Point3>],
+    projection: CoplanarProjection,
+    label: &'static str,
+) -> Option<Vec<Vec<Point3>>> {
+    match cutters {
+        [] => None,
+        [single] => Some(vec![single_convex_cut_difference_polygon(
+            source, single, projection, label,
+        )?]),
+        _ => multi_side_opened_difference_polygons(source, cutters, projection, label),
+    }
+}
+
+/// Subtract one clipped convex cutter from a convex retained source loop.
+///
+/// The output loop is stitched from exact source and cutter boundary fragments
+/// using [`collect_convex_difference_boundary_fragments`]. This is the bounded
+/// retained-object version of Weiler-Atherton boundary traversal: candidate
+/// fragments are chosen by exact convex side predicates, stitched into one
+/// simple loop, and accepted only after
+/// [`convex_difference_boundary_area_matches_inputs`] replays
+/// `area(source) = area(output) + area(source ∩ cutter)`. See Weiler and
+/// Atherton, "Hidden Surface Removal Using Polygon Area Sorting," *SIGGRAPH
+/// Computer Graphics* 11.2 (1977), Sutherland and Hodgman, "Reentrant Polygon
+/// Clipping," *Communications of the ACM* 17.1 (1974), and Yap, "Towards
+/// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997).
+#[cfg(feature = "exact-triangulation")]
+fn single_convex_cut_difference_polygon(
+    source: &[Point3],
+    cutter: &[Point3],
+    projection: CoplanarProjection,
+    label: &'static str,
+) -> Option<Vec<Point3>> {
+    let mut source = source.to_vec();
+    let mut cutter = cutter.to_vec();
+    orient_polygon_ccw(&mut source, projection)?;
+    orient_polygon_ccw(&mut cutter, projection)?;
+    validate_projected_strictly_convex_loop(&source, projection, label).ok()?;
+    validate_projected_strictly_convex_loop(&cutter, projection, label).ok()?;
+
+    let mut fragments = Vec::new();
+    collect_convex_difference_boundary_fragments(
+        &source,
+        &cutter,
+        projection,
+        true,
+        &mut fragments,
+    )?;
+    collect_convex_difference_boundary_fragments(
+        &cutter,
+        &source,
+        projection,
+        false,
+        &mut fragments,
+    )?;
+    let mut polygon = stitch_simple_loop(fragments, projection)?;
+    orient_polygon_ccw(&mut polygon, projection)?;
+    polygon = simplify_projected_polygon(polygon, projection);
+    validate_projected_simple_loop(&polygon, projection, label).ok()?;
+    if !convex_difference_boundary_area_matches_inputs(&polygon, &source, &cutter, projection)? {
+        return None;
+    }
+    Some(polygon)
+}
+
 /// Replay same-outer holed differences whose output contains only filled holes.
 ///
 /// This is the no-hole sibling of
@@ -4144,10 +4309,13 @@ fn same_outer_holed_rectangular_difference_components(
 /// path also accepts the bounded rectilinear overlap case where a right
 /// retained hole and one or more left retained holes are exact projected
 /// axis-aligned rectangles: the output is the exact orthogonal cell set
-/// `right_hole - union(left_holes)`, emitted as simple filled loops. If a
+/// `right_hole - union(left_holes)`, emitted as simple filled loops. The same
+/// retained-fragment path now accepts strictly convex nonrectangular
+/// positive-area partial overlaps when the clipped cutter attaches to the
+/// right-hole boundary and exact area replay certifies the simple output. If a
 /// right hole strictly contains a left hole, the output is holed and belongs
 /// to the component-holed artifact instead; if rings touch, cross, or overlap
-/// outside this rectangle-cell certificate, the case remains general
+/// outside these bounded certificates, the case remains general
 /// planar-arrangement work.
 ///
 /// The certificate follows Yap, "Towards Exact Geometric Computation,"
@@ -4156,7 +4324,10 @@ fn same_outer_holed_rectangular_difference_components(
 /// rings, and the result is accepted only after exact area replay. The area
 /// replay sums pairwise Sutherland-Hodgman triangle clips (Sutherland and
 /// Hodgman, "Reentrant Polygon Clipping," *Communications of the ACM* 17.1,
-/// 1974). The rectilinear overlap branch is the bounded orthogonal cell
+/// 1974). Convex partial subtraction uses the Weiler-Atherton retained
+/// boundary-fragment traversal from Weiler and Atherton, "Hidden Surface
+/// Removal Using Polygon Area Sorting," *SIGGRAPH Computer Graphics* 11.2
+/// (1977). The rectilinear overlap branch is the bounded orthogonal cell
 /// decomposition described by de Berg, Cheong, van Kreveld, and Overmars,
 /// *Computational Geometry: Algorithms and Applications*, 3rd ed. (2008),
 /// Chapter 2. Retained simple loops are triangulated through the same
@@ -4242,6 +4413,7 @@ fn same_outer_holed_no_hole_difference_rings(
     let mut polygons = Vec::new();
     for right_hole in &right.holes {
         let mut contributes = true;
+        let mut convex_cutters = Vec::new();
         let mut rectangular_cutters = Vec::new();
         for left_hole in &left.holes {
             if polygons_equal(left_hole, right_hole)
@@ -4257,21 +4429,28 @@ fn same_outer_holed_no_hole_difference_rings(
                 SimplePolygonInteraction::Disjoint => {}
                 SimplePolygonInteraction::PointOnly => return None,
                 SimplePolygonInteraction::Connected => {
-                    let right_rect = projected_axis_aligned_rectangle(right_hole, projection)?;
-                    let left_rect = projected_axis_aligned_rectangle(left_hole, projection)?;
-                    if !rectangles_overlap_with_positive_area(&right_rect, &left_rect)? {
-                        return None;
+                    if let (Some(right_rect), Some(left_rect)) = (
+                        projected_axis_aligned_rectangle(right_hole, projection),
+                        projected_axis_aligned_rectangle(left_hole, projection),
+                    ) {
+                        if !rectangles_overlap_with_positive_area(&right_rect, &left_rect)? {
+                            return None;
+                        }
+                        rectangular_cutters.push(left_rect);
+                    } else {
+                        convex_cutters.push(convex_retained_hole_intersection_polygon(
+                            left_hole, right_hole, projection,
+                        )?);
                     }
-                    rectangular_cutters.push(left_rect);
                 }
             }
         }
         if contributes {
-            if rectangular_cutters.is_empty() {
+            if rectangular_cutters.is_empty() && convex_cutters.is_empty() {
                 let mut polygon = right_hole.clone();
                 orient_polygon_ccw(&mut polygon, projection)?;
                 polygons.push(polygon);
-            } else {
+            } else if !rectangular_cutters.is_empty() && convex_cutters.is_empty() {
                 let right_rect = projected_axis_aligned_rectangle(right_hole, projection)?;
                 let mut remnants = axis_aligned_rectangle_difference_polygons(
                     &right_rect,
@@ -4282,6 +4461,19 @@ fn same_outer_holed_no_hole_difference_rings(
                     orient_polygon_ccw(remnant, projection)?;
                 }
                 polygons.extend(remnants);
+            } else if rectangular_cutters.is_empty() {
+                let mut remnants = convex_cut_difference_polygons(
+                    right_hole,
+                    &convex_cutters,
+                    projection,
+                    "coplanar same-outer convex no-hole difference",
+                )?;
+                for remnant in &mut remnants {
+                    orient_polygon_ccw(remnant, projection)?;
+                }
+                polygons.extend(remnants);
+            } else {
+                return None;
             }
         }
     }

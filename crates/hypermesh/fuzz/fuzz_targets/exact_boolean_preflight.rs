@@ -2728,11 +2728,15 @@ fn exercise_same_outer_component_holed_coplanar_difference() {
     )
     .expect("partial same-outer nonrect left should materialize")
     .mesh;
-    assert!(arrange_coplanar_surface_component_holed_difference(
-        &nonrect_partial_left,
-        &partial_right,
-    )
-    .is_none());
+    let nonrect_partial_difference =
+        arrange_coplanar_surface_component_holed_difference(&nonrect_partial_left, &partial_right)
+            .expect("nonrectangular same-outer overlap should retain a holed remnant");
+    nonrect_partial_difference.validate().unwrap();
+    nonrect_partial_difference
+        .validate_surface_difference_against_sources(&nonrect_partial_left, &partial_right)
+        .unwrap();
+    assert_eq!(nonrect_partial_difference.components.len(), 1);
+    assert_eq!(nonrect_partial_difference.components[0].holes.len(), 1);
 
     let preflight = preflight_boolean_exact(&left, &right, ExactBooleanOperation::Difference)
         .expect("same-outer holed difference preflight should classify shortcut");
@@ -2778,6 +2782,36 @@ fn exercise_same_outer_component_holed_coplanar_difference() {
     .expect("partial same-outer holed difference should materialize")
     .validate_operation_against_sources(
         &partial_left,
+        &partial_right,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
+
+    let nonrect_partial_preflight = preflight_boolean_exact(
+        &nonrect_partial_left,
+        &partial_right,
+        ExactBooleanOperation::Difference,
+    )
+    .expect("nonrectangular same-outer holed difference preflight should classify shortcut");
+    nonrect_partial_preflight.validate().unwrap();
+    nonrect_partial_preflight
+        .validate_against_sources(&nonrect_partial_left, &partial_right)
+        .unwrap();
+    assert_eq!(
+        nonrect_partial_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
+    );
+    hypermesh::exact::boolean_exact(
+        &nonrect_partial_left,
+        &partial_right,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("nonrectangular same-outer holed difference should materialize")
+    .validate_operation_against_sources(
+        &nonrect_partial_left,
         &partial_right,
         ExactBooleanOperation::Difference,
         ValidationPolicy::ALLOW_BOUNDARY,
@@ -2920,6 +2954,59 @@ fn exercise_same_outer_holed_coplanar_component_difference() {
     crossing_difference
         .validate_component_difference_against_sources(&left, &crossing)
         .unwrap();
+
+    let nonrect_left_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[6, 1, 0, 9, 1, 0, 9, 5, 0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("same-outer nonrect component left hole fixture must import");
+    let nonrect_right_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[2, 2, 0, 8, 2, 0, 8, 8, 0, 2, 8, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("same-outer nonrect component right hole fixture must import");
+    let nonrect_left = arrange_coplanar_convex_surface_holed_difference(&outer, &nonrect_left_hole)
+        .expect("same-outer nonrect left should materialize")
+        .mesh;
+    let nonrect_right =
+        arrange_coplanar_convex_surface_holed_difference(&outer, &nonrect_right_hole)
+            .expect("same-outer nonrect right should materialize")
+            .mesh;
+    let nonrect_difference =
+        arrange_coplanar_surface_component_difference(&nonrect_left, &nonrect_right)
+            .expect("same-outer nonrectangular overlap should replay as one no-hole loop");
+    nonrect_difference.validate().unwrap();
+    nonrect_difference
+        .validate_component_difference_against_sources(&nonrect_left, &nonrect_right)
+        .unwrap();
+    let nonrect_preflight =
+        preflight_boolean_exact(&nonrect_left, &nonrect_right, ExactBooleanOperation::Difference)
+            .expect("same-outer nonrect component-difference preflight should classify shortcut");
+    nonrect_preflight.validate().unwrap();
+    nonrect_preflight
+        .validate_against_sources(&nonrect_left, &nonrect_right)
+        .unwrap();
+    assert_eq!(
+        nonrect_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementDifference
+    );
+    hypermesh::exact::boolean_exact(
+        &nonrect_left,
+        &nonrect_right,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("same-outer nonrect component-difference should materialize")
+    .validate_operation_against_sources(
+        &nonrect_left,
+        &nonrect_right,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
 
     let touching_hole = ExactMesh::from_i64_triangles_with_policy(
         &[6, 4, 0, 8, 4, 0, 8, 6, 0, 6, 6, 0],

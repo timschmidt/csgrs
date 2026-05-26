@@ -26970,14 +26970,57 @@ fn exact_coplanar_component_holed_difference_materializes_nested_same_outer_hole
         )
         .expect("retained-plus-nonrectangular left holes should materialize")
         .mesh;
-    assert!(
+    let nonrect_partial_difference =
         hypermesh::exact::arrange_coplanar_surface_component_holed_difference(
             &nonrect_partial_left,
             &partial_right,
         )
-        .is_none(),
-        "nonrectangular partial hole overlap is outside the bounded certificate"
+        .expect("strictly convex nonrectangular partial overlap should retain a holed remnant");
+    nonrect_partial_difference.validate().unwrap();
+    nonrect_partial_difference
+        .validate_surface_difference_against_sources(&nonrect_partial_left, &partial_right)
+        .unwrap();
+    assert_eq!(nonrect_partial_difference.components.len(), 1);
+    assert_eq!(nonrect_partial_difference.components[0].holes.len(), 1);
+    assert!(
+        nonrect_partial_difference.components[0].outer.len() > 4,
+        "the nonrectangular clipped cutter should replay as a nonconvex retained outer ring"
     );
+    assert!(
+        nonrect_partial_difference.components[0]
+            .outer
+            .iter()
+            .any(|point| real_eq(&point.x, &ExactReal::from(10)))
+    );
+    let nonrect_partial_preflight = hypermesh::exact::preflight_boolean_exact(
+        &nonrect_partial_left,
+        &partial_right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .expect("nonrectangular partial component-holed preflight should classify shortcut");
+    nonrect_partial_preflight.validate().unwrap();
+    nonrect_partial_preflight
+        .validate_against_sources(&nonrect_partial_left, &partial_right)
+        .unwrap();
+    assert_eq!(
+        nonrect_partial_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
+    );
+    hypermesh::exact::boolean_exact(
+        &nonrect_partial_left,
+        &partial_right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("nonrectangular partial component-holed difference should materialize")
+    .validate_operation_against_sources(
+        &nonrect_partial_left,
+        &partial_right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
 
     let preflight = hypermesh::exact::preflight_boolean_exact(
         &left,
@@ -27265,6 +27308,56 @@ fn exact_coplanar_component_difference_materializes_same_outer_single_hole_fill(
             .polygon
             .iter()
             .any(|point| real_eq(&point.x, &ExactReal::from(8)))
+    );
+
+    let nonrect_left_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[6, 1, 0, 9, 1, 0, 9, 5, 0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let nonrect_right_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[2, 2, 0, 8, 2, 0, 8, 8, 0, 2, 8, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let nonrect_left = hypermesh::exact::arrange_coplanar_convex_surface_holed_difference(
+        &outer,
+        &nonrect_left_hole,
+    )
+    .expect("nonrectangular left annulus should materialize")
+    .mesh;
+    let nonrect_right = hypermesh::exact::arrange_coplanar_convex_surface_holed_difference(
+        &outer,
+        &nonrect_right_hole,
+    )
+    .expect("large right annulus should materialize")
+    .mesh;
+    let nonrect_crossing_difference =
+        hypermesh::exact::arrange_coplanar_surface_component_difference(
+            &nonrect_left,
+            &nonrect_right,
+        )
+        .expect("convex nonrectangular partial retained-hole overlap should replay as one loop");
+    nonrect_crossing_difference.validate().unwrap();
+    nonrect_crossing_difference
+        .validate_component_difference_against_sources(&nonrect_left, &nonrect_right)
+        .unwrap();
+    assert!(nonrect_crossing_difference.polygon.len() > 3);
+    let nonrect_crossing_preflight = hypermesh::exact::preflight_boolean_exact(
+        &nonrect_left,
+        &nonrect_right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .expect("nonrectangular same-outer component difference preflight should classify shortcut");
+    nonrect_crossing_preflight.validate().unwrap();
+    nonrect_crossing_preflight
+        .validate_against_sources(&nonrect_left, &nonrect_right)
+        .unwrap();
+    assert_eq!(
+        nonrect_crossing_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementDifference
     );
 
     let touching_hole = ExactMesh::from_i64_triangles_with_policy(
