@@ -15,7 +15,8 @@ use hyperpath::{
     SpecctraNetAlias, SweptLineSegment, TangentSpan, TraceLayer, ViaDrillIntent,
     ViaFabricationPolicy, arrange_cubic_beziers, arrange_explicit_arcs, arrange_line_segments,
     arrange_line_segments_with_cubic_beziers, arrange_line_segments_with_explicit_arcs,
-    arrange_line_segments_with_mixed_beziers, arrange_line_segments_with_quadratic_beziers,
+    arrange_line_segments_with_mixed_beziers, arrange_line_segments_with_mixed_curves,
+    arrange_line_segments_with_quadratic_beziers,
     arrange_line_segments_with_rational_quadratic_beziers, arrange_quadratic_beziers,
     arrange_rational_quadratic_beziers, build_alternating_detour_meander, build_g1_join_problem,
     build_keepout_aware_detour_meander, build_length_match_problem, build_multi_detour_meander,
@@ -531,6 +532,26 @@ fn path_predicates(c: &mut Criterion) {
                 std::slice::from_ref(&mixed_family_quadratic),
                 std::slice::from_ref(&mixed_family_cubic),
                 std::slice::from_ref(&mixed_family_conic),
+                PredicatePolicy::default(),
+            )
+            .map(|report| report.cell_graph)
+        })
+    });
+    let mixed_curve_line = LinePathSegment::new(p(0, 0), p(2800, 0));
+    let mixed_curve_arc =
+        ExplicitCircularArc::new(p(200, 0), r(200), p(0, 0), p(400, 0), ArcDirection::Cw).unwrap();
+    let mixed_curve_quadratic = QuadraticBezier::new(p(800, 0), p(1000, 400), p(1200, 0));
+    let mixed_curve_cubic = CubicBezier::new(p(1600, 0), p(1600, 300), p(2000, 300), p(2000, 0));
+    let mixed_curve_conic =
+        RationalQuadraticBezier::new(p(2400, 0), p(2600, 400), p(2800, 0), r(2)).unwrap();
+    c.bench_function("line_mixed_curve_arrangement_exact_cell_graph", |b| {
+        b.iter(|| {
+            arrange_line_segments_with_mixed_curves(
+                std::slice::from_ref(&mixed_curve_line),
+                std::slice::from_ref(&mixed_curve_arc),
+                std::slice::from_ref(&mixed_curve_quadratic),
+                std::slice::from_ref(&mixed_curve_cubic),
+                std::slice::from_ref(&mixed_curve_conic),
                 PredicatePolicy::default(),
             )
             .map(|report| report.cell_graph)

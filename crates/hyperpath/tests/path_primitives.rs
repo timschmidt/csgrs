@@ -52,7 +52,8 @@ use hyperpath::{
     ViaFabricationAcceptance, ViaFabricationError, ViaFabricationPolicy, ViaLayerSpanRelation,
     ViaLayerTransitionClass, arrange_cubic_beziers, arrange_explicit_arcs, arrange_line_segments,
     arrange_line_segments_with_cubic_beziers, arrange_line_segments_with_explicit_arcs,
-    arrange_line_segments_with_mixed_beziers, arrange_line_segments_with_quadratic_beziers,
+    arrange_line_segments_with_mixed_beziers, arrange_line_segments_with_mixed_curves,
+    arrange_line_segments_with_quadratic_beziers,
     arrange_line_segments_with_rational_quadratic_beziers, arrange_quadratic_beziers,
     arrange_rational_quadratic_beziers, audit_specctra_route_rule_widths,
     audit_specctra_trace_rule_clearances, build_alternating_detour_meander, build_g1_join_problem,
@@ -2373,6 +2374,71 @@ fn line_mixed_bezier_arrangement_rejects_uncertified_curve_curve_overlap() {
         LineMixedBezierArrangementError::UnsupportedCurveCurveInteraction {
             left: MixedCurveFragmentRef::Quadratic(0),
             right: MixedCurveFragmentRef::Cubic(0),
+        }
+    );
+}
+
+#[test]
+fn line_mixed_curve_arrangement_merges_arc_and_bezier_family_breakpoints() {
+    let line = LinePathSegment::new(p(0, 0), p(28, 0));
+    let arc = ExplicitCircularArc::new(p(2, 0), r(2), p(0, 0), p(4, 0), ArcDirection::Cw).unwrap();
+    let quadratic = QuadraticBezier::new(p(8, 0), p(10, 4), p(12, 0));
+    let cubic = CubicBezier::new(p(16, 0), p(16, 3), p(20, 3), p(20, 0));
+    let conic = RationalQuadraticBezier::new(p(24, 0), p(26, 4), p(28, 0), r(2)).unwrap();
+
+    let report = arrange_line_segments_with_mixed_curves(
+        &[line],
+        &[arc],
+        &[quadratic],
+        &[cubic],
+        &[conic],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+
+    assert_eq!(report.line_breakpoints[0].len(), 8);
+    assert_eq!(report.line_fragments.len(), 7);
+    assert_eq!(report.arc_fragments.len(), 1);
+    assert_eq!(report.quadratic_fragments.len(), 1);
+    assert_eq!(report.cubic_fragments.len(), 1);
+    assert_eq!(report.rational_quadratic_fragments.len(), 1);
+    assert_eq!(report.cell_graph.edges.len(), 11);
+    assert_eq!(
+        report.cell_graph.half_edges.len(),
+        report.cell_graph.edges.len() * 2
+    );
+    assert_eq!(
+        report
+            .cell_graph
+            .faces
+            .iter()
+            .filter(|face| face.class == CurveArrangementCellFaceClass::Bounded)
+            .count(),
+        4
+    );
+}
+
+#[test]
+fn line_mixed_curve_arrangement_rejects_uncertified_arc_curve_overlap() {
+    let line = LinePathSegment::new(p(0, 0), p(8, 0));
+    let arc = ExplicitCircularArc::new(p(4, 0), r(4), p(0, 0), p(8, 0), ArcDirection::Cw).unwrap();
+    let quadratic = QuadraticBezier::new(p(0, 0), p(4, 8), p(8, 0));
+
+    let error = arrange_line_segments_with_mixed_curves(
+        &[line],
+        &[arc],
+        &[quadratic],
+        &[],
+        &[],
+        PredicatePolicy::default(),
+    )
+    .unwrap_err();
+
+    assert_eq!(
+        error,
+        LineMixedBezierArrangementError::UnsupportedCurveCurveInteraction {
+            left: MixedCurveFragmentRef::ExplicitArc(0),
+            right: MixedCurveFragmentRef::Quadratic(0),
         }
     );
 }

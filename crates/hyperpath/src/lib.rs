@@ -160,6 +160,8 @@ pub use mixed_curve_arrangement::{
     LineMixedBezierArrangementReport, MixedCurveFragmentRef,
     arrange_line_segments_with_mixed_beziers,
     arrange_line_segments_with_mixed_beziers_and_provenance,
+    arrange_line_segments_with_mixed_curves,
+    arrange_line_segments_with_mixed_curves_and_provenance,
 };
 pub use offset::{
     ArcOffsetCandidate, ArcOffsetError, BezierOffsetError, BezierOffsetSampleCandidate,

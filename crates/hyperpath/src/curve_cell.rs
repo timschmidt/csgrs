@@ -265,6 +265,7 @@ pub(crate) fn build_line_cubic_cell_graph(
 
 pub(crate) fn build_line_mixed_bezier_cell_graph(
     line_fragments: &[MixedLineArrangementFragment],
+    arc_fragments: &[ExplicitArcArrangementFragment],
     bezier_fragments: &[QuadraticBezierRealFragment],
     cubic_fragments: &[CubicBezierRealFragment],
     conic_fragments: &[RationalQuadraticBezierRealFragment],
@@ -301,7 +302,7 @@ pub(crate) fn build_line_mixed_bezier_cell_graph(
         .collect::<Vec<_>>();
     build_curve_cell_graph_full(
         &converted_lines,
-        &[],
+        arc_fragments,
         bezier_fragments,
         cubic_fragments,
         &converted_conics,

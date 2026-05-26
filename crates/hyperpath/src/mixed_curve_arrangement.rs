@@ -1,8 +1,8 @@
-//! Bounded mixed line/Bezier/conic arrangement scheduling.
+//! Bounded mixed line/arc/Bezier/conic arrangement scheduling.
 //!
 //! This module closes the first mixed-family gap left by the pairwise
-//! line/quadratic, line/cubic, and line/conic schedulers: one retained line can
-//! now receive exact breakpoints from all three curve families before the
+//! line/arc, line/quadratic, line/cubic, and line/conic schedulers: one retained line can
+//! now receive exact breakpoints from all four curve families before the
 //! shared cell graph is built. It deliberately does **not** claim a general
 //! curve-curve arrangement. Non-line fragments are admitted together only when
 //! their exact convex-hull boxes are strictly separated, so any possible
@@ -14,12 +14,19 @@
 //! construction are separated from topology acceptance. The polynomial
 //! Bezier hodograph/convex-hull facts are the standard curve-carrier
 //! discipline described by Farouki, *Pythagorean Hodograph Curves* (2008).
+//! Explicit circular arcs use the same exact curve-object/predicate split as
+//! circular-arc arrangement packages such as CGAL Arrangement_on_surface_2.
 
 use std::cmp::Ordering;
 
 use hyperlimit::{Point2, PredicatePolicy, compare_reals_with_policy, point2_equal_with_policy};
 use hyperreal::{Real, RealExactSetFacts};
 
+use crate::arc::ExplicitCircularArc;
+use crate::arrangement::{
+    ExplicitArcArrangementFragment, LineArcArrangementEvent, LineArrangementBreakpoint,
+    LineArrangementError, arrange_line_segments_with_explicit_arcs_and_provenance,
+};
 use crate::bezier::{CubicBezier, QuadraticBezier, RationalQuadraticBezier};
 use crate::curve_cell::{
     CurveArrangementCellError, CurveArrangementCellGraph, build_line_mixed_bezier_cell_graph,
@@ -46,6 +53,8 @@ use crate::segment::LinePathSegment;
 pub enum LineMixedBezierArrangementError {
     /// A line/quadratic sub-scheduler rejected exact replay.
     Quadratic(LineQuadraticBezierArrangementError),
+    /// A line/explicit-arc sub-scheduler rejected exact replay.
+    Arc(LineArrangementError),
     /// A line/cubic sub-scheduler rejected exact replay.
     Cubic(LineCubicBezierArrangementError),
     /// A line/conic sub-scheduler rejected exact replay.
@@ -68,6 +77,8 @@ pub enum LineMixedBezierArrangementError {
 /// Source identity for a non-line fragment in the bounded mixed scheduler.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum MixedCurveFragmentRef {
+    /// Explicit circular-arc fragment index.
+    ExplicitArc(usize),
     /// Quadratic Bezier fragment index.
     Quadratic(usize),
     /// Cubic Bezier fragment index.
@@ -76,7 +87,7 @@ pub enum MixedCurveFragmentRef {
     RationalQuadratic(usize),
 }
 
-/// Cached exact facts for a bounded mixed line/Bezier/conic schedule.
+/// Cached exact facts for a bounded mixed line/arc/Bezier/conic schedule.
 #[derive(Clone, Debug, PartialEq)]
 pub struct LineMixedBezierArrangementFacts {
     /// Exact-set facts across all retained input line and curve controls.
@@ -87,7 +98,7 @@ pub struct LineMixedBezierArrangementFacts {
     pub provenance: PathProvenance,
 }
 
-/// Bounded mixed line plus quadratic/cubic/conic arrangement schedule.
+/// Bounded mixed line plus explicit-arc/quadratic/cubic/conic arrangement schedule.
 ///
 /// Pairwise exact line/curve schedulers discover events and native curve
 /// fragments. This report then merges every line breakpoint into one retained
@@ -100,12 +111,16 @@ pub struct LineMixedBezierArrangementFacts {
 pub struct LineMixedBezierArrangementReport {
     /// Retained input line segments.
     pub lines: Vec<LinePathSegment>,
+    /// Retained input explicit circular arcs.
+    pub arcs: Vec<ExplicitCircularArc>,
     /// Retained input quadratic Beziers.
     pub quadratic_curves: Vec<QuadraticBezier>,
     /// Retained input cubic Beziers.
     pub cubic_curves: Vec<CubicBezier>,
     /// Retained input rational quadratic conics.
     pub rational_quadratic_curves: Vec<RationalQuadraticBezier>,
+    /// Certified or unknown line/arc events.
+    pub arc_events: Vec<LineArcArrangementEvent>,
     /// Certified or unknown line/quadratic events.
     pub quadratic_events: Vec<LineQuadraticBezierArrangementEvent>,
     /// Certified or unknown line/cubic events.
@@ -116,6 +131,8 @@ pub struct LineMixedBezierArrangementReport {
     pub line_breakpoints: Vec<Vec<MixedLineArrangementBreakpoint>>,
     /// Positive-length merged line fragments.
     pub line_fragments: Vec<MixedLineArrangementFragment>,
+    /// Positive-length explicit-arc fragments from the pairwise exact scheduler.
+    pub arc_fragments: Vec<ExplicitArcArrangementFragment>,
     /// Positive-length quadratic fragments from the pairwise exact scheduler.
     pub quadratic_fragments: Vec<QuadraticBezierRealFragment>,
     /// Positive-length cubic fragments from the pairwise exact scheduler.
@@ -136,8 +153,9 @@ pub fn arrange_line_segments_with_mixed_beziers(
     rational_quadratic_curves: &[RationalQuadraticBezier],
     policy: PredicatePolicy,
 ) -> Result<LineMixedBezierArrangementReport, LineMixedBezierArrangementError> {
-    arrange_line_segments_with_mixed_beziers_and_provenance(
+    arrange_line_segments_with_mixed_curves_and_provenance(
         lines,
+        &[],
         quadratic_curves,
         cubic_curves,
         rational_quadratic_curves,
@@ -155,6 +173,54 @@ pub fn arrange_line_segments_with_mixed_beziers_and_provenance(
     policy: PredicatePolicy,
     provenance: PathProvenance,
 ) -> Result<LineMixedBezierArrangementReport, LineMixedBezierArrangementError> {
+    arrange_line_segments_with_mixed_curves_and_provenance(
+        lines,
+        &[],
+        quadratic_curves,
+        cubic_curves,
+        rational_quadratic_curves,
+        policy,
+        provenance,
+    )
+}
+
+/// Arrange retained line segments against separated explicit arcs and Bezier/conic families.
+pub fn arrange_line_segments_with_mixed_curves(
+    lines: &[LinePathSegment],
+    arcs: &[ExplicitCircularArc],
+    quadratic_curves: &[QuadraticBezier],
+    cubic_curves: &[CubicBezier],
+    rational_quadratic_curves: &[RationalQuadraticBezier],
+    policy: PredicatePolicy,
+) -> Result<LineMixedBezierArrangementReport, LineMixedBezierArrangementError> {
+    arrange_line_segments_with_mixed_curves_and_provenance(
+        lines,
+        arcs,
+        quadratic_curves,
+        cubic_curves,
+        rational_quadratic_curves,
+        policy,
+        PathProvenance::native(),
+    )
+}
+
+/// Arrange retained line segments against separated explicit arcs and Bezier/conic families with provenance.
+pub fn arrange_line_segments_with_mixed_curves_and_provenance(
+    lines: &[LinePathSegment],
+    arcs: &[ExplicitCircularArc],
+    quadratic_curves: &[QuadraticBezier],
+    cubic_curves: &[CubicBezier],
+    rational_quadratic_curves: &[RationalQuadraticBezier],
+    policy: PredicatePolicy,
+    provenance: PathProvenance,
+) -> Result<LineMixedBezierArrangementReport, LineMixedBezierArrangementError> {
+    let arc_report = arrange_line_segments_with_explicit_arcs_and_provenance(
+        lines,
+        arcs,
+        policy,
+        provenance.clone(),
+    )
+    .map_err(LineMixedBezierArrangementError::Arc)?;
     let quadratic_report = arrange_line_segments_with_quadratic_beziers_and_provenance(
         lines,
         quadratic_curves,
@@ -179,6 +245,7 @@ pub fn arrange_line_segments_with_mixed_beziers_and_provenance(
         .map_err(LineMixedBezierArrangementError::RationalQuadratic)?;
 
     let mut line_breakpoints = seed_line_breakpoints(lines);
+    merge_arc_line_breakpoints(&mut line_breakpoints, &arc_report.line_breakpoints, policy)?;
     merge_quadratic_line_breakpoints(
         &mut line_breakpoints,
         &quadratic_report.line_breakpoints,
@@ -198,6 +265,7 @@ pub fn arrange_line_segments_with_mixed_beziers_and_provenance(
 
     let line_fragments = build_line_fragments(&line_breakpoints, policy)?;
     validate_curve_fragment_separation(
+        &arc_report.arc_fragments,
         &quadratic_report.bezier_fragments,
         &cubic_report.cubic_fragments,
         &rational_quadratic_report.conic_fragments,
@@ -205,6 +273,7 @@ pub fn arrange_line_segments_with_mixed_beziers_and_provenance(
     )?;
     let cell_graph = build_line_mixed_bezier_cell_graph(
         &line_fragments,
+        &arc_report.arc_fragments,
         &quadratic_report.bezier_fragments,
         &cubic_report.cubic_fragments,
         &rational_quadratic_report.conic_fragments,
@@ -214,12 +283,14 @@ pub fn arrange_line_segments_with_mixed_beziers_and_provenance(
     let facts = LineMixedBezierArrangementFacts {
         input_exact: input_exact_facts(
             lines,
+            arcs,
             quadratic_curves,
             cubic_curves,
             rational_quadratic_curves,
         ),
         fragment_exact: fragment_exact_facts(
             &line_fragments,
+            &arc_report.arc_fragments,
             &quadratic_report.bezier_fragments,
             &cubic_report.cubic_fragments,
             &rational_quadratic_report.conic_fragments,
@@ -229,14 +300,17 @@ pub fn arrange_line_segments_with_mixed_beziers_and_provenance(
 
     Ok(LineMixedBezierArrangementReport {
         lines: lines.to_vec(),
+        arcs: arcs.to_vec(),
         quadratic_curves: quadratic_curves.to_vec(),
         cubic_curves: cubic_curves.to_vec(),
         rational_quadratic_curves: rational_quadratic_curves.to_vec(),
+        arc_events: arc_report.events,
         quadratic_events: quadratic_report.events,
         cubic_events: cubic_report.events,
         rational_quadratic_events: rational_quadratic_report.events,
         line_breakpoints,
         line_fragments,
+        arc_fragments: arc_report.arc_fragments,
         quadratic_fragments: quadratic_report.bezier_fragments,
         cubic_fragments: cubic_report.cubic_fragments,
         rational_quadratic_fragments: rational_quadratic_report.conic_fragments,
@@ -272,6 +346,28 @@ fn seed_line_breakpoints(lines: &[LinePathSegment]) -> Vec<Vec<MixedLineArrangem
             ]
         })
         .collect()
+}
+
+fn merge_arc_line_breakpoints(
+    target: &mut [Vec<MixedLineArrangementBreakpoint>],
+    source: &[Vec<LineArrangementBreakpoint>],
+    policy: PredicatePolicy,
+) -> Result<(), LineMixedBezierArrangementError> {
+    for (line, points) in source.iter().enumerate() {
+        for point in points {
+            insert_line_breakpoint(
+                &mut target[line],
+                MixedLineArrangementBreakpoint {
+                    line: point.segment,
+                    point: point.point.clone(),
+                    parameter_numerator: point.parameter_numerator.clone(),
+                    parameter_denominator: point.parameter_denominator.clone(),
+                },
+                policy,
+            )?;
+        }
+    }
+    Ok(())
 }
 
 fn merge_quadratic_line_breakpoints(
@@ -442,12 +538,19 @@ struct FragmentBox {
 }
 
 fn validate_curve_fragment_separation(
+    arcs: &[ExplicitArcArrangementFragment],
     quadratics: &[QuadraticBezierRealFragment],
     cubics: &[CubicBezierRealFragment],
     conics: &[RationalQuadraticBezierRealFragment],
     policy: PredicatePolicy,
 ) -> Result<(), LineMixedBezierArrangementError> {
     let mut boxes = Vec::new();
+    for (index, fragment) in arcs.iter().enumerate() {
+        boxes.push(FragmentBox {
+            source: MixedCurveFragmentRef::ExplicitArc(index),
+            ..box_from_explicit_arc(fragment)
+        });
+    }
     for (index, fragment) in quadratics.iter().enumerate() {
         boxes.push(FragmentBox {
             source: MixedCurveFragmentRef::Quadratic(index),
@@ -497,6 +600,21 @@ fn validate_curve_fragment_separation(
         }
     }
     Ok(())
+}
+
+fn box_from_explicit_arc(fragment: &ExplicitArcArrangementFragment) -> FragmentBox {
+    let arc = &fragment.arc;
+    let x_min = arc.center().x.clone() - arc.radius().clone();
+    let x_max = arc.center().x.clone() + arc.radius().clone();
+    let y_min = arc.center().y.clone() - arc.radius().clone();
+    let y_max = arc.center().y.clone() + arc.radius().clone();
+    FragmentBox {
+        source: MixedCurveFragmentRef::ExplicitArc(usize::MAX),
+        x_min,
+        x_max,
+        y_min,
+        y_max,
+    }
 }
 
 fn box_from_points<'a, const N: usize>(
@@ -581,6 +699,7 @@ fn affine_homogeneous_point(
 
 fn input_exact_facts(
     lines: &[LinePathSegment],
+    arcs: &[ExplicitCircularArc],
     quadratics: &[QuadraticBezier],
     cubics: &[CubicBezier],
     conics: &[RationalQuadraticBezier],
@@ -592,6 +711,17 @@ fn input_exact_facts(
             &line.start().y,
             &line.end().x,
             &line.end().y,
+        ]);
+    }
+    for arc in arcs {
+        values.extend([
+            &arc.center().x,
+            &arc.center().y,
+            arc.radius(),
+            &arc.start().x,
+            &arc.start().y,
+            &arc.end().x,
+            &arc.end().y,
         ]);
     }
     for curve in quadratics {
@@ -632,6 +762,7 @@ fn input_exact_facts(
 
 fn fragment_exact_facts(
     lines: &[MixedLineArrangementFragment],
+    arcs: &[ExplicitArcArrangementFragment],
     quadratics: &[QuadraticBezierRealFragment],
     cubics: &[CubicBezierRealFragment],
     conics: &[RationalQuadraticBezierRealFragment],
@@ -643,6 +774,17 @@ fn fragment_exact_facts(
             &fragment.segment.start().y,
             &fragment.segment.end().x,
             &fragment.segment.end().y,
+        ]);
+    }
+    for fragment in arcs {
+        values.extend([
+            &fragment.arc.center().x,
+            &fragment.arc.center().y,
+            fragment.arc.radius(),
+            &fragment.arc.start().x,
+            &fragment.arc.start().y,
+            &fragment.arc.end().x,
+            &fragment.arc.end().y,
         ]);
     }
     for fragment in quadratics {

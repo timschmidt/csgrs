@@ -4,8 +4,9 @@ use std::cmp::Ordering;
 
 use hyperlimit::{PredicatePolicy, compare_reals_with_policy};
 use hyperpath::{
-    BezierParameter, CubicBezier, CurveArrangementCellFaceClass, LineCubicAlgebraicPointDomain,
-    LineCubicAlgebraicRootDomain, LineCubicBezierAlgebraicBreakpointDomain,
+    ArcDirection, BezierParameter, CubicBezier, CurveArrangementCellFaceClass,
+    ExplicitCircularArc, LineCubicAlgebraicPointDomain, LineCubicAlgebraicRootDomain,
+    LineCubicBezierAlgebraicBreakpointDomain,
     LineCubicBezierAlgebraicBreakpointOrderClass, LineCubicBezierAlgebraicBreakpointSequenceClass,
     LineCubicBezierAlgebraicOverlapBreakpointDomain,
     LineCubicBezierAlgebraicOverlapBreakpointSequenceClass,
@@ -19,7 +20,8 @@ use hyperpath::{
     LineRationalQuadraticBezierIntersectionClass, LineRationalQuadraticBezierInverseRootDomain,
     LineRationalQuadraticBezierSupportOverlapMonotonicity, MixedCurveFragmentRef, QuadraticBezier,
     RationalQuadraticBezier, arrange_cubic_beziers, arrange_line_segments_with_cubic_beziers,
-    arrange_line_segments_with_mixed_beziers, arrange_line_segments_with_quadratic_beziers,
+    arrange_line_segments_with_mixed_beziers, arrange_line_segments_with_mixed_curves,
+    arrange_line_segments_with_quadratic_beziers,
     arrange_line_segments_with_rational_quadratic_beziers, arrange_quadratic_beziers,
     arrange_rational_quadratic_beziers, intersect_axis_aligned_line_cubic_bezier,
     intersect_axis_aligned_line_quadratic_bezier,
@@ -284,6 +286,39 @@ fuzz_target!(|data: &[u8]| {
         LineMixedBezierArrangementError::UnsupportedCurveCurveInteraction {
             left: MixedCurveFragmentRef::Quadratic(0),
             right: MixedCurveFragmentRef::Cubic(0),
+        }
+    );
+
+    let mixed_curve_report = arrange_line_segments_with_mixed_curves(
+        &[LinePathSegment::new(p(0, 0), p(28, 0))],
+        &[ExplicitCircularArc::new(p(2, 0), r(2), p(0, 0), p(4, 0), ArcDirection::Cw).unwrap()],
+        &[QuadraticBezier::new(p(8, 0), p(10, 4), p(12, 0))],
+        &[CubicBezier::new(p(16, 0), p(16, 3), p(20, 3), p(20, 0))],
+        &[RationalQuadraticBezier::new(p(24, 0), p(26, 4), p(28, 0), r(2)).unwrap()],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert_eq!(mixed_curve_report.line_breakpoints[0].len(), 8);
+    assert_eq!(mixed_curve_report.cell_graph.edges.len(), 11);
+    assert_eq!(
+        mixed_curve_report.cell_graph.half_edges.len(),
+        mixed_curve_report.cell_graph.edges.len() * 2
+    );
+
+    let overlapping_arc_error = arrange_line_segments_with_mixed_curves(
+        &[LinePathSegment::new(p(0, 0), p(8, 0))],
+        &[ExplicitCircularArc::new(p(4, 0), r(4), p(0, 0), p(8, 0), ArcDirection::Cw).unwrap()],
+        &[QuadraticBezier::new(p(0, 0), p(4, 8), p(8, 0))],
+        &[],
+        &[],
+        PredicatePolicy::default(),
+    )
+    .unwrap_err();
+    assert_eq!(
+        overlapping_arc_error,
+        LineMixedBezierArrangementError::UnsupportedCurveCurveInteraction {
+            left: MixedCurveFragmentRef::ExplicitArc(0),
+            right: MixedCurveFragmentRef::Quadratic(0),
         }
     );
 
