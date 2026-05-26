@@ -3160,6 +3160,51 @@ fn exercise_same_outer_component_holed_coplanar_intersection_with_island() {
         .validate_against_sources(&multi_clip_source, &multi_clip_right)
         .unwrap();
 
+    let split_source_island_hole = rect_surface_i64(&[(9, 8, 11, 12)]);
+    let split_source_island_right = arrange_coplanar_convex_surface_holed_difference(
+        &multi_clip_outer,
+        &split_source_island_hole,
+    )
+    .expect("split source-island cutter should materialize")
+    .mesh;
+    let split_source_island_intersection = arrange_coplanar_surface_component_holed_intersection(
+        &multi_clip_source,
+        &split_source_island_right,
+    )
+    .expect("opposite retained hole should split the source-owned filled island");
+    split_source_island_intersection.validate().unwrap();
+    split_source_island_intersection
+        .validate_intersection_against_sources(&multi_clip_source, &split_source_island_right)
+        .unwrap();
+    assert_eq!(split_source_island_intersection.components.len(), 3);
+    assert_eq!(
+        split_source_island_intersection
+            .components
+            .iter()
+            .filter(|component| component.holes.is_empty())
+            .count(),
+        2
+    );
+    let split_source_island_reverse = arrange_coplanar_surface_component_holed_intersection(
+        &split_source_island_right,
+        &multi_clip_source,
+    )
+    .expect("split source-owned filled island clipping should be symmetric");
+    split_source_island_reverse.validate().unwrap();
+    split_source_island_reverse
+        .validate_intersection_against_sources(&split_source_island_right, &multi_clip_source)
+        .unwrap();
+    let split_source_island_preflight = preflight_boolean_exact(
+        &multi_clip_source,
+        &split_source_island_right,
+        ExactBooleanOperation::Intersection,
+    )
+    .expect("split source-owned filled island preflight should classify shortcut");
+    split_source_island_preflight.validate().unwrap();
+    split_source_island_preflight
+        .validate_against_sources(&multi_clip_source, &split_source_island_right)
+        .unwrap();
+
     let holed_island_outer = rect_surface_i64(&[(0, 0, 24, 24)]);
     let holed_island_owner_hole = rect_surface_i64(&[(4, 4, 20, 20)]);
     let holed_island_shell = arrange_coplanar_convex_surface_holed_difference(

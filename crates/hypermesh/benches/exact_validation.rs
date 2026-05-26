@@ -5231,6 +5231,14 @@ fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
             )
             .unwrap()
             .mesh;
+        let same_outer_split_source_island_right_hole = rect_surface_i64(&[(9, 8, 11, 12)]);
+        let same_outer_split_source_island_right =
+            arrange_coplanar_convex_surface_holed_difference(
+                &same_outer_multi_source_island_outer,
+                &same_outer_split_source_island_right_hole,
+            )
+            .unwrap()
+            .mesh;
         let same_outer_holed_source_island_outer = rect_surface_i64(&[(0, 0, 24, 24)]);
         let same_outer_holed_source_island_owner_hole = rect_surface_i64(&[(4, 4, 20, 20)]);
         let same_outer_holed_source_island_shell =
@@ -7254,6 +7262,22 @@ fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
                         hypermesh::exact::preflight_boolean_exact(
                             &same_outer_multi_source_island_source,
                             &same_outer_multi_source_island_right,
+                            hypermesh::exact::ExactBooleanOperation::Intersection,
+                        )
+                        .map(|report| report.validate()),
+                        arrange_coplanar_surface_component_holed_intersection(
+                            &same_outer_multi_source_island_source,
+                            &same_outer_split_source_island_right,
+                        )
+                        .map(|output| {
+                            output.validate_intersection_against_sources(
+                                &same_outer_multi_source_island_source,
+                                &same_outer_split_source_island_right,
+                            )
+                        }),
+                        hypermesh::exact::preflight_boolean_exact(
+                            &same_outer_multi_source_island_source,
+                            &same_outer_split_source_island_right,
                             hypermesh::exact::ExactBooleanOperation::Intersection,
                         )
                         .map(|report| report.validate()),

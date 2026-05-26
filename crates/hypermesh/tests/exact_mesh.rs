@@ -28005,14 +28005,119 @@ fn exact_coplanar_component_holed_intersection_clips_same_outer_source_hole_isla
         hypermesh::exact::arrange_coplanar_convex_surface_holed_difference(&outer, &split_hole)
             .expect("split island cutter source should materialize")
             .mesh;
-    assert!(
+    let split_intersection =
         hypermesh::exact::arrange_coplanar_surface_component_holed_intersection(
             &source,
             &split_opposing,
         )
-        .is_none(),
-        "split island remnants require the later planar-cell extractor"
+        .expect("opposite retained hole should split the source-owned island");
+    split_intersection.validate().unwrap();
+    split_intersection
+        .validate_intersection_against_sources(&source, &split_opposing)
+        .unwrap();
+    assert_eq!(
+        split_intersection.components.len(),
+        3,
+        "main component plus two split filled island remnants should survive"
     );
+    assert!(
+        split_intersection.components.iter().any(|component| {
+            component.holes.is_empty()
+                && component
+                    .outer
+                    .iter()
+                    .any(|point| real_eq(&point.x, &ExactReal::from(8)))
+        }),
+        "left split source-island remnant should be retained"
+    );
+    assert!(
+        split_intersection.components.iter().any(|component| {
+            component.holes.is_empty()
+                && component
+                    .outer
+                    .iter()
+                    .any(|point| real_eq(&point.x, &ExactReal::from(11)))
+        }),
+        "right split source-island remnant should be retained"
+    );
+
+    let split_reverse = hypermesh::exact::arrange_coplanar_surface_component_holed_intersection(
+        &split_opposing,
+        &source,
+    )
+    .expect("split source-owned island clipping should be symmetric");
+    split_reverse.validate().unwrap();
+    split_reverse
+        .validate_intersection_against_sources(&split_opposing, &source)
+        .unwrap();
+    assert_eq!(split_reverse.components.len(), 3);
+
+    let mut stale_split = split_intersection.clone();
+    let split_remnant = stale_split
+        .components
+        .iter()
+        .position(|component| {
+            component.holes.is_empty()
+                && component
+                    .outer
+                    .iter()
+                    .any(|point| real_eq(&point.x, &ExactReal::from(11)))
+        })
+        .expect("split output should expose the right filled island remnant");
+    stale_split.components.remove(split_remnant);
+    assert!(
+        stale_split
+            .validate_intersection_against_sources(&source, &split_opposing)
+            .is_err(),
+        "source replay must reject dropping one split filled island remnant"
+    );
+
+    let point_touch_hole = rect_surface_i64(&[(12, 12, 14, 14)]);
+    let point_touch_opposing = hypermesh::exact::arrange_coplanar_convex_surface_holed_difference(
+        &outer,
+        &point_touch_hole,
+    )
+    .expect("point-touch source-island cutter should materialize")
+    .mesh;
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_component_holed_intersection(
+            &source,
+            &point_touch_opposing,
+        )
+        .is_none(),
+        "point-only contact with a source-owned island still requires planar-cell ownership"
+    );
+
+    let split_preflight = hypermesh::exact::preflight_boolean_exact(
+        &source,
+        &split_opposing,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+    )
+    .expect("split source-island clipping preflight should classify shortcut");
+    split_preflight.validate().unwrap();
+    split_preflight
+        .validate_against_sources(&source, &split_opposing)
+        .unwrap();
+    assert_eq!(
+        split_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
+    );
+
+    hypermesh::exact::boolean_exact(
+        &source,
+        &split_opposing,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("split source-island clipping boolean should materialize")
+    .validate_operation_against_sources(
+        &source,
+        &split_opposing,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
 
     let preflight = hypermesh::exact::preflight_boolean_exact(
         &source,

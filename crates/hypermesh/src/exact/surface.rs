@@ -3539,12 +3539,15 @@ fn same_outer_source_island_retained_component(
                 }])
             }
             SameOuterSourceIslandDisposition::Consumed => Some(Vec::new()),
-            SameOuterSourceIslandDisposition::Clipped(remnant) => {
-                Some(vec![CoplanarConvexHoledComponent {
-                    outer: remnant,
-                    holes: Vec::new(),
-                }])
-            }
+            SameOuterSourceIslandDisposition::Clipped(remnants) => Some(
+                remnants
+                    .into_iter()
+                    .map(|outer| CoplanarConvexHoledComponent {
+                        outer,
+                        holes: Vec::new(),
+                    })
+                    .collect(),
+            ),
         };
     }
     same_outer_holed_source_island_retained_components(candidate, opposite_main, projection)
@@ -3728,9 +3731,9 @@ fn same_outer_opposite_hole_is_inside_existing_island_hole(
 /// no output component, but it must still be accounted for so the cross-pair
 /// topology check does not reject the intersection. A third bounded case clips
 /// a convex source island by one or more crossing convex retained holes and
-/// emits a single exact filled remnant; interior cutters, holed remnants, and
-/// split remnants still reject so the general planar-cell extractor owns those
-/// topologies.
+/// emits every exact filled remnant whose boundary can be replayed as a simple
+/// loop. Interior cutters and holed remnants still reject so the general
+/// planar-cell extractor owns those topologies.
 ///
 /// This is a direct use of Yap's retained-object paradigm from "Towards Exact
 /// Geometric Computation," *Computational Geometry* 7.1-2 (1997): the Boolean
@@ -3738,7 +3741,7 @@ fn same_outer_opposite_hole_is_inside_existing_island_hole(
 /// Segment contact is classified with the orientation-predicate relation used
 /// by Guigue and Devillers, "Fast and Robust Triangle-Triangle Overlap Test
 /// Using Orientation Predicates," *Journal of Graphics Tools* 8.1 (2003).
-/// The single-remnant clip reuses the exact orthogonal cell replay cited by
+/// The remnant clip reuses the exact orthogonal cell replay cited by
 /// [`same_outer_holed_orthogonal_no_hole_difference_polygons`] and the
 /// Weiler-Atherton retained-fragment replay cited by
 /// [`convex_cut_difference_polygons`].
@@ -3768,7 +3771,7 @@ fn same_outer_source_island_opposite_hole_disposition(
         }
     }
     if !clipping_holes.is_empty() {
-        let remnant = same_outer_source_island_clipped_by_holes(
+        let remnants = same_outer_source_island_clipped_components_by_holes(
             candidate_outer,
             &clipping_holes,
             projection,
@@ -3777,13 +3780,15 @@ fn same_outer_source_island_opposite_hole_disposition(
             if clipping_hole_indices.contains(&hole_index) {
                 continue;
             }
-            if simple_polygon_interaction(&remnant, opposite_hole, projection)?
-                != SimplePolygonInteraction::Disjoint
-            {
-                return None;
+            for remnant in &remnants {
+                if simple_polygon_interaction(remnant, opposite_hole, projection)?
+                    != SimplePolygonInteraction::Disjoint
+                {
+                    return None;
+                }
             }
         }
-        return Some(SameOuterSourceIslandDisposition::Clipped(remnant));
+        return Some(SameOuterSourceIslandDisposition::Clipped(remnants));
     }
     Some(SameOuterSourceIslandDisposition::Survives)
 }
@@ -3800,35 +3805,18 @@ fn same_outer_source_island_consumed_by_hole(
     polygon_strictly_inside_simple_polygon(candidate_outer, opposite_hole, projection)
 }
 
-#[cfg(feature = "exact-triangulation")]
-fn same_outer_source_island_clipped_by_holes(
-    candidate_outer: &[Point3],
-    opposite_holes: &[Vec<Point3>],
-    projection: CoplanarProjection,
-) -> Option<Vec<Point3>> {
-    let mut remnants = same_outer_source_island_clipped_components_by_holes(
-        candidate_outer,
-        opposite_holes,
-        projection,
-    )?;
-    if remnants.len() != 1 {
-        return None;
-    }
-    Some(remnants.remove(0))
-}
-
 /// Clip a source island outer by opposite retained holes and keep all remnants.
 ///
 /// The clipped opposite holes are exact removed objects inside the candidate
 /// source island. The construction first clips each opposite hole against the
 /// source loop, then replays the exact difference with the same bounded
-/// orthogonal arrangement and convex-fragment routines used by
-/// [`same_outer_source_island_clipped_by_holes`]. Allowing multiple remnants is
-/// still a retained-object certificate, not a general planar subdivision: all
-/// remnant loops must be simple and pairwise disjoint before callers may
-/// assign holed material to them. This is the Yap TEGC predicate/construction
-/// split applied to the split-remnant case; see Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997).
+/// orthogonal arrangement and convex-fragment routines used by same-outer
+/// holed differences. Allowing multiple remnants is still a retained-object
+/// certificate, not a general planar subdivision: all remnant loops must be
+/// simple and pairwise disjoint before callers may assign material to them.
+/// This is the Yap TEGC predicate/construction split applied to the
+/// split-remnant case; see Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997).
 #[cfg(feature = "exact-triangulation")]
 fn same_outer_source_island_clipped_components_by_holes(
     candidate_outer: &[Point3],
@@ -3884,7 +3872,7 @@ fn same_outer_source_island_clipped_components_by_holes(
 enum SameOuterSourceIslandDisposition {
     Survives,
     Consumed,
-    Clipped(Vec<Point3>),
+    Clipped(Vec<Vec<Point3>>),
 }
 
 #[cfg(feature = "exact-triangulation")]
