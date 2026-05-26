@@ -4,14 +4,15 @@ use hyperpath::{
     BeadPlanError, BezierOffsetError, BezierParameter, BezierParameterError, BoardContourError,
     BoardContourOrientation, CardinalPoint, CardinalRotation, CircularArc, CircularArcError,
     ClearanceStatus, ConstructionStamp, CornerLookaheadJoinClass, CubicBezier,
-    CubicPythagoreanHodograph, DrillBoardClearanceReport, ExplicitArcArrangementClass,
-    ExplicitArcIntersectionClass, ExplicitArcOverlapClass, ExplicitArcPointClassification,
-    ExplicitArcSweepClass, ExplicitArcTangentClass, ExplicitCircleRelationClass,
-    ExplicitCircularArc, FeedPathElement, HigherOrderBezier, HigherOrderBezierError,
-    InfillGraphError, JerkLimitedFeedTimeReport, JerkRampPhaseProposal, JerkRampSpanProposal,
-    LineArcArrangementEventClass, LineArrangementCellFaceClass, LineArrangementError,
-    LineArrangementEventClass, LineCubicAlgebraicPointDomain, LineCubicAlgebraicRootDomain,
-    LineCubicBezierAlgebraicBreakpointDomain, LineCubicBezierAlgebraicBreakpointOrderClass,
+    CubicPythagoreanHodograph, CurveArrangementCellFaceClass, DrillBoardClearanceReport,
+    ExplicitArcArrangementClass, ExplicitArcIntersectionClass, ExplicitArcOverlapClass,
+    ExplicitArcPointClassification, ExplicitArcSweepClass, ExplicitArcTangentClass,
+    ExplicitCircleRelationClass, ExplicitCircularArc, FeedPathElement, HigherOrderBezier,
+    HigherOrderBezierError, InfillGraphError, JerkLimitedFeedTimeReport, JerkRampPhaseProposal,
+    JerkRampSpanProposal, LineArcArrangementEventClass, LineArrangementCellFaceClass,
+    LineArrangementError, LineArrangementEventClass, LineCubicAlgebraicPointDomain,
+    LineCubicAlgebraicRootDomain, LineCubicBezierAlgebraicBreakpointDomain,
+    LineCubicBezierAlgebraicBreakpointOrderClass,
     LineCubicBezierAlgebraicBreakpointSequenceBlocker,
     LineCubicBezierAlgebraicBreakpointSequenceClass,
     LineCubicBezierAlgebraicBreakpointSequenceSource,
@@ -435,10 +436,68 @@ fn line_arc_arrangement_splits_axis_lines_at_arc_events() {
     );
     assert_eq!(report.line_fragments.len(), 5);
     assert_eq!(report.arc_fragments.len(), 3);
+    assert_eq!(report.cell_graph.vertices.len(), 7);
+    assert_eq!(report.cell_graph.edges.len(), 8);
+    assert_eq!(report.cell_graph.half_edges.len(), 16);
+    assert!(report.cell_graph.faces.iter().any(|face| {
+        face.class == CurveArrangementCellFaceClass::Bounded
+            && face.signed_area_twice == r(25) * Real::pi()
+    }));
     assert_eq!(report.arc_fragments[0].arc.start(), &p(5, 0));
     assert_eq!(report.arc_fragments[0].arc.end(), &p(0, 5));
     assert_eq!(report.arc_fragments[1].arc.start(), &p(0, 5));
     assert_eq!(report.arc_fragments[1].arc.end(), &p(-5, 0));
+}
+
+#[test]
+fn line_arc_cell_graph_schedules_semicircle_face_with_exact_green_area() {
+    let diameter = LinePathSegment::new(p(-5, 0), p(5, 0));
+    let upper =
+        ExplicitCircularArc::new(p(0, 0), r(5), p(5, 0), p(-5, 0), ArcDirection::Ccw).unwrap();
+
+    let report =
+        arrange_line_segments_with_explicit_arcs(&[diameter], &[upper], PredicatePolicy::default())
+            .unwrap();
+
+    assert_eq!(report.line_fragments.len(), 1);
+    assert_eq!(report.arc_fragments.len(), 1);
+    assert_eq!(report.cell_graph.vertices.len(), 2);
+    assert_eq!(report.cell_graph.edges.len(), 2);
+    assert_eq!(report.cell_graph.half_edges.len(), 4);
+    assert_eq!(report.cell_graph.faces.len(), 2);
+    assert!(report.cell_graph.faces.iter().any(|face| {
+        face.class == CurveArrangementCellFaceClass::Bounded
+            && face.signed_area_twice == r(25) * Real::pi()
+    }));
+    assert!(report.cell_graph.faces.iter().any(|face| {
+        face.class == CurveArrangementCellFaceClass::Exterior
+            && face.signed_area_twice == -r(25) * Real::pi()
+    }));
+}
+
+#[test]
+fn line_arc_cell_graph_keeps_full_circle_branch_cut_faces() {
+    let circle =
+        ExplicitCircularArc::new(p(2, -3), r(4), p(6, -3), p(6, -3), ArcDirection::Ccw).unwrap();
+
+    let report =
+        arrange_line_segments_with_explicit_arcs(&[], &[circle], PredicatePolicy::default())
+            .unwrap();
+
+    assert_eq!(report.line_fragments.len(), 0);
+    assert_eq!(report.arc_fragments.len(), 1);
+    assert_eq!(report.cell_graph.vertices.len(), 1);
+    assert_eq!(report.cell_graph.edges.len(), 1);
+    assert_eq!(report.cell_graph.half_edges.len(), 2);
+    assert_eq!(report.cell_graph.faces.len(), 2);
+    assert!(report.cell_graph.faces.iter().any(|face| {
+        face.class == CurveArrangementCellFaceClass::Bounded
+            && face.signed_area_twice == r(32) * Real::pi()
+    }));
+    assert!(report.cell_graph.faces.iter().any(|face| {
+        face.class == CurveArrangementCellFaceClass::Exterior
+            && face.signed_area_twice == -r(32) * Real::pi()
+    }));
 }
 
 #[test]

@@ -175,6 +175,20 @@ fn path_predicates(c: &mut Criterion) {
             )
         })
     });
+    let line_arc_cell_lines = vec![LinePathSegment::new(p(-500, 0), p(500, 0))];
+    let line_arc_cell_arcs = vec![
+        ExplicitCircularArc::new(p(0, 0), r(500), p(500, 0), p(-500, 0), ArcDirection::Ccw)
+            .unwrap(),
+    ];
+    c.bench_function("line_arc_arrangement_exact_cell_graph", |b| {
+        b.iter(|| {
+            arrange_line_segments_with_explicit_arcs(
+                &line_arc_cell_lines,
+                &line_arc_cell_arcs,
+                PredicatePolicy::default(),
+            )
+        })
+    });
     let arc_arrangement_arcs = vec![
         ExplicitCircularArc::new(
             p(-300, 0),

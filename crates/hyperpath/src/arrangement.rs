@@ -24,6 +24,7 @@ use crate::arc::{
     ExplicitArcIntersectionClass, ExplicitArcPointClassification, ExplicitCircularArc,
     LineExplicitArcIntersectionClass,
 };
+use crate::curve_cell::{CurveArrangementCellGraph, build_line_arc_cell_graph};
 use crate::provenance::PathProvenance;
 use crate::segment::LinePathSegment;
 
@@ -63,6 +64,8 @@ pub enum LineArrangementError {
     UndecidableArcOrder { arc: usize },
     /// Exact angular ordering of incident line fragments was undecidable.
     UndecidableCellOrder { vertex: usize },
+    /// Exact curved face area replay was unavailable for a retained cell edge.
+    UndecidableCellArea { edge: usize },
     /// A retained explicit sub-arc could not be reconstructed from certified endpoints.
     ArcFragmentConstruction,
 }
@@ -352,6 +355,8 @@ pub struct LineArcArrangementReport {
     pub line_fragments: Vec<LineArrangementFragment>,
     /// Positive-length explicit-arc fragments induced by exact line/arc split points.
     pub arc_fragments: Vec<ExplicitArcArrangementFragment>,
+    /// Exact retained mixed line/arc cell graph induced by split fragments.
+    pub cell_graph: CurveArrangementCellGraph,
     /// Cached exact facts for retained line endpoints and emitted line fragments.
     pub facts: LineArrangementFacts,
 }
@@ -532,6 +537,7 @@ pub fn arrange_line_segments_with_explicit_arcs_and_provenance(
     let line_fragments = build_fragments(&line_breakpoints, policy)?;
     let arc_fragments = build_arc_fragments(arcs, &arc_breakpoints, policy)
         .map_err(line_arc_error_from_arc_error)?;
+    let cell_graph = build_line_arc_cell_graph(&line_fragments, &arc_fragments, policy)?;
     let endpoint_refs = lines
         .iter()
         .flat_map(|segment| {
@@ -575,6 +581,7 @@ pub fn arrange_line_segments_with_explicit_arcs_and_provenance(
         arc_breakpoints,
         line_fragments,
         arc_fragments,
+        cell_graph,
         facts,
     })
 }

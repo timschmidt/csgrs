@@ -12,6 +12,7 @@ pub mod arrangement;
 pub mod bezier;
 pub mod bezier_arrangement;
 pub mod cam;
+pub mod curve_cell;
 pub mod mixed_bezier_arrangement;
 pub mod mixed_conic_arrangement;
 pub mod mixed_cubic_arrangement;
@@ -96,6 +97,11 @@ pub use cam::{
     build_rectangular_pocket_link_graph, build_rectangular_pocket_plan,
     build_rectangular_rest_material_graph, build_rectangular_serpentine_infill_graph,
     build_rectangular_support_plan, intersect_rectangular_regions, subtract_rectangular_region,
+};
+pub use curve_cell::{
+    CurveArrangementCellEdge, CurveArrangementCellEdgeKind, CurveArrangementCellFace,
+    CurveArrangementCellFaceClass, CurveArrangementCellGraph, CurveArrangementCellVertex,
+    CurveArrangementHalfEdge,
 };
 pub use mixed_bezier_arrangement::{
     LineQuadraticBezierArrangementError, LineQuadraticBezierArrangementEvent,

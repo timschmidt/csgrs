@@ -2,8 +2,9 @@
 
 use hyperlimit::PredicatePolicy;
 use hyperpath::{
-    ArcDirection, ExplicitCircularArc, LineArcArrangementEventClass, LineArrangementError,
-    LinePathSegment, arrange_line_segments_with_explicit_arcs,
+    ArcDirection, CurveArrangementCellFaceClass, ExplicitCircularArc,
+    LineArcArrangementEventClass, LineArrangementError, LinePathSegment,
+    arrange_line_segments_with_explicit_arcs,
 };
 use hyperreal::{Rational, Real};
 use libfuzzer_sys::fuzz_target;
@@ -50,6 +51,11 @@ fuzz_target!(|data: &[u8]| {
             assert_eq!(report.events.len(), 1);
             assert_eq!(report.line_breakpoints.len(), 1);
             assert_eq!(report.arc_breakpoints.len(), 1);
+            assert!(!report.cell_graph.vertices.is_empty());
+            assert_eq!(
+                report.cell_graph.half_edges.len(),
+                report.cell_graph.edges.len() * 2
+            );
             assert!(!report.line_breakpoints[0].is_empty());
             assert!(!report.arc_breakpoints[0].is_empty());
             for point in &report.events[0].points {
@@ -74,7 +80,7 @@ fuzz_target!(|data: &[u8]| {
     let vertical = LinePathSegment::new(p(cx, cy - radius - pad), p(cx, cy + radius + pad));
     let report = arrange_line_segments_with_explicit_arcs(
         &[horizontal, vertical],
-        &[arc],
+        &[arc.clone()],
         PredicatePolicy::default(),
     )
     .unwrap();
@@ -87,4 +93,17 @@ fuzz_target!(|data: &[u8]| {
     assert_eq!(report.arc_breakpoints[0].len(), 4);
     assert_eq!(report.line_fragments.len(), 6);
     assert_eq!(report.arc_fragments.len(), 4);
+    assert_eq!(
+        report.cell_graph.half_edges.len(),
+        report.cell_graph.edges.len() * 2
+    );
+
+    let circle_only =
+        arrange_line_segments_with_explicit_arcs(&[], &[arc], PredicatePolicy::default()).unwrap();
+    assert_eq!(circle_only.cell_graph.vertices.len(), 1);
+    assert_eq!(circle_only.cell_graph.edges.len(), 1);
+    assert!(circle_only.cell_graph.faces.iter().any(|face| {
+        face.class == CurveArrangementCellFaceClass::Bounded
+            && face.signed_area_twice == r(2) * r(radius) * r(radius) * Real::pi()
+    }));
 });
