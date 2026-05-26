@@ -3460,9 +3460,6 @@ fn collect_same_outer_source_islands_from_side(
         if polygons_equal_modulo_collinear(&candidate.outer, &owner_main.outer, projection) {
             continue;
         }
-        if !candidate.holes.is_empty() {
-            return None;
-        }
         if !source_component_outer_inside_any_hole_allowing_point_branch(
             &candidate.outer,
             owner_main,
@@ -3477,41 +3474,172 @@ fn collect_same_outer_source_islands_from_side(
         )? {
             return None;
         }
-        match same_outer_source_island_opposite_hole_disposition(
+        let Some(mut retained) =
+            same_outer_source_island_retained_component(candidate, opposite_main, projection)?
+        else {
+            continue;
+        };
+        orient_polygon_ccw(&mut retained.outer, projection)?;
+        retained.outer = simplify_projected_polygon(retained.outer, projection);
+        for hole in &mut retained.holes {
+            orient_polygon_cw(hole, projection)?;
+            *hole = simplify_projected_polygon(core::mem::take(hole), projection);
+        }
+        sort_polygons_for_replay(&mut retained.holes, projection);
+        if islands.iter().any(|island| {
+            polygons_equal_modulo_collinear(&island.outer, &retained.outer, projection)
+                && same_component_holes_equal(&island.holes, &retained.holes, projection)
+        }) {
+            continue;
+        }
+        islands.push(retained);
+    }
+    Some(())
+}
+
+/// Replay a source-owned island component through an opposite same-outer sheet.
+///
+/// Source islands are not inferred from sampled triangle interiors. They are
+/// retained components that must be replayed against every opposite retained
+/// hole before they may appear in the Boolean output. For no-hole islands this
+/// delegates to the existing filled-loop clipper. For holed islands this
+/// bounded certificate accepts only exact object-level facts: an opposite hole
+/// may have no effect because it lies in an already removed island hole, may
+/// consume the whole island, or may become a new strict retained hole of the
+/// island. Crossing, point-contact, and partial-overlap hole relations still
+/// reject so a later planar-cell extractor owns those topologies.
+///
+/// This follows Yap, "Towards Exact Geometric Computation," *Computational
+/// Geometry* 7.1-2 (1997): the retained island, its holes, and any additional
+/// opposite holes are certified objects, not consequences of representative
+/// points. Boundary relation tests use the exact orientation-predicate segment
+/// classifier of Guigue and Devillers, "Fast and Robust Triangle-Triangle
+/// Overlap Test Using Orientation Predicates," *Journal of Graphics Tools*
+/// 8.1 (2003), while containment of nonconvex simple loops reuses the
+/// Held/FIST-backed simple-polygon location replay used elsewhere in this
+/// module.
+#[cfg(feature = "exact-triangulation")]
+fn same_outer_source_island_retained_component(
+    candidate: &SourceHoledSurfaceComponent,
+    opposite_main: &SourceHoledSurfaceComponent,
+    projection: CoplanarProjection,
+) -> Option<Option<CoplanarConvexHoledComponent>> {
+    if candidate.holes.is_empty() {
+        return match same_outer_source_island_opposite_hole_disposition(
             &candidate.outer,
             opposite_main,
             projection,
         )? {
-            SameOuterSourceIslandDisposition::Survives => {}
-            SameOuterSourceIslandDisposition::Consumed => continue,
-            SameOuterSourceIslandDisposition::Clipped(mut remnant) => {
-                orient_polygon_ccw(&mut remnant, projection)?;
-                remnant = simplify_projected_polygon(remnant, projection);
-                if islands.iter().any(|island| {
-                    polygons_equal_modulo_collinear(&island.outer, &remnant, projection)
-                }) {
-                    continue;
-                }
-                islands.push(CoplanarConvexHoledComponent {
+            SameOuterSourceIslandDisposition::Survives => {
+                Some(Some(CoplanarConvexHoledComponent {
+                    outer: candidate.outer.clone(),
+                    holes: Vec::new(),
+                }))
+            }
+            SameOuterSourceIslandDisposition::Consumed => Some(None),
+            SameOuterSourceIslandDisposition::Clipped(remnant) => {
+                Some(Some(CoplanarConvexHoledComponent {
                     outer: remnant,
                     holes: Vec::new(),
-                });
-                continue;
+                }))
             }
+        };
+    }
+    same_outer_holed_source_island_retained_component(candidate, opposite_main, projection)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn same_component_holes_equal(
+    left: &[Vec<Point3>],
+    right: &[Vec<Point3>],
+    projection: CoplanarProjection,
+) -> bool {
+    left.len() == right.len()
+        && left.iter().all(|left_hole| {
+            right.iter().any(|right_hole| {
+                polygons_equal_modulo_collinear(left_hole, right_hole, projection)
+            })
+        })
+}
+
+/// Retain a source-owned holed island in a same-outer intersection.
+///
+/// The output for a holed island is
+/// `candidate.outer - union(candidate.holes, opposite_holes_inside_material)`.
+/// This helper deliberately recognizes only the bounded case where that union
+/// is still represented by disjoint or nested simple retained holes. Nested
+/// holes are collapsed to the larger removed object, matching the same-outer
+/// main-hole intersection rule. Any proper crossing or point-only boundary
+/// contact remains future planar-cell work because it would require explicit
+/// cell ownership rather than a retained simple-loop carrier.
+#[cfg(feature = "exact-triangulation")]
+fn same_outer_holed_source_island_retained_component(
+    candidate: &SourceHoledSurfaceComponent,
+    opposite_main: &SourceHoledSurfaceComponent,
+    projection: CoplanarProjection,
+) -> Option<Option<CoplanarConvexHoledComponent>> {
+    let mut holes = candidate.holes.clone();
+    for opposite_hole in &opposite_main.holes {
+        if same_outer_source_island_consumed_by_hole(&candidate.outer, opposite_hole, projection)? {
+            return Some(None);
         }
-        if islands.iter().any(|island| {
-            polygons_equal_modulo_collinear(&island.outer, &candidate.outer, projection)
-        }) {
+        if same_outer_opposite_hole_is_inside_existing_island_hole(
+            opposite_hole,
+            &holes,
+            projection,
+        )? {
             continue;
         }
-        let mut outer = candidate.outer.clone();
-        orient_polygon_ccw(&mut outer, projection)?;
-        islands.push(CoplanarConvexHoledComponent {
-            outer,
-            holes: Vec::new(),
-        });
+        match simple_polygon_interaction(&candidate.outer, opposite_hole, projection)? {
+            SimplePolygonInteraction::Disjoint => continue,
+            SimplePolygonInteraction::PointOnly => return None,
+            SimplePolygonInteraction::Connected => {}
+        }
+        if !polygon_strictly_inside_simple_polygon(opposite_hole, &candidate.outer, projection)? {
+            return None;
+        }
+        for candidate_hole in &holes {
+            if polygon_lies_in_closed_simple_polygon(candidate_hole, opposite_hole, projection)? {
+                continue;
+            }
+            if simple_polygon_interaction(candidate_hole, opposite_hole, projection)?
+                != SimplePolygonInteraction::Disjoint
+            {
+                return None;
+            }
+        }
+        holes.push(opposite_hole.clone());
     }
-    Some(())
+    remove_nested_same_outer_intersection_holes(&mut holes, projection)?;
+    validate_simple_component_loops_disjoint(
+        &holes,
+        projection,
+        "coplanar same-outer holed source island retained holes",
+    )
+    .ok()?;
+    Some(Some(CoplanarConvexHoledComponent {
+        outer: candidate.outer.clone(),
+        holes,
+    }))
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn same_outer_opposite_hole_is_inside_existing_island_hole(
+    opposite_hole: &[Point3],
+    island_holes: &[Vec<Point3>],
+    projection: CoplanarProjection,
+) -> Option<bool> {
+    island_holes.iter().try_fold(false, |found, island_hole| {
+        if found {
+            Some(true)
+        } else {
+            Some(polygon_lies_in_closed_simple_polygon(
+                opposite_hole,
+                island_hole,
+                projection,
+            )?)
+        }
+    })
 }
 
 /// Classify a source-owned island against the opposite operand's retained holes.
@@ -3681,12 +3809,7 @@ fn source_component_is_island_owned_by_matching_outer(
     candidate_side_components: &[SourceHoledSurfaceComponent],
     projection: CoplanarProjection,
 ) -> Option<bool> {
-    if !candidate.holes.is_empty()
-        || !polygon_strictly_inside_simple_polygon(
-            &candidate.outer,
-            &opposite_main.outer,
-            projection,
-        )?
+    if !polygon_strictly_inside_simple_polygon(&candidate.outer, &opposite_main.outer, projection)?
     {
         return Some(false);
     }
@@ -3699,11 +3822,7 @@ fn source_component_is_island_owned_by_matching_outer(
             owner_main,
             projection,
         )? {
-            same_outer_source_island_opposite_hole_disposition(
-                &candidate.outer,
-                opposite_main,
-                projection,
-            )?;
+            same_outer_source_island_retained_component(candidate, opposite_main, projection)?;
             return Some(true);
         }
     }

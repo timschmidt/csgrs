@@ -3160,6 +3160,69 @@ fn exercise_same_outer_component_holed_coplanar_intersection_with_island() {
         .validate_against_sources(&multi_clip_source, &multi_clip_right)
         .unwrap();
 
+    let holed_island_outer = rect_surface_i64(&[(0, 0, 24, 24)]);
+    let holed_island_owner_hole = rect_surface_i64(&[(4, 4, 20, 20)]);
+    let holed_island_shell = arrange_coplanar_convex_surface_holed_difference(
+        &holed_island_outer,
+        &holed_island_owner_hole,
+    )
+    .expect("holed source-island owner shell should materialize")
+    .mesh;
+    let holed_island_component_outer = rect_surface_i64(&[(8, 8, 18, 18)]);
+    let holed_island_component_hole = rect_surface_i64(&[(10, 10, 14, 14)]);
+    let holed_island_component = arrange_coplanar_convex_surface_holed_difference(
+        &holed_island_component_outer,
+        &holed_island_component_hole,
+    )
+    .expect("holed source island should materialize")
+    .mesh;
+    let holed_island_source = combine_open_exact_meshes(
+        &[holed_island_shell, holed_island_component],
+        "fuzz same-outer holed source island",
+    );
+    let holed_island_right_holes = rect_surface_i64(&[(11, 11, 12, 12), (15, 15, 17, 17)]);
+    let holed_island_right = arrange_coplanar_convex_surface_multi_holed_difference(
+        &holed_island_outer,
+        &holed_island_right_holes,
+    )
+    .expect("holed source-island cutter should materialize")
+    .mesh;
+    let holed_island_intersection = arrange_coplanar_surface_component_holed_intersection(
+        &holed_island_source,
+        &holed_island_right,
+    )
+    .expect("same-outer holed source island should be retained");
+    holed_island_intersection.validate().unwrap();
+    holed_island_intersection
+        .validate_intersection_against_sources(&holed_island_source, &holed_island_right)
+        .unwrap();
+    assert_eq!(holed_island_intersection.components.len(), 2);
+    assert!(
+        holed_island_intersection
+            .components
+            .iter()
+            .any(|component| component.holes.len() == 2)
+    );
+    let holed_island_reverse = arrange_coplanar_surface_component_holed_intersection(
+        &holed_island_right,
+        &holed_island_source,
+    )
+    .expect("same-outer holed source island retention should be symmetric");
+    holed_island_reverse.validate().unwrap();
+    holed_island_reverse
+        .validate_intersection_against_sources(&holed_island_right, &holed_island_source)
+        .unwrap();
+    let holed_island_preflight = preflight_boolean_exact(
+        &holed_island_source,
+        &holed_island_right,
+        ExactBooleanOperation::Intersection,
+    )
+    .expect("same-outer holed source island preflight should classify shortcut");
+    holed_island_preflight.validate().unwrap();
+    holed_island_preflight
+        .validate_against_sources(&holed_island_source, &holed_island_right)
+        .unwrap();
+
     let affine_origin = (0, 0, 0);
     let affine_basis_u = (2, 1, 0);
     let affine_basis_v = (-1, 2, 0);
