@@ -23,6 +23,9 @@ pub struct PreparedTriangleSolidComponentConsensusAuditReport {
     pub row_candidate_schedule_matches: bool,
     /// Whether retained row-cache hits and misses account for attempted rows.
     pub row_cache_accounting_matches: bool,
+    /// Whether component row-window scheduling is accounted for as a subset of
+    /// exact candidate scheduling.
+    pub row_window_accounting_matches: bool,
     /// Whether row candidate AABB rejections replay the row AABB rejection
     /// counter exactly.
     pub row_candidate_rejections_match: bool,
@@ -76,6 +79,10 @@ pub fn audit_prepared_triangle_solid_component_consensus(
     };
     let row_candidate_schedule_matches = report.row_candidate_scheduled_rows == 0
         || report.row_candidate_scheduled_rows + report.row_cache_hits == attempted_rows;
+    let row_window_accounting_matches = report.row_window_scheduled_rows == 0
+        || (report.row_window_scheduled_rows == report.row_candidate_scheduled_rows
+            && report.row_window_aabb_rejections <= report.row_candidate_aabb_rejections
+            && report.row_cache_broadened_misses <= report.row_cache_misses);
     let row_candidate_rejections_match = report.row_candidate_scheduled_rows == 0
         || report.row_candidate_aabb_rejections == report.row_ray_aabb_rejections;
     let row_outcomes_match = attempted_rows
@@ -90,6 +97,7 @@ pub fn audit_prepared_triangle_solid_component_consensus(
         && retry_subset_matches
         && row_candidate_schedule_matches
         && row_cache_accounting_matches
+        && row_window_accounting_matches
         && row_candidate_rejections_match
         && row_outcomes_match
         && no_component_blockers
@@ -101,6 +109,7 @@ pub fn audit_prepared_triangle_solid_component_consensus(
         retry_subset_matches,
         row_candidate_schedule_matches,
         row_cache_accounting_matches,
+        row_window_accounting_matches,
         row_candidate_rejections_match,
         row_outcomes_match,
         no_component_blockers,
@@ -131,7 +140,9 @@ mod tests {
             axis_sweep_rows: [1, 1, 0],
             axis_certified_sweep_rows: [1, 1, 0],
             row_candidate_scheduled_rows: 2,
+            row_window_scheduled_rows: 2,
             row_candidate_aabb_rejections: 7,
+            row_window_aabb_rejections: 1,
             row_ray_aabb_rejections: 7,
             ..PreparedTriangleSolidComponentConsensusVoxelizationReport::default()
         }
@@ -146,6 +157,7 @@ mod tests {
         assert!(audit.retry_subset_matches);
         assert!(audit.row_candidate_schedule_matches);
         assert!(audit.row_cache_accounting_matches);
+        assert!(audit.row_window_accounting_matches);
         assert!(audit.row_candidate_rejections_match);
         assert!(audit.row_outcomes_match);
         assert!(audit.no_component_blockers);
@@ -193,6 +205,7 @@ mod tests {
         report.row_cache_hits = 1;
         report.row_cache_misses = 1;
         report.row_candidate_scheduled_rows = 1;
+        report.row_window_scheduled_rows = 1;
 
         let audit = audit_prepared_triangle_solid_component_consensus(&report);
 
@@ -212,6 +225,17 @@ mod tests {
         let audit = audit_prepared_triangle_solid_component_consensus(&report);
 
         assert!(!audit.row_cache_accounting_matches);
+        assert!(!audit.exact_component_consensus_audit_ready);
+    }
+
+    #[test]
+    fn audit_rejects_window_rows_outside_candidate_schedule() {
+        let mut report = valid_report();
+        report.row_window_scheduled_rows = report.row_candidate_scheduled_rows + 1;
+
+        let audit = audit_prepared_triangle_solid_component_consensus(&report);
+
+        assert!(!audit.row_window_accounting_matches);
         assert!(!audit.exact_component_consensus_audit_ready);
     }
 

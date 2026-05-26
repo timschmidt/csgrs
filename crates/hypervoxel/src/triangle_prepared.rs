@@ -18,7 +18,10 @@ use hyperlimit::{
 
 use hyperreal::Real;
 
-use crate::ray_schedule::{RayAabbIntersection, classify_ray_aabb_intersection};
+use crate::ray_schedule::{
+    RayAabbIntersection, RayAabbWindowIntersection, classify_ray_aabb_intersection,
+    classify_ray_aabb_intersection_from_lower,
+};
 use crate::triangle_component_audit::{
     PreparedTriangleSolidComponentConsensusAuditReport,
     audit_prepared_triangle_solid_component_consensus,
@@ -1616,20 +1619,37 @@ pub fn voxelize_prepared_exact_triangle_solid_mesh_by_local_component_consensus(
                         let row_origin = VoxelAddress::new(frame.depth(), origin_coords)?
                             .bounds(&frame)?
                             .center();
+                        let min_axis_coord = indices
+                            .iter()
+                            .map(|&component_index| component[component_index][axis])
+                            .min()
+                            .expect("component row has at least one cell");
+                        let mut min_axis_coords = component[indices[0]];
+                        min_axis_coords[axis] = min_axis_coord;
+                        let min_axis_threshold = VoxelAddress::new(frame.depth(), min_axis_coords)?
+                            .bounds(&frame)?
+                            .center()[axis]
+                            .clone()
+                            - &row_origin[axis];
                         component_report.row_cache_lookups += 1;
                         let row_key = ComponentAxisRowKey::new(axis, row_key);
-                        let (row, cache_hit) = row_cache.get_or_insert_with(row_key, || {
-                            classify_component_consensus_axis_row_with_candidate_schedule(
-                                axis,
-                                &row_origin,
-                                prepared,
-                                &mut component_report,
-                            )
-                        })?;
+                        let (row, cache_hit, broadened_miss) = row_cache
+                            .get_or_insert_window_with(row_key, min_axis_coord, || {
+                                classify_component_consensus_axis_row_with_candidate_schedule(
+                                    axis,
+                                    &row_origin,
+                                    &min_axis_threshold,
+                                    prepared,
+                                    &mut component_report,
+                                )
+                            })?;
                         if cache_hit {
                             component_report.row_cache_hits += 1;
                         } else {
                             component_report.row_cache_misses += 1;
+                            if broadened_miss {
+                                component_report.row_cache_broadened_misses += 1;
+                            }
                         }
 
                         match row {
@@ -1940,20 +1960,37 @@ pub fn voxelize_prepared_exact_triangle_solid_mesh_by_adaptive_local_component_c
                         let row_origin = VoxelAddress::new(frame.depth(), origin_coords)?
                             .bounds(&frame)?
                             .center();
+                        let min_axis_coord = indices
+                            .iter()
+                            .map(|&component_index| component[component_index][axis])
+                            .min()
+                            .expect("component row has at least one cell");
+                        let mut min_axis_coords = component[indices[0]];
+                        min_axis_coords[axis] = min_axis_coord;
+                        let min_axis_threshold = VoxelAddress::new(frame.depth(), min_axis_coords)?
+                            .bounds(&frame)?
+                            .center()[axis]
+                            .clone()
+                            - &row_origin[axis];
                         component_report.row_cache_lookups += 1;
                         let row_key = ComponentAxisRowKey::new(axis, row_key);
-                        let (row, cache_hit) = row_cache.get_or_insert_with(row_key, || {
-                            classify_component_consensus_axis_row_with_candidate_schedule(
-                                axis,
-                                &row_origin,
-                                prepared,
-                                &mut component_report,
-                            )
-                        })?;
+                        let (row, cache_hit, broadened_miss) = row_cache
+                            .get_or_insert_window_with(row_key, min_axis_coord, || {
+                                classify_component_consensus_axis_row_with_candidate_schedule(
+                                    axis,
+                                    &row_origin,
+                                    &min_axis_threshold,
+                                    prepared,
+                                    &mut component_report,
+                                )
+                            })?;
                         if cache_hit {
                             component_report.row_cache_hits += 1;
                         } else {
                             component_report.row_cache_misses += 1;
+                            if broadened_miss {
+                                component_report.row_cache_broadened_misses += 1;
+                            }
                         }
 
                         match row {
@@ -2723,13 +2760,23 @@ pub struct PreparedTriangleSolidComponentConsensusVoxelizationReport {
     /// Component-local row certificate lookups that had to run the exact row
     /// scheduler and then retain the result.
     pub row_cache_misses: usize,
+    /// Cache misses caused by a retained row certificate whose lower row
+    /// window started after the current row segment, requiring a broader exact
+    /// replay before it could be reused.
+    pub row_cache_broadened_misses: usize,
     /// Component-local rows whose triangle candidate set was built by exact
     /// ray/AABB slab replay before narrow ray/triangle predicates.
     pub row_candidate_scheduled_rows: usize,
+    /// Component-local rows scheduled with an exact lower-bound window at the
+    /// first component cell center on that row.
+    pub row_window_scheduled_rows: usize,
     /// Triangle candidates admitted to those exact row schedules.
     pub row_candidate_triangles: usize,
     /// Triangles rejected from row schedules by exact ray/AABB slab replay.
     pub row_candidate_aabb_rejections: usize,
+    /// Triangle AABBs rejected specifically because their exact row interval
+    /// exits before the first component cell center on the row.
+    pub row_window_aabb_rejections: usize,
     /// Exact ray/AABB broad-phase rejections consumed by component-consensus
     /// row sweeps.
     pub row_ray_aabb_rejections: usize,
@@ -3085,6 +3132,7 @@ fn classify_component_consensus_axis_row_against_prepared_triangle_solid(
 fn classify_component_consensus_axis_row_with_candidate_schedule(
     axis: usize,
     row_origin: &[Real; 3],
+    min_axis_threshold: &Real,
     prepared: &PreparedExactTriangleSolidMesh,
     component_report: &mut PreparedTriangleSolidComponentConsensusVoxelizationReport,
 ) -> HypervoxelResult<AxisRowParity> {
@@ -3094,13 +3142,24 @@ fn classify_component_consensus_axis_row_with_candidate_schedule(
     let mut candidates = Vec::new();
 
     component_report.row_candidate_scheduled_rows += 1;
+    component_report.row_window_scheduled_rows += 1;
     for (triangle_index, triangle) in prepared.triangles.iter().enumerate() {
-        match classify_ray_aabb_intersection(row_origin, &direction_components, &triangle.bounds)? {
-            RayAabbIntersection::Disjoint => {
+        match classify_ray_aabb_intersection_from_lower(
+            row_origin,
+            &direction_components,
+            &triangle.bounds,
+            min_axis_threshold,
+        )? {
+            RayAabbWindowIntersection::Disjoint => {
                 component_report.row_candidate_aabb_rejections += 1;
                 component_report.row_ray_aabb_rejections += 1;
             }
-            RayAabbIntersection::Intersects => candidates.push(triangle_index),
+            RayAabbWindowIntersection::BeforeLower => {
+                component_report.row_candidate_aabb_rejections += 1;
+                component_report.row_ray_aabb_rejections += 1;
+                component_report.row_window_aabb_rejections += 1;
+            }
+            RayAabbWindowIntersection::Intersects => candidates.push(triangle_index),
         }
     }
     component_report.row_candidate_triangles += candidates.len();

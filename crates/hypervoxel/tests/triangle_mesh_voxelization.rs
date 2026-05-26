@@ -152,6 +152,12 @@ fn assert_component_row_cache_accounting(
         report.row_cache_hits + report.row_cache_misses,
         report.row_cache_lookups
     );
+    assert_eq!(
+        report.row_window_scheduled_rows,
+        report.row_candidate_scheduled_rows
+    );
+    assert!(report.row_window_aabb_rejections <= report.row_candidate_aabb_rejections);
+    assert!(report.row_cache_broadened_misses <= report.row_cache_misses);
 }
 
 fn sheared_box_surface(min: i64, max: i64, frame: &GridFrame) -> ExactTriangleSurfaceMesh {
@@ -900,6 +906,7 @@ fn local_component_consensus_schedules_only_component_rows() {
     assert_component_row_cache_accounting(&local_component);
     assert!(local_component.row_candidate_triangles > 0);
     assert!(local_component.row_candidate_aabb_rejections > 0);
+    assert!(local_component.row_window_aabb_rejections > 0);
     assert_eq!(
         local_component.row_candidate_aabb_rejections,
         local_component.row_ray_aabb_rejections
@@ -926,6 +933,7 @@ fn local_component_consensus_schedules_only_component_rows() {
             .exact_component_consensus_audit_ready
     );
     assert!(verified.component_audit.row_cache_accounting_matches);
+    assert!(verified.component_audit.row_window_accounting_matches);
     assert!(verified.component_audit.row_candidate_schedule_matches);
     assert!(verified.component_audit.row_candidate_rejections_match);
     assert_eq!(verified.component_consensus, local_component);
@@ -1011,6 +1019,7 @@ fn adaptive_local_component_consensus_stops_after_complete_component_proof() {
     assert_component_row_cache_accounting(&adaptive_component);
     assert!(adaptive_component.row_candidate_triangles > 0);
     assert!(adaptive_component.row_candidate_aabb_rejections > 0);
+    assert!(adaptive_component.row_window_aabb_rejections > 0);
     assert_eq!(
         adaptive_component.row_candidate_aabb_rejections,
         adaptive_component.row_ray_aabb_rejections
@@ -1032,6 +1041,7 @@ fn adaptive_local_component_consensus_stops_after_complete_component_proof() {
             .exact_component_consensus_audit_ready
     );
     assert!(verified.component_audit.row_cache_accounting_matches);
+    assert!(verified.component_audit.row_window_accounting_matches);
     assert!(verified.component_audit.component_accounting_matches);
     assert!(verified.component_audit.retry_subset_matches);
     assert_eq!(verified.component_consensus, adaptive_component);
@@ -1088,6 +1098,7 @@ fn local_component_consensus_reuses_exact_row_certificates_across_components() {
     );
     assert!(local_component.row_cache_misses > 0);
     assert!(local_component.row_candidate_triangles > 0);
+    assert!(local_component.row_window_aabb_rejections > 0);
     assert!(local_component.row_votes > 0);
     assert_eq!(local_component.fallback_unknown_cells, 0);
     assert_eq!(local_component.fallback_boundary_regression_cells, 0);
@@ -1108,6 +1119,7 @@ fn local_component_consensus_reuses_exact_row_certificates_across_components() {
             .exact_component_consensus_audit_ready
     );
     assert!(verified.component_audit.row_cache_accounting_matches);
+    assert!(verified.component_audit.row_window_accounting_matches);
     assert!(verified.component_audit.row_candidate_schedule_matches);
     assert!(verified.component_audit.row_candidate_rejections_match);
     assert!(verified.exact_verified_component_consensus_ready);

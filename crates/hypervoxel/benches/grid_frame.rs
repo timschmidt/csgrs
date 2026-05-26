@@ -439,6 +439,11 @@ fn bench_exact_box_voxelization(c: &mut Criterion) {
         row_cache_probe.row_cache_hits + row_cache_probe.row_cache_misses,
         row_cache_probe.row_cache_lookups
     );
+    assert_eq!(
+        row_cache_probe.row_window_scheduled_rows,
+        row_cache_probe.row_candidate_scheduled_rows
+    );
+    assert!(row_cache_probe.row_window_aabb_rejections > 0);
     c.bench_function("prepared_triangle_solid_component_consensus_audit", |b| {
         b.iter(|| {
             audit_prepared_triangle_solid_component_consensus(black_box(

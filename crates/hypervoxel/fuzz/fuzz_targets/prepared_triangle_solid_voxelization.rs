@@ -312,6 +312,12 @@ fuzz_target!(|data: (u8, u8, u8, bool)| {
         local_component.row_cache_lookups
     );
     assert_eq!(
+        local_component.row_window_scheduled_rows,
+        local_component.row_candidate_scheduled_rows
+    );
+    assert!(local_component.row_window_aabb_rejections <= local_component.row_candidate_aabb_rejections);
+    assert!(local_component.row_cache_broadened_misses <= local_component.row_cache_misses);
+    assert_eq!(
         local_component.row_candidate_aabb_rejections,
         local_component.row_ray_aabb_rejections
     );
@@ -324,6 +330,7 @@ fuzz_target!(|data: (u8, u8, u8, bool)| {
         .component_audit
         .exact_component_consensus_audit_ready);
     assert!(verified_local.component_audit.row_cache_accounting_matches);
+    assert!(verified_local.component_audit.row_window_accounting_matches);
     assert_eq!(
         adaptive_local.consensus_cells
             + adaptive_local.exterior_cells
@@ -351,6 +358,15 @@ fuzz_target!(|data: (u8, u8, u8, bool)| {
         adaptive_local.row_cache_lookups
     );
     assert_eq!(
+        adaptive_local.row_window_scheduled_rows,
+        adaptive_local.row_candidate_scheduled_rows
+    );
+    assert!(
+        adaptive_local.row_window_aabb_rejections
+            <= adaptive_local.row_candidate_aabb_rejections
+    );
+    assert!(adaptive_local.row_cache_broadened_misses <= adaptive_local.row_cache_misses);
+    assert_eq!(
         adaptive_local.row_candidate_aabb_rejections,
         adaptive_local.row_ray_aabb_rejections
     );
@@ -365,4 +381,7 @@ fuzz_target!(|data: (u8, u8, u8, bool)| {
     assert!(verified_adaptive_local
         .component_audit
         .row_cache_accounting_matches);
+    assert!(verified_adaptive_local
+        .component_audit
+        .row_window_accounting_matches);
 });
