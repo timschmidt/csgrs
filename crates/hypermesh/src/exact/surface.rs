@@ -9612,6 +9612,16 @@ fn coplanar_surface_difference_polygons(
                     {
                         opened
                     } else if let Some(remnants) =
+                        materialize_crossing_side_cutter_multi_component_difference_consuming_hole_contact_groups(
+                            component,
+                            &cutter_indices,
+                            &holes,
+                            &right_components,
+                            "coplanar crossing side-cutter consumed straddling-hole difference",
+                        )
+                    {
+                        remnants
+                    } else if let Some(remnants) =
                         materialize_side_cutter_multi_component_difference_consuming_holes(
                             component,
                             &cutter_indices,
@@ -14028,6 +14038,17 @@ pub fn arrange_coplanar_convex_surface_component_holed_difference(
                 continue;
             }
             if let Some(split_components) =
+                materialize_crossing_side_cutter_component_holed_difference_consuming_hole_contact_groups(
+                    component,
+                    &cut_indices,
+                    &holes,
+                    &right_components,
+                )
+            {
+                components.extend(split_components);
+                continue;
+            }
+            if let Some(split_components) =
                 materialize_crossing_side_cutter_multi_component_holed_difference(
                     component,
                     &cut_indices,
@@ -15954,6 +15975,246 @@ fn materialize_side_cutter_opening_difference_consuming_holes(
         return None;
     }
     Some(vec![opening])
+}
+
+/// Replay proper-crossing side cutters that consume straddling strict holes.
+///
+/// The ordinary crossing side-cutter split starts from clipped cutter loops
+/// only, then assigns unrelated strict holes to retained output loops. This
+/// helper owns the harder retained-object case where a strict right-side ring
+/// positively overlaps the crossing cutter group and must first be unioned
+/// into the removed object. A group is promoted only when it contains at least
+/// two side cutters with an exact proper boundary crossing, contains a
+/// contacted hole, replays as one simple source-owned removed loop, and the
+/// later source subtraction satisfies the exact area equation.
+///
+/// This is not a general planar-cell extractor. It is the same Yap boundary
+/// used throughout this module: "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997), treats topology as certified object
+/// state, so the deleted ring is admitted only after exact contact predicates
+/// name the removed object. The retained boundary stitch is the
+/// Weiler-Atherton construction, Weiler and Atherton, "Hidden Surface Removal
+/// Using Polygon Area Sorting," *SIGGRAPH Computer Graphics* 11.2 (1977);
+/// proper crossing/contact dimensionality uses orientation-predicate segment
+/// classification in the style of Guigue and Devillers, "Fast and Robust
+/// Triangle-Triangle Overlap Test Using Orientation Predicates," *Journal of
+/// Graphics Tools* 8.1 (2003).
+#[cfg(feature = "exact-triangulation")]
+fn materialize_crossing_side_cutter_straddling_hole_replay(
+    component: &ConvexUnionComponent,
+    cut_indices: &[usize],
+    holes: &[ComponentHoleCandidate],
+    right_components: &[ConvexUnionComponent],
+    label: &'static str,
+) -> Option<(Vec<Vec<Point3>>, Vec<Vec<Point3>>, Vec<Vec<Point3>>)> {
+    if cut_indices.len() < 2 || holes.is_empty() {
+        return None;
+    }
+    let projection = component.projection;
+    let mut regions = Vec::with_capacity(cut_indices.len() + holes.len());
+    let mut clipped_cutters = Vec::with_capacity(cut_indices.len());
+    let mut all_clipped_cutters_are_rectangles = true;
+    for &right_index in cut_indices {
+        let mut clipped = convex_polygon_intersection_boundary(
+            &right_components.get(right_index)?.hull,
+            &component.hull,
+            projection,
+        )?;
+        if clipped.len() < 3 {
+            return None;
+        }
+        orient_polygon_ccw(&mut clipped, projection)?;
+        clipped = simplify_projected_polygon(clipped, projection);
+        validate_projected_simple_loop(&clipped, projection, label).ok()?;
+        all_clipped_cutters_are_rectangles &=
+            projected_axis_aligned_rectangle(&clipped, projection).is_some();
+        clipped_cutters.push(clipped.clone());
+        regions.push(RemovedRegionCandidate {
+            right_index,
+            is_cutter: true,
+            region: clipped,
+        });
+    }
+    if all_clipped_cutters_are_rectangles
+        || !simple_loops_have_proper_boundary_crossing(&clipped_cutters, projection)?
+    {
+        return None;
+    }
+
+    for hole in holes {
+        if !polygon_strictly_inside_convex_polygon(&hole.ring, &component.hull, projection)? {
+            return None;
+        }
+        let mut region = hole.ring.clone();
+        orient_polygon_ccw(&mut region, projection)?;
+        region = simplify_projected_polygon(region, projection);
+        validate_projected_simple_loop(&region, projection, label).ok()?;
+        regions.push(RemovedRegionCandidate {
+            right_index: hole.right_index,
+            is_cutter: false,
+            region,
+        });
+    }
+
+    let mut contact_graph = UnionFind::new(regions.len());
+    for left in 0..regions.len() {
+        for right in left + 1..regions.len() {
+            match simple_polygon_interaction(
+                &regions[left].region,
+                &regions[right].region,
+                projection,
+            )? {
+                SimplePolygonInteraction::Disjoint => {}
+                SimplePolygonInteraction::PointOnly => return None,
+                SimplePolygonInteraction::Connected => contact_graph.union(left, right),
+            }
+        }
+    }
+
+    let mut groups: Vec<(usize, Vec<usize>)> = Vec::new();
+    for index in 0..regions.len() {
+        let root = contact_graph.find(index);
+        if let Some((_, members)) = groups.iter_mut().find(|(candidate, _)| *candidate == root) {
+            members.push(index);
+        } else {
+            groups.push((root, vec![index]));
+        }
+    }
+    groups.sort_by_key(|(_, members)| members.first().copied().unwrap_or(usize::MAX));
+
+    let mut retained_holes = Vec::new();
+    let mut removed_openings = Vec::new();
+    let mut saw_crossing_consumed_group = false;
+    for (_, group) in groups {
+        let cutter_count = group
+            .iter()
+            .filter(|&&index| regions[index].is_cutter)
+            .count();
+        let hole_count = group
+            .iter()
+            .filter(|&&index| !regions[index].is_cutter)
+            .count();
+        if cutter_count == 0 {
+            if hole_count != 1 || group.len() != 1 {
+                return None;
+            }
+            let mut retained = regions[group[0]].region.clone();
+            orient_polygon_cw(&mut retained, projection)?;
+            retained_holes.push(retained);
+            continue;
+        }
+
+        let group_cutters = group
+            .iter()
+            .filter(|&&index| regions[index].is_cutter)
+            .map(|&index| regions[index].region.clone())
+            .collect::<Vec<_>>();
+        if hole_count > 0
+            && cutter_count > 1
+            && simple_loops_have_proper_boundary_crossing(&group_cutters, projection)?
+        {
+            saw_crossing_consumed_group = true;
+        }
+
+        let mut opening = if group.len() == 1 {
+            regions[group[0]].region.clone()
+        } else {
+            let polygons = group
+                .iter()
+                .map(|&index| regions[index].region.clone())
+                .collect::<Vec<_>>();
+            let all = (0..polygons.len()).collect::<Vec<_>>();
+            materialize_simple_polygon_union_group(&polygons, &all, projection, label)?
+        };
+        orient_polygon_ccw(&mut opening, projection)?;
+        opening = simplify_projected_polygon(opening, projection);
+        validate_projected_simple_loop(&opening, projection, label).ok()?;
+        if convex_boundary_attachment_count(&component.hull, &opening, projection)? == 0 {
+            return None;
+        }
+        for point in &opening {
+            if convex_polygon_location(point, &component.hull, projection)?
+                == ConvexPolygonLocation::Outside
+            {
+                return None;
+            }
+        }
+        removed_openings.push(opening);
+    }
+    if !saw_crossing_consumed_group {
+        return None;
+    }
+
+    let mut cut_polygons = multi_side_opened_difference_polygons(
+        &component.hull,
+        &removed_openings,
+        projection,
+        label,
+    )?;
+    if cut_polygons.len() < 2 {
+        return None;
+    }
+    for polygon in &mut cut_polygons {
+        orient_polygon_ccw(polygon, projection)?;
+        validate_projected_simple_loop(polygon, projection, label).ok()?;
+    }
+    let holes_by_cut =
+        assign_holes_to_cut_component_outputs(&retained_holes, &cut_polygons, projection)?;
+    let retained_holes = holes_by_cut.into_iter().flatten().collect::<Vec<_>>();
+    Some((removed_openings, cut_polygons, retained_holes))
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn materialize_crossing_side_cutter_component_holed_difference_consuming_hole_contact_groups(
+    component: &ConvexUnionComponent,
+    cut_indices: &[usize],
+    holes: &[ComponentHoleCandidate],
+    right_components: &[ConvexUnionComponent],
+) -> Option<Vec<CoplanarConvexHoledComponent>> {
+    let label = "coplanar component-holed crossing side-cutter straddling-hole split";
+    let (removed_openings, cut_polygons, retained_holes) =
+        materialize_crossing_side_cutter_straddling_hole_replay(
+            component,
+            cut_indices,
+            holes,
+            right_components,
+            label,
+        )?;
+    let holes_by_cut = assign_holes_to_side_cutter_split_outputs(
+        &retained_holes,
+        &cut_polygons,
+        &removed_openings,
+        component.projection,
+    )?;
+    Some(
+        cut_polygons
+            .into_iter()
+            .zip(holes_by_cut)
+            .map(|(outer, holes)| CoplanarConvexHoledComponent { outer, holes })
+            .collect(),
+    )
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn materialize_crossing_side_cutter_multi_component_difference_consuming_hole_contact_groups(
+    component: &ConvexUnionComponent,
+    cut_indices: &[usize],
+    holes: &[ComponentHoleCandidate],
+    right_components: &[ConvexUnionComponent],
+    label: &'static str,
+) -> Option<Vec<Vec<Point3>>> {
+    let (_, cut_polygons, retained_holes) =
+        materialize_crossing_side_cutter_straddling_hole_replay(
+            component,
+            cut_indices,
+            holes,
+            right_components,
+            label,
+        )?;
+    if !retained_holes.is_empty() {
+        return None;
+    }
+    Some(cut_polygons)
 }
 
 /// Replay a non-rectilinear side-cutter split while owning strict holes.

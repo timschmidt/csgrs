@@ -4688,6 +4688,20 @@ fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
             ValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap();
+        let crossing_side_cutter_straddling_hole_right = ExactMesh::from_i64_triangles_with_policy(
+            &[
+                12, 12, 0, 18, 12, 0, 18, 18, 0, 12, 18, 0, //
+                -4, 8, 0, 34, 18, 0, 34, 22, 0, -4, 12, 0, //
+                8, -4, 0, 12, -4, 0, 22, 34, 0, 18, 34, 0,
+            ],
+            &[
+                0, 1, 2, 0, 2, 3, //
+                4, 5, 6, 4, 6, 7, //
+                8, 9, 10, 8, 10, 11,
+            ],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
         let component_holed_left = ExactMesh::from_i64_triangles_with_policy(
             &[
                 0, 0, 0, 10, 0, 0, 10, 10, 0, 0, 10, 0, //
@@ -6624,6 +6638,29 @@ fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
                         hypermesh::exact::boolean_exact(
                             &crossing_side_cutter_left,
                             &crossing_side_cutter_holed_right,
+                            hypermesh::exact::ExactBooleanOperation::Difference,
+                            ValidationPolicy::ALLOW_BOUNDARY,
+                        )
+                        .unwrap(),
+                        arrange_coplanar_surface_multi_difference(
+                            &crossing_side_cutter_left,
+                            &crossing_side_cutter_straddling_hole_right,
+                        )
+                        .map(|output| {
+                            output.validate_difference_against_sources(
+                                &crossing_side_cutter_left,
+                                &crossing_side_cutter_straddling_hole_right,
+                            )
+                        }),
+                        hypermesh::exact::preflight_boolean_exact(
+                            &crossing_side_cutter_left,
+                            &crossing_side_cutter_straddling_hole_right,
+                            hypermesh::exact::ExactBooleanOperation::Difference,
+                        )
+                        .map(|report| report.validate()),
+                        hypermesh::exact::boolean_exact(
+                            &crossing_side_cutter_left,
+                            &crossing_side_cutter_straddling_hole_right,
                             hypermesh::exact::ExactBooleanOperation::Difference,
                             ValidationPolicy::ALLOW_BOUNDARY,
                         )

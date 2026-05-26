@@ -5322,6 +5322,52 @@ fn exercise_consumed_hole_side_cutter_openings() {
         ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
     );
 
+    let crossing_straddling_hole_right = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            12, 12, 0, 18, 12, 0, 18, 18, 0, 12, 18, 0, //
+            -4, 8, 0, 34, 18, 0, 34, 22, 0, -4, 12, 0, //
+            8, -4, 0, 12, -4, 0, 22, 34, 0, 18, 34, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7, //
+            8, 9, 10, 8, 10, 11,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("crossing straddling-hole right fixture must import");
+    assert!(
+        arrange_coplanar_convex_surface_component_holed_difference(
+            &crossing_side_cutter_left,
+            &crossing_straddling_hole_right,
+        )
+        .is_none()
+    );
+    let crossing_straddling_difference = arrange_coplanar_surface_multi_difference(
+        &crossing_side_cutter_left,
+        &crossing_straddling_hole_right,
+    )
+    .expect("crossing side cutters should consume a straddling strict hole");
+    crossing_straddling_difference.validate().unwrap();
+    crossing_straddling_difference
+        .validate_difference_against_sources(
+            &crossing_side_cutter_left,
+            &crossing_straddling_hole_right,
+        )
+        .unwrap();
+    assert_eq!(crossing_straddling_difference.polygons.len(), 4);
+    let crossing_straddling_preflight = preflight_boolean_exact(
+        &crossing_side_cutter_left,
+        &crossing_straddling_hole_right,
+        ExactBooleanOperation::Difference,
+    )
+    .expect("crossing straddling-hole preflight should classify multi-difference shortcut");
+    crossing_straddling_preflight.validate().unwrap();
+    assert_eq!(
+        crossing_straddling_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarSurfaceMultiDifference
+    );
+
     let multi_branch_left = ExactMesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 30, 0, 0, 30, 30, 0, 0, 30, 0],
         &[0, 1, 2, 0, 2, 3],
