@@ -4851,6 +4851,39 @@ fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
         )
         .unwrap()
         .mesh;
+        let same_outer_simple_component_origin = (0, 0, 0);
+        let same_outer_simple_component_basis_u = (2, 1, 0);
+        let same_outer_simple_component_basis_v = (-1, 2, 0);
+        let same_outer_simple_component_outer = affine_rect_surface_i64(
+            &[(0, 0, 14, 14)],
+            same_outer_simple_component_origin,
+            same_outer_simple_component_basis_u,
+            same_outer_simple_component_basis_v,
+        );
+        let same_outer_simple_component_left_hole = affine_rect_surface_i64(
+            &[(7, 4, 13, 12)],
+            same_outer_simple_component_origin,
+            same_outer_simple_component_basis_u,
+            same_outer_simple_component_basis_v,
+        );
+        let same_outer_simple_component_right_hole = affine_rect_surface_i64(
+            &[(3, 2, 12, 5), (8, 5, 12, 10)],
+            same_outer_simple_component_origin,
+            same_outer_simple_component_basis_u,
+            same_outer_simple_component_basis_v,
+        );
+        let same_outer_simple_component_left = arrange_coplanar_affine_surface_difference(
+            &same_outer_simple_component_outer,
+            &same_outer_simple_component_left_hole,
+        )
+        .unwrap()
+        .mesh;
+        let same_outer_simple_component_right = arrange_coplanar_affine_surface_difference(
+            &same_outer_simple_component_outer,
+            &same_outer_simple_component_right_hole,
+        )
+        .unwrap()
+        .mesh;
         let same_outer_crossing_multi_holes = ExactMesh::from_i64_triangles_with_policy(
             &[
                 1, 1, 0, 2, 1, 0, 2, 2, 0, 1, 2, 0, //
@@ -6791,6 +6824,22 @@ fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
                         hypermesh::exact::preflight_boolean_exact(
                             &same_outer_mixed_component_left,
                             &same_outer_mixed_component_right,
+                            hypermesh::exact::ExactBooleanOperation::Difference,
+                        )
+                        .map(|report| report.validate()),
+                        arrange_coplanar_surface_component_difference(
+                            &same_outer_simple_component_left,
+                            &same_outer_simple_component_right,
+                        )
+                        .map(|output| {
+                            output.validate_component_difference_against_sources(
+                                &same_outer_simple_component_left,
+                                &same_outer_simple_component_right,
+                            )
+                        }),
+                        hypermesh::exact::preflight_boolean_exact(
+                            &same_outer_simple_component_left,
+                            &same_outer_simple_component_right,
                             hypermesh::exact::ExactBooleanOperation::Difference,
                         )
                         .map(|report| report.validate()),

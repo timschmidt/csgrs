@@ -4680,13 +4680,16 @@ fn single_convex_cut_difference_polygon(
 /// `right_hole - union(left_holes)`, emitted as simple filled loops. The same
 /// retained-fragment path now accepts strictly convex nonrectangular
 /// positive-area partial overlaps when the clipped cutter attaches to the
-/// right-hole boundary and exact area replay certifies the simple output. If a
+/// right-hole boundary and exact area replay certifies the simple output.
+/// Rectilinear nonconvex right holes can also be replayed through the exact
+/// orthogonal cell path when every remnant is a simple filled loop. The next
+/// bounded fallback clips non-rectilinear nonconvex simple retained holes
+/// against simple left holes, but only when each clipped removed region is a
+/// side-attached simple opening and the retained result has no holes. If a
 /// right hole strictly contains a left hole, the output is holed and belongs
-/// to the component-holed artifact instead. Rectilinear nonconvex right holes
-/// can also be replayed through the exact orthogonal cell path when every
-/// remnant is a simple filled loop. If rings touch, cross, or overlap outside
-/// these bounded certificates, the case remains general planar-arrangement
-/// work.
+/// to the component-holed artifact instead. If rings touch, cross, or overlap
+/// outside these bounded certificates, the case remains general
+/// planar-arrangement work.
 ///
 /// The certificate follows Yap, "Towards Exact Geometric Computation,"
 /// *Computational Geometry* 7.1-2 (1997): source boundary rings are recovered
@@ -4700,9 +4703,12 @@ fn single_convex_cut_difference_polygon(
 /// (1977). The rectilinear overlap branch is the bounded orthogonal cell
 /// decomposition described by de Berg, Cheong, van Kreveld, and Overmars,
 /// *Computational Geometry: Algorithms and Applications*, 3rd ed. (2008),
-/// Chapter 2. Retained simple loops are triangulated through the same
-/// FIST-style earcut handoff described by Held, "FIST: Fast
-/// Industrial-Strength Triangulation of Polygons," *Algorithmica* 30 (2001).
+/// Chapter 2. The non-rectilinear simple fallback uses the same
+/// Weiler-Atherton retained-boundary walk, with exact simple-polygon
+/// containment tests, rather than sampled winding representatives. Retained
+/// simple loops are triangulated through the same FIST-style earcut handoff
+/// described by Held, "FIST: Fast Industrial-Strength Triangulation of
+/// Polygons," *Algorithmica* 30 (2001).
 #[cfg(feature = "exact-triangulation")]
 fn same_outer_holed_no_hole_difference_polygons(
     left: &ExactMesh,
@@ -4822,11 +4828,19 @@ fn same_outer_holed_no_hole_difference_rings(
         }
         if contributes {
             if requires_orthogonal_replay {
-                polygons.extend(same_outer_holed_orthogonal_no_hole_difference_polygons(
+                let remnants = same_outer_holed_orthogonal_no_hole_difference_polygons(
                     right_hole,
                     &connected_cutters,
                     projection,
-                )?);
+                )
+                .or_else(|| {
+                    same_outer_holed_simple_no_hole_difference_polygons(
+                        right_hole,
+                        &connected_cutters,
+                        projection,
+                    )
+                })?;
+                polygons.extend(remnants);
             } else if rectangular_cutters.is_empty() && convex_cutters.is_empty() {
                 let mut polygon = right_hole.clone();
                 orient_polygon_ccw(&mut polygon, projection)?;
@@ -4874,6 +4888,229 @@ fn same_outer_holed_no_hole_difference_rings(
         }
     }
     Some(polygons)
+}
+
+/// Replay a bounded simple retained-hole subtraction as filled loops.
+///
+/// Same-outer subtraction reduces `(outer - left_holes) - (outer -
+/// right_holes)` to `right_hole - left_holes`. The convex and orthogonal
+/// helpers above own the common simpler cases. This fallback is the bounded
+/// non-rectilinear nonconvex case: each left hole is clipped against the
+/// right retained hole by exact retained boundary fragments, the clipped
+/// removed regions must be side-attached simple loops, and the final
+/// subtraction may emit only simple no-hole filled components.
+///
+/// This is deliberately not arbitrary planar-cell extraction. It is the
+/// Weiler-Atherton retained-fragment construction from Weiler and Atherton,
+/// "Hidden Surface Removal Using Polygon Area Sorting," *SIGGRAPH Computer
+/// Graphics* 11.2 (1977), constrained by Yap's object/predicate discipline
+/// from "Towards Exact Geometric Computation," *Computational Geometry*
+/// 7.1-2 (1997): every intersection vertex is exact, every topological
+/// ownership claim is checked by exact simple-polygon predicates, and the
+/// final area equation must close before an artifact is emitted. Segment
+/// events use the orientation-predicate model of Guigue and Devillers,
+/// "Fast and Robust Triangle-Triangle Overlap Test Using Orientation
+/// Predicates," *Journal of Graphics Tools* 8.1 (2003); temporary
+/// simple-loop triangulation uses Held, "FIST: Fast Industrial-Strength
+/// Triangulation of Polygons," *Algorithmica* 30 (2001), through `hypertri`.
+#[cfg(feature = "exact-triangulation")]
+fn same_outer_holed_simple_no_hole_difference_polygons(
+    source: &[Point3],
+    cutters: &[Vec<Point3>],
+    projection: CoplanarProjection,
+) -> Option<Vec<Vec<Point3>>> {
+    if cutters.is_empty() {
+        return None;
+    }
+
+    let mut source = source.to_vec();
+    orient_polygon_ccw(&mut source, projection)?;
+    source = simplify_projected_polygon(source, projection);
+    validate_projected_simple_loop(
+        &source,
+        projection,
+        "coplanar same-outer simple no-hole difference source",
+    )
+    .ok()?;
+
+    let mut removed = Vec::new();
+    for cutter in cutters {
+        let mut clipped = simple_retained_hole_intersection_openings(
+            &source,
+            cutter,
+            projection,
+            "coplanar same-outer simple no-hole difference clipped opening",
+        )?;
+        removed.append(&mut clipped);
+    }
+    if removed.is_empty() {
+        return None;
+    }
+
+    for opening in &mut removed {
+        orient_polygon_ccw(opening, projection)?;
+        *opening = simplify_projected_polygon(core::mem::take(opening), projection);
+        validate_projected_simple_loop(
+            opening,
+            projection,
+            "coplanar same-outer simple no-hole difference opening",
+        )
+        .ok()?;
+        if !polygon_lies_in_closed_simple_polygon(opening, &source, projection)? {
+            return None;
+        }
+        if simple_boundary_attachment_count(&source, opening, projection)? == 0 {
+            return None;
+        }
+    }
+    validate_simple_component_loops_disjoint(
+        &removed,
+        projection,
+        "coplanar same-outer simple no-hole difference openings",
+    )
+    .ok()?;
+
+    let mut fragments = Vec::new();
+    collect_outer_difference_fragments(&source, &removed, projection, &mut fragments)?;
+    for index in 0..removed.len() {
+        collect_simple_removed_difference_fragments(
+            index,
+            &source,
+            &removed,
+            projection,
+            &mut fragments,
+        )?;
+    }
+    let mut polygons = if let Some(polygon) = stitch_simple_loop(fragments.clone(), projection) {
+        vec![polygon]
+    } else {
+        stitch_disjoint_simple_loops(fragments, projection)?
+    };
+    if polygons.is_empty() {
+        return None;
+    }
+
+    let mut output_area = ExactReal::from(0);
+    for polygon in &mut polygons {
+        orient_polygon_ccw(polygon, projection)?;
+        *polygon = simplify_projected_polygon(core::mem::take(polygon), projection);
+        validate_projected_simple_loop(
+            polygon,
+            projection,
+            "coplanar same-outer simple no-hole difference output",
+        )
+        .ok()?;
+        output_area = add(&output_area, &projected_area2_abs(polygon, projection)?);
+    }
+    validate_simple_component_loops_disjoint(
+        &polygons,
+        projection,
+        "coplanar same-outer simple no-hole difference output",
+    )
+    .ok()?;
+
+    let mut removed_area = ExactReal::from(0);
+    for opening in &removed {
+        removed_area = add(&removed_area, &projected_area2_abs(opening, projection)?);
+    }
+    let source_area = projected_area2_abs(&source, projection)?;
+    if compare_reals(&add(&output_area, &removed_area), &source_area).value()
+        != Some(Ordering::Equal)
+    {
+        return None;
+    }
+
+    sort_polygons_for_replay(&mut polygons, projection);
+    Some(polygons)
+}
+
+/// Clip one simple retained hole against another as removed openings.
+///
+/// The resulting loops are the positive-area components of `source ∩ cutter`.
+/// They are later subtracted from `source`, so the caller additionally checks
+/// side attachment and no-hole output. This helper only certifies the exact
+/// intersection boundary: source fragments whose midpoints lie in the cutter
+/// plus cutter fragments whose midpoints lie in the source. That is the
+/// retained-boundary fragment rule from Weiler-Atherton, promoted only under
+/// Yap's exact-object model.
+#[cfg(feature = "exact-triangulation")]
+fn simple_retained_hole_intersection_openings(
+    source: &[Point3],
+    cutter: &[Point3],
+    projection: CoplanarProjection,
+    label: &'static str,
+) -> Option<Vec<Vec<Point3>>> {
+    let mut cutter = cutter.to_vec();
+    orient_polygon_ccw(&mut cutter, projection)?;
+    cutter = simplify_projected_polygon(cutter, projection);
+    validate_projected_simple_loop(&cutter, projection, label).ok()?;
+
+    let mut fragments = Vec::new();
+    collect_simple_intersection_boundary_fragments(source, &cutter, projection, &mut fragments)?;
+    collect_simple_intersection_boundary_fragments(&cutter, source, projection, &mut fragments)?;
+
+    let mut openings = if let Some(opening) = stitch_simple_loop(fragments.clone(), projection) {
+        vec![opening]
+    } else {
+        stitch_disjoint_simple_loops(fragments, projection)?
+    };
+    if openings.is_empty() {
+        return None;
+    }
+    for opening in &mut openings {
+        orient_polygon_ccw(opening, projection)?;
+        *opening = simplify_projected_polygon(core::mem::take(opening), projection);
+        validate_projected_simple_loop(opening, projection, label).ok()?;
+        let area = projected_area2_abs(opening, projection)?;
+        if compare_reals(&area, &ExactReal::from(0)).value() != Some(Ordering::Greater) {
+            return None;
+        }
+    }
+    sort_polygons_for_replay(&mut openings, projection);
+    Some(openings)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn collect_simple_intersection_boundary_fragments(
+    polygon: &[Point3],
+    other: &[Point3],
+    projection: CoplanarProjection,
+    fragments: &mut Vec<DirectedFragment>,
+) -> Option<()> {
+    for edge in 0..polygon.len() {
+        let start = &polygon[edge];
+        let end = &polygon[(edge + 1) % polygon.len()];
+        let mut splits = vec![start.clone(), end.clone()];
+        for other_edge in 0..other.len() {
+            add_projected_edge_intersections(
+                start,
+                end,
+                &other[other_edge],
+                &other[(other_edge + 1) % other.len()],
+                projection,
+                &mut splits,
+            )?;
+        }
+        sort_points_along_segment(&mut splits, start, end, projection)?;
+        dedup_points(&mut splits);
+        for pair in splits.windows(2) {
+            let a = &pair[0];
+            let b = &pair[1];
+            if points_equal(a, b) {
+                continue;
+            }
+            let midpoint = midpoint3(a, b);
+            if simple_polygon_location(&midpoint, other, projection)?
+                != ConvexPolygonLocation::Outside
+            {
+                fragments.push(DirectedFragment {
+                    start: a.clone(),
+                    end: b.clone(),
+                });
+            }
+        }
+    }
+    Some(())
 }
 
 /// Replay a rectilinear same-outer retained-hole subtraction as filled loops.

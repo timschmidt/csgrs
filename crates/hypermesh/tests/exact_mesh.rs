@@ -27988,6 +27988,102 @@ fn exact_coplanar_component_difference_materializes_same_outer_single_hole_fill(
 
 #[cfg(feature = "exact-triangulation")]
 #[test]
+fn exact_coplanar_component_difference_replays_nonrectilinear_nonconvex_same_outer_fill() {
+    let origin = (0, 0, 0);
+    let basis_u = (2, 1, 0);
+    let basis_v = (-1, 2, 0);
+    let outer = affine_rect_surface_i64(&[(0, 0, 14, 14)], origin, basis_u, basis_v);
+    let crossing_left_hole = affine_rect_surface_i64(&[(7, 4, 13, 12)], origin, basis_u, basis_v);
+    let nonconvex_right_hole =
+        affine_rect_surface_i64(&[(3, 2, 12, 5), (8, 5, 12, 10)], origin, basis_u, basis_v);
+    let left =
+        hypermesh::exact::arrange_coplanar_affine_surface_difference(&outer, &crossing_left_hole)
+            .expect("crossing same-outer nonrectangular left hole should materialize")
+            .mesh;
+    let right =
+        hypermesh::exact::arrange_coplanar_affine_surface_difference(&outer, &nonconvex_right_hole)
+            .expect("nonconvex same-outer right hole should materialize")
+            .mesh;
+
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_component_holed_difference(&left, &right)
+            .is_none(),
+        "the remnant has no retained holes and belongs on the simple component artifact"
+    );
+    assert!(
+        hypermesh::exact::arrange_coplanar_orthogonal_surface_difference(&left, &right).is_none(),
+        "non-axis-aligned retained edges must not be claimed by the orthogonal materializer"
+    );
+
+    let difference = hypermesh::exact::arrange_coplanar_surface_component_difference(&left, &right)
+        .expect("nonrectilinear nonconvex same-outer overlap should replay as one no-hole loop");
+    difference.validate().unwrap();
+    difference
+        .validate_component_difference_against_sources(&left, &right)
+        .unwrap();
+    assert!(
+        difference.polygon.len() > 4,
+        "the retained loop should carry exact split vertices from the crossing"
+    );
+    assert_eq!(
+        difference.projection,
+        CoplanarProjection::Xy,
+        "the affine fixture stays in the xy plane while using non-axis-aligned retained edges"
+    );
+
+    let mut stale = difference.clone();
+    stale.polygon.reverse();
+    assert!(stale.validate().is_err());
+    assert!(
+        stale
+            .validate_component_difference_against_sources(&left, &right)
+            .is_err()
+    );
+
+    let preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .expect("nonrectilinear same-outer difference preflight should classify shortcut");
+    preflight.validate().unwrap();
+    preflight.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementDifference
+    );
+    hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("nonrectilinear same-outer component difference should materialize")
+    .validate_operation_against_sources(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
+
+    let strict_inner_left_hole = affine_rect_surface_i64(&[(4, 3, 6, 4)], origin, basis_u, basis_v);
+    let strict_inner_left = hypermesh::exact::arrange_coplanar_affine_surface_difference(
+        &outer,
+        &strict_inner_left_hole,
+    )
+    .expect("strict inner same-outer left hole should materialize")
+    .mesh;
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_component_difference(&strict_inner_left, &right)
+            .is_none(),
+        "a strict left hole inside the nonconvex right hole would create a retained hole"
+    );
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[test]
 fn exact_named_booleans_handle_empty_operands() {
     let empty =
         ExactMesh::from_i64_triangles_with_policy(&[], &[], ValidationPolicy::ALLOW_BOUNDARY)

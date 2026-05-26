@@ -3346,6 +3346,57 @@ fn exercise_same_outer_holed_coplanar_component_difference() {
     )
     .unwrap();
 
+    let origin = (0, 0, 0);
+    let basis_u = (2, 1, 0);
+    let basis_v = (-1, 2, 0);
+    let affine_outer = affine_rect_surface_i64(&[(0, 0, 14, 14)], origin, basis_u, basis_v);
+    let affine_crossing_left_hole =
+        affine_rect_surface_i64(&[(7, 4, 13, 12)], origin, basis_u, basis_v);
+    let affine_nonconvex_right_hole =
+        affine_rect_surface_i64(&[(3, 2, 12, 5), (8, 5, 12, 10)], origin, basis_u, basis_v);
+    let affine_left =
+        arrange_coplanar_affine_surface_difference(&affine_outer, &affine_crossing_left_hole)
+            .expect("affine same-outer left source should materialize")
+            .mesh;
+    let affine_right =
+        arrange_coplanar_affine_surface_difference(&affine_outer, &affine_nonconvex_right_hole)
+            .expect("affine same-outer nonconvex right source should materialize")
+            .mesh;
+    assert!(arrange_coplanar_orthogonal_surface_difference(&affine_left, &affine_right).is_none());
+    let affine_difference =
+        arrange_coplanar_surface_component_difference(&affine_left, &affine_right)
+            .expect("nonrectilinear nonconvex same-outer overlap should replay as one component");
+    affine_difference.validate().unwrap();
+    affine_difference
+        .validate_component_difference_against_sources(&affine_left, &affine_right)
+        .unwrap();
+    let affine_preflight =
+        preflight_boolean_exact(&affine_left, &affine_right, ExactBooleanOperation::Difference)
+            .expect("nonrectilinear nonconvex same-outer preflight should classify shortcut");
+    affine_preflight.validate().unwrap();
+    affine_preflight
+        .validate_against_sources(&affine_left, &affine_right)
+        .unwrap();
+    assert_eq!(
+        affine_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementDifference
+    );
+    hypermesh::exact::boolean_exact(
+        &affine_left,
+        &affine_right,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("nonrectilinear nonconvex same-outer component difference should materialize")
+    .validate_operation_against_sources(
+        &affine_left,
+        &affine_right,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
+
     let mixed_outer = ExactMesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 14, 0, 0, 14, 14, 0, 0, 14, 0],
         &[0, 1, 2, 0, 2, 3],
