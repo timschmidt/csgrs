@@ -18,8 +18,9 @@ use hyperpath::{
     LineRationalQuadraticBezierAlgebraicBreakpointSequenceClass,
     LineRationalQuadraticBezierAlgebraicBreakpointSequenceSource,
     LineRationalQuadraticBezierIntersectionClass, LineRationalQuadraticBezierInverseRootDomain,
-    LineRationalQuadraticBezierSupportOverlapMonotonicity, MixedCurveFragmentRef, QuadraticBezier,
-    RationalQuadraticBezier, arrange_cubic_beziers, arrange_line_segments_with_cubic_beziers,
+    LineRationalQuadraticBezierSupportOverlapMonotonicity, MixedCurveFragmentRef,
+    MixedCurveFragmentSeparationClass, QuadraticBezier, RationalQuadraticBezier,
+    arrange_cubic_beziers, arrange_line_segments_with_cubic_beziers,
     arrange_line_segments_with_mixed_beziers, arrange_line_segments_with_mixed_curves,
     arrange_line_segments_with_quadratic_beziers,
     arrange_line_segments_with_rational_quadratic_beziers, arrange_quadratic_beziers,
@@ -272,6 +273,12 @@ fuzz_target!(|data: &[u8]| {
         mixed_report.cell_graph.half_edges.len(),
         mixed_report.cell_graph.edges.len() * 2
     );
+    assert_eq!(mixed_report.fragment_separations.len(), 3);
+    assert!(mixed_report
+        .fragment_separations
+        .iter()
+        .all(|separation| separation.class
+            == MixedCurveFragmentSeparationClass::LeftBeforeRightX));
 
     let overlapping_mixed_error = arrange_line_segments_with_mixed_beziers(
         &[LinePathSegment::new(p(0, 0), p(8, 0))],
@@ -394,6 +401,17 @@ fuzz_target!(|data: &[u8]| {
             .len(),
         3
     );
+    assert_eq!(
+        mixed_promoted_conic_siblings_report
+            .fragment_separations
+            .len(),
+        3
+    );
+    assert!(mixed_promoted_conic_siblings_report
+        .fragment_separations
+        .iter()
+        .all(|separation| separation.class
+            == MixedCurveFragmentSeparationClass::SameSourceSibling));
 
     let overlapping_arc_error = arrange_line_segments_with_mixed_curves(
         &[LinePathSegment::new(p(0, 0), p(8, 0))],

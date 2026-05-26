@@ -103,6 +103,60 @@ pub enum MixedCurveFragmentRef {
     RationalQuadratic(usize),
 }
 
+/// Original non-line curve source for a mixed scheduler fragment.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum MixedCurveSourceRef {
+    /// Input explicit circular arc index.
+    ExplicitArc(usize),
+    /// Input quadratic Bezier index.
+    Quadratic(usize),
+    /// Input cubic Bezier index.
+    Cubic(usize),
+    /// Input rational quadratic conic index.
+    RationalQuadratic(usize),
+}
+
+/// Exact reason a pair of non-line fragments was accepted by the bounded mixed scheduler.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum MixedCurveFragmentSeparationClass {
+    /// Both fragments are exact sub-fragments of the same original curve.
+    SameSourceSibling,
+    /// The left fragment box is strictly before the right box on the x-axis.
+    LeftBeforeRightX,
+    /// The right fragment box is strictly before the left box on the x-axis.
+    RightBeforeLeftX,
+    /// The left fragment box is strictly below the right box on the y-axis.
+    LeftBelowRightY,
+    /// The right fragment box is strictly below the left box on the y-axis.
+    RightBelowLeftY,
+}
+
+/// Replay certificate for one accepted non-line fragment pair.
+///
+/// The bounded mixed scheduler still refuses general curve-curve topology.
+/// This certificate records why a retained pair was allowed into the shared
+/// graph: either both fragments are siblings emitted by one exact pairwise
+/// split scheduler, or an exact axis-aligned hull inequality separates two
+/// distinct sources. This follows Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997): accepted topology is accompanied by
+/// retained predicate evidence, and unsupported topology remains explicit.
+/// Same-source algebraic siblings arise from Collins-Loos isolated roots
+/// promoted by cubic/conic sub-schedulers, while Bezier/conic hulls retain the
+/// Farouki polynomial/rational curve-carrier discipline.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct MixedCurveFragmentSeparation {
+    /// Left non-line fragment in report fragment-index space.
+    pub left: MixedCurveFragmentRef,
+    /// Right non-line fragment in report fragment-index space.
+    pub right: MixedCurveFragmentRef,
+    /// Original curve source of `left`.
+    pub left_source: MixedCurveSourceRef,
+    /// Original curve source of `right`.
+    pub right_source: MixedCurveSourceRef,
+    /// Certified reason this pair was accepted.
+    pub class: MixedCurveFragmentSeparationClass,
+}
+
 /// Cached exact facts for a bounded mixed line/arc/Bezier/conic schedule.
 #[derive(Clone, Debug, PartialEq)]
 pub struct LineMixedBezierArrangementFacts {
@@ -236,6 +290,8 @@ pub struct LineMixedBezierArrangementReport {
     pub cubic_fragments: Vec<CubicBezierRealFragment>,
     /// Positive-length homogeneous conic fragments from the pairwise exact scheduler.
     pub rational_quadratic_fragments: Vec<RationalQuadraticBezierRealFragment>,
+    /// Certificates for every accepted non-line fragment pair.
+    pub fragment_separations: Vec<MixedCurveFragmentSeparation>,
     /// Shared retained topology graph over merged line and separated curve fragments.
     pub cell_graph: CurveArrangementCellGraph,
     /// Cached exact facts for the retained schedule.
@@ -361,7 +417,7 @@ pub fn arrange_line_segments_with_mixed_curves_and_provenance(
     sort_and_dedup_line_breakpoints(&mut line_breakpoints, policy)?;
 
     let line_fragments = build_line_fragments(&line_breakpoints, policy)?;
-    validate_curve_fragment_separation(
+    let fragment_separations = validate_curve_fragment_separation(
         &arc_report.arc_fragments,
         &quadratic_report.bezier_fragments,
         &cubic_report.cubic_fragments,
@@ -440,6 +496,7 @@ pub fn arrange_line_segments_with_mixed_curves_and_provenance(
         quadratic_fragments: quadratic_report.bezier_fragments,
         cubic_fragments: cubic_report.cubic_fragments,
         rational_quadratic_fragments: rational_quadratic_report.conic_fragments,
+        fragment_separations,
         cell_graph,
         facts,
     })
@@ -664,21 +721,13 @@ struct FragmentBox {
     y_max: Real,
 }
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-enum MixedCurveSourceRef {
-    ExplicitArc(usize),
-    Quadratic(usize),
-    Cubic(usize),
-    RationalQuadratic(usize),
-}
-
 fn validate_curve_fragment_separation(
     arcs: &[ExplicitArcArrangementFragment],
     quadratics: &[QuadraticBezierRealFragment],
     cubics: &[CubicBezierRealFragment],
     conics: &[RationalQuadraticBezierRealFragment],
     policy: PredicatePolicy,
-) -> Result<(), LineMixedBezierArrangementError> {
+) -> Result<Vec<MixedCurveFragmentSeparation>, LineMixedBezierArrangementError> {
     let mut boxes = Vec::new();
     for (index, fragment) in arcs.iter().enumerate() {
         boxes.push(FragmentBox {
@@ -726,6 +775,7 @@ fn validate_curve_fragment_separation(
             ..box_from_points([&start, &control, &end], policy)?
         });
     }
+    let mut separations = Vec::new();
     for left in 0..boxes.len() {
         for right in (left + 1)..boxes.len() {
             // Same-source siblings are already the output of one retained
@@ -738,9 +788,16 @@ fn validate_curve_fragment_separation(
             // fragments whose convex hull boxes still overlap at certified
             // same-source boundaries.
             if boxes[left].owner == boxes[right].owner {
+                separations.push(fragment_separation(
+                    &boxes[left],
+                    &boxes[right],
+                    MixedCurveFragmentSeparationClass::SameSourceSibling,
+                ));
                 continue;
             }
-            if !boxes_strictly_separated(&boxes[left], &boxes[right], policy)? {
+            if let Some(class) = boxes_separation_class(&boxes[left], &boxes[right], policy)? {
+                separations.push(fragment_separation(&boxes[left], &boxes[right], class));
+            } else {
                 return Err(
                     LineMixedBezierArrangementError::UnsupportedCurveCurveInteraction {
                         left: boxes[left].source,
@@ -750,7 +807,21 @@ fn validate_curve_fragment_separation(
             }
         }
     }
-    Ok(())
+    Ok(separations)
+}
+
+fn fragment_separation(
+    left: &FragmentBox,
+    right: &FragmentBox,
+    class: MixedCurveFragmentSeparationClass,
+) -> MixedCurveFragmentSeparation {
+    MixedCurveFragmentSeparation {
+        left: left.source,
+        right: right.source,
+        left_source: left.owner,
+        right_source: right.owner,
+        class,
+    }
 }
 
 /// Build a sweep-aware exact hull box for an explicit circular-arc fragment.
@@ -838,15 +909,22 @@ fn update_min_max(
     Ok(())
 }
 
-fn boxes_strictly_separated(
+fn boxes_separation_class(
     left: &FragmentBox,
     right: &FragmentBox,
     policy: PredicatePolicy,
-) -> Result<bool, LineMixedBezierArrangementError> {
-    Ok(is_less(&left.x_max, &right.x_min, policy)?
-        || is_less(&right.x_max, &left.x_min, policy)?
-        || is_less(&left.y_max, &right.y_min, policy)?
-        || is_less(&right.y_max, &left.y_min, policy)?)
+) -> Result<Option<MixedCurveFragmentSeparationClass>, LineMixedBezierArrangementError> {
+    if is_less(&left.x_max, &right.x_min, policy)? {
+        Ok(Some(MixedCurveFragmentSeparationClass::LeftBeforeRightX))
+    } else if is_less(&right.x_max, &left.x_min, policy)? {
+        Ok(Some(MixedCurveFragmentSeparationClass::RightBeforeLeftX))
+    } else if is_less(&left.y_max, &right.y_min, policy)? {
+        Ok(Some(MixedCurveFragmentSeparationClass::LeftBelowRightY))
+    } else if is_less(&right.y_max, &left.y_min, policy)? {
+        Ok(Some(MixedCurveFragmentSeparationClass::RightBelowLeftY))
+    } else {
+        Ok(None)
+    }
 }
 
 fn is_less(

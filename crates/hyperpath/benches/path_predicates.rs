@@ -599,6 +599,7 @@ fn path_predicates(c: &mut Criterion) {
                     report
                         .rational_quadratic_algebraic_evidence
                         .algebraic_breakpoints,
+                    report.fragment_separations,
                 )
             })
         })
