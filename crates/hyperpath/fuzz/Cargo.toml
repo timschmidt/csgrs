@@ -106,6 +106,13 @@ doc = false
 bench = false
 
 [[bin]]
+name = "cam_rest_material"
+path = "fuzz_targets/cam_rest_material.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
 name = "routing_keepout"
 path = "fuzz_targets/routing_keepout.rs"
 test = false

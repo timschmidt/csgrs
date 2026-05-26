@@ -22,8 +22,8 @@ use hyperpath::{
     build_nonuniform_detour_meander, build_obstacle_aware_detour_meander,
     build_oriented_tangent_alignment_problem, build_rectangular_bead_plan,
     build_rectangular_pocket_link_graph, build_rectangular_pocket_plan,
-    build_rectangular_serpentine_infill_graph, build_rectangular_support_plan,
-    build_single_detour_meander, build_tangent_alignment_problem,
+    build_rectangular_rest_material_graph, build_rectangular_serpentine_infill_graph,
+    build_rectangular_support_plan, build_single_detour_meander, build_tangent_alignment_problem,
     certify_acceleration_limited_feed_time, certify_acceleration_limited_feed_time_for_path,
     certify_constant_feed_time, certify_constant_feed_time_for_path,
     certify_corner_lookahead_limits, certify_cubic_ph_inverse_length,
@@ -1587,6 +1587,20 @@ fn path_predicates(c: &mut Criterion) {
             subtract_rectangular_region(
                 support_base.clone(),
                 support_overhang.clone(),
+                PredicatePolicy::default(),
+            )
+        })
+    });
+    let rest_cutters = vec![
+        RectangularPocket::new(p(1_000, 1_000), p(9_000, 5_000)).unwrap(),
+        RectangularPocket::new(p(2_000, -1_000), p(4_000, 7_000)).unwrap(),
+        RectangularPocket::new(p(6_000, 0), p(11_000, 6_000)).unwrap(),
+    ];
+    c.bench_function("rectangular_rest_material_graph", |b| {
+        b.iter(|| {
+            build_rectangular_rest_material_graph(
+                pocket.clone(),
+                rest_cutters.clone(),
                 PredicatePolicy::default(),
             )
         })

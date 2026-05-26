@@ -17,10 +17,15 @@ use hyperreal::{Real, RealExactSetFacts, RealSign};
 use crate::provenance::PathProvenance;
 
 mod pocket_link;
+mod rest;
 
 pub use pocket_link::{
     PocketLinkGraphError, PocketLinkSegment, PocketRingSegment, PocketRingSide,
     RectangularPocketLinkGraph, build_rectangular_pocket_link_graph,
+};
+pub use rest::{
+    RectangularRestCutRecord, RectangularRestMaterialError, RectangularRestMaterialGraph,
+    RectangularRestMaterialStage, build_rectangular_rest_material_graph,
 };
 
 /// Exact axis-aligned rectangular pocket boundary.

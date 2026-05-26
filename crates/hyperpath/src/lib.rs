@@ -85,9 +85,11 @@ pub use cam::{
     PocketPlanStopReason, PocketRingSegment, PocketRingSide, RectangularBeadPlan,
     RectangularInfillGraph, RectangularPocket, RectangularPocketLinkGraph, RectangularPocketPlan,
     RectangularRegionDifference, RectangularRegionIntersection, RectangularRegionRelation,
-    RectangularSupportPlan, RegionBooleanError, SupportFootprintStatus, SupportPlanError,
-    build_rectangular_bead_plan, build_rectangular_pocket_link_graph,
-    build_rectangular_pocket_plan, build_rectangular_serpentine_infill_graph,
+    RectangularRestCutRecord, RectangularRestMaterialError, RectangularRestMaterialGraph,
+    RectangularRestMaterialStage, RectangularSupportPlan, RegionBooleanError,
+    SupportFootprintStatus, SupportPlanError, build_rectangular_bead_plan,
+    build_rectangular_pocket_link_graph, build_rectangular_pocket_plan,
+    build_rectangular_rest_material_graph, build_rectangular_serpentine_infill_graph,
     build_rectangular_support_plan, intersect_rectangular_regions, subtract_rectangular_region,
 };
 pub use mixed_bezier_arrangement::{

@@ -33,12 +33,12 @@ use hyperpath::{
     PcbViaStack, PhCurveError, PocketLinkGraphError, PocketPlanError, PocketPlanStopReason,
     PocketRingSide, QuadraticBezier, QuinticPythagoreanHodograph, RationalQuadraticBezier,
     RationalQuadraticBezierError, RectangularPocket, RectangularRegionRelation,
-    RouteCertificationError, SegmentParameterOrder, SourceLengthUnit, SpecctraGridArcWireRecord,
-    SpecctraGridKeepoutRecord, SpecctraGridKeepoutShape, SpecctraGridTraceRecord,
-    SpecctraGridViaRecord, SpecctraImportError, SpecctraLayerAlias, SpecctraNetAlias,
-    SpecctraParseError, SupportFootprintStatus, SupportPlanError, SweptLineSegment,
-    TangentAlignment, TangentJoinClass, TangentJoinReport, TangentSpan, TraceLayer,
-    ViaAnnularRingReport, ViaDrillIntent, ViaDrillPolicyClass, ViaLayerSpanRelation,
+    RectangularRestMaterialError, RouteCertificationError, SegmentParameterOrder, SourceLengthUnit,
+    SpecctraGridArcWireRecord, SpecctraGridKeepoutRecord, SpecctraGridKeepoutShape,
+    SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraImportError, SpecctraLayerAlias,
+    SpecctraNetAlias, SpecctraParseError, SupportFootprintStatus, SupportPlanError,
+    SweptLineSegment, TangentAlignment, TangentJoinClass, TangentJoinReport, TangentSpan,
+    TraceLayer, ViaAnnularRingReport, ViaDrillIntent, ViaDrillPolicyClass, ViaLayerSpanRelation,
     ViaLayerTransitionClass, arrange_cubic_beziers, arrange_explicit_arcs, arrange_line_segments,
     arrange_line_segments_with_cubic_beziers, arrange_line_segments_with_explicit_arcs,
     arrange_line_segments_with_quadratic_beziers,
@@ -48,8 +48,8 @@ use hyperpath::{
     build_nonuniform_detour_meander, build_obstacle_aware_detour_meander,
     build_oriented_tangent_alignment_problem, build_rectangular_bead_plan,
     build_rectangular_pocket_link_graph, build_rectangular_pocket_plan,
-    build_rectangular_serpentine_infill_graph, build_rectangular_support_plan,
-    build_single_detour_meander, build_tangent_alignment_problem,
+    build_rectangular_rest_material_graph, build_rectangular_serpentine_infill_graph,
+    build_rectangular_support_plan, build_single_detour_meander, build_tangent_alignment_problem,
     certify_acceleration_limited_feed_time, certify_acceleration_limited_feed_time_for_path,
     certify_constant_feed_time, certify_constant_feed_time_for_path,
     certify_corner_lookahead_limits, certify_cubic_ph_inverse_length,
@@ -4895,6 +4895,118 @@ fn rectangular_region_difference_emits_positive_area_remainder_pieces() {
 }
 
 #[test]
+fn rectangular_rest_material_graph_replays_multi_cut_area_exactly() {
+    let stock = RectangularPocket::new(p(0, 0), p(10, 10)).unwrap();
+    let cutters = vec![
+        RectangularPocket::new(p(2, 2), p(8, 8)).unwrap(),
+        RectangularPocket::new(p(-1, 4), p(4, 6)).unwrap(),
+        RectangularPocket::new(p(8, 0), p(12, 10)).unwrap(),
+    ];
+    let graph = build_rectangular_rest_material_graph(
+        stock.clone(),
+        cutters.clone(),
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+
+    assert_eq!(graph.stock, stock);
+    assert_eq!(graph.cutters, cutters);
+    assert_eq!(graph.stages.len(), 3);
+    assert!(graph.all_area_certified());
+    assert!(graph.total_area_certification.all_satisfied());
+    assert_eq!(graph.removed_area(), r(60));
+    assert_eq!(graph.remaining_area(), r(40));
+
+    assert_eq!(graph.stages[0].cutter_index, 0);
+    assert_eq!(graph.stages[0].before.len(), 1);
+    assert_eq!(graph.stages[0].cuts.len(), 1);
+    assert_eq!(graph.stages[0].cuts[0].subject_index, 0);
+    assert_eq!(
+        graph.stages[0].cuts[0].removed.as_ref().unwrap().min(),
+        &p(2, 2)
+    );
+    assert_eq!(
+        graph.stages[0].cuts[0].removed.as_ref().unwrap().max(),
+        &p(8, 8)
+    );
+    assert_eq!(graph.stages[0].after.len(), 4);
+
+    assert_eq!(graph.stages[1].before.len(), 4);
+    assert_eq!(
+        graph.stages[1]
+            .cuts
+            .iter()
+            .filter(|cut| cut.removed.is_some())
+            .count(),
+        1
+    );
+    assert_eq!(graph.stages[2].after, graph.remaining);
+    for stage in &graph.stages {
+        assert!(stage.area_certification.all_satisfied());
+        assert_eq!(stage.cuts.len(), stage.before.len());
+        for (expected, cut) in stage.cuts.iter().enumerate() {
+            assert_eq!(cut.subject_index, expected);
+            for piece in &cut.difference.remainder {
+                assert_ne!(piece.min().x, piece.max().x);
+                assert_ne!(piece.min().y, piece.max().y);
+            }
+        }
+    }
+}
+
+#[test]
+fn rectangular_rest_material_graph_handles_disjoint_touching_and_full_cover() {
+    assert_eq!(
+        build_rectangular_rest_material_graph(
+            RectangularPocket::new(p(0, 0), p(10, 10)).unwrap(),
+            Vec::<RectangularPocket>::new(),
+            PredicatePolicy::default()
+        )
+        .unwrap_err(),
+        RectangularRestMaterialError::EmptyCutterSet
+    );
+
+    let disjoint_and_touching = build_rectangular_rest_material_graph(
+        RectangularPocket::new(p(0, 0), p(10, 10)).unwrap(),
+        vec![
+            RectangularPocket::new(p(11, 0), p(12, 10)).unwrap(),
+            RectangularPocket::new(p(10, 0), p(11, 10)).unwrap(),
+        ],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert!(disjoint_and_touching.all_area_certified());
+    assert_eq!(disjoint_and_touching.removed_area(), r(0));
+    assert_eq!(disjoint_and_touching.remaining_area(), r(100));
+    assert_eq!(disjoint_and_touching.remaining.len(), 1);
+    assert_eq!(
+        disjoint_and_touching.stages[0].cuts[0].difference.relation,
+        RectangularRegionRelation::Disjoint
+    );
+    assert_eq!(
+        disjoint_and_touching.stages[1].cuts[0].difference.relation,
+        RectangularRegionRelation::Touching
+    );
+
+    let covered = build_rectangular_rest_material_graph(
+        RectangularPocket::new(p(0, 0), p(10, 10)).unwrap(),
+        vec![
+            RectangularPocket::new(p(-1, -1), p(11, 11)).unwrap(),
+            RectangularPocket::new(p(2, 2), p(4, 4)).unwrap(),
+        ],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert!(covered.all_area_certified());
+    assert_eq!(covered.removed_area(), r(100));
+    assert_eq!(covered.remaining_area(), r(0));
+    assert!(covered.remaining.is_empty());
+    assert!(covered.stages[1].before.is_empty());
+    assert!(covered.stages[1].cuts.is_empty());
+    assert!(covered.stages[1].area_certification.all_satisfied());
+}
+
+#[test]
 fn length_match_problem_certifies_exact_extension_candidate() {
     let model = build_length_match_problem(r(100), r(125), r(25));
     let report = certify_length_extension(&model);
@@ -8331,6 +8443,45 @@ proptest! {
         for piece in &report.remainder {
             prop_assert_ne!(&piece.min().x, &piece.max().x);
             prop_assert_ne!(&piece.min().y, &piece.max().y);
+        }
+    }
+
+    #[test]
+    fn rectangular_rest_material_generated_cross_cuts_conserve_exact_area(
+        width in 2_i16..=80,
+        height in 2_i16..=80,
+        vertical_x in 1_i16..=79,
+        horizontal_y in 1_i16..=79,
+    ) {
+        let width = i64::from(width);
+        let height = i64::from(height);
+        let vertical_x = i64::from(vertical_x).min(width - 1);
+        let horizontal_y = i64::from(horizontal_y).min(height - 1);
+        let stock = RectangularPocket::new(p(0, 0), p(width, height)).unwrap();
+        let cutters = vec![
+            RectangularPocket::new(p(vertical_x, 0), p(width, height)).unwrap(),
+            RectangularPocket::new(p(0, horizontal_y), p(width, height)).unwrap(),
+        ];
+        let graph = build_rectangular_rest_material_graph(
+            stock,
+            cutters,
+            PredicatePolicy::default(),
+        ).unwrap();
+        let expected_remaining = r(vertical_x * horizontal_y);
+        let expected_removed = r(width * height - vertical_x * horizontal_y);
+
+        prop_assert!(graph.all_area_certified());
+        prop_assert_eq!(graph.remaining_area(), expected_remaining);
+        prop_assert_eq!(graph.removed_area(), expected_removed);
+        prop_assert_eq!(
+            graph.remaining.iter().fold(r(0), |sum, piece| {
+                sum + piece.width() * piece.height()
+            }),
+            graph.remaining_area()
+        );
+        for stage in &graph.stages {
+            prop_assert!(stage.area_certification.all_satisfied());
+            prop_assert_eq!(stage.cuts.len(), stage.before.len());
         }
     }
 
