@@ -455,6 +455,15 @@ fn path_predicates(c: &mut Criterion) {
             )
         })
     });
+    c.bench_function("line_cubic_bezier_nonlinear_overlap_envelopes", |b| {
+        b.iter(|| {
+            arrange_line_segments_with_cubic_beziers(
+                std::slice::from_ref(&line_cubic_nonlinear_overlap_line),
+                std::slice::from_ref(&line_cubic_nonlinear_overlap),
+                PredicatePolicy::default(),
+            )
+        })
+    });
     let line_cubic_algebraic = CubicBezier::new(p(0, 0), pq(1, 3, 0, 1), pq(2, 3, 0, 1), p(1, 1));
     let line_cubic_algebraic_line = LinePathSegment::new(pq(0, 1, 1, 8), pq(1, 1, 1, 8));
     c.bench_function("line_cubic_bezier_algebraic_support_point_images", |b| {

@@ -1037,6 +1037,53 @@ fn line_cubic_bezier_arrangement_retains_same_support_overlap_boundaries() {
         curve_spans[2].right,
         LineCubicBezierAlgebraicOverlapSourceSpanBoundary::SourceEnd
     );
+    assert_eq!(report.algebraic_overlap_endpoint_envelopes.len(), 6);
+    assert!(
+        report
+            .algebraic_overlap_endpoint_envelopes
+            .iter()
+            .enumerate()
+            .all(|(index, envelope)| envelope.span == index)
+    );
+    assert!(
+        report
+            .algebraic_overlap_endpoint_envelopes
+            .iter()
+            .all(|envelope| {
+                compare_reals_with_policy(
+                    &envelope.x_lower,
+                    &envelope.x_upper,
+                    PredicatePolicy::default(),
+                )
+                .value()
+                .is_some()
+                    && compare_reals_with_policy(
+                        &envelope.y_lower,
+                        &envelope.y_upper,
+                        PredicatePolicy::default(),
+                    )
+                    .value()
+                    .is_some()
+            })
+    );
+    assert!(
+        report
+            .algebraic_overlap_endpoint_envelopes
+            .iter()
+            .any(|envelope| envelope.x_lower == r(0)
+                && envelope.x_upper == r(2)
+                && envelope.y_lower == r(0)
+                && envelope.y_upper == r(0))
+    );
+    assert!(
+        report
+            .algebraic_overlap_endpoint_envelopes
+            .iter()
+            .any(|envelope| envelope.x_lower == r(6)
+                && envelope.x_upper == r(8)
+                && envelope.y_lower == r(0)
+                && envelope.y_upper == r(0))
+    );
     assert_eq!(report.line_breakpoints[0].len(), 2);
     assert_eq!(report.cubic_breakpoints[0].len(), 2);
 }
@@ -11497,6 +11544,7 @@ proptest! {
         prop_assert!(report.algebraic_overlap_breakpoint_orders.is_empty());
         prop_assert!(report.algebraic_overlap_breakpoint_sequences.is_empty());
         prop_assert!(report.algebraic_overlap_source_spans.is_empty());
+        prop_assert!(report.algebraic_overlap_endpoint_envelopes.is_empty());
         prop_assert_eq!(report.events[0].intersection.intersections[0].parameter.clone(), r(0));
         prop_assert_eq!(report.events[0].intersection.intersections[1].parameter.clone(), r(1));
         prop_assert_eq!(report.line_fragments.len(), 3);

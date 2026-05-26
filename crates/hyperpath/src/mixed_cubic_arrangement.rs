@@ -295,6 +295,34 @@ pub struct LineCubicBezierAlgebraicOverlapSourceSpan {
     pub parameter_upper: Real,
 }
 
+/// Conservative coordinate envelope for endpoints of a cubic overlap source span.
+///
+/// The envelope is indexed by
+/// [`LineCubicBezierArrangementReport::algebraic_overlap_source_spans`]. It
+/// encloses only the two span endpoints: exact source endpoints and retained
+/// same-support inverse-boundary points. It is not a curve-interior hull and
+/// it does not sample the cubic image.
+///
+/// This follows Yap, "Towards Exact Geometric Computation" (1997): represented
+/// roots and exact endpoint witnesses remain first-class retained objects
+/// until a later construction pass can materialize algebraic subcurves. The
+/// root intervals that make the source spans valid follow Collins and Loos,
+/// "Real Zeros of Polynomials" (1982); the coordinates here are exact
+/// same-support boundary witnesses already proven by the predicate layer.
+#[derive(Clone, Debug, PartialEq)]
+pub struct LineCubicBezierAlgebraicOverlapEndpointEnvelope {
+    /// Index in [`LineCubicBezierArrangementReport::algebraic_overlap_source_spans`].
+    pub span: usize,
+    /// Conservative lower x-coordinate bound for the span endpoints.
+    pub x_lower: Real,
+    /// Conservative upper x-coordinate bound for the span endpoints.
+    pub x_upper: Real,
+    /// Conservative lower y-coordinate bound for the span endpoints.
+    pub y_lower: Real,
+    /// Conservative upper y-coordinate bound for the span endpoints.
+    pub y_upper: Real,
+}
+
 /// Certified order relation between two represented line/cubic breakpoint candidates.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum LineCubicBezierAlgebraicBreakpointOrderClass {
@@ -559,6 +587,8 @@ pub struct LineCubicBezierArrangementReport {
         Vec<LineCubicBezierAlgebraicOverlapBreakpointSequence>,
     /// Conservative source spans induced by certified cubic overlap-boundary sequences.
     pub algebraic_overlap_source_spans: Vec<LineCubicBezierAlgebraicOverlapSourceSpan>,
+    /// Conservative endpoint coordinate envelopes for retained overlap source spans.
+    pub algebraic_overlap_endpoint_envelopes: Vec<LineCubicBezierAlgebraicOverlapEndpointEnvelope>,
     /// Pairwise exact order evidence for retained algebraic breakpoints.
     pub algebraic_breakpoint_orders: Vec<LineCubicBezierAlgebraicBreakpointOrder>,
     /// Per-source retained algebraic breakpoint sequences derived from exact order evidence.
@@ -681,6 +711,13 @@ pub fn arrange_line_segments_with_cubic_beziers_and_provenance(
         &algebraic_overlap_breakpoints,
         &algebraic_overlap_breakpoint_sequences,
     );
+    let algebraic_overlap_endpoint_envelopes = algebraic_cubic_overlap_endpoint_envelopes(
+        lines,
+        curves,
+        &algebraic_overlap_breakpoints,
+        &algebraic_overlap_source_spans,
+        policy,
+    );
     let algebraic_endpoint_envelopes = algebraic_cubic_endpoint_envelopes(
         lines,
         curves,
@@ -706,6 +743,7 @@ pub fn arrange_line_segments_with_cubic_beziers_and_provenance(
         algebraic_overlap_breakpoint_orders,
         algebraic_overlap_breakpoint_sequences,
         algebraic_overlap_source_spans,
+        algebraic_overlap_endpoint_envelopes,
         algebraic_breakpoint_orders,
         algebraic_breakpoint_sequences,
         algebraic_source_spans,
@@ -1121,6 +1159,86 @@ fn algebraic_cubic_overlap_boundary_interval(
                 Some((parameter.clone(), parameter.clone()))
             }
         },
+    }
+}
+
+fn algebraic_cubic_overlap_endpoint_envelopes(
+    lines: &[LinePathSegment],
+    curves: &[CubicBezier],
+    breakpoints: &[LineCubicBezierAlgebraicOverlapBreakpoint],
+    spans: &[LineCubicBezierAlgebraicOverlapSourceSpan],
+    policy: PredicatePolicy,
+) -> Vec<LineCubicBezierAlgebraicOverlapEndpointEnvelope> {
+    spans
+        .iter()
+        .enumerate()
+        .filter_map(|(span_index, span)| {
+            let left = algebraic_cubic_overlap_boundary_point_interval(
+                span.source,
+                span.left,
+                lines,
+                curves,
+                breakpoints,
+            )?;
+            let right = algebraic_cubic_overlap_boundary_point_interval(
+                span.source,
+                span.right,
+                lines,
+                curves,
+                breakpoints,
+            )?;
+            let (x_lower, x_upper) = certified_min_max(
+                &left.x_lower,
+                &left.x_upper,
+                &right.x_lower,
+                &right.x_upper,
+                policy,
+            )?;
+            let (y_lower, y_upper) = certified_min_max(
+                &left.y_lower,
+                &left.y_upper,
+                &right.y_lower,
+                &right.y_upper,
+                policy,
+            )?;
+            Some(LineCubicBezierAlgebraicOverlapEndpointEnvelope {
+                span: span_index,
+                x_lower,
+                x_upper,
+                y_lower,
+                y_upper,
+            })
+        })
+        .collect()
+}
+
+fn algebraic_cubic_overlap_boundary_point_interval(
+    source: LineCubicBezierAlgebraicOverlapBreakpointSequenceSource,
+    boundary: LineCubicBezierAlgebraicOverlapSourceSpanBoundary,
+    lines: &[LinePathSegment],
+    curves: &[CubicBezier],
+    breakpoints: &[LineCubicBezierAlgebraicOverlapBreakpoint],
+) -> Option<CubicPointInterval> {
+    match boundary {
+        LineCubicBezierAlgebraicOverlapSourceSpanBoundary::SourceStart => match source {
+            LineCubicBezierAlgebraicOverlapBreakpointSequenceSource::Line(line) => {
+                point_exact_interval(lines.get(line)?.start())
+            }
+            LineCubicBezierAlgebraicOverlapBreakpointSequenceSource::Curve(curve) => {
+                point_exact_interval(curves.get(curve)?.start())
+            }
+        },
+        LineCubicBezierAlgebraicOverlapSourceSpanBoundary::SourceEnd => match source {
+            LineCubicBezierAlgebraicOverlapBreakpointSequenceSource::Line(line) => {
+                point_exact_interval(lines.get(line)?.end())
+            }
+            LineCubicBezierAlgebraicOverlapBreakpointSequenceSource::Curve(curve) => {
+                point_exact_interval(curves.get(curve)?.end())
+            }
+        },
+        LineCubicBezierAlgebraicOverlapSourceSpanBoundary::Breakpoint(index) => {
+            point_exact_interval(&breakpoints.get(index)?.point)
+        }
     }
 }
 

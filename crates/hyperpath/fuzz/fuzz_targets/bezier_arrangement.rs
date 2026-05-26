@@ -261,6 +261,14 @@ fuzz_target!(|data: &[u8]| {
     assert!(!nonlinear_cubic_mixed_inner_report
         .algebraic_overlap_source_spans
         .is_empty());
+    assert_eq!(
+        nonlinear_cubic_mixed_inner_report
+            .algebraic_overlap_endpoint_envelopes
+            .len(),
+        nonlinear_cubic_mixed_inner_report
+            .algebraic_overlap_source_spans
+            .len()
+    );
     let algebraic_cubic = CubicBezier::new(p(0, 0), pq(1, 3, 0, 1), pq(2, 3, 0, 1), p(1, 1));
     let algebraic_line = LinePathSegment::new(pq(0, 1, 1, 8), pq(1, 1, 1, 8));
     let algebraic_report = intersect_axis_aligned_line_cubic_bezier(
