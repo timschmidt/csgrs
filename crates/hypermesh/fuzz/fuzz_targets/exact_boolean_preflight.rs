@@ -3122,9 +3122,22 @@ fn exercise_same_outer_holed_coplanar_retained_union() {
     )
     .expect("same-outer nonrectangular source should materialize")
     .mesh;
-    assert!(
-        arrange_coplanar_surface_component_holed_union(&left, &nonrectangular_overlap).is_none()
-    );
+    let nonrectangular_union =
+        arrange_coplanar_surface_component_holed_union(&left, &nonrectangular_overlap)
+            .expect("same-outer nonrectangular retained-hole overlap should materialize");
+    nonrectangular_union.validate().unwrap();
+    nonrectangular_union
+        .validate_union_against_sources(&left, &nonrectangular_overlap)
+        .unwrap();
+    assert_eq!(nonrectangular_union.components.len(), 1);
+    assert_eq!(nonrectangular_union.components[0].holes.len(), 1);
+    let nonrectangular_reverse =
+        arrange_coplanar_surface_component_holed_union(&nonrectangular_overlap, &left)
+            .expect("same-outer nonrectangular retained-hole overlap should be symmetric");
+    nonrectangular_reverse.validate().unwrap();
+    nonrectangular_reverse
+        .validate_union_against_sources(&nonrectangular_overlap, &left)
+        .unwrap();
 
     let touching_holes = ExactMesh::from_i64_triangles_with_policy(
         &[
@@ -3185,6 +3198,33 @@ fn exercise_same_outer_holed_coplanar_retained_union() {
     .validate_operation_against_sources(
         &left,
         &overlapping,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
+
+    let nonrectangular_preflight =
+        preflight_boolean_exact(&left, &nonrectangular_overlap, ExactBooleanOperation::Union)
+            .expect("same-outer nonrectangular retained-union preflight should classify shortcut");
+    nonrectangular_preflight.validate().unwrap();
+    nonrectangular_preflight
+        .validate_against_sources(&left, &nonrectangular_overlap)
+        .unwrap();
+    assert_eq!(
+        nonrectangular_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
+    );
+    hypermesh::exact::boolean_exact(
+        &left,
+        &nonrectangular_overlap,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("same-outer nonrectangular retained union should materialize")
+    .validate_operation_against_sources(
+        &left,
+        &nonrectangular_overlap,
         ExactBooleanOperation::Union,
         ValidationPolicy::ALLOW_BOUNDARY,
         ExactBoundaryBooleanPolicy::Reject,

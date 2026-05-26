@@ -4548,11 +4548,11 @@ fn same_outer_holed_filled_union_polygons(
 /// `outer - (left_holes intersect right_holes)`. This certificate handles the
 /// named-ring cases where that hole intersection is either an identical
 /// retained hole, the smaller of two strictly nested retained holes, or the
-/// exact projected-rectangle intersection of two retained source holes. Holes
-/// that are strictly disjoint are filled by the opposite operand. Touching,
-/// crossing, nonrectangular partial-overlap, and higher-order hole relations
-/// reject to the general planar arrangement layer because their output
-/// boundary is not a bounded retained-cell certificate.
+/// exact positive-area intersection of two strictly convex retained source
+/// holes. Holes that are strictly disjoint are filled by the opposite operand.
+/// Touching, crossing, nonconvex partial-overlap, and higher-order hole
+/// relations reject to the general planar arrangement layer because their
+/// output boundary is not a bounded retained-cell certificate.
 ///
 /// This follows Yap, "Towards Exact Geometric Computation," *Computational
 /// Geometry* 7.1-2 (1997): the topology is expressed in source-owned objects
@@ -4560,7 +4560,12 @@ fn same_outer_holed_filled_union_polygons(
 /// `area(union) == area(retained rings)` is replayed with the exact
 /// Sutherland-Hodgman triangle-clip sum from Sutherland and Hodgman,
 /// "Reentrant Polygon Clipping," *Communications of the ACM* 17.1 (1974).
-/// The retained holed rings are triangulated through the same FIST-style
+/// Segment contact is separated with the orientation-predicate model of
+/// Guigue and Devillers, "Fast and Robust Triangle-Triangle Overlap Test
+/// Using Orientation Predicates," *Journal of Graphics Tools* 8.1 (2003), so
+/// point/edge-only hole contact remains lower-dimensional evidence instead of
+/// a retained hole. The retained holed rings are triangulated through the same
+/// FIST-style
 /// `hypertri` earcut handoff described by Held, "FIST: Fast
 /// Industrial-Strength Triangulation of Polygons," *Algorithmica* 30 (2001).
 #[cfg(feature = "exact-triangulation")]
@@ -4701,7 +4706,7 @@ fn same_outer_retained_union_holes(
                     SimplePolygonInteraction::Disjoint => None,
                     SimplePolygonInteraction::PointOnly => return None,
                     SimplePolygonInteraction::Connected => {
-                        Some(projected_rectangular_hole_intersection_polygon(
+                        Some(convex_retained_hole_intersection_polygon(
                             left_hole, right_hole, projection,
                         )?)
                     }
@@ -4727,45 +4732,62 @@ fn same_outer_retained_union_holes(
     Some(holes)
 }
 
-/// Return the retained removed region common to two rectangular source holes.
+/// Return the retained removed region common to two convex source holes.
 ///
 /// Same-outer union computes `outer - (left_holes intersect right_holes)`.
 /// Equal and nested intersections are retained source rings directly; this
-/// helper covers the bounded cell-arrangement case where the overlap of two
-/// source-owned holes is itself an exact projected axis-aligned rectangle. The
-/// construction follows Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997): the candidate topology is emitted
-/// only from exact source objects and exact interval comparisons, then the
-/// caller replays global area equality before accepting the Boolean. The
-/// rectangle-cell view is the standard orthogonal arrangement model described
-/// by de Berg, Cheong, van Kreveld, and Overmars, *Computational Geometry:
-/// Algorithms and Applications*, 3rd ed. (2008), Chapter 2.
+/// helper covers the bounded partial-overlap case where two source-owned holes
+/// are both strictly convex and their intersection has positive area. The
+/// intersection polygon is built with the same exact Sutherland-Hodgman-style
+/// half-plane clipping facts used elsewhere in this module; see Sutherland and
+/// Hodgman, "Reentrant Polygon Clipping," *Communications of the ACM* 17.1
+/// (1974). The positive-area check on the clipped retained object rejects
+/// point-only and edge-only contact before it can masquerade as a
+/// two-dimensional retained hole; segment events are still classified by the
+/// Guigue and Devillers orientation-predicate model cited at the caller. This
+/// is exactly the object/predicate separation advocated by Yap, "Towards Exact
+/// Geometric Computation," *Computational Geometry* 7.1-2 (1997): only a
+/// replayable positive-area retained object may remove topology.
 #[cfg(feature = "exact-triangulation")]
-fn projected_rectangular_hole_intersection_polygon(
+fn convex_retained_hole_intersection_polygon(
     left: &[Point3],
     right: &[Point3],
     projection: CoplanarProjection,
 ) -> Option<Vec<Point3>> {
-    let left_rect = projected_axis_aligned_rectangle(left, projection)?;
-    let right_rect = projected_axis_aligned_rectangle(right, projection)?;
-    if !real_equal(&left_rect.dropped, &right_rect.dropped) {
+    validate_projected_strictly_convex_loop(
+        left,
+        projection,
+        "coplanar same-outer convex retained-hole intersection",
+    )
+    .ok()?;
+    validate_projected_strictly_convex_loop(
+        right,
+        projection,
+        "coplanar same-outer convex retained-hole intersection",
+    )
+    .ok()?;
+    let mut intersection = convex_polygon_intersection_boundary(left, right, projection)?;
+    intersection = simplify_projected_polygon(intersection, projection);
+    if intersection.len() < 3 {
         return None;
     }
-    let min_x = exact_max_real(&left_rect.min.x, &right_rect.min.x)?;
-    let max_x = exact_min_real(&left_rect.max.x, &right_rect.max.x)?;
-    let min_y = exact_max_real(&left_rect.min.y, &right_rect.min.y)?;
-    let max_y = exact_min_real(&left_rect.max.y, &right_rect.max.y)?;
-    if real_order(&min_x, &max_x)? != Ordering::Less
-        || real_order(&min_y, &max_y)? != Ordering::Less
-    {
+    validate_projected_simple_loop(
+        &intersection,
+        projection,
+        "coplanar same-outer convex retained-hole intersection",
+    )
+    .ok()?;
+    validate_projected_strictly_convex_loop(
+        &intersection,
+        projection,
+        "coplanar same-outer convex retained-hole intersection",
+    )
+    .ok()?;
+    let area = projected_area2_abs(&intersection, projection)?;
+    if compare_reals(&area, &ExactReal::from(0)).value() != Some(Ordering::Greater) {
         return None;
     }
-    Some(vec![
-        point_from_projection(&min_x, &min_y, &left_rect.dropped, projection),
-        point_from_projection(&max_x, &min_y, &left_rect.dropped, projection),
-        point_from_projection(&max_x, &max_y, &left_rect.dropped, projection),
-        point_from_projection(&min_x, &max_y, &left_rect.dropped, projection),
-    ])
+    Some(intersection)
 }
 
 #[cfg(feature = "exact-triangulation")]

@@ -26656,14 +26656,73 @@ fn exact_coplanar_component_holed_union_retains_same_outer_common_holes() {
         )
         .expect("nonrectangular overlap source fixture should materialize")
         .mesh;
+    let nonrectangular_union = hypermesh::exact::arrange_coplanar_surface_component_holed_union(
+        &left,
+        &nonrectangular_overlap,
+    )
+    .expect("strictly convex nonrectangular retained-hole overlap should retain exact clip");
+    nonrectangular_union.validate().unwrap();
+    nonrectangular_union
+        .validate_union_against_sources(&left, &nonrectangular_overlap)
+        .unwrap();
+    assert_eq!(nonrectangular_union.components.len(), 1);
+    assert_eq!(nonrectangular_union.components[0].holes.len(), 1);
     assert!(
-        hypermesh::exact::arrange_coplanar_surface_component_holed_union(
-            &left,
-            &nonrectangular_overlap
-        )
-        .is_none(),
-        "nonrectangular retained-hole overlap remains outside the bounded union certificate"
+        nonrectangular_union.components[0].holes[0]
+            .iter()
+            .any(|point| real_eq(&point.x, &ExactReal::from(3)))
     );
+    assert!(
+        nonrectangular_union.components[0].holes[0]
+            .iter()
+            .any(|point| real_eq(&point.x, &ExactReal::from(4)))
+    );
+    let nonrectangular_reverse = hypermesh::exact::arrange_coplanar_surface_component_holed_union(
+        &nonrectangular_overlap,
+        &left,
+    )
+    .expect("strictly convex nonrectangular retained-hole overlap should be symmetric");
+    nonrectangular_reverse.validate().unwrap();
+    nonrectangular_reverse
+        .validate_union_against_sources(&nonrectangular_overlap, &left)
+        .unwrap();
+    let mut stale_nonrectangular = nonrectangular_union.clone();
+    stale_nonrectangular.components[0].holes[0].reverse();
+    assert!(stale_nonrectangular.validate().is_err());
+    assert!(
+        stale_nonrectangular
+            .validate_union_against_sources(&left, &nonrectangular_overlap)
+            .is_err()
+    );
+    let nonrectangular_preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &nonrectangular_overlap,
+        hypermesh::exact::ExactBooleanOperation::Union,
+    )
+    .expect("nonrectangular retained-hole overlap preflight should classify shortcut");
+    nonrectangular_preflight.validate().unwrap();
+    nonrectangular_preflight
+        .validate_against_sources(&left, &nonrectangular_overlap)
+        .unwrap();
+    assert_eq!(
+        nonrectangular_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
+    );
+    hypermesh::exact::boolean_exact(
+        &left,
+        &nonrectangular_overlap,
+        hypermesh::exact::ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("nonrectangular retained-hole overlap union should materialize")
+    .validate_operation_against_sources(
+        &left,
+        &nonrectangular_overlap,
+        hypermesh::exact::ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
 
     let touching_holes = ExactMesh::from_i64_triangles_with_policy(
         &[

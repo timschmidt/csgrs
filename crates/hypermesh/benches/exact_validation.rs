@@ -4855,6 +4855,23 @@ fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
             )
             .unwrap()
             .mesh;
+        let same_outer_nonrect_partial_union_right_holes =
+            ExactMesh::from_i64_triangles_with_policy(
+                &[
+                    3, 2, 0, 5, 2, 0, 5, 4, 0, //
+                    6, 1, 0, 8, 1, 0, 8, 3, 0, 6, 3, 0,
+                ],
+                &[0, 1, 2, 3, 4, 5, 3, 5, 6],
+                ValidationPolicy::ALLOW_BOUNDARY,
+            )
+            .unwrap();
+        let same_outer_nonrect_partial_union_right =
+            arrange_coplanar_convex_surface_multi_holed_difference(
+                &single_component_holed_left,
+                &same_outer_nonrect_partial_union_right_holes,
+            )
+            .unwrap()
+            .mesh;
         let same_outer_bridge_intersection_left_holes = ExactMesh::from_i64_triangles_with_policy(
             &[
                 2, 2, 0, 4, 2, 0, 4, 4, 0, 2, 4, 0, //
@@ -6468,6 +6485,22 @@ fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
                         hypermesh::exact::preflight_boolean_exact(
                             &same_outer_common_left,
                             &same_outer_partial_union_right,
+                            hypermesh::exact::ExactBooleanOperation::Union,
+                        )
+                        .map(|report| report.validate()),
+                        arrange_coplanar_surface_component_holed_union(
+                            &same_outer_common_left,
+                            &same_outer_nonrect_partial_union_right,
+                        )
+                        .map(|output| {
+                            output.validate_union_against_sources(
+                                &same_outer_common_left,
+                                &same_outer_nonrect_partial_union_right,
+                            )
+                        }),
+                        hypermesh::exact::preflight_boolean_exact(
+                            &same_outer_common_left,
+                            &same_outer_nonrect_partial_union_right,
                             hypermesh::exact::ExactBooleanOperation::Union,
                         )
                         .map(|report| report.validate()),
