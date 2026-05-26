@@ -140,9 +140,9 @@ pub use mixed_cubic_arrangement::{
     LineCubicBezierAlgebraicOverlapSourceSpanBoundary, LineCubicBezierAlgebraicSourceSpan,
     LineCubicBezierAlgebraicSourceSpanBoundary, LineCubicBezierArrangementError,
     LineCubicBezierArrangementEvent, LineCubicBezierArrangementFacts,
-    LineCubicBezierArrangementReport, LineCubicBezierSupportOverlapCandidate,
-    MixedCubicLineArrangementBreakpoint, MixedCubicLineArrangementFragment,
-    arrange_line_segments_with_cubic_beziers,
+    LineCubicBezierArrangementReport, LineCubicBezierExactAlgebraicOverlapBreakpointPromotion,
+    LineCubicBezierSupportOverlapCandidate, MixedCubicLineArrangementBreakpoint,
+    MixedCubicLineArrangementFragment, arrange_line_segments_with_cubic_beziers,
     arrange_line_segments_with_cubic_beziers_and_provenance,
 };
 pub use offset::{

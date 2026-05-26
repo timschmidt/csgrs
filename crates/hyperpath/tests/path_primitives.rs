@@ -1040,6 +1040,11 @@ fn line_cubic_bezier_arrangement_retains_same_support_overlap_boundaries() {
     assert_eq!(report.algebraic_overlap_endpoint_envelopes.len(), 6);
     assert!(
         report
+            .exact_algebraic_overlap_breakpoint_promotions
+            .is_empty()
+    );
+    assert!(
+        report
             .algebraic_overlap_endpoint_envelopes
             .iter()
             .enumerate()
@@ -1086,6 +1091,54 @@ fn line_cubic_bezier_arrangement_retains_same_support_overlap_boundaries() {
     );
     assert_eq!(report.line_breakpoints[0].len(), 2);
     assert_eq!(report.cubic_breakpoints[0].len(), 2);
+}
+
+#[test]
+fn line_cubic_bezier_arrangement_promotes_exact_overlap_roots() {
+    let curve = CubicBezier::new(p(0, 0), p(8, 0), p(8, 0), p(0, 0));
+    let line = LinePathSegment::new(p(0, 0), pq(9, 2, 0, 1));
+
+    let report =
+        arrange_line_segments_with_cubic_beziers(&[line], &[curve], PredicatePolicy::default())
+            .unwrap();
+
+    assert_eq!(report.support_overlaps.len(), 1);
+    assert!(
+        report
+            .algebraic_overlap_breakpoints
+            .iter()
+            .any(|breakpoint| breakpoint.domain
+                == LineCubicBezierAlgebraicOverlapBreakpointDomain::InsideLineAndCurve
+                && breakpoint.cubic_parameter.interval.exact_root == Some(rq(1, 4)))
+    );
+    assert!(
+        report
+            .algebraic_overlap_breakpoints
+            .iter()
+            .any(|breakpoint| breakpoint.domain
+                == LineCubicBezierAlgebraicOverlapBreakpointDomain::InsideLineAndCurve
+                && breakpoint.cubic_parameter.interval.exact_root == Some(rq(3, 4)))
+    );
+    assert!(
+        report
+            .exact_algebraic_overlap_breakpoint_promotions
+            .iter()
+            .any(|promotion| promotion.parameter == rq(1, 4) && promotion.point == pq(9, 2, 0, 1))
+    );
+    assert!(
+        report
+            .exact_algebraic_overlap_breakpoint_promotions
+            .iter()
+            .any(|promotion| promotion.parameter == rq(3, 4) && promotion.point == pq(9, 2, 0, 1))
+    );
+    assert_eq!(report.cubic_breakpoints[0].len(), 4);
+    assert_eq!(report.cubic_fragments.len(), 3);
+    assert_eq!(report.cubic_breakpoints[0][1].parameter, rq(1, 4));
+    assert_eq!(report.cubic_breakpoints[0][2].parameter, rq(3, 4));
+    assert_eq!(report.cubic_fragments[0].curve.end(), &pq(9, 2, 0, 1));
+    assert_eq!(report.cubic_fragments[1].curve.start(), &pq(9, 2, 0, 1));
+    assert_eq!(report.cubic_fragments[1].curve.end(), &pq(9, 2, 0, 1));
+    assert_eq!(report.cubic_fragments[2].curve.start(), &pq(9, 2, 0, 1));
 }
 
 #[test]
@@ -11653,6 +11706,7 @@ proptest! {
         prop_assert!(report.algebraic_overlap_breakpoint_sequences.is_empty());
         prop_assert!(report.algebraic_overlap_source_spans.is_empty());
         prop_assert!(report.algebraic_overlap_endpoint_envelopes.is_empty());
+        prop_assert!(report.exact_algebraic_overlap_breakpoint_promotions.is_empty());
         prop_assert_eq!(report.events[0].intersection.intersections[0].parameter.clone(), r(0));
         prop_assert_eq!(report.events[0].intersection.intersections[1].parameter.clone(), r(1));
         prop_assert_eq!(report.line_fragments.len(), 3);

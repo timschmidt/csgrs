@@ -323,6 +323,33 @@ pub struct LineCubicBezierAlgebraicOverlapEndpointEnvelope {
     pub y_upper: Real,
 }
 
+/// Exact native cubic breakpoint promoted from a retained overlap-boundary root.
+///
+/// Same-support line/cubic overlap boundaries are usually retained as
+/// represented algebraic inverse roots. When the isolating interval carries an
+/// exact rational witness, however, the mixed scheduler can replay that root
+/// as an ordinary cubic `Real` split parameter while keeping the represented
+/// source candidate available for audit.
+///
+/// This is the exact-construction boundary advocated by Yap, "Towards Exact
+/// Geometric Computation" (1997): a represented object is materialized only
+/// when the predicate layer has already certified an exact rational value and
+/// domain membership. The root witness follows the Collins-Loos real-root
+/// isolation model used by `hypersolve`; the emitted sub-curves are still
+/// cubic Bezier restrictions built by de Casteljau subdivision, as described
+/// in Farouki, *Pythagorean Hodograph Curves* (2008).
+#[derive(Clone, Debug, PartialEq)]
+pub struct LineCubicBezierExactAlgebraicOverlapBreakpointPromotion {
+    /// Index in [`LineCubicBezierArrangementReport::algebraic_overlap_breakpoints`].
+    pub algebraic_overlap_breakpoint: usize,
+    /// Cubic Bezier index.
+    pub curve: usize,
+    /// Exact promoted cubic source parameter.
+    pub parameter: Real,
+    /// Exact point attached to the retained overlap boundary.
+    pub point: Point2,
+}
+
 /// Certified order relation between two represented line/cubic breakpoint candidates.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum LineCubicBezierAlgebraicBreakpointOrderClass {
@@ -589,6 +616,9 @@ pub struct LineCubicBezierArrangementReport {
     pub algebraic_overlap_source_spans: Vec<LineCubicBezierAlgebraicOverlapSourceSpan>,
     /// Conservative endpoint coordinate envelopes for retained overlap source spans.
     pub algebraic_overlap_endpoint_envelopes: Vec<LineCubicBezierAlgebraicOverlapEndpointEnvelope>,
+    /// Exact rational overlap-boundary roots promoted into native cubic split parameters.
+    pub exact_algebraic_overlap_breakpoint_promotions:
+        Vec<LineCubicBezierExactAlgebraicOverlapBreakpointPromotion>,
     /// Pairwise exact order evidence for retained algebraic breakpoints.
     pub algebraic_breakpoint_orders: Vec<LineCubicBezierAlgebraicBreakpointOrder>,
     /// Per-source retained algebraic breakpoint sequences derived from exact order evidence.
@@ -693,6 +723,12 @@ pub fn arrange_line_segments_with_cubic_beziers_and_provenance(
         }
     }
 
+    let exact_algebraic_overlap_breakpoint_promotions =
+        promote_exact_algebraic_cubic_overlap_breakpoints(
+            &mut cubic_breakpoints,
+            &algebraic_overlap_breakpoints,
+            policy,
+        )?;
     sort_and_dedup_line_breakpoints(&mut line_breakpoints, policy)?;
     sort_and_dedup_cubic_breakpoints(&mut cubic_breakpoints, policy)?;
     let algebraic_breakpoint_orders =
@@ -744,6 +780,7 @@ pub fn arrange_line_segments_with_cubic_beziers_and_provenance(
         algebraic_overlap_breakpoint_sequences,
         algebraic_overlap_source_spans,
         algebraic_overlap_endpoint_envelopes,
+        exact_algebraic_overlap_breakpoint_promotions,
         algebraic_breakpoint_orders,
         algebraic_breakpoint_sequences,
         algebraic_source_spans,
@@ -884,6 +921,40 @@ fn point_from_axis(axis: Axis, fixed: Real, varying: Real) -> Point2 {
         Axis::X => Point2::new(varying, fixed),
         Axis::Y => Point2::new(fixed, varying),
     }
+}
+
+fn promote_exact_algebraic_cubic_overlap_breakpoints(
+    cubic_breakpoints: &mut [Vec<CubicBezierRealBreakpoint>],
+    algebraic_overlap_breakpoints: &[LineCubicBezierAlgebraicOverlapBreakpoint],
+    policy: PredicatePolicy,
+) -> Result<
+    Vec<LineCubicBezierExactAlgebraicOverlapBreakpointPromotion>,
+    LineCubicBezierArrangementError,
+> {
+    let mut promotions = Vec::new();
+    for (index, breakpoint) in algebraic_overlap_breakpoints.iter().enumerate() {
+        if breakpoint.domain != LineCubicBezierAlgebraicOverlapBreakpointDomain::InsideLineAndCurve
+        {
+            continue;
+        }
+        let Some(parameter) = breakpoint.cubic_parameter.interval.exact_root.clone() else {
+            continue;
+        };
+        insert_exact_cubic_breakpoint(
+            &mut cubic_breakpoints[breakpoint.curve],
+            breakpoint.curve,
+            parameter.clone(),
+            breakpoint.point.clone(),
+            policy,
+        )?;
+        promotions.push(LineCubicBezierExactAlgebraicOverlapBreakpointPromotion {
+            algebraic_overlap_breakpoint: index,
+            curve: breakpoint.curve,
+            parameter,
+            point: breakpoint.point.clone(),
+        });
+    }
+    Ok(promotions)
 }
 
 fn algebraic_cubic_overlap_breakpoint_orders(
@@ -1890,8 +1961,24 @@ fn insert_cubic_breakpoint(
     event: &LineCubicBezierIntersection,
     policy: PredicatePolicy,
 ) -> Result<(), LineCubicBezierArrangementError> {
+    insert_exact_cubic_breakpoint(
+        breakpoints,
+        curve_index,
+        event.parameter.clone(),
+        event.point.clone(),
+        policy,
+    )
+}
+
+fn insert_exact_cubic_breakpoint(
+    breakpoints: &mut Vec<CubicBezierRealBreakpoint>,
+    curve_index: usize,
+    parameter: Real,
+    point: Point2,
+    policy: PredicatePolicy,
+) -> Result<(), LineCubicBezierArrangementError> {
     for existing in breakpoints.iter() {
-        match compare_reals_with_policy(&existing.parameter, &event.parameter, policy).value() {
+        match compare_reals_with_policy(&existing.parameter, &parameter, policy).value() {
             Some(Ordering::Equal) => return Ok(()),
             Some(Ordering::Less | Ordering::Greater) => {}
             None => {
@@ -1903,8 +1990,8 @@ fn insert_cubic_breakpoint(
     }
     breakpoints.push(CubicBezierRealBreakpoint {
         curve: curve_index,
-        parameter: event.parameter.clone(),
-        point: event.point.clone(),
+        parameter,
+        point,
     });
     Ok(())
 }

@@ -194,6 +194,26 @@ fuzz_target!(|data: &[u8]| {
         LineCubicBezierIntersectionClass::Overlap
     );
     assert_eq!(cubic_overlap_report.cubic_breakpoints[0].len(), 4);
+    let exact_cubic_overlap_curve = CubicBezier::new(p(0, 0), p(8, 0), p(8, 0), p(0, 0));
+    let exact_cubic_overlap_line = LinePathSegment::new(p(0, 0), pq(9, 2, 0, 1));
+    let exact_cubic_overlap_report = arrange_line_segments_with_cubic_beziers(
+        &[exact_cubic_overlap_line],
+        &[exact_cubic_overlap_curve],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert!(exact_cubic_overlap_report
+        .exact_algebraic_overlap_breakpoint_promotions
+        .iter()
+        .any(|promotion| promotion.parameter
+            == Real::new(Rational::new(1) / Rational::new(4))));
+    assert!(exact_cubic_overlap_report
+        .exact_algebraic_overlap_breakpoint_promotions
+        .iter()
+        .any(|promotion| promotion.parameter
+            == Real::new(Rational::new(3) / Rational::new(4))));
+    assert_eq!(exact_cubic_overlap_report.cubic_breakpoints[0].len(), 4);
+    assert_eq!(exact_cubic_overlap_report.cubic_fragments.len(), 3);
     let nonlinear_cubic_overlap_curve =
         CubicBezier::new(p(0, 0), p(1, 0), p(7, 0), p(8, 0));
     let nonlinear_cubic_overlap_line = LinePathSegment::new(p(-1, 0), p(9, 0));
