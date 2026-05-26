@@ -33174,12 +33174,49 @@ fn exact_boolmesh_kernel12_discovers_skew_edge_face_events() {
     assert_eq!(workspace.kernel12_unknown_events, 0);
     assert_eq!(workspace.kernel12_construction_failures, 0);
     assert_eq!(workspace.kernel12_coplanar_events, 0);
+    assert_eq!(
+        workspace.boolean03.p1q2.len(),
+        workspace.boolean03.x12.len()
+    );
+    assert_eq!(
+        workspace.boolean03.p1q2.len(),
+        workspace.boolean03.v12.len()
+    );
+    assert_eq!(
+        workspace.boolean03.p2q1.len(),
+        workspace.boolean03.x21.len()
+    );
+    assert_eq!(
+        workspace.boolean03.p2q1.len(),
+        workspace.boolean03.v21.len()
+    );
+    assert!(
+        !workspace.boolean03.p1q2.is_empty() || !workspace.boolean03.p2q1.is_empty(),
+        "proper crossings must lower into boolmesh p/x/v tables"
+    );
+    assert!(
+        workspace
+            .boolean03
+            .x12
+            .iter()
+            .chain(workspace.boolean03.x21.iter())
+            .all(|sign| sign.abs() == 1)
+    );
 
     let mut stale = workspace.clone();
     stale.kernel12_events[0].edge_face.edge[0] = left.vertices().len();
     assert_eq!(
         stale.validate_against_sources(&left, &right).unwrap_err(),
         hypermesh::exact::ExactBoolMeshValidationError::EdgeFacePairOutOfBounds
+    );
+
+    let mut malformed = workspace.clone();
+    malformed.boolean03.x12.push(1);
+    assert_eq!(
+        malformed
+            .validate_against_sources(&left, &right)
+            .unwrap_err(),
+        hypermesh::exact::ExactBoolMeshValidationError::Kernel12TableLengthMismatch
     );
 }
 

@@ -201,6 +201,15 @@ fuzz_target!(|data: &[u8]| {
                     .is_err()
             );
         }
+        if !workspace.boolean03.p1q2.is_empty() || !workspace.boolean03.p2q1.is_empty() {
+            let mut corrupted_lowering = workspace.clone();
+            corrupted_lowering.boolean03.x12.push(1);
+            assert!(
+                corrupted_lowering
+                    .validate_against_sources(&left, &right)
+                    .is_err()
+            );
+        }
         if workspace.is_certified_bounds_disjoint() {
             let execution = hypermesh::exact::execute_exact_boolmesh_bounds_disjoint(
                 &left,
@@ -1573,6 +1582,10 @@ fn exercise_exact_boolmesh_kernel12_port() {
         event.relation,
         SegmentPlaneRelation::ProperCrossing | SegmentPlaneRelation::EndpointOnPlane
     )));
+    assert!(
+        !workspace.boolean03.p1q2.is_empty() || !workspace.boolean03.p2q1.is_empty(),
+        "deterministic kernel12 fixture must lower proper crossings"
+    );
 }
 
 fn exercise_partial_convex_union_boundary() {

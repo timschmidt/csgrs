@@ -17,6 +17,9 @@
 //! ordered boundary fragments before faces are emitted.
 
 #[cfg(feature = "exact-triangulation")]
+mod kernel12;
+
+#[cfg(feature = "exact-triangulation")]
 use super::boolean::ExactBooleanOperation;
 #[cfg(feature = "exact-triangulation")]
 use super::construction::{
@@ -38,6 +41,8 @@ use super::validation::ValidationPolicy;
 use super::{AabbIntersectionKind, MeshError};
 #[cfg(feature = "exact-triangulation")]
 use hyperlimit::{PlaneSide, Point3, PredicateOutcome};
+#[cfg(feature = "exact-triangulation")]
+use kernel12::lower_kernel12_events;
 
 /// Legacy boolmesh kernel stage represented by the exact port.
 ///
@@ -235,7 +240,7 @@ pub struct ExactBoolMeshKernel12Event {
 /// prove the direct boolmesh workspace crossed discovery without invoking the
 /// primitive-float adapter.
 #[cfg(feature = "exact-triangulation")]
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct ExactBoolMeshBoolean03 {
     /// Left-edge/right-face ownership pairs, legacy `p1q2`.
     pub p1q2: Vec<ExactBoolMeshEdgeFacePair>,
@@ -245,6 +250,10 @@ pub struct ExactBoolMeshBoolean03 {
     pub x12: Vec<i32>,
     /// Signed event multiplicity along right edges, legacy `x21`.
     pub x21: Vec<i32>,
+    /// Exact left-edge/right-face intersection points, legacy `v12`.
+    pub v12: Vec<Point3>,
+    /// Exact right-edge/left-face intersection points, legacy `v21`.
+    pub v21: Vec<Point3>,
     /// Left vertex winding/classification counters, legacy `w03`.
     pub w03: Vec<i32>,
     /// Right vertex winding/classification counters, legacy `w30`.
@@ -335,6 +344,7 @@ impl ExactBoolMeshWorkspace {
         let mesh_bounds_unknown =
             matches!(mesh_bounds_relation, Some(PredicateOutcome::Unknown { .. }));
         let kernel12 = discover_kernel12_events(left, right);
+        let kernel12_lowering = lower_kernel12_events(&kernel12.events);
         let blocker = if candidate_face_pairs.is_empty() && !mesh_bounds_unknown {
             None
         } else if mesh_bounds_unknown
@@ -368,10 +378,12 @@ impl ExactBoolMeshWorkspace {
             kernel12_construction_failures: kernel12.construction_failures,
             kernel12_coplanar_events: kernel12.coplanar_events,
             boolean03: ExactBoolMeshBoolean03 {
-                p1q2: Vec::new(),
-                p2q1: Vec::new(),
-                x12: Vec::new(),
-                x21: Vec::new(),
+                p1q2: kernel12_lowering.p1q2,
+                p2q1: kernel12_lowering.p2q1,
+                x12: kernel12_lowering.x12,
+                x21: kernel12_lowering.x21,
+                v12: kernel12_lowering.v12,
+                v21: kernel12_lowering.v21,
                 w03: vec![0; left.vertices().len()],
                 w30: vec![0; right.vertices().len()],
             },
@@ -386,6 +398,10 @@ impl ExactBoolMeshWorkspace {
             && self.candidate_face_pairs.is_empty()
             && self.boolean03.p1q2.is_empty()
             && self.boolean03.p2q1.is_empty()
+            && self.boolean03.x12.is_empty()
+            && self.boolean03.x21.is_empty()
+            && self.boolean03.v12.is_empty()
+            && self.boolean03.v21.is_empty()
             && matches!(
                 self.mesh_bounds_relation,
                 Some(PredicateOutcome::Decided {
@@ -402,6 +418,16 @@ impl ExactBoolMeshWorkspace {
         }
         if self.boolean03.w30.len() != self.right_vertices {
             return Err(ExactBoolMeshValidationError::RightWindingCountMismatch);
+        }
+        if self.boolean03.p1q2.len() != self.boolean03.x12.len()
+            || self.boolean03.p1q2.len() != self.boolean03.v12.len()
+        {
+            return Err(ExactBoolMeshValidationError::Kernel12TableLengthMismatch);
+        }
+        if self.boolean03.p2q1.len() != self.boolean03.x21.len()
+            || self.boolean03.p2q1.len() != self.boolean03.v21.len()
+        {
+            return Err(ExactBoolMeshValidationError::Kernel12TableLengthMismatch);
         }
         for pair in &self.candidate_face_pairs {
             if pair.left_face >= self.left_faces || pair.right_face >= self.right_faces {
@@ -527,6 +553,9 @@ pub enum ExactBoolMeshValidationError {
     Boolean03OwnershipMismatch,
     /// A `kernel12` event relation and exact construction payload disagree.
     Kernel12EventShapeMismatch,
+    /// A lowered `kernel12` ownership table does not align with signed events
+    /// or exact vertices.
+    Kernel12TableLengthMismatch,
     /// Blocker candidate counts do not match retained candidates.
     BlockerCountMismatch,
     /// A non-disjoint workspace had no named boolmesh-stage blocker.
