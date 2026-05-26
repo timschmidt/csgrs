@@ -33,27 +33,28 @@ use hyperpath::{
     LineRationalQuadraticBezierIntersectionClass, LineRationalQuadraticBezierInverseBoundarySource,
     LineRationalQuadraticBezierInverseRootDomain,
     LineRationalQuadraticBezierSupportOverlapMonotonicity, LookaheadFeedSchedule, MeanderError,
-    MeanderKeepout, MeanderObstacle, MeanderPlacementCandidate, MixedCurveFragmentRef,
-    MixedCurveFragmentSeparationClass, MixedCurveSourceRef, NetId, OffsetSide, PathProvenance,
-    PathSourceFormat, PcbBoardOutline, PcbCardinalRectPad, PcbCircularBoardOutline, PcbCircularPad,
-    PcbConvexBoardOutline, PcbConvexPad, PcbObroundBoardOutline, PcbObroundPad, PcbOrientedRectPad,
-    PcbOrthogonalBoardOutline, PcbOrthogonalPad, PcbRectPad, PcbRoundedRectPad, PcbTrace,
-    PcbViaStack, PhCurveError, PocketLinkGraphError, PocketPlanError, PocketPlanStopReason,
-    PocketRingSide, QuadraticBezier, QuinticPythagoreanHodograph, RationalQuadraticBezier,
-    RationalQuadraticBezierError, RectangularPocket, RectangularRegionRelation,
-    RectangularRestMaterialError, RouteCertificationError, SegmentParameterOrder, SourceLengthUnit,
-    SpecctraGridArcWireRecord, SpecctraGridKeepoutRecord, SpecctraGridKeepoutShape,
-    SpecctraGridRouteRuleRecord, SpecctraGridTraceRecord, SpecctraGridViaRecord,
-    SpecctraImportError, SpecctraLayerAlias, SpecctraNetAlias, SpecctraParseError,
-    SpecctraRouteRuleAuditError, SpecctraRouteRuleItemKind, SpecctraRouteRuleScopeClass,
-    SpecctraRouteRuleTraceClearanceStatus, SpecctraRouteRuleWidthStatus, SpecctraTraceRecord,
-    SupportFootprintStatus, SupportPlanError, SweptLineSegment, TangentAlignment, TangentJoinClass,
-    TangentJoinReport, TangentSpan, TraceLayer, ViaAnnularRingReport, ViaAspectRatioReport,
-    ViaDrillIntent, ViaDrillPolicyClass, ViaFabricationAcceptance, ViaFabricationError,
-    ViaFabricationPolicy, ViaLayerSpanRelation, ViaLayerTransitionClass, arrange_cubic_beziers,
-    arrange_explicit_arcs, arrange_line_segments, arrange_line_segments_with_cubic_beziers,
-    arrange_line_segments_with_explicit_arcs, arrange_line_segments_with_mixed_beziers,
-    arrange_line_segments_with_mixed_curves, arrange_line_segments_with_quadratic_beziers,
+    MeanderKeepout, MeanderObstacle, MeanderPlacementCandidate, MixedCurveFragmentEndpoint,
+    MixedCurveFragmentRef, MixedCurveFragmentSeparationClass, MixedCurveSourceRef, NetId,
+    OffsetSide, PathProvenance, PathSourceFormat, PcbBoardOutline, PcbCardinalRectPad,
+    PcbCircularBoardOutline, PcbCircularPad, PcbConvexBoardOutline, PcbConvexPad,
+    PcbObroundBoardOutline, PcbObroundPad, PcbOrientedRectPad, PcbOrthogonalBoardOutline,
+    PcbOrthogonalPad, PcbRectPad, PcbRoundedRectPad, PcbTrace, PcbViaStack, PhCurveError,
+    PocketLinkGraphError, PocketPlanError, PocketPlanStopReason, PocketRingSide, QuadraticBezier,
+    QuinticPythagoreanHodograph, RationalQuadraticBezier, RationalQuadraticBezierError,
+    RectangularPocket, RectangularRegionRelation, RectangularRestMaterialError,
+    RouteCertificationError, SegmentParameterOrder, SourceLengthUnit, SpecctraGridArcWireRecord,
+    SpecctraGridKeepoutRecord, SpecctraGridKeepoutShape, SpecctraGridRouteRuleRecord,
+    SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraImportError, SpecctraLayerAlias,
+    SpecctraNetAlias, SpecctraParseError, SpecctraRouteRuleAuditError, SpecctraRouteRuleItemKind,
+    SpecctraRouteRuleScopeClass, SpecctraRouteRuleTraceClearanceStatus,
+    SpecctraRouteRuleWidthStatus, SpecctraTraceRecord, SupportFootprintStatus, SupportPlanError,
+    SweptLineSegment, TangentAlignment, TangentJoinClass, TangentJoinReport, TangentSpan,
+    TraceLayer, ViaAnnularRingReport, ViaAspectRatioReport, ViaDrillIntent, ViaDrillPolicyClass,
+    ViaFabricationAcceptance, ViaFabricationError, ViaFabricationPolicy, ViaLayerSpanRelation,
+    ViaLayerTransitionClass, arrange_cubic_beziers, arrange_explicit_arcs, arrange_line_segments,
+    arrange_line_segments_with_cubic_beziers, arrange_line_segments_with_explicit_arcs,
+    arrange_line_segments_with_mixed_beziers, arrange_line_segments_with_mixed_curves,
+    arrange_line_segments_with_quadratic_beziers,
     arrange_line_segments_with_rational_quadratic_beziers, arrange_quadratic_beziers,
     arrange_rational_quadratic_beziers, audit_specctra_route_rule_widths,
     audit_specctra_trace_rule_clearances, build_alternating_detour_meander, build_g1_join_problem,
@@ -2376,6 +2377,63 @@ fn line_mixed_bezier_arrangement_rejects_uncertified_curve_curve_overlap() {
     let line = LinePathSegment::new(p(0, 0), p(8, 0));
     let quadratic = QuadraticBezier::new(p(0, 0), p(4, 8), p(8, 0));
     let cubic = CubicBezier::new(p(0, 0), p(0, 4), p(8, 4), p(8, 0));
+
+    let error = arrange_line_segments_with_mixed_beziers(
+        &[line],
+        &[quadratic],
+        &[cubic],
+        &[],
+        PredicatePolicy::default(),
+    )
+    .unwrap_err();
+
+    assert_eq!(
+        error,
+        LineMixedBezierArrangementError::UnsupportedCurveCurveInteraction {
+            left: MixedCurveFragmentRef::Quadratic(0),
+            right: MixedCurveFragmentRef::Cubic(0),
+        }
+    );
+}
+
+#[test]
+fn line_mixed_bezier_arrangement_accepts_certified_endpoint_corner_contact() {
+    let line = LinePathSegment::new(p(0, 0), p(8, 0));
+    let quadratic = QuadraticBezier::new(p(0, 0), p(2, 2), p(4, 0));
+    let cubic = CubicBezier::new(p(4, 0), p(5, -1), p(7, -1), p(8, 0));
+
+    let report = arrange_line_segments_with_mixed_beziers(
+        &[line],
+        &[quadratic],
+        &[cubic],
+        &[],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+
+    assert_eq!(report.quadratic_fragments.len(), 1);
+    assert_eq!(report.cubic_fragments.len(), 1);
+    assert!(report.fragment_separations.iter().any(|separation| {
+        separation.class == MixedCurveFragmentSeparationClass::EndpointContact
+            && separation.left == MixedCurveFragmentRef::Quadratic(0)
+            && separation.right == MixedCurveFragmentRef::Cubic(0)
+            && separation.left_endpoint == Some(MixedCurveFragmentEndpoint::End)
+            && separation.right_endpoint == Some(MixedCurveFragmentEndpoint::Start)
+    }));
+    assert!(
+        report
+            .cell_graph
+            .vertices
+            .iter()
+            .any(|vertex| vertex.point == p(4, 0))
+    );
+}
+
+#[test]
+fn line_mixed_bezier_arrangement_rejects_endpoint_edge_box_contact() {
+    let line = LinePathSegment::new(p(0, 0), p(8, 0));
+    let quadratic = QuadraticBezier::new(p(0, 0), p(2, 2), p(4, 0));
+    let cubic = CubicBezier::new(p(4, 0), p(5, 1), p(7, 1), p(8, 0));
 
     let error = arrange_line_segments_with_mixed_beziers(
         &[line],

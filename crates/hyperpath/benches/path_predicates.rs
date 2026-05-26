@@ -604,6 +604,22 @@ fn path_predicates(c: &mut Criterion) {
             })
         })
     });
+    let mixed_endpoint_contact_line = LinePathSegment::new(p(0, 0), p(800, 0));
+    let mixed_endpoint_contact_quadratic = QuadraticBezier::new(p(0, 0), p(200, 200), p(400, 0));
+    let mixed_endpoint_contact_cubic =
+        CubicBezier::new(p(400, 0), p(500, -100), p(700, -100), p(800, 0));
+    c.bench_function("line_mixed_bezier_endpoint_contact_certificate", |b| {
+        b.iter(|| {
+            arrange_line_segments_with_mixed_beziers(
+                std::slice::from_ref(&mixed_endpoint_contact_line),
+                std::slice::from_ref(&mixed_endpoint_contact_quadratic),
+                std::slice::from_ref(&mixed_endpoint_contact_cubic),
+                &[],
+                PredicatePolicy::default(),
+            )
+            .map(|report| report.fragment_separations)
+        })
+    });
     let line_cubic = CubicBezier::new(
         p(0, 0),
         pq(1000, 3, 500, 1),

@@ -18,9 +18,9 @@ use hyperpath::{
     LineRationalQuadraticBezierAlgebraicBreakpointSequenceClass,
     LineRationalQuadraticBezierAlgebraicBreakpointSequenceSource,
     LineRationalQuadraticBezierIntersectionClass, LineRationalQuadraticBezierInverseRootDomain,
-    LineRationalQuadraticBezierSupportOverlapMonotonicity, MixedCurveFragmentRef,
-    MixedCurveFragmentSeparationClass, QuadraticBezier, RationalQuadraticBezier,
-    arrange_cubic_beziers, arrange_line_segments_with_cubic_beziers,
+    LineRationalQuadraticBezierSupportOverlapMonotonicity, MixedCurveFragmentEndpoint,
+    MixedCurveFragmentRef, MixedCurveFragmentSeparationClass, QuadraticBezier,
+    RationalQuadraticBezier, arrange_cubic_beziers, arrange_line_segments_with_cubic_beziers,
     arrange_line_segments_with_mixed_beziers, arrange_line_segments_with_mixed_curves,
     arrange_line_segments_with_quadratic_beziers,
     arrange_line_segments_with_rational_quadratic_beziers, arrange_quadratic_beziers,
@@ -290,6 +290,37 @@ fuzz_target!(|data: &[u8]| {
     .unwrap_err();
     assert_eq!(
         overlapping_mixed_error,
+        LineMixedBezierArrangementError::UnsupportedCurveCurveInteraction {
+            left: MixedCurveFragmentRef::Quadratic(0),
+            right: MixedCurveFragmentRef::Cubic(0),
+        }
+    );
+
+    let endpoint_contact_report = arrange_line_segments_with_mixed_beziers(
+        &[LinePathSegment::new(p(0, 0), p(8, 0))],
+        &[QuadraticBezier::new(p(0, 0), p(2, 2), p(4, 0))],
+        &[CubicBezier::new(p(4, 0), p(5, -1), p(7, -1), p(8, 0))],
+        &[],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert!(endpoint_contact_report
+        .fragment_separations
+        .iter()
+        .any(|separation| separation.class == MixedCurveFragmentSeparationClass::EndpointContact
+            && separation.left_endpoint == Some(MixedCurveFragmentEndpoint::End)
+            && separation.right_endpoint == Some(MixedCurveFragmentEndpoint::Start)));
+
+    let endpoint_edge_contact_error = arrange_line_segments_with_mixed_beziers(
+        &[LinePathSegment::new(p(0, 0), p(8, 0))],
+        &[QuadraticBezier::new(p(0, 0), p(2, 2), p(4, 0))],
+        &[CubicBezier::new(p(4, 0), p(5, 1), p(7, 1), p(8, 0))],
+        &[],
+        PredicatePolicy::default(),
+    )
+    .unwrap_err();
+    assert_eq!(
+        endpoint_edge_contact_error,
         LineMixedBezierArrangementError::UnsupportedCurveCurveInteraction {
             left: MixedCurveFragmentRef::Quadratic(0),
             right: MixedCurveFragmentRef::Cubic(0),

@@ -121,6 +121,8 @@ pub enum MixedCurveSourceRef {
 pub enum MixedCurveFragmentSeparationClass {
     /// Both fragments are exact sub-fragments of the same original curve.
     SameSourceSibling,
+    /// Distinct-source boxes meet at one exact shared fragment endpoint.
+    EndpointContact,
     /// The left fragment box is strictly before the right box on the x-axis.
     LeftBeforeRightX,
     /// The right fragment box is strictly before the left box on the x-axis.
@@ -131,18 +133,31 @@ pub enum MixedCurveFragmentSeparationClass {
     RightBelowLeftY,
 }
 
+/// Endpoint selector for a retained mixed-curve fragment.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum MixedCurveFragmentEndpoint {
+    /// Fragment start endpoint.
+    Start,
+    /// Fragment end endpoint.
+    End,
+}
+
 /// Replay certificate for one accepted non-line fragment pair.
 ///
 /// The bounded mixed scheduler still refuses general curve-curve topology.
 /// This certificate records why a retained pair was allowed into the shared
 /// graph: either both fragments are siblings emitted by one exact pairwise
-/// split scheduler, or an exact axis-aligned hull inequality separates two
-/// distinct sources. This follows Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997): accepted topology is accompanied by
-/// retained predicate evidence, and unsupported topology remains explicit.
+/// split scheduler, an exact endpoint-corner contact was replayed, or an
+/// exact axis-aligned hull inequality separates two distinct sources. This
+/// follows Yap, "Towards Exact Geometric Computation," *Computational
+/// Geometry* 7.1-2 (1997): accepted topology is accompanied by retained
+/// predicate evidence, and unsupported topology remains explicit.
 /// Same-source algebraic siblings arise from Collins-Loos isolated roots
 /// promoted by cubic/conic sub-schedulers, while Bezier/conic hulls retain the
-/// Farouki polynomial/rational curve-carrier discipline.
+/// Farouki polynomial/rational curve-carrier discipline. Endpoint contacts are
+/// deliberately narrower than curve-curve arrangement: both hull boxes must
+/// meet at a single exact corner and the retained fragment endpoints at that
+/// corner must compare equal.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct MixedCurveFragmentSeparation {
     /// Left non-line fragment in report fragment-index space.
@@ -153,6 +168,10 @@ pub struct MixedCurveFragmentSeparation {
     pub left_source: MixedCurveSourceRef,
     /// Original curve source of `right`.
     pub right_source: MixedCurveSourceRef,
+    /// Endpoint on `left` when `class == EndpointContact`.
+    pub left_endpoint: Option<MixedCurveFragmentEndpoint>,
+    /// Endpoint on `right` when `class == EndpointContact`.
+    pub right_endpoint: Option<MixedCurveFragmentEndpoint>,
     /// Certified reason this pair was accepted.
     pub class: MixedCurveFragmentSeparationClass,
 }
@@ -715,6 +734,8 @@ fn build_line_fragments(
 struct FragmentBox {
     source: MixedCurveFragmentRef,
     owner: MixedCurveSourceRef,
+    start: Point2,
+    end: Point2,
     x_min: Real,
     x_max: Real,
     y_min: Real,
@@ -792,11 +813,29 @@ fn validate_curve_fragment_separation(
                     &boxes[left],
                     &boxes[right],
                     MixedCurveFragmentSeparationClass::SameSourceSibling,
+                    None,
+                    None,
                 ));
                 continue;
             }
             if let Some(class) = boxes_separation_class(&boxes[left], &boxes[right], policy)? {
-                separations.push(fragment_separation(&boxes[left], &boxes[right], class));
+                separations.push(fragment_separation(
+                    &boxes[left],
+                    &boxes[right],
+                    class,
+                    None,
+                    None,
+                ));
+            } else if let Some((left_endpoint, right_endpoint)) =
+                endpoint_corner_contact(&boxes[left], &boxes[right], policy)?
+            {
+                separations.push(fragment_separation(
+                    &boxes[left],
+                    &boxes[right],
+                    MixedCurveFragmentSeparationClass::EndpointContact,
+                    Some(left_endpoint),
+                    Some(right_endpoint),
+                ));
             } else {
                 return Err(
                     LineMixedBezierArrangementError::UnsupportedCurveCurveInteraction {
@@ -814,12 +853,16 @@ fn fragment_separation(
     left: &FragmentBox,
     right: &FragmentBox,
     class: MixedCurveFragmentSeparationClass,
+    left_endpoint: Option<MixedCurveFragmentEndpoint>,
+    right_endpoint: Option<MixedCurveFragmentEndpoint>,
 ) -> MixedCurveFragmentSeparation {
     MixedCurveFragmentSeparation {
         left: left.source,
         right: right.source,
         left_source: left.owner,
         right_source: right.owner,
+        left_endpoint,
+        right_endpoint,
         class,
     }
 }
@@ -865,6 +908,8 @@ fn box_from_explicit_arc(
     }
     hull.source = MixedCurveFragmentRef::ExplicitArc(usize::MAX);
     hull.owner = MixedCurveSourceRef::ExplicitArc(usize::MAX);
+    hull.start = arc.start().clone();
+    hull.end = arc.end().clone();
     Ok(hull)
 }
 
@@ -883,6 +928,8 @@ fn box_from_points<'a, const N: usize>(
     Ok(FragmentBox {
         source: MixedCurveFragmentRef::Quadratic(usize::MAX),
         owner: MixedCurveSourceRef::Quadratic(usize::MAX),
+        start: points[0].clone(),
+        end: points[N - 1].clone(),
         x_min,
         x_max,
         y_min,
@@ -927,6 +974,79 @@ fn boxes_separation_class(
     }
 }
 
+fn endpoint_corner_contact(
+    left: &FragmentBox,
+    right: &FragmentBox,
+    policy: PredicatePolicy,
+) -> Result<
+    Option<(MixedCurveFragmentEndpoint, MixedCurveFragmentEndpoint)>,
+    LineMixedBezierArrangementError,
+> {
+    let endpoint_pairs = [
+        (
+            MixedCurveFragmentEndpoint::Start,
+            &left.start,
+            MixedCurveFragmentEndpoint::Start,
+            &right.start,
+        ),
+        (
+            MixedCurveFragmentEndpoint::Start,
+            &left.start,
+            MixedCurveFragmentEndpoint::End,
+            &right.end,
+        ),
+        (
+            MixedCurveFragmentEndpoint::End,
+            &left.end,
+            MixedCurveFragmentEndpoint::Start,
+            &right.start,
+        ),
+        (
+            MixedCurveFragmentEndpoint::End,
+            &left.end,
+            MixedCurveFragmentEndpoint::End,
+            &right.end,
+        ),
+    ];
+
+    for (left_endpoint, left_point, right_endpoint, right_point) in endpoint_pairs {
+        match point2_equal_with_policy(left_point, right_point, policy).value() {
+            Some(true) => {
+                if boxes_touch_only_at_corner(left, right, left_point, policy)? {
+                    return Ok(Some((left_endpoint, right_endpoint)));
+                }
+            }
+            Some(false) => {}
+            None => return Err(LineMixedBezierArrangementError::UndecidablePointEquality),
+        }
+    }
+    Ok(None)
+}
+
+fn boxes_touch_only_at_corner(
+    left: &FragmentBox,
+    right: &FragmentBox,
+    point: &Point2,
+    policy: PredicatePolicy,
+) -> Result<bool, LineMixedBezierArrangementError> {
+    Ok((real_equal(&left.x_max, &point.x, policy)?
+        && real_equal(&right.x_min, &point.x, policy)?
+        && real_equal(&left.y_max, &point.y, policy)?
+        && real_equal(&right.y_min, &point.y, policy)?)
+        || (real_equal(&left.x_max, &point.x, policy)?
+            && real_equal(&right.x_min, &point.x, policy)?
+            && real_equal(&left.y_min, &point.y, policy)?
+            && real_equal(&right.y_max, &point.y, policy)?)
+        || (real_equal(&left.x_min, &point.x, policy)?
+            && real_equal(&right.x_max, &point.x, policy)?
+            && real_equal(&left.y_max, &point.y, policy)?
+            && real_equal(&right.y_min, &point.y, policy)?)
+        || (real_equal(&left.x_min, &point.x, policy)?
+            && real_equal(&right.x_max, &point.x, policy)?
+            && real_equal(&left.y_min, &point.y, policy)?
+            && real_equal(&right.y_max, &point.y, policy)?))
+}
+
 fn is_less(
     left: &Real,
     right: &Real,
@@ -935,6 +1055,18 @@ fn is_less(
     match compare_reals_with_policy(left, right, policy).value() {
         Some(Ordering::Less) => Ok(true),
         Some(Ordering::Equal | Ordering::Greater) => Ok(false),
+        None => Err(LineMixedBezierArrangementError::UndecidablePointEquality),
+    }
+}
+
+fn real_equal(
+    left: &Real,
+    right: &Real,
+    policy: PredicatePolicy,
+) -> Result<bool, LineMixedBezierArrangementError> {
+    match compare_reals_with_policy(left, right, policy).value() {
+        Some(Ordering::Equal) => Ok(true),
+        Some(Ordering::Less | Ordering::Greater) => Ok(false),
         None => Err(LineMixedBezierArrangementError::UndecidablePointEquality),
     }
 }
