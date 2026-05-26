@@ -27480,6 +27480,79 @@ fn exact_coplanar_multi_difference_materializes_same_outer_disjoint_hole_fills()
             .any(|point| real_eq(&point.x, &ExactReal::from(8)))
     }));
 
+    let orthogonal_outer = rect_surface_i64(&[(0, 0, 20, 20)]);
+    let orthogonal_right_hole = rect_surface_i64(&[(4, 4, 16, 8), (4, 8, 8, 16)]);
+    let orthogonal_left_hole = rect_surface_i64(&[(6, 4, 8, 16)]);
+    let orthogonal_left = hypermesh::exact::arrange_coplanar_orthogonal_surface_difference(
+        &orthogonal_outer,
+        &orthogonal_left_hole,
+    )
+    .expect("orthogonal no-hole left source should materialize")
+    .mesh;
+    let orthogonal_right = hypermesh::exact::arrange_coplanar_orthogonal_surface_difference(
+        &orthogonal_outer,
+        &orthogonal_right_hole,
+    )
+    .expect("orthogonal no-hole right source should materialize")
+    .mesh;
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_component_difference(
+            &orthogonal_left,
+            &orthogonal_right,
+        )
+        .is_none(),
+        "the nonconvex retained hole is split into multiple filled loops"
+    );
+    let orthogonal_difference = hypermesh::exact::arrange_coplanar_surface_multi_difference(
+        &orthogonal_left,
+        &orthogonal_right,
+    )
+    .expect("rectilinear nonconvex no-hole same-outer subtraction should replay");
+    orthogonal_difference.validate().unwrap();
+    orthogonal_difference
+        .validate_difference_against_sources(&orthogonal_left, &orthogonal_right)
+        .unwrap();
+    assert_eq!(orthogonal_difference.polygons.len(), 2);
+    assert!(orthogonal_difference.polygons.iter().any(|polygon| {
+        polygon
+            .iter()
+            .any(|point| real_eq(&point.x, &ExactReal::from(16)))
+    }));
+    assert!(orthogonal_difference.polygons.iter().any(|polygon| {
+        polygon
+            .iter()
+            .any(|point| real_eq(&point.y, &ExactReal::from(16)))
+    }));
+    let orthogonal_preflight = hypermesh::exact::preflight_boolean_exact(
+        &orthogonal_left,
+        &orthogonal_right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .expect("orthogonal no-hole preflight should classify multi-difference shortcut");
+    orthogonal_preflight.validate().unwrap();
+    orthogonal_preflight
+        .validate_against_sources(&orthogonal_left, &orthogonal_right)
+        .unwrap();
+    assert_eq!(
+        orthogonal_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceMultiDifference
+    );
+    hypermesh::exact::boolean_exact(
+        &orthogonal_left,
+        &orthogonal_right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("orthogonal no-hole same-outer difference should materialize")
+    .validate_operation_against_sources(
+        &orthogonal_left,
+        &orthogonal_right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
+
     let touching_holes = ExactMesh::from_i64_triangles_with_policy(
         &[
             1, 1, 0, 2, 1, 0, 2, 2, 0, 1, 2, 0, //

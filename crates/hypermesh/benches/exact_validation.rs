@@ -4867,6 +4867,24 @@ fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
             )
             .unwrap()
             .mesh;
+        let same_outer_orthogonal_split_multi_outer = rect_surface_i64(&[(0, 0, 20, 20)]);
+        let same_outer_orthogonal_split_multi_right_hole =
+            rect_surface_i64(&[(4, 4, 16, 8), (4, 8, 8, 16)]);
+        let same_outer_orthogonal_split_multi_left_hole = rect_surface_i64(&[(6, 4, 8, 16)]);
+        let same_outer_orthogonal_split_multi_left =
+            arrange_coplanar_orthogonal_surface_difference(
+                &same_outer_orthogonal_split_multi_outer,
+                &same_outer_orthogonal_split_multi_left_hole,
+            )
+            .unwrap()
+            .mesh;
+        let same_outer_orthogonal_split_multi_right =
+            arrange_coplanar_orthogonal_surface_difference(
+                &same_outer_orthogonal_split_multi_outer,
+                &same_outer_orthogonal_split_multi_right_hole,
+            )
+            .unwrap()
+            .mesh;
         let same_outer_common_left_holes = ExactMesh::from_i64_triangles_with_policy(
             &[
                 2, 2, 0, 4, 2, 0, 4, 4, 0, 2, 4, 0, //
@@ -6659,6 +6677,22 @@ fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
                         hypermesh::exact::preflight_boolean_exact(
                             &same_outer_nested_left,
                             &same_outer_crossing_multi_right,
+                            hypermesh::exact::ExactBooleanOperation::Difference,
+                        )
+                        .map(|report| report.validate()),
+                        arrange_coplanar_surface_multi_difference(
+                            &same_outer_orthogonal_split_multi_left,
+                            &same_outer_orthogonal_split_multi_right,
+                        )
+                        .map(|output| {
+                            output.validate_difference_against_sources(
+                                &same_outer_orthogonal_split_multi_left,
+                                &same_outer_orthogonal_split_multi_right,
+                            )
+                        }),
+                        hypermesh::exact::preflight_boolean_exact(
+                            &same_outer_orthogonal_split_multi_left,
+                            &same_outer_orthogonal_split_multi_right,
                             hypermesh::exact::ExactBooleanOperation::Difference,
                         )
                         .map(|report| report.validate()),

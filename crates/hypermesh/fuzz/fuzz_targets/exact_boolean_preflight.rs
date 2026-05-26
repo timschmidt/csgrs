@@ -3090,6 +3090,62 @@ fn exercise_same_outer_holed_coplanar_multi_difference() {
         .validate_difference_against_sources(&left, &crossing)
         .unwrap();
 
+    let orthogonal_outer = rect_surface_i64(&[(0, 0, 20, 20)]);
+    let orthogonal_right_hole = rect_surface_i64(&[(4, 4, 16, 8), (4, 8, 8, 16)]);
+    let orthogonal_left_hole = rect_surface_i64(&[(6, 4, 8, 16)]);
+    let orthogonal_left = arrange_coplanar_orthogonal_surface_difference(
+        &orthogonal_outer,
+        &orthogonal_left_hole,
+    )
+    .expect("same-outer orthogonal no-hole left should materialize")
+    .mesh;
+    let orthogonal_right = arrange_coplanar_orthogonal_surface_difference(
+        &orthogonal_outer,
+        &orthogonal_right_hole,
+    )
+    .expect("same-outer orthogonal no-hole right should materialize")
+    .mesh;
+    assert!(
+        arrange_coplanar_surface_component_difference(&orthogonal_left, &orthogonal_right).is_none()
+    );
+    let orthogonal_difference =
+        arrange_coplanar_surface_multi_difference(&orthogonal_left, &orthogonal_right)
+            .expect("same-outer orthogonal no-hole difference should split into components");
+    orthogonal_difference.validate().unwrap();
+    orthogonal_difference
+        .validate_difference_against_sources(&orthogonal_left, &orthogonal_right)
+        .unwrap();
+    assert_eq!(orthogonal_difference.polygons.len(), 2);
+    let orthogonal_preflight = preflight_boolean_exact(
+        &orthogonal_left,
+        &orthogonal_right,
+        ExactBooleanOperation::Difference,
+    )
+    .expect("same-outer orthogonal no-hole multi-difference preflight should classify shortcut");
+    orthogonal_preflight.validate().unwrap();
+    orthogonal_preflight
+        .validate_against_sources(&orthogonal_left, &orthogonal_right)
+        .unwrap();
+    assert_eq!(
+        orthogonal_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarSurfaceMultiDifference
+    );
+    hypermesh::exact::boolean_exact(
+        &orthogonal_left,
+        &orthogonal_right,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("same-outer orthogonal no-hole multi-difference should materialize")
+    .validate_operation_against_sources(
+        &orthogonal_left,
+        &orthogonal_right,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
+
     let preflight = preflight_boolean_exact(&left, &right, ExactBooleanOperation::Difference)
         .expect("same-outer holed multi-difference preflight should classify shortcut");
     preflight.validate().unwrap();

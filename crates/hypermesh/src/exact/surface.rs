@@ -4587,9 +4587,11 @@ fn single_convex_cut_difference_polygon(
 /// positive-area partial overlaps when the clipped cutter attaches to the
 /// right-hole boundary and exact area replay certifies the simple output. If a
 /// right hole strictly contains a left hole, the output is holed and belongs
-/// to the component-holed artifact instead; if rings touch, cross, or overlap
-/// outside these bounded certificates, the case remains general
-/// planar-arrangement work.
+/// to the component-holed artifact instead. Rectilinear nonconvex right holes
+/// can also be replayed through the exact orthogonal cell path when every
+/// remnant is a simple filled loop. If rings touch, cross, or overlap outside
+/// these bounded certificates, the case remains general planar-arrangement
+/// work.
 ///
 /// The certificate follows Yap, "Towards Exact Geometric Computation,"
 /// *Computational Geometry* 7.1-2 (1997): source boundary rings are recovered
@@ -4688,6 +4690,8 @@ fn same_outer_holed_no_hole_difference_rings(
         let mut contributes = true;
         let mut convex_cutters = Vec::new();
         let mut rectangular_cutters = Vec::new();
+        let mut connected_cutters = Vec::new();
+        let mut requires_orthogonal_replay = false;
         for left_hole in &left.holes {
             if polygons_equal(left_hole, right_hole)
                 || polygon_strictly_inside_simple_polygon(right_hole, left_hole, projection)?
@@ -4702,6 +4706,7 @@ fn same_outer_holed_no_hole_difference_rings(
                 SimplePolygonInteraction::Disjoint => {}
                 SimplePolygonInteraction::PointOnly => return None,
                 SimplePolygonInteraction::Connected => {
+                    connected_cutters.push(left_hole.clone());
                     if let (Some(right_rect), Some(left_rect)) = (
                         projected_axis_aligned_rectangle(right_hole, projection),
                         projected_axis_aligned_rectangle(left_hole, projection),
@@ -4710,16 +4715,24 @@ fn same_outer_holed_no_hole_difference_rings(
                             return None;
                         }
                         rectangular_cutters.push(left_rect);
+                    } else if let Some(cutter) =
+                        convex_retained_hole_intersection_polygon(left_hole, right_hole, projection)
+                    {
+                        convex_cutters.push(cutter);
                     } else {
-                        convex_cutters.push(convex_retained_hole_intersection_polygon(
-                            left_hole, right_hole, projection,
-                        )?);
+                        requires_orthogonal_replay = true;
                     }
                 }
             }
         }
         if contributes {
-            if rectangular_cutters.is_empty() && convex_cutters.is_empty() {
+            if requires_orthogonal_replay {
+                polygons.extend(same_outer_holed_orthogonal_no_hole_difference_polygons(
+                    right_hole,
+                    &connected_cutters,
+                    projection,
+                )?);
+            } else if rectangular_cutters.is_empty() && convex_cutters.is_empty() {
                 let mut polygon = right_hole.clone();
                 orient_polygon_ccw(&mut polygon, projection)?;
                 polygons.push(polygon);
@@ -4765,6 +4778,94 @@ fn same_outer_holed_no_hole_difference_rings(
             }
         }
     }
+    Some(polygons)
+}
+
+/// Replay a rectilinear same-outer retained-hole subtraction as filled loops.
+///
+/// Same-outer subtraction reduces `(outer - left_holes) - (outer - right_holes)`
+/// to `right_hole - left_holes`. The convex and rectangular helpers above own
+/// the cases where a clipped cutter can be represented directly as one retained
+/// boundary-fragment certificate. This fallback owns the bounded no-hole
+/// orthogonal case: a nonconvex rectilinear right retained hole may split into
+/// one or more simple filled loops after subtracting rectilinear left retained
+/// holes, but no output loop may contain a retained hole. Holed remnants remain
+/// on [`same_outer_holed_orthogonal_difference_components`].
+///
+/// This is a finite exact arrangement step in Yap's sense: source loops are
+/// retained as exact objects, the orthogonal cell decomposition uses exact
+/// predicates, and the caller replays the global area equation before emitting
+/// a boolean artifact; see Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997). The grid subdivision is the
+/// rectilinear arrangement model from de Berg, Cheong, van Kreveld, and
+/// Overmars, *Computational Geometry: Algorithms and Applications*, 3rd ed.
+/// (2008), Chapter 2. Temporary simple-loop triangulation goes through
+/// Held, "FIST: Fast Industrial-Strength Triangulation of Polygons,"
+/// *Algorithmica* 30 (2001), via `hypertri`.
+#[cfg(feature = "exact-triangulation")]
+fn same_outer_holed_orthogonal_no_hole_difference_polygons(
+    source: &[Point3],
+    cutters: &[Vec<Point3>],
+    projection: CoplanarProjection,
+) -> Option<Vec<Vec<Point3>>> {
+    if cutters.is_empty() {
+        return None;
+    }
+    let mut source_loop = source.to_vec();
+    orient_polygon_ccw(&mut source_loop, projection)?;
+    validate_projected_simple_loop(
+        &source_loop,
+        projection,
+        "coplanar same-outer orthogonal no-hole difference source",
+    )
+    .ok()?;
+    let source_mesh = polygon_to_retained_simple_open_mesh_with_label(
+        &source_loop,
+        projection,
+        "exact same-outer orthogonal no-hole difference source",
+    )?;
+
+    let removal_meshes = cutters
+        .iter()
+        .map(|cutter| {
+            simple_loop_mesh_for_orthogonal_replay(
+                cutter,
+                projection,
+                "exact same-outer orthogonal no-hole difference cutter",
+            )
+        })
+        .collect::<Option<Vec<_>>>()?;
+    let removal = merge_component_meshes(
+        removal_meshes.iter().collect::<Vec<_>>(),
+        "exact same-outer orthogonal no-hole difference removals",
+    )?;
+    let arrangement = super::orthogonal_surface::arrange_coplanar_orthogonal_surface_difference(
+        &source_mesh,
+        &removal,
+    )?;
+    if arrangement.projection != projection {
+        return None;
+    }
+
+    let mut polygons = Vec::new();
+    for component in arrangement.components {
+        if !component.holes.is_empty() {
+            return None;
+        }
+        let mut polygon = simplify_projected_polygon(component.outer, projection);
+        orient_polygon_ccw(&mut polygon, projection)?;
+        validate_projected_simple_loop(
+            &polygon,
+            projection,
+            "coplanar same-outer orthogonal no-hole difference output",
+        )
+        .ok()?;
+        polygons.push(polygon);
+    }
+    if polygons.is_empty() {
+        return None;
+    }
+    sort_polygons_for_replay(&mut polygons, projection);
     Some(polygons)
 }
 
