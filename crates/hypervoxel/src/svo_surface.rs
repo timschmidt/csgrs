@@ -14,8 +14,10 @@
 //! vertex/edge/face reports keep the combinatorial mesh vocabulary explicit.
 
 use crate::{
-    ExactFaceExtractionReport, ExactVoxelFace, ExactVoxelSurfaceTopologyReport, HypervoxelResult,
-    SvoSparseReplayReport, SvoVoxelGrid, audit_exact_voxel_surface_topology,
+    ExactFaceExtractionReport, ExactSurfaceTriangleMeshVocabularyReport, ExactVoxelFace,
+    ExactVoxelSurfaceTopologyReport, ExactVoxelSurfaceTriangleMesh, HypervoxelResult,
+    SvoSparseReplayReport, SvoVoxelGrid, audit_exact_surface_triangle_mesh_vocabulary,
+    audit_exact_voxel_surface_topology, exact_voxel_surface_triangle_mesh_from_faces,
     extract_exposed_faces_with_report,
 };
 
@@ -33,6 +35,20 @@ pub struct SvoSurfaceReplayReport {
     /// Whether exact SVO storage replay, exact shell extraction, and exact
     /// closed-surface topology all succeeded.
     pub exact_svo_surface_replay_ready: bool,
+}
+
+/// Exact SVO-DAG surface triangle-mesh handoff report.
+#[derive(Clone, Debug, PartialEq)]
+pub struct SvoExactSurfaceTriangleMeshReport {
+    /// Exact SVO surface replay consumed by the handoff.
+    pub surface: SvoSurfaceReplayReport,
+    /// Exact indexed triangle mesh produced from the replayed shell.
+    pub mesh: ExactVoxelSurfaceTriangleMesh,
+    /// Shared indexed mesh vocabulary audit over the emitted triangle mesh.
+    pub vocabulary: ExactSurfaceTriangleMeshVocabularyReport,
+    /// Whether SVO sparse replay, exact shell extraction, exact topology, exact
+    /// triangle emission, and shared mesh vocabulary all replay successfully.
+    pub exact_svo_triangle_mesh_ready: bool,
 }
 
 /// Replays compressed SVO-DAG storage into exact exposed surface faces.
@@ -63,4 +79,34 @@ pub fn extract_svo_exposed_faces_with_report(
             exact_svo_surface_replay_ready,
         },
     ))
+}
+
+/// Builds an exact indexed triangle mesh from SVO-DAG storage replay.
+///
+/// This is the SVO counterpart to
+/// [`crate::chunk_paged_exact_surface_triangle_mesh_with_report`]. The SVO DAG
+/// only schedules decompression: the path first replays to canonical sparse
+/// cells, extracts exact exposed faces, audits exact surface topology, emits
+/// lattice-vertex indexed triangles, and finally audits the shared mesh
+/// vocabulary. Following Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7(1-2), 1997, compression is never accepted as
+/// topology evidence until the retained object facts have been replayed. The
+/// indexed mesh vocabulary follows Botsch et al., *Polygon Mesh Processing*,
+/// AK Peters, 2010, with exact lattice vertices instead of primitive-float
+/// display coordinates.
+pub fn svo_exact_surface_triangle_mesh_with_report(
+    grid: &SvoVoxelGrid,
+) -> HypervoxelResult<SvoExactSurfaceTriangleMeshReport> {
+    let (faces, surface) = extract_svo_exposed_faces_with_report(grid)?;
+    let mesh = exact_voxel_surface_triangle_mesh_from_faces(&faces);
+    let vocabulary = audit_exact_surface_triangle_mesh_vocabulary(&mesh);
+    let exact_svo_triangle_mesh_ready = surface.exact_svo_surface_replay_ready
+        && mesh.report.exact_triangle_surface_mesh_ready
+        && vocabulary.exact_shared_mesh_vocabulary_ready;
+    Ok(SvoExactSurfaceTriangleMeshReport {
+        surface,
+        mesh,
+        vocabulary,
+        exact_svo_triangle_mesh_ready,
+    })
 }

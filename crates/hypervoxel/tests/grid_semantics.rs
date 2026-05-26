@@ -1241,6 +1241,46 @@ fn svo_surface_replay_extracts_exact_shell_after_sparse_expansion() {
 }
 
 #[test]
+fn svo_exact_surface_triangle_mesh_preserves_replayed_surface_vocabulary() {
+    let frame = frame(2);
+    let mut grid = SvoVoxelGrid::new(frame.clone());
+    grid.set(
+        VoxelAddress::root(),
+        VoxelCell::material(MaterialRegionId(8)),
+    )
+    .unwrap();
+
+    let (_, surface) = hypervoxel::extract_svo_exposed_faces_with_report(&grid).unwrap();
+    let mesh = hypervoxel::svo_exact_surface_triangle_mesh_with_report(&grid).unwrap();
+
+    assert_eq!(mesh.surface, surface);
+    assert_eq!(mesh.mesh.report.input_faces, surface.exact_faces);
+    assert_eq!(mesh.mesh.report.exact_triangles, surface.exact_faces * 2);
+    assert!(mesh.mesh.report.exact_triangle_surface_mesh_ready);
+    assert_eq!(mesh.vocabulary.source_faces, surface.topology.unique_faces);
+    assert!(mesh.vocabulary.exact_shared_mesh_vocabulary_ready);
+    assert!(mesh.exact_svo_triangle_mesh_ready);
+
+    let empty = SvoVoxelGrid::new(frame.clone());
+    let empty_mesh = hypervoxel::svo_exact_surface_triangle_mesh_with_report(&empty).unwrap();
+    assert_eq!(empty_mesh.surface.exact_faces, 0);
+    assert!(empty_mesh.mesh.triangles.is_empty());
+    assert!(!empty_mesh.mesh.report.exact_triangle_surface_mesh_ready);
+    assert!(!empty_mesh.vocabulary.exact_shared_mesh_vocabulary_ready);
+    assert!(!empty_mesh.exact_svo_triangle_mesh_ready);
+
+    let mut lossy = SvoVoxelGrid::new(frame);
+    lossy
+        .set(VoxelAddress::root(), VoxelCell::lossy_adapter_value(5))
+        .unwrap();
+    let lossy_mesh = hypervoxel::svo_exact_surface_triangle_mesh_with_report(&lossy).unwrap();
+    assert_eq!(lossy_mesh.surface.sparse_replay.lossy_leaf_cells, 64);
+    assert!(!lossy_mesh.surface.exact_svo_surface_replay_ready);
+    assert!(!lossy_mesh.mesh.report.exact_triangle_surface_mesh_ready);
+    assert!(!lossy_mesh.exact_svo_triangle_mesh_ready);
+}
+
+#[test]
 fn voxelization_report_exposes_freshness_and_legacy_status() {
     let frame = frame(2);
     let aggregate = VoxelAggregateFacts::from_cells([&VoxelCell::material(MaterialRegionId(3))]);

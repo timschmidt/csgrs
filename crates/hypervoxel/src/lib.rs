@@ -223,7 +223,10 @@ pub use svo::{
     SvoCompactionReport, SvoDagStats, SvoEditReport, SvoNodeId, SvoSparseReplayReport,
     SvoStorageReport, SvoVoxelGrid,
 };
-pub use svo_surface::{SvoSurfaceReplayReport, extract_svo_exposed_faces_with_report};
+pub use svo_surface::{
+    SvoExactSurfaceTriangleMeshReport, SvoSurfaceReplayReport,
+    extract_svo_exposed_faces_with_report, svo_exact_surface_triangle_mesh_with_report,
+};
 pub use trace::{VoxelTraceDimension, VoxelTraceManifest, VoxelTraceReport};
 pub use transform::{AxisPermutationTransform, SignedAxis};
 pub use triangle_component_audit::{

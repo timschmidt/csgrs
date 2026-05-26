@@ -34,10 +34,11 @@ use hypervoxel::{
     greedy_face_patch_plan, lookup_material_display_colors, lossy_obj_from_quad_mesh,
     lossy_quad_mesh_from_faces, query_field_samples, query_material_regions,
     report_material_region_metadata, sample_manhattan_distance_field,
-    sample_signed_manhattan_distance_field, select_lod_cells, sweep_address_segment,
-    trace_address_ray, voxelize_exact_box, voxelize_exact_convex_halfspace_set,
-    voxelize_exact_halfspace, voxelize_exact_triangle_solid_mesh,
-    voxelize_exact_triangle_surface_mesh, voxelize_prepared_exact_triangle_solid_mesh,
+    sample_signed_manhattan_distance_field, select_lod_cells,
+    svo_exact_surface_triangle_mesh_with_report, sweep_address_segment, trace_address_ray,
+    voxelize_exact_box, voxelize_exact_convex_halfspace_set, voxelize_exact_halfspace,
+    voxelize_exact_triangle_solid_mesh, voxelize_exact_triangle_surface_mesh,
+    voxelize_prepared_exact_triangle_solid_mesh,
     voxelize_prepared_exact_triangle_solid_mesh_by_adaptive_axis_sweeps,
     voxelize_prepared_exact_triangle_solid_mesh_by_adaptive_local_component_consensus,
     voxelize_prepared_exact_triangle_solid_mesh_by_axis_sweeps,
@@ -763,6 +764,24 @@ fn bench_svo_path_copy_edits(c: &mut Criterion) {
                 report.topology.edges.len(),
                 report.sparse_replay.materialized_sparse_cells,
                 report.exact_svo_surface_replay_ready,
+            )
+        })
+    });
+    c.bench_function("semantic_svo_exact_surface_triangle_mesh_handoff", |b| {
+        let surface_frame = GridFrame::builder().depth(4).build().unwrap();
+        let mut grid = SvoVoxelGrid::new(surface_frame);
+        grid.set(
+            VoxelAddress::root(),
+            VoxelCell::material(MaterialRegionId(3)),
+        )
+        .unwrap();
+        b.iter(|| {
+            let report = svo_exact_surface_triangle_mesh_with_report(&grid).unwrap();
+            (
+                report.surface.exact_faces,
+                report.mesh.report.exact_triangles,
+                report.vocabulary.unique_index_edges,
+                report.exact_svo_triangle_mesh_ready,
             )
         })
     });

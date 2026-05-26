@@ -36,7 +36,8 @@ use hypervoxel::{
     lookup_material_display_colors, lossy_obj_from_quad_mesh, lossy_quad_mesh_from_faces,
     materialize_legacy_voxelis_u8_chunk_paged_storage, query_field_samples,
     query_material_regions, report_material_region_metadata, sample_manhattan_distance_field,
-    sample_signed_manhattan_distance_field, select_lod_cells, sweep_address_segment,
+    sample_signed_manhattan_distance_field, select_lod_cells, svo_exact_surface_triangle_mesh_with_report,
+    sweep_address_segment,
     trace_address_ray, voxel_neighbors6, voxelize_exact_box, voxelize_exact_convex_halfspace_set,
     voxelize_exact_halfspace, voxelize_prepared_exact_triangle_solid_mesh,
     voxelize_prepared_exact_triangle_solid_mesh_by_adaptive_axis_sweeps,
@@ -390,6 +391,19 @@ fuzz_target!(|data: (u8, u64, u64, u64)| {
             && svo_surface.shell.exact_shell_ready
             && svo_surface.topology.exact_surface_topology_ready
             && svo_surface.exact_faces > 0
+    );
+    let svo_mesh = svo_exact_surface_triangle_mesh_with_report(&svo).unwrap();
+    assert_eq!(svo_mesh.surface, svo_surface);
+    assert_eq!(svo_mesh.mesh.report.input_faces, svo_mesh.surface.exact_faces);
+    assert_eq!(
+        svo_mesh.mesh.report.exact_triangles,
+        svo_mesh.surface.exact_faces * 2
+    );
+    assert_eq!(
+        svo_mesh.exact_svo_triangle_mesh_ready,
+        svo_mesh.surface.exact_svo_surface_replay_ready
+            && svo_mesh.mesh.report.exact_triangle_surface_mesh_ready
+            && svo_mesh.vocabulary.exact_shared_mesh_vocabulary_ready
     );
     assert_eq!(
         svo_report.logical_leaf_cells,
