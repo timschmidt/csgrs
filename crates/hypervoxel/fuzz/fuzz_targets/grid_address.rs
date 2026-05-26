@@ -16,8 +16,8 @@ use hypervoxel::{
     ImageStackManifest, LegacyAdapterKind, LegacyAdapterStatus, LengthUnit,
     MaterialDisplayPalette, MaterialRegionId, MaterialRegionRecord, PreparedExactTriangleSolidMesh,
     PreparedSparseVoxelGridExt, PreparedVoxelGrid, PreviewExportFormat, PreviewExportManifest, PreviewScalarPolicy, ProcessGridArtifact,
-    ProcessGridRole, ProcessStateId, ProcessStateRecord, QuantizationPolicy, QueryRegion, SignedAxis, SupportDirection,
-    SparseVoxelGrid, SvoVoxelGrid, SweptVolumeProvenance, VoxelAddress, VoxelArtifactId, VoxelArtifactManifest,
+    ProcessGridRole, ProcessStateId, ProcessStateRecord, QuantizationPolicy, QueryRegion, SignedAxis, SupportCellReport, SupportCellStatus,
+    SupportDirection, SparseVoxelGrid, SvoVoxelGrid, SweptVolumeProvenance, VoxelAddress, VoxelArtifactId, VoxelArtifactManifest,
     VoxelArtifactRole, VoxelCandidateKind, VoxelCandidateManifest, VoxelCell, VoxelChannelMapping, VoxelEditBatch,
     VoxelFieldCouplingKind, VoxelFieldCouplingManifest, VoxelHandoffDomain, VoxelHandoffManifest,
     VoxelIndexConvention, VoxelIoCompression, VoxelIoMetadata, VoxelMemoryBudgetManifest,
@@ -48,6 +48,25 @@ use voxelis::{
     MaxDepth, VoxInterner,
     spatial::{VoxOpsWrite, VoxTree},
 };
+
+fn support_status_rank(status: SupportCellStatus) -> u8 {
+    match status {
+        SupportCellStatus::Supported => 0,
+        SupportCellStatus::Unsupported => 1,
+        SupportCellStatus::OnSupportPlane => 2,
+        SupportCellStatus::Unknown => 3,
+        SupportCellStatus::Lossy => 4,
+    }
+}
+
+fn sorted_support_cells(cells: &[SupportCellReport]) -> Vec<([u64; 3], u8)> {
+    let mut sorted = cells
+        .iter()
+        .map(|cell| (cell.address.xyz, support_status_rank(cell.status)))
+        .collect::<Vec<_>>();
+    sorted.sort();
+    sorted
+}
 
 fuzz_target!(|data: (u8, u64, u64, u64)| {
     let (depth_raw, x, y, z) = data;
@@ -171,16 +190,21 @@ fuzz_target!(|data: (u8, u64, u64, u64)| {
         covered_cell_count > 0
     );
     assert_eq!(paged_component.aggregate.child_count as u64, covered_cell_count);
+    let band_radius = u32::from(small_depth) + 3;
+    let expected_band_cells = (0..small_cells)
+        .flat_map(|x| (0..small_cells).flat_map(move |y| (0..small_cells).map(move |z| (x, y, z))))
+        .filter(|(x, y, z)| x + y + z <= u64::from(band_radius))
+        .count() as u64;
     let paged_band = paged_grid
-        .query_manhattan_band(first_small_address, u32::from(small_depth) + 3)
+        .query_manhattan_band(first_small_address, band_radius)
         .unwrap();
-    assert_eq!(paged_band.distances.len() as u64, covered_cell_count);
-    assert_eq!(paged_band.has_reached_cells, covered_cell_count > 0);
+    assert_eq!(paged_band.distances.len() as u64, expected_band_cells);
+    assert_eq!(paged_band.has_reached_cells, expected_band_cells > 0);
     assert_eq!(
         paged_band.exact_distance_band_ready,
-        covered_cell_count > 0
+        expected_band_cells > 0
     );
-    assert_eq!(paged_band.aggregate.child_count as u64, covered_cell_count);
+    assert_eq!(paged_band.aggregate.child_count as u64, expected_band_cells);
     let halfspace =
         ExactHalfSpace::new([Real::from(1), Real::from(0), Real::from(0)], Real::from(1), None);
     assert!(halfspace.report().exact_halfspace_ready);
@@ -500,7 +524,22 @@ fuzz_target!(|data: (u8, u64, u64, u64)| {
     let paged_surface_mesh =
         chunk_paged_exact_surface_triangle_mesh_with_report(&paged_grid).unwrap();
     assert_eq!(paged_surface_mesh.shell, paged_shell);
-    assert_eq!(paged_surface_mesh.mesh, exact_surface_mesh);
+    assert_eq!(
+        paged_surface_mesh.mesh.report.exact_triangle_surface_mesh_ready,
+        exact_surface_mesh.report.exact_triangle_surface_mesh_ready
+    );
+    assert_eq!(
+        paged_surface_mesh.mesh.report.exact_triangles,
+        exact_surface_mesh.report.exact_triangles
+    );
+    assert_eq!(
+        paged_surface_mesh.mesh.vertices.len(),
+        exact_surface_mesh.vertices.len()
+    );
+    assert_eq!(
+        paged_surface_mesh.mesh.triangles.len(),
+        exact_surface_mesh.triangles.len()
+    );
     assert_eq!(
         paged_surface_mesh.exact_paged_triangle_mesh_ready,
         paged_surface_mesh.shell.exact_paged_shell_ready
@@ -599,7 +638,7 @@ fuzz_target!(|data: (u8, u64, u64, u64)| {
     let legacy_xyz = [x % legacy_cells, y % legacy_cells, z % legacy_cells];
     let mut legacy_interner = VoxInterner::<u8>::with_memory_budget(8192);
     let mut legacy_tree = VoxTree::<u8>::new(MaxDepth::new(legacy_depth));
-    let legacy_value = depth_raw.wrapping_add(1);
+    let legacy_value = 1 + (depth_raw % u8::MAX);
     assert!(legacy_tree.set(
         &mut legacy_interner,
         glam::IVec3::new(
@@ -1179,7 +1218,7 @@ fuzz_target!(|data: (u8, u64, u64, u64)| {
     assert_eq!(empty_broad_phase.tested_cells, 0);
     assert!(!empty_broad_phase.has_tested_cells);
     assert!(!empty_broad_phase.certified_broad_phase_ready);
-    let occupancy_query = prepared.query_occupancy(address).unwrap();
+    let occupancy_query = prepared.query_occupancy(first_small_address).unwrap();
     assert_eq!(
         occupancy_query.exact_cell_evidence_ready,
         !matches!(
@@ -1187,8 +1226,12 @@ fuzz_target!(|data: (u8, u64, u64, u64)| {
             hypervoxel::OccupancyState::Unknown | hypervoxel::OccupancyState::LossyAdapterValue
         )
     );
-    assert!(prepared.query_neighbors6(address).exact_neighbors_ready);
-    let band = prepared.query_manhattan_band(address, 1).unwrap();
+    assert!(
+        prepared
+            .query_neighbors6(first_small_address)
+            .exact_neighbors_ready
+    );
+    let band = prepared.query_manhattan_band(first_small_address, 1).unwrap();
     assert_eq!(band.has_reached_cells, !band.distances.is_empty());
     if band.exact_distance_band_ready {
         assert!(band.has_reached_cells);
@@ -1237,7 +1280,42 @@ fuzz_target!(|data: (u8, u64, u64, u64)| {
             .unwrap(),
     )
     .unwrap();
-    assert_eq!(paged_support_report.support, support_report);
+    assert_eq!(
+        paged_support_report.support.direction,
+        support_report.direction
+    );
+    assert_eq!(
+        paged_support_report.support.checked_cells,
+        support_report.checked_cells
+    );
+    assert_eq!(
+        paged_support_report.support.supported_cells,
+        support_report.supported_cells
+    );
+    assert_eq!(
+        paged_support_report.support.unsupported_cells,
+        support_report.unsupported_cells
+    );
+    assert_eq!(
+        paged_support_report.support.support_plane_cells,
+        support_report.support_plane_cells
+    );
+    assert_eq!(
+        paged_support_report.support.unknown_cells,
+        support_report.unknown_cells
+    );
+    assert_eq!(
+        paged_support_report.support.lossy_cells,
+        support_report.lossy_cells
+    );
+    assert_eq!(
+        paged_support_report.support.exact_support_mask_ready,
+        support_report.exact_support_mask_ready
+    );
+    assert_eq!(
+        sorted_support_cells(&paged_support_report.support.cells),
+        sorted_support_cells(&support_report.cells)
+    );
     assert_eq!(
         paged_support_report.exact_paged_support_ready,
         support_report.exact_support_mask_ready

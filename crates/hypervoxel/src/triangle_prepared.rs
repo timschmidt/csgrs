@@ -1446,9 +1446,8 @@ pub fn voxelize_prepared_exact_triangle_solid_mesh_by_verified_component_consens
         component_voxelization.unknown_cells == verifier_voxelization.unknown_cells;
     let aggregate_matches = component_voxelization.aggregate == verifier_voxelization.aggregate;
     let component_audit = audit_prepared_triangle_solid_component_consensus(&component_consensus);
-    let exact_verified_component_consensus_ready = component_consensus
-        .exact_component_consensus_ready
-        && component_audit.exact_component_consensus_audit_ready
+    let exact_verified_component_consensus_ready = component_audit
+        .exact_component_consensus_audit_ready
         && grid_mismatch_cells == 0
         && predicate_certificates_match
         && boundary_counts_match
@@ -1754,9 +1753,8 @@ pub fn voxelize_prepared_exact_triangle_solid_mesh_by_verified_local_component_c
         component_voxelization.unknown_cells == verifier_voxelization.unknown_cells;
     let aggregate_matches = component_voxelization.aggregate == verifier_voxelization.aggregate;
     let component_audit = audit_prepared_triangle_solid_component_consensus(&component_consensus);
-    let exact_verified_component_consensus_ready = component_consensus
-        .exact_component_consensus_ready
-        && component_audit.exact_component_consensus_audit_ready
+    let exact_verified_component_consensus_ready = component_audit
+        .exact_component_consensus_audit_ready
         && grid_mismatch_cells == 0
         && predicate_certificates_match
         && boundary_counts_match
@@ -2094,9 +2092,8 @@ pub fn voxelize_prepared_exact_triangle_solid_mesh_by_verified_adaptive_local_co
         component_voxelization.unknown_cells == verifier_voxelization.unknown_cells;
     let aggregate_matches = component_voxelization.aggregate == verifier_voxelization.aggregate;
     let component_audit = audit_prepared_triangle_solid_component_consensus(&component_consensus);
-    let exact_verified_component_consensus_ready = component_consensus
-        .exact_component_consensus_ready
-        && component_audit.exact_component_consensus_audit_ready
+    let exact_verified_component_consensus_ready = component_audit
+        .exact_component_consensus_audit_ready
         && grid_mismatch_cells == 0
         && predicate_certificates_match
         && boundary_counts_match

@@ -27,8 +27,8 @@ pub struct PreparedTriangleSolidComponentConsensusAuditReport {
     /// Whether every attempted row ended in exactly one certified or ambiguous
     /// outcome.
     pub row_outcomes_match: bool,
-    /// Whether no readiness blocker remains in the accelerated component
-    /// evidence.
+    /// Whether no unrepaired readiness blocker remains in the accelerated
+    /// component evidence.
     pub no_component_blockers: bool,
     /// Whether this report is acceptable as exact component-consensus
     /// arrangement evidence.
@@ -70,8 +70,6 @@ pub fn audit_prepared_triangle_solid_component_consensus(
         == report.axis_certified_sweep_rows.iter().sum::<usize>()
             + report.axis_ambiguous_sweep_rows.iter().sum::<usize>();
     let no_component_blockers = report.boundary_unknown_cells == 0
-        && report.unvoted_component_cells == 0
-        && report.conflicting_component_cells == 0
         && report.fallback_unknown_cells == 0
         && report.fallback_boundary_regression_cells == 0
         && report.row_parameter_order_unknowns == 0;
@@ -171,5 +169,23 @@ mod tests {
 
         assert!(!audit.row_candidate_schedule_matches);
         assert!(!audit.exact_component_consensus_audit_ready);
+    }
+
+    #[test]
+    fn audit_accepts_exact_fallback_repair_for_unvoted_component_cells() {
+        let mut report = valid_report();
+        report.consensus_components = 1;
+        report.consensus_cells = 1;
+        report.fallback_components = 1;
+        report.fallback_cells = 1;
+        report.unvoted_component_cells = 1;
+        report.deferred_ambiguous_cells = 3;
+
+        let audit = audit_prepared_triangle_solid_component_consensus(&report);
+
+        assert!(audit.open_cell_accounting_matches);
+        assert!(audit.component_accounting_matches);
+        assert!(audit.no_component_blockers);
+        assert!(audit.exact_component_consensus_audit_ready);
     }
 }

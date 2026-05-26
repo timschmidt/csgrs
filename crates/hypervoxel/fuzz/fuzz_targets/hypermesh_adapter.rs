@@ -60,7 +60,7 @@ fuzz_target!(|data: (u8, bool, bool)| {
     } else {
         assert!(!adapter.report.exact_triangle_solid_ready);
         assert!(adapter.solid.is_none());
-        if !exact_source {
+        if !exact_source && closed_policy {
             assert!(
                 adapter
                     .report

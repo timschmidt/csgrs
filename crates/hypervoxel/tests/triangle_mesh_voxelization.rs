@@ -966,6 +966,31 @@ fn adaptive_local_component_consensus_stops_after_complete_component_proof() {
 }
 
 #[test]
+fn fuzz_regression_axis_aligned_component_audit_allows_zero_row_candidates() {
+    let frame = frame(3);
+    let solid = ExactTriangleSolidMesh::new(cube_surface(1, 5, &frame), true);
+    let prepared = PreparedExactTriangleSolidMesh::prepare(solid).unwrap();
+    let (_, _, verified) =
+        voxelize_prepared_exact_triangle_solid_mesh_by_verified_component_consensus(
+            frame,
+            &prepared,
+            MaterialRegionId(15),
+            VoxelizationPolicy::conservative_cover(),
+        )
+        .unwrap();
+
+    assert!(
+        verified
+            .component_audit
+            .exact_component_consensus_audit_ready,
+        "audit: {:#?}\ncomponent: {:#?}",
+        verified.component_audit,
+        verified.component_consensus
+    );
+    assert!(verified.exact_verified_component_consensus_ready);
+}
+
+#[test]
 fn prepared_triangle_solid_rejects_non_solid_source_replay() {
     let frame = frame(2);
     let solid = ExactTriangleSolidMesh::new(cube_surface(1, 3, &frame), false);
