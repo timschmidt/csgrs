@@ -4973,6 +4973,46 @@ fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
             )
             .unwrap()
             .mesh;
+        let same_outer_disconnected_intersection_outer = ExactMesh::from_i64_triangles_with_policy(
+            &[0, 0, 0, 20, 0, 0, 20, 20, 0, 0, 20, 0],
+            &[0, 1, 2, 0, 2, 3],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let same_outer_disconnected_intersection_left_holes =
+            ExactMesh::from_i64_triangles_with_policy(
+                &[
+                    2, 2, 0, 5, 2, 0, 5, 5, 0, 2, 5, 0, //
+                    12, 12, 0, 15, 12, 0, 15, 15, 0, 12, 15, 0,
+                ],
+                &[0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7],
+                ValidationPolicy::ALLOW_BOUNDARY,
+            )
+            .unwrap();
+        let same_outer_disconnected_intersection_right_holes =
+            ExactMesh::from_i64_triangles_with_policy(
+                &[
+                    4, 2, 0, 7, 2, 0, 7, 5, 0, 4, 5, 0, //
+                    14, 12, 0, 17, 12, 0, 17, 15, 0, 14, 15, 0,
+                ],
+                &[0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7],
+                ValidationPolicy::ALLOW_BOUNDARY,
+            )
+            .unwrap();
+        let same_outer_disconnected_intersection_left =
+            arrange_coplanar_convex_surface_multi_holed_difference(
+                &same_outer_disconnected_intersection_outer,
+                &same_outer_disconnected_intersection_left_holes,
+            )
+            .unwrap()
+            .mesh;
+        let same_outer_disconnected_intersection_right =
+            arrange_coplanar_convex_surface_multi_holed_difference(
+                &same_outer_disconnected_intersection_outer,
+                &same_outer_disconnected_intersection_right_holes,
+            )
+            .unwrap()
+            .mesh;
         let same_outer_partial_component_outer = ExactMesh::from_i64_triangles_with_policy(
             &[0, 0, 0, 12, 0, 0, 12, 12, 0, 0, 12, 0],
             &[0, 1, 2, 0, 2, 3],
@@ -6502,6 +6542,22 @@ fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
                         hypermesh::exact::preflight_boolean_exact(
                             &same_outer_bridge_intersection_left,
                             &same_outer_bridge_intersection_nonrect_right,
+                            hypermesh::exact::ExactBooleanOperation::Intersection,
+                        )
+                        .map(|report| report.validate()),
+                        arrange_coplanar_surface_component_holed_intersection(
+                            &same_outer_disconnected_intersection_left,
+                            &same_outer_disconnected_intersection_right,
+                        )
+                        .map(|output| {
+                            output.validate_intersection_against_sources(
+                                &same_outer_disconnected_intersection_left,
+                                &same_outer_disconnected_intersection_right,
+                            )
+                        }),
+                        hypermesh::exact::preflight_boolean_exact(
+                            &same_outer_disconnected_intersection_left,
+                            &same_outer_disconnected_intersection_right,
                             hypermesh::exact::ExactBooleanOperation::Intersection,
                         )
                         .map(|report| report.validate()),

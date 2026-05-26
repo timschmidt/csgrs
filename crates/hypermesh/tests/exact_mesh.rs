@@ -26194,6 +26194,106 @@ fn exact_coplanar_component_holed_intersection_merges_same_outer_holes() {
     )
     .unwrap();
 
+    let disconnected_outer = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 20, 0, 0, 20, 20, 0, 0, 20, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let disconnected_left_holes = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            2, 2, 0, 5, 2, 0, 5, 5, 0, 2, 5, 0, //
+            12, 12, 0, 15, 12, 0, 15, 15, 0, 12, 15, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let disconnected_right_holes = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            4, 2, 0, 7, 2, 0, 7, 5, 0, 4, 5, 0, //
+            14, 12, 0, 17, 12, 0, 17, 15, 0, 14, 15, 0,
+        ],
+        &[0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let disconnected_left =
+        hypermesh::exact::arrange_coplanar_convex_surface_multi_holed_difference(
+            &disconnected_outer,
+            &disconnected_left_holes,
+        )
+        .expect("two disconnected retained-hole clusters should materialize")
+        .mesh;
+    let disconnected_right =
+        hypermesh::exact::arrange_coplanar_convex_surface_multi_holed_difference(
+            &disconnected_outer,
+            &disconnected_right_holes,
+        )
+        .expect("two disconnected overlapping rectangle-strip holes should materialize")
+        .mesh;
+    let disconnected_intersection =
+        hypermesh::exact::arrange_coplanar_surface_component_holed_intersection(
+            &disconnected_left,
+            &disconnected_right,
+        )
+        .expect("disconnected convex retained-hole clusters should replay as two retained holes");
+    disconnected_intersection.validate().unwrap();
+    disconnected_intersection
+        .validate_intersection_against_sources(&disconnected_left, &disconnected_right)
+        .unwrap();
+    assert_eq!(disconnected_intersection.components.len(), 1);
+    assert_eq!(disconnected_intersection.components[0].holes.len(), 2);
+    assert!(
+        disconnected_intersection.components[0]
+            .holes
+            .iter()
+            .all(|hole| hole.len() == 4),
+        "both disconnected retained clusters should replay as convex merged rectangles"
+    );
+    let disconnected_reverse =
+        hypermesh::exact::arrange_coplanar_surface_component_holed_intersection(
+            &disconnected_right,
+            &disconnected_left,
+        )
+        .expect("disconnected retained-hole clusters should be symmetric");
+    disconnected_reverse.validate().unwrap();
+    disconnected_reverse
+        .validate_intersection_against_sources(&disconnected_right, &disconnected_left)
+        .unwrap();
+    let disconnected_preflight = hypermesh::exact::preflight_boolean_exact(
+        &disconnected_left,
+        &disconnected_right,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+    )
+    .expect("disconnected retained-hole cluster preflight should classify shortcut");
+    disconnected_preflight.validate().unwrap();
+    disconnected_preflight
+        .validate_against_sources(&disconnected_left, &disconnected_right)
+        .unwrap();
+    assert_eq!(
+        disconnected_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
+    );
+    hypermesh::exact::boolean_exact(
+        &disconnected_left,
+        &disconnected_right,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("disconnected retained-hole cluster boolean should materialize")
+    .validate_operation_against_sources(
+        &disconnected_left,
+        &disconnected_right,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
+
     let touching_hole = ExactMesh::from_i64_triangles_with_policy(
         &[4, 2, 0, 6, 2, 0, 6, 4, 0, 4, 4, 0],
         &[0, 1, 2, 0, 2, 3],

@@ -3274,11 +3274,14 @@ pub fn arrange_coplanar_surface_component_holed_intersection(
 /// and disjoint holes are retained independently. Bounded overlap components
 /// are accepted when all participating retained holes are strictly convex,
 /// their positive-area overlap graph is connected, and their removed union
-/// replays as one exact simple retained hole. Touching, crossing, disconnected
-/// overlap components, or nonconvex partial overlaps reject to the general
-/// planar arrangement layer. This is a legitimate Boolean intersection
-/// because the complement of each retained hole is part of the source object:
-/// intersecting two equal-outer holed sheets removes the union of their holes.
+/// replays as one exact simple retained hole. Multiple disconnected overlap
+/// clusters are accepted only when each cluster independently replays as a
+/// retained hole and the resulting holes are mutually disjoint. Touching,
+/// crossing, edge-contact clusters, or nonconvex partial overlaps reject to
+/// the general planar arrangement layer. This is a legitimate Boolean
+/// intersection because the complement of each retained hole is part of the
+/// source object: intersecting two equal-outer holed sheets removes the union
+/// of their holes.
 ///
 /// Boundary rings still come from exact mesh incidence and the final retained
 /// area must equal the pairwise source-triangle intersection area. That is the
@@ -3328,7 +3331,7 @@ fn arrange_coplanar_surface_component_holed_same_outer_intersection(
                     projection,
                 )?;
                 sort_polygons_for_replay(&mut holes, projection);
-                split_outer_for_single_hole_bridge(&mut outer, &holes, projection)?;
+                split_outer_for_retained_hole_bridges(&mut outer, &holes, projection)?;
                 retained_components.push(CoplanarConvexHoledComponent { outer, holes });
                 continue;
             }
@@ -3516,7 +3519,9 @@ fn same_outer_intersection_convex_hole_union_component(
     if holes.len() < 2 {
         return None;
     }
-    let mut union = connected_convex_overlap_union_polygon(holes, projection)?;
+    let mut union = connected_convex_overlap_union_polygon(holes, projection).or_else(|| {
+        same_outer_intersection_rectangle_strip_hole_union_component(holes, projection)
+    })?;
     union = simplify_projected_polygon(union, projection);
     orient_polygon_cw(&mut union, projection)?;
     canonicalize_polygon_start_by_min_projected_point(&mut union, projection);
@@ -3529,29 +3534,85 @@ fn same_outer_intersection_convex_hole_union_component(
     Some(union)
 }
 
-/// Add an exact retained bridge point to a rectangular outer ring.
+/// Replay a connected same-outer retained-hole cluster as one rectangle strip.
 ///
-/// A nonconvex retained hole may need an explicit outer endpoint for the
-/// keyhole triangulation to use every retained boundary vertex. The split
-/// point is constructed exactly on the source outer boundary, horizontally
-/// aligned with the lexicographically leftmost retained-hole vertex, and then
-/// validated by the ordinary component-holed output checks. For a strict
-/// interior simple hole, that leftmost vertex gives an exact horizontal
-/// visibility segment to the rectangular outer boundary; the segment is a
-/// triangulation aid, not Boolean topology. This is still Yap-style retained
-/// state ("Towards Exact Geometric Computation," *Computational Geometry*
-/// 7.1-2, 1997): the bridge point is an exact construction fact, not a
-/// tolerance weld. The keyhole reduction follows Held, "FIST: Fast
-/// Industrial-Strength Triangulation of Polygons," *Algorithmica* 30 (2001).
+/// The generic convex-union fragment stitcher is intentionally conservative
+/// around collinear shared rectangle sides because those degeneracies can hide
+/// missing retained vertices. This fallback accepts only the stricter
+/// orthogonal case: every source hole must be an exact projected axis-aligned
+/// rectangle and their union must be one certified strip rectangle from
+/// [`rectangle_strip_union_polygon`]. The finite arrangement model is the
+/// standard rectangle-cell decomposition from de Berg, Cheong, van Kreveld,
+/// and Overmars, *Computational Geometry: Algorithms and Applications*, 3rd
+/// ed. (2008), Chapter 2, while the promotion boundary remains Yap,
+/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+/// (1997): only exact source rectangles and exact area/loop replay may name a
+/// retained removed owner.
 #[cfg(feature = "exact-triangulation")]
-fn split_outer_for_single_hole_bridge(
+fn same_outer_intersection_rectangle_strip_hole_union_component(
+    holes: &[Vec<Point3>],
+    projection: CoplanarProjection,
+) -> Option<Vec<Point3>> {
+    if holes.len() < 2 {
+        return None;
+    }
+    let rectangles = holes
+        .iter()
+        .map(|hole| projected_axis_aligned_rectangle(hole, projection))
+        .collect::<Option<Vec<_>>>()?;
+    let mut overlap_graph = UnionFind::new(rectangles.len());
+    for left in 0..rectangles.len() {
+        for right in left + 1..rectangles.len() {
+            if rectangles_overlap_with_positive_area(&rectangles[left], &rectangles[right])? {
+                overlap_graph.union(left, right);
+            } else if rectangles_touch_on_positive_boundary(&rectangles[left], &rectangles[right])?
+            {
+                return None;
+            }
+        }
+    }
+    let root = overlap_graph.find(0);
+    if (1..rectangles.len()).any(|index| overlap_graph.find(index) != root) {
+        return None;
+    }
+    rectangle_strip_union_polygon(&rectangles, projection, StripVariableAxis::U)
+        .or_else(|| rectangle_strip_union_polygon(&rectangles, projection, StripVariableAxis::V))
+}
+
+/// Add exact retained bridge points to a rectangular outer ring.
+///
+/// Same-outer intersection can produce several disconnected merged retained
+/// holes. Some are convex rectangles and others are nonconvex exact unions of
+/// positive-area retained-hole contact clusters. Direct multi-hole
+/// triangulation needs an exact outer endpoint for each nonconvex retained
+/// hole so every bridge/reflex boundary vertex remains available to validation.
+/// For each nonconvex hole, the split point is constructed exactly on the
+/// source outer boundary, horizontally aligned with the lexicographically
+/// leftmost retained-hole vertex, and then the ordinary component-holed source
+/// replay accepts or rejects the final mesh. The bridge point is a
+/// triangulation aid, not Boolean topology. This follows Yap, "Towards Exact
+/// Geometric Computation," *Computational Geometry* 7.1-2 (1997): it is
+/// retained exact construction state, not a tolerance weld. The keyhole/bridge
+/// reduction follows Held, "FIST: Fast Industrial-Strength Triangulation of
+/// Polygons," *Algorithmica* 30 (2001).
+#[cfg(feature = "exact-triangulation")]
+fn split_outer_for_retained_hole_bridges(
     outer: &mut Vec<Point3>,
     holes: &[Vec<Point3>],
     projection: CoplanarProjection,
 ) -> Option<()> {
-    let [hole] = holes else {
-        return Some(());
-    };
+    for hole in holes {
+        split_outer_for_retained_hole_bridge(outer, hole, projection)?;
+    }
+    Some(())
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn split_outer_for_retained_hole_bridge(
+    outer: &mut Vec<Point3>,
+    hole: &[Point3],
+    projection: CoplanarProjection,
+) -> Option<()> {
     if validate_projected_strictly_convex_loop(
         hole,
         projection,
@@ -3561,7 +3622,7 @@ fn split_outer_for_single_hole_bridge(
     {
         return Some(());
     }
-    let outer_rect = projected_axis_aligned_rectangle(outer, projection)?;
+    let outer_rect = projected_axis_aligned_boundary_rectangle(outer, projection)?;
     let mut chosen_projected = project_point(hole.first()?, projection);
     for point in hole.iter().skip(1) {
         let projected = project_point(point, projection);
@@ -5835,6 +5896,80 @@ fn projected_axis_aligned_rectangle(
         None
     }
 }
+
+/// Recover a projected axis-aligned rectangle from a boundary loop.
+///
+/// Unlike [`projected_axis_aligned_rectangle`], this accepts extra exact
+/// collinear boundary vertices. Same-outer retained-hole intersections insert
+/// such vertices as triangulation bridge anchors, and later nonconvex retained
+/// holes may need additional anchors on the same rectangular source boundary.
+/// The accepted object is still the same retained rectangle: every vertex must
+/// lie on the rectangle boundary, all four corners must be present, and the
+/// dropped coordinate must replay exactly. That keeps the construction within
+/// Yap's retained-object discipline from "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7.1-2 (1997).
+#[cfg(feature = "exact-triangulation")]
+fn projected_axis_aligned_boundary_rectangle(
+    polygon: &[Point3],
+    projection: CoplanarProjection,
+) -> Option<ProjectedRectangle> {
+    if polygon.len() < 4 {
+        return None;
+    }
+    let dropped = dropped_coordinate(polygon.first()?, projection);
+    if !polygon
+        .iter()
+        .all(|point| real_equal(&dropped_coordinate(point, projection), &dropped))
+    {
+        return None;
+    }
+    let mut min = project_point(polygon.first()?, projection);
+    let mut max = min.clone();
+    let projected = polygon
+        .iter()
+        .map(|point| project_point(point, projection))
+        .collect::<Vec<_>>();
+    for point in projected.iter().skip(1) {
+        if real_order(&point.x, &min.x)? == Ordering::Less {
+            min.x = point.x.clone();
+        }
+        if real_order(&point.y, &min.y)? == Ordering::Less {
+            min.y = point.y.clone();
+        }
+        if real_order(&point.x, &max.x)? == Ordering::Greater {
+            max.x = point.x.clone();
+        }
+        if real_order(&point.y, &max.y)? == Ordering::Greater {
+            max.y = point.y.clone();
+        }
+    }
+    if real_order(&min.x, &max.x)? != Ordering::Less
+        || real_order(&min.y, &max.y)? != Ordering::Less
+    {
+        return None;
+    }
+    if !projected.iter().all(|point| {
+        (real_equal(&point.x, &min.x) || real_equal(&point.x, &max.x))
+            || (real_equal(&point.y, &min.y) || real_equal(&point.y, &max.y))
+    }) {
+        return None;
+    }
+    let corners = [
+        Point2::new(min.x.clone(), min.y.clone()),
+        Point2::new(max.x.clone(), min.y.clone()),
+        Point2::new(max.x.clone(), max.y.clone()),
+        Point2::new(min.x.clone(), max.y.clone()),
+    ];
+    if corners
+        .iter()
+        .all(|corner| projected.iter().any(|point| point2_equal(point, corner)))
+    {
+        Some(ProjectedRectangle { min, max, dropped })
+    } else {
+        None
+    }
+}
+
 #[cfg(feature = "exact-triangulation")]
 fn rectangle_strip_union_polygon(
     rectangles: &[ProjectedRectangle],

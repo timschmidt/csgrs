@@ -2567,6 +2567,97 @@ fn exercise_same_outer_component_holed_coplanar_intersection() {
     )
     .unwrap();
 
+    let disconnected_outer = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 20, 0, 0, 20, 20, 0, 0, 20, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("same-outer disconnected retained-hole outer fixture must import");
+    let disconnected_left_holes = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            2, 2, 0, 5, 2, 0, 5, 5, 0, 2, 5, 0, //
+            12, 12, 0, 15, 12, 0, 15, 15, 0, 12, 15, 0,
+        ],
+        &[0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("same-outer disconnected left holes fixture must import");
+    let disconnected_right_holes = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            4, 2, 0, 7, 2, 0, 7, 5, 0, 4, 5, 0, //
+            14, 12, 0, 17, 12, 0, 17, 15, 0, 14, 15, 0,
+        ],
+        &[0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("same-outer disconnected right holes fixture must import");
+    let disconnected_left = arrange_coplanar_convex_surface_multi_holed_difference(
+        &disconnected_outer,
+        &disconnected_left_holes,
+    )
+    .expect("same-outer disconnected left fixture should materialize")
+    .mesh;
+    let disconnected_right = arrange_coplanar_convex_surface_multi_holed_difference(
+        &disconnected_outer,
+        &disconnected_right_holes,
+    )
+    .expect("same-outer disconnected right fixture should materialize")
+    .mesh;
+    let disconnected_intersection = arrange_coplanar_surface_component_holed_intersection(
+        &disconnected_left,
+        &disconnected_right,
+    )
+    .expect("same-outer disconnected rectangle-strip clusters should materialize");
+    disconnected_intersection.validate().unwrap();
+    disconnected_intersection
+        .validate_intersection_against_sources(&disconnected_left, &disconnected_right)
+        .unwrap();
+    assert_eq!(disconnected_intersection.components.len(), 1);
+    assert_eq!(disconnected_intersection.components[0].holes.len(), 2);
+    assert!(
+        disconnected_intersection.components[0]
+            .holes
+            .iter()
+            .all(|hole| hole.len() == 4),
+        "disconnected positive-area rectangle-strip clusters should replay as two exact rectangles"
+    );
+    assert_eq!(
+        arrange_coplanar_surface_component_holed_intersection(
+            &disconnected_right,
+            &disconnected_left,
+        ),
+        Some(disconnected_intersection)
+    );
+    let disconnected_preflight = preflight_boolean_exact(
+        &disconnected_left,
+        &disconnected_right,
+        ExactBooleanOperation::Intersection,
+    )
+    .expect("same-outer disconnected retained-hole preflight should classify shortcut");
+    disconnected_preflight.validate().unwrap();
+    disconnected_preflight
+        .validate_against_sources(&disconnected_left, &disconnected_right)
+        .unwrap();
+    assert_eq!(
+        disconnected_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
+    );
+    hypermesh::exact::boolean_exact(
+        &disconnected_left,
+        &disconnected_right,
+        ExactBooleanOperation::Intersection,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("same-outer disconnected retained-hole boolean should materialize")
+    .validate_operation_against_sources(
+        &disconnected_left,
+        &disconnected_right,
+        ExactBooleanOperation::Intersection,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
+
     let small_hole = ExactMesh::from_i64_triangles_with_policy(
         &[4, 4, 0, 6, 4, 0, 6, 6, 0, 4, 6, 0],
         &[0, 1, 2, 0, 2, 3],
