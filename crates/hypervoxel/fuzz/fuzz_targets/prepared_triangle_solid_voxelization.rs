@@ -368,6 +368,23 @@ fuzz_target!(|data: (u8, u8, u8, bool)| {
         adaptive_local.retry_consensus_cells
     );
     assert_eq!(
+        adaptive_local.retry_direction_component_cells,
+        adaptive_local.retry_ray_attempts
+    );
+    assert_eq!(
+        adaptive_local.retry_direction_component_cells,
+        adaptive_local.retry_successful_direction_cells + adaptive_local.retry_failed_direction_cells
+    );
+    assert_eq!(
+        adaptive_local.retry_successful_direction_cells,
+        adaptive_local.retry_successful_cells
+    );
+    assert_eq!(
+        adaptive_local.retry_failed_direction_cells,
+        (adaptive_local.retry_certified_cells - adaptive_local.retry_successful_cells)
+            + adaptive_local.retry_unknown_cells
+    );
+    assert_eq!(
         adaptive_local.retry_ray_attempts,
         adaptive_local.retry_certified_cells + adaptive_local.retry_unknown_cells
     );
@@ -435,4 +452,7 @@ fuzz_target!(|data: (u8, u8, u8, bool)| {
     assert!(verified_adaptive_local
         .component_audit
         .retry_direction_accounting_matches);
+    assert!(verified_adaptive_local
+        .component_audit
+        .retry_direction_schedule_matches);
 });

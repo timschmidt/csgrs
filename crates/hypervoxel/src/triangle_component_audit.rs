@@ -22,6 +22,9 @@ pub struct PreparedTriangleSolidComponentConsensusAuditReport {
     /// Whether deterministic retry directions, successful directions, failed
     /// directions, and per-cell retry ray outcomes replay exactly.
     pub retry_direction_accounting_matches: bool,
+    /// Whether retry direction schedules prove full component-cell coverage
+    /// for every attempted deterministic direction.
+    pub retry_direction_schedule_matches: bool,
     /// Whether row candidate schedules match attempted row counts.
     pub row_candidate_schedule_matches: bool,
     /// Whether retained row-cache hits and misses account for attempted rows.
@@ -75,6 +78,21 @@ pub fn audit_prepared_triangle_solid_component_consensus(
         && (report.retry_consensus_cells == 0 || report.retry_direction_attempts > 0)
         && (report.retry_consensus_cells == 0
             || report.retry_ray_attempts >= report.retry_consensus_cells);
+    let retry_direction_schedule_matches = if report.retry_direction_attempts == 0 {
+        report.retry_direction_component_cells == 0
+            && report.retry_successful_direction_cells == 0
+            && report.retry_failed_direction_cells == 0
+    } else {
+        report.retry_direction_component_cells == report.retry_ray_attempts
+            && report.retry_direction_component_cells
+                == report.retry_successful_direction_cells + report.retry_failed_direction_cells
+            && report.retry_successful_direction_cells == report.retry_successful_cells
+            && report.retry_successful_direction_cells == report.retry_consensus_cells
+            && report.retry_certified_cells >= report.retry_successful_direction_cells
+            && report.retry_failed_direction_cells
+                == (report.retry_certified_cells - report.retry_successful_direction_cells)
+                    + report.retry_unknown_cells
+    };
     let retry_direction_accounting_matches = if report.retry_direction_attempts == 0 {
         report.retry_successful_direction_attempts == 0
             && report.retry_failed_direction_attempts == 0
@@ -83,6 +101,7 @@ pub fn audit_prepared_triangle_solid_component_consensus(
             && report.retry_successful_cells == 0
             && report.retry_unknown_cells == 0
             && report.retry_conflicting_cells == 0
+            && retry_direction_schedule_matches
     } else {
         report.retry_direction_attempts
             == report.retry_successful_direction_attempts + report.retry_failed_direction_attempts
@@ -91,6 +110,7 @@ pub fn audit_prepared_triangle_solid_component_consensus(
             && report.retry_ray_attempts
                 == report.retry_certified_cells + report.retry_unknown_cells
             && report.retry_conflicting_cells <= report.retry_certified_cells
+            && retry_direction_schedule_matches
     };
     let attempted_rows = report.axis_sweep_rows.iter().sum::<usize>();
     let row_cache_replay_accounting_matches =
@@ -137,6 +157,7 @@ pub fn audit_prepared_triangle_solid_component_consensus(
         && component_accounting_matches
         && retry_subset_matches
         && retry_direction_accounting_matches
+        && retry_direction_schedule_matches
         && row_candidate_schedule_matches
         && row_cache_accounting_matches
         && row_cache_replay_accounting_matches
@@ -152,6 +173,7 @@ pub fn audit_prepared_triangle_solid_component_consensus(
         component_accounting_matches,
         retry_subset_matches,
         retry_direction_accounting_matches,
+        retry_direction_schedule_matches,
         row_candidate_schedule_matches,
         row_cache_accounting_matches,
         row_cache_replay_accounting_matches,
@@ -182,6 +204,8 @@ mod tests {
             retry_consensus_cells: 1,
             retry_direction_attempts: 1,
             retry_successful_direction_attempts: 1,
+            retry_direction_component_cells: 1,
+            retry_successful_direction_cells: 1,
             retry_ray_attempts: 1,
             retry_certified_cells: 1,
             retry_successful_cells: 1,
@@ -209,6 +233,7 @@ mod tests {
         assert!(audit.component_accounting_matches);
         assert!(audit.retry_subset_matches);
         assert!(audit.retry_direction_accounting_matches);
+        assert!(audit.retry_direction_schedule_matches);
         assert!(audit.row_candidate_schedule_matches);
         assert!(audit.row_cache_accounting_matches);
         assert!(audit.row_cache_replay_accounting_matches);
@@ -250,6 +275,19 @@ mod tests {
 
         let audit = audit_prepared_triangle_solid_component_consensus(&report);
 
+        assert!(!audit.retry_direction_accounting_matches);
+        assert!(!audit.exact_component_consensus_audit_ready);
+    }
+
+    #[test]
+    fn audit_rejects_retry_direction_without_component_cell_schedule() {
+        let mut report = valid_report();
+        report.retry_direction_component_cells = 0;
+        report.retry_successful_direction_cells = 0;
+
+        let audit = audit_prepared_triangle_solid_component_consensus(&report);
+
+        assert!(!audit.retry_direction_schedule_matches);
         assert!(!audit.retry_direction_accounting_matches);
         assert!(!audit.exact_component_consensus_audit_ready);
     }

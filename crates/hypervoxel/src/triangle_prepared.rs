@@ -2746,6 +2746,18 @@ pub struct PreparedTriangleSolidComponentConsensusVoxelizationReport {
     /// Retry directions that failed because of unknown, conflicting, or absent
     /// certified component evidence.
     pub retry_failed_direction_attempts: usize,
+    /// Component-cell memberships scheduled by attempted retry directions.
+    ///
+    /// This is retained schedule evidence for the deterministic retry witness:
+    /// each attempted direction must test every cell in the enclosed component.
+    /// Following Yap, "Towards Exact Geometric Computation," *Computational
+    /// Geometry* 7(1-2), 1997, this keeps the accelerated combinatorial
+    /// decision replayable instead of trusting aggregate predicate counts.
+    pub retry_direction_component_cells: usize,
+    /// Component-cell memberships scheduled by successful retry directions.
+    pub retry_successful_direction_cells: usize,
+    /// Component-cell memberships scheduled by failed retry directions.
+    pub retry_failed_direction_cells: usize,
     /// Per-cell exact ray attempts consumed by retry consensus probes.
     pub retry_ray_attempts: usize,
     /// Retry-probed cells whose ray produced certified non-unknown evidence.
@@ -3278,6 +3290,7 @@ fn classify_component_by_retry_ray_consensus(
 ) -> HypervoxelResult<Option<VoxelTriangleSolidClassifier>> {
     for (direction_index, direction) in ray_parity_directions().into_iter().enumerate() {
         component_report.retry_direction_attempts += 1;
+        component_report.retry_direction_component_cells += component.len();
         let mut component_vote = None::<VoxelTriangleSolidClassifier>;
         let mut direction_unknowns = 0_usize;
         let mut direction_conflicts = 0_usize;
@@ -3313,12 +3326,14 @@ fn classify_component_by_retry_ray_consensus(
         if direction_unknowns == 0 && direction_conflicts == 0 {
             if let Some(classifier) = component_vote {
                 component_report.retry_successful_direction_attempts += 1;
+                component_report.retry_successful_direction_cells += component.len();
                 component_report.retry_certified_cells += direction_certified;
                 component_report.retry_successful_cells += component.len();
                 return Ok(Some(classifier));
             }
         }
         component_report.retry_failed_direction_attempts += 1;
+        component_report.retry_failed_direction_cells += component.len();
         component_report.retry_certified_cells += direction_certified;
         component_report.retry_unknown_cells += direction_unknowns;
         component_report.retry_conflicting_cells += direction_conflicts;
