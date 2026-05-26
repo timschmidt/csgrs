@@ -2,7 +2,8 @@
 
 use hyperlimit::PredicatePolicy;
 use hyperpath::{
-    LineArrangementError, LineArrangementEventClass, LinePathSegment, arrange_line_segments,
+    LineArrangementCellFaceClass, LineArrangementError, LineArrangementEventClass,
+    LinePathSegment, arrange_line_segments,
 };
 use hyperreal::{Rational, Real};
 use libfuzzer_sys::fuzz_target;
@@ -72,4 +73,19 @@ fuzz_target!(|data: &[u8]| {
     );
     assert_eq!(report.events[0].point.as_ref().unwrap(), &p(x, y));
     assert_eq!(report.fragments.len(), 4);
+    assert!(report.cell_graph.faces.is_empty());
+
+    let square = [
+        LinePathSegment::new(p(0, 0), p(4, 0)),
+        LinePathSegment::new(p(4, 0), p(4, 4)),
+        LinePathSegment::new(p(4, 4), p(0, 4)),
+        LinePathSegment::new(p(0, 4), p(0, 0)),
+    ];
+    let square_report = arrange_line_segments(&square, PredicatePolicy::default()).unwrap();
+    assert_eq!(square_report.cell_graph.vertices.len(), 4);
+    assert_eq!(square_report.cell_graph.edges.len(), 4);
+    assert_eq!(square_report.cell_graph.faces.len(), 2);
+    assert!(square_report.cell_graph.faces.iter().any(|face| {
+        face.class == LineArrangementCellFaceClass::Bounded && face.signed_area_twice == r(32)
+    }));
 });

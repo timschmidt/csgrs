@@ -1,10 +1,13 @@
 //! Retained exact arrangement cleanup for line path sets.
 //!
-//! This module does not build a planar subdivision or perform a boolean
-//! operation. It records the exact event schedule that later CAM/EDA cleanup
-//! stages can consume: proper crossings, endpoint touches, positive-length
-//! collinear overlaps, and the exact split fragments induced on every retained
-//! input segment.
+//! This module does not perform a boolean operation. It records the exact event
+//! schedule that later CAM/EDA cleanup stages can consume: proper crossings,
+//! endpoint touches, positive-length collinear overlaps, the exact split
+//! fragments induced on every retained input segment, and a retained line-cell
+//! graph over those fragments. The cell graph is still an exact replay object,
+//! not a sampled polygonizer; it follows Yap, "Towards Exact Geometric
+//! Computation" (1997), by admitting topology only after exact predicate and
+//! ordering replay.
 
 use std::cmp::Ordering;
 
@@ -58,6 +61,8 @@ pub enum LineArrangementError {
     SplitPointOffArc { arc: usize },
     /// Exact ordering along an explicit arc sweep was undecidable.
     UndecidableArcOrder { arc: usize },
+    /// Exact angular ordering of incident line fragments was undecidable.
+    UndecidableCellOrder { vertex: usize },
     /// A retained explicit sub-arc could not be reconstructed from certified endpoints.
     ArcFragmentConstruction,
 }
@@ -123,6 +128,102 @@ pub struct LineArrangementFragment {
     pub end: LineArrangementBreakpoint,
     /// Retained exact line fragment.
     pub segment: LinePathSegment,
+}
+
+/// Exact vertex in the retained line arrangement cell graph.
+///
+/// Vertices are de-duplicated from fragment endpoints by exact point equality.
+/// They are not snapped or bucketed. This is the point-object side of Yap's
+/// exact geometric computation split: the graph stores constructed exact
+/// coordinates and the predicates that justified their use.
+#[derive(Clone, Debug, PartialEq)]
+pub struct LineArrangementCellVertex {
+    /// Exact vertex coordinate.
+    pub point: Point2,
+    /// Outgoing half-edge indices sorted by exact angular order.
+    pub outgoing_half_edges: Vec<usize>,
+}
+
+/// Exact undirected edge in the retained line arrangement cell graph.
+///
+/// Multiple source fragments may cover the same geometric open segment after
+/// collinear overlap splitting. The graph stores one geometric edge and keeps
+/// every contributing fragment index as replay provenance instead of emitting
+/// duplicate cell boundaries.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct LineArrangementCellEdge {
+    /// Start vertex index for the retained geometric edge.
+    pub start: usize,
+    /// End vertex index for the retained geometric edge.
+    pub end: usize,
+    /// Indices in [`LineArrangementReport::fragments`] that realize this edge.
+    pub fragments: Vec<usize>,
+}
+
+/// Directed half-edge used for exact line-cell face walks.
+///
+/// Half-edges are sorted around each vertex by exact quadrant/cross-product
+/// predicates. Face traversal uses the standard DCEL rule from de Berg,
+/// Cheong, van Kreveld, and Overmars, *Computational Geometry: Algorithms and
+/// Applications*, 3rd ed. (2008): after crossing an edge, take the predecessor
+/// of the twin in the angular order at the arrival vertex. All ordering uses
+/// exact `Real` comparisons, following Yap (1997).
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct LineArrangementHalfEdge {
+    /// Undirected cell edge index.
+    pub edge: usize,
+    /// Origin vertex index.
+    pub from: usize,
+    /// Destination vertex index.
+    pub to: usize,
+    /// Opposite half-edge index.
+    pub twin: usize,
+    /// Next half-edge in the exact face walk, when the walk is non-degenerate.
+    pub next: Option<usize>,
+}
+
+/// Classification for an exact line-cell face walk.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum LineArrangementCellFaceClass {
+    /// A counter-clockwise positive-area bounded face.
+    Bounded,
+    /// The clockwise exterior walk around a connected component.
+    Exterior,
+}
+
+/// Nonzero-area face walk in the retained line cell graph.
+///
+/// The signed doubled area is the exact shoelace sum over the face vertices.
+/// Positive area denotes a bounded counter-clockwise walk; negative area is an
+/// exterior walk. Zero-area backtracks and dangling-edge walks are deliberately
+/// omitted rather than promoted into cells.
+#[derive(Clone, Debug, PartialEq)]
+pub struct LineArrangementCellFace {
+    /// Half-edges traversed in order.
+    pub half_edges: Vec<usize>,
+    /// Exact doubled signed area of the walk.
+    pub signed_area_twice: Real,
+    /// Whether the walk is bounded or exterior.
+    pub class: LineArrangementCellFaceClass,
+}
+
+/// Retained exact cell graph induced by arranged line fragments.
+///
+/// This is the first planar-cell scheduling artifact for line arrangements. It
+/// does not decide boolean interiors or fill rules. It gives downstream CAM
+/// and PCB stages exact vertices, unique geometric edges, angular half-edge
+/// order, and nonzero face walks that can be replayed without sampled
+/// coordinates.
+#[derive(Clone, Debug, PartialEq)]
+pub struct LineArrangementCellGraph {
+    /// Exact graph vertices.
+    pub vertices: Vec<LineArrangementCellVertex>,
+    /// Unique undirected geometric edges.
+    pub edges: Vec<LineArrangementCellEdge>,
+    /// Directed half-edges, two per unique edge.
+    pub half_edges: Vec<LineArrangementHalfEdge>,
+    /// Nonzero-area face walks discovered from exact half-edge traversal.
+    pub faces: Vec<LineArrangementCellFace>,
 }
 
 /// Pairwise arrangement event between two retained line segments.
@@ -216,6 +317,8 @@ pub struct LineArrangementReport {
     pub breakpoints: Vec<Vec<LineArrangementBreakpoint>>,
     /// Positive-length split fragments. Point fragments are intentionally omitted.
     pub fragments: Vec<LineArrangementFragment>,
+    /// Exact retained cell graph induced by split line fragments.
+    pub cell_graph: LineArrangementCellGraph,
     /// Cached exact facts for the retained arrangement schedule.
     pub facts: LineArrangementFacts,
 }
@@ -328,6 +431,7 @@ pub fn arrange_line_segments_with_provenance(
 
     sort_and_dedup_breakpoints(&mut breakpoints, policy)?;
     let fragments = build_fragments(&breakpoints, policy)?;
+    let cell_graph = build_line_cell_graph(&fragments, policy)?;
     let endpoint_refs = segments
         .iter()
         .flat_map(|segment| {
@@ -360,6 +464,7 @@ pub fn arrange_line_segments_with_provenance(
         events,
         breakpoints,
         fragments,
+        cell_graph,
         facts,
     })
 }
@@ -1248,6 +1353,249 @@ fn build_fragments(
         }
     }
     Ok(fragments)
+}
+
+fn build_line_cell_graph(
+    fragments: &[LineArrangementFragment],
+    policy: PredicatePolicy,
+) -> Result<LineArrangementCellGraph, LineArrangementError> {
+    let mut vertices = Vec::new();
+    let mut edges: Vec<LineArrangementCellEdge> = Vec::new();
+
+    for (fragment_index, fragment) in fragments.iter().enumerate() {
+        let start = cell_vertex_index(&mut vertices, fragment.segment.start(), policy)?;
+        let end = cell_vertex_index(&mut vertices, fragment.segment.end(), policy)?;
+        if start == end {
+            continue;
+        }
+        if let Some(edge) = edges.iter_mut().find(|edge| {
+            (edge.start == start && edge.end == end) || (edge.start == end && edge.end == start)
+        }) {
+            edge.fragments.push(fragment_index);
+        } else {
+            edges.push(LineArrangementCellEdge {
+                start,
+                end,
+                fragments: vec![fragment_index],
+            });
+        }
+    }
+
+    let mut half_edges = Vec::with_capacity(edges.len() * 2);
+    for (edge_index, edge) in edges.iter().enumerate() {
+        let forward = half_edges.len();
+        let reverse = forward + 1;
+        half_edges.push(LineArrangementHalfEdge {
+            edge: edge_index,
+            from: edge.start,
+            to: edge.end,
+            twin: reverse,
+            next: None,
+        });
+        half_edges.push(LineArrangementHalfEdge {
+            edge: edge_index,
+            from: edge.end,
+            to: edge.start,
+            twin: forward,
+            next: None,
+        });
+        vertices[edge.start].outgoing_half_edges.push(forward);
+        vertices[edge.end].outgoing_half_edges.push(reverse);
+    }
+
+    for vertex in 0..vertices.len() {
+        sort_outgoing_half_edges(vertex, &mut vertices, &half_edges, policy)?;
+    }
+    assign_half_edge_successors(&vertices, &mut half_edges);
+    let faces = line_cell_faces(&vertices, &half_edges, policy)?;
+
+    Ok(LineArrangementCellGraph {
+        vertices,
+        edges,
+        half_edges,
+        faces,
+    })
+}
+
+fn cell_vertex_index(
+    vertices: &mut Vec<LineArrangementCellVertex>,
+    point: &Point2,
+    policy: PredicatePolicy,
+) -> Result<usize, LineArrangementError> {
+    for (index, vertex) in vertices.iter().enumerate() {
+        match point2_equal_with_policy(&vertex.point, point, policy).value() {
+            Some(true) => return Ok(index),
+            Some(false) => {}
+            None => return Err(LineArrangementError::UndecidablePointEquality),
+        }
+    }
+    let index = vertices.len();
+    vertices.push(LineArrangementCellVertex {
+        point: point.clone(),
+        outgoing_half_edges: Vec::new(),
+    });
+    Ok(index)
+}
+
+fn sort_outgoing_half_edges(
+    vertex: usize,
+    vertices: &mut [LineArrangementCellVertex],
+    half_edges: &[LineArrangementHalfEdge],
+    policy: PredicatePolicy,
+) -> Result<(), LineArrangementError> {
+    let mut outgoing = std::mem::take(&mut vertices[vertex].outgoing_half_edges);
+    for left in 0..outgoing.len() {
+        for right in (left + 1)..outgoing.len() {
+            compare_half_edge_angle(
+                outgoing[left],
+                outgoing[right],
+                vertices,
+                half_edges,
+                policy,
+            )
+            .ok_or(LineArrangementError::UndecidableCellOrder { vertex })?;
+        }
+    }
+    outgoing.sort_by(|left, right| {
+        compare_half_edge_angle(*left, *right, vertices, half_edges, policy)
+            .expect("cell half-edge order was certified before sorting")
+    });
+    vertices[vertex].outgoing_half_edges = outgoing;
+    Ok(())
+}
+
+fn compare_half_edge_angle(
+    left: usize,
+    right: usize,
+    vertices: &[LineArrangementCellVertex],
+    half_edges: &[LineArrangementHalfEdge],
+    policy: PredicatePolicy,
+) -> Option<Ordering> {
+    if left == right {
+        return Some(Ordering::Equal);
+    }
+    let left_vector = half_edge_vector(left, vertices, half_edges);
+    let right_vector = half_edge_vector(right, vertices, half_edges);
+    let left_upper = direction_upper_half(&left_vector.0, &left_vector.1, policy)?;
+    let right_upper = direction_upper_half(&right_vector.0, &right_vector.1, policy)?;
+    match (left_upper, right_upper) {
+        (true, false) => return Some(Ordering::Less),
+        (false, true) => return Some(Ordering::Greater),
+        _ => {}
+    }
+    let cross = left_vector.0 * right_vector.1 - left_vector.1 * right_vector.0;
+    match compare_reals_with_policy(&cross, &Real::zero(), policy).value()? {
+        Ordering::Greater => Some(Ordering::Less),
+        Ordering::Less => Some(Ordering::Greater),
+        Ordering::Equal => Some(Ordering::Equal),
+    }
+}
+
+fn direction_upper_half(dx: &Real, dy: &Real, policy: PredicatePolicy) -> Option<bool> {
+    match compare_reals_with_policy(dy, &Real::zero(), policy).value()? {
+        Ordering::Greater => Some(true),
+        Ordering::Less => Some(false),
+        Ordering::Equal => match compare_reals_with_policy(dx, &Real::zero(), policy).value()? {
+            Ordering::Less => Some(false),
+            Ordering::Equal | Ordering::Greater => Some(true),
+        },
+    }
+}
+
+fn half_edge_vector(
+    half_edge: usize,
+    vertices: &[LineArrangementCellVertex],
+    half_edges: &[LineArrangementHalfEdge],
+) -> (Real, Real) {
+    let edge = &half_edges[half_edge];
+    let from = &vertices[edge.from].point;
+    let to = &vertices[edge.to].point;
+    (to.x.clone() - from.x.clone(), to.y.clone() - from.y.clone())
+}
+
+fn assign_half_edge_successors(
+    vertices: &[LineArrangementCellVertex],
+    half_edges: &mut [LineArrangementHalfEdge],
+) {
+    for half_edge in 0..half_edges.len() {
+        let twin = half_edges[half_edge].twin;
+        let vertex = half_edges[half_edge].to;
+        let outgoing = &vertices[vertex].outgoing_half_edges;
+        let Some(position) = outgoing.iter().position(|candidate| *candidate == twin) else {
+            continue;
+        };
+        let next_position = if position == 0 {
+            outgoing.len() - 1
+        } else {
+            position - 1
+        };
+        half_edges[half_edge].next = Some(outgoing[next_position]);
+    }
+}
+
+fn line_cell_faces(
+    vertices: &[LineArrangementCellVertex],
+    half_edges: &[LineArrangementHalfEdge],
+    policy: PredicatePolicy,
+) -> Result<Vec<LineArrangementCellFace>, LineArrangementError> {
+    let mut visited = vec![false; half_edges.len()];
+    let mut faces = Vec::new();
+    for start in 0..half_edges.len() {
+        if visited[start] {
+            continue;
+        }
+        let mut cycle = Vec::new();
+        let mut current = start;
+        loop {
+            if visited[current] {
+                break;
+            }
+            visited[current] = true;
+            cycle.push(current);
+            let Some(next) = half_edges[current].next else {
+                break;
+            };
+            current = next;
+            if current == start {
+                break;
+            }
+        }
+        if current != start || cycle.len() < 3 {
+            continue;
+        }
+        let area = signed_face_area_twice(&cycle, vertices, half_edges);
+        match compare_reals_with_policy(&area, &Real::zero(), policy).value() {
+            Some(Ordering::Equal) => continue,
+            Some(Ordering::Greater) => faces.push(LineArrangementCellFace {
+                half_edges: cycle,
+                signed_area_twice: area,
+                class: LineArrangementCellFaceClass::Bounded,
+            }),
+            Some(Ordering::Less) => faces.push(LineArrangementCellFace {
+                half_edges: cycle,
+                signed_area_twice: area,
+                class: LineArrangementCellFaceClass::Exterior,
+            }),
+            None => {
+                return Err(LineArrangementError::UndecidableCellOrder {
+                    vertex: half_edges[start].from,
+                });
+            }
+        }
+    }
+    Ok(faces)
+}
+
+fn signed_face_area_twice(
+    cycle: &[usize],
+    vertices: &[LineArrangementCellVertex],
+    half_edges: &[LineArrangementHalfEdge],
+) -> Real {
+    cycle.iter().fold(Real::zero(), |area, half_edge| {
+        let from = &vertices[half_edges[*half_edge].from].point;
+        let to = &vertices[half_edges[*half_edge].to].point;
+        area + from.x.clone() * to.y.clone() - from.y.clone() * to.x.clone()
+    })
 }
 
 fn collect_shared_points(

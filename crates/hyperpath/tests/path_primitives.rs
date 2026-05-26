@@ -9,8 +9,8 @@ use hyperpath::{
     ExplicitArcSweepClass, ExplicitArcTangentClass, ExplicitCircleRelationClass,
     ExplicitCircularArc, FeedPathElement, HigherOrderBezier, HigherOrderBezierError,
     InfillGraphError, JerkLimitedFeedTimeReport, JerkRampPhaseProposal, JerkRampSpanProposal,
-    LineArcArrangementEventClass, LineArrangementError, LineArrangementEventClass,
-    LineCubicAlgebraicPointDomain, LineCubicAlgebraicRootDomain,
+    LineArcArrangementEventClass, LineArrangementCellFaceClass, LineArrangementError,
+    LineArrangementEventClass, LineCubicAlgebraicPointDomain, LineCubicAlgebraicRootDomain,
     LineCubicBezierAlgebraicBreakpointDomain, LineCubicBezierAlgebraicBreakpointOrderClass,
     LineCubicBezierAlgebraicBreakpointSequenceBlocker,
     LineCubicBezierAlgebraicBreakpointSequenceClass,
@@ -285,6 +285,79 @@ fn line_arrangement_splits_crossings_touches_and_overlaps() {
         fragment.source_segment == 1
             && fragment.segment.start() == &p(5, -5)
             && fragment.segment.end() == &p(5, 0)
+    }));
+    assert_eq!(report.cell_graph.vertices.len(), 8);
+    assert!(
+        report
+            .cell_graph
+            .edges
+            .iter()
+            .any(|edge| edge.fragments.len() > 1)
+    );
+    assert!(report.cell_graph.faces.is_empty());
+}
+
+#[test]
+fn line_arrangement_cell_graph_schedules_square_faces() {
+    let bottom = LinePathSegment::new(p(0, 0), p(4, 0));
+    let right = LinePathSegment::new(p(4, 0), p(4, 4));
+    let top = LinePathSegment::new(p(4, 4), p(0, 4));
+    let left = LinePathSegment::new(p(0, 4), p(0, 0));
+
+    let report =
+        arrange_line_segments(&[bottom, right, top, left], PredicatePolicy::default()).unwrap();
+
+    assert_eq!(report.fragments.len(), 4);
+    assert_eq!(report.cell_graph.vertices.len(), 4);
+    assert_eq!(report.cell_graph.edges.len(), 4);
+    assert_eq!(report.cell_graph.half_edges.len(), 8);
+    assert_eq!(report.cell_graph.faces.len(), 2);
+    assert!(
+        report
+            .cell_graph
+            .vertices
+            .iter()
+            .all(|vertex| vertex.outgoing_half_edges.len() == 2)
+    );
+    assert!(report.cell_graph.faces.iter().any(|face| {
+        face.class == LineArrangementCellFaceClass::Bounded && face.signed_area_twice == r(32)
+    }));
+    assert!(report.cell_graph.faces.iter().any(|face| {
+        face.class == LineArrangementCellFaceClass::Exterior && face.signed_area_twice == r(-32)
+    }));
+}
+
+#[test]
+fn line_arrangement_cell_graph_splits_square_by_diagonal() {
+    let bottom = LinePathSegment::new(p(0, 0), p(4, 0));
+    let right = LinePathSegment::new(p(4, 0), p(4, 4));
+    let top = LinePathSegment::new(p(4, 4), p(0, 4));
+    let left = LinePathSegment::new(p(0, 4), p(0, 0));
+    let diagonal = LinePathSegment::new(p(0, 0), p(4, 4));
+
+    let report = arrange_line_segments(
+        &[bottom, right, top, left, diagonal],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+
+    let bounded_faces = report
+        .cell_graph
+        .faces
+        .iter()
+        .filter(|face| face.class == LineArrangementCellFaceClass::Bounded)
+        .collect::<Vec<_>>();
+    assert_eq!(report.cell_graph.vertices.len(), 4);
+    assert_eq!(report.cell_graph.edges.len(), 5);
+    assert_eq!(report.cell_graph.faces.len(), 3);
+    assert_eq!(bounded_faces.len(), 2);
+    assert!(
+        bounded_faces
+            .iter()
+            .all(|face| face.signed_area_twice == r(16))
+    );
+    assert!(report.cell_graph.faces.iter().any(|face| {
+        face.class == LineArrangementCellFaceClass::Exterior && face.signed_area_twice == r(-32)
     }));
 }
 

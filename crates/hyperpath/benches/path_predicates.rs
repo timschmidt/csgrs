@@ -148,6 +148,16 @@ fn path_predicates(c: &mut Criterion) {
     c.bench_function("line_arrangement_exact_cleanup", |b| {
         b.iter(|| arrange_line_segments(&line_arrangement_segments, PredicatePolicy::default()))
     });
+    let line_cell_square = vec![
+        LinePathSegment::new(p(0, 0), p(1000, 0)),
+        LinePathSegment::new(p(1000, 0), p(1000, 1000)),
+        LinePathSegment::new(p(1000, 1000), p(0, 1000)),
+        LinePathSegment::new(p(0, 1000), p(0, 0)),
+        LinePathSegment::new(p(0, 0), p(1000, 1000)),
+    ];
+    c.bench_function("line_arrangement_exact_cell_graph", |b| {
+        b.iter(|| arrange_line_segments(&line_cell_square, PredicatePolicy::default()))
+    });
     let line_arc_lines = vec![
         LinePathSegment::new(p(-600, 0), p(600, 0)),
         LinePathSegment::new(p(0, -600), p(0, 600)),
