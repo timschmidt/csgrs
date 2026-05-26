@@ -263,6 +263,7 @@ fuzz_target!(|data: &[u8]| {
                 && sequence.blockers.is_empty())
     );
     assert_eq!(algebraic_mixed_report.algebraic_source_spans.len(), 4);
+    assert_eq!(algebraic_mixed_report.algebraic_endpoint_envelopes.len(), 4);
     let three_root_cubic = CubicBezier::new(
         hyperlimit::Point2::new(r(0), Real::new(Rational::new(-2) / Rational::new(25))),
         hyperlimit::Point2::new(
@@ -304,6 +305,7 @@ fuzz_target!(|data: &[u8]| {
                 && sequence.blockers.is_empty())
     );
     assert_eq!(three_root_report.algebraic_source_spans.len(), 8);
+    assert_eq!(three_root_report.algebraic_endpoint_envelopes.len(), 8);
 
     let weight = r(i64::from(data[11] % 16));
     let conic = RationalQuadraticBezier::new(

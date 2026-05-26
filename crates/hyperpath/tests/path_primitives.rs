@@ -914,6 +914,9 @@ fn line_cubic_bezier_arrangement_keeps_true_cubic_roots_unknown() {
             .iter()
             .all(|span| span.parameter_lower == r(0) || span.parameter_upper == r(1))
     );
+    assert_eq!(report.algebraic_endpoint_envelopes.len(), 4);
+    assert_eq!(report.algebraic_endpoint_envelopes[0].span, 0);
+    assert_eq!(report.algebraic_endpoint_envelopes[3].span, 3);
     assert_eq!(report.line_breakpoints[0].len(), 2);
     assert_eq!(report.cubic_breakpoints[0].len(), 2);
 }
@@ -1016,6 +1019,30 @@ fn line_cubic_bezier_arrangement_orders_multiple_algebraic_breakpoints() {
             .is_some()
         );
     }
+    assert_eq!(report.algebraic_endpoint_envelopes.len(), 8);
+    assert!(
+        report
+            .algebraic_endpoint_envelopes
+            .iter()
+            .enumerate()
+            .all(|(index, envelope)| envelope.span == index)
+    );
+    assert!(report.algebraic_endpoint_envelopes.iter().all(|envelope| {
+        compare_reals_with_policy(
+            &envelope.x_lower,
+            &envelope.x_upper,
+            PredicatePolicy::default(),
+        )
+        .value()
+        .is_some()
+            && compare_reals_with_policy(
+                &envelope.y_lower,
+                &envelope.y_upper,
+                PredicatePolicy::default(),
+            )
+            .value()
+            .is_some()
+    }));
     assert_eq!(report.line_breakpoints[0].len(), 2);
     assert_eq!(report.cubic_breakpoints[0].len(), 2);
 }
@@ -1068,6 +1095,27 @@ fn line_cubic_bezier_arrangement_blocks_duplicate_algebraic_curve_sequence() {
             .iter()
             .all(|span| span.source != LineCubicBezierAlgebraicBreakpointSequenceSource::Curve(0))
     );
+    assert_eq!(report.algebraic_endpoint_envelopes.len(), 4);
+    assert!(report.algebraic_endpoint_envelopes.iter().all(|envelope| {
+        compare_reals_with_policy(
+            &envelope.x_lower,
+            &envelope.x_upper,
+            PredicatePolicy::default(),
+        )
+        .value()
+        .is_some()
+    }));
+    assert!(report.algebraic_endpoint_envelopes.iter().all(|envelope| {
+        report
+            .algebraic_source_spans
+            .get(envelope.span)
+            .is_some_and(|span| {
+                matches!(
+                    span.source,
+                    LineCubicBezierAlgebraicBreakpointSequenceSource::Line(_)
+                )
+            })
+    }));
 }
 
 #[test]
@@ -1092,6 +1140,7 @@ fn line_cubic_bezier_arrangement_rejects_algebraic_breakpoint_outside_line_span(
     assert!(report.algebraic_breakpoints.is_empty());
     assert!(report.algebraic_breakpoint_sequences.is_empty());
     assert!(report.algebraic_source_spans.is_empty());
+    assert!(report.algebraic_endpoint_envelopes.is_empty());
     assert_eq!(report.line_breakpoints[0].len(), 2);
     assert_eq!(report.cubic_breakpoints[0].len(), 2);
 }
