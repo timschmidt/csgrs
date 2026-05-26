@@ -5156,6 +5156,31 @@ fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
             )
             .unwrap()
             .mesh;
+        let same_outer_point_branch_island_clipped_outer = rect_surface_i64(&[(0, 0, 10, 10)]);
+        let same_outer_point_branch_island_clipped_holes = rect_surface_i64(&[
+            (2, 4, 4, 6),
+            (2, 6, 4, 8),
+            (4, 2, 6, 4),
+            (4, 6, 6, 8),
+            (6, 2, 8, 4),
+            (6, 4, 8, 6),
+            (6, 6, 8, 8),
+        ]);
+        let same_outer_point_branch_island_clipped_source =
+            arrange_coplanar_orthogonal_surface_difference(
+                &same_outer_point_branch_island_clipped_outer,
+                &same_outer_point_branch_island_clipped_holes,
+            )
+            .unwrap()
+            .mesh;
+        let same_outer_point_branch_island_clipped_right_hole = rect_surface_i64(&[(5, 4, 7, 6)]);
+        let same_outer_point_branch_island_clipped_right =
+            arrange_coplanar_convex_surface_holed_difference(
+                &same_outer_point_branch_island_clipped_outer,
+                &same_outer_point_branch_island_clipped_right_hole,
+            )
+            .unwrap()
+            .mesh;
         let same_outer_affine_island_intersection_origin = (0, 0, 0);
         let same_outer_affine_island_intersection_basis_u = (2, 1, 0);
         let same_outer_affine_island_intersection_basis_v = (-1, 2, 0);
@@ -7041,6 +7066,22 @@ fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
                         hypermesh::exact::preflight_boolean_exact(
                             &same_outer_point_branch_island_intersection_source,
                             &same_outer_point_branch_island_consumed_right,
+                            hypermesh::exact::ExactBooleanOperation::Intersection,
+                        )
+                        .map(|report| report.validate()),
+                        arrange_coplanar_surface_component_holed_intersection(
+                            &same_outer_point_branch_island_clipped_source,
+                            &same_outer_point_branch_island_clipped_right,
+                        )
+                        .map(|output| {
+                            output.validate_intersection_against_sources(
+                                &same_outer_point_branch_island_clipped_source,
+                                &same_outer_point_branch_island_clipped_right,
+                            )
+                        }),
+                        hypermesh::exact::preflight_boolean_exact(
+                            &same_outer_point_branch_island_clipped_source,
+                            &same_outer_point_branch_island_clipped_right,
                             hypermesh::exact::ExactBooleanOperation::Intersection,
                         )
                         .map(|report| report.validate()),

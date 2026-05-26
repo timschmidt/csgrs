@@ -27717,22 +27717,6 @@ fn exact_coplanar_component_holed_intersection_consumes_same_outer_point_branch_
         "source replay must reject an island retained after an opposite hole consumes it"
     );
 
-    let partial_killer_hole = rect_surface_i64(&[(5, 4, 7, 6)]);
-    let partial_killer = hypermesh::exact::arrange_coplanar_convex_surface_holed_difference(
-        &outer,
-        &partial_killer_hole,
-    )
-    .expect("partial island cutter source should materialize")
-    .mesh;
-    assert!(
-        hypermesh::exact::arrange_coplanar_surface_component_holed_intersection(
-            &branch_source,
-            &partial_killer,
-        )
-        .is_none(),
-        "partial source-island clipping requires the later planar-cell extractor"
-    );
-
     let preflight = hypermesh::exact::preflight_boolean_exact(
         &branch_source,
         &island_killer,
@@ -27758,6 +27742,146 @@ fn exact_coplanar_component_holed_intersection_consumes_same_outer_point_branch_
     .validate_operation_against_sources(
         &branch_source,
         &island_killer,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[test]
+fn exact_coplanar_component_holed_intersection_clips_same_outer_point_branch_hole_island() {
+    let outer = rect_surface_i64(&[(0, 0, 20, 20)]);
+    let branch_holes = rect_surface_i64(&[
+        (4, 8, 8, 12),
+        (4, 12, 8, 16),
+        (8, 4, 12, 8),
+        (8, 12, 12, 16),
+        (12, 4, 16, 8),
+        (12, 8, 16, 12),
+        (12, 12, 16, 16),
+    ]);
+    let branch_source =
+        hypermesh::exact::arrange_coplanar_orthogonal_surface_difference(&outer, &branch_holes)
+            .expect("scaled point-branched source fixture should materialize")
+            .mesh;
+
+    let partial_killer_hole = rect_surface_i64(&[(10, 8, 14, 12)]);
+    let partial_killer = hypermesh::exact::arrange_coplanar_convex_surface_holed_difference(
+        &outer,
+        &partial_killer_hole,
+    )
+    .expect("partial island cutter source should materialize")
+    .mesh;
+    let intersection = hypermesh::exact::arrange_coplanar_surface_component_holed_intersection(
+        &branch_source,
+        &partial_killer,
+    )
+    .expect("one opposite retained hole should clip the source-owned island remnant");
+    intersection.validate().unwrap();
+    intersection
+        .validate_intersection_against_sources(&branch_source, &partial_killer)
+        .unwrap();
+    assert_eq!(intersection.components.len(), 2);
+    let clipped_island = intersection
+        .components
+        .iter()
+        .find(|component| component.holes.is_empty())
+        .expect("the surviving half of the point-branched island should be retained");
+    assert!(
+        clipped_island
+            .outer
+            .iter()
+            .any(|point| real_eq(&point.x, &ExactReal::from(10))),
+        "the exact clip edge should be retained on the island remnant"
+    );
+    assert!(
+        !clipped_island
+            .outer
+            .iter()
+            .any(|point| real_eq(&point.x, &ExactReal::from(12))),
+        "the removed half of the source island must not survive"
+    );
+
+    let reverse = hypermesh::exact::arrange_coplanar_surface_component_holed_intersection(
+        &partial_killer,
+        &branch_source,
+    )
+    .expect("partial source-owned island clipping should be symmetric");
+    reverse.validate().unwrap();
+    reverse
+        .validate_intersection_against_sources(&partial_killer, &branch_source)
+        .unwrap();
+    assert_eq!(reverse.components.len(), 2);
+
+    let surviving_source_island =
+        hypermesh::exact::arrange_coplanar_surface_component_holed_intersection(
+            &branch_source,
+            &outer,
+        )
+        .expect("unclipped source should still expose its full point-branched island");
+    let full_island = surviving_source_island
+        .components
+        .iter()
+        .find(|component| component.holes.is_empty())
+        .expect("fixture should expose the full source-owned island")
+        .clone();
+    let mut stale = intersection.clone();
+    let clipped_index = stale
+        .components
+        .iter()
+        .position(|component| component.holes.is_empty())
+        .expect("clipped output should expose an island remnant");
+    stale.components[clipped_index] = full_island;
+    assert!(
+        stale
+            .validate_intersection_against_sources(&branch_source, &partial_killer)
+            .is_err(),
+        "source replay must reject retaining the unclipped island"
+    );
+
+    let interior_killer_hole = rect_surface_i64(&[(9, 9, 11, 11)]);
+    let interior_killer = hypermesh::exact::arrange_coplanar_convex_surface_holed_difference(
+        &outer,
+        &interior_killer_hole,
+    )
+    .expect("interior island cutter source should materialize")
+    .mesh;
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_component_holed_intersection(
+            &branch_source,
+            &interior_killer,
+        )
+        .is_none(),
+        "a holed island remnant still belongs to the later planar-cell extractor"
+    );
+
+    let preflight = hypermesh::exact::preflight_boolean_exact(
+        &branch_source,
+        &partial_killer,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+    )
+    .expect("partial source-island clipping preflight should classify shortcut");
+    preflight.validate().unwrap();
+    preflight
+        .validate_against_sources(&branch_source, &partial_killer)
+        .unwrap();
+    assert_eq!(
+        preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
+    );
+
+    hypermesh::exact::boolean_exact(
+        &branch_source,
+        &partial_killer,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("partial source-island clipping boolean should materialize")
+    .validate_operation_against_sources(
+        &branch_source,
+        &partial_killer,
         hypermesh::exact::ExactBooleanOperation::Intersection,
         ValidationPolicy::ALLOW_BOUNDARY,
         hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,

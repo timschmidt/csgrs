@@ -3048,6 +3048,63 @@ fn exercise_same_outer_component_holed_coplanar_intersection_with_island() {
         .validate_against_sources(&branch_source, &branch_island_killer)
         .unwrap();
 
+    let scaled_branch_outer = rect_surface_i64(&[(0, 0, 10, 10)]);
+    let scaled_branch_holes = rect_surface_i64(&[
+        (2, 4, 4, 6),
+        (2, 6, 4, 8),
+        (4, 2, 6, 4),
+        (4, 6, 6, 8),
+        (6, 2, 8, 4),
+        (6, 4, 8, 6),
+        (6, 6, 8, 8),
+    ]);
+    let scaled_branch_source =
+        arrange_coplanar_orthogonal_surface_difference(&scaled_branch_outer, &scaled_branch_holes)
+            .expect("scaled point-branched retained-hole source should materialize")
+            .mesh;
+    let branch_partial_killer_hole = rect_surface_i64(&[(5, 4, 7, 6)]);
+    let branch_partial_killer = arrange_coplanar_convex_surface_holed_difference(
+        &scaled_branch_outer,
+        &branch_partial_killer_hole,
+    )
+    .expect("partial point-branched island cutter should materialize")
+    .mesh;
+    let branch_clipped = arrange_coplanar_surface_component_holed_intersection(
+        &scaled_branch_source,
+        &branch_partial_killer,
+    )
+    .expect("opposite retained hole should clip the source-owned island");
+    branch_clipped.validate().unwrap();
+    branch_clipped
+        .validate_intersection_against_sources(&scaled_branch_source, &branch_partial_killer)
+        .unwrap();
+    assert_eq!(branch_clipped.components.len(), 2);
+    assert!(
+        branch_clipped
+            .components
+            .iter()
+            .any(|component| component.holes.is_empty())
+    );
+    let branch_clipped_reverse = arrange_coplanar_surface_component_holed_intersection(
+        &branch_partial_killer,
+        &scaled_branch_source,
+    )
+    .expect("source-owned island clipping should be symmetric");
+    branch_clipped_reverse.validate().unwrap();
+    branch_clipped_reverse
+        .validate_intersection_against_sources(&branch_partial_killer, &scaled_branch_source)
+        .unwrap();
+    let branch_clipped_preflight = preflight_boolean_exact(
+        &scaled_branch_source,
+        &branch_partial_killer,
+        ExactBooleanOperation::Intersection,
+    )
+    .expect("source-owned island clipping preflight should classify shortcut");
+    branch_clipped_preflight.validate().unwrap();
+    branch_clipped_preflight
+        .validate_against_sources(&scaled_branch_source, &branch_partial_killer)
+        .unwrap();
+
     let affine_origin = (0, 0, 0);
     let affine_basis_u = (2, 1, 0);
     let affine_basis_v = (-1, 2, 0);
