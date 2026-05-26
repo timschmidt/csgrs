@@ -17511,6 +17511,121 @@ fn exact_coplanar_convex_surface_difference_materializes_multiple_component_cuts
         }
     );
 
+    let orthogonal_grouped_straddling_branch_right = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            11, 11, 0, 13, 11, 0, 13, 13, 0, 11, 13, 0, //
+            -2, 8, 0, 12, 8, 0, 12, 12, 0, -2, 12, 0, //
+            12, 12, 0, 16, 12, 0, 16, 32, 0, 12, 32, 0, //
+            12, -2, 0, 16, -2, 0, 16, 8, 0, 12, 8, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7, //
+            8, 9, 10, 8, 10, 11, //
+            12, 13, 14, 12, 14, 15,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_multi_difference(
+            &grouped_straddling_branch_left,
+            &orthogonal_grouped_straddling_branch_right,
+        )
+        .is_none()
+    );
+    assert!(
+        hypermesh::exact::arrange_coplanar_convex_surface_component_holed_difference(
+            &grouped_straddling_branch_left,
+            &orthogonal_grouped_straddling_branch_right,
+        )
+        .is_none()
+    );
+    let orthogonal_grouped_straddling_branch =
+        hypermesh::exact::arrange_coplanar_surface_point_touch_difference(
+            &grouped_straddling_branch_left,
+            &orthogonal_grouped_straddling_branch_right,
+        )
+        .expect("orthogonal grouped branch openings should consume a straddling hole");
+    orthogonal_grouped_straddling_branch.validate().unwrap();
+    orthogonal_grouped_straddling_branch
+        .validate_difference_against_sources(
+            &grouped_straddling_branch_left,
+            &orthogonal_grouped_straddling_branch_right,
+        )
+        .unwrap();
+    assert!(
+        orthogonal_grouped_straddling_branch
+            .polygons
+            .iter()
+            .flatten()
+            .all(|point| !(real_eq(&point.x, &ExactReal::from(11))
+                && real_eq(&point.y, &ExactReal::from(11))))
+    );
+    let orthogonal_grouped_branch_count = orthogonal_grouped_straddling_branch
+        .polygons
+        .iter()
+        .filter(|polygon| {
+            polygon.iter().any(|point| {
+                real_eq(&point.x, &ExactReal::from(12)) && real_eq(&point.y, &ExactReal::from(8))
+            })
+        })
+        .count();
+    assert!(
+        orthogonal_grouped_branch_count >= 2,
+        "orthogonal grouped replay must retain the branch vertex after consuming the hole"
+    );
+    let mut stale_orthogonal_grouped = orthogonal_grouped_straddling_branch.clone();
+    stale_orthogonal_grouped.polygons.pop();
+    assert!(
+        stale_orthogonal_grouped
+            .validate_difference_against_sources(
+                &grouped_straddling_branch_left,
+                &orthogonal_grouped_straddling_branch_right,
+            )
+            .is_err()
+    );
+    let orthogonal_grouped_preflight = hypermesh::exact::preflight_boolean_exact(
+        &grouped_straddling_branch_left,
+        &orthogonal_grouped_straddling_branch_right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    orthogonal_grouped_preflight.validate().unwrap();
+    orthogonal_grouped_preflight
+        .validate_against_sources(
+            &grouped_straddling_branch_left,
+            &orthogonal_grouped_straddling_branch_right,
+        )
+        .unwrap();
+    assert_eq!(
+        orthogonal_grouped_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchDifference
+    );
+    let orthogonal_grouped_result = hypermesh::exact::boolean_exact(
+        &grouped_straddling_branch_left,
+        &orthogonal_grouped_straddling_branch_right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    orthogonal_grouped_result
+        .validate_operation_against_sources(
+            &grouped_straddling_branch_left,
+            &orthogonal_grouped_straddling_branch_right,
+            hypermesh::exact::ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        orthogonal_grouped_result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut:
+                hypermesh::exact::ExactBooleanShortcutKind::CoplanarSurfacePointTouchDifference
+        }
+    );
+
     let grouped_straddling_retained_right = ExactMesh::from_i64_triangles_with_policy(
         &[
             3, 3, 0, 5, 3, 0, 5, 5, 0, 3, 5, 0, //
@@ -17652,6 +17767,92 @@ fn exact_coplanar_convex_surface_difference_materializes_multiple_component_cuts
             shortcut: hypermesh::exact::ExactBooleanShortcutKind::
                 CoplanarConvexSurfaceComponentHoledDifference
         }
+    );
+
+    let orthogonal_grouped_straddling_retained_right = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            3, 3, 0, 5, 3, 0, 5, 5, 0, 3, 5, 0, //
+            11, 11, 0, 13, 11, 0, 13, 13, 0, 11, 13, 0, //
+            -2, 8, 0, 12, 8, 0, 12, 12, 0, -2, 12, 0, //
+            12, 12, 0, 16, 12, 0, 16, 32, 0, 12, 32, 0, //
+            12, -2, 0, 16, -2, 0, 16, 8, 0, 12, 8, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7, //
+            8, 9, 10, 8, 10, 11, //
+            12, 13, 14, 12, 14, 15, //
+            16, 17, 18, 16, 18, 19,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_point_touch_difference(
+            &grouped_straddling_branch_left,
+            &orthogonal_grouped_straddling_retained_right,
+        )
+        .is_none()
+    );
+    let orthogonal_grouped_retained =
+        hypermesh::exact::arrange_coplanar_convex_surface_component_holed_difference(
+            &grouped_straddling_branch_left,
+            &orthogonal_grouped_straddling_retained_right,
+        )
+        .expect("orthogonal grouped branch replay should retain unrelated strict holes");
+    orthogonal_grouped_retained.validate().unwrap();
+    orthogonal_grouped_retained
+        .validate_against_sources(
+            &grouped_straddling_branch_left,
+            &orthogonal_grouped_straddling_retained_right,
+        )
+        .unwrap();
+    assert_eq!(
+        orthogonal_grouped_retained
+            .components
+            .iter()
+            .map(|component| component.holes.len())
+            .sum::<usize>(),
+        1
+    );
+    assert!(
+        orthogonal_grouped_retained
+            .components
+            .iter()
+            .any(|component| component.holes.iter().any(|hole| {
+                hole.iter().any(|point| {
+                    real_eq(&point.x, &ExactReal::from(3)) && real_eq(&point.y, &ExactReal::from(3))
+                })
+            }))
+    );
+    assert!(
+        !orthogonal_grouped_retained
+            .components
+            .iter()
+            .any(|component| component.holes.iter().any(|hole| {
+                hole.iter().any(|point| {
+                    real_eq(&point.x, &ExactReal::from(11))
+                        && real_eq(&point.y, &ExactReal::from(11))
+                })
+            }))
+    );
+    let orthogonal_grouped_retained_preflight = hypermesh::exact::preflight_boolean_exact(
+        &grouped_straddling_branch_left,
+        &orthogonal_grouped_straddling_retained_right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    orthogonal_grouped_retained_preflight.validate().unwrap();
+    orthogonal_grouped_retained_preflight
+        .validate_against_sources(
+            &grouped_straddling_branch_left,
+            &orthogonal_grouped_straddling_retained_right,
+        )
+        .unwrap();
+    assert_eq!(
+        orthogonal_grouped_retained_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::
+            CertifiedCoplanarConvexSurfaceComponentHoledDifference
     );
 
     let multi_component_grouped_left = ExactMesh::from_i64_triangles_with_policy(

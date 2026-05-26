@@ -16626,7 +16626,10 @@ fn materialize_side_cutter_point_touch_component_holed_difference(
 /// exactly one clipped opening; that ring is unioned into the removed object
 /// before branch replay, while disjoint rings are assigned to retained
 /// branch loops afterward. Point-only contact and multi-opening ownership are
-/// rejected.
+/// rejected. Rectilinear clipped openings are admitted here because the
+/// consumed ring, not the cutter outline alone, is the retained object that
+/// names the deletion; the plain no-hole all-rectangle route remains with the
+/// orthogonal-cell shortcuts.
 ///
 /// This is a bounded retained-object certificate in Yap's sense from
 /// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
@@ -16648,7 +16651,6 @@ fn materialize_side_cutter_point_touch_component_holed_difference_consuming_hole
         return None;
     }
     let projection = component.projection;
-    let mut all_clipped_cutters_are_rectangles = true;
     let mut openings = Vec::with_capacity(cut_indices.len());
     for &right_index in cut_indices {
         let mut clipped = convex_polygon_intersection_boundary(
@@ -16667,12 +16669,7 @@ fn materialize_side_cutter_point_touch_component_holed_difference_consuming_hole
             "coplanar component-holed point-touch straddling-hole side-cutter split",
         )
         .ok()?;
-        all_clipped_cutters_are_rectangles &=
-            projected_axis_aligned_rectangle(&clipped, projection).is_some();
         openings.push(clipped);
-    }
-    if all_clipped_cutters_are_rectangles {
-        return None;
     }
 
     let mut holes_by_opening = vec![Vec::<Vec<Point3>>::new(); openings.len()];
@@ -16795,7 +16792,11 @@ fn materialize_side_cutter_point_touch_component_holed_difference_consuming_hole
 /// ring with positive-dimensional contact to several side openings may be
 /// consumed when the whole cutter/ring contact group replays as one simple
 /// removed object. Point-only hole contact is rejected, and hole-only contact
-/// groups are rejected because they do not name a removed object.
+/// groups are rejected because they do not name a removed object. The same
+/// proof also covers the all-rectangular clipped-cutter case: de Berg et al.'s
+/// orthogonal subdivision view can explain the cells, but Yap's retained
+/// object boundary still requires the consumed ring to be tied to an explicit
+/// removed group before the branch loops are emitted.
 ///
 /// The policy follows Yap, "Towards Exact Geometric Computation,"
 /// *Computational Geometry* 7.1-2 (1997): a ring is either retained as an
@@ -16820,7 +16821,6 @@ fn materialize_side_cutter_point_touch_component_holed_difference_consuming_hole
     let projection = component.projection;
     let label = "coplanar component-holed grouped point-touch straddling-hole side-cutter split";
     let mut regions = Vec::with_capacity(cut_indices.len() + holes.len());
-    let mut all_clipped_cutters_are_rectangles = true;
     for &right_index in cut_indices {
         let mut clipped = convex_polygon_intersection_boundary(
             &right_components.get(right_index)?.hull,
@@ -16833,16 +16833,11 @@ fn materialize_side_cutter_point_touch_component_holed_difference_consuming_hole
         orient_polygon_ccw(&mut clipped, projection)?;
         clipped = simplify_projected_polygon(clipped, projection);
         validate_projected_simple_loop(&clipped, projection, label).ok()?;
-        all_clipped_cutters_are_rectangles &=
-            projected_axis_aligned_rectangle(&clipped, projection).is_some();
         regions.push(RemovedRegionCandidate {
             right_index,
             is_cutter: true,
             region: clipped,
         });
-    }
-    if all_clipped_cutters_are_rectangles {
-        return None;
     }
     for (hole_index, hole) in holes.iter().enumerate() {
         if !polygon_strictly_inside_convex_polygon(&hole.ring, &component.hull, projection)? {
@@ -17047,7 +17042,10 @@ fn materialize_side_cutter_point_touch_difference_consuming_holes(
 /// owned hole is first unioned into that removed opening, and the resulting
 /// removed-opening set is replayed by the branch-aware retained-fragment
 /// stitcher. Point-only hole contact and holes touching multiple openings are
-/// rejected because they do not name one 2D removed object.
+/// rejected because they do not name one 2D removed object. All-rectangular
+/// clipped openings are valid here when the consumed hole supplies the exact
+/// ownership object; ordinary all-rectangle no-hole subtraction remains
+/// delegated to the orthogonal arrangement layer.
 ///
 /// Yap's "Towards Exact Geometric Computation," *Computational Geometry*
 /// 7.1-2 (1997), is the certificate boundary: deleting a ring is permitted
@@ -17068,7 +17066,6 @@ fn materialize_side_cutter_point_touch_difference_consuming_hole_contacts(
         return None;
     }
     let projection = component.projection;
-    let mut all_clipped_cutters_are_rectangles = true;
     let mut openings = Vec::with_capacity(cut_indices.len());
     for &right_index in cut_indices {
         let mut clipped = convex_polygon_intersection_boundary(
@@ -17082,12 +17079,7 @@ fn materialize_side_cutter_point_touch_difference_consuming_hole_contacts(
         orient_polygon_ccw(&mut clipped, projection)?;
         clipped = simplify_projected_polygon(clipped, projection);
         validate_projected_simple_loop(&clipped, projection, label).ok()?;
-        all_clipped_cutters_are_rectangles &=
-            projected_axis_aligned_rectangle(&clipped, projection).is_some();
         openings.push(clipped);
-    }
-    if all_clipped_cutters_are_rectangles {
-        return None;
     }
 
     let mut holes_by_opening = vec![Vec::<Vec<Point3>>::new(); openings.len()];
@@ -17179,7 +17171,11 @@ fn materialize_side_cutter_point_touch_difference_consuming_hole_contacts(
 /// source-owned removed object. Point-only hole contact still rejects; exact
 /// point contacts are retained only between removed opening groups, where they
 /// are the named branch vertices of
-/// [`materialize_side_cutter_point_touch_removed_openings_core`].
+/// [`materialize_side_cutter_point_touch_removed_openings_core`]. This helper
+/// intentionally accepts all-rectangular clipped openings when the group also
+/// owns a consumed ring: the output topology is certified by the exact
+/// cutter/ring contact graph and retained branch replay, not by widening to a
+/// generic sampled rectilinear cell difference.
 ///
 /// This follows Yap, "Towards Exact Geometric Computation,"
 /// *Computational Geometry* 7.1-2 (1997): a deleted ring must be named by an
@@ -17202,7 +17198,6 @@ fn materialize_side_cutter_point_touch_difference_consuming_hole_contact_groups(
     }
     let projection = component.projection;
     let mut regions = Vec::with_capacity(cut_indices.len() + holes.len());
-    let mut all_clipped_cutters_are_rectangles = true;
     for &right_index in cut_indices {
         let mut clipped = convex_polygon_intersection_boundary(
             &right_components.get(right_index)?.hull,
@@ -17215,16 +17210,11 @@ fn materialize_side_cutter_point_touch_difference_consuming_hole_contact_groups(
         orient_polygon_ccw(&mut clipped, projection)?;
         clipped = simplify_projected_polygon(clipped, projection);
         validate_projected_simple_loop(&clipped, projection, label).ok()?;
-        all_clipped_cutters_are_rectangles &=
-            projected_axis_aligned_rectangle(&clipped, projection).is_some();
         regions.push(RemovedRegionCandidate {
             right_index,
             is_cutter: true,
             region: clipped,
         });
-    }
-    if all_clipped_cutters_are_rectangles {
-        return None;
     }
     for hole in holes {
         if !polygon_strictly_inside_convex_polygon(&hole.ring, &component.hull, projection)? {

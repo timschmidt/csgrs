@@ -520,6 +520,16 @@ pub fn preflight_boolean_exact(
             ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
         }
         ExactBooleanOperation::Difference
+            if arrange_coplanar_surface_point_touch_difference(left, right).is_some() =>
+        {
+            // Point-touch consumed-hole differences carry explicit branch
+            // vertices and deleted-ring ownership. Yap, "Towards Exact
+            // Geometric Computation," Computational Geometry 7.1-2 (1997),
+            // treats that retained object evidence as stronger than a later
+            // generic orthogonal-cell explanation of the same area.
+            ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchDifference
+        }
+        ExactBooleanOperation::Difference
             if arrange_coplanar_orthogonal_surface_difference(left, right).is_some() =>
         {
             ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceDifference
@@ -528,11 +538,6 @@ pub fn preflight_boolean_exact(
             if arrange_coplanar_affine_surface_difference(left, right).is_some() =>
         {
             ExactBooleanSupport::CertifiedCoplanarAffineSurfaceDifference
-        }
-        ExactBooleanOperation::Difference
-            if arrange_coplanar_surface_point_touch_difference(left, right).is_some() =>
-        {
-            ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchDifference
         }
         ExactBooleanOperation::Union if has_axis_aligned_box_union(left, right) => {
             ExactBooleanSupport::CertifiedAxisAlignedBoxUnion
@@ -1586,6 +1591,14 @@ pub fn boolean_exact_with_boundary_policy(
             boolean_coplanar_convex_component_holed_difference(left, right, validation)
         }
         ExactBooleanOperation::Difference
+            if arrange_coplanar_surface_point_touch_difference(left, right).is_some() =>
+        {
+            // Keep the retained branch/deleted-ring certificate ahead of the
+            // generic orthogonal-cell materializer. The exact topology is the
+            // object being certified here, per Yap's TEGC model.
+            boolean_coplanar_surface_point_touch_difference(left, right, validation)
+        }
+        ExactBooleanOperation::Difference
             if arrange_coplanar_orthogonal_surface_difference(left, right).is_some() =>
         {
             boolean_coplanar_orthogonal_surface(left, right, operation, validation)
@@ -1594,11 +1607,6 @@ pub fn boolean_exact_with_boundary_policy(
             if arrange_coplanar_affine_surface_difference(left, right).is_some() =>
         {
             boolean_coplanar_affine_surface(left, right, operation, validation)
-        }
-        ExactBooleanOperation::Difference
-            if arrange_coplanar_surface_point_touch_difference(left, right).is_some() =>
-        {
-            boolean_coplanar_surface_point_touch_difference(left, right, validation)
         }
         ExactBooleanOperation::Union if has_axis_aligned_box_union(left, right) => {
             boolean_axis_aligned_box_union(left, right, validation)

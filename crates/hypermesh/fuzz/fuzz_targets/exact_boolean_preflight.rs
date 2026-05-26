@@ -6537,6 +6537,74 @@ fn exercise_side_cutter_opening_without_holes() {
         )
         .unwrap();
 
+    let orthogonal_grouped_straddling_branch_right =
+        ExactMesh::from_i64_triangles_with_policy(
+            &[
+                11, 11, 0, 13, 11, 0, 13, 13, 0, 11, 13, 0, //
+                -2, 8, 0, 12, 8, 0, 12, 12, 0, -2, 12, 0, //
+                12, 12, 0, 16, 12, 0, 16, 32, 0, 12, 32, 0, //
+                12, -2, 0, 16, -2, 0, 16, 8, 0, 12, 8, 0,
+            ],
+            &[
+                0, 1, 2, 0, 2, 3, //
+                4, 5, 6, 4, 6, 7, //
+                8, 9, 10, 8, 10, 11, //
+                12, 13, 14, 12, 14, 15,
+            ],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .expect("orthogonal grouped straddling-hole cutter fixture must import");
+    assert!(arrange_coplanar_surface_multi_difference(
+        &grouped_straddling_branch_left,
+        &orthogonal_grouped_straddling_branch_right,
+    )
+    .is_none());
+    let orthogonal_grouped_straddling = arrange_coplanar_surface_point_touch_difference(
+        &grouped_straddling_branch_left,
+        &orthogonal_grouped_straddling_branch_right,
+    )
+    .expect("orthogonal point-touch replay should consume a grouped straddling hole");
+    orthogonal_grouped_straddling.validate().unwrap();
+    orthogonal_grouped_straddling
+        .validate_difference_against_sources(
+            &grouped_straddling_branch_left,
+            &orthogonal_grouped_straddling_branch_right,
+        )
+        .unwrap();
+    let orthogonal_grouped_preflight = preflight_boolean_exact(
+        &grouped_straddling_branch_left,
+        &orthogonal_grouped_straddling_branch_right,
+        ExactBooleanOperation::Difference,
+    )
+    .expect("orthogonal grouped preflight should keep the point-touch shortcut");
+    orthogonal_grouped_preflight.validate().unwrap();
+    orthogonal_grouped_preflight
+        .validate_against_sources(
+            &grouped_straddling_branch_left,
+            &orthogonal_grouped_straddling_branch_right,
+        )
+        .unwrap();
+    assert_eq!(
+        orthogonal_grouped_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchDifference
+    );
+    let orthogonal_grouped_result = hypermesh::exact::boolean_exact(
+        &grouped_straddling_branch_left,
+        &orthogonal_grouped_straddling_branch_right,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("orthogonal grouped straddling-hole boolean should materialize");
+    orthogonal_grouped_result
+        .validate_operation_against_sources(
+            &grouped_straddling_branch_left,
+            &orthogonal_grouped_straddling_branch_right,
+            ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+
     let grouped_straddling_retained_right = ExactMesh::from_i64_triangles_with_policy(
         &[
             3, 3, 0, 5, 3, 0, 5, 5, 0, 3, 5, 0, //
@@ -6616,6 +6684,71 @@ fn exercise_side_cutter_opening_without_holes() {
             ExactBoundaryBooleanPolicy::Reject,
         )
         .unwrap();
+
+    let orthogonal_grouped_straddling_retained_right =
+        ExactMesh::from_i64_triangles_with_policy(
+            &[
+                3, 3, 0, 5, 3, 0, 5, 5, 0, 3, 5, 0, //
+                11, 11, 0, 13, 11, 0, 13, 13, 0, 11, 13, 0, //
+                -2, 8, 0, 12, 8, 0, 12, 12, 0, -2, 12, 0, //
+                12, 12, 0, 16, 12, 0, 16, 32, 0, 12, 32, 0, //
+                12, -2, 0, 16, -2, 0, 16, 8, 0, 12, 8, 0,
+            ],
+            &[
+                0, 1, 2, 0, 2, 3, //
+                4, 5, 6, 4, 6, 7, //
+                8, 9, 10, 8, 10, 11, //
+                12, 13, 14, 12, 14, 15, //
+                16, 17, 18, 16, 18, 19,
+            ],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .expect("orthogonal grouped retained-hole cutter fixture must import");
+    assert!(
+        arrange_coplanar_surface_point_touch_difference(
+            &grouped_straddling_branch_left,
+            &orthogonal_grouped_straddling_retained_right,
+        )
+        .is_none()
+    );
+    let orthogonal_grouped_retained =
+        arrange_coplanar_convex_surface_component_holed_difference(
+            &grouped_straddling_branch_left,
+            &orthogonal_grouped_straddling_retained_right,
+        )
+        .expect("orthogonal component-holed replay should retain unrelated holes");
+    orthogonal_grouped_retained.validate().unwrap();
+    orthogonal_grouped_retained
+        .validate_against_sources(
+            &grouped_straddling_branch_left,
+            &orthogonal_grouped_straddling_retained_right,
+        )
+        .unwrap();
+    assert_eq!(
+        orthogonal_grouped_retained
+            .components
+            .iter()
+            .map(|component| component.holes.len())
+            .sum::<usize>(),
+        1
+    );
+    let orthogonal_grouped_retained_preflight = preflight_boolean_exact(
+        &grouped_straddling_branch_left,
+        &orthogonal_grouped_straddling_retained_right,
+        ExactBooleanOperation::Difference,
+    )
+    .expect("orthogonal retained-hole preflight should classify component-holed shortcut");
+    orthogonal_grouped_retained_preflight.validate().unwrap();
+    orthogonal_grouped_retained_preflight
+        .validate_against_sources(
+            &grouped_straddling_branch_left,
+            &orthogonal_grouped_straddling_retained_right,
+        )
+        .unwrap();
+    assert_eq!(
+        orthogonal_grouped_retained_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
+    );
 
     let multi_component_grouped_left = ExactMesh::from_i64_triangles_with_policy(
         &[
