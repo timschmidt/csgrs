@@ -373,6 +373,28 @@ fuzz_target!(|data: &[u8]| {
         2
     );
 
+    let mixed_promoted_conic_siblings_report = arrange_line_segments_with_mixed_beziers(
+        &[LinePathSegment::new(p(1, 0), p(3, 0))],
+        &[],
+        &[],
+        &[RationalQuadraticBezier::new(p(0, 0), p(8, 0), p(0, 0), r(1)).unwrap()],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert_eq!(
+        mixed_promoted_conic_siblings_report
+            .rational_quadratic_algebraic_evidence
+            .exact_algebraic_breakpoint_promotions
+            .len(),
+        2
+    );
+    assert_eq!(
+        mixed_promoted_conic_siblings_report
+            .rational_quadratic_fragments
+            .len(),
+        3
+    );
+
     let overlapping_arc_error = arrange_line_segments_with_mixed_curves(
         &[LinePathSegment::new(p(0, 0), p(8, 0))],
         &[ExplicitCircularArc::new(p(4, 0), r(4), p(0, 0), p(8, 0), ArcDirection::Cw).unwrap()],

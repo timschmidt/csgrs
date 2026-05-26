@@ -578,7 +578,7 @@ fn path_predicates(c: &mut Criterion) {
     let mixed_evidence_cubic = CubicBezier::new(p(0, 0), p(100, 0), p(700, 0), p(800, 0));
     let mixed_evidence_conic =
         RationalQuadraticBezier::new(p(1000, 0), p(1800, 0), p(1000, 0), r(1)).unwrap();
-    let mixed_evidence_conic_line = LinePathSegment::new(p(1100, 0), p(1200, 0));
+    let mixed_evidence_conic_line = LinePathSegment::new(p(1100, 0), p(1300, 0));
     c.bench_function("line_mixed_bezier_algebraic_evidence_retention", |b| {
         b.iter(|| {
             arrange_line_segments_with_mixed_beziers(

@@ -2502,6 +2502,52 @@ fn line_mixed_bezier_arrangement_retains_conic_algebraic_overlap_evidence() {
 }
 
 #[test]
+fn line_mixed_bezier_arrangement_accepts_same_source_promoted_conic_siblings() {
+    let line = LinePathSegment::new(p(1, 0), p(3, 0));
+    let conic = RationalQuadraticBezier::new(p(0, 0), p(8, 0), p(0, 0), r(1)).unwrap();
+
+    let report = arrange_line_segments_with_mixed_beziers(
+        &[line],
+        &[],
+        &[],
+        &[conic],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    let evidence = &report.rational_quadratic_algebraic_evidence;
+
+    assert_eq!(
+        report.rational_quadratic_events[0].class,
+        LineRationalQuadraticBezierIntersectionClass::Unknown
+    );
+    assert_eq!(evidence.algebraic_breakpoints.len(), 4);
+    assert!(
+        evidence
+            .exact_algebraic_breakpoint_promotions
+            .iter()
+            .any(|promotion| promotion.parameter == rq(1, 4) && promotion.point == p(3, 0))
+    );
+    assert!(
+        evidence
+            .exact_algebraic_breakpoint_promotions
+            .iter()
+            .any(|promotion| promotion.parameter == rq(3, 4) && promotion.point == p(3, 0))
+    );
+    assert_eq!(report.rational_quadratic_fragments.len(), 3);
+    assert!(
+        report
+            .rational_quadratic_fragments
+            .iter()
+            .all(|fragment| fragment.source_curve == 0)
+    );
+    assert_eq!(report.cell_graph.edges.len(), 3);
+    assert_eq!(
+        report.cell_graph.half_edges.len(),
+        report.cell_graph.edges.len() * 2
+    );
+}
+
+#[test]
 fn line_mixed_curve_arrangement_merges_arc_and_bezier_family_breakpoints() {
     let line = LinePathSegment::new(p(0, 0), p(28, 0));
     let arc = ExplicitCircularArc::new(p(2, 0), r(2), p(0, 0), p(4, 0), ArcDirection::Cw).unwrap();

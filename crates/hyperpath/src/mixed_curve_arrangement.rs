@@ -657,10 +657,19 @@ fn build_line_fragments(
 #[derive(Clone, Debug)]
 struct FragmentBox {
     source: MixedCurveFragmentRef,
+    owner: MixedCurveSourceRef,
     x_min: Real,
     x_max: Real,
     y_min: Real,
     y_max: Real,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum MixedCurveSourceRef {
+    ExplicitArc(usize),
+    Quadratic(usize),
+    Cubic(usize),
+    RationalQuadratic(usize),
 }
 
 fn validate_curve_fragment_separation(
@@ -674,12 +683,14 @@ fn validate_curve_fragment_separation(
     for (index, fragment) in arcs.iter().enumerate() {
         boxes.push(FragmentBox {
             source: MixedCurveFragmentRef::ExplicitArc(index),
+            owner: MixedCurveSourceRef::ExplicitArc(fragment.source_arc),
             ..box_from_explicit_arc(fragment, policy)?
         });
     }
     for (index, fragment) in quadratics.iter().enumerate() {
         boxes.push(FragmentBox {
             source: MixedCurveFragmentRef::Quadratic(index),
+            owner: MixedCurveSourceRef::Quadratic(fragment.source_curve),
             ..box_from_points(
                 [
                     fragment.curve.start(),
@@ -693,6 +704,7 @@ fn validate_curve_fragment_separation(
     for (index, fragment) in cubics.iter().enumerate() {
         boxes.push(FragmentBox {
             source: MixedCurveFragmentRef::Cubic(index),
+            owner: MixedCurveSourceRef::Cubic(fragment.source_curve),
             ..box_from_points(
                 [
                     fragment.curve.start(),
@@ -710,11 +722,24 @@ fn validate_curve_fragment_separation(
         let end = affine_homogeneous_point(&fragment.end_control, policy)?;
         boxes.push(FragmentBox {
             source: MixedCurveFragmentRef::RationalQuadratic(index),
+            owner: MixedCurveSourceRef::RationalQuadratic(fragment.source_curve),
             ..box_from_points([&start, &control, &end], policy)?
         });
     }
     for left in 0..boxes.len() {
         for right in (left + 1)..boxes.len() {
+            // Same-source siblings are already the output of one retained
+            // pairwise split scheduler. Yap's exact-object boundary lets this
+            // layer consume those constructed fragments as one source object;
+            // only cross-source curve-curve topology needs a new certificate
+            // before the bounded mixed graph may accept it. This distinction
+            // is essential for exact algebraic root promotions: Collins-Loos
+            // isolated roots can split a conic or cubic into multiple native
+            // fragments whose convex hull boxes still overlap at certified
+            // same-source boundaries.
+            if boxes[left].owner == boxes[right].owner {
+                continue;
+            }
             if !boxes_strictly_separated(&boxes[left], &boxes[right], policy)? {
                 return Err(
                     LineMixedBezierArrangementError::UnsupportedCurveCurveInteraction {
@@ -768,6 +793,7 @@ fn box_from_explicit_arc(
         }
     }
     hull.source = MixedCurveFragmentRef::ExplicitArc(usize::MAX);
+    hull.owner = MixedCurveSourceRef::ExplicitArc(usize::MAX);
     Ok(hull)
 }
 
@@ -785,6 +811,7 @@ fn box_from_points<'a, const N: usize>(
     }
     Ok(FragmentBox {
         source: MixedCurveFragmentRef::Quadratic(usize::MAX),
+        owner: MixedCurveSourceRef::Quadratic(usize::MAX),
         x_min,
         x_max,
         y_min,
