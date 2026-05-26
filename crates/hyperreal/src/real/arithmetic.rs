@@ -4032,36 +4032,36 @@ impl Real {
         // more expensive than reading already-derivable structural facts. Only
         // descend to the refinement path when structural inspection cannot
         // decide for one of the inputs.
-        let y_sign = match self.structural_facts().sign {
-            Some(RealSign::Zero) => Sign::NoSign,
-            Some(RealSign::Positive) => Sign::Plus,
-            Some(RealSign::Negative) => Sign::Minus,
-            None => self.best_sign(),
-        };
-        let x_sign = match x.structural_facts().sign {
-            Some(RealSign::Zero) => Sign::NoSign,
-            Some(RealSign::Positive) => Sign::Plus,
-            Some(RealSign::Negative) => Sign::Minus,
-            None => x.best_sign(),
-        };
+        let y_sign = self.structural_facts().sign.map(num_sign_from_real);
+        let x_sign = x.structural_facts().sign.map(num_sign_from_real);
         match (y_sign, x_sign) {
-            (Sign::NoSign, Sign::NoSign) | (Sign::NoSign, Sign::Plus) => {
+            (Some(Sign::NoSign), Some(Sign::NoSign)) | (Some(Sign::NoSign), Some(Sign::Plus)) => {
                 crate::trace_dispatch!("real", "atan2", "axis-zero-y");
                 return Self::zero();
             }
-            (Sign::NoSign, Sign::Minus) => {
+            (Some(Sign::NoSign), Some(Sign::Minus)) => {
                 crate::trace_dispatch!("real", "atan2", "axis-negative-x");
                 return Self::pi();
             }
-            (Sign::Plus, Sign::NoSign) => {
+            (Some(Sign::Plus), Some(Sign::NoSign)) => {
                 crate::trace_dispatch!("real", "atan2", "axis-positive-y");
                 return Self::pi_fraction(1, 2);
             }
-            (Sign::Minus, Sign::NoSign) => {
+            (Some(Sign::Minus), Some(Sign::NoSign)) => {
                 crate::trace_dispatch!("real", "atan2", "axis-negative-y");
                 return Self::pi_fraction(-1, 2);
             }
             _ => {}
+        }
+        let y_sign = y_sign.unwrap_or_else(|| self.best_sign());
+        let x_sign = x_sign.unwrap_or_else(|| x.best_sign());
+        if y_sign == Sign::NoSign && x_sign != Sign::Plus {
+            crate::trace_dispatch!("real", "atan2", "generic-computable");
+            return Self::irrational_from_computable(self.fold().atan2(x.fold()));
+        }
+        if x_sign == Sign::NoSign {
+            crate::trace_dispatch!("real", "atan2", "generic-computable");
+            return Self::irrational_from_computable(self.fold().atan2(x.fold()));
         }
         let ratio = (self / &x).expect("nonzero x rules out divide-by-zero");
         let base = ratio.atan().expect("Real::atan is total");
@@ -4140,7 +4140,7 @@ impl Real {
         crate::trace_dispatch!("real", "tanh", "generic-exp-identity");
         let positive = self.clone().exp()?;
         let negative = self.neg().exp()?;
-        (positive.clone() - negative.clone()) / (positive + negative)
+        (&positive - &negative) / (positive + negative)
     }
 
     /// The inverse hyperbolic sine of this Real.
@@ -4708,6 +4708,14 @@ fn real_sign_from_num(sign: Sign) -> RealSign {
         Sign::Minus => RealSign::Negative,
         Sign::NoSign => RealSign::Zero,
         Sign::Plus => RealSign::Positive,
+    }
+}
+
+fn num_sign_from_real(sign: RealSign) -> Sign {
+    match sign {
+        RealSign::Negative => Sign::Minus,
+        RealSign::Zero => Sign::NoSign,
+        RealSign::Positive => Sign::Plus,
     }
 }
 

@@ -1914,6 +1914,24 @@ mod tests {
     }
 
     #[test]
+    fn atan2_unresolved_positive_y_does_not_collapse_to_axis() {
+        let tiny = Real::new(
+            Rational::from_bigint_fraction(
+                num::BigInt::from(1_u8),
+                num::BigUint::from(1_u8) << 2500,
+            )
+            .unwrap(),
+        );
+        let y = (Real::pi() + tiny.clone()) - Real::pi();
+        assert_eq!(y.structural_facts().sign, None);
+
+        let got = y.atan2(Real::one());
+        let expected = tiny.atan2(Real::one());
+        assert_ne!(got, Real::zero());
+        assert_eq!(got.to_f64_approx(), expected.to_f64_approx());
+    }
+
+    #[test]
     fn atan2_is_consistent_under_uniform_positive_scaling() {
         // atan2(ky, kx) = atan2(y, x) for k > 0. Pick coords whose |y/x|
         // ratio (1/3 here) lands in the working atan kernel range.
@@ -1988,6 +2006,51 @@ mod tests {
                 "computable atan2({y}, {x}): got {got_f}, want {want}",
             );
         }
+    }
+
+    #[test]
+    fn computable_atan2_unresolved_positive_y_does_not_collapse_to_axis() {
+        use crate::Computable;
+        use num::Zero;
+
+        let tiny = Rational::from_bigint_fraction(
+            num::BigInt::from(1_u8),
+            num::BigUint::from(1_u8) << 2500,
+        )
+        .unwrap();
+        let y = Computable::pi()
+            .add(Computable::rational(tiny.clone()))
+            .add(Computable::pi().negate());
+        assert_eq!(y.sign(), num::bigint::Sign::NoSign);
+
+        let got = y.atan2(Computable::one()).approx(-2600);
+        let expected = Computable::rational(tiny)
+            .atan2(Computable::one())
+            .approx(-2600);
+        assert!(!got.is_zero());
+        assert_eq!(got, expected);
+    }
+
+    #[test]
+    fn computable_atan2_unresolved_negative_y_on_negative_x_keeps_lower_branch() {
+        use crate::Computable;
+
+        let tiny = Rational::from_bigint_fraction(
+            num::BigInt::from(1_u8),
+            num::BigUint::from(1_u8) << 2500,
+        )
+        .unwrap();
+        let y = Computable::pi()
+            .add(Computable::rational(tiny.clone()).negate())
+            .add(Computable::pi().negate());
+        assert_eq!(y.sign(), num::bigint::Sign::NoSign);
+
+        let got = y.atan2(Computable::one().negate()).approx(-2600);
+        let expected = Computable::rational(tiny)
+            .negate()
+            .atan2(Computable::one().negate())
+            .approx(-2600);
+        assert_eq!(got, expected);
     }
 
     #[test]
