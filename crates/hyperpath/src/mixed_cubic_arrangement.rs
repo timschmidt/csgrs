@@ -22,12 +22,14 @@ use hypersolve::{
 use crate::bezier::CubicBezier;
 use crate::bezier_arrangement::{
     LineCubicAlgebraicPointDomain, LineCubicAlgebraicRootDomain,
-    LineCubicBezierAlgebraicPointImage, LineCubicBezierAlgebraicSupportRoot,
-    LineCubicBezierIntersection, LineCubicBezierIntersectionClass,
-    LineCubicBezierIntersectionReport, intersect_axis_aligned_line_cubic_bezier,
+    LineCubicBezierAlgebraicInverseRoot, LineCubicBezierAlgebraicPointImage,
+    LineCubicBezierAlgebraicSupportRoot, LineCubicBezierIntersection,
+    LineCubicBezierIntersectionClass, LineCubicBezierIntersectionReport,
+    LineCubicBezierInverseBoundarySource, LineCubicBezierSupportOverlap,
+    intersect_axis_aligned_line_cubic_bezier,
 };
 use crate::provenance::PathProvenance;
-use crate::segment::LinePathSegment;
+use crate::segment::{Axis, LinePathSegment};
 
 /// Errors that prevent a trusted line/cubic-Bezier split schedule.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -53,6 +55,26 @@ pub struct LineCubicBezierArrangementEvent {
     pub class: LineCubicBezierIntersectionClass,
     /// Raw exact line/cubic-Bezier predicate report.
     pub intersection: LineCubicBezierIntersectionReport,
+}
+
+/// Retained same-support line/cubic overlap candidate.
+///
+/// These candidates are copied from the predicate report whenever a cubic
+/// Bezier is certified to lie on an axis-aligned line support. They are
+/// retained even when the event remains
+/// [`LineCubicBezierIntersectionClass::Unknown`] because inverse-boundary
+/// parameters are represented algebraic roots. This is the Yap retained-object
+/// discipline from "Towards Exact Geometric Computation" (1997): the exact
+/// support, hodograph, and inverse-root evidence stays available to later
+/// cell-scheduling work instead of being replaced by sampled topology.
+#[derive(Clone, Debug, PartialEq)]
+pub struct LineCubicBezierSupportOverlapCandidate {
+    /// Line segment index.
+    pub line: usize,
+    /// Cubic Bezier index.
+    pub curve: usize,
+    /// Retained same-support overlap evidence.
+    pub overlap: LineCubicBezierSupportOverlap,
 }
 
 /// Certified domain status for a retained algebraic line/cubic breakpoint candidate.
@@ -95,6 +117,51 @@ pub struct LineCubicBezierAlgebraicBreakpoint {
     pub line_parameter: AlgebraicRootPolynomialImageReport,
     /// Certified relation of the retained algebraic candidate to both source domains.
     pub domain: LineCubicBezierAlgebraicBreakpointDomain,
+}
+
+/// Certified domain status for a retained algebraic cubic overlap-boundary candidate.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum LineCubicBezierAlgebraicOverlapBreakpointDomain {
+    /// Cubic parameter and line boundary source are certified inside the retained pair domains.
+    InsideLineAndCurve,
+    /// The retained cubic parameter is certified outside `[0, 1]`.
+    OutsideCubic,
+    /// Exact interval comparison did not decide.
+    Unknown,
+}
+
+/// Retained algebraic breakpoint candidate for a line/cubic overlap boundary.
+///
+/// The predicate layer retains represented roots of `B_v(t) - value == 0`
+/// for line-boundary values on a same-support cubic. This scheduler attaches
+/// each represented root to the exact line endpoint that induced the boundary
+/// value. The record is replay evidence, not concrete topology: it is kept
+/// separate from [`CubicBezierRealBreakpoint`] until an algebraic
+/// materialization pass can split cubic curves at represented parameters.
+///
+/// This follows Yap, "Towards Exact Geometric Computation" (1997), keeping
+/// exact algebraic objects explicit; the represented roots come from the
+/// Sturm/Collins-Loos univariate root discipline used by `hypersolve`.
+#[derive(Clone, Debug, PartialEq)]
+pub struct LineCubicBezierAlgebraicOverlapBreakpoint {
+    /// Line segment index.
+    pub line: usize,
+    /// Cubic Bezier index.
+    pub curve: usize,
+    /// Line endpoint that supplied the retained boundary value.
+    pub boundary_source: LineCubicBezierInverseBoundarySource,
+    /// Exact varying-coordinate boundary value on the line support.
+    pub boundary_value: Real,
+    /// Exact point on the retained line support.
+    pub point: Point2,
+    /// Exact line parameter for the retained endpoint boundary (`0` or `1`).
+    pub line_parameter: Real,
+    /// Represented algebraic cubic parameter.
+    pub cubic_parameter: AlgebraicRootRepresentation,
+    /// Certified relation of the represented cubic parameter to `[0, 1]`.
+    pub cubic_parameter_domain: LineCubicAlgebraicRootDomain,
+    /// Certified relation of the candidate to both source domains.
+    pub domain: LineCubicBezierAlgebraicOverlapBreakpointDomain,
 }
 
 /// Certified order relation between two represented line/cubic breakpoint candidates.
@@ -348,8 +415,12 @@ pub struct LineCubicBezierArrangementReport {
     pub curves: Vec<CubicBezier>,
     /// Certified or unknown pairwise events.
     pub events: Vec<LineCubicBezierArrangementEvent>,
+    /// Retained same-support cubic overlap candidates.
+    pub support_overlaps: Vec<LineCubicBezierSupportOverlapCandidate>,
     /// Algebraic breakpoint candidates retained from true cubic support roots.
     pub algebraic_breakpoints: Vec<LineCubicBezierAlgebraicBreakpoint>,
+    /// Algebraic cubic breakpoint candidates retained from same-support overlap boundaries.
+    pub algebraic_overlap_breakpoints: Vec<LineCubicBezierAlgebraicOverlapBreakpoint>,
     /// Pairwise exact order evidence for retained algebraic breakpoints.
     pub algebraic_breakpoint_orders: Vec<LineCubicBezierAlgebraicBreakpointOrder>,
     /// Per-source retained algebraic breakpoint sequences derived from exact order evidence.
@@ -395,7 +466,9 @@ pub fn arrange_line_segments_with_cubic_beziers_and_provenance(
     let mut line_breakpoints = seed_line_breakpoints(lines);
     let mut cubic_breakpoints = seed_cubic_breakpoints(curves);
     let mut events = Vec::new();
+    let mut support_overlaps = Vec::new();
     let mut algebraic_breakpoints = Vec::new();
+    let mut algebraic_overlap_breakpoints = Vec::new();
 
     for (line_index, line) in lines.iter().enumerate() {
         for (curve_index, curve) in curves.iter().enumerate() {
@@ -431,6 +504,18 @@ pub fn arrange_line_segments_with_cubic_beziers_and_provenance(
                     candidate.domain == LineCubicBezierAlgebraicBreakpointDomain::InsideLineAndCurve
                 }),
             );
+            if let Some(overlap) = &intersection.support_overlap {
+                algebraic_overlap_breakpoints.extend(retained_algebraic_cubic_overlap_breakpoints(
+                    line_index,
+                    curve_index,
+                    overlap,
+                ));
+                support_overlaps.push(LineCubicBezierSupportOverlapCandidate {
+                    line: line_index,
+                    curve: curve_index,
+                    overlap: overlap.clone(),
+                });
+            }
             events.push(LineCubicBezierArrangementEvent {
                 line: line_index,
                 curve: curve_index,
@@ -467,7 +552,9 @@ pub fn arrange_line_segments_with_cubic_beziers_and_provenance(
         lines: lines.to_vec(),
         curves: curves.to_vec(),
         events,
+        support_overlaps,
         algebraic_breakpoints,
+        algebraic_overlap_breakpoints,
         algebraic_breakpoint_orders,
         algebraic_breakpoint_sequences,
         algebraic_source_spans,
@@ -556,6 +643,58 @@ fn retained_algebraic_breakpoints(
             })
         })
         .collect()
+}
+
+fn retained_algebraic_cubic_overlap_breakpoints(
+    line_index: usize,
+    curve_index: usize,
+    overlap: &LineCubicBezierSupportOverlap,
+) -> Vec<LineCubicBezierAlgebraicOverlapBreakpoint> {
+    let mut retained = Vec::new();
+    for boundary in &overlap.inverse_boundary_roots {
+        let point = point_from_axis(overlap.axis, overlap.fixed.clone(), boundary.value.clone());
+        let line_parameter = match boundary.source {
+            LineCubicBezierInverseBoundarySource::SegmentStart => Real::zero(),
+            LineCubicBezierInverseBoundarySource::SegmentEnd => Real::one(),
+        };
+        for root in &boundary.roots {
+            retained.push(LineCubicBezierAlgebraicOverlapBreakpoint {
+                line: line_index,
+                curve: curve_index,
+                boundary_source: boundary.source,
+                boundary_value: boundary.value.clone(),
+                point: point.clone(),
+                line_parameter: line_parameter.clone(),
+                cubic_parameter: root.parameter.clone(),
+                cubic_parameter_domain: root.parameter_domain,
+                domain: classify_algebraic_cubic_overlap_breakpoint_domain(root),
+            });
+        }
+    }
+    retained
+}
+
+fn classify_algebraic_cubic_overlap_breakpoint_domain(
+    root: &LineCubicBezierAlgebraicInverseRoot,
+) -> LineCubicBezierAlgebraicOverlapBreakpointDomain {
+    match root.parameter_domain {
+        LineCubicAlgebraicRootDomain::InsideUnitInterval => {
+            LineCubicBezierAlgebraicOverlapBreakpointDomain::InsideLineAndCurve
+        }
+        LineCubicAlgebraicRootDomain::OutsideUnitInterval => {
+            LineCubicBezierAlgebraicOverlapBreakpointDomain::OutsideCubic
+        }
+        LineCubicAlgebraicRootDomain::Unknown => {
+            LineCubicBezierAlgebraicOverlapBreakpointDomain::Unknown
+        }
+    }
+}
+
+fn point_from_axis(axis: Axis, fixed: Real, varying: Real) -> Point2 {
+    match axis {
+        Axis::X => Point2::new(varying, fixed),
+        Axis::Y => Point2::new(fixed, varying),
+    }
 }
 
 fn algebraic_line_parameter_image(

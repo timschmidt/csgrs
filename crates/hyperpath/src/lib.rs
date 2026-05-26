@@ -127,11 +127,12 @@ pub use mixed_cubic_arrangement::{
     LineCubicBezierAlgebraicBreakpointSequenceBlocker,
     LineCubicBezierAlgebraicBreakpointSequenceClass,
     LineCubicBezierAlgebraicBreakpointSequenceSource, LineCubicBezierAlgebraicEndpointEnvelope,
+    LineCubicBezierAlgebraicOverlapBreakpoint, LineCubicBezierAlgebraicOverlapBreakpointDomain,
     LineCubicBezierAlgebraicSourceSpan, LineCubicBezierAlgebraicSourceSpanBoundary,
     LineCubicBezierArrangementError, LineCubicBezierArrangementEvent,
     LineCubicBezierArrangementFacts, LineCubicBezierArrangementReport,
-    MixedCubicLineArrangementBreakpoint, MixedCubicLineArrangementFragment,
-    arrange_line_segments_with_cubic_beziers,
+    LineCubicBezierSupportOverlapCandidate, MixedCubicLineArrangementBreakpoint,
+    MixedCubicLineArrangementFragment, arrange_line_segments_with_cubic_beziers,
     arrange_line_segments_with_cubic_beziers_and_provenance,
 };
 pub use offset::{
