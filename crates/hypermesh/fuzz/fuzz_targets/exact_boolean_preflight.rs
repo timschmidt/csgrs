@@ -5218,6 +5218,110 @@ fn exercise_consumed_hole_side_cutter_openings() {
         ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
     );
 
+    let crossing_side_cutter_left = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 30, 0, 0, 30, 30, 0, 0, 30, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("crossing side-cutter source fixture must import");
+    let crossing_side_cutter_right = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            -4, 8, 0, 34, 18, 0, 34, 22, 0, -4, 12, 0, //
+            8, -4, 0, 12, -4, 0, 22, 34, 0, 18, 34, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("crossing side-cutter right fixture must import");
+    let crossing_split = arrange_coplanar_surface_multi_difference(
+        &crossing_side_cutter_left,
+        &crossing_side_cutter_right,
+    )
+    .expect("crossing side-cutter union should split into retained loops");
+    crossing_split.validate().unwrap();
+    crossing_split
+        .validate_difference_against_sources(
+            &crossing_side_cutter_left,
+            &crossing_side_cutter_right,
+        )
+        .unwrap();
+    assert_eq!(crossing_split.polygons.len(), 4);
+    let crossing_preflight = preflight_boolean_exact(
+        &crossing_side_cutter_left,
+        &crossing_side_cutter_right,
+        ExactBooleanOperation::Difference,
+    )
+    .expect("crossing side-cutter preflight should classify multi-difference shortcut");
+    crossing_preflight.validate().unwrap();
+    crossing_preflight
+        .validate_against_sources(&crossing_side_cutter_left, &crossing_side_cutter_right)
+        .unwrap();
+    assert_eq!(
+        crossing_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarSurfaceMultiDifference
+    );
+
+    let crossing_side_cutter_holed_right = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            2, 2, 0, 4, 2, 0, 4, 4, 0, 2, 4, 0, //
+            26, 2, 0, 28, 2, 0, 28, 4, 0, 26, 4, 0, //
+            26, 26, 0, 28, 26, 0, 28, 28, 0, 26, 28, 0, //
+            2, 26, 0, 4, 26, 0, 4, 28, 0, 2, 28, 0, //
+            -4, 8, 0, 34, 18, 0, 34, 22, 0, -4, 12, 0, //
+            8, -4, 0, 12, -4, 0, 22, 34, 0, 18, 34, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7, //
+            8, 9, 10, 8, 10, 11, //
+            12, 13, 14, 12, 14, 15, //
+            16, 17, 18, 16, 18, 19, //
+            20, 21, 22, 20, 22, 23,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("crossing side-cutter holed right fixture must import");
+    assert!(arrange_coplanar_surface_multi_difference(
+        &crossing_side_cutter_left,
+        &crossing_side_cutter_holed_right,
+    )
+    .is_none());
+    let crossing_holed = arrange_coplanar_convex_surface_component_holed_difference(
+        &crossing_side_cutter_left,
+        &crossing_side_cutter_holed_right,
+    )
+    .expect("crossing side-cutter split should retain strict corner holes");
+    crossing_holed.validate().unwrap();
+    crossing_holed
+        .validate_against_sources(&crossing_side_cutter_left, &crossing_side_cutter_holed_right)
+        .unwrap();
+    assert_eq!(crossing_holed.components.len(), 4);
+    assert_eq!(
+        crossing_holed
+            .components
+            .iter()
+            .map(|component| component.holes.len())
+            .sum::<usize>(),
+        4
+    );
+    let crossing_holed_preflight = preflight_boolean_exact(
+        &crossing_side_cutter_left,
+        &crossing_side_cutter_holed_right,
+        ExactBooleanOperation::Difference,
+    )
+    .expect("crossing side-cutter holed preflight should classify component-holed shortcut");
+    crossing_holed_preflight.validate().unwrap();
+    crossing_holed_preflight
+        .validate_against_sources(&crossing_side_cutter_left, &crossing_side_cutter_holed_right)
+        .unwrap();
+    assert_eq!(
+        crossing_holed_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
+    );
+
     let multi_branch_left = ExactMesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 30, 0, 0, 30, 30, 0, 0, 30, 0],
         &[0, 1, 2, 0, 2, 3],

@@ -9634,6 +9634,15 @@ fn coplanar_surface_difference_polygons(
                     } else {
                         return None;
                     }
+                } else if let Some(remnants) =
+                    materialize_crossing_side_cutter_multi_component_difference(
+                        component,
+                        &cutter_indices,
+                        &right_components,
+                        "coplanar crossing side-cutter multi-component difference",
+                    )
+                {
+                    remnants
                 } else if let Some(remnants) = materialize_side_cutter_multi_component_difference(
                     component,
                     &cutter_indices,
@@ -14010,6 +14019,17 @@ pub fn arrange_coplanar_convex_surface_component_holed_difference(
                 components.extend(opened_components);
                 continue;
             }
+            if let Some(split_components) =
+                materialize_crossing_side_cutter_multi_component_holed_difference(
+                    component,
+                    &cut_indices,
+                    &holes,
+                    &right_components,
+                )
+            {
+                components.extend(split_components);
+                continue;
+            }
             if let Some(split_components) = materialize_side_cutter_multi_component_holed_difference(
                 component,
                 &cut_indices,
@@ -15989,6 +16009,51 @@ fn materialize_side_cutter_multi_component_holed_difference(
     )
 }
 
+/// Replay crossing side-cutter boundaries while retaining strict holes.
+///
+/// This is the explicit proper-crossing sibling of
+/// [`materialize_side_cutter_multi_component_holed_difference`]. The generic
+/// split helper can replay any certified non-rectilinear removed opening, but
+/// crossing side-to-side cutters are a stronger topology claim: two clipped
+/// removed boundaries must have a proper segment crossing before their union
+/// is promoted as one removed object that splits the source. The final output
+/// is still accepted only after the shared retained-fragment replay, exact
+/// area equation, and retained/consumed hole assignment.
+///
+/// The boundary-crossing test uses the orientation-predicate segment
+/// classifier in the style of Guigue and Devillers, "Fast and Robust
+/// Triangle-Triangle Overlap Test Using Orientation Predicates," *Journal of
+/// Graphics Tools* 8.1 (2003). The promotion follows Yap, "Towards Exact
+/// Geometric Computation," *Computational Geometry* 7.1-2 (1997): proper
+/// crossings are retained predicate facts, while the emitted boolean object
+/// must still replay as exact retained loops before it crosses the API
+/// boundary. The loop materialization is the Weiler-Atherton retained-edge
+/// traversal cited by [`materialize_side_cutter_multi_component_difference`].
+#[cfg(feature = "exact-triangulation")]
+fn materialize_crossing_side_cutter_multi_component_holed_difference(
+    component: &ConvexUnionComponent,
+    cut_indices: &[usize],
+    holes: &[ComponentHoleCandidate],
+    right_components: &[ConvexUnionComponent],
+) -> Option<Vec<CoplanarConvexHoledComponent>> {
+    if cut_indices.len() < 2 || holes.is_empty() {
+        return None;
+    }
+    if !clipped_side_cutter_openings_have_proper_boundary_crossing(
+        component,
+        cut_indices,
+        right_components,
+    )? {
+        return None;
+    }
+    materialize_side_cutter_multi_component_holed_difference(
+        component,
+        cut_indices,
+        holes,
+        right_components,
+    )
+}
+
 /// Replay point-branch side cutters while retaining strict holes.
 ///
 /// This is the component-holed sibling of
@@ -16939,6 +17004,121 @@ fn materialize_side_cutter_multi_component_difference(
         label,
     )
     .map(|(_, polygons)| polygons)
+}
+
+/// Replay side-cutter splits whose clipped removed boundaries properly cross.
+///
+/// Ordinary side-cutter replay is deliberately broad enough to handle
+/// connected non-rectilinear removed objects. This wrapper names the harder
+/// case in the boolean dispatch graph: at least two clipped side openings
+/// must have a proper exact boundary crossing before the shared split
+/// materializer may expose the retained loops through this path. That keeps
+/// crossing-boundary promotion visible and testable instead of hiding it as a
+/// generic side-cutter consequence.
+///
+/// The crossing predicate is the exact orientation-based segment classifier
+/// used throughout this module, following Guigue and Devillers, "Fast and
+/// Robust Triangle-Triangle Overlap Test Using Orientation Predicates,"
+/// *Journal of Graphics Tools* 8.1 (2003). The later retained-loop replay
+/// remains the Yap-style object proof from "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7.1-2 (1997): the crossings only
+/// authorize attempting the retained object, and exact area/topology replay
+/// still decides whether it is a certified boolean result.
+#[cfg(feature = "exact-triangulation")]
+fn materialize_crossing_side_cutter_multi_component_difference(
+    component: &ConvexUnionComponent,
+    cut_indices: &[usize],
+    right_components: &[ConvexUnionComponent],
+    label: &'static str,
+) -> Option<Vec<Vec<Point3>>> {
+    if cut_indices.len() < 2 {
+        return None;
+    }
+    if !clipped_side_cutter_openings_have_proper_boundary_crossing(
+        component,
+        cut_indices,
+        right_components,
+    )? {
+        return None;
+    }
+    materialize_side_cutter_multi_component_difference(
+        component,
+        cut_indices,
+        right_components,
+        label,
+    )
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn clipped_side_cutter_openings_have_proper_boundary_crossing(
+    component: &ConvexUnionComponent,
+    cut_indices: &[usize],
+    right_components: &[ConvexUnionComponent],
+) -> Option<bool> {
+    let projection = component.projection;
+    let mut clipped_openings = Vec::with_capacity(cut_indices.len());
+    for &right_index in cut_indices {
+        let mut clipped = convex_polygon_intersection_boundary(
+            &right_components.get(right_index)?.hull,
+            &component.hull,
+            projection,
+        )?;
+        if clipped.len() < 3 {
+            return None;
+        }
+        orient_polygon_ccw(&mut clipped, projection)?;
+        clipped = simplify_projected_polygon(clipped, projection);
+        validate_projected_simple_loop(
+            &clipped,
+            projection,
+            "coplanar crossing side-cutter boundary probe",
+        )
+        .ok()?;
+        clipped_openings.push(clipped);
+    }
+    simple_loops_have_proper_boundary_crossing(&clipped_openings, projection)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn simple_loops_have_proper_boundary_crossing(
+    loops: &[Vec<Point3>],
+    projection: CoplanarProjection,
+) -> Option<bool> {
+    for left in 0..loops.len() {
+        for right in left + 1..loops.len() {
+            if simple_loop_pair_has_proper_boundary_crossing(
+                &loops[left],
+                &loops[right],
+                projection,
+            )? {
+                return Some(true);
+            }
+        }
+    }
+    Some(false)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn simple_loop_pair_has_proper_boundary_crossing(
+    left: &[Point3],
+    right: &[Point3],
+    projection: CoplanarProjection,
+) -> Option<bool> {
+    for left_edge in 0..left.len() {
+        let left_start = project_point(&left[left_edge], projection);
+        let left_end = project_point(&left[(left_edge + 1) % left.len()], projection);
+        for right_edge in 0..right.len() {
+            let right_start = project_point(&right[right_edge], projection);
+            let right_end = project_point(&right[(right_edge + 1) % right.len()], projection);
+            if classify_segment_intersection(&left_start, &left_end, &right_start, &right_end)
+                .value()?
+                == SegmentIntersection::Proper
+            {
+                return Some(true);
+            }
+        }
+    }
+    Some(false)
 }
 
 /// Replay a no-hole side-cutter split that consumes strict interior rings.

@@ -23778,6 +23778,192 @@ fn exact_coplanar_component_holed_difference_omits_holes_consumed_by_side_cutter
 
 #[cfg(feature = "exact-triangulation")]
 #[test]
+fn exact_coplanar_multi_difference_materializes_crossing_nonrectilinear_side_cutter_union() {
+    let left = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 30, 0, 0, 30, 30, 0, 0, 30, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let right = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            -4, 8, 0, 34, 18, 0, 34, 22, 0, -4, 12, 0, //
+            8, -4, 0, 12, -4, 0, 22, 34, 0, 18, 34, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_side_cutter_difference(&left, &right).is_none()
+    );
+    let difference = hypermesh::exact::arrange_coplanar_surface_multi_difference(&left, &right)
+        .expect("crossing diagonal side-to-side cutters should replay as retained corner loops");
+    difference.validate().unwrap();
+    difference
+        .validate_difference_against_sources(&left, &right)
+        .unwrap();
+    assert_eq!(difference.polygons.len(), 4);
+    for (expected_x, expected_y) in [(0, 0), (30, 0), (30, 30), (0, 30)] {
+        assert!(difference.polygons.iter().any(|polygon| {
+            polygon.iter().any(|point| {
+                real_eq(&point.x, &ExactReal::from(expected_x))
+                    && real_eq(&point.y, &ExactReal::from(expected_y))
+            })
+        }));
+    }
+
+    let mut stale = difference.clone();
+    stale.polygons.pop();
+    assert!(
+        stale
+            .validate_difference_against_sources(&left, &right)
+            .is_err()
+    );
+
+    let preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    preflight.validate().unwrap();
+    preflight.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceMultiDifference
+    );
+
+    let result = hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    result
+        .validate_operation_against_sources(
+            &left,
+            &right,
+            hypermesh::exact::ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::CoplanarSurfaceMultiDifference
+        }
+    );
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[test]
+fn exact_coplanar_component_holed_difference_retains_holes_after_crossing_nonrectilinear_side_cutter_union()
+ {
+    let left = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 30, 0, 0, 30, 30, 0, 0, 30, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let right = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            2, 2, 0, 4, 2, 0, 4, 4, 0, 2, 4, 0, //
+            26, 2, 0, 28, 2, 0, 28, 4, 0, 26, 4, 0, //
+            26, 26, 0, 28, 26, 0, 28, 28, 0, 26, 28, 0, //
+            2, 26, 0, 4, 26, 0, 4, 28, 0, 2, 28, 0, //
+            -4, 8, 0, 34, 18, 0, 34, 22, 0, -4, 12, 0, //
+            8, -4, 0, 12, -4, 0, 22, 34, 0, 18, 34, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6, 4, 6, 7, //
+            8, 9, 10, 8, 10, 11, //
+            12, 13, 14, 12, 14, 15, //
+            16, 17, 18, 16, 18, 19, //
+            20, 21, 22, 20, 22, 23,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+
+    assert!(hypermesh::exact::arrange_coplanar_surface_multi_difference(&left, &right).is_none());
+    let holed =
+        hypermesh::exact::arrange_coplanar_convex_surface_component_holed_difference(&left, &right)
+            .expect("crossing side-to-side cutters should split and retain corner holes");
+    holed.validate().unwrap();
+    holed.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(holed.components.len(), 4);
+    assert_eq!(
+        holed
+            .components
+            .iter()
+            .map(|component| component.holes.len())
+            .sum::<usize>(),
+        4
+    );
+    for (expected_x, expected_y) in [(2, 2), (26, 2), (26, 26), (2, 26)] {
+        assert!(holed.components.iter().any(|component| {
+            component.holes.iter().any(|hole| {
+                hole.iter().any(|point| {
+                    real_eq(&point.x, &ExactReal::from(expected_x))
+                        && real_eq(&point.y, &ExactReal::from(expected_y))
+                })
+            })
+        }));
+    }
+
+    let mut stale = holed.clone();
+    stale.components[0].holes.clear();
+    assert!(stale.validate_against_sources(&left, &right).is_err());
+
+    let preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    preflight.validate().unwrap();
+    preflight.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        preflight.support,
+        hypermesh::exact::ExactBooleanSupport::
+            CertifiedCoplanarConvexSurfaceComponentHoledDifference
+    );
+
+    let result = hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    result
+        .validate_operation_against_sources(
+            &left,
+            &right,
+            hypermesh::exact::ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::
+                CoplanarConvexSurfaceComponentHoledDifference
+        }
+    );
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[test]
 fn exact_coplanar_component_holed_difference_allows_opened_component_without_local_holes() {
     let left = ExactMesh::from_i64_triangles_with_policy(
         &[
