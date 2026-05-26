@@ -3295,6 +3295,80 @@ fn exercise_same_outer_component_holed_coplanar_intersection_with_island() {
         .validate_against_sources(&clipped_holed_island_source, &clipped_holed_island_right)
         .unwrap();
 
+    let split_holed_island_outer = rect_surface_i64(&[(0, 0, 24, 24)]);
+    let split_holed_island_owner_hole = rect_surface_i64(&[(4, 4, 20, 20)]);
+    let split_holed_island_shell = arrange_coplanar_convex_surface_holed_difference(
+        &split_holed_island_outer,
+        &split_holed_island_owner_hole,
+    )
+    .expect("split holed source-island owner shell should materialize")
+    .mesh;
+    let split_holed_island_component_outer = rect_surface_i64(&[(8, 8, 18, 18)]);
+    let split_holed_island_component_hole = rect_surface_i64(&[(9, 10, 11, 12)]);
+    let split_holed_island_component = arrange_coplanar_convex_surface_holed_difference(
+        &split_holed_island_component_outer,
+        &split_holed_island_component_hole,
+    )
+    .expect("split holed source island should materialize")
+    .mesh;
+    let split_holed_island_source = combine_open_exact_meshes(
+        &[
+            split_holed_island_shell,
+            split_holed_island_component,
+        ],
+        "fuzz same-outer split holed source island",
+    );
+    let split_holed_island_right_holes = rect_surface_i64(&[(12, 8, 14, 18), (15, 13, 17, 15)]);
+    let split_holed_island_right = arrange_coplanar_convex_surface_multi_holed_difference(
+        &split_holed_island_outer,
+        &split_holed_island_right_holes,
+    )
+    .expect("split holed source-island cutter should materialize")
+    .mesh;
+    let split_holed_island_intersection = arrange_coplanar_surface_component_holed_intersection(
+        &split_holed_island_source,
+        &split_holed_island_right,
+    )
+    .expect("same-outer holed source island should split into two remnants");
+    split_holed_island_intersection.validate().unwrap();
+    split_holed_island_intersection
+        .validate_intersection_against_sources(
+            &split_holed_island_source,
+            &split_holed_island_right,
+        )
+        .unwrap();
+    assert_eq!(split_holed_island_intersection.components.len(), 3);
+    assert_eq!(
+        split_holed_island_intersection
+            .components
+            .iter()
+            .filter(|component| component.holes.len() == 1)
+            .count(),
+        2
+    );
+    let split_holed_island_reverse = arrange_coplanar_surface_component_holed_intersection(
+        &split_holed_island_right,
+        &split_holed_island_source,
+    )
+    .expect("same-outer split holed source island should be symmetric");
+    split_holed_island_reverse.validate().unwrap();
+    split_holed_island_reverse
+        .validate_intersection_against_sources(
+            &split_holed_island_right,
+            &split_holed_island_source,
+        )
+        .unwrap();
+    let split_holed_island_preflight = preflight_boolean_exact(
+        &split_holed_island_source,
+        &split_holed_island_right,
+        ExactBooleanOperation::Intersection,
+    )
+    .expect("same-outer split holed source island preflight should classify shortcut");
+    split_holed_island_preflight.validate().unwrap();
+    split_holed_island_preflight
+        .validate_against_sources(&split_holed_island_source, &split_holed_island_right)
+        .unwrap();
+
     let affine_origin = (0, 0, 0);
     let affine_basis_u = (2, 1, 0);
     let affine_basis_v = (-1, 2, 0);
