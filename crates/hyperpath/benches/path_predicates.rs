@@ -1457,6 +1457,13 @@ fn path_predicates(c: &mut Criterion) {
             },
             grid_denominator: 10,
         }],
+        rules: vec![hyperpath::SpecctraGridRouteRuleRecord {
+            net: Some(NetId(3)),
+            layer: Some(TraceLayer(1)),
+            clearance: 6,
+            width: 8,
+            grid_denominator: 10,
+        }],
     });
     c.bench_function("specctra_grid_mixed_route_text_parse", |b| {
         b.iter(|| parse_specctra_grid_route_records(&mixed_text))
@@ -1485,6 +1492,28 @@ fn path_predicates(c: &mut Criterion) {
     };
     c.bench_function("specctra_grid_keepout_exact_lift", |b| {
         b.iter(|| specctra_grid_keepout_record(exact_keepout.clone()))
+    });
+    let route_rule_text = hyperpath::serialize_specctra_grid_route_rule_records(&[
+        hyperpath::SpecctraGridRouteRuleRecord {
+            net: Some(NetId(3)),
+            layer: Some(TraceLayer(1)),
+            clearance: 6,
+            width: 8,
+            grid_denominator: 10,
+        },
+    ]);
+    c.bench_function("specctra_grid_route_rule_text_parse", |b| {
+        b.iter(|| parse_specctra_grid_route_records(&route_rule_text))
+    });
+    let route_rule_record = hyperpath::SpecctraGridRouteRuleRecord {
+        net: Some(NetId(3)),
+        layer: Some(TraceLayer(1)),
+        clearance: 6,
+        width: 8,
+        grid_denominator: 10,
+    };
+    c.bench_function("specctra_grid_route_rule_exact_lift", |b| {
+        b.iter(|| hyperpath::specctra_grid_route_rule_record(route_rule_record))
     });
     let exact_polygon_keepout = SpecctraGridKeepoutRecord {
         layer: Some(TraceLayer(1)),

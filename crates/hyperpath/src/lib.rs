@@ -224,17 +224,18 @@ pub use solve::{
 };
 pub use specctra::{
     SpecctraArcWireRecord, SpecctraGridArcWireRecord, SpecctraGridKeepoutRecord,
-    SpecctraGridKeepoutShape, SpecctraGridRouteRecords, SpecctraGridTraceRecord,
-    SpecctraGridViaRecord, SpecctraImportError, SpecctraKeepoutRecord, SpecctraLayerAlias,
-    SpecctraNetAlias, SpecctraParseError, SpecctraRoute, SpecctraRouteArc, SpecctraTraceRecord,
-    SpecctraViaRecord, export_specctra_trace_record, export_specctra_via_record,
-    import_specctra_arc_wire_record, import_specctra_keepout_record, import_specctra_text_route,
-    import_specctra_trace_record, import_specctra_via_record, parse_specctra_grid_route_records,
-    parse_specctra_grid_trace_records, serialize_specctra_grid_arc_wire_records,
-    serialize_specctra_grid_keepout_records, serialize_specctra_grid_route_records,
+    SpecctraGridKeepoutShape, SpecctraGridRouteRecords, SpecctraGridRouteRuleRecord,
+    SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraImportError, SpecctraKeepoutRecord,
+    SpecctraLayerAlias, SpecctraNetAlias, SpecctraParseError, SpecctraRoute, SpecctraRouteArc,
+    SpecctraRouteRuleRecord, SpecctraTraceRecord, SpecctraViaRecord, export_specctra_trace_record,
+    export_specctra_via_record, import_specctra_arc_wire_record, import_specctra_keepout_record,
+    import_specctra_text_route, import_specctra_trace_record, import_specctra_via_record,
+    parse_specctra_grid_route_records, parse_specctra_grid_trace_records,
+    serialize_specctra_grid_arc_wire_records, serialize_specctra_grid_keepout_records,
+    serialize_specctra_grid_route_records, serialize_specctra_grid_route_rule_records,
     serialize_specctra_grid_trace_records, serialize_specctra_grid_via_records,
-    specctra_grid_arc_wire_record, specctra_grid_keepout_record, specctra_grid_trace_record,
-    specctra_grid_via_record,
+    specctra_grid_arc_wire_record, specctra_grid_keepout_record, specctra_grid_route_rule_record,
+    specctra_grid_trace_record, specctra_grid_via_record,
 };
 pub use swept::{SweptLineSegment, SweptLineSegmentFacts};
 pub use tangent::{

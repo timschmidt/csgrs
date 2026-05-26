@@ -35,14 +35,14 @@ use hyperpath::{
     RationalQuadraticBezierError, RectangularPocket, RectangularRegionRelation,
     RectangularRestMaterialError, RouteCertificationError, SegmentParameterOrder, SourceLengthUnit,
     SpecctraGridArcWireRecord, SpecctraGridKeepoutRecord, SpecctraGridKeepoutShape,
-    SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraImportError, SpecctraLayerAlias,
-    SpecctraNetAlias, SpecctraParseError, SupportFootprintStatus, SupportPlanError,
-    SweptLineSegment, TangentAlignment, TangentJoinClass, TangentJoinReport, TangentSpan,
-    TraceLayer, ViaAnnularRingReport, ViaAspectRatioReport, ViaDrillIntent, ViaDrillPolicyClass,
-    ViaFabricationAcceptance, ViaFabricationError, ViaFabricationPolicy, ViaLayerSpanRelation,
-    ViaLayerTransitionClass, arrange_cubic_beziers, arrange_explicit_arcs, arrange_line_segments,
-    arrange_line_segments_with_cubic_beziers, arrange_line_segments_with_explicit_arcs,
-    arrange_line_segments_with_quadratic_beziers,
+    SpecctraGridRouteRuleRecord, SpecctraGridTraceRecord, SpecctraGridViaRecord,
+    SpecctraImportError, SpecctraLayerAlias, SpecctraNetAlias, SpecctraParseError,
+    SupportFootprintStatus, SupportPlanError, SweptLineSegment, TangentAlignment, TangentJoinClass,
+    TangentJoinReport, TangentSpan, TraceLayer, ViaAnnularRingReport, ViaAspectRatioReport,
+    ViaDrillIntent, ViaDrillPolicyClass, ViaFabricationAcceptance, ViaFabricationError,
+    ViaFabricationPolicy, ViaLayerSpanRelation, ViaLayerTransitionClass, arrange_cubic_beziers,
+    arrange_explicit_arcs, arrange_line_segments, arrange_line_segments_with_cubic_beziers,
+    arrange_line_segments_with_explicit_arcs, arrange_line_segments_with_quadratic_beziers,
     arrange_line_segments_with_rational_quadratic_beziers, arrange_quadratic_beziers,
     arrange_rational_quadratic_beziers, build_alternating_detour_meander, build_g1_join_problem,
     build_keepout_aware_detour_meander, build_length_match_problem, build_multi_detour_meander,
@@ -84,10 +84,11 @@ use hyperpath::{
     offset_explicit_arc, offset_higher_order_bezier_sample, offset_quadratic_bezier_sample,
     parse_specctra_grid_route_records, parse_specctra_grid_trace_records,
     serialize_specctra_grid_arc_wire_records, serialize_specctra_grid_keepout_records,
-    serialize_specctra_grid_route_records, serialize_specctra_grid_trace_records,
-    serialize_specctra_grid_via_records, specctra_grid_arc_wire_record,
-    specctra_grid_keepout_record, specctra_grid_trace_record, specctra_grid_via_record,
-    subtract_rectangular_region, tangent_cross, tangent_dot, tangent_norm_squared,
+    serialize_specctra_grid_route_records, serialize_specctra_grid_route_rule_records,
+    serialize_specctra_grid_trace_records, serialize_specctra_grid_via_records,
+    specctra_grid_arc_wire_record, specctra_grid_keepout_record, specctra_grid_route_rule_record,
+    specctra_grid_trace_record, specctra_grid_via_record, subtract_rectangular_region,
+    tangent_cross, tangent_dot, tangent_norm_squared,
 };
 use hyperreal::{Rational, Real};
 use hypersolve::AlgebraicRootPolynomialImageStatus;
@@ -7266,6 +7267,7 @@ fn specctra_grid_route_text_round_trips_vias_and_wires() {
         vias: vec![via],
         arcs: Vec::new(),
         keepouts: Vec::new(),
+        rules: Vec::new(),
     });
     let parsed = parse_specctra_grid_route_records(&text).unwrap();
     let route = import_specctra_text_route(&text).unwrap();
@@ -7352,6 +7354,7 @@ fn specctra_grid_route_text_round_trips_mixed_arc_records() {
         vias: Vec::new(),
         arcs: vec![arc],
         keepouts: Vec::new(),
+        rules: Vec::new(),
     });
     let parsed = parse_specctra_grid_route_records(&text).unwrap();
     let route = import_specctra_text_route(&text).unwrap();
@@ -7398,6 +7401,7 @@ fn specctra_grid_route_text_round_trips_retained_keepouts() {
         vias: Vec::new(),
         arcs: Vec::new(),
         keepouts: vec![rect.clone(), circle.clone(), polygon.clone()],
+        rules: Vec::new(),
     });
     let parsed = parse_specctra_grid_route_records(&text).unwrap();
 
@@ -7453,6 +7457,50 @@ fn specctra_grid_route_text_round_trips_retained_keepouts() {
 }
 
 #[test]
+fn specctra_grid_route_text_round_trips_retained_route_rules() {
+    let scoped = SpecctraGridRouteRuleRecord {
+        net: Some(NetId(7)),
+        layer: Some(TraceLayer(3)),
+        clearance: 6,
+        width: 8,
+        grid_denominator: 10,
+    };
+    let global = SpecctraGridRouteRuleRecord {
+        net: None,
+        layer: None,
+        clearance: 4,
+        width: 5,
+        grid_denominator: 20,
+    };
+    let text = serialize_specctra_grid_route_records(&hyperpath::SpecctraGridRouteRecords {
+        net_aliases: Vec::new(),
+        layer_aliases: Vec::new(),
+        traces: Vec::new(),
+        vias: Vec::new(),
+        arcs: Vec::new(),
+        keepouts: Vec::new(),
+        rules: vec![scoped, global],
+    });
+    let parsed = parse_specctra_grid_route_records(&text).unwrap();
+
+    assert_eq!(parsed.rules, vec![scoped, global]);
+    let exact_scoped = specctra_grid_route_rule_record(scoped).unwrap();
+    let exact_global = specctra_grid_route_rule_record(global).unwrap();
+    assert_eq!(exact_scoped.net, Some(NetId(7)));
+    assert_eq!(exact_scoped.layer, Some(TraceLayer(3)));
+    assert_eq!(exact_scoped.clearance, rq(6, 10));
+    assert_eq!(exact_scoped.width, rq(8, 10));
+    assert_eq!(exact_global.net, None);
+    assert_eq!(exact_global.layer, None);
+    assert_eq!(exact_global.clearance, rq(4, 20));
+    assert_eq!(exact_global.width, rq(5, 20));
+    assert_eq!(
+        serialize_specctra_grid_route_rule_records(&[scoped, global]),
+        text
+    );
+}
+
+#[test]
 fn specctra_grid_route_text_round_trips_net_aliases() {
     let alias = SpecctraNetAlias {
         net: NetId(7),
@@ -7479,6 +7527,7 @@ fn specctra_grid_route_text_round_trips_net_aliases() {
         vias: Vec::new(),
         arcs: Vec::new(),
         keepouts: Vec::new(),
+        rules: Vec::new(),
     });
     let parsed = parse_specctra_grid_route_records(&text).unwrap();
     let route = import_specctra_text_route(&text).unwrap();
@@ -7702,6 +7751,29 @@ fn specctra_grid_route_text_rejects_malformed_and_invalid_routes() {
     assert_eq!(
         parse_specctra_grid_route_records("(routes (keepout (polygon 0 0 1 0 1) (grid 1)))")
             .unwrap_err(),
+        SpecctraParseError::InvalidSyntax
+    );
+    assert_eq!(
+        parse_specctra_grid_route_records(
+            "(routes (rule (net 1) (clearance -1) (width 1) (grid 1)))"
+        )
+        .unwrap_err(),
+        SpecctraParseError::NegativeRuleValue
+    );
+    assert_eq!(
+        parse_specctra_grid_route_records(
+            "(routes (rule (net 1) (clearance 1) (width -1) (grid 1)))"
+        )
+        .unwrap_err(),
+        SpecctraParseError::NegativeRuleValue
+    );
+    assert_eq!(
+        parse_specctra_grid_route_records("(routes (rule (clearance 1) (width 1) (grid 0)))")
+            .unwrap_err(),
+        SpecctraParseError::InvalidGrid
+    );
+    assert_eq!(
+        parse_specctra_grid_route_records("(routes (rule (clearance 1) (grid 1)))").unwrap_err(),
         SpecctraParseError::InvalidSyntax
     );
     assert_eq!(
@@ -8110,6 +8182,7 @@ proptest! {
             vias: Vec::new(),
             arcs: Vec::new(),
             keepouts: Vec::new(),
+            rules: Vec::new(),
         });
         let parsed = parse_specctra_grid_route_records(&text).unwrap();
 
@@ -8134,6 +8207,7 @@ proptest! {
             vias: Vec::new(),
             arcs: Vec::new(),
             keepouts: Vec::new(),
+            rules: Vec::new(),
         });
         let parsed = parse_specctra_grid_route_records(&text).unwrap();
 
@@ -8194,6 +8268,33 @@ proptest! {
 
         prop_assert_eq!(parsed.keepouts, vec![record]);
         prop_assert_eq!(import_specctra_keepout_record(&exact), exact.keepout);
+    }
+
+    #[test]
+    fn specctra_grid_route_rules_round_trip_generated_integer_records(
+        net in proptest::option::of(0_u32..=128),
+        layer in proptest::option::of(0_u16..=16),
+        clearance in 0_i16..=64,
+        width in 0_i16..=64,
+        denominator in 1_u16..=100,
+    ) {
+        let denominator_i64 = i64::from(denominator);
+        let record = SpecctraGridRouteRuleRecord {
+            net: net.map(NetId),
+            layer: layer.map(TraceLayer),
+            clearance: i64::from(clearance),
+            width: i64::from(width),
+            grid_denominator: u64::from(denominator),
+        };
+        let text = serialize_specctra_grid_route_rule_records(&[record]);
+        let parsed = parse_specctra_grid_route_records(&text).unwrap();
+        let exact = specctra_grid_route_rule_record(record).unwrap();
+
+        prop_assert_eq!(parsed.rules, vec![record]);
+        prop_assert_eq!(exact.net, record.net);
+        prop_assert_eq!(exact.layer, record.layer);
+        prop_assert_eq!(exact.clearance, rq(i64::from(clearance), denominator_i64));
+        prop_assert_eq!(exact.width, rq(i64::from(width), denominator_i64));
     }
 
     #[test]

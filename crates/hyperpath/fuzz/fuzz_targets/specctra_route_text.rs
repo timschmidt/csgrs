@@ -3,9 +3,10 @@
 use hyperpath::{ArcDirection, NetId, parse_specctra_grid_trace_records};
 use hyperpath::{
     SpecctraGridArcWireRecord, SpecctraGridKeepoutRecord, SpecctraGridKeepoutShape,
-    SpecctraGridRouteRecords, SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraLayerAlias,
-    SpecctraNetAlias, TraceLayer, ViaDrillIntent, import_specctra_text_route,
-    parse_specctra_grid_route_records, serialize_specctra_grid_route_records,
+    SpecctraGridRouteRecords, SpecctraGridRouteRuleRecord, SpecctraGridTraceRecord,
+    SpecctraGridViaRecord, SpecctraLayerAlias, SpecctraNetAlias, TraceLayer, ViaDrillIntent,
+    import_specctra_text_route, parse_specctra_grid_route_records,
+    serialize_specctra_grid_route_records,
 };
 use libfuzzer_sys::fuzz_target;
 
@@ -92,6 +93,13 @@ fuzz_target!(|data: &[u8]| {
                         (x2, y2 + i64::from(data[3] % 16) + 1),
                     ],
                 },
+                grid_denominator: denominator,
+            }],
+            rules: vec![SpecctraGridRouteRuleRecord {
+                net: Some(net),
+                layer: Some(layer),
+                clearance: i64::from(data[15] % 32),
+                width,
                 grid_denominator: denominator,
             }],
         };
