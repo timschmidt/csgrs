@@ -35,8 +35,9 @@ use hypervoxel::{
     lossy_quad_mesh_from_faces, query_field_samples, query_material_regions,
     report_material_region_metadata, sample_manhattan_distance_field,
     sample_signed_manhattan_distance_field, select_lod_cells,
-    svo_exact_surface_triangle_mesh_with_report, sweep_address_segment, trace_address_ray,
-    voxelize_exact_box, voxelize_exact_convex_halfspace_set, voxelize_exact_halfspace,
+    sparse_exact_surface_triangle_mesh_with_report, svo_exact_surface_triangle_mesh_with_report,
+    sweep_address_segment, trace_address_ray, voxelize_exact_box,
+    voxelize_exact_convex_halfspace_set, voxelize_exact_halfspace,
     voxelize_exact_triangle_solid_mesh, voxelize_exact_triangle_surface_mesh,
     voxelize_prepared_exact_triangle_solid_mesh,
     voxelize_prepared_exact_triangle_solid_mesh_by_adaptive_axis_sweeps,
@@ -1432,6 +1433,17 @@ fn bench_batches_field_facts_and_sweeps(c: &mut Criterion) {
                 report.unique_index_edges,
                 report.manifold_index_edges,
                 report.exact_shared_mesh_vocabulary_ready,
+            )
+        })
+    });
+    c.bench_function("sparse_exact_surface_triangle_mesh_handoff", |b| {
+        b.iter(|| {
+            let report = sparse_exact_surface_triangle_mesh_with_report(&grid).unwrap();
+            (
+                report.shell.exact_faces,
+                report.mesh.report.exact_triangles,
+                report.vocabulary.unique_index_edges,
+                report.exact_sparse_triangle_mesh_ready,
             )
         })
     });

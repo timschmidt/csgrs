@@ -63,6 +63,7 @@ mod report;
 mod serialize;
 mod side_table;
 mod solid;
+mod sparse_surface_mesh;
 mod spatial;
 mod storage;
 mod support;
@@ -200,6 +201,9 @@ pub use side_table::{
 pub use solid::{
     ExactConvexHalfSpaceSet, ExactConvexHalfSpaceSetReport, VoxelConvexClassifier,
     classify_cell_against_convex_halfspace_set, voxelize_exact_convex_halfspace_set,
+};
+pub use sparse_surface_mesh::{
+    SparseExactSurfaceTriangleMeshReport, sparse_exact_surface_triangle_mesh_with_report,
 };
 pub use spatial::VoxelSpatialAggregateFacts;
 pub use storage::{SparseVoxelGrid, VoxelEditReport};

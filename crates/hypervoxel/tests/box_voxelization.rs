@@ -20,7 +20,8 @@ use hypervoxel::{
     extract_exposed_faces_with_report, greedy_face_patch_plan, lookup_material_display_colors,
     lossy_obj_from_quad_mesh, lossy_quad_mesh_from_faces, query_material_regions,
     report_material_region_metadata, sample_manhattan_distance_field,
-    sample_signed_manhattan_distance_field, select_lod_cells, voxel_neighbors6, voxelize_exact_box,
+    sample_signed_manhattan_distance_field, select_lod_cells,
+    sparse_exact_surface_triangle_mesh_with_report, voxel_neighbors6, voxelize_exact_box,
     voxelize_exact_convex_halfspace_set, voxelize_exact_halfspace,
 };
 
@@ -1247,6 +1248,60 @@ fn exposed_faces_are_exact_before_lossy_mesh_export() {
     assert_eq!(empty_shell.exact_faces, 0);
     assert!(!empty_shell.has_exact_faces);
     assert!(!empty_shell.exact_shell_ready);
+}
+
+#[test]
+fn sparse_exact_surface_triangle_mesh_handoff_replays_shell_mesh_and_vocabulary() {
+    let exact_box = ExactBox::new([r(1), r(1), r(1)], [r(3), r(3), r(3)], None);
+    let (grid, _) = voxelize_exact_box(
+        frame(),
+        &exact_box,
+        MaterialRegionId(4),
+        VoxelizationPolicy::conservative_cover(),
+    )
+    .unwrap();
+    let shell = extract_exposed_faces_with_report(&grid).unwrap();
+    assert!(shell.exact_shell_ready);
+
+    let report = sparse_exact_surface_triangle_mesh_with_report(&grid).unwrap();
+    assert_eq!(report.shell, shell);
+    assert_eq!(report.mesh.report.input_faces, report.shell.exact_faces);
+    assert_eq!(
+        report.mesh.report.exact_triangles,
+        report.shell.exact_faces * 2
+    );
+    assert_eq!(report.vocabulary.source_faces, report.shell.exact_faces);
+    assert_eq!(
+        report.vocabulary.input_triangles,
+        report.mesh.triangles.len()
+    );
+    assert!(report.mesh.report.exact_face_identity_preserved);
+    assert!(report.mesh.report.exact_triangle_surface_mesh_ready);
+    assert!(report.vocabulary.exact_shared_mesh_vocabulary_ready);
+    assert!(report.exact_sparse_triangle_mesh_ready);
+
+    let empty =
+        sparse_exact_surface_triangle_mesh_with_report(&SparseVoxelGrid::new(frame())).unwrap();
+    assert_eq!(empty.shell.exact_faces, 0);
+    assert!(empty.mesh.triangles.is_empty());
+    assert!(!empty.shell.exact_shell_ready);
+    assert!(!empty.mesh.report.exact_triangle_surface_mesh_ready);
+    assert!(!empty.vocabulary.exact_shared_mesh_vocabulary_ready);
+    assert!(!empty.exact_sparse_triangle_mesh_ready);
+
+    let mut blocked = grid;
+    blocked
+        .set(
+            VoxelAddress::new(2, [1, 1, 1]).unwrap(),
+            VoxelCell::lossy_adapter_value(9),
+        )
+        .unwrap();
+    let blocked_report = sparse_exact_surface_triangle_mesh_with_report(&blocked).unwrap();
+    assert!(blocked_report.shell.skipped_lossy_cells > 0);
+    assert!(!blocked_report.shell.exact_shell_ready);
+    assert!(!blocked_report.mesh.report.exact_triangle_surface_mesh_ready);
+    assert!(!blocked_report.vocabulary.exact_shared_mesh_vocabulary_ready);
+    assert!(!blocked_report.exact_sparse_triangle_mesh_ready);
 }
 
 #[test]

@@ -36,7 +36,8 @@ use hypervoxel::{
     lookup_material_display_colors, lossy_obj_from_quad_mesh, lossy_quad_mesh_from_faces,
     materialize_legacy_voxelis_u8_chunk_paged_storage, query_field_samples,
     query_material_regions, report_material_region_metadata, sample_manhattan_distance_field,
-    sample_signed_manhattan_distance_field, select_lod_cells, svo_exact_surface_triangle_mesh_with_report,
+    sample_signed_manhattan_distance_field, select_lod_cells,
+    sparse_exact_surface_triangle_mesh_with_report, svo_exact_surface_triangle_mesh_with_report,
     sweep_address_segment,
     trace_address_ray, voxel_neighbors6, voxelize_exact_box, voxelize_exact_convex_halfspace_set,
     voxelize_exact_halfspace, voxelize_prepared_exact_triangle_solid_mesh,
@@ -517,6 +518,21 @@ fuzz_target!(|data: (u8, u64, u64, u64)| {
                 .is_empty()
             && mesh_vocabulary.boundary_index_edges.is_empty()
             && mesh_vocabulary.nonmanifold_index_edges.is_empty()
+    );
+    let sparse_surface_mesh = sparse_exact_surface_triangle_mesh_with_report(&grid).unwrap();
+    assert_eq!(sparse_surface_mesh.shell, shell);
+    assert_eq!(sparse_surface_mesh.mesh, exact_surface_mesh);
+    assert_eq!(sparse_surface_mesh.vocabulary, mesh_vocabulary);
+    assert_eq!(
+        sparse_surface_mesh.exact_sparse_triangle_mesh_ready,
+        sparse_surface_mesh.shell.exact_shell_ready
+            && sparse_surface_mesh
+                .mesh
+                .report
+                .exact_triangle_surface_mesh_ready
+            && sparse_surface_mesh
+                .vocabulary
+                .exact_shared_mesh_vocabulary_ready
     );
     let paged_shell = extract_chunk_paged_exposed_faces_with_report(&paged_grid).unwrap();
     assert_eq!(paged_shell.exact_faces, shell.exact_faces);
