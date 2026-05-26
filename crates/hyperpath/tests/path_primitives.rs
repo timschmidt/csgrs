@@ -4,15 +4,15 @@ use hyperpath::{
     BeadPlanError, BezierOffsetError, BezierParameter, BezierParameterError, BoardContourError,
     BoardContourOrientation, CardinalPoint, CardinalRotation, CircularArc, CircularArcError,
     ClearanceStatus, ConstructionStamp, CornerLookaheadJoinClass, CubicBezier,
-    CubicPythagoreanHodograph, CurveArrangementCellFaceClass, DrillBoardClearanceReport,
-    ExplicitArcArrangementClass, ExplicitArcIntersectionClass, ExplicitArcOverlapClass,
-    ExplicitArcPointClassification, ExplicitArcSweepClass, ExplicitArcTangentClass,
-    ExplicitCircleRelationClass, ExplicitCircularArc, FeedPathElement, HigherOrderBezier,
-    HigherOrderBezierError, InfillGraphError, JerkLimitedFeedTimeReport, JerkRampPhaseProposal,
-    JerkRampSpanProposal, LineArcArrangementEventClass, LineArrangementCellFaceClass,
-    LineArrangementError, LineArrangementEventClass, LineCubicAlgebraicPointDomain,
-    LineCubicAlgebraicRootDomain, LineCubicBezierAlgebraicBreakpointDomain,
-    LineCubicBezierAlgebraicBreakpointOrderClass,
+    CubicPythagoreanHodograph, CurveArrangementCellEdgeKind, CurveArrangementCellFaceClass,
+    DrillBoardClearanceReport, ExplicitArcArrangementClass, ExplicitArcIntersectionClass,
+    ExplicitArcOverlapClass, ExplicitArcPointClassification, ExplicitArcSweepClass,
+    ExplicitArcTangentClass, ExplicitCircleRelationClass, ExplicitCircularArc, FeedPathElement,
+    HigherOrderBezier, HigherOrderBezierError, InfillGraphError, JerkLimitedFeedTimeReport,
+    JerkRampPhaseProposal, JerkRampSpanProposal, LineArcArrangementEventClass,
+    LineArrangementCellFaceClass, LineArrangementError, LineArrangementEventClass,
+    LineCubicAlgebraicPointDomain, LineCubicAlgebraicRootDomain,
+    LineCubicBezierAlgebraicBreakpointDomain, LineCubicBezierAlgebraicBreakpointOrderClass,
     LineCubicBezierAlgebraicBreakpointSequenceBlocker,
     LineCubicBezierAlgebraicBreakpointSequenceClass,
     LineCubicBezierAlgebraicBreakpointSequenceSource,
@@ -1944,6 +1944,66 @@ fn line_rational_quadratic_bezier_arrangement_emits_homogeneous_fragments() {
     assert_eq!(report.conic_fragments[1].start.point, p(2, 3));
     assert_eq!(report.conic_fragments[1].end.point, p(6, 3));
     assert_eq!(report.conic_fragments[2].start.point, p(6, 3));
+    assert_eq!(report.cell_graph.vertices.len(), 6);
+    assert_eq!(report.cell_graph.edges.len(), 6);
+    assert_eq!(report.cell_graph.half_edges.len(), 12);
+    assert_eq!(report.cell_graph.faces.len(), 0);
+    assert_eq!(
+        report
+            .cell_graph
+            .edges
+            .iter()
+            .filter(|edge| edge.kind == CurveArrangementCellEdgeKind::Line)
+            .count(),
+        3
+    );
+    assert_eq!(
+        report
+            .cell_graph
+            .edges
+            .iter()
+            .filter(|edge| edge.kind == CurveArrangementCellEdgeKind::RationalQuadraticBezier)
+            .count(),
+        3
+    );
+    for edge in &report.cell_graph.edges {
+        assert_eq!(edge.fragments.len(), 1);
+    }
+    for (half_edge_index, half_edge) in report.cell_graph.half_edges.iter().enumerate() {
+        assert_eq!(
+            report.cell_graph.half_edges[half_edge.twin].twin,
+            half_edge_index
+        );
+        assert!(half_edge.next.is_some());
+    }
+}
+
+#[test]
+fn line_rational_quadratic_bezier_cell_graph_keeps_conic_area_unmaterialized() {
+    let conic = RationalQuadraticBezier::new(p(0, 0), p(4, 8), p(8, 0), r(1)).unwrap();
+    let chord = LinePathSegment::new(p(0, 0), p(8, 0));
+
+    let report = arrange_line_segments_with_rational_quadratic_beziers(
+        &[chord],
+        &[conic],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+
+    assert_eq!(
+        report.events[0].class,
+        LineRationalQuadraticBezierIntersectionClass::TwoPoints
+    );
+    assert_eq!(report.line_fragments.len(), 1);
+    assert_eq!(report.conic_fragments.len(), 1);
+    assert_eq!(report.cell_graph.vertices.len(), 2);
+    assert_eq!(report.cell_graph.edges.len(), 2);
+    assert_eq!(report.cell_graph.half_edges.len(), 4);
+    assert_eq!(
+        report.cell_graph.edges[1].kind,
+        CurveArrangementCellEdgeKind::RationalQuadraticBezier
+    );
+    assert!(report.cell_graph.faces.is_empty());
 }
 
 #[test]

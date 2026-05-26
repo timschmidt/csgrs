@@ -3,8 +3,8 @@
 //! This module is the conic companion to the mixed line/quadratic-Bezier
 //! scheduler. It promotes certified line/conic event witnesses into exact line
 //! breakpoints and exact rational-quadratic breakpoints, then emits retained
-//! homogeneous conic fragments. It does not construct planar cells or perform
-//! boolean materialization; those are downstream responsibilities.
+//! homogeneous conic fragments plus a tangent-sorted topology graph. It does
+//! not perform boolean materialization; those are downstream responsibilities.
 
 use std::cmp::Ordering;
 use std::collections::BTreeMap;
@@ -21,6 +21,9 @@ use crate::bezier_arrangement::{
     LineRationalQuadraticBezierSupportOverlap,
     intersect_axis_aligned_line_rational_quadratic_bezier,
 };
+use crate::curve_cell::{
+    CurveArrangementCellError, CurveArrangementCellGraph, build_line_rational_quadratic_cell_graph,
+};
 use crate::provenance::PathProvenance;
 use crate::segment::{Axis, LinePathSegment};
 
@@ -35,6 +38,10 @@ pub enum LineRationalQuadraticBezierArrangementError {
     UndecidableConicOrder { curve: usize },
     /// The same geometric point could not be de-duplicated exactly.
     UndecidablePointEquality,
+    /// Exact tangent ordering around a retained cell vertex was undecidable.
+    UndecidableCellOrder { vertex: usize },
+    /// Exact curved face-area replay was unavailable for a retained edge.
+    UndecidableCellArea { edge: usize },
 }
 
 /// Exact event between one retained line segment and one rational quadratic.
@@ -411,6 +418,15 @@ pub struct LineRationalQuadraticBezierArrangementReport {
     pub line_fragments: Vec<MixedConicLineArrangementFragment>,
     /// Positive-length homogeneous conic fragments.
     pub conic_fragments: Vec<RationalQuadraticBezierRealFragment>,
+    /// Retained topology graph over line and homogeneous conic fragments.
+    ///
+    /// Vertices are exact endpoints, edges retain source fragment provenance,
+    /// and half-edges are sorted by exact line tangents or homogeneous conic
+    /// endpoint derivatives. This follows Yap, "Towards Exact Geometric
+    /// Computation" (1997), by reporting certified topology without sampling.
+    /// Rational conic face walks are intentionally absent until this crate has
+    /// a replayable exact Green-integral quotient object for conic areas.
+    pub cell_graph: CurveArrangementCellGraph,
     /// Cached exact facts for the retained schedule.
     pub facts: LineRationalQuadraticBezierArrangementFacts,
 }
@@ -512,6 +528,9 @@ pub fn arrange_line_segments_with_rational_quadratic_beziers_and_provenance(
     );
     let line_fragments = build_line_fragments(&line_breakpoints, policy)?;
     let conic_fragments = build_conic_fragments(&conic_breakpoints, curves, policy)?;
+    let cell_graph =
+        build_line_rational_quadratic_cell_graph(&line_fragments, &conic_fragments, policy)
+            .map_err(line_rational_quadratic_error_from_curve_cell_error)?;
     let facts = LineRationalQuadraticBezierArrangementFacts {
         input_exact: input_exact_facts(lines, curves),
         fragment_exact: fragment_exact_facts(&line_fragments, &conic_fragments),
@@ -533,8 +552,25 @@ pub fn arrange_line_segments_with_rational_quadratic_beziers_and_provenance(
         conic_breakpoints,
         line_fragments,
         conic_fragments,
+        cell_graph,
         facts,
     })
+}
+
+fn line_rational_quadratic_error_from_curve_cell_error(
+    error: CurveArrangementCellError,
+) -> LineRationalQuadraticBezierArrangementError {
+    match error {
+        CurveArrangementCellError::UndecidablePointEquality => {
+            LineRationalQuadraticBezierArrangementError::UndecidablePointEquality
+        }
+        CurveArrangementCellError::UndecidableCellOrder { vertex } => {
+            LineRationalQuadraticBezierArrangementError::UndecidableCellOrder { vertex }
+        }
+        CurveArrangementCellError::UndecidableCellArea { edge } => {
+            LineRationalQuadraticBezierArrangementError::UndecidableCellArea { edge }
+        }
+    }
 }
 
 fn reject_degenerate_lines(

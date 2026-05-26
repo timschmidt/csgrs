@@ -498,6 +498,12 @@ fuzz_target!(|data: &[u8]| {
     );
     assert_eq!(secant_report.conic_breakpoints[0].len(), 4);
     assert_eq!(secant_report.conic_fragments.len(), 3);
+    assert_eq!(secant_report.cell_graph.edges.len(), 6);
+    assert_eq!(
+        secant_report.cell_graph.half_edges.len(),
+        secant_report.cell_graph.edges.len() * 2
+    );
+    assert!(secant_report.cell_graph.faces.is_empty());
 
     let tangent_conic = RationalQuadraticBezier::new(p(0, 0), p(4, 4), p(8, 0), r(1)).unwrap();
     let tangent_line = LinePathSegment::new(p(0, 2), p(8, 2));
