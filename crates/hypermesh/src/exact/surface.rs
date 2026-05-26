@@ -4100,7 +4100,18 @@ fn same_outer_holed_difference_components(
                 projection,
             )?);
         } else {
-            return None;
+            let mut mixed_cutters = clipped_rectangular_cutters_as_convex_polygons(
+                right_hole,
+                &rectangular_cutters,
+                projection,
+            )?;
+            mixed_cutters.extend(convex_cutters);
+            components.extend(same_outer_holed_convex_difference_components(
+                right_hole,
+                holes,
+                &mixed_cutters,
+                projection,
+            )?);
         }
     }
     Some(components)
@@ -4166,11 +4177,13 @@ fn same_outer_holed_rectangular_difference_components(
 /// right retained hole. The result is accepted only if the clipped convex
 /// cutters attach to the source boundary, stitch into simple retained
 /// components, and satisfy the exact area equation in
-/// [`multi_side_opened_difference_polygons`]. That is the Yap retained-object
-/// boundary from "Towards Exact Geometric Computation," *Computational
-/// Geometry* 7.1-2 (1997): no witness point decides the topology; retained
-/// source rings, exact clipping, exact segment predicates, and exact area
-/// replay do.
+/// [`multi_side_opened_difference_polygons`]. Mixed rectangle/nonrectangle
+/// cutter families enter this same path after exact rectangle clipping converts
+/// the orthogonal cutters into ordinary retained convex loops. That is the Yap
+/// retained-object boundary from "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997): no witness point decides the
+/// topology; retained source rings, exact clipping, exact segment predicates,
+/// and exact area replay do.
 ///
 /// The fragment walk is the Weiler-Atherton boundary traversal from Weiler and
 /// Atherton, "Hidden Surface Removal Using Polygon Area Sorting," *SIGGRAPH
@@ -4217,15 +4230,63 @@ fn same_outer_holed_convex_difference_components(
     Some(components)
 }
 
+/// Convert exact projected rectangular cutters into clipped convex loops.
+///
+/// This is the adapter that lets mixed same-outer subtraction reuse the
+/// retained-fragment path instead of adding a parallel reporting layer. Each
+/// rectangle is intersected exactly with the source retained rectangle and the
+/// positive-area clipped rectangle is emitted as a source-owned convex loop.
+/// The construction is the finite orthogonal arrangement step from de Berg,
+/// Cheong, van Kreveld, and Overmars, *Computational Geometry: Algorithms and
+/// Applications*, 3rd ed. (2008), Chapter 2, but the result is handed to the
+/// Yap-style exact replay boundary in
+/// [`same_outer_holed_convex_difference_components`].
+#[cfg(feature = "exact-triangulation")]
+fn clipped_rectangular_cutters_as_convex_polygons(
+    source: &[Point3],
+    cutters: &[ProjectedRectangle],
+    projection: CoplanarProjection,
+) -> Option<Vec<Vec<Point3>>> {
+    if cutters.is_empty() {
+        return Some(Vec::new());
+    }
+    let source_rect = projected_axis_aligned_rectangle(source, projection)?;
+    let mut polygons = Vec::with_capacity(cutters.len());
+    for cutter in cutters {
+        if !real_equal(&cutter.dropped, &source_rect.dropped) {
+            return None;
+        }
+        let min_x = exact_max_real(&source_rect.min.x, &cutter.min.x)?;
+        let max_x = exact_min_real(&source_rect.max.x, &cutter.max.x)?;
+        let min_y = exact_max_real(&source_rect.min.y, &cutter.min.y)?;
+        let max_y = exact_min_real(&source_rect.max.y, &cutter.max.y)?;
+        if real_order(&min_x, &max_x)? != Ordering::Less
+            || real_order(&min_y, &max_y)? != Ordering::Less
+        {
+            return None;
+        }
+        polygons.push(vec![
+            point_from_projection(&min_x, &min_y, &source_rect.dropped, projection),
+            point_from_projection(&max_x, &min_y, &source_rect.dropped, projection),
+            point_from_projection(&max_x, &max_y, &source_rect.dropped, projection),
+            point_from_projection(&min_x, &max_y, &source_rect.dropped, projection),
+        ]);
+    }
+    Some(polygons)
+}
+
 /// Subtract one or more clipped convex cutters from a convex retained source.
 ///
 /// A single clipped cutter is handled by the same exact convex difference
 /// boundary fragments used for ordinary convex coplanar differences. Several
-/// cutters route through [`multi_side_opened_difference_polygons`], which
-/// requires retained boundary attachment and exact area replay for the whole
-/// set. Keeping these two cases explicit avoids pretending this is a general
-/// planar subdivision while still accepting the common nonrectangular
-/// corner-cut topology. The predicate/construction split follows Yap,
+/// cutters first route through [`multi_side_opened_difference_polygons`], which
+/// accepts split outputs, then through [`multi_side_opened_difference_polygon`]
+/// when the exact retained fragments stitch one simple opened loop. Both
+/// routes require retained boundary attachment, pairwise disjoint removed
+/// loops, and exact area replay for the whole set. Keeping these cases explicit
+/// avoids pretending this is a general planar subdivision while still
+/// accepting common nonrectangular corner-cut and mixed convex/orthogonal
+/// cutter topologies. The predicate/construction split follows Yap,
 /// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
 /// (1997), and the single-cutter boundary walk is the same
 /// Weiler-Atherton-style retained fragment traversal used by
@@ -4242,7 +4303,13 @@ fn convex_cut_difference_polygons(
         [single] => Some(vec![single_convex_cut_difference_polygon(
             source, single, projection, label,
         )?]),
-        _ => multi_side_opened_difference_polygons(source, cutters, projection, label),
+        _ => multi_side_opened_difference_polygons(source, cutters, projection, label).or_else(
+            || {
+                Some(vec![multi_side_opened_difference_polygon(
+                    source, cutters, projection, label,
+                )?])
+            },
+        ),
     }
 }
 
@@ -4473,7 +4540,22 @@ fn same_outer_holed_no_hole_difference_rings(
                 }
                 polygons.extend(remnants);
             } else {
-                return None;
+                let mut mixed_cutters = clipped_rectangular_cutters_as_convex_polygons(
+                    right_hole,
+                    &rectangular_cutters,
+                    projection,
+                )?;
+                mixed_cutters.extend(convex_cutters);
+                let mut remnants = convex_cut_difference_polygons(
+                    right_hole,
+                    &mixed_cutters,
+                    projection,
+                    "coplanar same-outer mixed convex no-hole difference",
+                )?;
+                for remnant in &mut remnants {
+                    orient_polygon_ccw(remnant, projection)?;
+                }
+                polygons.extend(remnants);
             }
         }
     }

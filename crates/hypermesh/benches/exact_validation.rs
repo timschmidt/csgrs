@@ -4817,6 +4817,40 @@ fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
         )
         .unwrap()
         .mesh;
+        let same_outer_mixed_component_outer = ExactMesh::from_i64_triangles_with_policy(
+            &[0, 0, 0, 14, 0, 0, 14, 14, 0, 0, 14, 0],
+            &[0, 1, 2, 0, 2, 3],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let same_outer_mixed_component_left_holes = ExactMesh::from_i64_triangles_with_policy(
+            &[
+                1, 3, 0, 5, 3, 0, 5, 5, 0, 1, 5, 0, //
+                10, 8, 0, 13, 8, 0, 10, 11, 0,
+            ],
+            &[0, 1, 2, 0, 2, 3, 4, 5, 6],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let same_outer_mixed_component_right_hole = ExactMesh::from_i64_triangles_with_policy(
+            &[2, 2, 0, 12, 2, 0, 12, 12, 0, 2, 12, 0],
+            &[0, 1, 2, 0, 2, 3],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let same_outer_mixed_component_left =
+            arrange_coplanar_convex_surface_multi_holed_difference(
+                &same_outer_mixed_component_outer,
+                &same_outer_mixed_component_left_holes,
+            )
+            .unwrap()
+            .mesh;
+        let same_outer_mixed_component_right = arrange_coplanar_convex_surface_holed_difference(
+            &same_outer_mixed_component_outer,
+            &same_outer_mixed_component_right_hole,
+        )
+        .unwrap()
+        .mesh;
         let same_outer_crossing_multi_holes = ExactMesh::from_i64_triangles_with_policy(
             &[
                 1, 1, 0, 2, 1, 0, 2, 2, 0, 1, 2, 0, //
@@ -4990,6 +5024,44 @@ fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
         )
         .unwrap()
         .mesh;
+        let same_outer_mixed_partial_component_outer = ExactMesh::from_i64_triangles_with_policy(
+            &[0, 0, 0, 14, 0, 0, 14, 14, 0, 0, 14, 0],
+            &[0, 1, 2, 0, 2, 3],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let same_outer_mixed_partial_component_left_holes =
+            ExactMesh::from_i64_triangles_with_policy(
+                &[
+                    6, 6, 0, 7, 6, 0, 7, 7, 0, 6, 7, 0, //
+                    1, 3, 0, 5, 3, 0, 5, 5, 0, 1, 5, 0, //
+                    10, 8, 0, 13, 8, 0, 10, 11, 0,
+                ],
+                &[0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7, 8, 9, 10],
+                ValidationPolicy::ALLOW_BOUNDARY,
+            )
+            .unwrap();
+        let same_outer_mixed_partial_component_right_hole =
+            ExactMesh::from_i64_triangles_with_policy(
+                &[2, 2, 0, 12, 2, 0, 12, 12, 0, 2, 12, 0],
+                &[0, 1, 2, 0, 2, 3],
+                ValidationPolicy::ALLOW_BOUNDARY,
+            )
+            .unwrap();
+        let same_outer_mixed_partial_component_left =
+            arrange_coplanar_convex_surface_multi_holed_difference(
+                &same_outer_mixed_partial_component_outer,
+                &same_outer_mixed_partial_component_left_holes,
+            )
+            .unwrap()
+            .mesh;
+        let same_outer_mixed_partial_component_right =
+            arrange_coplanar_convex_surface_holed_difference(
+                &same_outer_mixed_partial_component_outer,
+                &same_outer_mixed_partial_component_right_hole,
+            )
+            .unwrap()
+            .mesh;
         let nonrectilinear_channel_holed_left = ExactMesh::from_i64_triangles_with_policy(
             &[0, 0, 0, 20, 0, 0, 20, 20, 0, 0, 20, 0],
             &[0, 1, 2, 0, 2, 3],
@@ -6369,6 +6441,22 @@ fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
                             hypermesh::exact::ExactBooleanOperation::Difference,
                         )
                         .map(|report| report.validate()),
+                        arrange_coplanar_surface_component_holed_difference(
+                            &same_outer_mixed_partial_component_left,
+                            &same_outer_mixed_partial_component_right,
+                        )
+                        .map(|output| {
+                            output.validate_surface_difference_against_sources(
+                                &same_outer_mixed_partial_component_left,
+                                &same_outer_mixed_partial_component_right,
+                            )
+                        }),
+                        hypermesh::exact::preflight_boolean_exact(
+                            &same_outer_mixed_partial_component_left,
+                            &same_outer_mixed_partial_component_right,
+                            hypermesh::exact::ExactBooleanOperation::Difference,
+                        )
+                        .map(|report| report.validate()),
                         arrange_coplanar_surface_component_holed_intersection(
                             &same_outer_nested_left,
                             &same_outer_nested_right,
@@ -6510,6 +6598,22 @@ fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
                         hypermesh::exact::preflight_boolean_exact(
                             &same_outer_nonrect_component_left,
                             &same_outer_nonrect_component_right,
+                            hypermesh::exact::ExactBooleanOperation::Difference,
+                        )
+                        .map(|report| report.validate()),
+                        arrange_coplanar_surface_component_difference(
+                            &same_outer_mixed_component_left,
+                            &same_outer_mixed_component_right,
+                        )
+                        .map(|output| {
+                            output.validate_component_difference_against_sources(
+                                &same_outer_mixed_component_left,
+                                &same_outer_mixed_component_right,
+                            )
+                        }),
+                        hypermesh::exact::preflight_boolean_exact(
+                            &same_outer_mixed_component_left,
+                            &same_outer_mixed_component_right,
                             hypermesh::exact::ExactBooleanOperation::Difference,
                         )
                         .map(|report| report.validate()),

@@ -2818,6 +2818,72 @@ fn exercise_same_outer_component_holed_coplanar_difference() {
         ExactBoundaryBooleanPolicy::Reject,
     )
     .unwrap();
+
+    let mixed_outer = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 14, 0, 0, 14, 14, 0, 0, 14, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("mixed same-outer component-holed outer fixture must import");
+    let mixed_left_holes = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            6, 6, 0, 7, 6, 0, 7, 7, 0, 6, 7, 0, //
+            1, 3, 0, 5, 3, 0, 5, 5, 0, 1, 5, 0, //
+            10, 8, 0, 13, 8, 0, 10, 11, 0,
+        ],
+        &[0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7, 8, 9, 10],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("mixed same-outer component-holed left holes fixture must import");
+    let mixed_right_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[2, 2, 0, 12, 2, 0, 12, 12, 0, 2, 12, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("mixed same-outer component-holed right hole fixture must import");
+    let mixed_left =
+        arrange_coplanar_convex_surface_multi_holed_difference(&mixed_outer, &mixed_left_holes)
+            .expect("mixed same-outer component-holed left should materialize")
+            .mesh;
+    let mixed_right =
+        arrange_coplanar_convex_surface_holed_difference(&mixed_outer, &mixed_right_hole)
+            .expect("mixed same-outer component-holed right should materialize")
+            .mesh;
+    let mixed_difference =
+        arrange_coplanar_surface_component_holed_difference(&mixed_left, &mixed_right)
+            .expect("mixed same-outer component-holed difference should materialize");
+    mixed_difference.validate().unwrap();
+    mixed_difference
+        .validate_surface_difference_against_sources(&mixed_left, &mixed_right)
+        .unwrap();
+    assert_eq!(mixed_difference.components.len(), 1);
+    assert_eq!(mixed_difference.components[0].holes.len(), 1);
+    let mixed_preflight =
+        preflight_boolean_exact(&mixed_left, &mixed_right, ExactBooleanOperation::Difference)
+            .expect("mixed component-holed preflight should classify shortcut");
+    mixed_preflight.validate().unwrap();
+    mixed_preflight
+        .validate_against_sources(&mixed_left, &mixed_right)
+        .unwrap();
+    assert_eq!(
+        mixed_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
+    );
+    hypermesh::exact::boolean_exact(
+        &mixed_left,
+        &mixed_right,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("mixed component-holed difference should materialize")
+    .validate_operation_against_sources(
+        &mixed_left,
+        &mixed_right,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
 }
 
 #[cfg(feature = "exact-triangulation")]
@@ -3002,6 +3068,69 @@ fn exercise_same_outer_holed_coplanar_component_difference() {
     .validate_operation_against_sources(
         &nonrect_left,
         &nonrect_right,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
+
+    let mixed_outer = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 14, 0, 0, 14, 14, 0, 0, 14, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("mixed same-outer component-difference outer fixture must import");
+    let mixed_left_holes = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            1, 3, 0, 5, 3, 0, 5, 5, 0, 1, 5, 0, //
+            10, 8, 0, 13, 8, 0, 10, 11, 0,
+        ],
+        &[0, 1, 2, 0, 2, 3, 4, 5, 6],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("mixed same-outer component-difference left holes fixture must import");
+    let mixed_right_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[2, 2, 0, 12, 2, 0, 12, 12, 0, 2, 12, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("mixed same-outer component-difference right hole fixture must import");
+    let mixed_left =
+        arrange_coplanar_convex_surface_multi_holed_difference(&mixed_outer, &mixed_left_holes)
+            .expect("mixed same-outer component-difference left should materialize")
+            .mesh;
+    let mixed_right =
+        arrange_coplanar_convex_surface_holed_difference(&mixed_outer, &mixed_right_hole)
+            .expect("mixed same-outer component-difference right should materialize")
+            .mesh;
+    let mixed_difference =
+        arrange_coplanar_surface_component_difference(&mixed_left, &mixed_right)
+            .expect("mixed same-outer component-difference should materialize");
+    mixed_difference.validate().unwrap();
+    mixed_difference
+        .validate_component_difference_against_sources(&mixed_left, &mixed_right)
+        .unwrap();
+    let mixed_preflight =
+        preflight_boolean_exact(&mixed_left, &mixed_right, ExactBooleanOperation::Difference)
+            .expect("mixed same-outer component-difference preflight should classify shortcut");
+    mixed_preflight.validate().unwrap();
+    mixed_preflight
+        .validate_against_sources(&mixed_left, &mixed_right)
+        .unwrap();
+    assert_eq!(
+        mixed_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementDifference
+    );
+    hypermesh::exact::boolean_exact(
+        &mixed_left,
+        &mixed_right,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("mixed same-outer component-difference should materialize")
+    .validate_operation_against_sources(
+        &mixed_left,
+        &mixed_right,
         ExactBooleanOperation::Difference,
         ValidationPolicy::ALLOW_BOUNDARY,
         ExactBoundaryBooleanPolicy::Reject,

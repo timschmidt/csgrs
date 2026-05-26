@@ -27022,6 +27022,85 @@ fn exact_coplanar_component_holed_difference_materializes_nested_same_outer_hole
     )
     .unwrap();
 
+    let mixed_outer = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 14, 0, 0, 14, 14, 0, 0, 14, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let mixed_left_holes = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            6, 6, 0, 7, 6, 0, 7, 7, 0, 6, 7, 0, //
+            1, 3, 0, 5, 3, 0, 5, 5, 0, 1, 5, 0, //
+            10, 8, 0, 13, 8, 0, 10, 11, 0,
+        ],
+        &[0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7, 8, 9, 10],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let mixed_right_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[2, 2, 0, 12, 2, 0, 12, 12, 0, 2, 12, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let mixed_left = hypermesh::exact::arrange_coplanar_convex_surface_multi_holed_difference(
+        &mixed_outer,
+        &mixed_left_holes,
+    )
+    .expect("mixed retained/cutter left holes should materialize")
+    .mesh;
+    let mixed_right = hypermesh::exact::arrange_coplanar_convex_surface_holed_difference(
+        &mixed_outer,
+        &mixed_right_hole,
+    )
+    .expect("mixed right hole should materialize")
+    .mesh;
+    let mixed_difference = hypermesh::exact::arrange_coplanar_surface_component_holed_difference(
+        &mixed_left,
+        &mixed_right,
+    )
+    .expect("mixed rectangular and convex cutters should retain a holed remnant");
+    mixed_difference.validate().unwrap();
+    mixed_difference
+        .validate_surface_difference_against_sources(&mixed_left, &mixed_right)
+        .unwrap();
+    assert_eq!(mixed_difference.components.len(), 1);
+    assert_eq!(mixed_difference.components[0].holes.len(), 1);
+    assert!(
+        mixed_difference.components[0].outer.len() > 6,
+        "two side cutters should replay a retained nonconvex outer boundary"
+    );
+    let mixed_preflight = hypermesh::exact::preflight_boolean_exact(
+        &mixed_left,
+        &mixed_right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .expect("mixed component-holed preflight should classify shortcut");
+    mixed_preflight.validate().unwrap();
+    mixed_preflight
+        .validate_against_sources(&mixed_left, &mixed_right)
+        .unwrap();
+    assert_eq!(
+        mixed_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
+    );
+    hypermesh::exact::boolean_exact(
+        &mixed_left,
+        &mixed_right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("mixed component-holed difference should materialize")
+    .validate_operation_against_sources(
+        &mixed_left,
+        &mixed_right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
+
     let preflight = hypermesh::exact::preflight_boolean_exact(
         &left,
         &right,
@@ -27359,6 +27438,77 @@ fn exact_coplanar_component_difference_materializes_same_outer_single_hole_fill(
         nonrect_crossing_preflight.support,
         hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementDifference
     );
+
+    let mixed_outer = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 14, 0, 0, 14, 14, 0, 0, 14, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let mixed_left_holes = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            1, 3, 0, 5, 3, 0, 5, 5, 0, 1, 5, 0, //
+            10, 8, 0, 13, 8, 0, 10, 11, 0,
+        ],
+        &[0, 1, 2, 0, 2, 3, 4, 5, 6],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let mixed_right_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[2, 2, 0, 12, 2, 0, 12, 12, 0, 2, 12, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let mixed_left = hypermesh::exact::arrange_coplanar_convex_surface_multi_holed_difference(
+        &mixed_outer,
+        &mixed_left_holes,
+    )
+    .expect("mixed no-hole left fixture should materialize")
+    .mesh;
+    let mixed_right = hypermesh::exact::arrange_coplanar_convex_surface_holed_difference(
+        &mixed_outer,
+        &mixed_right_hole,
+    )
+    .expect("mixed no-hole right fixture should materialize")
+    .mesh;
+    let mixed_difference =
+        hypermesh::exact::arrange_coplanar_surface_component_difference(&mixed_left, &mixed_right)
+            .expect("mixed rectangular and convex cutters should replay as one no-hole loop");
+    mixed_difference.validate().unwrap();
+    mixed_difference
+        .validate_component_difference_against_sources(&mixed_left, &mixed_right)
+        .unwrap();
+    assert!(mixed_difference.polygon.len() > 6);
+    let mixed_preflight = hypermesh::exact::preflight_boolean_exact(
+        &mixed_left,
+        &mixed_right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .expect("mixed no-hole preflight should classify shortcut");
+    mixed_preflight.validate().unwrap();
+    mixed_preflight
+        .validate_against_sources(&mixed_left, &mixed_right)
+        .unwrap();
+    assert_eq!(
+        mixed_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementDifference
+    );
+    hypermesh::exact::boolean_exact(
+        &mixed_left,
+        &mixed_right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("mixed no-hole component difference should materialize")
+    .validate_operation_against_sources(
+        &mixed_left,
+        &mixed_right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
 
     let touching_hole = ExactMesh::from_i64_triangles_with_policy(
         &[6, 4, 0, 8, 4, 0, 8, 6, 0, 6, 6, 0],
