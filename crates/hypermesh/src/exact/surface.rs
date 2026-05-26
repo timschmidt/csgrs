@@ -3523,10 +3523,10 @@ fn collect_same_outer_source_islands_from_side(
 /// island by exact loop equality or strict containment; that case contributes
 /// no output component, but it must still be accounted for so the cross-pair
 /// topology check does not reject the intersection. A third bounded case clips
-/// one convex source island by one crossing convex retained hole and emits the
-/// single exact filled remnant; interior cutters, multiple interacting cutters,
-/// and split remnants still reject so the general planar-cell extractor owns
-/// those topologies.
+/// a convex source island by one or more crossing convex retained holes and
+/// emits a single exact filled remnant; interior cutters, holed remnants, and
+/// split remnants still reject so the general planar-cell extractor owns those
+/// topologies.
 ///
 /// This is a direct use of Yap's retained-object paradigm from "Towards Exact
 /// Geometric Computation," *Computational Geometry* 7.1-2 (1997): the Boolean
@@ -3534,16 +3534,18 @@ fn collect_same_outer_source_islands_from_side(
 /// Segment contact is classified with the orientation-predicate relation used
 /// by Guigue and Devillers, "Fast and Robust Triangle-Triangle Overlap Test
 /// Using Orientation Predicates," *Journal of Graphics Tools* 8.1 (2003).
-/// The single-remnant clip reuses the Weiler-Atherton retained-fragment walk
-/// cited by [`single_convex_cut_difference_polygon`].
+/// The single-remnant clip reuses the exact orthogonal cell replay cited by
+/// [`same_outer_holed_orthogonal_no_hole_difference_polygons`] and the
+/// Weiler-Atherton retained-fragment replay cited by
+/// [`convex_cut_difference_polygons`].
 #[cfg(feature = "exact-triangulation")]
 fn same_outer_source_island_opposite_hole_disposition(
     candidate_outer: &[Point3],
     opposite_main: &SourceHoledSurfaceComponent,
     projection: CoplanarProjection,
 ) -> Option<SameOuterSourceIslandDisposition> {
-    let mut clipped_remnant: Option<Vec<Point3>> = None;
-    let mut clipping_hole_index = None;
+    let mut clipping_hole_indices = Vec::new();
+    let mut clipping_holes = Vec::new();
     for (hole_index, opposite_hole) in opposite_main.holes.iter().enumerate() {
         match simple_polygon_interaction(candidate_outer, opposite_hole, projection)? {
             SimplePolygonInteraction::Disjoint => {}
@@ -3556,21 +3558,19 @@ fn same_outer_source_island_opposite_hole_disposition(
                 )? {
                     return Some(SameOuterSourceIslandDisposition::Consumed);
                 }
-                if clipped_remnant.is_some() {
-                    return None;
-                }
-                clipped_remnant = Some(same_outer_source_island_clipped_by_hole(
-                    candidate_outer,
-                    opposite_hole,
-                    projection,
-                )?);
-                clipping_hole_index = Some(hole_index);
+                clipping_hole_indices.push(hole_index);
+                clipping_holes.push(opposite_hole.clone());
             }
         }
     }
-    if let Some(remnant) = clipped_remnant {
+    if !clipping_holes.is_empty() {
+        let remnant = same_outer_source_island_clipped_by_holes(
+            candidate_outer,
+            &clipping_holes,
+            projection,
+        )?;
         for (hole_index, opposite_hole) in opposite_main.holes.iter().enumerate() {
-            if Some(hole_index) == clipping_hole_index {
+            if clipping_hole_indices.contains(&hole_index) {
                 continue;
             }
             if simple_polygon_interaction(&remnant, opposite_hole, projection)?
@@ -3597,22 +3597,50 @@ fn same_outer_source_island_consumed_by_hole(
 }
 
 #[cfg(feature = "exact-triangulation")]
-fn same_outer_source_island_clipped_by_hole(
+fn same_outer_source_island_clipped_by_holes(
     candidate_outer: &[Point3],
-    opposite_hole: &[Point3],
+    opposite_holes: &[Vec<Point3>],
     projection: CoplanarProjection,
 ) -> Option<Vec<Point3>> {
-    if polygon_in_closed_convex_polygon(candidate_outer, opposite_hole, projection)?
-        || polygon_in_closed_convex_polygon(opposite_hole, candidate_outer, projection)?
-    {
+    for opposite_hole in opposite_holes {
+        if polygon_in_closed_convex_polygon(candidate_outer, opposite_hole, projection)?
+            || polygon_in_closed_convex_polygon(opposite_hole, candidate_outer, projection)?
+        {
+            return None;
+        }
+    }
+    let clipped_holes = opposite_holes
+        .iter()
+        .map(|opposite_hole| {
+            let mut clipped =
+                convex_polygon_intersection_boundary(candidate_outer, opposite_hole, projection)?;
+            orient_polygon_ccw(&mut clipped, projection)?;
+            validate_projected_strictly_convex_loop(
+                &clipped,
+                projection,
+                "coplanar same-outer source island retained-hole clip",
+            )
+            .ok()?;
+            Some(clipped)
+        })
+        .collect::<Option<Vec<_>>>()?;
+    let mut remnants = same_outer_holed_orthogonal_no_hole_difference_polygons(
+        candidate_outer,
+        &clipped_holes,
+        projection,
+    )
+    .or_else(|| {
+        convex_cut_difference_polygons(
+            candidate_outer,
+            &clipped_holes,
+            projection,
+            "coplanar same-outer source island retained-hole clip",
+        )
+    })?;
+    if remnants.len() != 1 {
         return None;
     }
-    single_convex_cut_difference_polygon(
-        candidate_outer,
-        opposite_hole,
-        projection,
-        "coplanar same-outer source island retained-hole clip",
-    )
+    Some(remnants.remove(0))
 }
 
 #[cfg(feature = "exact-triangulation")]

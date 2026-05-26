@@ -878,6 +878,30 @@ fn combine_exact_meshes(meshes: &[ExactMesh], label: &'static str) -> ExactMesh 
 }
 
 #[cfg(feature = "exact-triangulation")]
+fn combine_open_exact_meshes(meshes: &[ExactMesh], label: &'static str) -> ExactMesh {
+    let mut vertices = Vec::new();
+    let mut triangles = Vec::new();
+    for mesh in meshes {
+        let offset = vertices.len();
+        vertices.extend(mesh.vertices().iter().cloned());
+        triangles.extend(mesh.triangles().iter().map(|triangle| {
+            Triangle([
+                triangle.0[0] + offset,
+                triangle.0[1] + offset,
+                triangle.0[2] + offset,
+            ])
+        }));
+    }
+    ExactMesh::new_with_policy(
+        vertices,
+        triangles,
+        SourceProvenance::exact(label),
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap()
+}
+
+#[cfg(feature = "exact-triangulation")]
 fn base_fan_tetrahedron_i64(
     a: [i64; 3],
     b: [i64; 3],
@@ -5181,6 +5205,32 @@ fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
             )
             .unwrap()
             .mesh;
+        let same_outer_multi_source_island_outer = rect_surface_i64(&[(0, 0, 20, 20)]);
+        let same_outer_multi_source_island_owner_hole = rect_surface_i64(&[(4, 4, 16, 16)]);
+        let same_outer_multi_source_island_shell =
+            arrange_coplanar_convex_surface_holed_difference(
+                &same_outer_multi_source_island_outer,
+                &same_outer_multi_source_island_owner_hole,
+            )
+            .unwrap()
+            .mesh;
+        let same_outer_multi_source_island = rect_surface_i64(&[(8, 8, 12, 12)]);
+        let same_outer_multi_source_island_source = combine_open_exact_meshes(
+            &[
+                same_outer_multi_source_island_shell,
+                same_outer_multi_source_island,
+            ],
+            "bench same-outer multi-hole clipped source island",
+        );
+        let same_outer_multi_source_island_right_holes =
+            rect_surface_i64(&[(6, 6, 10, 10), (11, 11, 14, 14)]);
+        let same_outer_multi_source_island_right =
+            arrange_coplanar_convex_surface_multi_holed_difference(
+                &same_outer_multi_source_island_outer,
+                &same_outer_multi_source_island_right_holes,
+            )
+            .unwrap()
+            .mesh;
         let same_outer_affine_island_intersection_origin = (0, 0, 0);
         let same_outer_affine_island_intersection_basis_u = (2, 1, 0);
         let same_outer_affine_island_intersection_basis_v = (-1, 2, 0);
@@ -7082,6 +7132,22 @@ fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
                         hypermesh::exact::preflight_boolean_exact(
                             &same_outer_point_branch_island_clipped_source,
                             &same_outer_point_branch_island_clipped_right,
+                            hypermesh::exact::ExactBooleanOperation::Intersection,
+                        )
+                        .map(|report| report.validate()),
+                        arrange_coplanar_surface_component_holed_intersection(
+                            &same_outer_multi_source_island_source,
+                            &same_outer_multi_source_island_right,
+                        )
+                        .map(|output| {
+                            output.validate_intersection_against_sources(
+                                &same_outer_multi_source_island_source,
+                                &same_outer_multi_source_island_right,
+                            )
+                        }),
+                        hypermesh::exact::preflight_boolean_exact(
+                            &same_outer_multi_source_island_source,
+                            &same_outer_multi_source_island_right,
                             hypermesh::exact::ExactBooleanOperation::Intersection,
                         )
                         .map(|report| report.validate()),

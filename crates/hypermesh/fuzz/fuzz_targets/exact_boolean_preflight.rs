@@ -3105,6 +3105,61 @@ fn exercise_same_outer_component_holed_coplanar_intersection_with_island() {
         .validate_against_sources(&scaled_branch_source, &branch_partial_killer)
         .unwrap();
 
+    let multi_clip_outer = rect_surface_i64(&[(0, 0, 20, 20)]);
+    let multi_clip_owner_hole = rect_surface_i64(&[(4, 4, 16, 16)]);
+    let multi_clip_shell =
+        arrange_coplanar_convex_surface_holed_difference(&multi_clip_outer, &multi_clip_owner_hole)
+            .expect("multi-hole source-island owner shell should materialize")
+            .mesh;
+    let multi_clip_source_island = rect_surface_i64(&[(8, 8, 12, 12)]);
+    let multi_clip_source = combine_open_exact_meshes(
+        &[multi_clip_shell, multi_clip_source_island],
+        "fuzz same-outer multi-hole clipped source island",
+    );
+    let multi_clip_right_holes = rect_surface_i64(&[(6, 6, 10, 10), (11, 11, 14, 14)]);
+    let multi_clip_right =
+        arrange_coplanar_convex_surface_multi_holed_difference(
+            &multi_clip_outer,
+            &multi_clip_right_holes,
+        )
+        .expect("multi-hole source-island cutter should materialize")
+        .mesh;
+    let multi_clip_intersection = arrange_coplanar_surface_component_holed_intersection(
+        &multi_clip_source,
+        &multi_clip_right,
+    )
+    .expect("opposite retained holes should clip the source-owned island");
+    multi_clip_intersection.validate().unwrap();
+    multi_clip_intersection
+        .validate_intersection_against_sources(&multi_clip_source, &multi_clip_right)
+        .unwrap();
+    assert_eq!(multi_clip_intersection.components.len(), 2);
+    assert!(
+        multi_clip_intersection
+            .components
+            .iter()
+            .any(|component| component.holes.is_empty())
+    );
+    let multi_clip_reverse = arrange_coplanar_surface_component_holed_intersection(
+        &multi_clip_right,
+        &multi_clip_source,
+    )
+    .expect("multi-hole source-owned island clipping should be symmetric");
+    multi_clip_reverse.validate().unwrap();
+    multi_clip_reverse
+        .validate_intersection_against_sources(&multi_clip_right, &multi_clip_source)
+        .unwrap();
+    let multi_clip_preflight = preflight_boolean_exact(
+        &multi_clip_source,
+        &multi_clip_right,
+        ExactBooleanOperation::Intersection,
+    )
+    .expect("multi-hole source-owned island clipping preflight should classify shortcut");
+    multi_clip_preflight.validate().unwrap();
+    multi_clip_preflight
+        .validate_against_sources(&multi_clip_source, &multi_clip_right)
+        .unwrap();
+
     let affine_origin = (0, 0, 0);
     let affine_basis_u = (2, 1, 0);
     let affine_basis_v = (-1, 2, 0);
@@ -12022,6 +12077,30 @@ fn combine_exact_meshes(meshes: &[ExactMesh], label: &'static str) -> ExactMesh 
         ValidationPolicy::CLOSED,
     )
     .expect("combined fixture should import")
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn combine_open_exact_meshes(meshes: &[ExactMesh], label: &'static str) -> ExactMesh {
+    let mut vertices = Vec::new();
+    let mut triangles = Vec::new();
+    for mesh in meshes {
+        let offset = vertices.len();
+        vertices.extend(mesh.vertices().iter().cloned());
+        triangles.extend(mesh.triangles().iter().map(|triangle| {
+            Triangle([
+                triangle.0[0] + offset,
+                triangle.0[1] + offset,
+                triangle.0[2] + offset,
+            ])
+        }));
+    }
+    ExactMesh::new_with_policy(
+        vertices,
+        triangles,
+        SourceProvenance::exact(label),
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("combined open fixture should import")
 }
 
 #[cfg(feature = "exact-triangulation")]
