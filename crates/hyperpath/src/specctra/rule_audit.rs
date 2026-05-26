@@ -3,11 +3,11 @@
 //! Specctra DSN/SES rule declarations are source constraints, not edits to
 //! route geometry. This module keeps that boundary explicit: it selects the
 //! applicable retained rule scope for each trace/arc, computes the strongest
-//! exact width and clearance values within that scope, and certifies only the
-//! route-width predicate. Pairwise clearance DRC remains a later exact
-//! predicate over route geometry. The split follows Yap, "Towards Exact
-//! Geometric Computation," *Computational Geometry* 7.1-2 (1997): keep exact
-//! source objects and exact predicate reports separate. It also mirrors
+//! exact width and clearance values within that scope, certifies route width,
+//! and replays straight-trace pairwise clearance from the retained rule
+//! evidence. The split follows Yap, "Towards Exact Geometric Computation,"
+//! *Computational Geometry* 7.1-2 (1997): keep exact source objects, exact
+//! predicates, and predicate reports separate. It also mirrors
 //! Lee/Hightower-style autorouting, where graph/path proposals and rule
 //! acceptance are distinct phases.
 
@@ -16,8 +16,11 @@ use std::cmp::Ordering;
 use hyperlimit::{PredicatePolicy, compare_reals_with_policy};
 use hyperreal::{Real, RealSign};
 
-use crate::pcb::{NetId, TraceLayer};
-use crate::specctra::{SpecctraArcWireRecord, SpecctraRouteRuleRecord, SpecctraTraceRecord};
+use crate::pcb::{ClearanceStatus, NetId, TraceClearanceReport, TraceLayer, check_trace_clearance};
+use crate::specctra::{
+    SpecctraArcWireRecord, SpecctraImportError, SpecctraRouteRuleRecord, SpecctraTraceRecord,
+    import_specctra_trace_record,
+};
 
 /// Kind of route item audited against retained Specctra route rules.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -65,6 +68,35 @@ pub enum SpecctraRouteRuleWidthStatus {
     Unknown,
 }
 
+/// Exact pairwise clearance audit status for straight trace records.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum SpecctraRouteRuleTraceClearanceStatus {
+    /// At least one trace had no applicable retained route rule.
+    NoApplicableRule,
+    /// The pair was not applicable, for example same-net traces.
+    NotApplicable,
+    /// The traces overlap or touch before spacing can be considered.
+    NoShortViolation,
+    /// Exact trace clearance satisfied the retained effective clearance.
+    CertifiedClear,
+    /// Exact trace clearance violated the retained effective clearance.
+    ClearanceViolation,
+    /// Exact clearance comparison could not decide.
+    Unknown,
+}
+
+impl From<ClearanceStatus> for SpecctraRouteRuleTraceClearanceStatus {
+    fn from(status: ClearanceStatus) -> Self {
+        match status {
+            ClearanceStatus::NotApplicable => Self::NotApplicable,
+            ClearanceStatus::CertifiedClear => Self::CertifiedClear,
+            ClearanceStatus::ClearanceViolation => Self::ClearanceViolation,
+            ClearanceStatus::NoShortViolation => Self::NoShortViolation,
+            ClearanceStatus::Unknown => Self::Unknown,
+        }
+    }
+}
+
 /// Audit result for one route item against retained route rules.
 #[derive(Clone, Debug, PartialEq)]
 pub struct SpecctraRouteRuleItemAudit {
@@ -95,6 +127,61 @@ pub struct SpecctraRouteRuleItemAudit {
 pub struct SpecctraRouteRuleAudit {
     /// Per-item audit records in trace order followed by arc order.
     pub items: Vec<SpecctraRouteRuleItemAudit>,
+}
+
+/// Pairwise exact clearance audit for two straight Specctra trace records.
+#[derive(Clone, Debug, PartialEq)]
+pub struct SpecctraRouteRuleTraceClearancePairAudit {
+    /// First trace index.
+    pub first_index: usize,
+    /// Second trace index.
+    pub second_index: usize,
+    /// Exact retained clearance selected from the two effective route rules.
+    pub required_clearance: Option<Real>,
+    /// Exact PCB clearance report when both traces were ruled.
+    pub clearance_report: Option<TraceClearanceReport>,
+    /// Retained pairwise clearance status.
+    pub status: SpecctraRouteRuleTraceClearanceStatus,
+}
+
+/// Exact retained rule audit for straight Specctra trace clearance.
+#[derive(Clone, Debug, PartialEq)]
+pub struct SpecctraRouteRuleTraceClearanceAudit {
+    /// Per-trace retained width/rule-selection audits.
+    pub item_audits: Vec<SpecctraRouteRuleItemAudit>,
+    /// Pairwise trace clearance audits in lexicographic index order.
+    pub pairs: Vec<SpecctraRouteRuleTraceClearancePairAudit>,
+}
+
+impl SpecctraRouteRuleTraceClearanceAudit {
+    /// Return true when every pair with applicable rules is certified clear or not applicable.
+    pub fn all_clearances_certified(&self) -> bool {
+        self.pairs.iter().all(|pair| {
+            matches!(
+                pair.status,
+                SpecctraRouteRuleTraceClearanceStatus::CertifiedClear
+                    | SpecctraRouteRuleTraceClearanceStatus::NotApplicable
+            )
+        })
+    }
+
+    /// Return the first pair with a reported clearance violation or no-short violation.
+    pub fn first_clearance_violation(&self) -> Option<&SpecctraRouteRuleTraceClearancePairAudit> {
+        self.pairs.iter().find(|pair| {
+            matches!(
+                pair.status,
+                SpecctraRouteRuleTraceClearanceStatus::ClearanceViolation
+                    | SpecctraRouteRuleTraceClearanceStatus::NoShortViolation
+            )
+        })
+    }
+
+    /// Return true when at least one pair could not select a retained clearance rule.
+    pub fn has_unruled_pair(&self) -> bool {
+        self.pairs
+            .iter()
+            .any(|pair| pair.status == SpecctraRouteRuleTraceClearanceStatus::NoApplicableRule)
+    }
 }
 
 impl SpecctraRouteRuleAudit {
@@ -129,6 +216,8 @@ pub enum SpecctraRouteRuleAuditError {
     NegativeRuleValue,
     /// Exact comparison could not choose the strongest selected rule value.
     UnknownRuleOrdering,
+    /// A trace record could not be lowered into exact PCB trace geometry.
+    InvalidTrace(SpecctraImportError),
 }
 
 /// Audit exact route widths against retained Specctra route-rule records.
@@ -172,6 +261,66 @@ pub fn audit_specctra_route_rule_widths(
         )?);
     }
     Ok(SpecctraRouteRuleAudit { items })
+}
+
+/// Audit pairwise straight-trace clearance using retained Specctra route rules.
+///
+/// The effective clearance for a pair is the exact maximum of the two selected
+/// item clearances. This mirrors common DRC behavior while preserving the
+/// exact-computation boundary advocated by Yap, "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7.1-2 (1997): rule selection is
+/// retained as source evidence, trace lowering is exact, and the PCB swept-line
+/// predicate certifies the pair. Arcs are intentionally not accepted here;
+/// curved route clearance needs its own exact swept-arc predicate instead of
+/// being flattened into chords.
+pub fn audit_specctra_trace_rule_clearances(
+    traces: &[SpecctraTraceRecord],
+    rules: &[SpecctraRouteRuleRecord],
+    policy: PredicatePolicy,
+) -> Result<SpecctraRouteRuleTraceClearanceAudit, SpecctraRouteRuleAuditError> {
+    let item_report = audit_specctra_route_rule_widths(traces, &[], rules, policy)?;
+    let lowered_traces = traces
+        .iter()
+        .map(import_specctra_trace_record)
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(SpecctraRouteRuleAuditError::InvalidTrace)?;
+
+    let mut pairs = Vec::new();
+    for first_index in 0..traces.len() {
+        for second_index in (first_index + 1)..traces.len() {
+            let first = &item_report.items[first_index];
+            let second = &item_report.items[second_index];
+            let Some(first_clearance) = first.effective_clearance.clone() else {
+                pairs.push(unruled_pair(first_index, second_index));
+                continue;
+            };
+            let Some(second_clearance) = second.effective_clearance.clone() else {
+                pairs.push(unruled_pair(first_index, second_index));
+                continue;
+            };
+            let required_clearance =
+                max_real_option(Some(first_clearance), second_clearance, policy)?;
+            let clearance_report = check_trace_clearance(
+                &lowered_traces[first_index],
+                &lowered_traces[second_index],
+                &required_clearance,
+                policy,
+            );
+            let status = clearance_report.status.clone().into();
+            pairs.push(SpecctraRouteRuleTraceClearancePairAudit {
+                first_index,
+                second_index,
+                required_clearance: Some(required_clearance),
+                clearance_report: Some(clearance_report),
+                status,
+            });
+        }
+    }
+
+    Ok(SpecctraRouteRuleTraceClearanceAudit {
+        item_audits: item_report.items,
+        pairs,
+    })
 }
 
 fn validate_rules(rules: &[SpecctraRouteRuleRecord]) -> Result<(), SpecctraRouteRuleAuditError> {
@@ -287,5 +436,18 @@ fn max_real_option(
     {
         Ordering::Less => Ok(candidate),
         Ordering::Equal | Ordering::Greater => Ok(current),
+    }
+}
+
+fn unruled_pair(
+    first_index: usize,
+    second_index: usize,
+) -> SpecctraRouteRuleTraceClearancePairAudit {
+    SpecctraRouteRuleTraceClearancePairAudit {
+        first_index,
+        second_index,
+        required_clearance: None,
+        clearance_report: None,
+        status: SpecctraRouteRuleTraceClearanceStatus::NoApplicableRule,
     }
 }

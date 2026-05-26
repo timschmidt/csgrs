@@ -38,22 +38,22 @@ use hyperpath::{
     SpecctraGridRouteRuleRecord, SpecctraGridTraceRecord, SpecctraGridViaRecord,
     SpecctraImportError, SpecctraLayerAlias, SpecctraNetAlias, SpecctraParseError,
     SpecctraRouteRuleAuditError, SpecctraRouteRuleItemKind, SpecctraRouteRuleScopeClass,
-    SpecctraRouteRuleWidthStatus, SupportFootprintStatus, SupportPlanError, SweptLineSegment,
-    TangentAlignment, TangentJoinClass, TangentJoinReport, TangentSpan, TraceLayer,
-    ViaAnnularRingReport, ViaAspectRatioReport, ViaDrillIntent, ViaDrillPolicyClass,
-    ViaFabricationAcceptance, ViaFabricationError, ViaFabricationPolicy, ViaLayerSpanRelation,
-    ViaLayerTransitionClass, arrange_cubic_beziers, arrange_explicit_arcs, arrange_line_segments,
-    arrange_line_segments_with_cubic_beziers, arrange_line_segments_with_explicit_arcs,
-    arrange_line_segments_with_quadratic_beziers,
+    SpecctraRouteRuleTraceClearanceStatus, SpecctraRouteRuleWidthStatus, SpecctraTraceRecord,
+    SupportFootprintStatus, SupportPlanError, SweptLineSegment, TangentAlignment, TangentJoinClass,
+    TangentJoinReport, TangentSpan, TraceLayer, ViaAnnularRingReport, ViaAspectRatioReport,
+    ViaDrillIntent, ViaDrillPolicyClass, ViaFabricationAcceptance, ViaFabricationError,
+    ViaFabricationPolicy, ViaLayerSpanRelation, ViaLayerTransitionClass, arrange_cubic_beziers,
+    arrange_explicit_arcs, arrange_line_segments, arrange_line_segments_with_cubic_beziers,
+    arrange_line_segments_with_explicit_arcs, arrange_line_segments_with_quadratic_beziers,
     arrange_line_segments_with_rational_quadratic_beziers, arrange_quadratic_beziers,
     arrange_rational_quadratic_beziers, audit_specctra_route_rule_widths,
-    build_alternating_detour_meander, build_g1_join_problem, build_keepout_aware_detour_meander,
-    build_length_match_problem, build_multi_detour_meander, build_nonuniform_detour_meander,
-    build_obstacle_aware_detour_meander, build_oriented_tangent_alignment_problem,
-    build_rectangular_bead_plan, build_rectangular_pocket_link_graph,
-    build_rectangular_pocket_plan, build_rectangular_rest_material_graph,
-    build_rectangular_serpentine_infill_graph, build_rectangular_support_plan,
-    build_single_detour_meander, build_tangent_alignment_problem,
+    audit_specctra_trace_rule_clearances, build_alternating_detour_meander, build_g1_join_problem,
+    build_keepout_aware_detour_meander, build_length_match_problem, build_multi_detour_meander,
+    build_nonuniform_detour_meander, build_obstacle_aware_detour_meander,
+    build_oriented_tangent_alignment_problem, build_rectangular_bead_plan,
+    build_rectangular_pocket_link_graph, build_rectangular_pocket_plan,
+    build_rectangular_rest_material_graph, build_rectangular_serpentine_infill_graph,
+    build_rectangular_support_plan, build_single_detour_meander, build_tangent_alignment_problem,
     certify_acceleration_limited_feed_time, certify_acceleration_limited_feed_time_for_path,
     certify_constant_feed_time, certify_constant_feed_time_for_path,
     certify_corner_lookahead_limits, certify_cubic_ph_inverse_length,
@@ -7669,6 +7669,204 @@ fn specctra_route_rule_audit_reports_width_violations_unruled_items_and_bad_inpu
 }
 
 #[test]
+fn specctra_trace_rule_clearance_audit_replays_pairwise_retained_clearances() {
+    let traces = [
+        SpecctraGridTraceRecord {
+            net: NetId(1),
+            layer: TraceLayer(0),
+            start_x: 0,
+            start_y: 0,
+            end_x: 20,
+            end_y: 0,
+            width: 2,
+            grid_denominator: 1,
+        },
+        SpecctraGridTraceRecord {
+            net: NetId(2),
+            layer: TraceLayer(0),
+            start_x: 0,
+            start_y: 10,
+            end_x: 20,
+            end_y: 10,
+            width: 2,
+            grid_denominator: 1,
+        },
+        SpecctraGridTraceRecord {
+            net: NetId(3),
+            layer: TraceLayer(0),
+            start_x: 0,
+            start_y: 4,
+            end_x: 20,
+            end_y: 4,
+            width: 2,
+            grid_denominator: 1,
+        },
+    ]
+    .into_iter()
+    .map(specctra_grid_trace_record)
+    .collect::<Result<Vec<_>, _>>()
+    .unwrap();
+    let rules = [
+        SpecctraGridRouteRuleRecord {
+            net: None,
+            layer: None,
+            clearance: 1,
+            width: 2,
+            grid_denominator: 1,
+        },
+        SpecctraGridRouteRuleRecord {
+            net: Some(NetId(1)),
+            layer: Some(TraceLayer(0)),
+            clearance: 5,
+            width: 2,
+            grid_denominator: 1,
+        },
+        SpecctraGridRouteRuleRecord {
+            net: Some(NetId(2)),
+            layer: Some(TraceLayer(0)),
+            clearance: 4,
+            width: 2,
+            grid_denominator: 1,
+        },
+        SpecctraGridRouteRuleRecord {
+            net: Some(NetId(3)),
+            layer: Some(TraceLayer(0)),
+            clearance: 5,
+            width: 2,
+            grid_denominator: 1,
+        },
+    ]
+    .into_iter()
+    .map(specctra_grid_route_rule_record)
+    .collect::<Result<Vec<_>, _>>()
+    .unwrap();
+
+    let report =
+        audit_specctra_trace_rule_clearances(&traces, &rules, PredicatePolicy::default()).unwrap();
+
+    assert_eq!(report.item_audits.len(), 3);
+    assert_eq!(report.pairs.len(), 3);
+    assert!(!report.all_clearances_certified());
+    assert_eq!(report.pairs[0].first_index, 0);
+    assert_eq!(report.pairs[0].second_index, 1);
+    assert_eq!(report.pairs[0].required_clearance, Some(r(5)));
+    assert_eq!(
+        report.pairs[0].status,
+        SpecctraRouteRuleTraceClearanceStatus::CertifiedClear
+    );
+    assert_eq!(
+        report.pairs[0].clearance_report.as_ref().unwrap().axis_gap,
+        Some(r(10))
+    );
+    assert_eq!(report.pairs[1].required_clearance, Some(r(5)));
+    assert_eq!(
+        report.pairs[1].status,
+        SpecctraRouteRuleTraceClearanceStatus::ClearanceViolation
+    );
+    assert_eq!(report.first_clearance_violation().unwrap().second_index, 2);
+    assert_eq!(report.pairs[2].required_clearance, Some(r(5)));
+    assert_eq!(
+        report.pairs[2].status,
+        SpecctraRouteRuleTraceClearanceStatus::ClearanceViolation
+    );
+}
+
+#[test]
+fn specctra_trace_rule_clearance_audit_reports_unruled_same_net_and_bad_inputs() {
+    let first = specctra_grid_trace_record(SpecctraGridTraceRecord {
+        net: NetId(1),
+        layer: TraceLayer(0),
+        start_x: 0,
+        start_y: 0,
+        end_x: 20,
+        end_y: 0,
+        width: 2,
+        grid_denominator: 1,
+    })
+    .unwrap();
+    let second = specctra_grid_trace_record(SpecctraGridTraceRecord {
+        net: NetId(2),
+        layer: TraceLayer(0),
+        start_x: 0,
+        start_y: 10,
+        end_x: 20,
+        end_y: 10,
+        width: 2,
+        grid_denominator: 1,
+    })
+    .unwrap();
+    let wrong_net_rule = specctra_grid_route_rule_record(SpecctraGridRouteRuleRecord {
+        net: Some(NetId(9)),
+        layer: Some(TraceLayer(0)),
+        clearance: 1,
+        width: 1,
+        grid_denominator: 1,
+    })
+    .unwrap();
+    let unruled = audit_specctra_trace_rule_clearances(
+        &[first.clone(), second.clone()],
+        std::slice::from_ref(&wrong_net_rule),
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert!(unruled.has_unruled_pair());
+    assert_eq!(
+        unruled.pairs[0].status,
+        SpecctraRouteRuleTraceClearanceStatus::NoApplicableRule
+    );
+    assert_eq!(unruled.pairs[0].clearance_report, None);
+
+    let same_net_second = specctra_grid_trace_record(SpecctraGridTraceRecord {
+        net: NetId(1),
+        layer: TraceLayer(0),
+        start_x: 0,
+        start_y: 1,
+        end_x: 20,
+        end_y: 1,
+        width: 2,
+        grid_denominator: 1,
+    })
+    .unwrap();
+    let global_rule = specctra_grid_route_rule_record(SpecctraGridRouteRuleRecord {
+        net: None,
+        layer: None,
+        clearance: 8,
+        width: 1,
+        grid_denominator: 1,
+    })
+    .unwrap();
+    let same_net = audit_specctra_trace_rule_clearances(
+        &[first.clone(), same_net_second],
+        std::slice::from_ref(&global_rule),
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert!(same_net.all_clearances_certified());
+    assert_eq!(
+        same_net.pairs[0].status,
+        SpecctraRouteRuleTraceClearanceStatus::NotApplicable
+    );
+
+    let negative_width = SpecctraTraceRecord {
+        net: NetId(1),
+        layer: TraceLayer(0),
+        start: p(0, 0),
+        end: p(1, 0),
+        width: r(-1),
+        provenance: PathProvenance::native(),
+    };
+    assert_eq!(
+        audit_specctra_trace_rule_clearances(
+            &[negative_width],
+            std::slice::from_ref(&global_rule),
+            PredicatePolicy::default()
+        )
+        .unwrap_err(),
+        SpecctraRouteRuleAuditError::NegativeRouteWidth
+    );
+}
+
+#[test]
 fn specctra_grid_route_text_round_trips_net_aliases() {
     let alias = SpecctraNetAlias {
         net: NetId(7),
@@ -8510,6 +8708,65 @@ proptest! {
         prop_assert_eq!(
             report.all_widths_certified(),
             expected_status == SpecctraRouteRuleWidthStatus::Certified
+        );
+    }
+
+    #[test]
+    fn specctra_trace_rule_clearance_audit_generated_parallel_gaps_match_integer_oracle(
+        gap in 0_i16..=128,
+        first_width in 0_i16..=32,
+        second_width in 0_i16..=32,
+        clearance in 0_i16..=32,
+    ) {
+        let first = specctra_grid_trace_record(SpecctraGridTraceRecord {
+            net: NetId(1),
+            layer: TraceLayer(0),
+            start_x: 0,
+            start_y: 0,
+            end_x: 32,
+            end_y: 0,
+            width: i64::from(first_width),
+            grid_denominator: 1,
+        }).unwrap();
+        let second = specctra_grid_trace_record(SpecctraGridTraceRecord {
+            net: NetId(2),
+            layer: TraceLayer(0),
+            start_x: 0,
+            start_y: i64::from(gap),
+            end_x: 32,
+            end_y: i64::from(gap),
+            width: i64::from(second_width),
+            grid_denominator: 1,
+        }).unwrap();
+        let rule = specctra_grid_route_rule_record(SpecctraGridRouteRuleRecord {
+            net: None,
+            layer: None,
+            clearance: i64::from(clearance),
+            width: 0,
+            grid_denominator: 1,
+        }).unwrap();
+        let report = audit_specctra_trace_rule_clearances(
+            &[first, second],
+            std::slice::from_ref(&rule),
+            PredicatePolicy::default(),
+        ).unwrap();
+        let required = i64::from(first_width) + i64::from(second_width)
+            + 2 * i64::from(clearance);
+        let doubled_gap = 2 * i64::from(gap);
+        let expected_status = if gap == 0 {
+            SpecctraRouteRuleTraceClearanceStatus::NoShortViolation
+        } else if doubled_gap < required {
+            SpecctraRouteRuleTraceClearanceStatus::ClearanceViolation
+        } else {
+            SpecctraRouteRuleTraceClearanceStatus::CertifiedClear
+        };
+
+        prop_assert_eq!(report.pairs.len(), 1);
+        prop_assert_eq!(report.pairs[0].required_clearance.clone(), Some(r(i64::from(clearance))));
+        prop_assert_eq!(report.pairs[0].status, expected_status);
+        prop_assert_eq!(
+            report.all_clearances_certified(),
+            expected_status == SpecctraRouteRuleTraceClearanceStatus::CertifiedClear
         );
     }
 

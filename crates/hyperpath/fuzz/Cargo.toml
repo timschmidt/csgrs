@@ -36,6 +36,13 @@ doc = false
 bench = false
 
 [[bin]]
+name = "specctra_trace_rule_clearance"
+path = "fuzz_targets/specctra_trace_rule_clearance.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
 name = "pcb_rounded_rect_pad"
 path = "fuzz_targets/pcb_rounded_rect_pad.rs"
 test = false

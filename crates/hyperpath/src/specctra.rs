@@ -26,8 +26,10 @@ mod rule_audit;
 
 pub use rule_audit::{
     SpecctraRouteRuleAudit, SpecctraRouteRuleAuditError, SpecctraRouteRuleItemAudit,
-    SpecctraRouteRuleItemKind, SpecctraRouteRuleScopeClass, SpecctraRouteRuleWidthStatus,
-    audit_specctra_route_rule_widths,
+    SpecctraRouteRuleItemKind, SpecctraRouteRuleScopeClass, SpecctraRouteRuleTraceClearanceAudit,
+    SpecctraRouteRuleTraceClearancePairAudit, SpecctraRouteRuleTraceClearanceStatus,
+    SpecctraRouteRuleWidthStatus, audit_specctra_route_rule_widths,
+    audit_specctra_trace_rule_clearances,
 };
 
 /// Exact route-level net alias retained from a Specctra DSN/SES-style file.

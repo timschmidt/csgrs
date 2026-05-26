@@ -1537,6 +1537,35 @@ fn path_predicates(c: &mut Criterion) {
             )
         })
     });
+    let audited_second_trace = specctra_grid_trace_record(SpecctraGridTraceRecord {
+        net: NetId(4),
+        layer: TraceLayer(1),
+        start_x: 0,
+        start_y: 100,
+        end_x: 1000,
+        end_y: 100,
+        width: 8,
+        grid_denominator: 10,
+    })
+    .unwrap();
+    let audited_clearance_rule =
+        hyperpath::specctra_grid_route_rule_record(hyperpath::SpecctraGridRouteRuleRecord {
+            net: None,
+            layer: Some(TraceLayer(1)),
+            clearance: 6,
+            width: 8,
+            grid_denominator: 10,
+        })
+        .unwrap();
+    c.bench_function("specctra_trace_rule_clearance_audit", |b| {
+        b.iter(|| {
+            hyperpath::audit_specctra_trace_rule_clearances(
+                &[audited_trace.clone(), audited_second_trace.clone()],
+                std::slice::from_ref(&audited_clearance_rule),
+                PredicatePolicy::default(),
+            )
+        })
+    });
     let exact_polygon_keepout = SpecctraGridKeepoutRecord {
         layer: Some(TraceLayer(1)),
         shape: SpecctraGridKeepoutShape::Polygon {
