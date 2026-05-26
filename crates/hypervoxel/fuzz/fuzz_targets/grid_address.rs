@@ -35,7 +35,8 @@ use hypervoxel::{
     extract_svo_exposed_faces_with_report, greedy_face_patch_plan,
     lookup_material_display_colors, lossy_obj_from_quad_mesh, lossy_quad_mesh_from_faces,
     materialize_legacy_voxelis_u8_chunk_paged_storage, query_field_samples,
-    query_material_regions, report_material_region_metadata, sample_manhattan_distance_field,
+    materialize_legacy_voxelis_u8_exact_surface_triangle_mesh, query_material_regions,
+    report_material_region_metadata, sample_manhattan_distance_field,
     sample_signed_manhattan_distance_field, select_lod_cells,
     sparse_exact_surface_triangle_mesh_with_report, svo_exact_surface_triangle_mesh_with_report,
     sweep_address_segment,
@@ -696,6 +697,36 @@ fuzz_target!(|data: (u8, u64, u64, u64)| {
             .unwrap(),
         VoxelCell::material(MaterialRegionId(u32::from(legacy_value)))
     );
+    let (_, legacy_surface_report) = materialize_legacy_voxelis_u8_exact_surface_triangle_mesh(
+        &legacy_tree,
+        &legacy_interner,
+        GridFrame::builder().depth(legacy_depth).build().unwrap(),
+        ChunkShape::new(depth_raw % 3).unwrap(),
+    )
+    .unwrap();
+    assert_eq!(
+        legacy_surface_report.materialization.exhaustive_chunk_port_ready,
+        legacy_report.exhaustive_chunk_port_ready
+    );
+    assert_eq!(legacy_surface_report.surface.shell.exact_faces, 6);
+    assert_eq!(
+        legacy_surface_report.surface.mesh.report.exact_triangles,
+        legacy_surface_report.surface.shell.exact_faces * 2
+    );
+    assert_eq!(
+        legacy_surface_report.exact_legacy_storage_surface_ready,
+        legacy_surface_report
+            .materialization
+            .exhaustive_chunk_port_ready
+            && legacy_surface_report
+                .surface
+                .exact_paged_triangle_mesh_ready
+            && legacy_surface_report
+                .surface
+                .vocabulary
+                .exact_shared_mesh_vocabulary_ready
+    );
+    assert!(!legacy_surface_report.exact_voxelization_ready);
     assert_eq!(paged_diff_report.mismatch_count, diff_report.mismatch_count);
     assert!(paged_diff_report.exact_page_diff_ready);
     let empty_diff = diff_sparse_grids(

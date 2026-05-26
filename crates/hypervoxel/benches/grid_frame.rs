@@ -1093,6 +1093,25 @@ fn bench_connectivity_and_export_adapters(c: &mut Criterion) {
                 )
             })
         });
+        c.bench_function("legacy_voxelis_u8_exact_surface_mesh_handoff", |b| {
+            b.iter(|| {
+                let (_, report) =
+                    hypervoxel::materialize_legacy_voxelis_u8_exact_surface_triangle_mesh(
+                        &legacy_tree,
+                        &interner,
+                        GridFrame::builder().depth(4).build().unwrap(),
+                        ChunkShape::new(2).unwrap(),
+                    )
+                    .unwrap();
+                (
+                    report.exact_legacy_storage_surface_ready,
+                    report.surface.shell.exact_faces,
+                    report.surface.mesh.report.exact_triangles,
+                    report.surface.vocabulary.unique_index_edges,
+                    report.exact_voxelization_ready,
+                )
+            })
+        });
     }
 }
 

@@ -19,9 +19,10 @@ use voxelis::{
 };
 
 use crate::{
-    ChunkPagedSparseGrid, ChunkPagedSparseStorageReport, ChunkShape, GridFrame, HypervoxelError,
-    HypervoxelResult, LegacyAdapterKind, LegacyAdapterStatus, MaterialRegionId, SparseVoxelGrid,
-    VoxelAddress, VoxelCell,
+    ChunkPagedExactSurfaceTriangleMeshReport, ChunkPagedSparseGrid, ChunkPagedSparseStorageReport,
+    ChunkShape, GridFrame, HypervoxelError, HypervoxelResult, LegacyAdapterKind,
+    LegacyAdapterStatus, MaterialRegionId, SparseVoxelGrid, VoxelAddress, VoxelCell,
+    chunk_paged_exact_surface_triangle_mesh_with_report,
 };
 
 /// Sampled semantic comparison between a legacy `voxelis` tree and a Hyper grid.
@@ -104,6 +105,31 @@ pub struct LegacyVoxelisChunkPagedMaterializationReport {
     /// This remains false by construction. Yap's EGC model requires the
     /// source predicates and construction history to be replayed explicitly;
     /// harvested storage values alone are not geometric truth.
+    pub exact_voxelization_ready: bool,
+}
+
+/// Exact page-backed surface mesh report for materialized legacy `voxelis` storage.
+#[derive(Clone, Debug, PartialEq)]
+pub struct LegacyVoxelisExactSurfaceTriangleMeshReport {
+    /// Exhaustive legacy-to-Hyper chunk-paged storage materialization report.
+    pub materialization: LegacyVoxelisChunkPagedMaterializationReport,
+    /// Exact page-backed shell, triangle mesh, and vocabulary report over the
+    /// materialized Hyper storage.
+    pub surface: ChunkPagedExactSurfaceTriangleMeshReport,
+    /// Explicit adapter status for the harvested legacy surface handoff.
+    pub adapter: LegacyAdapterStatus,
+    /// Whether legacy storage was exhaustively ported and the resulting Hyper
+    /// pages replayed as exact shared surface-triangle vocabulary.
+    ///
+    /// This is exact evidence about the materialized integer storage surface,
+    /// not about the original geometry that may have produced the legacy tree.
+    pub exact_legacy_storage_surface_ready: bool,
+    /// Whether this legacy surface handoff can stand in for exact voxelization.
+    ///
+    /// This remains false by construction. Yap's exact-geometric-computation
+    /// contract requires source-geometry predicates and construction replay;
+    /// a legacy voxel tree plus a valid storage surface is still not source
+    /// voxelization proof.
     pub exact_voxelization_ready: bool,
 }
 
@@ -283,6 +309,51 @@ pub fn materialize_legacy_voxelis_u8_chunk_paged_storage(
             "exhaustive legacy voxelis u8 chunk-paged materialization",
         ),
         exhaustive_chunk_port_ready,
+        exact_voxelization_ready: false,
+    };
+    Ok((paged, report))
+}
+
+/// Materializes legacy `voxelis` storage and audits its exact page-backed surface mesh.
+///
+/// This composes [`materialize_legacy_voxelis_u8_chunk_paged_storage`] with
+/// [`crate::chunk_paged_exact_surface_triangle_mesh_with_report`]. The legacy
+/// tree is still treated as a lossy adapter boundary, but once its leaf values
+/// have been exhaustively replayed into Hyper chunk pages, the exposed surface
+/// of that materialized storage can be audited using the same exact shell,
+/// triangle, and shared mesh-vocabulary reports as native Hyper pages.
+///
+/// The acceptance split is deliberate and follows Yap, "Towards Exact
+/// Geometric Computation," *Computational Geometry* 7(1-2), 1997: exact
+/// claims must name the object whose facts replay. Here the replayed object is
+/// the materialized integer voxel storage surface, not the source geometry
+/// that may have produced the legacy `VoxTree`. The indexed surface vocabulary
+/// follows Botsch et al., *Polygon Mesh Processing*, AK Peters, 2010, while
+/// retaining exact grid-lattice vertices and source voxel-face identities.
+pub fn materialize_legacy_voxelis_u8_exact_surface_triangle_mesh(
+    tree: &VoxTree<u8>,
+    interner: &VoxInterner<u8>,
+    frame: GridFrame,
+    shape: ChunkShape,
+) -> HypervoxelResult<(
+    ChunkPagedSparseGrid,
+    LegacyVoxelisExactSurfaceTriangleMeshReport,
+)> {
+    let (paged, materialization) =
+        materialize_legacy_voxelis_u8_chunk_paged_storage(tree, interner, frame, shape)?;
+    let surface = chunk_paged_exact_surface_triangle_mesh_with_report(&paged)?;
+    let exact_legacy_storage_surface_ready = materialization.exhaustive_chunk_port_ready
+        && surface.exact_paged_triangle_mesh_ready
+        && surface.mesh.report.exact_triangle_surface_mesh_ready
+        && surface.vocabulary.exact_shared_mesh_vocabulary_ready;
+    let report = LegacyVoxelisExactSurfaceTriangleMeshReport {
+        materialization,
+        surface,
+        adapter: LegacyAdapterStatus::lossy(
+            LegacyAdapterKind::VoxelisStorage,
+            "legacy voxelis u8 materialized exact surface triangle mesh",
+        ),
+        exact_legacy_storage_surface_ready,
         exact_voxelization_ready: false,
     };
     Ok((paged, report))

@@ -5,6 +5,7 @@ use hypervoxel::{
     ChunkShape, GridFrame, LegacyAdapterKind, MaterialRegionId, OccupancyState, SparseVoxelGrid,
     VoxelAddress, VoxelCell, compare_legacy_voxelis_u8_samples,
     materialize_legacy_voxelis_u8_chunk_paged_storage,
+    materialize_legacy_voxelis_u8_exact_surface_triangle_mesh,
 };
 use proptest::prelude::*;
 use voxelis::{
@@ -122,6 +123,64 @@ fn legacy_voxelis_chunk_paged_materialization_rejects_depth_mismatch_as_evidence
     assert!(!report.exhaustive_chunk_port_ready);
     assert!(!report.exact_voxelization_ready);
     assert!(paged.is_empty());
+}
+
+#[test]
+fn legacy_voxelis_exact_surface_mesh_handoff_preserves_storage_boundary_only() {
+    let frame = GridFrame::builder().depth(2).build().unwrap();
+    let shape = ChunkShape::new(1).unwrap();
+    let mut interner = VoxInterner::<u8>::with_memory_budget(8192);
+    let mut tree = VoxTree::<u8>::new(MaxDepth::new(2));
+    assert!(tree.set(&mut interner, IVec3::new(1, 1, 1), 42));
+
+    let (paged, report) =
+        materialize_legacy_voxelis_u8_exact_surface_triangle_mesh(&tree, &interner, frame, shape)
+            .unwrap();
+
+    assert_eq!(paged.len(), 1);
+    assert_eq!(report.materialization.scanned_cells, 64);
+    assert_eq!(report.materialization.materialized_cells, 1);
+    assert!(report.materialization.exhaustive_chunk_port_ready);
+    assert_eq!(report.surface.shell.exact_faces, 6);
+    assert!(report.surface.shell.exact_paged_shell_ready);
+    assert_eq!(report.surface.mesh.report.exact_vertices, 8);
+    assert_eq!(report.surface.mesh.report.exact_triangles, 12);
+    assert!(report.surface.mesh.report.exact_face_identity_preserved);
+    assert!(report.surface.mesh.report.exact_triangle_surface_mesh_ready);
+    assert!(report.surface.vocabulary.exact_shared_mesh_vocabulary_ready);
+    assert!(report.surface.exact_paged_triangle_mesh_ready);
+    assert!(report.exact_legacy_storage_surface_ready);
+    assert_eq!(report.adapter.kind, LegacyAdapterKind::VoxelisStorage);
+    assert!(!report.adapter.exact_replay);
+    assert!(!report.exact_voxelization_ready);
+    assert!(!report.materialization.exact_voxelization_ready);
+}
+
+#[test]
+fn legacy_voxelis_exact_surface_mesh_handoff_rejects_depth_mismatch_and_empty_shells() {
+    let frame = GridFrame::builder().depth(3).build().unwrap();
+    let mut interner = VoxInterner::<u8>::with_memory_budget(4096);
+    let mut tree = VoxTree::<u8>::new(MaxDepth::new(2));
+    assert!(tree.set(&mut interner, IVec3::new(1, 1, 1), 4));
+
+    let (paged, report) = materialize_legacy_voxelis_u8_exact_surface_triangle_mesh(
+        &tree,
+        &interner,
+        frame,
+        ChunkShape::new(2).unwrap(),
+    )
+    .unwrap();
+
+    assert!(paged.is_empty());
+    assert!(!report.materialization.legacy_depth_matches_frame);
+    assert!(!report.materialization.exhaustive_chunk_port_ready);
+    assert_eq!(report.surface.shell.exact_faces, 0);
+    assert!(!report.surface.shell.exact_paged_shell_ready);
+    assert!(!report.surface.mesh.report.exact_triangle_surface_mesh_ready);
+    assert!(!report.surface.vocabulary.exact_shared_mesh_vocabulary_ready);
+    assert!(!report.surface.exact_paged_triangle_mesh_ready);
+    assert!(!report.exact_legacy_storage_surface_ready);
+    assert!(!report.exact_voxelization_ready);
 }
 
 #[test]
@@ -271,6 +330,39 @@ proptest! {
             paged.get(address).unwrap(),
             VoxelCell::material(MaterialRegionId(u32::from(value)))
         );
+        prop_assert!(!report.exact_voxelization_ready);
+    }
+
+    #[test]
+    fn generated_legacy_voxelis_exact_surface_mesh_replays_single_leaf_surface(
+        depth in 1_u8..4,
+        x in 0_u64..8,
+        y in 0_u64..8,
+        z in 0_u64..8,
+        value in 1_u8..=u8::MAX,
+        shape_log2 in 0_u8..3,
+    ) {
+        let cells = 1_u64 << depth;
+        let xyz = [x % cells, y % cells, z % cells];
+        let frame = GridFrame::builder().depth(depth).build().unwrap();
+        let shape = ChunkShape::new(shape_log2).unwrap();
+
+        let mut interner = VoxInterner::<u8>::with_memory_budget(8192);
+        let mut tree = VoxTree::<u8>::new(MaxDepth::new(depth));
+        prop_assert!(tree.set(
+            &mut interner,
+            IVec3::new(xyz[0] as i32, xyz[1] as i32, xyz[2] as i32),
+            value,
+        ));
+
+        let (paged, report) =
+            materialize_legacy_voxelis_u8_exact_surface_triangle_mesh(&tree, &interner, frame, shape).unwrap();
+        prop_assert_eq!(paged.len(), 1);
+        prop_assert!(report.materialization.exhaustive_chunk_port_ready);
+        prop_assert_eq!(report.surface.shell.exact_faces, 6);
+        prop_assert_eq!(report.surface.mesh.report.exact_triangles, 12);
+        prop_assert!(report.surface.vocabulary.exact_shared_mesh_vocabulary_ready);
+        prop_assert!(report.exact_legacy_storage_surface_ready);
         prop_assert!(!report.exact_voxelization_ready);
     }
 }

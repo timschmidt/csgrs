@@ -272,7 +272,9 @@ pub use triangle_prepared::{
 };
 #[cfg(feature = "legacy-voxelis")]
 pub use voxelis_adapter::{
-    LegacyVoxelisChunkPagedMaterializationReport, LegacyVoxelisStorageDiffReport,
-    compare_legacy_voxelis_u8_samples, materialize_legacy_voxelis_u8_chunk_paged_storage,
+    LegacyVoxelisChunkPagedMaterializationReport, LegacyVoxelisExactSurfaceTriangleMeshReport,
+    LegacyVoxelisStorageDiffReport, compare_legacy_voxelis_u8_samples,
+    materialize_legacy_voxelis_u8_chunk_paged_storage,
+    materialize_legacy_voxelis_u8_exact_surface_triangle_mesh,
 };
 pub use voxelize::{ExactBox, ExactBoxReport, VoxelBoxClassifier, voxelize_exact_box};
