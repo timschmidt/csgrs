@@ -485,6 +485,17 @@ fn path_predicates(c: &mut Criterion) {
             )
         })
     });
+    let line_cubic_cell = CubicBezier::new(p(0, 0), p(0, 500), p(1000, 500), p(1000, 0));
+    let line_cubic_cell_line = LinePathSegment::new(p(0, 0), p(1000, 0));
+    c.bench_function("line_cubic_bezier_exact_cell_graph", |b| {
+        b.iter(|| {
+            arrange_line_segments_with_cubic_beziers(
+                std::slice::from_ref(&line_cubic_cell_line),
+                std::slice::from_ref(&line_cubic_cell),
+                PredicatePolicy::default(),
+            )
+        })
+    });
     let line_cubic_overlap =
         CubicBezier::new(p(0, 0), pq(1000, 3, 0, 1), pq(2000, 3, 0, 1), p(1000, 0));
     let line_cubic_overlap_line = LinePathSegment::new(p(250, 0), p(750, 0));

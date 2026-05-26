@@ -29,6 +29,9 @@ use crate::bezier_arrangement::{
     LineCubicBezierInverseBoundarySource, LineCubicBezierSupportOverlap,
     intersect_axis_aligned_line_cubic_bezier,
 };
+use crate::curve_cell::{
+    CurveArrangementCellError, CurveArrangementCellGraph, build_line_cubic_cell_graph,
+};
 use crate::provenance::PathProvenance;
 use crate::segment::{Axis, LinePathSegment};
 
@@ -43,6 +46,10 @@ pub enum LineCubicBezierArrangementError {
     UndecidableCubicOrder { curve: usize },
     /// The same geometric point could not be de-duplicated exactly.
     UndecidablePointEquality,
+    /// Exact tangent ordering of incident mixed line/cubic fragments was undecidable.
+    UndecidableCellOrder { vertex: usize },
+    /// Exact polynomial Green-integral area replay was unavailable for a retained cell edge.
+    UndecidableCellArea { edge: usize },
 }
 
 /// Exact event between one retained line segment and one cubic Bezier.
@@ -615,7 +622,7 @@ pub struct LineCubicBezierArrangementFacts {
     pub provenance: PathProvenance,
 }
 
-/// Retained mixed line/cubic-Bezier arrangement schedule.
+/// Retained mixed line/cubic-Bezier arrangement schedule and cell graph.
 ///
 /// Certified events are replayed into sorted split parameters before fragments
 /// are emitted. Unknown relations do not add breakpoints. Cubic fragments are
@@ -625,7 +632,12 @@ pub struct LineCubicBezierArrangementFacts {
 /// predicate replay are separated, and unsupported roots remain report states.
 /// The cubic restriction formula is de Casteljau's affine subdivision written
 /// in endpoint/derivative form; see Farouki, *Pythagorean Hodograph Curves*
-/// (2008), for the same retained polynomial-curve discipline.
+/// (2008), for the same retained polynomial-curve discipline. Certified
+/// native line/cubic fragments also feed a retained curve cell graph whose
+/// half-edges are ordered by exact endpoint tangents and whose nonzero face
+/// walks replay exact polynomial Green-integral area; represented algebraic
+/// roots stay in the retained evidence fields until exact materialization is
+/// available.
 #[derive(Clone, Debug, PartialEq)]
 pub struct LineCubicBezierArrangementReport {
     /// Retained input line segments.
@@ -671,6 +683,8 @@ pub struct LineCubicBezierArrangementReport {
     pub line_fragments: Vec<MixedCubicLineArrangementFragment>,
     /// Positive-length cubic Bezier fragments.
     pub cubic_fragments: Vec<CubicBezierRealFragment>,
+    /// Exact retained curve cell graph induced by native line and cubic fragments.
+    pub cell_graph: CurveArrangementCellGraph,
     /// Cached exact facts for the retained schedule.
     pub facts: LineCubicBezierArrangementFacts,
 }
@@ -807,6 +821,8 @@ pub fn arrange_line_segments_with_cubic_beziers_and_provenance(
     );
     let line_fragments = build_line_fragments(&line_breakpoints, policy)?;
     let cubic_fragments = build_cubic_fragments(&cubic_breakpoints, curves, policy)?;
+    let cell_graph = build_line_cubic_cell_graph(&line_fragments, &cubic_fragments, policy)
+        .map_err(line_cubic_error_from_curve_cell_error)?;
     let facts = LineCubicBezierArrangementFacts {
         input_exact: input_exact_facts(lines, curves),
         fragment_exact: fragment_exact_facts(&line_fragments, &cubic_fragments),
@@ -834,8 +850,25 @@ pub fn arrange_line_segments_with_cubic_beziers_and_provenance(
         cubic_breakpoints,
         line_fragments,
         cubic_fragments,
+        cell_graph,
         facts,
     })
+}
+
+fn line_cubic_error_from_curve_cell_error(
+    error: CurveArrangementCellError,
+) -> LineCubicBezierArrangementError {
+    match error {
+        CurveArrangementCellError::UndecidablePointEquality => {
+            LineCubicBezierArrangementError::UndecidablePointEquality
+        }
+        CurveArrangementCellError::UndecidableCellOrder { vertex } => {
+            LineCubicBezierArrangementError::UndecidableCellOrder { vertex }
+        }
+        CurveArrangementCellError::UndecidableCellArea { edge } => {
+            LineCubicBezierArrangementError::UndecidableCellArea { edge }
+        }
+    }
 }
 
 fn reject_degenerate_lines(

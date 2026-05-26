@@ -201,6 +201,23 @@ fuzz_target!(|data: &[u8]| {
         LineCubicBezierIntersectionClass::TwoPoints
     );
     assert_eq!(cubic_mixed_report.cubic_fragments.len(), 3);
+    assert_eq!(
+        cubic_mixed_report.cell_graph.half_edges.len(),
+        cubic_mixed_report.cell_graph.edges.len() * 2
+    );
+    let cubic_cell_curve = CubicBezier::new(p(0, 0), p(0, 4), p(8, 4), p(8, 0));
+    let cubic_cell_line = LinePathSegment::new(p(0, 0), p(8, 0));
+    let cubic_cell_report = arrange_line_segments_with_cubic_beziers(
+        &[cubic_cell_line],
+        &[cubic_cell_curve],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert!(cubic_cell_report.cell_graph.faces.iter().any(|face| {
+        face.class == CurveArrangementCellFaceClass::Bounded
+            && face.signed_area_twice
+                == Real::new(Rational::new(192) / Rational::new(5))
+    }));
 
     let cubic_overlap_curve = CubicBezier::new(p(0, 0), pq(8, 3, 0, 1), pq(16, 3, 0, 1), p(8, 0));
     let cubic_overlap_line = LinePathSegment::new(p(2, 0), p(6, 0));
