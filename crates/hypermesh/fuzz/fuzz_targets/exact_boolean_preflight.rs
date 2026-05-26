@@ -1558,6 +1558,12 @@ fn exercise_exact_boolmesh_bounds_disjoint_port() {
         assert_eq!(size_output.inserted_intersection_vertices, 0);
         assert_eq!(size_output.source_edge_incident_gaps, 0);
         assert!(size_output.face_halfedge_offsets.windows(2).all(|window| window[0] <= window[1]));
+        assert_eq!(
+            size_output.vertex_allocation.output_vertex_origins.len(),
+            size_output.vertices_from_left
+                + size_output.vertices_from_right
+                + size_output.inserted_intersection_vertices
+        );
         let execution = hypermesh::exact::execute_exact_boolmesh_bounds_disjoint(
             &left,
             &right,
@@ -1611,6 +1617,12 @@ fn exercise_exact_boolmesh_kernel12_port() {
     assert_eq!(size_output.source_edge_incident_gaps, 0);
     assert!(size_output.face_halfedge_offsets.windows(2).all(|window| window[0] <= window[1]));
     assert_eq!(
+        size_output.vertex_allocation.output_vertex_origins.len(),
+        size_output.vertices_from_left
+            + size_output.vertices_from_right
+            + size_output.inserted_intersection_vertices
+    );
+    assert_eq!(
         workspace
             .pair_up
             .source_edge_runs
@@ -1627,6 +1639,17 @@ fn exercise_exact_boolmesh_kernel12_port() {
         .source_face_to_output_face
         .push(Some(0));
     assert!(malformed.validate_against_sources(&left, &right).is_err());
+    let mut malformed_allocation = workspace.clone();
+    malformed_allocation
+        .boolean45
+        .as_mut()
+        .unwrap()
+        .vertex_allocation
+        .output_vertex_origins
+        .clear();
+    assert!(malformed_allocation
+        .validate_against_sources(&left, &right)
+        .is_err());
 }
 
 fn exercise_partial_convex_union_boundary() {

@@ -33088,6 +33088,20 @@ fn exact_boolmesh_workspace_executes_bounds_disjoint_slice() {
         size_output.face_halfedge_offsets.last().copied(),
         Some((left.triangles().len() + right.triangles().len()) * 3)
     );
+    assert_eq!(
+        size_output.vertex_allocation.output_vertex_origins.len(),
+        left.vertices().len() + right.vertices().len()
+    );
+    assert_eq!(
+        size_output.vertex_allocation.left_vertex_output_starts,
+        (0..left.vertices().len()).map(Some).collect::<Vec<_>>()
+    );
+    assert_eq!(
+        size_output.vertex_allocation.right_vertex_output_starts,
+        (left.vertices().len()..left.vertices().len() + right.vertices().len())
+            .map(Some)
+            .collect::<Vec<_>>()
+    );
 
     let union = hypermesh::exact::execute_exact_boolmesh_bounds_disjoint(
         &left,
@@ -33126,6 +33140,12 @@ fn exact_boolmesh_workspace_executes_bounds_disjoint_slice() {
         intersection_size_output.face_halfedge_offsets.as_slice(),
         &[0]
     );
+    assert!(
+        intersection_size_output
+            .vertex_allocation
+            .output_vertex_origins
+            .is_empty()
+    );
 
     let difference = hypermesh::exact::execute_exact_boolmesh_bounds_disjoint(
         &left,
@@ -33154,6 +33174,20 @@ fn exact_boolmesh_workspace_executes_bounds_disjoint_slice() {
             .flatten()
             .count(),
         left.triangles().len()
+    );
+    assert_eq!(
+        difference_size_output
+            .vertex_allocation
+            .output_vertex_origins
+            .len(),
+        left.vertices().len()
+    );
+    assert!(
+        difference_size_output
+            .vertex_allocation
+            .right_vertex_output_starts
+            .iter()
+            .all(Option::is_none)
     );
 }
 
@@ -33273,6 +33307,41 @@ fn exact_boolmesh_kernel12_discovers_skew_edge_face_events() {
         size_output.inserted_intersection_vertices,
         workspace.boolean03.p1q2.len() + workspace.boolean03.p2q1.len()
     );
+    assert_eq!(
+        size_output.vertex_allocation.output_vertex_origins.len(),
+        size_output.inserted_intersection_vertices
+    );
+    assert!(
+        size_output
+            .vertex_allocation
+            .left_vertex_output_starts
+            .iter()
+            .chain(
+                size_output
+                    .vertex_allocation
+                    .right_vertex_output_starts
+                    .iter()
+            )
+            .all(Option::is_none)
+    );
+    assert_eq!(
+        size_output
+            .vertex_allocation
+            .p1q2_output_starts
+            .iter()
+            .filter(|start| start.is_some())
+            .count(),
+        workspace.boolean03.p1q2.len()
+    );
+    assert_eq!(
+        size_output
+            .vertex_allocation
+            .p2q1_output_starts
+            .iter()
+            .filter(|start| start.is_some())
+            .count(),
+        workspace.boolean03.p2q1.len()
+    );
     assert_eq!(size_output.source_edge_incident_gaps, 0);
     assert_eq!(size_output.face_halfedge_offsets.first().copied(), Some(0));
     assert!(
@@ -33358,6 +33427,24 @@ fn exact_boolmesh_kernel12_discovers_skew_edge_face_events() {
             .validate_against_sources(&left, &right)
             .unwrap_err(),
         hypermesh::exact::ExactBoolMeshValidationError::Boolean45SizeCountMismatch
+    );
+
+    let mut malformed_vertex_allocation = workspace.clone();
+    let allocation = &mut malformed_vertex_allocation
+        .boolean45
+        .as_mut()
+        .unwrap()
+        .vertex_allocation;
+    if let Some(start) = allocation.p1q2_output_starts.first_mut() {
+        *start = Some(usize::MAX);
+    } else {
+        allocation.p2q1_output_starts[0] = Some(usize::MAX);
+    }
+    assert_eq!(
+        malformed_vertex_allocation
+            .validate_against_sources(&left, &right)
+            .unwrap_err(),
+        hypermesh::exact::ExactBoolMeshValidationError::Boolean45VertexAllocationMismatch
     );
 }
 

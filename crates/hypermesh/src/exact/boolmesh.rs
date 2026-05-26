@@ -323,6 +323,55 @@ pub struct ExactBoolMeshBoolean03 {
     pub w30: Vec<i32>,
 }
 
+/// Exact output-vertex origin allocated by `boolean45`.
+///
+/// Legacy boolmesh stores only the output vertex id ranges produced by
+/// `exclusive_scan` and immediately duplicates primitive coordinates into
+/// `ps_r`.  The exact port keeps the same allocation order, but records a
+/// replayable origin for each slot so the later halfedge and triangulation
+/// stages can construct coordinates from exact source or `kernel12` evidence.
+#[cfg(feature = "exact-triangulation")]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ExactBoolMeshOutputVertexOrigin {
+    /// Retained source vertex copy from one operand.
+    SourceVertex {
+        /// Source vertex handle.
+        source: ExactBoolMeshSourceVertex,
+        /// Duplicate index for signed inclusion counts with magnitude > 1.
+        copy: usize,
+    },
+    /// Exact `v12` construction copied from a left-edge/right-face event.
+    Kernel12LeftEdgeRightFace {
+        /// Event index in `Boolean03::p1q2`/`x12`/`v12`.
+        event: usize,
+        /// Duplicate index for signed event multiplicity with magnitude > 1.
+        copy: usize,
+    },
+    /// Exact `v21` construction copied from a right-edge/left-face event.
+    Kernel12RightEdgeLeftFace {
+        /// Event index in `Boolean03::p2q1`/`x21`/`v21`.
+        event: usize,
+        /// Duplicate index for signed event multiplicity with magnitude > 1.
+        copy: usize,
+    },
+}
+
+/// Output vertex allocation produced before exact `boolean45` edge emission.
+#[cfg(feature = "exact-triangulation")]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ExactBoolMeshOutputVertexAllocation {
+    /// Output vertex start for each retained left source vertex.
+    pub left_vertex_output_starts: Vec<Option<usize>>,
+    /// Output vertex start for each retained right source vertex.
+    pub right_vertex_output_starts: Vec<Option<usize>>,
+    /// Output vertex start for each `p1q2` intersection construction.
+    pub p1q2_output_starts: Vec<Option<usize>>,
+    /// Output vertex start for each `p2q1` intersection construction.
+    pub p2q1_output_starts: Vec<Option<usize>>,
+    /// Output vertex origins in legacy boolmesh allocation order.
+    pub output_vertex_origins: Vec<ExactBoolMeshOutputVertexOrigin>,
+}
+
 /// Exact `boolean45`-shaped output staging metadata.
 #[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -335,6 +384,8 @@ pub struct ExactBoolMeshBoolean45Stage {
     pub face_halfedge_offsets: Vec<usize>,
     /// Source-face to output-face map, legacy `face_pq2r`.
     pub source_face_to_output_face: Vec<Option<usize>>,
+    /// Exact output vertex allocation, legacy `vid_*2r` plus duplicated `ps_r`.
+    pub vertex_allocation: ExactBoolMeshOutputVertexAllocation,
     /// Number of vertices copied from the left operand.
     pub vertices_from_left: usize,
     /// Number of vertices copied from the right operand.
@@ -667,6 +718,8 @@ pub enum ExactBoolMeshValidationError {
     Boolean45OffsetMismatch,
     /// A `boolean45::size_output` stage has stale retained/new vertex totals.
     Boolean45SizeCountMismatch,
+    /// A `boolean45` output-vertex allocation does not match `Boolean03`.
+    Boolean45VertexAllocationMismatch,
     /// Blocker candidate counts do not match retained candidates.
     BlockerCountMismatch,
     /// A non-disjoint workspace had no named boolmesh-stage blocker.
@@ -1068,6 +1121,133 @@ fn validate_boolean45_stage(
         || stage.inserted_intersection_vertices != expected_intersection_vertices
     {
         return Err(ExactBoolMeshValidationError::Boolean45SizeCountMismatch);
+    }
+    validate_boolean45_vertex_allocation(
+        &stage.vertex_allocation,
+        boolean03,
+        left_base,
+        right_base,
+        crossing_sign,
+    )?;
+    Ok(())
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn validate_boolean45_vertex_allocation(
+    allocation: &ExactBoolMeshOutputVertexAllocation,
+    boolean03: &ExactBoolMeshBoolean03,
+    left_base: i32,
+    right_base: i32,
+    crossing_sign: i32,
+) -> Result<(), ExactBoolMeshValidationError> {
+    if allocation.left_vertex_output_starts.len() != boolean03.w03.len()
+        || allocation.right_vertex_output_starts.len() != boolean03.w30.len()
+        || allocation.p1q2_output_starts.len() != boolean03.x12.len()
+        || allocation.p2q1_output_starts.len() != boolean03.x21.len()
+    {
+        return Err(ExactBoolMeshValidationError::Boolean45VertexAllocationMismatch);
+    }
+
+    let mut expected_origins = Vec::new();
+    validate_source_vertex_runs(
+        ExactBoolMeshSide::Left,
+        &boolean03
+            .w03
+            .iter()
+            .map(|winding| left_base + crossing_sign * winding)
+            .collect::<Vec<_>>(),
+        &allocation.left_vertex_output_starts,
+        &mut expected_origins,
+    )?;
+    validate_source_vertex_runs(
+        ExactBoolMeshSide::Right,
+        &boolean03
+            .w30
+            .iter()
+            .map(|winding| right_base + crossing_sign * winding)
+            .collect::<Vec<_>>(),
+        &allocation.right_vertex_output_starts,
+        &mut expected_origins,
+    )?;
+    validate_kernel12_vertex_runs(
+        &boolean03
+            .x12
+            .iter()
+            .map(|crossing| crossing_sign * crossing)
+            .collect::<Vec<_>>(),
+        &allocation.p1q2_output_starts,
+        |event, copy| ExactBoolMeshOutputVertexOrigin::Kernel12LeftEdgeRightFace { event, copy },
+        &mut expected_origins,
+    )?;
+    validate_kernel12_vertex_runs(
+        &boolean03
+            .x21
+            .iter()
+            .map(|crossing| crossing_sign * crossing)
+            .collect::<Vec<_>>(),
+        &allocation.p2q1_output_starts,
+        |event, copy| ExactBoolMeshOutputVertexOrigin::Kernel12RightEdgeLeftFace { event, copy },
+        &mut expected_origins,
+    )?;
+
+    if allocation.output_vertex_origins != expected_origins {
+        return Err(ExactBoolMeshValidationError::Boolean45VertexAllocationMismatch);
+    }
+    Ok(())
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn validate_source_vertex_runs(
+    side: ExactBoolMeshSide,
+    signed_counts: &[i32],
+    starts: &[Option<usize>],
+    expected_origins: &mut Vec<ExactBoolMeshOutputVertexOrigin>,
+) -> Result<(), ExactBoolMeshValidationError> {
+    for (vertex, signed_count) in signed_counts.iter().enumerate() {
+        let count = signed_abs_i32(*signed_count);
+        if count == 0 {
+            if starts[vertex].is_some() {
+                return Err(ExactBoolMeshValidationError::Boolean45VertexAllocationMismatch);
+            }
+            continue;
+        }
+        if starts[vertex] != Some(expected_origins.len()) {
+            return Err(ExactBoolMeshValidationError::Boolean45VertexAllocationMismatch);
+        }
+        for copy in 0..count {
+            expected_origins.push(ExactBoolMeshOutputVertexOrigin::SourceVertex {
+                source: ExactBoolMeshSourceVertex { side, vertex },
+                copy,
+            });
+        }
+    }
+    Ok(())
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn validate_kernel12_vertex_runs<F>(
+    signed_counts: &[i32],
+    starts: &[Option<usize>],
+    origin: F,
+    expected_origins: &mut Vec<ExactBoolMeshOutputVertexOrigin>,
+) -> Result<(), ExactBoolMeshValidationError>
+where
+    F: Fn(usize, usize) -> ExactBoolMeshOutputVertexOrigin,
+{
+    for (event, signed_count) in signed_counts.iter().enumerate() {
+        let count = signed_abs_i32(*signed_count);
+        if count == 0 {
+            if starts[event].is_some() {
+                return Err(ExactBoolMeshValidationError::Boolean45VertexAllocationMismatch);
+            }
+            continue;
+        }
+        if starts[event] != Some(expected_origins.len()) {
+            return Err(ExactBoolMeshValidationError::Boolean45VertexAllocationMismatch);
+        }
+        for copy in 0..count {
+            expected_origins.push(origin(event, copy));
+        }
     }
     Ok(())
 }

@@ -21,8 +21,9 @@ use crate::exact::mesh::{ExactMesh, Triangle};
 
 use super::{
     ExactBoolMeshBoolean03, ExactBoolMeshBoolean45Stage, ExactBoolMeshEdgeEvent,
-    ExactBoolMeshEdgeFacePair, ExactBoolMeshPairUpStage, ExactBoolMeshPairedEdgeFragment,
-    ExactBoolMeshSide, ExactBoolMeshSourceEdgeRun,
+    ExactBoolMeshEdgeFacePair, ExactBoolMeshOutputVertexAllocation,
+    ExactBoolMeshOutputVertexOrigin, ExactBoolMeshPairUpStage, ExactBoolMeshPairedEdgeFragment,
+    ExactBoolMeshSide, ExactBoolMeshSourceEdgeRun, ExactBoolMeshSourceVertex,
 };
 
 /// Build the exact `boolean45::size_output` staging record.
@@ -38,6 +39,10 @@ use super::{
 /// 7.1-2 (1997), motivates keeping this as replayable integer topology
 /// staging rather than constructing coordinates during sizing.  The counting
 /// semantics themselves follow the boolmesh `boolean45::size_output` kernel.
+/// The vertex allocation below is the exact counterpart of boolmesh's
+/// `exclusive_scan` ranges and `duplicate_verts` calls; exact coordinate
+/// construction is deferred, which is the separation between topology and
+/// numeric objects required by Yap's exact-computation paradigm.
 pub(super) fn size_output_stage(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -65,6 +70,7 @@ pub(super) fn size_output_stage(
         .iter()
         .map(|crossing| crossing_sign * crossing)
         .collect::<Vec<_>>();
+    let vertex_allocation = allocate_output_vertices(&i03, &i30, &i12, &i21);
 
     let mut left_face_halfedge_counts = retained_vertex_counts(left.triangles(), &i03);
     let mut right_face_halfedge_counts = retained_vertex_counts(right.triangles(), &i30);
@@ -112,6 +118,7 @@ pub(super) fn size_output_stage(
         right_face_halfedge_counts,
         face_halfedge_offsets,
         source_face_to_output_face,
+        vertex_allocation,
         vertices_from_left: i03.iter().map(|value| signed_abs(*value)).sum(),
         vertices_from_right: i30.iter().map(|value| signed_abs(*value)).sum(),
         inserted_intersection_vertices: i12
@@ -234,6 +241,87 @@ fn retained_vertex_counts(triangles: &[Triangle], vertex_counts: &[i32]) -> Vec<
                 .filter_map(|vertex| vertex_counts.get(*vertex))
                 .map(|count| signed_abs(*count))
                 .sum()
+        })
+        .collect()
+}
+
+fn allocate_output_vertices(
+    i03: &[i32],
+    i30: &[i32],
+    i12: &[i32],
+    i21: &[i32],
+) -> ExactBoolMeshOutputVertexAllocation {
+    let mut output_vertex_origins = Vec::new();
+    let left_vertex_output_starts =
+        allocate_source_vertices(ExactBoolMeshSide::Left, i03, &mut output_vertex_origins);
+    let right_vertex_output_starts =
+        allocate_source_vertices(ExactBoolMeshSide::Right, i30, &mut output_vertex_origins);
+    let p1q2_output_starts = allocate_kernel12_vertices(
+        i12,
+        |event, copy| ExactBoolMeshOutputVertexOrigin::Kernel12LeftEdgeRightFace { event, copy },
+        &mut output_vertex_origins,
+    );
+    let p2q1_output_starts = allocate_kernel12_vertices(
+        i21,
+        |event, copy| ExactBoolMeshOutputVertexOrigin::Kernel12RightEdgeLeftFace { event, copy },
+        &mut output_vertex_origins,
+    );
+
+    ExactBoolMeshOutputVertexAllocation {
+        left_vertex_output_starts,
+        right_vertex_output_starts,
+        p1q2_output_starts,
+        p2q1_output_starts,
+        output_vertex_origins,
+    }
+}
+
+fn allocate_source_vertices(
+    side: ExactBoolMeshSide,
+    signed_counts: &[i32],
+    output_vertex_origins: &mut Vec<ExactBoolMeshOutputVertexOrigin>,
+) -> Vec<Option<usize>> {
+    signed_counts
+        .iter()
+        .enumerate()
+        .map(|(vertex, signed_count)| {
+            let count = signed_abs(*signed_count);
+            if count == 0 {
+                return None;
+            }
+            let start = output_vertex_origins.len();
+            for copy in 0..count {
+                output_vertex_origins.push(ExactBoolMeshOutputVertexOrigin::SourceVertex {
+                    source: ExactBoolMeshSourceVertex { side, vertex },
+                    copy,
+                });
+            }
+            Some(start)
+        })
+        .collect()
+}
+
+fn allocate_kernel12_vertices<F>(
+    signed_counts: &[i32],
+    origin: F,
+    output_vertex_origins: &mut Vec<ExactBoolMeshOutputVertexOrigin>,
+) -> Vec<Option<usize>>
+where
+    F: Fn(usize, usize) -> ExactBoolMeshOutputVertexOrigin,
+{
+    signed_counts
+        .iter()
+        .enumerate()
+        .map(|(event, signed_count)| {
+            let count = signed_abs(*signed_count);
+            if count == 0 {
+                return None;
+            }
+            let start = output_vertex_origins.len();
+            for copy in 0..count {
+                output_vertex_origins.push(origin(event, copy));
+            }
+            Some(start)
         })
         .collect()
 }

@@ -13037,6 +13037,7 @@ fn exact_boolmesh_bounds_disjoint_port(c: &mut Criterion) {
                     + size_output.face_halfedge_offsets.len()
                     + size_output.vertices_from_left
                     + size_output.vertices_from_right
+                    + size_output.vertex_allocation.output_vertex_origins.len()
             })
         });
     }
@@ -13093,6 +13094,7 @@ fn exact_boolmesh_kernel12_port(c: &mut Criterion) {
                             stage.face_halfedge_offsets.len()
                                 + stage.inserted_intersection_vertices
                                 + stage.source_face_to_output_face.len()
+                                + stage.vertex_allocation.output_vertex_origins.len()
                         })
                         .unwrap_or(0)
             })
