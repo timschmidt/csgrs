@@ -26134,7 +26134,7 @@ fn exact_coplanar_component_holed_intersection_merges_same_outer_holes() {
     .unwrap();
 
     let nonrect_bridge_hole = ExactMesh::from_i64_triangles_with_policy(
-        &[3, 3, 0, 7, 3, 0, 7, 7, 0, 3, 6, 0],
+        &[3, 3, 0, 7, 3, 0, 8, 8, 0, 3, 7, 0],
         &[0, 1, 2, 0, 2, 3],
         ValidationPolicy::ALLOW_BOUNDARY,
     )
@@ -26145,14 +26145,54 @@ fn exact_coplanar_component_holed_intersection_merges_same_outer_holes() {
     )
     .expect("same-outer nonrectangular bridge-hole fixture should materialize")
     .mesh;
-    assert!(
+    let nonrect_bridge_intersection =
         hypermesh::exact::arrange_coplanar_surface_component_holed_intersection(
             &bridge_left,
             &nonrect_bridge,
         )
-        .is_none(),
-        "the rectangular bridge shortcut must not accept nonrectangular retained-hole unions"
+        .expect("convex nonrectangular bridge should replay as one retained-hole union");
+    nonrect_bridge_intersection.validate().unwrap();
+    nonrect_bridge_intersection
+        .validate_intersection_against_sources(&bridge_left, &nonrect_bridge)
+        .unwrap();
+    assert_eq!(nonrect_bridge_intersection.components.len(), 1);
+    assert_eq!(nonrect_bridge_intersection.components[0].holes.len(), 1);
+    assert!(
+        nonrect_bridge_intersection.components[0].holes[0].len() > 8,
+        "nonrectangular bridge should retain the exact convex-union boundary"
     );
+    assert_eq!(
+        hypermesh::exact::arrange_coplanar_surface_component_holed_intersection(
+            &nonrect_bridge,
+            &bridge_left,
+        ),
+        Some(nonrect_bridge_intersection)
+    );
+    let nonrect_bridge_preflight = hypermesh::exact::preflight_boolean_exact(
+        &bridge_left,
+        &nonrect_bridge,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+    )
+    .expect("nonrectangular convex bridge preflight should classify shortcut");
+    nonrect_bridge_preflight.validate().unwrap();
+    nonrect_bridge_preflight
+        .validate_against_sources(&bridge_left, &nonrect_bridge)
+        .unwrap();
+    hypermesh::exact::boolean_exact(
+        &bridge_left,
+        &nonrect_bridge,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("nonrectangular convex bridge boolean should materialize")
+    .validate_operation_against_sources(
+        &bridge_left,
+        &nonrect_bridge,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
 
     let touching_hole = ExactMesh::from_i64_triangles_with_policy(
         &[4, 2, 0, 6, 2, 0, 6, 4, 0, 4, 4, 0],

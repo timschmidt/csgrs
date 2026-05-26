@@ -3271,26 +3271,28 @@ pub fn arrange_coplanar_surface_component_holed_intersection(
 /// accepts only equal retained outer rings; the result keeps that outer ring
 /// and the exact union of both operands' retained holes. Identical holes are
 /// deduplicated, strictly nested holes collapse to the larger removed region,
-/// and disjoint holes are retained independently. The bounded rectangular
-/// overlap case is also accepted when both overlapping holes are exact
-/// projected axis-aligned rectangles and their removed union replays as one
-/// exact simple orthogonal retained hole. Touching, crossing, or
-/// nonrectangular partial overlaps reject to the general planar arrangement
-/// layer. This is a legitimate Boolean intersection because the complement of
-/// each retained hole is part of the source object: intersecting two
-/// equal-outer holed sheets removes the union of their holes.
+/// and disjoint holes are retained independently. Bounded overlap components
+/// are accepted when all participating retained holes are strictly convex,
+/// their positive-area overlap graph is connected, and their removed union
+/// replays as one exact simple retained hole. Touching, crossing, disconnected
+/// overlap components, or nonconvex partial overlaps reject to the general
+/// planar arrangement layer. This is a legitimate Boolean intersection
+/// because the complement of each retained hole is part of the source object:
+/// intersecting two equal-outer holed sheets removes the union of their holes.
 ///
 /// Boundary rings still come from exact mesh incidence and the final retained
 /// area must equal the pairwise source-triangle intersection area. That is the
 /// retained object/predicate split advocated by Yap, "Towards Exact Geometric
 /// Computation," *Computational Geometry* 7.1-2 (1997). The local face clips
 /// use Sutherland and Hodgman's half-plane clipping model from "Reentrant
-/// Polygon Clipping," *Communications of the ACM* 17.1 (1974). Rectangular
-/// overlap replay is a bounded orthogonal-cell subdivision in the sense of de
-/// Berg, Cheong, van Kreveld, and Overmars, *Computational Geometry:
-/// Algorithms and Applications*, 3rd ed. (2008), Chapter 2. Triangulation
-/// follows Held, "FIST: Fast Industrial-Strength Triangulation of Polygons,"
-/// *Algorithmica* 30 (2001), through `hypertri`'s exact earcut adapter.
+/// Polygon Clipping," *Communications of the ACM* 17.1 (1974). Convex removed
+/// union replay follows Weiler and Atherton, "Hidden Surface Removal Using
+/// Polygon Area Sorting," *SIGGRAPH Computer Graphics* 11.2 (1977), with the
+/// finite inclusion-exclusion area certificate used for convex arrangements
+/// in de Berg, Cheong, van Kreveld, and Overmars, *Computational Geometry:
+/// Algorithms and Applications*, 3rd ed. (2008). Triangulation follows Held,
+/// "FIST: Fast Industrial-Strength Triangulation of Polygons," *Algorithmica*
+/// 30 (2001), through `hypertri`'s exact earcut adapter.
 #[cfg(feature = "exact-triangulation")]
 fn arrange_coplanar_surface_component_holed_same_outer_intersection(
     left: &ExactMesh,
@@ -3313,7 +3315,11 @@ fn arrange_coplanar_surface_component_holed_same_outer_intersection(
     let mut retained_components = Vec::new();
     for left_component in &left_components {
         for right_component in &right_components {
-            if polygons_equal(&left_component.outer, &right_component.outer) {
+            if polygons_equal_modulo_collinear(
+                &left_component.outer,
+                &right_component.outer,
+                projection,
+            ) {
                 let mut outer = left_component.outer.clone();
                 orient_polygon_ccw(&mut outer, projection)?;
                 let mut holes = merged_same_outer_intersection_holes(
@@ -3322,7 +3328,7 @@ fn arrange_coplanar_surface_component_holed_same_outer_intersection(
                     projection,
                 )?;
                 sort_polygons_for_replay(&mut holes, projection);
-                split_outer_for_single_orthogonal_hole_bridge(&mut outer, &holes, projection)?;
+                split_outer_for_single_hole_bridge(&mut outer, &holes, projection)?;
                 retained_components.push(CoplanarConvexHoledComponent { outer, holes });
                 continue;
             }
@@ -3383,7 +3389,11 @@ fn merged_same_outer_intersection_holes(
         holes.push(hole);
     }
     remove_nested_same_outer_intersection_holes(&mut holes, projection)?;
-    let holes = merge_same_outer_intersection_hole_components(&holes, projection)?;
+    let mut holes = merge_same_outer_intersection_hole_components(&holes, projection)?;
+    for hole in &mut holes {
+        canonicalize_polygon_start_by_min_projected_point(hole, projection);
+    }
+    sort_polygons_for_replay(&mut holes, projection);
     validate_simple_component_loops_disjoint(
         &holes,
         projection,
@@ -3473,7 +3483,7 @@ fn merge_same_outer_intersection_hole_components(
                 .into_iter()
                 .map(|index| holes[index].clone())
                 .collect::<Vec<_>>();
-            merged.push(same_outer_intersection_rectangular_hole_union_component(
+            merged.push(same_outer_intersection_convex_hole_union_component(
                 &component_holes,
                 projection,
             )?);
@@ -3482,56 +3492,38 @@ fn merge_same_outer_intersection_hole_components(
     Some(merged)
 }
 
-/// Replay the removed union of a connected rectangular retained-hole component.
+/// Replay the removed union of a connected convex retained-hole component.
 ///
-/// The only promoted partial-overlap same-outer intersection is the case where
-/// every participating retained hole is an exact projected axis-aligned
-/// rectangle and their positive-area overlap graph forms a single component.
-/// This mirrors Yap's retained-object discipline in "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997): topology is advanced
-/// from exact predicates over the source objects, then accepted only after the
-/// resulting loop validates as one simple retained hole. The rectangular cell
-/// union is the standard planar subdivision construction from de Berg,
-/// Cheong, van Kreveld, and Overmars, *Computational Geometry: Algorithms and
-/// Applications*, 3rd ed. (2008).
+/// Same-outer intersection removes `union(left_holes, right_holes)`. This
+/// certificate promotes a connected component of retained hole rings only
+/// when every source ring is strictly convex, the positive-area overlap graph
+/// connects the component, and the exact fragment stitch replays as one
+/// simple retained hole. Point-only and edge-only contact still reject,
+/// because those contacts do not prove a 2D removed owner for the Boolean
+/// topology. This is Yap's retained-object discipline from "Towards Exact
+/// Geometric Computation," *Computational Geometry* 7.1-2 (1997): topology
+/// advances from exact predicates over named source objects, then the output
+/// is accepted only after exact area replay. Boundary fragments follow Weiler
+/// and Atherton, "Hidden Surface Removal Using Polygon Area Sorting,"
+/// *SIGGRAPH Computer Graphics* 11.2 (1977), and segment predicates follow
+/// Guigue and Devillers, "Fast and Robust Triangle-Triangle Overlap Test
+/// Using Orientation Predicates," *Journal of Graphics Tools* 8.1 (2003).
 #[cfg(feature = "exact-triangulation")]
-fn same_outer_intersection_rectangular_hole_union_component(
+fn same_outer_intersection_convex_hole_union_component(
     holes: &[Vec<Point3>],
     projection: CoplanarProjection,
 ) -> Option<Vec<Point3>> {
     if holes.len() < 2 {
         return None;
     }
-    let source_rects = holes
-        .iter()
-        .map(|hole| projected_axis_aligned_rectangle(hole, projection))
-        .collect::<Option<Vec<_>>>()?;
-    let mut visited = vec![false; source_rects.len()];
-    visited[0] = true;
-    let mut stack = vec![0];
-    while let Some(current) = stack.pop() {
-        for other in 0..source_rects.len() {
-            if visited[other] {
-                continue;
-            }
-            if rectangles_overlap_with_positive_area(&source_rects[current], &source_rects[other])?
-            {
-                visited[other] = true;
-                stack.push(other);
-            }
-        }
-    }
-    if !visited.into_iter().all(|value| value) {
-        return None;
-    }
-
-    let mut union = axis_aligned_rectangle_union_polygon(&source_rects, projection)?;
+    let mut union = connected_convex_overlap_union_polygon(holes, projection)?;
     union = simplify_projected_polygon(union, projection);
     orient_polygon_cw(&mut union, projection)?;
+    canonicalize_polygon_start_by_min_projected_point(&mut union, projection);
     validate_projected_simple_loop(
         &union,
         projection,
-        "coplanar same-outer rectangular intersection hole union",
+        "coplanar same-outer convex intersection hole union",
     )
     .ok()?;
     Some(union)
@@ -3542,14 +3534,17 @@ fn same_outer_intersection_rectangular_hole_union_component(
 /// A nonconvex retained hole may need an explicit outer endpoint for the
 /// keyhole triangulation to use every retained boundary vertex. The split
 /// point is constructed exactly on the source outer boundary, horizontally
-/// aligned with the leftmost retained-hole vertex, and then validated by the
-/// ordinary component-holed output checks. This is still Yap-style retained
+/// aligned with the lexicographically leftmost retained-hole vertex, and then
+/// validated by the ordinary component-holed output checks. For a strict
+/// interior simple hole, that leftmost vertex gives an exact horizontal
+/// visibility segment to the rectangular outer boundary; the segment is a
+/// triangulation aid, not Boolean topology. This is still Yap-style retained
 /// state ("Towards Exact Geometric Computation," *Computational Geometry*
 /// 7.1-2, 1997): the bridge point is an exact construction fact, not a
 /// tolerance weld. The keyhole reduction follows Held, "FIST: Fast
 /// Industrial-Strength Triangulation of Polygons," *Algorithmica* 30 (2001).
 #[cfg(feature = "exact-triangulation")]
-fn split_outer_for_single_orthogonal_hole_bridge(
+fn split_outer_for_single_hole_bridge(
     outer: &mut Vec<Point3>,
     holes: &[Vec<Point3>],
     projection: CoplanarProjection,
@@ -3567,10 +3562,6 @@ fn split_outer_for_single_orthogonal_hole_bridge(
         return Some(());
     }
     let outer_rect = projected_axis_aligned_rectangle(outer, projection)?;
-    if !projected_polygon_edges_are_axis_aligned(hole, projection)? {
-        return None;
-    }
-
     let mut chosen_projected = project_point(hole.first()?, projection);
     for point in hole.iter().skip(1) {
         let projected = project_point(point, projection);
@@ -3610,24 +3601,6 @@ fn split_outer_for_single_orthogonal_hole_bridge(
     .ok()?;
     *outer = split;
     Some(())
-}
-
-#[cfg(feature = "exact-triangulation")]
-fn projected_polygon_edges_are_axis_aligned(
-    polygon: &[Point3],
-    projection: CoplanarProjection,
-) -> Option<bool> {
-    if polygon.len() < 3 {
-        return Some(false);
-    }
-    for edge in 0..polygon.len() {
-        let start = project_point(&polygon[edge], projection);
-        let end = project_point(&polygon[(edge + 1) % polygon.len()], projection);
-        if !real_equal(&start.x, &end.x) && !real_equal(&start.y, &end.y) {
-            return Some(false);
-        }
-    }
-    Some(true)
 }
 
 #[cfg(feature = "exact-triangulation")]
@@ -3992,7 +3965,11 @@ pub fn arrange_coplanar_surface_component_holed_difference(
     let mut retained_components = Vec::new();
     for left_component in &left_components {
         for right_component in &right_components {
-            if polygons_equal(&left_component.outer, &right_component.outer) {
+            if polygons_equal_modulo_collinear(
+                &left_component.outer,
+                &right_component.outer,
+                projection,
+            ) {
                 retained_components.extend(same_outer_holed_difference_components(
                     left_component,
                     right_component,
@@ -4207,7 +4184,11 @@ fn same_outer_holed_no_hole_difference_polygons(
     let mut polygons = Vec::new();
     for left_component in &left_components {
         for right_component in &right_components {
-            if polygons_equal(&left_component.outer, &right_component.outer) {
+            if polygons_equal_modulo_collinear(
+                &left_component.outer,
+                &right_component.outer,
+                projection,
+            ) {
                 polygons.extend(same_outer_holed_no_hole_difference_rings(
                     left_component,
                     right_component,
@@ -4507,7 +4488,11 @@ fn same_outer_holed_filled_union_polygons(
     let mut polygons = Vec::new();
     for left_component in &left_components {
         for right_component in &right_components {
-            if polygons_equal(&left_component.outer, &right_component.outer) {
+            if polygons_equal_modulo_collinear(
+                &left_component.outer,
+                &right_component.outer,
+                projection,
+            ) {
                 same_outer_holes_are_strictly_cross_disjoint(
                     &left_component.holes,
                     &right_component.holes,
@@ -4602,7 +4587,11 @@ fn same_outer_holed_retained_union(
     let mut retained_components = Vec::new();
     for (left_index, left_component) in left_components.iter().enumerate() {
         for (right_index, right_component) in right_components.iter().enumerate() {
-            if polygons_equal(&left_component.outer, &right_component.outer) {
+            if polygons_equal_modulo_collinear(
+                &left_component.outer,
+                &right_component.outer,
+                projection,
+            ) {
                 if matched_left[left_index] || matched_right[right_index] {
                     return None;
                 }
@@ -5748,6 +5737,26 @@ fn polygon_min_projected_point(polygon: &[Point3], projection: CoplanarProjectio
         .map(|point| project_point(point, projection))
         .min_by(|left, right| compare_point2(left, right).unwrap_or(Ordering::Equal))
         .unwrap_or_else(|| Point2::new(ExactReal::from(0), ExactReal::from(0)))
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn canonicalize_polygon_start_by_min_projected_point(
+    polygon: &mut [Point3],
+    projection: CoplanarProjection,
+) {
+    if polygon.len() < 2 {
+        return;
+    }
+    let Some((min_index, _)) = polygon.iter().enumerate().min_by(|(_, left), (_, right)| {
+        compare_point2(
+            &project_point(left, projection),
+            &project_point(right, projection),
+        )
+        .unwrap_or(Ordering::Equal)
+    }) else {
+        return;
+    };
+    polygon.rotate_left(min_index);
 }
 
 #[cfg(feature = "exact-triangulation")]
@@ -10904,6 +10913,72 @@ fn connected_convex_contact_union_polygon_allowing_incidental_point_touches(
     projection: CoplanarProjection,
 ) -> Option<Vec<Point3>> {
     connected_convex_union_polygon_with_contact_policy(regions, projection, false)
+}
+
+/// Stitch a simple convex union connected only by positive-area overlaps.
+///
+/// Same-outer retained-hole intersection needs the union of removed source
+/// holes, but an edge-only or point-only contact between holes would be a
+/// lower-dimensional topological assertion rather than a retained 2D owner.
+/// This helper is therefore stricter than
+/// [`connected_convex_contact_union_polygon`]: every graph edge must be a
+/// positive-area overlap, while disjoint pairs are allowed only when other
+/// overlaps connect the full component. The final boundary and finite
+/// inclusion-exclusion area are replayed exactly, matching Yap, "Towards
+/// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997).
+#[cfg(feature = "exact-triangulation")]
+fn connected_convex_overlap_union_polygon(
+    regions: &[Vec<Point3>],
+    projection: CoplanarProjection,
+) -> Option<Vec<Point3>> {
+    if regions.len() < 2 {
+        return None;
+    }
+    let mut regions = regions.to_vec();
+    for region in &mut regions {
+        orient_polygon_ccw(region, projection)?;
+        validate_projected_strictly_convex_loop(
+            region,
+            projection,
+            "coplanar same-outer convex retained-hole union",
+        )
+        .ok()?;
+    }
+
+    let mut overlap_graph = UnionFind::new(regions.len());
+    for left in 0..regions.len() {
+        for right in left + 1..regions.len() {
+            match convex_union_component_relation(&regions[left], &regions[right], projection)? {
+                ConvexUnionComponentRelation::Disjoint => {}
+                ConvexUnionComponentRelation::BoundaryOnly => return None,
+                ConvexUnionComponentRelation::PositiveArea => overlap_graph.union(left, right),
+            }
+        }
+    }
+    let root = overlap_graph.find(0);
+    for index in 1..regions.len() {
+        if overlap_graph.find(index) != root {
+            return None;
+        }
+    }
+
+    let mut fragments = Vec::new();
+    for index in 0..regions.len() {
+        collect_multi_convex_union_boundary_fragments(index, &regions, projection, &mut fragments)?;
+    }
+    let mut polygon = stitch_simple_loop(fragments, projection)?;
+    orient_polygon_ccw(&mut polygon, projection)?;
+    polygon = simplify_projected_polygon(polygon, projection);
+    validate_projected_simple_loop(
+        &polygon,
+        projection,
+        "coplanar same-outer convex retained-hole union",
+    )
+    .ok()?;
+    if !multi_convex_contact_union_area_matches_inputs(&polygon, &regions, projection)? {
+        return None;
+    }
+    Some(polygon)
 }
 
 #[cfg(feature = "exact-triangulation")]
@@ -19911,6 +19986,24 @@ fn polygons_equal(left: &[Point3], right: &[Point3]) -> bool {
             .take(left.len())
             .all(|(left, right)| points_equal(left, right))
     })
+}
+
+/// Compare retained loops after removing exact collinear subdivision points.
+///
+/// Source-owned same-outer certificates must not depend on triangulation-only
+/// bridge vertices that lie exactly on an existing outer edge. Yap,
+/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+/// (1997), permits this simplification because it is an exact predicate
+/// replay over retained points, not a tolerance weld.
+#[cfg(feature = "exact-triangulation")]
+fn polygons_equal_modulo_collinear(
+    left: &[Point3],
+    right: &[Point3],
+    projection: CoplanarProjection,
+) -> bool {
+    let left = simplify_projected_polygon(left.to_vec(), projection);
+    let right = simplify_projected_polygon(right.to_vec(), projection);
+    polygons_equal(&left, &right)
 }
 
 #[cfg(feature = "exact-triangulation")]

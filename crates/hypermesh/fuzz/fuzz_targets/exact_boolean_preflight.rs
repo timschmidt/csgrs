@@ -2522,7 +2522,7 @@ fn exercise_same_outer_component_holed_coplanar_intersection() {
     .unwrap();
 
     let nonrect_bridge_hole = ExactMesh::from_i64_triangles_with_policy(
-        &[3, 3, 0, 7, 3, 0, 7, 7, 0, 3, 6, 0],
+        &[3, 3, 0, 7, 3, 0, 8, 8, 0, 3, 7, 0],
         &[0, 1, 2, 0, 2, 3],
         ValidationPolicy::ALLOW_BOUNDARY,
     )
@@ -2531,11 +2531,41 @@ fn exercise_same_outer_component_holed_coplanar_intersection() {
         arrange_coplanar_convex_surface_holed_difference(&outer, &nonrect_bridge_hole)
             .expect("same-outer nonrectangular bridge fixture should materialize")
             .mesh;
-    assert!(
+    let nonrect_bridge_intersection =
         arrange_coplanar_surface_component_holed_intersection(&bridge_left, &nonrect_bridge)
-            .is_none(),
-        "same-outer bridge shortcut must reject nonrectangular retained-hole unions"
+            .expect("same-outer convex nonrectangular bridge should retain one merged hole");
+    nonrect_bridge_intersection.validate().unwrap();
+    nonrect_bridge_intersection
+        .validate_intersection_against_sources(&bridge_left, &nonrect_bridge)
+        .unwrap();
+    assert_eq!(nonrect_bridge_intersection.components.len(), 1);
+    assert_eq!(nonrect_bridge_intersection.components[0].holes.len(), 1);
+    assert_eq!(
+        arrange_coplanar_surface_component_holed_intersection(&nonrect_bridge, &bridge_left),
+        Some(nonrect_bridge_intersection)
     );
+    let nonrect_bridge_preflight =
+        preflight_boolean_exact(&bridge_left, &nonrect_bridge, ExactBooleanOperation::Intersection)
+            .expect("same-outer nonrectangular bridge preflight should classify shortcut");
+    nonrect_bridge_preflight.validate().unwrap();
+    nonrect_bridge_preflight
+        .validate_against_sources(&bridge_left, &nonrect_bridge)
+        .unwrap();
+    hypermesh::exact::boolean_exact(
+        &bridge_left,
+        &nonrect_bridge,
+        ExactBooleanOperation::Intersection,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("same-outer nonrectangular bridge boolean should materialize")
+    .validate_operation_against_sources(
+        &bridge_left,
+        &nonrect_bridge,
+        ExactBooleanOperation::Intersection,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
 
     let small_hole = ExactMesh::from_i64_triangles_with_policy(
         &[4, 4, 0, 6, 4, 0, 6, 6, 0, 4, 6, 0],
