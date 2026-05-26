@@ -1388,11 +1388,22 @@ pub fn voxelize_prepared_exact_triangle_solid_mesh_by_component_consensus(
         }
     }
 
+    let fallback_replay_ready = component_report.certified_fallback_ray_attempts
+        + component_report.ambiguous_fallback_ray_attempts
+        == component_report.fallback_ray_attempts
+        && component_report.fallback_cells
+            >= component_report.fallback_unknown_cells
+                + component_report.fallback_boundary_regression_cells
+        && component_report.certified_fallback_ray_attempts
+            == component_report.fallback_cells
+                - component_report.fallback_unknown_cells
+                - component_report.fallback_boundary_regression_cells;
     component_report.exact_component_consensus_ready = component_report.boundary_unknown_cells == 0
         && component_report.unvoted_component_cells == 0
         && component_report.conflicting_component_cells == 0
         && component_report.fallback_unknown_cells == 0
         && component_report.fallback_boundary_regression_cells == 0
+        && fallback_replay_ready
         && component_report.row_parameter_order_unknowns == 0
         && component_report.row_plan_duplicate_memberships == 0
         && component_report.row_plan_missing_memberships == 0
@@ -1738,11 +1749,22 @@ pub fn voxelize_prepared_exact_triangle_solid_mesh_by_local_component_consensus(
         }
     }
 
+    let fallback_replay_ready = component_report.certified_fallback_ray_attempts
+        + component_report.ambiguous_fallback_ray_attempts
+        == component_report.fallback_ray_attempts
+        && component_report.fallback_cells
+            >= component_report.fallback_unknown_cells
+                + component_report.fallback_boundary_regression_cells
+        && component_report.certified_fallback_ray_attempts
+            == component_report.fallback_cells
+                - component_report.fallback_unknown_cells
+                - component_report.fallback_boundary_regression_cells;
     component_report.exact_component_consensus_ready = component_report.boundary_unknown_cells == 0
         && component_report.unvoted_component_cells == 0
         && component_report.conflicting_component_cells == 0
         && component_report.fallback_unknown_cells == 0
         && component_report.fallback_boundary_regression_cells == 0
+        && fallback_replay_ready
         && component_report.row_parameter_order_unknowns == 0
         && component_report.row_plan_duplicate_memberships == 0
         && component_report.row_plan_missing_memberships == 0
@@ -2872,6 +2894,14 @@ pub struct PreparedTriangleSolidComponentConsensusVoxelizationReport {
     pub fallback_ray_triangle_tests: usize,
     /// Ambiguous ray attempts seen during fallback classification.
     pub ambiguous_fallback_ray_attempts: usize,
+    /// Certified ray attempts seen during fallback classification.
+    ///
+    /// Fallback is an exact repair path, not an exemption from arrangement
+    /// evidence. In Yap's terms ("Towards Exact Geometric Computation,"
+    /// *Computational Geometry* 7(1-2), 1997), the system has to retain enough
+    /// proof structure to explain the final combinatorial decision; this
+    /// counter proves which fallback cells ended with certified parity rays.
+    pub certified_fallback_ray_attempts: usize,
     /// Whether component-level winding consensus produced exact arrangement
     /// evidence for all non-boundary cells without fallback blockers.
     pub exact_component_consensus_ready: bool,
@@ -3496,6 +3526,11 @@ fn classify_component_consensus_fallback_cell(
         .ray_attempts
         .iter()
         .filter(|attempt| !attempt.certified)
+        .count();
+    component_report.certified_fallback_ray_attempts += cell
+        .ray_attempts
+        .iter()
+        .filter(|attempt| attempt.certified)
         .count();
 
     match cell.classifier {

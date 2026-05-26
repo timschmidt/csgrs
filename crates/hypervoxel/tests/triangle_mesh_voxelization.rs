@@ -170,6 +170,25 @@ fn assert_component_row_cache_accounting(
     assert!(report.row_cache_broadened_misses <= report.row_cache_misses);
 }
 
+fn assert_component_fallback_replay_accounting(
+    report: &hypervoxel::PreparedTriangleSolidComponentConsensusVoxelizationReport,
+) {
+    assert_eq!(
+        report.certified_fallback_ray_attempts + report.ambiguous_fallback_ray_attempts,
+        report.fallback_ray_attempts
+    );
+    assert!(
+        report.fallback_cells
+            >= report.fallback_unknown_cells + report.fallback_boundary_regression_cells
+    );
+    assert_eq!(
+        report.certified_fallback_ray_attempts,
+        report.fallback_cells
+            - report.fallback_unknown_cells
+            - report.fallback_boundary_regression_cells
+    );
+}
+
 fn sheared_box_surface(min: i64, max: i64, frame: &GridFrame) -> ExactTriangleSurfaceMesh {
     let triangles = sheared_box_triangles(min, max, 0);
     ExactTriangleSurfaceMesh::new(triangles, frame.source().cloned(), true)
@@ -824,6 +843,7 @@ fn component_consensus_handles_non_grid_aligned_solid_with_verifier_replay() {
     assert!(component_consensus.consensus_cells > 0);
     assert_eq!(component_consensus.fallback_unknown_cells, 0);
     assert_eq!(component_consensus.fallback_boundary_regression_cells, 0);
+    assert_component_fallback_replay_accounting(&component_consensus);
     assert_eq!(component_consensus.row_parameter_order_unknowns, 0);
     assert!(component_consensus.row_votes > 0);
     assert!(component_consensus.exact_component_consensus_ready);
@@ -1074,6 +1094,7 @@ fn adaptive_local_component_consensus_stops_after_complete_component_proof() {
     );
     assert_eq!(adaptive_component.fallback_unknown_cells, 0);
     assert_eq!(adaptive_component.fallback_boundary_regression_cells, 0);
+    assert_component_fallback_replay_accounting(&adaptive_component);
     assert_eq!(adaptive_component.row_parameter_order_unknowns, 0);
     assert!(adaptive_component.exact_component_consensus_ready);
 
@@ -1096,6 +1117,7 @@ fn adaptive_local_component_consensus_stops_after_complete_component_proof() {
     assert!(verified.component_audit.retry_subset_matches);
     assert!(verified.component_audit.retry_direction_accounting_matches);
     assert!(verified.component_audit.retry_direction_schedule_matches);
+    assert!(verified.component_audit.fallback_replay_accounting_matches);
     assert_eq!(verified.component_consensus, adaptive_component);
     assert_eq!(verified.verifier, per_cell_schedule);
     assert!(verified.exact_verified_component_consensus_ready);

@@ -431,6 +431,11 @@ fn bench_exact_box_voxelization(c: &mut Criterion) {
             .component_audit
             .retry_direction_schedule_matches
     );
+    assert!(
+        verified_component_probe
+            .component_audit
+            .fallback_replay_accounting_matches
+    );
     let mut row_cache_triangles = retained_box_triangles([1, 1, 1], [6, 6, 6], 100);
     row_cache_triangles.extend(retained_box_triangles([9, 1, 1], [14, 6, 6], 112));
     let row_cache_surface =

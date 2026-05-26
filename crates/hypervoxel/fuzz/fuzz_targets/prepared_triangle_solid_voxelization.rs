@@ -277,6 +277,15 @@ fuzz_target!(|data: (u8, u8, u8, bool)| {
     );
     assert_eq!(component_consensus.fallback_unknown_cells, 0);
     assert_eq!(component_consensus.fallback_boundary_regression_cells, 0);
+    assert_eq!(
+        component_consensus.certified_fallback_ray_attempts
+            + component_consensus.ambiguous_fallback_ray_attempts,
+        component_consensus.fallback_ray_attempts
+    );
+    assert_eq!(
+        component_consensus.certified_fallback_ray_attempts,
+        component_consensus.fallback_cells
+    );
     assert_eq!(verified_component.grid_mismatch_cells, 0);
     assert!(verified_component.predicate_certificates_match);
     assert!(verified_component.boundary_counts_match);
@@ -294,6 +303,15 @@ fuzz_target!(|data: (u8, u8, u8, bool)| {
     );
     assert_eq!(local_component.fallback_unknown_cells, 0);
     assert_eq!(local_component.fallback_boundary_regression_cells, 0);
+    assert_eq!(
+        local_component.certified_fallback_ray_attempts
+            + local_component.ambiguous_fallback_ray_attempts,
+        local_component.fallback_ray_attempts
+    );
+    assert_eq!(
+        local_component.certified_fallback_ray_attempts,
+        local_component.fallback_cells
+    );
     let local_attempted_rows = local_component.axis_sweep_rows.iter().sum::<usize>();
     assert_eq!(local_component.row_plan_rows, local_attempted_rows);
     assert!(local_component.row_plan_axes > 0);
@@ -345,6 +363,9 @@ fuzz_target!(|data: (u8, u8, u8, bool)| {
         .row_cache_replay_accounting_matches);
     assert!(verified_local.component_audit.row_window_accounting_matches);
     assert!(verified_local.component_audit.row_plan_accounting_matches);
+    assert!(verified_local
+        .component_audit
+        .fallback_replay_accounting_matches);
     assert_eq!(
         adaptive_local.consensus_cells
             + adaptive_local.exterior_cells
@@ -354,6 +375,15 @@ fuzz_target!(|data: (u8, u8, u8, bool)| {
     );
     assert_eq!(adaptive_local.fallback_unknown_cells, 0);
     assert_eq!(adaptive_local.fallback_boundary_regression_cells, 0);
+    assert_eq!(
+        adaptive_local.certified_fallback_ray_attempts
+            + adaptive_local.ambiguous_fallback_ray_attempts,
+        adaptive_local.fallback_ray_attempts
+    );
+    assert_eq!(
+        adaptive_local.certified_fallback_ray_attempts,
+        adaptive_local.fallback_cells
+    );
     assert_eq!(
         adaptive_local.retry_direction_attempts,
         adaptive_local.retry_successful_direction_attempts
@@ -455,4 +485,7 @@ fuzz_target!(|data: (u8, u8, u8, bool)| {
     assert!(verified_adaptive_local
         .component_audit
         .retry_direction_schedule_matches);
+    assert!(verified_adaptive_local
+        .component_audit
+        .fallback_replay_accounting_matches);
 });

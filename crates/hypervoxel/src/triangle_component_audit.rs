@@ -41,6 +41,9 @@ pub struct PreparedTriangleSolidComponentConsensusAuditReport {
     /// Whether row candidate AABB rejections replay the row AABB rejection
     /// counter exactly.
     pub row_candidate_rejections_match: bool,
+    /// Whether fallback repair cells are exactly explained by retained
+    /// certified and ambiguous ray attempts.
+    pub fallback_replay_accounting_matches: bool,
     /// Whether every attempted row ended in exactly one certified or ambiguous
     /// outcome.
     pub row_outcomes_match: bool,
@@ -146,6 +149,20 @@ pub fn audit_prepared_triangle_solid_component_consensus(
     };
     let row_candidate_rejections_match = report.row_candidate_scheduled_rows == 0
         || report.row_candidate_aabb_rejections == report.row_ray_aabb_rejections;
+    let fallback_replay_accounting_matches = if report.fallback_cells == 0 {
+        report.fallback_ray_attempts == 0
+            && report.certified_fallback_ray_attempts == 0
+            && report.ambiguous_fallback_ray_attempts == 0
+    } else {
+        report.certified_fallback_ray_attempts + report.ambiguous_fallback_ray_attempts
+            == report.fallback_ray_attempts
+            && report.fallback_cells
+                >= report.fallback_unknown_cells + report.fallback_boundary_regression_cells
+            && report.certified_fallback_ray_attempts
+                == report.fallback_cells
+                    - report.fallback_unknown_cells
+                    - report.fallback_boundary_regression_cells
+    };
     let row_outcomes_match = attempted_rows
         == report.axis_certified_sweep_rows.iter().sum::<usize>()
             + report.axis_ambiguous_sweep_rows.iter().sum::<usize>();
@@ -164,6 +181,7 @@ pub fn audit_prepared_triangle_solid_component_consensus(
         && row_window_accounting_matches
         && row_plan_accounting_matches
         && row_candidate_rejections_match
+        && fallback_replay_accounting_matches
         && row_outcomes_match
         && no_component_blockers
         && report.classified_cells > 0;
@@ -180,6 +198,7 @@ pub fn audit_prepared_triangle_solid_component_consensus(
         row_window_accounting_matches,
         row_plan_accounting_matches,
         row_candidate_rejections_match,
+        fallback_replay_accounting_matches,
         row_outcomes_match,
         no_component_blockers,
         exact_component_consensus_audit_ready,
@@ -240,6 +259,7 @@ mod tests {
         assert!(audit.row_window_accounting_matches);
         assert!(audit.row_plan_accounting_matches);
         assert!(audit.row_candidate_rejections_match);
+        assert!(audit.fallback_replay_accounting_matches);
         assert!(audit.row_outcomes_match);
         assert!(audit.no_component_blockers);
         assert!(audit.exact_component_consensus_audit_ready);
@@ -380,6 +400,8 @@ mod tests {
         report.consensus_cells = 1;
         report.fallback_components = 1;
         report.fallback_cells = 1;
+        report.fallback_ray_attempts = 1;
+        report.certified_fallback_ray_attempts = 1;
         report.unvoted_component_cells = 1;
         report.deferred_ambiguous_cells = 3;
 
@@ -387,7 +409,23 @@ mod tests {
 
         assert!(audit.open_cell_accounting_matches);
         assert!(audit.component_accounting_matches);
+        assert!(audit.fallback_replay_accounting_matches);
         assert!(audit.no_component_blockers);
         assert!(audit.exact_component_consensus_audit_ready);
+    }
+
+    #[test]
+    fn audit_rejects_fallback_repair_without_ray_replay() {
+        let mut report = valid_report();
+        report.consensus_components = 1;
+        report.consensus_cells = 1;
+        report.fallback_components = 1;
+        report.fallback_cells = 1;
+        report.unvoted_component_cells = 1;
+
+        let audit = audit_prepared_triangle_solid_component_consensus(&report);
+
+        assert!(!audit.fallback_replay_accounting_matches);
+        assert!(!audit.exact_component_consensus_audit_ready);
     }
 }
