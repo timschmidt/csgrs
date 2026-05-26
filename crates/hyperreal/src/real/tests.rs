@@ -1122,6 +1122,160 @@ mod tests {
     }
 
     #[test]
+    fn sinh_of_zero_is_exact_zero() {
+        assert_eq!(Real::zero().sinh().unwrap(), Real::zero());
+    }
+
+    #[test]
+    fn cosh_of_zero_is_exact_one() {
+        assert_eq!(Real::zero().cosh().unwrap(), Real::one());
+    }
+
+    #[test]
+    fn sinh_rational_matches_f64() {
+        let one = Real::one();
+        let actual: f64 = one.sinh().unwrap().into();
+        assert!((actual - 1.0_f64.sinh()).abs() < 1e-14);
+
+        let two: f64 = Real::from(2_i32).sinh().unwrap().into();
+        assert!((two - 2.0_f64.sinh()).abs() < 1e-13);
+    }
+
+    #[test]
+    fn cosh_rational_matches_f64() {
+        let one = Real::one();
+        let actual: f64 = one.cosh().unwrap().into();
+        assert!((actual - 1.0_f64.cosh()).abs() < 1e-14);
+
+        let two: f64 = Real::from(2_i32).cosh().unwrap().into();
+        assert!((two - 2.0_f64.cosh()).abs() < 1e-13);
+    }
+
+    #[test]
+    fn sinh_is_odd_symmetry() {
+        let x = Real::new(Rational::fraction(3, 4).unwrap());
+        let lhs = x.clone().sinh().unwrap();
+        let rhs = (-x).sinh().unwrap();
+        let lhs_f64: f64 = lhs.into();
+        let rhs_f64: f64 = rhs.into();
+        assert!((lhs_f64 + rhs_f64).abs() < 1e-14);
+    }
+
+    #[test]
+    fn cosh_is_even_symmetry() {
+        let x = Real::new(Rational::fraction(3, 4).unwrap());
+        let lhs: f64 = x.clone().cosh().unwrap().into();
+        let rhs: f64 = (-x).cosh().unwrap().into();
+        assert!((lhs - rhs).abs() < 1e-14);
+    }
+
+    #[test]
+    fn sinh_of_integer_ln_is_exact_rational() {
+        // sinh(ln(2)) = (2 - 1/2)/2 = 3/4
+        let value = Real::from(2_i32).ln().unwrap().sinh().unwrap();
+        assert_eq!(value, Real::new(Rational::fraction(3, 4).unwrap()));
+
+        // sinh(2*ln(3)) = (9 - 1/9)/2 = 40/9
+        let value = (Real::from(2_i32) * Real::from(3_i32).ln().unwrap())
+            .sinh()
+            .unwrap();
+        assert_eq!(value, Real::new(Rational::fraction(40, 9).unwrap()));
+    }
+
+    #[test]
+    fn cosh_of_integer_ln_is_exact_rational() {
+        // cosh(ln(2)) = (2 + 1/2)/2 = 5/4
+        let value = Real::from(2_i32).ln().unwrap().cosh().unwrap();
+        assert_eq!(value, Real::new(Rational::fraction(5, 4).unwrap()));
+
+        // cosh(2*ln(3)) = (9 + 1/9)/2 = 41/9
+        let value = (Real::from(2_i32) * Real::from(3_i32).ln().unwrap())
+            .cosh()
+            .unwrap();
+        assert_eq!(value, Real::new(Rational::fraction(41, 9).unwrap()));
+    }
+
+    #[test]
+    fn cosh_squared_minus_sinh_squared_is_one() {
+        let x = Real::new(Rational::fraction(7, 5).unwrap());
+        let s = x.clone().sinh().unwrap();
+        let c = x.cosh().unwrap();
+        let identity = c.clone() * c - s.clone() * s;
+        let actual: f64 = identity.into();
+        assert!((actual - 1.0).abs() < 1e-12);
+    }
+
+    #[test]
+    fn sinh_of_irrational_argument_matches_f64() {
+        // sinh(sqrt(2)) — generic identity path with irrational argument.
+        let sqrt_two = Real::from(2_i32).sqrt().unwrap();
+        let value: f64 = sqrt_two.sinh().unwrap().into();
+        let expected = 2.0_f64.sqrt().sinh();
+        assert!((value - expected).abs() < 1e-12);
+    }
+
+    #[test]
+    fn cosh_of_irrational_argument_matches_f64() {
+        let sqrt_two = Real::from(2_i32).sqrt().unwrap();
+        let value: f64 = sqrt_two.cosh().unwrap().into();
+        let expected = 2.0_f64.sqrt().cosh();
+        assert!((value - expected).abs() < 1e-12);
+    }
+
+    #[test]
+    fn tanh_of_zero_is_exact_zero() {
+        assert_eq!(Real::zero().tanh().unwrap(), Real::zero());
+    }
+
+    #[test]
+    fn tanh_rational_matches_f64() {
+        let value: f64 = Real::one().tanh().unwrap().into();
+        assert!((value - 1.0_f64.tanh()).abs() < 1e-14);
+
+        let value: f64 = Real::from(2_i32).tanh().unwrap().into();
+        assert!((value - 2.0_f64.tanh()).abs() < 1e-13);
+    }
+
+    #[test]
+    fn tanh_is_odd_symmetry() {
+        let x = Real::new(Rational::fraction(3, 4).unwrap());
+        let lhs: f64 = x.clone().tanh().unwrap().into();
+        let rhs: f64 = (-x).tanh().unwrap().into();
+        assert!((lhs + rhs).abs() < 1e-14);
+    }
+
+    #[test]
+    fn tanh_of_integer_ln_is_exact_rational() {
+        // tanh(ln(2)) = (4 - 1)/(4 + 1) = 3/5
+        let value = Real::from(2_i32).ln().unwrap().tanh().unwrap();
+        assert_eq!(value, Real::new(Rational::fraction(3, 5).unwrap()));
+
+        // tanh(2*ln(3)) = (81 - 1)/(81 + 1) = 80/82 = 40/41
+        let value = (Real::from(2_i32) * Real::from(3_i32).ln().unwrap())
+            .tanh()
+            .unwrap();
+        assert_eq!(value, Real::new(Rational::fraction(40, 41).unwrap()));
+    }
+
+    #[test]
+    fn tanh_matches_sinh_over_cosh() {
+        let x = Real::new(Rational::fraction(7, 5).unwrap());
+        let direct: f64 = x.clone().tanh().unwrap().into();
+        let via_identity: f64 = (x.clone().sinh().unwrap() / x.cosh().unwrap())
+            .unwrap()
+            .into();
+        assert!((direct - via_identity).abs() < 1e-13);
+    }
+
+    #[test]
+    fn tanh_of_irrational_argument_matches_f64() {
+        let sqrt_two = Real::from(2_i32).sqrt().unwrap();
+        let value: f64 = sqrt_two.tanh().unwrap().into();
+        let expected = 2.0_f64.sqrt().tanh();
+        assert!((value - expected).abs() < 1e-12);
+    }
+
+    #[test]
     fn log2_of_powers_of_two_is_exact_integer() {
         for k in 0_i64..=20 {
             let n = Real::new(Rational::new(1_i64 << k));
@@ -1646,18 +1800,154 @@ mod tests {
     #[test]
     fn dot2_refs_matches_pairwise_rational_arithmetic() {
         let left = [
-            Real::new(Rational::fraction(6, 5).unwrap()),
-            Real::new(Rational::fraction(-7, 10).unwrap()),
+            &Real::new(Rational::fraction(6, 5).unwrap()),
+            &Real::new(Rational::fraction(-7, 10).unwrap()),
         ];
         let right = [
-            Real::new(Rational::fraction(-4, 5).unwrap()),
-            Real::new(Rational::fraction(11, 10).unwrap()),
+            &Real::new(Rational::fraction(-4, 5).unwrap()),
+            &Real::new(Rational::fraction(11, 10).unwrap()),
         ];
-        let expected = &(&left[0] * &right[0]) + &(&left[1] * &right[1]);
+        let expected = &(left[0] * right[0]) + &(left[1] * right[1]);
+        assert_eq!(Real::dot2_refs(left, right), expected);
+    }
+
+    #[test]
+    fn atan2_origin_returns_zero() {
+        assert_eq!(Real::zero().atan2(Real::zero()), Real::zero());
+    }
+
+    #[test]
+    fn atan2_positive_x_axis_is_zero() {
+        assert_eq!(Real::zero().atan2(Real::from(3_i32)), Real::zero());
+    }
+
+    #[test]
+    fn atan2_negative_x_axis_is_pi() {
+        assert_eq!(Real::zero().atan2(Real::from(-5_i32)), Real::pi());
+    }
+
+    #[test]
+    fn atan2_positive_y_axis_is_half_pi() {
         assert_eq!(
-            Real::dot2_refs([&left[0], &left[1]], [&right[0], &right[1]]),
-            expected,
+            Real::from(7_i32).atan2(Real::zero()),
+            (Real::pi() / Real::from(2_i32)).unwrap(),
         );
+    }
+
+    #[test]
+    fn atan2_negative_y_axis_is_minus_half_pi() {
+        assert_eq!(
+            Real::from(-9_i32).atan2(Real::zero()),
+            -(Real::pi() / Real::from(2_i32)).unwrap(),
+        );
+    }
+
+    #[test]
+    fn atan2_quadrant_one_uses_atan_special_form() {
+        // atan2(1, 1) = pi/4 exactly via Real::atan's exact special form.
+        assert_eq!(
+            Real::one().atan2(Real::one()),
+            (Real::pi() / Real::from(4_i32)).unwrap(),
+        );
+    }
+
+    #[test]
+    fn atan2_quadrant_two_uses_atan_plus_pi() {
+        assert_eq!(
+            Real::one().atan2(-Real::one()),
+            Real::pi() * Real::new(Rational::fraction(3, 4).unwrap()),
+        );
+    }
+
+    #[test]
+    fn atan2_quadrant_three_uses_atan_minus_pi() {
+        assert_eq!(
+            (-Real::one()).atan2(-Real::one()),
+            Real::pi() * Real::new(Rational::fraction(-3, 4).unwrap()),
+        );
+    }
+
+    #[test]
+    fn atan2_quadrant_four_uses_negative_atan() {
+        assert_eq!(
+            (-Real::one()).atan2(Real::one()),
+            (Real::pi() / Real::from(-4_i32)).unwrap(),
+        );
+    }
+
+    #[test]
+    fn atan2_sqrt_three_anchor_matches_pi_third() {
+        // atan2(sqrt(3), 1) = pi/3 exactly via Real::atan's sqrt(3) anchor.
+        let sqrt_three = Real::from(3_i32).sqrt().unwrap();
+        assert_eq!(
+            sqrt_three.atan2(Real::one()),
+            (Real::pi() / Real::from(3_i32)).unwrap(),
+        );
+    }
+
+    #[test]
+    fn atan2_generic_quadrants_match_f64() {
+        // Coords chosen so |y/x| lands in working atan kernel paths
+        // (unit fraction or integer >= 2). atan_rational has a pre-existing
+        // bug for rationals in (1/2, 1) with numerator > 1, intentionally
+        // avoided here so the quadrant logic is what's tested.
+        let cases: [(i32, i32); 8] = [
+            (1, 2),
+            (-1, 2),
+            (1, -2),
+            (-1, -2),
+            (3, 1),
+            (-3, 1),
+            (3, -1),
+            (-3, -1),
+        ];
+        for (y, x) in cases {
+            let y_real = Real::from(y);
+            let x_real = Real::from(x);
+            let got: f64 = y_real.atan2(x_real).into();
+            let want = (y as f64).atan2(x as f64);
+            assert!(
+                (got - want).abs() < 1e-12,
+                "atan2({y}, {x}): got {got}, want {want}",
+            );
+        }
+    }
+
+    #[test]
+    fn atan2_unresolved_positive_y_does_not_collapse_to_axis() {
+        let tiny = Real::new(
+            Rational::from_bigint_fraction(
+                num::BigInt::from(1_u8),
+                num::BigUint::from(1_u8) << 2500,
+            )
+            .unwrap(),
+        );
+        let y = (Real::pi() + tiny.clone()) - Real::pi();
+        assert_eq!(y.structural_facts().sign, None);
+
+        let got = y.atan2(Real::one());
+        let expected = tiny.atan2(Real::one());
+        assert_ne!(got, Real::zero());
+        assert_eq!(got.to_f64_approx(), expected.to_f64_approx());
+    }
+
+    #[test]
+    fn atan2_is_consistent_under_uniform_positive_scaling() {
+        // atan2(ky, kx) = atan2(y, x) for k > 0. Pick coords whose |y/x|
+        // ratio (1/3 here) lands in the working atan kernel range.
+        let y = Real::from(1_i32);
+        let x = Real::from(-3_i32);
+        let scale = Real::from(11_i32);
+        let unscaled: f64 = y.clone().atan2(x.clone()).into();
+        let scaled: f64 = (y * scale.clone()).atan2(x * scale).into();
+        assert!((unscaled - scaled).abs() < 1e-12);
+    }
+
+    #[test]
+    fn rational_atan2_axes_and_origin() {
+        assert_eq!(Real::zero().atan2(Real::zero()), Real::zero());
+        assert_eq!(Real::zero().atan2(Real::from(2)), Real::zero());
+        assert_eq!(Real::zero().atan2(Real::from(-2)), Real::pi());
     }
 
     #[test]
@@ -1669,6 +1959,10 @@ mod tests {
         assert!(
             (actual.to_f64_approx().unwrap() - expected.to_f64_approx().unwrap()).abs() < 1e-12
         );
+        assert_eq!(
+            Real::dot2_refs([&left[0], &left[1]], [&right[0], &right[1]]),
+            expected,
+        );
     }
 
     #[test]
@@ -1677,9 +1971,86 @@ mod tests {
         let right = [Real::pi(), Real::e()];
         let expected = &left[1] * &right[1];
         let actual = Real::dot2_refs([&left[0], &left[1]], [&right[0], &right[1]]);
-        assert!(
-            (actual.to_f64_approx().unwrap() - expected.to_f64_approx().unwrap()).abs() < 1e-12
-        );
+        assert!((actual.to_f64_approx().unwrap() - expected.to_f64_approx().unwrap()).abs() < 1e-12)
+    }
+
+    #[test]
+    fn computable_atan2_axes() {
+        use crate::Computable;
+        use num::Zero;
+        // compare_to(&equal) on Computable can loop forever (kernel docs warn
+        // about this), so axis cases are validated through approx values.
+        let zero_plus = Computable::zero().atan2(Computable::one());
+        assert!(zero_plus.approx(-30).is_zero());
+        let zero_minus = Computable::zero().atan2(Computable::one().negate());
+        assert_eq!(zero_minus.approx(-30), Computable::pi().approx(-30));
+        let plus_y = Computable::one().atan2(Computable::zero());
+        let half_pi = Computable::pi().multiply(Computable::one().add(Computable::one()).inverse());
+        assert_eq!(plus_y.approx(-30), half_pi.approx(-30));
+    }
+
+    #[test]
+    fn computable_atan2_quadrants_match_f64() {
+        use crate::Computable;
+        use num::ToPrimitive;
+        let cases: [(i64, i64); 4] = [(1, 2), (-1, 2), (1, -2), (-1, -2)];
+        for (y, x) in cases {
+            let y_c = Computable::rational(Rational::new(y));
+            let x_c = Computable::rational(Rational::new(x));
+            // approx returns a BigInt scaled by 2^p; using p=-60 buys ~18 decimal digits.
+            let scaled = y_c.atan2(x_c).approx(-60);
+            let got_f = scaled.to_f64().expect("BigInt fits in f64") * 2_f64.powi(-60);
+            let want = (y as f64).atan2(x as f64);
+            assert!(
+                (got_f - want).abs() < 1e-12,
+                "computable atan2({y}, {x}): got {got_f}, want {want}",
+            );
+        }
+    }
+
+    #[test]
+    fn computable_atan2_unresolved_positive_y_does_not_collapse_to_axis() {
+        use crate::Computable;
+        use num::Zero;
+
+        let tiny = Rational::from_bigint_fraction(
+            num::BigInt::from(1_u8),
+            num::BigUint::from(1_u8) << 2500,
+        )
+        .unwrap();
+        let y = Computable::pi()
+            .add(Computable::rational(tiny.clone()))
+            .add(Computable::pi().negate());
+        assert_eq!(y.sign(), num::bigint::Sign::NoSign);
+
+        let got = y.atan2(Computable::one()).approx(-2600);
+        let expected = Computable::rational(tiny)
+            .atan2(Computable::one())
+            .approx(-2600);
+        assert!(!got.is_zero());
+        assert_eq!(got, expected);
+    }
+
+    #[test]
+    fn computable_atan2_unresolved_negative_y_on_negative_x_keeps_lower_branch() {
+        use crate::Computable;
+
+        let tiny = Rational::from_bigint_fraction(
+            num::BigInt::from(1_u8),
+            num::BigUint::from(1_u8) << 2500,
+        )
+        .unwrap();
+        let y = Computable::pi()
+            .add(Computable::rational(tiny.clone()).negate())
+            .add(Computable::pi().negate());
+        assert_eq!(y.sign(), num::bigint::Sign::NoSign);
+
+        let got = y.atan2(Computable::one().negate()).approx(-2600);
+        let expected = Computable::rational(tiny)
+            .negate()
+            .atan2(Computable::one().negate())
+            .approx(-2600);
+        assert_eq!(got, expected);
     }
 
     #[test]

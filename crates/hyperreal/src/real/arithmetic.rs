@@ -3996,6 +3996,153 @@ impl Real {
         Ok(self.make_computable(Computable::atan))
     }
 
+    /// Two-argument arctangent of `(self, x)`, returning the angle of the
+    /// point `(x, self)` measured counterclockwise from the positive `x`
+    /// axis in the principal range `(-pi, pi]`.
+    ///
+    /// `self` is the `y` coordinate and `x` is the `x` coordinate, matching
+    /// the IEEE 754 `atan2(y, x)` convention. The implementation reduces to
+    /// the single-argument [`Real::atan`] kernel after a signed-pi quadrant
+    /// correction, so existing `atan` exact special forms (such as
+    /// `atan(1) = pi/4` or `atan(sqrt(3)) = pi/3`) flow through unchanged
+    /// when the ratio `self / x` lands on one of them. Axes return exact
+    /// pi multiples; the origin `(0, 0)` returns zero, matching the
+    /// `f64::atan2` convention.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use hyperreal::Real;
+    /// // atan2(1, 1) == pi / 4
+    /// assert_eq!(
+    ///     Real::one().atan2(Real::one()),
+    ///     (Real::pi() / Real::from(4_i32)).unwrap(),
+    /// );
+    /// // atan2(0, -1) == pi
+    /// assert_eq!(Real::zero().atan2(-Real::one()), Real::pi());
+    /// // atan2(1, 0) == pi / 2
+    /// assert_eq!(
+    ///     Real::one().atan2(Real::zero()),
+    ///     (Real::pi() / Real::from(2_i32)).unwrap(),
+    /// );
+    /// ```
+    pub fn atan2(self, x: Real) -> Real {
+        // Structural sign first. `best_sign` for Irrational class refines the
+        // computable graph until the sign is decided, which is dramatically
+        // more expensive than reading already-derivable structural facts. Only
+        // descend to the refinement path when structural inspection cannot
+        // decide for one of the inputs.
+        let y_sign = self.structural_facts().sign.map(num_sign_from_real);
+        let x_sign = x.structural_facts().sign.map(num_sign_from_real);
+        match (y_sign, x_sign) {
+            (Some(Sign::NoSign), Some(Sign::NoSign)) | (Some(Sign::NoSign), Some(Sign::Plus)) => {
+                crate::trace_dispatch!("real", "atan2", "axis-zero-y");
+                return Self::zero();
+            }
+            (Some(Sign::NoSign), Some(Sign::Minus)) => {
+                crate::trace_dispatch!("real", "atan2", "axis-negative-x");
+                return Self::pi();
+            }
+            (Some(Sign::Plus), Some(Sign::NoSign)) => {
+                crate::trace_dispatch!("real", "atan2", "axis-positive-y");
+                return Self::pi_fraction(1, 2);
+            }
+            (Some(Sign::Minus), Some(Sign::NoSign)) => {
+                crate::trace_dispatch!("real", "atan2", "axis-negative-y");
+                return Self::pi_fraction(-1, 2);
+            }
+            _ => {}
+        }
+        let y_sign = y_sign.unwrap_or_else(|| self.best_sign());
+        let x_sign = x_sign.unwrap_or_else(|| x.best_sign());
+        if y_sign == Sign::NoSign && x_sign != Sign::Plus {
+            crate::trace_dispatch!("real", "atan2", "generic-computable");
+            return Self::irrational_from_computable(self.fold().atan2(x.fold()));
+        }
+        if x_sign == Sign::NoSign {
+            crate::trace_dispatch!("real", "atan2", "generic-computable");
+            return Self::irrational_from_computable(self.fold().atan2(x.fold()));
+        }
+        let ratio = (self / &x).expect("nonzero x rules out divide-by-zero");
+        let base = ratio.atan().expect("Real::atan is total");
+        if x_sign == Sign::Plus {
+            crate::trace_dispatch!("real", "atan2", "quadrant-right");
+            base
+        } else if y_sign == Sign::Plus {
+            crate::trace_dispatch!("real", "atan2", "quadrant-upper-left");
+            base + Self::pi()
+        } else {
+            crate::trace_dispatch!("real", "atan2", "quadrant-lower-left");
+            base - Self::pi()
+        }
+    }
+
+    /// The hyperbolic sine of this Real.
+    pub fn sinh(self) -> Result<Real, Problem> {
+        if self.definitely_zero() {
+            crate::trace_dispatch!("real", "sinh", "exact-zero");
+            return Ok(Self::zero());
+        }
+        if let Ln(base) = &self.class
+            && let Some(int) = self.rational.to_big_integer()
+        {
+            // sinh(k*ln(n)) = (n^k - n^-k)/2 folds to an exact rational
+            // whenever the symbolic ln scale is integral.
+            let positive = base.clone().powi(int.clone())?;
+            let negative = base.clone().powi(-int)?;
+            crate::trace_dispatch!("real", "sinh", "integer-log-collapse");
+            return Ok(Self::new((positive - negative) / Rational::new(2)));
+        }
+        crate::trace_dispatch!("real", "sinh", "generic-exp-identity");
+        let positive = self.clone().exp()?;
+        let negative = self.neg().exp()?;
+        (positive - negative) / Self::new(Rational::new(2))
+    }
+
+    /// The hyperbolic cosine of this Real.
+    pub fn cosh(self) -> Result<Real, Problem> {
+        if self.definitely_zero() {
+            crate::trace_dispatch!("real", "cosh", "exact-zero-one");
+            return Ok(Self::one());
+        }
+        if let Ln(base) = &self.class
+            && let Some(int) = self.rational.to_big_integer()
+        {
+            // cosh(k*ln(n)) = (n^k + n^-k)/2 folds to an exact rational
+            // whenever the symbolic ln scale is integral.
+            let positive = base.clone().powi(int.clone())?;
+            let negative = base.clone().powi(-int)?;
+            crate::trace_dispatch!("real", "cosh", "integer-log-collapse");
+            return Ok(Self::new((positive + negative) / Rational::new(2)));
+        }
+        crate::trace_dispatch!("real", "cosh", "generic-exp-identity");
+        let positive = self.clone().exp()?;
+        let negative = self.neg().exp()?;
+        (positive + negative) / Self::new(Rational::new(2))
+    }
+
+    /// The hyperbolic tangent of this Real.
+    pub fn tanh(self) -> Result<Real, Problem> {
+        if self.definitely_zero() {
+            crate::trace_dispatch!("real", "tanh", "exact-zero");
+            return Ok(Self::zero());
+        }
+        if let Ln(base) = &self.class
+            && let Some(int) = self.rational.to_big_integer()
+        {
+            // tanh(k*ln(n)) = (n^2k - 1) / (n^2k + 1) folds to an exact
+            // rational whenever the symbolic ln scale is integral.
+            let squared = base.clone().powi(int * BigInt::from(2_u8))?;
+            let one = Rational::one();
+            crate::trace_dispatch!("real", "tanh", "integer-log-collapse");
+            return Ok(Self::new((squared.clone() - one.clone()) / (squared + one)));
+        }
+        crate::trace_dispatch!("real", "tanh", "generic-exp-identity");
+        let positive = self.clone().exp()?;
+        let negative = self.neg().exp()?;
+        (&positive - &negative) / (positive + negative)
+    }
+
     /// The inverse hyperbolic sine of this Real.
     pub fn asinh(self) -> Result<Real, Problem> {
         if self.definitely_zero() {
@@ -4561,6 +4708,14 @@ fn real_sign_from_num(sign: Sign) -> RealSign {
         Sign::Minus => RealSign::Negative,
         Sign::NoSign => RealSign::Zero,
         Sign::Plus => RealSign::Positive,
+    }
+}
+
+fn num_sign_from_real(sign: RealSign) -> Sign {
+    match sign {
+        RealSign::Negative => Sign::Minus,
+        RealSign::Zero => Sign::NoSign,
+        RealSign::Positive => Sign::Plus,
     }
 }
 

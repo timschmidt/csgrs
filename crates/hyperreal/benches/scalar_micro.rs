@@ -413,6 +413,54 @@ const SCALAR_MICRO_GROUPS: &[BenchGroupDoc] = &[
                 description: "Rejects atanh(sqrt(2)) through exact structural domain checks.",
             },
             BenchDoc {
+                name: "sinh_ln_two",
+                description: "Folds sinh(ln(2)) to the exact rational 3/4 via the integer-log-collapse shortcut.",
+            },
+            BenchDoc {
+                name: "cosh_ln_two",
+                description: "Folds cosh(ln(2)) to the exact rational 5/4 via the integer-log-collapse shortcut.",
+            },
+            BenchDoc {
+                name: "tanh_ln_two",
+                description: "Folds tanh(ln(2)) to the exact rational 3/5 via the integer-log-collapse shortcut.",
+            },
+            BenchDoc {
+                name: "sinh_rational_one",
+                description: "Builds sinh(1) through the generic (exp(x) - exp(-x))/2 identity path.",
+            },
+            BenchDoc {
+                name: "cosh_rational_one",
+                description: "Builds cosh(1) through the generic (exp(x) + exp(-x))/2 identity path.",
+            },
+            BenchDoc {
+                name: "tanh_rational_one",
+                description: "Builds tanh(1) through the generic (exp(x) - exp(-x))/(exp(x) + exp(-x)) identity path.",
+            },
+            BenchDoc {
+                name: "atan2_origin",
+                description: "Hits the origin (0, 0) short-circuit returning exact zero.",
+            },
+            BenchDoc {
+                name: "atan2_axis_positive_y",
+                description: "Hits the positive-y axis short-circuit returning exact pi/2.",
+            },
+            BenchDoc {
+                name: "atan2_axis_negative_x",
+                description: "Hits the negative-x axis short-circuit returning exact pi.",
+            },
+            BenchDoc {
+                name: "atan2_quadrant_one_unit_diagonal",
+                description: "Quadrant I unit diagonal reduces to atan(1) = pi/4 exact special form.",
+            },
+            BenchDoc {
+                name: "atan2_quadrant_two_pi_correction",
+                description: "Quadrant II (1, -2) exercises atan(small ratio) + pi correction.",
+            },
+            BenchDoc {
+                name: "atan2_quadrant_three_negative_pi",
+                description: "Quadrant III (-1, -2) exercises atan(small ratio) - pi correction.",
+            },
+            BenchDoc {
                 name: "log2_power_of_two",
                 description: "Folds log2(1024) to the exact rational 10 via the integer-log-detection shortcut.",
             },
@@ -1071,6 +1119,100 @@ fn bench_exact_transcendental_special_forms(c: &mut Criterion) {
         b.iter_batched(
             || atanh_sqrt_two_error.clone(),
             |value| black_box(value.atanh().unwrap_err()),
+            BatchSize::SmallInput,
+        )
+    });
+
+    let ln_two = Real::new(Rational::new(2)).ln().unwrap();
+    let rational_one = Real::one();
+
+    group.bench_function("sinh_ln_two", |b| {
+        b.iter_batched(
+            || ln_two.clone(),
+            |value| black_box(value.sinh().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("cosh_ln_two", |b| {
+        b.iter_batched(
+            || ln_two.clone(),
+            |value| black_box(value.cosh().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("tanh_ln_two", |b| {
+        b.iter_batched(
+            || ln_two.clone(),
+            |value| black_box(value.tanh().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("sinh_rational_one", |b| {
+        b.iter_batched(
+            || rational_one.clone(),
+            |value| black_box(value.sinh().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("cosh_rational_one", |b| {
+        b.iter_batched(
+            || rational_one.clone(),
+            |value| black_box(value.cosh().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("tanh_rational_one", |b| {
+        b.iter_batched(
+            || rational_one.clone(),
+            |value| black_box(value.tanh().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+
+    let zero = Real::zero();
+    let positive_one = Real::one();
+    let negative_one = -Real::one();
+    let negative_two = Real::from(-2_i32);
+
+    group.bench_function("atan2_origin", |b| {
+        b.iter_batched(
+            || (zero.clone(), zero.clone()),
+            |(y, x)| black_box(y.atan2(x)),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("atan2_axis_positive_y", |b| {
+        b.iter_batched(
+            || (positive_one.clone(), zero.clone()),
+            |(y, x)| black_box(y.atan2(x)),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("atan2_axis_negative_x", |b| {
+        b.iter_batched(
+            || (zero.clone(), negative_one.clone()),
+            |(y, x)| black_box(y.atan2(x)),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("atan2_quadrant_one_unit_diagonal", |b| {
+        b.iter_batched(
+            || (positive_one.clone(), positive_one.clone()),
+            |(y, x)| black_box(y.atan2(x)),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("atan2_quadrant_two_pi_correction", |b| {
+        b.iter_batched(
+            || (positive_one.clone(), negative_two.clone()),
+            |(y, x)| black_box(y.atan2(x)),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("atan2_quadrant_three_negative_pi", |b| {
+        b.iter_batched(
+            || (negative_one.clone(), negative_two.clone()),
+            |(y, x)| black_box(y.atan2(x)),
             BatchSize::SmallInput,
         )
     });
