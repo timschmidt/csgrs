@@ -22,7 +22,7 @@ use std::cmp::Ordering;
 use hyperlimit::{Point2, PredicatePolicy, compare_reals_with_policy, point2_equal_with_policy};
 use hyperreal::{Real, RealExactSetFacts};
 
-use crate::arc::ExplicitCircularArc;
+use crate::arc::{ExplicitArcPointClassification, ExplicitCircularArc};
 use crate::arrangement::{
     ExplicitArcArrangementFragment, LineArcArrangementEvent, LineArrangementBreakpoint,
     LineArrangementError, arrange_line_segments_with_explicit_arcs_and_provenance,
@@ -548,7 +548,7 @@ fn validate_curve_fragment_separation(
     for (index, fragment) in arcs.iter().enumerate() {
         boxes.push(FragmentBox {
             source: MixedCurveFragmentRef::ExplicitArc(index),
-            ..box_from_explicit_arc(fragment)
+            ..box_from_explicit_arc(fragment, policy)?
         });
     }
     for (index, fragment) in quadratics.iter().enumerate() {
@@ -602,19 +602,47 @@ fn validate_curve_fragment_separation(
     Ok(())
 }
 
-fn box_from_explicit_arc(fragment: &ExplicitArcArrangementFragment) -> FragmentBox {
+/// Build a sweep-aware exact hull box for an explicit circular-arc fragment.
+///
+/// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
+/// 7.1-2 (1997), draws the boundary used here: topology is accepted only from
+/// exact predicates over retained objects. The only interior extrema of an
+/// axis-aligned circular-arc box occur at the four cardinal points of the
+/// retained circle, so this routine asks the arc sweep predicate whether each
+/// cardinal witness is on the fragment. This is the same predicate-carrier
+/// discipline used by circular-arc arrangements such as CGAL
+/// `Arrangement_on_surface_2`; no sampled angle or approximate tessellation is
+/// allowed to shrink the box.
+fn box_from_explicit_arc(
+    fragment: &ExplicitArcArrangementFragment,
+    policy: PredicatePolicy,
+) -> Result<FragmentBox, LineMixedBezierArrangementError> {
     let arc = &fragment.arc;
-    let x_min = arc.center().x.clone() - arc.radius().clone();
-    let x_max = arc.center().x.clone() + arc.radius().clone();
-    let y_min = arc.center().y.clone() - arc.radius().clone();
-    let y_max = arc.center().y.clone() + arc.radius().clone();
-    FragmentBox {
-        source: MixedCurveFragmentRef::ExplicitArc(usize::MAX),
-        x_min,
-        x_max,
-        y_min,
-        y_max,
+    let mut hull = box_from_points([arc.start(), arc.end()], policy)?;
+    let center = arc.center();
+    let radius = arc.radius();
+    let cardinal_points = [
+        Point2::new(center.x.clone() + radius.clone(), center.y.clone()),
+        Point2::new(center.x.clone() - radius.clone(), center.y.clone()),
+        Point2::new(center.x.clone(), center.y.clone() + radius.clone()),
+        Point2::new(center.x.clone(), center.y.clone() - radius.clone()),
+    ];
+
+    for point in cardinal_points {
+        match arc.classify_point(&point, policy) {
+            ExplicitArcPointClassification::OnArc => {
+                update_min_max(&mut hull.x_min, &mut hull.x_max, &point.x, policy)?;
+                update_min_max(&mut hull.y_min, &mut hull.y_max, &point.y, policy)?;
+            }
+            ExplicitArcPointClassification::OnCircleOutsideSweep
+            | ExplicitArcPointClassification::OffCircle => {}
+            ExplicitArcPointClassification::Unknown => {
+                return Err(LineMixedBezierArrangementError::UndecidablePointEquality);
+            }
+        }
     }
+    hull.source = MixedCurveFragmentRef::ExplicitArc(usize::MAX);
+    Ok(hull)
 }
 
 fn box_from_points<'a, const N: usize>(

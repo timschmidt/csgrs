@@ -557,6 +557,23 @@ fn path_predicates(c: &mut Criterion) {
             .map(|report| report.cell_graph)
         })
     });
+    let sweep_box_line = LinePathSegment::new(p(0, 0), p(800, 0));
+    let sweep_box_arc =
+        ExplicitCircularArc::new(p(400, 0), r(400), p(0, 0), p(800, 0), ArcDirection::Cw).unwrap();
+    let sweep_box_quadratic = QuadraticBezier::new(p(200, -100), p(400, -300), p(600, -100));
+    c.bench_function("line_mixed_curve_sweep_box_admission", |b| {
+        b.iter(|| {
+            arrange_line_segments_with_mixed_curves(
+                std::slice::from_ref(&sweep_box_line),
+                std::slice::from_ref(&sweep_box_arc),
+                std::slice::from_ref(&sweep_box_quadratic),
+                &[],
+                &[],
+                PredicatePolicy::default(),
+            )
+            .map(|report| report.cell_graph)
+        })
+    });
     let line_cubic = CubicBezier::new(
         p(0, 0),
         pq(1000, 3, 500, 1),

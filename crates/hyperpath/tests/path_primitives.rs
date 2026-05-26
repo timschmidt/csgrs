@@ -2444,6 +2444,70 @@ fn line_mixed_curve_arrangement_rejects_uncertified_arc_curve_overlap() {
 }
 
 #[test]
+fn line_mixed_curve_arrangement_uses_arc_sweep_box_not_full_circle_box() {
+    let line = LinePathSegment::new(p(0, 0), p(8, 0));
+    let arc = ExplicitCircularArc::new(p(4, 0), r(4), p(0, 0), p(8, 0), ArcDirection::Cw).unwrap();
+    let quadratic = QuadraticBezier::new(p(2, -1), p(4, -3), p(6, -1));
+
+    assert_eq!(
+        arc.classify_point(&p(4, 4), PredicatePolicy::default()),
+        ExplicitArcPointClassification::OnArc
+    );
+    assert_eq!(
+        arc.classify_point(&p(4, -4), PredicatePolicy::default()),
+        ExplicitArcPointClassification::OnCircleOutsideSweep
+    );
+
+    let report = arrange_line_segments_with_mixed_curves(
+        &[line],
+        &[arc],
+        &[quadratic],
+        &[],
+        &[],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+
+    assert_eq!(report.arc_fragments.len(), 1);
+    assert_eq!(report.quadratic_fragments.len(), 1);
+    assert_eq!(
+        report
+            .cell_graph
+            .faces
+            .iter()
+            .filter(|face| face.class == CurveArrangementCellFaceClass::Bounded)
+            .count(),
+        1
+    );
+}
+
+#[test]
+fn line_mixed_curve_arrangement_keeps_full_circle_arc_box_conservative() {
+    let line = LinePathSegment::new(p(0, 10), p(8, 10));
+    let full_circle =
+        ExplicitCircularArc::new(p(4, 0), r(4), p(8, 0), p(8, 0), ArcDirection::Ccw).unwrap();
+    let quadratic = QuadraticBezier::new(p(2, -1), p(4, -3), p(6, -1));
+
+    let error = arrange_line_segments_with_mixed_curves(
+        &[line],
+        &[full_circle],
+        &[quadratic],
+        &[],
+        &[],
+        PredicatePolicy::default(),
+    )
+    .unwrap_err();
+
+    assert_eq!(
+        error,
+        LineMixedBezierArrangementError::UnsupportedCurveCurveInteraction {
+            left: MixedCurveFragmentRef::ExplicitArc(0),
+            right: MixedCurveFragmentRef::Quadratic(0),
+        }
+    );
+}
+
+#[test]
 fn line_rational_quadratic_bezier_arrangement_splits_monotone_support_overlap() {
     let conic = RationalQuadraticBezier::new(p(0, 0), p(4, 0), p(8, 0), r(2)).unwrap();
     let line = LinePathSegment::new(Point2::new(rq(28, 11), r(0)), Point2::new(rq(60, 11), r(0)));

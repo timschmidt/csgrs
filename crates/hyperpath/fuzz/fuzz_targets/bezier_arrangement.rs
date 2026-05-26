@@ -322,6 +322,35 @@ fuzz_target!(|data: &[u8]| {
         }
     );
 
+    let sweep_tight_arc_report = arrange_line_segments_with_mixed_curves(
+        &[LinePathSegment::new(p(0, 0), p(8, 0))],
+        &[ExplicitCircularArc::new(p(4, 0), r(4), p(0, 0), p(8, 0), ArcDirection::Cw).unwrap()],
+        &[QuadraticBezier::new(p(2, -1), p(4, -3), p(6, -1))],
+        &[],
+        &[],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert_eq!(sweep_tight_arc_report.arc_fragments.len(), 1);
+    assert_eq!(sweep_tight_arc_report.quadratic_fragments.len(), 1);
+
+    let full_circle_overlap_error = arrange_line_segments_with_mixed_curves(
+        &[LinePathSegment::new(p(0, 10), p(8, 10))],
+        &[ExplicitCircularArc::new(p(4, 0), r(4), p(8, 0), p(8, 0), ArcDirection::Ccw).unwrap()],
+        &[QuadraticBezier::new(p(2, -1), p(4, -3), p(6, -1))],
+        &[],
+        &[],
+        PredicatePolicy::default(),
+    )
+    .unwrap_err();
+    assert_eq!(
+        full_circle_overlap_error,
+        LineMixedBezierArrangementError::UnsupportedCurveCurveInteraction {
+            left: MixedCurveFragmentRef::ExplicitArc(0),
+            right: MixedCurveFragmentRef::Quadratic(0),
+        }
+    );
+
     let cubic_overlap_curve = CubicBezier::new(p(0, 0), pq(8, 3, 0, 1), pq(16, 3, 0, 1), p(8, 0));
     let cubic_overlap_line = LinePathSegment::new(p(2, 0), p(6, 0));
     let cubic_overlap_report = arrange_line_segments_with_cubic_beziers(
