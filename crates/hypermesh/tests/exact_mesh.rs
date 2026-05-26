@@ -24151,6 +24151,99 @@ fn exact_coplanar_surface_point_touch_difference_materializes_vertex_edge_side_c
 
 #[cfg(feature = "exact-triangulation")]
 #[test]
+fn exact_coplanar_surface_point_touch_difference_materializes_nonconvex_vertex_edge_branch() {
+    let left = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            0, 0, 0, 20, 0, 0, 20, 20, 0, 12, 20, 0, 12, 12, 0, 8, 12, 0, 8, 20, 0, 0, 20, 0, 20,
+            12, 0, 0, 12, 0,
+        ],
+        &[
+            0, 1, 8, 0, 8, 4, 0, 4, 5, 0, 5, 9, //
+            9, 5, 6, 9, 6, 7, //
+            4, 8, 2, 4, 2, 3,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let right = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            -2, 8, 0, 12, 8, 0, 12, 10, 0, -2, 10, 0, //
+            10, -2, 0, 14, -2, 0, 12, 8, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+
+    assert!(hypermesh::exact::arrange_coplanar_surface_multi_difference(&left, &right).is_none());
+    let branch = hypermesh::exact::arrange_coplanar_surface_point_touch_difference(&left, &right)
+        .expect("nonconvex source vertex-edge branch should replay as point-touch difference");
+    branch.validate().unwrap();
+    branch
+        .validate_difference_against_sources(&left, &right)
+        .unwrap();
+    assert!(
+        branch
+            .polygons
+            .iter()
+            .filter(|polygon| {
+                polygon.iter().any(|point| {
+                    real_eq(&point.x, &ExactReal::from(12))
+                        && real_eq(&point.y, &ExactReal::from(8))
+                })
+            })
+            .count()
+            >= 2
+    );
+    let mut stale_branch = branch.clone();
+    stale_branch.polygons.pop();
+    assert!(
+        stale_branch
+            .validate_difference_against_sources(&left, &right)
+            .is_err()
+    );
+    let preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    preflight.validate().unwrap();
+    preflight.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchDifference
+    );
+    let result = hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    result
+        .validate_operation_against_sources(
+            &left,
+            &right,
+            hypermesh::exact::ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut:
+                hypermesh::exact::ExactBooleanShortcutKind::CoplanarSurfacePointTouchDifference
+        }
+    );
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[test]
 fn exact_coplanar_component_holed_difference_retains_holes_after_crossing_nonrectilinear_side_cutter_union()
  {
     let left = ExactMesh::from_i64_triangles_with_policy(

@@ -10377,6 +10377,69 @@ fn materialize_simple_source_side_cutter_point_touch_difference_core(
     Some((removed, polygons))
 }
 
+/// Replay a vertex-on-edge branch on a nonconvex simple source disk.
+///
+/// This is the simple-source counterpart to
+/// [`materialize_vertex_edge_side_cutter_point_touch_difference`]. The input
+/// openings are already source-owned removed loops, possibly clipped from
+/// crossing convex right components by
+/// [`simple_source_convex_crossing_removed_openings`]. This wrapper admits the
+/// bounded higher-order branch where a removed-opening endpoint lies in the
+/// strict interior of another removed-opening edge. It then delegates to the
+/// ordinary branch-aware simple-source replay, so the final retained loops
+/// still duplicate the branch coordinate only after exact containment,
+/// source-boundary ownership, retained-fragment stitching, and area replay.
+///
+/// Endpoint-on-edge incidence is certified with the same exact
+/// orientation/segment predicates used by Guigue and Devillers, "Fast and
+/// Robust Triangle-Triangle Overlap Test Using Orientation Predicates,"
+/// *Journal of Graphics Tools* 8.1 (2003). The promotion boundary follows
+/// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
+/// 7.1-2 (1997): the incidence is retained evidence, not a tolerance
+/// decision, and the boolean object is exposed only after the exact replay
+/// succeeds. The retained-loop construction remains the Weiler-Atherton
+/// boundary-fragment traversal from Weiler and Atherton, "Hidden Surface
+/// Removal Using Polygon Area Sorting," *SIGGRAPH Computer Graphics* 11.2
+/// (1977).
+#[cfg(feature = "exact-triangulation")]
+fn materialize_simple_source_vertex_edge_side_cutter_point_touch_difference(
+    component: &SimpleSurfaceComponent,
+    removed: &[Vec<Point3>],
+) -> Option<Vec<Vec<Point3>>> {
+    if removed.len() < 2 {
+        return None;
+    }
+    let projection = component.projection;
+    let mut openings = removed.to_vec();
+    for opening in &mut openings {
+        orient_polygon_ccw(opening, projection)?;
+        *opening = simplify_projected_polygon(opening.clone(), projection);
+        validate_projected_simple_loop(
+            opening,
+            projection,
+            "coplanar nonconvex source vertex-edge point-touch side-cutter difference",
+        )
+        .ok()?;
+        if !polygon_lies_in_closed_simple_polygon(opening, &component.boundary, projection)? {
+            return None;
+        }
+        if simple_boundary_attachment_count(&component.boundary, opening, projection)? == 0 {
+            return None;
+        }
+    }
+    if !simple_loops_have_endpoint_on_edge_branch(&openings, projection) {
+        return None;
+    }
+    Some(
+        materialize_simple_source_side_cutter_point_touch_difference_core(
+            component,
+            &openings,
+            "coplanar nonconvex source vertex-edge point-touch side-cutter difference",
+        )?
+        .1,
+    )
+}
+
 /// Merge positive-connected simple removed openings without erasing branches.
 ///
 /// Ordinary simple-source removal treats point-only opening contacts as
@@ -11393,12 +11456,20 @@ fn arrange_coplanar_simple_surface_point_touch_difference(
             return None;
         }
         let mut branch_polygons = if holes.is_empty() {
-            materialize_simple_source_side_cutter_point_touch_difference_core(
-                component,
-                &removed,
-                "coplanar nonconvex source point-touch side-cutter difference",
-            )?
-            .1
+            if let Some(polygons) =
+                materialize_simple_source_vertex_edge_side_cutter_point_touch_difference(
+                    component, &removed,
+                )
+            {
+                polygons
+            } else {
+                materialize_simple_source_side_cutter_point_touch_difference_core(
+                    component,
+                    &removed,
+                    "coplanar nonconvex source point-touch side-cutter difference",
+                )?
+                .1
+            }
         } else if let Some(polygons) =
             materialize_simple_source_side_cutter_point_touch_difference_consuming_holes(
                 component,

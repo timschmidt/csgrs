@@ -6218,6 +6218,66 @@ fn exercise_side_cutter_opening_without_holes() {
         ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchDifference
     );
 
+    let nonconvex_vertex_edge_branch_left = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            0, 0, 0, 20, 0, 0, 20, 20, 0, 12, 20, 0, 12, 12, 0, 8, 12, 0, 8, 20,
+            0, 0, 20, 0, 20, 12, 0, 0, 12, 0,
+        ],
+        &[
+            0, 1, 8, 0, 8, 4, 0, 4, 5, 0, 5, 9, //
+            9, 5, 6, 9, 6, 7, //
+            4, 8, 2, 4, 2, 3,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("nonconvex vertex-edge source fixture must import");
+    let nonconvex_vertex_edge_branch_right = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            -2, 8, 0, 12, 8, 0, 12, 10, 0, -2, 10, 0, //
+            10, -2, 0, 14, -2, 0, 12, 8, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("nonconvex vertex-edge cutter fixture must import");
+    assert!(arrange_coplanar_surface_multi_difference(
+        &nonconvex_vertex_edge_branch_left,
+        &nonconvex_vertex_edge_branch_right,
+    )
+    .is_none());
+    let nonconvex_vertex_edge_branch = arrange_coplanar_surface_point_touch_difference(
+        &nonconvex_vertex_edge_branch_left,
+        &nonconvex_vertex_edge_branch_right,
+    )
+    .expect("nonconvex source vertex-edge branch should replay retained point-touch loops");
+    nonconvex_vertex_edge_branch.validate().unwrap();
+    nonconvex_vertex_edge_branch
+        .validate_difference_against_sources(
+            &nonconvex_vertex_edge_branch_left,
+            &nonconvex_vertex_edge_branch_right,
+        )
+        .unwrap();
+    let nonconvex_vertex_edge_preflight = preflight_boolean_exact(
+        &nonconvex_vertex_edge_branch_left,
+        &nonconvex_vertex_edge_branch_right,
+        ExactBooleanOperation::Difference,
+    )
+    .expect("nonconvex vertex-edge point-branch preflight should classify shortcut");
+    nonconvex_vertex_edge_preflight.validate().unwrap();
+    nonconvex_vertex_edge_preflight
+        .validate_against_sources(
+            &nonconvex_vertex_edge_branch_left,
+            &nonconvex_vertex_edge_branch_right,
+        )
+        .unwrap();
+    assert_eq!(
+        nonconvex_vertex_edge_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchDifference
+    );
+
     let point_branch_consumed_hole = ExactMesh::from_i64_triangles_with_policy(
         &[
             2, 5, 0, 3, 5, 0, 3, 6, 0, 2, 6, 0, //
