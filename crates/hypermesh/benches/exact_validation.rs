@@ -5131,6 +5131,41 @@ fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
             )
             .unwrap()
             .mesh;
+        let same_outer_affine_island_intersection_origin = (0, 0, 0);
+        let same_outer_affine_island_intersection_basis_u = (2, 1, 0);
+        let same_outer_affine_island_intersection_basis_v = (-1, 2, 0);
+        let same_outer_affine_island_intersection_outer = affine_rect_surface_i64(
+            &[(0, 0, 20, 20)],
+            same_outer_affine_island_intersection_origin,
+            same_outer_affine_island_intersection_basis_u,
+            same_outer_affine_island_intersection_basis_v,
+        );
+        let same_outer_affine_island_intersection_left_holes = affine_rect_surface_i64(
+            &[(4, 4, 13, 8), (4, 8, 8, 17)],
+            same_outer_affine_island_intersection_origin,
+            same_outer_affine_island_intersection_basis_u,
+            same_outer_affine_island_intersection_basis_v,
+        );
+        let same_outer_affine_island_intersection_right_holes = affine_rect_surface_i64(
+            &[(12, 4, 16, 13), (7, 12, 16, 16)],
+            same_outer_affine_island_intersection_origin,
+            same_outer_affine_island_intersection_basis_u,
+            same_outer_affine_island_intersection_basis_v,
+        );
+        let same_outer_affine_island_intersection_left =
+            arrange_coplanar_affine_surface_difference(
+                &same_outer_affine_island_intersection_outer,
+                &same_outer_affine_island_intersection_left_holes,
+            )
+            .unwrap()
+            .mesh;
+        let same_outer_affine_island_intersection_right =
+            arrange_coplanar_affine_surface_difference(
+                &same_outer_affine_island_intersection_outer,
+                &same_outer_affine_island_intersection_right_holes,
+            )
+            .unwrap()
+            .mesh;
         let same_outer_simple_intersection_origin = (0, 0, 0);
         let same_outer_simple_intersection_basis_u = (2, 1, 0);
         let same_outer_simple_intersection_basis_v = (-1, 2, 0);
@@ -6949,6 +6984,22 @@ fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
                         hypermesh::exact::preflight_boolean_exact(
                             &same_outer_orthogonal_island_intersection_left,
                             &same_outer_orthogonal_island_intersection_right,
+                            hypermesh::exact::ExactBooleanOperation::Intersection,
+                        )
+                        .map(|report| report.validate()),
+                        arrange_coplanar_surface_component_holed_intersection(
+                            &same_outer_affine_island_intersection_left,
+                            &same_outer_affine_island_intersection_right,
+                        )
+                        .map(|output| {
+                            output.validate_intersection_against_sources(
+                                &same_outer_affine_island_intersection_left,
+                                &same_outer_affine_island_intersection_right,
+                            )
+                        }),
+                        hypermesh::exact::preflight_boolean_exact(
+                            &same_outer_affine_island_intersection_left,
+                            &same_outer_affine_island_intersection_right,
                             hypermesh::exact::ExactBooleanOperation::Intersection,
                         )
                         .map(|report| report.validate()),

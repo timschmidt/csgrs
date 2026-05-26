@@ -3521,22 +3521,28 @@ fn same_outer_intersection_hole_groups(
 
 /// Replay same-outer retained holes whose removed union contains islands.
 ///
-/// In `outer - union(left_holes, right_holes)`, a connected rectilinear
-/// retained-hole cluster can form an annular removed owner. The existing
-/// single-hole path cannot encode that topology because the complement of the
-/// annulus is a main component with one retained hole plus an inner island
-/// component. This helper keeps the exact source-owned grouping used by
-/// [`merge_same_outer_intersection_hole_components`], then promotes only the
-/// bounded orthogonal annulus case proven by exact cell replay.
+/// In `outer - union(left_holes, right_holes)`, a connected retained-hole
+/// cluster can form an annular removed owner. The existing single-hole path
+/// cannot encode that topology because the complement of the annulus is a
+/// main component with one retained hole plus an inner island component. This
+/// helper keeps the exact source-owned grouping used by
+/// [`merge_same_outer_intersection_hole_components`], then promotes bounded
+/// annuli proven either by exact orthogonal cells or by a non-rectilinear
+/// exposed-fragment replay whose area equation closes.
 ///
 /// This is the same retained-object discipline Yap argues for in "Towards
 /// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997):
-/// source loops are first classified exactly, the finite rectilinear cell
-/// complex constructs the candidate topology, and the caller still replays the
-/// full Boolean area before materialization. The cell-complex boundary model
-/// is the planar subdivision invariant described by de Berg, Cheong, van
-/// Kreveld, and Overmars, *Computational Geometry: Algorithms and
-/// Applications*, 3rd ed. (2008), Chapter 2.
+/// source loops are first classified exactly, the candidate topology is
+/// constructed from retained exact boundary objects, and the caller still
+/// replays the full Boolean area before materialization. Orthogonal annuli use
+/// the cell-complex boundary model described by de Berg, Cheong, van Kreveld,
+/// and Overmars, *Computational Geometry: Algorithms and Applications*, 3rd
+/// ed. (2008), Chapter 2. Non-rectilinear annuli use the Weiler-Atherton
+/// exposed-fragment boundary traversal from Weiler and Atherton, "Hidden
+/// Surface Removal Using Polygon Area Sorting," *SIGGRAPH Computer Graphics*
+/// 11.2 (1977), with exact segment events classified in the style of Guigue
+/// and Devillers, "Fast and Robust Triangle-Triangle Overlap Test Using
+/// Orientation Predicates," *Journal of Graphics Tools* 8.1 (2003).
 #[cfg(feature = "exact-triangulation")]
 fn same_outer_intersection_components_with_orthogonal_hole_islands(
     left: &SourceHoledSurfaceComponent,
@@ -3572,7 +3578,7 @@ fn same_outer_intersection_components_with_orthogonal_hole_islands(
             .map(|index| source_holes[index].clone())
             .collect::<Vec<_>>();
         if let Some(replay) =
-            same_outer_intersection_orthogonal_hole_union_replay(&component_holes, projection)
+            same_outer_intersection_annular_hole_union_replay(&component_holes, projection)
         {
             retained_holes.push(replay.outer);
             for island in replay.islands {
@@ -3821,7 +3827,7 @@ fn same_outer_intersection_rectangle_strip_hole_union_component(
 /// (2001), via `hypertri`.
 #[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug)]
-struct SameOuterOrthogonalHoleUnionReplay {
+struct SameOuterHoleUnionReplay {
     outer: Vec<Point3>,
     islands: Vec<Vec<Point3>>,
 }
@@ -3842,7 +3848,7 @@ fn same_outer_intersection_orthogonal_hole_union_component(
 fn same_outer_intersection_orthogonal_hole_union_replay(
     holes: &[Vec<Point3>],
     projection: CoplanarProjection,
-) -> Option<SameOuterOrthogonalHoleUnionReplay> {
+) -> Option<SameOuterHoleUnionReplay> {
     if holes.len() < 2 {
         return None;
     }
@@ -3920,10 +3926,183 @@ fn same_outer_intersection_orthogonal_hole_union_replay(
         islands.push(island);
     }
     sort_polygons_for_replay(&mut islands, projection);
-    Some(SameOuterOrthogonalHoleUnionReplay {
+    Some(SameOuterHoleUnionReplay {
         outer: union_outer,
         islands,
     })
+}
+
+/// Replay a connected retained-hole union that exposes island components.
+///
+/// Orthogonal cell replay remains the first choice because it carries the
+/// finite rectilinear subdivision explicitly. The non-rectilinear fallback is
+/// deliberately narrower than a general planar arrangement: it requires a
+/// connected positive-area source-hole overlap graph, at least one
+/// non-axis-aligned retained edge, exposed boundary loops that classify as one
+/// outer removed ring plus one or more strict inner island rings, and exact
+/// equality between the loop area and the source union area. This is Yap's
+/// "Towards Exact Geometric Computation" (Computational Geometry 7.1-2,
+/// 1997) promotion rule applied directly: topology crosses the API boundary
+/// only when exact source objects, predicates, construction, and area replay
+/// agree. Boundary fragments follow Weiler and Atherton, "Hidden Surface
+/// Removal Using Polygon Area Sorting" (SIGGRAPH Computer Graphics 11.2,
+/// 1977); segment splitting uses the Guigue-Devillers orientation-predicate
+/// model cited by the surrounding union-fragment code.
+#[cfg(feature = "exact-triangulation")]
+fn same_outer_intersection_annular_hole_union_replay(
+    holes: &[Vec<Point3>],
+    projection: CoplanarProjection,
+) -> Option<SameOuterHoleUnionReplay> {
+    same_outer_intersection_orthogonal_hole_union_replay(holes, projection)
+        .or_else(|| same_outer_intersection_simple_annular_hole_union_replay(holes, projection))
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn same_outer_intersection_simple_annular_hole_union_replay(
+    holes: &[Vec<Point3>],
+    projection: CoplanarProjection,
+) -> Option<SameOuterHoleUnionReplay> {
+    if holes.len() < 2 {
+        return None;
+    }
+
+    let mut regions = holes.to_vec();
+    let mut has_non_axis_aligned_edge = false;
+    for region in &mut regions {
+        orient_polygon_ccw(region, projection)?;
+        *region = simplify_projected_polygon(core::mem::take(region), projection);
+        validate_projected_simple_loop(
+            region,
+            projection,
+            "coplanar same-outer simple annular retained-hole union",
+        )
+        .ok()?;
+        has_non_axis_aligned_edge |= polygon_has_non_axis_aligned_edge(region, projection)?;
+    }
+    if !has_non_axis_aligned_edge {
+        return None;
+    }
+
+    let mut overlap_graph = UnionFind::new(regions.len());
+    for left in 0..regions.len() {
+        for right in left + 1..regions.len() {
+            match simple_polygon_contact(&regions[left], &regions[right], projection)? {
+                SimplePolygonContact::Disjoint => {}
+                SimplePolygonContact::PositiveArea => overlap_graph.union(left, right),
+                SimplePolygonContact::PositiveLengthBoundary => {}
+                SimplePolygonContact::PointOnly => return None,
+            }
+        }
+    }
+    let root = overlap_graph.find(0);
+    for index in 1..regions.len() {
+        if overlap_graph.find(index) != root {
+            return None;
+        }
+    }
+
+    let mut fragments = Vec::new();
+    for index in 0..regions.len() {
+        collect_simple_union_boundary_fragments(index, &regions, projection, &mut fragments)?;
+    }
+    let mut loops = stitch_simple_union_loops(fragments, projection)?;
+    if loops.len() < 2 {
+        return None;
+    }
+    for loop_ring in &mut loops {
+        *loop_ring = simplify_projected_polygon(core::mem::take(loop_ring), projection);
+        validate_projected_simple_loop(
+            loop_ring,
+            projection,
+            "coplanar same-outer simple annular retained-hole union",
+        )
+        .ok()?;
+        let area = projected_area2_abs(loop_ring, projection)?;
+        if compare_reals(&area, &ExactReal::from(0)).value()? != Ordering::Greater {
+            return None;
+        }
+    }
+
+    let mut outer_index = None;
+    let mut island_indices = Vec::new();
+    for index in 0..loops.len() {
+        let containing_count =
+            loops
+                .iter()
+                .enumerate()
+                .try_fold(0usize, |count, (other_index, other)| {
+                    if other_index == index {
+                        Some(count)
+                    } else if polygon_strictly_inside_simple_polygon(
+                        &loops[index],
+                        other,
+                        projection,
+                    )? {
+                        Some(count + 1)
+                    } else {
+                        Some(count)
+                    }
+                })?;
+        match containing_count {
+            0 => {
+                if outer_index.is_some() {
+                    return None;
+                }
+                outer_index = Some(index);
+            }
+            1 => island_indices.push(index),
+            _ => return None,
+        }
+    }
+    let outer_index = outer_index?;
+    if island_indices.is_empty() {
+        return None;
+    }
+
+    let mut outer = loops[outer_index].clone();
+    orient_polygon_cw(&mut outer, projection)?;
+    canonicalize_polygon_start_by_min_projected_point(&mut outer, projection);
+    validate_projected_simple_loop(
+        &outer,
+        projection,
+        "coplanar same-outer simple annular retained-hole union",
+    )
+    .ok()?;
+
+    let mut islands = Vec::with_capacity(island_indices.len());
+    for index in island_indices {
+        let mut island = loops[index].clone();
+        orient_polygon_ccw(&mut island, projection)?;
+        canonicalize_polygon_start_by_min_projected_point(&mut island, projection);
+        validate_projected_simple_loop(
+            &island,
+            projection,
+            "coplanar same-outer simple annular retained-hole union island",
+        )
+        .ok()?;
+        if !polygon_strictly_inside_simple_polygon(&island, &outer, projection)? {
+            return None;
+        }
+        islands.push(island);
+    }
+    validate_simple_component_loops_disjoint(
+        &islands,
+        projection,
+        "coplanar same-outer simple annular retained-hole union island",
+    )
+    .ok()?;
+
+    let source_union_area = component_holed_union_source_area2(&regions, projection, true)?;
+    let mut replay_area = projected_area2_abs(&outer, projection)?;
+    for island in &islands {
+        replay_area = sub(&replay_area, &projected_area2_abs(island, projection)?);
+    }
+    if compare_reals(&source_union_area, &replay_area).value()? != Ordering::Equal {
+        return None;
+    }
+
+    sort_polygons_for_replay(&mut islands, projection);
+    Some(SameOuterHoleUnionReplay { outer, islands })
 }
 
 /// Add exact retained bridge points to an outer ring.

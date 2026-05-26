@@ -2967,6 +2967,109 @@ fn exercise_same_outer_component_holed_coplanar_intersection_with_island() {
     assert!(
         arrange_coplanar_surface_component_holed_intersection(&left, &point_touch_right).is_none()
     );
+
+    let affine_origin = (0, 0, 0);
+    let affine_basis_u = (2, 1, 0);
+    let affine_basis_v = (-1, 2, 0);
+    let affine_outer = affine_rect_surface_i64(
+        &[(0, 0, 20, 20)],
+        affine_origin,
+        affine_basis_u,
+        affine_basis_v,
+    );
+    let affine_left_holes = affine_rect_surface_i64(
+        &[(4, 4, 13, 8), (4, 8, 8, 17)],
+        affine_origin,
+        affine_basis_u,
+        affine_basis_v,
+    );
+    let affine_right_holes = affine_rect_surface_i64(
+        &[(12, 4, 16, 13), (7, 12, 16, 16)],
+        affine_origin,
+        affine_basis_u,
+        affine_basis_v,
+    );
+    let affine_left =
+        arrange_coplanar_affine_surface_difference(&affine_outer, &affine_left_holes)
+            .expect("same-outer affine island left fixture should materialize")
+            .mesh;
+    let affine_right =
+        arrange_coplanar_affine_surface_difference(&affine_outer, &affine_right_holes)
+            .expect("same-outer affine island right fixture should materialize")
+            .mesh;
+    assert!(
+        arrange_coplanar_orthogonal_surface_intersection(&affine_left, &affine_right).is_none()
+    );
+    let affine_intersection =
+        arrange_coplanar_surface_component_holed_intersection(&affine_left, &affine_right)
+            .expect("same-outer affine retained-hole frame should preserve its central island");
+    affine_intersection.validate().unwrap();
+    affine_intersection
+        .validate_intersection_against_sources(&affine_left, &affine_right)
+        .unwrap();
+    assert_eq!(affine_intersection.components.len(), 2);
+    assert_eq!(
+        affine_intersection
+            .components
+            .iter()
+            .map(|component| component.holes.len())
+            .sum::<usize>(),
+        1
+    );
+    assert!(
+        affine_intersection
+            .components
+            .iter()
+            .any(|component| component.holes.is_empty()),
+        "the complement of the nonrectilinear frame must be retained as an island"
+    );
+    let affine_reverse =
+        arrange_coplanar_surface_component_holed_intersection(&affine_right, &affine_left)
+            .expect("same-outer affine retained-hole island intersection should be symmetric");
+    affine_reverse.validate().unwrap();
+    affine_reverse
+        .validate_intersection_against_sources(&affine_right, &affine_left)
+        .unwrap();
+
+    let mut stale_affine = affine_intersection.clone();
+    let affine_island = stale_affine
+        .components
+        .iter()
+        .position(|component| component.holes.is_empty())
+        .expect("affine fixture should expose an island component");
+    stale_affine.components.remove(affine_island);
+    assert!(
+        stale_affine
+            .validate_intersection_against_sources(&affine_left, &affine_right)
+            .is_err()
+    );
+
+    let affine_preflight =
+        preflight_boolean_exact(&affine_left, &affine_right, ExactBooleanOperation::Intersection)
+            .expect("same-outer affine retained-hole island preflight should classify shortcut");
+    affine_preflight.validate().unwrap();
+    affine_preflight
+        .validate_against_sources(&affine_left, &affine_right)
+        .unwrap();
+    assert_eq!(
+        affine_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
+    );
+    hypermesh::exact::boolean_exact(
+        &affine_left,
+        &affine_right,
+        ExactBooleanOperation::Intersection,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("same-outer affine retained-hole island boolean should materialize")
+    .validate_operation_against_sources(
+        &affine_left,
+        &affine_right,
+        ExactBooleanOperation::Intersection,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
 }
 
 #[cfg(feature = "exact-triangulation")]
