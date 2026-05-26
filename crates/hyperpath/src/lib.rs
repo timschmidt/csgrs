@@ -158,8 +158,9 @@ pub use mixed_cubic_arrangement::{
 pub use mixed_curve_arrangement::{
     LineMixedBezierArrangementError, LineMixedBezierArrangementFacts,
     LineMixedBezierArrangementReport, LineMixedCubicAlgebraicEvidence,
-    LineMixedRationalQuadraticAlgebraicEvidence, MixedCurveFragmentEndpoint, MixedCurveFragmentRef,
-    MixedCurveFragmentSeparation, MixedCurveFragmentSeparationClass, MixedCurveSourceRef,
+    LineMixedRationalQuadraticAlgebraicEvidence, MixedCurveEndpointTangentClass,
+    MixedCurveFragmentEndpoint, MixedCurveFragmentRef, MixedCurveFragmentSeparation,
+    MixedCurveFragmentSeparationClass, MixedCurveSourceRef,
     arrange_line_segments_with_mixed_beziers,
     arrange_line_segments_with_mixed_beziers_and_provenance,
     arrange_line_segments_with_mixed_curves,

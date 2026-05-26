@@ -18,9 +18,10 @@ use hyperpath::{
     LineRationalQuadraticBezierAlgebraicBreakpointSequenceClass,
     LineRationalQuadraticBezierAlgebraicBreakpointSequenceSource,
     LineRationalQuadraticBezierIntersectionClass, LineRationalQuadraticBezierInverseRootDomain,
-    LineRationalQuadraticBezierSupportOverlapMonotonicity, MixedCurveFragmentEndpoint,
-    MixedCurveFragmentRef, MixedCurveFragmentSeparationClass, QuadraticBezier,
-    RationalQuadraticBezier, arrange_cubic_beziers, arrange_line_segments_with_cubic_beziers,
+    LineRationalQuadraticBezierSupportOverlapMonotonicity, MixedCurveEndpointTangentClass,
+    MixedCurveFragmentEndpoint, MixedCurveFragmentRef, MixedCurveFragmentSeparationClass,
+    QuadraticBezier, RationalQuadraticBezier, arrange_cubic_beziers,
+    arrange_line_segments_with_cubic_beziers,
     arrange_line_segments_with_mixed_beziers, arrange_line_segments_with_mixed_curves,
     arrange_line_segments_with_quadratic_beziers,
     arrange_line_segments_with_rational_quadratic_beziers, arrange_quadratic_beziers,
@@ -309,7 +310,9 @@ fuzz_target!(|data: &[u8]| {
         .iter()
         .any(|separation| separation.class == MixedCurveFragmentSeparationClass::EndpointContact
             && separation.left_endpoint == Some(MixedCurveFragmentEndpoint::End)
-            && separation.right_endpoint == Some(MixedCurveFragmentEndpoint::Start)));
+            && separation.right_endpoint == Some(MixedCurveFragmentEndpoint::Start)
+            && separation.endpoint_tangent_class
+                == Some(MixedCurveEndpointTangentClass::Collinear)));
 
     let endpoint_edge_contact_error = arrange_line_segments_with_mixed_beziers(
         &[LinePathSegment::new(p(0, 0), p(8, 0))],

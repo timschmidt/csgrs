@@ -27,7 +27,7 @@ use crate::arrangement::{
     ExplicitArcArrangementFragment, LineArcArrangementEvent, LineArrangementBreakpoint,
     LineArrangementError, arrange_line_segments_with_explicit_arcs_and_provenance,
 };
-use crate::bezier::{CubicBezier, QuadraticBezier, RationalQuadraticBezier};
+use crate::bezier::{BezierParameter, CubicBezier, QuadraticBezier, RationalQuadraticBezier};
 use crate::curve_cell::{
     CurveArrangementCellError, CurveArrangementCellGraph, build_line_mixed_bezier_cell_graph,
 };
@@ -142,6 +142,17 @@ pub enum MixedCurveFragmentEndpoint {
     End,
 }
 
+/// Exact outgoing tangent orientation at an admitted endpoint contact.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum MixedCurveEndpointTangentClass {
+    /// The left outgoing tangent turns counter-clockwise to the right outgoing tangent.
+    CounterClockwise,
+    /// The left outgoing tangent turns clockwise to the right outgoing tangent.
+    Clockwise,
+    /// The outgoing tangent directions are collinear.
+    Collinear,
+}
+
 /// Replay certificate for one accepted non-line fragment pair.
 ///
 /// The bounded mixed scheduler still refuses general curve-curve topology.
@@ -172,6 +183,8 @@ pub struct MixedCurveFragmentSeparation {
     pub left_endpoint: Option<MixedCurveFragmentEndpoint>,
     /// Endpoint on `right` when `class == EndpointContact`.
     pub right_endpoint: Option<MixedCurveFragmentEndpoint>,
+    /// Outgoing tangent orientation when `class == EndpointContact`.
+    pub endpoint_tangent_class: Option<MixedCurveEndpointTangentClass>,
     /// Certified reason this pair was accepted.
     pub class: MixedCurveFragmentSeparationClass,
 }
@@ -736,10 +749,20 @@ struct FragmentBox {
     owner: MixedCurveSourceRef,
     start: Point2,
     end: Point2,
+    start_tangent: Point2,
+    end_tangent: Point2,
     x_min: Real,
     x_max: Real,
     y_min: Real,
     y_max: Real,
+}
+
+impl FragmentBox {
+    fn with_tangents(mut self, start_tangent: Point2, end_tangent: Point2) -> Self {
+        self.start_tangent = start_tangent;
+        self.end_tangent = end_tangent;
+        self
+    }
 }
 
 fn validate_curve_fragment_separation(
@@ -769,6 +792,10 @@ fn validate_curve_fragment_separation(
                 ],
                 policy,
             )?
+            .with_tangents(
+                quadratic_start_tangent(fragment),
+                quadratic_end_tangent(fragment),
+            )
         });
     }
     for (index, fragment) in cubics.iter().enumerate() {
@@ -784,6 +811,7 @@ fn validate_curve_fragment_separation(
                 ],
                 policy,
             )?
+            .with_tangents(cubic_start_tangent(fragment), cubic_end_tangent(fragment))
         });
     }
     for (index, fragment) in conics.iter().enumerate() {
@@ -793,7 +821,10 @@ fn validate_curve_fragment_separation(
         boxes.push(FragmentBox {
             source: MixedCurveFragmentRef::RationalQuadratic(index),
             owner: MixedCurveSourceRef::RationalQuadratic(fragment.source_curve),
-            ..box_from_points([&start, &control, &end], policy)?
+            ..box_from_points([&start, &control, &end], policy)?.with_tangents(
+                homogeneous_endpoint_tangent(&fragment.start_control, &fragment.control),
+                homogeneous_endpoint_tangent(&fragment.control, &fragment.end_control),
+            )
         });
     }
     let mut separations = Vec::new();
@@ -815,6 +846,7 @@ fn validate_curve_fragment_separation(
                     MixedCurveFragmentSeparationClass::SameSourceSibling,
                     None,
                     None,
+                    None,
                 ));
                 continue;
             }
@@ -825,16 +857,25 @@ fn validate_curve_fragment_separation(
                     class,
                     None,
                     None,
+                    None,
                 ));
             } else if let Some((left_endpoint, right_endpoint)) =
                 endpoint_corner_contact(&boxes[left], &boxes[right], policy)?
             {
+                let tangent_class = endpoint_tangent_class(
+                    &boxes[left],
+                    left_endpoint,
+                    &boxes[right],
+                    right_endpoint,
+                    policy,
+                )?;
                 separations.push(fragment_separation(
                     &boxes[left],
                     &boxes[right],
                     MixedCurveFragmentSeparationClass::EndpointContact,
                     Some(left_endpoint),
                     Some(right_endpoint),
+                    Some(tangent_class),
                 ));
             } else {
                 return Err(
@@ -855,6 +896,7 @@ fn fragment_separation(
     class: MixedCurveFragmentSeparationClass,
     left_endpoint: Option<MixedCurveFragmentEndpoint>,
     right_endpoint: Option<MixedCurveFragmentEndpoint>,
+    endpoint_tangent_class: Option<MixedCurveEndpointTangentClass>,
 ) -> MixedCurveFragmentSeparation {
     MixedCurveFragmentSeparation {
         left: left.source,
@@ -863,6 +905,7 @@ fn fragment_separation(
         right_source: right.owner,
         left_endpoint,
         right_endpoint,
+        endpoint_tangent_class,
         class,
     }
 }
@@ -910,6 +953,8 @@ fn box_from_explicit_arc(
     hull.owner = MixedCurveSourceRef::ExplicitArc(usize::MAX);
     hull.start = arc.start().clone();
     hull.end = arc.end().clone();
+    hull.start_tangent = arc.start_tangent();
+    hull.end_tangent = arc.end_tangent();
     Ok(hull)
 }
 
@@ -930,6 +975,8 @@ fn box_from_points<'a, const N: usize>(
         owner: MixedCurveSourceRef::Quadratic(usize::MAX),
         start: points[0].clone(),
         end: points[N - 1].clone(),
+        start_tangent: Point2::new(Real::zero(), Real::zero()),
+        end_tangent: Point2::new(Real::zero(), Real::zero()),
         x_min,
         x_max,
         y_min,
@@ -1023,6 +1070,40 @@ fn endpoint_corner_contact(
     Ok(None)
 }
 
+fn endpoint_tangent_class(
+    left: &FragmentBox,
+    left_endpoint: MixedCurveFragmentEndpoint,
+    right: &FragmentBox,
+    right_endpoint: MixedCurveFragmentEndpoint,
+    policy: PredicatePolicy,
+) -> Result<MixedCurveEndpointTangentClass, LineMixedBezierArrangementError> {
+    let left_tangent = outgoing_endpoint_tangent(left, left_endpoint);
+    let right_tangent = outgoing_endpoint_tangent(right, right_endpoint);
+    if vector_is_zero(&left_tangent, policy)? || vector_is_zero(&right_tangent, policy)? {
+        return Err(LineMixedBezierArrangementError::UndecidablePointEquality);
+    }
+    let cross = left_tangent.x * right_tangent.y - left_tangent.y * right_tangent.x;
+    match compare_reals_with_policy(&cross, &Real::zero(), policy).value() {
+        Some(Ordering::Greater) => Ok(MixedCurveEndpointTangentClass::CounterClockwise),
+        Some(Ordering::Less) => Ok(MixedCurveEndpointTangentClass::Clockwise),
+        Some(Ordering::Equal) => Ok(MixedCurveEndpointTangentClass::Collinear),
+        None => Err(LineMixedBezierArrangementError::UndecidablePointEquality),
+    }
+}
+
+fn outgoing_endpoint_tangent(
+    fragment: &FragmentBox,
+    endpoint: MixedCurveFragmentEndpoint,
+) -> Point2 {
+    match endpoint {
+        MixedCurveFragmentEndpoint::Start => fragment.start_tangent.clone(),
+        MixedCurveFragmentEndpoint::End => Point2::new(
+            -fragment.end_tangent.x.clone(),
+            -fragment.end_tangent.y.clone(),
+        ),
+    }
+}
+
 fn boxes_touch_only_at_corner(
     left: &FragmentBox,
     right: &FragmentBox,
@@ -1047,6 +1128,44 @@ fn boxes_touch_only_at_corner(
             && real_equal(&right.y_max, &point.y, policy)?))
 }
 
+fn quadratic_start_tangent(fragment: &QuadraticBezierRealFragment) -> Point2 {
+    fragment.curve.derivative(BezierParameter {
+        numerator: 0,
+        denominator: 1,
+    })
+}
+
+fn quadratic_end_tangent(fragment: &QuadraticBezierRealFragment) -> Point2 {
+    fragment.curve.derivative(BezierParameter {
+        numerator: 1,
+        denominator: 1,
+    })
+}
+
+fn cubic_start_tangent(fragment: &CubicBezierRealFragment) -> Point2 {
+    fragment.curve.derivative(BezierParameter {
+        numerator: 0,
+        denominator: 1,
+    })
+}
+
+fn cubic_end_tangent(fragment: &CubicBezierRealFragment) -> Point2 {
+    fragment.curve.derivative(BezierParameter {
+        numerator: 1,
+        denominator: 1,
+    })
+}
+
+fn homogeneous_endpoint_tangent(
+    from: &crate::bezier_arrangement::HomogeneousPoint2,
+    to: &crate::bezier_arrangement::HomogeneousPoint2,
+) -> Point2 {
+    Point2::new(
+        from.w.clone() * to.x.clone() - to.w.clone() * from.x.clone(),
+        from.w.clone() * to.y.clone() - to.w.clone() * from.y.clone(),
+    )
+}
+
 fn is_less(
     left: &Real,
     right: &Real,
@@ -1057,6 +1176,14 @@ fn is_less(
         Some(Ordering::Equal | Ordering::Greater) => Ok(false),
         None => Err(LineMixedBezierArrangementError::UndecidablePointEquality),
     }
+}
+
+fn vector_is_zero(
+    vector: &Point2,
+    policy: PredicatePolicy,
+) -> Result<bool, LineMixedBezierArrangementError> {
+    Ok(real_equal(&vector.x, &Real::zero(), policy)?
+        && real_equal(&vector.y, &Real::zero(), policy)?)
 }
 
 fn real_equal(
