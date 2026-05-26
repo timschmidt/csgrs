@@ -11171,13 +11171,21 @@ pub fn arrange_coplanar_surface_point_touch_difference(
             return None;
         }
         let mut branch_polygons = if holes.is_empty() {
-            materialize_side_cutter_point_touch_difference_core(
+            if let Some(polygons) = materialize_vertex_edge_side_cutter_point_touch_difference(
                 left_component,
                 &cut_indices,
                 &right_components,
-                "coplanar point-touch side-cutter difference",
-            )?
-            .1
+            ) {
+                polygons
+            } else {
+                materialize_side_cutter_point_touch_difference_core(
+                    left_component,
+                    &cut_indices,
+                    &right_components,
+                    "coplanar point-touch side-cutter difference",
+                )?
+                .1
+            }
         } else if let Some(polygons) =
             materialize_side_cutter_point_touch_difference_consuming_holes(
                 left_component,
@@ -17055,6 +17063,17 @@ fn clipped_side_cutter_openings_have_proper_boundary_crossing(
     cut_indices: &[usize],
     right_components: &[ConvexUnionComponent],
 ) -> Option<bool> {
+    let clipped_openings =
+        clipped_side_cutter_opening_loops(component, cut_indices, right_components)?;
+    simple_loops_have_proper_boundary_crossing(&clipped_openings, component.projection)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn clipped_side_cutter_opening_loops(
+    component: &ConvexUnionComponent,
+    cut_indices: &[usize],
+    right_components: &[ConvexUnionComponent],
+) -> Option<Vec<Vec<Point3>>> {
     let projection = component.projection;
     let mut clipped_openings = Vec::with_capacity(cut_indices.len());
     for &right_index in cut_indices {
@@ -17076,7 +17095,7 @@ fn clipped_side_cutter_openings_have_proper_boundary_crossing(
         .ok()?;
         clipped_openings.push(clipped);
     }
-    simple_loops_have_proper_boundary_crossing(&clipped_openings, projection)
+    Some(clipped_openings)
 }
 
 #[cfg(feature = "exact-triangulation")]
@@ -17096,6 +17115,58 @@ fn simple_loops_have_proper_boundary_crossing(
         }
     }
     Some(false)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn simple_loops_have_endpoint_on_edge_branch(
+    loops: &[Vec<Point3>],
+    projection: CoplanarProjection,
+) -> bool {
+    for left in 0..loops.len() {
+        for right in left + 1..loops.len() {
+            if simple_loop_pair_has_endpoint_on_edge_branch(&loops[left], &loops[right], projection)
+            {
+                return true;
+            }
+        }
+    }
+    false
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn simple_loop_pair_has_endpoint_on_edge_branch(
+    left: &[Point3],
+    right: &[Point3],
+    projection: CoplanarProjection,
+) -> bool {
+    for left_edge in 0..left.len() {
+        let left_start = &left[left_edge];
+        let left_end = &left[(left_edge + 1) % left.len()];
+        for right_edge in 0..right.len() {
+            let right_start = &right[right_edge];
+            let right_end = &right[(right_edge + 1) % right.len()];
+            if point_on_segment_strict_interior(right_start, right_end, left_start, projection)
+                || point_on_segment_strict_interior(right_start, right_end, left_end, projection)
+                || point_on_segment_strict_interior(left_start, left_end, right_start, projection)
+                || point_on_segment_strict_interior(left_start, left_end, right_end, projection)
+            {
+                return true;
+            }
+        }
+    }
+    false
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn point_on_segment_strict_interior(
+    start: &Point3,
+    end: &Point3,
+    point: &Point3,
+    projection: CoplanarProjection,
+) -> bool {
+    !points_equal(point, start)
+        && !points_equal(point, end)
+        && point_on_projected_segment(start, end, point, projection)
 }
 
 #[cfg(feature = "exact-triangulation")]
@@ -17415,6 +17486,48 @@ fn materialize_side_cutter_point_touch_difference_core(
     }
     sort_polygons_for_replay(&mut polygons, projection);
     Some((removed_openings, polygons))
+}
+
+/// Replay a vertex-on-edge side-cutter branch on a convex source component.
+///
+/// [`materialize_side_cutter_point_touch_difference_core`] accepts all bounded
+/// point-only side-cutter branches. This wrapper names the higher-order
+/// vertex-edge subcase: after clipping the right components to the source, an
+/// endpoint of one removed opening must lie in the strict interior of another
+/// removed opening edge. Shared input vertices are deliberately excluded so
+/// the ordinary shared-vertex branch keeps its own proof path.
+///
+/// The branch predicate is exact segment incidence, following Guigue and
+/// Devillers, "Fast and Robust Triangle-Triangle Overlap Test Using
+/// Orientation Predicates," *Journal of Graphics Tools* 8.1 (2003). As in
+/// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
+/// 7.1-2 (1997), this predicate only authorizes a retained-object replay:
+/// the emitted loops still come from the Weiler-Atherton retained-fragment
+/// walk and exact area validation in
+/// [`materialize_side_cutter_point_touch_difference_core`].
+#[cfg(feature = "exact-triangulation")]
+fn materialize_vertex_edge_side_cutter_point_touch_difference(
+    component: &ConvexUnionComponent,
+    cut_indices: &[usize],
+    right_components: &[ConvexUnionComponent],
+) -> Option<Vec<Vec<Point3>>> {
+    if cut_indices.len() < 2 {
+        return None;
+    }
+    let clipped_openings =
+        clipped_side_cutter_opening_loops(component, cut_indices, right_components)?;
+    if !simple_loops_have_endpoint_on_edge_branch(&clipped_openings, component.projection) {
+        return None;
+    }
+    Some(
+        materialize_side_cutter_point_touch_difference_core(
+            component,
+            cut_indices,
+            right_components,
+            "coplanar vertex-edge point-touch side-cutter difference",
+        )?
+        .1,
+    )
 }
 
 /// Replay a convex source after removed openings already own their topology.

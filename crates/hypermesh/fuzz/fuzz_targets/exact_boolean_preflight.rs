@@ -6125,6 +6125,53 @@ fn exercise_side_cutter_opening_without_holes() {
         .unwrap();
     assert_eq!(point_branch_result.mesh, point_branch.mesh);
 
+    let vertex_edge_branch_left = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 30, 0, 0, 30, 30, 0, 0, 30, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("vertex-edge point-branch source fixture must import");
+    let vertex_edge_branch_right = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            -2, 8, 0, 12, 8, 0, 12, 12, 0, -2, 12, 0, //
+            10, -2, 0, 14, -2, 0, 12, 8, 0,
+        ],
+        &[
+            0, 1, 2, 0, 2, 3, //
+            4, 5, 6,
+        ],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("vertex-edge point-branch cutter fixture must import");
+    assert!(arrange_coplanar_surface_multi_difference(
+        &vertex_edge_branch_left,
+        &vertex_edge_branch_right,
+    )
+    .is_none());
+    let vertex_edge_branch = arrange_coplanar_surface_point_touch_difference(
+        &vertex_edge_branch_left,
+        &vertex_edge_branch_right,
+    )
+    .expect("vertex-edge point-branch side-cutter difference should materialize");
+    vertex_edge_branch.validate().unwrap();
+    vertex_edge_branch
+        .validate_difference_against_sources(&vertex_edge_branch_left, &vertex_edge_branch_right)
+        .unwrap();
+    let vertex_edge_preflight = preflight_boolean_exact(
+        &vertex_edge_branch_left,
+        &vertex_edge_branch_right,
+        ExactBooleanOperation::Difference,
+    )
+    .expect("vertex-edge point-branch preflight should classify shortcut");
+    vertex_edge_preflight.validate().unwrap();
+    vertex_edge_preflight
+        .validate_against_sources(&vertex_edge_branch_left, &vertex_edge_branch_right)
+        .unwrap();
+    assert_eq!(
+        vertex_edge_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchDifference
+    );
+
     let point_branch_consumed_hole = ExactMesh::from_i64_triangles_with_policy(
         &[
             2, 5, 0, 3, 5, 0, 3, 6, 0, 2, 6, 0, //
