@@ -4884,9 +4884,11 @@ fn same_outer_holed_filled_union_polygons(
 /// named-ring cases where that hole intersection is either an identical
 /// retained hole, the smaller of two strictly nested retained holes, or the
 /// exact positive-area intersection of two strictly convex retained source
-/// holes. Holes that are strictly disjoint are filled by the opposite operand.
-/// Touching, crossing, nonconvex partial-overlap, and higher-order hole
-/// relations reject to the general planar arrangement layer because their
+/// holes. Bounded rectilinear nonconvex overlaps may also be retained when the
+/// exact orthogonal cell replay emits one or more simple no-hole intersection
+/// components. Holes that are strictly disjoint are filled by the opposite
+/// operand. Touching, crossing non-orthogonal partial-overlap, and higher-order
+/// hole relations reject to the general planar arrangement layer because their
 /// output boundary is not a bounded retained-cell certificate.
 ///
 /// This follows Yap, "Towards Exact Geometric Computation," *Computational
@@ -5030,38 +5032,137 @@ fn same_outer_retained_union_holes(
     let mut holes: Vec<Vec<Point3>> = Vec::new();
     for left_hole in &left.holes {
         for right_hole in &right.holes {
-            let retained = if polygons_equal(left_hole, right_hole) {
-                Some(left_hole.clone())
+            let retained_holes = if polygons_equal(left_hole, right_hole) {
+                vec![left_hole.clone()]
             } else if polygon_strictly_inside_simple_polygon(left_hole, right_hole, projection)? {
-                Some(left_hole.clone())
+                vec![left_hole.clone()]
             } else if polygon_strictly_inside_simple_polygon(right_hole, left_hole, projection)? {
-                Some(right_hole.clone())
+                vec![right_hole.clone()]
             } else {
                 match simple_polygon_interaction(left_hole, right_hole, projection)? {
-                    SimplePolygonInteraction::Disjoint => None,
+                    SimplePolygonInteraction::Disjoint => Vec::new(),
                     SimplePolygonInteraction::PointOnly => return None,
                     SimplePolygonInteraction::Connected => {
-                        Some(convex_retained_hole_intersection_polygon(
-                            left_hole, right_hole, projection,
-                        )?)
+                        convex_retained_hole_intersection_polygon(left_hole, right_hole, projection)
+                            .map(|hole| vec![hole])
+                            .or_else(|| {
+                                orthogonal_retained_hole_intersection_polygons(
+                                    left_hole, right_hole, projection,
+                                )
+                            })?
                     }
                 }
             };
-            let Some(retained) = retained else {
-                continue;
-            };
-            if holes.iter().any(|hole| polygons_equal(hole, &retained)) {
-                continue;
+            for retained in retained_holes {
+                if holes.iter().any(|hole| polygons_equal(hole, &retained)) {
+                    continue;
+                }
+                let mut retained = retained;
+                orient_polygon_cw(&mut retained, projection)?;
+                holes.push(retained);
             }
-            let mut retained = retained;
-            orient_polygon_cw(&mut retained, projection)?;
-            holes.push(retained);
         }
     }
     validate_component_loops_disjoint(
         &holes,
         projection,
         "coplanar same-outer retained-hole union",
+    )
+    .ok()?;
+    Some(holes)
+}
+
+/// Intersect two retained holes through the exact orthogonal cell complex.
+///
+/// Same-outer union retains `left_holes intersect right_holes`. The convex
+/// helper above covers strictly convex clips; this fallback covers the bounded
+/// rectilinear case where a nonconvex retained hole overlaps another
+/// rectilinear hole and the common removed region is still a set of simple
+/// retained loops. The source hole rings are first triangulated as exact open
+/// surfaces and then replayed by [`crate::exact::orthogonal_surface`]'s cell
+/// arrangement. Only no-hole orthogonal intersection components are imported
+/// as retained holes; orthogonal islands-with-holes and positive-length
+/// boundary contacts remain explicit planar-arrangement work.
+///
+/// This is the same proof-before-promotion rule as Yap, "Towards Exact
+/// Geometric Computation," *Computational Geometry* 7.1-2 (1997): topology is
+/// emitted from retained exact objects and exact predicates, not from sampled
+/// points. The rectilinear subdivision is the finite cell arrangement described
+/// by de Berg, Cheong, van Kreveld, and Overmars, *Computational Geometry:
+/// Algorithms and Applications*, 3rd ed. (2008), Chapter 2. The temporary
+/// simple-loop triangulation uses Held, "FIST: Fast Industrial-Strength
+/// Triangulation of Polygons," *Algorithmica* 30 (2001), through `hypertri`.
+#[cfg(feature = "exact-triangulation")]
+fn orthogonal_retained_hole_intersection_polygons(
+    left: &[Point3],
+    right: &[Point3],
+    projection: CoplanarProjection,
+) -> Option<Vec<Vec<Point3>>> {
+    let mut left_loop = left.to_vec();
+    let mut right_loop = right.to_vec();
+    orient_polygon_ccw(&mut left_loop, projection)?;
+    orient_polygon_ccw(&mut right_loop, projection)?;
+    validate_projected_simple_loop(
+        &left_loop,
+        projection,
+        "coplanar same-outer orthogonal retained-hole intersection",
+    )
+    .ok()?;
+    validate_projected_simple_loop(
+        &right_loop,
+        projection,
+        "coplanar same-outer orthogonal retained-hole intersection",
+    )
+    .ok()?;
+
+    let left_mesh = polygon_to_retained_simple_open_mesh_with_label(
+        &left_loop,
+        projection,
+        "exact same-outer orthogonal retained-hole left source",
+    )?;
+    let right_mesh = polygon_to_retained_simple_open_mesh_with_label(
+        &right_loop,
+        projection,
+        "exact same-outer orthogonal retained-hole right source",
+    )?;
+    let arrangement = super::orthogonal_surface::arrange_coplanar_orthogonal_surface_intersection(
+        &left_mesh,
+        &right_mesh,
+    )?;
+    if arrangement.projection != projection {
+        return None;
+    }
+
+    let mut holes = Vec::with_capacity(arrangement.components.len());
+    for component in arrangement.components {
+        if !component.holes.is_empty() {
+            return None;
+        }
+        let mut hole = simplify_projected_polygon(component.outer, projection);
+        if hole.len() < 3 {
+            return None;
+        }
+        validate_projected_simple_loop(
+            &hole,
+            projection,
+            "coplanar same-outer orthogonal retained-hole intersection",
+        )
+        .ok()?;
+        let area = projected_area2_abs(&hole, projection)?;
+        if compare_reals(&area, &ExactReal::from(0)).value() != Some(Ordering::Greater) {
+            return None;
+        }
+        orient_polygon_cw(&mut hole, projection)?;
+        holes.push(hole);
+    }
+    if holes.is_empty() {
+        return None;
+    }
+    sort_polygons_for_replay(&mut holes, projection);
+    validate_component_loops_disjoint(
+        &holes,
+        projection,
+        "coplanar same-outer orthogonal retained-hole intersection",
     )
     .ok()?;
     Some(holes)

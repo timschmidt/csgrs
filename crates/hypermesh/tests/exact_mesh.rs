@@ -26824,6 +26824,82 @@ fn exact_coplanar_component_holed_union_retains_same_outer_common_holes() {
     )
     .unwrap();
 
+    let orthogonal_outer = rect_surface_i64(&[(0, 0, 10, 10)]);
+    let orthogonal_left_hole = rect_surface_i64(&[(2, 2, 6, 6), (6, 2, 8, 4)]);
+    let orthogonal_right_hole = rect_surface_i64(&[(4, 3, 9, 7)]);
+    let orthogonal_left = hypermesh::exact::arrange_coplanar_orthogonal_surface_difference(
+        &orthogonal_outer,
+        &orthogonal_left_hole,
+    )
+    .expect("orthogonal nonconvex left annulus should materialize")
+    .mesh;
+    let orthogonal_right = hypermesh::exact::arrange_coplanar_orthogonal_surface_difference(
+        &orthogonal_outer,
+        &orthogonal_right_hole,
+    )
+    .expect("orthogonal rectangular right annulus should materialize")
+    .mesh;
+    let orthogonal_union = hypermesh::exact::arrange_coplanar_surface_component_holed_union(
+        &orthogonal_left,
+        &orthogonal_right,
+    )
+    .expect("orthogonal nonconvex retained-hole overlap should replay as a retained L hole");
+    orthogonal_union.validate().unwrap();
+    orthogonal_union
+        .validate_union_against_sources(&orthogonal_left, &orthogonal_right)
+        .unwrap();
+    assert_eq!(orthogonal_union.components.len(), 1);
+    assert_eq!(orthogonal_union.components[0].holes.len(), 1);
+    assert_eq!(orthogonal_union.components[0].holes[0].len(), 6);
+    assert!(
+        orthogonal_union.components[0].holes[0]
+            .iter()
+            .any(|point| real_eq(&point.x, &ExactReal::from(8)))
+    );
+    assert!(
+        orthogonal_union.components[0].holes[0]
+            .iter()
+            .any(|point| real_eq(&point.y, &ExactReal::from(6)))
+    );
+    let orthogonal_reverse = hypermesh::exact::arrange_coplanar_surface_component_holed_union(
+        &orthogonal_right,
+        &orthogonal_left,
+    )
+    .expect("orthogonal nonconvex retained-hole overlap should be symmetric");
+    orthogonal_reverse.validate().unwrap();
+    orthogonal_reverse
+        .validate_union_against_sources(&orthogonal_right, &orthogonal_left)
+        .unwrap();
+    let orthogonal_preflight = hypermesh::exact::preflight_boolean_exact(
+        &orthogonal_left,
+        &orthogonal_right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+    )
+    .expect("orthogonal retained-hole overlap preflight should classify shortcut");
+    orthogonal_preflight.validate().unwrap();
+    orthogonal_preflight
+        .validate_against_sources(&orthogonal_left, &orthogonal_right)
+        .unwrap();
+    assert_eq!(
+        orthogonal_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
+    );
+    hypermesh::exact::boolean_exact(
+        &orthogonal_left,
+        &orthogonal_right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("orthogonal retained-hole overlap union should materialize")
+    .validate_operation_against_sources(
+        &orthogonal_left,
+        &orthogonal_right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
+
     let touching_holes = ExactMesh::from_i64_triangles_with_policy(
         &[
             4, 2, 0, 6, 2, 0, 6, 4, 0, 4, 4, 0, //
