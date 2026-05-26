@@ -26799,7 +26799,7 @@ fn exact_coplanar_component_holed_intersection_merges_same_outer_holes() {
     assert!(
         orthogonal_intersection.components[0].holes[0]
             .iter()
-            .any(|point| real_eq(&point.y, &ExactReal::from(16)))
+            .any(|point| real_eq(&point.y, &ExactReal::from(17)))
     );
     let orthogonal_reverse =
         hypermesh::exact::arrange_coplanar_surface_component_holed_intersection(
@@ -27177,6 +27177,154 @@ fn exact_coplanar_component_holed_intersection_merges_same_outer_holes() {
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
             shortcut: hypermesh::exact::ExactBooleanShortcutKind::CoplanarSurfaceIntersection
         }
+    );
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[test]
+fn exact_coplanar_component_holed_intersection_materializes_same_outer_orthogonal_hole_island() {
+    let outer = rect_surface_i64(&[(0, 0, 20, 20)]);
+    let left_holes = rect_surface_i64(&[(4, 4, 13, 8), (4, 8, 8, 17)]);
+    let right_holes = rect_surface_i64(&[(12, 4, 16, 13), (7, 12, 16, 16)]);
+    let left =
+        hypermesh::exact::arrange_coplanar_orthogonal_surface_difference(&outer, &left_holes)
+            .expect("same-outer island left fixture should materialize")
+            .mesh;
+    let right =
+        hypermesh::exact::arrange_coplanar_orthogonal_surface_difference(&outer, &right_holes)
+            .expect("same-outer island right fixture should materialize")
+            .mesh;
+
+    let intersection =
+        hypermesh::exact::arrange_coplanar_surface_component_holed_intersection(&left, &right)
+            .expect("orthogonal retained-hole frame should keep its central island");
+    intersection.validate().unwrap();
+    intersection
+        .validate_intersection_against_sources(&left, &right)
+        .unwrap();
+    assert_eq!(intersection.components.len(), 2);
+    assert_eq!(
+        intersection
+            .components
+            .iter()
+            .filter(|component| !component.holes.is_empty())
+            .count(),
+        1
+    );
+    assert_eq!(
+        intersection
+            .components
+            .iter()
+            .map(|component| component.holes.len())
+            .sum::<usize>(),
+        1
+    );
+    let main = intersection
+        .components
+        .iter()
+        .find(|component| !component.holes.is_empty())
+        .expect("main component should retain the removed frame boundary");
+    assert!(
+        main.holes[0]
+            .iter()
+            .any(|point| real_eq(&point.x, &ExactReal::from(4)))
+    );
+    assert!(
+        main.holes[0]
+            .iter()
+            .any(|point| real_eq(&point.y, &ExactReal::from(16)))
+    );
+    let island = intersection
+        .components
+        .iter()
+        .find(|component| component.holes.is_empty())
+        .expect("central complement of the removed frame should be an output island");
+    assert!(
+        island
+            .outer
+            .iter()
+            .any(|point| real_eq(&point.x, &ExactReal::from(8)))
+    );
+    assert!(
+        island
+            .outer
+            .iter()
+            .any(|point| real_eq(&point.y, &ExactReal::from(12)))
+    );
+
+    let reverse =
+        hypermesh::exact::arrange_coplanar_surface_component_holed_intersection(&right, &left)
+            .expect("same-outer orthogonal retained-hole island should be symmetric");
+    reverse.validate().unwrap();
+    reverse
+        .validate_intersection_against_sources(&right, &left)
+        .unwrap();
+    assert_eq!(reverse.components.len(), 2);
+    assert_eq!(
+        reverse
+            .components
+            .iter()
+            .map(|component| component.holes.len())
+            .sum::<usize>(),
+        1
+    );
+
+    let mut stale = intersection.clone();
+    let island_index = stale
+        .components
+        .iter()
+        .position(|component| component.holes.is_empty())
+        .expect("fixture should have a separate island component");
+    stale.components.remove(island_index);
+    assert!(
+        stale
+            .validate_intersection_against_sources(&left, &right)
+            .is_err(),
+        "source replay must reject an omitted island component"
+    );
+
+    let preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+    )
+    .expect("same-outer retained-hole island preflight should classify shortcut");
+    preflight.validate().unwrap();
+    preflight.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
+    );
+
+    hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("same-outer retained-hole island boolean should materialize")
+    .validate_operation_against_sources(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
+
+    let point_touch_right_hole = rect_surface_i64(&[(8, 8, 12, 12)]);
+    let point_touch_right = hypermesh::exact::arrange_coplanar_convex_surface_holed_difference(
+        &outer,
+        &point_touch_right_hole,
+    )
+    .expect("point-touch right source should materialize");
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_component_holed_intersection(
+            &left,
+            &point_touch_right.mesh,
+        )
+        .is_none(),
+        "point-only retained-hole contact does not certify an island frame"
     );
 }
 

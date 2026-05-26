@@ -3273,19 +3273,23 @@ pub fn arrange_coplanar_surface_component_holed_intersection(
 /// deduplicated, strictly nested holes collapse to the larger removed region,
 /// and disjoint holes are retained independently. Bounded overlap components
 /// are accepted when all participating retained holes have a connected
-/// positive-area overlap graph and their removed union replays as one exact
-/// simple retained hole. Strictly convex clusters use the convex fragment
+/// positive-area overlap graph and their removed union replays as exact
+/// retained topology. Strictly convex clusters use the convex fragment
 /// certificate, rectilinear nonconvex clusters use the exact orthogonal cell
 /// path, and the remaining bounded simple-loop fallback accepts
 /// non-rectilinear nonconvex clusters when exposed retained-boundary
 /// fragments stitch one simple loop whose exact source-union area closes.
+/// The rectilinear path also accepts a removed union that is itself annular:
+/// the removed union's outer boundary becomes a retained hole of the main
+/// component and every removed-union hole becomes a retained island component.
 /// Multiple disconnected overlap clusters are accepted only when each cluster
-/// independently replays as a retained hole and the resulting holes are
-/// mutually disjoint. Touching, edge-contact clusters, holed removed unions,
-/// and branched retained-boundary unions reject to the general planar
-/// arrangement layer. This is a legitimate Boolean intersection because the
-/// complement of each retained hole is part of the source object: intersecting
-/// two equal-outer holed sheets removes the union of their holes.
+/// independently replays as retained topology and the resulting holes/components
+/// remain disjoint or nested strictly inside retained holes. Touching,
+/// edge-contact clusters, and branched retained-boundary unions reject to the
+/// general planar arrangement layer. This is a legitimate Boolean
+/// intersection because the complement of each retained hole is part of the
+/// source object: intersecting two equal-outer holed sheets removes the union
+/// of their holes.
 ///
 /// Boundary rings still come from exact mesh incidence and the final retained
 /// area must equal the pairwise source-triangle intersection area. That is the
@@ -3327,16 +3331,25 @@ fn arrange_coplanar_surface_component_holed_same_outer_intersection(
                 &right_component.outer,
                 projection,
             ) {
-                let mut outer = left_component.outer.clone();
-                orient_polygon_ccw(&mut outer, projection)?;
-                let mut holes = merged_same_outer_intersection_holes(
+                if let Some(mut holes) = merged_same_outer_intersection_holes(
                     left_component,
                     right_component,
                     projection,
-                )?;
-                sort_polygons_for_replay(&mut holes, projection);
-                split_outer_for_retained_hole_bridges(&mut outer, &holes, projection)?;
-                retained_components.push(CoplanarConvexHoledComponent { outer, holes });
+                ) {
+                    let mut outer = left_component.outer.clone();
+                    orient_polygon_ccw(&mut outer, projection)?;
+                    sort_polygons_for_replay(&mut holes, projection);
+                    split_outer_for_retained_hole_bridges(&mut outer, &holes, projection)?;
+                    retained_components.push(CoplanarConvexHoledComponent { outer, holes });
+                } else {
+                    let components =
+                        same_outer_intersection_components_with_orthogonal_hole_islands(
+                            left_component,
+                            right_component,
+                            projection,
+                        )?;
+                    retained_components.extend(components);
+                }
                 continue;
             }
             match simple_polygon_interaction(
@@ -3355,12 +3368,8 @@ fn arrange_coplanar_surface_component_holed_same_outer_intersection(
         return None;
     }
     sort_components_for_replay(&mut retained_components, projection);
-    let retained_outers = retained_components
-        .iter()
-        .map(|component| component.outer.clone())
-        .collect::<Vec<_>>();
-    validate_simple_component_loops_disjoint(
-        &retained_outers,
+    validate_component_holed_outer_relationships(
+        &retained_components,
         projection,
         "coplanar same-outer component-holed intersection",
     )
@@ -3456,8 +3465,31 @@ fn merge_same_outer_intersection_hole_components(
     holes: &[Vec<Point3>],
     projection: CoplanarProjection,
 ) -> Option<Vec<Vec<Point3>>> {
-    let mut visited = vec![false; holes.len()];
     let mut merged = Vec::new();
+    for component in same_outer_intersection_hole_groups(holes, projection)? {
+        if component.len() == 1 {
+            merged.push(holes[component[0]].clone());
+        } else {
+            let component_holes = component
+                .into_iter()
+                .map(|index| holes[index].clone())
+                .collect::<Vec<_>>();
+            merged.push(same_outer_intersection_convex_hole_union_component(
+                &component_holes,
+                projection,
+            )?);
+        }
+    }
+    Some(merged)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn same_outer_intersection_hole_groups(
+    holes: &[Vec<Point3>],
+    projection: CoplanarProjection,
+) -> Option<Vec<Vec<usize>>> {
+    let mut visited = vec![false; holes.len()];
+    let mut groups = Vec::new();
     for start in 0..holes.len() {
         if visited[start] {
             continue;
@@ -3482,21 +3514,109 @@ fn merge_same_outer_intersection_hole_components(
             }
             cursor += 1;
         }
+        groups.push(component);
+    }
+    Some(groups)
+}
 
+/// Replay same-outer retained holes whose removed union contains islands.
+///
+/// In `outer - union(left_holes, right_holes)`, a connected rectilinear
+/// retained-hole cluster can form an annular removed owner. The existing
+/// single-hole path cannot encode that topology because the complement of the
+/// annulus is a main component with one retained hole plus an inner island
+/// component. This helper keeps the exact source-owned grouping used by
+/// [`merge_same_outer_intersection_hole_components`], then promotes only the
+/// bounded orthogonal annulus case proven by exact cell replay.
+///
+/// This is the same retained-object discipline Yap argues for in "Towards
+/// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997):
+/// source loops are first classified exactly, the finite rectilinear cell
+/// complex constructs the candidate topology, and the caller still replays the
+/// full Boolean area before materialization. The cell-complex boundary model
+/// is the planar subdivision invariant described by de Berg, Cheong, van
+/// Kreveld, and Overmars, *Computational Geometry: Algorithms and
+/// Applications*, 3rd ed. (2008), Chapter 2.
+#[cfg(feature = "exact-triangulation")]
+fn same_outer_intersection_components_with_orthogonal_hole_islands(
+    left: &SourceHoledSurfaceComponent,
+    right: &SourceHoledSurfaceComponent,
+    projection: CoplanarProjection,
+) -> Option<Vec<CoplanarConvexHoledComponent>> {
+    let mut source_holes: Vec<Vec<Point3>> =
+        Vec::with_capacity(left.holes.len() + right.holes.len());
+    for source_hole in left.holes.iter().chain(right.holes.iter()) {
+        if source_holes
+            .iter()
+            .any(|hole| polygons_equal(hole, source_hole))
+        {
+            continue;
+        }
+        let mut hole = source_hole.clone();
+        orient_polygon_cw(&mut hole, projection)?;
+        source_holes.push(hole);
+    }
+    remove_nested_same_outer_intersection_holes(&mut source_holes, projection)?;
+
+    let mut retained_holes = Vec::new();
+    let mut island_components = Vec::new();
+    let mut found_island = false;
+    for component in same_outer_intersection_hole_groups(&source_holes, projection)? {
         if component.len() == 1 {
-            merged.push(holes[component[0]].clone());
+            retained_holes.push(source_holes[component[0]].clone());
+            continue;
+        }
+
+        let component_holes = component
+            .into_iter()
+            .map(|index| source_holes[index].clone())
+            .collect::<Vec<_>>();
+        if let Some(replay) =
+            same_outer_intersection_orthogonal_hole_union_replay(&component_holes, projection)
+        {
+            retained_holes.push(replay.outer);
+            for island in replay.islands {
+                found_island = true;
+                island_components.push(CoplanarConvexHoledComponent {
+                    outer: island,
+                    holes: Vec::new(),
+                });
+            }
         } else {
-            let component_holes = component
-                .into_iter()
-                .map(|index| holes[index].clone())
-                .collect::<Vec<_>>();
-            merged.push(same_outer_intersection_convex_hole_union_component(
+            retained_holes.push(same_outer_intersection_convex_hole_union_component(
                 &component_holes,
                 projection,
             )?);
         }
     }
-    Some(merged)
+    if !found_island {
+        return None;
+    }
+
+    sort_polygons_for_replay(&mut retained_holes, projection);
+    validate_simple_component_loops_disjoint(
+        &retained_holes,
+        projection,
+        "coplanar same-outer orthogonal retained-hole island intersection",
+    )
+    .ok()?;
+
+    let mut outer = left.outer.clone();
+    orient_polygon_ccw(&mut outer, projection)?;
+    split_outer_for_retained_hole_bridges(&mut outer, &retained_holes, projection)?;
+    let mut components = vec![CoplanarConvexHoledComponent {
+        outer,
+        holes: retained_holes,
+    }];
+    components.append(&mut island_components);
+    sort_components_for_replay(&mut components, projection);
+    validate_component_holed_outer_relationships(
+        &components,
+        projection,
+        "coplanar same-outer orthogonal retained-hole island intersection",
+    )
+    .ok()?;
+    Some(components)
 }
 
 /// Replay the removed union of a connected convex retained-hole component.
@@ -3686,23 +3806,43 @@ fn same_outer_intersection_rectangle_strip_hole_union_component(
 /// a retained simple loop, all but the first are merged into the right operand,
 /// and a binary orthogonal union extracts the removed component boundary.
 ///
-/// The helper rejects if the removed union has multiple components or any
-/// hole/island, because `CoplanarConvexHoledComponent` can encode the removed
-/// object only as one retained hole ring. The construction keeps Yap's
-/// predicate/construction separation from "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997): exact retained source
-/// loops name the candidate topology, the orthogonal cell complex performs the
-/// finite arrangement, and the caller still replays the full Boolean area
-/// equation. The rectilinear subdivision is the arrangement model described by
-/// de Berg, Cheong, van Kreveld, and Overmars, *Computational Geometry:
-/// Algorithms and Applications*, 3rd ed. (2008), Chapter 2; temporary
-/// simple-loop triangulation uses Held, "FIST: Fast Industrial-Strength
-/// Triangulation of Polygons," *Algorithmica* 30 (2001), via `hypertri`.
+/// This single-ring entry point rejects removed unions with holes/islands;
+/// [`same_outer_intersection_components_with_orthogonal_hole_islands`] consumes
+/// those annular unions and promotes their inner voids to output island
+/// components. Both paths keep Yap's predicate/construction separation from
+/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+/// (1997): exact retained source loops name the candidate topology, the
+/// orthogonal cell complex performs the finite arrangement, and the caller
+/// still replays the full Boolean area equation. The rectilinear subdivision
+/// is the arrangement model described by de Berg, Cheong, van Kreveld, and
+/// Overmars, *Computational Geometry: Algorithms and Applications*, 3rd ed.
+/// (2008), Chapter 2; temporary simple-loop triangulation uses Held, "FIST:
+/// Fast Industrial-Strength Triangulation of Polygons," *Algorithmica* 30
+/// (2001), via `hypertri`.
+#[cfg(feature = "exact-triangulation")]
+#[derive(Clone, Debug)]
+struct SameOuterOrthogonalHoleUnionReplay {
+    outer: Vec<Point3>,
+    islands: Vec<Vec<Point3>>,
+}
+
 #[cfg(feature = "exact-triangulation")]
 fn same_outer_intersection_orthogonal_hole_union_component(
     holes: &[Vec<Point3>],
     projection: CoplanarProjection,
 ) -> Option<Vec<Point3>> {
+    let replay = same_outer_intersection_orthogonal_hole_union_replay(holes, projection)?;
+    if !replay.islands.is_empty() {
+        return None;
+    }
+    Some(replay.outer)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn same_outer_intersection_orthogonal_hole_union_replay(
+    holes: &[Vec<Point3>],
+    projection: CoplanarProjection,
+) -> Option<SameOuterOrthogonalHoleUnionReplay> {
     if holes.len() < 2 {
         return None;
     }
@@ -3754,19 +3894,36 @@ fn same_outer_intersection_orthogonal_hole_union_component(
         return None;
     }
     let component = arrangement.components.into_iter().next()?;
-    if !component.holes.is_empty() {
-        return None;
-    }
-    let mut union = simplify_projected_polygon(component.outer, projection);
-    orient_polygon_cw(&mut union, projection)?;
-    canonicalize_polygon_start_by_min_projected_point(&mut union, projection);
+    let mut union_outer = simplify_projected_polygon(component.outer, projection);
+    orient_polygon_cw(&mut union_outer, projection)?;
+    canonicalize_polygon_start_by_min_projected_point(&mut union_outer, projection);
     validate_projected_simple_loop(
-        &union,
+        &union_outer,
         projection,
         "coplanar same-outer orthogonal intersection hole union",
     )
     .ok()?;
-    Some(union)
+    let mut islands = Vec::with_capacity(component.holes.len());
+    for island in component.holes {
+        let mut island = simplify_projected_polygon(island, projection);
+        orient_polygon_ccw(&mut island, projection)?;
+        canonicalize_polygon_start_by_min_projected_point(&mut island, projection);
+        validate_projected_simple_loop(
+            &island,
+            projection,
+            "coplanar same-outer orthogonal intersection hole-union island",
+        )
+        .ok()?;
+        if !polygon_strictly_inside_simple_polygon(&island, &union_outer, projection)? {
+            return None;
+        }
+        islands.push(island);
+    }
+    sort_polygons_for_replay(&mut islands, projection);
+    Some(SameOuterOrthogonalHoleUnionReplay {
+        outer: union_outer,
+        islands,
+    })
 }
 
 /// Add exact retained bridge points to an outer ring.
@@ -20080,7 +20237,6 @@ fn validate_component_holed_surface_output(
     let mut expected_vertices = 0;
     let mut retained_area = ExactReal::from(0);
     let mut retained_signed_area = ExactReal::from(0);
-    let mut outers = Vec::with_capacity(components.len());
 
     for component in components {
         if component.outer.len() < 3 || component.holes.iter().any(|hole| hole.len() < 3) {
@@ -20180,11 +20336,8 @@ fn validate_component_holed_surface_output(
         retained_area = add(&retained_area, &sub(&outer_area, &hole_area_sum));
         retained_signed_area = add(&retained_signed_area, &component_signed_area);
         component_ranges.push(component_start..expected_vertices);
-        outers.push(component.outer.clone());
     }
-    validate_simple_component_loops_disjoint_allowing_vertex_point_touches(
-        &outers, projection, label,
-    )?;
+    validate_component_holed_outer_relationships(components, projection, label)?;
 
     if mesh.vertices().len() != expected_vertices {
         return Err(surface_validation_error(
@@ -20278,6 +20431,95 @@ fn validate_component_holed_surface_output(
     mesh.validate_retained_state().map_err(|_| {
         surface_validation_error(label, "materialized mesh retained-state validation failed")
     })
+}
+
+/// Validate outer-loop relationships for component-holed outputs.
+///
+/// Ordinary multi-component surfaces require pairwise disjoint outer loops.
+/// Component-holed booleans have one additional exact topology: a retained
+/// output component may be an island strictly inside another component's
+/// retained hole. That is still a two-dimensional retained object, not a mesh
+/// artifact inferred from triangles, so the relationship is accepted only when
+/// exact simple-polygon predicates prove strict containment by a named hole.
+/// This follows Yap, "Towards Exact Geometric Computation," *Computational
+/// Geometry* 7.1-2 (1997). Segment incidence is checked with the orientation
+/// predicate model of Guigue and Devillers, "Fast and Robust
+/// Triangle-Triangle Overlap Test Using Orientation Predicates," *Journal of
+/// Graphics Tools* 8.1 (2003), while nonconvex containment uses the exact
+/// simple-polygon location replay also used by Held's FIST triangulation
+/// adapter.
+#[cfg(feature = "exact-triangulation")]
+fn validate_component_holed_outer_relationships(
+    components: &[CoplanarConvexHoledComponent],
+    projection: CoplanarProjection,
+    label: &'static str,
+) -> Result<(), MeshError> {
+    for left_index in 0..components.len() {
+        for right_index in left_index + 1..components.len() {
+            let left = &components[left_index];
+            let right = &components[right_index];
+            validate_loop_segments_disjoint_or_shared_vertices(
+                &left.outer,
+                &right.outer,
+                projection,
+                label,
+            )?;
+
+            let left_inside_right =
+                polygon_strictly_inside_simple_polygon(&left.outer, &right.outer, projection)
+                    .ok_or_else(|| {
+                        surface_validation_error(
+                            label,
+                            "component outer containment predicate was undecided",
+                        )
+                    })?;
+            let right_inside_left =
+                polygon_strictly_inside_simple_polygon(&right.outer, &left.outer, projection)
+                    .ok_or_else(|| {
+                        surface_validation_error(
+                            label,
+                            "component outer containment predicate was undecided",
+                        )
+                    })?;
+            if left_inside_right
+                && !component_outer_strictly_inside_any_hole(&left.outer, right, projection, label)?
+            {
+                return Err(surface_validation_error(
+                    label,
+                    "component outer may nest only inside another component hole",
+                ));
+            }
+            if right_inside_left
+                && !component_outer_strictly_inside_any_hole(&right.outer, left, projection, label)?
+            {
+                return Err(surface_validation_error(
+                    label,
+                    "component outer may nest only inside another component hole",
+                ));
+            }
+        }
+    }
+    Ok(())
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn component_outer_strictly_inside_any_hole(
+    outer: &[Point3],
+    container: &CoplanarConvexHoledComponent,
+    projection: CoplanarProjection,
+    label: &'static str,
+) -> Result<bool, MeshError> {
+    for hole in &container.holes {
+        if polygon_strictly_inside_simple_polygon(outer, hole, projection).ok_or_else(|| {
+            surface_validation_error(
+                label,
+                "component island containment predicate was undecided",
+            )
+        })? {
+            return Ok(true);
+        }
+    }
+    Ok(false)
 }
 
 /// Return the retained component that owns a mesh vertex index.

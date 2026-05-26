@@ -1426,7 +1426,7 @@ fuzz_target!(|data: &[u8]| {
 
 #[cfg(feature = "exact-triangulation")]
 fn exercise_deterministic_case(selector: u8) {
-    match selector % 44 {
+    match selector % 45 {
         0 => exercise_partial_convex_union_boundary(),
         1 => exercise_face_interior_steiner_boundary(),
         2 => exercise_multi_component_coplanar_union(),
@@ -1466,11 +1466,12 @@ fn exercise_deterministic_case(selector: u8) {
         36 => exercise_holed_coplanar_mesh_containment(),
         37 => exercise_component_holed_coplanar_intersection(),
         38 => exercise_same_outer_component_holed_coplanar_intersection(),
-        39 => exercise_same_outer_component_holed_coplanar_difference(),
-        40 => exercise_same_outer_holed_coplanar_multi_difference(),
-        41 => exercise_same_outer_holed_coplanar_component_difference(),
-        42 => exercise_same_outer_holed_coplanar_filled_union(),
-        43 => exercise_same_outer_holed_coplanar_retained_union(),
+        39 => exercise_same_outer_component_holed_coplanar_intersection_with_island(),
+        40 => exercise_same_outer_component_holed_coplanar_difference(),
+        41 => exercise_same_outer_holed_coplanar_multi_difference(),
+        42 => exercise_same_outer_holed_coplanar_component_difference(),
+        43 => exercise_same_outer_holed_coplanar_filled_union(),
+        44 => exercise_same_outer_holed_coplanar_retained_union(),
         _ => exercise_nonconvex_coplanar_volumetric_difference_fan_split(),
     }
 }
@@ -2878,6 +2879,94 @@ fn exercise_same_outer_component_holed_coplanar_intersection() {
         ExactBoundaryBooleanPolicy::Reject,
     )
     .unwrap();
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn exercise_same_outer_component_holed_coplanar_intersection_with_island() {
+    let outer = rect_surface_i64(&[(0, 0, 20, 20)]);
+    let left_holes = rect_surface_i64(&[(4, 4, 13, 8), (4, 8, 8, 17)]);
+    let right_holes = rect_surface_i64(&[(12, 4, 16, 13), (7, 12, 16, 16)]);
+    let left = arrange_coplanar_orthogonal_surface_difference(&outer, &left_holes)
+        .expect("same-outer island left fixture should materialize")
+        .mesh;
+    let right = arrange_coplanar_orthogonal_surface_difference(&outer, &right_holes)
+        .expect("same-outer island right fixture should materialize")
+        .mesh;
+
+    let intersection = arrange_coplanar_surface_component_holed_intersection(&left, &right)
+        .expect("same-outer retained-hole frame should preserve its central island");
+    intersection.validate().unwrap();
+    intersection
+        .validate_intersection_against_sources(&left, &right)
+        .unwrap();
+    assert_eq!(intersection.components.len(), 2);
+    assert_eq!(
+        intersection
+            .components
+            .iter()
+            .map(|component| component.holes.len())
+            .sum::<usize>(),
+        1
+    );
+    assert!(
+        intersection
+            .components
+            .iter()
+            .any(|component| component.holes.is_empty()),
+        "the complement of the removed orthogonal frame must be retained as an island"
+    );
+    let reverse = arrange_coplanar_surface_component_holed_intersection(&right, &left)
+        .expect("same-outer retained-hole island intersection should be symmetric");
+    reverse.validate().unwrap();
+    reverse
+        .validate_intersection_against_sources(&right, &left)
+        .unwrap();
+
+    let mut stale = intersection.clone();
+    let island = stale
+        .components
+        .iter()
+        .position(|component| component.holes.is_empty())
+        .expect("fixture should expose an island component");
+    stale.components.remove(island);
+    assert!(
+        stale
+            .validate_intersection_against_sources(&left, &right)
+            .is_err()
+    );
+
+    let preflight = preflight_boolean_exact(&left, &right, ExactBooleanOperation::Intersection)
+        .expect("same-outer retained-hole island preflight should classify shortcut");
+    preflight.validate().unwrap();
+    preflight.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
+    );
+    hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        ExactBooleanOperation::Intersection,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("same-outer retained-hole island boolean should materialize")
+    .validate_operation_against_sources(
+        &left,
+        &right,
+        ExactBooleanOperation::Intersection,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
+
+    let point_touch_right_hole = rect_surface_i64(&[(8, 8, 12, 12)]);
+    let point_touch_right =
+        arrange_coplanar_convex_surface_holed_difference(&outer, &point_touch_right_hole)
+            .expect("same-outer point-touch source should materialize")
+            .mesh;
+    assert!(
+        arrange_coplanar_surface_component_holed_intersection(&left, &point_touch_right).is_none()
+    );
 }
 
 #[cfg(feature = "exact-triangulation")]
