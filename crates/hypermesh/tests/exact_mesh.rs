@@ -33110,6 +33110,7 @@ fn exact_boolmesh_workspace_executes_bounds_disjoint_slice() {
             .missing_source_edge_adjacencies,
         0
     );
+    assert!(size_output.partial_source_edges.source_edge_runs.is_empty());
 
     let union = hypermesh::exact::execute_exact_boolmesh_bounds_disjoint(
         &left,
@@ -33157,6 +33158,12 @@ fn exact_boolmesh_workspace_executes_bounds_disjoint_slice() {
     assert!(
         intersection_size_output
             .new_edge_vertices
+            .source_edge_runs
+            .is_empty()
+    );
+    assert!(
+        intersection_size_output
+            .partial_source_edges
             .source_edge_runs
             .is_empty()
     );
@@ -33393,6 +33400,49 @@ fn exact_boolmesh_kernel12_discovers_skew_edge_face_events() {
             .all(|run| run.face_pair.left_face < left.triangles().len()
                 && run.face_pair.right_face < right.triangles().len())
     );
+    assert_eq!(
+        size_output.partial_source_edges.source_edge_runs.len(),
+        size_output.new_edge_vertices.source_edge_runs.len()
+    );
+    assert_eq!(
+        size_output
+            .partial_source_edges
+            .source_edge_runs
+            .iter()
+            .flat_map(|run| run.points.iter())
+            .filter(|point| matches!(
+                point.origin,
+                hypermesh::exact::ExactBoolMeshPartialEdgePointOrigin::RoutedIntersection(_)
+            ))
+            .count(),
+        size_output.inserted_intersection_vertices
+    );
+    assert!(
+        size_output
+            .partial_source_edges
+            .source_edge_runs
+            .iter()
+            .all(|run| run.points.windows(2).all(|window| {
+                (
+                    window[0].order_index,
+                    window[0].collision,
+                    window[0].output_vertex,
+                ) <= (
+                    window[1].order_index,
+                    window[1].collision,
+                    window[1].output_vertex,
+                )
+            }))
+    );
+    assert_eq!(
+        size_output
+            .partial_source_edges
+            .source_edge_runs
+            .iter()
+            .filter(|run| run.unpaired_points > 0)
+            .count(),
+        size_output.partial_source_edges.unpaired_runs
+    );
     assert_eq!(size_output.source_edge_incident_gaps, 0);
     assert_eq!(size_output.face_halfedge_offsets.first().copied(), Some(0));
     assert!(
@@ -33512,6 +33562,22 @@ fn exact_boolmesh_kernel12_discovers_skew_edge_face_events() {
             .validate_against_sources(&left, &right)
             .unwrap_err(),
         hypermesh::exact::ExactBoolMeshValidationError::Boolean45EdgePointRoutingMismatch
+    );
+
+    let mut malformed_partial_edges = workspace.clone();
+    malformed_partial_edges
+        .boolean45
+        .as_mut()
+        .unwrap()
+        .partial_source_edges
+        .source_edge_runs[0]
+        .points[0]
+        .output_vertex = usize::MAX;
+    assert_eq!(
+        malformed_partial_edges
+            .validate_against_sources(&left, &right)
+            .unwrap_err(),
+        hypermesh::exact::ExactBoolMeshValidationError::Boolean45PartialEdgeMismatch
     );
 }
 

@@ -24,8 +24,10 @@ use super::{
     ExactBoolMeshEdgeFacePair, ExactBoolMeshFacePair, ExactBoolMeshFacePairPointRun,
     ExactBoolMeshNewEdgeVertexStage, ExactBoolMeshOutputVertexAllocation,
     ExactBoolMeshOutputVertexOrigin, ExactBoolMeshPairUpStage, ExactBoolMeshPairedEdgeFragment,
-    ExactBoolMeshRoutedEdgePoint, ExactBoolMeshSide, ExactBoolMeshSourceEdgePointRun,
-    ExactBoolMeshSourceEdgeRun, ExactBoolMeshSourceVertex,
+    ExactBoolMeshPartialEdgePoint, ExactBoolMeshPartialEdgePointOrigin,
+    ExactBoolMeshPartialSourceEdgeFragment, ExactBoolMeshPartialSourceEdgeRun,
+    ExactBoolMeshPartialSourceEdgeStage, ExactBoolMeshRoutedEdgePoint, ExactBoolMeshSide,
+    ExactBoolMeshSourceEdgePointRun, ExactBoolMeshSourceEdgeRun, ExactBoolMeshSourceVertex,
 };
 
 /// Build the exact `boolean45::size_output` staging record.
@@ -48,11 +50,16 @@ use super::{
 /// The new-edge routing is the exact counterpart to `add_new_edge_verts`:
 /// every allocated crossing vertex is placed into one source-edge bucket and
 /// two left/right face-pair buckets before later pairing/emission stages.
+/// Partial source-edge staging then mirrors `append_partial_edges`: retained
+/// endpoints from `i03`/`i30` are appended to each touched source-edge bucket,
+/// crossings are ordered by the exact parameter order produced by
+/// `pair_up`, and tail/head lists are zipped into source-edge fragments.
 pub(super) fn size_output_stage(
     left: &ExactMesh,
     right: &ExactMesh,
     boolean03: &ExactBoolMeshBoolean03,
     operation: ExactBooleanOperation,
+    pair_up: &ExactBoolMeshPairUpStage,
 ) -> ExactBoolMeshBoolean45Stage {
     let (left_base, right_base, crossing_sign) = operation_coefficients(operation);
     let i03 = boolean03
@@ -78,6 +85,15 @@ pub(super) fn size_output_stage(
     let vertex_allocation = allocate_output_vertices(&i03, &i30, &i12, &i21);
     let new_edge_vertices =
         route_new_edge_vertices(left, right, boolean03, &vertex_allocation, &i12, &i21);
+    let partial_source_edges = stage_partial_source_edges(
+        left,
+        right,
+        &vertex_allocation,
+        &new_edge_vertices,
+        &i03,
+        &i30,
+        pair_up,
+    );
 
     let mut left_face_halfedge_counts = retained_vertex_counts(left.triangles(), &i03);
     let mut right_face_halfedge_counts = retained_vertex_counts(right.triangles(), &i30);
@@ -127,6 +143,7 @@ pub(super) fn size_output_stage(
         source_face_to_output_face,
         vertex_allocation,
         new_edge_vertices,
+        partial_source_edges,
         vertices_from_left: i03.iter().map(|value| signed_abs(*value)).sum(),
         vertices_from_right: i30.iter().map(|value| signed_abs(*value)).sum(),
         inserted_intersection_vertices: i12
@@ -492,6 +509,174 @@ fn face_pair_key(pair: &ExactBoolMeshEdgeFacePair, edge_face: usize) -> (usize, 
         ExactBoolMeshSide::Left => (edge_face, pair.face),
         ExactBoolMeshSide::Right => (pair.face, edge_face),
     }
+}
+
+fn stage_partial_source_edges(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    allocation: &ExactBoolMeshOutputVertexAllocation,
+    new_edge_vertices: &ExactBoolMeshNewEdgeVertexStage,
+    i03: &[i32],
+    i30: &[i32],
+    pair_up: &ExactBoolMeshPairUpStage,
+) -> ExactBoolMeshPartialSourceEdgeStage {
+    let order_index = source_edge_order_index(pair_up);
+    let mut source_edge_runs = Vec::new();
+    let mut unpaired_runs = 0;
+    let mut missing_parameter_orders = 0;
+
+    for run in &new_edge_vertices.source_edge_runs {
+        let mesh = match run.side {
+            ExactBoolMeshSide::Left => left,
+            ExactBoolMeshSide::Right => right,
+        };
+        let signed_counts = match run.side {
+            ExactBoolMeshSide::Left => i03,
+            ExactBoolMeshSide::Right => i30,
+        };
+        let starts = match run.side {
+            ExactBoolMeshSide::Left => &allocation.left_vertex_output_starts,
+            ExactBoolMeshSide::Right => &allocation.right_vertex_output_starts,
+        };
+        let mut points = Vec::new();
+
+        for routed in &run.points {
+            let order_key = (side_key(run.side), run.tail, run.head, routed.collision);
+            let Some(order) = order_index.get(&order_key).copied() else {
+                missing_parameter_orders += 1;
+                continue;
+            };
+            points.push(ExactBoolMeshPartialEdgePoint {
+                output_vertex: routed.output_vertex,
+                is_tail: routed.is_tail,
+                order_index: order + 1,
+                collision: routed.collision,
+                origin: ExactBoolMeshPartialEdgePointOrigin::RoutedIntersection(*routed),
+            });
+        }
+
+        append_retained_endpoint(run.side, run.tail, signed_counts, starts, 0, &mut points);
+        append_retained_endpoint(
+            run.side,
+            run.head,
+            signed_counts,
+            starts,
+            usize::MAX,
+            &mut points,
+        );
+
+        points.sort_by(partial_point_order);
+        let fragments = pair_partial_points(&points);
+        let tail_count = points.iter().filter(|point| point.is_tail).count();
+        let head_count = points.len() - tail_count;
+        let unpaired_points = tail_count.abs_diff(head_count);
+        if unpaired_points > 0 {
+            unpaired_runs += 1;
+        }
+        source_edge_runs.push(ExactBoolMeshPartialSourceEdgeRun {
+            side: run.side,
+            tail: run.tail,
+            head: run.head,
+            incident_faces: incident_faces_for_edge(mesh.triangles(), [run.tail, run.head]),
+            points,
+            fragments,
+            unpaired_points,
+        });
+    }
+
+    ExactBoolMeshPartialSourceEdgeStage {
+        source_edge_runs,
+        unpaired_runs,
+        missing_parameter_orders,
+    }
+}
+
+fn source_edge_order_index(
+    pair_up: &ExactBoolMeshPairUpStage,
+) -> BTreeMap<(u8, usize, usize, usize), usize> {
+    let mut order_index = BTreeMap::new();
+    for run in &pair_up.source_edge_runs {
+        for (index, event) in run.events.iter().enumerate() {
+            order_index.insert(
+                (side_key(run.side), run.tail, run.head, event.collision),
+                index,
+            );
+        }
+    }
+    order_index
+}
+
+fn append_retained_endpoint(
+    side: ExactBoolMeshSide,
+    vertex: usize,
+    signed_counts: &[i32],
+    starts: &[Option<usize>],
+    order_index: usize,
+    points: &mut Vec<ExactBoolMeshPartialEdgePoint>,
+) {
+    let Some(signed_count) = signed_counts.get(vertex).copied() else {
+        return;
+    };
+    let count = signed_abs(signed_count);
+    if count == 0 {
+        return;
+    }
+    let Some(Some(start)) = starts.get(vertex) else {
+        return;
+    };
+    for copy in 0..count {
+        points.push(ExactBoolMeshPartialEdgePoint {
+            output_vertex: start + copy,
+            is_tail: if order_index == 0 {
+                signed_count > 0
+            } else {
+                signed_count < 0
+            },
+            order_index,
+            collision: usize::MAX,
+            origin: ExactBoolMeshPartialEdgePointOrigin::RetainedEndpoint {
+                source: ExactBoolMeshSourceVertex { side, vertex },
+                copy,
+            },
+        });
+    }
+}
+
+fn pair_partial_points(
+    points: &[ExactBoolMeshPartialEdgePoint],
+) -> Vec<ExactBoolMeshPartialSourceEdgeFragment> {
+    let mut tails = points
+        .iter()
+        .filter(|point| point.is_tail)
+        .copied()
+        .collect::<Vec<_>>();
+    let mut heads = points
+        .iter()
+        .filter(|point| !point.is_tail)
+        .copied()
+        .collect::<Vec<_>>();
+    tails.sort_by(partial_point_order);
+    heads.sort_by(partial_point_order);
+    tails
+        .into_iter()
+        .zip(heads)
+        .map(
+            |(tail_point, head_point)| ExactBoolMeshPartialSourceEdgeFragment {
+                tail_point,
+                head_point,
+            },
+        )
+        .collect()
+}
+
+fn partial_point_order(
+    left: &ExactBoolMeshPartialEdgePoint,
+    right: &ExactBoolMeshPartialEdgePoint,
+) -> Ordering {
+    left.order_index
+        .cmp(&right.order_index)
+        .then_with(|| left.collision.cmp(&right.collision))
+        .then_with(|| left.output_vertex.cmp(&right.output_vertex))
 }
 
 fn count_crossing_vertex(

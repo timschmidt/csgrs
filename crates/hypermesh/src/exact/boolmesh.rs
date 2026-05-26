@@ -426,6 +426,79 @@ pub struct ExactBoolMeshNewEdgeVertexStage {
     pub missing_source_edge_adjacencies: usize,
 }
 
+/// Point consumed by exact `boolean45::append_partial_edges`.
+#[cfg(feature = "exact-triangulation")]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ExactBoolMeshPartialEdgePointOrigin {
+    /// Crossing point previously routed by `add_new_edge_verts`.
+    RoutedIntersection(ExactBoolMeshRoutedEdgePoint),
+    /// Retained source endpoint added from `i03`/`i30`.
+    RetainedEndpoint {
+        /// Source vertex copied into the output allocation.
+        source: ExactBoolMeshSourceVertex,
+        /// Duplicate index for signed inclusion counts with magnitude > 1.
+        copy: usize,
+    },
+}
+
+/// Ordered point on a partial source-edge run.
+#[cfg(feature = "exact-triangulation")]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct ExactBoolMeshPartialEdgePoint {
+    /// Output vertex id.
+    pub output_vertex: usize,
+    /// Whether this point is on the tail side of a future halfedge.
+    pub is_tail: bool,
+    /// Exact ordering rank along the source edge.
+    pub order_index: usize,
+    /// Collision id for crossings, or `usize::MAX` for retained endpoints.
+    pub collision: usize,
+    /// Replayable origin for the point.
+    pub origin: ExactBoolMeshPartialEdgePointOrigin,
+}
+
+/// Paired source-edge fragment produced by exact `append_partial_edges`.
+#[cfg(feature = "exact-triangulation")]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ExactBoolMeshPartialSourceEdgeFragment {
+    /// Tail point of the emitted partial halfedge.
+    pub tail_point: ExactBoolMeshPartialEdgePoint,
+    /// Head point of the emitted partial halfedge.
+    pub head_point: ExactBoolMeshPartialEdgePoint,
+}
+
+/// Exact source-edge run consumed by `append_partial_edges`.
+#[cfg(feature = "exact-triangulation")]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ExactBoolMeshPartialSourceEdgeRun {
+    /// Source edge owner.
+    pub side: ExactBoolMeshSide,
+    /// Source edge tail vertex.
+    pub tail: usize,
+    /// Source edge head vertex.
+    pub head: usize,
+    /// Source faces incident to this undirected source edge.
+    pub incident_faces: Vec<usize>,
+    /// Ordered crossing and retained endpoint points.
+    pub points: Vec<ExactBoolMeshPartialEdgePoint>,
+    /// Zipped tail/head source-edge fragments.
+    pub fragments: Vec<ExactBoolMeshPartialSourceEdgeFragment>,
+    /// Number of points not paired into fragments.
+    pub unpaired_points: usize,
+}
+
+/// Exact `boolean45::append_partial_edges` staging over `pt_old`.
+#[cfg(feature = "exact-triangulation")]
+#[derive(Clone, Debug, Default, Eq, PartialEq)]
+pub struct ExactBoolMeshPartialSourceEdgeStage {
+    /// Partial source-edge runs.
+    pub source_edge_runs: Vec<ExactBoolMeshPartialSourceEdgeRun>,
+    /// Runs whose tail/head counts are not balanced yet.
+    pub unpaired_runs: usize,
+    /// Crossing points that could not be matched to an exact parameter order.
+    pub missing_parameter_orders: usize,
+}
+
 /// Exact `boolean45`-shaped output staging metadata.
 #[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -442,6 +515,8 @@ pub struct ExactBoolMeshBoolean45Stage {
     pub vertex_allocation: ExactBoolMeshOutputVertexAllocation,
     /// Exact routing from allocated new vertices into `pt_old`/`pt_new`.
     pub new_edge_vertices: ExactBoolMeshNewEdgeVertexStage,
+    /// Exact partial source-edge fragments, legacy `append_partial_edges`.
+    pub partial_source_edges: ExactBoolMeshPartialSourceEdgeStage,
     /// Number of vertices copied from the left operand.
     pub vertices_from_left: usize,
     /// Number of vertices copied from the right operand.
@@ -539,7 +614,9 @@ impl ExactBoolMeshWorkspace {
             w03: vec![0; left.vertices().len()],
             w30: vec![0; right.vertices().len()],
         };
-        let boolean45 = Some(size_output_stage(left, right, &boolean03, operation));
+        let boolean45 = Some(size_output_stage(
+            left, right, &boolean03, operation, &pair_up,
+        ));
         let blocker = if candidate_face_pairs.is_empty() && !mesh_bounds_unknown {
             None
         } else if mesh_bounds_unknown
@@ -780,6 +857,8 @@ pub enum ExactBoolMeshValidationError {
     Boolean45VertexAllocationMismatch,
     /// A `boolean45::add_new_edge_verts` routing record is stale or malformed.
     Boolean45EdgePointRoutingMismatch,
+    /// A `boolean45::append_partial_edges` staging record is stale or malformed.
+    Boolean45PartialEdgeMismatch,
     /// Blocker candidate counts do not match retained candidates.
     BlockerCountMismatch,
     /// A non-disjoint workspace had no named boolmesh-stage blocker.
@@ -1199,7 +1278,117 @@ fn validate_boolean45_stage(
         right_vertices,
         right_faces,
     )?;
+    validate_boolean45_partial_edges(stage, left_vertices, right_vertices)?;
     Ok(())
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn validate_boolean45_partial_edges(
+    stage: &ExactBoolMeshBoolean45Stage,
+    left_vertices: usize,
+    right_vertices: usize,
+) -> Result<(), ExactBoolMeshValidationError> {
+    if stage.partial_source_edges.source_edge_runs.len()
+        != stage.new_edge_vertices.source_edge_runs.len()
+    {
+        return Err(ExactBoolMeshValidationError::Boolean45PartialEdgeMismatch);
+    }
+    let routed_partial_points = stage
+        .partial_source_edges
+        .source_edge_runs
+        .iter()
+        .flat_map(|run| run.points.iter())
+        .filter(|point| {
+            matches!(
+                point.origin,
+                ExactBoolMeshPartialEdgePointOrigin::RoutedIntersection(_)
+            )
+        })
+        .count();
+    if routed_partial_points != stage.inserted_intersection_vertices {
+        return Err(ExactBoolMeshValidationError::Boolean45PartialEdgeMismatch);
+    }
+
+    let mut unpaired_runs = 0;
+    for run in &stage.partial_source_edges.source_edge_runs {
+        let vertex_count = match run.side {
+            ExactBoolMeshSide::Left => left_vertices,
+            ExactBoolMeshSide::Right => right_vertices,
+        };
+        if run.tail >= vertex_count
+            || run.head >= vertex_count
+            || run.points.is_empty()
+            || run.points.windows(2).any(|window| {
+                partial_edge_point_order_key(&window[0]) > partial_edge_point_order_key(&window[1])
+            })
+        {
+            return Err(ExactBoolMeshValidationError::Boolean45PartialEdgeMismatch);
+        }
+        let tail_count = run.points.iter().filter(|point| point.is_tail).count();
+        let head_count = run.points.len() - tail_count;
+        let unpaired_points = tail_count.abs_diff(head_count);
+        if unpaired_points > 0 {
+            unpaired_runs += 1;
+        }
+        if run.unpaired_points != unpaired_points
+            || run.fragments.len() != tail_count.min(head_count)
+        {
+            return Err(ExactBoolMeshValidationError::Boolean45PartialEdgeMismatch);
+        }
+        for point in &run.points {
+            validate_partial_edge_point(point, &stage.vertex_allocation)?;
+        }
+        for fragment in &run.fragments {
+            if !fragment.tail_point.is_tail || fragment.head_point.is_tail {
+                return Err(ExactBoolMeshValidationError::Boolean45PartialEdgeMismatch);
+            }
+            validate_partial_edge_point(&fragment.tail_point, &stage.vertex_allocation)?;
+            validate_partial_edge_point(&fragment.head_point, &stage.vertex_allocation)?;
+        }
+    }
+    if stage.partial_source_edges.unpaired_runs != unpaired_runs {
+        return Err(ExactBoolMeshValidationError::Boolean45PartialEdgeMismatch);
+    }
+    Ok(())
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn validate_partial_edge_point(
+    point: &ExactBoolMeshPartialEdgePoint,
+    allocation: &ExactBoolMeshOutputVertexAllocation,
+) -> Result<(), ExactBoolMeshValidationError> {
+    match point.origin {
+        ExactBoolMeshPartialEdgePointOrigin::RoutedIntersection(routed) => {
+            if point.output_vertex != routed.output_vertex
+                || point.collision != routed.collision
+                || point.is_tail != routed.is_tail
+                || allocation.output_vertex_origins.get(point.output_vertex) != Some(&routed.origin)
+            {
+                return Err(ExactBoolMeshValidationError::Boolean45PartialEdgeMismatch);
+            }
+        }
+        ExactBoolMeshPartialEdgePointOrigin::RetainedEndpoint { source, copy } => {
+            let starts = match source.side {
+                ExactBoolMeshSide::Left => &allocation.left_vertex_output_starts,
+                ExactBoolMeshSide::Right => &allocation.right_vertex_output_starts,
+            };
+            let Some(Some(start)) = starts.get(source.vertex) else {
+                return Err(ExactBoolMeshValidationError::Boolean45PartialEdgeMismatch);
+            };
+            if point.output_vertex != start + copy
+                || allocation.output_vertex_origins.get(point.output_vertex)
+                    != Some(&ExactBoolMeshOutputVertexOrigin::SourceVertex { source, copy })
+            {
+                return Err(ExactBoolMeshValidationError::Boolean45PartialEdgeMismatch);
+            }
+        }
+    }
+    Ok(())
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn partial_edge_point_order_key(point: &ExactBoolMeshPartialEdgePoint) -> (usize, usize, usize) {
+    (point.order_index, point.collision, point.output_vertex)
 }
 
 #[cfg(feature = "exact-triangulation")]

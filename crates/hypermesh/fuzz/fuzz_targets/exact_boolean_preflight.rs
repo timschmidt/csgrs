@@ -1566,6 +1566,7 @@ fn exercise_exact_boolmesh_bounds_disjoint_port() {
         );
         assert!(size_output.new_edge_vertices.source_edge_runs.is_empty());
         assert!(size_output.new_edge_vertices.face_pair_runs.is_empty());
+        assert!(size_output.partial_source_edges.source_edge_runs.is_empty());
         let execution = hypermesh::exact::execute_exact_boolmesh_bounds_disjoint(
             &left,
             &right,
@@ -1643,6 +1644,19 @@ fn exercise_exact_boolmesh_kernel12_port() {
         size_output.inserted_intersection_vertices * 2
     );
     assert_eq!(
+        size_output
+            .partial_source_edges
+            .source_edge_runs
+            .iter()
+            .flat_map(|run| run.points.iter())
+            .filter(|point| matches!(
+                point.origin,
+                hypermesh::exact::ExactBoolMeshPartialEdgePointOrigin::RoutedIntersection(_)
+            ))
+            .count(),
+        size_output.inserted_intersection_vertices
+    );
+    assert_eq!(
         workspace
             .pair_up
             .source_edge_runs
@@ -1680,6 +1694,18 @@ fn exercise_exact_boolmesh_kernel12_port() {
         .points[0]
         .collision = usize::MAX;
     assert!(malformed_edge_points
+        .validate_against_sources(&left, &right)
+        .is_err());
+    let mut malformed_partial_edges = workspace.clone();
+    malformed_partial_edges
+        .boolean45
+        .as_mut()
+        .unwrap()
+        .partial_source_edges
+        .source_edge_runs[0]
+        .points[0]
+        .output_vertex = usize::MAX;
+    assert!(malformed_partial_edges
         .validate_against_sources(&left, &right)
         .is_err());
 }
