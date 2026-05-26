@@ -74,6 +74,108 @@ fn frame() -> GridFrame {
         .unwrap()
 }
 
+fn retained_box_triangles(min: [i32; 3], max: [i32; 3], source_offset: u64) -> Vec<ExactTriangle3> {
+    let p = |x, y, z| [r(x), r(y), r(z)];
+    vec![
+        ExactTriangle3::new(
+            [
+                p(min[0], min[1], min[2]),
+                p(min[0], max[1], max[2]),
+                p(min[0], max[1], min[2]),
+            ],
+            Some(source_offset),
+        ),
+        ExactTriangle3::new(
+            [
+                p(min[0], min[1], min[2]),
+                p(min[0], min[1], max[2]),
+                p(min[0], max[1], max[2]),
+            ],
+            Some(source_offset + 1),
+        ),
+        ExactTriangle3::new(
+            [
+                p(max[0], min[1], min[2]),
+                p(max[0], max[1], min[2]),
+                p(max[0], min[1], max[2]),
+            ],
+            Some(source_offset + 2),
+        ),
+        ExactTriangle3::new(
+            [
+                p(max[0], max[1], min[2]),
+                p(max[0], max[1], max[2]),
+                p(max[0], min[1], max[2]),
+            ],
+            Some(source_offset + 3),
+        ),
+        ExactTriangle3::new(
+            [
+                p(min[0], min[1], min[2]),
+                p(max[0], min[1], min[2]),
+                p(min[0], min[1], max[2]),
+            ],
+            Some(source_offset + 4),
+        ),
+        ExactTriangle3::new(
+            [
+                p(max[0], min[1], min[2]),
+                p(max[0], min[1], max[2]),
+                p(min[0], min[1], max[2]),
+            ],
+            Some(source_offset + 5),
+        ),
+        ExactTriangle3::new(
+            [
+                p(min[0], max[1], min[2]),
+                p(min[0], max[1], max[2]),
+                p(max[0], max[1], min[2]),
+            ],
+            Some(source_offset + 6),
+        ),
+        ExactTriangle3::new(
+            [
+                p(max[0], max[1], min[2]),
+                p(min[0], max[1], max[2]),
+                p(max[0], max[1], max[2]),
+            ],
+            Some(source_offset + 7),
+        ),
+        ExactTriangle3::new(
+            [
+                p(min[0], min[1], min[2]),
+                p(min[0], max[1], min[2]),
+                p(max[0], min[1], min[2]),
+            ],
+            Some(source_offset + 8),
+        ),
+        ExactTriangle3::new(
+            [
+                p(max[0], min[1], min[2]),
+                p(min[0], max[1], min[2]),
+                p(max[0], max[1], min[2]),
+            ],
+            Some(source_offset + 9),
+        ),
+        ExactTriangle3::new(
+            [
+                p(min[0], min[1], max[2]),
+                p(max[0], min[1], max[2]),
+                p(min[0], max[1], max[2]),
+            ],
+            Some(source_offset + 10),
+        ),
+        ExactTriangle3::new(
+            [
+                p(max[0], min[1], max[2]),
+                p(max[0], max[1], max[2]),
+                p(min[0], max[1], max[2]),
+            ],
+            Some(source_offset + 11),
+        ),
+    ]
+}
+
 fn bench_cell_bounds(c: &mut Criterion) {
     let frame = frame();
     let addresses = (0..64)
@@ -317,6 +419,26 @@ fn bench_exact_box_voxelization(c: &mut Criterion) {
             .component_audit
             .exact_component_consensus_audit_ready
     );
+    let mut row_cache_triangles = retained_box_triangles([1, 1, 1], [6, 6, 6], 100);
+    row_cache_triangles.extend(retained_box_triangles([9, 1, 1], [14, 6, 6], 112));
+    let row_cache_surface =
+        ExactTriangleSurfaceMesh::new(row_cache_triangles, frame.source().cloned(), true);
+    let row_cache_solid = ExactTriangleSolidMesh::new(row_cache_surface, true);
+    let prepared_row_cache_solid =
+        PreparedExactTriangleSolidMesh::prepare(row_cache_solid).unwrap();
+    let (_, _, row_cache_probe) =
+        voxelize_prepared_exact_triangle_solid_mesh_by_local_component_consensus(
+            frame.clone(),
+            &prepared_row_cache_solid,
+            MaterialRegionId(11),
+            VoxelizationPolicy::conservative_cover(),
+        )
+        .unwrap();
+    assert!(row_cache_probe.row_cache_hits > 0);
+    assert_eq!(
+        row_cache_probe.row_cache_hits + row_cache_probe.row_cache_misses,
+        row_cache_probe.row_cache_lookups
+    );
     c.bench_function("prepared_triangle_solid_component_consensus_audit", |b| {
         b.iter(|| {
             audit_prepared_triangle_solid_component_consensus(black_box(
@@ -466,6 +588,20 @@ fn bench_exact_box_voxelization(c: &mut Criterion) {
                     frame.clone(),
                     &prepared_triangle_solid,
                     MaterialRegionId(10),
+                    VoxelizationPolicy::conservative_cover(),
+                )
+                .unwrap()
+            })
+        },
+    );
+    c.bench_function(
+        "local_component_row_cache_prepared_exact_triangle_solid_mesh_voxelization",
+        |b| {
+            b.iter(|| {
+                voxelize_prepared_exact_triangle_solid_mesh_by_local_component_consensus(
+                    frame.clone(),
+                    &prepared_row_cache_solid,
+                    MaterialRegionId(11),
                     VoxelizationPolicy::conservative_cover(),
                 )
                 .unwrap()

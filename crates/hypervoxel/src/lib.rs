@@ -76,6 +76,7 @@ mod transform;
 mod triangle_component_audit;
 mod triangle_mesh;
 mod triangle_prepared;
+mod triangle_row_cache;
 #[cfg(feature = "legacy-voxelis")]
 mod voxelis_adapter;
 mod voxelize;

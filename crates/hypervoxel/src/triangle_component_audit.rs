@@ -21,6 +21,8 @@ pub struct PreparedTriangleSolidComponentConsensusAuditReport {
     pub retry_subset_matches: bool,
     /// Whether row candidate schedules match attempted row counts.
     pub row_candidate_schedule_matches: bool,
+    /// Whether retained row-cache hits and misses account for attempted rows.
+    pub row_cache_accounting_matches: bool,
     /// Whether row candidate AABB rejections replay the row AABB rejection
     /// counter exactly.
     pub row_candidate_rejections_match: bool,
@@ -62,8 +64,18 @@ pub fn audit_prepared_triangle_solid_component_consensus(
         && (report.retry_consensus_cells == 0
             || report.retry_ray_attempts >= report.retry_consensus_cells);
     let attempted_rows = report.axis_sweep_rows.iter().sum::<usize>();
+    let row_cache_accounting_matches = if report.row_cache_lookups == 0
+        && report.row_cache_hits == 0
+        && report.row_cache_misses == 0
+    {
+        true
+    } else {
+        report.row_cache_lookups == attempted_rows
+            && report.row_cache_hits + report.row_cache_misses == report.row_cache_lookups
+            && report.row_cache_misses == report.row_candidate_scheduled_rows
+    };
     let row_candidate_schedule_matches = report.row_candidate_scheduled_rows == 0
-        || report.row_candidate_scheduled_rows == attempted_rows;
+        || report.row_candidate_scheduled_rows + report.row_cache_hits == attempted_rows;
     let row_candidate_rejections_match = report.row_candidate_scheduled_rows == 0
         || report.row_candidate_aabb_rejections == report.row_ray_aabb_rejections;
     let row_outcomes_match = attempted_rows
@@ -77,6 +89,7 @@ pub fn audit_prepared_triangle_solid_component_consensus(
         && component_accounting_matches
         && retry_subset_matches
         && row_candidate_schedule_matches
+        && row_cache_accounting_matches
         && row_candidate_rejections_match
         && row_outcomes_match
         && no_component_blockers
@@ -87,6 +100,7 @@ pub fn audit_prepared_triangle_solid_component_consensus(
         component_accounting_matches,
         retry_subset_matches,
         row_candidate_schedule_matches,
+        row_cache_accounting_matches,
         row_candidate_rejections_match,
         row_outcomes_match,
         no_component_blockers,
@@ -131,6 +145,7 @@ mod tests {
         assert!(audit.component_accounting_matches);
         assert!(audit.retry_subset_matches);
         assert!(audit.row_candidate_schedule_matches);
+        assert!(audit.row_cache_accounting_matches);
         assert!(audit.row_candidate_rejections_match);
         assert!(audit.row_outcomes_match);
         assert!(audit.no_component_blockers);
@@ -168,6 +183,35 @@ mod tests {
         let audit = audit_prepared_triangle_solid_component_consensus(&report);
 
         assert!(!audit.row_candidate_schedule_matches);
+        assert!(!audit.exact_component_consensus_audit_ready);
+    }
+
+    #[test]
+    fn audit_accepts_retained_row_cache_hits_as_scheduled_evidence() {
+        let mut report = valid_report();
+        report.row_cache_lookups = 2;
+        report.row_cache_hits = 1;
+        report.row_cache_misses = 1;
+        report.row_candidate_scheduled_rows = 1;
+
+        let audit = audit_prepared_triangle_solid_component_consensus(&report);
+
+        assert!(audit.row_cache_accounting_matches);
+        assert!(audit.row_candidate_schedule_matches);
+        assert!(audit.exact_component_consensus_audit_ready);
+    }
+
+    #[test]
+    fn audit_rejects_unaccounted_row_cache_hits() {
+        let mut report = valid_report();
+        report.row_cache_lookups = 2;
+        report.row_cache_hits = 1;
+        report.row_cache_misses = 0;
+        report.row_candidate_scheduled_rows = 1;
+
+        let audit = audit_prepared_triangle_solid_component_consensus(&report);
+
+        assert!(!audit.row_cache_accounting_matches);
         assert!(!audit.exact_component_consensus_audit_ready);
     }
 

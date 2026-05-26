@@ -44,27 +44,79 @@ fn tri(vertices: [[Real; 3]; 3]) -> ExactTriangle3 {
 }
 
 fn cube_surface(min: i64, max: i64, frame: &GridFrame) -> ExactTriangleSurfaceMesh {
-    let p = |x, y, z| [r(x), r(y), r(z)];
-    let triangles = vec![
-        tri([p(min, min, min), p(min, max, max), p(min, max, min)]),
-        tri([p(min, min, min), p(min, min, max), p(min, max, max)]),
-        tri([p(max, min, min), p(max, max, min), p(max, min, max)]),
-        tri([p(max, max, min), p(max, max, max), p(max, min, max)]),
-        tri([p(min, min, min), p(max, min, min), p(min, min, max)]),
-        tri([p(max, min, min), p(max, min, max), p(min, min, max)]),
-        tri([p(min, max, min), p(min, max, max), p(max, max, min)]),
-        tri([p(max, max, min), p(min, max, max), p(max, max, max)]),
-        tri([p(min, min, min), p(min, max, min), p(max, min, min)]),
-        tri([p(max, min, min), p(min, max, min), p(max, max, min)]),
-        tri([p(min, min, max), p(max, min, max), p(min, max, max)]),
-        tri([p(max, min, max), p(max, max, max), p(min, max, max)]),
-    ];
+    let triangles = rectangular_box_triangles([min, min, min], [max, max, max]);
     ExactTriangleSurfaceMesh::new(triangles, frame.source().cloned(), true)
 }
 
-fn sheared_box_surface(min: i64, max: i64, frame: &GridFrame) -> ExactTriangleSurfaceMesh {
-    let p = |x: i64, y: i64, z: i64| [r(x) + rf(z, 2), r(y), r(z)];
-    let triangles = vec![
+fn rectangular_box_triangles(min: [i64; 3], max: [i64; 3]) -> Vec<ExactTriangle3> {
+    let p = |x, y, z| [r(x), r(y), r(z)];
+    vec![
+        tri([
+            p(min[0], min[1], min[2]),
+            p(min[0], max[1], max[2]),
+            p(min[0], max[1], min[2]),
+        ]),
+        tri([
+            p(min[0], min[1], min[2]),
+            p(min[0], min[1], max[2]),
+            p(min[0], max[1], max[2]),
+        ]),
+        tri([
+            p(max[0], min[1], min[2]),
+            p(max[0], max[1], min[2]),
+            p(max[0], min[1], max[2]),
+        ]),
+        tri([
+            p(max[0], max[1], min[2]),
+            p(max[0], max[1], max[2]),
+            p(max[0], min[1], max[2]),
+        ]),
+        tri([
+            p(min[0], min[1], min[2]),
+            p(max[0], min[1], min[2]),
+            p(min[0], min[1], max[2]),
+        ]),
+        tri([
+            p(max[0], min[1], min[2]),
+            p(max[0], min[1], max[2]),
+            p(min[0], min[1], max[2]),
+        ]),
+        tri([
+            p(min[0], max[1], min[2]),
+            p(min[0], max[1], max[2]),
+            p(max[0], max[1], min[2]),
+        ]),
+        tri([
+            p(max[0], max[1], min[2]),
+            p(min[0], max[1], max[2]),
+            p(max[0], max[1], max[2]),
+        ]),
+        tri([
+            p(min[0], min[1], min[2]),
+            p(min[0], max[1], min[2]),
+            p(max[0], min[1], min[2]),
+        ]),
+        tri([
+            p(max[0], min[1], min[2]),
+            p(min[0], max[1], min[2]),
+            p(max[0], max[1], min[2]),
+        ]),
+        tri([
+            p(min[0], min[1], max[2]),
+            p(max[0], min[1], max[2]),
+            p(min[0], max[1], max[2]),
+        ]),
+        tri([
+            p(max[0], min[1], max[2]),
+            p(max[0], max[1], max[2]),
+            p(min[0], max[1], max[2]),
+        ]),
+    ]
+}
+
+fn sheared_box_triangles(min: i64, max: i64, offset: i64) -> Vec<ExactTriangle3> {
+    let p = |x: i64, y: i64, z: i64| [r(x + offset) + rf(z, 2), r(y), r(z)];
+    vec![
         tri([p(min, min, min), p(min, max, max), p(min, max, min)]),
         tri([p(min, min, min), p(min, min, max), p(min, max, max)]),
         tri([p(max, min, min), p(max, max, min), p(max, min, max)]),
@@ -77,7 +129,33 @@ fn sheared_box_surface(min: i64, max: i64, frame: &GridFrame) -> ExactTriangleSu
         tri([p(max, min, min), p(min, max, min), p(max, max, min)]),
         tri([p(min, min, max), p(max, min, max), p(min, max, max)]),
         tri([p(max, min, max), p(max, max, max), p(min, max, max)]),
-    ];
+    ]
+}
+
+fn two_sheared_aligned_box_surface(frame: &GridFrame) -> ExactTriangleSurfaceMesh {
+    let mut triangles = sheared_box_triangles(1, 5, 0);
+    triangles.extend(sheared_box_triangles(1, 5, 8));
+    ExactTriangleSurfaceMesh::new(triangles, frame.source().cloned(), true)
+}
+
+fn assert_component_row_cache_accounting(
+    report: &hypervoxel::PreparedTriangleSolidComponentConsensusVoxelizationReport,
+) {
+    let attempted_rows = report.axis_sweep_rows.iter().sum::<usize>();
+    assert_eq!(report.row_cache_lookups, attempted_rows);
+    assert_eq!(report.row_cache_misses, report.row_candidate_scheduled_rows);
+    assert_eq!(
+        report.row_candidate_scheduled_rows + report.row_cache_hits,
+        attempted_rows
+    );
+    assert_eq!(
+        report.row_cache_hits + report.row_cache_misses,
+        report.row_cache_lookups
+    );
+}
+
+fn sheared_box_surface(min: i64, max: i64, frame: &GridFrame) -> ExactTriangleSurfaceMesh {
+    let triangles = sheared_box_triangles(min, max, 0);
     ExactTriangleSurfaceMesh::new(triangles, frame.source().cloned(), true)
 }
 
@@ -819,10 +897,7 @@ fn local_component_consensus_schedules_only_component_rows() {
                 .iter()
                 .sum::<usize>()
     );
-    assert_eq!(
-        local_component.row_candidate_scheduled_rows,
-        local_component.axis_sweep_rows.iter().sum::<usize>()
-    );
+    assert_component_row_cache_accounting(&local_component);
     assert!(local_component.row_candidate_triangles > 0);
     assert!(local_component.row_candidate_aabb_rejections > 0);
     assert_eq!(
@@ -850,6 +925,7 @@ fn local_component_consensus_schedules_only_component_rows() {
             .component_audit
             .exact_component_consensus_audit_ready
     );
+    assert!(verified.component_audit.row_cache_accounting_matches);
     assert!(verified.component_audit.row_candidate_schedule_matches);
     assert!(verified.component_audit.row_candidate_rejections_match);
     assert_eq!(verified.component_consensus, local_component);
@@ -932,10 +1008,7 @@ fn adaptive_local_component_consensus_stops_after_complete_component_proof() {
     assert!(adaptive_component.retry_ray_triangle_tests > 0);
     assert!(adaptive_component.retry_consensus_components > 0);
     assert!(adaptive_component.retry_consensus_cells > 0);
-    assert_eq!(
-        adaptive_component.row_candidate_scheduled_rows,
-        adaptive_component.axis_sweep_rows.iter().sum::<usize>()
-    );
+    assert_component_row_cache_accounting(&adaptive_component);
     assert!(adaptive_component.row_candidate_triangles > 0);
     assert!(adaptive_component.row_candidate_aabb_rejections > 0);
     assert_eq!(
@@ -958,10 +1031,85 @@ fn adaptive_local_component_consensus_stops_after_complete_component_proof() {
             .component_audit
             .exact_component_consensus_audit_ready
     );
+    assert!(verified.component_audit.row_cache_accounting_matches);
     assert!(verified.component_audit.component_accounting_matches);
     assert!(verified.component_audit.retry_subset_matches);
     assert_eq!(verified.component_consensus, adaptive_component);
     assert_eq!(verified.verifier, per_cell_schedule);
+    assert!(verified.exact_verified_component_consensus_ready);
+}
+
+#[test]
+fn local_component_consensus_reuses_exact_row_certificates_across_components() {
+    let frame = frame(4);
+    let solid = ExactTriangleSolidMesh::new(two_sheared_aligned_box_surface(&frame), true);
+    let prepared = PreparedExactTriangleSolidMesh::prepare(solid).unwrap();
+    let (per_cell_grid, per_cell_report, per_cell_schedule) =
+        voxelize_prepared_exact_triangle_solid_mesh(
+            frame.clone(),
+            &prepared,
+            MaterialRegionId(16),
+            VoxelizationPolicy::conservative_cover(),
+        )
+        .unwrap();
+    let (local_grid, local_report, local_component) =
+        voxelize_prepared_exact_triangle_solid_mesh_by_local_component_consensus(
+            frame.clone(),
+            &prepared,
+            MaterialRegionId(16),
+            VoxelizationPolicy::conservative_cover(),
+        )
+        .unwrap();
+    let (verified_grid, verified_report, verified) =
+        voxelize_prepared_exact_triangle_solid_mesh_by_verified_local_component_consensus(
+            frame,
+            &prepared,
+            MaterialRegionId(16),
+            VoxelizationPolicy::conservative_cover(),
+        )
+        .unwrap();
+
+    assert_eq!(local_grid, per_cell_grid);
+    assert_eq!(verified_grid, per_cell_grid);
+    assert_eq!(
+        local_report.predicate_certificates,
+        per_cell_report.predicate_certificates
+    );
+    assert_eq!(
+        verified_report.predicate_certificates,
+        per_cell_report.predicate_certificates
+    );
+    assert!(local_component.components >= 2);
+    assert!(local_component.consensus_components >= 2);
+    assert_component_row_cache_accounting(&local_component);
+    assert!(
+        local_component.row_cache_hits > 0,
+        "aligned enclosed components should reuse exact row certificates"
+    );
+    assert!(local_component.row_cache_misses > 0);
+    assert!(local_component.row_candidate_triangles > 0);
+    assert!(local_component.row_votes > 0);
+    assert_eq!(local_component.fallback_unknown_cells, 0);
+    assert_eq!(local_component.fallback_boundary_regression_cells, 0);
+    assert_eq!(local_component.row_parameter_order_unknowns, 0);
+    assert!(local_component.exact_component_consensus_ready);
+
+    assert_eq!(verified.grid_mismatch_cells, 0);
+    assert!(verified.predicate_certificates_match);
+    assert!(verified.boundary_counts_match);
+    assert!(verified.unknown_counts_match);
+    assert!(verified.aggregate_matches);
+    assert!(verified.verifier_exact_topology_ready);
+    assert_eq!(verified.component_consensus, local_component);
+    assert_eq!(verified.verifier, per_cell_schedule);
+    assert!(
+        verified
+            .component_audit
+            .exact_component_consensus_audit_ready
+    );
+    assert!(verified.component_audit.row_cache_accounting_matches);
+    assert!(verified.component_audit.row_candidate_schedule_matches);
+    assert!(verified.component_audit.row_candidate_rejections_match);
     assert!(verified.exact_verified_component_consensus_ready);
 }
 

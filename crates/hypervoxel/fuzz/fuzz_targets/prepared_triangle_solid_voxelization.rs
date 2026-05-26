@@ -294,9 +294,22 @@ fuzz_target!(|data: (u8, u8, u8, bool)| {
     );
     assert_eq!(local_component.fallback_unknown_cells, 0);
     assert_eq!(local_component.fallback_boundary_regression_cells, 0);
+    let local_attempted_rows = local_component.axis_sweep_rows.iter().sum::<usize>();
     assert_eq!(
-        local_component.row_candidate_scheduled_rows,
-        local_component.axis_sweep_rows.iter().sum::<usize>()
+        local_component.row_cache_lookups,
+        local_attempted_rows
+    );
+    assert_eq!(
+        local_component.row_cache_misses,
+        local_component.row_candidate_scheduled_rows
+    );
+    assert_eq!(
+        local_component.row_candidate_scheduled_rows + local_component.row_cache_hits,
+        local_attempted_rows
+    );
+    assert_eq!(
+        local_component.row_cache_hits + local_component.row_cache_misses,
+        local_component.row_cache_lookups
     );
     assert_eq!(
         local_component.row_candidate_aabb_rejections,
@@ -310,6 +323,7 @@ fuzz_target!(|data: (u8, u8, u8, bool)| {
     assert!(verified_local
         .component_audit
         .exact_component_consensus_audit_ready);
+    assert!(verified_local.component_audit.row_cache_accounting_matches);
     assert_eq!(
         adaptive_local.consensus_cells
             + adaptive_local.exterior_cells
@@ -319,9 +333,22 @@ fuzz_target!(|data: (u8, u8, u8, bool)| {
     );
     assert_eq!(adaptive_local.fallback_unknown_cells, 0);
     assert_eq!(adaptive_local.fallback_boundary_regression_cells, 0);
+    let adaptive_attempted_rows = adaptive_local.axis_sweep_rows.iter().sum::<usize>();
     assert_eq!(
-        adaptive_local.row_candidate_scheduled_rows,
-        adaptive_local.axis_sweep_rows.iter().sum::<usize>()
+        adaptive_local.row_cache_lookups,
+        adaptive_attempted_rows
+    );
+    assert_eq!(
+        adaptive_local.row_cache_misses,
+        adaptive_local.row_candidate_scheduled_rows
+    );
+    assert_eq!(
+        adaptive_local.row_candidate_scheduled_rows + adaptive_local.row_cache_hits,
+        adaptive_attempted_rows
+    );
+    assert_eq!(
+        adaptive_local.row_cache_hits + adaptive_local.row_cache_misses,
+        adaptive_local.row_cache_lookups
     );
     assert_eq!(
         adaptive_local.row_candidate_aabb_rejections,
@@ -335,4 +362,7 @@ fuzz_target!(|data: (u8, u8, u8, bool)| {
     assert!(verified_adaptive_local
         .component_audit
         .exact_component_consensus_audit_ready);
+    assert!(verified_adaptive_local
+        .component_audit
+        .row_cache_accounting_matches);
 });

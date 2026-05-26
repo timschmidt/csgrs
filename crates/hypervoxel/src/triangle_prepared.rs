@@ -28,6 +28,7 @@ use crate::triangle_mesh::{
     insert_unique_parameter, point3, ray_parity_directions, triangle_bounds,
     triangle_intersects_cell,
 };
+use crate::triangle_row_cache::{ComponentAxisRowCache, ComponentAxisRowKey};
 use crate::{
     BoundaryPolicy, GridFrame, HypervoxelError, HypervoxelResult, MaterialRegionId, OccupancyState,
     QuantizationPolicy, SparseVoxelGrid, VoxelAddress, VoxelAggregateFacts, VoxelCell,
@@ -1512,6 +1513,7 @@ pub fn voxelize_prepared_exact_triangle_solid_mesh_by_local_component_consensus(
     let mut classifiers = vec![VoxelTriangleSolidClassifier::Unknown; total_cells];
     let mut open = vec![false; total_cells];
     let mut visited = vec![false; total_cells];
+    let mut row_cache = ComponentAxisRowCache::default();
     let mut component_report = PreparedTriangleSolidComponentConsensusVoxelizationReport {
         classified_cells: total_cells,
         ..PreparedTriangleSolidComponentConsensusVoxelizationReport::default()
@@ -1614,12 +1616,21 @@ pub fn voxelize_prepared_exact_triangle_solid_mesh_by_local_component_consensus(
                         let row_origin = VoxelAddress::new(frame.depth(), origin_coords)?
                             .bounds(&frame)?
                             .center();
-                        let row = classify_component_consensus_axis_row_with_candidate_schedule(
-                            axis,
-                            &row_origin,
-                            prepared,
-                            &mut component_report,
-                        )?;
+                        component_report.row_cache_lookups += 1;
+                        let row_key = ComponentAxisRowKey::new(axis, row_key);
+                        let (row, cache_hit) = row_cache.get_or_insert_with(row_key, || {
+                            classify_component_consensus_axis_row_with_candidate_schedule(
+                                axis,
+                                &row_origin,
+                                prepared,
+                                &mut component_report,
+                            )
+                        })?;
+                        if cache_hit {
+                            component_report.row_cache_hits += 1;
+                        } else {
+                            component_report.row_cache_misses += 1;
+                        }
 
                         match row {
                             AxisRowParity::Certified { parameters } => {
@@ -1820,6 +1831,7 @@ pub fn voxelize_prepared_exact_triangle_solid_mesh_by_adaptive_local_component_c
     let mut classifiers = vec![VoxelTriangleSolidClassifier::Unknown; total_cells];
     let mut open = vec![false; total_cells];
     let mut visited = vec![false; total_cells];
+    let mut row_cache = ComponentAxisRowCache::default();
     let mut component_report = PreparedTriangleSolidComponentConsensusVoxelizationReport {
         classified_cells: total_cells,
         ..PreparedTriangleSolidComponentConsensusVoxelizationReport::default()
@@ -1928,12 +1940,21 @@ pub fn voxelize_prepared_exact_triangle_solid_mesh_by_adaptive_local_component_c
                         let row_origin = VoxelAddress::new(frame.depth(), origin_coords)?
                             .bounds(&frame)?
                             .center();
-                        let row = classify_component_consensus_axis_row_with_candidate_schedule(
-                            axis,
-                            &row_origin,
-                            prepared,
-                            &mut component_report,
-                        )?;
+                        component_report.row_cache_lookups += 1;
+                        let row_key = ComponentAxisRowKey::new(axis, row_key);
+                        let (row, cache_hit) = row_cache.get_or_insert_with(row_key, || {
+                            classify_component_consensus_axis_row_with_candidate_schedule(
+                                axis,
+                                &row_origin,
+                                prepared,
+                                &mut component_report,
+                            )
+                        })?;
+                        if cache_hit {
+                            component_report.row_cache_hits += 1;
+                        } else {
+                            component_report.row_cache_misses += 1;
+                        }
 
                         match row {
                             AxisRowParity::Certified { parameters } => {
@@ -2694,6 +2715,14 @@ pub struct PreparedTriangleSolidComponentConsensusVoxelizationReport {
     pub axis_ambiguous_sweep_rows: [usize; 3],
     /// Exact row votes cast for open cells.
     pub row_votes: usize,
+    /// Component-local row certificate lookups by exact integer row key.
+    pub row_cache_lookups: usize,
+    /// Component-local row certificate lookups satisfied by retained row
+    /// evidence from an earlier component in the same voxelization pass.
+    pub row_cache_hits: usize,
+    /// Component-local row certificate lookups that had to run the exact row
+    /// scheduler and then retain the result.
+    pub row_cache_misses: usize,
     /// Component-local rows whose triangle candidate set was built by exact
     /// ray/AABB slab replay before narrow ray/triangle predicates.
     pub row_candidate_scheduled_rows: usize,
@@ -2823,7 +2852,8 @@ fn verify_component_arrangement_classification(
     Ok(exact_arrangement_ready)
 }
 
-enum AxisRowParity {
+#[derive(Clone, Debug, PartialEq)]
+pub(crate) enum AxisRowParity {
     Certified { parameters: Vec<Real> },
     Ambiguous,
 }
