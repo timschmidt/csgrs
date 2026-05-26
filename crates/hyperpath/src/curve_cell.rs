@@ -129,11 +129,16 @@ pub enum CurveArrangementCellFaceClass {
 /// exact curved-arrangement area formulas, kept inside Yap's retained-object
 /// model.
 ///
-/// Rational quadratic conic walks are not emitted here yet: their Green
-/// integral is a quotient integral over homogeneous Bernstein controls, and
-/// this layer currently has no retained exact `atan`/`ln` replay object for
-/// that evidence. Those cells keep topology and half-edge order, while
-/// `faces` remains empty instead of inventing sampled area.
+/// Rational quadratic conic walks contribute the exact quotient integral
+/// `integral((X dY - Y dX) / W^2)` over homogeneous Bernstein controls when
+/// the weight polynomial has a certified nonzero sign on the fragment. The
+/// implemented antiderivative reduces the quadratic numerator over `W^2` into
+/// a rational derivative plus an exact `integral(1/W)` branch for polynomial,
+/// linear, and negative-discriminant quadratic denominators. Positive
+/// discriminant logarithmic branches remain explicit unsupported evidence
+/// until the scalar layer can certify the required log-absolute arguments
+/// without domain panics. If the projective denominator sign or branch cannot
+/// be certified, the face is left unavailable instead of being sampled.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveArrangementCellFace {
     /// Half-edges traversed in order.
@@ -723,6 +728,7 @@ fn curve_cell_faces(
             bezier_fragments,
             cubic_fragments,
             conic_fragments,
+            policy,
         );
         let Some(area) = area else {
             if face_area_mode == FaceAreaMode::SkipUnavailable {
@@ -744,6 +750,7 @@ fn curve_cell_faces(
                 signed_area_twice: area,
                 class: CurveArrangementCellFaceClass::Exterior,
             }),
+            None if face_area_mode == FaceAreaMode::SkipUnavailable => continue,
             None => {
                 return Err(CurveArrangementCellError::UndecidableCellOrder {
                     vertex: half_edges[start].from,
@@ -764,6 +771,7 @@ fn signed_curve_face_area_twice(
     bezier_fragments: &[QuadraticBezierRealFragment],
     cubic_fragments: &[CubicBezierRealFragment],
     conic_fragments: &[RationalQuadraticBezierRealFragment],
+    policy: PredicatePolicy,
 ) -> Option<Real> {
     let mut area = Real::zero();
     for half_edge in cycle {
@@ -778,6 +786,7 @@ fn signed_curve_face_area_twice(
                 bezier_fragments,
                 cubic_fragments,
                 conic_fragments,
+                policy,
             )?;
     }
     Some(area)
@@ -792,7 +801,8 @@ fn signed_curve_half_edge_area_twice(
     arc_fragments: &[ExplicitArcArrangementFragment],
     bezier_fragments: &[QuadraticBezierRealFragment],
     cubic_fragments: &[CubicBezierRealFragment],
-    _conic_fragments: &[RationalQuadraticBezierRealFragment],
+    conic_fragments: &[RationalQuadraticBezierRealFragment],
+    policy: PredicatePolicy,
 ) -> Option<Real> {
     let half = &half_edges[half_edge];
     let edge = &edges[half.edge];
@@ -826,7 +836,15 @@ fn signed_curve_half_edge_area_twice(
                 Some(-contribution)
             }
         }
-        CurveArrangementCellEdgeKind::RationalQuadraticBezier => None,
+        CurveArrangementCellEdgeKind::RationalQuadraticBezier => {
+            let fragment = &conic_fragments[edge.fragments[0]];
+            let contribution = rational_quadratic_bezier_area_twice(fragment, policy)?;
+            if half_edge < half.twin {
+                Some(contribution)
+            } else {
+                Some(-contribution)
+            }
+        }
     }
 }
 
@@ -896,6 +914,245 @@ fn homogeneous_endpoint_tangent(from: &HomogeneousPoint2, to: &HomogeneousPoint2
         from.w.clone() * to.x.clone() - to.w.clone() * from.x.clone(),
         from.w.clone() * to.y.clone() - to.w.clone() * from.y.clone(),
     )
+}
+
+fn rational_quadratic_bezier_area_twice(
+    fragment: &RationalQuadraticBezierRealFragment,
+    policy: PredicatePolicy,
+) -> Option<Real> {
+    let x = homogeneous_quadratic_power_coefficients(
+        &fragment.start_control.x,
+        &fragment.control.x,
+        &fragment.end_control.x,
+    );
+    let y = homogeneous_quadratic_power_coefficients(
+        &fragment.start_control.y,
+        &fragment.control.y,
+        &fragment.end_control.y,
+    );
+    let w = homogeneous_quadratic_power_coefficients(
+        &fragment.start_control.w,
+        &fragment.control.w,
+        &fragment.end_control.w,
+    );
+    certify_quadratic_weight_nonzero_sign(&w, policy)?;
+
+    // Farouki's homogeneous rational-curve model writes affine coordinates as
+    // `(X/W, Y/W)`. Green replay therefore reduces to
+    // `(X Y' - Y X') / W^2`; Yap (1997) requires us to keep this exact
+    // quotient evidence or report unsupported, never to replace it with a
+    // sampled polygonal area.
+    let numerator = [
+        x[0].clone() * y[1].clone() - y[0].clone() * x[1].clone(),
+        Real::from(2) * (x[0].clone() * y[2].clone() - y[0].clone() * x[2].clone()),
+        x[1].clone() * y[2].clone() - y[1].clone() * x[2].clone(),
+    ];
+
+    div_real(
+        integrate_quadratic_over_weight_square(&numerator, &w, policy)?,
+        Real::from(2),
+    )
+}
+
+fn homogeneous_quadratic_power_coefficients(p0: &Real, p1: &Real, p2: &Real) -> [Real; 3] {
+    [
+        p0.clone(),
+        Real::from(2) * (p1.clone() - p0.clone()),
+        p0.clone() - Real::from(2) * p1.clone() + p2.clone(),
+    ]
+}
+
+fn certify_quadratic_weight_nonzero_sign(
+    weight_power: &[Real; 3],
+    policy: PredicatePolicy,
+) -> Option<Ordering> {
+    let mut values = vec![
+        weight_power[0].clone(),
+        weight_power[0].clone() + weight_power[1].clone() + weight_power[2].clone(),
+    ];
+    if compare_reals_with_policy(&weight_power[2], &Real::zero(), policy).value()?
+        != Ordering::Equal
+    {
+        let vertex = div_real(
+            -weight_power[1].clone(),
+            Real::from(2) * weight_power[2].clone(),
+        )?;
+        let vertex_after_start =
+            compare_reals_with_policy(&vertex, &Real::zero(), policy).value()?;
+        let vertex_before_end = compare_reals_with_policy(&vertex, &Real::one(), policy).value()?;
+        if vertex_after_start == Ordering::Greater && vertex_before_end == Ordering::Less {
+            values.push(
+                weight_power[0].clone()
+                    + weight_power[1].clone() * vertex.clone()
+                    + weight_power[2].clone() * vertex.clone() * vertex,
+            );
+        }
+    }
+    let signs = values
+        .iter()
+        .map(|value| compare_reals_with_policy(value, &Real::zero(), policy).value())
+        .collect::<Option<Vec<_>>>()?;
+    if signs.iter().any(|sign| *sign == Ordering::Equal) {
+        return None;
+    }
+    if signs.iter().all(|sign| *sign == Ordering::Greater) {
+        return Some(Ordering::Greater);
+    }
+    if signs.iter().all(|sign| *sign == Ordering::Less) {
+        return Some(Ordering::Less);
+    }
+    None
+}
+
+fn integrate_quadratic_over_weight_square(
+    numerator: &[Real; 3],
+    weight: &[Real; 3],
+    policy: PredicatePolicy,
+) -> Option<Real> {
+    let c0 = &weight[0];
+    let c1 = &weight[1];
+    let c2 = &weight[2];
+    let c2_order = compare_reals_with_policy(c2, &Real::zero(), policy).value()?;
+    if c2_order == Ordering::Equal {
+        return integrate_quadratic_over_linear_weight_square(numerator, c0, c1, policy);
+    }
+
+    let discriminant = c1.clone() * c1.clone() - Real::from(4) * c2.clone() * c0.clone();
+    if compare_reals_with_policy(&discriminant, &Real::zero(), policy).value()? == Ordering::Equal {
+        return None;
+    }
+
+    let n0 = &numerator[0];
+    let n1 = &numerator[1];
+    let n2 = &numerator[2];
+    let lambda = div_real(
+        c1.clone() * n1.clone()
+            - Real::from(2) * c2.clone() * n0.clone()
+            - Real::from(2) * c0.clone() * n2.clone(),
+        discriminant.clone(),
+    )?;
+    let alpha = -div_real(n2.clone() - lambda.clone() * c2.clone(), c2.clone())?;
+    let beta = -div_real(
+        n1.clone() - lambda.clone() * c1.clone(),
+        Real::from(2) * c2.clone(),
+    )?;
+
+    let rational_delta = rational_over_quadratic_at_one(&alpha, &beta, c0, c1, c2)?
+        - rational_over_quadratic_at_zero(&beta, c0)?;
+    let reciprocal_delta = integrate_reciprocal_quadratic_0_1(c1, c2, &discriminant, policy)?;
+    Some(rational_delta + lambda * reciprocal_delta)
+}
+
+fn integrate_quadratic_over_linear_weight_square(
+    numerator: &[Real; 3],
+    c0: &Real,
+    c1: &Real,
+    policy: PredicatePolicy,
+) -> Option<Real> {
+    if compare_reals_with_policy(c1, &Real::zero(), policy).value()? == Ordering::Equal {
+        let denominator = c0.clone() * c0.clone();
+        return Some(
+            div_real(numerator[0].clone(), denominator.clone())?
+                + div_real(numerator[1].clone(), Real::from(2) * denominator.clone())?
+                + div_real(numerator[2].clone(), Real::from(3) * denominator)?,
+        );
+    }
+
+    let c1_squared = c1.clone() * c1.clone();
+    let transformed_c = div_real(numerator[2].clone(), c1_squared.clone())?;
+    let transformed_b = div_real(numerator[1].clone(), c1.clone())?
+        - div_real(
+            Real::from(2) * numerator[2].clone() * c0.clone(),
+            c1_squared.clone(),
+        )?;
+    let transformed_a = numerator[0].clone()
+        - div_real(numerator[1].clone() * c0.clone(), c1.clone())?
+        + div_real(numerator[2].clone() * c0.clone() * c0.clone(), c1_squared)?;
+
+    let weight0 = c0.clone();
+    let weight1 = c0.clone() + c1.clone();
+    let primitive0 = linear_weight_square_primitive(
+        &weight0,
+        &transformed_a,
+        &transformed_b,
+        &transformed_c,
+        policy,
+    )?;
+    let primitive1 = linear_weight_square_primitive(
+        &weight1,
+        &transformed_a,
+        &transformed_b,
+        &transformed_c,
+        policy,
+    )?;
+    div_real(primitive1 - primitive0, c1.clone())
+}
+
+fn linear_weight_square_primitive(
+    weight: &Real,
+    transformed_a: &Real,
+    transformed_b: &Real,
+    transformed_c: &Real,
+    policy: PredicatePolicy,
+) -> Option<Real> {
+    let log_weight = ln_abs_real(weight.clone(), policy)?;
+    Some(
+        -div_real(transformed_a.clone(), weight.clone())?
+            + transformed_b.clone() * log_weight
+            + transformed_c.clone() * weight.clone(),
+    )
+}
+
+fn integrate_reciprocal_quadratic_0_1(
+    c1: &Real,
+    c2: &Real,
+    discriminant: &Real,
+    policy: PredicatePolicy,
+) -> Option<Real> {
+    match compare_reals_with_policy(discriminant, &Real::zero(), policy).value()? {
+        Ordering::Less => {
+            let positive_discriminant = -discriminant.clone();
+            let scale = positive_discriminant.sqrt().ok()?;
+            let start = div_real(c1.clone(), scale.clone())?;
+            let end = div_real(Real::from(2) * c2.clone() + c1.clone(), scale.clone())?;
+            Some(Real::from(2) * div_real(end.atan().ok()? - start.atan().ok()?, scale)?)
+        }
+        Ordering::Greater => None,
+        Ordering::Equal => {
+            let start = -div_real(Real::from(2), c1.clone())?;
+            let end = -div_real(Real::from(2), Real::from(2) * c2.clone() + c1.clone())?;
+            Some(end - start)
+        }
+    }
+}
+
+fn rational_over_quadratic_at_zero(beta: &Real, c0: &Real) -> Option<Real> {
+    div_real(beta.clone(), c0.clone())
+}
+
+fn rational_over_quadratic_at_one(
+    alpha: &Real,
+    beta: &Real,
+    c0: &Real,
+    c1: &Real,
+    c2: &Real,
+) -> Option<Real> {
+    div_real(
+        alpha.clone() + beta.clone(),
+        c0.clone() + c1.clone() + c2.clone(),
+    )
+}
+
+fn ln_abs_real(value: Real, policy: PredicatePolicy) -> Option<Real> {
+    match compare_reals_with_policy(&value, &Real::zero(), policy).value()? {
+        Ordering::Greater => value.ln().ok(),
+        Ordering::Less => (-value).ln().ok(),
+        Ordering::Equal => None,
+    }
+}
+
+fn div_real(numerator: Real, denominator: Real) -> Option<Real> {
+    (numerator / denominator).ok()
 }
 
 fn cubic_bezier_area_twice(fragment: &CubicBezierRealFragment) -> Real {

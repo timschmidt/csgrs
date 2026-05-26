@@ -503,7 +503,13 @@ fuzz_target!(|data: &[u8]| {
         secant_report.cell_graph.half_edges.len(),
         secant_report.cell_graph.edges.len() * 2
     );
-    assert!(secant_report.cell_graph.faces.is_empty());
+    assert_eq!(secant_report.cell_graph.faces.len(), 2);
+    assert!(secant_report.cell_graph.faces.iter().any(|face| {
+        face.class == CurveArrangementCellFaceClass::Bounded
+    }));
+    assert!(secant_report.cell_graph.faces.iter().any(|face| {
+        face.class == CurveArrangementCellFaceClass::Exterior
+    }));
 
     let tangent_conic = RationalQuadraticBezier::new(p(0, 0), p(4, 4), p(8, 0), r(1)).unwrap();
     let tangent_line = LinePathSegment::new(p(0, 2), p(8, 2));

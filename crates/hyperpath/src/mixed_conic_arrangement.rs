@@ -424,8 +424,9 @@ pub struct LineRationalQuadraticBezierArrangementReport {
     /// and half-edges are sorted by exact line tangents or homogeneous conic
     /// endpoint derivatives. This follows Yap, "Towards Exact Geometric
     /// Computation" (1997), by reporting certified topology without sampling.
-    /// Rational conic face walks are intentionally absent until this crate has
-    /// a replayable exact Green-integral quotient object for conic areas.
+    /// Rational conic face walks are emitted only when the homogeneous weight
+    /// denominator and Green-integral branch are certified exactly; unsupported
+    /// quotient branches remain explicit unavailable evidence.
     pub cell_graph: CurveArrangementCellGraph,
     /// Cached exact facts for the retained schedule.
     pub facts: LineRationalQuadraticBezierArrangementFacts,

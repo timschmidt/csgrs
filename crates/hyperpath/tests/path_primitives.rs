@@ -1947,7 +1947,21 @@ fn line_rational_quadratic_bezier_arrangement_emits_homogeneous_fragments() {
     assert_eq!(report.cell_graph.vertices.len(), 6);
     assert_eq!(report.cell_graph.edges.len(), 6);
     assert_eq!(report.cell_graph.half_edges.len(), 12);
-    assert_eq!(report.cell_graph.faces.len(), 0);
+    assert_eq!(report.cell_graph.faces.len(), 2);
+    assert!(
+        report
+            .cell_graph
+            .faces
+            .iter()
+            .any(|face| face.class == CurveArrangementCellFaceClass::Bounded)
+    );
+    assert!(
+        report
+            .cell_graph
+            .faces
+            .iter()
+            .any(|face| face.class == CurveArrangementCellFaceClass::Exterior)
+    );
     assert_eq!(
         report
             .cell_graph
@@ -1979,7 +1993,7 @@ fn line_rational_quadratic_bezier_arrangement_emits_homogeneous_fragments() {
 }
 
 #[test]
-fn line_rational_quadratic_bezier_cell_graph_keeps_conic_area_unmaterialized() {
+fn line_rational_quadratic_bezier_cell_graph_integrates_polynomial_weight_conic_area() {
     let conic = RationalQuadraticBezier::new(p(0, 0), p(4, 8), p(8, 0), r(1)).unwrap();
     let chord = LinePathSegment::new(p(0, 0), p(8, 0));
 
@@ -1999,11 +2013,72 @@ fn line_rational_quadratic_bezier_cell_graph_keeps_conic_area_unmaterialized() {
     assert_eq!(report.cell_graph.vertices.len(), 2);
     assert_eq!(report.cell_graph.edges.len(), 2);
     assert_eq!(report.cell_graph.half_edges.len(), 4);
+    assert_eq!(report.cell_graph.faces.len(), 2);
     assert_eq!(
         report.cell_graph.edges[1].kind,
         CurveArrangementCellEdgeKind::RationalQuadraticBezier
     );
-    assert!(report.cell_graph.faces.is_empty());
+    assert!(report.cell_graph.faces.iter().any(|face| {
+        face.class == CurveArrangementCellFaceClass::Bounded && face.signed_area_twice == rq(64, 3)
+    }));
+    assert!(report.cell_graph.faces.iter().any(|face| {
+        face.class == CurveArrangementCellFaceClass::Exterior
+            && face.signed_area_twice == -rq(64, 3)
+    }));
+}
+
+#[test]
+fn line_rational_quadratic_bezier_cell_graph_integrates_atan_branch_conic_area() {
+    let conic = RationalQuadraticBezier::new(p(0, 0), p(4, 8), p(8, 0), rq(1, 2)).unwrap();
+    let chord = LinePathSegment::new(p(0, 0), p(8, 0));
+
+    let report = arrange_line_segments_with_rational_quadratic_beziers(
+        &[chord],
+        &[conic],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+
+    assert_eq!(
+        report.events[0].class,
+        LineRationalQuadraticBezierIntersectionClass::TwoPoints
+    );
+    assert_eq!(report.line_fragments.len(), 1);
+    assert_eq!(report.conic_fragments.len(), 1);
+    assert_eq!(report.cell_graph.vertices.len(), 2);
+    assert_eq!(report.cell_graph.edges.len(), 2);
+    assert_eq!(report.cell_graph.half_edges.len(), 4);
+    assert_eq!(report.cell_graph.faces.len(), 2);
+    let bounded = report
+        .cell_graph
+        .faces
+        .iter()
+        .find(|face| face.class == CurveArrangementCellFaceClass::Bounded)
+        .unwrap();
+    let exterior = report
+        .cell_graph
+        .faces
+        .iter()
+        .find(|face| face.class == CurveArrangementCellFaceClass::Exterior)
+        .unwrap();
+    assert_eq!(
+        compare_reals_with_policy(
+            &bounded.signed_area_twice,
+            &Real::zero(),
+            PredicatePolicy::default()
+        )
+        .value(),
+        Some(std::cmp::Ordering::Greater)
+    );
+    assert_eq!(
+        compare_reals_with_policy(
+            &exterior.signed_area_twice,
+            &Real::zero(),
+            PredicatePolicy::default()
+        )
+        .value(),
+        Some(std::cmp::Ordering::Less)
+    );
 }
 
 #[test]
