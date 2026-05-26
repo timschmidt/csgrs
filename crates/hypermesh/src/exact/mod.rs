@@ -120,10 +120,11 @@ pub use boolean::{
 #[cfg(feature = "exact-triangulation")]
 pub use boolmesh::{
     ExactBoolMeshBoolean03, ExactBoolMeshBoolean45Stage, ExactBoolMeshEdgeEvent,
-    ExactBoolMeshExecution, ExactBoolMeshFacePair, ExactBoolMeshKernelStage,
-    ExactBoolMeshPointConstruction, ExactBoolMeshPortBlocker, ExactBoolMeshSide,
-    ExactBoolMeshSourceVertex, ExactBoolMeshValidationError, ExactBoolMeshWorkspace,
-    exact_boolmesh_workspace, execute_exact_boolmesh_bounds_disjoint,
+    ExactBoolMeshEdgeFacePair, ExactBoolMeshExecution, ExactBoolMeshFacePair,
+    ExactBoolMeshKernel12Event, ExactBoolMeshKernelStage, ExactBoolMeshPointConstruction,
+    ExactBoolMeshPortBlocker, ExactBoolMeshSide, ExactBoolMeshSourceVertex,
+    ExactBoolMeshValidationError, ExactBoolMeshWorkspace, exact_boolmesh_workspace,
+    execute_exact_boolmesh_bounds_disjoint,
 };
 pub use bounds::{AabbIntersectionKind, BoundsValidationError, ExactAabb3, MeshBounds};
 #[cfg(feature = "exact-triangulation")]

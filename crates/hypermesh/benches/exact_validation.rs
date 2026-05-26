@@ -7,8 +7,9 @@ use hypermesh::exact::{
     FaceRegionPlaneRelation, MeshArtifactBlocker, MeshArtifactFaceRecord, MeshArtifactManifest,
     MeshArtifactRole, MeshArtifactSourceKind, MeshArtifactVertexRecord, MeshCoordinateEvidence,
     MeshFacePairClassification, MeshNumericAdapterContract, MeshTopologyEvidence, PredicateUse,
-    SourceProvenance, Triangle, ValidationPolicy, arrange_coplanar_affine_surface_difference,
-    arrange_coplanar_affine_surface_intersection, arrange_coplanar_affine_surface_union,
+    SegmentPlaneRelation, SourceProvenance, Triangle, ValidationPolicy,
+    arrange_coplanar_affine_surface_difference, arrange_coplanar_affine_surface_intersection,
+    arrange_coplanar_affine_surface_union,
     arrange_coplanar_convex_surface_component_holed_difference,
     arrange_coplanar_convex_surface_component_union, arrange_coplanar_convex_surface_difference,
     arrange_coplanar_convex_surface_holed_difference, arrange_coplanar_convex_surface_intersection,
@@ -13041,6 +13042,52 @@ fn exact_boolmesh_bounds_disjoint_port(c: &mut Criterion) {
     }
 }
 
+fn exact_boolmesh_kernel12_port(c: &mut Criterion) {
+    #[cfg(feature = "exact-triangulation")]
+    {
+        let left = ExactMesh::from_i64_triangles(
+            &[0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0, 4],
+            &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
+        )
+        .unwrap();
+        let right = ExactMesh::from_i64_triangles(
+            &[1, 1, -1, 3, 1, 3, 1, 3, 3, 3, 3, 1],
+            &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
+        )
+        .unwrap();
+
+        c.bench_function("exact_boolmesh_kernel12_port", |b| {
+            b.iter(|| {
+                let workspace = hypermesh::exact::exact_boolmesh_workspace(
+                    &left,
+                    &right,
+                    hypermesh::exact::ExactBooleanOperation::Intersection,
+                );
+                workspace.validate_against_sources(&left, &right).unwrap();
+                assert_eq!(
+                    workspace.blocker.as_ref().map(|blocker| blocker.stage),
+                    Some(hypermesh::exact::ExactBoolMeshKernelStage::Kernel03)
+                );
+                workspace
+                    .kernel12_events
+                    .iter()
+                    .filter(|event| {
+                        matches!(
+                            event.relation,
+                            SegmentPlaneRelation::ProperCrossing
+                                | SegmentPlaneRelation::EndpointOnPlane
+                        )
+                    })
+                    .count()
+            })
+        });
+    }
+    #[cfg(not(feature = "exact-triangulation"))]
+    {
+        let _ = c;
+    }
+}
+
 fn legacy_boolean_adapter_report(c: &mut Criterion) {
     #[cfg(feature = "legacy-boolean")]
     {
@@ -13144,6 +13191,7 @@ criterion_group!(
     exact_boolean_volumetric_winding_materialization,
     exact_boolean_convex_single_cap_difference,
     exact_boolmesh_bounds_disjoint_port,
+    exact_boolmesh_kernel12_port,
     legacy_boolean_adapter_report
 );
 criterion_main!(benches);

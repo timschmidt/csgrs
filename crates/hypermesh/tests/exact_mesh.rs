@@ -33108,7 +33108,7 @@ fn exact_boolmesh_workspace_executes_bounds_disjoint_slice() {
 
 #[test]
 #[cfg(feature = "exact-triangulation")]
-fn exact_boolmesh_workspace_blocks_non_disjoint_at_kernel12() {
+fn exact_boolmesh_workspace_blocks_coplanar_non_disjoint_at_kernel12() {
     let left = tetrahedron_i64([0, 0, 0], [2, 0, 0], [0, 2, 0], [0, 0, 2]);
     let right = tetrahedron_i64([1, 0, 0], [3, 0, 0], [1, 2, 0], [1, 0, 2]);
 
@@ -33127,6 +33127,11 @@ fn exact_boolmesh_workspace_blocks_non_disjoint_at_kernel12() {
         hypermesh::exact::ExactBoolMeshKernelStage::Kernel12
     );
     assert!(blocker.candidate_face_pairs > 0);
+    assert!(
+        workspace.kernel12_coplanar_events > 0
+            || workspace.kernel12_unknown_events > 0
+            || workspace.kernel12_construction_failures > 0
+    );
 
     let execution = hypermesh::exact::execute_exact_boolmesh_bounds_disjoint(
         &left,
@@ -33136,7 +33141,45 @@ fn exact_boolmesh_workspace_blocks_non_disjoint_at_kernel12() {
     );
     assert_eq!(
         execution.unwrap_err(),
-        hypermesh::exact::ExactBoolMeshValidationError::RequiresKernel12
+        hypermesh::exact::ExactBoolMeshValidationError::PortBlocked(
+            hypermesh::exact::ExactBoolMeshKernelStage::Kernel12
+        )
+    );
+}
+
+#[test]
+#[cfg(feature = "exact-triangulation")]
+fn exact_boolmesh_kernel12_discovers_skew_edge_face_events() {
+    let left = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
+    let right = tetrahedron_i64([1, 1, -1], [3, 1, 3], [1, 3, 3], [3, 3, 1]);
+
+    let workspace = hypermesh::exact::exact_boolmesh_workspace(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+    );
+    workspace.validate_against_sources(&left, &right).unwrap();
+    let blocker = workspace
+        .blocker
+        .as_ref()
+        .expect("skew crossing must advance to the next boolmesh stage");
+    assert_eq!(
+        blocker.stage,
+        hypermesh::exact::ExactBoolMeshKernelStage::Kernel03
+    );
+    assert!(workspace.kernel12_events.iter().any(|event| matches!(
+        event.relation,
+        SegmentPlaneRelation::ProperCrossing | SegmentPlaneRelation::EndpointOnPlane
+    )));
+    assert_eq!(workspace.kernel12_unknown_events, 0);
+    assert_eq!(workspace.kernel12_construction_failures, 0);
+    assert_eq!(workspace.kernel12_coplanar_events, 0);
+
+    let mut stale = workspace.clone();
+    stale.kernel12_events[0].edge_face.edge[0] = left.vertices().len();
+    assert_eq!(
+        stale.validate_against_sources(&left, &right).unwrap_err(),
+        hypermesh::exact::ExactBoolMeshValidationError::EdgeFacePairOutOfBounds
     );
 }
 

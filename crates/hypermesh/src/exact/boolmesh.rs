@@ -19,6 +19,12 @@
 #[cfg(feature = "exact-triangulation")]
 use super::boolean::ExactBooleanOperation;
 #[cfg(feature = "exact-triangulation")]
+use super::construction::{
+    SegmentPlaneConstructionFailure, SegmentPlaneParameterRatio, SegmentPlaneRelation,
+};
+#[cfg(feature = "exact-triangulation")]
+use super::graph::{IntersectionEvent, MeshSide, build_intersection_graph};
+#[cfg(feature = "exact-triangulation")]
 use super::mesh::{ExactMesh, Triangle};
 #[cfg(feature = "exact-triangulation")]
 use super::provenance::SourceProvenance;
@@ -31,7 +37,7 @@ use super::validation::ValidationPolicy;
 #[cfg(feature = "exact-triangulation")]
 use super::{AabbIntersectionKind, MeshError};
 #[cfg(feature = "exact-triangulation")]
-use hyperlimit::PredicateOutcome;
+use hyperlimit::{PlaneSide, Point3, PredicateOutcome};
 
 /// Legacy boolmesh kernel stage represented by the exact port.
 ///
@@ -83,6 +89,29 @@ pub struct ExactBoolMeshFacePair {
     pub left_face: usize,
     /// Source face from the right operand.
     pub right_face: usize,
+}
+
+/// Exact edge/face key used by the boolmesh `kernel12` port.
+///
+/// Legacy boolmesh names these tables `p1q2` and `p2q1`: a directed source
+/// edge from one operand is paired with a source face from the other operand.
+/// This exact representation keeps that ownership explicit instead of
+/// collapsing the event to a face-pair id, because the later `boolean45`
+/// pairing stage must sort and split along the source edge that produced the
+/// construction.
+#[cfg(feature = "exact-triangulation")]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct ExactBoolMeshEdgeFacePair {
+    /// Source face pair that retained this edge/face contact.
+    pub face_pair: ExactBoolMeshFacePair,
+    /// Operand side owning the source edge.
+    pub edge_side: ExactBoolMeshSide,
+    /// Directed source edge endpoints in `edge_side` vertex index space.
+    pub edge: [usize; 2],
+    /// Operand side owning the opposite source face.
+    pub face_side: ExactBoolMeshSide,
+    /// Source face index in `face_side` face index space.
+    pub face: usize,
 }
 
 /// Operand side used by exact boolmesh event provenance.
@@ -163,6 +192,42 @@ pub struct ExactBoolMeshEdgeEvent {
     pub point: ExactBoolMeshPointConstruction,
 }
 
+/// Retained exact event from the direct boolmesh `kernel12` port.
+///
+/// The legacy `boolean03::kernel12` implementation combines shadow tests and
+/// `f64` interpolation to discover edge/triangle contacts.  The exact port
+/// keeps the same edge/face ownership, but consumes the determinant-ratio
+/// segment/plane construction used by the exact narrow phase.  This is the
+/// Yap boundary in code: predicate side facts, exact parameter, constructed
+/// point, and source handles replay together before any topology mutation.
+///
+/// The segment/plane event substrate follows the orientation-predicate
+/// decomposition used by Moller, "A Fast Triangle-Triangle Intersection
+/// Test," *Journal of Graphics Tools* 2.2 (1997), and Guigue and Devillers,
+/// "Fast and Robust Triangle-Triangle Overlap Test Using Orientation
+/// Predicates," *Journal of Graphics Tools* 8.1 (2003), with construction
+/// retained exactly as required by Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997).
+#[cfg(feature = "exact-triangulation")]
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactBoolMeshKernel12Event {
+    /// Edge/face ownership key for this event.
+    pub edge_face: ExactBoolMeshEdgeFacePair,
+    /// Coarse exact relation between the closed edge segment and face plane.
+    pub relation: SegmentPlaneRelation,
+    /// Exact intersection point for endpoint and proper-crossing events.
+    pub point: Option<Point3>,
+    /// Exact segment parameter measured from `edge[0]` toward `edge[1]`.
+    pub parameter: Option<ExactReal>,
+    /// Determinant numerator/denominator that produced [`Self::parameter`].
+    pub parameter_ratio: Option<SegmentPlaneParameterRatio>,
+    /// Structured construction failure when side predicates certified a
+    /// crossing but exact point construction failed.
+    pub construction_failure: Option<SegmentPlaneConstructionFailure>,
+    /// Certified side of each edge endpoint against the opposite face plane.
+    pub endpoint_sides: [Option<PlaneSide>; 2],
+}
+
 /// Exact `Boolean03`-shaped package.
 ///
 /// This mirrors the legacy `Boolean03` fields so the port can move one stage at
@@ -173,9 +238,9 @@ pub struct ExactBoolMeshEdgeEvent {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ExactBoolMeshBoolean03 {
     /// Left-edge/right-face ownership pairs, legacy `p1q2`.
-    pub p1q2: Vec<ExactBoolMeshFacePair>,
+    pub p1q2: Vec<ExactBoolMeshEdgeFacePair>,
     /// Right-edge/left-face ownership pairs, legacy `p2q1`.
-    pub p2q1: Vec<ExactBoolMeshFacePair>,
+    pub p2q1: Vec<ExactBoolMeshEdgeFacePair>,
     /// Signed event multiplicity along left edges, legacy `x12`.
     pub x12: Vec<i32>,
     /// Signed event multiplicity along right edges, legacy `x21`.
@@ -220,6 +285,15 @@ pub struct ExactBoolMeshWorkspace {
     pub mesh_bounds_relation: Option<PredicateOutcome<AabbIntersectionKind>>,
     /// Broad-phase face pairs that must continue to exact `kernel12`.
     pub candidate_face_pairs: Vec<ExactBoolMeshFacePair>,
+    /// Raw exact edge/face events discovered by the ported `kernel12` stage.
+    pub kernel12_events: Vec<ExactBoolMeshKernel12Event>,
+    /// Retained `kernel12` event records whose relation was undecidable.
+    pub kernel12_unknown_events: usize,
+    /// Certified crossings whose exact point construction failed.
+    pub kernel12_construction_failures: usize,
+    /// Coplanar graph events retained by discovery but not yet lowered into
+    /// boolmesh edge/face split records.
+    pub kernel12_coplanar_events: usize,
     /// Current exact `Boolean03` package.
     pub boolean03: ExactBoolMeshBoolean03,
     /// Current exact `boolean45` staging package, if output assembly has run.
@@ -232,10 +306,12 @@ impl ExactBoolMeshWorkspace {
     /// Build the first exact boolmesh workspace from source meshes.
     ///
     /// This is the exact counterpart to entering legacy `boolean03`: it records
-    /// source sizes and exact broad-phase scheduling before any topology is
-    /// emitted.  Certified disjoint mesh bounds produce an empty `Boolean03`
-    /// package.  Any retained candidate face pair stops at `kernel12`, because
-    /// the exact edge/triangle discovery loop is the next port chunk.
+    /// source sizes, exact broad-phase scheduling, and the retained
+    /// `kernel12` edge/face discovery records before any topology is emitted.
+    /// Certified disjoint mesh bounds produce an empty `Boolean03` package.
+    /// Non-coplanar segment/plane contacts advance the blocker to `kernel03`;
+    /// unresolved or coplanar discovery still names `kernel12`, because those
+    /// boolmesh branches are the next direct-port slices.
     pub fn from_sources(
         left: &ExactMesh,
         right: &ExactMesh,
@@ -258,11 +334,23 @@ impl ExactBoolMeshWorkspace {
             .collect::<Vec<_>>();
         let mesh_bounds_unknown =
             matches!(mesh_bounds_relation, Some(PredicateOutcome::Unknown { .. }));
+        let kernel12 = discover_kernel12_events(left, right);
         let blocker = if candidate_face_pairs.is_empty() && !mesh_bounds_unknown {
             None
-        } else {
+        } else if mesh_bounds_unknown
+            || kernel12.graph_failed
+            || kernel12.unknown_events > 0
+            || kernel12.construction_failures > 0
+            || kernel12.coplanar_events > 0
+        {
             Some(ExactBoolMeshPortBlocker {
                 stage: ExactBoolMeshKernelStage::Kernel12,
+                candidate_face_pairs: candidate_face_pairs.len(),
+                mesh_bounds_unknown,
+            })
+        } else {
+            Some(ExactBoolMeshPortBlocker {
+                stage: ExactBoolMeshKernelStage::Kernel03,
                 candidate_face_pairs: candidate_face_pairs.len(),
                 mesh_bounds_unknown,
             })
@@ -275,6 +363,10 @@ impl ExactBoolMeshWorkspace {
             right_faces: right.triangles().len(),
             mesh_bounds_relation,
             candidate_face_pairs,
+            kernel12_events: kernel12.events,
+            kernel12_unknown_events: kernel12.unknown_events,
+            kernel12_construction_failures: kernel12.construction_failures,
+            kernel12_coplanar_events: kernel12.coplanar_events,
             boolean03: ExactBoolMeshBoolean03 {
                 p1q2: Vec::new(),
                 p2q1: Vec::new(),
@@ -314,6 +406,44 @@ impl ExactBoolMeshWorkspace {
         for pair in &self.candidate_face_pairs {
             if pair.left_face >= self.left_faces || pair.right_face >= self.right_faces {
                 return Err(ExactBoolMeshValidationError::FacePairOutOfBounds);
+            }
+        }
+        for event in &self.kernel12_events {
+            validate_edge_face_pair(
+                event.edge_face,
+                self.left_vertices,
+                self.left_faces,
+                self.right_vertices,
+                self.right_faces,
+            )?;
+            validate_kernel12_event_shape(event)?;
+        }
+        for pair in &self.boolean03.p1q2 {
+            validate_edge_face_pair(
+                *pair,
+                self.left_vertices,
+                self.left_faces,
+                self.right_vertices,
+                self.right_faces,
+            )?;
+            if pair.edge_side != ExactBoolMeshSide::Left
+                || pair.face_side != ExactBoolMeshSide::Right
+            {
+                return Err(ExactBoolMeshValidationError::Boolean03OwnershipMismatch);
+            }
+        }
+        for pair in &self.boolean03.p2q1 {
+            validate_edge_face_pair(
+                *pair,
+                self.left_vertices,
+                self.left_faces,
+                self.right_vertices,
+                self.right_faces,
+            )?;
+            if pair.edge_side != ExactBoolMeshSide::Right
+                || pair.face_side != ExactBoolMeshSide::Left
+            {
+                return Err(ExactBoolMeshValidationError::Boolean03OwnershipMismatch);
             }
         }
         if let Some(blocker) = &self.blocker {
@@ -389,6 +519,14 @@ pub enum ExactBoolMeshValidationError {
     RightWindingCountMismatch,
     /// A retained face-pair candidate names a missing source face.
     FacePairOutOfBounds,
+    /// A retained edge/face event names a missing source edge or face.
+    EdgeFacePairOutOfBounds,
+    /// A retained edge/face event uses the same side for both operands.
+    EdgeFacePairSideMismatch,
+    /// A `Boolean03` ownership table contains the opposite directed side.
+    Boolean03OwnershipMismatch,
+    /// A `kernel12` event relation and exact construction payload disagree.
+    Kernel12EventShapeMismatch,
     /// Blocker candidate counts do not match retained candidates.
     BlockerCountMismatch,
     /// A non-disjoint workspace had no named boolmesh-stage blocker.
@@ -399,8 +537,9 @@ pub enum ExactBoolMeshValidationError {
     InvalidOutputMesh,
     /// Execution shortcut does not match the workspace state.
     ShortcutMismatch,
-    /// The executable disjoint slice was requested for a non-disjoint pair.
-    RequiresKernel12,
+    /// The executable slice was requested for a workspace blocked at a later
+    /// or unresolved boolmesh stage.
+    PortBlocked(ExactBoolMeshKernelStage),
 }
 
 /// Build the exact boolmesh workspace for one operation.
@@ -418,8 +557,8 @@ pub fn exact_boolmesh_workspace(
 /// This is intentionally small but not a report-only layer: it materializes the
 /// same no-contact outputs that the legacy boolmesh pipeline reaches with
 /// empty `p1q2`/`p2q1` discovery.  Non-disjoint operands return
-/// [`ExactBoolMeshValidationError::RequiresKernel12`], naming the next direct
-/// port stage instead of routing through bounded planar certificates.
+/// [`ExactBoolMeshValidationError::PortBlocked`], naming the next direct port
+/// stage instead of routing through bounded planar certificates.
 #[cfg(feature = "exact-triangulation")]
 pub fn execute_exact_boolmesh_bounds_disjoint(
     left: &ExactMesh,
@@ -430,7 +569,13 @@ pub fn execute_exact_boolmesh_bounds_disjoint(
     let workspace = ExactBoolMeshWorkspace::from_sources(left, right, operation);
     workspace.validate()?;
     if !workspace.is_certified_bounds_disjoint() {
-        return Err(ExactBoolMeshValidationError::RequiresKernel12);
+        return Err(ExactBoolMeshValidationError::PortBlocked(
+            workspace
+                .blocker
+                .as_ref()
+                .map(|blocker| blocker.stage)
+                .unwrap_or(ExactBoolMeshKernelStage::Boolean03),
+        ));
     }
     let mesh = match operation {
         ExactBooleanOperation::Union => concatenate_meshes(left, right, validation)
@@ -447,7 +592,9 @@ pub fn execute_exact_boolmesh_bounds_disjoint(
         )
         .map_err(|_| ExactBoolMeshValidationError::InvalidOutputMesh)?,
         ExactBooleanOperation::SelectedRegions(_) => {
-            return Err(ExactBoolMeshValidationError::RequiresKernel12);
+            return Err(ExactBoolMeshValidationError::PortBlocked(
+                ExactBoolMeshKernelStage::Boolean03,
+            ));
         }
     };
     let execution = ExactBoolMeshExecution {
@@ -457,6 +604,190 @@ pub fn execute_exact_boolmesh_bounds_disjoint(
     };
     execution.validate_against_sources(left, right)?;
     Ok(execution)
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[derive(Clone, Debug, Default, PartialEq)]
+struct Kernel12Discovery {
+    events: Vec<ExactBoolMeshKernel12Event>,
+    unknown_events: usize,
+    construction_failures: usize,
+    coplanar_events: usize,
+    graph_failed: bool,
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn discover_kernel12_events(left: &ExactMesh, right: &ExactMesh) -> Kernel12Discovery {
+    let graph = match build_intersection_graph(left, right) {
+        Ok(graph) => graph,
+        Err(_) => {
+            return Kernel12Discovery {
+                graph_failed: true,
+                ..Kernel12Discovery::default()
+            };
+        }
+    };
+    let mut discovery = Kernel12Discovery::default();
+    for pair in &graph.face_pairs {
+        let face_pair = ExactBoolMeshFacePair {
+            left_face: pair.left_face,
+            right_face: pair.right_face,
+        };
+        for event in &pair.events {
+            match event {
+                IntersectionEvent::SegmentPlane {
+                    segment_side,
+                    edge,
+                    plane_side,
+                    plane_face,
+                    relation,
+                    point,
+                    parameter,
+                    parameter_ratio,
+                    construction_failure,
+                    endpoint_sides,
+                } => {
+                    if *relation == SegmentPlaneRelation::Unknown {
+                        discovery.unknown_events += 1;
+                    }
+                    if *relation == SegmentPlaneRelation::ConstructionFailed {
+                        discovery.construction_failures += 1;
+                    }
+                    if *relation == SegmentPlaneRelation::Coplanar {
+                        discovery.coplanar_events += 1;
+                    }
+                    discovery.events.push(ExactBoolMeshKernel12Event {
+                        edge_face: ExactBoolMeshEdgeFacePair {
+                            face_pair,
+                            edge_side: boolmesh_side(*segment_side),
+                            edge: *edge,
+                            face_side: boolmesh_side(*plane_side),
+                            face: *plane_face,
+                        },
+                        relation: *relation,
+                        point: point.clone(),
+                        parameter: parameter.clone(),
+                        parameter_ratio: parameter_ratio.clone(),
+                        construction_failure: *construction_failure,
+                        endpoint_sides: *endpoint_sides,
+                    });
+                }
+                IntersectionEvent::CoplanarEdge { .. }
+                | IntersectionEvent::CoplanarVertex { .. } => {
+                    discovery.coplanar_events += 1;
+                }
+                IntersectionEvent::Unknown => {
+                    discovery.unknown_events += 1;
+                }
+            }
+        }
+    }
+    discovery
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn boolmesh_side(side: MeshSide) -> ExactBoolMeshSide {
+    match side {
+        MeshSide::Left => ExactBoolMeshSide::Left,
+        MeshSide::Right => ExactBoolMeshSide::Right,
+    }
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn validate_edge_face_pair(
+    pair: ExactBoolMeshEdgeFacePair,
+    left_vertices: usize,
+    left_faces: usize,
+    right_vertices: usize,
+    right_faces: usize,
+) -> Result<(), ExactBoolMeshValidationError> {
+    if pair.edge_side == pair.face_side {
+        return Err(ExactBoolMeshValidationError::EdgeFacePairSideMismatch);
+    }
+    if pair.face_pair.left_face >= left_faces || pair.face_pair.right_face >= right_faces {
+        return Err(ExactBoolMeshValidationError::FacePairOutOfBounds);
+    }
+    let (edge_vertices, face_count) = match pair.edge_side {
+        ExactBoolMeshSide::Left => (left_vertices, right_faces),
+        ExactBoolMeshSide::Right => (right_vertices, left_faces),
+    };
+    if pair.edge[0] >= edge_vertices || pair.edge[1] >= edge_vertices {
+        return Err(ExactBoolMeshValidationError::EdgeFacePairOutOfBounds);
+    }
+    if pair.face >= face_count {
+        return Err(ExactBoolMeshValidationError::EdgeFacePairOutOfBounds);
+    }
+    let expected_face = match pair.face_side {
+        ExactBoolMeshSide::Left => pair.face_pair.left_face,
+        ExactBoolMeshSide::Right => pair.face_pair.right_face,
+    };
+    if pair.face != expected_face {
+        return Err(ExactBoolMeshValidationError::EdgeFacePairOutOfBounds);
+    }
+    Ok(())
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn validate_kernel12_event_shape(
+    event: &ExactBoolMeshKernel12Event,
+) -> Result<(), ExactBoolMeshValidationError> {
+    let construction_is_empty = event.point.is_none()
+        && event.parameter.is_none()
+        && event.parameter_ratio.is_none()
+        && event.construction_failure.is_none();
+    match event.relation {
+        SegmentPlaneRelation::Disjoint | SegmentPlaneRelation::Coplanar => {
+            if construction_is_empty {
+                Ok(())
+            } else {
+                Err(ExactBoolMeshValidationError::Kernel12EventShapeMismatch)
+            }
+        }
+        SegmentPlaneRelation::EndpointOnPlane => {
+            if event.point.is_some()
+                && event.parameter.is_some()
+                && event.parameter_ratio.is_none()
+                && event.construction_failure.is_none()
+            {
+                Ok(())
+            } else {
+                Err(ExactBoolMeshValidationError::Kernel12EventShapeMismatch)
+            }
+        }
+        SegmentPlaneRelation::ProperCrossing => {
+            if event.point.is_some()
+                && event.parameter.is_some()
+                && event.parameter_ratio.is_some()
+                && event.construction_failure.is_none()
+            {
+                Ok(())
+            } else {
+                Err(ExactBoolMeshValidationError::Kernel12EventShapeMismatch)
+            }
+        }
+        SegmentPlaneRelation::Unknown => {
+            if event.point.is_none()
+                && event.parameter.is_none()
+                && event.parameter_ratio.is_none()
+                && event.construction_failure.is_none()
+            {
+                Ok(())
+            } else {
+                Err(ExactBoolMeshValidationError::Kernel12EventShapeMismatch)
+            }
+        }
+        SegmentPlaneRelation::ConstructionFailed => {
+            if event.point.is_none()
+                && event.parameter.is_none()
+                && event.parameter_ratio.is_none()
+                && event.construction_failure.is_some()
+            {
+                Ok(())
+            } else {
+                Err(ExactBoolMeshValidationError::Kernel12EventShapeMismatch)
+            }
+        }
+    }
 }
 
 #[cfg(feature = "exact-triangulation")]
