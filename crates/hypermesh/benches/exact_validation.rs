@@ -5148,6 +5148,14 @@ fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
             )
             .unwrap()
             .mesh;
+        let same_outer_point_branch_island_consumed_hole = rect_surface_i64(&[(2, 2, 3, 3)]);
+        let same_outer_point_branch_island_consumed_right =
+            arrange_coplanar_convex_surface_holed_difference(
+                &same_outer_point_branch_island_intersection_outer,
+                &same_outer_point_branch_island_consumed_hole,
+            )
+            .unwrap()
+            .mesh;
         let same_outer_affine_island_intersection_origin = (0, 0, 0);
         let same_outer_affine_island_intersection_basis_u = (2, 1, 0);
         let same_outer_affine_island_intersection_basis_v = (-1, 2, 0);
@@ -7017,6 +7025,22 @@ fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
                         hypermesh::exact::preflight_boolean_exact(
                             &same_outer_point_branch_island_intersection_source,
                             &same_outer_point_branch_island_intersection_outer,
+                            hypermesh::exact::ExactBooleanOperation::Intersection,
+                        )
+                        .map(|report| report.validate()),
+                        arrange_coplanar_surface_component_holed_intersection(
+                            &same_outer_point_branch_island_intersection_source,
+                            &same_outer_point_branch_island_consumed_right,
+                        )
+                        .map(|output| {
+                            output.validate_intersection_against_sources(
+                                &same_outer_point_branch_island_intersection_source,
+                                &same_outer_point_branch_island_consumed_right,
+                            )
+                        }),
+                        hypermesh::exact::preflight_boolean_exact(
+                            &same_outer_point_branch_island_intersection_source,
+                            &same_outer_point_branch_island_consumed_right,
                             hypermesh::exact::ExactBooleanOperation::Intersection,
                         )
                         .map(|report| report.validate()),

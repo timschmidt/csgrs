@@ -3011,6 +3011,43 @@ fn exercise_same_outer_component_holed_coplanar_intersection_with_island() {
         .validate_against_sources(&branch_source, &branch_outer)
         .unwrap();
 
+    let branch_island_killer_hole = rect_surface_i64(&[(2, 2, 3, 3)]);
+    let branch_island_killer =
+        arrange_coplanar_convex_surface_holed_difference(&branch_outer, &branch_island_killer_hole)
+            .expect("point-branched island-consuming source should materialize")
+            .mesh;
+    let branch_consumed =
+        arrange_coplanar_surface_component_holed_intersection(&branch_source, &branch_island_killer)
+            .expect("opposite retained hole should consume the source-owned island");
+    branch_consumed.validate().unwrap();
+    branch_consumed
+        .validate_intersection_against_sources(&branch_source, &branch_island_killer)
+        .unwrap();
+    assert_eq!(branch_consumed.components.len(), 1);
+    assert!(
+        branch_consumed
+            .components
+            .iter()
+            .all(|component| !component.holes.is_empty())
+    );
+    let branch_consumed_reverse =
+        arrange_coplanar_surface_component_holed_intersection(&branch_island_killer, &branch_source)
+            .expect("source-owned island consumption should be symmetric");
+    branch_consumed_reverse.validate().unwrap();
+    branch_consumed_reverse
+        .validate_intersection_against_sources(&branch_island_killer, &branch_source)
+        .unwrap();
+    let branch_consumed_preflight = preflight_boolean_exact(
+        &branch_source,
+        &branch_island_killer,
+        ExactBooleanOperation::Intersection,
+    )
+    .expect("source-owned island consumption preflight should classify shortcut");
+    branch_consumed_preflight.validate().unwrap();
+    branch_consumed_preflight
+        .validate_against_sources(&branch_source, &branch_island_killer)
+        .unwrap();
+
     let affine_origin = (0, 0, 0);
     let affine_basis_u = (2, 1, 0);
     let affine_basis_v = (-1, 2, 0);

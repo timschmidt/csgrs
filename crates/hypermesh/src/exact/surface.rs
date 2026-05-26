@@ -3371,7 +3371,7 @@ fn arrange_coplanar_surface_component_holed_same_outer_intersection(
             )? {
                 SimplePolygonInteraction::Disjoint => {}
                 SimplePolygonInteraction::PointOnly | SimplePolygonInteraction::Connected => {
-                    if !same_outer_intersection_pair_is_surviving_source_island(
+                    if !same_outer_intersection_pair_is_accounted_source_island(
                         left_component,
                         right_component,
                         &left_components,
@@ -3477,12 +3477,13 @@ fn collect_same_outer_source_islands_from_side(
         )? {
             return None;
         }
-        for opposite_hole in &opposite_main.holes {
-            if simple_polygon_interaction(&candidate.outer, opposite_hole, projection)?
-                != SimplePolygonInteraction::Disjoint
-            {
-                return None;
-            }
+        match same_outer_source_island_opposite_hole_disposition(
+            &candidate.outer,
+            opposite_main,
+            projection,
+        )? {
+            SameOuterSourceIslandDisposition::Survives => {}
+            SameOuterSourceIslandDisposition::Consumed => continue,
         }
         if islands.iter().any(|island| {
             polygons_equal_modulo_collinear(&island.outer, &candidate.outer, projection)
@@ -3499,8 +3500,68 @@ fn collect_same_outer_source_islands_from_side(
     Some(())
 }
 
+/// Classify a source-owned island against the opposite operand's retained holes.
+///
+/// Same-outer intersection is `outer - union(left_holes, right_holes)` plus
+/// any source-owned island components that remain filled. A candidate island
+/// therefore survives only if every opposite retained hole is disjoint from
+/// it. It is also certified when a named opposite hole consumes the whole
+/// island by exact loop equality or strict containment; that case contributes
+/// no output component, but it must still be accounted for so the cross-pair
+/// topology check does not reject the intersection.
+///
+/// This is a direct use of Yap's retained-object paradigm from "Towards Exact
+/// Geometric Computation," *Computational Geometry* 7.1-2 (1997): the Boolean
+/// decision advances only after exact predicates classify named source loops.
+/// Segment contact is classified with the orientation-predicate relation used
+/// by Guigue and Devillers, "Fast and Robust Triangle-Triangle Overlap Test
+/// Using Orientation Predicates," *Journal of Graphics Tools* 8.1 (2003).
 #[cfg(feature = "exact-triangulation")]
-fn same_outer_intersection_pair_is_surviving_source_island(
+fn same_outer_source_island_opposite_hole_disposition(
+    candidate_outer: &[Point3],
+    opposite_main: &SourceHoledSurfaceComponent,
+    projection: CoplanarProjection,
+) -> Option<SameOuterSourceIslandDisposition> {
+    for opposite_hole in &opposite_main.holes {
+        match simple_polygon_interaction(candidate_outer, opposite_hole, projection)? {
+            SimplePolygonInteraction::Disjoint => {}
+            SimplePolygonInteraction::PointOnly => return None,
+            SimplePolygonInteraction::Connected => {
+                if same_outer_source_island_consumed_by_hole(
+                    candidate_outer,
+                    opposite_hole,
+                    projection,
+                )? {
+                    return Some(SameOuterSourceIslandDisposition::Consumed);
+                }
+                return None;
+            }
+        }
+    }
+    Some(SameOuterSourceIslandDisposition::Survives)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn same_outer_source_island_consumed_by_hole(
+    candidate_outer: &[Point3],
+    opposite_hole: &[Point3],
+    projection: CoplanarProjection,
+) -> Option<bool> {
+    if polygons_equal_modulo_collinear(candidate_outer, opposite_hole, projection) {
+        return Some(true);
+    }
+    polygon_strictly_inside_simple_polygon(candidate_outer, opposite_hole, projection)
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum SameOuterSourceIslandDisposition {
+    Survives,
+    Consumed,
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn same_outer_intersection_pair_is_accounted_source_island(
     left_component: &SourceHoledSurfaceComponent,
     right_component: &SourceHoledSurfaceComponent,
     left_components: &[SourceHoledSurfaceComponent],
@@ -3548,6 +3609,11 @@ fn source_component_is_island_owned_by_matching_outer(
             owner_main,
             projection,
         )? {
+            same_outer_source_island_opposite_hole_disposition(
+                &candidate.outer,
+                opposite_main,
+                projection,
+            )?;
             return Some(true);
         }
     }

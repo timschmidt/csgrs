@@ -27644,6 +27644,129 @@ fn exact_coplanar_component_holed_intersection_materializes_same_outer_point_bra
 
 #[cfg(feature = "exact-triangulation")]
 #[test]
+fn exact_coplanar_component_holed_intersection_consumes_same_outer_point_branch_hole_island() {
+    let outer = rect_surface_i64(&[(0, 0, 10, 10)]);
+    let branch_holes = rect_surface_i64(&[
+        (2, 4, 4, 6),
+        (2, 6, 4, 8),
+        (4, 2, 6, 4),
+        (4, 6, 6, 8),
+        (6, 2, 8, 4),
+        (6, 4, 8, 6),
+        (6, 6, 8, 8),
+    ]);
+    let branch_source =
+        hypermesh::exact::arrange_coplanar_orthogonal_surface_difference(&outer, &branch_holes)
+            .expect("scaled point-branched source fixture should materialize")
+            .mesh;
+
+    let island_killer_hole = rect_surface_i64(&[(4, 4, 6, 6)]);
+    let island_killer = hypermesh::exact::arrange_coplanar_convex_surface_holed_difference(
+        &outer,
+        &island_killer_hole,
+    )
+    .expect("same-outer island-consuming source should materialize")
+    .mesh;
+    let intersection = hypermesh::exact::arrange_coplanar_surface_component_holed_intersection(
+        &branch_source,
+        &island_killer,
+    )
+    .expect("opposite retained hole should consume the source-owned island exactly");
+    intersection.validate().unwrap();
+    intersection
+        .validate_intersection_against_sources(&branch_source, &island_killer)
+        .unwrap();
+    assert_eq!(intersection.components.len(), 1);
+    assert!(
+        intersection
+            .components
+            .iter()
+            .all(|component| !component.holes.is_empty()),
+        "the killed source island must not be re-emitted as a filled component"
+    );
+
+    let reverse = hypermesh::exact::arrange_coplanar_surface_component_holed_intersection(
+        &island_killer,
+        &branch_source,
+    )
+    .expect("source-owned island consumption should be symmetric");
+    reverse.validate().unwrap();
+    reverse
+        .validate_intersection_against_sources(&island_killer, &branch_source)
+        .unwrap();
+    assert_eq!(reverse.components.len(), 1);
+
+    let surviving_source_island =
+        hypermesh::exact::arrange_coplanar_surface_component_holed_intersection(
+            &branch_source,
+            &outer,
+        )
+        .expect("unclipped source should still expose its point-branched island");
+    let extra_island = surviving_source_island
+        .components
+        .iter()
+        .find(|component| component.holes.is_empty())
+        .expect("fixture should expose the source-owned island")
+        .clone();
+    let mut stale = intersection.clone();
+    stale.components.push(extra_island);
+    assert!(
+        stale
+            .validate_intersection_against_sources(&branch_source, &island_killer)
+            .is_err(),
+        "source replay must reject an island retained after an opposite hole consumes it"
+    );
+
+    let partial_killer_hole = rect_surface_i64(&[(5, 4, 7, 6)]);
+    let partial_killer = hypermesh::exact::arrange_coplanar_convex_surface_holed_difference(
+        &outer,
+        &partial_killer_hole,
+    )
+    .expect("partial island cutter source should materialize")
+    .mesh;
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_component_holed_intersection(
+            &branch_source,
+            &partial_killer,
+        )
+        .is_none(),
+        "partial source-island clipping requires the later planar-cell extractor"
+    );
+
+    let preflight = hypermesh::exact::preflight_boolean_exact(
+        &branch_source,
+        &island_killer,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+    )
+    .expect("source-island consumption preflight should classify shortcut");
+    preflight.validate().unwrap();
+    preflight
+        .validate_against_sources(&branch_source, &island_killer)
+        .unwrap();
+    assert_eq!(
+        preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
+    );
+
+    hypermesh::exact::boolean_exact(
+        &branch_source,
+        &island_killer,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("source-island consumption boolean should materialize")
+    .validate_operation_against_sources(
+        &branch_source,
+        &island_killer,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[test]
 fn exact_coplanar_component_holed_intersection_materializes_nonrectilinear_hole_island() {
     let origin = (0, 0, 0);
     let basis_u = (2, 1, 0);
