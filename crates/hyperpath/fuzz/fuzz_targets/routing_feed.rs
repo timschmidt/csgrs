@@ -10,8 +10,8 @@ use hyperpath::{
     certify_constant_feed_time_for_path, certify_corner_lookahead_limits,
     certify_cubic_ph_inverse_length, certify_jerk_ramp_feed_schedule,
     certify_lookahead_feed_schedule, certify_multi_phase_jerk_ramp_feed_schedule,
-    certify_quintic_ph_inverse_length, certify_symmetric_jerk_limited_feed_time,
-    certify_symmetric_jerk_limited_feed_time_for_path,
+    certify_quintic_ph_g1_smoothing, certify_quintic_ph_inverse_length,
+    certify_symmetric_jerk_limited_feed_time, certify_symmetric_jerk_limited_feed_time_for_path,
 };
 use hyperreal::{Rational, Real};
 use libfuzzer_sys::fuzz_target;
@@ -316,7 +316,7 @@ fuzz_target!(|data: &[u8]| {
     )
     .unwrap();
     assert!(quintic_inverse.certification.all_satisfied());
-    let quintic_route = vec![FeedPathElement::QuinticPh(quintic_ph)];
+    let quintic_route = vec![FeedPathElement::QuinticPh(quintic_ph.clone())];
     let quintic_feed = certify_constant_feed_time_for_path(
         &quintic_route,
         r(ph_root * ph_root),
@@ -325,4 +325,13 @@ fuzz_target!(|data: &[u8]| {
     )
     .unwrap();
     assert!(quintic_feed.certification.all_satisfied());
+    let quintic_g1 = certify_quintic_ph_g1_smoothing(
+        &quintic_ph,
+        p(0, 0),
+        p(ph_root * ph_root, 0),
+        p(ph_root * ph_root, 0),
+        p(ph_root * ph_root, 0),
+    )
+    .unwrap();
+    assert!(quintic_g1.all_satisfied());
 });

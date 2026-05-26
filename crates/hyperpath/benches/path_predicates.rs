@@ -28,16 +28,16 @@ use hyperpath::{
     certify_corner_lookahead_limits, certify_cubic_ph_inverse_length,
     certify_differential_pair_skew, certify_g1_chain, certify_g1_join_candidate,
     certify_jerk_ramp_feed_schedule, certify_length_extension, certify_lookahead_feed_schedule,
-    certify_multi_phase_jerk_ramp_feed_schedule, certify_quintic_ph_inverse_length,
-    certify_symmetric_jerk_limited_feed_time, certify_symmetric_jerk_limited_feed_time_for_path,
-    certify_tangent_alignment_candidate, check_cardinal_rect_pad_board_clearance,
-    check_circular_pad_board_clearance, check_circular_pad_circular_board_clearance,
-    check_convex_pad_board_clearance, check_obround_pad_board_clearance,
-    check_oriented_rect_pad_board_clearance, check_orthogonal_pad_board_clearance,
-    check_rect_pad_board_clearance, check_rounded_rect_pad_board_clearance,
-    check_trace_board_clearance, check_trace_cardinal_rect_pad_clearance,
-    check_trace_circular_board_clearance, check_trace_clearance,
-    check_trace_convex_board_clearance, check_trace_convex_pad_clearance,
+    certify_multi_phase_jerk_ramp_feed_schedule, certify_quintic_ph_g1_smoothing,
+    certify_quintic_ph_inverse_length, certify_symmetric_jerk_limited_feed_time,
+    certify_symmetric_jerk_limited_feed_time_for_path, certify_tangent_alignment_candidate,
+    check_cardinal_rect_pad_board_clearance, check_circular_pad_board_clearance,
+    check_circular_pad_circular_board_clearance, check_convex_pad_board_clearance,
+    check_obround_pad_board_clearance, check_oriented_rect_pad_board_clearance,
+    check_orthogonal_pad_board_clearance, check_rect_pad_board_clearance,
+    check_rounded_rect_pad_board_clearance, check_trace_board_clearance,
+    check_trace_cardinal_rect_pad_clearance, check_trace_circular_board_clearance,
+    check_trace_clearance, check_trace_convex_board_clearance, check_trace_convex_pad_clearance,
     check_trace_obround_pad_clearance, check_trace_oriented_rect_pad_clearance,
     check_trace_orthogonal_board_clearance, check_trace_orthogonal_pad_clearance,
     check_trace_pad_clearance, check_trace_rect_pad_clearance,
@@ -515,6 +515,9 @@ fn path_predicates(c: &mut Criterion) {
     });
     c.bench_function("quintic_ph_inverse_length_certification", |b| {
         b.iter(|| certify_quintic_ph_inverse_length(&quintic_ph, rq(19, 24), half))
+    });
+    c.bench_function("quintic_ph_g1_smoothing_certification", |b| {
+        b.iter(|| certify_quintic_ph_g1_smoothing(&quintic_ph, p(0, 0), p(1, 0), p(7, 3), p(4, 0)))
     });
     c.bench_function("quadratic_bezier_offset_sample", |b| {
         b.iter(|| {

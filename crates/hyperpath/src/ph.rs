@@ -118,6 +118,8 @@ pub struct QuinticPhInverseLengthReport {
 pub enum PhCurveError {
     /// The retained hodograph is structurally zero-length over the full span.
     DegenerateHodograph,
+    /// Endpoint or source tangent evidence is structurally zero.
+    DegenerateTangent,
     /// Exact scalar division failed while integrating the hodograph.
     UnsupportedDivision,
     /// Target length was structurally negative.
@@ -316,6 +318,27 @@ impl QuinticPythagoreanHodograph {
     pub fn speed_polynomial_coefficients(&self) -> [Real; 5] {
         quadratic_square_sum_coefficients(
             &self.u0, &self.u1, &self.u2, &self.v0, &self.v1, &self.v2,
+        )
+    }
+
+    /// Return the exact PH derivative at `t = 0`.
+    ///
+    /// For Farouki-Sakkalis PH curves, `r'(t)` is the square of the complex
+    /// hodograph: `(u^2-v^2, 2uv)`. Exposing this exact endpoint derivative
+    /// lets smoothing certification replay G1 branch evidence without
+    /// normalizing tangents or sampling the curve.
+    pub fn start_derivative(&self) -> Point2 {
+        ph_derivative(&self.u0, &self.v0)
+    }
+
+    /// Return the exact PH derivative at `t = 1`.
+    ///
+    /// The quadratic hodograph is stored in power basis, so `u(1)` and `v(1)`
+    /// are exact coefficient sums before applying the PH derivative identity.
+    pub fn end_derivative(&self) -> Point2 {
+        ph_derivative(
+            &(self.u0.clone() + self.u1.clone() + self.u2.clone()),
+            &(self.v0.clone() + self.v1.clone() + self.v2.clone()),
         )
     }
 }
@@ -522,4 +545,11 @@ fn integrate_quartic_unit(coefficients: &[Real; 5]) -> Result<Real, PhCurveError
             .map_err(|_| PhCurveError::UnsupportedDivision)?
         + (coefficients[4].clone() / Real::from(5))
             .map_err(|_| PhCurveError::UnsupportedDivision)?)
+}
+
+fn ph_derivative(u: &Real, v: &Real) -> Point2 {
+    Point2::new(
+        u.clone() * u.clone() - v.clone() * v.clone(),
+        Real::from(2) * u.clone() * v.clone(),
+    )
 }

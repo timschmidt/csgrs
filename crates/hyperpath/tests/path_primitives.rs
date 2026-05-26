@@ -54,7 +54,8 @@ use hyperpath::{
     certify_corner_lookahead_limits, certify_cubic_ph_inverse_length,
     certify_differential_pair_skew, certify_g1_chain, certify_g1_join_candidate,
     certify_jerk_ramp_feed_schedule, certify_length_extension, certify_lookahead_feed_schedule,
-    certify_multi_phase_jerk_ramp_feed_schedule, certify_quintic_ph_inverse_length,
+    certify_multi_phase_jerk_ramp_feed_schedule, certify_quintic_ph_g1_smoothing,
+    certify_quintic_ph_g1_smoothing_between, certify_quintic_ph_inverse_length,
     certify_symmetric_jerk_limited_feed_time, certify_symmetric_jerk_limited_feed_time_for_path,
     certify_tangent_alignment_candidate, check_cardinal_rect_pad_board_clearance,
     check_circular_pad_board_clearance, check_circular_pad_circular_board_clearance,
@@ -2165,6 +2166,78 @@ fn quintic_ph_retains_exact_length_endpoint_and_inverse_length() {
         certify_quintic_ph_inverse_length(&curve, r(1), BezierParameter::new(1, 2).unwrap())
             .unwrap();
     assert!(wrong.certification.has_certified_violation());
+}
+
+#[test]
+fn quintic_ph_g1_smoothing_certifies_endpoint_and_tangent_branch() {
+    let curve = QuinticPythagoreanHodograph::new(
+        p(0, 0),
+        r(1),
+        Real::zero(),
+        Real::zero(),
+        Real::zero(),
+        Real::zero(),
+        Real::zero(),
+    )
+    .unwrap();
+
+    assert_eq!(curve.start_derivative(), p(1, 0));
+    assert_eq!(curve.end_derivative(), p(1, 0));
+
+    let report =
+        certify_quintic_ph_g1_smoothing(&curve, p(0, 0), p(3, 0), p(1, 0), p(5, 0)).unwrap();
+    assert!(report.all_satisfied());
+    assert_eq!(report.curve_start_derivative, p(1, 0));
+    assert_eq!(report.curve_end_derivative, p(1, 0));
+}
+
+#[test]
+fn quintic_ph_g1_smoothing_between_spans_uses_retained_join_endpoints() {
+    let incoming = TangentSpan::from_line_segment(&LinePathSegment::new(p(-2, 0), p(0, 0)));
+    let outgoing = TangentSpan::from_line_segment(&LinePathSegment::new(p(1, 0), p(3, 0)));
+    let curve = QuinticPythagoreanHodograph::new(
+        p(0, 0),
+        r(1),
+        Real::zero(),
+        Real::zero(),
+        Real::zero(),
+        Real::zero(),
+        Real::zero(),
+    )
+    .unwrap();
+
+    let report = certify_quintic_ph_g1_smoothing_between(&curve, &incoming, &outgoing).unwrap();
+
+    assert!(report.all_satisfied());
+    assert_eq!(report.start, p(0, 0));
+    assert_eq!(report.end, p(1, 0));
+}
+
+#[test]
+fn quintic_ph_g1_smoothing_rejects_wrong_endpoint_or_reversed_branch() {
+    let curve = QuinticPythagoreanHodograph::new(
+        p(0, 0),
+        r(1),
+        Real::zero(),
+        Real::zero(),
+        Real::zero(),
+        Real::zero(),
+        Real::zero(),
+    )
+    .unwrap();
+
+    let endpoint_mismatch =
+        certify_quintic_ph_g1_smoothing(&curve, p(0, 0), p(1, 0), p(2, 0), p(1, 0)).unwrap();
+    assert!(endpoint_mismatch.certification.has_certified_violation());
+
+    let reversed =
+        certify_quintic_ph_g1_smoothing(&curve, p(0, 0), p(1, 0), p(1, 0), p(-1, 0)).unwrap();
+    assert!(reversed.certification.has_certified_violation());
+
+    assert_eq!(
+        certify_quintic_ph_g1_smoothing(&curve, p(0, 0), p(0, 0), p(1, 0), p(1, 0)).unwrap_err(),
+        PhCurveError::DegenerateTangent
+    );
 }
 
 #[test]
@@ -8359,6 +8432,34 @@ proptest! {
 
         prop_assert_eq!(curve.exact_length(), r(speed_root * speed_root));
         prop_assert!(report.certification.all_satisfied());
+    }
+
+    #[test]
+    fn quintic_ph_generated_constant_hodograph_g1_smoothing_certifies(
+        speed_root in 1_i16..=20,
+    ) {
+        let speed_root = i64::from(speed_root);
+        let speed = speed_root * speed_root;
+        let curve = QuinticPythagoreanHodograph::new(
+            p(0, 0),
+            r(speed_root),
+            Real::zero(),
+            Real::zero(),
+            Real::zero(),
+            Real::zero(),
+            Real::zero(),
+        ).unwrap();
+
+        let report = certify_quintic_ph_g1_smoothing(
+            &curve,
+            p(0, 0),
+            p(speed, 0),
+            p(speed, 0),
+            p(speed, 0),
+        ).unwrap();
+
+        prop_assert_eq!(curve.exact_length(), r(speed));
+        prop_assert!(report.all_satisfied());
     }
 
     #[test]

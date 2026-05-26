@@ -23,6 +23,7 @@ pub mod pcb_obround_pad;
 pub mod pcb_oriented;
 pub mod pcb_orthogonal_pad;
 pub mod ph;
+pub mod ph_smoothing;
 pub mod provenance;
 pub mod routing;
 pub mod segment;
@@ -173,6 +174,10 @@ pub use ph::{
     CubicPhFacts, CubicPhInverseLengthReport, CubicPythagoreanHodograph, PhCurveError,
     QuinticPhFacts, QuinticPhInverseLengthReport, QuinticPythagoreanHodograph,
     certify_cubic_ph_inverse_length, certify_quintic_ph_inverse_length,
+};
+pub use ph_smoothing::{
+    QuinticPhG1SmoothingReport, certify_quintic_ph_g1_smoothing,
+    certify_quintic_ph_g1_smoothing_between,
 };
 pub use provenance::{
     ConstructionStamp, PathProvenance, PathSourceFormat, SourceGrid, SourceLengthUnit,
