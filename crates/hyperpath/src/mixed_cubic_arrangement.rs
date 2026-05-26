@@ -13,10 +13,11 @@ use std::cmp::Ordering;
 use std::collections::BTreeMap;
 
 use hyperlimit::{Point2, PredicatePolicy, compare_reals_with_policy, point2_equal_with_policy};
-use hyperreal::{Real, RealExactSetFacts};
+use hyperreal::{Rational, Real, RealExactSetFacts};
 use hypersolve::{
     AlgebraicRootPolynomialImageReport, AlgebraicRootPolynomialImageStatus,
-    AlgebraicRootRepresentation, transform_algebraic_root_polynomial_image,
+    AlgebraicRootRepresentation, IsolatedRootRefinementStatus, RootIsolationConfig,
+    refine_isolated_univariate_polynomial_interval, transform_algebraic_root_polynomial_image,
 };
 
 use crate::bezier::CubicBezier;
@@ -350,6 +351,38 @@ pub struct LineCubicBezierExactAlgebraicOverlapBreakpointPromotion {
     pub point: Point2,
 }
 
+/// Exact native line/cubic breakpoints promoted from a true cubic support root.
+///
+/// A retained line/cubic support root may be represented by a cubic polynomial
+/// even when its isolator contains an exact rational witness. In that case the
+/// mixed scheduler can replay the root as ordinary `Real` line and cubic split
+/// parameters, while still retaining the original algebraic source candidate
+/// for audit and for downstream exact cell construction.
+///
+/// This is a deliberately narrow Yap-style materialization step from
+/// "Towards Exact Geometric Computation" (1997): exact construction happens
+/// only after the predicate layer supplies a valid rational root witness,
+/// exact resultant point/line images, and certified domain membership. The
+/// resultant images cite Sylvester (1853) and Collins and Loos, "Real Zeros
+/// of Polynomials" (1982); the native cubic fragments remain de Casteljau
+/// restrictions of the original Bezier curve, as in Farouki,
+/// *Pythagorean Hodograph Curves* (2008).
+#[derive(Clone, Debug, PartialEq)]
+pub struct LineCubicBezierExactAlgebraicBreakpointPromotion {
+    /// Index in [`LineCubicBezierArrangementReport::algebraic_breakpoints`].
+    pub algebraic_breakpoint: usize,
+    /// Line segment index.
+    pub line: usize,
+    /// Cubic Bezier index.
+    pub curve: usize,
+    /// Exact promoted cubic source parameter.
+    pub cubic_parameter: Real,
+    /// Exact promoted normalized line parameter.
+    pub line_parameter: Real,
+    /// Exact point shared by the line and cubic at the promoted root.
+    pub point: Point2,
+}
+
 /// Certified order relation between two represented line/cubic breakpoint candidates.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum LineCubicBezierAlgebraicBreakpointOrderClass {
@@ -619,6 +652,9 @@ pub struct LineCubicBezierArrangementReport {
     /// Exact rational overlap-boundary roots promoted into native cubic split parameters.
     pub exact_algebraic_overlap_breakpoint_promotions:
         Vec<LineCubicBezierExactAlgebraicOverlapBreakpointPromotion>,
+    /// Exact rational true-cubic support roots promoted into native split parameters.
+    pub exact_algebraic_breakpoint_promotions:
+        Vec<LineCubicBezierExactAlgebraicBreakpointPromotion>,
     /// Pairwise exact order evidence for retained algebraic breakpoints.
     pub algebraic_breakpoint_orders: Vec<LineCubicBezierAlgebraicBreakpointOrder>,
     /// Per-source retained algebraic breakpoint sequences derived from exact order evidence.
@@ -729,6 +765,14 @@ pub fn arrange_line_segments_with_cubic_beziers_and_provenance(
             &algebraic_overlap_breakpoints,
             policy,
         )?;
+    let exact_algebraic_breakpoint_promotions = promote_exact_algebraic_cubic_breakpoints(
+        &mut line_breakpoints,
+        &mut cubic_breakpoints,
+        lines,
+        curves,
+        &algebraic_breakpoints,
+        policy,
+    )?;
     sort_and_dedup_line_breakpoints(&mut line_breakpoints, policy)?;
     sort_and_dedup_cubic_breakpoints(&mut cubic_breakpoints, policy)?;
     let algebraic_breakpoint_orders =
@@ -781,6 +825,7 @@ pub fn arrange_line_segments_with_cubic_beziers_and_provenance(
         algebraic_overlap_source_spans,
         algebraic_overlap_endpoint_envelopes,
         exact_algebraic_overlap_breakpoint_promotions,
+        exact_algebraic_breakpoint_promotions,
         algebraic_breakpoint_orders,
         algebraic_breakpoint_sequences,
         algebraic_source_spans,
@@ -955,6 +1000,190 @@ fn promote_exact_algebraic_cubic_overlap_breakpoints(
         });
     }
     Ok(promotions)
+}
+
+fn promote_exact_algebraic_cubic_breakpoints(
+    line_breakpoints: &mut [Vec<MixedCubicLineArrangementBreakpoint>],
+    cubic_breakpoints: &mut [Vec<CubicBezierRealBreakpoint>],
+    lines: &[LinePathSegment],
+    curves: &[CubicBezier],
+    algebraic_breakpoints: &[LineCubicBezierAlgebraicBreakpoint],
+    policy: PredicatePolicy,
+) -> Result<Vec<LineCubicBezierExactAlgebraicBreakpointPromotion>, LineCubicBezierArrangementError>
+{
+    let mut promotions = Vec::new();
+    for (index, breakpoint) in algebraic_breakpoints.iter().enumerate() {
+        if breakpoint.domain != LineCubicBezierAlgebraicBreakpointDomain::InsideLineAndCurve {
+            continue;
+        }
+        let Some(cubic_parameter) =
+            exact_or_refined_cubic_root(&breakpoint.cubic_parameter, policy)
+        else {
+            continue;
+        };
+        let Some(line_parameter) = exact_cubic_line_parameter(
+            &lines[breakpoint.line],
+            &curves[breakpoint.curve],
+            &cubic_parameter,
+        ) else {
+            continue;
+        };
+        if !exact_value_inside_transformed_image(
+            &breakpoint.line_parameter,
+            &line_parameter,
+            policy,
+        ) {
+            continue;
+        }
+        let point = eval_cubic_real(&curves[breakpoint.curve], &cubic_parameter);
+        if !exact_point_inside_algebraic_image(&breakpoint.point_image, &point, policy) {
+            continue;
+        }
+
+        insert_line_breakpoint(
+            &mut line_breakpoints[breakpoint.line],
+            breakpoint.line,
+            &lines[breakpoint.line],
+            point.clone(),
+            policy,
+        )?;
+        insert_exact_cubic_breakpoint(
+            &mut cubic_breakpoints[breakpoint.curve],
+            breakpoint.curve,
+            cubic_parameter.clone(),
+            point.clone(),
+            policy,
+        )?;
+        promotions.push(LineCubicBezierExactAlgebraicBreakpointPromotion {
+            algebraic_breakpoint: index,
+            line: breakpoint.line,
+            curve: breakpoint.curve,
+            cubic_parameter,
+            line_parameter,
+            point,
+        });
+    }
+    Ok(promotions)
+}
+
+fn exact_or_refined_cubic_root(
+    root: &AlgebraicRootRepresentation,
+    policy: PredicatePolicy,
+) -> Option<Real> {
+    if let Some(exact) = &root.interval.exact_root {
+        return Some(exact.clone());
+    }
+    if let Some(witness) = exact_rational_grid_witness(root, policy) {
+        return Some(witness);
+    }
+    let refinement = refine_isolated_univariate_polynomial_interval(
+        &root.polynomial_coefficients,
+        &root.interval,
+        RootIsolationConfig {
+            policy,
+            max_interval_width: None,
+            max_refinement_steps: 256,
+            ..RootIsolationConfig::default()
+        },
+    );
+    if refinement.status == IsolatedRootRefinementStatus::ExactRoot {
+        return refinement
+            .refined_interval
+            .and_then(|interval| interval.exact_root);
+    }
+    None
+}
+
+fn exact_rational_grid_witness(
+    root: &AlgebraicRootRepresentation,
+    policy: PredicatePolicy,
+) -> Option<Real> {
+    // A retained Sturm interval may be too narrow to hit a rational root by
+    // bisection if the interval endpoints are not aligned with that rational.
+    // For the native materialization boundary we therefore replay small exact
+    // rational candidates against the support polynomial and the isolating
+    // interval. This is still Yap-style exact construction: no approximation
+    // is admitted, and every accepted candidate is an exact polynomial root
+    // inside the existing Collins-Loos isolator.
+    for denominator in 1_u64..=64 {
+        for numerator in 0_i64..=(denominator as i64) {
+            let candidate = Real::new(Rational::fraction(numerator, denominator).ok()?);
+            if !exact_value_inside_interval(
+                &candidate,
+                &root.interval.lower,
+                &root.interval.upper,
+                policy,
+            ) {
+                continue;
+            }
+            if compare_reals_with_policy(
+                &evaluate_real_polynomial(&root.polynomial_coefficients, &candidate),
+                &Real::zero(),
+                policy,
+            )
+            .value()
+                == Some(Ordering::Equal)
+            {
+                return Some(candidate);
+            }
+        }
+    }
+    None
+}
+
+fn exact_cubic_line_parameter(
+    line: &LinePathSegment,
+    curve: &CubicBezier,
+    parameter: &Real,
+) -> Option<Real> {
+    let coefficients = cubic_line_parameter_polynomial(line, curve)?;
+    Some(evaluate_real_polynomial(&coefficients, parameter))
+}
+
+fn evaluate_real_polynomial(coefficients: &[Real], value: &Real) -> Real {
+    coefficients
+        .iter()
+        .rev()
+        .fold(Real::zero(), |accumulator, coefficient| {
+            accumulator * value.clone() + coefficient.clone()
+        })
+}
+
+fn exact_point_inside_algebraic_image(
+    point_image: &LineCubicBezierAlgebraicPointImage,
+    point: &Point2,
+    policy: PredicatePolicy,
+) -> bool {
+    exact_value_inside_transformed_image(&point_image.x, &point.x, policy)
+        && exact_value_inside_transformed_image(&point_image.y, &point.y, policy)
+}
+
+fn exact_value_inside_transformed_image(
+    image: &AlgebraicRootPolynomialImageReport,
+    value: &Real,
+    policy: PredicatePolicy,
+) -> bool {
+    let Some(representation) = transformed_image_representation(image) else {
+        return false;
+    };
+    exact_value_inside_interval(
+        value,
+        &representation.interval.lower,
+        &representation.interval.upper,
+        policy,
+    )
+}
+
+fn exact_value_inside_interval(
+    value: &Real,
+    lower_bound: &Real,
+    upper_bound: &Real,
+    policy: PredicatePolicy,
+) -> bool {
+    let lower = compare_reals_with_policy(value, lower_bound, policy).value();
+    let upper = compare_reals_with_policy(value, upper_bound, policy).value();
+    matches!(lower, Some(Ordering::Equal | Ordering::Greater))
+        && matches!(upper, Some(Ordering::Equal | Ordering::Less))
 }
 
 fn algebraic_cubic_overlap_breakpoint_orders(

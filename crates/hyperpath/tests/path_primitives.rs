@@ -1166,7 +1166,7 @@ fn line_cubic_bezier_arrangement_splits_certified_quadratic_events() {
 }
 
 #[test]
-fn line_cubic_bezier_arrangement_keeps_true_cubic_roots_unknown() {
+fn line_cubic_bezier_arrangement_promotes_exact_true_cubic_roots() {
     let curve = CubicBezier::new(p(0, 0), pq(1, 3, 0, 1), pq(2, 3, 0, 1), p(1, 1));
     let line = LinePathSegment::new(pq(0, 1, 1, 8), pq(1, 1, 1, 8));
 
@@ -1218,8 +1218,30 @@ fn line_cubic_bezier_arrangement_keeps_true_cubic_roots_unknown() {
     assert_eq!(report.algebraic_endpoint_envelopes.len(), 4);
     assert_eq!(report.algebraic_endpoint_envelopes[0].span, 0);
     assert_eq!(report.algebraic_endpoint_envelopes[3].span, 3);
-    assert_eq!(report.line_breakpoints[0].len(), 2);
-    assert_eq!(report.cubic_breakpoints[0].len(), 2);
+    assert_eq!(report.exact_algebraic_breakpoint_promotions.len(), 1);
+    assert_eq!(
+        report.exact_algebraic_breakpoint_promotions[0].algebraic_breakpoint,
+        0
+    );
+    assert_eq!(
+        report.exact_algebraic_breakpoint_promotions[0].cubic_parameter,
+        rq(1, 2)
+    );
+    assert_eq!(
+        report.exact_algebraic_breakpoint_promotions[0].line_parameter,
+        rq(1, 2)
+    );
+    assert_eq!(
+        report.exact_algebraic_breakpoint_promotions[0].point,
+        pq(1, 2, 1, 8)
+    );
+    assert_eq!(report.line_breakpoints[0].len(), 3);
+    assert_eq!(report.cubic_breakpoints[0].len(), 3);
+    assert_eq!(report.line_fragments.len(), 2);
+    assert_eq!(report.cubic_fragments.len(), 2);
+    assert_eq!(report.cubic_breakpoints[0][1].parameter, rq(1, 2));
+    assert_eq!(report.cubic_fragments[0].curve.end(), &pq(1, 2, 1, 8));
+    assert_eq!(report.cubic_fragments[1].curve.start(), &pq(1, 2, 1, 8));
 }
 
 #[test]
@@ -1344,8 +1366,29 @@ fn line_cubic_bezier_arrangement_orders_multiple_algebraic_breakpoints() {
             .value()
             .is_some()
     }));
-    assert_eq!(report.line_breakpoints[0].len(), 2);
-    assert_eq!(report.cubic_breakpoints[0].len(), 2);
+    assert_eq!(report.exact_algebraic_breakpoint_promotions.len(), 3);
+    assert!(
+        report
+            .exact_algebraic_breakpoint_promotions
+            .iter()
+            .any(|promotion| promotion.cubic_parameter == rq(1, 5))
+    );
+    assert!(
+        report
+            .exact_algebraic_breakpoint_promotions
+            .iter()
+            .any(|promotion| promotion.cubic_parameter == rq(1, 2))
+    );
+    assert!(
+        report
+            .exact_algebraic_breakpoint_promotions
+            .iter()
+            .any(|promotion| promotion.cubic_parameter == rq(4, 5))
+    );
+    assert_eq!(report.line_breakpoints[0].len(), 5);
+    assert_eq!(report.cubic_breakpoints[0].len(), 5);
+    assert_eq!(report.line_fragments.len(), 4);
+    assert_eq!(report.cubic_fragments.len(), 4);
 }
 
 #[test]
@@ -11633,8 +11676,19 @@ proptest! {
                     && sequence.breakpoints == vec![0]
                     && sequence.blockers.is_empty())
         );
-        prop_assert_eq!(report.line_breakpoints[0].len(), 2);
-        prop_assert_eq!(report.cubic_breakpoints[0].len(), 2);
+        prop_assert_eq!(report.exact_algebraic_breakpoint_promotions.len(), 1);
+        prop_assert_eq!(
+            &report.exact_algebraic_breakpoint_promotions[0].cubic_parameter,
+            &parameter
+        );
+        prop_assert_eq!(
+            &report.exact_algebraic_breakpoint_promotions[0].line_parameter,
+            &parameter
+        );
+        prop_assert_eq!(report.line_breakpoints[0].len(), 3);
+        prop_assert_eq!(report.cubic_breakpoints[0].len(), 3);
+        prop_assert_eq!(report.line_fragments.len(), 2);
+        prop_assert_eq!(report.cubic_fragments.len(), 2);
     }
 
     #[test]

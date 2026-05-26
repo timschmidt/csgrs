@@ -362,6 +362,18 @@ fuzz_target!(|data: &[u8]| {
     );
     assert_eq!(algebraic_mixed_report.algebraic_source_spans.len(), 4);
     assert_eq!(algebraic_mixed_report.algebraic_endpoint_envelopes.len(), 4);
+    assert_eq!(
+        algebraic_mixed_report
+            .exact_algebraic_breakpoint_promotions
+            .len(),
+        1
+    );
+    assert_eq!(
+        algebraic_mixed_report.exact_algebraic_breakpoint_promotions[0].cubic_parameter,
+        Real::new(Rational::new(1) / Rational::new(2))
+    );
+    assert_eq!(algebraic_mixed_report.line_breakpoints[0].len(), 3);
+    assert_eq!(algebraic_mixed_report.cubic_breakpoints[0].len(), 3);
     let three_root_cubic = CubicBezier::new(
         hyperlimit::Point2::new(r(0), Real::new(Rational::new(-2) / Rational::new(25))),
         hyperlimit::Point2::new(

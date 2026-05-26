@@ -522,6 +522,18 @@ fn path_predicates(c: &mut Criterion) {
             )
         })
     });
+    c.bench_function(
+        "line_cubic_bezier_exact_algebraic_breakpoint_promotion",
+        |b| {
+            b.iter(|| {
+                arrange_line_segments_with_cubic_beziers(
+                    std::slice::from_ref(&line_cubic_algebraic_line),
+                    std::slice::from_ref(&line_cubic_algebraic),
+                    PredicatePolicy::default(),
+                )
+            })
+        },
+    );
     let line_cubic_three_root = CubicBezier::new(
         pq(0, 1, -2, 25),
         pq(1, 3, 7, 50),
