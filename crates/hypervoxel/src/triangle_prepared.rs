@@ -1646,6 +1646,14 @@ pub fn voxelize_prepared_exact_triangle_solid_mesh_by_local_component_consensus(
                             })?;
                         if cache_hit {
                             component_report.row_cache_hits += 1;
+                            match &row {
+                                AxisRowParity::Certified { .. } => {
+                                    component_report.row_cache_certified_hits += 1;
+                                }
+                                AxisRowParity::Ambiguous => {
+                                    component_report.row_cache_ambiguous_hits += 1;
+                                }
+                            }
                         } else {
                             component_report.row_cache_misses += 1;
                             if broadened_miss {
@@ -1988,6 +1996,14 @@ pub fn voxelize_prepared_exact_triangle_solid_mesh_by_adaptive_local_component_c
                             })?;
                         if cache_hit {
                             component_report.row_cache_hits += 1;
+                            match &row {
+                                AxisRowParity::Certified { .. } => {
+                                    component_report.row_cache_certified_hits += 1;
+                                }
+                                AxisRowParity::Ambiguous => {
+                                    component_report.row_cache_ambiguous_hits += 1;
+                                }
+                            }
                         } else {
                             component_report.row_cache_misses += 1;
                             if broadened_miss {
@@ -2784,6 +2800,21 @@ pub struct PreparedTriangleSolidComponentConsensusVoxelizationReport {
     /// Component-local row certificate lookups satisfied by retained row
     /// evidence from an earlier component in the same voxelization pass.
     pub row_cache_hits: usize,
+    /// Cache hits that replayed certified exact crossing-sequence evidence.
+    ///
+    /// Yap frames exact geometric computation as a system property, not only a
+    /// predicate property ("Towards Exact Geometric Computation,"
+    /// *Computational Geometry* 7(1-2), 1997). This counter keeps retained row
+    /// evidence auditable after acceleration by proving that a cache hit reused
+    /// a certified row, not merely an untyped shortcut.
+    pub row_cache_certified_hits: usize,
+    /// Cache hits that replayed retained ambiguous arrangement evidence.
+    ///
+    /// Ambiguous rows are still exact evidence: they prove that this accelerated
+    /// path refused to cast a row vote because the row hit an edge, vertex, or
+    /// coplanar event. Keeping them separate from certified hits prevents cache
+    /// replay from hiding exact refusals behind aggregate hit counts.
+    pub row_cache_ambiguous_hits: usize,
     /// Component-local row certificate lookups that had to run the exact row
     /// scheduler and then retain the result.
     pub row_cache_misses: usize,

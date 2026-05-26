@@ -159,6 +159,10 @@ fn assert_component_row_cache_accounting(
         report.row_cache_lookups
     );
     assert_eq!(
+        report.row_cache_certified_hits + report.row_cache_ambiguous_hits,
+        report.row_cache_hits
+    );
+    assert_eq!(
         report.row_window_scheduled_rows,
         report.row_candidate_scheduled_rows
     );
@@ -939,6 +943,7 @@ fn local_component_consensus_schedules_only_component_rows() {
             .exact_component_consensus_audit_ready
     );
     assert!(verified.component_audit.row_cache_accounting_matches);
+    assert!(verified.component_audit.row_cache_replay_accounting_matches);
     assert!(verified.component_audit.row_window_accounting_matches);
     assert!(verified.component_audit.row_plan_accounting_matches);
     assert!(verified.component_audit.row_candidate_schedule_matches);
@@ -1066,6 +1071,7 @@ fn adaptive_local_component_consensus_stops_after_complete_component_proof() {
             .exact_component_consensus_audit_ready
     );
     assert!(verified.component_audit.row_cache_accounting_matches);
+    assert!(verified.component_audit.row_cache_replay_accounting_matches);
     assert!(verified.component_audit.row_window_accounting_matches);
     assert!(verified.component_audit.row_plan_accounting_matches);
     assert!(verified.component_audit.component_accounting_matches);
@@ -1146,6 +1152,7 @@ fn local_component_consensus_reuses_exact_row_certificates_across_components() {
             .exact_component_consensus_audit_ready
     );
     assert!(verified.component_audit.row_cache_accounting_matches);
+    assert!(verified.component_audit.row_cache_replay_accounting_matches);
     assert!(verified.component_audit.row_window_accounting_matches);
     assert!(verified.component_audit.row_plan_accounting_matches);
     assert!(verified.component_audit.row_candidate_schedule_matches);

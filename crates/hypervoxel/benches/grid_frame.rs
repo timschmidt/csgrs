@@ -447,6 +447,10 @@ fn bench_exact_box_voxelization(c: &mut Criterion) {
         row_cache_probe.row_cache_lookups
     );
     assert_eq!(
+        row_cache_probe.row_cache_certified_hits + row_cache_probe.row_cache_ambiguous_hits,
+        row_cache_probe.row_cache_hits
+    );
+    assert_eq!(
         row_cache_probe.row_window_scheduled_rows,
         row_cache_probe.row_candidate_scheduled_rows
     );
