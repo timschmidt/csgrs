@@ -2379,6 +2379,129 @@ fn line_mixed_bezier_arrangement_rejects_uncertified_curve_curve_overlap() {
 }
 
 #[test]
+fn line_mixed_bezier_arrangement_retains_cubic_algebraic_overlap_evidence() {
+    let line = LinePathSegment::new(p(2, 0), p(6, 0));
+    let cubic = CubicBezier::new(p(0, 0), p(1, 0), p(7, 0), p(8, 0));
+
+    let report = arrange_line_segments_with_mixed_beziers(
+        &[line],
+        &[],
+        &[cubic],
+        &[],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    let evidence = &report.cubic_algebraic_evidence;
+
+    assert_eq!(
+        report.cubic_events[0].class,
+        LineCubicBezierIntersectionClass::Unknown
+    );
+    assert_eq!(evidence.support_overlaps.len(), 1);
+    assert_eq!(
+        evidence.support_overlaps[0].overlap.monotonicity,
+        LineCubicBezierSupportOverlapMonotonicity::Monotone
+    );
+    assert_eq!(evidence.algebraic_overlap_breakpoints.len(), 6);
+    assert!(
+        evidence
+            .algebraic_overlap_breakpoints
+            .iter()
+            .any(|breakpoint| breakpoint.boundary_source
+                == LineCubicBezierInverseBoundarySource::SegmentStart
+                && breakpoint.boundary_value == r(2)
+                && breakpoint.point == p(2, 0)
+                && breakpoint.domain
+                    == LineCubicBezierAlgebraicOverlapBreakpointDomain::InsideLineAndCurve)
+    );
+    assert_eq!(evidence.algebraic_overlap_breakpoint_orders.len(), 1);
+    assert_eq!(
+        evidence.algebraic_overlap_breakpoint_orders[0].cubic_order,
+        Some(LineCubicBezierAlgebraicOverlapBreakpointOrderClass::Before)
+    );
+    assert_eq!(
+        evidence.algebraic_overlap_breakpoint_orders[0].line_order,
+        Some(LineCubicBezierAlgebraicOverlapBreakpointOrderClass::Before)
+    );
+    assert_eq!(evidence.algebraic_overlap_breakpoint_sequences.len(), 2);
+    assert!(
+        evidence
+            .algebraic_overlap_breakpoint_sequences
+            .iter()
+            .any(|sequence| sequence.source
+                == LineCubicBezierAlgebraicOverlapBreakpointSequenceSource::Curve(0)
+                && sequence.class
+                    == LineCubicBezierAlgebraicOverlapBreakpointSequenceClass::Ordered
+                && sequence.breakpoints.len() == 2)
+    );
+    assert_eq!(evidence.algebraic_overlap_source_spans.len(), 6);
+    assert_eq!(evidence.algebraic_overlap_endpoint_envelopes.len(), 6);
+    assert!(
+        evidence
+            .exact_algebraic_overlap_breakpoint_promotions
+            .is_empty()
+    );
+    assert_eq!(report.line_breakpoints[0].len(), 2);
+    assert_eq!(report.cubic_fragments.len(), 1);
+}
+
+#[test]
+fn line_mixed_bezier_arrangement_retains_conic_algebraic_overlap_evidence() {
+    let line = LinePathSegment::new(p(1, 0), p(2, 0));
+    let conic = RationalQuadraticBezier::new(p(0, 0), p(8, 0), p(0, 0), r(1)).unwrap();
+
+    let report = arrange_line_segments_with_mixed_beziers(
+        &[line],
+        &[],
+        &[],
+        &[conic],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    let evidence = &report.rational_quadratic_algebraic_evidence;
+
+    assert_eq!(
+        report.rational_quadratic_events[0].class,
+        LineRationalQuadraticBezierIntersectionClass::Unknown
+    );
+    assert_eq!(evidence.support_overlaps.len(), 1);
+    assert_eq!(
+        evidence.support_overlaps[0].overlap.monotonicity,
+        LineRationalQuadraticBezierSupportOverlapMonotonicity::NonMonotone
+    );
+    assert_eq!(evidence.algebraic_breakpoints.len(), 4);
+    assert!(
+        evidence
+            .algebraic_breakpoints
+            .iter()
+            .all(|breakpoint| breakpoint.domain
+                == LineRationalQuadraticBezierAlgebraicBreakpointDomain::InsideLineAndCurve)
+    );
+    assert_eq!(
+        evidence.algebraic_breakpoints[0].boundary_source,
+        LineRationalQuadraticBezierInverseBoundarySource::SegmentStart
+    );
+    assert_eq!(evidence.algebraic_breakpoints[0].point, p(1, 0));
+    assert_eq!(evidence.algebraic_breakpoint_orders.len(), 6);
+    assert_eq!(evidence.algebraic_breakpoint_sequences.len(), 2);
+    assert!(
+        evidence
+            .algebraic_breakpoint_sequences
+            .iter()
+            .any(|sequence| sequence.source
+                == LineRationalQuadraticBezierAlgebraicBreakpointSequenceSource::Curve(0)
+                && sequence.class
+                    == LineRationalQuadraticBezierAlgebraicBreakpointSequenceClass::Ordered
+                && sequence.breakpoints == vec![0, 2, 3, 1])
+    );
+    assert_eq!(evidence.algebraic_source_spans.len(), 5);
+    assert_eq!(evidence.algebraic_endpoint_envelopes.len(), 5);
+    assert!(evidence.exact_algebraic_breakpoint_promotions.is_empty());
+    assert_eq!(report.line_breakpoints[0].len(), 2);
+    assert_eq!(report.rational_quadratic_fragments.len(), 1);
+}
+
+#[test]
 fn line_mixed_curve_arrangement_merges_arc_and_bezier_family_breakpoints() {
     let line = LinePathSegment::new(p(0, 0), p(28, 0));
     let arc = ExplicitCircularArc::new(p(2, 0), r(2), p(0, 0), p(4, 0), ArcDirection::Cw).unwrap();

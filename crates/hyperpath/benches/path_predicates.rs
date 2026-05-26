@@ -574,6 +574,35 @@ fn path_predicates(c: &mut Criterion) {
             .map(|report| report.cell_graph)
         })
     });
+    let mixed_evidence_line = LinePathSegment::new(p(200, 0), p(600, 0));
+    let mixed_evidence_cubic = CubicBezier::new(p(0, 0), p(100, 0), p(700, 0), p(800, 0));
+    let mixed_evidence_conic =
+        RationalQuadraticBezier::new(p(1000, 0), p(1800, 0), p(1000, 0), r(1)).unwrap();
+    let mixed_evidence_conic_line = LinePathSegment::new(p(1100, 0), p(1200, 0));
+    c.bench_function("line_mixed_bezier_algebraic_evidence_retention", |b| {
+        b.iter(|| {
+            arrange_line_segments_with_mixed_beziers(
+                &[
+                    mixed_evidence_line.clone(),
+                    mixed_evidence_conic_line.clone(),
+                ],
+                &[],
+                std::slice::from_ref(&mixed_evidence_cubic),
+                std::slice::from_ref(&mixed_evidence_conic),
+                PredicatePolicy::default(),
+            )
+            .map(|report| {
+                (
+                    report
+                        .cubic_algebraic_evidence
+                        .algebraic_overlap_breakpoints,
+                    report
+                        .rational_quadratic_algebraic_evidence
+                        .algebraic_breakpoints,
+                )
+            })
+        })
+    });
     let line_cubic = CubicBezier::new(
         p(0, 0),
         pq(1000, 3, 500, 1),

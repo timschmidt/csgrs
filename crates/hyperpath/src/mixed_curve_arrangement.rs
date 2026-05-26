@@ -37,13 +37,29 @@ use crate::mixed_bezier_arrangement::{
     arrange_line_segments_with_quadratic_beziers_and_provenance,
 };
 use crate::mixed_conic_arrangement::{
-    LineRationalQuadraticBezierArrangementError, LineRationalQuadraticBezierArrangementEvent,
-    MixedConicLineArrangementBreakpoint, RationalQuadraticBezierRealFragment,
+    LineRationalQuadraticBezierAlgebraicBreakpoint,
+    LineRationalQuadraticBezierAlgebraicBreakpointOrder,
+    LineRationalQuadraticBezierAlgebraicBreakpointSequence,
+    LineRationalQuadraticBezierAlgebraicEndpointEnvelope,
+    LineRationalQuadraticBezierAlgebraicSourceSpan, LineRationalQuadraticBezierArrangementError,
+    LineRationalQuadraticBezierArrangementEvent,
+    LineRationalQuadraticBezierExactAlgebraicBreakpointPromotion,
+    LineRationalQuadraticBezierSupportOverlapCandidate, MixedConicLineArrangementBreakpoint,
+    RationalQuadraticBezierRealFragment,
     arrange_line_segments_with_rational_quadratic_beziers_and_provenance,
 };
 use crate::mixed_cubic_arrangement::{
-    CubicBezierRealFragment, LineCubicBezierArrangementError, LineCubicBezierArrangementEvent,
-    MixedCubicLineArrangementBreakpoint, arrange_line_segments_with_cubic_beziers_and_provenance,
+    CubicBezierRealFragment, LineCubicBezierAlgebraicBreakpoint,
+    LineCubicBezierAlgebraicBreakpointOrder, LineCubicBezierAlgebraicBreakpointSequence,
+    LineCubicBezierAlgebraicEndpointEnvelope, LineCubicBezierAlgebraicOverlapBreakpoint,
+    LineCubicBezierAlgebraicOverlapBreakpointOrder,
+    LineCubicBezierAlgebraicOverlapBreakpointSequence,
+    LineCubicBezierAlgebraicOverlapEndpointEnvelope, LineCubicBezierAlgebraicOverlapSourceSpan,
+    LineCubicBezierAlgebraicSourceSpan, LineCubicBezierArrangementError,
+    LineCubicBezierArrangementEvent, LineCubicBezierExactAlgebraicBreakpointPromotion,
+    LineCubicBezierExactAlgebraicOverlapBreakpointPromotion,
+    LineCubicBezierSupportOverlapCandidate, MixedCubicLineArrangementBreakpoint,
+    arrange_line_segments_with_cubic_beziers_and_provenance,
 };
 use crate::provenance::PathProvenance;
 use crate::segment::LinePathSegment;
@@ -98,6 +114,83 @@ pub struct LineMixedBezierArrangementFacts {
     pub provenance: PathProvenance,
 }
 
+/// Retained algebraic evidence copied from the line/cubic sub-scheduler.
+///
+/// The bounded mixed scheduler merges native line breakpoints and then builds
+/// one concrete cell graph only from exact `Real` fragments. Cubic support
+/// roots and overlap boundaries may still be represented algebraic objects, so
+/// they are retained here as replay evidence instead of being discarded at the
+/// family boundary. This follows Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997): exact objects and exact predicates
+/// are preserved even when construction is not yet available. The represented
+/// roots and order certificates use the Sturm/Collins-Loos model described by
+/// Collins and Loos, "Real Zeros of Polynomials" (1982), while native cubic
+/// fragments remain Bezier restrictions in the Farouki curve-carrier sense
+/// (*Pythagorean Hodograph Curves*, 2008).
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct LineMixedCubicAlgebraicEvidence {
+    /// Same-support line/cubic overlap candidates retained by the cubic scheduler.
+    pub support_overlaps: Vec<LineCubicBezierSupportOverlapCandidate>,
+    /// True line/cubic support roots retained as represented algebraic candidates.
+    pub algebraic_breakpoints: Vec<LineCubicBezierAlgebraicBreakpoint>,
+    /// Pairwise order evidence for retained true-support algebraic breakpoints.
+    pub algebraic_breakpoint_orders: Vec<LineCubicBezierAlgebraicBreakpointOrder>,
+    /// Per-line and per-cubic readiness sequences for true-support algebraic breakpoints.
+    pub algebraic_breakpoint_sequences: Vec<LineCubicBezierAlgebraicBreakpointSequence>,
+    /// Conservative source spans induced by ordered true-support algebraic breakpoints.
+    pub algebraic_source_spans: Vec<LineCubicBezierAlgebraicSourceSpan>,
+    /// Conservative endpoint coordinate envelopes for true-support algebraic spans.
+    pub algebraic_endpoint_envelopes: Vec<LineCubicBezierAlgebraicEndpointEnvelope>,
+    /// Same-support overlap boundaries retained as represented algebraic candidates.
+    pub algebraic_overlap_breakpoints: Vec<LineCubicBezierAlgebraicOverlapBreakpoint>,
+    /// Pairwise order evidence for retained overlap-boundary candidates.
+    pub algebraic_overlap_breakpoint_orders: Vec<LineCubicBezierAlgebraicOverlapBreakpointOrder>,
+    /// Per-line and per-cubic readiness sequences for retained overlap boundaries.
+    pub algebraic_overlap_breakpoint_sequences:
+        Vec<LineCubicBezierAlgebraicOverlapBreakpointSequence>,
+    /// Conservative source spans induced by ordered overlap-boundary candidates.
+    pub algebraic_overlap_source_spans: Vec<LineCubicBezierAlgebraicOverlapSourceSpan>,
+    /// Conservative endpoint coordinate envelopes for overlap-boundary source spans.
+    pub algebraic_overlap_endpoint_envelopes: Vec<LineCubicBezierAlgebraicOverlapEndpointEnvelope>,
+    /// Exact rational true-support roots that were promoted into native split parameters.
+    pub exact_algebraic_breakpoint_promotions:
+        Vec<LineCubicBezierExactAlgebraicBreakpointPromotion>,
+    /// Exact rational overlap-boundary roots that were promoted into native split parameters.
+    pub exact_algebraic_overlap_breakpoint_promotions:
+        Vec<LineCubicBezierExactAlgebraicOverlapBreakpointPromotion>,
+}
+
+/// Retained algebraic evidence copied from the line/rational-quadratic sub-scheduler.
+///
+/// Rational quadratic same-support overlap boundaries can be nonmonotone in
+/// the affine line image. The conic sub-scheduler therefore retains
+/// homogeneous boundary roots, exact order evidence, and source-span envelopes
+/// without pretending every represented root is a native `Real` breakpoint.
+/// The mixed scheduler keeps that evidence intact across the family merge.
+/// This is the Yap (1997) exact-geometric-computation boundary: preserve
+/// exact replay artifacts and leave unknown construction explicit. The root
+/// isolation/order model follows Collins and Loos (1982), and the rational
+/// curve remains in the homogeneous Farouki (2008) form until a certified
+/// materializer consumes it.
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct LineMixedRationalQuadraticAlgebraicEvidence {
+    /// Same-support line/conic overlap candidates retained by the conic scheduler.
+    pub support_overlaps: Vec<LineRationalQuadraticBezierSupportOverlapCandidate>,
+    /// Nonmonotone overlap-boundary roots retained as represented algebraic candidates.
+    pub algebraic_breakpoints: Vec<LineRationalQuadraticBezierAlgebraicBreakpoint>,
+    /// Pairwise order evidence for retained conic algebraic breakpoints.
+    pub algebraic_breakpoint_orders: Vec<LineRationalQuadraticBezierAlgebraicBreakpointOrder>,
+    /// Per-line and per-conic readiness sequences for retained algebraic breakpoints.
+    pub algebraic_breakpoint_sequences: Vec<LineRationalQuadraticBezierAlgebraicBreakpointSequence>,
+    /// Conservative source spans induced by ordered retained conic breakpoints.
+    pub algebraic_source_spans: Vec<LineRationalQuadraticBezierAlgebraicSourceSpan>,
+    /// Conservative endpoint coordinate envelopes for retained conic algebraic spans.
+    pub algebraic_endpoint_envelopes: Vec<LineRationalQuadraticBezierAlgebraicEndpointEnvelope>,
+    /// Exact rational represented roots that were promoted into native conic split parameters.
+    pub exact_algebraic_breakpoint_promotions:
+        Vec<LineRationalQuadraticBezierExactAlgebraicBreakpointPromotion>,
+}
+
 /// Bounded mixed line plus explicit-arc/quadratic/cubic/conic arrangement schedule.
 ///
 /// Pairwise exact line/curve schedulers discover events and native curve
@@ -127,6 +220,10 @@ pub struct LineMixedBezierArrangementReport {
     pub cubic_events: Vec<LineCubicBezierArrangementEvent>,
     /// Certified or unknown line/conic events.
     pub rational_quadratic_events: Vec<LineRationalQuadraticBezierArrangementEvent>,
+    /// Retained algebraic evidence from the line/cubic sub-scheduler.
+    pub cubic_algebraic_evidence: LineMixedCubicAlgebraicEvidence,
+    /// Retained algebraic evidence from the line/conic sub-scheduler.
+    pub rational_quadratic_algebraic_evidence: LineMixedRationalQuadraticAlgebraicEvidence,
     /// Merged line breakpoints induced by every retained curve family.
     pub line_breakpoints: Vec<Vec<MixedLineArrangementBreakpoint>>,
     /// Positive-length merged line fragments.
@@ -308,6 +405,35 @@ pub fn arrange_line_segments_with_mixed_curves_and_provenance(
         quadratic_events: quadratic_report.events,
         cubic_events: cubic_report.events,
         rational_quadratic_events: rational_quadratic_report.events,
+        cubic_algebraic_evidence: LineMixedCubicAlgebraicEvidence {
+            support_overlaps: cubic_report.support_overlaps,
+            algebraic_breakpoints: cubic_report.algebraic_breakpoints,
+            algebraic_breakpoint_orders: cubic_report.algebraic_breakpoint_orders,
+            algebraic_breakpoint_sequences: cubic_report.algebraic_breakpoint_sequences,
+            algebraic_source_spans: cubic_report.algebraic_source_spans,
+            algebraic_endpoint_envelopes: cubic_report.algebraic_endpoint_envelopes,
+            algebraic_overlap_breakpoints: cubic_report.algebraic_overlap_breakpoints,
+            algebraic_overlap_breakpoint_orders: cubic_report.algebraic_overlap_breakpoint_orders,
+            algebraic_overlap_breakpoint_sequences: cubic_report
+                .algebraic_overlap_breakpoint_sequences,
+            algebraic_overlap_source_spans: cubic_report.algebraic_overlap_source_spans,
+            algebraic_overlap_endpoint_envelopes: cubic_report.algebraic_overlap_endpoint_envelopes,
+            exact_algebraic_breakpoint_promotions: cubic_report
+                .exact_algebraic_breakpoint_promotions,
+            exact_algebraic_overlap_breakpoint_promotions: cubic_report
+                .exact_algebraic_overlap_breakpoint_promotions,
+        },
+        rational_quadratic_algebraic_evidence: LineMixedRationalQuadraticAlgebraicEvidence {
+            support_overlaps: rational_quadratic_report.support_overlaps,
+            algebraic_breakpoints: rational_quadratic_report.algebraic_breakpoints,
+            algebraic_breakpoint_orders: rational_quadratic_report.algebraic_breakpoint_orders,
+            algebraic_breakpoint_sequences: rational_quadratic_report
+                .algebraic_breakpoint_sequences,
+            algebraic_source_spans: rational_quadratic_report.algebraic_source_spans,
+            algebraic_endpoint_envelopes: rational_quadratic_report.algebraic_endpoint_envelopes,
+            exact_algebraic_breakpoint_promotions: rational_quadratic_report
+                .exact_algebraic_breakpoint_promotions,
+        },
         line_breakpoints,
         line_fragments,
         arc_fragments: arc_report.arc_fragments,

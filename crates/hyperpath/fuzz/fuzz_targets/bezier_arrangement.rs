@@ -305,6 +305,74 @@ fuzz_target!(|data: &[u8]| {
         mixed_curve_report.cell_graph.edges.len() * 2
     );
 
+    let mixed_cubic_evidence_report = arrange_line_segments_with_mixed_beziers(
+        &[LinePathSegment::new(p(2, 0), p(6, 0))],
+        &[],
+        &[CubicBezier::new(p(0, 0), p(1, 0), p(7, 0), p(8, 0))],
+        &[],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert_eq!(
+        mixed_cubic_evidence_report.cubic_events[0].class,
+        LineCubicBezierIntersectionClass::Unknown
+    );
+    assert_eq!(
+        mixed_cubic_evidence_report
+            .cubic_algebraic_evidence
+            .support_overlaps
+            .len(),
+        1
+    );
+    assert_eq!(
+        mixed_cubic_evidence_report
+            .cubic_algebraic_evidence
+            .algebraic_overlap_breakpoints
+            .len(),
+        6
+    );
+    assert_eq!(
+        mixed_cubic_evidence_report
+            .cubic_algebraic_evidence
+            .algebraic_overlap_breakpoint_sequences
+            .len(),
+        2
+    );
+
+    let mixed_conic_evidence_report = arrange_line_segments_with_mixed_beziers(
+        &[LinePathSegment::new(p(1, 0), p(2, 0))],
+        &[],
+        &[],
+        &[RationalQuadraticBezier::new(p(0, 0), p(8, 0), p(0, 0), r(1)).unwrap()],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert_eq!(
+        mixed_conic_evidence_report.rational_quadratic_events[0].class,
+        LineRationalQuadraticBezierIntersectionClass::Unknown
+    );
+    assert_eq!(
+        mixed_conic_evidence_report
+            .rational_quadratic_algebraic_evidence
+            .support_overlaps
+            .len(),
+        1
+    );
+    assert_eq!(
+        mixed_conic_evidence_report
+            .rational_quadratic_algebraic_evidence
+            .algebraic_breakpoints
+            .len(),
+        4
+    );
+    assert_eq!(
+        mixed_conic_evidence_report
+            .rational_quadratic_algebraic_evidence
+            .algebraic_breakpoint_sequences
+            .len(),
+        2
+    );
+
     let overlapping_arc_error = arrange_line_segments_with_mixed_curves(
         &[LinePathSegment::new(p(0, 0), p(8, 0))],
         &[ExplicitCircularArc::new(p(4, 0), r(4), p(0, 0), p(8, 0), ArcDirection::Cw).unwrap()],
