@@ -1,4 +1,4 @@
-use criterion::{Criterion, criterion_group, criterion_main};
+use criterion::{Criterion, black_box, criterion_group, criterion_main};
 use hyperreal::{Rational, Real};
 use hypervoxel::{
     AdapterNumericContract, AdapterToleranceStatus, AddressRay, AggregateCertainty,
@@ -23,8 +23,9 @@ use hypervoxel::{
     VoxelTraceDimension, VoxelTraceManifest, VoxelizationAudit, VoxelizationPolicy,
     audit_chunk_paged_field_samples, audit_chunk_paged_material_regions,
     audit_chunk_paged_process_states, audit_exact_surface_triangle_mesh_vocabulary,
-    audit_exact_voxel_surface_topology, certify_chunk_paged_handoff,
-    chunk_paged_binary_snapshot_v1, chunk_paged_exact_surface_triangle_mesh_with_report,
+    audit_exact_voxel_surface_topology, audit_prepared_triangle_solid_component_consensus,
+    certify_chunk_paged_handoff, chunk_paged_binary_snapshot_v1,
+    chunk_paged_exact_surface_triangle_mesh_with_report,
     chunk_paged_greedy_face_patch_plan_with_report, chunk_paged_run_length_snapshot_v1,
     classify_chunk_paged_support_mask, classify_support_mask, continuous_field_address,
     diff_chunk_paged_sparse_grids, diff_sparse_grids, exact_voxel_surface_triangle_mesh_from_faces,
@@ -38,10 +39,18 @@ use hypervoxel::{
     voxelize_exact_halfspace, voxelize_exact_triangle_solid_mesh,
     voxelize_exact_triangle_surface_mesh, voxelize_prepared_exact_triangle_solid_mesh,
     voxelize_prepared_exact_triangle_solid_mesh_by_adaptive_axis_sweeps,
+    voxelize_prepared_exact_triangle_solid_mesh_by_adaptive_local_component_consensus,
     voxelize_prepared_exact_triangle_solid_mesh_by_axis_sweeps,
+    voxelize_prepared_exact_triangle_solid_mesh_by_component_consensus,
     voxelize_prepared_exact_triangle_solid_mesh_by_components,
+    voxelize_prepared_exact_triangle_solid_mesh_by_consensus_axis_sweeps,
+    voxelize_prepared_exact_triangle_solid_mesh_by_local_component_consensus,
     voxelize_prepared_exact_triangle_solid_mesh_by_verified_adaptive_axis_sweeps,
+    voxelize_prepared_exact_triangle_solid_mesh_by_verified_adaptive_local_component_consensus,
+    voxelize_prepared_exact_triangle_solid_mesh_by_verified_component_consensus,
     voxelize_prepared_exact_triangle_solid_mesh_by_verified_components,
+    voxelize_prepared_exact_triangle_solid_mesh_by_verified_consensus_axis_sweeps,
+    voxelize_prepared_exact_triangle_solid_mesh_by_verified_local_component_consensus,
 };
 
 fn r(n: i32) -> Real {
@@ -295,6 +304,26 @@ fn bench_exact_box_voxelization(c: &mut Criterion) {
     .unwrap();
     assert!(prepared_schedule_probe.ray_aabb_rejections > 0);
     assert!(prepared_schedule_probe.ray_triangle_tests < prepared_schedule_probe.ray_attempts * 12);
+    let (_, _, verified_component_probe) =
+        voxelize_prepared_exact_triangle_solid_mesh_by_verified_adaptive_local_component_consensus(
+            frame.clone(),
+            &prepared_triangle_solid,
+            MaterialRegionId(10),
+            VoxelizationPolicy::conservative_cover(),
+        )
+        .unwrap();
+    assert!(
+        verified_component_probe
+            .component_audit
+            .exact_component_consensus_audit_ready
+    );
+    c.bench_function("prepared_triangle_solid_component_consensus_audit", |b| {
+        b.iter(|| {
+            audit_prepared_triangle_solid_component_consensus(black_box(
+                &verified_component_probe.component_consensus,
+            ))
+        })
+    });
     c.bench_function("exact_triangle_solid_mesh_voxelization", |b| {
         b.iter(|| {
             voxelize_exact_triangle_solid_mesh(
@@ -364,6 +393,118 @@ fn bench_exact_box_voxelization(c: &mut Criterion) {
         |b| {
             b.iter(|| {
                 voxelize_prepared_exact_triangle_solid_mesh_by_verified_adaptive_axis_sweeps(
+                    frame.clone(),
+                    &prepared_triangle_solid,
+                    MaterialRegionId(10),
+                    VoxelizationPolicy::conservative_cover(),
+                )
+                .unwrap()
+            })
+        },
+    );
+    c.bench_function(
+        "consensus_axis_sweep_prepared_exact_triangle_solid_mesh_voxelization",
+        |b| {
+            b.iter(|| {
+                voxelize_prepared_exact_triangle_solid_mesh_by_consensus_axis_sweeps(
+                    frame.clone(),
+                    &prepared_triangle_solid,
+                    MaterialRegionId(10),
+                    VoxelizationPolicy::conservative_cover(),
+                )
+                .unwrap()
+            })
+        },
+    );
+    c.bench_function(
+        "verified_consensus_axis_sweep_prepared_exact_triangle_solid_mesh_voxelization",
+        |b| {
+            b.iter(|| {
+                voxelize_prepared_exact_triangle_solid_mesh_by_verified_consensus_axis_sweeps(
+                    frame.clone(),
+                    &prepared_triangle_solid,
+                    MaterialRegionId(10),
+                    VoxelizationPolicy::conservative_cover(),
+                )
+                .unwrap()
+            })
+        },
+    );
+    c.bench_function(
+        "component_consensus_prepared_exact_triangle_solid_mesh_voxelization",
+        |b| {
+            b.iter(|| {
+                voxelize_prepared_exact_triangle_solid_mesh_by_component_consensus(
+                    frame.clone(),
+                    &prepared_triangle_solid,
+                    MaterialRegionId(10),
+                    VoxelizationPolicy::conservative_cover(),
+                )
+                .unwrap()
+            })
+        },
+    );
+    c.bench_function(
+        "verified_component_consensus_prepared_exact_triangle_solid_mesh_voxelization",
+        |b| {
+            b.iter(|| {
+                voxelize_prepared_exact_triangle_solid_mesh_by_verified_component_consensus(
+                    frame.clone(),
+                    &prepared_triangle_solid,
+                    MaterialRegionId(10),
+                    VoxelizationPolicy::conservative_cover(),
+                )
+                .unwrap()
+            })
+        },
+    );
+    c.bench_function(
+        "local_component_consensus_prepared_exact_triangle_solid_mesh_voxelization",
+        |b| {
+            b.iter(|| {
+                voxelize_prepared_exact_triangle_solid_mesh_by_local_component_consensus(
+                    frame.clone(),
+                    &prepared_triangle_solid,
+                    MaterialRegionId(10),
+                    VoxelizationPolicy::conservative_cover(),
+                )
+                .unwrap()
+            })
+        },
+    );
+    c.bench_function(
+        "verified_local_component_consensus_prepared_exact_triangle_solid_mesh_voxelization",
+        |b| {
+            b.iter(|| {
+                voxelize_prepared_exact_triangle_solid_mesh_by_verified_local_component_consensus(
+                    frame.clone(),
+                    &prepared_triangle_solid,
+                    MaterialRegionId(10),
+                    VoxelizationPolicy::conservative_cover(),
+                )
+                .unwrap()
+            })
+        },
+    );
+    c.bench_function(
+        "adaptive_local_component_consensus_prepared_exact_triangle_solid_mesh_voxelization",
+        |b| {
+            b.iter(|| {
+                voxelize_prepared_exact_triangle_solid_mesh_by_adaptive_local_component_consensus(
+                    frame.clone(),
+                    &prepared_triangle_solid,
+                    MaterialRegionId(10),
+                    VoxelizationPolicy::conservative_cover(),
+                )
+                .unwrap()
+            })
+        },
+    );
+    c.bench_function(
+        "verified_adaptive_local_component_consensus_prepared_exact_triangle_solid_mesh_voxelization",
+        |b| {
+            b.iter(|| {
+                voxelize_prepared_exact_triangle_solid_mesh_by_verified_adaptive_local_component_consensus(
                     frame.clone(),
                     &prepared_triangle_solid,
                     MaterialRegionId(10),
