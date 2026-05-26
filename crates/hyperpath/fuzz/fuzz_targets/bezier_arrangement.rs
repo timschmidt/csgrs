@@ -537,6 +537,10 @@ fuzz_target!(|data: &[u8]| {
                 && !sequence.blockers.is_empty())
     );
     assert_eq!(nonmonotone_report.algebraic_source_spans.len(), 3);
+    assert_eq!(
+        nonmonotone_report.algebraic_endpoint_envelopes.len(),
+        nonmonotone_report.algebraic_source_spans.len()
+    );
 
     let r_report =
         arrange_rational_quadratic_beziers(&[conic], &[vec![t]], PredicatePolicy::default())

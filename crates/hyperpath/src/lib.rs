@@ -111,6 +111,7 @@ pub use mixed_conic_arrangement::{
     LineRationalQuadraticBezierAlgebraicBreakpointSequenceBlocker,
     LineRationalQuadraticBezierAlgebraicBreakpointSequenceClass,
     LineRationalQuadraticBezierAlgebraicBreakpointSequenceSource,
+    LineRationalQuadraticBezierAlgebraicEndpointEnvelope,
     LineRationalQuadraticBezierAlgebraicSourceSpan,
     LineRationalQuadraticBezierAlgebraicSourceSpanBoundary,
     LineRationalQuadraticBezierArrangementError, LineRationalQuadraticBezierArrangementEvent,

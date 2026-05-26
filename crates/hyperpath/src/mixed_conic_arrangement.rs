@@ -252,6 +252,35 @@ pub struct LineRationalQuadraticBezierAlgebraicSourceSpan {
     pub parameter_upper: Real,
 }
 
+/// Conservative coordinate envelope for endpoints of a line/conic algebraic source span.
+///
+/// The envelope is indexed by
+/// [`LineRationalQuadraticBezierArrangementReport::algebraic_source_spans`].
+/// It encloses only the two retained span endpoints: exact source endpoints
+/// and exact same-support inverse-boundary points. It is not a conic interior
+/// hull, and it does not evaluate or split the rational quadratic at a
+/// represented root.
+///
+/// This is Yap's retained-object boundary from "Towards Exact Geometric
+/// Computation" (1997): represented roots remain exact evidence until a later
+/// homogeneous materializer can consume them. The source intervals are
+/// Sturm/Collins-Loos isolators, following Collins and Loos, "Real Zeros of
+/// Polynomials" (1982), and the conic itself remains in the homogeneous
+/// rational model described by Farouki, *Pythagorean Hodograph Curves* (2008).
+#[derive(Clone, Debug, PartialEq)]
+pub struct LineRationalQuadraticBezierAlgebraicEndpointEnvelope {
+    /// Index in [`LineRationalQuadraticBezierArrangementReport::algebraic_source_spans`].
+    pub span: usize,
+    /// Conservative lower x-coordinate bound for the span endpoints.
+    pub x_lower: Real,
+    /// Conservative upper x-coordinate bound for the span endpoints.
+    pub x_upper: Real,
+    /// Conservative lower y-coordinate bound for the span endpoints.
+    pub y_lower: Real,
+    /// Conservative upper y-coordinate bound for the span endpoints.
+    pub y_upper: Real,
+}
+
 /// Exact breakpoint on one arranged rational quadratic conic.
 #[derive(Clone, Debug, PartialEq)]
 pub struct RationalQuadraticBezierRealBreakpoint {
@@ -343,6 +372,8 @@ pub struct LineRationalQuadraticBezierArrangementReport {
     pub algebraic_breakpoint_sequences: Vec<LineRationalQuadraticBezierAlgebraicBreakpointSequence>,
     /// Conservative source spans induced by certified algebraic breakpoint sequences.
     pub algebraic_source_spans: Vec<LineRationalQuadraticBezierAlgebraicSourceSpan>,
+    /// Conservative endpoint coordinate envelopes for retained algebraic source spans.
+    pub algebraic_endpoint_envelopes: Vec<LineRationalQuadraticBezierAlgebraicEndpointEnvelope>,
     /// Sorted line breakpoints induced by line endpoints and certified events.
     pub line_breakpoints: Vec<Vec<MixedConicLineArrangementBreakpoint>>,
     /// Sorted conic breakpoints induced by endpoints and certified events.
@@ -438,6 +469,13 @@ pub fn arrange_line_segments_with_rational_quadratic_beziers_and_provenance(
     );
     let algebraic_source_spans =
         algebraic_conic_source_spans(&algebraic_breakpoints, &algebraic_breakpoint_sequences);
+    let algebraic_endpoint_envelopes = algebraic_conic_endpoint_envelopes(
+        lines,
+        curves,
+        &algebraic_breakpoints,
+        &algebraic_source_spans,
+        policy,
+    );
     let line_fragments = build_line_fragments(&line_breakpoints, policy)?;
     let conic_fragments = build_conic_fragments(&conic_breakpoints, curves, policy)?;
     let facts = LineRationalQuadraticBezierArrangementFacts {
@@ -455,6 +493,7 @@ pub fn arrange_line_segments_with_rational_quadratic_beziers_and_provenance(
         algebraic_breakpoint_orders,
         algebraic_breakpoint_sequences,
         algebraic_source_spans,
+        algebraic_endpoint_envelopes,
         line_breakpoints,
         conic_breakpoints,
         line_fragments,
@@ -855,6 +894,121 @@ fn algebraic_conic_boundary_interval(
             }
         },
     }
+}
+
+fn algebraic_conic_endpoint_envelopes(
+    lines: &[LinePathSegment],
+    curves: &[RationalQuadraticBezier],
+    breakpoints: &[LineRationalQuadraticBezierAlgebraicBreakpoint],
+    spans: &[LineRationalQuadraticBezierAlgebraicSourceSpan],
+    policy: PredicatePolicy,
+) -> Vec<LineRationalQuadraticBezierAlgebraicEndpointEnvelope> {
+    spans
+        .iter()
+        .enumerate()
+        .filter_map(|(span_index, span)| {
+            let left = algebraic_conic_boundary_point_interval(
+                span.source,
+                span.left,
+                lines,
+                curves,
+                breakpoints,
+            )?;
+            let right = algebraic_conic_boundary_point_interval(
+                span.source,
+                span.right,
+                lines,
+                curves,
+                breakpoints,
+            )?;
+            let (x_lower, x_upper) = certified_min_max(
+                &left.x_lower,
+                &left.x_upper,
+                &right.x_lower,
+                &right.x_upper,
+                policy,
+            )?;
+            let (y_lower, y_upper) = certified_min_max(
+                &left.y_lower,
+                &left.y_upper,
+                &right.y_lower,
+                &right.y_upper,
+                policy,
+            )?;
+            Some(LineRationalQuadraticBezierAlgebraicEndpointEnvelope {
+                span: span_index,
+                x_lower,
+                x_upper,
+                y_lower,
+                y_upper,
+            })
+        })
+        .collect()
+}
+
+fn algebraic_conic_boundary_point_interval(
+    source: LineRationalQuadraticBezierAlgebraicBreakpointSequenceSource,
+    boundary: LineRationalQuadraticBezierAlgebraicSourceSpanBoundary,
+    lines: &[LinePathSegment],
+    curves: &[RationalQuadraticBezier],
+    breakpoints: &[LineRationalQuadraticBezierAlgebraicBreakpoint],
+) -> Option<ConicPointInterval> {
+    match boundary {
+        LineRationalQuadraticBezierAlgebraicSourceSpanBoundary::SourceStart => match source {
+            LineRationalQuadraticBezierAlgebraicBreakpointSequenceSource::Line(line) => {
+                conic_point_exact_interval(lines.get(line)?.start())
+            }
+            LineRationalQuadraticBezierAlgebraicBreakpointSequenceSource::Curve(curve) => {
+                conic_point_exact_interval(curves.get(curve)?.start())
+            }
+        },
+        LineRationalQuadraticBezierAlgebraicSourceSpanBoundary::SourceEnd => match source {
+            LineRationalQuadraticBezierAlgebraicBreakpointSequenceSource::Line(line) => {
+                conic_point_exact_interval(lines.get(line)?.end())
+            }
+            LineRationalQuadraticBezierAlgebraicBreakpointSequenceSource::Curve(curve) => {
+                conic_point_exact_interval(curves.get(curve)?.end())
+            }
+        },
+        LineRationalQuadraticBezierAlgebraicSourceSpanBoundary::Breakpoint(index) => {
+            conic_point_exact_interval(&breakpoints.get(index)?.point)
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+struct ConicPointInterval {
+    x_lower: Real,
+    x_upper: Real,
+    y_lower: Real,
+    y_upper: Real,
+}
+
+fn conic_point_exact_interval(point: &Point2) -> Option<ConicPointInterval> {
+    Some(ConicPointInterval {
+        x_lower: point.x.clone(),
+        x_upper: point.x.clone(),
+        y_lower: point.y.clone(),
+        y_upper: point.y.clone(),
+    })
+}
+
+fn certified_min_max(
+    left_lower: &Real,
+    left_upper: &Real,
+    right_lower: &Real,
+    right_upper: &Real,
+    policy: PredicatePolicy,
+) -> Option<(Real, Real)> {
+    let lower = match compare_reals_with_policy(left_lower, right_lower, policy).value()? {
+        Ordering::Less | Ordering::Equal => left_lower.clone(),
+        Ordering::Greater => right_lower.clone(),
+    };
+    let upper = match compare_reals_with_policy(left_upper, right_upper, policy).value()? {
+        Ordering::Less | Ordering::Equal => right_upper.clone(),
+        Ordering::Greater => left_upper.clone(),
+    };
+    Some((lower, upper))
 }
 
 fn compare_algebraic_conic_parameters(

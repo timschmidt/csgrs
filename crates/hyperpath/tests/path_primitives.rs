@@ -1822,6 +1822,48 @@ fn line_rational_quadratic_bezier_arrangement_keeps_nonmonotone_support_overlap_
         report.algebraic_source_spans.iter().all(|span| span.source
             != LineRationalQuadraticBezierAlgebraicBreakpointSequenceSource::Line(0))
     );
+    assert_eq!(report.algebraic_endpoint_envelopes.len(), 5);
+    assert!(
+        report
+            .algebraic_endpoint_envelopes
+            .iter()
+            .enumerate()
+            .all(|(index, envelope)| envelope.span == index)
+    );
+    assert!(report.algebraic_endpoint_envelopes.iter().all(|envelope| {
+        compare_reals_with_policy(
+            &envelope.x_lower,
+            &envelope.x_upper,
+            PredicatePolicy::default(),
+        )
+        .value()
+        .is_some()
+            && compare_reals_with_policy(
+                &envelope.y_lower,
+                &envelope.y_upper,
+                PredicatePolicy::default(),
+            )
+            .value()
+            .is_some()
+    }));
+    assert!(
+        report
+            .algebraic_endpoint_envelopes
+            .iter()
+            .any(|envelope| envelope.x_lower == r(0)
+                && envelope.x_upper == r(1)
+                && envelope.y_lower == r(0)
+                && envelope.y_upper == r(0))
+    );
+    assert!(
+        report
+            .algebraic_endpoint_envelopes
+            .iter()
+            .any(|envelope| envelope.x_lower == r(3)
+                && envelope.x_upper == r(3)
+                && envelope.y_lower == r(0)
+                && envelope.y_upper == r(0))
+    );
     assert_eq!(report.line_breakpoints[0].len(), 2);
     assert_eq!(report.conic_breakpoints[0].len(), 2);
     assert_eq!(report.conic_fragments.len(), 1);
@@ -1856,6 +1898,7 @@ fn line_rational_quadratic_bezier_overlap_retains_empty_inverse_boundary_evidenc
     assert!(report.algebraic_breakpoint_orders.is_empty());
     assert!(report.algebraic_breakpoint_sequences.is_empty());
     assert!(report.algebraic_source_spans.is_empty());
+    assert!(report.algebraic_endpoint_envelopes.is_empty());
 }
 
 #[test]
