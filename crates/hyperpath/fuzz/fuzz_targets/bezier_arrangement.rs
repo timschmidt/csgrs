@@ -7,7 +7,7 @@ use hyperpath::{
     BezierParameter, CubicBezier, LineCubicAlgebraicPointDomain, LineCubicAlgebraicRootDomain,
     LineCubicBezierAlgebraicBreakpointDomain, LineCubicBezierAlgebraicBreakpointOrderClass,
     LineCubicBezierAlgebraicBreakpointSequenceClass, LineCubicBezierIntersectionClass,
-    LinePathSegment, LineQuadraticBezierIntersectionClass,
+    LineCubicBezierSupportOverlapMonotonicity, LinePathSegment, LineQuadraticBezierIntersectionClass,
     LineRationalQuadraticBezierAlgebraicBreakpointDomain,
     LineRationalQuadraticBezierAlgebraicBreakpointOrderClass,
     LineRationalQuadraticBezierAlgebraicBreakpointSequenceClass,
@@ -191,6 +191,47 @@ fuzz_target!(|data: &[u8]| {
         LineCubicBezierIntersectionClass::Overlap
     );
     assert_eq!(cubic_overlap_report.cubic_breakpoints[0].len(), 4);
+    let nonlinear_cubic_overlap_curve =
+        CubicBezier::new(p(0, 0), p(1, 0), p(7, 0), p(8, 0));
+    let nonlinear_cubic_overlap_line = LinePathSegment::new(p(-1, 0), p(9, 0));
+    let nonlinear_cubic_overlap_report = arrange_line_segments_with_cubic_beziers(
+        &[nonlinear_cubic_overlap_line],
+        &[nonlinear_cubic_overlap_curve.clone()],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert_eq!(
+        nonlinear_cubic_overlap_report.events[0].class,
+        LineCubicBezierIntersectionClass::Overlap
+    );
+    assert_eq!(
+        nonlinear_cubic_overlap_report.events[0]
+            .intersection
+            .support_overlap
+            .as_ref()
+            .unwrap()
+            .monotonicity,
+        LineCubicBezierSupportOverlapMonotonicity::Monotone
+    );
+    let nonlinear_cubic_inner_line = LinePathSegment::new(p(2, 0), p(6, 0));
+    let nonlinear_cubic_inner_report = intersect_axis_aligned_line_cubic_bezier(
+        &nonlinear_cubic_inner_line,
+        &nonlinear_cubic_overlap_curve,
+        PredicatePolicy::default(),
+    );
+    assert_eq!(
+        nonlinear_cubic_inner_report.class,
+        LineCubicBezierIntersectionClass::Unknown
+    );
+    assert_eq!(
+        nonlinear_cubic_inner_report
+            .support_overlap
+            .as_ref()
+            .unwrap()
+            .inverse_boundary_roots
+            .len(),
+        2
+    );
     let algebraic_cubic = CubicBezier::new(p(0, 0), pq(1, 3, 0, 1), pq(2, 3, 0, 1), p(1, 1));
     let algebraic_line = LinePathSegment::new(pq(0, 1, 1, 8), pq(1, 1, 1, 8));
     let algebraic_report = intersect_axis_aligned_line_cubic_bezier(

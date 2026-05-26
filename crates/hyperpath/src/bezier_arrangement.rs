@@ -169,6 +169,85 @@ pub struct LineCubicBezierAlgebraicSupportRoot {
     pub point_image: LineCubicBezierAlgebraicPointImage,
 }
 
+/// Certified monotonicity of a same-support cubic Bezier line image.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum LineCubicBezierSupportOverlapMonotonicity {
+    /// The varying-coordinate hodograph has one certified nonzero Bernstein sign.
+    Monotone,
+    /// The varying-coordinate hodograph changes sign or is exactly constant.
+    NonMonotone,
+    /// Exact sign comparison of the hodograph controls did not decide.
+    Unknown,
+}
+
+/// Segment endpoint that induced a retained cubic inverse-boundary equation.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum LineCubicBezierInverseBoundarySource {
+    /// The boundary value comes from the line segment start point.
+    SegmentStart,
+    /// The boundary value comes from the line segment end point.
+    SegmentEnd,
+}
+
+/// Retained algebraic root of a cubic line-image inverse equation.
+///
+/// The parameter represents one root of `B_v(t) - value == 0`, where `B_v`
+/// is the cubic coordinate that varies along the retained line support. Roots
+/// are represented with Sturm-isolated exact algebraic objects rather than
+/// sampled values. This follows Yap, "Towards Exact Geometric Computation"
+/// (1997): exact algebraic evidence is retained even when current topology
+/// code cannot yet materialize a native split at that represented parameter.
+/// The isolation step is the classical Sturm theorem (1835) as developed for
+/// exact real-root algorithms by Collins and Loos, "Real Zeros of Polynomials"
+/// (1982).
+#[derive(Clone, Debug, PartialEq)]
+pub struct LineCubicBezierAlgebraicInverseRoot {
+    /// Certified domain relationship for the cubic parameter.
+    pub parameter_domain: LineCubicAlgebraicRootDomain,
+    /// Represented algebraic cubic parameter.
+    pub parameter: AlgebraicRootRepresentation,
+}
+
+/// Retained inverse-root evidence for one line-segment boundary value.
+#[derive(Clone, Debug, PartialEq)]
+pub struct LineCubicBezierInverseBoundaryRoots {
+    /// Which line endpoint supplied the retained boundary value.
+    pub source: LineCubicBezierInverseBoundarySource,
+    /// Exact varying-coordinate value on the retained line support.
+    pub value: Real,
+    /// Represented roots of `B_v(t) - value == 0`.
+    pub roots: Vec<LineCubicBezierAlgebraicInverseRoot>,
+}
+
+/// Retained same-support line/cubic overlap evidence.
+///
+/// A cubic Bezier lies on an axis-aligned retained line support when each
+/// support-coordinate Bernstein control equals the line's fixed coordinate.
+/// Promotion to concrete overlap topology additionally needs exact inverse
+/// witnesses for the varying coordinate. `hodograph_controls` stores the
+/// Bernstein controls of that varying-coordinate derivative:
+/// `3(P1-P0), 3(P2-P1), 3(P3-P2)`.
+///
+/// The sign certificate is the Bezier variation-diminishing predicate style
+/// used in arrangement kernels: common nonzero Bernstein sign proves
+/// monotonicity. Retaining algebraic inverse roots for boundary values follows
+/// Yap's exact object/report split and keeps true cubic endpoint inverses out
+/// of sampled topology.
+#[derive(Clone, Debug, PartialEq)]
+pub struct LineCubicBezierSupportOverlap {
+    /// Axis-aligned line family used for the support equation.
+    pub axis: Axis,
+    /// Exact retained line support coordinate.
+    pub fixed: Real,
+    /// Bernstein controls of the cubic varying-coordinate derivative.
+    pub hodograph_controls: [Real; 3],
+    /// Certified monotonicity status of the cubic line image.
+    pub monotonicity: LineCubicBezierSupportOverlapMonotonicity,
+    /// Algebraic inverse-root evidence for line segment boundaries retained
+    /// whenever concrete endpoint promotion is unavailable or ambiguous.
+    pub inverse_boundary_roots: Vec<LineCubicBezierInverseBoundaryRoots>,
+}
+
 /// Exact event report for an axis-aligned line segment and cubic Bezier.
 ///
 /// The retained line is substituted into one cubic Bezier coordinate. Constant,
@@ -177,9 +256,10 @@ pub struct LineCubicBezierAlgebraicSupportRoot {
 /// retained as represented algebraic parameters with exact algebraic point
 /// images, but the topological class remains
 /// [`LineCubicBezierIntersectionClass::Unknown`] until the mixed scheduler
-/// consumes that image evidence as concrete breakpoints. Same-support
-/// overlaps are promoted only for degree-elevated straight cubic images, where
-/// endpoint coordinates invert to exact affine parameters.
+/// consumes that image evidence as concrete breakpoints. Same-support cubic
+/// line images retain support-overlap evidence, monotonicity certificates, and
+/// algebraic inverse-boundary roots. Concrete overlap topology is promoted only
+/// when both overlap endpoints have exact `Real` source parameters.
 ///
 /// This follows Yap, "Towards Exact Geometric Computation," *Computational
 /// Geometry* 7.1-2 (1997): unsupported algebraic discovery is reported instead
@@ -194,6 +274,8 @@ pub struct LineCubicBezierIntersectionReport {
     pub intersections: Vec<LineCubicBezierIntersection>,
     /// Represented algebraic support roots for true cubic equations.
     pub algebraic_support_roots: Vec<LineCubicBezierAlgebraicSupportRoot>,
+    /// Retained support-overlap evidence when the cubic lies on the line support.
+    pub support_overlap: Option<LineCubicBezierSupportOverlap>,
 }
 
 /// Certified class for a retained line segment against a rational quadratic conic.
@@ -657,16 +739,10 @@ pub fn intersect_axis_aligned_line_cubic_bezier(
         match solve_cubic_coordinate_roots_up_to_quadratic(curve, axis, fixed.clone(), policy) {
             Some(roots) => roots,
             None => {
-                return degree_elevated_cubic_line_overlap_report(
-                    segment,
-                    curve,
-                    axis,
-                    fixed.clone(),
-                    policy,
-                )
-                .unwrap_or_else(|| {
-                    true_cubic_algebraic_support_report(segment, curve, axis, fixed, policy)
-                });
+                return cubic_line_overlap_report(segment, curve, axis, fixed.clone(), policy)
+                    .unwrap_or_else(|| {
+                        true_cubic_algebraic_support_report(segment, curve, axis, fixed, policy)
+                    });
             }
         };
     let mut intersections = Vec::new();
@@ -704,6 +780,7 @@ pub fn intersect_axis_aligned_line_cubic_bezier(
         class,
         intersections,
         algebraic_support_roots: Vec::new(),
+        support_overlap: None,
     }
 }
 
@@ -1246,6 +1323,7 @@ fn true_cubic_algebraic_support_report(
         class: LineCubicBezierIntersectionClass::Unknown,
         intersections: Vec::new(),
         algebraic_support_roots: roots,
+        support_overlap: None,
     }
 }
 
@@ -1505,36 +1583,23 @@ fn quadratic_line_overlap_report(
     }
 }
 
-fn degree_elevated_cubic_line_overlap_report(
+fn cubic_line_overlap_report(
     segment: &LinePathSegment,
     curve: &CubicBezier,
     axis: Axis,
     fixed: Real,
     policy: PredicatePolicy,
 ) -> Option<LineCubicBezierIntersectionReport> {
-    // The exact cubic line-support equation may vanish identically for both
-    // true nonlinear line images and degree-elevated straight segments. We
-    // promote only the degree-elevated straight case:
-    // `p1 = (2*p0+p3)/3` and `p2 = (p0+2*p3)/3`. Then `B(t)` is exactly the
-    // affine line image and endpoint overlap values invert without solving a
-    // cubic. This is the same Yap-style retained-object boundary used for the
-    // quadratic overlap branch above.
-    if !is_degree_elevated_cubic_line(curve, policy)? {
+    // The exact cubic line-support equation vanishes identically for every
+    // cubic whose four support-coordinate controls lie on the retained line,
+    // including nonlinear one-dimensional cubic images. Following Yap (1997),
+    // this branch keeps the support-overlap certificate even when concrete
+    // split parameters require represented algebraic inverses. Only endpoints
+    // with exact `Real` source parameters are promoted into topology.
+    if !cubic_same_support(curve, axis, &fixed, policy)? {
         return None;
     }
-    if compare_reals_with_policy(&support_coordinate(curve.start(), axis), &fixed, policy)
-        .value()?
-        != Ordering::Equal
-        || compare_reals_with_policy(&support_coordinate(curve.end(), axis), &fixed, policy)
-            .value()?
-            != Ordering::Equal
-    {
-        return Some(LineCubicBezierIntersectionReport {
-            class: LineCubicBezierIntersectionClass::Disjoint,
-            intersections: Vec::new(),
-            algebraic_support_roots: Vec::new(),
-        });
-    }
+    let support_overlap = cubic_support_overlap(segment, curve, axis, fixed.clone(), policy);
 
     let curve_a = varying_coordinate(curve.start(), axis);
     let curve_b = varying_coordinate(curve.end(), axis);
@@ -1555,24 +1620,54 @@ fn degree_elevated_cubic_line_overlap_report(
             class: LineCubicBezierIntersectionClass::Disjoint,
             intersections: Vec::new(),
             algebraic_support_roots: Vec::new(),
+            support_overlap: Some(support_overlap),
         }),
         Ordering::Equal => {
-            let parameter = cubic_line_image_parameter(curve, axis, &overlap_min, policy)?;
+            let Some(parameter) = cubic_line_image_parameter(curve, axis, &overlap_min, policy)
+            else {
+                return Some(LineCubicBezierIntersectionReport {
+                    class: LineCubicBezierIntersectionClass::Unknown,
+                    intersections: Vec::new(),
+                    algebraic_support_roots: Vec::new(),
+                    support_overlap: Some(support_overlap),
+                });
+            };
             let point = point_from_axis(axis, fixed, overlap_min);
             Some(LineCubicBezierIntersectionReport {
                 class: LineCubicBezierIntersectionClass::OnePoint,
                 intersections: vec![LineCubicBezierIntersection { parameter, point }],
                 algebraic_support_roots: Vec::new(),
+                support_overlap: Some(support_overlap),
             })
         }
         Ordering::Less => {
+            let Some(first_parameter) =
+                cubic_line_image_parameter(curve, axis, &overlap_min, policy)
+            else {
+                return Some(LineCubicBezierIntersectionReport {
+                    class: LineCubicBezierIntersectionClass::Unknown,
+                    intersections: Vec::new(),
+                    algebraic_support_roots: Vec::new(),
+                    support_overlap: Some(support_overlap),
+                });
+            };
+            let Some(second_parameter) =
+                cubic_line_image_parameter(curve, axis, &overlap_max, policy)
+            else {
+                return Some(LineCubicBezierIntersectionReport {
+                    class: LineCubicBezierIntersectionClass::Unknown,
+                    intersections: Vec::new(),
+                    algebraic_support_roots: Vec::new(),
+                    support_overlap: Some(support_overlap),
+                });
+            };
             let mut intersections = vec![
                 LineCubicBezierIntersection {
-                    parameter: cubic_line_image_parameter(curve, axis, &overlap_min, policy)?,
+                    parameter: first_parameter,
                     point: point_from_axis(axis, fixed.clone(), overlap_min),
                 },
                 LineCubicBezierIntersection {
-                    parameter: cubic_line_image_parameter(curve, axis, &overlap_max, policy)?,
+                    parameter: second_parameter,
                     point: point_from_axis(axis, fixed, overlap_max),
                 },
             ];
@@ -1581,6 +1676,7 @@ fn degree_elevated_cubic_line_overlap_report(
                 class: LineCubicBezierIntersectionClass::Overlap,
                 intersections,
                 algebraic_support_roots: Vec::new(),
+                support_overlap: Some(support_overlap),
             })
         }
     }
@@ -1732,6 +1828,150 @@ fn is_degree_elevated_cubic_line(curve: &CubicBezier, policy: PredicatePolicy) -
     )
 }
 
+fn cubic_same_support(
+    curve: &CubicBezier,
+    axis: Axis,
+    fixed: &Real,
+    policy: PredicatePolicy,
+) -> Option<bool> {
+    Some(
+        compare_reals_with_policy(&support_coordinate(curve.start(), axis), fixed, policy)
+            .value()?
+            == Ordering::Equal
+            && compare_reals_with_policy(
+                &support_coordinate(curve.control0(), axis),
+                fixed,
+                policy,
+            )
+            .value()?
+                == Ordering::Equal
+            && compare_reals_with_policy(
+                &support_coordinate(curve.control1(), axis),
+                fixed,
+                policy,
+            )
+            .value()?
+                == Ordering::Equal
+            && compare_reals_with_policy(&support_coordinate(curve.end(), axis), fixed, policy)
+                .value()?
+                == Ordering::Equal,
+    )
+}
+
+fn cubic_support_overlap(
+    segment: &LinePathSegment,
+    curve: &CubicBezier,
+    axis: Axis,
+    fixed: Real,
+    policy: PredicatePolicy,
+) -> LineCubicBezierSupportOverlap {
+    let hodograph_controls = cubic_hodograph_controls(curve, axis);
+    let monotonicity = classify_cubic_hodograph_controls(&hodograph_controls, policy);
+    let inverse_boundary_roots = cubic_inverse_boundary_roots(segment, curve, axis, policy);
+    LineCubicBezierSupportOverlap {
+        axis,
+        fixed,
+        hodograph_controls,
+        monotonicity,
+        inverse_boundary_roots,
+    }
+}
+
+fn cubic_hodograph_controls(curve: &CubicBezier, axis: Axis) -> [Real; 3] {
+    let start = varying_coordinate(curve.start(), axis);
+    let control0 = varying_coordinate(curve.control0(), axis);
+    let control1 = varying_coordinate(curve.control1(), axis);
+    let end = varying_coordinate(curve.end(), axis);
+    [
+        Real::from(3) * (control0.clone() - start),
+        Real::from(3) * (control1.clone() - control0),
+        Real::from(3) * (end - control1),
+    ]
+}
+
+fn classify_cubic_hodograph_controls(
+    controls: &[Real; 3],
+    policy: PredicatePolicy,
+) -> LineCubicBezierSupportOverlapMonotonicity {
+    let mut signs = Vec::with_capacity(3);
+    for control in controls {
+        let Some(sign) = compare_reals_with_policy(control, &Real::zero(), policy).value() else {
+            return LineCubicBezierSupportOverlapMonotonicity::Unknown;
+        };
+        signs.push(sign);
+    }
+    let nonnegative = signs.iter().all(|sign| *sign != Ordering::Less);
+    let nonpositive = signs.iter().all(|sign| *sign != Ordering::Greater);
+    let nonconstant = signs.iter().any(|sign| *sign != Ordering::Equal);
+    if nonconstant && (nonnegative || nonpositive) {
+        LineCubicBezierSupportOverlapMonotonicity::Monotone
+    } else {
+        LineCubicBezierSupportOverlapMonotonicity::NonMonotone
+    }
+}
+
+fn cubic_inverse_boundary_roots(
+    segment: &LinePathSegment,
+    curve: &CubicBezier,
+    axis: Axis,
+    policy: PredicatePolicy,
+) -> Vec<LineCubicBezierInverseBoundaryRoots> {
+    [
+        (
+            LineCubicBezierInverseBoundarySource::SegmentStart,
+            varying_coordinate(segment.start(), axis),
+        ),
+        (
+            LineCubicBezierInverseBoundarySource::SegmentEnd,
+            varying_coordinate(segment.end(), axis),
+        ),
+    ]
+    .into_iter()
+    .map(|(source, value)| LineCubicBezierInverseBoundaryRoots {
+        source,
+        roots: represent_cubic_varying_roots(curve, axis, value.clone(), policy),
+        value,
+    })
+    .collect()
+}
+
+fn represent_cubic_varying_roots(
+    curve: &CubicBezier,
+    axis: Axis,
+    value: Real,
+    policy: PredicatePolicy,
+) -> Vec<LineCubicBezierAlgebraicInverseRoot> {
+    let (a, b, c, d) = cubic_varying_coordinate_polynomial(curve, axis, value);
+    let mut problem = Problem::default();
+    let parameter = problem.add_variable("cubic_inverse_parameter", Real::zero());
+    let t = Expr::symbol(parameter.into(), "cubic_inverse_parameter");
+    let residual = Expr::real(d)
+        + Expr::real(c) * t.clone()
+        + Expr::real(b) * t.clone().powi(2)
+        + Expr::real(a) * t.powi(3);
+    problem.add_constraint(Constraint::equality(
+        "cubic inverse boundary root",
+        residual,
+    ));
+    let prepared = PreparedProblem::new(&problem);
+    represent_univariate_algebraic_roots(
+        &prepared,
+        RootIsolationConfig {
+            policy,
+            max_interval_width: Some((Real::one() / Real::from(1024)).expect("nonzero width")),
+            max_refinement_steps: 64,
+            ..RootIsolationConfig::default()
+        },
+    )
+    .into_iter()
+    .flat_map(|report| report.roots)
+    .map(|root| LineCubicBezierAlgebraicInverseRoot {
+        parameter_domain: classify_algebraic_root_unit_domain(&root, policy),
+        parameter: root,
+    })
+    .collect()
+}
+
 fn line_image_parameter(
     curve: &QuadraticBezier,
     axis: Axis,
@@ -1808,13 +2048,90 @@ fn cubic_line_image_parameter(
     value: &Real,
     policy: PredicatePolicy,
 ) -> Option<Real> {
+    match compare_reals_with_policy(value, &varying_coordinate(curve.start(), axis), policy)
+        .value()?
+    {
+        Ordering::Equal => return Some(Real::zero()),
+        Ordering::Less | Ordering::Greater => {}
+    }
+    match compare_reals_with_policy(value, &varying_coordinate(curve.end(), axis), policy)
+        .value()?
+    {
+        Ordering::Equal => return Some(Real::one()),
+        Ordering::Less | Ordering::Greater => {}
+    }
     let start = varying_coordinate(curve.start(), axis);
     let end = varying_coordinate(curve.end(), axis);
     let denominator = end - start.clone();
-    match compare_reals_with_policy(&denominator, &Real::zero(), policy).value()? {
-        Ordering::Equal => None,
-        Ordering::Less | Ordering::Greater => ((value.clone() - start) / denominator).ok(),
+    if is_degree_elevated_cubic_line(curve, policy)? {
+        return match compare_reals_with_policy(&denominator, &Real::zero(), policy).value()? {
+            Ordering::Equal => None,
+            Ordering::Less | Ordering::Greater => ((value.clone() - start) / denominator).ok(),
+        };
     }
+    let roots = solve_cubic_varying_roots_up_to_quadratic(curve, axis, value.clone(), policy)?;
+    let mut accepted: Vec<Real> = Vec::new();
+    for root in roots {
+        match parameter_in_unit_interval(&root, policy) {
+            Some(true) => {}
+            Some(false) => continue,
+            None => return None,
+        }
+        let point = eval_cubic_at_real(curve, &root);
+        match compare_reals_with_policy(&varying_coordinate(&point, axis), value, policy).value()? {
+            Ordering::Equal => {}
+            Ordering::Less | Ordering::Greater => continue,
+        }
+        let mut duplicate = false;
+        for existing in &accepted {
+            match compare_reals_with_policy(existing, &root, policy).value()? {
+                Ordering::Equal => {
+                    duplicate = true;
+                    break;
+                }
+                Ordering::Less | Ordering::Greater => {}
+            }
+        }
+        if !duplicate {
+            accepted.push(root);
+        }
+    }
+    match accepted.len() {
+        1 => accepted.pop(),
+        _ => None,
+    }
+}
+
+fn solve_cubic_varying_roots_up_to_quadratic(
+    curve: &CubicBezier,
+    axis: Axis,
+    value: Real,
+    policy: PredicatePolicy,
+) -> Option<Vec<Real>> {
+    let (a, b, c, d) = cubic_varying_coordinate_polynomial(curve, axis, value);
+    match compare_reals_with_policy(&a, &Real::zero(), policy).value()? {
+        Ordering::Equal => match compare_reals_with_policy(&b, &Real::zero(), policy).value()? {
+            Ordering::Equal => solve_linear_root(c, d, policy),
+            Ordering::Less | Ordering::Greater => solve_quadratic_roots(b, c, d, policy),
+        },
+        Ordering::Less | Ordering::Greater => None,
+    }
+}
+
+fn cubic_varying_coordinate_polynomial(
+    curve: &CubicBezier,
+    axis: Axis,
+    value: Real,
+) -> (Real, Real, Real, Real) {
+    let p0 = varying_coordinate(curve.start(), axis);
+    let p1 = varying_coordinate(curve.control0(), axis);
+    let p2 = varying_coordinate(curve.control1(), axis);
+    let p3 = varying_coordinate(curve.end(), axis);
+    let a = -p0.clone() + Real::from(3) * p1.clone() - Real::from(3) * p2.clone() + p3;
+    let b = Real::from(3) * p0.clone() - Real::from(6) * p1.clone() + Real::from(3) * p2;
+    let c = Real::from(3) * (p1 - p0.clone());
+    let d = p0 - value;
+    (a, b, c, d)
 }
 
 fn rational_quadratic_same_support(
@@ -2384,6 +2701,7 @@ fn line_cubic_unknown_report() -> LineCubicBezierIntersectionReport {
         class: LineCubicBezierIntersectionClass::Unknown,
         intersections: Vec::new(),
         algebraic_support_roots: Vec::new(),
+        support_overlap: None,
     }
 }
 

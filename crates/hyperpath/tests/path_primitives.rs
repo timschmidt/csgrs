@@ -15,7 +15,8 @@ use hyperpath::{
     LineCubicBezierAlgebraicBreakpointSequenceBlocker,
     LineCubicBezierAlgebraicBreakpointSequenceClass,
     LineCubicBezierAlgebraicBreakpointSequenceSource, LineCubicBezierAlgebraicSourceSpanBoundary,
-    LineCubicBezierIntersectionClass, LineExplicitArcIntersectionClass, LineOffsetError,
+    LineCubicBezierIntersectionClass, LineCubicBezierInverseBoundarySource,
+    LineCubicBezierSupportOverlapMonotonicity, LineExplicitArcIntersectionClass, LineOffsetError,
     LinePathSegment, LineQuadraticBezierIntersectionClass,
     LineRationalQuadraticBezierAlgebraicBreakpointDomain,
     LineRationalQuadraticBezierAlgebraicBreakpointOrderClass,
@@ -847,6 +848,79 @@ fn line_cubic_bezier_intersection_promotes_degree_elevated_overlap() {
     assert_eq!(report.intersections[0].point, p(2, 0));
     assert_eq!(report.intersections[1].parameter, rq(3, 4));
     assert_eq!(report.intersections[1].point, p(6, 0));
+}
+
+#[test]
+fn line_cubic_bezier_intersection_promotes_nonlinear_same_support_endpoint_overlap() {
+    let curve = CubicBezier::new(p(0, 0), p(1, 0), p(7, 0), p(8, 0));
+    let line = LinePathSegment::new(p(-1, 0), p(9, 0));
+
+    let report =
+        intersect_axis_aligned_line_cubic_bezier(&line, &curve, PredicatePolicy::default());
+
+    assert_eq!(report.class, LineCubicBezierIntersectionClass::Overlap);
+    assert_eq!(report.intersections.len(), 2);
+    assert_eq!(report.intersections[0].parameter, r(0));
+    assert_eq!(report.intersections[0].point, p(0, 0));
+    assert_eq!(report.intersections[1].parameter, r(1));
+    assert_eq!(report.intersections[1].point, p(8, 0));
+    let overlap = report.support_overlap.as_ref().unwrap();
+    assert_eq!(
+        overlap.monotonicity,
+        LineCubicBezierSupportOverlapMonotonicity::Monotone
+    );
+    assert_eq!(overlap.hodograph_controls, [r(3), r(18), r(3)]);
+    assert_eq!(overlap.inverse_boundary_roots.len(), 2);
+    assert!(overlap.inverse_boundary_roots.iter().all(|boundary| {
+        boundary
+            .roots
+            .iter()
+            .all(|root| root.parameter_domain == LineCubicAlgebraicRootDomain::OutsideUnitInterval)
+    }));
+}
+
+#[test]
+fn line_cubic_bezier_intersection_retains_nonlinear_same_support_inverse_roots() {
+    let curve = CubicBezier::new(p(0, 0), p(1, 0), p(7, 0), p(8, 0));
+    let line = LinePathSegment::new(p(2, 0), p(6, 0));
+
+    let report =
+        intersect_axis_aligned_line_cubic_bezier(&line, &curve, PredicatePolicy::default());
+
+    assert_eq!(report.class, LineCubicBezierIntersectionClass::Unknown);
+    assert!(report.intersections.is_empty());
+    let overlap = report.support_overlap.as_ref().unwrap();
+    assert_eq!(
+        overlap.monotonicity,
+        LineCubicBezierSupportOverlapMonotonicity::Monotone
+    );
+    assert_eq!(overlap.inverse_boundary_roots.len(), 2);
+    assert_eq!(
+        overlap.inverse_boundary_roots[0].source,
+        LineCubicBezierInverseBoundarySource::SegmentStart
+    );
+    assert_eq!(overlap.inverse_boundary_roots[0].value, r(2));
+    assert_eq!(
+        overlap.inverse_boundary_roots[0]
+            .roots
+            .iter()
+            .filter(|root| root.parameter_domain == LineCubicAlgebraicRootDomain::InsideUnitInterval)
+            .count(),
+        1
+    );
+    assert_eq!(
+        overlap.inverse_boundary_roots[1].source,
+        LineCubicBezierInverseBoundarySource::SegmentEnd
+    );
+    assert_eq!(overlap.inverse_boundary_roots[1].value, r(6));
+    assert_eq!(
+        overlap.inverse_boundary_roots[1]
+            .roots
+            .iter()
+            .filter(|root| root.parameter_domain == LineCubicAlgebraicRootDomain::InsideUnitInterval)
+            .count(),
+        1
+    );
 }
 
 #[test]
@@ -11266,6 +11340,39 @@ proptest! {
         prop_assert_eq!(report.line_fragments.len(), 1);
         prop_assert_eq!(report.cubic_fragments.len(), 3);
         prop_assert_eq!(report.cubic_breakpoints[0].len(), 4);
+    }
+
+    #[test]
+    fn line_cubic_bezier_generated_nonlinear_same_support_endpoint_overlap_splits(
+        x0 in -20_i16..=20,
+        width in 1_i16..=20,
+    ) {
+        let start_x = i64::from(x0);
+        let width = i64::from(width);
+        let curve = CubicBezier::new(
+            p(start_x, 0),
+            p(start_x + width, 0),
+            p(start_x + 7 * width, 0),
+            p(start_x + 8 * width, 0),
+        );
+        let line = LinePathSegment::new(p(start_x - width, 0), p(start_x + 9 * width, 0));
+
+        let report = arrange_line_segments_with_cubic_beziers(
+            &[line],
+            &[curve],
+            PredicatePolicy::default(),
+        ).unwrap();
+
+        prop_assert_eq!(report.events[0].class, LineCubicBezierIntersectionClass::Overlap);
+        prop_assert_eq!(
+            report.events[0].intersection.support_overlap.as_ref().unwrap().monotonicity,
+            LineCubicBezierSupportOverlapMonotonicity::Monotone
+        );
+        prop_assert_eq!(report.events[0].intersection.intersections[0].parameter.clone(), r(0));
+        prop_assert_eq!(report.events[0].intersection.intersections[1].parameter.clone(), r(1));
+        prop_assert_eq!(report.line_fragments.len(), 3);
+        prop_assert_eq!(report.cubic_fragments.len(), 1);
+        prop_assert_eq!(report.cubic_breakpoints[0].len(), 2);
     }
 
     #[test]
