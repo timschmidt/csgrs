@@ -511,6 +511,15 @@ fuzz_target!(|data: &[u8]| {
         face.class == CurveArrangementCellFaceClass::Exterior
     }));
 
+    let log_area_conic = RationalQuadraticBezier::new(p(0, 0), p(4, 8), p(8, 0), r(2)).unwrap();
+    let log_area_report = arrange_line_segments_with_rational_quadratic_beziers(
+        &[LinePathSegment::new(p(0, 0), p(8, 0))],
+        &[log_area_conic],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert_eq!(log_area_report.cell_graph.faces.len(), 2);
+
     let tangent_conic = RationalQuadraticBezier::new(p(0, 0), p(4, 4), p(8, 0), r(1)).unwrap();
     let tangent_line = LinePathSegment::new(p(0, 2), p(8, 2));
     let tangent_report = arrange_line_segments_with_rational_quadratic_beziers(

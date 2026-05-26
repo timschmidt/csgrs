@@ -134,11 +134,12 @@ pub enum CurveArrangementCellFaceClass {
 /// the weight polynomial has a certified nonzero sign on the fragment. The
 /// implemented antiderivative reduces the quadratic numerator over `W^2` into
 /// a rational derivative plus an exact `integral(1/W)` branch for polynomial,
-/// linear, and negative-discriminant quadratic denominators. Positive
-/// discriminant logarithmic branches remain explicit unsupported evidence
-/// until the scalar layer can certify the required log-absolute arguments
-/// without domain panics. If the projective denominator sign or branch cannot
-/// be certified, the face is left unavailable instead of being sampled.
+/// linear, negative-discriminant quadratic, and positive-discriminant
+/// logarithmic denominators. The log branch evaluates the antiderivative as a
+/// difference of `ln|L(t)-sqrt(D)|` and `ln|L(t)+sqrt(D)|`, so exact-real sign
+/// certification never has to invert a nested square-root ratio. If the
+/// projective denominator sign or branch cannot be certified, the face is left
+/// unavailable instead of being sampled.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveArrangementCellFace {
     /// Half-edges traversed in order.
@@ -947,6 +948,9 @@ fn rational_quadratic_bezier_area_twice(
         Real::from(2) * (x[0].clone() * y[2].clone() - y[0].clone() * x[2].clone()),
         x[1].clone() * y[2].clone() - y[1].clone() * x[2].clone(),
     ];
+    if quadratic_coefficients_are_zero(&numerator, policy)? {
+        return Some(Real::zero());
+    }
 
     div_real(
         integrate_quadratic_over_weight_square(&numerator, &w, policy)?,
@@ -960,6 +964,22 @@ fn homogeneous_quadratic_power_coefficients(p0: &Real, p1: &Real, p2: &Real) -> 
         Real::from(2) * (p1.clone() - p0.clone()),
         p0.clone() - Real::from(2) * p1.clone() + p2.clone(),
     ]
+}
+
+fn quadratic_coefficients_are_zero(
+    coefficients: &[Real; 3],
+    policy: PredicatePolicy,
+) -> Option<bool> {
+    Some(
+        coefficients
+            .iter()
+            .map(|coefficient| {
+                compare_reals_with_policy(coefficient, &Real::zero(), policy).value()
+            })
+            .collect::<Option<Vec<_>>>()?
+            .into_iter()
+            .all(|order| order == Ordering::Equal),
+    )
 }
 
 fn certify_quadratic_weight_nonzero_sign(
@@ -1117,7 +1137,16 @@ fn integrate_reciprocal_quadratic_0_1(
             let end = div_real(Real::from(2) * c2.clone() + c1.clone(), scale.clone())?;
             Some(Real::from(2) * div_real(end.atan().ok()? - start.atan().ok()?, scale)?)
         }
-        Ordering::Greater => None,
+        Ordering::Greater => {
+            let scale = discriminant.clone().sqrt().ok()?;
+            let start = reciprocal_quadratic_log_abs_argument(c1, &scale, policy)?;
+            let end = reciprocal_quadratic_log_abs_argument(
+                &(Real::from(2) * c2.clone() + c1.clone()),
+                &scale,
+                policy,
+            )?;
+            div_real(end - start, scale)
+        }
         Ordering::Equal => {
             let start = -div_real(Real::from(2), c1.clone())?;
             let end = -div_real(Real::from(2), Real::from(2) * c2.clone() + c1.clone())?;
@@ -1128,6 +1157,17 @@ fn integrate_reciprocal_quadratic_0_1(
 
 fn rational_over_quadratic_at_zero(beta: &Real, c0: &Real) -> Option<Real> {
     div_real(beta.clone(), c0.clone())
+}
+
+fn reciprocal_quadratic_log_abs_argument(
+    linear_term: &Real,
+    scale: &Real,
+    policy: PredicatePolicy,
+) -> Option<Real> {
+    Some(
+        ln_abs_real(linear_term.clone() - scale.clone(), policy)?
+            - ln_abs_real(linear_term.clone() + scale.clone(), policy)?,
+    )
 }
 
 fn rational_over_quadratic_at_one(
