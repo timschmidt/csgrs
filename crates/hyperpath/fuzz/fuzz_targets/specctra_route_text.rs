@@ -1,11 +1,11 @@
 #![no_main]
 
-use hyperpath::{NetId, parse_specctra_grid_trace_records};
+use hyperpath::{ArcDirection, NetId, parse_specctra_grid_trace_records};
 use hyperpath::{
-    SpecctraGridKeepoutRecord, SpecctraGridKeepoutShape, SpecctraGridRouteRecords,
-    SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraLayerAlias, SpecctraNetAlias,
-    TraceLayer, ViaDrillIntent, import_specctra_text_route, parse_specctra_grid_route_records,
-    serialize_specctra_grid_route_records,
+    SpecctraGridArcWireRecord, SpecctraGridKeepoutRecord, SpecctraGridKeepoutShape,
+    SpecctraGridRouteRecords, SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraLayerAlias,
+    SpecctraNetAlias, TraceLayer, ViaDrillIntent, import_specctra_text_route,
+    parse_specctra_grid_route_records, serialize_specctra_grid_route_records,
 };
 use libfuzzer_sys::fuzz_target;
 
@@ -61,6 +61,24 @@ fuzz_target!(|data: &[u8]| {
                 },
                 grid_denominator: denominator,
             }],
+            arcs: vec![SpecctraGridArcWireRecord {
+                net,
+                layer,
+                center_x: x0,
+                center_y: y0,
+                start_x: x0 + 1,
+                start_y: y0,
+                end_x: x0,
+                end_y: y0 + 1,
+                radius: 1,
+                direction: if data[14] & 1 == 0 {
+                    ArcDirection::Ccw
+                } else {
+                    ArcDirection::Cw
+                },
+                width,
+                grid_denominator: denominator,
+            }],
             keepouts: vec![SpecctraGridKeepoutRecord {
                 layer: Some(layer),
                 shape: SpecctraGridKeepoutShape::Polygon {
@@ -80,6 +98,7 @@ fuzz_target!(|data: &[u8]| {
         let text = serialize_specctra_grid_route_records(&route);
         let reparsed = parse_specctra_grid_route_records(&text).unwrap();
         assert_eq!(reparsed, route);
+        assert_eq!(reparsed.arcs.len(), 1);
 
         let path_text = format!(
             "(session fuzz (routes (wire (net {}) (path {} {} {} {} {} {} {} {}) (grid {}))))",

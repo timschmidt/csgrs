@@ -10,11 +10,12 @@ use hyperpath::{
     PcbConvexBoardOutline, PcbConvexPad, PcbObroundBoardOutline, PcbObroundPad, PcbOrientedRectPad,
     PcbOrthogonalBoardOutline, PcbOrthogonalPad, PcbRectPad, PcbRoundedRectPad, PcbTrace,
     PcbViaStack, QuadraticBezier, QuinticPythagoreanHodograph, RationalQuadraticBezier,
-    RectangularPocket, SourceLengthUnit, SpecctraGridKeepoutRecord, SpecctraGridKeepoutShape,
-    SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraLayerAlias, SpecctraNetAlias,
-    SweptLineSegment, TangentSpan, TraceLayer, ViaDrillIntent, arrange_cubic_beziers,
-    arrange_explicit_arcs, arrange_line_segments, arrange_line_segments_with_cubic_beziers,
-    arrange_line_segments_with_explicit_arcs, arrange_line_segments_with_quadratic_beziers,
+    RectangularPocket, SourceLengthUnit, SpecctraGridArcWireRecord, SpecctraGridKeepoutRecord,
+    SpecctraGridKeepoutShape, SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraLayerAlias,
+    SpecctraNetAlias, SweptLineSegment, TangentSpan, TraceLayer, ViaDrillIntent,
+    arrange_cubic_beziers, arrange_explicit_arcs, arrange_line_segments,
+    arrange_line_segments_with_cubic_beziers, arrange_line_segments_with_explicit_arcs,
+    arrange_line_segments_with_quadratic_beziers,
     arrange_line_segments_with_rational_quadratic_beziers, arrange_quadratic_beziers,
     arrange_rational_quadratic_beziers, build_alternating_detour_meander, build_g1_join_problem,
     build_keepout_aware_detour_meander, build_length_match_problem, build_multi_detour_meander,
@@ -53,8 +54,9 @@ use hyperpath::{
     offset_axis_aligned_segment, offset_cardinal_arc, offset_cubic_bezier_sample,
     offset_explicit_arc, offset_higher_order_bezier_sample, offset_quadratic_bezier_sample,
     parse_specctra_grid_route_records, parse_specctra_grid_trace_records,
-    serialize_specctra_grid_keepout_records, serialize_specctra_grid_route_records,
-    serialize_specctra_grid_trace_records, serialize_specctra_grid_via_records,
+    serialize_specctra_grid_arc_wire_records, serialize_specctra_grid_keepout_records,
+    serialize_specctra_grid_route_records, serialize_specctra_grid_trace_records,
+    serialize_specctra_grid_via_records, specctra_grid_arc_wire_record,
     specctra_grid_keepout_record, specctra_grid_trace_record, specctra_grid_via_record,
     subtract_rectangular_region,
 };
@@ -1389,6 +1391,27 @@ fn path_predicates(c: &mut Criterion) {
     c.bench_function("specctra_grid_via_text_parse", |b| {
         b.iter(|| parse_specctra_grid_route_records(&via_text))
     });
+    let arc_record_text = SpecctraGridArcWireRecord {
+        net: NetId(3),
+        layer: TraceLayer(1),
+        center_x: 1000,
+        center_y: 500,
+        start_x: 1000,
+        start_y: 0,
+        end_x: 1500,
+        end_y: 500,
+        radius: 500,
+        direction: ArcDirection::Ccw,
+        width: 8,
+        grid_denominator: 10,
+    };
+    let arc_text = serialize_specctra_grid_arc_wire_records(&[arc_record_text]);
+    c.bench_function("specctra_grid_arc_wire_text_parse", |b| {
+        b.iter(|| parse_specctra_grid_route_records(&arc_text))
+    });
+    c.bench_function("specctra_grid_arc_wire_exact_lift", |b| {
+        b.iter(|| specctra_grid_arc_wire_record(arc_record_text))
+    });
     let mixed_text = serialize_specctra_grid_route_records(&hyperpath::SpecctraGridRouteRecords {
         net_aliases: vec![SpecctraNetAlias {
             net: NetId(3),
@@ -1409,6 +1432,7 @@ fn path_predicates(c: &mut Criterion) {
             grid_denominator: 10,
         }],
         vias: vec![via_record_text],
+        arcs: vec![arc_record_text],
         keepouts: vec![SpecctraGridKeepoutRecord {
             layer: Some(TraceLayer(1)),
             shape: SpecctraGridKeepoutShape::Polygon {

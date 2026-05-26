@@ -14,6 +14,7 @@ use hyperlimit::Point2;
 use hyperreal::{Rational, Real};
 use std::fmt::Write;
 
+use crate::arc::{ArcDirection, ExplicitCircularArc};
 use crate::pcb::{NetId, PcbTrace, PcbViaStack, TraceLayer, ViaDrillIntent};
 use crate::provenance::{PathProvenance, PathSourceFormat};
 use crate::routing::{MeanderError, MeanderKeepout, MeanderObstacle, validate_meander_keepouts};
@@ -85,6 +86,55 @@ pub struct SpecctraGridTraceRecord {
     /// End Y coordinate in source grid units.
     pub end_y: i64,
     /// Trace width in source grid units.
+    pub width: i64,
+    /// Denominator of one source unit.
+    pub grid_denominator: u64,
+}
+
+/// Exact circular-arc route record in a Specctra DSN/SES-style exchange.
+///
+/// This is a retained curved route object, not a flattened trace sequence.
+/// The exact [`ExplicitCircularArc`] carrier preserves circle center, radius,
+/// endpoints, and sweep direction so later arrangement/feed predicates can
+/// certify topology without chordal approximation.
+#[derive(Clone, Debug, PartialEq)]
+pub struct SpecctraArcWireRecord {
+    /// Net identifier.
+    pub net: NetId,
+    /// Copper layer identifier.
+    pub layer: TraceLayer,
+    /// Exact retained arc geometry.
+    pub arc: ExplicitCircularArc,
+    /// Exact route width.
+    pub width: Real,
+    /// Source provenance for the route token.
+    pub provenance: PathProvenance,
+}
+
+/// Raw fixed-grid circular-arc route token lowered from a DSN/SES route file.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct SpecctraGridArcWireRecord {
+    /// Net identifier.
+    pub net: NetId,
+    /// Copper layer identifier.
+    pub layer: TraceLayer,
+    /// Circle center X coordinate in source grid units.
+    pub center_x: i64,
+    /// Circle center Y coordinate in source grid units.
+    pub center_y: i64,
+    /// Start X coordinate in source grid units.
+    pub start_x: i64,
+    /// Start Y coordinate in source grid units.
+    pub start_y: i64,
+    /// End X coordinate in source grid units.
+    pub end_x: i64,
+    /// End Y coordinate in source grid units.
+    pub end_y: i64,
+    /// Retained circular radius in source grid units.
+    pub radius: i64,
+    /// Exact sweep direction.
+    pub direction: ArcDirection,
+    /// Route width in source grid units.
     pub width: i64,
     /// Denominator of one source unit.
     pub grid_denominator: u64,
@@ -192,11 +242,27 @@ pub struct SpecctraKeepoutRecord {
     pub provenance: PathProvenance,
 }
 
-/// Exact route made of validated straight trace records.
+/// Imported exact circular-arc route segment.
+#[derive(Clone, Debug, PartialEq)]
+pub struct SpecctraRouteArc {
+    /// Net identifier.
+    pub net: NetId,
+    /// Copper layer identifier.
+    pub layer: TraceLayer,
+    /// Exact retained arc geometry.
+    pub arc: ExplicitCircularArc,
+    /// Exact route width.
+    pub width: Real,
+    /// Source provenance for the route token.
+    pub provenance: PathProvenance,
+}
+
+/// Exact route made of validated trace, via, and retained arc records.
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct SpecctraRoute {
     traces: Vec<PcbTrace>,
     vias: Vec<PcbViaStack>,
+    arcs: Vec<SpecctraRouteArc>,
 }
 
 impl SpecctraRoute {
@@ -205,12 +271,26 @@ impl SpecctraRoute {
         Self {
             traces,
             vias: Vec::new(),
+            arcs: Vec::new(),
         }
     }
 
     /// Construct a route from already validated traces and vias.
     pub fn with_vias(traces: Vec<PcbTrace>, vias: Vec<PcbViaStack>) -> Self {
-        Self { traces, vias }
+        Self {
+            traces,
+            vias,
+            arcs: Vec::new(),
+        }
+    }
+
+    /// Construct a route from already validated traces, vias, and retained arcs.
+    pub fn with_vias_and_arcs(
+        traces: Vec<PcbTrace>,
+        vias: Vec<PcbViaStack>,
+        arcs: Vec<SpecctraRouteArc>,
+    ) -> Self {
+        Self { traces, vias, arcs }
     }
 
     /// Return the validated trace list.
@@ -221,6 +301,11 @@ impl SpecctraRoute {
     /// Return the validated via list.
     pub fn vias(&self) -> &[PcbViaStack] {
         &self.vias
+    }
+
+    /// Return retained exact circular-arc route segments.
+    pub fn arcs(&self) -> &[SpecctraRouteArc] {
+        &self.arcs
     }
 
     /// Import exact trace records, stopping at the first invalid record.
@@ -237,6 +322,15 @@ impl SpecctraRoute {
         traces: &[SpecctraTraceRecord],
         vias: &[SpecctraViaRecord],
     ) -> Result<Self, SpecctraImportError> {
+        Self::from_trace_via_and_arc_records(traces, vias, &[])
+    }
+
+    /// Import exact trace, via, and arc records, stopping at the first invalid record.
+    pub fn from_trace_via_and_arc_records(
+        traces: &[SpecctraTraceRecord],
+        vias: &[SpecctraViaRecord],
+        arcs: &[SpecctraArcWireRecord],
+    ) -> Result<Self, SpecctraImportError> {
         let traces = traces
             .iter()
             .map(import_specctra_trace_record)
@@ -245,7 +339,11 @@ impl SpecctraRoute {
             .iter()
             .map(import_specctra_via_record)
             .collect::<Result<Vec<_>, _>>()?;
-        Ok(Self::with_vias(traces, vias))
+        let arcs = arcs
+            .iter()
+            .map(import_specctra_arc_wire_record)
+            .collect::<Result<Vec<_>, _>>()?;
+        Ok(Self::with_vias_and_arcs(traces, vias, arcs))
     }
 }
 
@@ -266,6 +364,8 @@ pub enum SpecctraImportError {
     InvalidKeepoutPolygon,
     /// Via start layer was above its end layer.
     ReversedLayerSpan,
+    /// Circular arc route geometry failed exact construction.
+    InvalidArcGeometry,
 }
 
 /// Errors while parsing the minimal DSN/SES-style route text form.
@@ -289,6 +389,8 @@ pub enum SpecctraParseError {
     InvalidKeepoutPolygon,
     /// Via start layer was above its end layer.
     ReversedLayerSpan,
+    /// Circular arc route geometry failed exact construction.
+    InvalidArcGeometry,
     /// Route-level net alias was empty, malformed, or duplicated.
     InvalidNetAlias,
     /// Route-level layer alias was empty, malformed, or duplicated.
@@ -307,6 +409,7 @@ impl From<SpecctraImportError> for SpecctraParseError {
             SpecctraImportError::InvalidKeepoutBounds => Self::InvalidKeepoutBounds,
             SpecctraImportError::InvalidKeepoutPolygon => Self::InvalidKeepoutPolygon,
             SpecctraImportError::ReversedLayerSpan => Self::ReversedLayerSpan,
+            SpecctraImportError::InvalidArcGeometry => Self::InvalidArcGeometry,
         }
     }
 }
@@ -363,6 +466,52 @@ pub fn specctra_grid_via_record(
         land_diameter: grid_real(record.land_diameter, record.grid_denominator)?,
         drill_diameter: grid_real(record.drill_diameter, record.grid_denominator)?,
         drill_intent: record.drill_intent,
+        provenance,
+    })
+}
+
+/// Convert a fixed-grid DSN/SES arc-wire token into an exact arc route record.
+///
+/// The fixed-grid center, endpoints, radius, and width are lifted as exact
+/// rationals before constructing the retained circular arc. This follows Yap's
+/// exact-geometric-computation boundary and the circular-arc arrangement model
+/// used by CGAL: preserve the curve object first, then let exact predicates
+/// certify sweep membership, intersections, and feed length. Off-circle
+/// endpoints, zero radius, and negative radius reject instead of being
+/// projected or flattened.
+pub fn specctra_grid_arc_wire_record(
+    record: SpecctraGridArcWireRecord,
+) -> Result<SpecctraArcWireRecord, SpecctraImportError> {
+    let provenance =
+        PathProvenance::fixed_grid(PathSourceFormat::Specctra, record.grid_denominator)
+            .ok_or(SpecctraImportError::InvalidGrid)?;
+    let radius = grid_real(record.radius, record.grid_denominator)?;
+    if record.radius < 0 {
+        return Err(SpecctraImportError::NegativeRadius);
+    }
+    let arc = ExplicitCircularArc::with_provenance(
+        Point2::new(
+            grid_real(record.center_x, record.grid_denominator)?,
+            grid_real(record.center_y, record.grid_denominator)?,
+        ),
+        radius,
+        Point2::new(
+            grid_real(record.start_x, record.grid_denominator)?,
+            grid_real(record.start_y, record.grid_denominator)?,
+        ),
+        Point2::new(
+            grid_real(record.end_x, record.grid_denominator)?,
+            grid_real(record.end_y, record.grid_denominator)?,
+        ),
+        record.direction,
+        provenance,
+    )
+    .map_err(|_| SpecctraImportError::InvalidArcGeometry)?;
+    Ok(SpecctraArcWireRecord {
+        net: record.net,
+        layer: record.layer,
+        arc,
+        width: grid_real(record.width, record.grid_denominator)?,
         provenance,
     })
 }
@@ -470,6 +619,22 @@ pub fn import_specctra_via_record(
     })
 }
 
+/// Lower an exact Specctra arc-wire record into a retained route arc.
+pub fn import_specctra_arc_wire_record(
+    record: &SpecctraArcWireRecord,
+) -> Result<SpecctraRouteArc, SpecctraImportError> {
+    if record.width.structural_facts().sign == Some(hyperreal::RealSign::Negative) {
+        return Err(SpecctraImportError::NegativeWidth);
+    }
+    Ok(SpecctraRouteArc {
+        net: record.net,
+        layer: record.layer,
+        arc: record.arc.clone(),
+        width: record.width.clone(),
+        provenance: record.provenance,
+    })
+}
+
 /// Export a validated PCB trace into an exact Specctra-style route record.
 pub fn export_specctra_trace_record(trace: &PcbTrace) -> SpecctraTraceRecord {
     SpecctraTraceRecord {
@@ -539,6 +704,16 @@ pub fn serialize_specctra_grid_via_records(records: &[SpecctraGridViaRecord]) ->
     output
 }
 
+/// Serialize fixed-grid circular-arc route records into the canonical route subset.
+pub fn serialize_specctra_grid_arc_wire_records(records: &[SpecctraGridArcWireRecord]) -> String {
+    let mut output = String::from("(routes");
+    for record in records {
+        write_arc_wire_record(&mut output, record);
+    }
+    output.push(')');
+    output
+}
+
 /// Serialize fixed-grid keepout records into the canonical route subset.
 pub fn serialize_specctra_grid_keepout_records(records: &[SpecctraGridKeepoutRecord]) -> String {
     let mut output = String::from("(routes");
@@ -560,6 +735,8 @@ pub struct SpecctraGridRouteRecords {
     pub traces: Vec<SpecctraGridTraceRecord>,
     /// Fixed-grid via records.
     pub vias: Vec<SpecctraGridViaRecord>,
+    /// Fixed-grid retained circular-arc route records.
+    pub arcs: Vec<SpecctraGridArcWireRecord>,
     /// Fixed-grid retained route keepouts.
     pub keepouts: Vec<SpecctraGridKeepoutRecord>,
 }
@@ -571,6 +748,7 @@ impl SpecctraGridRouteRecords {
             && self.layer_aliases.is_empty()
             && self.traces.is_empty()
             && self.vias.is_empty()
+            && self.arcs.is_empty()
             && self.keepouts.is_empty()
     }
 
@@ -583,6 +761,7 @@ impl SpecctraGridRouteRecords {
         }
         self.traces.extend(other.traces);
         self.vias.extend(other.vias);
+        self.arcs.extend(other.arcs);
         self.keepouts.extend(other.keepouts);
         Ok(())
     }
@@ -631,6 +810,9 @@ pub fn serialize_specctra_grid_route_records(records: &SpecctraGridRouteRecords)
     for record in &records.vias {
         write_via_record(&mut output, record);
     }
+    for record in &records.arcs {
+        write_arc_wire_record(&mut output, record);
+    }
     for record in &records.keepouts {
         write_keepout_record(&mut output, record);
     }
@@ -659,6 +841,8 @@ pub fn parse_specctra_grid_trace_records(
 /// Supported route-level layer aliases have the form `(layer N NAME)`.
 /// Supported via records have the form
 /// `(via (net N) (layers A B) (at X Y) (land D) (drill H) (intent plated) (grid G))`.
+/// Supported arc-wire records have the form
+/// `(arc (net N) (layer L) (center CX CY) (start X0 Y0) (end X1 Y1) (radius R) (direction ccw) (width W) (grid G))`.
 /// Supported keepout records have the form
 /// `(keepout (layer L) (rect X0 Y0 X1 Y1) (grid G))`,
 /// `(keepout (circle X Y R) (grid G))`, or
@@ -692,7 +876,13 @@ pub fn import_specctra_text_route(input: &str) -> Result<SpecctraRoute, Specctra
         .into_iter()
         .map(specctra_grid_via_record)
         .collect::<Result<Vec<_>, _>>()?;
-    SpecctraRoute::from_trace_and_via_records(&exact_traces, &exact_vias).map_err(Into::into)
+    let exact_arcs = records
+        .arcs
+        .into_iter()
+        .map(specctra_grid_arc_wire_record)
+        .collect::<Result<Vec<_>, _>>()?;
+    SpecctraRoute::from_trace_via_and_arc_records(&exact_traces, &exact_vias, &exact_arcs)
+        .map_err(Into::into)
 }
 
 fn grid_real(value: i64, denominator: u64) -> Result<Real, SpecctraImportError> {
@@ -744,6 +934,33 @@ fn write_via_record(output: &mut String, record: &SpecctraGridViaRecord) {
         record.grid_denominator
     )
     .expect("writing to a String cannot fail");
+}
+
+fn write_arc_wire_record(output: &mut String, record: &SpecctraGridArcWireRecord) {
+    write!(
+        output,
+        " (arc (net {}) (layer {}) (center {} {}) (start {} {}) (end {} {}) (radius {}) (direction {}) (width {}) (grid {}))",
+        record.net.0,
+        record.layer.0,
+        record.center_x,
+        record.center_y,
+        record.start_x,
+        record.start_y,
+        record.end_x,
+        record.end_y,
+        record.radius,
+        arc_direction_atom(record.direction),
+        record.width,
+        record.grid_denominator
+    )
+    .expect("writing to a String cannot fail");
+}
+
+fn arc_direction_atom(direction: ArcDirection) -> &'static str {
+    match direction {
+        ArcDirection::Cw => "cw",
+        ArcDirection::Ccw => "ccw",
+    }
 }
 
 fn write_keepout_record(output: &mut String, record: &SpecctraGridKeepoutRecord) {
@@ -821,6 +1038,7 @@ impl<'a> Parser<'a> {
                 }
                 "wire" => records.traces.extend(self.parse_wire()?),
                 "via" => records.vias.push(self.parse_via()?),
+                "arc" => records.arcs.push(self.parse_arc_wire()?),
                 "keepout" => records.keepouts.push(self.parse_keepout()?),
                 _ => return Err(SpecctraParseError::InvalidSyntax),
             }
@@ -1018,6 +1236,40 @@ impl<'a> Parser<'a> {
         })
     }
 
+    fn parse_arc_wire(&mut self) -> Result<SpecctraGridArcWireRecord, SpecctraParseError> {
+        self.expect("(")?;
+        self.expect("arc")?;
+        let net = self.parse_u32_field("net")?;
+        let layer = self.parse_u16_field("layer")?;
+        let (center_x, center_y) = self.parse_i64_pair_field("center")?;
+        let (start_x, start_y) = self.parse_i64_pair_field("start")?;
+        let (end_x, end_y) = self.parse_i64_pair_field("end")?;
+        let radius = self.parse_i64_field("radius")?;
+        let direction = self.parse_arc_direction_field()?;
+        let width = self.parse_i64_field("width")?;
+        let grid_denominator = self.parse_u64_field("grid")?;
+        self.expect(")")?;
+        if grid_denominator == 0 {
+            return Err(SpecctraParseError::InvalidGrid);
+        }
+        let record = SpecctraGridArcWireRecord {
+            net: NetId(net),
+            layer: TraceLayer(layer),
+            center_x,
+            center_y,
+            start_x,
+            start_y,
+            end_x,
+            end_y,
+            radius,
+            direction,
+            width,
+            grid_denominator,
+        };
+        specctra_grid_arc_wire_record(record)?;
+        Ok(record)
+    }
+
     fn parse_keepout(&mut self) -> Result<SpecctraGridKeepoutRecord, SpecctraParseError> {
         self.expect("(")?;
         self.expect("keepout")?;
@@ -1070,6 +1322,18 @@ impl<'a> Parser<'a> {
         };
         self.expect(")")?;
         Ok(intent)
+    }
+
+    fn parse_arc_direction_field(&mut self) -> Result<ArcDirection, SpecctraParseError> {
+        self.expect("(")?;
+        self.expect("direction")?;
+        let direction = match self.next()? {
+            "cw" => ArcDirection::Cw,
+            "ccw" => ArcDirection::Ccw,
+            _ => return Err(SpecctraParseError::InvalidArcGeometry),
+        };
+        self.expect(")")?;
+        Ok(direction)
     }
 
     fn parse_path_field(&mut self) -> Result<SpecctraPathWire, SpecctraParseError> {
