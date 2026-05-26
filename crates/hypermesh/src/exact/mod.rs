@@ -121,8 +121,9 @@ pub use boolean::{
 pub use boolmesh::{
     ExactBoolMeshBoolean03, ExactBoolMeshBoolean45Stage, ExactBoolMeshEdgeEvent,
     ExactBoolMeshEdgeFacePair, ExactBoolMeshExecution, ExactBoolMeshFacePair,
-    ExactBoolMeshKernel12Event, ExactBoolMeshKernelStage, ExactBoolMeshPointConstruction,
-    ExactBoolMeshPortBlocker, ExactBoolMeshSide, ExactBoolMeshSourceVertex,
+    ExactBoolMeshKernel12Event, ExactBoolMeshKernelStage, ExactBoolMeshPairUpStage,
+    ExactBoolMeshPairedEdgeFragment, ExactBoolMeshPointConstruction, ExactBoolMeshPortBlocker,
+    ExactBoolMeshSide, ExactBoolMeshSourceEdgeRun, ExactBoolMeshSourceVertex,
     ExactBoolMeshValidationError, ExactBoolMeshWorkspace, exact_boolmesh_workspace,
     execute_exact_boolmesh_bounds_disjoint,
 };

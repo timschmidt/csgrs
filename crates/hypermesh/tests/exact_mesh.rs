@@ -33202,6 +33202,33 @@ fn exact_boolmesh_kernel12_discovers_skew_edge_face_events() {
             .chain(workspace.boolean03.x21.iter())
             .all(|sign| sign.abs() == 1)
     );
+    assert_eq!(
+        workspace
+            .pair_up
+            .source_edge_runs
+            .iter()
+            .map(|run| run.events.len())
+            .sum::<usize>(),
+        workspace.boolean03.p1q2.len() + workspace.boolean03.p2q1.len()
+    );
+    assert!(!workspace.pair_up.source_edge_runs.is_empty());
+    for run in &workspace.pair_up.source_edge_runs {
+        assert!(run.events.windows(2).all(|window| matches!(
+            compare_reals(&window[0].parameter, &window[1].parameter).value(),
+            Some(Ordering::Less | Ordering::Equal)
+        )));
+        assert!(run.events.iter().all(|event| event.side == run.side
+            && event.tail == run.tail
+            && event.head == run.head));
+        assert_eq!(
+            run.fragments.len(),
+            run.events
+                .iter()
+                .filter(|event| event.is_tail)
+                .count()
+                .min(run.events.iter().filter(|event| !event.is_tail).count())
+        );
+    }
 
     let mut stale = workspace.clone();
     stale.kernel12_events[0].edge_face.edge[0] = left.vertices().len();
@@ -33217,6 +33244,24 @@ fn exact_boolmesh_kernel12_discovers_skew_edge_face_events() {
             .validate_against_sources(&left, &right)
             .unwrap_err(),
         hypermesh::exact::ExactBoolMeshValidationError::Kernel12TableLengthMismatch
+    );
+
+    let mut malformed_pairing = workspace.clone();
+    malformed_pairing.pair_up.source_edge_runs[0].unpaired_events += 1;
+    assert_eq!(
+        malformed_pairing
+            .validate_against_sources(&left, &right)
+            .unwrap_err(),
+        hypermesh::exact::ExactBoolMeshValidationError::PairUpRunCountMismatch
+    );
+
+    let mut stale_pairing = workspace.clone();
+    stale_pairing.pair_up.source_edge_runs[0].events[0].tail = left.vertices().len();
+    assert_eq!(
+        stale_pairing
+            .validate_against_sources(&left, &right)
+            .unwrap_err(),
+        hypermesh::exact::ExactBoolMeshValidationError::PairUpRunEventMismatch
     );
 }
 

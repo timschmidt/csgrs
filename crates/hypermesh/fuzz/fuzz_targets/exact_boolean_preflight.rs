@@ -209,6 +209,13 @@ fuzz_target!(|data: &[u8]| {
                     .validate_against_sources(&left, &right)
                     .is_err()
             );
+            let mut corrupted_pairing = workspace.clone();
+            corrupted_pairing.pair_up.source_edge_runs[0].unpaired_events += 1;
+            assert!(
+                corrupted_pairing
+                    .validate_against_sources(&left, &right)
+                    .is_err()
+            );
         }
         if workspace.is_certified_bounds_disjoint() {
             let execution = hypermesh::exact::execute_exact_boolmesh_bounds_disjoint(
@@ -1585,6 +1592,15 @@ fn exercise_exact_boolmesh_kernel12_port() {
     assert!(
         !workspace.boolean03.p1q2.is_empty() || !workspace.boolean03.p2q1.is_empty(),
         "deterministic kernel12 fixture must lower proper crossings"
+    );
+    assert_eq!(
+        workspace
+            .pair_up
+            .source_edge_runs
+            .iter()
+            .map(|run| run.events.len())
+            .sum::<usize>(),
+        workspace.boolean03.p1q2.len() + workspace.boolean03.p2q1.len()
     );
 }
 

@@ -17,6 +17,8 @@
 //! ordered boundary fragments before faces are emitted.
 
 #[cfg(feature = "exact-triangulation")]
+mod boolean45;
+#[cfg(feature = "exact-triangulation")]
 mod kernel12;
 
 #[cfg(feature = "exact-triangulation")]
@@ -39,6 +41,8 @@ use super::scalar::ExactReal;
 use super::validation::ValidationPolicy;
 #[cfg(feature = "exact-triangulation")]
 use super::{AabbIntersectionKind, MeshError};
+#[cfg(feature = "exact-triangulation")]
+use boolean45::pair_source_edge_events;
 #[cfg(feature = "exact-triangulation")]
 use hyperlimit::{PlaneSide, Point3, PredicateOutcome};
 #[cfg(feature = "exact-triangulation")]
@@ -197,6 +201,65 @@ pub struct ExactBoolMeshEdgeEvent {
     pub point: ExactBoolMeshPointConstruction,
 }
 
+/// Paired source-edge fragment produced by exact `boolean45::pair_up`.
+///
+/// The legacy boolmesh stage sorts [`EdgePt`] values along a source edge,
+/// partitions tail/head events, then creates partial halfedges by zipping the
+/// sorted halves.  This exact record keeps the same pairing decision but
+/// stores source event provenance instead of output vertex ids, because final
+/// vertex allocation is still owned by the later exact `boolean45` slices.
+#[cfg(feature = "exact-triangulation")]
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactBoolMeshPairedEdgeFragment {
+    /// Source edge owner.
+    pub side: ExactBoolMeshSide,
+    /// Source edge tail vertex.
+    pub tail: usize,
+    /// Source edge head vertex.
+    pub head: usize,
+    /// Event that contributes the fragment tail endpoint.
+    pub tail_event: ExactBoolMeshEdgeEvent,
+    /// Event that contributes the fragment head endpoint.
+    pub head_event: ExactBoolMeshEdgeEvent,
+}
+
+/// Ordered exact event run on one source edge.
+///
+/// Runs are the exact equivalent of the `pt_old` buckets consumed by
+/// `boolean45::append_partial_edges`.  Events are sorted by exact edge
+/// parameter, with collision id as the boolmesh tie-break.  Unpaired events are
+/// retained explicitly because endpoint retention from `kernel03` has not yet
+/// been ported into the exact path.
+#[cfg(feature = "exact-triangulation")]
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactBoolMeshSourceEdgeRun {
+    /// Source edge owner.
+    pub side: ExactBoolMeshSide,
+    /// Source edge tail vertex.
+    pub tail: usize,
+    /// Source edge head vertex.
+    pub head: usize,
+    /// Ordered events on this directed source edge.
+    pub events: Vec<ExactBoolMeshEdgeEvent>,
+    /// Zipped tail/head fragments when both sides are present.
+    pub fragments: Vec<ExactBoolMeshPairedEdgeFragment>,
+    /// Number of ordered events that could not yet be paired.
+    pub unpaired_events: usize,
+}
+
+/// Exact `boolean45::pair_up` staging over lowered source-edge events.
+#[cfg(feature = "exact-triangulation")]
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct ExactBoolMeshPairUpStage {
+    /// Ordered source-edge runs.
+    pub source_edge_runs: Vec<ExactBoolMeshSourceEdgeRun>,
+    /// Exact parameter comparisons that were not decidable.
+    pub unknown_orderings: usize,
+    /// Runs that still have unpaired events before endpoint retention is
+    /// available.
+    pub unpaired_event_runs: usize,
+}
+
 /// Retained exact event from the direct boolmesh `kernel12` port.
 ///
 /// The legacy `boolean03::kernel12` implementation combines shadow tests and
@@ -305,6 +368,8 @@ pub struct ExactBoolMeshWorkspace {
     pub kernel12_coplanar_events: usize,
     /// Current exact `Boolean03` package.
     pub boolean03: ExactBoolMeshBoolean03,
+    /// Exact `boolean45::pair_up` staging over source-edge events.
+    pub pair_up: ExactBoolMeshPairUpStage,
     /// Current exact `boolean45` staging package, if output assembly has run.
     pub boolean45: Option<ExactBoolMeshBoolean45Stage>,
     /// First missing boolmesh stage for this workspace.
@@ -345,6 +410,7 @@ impl ExactBoolMeshWorkspace {
             matches!(mesh_bounds_relation, Some(PredicateOutcome::Unknown { .. }));
         let kernel12 = discover_kernel12_events(left, right);
         let kernel12_lowering = lower_kernel12_events(&kernel12.events);
+        let pair_up = pair_source_edge_events(kernel12_lowering.source_edge_events.clone());
         let blocker = if candidate_face_pairs.is_empty() && !mesh_bounds_unknown {
             None
         } else if mesh_bounds_unknown
@@ -387,6 +453,7 @@ impl ExactBoolMeshWorkspace {
                 w03: vec![0; left.vertices().len()],
                 w30: vec![0; right.vertices().len()],
             },
+            pair_up,
             boolean45: None,
             blocker,
         }
@@ -402,6 +469,7 @@ impl ExactBoolMeshWorkspace {
             && self.boolean03.x21.is_empty()
             && self.boolean03.v12.is_empty()
             && self.boolean03.v21.is_empty()
+            && self.pair_up.source_edge_runs.is_empty()
             && matches!(
                 self.mesh_bounds_relation,
                 Some(PredicateOutcome::Decided {
@@ -429,6 +497,11 @@ impl ExactBoolMeshWorkspace {
         {
             return Err(ExactBoolMeshValidationError::Kernel12TableLengthMismatch);
         }
+        let lowered_event_count = self.boolean03.p1q2.len() + self.boolean03.p2q1.len();
+        if pair_up_event_count(&self.pair_up) != lowered_event_count {
+            return Err(ExactBoolMeshValidationError::PairUpEventCountMismatch);
+        }
+        validate_pair_up_stage(&self.pair_up, self.left_vertices, self.right_vertices)?;
         for pair in &self.candidate_face_pairs {
             if pair.left_face >= self.left_faces || pair.right_face >= self.right_faces {
                 return Err(ExactBoolMeshValidationError::FacePairOutOfBounds);
@@ -556,6 +629,14 @@ pub enum ExactBoolMeshValidationError {
     /// A lowered `kernel12` ownership table does not align with signed events
     /// or exact vertices.
     Kernel12TableLengthMismatch,
+    /// Exact pair-up event runs do not match lowered `kernel12` tables.
+    PairUpEventCountMismatch,
+    /// A paired edge run contains an event from a different source edge.
+    PairUpRunEventMismatch,
+    /// A paired edge run has stale pairing counts.
+    PairUpRunCountMismatch,
+    /// A paired edge run names a missing source edge endpoint.
+    PairUpEdgeOutOfBounds,
     /// Blocker candidate counts do not match retained candidates.
     BlockerCountMismatch,
     /// A non-disjoint workspace had no named boolmesh-stage blocker.
@@ -817,6 +898,78 @@ fn validate_kernel12_event_shape(
             }
         }
     }
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn pair_up_event_count(stage: &ExactBoolMeshPairUpStage) -> usize {
+    stage
+        .source_edge_runs
+        .iter()
+        .map(|run| run.events.len())
+        .sum()
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn validate_pair_up_stage(
+    stage: &ExactBoolMeshPairUpStage,
+    left_vertices: usize,
+    right_vertices: usize,
+) -> Result<(), ExactBoolMeshValidationError> {
+    let mut unpaired_event_runs = 0;
+    for run in &stage.source_edge_runs {
+        let vertex_count = match run.side {
+            ExactBoolMeshSide::Left => left_vertices,
+            ExactBoolMeshSide::Right => right_vertices,
+        };
+        if run.tail >= vertex_count || run.head >= vertex_count {
+            return Err(ExactBoolMeshValidationError::PairUpEdgeOutOfBounds);
+        }
+        let tail_count = run.events.iter().filter(|event| event.is_tail).count();
+        let head_count = run.events.len() - tail_count;
+        let unpaired_events = tail_count.abs_diff(head_count);
+        if unpaired_events > 0 {
+            unpaired_event_runs += 1;
+        }
+        if run.unpaired_events != unpaired_events
+            || run.fragments.len() != tail_count.min(head_count)
+        {
+            return Err(ExactBoolMeshValidationError::PairUpRunCountMismatch);
+        }
+        for event in &run.events {
+            validate_pair_up_event(event, run, vertex_count)?;
+        }
+        for fragment in &run.fragments {
+            if fragment.side != run.side || fragment.tail != run.tail || fragment.head != run.head {
+                return Err(ExactBoolMeshValidationError::PairUpRunEventMismatch);
+            }
+            validate_pair_up_event(&fragment.tail_event, run, vertex_count)?;
+            validate_pair_up_event(&fragment.head_event, run, vertex_count)?;
+            if !fragment.tail_event.is_tail || fragment.head_event.is_tail {
+                return Err(ExactBoolMeshValidationError::PairUpRunEventMismatch);
+            }
+        }
+    }
+    if stage.unpaired_event_runs != unpaired_event_runs {
+        return Err(ExactBoolMeshValidationError::PairUpRunCountMismatch);
+    }
+    Ok(())
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn validate_pair_up_event(
+    event: &ExactBoolMeshEdgeEvent,
+    run: &ExactBoolMeshSourceEdgeRun,
+    vertex_count: usize,
+) -> Result<(), ExactBoolMeshValidationError> {
+    if event.side != run.side
+        || event.tail != run.tail
+        || event.head != run.head
+        || event.tail >= vertex_count
+        || event.head >= vertex_count
+    {
+        return Err(ExactBoolMeshValidationError::PairUpRunEventMismatch);
+    }
+    Ok(())
 }
 
 #[cfg(feature = "exact-triangulation")]

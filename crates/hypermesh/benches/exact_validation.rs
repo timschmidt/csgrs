@@ -13081,6 +13081,7 @@ fn exact_boolmesh_kernel12_port(c: &mut Criterion) {
                     .count()
                     + workspace.boolean03.p1q2.len()
                     + workspace.boolean03.p2q1.len()
+                    + workspace.pair_up.source_edge_runs.len()
             })
         });
     }
