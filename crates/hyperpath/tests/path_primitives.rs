@@ -542,6 +542,9 @@ fn explicit_arc_arrangement_splits_different_circle_secants() {
     );
     assert_eq!(report.breakpoints[1].len(), 4);
     assert_eq!(report.fragments.len(), 6);
+    assert_eq!(report.cell_graph.vertices.len(), 6);
+    assert_eq!(report.cell_graph.edges.len(), 6);
+    assert_eq!(report.cell_graph.half_edges.len(), 12);
     assert_eq!(report.fragments[0].arc.start(), &p(-3, -5));
     assert_eq!(report.fragments[0].arc.end(), &p(0, -4));
 }
@@ -574,6 +577,9 @@ fn explicit_arc_arrangement_promotes_same_circle_overlap_boundaries() {
         vec![p(0, 5), p(-5, 0)]
     );
     assert_eq!(report.fragments.len(), 3);
+    assert_eq!(report.cell_graph.vertices.len(), 3);
+    assert_eq!(report.cell_graph.edges.len(), 3);
+    assert_eq!(report.cell_graph.half_edges.len(), 6);
 }
 
 #[test]
@@ -597,8 +603,63 @@ fn explicit_arc_arrangement_uses_full_circle_start_as_branch_cut() {
         vec![p(5, 0), p(-5, 0)]
     );
     assert_eq!(report.fragments.len(), 3);
+    assert_eq!(report.cell_graph.vertices.len(), 2);
+    assert_eq!(report.cell_graph.edges.len(), 3);
+    assert_eq!(report.cell_graph.half_edges.len(), 6);
     assert_eq!(report.fragments[1].arc.start(), &p(-5, 0));
     assert_eq!(report.fragments[1].arc.end(), &p(5, 0));
+}
+
+#[test]
+fn explicit_arc_cell_graph_schedules_two_semicircle_closed_curve() {
+    let upper =
+        ExplicitCircularArc::new(p(0, 0), r(5), p(5, 0), p(-5, 0), ArcDirection::Ccw).unwrap();
+    let lower =
+        ExplicitCircularArc::new(p(0, 0), r(5), p(-5, 0), p(5, 0), ArcDirection::Ccw).unwrap();
+
+    let report = arrange_explicit_arcs(&[upper, lower], PredicatePolicy::default()).unwrap();
+
+    assert!(matches!(
+        report.events[0].class,
+        ExplicitArcArrangementClass::SameCircleEndpointTouch
+            | ExplicitArcArrangementClass::SameCircleFirstCoversSecond
+            | ExplicitArcArrangementClass::SameCircleSecondCoversFirst
+    ));
+    assert_eq!(report.fragments.len(), 2);
+    assert_eq!(report.cell_graph.vertices.len(), 2);
+    assert_eq!(report.cell_graph.edges.len(), 2);
+    assert_eq!(report.cell_graph.half_edges.len(), 4);
+    assert_eq!(report.cell_graph.faces.len(), 2);
+    assert!(report.cell_graph.faces.iter().any(|face| {
+        face.class == CurveArrangementCellFaceClass::Bounded
+            && face.signed_area_twice == r(50) * Real::pi()
+    }));
+    assert!(report.cell_graph.faces.iter().any(|face| {
+        face.class == CurveArrangementCellFaceClass::Exterior
+            && face.signed_area_twice == -r(50) * Real::pi()
+    }));
+}
+
+#[test]
+fn explicit_arc_cell_graph_schedules_single_full_circle() {
+    let full =
+        ExplicitCircularArc::new(p(-7, 2), r(3), p(-4, 2), p(-4, 2), ArcDirection::Ccw).unwrap();
+
+    let report = arrange_explicit_arcs(&[full], PredicatePolicy::default()).unwrap();
+
+    assert_eq!(report.fragments.len(), 1);
+    assert_eq!(report.cell_graph.vertices.len(), 1);
+    assert_eq!(report.cell_graph.edges.len(), 1);
+    assert_eq!(report.cell_graph.half_edges.len(), 2);
+    assert_eq!(report.cell_graph.faces.len(), 2);
+    assert!(report.cell_graph.faces.iter().any(|face| {
+        face.class == CurveArrangementCellFaceClass::Bounded
+            && face.signed_area_twice == r(18) * Real::pi()
+    }));
+    assert!(report.cell_graph.faces.iter().any(|face| {
+        face.class == CurveArrangementCellFaceClass::Exterior
+            && face.signed_area_twice == -r(18) * Real::pi()
+    }));
 }
 
 #[test]

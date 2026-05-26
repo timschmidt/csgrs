@@ -24,7 +24,10 @@ use crate::arc::{
     ExplicitArcIntersectionClass, ExplicitArcPointClassification, ExplicitCircularArc,
     LineExplicitArcIntersectionClass,
 };
-use crate::curve_cell::{CurveArrangementCellGraph, build_line_arc_cell_graph};
+use crate::curve_cell::{
+    CurveArrangementCellError, CurveArrangementCellGraph, build_explicit_arc_cell_graph,
+    build_line_arc_cell_graph,
+};
 use crate::provenance::PathProvenance;
 use crate::segment::LinePathSegment;
 
@@ -79,6 +82,10 @@ pub enum ExplicitArcArrangementError {
     UndecidableArcOrder { arc: usize },
     /// The same geometric point could not be de-duplicated exactly.
     UndecidablePointEquality,
+    /// Exact tangent ordering of incident explicit-arc fragments was undecidable.
+    UndecidableCellOrder { vertex: usize },
+    /// Exact curved face area replay was unavailable for a retained arc-cell edge.
+    UndecidableCellArea { edge: usize },
     /// A retained explicit sub-arc could not be reconstructed from certified endpoints.
     FragmentConstruction,
 }
@@ -361,20 +368,23 @@ pub struct LineArcArrangementReport {
     pub facts: LineArrangementFacts,
 }
 
-/// Retained explicit-arc arrangement schedule and split fragments.
+/// Retained explicit-arc arrangement schedule, split fragments, and cells.
 ///
 /// This is the arc-only companion to [`LineArrangementReport`]. It promotes
 /// retained arc/arc predicate reports into exact breakpoints and sub-arcs
-/// without constructing planar cells. Different-circle tangent/secant events
-/// contribute exact point witnesses from the retained radical-axis/tangent
-/// construction. Same-circle positive overlaps contribute the endpoints that
-/// delimit the shared sweep. Breakpoint ordering is accepted only for non-full
-/// explicit arcs and is certified by exact sub-arc containment predicates.
-/// Full circles use their retained start point as a branch cut and sort by
-/// exact oriented half-turn and cross-product predicates, rather than by
-/// sampled angles. This follows Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997), and the CGAL circular-arc
-/// arrangement split between exact curve objects and exact topology predicates.
+/// then feeds the positive-length sub-arcs into the retained curve-cell
+/// scheduler. Different-circle tangent/secant events contribute exact point
+/// witnesses from the retained radical-axis/tangent construction. Same-circle
+/// positive overlaps contribute the endpoints that delimit the shared sweep.
+/// Breakpoint ordering is accepted only for non-full explicit arcs and is
+/// certified by exact sub-arc containment predicates. Full circles use their
+/// retained start point as a branch cut and sort by exact oriented half-turn
+/// and cross-product predicates, rather than by sampled angles. The cell graph
+/// then orders half-edges from exact tangents and computes nonzero face walks
+/// by Green-integral circular-arc area terms. This follows Yap, "Towards Exact
+/// Geometric Computation," *Computational Geometry* 7.1-2 (1997), and the CGAL
+/// circular-arc arrangement split between exact curve objects and exact
+/// topology predicates.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExplicitArcSetArrangementReport {
     /// Retained input explicit arcs.
@@ -385,6 +395,8 @@ pub struct ExplicitArcSetArrangementReport {
     pub breakpoints: Vec<Vec<ExplicitArcArrangementBreakpoint>>,
     /// Positive-length explicit sub-arcs. Point fragments are intentionally omitted.
     pub fragments: Vec<ExplicitArcArrangementFragment>,
+    /// Exact retained curve cell graph induced by split explicit-arc fragments.
+    pub cell_graph: CurveArrangementCellGraph,
     /// Exact-set facts across all emitted fragment endpoints.
     pub fragment_exact: RealExactSetFacts,
     /// Source provenance for the arrangement schedule.
@@ -537,7 +549,8 @@ pub fn arrange_line_segments_with_explicit_arcs_and_provenance(
     let line_fragments = build_fragments(&line_breakpoints, policy)?;
     let arc_fragments = build_arc_fragments(arcs, &arc_breakpoints, policy)
         .map_err(line_arc_error_from_arc_error)?;
-    let cell_graph = build_line_arc_cell_graph(&line_fragments, &arc_fragments, policy)?;
+    let cell_graph = build_line_arc_cell_graph(&line_fragments, &arc_fragments, policy)
+        .map_err(line_error_from_curve_cell_error)?;
     let endpoint_refs = lines
         .iter()
         .flat_map(|segment| {
@@ -621,6 +634,8 @@ pub fn arrange_explicit_arcs_with_provenance(
 
     sort_and_dedup_arc_breakpoints(&mut breakpoints, arcs, policy)?;
     let fragments = build_arc_fragments(arcs, &breakpoints, policy)?;
+    let cell_graph = build_explicit_arc_cell_graph(&fragments, policy)
+        .map_err(arc_error_from_curve_cell_error)?;
     let fragment_refs = fragments
         .iter()
         .flat_map(|fragment| {
@@ -638,6 +653,7 @@ pub fn arrange_explicit_arcs_with_provenance(
         events,
         breakpoints,
         fragments,
+        cell_graph,
         fragment_exact,
         provenance,
     })
@@ -774,8 +790,44 @@ fn line_arc_error_from_arc_error(error: ExplicitArcArrangementError) -> LineArra
         ExplicitArcArrangementError::UndecidablePointEquality => {
             LineArrangementError::UndecidablePointEquality
         }
+        ExplicitArcArrangementError::UndecidableCellOrder { vertex } => {
+            LineArrangementError::UndecidableCellOrder { vertex }
+        }
+        ExplicitArcArrangementError::UndecidableCellArea { edge } => {
+            LineArrangementError::UndecidableCellArea { edge }
+        }
         ExplicitArcArrangementError::FragmentConstruction => {
             LineArrangementError::ArcFragmentConstruction
+        }
+    }
+}
+
+fn line_error_from_curve_cell_error(error: CurveArrangementCellError) -> LineArrangementError {
+    match error {
+        CurveArrangementCellError::UndecidablePointEquality => {
+            LineArrangementError::UndecidablePointEquality
+        }
+        CurveArrangementCellError::UndecidableCellOrder { vertex } => {
+            LineArrangementError::UndecidableCellOrder { vertex }
+        }
+        CurveArrangementCellError::UndecidableCellArea { edge } => {
+            LineArrangementError::UndecidableCellArea { edge }
+        }
+    }
+}
+
+fn arc_error_from_curve_cell_error(
+    error: CurveArrangementCellError,
+) -> ExplicitArcArrangementError {
+    match error {
+        CurveArrangementCellError::UndecidablePointEquality => {
+            ExplicitArcArrangementError::UndecidablePointEquality
+        }
+        CurveArrangementCellError::UndecidableCellOrder { vertex } => {
+            ExplicitArcArrangementError::UndecidableCellOrder { vertex }
+        }
+        CurveArrangementCellError::UndecidableCellArea { edge } => {
+            ExplicitArcArrangementError::UndecidableCellArea { edge }
         }
     }
 }

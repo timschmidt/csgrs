@@ -13,9 +13,18 @@ use hyperlimit::{Point2, PredicatePolicy, compare_reals_with_policy, point2_equa
 use hyperreal::Real;
 
 use crate::arc::ArcDirection;
-use crate::arrangement::{
-    ExplicitArcArrangementFragment, LineArrangementError, LineArrangementFragment,
-};
+use crate::arrangement::{ExplicitArcArrangementFragment, LineArrangementFragment};
+
+/// Errors that prevent retained curve cell scheduling from producing trusted topology.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CurveArrangementCellError {
+    /// The same geometric endpoint could not be de-duplicated exactly.
+    UndecidablePointEquality,
+    /// Exact tangent ordering around a retained cell vertex was undecidable.
+    UndecidableCellOrder { vertex: usize },
+    /// Exact Green-integral face-area replay was unavailable for a retained edge.
+    UndecidableCellArea { edge: usize },
+}
 
 /// Exact vertex in a retained mixed curve cell graph.
 ///
@@ -106,12 +115,13 @@ pub struct CurveArrangementCellFace {
     pub class: CurveArrangementCellFaceClass,
 }
 
-/// Retained exact cell graph for line plus explicit circular-arc fragments.
+/// Retained exact cell graph for line and/or explicit circular-arc fragments.
 ///
-/// This graph schedules topology for downstream CAM/PCB consumers. It does
-/// not decide fill rules, boolean ownership, or materialization. Those stages
-/// must replay the retained vertices, edge provenance, tangent ordering, and
-/// exact face-area evidence before accepting output.
+/// This graph schedules topology for downstream CAM/PCB consumers in both
+/// mixed line/arc and arc-only arrangements. It does not decide fill rules,
+/// boolean ownership, or materialization. Those stages must replay the
+/// retained vertices, edge provenance, tangent ordering, and exact face-area
+/// evidence before accepting output.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveArrangementCellGraph {
     /// Exact graph vertices.
@@ -128,7 +138,22 @@ pub(crate) fn build_line_arc_cell_graph(
     line_fragments: &[LineArrangementFragment],
     arc_fragments: &[ExplicitArcArrangementFragment],
     policy: PredicatePolicy,
-) -> Result<CurveArrangementCellGraph, LineArrangementError> {
+) -> Result<CurveArrangementCellGraph, CurveArrangementCellError> {
+    build_curve_cell_graph(line_fragments, arc_fragments, policy)
+}
+
+pub(crate) fn build_explicit_arc_cell_graph(
+    arc_fragments: &[ExplicitArcArrangementFragment],
+    policy: PredicatePolicy,
+) -> Result<CurveArrangementCellGraph, CurveArrangementCellError> {
+    build_curve_cell_graph(&[], arc_fragments, policy)
+}
+
+fn build_curve_cell_graph(
+    line_fragments: &[LineArrangementFragment],
+    arc_fragments: &[ExplicitArcArrangementFragment],
+    policy: PredicatePolicy,
+) -> Result<CurveArrangementCellGraph, CurveArrangementCellError> {
     let mut vertices = Vec::new();
     let mut edges = Vec::new();
 
@@ -223,12 +248,12 @@ fn curve_vertex_index(
     vertices: &mut Vec<CurveArrangementCellVertex>,
     point: &Point2,
     policy: PredicatePolicy,
-) -> Result<usize, LineArrangementError> {
+) -> Result<usize, CurveArrangementCellError> {
     for (index, vertex) in vertices.iter().enumerate() {
         match point2_equal_with_policy(&vertex.point, point, policy).value() {
             Some(true) => return Ok(index),
             Some(false) => {}
-            None => return Err(LineArrangementError::UndecidablePointEquality),
+            None => return Err(CurveArrangementCellError::UndecidablePointEquality),
         }
     }
     let index = vertices.len();
@@ -247,7 +272,7 @@ fn sort_curve_outgoing_half_edges(
     line_fragments: &[LineArrangementFragment],
     arc_fragments: &[ExplicitArcArrangementFragment],
     policy: PredicatePolicy,
-) -> Result<(), LineArrangementError> {
+) -> Result<(), CurveArrangementCellError> {
     let mut outgoing = std::mem::take(&mut vertices[vertex].outgoing_half_edges);
     for left in 0..outgoing.len() {
         for right in (left + 1)..outgoing.len() {
@@ -260,7 +285,7 @@ fn sort_curve_outgoing_half_edges(
                 arc_fragments,
                 policy,
             )
-            .ok_or(LineArrangementError::UndecidableCellOrder { vertex })?;
+            .ok_or(CurveArrangementCellError::UndecidableCellOrder { vertex })?;
         }
     }
     outgoing.sort_by(|left, right| {
@@ -384,7 +409,7 @@ fn curve_cell_faces(
     line_fragments: &[LineArrangementFragment],
     arc_fragments: &[ExplicitArcArrangementFragment],
     policy: PredicatePolicy,
-) -> Result<Vec<CurveArrangementCellFace>, LineArrangementError> {
+) -> Result<Vec<CurveArrangementCellFace>, CurveArrangementCellError> {
     let mut visited = vec![false; half_edges.len()];
     let mut faces = Vec::new();
     for start in 0..half_edges.len() {
@@ -418,7 +443,7 @@ fn curve_cell_faces(
             line_fragments,
             arc_fragments,
         )
-        .ok_or(LineArrangementError::UndecidableCellArea {
+        .ok_or(CurveArrangementCellError::UndecidableCellArea {
             edge: half_edges[start].edge,
         })?;
         match compare_reals_with_policy(&area, &Real::zero(), policy).value() {
@@ -434,7 +459,7 @@ fn curve_cell_faces(
                 class: CurveArrangementCellFaceClass::Exterior,
             }),
             None => {
-                return Err(LineArrangementError::UndecidableCellOrder {
+                return Err(CurveArrangementCellError::UndecidableCellOrder {
                     vertex: half_edges[start].from,
                 });
             }

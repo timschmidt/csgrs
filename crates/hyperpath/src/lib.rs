@@ -99,9 +99,9 @@ pub use cam::{
     build_rectangular_support_plan, intersect_rectangular_regions, subtract_rectangular_region,
 };
 pub use curve_cell::{
-    CurveArrangementCellEdge, CurveArrangementCellEdgeKind, CurveArrangementCellFace,
-    CurveArrangementCellFaceClass, CurveArrangementCellGraph, CurveArrangementCellVertex,
-    CurveArrangementHalfEdge,
+    CurveArrangementCellEdge, CurveArrangementCellEdgeKind, CurveArrangementCellError,
+    CurveArrangementCellFace, CurveArrangementCellFaceClass, CurveArrangementCellGraph,
+    CurveArrangementCellVertex, CurveArrangementHalfEdge,
 };
 pub use mixed_bezier_arrangement::{
     LineQuadraticBezierArrangementError, LineQuadraticBezierArrangementEvent,

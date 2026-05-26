@@ -212,6 +212,15 @@ fn path_predicates(c: &mut Criterion) {
     c.bench_function("explicit_arc_arrangement_split_cleanup", |b| {
         b.iter(|| arrange_explicit_arcs(&arc_arrangement_arcs, PredicatePolicy::default()))
     });
+    let arc_cell_arcs = vec![
+        ExplicitCircularArc::new(p(0, 0), r(500), p(500, 0), p(-500, 0), ArcDirection::Ccw)
+            .unwrap(),
+        ExplicitCircularArc::new(p(0, 0), r(500), p(-500, 0), p(500, 0), ArcDirection::Ccw)
+            .unwrap(),
+    ];
+    c.bench_function("explicit_arc_arrangement_exact_cell_graph", |b| {
+        b.iter(|| arrange_explicit_arcs(&arc_cell_arcs, PredicatePolicy::default()))
+    });
     let tangent_span_arc =
         ExplicitCircularArc::new(p(0, 0), r(5), p(3, 4), p(-3, 4), ArcDirection::Ccw).unwrap();
     let tangent_span_curve = CubicBezier::new(p(-3, 4), p(-7, 1), p(-9, 1), p(-13, 4));

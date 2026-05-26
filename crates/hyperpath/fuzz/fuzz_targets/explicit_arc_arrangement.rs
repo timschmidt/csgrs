@@ -2,7 +2,8 @@
 
 use hyperlimit::PredicatePolicy;
 use hyperpath::{
-    ArcDirection, ExplicitArcArrangementClass, ExplicitCircularArc, arrange_explicit_arcs,
+    ArcDirection, CurveArrangementCellFaceClass, ExplicitArcArrangementClass, ExplicitCircularArc,
+    arrange_explicit_arcs,
 };
 use hyperreal::{Rational, Real};
 use libfuzzer_sys::fuzz_target;
@@ -51,6 +52,10 @@ fuzz_target!(|data: &[u8]| {
     );
     assert_eq!(report.breakpoints.len(), 2);
     assert_eq!(report.fragments.len(), 3);
+    assert_eq!(
+        report.cell_graph.half_edges.len(),
+        report.cell_graph.edges.len() * 2
+    );
 
     let left_center_x = signed(data[3]) - 3 * scale;
     let right_center_x = signed(data[3]) + 3 * scale;
@@ -80,6 +85,10 @@ fuzz_target!(|data: &[u8]| {
     assert_eq!(report.events[0].points.len(), 2);
     assert_eq!(report.breakpoints[0].len(), 4);
     assert_eq!(report.breakpoints[1].len(), 4);
+    assert_eq!(
+        report.cell_graph.half_edges.len(),
+        report.cell_graph.edges.len() * 2
+    );
 
     let full = ExplicitCircularArc::new(
         p(signed(data[5]), signed(data[6])),
@@ -98,5 +107,15 @@ fuzz_target!(|data: &[u8]| {
     let report = arrange_explicit_arcs(&[full], PredicatePolicy::default()).unwrap();
     assert_eq!(report.breakpoints[0].len(), 1);
     assert_eq!(report.fragments.len(), 1);
+    assert_eq!(report.cell_graph.vertices.len(), 1);
+    assert_eq!(report.cell_graph.edges.len(), 1);
+    assert!(report.cell_graph.faces.iter().any(|face| {
+        face.class == CurveArrangementCellFaceClass::Bounded
+            && face.signed_area_twice
+                == r(2)
+                    * r(i64::from(data[7] % 32) + 1)
+                    * r(i64::from(data[7] % 32) + 1)
+                    * Real::pi()
+    }));
     assert!(report.fragments[0].arc.facts().known_full_circle);
 });
