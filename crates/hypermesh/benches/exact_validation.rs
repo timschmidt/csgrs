@@ -5265,6 +5265,42 @@ fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
             )
             .unwrap()
             .mesh;
+        let same_outer_clipped_holed_source_island_outer = rect_surface_i64(&[(0, 0, 24, 24)]);
+        let same_outer_clipped_holed_source_island_owner_hole = rect_surface_i64(&[(4, 4, 20, 20)]);
+        let same_outer_clipped_holed_source_island_shell =
+            arrange_coplanar_convex_surface_holed_difference(
+                &same_outer_clipped_holed_source_island_outer,
+                &same_outer_clipped_holed_source_island_owner_hole,
+            )
+            .unwrap()
+            .mesh;
+        let same_outer_clipped_holed_source_island_component_outer =
+            rect_surface_i64(&[(8, 8, 18, 18)]);
+        let same_outer_clipped_holed_source_island_component_hole =
+            rect_surface_i64(&[(10, 10, 12, 12)]);
+        let same_outer_clipped_holed_source_island_component =
+            arrange_coplanar_convex_surface_holed_difference(
+                &same_outer_clipped_holed_source_island_component_outer,
+                &same_outer_clipped_holed_source_island_component_hole,
+            )
+            .unwrap()
+            .mesh;
+        let same_outer_clipped_holed_source_island_source = combine_open_exact_meshes(
+            &[
+                same_outer_clipped_holed_source_island_shell,
+                same_outer_clipped_holed_source_island_component,
+            ],
+            "bench same-outer clipped holed source island",
+        );
+        let same_outer_clipped_holed_source_island_right_holes =
+            rect_surface_i64(&[(16, 8, 22, 18), (13, 13, 15, 15)]);
+        let same_outer_clipped_holed_source_island_right =
+            arrange_coplanar_convex_surface_multi_holed_difference(
+                &same_outer_clipped_holed_source_island_outer,
+                &same_outer_clipped_holed_source_island_right_holes,
+            )
+            .unwrap()
+            .mesh;
         let same_outer_affine_island_intersection_origin = (0, 0, 0);
         let same_outer_affine_island_intersection_basis_u = (2, 1, 0);
         let same_outer_affine_island_intersection_basis_v = (-1, 2, 0);
@@ -7198,6 +7234,22 @@ fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
                         hypermesh::exact::preflight_boolean_exact(
                             &same_outer_holed_source_island_source,
                             &same_outer_holed_source_island_right,
+                            hypermesh::exact::ExactBooleanOperation::Intersection,
+                        )
+                        .map(|report| report.validate()),
+                        arrange_coplanar_surface_component_holed_intersection(
+                            &same_outer_clipped_holed_source_island_source,
+                            &same_outer_clipped_holed_source_island_right,
+                        )
+                        .map(|output| {
+                            output.validate_intersection_against_sources(
+                                &same_outer_clipped_holed_source_island_source,
+                                &same_outer_clipped_holed_source_island_right,
+                            )
+                        }),
+                        hypermesh::exact::preflight_boolean_exact(
+                            &same_outer_clipped_holed_source_island_source,
+                            &same_outer_clipped_holed_source_island_right,
                             hypermesh::exact::ExactBooleanOperation::Intersection,
                         )
                         .map(|report| report.validate()),

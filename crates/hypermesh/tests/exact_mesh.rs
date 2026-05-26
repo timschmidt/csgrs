@@ -28196,6 +28196,159 @@ fn exact_coplanar_component_holed_intersection_retains_same_outer_holed_source_i
 
 #[cfg(feature = "exact-triangulation")]
 #[test]
+fn exact_coplanar_component_holed_intersection_clips_same_outer_holed_source_island() {
+    let outer = rect_surface_i64(&[(0, 0, 24, 24)]);
+    let owner_hole = rect_surface_i64(&[(4, 4, 20, 20)]);
+    let source_shell =
+        hypermesh::exact::arrange_coplanar_convex_surface_holed_difference(&outer, &owner_hole)
+            .expect("source shell with retained owner hole should materialize")
+            .mesh;
+    let island_outer = rect_surface_i64(&[(8, 8, 18, 18)]);
+    let island_hole = rect_surface_i64(&[(10, 10, 12, 12)]);
+    let source_island = hypermesh::exact::arrange_coplanar_convex_surface_holed_difference(
+        &island_outer,
+        &island_hole,
+    )
+    .expect("source-owned holed island should materialize")
+    .mesh;
+    let source = combine_open_exact_meshes(
+        &[source_shell, source_island],
+        "same-outer clipped holed source island fixture",
+    );
+
+    let clipping_hole = (16, 8, 22, 18);
+    let strict_island_hole = (13, 13, 15, 15);
+    let opposing_holes = rect_surface_i64(&[clipping_hole, strict_island_hole]);
+    let opposing = hypermesh::exact::arrange_coplanar_convex_surface_multi_holed_difference(
+        &outer,
+        &opposing_holes,
+    )
+    .expect("same-outer holed island clipping source should materialize")
+    .mesh;
+
+    let intersection =
+        hypermesh::exact::arrange_coplanar_surface_component_holed_intersection(&source, &opposing)
+            .expect("same-outer intersection should clip the source-owned holed island");
+    intersection.validate().unwrap();
+    intersection
+        .validate_intersection_against_sources(&source, &opposing)
+        .unwrap();
+    assert_eq!(intersection.components.len(), 2);
+    let island = intersection
+        .components
+        .iter()
+        .find(|component| {
+            component
+                .outer
+                .iter()
+                .any(|point| real_eq(&point.x, &ExactReal::from(16)))
+        })
+        .expect("the source-owned holed island should survive as a clipped component");
+    assert_eq!(
+        island.holes.len(),
+        2,
+        "the original source hole and strict opposite hole should both remain"
+    );
+    assert!(
+        !island
+            .outer
+            .iter()
+            .any(|point| real_eq(&point.x, &ExactReal::from(18))),
+        "the deleted side of the holed source island must not survive"
+    );
+    assert!(
+        island.holes.iter().any(|hole| {
+            hole.iter()
+                .any(|point| real_eq(&point.x, &ExactReal::from(10)))
+        }),
+        "the source island's original hole should remain inside the clipped remnant"
+    );
+    assert!(
+        island.holes.iter().any(|hole| {
+            hole.iter()
+                .any(|point| real_eq(&point.x, &ExactReal::from(13)))
+        }),
+        "the strict opposite hole should be retained inside the clipped remnant"
+    );
+
+    let reverse =
+        hypermesh::exact::arrange_coplanar_surface_component_holed_intersection(&opposing, &source)
+            .expect("same-outer holed source island clipping should be symmetric");
+    reverse.validate().unwrap();
+    reverse
+        .validate_intersection_against_sources(&opposing, &source)
+        .unwrap();
+    assert_eq!(reverse.components.len(), 2);
+
+    let mut stale = intersection.clone();
+    let island_index = stale
+        .components
+        .iter()
+        .position(|component| {
+            component
+                .outer
+                .iter()
+                .any(|point| real_eq(&point.x, &ExactReal::from(16)))
+        })
+        .expect("fixture should retain a clipped holed source island component");
+    stale.components[island_index].holes.clear();
+    assert!(
+        stale
+            .validate_intersection_against_sources(&source, &opposing)
+            .is_err(),
+        "source replay must reject losing holes from the clipped source island"
+    );
+
+    let hole_straddling_clip = rect_surface_i64(&[(11, 8, 14, 18)]);
+    let straddling_opposing = hypermesh::exact::arrange_coplanar_convex_surface_holed_difference(
+        &outer,
+        &hole_straddling_clip,
+    )
+    .expect("straddling island-hole cutter should materialize")
+    .mesh;
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_component_holed_intersection(
+            &source,
+            &straddling_opposing,
+        )
+        .is_none(),
+        "a cutter that crosses a retained island hole still requires planar-cell extraction"
+    );
+
+    let preflight = hypermesh::exact::preflight_boolean_exact(
+        &source,
+        &opposing,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+    )
+    .expect("same-outer clipped holed source island preflight should classify shortcut");
+    preflight.validate().unwrap();
+    preflight
+        .validate_against_sources(&source, &opposing)
+        .unwrap();
+    assert_eq!(
+        preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
+    );
+
+    hypermesh::exact::boolean_exact(
+        &source,
+        &opposing,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("same-outer clipped holed source island boolean should materialize")
+    .validate_operation_against_sources(
+        &source,
+        &opposing,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[test]
 fn exact_coplanar_component_holed_intersection_materializes_nonrectilinear_hole_island() {
     let origin = (0, 0, 0);
     let basis_u = (2, 1, 0);

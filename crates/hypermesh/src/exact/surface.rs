@@ -3569,23 +3569,27 @@ fn same_component_holes_equal(
 /// This helper deliberately recognizes only the bounded case where that union
 /// is still represented by disjoint or nested simple retained holes. Nested
 /// holes are collapsed to the larger removed object, matching the same-outer
-/// main-hole intersection rule. Any proper crossing or point-only boundary
-/// contact remains future planar-cell work because it would require explicit
-/// cell ownership rather than a retained simple-loop carrier.
+/// main-hole intersection rule. A crossing opposite hole may clip the island
+/// outer loop only when the existing retained holes replay either strictly
+/// inside the single filled remnant or wholly inside the deleted cutter. Any
+/// proper crossing or point-only contact with an island hole remains future
+/// planar-cell work because it would require explicit cell ownership rather
+/// than a retained simple-loop carrier.
 #[cfg(feature = "exact-triangulation")]
 fn same_outer_holed_source_island_retained_component(
     candidate: &SourceHoledSurfaceComponent,
     opposite_main: &SourceHoledSurfaceComponent,
     projection: CoplanarProjection,
 ) -> Option<Option<CoplanarConvexHoledComponent>> {
-    let mut holes = candidate.holes.clone();
+    let mut retained_holes = candidate.holes.clone();
+    let mut outer_cutters = Vec::new();
     for opposite_hole in &opposite_main.holes {
         if same_outer_source_island_consumed_by_hole(&candidate.outer, opposite_hole, projection)? {
             return Some(None);
         }
         if same_outer_opposite_hole_is_inside_existing_island_hole(
             opposite_hole,
-            &holes,
+            &retained_holes,
             projection,
         )? {
             continue;
@@ -3595,20 +3599,39 @@ fn same_outer_holed_source_island_retained_component(
             SimplePolygonInteraction::PointOnly => return None,
             SimplePolygonInteraction::Connected => {}
         }
-        if !polygon_strictly_inside_simple_polygon(opposite_hole, &candidate.outer, projection)? {
+        if polygon_strictly_inside_simple_polygon(opposite_hole, &candidate.outer, projection)? {
+            for candidate_hole in &retained_holes {
+                if polygon_lies_in_closed_simple_polygon(candidate_hole, opposite_hole, projection)?
+                {
+                    continue;
+                }
+                if simple_polygon_interaction(candidate_hole, opposite_hole, projection)?
+                    != SimplePolygonInteraction::Disjoint
+                {
+                    return None;
+                }
+            }
+            retained_holes.push(opposite_hole.clone());
+        } else {
+            outer_cutters.push(opposite_hole.clone());
+        }
+    }
+    let outer = if outer_cutters.is_empty() {
+        candidate.outer.clone()
+    } else {
+        same_outer_source_island_clipped_by_holes(&candidate.outer, &outer_cutters, projection)?
+    };
+    let mut holes = Vec::new();
+    for hole in retained_holes {
+        if polygon_strictly_inside_simple_polygon(&hole, &outer, projection)? {
+            holes.push(hole);
+        } else if !same_outer_island_hole_is_deleted_by_outer_cutters(
+            &hole,
+            &outer_cutters,
+            projection,
+        )? {
             return None;
         }
-        for candidate_hole in &holes {
-            if polygon_lies_in_closed_simple_polygon(candidate_hole, opposite_hole, projection)? {
-                continue;
-            }
-            if simple_polygon_interaction(candidate_hole, opposite_hole, projection)?
-                != SimplePolygonInteraction::Disjoint
-            {
-                return None;
-            }
-        }
-        holes.push(opposite_hole.clone());
     }
     remove_nested_same_outer_intersection_holes(&mut holes, projection)?;
     validate_simple_component_loops_disjoint(
@@ -3617,10 +3640,26 @@ fn same_outer_holed_source_island_retained_component(
         "coplanar same-outer holed source island retained holes",
     )
     .ok()?;
-    Some(Some(CoplanarConvexHoledComponent {
-        outer: candidate.outer.clone(),
-        holes,
-    }))
+    Some(Some(CoplanarConvexHoledComponent { outer, holes }))
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn same_outer_island_hole_is_deleted_by_outer_cutters(
+    island_hole: &[Point3],
+    outer_cutters: &[Vec<Point3>],
+    projection: CoplanarProjection,
+) -> Option<bool> {
+    outer_cutters.iter().try_fold(false, |deleted, cutter| {
+        if deleted {
+            Some(true)
+        } else {
+            Some(polygon_lies_in_closed_simple_polygon(
+                island_hole,
+                cutter,
+                projection,
+            )?)
+        }
+    })
 }
 
 #[cfg(feature = "exact-triangulation")]
