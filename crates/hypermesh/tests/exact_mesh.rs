@@ -27277,6 +27277,75 @@ fn exact_coplanar_component_holed_difference_materializes_nested_same_outer_hole
     )
     .unwrap();
 
+    let orthogonal_outer = rect_surface_i64(&[(0, 0, 20, 20)]);
+    let orthogonal_right_hole = rect_surface_i64(&[(4, 4, 16, 8), (4, 8, 8, 16)]);
+    let orthogonal_left_holes = rect_surface_i64(&[
+        (12, 5, 14, 7),  // strict nested hole that must survive in the output
+        (6, 10, 10, 14), // overlapping cutter through the nonconvex right arm
+    ]);
+    let orthogonal_left = hypermesh::exact::arrange_coplanar_orthogonal_surface_difference(
+        &orthogonal_outer,
+        &orthogonal_left_holes,
+    )
+    .expect("orthogonal left source should materialize")
+    .mesh;
+    let orthogonal_right = hypermesh::exact::arrange_coplanar_orthogonal_surface_difference(
+        &orthogonal_outer,
+        &orthogonal_right_hole,
+    )
+    .expect("orthogonal right source should materialize")
+    .mesh;
+    let orthogonal_difference =
+        hypermesh::exact::arrange_coplanar_surface_component_holed_difference(
+            &orthogonal_left,
+            &orthogonal_right,
+        )
+        .expect("rectilinear nonconvex same-outer retained-hole subtraction should replay");
+    orthogonal_difference.validate().unwrap();
+    orthogonal_difference
+        .validate_surface_difference_against_sources(&orthogonal_left, &orthogonal_right)
+        .unwrap();
+    assert_eq!(orthogonal_difference.components.len(), 1);
+    assert_eq!(orthogonal_difference.components[0].holes.len(), 1);
+    assert!(
+        orthogonal_difference.components[0].outer.len() > 6,
+        "the output outer ring must keep the right retained hole's nonconvex shape"
+    );
+    assert!(
+        orthogonal_difference.components[0].holes[0]
+            .iter()
+            .any(|point| real_eq(&point.x, &ExactReal::from(12)))
+    );
+    let orthogonal_preflight = hypermesh::exact::preflight_boolean_exact(
+        &orthogonal_left,
+        &orthogonal_right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .expect("orthogonal component-holed preflight should classify shortcut");
+    orthogonal_preflight.validate().unwrap();
+    orthogonal_preflight
+        .validate_against_sources(&orthogonal_left, &orthogonal_right)
+        .unwrap();
+    assert_eq!(
+        orthogonal_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
+    );
+    hypermesh::exact::boolean_exact(
+        &orthogonal_left,
+        &orthogonal_right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("orthogonal component-holed difference should materialize")
+    .validate_operation_against_sources(
+        &orthogonal_left,
+        &orthogonal_right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
+
     let preflight = hypermesh::exact::preflight_boolean_exact(
         &left,
         &right,

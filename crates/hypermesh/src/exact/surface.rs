@@ -3990,12 +3990,13 @@ fn coplanar_mesh_pairwise_intersection_area2(
 /// emitted component is either a right retained hole boundary, the exact
 /// retained-fragment remnant of a right retained hole after subtracting
 /// clipped left convex holes, or the older exact orthogonal remnant of a right
-/// retained hole after subtracting overlapping left retained rectangles.
-/// Strict left retained holes nested in the remnant stay as holes. Identical
-/// right/left holes and right holes strictly inside a left hole contribute no
-/// area; point contact, edge contact, nonconvex overlap, and crossing
-/// boundaries outside this bounded certificate reject to the general planar
-/// arrangement layer.
+/// retained hole after subtracting overlapping left retained rectangles. The
+/// same exact-cell replay now also accepts rectilinear nonconvex right holes
+/// cut by rectilinear left holes when every strict nested left hole survives as
+/// an output hole ring. Identical right/left holes and right holes strictly
+/// inside a left hole contribute no area; point contact, edge contact,
+/// non-rectilinear nonconvex overlap, and crossing boundaries outside this
+/// bounded certificate reject to the general planar arrangement layer.
 ///
 /// The source rings are recovered by exact mesh incidence, and the final area
 /// equation is replayed as `area(left) - area(left ∩ right) == area(output)`.
@@ -4105,6 +4106,8 @@ fn same_outer_holed_difference_components(
         let mut holes = Vec::new();
         let mut convex_cutters = Vec::new();
         let mut rectangular_cutters = Vec::new();
+        let mut connected_cutters = Vec::new();
+        let mut requires_orthogonal_replay = false;
         for left_hole in &left.holes {
             if polygons_equal(left_hole, right_hole)
                 || polygon_strictly_inside_simple_polygon(right_hole, left_hole, projection)?
@@ -4122,6 +4125,7 @@ fn same_outer_holed_difference_components(
                 SimplePolygonInteraction::Disjoint => {}
                 SimplePolygonInteraction::PointOnly => return None,
                 SimplePolygonInteraction::Connected => {
+                    connected_cutters.push(left_hole.clone());
                     if let (Some(right_rect), Some(left_rect)) = (
                         projected_axis_aligned_rectangle(right_hole, projection),
                         projected_axis_aligned_rectangle(left_hole, projection),
@@ -4130,10 +4134,12 @@ fn same_outer_holed_difference_components(
                             return None;
                         }
                         rectangular_cutters.push(left_rect);
+                    } else if let Some(cutter) =
+                        convex_retained_hole_intersection_polygon(left_hole, right_hole, projection)
+                    {
+                        convex_cutters.push(cutter);
                     } else {
-                        convex_cutters.push(convex_retained_hole_intersection_polygon(
-                            left_hole, right_hole, projection,
-                        )?);
+                        requires_orthogonal_replay = true;
                     }
                 }
             }
@@ -4141,7 +4147,14 @@ fn same_outer_holed_difference_components(
         if swallowed {
             continue;
         }
-        if rectangular_cutters.is_empty() && convex_cutters.is_empty() {
+        if requires_orthogonal_replay {
+            components.extend(same_outer_holed_orthogonal_difference_components(
+                right_hole,
+                holes,
+                &connected_cutters,
+                projection,
+            )?);
+        } else if rectangular_cutters.is_empty() && convex_cutters.is_empty() {
             let mut outer = right_hole.clone();
             orient_polygon_ccw(&mut outer, projection)?;
             sort_polygons_for_replay(&mut holes, projection);
@@ -4228,6 +4241,138 @@ fn same_outer_holed_rectangular_difference_components(
         components.push(CoplanarConvexHoledComponent { outer, holes });
     }
     Some(components)
+}
+
+/// Replay a rectilinear same-outer retained-hole difference through cells.
+///
+/// Same-outer subtraction reduces `(outer - left_holes) - (outer - right_holes)`
+/// to `right_hole - left_holes`. The rectangular and convex helpers above own
+/// the smaller clipped-cutter certificates. This fallback covers the bounded
+/// rectilinear case where the right retained hole itself may be nonconvex, but
+/// the exact orthogonal cell arrangement can still materialize the remainder
+/// as simple component-holed loops. Strict nested left holes are included in
+/// the removed set and must reappear as retained hole rings in the imported
+/// components; otherwise the helper rejects instead of silently consuming
+/// topology that belongs to a broader planar arrangement.
+///
+/// The promotion follows Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997): retained source loops and exact cell
+/// predicates decide topology before any mesh is emitted. The finite
+/// rectilinear subdivision is the orthogonal arrangement model from de Berg,
+/// Cheong, van Kreveld, and Overmars, *Computational Geometry: Algorithms and
+/// Applications*, 3rd ed. (2008), Chapter 2. Temporary loop triangulation uses
+/// Held, "FIST: Fast Industrial-Strength Triangulation of Polygons,"
+/// *Algorithmica* 30 (2001), through `hypertri`.
+#[cfg(feature = "exact-triangulation")]
+fn same_outer_holed_orthogonal_difference_components(
+    source: &[Point3],
+    retained_holes: Vec<Vec<Point3>>,
+    cutters: &[Vec<Point3>],
+    projection: CoplanarProjection,
+) -> Option<Vec<CoplanarConvexHoledComponent>> {
+    if cutters.is_empty() {
+        return None;
+    }
+    let mut source_loop = source.to_vec();
+    orient_polygon_ccw(&mut source_loop, projection)?;
+    validate_projected_simple_loop(
+        &source_loop,
+        projection,
+        "coplanar same-outer orthogonal hole difference source",
+    )
+    .ok()?;
+    let source_mesh = polygon_to_retained_simple_open_mesh_with_label(
+        &source_loop,
+        projection,
+        "exact same-outer orthogonal retained-hole difference source",
+    )?;
+
+    let mut removal_meshes = Vec::with_capacity(cutters.len() + retained_holes.len());
+    for cutter in cutters {
+        removal_meshes.push(simple_loop_mesh_for_orthogonal_replay(
+            cutter,
+            projection,
+            "exact same-outer orthogonal retained-hole difference cutter",
+        )?);
+    }
+    for retained_hole in &retained_holes {
+        removal_meshes.push(simple_loop_mesh_for_orthogonal_replay(
+            retained_hole,
+            projection,
+            "exact same-outer orthogonal retained-hole difference strict hole",
+        )?);
+    }
+    let removal_refs = removal_meshes.iter().collect::<Vec<_>>();
+    let removal = merge_component_meshes(
+        removal_refs,
+        "exact same-outer orthogonal retained-hole difference removals",
+    )?;
+    let arrangement = super::orthogonal_surface::arrange_coplanar_orthogonal_surface_difference(
+        &source_mesh,
+        &removal,
+    )?;
+    if arrangement.projection != projection {
+        return None;
+    }
+
+    let mut components = arrangement
+        .components
+        .into_iter()
+        .map(|component| {
+            let mut outer = simplify_projected_polygon(component.outer, projection);
+            orient_polygon_ccw(&mut outer, projection)?;
+            validate_projected_simple_loop(
+                &outer,
+                projection,
+                "coplanar same-outer orthogonal hole difference output",
+            )
+            .ok()?;
+            let mut holes = component
+                .holes
+                .into_iter()
+                .map(|hole| {
+                    let mut hole = simplify_projected_polygon(hole, projection);
+                    orient_polygon_cw(&mut hole, projection)?;
+                    validate_projected_simple_loop(
+                        &hole,
+                        projection,
+                        "coplanar same-outer orthogonal hole difference output",
+                    )
+                    .ok()?;
+                    Some(hole)
+                })
+                .collect::<Option<Vec<_>>>()?;
+            sort_polygons_for_replay(&mut holes, projection);
+            Some(CoplanarConvexHoledComponent { outer, holes })
+        })
+        .collect::<Option<Vec<_>>>()?;
+    if components.is_empty() {
+        return None;
+    }
+    sort_components_for_replay(&mut components, projection);
+    if !retained_holes.iter().all(|expected| {
+        components.iter().any(|component| {
+            component
+                .holes
+                .iter()
+                .any(|actual| polygons_equal(expected, actual))
+        })
+    }) {
+        return None;
+    }
+    Some(components)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn simple_loop_mesh_for_orthogonal_replay(
+    loop_points: &[Point3],
+    projection: CoplanarProjection,
+    label: &'static str,
+) -> Option<ExactMesh> {
+    let mut loop_points = loop_points.to_vec();
+    orient_polygon_ccw(&mut loop_points, projection)?;
+    validate_projected_simple_loop(&loop_points, projection, label).ok()?;
+    polygon_to_retained_simple_open_mesh_with_label(&loop_points, projection, label)
 }
 
 /// Materialize a right retained hole minus clipped convex left-hole cutters.

@@ -2975,6 +2975,61 @@ fn exercise_same_outer_component_holed_coplanar_difference() {
         ExactBoundaryBooleanPolicy::Reject,
     )
     .unwrap();
+
+    let orthogonal_outer = rect_surface_i64(&[(0, 0, 20, 20)]);
+    let orthogonal_right_hole = rect_surface_i64(&[(4, 4, 16, 8), (4, 8, 8, 16)]);
+    let orthogonal_left_holes = rect_surface_i64(&[(12, 5, 14, 7), (6, 10, 10, 14)]);
+    let orthogonal_left = arrange_coplanar_orthogonal_surface_difference(
+        &orthogonal_outer,
+        &orthogonal_left_holes,
+    )
+    .expect("orthogonal same-outer left should materialize")
+    .mesh;
+    let orthogonal_right = arrange_coplanar_orthogonal_surface_difference(
+        &orthogonal_outer,
+        &orthogonal_right_hole,
+    )
+    .expect("orthogonal same-outer right should materialize")
+    .mesh;
+    let orthogonal_difference =
+        arrange_coplanar_surface_component_holed_difference(&orthogonal_left, &orthogonal_right)
+            .expect("orthogonal same-outer component-holed difference should materialize");
+    orthogonal_difference.validate().unwrap();
+    orthogonal_difference
+        .validate_surface_difference_against_sources(&orthogonal_left, &orthogonal_right)
+        .unwrap();
+    assert_eq!(orthogonal_difference.components.len(), 1);
+    assert_eq!(orthogonal_difference.components[0].holes.len(), 1);
+    assert!(orthogonal_difference.components[0].outer.len() > 6);
+    let orthogonal_preflight = preflight_boolean_exact(
+        &orthogonal_left,
+        &orthogonal_right,
+        ExactBooleanOperation::Difference,
+    )
+    .expect("orthogonal component-holed preflight should classify shortcut");
+    orthogonal_preflight.validate().unwrap();
+    orthogonal_preflight
+        .validate_against_sources(&orthogonal_left, &orthogonal_right)
+        .unwrap();
+    assert_eq!(
+        orthogonal_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
+    );
+    hypermesh::exact::boolean_exact(
+        &orthogonal_left,
+        &orthogonal_right,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("orthogonal component-holed difference should materialize")
+    .validate_operation_against_sources(
+        &orthogonal_left,
+        &orthogonal_right,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
 }
 
 #[cfg(feature = "exact-triangulation")]
