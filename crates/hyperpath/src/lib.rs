@@ -103,7 +103,8 @@ pub use cam::{
 pub use curve_cell::{
     CurveArrangementCellEdge, CurveArrangementCellEdgeKind, CurveArrangementCellError,
     CurveArrangementCellFace, CurveArrangementCellFaceClass, CurveArrangementCellGraph,
-    CurveArrangementCellVertex, CurveArrangementHalfEdge,
+    CurveArrangementCellVertex, CurveArrangementHalfEdge, CurveArrangementLoopRoleBlocker,
+    CurveArrangementLoopRoleClass, CurveArrangementLoopRoleReport,
 };
 pub use mixed_bezier_arrangement::{
     LineQuadraticBezierArrangementError, LineQuadraticBezierArrangementEvent,

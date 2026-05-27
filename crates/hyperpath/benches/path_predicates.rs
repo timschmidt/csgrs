@@ -374,7 +374,7 @@ fn path_predicates(c: &mut Criterion) {
                 &[vec![], vec![]],
                 PredicatePolicy::default(),
             )
-            .map(|report| report.cell_graph)
+            .map(|report| (report.cell_graph.faces, report.cell_graph.loop_roles))
         })
     });
     let conic = RationalQuadraticBezier::new(p(0, 0), p(500, 200), p(1000, 0), r(2)).unwrap();
@@ -394,6 +394,20 @@ fn path_predicates(c: &mut Criterion) {
                 &bezier_events,
                 PredicatePolicy::default(),
             )
+        })
+    });
+    let conic_loop_upper =
+        RationalQuadraticBezier::new(p(0, 0), p(500, 1000), p(1000, 0), r(2)).unwrap();
+    let conic_loop_lower =
+        RationalQuadraticBezier::new(p(1000, 0), p(500, -1000), p(0, 0), r(2)).unwrap();
+    c.bench_function("rational_quadratic_bezier_loop_role_replay", |b| {
+        b.iter(|| {
+            arrange_rational_quadratic_beziers(
+                &[conic_loop_upper.clone(), conic_loop_lower.clone()],
+                &[vec![], vec![]],
+                PredicatePolicy::default(),
+            )
+            .map(|report| report.cell_graph.loop_roles)
         })
     });
     let line_conic = RationalQuadraticBezier::new(p(0, 0), p(500, 1000), p(1000, 0), r(1)).unwrap();
@@ -453,7 +467,7 @@ fn path_predicates(c: &mut Criterion) {
                 std::slice::from_ref(&line_conic),
                 PredicatePolicy::default(),
             )
-            .map(|report| report.cell_graph)
+            .map(|report| (report.cell_graph.faces, report.cell_graph.loop_roles))
         })
     });
     let line_conic_atan_area =

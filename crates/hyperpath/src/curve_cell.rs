@@ -123,6 +123,68 @@ pub enum CurveArrangementCellFaceClass {
     Exterior,
 }
 
+/// Exact containment role for a retained native curve face.
+///
+/// The role report is deliberately narrower than a general curve boolean
+/// materializer. It is emitted only for nonzero-area native faces whose
+/// representative point can be certified by exact horizontal-ray predicates
+/// against every other native face. Boundary hits, tangent ray contacts, arcs,
+/// and genuinely cubic ray equations that are not degree-lowered stay
+/// [`Uncertain`](Self::Uncertain). This is the object/predicate boundary in
+/// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
+/// 7.1-2 (1997): retained topology may be classified only when exact
+/// witnesses replay; otherwise uncertainty is explicit. Polynomial Bezier
+/// ray equations use the Bernstein hodograph model described by Farouki,
+/// *Pythagorean Hodograph Curves* (2008), and rational quadratics use the
+/// homogeneous equation `Y(t) - y W(t) = 0` before affine division.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CurveArrangementLoopRoleClass {
+    /// Positive-area loop at even containment depth.
+    Material,
+    /// Positive-area loop at odd containment depth.
+    Hole,
+    /// Negative-area exterior walk.
+    Exterior,
+    /// Exact role replay was blocked by unsupported, boundary, or tangent evidence.
+    Uncertain,
+}
+
+/// Why a native loop role is uncertain.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CurveArrangementLoopRoleBlocker {
+    /// The face has zero or undecidable signed area.
+    Area,
+    /// No representative point was certified strictly inside the face.
+    Representative,
+    /// A horizontal ray hit a boundary point of the tested loop.
+    BoundaryContact,
+    /// A horizontal ray was tangent to the tested loop.
+    TangentContact,
+    /// The tested loop contains an unsupported edge family for exact ray replay.
+    UnsupportedEdge,
+    /// A genuinely cubic ray equation needs represented-root isolation.
+    UnsupportedCubicRay,
+    /// Exact comparison or division failed during ray replay.
+    UndecidablePredicate,
+}
+
+/// Native retained loop role evidence for one cell face.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CurveArrangementLoopRoleReport {
+    /// Face index in [`CurveArrangementCellGraph::faces`].
+    pub face: usize,
+    /// Certified role or explicit uncertainty.
+    pub class: CurveArrangementLoopRoleClass,
+    /// Exact representative point when one was certified.
+    pub representative: Option<Point2>,
+    /// Number of other bounded faces that contain `representative`.
+    pub containment_depth: Option<usize>,
+    /// Face indices whose boundaries contain `representative`.
+    pub containers: Vec<usize>,
+    /// Explicit blocker when `class == Uncertain`.
+    pub blocker: Option<CurveArrangementLoopRoleBlocker>,
+}
+
 /// Nonzero-area face walk in a retained mixed curve cell graph.
 ///
 /// The signed doubled area is the exact Green-integral
@@ -175,6 +237,8 @@ pub struct CurveArrangementCellGraph {
     pub half_edges: Vec<CurveArrangementHalfEdge>,
     /// Nonzero-area face walks.
     pub faces: Vec<CurveArrangementCellFace>,
+    /// Exact native loop containment/material role reports for retained faces.
+    pub loop_roles: Vec<CurveArrangementLoopRoleReport>,
 }
 
 pub(crate) fn build_line_arc_cell_graph(
@@ -587,12 +651,25 @@ fn build_curve_cell_graph_full(
         face_area_mode,
         policy,
     )?;
+    let loop_roles = curve_loop_role_reports(
+        &vertices,
+        &edges,
+        &half_edges,
+        &faces,
+        line_fragments,
+        arc_fragments,
+        bezier_fragments,
+        cubic_fragments,
+        conic_fragments,
+        policy,
+    );
 
     Ok(CurveArrangementCellGraph {
         vertices,
         edges,
         half_edges,
         faces,
+        loop_roles,
     })
 }
 
@@ -907,6 +984,355 @@ fn curve_cell_faces(
     Ok(faces)
 }
 
+fn curve_loop_role_reports(
+    vertices: &[CurveArrangementCellVertex],
+    edges: &[CurveArrangementCellEdge],
+    half_edges: &[CurveArrangementHalfEdge],
+    faces: &[CurveArrangementCellFace],
+    line_fragments: &[LineArrangementFragment],
+    arc_fragments: &[ExplicitArcArrangementFragment],
+    bezier_fragments: &[QuadraticBezierRealFragment],
+    cubic_fragments: &[CubicBezierRealFragment],
+    conic_fragments: &[RationalQuadraticCellFragment],
+    policy: PredicatePolicy,
+) -> Vec<CurveArrangementLoopRoleReport> {
+    let mut reports = Vec::with_capacity(faces.len());
+    for (face_index, face) in faces.iter().enumerate() {
+        if face.class == CurveArrangementCellFaceClass::Exterior {
+            reports.push(CurveArrangementLoopRoleReport {
+                face: face_index,
+                class: CurveArrangementLoopRoleClass::Exterior,
+                representative: None,
+                containment_depth: None,
+                containers: Vec::new(),
+                blocker: None,
+            });
+            continue;
+        }
+
+        let Some(representative) = native_face_representative(
+            face,
+            vertices,
+            edges,
+            half_edges,
+            line_fragments,
+            arc_fragments,
+            bezier_fragments,
+            cubic_fragments,
+            conic_fragments,
+            policy,
+        ) else {
+            reports.push(uncertain_loop_role(
+                face_index,
+                CurveArrangementLoopRoleBlocker::Representative,
+            ));
+            continue;
+        };
+
+        let mut containers = Vec::new();
+        let mut blocker = None;
+        for (other_index, other_face) in faces.iter().enumerate() {
+            if other_index == face_index
+                || other_face.class == CurveArrangementCellFaceClass::Exterior
+            {
+                continue;
+            }
+            match classify_point_against_native_face(
+                &representative,
+                other_face,
+                vertices,
+                edges,
+                half_edges,
+                line_fragments,
+                arc_fragments,
+                bezier_fragments,
+                cubic_fragments,
+                conic_fragments,
+                policy,
+            ) {
+                NativePointFaceClassification::Inside => containers.push(other_index),
+                NativePointFaceClassification::Outside => {}
+                NativePointFaceClassification::Boundary => {
+                    blocker = Some(CurveArrangementLoopRoleBlocker::BoundaryContact);
+                    break;
+                }
+                NativePointFaceClassification::Unknown(reason) => {
+                    blocker = Some(reason);
+                    break;
+                }
+            }
+        }
+
+        if let Some(blocker) = blocker {
+            reports.push(CurveArrangementLoopRoleReport {
+                face: face_index,
+                class: CurveArrangementLoopRoleClass::Uncertain,
+                representative: Some(representative),
+                containment_depth: None,
+                containers,
+                blocker: Some(blocker),
+            });
+            continue;
+        }
+
+        let depth = containers.len();
+        reports.push(CurveArrangementLoopRoleReport {
+            face: face_index,
+            class: if depth % 2 == 0 {
+                CurveArrangementLoopRoleClass::Material
+            } else {
+                CurveArrangementLoopRoleClass::Hole
+            },
+            representative: Some(representative),
+            containment_depth: Some(depth),
+            containers,
+            blocker: None,
+        });
+    }
+    reports
+}
+
+fn uncertain_loop_role(
+    face: usize,
+    blocker: CurveArrangementLoopRoleBlocker,
+) -> CurveArrangementLoopRoleReport {
+    CurveArrangementLoopRoleReport {
+        face,
+        class: CurveArrangementLoopRoleClass::Uncertain,
+        representative: None,
+        containment_depth: None,
+        containers: Vec::new(),
+        blocker: Some(blocker),
+    }
+}
+
+fn native_face_representative(
+    face: &CurveArrangementCellFace,
+    vertices: &[CurveArrangementCellVertex],
+    edges: &[CurveArrangementCellEdge],
+    half_edges: &[CurveArrangementHalfEdge],
+    line_fragments: &[LineArrangementFragment],
+    arc_fragments: &[ExplicitArcArrangementFragment],
+    bezier_fragments: &[QuadraticBezierRealFragment],
+    cubic_fragments: &[CubicBezierRealFragment],
+    conic_fragments: &[RationalQuadraticCellFragment],
+    policy: PredicatePolicy,
+) -> Option<Point2> {
+    let area_cycle = cycle_without_canceling_twins(&face.half_edges, half_edges);
+    if area_cycle.is_empty() {
+        return None;
+    }
+    let vertex_average = average_cycle_vertices(&area_cycle, vertices, half_edges)?;
+    for half_edge in &area_cycle {
+        let midpoint = half_edge_midpoint(
+            *half_edge,
+            vertices,
+            edges,
+            half_edges,
+            line_fragments,
+            arc_fragments,
+            bezier_fragments,
+            cubic_fragments,
+            conic_fragments,
+            policy,
+        )?;
+        let candidate = midpoint_between(&vertex_average, &midpoint)?;
+        if classify_point_against_native_face(
+            &candidate,
+            face,
+            vertices,
+            edges,
+            half_edges,
+            line_fragments,
+            arc_fragments,
+            bezier_fragments,
+            cubic_fragments,
+            conic_fragments,
+            policy,
+        ) == NativePointFaceClassification::Inside
+        {
+            return Some(candidate);
+        }
+    }
+    None
+}
+
+fn average_cycle_vertices(
+    cycle: &[usize],
+    vertices: &[CurveArrangementCellVertex],
+    half_edges: &[CurveArrangementHalfEdge],
+) -> Option<Point2> {
+    let mut unique = Vec::<usize>::new();
+    for half_edge in cycle {
+        let vertex = half_edges[*half_edge].from;
+        if !unique.contains(&vertex) {
+            unique.push(vertex);
+        }
+    }
+    if unique.is_empty() {
+        return None;
+    }
+    let mut x = Real::zero();
+    let mut y = Real::zero();
+    for vertex in &unique {
+        x = x + vertices[*vertex].point.x.clone();
+        y = y + vertices[*vertex].point.y.clone();
+    }
+    let denominator = Real::from(unique.len() as i64);
+    Some(Point2::new(
+        div_real(x, denominator.clone())?,
+        div_real(y, denominator)?,
+    ))
+}
+
+fn midpoint_between(left: &Point2, right: &Point2) -> Option<Point2> {
+    Some(Point2::new(
+        div_real(left.x.clone() + right.x.clone(), Real::from(2))?,
+        div_real(left.y.clone() + right.y.clone(), Real::from(2))?,
+    ))
+}
+
+fn half_edge_midpoint(
+    half_edge: usize,
+    vertices: &[CurveArrangementCellVertex],
+    edges: &[CurveArrangementCellEdge],
+    half_edges: &[CurveArrangementHalfEdge],
+    _line_fragments: &[LineArrangementFragment],
+    arc_fragments: &[ExplicitArcArrangementFragment],
+    bezier_fragments: &[QuadraticBezierRealFragment],
+    cubic_fragments: &[CubicBezierRealFragment],
+    conic_fragments: &[RationalQuadraticCellFragment],
+    policy: PredicatePolicy,
+) -> Option<Point2> {
+    let half = &half_edges[half_edge];
+    let edge = &edges[half.edge];
+    let midpoint = match edge.kind {
+        CurveArrangementCellEdgeKind::Line => {
+            midpoint_between(&vertices[half.from].point, &vertices[half.to].point)?
+        }
+        CurveArrangementCellEdgeKind::ExplicitArc => {
+            let _ = arc_fragments;
+            return None;
+        }
+        CurveArrangementCellEdgeKind::QuadraticBezier => {
+            let fragment = &bezier_fragments[edge.fragments[0]];
+            eval_quadratic_fragment_half(fragment)
+        }
+        CurveArrangementCellEdgeKind::CubicBezier => {
+            let fragment = &cubic_fragments[edge.fragments[0]];
+            eval_cubic_fragment_half(fragment)
+        }
+        CurveArrangementCellEdgeKind::RationalQuadraticBezier => {
+            let fragment = &conic_fragments[edge.fragments[0]];
+            eval_conic_fragment_half(fragment, policy)?
+        }
+    };
+    if half_edge < half.twin {
+        Some(midpoint)
+    } else {
+        Some(midpoint)
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum NativePointFaceClassification {
+    Inside,
+    Outside,
+    Boundary,
+    Unknown(CurveArrangementLoopRoleBlocker),
+}
+
+fn classify_point_against_native_face(
+    point: &Point2,
+    face: &CurveArrangementCellFace,
+    vertices: &[CurveArrangementCellVertex],
+    edges: &[CurveArrangementCellEdge],
+    half_edges: &[CurveArrangementHalfEdge],
+    line_fragments: &[LineArrangementFragment],
+    arc_fragments: &[ExplicitArcArrangementFragment],
+    bezier_fragments: &[QuadraticBezierRealFragment],
+    cubic_fragments: &[CubicBezierRealFragment],
+    conic_fragments: &[RationalQuadraticCellFragment],
+    policy: PredicatePolicy,
+) -> NativePointFaceClassification {
+    let area_cycle = cycle_without_canceling_twins(&face.half_edges, half_edges);
+    let mut crossings = 0usize;
+    for half_edge in area_cycle {
+        match horizontal_ray_crossings(
+            point,
+            half_edge,
+            vertices,
+            edges,
+            half_edges,
+            line_fragments,
+            arc_fragments,
+            bezier_fragments,
+            cubic_fragments,
+            conic_fragments,
+            policy,
+        ) {
+            RayCrossingResult::Crossings(count) => crossings += count,
+            RayCrossingResult::Boundary => return NativePointFaceClassification::Boundary,
+            RayCrossingResult::Unknown(reason) => {
+                return NativePointFaceClassification::Unknown(reason);
+            }
+        }
+    }
+    if crossings % 2 == 1 {
+        NativePointFaceClassification::Inside
+    } else {
+        NativePointFaceClassification::Outside
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum RayCrossingResult {
+    Crossings(usize),
+    Boundary,
+    Unknown(CurveArrangementLoopRoleBlocker),
+}
+
+fn horizontal_ray_crossings(
+    point: &Point2,
+    half_edge: usize,
+    vertices: &[CurveArrangementCellVertex],
+    edges: &[CurveArrangementCellEdge],
+    half_edges: &[CurveArrangementHalfEdge],
+    _line_fragments: &[LineArrangementFragment],
+    arc_fragments: &[ExplicitArcArrangementFragment],
+    bezier_fragments: &[QuadraticBezierRealFragment],
+    cubic_fragments: &[CubicBezierRealFragment],
+    conic_fragments: &[RationalQuadraticCellFragment],
+    policy: PredicatePolicy,
+) -> RayCrossingResult {
+    let half = &half_edges[half_edge];
+    let edge = &edges[half.edge];
+    match edge.kind {
+        CurveArrangementCellEdgeKind::Line => line_ray_crossing(
+            point,
+            &vertices[half.from].point,
+            &vertices[half.to].point,
+            policy,
+        ),
+        CurveArrangementCellEdgeKind::ExplicitArc => {
+            let _ = arc_fragments;
+            RayCrossingResult::Unknown(CurveArrangementLoopRoleBlocker::UnsupportedEdge)
+        }
+        CurveArrangementCellEdgeKind::QuadraticBezier => {
+            let fragment = &bezier_fragments[edge.fragments[0]];
+            quadratic_ray_crossing(point, fragment, half_edge < half.twin, policy)
+        }
+        CurveArrangementCellEdgeKind::CubicBezier => {
+            let fragment = &cubic_fragments[edge.fragments[0]];
+            cubic_ray_crossing(point, fragment, half_edge < half.twin, policy)
+        }
+        CurveArrangementCellEdgeKind::RationalQuadraticBezier => {
+            let fragment = &conic_fragments[edge.fragments[0]];
+            conic_ray_crossing(point, fragment, half_edge < half.twin, policy)
+        }
+    }
+}
+
 fn cycle_without_canceling_twins(
     cycle: &[usize],
     half_edges: &[CurveArrangementHalfEdge],
@@ -951,6 +1377,237 @@ fn signed_curve_face_area_twice(
             )?;
     }
     Some(area)
+}
+
+fn line_ray_crossing(
+    point: &Point2,
+    start: &Point2,
+    end: &Point2,
+    policy: PredicatePolicy,
+) -> RayCrossingResult {
+    if point_on_segment(point, start, end, policy) == Some(true) {
+        return RayCrossingResult::Boundary;
+    }
+    let start_above = match compare_reals_with_policy(&start.y, &point.y, policy).value() {
+        Some(order) => matches!(order, Ordering::Greater | Ordering::Equal),
+        None => {
+            return RayCrossingResult::Unknown(
+                CurveArrangementLoopRoleBlocker::UndecidablePredicate,
+            );
+        }
+    };
+    let end_above = match compare_reals_with_policy(&end.y, &point.y, policy).value() {
+        Some(order) => matches!(order, Ordering::Greater | Ordering::Equal),
+        None => {
+            return RayCrossingResult::Unknown(
+                CurveArrangementLoopRoleBlocker::UndecidablePredicate,
+            );
+        }
+    };
+    if start_above == end_above {
+        return RayCrossingResult::Crossings(0);
+    }
+    let dy = end.y.clone() - start.y.clone();
+    let numerator = (point.y.clone() - start.y.clone()) * (end.x.clone() - start.x.clone());
+    let Some(x) = div_real(start.x.clone() * dy.clone() + numerator, dy) else {
+        return RayCrossingResult::Unknown(CurveArrangementLoopRoleBlocker::UndecidablePredicate);
+    };
+    ray_x_crossing(point, &x, policy)
+}
+
+fn point_on_segment(
+    point: &Point2,
+    start: &Point2,
+    end: &Point2,
+    policy: PredicatePolicy,
+) -> Option<bool> {
+    let cross_value = (end.x.clone() - start.x.clone()) * (point.y.clone() - start.y.clone())
+        - (end.y.clone() - start.y.clone()) * (point.x.clone() - start.x.clone());
+    if compare_reals_with_policy(&cross_value, &Real::zero(), policy).value()? != Ordering::Equal {
+        return Some(false);
+    }
+    Some(
+        real_between_closed(&point.x, &start.x, &end.x, policy)?
+            && real_between_closed(&point.y, &start.y, &end.y, policy)?,
+    )
+}
+
+fn quadratic_ray_crossing(
+    point: &Point2,
+    fragment: &QuadraticBezierRealFragment,
+    forward: bool,
+    policy: PredicatePolicy,
+) -> RayCrossingResult {
+    let roots = match solve_quadratic_or_linear_real(
+        fragment.curve.start().y.clone() - Real::from(2) * fragment.curve.control().y.clone()
+            + fragment.curve.end().y.clone(),
+        Real::from(2) * (fragment.curve.control().y.clone() - fragment.curve.start().y.clone()),
+        fragment.curve.start().y.clone() - point.y.clone(),
+        policy,
+    ) {
+        Some(roots) => roots,
+        None => {
+            return RayCrossingResult::Unknown(
+                CurveArrangementLoopRoleBlocker::UndecidablePredicate,
+            );
+        }
+    };
+    ray_crossings_from_roots(
+        point,
+        roots,
+        forward,
+        |t| eval_quadratic_cell_fragment(fragment, t),
+        |t| quadratic_y_derivative(fragment, t),
+        policy,
+    )
+}
+
+fn cubic_ray_crossing(
+    point: &Point2,
+    fragment: &CubicBezierRealFragment,
+    forward: bool,
+    policy: PredicatePolicy,
+) -> RayCrossingResult {
+    let p0 = fragment.curve.start().y.clone() - point.y.clone();
+    let p1 = fragment.curve.control0().y.clone() - point.y.clone();
+    let p2 = fragment.curve.control1().y.clone() - point.y.clone();
+    let p3 = fragment.curve.end().y.clone() - point.y.clone();
+    let cubic = -p0.clone() + Real::from(3) * p1.clone() - Real::from(3) * p2.clone() + p3;
+    if compare_reals_with_policy(&cubic, &Real::zero(), policy).value() != Some(Ordering::Equal) {
+        return RayCrossingResult::Unknown(CurveArrangementLoopRoleBlocker::UnsupportedCubicRay);
+    }
+    let quadratic = Real::from(3) * p0.clone() - Real::from(6) * p1.clone() + Real::from(3) * p2;
+    let linear = Real::from(3) * (p1 - p0);
+    let roots = match solve_quadratic_or_linear_real(
+        quadratic,
+        linear,
+        fragment.curve.start().y.clone() - point.y.clone(),
+        policy,
+    ) {
+        Some(roots) => roots,
+        None => {
+            return RayCrossingResult::Unknown(
+                CurveArrangementLoopRoleBlocker::UndecidablePredicate,
+            );
+        }
+    };
+    ray_crossings_from_roots(
+        point,
+        roots,
+        forward,
+        |t| eval_cubic_cell_fragment(fragment, t),
+        |t| cubic_y_derivative(fragment, t),
+        policy,
+    )
+}
+
+fn conic_ray_crossing(
+    point: &Point2,
+    fragment: &RationalQuadraticCellFragment,
+    forward: bool,
+    policy: PredicatePolicy,
+) -> RayCrossingResult {
+    let y0 = fragment.start_control.y.clone() - point.y.clone() * fragment.start_control.w.clone();
+    let y1 = fragment.control.y.clone() - point.y.clone() * fragment.control.w.clone();
+    let y2 = fragment.end_control.y.clone() - point.y.clone() * fragment.end_control.w.clone();
+    let roots = match solve_quadratic_or_linear_real(
+        y0.clone() - Real::from(2) * y1.clone() + y2,
+        Real::from(2) * (y1 - y0.clone()),
+        y0,
+        policy,
+    ) {
+        Some(roots) => roots,
+        None => {
+            return RayCrossingResult::Unknown(
+                CurveArrangementLoopRoleBlocker::UndecidablePredicate,
+            );
+        }
+    };
+    ray_crossings_from_roots(
+        point,
+        roots,
+        forward,
+        |t| eval_conic_cell_fragment(fragment, t, policy),
+        |t| conic_y_derivative_numerator(fragment, t, point),
+        policy,
+    )
+}
+
+fn ray_crossings_from_roots<E, D>(
+    point: &Point2,
+    roots: Vec<Real>,
+    forward: bool,
+    mut eval: E,
+    mut y_derivative: D,
+    policy: PredicatePolicy,
+) -> RayCrossingResult
+where
+    E: FnMut(&Real) -> Option<Point2>,
+    D: FnMut(&Real) -> Option<Real>,
+{
+    let mut crossings = 0usize;
+    for root in roots {
+        match real_in_unit_interval_closed(&root, policy) {
+            Some(true) => {}
+            Some(false) => continue,
+            None => {
+                return RayCrossingResult::Unknown(
+                    CurveArrangementLoopRoleBlocker::UndecidablePredicate,
+                );
+            }
+        }
+        if !traversal_half_open_parameter(&root, forward, policy) {
+            continue;
+        }
+        let Some(curve_point) = eval(&root) else {
+            return RayCrossingResult::Unknown(
+                CurveArrangementLoopRoleBlocker::UndecidablePredicate,
+            );
+        };
+        if compare_reals_with_policy(&curve_point.x, &point.x, policy).value()
+            == Some(Ordering::Equal)
+        {
+            return RayCrossingResult::Boundary;
+        }
+        let Some(derivative) = y_derivative(&root) else {
+            return RayCrossingResult::Unknown(
+                CurveArrangementLoopRoleBlocker::UndecidablePredicate,
+            );
+        };
+        match compare_reals_with_policy(&derivative, &Real::zero(), policy).value() {
+            Some(Ordering::Equal) => {
+                return RayCrossingResult::Unknown(CurveArrangementLoopRoleBlocker::TangentContact);
+            }
+            Some(Ordering::Less | Ordering::Greater) => {}
+            None => {
+                return RayCrossingResult::Unknown(
+                    CurveArrangementLoopRoleBlocker::UndecidablePredicate,
+                );
+            }
+        }
+        match ray_x_crossing(point, &curve_point.x, policy) {
+            RayCrossingResult::Crossings(count) => crossings += count,
+            other => return other,
+        }
+    }
+    RayCrossingResult::Crossings(crossings)
+}
+
+fn ray_x_crossing(point: &Point2, x: &Real, policy: PredicatePolicy) -> RayCrossingResult {
+    match compare_reals_with_policy(x, &point.x, policy).value() {
+        Some(Ordering::Greater) => RayCrossingResult::Crossings(1),
+        Some(Ordering::Less) => RayCrossingResult::Crossings(0),
+        Some(Ordering::Equal) => RayCrossingResult::Boundary,
+        None => RayCrossingResult::Unknown(CurveArrangementLoopRoleBlocker::UndecidablePredicate),
+    }
+}
+
+fn traversal_half_open_parameter(parameter: &Real, forward: bool, policy: PredicatePolicy) -> bool {
+    if forward {
+        compare_reals_with_policy(parameter, &Real::one(), policy).value() != Some(Ordering::Equal)
+    } else {
+        compare_reals_with_policy(parameter, &Real::zero(), policy).value() != Some(Ordering::Equal)
+    }
 }
 
 fn signed_curve_half_edge_area_twice(
@@ -1076,6 +1733,41 @@ fn quadratic_bezier_area_twice(fragment: &QuadraticBezierRealFragment) -> Real {
         .expect("nonzero Green-integral denominator")
 }
 
+fn eval_quadratic_fragment_half(fragment: &QuadraticBezierRealFragment) -> Point2 {
+    eval_quadratic_cell_fragment(fragment, &div_real(Real::one(), Real::from(2)).unwrap()).unwrap()
+}
+
+fn eval_quadratic_cell_fragment(
+    fragment: &QuadraticBezierRealFragment,
+    parameter: &Real,
+) -> Option<Point2> {
+    let one_minus_t = Real::one() - parameter.clone();
+    let start_weight = one_minus_t.clone() * one_minus_t.clone();
+    let control_weight = Real::from(2) * one_minus_t * parameter.clone();
+    let end_weight = parameter.clone() * parameter.clone();
+    Some(Point2::new(
+        fragment.curve.start().x.clone() * start_weight.clone()
+            + fragment.curve.control().x.clone() * control_weight.clone()
+            + fragment.curve.end().x.clone() * end_weight.clone(),
+        fragment.curve.start().y.clone() * start_weight
+            + fragment.curve.control().y.clone() * control_weight
+            + fragment.curve.end().y.clone() * end_weight,
+    ))
+}
+
+fn quadratic_y_derivative(
+    fragment: &QuadraticBezierRealFragment,
+    parameter: &Real,
+) -> Option<Real> {
+    Some(
+        Real::from(2)
+            * ((Real::one() - parameter.clone())
+                * (fragment.curve.control().y.clone() - fragment.curve.start().y.clone())
+                + parameter.clone()
+                    * (fragment.curve.end().y.clone() - fragment.curve.control().y.clone())),
+    )
+}
+
 fn cubic_start_tangent(fragment: &CubicBezierRealFragment) -> Point2 {
     Point2::new(
         Real::from(3) * (fragment.curve.control0().x.clone() - fragment.curve.start().x.clone()),
@@ -1087,6 +1779,49 @@ fn cubic_end_tangent(fragment: &CubicBezierRealFragment) -> Point2 {
     Point2::new(
         Real::from(3) * (fragment.curve.end().x.clone() - fragment.curve.control1().x.clone()),
         Real::from(3) * (fragment.curve.end().y.clone() - fragment.curve.control1().y.clone()),
+    )
+}
+
+fn eval_cubic_fragment_half(fragment: &CubicBezierRealFragment) -> Point2 {
+    eval_cubic_cell_fragment(fragment, &div_real(Real::one(), Real::from(2)).unwrap()).unwrap()
+}
+
+fn eval_cubic_cell_fragment(
+    fragment: &CubicBezierRealFragment,
+    parameter: &Real,
+) -> Option<Point2> {
+    let one_minus_t = Real::one() - parameter.clone();
+    let start_weight = one_minus_t.clone() * one_minus_t.clone() * one_minus_t.clone();
+    let control0_weight =
+        Real::from(3) * one_minus_t.clone() * one_minus_t.clone() * parameter.clone();
+    let control1_weight = Real::from(3) * one_minus_t * parameter.clone() * parameter.clone();
+    let end_weight = parameter.clone() * parameter.clone() * parameter.clone();
+    Some(Point2::new(
+        fragment.curve.start().x.clone() * start_weight.clone()
+            + fragment.curve.control0().x.clone() * control0_weight.clone()
+            + fragment.curve.control1().x.clone() * control1_weight.clone()
+            + fragment.curve.end().x.clone() * end_weight.clone(),
+        fragment.curve.start().y.clone() * start_weight
+            + fragment.curve.control0().y.clone() * control0_weight
+            + fragment.curve.control1().y.clone() * control1_weight
+            + fragment.curve.end().y.clone() * end_weight,
+    ))
+}
+
+fn cubic_y_derivative(fragment: &CubicBezierRealFragment, parameter: &Real) -> Option<Real> {
+    let one_minus_t = Real::one() - parameter.clone();
+    Some(
+        Real::from(3)
+            * (one_minus_t.clone()
+                * one_minus_t
+                * (fragment.curve.control0().y.clone() - fragment.curve.start().y.clone())
+                + Real::from(2)
+                    * (Real::one() - parameter.clone())
+                    * parameter.clone()
+                    * (fragment.curve.control1().y.clone() - fragment.curve.control0().y.clone())
+                + parameter.clone()
+                    * parameter.clone()
+                    * (fragment.curve.end().y.clone() - fragment.curve.control1().y.clone())),
     )
 }
 
@@ -1102,6 +1837,58 @@ fn homogeneous_endpoint_tangent(from: &HomogeneousPoint2, to: &HomogeneousPoint2
     Point2::new(
         from.w.clone() * to.x.clone() - to.w.clone() * from.x.clone(),
         from.w.clone() * to.y.clone() - to.w.clone() * from.y.clone(),
+    )
+}
+
+fn eval_conic_fragment_half(
+    fragment: &RationalQuadraticCellFragment,
+    policy: PredicatePolicy,
+) -> Option<Point2> {
+    eval_conic_cell_fragment(fragment, &div_real(Real::one(), Real::from(2))?, policy)
+}
+
+fn eval_conic_cell_fragment(
+    fragment: &RationalQuadraticCellFragment,
+    parameter: &Real,
+    policy: PredicatePolicy,
+) -> Option<Point2> {
+    let one_minus_t = Real::one() - parameter.clone();
+    let start_weight = one_minus_t.clone() * one_minus_t.clone();
+    let control_weight = Real::from(2) * one_minus_t * parameter.clone();
+    let end_weight = parameter.clone() * parameter.clone();
+    let x = fragment.start_control.x.clone() * start_weight.clone()
+        + fragment.control.x.clone() * control_weight.clone()
+        + fragment.end_control.x.clone() * end_weight.clone();
+    let y = fragment.start_control.y.clone() * start_weight.clone()
+        + fragment.control.y.clone() * control_weight.clone()
+        + fragment.end_control.y.clone() * end_weight.clone();
+    let w = fragment.start_control.w.clone() * start_weight
+        + fragment.control.w.clone() * control_weight
+        + fragment.end_control.w.clone() * end_weight;
+    if compare_reals_with_policy(&w, &Real::zero(), policy).value()? == Ordering::Equal {
+        return None;
+    }
+    Some(Point2::new(div_real(x, w.clone())?, div_real(y, w)?))
+}
+
+fn conic_y_derivative_numerator(
+    fragment: &RationalQuadraticCellFragment,
+    parameter: &Real,
+    point: &Point2,
+) -> Option<Real> {
+    let y = [
+        fragment.start_control.y.clone() - point.y.clone() * fragment.start_control.w.clone(),
+        fragment.control.y.clone() - point.y.clone() * fragment.control.w.clone(),
+        fragment.end_control.y.clone() - point.y.clone() * fragment.end_control.w.clone(),
+    ];
+    quadratic_y_derivative_from_controls(&y, parameter)
+}
+
+fn quadratic_y_derivative_from_controls(controls: &[Real; 3], parameter: &Real) -> Option<Real> {
+    Some(
+        Real::from(2)
+            * ((Real::one() - parameter.clone()) * (controls[1].clone() - controls[0].clone())
+                + parameter.clone() * (controls[2].clone() - controls[1].clone())),
     )
 }
 
@@ -1377,6 +2164,68 @@ fn ln_abs_real(value: Real, policy: PredicatePolicy) -> Option<Real> {
         Ordering::Less => (-value).ln().ok(),
         Ordering::Equal => None,
     }
+}
+
+fn solve_quadratic_or_linear_real(
+    a: Real,
+    b: Real,
+    c: Real,
+    policy: PredicatePolicy,
+) -> Option<Vec<Real>> {
+    match compare_reals_with_policy(&a, &Real::zero(), policy).value()? {
+        Ordering::Equal => solve_linear_real(b, c, policy),
+        Ordering::Less | Ordering::Greater => solve_quadratic_real(a, b, c, policy),
+    }
+}
+
+fn solve_linear_real(b: Real, c: Real, policy: PredicatePolicy) -> Option<Vec<Real>> {
+    match compare_reals_with_policy(&b, &Real::zero(), policy).value()? {
+        Ordering::Equal => Some(Vec::new()),
+        Ordering::Less | Ordering::Greater => Some(vec![div_real(-c, b)?]),
+    }
+}
+
+fn solve_quadratic_real(a: Real, b: Real, c: Real, policy: PredicatePolicy) -> Option<Vec<Real>> {
+    let discriminant = b.clone() * b.clone() - Real::from(4) * a.clone() * c;
+    match compare_reals_with_policy(&discriminant, &Real::zero(), policy).value()? {
+        Ordering::Less => Some(Vec::new()),
+        Ordering::Equal => Some(vec![div_real(-b, Real::from(2) * a)?]),
+        Ordering::Greater => {
+            let root = discriminant.sqrt().ok()?;
+            let denominator = Real::from(2) * a;
+            Some(vec![
+                div_real(-b.clone() - root.clone(), denominator.clone())?,
+                div_real(-b + root, denominator)?,
+            ])
+        }
+    }
+}
+
+fn real_between_closed(
+    value: &Real,
+    left: &Real,
+    right: &Real,
+    policy: PredicatePolicy,
+) -> Option<bool> {
+    let (min, max) = match compare_reals_with_policy(left, right, policy).value()? {
+        Ordering::Less | Ordering::Equal => (left, right),
+        Ordering::Greater => (right, left),
+    };
+    let lower = compare_reals_with_policy(value, min, policy).value()?;
+    let upper = compare_reals_with_policy(value, max, policy).value()?;
+    Some(
+        matches!(lower, Ordering::Equal | Ordering::Greater)
+            && matches!(upper, Ordering::Equal | Ordering::Less),
+    )
+}
+
+fn real_in_unit_interval_closed(value: &Real, policy: PredicatePolicy) -> Option<bool> {
+    let lower = compare_reals_with_policy(value, &Real::zero(), policy).value()?;
+    let upper = compare_reals_with_policy(value, &Real::one(), policy).value()?;
+    Some(
+        matches!(lower, Ordering::Equal | Ordering::Greater)
+            && matches!(upper, Ordering::Equal | Ordering::Less),
+    )
 }
 
 fn div_real(numerator: Real, denominator: Real) -> Option<Real> {

@@ -5,6 +5,7 @@ use std::cmp::Ordering;
 use hyperlimit::{PredicatePolicy, compare_reals_with_policy};
 use hyperpath::{
     ArcDirection, BezierParameter, CubicBezier, CurveArrangementCellFaceClass,
+    CurveArrangementLoopRoleClass,
     ExplicitCircularArc, LineCubicAlgebraicPointDomain, LineCubicAlgebraicRootDomain,
     LineCubicBezierAlgebraicBreakpointDomain,
     LineCubicBezierAlgebraicBreakpointOrderClass, LineCubicBezierAlgebraicBreakpointSequenceClass,
@@ -342,6 +343,30 @@ fuzz_target!(|data: &[u8]| {
     assert_eq!(q_loop_report.cell_graph.vertices.len(), 2);
     assert_eq!(q_loop_report.cell_graph.edges.len(), 2);
     assert_eq!(q_loop_report.cell_graph.faces.len(), 2);
+    assert!(q_loop_report
+        .cell_graph
+        .loop_roles
+        .iter()
+        .any(|role| role.class == CurveArrangementLoopRoleClass::Material
+            && role.containment_depth == Some(0)
+            && role.representative.is_some()));
+    let nested_q_report = arrange_quadratic_beziers(
+        &[
+            QuadraticBezier::new(p(0, 0), p(4, 8), p(8, 0)),
+            QuadraticBezier::new(p(8, 0), p(4, -8), p(0, 0)),
+            QuadraticBezier::new(p(2, 0), p(4, 3), p(6, 0)),
+            QuadraticBezier::new(p(6, 0), p(4, -3), p(2, 0)),
+        ],
+        &[vec![], vec![], vec![], vec![]],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert!(nested_q_report
+        .cell_graph
+        .loop_roles
+        .iter()
+        .any(|role| role.class == CurveArrangementLoopRoleClass::Hole
+            && role.containment_depth == Some(1)));
 
     let c_upper = CubicBezier::new(p(0, 0), p(0, 4), p(8, 4), p(8, 0));
     let c_lower = CubicBezier::new(p(8, 0), p(8, -4), p(0, -4), p(0, 0));
