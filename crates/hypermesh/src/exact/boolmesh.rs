@@ -19,6 +19,8 @@
 #[cfg(feature = "exact-triangulation")]
 mod boolean45;
 #[cfg(feature = "exact-triangulation")]
+mod cleanup;
+#[cfg(feature = "exact-triangulation")]
 mod kernel02;
 #[cfg(feature = "exact-triangulation")]
 mod kernel03;
@@ -61,6 +63,8 @@ use super::validation::ValidationPolicy;
 #[cfg(feature = "exact-triangulation")]
 #[cfg(feature = "exact-triangulation")]
 use boolean45::{pair_source_edge_events, size_output_stage};
+#[cfg(feature = "exact-triangulation")]
+use cleanup::cleanup_exact_export_vertices;
 #[cfg(feature = "exact-triangulation")]
 use hyperlimit::{
     CoplanarProjection, PlaneSide, Point3, PredicateOutcome, SegmentIntersection, TriangleLocation,
@@ -1210,7 +1214,9 @@ impl ExactBoolMeshWorkspace {
                 candidate_face_pairs.len(),
                 mesh_bounds_unknown,
             );
-            if blocker.is_none()
+            if blocker
+                .as_ref()
+                .is_none_or(|blocker| blocker.stage == ExactBoolMeshKernelStage::Cleanup)
                 && !boolean45_export_materializes_closed(
                     boolean45.as_ref().expect("boolean45 is staged above"),
                     &boolean03,
@@ -1826,19 +1832,21 @@ fn materialize_boolean45_export(
     {
         return Err(ExactBoolMeshValidationError::Boolean45MeshExportMismatch);
     }
-    let vertices = stage
+    let raw_vertices = stage
         .vertex_allocation
         .output_vertex_origins
         .iter()
         .map(|origin| output_vertex_origin_point(*origin, boolean03, left, right))
         .collect::<Option<Vec<_>>>()
         .ok_or(ExactBoolMeshValidationError::Boolean45MeshExportMismatch)?;
-    if vertices.len() != stage.mesh_export.vertex_count {
+    if raw_vertices.len() != stage.mesh_export.vertex_count {
         return Err(ExactBoolMeshValidationError::Boolean45MeshExportMismatch);
     }
+    let (vertices, triangles) =
+        cleanup_exact_export_vertices(raw_vertices, &stage.mesh_export.triangles);
     ExactMesh::new_with_policy(
         vertices,
-        stage.mesh_export.triangles.clone(),
+        triangles,
         SourceProvenance::exact(label),
         validation,
     )

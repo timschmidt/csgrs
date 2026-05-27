@@ -1550,7 +1550,7 @@ fuzz_target!(|data: &[u8]| {
 
 #[cfg(feature = "exact-triangulation")]
 fn exercise_deterministic_case(selector: u8) {
-    match selector % 60 {
+    match selector % 63 {
         0 => exercise_partial_convex_union_boundary(),
         1 => exercise_face_interior_steiner_boundary(),
         2 => exercise_multi_component_coplanar_union(),
@@ -1613,6 +1613,7 @@ fn exercise_deterministic_case(selector: u8) {
         59 => exercise_exact_boolmesh_kernel12_intersect_boundary_endpoint_port(),
         60 => exercise_exact_boolmesh_kernel12_coplanar_interval_port(),
         61 => exercise_exact_boolmesh_kernel03_winding_port(),
+        62 => exercise_exact_boolmesh_cleanup_materialization_port(),
         _ => exercise_nonconvex_coplanar_volumetric_difference_fan_split(),
     }
 }
@@ -1820,22 +1821,22 @@ fn exercise_exact_boolmesh_kernel12_port() {
         ExactBooleanOperation::Intersection,
     );
     workspace.validate_against_sources(&left, &right).unwrap();
+    assert!(workspace.blocker.is_none());
+    let execution = hypermesh::exact::execute_exact_boolmesh_port(
+        &left,
+        &right,
+        ExactBooleanOperation::Intersection,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("deterministic boolmesh kernel12 fixture must materialize after exact cleanup");
+    execution.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
-        workspace.blocker.as_ref().map(|blocker| blocker.stage),
-        Some(hypermesh::exact::ExactBoolMeshKernelStage::Triangulation)
+        execution.shortcut,
+        hypermesh::exact::ExactBooleanShortcutKind::BoolMeshSplit
     );
-    assert_eq!(
-        hypermesh::exact::execute_exact_boolmesh_port(
-            &left,
-            &right,
-            ExactBooleanOperation::Intersection,
-            ValidationPolicy::CLOSED,
-        )
-        .unwrap_err(),
-        hypermesh::exact::ExactBoolMeshValidationError::PortBlocked(
-            hypermesh::exact::ExactBoolMeshKernelStage::Triangulation
-        )
-    );
+    assert_eq!(execution.mesh.vertices().len(), 5);
+    assert_eq!(execution.mesh.triangles().len(), 6);
+    assert!(execution.mesh.facts().mesh.closed_manifold);
     assert!(workspace.kernel12_events.iter().any(|event| matches!(
         event.relation,
         SegmentPlaneRelation::ProperCrossing | SegmentPlaneRelation::EndpointOnPlane
@@ -2048,6 +2049,33 @@ fn exercise_exact_boolmesh_kernel12_port() {
     assert!(stale_new_edge_order
         .validate_against_sources(&left, &right)
         .is_err());
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn exercise_exact_boolmesh_cleanup_materialization_port() {
+    let left = ExactMesh::from_i64_triangles(
+        &[0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0, 4],
+        &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
+    )
+    .expect("deterministic cleanup left fixture must import");
+    let right = ExactMesh::from_i64_triangles(
+        &[1, 1, -1, 3, 1, 3, 1, 3, 3, 3, 3, 1],
+        &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
+    )
+    .expect("deterministic cleanup right fixture must import");
+
+    let execution = hypermesh::exact::execute_exact_boolmesh_port(
+        &left,
+        &right,
+        ExactBooleanOperation::Intersection,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("exact cleanup must certify the skew boolmesh split fixture");
+    execution.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(execution.mesh.vertices().len(), 5);
+    assert_eq!(execution.mesh.triangles().len(), 6);
+    assert_eq!(execution.mesh.facts().mesh.boundary_edges, 0);
+    assert_eq!(execution.mesh.facts().mesh.duplicate_directed_edges, 0);
 }
 
 #[cfg(feature = "exact-triangulation")]

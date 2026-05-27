@@ -34234,26 +34234,24 @@ fn exact_boolmesh_kernel12_discovers_skew_edge_face_events() {
         hypermesh::exact::ExactBooleanOperation::Intersection,
     );
     workspace.validate_against_sources(&left, &right).unwrap();
-    let blocker = workspace
-        .blocker
-        .as_ref()
-        .expect("skew crossing should now advance past face-pair edge emission");
-    assert_eq!(
-        blocker.stage,
-        hypermesh::exact::ExactBoolMeshKernelStage::Triangulation
+    assert!(
+        workspace.blocker.is_none(),
+        "exact boolmesh cleanup should materialize the skew split fixture"
     );
+    let execution = hypermesh::exact::execute_exact_boolmesh_port(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("skew crossing should complete through exact boolmesh cleanup");
+    execution.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
-        hypermesh::exact::execute_exact_boolmesh_port(
-            &left,
-            &right,
-            hypermesh::exact::ExactBooleanOperation::Intersection,
-            ValidationPolicy::CLOSED,
-        )
-        .unwrap_err(),
-        hypermesh::exact::ExactBoolMeshValidationError::PortBlocked(
-            hypermesh::exact::ExactBoolMeshKernelStage::Triangulation
-        )
+        execution.shortcut,
+        hypermesh::exact::ExactBooleanShortcutKind::BoolMeshSplit
     );
+    assert_eq!(execution.mesh.vertices().len(), 5);
+    assert_eq!(execution.mesh.triangles().len(), 6);
     assert!(workspace.kernel12_events.iter().any(|event| matches!(
         event.relation,
         SegmentPlaneRelation::ProperCrossing | SegmentPlaneRelation::EndpointOnPlane

@@ -13102,10 +13102,7 @@ fn exact_boolmesh_kernel12_port(c: &mut Criterion) {
                     hypermesh::exact::ExactBooleanOperation::Intersection,
                 );
                 workspace.validate_against_sources(&left, &right).unwrap();
-                assert_eq!(
-                    workspace.blocker.as_ref().map(|blocker| blocker.stage),
-                    Some(hypermesh::exact::ExactBoolMeshKernelStage::FacePairEdgeEmission)
-                );
+                assert!(workspace.blocker.is_none());
                 workspace
                     .kernel12_events
                     .iter()
@@ -13150,6 +13147,42 @@ fn exact_boolmesh_kernel12_port(c: &mut Criterion) {
                                 + stage.mesh_export.orientation_failures
                         })
                         .unwrap_or(0)
+            })
+        });
+    }
+    #[cfg(not(feature = "exact-triangulation"))]
+    {
+        let _ = c;
+    }
+}
+
+fn exact_boolmesh_cleanup_materialization_port(c: &mut Criterion) {
+    #[cfg(feature = "exact-triangulation")]
+    {
+        let left = ExactMesh::from_i64_triangles(
+            &[0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0, 4],
+            &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
+        )
+        .unwrap();
+        let right = ExactMesh::from_i64_triangles(
+            &[1, 1, -1, 3, 1, 3, 1, 3, 3, 3, 3, 1],
+            &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
+        )
+        .unwrap();
+
+        c.bench_function("exact_boolmesh_cleanup_materialization_port", |b| {
+            b.iter(|| {
+                let execution = hypermesh::exact::execute_exact_boolmesh_port(
+                    &left,
+                    &right,
+                    hypermesh::exact::ExactBooleanOperation::Intersection,
+                    hypermesh::exact::ValidationPolicy::CLOSED,
+                )
+                .expect("skew boolmesh split should materialize through exact cleanup");
+                execution.validate_against_sources(&left, &right).unwrap();
+                execution.mesh.vertices().len()
+                    + execution.mesh.triangles().len()
+                    + execution.mesh.facts().mesh.edge_count
             })
         });
     }
@@ -13654,6 +13687,7 @@ criterion_group!(
     exact_boolean_convex_single_cap_difference,
     exact_boolmesh_bounds_disjoint_port,
     exact_boolmesh_kernel12_port,
+    exact_boolmesh_cleanup_materialization_port,
     exact_boolmesh_kernel12_endpoint_shadow_port,
     exact_boolmesh_kernel12_boundary_endpoint_shadow_port,
     exact_boolmesh_kernel11_shadow_port,
