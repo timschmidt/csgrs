@@ -468,6 +468,7 @@ mod tests {
         let partial_source_edges = ExactBoolMeshPartialSourceEdgeStage {
             source_edge_runs: vec![ExactBoolMeshPartialSourceEdgeRun {
                 side: ExactBoolMeshSide::Left,
+                source_halfedge: 0,
                 tail: 0,
                 head: 1,
                 incident_faces: vec![0],

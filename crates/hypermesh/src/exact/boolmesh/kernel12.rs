@@ -383,6 +383,7 @@ fn lower_strict_endpoint_shadow(
 fn source_edge_event(event: &LoweredKernel12Event, collision: usize) -> ExactBoolMeshEdgeEvent {
     ExactBoolMeshEdgeEvent {
         side: event.edge_face.edge_side,
+        source_halfedge: event.edge_face.source_halfedge,
         tail: event.edge_face.edge[0],
         head: event.edge_face.edge[1],
         parameter: event.parameter.clone(),

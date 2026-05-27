@@ -275,6 +275,13 @@ pub enum ExactBoolMeshPointConstruction {
 pub struct ExactBoolMeshEdgeEvent {
     /// Source edge owner.
     pub side: ExactBoolMeshSide,
+    /// Face-local source halfedge id in the owning operand.
+    ///
+    /// Boolmesh keys `pt_old` by `hid_p`, not by endpoint reconstruction.
+    /// Retaining this row id lets exact `boolean45` replay the same bucket
+    /// ownership after exact `kernel12` lowering, in Yap's sense of carrying
+    /// the certified combinatorial object beside the exact construction.
+    pub source_halfedge: usize,
     /// Source edge tail vertex.
     pub tail: usize,
     /// Source edge head vertex.
@@ -301,6 +308,8 @@ pub struct ExactBoolMeshEdgeEvent {
 pub struct ExactBoolMeshPairedEdgeFragment {
     /// Source edge owner.
     pub side: ExactBoolMeshSide,
+    /// Face-local source halfedge id in the owning operand.
+    pub source_halfedge: usize,
     /// Source edge tail vertex.
     pub tail: usize,
     /// Source edge head vertex.
@@ -323,6 +332,11 @@ pub struct ExactBoolMeshPairedEdgeFragment {
 pub struct ExactBoolMeshSourceEdgeRun {
     /// Source edge owner.
     pub side: ExactBoolMeshSide,
+    /// Face-local source halfedge id in the owning operand.
+    ///
+    /// This is the exact-port counterpart of boolmesh's `pt_old` map key in
+    /// `boolean45::add_new_edge_verts` and `append_partial_edges`.
+    pub source_halfedge: usize,
     /// Source edge tail vertex.
     pub tail: usize,
     /// Source edge head vertex.
@@ -555,6 +569,12 @@ pub struct ExactBoolMeshRoutedEdgePoint {
 pub struct ExactBoolMeshSourceEdgePointRun {
     /// Source edge owner.
     pub side: ExactBoolMeshSide,
+    /// Face-local source halfedge id in the owning operand.
+    ///
+    /// Legacy boolmesh routes every inserted crossing vertex into `pt_old` by
+    /// `hid_p`; the exact port keeps that row key instead of recomputing a
+    /// bucket from rounded or endpoint-only geometry.
+    pub source_halfedge: usize,
     /// Source edge tail vertex.
     pub tail: usize,
     /// Source edge head vertex.
@@ -636,6 +656,13 @@ pub struct ExactBoolMeshPartialSourceEdgeFragment {
 pub struct ExactBoolMeshPartialSourceEdgeRun {
     /// Source edge owner.
     pub side: ExactBoolMeshSide,
+    /// Face-local source halfedge id in the owning operand.
+    ///
+    /// `append_partial_edges` in boolmesh consumes a `(hid_p, pt)` entry and
+    /// writes to `face_of(hid_p)` and `face_of(pair(hid_p))`.  This field is
+    /// the exact replay key for that published kernel shape; incident faces
+    /// below are derived from the row and retained as checked output.
+    pub source_halfedge: usize,
     /// Source edge tail vertex.
     pub tail: usize,
     /// Source edge head vertex.
@@ -1273,7 +1300,13 @@ impl ExactBoolMeshWorkspace {
         if pair_up_event_count(&self.pair_up) != lowered_event_count {
             return Err(ExactBoolMeshValidationError::PairUpEventCountMismatch);
         }
-        validate_pair_up_stage(&self.pair_up, self.left_vertices, self.right_vertices)?;
+        validate_pair_up_stage(
+            &self.pair_up,
+            self.left_vertices,
+            self.left_faces,
+            self.right_vertices,
+            self.right_faces,
+        )?;
         if let Some(stage) = &self.boolean45 {
             validate_boolean45_stage(
                 stage,
@@ -1355,6 +1388,10 @@ impl ExactBoolMeshWorkspace {
         }
         for pair in self.boolean03.p1q2.iter().chain(self.boolean03.p2q1.iter()) {
             validate_edge_face_pair_source_halfedge(*pair, left, right)?;
+        }
+        validate_pair_up_source_halfedges(&self.pair_up, left, right)?;
+        if let Some(stage) = &self.boolean45 {
+            validate_boolean45_source_halfedges(stage, left, right)?;
         }
         let replay = Self::from_sources(left, right, self.operation);
         if self == &replay {
@@ -1931,6 +1968,68 @@ fn validate_edge_face_pair_source_halfedge(
 }
 
 #[cfg(feature = "exact-triangulation")]
+fn validate_pair_up_source_halfedges(
+    stage: &ExactBoolMeshPairUpStage,
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Result<(), ExactBoolMeshValidationError> {
+    for run in &stage.source_edge_runs {
+        let mesh = boolmesh_source_mesh(run.side, left, right);
+        if !source_halfedge_matches_edge(mesh, run.source_halfedge, [run.tail, run.head]) {
+            return Err(ExactBoolMeshValidationError::PairUpEdgeOutOfBounds);
+        }
+    }
+    Ok(())
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn validate_boolean45_source_halfedges(
+    stage: &ExactBoolMeshBoolean45Stage,
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Result<(), ExactBoolMeshValidationError> {
+    for run in &stage.new_edge_vertices.source_edge_runs {
+        let mesh = boolmesh_source_mesh(run.side, left, right);
+        if !source_halfedge_matches_edge(mesh, run.source_halfedge, [run.tail, run.head]) {
+            return Err(ExactBoolMeshValidationError::Boolean45EdgePointRoutingMismatch);
+        }
+    }
+    for run in &stage.partial_source_edges.source_edge_runs {
+        let mesh = boolmesh_source_mesh(run.side, left, right);
+        if !source_halfedge_matches_edge(mesh, run.source_halfedge, [run.tail, run.head]) {
+            return Err(ExactBoolMeshValidationError::Boolean45PartialEdgeMismatch);
+        }
+    }
+    Ok(())
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn boolmesh_source_mesh<'a>(
+    side: ExactBoolMeshSide,
+    left: &'a ExactMesh,
+    right: &'a ExactMesh,
+) -> &'a ExactMesh {
+    match side {
+        ExactBoolMeshSide::Left => left,
+        ExactBoolMeshSide::Right => right,
+    }
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn source_halfedge_matches_edge(
+    mesh: &ExactMesh,
+    source_halfedge: usize,
+    edge: [usize; 2],
+) -> bool {
+    let face = source_halfedge / 3;
+    let local = source_halfedge % 3;
+    let Some(triangle) = mesh.triangles().get(face).copied() else {
+        return false;
+    };
+    boolmesh_triangle_edges(triangle)[local] == edge
+}
+
+#[cfg(feature = "exact-triangulation")]
 fn validate_edge_face_pair(
     pair: ExactBoolMeshEdgeFacePair,
     left_vertices: usize,
@@ -2047,15 +2146,20 @@ fn pair_up_event_count(stage: &ExactBoolMeshPairUpStage) -> usize {
 fn validate_pair_up_stage(
     stage: &ExactBoolMeshPairUpStage,
     left_vertices: usize,
+    left_faces: usize,
     right_vertices: usize,
+    right_faces: usize,
 ) -> Result<(), ExactBoolMeshValidationError> {
     let mut unpaired_event_runs = 0;
     for run in &stage.source_edge_runs {
-        let vertex_count = match run.side {
-            ExactBoolMeshSide::Left => left_vertices,
-            ExactBoolMeshSide::Right => right_vertices,
+        let (vertex_count, face_count) = match run.side {
+            ExactBoolMeshSide::Left => (left_vertices, left_faces),
+            ExactBoolMeshSide::Right => (right_vertices, right_faces),
         };
-        if run.tail >= vertex_count || run.head >= vertex_count {
+        if run.tail >= vertex_count
+            || run.head >= vertex_count
+            || run.source_halfedge >= face_count * 3
+        {
             return Err(ExactBoolMeshValidationError::PairUpEdgeOutOfBounds);
         }
         let tail_count = run.events.iter().filter(|event| event.is_tail).count();
@@ -2073,7 +2177,11 @@ fn validate_pair_up_stage(
             validate_pair_up_event(event, run, vertex_count)?;
         }
         for fragment in &run.fragments {
-            if fragment.side != run.side || fragment.tail != run.tail || fragment.head != run.head {
+            if fragment.side != run.side
+                || fragment.source_halfedge != run.source_halfedge
+                || fragment.tail != run.tail
+                || fragment.head != run.head
+            {
                 return Err(ExactBoolMeshValidationError::PairUpRunEventMismatch);
             }
             validate_pair_up_event(&fragment.tail_event, run, vertex_count)?;
@@ -2190,7 +2298,13 @@ fn validate_boolean45_stage(
         right_vertices,
         right_faces,
     )?;
-    validate_boolean45_partial_edges(stage, left_vertices, right_vertices)?;
+    validate_boolean45_partial_edges(
+        stage,
+        left_vertices,
+        left_faces,
+        right_vertices,
+        right_faces,
+    )?;
     validate_boolean45_new_edges(
         stage,
         left_faces,
@@ -2923,7 +3037,9 @@ fn validate_boolean45_new_edges(
 fn validate_boolean45_partial_edges(
     stage: &ExactBoolMeshBoolean45Stage,
     left_vertices: usize,
+    left_faces: usize,
     right_vertices: usize,
+    right_faces: usize,
 ) -> Result<(), ExactBoolMeshValidationError> {
     if stage.partial_source_edges.source_edge_runs.len()
         != stage.new_edge_vertices.source_edge_runs.len()
@@ -2948,12 +3064,13 @@ fn validate_boolean45_partial_edges(
 
     let mut unpaired_runs = 0;
     for run in &stage.partial_source_edges.source_edge_runs {
-        let vertex_count = match run.side {
-            ExactBoolMeshSide::Left => left_vertices,
-            ExactBoolMeshSide::Right => right_vertices,
+        let (vertex_count, face_count) = match run.side {
+            ExactBoolMeshSide::Left => (left_vertices, left_faces),
+            ExactBoolMeshSide::Right => (right_vertices, right_faces),
         };
         if run.tail >= vertex_count
             || run.head >= vertex_count
+            || run.source_halfedge >= face_count * 3
             || run.points.is_empty()
             || run.incident_faces.len() != run.incident_edges.len()
             || run
@@ -3092,11 +3209,15 @@ fn validate_boolean45_edge_point_routing(
     }
     let collision_count = boolean03.p1q2.len() + boolean03.p2q1.len();
     for run in &stage.new_edge_vertices.source_edge_runs {
-        let vertex_count = match run.side {
-            ExactBoolMeshSide::Left => left_vertices,
-            ExactBoolMeshSide::Right => right_vertices,
+        let (vertex_count, face_count) = match run.side {
+            ExactBoolMeshSide::Left => (left_vertices, left_faces),
+            ExactBoolMeshSide::Right => (right_vertices, right_faces),
         };
-        if run.tail >= vertex_count || run.head >= vertex_count || run.points.is_empty() {
+        if run.tail >= vertex_count
+            || run.head >= vertex_count
+            || run.source_halfedge >= face_count * 3
+            || run.points.is_empty()
+        {
             return Err(ExactBoolMeshValidationError::Boolean45EdgePointRoutingMismatch);
         }
         for point in &run.points {
@@ -3296,6 +3417,7 @@ fn validate_pair_up_event(
     vertex_count: usize,
 ) -> Result<(), ExactBoolMeshValidationError> {
     if event.side != run.side
+        || event.source_halfedge != run.source_halfedge
         || event.tail != run.tail
         || event.head != run.head
         || event.tail >= vertex_count

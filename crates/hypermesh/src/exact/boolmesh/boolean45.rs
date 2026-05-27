@@ -2,14 +2,14 @@
 //!
 //! Legacy `boolean45::pair_up` partitions edge events into tails and heads,
 //! sorts each side by `EdgePt.val`, and zips the sorted halves into partial
-//! halfedges.  This exact port keeps that algorithmic shape but orders by the
-//! retained edge parameter from `kernel12` rather than a rounded dot product.
-//! Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-//! 7.1-2 (1997), is the rule here: the pairing decision consumes certified
-//! construction parameters and remains a replayable staging artifact before
-//! final topology mutation.  The boundary-fragment pairing model follows
-//! Weiler and Atherton, "Hidden Surface Removal Using Polygon Area Sorting,"
-//! *SIGGRAPH* (1977).
+//! halfedges.  Boolmesh keys the old-source-edge buckets by `hid_p`; this
+//! exact port keeps that row id and orders by the retained edge parameter from
+//! `kernel12` rather than a rounded dot product.  Yap, "Towards Exact
+//! Geometric Computation," *Computational Geometry* 7.1-2 (1997), is the rule
+//! here: the pairing decision consumes certified construction parameters and
+//! combinatorial row identity before final topology mutation.  The
+//! boundary-fragment pairing model follows Weiler and Atherton, "Hidden
+//! Surface Removal Using Polygon Area Sorting," *SIGGRAPH* (1977).
 
 mod assembly;
 mod export;
@@ -229,17 +229,18 @@ pub(super) fn size_output_stage(
 /// Pair lowered source-edge events with exact parameter ordering.
 ///
 /// This is the exact counterpart to the source-edge `pt_old` path in
-/// `boolean45::append_partial_edges`.  It deliberately does not synthesize
-/// retained source endpoints from `kernel03` yet; runs that need those
-/// endpoints keep explicit unpaired counts so the later winding slice has a
-/// checked place to attach them.
+/// `boolean45::append_partial_edges`: events are bucketed by boolmesh's
+/// source halfedge row (`hid_p`), not by reconstructed endpoints.  It
+/// deliberately does not synthesize retained source endpoints from `kernel03`
+/// yet; runs that need those endpoints keep explicit unpaired counts so the
+/// later winding slice has a checked place to attach them.
 pub(super) fn pair_source_edge_events(
     events: Vec<ExactBoolMeshEdgeEvent>,
 ) -> ExactBoolMeshPairUpStage {
-    let mut grouped = BTreeMap::<(u8, usize, usize), Vec<ExactBoolMeshEdgeEvent>>::new();
+    let mut grouped = BTreeMap::<(u8, usize), Vec<ExactBoolMeshEdgeEvent>>::new();
     for event in events {
         grouped
-            .entry((side_key(event.side), event.tail, event.head))
+            .entry((side_key(event.side), event.source_halfedge))
             .or_default()
             .push(event);
     }
@@ -247,12 +248,16 @@ pub(super) fn pair_source_edge_events(
     let mut unknown_orderings = 0;
     let mut unpaired_event_runs = 0;
     let mut source_edge_runs = Vec::new();
-    for ((_side_key, tail, head), mut events) in grouped {
+    for ((_side_key, source_halfedge), mut events) in grouped {
         unknown_orderings += sort_events(&mut events);
         let side = events
             .first()
             .map(|event| event.side)
             .unwrap_or(ExactBoolMeshSide::Left);
+        let [tail, head] = events
+            .first()
+            .map(|event| [event.tail, event.head])
+            .unwrap_or([0, 0]);
         let mut tails = events
             .iter()
             .filter(|event| event.is_tail)
@@ -273,6 +278,7 @@ pub(super) fn pair_source_edge_events(
             .zip(heads.into_iter().take(pair_count))
             .map(|(tail_event, head_event)| ExactBoolMeshPairedEdgeFragment {
                 side,
+                source_halfedge,
                 tail,
                 head,
                 tail_event,
@@ -281,6 +287,7 @@ pub(super) fn pair_source_edge_events(
             .collect();
         source_edge_runs.push(ExactBoolMeshSourceEdgeRun {
             side,
+            source_halfedge,
             tail,
             head,
             events,
@@ -437,8 +444,7 @@ fn route_new_edge_vertices(
     i12: &[i32],
     i21: &[i32],
 ) -> ExactBoolMeshNewEdgeVertexStage {
-    let mut source_edge_runs =
-        BTreeMap::<(u8, usize, usize), Vec<ExactBoolMeshRoutedEdgePoint>>::new();
+    let mut source_edge_runs = BTreeMap::<(u8, usize), SourceEdgePointBucket>::new();
     let mut face_pair_runs = BTreeMap::<(usize, usize), Vec<ExactBoolMeshRoutedEdgePoint>>::new();
     let mut missing_source_edge_adjacencies = 0;
 
@@ -474,11 +480,12 @@ fn route_new_edge_vertices(
         source_edge_runs: source_edge_runs
             .into_iter()
             .map(
-                |((side_key, tail, head), points)| ExactBoolMeshSourceEdgePointRun {
+                |((side_key, source_halfedge), bucket)| ExactBoolMeshSourceEdgePointRun {
                     side: side_from_key(side_key),
-                    tail,
-                    head,
-                    points,
+                    source_halfedge,
+                    tail: bucket.tail,
+                    head: bucket.head,
+                    points: bucket.points,
                 },
             )
             .collect(),
@@ -507,7 +514,7 @@ fn route_crossing_vertices(
     edge_mesh: &ExactMesh,
     fwd: bool,
     origins: &[ExactBoolMeshOutputVertexOrigin],
-    source_edge_runs: &mut BTreeMap<(u8, usize, usize), Vec<ExactBoolMeshRoutedEdgePoint>>,
+    source_edge_runs: &mut BTreeMap<(u8, usize), SourceEdgePointBucket>,
     face_pair_runs: &mut BTreeMap<(usize, usize), Vec<ExactBoolMeshRoutedEdgePoint>>,
 ) -> usize {
     let count = signed_abs(signed_count);
@@ -519,12 +526,13 @@ fn route_crossing_vertices(
     };
 
     let dir = signed_count < 0;
-    let source_key = (side_key(pair.edge_side), pair.edge[0], pair.edge[1]);
+    let source_key = (side_key(pair.edge_side), pair.source_halfedge);
     let primary_edge_face = match pair.edge_side {
         ExactBoolMeshSide::Left => pair.face_pair.left_face,
         ExactBoolMeshSide::Right => pair.face_pair.right_face,
     };
-    let incident_faces = incident_faces_for_edge(edge_mesh.triangles(), pair.edge);
+    let incident_faces =
+        incident_faces_for_source_halfedge(edge_mesh.triangles(), pair.source_halfedge);
     let missing_source_edge_adjacencies = usize::from(!incident_faces.contains(&primary_edge_face));
     let paired_edge_face = incident_faces
         .iter()
@@ -545,7 +553,12 @@ fn route_crossing_vertices(
         };
         source_edge_runs
             .entry(source_key)
-            .or_default()
+            .or_insert_with(|| SourceEdgePointBucket {
+                tail: pair.edge[0],
+                head: pair.edge[1],
+                points: Vec::new(),
+            })
+            .points
             .push(source_point);
 
         let primary_point = ExactBoolMeshRoutedEdgePoint {
@@ -609,7 +622,7 @@ fn stage_partial_source_edges(
         let mut points = Vec::new();
 
         for routed in &run.points {
-            let order_key = (side_key(run.side), run.tail, run.head, routed.collision);
+            let order_key = (side_key(run.side), run.source_halfedge, routed.collision);
             let Some(order) = order_index.get(&order_key).copied() else {
                 missing_parameter_orders += 1;
                 continue;
@@ -641,9 +654,11 @@ fn stage_partial_source_edges(
         if unpaired_points > 0 {
             unpaired_runs += 1;
         }
-        let incident_uses = directed_edge_uses_for_edge(mesh.triangles(), [run.tail, run.head]);
+        let incident_uses =
+            directed_edge_uses_for_source_halfedge(mesh.triangles(), run.source_halfedge);
         source_edge_runs.push(ExactBoolMeshPartialSourceEdgeRun {
             side: run.side,
+            source_halfedge: run.source_halfedge,
             tail: run.tail,
             head: run.head,
             incident_faces: incident_uses.iter().map(|use_| use_.face).collect(),
@@ -663,12 +678,12 @@ fn stage_partial_source_edges(
 
 fn source_edge_order_index(
     pair_up: &ExactBoolMeshPairUpStage,
-) -> BTreeMap<(u8, usize, usize, usize), usize> {
+) -> BTreeMap<(u8, usize, usize), usize> {
     let mut order_index = BTreeMap::new();
     for run in &pair_up.source_edge_runs {
         for (index, event) in run.events.iter().enumerate() {
             order_index.insert(
-                (side_key(run.side), run.tail, run.head, event.collision),
+                (side_key(run.side), run.source_halfedge, event.collision),
                 index,
             );
         }
@@ -1065,6 +1080,13 @@ fn append_whole_source_edges_for_side(
 }
 
 #[derive(Clone, Debug)]
+struct SourceEdgePointBucket {
+    tail: usize,
+    head: usize,
+    points: Vec<ExactBoolMeshRoutedEdgePoint>,
+}
+
+#[derive(Clone, Debug)]
 struct SourceEdge {
     edge: [usize; 2],
     incident_faces: Vec<usize>,
@@ -1107,7 +1129,8 @@ fn count_crossing_vertex(
     edge_face_counts: &mut [usize],
     opposite_face_counts: &mut [usize],
 ) -> usize {
-    let incident_faces = incident_faces_for_edge(edge_mesh.triangles(), pair.edge);
+    let incident_faces =
+        incident_faces_for_source_halfedge(edge_mesh.triangles(), pair.source_halfedge);
     for face in &incident_faces {
         if let Some(count) = edge_face_counts.get_mut(*face) {
             *count += increment;
@@ -1124,8 +1147,11 @@ fn count_crossing_vertex(
     usize::from(!incident_faces.contains(&primary_edge_face))
 }
 
-fn incident_faces_for_edge(triangles: &[Triangle], edge: [usize; 2]) -> Vec<usize> {
-    directed_edge_uses_for_edge(triangles, edge)
+fn incident_faces_for_source_halfedge(
+    triangles: &[Triangle],
+    source_halfedge: usize,
+) -> Vec<usize> {
+    directed_edge_uses_for_source_halfedge(triangles, source_halfedge)
         .iter()
         .map(|use_| use_.face)
         .collect()
@@ -1134,14 +1160,32 @@ fn incident_faces_for_edge(triangles: &[Triangle], edge: [usize; 2]) -> Vec<usiz
 /// Return incident face uses in the same first-face order boolmesh gets from
 /// its source halfedge cursor.
 ///
-/// For partial edges, `preferred` is the directed split source edge that owns
-/// the `pt_old` bucket.  For whole retained edges, callers pass the canonical
-/// source edge.  The ordered uses let the exact `append_*_edges` stages emit a
-/// halfedge to the preferred face and the paired reverse halfedge to the
-/// opposite face, matching the boolmesh topology while avoiding any rounded
+/// For split edges, `source_halfedge` is the `hid_p` row that owns the
+/// `pt_old` bucket in boolmesh `add_new_edge_verts`/`append_partial_edges`.
+/// The preferred face is `source_halfedge / 3`; the paired reverse face, when
+/// present, follows by matching the undirected source edge.  The ordered uses
+/// let the exact stages emit a halfedge to `face_of(hid_p)` and then to
+/// `face_of(pair(hid_p))`, matching boolmesh while avoiding any rounded
 /// orientation recovery.  This follows Yap, "Towards Exact Geometric
 /// Computation," by making the combinatorial orientation a replayed exact
 /// artifact.
+fn directed_edge_uses_for_source_halfedge(
+    triangles: &[Triangle],
+    source_halfedge: usize,
+) -> Vec<SourceEdgeUse> {
+    let face = source_halfedge / 3;
+    let local = source_halfedge % 3;
+    let Some(triangle) = triangles.get(face).copied() else {
+        return Vec::new();
+    };
+    directed_edge_uses_for_edge(triangles, triangle_edges(triangle)[local])
+}
+
+/// Return incident face uses for a retained whole edge.
+///
+/// Whole-edge emission still iterates canonical source edges, equivalent to
+/// boolmesh's `append_whole_edges` pass over forward halfedges.  Split-edge
+/// emission uses [`directed_edge_uses_for_source_halfedge`] instead.
 fn directed_edge_uses_for_edge(
     triangles: &[Triangle],
     preferred: [usize; 2],

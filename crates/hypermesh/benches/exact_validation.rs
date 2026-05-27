@@ -13333,6 +13333,55 @@ fn exact_boolmesh_kernel12_intersect_halfedge_row_port(c: &mut Criterion) {
     }
 }
 
+fn exact_boolmesh_boolean45_halfedge_row_port(c: &mut Criterion) {
+    #[cfg(feature = "exact-triangulation")]
+    {
+        let left = ExactMesh::from_i64_triangles_with_policy(
+            &[1, 1, 0, 1, 1, 5, 2, 1, 5],
+            &[2, 0, 1],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let right = ExactMesh::from_i64_triangles_with_policy(
+            &[0, 0, 4, 4, 0, 4, 0, 4, 4],
+            &[0, 1, 2],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        c.bench_function("exact_boolmesh_boolean45_halfedge_row_port", |b| {
+            b.iter(|| {
+                let workspace = hypermesh::exact::exact_boolmesh_workspace(
+                    &left,
+                    &right,
+                    hypermesh::exact::ExactBooleanOperation::Intersection,
+                );
+                workspace
+                    .boolean45
+                    .as_ref()
+                    .map(|stage| {
+                        stage
+                            .new_edge_vertices
+                            .source_edge_runs
+                            .iter()
+                            .filter(|run| run.source_halfedge == 1)
+                            .count()
+                            + stage
+                                .partial_source_edges
+                                .source_edge_runs
+                                .iter()
+                                .filter(|run| run.source_halfedge == 1)
+                                .count()
+                    })
+                    .unwrap_or(0)
+            })
+        });
+    }
+    #[cfg(not(feature = "exact-triangulation"))]
+    {
+        let _ = c;
+    }
+}
+
 fn exact_boolmesh_kernel03_no_intersection_port(c: &mut Criterion) {
     #[cfg(feature = "exact-triangulation")]
     {
@@ -13545,6 +13594,7 @@ criterion_group!(
     exact_boolmesh_kernel12_accumulator_replay_port,
     exact_boolmesh_kernel12_intersect_loop_port,
     exact_boolmesh_kernel12_intersect_halfedge_row_port,
+    exact_boolmesh_boolean45_halfedge_row_port,
     exact_boolmesh_kernel03_no_intersection_port,
     legacy_boolean_adapter_report
 );

@@ -34417,6 +34417,7 @@ fn exact_boolmesh_kernel12_discovers_skew_edge_face_events() {
             Some(Ordering::Less | Ordering::Equal)
         )));
         assert!(run.events.iter().all(|event| event.side == run.side
+            && event.source_halfedge == run.source_halfedge
             && event.tail == run.tail
             && event.head == run.head));
         assert_eq!(
@@ -34654,7 +34655,9 @@ fn exact_boolmesh_open_crossing_edges_are_not_adjacency_gaps() {
             .partial_source_edges
             .source_edge_runs
             .iter()
-            .any(|run| run.incident_faces.len() == 1 && !run.points.is_empty()),
+            .any(|run| run.incident_faces.len() == 1
+                && run.source_halfedge / 3 == run.incident_faces[0]
+                && !run.points.is_empty()),
         "open split source edges must be represented as one-incident exact runs"
     );
     assert_eq!(size_output.source_edge_incident_gaps, 0);
@@ -34683,6 +34686,114 @@ fn exact_boolmesh_open_crossing_edges_are_not_adjacency_gaps() {
                     * run.incident_faces.len()
             })
             .sum::<usize>()
+    );
+}
+
+#[test]
+#[cfg(feature = "exact-triangulation")]
+fn exact_boolmesh_boolean45_routes_source_buckets_by_halfedge_row() {
+    let left = ExactMesh::new_with_policy(
+        vec![
+            ExactPoint3::new(ExactReal::from(1), ExactReal::from(1), ExactReal::from(0)),
+            ExactPoint3::new(ExactReal::from(1), ExactReal::from(1), ExactReal::from(5)),
+            ExactPoint3::new(ExactReal::from(2), ExactReal::from(1), ExactReal::from(5)),
+        ],
+        vec![Triangle([2, 0, 1])],
+        SourceProvenance::exact("exact boolmesh boolean45 halfedge row left fixture"),
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let right = ExactMesh::new_with_policy(
+        vec![
+            ExactPoint3::new(ExactReal::from(0), ExactReal::from(0), ExactReal::from(4)),
+            ExactPoint3::new(ExactReal::from(4), ExactReal::from(0), ExactReal::from(4)),
+            ExactPoint3::new(ExactReal::from(0), ExactReal::from(4), ExactReal::from(4)),
+        ],
+        vec![Triangle([0, 1, 2])],
+        SourceProvenance::exact("exact boolmesh boolean45 halfedge row right fixture"),
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+
+    let workspace = hypermesh::exact::exact_boolmesh_workspace(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+    );
+    workspace.validate_against_sources(&left, &right).unwrap();
+    assert!(
+        workspace
+            .boolean03
+            .p1q2
+            .iter()
+            .any(|pair| pair.source_halfedge == 1),
+        "kernel12 must retain the nonzero boolmesh halfedge row key"
+    );
+    assert!(
+        workspace.pair_up.source_edge_runs.iter().any(|run| run.side
+            == hypermesh::exact::ExactBoolMeshSide::Left
+            && run.source_halfedge == 1
+            && run.tail == 0
+            && run.head == 1),
+        "pair_up must bucket by hid_p rather than endpoint-recovered edge identity"
+    );
+
+    let size_output = workspace
+        .boolean45
+        .as_ref()
+        .expect("halfedge-row crossing should reach boolean45 sizing");
+    assert!(
+        size_output
+            .new_edge_vertices
+            .source_edge_runs
+            .iter()
+            .any(|run| run.side == hypermesh::exact::ExactBoolMeshSide::Left
+                && run.source_halfedge == 1
+                && run.tail == 0
+                && run.head == 1)
+    );
+    assert!(
+        size_output
+            .partial_source_edges
+            .source_edge_runs
+            .iter()
+            .any(|run| run.side == hypermesh::exact::ExactBoolMeshSide::Left
+                && run.source_halfedge == 1
+                && run.incident_faces == vec![0]
+                && run.incident_edges == vec![[0, 1]])
+    );
+
+    let mut stale_pair_up = workspace.clone();
+    stale_pair_up
+        .pair_up
+        .source_edge_runs
+        .iter_mut()
+        .find(|run| run.source_halfedge == 1 && run.tail == 0 && run.head == 1)
+        .expect("target halfedge-row pair_up run must exist")
+        .source_halfedge = 0;
+    assert_eq!(
+        stale_pair_up
+            .validate_against_sources(&left, &right)
+            .unwrap_err(),
+        hypermesh::exact::ExactBoolMeshValidationError::PairUpRunEventMismatch
+    );
+
+    let mut stale_boolean45 = workspace.clone();
+    stale_boolean45
+        .boolean45
+        .as_mut()
+        .unwrap()
+        .new_edge_vertices
+        .source_edge_runs
+        .iter_mut()
+        .find(|run| run.source_halfedge == 1 && run.tail == 0 && run.head == 1)
+        .expect("target halfedge-row boolean45 run must exist")
+        .source_halfedge = 0;
+    assert_eq!(
+        stale_boolean45
+            .validate_against_sources(&left, &right)
+            .unwrap_err(),
+        hypermesh::exact::ExactBoolMeshValidationError::Boolean45EdgePointRoutingMismatch
     );
 }
 
