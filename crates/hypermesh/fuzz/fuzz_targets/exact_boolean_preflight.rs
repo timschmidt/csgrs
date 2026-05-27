@@ -1580,13 +1580,19 @@ fn exercise_exact_boolmesh_bounds_disjoint_port() {
                         .sum::<usize>(),
                     12
                 );
+                assert!(size_output.whole_source_edges.source_edge_runs.iter().all(
+                    |run| run.incident_faces.len() == 2 && run.incident_edges.len() == 2
+                ));
                 assert_eq!(size_output.halfedge_assembly.emitted_pairs, 12);
                 assert_eq!(size_output.halfedge_assembly.unfilled_halfedges, 0);
+                assert_eq!(size_output.face_loop_assembly.loops.len(), 8);
+                assert_eq!(size_output.face_loop_assembly.incomplete_faces, 0);
             }
             ExactBooleanOperation::Intersection => {
                 assert!(size_output.whole_source_edges.source_edge_runs.is_empty());
                 assert_eq!(size_output.halfedge_assembly.emitted_pairs, 0);
                 assert_eq!(size_output.halfedge_assembly.unfilled_halfedges, 0);
+                assert!(size_output.face_loop_assembly.loops.is_empty());
             }
             ExactBooleanOperation::Difference => {
                 assert_eq!(size_output.whole_source_edges.source_edge_runs.len(), 6);
@@ -1596,6 +1602,8 @@ fn exercise_exact_boolmesh_bounds_disjoint_port() {
                 ));
                 assert_eq!(size_output.halfedge_assembly.emitted_pairs, 6);
                 assert_eq!(size_output.halfedge_assembly.unfilled_halfedges, 0);
+                assert_eq!(size_output.face_loop_assembly.loops.len(), 4);
+                assert_eq!(size_output.face_loop_assembly.incomplete_faces, 0);
             }
             ExactBooleanOperation::SelectedRegions(_) => unreachable!(),
         }
@@ -1605,6 +1613,7 @@ fn exercise_exact_boolmesh_bounds_disjoint_port() {
         );
         assert_eq!(size_output.halfedge_assembly.face_overflows, 0);
         assert_eq!(size_output.halfedge_assembly.missing_source_face_maps, 0);
+        assert_eq!(size_output.face_loop_assembly.repeated_halfedges, 0);
         if operation == ExactBooleanOperation::Union {
             let mut malformed = workspace.clone();
             malformed
@@ -1616,6 +1625,17 @@ fn exercise_exact_boolmesh_bounds_disjoint_port() {
                 .fragments[0]
                 .output_head = usize::MAX;
             assert!(malformed.validate_against_sources(&left, &right).is_err());
+            let mut malformed_edge_use = workspace.clone();
+            malformed_edge_use
+                .boolean45
+                .as_mut()
+                .unwrap()
+                .whole_source_edges
+                .source_edge_runs[0]
+                .incident_edges[0] = [usize::MAX, 0];
+            assert!(malformed_edge_use
+                .validate_against_sources(&left, &right)
+                .is_err());
             let mut malformed_halfedges = workspace.clone();
             malformed_halfedges
                 .boolean45
@@ -1627,6 +1647,18 @@ fn exercise_exact_boolmesh_bounds_disjoint_port() {
                 .unwrap()
                 .pair = usize::MAX;
             assert!(malformed_halfedges
+                .validate_against_sources(&left, &right)
+                .is_err());
+            let mut malformed_loops = workspace.clone();
+            malformed_loops
+                .boolean45
+                .as_mut()
+                .unwrap()
+                .face_loop_assembly
+                .loops[0]
+                .vertices
+                .clear();
+            assert!(malformed_loops
                 .validate_against_sources(&left, &right)
                 .is_err());
         }
@@ -1740,6 +1772,14 @@ fn exercise_exact_boolmesh_kernel12_port() {
             + size_output.halfedge_assembly.unfilled_halfedges,
         size_output.halfedge_assembly.output_halfedges.len()
     );
+    assert_eq!(size_output.face_loop_assembly.repeated_halfedges, 0);
+    assert_eq!(size_output.face_loop_assembly.non_loop_halfedges, 0);
+    assert!(size_output
+        .face_loop_assembly
+        .loops
+        .iter()
+        .all(|face_loop| face_loop.halfedges.len() >= 3
+            && face_loop.halfedges.len() == face_loop.vertices.len()));
     assert_eq!(
         workspace
             .pair_up

@@ -33134,6 +33134,7 @@ fn exact_boolmesh_workspace_executes_bounds_disjoint_slice() {
             .all(|run| {
                 run.signed_count == 1
                     && run.incident_faces.len() == 2
+                    && run.incident_edges.len() == 2
                     && run.fragments.len() == 1
                     && !run.fragments[0].reversed
             })
@@ -33160,6 +33161,20 @@ fn exact_boolmesh_workspace_executes_bounds_disjoint_slice() {
                 pair.pair == slot && pair.tail == halfedge.head && pair.head == halfedge.tail
             })
     );
+    assert_eq!(size_output.face_loop_assembly.incomplete_faces, 0);
+    assert_eq!(size_output.face_loop_assembly.non_loop_halfedges, 0);
+    assert_eq!(size_output.face_loop_assembly.repeated_halfedges, 0);
+    assert_eq!(
+        size_output.face_loop_assembly.loops.len(),
+        left.triangles().len() + right.triangles().len()
+    );
+    assert!(
+        size_output
+            .face_loop_assembly
+            .loops
+            .iter()
+            .all(|face_loop| face_loop.halfedges.len() == 3 && face_loop.vertices.len() == 3)
+    );
 
     let mut malformed_whole_edges = workspace.clone();
     malformed_whole_edges
@@ -33172,6 +33187,20 @@ fn exact_boolmesh_workspace_executes_bounds_disjoint_slice() {
         .output_tail = usize::MAX;
     assert_eq!(
         malformed_whole_edges
+            .validate_against_sources(&left, &right)
+            .unwrap_err(),
+        hypermesh::exact::ExactBoolMeshValidationError::Boolean45WholeEdgeMismatch
+    );
+    let mut malformed_whole_edge_use = workspace.clone();
+    malformed_whole_edge_use
+        .boolean45
+        .as_mut()
+        .unwrap()
+        .whole_source_edges
+        .source_edge_runs[0]
+        .incident_edges[0] = [usize::MAX, 0];
+    assert_eq!(
+        malformed_whole_edge_use
             .validate_against_sources(&left, &right)
             .unwrap_err(),
         hypermesh::exact::ExactBoolMeshValidationError::Boolean45WholeEdgeMismatch
@@ -33191,6 +33220,20 @@ fn exact_boolmesh_workspace_executes_bounds_disjoint_slice() {
             .validate_against_sources(&left, &right)
             .unwrap_err(),
         hypermesh::exact::ExactBoolMeshValidationError::Boolean45HalfedgeAssemblyMismatch
+    );
+    let mut malformed_face_loops = workspace.clone();
+    malformed_face_loops
+        .boolean45
+        .as_mut()
+        .unwrap()
+        .face_loop_assembly
+        .loops[0]
+        .halfedges[0] = usize::MAX;
+    assert_eq!(
+        malformed_face_loops
+            .validate_against_sources(&left, &right)
+            .unwrap_err(),
+        hypermesh::exact::ExactBoolMeshValidationError::Boolean45FaceLoopMismatch
     );
 
     let union = hypermesh::exact::execute_exact_boolmesh_bounds_disjoint(
@@ -33273,6 +33316,11 @@ fn exact_boolmesh_workspace_executes_bounds_disjoint_slice() {
             .unfilled_halfedges,
         0
     );
+    assert!(intersection_size_output.face_loop_assembly.loops.is_empty());
+    assert_eq!(
+        intersection_size_output.face_loop_assembly.incomplete_faces,
+        0
+    );
 
     let difference = hypermesh::exact::execute_exact_boolmesh_bounds_disjoint(
         &left,
@@ -33347,6 +33395,17 @@ fn exact_boolmesh_workspace_executes_bounds_disjoint_slice() {
     assert_eq!(
         difference_size_output.halfedge_assembly.unfilled_halfedges,
         0
+    );
+    assert_eq!(
+        difference_size_output.face_loop_assembly.loops.len(),
+        left.triangles().len()
+    );
+    assert!(
+        difference_size_output
+            .face_loop_assembly
+            .loops
+            .iter()
+            .all(|face_loop| face_loop.halfedges.len() == 3 && face_loop.vertices.len() == 3)
     );
 }
 
@@ -33581,6 +33640,20 @@ fn exact_boolmesh_kernel12_discovers_skew_edge_face_events() {
             .count(),
         size_output.partial_source_edges.unpaired_runs
     );
+    let mut malformed_partial_edge_use = workspace.clone();
+    malformed_partial_edge_use
+        .boolean45
+        .as_mut()
+        .unwrap()
+        .partial_source_edges
+        .source_edge_runs[0]
+        .incident_edges[0] = [usize::MAX, 0];
+    assert_eq!(
+        malformed_partial_edge_use
+            .validate_against_sources(&left, &right)
+            .unwrap_err(),
+        hypermesh::exact::ExactBoolMeshValidationError::Boolean45PartialEdgeMismatch
+    );
     assert_eq!(
         size_output.new_face_pair_edges.face_pair_runs.len(),
         size_output.new_edge_vertices.face_pair_runs.len()
@@ -33596,6 +33669,16 @@ fn exact_boolmesh_kernel12_discovers_skew_edge_face_events() {
         size_output.halfedge_assembly.emitted_pairs * 2
             + size_output.halfedge_assembly.unfilled_halfedges,
         size_output.halfedge_assembly.output_halfedges.len()
+    );
+    assert_eq!(size_output.face_loop_assembly.repeated_halfedges, 0);
+    assert_eq!(size_output.face_loop_assembly.non_loop_halfedges, 0);
+    assert!(
+        size_output
+            .face_loop_assembly
+            .loops
+            .iter()
+            .all(|face_loop| face_loop.halfedges.len() >= 3
+                && face_loop.halfedges.len() == face_loop.vertices.len())
     );
     assert_eq!(
         size_output

@@ -12,6 +12,7 @@
 //! *SIGGRAPH* (1977).
 
 mod assembly;
+mod face_loops;
 
 use std::cmp::Ordering;
 use std::collections::{BTreeMap, BTreeSet};
@@ -19,6 +20,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use hyperlimit::compare_reals;
 
 use assembly::assemble_output_halfedges;
+use face_loops::assemble_output_face_loops;
 
 use crate::exact::boolean::ExactBooleanOperation;
 use crate::exact::mesh::{ExactMesh, Triangle};
@@ -167,6 +169,7 @@ pub(super) fn size_output_stage(
         &face_halfedge_offsets,
         left.triangles().len(),
     );
+    let face_loop_assembly = assemble_output_face_loops(&halfedge_assembly, &face_halfedge_offsets);
 
     ExactBoolMeshBoolean45Stage {
         left_face_halfedge_counts,
@@ -179,6 +182,7 @@ pub(super) fn size_output_stage(
         new_face_pair_edges,
         whole_source_edges,
         halfedge_assembly,
+        face_loop_assembly,
         vertices_from_left: i03.iter().map(|value| signed_abs(*value)).sum(),
         vertices_from_right: i30.iter().map(|value| signed_abs(*value)).sum(),
         inserted_intersection_vertices: i12
@@ -608,11 +612,13 @@ fn stage_partial_source_edges(
         if unpaired_points > 0 {
             unpaired_runs += 1;
         }
+        let incident_uses = directed_edge_uses_for_edge(mesh.triangles(), [run.tail, run.head]);
         source_edge_runs.push(ExactBoolMeshPartialSourceEdgeRun {
             side: run.side,
             tail: run.tail,
             head: run.head,
-            incident_faces: incident_faces_for_edge(mesh.triangles(), [run.tail, run.head]),
+            incident_faces: incident_uses.iter().map(|use_| use_.face).collect(),
+            incident_edges: incident_uses.iter().map(|use_| use_.edge).collect(),
             points,
             fragments,
             unpaired_points,
@@ -878,6 +884,7 @@ fn append_whole_source_edges_for_side(
                 side,
                 edge: source_edge.edge,
                 incident_faces: source_edge.incident_faces,
+                incident_edges: source_edge.incident_edges,
                 signed_count,
                 fragments,
             });
@@ -888,20 +895,34 @@ fn append_whole_source_edges_for_side(
 struct SourceEdge {
     edge: [usize; 2],
     incident_faces: Vec<usize>,
+    incident_edges: Vec<[usize; 2]>,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+struct SourceEdgeUse {
+    face: usize,
+    edge: [usize; 2],
 }
 
 fn source_edges(triangles: &[Triangle]) -> Vec<SourceEdge> {
-    let mut edges = BTreeMap::<[usize; 2], Vec<usize>>::new();
+    let mut edges = BTreeMap::<[usize; 2], Vec<SourceEdgeUse>>::new();
     for (face, triangle) in triangles.iter().enumerate() {
         for edge in triangle_edges(*triangle) {
-            edges.entry(canonical_edge(edge)).or_default().push(face);
+            edges
+                .entry(canonical_edge(edge))
+                .or_default()
+                .push(SourceEdgeUse { face, edge });
         }
     }
     edges
         .into_iter()
-        .map(|(edge, incident_faces)| SourceEdge {
-            edge,
-            incident_faces,
+        .map(|(edge, mut uses)| {
+            sort_source_edge_uses(edge, &mut uses);
+            SourceEdge {
+                edge,
+                incident_faces: uses.iter().map(|use_| use_.face).collect(),
+                incident_edges: uses.iter().map(|use_| use_.edge).collect(),
+            }
         })
         .collect()
 }
@@ -927,17 +948,50 @@ fn count_crossing_vertex(
 }
 
 fn incident_faces_for_edge(triangles: &[Triangle], edge: [usize; 2]) -> Vec<usize> {
-    let key = canonical_edge(edge);
-    triangles
+    directed_edge_uses_for_edge(triangles, edge)
+        .iter()
+        .map(|use_| use_.face)
+        .collect()
+}
+
+/// Return incident face uses in the same first-face order boolmesh gets from
+/// its source halfedge cursor.
+///
+/// For partial edges, `preferred` is the directed split source edge that owns
+/// the `pt_old` bucket.  For whole retained edges, callers pass the canonical
+/// source edge.  The ordered uses let the exact `append_*_edges` stages emit a
+/// halfedge to the preferred face and the paired reverse halfedge to the
+/// opposite face, matching the boolmesh topology while avoiding any rounded
+/// orientation recovery.  This follows Yap, "Towards Exact Geometric
+/// Computation," by making the combinatorial orientation a replayed exact
+/// artifact.
+fn directed_edge_uses_for_edge(
+    triangles: &[Triangle],
+    preferred: [usize; 2],
+) -> Vec<SourceEdgeUse> {
+    let key = canonical_edge(preferred);
+    let mut uses = triangles
         .iter()
         .enumerate()
-        .filter_map(|(face, triangle)| {
+        .flat_map(|(face, triangle)| {
             triangle_edges(*triangle)
-                .iter()
-                .any(|candidate| canonical_edge(*candidate) == key)
-                .then_some(face)
+                .into_iter()
+                .filter(move |candidate| canonical_edge(*candidate) == key)
+                .map(move |edge| SourceEdgeUse { face, edge })
         })
-        .collect()
+        .collect::<Vec<_>>();
+    sort_source_edge_uses(preferred, &mut uses);
+    uses
+}
+
+fn sort_source_edge_uses(preferred: [usize; 2], uses: &mut [SourceEdgeUse]) {
+    uses.sort_by_key(|use_| {
+        (
+            use_.edge != preferred,
+            use_.edge != [preferred[1], preferred[0]],
+            use_.face,
+        )
+    });
 }
 
 fn triangle_edges(triangle: Triangle) -> [[usize; 2]; 3] {

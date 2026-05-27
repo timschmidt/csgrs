@@ -72,20 +72,33 @@ fn append_partial_source_halfedges(
     stage: &mut ExactBoolMeshHalfedgeAssemblyStage,
 ) {
     for run in &partial_source_edges.source_edge_runs {
-        let Some((&first_face, &second_face)) =
-            run.incident_faces.first().zip(run.incident_faces.get(1))
+        let Some((&first_face, &second_face, &first_edge)) = run
+            .incident_faces
+            .first()
+            .zip(run.incident_faces.get(1))
+            .zip(run.incident_edges.first())
+            .map(|((first_face, second_face), first_edge)| (first_face, second_face, first_edge))
         else {
             stage.source_edge_incident_gaps += run.fragments.len();
             continue;
         };
         let edge = [run.tail, run.head];
         for (fragment_index, fragment) in run.fragments.iter().enumerate() {
+            let Some((tail, head)) = oriented_fragment_endpoints(
+                edge,
+                first_edge,
+                fragment.tail_point.output_vertex,
+                fragment.head_point.output_vertex,
+            ) else {
+                stage.source_edge_incident_gaps += 1;
+                continue;
+            };
             emit_source_edge_pair(
                 run.side,
                 first_face,
                 second_face,
-                fragment.tail_point.output_vertex,
-                fragment.head_point.output_vertex,
+                tail,
+                head,
                 edge,
                 fragment_index,
                 SourceEdgeEmissionKind::Partial,
@@ -146,8 +159,12 @@ fn append_whole_source_halfedges(
     stage: &mut ExactBoolMeshHalfedgeAssemblyStage,
 ) {
     for run in &whole_source_edges.source_edge_runs {
-        let Some((&first_face, &second_face)) =
-            run.incident_faces.first().zip(run.incident_faces.get(1))
+        let Some((&first_face, &second_face, &first_edge)) = run
+            .incident_faces
+            .first()
+            .zip(run.incident_faces.get(1))
+            .zip(run.incident_edges.first())
+            .map(|((first_face, second_face), first_edge)| (first_face, second_face, first_edge))
         else {
             stage.source_edge_incident_gaps += run.fragments.len();
             continue;
@@ -158,12 +175,26 @@ fn append_whole_source_halfedges(
             run.edge
         };
         for (fragment_index, fragment) in run.fragments.iter().enumerate() {
+            let desired_edge = if run.signed_count < 0 {
+                [first_edge[1], first_edge[0]]
+            } else {
+                first_edge
+            };
+            let Some((tail, head)) = oriented_fragment_endpoints(
+                edge,
+                desired_edge,
+                fragment.output_tail,
+                fragment.output_head,
+            ) else {
+                stage.source_edge_incident_gaps += 1;
+                continue;
+            };
             emit_source_edge_pair(
                 run.side,
                 first_face,
                 second_face,
-                fragment.output_tail,
-                fragment.output_head,
+                tail,
+                head,
                 edge,
                 fragment_index,
                 SourceEdgeEmissionKind::Whole,
@@ -173,6 +204,25 @@ fn append_whole_source_halfedges(
                 stage,
             );
         }
+    }
+}
+
+fn oriented_fragment_endpoints(
+    stored_edge: [usize; 2],
+    desired_edge: [usize; 2],
+    tail: usize,
+    head: usize,
+) -> Option<(usize, usize)> {
+    // Boolmesh receives this orientation from its halfedge structure.  The
+    // exact port replays the same combinatorial choice from retained directed
+    // source-edge uses, which is the kind of topology/numeric separation Yap
+    // requires in "Towards Exact Geometric Computation" (1997).
+    if desired_edge == stored_edge {
+        Some((tail, head))
+    } else if desired_edge == [stored_edge[1], stored_edge[0]] {
+        Some((head, tail))
+    } else {
+        None
     }
 }
 
