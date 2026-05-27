@@ -377,6 +377,29 @@ fn path_predicates(c: &mut Criterion) {
             .map(|report| (report.cell_graph.faces, report.cell_graph.loop_roles))
         })
     });
+    let true_cubic_loop_outer_upper =
+        CubicBezier::new(p(0, 0), p(0, 750), p(1000, 250), p(1000, 0));
+    let true_cubic_loop_outer_lower =
+        CubicBezier::new(p(1000, 0), p(1000, -750), p(0, -250), p(0, 0));
+    let true_cubic_loop_inner_upper =
+        CubicBezier::new(p(250, 0), p(250, 250), p(750, 125), p(750, 0));
+    let true_cubic_loop_inner_lower =
+        CubicBezier::new(p(750, 0), p(750, -250), p(250, -125), p(250, 0));
+    c.bench_function("cubic_bezier_algebraic_loop_role_replay", |b| {
+        b.iter(|| {
+            arrange_cubic_beziers(
+                &[
+                    true_cubic_loop_outer_upper.clone(),
+                    true_cubic_loop_outer_lower.clone(),
+                    true_cubic_loop_inner_upper.clone(),
+                    true_cubic_loop_inner_lower.clone(),
+                ],
+                &[vec![], vec![], vec![], vec![]],
+                PredicatePolicy::default(),
+            )
+            .map(|report| report.cell_graph.loop_roles)
+        })
+    });
     let conic = RationalQuadraticBezier::new(p(0, 0), p(500, 200), p(1000, 0), r(2)).unwrap();
     c.bench_function("rational_quadratic_bezier_exact_eval", |b| {
         b.iter(|| conic.eval(half))

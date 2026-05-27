@@ -393,6 +393,24 @@ fuzz_target!(|data: &[u8]| {
     assert_eq!(c_loop_report.cell_graph.vertices.len(), 2);
     assert_eq!(c_loop_report.cell_graph.edges.len(), 2);
     assert_eq!(c_loop_report.cell_graph.faces.len(), 2);
+    let nested_true_cubic_report = arrange_cubic_beziers(
+        &[
+            CubicBezier::new(p(0, 0), p(0, 6), p(8, 2), p(8, 0)),
+            CubicBezier::new(p(8, 0), p(8, -6), p(0, -2), p(0, 0)),
+            CubicBezier::new(p(2, 0), p(2, 2), p(6, 1), p(6, 0)),
+            CubicBezier::new(p(6, 0), p(6, -2), p(2, -1), p(2, 0)),
+        ],
+        &[vec![], vec![], vec![], vec![]],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert!(nested_true_cubic_report
+        .cell_graph
+        .loop_roles
+        .iter()
+        .any(|role| role.class == CurveArrangementLoopRoleClass::Hole
+            && role.containment_depth == Some(1)
+            && role.representative.is_some()));
 
     let mixed_line = LinePathSegment::new(p(0, 0), p(20, 0));
     let mixed_quadratic = QuadraticBezier::new(p(0, 0), p(2, 4), p(4, 0));

@@ -888,6 +888,28 @@ fn cubic_bezier_arrangement_cell_graph_schedules_closed_loop() {
 }
 
 #[test]
+fn cubic_bezier_arrangement_reports_nested_true_cubic_hole_role() {
+    let outer_upper = CubicBezier::new(p(0, 0), p(0, 6), p(8, 2), p(8, 0));
+    let outer_lower = CubicBezier::new(p(8, 0), p(8, -6), p(0, -2), p(0, 0));
+    let inner_upper = CubicBezier::new(p(2, 0), p(2, 2), p(6, 1), p(6, 0));
+    let inner_lower = CubicBezier::new(p(6, 0), p(6, -2), p(2, -1), p(2, 0));
+
+    let report = arrange_cubic_beziers(
+        &[outer_upper, outer_lower, inner_upper, inner_lower],
+        &[vec![], vec![], vec![], vec![]],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+
+    assert!(report.cell_graph.loop_roles.iter().any(|role| {
+        role.class == CurveArrangementLoopRoleClass::Hole
+            && role.containment_depth == Some(1)
+            && role.containers.len() == 1
+            && role.representative.is_some()
+    }));
+}
+
+#[test]
 fn rational_quadratic_bezier_arrangement_emits_homogeneous_fragments() {
     let curve = RationalQuadraticBezier::new(p(0, 0), p(2, 4), p(4, 0), r(2)).unwrap();
     let half = BezierParameter::new(1, 2).unwrap();

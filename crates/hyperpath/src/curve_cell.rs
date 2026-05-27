@@ -11,6 +11,12 @@ use std::cmp::Ordering;
 
 use hyperlimit::{Point2, PredicatePolicy, compare_reals_with_policy, point2_equal_with_policy};
 use hyperreal::Real;
+use hypersolve::{
+    AlgebraicRootPolynomialImageReport, AlgebraicRootPolynomialImageStatus,
+    AlgebraicRootRepresentation, AlgebraicRootRepresentationStatus, Constraint, Expr,
+    PreparedProblem, Problem, RootIsolationConfig, represent_univariate_algebraic_roots,
+    transform_algebraic_root_polynomial_image,
+};
 
 use crate::arc::{
     ArcDirection, ExplicitArcPointClassification, ExplicitArcSweepClass, ExplicitCircularArc,
@@ -133,17 +139,19 @@ pub enum CurveArrangementCellFaceClass {
 /// against every other native face. Isolated nonzero native faces are a
 /// special depth-zero case: their retained Green-area face already proves a
 /// material loop and no containment ray is needed. Boundary hits, tangent ray
-/// contacts, and genuinely cubic ray equations that are not degree-lowered
-/// stay [`Uncertain`](Self::Uncertain). This is the
+/// contacts, and genuinely cubic ray equations whose represented roots cannot
+/// certify parameter, image, and derivative predicates stay
+/// [`Uncertain`](Self::Uncertain). This is the
 /// object/predicate boundary in Yap, "Towards Exact Geometric Computation,"
 /// *Computational Geometry* 7.1-2 (1997): retained topology may be classified
 /// only when exact witnesses replay; otherwise uncertainty is explicit.
 /// Explicit arcs use retained circle/sweep predicates in the style of exact
 /// circular-arc arrangements such as CGAL `Arrangement_on_surface_2`;
 /// polynomial Bezier ray equations use the Bernstein hodograph model
-/// described by Farouki, *Pythagorean Hodograph Curves* (2008), and rational
-/// quadratics use the homogeneous equation `Y(t) - y W(t) = 0` before affine
-/// division.
+/// described by Farouki, *Pythagorean Hodograph Curves* (2008). Genuinely
+/// cubic ray equations are isolated by the Sturm/Collins-Loos represented-root
+/// model already used in `hypersolve`; rational quadratics use the homogeneous
+/// equation `Y(t) - y W(t) = 0` before affine division.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum CurveArrangementLoopRoleClass {
     /// Positive-area loop at even containment depth.
@@ -169,7 +177,7 @@ pub enum CurveArrangementLoopRoleBlocker {
     TangentContact,
     /// The tested loop contains an unsupported edge family for exact ray replay.
     UnsupportedEdge,
-    /// A genuinely cubic ray equation needs represented-root isolation.
+    /// A genuinely cubic ray equation could not certify represented-root replay.
     UnsupportedCubicRay,
     /// Exact comparison or division failed during ray replay.
     UndecidablePredicate,
@@ -1751,7 +1759,19 @@ fn cubic_ray_crossing(
     let p3 = fragment.curve.end().y.clone() - point.y.clone();
     let cubic = -p0.clone() + Real::from(3) * p1.clone() - Real::from(3) * p2.clone() + p3;
     if compare_reals_with_policy(&cubic, &Real::zero(), policy).value() != Some(Ordering::Equal) {
-        return RayCrossingResult::Unknown(CurveArrangementLoopRoleBlocker::UnsupportedCubicRay);
+        return algebraic_cubic_ray_crossing(
+            point,
+            fragment,
+            (
+                p0.clone(),
+                Real::from(3) * p0.clone() - Real::from(6) * p1.clone()
+                    + Real::from(3) * p2.clone(),
+                Real::from(3) * (p1.clone() - p0.clone()),
+                cubic,
+            ),
+            forward,
+            policy,
+        );
     }
     let quadratic = Real::from(3) * p0.clone() - Real::from(6) * p1.clone() + Real::from(3) * p2;
     let linear = Real::from(3) * (p1 - p0);
@@ -1776,6 +1796,214 @@ fn cubic_ray_crossing(
         |t| cubic_y_derivative(fragment, t),
         policy,
     )
+}
+
+/// Replay a genuinely cubic horizontal-ray equation with represented roots.
+///
+/// Degree-lowered cubics already return ordinary [`Real`] roots. This path is
+/// the exact-algebraic fallback for the remaining cubic support equation
+/// `Y(t)-y = 0`: it isolates represented roots with the Sturm theorem
+/// (Sturm, 1835) in the Collins-Loos real-root model, builds polynomial
+/// images for `X(t)` and `Y'(t)` using `hypersolve`'s resultant-backed image
+/// construction, and accepts a crossing only when interval evidence separates
+/// the root from endpoints, the x-image from the query point, and the
+/// derivative from zero. This follows Yap, "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7.1-2 (1997): exact algebraic
+/// witnesses may drive topology, but overlapping or undecidable intervals stay
+/// explicit uncertainty.
+fn algebraic_cubic_ray_crossing(
+    point: &Point2,
+    fragment: &CubicBezierRealFragment,
+    polynomial: (Real, Real, Real, Real),
+    forward: bool,
+    policy: PredicatePolicy,
+) -> RayCrossingResult {
+    let roots = match isolate_cubic_ray_roots(polynomial, policy) {
+        Some(roots) => roots,
+        None => {
+            return RayCrossingResult::Unknown(
+                CurveArrangementLoopRoleBlocker::UnsupportedCubicRay,
+            );
+        }
+    };
+    let x_coefficients = cubic_coordinate_image_coefficients(
+        fragment.curve.start().x.clone(),
+        fragment.curve.control0().x.clone(),
+        fragment.curve.control1().x.clone(),
+        fragment.curve.end().x.clone(),
+    );
+    let dy_coefficients = cubic_y_derivative_image_coefficients(fragment);
+    let mut crossings = 0usize;
+    for root in roots {
+        match algebraic_parameter_in_half_open_unit(&root, forward, policy) {
+            Some(true) => {}
+            Some(false) => continue,
+            None => {
+                return RayCrossingResult::Unknown(
+                    CurveArrangementLoopRoleBlocker::UnsupportedCubicRay,
+                );
+            }
+        }
+
+        let x_image = transform_algebraic_root_polynomial_image(&root, &x_coefficients, policy);
+        match compare_algebraic_image_to_real(&x_image, &point.x, policy) {
+            Some(Ordering::Less) => continue,
+            Some(Ordering::Equal) => return RayCrossingResult::Boundary,
+            Some(Ordering::Greater) => {}
+            None => {
+                return RayCrossingResult::Unknown(
+                    CurveArrangementLoopRoleBlocker::UnsupportedCubicRay,
+                );
+            }
+        }
+
+        let dy_image = transform_algebraic_root_polynomial_image(&root, &dy_coefficients, policy);
+        match compare_algebraic_image_to_real(&dy_image, &Real::zero(), policy) {
+            Some(Ordering::Equal) => {
+                return RayCrossingResult::Unknown(CurveArrangementLoopRoleBlocker::TangentContact);
+            }
+            Some(Ordering::Less | Ordering::Greater) => crossings += 1,
+            None => {
+                return RayCrossingResult::Unknown(
+                    CurveArrangementLoopRoleBlocker::UnsupportedCubicRay,
+                );
+            }
+        }
+    }
+    RayCrossingResult::Crossings(crossings)
+}
+
+fn isolate_cubic_ray_roots(
+    polynomial: (Real, Real, Real, Real),
+    policy: PredicatePolicy,
+) -> Option<Vec<AlgebraicRootRepresentation>> {
+    let (d, b, c, a) = polynomial;
+    let mut problem = Problem::default();
+    let parameter = problem.add_variable("cubic_ray_parameter", Real::zero());
+    let t = Expr::symbol(parameter.into(), "cubic_ray_parameter");
+    let residual = Expr::real(d)
+        + Expr::real(c) * t.clone()
+        + Expr::real(b) * t.clone().powi(2)
+        + Expr::real(a) * t.powi(3);
+    problem.add_constraint(Constraint::equality("cubic ray root", residual));
+    let prepared = PreparedProblem::new(&problem);
+    let reports = represent_univariate_algebraic_roots(
+        &prepared,
+        RootIsolationConfig {
+            policy,
+            max_interval_width: Some((Real::one() / Real::from(4096)).ok()?),
+            max_refinement_steps: 96,
+            ..RootIsolationConfig::default()
+        },
+    );
+    if reports.is_empty() {
+        return None;
+    }
+    let mut roots = Vec::new();
+    for report in reports {
+        match report.status {
+            AlgebraicRootRepresentationStatus::Represented => {
+                if report.roots.iter().all(|root| root.is_valid()) {
+                    roots.extend(report.roots);
+                } else {
+                    return None;
+                }
+            }
+            AlgebraicRootRepresentationStatus::NoRealRoots => {}
+            AlgebraicRootRepresentationStatus::UnsupportedIsolationStatus
+            | AlgebraicRootRepresentationStatus::MissingSymbol
+            | AlgebraicRootRepresentationStatus::MissingPolynomial
+            | AlgebraicRootRepresentationStatus::InvalidEvidence => return None,
+        }
+    }
+    Some(roots)
+}
+
+fn algebraic_parameter_in_half_open_unit(
+    root: &AlgebraicRootRepresentation,
+    forward: bool,
+    policy: PredicatePolicy,
+) -> Option<bool> {
+    if let Some(witness) = root.exact_rational_witness() {
+        match real_in_unit_interval_closed(witness, policy) {
+            Some(true) => {}
+            other => return other,
+        }
+        if forward
+            && compare_reals_with_policy(witness, &Real::one(), policy).value()? == Ordering::Equal
+        {
+            return Some(false);
+        }
+        if !forward
+            && compare_reals_with_policy(witness, &Real::zero(), policy).value()? == Ordering::Equal
+        {
+            return Some(false);
+        }
+        return Some(true);
+    }
+
+    let lower_zero =
+        compare_reals_with_policy(&root.interval.lower, &Real::zero(), policy).value()?;
+    let upper_one =
+        compare_reals_with_policy(&root.interval.upper, &Real::one(), policy).value()?;
+    if matches!(lower_zero, Ordering::Greater) && matches!(upper_one, Ordering::Less) {
+        return Some(true);
+    }
+    let upper_zero =
+        compare_reals_with_policy(&root.interval.upper, &Real::zero(), policy).value()?;
+    let lower_one =
+        compare_reals_with_policy(&root.interval.lower, &Real::one(), policy).value()?;
+    if matches!(upper_zero, Ordering::Less) || matches!(lower_one, Ordering::Greater) {
+        Some(false)
+    } else {
+        None
+    }
+}
+
+fn compare_algebraic_image_to_real(
+    image: &AlgebraicRootPolynomialImageReport,
+    value: &Real,
+    policy: PredicatePolicy,
+) -> Option<Ordering> {
+    if image.status != AlgebraicRootPolynomialImageStatus::Transformed {
+        return None;
+    }
+    let representation = image.representation.as_ref()?;
+    if let Some(exact) = representation.exact_rational_witness() {
+        return compare_reals_with_policy(exact, value, policy).value();
+    }
+    let upper_value =
+        compare_reals_with_policy(&representation.interval.upper, value, policy).value()?;
+    if upper_value == Ordering::Less {
+        return Some(Ordering::Less);
+    }
+    let lower_value =
+        compare_reals_with_policy(&representation.interval.lower, value, policy).value()?;
+    if lower_value == Ordering::Greater {
+        return Some(Ordering::Greater);
+    }
+    None
+}
+
+fn cubic_coordinate_image_coefficients(p0: Real, p1: Real, p2: Real, p3: Real) -> Vec<Real> {
+    let a = -p0.clone() + Real::from(3) * p1.clone() - Real::from(3) * p2.clone() + p3;
+    let b = Real::from(3) * p0.clone() - Real::from(6) * p1.clone() + Real::from(3) * p2;
+    let c = Real::from(3) * (p1 - p0.clone());
+    vec![p0, c, b, a]
+}
+
+fn cubic_y_derivative_image_coefficients(fragment: &CubicBezierRealFragment) -> Vec<Real> {
+    let coefficients = cubic_coordinate_image_coefficients(
+        fragment.curve.start().y.clone(),
+        fragment.curve.control0().y.clone(),
+        fragment.curve.control1().y.clone(),
+        fragment.curve.end().y.clone(),
+    );
+    vec![
+        coefficients[1].clone(),
+        Real::from(2) * coefficients[2].clone(),
+        Real::from(3) * coefficients[3].clone(),
+    ]
 }
 
 fn conic_ray_crossing(
