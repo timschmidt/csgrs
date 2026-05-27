@@ -48,6 +48,11 @@ pub(super) struct ExactBoolMeshKernelFrame {
 }
 
 impl ExactBoolMeshKernelFrame {
+    /// Number of face-local halfedges before any appended boundary reverse rows.
+    pub(super) fn source_halfedge_count(&self) -> usize {
+        self.paired_source_halfedges + self.boundary_source_halfedges
+    }
+
     /// Resolve a retained face-local edge into the boolmesh halfedge row.
     ///
     /// Legacy boolmesh `Kernel12::op` is addressed by a source halfedge index

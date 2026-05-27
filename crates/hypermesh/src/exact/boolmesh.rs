@@ -27,6 +27,8 @@ mod kernel12;
 #[cfg(feature = "exact-triangulation")]
 mod kernel12_boundary;
 #[cfg(feature = "exact-triangulation")]
+mod kernel12_intersect;
+#[cfg(feature = "exact-triangulation")]
 mod kernel12_op;
 #[cfg(feature = "exact-triangulation")]
 mod kernel_frame;
@@ -115,6 +117,16 @@ pub fn exact_boolmesh_kernel_frame_probe_for_internal_fuzz(selector: u8) -> bool
 #[cfg(all(feature = "exact-triangulation", feature = "internal-fuzzing"))]
 pub fn exact_boolmesh_kernel12_accumulator_replay_probe_for_internal_fuzz(selector: u8) -> bool {
     kernel12::internal_fuzz_probe(selector)
+}
+
+/// Exercise the exact boolmesh `intersect12` broad loop from fuzz targets.
+///
+/// This keeps the structural boolmesh edge-AABB/opposite-face scheduling path
+/// compiled under adversarial builds without exporting it as public API before
+/// the remaining boundary and coplanar `Kernel12` rows are wired through.
+#[cfg(all(feature = "exact-triangulation", feature = "internal-fuzzing"))]
+pub fn exact_boolmesh_kernel12_intersect_loop_probe_for_internal_fuzz(selector: u8) -> bool {
+    kernel12_intersect::internal_fuzz_probe(selector)
 }
 
 /// Legacy boolmesh kernel stage represented by the exact port.

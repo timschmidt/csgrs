@@ -11,6 +11,8 @@ use hypermesh::exact::boolmesh::exact_boolmesh_kernel11_shadow_probe_for_interna
 #[cfg(all(feature = "exact-triangulation", feature = "internal-fuzzing"))]
 use hypermesh::exact::boolmesh::exact_boolmesh_kernel12_accumulator_replay_probe_for_internal_fuzz;
 #[cfg(all(feature = "exact-triangulation", feature = "internal-fuzzing"))]
+use hypermesh::exact::boolmesh::exact_boolmesh_kernel12_intersect_loop_probe_for_internal_fuzz;
+#[cfg(all(feature = "exact-triangulation", feature = "internal-fuzzing"))]
 use hypermesh::exact::boolmesh::exact_boolmesh_kernel12_shadow_accumulator_probe_for_internal_fuzz;
 use hypermesh::exact::{
     CoplanarArrangementOperation, ExactMesh, ExactPoint3, ExactReportValidationError,
@@ -13305,6 +13307,19 @@ fn exact_boolmesh_kernel12_accumulator_replay_port(c: &mut Criterion) {
     }
 }
 
+fn exact_boolmesh_kernel12_intersect_loop_port(c: &mut Criterion) {
+    #[cfg(all(feature = "exact-triangulation", feature = "internal-fuzzing"))]
+    {
+        c.bench_function("exact_boolmesh_kernel12_intersect_loop_port", |b| {
+            b.iter(|| exact_boolmesh_kernel12_intersect_loop_probe_for_internal_fuzz(56))
+        });
+    }
+    #[cfg(not(all(feature = "exact-triangulation", feature = "internal-fuzzing")))]
+    {
+        let _ = c;
+    }
+}
+
 fn exact_boolmesh_kernel03_no_intersection_port(c: &mut Criterion) {
     #[cfg(feature = "exact-triangulation")]
     {
@@ -13515,6 +13530,7 @@ criterion_group!(
     exact_boolmesh_kernel12_shadow_accumulator_port,
     exact_boolmesh_kernel_frame_port,
     exact_boolmesh_kernel12_accumulator_replay_port,
+    exact_boolmesh_kernel12_intersect_loop_port,
     exact_boolmesh_kernel03_no_intersection_port,
     legacy_boolean_adapter_report
 );
