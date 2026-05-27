@@ -42,7 +42,10 @@ use super::construction::{
     SegmentPlaneConstructionFailure, SegmentPlaneParameterRatio, SegmentPlaneRelation,
 };
 #[cfg(feature = "exact-triangulation")]
-use super::graph::{IntersectionEvent, MeshSide, build_intersection_graph};
+use super::graph::{
+    CoplanarEdgeInterval, CoplanarEdgeSplitPoint, CoplanarOverlapSplitPlan, IntersectionEvent,
+    MeshSide, build_intersection_graph,
+};
 #[cfg(feature = "exact-triangulation")]
 use super::mesh::{ExactMesh, ExactPoint3, Triangle};
 #[cfg(feature = "exact-triangulation")]
@@ -1866,6 +1869,8 @@ enum Kernel12CoplanarEvidence {
         left_edge: [usize; 2],
         right_edge: [usize; 2],
         relation: SegmentIntersection,
+        points: Vec<CoplanarEdgeSplitPoint>,
+        interval: Option<CoplanarEdgeInterval>,
     },
     Vertex {
         face_pair: ExactBoolMeshFacePair,
@@ -1889,6 +1894,13 @@ fn discover_kernel12_events(left: &ExactMesh, right: &ExactMesh) -> Kernel12Disc
         }
     };
     let mut discovery = Kernel12Discovery::default();
+    let split_plan = match graph.coplanar_overlap_split_plan(left, right) {
+        Ok(plan) => Some(plan),
+        Err(_) => {
+            discovery.graph_failed = true;
+            None
+        }
+    };
     for pair in &graph.face_pairs {
         let face_pair = ExactBoolMeshFacePair {
             left_face: pair.left_face,
@@ -1948,6 +1960,13 @@ fn discover_kernel12_events(left: &ExactMesh, right: &ExactMesh) -> Kernel12Disc
                     relation,
                 } => {
                     discovery.coplanar_events += 1;
+                    let (points, interval) = coplanar_edge_split_for_event(
+                        split_plan.as_ref(),
+                        face_pair,
+                        *left_edge,
+                        *right_edge,
+                        *relation,
+                    );
                     discovery
                         .coplanar_evidence
                         .push(Kernel12CoplanarEvidence::Edge {
@@ -1955,6 +1974,8 @@ fn discover_kernel12_events(left: &ExactMesh, right: &ExactMesh) -> Kernel12Disc
                             left_edge: *left_edge,
                             right_edge: *right_edge,
                             relation: *relation,
+                            points,
+                            interval,
                         });
                 }
                 IntersectionEvent::CoplanarVertex {
@@ -1986,6 +2007,34 @@ fn discover_kernel12_events(left: &ExactMesh, right: &ExactMesh) -> Kernel12Disc
 }
 
 #[cfg(feature = "exact-triangulation")]
+fn coplanar_edge_split_for_event(
+    split_plan: Option<&CoplanarOverlapSplitPlan>,
+    face_pair: ExactBoolMeshFacePair,
+    left_edge: [usize; 2],
+    right_edge: [usize; 2],
+    relation: SegmentIntersection,
+) -> (Vec<CoplanarEdgeSplitPoint>, Option<CoplanarEdgeInterval>) {
+    let Some(split_plan) = split_plan else {
+        return (Vec::new(), None);
+    };
+    split_plan
+        .graphs
+        .iter()
+        .find(|graph| {
+            graph.left_face == face_pair.left_face && graph.right_face == face_pair.right_face
+        })
+        .and_then(|graph| {
+            graph.edge_splits.iter().find(|split| {
+                split.overlap.left_edge == left_edge
+                    && split.overlap.right_edge == right_edge
+                    && split.overlap.relation == relation
+            })
+        })
+        .map(|split| (split.points.clone(), split.interval.clone()))
+        .unwrap_or_else(|| (Vec::new(), None))
+}
+
+#[cfg(feature = "exact-triangulation")]
 fn count_uncovered_coplanar_events(
     coplanar_evidence: &[Kernel12CoplanarEvidence],
     lowering: &ExactBoolMeshKernel12Lowering,
@@ -2005,8 +2054,10 @@ fn count_uncovered_coplanar_events(
 /// "Towards Exact Geometric Computation" requires retained facts to replay
 /// against the exact object that consumes them; for this port, that consumer is
 /// the exact `intersect12`/`Kernel12::op` row.  Positive-length coplanar edge
-/// overlap and strict interior vertex containment are not single-row witnesses,
-/// so they remain unresolved until the coplanar overlap branch is ported.
+/// overlap is therefore covered only when both split-interval endpoints replay
+/// through rows on the retained source edges.  Strict interior vertex
+/// containment is still not a row witness and remains unresolved until the
+/// coplanar overlap branch is ported.
 #[cfg(feature = "exact-triangulation")]
 fn coplanar_evidence_has_lowered_row(
     evidence: &Kernel12CoplanarEvidence,
@@ -2020,24 +2071,35 @@ fn coplanar_evidence_has_lowered_row(
             left_edge,
             right_edge,
             relation,
+            points,
+            interval,
         } => match relation {
             SegmentIntersection::EndpointTouch | SegmentIntersection::Proper => {
-                lowered_rows(lowering).any(|row| {
-                    row.0.face_pair == *face_pair
-                        && (lowered_row_matches_side_edge(
-                            row.0,
-                            ExactBoolMeshSide::Left,
+                !points.is_empty()
+                    && points.iter().all(|point| {
+                        coplanar_edge_split_point_has_lowered_row(
+                            point,
+                            *face_pair,
                             *left_edge,
-                        ) || lowered_row_matches_side_edge(
-                            row.0,
-                            ExactBoolMeshSide::Right,
                             *right_edge,
-                        ))
+                            lowering,
+                        )
+                    })
+            }
+            SegmentIntersection::CollinearOverlap | SegmentIntersection::Identical => {
+                interval.as_ref().is_some_and(|interval| {
+                    interval.endpoints.iter().all(|point| {
+                        coplanar_edge_split_point_has_lowered_row(
+                            point,
+                            *face_pair,
+                            *left_edge,
+                            *right_edge,
+                            lowering,
+                        )
+                    })
                 })
             }
-            SegmentIntersection::Disjoint
-            | SegmentIntersection::CollinearOverlap
-            | SegmentIntersection::Identical => false,
+            SegmentIntersection::Disjoint => false,
         },
         Kernel12CoplanarEvidence::Vertex {
             face_pair,
@@ -2070,6 +2132,22 @@ fn coplanar_evidence_has_lowered_row(
             }
         },
     }
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn coplanar_edge_split_point_has_lowered_row(
+    point: &CoplanarEdgeSplitPoint,
+    face_pair: ExactBoolMeshFacePair,
+    left_edge: [usize; 2],
+    right_edge: [usize; 2],
+    lowering: &ExactBoolMeshKernel12Lowering,
+) -> bool {
+    lowered_rows(lowering).any(|row| {
+        row.0.face_pair == face_pair
+            && point_matches(row.1, &point.point)
+            && (lowered_row_matches_side_edge(row.0, ExactBoolMeshSide::Left, left_edge)
+                || lowered_row_matches_side_edge(row.0, ExactBoolMeshSide::Right, right_edge))
+    })
 }
 
 #[cfg(feature = "exact-triangulation")]
@@ -2145,6 +2223,27 @@ mod tests {
         }
     }
 
+    fn interval_lowering() -> ExactBoolMeshKernel12Lowering {
+        ExactBoolMeshKernel12Lowering {
+            p1q2: vec![edge_face(), edge_face()],
+            x12: vec![1, -1],
+            v12: vec![p3(0, 0, 0), p3(1, 0, 0)],
+            ..ExactBoolMeshKernel12Lowering::default()
+        }
+    }
+
+    fn split_point(
+        point: Point3,
+        left_parameter: i64,
+        right_parameter: i64,
+    ) -> CoplanarEdgeSplitPoint {
+        CoplanarEdgeSplitPoint {
+            point,
+            left_parameter: ExactReal::from(left_parameter),
+            right_parameter: ExactReal::from(right_parameter),
+        }
+    }
+
     /// Endpoint coplanar edge contacts are single-row facts: the exact
     /// `Kernel12::op` row owns the same boolmesh source edge and face pair.
     #[test]
@@ -2160,6 +2259,8 @@ mod tests {
             left_edge: [1, 0],
             right_edge: [0, 1],
             relation: SegmentIntersection::EndpointTouch,
+            points: vec![split_point(p3(0, 0, 0), 1, 0)],
+            interval: None,
         };
 
         assert_eq!(
@@ -2168,8 +2269,8 @@ mod tests {
         );
     }
 
-    /// Positive-length coplanar edge overlap is not a single `v12` witness; it
-    /// must wait for the explicit coplanar overlap row port.
+    /// Positive-length coplanar edge overlap is not a single `v12` witness; a
+    /// lone endpoint row does not cover the retained interval.
     #[test]
     fn coplanar_positive_length_edge_overlap_remains_uncovered() {
         let left = tetrahedron_i64([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]);
@@ -2183,11 +2284,48 @@ mod tests {
             left_edge: [0, 1],
             right_edge: [1, 0],
             relation: SegmentIntersection::CollinearOverlap,
+            points: Vec::new(),
+            interval: Some(CoplanarEdgeInterval {
+                endpoints: [
+                    split_point(p3(0, 0, 0), 0, 1),
+                    split_point(p3(1, 0, 0), 1, 0),
+                ],
+            }),
         };
 
         assert_eq!(
             count_uncovered_coplanar_events(&[evidence], &lowering, &left, &right),
             1
+        );
+    }
+
+    /// A positive-length interval becomes row-covered only when both exact
+    /// interval endpoints replay through boolmesh rows on the retained edge.
+    #[test]
+    fn coplanar_positive_length_edge_overlap_clears_with_both_endpoint_rows() {
+        let left = tetrahedron_i64([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]);
+        let right = tetrahedron_i64([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, -1]);
+        let lowering = interval_lowering();
+        let evidence = Kernel12CoplanarEvidence::Edge {
+            face_pair: ExactBoolMeshFacePair {
+                left_face: 0,
+                right_face: 0,
+            },
+            left_edge: [0, 1],
+            right_edge: [1, 0],
+            relation: SegmentIntersection::CollinearOverlap,
+            points: Vec::new(),
+            interval: Some(CoplanarEdgeInterval {
+                endpoints: [
+                    split_point(p3(0, 0, 0), 0, 1),
+                    split_point(p3(1, 0, 0), 1, 0),
+                ],
+            }),
+        };
+
+        assert_eq!(
+            count_uncovered_coplanar_events(&[evidence], &lowering, &left, &right),
+            0
         );
     }
 
