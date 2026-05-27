@@ -2167,6 +2167,61 @@ fn line_cubic_bezier_intersection_keeps_algebraic_point_image_without_topology_p
 }
 
 #[test]
+fn line_cubic_bezier_intersection_retains_general_true_cubic_algebraic_support_roots() {
+    let curve = CubicBezier::new(p(0, 0), pq(1, 3, 0, 1), pq(2, 3, 0, 1), p(1, 1));
+    let line = LinePathSegment::new(pq(0, 1, -3, 8), pq(1, 1, 5, 8));
+
+    let axis_report =
+        intersect_axis_aligned_line_cubic_bezier(&line, &curve, PredicatePolicy::default());
+    let report = intersect_line_cubic_bezier(&line, &curve, PredicatePolicy::default());
+
+    assert_eq!(axis_report.class, LineCubicBezierIntersectionClass::Unknown);
+    assert!(axis_report.algebraic_support_roots.is_empty());
+    assert_eq!(report.class, LineCubicBezierIntersectionClass::Unknown);
+    assert!(report.intersections.is_empty());
+    assert_eq!(report.algebraic_support_roots.len(), 3);
+    assert!(report.algebraic_support_roots.iter().any(|root| {
+        root.parameter_domain == LineCubicAlgebraicRootDomain::InsideUnitInterval
+            && root.point_image.segment_domain == LineCubicAlgebraicPointDomain::InsideSegmentBounds
+            && root.point_image.x.status == AlgebraicRootPolynomialImageStatus::Transformed
+            && root.point_image.y.status == AlgebraicRootPolynomialImageStatus::Transformed
+    }));
+    assert!(report.algebraic_support_roots.iter().any(|root| {
+        root.parameter_domain == LineCubicAlgebraicRootDomain::OutsideUnitInterval
+            && root.point_image.segment_domain
+                == LineCubicAlgebraicPointDomain::OutsideSegmentBounds
+    }));
+}
+
+#[test]
+fn line_cubic_bezier_arrangement_retains_general_algebraic_breakpoints() {
+    let curve = CubicBezier::new(p(0, 0), pq(1, 3, 0, 1), pq(2, 3, 0, 1), p(1, 1));
+    let line = LinePathSegment::new(pq(0, 1, -3, 8), pq(1, 1, 5, 8));
+
+    let report =
+        arrange_line_segments_with_cubic_beziers(&[line], &[curve], PredicatePolicy::default())
+            .unwrap();
+
+    assert_eq!(
+        report.events[0].class,
+        LineCubicBezierIntersectionClass::Unknown
+    );
+    assert_eq!(report.algebraic_breakpoints.len(), 2);
+    assert!(report.algebraic_breakpoints.iter().all(|breakpoint| {
+        breakpoint.domain == LineCubicBezierAlgebraicBreakpointDomain::InsideLineAndCurve
+            && breakpoint.line_parameter.status == AlgebraicRootPolynomialImageStatus::Transformed
+            && breakpoint.point_image.segment_domain
+                == LineCubicAlgebraicPointDomain::InsideSegmentBounds
+    }));
+    assert_eq!(report.algebraic_breakpoint_sequences.len(), 2);
+    assert!(report.algebraic_source_spans.len() >= 2);
+    assert!(report.algebraic_endpoint_envelopes.len() >= 2);
+    assert_eq!(report.exact_algebraic_breakpoint_promotions.len(), 1);
+    assert_eq!(report.line_breakpoints[0].len(), 3);
+    assert_eq!(report.cubic_breakpoints[0].len(), 3);
+}
+
+#[test]
 fn line_cubic_bezier_arrangement_splits_degree_elevated_overlap() {
     let curve = CubicBezier::new(p(0, 0), pq(8, 3, 0, 1), pq(16, 3, 0, 1), p(8, 0));
     let line = LinePathSegment::new(p(2, 0), p(6, 0));
@@ -13046,6 +13101,55 @@ proptest! {
         prop_assert_eq!(report.cubic_breakpoints[0].len(), 3);
         prop_assert_eq!(report.line_fragments.len(), 2);
         prop_assert_eq!(report.cubic_fragments.len(), 2);
+    }
+
+    #[test]
+    fn line_cubic_bezier_generated_general_true_cubic_support_roots_are_retained(
+        numerator in 1_i64..=9,
+    ) {
+        let parameter = rq(numerator, 10);
+        let support_offset = parameter.clone() * parameter.clone() * parameter.clone()
+            - parameter.clone();
+        let curve = CubicBezier::new(
+            p(0, 0),
+            pq(1, 3, 0, 1),
+            pq(2, 3, 0, 1),
+            p(1, 1),
+        );
+        let line = LinePathSegment::new(
+            Point2::new(r(0), support_offset.clone()),
+            Point2::new(r(1), r(1) + support_offset),
+        );
+
+        let report = intersect_line_cubic_bezier(
+            &line,
+            &curve,
+            PredicatePolicy::default(),
+        );
+
+        prop_assert_eq!(report.class, LineCubicBezierIntersectionClass::Unknown);
+        prop_assert!(report.intersections.is_empty());
+        prop_assert!(!report.algebraic_support_roots.is_empty());
+        let has_retained_inside_root = report.algebraic_support_roots.iter().any(|root| {
+            root.parameter_domain == LineCubicAlgebraicRootDomain::InsideUnitInterval
+                && root.point_image.segment_domain
+                    == LineCubicAlgebraicPointDomain::InsideSegmentBounds
+                && root.point_image.x.status == AlgebraicRootPolynomialImageStatus::Transformed
+                && root.point_image.y.status == AlgebraicRootPolynomialImageStatus::Transformed
+        });
+        prop_assert!(has_retained_inside_root);
+
+        let arrangement = arrange_line_segments_with_cubic_beziers(
+            &[line],
+            &[curve],
+            PredicatePolicy::default(),
+        ).unwrap();
+        let has_retained_breakpoint = arrangement.algebraic_breakpoints.iter().any(|breakpoint| {
+            breakpoint.domain == LineCubicBezierAlgebraicBreakpointDomain::InsideLineAndCurve
+                && breakpoint.line_parameter.status
+                    == AlgebraicRootPolynomialImageStatus::Transformed
+        });
+        prop_assert!(has_retained_breakpoint);
     }
 
     #[test]

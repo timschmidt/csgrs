@@ -724,7 +724,7 @@ fuzz_target!(|data: &[u8]| {
     );
     let algebraic_mixed_report = arrange_line_segments_with_cubic_beziers(
         &[algebraic_line],
-        &[algebraic_cubic],
+        &[algebraic_cubic.clone()],
         PredicatePolicy::default(),
     )
     .unwrap();
@@ -771,6 +771,42 @@ fuzz_target!(|data: &[u8]| {
     );
     assert_eq!(algebraic_mixed_report.line_breakpoints[0].len(), 3);
     assert_eq!(algebraic_mixed_report.cubic_breakpoints[0].len(), 3);
+    let general_algebraic_line = LinePathSegment::new(pq(0, 1, -3, 8), pq(1, 1, 5, 8));
+    let general_algebraic_report = intersect_line_cubic_bezier(
+        &general_algebraic_line,
+        &algebraic_cubic,
+        PredicatePolicy::default(),
+    );
+    assert_eq!(
+        general_algebraic_report.class,
+        LineCubicBezierIntersectionClass::Unknown
+    );
+    assert_eq!(general_algebraic_report.algebraic_support_roots.len(), 3);
+    assert!(general_algebraic_report.algebraic_support_roots.iter().any(|root| {
+        root.parameter_domain == LineCubicAlgebraicRootDomain::InsideUnitInterval
+            && root.point_image.segment_domain
+                == LineCubicAlgebraicPointDomain::InsideSegmentBounds
+            && root.point_image.x.status == AlgebraicRootPolynomialImageStatus::Transformed
+            && root.point_image.y.status == AlgebraicRootPolynomialImageStatus::Transformed
+    }));
+    let general_algebraic_mixed_report = arrange_line_segments_with_cubic_beziers(
+        &[general_algebraic_line],
+        &[algebraic_cubic],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert_eq!(
+        general_algebraic_mixed_report
+            .algebraic_breakpoints
+            .len(),
+        2
+    );
+    assert!(general_algebraic_mixed_report.algebraic_breakpoints.iter().all(
+        |breakpoint| breakpoint.domain
+            == LineCubicBezierAlgebraicBreakpointDomain::InsideLineAndCurve
+            && breakpoint.line_parameter.status
+                == AlgebraicRootPolynomialImageStatus::Transformed
+    ));
     let three_root_cubic = CubicBezier::new(
         hyperlimit::Point2::new(r(0), Real::new(Rational::new(-2) / Rational::new(25))),
         hyperlimit::Point2::new(

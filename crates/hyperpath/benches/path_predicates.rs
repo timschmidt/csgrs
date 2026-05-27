@@ -766,6 +766,7 @@ fn path_predicates(c: &mut Criterion) {
     });
     let line_cubic_algebraic = CubicBezier::new(p(0, 0), pq(1, 3, 0, 1), pq(2, 3, 0, 1), p(1, 1));
     let line_cubic_algebraic_line = LinePathSegment::new(pq(0, 1, 1, 8), pq(1, 1, 1, 8));
+    let line_cubic_general_algebraic_line = LinePathSegment::new(pq(0, 1, -3, 8), pq(1, 1, 5, 8));
     c.bench_function("line_cubic_bezier_algebraic_support_point_images", |b| {
         b.iter(|| {
             intersect_axis_aligned_line_cubic_bezier(
@@ -775,6 +776,18 @@ fn path_predicates(c: &mut Criterion) {
             )
         })
     });
+    c.bench_function(
+        "line_cubic_bezier_general_algebraic_support_point_images",
+        |b| {
+            b.iter(|| {
+                intersect_line_cubic_bezier(
+                    &line_cubic_general_algebraic_line,
+                    &line_cubic_algebraic,
+                    PredicatePolicy::default(),
+                )
+            })
+        },
+    );
     c.bench_function("line_cubic_bezier_algebraic_breakpoint_retention", |b| {
         b.iter(|| {
             arrange_line_segments_with_cubic_beziers(

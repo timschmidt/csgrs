@@ -133,9 +133,9 @@ pub enum LineCubicAlgebraicRootDomain {
 /// Exact segment-domain status for the algebraic image of a line/cubic root.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum LineCubicAlgebraicPointDomain {
-    /// The support equation and varying-coordinate image certify the point inside segment bounds.
+    /// The support equation and coordinate images certify the point inside segment bounds.
     InsideSegmentBounds,
-    /// The varying-coordinate image is certified outside the retained segment bounds.
+    /// At least one coordinate image is certified outside the retained segment bounds.
     OutsideSegmentBounds,
     /// Image construction or exact interval comparison did not decide.
     Unknown,
@@ -864,15 +864,17 @@ fn intersect_axis_aligned_line_quadratic_bezier_with_axis(
 }
 
 /// Intersect a line segment with a cubic Bezier exactly when its retained
-/// support equation has degree at most two.
+/// support equation has degree at most two, or retain represented roots when
+/// that support equation is genuinely cubic.
 ///
 /// For non-axis lines this evaluates the cubic Bezier in the exact implicit
 /// line equation `cross(line.end-line.start, B(t)-line.start) = 0`. Constant,
 /// linear, and quadratic equations are solved as exact `Real` objects and
 /// replayed against the curve domain and segment bounds. Genuinely cubic
-/// equations remain [`LineCubicBezierIntersectionClass::Unknown`] until the
-/// represented-root point-image machinery can materialize them without
-/// sampling. This is the Yap boundary from "Towards Exact Geometric
+/// equations remain [`LineCubicBezierIntersectionClass::Unknown`] for
+/// topology, but they now retain Sturm-isolated algebraic parameters and exact
+/// coordinate-image evidence for later schedulers. This is the Yap boundary
+/// from "Towards Exact Geometric
 /// Computation," *Computational Geometry* 7.1-2 (1997): exact construction is
 /// admitted only when the predicate layer has a replayable object. The cubic
 /// Bezier carrier and tangent classification follow the polynomial-curve
@@ -888,7 +890,7 @@ pub fn intersect_line_cubic_bezier(
 
     let roots = match solve_cubic_implicit_line_roots_up_to_quadratic(segment, curve, policy) {
         Some(roots) => roots,
-        None => return line_cubic_unknown_report(),
+        None => return true_cubic_general_line_algebraic_support_report(segment, curve, policy),
     };
     let mut intersections = Vec::new();
     for parameter in roots {
@@ -1648,6 +1650,53 @@ fn true_cubic_algebraic_support_report(
     // discipline used here: report the exact algebraic object, but do not turn
     // it into topology until later predicates can order its point image.
     let (a, b, c, d) = cubic_coordinate_polynomial(curve, axis, fixed);
+    true_cubic_algebraic_support_report_from_polynomial(
+        segment,
+        curve,
+        (a, b, c, d),
+        |curve, segment, root, policy| {
+            cubic_axis_algebraic_point_image(curve, segment, axis, root, policy)
+        },
+        policy,
+    )
+}
+
+fn true_cubic_general_line_algebraic_support_report(
+    segment: &LinePathSegment,
+    curve: &CubicBezier,
+    policy: PredicatePolicy,
+) -> LineCubicBezierIntersectionReport {
+    // A general retained line produces the same univariate support object as
+    // the axis-aligned path, but segment membership cannot be replayed from one
+    // varying coordinate. We therefore retain both polynomial coordinate
+    // images and classify the algebraic point against the full segment box.
+    // This is Yap's "exact object first, topology only after certified
+    // predicates" rule applied to the non-axis implicit-line equation; the
+    // isolated roots come from Sturm (1835), and the coordinate images use the
+    // Sylvester resultant construction cited below.
+    let polynomial = cubic_implicit_line_polynomial(segment, curve);
+    true_cubic_algebraic_support_report_from_polynomial(
+        segment,
+        curve,
+        polynomial,
+        cubic_general_line_algebraic_point_image,
+        policy,
+    )
+}
+
+fn true_cubic_algebraic_support_report_from_polynomial(
+    segment: &LinePathSegment,
+    curve: &CubicBezier,
+    polynomial: (Real, Real, Real, Real),
+    point_image: impl Fn(
+        &CubicBezier,
+        &LinePathSegment,
+        &AlgebraicRootRepresentation,
+        PredicatePolicy,
+    ) -> LineCubicBezierAlgebraicPointImage,
+    policy: PredicatePolicy,
+) -> LineCubicBezierIntersectionReport {
+    let (a, b, c, d) = polynomial;
     match compare_reals_with_policy(&a, &Real::zero(), policy).value() {
         Some(Ordering::Less | Ordering::Greater) => {}
         Some(Ordering::Equal) | None => return line_cubic_unknown_report(),
@@ -1673,7 +1722,7 @@ fn true_cubic_algebraic_support_report(
     .into_iter()
     .flat_map(|report| report.roots)
     .map(|root| {
-        let point_image = cubic_algebraic_point_image(curve, segment, axis, &root, policy);
+        let point_image = point_image(curve, segment, &root, policy);
         LineCubicBezierAlgebraicSupportRoot {
             parameter_domain: classify_algebraic_root_unit_domain(&root, policy),
             parameter: root,
@@ -1689,7 +1738,7 @@ fn true_cubic_algebraic_support_report(
     }
 }
 
-fn cubic_algebraic_point_image(
+fn cubic_axis_algebraic_point_image(
     curve: &CubicBezier,
     segment: &LinePathSegment,
     axis: Axis,
@@ -1712,6 +1761,36 @@ fn cubic_algebraic_point_image(
         policy,
     );
     let segment_domain = classify_algebraic_point_segment_domain(&x, &y, segment, axis, policy);
+    LineCubicBezierAlgebraicPointImage {
+        x,
+        y,
+        segment_domain,
+    }
+}
+
+fn cubic_general_line_algebraic_point_image(
+    curve: &CubicBezier,
+    segment: &LinePathSegment,
+    root: &AlgebraicRootRepresentation,
+    policy: PredicatePolicy,
+) -> LineCubicBezierAlgebraicPointImage {
+    // For non-axis lines, the implicit-line support equation certifies
+    // incidence on the infinite line but not containment in the finite segment.
+    // We keep independent exact x/y images and replay both against the segment
+    // bounds. This avoids sampled line parameters while still giving the mixed
+    // scheduler a resultant-backed normalized line-parameter image later.
+    // See Sylvester (1853), Collins and Loos (1982), and Yap (1997).
+    let x = transform_algebraic_root_polynomial_image(
+        root,
+        &cubic_point_coordinate_polynomial(curve, PointCoordinate::X),
+        policy,
+    );
+    let y = transform_algebraic_root_polynomial_image(
+        root,
+        &cubic_point_coordinate_polynomial(curve, PointCoordinate::Y),
+        policy,
+    );
+    let segment_domain = classify_algebraic_point_segment_box_domain(&x, &y, segment, policy);
     LineCubicBezierAlgebraicPointImage {
         x,
         y,
@@ -1751,6 +1830,39 @@ fn classify_algebraic_point_segment_domain(
         Some(true) => LineCubicAlgebraicPointDomain::InsideSegmentBounds,
         Some(false) => LineCubicAlgebraicPointDomain::OutsideSegmentBounds,
         None => LineCubicAlgebraicPointDomain::Unknown,
+    }
+}
+
+fn classify_algebraic_point_segment_box_domain(
+    x: &AlgebraicRootPolynomialImageReport,
+    y: &AlgebraicRootPolynomialImageReport,
+    segment: &LinePathSegment,
+    policy: PredicatePolicy,
+) -> LineCubicAlgebraicPointDomain {
+    let Some(x_representation) = transformed_image_representation(x) else {
+        return LineCubicAlgebraicPointDomain::Unknown;
+    };
+    let Some(y_representation) = transformed_image_representation(y) else {
+        return LineCubicAlgebraicPointDomain::Unknown;
+    };
+    let x_domain = algebraic_interval_against_closed_bounds(
+        &x_representation.interval.lower,
+        &x_representation.interval.upper,
+        &segment.bounds_min().x,
+        &segment.bounds_max().x,
+        policy,
+    );
+    let y_domain = algebraic_interval_against_closed_bounds(
+        &y_representation.interval.lower,
+        &y_representation.interval.upper,
+        &segment.bounds_min().y,
+        &segment.bounds_max().y,
+        policy,
+    );
+    match (x_domain, y_domain) {
+        (Some(true), Some(true)) => LineCubicAlgebraicPointDomain::InsideSegmentBounds,
+        (Some(false), _) | (_, Some(false)) => LineCubicAlgebraicPointDomain::OutsideSegmentBounds,
+        _ => LineCubicAlgebraicPointDomain::Unknown,
     }
 }
 
