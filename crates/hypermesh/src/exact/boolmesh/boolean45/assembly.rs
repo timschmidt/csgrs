@@ -159,16 +159,13 @@ fn append_whole_source_halfedges(
     stage: &mut ExactBoolMeshHalfedgeAssemblyStage,
 ) {
     for run in &whole_source_edges.source_edge_runs {
-        let Some((&first_face, &second_face, &first_edge)) = run
-            .incident_faces
-            .first()
-            .zip(run.incident_faces.get(1))
-            .zip(run.incident_edges.first())
-            .map(|((first_face, second_face), first_edge)| (first_face, second_face, first_edge))
+        let Some((&first_face, &first_edge)) =
+            run.incident_faces.first().zip(run.incident_edges.first())
         else {
             stage.source_edge_incident_gaps += run.fragments.len();
             continue;
         };
+        let second_face = run.incident_faces.get(1).copied();
         let edge = if run.signed_count < 0 {
             [run.edge[1], run.edge[0]]
         } else {
@@ -189,20 +186,36 @@ fn append_whole_source_halfedges(
                 stage.source_edge_incident_gaps += 1;
                 continue;
             };
-            emit_source_edge_pair(
-                run.side,
-                first_face,
-                second_face,
-                tail,
-                head,
-                edge,
-                fragment_index,
-                SourceEdgeEmissionKind::Whole,
-                source_face_to_output_face,
-                face_halfedge_offsets,
-                left_faces,
-                stage,
-            );
+            if let Some(second_face) = second_face {
+                emit_source_edge_pair(
+                    run.side,
+                    first_face,
+                    second_face,
+                    tail,
+                    head,
+                    edge,
+                    fragment_index,
+                    SourceEdgeEmissionKind::Whole,
+                    source_face_to_output_face,
+                    face_halfedge_offsets,
+                    left_faces,
+                    stage,
+                );
+            } else {
+                emit_source_boundary_halfedge(
+                    run.side,
+                    first_face,
+                    tail,
+                    head,
+                    edge,
+                    fragment_index,
+                    SourceEdgeEmissionKind::Whole,
+                    source_face_to_output_face,
+                    face_halfedge_offsets,
+                    left_faces,
+                    stage,
+                );
+            }
         }
     }
 }
@@ -261,6 +274,43 @@ fn emit_source_edge_pair(
         face_halfedge_offsets,
         stage,
     );
+}
+
+fn emit_source_boundary_halfedge(
+    side: ExactBoolMeshSide,
+    face: usize,
+    tail: usize,
+    head: usize,
+    edge: [usize; 2],
+    fragment: usize,
+    kind: SourceEdgeEmissionKind,
+    source_face_to_output_face: &[Option<usize>],
+    face_halfedge_offsets: &[usize],
+    left_faces: usize,
+    stage: &mut ExactBoolMeshHalfedgeAssemblyStage,
+) {
+    // Legacy boolmesh obtains boundary behavior from source halfedge topology:
+    // an open mesh edge has one incident face instead of a reciprocal pair.
+    // The exact port records that one-sided combinatorial fact directly.  This
+    // follows Yap, "Towards Exact Geometric Computation," Comput. Geom. 7.1-2
+    // (1997): topology evidence is retained as object state, not recovered
+    // later from rounded coordinates or epsilon pairing.
+    let source_face = source_face_index(side, face, left_faces);
+    let Some(Some(output_face)) = source_face_to_output_face.get(source_face) else {
+        stage.missing_source_face_maps += 1;
+        return;
+    };
+    let Some(slot) = allocate_face_slot(*output_face, face_halfedge_offsets, stage) else {
+        return;
+    };
+    stage.output_halfedges[slot] = Some(ExactBoolMeshOutputHalfedge {
+        tail,
+        head,
+        pair: slot,
+        face: *output_face,
+        source: source_edge_halfedge_source(side, face, edge, fragment, true, kind),
+    });
+    stage.emitted_boundary_halfedges += 1;
 }
 
 fn source_edge_halfedge_source(

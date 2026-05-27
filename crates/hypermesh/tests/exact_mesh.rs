@@ -6084,6 +6084,85 @@ fn exact_named_booleans_handle_certified_aabb_disjoint_meshes() {
     );
     assert_eq!(union.mesh.triangles().len(), 2);
     assert_eq!(union.mesh.vertices().len(), 6);
+    let union_workspace = hypermesh::exact::exact_boolmesh_workspace(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+    );
+    union_workspace
+        .validate_against_sources(&left, &right)
+        .unwrap();
+    let union_size_output = union_workspace
+        .boolean45
+        .as_ref()
+        .expect("open bounds-disjoint union should run boolean45");
+    assert_eq!(
+        union_size_output.whole_source_edges.source_edge_runs.len(),
+        6
+    );
+    assert!(
+        union_size_output
+            .whole_source_edges
+            .source_edge_runs
+            .iter()
+            .all(|run| run.incident_faces.len() == 1
+                && run.incident_edges.len() == 1
+                && run.fragments.len() == 1)
+    );
+    assert_eq!(union_size_output.halfedge_assembly.emitted_pairs, 0);
+    assert_eq!(
+        union_size_output
+            .halfedge_assembly
+            .emitted_boundary_halfedges,
+        6
+    );
+    assert_eq!(
+        union_size_output
+            .halfedge_assembly
+            .source_edge_incident_gaps,
+        0
+    );
+    assert_eq!(union_size_output.halfedge_assembly.unfilled_halfedges, 0);
+    assert_eq!(union_size_output.face_loop_assembly.loops.len(), 2);
+    assert_eq!(union_size_output.loop_triangulation.triangulations.len(), 2);
+    assert_eq!(union_size_output.output_triangles.triangles.len(), 2);
+    assert_eq!(union_size_output.mesh_export.triangles.len(), 2);
+    assert_eq!(union_size_output.mesh_export.orientation_failures, 0);
+    let mut stale_boundary_count = union_workspace.clone();
+    stale_boundary_count
+        .boolean45
+        .as_mut()
+        .unwrap()
+        .halfedge_assembly
+        .emitted_boundary_halfedges += 1;
+    assert_eq!(
+        stale_boundary_count
+            .validate_against_sources(&left, &right)
+            .unwrap_err(),
+        hypermesh::exact::ExactBoolMeshValidationError::Boolean45HalfedgeAssemblyMismatch
+    );
+    let mut malformed_boundary_source = union_workspace.clone();
+    let boundary_source = &mut malformed_boundary_source
+        .boolean45
+        .as_mut()
+        .unwrap()
+        .halfedge_assembly
+        .output_halfedges[0]
+        .as_mut()
+        .unwrap()
+        .source;
+    match boundary_source {
+        hypermesh::exact::ExactBoolMeshOutputHalfedgeSource::WholeSourceEdge {
+            forward, ..
+        } => *forward = false,
+        other => panic!("expected whole-source boundary halfedge, got {other:?}"),
+    }
+    assert_eq!(
+        malformed_boundary_source
+            .validate_against_sources(&left, &right)
+            .unwrap_err(),
+        hypermesh::exact::ExactBoolMeshValidationError::Boolean45HalfedgeAssemblyMismatch
+    );
 
     let intersection = hypermesh::exact::boolean_exact(
         &left,
@@ -33159,6 +33238,7 @@ fn exact_boolmesh_workspace_executes_bounds_disjoint_slice() {
         size_output.face_halfedge_offsets.last().copied().unwrap()
     );
     assert_eq!(size_output.halfedge_assembly.emitted_pairs, 12);
+    assert_eq!(size_output.halfedge_assembly.emitted_boundary_halfedges, 0);
     assert_eq!(size_output.halfedge_assembly.unfilled_halfedges, 0);
     assert_eq!(size_output.halfedge_assembly.face_overflows, 0);
     assert_eq!(size_output.halfedge_assembly.missing_source_face_maps, 0);
@@ -33420,6 +33500,12 @@ fn exact_boolmesh_workspace_executes_bounds_disjoint_slice() {
     assert_eq!(
         intersection_size_output
             .halfedge_assembly
+            .emitted_boundary_halfedges,
+        0
+    );
+    assert_eq!(
+        intersection_size_output
+            .halfedge_assembly
             .unfilled_halfedges,
         0
     );
@@ -33552,6 +33638,12 @@ fn exact_boolmesh_workspace_executes_bounds_disjoint_slice() {
             .unwrap()
     );
     assert_eq!(difference_size_output.halfedge_assembly.emitted_pairs, 6);
+    assert_eq!(
+        difference_size_output
+            .halfedge_assembly
+            .emitted_boundary_halfedges,
+        0
+    );
     assert_eq!(
         difference_size_output.halfedge_assembly.unfilled_halfedges,
         0
@@ -33869,6 +33961,7 @@ fn exact_boolmesh_kernel12_discovers_skew_edge_face_events() {
     assert_eq!(size_output.halfedge_assembly.missing_source_face_maps, 0);
     assert_eq!(
         size_output.halfedge_assembly.emitted_pairs * 2
+            + size_output.halfedge_assembly.emitted_boundary_halfedges
             + size_output.halfedge_assembly.unfilled_halfedges,
         size_output.halfedge_assembly.output_halfedges.len()
     );

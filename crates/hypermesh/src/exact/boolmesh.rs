@@ -666,6 +666,13 @@ pub struct ExactBoolMeshHalfedgeAssemblyStage {
     pub face_write_offsets: Vec<usize>,
     /// Number of emitted halfedge pairs.
     pub emitted_pairs: usize,
+    /// Number of emitted unpaired boundary halfedges for open source surfaces.
+    ///
+    /// Boolmesh's closed-solid path writes paired source halfedges.  Open
+    /// exact surfaces can retain a single incident source face; this counter
+    /// makes those one-sided boundary records explicit instead of pretending
+    /// they are manifold pairs.
+    pub emitted_boundary_halfedges: usize,
     /// Slots left unfilled by the currently ported fragment stages.
     pub unfilled_halfedges: usize,
     /// Fragment pairs that would overflow the sized output face ranges.
@@ -2099,6 +2106,8 @@ fn validate_boolean45_halfedge_assembly(
         || stage.halfedge_assembly.missing_source_face_maps != 0
         || stage.halfedge_assembly.source_edge_incident_gaps
             != expected_halfedge_source_incident_gaps(stage)
+        || stage.halfedge_assembly.emitted_boundary_halfedges
+            != expected_halfedge_boundary_halfedges(stage)
     {
         return Err(ExactBoolMeshValidationError::Boolean45HalfedgeAssemblyMismatch);
     }
@@ -2111,12 +2120,15 @@ fn validate_boolean45_halfedge_assembly(
         .count();
     let occupied = total_halfedges.saturating_sub(unfilled);
     if stage.halfedge_assembly.unfilled_halfedges != unfilled
-        || stage.halfedge_assembly.emitted_pairs * 2 != occupied
+        || stage.halfedge_assembly.emitted_pairs * 2
+            + stage.halfedge_assembly.emitted_boundary_halfedges
+            != occupied
     {
         return Err(ExactBoolMeshValidationError::Boolean45HalfedgeAssemblyMismatch);
     }
 
     let mut occupied_by_face = vec![0usize; output_face_count];
+    let mut boundary_halfedges = 0usize;
     for (slot, halfedge) in stage.halfedge_assembly.output_halfedges.iter().enumerate() {
         let Some(halfedge) = halfedge else {
             continue;
@@ -2124,7 +2136,6 @@ fn validate_boolean45_halfedge_assembly(
         if halfedge.tail >= stage.vertex_allocation.output_vertex_origins.len()
             || halfedge.head >= stage.vertex_allocation.output_vertex_origins.len()
             || halfedge.pair >= stage.halfedge_assembly.output_halfedges.len()
-            || halfedge.pair == slot
             || halfedge.face >= output_face_count
             || slot < stage.face_halfedge_offsets[halfedge.face]
             || slot >= stage.face_halfedge_offsets[halfedge.face + 1]
@@ -2132,6 +2143,14 @@ fn validate_boolean45_halfedge_assembly(
             return Err(ExactBoolMeshValidationError::Boolean45HalfedgeAssemblyMismatch);
         }
         occupied_by_face[halfedge.face] += 1;
+        if halfedge.pair == slot {
+            if !is_expected_boundary_halfedge_source(stage, &halfedge.source) {
+                return Err(ExactBoolMeshValidationError::Boolean45HalfedgeAssemblyMismatch);
+            }
+            boundary_halfedges += 1;
+            validate_halfedge_source(&halfedge.source, left_faces, right_faces)?;
+            continue;
+        }
         let Some(Some(pair)) = stage.halfedge_assembly.output_halfedges.get(halfedge.pair) else {
             return Err(ExactBoolMeshValidationError::Boolean45HalfedgeAssemblyMismatch);
         };
@@ -2147,6 +2166,9 @@ fn validate_boolean45_halfedge_assembly(
         {
             return Err(ExactBoolMeshValidationError::Boolean45HalfedgeAssemblyMismatch);
         }
+    }
+    if boundary_halfedges != stage.halfedge_assembly.emitted_boundary_halfedges {
+        return Err(ExactBoolMeshValidationError::Boolean45HalfedgeAssemblyMismatch);
     }
     Ok(())
 }
@@ -2164,10 +2186,59 @@ fn expected_halfedge_source_incident_gaps(stage: &ExactBoolMeshBoolean45Stage) -
         .whole_source_edges
         .source_edge_runs
         .iter()
-        .filter(|run| run.incident_faces.len() < 2 || run.incident_edges.is_empty())
+        .filter(|run| run.incident_faces.is_empty() || run.incident_edges.is_empty())
         .map(|run| run.fragments.len())
         .sum::<usize>();
     partial_gaps + whole_gaps
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn expected_halfedge_boundary_halfedges(stage: &ExactBoolMeshBoolean45Stage) -> usize {
+    stage
+        .whole_source_edges
+        .source_edge_runs
+        .iter()
+        .filter(|run| run.incident_faces.len() == 1 && !run.incident_edges.is_empty())
+        .map(|run| run.fragments.len())
+        .sum()
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn is_expected_boundary_halfedge_source(
+    stage: &ExactBoolMeshBoolean45Stage,
+    source: &ExactBoolMeshOutputHalfedgeSource,
+) -> bool {
+    let ExactBoolMeshOutputHalfedgeSource::WholeSourceEdge {
+        side,
+        source_face,
+        edge,
+        fragment,
+        forward,
+    } = source
+    else {
+        return false;
+    };
+    if !forward {
+        return false;
+    }
+
+    stage.whole_source_edges.source_edge_runs.iter().any(|run| {
+        run.side == *side
+            && run.incident_faces.len() == 1
+            && run.incident_edges.len() == 1
+            && run.incident_faces[0] == *source_face
+            && *fragment < run.fragments.len()
+            && oriented_whole_run_edge(run) == *edge
+    })
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn oriented_whole_run_edge(run: &ExactBoolMeshWholeSourceEdgeRun) -> [usize; 2] {
+    if run.signed_count < 0 {
+        [run.edge[1], run.edge[0]]
+    } else {
+        run.edge
+    }
 }
 
 #[cfg(feature = "exact-triangulation")]

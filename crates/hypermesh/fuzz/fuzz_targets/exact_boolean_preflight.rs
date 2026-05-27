@@ -1680,7 +1680,23 @@ fn exercise_exact_boolmesh_bounds_disjoint_port() {
         );
         assert_eq!(size_output.halfedge_assembly.face_overflows, 0);
         assert_eq!(size_output.halfedge_assembly.missing_source_face_maps, 0);
+        assert_eq!(
+            size_output
+                .halfedge_assembly
+                .emitted_boundary_halfedges,
+            0
+        );
         assert_eq!(size_output.face_loop_assembly.repeated_halfedges, 0);
+        let mut malformed_boundary_count = workspace.clone();
+        malformed_boundary_count
+            .boolean45
+            .as_mut()
+            .unwrap()
+            .halfedge_assembly
+            .emitted_boundary_halfedges += 1;
+        assert!(malformed_boundary_count
+            .validate_against_sources(&left, &right)
+            .is_err());
         if operation == ExactBooleanOperation::Union {
             let mut malformed = workspace.clone();
             malformed
@@ -1847,6 +1863,7 @@ fn exercise_exact_boolmesh_kernel12_port() {
     assert_eq!(size_output.halfedge_assembly.missing_source_face_maps, 0);
     assert_eq!(
         size_output.halfedge_assembly.emitted_pairs * 2
+            + size_output.halfedge_assembly.emitted_boundary_halfedges
             + size_output.halfedge_assembly.unfilled_halfedges,
         size_output.halfedge_assembly.output_halfedges.len()
     );
