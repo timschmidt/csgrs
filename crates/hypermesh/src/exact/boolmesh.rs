@@ -1028,7 +1028,7 @@ impl ExactBoolMeshWorkspace {
         let mesh_bounds_unknown =
             matches!(mesh_bounds_relation, Some(PredicateOutcome::Unknown { .. }));
         let kernel12 = discover_kernel12_events(left, right);
-        let kernel12_lowering = lower_kernel12_events(&kernel12.events);
+        let kernel12_lowering = lower_kernel12_events(&kernel12.events, left, right);
         let pair_up = pair_source_edge_events(kernel12_lowering.source_edge_events.clone());
         let kernel12_is_clear = !mesh_bounds_unknown
             && !kernel12.graph_failed

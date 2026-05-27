@@ -6,11 +6,20 @@
 //! lowered subcase is the certified proper segment/plane crossing, because it
 //! carries all Yap-style construction evidence required before topology
 //! mutation: source edge, opposite face, exact parameter, determinant ratio,
-//! exact point, and endpoint side facts.  Endpoint-on-plane, edge/edge shadow,
-//! and coplanar overlap lowering remain explicit `Kernel12` work until their
-//! boolmesh shadow rules are ported directly.
+//! exact point, and endpoint side facts.  Strict vertex/face endpoint shadows
+//! are also lowered once the endpoint is certified inside the opposite
+//! triangle.  Edge/edge boundary shadows and coplanar overlap lowering remain
+//! explicit `Kernel12` work until their boolmesh shadow rules are ported
+//! directly.
 
-use hyperlimit::{PlaneSide, Point3};
+use std::cmp::Ordering;
+
+use hyperlimit::{
+    CoplanarProjection, PlaneSide, Point3, Sign, TriangleLocation, classify_point_triangle,
+    compare_reals, project_point3, projected_polygon_area2_value,
+};
+
+use crate::exact::mesh::ExactMesh;
 
 use super::{
     ExactBoolMeshEdgeEvent, ExactBoolMeshEdgeFacePair, ExactBoolMeshKernel12Event,
@@ -42,48 +51,39 @@ pub(super) struct ExactBoolMeshKernel12Lowering {
     pub(super) source_edge_events: Vec<ExactBoolMeshEdgeEvent>,
 }
 
-/// Lower certified proper segment/plane crossings into boolmesh tables.
+/// Lower certified segment/plane contacts into boolmesh tables.
 ///
 /// The sign is the oriented transition of the directed source edge through the
 /// opposite oriented face plane.  That is the exact analogue of the non-tie
-/// branch in boolmesh's shadow accumulation: below-to-above and above-to-below
-/// are the only lowered cases here.  Degenerate ties are deliberately excluded
-/// until the corresponding `kernel02`/`kernel11` shadow paths are ported from
-/// the paper/legacy implementation.  The segment/plane predicate split follows
-/// Moller, "A Fast Triangle-Triangle Intersection Test," *Journal of Graphics
-/// Tools* 2.2 (1997), and Guigue and Devillers, "Fast and Robust
-/// Triangle-Triangle Overlap Test Using Orientation Predicates," *Journal of
-/// Graphics Tools* 8.1 (2003); retaining the parameter, point, and endpoint
-/// side facts before mutating topology follows Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997).
+/// branch in boolmesh's shadow accumulation for proper crossings.  For
+/// endpoint contacts this ports the strict vertex/face part of
+/// `boolean03::kernel12`: legacy `Kernel02` contributes when a source endpoint
+/// shadows the opposite face interior, while edge/edge and boundary shadows
+/// stay out of this slice.  The segment/plane predicate split follows Moller,
+/// "A Fast Triangle-Triangle Intersection Test," *Journal of Graphics Tools*
+/// 2.2 (1997), and Guigue and Devillers, "Fast and Robust Triangle-Triangle
+/// Overlap Test Using Orientation Predicates," *Journal of Graphics Tools* 8.1
+/// (2003); retaining the parameter, point, endpoint side facts, and exact
+/// point-in-triangle predicate before mutating topology follows Yap, "Towards
+/// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997).
 pub(super) fn lower_kernel12_events(
     events: &[ExactBoolMeshKernel12Event],
+    left_mesh: &ExactMesh,
+    right_mesh: &ExactMesh,
 ) -> ExactBoolMeshKernel12Lowering {
     let mut left = Vec::<LoweredKernel12Event>::new();
     let mut right = Vec::<LoweredKernel12Event>::new();
 
     for event in events {
-        if event.relation != SegmentPlaneRelation::ProperCrossing {
-            continue;
-        }
-        let Some(sign) = signed_plane_transition(event.endpoint_sides) else {
-            continue;
+        let lowered = match event.relation {
+            SegmentPlaneRelation::ProperCrossing => lower_proper_crossing(event),
+            SegmentPlaneRelation::EndpointOnPlane => {
+                lower_strict_endpoint_shadow(event, left_mesh, right_mesh)
+            }
+            _ => None,
         };
-        let Some(point) = event.point.clone() else {
+        let Some(lowered) = lowered else {
             continue;
-        };
-        let Some(parameter) = event.parameter.clone() else {
-            continue;
-        };
-        if event.parameter_ratio.is_none() {
-            continue;
-        }
-
-        let lowered = LoweredKernel12Event {
-            edge_face: event.edge_face,
-            sign,
-            point,
-            parameter,
         };
         match (event.edge_face.edge_side, event.edge_face.face_side) {
             (ExactBoolMeshSide::Left, ExactBoolMeshSide::Right) => {
@@ -130,6 +130,41 @@ struct LoweredKernel12Event {
     parameter: super::ExactReal,
 }
 
+fn lower_proper_crossing(event: &ExactBoolMeshKernel12Event) -> Option<LoweredKernel12Event> {
+    let sign = signed_plane_transition(event.endpoint_sides)?;
+    let point = event.point.clone()?;
+    let parameter = event.parameter.clone()?;
+    event.parameter_ratio.as_ref()?;
+    Some(LoweredKernel12Event {
+        edge_face: event.edge_face,
+        sign,
+        point,
+        parameter,
+    })
+}
+
+fn lower_strict_endpoint_shadow(
+    event: &ExactBoolMeshKernel12Event,
+    left_mesh: &ExactMesh,
+    right_mesh: &ExactMesh,
+) -> Option<LoweredKernel12Event> {
+    let sign = signed_endpoint_transition(event.endpoint_sides)?;
+    let point = event.point.clone()?;
+    let parameter = event.parameter.clone()?;
+    if !is_endpoint_parameter(&parameter) {
+        return None;
+    }
+    if !point_strictly_inside_opposite_face(&point, event.edge_face, left_mesh, right_mesh)? {
+        return None;
+    }
+    Some(LoweredKernel12Event {
+        edge_face: event.edge_face,
+        sign,
+        point,
+        parameter,
+    })
+}
+
 fn source_edge_event(event: &LoweredKernel12Event, collision: usize) -> ExactBoolMeshEdgeEvent {
     ExactBoolMeshEdgeEvent {
         side: event.edge_face.edge_side,
@@ -153,6 +188,69 @@ fn signed_plane_transition(endpoint_sides: [Option<PlaneSide>; 2]) -> Option<i32
         [Some(PlaneSide::Below), Some(PlaneSide::Above)] => Some(1),
         [Some(PlaneSide::Above), Some(PlaneSide::Below)] => Some(-1),
         _ => None,
+    }
+}
+
+fn signed_endpoint_transition(endpoint_sides: [Option<PlaneSide>; 2]) -> Option<i32> {
+    match endpoint_sides {
+        [Some(PlaneSide::On), Some(PlaneSide::Above)]
+        | [Some(PlaneSide::Below), Some(PlaneSide::On)] => Some(1),
+        [Some(PlaneSide::On), Some(PlaneSide::Below)]
+        | [Some(PlaneSide::Above), Some(PlaneSide::On)] => Some(-1),
+        _ => None,
+    }
+}
+
+fn is_endpoint_parameter(parameter: &super::ExactReal) -> bool {
+    compare_reals(parameter, &super::ExactReal::from(0)).value() == Some(Ordering::Equal)
+        || compare_reals(parameter, &super::ExactReal::from(1)).value() == Some(Ordering::Equal)
+}
+
+fn point_strictly_inside_opposite_face(
+    point: &Point3,
+    edge_face: ExactBoolMeshEdgeFacePair,
+    left_mesh: &ExactMesh,
+    right_mesh: &ExactMesh,
+) -> Option<bool> {
+    let face_mesh = match edge_face.face_side {
+        ExactBoolMeshSide::Left => left_mesh,
+        ExactBoolMeshSide::Right => right_mesh,
+    };
+    let triangle = face_mesh.triangles().get(edge_face.face)?.0;
+    let face = [
+        face_mesh.vertices().get(triangle[0])?.to_hyperlimit_point(),
+        face_mesh.vertices().get(triangle[1])?.to_hyperlimit_point(),
+        face_mesh.vertices().get(triangle[2])?.to_hyperlimit_point(),
+    ];
+    let projection = choose_triangle_projection(&face)?;
+    classify_point_triangle(
+        &project_point3(&face[0], projection),
+        &project_point3(&face[1], projection),
+        &project_point3(&face[2], projection),
+        &project_point3(point, projection),
+    )
+    .value()
+    .map(|location| location == TriangleLocation::Inside)
+}
+
+fn choose_triangle_projection(points: &[Point3; 3]) -> Option<CoplanarProjection> {
+    [
+        CoplanarProjection::Xy,
+        CoplanarProjection::Xz,
+        CoplanarProjection::Yz,
+    ]
+    .into_iter()
+    .find(|&projection| {
+        let area = projected_polygon_area2_value(points, projection);
+        !matches!(real_sign(&area), Some(Sign::Zero) | None)
+    })
+}
+
+fn real_sign(value: &super::ExactReal) -> Option<Sign> {
+    match compare_reals(value, &super::ExactReal::from(0)).value()? {
+        Ordering::Less => Some(Sign::Negative),
+        Ordering::Equal => Some(Sign::Zero),
+        Ordering::Greater => Some(Sign::Positive),
     }
 }
 

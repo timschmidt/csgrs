@@ -13139,6 +13139,55 @@ fn exact_boolmesh_kernel12_port(c: &mut Criterion) {
     }
 }
 
+fn exact_boolmesh_kernel12_endpoint_shadow_port(c: &mut Criterion) {
+    #[cfg(feature = "exact-triangulation")]
+    {
+        let left = ExactMesh::from_i64_triangles(
+            &[1, 1, 0, 1, 1, 2, 2, 1, 1, 1, 2, 1],
+            &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
+        )
+        .unwrap();
+        let right = ExactMesh::from_i64_triangles(
+            &[0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0, -4],
+            &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
+        )
+        .unwrap();
+
+        c.bench_function("exact_boolmesh_kernel12_endpoint_shadow_port", |b| {
+            b.iter(|| {
+                let workspace = hypermesh::exact::exact_boolmesh_workspace(
+                    &left,
+                    &right,
+                    hypermesh::exact::ExactBooleanOperation::Intersection,
+                );
+                workspace.validate_against_sources(&left, &right).unwrap();
+                workspace
+                    .kernel12_events
+                    .iter()
+                    .filter(|event| event.relation == SegmentPlaneRelation::EndpointOnPlane)
+                    .count()
+                    + workspace.boolean03.p1q2.len()
+                    + workspace.boolean03.p2q1.len()
+                    + workspace.pair_up.source_edge_runs.len()
+                    + workspace
+                        .boolean45
+                        .as_ref()
+                        .map(|stage| {
+                            stage.inserted_intersection_vertices
+                                + stage.new_edge_vertices.source_edge_runs.len()
+                                + stage.new_edge_vertices.face_pair_runs.len()
+                                + stage.new_face_pair_edges.face_pair_runs.len()
+                        })
+                        .unwrap_or(0)
+            })
+        });
+    }
+    #[cfg(not(feature = "exact-triangulation"))]
+    {
+        let _ = c;
+    }
+}
+
 fn exact_boolmesh_kernel03_no_intersection_port(c: &mut Criterion) {
     #[cfg(feature = "exact-triangulation")]
     {
@@ -13342,6 +13391,7 @@ criterion_group!(
     exact_boolean_convex_single_cap_difference,
     exact_boolmesh_bounds_disjoint_port,
     exact_boolmesh_kernel12_port,
+    exact_boolmesh_kernel12_endpoint_shadow_port,
     exact_boolmesh_kernel03_no_intersection_port,
     legacy_boolean_adapter_report
 );

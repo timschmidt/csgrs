@@ -4,13 +4,13 @@
 use std::cmp::Ordering;
 
 #[cfg(feature = "exact-triangulation")]
-use hyperlimit::{Point3, compare_reals};
+use hyperlimit::{PlaneSide, Point3, compare_reals};
 use hypermesh::exact::{
     CoplanarAffineSurfaceArrangement, CoplanarAffineSurfaceBasis, CoplanarArrangementOperation,
     CoplanarOrthogonalSurfaceArrangement, CoplanarOrthogonalSurfaceComponent,
     CoplanarOrthogonalSurfaceOperation, CoplanarSurfaceContainment,
     CoplanarSurfaceContainmentStatus, CoplanarTriangleRelation, ExactBooleanOperation,
-    ExactBooleanPolicy, ExactBooleanSupport, ExactBoundaryBooleanPolicy, ExactMesh,
+    ExactBooleanPolicy, ExactBooleanSupport, ExactBoundaryBooleanPolicy, ExactMesh, ExactReal,
     ExactRegionSelection, FaceRegionPlaneRelation, FaceSplitBoundaryNode, SourceProvenance,
     SegmentPlaneRelation, Triangle, ValidationPolicy,
     arrange_coplanar_affine_surface_difference, arrange_coplanar_affine_surface_intersection,
@@ -1586,6 +1586,7 @@ fn exercise_deterministic_case(selector: u8) {
         46 => exercise_exact_boolmesh_kernel12_port(),
         47 => exercise_exact_boolmesh_open_crossing_adjacency_port(),
         48 => exercise_exact_boolmesh_kernel03_no_intersection_port(),
+        49 => exercise_exact_boolmesh_kernel12_endpoint_shadow_port(),
         _ => exercise_nonconvex_coplanar_volumetric_difference_fan_split(),
     }
 }
@@ -2001,6 +2002,34 @@ fn exercise_exact_boolmesh_kernel12_port() {
     assert!(stale_new_edge_order
         .validate_against_sources(&left, &right)
         .is_err());
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn exercise_exact_boolmesh_kernel12_endpoint_shadow_port() {
+    let left = tetrahedron_i64([1, 1, 0], [1, 1, 2], [2, 1, 1], [1, 2, 1]);
+    let right = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, -4]);
+
+    let workspace =
+        hypermesh::exact::exact_boolmesh_workspace(&left, &right, ExactBooleanOperation::Intersection);
+    workspace.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(workspace.kernel12_unknown_events, 0);
+    assert_eq!(workspace.kernel12_construction_failures, 0);
+    assert_eq!(workspace.kernel12_coplanar_events, 0);
+    assert!(workspace.kernel12_events.iter().any(|event| {
+        event.relation == SegmentPlaneRelation::EndpointOnPlane
+            && event.endpoint_sides.contains(&Some(PlaneSide::On))
+    }));
+    assert!(workspace
+        .pair_up
+        .source_edge_runs
+        .iter()
+        .flat_map(|run| run.events.iter())
+        .any(|event| {
+            compare_reals(&event.parameter, &ExactReal::from(0)).value() == Some(Ordering::Equal)
+                || compare_reals(&event.parameter, &ExactReal::from(1)).value()
+                    == Some(Ordering::Equal)
+        }));
+    assert!(!workspace.boolean03.p1q2.is_empty() || !workspace.boolean03.p2q1.is_empty());
 }
 
 #[cfg(feature = "exact-triangulation")]

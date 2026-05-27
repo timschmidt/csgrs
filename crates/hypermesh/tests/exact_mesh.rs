@@ -34025,6 +34025,49 @@ fn exact_boolmesh_kernel03_executes_overlapping_aabb_separation() {
 
 #[test]
 #[cfg(feature = "exact-triangulation")]
+fn exact_boolmesh_kernel12_lowers_strict_endpoint_face_shadow() {
+    let left = tetrahedron_i64([1, 1, 0], [1, 1, 2], [2, 1, 1], [1, 2, 1]);
+    let right = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, -4]);
+
+    let workspace = hypermesh::exact::exact_boolmesh_workspace(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+    );
+    workspace.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(workspace.kernel12_unknown_events, 0);
+    assert_eq!(workspace.kernel12_construction_failures, 0);
+    assert_eq!(workspace.kernel12_coplanar_events, 0);
+    assert!(workspace.kernel12_events.iter().any(|event| {
+        event.relation == SegmentPlaneRelation::EndpointOnPlane
+            && event.endpoint_sides.contains(&Some(PlaneSide::On))
+    }));
+    assert!(
+        workspace
+            .pair_up
+            .source_edge_runs
+            .iter()
+            .flat_map(|run| run.events.iter())
+            .any(|event| {
+                (compare_reals(&event.parameter, &ExactReal::from(0)).value()
+                    == Some(Ordering::Equal)
+                    || compare_reals(&event.parameter, &ExactReal::from(1)).value()
+                        == Some(Ordering::Equal))
+                    && matches!(
+                        event.point,
+                        hypermesh::exact::ExactBoolMeshPointConstruction::SegmentPlane { .. }
+                    )
+            }),
+        "strict endpoint-on-face contacts must lower into boolmesh pair_up events"
+    );
+    assert!(
+        !workspace.boolean03.p1q2.is_empty() || !workspace.boolean03.p2q1.is_empty(),
+        "strict endpoint-on-face contacts must lower into boolmesh p/x/v tables"
+    );
+}
+
+#[test]
+#[cfg(feature = "exact-triangulation")]
 fn exact_boolmesh_kernel12_discovers_skew_edge_face_events() {
     let left = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
     let right = tetrahedron_i64([1, 1, -1], [3, 1, 3], [1, 3, 3], [3, 3, 1]);
