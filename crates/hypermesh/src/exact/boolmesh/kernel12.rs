@@ -13,6 +13,7 @@
 //! directly.
 
 use std::cmp::Ordering;
+use std::collections::BTreeSet;
 
 use hyperlimit::{PlaneSide, Point3, compare_reals};
 
@@ -20,6 +21,9 @@ use crate::exact::mesh::ExactMesh;
 
 use super::kernel_frame::{ExactBoolMeshKernelFrame, build_kernel_frame};
 use super::kernel12_boundary::{EndpointShadowLocation, classify_endpoint_shadow};
+use super::kernel12_intersect::{
+    ExactKernel12IntersectHit, ExactKernel12IntersectTables, intersect12_exact,
+};
 use super::kernel12_op::{ExactKernel12Hit, ExactKernel12Input, kernel12_op};
 use super::{
     ExactBoolMeshEdgeEvent, ExactBoolMeshEdgeFacePair, ExactBoolMeshKernel12Event,
@@ -75,17 +79,26 @@ pub(super) fn lower_kernel12_events(
     let mut right = Vec::<LoweredKernel12Event>::new();
     let left_frame = build_kernel_frame(left_mesh);
     let right_frame = build_kernel_frame(right_mesh);
+    let intersect12 = intersect12_exact(left_mesh, right_mesh);
+    let mut used_intersect12_hits = BTreeSet::new();
 
     for event in events {
-        let lowered = lower_accumulator_replay(event, &left_frame, &right_frame).or_else(|| {
-            match event.relation {
-                SegmentPlaneRelation::ProperCrossing => lower_proper_crossing(event),
-                SegmentPlaneRelation::EndpointOnPlane => {
-                    lower_strict_endpoint_shadow(event, left_mesh, right_mesh)
+        let lowered =
+            match lower_intersect12_replay(event, &intersect12, &mut used_intersect12_hits) {
+                Intersect12Replay::Lowered(lowered) => Some(lowered),
+                Intersect12Replay::AlreadyConsumed => None,
+                Intersect12Replay::Missing => {
+                    lower_accumulator_replay(event, &left_frame, &right_frame).or_else(|| {
+                        match event.relation {
+                            SegmentPlaneRelation::ProperCrossing => lower_proper_crossing(event),
+                            SegmentPlaneRelation::EndpointOnPlane => {
+                                lower_strict_endpoint_shadow(event, left_mesh, right_mesh)
+                            }
+                            _ => None,
+                        }
+                    })
                 }
-                _ => None,
-            }
-        });
+            };
         let Some(lowered) = lowered else {
             continue;
         };
@@ -123,6 +136,96 @@ pub(super) fn lower_kernel12_events(
         v12: left.into_iter().map(|event| event.point).collect(),
         v21: right.into_iter().map(|event| event.point).collect(),
         source_edge_events,
+    }
+}
+
+enum Intersect12Replay {
+    Lowered(LoweredKernel12Event),
+    AlreadyConsumed,
+    Missing,
+}
+
+/// Replay a retained event through the exact boolmesh `intersect12` loop.
+///
+/// This is stricter than calling `Kernel12::op` directly per retained event:
+/// the loop owns boolmesh's actual row cardinality.  Legacy `intersect12`
+/// emits at most one row per forward source halfedge/opposite face candidate
+/// after exact AABB scheduling and `Kernel12::op` accumulation.  If multiple
+/// retained graph events map to the same row, only the first can consume it;
+/// later matches are represented by that row and must not be re-lowered by the
+/// older segment/plane shortcut.  That row-level replay follows Yap's
+/// exact-object discipline from "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997): the retained event must agree with
+/// the exact boolmesh accumulator point and source-edge parameter before
+/// topology tables are mutated.
+fn lower_intersect12_replay(
+    event: &ExactBoolMeshKernel12Event,
+    tables: &ExactKernel12IntersectTables,
+    used_hits: &mut BTreeSet<(u8, usize)>,
+) -> Intersect12Replay {
+    let Some((table, side)) = intersect12_table_for_event(event, tables) else {
+        return Intersect12Replay::Missing;
+    };
+    for (index, hit) in table.iter().enumerate() {
+        if !intersect12_hit_matches_event(event, hit) {
+            continue;
+        }
+        let key = (side, index);
+        if used_hits.contains(&key) {
+            return Intersect12Replay::AlreadyConsumed;
+        }
+        used_hits.insert(key);
+        return Intersect12Replay::Lowered(LoweredKernel12Event {
+            edge_face: hit.edge_face,
+            sign: hit.sign,
+            point: hit.point.clone(),
+            parameter: hit.parameter.clone(),
+        });
+    }
+    Intersect12Replay::Missing
+}
+
+fn intersect12_table_for_event<'a>(
+    event: &ExactBoolMeshKernel12Event,
+    tables: &'a ExactKernel12IntersectTables,
+) -> Option<(&'a [ExactKernel12IntersectHit], u8)> {
+    match (event.edge_face.edge_side, event.edge_face.face_side) {
+        (ExactBoolMeshSide::Left, ExactBoolMeshSide::Right) => Some((&tables.p1q2, 0)),
+        (ExactBoolMeshSide::Right, ExactBoolMeshSide::Left) => Some((&tables.p2q1, 1)),
+        _ => None,
+    }
+}
+
+fn intersect12_hit_matches_event(
+    event: &ExactBoolMeshKernel12Event,
+    hit: &ExactKernel12IntersectHit,
+) -> bool {
+    let Some(point) = event.point.as_ref() else {
+        return false;
+    };
+    let Some(parameter) = event.parameter.as_ref() else {
+        return false;
+    };
+    event.edge_face.face_pair == hit.edge_face.face_pair
+        && event.edge_face.edge_side == hit.edge_face.edge_side
+        && event.edge_face.face_side == hit.edge_face.face_side
+        && event.edge_face.face == hit.edge_face.face
+        && same_point(point, &hit.point)
+        && event_parameter_matches_intersect12_hit(event.edge_face.edge, parameter, hit)
+}
+
+fn event_parameter_matches_intersect12_hit(
+    event_edge: [usize; 2],
+    event_parameter: &super::ExactReal,
+    hit: &ExactKernel12IntersectHit,
+) -> bool {
+    if event_edge == hit.edge_face.edge {
+        compare_reals(event_parameter, &hit.parameter).value() == Some(Ordering::Equal)
+    } else if event_edge == [hit.edge_face.edge[1], hit.edge_face.edge[0]] {
+        let reversed = super::ExactReal::from(1) - &hit.parameter;
+        compare_reals(event_parameter, &reversed).value() == Some(Ordering::Equal)
+    } else {
+        false
     }
 }
 
@@ -578,6 +681,14 @@ mod tests {
         }
     }
 
+    fn reversed_accumulator_replay_event() -> ExactBoolMeshKernel12Event {
+        let mut event = accumulator_replay_event();
+        event.edge_face.edge = [1, 0];
+        event.parameter =
+            Some((super::super::ExactReal::from(1) / super::super::ExactReal::from(5)).unwrap());
+        event
+    }
+
     #[test]
     fn coalesces_identical_edge_face_contributions() {
         let left = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
@@ -663,6 +774,45 @@ mod tests {
         assert_eq!(lowering.source_edge_events.len(), 1);
         assert_eq!(lowering.source_edge_events[0].tail, 0);
         assert_eq!(lowering.source_edge_events[0].head, 1);
+    }
+
+    #[test]
+    fn intersect12_replay_normalizes_reversed_event_edge_to_forward_row() {
+        let (left, right) = open_accumulator_replay_meshes();
+        let lowering = lower_kernel12_events(&[reversed_accumulator_replay_event()], &left, &right);
+
+        assert_eq!(lowering.p1q2, vec![edge_face()]);
+        assert_eq!(lowering.x12, vec![1]);
+        assert_eq!(lowering.source_edge_events.len(), 1);
+        assert_eq!(lowering.source_edge_events[0].tail, 0);
+        assert_eq!(lowering.source_edge_events[0].head, 1);
+        assert_eq!(
+            compare_reals(
+                &lowering.source_edge_events[0].parameter,
+                &(super::super::ExactReal::from(4) / super::super::ExactReal::from(5)).unwrap()
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
+    }
+
+    #[test]
+    fn intersect12_replay_does_not_duplicate_consumed_boolmesh_rows() {
+        let (left, right) = open_accumulator_replay_meshes();
+        let lowering = lower_kernel12_events(
+            &[
+                accumulator_replay_event(),
+                reversed_accumulator_replay_event(),
+                accumulator_replay_event(),
+            ],
+            &left,
+            &right,
+        );
+
+        assert_eq!(lowering.p1q2, vec![edge_face()]);
+        assert_eq!(lowering.x12, vec![1]);
+        assert_eq!(lowering.v12.len(), 1);
+        assert_eq!(lowering.source_edge_events.len(), 1);
     }
 
     #[test]
