@@ -21,13 +21,15 @@ use crate::exact::mesh::ExactMesh;
 
 use super::kernel_frame::{ExactBoolMeshKernelFrame, build_kernel_frame};
 use super::kernel12_boundary::{EndpointShadowLocation, classify_endpoint_shadow};
+use super::kernel12_coplanar::{ExactCoplanarKernel12Row, lower_coplanar_split_rows};
 use super::kernel12_intersect::{
     ExactKernel12IntersectHit, ExactKernel12IntersectTables, intersect12_exact,
 };
 use super::kernel12_op::{ExactKernel12Hit, ExactKernel12Input, kernel12_op};
 use super::{
     ExactBoolMeshEdgeEvent, ExactBoolMeshEdgeFacePair, ExactBoolMeshKernel12Event,
-    ExactBoolMeshPointConstruction, ExactBoolMeshSide, SegmentPlaneRelation,
+    ExactBoolMeshPointConstruction, ExactBoolMeshSide, Kernel12CoplanarEvidence,
+    SegmentPlaneRelation,
 };
 
 /// Lowered exact `kernel12` tables for the `Boolean03` package.
@@ -72,6 +74,7 @@ pub(super) struct ExactBoolMeshKernel12Lowering {
 /// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997).
 pub(super) fn lower_kernel12_events(
     events: &[ExactBoolMeshKernel12Event],
+    coplanar_evidence: &[Kernel12CoplanarEvidence],
     left_mesh: &ExactMesh,
     right_mesh: &ExactMesh,
 ) -> ExactBoolMeshKernel12Lowering {
@@ -110,6 +113,12 @@ pub(super) fn lower_kernel12_events(
                 right.push(lowered);
             }
             _ => {}
+        }
+    }
+    for row in lower_coplanar_split_rows(coplanar_evidence, left_mesh, right_mesh) {
+        match row.edge_face.edge_side {
+            ExactBoolMeshSide::Left => push_coplanar_row_if_new(&mut left, row),
+            ExactBoolMeshSide::Right => push_coplanar_row_if_new(&mut right, row),
         }
     }
 
@@ -172,6 +181,7 @@ fn lower_intersect12_hit(hit: &ExactKernel12IntersectHit) -> LoweredKernel12Even
         sign: hit.sign,
         point: hit.point.clone(),
         parameter: hit.parameter.clone(),
+        point_construction: segment_plane_construction(hit.edge_face, hit.parameter.clone()),
     }
 }
 
@@ -216,6 +226,7 @@ fn lower_intersect12_replay(
             sign: hit.sign,
             point: hit.point.clone(),
             parameter: hit.parameter.clone(),
+            point_construction: segment_plane_construction(hit.edge_face, hit.parameter.clone()),
         });
     }
     Intersect12Replay::Missing
@@ -294,7 +305,8 @@ fn lower_accumulator_replay(
         edge_face: event.edge_face,
         sign: hit.sign,
         point: hit.point,
-        parameter,
+        parameter: parameter.clone(),
+        point_construction: segment_plane_construction(event.edge_face, parameter),
     })
 }
 
@@ -341,6 +353,7 @@ struct LoweredKernel12Event {
     sign: i32,
     point: Point3,
     parameter: super::ExactReal,
+    point_construction: ExactBoolMeshPointConstruction,
 }
 
 fn lower_proper_crossing(event: &ExactBoolMeshKernel12Event) -> Option<LoweredKernel12Event> {
@@ -352,7 +365,8 @@ fn lower_proper_crossing(event: &ExactBoolMeshKernel12Event) -> Option<LoweredKe
         edge_face: event.edge_face,
         sign,
         point,
-        parameter,
+        parameter: parameter.clone(),
+        point_construction: segment_plane_construction(event.edge_face, parameter),
     })
 }
 
@@ -376,7 +390,8 @@ fn lower_strict_endpoint_shadow(
         edge_face: event.edge_face,
         sign,
         point,
-        parameter,
+        parameter: parameter.clone(),
+        point_construction: segment_plane_construction(event.edge_face, parameter),
     })
 }
 
@@ -389,14 +404,38 @@ fn source_edge_event(event: &LoweredKernel12Event, collision: usize) -> ExactBoo
         parameter: event.parameter.clone(),
         collision,
         is_tail: event.sign < 0,
-        point: ExactBoolMeshPointConstruction::SegmentPlane {
-            edge_side: event.edge_face.edge_side,
-            tail: event.edge_face.edge[0],
-            head: event.edge_face.edge[1],
-            face: event.edge_face.face,
-            parameter: event.parameter.clone(),
-        },
+        point: event.point_construction.clone(),
     }
+}
+
+fn segment_plane_construction(
+    edge_face: ExactBoolMeshEdgeFacePair,
+    parameter: super::ExactReal,
+) -> ExactBoolMeshPointConstruction {
+    ExactBoolMeshPointConstruction::SegmentPlane {
+        edge_side: edge_face.edge_side,
+        tail: edge_face.edge[0],
+        head: edge_face.edge[1],
+        face: edge_face.face,
+        parameter,
+    }
+}
+
+fn push_coplanar_row_if_new(events: &mut Vec<LoweredKernel12Event>, row: ExactCoplanarKernel12Row) {
+    if events.iter().any(|event| {
+        event.edge_face == row.edge_face
+            && same_point(&event.point, &row.point)
+            && compare_reals(&event.parameter, &row.parameter).value() == Some(Ordering::Equal)
+    }) {
+        return;
+    }
+    events.push(LoweredKernel12Event {
+        edge_face: row.edge_face,
+        sign: row.sign,
+        point: row.point,
+        parameter: row.parameter,
+        point_construction: row.point_construction,
+    });
 }
 
 fn signed_plane_transition(endpoint_sides: [Option<PlaneSide>; 2]) -> Option<i32> {
@@ -570,7 +609,7 @@ pub(super) fn internal_fuzz_probe(selector: u8) -> bool {
         construction_failure: None,
         endpoint_sides: [None, None],
     };
-    let lowering = lower_kernel12_events(&[event], &left, &right);
+    let lowering = lower_kernel12_events(&[event], &[], &left, &right);
     lowering.p1q2.len() == 1
         && lowering.p2q1.is_empty()
         && lowering.x12 == vec![1]
@@ -749,6 +788,7 @@ mod tests {
                 proper_event([Some(PlaneSide::Below), Some(PlaneSide::Above)]),
                 proper_event([Some(PlaneSide::Below), Some(PlaneSide::Above)]),
             ],
+            &[],
             &left,
             &right,
         );
@@ -768,6 +808,7 @@ mod tests {
                 proper_event([Some(PlaneSide::Below), Some(PlaneSide::Above)]),
                 proper_event([Some(PlaneSide::Above), Some(PlaneSide::Below)]),
             ],
+            &[],
             &left,
             &right,
         );
@@ -792,6 +833,7 @@ mod tests {
                 super::super::ExactReal::from(0),
                 [Some(PlaneSide::On), Some(PlaneSide::Above)],
             )],
+            &[],
             &left,
             &right,
         );
@@ -813,7 +855,7 @@ mod tests {
     #[test]
     fn accumulator_replay_lowers_event_without_legacy_side_shortcut() {
         let (left, right) = open_accumulator_replay_meshes();
-        let lowering = lower_kernel12_events(&[accumulator_replay_event()], &left, &right);
+        let lowering = lower_kernel12_events(&[accumulator_replay_event()], &[], &left, &right);
 
         assert_eq!(lowering.p1q2, vec![edge_face()]);
         assert_eq!(lowering.p2q1, Vec::new());
@@ -835,7 +877,8 @@ mod tests {
     #[test]
     fn intersect12_replay_normalizes_reversed_event_edge_to_forward_row() {
         let (left, right) = open_accumulator_replay_meshes();
-        let lowering = lower_kernel12_events(&[reversed_accumulator_replay_event()], &left, &right);
+        let lowering =
+            lower_kernel12_events(&[reversed_accumulator_replay_event()], &[], &left, &right);
 
         assert_eq!(lowering.p1q2, vec![edge_face()]);
         assert_eq!(lowering.x12, vec![1]);
@@ -861,6 +904,7 @@ mod tests {
                 reversed_accumulator_replay_event(),
                 accumulator_replay_event(),
             ],
+            &[],
             &left,
             &right,
         );
@@ -880,7 +924,7 @@ mod tests {
             super::super::ExactReal::from(1),
             super::super::ExactReal::from(3),
         ));
-        let lowering = lower_kernel12_events(&[event], &left, &right);
+        let lowering = lower_kernel12_events(&[event], &[], &left, &right);
 
         assert_eq!(lowering.p1q2, vec![edge_face()]);
         assert!(lowering.p2q1.is_empty());

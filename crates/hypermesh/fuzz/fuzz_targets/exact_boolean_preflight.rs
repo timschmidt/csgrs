@@ -1609,6 +1609,7 @@ fn exercise_deterministic_case(selector: u8) {
         57 => exercise_exact_boolmesh_kernel12_intersect_halfedge_row_port(),
         58 => exercise_exact_boolmesh_boolean45_halfedge_row_port(),
         59 => exercise_exact_boolmesh_kernel12_intersect_boundary_endpoint_port(),
+        60 => exercise_exact_boolmesh_kernel12_coplanar_interval_port(),
         _ => exercise_nonconvex_coplanar_volumetric_difference_fan_split(),
     }
 }
@@ -2118,6 +2119,40 @@ fn exercise_exact_boolmesh_kernel12_intersect_halfedge_row_port() {
 #[cfg(feature = "exact-triangulation")]
 fn exercise_exact_boolmesh_kernel12_intersect_boundary_endpoint_port() {
     assert!(exact_boolmesh_kernel12_intersect_loop_probe_for_internal_fuzz(60));
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn exercise_exact_boolmesh_kernel12_coplanar_interval_port() {
+    let left = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 2, 0, 0, 0, 2, 0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("deterministic boolmesh coplanar interval left fixture must import");
+    let right = ExactMesh::from_i64_triangles_with_policy(
+        &[1, 0, 0, 2, 0, 0, 1, -2, 0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("deterministic boolmesh coplanar interval right fixture must import");
+    let workspace = hypermesh::exact::exact_boolmesh_workspace(
+        &left,
+        &right,
+        ExactBooleanOperation::Intersection,
+    );
+    workspace.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(workspace.kernel12_coplanar_events, 0);
+    assert!(workspace.boolean03.p1q2.len() >= 2);
+    assert!(workspace.boolean03.p2q1.len() >= 2);
+    assert!(workspace
+        .pair_up
+        .source_edge_runs
+        .iter()
+        .flat_map(|run| run.events.iter())
+        .any(|event| matches!(
+            event.point,
+            hypermesh::exact::ExactBoolMeshPointConstruction::EdgeParameter { .. }
+        )));
 }
 
 #[cfg(feature = "exact-triangulation")]

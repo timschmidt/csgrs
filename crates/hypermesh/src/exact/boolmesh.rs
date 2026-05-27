@@ -27,6 +27,8 @@ mod kernel12;
 #[cfg(feature = "exact-triangulation")]
 mod kernel12_boundary;
 #[cfg(feature = "exact-triangulation")]
+mod kernel12_coplanar;
+#[cfg(feature = "exact-triangulation")]
 mod kernel12_intersect;
 #[cfg(feature = "exact-triangulation")]
 mod kernel12_op;
@@ -1164,7 +1166,8 @@ impl ExactBoolMeshWorkspace {
         let mesh_bounds_unknown =
             matches!(mesh_bounds_relation, Some(PredicateOutcome::Unknown { .. }));
         let kernel12 = discover_kernel12_events(left, right);
-        let kernel12_lowering = lower_kernel12_events(&kernel12.events, left, right);
+        let kernel12_lowering =
+            lower_kernel12_events(&kernel12.events, &kernel12.coplanar_evidence, left, right);
         let unresolved_coplanar_events = count_uncovered_coplanar_events(
             &kernel12.coplanar_evidence,
             &kernel12_lowering,
@@ -1863,7 +1866,7 @@ struct Kernel12Discovery {
 
 #[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, PartialEq)]
-enum Kernel12CoplanarEvidence {
+pub(super) enum Kernel12CoplanarEvidence {
     Edge {
         face_pair: ExactBoolMeshFacePair,
         left_edge: [usize; 2],

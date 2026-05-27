@@ -33737,8 +33737,8 @@ fn exact_boolmesh_workspace_executes_bounds_disjoint_slice() {
 #[test]
 #[cfg(feature = "exact-triangulation")]
 fn exact_boolmesh_workspace_blocks_coplanar_non_disjoint_at_kernel12() {
-    let left = tetrahedron_i64([0, 0, 0], [2, 0, 0], [0, 2, 0], [0, 0, 2]);
-    let right = tetrahedron_i64([1, 0, 0], [3, 0, 0], [1, 2, 0], [1, 0, 2]);
+    let left = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
+    let right = tetrahedron_i64([1, 1, 0], [2, 1, 0], [1, 2, 0], [1, 1, -1]);
 
     let workspace = hypermesh::exact::exact_boolmesh_workspace(
         &left,
@@ -34144,6 +34144,65 @@ fn exact_boolmesh_kernel12_lowers_boundary_endpoint_edge_shadow_through_intersec
                     )
             }),
         "direct intersect12 boundary rows must feed pair_up source-edge events"
+    );
+}
+
+#[test]
+#[cfg(feature = "exact-triangulation")]
+fn exact_boolmesh_kernel12_lowers_coplanar_interval_endpoints() {
+    let left = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 2, 0, 0, 0, 2, 0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let right = ExactMesh::from_i64_triangles_with_policy(
+        &[1, 0, 0, 2, 0, 0, 1, -2, 0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+
+    let workspace = hypermesh::exact::exact_boolmesh_workspace(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+    );
+    workspace.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(workspace.kernel12_unknown_events, 0);
+    assert_eq!(workspace.kernel12_construction_failures, 0);
+    assert_eq!(
+        workspace.kernel12_coplanar_events, 0,
+        "positive-length coplanar edge intervals with exact endpoint rows must not keep the workspace at Kernel12"
+    );
+    assert_ne!(
+        workspace.blocker.as_ref().map(|blocker| blocker.stage),
+        Some(hypermesh::exact::ExactBoolMeshKernelStage::Kernel12)
+    );
+    assert!(workspace.boolean03.p1q2.len() >= 2);
+    assert!(workspace.boolean03.p2q1.len() >= 2);
+    assert_eq!(
+        workspace.boolean03.p1q2.len(),
+        workspace.boolean03.x12.len()
+    );
+    assert_eq!(
+        workspace.boolean03.p2q1.len(),
+        workspace.boolean03.x21.len()
+    );
+    assert!(workspace.boolean03.x12.contains(&1));
+    assert!(workspace.boolean03.x12.contains(&-1));
+    assert!(workspace.boolean03.x21.contains(&1));
+    assert!(workspace.boolean03.x21.contains(&-1));
+    assert!(
+        workspace
+            .pair_up
+            .source_edge_runs
+            .iter()
+            .flat_map(|run| run.events.iter())
+            .any(|event| matches!(
+                event.point,
+                hypermesh::exact::ExactBoolMeshPointConstruction::EdgeParameter { .. }
+            ))
     );
 }
 
