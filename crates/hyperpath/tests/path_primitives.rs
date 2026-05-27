@@ -990,8 +990,9 @@ fn rational_quadratic_bezier_arrangement_cell_graph_schedules_closed_conic_loop(
                 == Some(std::cmp::Ordering::Less)
     }));
     assert!(report.cell_graph.loop_roles.iter().any(|role| {
-        role.class == CurveArrangementLoopRoleClass::Uncertain
-            && role.blocker == Some(CurveArrangementLoopRoleBlocker::Representative)
+        role.class == CurveArrangementLoopRoleClass::Material
+            && role.containment_depth == Some(0)
+            && role.representative.is_none()
     }));
 }
 
@@ -1006,7 +1007,7 @@ fn explicit_arc_loop_role_reports_unsupported_ray_replay() {
 
     assert!(report.cell_graph.loop_roles.iter().any(|role| {
         role.class == CurveArrangementLoopRoleClass::Uncertain
-            && role.blocker == Some(CurveArrangementLoopRoleBlocker::Representative)
+            && role.blocker == Some(CurveArrangementLoopRoleBlocker::UnsupportedEdge)
     }));
 }
 

@@ -1304,4 +1304,11 @@ fuzz_target!(|data: &[u8]| {
     assert_eq!(conic_loop_report.cell_graph.vertices.len(), 2);
     assert_eq!(conic_loop_report.cell_graph.edges.len(), 2);
     assert_eq!(conic_loop_report.cell_graph.faces.len(), 2);
+    assert!(conic_loop_report
+        .cell_graph
+        .loop_roles
+        .iter()
+        .any(|role| role.class == CurveArrangementLoopRoleClass::Material
+            && role.containment_depth == Some(0)
+            && role.representative.is_none()));
 });

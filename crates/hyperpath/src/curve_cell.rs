@@ -128,15 +128,18 @@ pub enum CurveArrangementCellFaceClass {
 /// The role report is deliberately narrower than a general curve boolean
 /// materializer. It is emitted only for nonzero-area native faces whose
 /// representative point can be certified by exact horizontal-ray predicates
-/// against every other native face. Boundary hits, tangent ray contacts, arcs,
-/// and genuinely cubic ray equations that are not degree-lowered stay
-/// [`Uncertain`](Self::Uncertain). This is the object/predicate boundary in
-/// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-/// 7.1-2 (1997): retained topology may be classified only when exact
-/// witnesses replay; otherwise uncertainty is explicit. Polynomial Bezier
-/// ray equations use the Bernstein hodograph model described by Farouki,
-/// *Pythagorean Hodograph Curves* (2008), and rational quadratics use the
-/// homogeneous equation `Y(t) - y W(t) = 0` before affine division.
+/// against every other native face. Isolated nonzero native faces are a
+/// special depth-zero case: their retained Green-area face already proves a
+/// material loop and no containment ray is needed. Boundary hits, tangent ray
+/// contacts, arcs, and genuinely cubic ray equations that are not
+/// degree-lowered stay [`Uncertain`](Self::Uncertain). This is the
+/// object/predicate boundary in Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997): retained topology may be classified
+/// only when exact witnesses replay; otherwise uncertainty is explicit.
+/// Polynomial Bezier ray equations use the Bernstein hodograph model
+/// described by Farouki, *Pythagorean Hodograph Curves* (2008), and rational
+/// quadratics use the homogeneous equation `Y(t) - y W(t) = 0` before affine
+/// division.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum CurveArrangementLoopRoleClass {
     /// Positive-area loop at even containment depth.
@@ -997,6 +1000,10 @@ fn curve_loop_role_reports(
     policy: PredicatePolicy,
 ) -> Vec<CurveArrangementLoopRoleReport> {
     let mut reports = Vec::with_capacity(faces.len());
+    let bounded_face_count = faces
+        .iter()
+        .filter(|face| face.class == CurveArrangementCellFaceClass::Bounded)
+        .count();
     for (face_index, face) in faces.iter().enumerate() {
         if face.class == CurveArrangementCellFaceClass::Exterior {
             reports.push(CurveArrangementLoopRoleReport {
@@ -1007,6 +1014,42 @@ fn curve_loop_role_reports(
                 containers: Vec::new(),
                 blocker: None,
             });
+            continue;
+        }
+
+        if bounded_face_count == 1 {
+            if face_has_explicit_arc_edge(face, edges, half_edges) {
+                reports.push(uncertain_loop_role(
+                    face_index,
+                    CurveArrangementLoopRoleBlocker::UnsupportedEdge,
+                ));
+            } else {
+                // An isolated nonzero native face has containment depth zero
+                // without needing a ray against any other loop. This is still
+                // Yap's exact-object boundary: the face already exists only
+                // after exact half-edge ordering and exact Green-area replay,
+                // and a missing representative is not used for nesting.
+                let representative = native_face_representative(
+                    face,
+                    vertices,
+                    edges,
+                    half_edges,
+                    line_fragments,
+                    arc_fragments,
+                    bezier_fragments,
+                    cubic_fragments,
+                    conic_fragments,
+                    policy,
+                );
+                reports.push(CurveArrangementLoopRoleReport {
+                    face: face_index,
+                    class: CurveArrangementLoopRoleClass::Material,
+                    representative,
+                    containment_depth: Some(0),
+                    containers: Vec::new(),
+                    blocker: None,
+                });
+            }
             continue;
         }
 
@@ -1090,6 +1133,18 @@ fn curve_loop_role_reports(
         });
     }
     reports
+}
+
+fn face_has_explicit_arc_edge(
+    face: &CurveArrangementCellFace,
+    edges: &[CurveArrangementCellEdge],
+    half_edges: &[CurveArrangementHalfEdge],
+) -> bool {
+    cycle_without_canceling_twins(&face.half_edges, half_edges)
+        .iter()
+        .any(|half_edge| {
+            edges[half_edges[*half_edge].edge].kind == CurveArrangementCellEdgeKind::ExplicitArc
+        })
 }
 
 fn uncertain_loop_role(
