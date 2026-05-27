@@ -13458,6 +13458,38 @@ fn exact_boolmesh_kernel12_coplanar_interval_port(c: &mut Criterion) {
     }
 }
 
+fn exact_boolmesh_positive_area_coplanar_kernel12_port(c: &mut Criterion) {
+    #[cfg(feature = "exact-triangulation")]
+    {
+        let left = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
+        let right = tetrahedron_i64([2, -1, 0], [5, -1, 0], [2, 2, 0], [2, -1, -3]);
+        c.bench_function("exact_boolmesh_positive_area_coplanar_kernel12_port", |b| {
+            b.iter(|| {
+                let workspace = hypermesh::exact::exact_boolmesh_workspace(
+                    &left,
+                    &right,
+                    hypermesh::exact::ExactBooleanOperation::Union,
+                );
+                workspace.kernel12_coplanar_events
+                    + workspace.boolean03.p1q2.len()
+                    + workspace.boolean03.p2q1.len()
+                    + workspace
+                        .boolean45
+                        .as_ref()
+                        .map(|stage| {
+                            stage.partial_source_edges.unpaired_runs
+                                + stage.new_face_pair_edges.unpaired_runs
+                        })
+                        .unwrap_or(0)
+            })
+        });
+    }
+    #[cfg(not(feature = "exact-triangulation"))]
+    {
+        let _ = c;
+    }
+}
+
 fn exact_boolmesh_boolean45_halfedge_row_port(c: &mut Criterion) {
     #[cfg(feature = "exact-triangulation")]
     {
@@ -13736,6 +13768,7 @@ criterion_group!(
     exact_boolmesh_kernel12_intersect_halfedge_row_port,
     exact_boolmesh_kernel12_intersect_boundary_endpoint_port,
     exact_boolmesh_kernel12_coplanar_interval_port,
+    exact_boolmesh_positive_area_coplanar_kernel12_port,
     exact_boolmesh_boolean45_halfedge_row_port,
     exact_boolmesh_kernel03_no_intersection_port,
     exact_boolmesh_kernel03_winding_port,

@@ -34235,6 +34235,43 @@ fn exact_boolmesh_kernel12_lowers_coplanar_interval_endpoints() {
 
 #[test]
 #[cfg(feature = "exact-triangulation")]
+fn exact_boolmesh_kernel12_lowers_partial_positive_area_coplanar_overlap() {
+    let left = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
+    let right = tetrahedron_i64([2, -1, 0], [5, -1, 0], [2, 2, 0], [2, -1, -3]);
+
+    let workspace = hypermesh::exact::exact_boolmesh_workspace(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+    );
+    workspace.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(workspace.kernel12_unknown_events, 0);
+    assert_eq!(workspace.kernel12_construction_failures, 0);
+    assert_eq!(
+        workspace.kernel12_coplanar_events, 0,
+        "positive-area coplanar edge/vertex evidence with exact split rows must not remain a Kernel12 blocker"
+    );
+    assert_eq!(
+        workspace.blocker.as_ref().map(|blocker| blocker.stage),
+        Some(hypermesh::exact::ExactBoolMeshKernelStage::SourceEdgeEmission),
+        "the next unfinished boolmesh stage should be source-edge ownership, not coplanar discovery"
+    );
+    assert!(workspace.boolean03.x12.iter().any(|sign| *sign > 0));
+    assert!(workspace.boolean03.x12.iter().any(|sign| *sign < 0));
+    assert!(workspace.boolean03.x21.iter().any(|sign| *sign > 0));
+    assert!(workspace.boolean03.x21.iter().any(|sign| *sign < 0));
+    let stage = workspace
+        .boolean45
+        .as_ref()
+        .expect("lowered coplanar rows must reach boolean45 staging");
+    assert!(
+        stage.partial_source_edges.unpaired_runs > 0 || stage.new_face_pair_edges.unpaired_runs > 0,
+        "partial positive-area overlap should expose the next boolmesh ownership blocker"
+    );
+}
+
+#[test]
+#[cfg(feature = "exact-triangulation")]
 fn exact_boolmesh_kernel12_discovers_skew_edge_face_events() {
     let left = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
     let right = tetrahedron_i64([1, 1, -1], [3, 1, 3], [1, 3, 3], [3, 3, 1]);

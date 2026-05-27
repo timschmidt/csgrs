@@ -1550,7 +1550,7 @@ fuzz_target!(|data: &[u8]| {
 
 #[cfg(feature = "exact-triangulation")]
 fn exercise_deterministic_case(selector: u8) {
-    match selector % 64 {
+    match selector % 65 {
         0 => exercise_partial_convex_union_boundary(),
         1 => exercise_face_interior_steiner_boundary(),
         2 => exercise_multi_component_coplanar_union(),
@@ -1615,6 +1615,7 @@ fn exercise_deterministic_case(selector: u8) {
         61 => exercise_exact_boolmesh_kernel03_winding_port(),
         62 => exercise_exact_boolmesh_cleanup_materialization_port(),
         63 => exercise_exact_boolmesh_holed_triangulation_port(),
+        64 => exercise_exact_boolmesh_positive_area_coplanar_kernel12_port(),
         _ => exercise_nonconvex_coplanar_volumetric_difference_fan_split(),
     }
 }
@@ -2243,6 +2244,22 @@ fn exercise_exact_boolmesh_kernel12_coplanar_interval_port() {
             event.point,
             hypermesh::exact::ExactBoolMeshPointConstruction::EdgeParameter { .. }
         )));
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn exercise_exact_boolmesh_positive_area_coplanar_kernel12_port() {
+    let left = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
+    let right = tetrahedron_i64([2, -1, 0], [5, -1, 0], [2, 2, 0], [2, -1, -3]);
+    let workspace =
+        hypermesh::exact::exact_boolmesh_workspace(&left, &right, ExactBooleanOperation::Union);
+    workspace.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(workspace.kernel12_coplanar_events, 0);
+    assert_eq!(
+        workspace.blocker.as_ref().map(|blocker| blocker.stage),
+        Some(hypermesh::exact::ExactBoolMeshKernelStage::SourceEdgeEmission)
+    );
+    assert!(workspace.boolean03.x12.iter().any(|sign| *sign < 0));
+    assert!(workspace.boolean03.x21.iter().any(|sign| *sign < 0));
 }
 
 #[cfg(feature = "exact-triangulation")]

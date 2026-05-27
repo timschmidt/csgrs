@@ -324,6 +324,7 @@ fn push_coplanar_row_if_new(events: &mut Vec<LoweredKernel12Event>, row: ExactCo
         event.edge_face == row.edge_face
             && same_point(&event.point, &row.point)
             && compare_reals(&event.parameter, &row.parameter).value() == Some(Ordering::Equal)
+            && event.sign == row.sign
     }) {
         return;
     }

@@ -1106,12 +1106,13 @@ pub struct ExactBoolMeshWorkspace {
     /// Projected coplanar evidence is allowed to clear this counter only when
     /// the direct `intersect12`/`Kernel12::op` port emitted a row for the same
     /// retained edge or vertex fact.  Raw segment/plane coplanarity is only a
-    /// scheduling degeneracy here; positive-length edge overlap and strict
-    /// interior vertex containment remain unresolved until the explicit
-    /// coplanar-overlap branch is ported.  This mirrors the legacy boolmesh
-    /// algorithm while preserving Yap's exact replay boundary: retained
-    /// projected coplanar facts cannot disappear unless a certified exact row
-    /// has taken ownership of that row-level work.
+    /// scheduling degeneracy here; exact point/interval split facts clear this
+    /// counter only after they replay through boolmesh `p/x/v` rows, while the
+    /// remaining positive-area ownership work is exposed by downstream
+    /// `boolean45` stages.  This mirrors the legacy boolmesh algorithm while
+    /// preserving Yap's exact replay boundary: retained projected coplanar
+    /// facts cannot disappear unless a certified exact row has taken ownership
+    /// of that row-level work.
     pub kernel12_coplanar_events: usize,
     /// Current exact `Boolean03` package.
     pub boolean03: ExactBoolMeshBoolean03,
@@ -2125,10 +2126,13 @@ fn count_uncovered_coplanar_events(
 /// against the exact object that consumes them; for split facts, that consumer
 /// is the exact `intersect12`/`Kernel12::op` row. Positive-length coplanar
 /// edge overlap is therefore covered only when both split-interval endpoints
-/// replay through rows on the retained source edges. Strict interior coplanar
-/// vertex evidence is different: legacy boolmesh does not emit a `kernel12`
-/// split row for it, and the exact direct `kernel03` port now owns that
-/// retained-vertex classification through `w03`/`w30` counters.
+/// replay through rows on the retained source edges.  The exact row owner is
+/// boolmesh's normalized `hid_p` source halfedge, so coverage checks the
+/// source side, source edge, opposite face, and exact point rather than the
+/// original coplanar face-pair key.  Strict interior coplanar vertex evidence
+/// is different: legacy boolmesh does not emit a `kernel12` split row for it,
+/// and the exact direct `kernel03` port now owns that retained-vertex
+/// classification through `w03`/`w30` counters.
 #[cfg(feature = "exact-triangulation")]
 fn coplanar_evidence_has_lowered_row(
     evidence: &Kernel12CoplanarEvidence,
@@ -2170,7 +2174,7 @@ fn coplanar_evidence_has_lowered_row(
                     })
                 })
             }
-            SegmentIntersection::Disjoint => false,
+            SegmentIntersection::Disjoint => true,
         },
         Kernel12CoplanarEvidence::Vertex {
             face_pair,
@@ -2191,10 +2195,10 @@ fn coplanar_evidence_has_lowered_row(
                     return false;
                 };
                 lowered_rows(lowering).any(|row| {
-                    row.0.face_pair == *face_pair
-                        && row.0.edge_side == source_side
+                    row.0.edge_side == source_side
                         && row.0.face_side == face_side
                         && row.0.face == *triangle_face
+                        && lowered_row_owns_opposite_face(row.0, source_side, *face_pair)
                         && point_matches(row.1, &point)
                 })
             }
@@ -2213,10 +2217,11 @@ fn coplanar_edge_split_point_has_lowered_row(
     lowering: &ExactBoolMeshKernel12Lowering,
 ) -> bool {
     lowered_rows(lowering).any(|row| {
-        row.0.face_pair == face_pair
-            && point_matches(row.1, &point.point)
-            && (lowered_row_matches_side_edge(row.0, ExactBoolMeshSide::Left, left_edge)
-                || lowered_row_matches_side_edge(row.0, ExactBoolMeshSide::Right, right_edge))
+        point_matches(row.1, &point.point)
+            && ((lowered_row_matches_side_edge(row.0, ExactBoolMeshSide::Left, left_edge)
+                && lowered_row_owns_opposite_face(row.0, ExactBoolMeshSide::Left, face_pair))
+                || (lowered_row_matches_side_edge(row.0, ExactBoolMeshSide::Right, right_edge)
+                    && lowered_row_owns_opposite_face(row.0, ExactBoolMeshSide::Right, face_pair)))
     })
 }
 
@@ -2238,6 +2243,26 @@ fn lowered_row_matches_side_edge(
     edge: [usize; 2],
 ) -> bool {
     row.edge_side == side && edge_same_undirected(row.edge, edge)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn lowered_row_owns_opposite_face(
+    row: &ExactBoolMeshEdgeFacePair,
+    source_side: ExactBoolMeshSide,
+    evidence_face_pair: ExactBoolMeshFacePair,
+) -> bool {
+    match source_side {
+        ExactBoolMeshSide::Left => {
+            row.face_side == ExactBoolMeshSide::Right
+                && row.face == evidence_face_pair.right_face
+                && row.face_pair.right_face == evidence_face_pair.right_face
+        }
+        ExactBoolMeshSide::Right => {
+            row.face_side == ExactBoolMeshSide::Left
+                && row.face == evidence_face_pair.left_face
+                && row.face_pair.left_face == evidence_face_pair.left_face
+        }
+    }
 }
 
 #[cfg(feature = "exact-triangulation")]

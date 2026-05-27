@@ -149,6 +149,7 @@ pub(super) fn lower_coplanar_split_rows(
         right.edge_face == left.edge_face
             && points_equal(&right.point, &left.point)
             && compare_reals(&right.parameter, &left.parameter).value() == Some(Ordering::Equal)
+            && right.sign == left.sign
     });
     rows
 }
@@ -375,5 +376,55 @@ mod tests {
         assert_eq!(rows[0].edge_face.edge_side, ExactBoolMeshSide::Left);
         assert_eq!(rows[1].edge_face.edge_side, ExactBoolMeshSide::Right);
         assert!(rows.iter().all(|row| row.sign == 1));
+    }
+
+    #[test]
+    fn preserves_opposite_signed_rows_at_shared_interval_endpoint() {
+        let left = tetrahedron_i64([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]);
+        let right = tetrahedron_i64([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, -1]);
+        let evidence = [
+            Kernel12CoplanarEvidence::Edge {
+                face_pair: ExactBoolMeshFacePair {
+                    left_face: 0,
+                    right_face: 0,
+                },
+                left_edge: [1, 0],
+                right_edge: [1, 0],
+                relation: SegmentIntersection::CollinearOverlap,
+                points: Vec::new(),
+                interval: Some(CoplanarEdgeInterval {
+                    endpoints: [
+                        split_point(p3(0, 0, 0), 0, 0),
+                        split_point(p3(1, 0, 0), 1, 1),
+                    ],
+                }),
+            },
+            Kernel12CoplanarEvidence::Edge {
+                face_pair: ExactBoolMeshFacePair {
+                    left_face: 0,
+                    right_face: 0,
+                },
+                left_edge: [1, 0],
+                right_edge: [1, 0],
+                relation: SegmentIntersection::EndpointTouch,
+                points: vec![split_point(p3(0, 0, 0), 0, 0)],
+                interval: None,
+            },
+        ];
+
+        let rows = lower_coplanar_split_rows(&evidence, &left, &right);
+
+        assert_eq!(rows.len(), 6);
+        for side in [ExactBoolMeshSide::Left, ExactBoolMeshSide::Right] {
+            let endpoint_rows = rows
+                .iter()
+                .filter(|row| {
+                    row.edge_face.edge_side == side && points_equal(&row.point, &p3(0, 0, 0))
+                })
+                .collect::<Vec<_>>();
+            assert_eq!(endpoint_rows.len(), 2);
+            assert!(endpoint_rows.iter().any(|row| row.sign == 1));
+            assert!(endpoint_rows.iter().any(|row| row.sign == -1));
+        }
     }
 }
