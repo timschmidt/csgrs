@@ -1548,7 +1548,7 @@ fuzz_target!(|data: &[u8]| {
 
 #[cfg(feature = "exact-triangulation")]
 fn exercise_deterministic_case(selector: u8) {
-    match selector % 47 {
+    match selector % 58 {
         0 => exercise_partial_convex_union_boundary(),
         1 => exercise_face_interior_steiner_boundary(),
         2 => exercise_multi_component_coplanar_union(),
@@ -1606,6 +1606,7 @@ fn exercise_deterministic_case(selector: u8) {
         54 => exercise_exact_boolmesh_kernel_frame_port(),
         55 => exercise_exact_boolmesh_kernel12_accumulator_replay_port(),
         56 => exercise_exact_boolmesh_kernel12_intersect_loop_port(),
+        57 => exercise_exact_boolmesh_kernel12_intersect_halfedge_row_port(),
         _ => exercise_nonconvex_coplanar_volumetric_difference_fan_split(),
     }
 }
@@ -2100,6 +2101,11 @@ fn exercise_exact_boolmesh_kernel12_accumulator_replay_port() {
 #[cfg(feature = "exact-triangulation")]
 fn exercise_exact_boolmesh_kernel12_intersect_loop_port() {
     assert!(exact_boolmesh_kernel12_intersect_loop_probe_for_internal_fuzz(56));
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn exercise_exact_boolmesh_kernel12_intersect_halfedge_row_port() {
+    assert!(exact_boolmesh_kernel12_intersect_loop_probe_for_internal_fuzz(57));
 }
 
 #[cfg(feature = "exact-triangulation")]

@@ -156,6 +156,7 @@ mod tests {
                 right_face: face,
             },
             edge_side: ExactBoolMeshSide::Left,
+            source_halfedge: 0,
             edge: [0, 1],
             face_side: ExactBoolMeshSide::Right,
             face,

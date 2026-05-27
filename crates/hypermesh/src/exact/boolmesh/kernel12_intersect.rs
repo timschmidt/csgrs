@@ -164,6 +164,7 @@ fn edge_face_pair(
         } else {
             ExactBoolMeshSide::Right
         },
+        source_halfedge,
         edge,
         face_side: if fwd {
             ExactBoolMeshSide::Right
@@ -272,6 +273,14 @@ fn mul(left: &ExactReal, right: &ExactReal) -> ExactReal {
 
 #[cfg(feature = "internal-fuzzing")]
 pub(super) fn internal_fuzz_probe(selector: u8) -> bool {
+    if selector & 2 != 0 {
+        let (left, right) = halfedge_row_key_meshes();
+        let tables = intersect12_exact(&left, &right);
+        return tables.p1q2.len() == 1
+            && tables.p2q1.is_empty()
+            && tables.p1q2[0].source_halfedge == 1
+            && tables.p1q2[0].edge_face.source_halfedge == 1;
+    }
     let top = 5 + i64::from(selector & 1);
     let (left, right) = open_crossing_meshes(top, 4);
     let tables = intersect12_exact(&left, &right);
@@ -279,6 +288,37 @@ pub(super) fn internal_fuzz_probe(selector: u8) -> bool {
         && tables.p2q1.is_empty()
         && tables.p1q2[0].sign == 1
         && real_order(&tables.p1q2[0].point.z, &ExactReal::from(4)) == Some(Ordering::Equal)
+}
+
+#[cfg(any(test, feature = "internal-fuzzing"))]
+fn halfedge_row_key_meshes() -> (ExactMesh, ExactMesh) {
+    use crate::exact::SourceProvenance;
+    use crate::exact::mesh::{ExactPoint3, Triangle};
+    use crate::exact::validation::ValidationPolicy;
+
+    let left = ExactMesh::new_with_policy(
+        vec![
+            ExactPoint3::new(ExactReal::from(1), ExactReal::from(1), ExactReal::from(0)),
+            ExactPoint3::new(ExactReal::from(1), ExactReal::from(1), ExactReal::from(5)),
+            ExactPoint3::new(ExactReal::from(2), ExactReal::from(1), ExactReal::from(5)),
+        ],
+        vec![Triangle([2, 0, 1])],
+        SourceProvenance::exact("exact boolmesh intersect12 halfedge row fixture"),
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let right = ExactMesh::new_with_policy(
+        vec![
+            ExactPoint3::new(ExactReal::from(0), ExactReal::from(0), ExactReal::from(4)),
+            ExactPoint3::new(ExactReal::from(4), ExactReal::from(0), ExactReal::from(4)),
+            ExactPoint3::new(ExactReal::from(0), ExactReal::from(4), ExactReal::from(4)),
+        ],
+        vec![Triangle([0, 1, 2])],
+        SourceProvenance::exact("exact boolmesh intersect12 halfedge row opposite"),
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    (left, right)
 }
 
 #[cfg(any(test, feature = "internal-fuzzing"))]
@@ -339,6 +379,7 @@ mod tests {
         assert_eq!(hit.source_halfedge, 0);
         assert_eq!(hit.opposite_face, 0);
         assert_eq!(hit.edge_face.edge_side, ExactBoolMeshSide::Left);
+        assert_eq!(hit.edge_face.source_halfedge, 0);
         assert_eq!(hit.edge_face.edge, [0, 1]);
         assert_eq!(hit.edge_face.face_side, ExactBoolMeshSide::Right);
         assert_eq!(hit.edge_face.face, 0);
@@ -371,5 +412,20 @@ mod tests {
 
         assert!(tables.p1q2.is_empty());
         assert!(tables.p2q1.is_empty());
+    }
+
+    #[test]
+    fn intersect12_loop_retains_boolmesh_source_halfedge_row_key() {
+        let (left, right) = halfedge_row_key_meshes();
+
+        let tables = intersect12_exact(&left, &right);
+
+        assert_eq!(tables.p1q2.len(), 1);
+        let hit = &tables.p1q2[0];
+        assert_eq!(hit.source_halfedge, 1);
+        assert_eq!(hit.edge_face.source_halfedge, 1);
+        assert_eq!(hit.edge_face.edge, [0, 1]);
+        assert_eq!(hit.edge_face.face_pair.left_face, 0);
+        assert_eq!(hit.edge_face.face_pair.right_face, 0);
     }
 }

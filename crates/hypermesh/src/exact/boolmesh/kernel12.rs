@@ -479,6 +479,7 @@ fn same_point(left: &Point3, right: &Point3) -> bool {
 fn sort_lowered_events(events: &mut [LoweredKernel12Event]) {
     events.sort_by(|left, right| {
         (
+            left.edge_face.source_halfedge,
             left.edge_face.edge[0],
             left.edge_face.edge[1],
             left.edge_face.face,
@@ -486,6 +487,7 @@ fn sort_lowered_events(events: &mut [LoweredKernel12Event]) {
             left.edge_face.face_pair.right_face,
         )
             .cmp(&(
+                right.edge_face.source_halfedge,
                 right.edge_face.edge[0],
                 right.edge_face.edge[1],
                 right.edge_face.face,
@@ -551,6 +553,7 @@ pub(super) fn internal_fuzz_probe(selector: u8) -> bool {
                 right_face: 0,
             },
             edge_side: ExactBoolMeshSide::Left,
+            source_halfedge: 0,
             edge: [0, 1],
             face_side: ExactBoolMeshSide::Right,
             face: 0,
@@ -606,6 +609,7 @@ mod tests {
                 right_face: 0,
             },
             edge_side: ExactBoolMeshSide::Left,
+            source_halfedge: 0,
             edge: [0, 1],
             face_side: ExactBoolMeshSide::Right,
             face: 0,

@@ -188,7 +188,12 @@ pub struct ExactBoolMeshFacePair {
 /// This exact representation keeps that ownership explicit instead of
 /// collapsing the event to a face-pair id, because the later `boolean45`
 /// pairing stage must sort and split along the source edge that produced the
-/// construction.
+/// construction.  The `source_halfedge` field is the legacy boolmesh row key
+/// (`hid` in `boolean03::kernel12::intersect12`), retained exactly so the port
+/// does not recover face-local topology from rounded coordinates or endpoint
+/// coincidence.  That is the exact-object separation advocated by Yap,
+/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+/// (1997).
 #[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct ExactBoolMeshEdgeFacePair {
@@ -196,6 +201,8 @@ pub struct ExactBoolMeshEdgeFacePair {
     pub face_pair: ExactBoolMeshFacePair,
     /// Operand side owning the source edge.
     pub edge_side: ExactBoolMeshSide,
+    /// Face-local source halfedge id in the owning operand.
+    pub source_halfedge: usize,
     /// Directed source edge endpoints in `edge_side` vertex index space.
     pub edge: [usize; 2],
     /// Operand side owning the opposite source face.
@@ -1343,6 +1350,12 @@ impl ExactBoolMeshWorkspace {
         right: &ExactMesh,
     ) -> Result<(), ExactBoolMeshValidationError> {
         self.validate()?;
+        for event in &self.kernel12_events {
+            validate_edge_face_pair_source_halfedge(event.edge_face, left, right)?;
+        }
+        for pair in self.boolean03.p1q2.iter().chain(self.boolean03.p2q1.iter()) {
+            validate_edge_face_pair_source_halfedge(*pair, left, right)?;
+        }
         let replay = Self::from_sources(left, right, self.operation);
         if self == &replay {
             Ok(())
@@ -1821,6 +1834,14 @@ fn discover_kernel12_events(left: &ExactMesh, right: &ExactMesh) -> Kernel12Disc
                         edge_face: ExactBoolMeshEdgeFacePair {
                             face_pair,
                             edge_side: boolmesh_side(*segment_side),
+                            source_halfedge: source_halfedge_for_event(
+                                left,
+                                right,
+                                face_pair,
+                                *segment_side,
+                                *edge,
+                            )
+                            .unwrap_or(usize::MAX),
                             edge: *edge,
                             face_side: boolmesh_side(*plane_side),
                             face: *plane_face,
@@ -1855,6 +1876,61 @@ fn boolmesh_side(side: MeshSide) -> ExactBoolMeshSide {
 }
 
 #[cfg(feature = "exact-triangulation")]
+fn source_halfedge_for_event(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    face_pair: ExactBoolMeshFacePair,
+    segment_side: MeshSide,
+    edge: [usize; 2],
+) -> Option<usize> {
+    let (mesh, face) = match segment_side {
+        MeshSide::Left => (left, face_pair.left_face),
+        MeshSide::Right => (right, face_pair.right_face),
+    };
+    source_halfedge_for_face_edge(mesh, face, edge)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn source_halfedge_for_face_edge(mesh: &ExactMesh, face: usize, edge: [usize; 2]) -> Option<usize> {
+    boolmesh_triangle_edges(*mesh.triangles().get(face)?)
+        .iter()
+        .position(|candidate| *candidate == edge)
+        .map(|local| 3 * face + local)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn boolmesh_triangle_edges(triangle: Triangle) -> [[usize; 2]; 3] {
+    [
+        [triangle.0[0], triangle.0[1]],
+        [triangle.0[1], triangle.0[2]],
+        [triangle.0[2], triangle.0[0]],
+    ]
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn validate_edge_face_pair_source_halfedge(
+    pair: ExactBoolMeshEdgeFacePair,
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Result<(), ExactBoolMeshValidationError> {
+    let (mesh, source_face) = match pair.edge_side {
+        ExactBoolMeshSide::Left => (left, pair.face_pair.left_face),
+        ExactBoolMeshSide::Right => (right, pair.face_pair.right_face),
+    };
+    let Some(triangle) = mesh.triangles().get(source_face) else {
+        return Err(ExactBoolMeshValidationError::EdgeFacePairOutOfBounds);
+    };
+    if pair.source_halfedge / 3 != source_face {
+        return Err(ExactBoolMeshValidationError::EdgeFacePairOutOfBounds);
+    }
+    let local = pair.source_halfedge % 3;
+    if boolmesh_triangle_edges(*triangle)[local] != pair.edge {
+        return Err(ExactBoolMeshValidationError::EdgeFacePairOutOfBounds);
+    }
+    Ok(())
+}
+
+#[cfg(feature = "exact-triangulation")]
 fn validate_edge_face_pair(
     pair: ExactBoolMeshEdgeFacePair,
     left_vertices: usize,
@@ -1868,11 +1944,18 @@ fn validate_edge_face_pair(
     if pair.face_pair.left_face >= left_faces || pair.face_pair.right_face >= right_faces {
         return Err(ExactBoolMeshValidationError::FacePairOutOfBounds);
     }
-    let (edge_vertices, face_count) = match pair.edge_side {
-        ExactBoolMeshSide::Left => (left_vertices, right_faces),
-        ExactBoolMeshSide::Right => (right_vertices, left_faces),
+    let (edge_vertices, source_faces, face_count) = match pair.edge_side {
+        ExactBoolMeshSide::Left => (left_vertices, left_faces, right_faces),
+        ExactBoolMeshSide::Right => (right_vertices, right_faces, left_faces),
     };
     if pair.edge[0] >= edge_vertices || pair.edge[1] >= edge_vertices {
+        return Err(ExactBoolMeshValidationError::EdgeFacePairOutOfBounds);
+    }
+    let source_face = match pair.edge_side {
+        ExactBoolMeshSide::Left => pair.face_pair.left_face,
+        ExactBoolMeshSide::Right => pair.face_pair.right_face,
+    };
+    if pair.source_halfedge >= source_faces * 3 || pair.source_halfedge / 3 != source_face {
         return Err(ExactBoolMeshValidationError::EdgeFacePairOutOfBounds);
     }
     if pair.face >= face_count {

@@ -34631,6 +34631,20 @@ fn exact_boolmesh_open_crossing_edges_are_not_adjacency_gaps() {
         !workspace.boolean03.p1q2.is_empty() || !workspace.boolean03.p2q1.is_empty(),
         "open crossing triangles should lower exact edge-face events"
     );
+    let mut stale_halfedge = workspace.clone();
+    let pair = stale_halfedge
+        .boolean03
+        .p1q2
+        .first_mut()
+        .or_else(|| stale_halfedge.boolean03.p2q1.first_mut())
+        .expect("open crossing triangles should expose a boolmesh row");
+    pair.source_halfedge = (pair.source_halfedge / 3) * 3 + ((pair.source_halfedge + 1) % 3);
+    assert_eq!(
+        stale_halfedge
+            .validate_against_sources(&left, &right)
+            .unwrap_err(),
+        hypermesh::exact::ExactBoolMeshValidationError::EdgeFacePairOutOfBounds
+    );
     let size_output = workspace
         .boolean45
         .as_ref()
