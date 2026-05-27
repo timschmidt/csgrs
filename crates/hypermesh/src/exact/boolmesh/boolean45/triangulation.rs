@@ -84,6 +84,10 @@ pub(super) fn triangulate_output_face_loops(
             stage.triangulation_failures += 1;
             continue;
         };
+        if triangles.is_empty() {
+            stage.triangulation_failures += 1;
+            continue;
+        }
         stage.triangulations.push(ExactBoolMeshLoopTriangulation {
             output_face: face_loop.output_face,
             loop_index,

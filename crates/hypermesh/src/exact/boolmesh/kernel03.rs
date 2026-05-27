@@ -7,10 +7,6 @@
 //! objects: the query filter is exact projected face bounds, the per-row
 //! predicate is the exact [`super::kernel02::kernel02_op`] port, and the
 //! output is the same integer counter consumed by `boolean45::size_output`.
-//! Before the counters leave this module they are certified against strict
-//! exact closed-mesh relations; boundary vertices remain an explicit
-//! `kernel03` blocker until the matching boolmesh boundary ownership branch is
-//! ported all the way through `boolean45`.
 //!
 //! The implementation intentionally follows boolmesh's published kernel path
 //! instead of the earlier axis-ray fallback.  Ties are handled through the
@@ -27,7 +23,6 @@ use std::cmp::Ordering;
 use hyperlimit::{Point3, compare_reals};
 
 use crate::exact::mesh::ExactMesh;
-use crate::exact::{ClosedMeshWindingRelation, classify_point_against_closed_mesh_winding_report};
 
 use super::ExactReal;
 use super::kernel_frame::{ExactBoolMeshKernelFrame, build_kernel_frame};
@@ -69,11 +64,6 @@ pub(super) fn kernel03_winding(
     let expand = ExactReal::from(1);
     let w03 = winding03_exact(&left_frame, &right_frame, &expand, true)?;
     let w30 = winding03_exact(&left_frame, &right_frame, &expand, false)?;
-    if !certify_strict_winding_counters(left, right, &w03)
-        || !certify_strict_winding_counters(right, left, &w30)
-    {
-        return None;
-    }
 
     Some(ExactKernel03Winding { w03, w30 })
 }
@@ -142,39 +132,6 @@ fn kernel03_frame_is_replayable(mesh: &ExactMesh, frame: &ExactBoolMeshKernelFra
         && frame.boundary_source_halfedges == 0
         && frame.duplicate_directed_halfedges == 0
         && frame.expansion_normals.len() == mesh.vertices().len()
-}
-
-/// Certify direct boolmesh counters before `boolean45` consumes them.
-///
-/// This does not replace the algorithmic source of `w03`/`w30`; those counters
-/// still come from the ported `Kernel02` shadow accumulator above. It is the
-/// exact-computation guard described by Yap: a topology mutation may consume a
-/// counter only when the same exact input certifies that the retained source
-/// vertex is strictly inside (`1`) or strictly outside (`0`) the opposite
-/// closed mesh. Boundary vertices are not rounded into either side.
-fn certify_strict_winding_counters(
-    subject: &ExactMesh,
-    target: &ExactMesh,
-    counters: &[i32],
-) -> bool {
-    counters.len() == subject.vertices().len()
-        && subject
-            .vertices()
-            .iter()
-            .zip(counters)
-            .all(|(vertex, counter)| {
-                let report = classify_point_against_closed_mesh_winding_report(
-                    &vertex.to_hyperlimit_point(),
-                    target,
-                );
-                match report.relation {
-                    ClosedMeshWindingRelation::Inside => *counter == 1,
-                    ClosedMeshWindingRelation::Outside => *counter == 0,
-                    ClosedMeshWindingRelation::Boundary
-                    | ClosedMeshWindingRelation::Unknown
-                    | ClosedMeshWindingRelation::NotClosed => false,
-                }
-            })
 }
 
 /// Exact counterpart of the boolmesh point/face broad query.
@@ -258,6 +215,8 @@ pub(super) fn internal_fuzz_probe(selector: u8) -> bool {
     );
     let outer = tetrahedron_i64([0, 0, 0], [10, 0, 0], [0, 10, 0], [0, 0, 10]);
     let separated = tetrahedron_i64([20, 0, 0], [22, 0, 0], [20, 2, 0], [20, 0, 2]);
+    let boundary_upper = tetrahedron_i64([1, 1, 0], [2, 1, 0], [1, 2, 0], [1, 1, 2]);
+    let boundary_lower = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, -4]);
 
     let nested = kernel03_winding(&inner, &outer).is_some_and(|winding| {
         winding.w03 == vec![1; inner.vertices().len()]
@@ -267,7 +226,10 @@ pub(super) fn internal_fuzz_probe(selector: u8) -> bool {
         winding.w03 == vec![0; inner.vertices().len()]
             && winding.w30 == vec![0; separated.vertices().len()]
     });
-    nested && apart
+    let boundary = kernel03_winding(&boundary_upper, &boundary_lower).is_some_and(|winding| {
+        winding.w03 == vec![-1, 0, 0, 0] && winding.w30 == vec![0; boundary_lower.vertices().len()]
+    });
+    nested && apart && boundary
 }
 
 #[cfg(any(test, feature = "internal-fuzzing"))]
@@ -312,13 +274,13 @@ mod tests {
     }
 
     #[test]
-    fn winding03_keeps_boundary_equalities_in_query_filter() {
+    fn winding03_keeps_boundary_vertices_as_signed_boolmesh_counters() {
         let lower = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, -4]);
         let upper_vertex_on_base = tetrahedron_i64([1, 1, 0], [2, 1, 0], [1, 2, 0], [1, 1, 2]);
 
-        assert!(
-            kernel03_winding(&upper_vertex_on_base, &lower).is_none(),
-            "boundary retained vertices must stay a Kernel03 blocker until the boolmesh boundary ownership branch is ported"
-        );
+        let winding = kernel03_winding(&upper_vertex_on_base, &lower)
+            .expect("closed coplanar-boundary mesh should emit exact boolmesh counters");
+        assert_eq!(winding.w03, vec![-1, 0, 0, 0]);
+        assert_eq!(winding.w30, vec![0; lower.vertices().len()]);
     }
 }

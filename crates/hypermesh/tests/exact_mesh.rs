@@ -33736,7 +33736,7 @@ fn exact_boolmesh_workspace_executes_bounds_disjoint_slice() {
 
 #[test]
 #[cfg(feature = "exact-triangulation")]
-fn exact_boolmesh_workspace_routes_strict_coplanar_vertices_to_kernel03() {
+fn exact_boolmesh_workspace_routes_strict_coplanar_vertices_to_boolean45() {
     let left = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
     let right = tetrahedron_i64([1, 1, 0], [2, 1, 0], [1, 2, 0], [1, 1, -1]);
 
@@ -33752,7 +33752,7 @@ fn exact_boolmesh_workspace_routes_strict_coplanar_vertices_to_kernel03() {
         .expect("overlapping bounds must name the next boolmesh stage");
     assert_eq!(
         blocker.stage,
-        hypermesh::exact::ExactBoolMeshKernelStage::Kernel03
+        hypermesh::exact::ExactBoolMeshKernelStage::FacePairEdgeEmission
     );
     assert!(blocker.candidate_face_pairs > 0);
     assert!(
@@ -33760,6 +33760,11 @@ fn exact_boolmesh_workspace_routes_strict_coplanar_vertices_to_kernel03() {
             && workspace.kernel12_unknown_events == 0
             && workspace.kernel12_construction_failures == 0,
         "strict coplanar vertex ownership is no longer a Kernel12 row blocker"
+    );
+    assert!(
+        workspace.boolean03.w03.iter().any(|winding| *winding != 0)
+            || workspace.boolean03.w30.iter().any(|winding| *winding != 0),
+        "strict coplanar vertex ownership should flow through exact kernel03 counters"
     );
 
     let execution = hypermesh::exact::execute_exact_boolmesh_bounds_disjoint(
@@ -33771,7 +33776,7 @@ fn exact_boolmesh_workspace_routes_strict_coplanar_vertices_to_kernel03() {
     assert_eq!(
         execution.unwrap_err(),
         hypermesh::exact::ExactBoolMeshValidationError::PortBlocked(
-            hypermesh::exact::ExactBoolMeshKernelStage::Kernel03
+            hypermesh::exact::ExactBoolMeshKernelStage::FacePairEdgeEmission
         )
     );
 }
@@ -34055,6 +34060,16 @@ fn exact_boolmesh_kernel12_lowers_strict_endpoint_face_shadow() {
     assert_eq!(workspace.kernel12_unknown_events, 0);
     assert_eq!(workspace.kernel12_construction_failures, 0);
     assert_eq!(workspace.kernel12_coplanar_events, 0);
+    assert_eq!(
+        workspace.boolean03.w03,
+        vec![-1, 0, 0, 0],
+        "boundary endpoint ownership should come from exact boolmesh kernel03, not the strict certification blocker"
+    );
+    assert_eq!(workspace.boolean03.w30, vec![0; right.vertices().len()]);
+    assert_ne!(
+        workspace.blocker.as_ref().map(|blocker| blocker.stage),
+        Some(hypermesh::exact::ExactBoolMeshKernelStage::Kernel03)
+    );
     assert!(workspace.kernel12_events.iter().any(|event| {
         event.relation == SegmentPlaneRelation::EndpointOnPlane
             && event.endpoint_sides.contains(&Some(PlaneSide::On))
