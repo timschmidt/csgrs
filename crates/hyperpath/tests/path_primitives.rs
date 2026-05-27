@@ -5,15 +5,14 @@ use hyperpath::{
     BoardContourOrientation, CardinalPoint, CardinalRotation, CircularArc, CircularArcError,
     ClearanceStatus, ConstructionStamp, CornerLookaheadJoinClass, CubicBezier,
     CubicPythagoreanHodograph, CurveArrangementCellEdgeKind, CurveArrangementCellFaceClass,
-    CurveArrangementLoopRoleBlocker, CurveArrangementLoopRoleClass, DrillBoardClearanceReport,
-    ExplicitArcArrangementClass, ExplicitArcIntersectionClass, ExplicitArcOverlapClass,
-    ExplicitArcPointClassification, ExplicitArcSweepClass, ExplicitArcTangentClass,
-    ExplicitCircleRelationClass, ExplicitCircularArc, FeedPathElement, HigherOrderBezier,
-    HigherOrderBezierError, InfillGraphError, JerkLimitedFeedTimeReport, JerkRampPhaseProposal,
-    JerkRampSpanProposal, LineArcArrangementEventClass, LineArrangementCellFaceClass,
-    LineArrangementError, LineArrangementEventClass, LineCubicAlgebraicPointDomain,
-    LineCubicAlgebraicRootDomain, LineCubicBezierAlgebraicBreakpointDomain,
-    LineCubicBezierAlgebraicBreakpointOrderClass,
+    CurveArrangementLoopRoleClass, DrillBoardClearanceReport, ExplicitArcArrangementClass,
+    ExplicitArcIntersectionClass, ExplicitArcOverlapClass, ExplicitArcPointClassification,
+    ExplicitArcSweepClass, ExplicitArcTangentClass, ExplicitCircleRelationClass,
+    ExplicitCircularArc, FeedPathElement, HigherOrderBezier, HigherOrderBezierError,
+    InfillGraphError, JerkLimitedFeedTimeReport, JerkRampPhaseProposal, JerkRampSpanProposal,
+    LineArcArrangementEventClass, LineArrangementCellFaceClass, LineArrangementError,
+    LineArrangementEventClass, LineCubicAlgebraicPointDomain, LineCubicAlgebraicRootDomain,
+    LineCubicBezierAlgebraicBreakpointDomain, LineCubicBezierAlgebraicBreakpointOrderClass,
     LineCubicBezierAlgebraicBreakpointSequenceBlocker,
     LineCubicBezierAlgebraicBreakpointSequenceClass,
     LineCubicBezierAlgebraicBreakpointSequenceSource,
@@ -1019,7 +1018,7 @@ fn rational_quadratic_bezier_arrangement_reports_nested_same_orientation_hole_ro
 }
 
 #[test]
-fn explicit_arc_loop_role_reports_unsupported_ray_replay() {
+fn explicit_arc_loop_role_reports_isolated_material_role() {
     let upper =
         ExplicitCircularArc::new(p(4, 0), r(4), p(0, 0), p(8, 0), ArcDirection::Cw).unwrap();
     let lower =
@@ -1028,8 +1027,69 @@ fn explicit_arc_loop_role_reports_unsupported_ray_replay() {
     let report = arrange_explicit_arcs(&[upper, lower], PredicatePolicy::default()).unwrap();
 
     assert!(report.cell_graph.loop_roles.iter().any(|role| {
-        role.class == CurveArrangementLoopRoleClass::Uncertain
-            && role.blocker == Some(CurveArrangementLoopRoleBlocker::UnsupportedEdge)
+        role.class == CurveArrangementLoopRoleClass::Material
+            && role.containment_depth == Some(0)
+            && role.representative.is_some()
+    }));
+}
+
+#[test]
+fn explicit_arc_loop_role_reports_nested_same_orientation_hole_role() {
+    let outer_upper =
+        ExplicitCircularArc::new(p(4, 0), r(4), p(0, 0), p(8, 0), ArcDirection::Cw).unwrap();
+    let outer_lower =
+        ExplicitCircularArc::new(p(4, 0), r(4), p(8, 0), p(0, 0), ArcDirection::Cw).unwrap();
+    let inner_upper =
+        ExplicitCircularArc::new(p(4, 0), r(2), p(2, 0), p(6, 0), ArcDirection::Cw).unwrap();
+    let inner_lower =
+        ExplicitCircularArc::new(p(4, 0), r(2), p(6, 0), p(2, 0), ArcDirection::Cw).unwrap();
+
+    let report = arrange_explicit_arcs(
+        &[outer_upper, outer_lower, inner_upper, inner_lower],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+
+    assert!(report.cell_graph.loop_roles.iter().any(|role| {
+        role.class == CurveArrangementLoopRoleClass::Hole
+            && role.containment_depth == Some(1)
+            && role.containers.len() == 1
+            && role.representative.is_some()
+    }));
+}
+
+#[test]
+fn explicit_arc_loop_role_reports_non_cardinal_representative_hole_role() {
+    let outer = [
+        ExplicitCircularArc::new(p(0, 0), r(5), p(5, 0), p(0, 5), ArcDirection::Ccw).unwrap(),
+        ExplicitCircularArc::new(p(0, 0), r(5), p(0, 5), p(-5, 0), ArcDirection::Ccw).unwrap(),
+        ExplicitCircularArc::new(p(0, 0), r(5), p(-5, 0), p(0, -5), ArcDirection::Ccw).unwrap(),
+        ExplicitCircularArc::new(p(0, 0), r(5), p(0, -5), p(5, 0), ArcDirection::Ccw).unwrap(),
+    ];
+    let inner = [
+        ExplicitCircularArc::new(p(0, 0), r(3), p(3, 0), p(0, 3), ArcDirection::Ccw).unwrap(),
+        ExplicitCircularArc::new(p(0, 0), r(3), p(0, 3), p(-3, 0), ArcDirection::Ccw).unwrap(),
+        ExplicitCircularArc::new(p(0, 0), r(3), p(-3, 0), p(0, -3), ArcDirection::Ccw).unwrap(),
+        ExplicitCircularArc::new(p(0, 0), r(3), p(0, -3), p(3, 0), ArcDirection::Ccw).unwrap(),
+    ];
+    let arcs = [
+        outer[0].clone(),
+        outer[1].clone(),
+        outer[2].clone(),
+        outer[3].clone(),
+        inner[0].clone(),
+        inner[1].clone(),
+        inner[2].clone(),
+        inner[3].clone(),
+    ];
+
+    let report = arrange_explicit_arcs(&arcs, PredicatePolicy::default()).unwrap();
+
+    assert!(report.cell_graph.loop_roles.iter().any(|role| {
+        role.class == CurveArrangementLoopRoleClass::Hole
+            && role.containment_depth == Some(1)
+            && role.containers.len() == 1
+            && role.representative.is_some()
     }));
 }
 

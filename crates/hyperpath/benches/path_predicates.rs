@@ -1118,6 +1118,30 @@ fn path_predicates(c: &mut Criterion) {
                 .arrange_with(&secant_intersection_other, PredicatePolicy::default())
         })
     });
+    let arc_loop_outer_upper =
+        ExplicitCircularArc::new(p(400, 0), r(400), p(0, 0), p(800, 0), ArcDirection::Cw).unwrap();
+    let arc_loop_outer_lower =
+        ExplicitCircularArc::new(p(400, 0), r(400), p(800, 0), p(0, 0), ArcDirection::Cw).unwrap();
+    let arc_loop_inner_upper =
+        ExplicitCircularArc::new(p(400, 0), r(200), p(200, 0), p(600, 0), ArcDirection::Cw)
+            .unwrap();
+    let arc_loop_inner_lower =
+        ExplicitCircularArc::new(p(400, 0), r(200), p(600, 0), p(200, 0), ArcDirection::Cw)
+            .unwrap();
+    c.bench_function("explicit_circular_arc_loop_role_replay", |b| {
+        b.iter(|| {
+            arrange_explicit_arcs(
+                &[
+                    arc_loop_outer_upper.clone(),
+                    arc_loop_outer_lower.clone(),
+                    arc_loop_inner_upper.clone(),
+                    arc_loop_inner_lower.clone(),
+                ],
+                PredicatePolicy::default(),
+            )
+            .map(|report| report.cell_graph.loop_roles)
+        })
+    });
     c.bench_function("explicit_circular_arc_exact_tangents", |b| {
         b.iter(|| (explicit_arc.start_tangent(), explicit_arc.end_tangent()))
     });

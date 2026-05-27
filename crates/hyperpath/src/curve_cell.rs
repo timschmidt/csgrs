@@ -12,7 +12,9 @@ use std::cmp::Ordering;
 use hyperlimit::{Point2, PredicatePolicy, compare_reals_with_policy, point2_equal_with_policy};
 use hyperreal::Real;
 
-use crate::arc::ArcDirection;
+use crate::arc::{
+    ArcDirection, ExplicitArcPointClassification, ExplicitArcSweepClass, ExplicitCircularArc,
+};
 use crate::arrangement::{ExplicitArcArrangementFragment, LineArrangementFragment};
 use crate::bezier_arrangement::{
     CubicBezierArrangementFragment, HomogeneousPoint2, QuadraticBezierArrangementFragment,
@@ -131,12 +133,14 @@ pub enum CurveArrangementCellFaceClass {
 /// against every other native face. Isolated nonzero native faces are a
 /// special depth-zero case: their retained Green-area face already proves a
 /// material loop and no containment ray is needed. Boundary hits, tangent ray
-/// contacts, arcs, and genuinely cubic ray equations that are not
-/// degree-lowered stay [`Uncertain`](Self::Uncertain). This is the
+/// contacts, and genuinely cubic ray equations that are not degree-lowered
+/// stay [`Uncertain`](Self::Uncertain). This is the
 /// object/predicate boundary in Yap, "Towards Exact Geometric Computation,"
 /// *Computational Geometry* 7.1-2 (1997): retained topology may be classified
 /// only when exact witnesses replay; otherwise uncertainty is explicit.
-/// Polynomial Bezier ray equations use the Bernstein hodograph model
+/// Explicit arcs use retained circle/sweep predicates in the style of exact
+/// circular-arc arrangements such as CGAL `Arrangement_on_surface_2`;
+/// polynomial Bezier ray equations use the Bernstein hodograph model
 /// described by Farouki, *Pythagorean Hodograph Curves* (2008), and rational
 /// quadratics use the homogeneous equation `Y(t) - y W(t) = 0` before affine
 /// division.
@@ -1018,38 +1022,32 @@ fn curve_loop_role_reports(
         }
 
         if bounded_face_count == 1 {
-            if face_has_explicit_arc_edge(face, edges, half_edges) {
-                reports.push(uncertain_loop_role(
-                    face_index,
-                    CurveArrangementLoopRoleBlocker::UnsupportedEdge,
-                ));
-            } else {
-                // An isolated nonzero native face has containment depth zero
-                // without needing a ray against any other loop. This is still
-                // Yap's exact-object boundary: the face already exists only
-                // after exact half-edge ordering and exact Green-area replay,
-                // and a missing representative is not used for nesting.
-                let representative = native_face_representative(
-                    face,
-                    vertices,
-                    edges,
-                    half_edges,
-                    line_fragments,
-                    arc_fragments,
-                    bezier_fragments,
-                    cubic_fragments,
-                    conic_fragments,
-                    policy,
-                );
-                reports.push(CurveArrangementLoopRoleReport {
-                    face: face_index,
-                    class: CurveArrangementLoopRoleClass::Material,
-                    representative,
-                    containment_depth: Some(0),
-                    containers: Vec::new(),
-                    blocker: None,
-                });
-            }
+            // An isolated nonzero native face has containment depth zero
+            // without needing a ray against any other loop. This is still
+            // Yap's exact-object boundary: the face already exists only after
+            // exact half-edge ordering and exact Green-area replay. When a
+            // representative is available it is retained for later point
+            // location diagnostics, but it is not needed to prove depth zero.
+            let representative = native_face_representative(
+                face,
+                vertices,
+                edges,
+                half_edges,
+                line_fragments,
+                arc_fragments,
+                bezier_fragments,
+                cubic_fragments,
+                conic_fragments,
+                policy,
+            );
+            reports.push(CurveArrangementLoopRoleReport {
+                face: face_index,
+                class: CurveArrangementLoopRoleClass::Material,
+                representative,
+                containment_depth: Some(0),
+                containers: Vec::new(),
+                blocker: None,
+            });
             continue;
         }
 
@@ -1133,18 +1131,6 @@ fn curve_loop_role_reports(
         });
     }
     reports
-}
-
-fn face_has_explicit_arc_edge(
-    face: &CurveArrangementCellFace,
-    edges: &[CurveArrangementCellEdge],
-    half_edges: &[CurveArrangementHalfEdge],
-) -> bool {
-    cycle_without_canceling_twins(&face.half_edges, half_edges)
-        .iter()
-        .any(|half_edge| {
-            edges[half_edges[*half_edge].edge].kind == CurveArrangementCellEdgeKind::ExplicitArc
-        })
 }
 
 fn uncertain_loop_role(
@@ -1271,6 +1257,99 @@ fn midpoint_between(left: &Point2, right: &Point2) -> Option<Point2> {
     ))
 }
 
+/// Construct an exact interior witness for an explicit circular-arc fragment.
+///
+/// Half-turns use an exact radial quarter-turn. Minor and major arcs use the
+/// symbolic radial bisector `r * (u + v) / |u + v|`, with major arcs taking the
+/// antipodal bisector of the complementary minor sweep. The candidate is still
+/// accepted only after [`ExplicitCircularArc::classify_point`] replays the
+/// retained circle/sweep predicates, matching Yap's exact-object boundary and
+/// CGAL-style circular-arc arrangement traits.
+fn arc_midpoint_candidate(
+    fragment: &ExplicitArcArrangementFragment,
+    policy: PredicatePolicy,
+) -> Option<Point2> {
+    let arc = &fragment.arc;
+    match arc.facts().sweep_class {
+        ExplicitArcSweepClass::FullCircle => {}
+        ExplicitArcSweepClass::HalfTurn => {
+            let radial_x = arc.start().x.clone() - arc.center().x.clone();
+            let radial_y = arc.start().y.clone() - arc.center().y.clone();
+            let candidate = match arc.direction() {
+                ArcDirection::Ccw => Point2::new(
+                    arc.center().x.clone() - radial_y,
+                    arc.center().y.clone() + radial_x,
+                ),
+                ArcDirection::Cw => Point2::new(
+                    arc.center().x.clone() + radial_y,
+                    arc.center().y.clone() - radial_x,
+                ),
+            };
+            if arc.classify_point(&candidate, policy) == ExplicitArcPointClassification::OnArc {
+                return Some(candidate);
+            }
+            return None;
+        }
+        ExplicitArcSweepClass::LessThanHalfTurn | ExplicitArcSweepClass::GreaterThanHalfTurn => {
+            // The exact radial bisector is Yap-style retained-object evidence:
+            // construct `r * (u + v) / |u + v|` symbolically and then replay the
+            // arc sweep predicate. For major arcs the interior midpoint is the
+            // antipodal point of the complementary minor-arc bisector.
+            let start_x = arc.start().x.clone() - arc.center().x.clone();
+            let start_y = arc.start().y.clone() - arc.center().y.clone();
+            let end_x = arc.end().x.clone() - arc.center().x.clone();
+            let end_y = arc.end().y.clone() - arc.center().y.clone();
+            let sum_x = start_x + end_x;
+            let sum_y = start_y + end_y;
+            let norm_squared = sum_x.clone() * sum_x.clone() + sum_y.clone() * sum_y.clone();
+            let norm = norm_squared.sqrt().ok()?;
+            let scale = (arc.radius().clone() / norm).ok()?;
+            let sign = match arc.facts().sweep_class {
+                ExplicitArcSweepClass::LessThanHalfTurn => Real::one(),
+                ExplicitArcSweepClass::GreaterThanHalfTurn => -Real::one(),
+                ExplicitArcSweepClass::FullCircle
+                | ExplicitArcSweepClass::HalfTurn
+                | ExplicitArcSweepClass::Unknown => unreachable!(),
+            };
+            let candidate = Point2::new(
+                arc.center().x.clone() + sign.clone() * scale.clone() * sum_x,
+                arc.center().y.clone() + sign * scale * sum_y,
+            );
+            if arc.classify_point(&candidate, policy) == ExplicitArcPointClassification::OnArc {
+                return Some(candidate);
+            }
+            return None;
+        }
+        ExplicitArcSweepClass::Unknown => return None,
+    }
+
+    let center = arc.center();
+    let radius = arc.radius();
+    let candidates = [
+        Point2::new(center.x.clone(), center.y.clone() + radius.clone()),
+        Point2::new(center.x.clone() + radius.clone(), center.y.clone()),
+        Point2::new(center.x.clone(), center.y.clone() - radius.clone()),
+        Point2::new(center.x.clone() - radius.clone(), center.y.clone()),
+    ];
+    for candidate in candidates {
+        match arc.classify_point(&candidate, policy) {
+            ExplicitArcPointClassification::OnArc => {
+                if point2_equal_with_policy(&candidate, arc.start(), policy).value()? {
+                    continue;
+                }
+                if point2_equal_with_policy(&candidate, arc.end(), policy).value()? {
+                    continue;
+                }
+                return Some(candidate);
+            }
+            ExplicitArcPointClassification::OnCircleOutsideSweep
+            | ExplicitArcPointClassification::OffCircle => {}
+            ExplicitArcPointClassification::Unknown => return None,
+        }
+    }
+    None
+}
+
 fn half_edge_midpoint(
     half_edge: usize,
     vertices: &[CurveArrangementCellVertex],
@@ -1290,8 +1369,8 @@ fn half_edge_midpoint(
             midpoint_between(&vertices[half.from].point, &vertices[half.to].point)?
         }
         CurveArrangementCellEdgeKind::ExplicitArc => {
-            let _ = arc_fragments;
-            return None;
+            let fragment = &arc_fragments[edge.fragments[0]];
+            arc_midpoint_candidate(fragment, policy)?
         }
         CurveArrangementCellEdgeKind::QuadraticBezier => {
             let fragment = &bezier_fragments[edge.fragments[0]];
@@ -1394,8 +1473,8 @@ fn horizontal_ray_crossings(
             policy,
         ),
         CurveArrangementCellEdgeKind::ExplicitArc => {
-            let _ = arc_fragments;
-            RayCrossingResult::Unknown(CurveArrangementLoopRoleBlocker::UnsupportedEdge)
+            let fragment = &arc_fragments[edge.fragments[0]];
+            explicit_arc_ray_crossing(point, fragment, half_edge < half.twin, policy)
         }
         CurveArrangementCellEdgeKind::QuadraticBezier => {
             let fragment = &bezier_fragments[edge.fragments[0]];
@@ -1509,6 +1588,125 @@ fn point_on_segment(
         real_between_closed(&point.x, &start.x, &end.x, policy)?
             && real_between_closed(&point.y, &start.y, &end.y, policy)?,
     )
+}
+
+/// Count exact horizontal-ray crossings against one explicit circular-arc fragment.
+///
+/// The ray predicate replays the retained circle equation
+/// `(x-c_x)^2 + (y-c_y)^2 = r^2` at the query ordinate, filters the two exact
+/// candidate points through [`ExplicitCircularArc::classify_point`], and then
+/// applies the same half-open endpoint ownership used by the polynomial
+/// carriers. This follows Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997): candidates are constructed exactly
+/// and accepted only by exact predicates. The circular-carrier predicate is
+/// the same object/sweep split used by exact circular-arc arrangements such as
+/// CGAL `Arrangement_on_surface_2`.
+fn explicit_arc_ray_crossing(
+    point: &Point2,
+    fragment: &ExplicitArcArrangementFragment,
+    forward: bool,
+    policy: PredicatePolicy,
+) -> RayCrossingResult {
+    let arc = &fragment.arc;
+    match arc.classify_point(point, policy) {
+        ExplicitArcPointClassification::OnArc => return RayCrossingResult::Boundary,
+        ExplicitArcPointClassification::OnCircleOutsideSweep
+        | ExplicitArcPointClassification::OffCircle => {}
+        ExplicitArcPointClassification::Unknown => {
+            return RayCrossingResult::Unknown(
+                CurveArrangementLoopRoleBlocker::UndecidablePredicate,
+            );
+        }
+    }
+
+    let dy = point.y.clone() - arc.center().y.clone();
+    let radicand = arc.radius().clone() * arc.radius().clone() - dy.clone() * dy;
+    match compare_reals_with_policy(&radicand, &Real::zero(), policy).value() {
+        Some(Ordering::Less) => RayCrossingResult::Crossings(0),
+        Some(Ordering::Equal) => {
+            let candidate = Point2::new(arc.center().x.clone(), point.y.clone());
+            match arc.classify_point(&candidate, policy) {
+                ExplicitArcPointClassification::OnArc => {
+                    if arc_endpoint_owned_by_half_open_traversal(arc, &candidate, forward, policy)
+                        == Some(false)
+                    {
+                        return RayCrossingResult::Crossings(0);
+                    }
+                    match compare_reals_with_policy(&candidate.x, &point.x, policy).value() {
+                        Some(Ordering::Less) => RayCrossingResult::Crossings(0),
+                        Some(Ordering::Equal) => RayCrossingResult::Boundary,
+                        Some(Ordering::Greater) => RayCrossingResult::Unknown(
+                            CurveArrangementLoopRoleBlocker::TangentContact,
+                        ),
+                        None => RayCrossingResult::Unknown(
+                            CurveArrangementLoopRoleBlocker::UndecidablePredicate,
+                        ),
+                    }
+                }
+                ExplicitArcPointClassification::OnCircleOutsideSweep
+                | ExplicitArcPointClassification::OffCircle => RayCrossingResult::Crossings(0),
+                ExplicitArcPointClassification::Unknown => RayCrossingResult::Unknown(
+                    CurveArrangementLoopRoleBlocker::UndecidablePredicate,
+                ),
+            }
+        }
+        Some(Ordering::Greater) => {
+            let Ok(root) = radicand.sqrt() else {
+                return RayCrossingResult::Unknown(
+                    CurveArrangementLoopRoleBlocker::UndecidablePredicate,
+                );
+            };
+            let candidates = [
+                Point2::new(arc.center().x.clone() - root.clone(), point.y.clone()),
+                Point2::new(arc.center().x.clone() + root, point.y.clone()),
+            ];
+            let mut crossings = 0usize;
+            for candidate in candidates {
+                match arc.classify_point(&candidate, policy) {
+                    ExplicitArcPointClassification::OnArc => {}
+                    ExplicitArcPointClassification::OnCircleOutsideSweep
+                    | ExplicitArcPointClassification::OffCircle => continue,
+                    ExplicitArcPointClassification::Unknown => {
+                        return RayCrossingResult::Unknown(
+                            CurveArrangementLoopRoleBlocker::UndecidablePredicate,
+                        );
+                    }
+                }
+                match arc_endpoint_owned_by_half_open_traversal(arc, &candidate, forward, policy) {
+                    Some(true) => {}
+                    Some(false) => continue,
+                    None => {
+                        return RayCrossingResult::Unknown(
+                            CurveArrangementLoopRoleBlocker::UndecidablePredicate,
+                        );
+                    }
+                }
+                match ray_x_crossing(point, &candidate.x, policy) {
+                    RayCrossingResult::Crossings(count) => crossings += count,
+                    other => return other,
+                }
+            }
+            RayCrossingResult::Crossings(crossings)
+        }
+        None => RayCrossingResult::Unknown(CurveArrangementLoopRoleBlocker::UndecidablePredicate),
+    }
+}
+
+fn arc_endpoint_owned_by_half_open_traversal(
+    arc: &ExplicitCircularArc,
+    candidate: &Point2,
+    forward: bool,
+    policy: PredicatePolicy,
+) -> Option<bool> {
+    let is_start = point2_equal_with_policy(candidate, arc.start(), policy).value()?;
+    let is_end = point2_equal_with_policy(candidate, arc.end(), policy).value()?;
+    if forward && is_end {
+        return Some(false);
+    }
+    if !forward && is_start {
+        return Some(false);
+    }
+    Some(true)
 }
 
 fn quadratic_ray_crossing(

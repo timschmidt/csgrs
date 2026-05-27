@@ -22,9 +22,9 @@ use hyperpath::{
     LineRationalQuadraticBezierSupportOverlapMonotonicity, MixedCurveEndpointTangentClass,
     MixedCurveFragmentEndpoint, MixedCurveFragmentRef, MixedCurveFragmentSeparationClass,
     MixedCurveSourceRef, QuadraticBezier, RationalQuadraticBezier, arrange_cubic_beziers,
-    arrange_line_segments_with_cubic_beziers, arrange_line_segments_with_explicit_arcs,
-    arrange_line_segments_with_mixed_beziers, arrange_line_segments_with_mixed_curves,
-    arrange_line_segments_with_quadratic_beziers,
+    arrange_explicit_arcs, arrange_line_segments_with_cubic_beziers,
+    arrange_line_segments_with_explicit_arcs, arrange_line_segments_with_mixed_beziers,
+    arrange_line_segments_with_mixed_curves, arrange_line_segments_with_quadratic_beziers,
     arrange_line_segments_with_rational_quadratic_beziers, arrange_quadratic_beziers,
     arrange_rational_quadratic_beziers, intersect_axis_aligned_line_cubic_bezier,
     intersect_axis_aligned_line_quadratic_bezier,
@@ -367,6 +367,23 @@ fuzz_target!(|data: &[u8]| {
         .iter()
         .any(|role| role.class == CurveArrangementLoopRoleClass::Hole
             && role.containment_depth == Some(1)));
+    let nested_arc_report = arrange_explicit_arcs(
+        &[
+            ExplicitCircularArc::new(p(4, 0), r(4), p(0, 0), p(8, 0), ArcDirection::Cw).unwrap(),
+            ExplicitCircularArc::new(p(4, 0), r(4), p(8, 0), p(0, 0), ArcDirection::Cw).unwrap(),
+            ExplicitCircularArc::new(p(4, 0), r(2), p(2, 0), p(6, 0), ArcDirection::Cw).unwrap(),
+            ExplicitCircularArc::new(p(4, 0), r(2), p(6, 0), p(2, 0), ArcDirection::Cw).unwrap(),
+        ],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert!(nested_arc_report
+        .cell_graph
+        .loop_roles
+        .iter()
+        .any(|role| role.class == CurveArrangementLoopRoleClass::Hole
+            && role.containment_depth == Some(1)
+            && role.representative.is_some()));
 
     let c_upper = CubicBezier::new(p(0, 0), p(0, 4), p(8, 4), p(8, 0));
     let c_lower = CubicBezier::new(p(8, 0), p(8, -4), p(0, -4), p(0, 0));
