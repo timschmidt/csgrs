@@ -80,7 +80,7 @@ pub(super) fn lower_kernel12_events(
     let left_frame = build_kernel_frame(left_mesh);
     let right_frame = build_kernel_frame(right_mesh);
     let intersect12 = intersect12_exact(left_mesh, right_mesh);
-    let mut used_intersect12_hits = BTreeSet::new();
+    let mut used_intersect12_hits = seed_intersect12_hits(&intersect12, &mut left, &mut right);
 
     for event in events {
         let lowered =
@@ -136,6 +136,42 @@ pub(super) fn lower_kernel12_events(
         v12: left.into_iter().map(|event| event.point).collect(),
         v21: right.into_iter().map(|event| event.point).collect(),
         source_edge_events,
+    }
+}
+
+/// Seed lowering from the exact boolmesh `intersect12` rows.
+///
+/// This is the direct boolmesh path: rows found by the exact broad loop and
+/// `Kernel12::op` accumulator already carry the boolmesh row key, signed
+/// multiplicity, witness point, and source-edge parameter.  Retained graph
+/// events are still useful as fallbacks while boundary and coplanar discovery
+/// are being finished, but they should not be the primary row source once the
+/// accumulator loop can replay the row itself.  Trusting the row only after it
+/// carries exact construction witnesses follows Yap, "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7.1-2 (1997).
+fn seed_intersect12_hits(
+    tables: &ExactKernel12IntersectTables,
+    left: &mut Vec<LoweredKernel12Event>,
+    right: &mut Vec<LoweredKernel12Event>,
+) -> BTreeSet<(u8, usize)> {
+    let mut used = BTreeSet::new();
+    for (index, hit) in tables.p1q2.iter().enumerate() {
+        used.insert((0, index));
+        left.push(lower_intersect12_hit(hit));
+    }
+    for (index, hit) in tables.p2q1.iter().enumerate() {
+        used.insert((1, index));
+        right.push(lower_intersect12_hit(hit));
+    }
+    used
+}
+
+fn lower_intersect12_hit(hit: &ExactKernel12IntersectHit) -> LoweredKernel12Event {
+    LoweredKernel12Event {
+        edge_face: hit.edge_face,
+        sign: hit.sign,
+        point: hit.point.clone(),
+        parameter: hit.parameter.clone(),
     }
 }
 
@@ -629,7 +665,7 @@ mod tests {
                 ExactPoint3::new(
                     super::super::ExactReal::from(2),
                     super::super::ExactReal::from(1),
-                    super::super::ExactReal::from(0),
+                    super::super::ExactReal::from(5),
                 ),
             ],
             vec![Triangle([0, 1, 2])],
@@ -663,6 +699,16 @@ mod tests {
         (left, right)
     }
 
+    fn empty_mesh() -> ExactMesh {
+        ExactMesh::new_with_policy(
+            Vec::new(),
+            Vec::new(),
+            SourceProvenance::exact("empty exact boolmesh kernel12 fallback fixture"),
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap()
+    }
+
     fn accumulator_replay_event() -> ExactBoolMeshKernel12Event {
         ExactBoolMeshKernel12Event {
             edge_face: edge_face(),
@@ -691,8 +737,8 @@ mod tests {
 
     #[test]
     fn coalesces_identical_edge_face_contributions() {
-        let left = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
-        let right = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, -4]);
+        let left = empty_mesh();
+        let right = empty_mesh();
         let lowering = lower_kernel12_events(
             &[
                 proper_event([Some(PlaneSide::Below), Some(PlaneSide::Above)]),
@@ -710,8 +756,8 @@ mod tests {
 
     #[test]
     fn drops_zero_sum_identical_edge_face_contributions() {
-        let left = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
-        let right = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, -4]);
+        let left = empty_mesh();
+        let right = empty_mesh();
         let lowering = lower_kernel12_events(
             &[
                 proper_event([Some(PlaneSide::Below), Some(PlaneSide::Above)]),
@@ -728,7 +774,7 @@ mod tests {
     }
 
     #[test]
-    fn keeps_boundary_endpoint_shadows_for_kernel11() {
+    fn intersect12_loop_lowers_boundary_endpoint_shadow_rows() {
         let left = tetrahedron_i64([2, 0, 0], [2, 0, 2], [3, 1, 1], [1, 1, 1]);
         let right = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, -4]);
         let lowering = lower_kernel12_events(
@@ -746,12 +792,17 @@ mod tests {
         );
 
         assert!(
-            lowering.p1q2.is_empty(),
-            "endpoint-on-edge shadows require boolmesh Kernel11 rather than strict vertex/face lowering"
+            !lowering.p1q2.is_empty() || !lowering.p2q1.is_empty(),
+            "the exact intersect12 loop should now replay Kernel11 boundary shadow rows directly"
         );
-        assert!(lowering.x12.is_empty());
-        assert!(lowering.v12.is_empty());
-        assert!(lowering.source_edge_events.is_empty());
+        assert_eq!(lowering.p1q2.len(), lowering.x12.len());
+        assert_eq!(lowering.p1q2.len(), lowering.v12.len());
+        assert_eq!(lowering.p2q1.len(), lowering.x21.len());
+        assert_eq!(lowering.p2q1.len(), lowering.v21.len());
+        assert_eq!(
+            lowering.source_edge_events.len(),
+            lowering.p1q2.len() + lowering.p2q1.len()
+        );
     }
 
     #[test]
@@ -826,12 +877,19 @@ mod tests {
         ));
         let lowering = lower_kernel12_events(&[event], &left, &right);
 
-        assert!(lowering.p1q2.is_empty());
+        assert_eq!(lowering.p1q2, vec![edge_face()]);
         assert!(lowering.p2q1.is_empty());
-        assert!(lowering.x12.is_empty());
+        assert_eq!(lowering.x12, vec![1]);
         assert!(lowering.x21.is_empty());
-        assert!(lowering.v12.is_empty());
+        assert_eq!(
+            lowering.v12,
+            vec![Point3::new(
+                super::super::ExactReal::from(1),
+                super::super::ExactReal::from(1),
+                super::super::ExactReal::from(4),
+            )]
+        );
         assert!(lowering.v21.is_empty());
-        assert!(lowering.source_edge_events.is_empty());
+        assert_eq!(lowering.source_edge_events.len(), 1);
     }
 }
