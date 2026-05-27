@@ -19,6 +19,8 @@
 #[cfg(feature = "exact-triangulation")]
 mod boolean45;
 #[cfg(feature = "exact-triangulation")]
+mod kernel11;
+#[cfg(feature = "exact-triangulation")]
 mod kernel12;
 #[cfg(feature = "exact-triangulation")]
 mod kernel12_boundary;
@@ -55,6 +57,18 @@ use hyperlimit::{CoplanarProjection, PlaneSide, Point3, PredicateOutcome};
 use kernel12::lower_kernel12_events;
 #[cfg(feature = "exact-triangulation")]
 use std::collections::{BTreeMap, BTreeSet};
+
+/// Exercise the exact `Kernel11` shadow primitive port from fuzz targets.
+///
+/// This is intentionally gated behind `internal-fuzzing`; normal callers should
+/// continue to use the staged boolmesh workspace until `Kernel11` is wired into
+/// `kernel12` lowering.  The probe keeps the boolmesh `kernel01`/`kernel11`
+/// branch behavior compiled under adversarial fuzz builds without exporting a
+/// partial boolean API.
+#[cfg(all(feature = "exact-triangulation", feature = "internal-fuzzing"))]
+pub fn exact_boolmesh_kernel11_shadow_probe_for_internal_fuzz(selector: u8) -> bool {
+    kernel11::internal_fuzz_probe(selector)
+}
 
 /// Legacy boolmesh kernel stage represented by the exact port.
 ///
