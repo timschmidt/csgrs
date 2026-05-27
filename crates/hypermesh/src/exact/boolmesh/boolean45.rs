@@ -22,7 +22,8 @@ use crate::exact::mesh::{ExactMesh, Triangle};
 use super::{
     ExactBoolMeshBoolean03, ExactBoolMeshBoolean45Stage, ExactBoolMeshEdgeEvent,
     ExactBoolMeshEdgeFacePair, ExactBoolMeshFacePair, ExactBoolMeshFacePairPointRun,
-    ExactBoolMeshNewEdgeVertexStage, ExactBoolMeshOutputVertexAllocation,
+    ExactBoolMeshNewEdgeVertexStage, ExactBoolMeshNewFacePairFragment, ExactBoolMeshNewFacePairRun,
+    ExactBoolMeshNewFacePairStage, ExactBoolMeshOutputVertexAllocation,
     ExactBoolMeshOutputVertexOrigin, ExactBoolMeshPairUpStage, ExactBoolMeshPairedEdgeFragment,
     ExactBoolMeshPartialEdgePoint, ExactBoolMeshPartialEdgePointOrigin,
     ExactBoolMeshPartialSourceEdgeFragment, ExactBoolMeshPartialSourceEdgeRun,
@@ -54,6 +55,11 @@ use super::{
 /// endpoints from `i03`/`i30` are appended to each touched source-edge bucket,
 /// crossings are ordered by the exact parameter order produced by
 /// `pair_up`, and tail/head lists are zipped into source-edge fragments.
+/// New face-pair staging mirrors `append_new_edges`: each `pt_new` bucket is
+/// partitioned into tail/head sides and zipped into fragments.  The legacy
+/// kernel orders by the longest bounding-box coordinate of rounded output
+/// positions; this exact stage uses collision/output ids as deterministic
+/// symbolic ordering until face-local exact curve order is ported.
 pub(super) fn size_output_stage(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -94,6 +100,7 @@ pub(super) fn size_output_stage(
         &i30,
         pair_up,
     );
+    let new_face_pair_edges = stage_new_face_pair_edges(&new_edge_vertices);
 
     let mut left_face_halfedge_counts = retained_vertex_counts(left.triangles(), &i03);
     let mut right_face_halfedge_counts = retained_vertex_counts(right.triangles(), &i30);
@@ -144,6 +151,7 @@ pub(super) fn size_output_stage(
         vertex_allocation,
         new_edge_vertices,
         partial_source_edges,
+        new_face_pair_edges,
         vertices_from_left: i03.iter().map(|value| signed_abs(*value)).sum(),
         vertices_from_right: i30.iter().map(|value| signed_abs(*value)).sum(),
         inserted_intersection_vertices: i12
@@ -676,6 +684,74 @@ fn partial_point_order(
     left.order_index
         .cmp(&right.order_index)
         .then_with(|| left.collision.cmp(&right.collision))
+        .then_with(|| left.output_vertex.cmp(&right.output_vertex))
+}
+
+fn stage_new_face_pair_edges(
+    new_edge_vertices: &ExactBoolMeshNewEdgeVertexStage,
+) -> ExactBoolMeshNewFacePairStage {
+    let mut unpaired_runs = 0;
+    let face_pair_runs = new_edge_vertices
+        .face_pair_runs
+        .iter()
+        .map(|run| {
+            let mut points = run.points.clone();
+            points.sort_by(routed_point_order);
+            let fragments = pair_routed_points(&points);
+            let tail_count = points.iter().filter(|point| point.is_tail).count();
+            let head_count = points.len() - tail_count;
+            let unpaired_points = tail_count.abs_diff(head_count);
+            if unpaired_points > 0 {
+                unpaired_runs += 1;
+            }
+            ExactBoolMeshNewFacePairRun {
+                face_pair: run.face_pair,
+                points,
+                fragments,
+                unpaired_points,
+            }
+        })
+        .collect();
+
+    ExactBoolMeshNewFacePairStage {
+        face_pair_runs,
+        unpaired_runs,
+    }
+}
+
+fn pair_routed_points(
+    points: &[ExactBoolMeshRoutedEdgePoint],
+) -> Vec<ExactBoolMeshNewFacePairFragment> {
+    let mut tails = points
+        .iter()
+        .filter(|point| point.is_tail)
+        .copied()
+        .collect::<Vec<_>>();
+    let mut heads = points
+        .iter()
+        .filter(|point| !point.is_tail)
+        .copied()
+        .collect::<Vec<_>>();
+    tails.sort_by(routed_point_order);
+    heads.sort_by(routed_point_order);
+    tails
+        .into_iter()
+        .zip(heads)
+        .map(
+            |(tail_point, head_point)| ExactBoolMeshNewFacePairFragment {
+                tail_point,
+                head_point,
+            },
+        )
+        .collect()
+}
+
+fn routed_point_order(
+    left: &ExactBoolMeshRoutedEdgePoint,
+    right: &ExactBoolMeshRoutedEdgePoint,
+) -> Ordering {
+    left.collision
+        .cmp(&right.collision)
         .then_with(|| left.output_vertex.cmp(&right.output_vertex))
 }
 

@@ -499,6 +499,40 @@ pub struct ExactBoolMeshPartialSourceEdgeStage {
     pub missing_parameter_orders: usize,
 }
 
+/// Paired face-pair fragment produced by exact `append_new_edges`.
+#[cfg(feature = "exact-triangulation")]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ExactBoolMeshNewFacePairFragment {
+    /// Tail point of the emitted new halfedge.
+    pub tail_point: ExactBoolMeshRoutedEdgePoint,
+    /// Head point of the emitted new halfedge.
+    pub head_point: ExactBoolMeshRoutedEdgePoint,
+}
+
+/// Exact face-pair run consumed by `append_new_edges`.
+#[cfg(feature = "exact-triangulation")]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ExactBoolMeshNewFacePairRun {
+    /// Source face pair owning the new halfedge pair.
+    pub face_pair: ExactBoolMeshFacePair,
+    /// Routed output vertices ordered for pairing.
+    pub points: Vec<ExactBoolMeshRoutedEdgePoint>,
+    /// Zipped tail/head face-pair fragments.
+    pub fragments: Vec<ExactBoolMeshNewFacePairFragment>,
+    /// Number of points not paired into fragments.
+    pub unpaired_points: usize,
+}
+
+/// Exact `boolean45::append_new_edges` staging over `pt_new`.
+#[cfg(feature = "exact-triangulation")]
+#[derive(Clone, Debug, Default, Eq, PartialEq)]
+pub struct ExactBoolMeshNewFacePairStage {
+    /// New face-pair runs.
+    pub face_pair_runs: Vec<ExactBoolMeshNewFacePairRun>,
+    /// Runs whose tail/head counts are not balanced yet.
+    pub unpaired_runs: usize,
+}
+
 /// Exact `boolean45`-shaped output staging metadata.
 #[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -517,6 +551,8 @@ pub struct ExactBoolMeshBoolean45Stage {
     pub new_edge_vertices: ExactBoolMeshNewEdgeVertexStage,
     /// Exact partial source-edge fragments, legacy `append_partial_edges`.
     pub partial_source_edges: ExactBoolMeshPartialSourceEdgeStage,
+    /// Exact new face-pair fragments, legacy `append_new_edges`.
+    pub new_face_pair_edges: ExactBoolMeshNewFacePairStage,
     /// Number of vertices copied from the left operand.
     pub vertices_from_left: usize,
     /// Number of vertices copied from the right operand.
@@ -859,6 +895,8 @@ pub enum ExactBoolMeshValidationError {
     Boolean45EdgePointRoutingMismatch,
     /// A `boolean45::append_partial_edges` staging record is stale or malformed.
     Boolean45PartialEdgeMismatch,
+    /// A `boolean45::append_new_edges` staging record is stale or malformed.
+    Boolean45NewEdgeMismatch,
     /// Blocker candidate counts do not match retained candidates.
     BlockerCountMismatch,
     /// A non-disjoint workspace had no named boolmesh-stage blocker.
@@ -1279,6 +1317,86 @@ fn validate_boolean45_stage(
         right_faces,
     )?;
     validate_boolean45_partial_edges(stage, left_vertices, right_vertices)?;
+    validate_boolean45_new_edges(
+        stage,
+        left_faces,
+        right_faces,
+        boolean03.p1q2.len() + boolean03.p2q1.len(),
+    )?;
+    Ok(())
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn validate_boolean45_new_edges(
+    stage: &ExactBoolMeshBoolean45Stage,
+    left_faces: usize,
+    right_faces: usize,
+    collision_count: usize,
+) -> Result<(), ExactBoolMeshValidationError> {
+    if stage.new_face_pair_edges.face_pair_runs.len()
+        != stage.new_edge_vertices.face_pair_runs.len()
+    {
+        return Err(ExactBoolMeshValidationError::Boolean45NewEdgeMismatch);
+    }
+    let mut unpaired_runs = 0;
+    let routed_new_points = stage
+        .new_face_pair_edges
+        .face_pair_runs
+        .iter()
+        .map(|run| run.points.len())
+        .sum::<usize>();
+    let routed_source_points = stage
+        .new_edge_vertices
+        .face_pair_runs
+        .iter()
+        .map(|run| run.points.len())
+        .sum::<usize>();
+    if routed_new_points != routed_source_points {
+        return Err(ExactBoolMeshValidationError::Boolean45NewEdgeMismatch);
+    }
+    for run in &stage.new_face_pair_edges.face_pair_runs {
+        if run.face_pair.left_face >= left_faces
+            || run.face_pair.right_face >= right_faces
+            || run.points.is_empty()
+            || run.points.windows(2).any(|window| {
+                routed_edge_point_order_key(&window[0]) > routed_edge_point_order_key(&window[1])
+            })
+        {
+            return Err(ExactBoolMeshValidationError::Boolean45NewEdgeMismatch);
+        }
+        let tail_count = run.points.iter().filter(|point| point.is_tail).count();
+        let head_count = run.points.len() - tail_count;
+        let unpaired_points = tail_count.abs_diff(head_count);
+        if unpaired_points > 0 {
+            unpaired_runs += 1;
+        }
+        if run.unpaired_points != unpaired_points
+            || run.fragments.len() != tail_count.min(head_count)
+        {
+            return Err(ExactBoolMeshValidationError::Boolean45NewEdgeMismatch);
+        }
+        for point in &run.points {
+            validate_routed_edge_point(point, &stage.vertex_allocation, collision_count)?;
+        }
+        for fragment in &run.fragments {
+            if !fragment.tail_point.is_tail || fragment.head_point.is_tail {
+                return Err(ExactBoolMeshValidationError::Boolean45NewEdgeMismatch);
+            }
+            validate_routed_edge_point(
+                &fragment.tail_point,
+                &stage.vertex_allocation,
+                collision_count,
+            )?;
+            validate_routed_edge_point(
+                &fragment.head_point,
+                &stage.vertex_allocation,
+                collision_count,
+            )?;
+        }
+    }
+    if stage.new_face_pair_edges.unpaired_runs != unpaired_runs {
+        return Err(ExactBoolMeshValidationError::Boolean45NewEdgeMismatch);
+    }
     Ok(())
 }
 
@@ -1466,6 +1584,11 @@ fn validate_routed_edge_point(
         return Err(ExactBoolMeshValidationError::Boolean45EdgePointRoutingMismatch);
     }
     Ok(())
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn routed_edge_point_order_key(point: &ExactBoolMeshRoutedEdgePoint) -> (usize, usize) {
+    (point.collision, point.output_vertex)
 }
 
 #[cfg(feature = "exact-triangulation")]
