@@ -400,6 +400,21 @@ fn path_predicates(c: &mut Criterion) {
             .map(|report| report.cell_graph.loop_roles)
         })
     });
+    let duplicate_cubic_forward = CubicBezier::new(p(0, 0), p(250, 1000), p(750, 1000), p(1000, 0));
+    let duplicate_cubic_reverse = CubicBezier::new(p(1000, 0), p(750, 1000), p(250, 1000), p(0, 0));
+    c.bench_function("cubic_bezier_duplicate_span_cell_graph", |b| {
+        b.iter(|| {
+            arrange_cubic_beziers(
+                &[
+                    duplicate_cubic_forward.clone(),
+                    duplicate_cubic_reverse.clone(),
+                ],
+                &[vec![], vec![]],
+                PredicatePolicy::default(),
+            )
+            .map(|report| report.cell_graph.edges)
+        })
+    });
     let conic = RationalQuadraticBezier::new(p(0, 0), p(500, 200), p(1000, 0), r(2)).unwrap();
     c.bench_function("rational_quadratic_bezier_exact_eval", |b| {
         b.iter(|| conic.eval(half))

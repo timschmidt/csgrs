@@ -591,8 +591,8 @@ fn explicit_arc_arrangement_promotes_same_circle_overlap_boundaries() {
     );
     assert_eq!(report.fragments.len(), 3);
     assert_eq!(report.cell_graph.vertices.len(), 3);
-    assert_eq!(report.cell_graph.edges.len(), 3);
-    assert_eq!(report.cell_graph.half_edges.len(), 6);
+    assert_eq!(report.cell_graph.edges.len(), 2);
+    assert_eq!(report.cell_graph.half_edges.len(), 4);
 }
 
 #[test]
@@ -617,8 +617,8 @@ fn explicit_arc_arrangement_uses_full_circle_start_as_branch_cut() {
     );
     assert_eq!(report.fragments.len(), 3);
     assert_eq!(report.cell_graph.vertices.len(), 2);
-    assert_eq!(report.cell_graph.edges.len(), 3);
-    assert_eq!(report.cell_graph.half_edges.len(), 6);
+    assert_eq!(report.cell_graph.edges.len(), 2);
+    assert_eq!(report.cell_graph.half_edges.len(), 4);
     assert_eq!(report.fragments[1].arc.start(), &p(-5, 0));
     assert_eq!(report.fragments[1].arc.end(), &p(5, 0));
 }
@@ -1113,6 +1113,51 @@ fn explicit_arc_loop_role_reports_non_cardinal_representative_hole_role() {
             && role.containers.len() == 1
             && role.representative.is_some()
     }));
+}
+
+#[test]
+fn curve_cell_graph_merges_exact_duplicate_curved_spans() {
+    let arc_forward =
+        ExplicitCircularArc::new(p(4, 0), r(4), p(0, 0), p(8, 0), ArcDirection::Ccw).unwrap();
+    let arc_reverse =
+        ExplicitCircularArc::new(p(4, 0), r(4), p(8, 0), p(0, 0), ArcDirection::Cw).unwrap();
+    let arc_report =
+        arrange_explicit_arcs(&[arc_forward, arc_reverse], PredicatePolicy::default()).unwrap();
+    assert_eq!(arc_report.cell_graph.edges.len(), 1);
+    assert_eq!(arc_report.cell_graph.edges[0].fragments.len(), 2);
+
+    let quadratic_forward = QuadraticBezier::new(p(0, 0), p(4, 8), p(8, 0));
+    let quadratic_reverse = QuadraticBezier::new(p(8, 0), p(4, 8), p(0, 0));
+    let quadratic_report = arrange_quadratic_beziers(
+        &[quadratic_forward, quadratic_reverse],
+        &[vec![], vec![]],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert_eq!(quadratic_report.cell_graph.edges.len(), 1);
+    assert_eq!(quadratic_report.cell_graph.edges[0].fragments.len(), 2);
+
+    let cubic_forward = CubicBezier::new(p(0, 0), p(2, 8), p(6, 8), p(8, 0));
+    let cubic_reverse = CubicBezier::new(p(8, 0), p(6, 8), p(2, 8), p(0, 0));
+    let cubic_report = arrange_cubic_beziers(
+        &[cubic_forward, cubic_reverse],
+        &[vec![], vec![]],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert_eq!(cubic_report.cell_graph.edges.len(), 1);
+    assert_eq!(cubic_report.cell_graph.edges[0].fragments.len(), 2);
+
+    let conic_forward = RationalQuadraticBezier::new(p(0, 0), p(4, 8), p(8, 0), r(2)).unwrap();
+    let conic_reverse = RationalQuadraticBezier::new(p(8, 0), p(4, 8), p(0, 0), r(2)).unwrap();
+    let conic_report = arrange_rational_quadratic_beziers(
+        &[conic_forward, conic_reverse],
+        &[vec![], vec![]],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert_eq!(conic_report.cell_graph.edges.len(), 1);
+    assert_eq!(conic_report.cell_graph.edges[0].fragments.len(), 2);
 }
 
 #[test]

@@ -411,6 +411,31 @@ fuzz_target!(|data: &[u8]| {
         .any(|role| role.class == CurveArrangementLoopRoleClass::Hole
             && role.containment_depth == Some(1)
             && role.representative.is_some()));
+    let duplicate_quadratic_report = arrange_quadratic_beziers(
+        &[
+            QuadraticBezier::new(p(0, 0), p(4, 8), p(8, 0)),
+            QuadraticBezier::new(p(8, 0), p(4, 8), p(0, 0)),
+        ],
+        &[vec![], vec![]],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert_eq!(duplicate_quadratic_report.cell_graph.edges.len(), 1);
+    assert_eq!(
+        duplicate_quadratic_report.cell_graph.edges[0].fragments.len(),
+        2
+    );
+    let duplicate_cubic_report = arrange_cubic_beziers(
+        &[
+            CubicBezier::new(p(0, 0), p(2, 8), p(6, 8), p(8, 0)),
+            CubicBezier::new(p(8, 0), p(6, 8), p(2, 8), p(0, 0)),
+        ],
+        &[vec![], vec![]],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert_eq!(duplicate_cubic_report.cell_graph.edges.len(), 1);
+    assert_eq!(duplicate_cubic_report.cell_graph.edges[0].fragments.len(), 2);
 
     let mixed_line = LinePathSegment::new(p(0, 0), p(20, 0));
     let mixed_quadratic = QuadraticBezier::new(p(0, 0), p(2, 4), p(4, 0));

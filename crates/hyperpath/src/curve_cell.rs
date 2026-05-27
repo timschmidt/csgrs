@@ -372,6 +372,7 @@ pub(crate) fn build_line_mixed_bezier_cell_graph(
     let converted_conics = conic_fragments
         .iter()
         .map(|fragment| RationalQuadraticCellFragment {
+            source_curve: fragment.source_curve,
             start_point: fragment.start.point.clone(),
             end_point: fragment.end.point.clone(),
             start_control: fragment.start_control.clone(),
@@ -441,6 +442,7 @@ pub(crate) fn build_line_rational_quadratic_cell_graph(
     let converted_conics = conic_fragments
         .iter()
         .map(|fragment| RationalQuadraticCellFragment {
+            source_curve: fragment.source_curve,
             start_point: fragment.start.point.clone(),
             end_point: fragment.end.point.clone(),
             start_control: fragment.start_control.clone(),
@@ -520,6 +522,7 @@ enum FaceAreaMode {
 
 #[derive(Clone, Debug, PartialEq)]
 struct RationalQuadraticCellFragment {
+    source_curve: usize,
     start_point: Point2,
     end_point: Point2,
     start_control: HomogeneousPoint2,
@@ -567,12 +570,28 @@ fn build_curve_cell_graph_full(
     for (fragment_index, fragment) in arc_fragments.iter().enumerate() {
         let start = curve_vertex_index(&mut vertices, fragment.arc.start(), policy)?;
         let end = curve_vertex_index(&mut vertices, fragment.arc.end(), policy)?;
-        edges.push(CurveArrangementCellEdge {
-            kind: CurveArrangementCellEdgeKind::ExplicitArc,
+        if let Some(edge) = find_duplicate_curve_edge(
+            &mut edges,
+            CurveArrangementCellEdgeKind::ExplicitArc,
             start,
             end,
-            fragments: vec![fragment_index],
-        });
+            |edge| {
+                explicit_arc_fragments_same_image(
+                    &arc_fragments[edge.fragments[0]],
+                    fragment,
+                    policy,
+                )
+            },
+        ) {
+            edge.fragments.push(fragment_index);
+        } else {
+            edges.push(CurveArrangementCellEdge {
+                kind: CurveArrangementCellEdgeKind::ExplicitArc,
+                start,
+                end,
+                fragments: vec![fragment_index],
+            });
+        }
     }
 
     for (fragment_index, fragment) in bezier_fragments.iter().enumerate() {
@@ -581,12 +600,28 @@ fn build_curve_cell_graph_full(
         if start == end {
             continue;
         }
-        edges.push(CurveArrangementCellEdge {
-            kind: CurveArrangementCellEdgeKind::QuadraticBezier,
+        if let Some(edge) = find_duplicate_curve_edge(
+            &mut edges,
+            CurveArrangementCellEdgeKind::QuadraticBezier,
             start,
             end,
-            fragments: vec![fragment_index],
-        });
+            |edge| {
+                quadratic_fragments_same_image(
+                    &bezier_fragments[edge.fragments[0]],
+                    fragment,
+                    policy,
+                )
+            },
+        ) {
+            edge.fragments.push(fragment_index);
+        } else {
+            edges.push(CurveArrangementCellEdge {
+                kind: CurveArrangementCellEdgeKind::QuadraticBezier,
+                start,
+                end,
+                fragments: vec![fragment_index],
+            });
+        }
     }
 
     for (fragment_index, fragment) in cubic_fragments.iter().enumerate() {
@@ -595,12 +630,24 @@ fn build_curve_cell_graph_full(
         if start == end {
             continue;
         }
-        edges.push(CurveArrangementCellEdge {
-            kind: CurveArrangementCellEdgeKind::CubicBezier,
+        if let Some(edge) = find_duplicate_curve_edge(
+            &mut edges,
+            CurveArrangementCellEdgeKind::CubicBezier,
             start,
             end,
-            fragments: vec![fragment_index],
-        });
+            |edge| {
+                cubic_fragments_same_image(&cubic_fragments[edge.fragments[0]], fragment, policy)
+            },
+        ) {
+            edge.fragments.push(fragment_index);
+        } else {
+            edges.push(CurveArrangementCellEdge {
+                kind: CurveArrangementCellEdgeKind::CubicBezier,
+                start,
+                end,
+                fragments: vec![fragment_index],
+            });
+        }
     }
 
     for (fragment_index, fragment) in conic_fragments.iter().enumerate() {
@@ -609,12 +656,24 @@ fn build_curve_cell_graph_full(
         if start == end {
             continue;
         }
-        edges.push(CurveArrangementCellEdge {
-            kind: CurveArrangementCellEdgeKind::RationalQuadraticBezier,
+        if let Some(edge) = find_duplicate_curve_edge(
+            &mut edges,
+            CurveArrangementCellEdgeKind::RationalQuadraticBezier,
             start,
             end,
-            fragments: vec![fragment_index],
-        });
+            |edge| {
+                conic_fragments_same_image(&conic_fragments[edge.fragments[0]], fragment, policy)
+            },
+        ) {
+            edge.fragments.push(fragment_index);
+        } else {
+            edges.push(CurveArrangementCellEdge {
+                kind: CurveArrangementCellEdgeKind::RationalQuadraticBezier,
+                start,
+                end,
+                fragments: vec![fragment_index],
+            });
+        }
     }
 
     let mut half_edges = Vec::with_capacity(edges.len() * 2);
@@ -706,6 +765,129 @@ fn curve_vertex_index(
         outgoing_half_edges: Vec::new(),
     });
     Ok(index)
+}
+
+/// Find an already materialized duplicate native curve edge.
+///
+/// This is the bounded overlap-traversal extension for exact retained cell
+/// graphs. After arrangement refinement, a certified overlap may appear as two
+/// fragments with identical endpoint vertices and identical retained curve
+/// objects, possibly reversed. Merging those duplicates gives the half-edge
+/// scheduler one topological carrier for the shared span, just as the line
+/// arrangement already does for collinear overlaps. The predicate remains
+/// deliberately structural: it accepts only exact native curve equality and
+/// refuses broader algebraic overlap ownership. That is Yap's
+/// object/predicate boundary from "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997), applied to de Boor/Farouki-style
+/// retained curve objects rather than sampled polylines.
+fn find_duplicate_curve_edge<'a>(
+    edges: &'a mut [CurveArrangementCellEdge],
+    kind: CurveArrangementCellEdgeKind,
+    start: usize,
+    end: usize,
+    mut same_image: impl FnMut(&CurveArrangementCellEdge) -> bool,
+) -> Option<&'a mut CurveArrangementCellEdge> {
+    edges.iter_mut().find(|edge| {
+        edge.kind == kind
+            && ((edge.start == start && edge.end == end)
+                || (edge.start == end && edge.end == start))
+            && same_image(edge)
+    })
+}
+
+fn real_equal(left: &Real, right: &Real, policy: PredicatePolicy) -> bool {
+    compare_reals_with_policy(left, right, policy).value() == Some(Ordering::Equal)
+}
+
+fn point_equal(left: &Point2, right: &Point2, policy: PredicatePolicy) -> bool {
+    point2_equal_with_policy(left, right, policy).value() == Some(true)
+}
+
+fn homogeneous_point_equal(
+    left: &HomogeneousPoint2,
+    right: &HomogeneousPoint2,
+    policy: PredicatePolicy,
+) -> bool {
+    real_equal(&left.x, &right.x, policy)
+        && real_equal(&left.y, &right.y, policy)
+        && real_equal(&left.w, &right.w, policy)
+}
+
+fn explicit_arc_fragments_same_image(
+    left: &ExplicitArcArrangementFragment,
+    right: &ExplicitArcArrangementFragment,
+    policy: PredicatePolicy,
+) -> bool {
+    if left.source_arc == right.source_arc {
+        return false;
+    }
+    let same_circle = point_equal(left.arc.center(), right.arc.center(), policy)
+        && real_equal(left.arc.radius(), right.arc.radius(), policy);
+    if !same_circle {
+        return false;
+    }
+    let same_orientation = left.arc.direction() == right.arc.direction()
+        && point_equal(left.arc.start(), right.arc.start(), policy)
+        && point_equal(left.arc.end(), right.arc.end(), policy);
+    let opposite_orientation = left.arc.direction() != right.arc.direction()
+        && point_equal(left.arc.start(), right.arc.end(), policy)
+        && point_equal(left.arc.end(), right.arc.start(), policy);
+    same_orientation || opposite_orientation
+}
+
+fn quadratic_fragments_same_image(
+    left: &QuadraticBezierRealFragment,
+    right: &QuadraticBezierRealFragment,
+    policy: PredicatePolicy,
+) -> bool {
+    if left.source_curve == right.source_curve {
+        return false;
+    }
+    let same_orientation = point_equal(left.curve.start(), right.curve.start(), policy)
+        && point_equal(left.curve.control(), right.curve.control(), policy)
+        && point_equal(left.curve.end(), right.curve.end(), policy);
+    let opposite_orientation = point_equal(left.curve.start(), right.curve.end(), policy)
+        && point_equal(left.curve.control(), right.curve.control(), policy)
+        && point_equal(left.curve.end(), right.curve.start(), policy);
+    same_orientation || opposite_orientation
+}
+
+fn cubic_fragments_same_image(
+    left: &CubicBezierRealFragment,
+    right: &CubicBezierRealFragment,
+    policy: PredicatePolicy,
+) -> bool {
+    if left.source_curve == right.source_curve {
+        return false;
+    }
+    let same_orientation = point_equal(left.curve.start(), right.curve.start(), policy)
+        && point_equal(left.curve.control0(), right.curve.control0(), policy)
+        && point_equal(left.curve.control1(), right.curve.control1(), policy)
+        && point_equal(left.curve.end(), right.curve.end(), policy);
+    let opposite_orientation = point_equal(left.curve.start(), right.curve.end(), policy)
+        && point_equal(left.curve.control0(), right.curve.control1(), policy)
+        && point_equal(left.curve.control1(), right.curve.control0(), policy)
+        && point_equal(left.curve.end(), right.curve.start(), policy);
+    same_orientation || opposite_orientation
+}
+
+fn conic_fragments_same_image(
+    left: &RationalQuadraticCellFragment,
+    right: &RationalQuadraticCellFragment,
+    policy: PredicatePolicy,
+) -> bool {
+    if left.source_curve == right.source_curve {
+        return false;
+    }
+    let same_orientation =
+        homogeneous_point_equal(&left.start_control, &right.start_control, policy)
+            && homogeneous_point_equal(&left.control, &right.control, policy)
+            && homogeneous_point_equal(&left.end_control, &right.end_control, policy);
+    let opposite_orientation =
+        homogeneous_point_equal(&left.start_control, &right.end_control, policy)
+            && homogeneous_point_equal(&left.control, &right.control, policy)
+            && homogeneous_point_equal(&left.end_control, &right.start_control, policy);
+    same_orientation || opposite_orientation
 }
 
 fn sort_curve_outgoing_half_edges(
@@ -2193,6 +2375,7 @@ fn rational_quadratic_cell_fragment_from_arrangement(
     policy: PredicatePolicy,
 ) -> Result<RationalQuadraticCellFragment, CurveArrangementCellError> {
     Ok(RationalQuadraticCellFragment {
+        source_curve: fragment.source,
         start_point: affine_point_from_homogeneous(&fragment.start_control, policy)?,
         end_point: affine_point_from_homogeneous(&fragment.end_control, policy)?,
         start_control: fragment.start_control.clone(),
