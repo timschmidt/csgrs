@@ -13043,6 +13043,8 @@ fn exact_boolmesh_bounds_disjoint_port(c: &mut Criterion) {
                     + size_output.partial_source_edges.source_edge_runs.len()
                     + size_output.new_face_pair_edges.face_pair_runs.len()
                     + size_output.whole_source_edges.source_edge_runs.len()
+                    + size_output.halfedge_assembly.output_halfedges.len()
+                    + size_output.halfedge_assembly.emitted_pairs
             })
         });
     }
@@ -13105,6 +13107,8 @@ fn exact_boolmesh_kernel12_port(c: &mut Criterion) {
                                 + stage.partial_source_edges.source_edge_runs.len()
                                 + stage.new_face_pair_edges.face_pair_runs.len()
                                 + stage.whole_source_edges.source_edge_runs.len()
+                                + stage.halfedge_assembly.output_halfedges.len()
+                                + stage.halfedge_assembly.emitted_pairs
                         })
                         .unwrap_or(0)
             })

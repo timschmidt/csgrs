@@ -1580,9 +1580,13 @@ fn exercise_exact_boolmesh_bounds_disjoint_port() {
                         .sum::<usize>(),
                     12
                 );
+                assert_eq!(size_output.halfedge_assembly.emitted_pairs, 12);
+                assert_eq!(size_output.halfedge_assembly.unfilled_halfedges, 0);
             }
             ExactBooleanOperation::Intersection => {
                 assert!(size_output.whole_source_edges.source_edge_runs.is_empty());
+                assert_eq!(size_output.halfedge_assembly.emitted_pairs, 0);
+                assert_eq!(size_output.halfedge_assembly.unfilled_halfedges, 0);
             }
             ExactBooleanOperation::Difference => {
                 assert_eq!(size_output.whole_source_edges.source_edge_runs.len(), 6);
@@ -1590,9 +1594,17 @@ fn exercise_exact_boolmesh_bounds_disjoint_port() {
                     |run| run.side == hypermesh::exact::ExactBoolMeshSide::Left
                         && run.fragments.len() == 1
                 ));
+                assert_eq!(size_output.halfedge_assembly.emitted_pairs, 6);
+                assert_eq!(size_output.halfedge_assembly.unfilled_halfedges, 0);
             }
             ExactBooleanOperation::SelectedRegions(_) => unreachable!(),
         }
+        assert_eq!(
+            size_output.halfedge_assembly.output_halfedges.len(),
+            size_output.face_halfedge_offsets.last().copied().unwrap()
+        );
+        assert_eq!(size_output.halfedge_assembly.face_overflows, 0);
+        assert_eq!(size_output.halfedge_assembly.missing_source_face_maps, 0);
         if operation == ExactBooleanOperation::Union {
             let mut malformed = workspace.clone();
             malformed
@@ -1604,6 +1616,19 @@ fn exercise_exact_boolmesh_bounds_disjoint_port() {
                 .fragments[0]
                 .output_head = usize::MAX;
             assert!(malformed.validate_against_sources(&left, &right).is_err());
+            let mut malformed_halfedges = workspace.clone();
+            malformed_halfedges
+                .boolean45
+                .as_mut()
+                .unwrap()
+                .halfedge_assembly
+                .output_halfedges[0]
+                .as_mut()
+                .unwrap()
+                .pair = usize::MAX;
+            assert!(malformed_halfedges
+                .validate_against_sources(&left, &right)
+                .is_err());
         }
         let execution = hypermesh::exact::execute_exact_boolmesh_bounds_disjoint(
             &left,
@@ -1704,6 +1729,17 @@ fn exercise_exact_boolmesh_kernel12_port() {
         size_output.inserted_intersection_vertices * 2
     );
     assert!(size_output.whole_source_edges.source_edge_runs.is_empty());
+    assert_eq!(
+        size_output.halfedge_assembly.output_halfedges.len(),
+        size_output.face_halfedge_offsets.last().copied().unwrap()
+    );
+    assert_eq!(size_output.halfedge_assembly.face_overflows, 0);
+    assert_eq!(size_output.halfedge_assembly.missing_source_face_maps, 0);
+    assert_eq!(
+        size_output.halfedge_assembly.emitted_pairs * 2
+            + size_output.halfedge_assembly.unfilled_halfedges,
+        size_output.halfedge_assembly.output_halfedges.len()
+    );
     assert_eq!(
         workspace
             .pair_up

@@ -575,6 +575,89 @@ pub struct ExactBoolMeshWholeSourceEdgeStage {
     pub missing_endpoint_allocations: usize,
 }
 
+/// Source provenance for one exact boolmesh output halfedge.
+#[cfg(feature = "exact-triangulation")]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum ExactBoolMeshOutputHalfedgeSource {
+    /// Halfedge emitted by legacy `append_partial_edges`.
+    PartialSourceEdge {
+        /// Source mesh side owning the split edge.
+        side: ExactBoolMeshSide,
+        /// Source face receiving this halfedge.
+        source_face: usize,
+        /// Directed source edge that was split.
+        edge: [usize; 2],
+        /// Fragment index inside the source-edge run.
+        fragment: usize,
+        /// Whether this is the forward halfedge written to the first incident face.
+        forward: bool,
+    },
+    /// Halfedge emitted by legacy `append_new_edges`.
+    NewFacePair {
+        /// Source mesh side receiving this halfedge.
+        side: ExactBoolMeshSide,
+        /// Source face receiving this halfedge.
+        source_face: usize,
+        /// Opposite operand face in the face-pair bucket.
+        opposite_face: usize,
+        /// Fragment index inside the face-pair run.
+        fragment: usize,
+        /// Whether this is the forward halfedge written to the left face.
+        forward: bool,
+    },
+    /// Halfedge emitted by legacy `append_whole_edges`.
+    WholeSourceEdge {
+        /// Source mesh side owning the retained edge.
+        side: ExactBoolMeshSide,
+        /// Source face receiving this halfedge.
+        source_face: usize,
+        /// Directed retained source edge after operation-sign orientation.
+        edge: [usize; 2],
+        /// Fragment index inside the source-edge run.
+        fragment: usize,
+        /// Whether this is the forward halfedge written to the first incident face.
+        forward: bool,
+    },
+}
+
+/// Exact output halfedge slot produced by the `boolean45` emission passes.
+#[cfg(feature = "exact-triangulation")]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ExactBoolMeshOutputHalfedge {
+    /// Output vertex at the halfedge tail.
+    pub tail: usize,
+    /// Output vertex at the halfedge head.
+    pub head: usize,
+    /// Opposite output halfedge slot.
+    pub pair: usize,
+    /// Output face owning this halfedge slot.
+    pub face: usize,
+    /// Replayable source for this halfedge.
+    pub source: ExactBoolMeshOutputHalfedgeSource,
+}
+
+/// Exact `boolean45` halfedge emission over partial, new, and whole fragments.
+#[cfg(feature = "exact-triangulation")]
+#[derive(Clone, Debug, Default, Eq, PartialEq)]
+pub struct ExactBoolMeshHalfedgeAssemblyStage {
+    /// Output halfedge array, legacy `hs_r`.  `None` slots are explicit
+    /// blockers where earlier boolmesh stages have not emitted balanced
+    /// fragments yet.
+    pub output_halfedges: Vec<Option<ExactBoolMeshOutputHalfedge>>,
+    /// Per-output-face write cursors after emission, legacy `face_ptr_r`.
+    pub face_write_offsets: Vec<usize>,
+    /// Number of emitted halfedge pairs.
+    pub emitted_pairs: usize,
+    /// Slots left unfilled by the currently ported fragment stages.
+    pub unfilled_halfedges: usize,
+    /// Fragment pairs that would overflow the sized output face ranges.
+    pub face_overflows: usize,
+    /// Fragment pairs whose source face did not map to an output face.
+    pub missing_source_face_maps: usize,
+    /// Source-edge runs without the two incident faces required by boolmesh.
+    pub source_edge_incident_gaps: usize,
+}
+
 /// Exact `boolean45`-shaped output staging metadata.
 #[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -597,6 +680,8 @@ pub struct ExactBoolMeshBoolean45Stage {
     pub new_face_pair_edges: ExactBoolMeshNewFacePairStage,
     /// Exact whole source-edge fragments, legacy `append_whole_edges`.
     pub whole_source_edges: ExactBoolMeshWholeSourceEdgeStage,
+    /// Exact output halfedge slots, legacy `hs_r`/`rs_r` emission.
+    pub halfedge_assembly: ExactBoolMeshHalfedgeAssemblyStage,
     /// Number of vertices copied from the left operand.
     pub vertices_from_left: usize,
     /// Number of vertices copied from the right operand.
@@ -943,6 +1028,8 @@ pub enum ExactBoolMeshValidationError {
     Boolean45NewEdgeMismatch,
     /// A `boolean45::append_whole_edges` staging record is stale or malformed.
     Boolean45WholeEdgeMismatch,
+    /// A `boolean45` halfedge assembly record is stale or malformed.
+    Boolean45HalfedgeAssemblyMismatch,
     /// Blocker candidate counts do not match retained candidates.
     BlockerCountMismatch,
     /// A non-disjoint workspace had no named boolmesh-stage blocker.
@@ -1370,7 +1457,144 @@ fn validate_boolean45_stage(
         boolean03.p1q2.len() + boolean03.p2q1.len(),
     )?;
     validate_boolean45_whole_edges(stage, left_vertices, right_vertices)?;
+    validate_boolean45_halfedge_assembly(stage, left_faces, right_faces)?;
     Ok(())
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn validate_boolean45_halfedge_assembly(
+    stage: &ExactBoolMeshBoolean45Stage,
+    left_faces: usize,
+    right_faces: usize,
+) -> Result<(), ExactBoolMeshValidationError> {
+    let total_halfedges = stage.face_halfedge_offsets.last().copied().unwrap_or(0);
+    let output_face_count = stage.face_halfedge_offsets.len().saturating_sub(1);
+    if stage.halfedge_assembly.output_halfedges.len() != total_halfedges
+        || stage.halfedge_assembly.face_write_offsets.len() != output_face_count
+        || stage.halfedge_assembly.face_overflows != 0
+        || stage.halfedge_assembly.missing_source_face_maps != 0
+        || stage.halfedge_assembly.source_edge_incident_gaps
+            != expected_halfedge_source_incident_gaps(stage)
+    {
+        return Err(ExactBoolMeshValidationError::Boolean45HalfedgeAssemblyMismatch);
+    }
+
+    let unfilled = stage
+        .halfedge_assembly
+        .output_halfedges
+        .iter()
+        .filter(|halfedge| halfedge.is_none())
+        .count();
+    let occupied = total_halfedges.saturating_sub(unfilled);
+    if stage.halfedge_assembly.unfilled_halfedges != unfilled
+        || stage.halfedge_assembly.emitted_pairs * 2 != occupied
+    {
+        return Err(ExactBoolMeshValidationError::Boolean45HalfedgeAssemblyMismatch);
+    }
+
+    let mut occupied_by_face = vec![0usize; output_face_count];
+    for (slot, halfedge) in stage.halfedge_assembly.output_halfedges.iter().enumerate() {
+        let Some(halfedge) = halfedge else {
+            continue;
+        };
+        if halfedge.tail >= stage.vertex_allocation.output_vertex_origins.len()
+            || halfedge.head >= stage.vertex_allocation.output_vertex_origins.len()
+            || halfedge.pair >= stage.halfedge_assembly.output_halfedges.len()
+            || halfedge.pair == slot
+            || halfedge.face >= output_face_count
+            || slot < stage.face_halfedge_offsets[halfedge.face]
+            || slot >= stage.face_halfedge_offsets[halfedge.face + 1]
+        {
+            return Err(ExactBoolMeshValidationError::Boolean45HalfedgeAssemblyMismatch);
+        }
+        occupied_by_face[halfedge.face] += 1;
+        let Some(Some(pair)) = stage.halfedge_assembly.output_halfedges.get(halfedge.pair) else {
+            return Err(ExactBoolMeshValidationError::Boolean45HalfedgeAssemblyMismatch);
+        };
+        if pair.pair != slot || pair.tail != halfedge.head || pair.head != halfedge.tail {
+            return Err(ExactBoolMeshValidationError::Boolean45HalfedgeAssemblyMismatch);
+        }
+        validate_halfedge_source(&halfedge.source, left_faces, right_faces)?;
+    }
+
+    for (face, occupied_count) in occupied_by_face.iter().enumerate() {
+        if stage.halfedge_assembly.face_write_offsets[face]
+            != stage.face_halfedge_offsets[face] + occupied_count
+        {
+            return Err(ExactBoolMeshValidationError::Boolean45HalfedgeAssemblyMismatch);
+        }
+    }
+    Ok(())
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn expected_halfedge_source_incident_gaps(stage: &ExactBoolMeshBoolean45Stage) -> usize {
+    let partial_gaps = stage
+        .partial_source_edges
+        .source_edge_runs
+        .iter()
+        .filter(|run| run.incident_faces.len() < 2)
+        .map(|run| run.fragments.len())
+        .sum::<usize>();
+    let whole_gaps = stage
+        .whole_source_edges
+        .source_edge_runs
+        .iter()
+        .filter(|run| run.incident_faces.len() < 2)
+        .map(|run| run.fragments.len())
+        .sum::<usize>();
+    partial_gaps + whole_gaps
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn validate_halfedge_source(
+    source: &ExactBoolMeshOutputHalfedgeSource,
+    left_faces: usize,
+    right_faces: usize,
+) -> Result<(), ExactBoolMeshValidationError> {
+    match source {
+        ExactBoolMeshOutputHalfedgeSource::PartialSourceEdge {
+            side, source_face, ..
+        }
+        | ExactBoolMeshOutputHalfedgeSource::WholeSourceEdge {
+            side, source_face, ..
+        } => {
+            if !source_face_in_bounds(*side, *source_face, left_faces, right_faces) {
+                return Err(ExactBoolMeshValidationError::Boolean45HalfedgeAssemblyMismatch);
+            }
+        }
+        ExactBoolMeshOutputHalfedgeSource::NewFacePair {
+            side,
+            source_face,
+            opposite_face,
+            ..
+        } => match side {
+            ExactBoolMeshSide::Left => {
+                if *source_face >= left_faces || *opposite_face >= right_faces {
+                    return Err(ExactBoolMeshValidationError::Boolean45HalfedgeAssemblyMismatch);
+                }
+            }
+            ExactBoolMeshSide::Right => {
+                if *source_face >= right_faces || *opposite_face >= left_faces {
+                    return Err(ExactBoolMeshValidationError::Boolean45HalfedgeAssemblyMismatch);
+                }
+            }
+        },
+    }
+    Ok(())
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn source_face_in_bounds(
+    side: ExactBoolMeshSide,
+    face: usize,
+    left_faces: usize,
+    right_faces: usize,
+) -> bool {
+    match side {
+        ExactBoolMeshSide::Left => face < left_faces,
+        ExactBoolMeshSide::Right => face < right_faces,
+    }
 }
 
 #[cfg(feature = "exact-triangulation")]

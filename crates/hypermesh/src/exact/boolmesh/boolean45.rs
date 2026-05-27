@@ -11,10 +11,14 @@
 //! Weiler and Atherton, "Hidden Surface Removal Using Polygon Area Sorting,"
 //! *SIGGRAPH* (1977).
 
+mod assembly;
+
 use std::cmp::Ordering;
 use std::collections::{BTreeMap, BTreeSet};
 
 use hyperlimit::compare_reals;
+
+use assembly::assemble_output_halfedges;
 
 use crate::exact::boolean::ExactBooleanOperation;
 use crate::exact::mesh::{ExactMesh, Triangle};
@@ -155,6 +159,14 @@ pub(super) fn size_output_stage(
             face_halfedge_offsets.push(halfedge_sum);
         }
     }
+    let halfedge_assembly = assemble_output_halfedges(
+        &partial_source_edges,
+        &new_face_pair_edges,
+        &whole_source_edges,
+        &source_face_to_output_face,
+        &face_halfedge_offsets,
+        left.triangles().len(),
+    );
 
     ExactBoolMeshBoolean45Stage {
         left_face_halfedge_counts,
@@ -166,6 +178,7 @@ pub(super) fn size_output_stage(
         partial_source_edges,
         new_face_pair_edges,
         whole_source_edges,
+        halfedge_assembly,
         vertices_from_left: i03.iter().map(|value| signed_abs(*value)).sum(),
         vertices_from_right: i30.iter().map(|value| signed_abs(*value)).sum(),
         inserted_intersection_vertices: i12

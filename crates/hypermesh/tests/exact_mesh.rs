@@ -33138,6 +33138,28 @@ fn exact_boolmesh_workspace_executes_bounds_disjoint_slice() {
                     && !run.fragments[0].reversed
             })
     );
+    assert_eq!(
+        size_output.halfedge_assembly.output_halfedges.len(),
+        size_output.face_halfedge_offsets.last().copied().unwrap()
+    );
+    assert_eq!(size_output.halfedge_assembly.emitted_pairs, 12);
+    assert_eq!(size_output.halfedge_assembly.unfilled_halfedges, 0);
+    assert_eq!(size_output.halfedge_assembly.face_overflows, 0);
+    assert_eq!(size_output.halfedge_assembly.missing_source_face_maps, 0);
+    assert!(
+        size_output
+            .halfedge_assembly
+            .output_halfedges
+            .iter()
+            .enumerate()
+            .all(|(slot, halfedge)| {
+                let halfedge = halfedge.as_ref().unwrap();
+                let pair = size_output.halfedge_assembly.output_halfedges[halfedge.pair]
+                    .as_ref()
+                    .unwrap();
+                pair.pair == slot && pair.tail == halfedge.head && pair.head == halfedge.tail
+            })
+    );
 
     let mut malformed_whole_edges = workspace.clone();
     malformed_whole_edges
@@ -33153,6 +33175,22 @@ fn exact_boolmesh_workspace_executes_bounds_disjoint_slice() {
             .validate_against_sources(&left, &right)
             .unwrap_err(),
         hypermesh::exact::ExactBoolMeshValidationError::Boolean45WholeEdgeMismatch
+    );
+    let mut malformed_halfedges = workspace.clone();
+    malformed_halfedges
+        .boolean45
+        .as_mut()
+        .unwrap()
+        .halfedge_assembly
+        .output_halfedges[0]
+        .as_mut()
+        .unwrap()
+        .pair = usize::MAX;
+    assert_eq!(
+        malformed_halfedges
+            .validate_against_sources(&left, &right)
+            .unwrap_err(),
+        hypermesh::exact::ExactBoolMeshValidationError::Boolean45HalfedgeAssemblyMismatch
     );
 
     let union = hypermesh::exact::execute_exact_boolmesh_bounds_disjoint(
@@ -33222,6 +33260,19 @@ fn exact_boolmesh_workspace_executes_bounds_disjoint_slice() {
             .source_edge_runs
             .is_empty()
     );
+    assert!(
+        intersection_size_output
+            .halfedge_assembly
+            .output_halfedges
+            .is_empty()
+    );
+    assert_eq!(intersection_size_output.halfedge_assembly.emitted_pairs, 0);
+    assert_eq!(
+        intersection_size_output
+            .halfedge_assembly
+            .unfilled_halfedges,
+        0
+    );
 
     let difference = hypermesh::exact::execute_exact_boolmesh_bounds_disjoint(
         &left,
@@ -33280,6 +33331,22 @@ fn exact_boolmesh_workspace_executes_bounds_disjoint_slice() {
             .all(|run| run.side == hypermesh::exact::ExactBoolMeshSide::Left
                 && run.signed_count == 1
                 && run.fragments.len() == 1)
+    );
+    assert_eq!(
+        difference_size_output
+            .halfedge_assembly
+            .output_halfedges
+            .len(),
+        difference_size_output
+            .face_halfedge_offsets
+            .last()
+            .copied()
+            .unwrap()
+    );
+    assert_eq!(difference_size_output.halfedge_assembly.emitted_pairs, 6);
+    assert_eq!(
+        difference_size_output.halfedge_assembly.unfilled_halfedges,
+        0
     );
 }
 
@@ -33519,6 +33586,17 @@ fn exact_boolmesh_kernel12_discovers_skew_edge_face_events() {
         size_output.new_edge_vertices.face_pair_runs.len()
     );
     assert!(size_output.whole_source_edges.source_edge_runs.is_empty());
+    assert_eq!(
+        size_output.halfedge_assembly.output_halfedges.len(),
+        size_output.face_halfedge_offsets.last().copied().unwrap()
+    );
+    assert_eq!(size_output.halfedge_assembly.face_overflows, 0);
+    assert_eq!(size_output.halfedge_assembly.missing_source_face_maps, 0);
+    assert_eq!(
+        size_output.halfedge_assembly.emitted_pairs * 2
+            + size_output.halfedge_assembly.unfilled_halfedges,
+        size_output.halfedge_assembly.output_halfedges.len()
+    );
     assert_eq!(
         size_output
             .new_face_pair_edges

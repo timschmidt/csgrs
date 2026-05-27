@@ -121,9 +121,10 @@ pub use boolean::{
 pub use boolmesh::{
     ExactBoolMeshBoolean03, ExactBoolMeshBoolean45Stage, ExactBoolMeshEdgeEvent,
     ExactBoolMeshEdgeFacePair, ExactBoolMeshExecution, ExactBoolMeshFacePair,
-    ExactBoolMeshFacePairPointRun, ExactBoolMeshKernel12Event, ExactBoolMeshKernelStage,
-    ExactBoolMeshNewEdgeVertexStage, ExactBoolMeshNewFacePairFragment, ExactBoolMeshNewFacePairRun,
-    ExactBoolMeshNewFacePairStage, ExactBoolMeshOutputVertexAllocation,
+    ExactBoolMeshFacePairPointRun, ExactBoolMeshHalfedgeAssemblyStage, ExactBoolMeshKernel12Event,
+    ExactBoolMeshKernelStage, ExactBoolMeshNewEdgeVertexStage, ExactBoolMeshNewFacePairFragment,
+    ExactBoolMeshNewFacePairRun, ExactBoolMeshNewFacePairStage, ExactBoolMeshOutputHalfedge,
+    ExactBoolMeshOutputHalfedgeSource, ExactBoolMeshOutputVertexAllocation,
     ExactBoolMeshOutputVertexOrigin, ExactBoolMeshPairUpStage, ExactBoolMeshPairedEdgeFragment,
     ExactBoolMeshPartialEdgePoint, ExactBoolMeshPartialEdgePointOrigin,
     ExactBoolMeshPartialSourceEdgeFragment, ExactBoolMeshPartialSourceEdgeRun,
