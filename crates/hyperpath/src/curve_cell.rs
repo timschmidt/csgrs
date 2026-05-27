@@ -1209,6 +1209,30 @@ fn native_face_representative(
             return Some(candidate);
         }
     }
+    // The vertex average is an exact constructed point, not a sampled
+    // approximation. It is intentionally only a fallback after edge-midpoint
+    // interior probes, because a parent loop's vertex average can lie inside a
+    // nested child loop. For symmetric conic lens loops it supplies a stable
+    // representative when edge-midpoint rays hit both branches of the same
+    // conic. It is still accepted only after the same exact boundary-first ray
+    // replay, keeping the representative step inside Yap's exact
+    // construction/predicate split.
+    if classify_point_against_native_face(
+        &vertex_average,
+        face,
+        vertices,
+        edges,
+        half_edges,
+        line_fragments,
+        arc_fragments,
+        bezier_fragments,
+        cubic_fragments,
+        conic_fragments,
+        policy,
+    ) == NativePointFaceClassification::Inside
+    {
+        return Some(vertex_average);
+    }
     None
 }
 

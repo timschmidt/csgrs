@@ -1310,5 +1310,23 @@ fuzz_target!(|data: &[u8]| {
         .iter()
         .any(|role| role.class == CurveArrangementLoopRoleClass::Material
             && role.containment_depth == Some(0)
-            && role.representative.is_none()));
+            && role.representative.is_some()));
+    let nested_conic_loop_report = arrange_rational_quadratic_beziers(
+        &[
+            RationalQuadraticBezier::new(p(0, 0), p(4, 8), p(8, 0), r(2)).unwrap(),
+            RationalQuadraticBezier::new(p(8, 0), p(4, -8), p(0, 0), r(2)).unwrap(),
+            RationalQuadraticBezier::new(p(2, 0), p(4, 3), p(6, 0), r(2)).unwrap(),
+            RationalQuadraticBezier::new(p(6, 0), p(4, -3), p(2, 0), r(2)).unwrap(),
+        ],
+        &[vec![], vec![], vec![], vec![]],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert!(nested_conic_loop_report
+        .cell_graph
+        .loop_roles
+        .iter()
+        .any(|role| role.class == CurveArrangementLoopRoleClass::Hole
+            && role.containment_depth == Some(1)
+            && role.representative.is_some()));
 });

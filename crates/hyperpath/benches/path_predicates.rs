@@ -400,11 +400,20 @@ fn path_predicates(c: &mut Criterion) {
         RationalQuadraticBezier::new(p(0, 0), p(500, 1000), p(1000, 0), r(2)).unwrap();
     let conic_loop_lower =
         RationalQuadraticBezier::new(p(1000, 0), p(500, -1000), p(0, 0), r(2)).unwrap();
+    let nested_conic_loop_upper =
+        RationalQuadraticBezier::new(p(250, 0), p(500, 375), p(750, 0), r(2)).unwrap();
+    let nested_conic_loop_lower =
+        RationalQuadraticBezier::new(p(750, 0), p(500, -375), p(250, 0), r(2)).unwrap();
     c.bench_function("rational_quadratic_bezier_loop_role_replay", |b| {
         b.iter(|| {
             arrange_rational_quadratic_beziers(
-                &[conic_loop_upper.clone(), conic_loop_lower.clone()],
-                &[vec![], vec![]],
+                &[
+                    conic_loop_upper.clone(),
+                    conic_loop_lower.clone(),
+                    nested_conic_loop_upper.clone(),
+                    nested_conic_loop_lower.clone(),
+                ],
+                &[vec![], vec![], vec![], vec![]],
                 PredicatePolicy::default(),
             )
             .map(|report| report.cell_graph.loop_roles)

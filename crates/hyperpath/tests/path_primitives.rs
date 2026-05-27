@@ -992,7 +992,29 @@ fn rational_quadratic_bezier_arrangement_cell_graph_schedules_closed_conic_loop(
     assert!(report.cell_graph.loop_roles.iter().any(|role| {
         role.class == CurveArrangementLoopRoleClass::Material
             && role.containment_depth == Some(0)
-            && role.representative.is_none()
+            && role.representative.is_some()
+    }));
+}
+
+#[test]
+fn rational_quadratic_bezier_arrangement_reports_nested_same_orientation_hole_role() {
+    let outer_upper = RationalQuadraticBezier::new(p(0, 0), p(4, 8), p(8, 0), r(2)).unwrap();
+    let outer_lower = RationalQuadraticBezier::new(p(8, 0), p(4, -8), p(0, 0), r(2)).unwrap();
+    let inner_upper = RationalQuadraticBezier::new(p(2, 0), p(4, 3), p(6, 0), r(2)).unwrap();
+    let inner_lower = RationalQuadraticBezier::new(p(6, 0), p(4, -3), p(2, 0), r(2)).unwrap();
+
+    let report = arrange_rational_quadratic_beziers(
+        &[outer_upper, outer_lower, inner_upper, inner_lower],
+        &[vec![], vec![], vec![], vec![]],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+
+    assert!(report.cell_graph.loop_roles.iter().any(|role| {
+        role.class == CurveArrangementLoopRoleClass::Hole
+            && role.containment_depth == Some(1)
+            && role.containers.len() == 1
+            && role.representative.is_some()
     }));
 }
 
