@@ -2026,6 +2026,61 @@ fn exercise_exact_boolmesh_kernel03_no_intersection_port() {
             .validate_against_sources(&inner, &outer)
             .is_err());
     }
+
+    let separated_left = ExactMesh::from_i64_triangles(
+        &[0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0, 4],
+        &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
+    )
+    .expect("deterministic boolmesh separated-left fixture must import");
+    let separated_right = ExactMesh::from_i64_triangles(
+        &[4, 4, 4, 4, 0, 4, 0, 4, 4, 4, 4, 0],
+        &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
+    )
+    .expect("deterministic boolmesh separated-right fixture must import");
+
+    for (operation, output_faces) in [
+        (
+            ExactBooleanOperation::Union,
+            separated_left.triangles().len() + separated_right.triangles().len(),
+        ),
+        (ExactBooleanOperation::Intersection, 0),
+        (
+            ExactBooleanOperation::Difference,
+            separated_left.triangles().len(),
+        ),
+    ] {
+        let workspace =
+            hypermesh::exact::exact_boolmesh_workspace(&separated_left, &separated_right, operation);
+        workspace
+            .validate_against_sources(&separated_left, &separated_right)
+            .unwrap();
+        assert!(workspace.blocker.is_none());
+        assert!(!workspace.is_certified_bounds_disjoint());
+        assert!(workspace.is_certified_no_intersection_kernel03());
+        assert_eq!(
+            workspace.boolean03.w03,
+            vec![0; separated_left.vertices().len()]
+        );
+        assert_eq!(
+            workspace.boolean03.w30,
+            vec![0; separated_right.vertices().len()]
+        );
+        let execution = hypermesh::exact::execute_exact_boolmesh_port(
+            &separated_left,
+            &separated_right,
+            operation,
+            ValidationPolicy::CLOSED,
+        )
+        .expect("separated overlapping-AABB boolmesh port should execute");
+        execution
+            .validate_against_sources(&separated_left, &separated_right)
+            .unwrap();
+        assert_eq!(
+            execution.shortcut,
+            hypermesh::exact::ExactBooleanShortcutKind::WindingSeparated
+        );
+        assert_eq!(execution.mesh.triangles().len(), output_faces);
+    }
 }
 
 #[cfg(feature = "exact-triangulation")]

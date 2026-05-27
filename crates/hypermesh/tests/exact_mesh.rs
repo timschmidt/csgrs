@@ -2428,7 +2428,15 @@ fn exact_named_booleans_use_winding_for_nonconvex_no_intersection_containment() 
         }
     );
     assert_eq!(intersection.mesh.vertices(), inner.vertices());
-    assert_eq!(intersection.mesh.triangles(), inner.triangles());
+    assert_eq!(intersection.mesh.triangles().len(), inner.triangles().len());
+    assert!(
+        intersection
+            .mesh
+            .triangles()
+            .iter()
+            .zip(inner.triangles().iter())
+            .all(|(actual, expected)| cyclic_triangle_eq(actual.0, expected.0))
+    );
     intersection
         .validate_against_sources(&inner, &outer)
         .unwrap();
@@ -2441,7 +2449,15 @@ fn exact_named_booleans_use_winding_for_nonconvex_no_intersection_containment() 
     )
     .unwrap();
     assert_eq!(union.mesh.vertices(), outer.vertices());
-    assert_eq!(union.mesh.triangles(), outer.triangles());
+    assert_eq!(union.mesh.triangles().len(), outer.triangles().len());
+    assert!(
+        union
+            .mesh
+            .triangles()
+            .iter()
+            .zip(outer.triangles().iter())
+            .all(|(actual, expected)| cyclic_triangle_eq(actual.0, expected.0))
+    );
 
     let difference = hypermesh::exact::boolean_exact(
         &inner,
@@ -2517,7 +2533,6 @@ fn exact_named_booleans_use_winding_for_nonconvex_aabb_overlap_separation() {
     intersection
         .validate_against_sources(&left, &right)
         .unwrap();
-
     let union = hypermesh::exact::boolean_exact(
         &left,
         &right,
@@ -33953,6 +33968,59 @@ fn exact_boolmesh_kernel03_classifies_nested_closed_no_intersection() {
             .unwrap_err(),
         hypermesh::exact::ExactBoolMeshValidationError::Boolean45SizeCountMismatch
     );
+}
+
+#[test]
+#[cfg(feature = "exact-triangulation")]
+fn exact_boolmesh_kernel03_executes_overlapping_aabb_separation() {
+    let left = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
+    let right = tetrahedron_i64([4, 4, 4], [4, 0, 4], [0, 4, 4], [4, 4, 0]);
+
+    assert_ne!(
+        left.bounds()
+            .mesh
+            .as_ref()
+            .unwrap()
+            .classify_intersection(right.bounds().mesh.as_ref().unwrap())
+            .value(),
+        Some(hypermesh::exact::AabbIntersectionKind::Disjoint)
+    );
+
+    for (operation, expected_faces) in [
+        (
+            hypermesh::exact::ExactBooleanOperation::Union,
+            left.triangles().len() + right.triangles().len(),
+        ),
+        (hypermesh::exact::ExactBooleanOperation::Intersection, 0),
+        (
+            hypermesh::exact::ExactBooleanOperation::Difference,
+            left.triangles().len(),
+        ),
+    ] {
+        let workspace = hypermesh::exact::exact_boolmesh_workspace(&left, &right, operation);
+        workspace.validate_against_sources(&left, &right).unwrap();
+        assert!(workspace.blocker.is_none());
+        assert!(!workspace.is_certified_bounds_disjoint());
+        assert!(workspace.is_certified_no_intersection_kernel03());
+        assert_eq!(workspace.boolean03.w03, vec![0; left.vertices().len()]);
+        assert_eq!(workspace.boolean03.w30, vec![0; right.vertices().len()]);
+        assert!(workspace.boolean03.p1q2.is_empty());
+        assert!(workspace.boolean03.p2q1.is_empty());
+
+        let execution = hypermesh::exact::execute_exact_boolmesh_port(
+            &left,
+            &right,
+            operation,
+            ValidationPolicy::CLOSED,
+        )
+        .unwrap();
+        execution.validate_against_sources(&left, &right).unwrap();
+        assert_eq!(
+            execution.shortcut,
+            hypermesh::exact::ExactBooleanShortcutKind::WindingSeparated
+        );
+        assert_eq!(execution.mesh.triangles().len(), expected_faces);
+    }
 }
 
 #[test]

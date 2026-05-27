@@ -13145,6 +13145,16 @@ fn exact_boolmesh_kernel03_no_intersection_port(c: &mut Criterion) {
             &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
         )
         .unwrap();
+        let separated_left = ExactMesh::from_i64_triangles(
+            &[0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0, 4],
+            &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
+        )
+        .unwrap();
+        let separated_right = ExactMesh::from_i64_triangles(
+            &[4, 4, 4, 4, 0, 4, 0, 4, 4, 4, 4, 0],
+            &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
+        )
+        .unwrap();
 
         c.bench_function("exact_boolmesh_kernel03_no_intersection_port", |b| {
             b.iter(|| {
@@ -13172,6 +13182,16 @@ fn exact_boolmesh_kernel03_no_intersection_port(c: &mut Criterion) {
                 )
                 .unwrap();
                 execution.validate_against_sources(&inner, &outer).unwrap();
+                let separated_execution = hypermesh::exact::execute_exact_boolmesh_port(
+                    &separated_left,
+                    &separated_right,
+                    hypermesh::exact::ExactBooleanOperation::Union,
+                    ValidationPolicy::CLOSED,
+                )
+                .unwrap();
+                separated_execution
+                    .validate_against_sources(&separated_left, &separated_right)
+                    .unwrap();
                 let union_stage = union.boolean45.as_ref().unwrap();
                 let intersection_stage = intersection.boolean45.as_ref().unwrap();
                 union
@@ -13197,6 +13217,7 @@ fn exact_boolmesh_kernel03_no_intersection_port(c: &mut Criterion) {
                     + union_stage.halfedge_assembly.emitted_pairs
                     + union_stage.mesh_export.triangles.len()
                     + execution.mesh.triangles().len()
+                    + separated_execution.mesh.triangles().len()
                     + intersection_stage.vertices_from_left
                     + intersection_stage.whole_source_edges.source_edge_runs.len()
                     + intersection_stage.halfedge_assembly.emitted_pairs

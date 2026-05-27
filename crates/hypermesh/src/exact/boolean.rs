@@ -36,7 +36,10 @@ use super::affine_surface::{
     arrange_coplanar_affine_surface_union,
 };
 #[cfg(feature = "exact-triangulation")]
-use super::boolmesh::execute_exact_boolmesh_bounds_disjoint;
+use super::boolmesh::{
+    ExactBoolMeshValidationError, execute_exact_boolmesh_bounds_disjoint,
+    execute_exact_boolmesh_port,
+};
 #[cfg(feature = "exact-triangulation")]
 use super::bounds::AabbIntersectionKind;
 #[cfg(feature = "exact-triangulation")]
@@ -1821,6 +1824,10 @@ pub fn boolean_exact_with_boundary_policy(
             }
             if let Some(result) =
                 boolean_volumetric_winding_regions(left, right, operation, validation)?
+            {
+                return Ok(result);
+            }
+            if let Some(result) = boolean_boolmesh_port_meshes(left, right, operation, validation)?
             {
                 return Ok(result);
             }
@@ -5244,6 +5251,39 @@ fn boolean_disjoint_meshes(
         execution.mesh,
         execution.shortcut,
     ))
+}
+
+/// Execute the landed direct boolmesh port from the public exact boolean path.
+///
+/// This is deliberately a fall-through adapter, not a compatibility fallback:
+/// a completed boolmesh workspace materializes from the retained `boolean45`
+/// mesh export and becomes an audited certified shortcut result, while
+/// [`ExactBoolMeshValidationError::PortBlocked`] means the exact port has
+/// reached an unported boolmesh stage and the historical exact materializers
+/// may still handle the case.  Other boolmesh validation errors are reported
+/// as hard exact-operation failures.  That separation follows Yap, "Towards
+/// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997): a
+/// topology-changing decision is either certified, explicitly unknown, or a
+/// validation failure.
+#[cfg(feature = "exact-triangulation")]
+fn boolean_boolmesh_port_meshes(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    match execute_exact_boolmesh_port(left, right, operation, validation) {
+        Ok(execution) => Ok(Some(certified_shortcut_result(
+            execution.mesh,
+            execution.shortcut,
+        ))),
+        Err(ExactBoolMeshValidationError::PortBlocked(_)) => Ok(None),
+        Err(error) => Err(MeshError::one(MeshDiagnostic::new(
+            Severity::Error,
+            DiagnosticKind::UnsupportedExactOperation,
+            format!("exact boolmesh port failed: {error:?}"),
+        ))),
+    }
 }
 
 #[cfg(feature = "exact-triangulation")]
