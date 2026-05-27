@@ -1014,7 +1014,11 @@ fn intersect_axis_aligned_line_cubic_bezier_with_axis(
 /// `dx*(Y-y0*W)-dy*(X-x0*W)`. Candidate roots are solved as exact `Real`
 /// objects, then replayed through rational evaluation so denominator-zero
 /// branches remain [`LineRationalQuadraticBezierIntersectionClass::Unknown`]
-/// rather than sampled topology. This follows Yap, "Towards Exact Geometric
+/// rather than sampled topology. If every homogeneous support coefficient
+/// vanishes, a non-axis monotone line image is handled by the same exact
+/// discipline using the segment's normalized line parameter as the rational
+/// scalar image; nonmonotone general overlaps remain explicit `Unknown`.
+/// This follows Yap, "Towards Exact Geometric
 /// Computation," *Computational Geometry* 7.1-2 (1997): construction is
 /// accepted only after exact predicate replay. The homogeneous rational curve
 /// model follows Farouki, *Pythagorean Hodograph Curves* (2008).
@@ -1031,7 +1035,10 @@ pub fn intersect_line_rational_quadratic_bezier(
 
     let roots = match solve_rational_quadratic_implicit_line_roots(segment, curve, policy) {
         Some(roots) => roots,
-        None => return line_rational_quadratic_unknown_report(),
+        None => {
+            return rational_quadratic_general_line_overlap_report(segment, curve, policy)
+                .unwrap_or_else(line_rational_quadratic_unknown_report);
+        }
     };
     let mut intersections = Vec::new();
     for parameter in roots {
@@ -2267,6 +2274,100 @@ fn rational_quadratic_line_overlap_report(
     }
 }
 
+fn rational_quadratic_general_line_overlap_report(
+    segment: &LinePathSegment,
+    curve: &RationalQuadraticBezier,
+    policy: PredicatePolicy,
+) -> Option<LineRationalQuadraticBezierIntersectionReport> {
+    // Non-axis same-support conics use the retained segment's normalized line
+    // parameter as the scalar image:
+    //
+    //     s(t) = dot(C(t)-L0, L1-L0) / |L1-L0|^2.
+    //
+    // The same-support certificate is still denominator-free: every
+    // homogeneous conic control must make the implicit line coefficient zero.
+    // Only then do we promote overlap, and only when the rational scalar image
+    // has a Bernstein-sign monotonicity certificate. This is Yap's exact
+    // geometric-computation split in the non-axis setting: construct exact
+    // overlap witnesses from replayable homogeneous equations, otherwise keep
+    // uncertainty explicit. The rational derivative numerator is the standard
+    // `N'W - NW'` form described by Farouki, *Pythagorean Hodograph Curves*
+    // (2008), with Bernstein sign replay used as the monotonicity proof.
+    if !rational_quadratic_general_same_support(segment, curve, policy)? {
+        return None;
+    }
+    let scalar_controls = rational_quadratic_line_parameter_controls(segment, curve)?;
+    let hodograph_controls =
+        rational_quadratic_scalar_hodograph_numerator_controls(curve, &scalar_controls);
+    if classify_rational_quadratic_hodograph_controls(&hodograph_controls, policy)
+        != LineRationalQuadraticBezierSupportOverlapMonotonicity::Monotone
+    {
+        return Some(LineRationalQuadraticBezierIntersectionReport {
+            class: LineRationalQuadraticBezierIntersectionClass::Unknown,
+            intersections: Vec::new(),
+            support_overlap: None,
+        });
+    }
+
+    let curve_a = scalar_controls[0].clone();
+    let curve_b = scalar_controls[2].clone();
+    let overlap_min = max_real(
+        &min_real(&curve_a, &curve_b, policy)?,
+        &Real::zero(),
+        policy,
+    )?;
+    let overlap_max = min_real(&max_real(&curve_a, &curve_b, policy)?, &Real::one(), policy)?;
+    match compare_reals_with_policy(&overlap_min, &overlap_max, policy).value()? {
+        Ordering::Greater => Some(LineRationalQuadraticBezierIntersectionReport {
+            class: LineRationalQuadraticBezierIntersectionClass::Disjoint,
+            intersections: Vec::new(),
+            support_overlap: None,
+        }),
+        Ordering::Equal => {
+            let parameter = rational_quadratic_line_parameter_image_parameter(
+                curve,
+                &scalar_controls,
+                &overlap_min,
+                policy,
+            )?;
+            let point = point_from_line_parameter(segment, overlap_min);
+            Some(LineRationalQuadraticBezierIntersectionReport {
+                class: LineRationalQuadraticBezierIntersectionClass::OnePoint,
+                intersections: vec![LineRationalQuadraticBezierIntersection { parameter, point }],
+                support_overlap: None,
+            })
+        }
+        Ordering::Less => {
+            let mut intersections = vec![
+                LineRationalQuadraticBezierIntersection {
+                    parameter: rational_quadratic_line_parameter_image_parameter(
+                        curve,
+                        &scalar_controls,
+                        &overlap_min,
+                        policy,
+                    )?,
+                    point: point_from_line_parameter(segment, overlap_min),
+                },
+                LineRationalQuadraticBezierIntersection {
+                    parameter: rational_quadratic_line_parameter_image_parameter(
+                        curve,
+                        &scalar_controls,
+                        &overlap_max,
+                        policy,
+                    )?,
+                    point: point_from_line_parameter(segment, overlap_max),
+                },
+            ];
+            sort_rational_quadratic_intersections(&mut intersections, policy)?;
+            Some(LineRationalQuadraticBezierIntersectionReport {
+                class: LineRationalQuadraticBezierIntersectionClass::Overlap,
+                intersections,
+                support_overlap: None,
+            })
+        }
+    }
+}
+
 fn is_degree_elevated_line(curve: &QuadraticBezier, policy: PredicatePolicy) -> Option<bool> {
     let x_mid = Real::from(2) * curve.control().x.clone();
     let y_mid = Real::from(2) * curve.control().y.clone();
@@ -2645,6 +2746,22 @@ fn rational_quadratic_same_support(
     )
 }
 
+fn rational_quadratic_general_same_support(
+    segment: &LinePathSegment,
+    curve: &RationalQuadraticBezier,
+    policy: PredicatePolicy,
+) -> Option<bool> {
+    let q0 = rational_conic_implicit_line_coefficient(segment, curve.start(), &Real::one());
+    let q1 =
+        rational_conic_implicit_line_coefficient(segment, curve.control(), curve.control_weight());
+    let q2 = rational_conic_implicit_line_coefficient(segment, curve.end(), &Real::one());
+    Some(
+        compare_reals_with_policy(&q0, &Real::zero(), policy).value()? == Ordering::Equal
+            && compare_reals_with_policy(&q1, &Real::zero(), policy).value()? == Ordering::Equal
+            && compare_reals_with_policy(&q2, &Real::zero(), policy).value()? == Ordering::Equal,
+    )
+}
+
 fn rational_quadratic_support_overlap(
     segment: &LinePathSegment,
     curve: &RationalQuadraticBezier,
@@ -2777,6 +2894,17 @@ fn rational_quadratic_hodograph_numerator_controls(
     ]
 }
 
+fn rational_quadratic_scalar_hodograph_numerator_controls(
+    curve: &RationalQuadraticBezier,
+    scalar_controls: &[Real; 3],
+) -> [Real; 3] {
+    [
+        curve.control_weight().clone() * (scalar_controls[1].clone() - scalar_controls[0].clone()),
+        scalar_controls[2].clone() - scalar_controls[0].clone(),
+        curve.control_weight().clone() * (scalar_controls[2].clone() - scalar_controls[1].clone()),
+    ]
+}
+
 fn classify_rational_quadratic_hodograph_controls(
     controls: &[Real; 3],
     policy: PredicatePolicy,
@@ -2863,6 +2991,126 @@ fn rational_quadratic_line_image_parameter(
         1 => accepted.pop(),
         _ => None,
     }
+}
+
+fn rational_quadratic_line_parameter_image_parameter(
+    curve: &RationalQuadraticBezier,
+    scalar_controls: &[Real; 3],
+    value: &Real,
+    policy: PredicatePolicy,
+) -> Option<Real> {
+    let roots =
+        solve_rational_quadratic_scalar_image_roots(curve, scalar_controls, value.clone(), policy)?;
+    let mut accepted: Vec<Real> = Vec::new();
+    for root in roots {
+        match parameter_in_unit_interval(&root, policy) {
+            Some(true) => {}
+            Some(false) => continue,
+            None => return None,
+        }
+        let image = line_parameter_for_point_from_controls(curve, scalar_controls, &root, policy)?;
+        match compare_reals_with_policy(&image, value, policy).value()? {
+            Ordering::Equal => {}
+            Ordering::Less | Ordering::Greater => continue,
+        }
+        let mut duplicate = false;
+        for existing in &accepted {
+            match compare_reals_with_policy(existing, &root, policy).value()? {
+                Ordering::Equal => {
+                    duplicate = true;
+                    break;
+                }
+                Ordering::Less | Ordering::Greater => {}
+            }
+        }
+        if !duplicate {
+            accepted.push(root);
+        }
+    }
+    match accepted.len() {
+        1 => accepted.pop(),
+        _ => None,
+    }
+}
+
+fn solve_rational_quadratic_scalar_image_roots(
+    curve: &RationalQuadraticBezier,
+    scalar_controls: &[Real; 3],
+    value: Real,
+    policy: PredicatePolicy,
+) -> Option<Vec<Real>> {
+    let q0 = scalar_controls[0].clone() - value.clone();
+    let q1 = curve.control_weight().clone() * (scalar_controls[1].clone() - value.clone());
+    let q2 = scalar_controls[2].clone() - value;
+    let a = q0.clone() - Real::from(2) * q1.clone() + q2.clone();
+    let b = Real::from(2) * (q1 - q0.clone());
+    let c = q0;
+    match compare_reals_with_policy(&a, &Real::zero(), policy).value()? {
+        Ordering::Equal => solve_linear_root(b, c, policy),
+        Ordering::Less | Ordering::Greater => solve_quadratic_roots(a, b, c, policy),
+    }
+}
+
+fn line_parameter_for_point_from_controls(
+    curve: &RationalQuadraticBezier,
+    scalar_controls: &[Real; 3],
+    parameter: &Real,
+    policy: PredicatePolicy,
+) -> Option<Real> {
+    let one_minus_t = Real::one() - parameter.clone();
+    let w = one_minus_t.clone() * one_minus_t.clone()
+        + Real::from(2) * one_minus_t.clone() * parameter.clone() * curve.control_weight().clone()
+        + parameter.clone() * parameter.clone();
+    match compare_reals_with_policy(&w, &Real::zero(), policy).value()? {
+        Ordering::Equal => None,
+        Ordering::Less | Ordering::Greater => {
+            let numerator = one_minus_t.clone() * one_minus_t * scalar_controls[0].clone()
+                + Real::from(2)
+                    * (Real::one() - parameter.clone())
+                    * parameter.clone()
+                    * curve.control_weight().clone()
+                    * scalar_controls[1].clone()
+                + parameter.clone() * parameter.clone() * scalar_controls[2].clone();
+            (numerator / w).ok()
+        }
+    }
+}
+
+fn rational_quadratic_line_parameter_controls(
+    segment: &LinePathSegment,
+    curve: &RationalQuadraticBezier,
+) -> Option<[Real; 3]> {
+    Some([
+        normalized_line_parameter_for_weighted_point(segment, curve.start(), &Real::one())?,
+        normalized_line_parameter_for_weighted_point(
+            segment,
+            curve.control(),
+            curve.control_weight(),
+        )?,
+        normalized_line_parameter_for_weighted_point(segment, curve.end(), &Real::one())?,
+    ])
+}
+
+fn normalized_line_parameter_for_weighted_point(
+    segment: &LinePathSegment,
+    point: &Point2,
+    weight: &Real,
+) -> Option<Real> {
+    let dx = segment.end().x.clone() - segment.start().x.clone();
+    let dy = segment.end().y.clone() - segment.start().y.clone();
+    let denominator = dx.clone() * dx.clone() + dy.clone() * dy.clone();
+    let x = weight.clone() * (point.x.clone() - segment.start().x.clone());
+    let y = weight.clone() * (point.y.clone() - segment.start().y.clone());
+    ((x * dx + y * dy) / (weight.clone() * denominator)).ok()
+}
+
+fn point_from_line_parameter(segment: &LinePathSegment, parameter: Real) -> Point2 {
+    let dx = segment.end().x.clone() - segment.start().x.clone();
+    let dy = segment.end().y.clone() - segment.start().y.clone();
+    Point2::new(
+        segment.start().x.clone() + parameter.clone() * dx,
+        segment.start().y.clone() + parameter * dy,
+    )
 }
 
 fn roots_are_tangent(

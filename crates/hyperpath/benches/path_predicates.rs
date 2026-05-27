@@ -406,6 +406,21 @@ fn path_predicates(c: &mut Criterion) {
             })
         },
     );
+    let line_conic_general_overlap =
+        RationalQuadraticBezier::new(p(0, 0), p(500, 500), p(1000, 1000), r(1)).unwrap();
+    let line_conic_general_overlap_line = LinePathSegment::new(p(250, 250), p(750, 750));
+    c.bench_function(
+        "line_rational_quadratic_bezier_general_overlap_promotion",
+        |b| {
+            b.iter(|| {
+                arrange_line_segments_with_rational_quadratic_beziers(
+                    std::slice::from_ref(&line_conic_general_overlap_line),
+                    std::slice::from_ref(&line_conic_general_overlap),
+                    PredicatePolicy::default(),
+                )
+            })
+        },
+    );
     c.bench_function("line_rational_quadratic_bezier_arrangement_cleanup", |b| {
         b.iter(|| {
             arrange_line_segments_with_rational_quadratic_beziers(

@@ -903,6 +903,29 @@ fuzz_target!(|data: &[u8]| {
     );
     assert_eq!(diagonal_conic_arrangement.line_breakpoints[0].len(), 4);
     assert_eq!(diagonal_conic_arrangement.conic_breakpoints[0].len(), 4);
+    let general_overlap_conic =
+        RationalQuadraticBezier::new(p(0, 0), p(2, 2), p(4, 4), r(1)).unwrap();
+    let general_overlap_line = LinePathSegment::new(p(1, 1), p(3, 3));
+    let general_overlap_report = arrange_line_segments_with_rational_quadratic_beziers(
+        &[general_overlap_line],
+        &[general_overlap_conic],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert_eq!(
+        general_overlap_report.events[0].class,
+        LineRationalQuadraticBezierIntersectionClass::Overlap
+    );
+    assert_eq!(
+        general_overlap_report.events[0].intersection.intersections[0].parameter,
+        rq(1, 4)
+    );
+    assert_eq!(
+        general_overlap_report.events[0].intersection.intersections[1].parameter,
+        rq(3, 4)
+    );
+    assert_eq!(general_overlap_report.line_fragments.len(), 1);
+    assert_eq!(general_overlap_report.conic_fragments.len(), 3);
 
     let secant_conic = RationalQuadraticBezier::new(p(0, 0), p(4, 8), p(8, 0), r(1)).unwrap();
     let secant_line = LinePathSegment::new(p(0, 3), p(8, 3));
