@@ -26,6 +26,8 @@ mod kernel11;
 mod kernel12;
 #[cfg(feature = "exact-triangulation")]
 mod kernel12_boundary;
+#[cfg(feature = "exact-triangulation")]
+mod kernel12_op;
 
 #[cfg(feature = "exact-triangulation")]
 use super::AabbIntersectionKind;
@@ -80,6 +82,16 @@ pub fn exact_boolmesh_kernel11_shadow_probe_for_internal_fuzz(selector: u8) -> b
 #[cfg(all(feature = "exact-triangulation", feature = "internal-fuzzing"))]
 pub fn exact_boolmesh_kernel02_shadow_probe_for_internal_fuzz(selector: u8) -> bool {
     kernel02::internal_fuzz_probe(selector)
+}
+
+/// Exercise the exact `Kernel12::op` shadow accumulator port from fuzz targets.
+///
+/// The normal workspace still owns event discovery and lowering.  This probe
+/// keeps the hard boolmesh accumulator compiled under adversarial builds until
+/// `kernel12` lowering delegates to it for boundary and mixed shadow rows.
+#[cfg(all(feature = "exact-triangulation", feature = "internal-fuzzing"))]
+pub fn exact_boolmesh_kernel12_shadow_accumulator_probe_for_internal_fuzz(selector: u8) -> bool {
+    kernel12_op::internal_fuzz_probe(selector)
 }
 
 /// Legacy boolmesh kernel stage represented by the exact port.

@@ -60,6 +60,8 @@ use hypermesh::exact::{CoplanarProjection, ExactBooleanAssemblyPlan, FaceRegionT
 use hypermesh::exact::boolmesh::exact_boolmesh_kernel11_shadow_probe_for_internal_fuzz;
 #[cfg(feature = "exact-triangulation")]
 use hypermesh::exact::boolmesh::exact_boolmesh_kernel02_shadow_probe_for_internal_fuzz;
+#[cfg(feature = "exact-triangulation")]
+use hypermesh::exact::boolmesh::exact_boolmesh_kernel12_shadow_accumulator_probe_for_internal_fuzz;
 use libfuzzer_sys::fuzz_target;
 
 fuzz_target!(|data: &[u8]| {
@@ -1594,6 +1596,7 @@ fn exercise_deterministic_case(selector: u8) {
         50 => exercise_exact_boolmesh_kernel12_boundary_endpoint_shadow_port(),
         51 => exercise_exact_boolmesh_kernel11_shadow_port(),
         52 => exercise_exact_boolmesh_kernel02_shadow_port(),
+        53 => exercise_exact_boolmesh_kernel12_shadow_accumulator_port(),
         _ => exercise_nonconvex_coplanar_volumetric_difference_fan_split(),
     }
 }
@@ -2068,6 +2071,11 @@ fn exercise_exact_boolmesh_kernel11_shadow_port() {
 #[cfg(feature = "exact-triangulation")]
 fn exercise_exact_boolmesh_kernel02_shadow_port() {
     assert!(exact_boolmesh_kernel02_shadow_probe_for_internal_fuzz(52));
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn exercise_exact_boolmesh_kernel12_shadow_accumulator_port() {
+    assert!(exact_boolmesh_kernel12_shadow_accumulator_probe_for_internal_fuzz(53));
 }
 
 #[cfg(feature = "exact-triangulation")]
