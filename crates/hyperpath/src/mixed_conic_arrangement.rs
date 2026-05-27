@@ -258,14 +258,16 @@ pub struct LineRationalQuadraticBezierAlgebraicSourceSpan {
     pub parameter_upper: Real,
 }
 
-/// Conservative coordinate envelope for endpoints of a line/conic algebraic source span.
+/// Conservative coordinate envelope for a line/conic algebraic source span.
 ///
 /// The envelope is indexed by
 /// [`LineRationalQuadraticBezierArrangementReport::algebraic_source_spans`].
-/// It encloses only the two retained span endpoints: exact source endpoints
-/// and exact same-support inverse-boundary points. It is not a conic interior
-/// hull, and it does not evaluate or split the rational quadratic at a
-/// represented root.
+/// It encloses retained span endpoints: exact source endpoints and exact
+/// same-support inverse-boundary points. For curve-owned spans it also
+/// includes any exact rational quadratic coordinate extrema whose quotient
+/// derivative roots are certified inside the retained source-parameter
+/// interval. It does not evaluate or split the rational quadratic at a
+/// represented root and it does not sample the conic interior.
 ///
 /// This is Yap's retained-object boundary from "Towards Exact Geometric
 /// Computation" (1997): represented roots remain exact evidence until a later
@@ -273,6 +275,8 @@ pub struct LineRationalQuadraticBezierAlgebraicSourceSpan {
 /// Sturm/Collins-Loos isolators, following Collins and Loos, "Real Zeros of
 /// Polynomials" (1982), and the conic itself remains in the homogeneous
 /// rational model described by Farouki, *Pythagorean Hodograph Curves* (2008).
+/// Extrema replay uses the exact quotient derivative numerator `N'W - NW'`,
+/// the standard rational Bezier derivative construction in that model.
 #[derive(Clone, Debug, PartialEq)]
 pub struct LineRationalQuadraticBezierAlgebraicEndpointEnvelope {
     /// Index in [`LineRationalQuadraticBezierArrangementReport::algebraic_source_spans`].
@@ -1028,20 +1032,19 @@ fn algebraic_conic_endpoint_envelopes(
                 curves,
                 breakpoints,
             )?;
-            let (x_lower, x_upper) = certified_min_max(
-                &left.x_lower,
-                &left.x_upper,
-                &right.x_lower,
-                &right.x_upper,
-                policy,
-            )?;
-            let (y_lower, y_upper) = certified_min_max(
-                &left.y_lower,
-                &left.y_upper,
-                &right.y_lower,
-                &right.y_upper,
-                policy,
-            )?;
+            let mut points = vec![left, right];
+            if let LineRationalQuadraticBezierAlgebraicBreakpointSequenceSource::Curve(
+                curve_index,
+            ) = span.source
+            {
+                points.extend(algebraic_conic_span_interior_extrema(
+                    curves.get(curve_index)?,
+                    span,
+                    policy,
+                )?);
+            }
+            let (x_lower, x_upper, y_lower, y_upper) =
+                certified_conic_point_interval_bounds(&points, policy)?;
             Some(LineRationalQuadraticBezierAlgebraicEndpointEnvelope {
                 span: span_index,
                 x_lower,
@@ -1051,6 +1054,30 @@ fn algebraic_conic_endpoint_envelopes(
             })
         })
         .collect()
+}
+
+fn algebraic_conic_span_interior_extrema(
+    curve: &RationalQuadraticBezier,
+    span: &LineRationalQuadraticBezierAlgebraicSourceSpan,
+    policy: PredicatePolicy,
+) -> Option<Vec<ConicPointInterval>> {
+    // A retained algebraic span is an interval certificate, not a materialized
+    // sub-conic. We therefore admit quotient-derivative extrema only when
+    // exact comparison proves the derivative root is inside the retained
+    // source interval. Undecidable membership withholds the envelope instead
+    // of approximating, matching Yap's EGC construction boundary.
+    let mut extrema = Vec::new();
+    for root in rational_quadratic_derivative_roots(curve, ConicCoordinate::X, policy)? {
+        if real_in_closed_interval(&root, &span.parameter_lower, &span.parameter_upper, policy)? {
+            extrema.push(affine_conic_point_exact_interval(curve, &root, policy)?);
+        }
+    }
+    for root in rational_quadratic_derivative_roots(curve, ConicCoordinate::Y, policy)? {
+        if real_in_closed_interval(&root, &span.parameter_lower, &span.parameter_upper, policy)? {
+            extrema.push(affine_conic_point_exact_interval(curve, &root, policy)?);
+        }
+    }
+    Some(extrema)
 }
 
 fn algebraic_conic_boundary_point_interval(
@@ -1100,6 +1127,42 @@ fn conic_point_exact_interval(point: &Point2) -> Option<ConicPointInterval> {
     })
 }
 
+fn affine_conic_point_exact_interval(
+    curve: &RationalQuadraticBezier,
+    parameter: &Real,
+    policy: PredicatePolicy,
+) -> Option<ConicPointInterval> {
+    let homogeneous = homogeneous_eval_real(curve, parameter);
+    match compare_reals_with_policy(&homogeneous.w, &Real::zero(), policy).value()? {
+        Ordering::Equal => None,
+        Ordering::Less | Ordering::Greater => {
+            let x = (homogeneous.x / homogeneous.w.clone()).ok()?;
+            let y = (homogeneous.y / homogeneous.w).ok()?;
+            conic_point_exact_interval(&Point2::new(x, y))
+        }
+    }
+}
+
+fn certified_conic_point_interval_bounds(
+    points: &[ConicPointInterval],
+    policy: PredicatePolicy,
+) -> Option<(Real, Real, Real, Real)> {
+    let first = points.first()?;
+    let mut x_lower = first.x_lower.clone();
+    let mut x_upper = first.x_upper.clone();
+    let mut y_lower = first.y_lower.clone();
+    let mut y_upper = first.y_upper.clone();
+    for point in points.iter().skip(1) {
+        let x = certified_min_max(&x_lower, &x_upper, &point.x_lower, &point.x_upper, policy)?;
+        x_lower = x.0;
+        x_upper = x.1;
+        let y = certified_min_max(&y_lower, &y_upper, &point.y_lower, &point.y_upper, policy)?;
+        y_lower = y.0;
+        y_upper = y.1;
+    }
+    Some((x_lower, x_upper, y_lower, y_upper))
+}
+
 fn certified_min_max(
     left_lower: &Real,
     left_upper: &Real,
@@ -1116,6 +1179,112 @@ fn certified_min_max(
         Ordering::Greater => left_upper.clone(),
     };
     Some((lower, upper))
+}
+
+#[derive(Clone, Copy)]
+enum ConicCoordinate {
+    X,
+    Y,
+}
+
+fn rational_quadratic_derivative_roots(
+    curve: &RationalQuadraticBezier,
+    coordinate: ConicCoordinate,
+    policy: PredicatePolicy,
+) -> Option<Vec<Real>> {
+    let numerator = rational_quadratic_coordinate_power_coefficients(curve, coordinate);
+    let denominator = rational_quadratic_weight_power_coefficients(curve);
+    let a = numerator[1].clone() * denominator[0].clone()
+        - numerator[0].clone() * denominator[1].clone();
+    let b = Real::from(2)
+        * (numerator[2].clone() * denominator[0].clone()
+            - numerator[0].clone() * denominator[2].clone());
+    let c = numerator[2].clone() * denominator[1].clone()
+        - numerator[1].clone() * denominator[2].clone();
+    solve_conic_quadratic_or_linear_roots(c, b, a, policy)
+}
+
+fn rational_quadratic_coordinate_power_coefficients(
+    curve: &RationalQuadraticBezier,
+    coordinate: ConicCoordinate,
+) -> [Real; 3] {
+    let p0 = conic_coordinate(curve.start(), coordinate);
+    let p1 = conic_coordinate(curve.control(), coordinate) * curve.control_weight().clone();
+    let p2 = conic_coordinate(curve.end(), coordinate);
+    [
+        p0.clone(),
+        Real::from(2) * (p1.clone() - p0.clone()),
+        p0 - Real::from(2) * p1 + p2,
+    ]
+}
+
+fn rational_quadratic_weight_power_coefficients(curve: &RationalQuadraticBezier) -> [Real; 3] {
+    let w = curve.control_weight().clone();
+    [
+        Real::one(),
+        Real::from(2) * (w.clone() - Real::one()),
+        Real::one() - Real::from(2) * w + Real::one(),
+    ]
+}
+
+fn conic_coordinate(point: &Point2, coordinate: ConicCoordinate) -> Real {
+    match coordinate {
+        ConicCoordinate::X => point.x.clone(),
+        ConicCoordinate::Y => point.y.clone(),
+    }
+}
+
+fn solve_conic_quadratic_or_linear_roots(
+    a: Real,
+    b: Real,
+    c: Real,
+    policy: PredicatePolicy,
+) -> Option<Vec<Real>> {
+    match compare_reals_with_policy(&a, &Real::zero(), policy).value()? {
+        Ordering::Equal => solve_conic_linear_roots(b, c, policy),
+        Ordering::Less | Ordering::Greater => solve_conic_quadratic_roots(a, b, c, policy),
+    }
+}
+
+fn solve_conic_linear_roots(b: Real, c: Real, policy: PredicatePolicy) -> Option<Vec<Real>> {
+    match compare_reals_with_policy(&b, &Real::zero(), policy).value()? {
+        Ordering::Equal => Some(Vec::new()),
+        Ordering::Less | Ordering::Greater => Some(vec![(-c / b).ok()?]),
+    }
+}
+
+fn solve_conic_quadratic_roots(
+    a: Real,
+    b: Real,
+    c: Real,
+    policy: PredicatePolicy,
+) -> Option<Vec<Real>> {
+    let discriminant = b.clone() * b.clone() - Real::from(4) * a.clone() * c;
+    match compare_reals_with_policy(&discriminant, &Real::zero(), policy).value()? {
+        Ordering::Less => Some(Vec::new()),
+        Ordering::Equal => Some(vec![((-b) / (Real::from(2) * a)).ok()?]),
+        Ordering::Greater => {
+            let root = discriminant.sqrt().ok()?;
+            let denominator = Real::from(2) * a;
+            let first = ((-b.clone() - root.clone()) / denominator.clone()).ok()?;
+            let second = ((-b + root) / denominator).ok()?;
+            Some(vec![first, second])
+        }
+    }
+}
+
+fn real_in_closed_interval(
+    value: &Real,
+    lower: &Real,
+    upper: &Real,
+    policy: PredicatePolicy,
+) -> Option<bool> {
+    let lower_cmp = compare_reals_with_policy(value, lower, policy).value()?;
+    let upper_cmp = compare_reals_with_policy(value, upper, policy).value()?;
+    Some(
+        matches!(lower_cmp, Ordering::Equal | Ordering::Greater)
+            && matches!(upper_cmp, Ordering::Equal | Ordering::Less),
+    )
 }
 
 fn compare_algebraic_conic_parameters(

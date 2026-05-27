@@ -1093,6 +1093,9 @@ fuzz_target!(|data: &[u8]| {
         nonmonotone_report.algebraic_endpoint_envelopes.len(),
         nonmonotone_report.algebraic_source_spans.len()
     );
+    assert!(nonmonotone_report.algebraic_endpoint_envelopes.iter().any(|envelope| {
+        envelope.x_upper == r(4) && envelope.y_lower == r(0) && envelope.y_upper == r(0)
+    }));
     let exact_root_conic = RationalQuadraticBezier::new(p(0, 0), p(8, 0), p(0, 0), r(1)).unwrap();
     let exact_root_report = arrange_line_segments_with_rational_quadratic_beziers(
         &[LinePathSegment::new(p(0, 0), p(3, 0))],

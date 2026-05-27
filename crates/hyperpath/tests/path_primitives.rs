@@ -3426,6 +3426,14 @@ fn line_rational_quadratic_bezier_arrangement_keeps_nonmonotone_support_overlap_
         report
             .algebraic_endpoint_envelopes
             .iter()
+            .any(|envelope| envelope.x_upper == r(4)
+                && envelope.y_lower == r(0)
+                && envelope.y_upper == r(0))
+    );
+    assert!(
+        report
+            .algebraic_endpoint_envelopes
+            .iter()
             .any(|envelope| envelope.x_lower == r(0)
                 && envelope.x_upper == r(1)
                 && envelope.y_lower == r(0)
@@ -3436,7 +3444,7 @@ fn line_rational_quadratic_bezier_arrangement_keeps_nonmonotone_support_overlap_
             .algebraic_endpoint_envelopes
             .iter()
             .any(|envelope| envelope.x_lower == r(3)
-                && envelope.x_upper == r(3)
+                && envelope.x_upper == r(4)
                 && envelope.y_lower == r(0)
                 && envelope.y_upper == r(0))
     );
