@@ -13112,6 +13112,13 @@ fn exact_boolmesh_kernel12_port(c: &mut Criterion) {
                                 + stage.new_edge_vertices.face_pair_runs.len()
                                 + stage.partial_source_edges.source_edge_runs.len()
                                 + stage.new_face_pair_edges.face_pair_runs.len()
+                                + stage
+                                    .new_face_pair_edges
+                                    .face_pair_runs
+                                    .iter()
+                                    .flat_map(|run| run.points.iter())
+                                    .map(|point| point.order_index)
+                                    .sum::<usize>()
                                 + stage.whole_source_edges.source_edge_runs.len()
                                 + stage.halfedge_assembly.output_halfedges.len()
                                 + stage.halfedge_assembly.emitted_pairs

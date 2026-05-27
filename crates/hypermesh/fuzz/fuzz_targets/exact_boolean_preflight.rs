@@ -1873,6 +1873,21 @@ fn exercise_exact_boolmesh_kernel12_port() {
             .sum::<usize>(),
         size_output.inserted_intersection_vertices * 2
     );
+    assert!(size_output
+        .new_face_pair_edges
+        .face_pair_runs
+        .iter()
+        .all(|run| run.points.windows(2).all(|window| {
+            (
+                window[0].order_index,
+                window[0].collision,
+                window[0].output_vertex,
+            ) <= (
+                window[1].order_index,
+                window[1].collision,
+                window[1].output_vertex,
+            )
+        })));
     assert!(size_output.whole_source_edges.source_edge_runs.is_empty());
     assert_eq!(
         size_output.halfedge_assembly.output_halfedges.len(),
@@ -1972,6 +1987,18 @@ fn exercise_exact_boolmesh_kernel12_port() {
         .points[0]
         .collision = usize::MAX;
     assert!(malformed_new_edges
+        .validate_against_sources(&left, &right)
+        .is_err());
+    let mut stale_new_edge_order = workspace.clone();
+    stale_new_edge_order
+        .boolean45
+        .as_mut()
+        .unwrap()
+        .new_face_pair_edges
+        .face_pair_runs[0]
+        .points[0]
+        .order_index = usize::MAX;
+    assert!(stale_new_edge_order
         .validate_against_sources(&left, &right)
         .is_err());
 }

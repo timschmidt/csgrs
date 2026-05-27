@@ -34340,8 +34340,15 @@ fn exact_boolmesh_kernel12_discovers_skew_edge_face_events() {
             .face_pair_runs
             .iter()
             .all(|run| run.points.windows(2).all(|window| {
-                (window[0].collision, window[0].output_vertex)
-                    <= (window[1].collision, window[1].output_vertex)
+                (
+                    window[0].order_index,
+                    window[0].collision,
+                    window[0].output_vertex,
+                ) <= (
+                    window[1].order_index,
+                    window[1].collision,
+                    window[1].output_vertex,
+                )
             }))
     );
     assert_eq!(
@@ -34498,12 +34505,26 @@ fn exact_boolmesh_kernel12_discovers_skew_edge_face_events() {
         .new_face_pair_edges
         .face_pair_runs[0]
         .points[0]
-        .collision = usize::MAX;
+        .order_index = usize::MAX;
     assert_eq!(
         malformed_new_edges
             .validate_against_sources(&left, &right)
             .unwrap_err(),
         hypermesh::exact::ExactBoolMeshValidationError::Boolean45NewEdgeMismatch
+    );
+    let mut stale_new_edge_point = workspace.clone();
+    stale_new_edge_point
+        .boolean45
+        .as_mut()
+        .unwrap()
+        .new_face_pair_edges
+        .face_pair_runs[0]
+        .points[0]
+        .collision = usize::MAX;
+    assert!(
+        stale_new_edge_point
+            .validate_against_sources(&left, &right)
+            .is_err()
     );
 
     if !size_output.output_triangles.triangles.is_empty() {

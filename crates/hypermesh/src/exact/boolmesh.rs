@@ -452,6 +452,13 @@ pub struct ExactBoolMeshOutputVertexAllocation {
 pub struct ExactBoolMeshRoutedEdgePoint {
     /// Output vertex id allocated by exact `boolean45`.
     pub output_vertex: usize,
+    /// Ordering rank inside the currently staged boolmesh bucket.
+    ///
+    /// Source-edge buckets initialize this from the collision id and later
+    /// partial-edge staging replaces it with certified source-edge parameter
+    /// order.  Face-pair buckets replace it with the exact longest-axis
+    /// coordinate order used by legacy `boolean45::append_new_edges`.
+    pub order_index: usize,
     /// Collision/event id, preserving boolmesh `cid` ordering.
     pub collision: usize,
     /// Whether this point is on the tail side of a future paired halfedge.
@@ -2971,8 +2978,8 @@ fn validate_routed_edge_point(
 }
 
 #[cfg(feature = "exact-triangulation")]
-fn routed_edge_point_order_key(point: &ExactBoolMeshRoutedEdgePoint) -> (usize, usize) {
-    (point.collision, point.output_vertex)
+fn routed_edge_point_order_key(point: &ExactBoolMeshRoutedEdgePoint) -> (usize, usize, usize) {
+    (point.order_index, point.collision, point.output_vertex)
 }
 
 #[cfg(feature = "exact-triangulation")]

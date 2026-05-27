@@ -26,11 +26,13 @@ use hyperlimit::compare_reals;
 use assembly::assemble_output_halfedges;
 use export::stage_mesh_export;
 use face_loops::assemble_output_face_loops;
+use geometry::output_vertex_point;
 use output_triangles::materialize_output_triangles;
 use triangulation::triangulate_output_face_loops;
 
 use crate::exact::boolean::ExactBooleanOperation;
 use crate::exact::mesh::{ExactMesh, Triangle};
+use crate::exact::scalar::ExactReal;
 
 use super::{
     ExactBoolMeshBoolean03, ExactBoolMeshBoolean45Stage, ExactBoolMeshEdgeEvent,
@@ -71,10 +73,8 @@ use super::{
 /// crossings are ordered by the exact parameter order produced by
 /// `pair_up`, and tail/head lists are zipped into source-edge fragments.
 /// New face-pair staging mirrors `append_new_edges`: each `pt_new` bucket is
-/// partitioned into tail/head sides and zipped into fragments.  The legacy
-/// kernel orders by the longest bounding-box coordinate of rounded output
-/// positions; this exact stage uses collision/output ids as deterministic
-/// symbolic ordering until face-local exact curve order is ported.
+/// ordered on the longest exact coordinate span of its output points, then
+/// partitioned into tail/head sides and zipped into fragments.
 /// Whole source-edge staging mirrors `append_whole_edges`: untouched retained
 /// source edges are copied with operation-signed orientation and exact output
 /// vertex ids.
@@ -118,7 +118,13 @@ pub(super) fn size_output_stage(
         &i30,
         pair_up,
     );
-    let new_face_pair_edges = stage_new_face_pair_edges(&new_edge_vertices);
+    let new_face_pair_edges = stage_new_face_pair_edges(
+        left,
+        right,
+        boolean03,
+        &vertex_allocation,
+        &new_edge_vertices,
+    );
     let whole_source_edges = stage_whole_source_edges(
         left,
         right,
@@ -532,6 +538,7 @@ fn route_crossing_vertices(
         };
         let source_point = ExactBoolMeshRoutedEdgePoint {
             output_vertex,
+            order_index: collision,
             collision,
             is_tail: dir,
             origin,
@@ -743,6 +750,10 @@ fn partial_point_order(
 }
 
 fn stage_new_face_pair_edges(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    boolean03: &ExactBoolMeshBoolean03,
+    allocation: &ExactBoolMeshOutputVertexAllocation,
     new_edge_vertices: &ExactBoolMeshNewEdgeVertexStage,
 ) -> ExactBoolMeshNewFacePairStage {
     let mut unpaired_runs = 0;
@@ -751,6 +762,7 @@ fn stage_new_face_pair_edges(
         .iter()
         .map(|run| {
             let mut points = run.points.clone();
+            assign_face_pair_order_indices(left, right, boolean03, allocation, &mut points);
             points.sort_by(routed_point_order);
             let fragments = pair_routed_points(&points);
             let tail_count = points.iter().filter(|point| point.is_tail).count();
@@ -771,6 +783,144 @@ fn stage_new_face_pair_edges(
     ExactBoolMeshNewFacePairStage {
         face_pair_runs,
         unpaired_runs,
+    }
+}
+
+/// Assign the exact face-local order used by boolmesh `append_new_edges`.
+///
+/// Legacy boolmesh computes a bounding box over the output positions in one
+/// `pt_new` face-pair bucket, chooses the longest coordinate dimension, stores
+/// that coordinate in `EdgePt.val`, and then calls `pair_up`.  The exact port
+/// keeps the algorithm and removes only the `f64` dependency: output vertex
+/// coordinates are replayed from source/`kernel12` provenance, axis spans and
+/// point order are compared with exact predicates, and the resulting ordinal is
+/// stored as a replayable topology artifact.
+///
+/// This follows Yap, "Towards Exact Geometric Computation," *Computational
+/// Geometry* 7.1-2 (1997): numeric comparisons are certified before topology
+/// pairing consumes them.  The bucket algorithm itself is the boolmesh
+/// `boolean45::append_new_edges` rule.
+fn assign_face_pair_order_indices(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    boolean03: &ExactBoolMeshBoolean03,
+    allocation: &ExactBoolMeshOutputVertexAllocation,
+    points: &mut [ExactBoolMeshRoutedEdgePoint],
+) {
+    let Some(axis) = longest_exact_axis(left, right, boolean03, allocation, points) else {
+        assign_symbolic_face_pair_order_indices(points);
+        return;
+    };
+    let mut indexed = (0..points.len()).collect::<Vec<_>>();
+    indexed.sort_by(|left_index, right_index| {
+        compare_output_vertex_axis(
+            left,
+            right,
+            boolean03,
+            allocation,
+            points[*left_index].output_vertex,
+            points[*right_index].output_vertex,
+            axis,
+        )
+        .unwrap_or(Ordering::Equal)
+        .then_with(|| {
+            points[*left_index]
+                .collision
+                .cmp(&points[*right_index].collision)
+        })
+        .then_with(|| {
+            points[*left_index]
+                .output_vertex
+                .cmp(&points[*right_index].output_vertex)
+        })
+    });
+    for (order_index, point_index) in indexed.into_iter().enumerate() {
+        points[point_index].order_index = order_index;
+    }
+}
+
+fn assign_symbolic_face_pair_order_indices(points: &mut [ExactBoolMeshRoutedEdgePoint]) {
+    let mut indexed = (0..points.len()).collect::<Vec<_>>();
+    indexed.sort_by(|left_index, right_index| {
+        points[*left_index]
+            .collision
+            .cmp(&points[*right_index].collision)
+            .then_with(|| {
+                points[*left_index]
+                    .output_vertex
+                    .cmp(&points[*right_index].output_vertex)
+            })
+    });
+    for (order_index, point_index) in indexed.into_iter().enumerate() {
+        points[point_index].order_index = order_index;
+    }
+}
+
+fn longest_exact_axis(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    boolean03: &ExactBoolMeshBoolean03,
+    allocation: &ExactBoolMeshOutputVertexAllocation,
+    points: &[ExactBoolMeshRoutedEdgePoint],
+) -> Option<usize> {
+    let first = output_vertex_point(
+        points.first()?.output_vertex,
+        allocation,
+        boolean03,
+        left,
+        right,
+    )?;
+    let mut mins = [first.x.clone(), first.y.clone(), first.z.clone()];
+    let mut maxes = [first.x, first.y, first.z];
+    for point in points.iter().skip(1) {
+        let output = output_vertex_point(point.output_vertex, allocation, boolean03, left, right)?;
+        for axis in 0..3 {
+            let coordinate = point_axis(&output, axis);
+            if compare_reals(coordinate, &mins[axis]).value()? == Ordering::Less {
+                mins[axis] = coordinate.clone();
+            }
+            if compare_reals(coordinate, &maxes[axis]).value()? == Ordering::Greater {
+                maxes[axis] = coordinate.clone();
+            }
+        }
+    }
+    let spans = [
+        maxes[0].clone() - &mins[0],
+        maxes[1].clone() - &mins[1],
+        maxes[2].clone() - &mins[2],
+    ];
+    let mut axis = 0;
+    for candidate in 1..3 {
+        if compare_reals(&spans[candidate], &spans[axis]).value()? == Ordering::Greater {
+            axis = candidate;
+        }
+    }
+    Some(axis)
+}
+
+fn compare_output_vertex_axis(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    boolean03: &ExactBoolMeshBoolean03,
+    allocation: &ExactBoolMeshOutputVertexAllocation,
+    left_vertex: usize,
+    right_vertex: usize,
+    axis: usize,
+) -> Option<Ordering> {
+    let left_point = output_vertex_point(left_vertex, allocation, boolean03, left, right)?;
+    let right_point = output_vertex_point(right_vertex, allocation, boolean03, left, right)?;
+    compare_reals(
+        point_axis(&left_point, axis),
+        point_axis(&right_point, axis),
+    )
+    .value()
+}
+
+fn point_axis(point: &hyperlimit::Point3, axis: usize) -> &ExactReal {
+    match axis {
+        0 => &point.x,
+        1 => &point.y,
+        _ => &point.z,
     }
 }
 
@@ -805,8 +955,9 @@ fn routed_point_order(
     left: &ExactBoolMeshRoutedEdgePoint,
     right: &ExactBoolMeshRoutedEdgePoint,
 ) -> Ordering {
-    left.collision
-        .cmp(&right.collision)
+    left.order_index
+        .cmp(&right.order_index)
+        .then_with(|| left.collision.cmp(&right.collision))
         .then_with(|| left.output_vertex.cmp(&right.output_vertex))
 }
 
