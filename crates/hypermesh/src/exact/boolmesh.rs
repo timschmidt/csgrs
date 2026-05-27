@@ -19,6 +19,8 @@
 #[cfg(feature = "exact-triangulation")]
 mod boolean45;
 #[cfg(feature = "exact-triangulation")]
+mod kernel02;
+#[cfg(feature = "exact-triangulation")]
 mod kernel11;
 #[cfg(feature = "exact-triangulation")]
 mod kernel12;
@@ -68,6 +70,16 @@ use std::collections::{BTreeMap, BTreeSet};
 #[cfg(all(feature = "exact-triangulation", feature = "internal-fuzzing"))]
 pub fn exact_boolmesh_kernel11_shadow_probe_for_internal_fuzz(selector: u8) -> bool {
     kernel11::internal_fuzz_probe(selector)
+}
+
+/// Exercise the exact `Kernel02` vertex/face shadow primitive port from fuzz targets.
+///
+/// This remains gated behind `internal-fuzzing` for the same reason as the
+/// `Kernel11` probe: it compiles adversarial coverage for the direct boolmesh
+/// algorithm while the normal workspace still owns staged `kernel12` lowering.
+#[cfg(all(feature = "exact-triangulation", feature = "internal-fuzzing"))]
+pub fn exact_boolmesh_kernel02_shadow_probe_for_internal_fuzz(selector: u8) -> bool {
+    kernel02::internal_fuzz_probe(selector)
 }
 
 /// Legacy boolmesh kernel stage represented by the exact port.
