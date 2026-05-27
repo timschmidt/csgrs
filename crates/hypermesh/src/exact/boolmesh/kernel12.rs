@@ -96,8 +96,8 @@ pub(super) fn lower_kernel12_events(
         }
     }
 
-    sort_lowered_events(&mut left);
-    sort_lowered_events(&mut right);
+    coalesce_lowered_events(&mut left);
+    coalesce_lowered_events(&mut right);
 
     let source_edge_events = left
         .iter()
@@ -254,6 +254,57 @@ fn real_sign(value: &super::ExactReal) -> Option<Sign> {
     }
 }
 
+/// Coalesce certified identical `Kernel12` contributions by edge/face key.
+///
+/// Legacy boolmesh calls `Kernel12::op` once for each `(source halfedge,
+/// opposite face)` pair.  That call accumulates vertex/face and edge/edge
+/// shadow terms into one signed `x12`/`x21` value and emits no row when the
+/// signed sum is zero.  The exact graph may retain the same construction more
+/// than once as independent segment/plane evidence, so this pass ports the
+/// boolmesh accumulation shape for cases where the exact point and parameter
+/// are certified identical.  Non-identical multi-shadow groups are left split
+/// until the full `Kernel11` interpolation rule is ported; collapsing them to a
+/// representative point would violate Yap's exact-object replay boundary.
+fn coalesce_lowered_events(events: &mut Vec<LoweredKernel12Event>) {
+    sort_lowered_events(events);
+    let mut coalesced = Vec::new();
+    let mut start = 0;
+    while start < events.len() {
+        let mut end = start + 1;
+        while end < events.len() && events[end].edge_face == events[start].edge_face {
+            end += 1;
+        }
+
+        let mut sign_sum = 0;
+        let mut identical = true;
+        for event in &events[start..end] {
+            sign_sum += event.sign;
+            if !same_lowered_construction(&events[start], event) {
+                identical = false;
+            }
+        }
+
+        if identical {
+            if sign_sum != 0 {
+                let mut event = events[start].clone();
+                event.sign = sign_sum;
+                coalesced.push(event);
+            }
+        } else {
+            coalesced.extend(events[start..end].iter().cloned());
+        }
+        start = end;
+    }
+    *events = coalesced;
+}
+
+fn same_lowered_construction(left: &LoweredKernel12Event, right: &LoweredKernel12Event) -> bool {
+    compare_reals(&left.parameter, &right.parameter).value() == Some(Ordering::Equal)
+        && compare_reals(&left.point.x, &right.point.x).value() == Some(Ordering::Equal)
+        && compare_reals(&left.point.y, &right.point.y).value() == Some(Ordering::Equal)
+        && compare_reals(&left.point.z, &right.point.z).value() == Some(Ordering::Equal)
+}
+
 fn sort_lowered_events(events: &mut [LoweredKernel12Event]) {
     events.sort_by(|left, right| {
         (
@@ -271,4 +322,93 @@ fn sort_lowered_events(events: &mut [LoweredKernel12Event]) {
                 right.edge_face.face_pair.right_face,
             ))
     });
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::exact::SegmentPlaneParameterRatio;
+    use crate::exact::mesh::ExactMesh;
+
+    fn tetrahedron_i64(a: [i64; 3], b: [i64; 3], c: [i64; 3], d: [i64; 3]) -> ExactMesh {
+        ExactMesh::from_i64_triangles(
+            &[
+                a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2], d[0], d[1], d[2],
+            ],
+            &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
+        )
+        .unwrap()
+    }
+
+    fn edge_face() -> ExactBoolMeshEdgeFacePair {
+        ExactBoolMeshEdgeFacePair {
+            face_pair: super::super::ExactBoolMeshFacePair {
+                left_face: 0,
+                right_face: 0,
+            },
+            edge_side: ExactBoolMeshSide::Left,
+            edge: [0, 1],
+            face_side: ExactBoolMeshSide::Right,
+            face: 0,
+        }
+    }
+
+    fn proper_event(endpoint_sides: [Option<PlaneSide>; 2]) -> ExactBoolMeshKernel12Event {
+        ExactBoolMeshKernel12Event {
+            edge_face: edge_face(),
+            relation: SegmentPlaneRelation::ProperCrossing,
+            point: Some(Point3::new(
+                super::super::ExactReal::from(1),
+                super::super::ExactReal::from(1),
+                super::super::ExactReal::from(1),
+            )),
+            parameter: Some(
+                (super::super::ExactReal::from(1) / super::super::ExactReal::from(2)).unwrap(),
+            ),
+            parameter_ratio: Some(SegmentPlaneParameterRatio {
+                numerator: super::super::ExactReal::from(1),
+                denominator: super::super::ExactReal::from(2),
+            }),
+            construction_failure: None,
+            endpoint_sides,
+        }
+    }
+
+    #[test]
+    fn coalesces_identical_edge_face_contributions() {
+        let left = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
+        let right = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, -4]);
+        let lowering = lower_kernel12_events(
+            &[
+                proper_event([Some(PlaneSide::Below), Some(PlaneSide::Above)]),
+                proper_event([Some(PlaneSide::Below), Some(PlaneSide::Above)]),
+            ],
+            &left,
+            &right,
+        );
+
+        assert_eq!(lowering.p1q2, vec![edge_face()]);
+        assert_eq!(lowering.x12, vec![2]);
+        assert_eq!(lowering.v12.len(), 1);
+        assert_eq!(lowering.source_edge_events.len(), 1);
+    }
+
+    #[test]
+    fn drops_zero_sum_identical_edge_face_contributions() {
+        let left = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
+        let right = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, -4]);
+        let lowering = lower_kernel12_events(
+            &[
+                proper_event([Some(PlaneSide::Below), Some(PlaneSide::Above)]),
+                proper_event([Some(PlaneSide::Above), Some(PlaneSide::Below)]),
+            ],
+            &left,
+            &right,
+        );
+
+        assert!(lowering.p1q2.is_empty());
+        assert!(lowering.x12.is_empty());
+        assert!(lowering.v12.is_empty());
+        assert!(lowering.source_edge_events.is_empty());
+    }
 }
