@@ -27,7 +27,7 @@ use crate::bezier_arrangement::{
     LineCubicBezierAlgebraicSupportRoot, LineCubicBezierIntersection,
     LineCubicBezierIntersectionClass, LineCubicBezierIntersectionReport,
     LineCubicBezierInverseBoundarySource, LineCubicBezierSupportOverlap,
-    intersect_axis_aligned_line_cubic_bezier,
+    intersect_line_cubic_bezier,
 };
 use crate::curve_cell::{
     CurveArrangementCellError, CurveArrangementCellGraph, build_line_cubic_cell_graph,
@@ -720,7 +720,7 @@ pub fn arrange_line_segments_with_cubic_beziers_and_provenance(
 
     for (line_index, line) in lines.iter().enumerate() {
         for (curve_index, curve) in curves.iter().enumerate() {
-            let intersection = intersect_axis_aligned_line_cubic_bezier(line, curve, policy);
+            let intersection = intersect_line_cubic_bezier(line, curve, policy);
             if intersection.class != LineCubicBezierIntersectionClass::Unknown {
                 for event in &intersection.intersections {
                     insert_line_breakpoint(

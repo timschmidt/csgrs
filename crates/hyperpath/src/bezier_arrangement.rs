@@ -863,6 +863,72 @@ fn intersect_axis_aligned_line_quadratic_bezier_with_axis(
     }
 }
 
+/// Intersect a line segment with a cubic Bezier exactly when its retained
+/// support equation has degree at most two.
+///
+/// For non-axis lines this evaluates the cubic Bezier in the exact implicit
+/// line equation `cross(line.end-line.start, B(t)-line.start) = 0`. Constant,
+/// linear, and quadratic equations are solved as exact `Real` objects and
+/// replayed against the curve domain and segment bounds. Genuinely cubic
+/// equations remain [`LineCubicBezierIntersectionClass::Unknown`] until the
+/// represented-root point-image machinery can materialize them without
+/// sampling. This is the Yap boundary from "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7.1-2 (1997): exact construction is
+/// admitted only when the predicate layer has a replayable object. The cubic
+/// Bezier carrier and tangent classification follow the polynomial-curve
+/// discipline in Farouki, *Pythagorean Hodograph Curves* (2008).
+pub fn intersect_line_cubic_bezier(
+    segment: &LinePathSegment,
+    curve: &CubicBezier,
+    policy: PredicatePolicy,
+) -> LineCubicBezierIntersectionReport {
+    if let Some(axis) = segment.facts().axis_aligned {
+        return intersect_axis_aligned_line_cubic_bezier_with_axis(segment, curve, axis, policy);
+    }
+
+    let roots = match solve_cubic_implicit_line_roots_up_to_quadratic(segment, curve, policy) {
+        Some(roots) => roots,
+        None => return line_cubic_unknown_report(),
+    };
+    let mut intersections = Vec::new();
+    for parameter in roots {
+        match parameter_in_unit_interval(&parameter, policy) {
+            Some(true) => {}
+            Some(false) => continue,
+            None => return line_cubic_unknown_report(),
+        }
+        let point = eval_cubic_at_real(curve, &parameter);
+        match point_inside_segment_bounds(&point, segment, policy) {
+            Some(true) => {}
+            Some(false) => continue,
+            None => return line_cubic_unknown_report(),
+        }
+        if push_unique_cubic_intersection(&mut intersections, parameter, point, policy).is_none() {
+            return line_cubic_unknown_report();
+        }
+    }
+    if sort_cubic_intersections(&mut intersections, policy).is_none() {
+        return line_cubic_unknown_report();
+    }
+    let class = match intersections.len() {
+        0 => LineCubicBezierIntersectionClass::Disjoint,
+        1 => match implicit_line_cubic_roots_are_tangent_up_to_quadratic(segment, curve, policy) {
+            Some(true) => LineCubicBezierIntersectionClass::Tangent,
+            Some(false) => LineCubicBezierIntersectionClass::OnePoint,
+            None => return line_cubic_unknown_report(),
+        },
+        2 => LineCubicBezierIntersectionClass::TwoPoints,
+        3 => LineCubicBezierIntersectionClass::ThreePoints,
+        _ => LineCubicBezierIntersectionClass::Unknown,
+    };
+    LineCubicBezierIntersectionReport {
+        class,
+        intersections,
+        algebraic_support_roots: Vec::new(),
+        support_overlap: None,
+    }
+}
+
 /// Intersect an axis-aligned line segment with a cubic Bezier exactly where
 /// the retained support equation has degree at most two.
 pub fn intersect_axis_aligned_line_cubic_bezier(
@@ -873,6 +939,15 @@ pub fn intersect_axis_aligned_line_cubic_bezier(
     let Some(axis) = segment.facts().axis_aligned else {
         return line_cubic_unknown_report();
     };
+    intersect_axis_aligned_line_cubic_bezier_with_axis(segment, curve, axis, policy)
+}
+
+fn intersect_axis_aligned_line_cubic_bezier_with_axis(
+    segment: &LinePathSegment,
+    curve: &CubicBezier,
+    axis: Axis,
+    policy: PredicatePolicy,
+) -> LineCubicBezierIntersectionReport {
     let fixed = match axis {
         Axis::X => segment.start().y.clone(),
         Axis::Y => segment.start().x.clone(),
@@ -1387,6 +1462,21 @@ fn solve_cubic_coordinate_roots_up_to_quadratic(
     }
 }
 
+fn solve_cubic_implicit_line_roots_up_to_quadratic(
+    segment: &LinePathSegment,
+    curve: &CubicBezier,
+    policy: PredicatePolicy,
+) -> Option<Vec<Real>> {
+    let (a, b, c, d) = cubic_implicit_line_polynomial(segment, curve);
+    match compare_reals_with_policy(&a, &Real::zero(), policy).value()? {
+        Ordering::Equal => match compare_reals_with_policy(&b, &Real::zero(), policy).value()? {
+            Ordering::Equal => solve_linear_root(c, d, policy),
+            Ordering::Less | Ordering::Greater => solve_quadratic_roots(b, c, d, policy),
+        },
+        Ordering::Less | Ordering::Greater => None,
+    }
+}
+
 fn cubic_coordinate_polynomial(
     curve: &CubicBezier,
     axis: Axis,
@@ -1400,6 +1490,21 @@ fn cubic_coordinate_polynomial(
     let b = Real::from(3) * p0.clone() - Real::from(6) * p1.clone() + Real::from(3) * p2;
     let c = Real::from(3) * (p1 - p0.clone());
     let d = p0 - fixed;
+    (a, b, c, d)
+}
+
+fn cubic_implicit_line_polynomial(
+    segment: &LinePathSegment,
+    curve: &CubicBezier,
+) -> (Real, Real, Real, Real) {
+    let q0 = implicit_line_support_coefficient(segment, curve.start());
+    let q1 = implicit_line_support_coefficient(segment, curve.control0());
+    let q2 = implicit_line_support_coefficient(segment, curve.control1());
+    let q3 = implicit_line_support_coefficient(segment, curve.end());
+    let a = -q0.clone() + Real::from(3) * q1.clone() - Real::from(3) * q2.clone() + q3;
+    let b = Real::from(3) * q0.clone() - Real::from(6) * q1.clone() + Real::from(3) * q2;
+    let c = Real::from(3) * (q1 - q0.clone());
+    let d = q0;
     (a, b, c, d)
 }
 
@@ -2627,6 +2732,24 @@ fn cubic_roots_are_tangent_up_to_quadratic(
     let b = Real::from(3) * p0.clone() - Real::from(6) * p1.clone() + Real::from(3) * p2;
     let c = Real::from(3) * (p1 - p0.clone());
     let d = p0 - fixed;
+    if compare_reals_with_policy(&a, &Real::zero(), policy).value()? != Ordering::Equal {
+        return None;
+    }
+    if compare_reals_with_policy(&b, &Real::zero(), policy).value()? == Ordering::Equal {
+        return Some(false);
+    }
+    let discriminant = c.clone() * c - Real::from(4) * b * d;
+    Some(
+        compare_reals_with_policy(&discriminant, &Real::zero(), policy).value()? == Ordering::Equal,
+    )
+}
+
+fn implicit_line_cubic_roots_are_tangent_up_to_quadratic(
+    segment: &LinePathSegment,
+    curve: &CubicBezier,
+    policy: PredicatePolicy,
+) -> Option<bool> {
+    let (a, b, c, d) = cubic_implicit_line_polynomial(segment, curve);
     if compare_reals_with_policy(&a, &Real::zero(), policy).value()? != Ordering::Equal {
         return None;
     }

@@ -27,7 +27,8 @@ use hyperpath::{
     arrange_line_segments_with_rational_quadratic_beziers, arrange_quadratic_beziers,
     arrange_rational_quadratic_beziers, intersect_axis_aligned_line_cubic_bezier,
     intersect_axis_aligned_line_quadratic_bezier,
-    intersect_axis_aligned_line_rational_quadratic_bezier, intersect_line_quadratic_bezier,
+    intersect_axis_aligned_line_rational_quadratic_bezier, intersect_line_cubic_bezier,
+    intersect_line_quadratic_bezier,
 };
 use hyperreal::{Rational, Real};
 use hypersolve::AlgebraicRootPolynomialImageStatus;
@@ -232,6 +233,30 @@ fuzz_target!(|data: &[u8]| {
             Some(Ordering::Equal)
         );
     }
+    let diagonal_cubic_line = LinePathSegment::new(p(0, 1), p(8, 5));
+    let diagonal_cubic_report = intersect_line_cubic_bezier(
+        &diagonal_cubic_line,
+        &reducible_cubic,
+        PredicatePolicy::default(),
+    );
+    assert_eq!(
+        diagonal_cubic_report.class,
+        LineCubicBezierIntersectionClass::TwoPoints
+    );
+    assert_eq!(diagonal_cubic_report.intersections[0].parameter, rq(1, 6));
+    assert_eq!(diagonal_cubic_report.intersections[1].parameter, rq(1, 2));
+    let diagonal_cubic_arrangement = arrange_line_segments_with_cubic_beziers(
+        &[diagonal_cubic_line],
+        &[reducible_cubic.clone()],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert_eq!(
+        diagonal_cubic_arrangement.events[0].class,
+        LineCubicBezierIntersectionClass::TwoPoints
+    );
+    assert_eq!(diagonal_cubic_arrangement.line_breakpoints[0].len(), 4);
+    assert_eq!(diagonal_cubic_arrangement.cubic_breakpoints[0].len(), 4);
     let cubic_mixed_report = arrange_line_segments_with_cubic_beziers(
         &[cubic_secant_line],
         &[reducible_cubic],

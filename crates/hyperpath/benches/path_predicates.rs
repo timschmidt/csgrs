@@ -51,15 +51,15 @@ use hyperpath::{
     classify_tangent_chain, classify_tangent_join, import_specctra_trace_record,
     import_specctra_via_record, intersect_axis_aligned_line_cubic_bezier,
     intersect_axis_aligned_line_quadratic_bezier,
-    intersect_axis_aligned_line_rational_quadratic_bezier, intersect_rectangular_regions,
-    offset_axis_aligned_segment, offset_cardinal_arc, offset_cubic_bezier_sample,
-    offset_explicit_arc, offset_higher_order_bezier_sample, offset_quadratic_bezier_sample,
-    parse_specctra_grid_route_records, parse_specctra_grid_trace_records,
-    serialize_specctra_grid_arc_wire_records, serialize_specctra_grid_keepout_records,
-    serialize_specctra_grid_route_records, serialize_specctra_grid_trace_records,
-    serialize_specctra_grid_via_records, specctra_grid_arc_wire_record,
-    specctra_grid_keepout_record, specctra_grid_trace_record, specctra_grid_via_record,
-    subtract_rectangular_region,
+    intersect_axis_aligned_line_rational_quadratic_bezier, intersect_line_cubic_bezier,
+    intersect_rectangular_regions, offset_axis_aligned_segment, offset_cardinal_arc,
+    offset_cubic_bezier_sample, offset_explicit_arc, offset_higher_order_bezier_sample,
+    offset_quadratic_bezier_sample, parse_specctra_grid_route_records,
+    parse_specctra_grid_trace_records, serialize_specctra_grid_arc_wire_records,
+    serialize_specctra_grid_keepout_records, serialize_specctra_grid_route_records,
+    serialize_specctra_grid_trace_records, serialize_specctra_grid_via_records,
+    specctra_grid_arc_wire_record, specctra_grid_keepout_record, specctra_grid_trace_record,
+    specctra_grid_via_record, subtract_rectangular_region,
 };
 use hyperreal::{Rational, Real};
 
@@ -642,6 +642,16 @@ fn path_predicates(c: &mut Criterion) {
         b.iter(|| {
             intersect_axis_aligned_line_cubic_bezier(
                 &line_cubic_line,
+                &line_cubic,
+                PredicatePolicy::default(),
+            )
+        })
+    });
+    let line_cubic_diagonal_line = LinePathSegment::new(p(0, 100), p(400, 300));
+    c.bench_function("line_cubic_bezier_general_line_exact_events", |b| {
+        b.iter(|| {
+            intersect_line_cubic_bezier(
+                &line_cubic_diagonal_line,
                 &line_cubic,
                 PredicatePolicy::default(),
             )
