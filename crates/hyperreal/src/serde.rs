@@ -3,6 +3,7 @@ use std::str::FromStr;
 use crate::{Problem, Rational, real::Real};
 use ciborium::{Value, de, ser};
 use num::BigInt;
+use num::bigint::Sign as BigIntSign;
 
 impl Real {
     /// Serializes the Real to a JSON string.
@@ -68,11 +69,19 @@ impl TryFrom<&Value> for Real {
                     }
                 }
                 // If we receive an array of length 2, we attempt to interpret it as the numerator and denominator of a Rational.
-                let numerator = as_big_int(&x[0])?;
+                let mut numerator = as_big_int(&x[0])?;
                 let denominator = as_big_int(&x[1])?;
-                Ok(Real::new(
-                    Rational::from_bigint(numerator) / Rational::from_bigint(denominator),
-                ))
+                let (denominator_sign, denominator_magnitude) = denominator.into_parts();
+                if denominator_sign == BigIntSign::NoSign {
+                    return Err(Problem::DivideByZero);
+                }
+                if denominator_sign == BigIntSign::Minus {
+                    numerator = -numerator;
+                }
+                Ok(Real::new(Rational::from_bigint_fraction(
+                    numerator,
+                    denominator_magnitude,
+                )?))
             }
             _ => {
                 // In this branch, we should be whatever type ciborium decided to use for `Real`.
@@ -261,5 +270,20 @@ mod tests {
         let value: Value = de::from_reader(buf.as_slice()).unwrap();
         let y: Real = (&value).try_into().unwrap();
         assert_eq!(x, y);
+    }
+
+    #[test]
+    fn cbor_rational_pair_rejects_zero_denominator() {
+        let value = Value::Array(vec![Value::Integer(1.into()), Value::Integer(0.into())]);
+        assert_eq!(Real::try_from(&value), Err(Problem::DivideByZero));
+    }
+
+    #[test]
+    fn cbor_rational_pair_normalizes_negative_denominator() {
+        let value = Value::Array(vec![Value::Integer(1.into()), Value::Integer((-2).into())]);
+        assert_eq!(
+            Real::try_from(&value).unwrap(),
+            Real::new(Rational::fraction(-1, 2).unwrap())
+        );
     }
 }

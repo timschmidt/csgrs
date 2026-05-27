@@ -3,7 +3,7 @@ use crate::structural::{RationalFacts, RationalStorageClass};
 use num::bigint::Sign::{self, *};
 use num::{BigInt, BigUint, ToPrimitive};
 use num::{One, Zero};
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 use std::cmp::Ordering;
 use std::sync::LazyLock;
 
@@ -49,11 +49,33 @@ use std::sync::LazyLock;
 /// assert_eq!(four, Rational::new(4));
 /// ```
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize)]
 pub struct Rational {
     sign: Sign,
     numerator: BigUint,
     denominator: BigUint,
+}
+
+impl<'de> Deserialize<'de> for Rational {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        #[derive(Deserialize)]
+        struct RationalWire {
+            sign: Sign,
+            numerator: BigUint,
+            denominator: BigUint,
+        }
+
+        let wire = RationalWire::deserialize(deserializer)?;
+        if wire.denominator.is_zero() {
+            return Err(serde::de::Error::custom(
+                "Rational denominator must be nonzero",
+            ));
+        }
+        Ok(Self::from_fraction_parts(wire.sign, wire.numerator, wire.denominator).reduce())
+    }
 }
 
 static ONE: LazyLock<BigUint> = LazyLock::new(BigUint::one);
@@ -1613,11 +1635,11 @@ impl std::str::FromStr for Rational {
             if numerator.is_zero() {
                 sign = NoSign;
             }
-            Ok(Self {
-                sign,
-                numerator,
-                denominator: BigUint::parse_bytes(d.as_bytes(), 10).ok_or(Problem::BadFraction)?,
-            })
+            let denominator = BigUint::parse_bytes(d.as_bytes(), 10).ok_or(Problem::BadFraction)?;
+            if denominator.is_zero() {
+                return Err(Problem::DivideByZero);
+            }
+            Ok(Self::from_fraction_parts(sign, numerator, denominator).reduce())
         } else if let Some((i, d)) = s.split_once('.') {
             let numerator = BigUint::parse_bytes(i.as_bytes(), 10).ok_or(Problem::BadDecimal)?;
             let whole = if numerator.is_zero() {
@@ -1961,6 +1983,27 @@ mod tests {
         let answer = third + minus_four * twelve;
         let expected: Rational = "-31/15".parse().unwrap();
         assert_eq!(answer, expected);
+    }
+
+    #[test]
+    fn parse_fraction_rejects_zero_denominator_and_reduces() {
+        assert_eq!("1/0".parse::<Rational>(), Err(Problem::DivideByZero));
+        assert_eq!("0/0".parse::<Rational>(), Err(Problem::DivideByZero));
+
+        let reduced: Rational = "9/18".parse().unwrap();
+        assert_eq!(reduced, Rational::fraction(1, 2).unwrap());
+        assert_eq!(format!("{reduced}"), "1/2");
+    }
+
+    #[test]
+    fn serde_rejects_invalid_or_uncanonical_rational_state() {
+        let bad = r#"{"sign":1,"numerator":[1],"denominator":[]}"#;
+        assert!(serde_json::from_str::<Rational>(bad).is_err());
+
+        let unreduced = r#"{"sign":1,"numerator":[9],"denominator":[18]}"#;
+        let decoded: Rational = serde_json::from_str(unreduced).unwrap();
+        assert_eq!(decoded, Rational::fraction(1, 2).unwrap());
+        assert_eq!(format!("{decoded}"), "1/2");
     }
 
     #[test]
