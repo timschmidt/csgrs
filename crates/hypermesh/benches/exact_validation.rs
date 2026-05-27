@@ -13132,6 +13132,75 @@ fn exact_boolmesh_kernel12_port(c: &mut Criterion) {
     }
 }
 
+fn exact_boolmesh_kernel03_no_intersection_port(c: &mut Criterion) {
+    #[cfg(feature = "exact-triangulation")]
+    {
+        let inner = ExactMesh::from_i64_triangles(
+            &[1, 1, 1, 2, 1, 1, 1, 2, 1, 1, 1, 2],
+            &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
+        )
+        .unwrap();
+        let outer = ExactMesh::from_i64_triangles(
+            &[0, 0, 0, 10, 0, 0, 0, 10, 0, 0, 0, 10],
+            &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
+        )
+        .unwrap();
+
+        c.bench_function("exact_boolmesh_kernel03_no_intersection_port", |b| {
+            b.iter(|| {
+                let union = hypermesh::exact::exact_boolmesh_workspace(
+                    &inner,
+                    &outer,
+                    hypermesh::exact::ExactBooleanOperation::Union,
+                );
+                union.validate_against_sources(&inner, &outer).unwrap();
+                assert!(union.is_certified_no_intersection_kernel03());
+                let intersection = hypermesh::exact::exact_boolmesh_workspace(
+                    &inner,
+                    &outer,
+                    hypermesh::exact::ExactBooleanOperation::Intersection,
+                );
+                intersection
+                    .validate_against_sources(&inner, &outer)
+                    .unwrap();
+                assert!(intersection.is_certified_no_intersection_kernel03());
+                let union_stage = union.boolean45.as_ref().unwrap();
+                let intersection_stage = intersection.boolean45.as_ref().unwrap();
+                union
+                    .boolean03
+                    .w03
+                    .iter()
+                    .map(|value| *value as usize)
+                    .sum::<usize>()
+                    + union
+                        .boolean03
+                        .w30
+                        .iter()
+                        .map(|value| *value as usize)
+                        .sum::<usize>()
+                    + intersection
+                        .boolean03
+                        .w03
+                        .iter()
+                        .map(|value| *value as usize)
+                        .sum::<usize>()
+                    + union_stage.vertices_from_right
+                    + union_stage.whole_source_edges.source_edge_runs.len()
+                    + union_stage.halfedge_assembly.emitted_pairs
+                    + union_stage.mesh_export.triangles.len()
+                    + intersection_stage.vertices_from_left
+                    + intersection_stage.whole_source_edges.source_edge_runs.len()
+                    + intersection_stage.halfedge_assembly.emitted_pairs
+                    + intersection_stage.mesh_export.triangles.len()
+            })
+        });
+    }
+    #[cfg(not(feature = "exact-triangulation"))]
+    {
+        let _ = c;
+    }
+}
+
 fn legacy_boolean_adapter_report(c: &mut Criterion) {
     #[cfg(feature = "legacy-boolean")]
     {
@@ -13236,6 +13305,7 @@ criterion_group!(
     exact_boolean_convex_single_cap_difference,
     exact_boolmesh_bounds_disjoint_port,
     exact_boolmesh_kernel12_port,
+    exact_boolmesh_kernel03_no_intersection_port,
     legacy_boolean_adapter_report
 );
 criterion_main!(benches);

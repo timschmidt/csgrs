@@ -33746,6 +33746,158 @@ fn exact_boolmesh_workspace_blocks_coplanar_non_disjoint_at_kernel12() {
 
 #[test]
 #[cfg(feature = "exact-triangulation")]
+fn exact_boolmesh_kernel03_classifies_nested_closed_no_intersection() {
+    let inner = tetrahedron_i64([1, 1, 1], [2, 1, 1], [1, 2, 1], [1, 1, 2]);
+    let outer = tetrahedron_i64([0, 0, 0], [10, 0, 0], [0, 10, 0], [0, 0, 10]);
+
+    let union_workspace = hypermesh::exact::exact_boolmesh_workspace(
+        &inner,
+        &outer,
+        hypermesh::exact::ExactBooleanOperation::Union,
+    );
+    union_workspace
+        .validate_against_sources(&inner, &outer)
+        .unwrap();
+    assert!(union_workspace.blocker.is_none());
+    assert!(!union_workspace.is_certified_bounds_disjoint());
+    assert!(union_workspace.is_certified_no_intersection_kernel03());
+    assert_eq!(
+        union_workspace.boolean03.w03,
+        vec![1; inner.vertices().len()]
+    );
+    assert_eq!(
+        union_workspace.boolean03.w30,
+        vec![0; outer.vertices().len()]
+    );
+    assert!(union_workspace.boolean03.p1q2.is_empty());
+    assert!(union_workspace.boolean03.p2q1.is_empty());
+    let union_size_output = union_workspace
+        .boolean45
+        .as_ref()
+        .expect("nested no-intersection union should run boolean45");
+    assert_eq!(union_size_output.vertices_from_left, 0);
+    assert_eq!(
+        union_size_output.vertices_from_right,
+        outer.vertices().len()
+    );
+    assert_eq!(union_size_output.inserted_intersection_vertices, 0);
+    assert_eq!(union_size_output.source_edge_incident_gaps, 0);
+    assert_eq!(
+        union_size_output.whole_source_edges.source_edge_runs.len(),
+        6
+    );
+    assert!(
+        union_size_output
+            .whole_source_edges
+            .source_edge_runs
+            .iter()
+            .all(|run| run.side == hypermesh::exact::ExactBoolMeshSide::Right
+                && run.signed_count == 1
+                && run.fragments.len() == 1)
+    );
+    assert_eq!(union_size_output.halfedge_assembly.emitted_pairs, 6);
+    assert_eq!(
+        union_size_output
+            .halfedge_assembly
+            .emitted_boundary_halfedges,
+        0
+    );
+    assert_eq!(
+        union_size_output.mesh_export.triangles.len(),
+        outer.triangles().len()
+    );
+    assert!(
+        union_size_output
+            .mesh_export
+            .triangles
+            .iter()
+            .zip(outer.triangles().iter())
+            .all(|(actual, expected)| cyclic_triangle_eq(actual.0, expected.0))
+    );
+
+    let intersection_workspace = hypermesh::exact::exact_boolmesh_workspace(
+        &inner,
+        &outer,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+    );
+    intersection_workspace
+        .validate_against_sources(&inner, &outer)
+        .unwrap();
+    assert!(intersection_workspace.blocker.is_none());
+    assert!(intersection_workspace.is_certified_no_intersection_kernel03());
+    assert_eq!(
+        intersection_workspace.boolean03.w03,
+        vec![1; inner.vertices().len()]
+    );
+    assert_eq!(
+        intersection_workspace.boolean03.w30,
+        vec![0; outer.vertices().len()]
+    );
+    let intersection_size_output = intersection_workspace
+        .boolean45
+        .as_ref()
+        .expect("nested no-intersection intersection should run boolean45");
+    assert_eq!(
+        intersection_size_output.vertices_from_left,
+        inner.vertices().len()
+    );
+    assert_eq!(intersection_size_output.vertices_from_right, 0);
+    assert_eq!(
+        intersection_size_output
+            .whole_source_edges
+            .source_edge_runs
+            .len(),
+        6
+    );
+    assert!(
+        intersection_size_output
+            .whole_source_edges
+            .source_edge_runs
+            .iter()
+            .all(|run| run.side == hypermesh::exact::ExactBoolMeshSide::Left
+                && run.signed_count == 1
+                && run.fragments.len() == 1)
+    );
+    assert_eq!(intersection_size_output.halfedge_assembly.emitted_pairs, 6);
+    assert_eq!(
+        intersection_size_output.mesh_export.triangles.len(),
+        inner.triangles().len()
+    );
+    assert!(
+        intersection_size_output
+            .mesh_export
+            .triangles
+            .iter()
+            .zip(inner.triangles().iter())
+            .all(|(actual, expected)| cyclic_triangle_eq(actual.0, expected.0))
+    );
+
+    let difference_workspace = hypermesh::exact::exact_boolmesh_workspace(
+        &inner,
+        &outer,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    );
+    difference_workspace
+        .validate_against_sources(&inner, &outer)
+        .unwrap();
+    assert!(difference_workspace.blocker.is_none());
+    let difference_size_output = difference_workspace.boolean45.as_ref().unwrap();
+    assert_eq!(difference_size_output.vertices_from_left, 0);
+    assert_eq!(difference_size_output.vertices_from_right, 0);
+    assert!(difference_size_output.mesh_export.triangles.is_empty());
+
+    let mut stale_winding = union_workspace.clone();
+    stale_winding.boolean03.w03[0] = 0;
+    assert_eq!(
+        stale_winding
+            .validate_against_sources(&inner, &outer)
+            .unwrap_err(),
+        hypermesh::exact::ExactBoolMeshValidationError::Boolean45SizeCountMismatch
+    );
+}
+
+#[test]
+#[cfg(feature = "exact-triangulation")]
 fn exact_boolmesh_kernel12_discovers_skew_edge_face_events() {
     let left = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
     let right = tetrahedron_i64([1, 1, -1], [3, 1, 3], [1, 3, 3], [3, 3, 1]);

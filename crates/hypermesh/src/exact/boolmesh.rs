@@ -40,6 +40,10 @@ use super::scalar::ExactReal;
 #[cfg(feature = "exact-triangulation")]
 use super::validation::ValidationPolicy;
 #[cfg(feature = "exact-triangulation")]
+use super::winding::{
+    ClosedMeshWindingRelation, classify_point_against_closed_mesh_winding_report,
+};
+#[cfg(feature = "exact-triangulation")]
 use super::{AabbIntersectionKind, MeshError};
 #[cfg(feature = "exact-triangulation")]
 use boolean45::{pair_source_edge_events, size_output_stage};
@@ -323,6 +327,75 @@ pub struct ExactBoolMeshBoolean03 {
     pub w03: Vec<i32>,
     /// Right vertex winding/classification counters, legacy `w30`.
     pub w30: Vec<i32>,
+}
+
+/// Exact `kernel03` winding counters for the no-intersection boolmesh branch.
+///
+/// Legacy boolmesh fills `w03` and `w30` after `kernel12` has proved that no
+/// edge/face split records have to be inserted.  This port keeps the same data
+/// dependency: only a clear exact `kernel12` result may ask the existing exact
+/// closed-mesh winding query to classify every opposite vertex.  Following Yap,
+/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+/// (1997), boundary and undecidable states stay explicit blockers rather than
+/// being rounded into inside/outside counters.
+#[cfg(feature = "exact-triangulation")]
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct ExactBoolMeshKernel03Winding {
+    /// Left source vertices classified against the right mesh, legacy `w03`.
+    w03: Vec<i32>,
+    /// Right source vertices classified against the left mesh, legacy `w30`.
+    w30: Vec<i32>,
+}
+
+/// Classify closed, no-intersection operands for exact `kernel03`.
+///
+/// This is intentionally limited to the boolmesh branch where `kernel12` has
+/// no split points left to pair.  With no edge/face events, all vertices of a
+/// connected closed operand share the same winding class against the other
+/// closed operand, but the port still checks every vertex: that preserves the
+/// replay surface expected by Yap's exact-computation model and catches
+/// boundary or mixed states before `boolean45::size_output` consumes the
+/// integer counters.
+#[cfg(feature = "exact-triangulation")]
+fn classify_no_intersection_kernel03(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Option<ExactBoolMeshKernel03Winding> {
+    Some(ExactBoolMeshKernel03Winding {
+        w03: classify_vertices_for_boolmesh_winding(left, right)?,
+        w30: classify_vertices_for_boolmesh_winding(right, left)?,
+    })
+}
+
+/// Convert exact closed-mesh winding relations into boolmesh `kernel03`
+/// counters.
+///
+/// Boolmesh stores winding membership as small integers that are later combined
+/// with operation coefficients in `boolean45::size_output`: `1` means the
+/// subject vertex is strictly inside the opposite closed mesh and `0` means it
+/// is strictly outside.  Boundary, unknown, and not-closed relations are not
+/// coerced; they keep the workspace blocked at `kernel03` until the matching
+/// boolmesh subcase is ported with exact predicates.
+#[cfg(feature = "exact-triangulation")]
+fn classify_vertices_for_boolmesh_winding(
+    subject: &ExactMesh,
+    target: &ExactMesh,
+) -> Option<Vec<i32>> {
+    let mut winding = Vec::with_capacity(subject.vertices().len());
+    for vertex in subject.vertices() {
+        let report = classify_point_against_closed_mesh_winding_report(
+            &vertex.to_hyperlimit_point(),
+            target,
+        );
+        match report.relation {
+            ClosedMeshWindingRelation::Inside => winding.push(1),
+            ClosedMeshWindingRelation::Outside => winding.push(0),
+            ClosedMeshWindingRelation::Boundary
+            | ClosedMeshWindingRelation::Unknown
+            | ClosedMeshWindingRelation::NotClosed => return None,
+        }
+    }
+    Some(winding)
 }
 
 /// Exact output-vertex origin allocated by `boolean45`.
@@ -949,6 +1022,26 @@ impl ExactBoolMeshWorkspace {
         let kernel12 = discover_kernel12_events(left, right);
         let kernel12_lowering = lower_kernel12_events(&kernel12.events);
         let pair_up = pair_source_edge_events(kernel12_lowering.source_edge_events.clone());
+        let kernel12_is_clear = !mesh_bounds_unknown
+            && !kernel12.graph_failed
+            && kernel12.unknown_events == 0
+            && kernel12.construction_failures == 0
+            && kernel12.coplanar_events == 0;
+        let no_split_kernel12 = kernel12_is_clear
+            && kernel12_lowering.p1q2.is_empty()
+            && kernel12_lowering.p2q1.is_empty();
+        let kernel03_winding = no_split_kernel12
+            .then(|| classify_no_intersection_kernel03(left, right))
+            .flatten();
+        let (w03, w30) = kernel03_winding
+            .as_ref()
+            .map(|winding| (winding.w03.clone(), winding.w30.clone()))
+            .unwrap_or_else(|| {
+                (
+                    vec![0; left.vertices().len()],
+                    vec![0; right.vertices().len()],
+                )
+            });
         let boolean03 = ExactBoolMeshBoolean03 {
             p1q2: kernel12_lowering.p1q2,
             p2q1: kernel12_lowering.p2q1,
@@ -956,25 +1049,22 @@ impl ExactBoolMeshWorkspace {
             x21: kernel12_lowering.x21,
             v12: kernel12_lowering.v12,
             v21: kernel12_lowering.v21,
-            w03: vec![0; left.vertices().len()],
-            w30: vec![0; right.vertices().len()],
+            w03,
+            w30,
         };
         let boolean45 = Some(size_output_stage(
             left, right, &boolean03, operation, &pair_up,
         ));
         let blocker = if candidate_face_pairs.is_empty() && !mesh_bounds_unknown {
             None
-        } else if mesh_bounds_unknown
-            || kernel12.graph_failed
-            || kernel12.unknown_events > 0
-            || kernel12.construction_failures > 0
-            || kernel12.coplanar_events > 0
-        {
+        } else if !kernel12_is_clear {
             Some(ExactBoolMeshPortBlocker {
                 stage: ExactBoolMeshKernelStage::Kernel12,
                 candidate_face_pairs: candidate_face_pairs.len(),
                 mesh_bounds_unknown,
             })
+        } else if no_split_kernel12 && kernel03_winding.is_some() {
+            None
         } else {
             Some(ExactBoolMeshPortBlocker {
                 stage: ExactBoolMeshKernelStage::Kernel03,
@@ -1019,6 +1109,30 @@ impl ExactBoolMeshWorkspace {
                     ..
                 })
             )
+    }
+
+    /// Return whether this workspace completed the exact no-intersection
+    /// `kernel03` branch.
+    ///
+    /// This is the local shape check for the boolmesh containment/separation
+    /// path.  Source replay still owns the stronger guarantee that the retained
+    /// `w03`/`w30` counters are exactly the result of reclassifying the source
+    /// meshes; locally we can assert that no prior `kernel12` blocker or split
+    /// event remains.
+    pub fn is_certified_no_intersection_kernel03(&self) -> bool {
+        self.blocker.is_none()
+            && !self.candidate_face_pairs.is_empty()
+            && self.kernel12_unknown_events == 0
+            && self.kernel12_construction_failures == 0
+            && self.kernel12_coplanar_events == 0
+            && self.boolean03.p1q2.is_empty()
+            && self.boolean03.p2q1.is_empty()
+            && self.boolean03.x12.is_empty()
+            && self.boolean03.x21.is_empty()
+            && self.boolean03.v12.is_empty()
+            && self.boolean03.v21.is_empty()
+            && self.pair_up.source_edge_runs.is_empty()
+            && self.boolean45.is_some()
     }
 
     /// Validate the workspace locally.
@@ -1103,9 +1217,10 @@ impl ExactBoolMeshWorkspace {
                 return Err(ExactBoolMeshValidationError::BlockerCountMismatch);
             }
         }
-        if self.is_certified_bounds_disjoint() {
-            Ok(())
-        } else if self.blocker.is_some() {
+        if self.blocker.is_some()
+            || self.candidate_face_pairs.is_empty()
+            || self.is_certified_no_intersection_kernel03()
+        {
             Ok(())
         } else {
             Err(ExactBoolMeshValidationError::MissingBlocker)

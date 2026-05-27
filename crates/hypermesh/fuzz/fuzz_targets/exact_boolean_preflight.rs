@@ -1585,6 +1585,7 @@ fn exercise_deterministic_case(selector: u8) {
         45 => exercise_exact_boolmesh_bounds_disjoint_port(),
         46 => exercise_exact_boolmesh_kernel12_port(),
         47 => exercise_exact_boolmesh_open_crossing_adjacency_port(),
+        48 => exercise_exact_boolmesh_kernel03_no_intersection_port(),
         _ => exercise_nonconvex_coplanar_volumetric_difference_fan_split(),
     }
 }
@@ -1956,6 +1957,62 @@ fn exercise_exact_boolmesh_kernel12_port() {
     assert!(malformed_new_edges
         .validate_against_sources(&left, &right)
         .is_err());
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn exercise_exact_boolmesh_kernel03_no_intersection_port() {
+    let inner = ExactMesh::from_i64_triangles(
+        &[1, 1, 1, 2, 1, 1, 1, 2, 1, 1, 1, 2],
+        &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
+    )
+    .expect("deterministic boolmesh kernel03 inner fixture must import");
+    let outer = ExactMesh::from_i64_triangles(
+        &[0, 0, 0, 10, 0, 0, 0, 10, 0, 0, 0, 10],
+        &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
+    )
+    .expect("deterministic boolmesh kernel03 outer fixture must import");
+
+    for (operation, left_vertices, right_vertices, output_faces) in [
+        (
+            ExactBooleanOperation::Union,
+            0,
+            outer.vertices().len(),
+            outer.triangles().len(),
+        ),
+        (
+            ExactBooleanOperation::Intersection,
+            inner.vertices().len(),
+            0,
+            inner.triangles().len(),
+        ),
+        (ExactBooleanOperation::Difference, 0, 0, 0),
+    ] {
+        let workspace = hypermesh::exact::exact_boolmesh_workspace(&inner, &outer, operation);
+        workspace.validate_against_sources(&inner, &outer).unwrap();
+        assert!(workspace.blocker.is_none());
+        assert!(!workspace.is_certified_bounds_disjoint());
+        assert!(workspace.is_certified_no_intersection_kernel03());
+        assert_eq!(workspace.boolean03.w03, vec![1; inner.vertices().len()]);
+        assert_eq!(workspace.boolean03.w30, vec![0; outer.vertices().len()]);
+        assert!(workspace.boolean03.p1q2.is_empty());
+        assert!(workspace.boolean03.p2q1.is_empty());
+        let size_output = workspace
+            .boolean45
+            .as_ref()
+            .expect("kernel03 no-intersection workspace must size output");
+        assert_eq!(size_output.vertices_from_left, left_vertices);
+        assert_eq!(size_output.vertices_from_right, right_vertices);
+        assert_eq!(size_output.inserted_intersection_vertices, 0);
+        assert_eq!(size_output.source_edge_incident_gaps, 0);
+        assert_eq!(size_output.mesh_export.triangles.len(), output_faces);
+        assert_eq!(size_output.halfedge_assembly.emitted_boundary_halfedges, 0);
+
+        let mut stale_winding = workspace.clone();
+        stale_winding.boolean03.w03[0] = 0;
+        assert!(stale_winding
+            .validate_against_sources(&inner, &outer)
+            .is_err());
+    }
 }
 
 #[cfg(feature = "exact-triangulation")]
