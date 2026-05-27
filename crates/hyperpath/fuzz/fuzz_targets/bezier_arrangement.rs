@@ -393,6 +393,20 @@ fuzz_target!(|data: &[u8]| {
             right: MixedCurveFragmentRef::Cubic(0),
         }
     );
+    let extrema_separated_report = arrange_line_segments_with_mixed_beziers(
+        &[LinePathSegment::new(p(0, 0), p(4, 0))],
+        &[QuadraticBezier::new(p(0, 0), p(2, 2), p(4, 0))],
+        &[CubicBezier::new(p(0, 2), pq(1, 1, 3, 2), pq(3, 1, 3, 2), p(4, 2))],
+        &[],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert!(extrema_separated_report
+        .fragment_separations
+        .iter()
+        .any(|separation| separation.left == MixedCurveFragmentRef::Quadratic(0)
+            && separation.right == MixedCurveFragmentRef::Cubic(0)
+            && separation.class == MixedCurveFragmentSeparationClass::LeftBelowRightY));
 
     let endpoint_contact_report = arrange_line_segments_with_mixed_beziers(
         &[LinePathSegment::new(p(0, 0), p(8, 0))],

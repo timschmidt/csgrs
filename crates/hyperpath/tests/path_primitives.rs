@@ -2919,6 +2919,30 @@ fn line_mixed_bezier_arrangement_rejects_uncertified_curve_curve_overlap() {
 }
 
 #[test]
+fn line_mixed_bezier_arrangement_accepts_exact_bezier_extrema_box_separation() {
+    let line = LinePathSegment::new(p(0, 0), p(4, 0));
+    let quadratic = QuadraticBezier::new(p(0, 0), p(2, 2), p(4, 0));
+    let cubic = CubicBezier::new(p(0, 2), pq(1, 1, 3, 2), pq(3, 1, 3, 2), p(4, 2));
+
+    let report = arrange_line_segments_with_mixed_beziers(
+        &[line],
+        &[quadratic],
+        &[cubic],
+        &[],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+
+    assert_eq!(report.quadratic_fragments.len(), 1);
+    assert_eq!(report.cubic_fragments.len(), 1);
+    assert!(report.fragment_separations.iter().any(|separation| {
+        separation.left == MixedCurveFragmentRef::Quadratic(0)
+            && separation.right == MixedCurveFragmentRef::Cubic(0)
+            && separation.class == MixedCurveFragmentSeparationClass::LeftBelowRightY
+    }));
+}
+
+#[test]
 fn line_mixed_bezier_arrangement_accepts_certified_endpoint_corner_contact() {
     let line = LinePathSegment::new(p(0, 0), p(8, 0));
     let quadratic = QuadraticBezier::new(p(0, 0), p(2, 2), p(4, 0));

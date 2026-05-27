@@ -654,6 +654,26 @@ fn path_predicates(c: &mut Criterion) {
             .map(|report| report.cell_graph)
         })
     });
+    let bezier_extrema_box_line = LinePathSegment::new(p(0, 0), p(400, 0));
+    let bezier_extrema_box_quadratic = QuadraticBezier::new(p(0, 0), p(200, 200), p(400, 0));
+    let bezier_extrema_box_cubic = CubicBezier::new(
+        p(0, 200),
+        pq(100, 1, 300, 2),
+        pq(300, 1, 300, 2),
+        p(400, 200),
+    );
+    c.bench_function("line_mixed_bezier_extrema_box_admission", |b| {
+        b.iter(|| {
+            arrange_line_segments_with_mixed_beziers(
+                std::slice::from_ref(&bezier_extrema_box_line),
+                std::slice::from_ref(&bezier_extrema_box_quadratic),
+                std::slice::from_ref(&bezier_extrema_box_cubic),
+                &[],
+                PredicatePolicy::default(),
+            )
+            .map(|report| report.fragment_separations)
+        })
+    });
     let mixed_evidence_line = LinePathSegment::new(p(200, 0), p(600, 0));
     let mixed_evidence_cubic = CubicBezier::new(p(0, 0), p(100, 0), p(700, 0), p(800, 0));
     let mixed_evidence_conic =

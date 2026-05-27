@@ -784,34 +784,14 @@ fn validate_curve_fragment_separation(
         boxes.push(FragmentBox {
             source: MixedCurveFragmentRef::Quadratic(index),
             owner: MixedCurveSourceRef::Quadratic(fragment.source_curve),
-            ..box_from_points(
-                [
-                    fragment.curve.start(),
-                    fragment.curve.control(),
-                    fragment.curve.end(),
-                ],
-                policy,
-            )?
-            .with_tangents(
-                quadratic_start_tangent(fragment),
-                quadratic_end_tangent(fragment),
-            )
+            ..box_from_quadratic_fragment(fragment, policy)?
         });
     }
     for (index, fragment) in cubics.iter().enumerate() {
         boxes.push(FragmentBox {
             source: MixedCurveFragmentRef::Cubic(index),
             owner: MixedCurveSourceRef::Cubic(fragment.source_curve),
-            ..box_from_points(
-                [
-                    fragment.curve.start(),
-                    fragment.curve.control0(),
-                    fragment.curve.control1(),
-                    fragment.curve.end(),
-                ],
-                policy,
-            )?
-            .with_tangents(cubic_start_tangent(fragment), cubic_end_tangent(fragment))
+            ..box_from_cubic_fragment(fragment, policy)?
         });
     }
     for (index, fragment) in conics.iter().enumerate() {
@@ -958,6 +938,58 @@ fn box_from_explicit_arc(
     Ok(hull)
 }
 
+/// Build a certified coordinate-extrema box for a quadratic Bezier fragment.
+///
+/// The previous mixed scheduler used the quadratic control hull as a safe
+/// rejection box. This routine keeps the same Yap boundary, "Towards Exact
+/// Geometric Computation" (1997): a cross-curve pair is accepted only after an
+/// exact predicate proves strict box separation. The box is now tighter because
+/// polynomial coordinate extrema are admitted from exact derivative roots
+/// inside `[0, 1]`; Farouki, *Pythagorean Hodograph Curves* (2008), describes
+/// the Bernstein derivative carrier used here. No sampled point can shrink the
+/// retained box.
+fn box_from_quadratic_fragment(
+    fragment: &QuadraticBezierRealFragment,
+    policy: PredicatePolicy,
+) -> Result<FragmentBox, LineMixedBezierArrangementError> {
+    let curve = &fragment.curve;
+    let mut hull = box_from_points([curve.start(), curve.end()], policy)?;
+    for root in quadratic_coordinate_extrema_parameters(curve, Coordinate::X, policy)? {
+        update_box_with_point(&mut hull, &eval_quadratic_real(curve, &root), policy)?;
+    }
+    for root in quadratic_coordinate_extrema_parameters(curve, Coordinate::Y, policy)? {
+        update_box_with_point(&mut hull, &eval_quadratic_real(curve, &root), policy)?;
+    }
+    Ok(hull.with_tangents(
+        quadratic_start_tangent(fragment),
+        quadratic_end_tangent(fragment),
+    ))
+}
+
+/// Build a certified coordinate-extrema box for a cubic Bezier fragment.
+///
+/// Cubic coordinate extrema occur at roots of the derivative quadratic. Roots
+/// are constructed exactly as `Real` values and admitted only when exact
+/// comparison certifies membership in the retained source interval `[0, 1]`.
+/// If that proof is unavailable, the scheduler reports an undecidable exact
+/// predicate rather than widening from samples. This follows Yap's exact
+/// object/predicate split and the Bernstein hodograph construction described
+/// by Farouki, *Pythagorean Hodograph Curves* (2008).
+fn box_from_cubic_fragment(
+    fragment: &CubicBezierRealFragment,
+    policy: PredicatePolicy,
+) -> Result<FragmentBox, LineMixedBezierArrangementError> {
+    let curve = &fragment.curve;
+    let mut hull = box_from_points([curve.start(), curve.end()], policy)?;
+    for root in cubic_coordinate_extrema_parameters(curve, Coordinate::X, policy)? {
+        update_box_with_point(&mut hull, &eval_cubic_real(curve, &root), policy)?;
+    }
+    for root in cubic_coordinate_extrema_parameters(curve, Coordinate::Y, policy)? {
+        update_box_with_point(&mut hull, &eval_cubic_real(curve, &root), policy)?;
+    }
+    Ok(hull.with_tangents(cubic_start_tangent(fragment), cubic_end_tangent(fragment)))
+}
+
 fn box_from_points<'a, const N: usize>(
     points: [&'a Point2; N],
     policy: PredicatePolicy,
@@ -982,6 +1014,181 @@ fn box_from_points<'a, const N: usize>(
         y_min,
         y_max,
     })
+}
+
+fn update_box_with_point(
+    hull: &mut FragmentBox,
+    point: &Point2,
+    policy: PredicatePolicy,
+) -> Result<(), LineMixedBezierArrangementError> {
+    update_min_max(&mut hull.x_min, &mut hull.x_max, &point.x, policy)?;
+    update_min_max(&mut hull.y_min, &mut hull.y_max, &point.y, policy)
+}
+
+#[derive(Clone, Copy)]
+enum Coordinate {
+    X,
+    Y,
+}
+
+fn quadratic_coordinate_extrema_parameters(
+    curve: &QuadraticBezier,
+    coordinate: Coordinate,
+    policy: PredicatePolicy,
+) -> Result<Vec<Real>, LineMixedBezierArrangementError> {
+    let p0 = coordinate_value(curve.start(), coordinate);
+    let p1 = coordinate_value(curve.control(), coordinate);
+    let p2 = coordinate_value(curve.end(), coordinate);
+    let denominator = p0.clone() - Real::from(2) * p1.clone() + p2;
+    if compare_required(&denominator, &Real::zero(), policy)? == Ordering::Equal {
+        return Ok(Vec::new());
+    }
+    let root = ((p0 - p1) / denominator)
+        .map_err(|_| LineMixedBezierArrangementError::UndecidablePointEquality)?;
+    if real_in_unit_interval(&root, policy)? {
+        Ok(vec![root])
+    } else {
+        Ok(Vec::new())
+    }
+}
+
+fn cubic_coordinate_extrema_parameters(
+    curve: &CubicBezier,
+    coordinate: Coordinate,
+    policy: PredicatePolicy,
+) -> Result<Vec<Real>, LineMixedBezierArrangementError> {
+    let p0 = coordinate_value(curve.start(), coordinate);
+    let p1 = coordinate_value(curve.control0(), coordinate);
+    let p2 = coordinate_value(curve.control1(), coordinate);
+    let p3 = coordinate_value(curve.end(), coordinate);
+    let a = -p0.clone() + Real::from(3) * p1.clone() - Real::from(3) * p2.clone() + p3;
+    let b = Real::from(3) * p0.clone() - Real::from(6) * p1.clone() + Real::from(3) * p2;
+    let c = Real::from(3) * (p1 - p0);
+    let roots = solve_quadratic_or_linear_real(Real::from(3) * a, Real::from(2) * b, c, policy)?;
+    let mut accepted = Vec::new();
+    for root in roots {
+        if real_in_unit_interval(&root, policy)? {
+            accepted.push(root);
+        }
+    }
+    Ok(accepted)
+}
+
+fn solve_quadratic_or_linear_real(
+    a: Real,
+    b: Real,
+    c: Real,
+    policy: PredicatePolicy,
+) -> Result<Vec<Real>, LineMixedBezierArrangementError> {
+    match compare_required(&a, &Real::zero(), policy)? {
+        Ordering::Equal => solve_linear_real(b, c, policy),
+        Ordering::Less | Ordering::Greater => solve_quadratic_real(a, b, c, policy),
+    }
+}
+
+fn solve_linear_real(
+    b: Real,
+    c: Real,
+    policy: PredicatePolicy,
+) -> Result<Vec<Real>, LineMixedBezierArrangementError> {
+    match compare_required(&b, &Real::zero(), policy)? {
+        Ordering::Equal => Ok(Vec::new()),
+        Ordering::Less | Ordering::Greater => {
+            Ok(vec![((-c) / b).map_err(|_| {
+                LineMixedBezierArrangementError::UndecidablePointEquality
+            })?])
+        }
+    }
+}
+
+fn solve_quadratic_real(
+    a: Real,
+    b: Real,
+    c: Real,
+    policy: PredicatePolicy,
+) -> Result<Vec<Real>, LineMixedBezierArrangementError> {
+    let discriminant = b.clone() * b.clone() - Real::from(4) * a.clone() * c;
+    match compare_required(&discriminant, &Real::zero(), policy)? {
+        Ordering::Less => Ok(Vec::new()),
+        Ordering::Equal => {
+            Ok(vec![((-b) / (Real::from(2) * a)).map_err(|_| {
+                LineMixedBezierArrangementError::UndecidablePointEquality
+            })?])
+        }
+        Ordering::Greater => {
+            let root = discriminant
+                .sqrt()
+                .map_err(|_| LineMixedBezierArrangementError::UndecidablePointEquality)?;
+            let denominator = Real::from(2) * a;
+            Ok(vec![
+                ((-b.clone() - root.clone()) / denominator.clone())
+                    .map_err(|_| LineMixedBezierArrangementError::UndecidablePointEquality)?,
+                ((-b + root) / denominator)
+                    .map_err(|_| LineMixedBezierArrangementError::UndecidablePointEquality)?,
+            ])
+        }
+    }
+}
+
+fn real_in_unit_interval(
+    value: &Real,
+    policy: PredicatePolicy,
+) -> Result<bool, LineMixedBezierArrangementError> {
+    let lower = compare_required(value, &Real::zero(), policy)?;
+    let upper = compare_required(value, &Real::one(), policy)?;
+    Ok(matches!(lower, Ordering::Equal | Ordering::Greater)
+        && matches!(upper, Ordering::Equal | Ordering::Less))
+}
+
+fn compare_required(
+    left: &Real,
+    right: &Real,
+    policy: PredicatePolicy,
+) -> Result<Ordering, LineMixedBezierArrangementError> {
+    compare_reals_with_policy(left, right, policy)
+        .value()
+        .ok_or(LineMixedBezierArrangementError::UndecidablePointEquality)
+}
+
+fn coordinate_value(point: &Point2, coordinate: Coordinate) -> Real {
+    match coordinate {
+        Coordinate::X => point.x.clone(),
+        Coordinate::Y => point.y.clone(),
+    }
+}
+
+fn eval_quadratic_real(curve: &QuadraticBezier, parameter: &Real) -> Point2 {
+    let one_minus_t = Real::one() - parameter.clone();
+    let start_weight = one_minus_t.clone() * one_minus_t.clone();
+    let control_weight = Real::from(2) * one_minus_t * parameter.clone();
+    let end_weight = parameter.clone() * parameter.clone();
+    Point2::new(
+        curve.start().x.clone() * start_weight.clone()
+            + curve.control().x.clone() * control_weight.clone()
+            + curve.end().x.clone() * end_weight.clone(),
+        curve.start().y.clone() * start_weight
+            + curve.control().y.clone() * control_weight
+            + curve.end().y.clone() * end_weight,
+    )
+}
+
+fn eval_cubic_real(curve: &CubicBezier, parameter: &Real) -> Point2 {
+    let one_minus_t = Real::one() - parameter.clone();
+    let start_weight = one_minus_t.clone() * one_minus_t.clone() * one_minus_t.clone();
+    let control0_weight =
+        Real::from(3) * one_minus_t.clone() * one_minus_t.clone() * parameter.clone();
+    let control1_weight = Real::from(3) * one_minus_t * parameter.clone() * parameter.clone();
+    let end_weight = parameter.clone() * parameter.clone() * parameter.clone();
+    Point2::new(
+        curve.start().x.clone() * start_weight.clone()
+            + curve.control0().x.clone() * control0_weight.clone()
+            + curve.control1().x.clone() * control1_weight.clone()
+            + curve.end().x.clone() * end_weight.clone(),
+        curve.start().y.clone() * start_weight
+            + curve.control0().y.clone() * control0_weight
+            + curve.control1().y.clone() * control1_weight
+            + curve.end().y.clone() * end_weight,
+    )
 }
 
 fn update_min_max(
