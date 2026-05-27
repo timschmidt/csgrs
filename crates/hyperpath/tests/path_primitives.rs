@@ -1948,6 +1948,52 @@ fn line_cubic_bezier_arrangement_orders_multiple_algebraic_breakpoints() {
             .value()
             .is_some()
     }));
+    let positive_arch_span = report
+        .algebraic_source_spans
+        .iter()
+        .position(|span| {
+            span.source == LineCubicBezierAlgebraicBreakpointSequenceSource::Curve(0)
+                && span.left == LineCubicBezierAlgebraicSourceSpanBoundary::Breakpoint(0)
+                && span.right == LineCubicBezierAlgebraicSourceSpanBoundary::Breakpoint(1)
+        })
+        .unwrap();
+    let positive_arch_envelope = report
+        .algebraic_endpoint_envelopes
+        .iter()
+        .find(|envelope| envelope.span == positive_arch_span)
+        .unwrap();
+    assert_eq!(
+        compare_reals_with_policy(
+            &positive_arch_envelope.y_upper,
+            &rq(1, 200),
+            PredicatePolicy::default()
+        )
+        .value(),
+        Some(std::cmp::Ordering::Greater)
+    );
+    let negative_arch_span = report
+        .algebraic_source_spans
+        .iter()
+        .position(|span| {
+            span.source == LineCubicBezierAlgebraicBreakpointSequenceSource::Curve(0)
+                && span.left == LineCubicBezierAlgebraicSourceSpanBoundary::Breakpoint(1)
+                && span.right == LineCubicBezierAlgebraicSourceSpanBoundary::Breakpoint(2)
+        })
+        .unwrap();
+    let negative_arch_envelope = report
+        .algebraic_endpoint_envelopes
+        .iter()
+        .find(|envelope| envelope.span == negative_arch_span)
+        .unwrap();
+    assert_eq!(
+        compare_reals_with_policy(
+            &negative_arch_envelope.y_lower,
+            &rq(-1, 200),
+            PredicatePolicy::default()
+        )
+        .value(),
+        Some(std::cmp::Ordering::Less)
+    );
     assert_eq!(report.exact_algebraic_breakpoint_promotions.len(), 3);
     assert!(
         report

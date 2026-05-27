@@ -530,23 +530,25 @@ pub struct LineCubicBezierAlgebraicSourceSpan {
     pub parameter_upper: Real,
 }
 
-/// Conservative coordinate envelope for the two endpoints of an algebraic source span.
+/// Conservative coordinate envelope for an algebraic source span.
 ///
 /// The envelope is indexed by
 /// [`LineCubicBezierArrangementReport::algebraic_source_spans`]. It encloses
-/// only the span endpoints: exact source endpoints and retained algebraic
-/// breakpoint point images. It is not a curve hull and not a sampled
-/// approximation of the interior. The purpose is to give later exact
-/// algebraic split construction a small replayable coordinate box for endpoint
-/// evidence while preserving the nonlinear algebraic boundary as retained
-/// evidence.
+/// exact source endpoints, retained algebraic breakpoint point images, and any
+/// certified cubic coordinate extrema whose exact derivative roots lie inside
+/// a curve-owned retained span. It is still not a sampled approximation and
+/// still does not materialize a nonlinear algebraic subcurve: extrema are
+/// included only when exact root membership in the retained interval is
+/// decidable.
 ///
 /// This follows Yap, "Towards Exact Geometric Computation" (1997): predicates
 /// and constructed objects remain separate, and unsupported construction keeps
 /// exact certificates instead of floating approximations. The algebraic point
 /// images use the Sylvester resultant construction of Sylvester (1853) and the
 /// Sturm/Collins-Loos isolating-interval model from Collins and Loos, "Real
-/// Zeros of Polynomials" (1982).
+/// Zeros of Polynomials" (1982). The interior extrema replay exact polynomial
+/// Bezier derivative roots, using the Bernstein/polynomial curve treatment
+/// described by Farouki, *Pythagorean Hodograph Curves* (2008).
 #[derive(Clone, Debug, PartialEq)]
 pub struct LineCubicBezierAlgebraicEndpointEnvelope {
     /// Index in [`LineCubicBezierArrangementReport::algebraic_source_spans`].
@@ -1992,20 +1994,18 @@ fn algebraic_cubic_endpoint_envelopes(
                 curves,
                 breakpoints,
             )?;
-            let (x_lower, x_upper) = certified_min_max(
-                &left.x_lower,
-                &left.x_upper,
-                &right.x_lower,
-                &right.x_upper,
-                policy,
-            )?;
-            let (y_lower, y_upper) = certified_min_max(
-                &left.y_lower,
-                &left.y_upper,
-                &right.y_lower,
-                &right.y_upper,
-                policy,
-            )?;
+            let mut points = vec![left, right];
+            if let LineCubicBezierAlgebraicBreakpointSequenceSource::Curve(curve_index) =
+                span.source
+            {
+                points.extend(algebraic_cubic_span_interior_extrema(
+                    curves.get(curve_index)?,
+                    span,
+                    policy,
+                )?);
+            }
+            let (x_lower, x_upper, y_lower, y_upper) =
+                certified_point_interval_bounds(&points, policy)?;
             Some(LineCubicBezierAlgebraicEndpointEnvelope {
                 span: span_index,
                 x_lower,
@@ -2015,6 +2015,30 @@ fn algebraic_cubic_endpoint_envelopes(
             })
         })
         .collect()
+}
+
+fn algebraic_cubic_span_interior_extrema(
+    curve: &CubicBezier,
+    span: &LineCubicBezierAlgebraicSourceSpan,
+    policy: PredicatePolicy,
+) -> Option<Vec<CubicPointInterval>> {
+    // Retained algebraic spans use interval endpoints, so an extrema root is
+    // admitted only when exact comparison proves it lies inside the retained
+    // parameter interval. If membership is undecidable, the whole envelope is
+    // withheld instead of publishing a possibly incomplete box. This is the
+    // conservative construction boundary required by Yap (1997).
+    let mut extrema = Vec::new();
+    for root in cubic_derivative_roots(curve, CubicCoordinate::X, policy)? {
+        if real_in_closed_interval(&root, &span.parameter_lower, &span.parameter_upper, policy)? {
+            extrema.push(point_exact_interval(&eval_cubic_real(curve, &root))?);
+        }
+    }
+    for root in cubic_derivative_roots(curve, CubicCoordinate::Y, policy)? {
+        if real_in_closed_interval(&root, &span.parameter_lower, &span.parameter_upper, policy)? {
+            extrema.push(point_exact_interval(&eval_cubic_real(curve, &root))?);
+        }
+    }
+    Some(extrema)
 }
 
 #[derive(Clone, Debug)]
@@ -2072,6 +2096,26 @@ fn point_exact_interval(point: &Point2) -> Option<CubicPointInterval> {
     })
 }
 
+fn certified_point_interval_bounds(
+    points: &[CubicPointInterval],
+    policy: PredicatePolicy,
+) -> Option<(Real, Real, Real, Real)> {
+    let first = points.first()?;
+    let mut x_lower = first.x_lower.clone();
+    let mut x_upper = first.x_upper.clone();
+    let mut y_lower = first.y_lower.clone();
+    let mut y_upper = first.y_upper.clone();
+    for point in points.iter().skip(1) {
+        let x = certified_min_max(&x_lower, &x_upper, &point.x_lower, &point.x_upper, policy)?;
+        x_lower = x.0;
+        x_upper = x.1;
+        let y = certified_min_max(&y_lower, &y_upper, &point.y_lower, &point.y_upper, policy)?;
+        y_lower = y.0;
+        y_upper = y.1;
+    }
+    Some((x_lower, x_upper, y_lower, y_upper))
+}
+
 fn certified_min_max(
     left_lower: &Real,
     left_upper: &Real,
@@ -2088,6 +2132,92 @@ fn certified_min_max(
         Ordering::Greater => left_upper.clone(),
     };
     Some((lower, upper))
+}
+
+#[derive(Clone, Copy)]
+enum CubicCoordinate {
+    X,
+    Y,
+}
+
+fn cubic_derivative_roots(
+    curve: &CubicBezier,
+    coordinate: CubicCoordinate,
+    policy: PredicatePolicy,
+) -> Option<Vec<Real>> {
+    let (a, b, c, _) = cubic_extrema_coordinate_power_coefficients(curve, coordinate);
+    let qa = Real::from(3) * a;
+    let qb = Real::from(2) * b;
+    solve_quadratic_or_linear_roots(qa, qb, c, policy)
+}
+
+fn cubic_extrema_coordinate_power_coefficients(
+    curve: &CubicBezier,
+    coordinate: CubicCoordinate,
+) -> (Real, Real, Real, Real) {
+    let p0 = cubic_coordinate(curve.start(), coordinate);
+    let p1 = cubic_coordinate(curve.control0(), coordinate);
+    let p2 = cubic_coordinate(curve.control1(), coordinate);
+    let p3 = cubic_coordinate(curve.end(), coordinate);
+    let a = -p0.clone() + Real::from(3) * p1.clone() - Real::from(3) * p2.clone() + p3;
+    let b = Real::from(3) * p0.clone() - Real::from(6) * p1.clone() + Real::from(3) * p2;
+    let c = Real::from(3) * (p1 - p0.clone());
+    (a, b, c, p0)
+}
+
+fn cubic_coordinate(point: &Point2, coordinate: CubicCoordinate) -> Real {
+    match coordinate {
+        CubicCoordinate::X => point.x.clone(),
+        CubicCoordinate::Y => point.y.clone(),
+    }
+}
+
+fn solve_quadratic_or_linear_roots(
+    a: Real,
+    b: Real,
+    c: Real,
+    policy: PredicatePolicy,
+) -> Option<Vec<Real>> {
+    match compare_reals_with_policy(&a, &Real::zero(), policy).value()? {
+        Ordering::Equal => solve_linear_roots(b, c, policy),
+        Ordering::Less | Ordering::Greater => solve_quadratic_roots(a, b, c, policy),
+    }
+}
+
+fn solve_linear_roots(b: Real, c: Real, policy: PredicatePolicy) -> Option<Vec<Real>> {
+    match compare_reals_with_policy(&b, &Real::zero(), policy).value()? {
+        Ordering::Equal => Some(Vec::new()),
+        Ordering::Less | Ordering::Greater => Some(vec![(-c / b).ok()?]),
+    }
+}
+
+fn solve_quadratic_roots(a: Real, b: Real, c: Real, policy: PredicatePolicy) -> Option<Vec<Real>> {
+    let discriminant = b.clone() * b.clone() - Real::from(4) * a.clone() * c;
+    match compare_reals_with_policy(&discriminant, &Real::zero(), policy).value()? {
+        Ordering::Less => Some(Vec::new()),
+        Ordering::Equal => Some(vec![((-b) / (Real::from(2) * a)).ok()?]),
+        Ordering::Greater => {
+            let root = discriminant.sqrt().ok()?;
+            let denominator = Real::from(2) * a;
+            let first = ((-b.clone() - root.clone()) / denominator.clone()).ok()?;
+            let second = ((-b + root) / denominator).ok()?;
+            Some(vec![first, second])
+        }
+    }
+}
+
+fn real_in_closed_interval(
+    value: &Real,
+    lower: &Real,
+    upper: &Real,
+    policy: PredicatePolicy,
+) -> Option<bool> {
+    let lower_cmp = compare_reals_with_policy(value, lower, policy).value()?;
+    let upper_cmp = compare_reals_with_policy(value, upper, policy).value()?;
+    Some(
+        matches!(lower_cmp, Ordering::Equal | Ordering::Greater)
+            && matches!(upper_cmp, Ordering::Equal | Ordering::Less),
+    )
 }
 
 fn compare_algebraic_cubic_parameters(

@@ -849,6 +849,24 @@ fuzz_target!(|data: &[u8]| {
     );
     assert_eq!(three_root_report.algebraic_source_spans.len(), 8);
     assert_eq!(three_root_report.algebraic_endpoint_envelopes.len(), 8);
+    assert!(three_root_report.algebraic_endpoint_envelopes.iter().any(|envelope| {
+        compare_reals_with_policy(
+            &envelope.y_upper,
+            &Real::new(Rational::new(1) / Rational::new(200)),
+            PredicatePolicy::default(),
+        )
+        .value()
+            == Some(std::cmp::Ordering::Greater)
+    }));
+    assert!(three_root_report.algebraic_endpoint_envelopes.iter().any(|envelope| {
+        compare_reals_with_policy(
+            &envelope.y_lower,
+            &Real::new(Rational::new(-1) / Rational::new(200)),
+            PredicatePolicy::default(),
+        )
+        .value()
+            == Some(std::cmp::Ordering::Less)
+    }));
 
     let weight = r(i64::from(data[11] % 16));
     let conic = RationalQuadraticBezier::new(
