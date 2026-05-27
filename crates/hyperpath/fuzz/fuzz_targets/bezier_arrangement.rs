@@ -172,6 +172,51 @@ fuzz_target!(|data: &[u8]| {
         LineQuadraticBezierIntersectionClass::Overlap
     );
     assert_eq!(nonlinear_overlap_report.bezier_breakpoints[0].len(), 4);
+    let general_nonlinear_overlap_curve = QuadraticBezier::new(p(0, 0), p(1, 1), p(3, 3));
+    let general_nonlinear_overlap_line =
+        LinePathSegment::new(pq(9, 16, 9, 16), pq(33, 16, 33, 16));
+    let general_nonlinear_overlap_report = arrange_line_segments_with_quadratic_beziers(
+        &[general_nonlinear_overlap_line],
+        &[general_nonlinear_overlap_curve],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert_eq!(
+        general_nonlinear_overlap_report.events[0].class,
+        LineQuadraticBezierIntersectionClass::Overlap
+    );
+    assert_eq!(
+        general_nonlinear_overlap_report.events[0].intersection.intersections[0].parameter,
+        rq(1, 4)
+    );
+    assert_eq!(
+        general_nonlinear_overlap_report.events[0].intersection.intersections[1].parameter,
+        rq(3, 4)
+    );
+    assert_eq!(
+        general_nonlinear_overlap_report.bezier_breakpoints[0].len(),
+        4
+    );
+    let general_nonmonotone_overlap_curve = QuadraticBezier::new(p(0, 0), p(4, 4), p(0, 0));
+    let general_nonmonotone_overlap_line = LinePathSegment::new(p(1, 1), p(3, 3));
+    let general_nonmonotone_overlap_report = arrange_line_segments_with_quadratic_beziers(
+        &[general_nonmonotone_overlap_line],
+        &[general_nonmonotone_overlap_curve],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert_eq!(
+        general_nonmonotone_overlap_report.events[0].class,
+        LineQuadraticBezierIntersectionClass::Unknown
+    );
+    assert!(general_nonmonotone_overlap_report.events[0]
+        .intersection
+        .intersections
+        .is_empty());
+    assert_eq!(
+        general_nonmonotone_overlap_report.bezier_breakpoints[0].len(),
+        2
+    );
 
     let diagonal_curve = QuadraticBezier::new(p(0, 0), p(2, 4), p(4, 0));
     let diagonal_line = LinePathSegment::new(p(0, 1), p(4, 3));

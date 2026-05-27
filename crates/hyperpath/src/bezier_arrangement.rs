@@ -723,12 +723,15 @@ fn bezier_error_from_curve_cell_error(error: CurveArrangementCellError) -> Bezie
 ///
 /// The resulting Bernstein quadratic is lowered to power form and solved as
 /// an exact `Real` polynomial. Candidate roots are admitted only after exact
-/// replay against the Bezier domain and the closed segment box. This is the
-/// Yap object/predicate separation from "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997): discovered topology is carried by
-/// exact witnesses, while collinear nonlinear overlap remains `Unknown` until
-/// a later exact inverse construction exists. The retained quadratic carrier
-/// and derivative/tangent test follow the Bezier treatment in Farouki,
+/// replay against the Bezier domain and the closed segment box. If the
+/// implicit equation vanishes identically, the general same-support branch
+/// replays the segment's normalized line parameter as a scalar quadratic image
+/// and promotes only monotone image overlaps with exact inverse witnesses.
+/// This is the Yap object/predicate separation from "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7.1-2 (1997): discovered topology is
+/// carried by exact witnesses, while unsupported inverse or ordering evidence
+/// remains explicit uncertainty. The retained quadratic carrier and
+/// derivative/tangent test follow the Bezier treatment in Farouki,
 /// *Pythagorean Hodograph Curves* (2008).
 pub fn intersect_line_quadratic_bezier(
     segment: &LinePathSegment,
@@ -743,7 +746,10 @@ pub fn intersect_line_quadratic_bezier(
 
     let roots = match solve_quadratic_implicit_line_roots(segment, curve, policy) {
         Some(roots) => roots,
-        None => return line_quadratic_unknown_report(),
+        None => {
+            return quadratic_general_line_overlap_report(segment, curve, policy)
+                .unwrap_or_else(line_quadratic_unknown_report);
+        }
     };
     let mut intersections = Vec::new();
     for parameter in roots {
@@ -2084,6 +2090,84 @@ fn quadratic_line_overlap_report(
     }
 }
 
+fn quadratic_general_line_overlap_report(
+    segment: &LinePathSegment,
+    curve: &QuadraticBezier,
+    policy: PredicatePolicy,
+) -> Option<LineQuadraticBezierIntersectionReport> {
+    // Non-axis same-support quadratics use the retained segment's normalized
+    // line parameter as the one-dimensional Bezier image:
+    //
+    //     s(t) = dot(B(t)-L0, L1-L0) / |L1-L0|^2.
+    //
+    // The implicit line equation must vanish at every Bernstein control before
+    // this branch is allowed to construct topology. Monotonicity is certified
+    // from the scalar image's Bernstein derivative controls, so inverse
+    // witnesses are unique and replayable. This is Yap's exact
+    // object/predicate split in the general-line setting, and the Bernstein
+    // derivative sign test follows the polynomial-curve reasoning described by
+    // Farouki, Pythagorean-Hodograph Curves (2008).
+    if !quadratic_general_same_support(segment, curve, policy)? {
+        return None;
+    }
+    let scalar_controls = quadratic_line_parameter_controls(segment, curve)?;
+    if !quadratic_scalar_image_monotone(&scalar_controls, policy)? {
+        return Some(LineQuadraticBezierIntersectionReport {
+            class: LineQuadraticBezierIntersectionClass::Unknown,
+            intersections: Vec::new(),
+        });
+    }
+
+    let curve_a = scalar_controls[0].clone();
+    let curve_b = scalar_controls[2].clone();
+    let overlap_min = max_real(
+        &min_real(&curve_a, &curve_b, policy)?,
+        &Real::zero(),
+        policy,
+    )?;
+    let overlap_max = min_real(&max_real(&curve_a, &curve_b, policy)?, &Real::one(), policy)?;
+    match compare_reals_with_policy(&overlap_min, &overlap_max, policy).value()? {
+        Ordering::Greater => Some(LineQuadraticBezierIntersectionReport {
+            class: LineQuadraticBezierIntersectionClass::Disjoint,
+            intersections: Vec::new(),
+        }),
+        Ordering::Equal => {
+            let parameter =
+                quadratic_scalar_image_parameter(&scalar_controls, &overlap_min, policy)?;
+            let point = point_from_line_parameter(segment, overlap_min);
+            Some(LineQuadraticBezierIntersectionReport {
+                class: LineQuadraticBezierIntersectionClass::OnePoint,
+                intersections: vec![LineQuadraticBezierIntersection { parameter, point }],
+            })
+        }
+        Ordering::Less => {
+            let mut intersections = vec![
+                LineQuadraticBezierIntersection {
+                    parameter: quadratic_scalar_image_parameter(
+                        &scalar_controls,
+                        &overlap_min,
+                        policy,
+                    )?,
+                    point: point_from_line_parameter(segment, overlap_min),
+                },
+                LineQuadraticBezierIntersection {
+                    parameter: quadratic_scalar_image_parameter(
+                        &scalar_controls,
+                        &overlap_max,
+                        policy,
+                    )?,
+                    point: point_from_line_parameter(segment, overlap_max),
+                },
+            ];
+            sort_line_quadratic_intersections(&mut intersections, policy)?;
+            Some(LineQuadraticBezierIntersectionReport {
+                class: LineQuadraticBezierIntersectionClass::Overlap,
+                intersections,
+            })
+        }
+    }
+}
+
 fn cubic_line_overlap_report(
     segment: &LinePathSegment,
     curve: &CubicBezier,
@@ -2406,6 +2490,24 @@ fn quadratic_line_image_monotone(
     Some(nonconstant && (nonnegative || nonpositive))
 }
 
+fn quadratic_scalar_image_monotone(controls: &[Real; 3], policy: PredicatePolicy) -> Option<bool> {
+    // The scalar image is a quadratic Bezier in the retained line parameter.
+    // Its derivative has Bernstein controls `2(s1-s0)` and `2(s2-s1)`;
+    // the common-sign test certifies a unique inverse for every admitted
+    // overlap boundary, matching the exact Bernstein sign discipline used by
+    // Farouki and the Yap retained-object model.
+    let first = controls[1].clone() - controls[0].clone();
+    let second = controls[2].clone() - controls[1].clone();
+    let signs = [
+        compare_reals_with_policy(&first, &Real::zero(), policy).value()?,
+        compare_reals_with_policy(&second, &Real::zero(), policy).value()?,
+    ];
+    let nonnegative = signs.iter().all(|sign| *sign != Ordering::Less);
+    let nonpositive = signs.iter().all(|sign| *sign != Ordering::Greater);
+    let nonconstant = signs.iter().any(|sign| *sign != Ordering::Equal);
+    Some(nonconstant && (nonnegative || nonpositive))
+}
+
 fn is_degree_elevated_cubic_line(curve: &CubicBezier, policy: PredicatePolicy) -> Option<bool> {
     let three_x1 = Real::from(3) * curve.control0().x.clone();
     let three_y1 = Real::from(3) * curve.control0().y.clone();
@@ -2450,6 +2552,21 @@ fn cubic_same_support(
             && compare_reals_with_policy(&support_coordinate(curve.end(), axis), fixed, policy)
                 .value()?
                 == Ordering::Equal,
+    )
+}
+
+fn quadratic_general_same_support(
+    segment: &LinePathSegment,
+    curve: &QuadraticBezier,
+    policy: PredicatePolicy,
+) -> Option<bool> {
+    let q0 = implicit_line_support_coefficient(segment, curve.start());
+    let q1 = implicit_line_support_coefficient(segment, curve.control());
+    let q2 = implicit_line_support_coefficient(segment, curve.end());
+    Some(
+        compare_reals_with_policy(&q0, &Real::zero(), policy).value()? == Ordering::Equal
+            && compare_reals_with_policy(&q1, &Real::zero(), policy).value()? == Ordering::Equal
+            && compare_reals_with_policy(&q2, &Real::zero(), policy).value()? == Ordering::Equal,
     )
 }
 
@@ -2630,6 +2747,42 @@ fn quadratic_line_image_parameter(
         if !duplicate {
             accepted.push(root);
         }
+    }
+    match accepted.len() {
+        1 => accepted.pop(),
+        _ => None,
+    }
+}
+
+fn quadratic_scalar_image_parameter(
+    controls: &[Real; 3],
+    value: &Real,
+    policy: PredicatePolicy,
+) -> Option<Real> {
+    let a = controls[0].clone() - Real::from(2) * controls[1].clone() + controls[2].clone();
+    let b = Real::from(2) * (controls[1].clone() - controls[0].clone());
+    let c = controls[0].clone() - value.clone();
+    let roots = match compare_reals_with_policy(&a, &Real::zero(), policy).value()? {
+        Ordering::Equal => solve_linear_root(b, c, policy)?,
+        Ordering::Less | Ordering::Greater => solve_quadratic_roots(a, b, c, policy)?,
+    };
+    let mut accepted: Vec<Real> = Vec::new();
+    for root in roots {
+        match parameter_in_unit_interval(&root, policy) {
+            Some(true) => {}
+            Some(false) => continue,
+            None => return None,
+        }
+        if accepted.iter().try_fold(false, |duplicate, existing| {
+            Some(
+                duplicate
+                    || compare_reals_with_policy(existing, &root, policy).value()?
+                        == Ordering::Equal,
+            )
+        })? {
+            continue;
+        }
+        accepted.push(root);
     }
     match accepted.len() {
         1 => accepted.pop(),
@@ -3087,6 +3240,17 @@ fn rational_quadratic_line_parameter_controls(
             curve.control(),
             curve.control_weight(),
         )?,
+        normalized_line_parameter_for_weighted_point(segment, curve.end(), &Real::one())?,
+    ])
+}
+
+fn quadratic_line_parameter_controls(
+    segment: &LinePathSegment,
+    curve: &QuadraticBezier,
+) -> Option<[Real; 3]> {
+    Some([
+        normalized_line_parameter_for_weighted_point(segment, curve.start(), &Real::one())?,
+        normalized_line_parameter_for_weighted_point(segment, curve.control(), &Real::one())?,
         normalized_line_parameter_for_weighted_point(segment, curve.end(), &Real::one())?,
     ])
 }
