@@ -13330,8 +13330,22 @@ fn exact_boolmesh_kernel12_intersect_halfedge_row_port(c: &mut Criterion) {
     #[cfg(all(feature = "exact-triangulation", feature = "internal-fuzzing"))]
     {
         c.bench_function("exact_boolmesh_kernel12_intersect_halfedge_row_port", |b| {
-            b.iter(|| exact_boolmesh_kernel12_intersect_loop_probe_for_internal_fuzz(57))
+            b.iter(|| exact_boolmesh_kernel12_intersect_loop_probe_for_internal_fuzz(58))
         });
+    }
+    #[cfg(not(all(feature = "exact-triangulation", feature = "internal-fuzzing")))]
+    {
+        let _ = c;
+    }
+}
+
+fn exact_boolmesh_kernel12_intersect_boundary_endpoint_port(c: &mut Criterion) {
+    #[cfg(all(feature = "exact-triangulation", feature = "internal-fuzzing"))]
+    {
+        c.bench_function(
+            "exact_boolmesh_kernel12_intersect_boundary_endpoint_port",
+            |b| b.iter(|| exact_boolmesh_kernel12_intersect_loop_probe_for_internal_fuzz(60)),
+        );
     }
     #[cfg(not(all(feature = "exact-triangulation", feature = "internal-fuzzing")))]
     {
@@ -13600,6 +13614,7 @@ criterion_group!(
     exact_boolmesh_kernel12_accumulator_replay_port,
     exact_boolmesh_kernel12_intersect_loop_port,
     exact_boolmesh_kernel12_intersect_halfedge_row_port,
+    exact_boolmesh_kernel12_intersect_boundary_endpoint_port,
     exact_boolmesh_boolean45_halfedge_row_port,
     exact_boolmesh_kernel03_no_intersection_port,
     legacy_boolean_adapter_report

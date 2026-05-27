@@ -34084,6 +34084,64 @@ fn exact_boolmesh_kernel12_lowers_strict_endpoint_face_shadow() {
 
 #[test]
 #[cfg(feature = "exact-triangulation")]
+fn exact_boolmesh_kernel12_lowers_boundary_endpoint_edge_shadow_through_intersect12() {
+    let left = tetrahedron_i64([2, 0, 0], [2, 0, 2], [3, 1, 1], [1, 1, 1]);
+    let right = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, -4]);
+
+    let workspace = hypermesh::exact::exact_boolmesh_workspace(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+    );
+
+    workspace.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(workspace.kernel12_unknown_events, 0);
+    assert_eq!(workspace.kernel12_construction_failures, 0);
+    assert_eq!(
+        workspace.boolean03.p1q2.len(),
+        workspace.boolean03.x12.len()
+    );
+    assert_eq!(
+        workspace.boolean03.p1q2.len(),
+        workspace.boolean03.v12.len()
+    );
+    assert!(
+        workspace
+            .boolean03
+            .p1q2
+            .iter()
+            .zip(&workspace.boolean03.v12)
+            .any(|(edge_face, point)| {
+                edge_face.edge_side == hypermesh::exact::ExactBoolMeshSide::Left
+                    && edge_face.face_side == hypermesh::exact::ExactBoolMeshSide::Right
+                    && compare_reals(&point.x, &ExactReal::from(2)).value() == Some(Ordering::Equal)
+                    && compare_reals(&point.y, &ExactReal::from(0)).value() == Some(Ordering::Equal)
+                    && compare_reals(&point.z, &ExactReal::from(0)).value() == Some(Ordering::Equal)
+            }),
+        "boundary endpoint-on-edge contacts must lower through the direct exact intersect12 rows"
+    );
+    assert!(
+        workspace
+            .pair_up
+            .source_edge_runs
+            .iter()
+            .flat_map(|run| run.events.iter())
+            .any(|event| {
+                (compare_reals(&event.parameter, &ExactReal::from(0)).value()
+                    == Some(Ordering::Equal)
+                    || compare_reals(&event.parameter, &ExactReal::from(1)).value()
+                        == Some(Ordering::Equal))
+                    && matches!(
+                        event.point,
+                        hypermesh::exact::ExactBoolMeshPointConstruction::SegmentPlane { .. }
+                    )
+            }),
+        "direct intersect12 boundary rows must feed pair_up source-edge events"
+    );
+}
+
+#[test]
+#[cfg(feature = "exact-triangulation")]
 fn exact_boolmesh_kernel12_discovers_skew_edge_face_events() {
     let left = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
     let right = tetrahedron_i64([1, 1, -1], [3, 1, 3], [1, 3, 3], [3, 3, 1]);

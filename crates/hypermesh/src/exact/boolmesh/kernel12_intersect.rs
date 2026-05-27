@@ -273,6 +273,11 @@ fn mul(left: &ExactReal, right: &ExactReal) -> ExactReal {
 
 #[cfg(feature = "internal-fuzzing")]
 pub(super) fn internal_fuzz_probe(selector: u8) -> bool {
+    if selector & 4 != 0 {
+        let (left, right) = boundary_endpoint_shadow_meshes();
+        let tables = intersect12_exact(&left, &right);
+        return !tables.p1q2.is_empty() && tables.p1q2.iter().any(boundary_endpoint_hit);
+    }
     if selector & 2 != 0 {
         let (left, right) = halfedge_row_key_meshes();
         let tables = intersect12_exact(&left, &right);
@@ -288,6 +293,41 @@ pub(super) fn internal_fuzz_probe(selector: u8) -> bool {
         && tables.p2q1.is_empty()
         && tables.p1q2[0].sign == 1
         && real_order(&tables.p1q2[0].point.z, &ExactReal::from(4)) == Some(Ordering::Equal)
+}
+
+/// Boundary endpoint/edge fixture for the direct boolmesh `intersect12` port.
+///
+/// Yap's "Towards Exact Geometric Computation" requires the branch condition
+/// itself to be exact; this fixture places the source endpoint `(2, 0, 0)` on
+/// an opposite triangle boundary edge, so accepting the row must come from the
+/// exact `Kernel12::op` `Kernel11` shadow sum rather than a floating tolerance
+/// around the strict point-in-face path.
+#[cfg(any(test, feature = "internal-fuzzing"))]
+fn boundary_endpoint_shadow_meshes() -> (ExactMesh, ExactMesh) {
+    (
+        tetrahedron_i64([2, 0, 0], [2, 0, 2], [3, 1, 1], [1, 1, 1]),
+        tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, -4]),
+    )
+}
+
+#[cfg(any(test, feature = "internal-fuzzing"))]
+fn tetrahedron_i64(a: [i64; 3], b: [i64; 3], c: [i64; 3], d: [i64; 3]) -> ExactMesh {
+    ExactMesh::from_i64_triangles(
+        &[
+            a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2], d[0], d[1], d[2],
+        ],
+        &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
+    )
+    .unwrap()
+}
+
+#[cfg(any(test, feature = "internal-fuzzing"))]
+fn boundary_endpoint_hit(hit: &ExactKernel12IntersectHit) -> bool {
+    real_order(&hit.point.x, &ExactReal::from(2)) == Some(Ordering::Equal)
+        && real_order(&hit.point.y, &ExactReal::from(0)) == Some(Ordering::Equal)
+        && real_order(&hit.point.z, &ExactReal::from(0)) == Some(Ordering::Equal)
+        && (real_order(&hit.parameter, &ExactReal::from(0)) == Some(Ordering::Equal)
+            || real_order(&hit.parameter, &ExactReal::from(1)) == Some(Ordering::Equal))
 }
 
 #[cfg(any(test, feature = "internal-fuzzing"))]
@@ -427,5 +467,36 @@ mod tests {
         assert_eq!(hit.edge_face.edge, [0, 1]);
         assert_eq!(hit.edge_face.face_pair.left_face, 0);
         assert_eq!(hit.edge_face.face_pair.right_face, 0);
+    }
+
+    #[test]
+    fn intersect12_loop_lowers_boundary_endpoint_through_kernel11_rows() {
+        let (left, right) = boundary_endpoint_shadow_meshes();
+
+        let tables = intersect12_exact(&left, &right);
+
+        assert!(
+            tables.p1q2.iter().any(boundary_endpoint_hit),
+            "boundary endpoint/edge contact must survive direct Kernel12::op replay"
+        );
+        let hit = tables
+            .p1q2
+            .iter()
+            .find(|hit| boundary_endpoint_hit(hit))
+            .unwrap();
+        assert_eq!(hit.edge_face.edge_side, ExactBoolMeshSide::Left);
+        assert_eq!(hit.edge_face.face_side, ExactBoolMeshSide::Right);
+        assert_eq!(hit.edge_face.face_pair.left_face, hit.source_halfedge / 3);
+        assert_eq!(hit.edge_face.face_pair.right_face, hit.opposite_face);
+        assert_eq!(hit.edge_face.source_halfedge, hit.source_halfedge);
+        assert_ne!(hit.sign, 0);
+    }
+
+    #[test]
+    #[cfg(feature = "internal-fuzzing")]
+    fn internal_fuzz_probe_reaches_intersect12_loop_variants() {
+        assert!(internal_fuzz_probe(56));
+        assert!(internal_fuzz_probe(58));
+        assert!(internal_fuzz_probe(60));
     }
 }
