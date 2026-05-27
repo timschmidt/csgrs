@@ -33736,7 +33736,7 @@ fn exact_boolmesh_workspace_executes_bounds_disjoint_slice() {
 
 #[test]
 #[cfg(feature = "exact-triangulation")]
-fn exact_boolmesh_workspace_blocks_coplanar_non_disjoint_at_kernel12() {
+fn exact_boolmesh_workspace_routes_strict_coplanar_vertices_to_kernel03() {
     let left = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
     let right = tetrahedron_i64([1, 1, 0], [2, 1, 0], [1, 2, 0], [1, 1, -1]);
 
@@ -33752,13 +33752,14 @@ fn exact_boolmesh_workspace_blocks_coplanar_non_disjoint_at_kernel12() {
         .expect("overlapping bounds must name the next boolmesh stage");
     assert_eq!(
         blocker.stage,
-        hypermesh::exact::ExactBoolMeshKernelStage::Kernel12
+        hypermesh::exact::ExactBoolMeshKernelStage::Kernel03
     );
     assert!(blocker.candidate_face_pairs > 0);
     assert!(
-        workspace.kernel12_coplanar_events > 0
-            || workspace.kernel12_unknown_events > 0
-            || workspace.kernel12_construction_failures > 0
+        workspace.kernel12_coplanar_events == 0
+            && workspace.kernel12_unknown_events == 0
+            && workspace.kernel12_construction_failures == 0,
+        "strict coplanar vertex ownership is no longer a Kernel12 row blocker"
     );
 
     let execution = hypermesh::exact::execute_exact_boolmesh_bounds_disjoint(
@@ -33770,7 +33771,7 @@ fn exact_boolmesh_workspace_blocks_coplanar_non_disjoint_at_kernel12() {
     assert_eq!(
         execution.unwrap_err(),
         hypermesh::exact::ExactBoolMeshValidationError::PortBlocked(
-            hypermesh::exact::ExactBoolMeshKernelStage::Kernel12
+            hypermesh::exact::ExactBoolMeshKernelStage::Kernel03
         )
     );
 }

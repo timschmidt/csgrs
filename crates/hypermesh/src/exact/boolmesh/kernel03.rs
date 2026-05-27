@@ -1,0 +1,324 @@
+//! Exact port of boolmesh `boolean03::kernel03`.
+//!
+//! Legacy boolmesh classifies retained source vertices by querying every
+//! source point against candidate opposite faces, running `Kernel02::op`, and
+//! accumulating the signed shadow contribution into `w03` or `w30`.  This
+//! module ports that dataflow directly over exact `hyperreal`/`hyperlimit`
+//! objects: the query filter is exact projected face bounds, the per-row
+//! predicate is the exact [`super::kernel02::kernel02_op`] port, and the
+//! output is the same integer counter consumed by `boolean45::size_output`.
+//! Before the counters leave this module they are certified against strict
+//! exact closed-mesh relations; boundary vertices remain an explicit
+//! `kernel03` blocker until the matching boolmesh boundary ownership branch is
+//! ported all the way through `boolean45`.
+//!
+//! The implementation intentionally follows boolmesh's published kernel path
+//! instead of the earlier axis-ray fallback.  Ties are handled through the
+//! exact expansion directions in [`super::kernel_frame`], preserving the
+//! simulation-of-simplicity role that boolmesh assigns to vertex normals while
+//! satisfying Yap's "Towards Exact Geometric Computation," *Computational
+//! Geometry* 7.1-2 (1997): topology counters are emitted only from replayable
+//! exact predicates and constructions.
+
+#![allow(dead_code)]
+
+use std::cmp::Ordering;
+
+use hyperlimit::{Point3, compare_reals};
+
+use crate::exact::mesh::ExactMesh;
+use crate::exact::{ClosedMeshWindingRelation, classify_point_against_closed_mesh_winding_report};
+
+use super::ExactReal;
+use super::kernel_frame::{ExactBoolMeshKernelFrame, build_kernel_frame};
+use super::kernel02::{ExactKernel02Input, kernel02_op};
+
+/// Bidirectional `kernel03` winding counters.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(super) struct ExactKernel03Winding {
+    /// Left source vertices classified against the right mesh, legacy `w03`.
+    pub(super) w03: Vec<i32>,
+    /// Right source vertices classified against the left mesh, legacy `w30`.
+    pub(super) w30: Vec<i32>,
+}
+
+/// Run exact boolmesh `kernel03` in both operand directions.
+///
+/// Boolmesh runs `winding03(mp, mq, expand, true)` for `w03` and
+/// `winding03(mp, mq, expand, false)` for `w30`.  The exact port keeps that
+/// canonical operand model so the reverse direction can reuse the canonical
+/// left expansion directions for tie-breaking exactly like legacy `Kernel02`.
+/// Non-closed or malformed halfedge frames remain blockers for now because
+/// `boolean45` source-face retention assumes two-manifold source ownership.
+pub(super) fn kernel03_winding(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Option<ExactKernel03Winding> {
+    if !left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold {
+        return None;
+    }
+
+    let left_frame = build_kernel_frame(left);
+    let right_frame = build_kernel_frame(right);
+    if !kernel03_frame_is_replayable(left, &left_frame)
+        || !kernel03_frame_is_replayable(right, &right_frame)
+    {
+        return None;
+    }
+
+    let expand = ExactReal::from(1);
+    let w03 = winding03_exact(&left_frame, &right_frame, &expand, true)?;
+    let w30 = winding03_exact(&left_frame, &right_frame, &expand, false)?;
+    if !certify_strict_winding_counters(left, right, &w03)
+        || !certify_strict_winding_counters(right, left, &w30)
+    {
+        return None;
+    }
+
+    Some(ExactKernel03Winding { w03, w30 })
+}
+
+/// Port boolmesh `winding03` for one direction.
+///
+/// `fwd == true` classifies canonical-left vertices against canonical-right
+/// faces and accumulates `+s02`; `fwd == false` classifies canonical-right
+/// vertices against canonical-left faces and accumulates `-s02`.  This is the
+/// same sign convention legacy boolmesh uses before `boolean45::size_output`
+/// applies operation coefficients for union, intersection, and difference.
+fn winding03_exact(
+    left: &ExactBoolMeshKernelFrame,
+    right: &ExactBoolMeshKernelFrame,
+    expand: &ExactReal,
+    fwd: bool,
+) -> Option<Vec<i32>> {
+    let subject = if fwd { left } else { right };
+    let target = if fwd { right } else { left };
+    let subject_normals = if fwd {
+        &left.expansion_normals
+    } else {
+        &right.expansion_normals
+    };
+    let target_normals = if fwd {
+        &right.expansion_normals
+    } else {
+        &left.expansion_normals
+    };
+
+    let input = ExactKernel02Input {
+        ps_p: &subject.points,
+        ps_q: &target.points,
+        hs_q: &target.halfedges,
+        ns_p: subject_normals,
+        ns_q: target_normals,
+        expand,
+        fwd,
+    };
+
+    let mut winding = vec![0i32; subject.points.len()];
+    for vertex in 0..subject.points.len() {
+        let point = subject.points.get(vertex)?;
+        for face in 0..(target.source_halfedge_count() / 3) {
+            if !point_in_face_xy_bounds(point, target, face)? {
+                continue;
+            }
+            if let Some(hit) = kernel02_op(&input, vertex, face) {
+                winding[vertex] += hit.sign * if fwd { 1 } else { -1 };
+            }
+        }
+    }
+    Some(winding)
+}
+
+/// Validate that a frame is faithful enough for boolmesh `kernel03` replay.
+///
+/// Closed triangle meshes should have exactly three source halfedges per face,
+/// no synthetic boundary reverse rows in the source range, and no duplicate
+/// directed source rows.  Rejecting drift here keeps `kernel03` counters tied
+/// to the same halfedge object model consumed later by `boolean45`.
+fn kernel03_frame_is_replayable(mesh: &ExactMesh, frame: &ExactBoolMeshKernelFrame) -> bool {
+    let source_halfedges = mesh.triangles().len() * 3;
+    frame.points.len() == mesh.vertices().len()
+        && frame.source_halfedge_count() == source_halfedges
+        && frame.boundary_source_halfedges == 0
+        && frame.duplicate_directed_halfedges == 0
+        && frame.expansion_normals.len() == mesh.vertices().len()
+}
+
+/// Certify direct boolmesh counters before `boolean45` consumes them.
+///
+/// This does not replace the algorithmic source of `w03`/`w30`; those counters
+/// still come from the ported `Kernel02` shadow accumulator above. It is the
+/// exact-computation guard described by Yap: a topology mutation may consume a
+/// counter only when the same exact input certifies that the retained source
+/// vertex is strictly inside (`1`) or strictly outside (`0`) the opposite
+/// closed mesh. Boundary vertices are not rounded into either side.
+fn certify_strict_winding_counters(
+    subject: &ExactMesh,
+    target: &ExactMesh,
+    counters: &[i32],
+) -> bool {
+    counters.len() == subject.vertices().len()
+        && subject
+            .vertices()
+            .iter()
+            .zip(counters)
+            .all(|(vertex, counter)| {
+                let report = classify_point_against_closed_mesh_winding_report(
+                    &vertex.to_hyperlimit_point(),
+                    target,
+                );
+                match report.relation {
+                    ClosedMeshWindingRelation::Inside => *counter == 1,
+                    ClosedMeshWindingRelation::Outside => *counter == 0,
+                    ClosedMeshWindingRelation::Boundary
+                    | ClosedMeshWindingRelation::Unknown
+                    | ClosedMeshWindingRelation::NotClosed => false,
+                }
+            })
+}
+
+/// Exact counterpart of the boolmesh point/face broad query.
+///
+/// The legacy collider tests a point query in projected `x/y` against opposite
+/// face bounds before invoking `Kernel02::op`.  The filter is conservative:
+/// boundary equality is included so exact edge and vertex shadows still reach
+/// the kernel row that owns their tie-breaking decision.
+fn point_in_face_xy_bounds(
+    point: &Point3,
+    frame: &ExactBoolMeshKernelFrame,
+    face: usize,
+) -> Option<bool> {
+    let base = face.checked_mul(3)?;
+    let mut min_x = None::<&ExactReal>;
+    let mut max_x = None::<&ExactReal>;
+    let mut min_y = None::<&ExactReal>;
+    let mut max_y = None::<&ExactReal>;
+
+    for local in 0..3 {
+        let halfedge = *frame.halfedges.get(base + local)?;
+        let vertex = frame.points.get(halfedge.tail)?;
+        min_x = choose_min(min_x, &vertex.x);
+        max_x = choose_max(max_x, &vertex.x);
+        min_y = choose_min(min_y, &vertex.y);
+        max_y = choose_max(max_y, &vertex.y);
+    }
+
+    let min_x = min_x?;
+    let max_x = max_x?;
+    let min_y = min_y?;
+    let max_y = max_y?;
+    Some(
+        compare_reals(&point.x, min_x).value()? != Ordering::Less
+            && compare_reals(&point.x, max_x).value()? != Ordering::Greater
+            && compare_reals(&point.y, min_y).value()? != Ordering::Less
+            && compare_reals(&point.y, max_y).value()? != Ordering::Greater,
+    )
+}
+
+fn choose_min<'a>(
+    current: Option<&'a ExactReal>,
+    candidate: &'a ExactReal,
+) -> Option<&'a ExactReal> {
+    match current {
+        Some(current)
+            if compare_reals(candidate, current)
+                .value()
+                .is_some_and(|ordering| ordering != Ordering::Less) =>
+        {
+            Some(current)
+        }
+        Some(_) | None => Some(candidate),
+    }
+}
+
+fn choose_max<'a>(
+    current: Option<&'a ExactReal>,
+    candidate: &'a ExactReal,
+) -> Option<&'a ExactReal> {
+    match current {
+        Some(current)
+            if compare_reals(candidate, current)
+                .value()
+                .is_some_and(|ordering| ordering != Ordering::Greater) =>
+        {
+            Some(current)
+        }
+        Some(_) | None => Some(candidate),
+    }
+}
+
+#[cfg(feature = "internal-fuzzing")]
+pub(super) fn internal_fuzz_probe(selector: u8) -> bool {
+    let offset = i64::from(selector % 2);
+    let inner = tetrahedron_i64(
+        [1 + offset, 1, 1],
+        [2 + offset, 1, 1],
+        [1 + offset, 2, 1],
+        [1 + offset, 1, 2],
+    );
+    let outer = tetrahedron_i64([0, 0, 0], [10, 0, 0], [0, 10, 0], [0, 0, 10]);
+    let separated = tetrahedron_i64([20, 0, 0], [22, 0, 0], [20, 2, 0], [20, 0, 2]);
+
+    let nested = kernel03_winding(&inner, &outer).is_some_and(|winding| {
+        winding.w03 == vec![1; inner.vertices().len()]
+            && winding.w30 == vec![0; outer.vertices().len()]
+    });
+    let apart = kernel03_winding(&inner, &separated).is_some_and(|winding| {
+        winding.w03 == vec![0; inner.vertices().len()]
+            && winding.w30 == vec![0; separated.vertices().len()]
+    });
+    nested && apart
+}
+
+#[cfg(any(test, feature = "internal-fuzzing"))]
+fn tetrahedron_i64(a: [i64; 3], b: [i64; 3], c: [i64; 3], d: [i64; 3]) -> ExactMesh {
+    ExactMesh::from_i64_triangles(
+        &[
+            a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2], d[0], d[1], d[2],
+        ],
+        &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
+    )
+    .expect("deterministic kernel03 tetrahedron fixture must import")
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::exact::ValidationPolicy;
+
+    use super::*;
+
+    #[test]
+    fn winding03_classifies_nested_closed_tetrahedra() {
+        let inner = tetrahedron_i64([1, 1, 1], [2, 1, 1], [1, 2, 1], [1, 1, 2]);
+        let outer = tetrahedron_i64([0, 0, 0], [10, 0, 0], [0, 10, 0], [0, 0, 10]);
+
+        let winding = kernel03_winding(&inner, &outer).expect("closed nested meshes classify");
+        assert_eq!(winding.w03, vec![1; inner.vertices().len()]);
+        assert_eq!(winding.w30, vec![0; outer.vertices().len()]);
+    }
+
+    #[test]
+    fn winding03_rejects_open_source_frame() {
+        let open = ExactMesh::from_i64_triangles_with_policy(
+            &[0, 0, 0, 4, 0, 0, 0, 4, 0],
+            &[0, 1, 2],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .expect("open triangle fixture must import");
+        let closed = tetrahedron_i64([0, 0, 0], [10, 0, 0], [0, 10, 0], [0, 0, 10]);
+
+        assert!(kernel03_winding(&open, &closed).is_none());
+        assert!(kernel03_winding(&closed, &open).is_none());
+    }
+
+    #[test]
+    fn winding03_keeps_boundary_equalities_in_query_filter() {
+        let lower = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, -4]);
+        let upper_vertex_on_base = tetrahedron_i64([1, 1, 0], [2, 1, 0], [1, 2, 0], [1, 1, 2]);
+
+        assert!(
+            kernel03_winding(&upper_vertex_on_base, &lower).is_none(),
+            "boundary retained vertices must stay a Kernel03 blocker until the boolmesh boundary ownership branch is ported"
+        );
+    }
+}

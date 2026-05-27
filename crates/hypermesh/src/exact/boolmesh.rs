@@ -21,6 +21,8 @@ mod boolean45;
 #[cfg(feature = "exact-triangulation")]
 mod kernel02;
 #[cfg(feature = "exact-triangulation")]
+mod kernel03;
+#[cfg(feature = "exact-triangulation")]
 mod kernel11;
 #[cfg(feature = "exact-triangulation")]
 mod kernel12;
@@ -59,9 +61,6 @@ use super::scalar::ExactReal;
 #[cfg(feature = "exact-triangulation")]
 use super::validation::ValidationPolicy;
 #[cfg(feature = "exact-triangulation")]
-use super::winding::{
-    ClosedMeshWindingRelation, classify_point_against_closed_mesh_winding_report,
-};
 #[cfg(feature = "exact-triangulation")]
 use boolean45::{pair_source_edge_events, size_output_stage};
 #[cfg(feature = "exact-triangulation")]
@@ -69,6 +68,8 @@ use hyperlimit::{
     CoplanarProjection, PlaneSide, Point3, PredicateOutcome, SegmentIntersection, TriangleLocation,
     compare_reals,
 };
+#[cfg(feature = "exact-triangulation")]
+use kernel03::kernel03_winding;
 #[cfg(feature = "exact-triangulation")]
 use kernel12::{ExactBoolMeshKernel12Lowering, lower_kernel12_events};
 #[cfg(feature = "exact-triangulation")]
@@ -135,6 +136,16 @@ pub fn exact_boolmesh_kernel12_accumulator_replay_probe_for_internal_fuzz(select
 #[cfg(all(feature = "exact-triangulation", feature = "internal-fuzzing"))]
 pub fn exact_boolmesh_kernel12_intersect_loop_probe_for_internal_fuzz(selector: u8) -> bool {
     kernel12_intersect::internal_fuzz_probe(selector)
+}
+
+/// Exercise the direct exact boolmesh `kernel03::winding03` port from fuzz targets.
+///
+/// This is the retained-source-vertex classifier that fills boolmesh `w03` and
+/// `w30`.  Keeping it in the fuzz build stresses the hard handoff from exact
+/// `Kernel02` shadows into operation-signed `boolean45::size_output` counters.
+#[cfg(all(feature = "exact-triangulation", feature = "internal-fuzzing"))]
+pub fn exact_boolmesh_kernel03_winding_probe_for_internal_fuzz(selector: u8) -> bool {
+    kernel03::internal_fuzz_probe(selector)
 }
 
 /// Legacy boolmesh kernel stage represented by the exact port.
@@ -459,46 +470,18 @@ struct ExactBoolMeshKernel03Winding {
 /// split cases may retain only the source vertices that are inside the
 /// opposite mesh for the requested operation.  In both cases boolmesh stores
 /// the same integer counters, so this port deliberately keeps one classifier
-/// and lets `boolean45::size_output` apply the operation signs.  Boundary or
-/// undecidable vertices remain a `kernel03` blocker, matching Yap's requirement
-/// that exact-computation topology decisions be certified before mutation.
+/// and lets `boolean45::size_output` apply the operation signs.  The counters
+/// are now produced by the direct exact `boolean03::kernel03` port: source
+/// vertices are queried against opposite boolmesh face rows and accumulated
+/// through exact `Kernel02::op`, following Yap's requirement that topology
+/// decisions replay through retained exact predicates before mutation.
 #[cfg(feature = "exact-triangulation")]
 fn classify_kernel03(left: &ExactMesh, right: &ExactMesh) -> Option<ExactBoolMeshKernel03Winding> {
+    let winding = kernel03_winding(left, right)?;
     Some(ExactBoolMeshKernel03Winding {
-        w03: classify_vertices_for_boolmesh_winding(left, right)?,
-        w30: classify_vertices_for_boolmesh_winding(right, left)?,
+        w03: winding.w03,
+        w30: winding.w30,
     })
-}
-
-/// Convert exact closed-mesh winding relations into boolmesh `kernel03`
-/// counters.
-///
-/// Boolmesh stores winding membership as small integers that are later combined
-/// with operation coefficients in `boolean45::size_output`: `1` means the
-/// subject vertex is strictly inside the opposite closed mesh and `0` means it
-/// is strictly outside.  Boundary, unknown, and not-closed relations are not
-/// coerced; they keep the workspace blocked at `kernel03` until the matching
-/// boolmesh subcase is ported with exact predicates.
-#[cfg(feature = "exact-triangulation")]
-fn classify_vertices_for_boolmesh_winding(
-    subject: &ExactMesh,
-    target: &ExactMesh,
-) -> Option<Vec<i32>> {
-    let mut winding = Vec::with_capacity(subject.vertices().len());
-    for vertex in subject.vertices() {
-        let report = classify_point_against_closed_mesh_winding_report(
-            &vertex.to_hyperlimit_point(),
-            target,
-        );
-        match report.relation {
-            ClosedMeshWindingRelation::Inside => winding.push(1),
-            ClosedMeshWindingRelation::Outside => winding.push(0),
-            ClosedMeshWindingRelation::Boundary
-            | ClosedMeshWindingRelation::Unknown
-            | ClosedMeshWindingRelation::NotClosed => return None,
-        }
-    }
-    Some(winding)
 }
 
 /// Exact output-vertex origin allocated by `boolean45`.
@@ -2050,17 +2033,18 @@ fn count_uncovered_coplanar_events(
         .count()
 }
 
-/// Return whether retained coplanar graph evidence is already owned by a
-/// direct exact boolmesh row.
+/// Return whether retained coplanar graph evidence is already owned by the
+/// exact boolmesh port.
 ///
-/// This guard deliberately stays at boolmesh row granularity.  Yap's
+/// Edge evidence deliberately stays at boolmesh row granularity. Yap's
 /// "Towards Exact Geometric Computation" requires retained facts to replay
-/// against the exact object that consumes them; for this port, that consumer is
-/// the exact `intersect12`/`Kernel12::op` row.  Positive-length coplanar edge
-/// overlap is therefore covered only when both split-interval endpoints replay
-/// through rows on the retained source edges.  Strict interior vertex
-/// containment is still not a row witness and remains unresolved until the
-/// coplanar overlap branch is ported.
+/// against the exact object that consumes them; for split facts, that consumer
+/// is the exact `intersect12`/`Kernel12::op` row. Positive-length coplanar
+/// edge overlap is therefore covered only when both split-interval endpoints
+/// replay through rows on the retained source edges. Strict interior coplanar
+/// vertex evidence is different: legacy boolmesh does not emit a `kernel12`
+/// split row for it, and the exact direct `kernel03` port now owns that
+/// retained-vertex classification through `w03`/`w30` counters.
 #[cfg(feature = "exact-triangulation")]
 fn coplanar_evidence_has_lowered_row(
     evidence: &Kernel12CoplanarEvidence,
@@ -2130,9 +2114,8 @@ fn coplanar_evidence_has_lowered_row(
                         && point_matches(row.1, &point)
                 })
             }
-            TriangleLocation::Inside | TriangleLocation::Outside | TriangleLocation::Degenerate => {
-                false
-            }
+            TriangleLocation::Inside => true,
+            TriangleLocation::Outside | TriangleLocation::Degenerate => false,
         },
     }
 }
@@ -2332,11 +2315,11 @@ mod tests {
         );
     }
 
-    /// A strict interior coplanar vertex is positive-area overlap evidence,
-    /// not an endpoint split row, even when the face pair already emitted some
-    /// other exact boolmesh row.
+    /// A strict interior coplanar vertex is positive-area overlap evidence
+    /// owned by exact `kernel03` retained-vertex classification, not an
+    /// endpoint split row.
     #[test]
-    fn coplanar_strict_interior_vertex_remains_uncovered() {
+    fn coplanar_strict_interior_vertex_is_owned_by_kernel03() {
         let left = tetrahedron_i64([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]);
         let right = tetrahedron_i64([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, -1]);
         let lowering = lowering_at(p3(0, 0, 0));
@@ -2354,7 +2337,7 @@ mod tests {
 
         assert_eq!(
             count_uncovered_coplanar_events(&[evidence], &lowering, &left, &right),
-            1
+            0
         );
     }
 }
