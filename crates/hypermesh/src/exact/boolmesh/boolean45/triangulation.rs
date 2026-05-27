@@ -21,9 +21,9 @@ use crate::exact::region::{choose_region_projection, project_for_hypertri};
 use super::super::{
     ExactBoolMeshBoolean03, ExactBoolMeshFaceLoopAssemblyStage, ExactBoolMeshHalfedgeAssemblyStage,
     ExactBoolMeshLoopTriangulation, ExactBoolMeshLoopTriangulationStage,
-    ExactBoolMeshOutputHalfedgeSource, ExactBoolMeshOutputVertexAllocation,
-    ExactBoolMeshOutputVertexOrigin, ExactBoolMeshSide, ExactBoolMeshSourceVertex,
+    ExactBoolMeshOutputHalfedgeSource, ExactBoolMeshOutputVertexAllocation, ExactBoolMeshSide,
 };
+use super::geometry::output_vertex_point;
 
 /// Triangulate simple assembled boolmesh output loops.
 pub(super) fn triangulate_output_face_loops(
@@ -144,38 +144,4 @@ fn output_loop_points(
         .iter()
         .map(|vertex| output_vertex_point(*vertex, allocation, boolean03, left, right))
         .collect()
-}
-
-fn output_vertex_point(
-    vertex: usize,
-    allocation: &ExactBoolMeshOutputVertexAllocation,
-    boolean03: &ExactBoolMeshBoolean03,
-    left: &ExactMesh,
-    right: &ExactMesh,
-) -> Option<Point3> {
-    match allocation.output_vertex_origins.get(vertex)? {
-        ExactBoolMeshOutputVertexOrigin::SourceVertex { source, .. } => {
-            source_vertex_point(*source, left, right)
-        }
-        ExactBoolMeshOutputVertexOrigin::Kernel12LeftEdgeRightFace { event, .. } => {
-            boolean03.v12.get(*event).cloned()
-        }
-        ExactBoolMeshOutputVertexOrigin::Kernel12RightEdgeLeftFace { event, .. } => {
-            boolean03.v21.get(*event).cloned()
-        }
-    }
-}
-
-fn source_vertex_point(
-    source: ExactBoolMeshSourceVertex,
-    left: &ExactMesh,
-    right: &ExactMesh,
-) -> Option<Point3> {
-    let mesh = match source.side {
-        ExactBoolMeshSide::Left => left,
-        ExactBoolMeshSide::Right => right,
-    };
-    mesh.vertices()
-        .get(source.vertex)
-        .map(|point| point.to_hyperlimit_point())
 }

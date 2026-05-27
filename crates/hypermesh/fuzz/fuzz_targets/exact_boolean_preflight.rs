@@ -232,6 +232,23 @@ fuzz_target!(|data: &[u8]| {
                     .map(|triangulation| triangulation.triangles.len() / 3)
                     .sum::<usize>()
             );
+            assert_eq!(
+                boolean45.mesh_export.vertex_count,
+                boolean45.vertex_allocation.output_vertex_origins.len()
+            );
+            assert_eq!(
+                boolean45.mesh_export.triangles.len(),
+                boolean45.output_triangles.triangles.len()
+            );
+            assert_eq!(
+                boolean45.mesh_export.blocked_output_triangles,
+                boolean45.output_triangles.missing_loop_triangulations
+                    + boolean45.output_triangles.invalid_local_triangles
+            );
+            assert!(
+                boolean45.mesh_export.orientation_failures
+                    <= boolean45.output_triangles.triangles.len()
+            );
             if !boolean45.output_triangles.triangles.is_empty() {
                 let mut corrupted_output = workspace.clone();
                 corrupted_output
@@ -243,6 +260,21 @@ fuzz_target!(|data: &[u8]| {
                     .vertices[0] = usize::MAX;
                 assert!(
                     corrupted_output
+                        .validate_against_sources(&left, &right)
+                        .is_err()
+                );
+            }
+            if !boolean45.mesh_export.triangles.is_empty() {
+                let mut corrupted_export = workspace.clone();
+                corrupted_export
+                    .boolean45
+                    .as_mut()
+                    .unwrap()
+                    .mesh_export
+                    .triangles[0]
+                    .0[0] = usize::MAX;
+                assert!(
+                    corrupted_export
                         .validate_against_sources(&left, &right)
                         .is_err()
                 );

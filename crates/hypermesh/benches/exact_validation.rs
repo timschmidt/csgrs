@@ -13048,6 +13048,8 @@ fn exact_boolmesh_bounds_disjoint_port(c: &mut Criterion) {
                     + size_output.face_loop_assembly.loops.len()
                     + size_output.loop_triangulation.triangulations.len()
                     + size_output.output_triangles.triangles.len()
+                    + size_output.mesh_export.triangles.len()
+                    + size_output.mesh_export.orientation_failures
             })
         });
     }
@@ -13115,6 +13117,8 @@ fn exact_boolmesh_kernel12_port(c: &mut Criterion) {
                                 + stage.face_loop_assembly.loops.len()
                                 + stage.loop_triangulation.triangulations.len()
                                 + stage.output_triangles.triangles.len()
+                                + stage.mesh_export.triangles.len()
+                                + stage.mesh_export.orientation_failures
                         })
                         .unwrap_or(0)
             })

@@ -12,7 +12,9 @@
 //! *SIGGRAPH* (1977).
 
 mod assembly;
+mod export;
 mod face_loops;
+mod geometry;
 mod output_triangles;
 mod triangulation;
 
@@ -22,6 +24,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use hyperlimit::compare_reals;
 
 use assembly::assemble_output_halfedges;
+use export::stage_mesh_export;
 use face_loops::assemble_output_face_loops;
 use output_triangles::materialize_output_triangles;
 use triangulation::triangulate_output_face_loops;
@@ -183,6 +186,13 @@ pub(super) fn size_output_stage(
         &face_loop_assembly,
     );
     let output_triangles = materialize_output_triangles(&loop_triangulation);
+    let mesh_export = stage_mesh_export(
+        left,
+        right,
+        boolean03,
+        &vertex_allocation,
+        &output_triangles,
+    );
 
     ExactBoolMeshBoolean45Stage {
         left_face_halfedge_counts,
@@ -198,6 +208,7 @@ pub(super) fn size_output_stage(
         face_loop_assembly,
         loop_triangulation,
         output_triangles,
+        mesh_export,
         vertices_from_left: i03.iter().map(|value| signed_abs(*value)).sum(),
         vertices_from_right: i30.iter().map(|value| signed_abs(*value)).sum(),
         inserted_intersection_vertices: i12

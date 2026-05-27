@@ -30,7 +30,7 @@ use super::construction::{
 #[cfg(feature = "exact-triangulation")]
 use super::graph::{IntersectionEvent, MeshSide, build_intersection_graph};
 #[cfg(feature = "exact-triangulation")]
-use super::mesh::{ExactMesh, Triangle};
+use super::mesh::{ExactMesh, ExactPoint3, Triangle};
 #[cfg(feature = "exact-triangulation")]
 use super::provenance::SourceProvenance;
 #[cfg(feature = "exact-triangulation")]
@@ -796,6 +796,33 @@ pub struct ExactBoolMeshOutputTriangleStage {
     pub invalid_local_triangles: usize,
 }
 
+/// Exact final-triangle export candidate for a `boolean45` stage.
+///
+/// This is the ported handoff from boolmesh's assembled/triangulated boundary
+/// into mesh triangles.  It intentionally stores output vertex ids and
+/// [`Triangle`] records rather than an [`ExactMesh`]: retained mesh facts are
+/// built only after validation proves the boolmesh topology can be replayed.
+/// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
+/// 7.1-2 (1997), is the reason this object is explicit instead of hiding mesh
+/// construction behind a convenience cache.
+#[cfg(feature = "exact-triangulation")]
+#[derive(Clone, Debug, Default, Eq, PartialEq)]
+pub struct ExactBoolMeshMeshExportStage {
+    /// Number of boolmesh output vertex slots available to exported triangles.
+    pub vertex_count: usize,
+    /// Triangle index buffer ready for final `ExactMesh` construction.
+    pub triangles: Vec<Triangle>,
+    /// Output vertex origins whose exact coordinates cannot be recovered.
+    pub missing_vertex_coordinates: usize,
+    /// Upstream loop-triangulation records that block final triangle export.
+    pub blocked_output_triangles: usize,
+    /// Materialized triangle triplets that were malformed or out of range.
+    pub invalid_output_triangles: usize,
+    /// Triangles whose exact orientation could not be aligned to source face
+    /// orientation.
+    pub orientation_failures: usize,
+}
+
 /// Exact `boolean45`-shaped output staging metadata.
 #[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -826,6 +853,8 @@ pub struct ExactBoolMeshBoolean45Stage {
     pub loop_triangulation: ExactBoolMeshLoopTriangulationStage,
     /// Exact output triangle triplets resolved from loop triangulations.
     pub output_triangles: ExactBoolMeshOutputTriangleStage,
+    /// Exact final-triangle export candidate.
+    pub mesh_export: ExactBoolMeshMeshExportStage,
     /// Number of vertices copied from the left operand.
     pub vertices_from_left: usize,
     /// Number of vertices copied from the right operand.
@@ -1180,6 +1209,8 @@ pub enum ExactBoolMeshValidationError {
     Boolean45LoopTriangulationMismatch,
     /// A `boolean45` materialized output-triangle record is stale or malformed.
     Boolean45OutputTriangleMismatch,
+    /// A `boolean45` mesh-export record is stale or malformed.
+    Boolean45MeshExportMismatch,
     /// Blocker candidate counts do not match retained candidates.
     BlockerCountMismatch,
     /// A non-disjoint workspace had no named boolmesh-stage blocker.
@@ -1230,7 +1261,25 @@ pub fn execute_exact_boolmesh_bounds_disjoint(
                 .unwrap_or(ExactBoolMeshKernelStage::Boolean03),
         ));
     }
+    let boolean45 = workspace
+        .boolean45
+        .as_ref()
+        .ok_or(ExactBoolMeshValidationError::MissingBlocker)?;
     let mesh = match operation {
+        ExactBooleanOperation::Union
+        | ExactBooleanOperation::Intersection
+        | ExactBooleanOperation::Difference
+            if boolean45_bounds_disjoint_export_is_complete(boolean45) =>
+        {
+            materialize_boolean45_export(
+                boolean45,
+                &workspace.boolean03,
+                left,
+                right,
+                validation,
+                boolmesh_export_label(operation),
+            )?
+        }
         ExactBooleanOperation::Union => concatenate_meshes(left, right, validation)
             .map_err(|_| ExactBoolMeshValidationError::InvalidOutputMesh)?,
         ExactBooleanOperation::Intersection => {
@@ -1257,6 +1306,124 @@ pub fn execute_exact_boolmesh_bounds_disjoint(
     };
     execution.validate_against_sources(left, right)?;
     Ok(execution)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn boolean45_bounds_disjoint_export_is_complete(stage: &ExactBoolMeshBoolean45Stage) -> bool {
+    stage.source_edge_incident_gaps == 0
+        && stage.halfedge_assembly.unfilled_halfedges == 0
+        && stage.face_loop_assembly.incomplete_faces == 0
+        && stage.mesh_export.missing_vertex_coordinates == 0
+        && stage.mesh_export.blocked_output_triangles == 0
+        && stage.mesh_export.invalid_output_triangles == 0
+        && stage.mesh_export.orientation_failures == 0
+        && stage.mesh_export.triangles.len()
+            == stage.source_face_to_output_face.iter().flatten().count()
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn materialize_boolean45_export(
+    stage: &ExactBoolMeshBoolean45Stage,
+    boolean03: &ExactBoolMeshBoolean03,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    validation: ValidationPolicy,
+    label: &'static str,
+) -> Result<ExactMesh, ExactBoolMeshValidationError> {
+    if stage.mesh_export.missing_vertex_coordinates > 0
+        || stage.mesh_export.blocked_output_triangles > 0
+        || stage.mesh_export.invalid_output_triangles > 0
+        || stage.mesh_export.orientation_failures > 0
+    {
+        return Err(ExactBoolMeshValidationError::Boolean45MeshExportMismatch);
+    }
+    let vertices = stage
+        .vertex_allocation
+        .output_vertex_origins
+        .iter()
+        .map(|origin| output_vertex_origin_point(*origin, boolean03, left, right))
+        .collect::<Option<Vec<_>>>()
+        .ok_or(ExactBoolMeshValidationError::Boolean45MeshExportMismatch)?;
+    if vertices.len() != stage.mesh_export.vertex_count {
+        return Err(ExactBoolMeshValidationError::Boolean45MeshExportMismatch);
+    }
+    ExactMesh::new_with_policy(
+        vertices,
+        stage.mesh_export.triangles.clone(),
+        SourceProvenance::exact(label),
+        validation,
+    )
+    .map_err(|_| ExactBoolMeshValidationError::InvalidOutputMesh)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn output_vertex_origin_point(
+    origin: ExactBoolMeshOutputVertexOrigin,
+    boolean03: &ExactBoolMeshBoolean03,
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Option<ExactPoint3> {
+    let point = match origin {
+        ExactBoolMeshOutputVertexOrigin::SourceVertex { source, .. } => {
+            let mesh = match source.side {
+                ExactBoolMeshSide::Left => left,
+                ExactBoolMeshSide::Right => right,
+            };
+            mesh.vertices().get(source.vertex)?.to_hyperlimit_point()
+        }
+        ExactBoolMeshOutputVertexOrigin::Kernel12LeftEdgeRightFace { event, .. } => {
+            boolean03.v12.get(event)?.clone()
+        }
+        ExactBoolMeshOutputVertexOrigin::Kernel12RightEdgeLeftFace { event, .. } => {
+            boolean03.v21.get(event)?.clone()
+        }
+    };
+    Some(ExactPoint3::new(point.x, point.y, point.z))
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn boolmesh_export_label(operation: ExactBooleanOperation) -> &'static str {
+    match operation {
+        ExactBooleanOperation::Union => "exact boolmesh exported union",
+        ExactBooleanOperation::Intersection => "exact boolmesh exported intersection",
+        ExactBooleanOperation::Difference => "exact boolmesh exported difference",
+        ExactBooleanOperation::SelectedRegions(_) => "exact boolmesh exported selected regions",
+    }
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn empty_mesh(label: &'static str, validation: ValidationPolicy) -> Result<ExactMesh, MeshError> {
+    ExactMesh::new_with_policy(
+        Vec::new(),
+        Vec::new(),
+        SourceProvenance::exact(label),
+        validation,
+    )
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn concatenate_meshes(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    validation: ValidationPolicy,
+) -> Result<ExactMesh, MeshError> {
+    let mut vertices = left.vertices().to_vec();
+    let right_offset = vertices.len();
+    vertices.extend_from_slice(right.vertices());
+    let mut triangles = left.triangles().to_vec();
+    triangles.extend(right.triangles().iter().map(|triangle| {
+        Triangle([
+            triangle.0[0] + right_offset,
+            triangle.0[1] + right_offset,
+            triangle.0[2] + right_offset,
+        ])
+    }));
+    ExactMesh::new_with_policy(
+        vertices,
+        triangles,
+        SourceProvenance::exact("exact boolmesh disjoint union"),
+        validation,
+    )
 }
 
 #[cfg(feature = "exact-triangulation")]
@@ -1611,6 +1778,76 @@ fn validate_boolean45_stage(
     validate_boolean45_face_loops(stage)?;
     validate_boolean45_loop_triangulation(stage, left_faces, right_faces)?;
     validate_boolean45_output_triangles(stage)?;
+    validate_boolean45_mesh_export(stage, boolean03, left_vertices, right_vertices)?;
+    Ok(())
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn validate_boolean45_mesh_export(
+    stage: &ExactBoolMeshBoolean45Stage,
+    boolean03: &ExactBoolMeshBoolean03,
+    left_vertices: usize,
+    right_vertices: usize,
+) -> Result<(), ExactBoolMeshValidationError> {
+    if stage.mesh_export.vertex_count != stage.vertex_allocation.output_vertex_origins.len() {
+        return Err(ExactBoolMeshValidationError::Boolean45MeshExportMismatch);
+    }
+    let expected_missing_vertex_coordinates = stage
+        .vertex_allocation
+        .output_vertex_origins
+        .iter()
+        .filter(|origin| {
+            !output_vertex_origin_has_coordinate(**origin, boolean03, left_vertices, right_vertices)
+        })
+        .count();
+    let expected_blocked_output_triangles = stage.output_triangles.missing_loop_triangulations
+        + stage.output_triangles.invalid_local_triangles;
+    if stage.mesh_export.missing_vertex_coordinates != expected_missing_vertex_coordinates
+        || stage.mesh_export.blocked_output_triangles != expected_blocked_output_triangles
+        || stage.mesh_export.orientation_failures > stage.output_triangles.triangles.len()
+    {
+        return Err(ExactBoolMeshValidationError::Boolean45MeshExportMismatch);
+    }
+
+    let mut expected_invalid_output_triangles = 0;
+    for triangle in &stage.output_triangles.triangles {
+        if triangle
+            .vertices
+            .iter()
+            .any(|vertex| *vertex >= stage.mesh_export.vertex_count)
+            || triangle.vertices[0] == triangle.vertices[1]
+            || triangle.vertices[1] == triangle.vertices[2]
+            || triangle.vertices[2] == triangle.vertices[0]
+        {
+            expected_invalid_output_triangles += 1;
+            continue;
+        }
+    }
+    if stage.mesh_export.invalid_output_triangles != expected_invalid_output_triangles {
+        return Err(ExactBoolMeshValidationError::Boolean45MeshExportMismatch);
+    }
+    if stage.mesh_export.triangles.len() + stage.mesh_export.orientation_failures
+        != stage.output_triangles.triangles.len() - expected_invalid_output_triangles
+    {
+        return Err(ExactBoolMeshValidationError::Boolean45MeshExportMismatch);
+    }
+    for (exported, materialized) in stage
+        .mesh_export
+        .triangles
+        .iter()
+        .zip(stage.output_triangles.triangles.iter())
+    {
+        let raw = Triangle(materialized.vertices);
+        let reversed = Triangle([
+            materialized.vertices[0],
+            materialized.vertices[2],
+            materialized.vertices[1],
+        ]);
+        if *exported != raw && *exported != reversed {
+            return Err(ExactBoolMeshValidationError::Boolean45MeshExportMismatch);
+        }
+    }
+
     Ok(())
 }
 
@@ -1675,6 +1912,27 @@ fn validate_boolean45_output_triangles(
     }
 
     Ok(())
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn output_vertex_origin_has_coordinate(
+    origin: ExactBoolMeshOutputVertexOrigin,
+    boolean03: &ExactBoolMeshBoolean03,
+    left_vertices: usize,
+    right_vertices: usize,
+) -> bool {
+    match origin {
+        ExactBoolMeshOutputVertexOrigin::SourceVertex { source, .. } => match source.side {
+            ExactBoolMeshSide::Left => source.vertex < left_vertices,
+            ExactBoolMeshSide::Right => source.vertex < right_vertices,
+        },
+        ExactBoolMeshOutputVertexOrigin::Kernel12LeftEdgeRightFace { event, .. } => {
+            event < boolean03.v12.len()
+        }
+        ExactBoolMeshOutputVertexOrigin::Kernel12RightEdgeLeftFace { event, .. } => {
+            event < boolean03.v21.len()
+        }
+    }
 }
 
 #[cfg(feature = "exact-triangulation")]
@@ -2513,39 +2771,4 @@ fn validate_pair_up_event(
         return Err(ExactBoolMeshValidationError::PairUpRunEventMismatch);
     }
     Ok(())
-}
-
-#[cfg(feature = "exact-triangulation")]
-fn empty_mesh(label: &'static str, validation: ValidationPolicy) -> Result<ExactMesh, MeshError> {
-    ExactMesh::new_with_policy(
-        Vec::new(),
-        Vec::new(),
-        SourceProvenance::exact(label),
-        validation,
-    )
-}
-
-#[cfg(feature = "exact-triangulation")]
-fn concatenate_meshes(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    validation: ValidationPolicy,
-) -> Result<ExactMesh, MeshError> {
-    let mut vertices = left.vertices().to_vec();
-    let right_offset = vertices.len();
-    vertices.extend_from_slice(right.vertices());
-    let mut triangles = left.triangles().to_vec();
-    triangles.extend(right.triangles().iter().map(|triangle| {
-        Triangle([
-            triangle.0[0] + right_offset,
-            triangle.0[1] + right_offset,
-            triangle.0[2] + right_offset,
-        ])
-    }));
-    ExactMesh::new_with_policy(
-        vertices,
-        triangles,
-        SourceProvenance::exact("exact boolmesh disjoint union"),
-        validation,
-    )
 }

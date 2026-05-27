@@ -56,6 +56,13 @@ fn tetrahedron() -> (Vec<f64>, Vec<usize>) {
 }
 
 #[cfg(feature = "exact-triangulation")]
+fn cyclic_triangle_eq(left: [usize; 3], right: [usize; 3]) -> bool {
+    left == right
+        || left == [right[1], right[2], right[0]]
+        || left == [right[2], right[0], right[1]]
+}
+
+#[cfg(feature = "exact-triangulation")]
 fn tetrahedron_i64(a: [i64; 3], b: [i64; 3], c: [i64; 3], d: [i64; 3]) -> ExactMesh {
     ExactMesh::from_i64_triangles(
         &[
@@ -2535,7 +2542,15 @@ fn exact_named_booleans_use_winding_for_nonconvex_aabb_overlap_separation() {
     )
     .unwrap();
     assert_eq!(difference.mesh.vertices(), left.vertices());
-    assert_eq!(difference.mesh.triangles(), left.triangles());
+    assert_eq!(difference.mesh.triangles().len(), left.triangles().len());
+    assert!(
+        difference
+            .mesh
+            .triangles()
+            .iter()
+            .zip(left.triangles().iter())
+            .all(|(actual, expected)| cyclic_triangle_eq(actual.0, expected.0))
+    );
 }
 
 #[test]
@@ -33209,6 +33224,18 @@ fn exact_boolmesh_workspace_executes_bounds_disjoint_slice() {
                 }) && triangle.local_triangle.iter().all(|index| *index < 3)
             })
     );
+    assert_eq!(
+        size_output.mesh_export.vertex_count,
+        size_output.vertex_allocation.output_vertex_origins.len()
+    );
+    assert_eq!(size_output.mesh_export.missing_vertex_coordinates, 0);
+    assert_eq!(size_output.mesh_export.blocked_output_triangles, 0);
+    assert_eq!(size_output.mesh_export.invalid_output_triangles, 0);
+    assert_eq!(size_output.mesh_export.orientation_failures, 0);
+    assert_eq!(
+        size_output.mesh_export.triangles.len(),
+        size_output.output_triangles.triangles.len()
+    );
 
     let mut malformed_whole_edges = workspace.clone();
     malformed_whole_edges
@@ -33297,6 +33324,20 @@ fn exact_boolmesh_workspace_executes_bounds_disjoint_slice() {
             .unwrap_err(),
         hypermesh::exact::ExactBoolMeshValidationError::Boolean45OutputTriangleMismatch
     );
+    let mut malformed_mesh_export = workspace.clone();
+    malformed_mesh_export
+        .boolean45
+        .as_mut()
+        .unwrap()
+        .mesh_export
+        .triangles[0]
+        .0[0] = usize::MAX;
+    assert_eq!(
+        malformed_mesh_export
+            .validate_against_sources(&left, &right)
+            .unwrap_err(),
+        hypermesh::exact::ExactBoolMeshValidationError::Boolean45MeshExportMismatch
+    );
 
     let union = hypermesh::exact::execute_exact_boolmesh_bounds_disjoint(
         &left,
@@ -33313,6 +33354,10 @@ fn exact_boolmesh_workspace_executes_bounds_disjoint_slice() {
     assert_eq!(
         union.mesh.triangles().len(),
         left.triangles().len() + right.triangles().len()
+    );
+    assert_eq!(
+        union.mesh.triangles(),
+        size_output.mesh_export.triangles.as_slice()
     );
 
     let intersection = hypermesh::exact::execute_exact_boolmesh_bounds_disjoint(
@@ -33407,6 +33452,27 @@ fn exact_boolmesh_workspace_executes_bounds_disjoint_slice() {
             .invalid_local_triangles,
         0
     );
+    assert_eq!(intersection_size_output.mesh_export.vertex_count, 0);
+    assert!(intersection_size_output.mesh_export.triangles.is_empty());
+    assert_eq!(
+        intersection_size_output
+            .mesh_export
+            .missing_vertex_coordinates,
+        0
+    );
+    assert_eq!(
+        intersection_size_output
+            .mesh_export
+            .blocked_output_triangles,
+        0
+    );
+    assert_eq!(
+        intersection_size_output
+            .mesh_export
+            .invalid_output_triangles,
+        0
+    );
+    assert_eq!(intersection_size_output.mesh_export.orientation_failures, 0);
 
     let difference = hypermesh::exact::execute_exact_boolmesh_bounds_disjoint(
         &left,
@@ -33416,7 +33482,15 @@ fn exact_boolmesh_workspace_executes_bounds_disjoint_slice() {
     )
     .unwrap();
     assert_eq!(difference.mesh.vertices(), left.vertices());
-    assert_eq!(difference.mesh.triangles(), left.triangles());
+    assert_eq!(difference.mesh.triangles().len(), left.triangles().len());
+    assert!(
+        difference
+            .mesh
+            .triangles()
+            .iter()
+            .zip(left.triangles().iter())
+            .all(|(actual, expected)| cyclic_triangle_eq(actual.0, expected.0))
+    );
     let difference_workspace = hypermesh::exact::exact_boolmesh_workspace(
         &left,
         &right,
@@ -33522,6 +33596,19 @@ fn exact_boolmesh_workspace_executes_bounds_disjoint_slice() {
             .invalid_local_triangles,
         0
     );
+    assert_eq!(
+        difference_size_output.mesh_export.triangles.len(),
+        left.triangles().len()
+    );
+    assert_eq!(
+        difference_size_output.mesh_export.blocked_output_triangles,
+        0
+    );
+    assert_eq!(
+        difference_size_output.mesh_export.invalid_output_triangles,
+        0
+    );
+    assert_eq!(difference_size_output.mesh_export.orientation_failures, 0);
 }
 
 #[test]
@@ -33833,6 +33920,20 @@ fn exact_boolmesh_kernel12_discovers_skew_edge_face_events() {
             }))
     );
     assert_eq!(
+        size_output.mesh_export.vertex_count,
+        size_output.vertex_allocation.output_vertex_origins.len()
+    );
+    assert_eq!(
+        size_output.mesh_export.triangles.len(),
+        size_output.output_triangles.triangles.len()
+    );
+    assert_eq!(
+        size_output.mesh_export.blocked_output_triangles,
+        size_output.output_triangles.missing_loop_triangulations
+            + size_output.output_triangles.invalid_local_triangles
+    );
+    assert_eq!(size_output.mesh_export.orientation_failures, 0);
+    assert_eq!(
         size_output
             .new_face_pair_edges
             .face_pair_runs
@@ -34027,6 +34128,22 @@ fn exact_boolmesh_kernel12_discovers_skew_edge_face_events() {
                 .validate_against_sources(&left, &right)
                 .unwrap_err(),
             hypermesh::exact::ExactBoolMeshValidationError::Boolean45OutputTriangleMismatch
+        );
+    }
+    if !size_output.mesh_export.triangles.is_empty() {
+        let mut malformed_mesh_export = workspace.clone();
+        malformed_mesh_export
+            .boolean45
+            .as_mut()
+            .unwrap()
+            .mesh_export
+            .triangles[0]
+            .0[0] = usize::MAX;
+        assert_eq!(
+            malformed_mesh_export
+                .validate_against_sources(&left, &right)
+                .unwrap_err(),
+            hypermesh::exact::ExactBoolMeshValidationError::Boolean45MeshExportMismatch
         );
     }
 }
