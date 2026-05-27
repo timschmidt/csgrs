@@ -13055,6 +13055,12 @@ fn exact_boolmesh_bounds_disjoint_port(c: &mut Criterion) {
                     + size_output.partial_source_edges.source_edge_runs.len()
                     + size_output.new_face_pair_edges.face_pair_runs.len()
                     + size_output.whole_source_edges.source_edge_runs.len()
+                    + size_output
+                        .whole_source_edges
+                        .source_edge_runs
+                        .iter()
+                        .map(|run| run.source_halfedge)
+                        .sum::<usize>()
                     + size_output.halfedge_assembly.output_halfedges.len()
                     + size_output.halfedge_assembly.emitted_pairs
                     + size_output.halfedge_assembly.emitted_boundary_halfedges

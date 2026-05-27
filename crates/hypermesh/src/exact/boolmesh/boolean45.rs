@@ -983,7 +983,9 @@ fn routed_point_order(
 /// source edges whose operation-signed endpoint allocations replay exactly.
 /// The emitted fragments keep the Weiler-Atherton-style boundary-fragment
 /// shape used by the boolmesh kernels without using rounded coordinates for
-/// orientation or identity.
+/// orientation or identity.  The source row retained on each run is the exact
+/// counterpart of boolmesh's `append_whole_edges` loop over `hid_p` with
+/// `Half::is_forward()` filtering.
 fn stage_whole_source_edges(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -1070,6 +1072,7 @@ fn append_whole_source_edges_for_side(
             .source_edge_runs
             .push(ExactBoolMeshWholeSourceEdgeRun {
                 side,
+                source_halfedge: source_edge.source_halfedge,
                 edge: source_edge.edge,
                 incident_faces: source_edge.incident_faces,
                 incident_edges: source_edge.incident_edges,
@@ -1088,6 +1091,7 @@ struct SourceEdgePointBucket {
 
 #[derive(Clone, Debug)]
 struct SourceEdge {
+    source_halfedge: usize,
     edge: [usize; 2],
     incident_faces: Vec<usize>,
     incident_edges: Vec<[usize; 2]>,
@@ -1095,6 +1099,7 @@ struct SourceEdge {
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 struct SourceEdgeUse {
+    source_halfedge: usize,
     face: usize,
     edge: [usize; 2],
 }
@@ -1102,24 +1107,49 @@ struct SourceEdgeUse {
 fn source_edges(triangles: &[Triangle]) -> Vec<SourceEdge> {
     let mut edges = BTreeMap::<[usize; 2], Vec<SourceEdgeUse>>::new();
     for (face, triangle) in triangles.iter().enumerate() {
-        for edge in triangle_edges(*triangle) {
+        for (local, edge) in triangle_edges(*triangle).into_iter().enumerate() {
             edges
                 .entry(canonical_edge(edge))
                 .or_default()
-                .push(SourceEdgeUse { face, edge });
+                .push(SourceEdgeUse {
+                    source_halfedge: face * 3 + local,
+                    face,
+                    edge,
+                });
         }
     }
     edges
         .into_iter()
         .map(|(edge, mut uses)| {
-            sort_source_edge_uses(edge, &mut uses);
+            let preferred = preferred_whole_source_edge(edge, &uses);
+            sort_source_edge_uses(preferred.edge, &mut uses);
             SourceEdge {
-                edge,
+                source_halfedge: preferred.source_halfedge,
+                edge: preferred.edge,
                 incident_faces: uses.iter().map(|use_| use_.face).collect(),
                 incident_edges: uses.iter().map(|use_| use_.edge).collect(),
             }
         })
         .collect()
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+struct PreferredSourceEdge {
+    source_halfedge: usize,
+    edge: [usize; 2],
+}
+
+fn preferred_whole_source_edge(_edge: [usize; 2], uses: &[SourceEdgeUse]) -> PreferredSourceEdge {
+    let use_ = uses
+        .iter()
+        .find(|use_| use_.edge[0] < use_.edge[1])
+        .or_else(|| uses.first())
+        .copied()
+        .expect("source edge buckets are built from at least one triangle use");
+    PreferredSourceEdge {
+        source_halfedge: use_.source_halfedge,
+        edge: use_.edge,
+    }
 }
 
 fn count_crossing_vertex(
@@ -1197,8 +1227,13 @@ fn directed_edge_uses_for_edge(
         .flat_map(|(face, triangle)| {
             triangle_edges(*triangle)
                 .into_iter()
-                .filter(move |candidate| canonical_edge(*candidate) == key)
-                .map(move |edge| SourceEdgeUse { face, edge })
+                .enumerate()
+                .filter(move |(_, candidate)| canonical_edge(*candidate) == key)
+                .map(move |(local, edge)| SourceEdgeUse {
+                    source_halfedge: face * 3 + local,
+                    face,
+                    edge,
+                })
         })
         .collect::<Vec<_>>();
     sort_source_edge_uses(preferred, &mut uses);

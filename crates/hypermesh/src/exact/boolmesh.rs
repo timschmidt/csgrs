@@ -752,6 +752,14 @@ pub struct ExactBoolMeshWholeSourceEdgeFragment {
 pub struct ExactBoolMeshWholeSourceEdgeRun {
     /// Source edge owner.
     pub side: ExactBoolMeshSide,
+    /// Source halfedge row selected by boolmesh `append_whole_edges`.
+    ///
+    /// Legacy boolmesh iterates halfedges, skips rows whose `Half::is_forward`
+    /// is false, then emits the retained whole edge from that row and its
+    /// pair.  Retaining the selected row here keeps the exact staging aligned
+    /// with that algorithm instead of treating the edge as only an unordered
+    /// endpoint pair.
+    pub source_halfedge: usize,
     /// Chosen source-edge endpoints before sign reversal.
     pub edge: [usize; 2],
     /// Source faces incident to this undirected edge.
@@ -789,6 +797,8 @@ pub enum ExactBoolMeshOutputHalfedgeSource {
     PartialSourceEdge {
         /// Source mesh side owning the split edge.
         side: ExactBoolMeshSide,
+        /// Boolmesh `pt_old` bucket row that emitted this partial edge.
+        source_halfedge: usize,
         /// Source face receiving this halfedge.
         source_face: usize,
         /// Directed source edge that was split.
@@ -815,6 +825,8 @@ pub enum ExactBoolMeshOutputHalfedgeSource {
     WholeSourceEdge {
         /// Source mesh side owning the retained edge.
         side: ExactBoolMeshSide,
+        /// Boolmesh source halfedge row selected by `append_whole_edges`.
+        source_halfedge: usize,
         /// Source face receiving this halfedge.
         source_face: usize,
         /// Directed retained source edge after operation-sign orientation.
@@ -2000,6 +2012,12 @@ fn validate_boolean45_source_halfedges(
             return Err(ExactBoolMeshValidationError::Boolean45PartialEdgeMismatch);
         }
     }
+    for run in &stage.whole_source_edges.source_edge_runs {
+        let mesh = boolmesh_source_mesh(run.side, left, right);
+        if !source_halfedge_matches_edge(mesh, run.source_halfedge, run.edge) {
+            return Err(ExactBoolMeshValidationError::Boolean45WholeEdgeMismatch);
+        }
+    }
     Ok(())
 }
 
@@ -2311,7 +2329,13 @@ fn validate_boolean45_stage(
         right_faces,
         boolean03.p1q2.len() + boolean03.p2q1.len(),
     )?;
-    validate_boolean45_whole_edges(stage, left_vertices, right_vertices)?;
+    validate_boolean45_whole_edges(
+        stage,
+        left_vertices,
+        left_faces,
+        right_vertices,
+        right_faces,
+    )?;
     validate_boolean45_halfedge_assembly(stage, left_faces, right_faces)?;
     validate_boolean45_face_loops(stage)?;
     validate_boolean45_loop_triangulation(stage, left_faces, right_faces)?;
@@ -2750,6 +2774,7 @@ fn is_expected_boundary_halfedge_source(
     match source {
         ExactBoolMeshOutputHalfedgeSource::PartialSourceEdge {
             side,
+            source_halfedge,
             source_face,
             edge,
             fragment,
@@ -2764,6 +2789,7 @@ fn is_expected_boundary_halfedge_source(
                         run.side == *side
                             && run.incident_faces.len() == 1
                             && run.incident_edges.len() == 1
+                            && run.source_halfedge == *source_halfedge
                             && run.incident_faces[0] == *source_face
                             && *fragment < run.fragments.len()
                             && [run.tail, run.head] == *edge
@@ -2771,6 +2797,7 @@ fn is_expected_boundary_halfedge_source(
         }
         ExactBoolMeshOutputHalfedgeSource::WholeSourceEdge {
             side,
+            source_halfedge,
             source_face,
             edge,
             fragment,
@@ -2779,6 +2806,7 @@ fn is_expected_boundary_halfedge_source(
             *forward
                 && stage.whole_source_edges.source_edge_runs.iter().any(|run| {
                     run.side == *side
+                        && run.source_halfedge == *source_halfedge
                         && run.incident_faces.len() == 1
                         && run.incident_edges.len() == 1
                         && run.incident_faces[0] == *source_face
@@ -2807,12 +2835,20 @@ fn validate_halfedge_source(
 ) -> Result<(), ExactBoolMeshValidationError> {
     match source {
         ExactBoolMeshOutputHalfedgeSource::PartialSourceEdge {
-            side, source_face, ..
+            side,
+            source_halfedge,
+            source_face,
+            ..
         }
         | ExactBoolMeshOutputHalfedgeSource::WholeSourceEdge {
-            side, source_face, ..
+            side,
+            source_halfedge,
+            source_face,
+            ..
         } => {
-            if !source_face_in_bounds(*side, *source_face, left_faces, right_faces) {
+            if !source_face_in_bounds(*side, *source_face, left_faces, right_faces)
+                || !source_halfedge_in_bounds(*side, *source_halfedge, left_faces, right_faces)
+            {
                 return Err(ExactBoolMeshValidationError::Boolean45HalfedgeAssemblyMismatch);
             }
         }
@@ -2851,21 +2887,40 @@ fn source_face_in_bounds(
 }
 
 #[cfg(feature = "exact-triangulation")]
+fn source_halfedge_in_bounds(
+    side: ExactBoolMeshSide,
+    source_halfedge: usize,
+    left_faces: usize,
+    right_faces: usize,
+) -> bool {
+    match side {
+        ExactBoolMeshSide::Left => source_halfedge < left_faces * 3,
+        ExactBoolMeshSide::Right => source_halfedge < right_faces * 3,
+    }
+}
+
+#[cfg(feature = "exact-triangulation")]
 fn validate_boolean45_whole_edges(
     stage: &ExactBoolMeshBoolean45Stage,
     left_vertices: usize,
+    left_faces: usize,
     right_vertices: usize,
+    right_faces: usize,
 ) -> Result<(), ExactBoolMeshValidationError> {
     if stage.whole_source_edges.missing_endpoint_allocations != 0 {
         return Err(ExactBoolMeshValidationError::Boolean45WholeEdgeMismatch);
     }
     let mut seen_edges = BTreeSet::<(u8, [usize; 2])>::new();
     for run in &stage.whole_source_edges.source_edge_runs {
-        let vertex_count = match run.side {
-            ExactBoolMeshSide::Left => left_vertices,
-            ExactBoolMeshSide::Right => right_vertices,
+        let (vertex_count, face_count) = match run.side {
+            ExactBoolMeshSide::Left => (left_vertices, left_faces),
+            ExactBoolMeshSide::Right => (right_vertices, right_faces),
         };
-        if run.edge[0] >= vertex_count || run.edge[1] >= vertex_count || run.fragments.is_empty() {
+        if run.edge[0] >= vertex_count
+            || run.edge[1] >= vertex_count
+            || run.source_halfedge >= face_count * 3
+            || run.fragments.is_empty()
+        {
             return Err(ExactBoolMeshValidationError::Boolean45WholeEdgeMismatch);
         }
         if run.incident_faces.is_empty()

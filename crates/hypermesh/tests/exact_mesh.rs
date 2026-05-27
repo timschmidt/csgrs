@@ -33242,6 +33242,8 @@ fn exact_boolmesh_workspace_executes_bounds_disjoint_slice() {
             .iter()
             .all(|run| {
                 run.signed_count == 1
+                    && run.source_halfedge / 3 == run.incident_faces[0]
+                    && run.incident_edges[0] == run.edge
                     && run.incident_faces.len() == 2
                     && run.incident_edges.len() == 2
                     && run.fragments.len() == 1
@@ -33357,6 +33359,20 @@ fn exact_boolmesh_workspace_executes_bounds_disjoint_slice() {
         .incident_edges[0] = [usize::MAX, 0];
     assert_eq!(
         malformed_whole_edge_use
+            .validate_against_sources(&left, &right)
+            .unwrap_err(),
+        hypermesh::exact::ExactBoolMeshValidationError::Boolean45WholeEdgeMismatch
+    );
+    let mut malformed_whole_edge_row = workspace.clone();
+    malformed_whole_edge_row
+        .boolean45
+        .as_mut()
+        .unwrap()
+        .whole_source_edges
+        .source_edge_runs[0]
+        .source_halfedge = usize::MAX;
+    assert_eq!(
+        malformed_whole_edge_row
             .validate_against_sources(&left, &right)
             .unwrap_err(),
         hypermesh::exact::ExactBoolMeshValidationError::Boolean45WholeEdgeMismatch

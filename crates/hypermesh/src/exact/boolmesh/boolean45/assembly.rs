@@ -98,6 +98,7 @@ fn append_partial_source_halfedges(
                     tail,
                     head,
                     edge,
+                    run.source_halfedge,
                     fragment_index,
                     SourceEdgeEmissionKind::Partial,
                     source_face_to_output_face,
@@ -112,6 +113,7 @@ fn append_partial_source_halfedges(
                     tail,
                     head,
                     edge,
+                    run.source_halfedge,
                     fragment_index,
                     SourceEdgeEmissionKind::Partial,
                     source_face_to_output_face,
@@ -207,6 +209,7 @@ fn append_whole_source_halfedges(
                     tail,
                     head,
                     edge,
+                    run.source_halfedge,
                     fragment_index,
                     SourceEdgeEmissionKind::Whole,
                     source_face_to_output_face,
@@ -221,6 +224,7 @@ fn append_whole_source_halfedges(
                     tail,
                     head,
                     edge,
+                    run.source_halfedge,
                     fragment_index,
                     SourceEdgeEmissionKind::Whole,
                     source_face_to_output_face,
@@ -265,6 +269,7 @@ fn emit_source_edge_pair(
     tail: usize,
     head: usize,
     edge: [usize; 2],
+    source_halfedge: usize,
     fragment: usize,
     kind: SourceEdgeEmissionKind,
     source_face_to_output_face: &[Option<usize>],
@@ -274,8 +279,24 @@ fn emit_source_edge_pair(
 ) {
     let first_source_face = source_face_index(side, first_face, left_faces);
     let second_source_face = source_face_index(side, second_face, left_faces);
-    let forward = source_edge_halfedge_source(side, first_face, edge, fragment, true, kind);
-    let backward = source_edge_halfedge_source(side, second_face, edge, fragment, false, kind);
+    let forward = source_edge_halfedge_source(
+        side,
+        source_halfedge,
+        first_face,
+        edge,
+        fragment,
+        true,
+        kind,
+    );
+    let backward = source_edge_halfedge_source(
+        side,
+        source_halfedge,
+        second_face,
+        edge,
+        fragment,
+        false,
+        kind,
+    );
     emit_halfedge_pair(
         first_source_face,
         second_source_face,
@@ -295,6 +316,7 @@ fn emit_source_boundary_halfedge(
     tail: usize,
     head: usize,
     edge: [usize; 2],
+    source_halfedge: usize,
     fragment: usize,
     kind: SourceEdgeEmissionKind,
     source_face_to_output_face: &[Option<usize>],
@@ -322,13 +344,22 @@ fn emit_source_boundary_halfedge(
         head,
         pair: slot,
         face: *output_face,
-        source: source_edge_halfedge_source(side, face, edge, fragment, true, kind),
+        source: source_edge_halfedge_source(
+            side,
+            source_halfedge,
+            face,
+            edge,
+            fragment,
+            true,
+            kind,
+        ),
     });
     stage.emitted_boundary_halfedges += 1;
 }
 
 fn source_edge_halfedge_source(
     side: ExactBoolMeshSide,
+    source_halfedge: usize,
     source_face: usize,
     edge: [usize; 2],
     fragment: usize,
@@ -338,6 +369,7 @@ fn source_edge_halfedge_source(
     match kind {
         SourceEdgeEmissionKind::Partial => ExactBoolMeshOutputHalfedgeSource::PartialSourceEdge {
             side,
+            source_halfedge,
             source_face,
             edge,
             fragment,
@@ -345,6 +377,7 @@ fn source_edge_halfedge_source(
         },
         SourceEdgeEmissionKind::Whole => ExactBoolMeshOutputHalfedgeSource::WholeSourceEdge {
             side,
+            source_halfedge,
             source_face,
             edge,
             fragment,
@@ -506,6 +539,7 @@ mod tests {
             halfedge.source,
             ExactBoolMeshOutputHalfedgeSource::PartialSourceEdge {
                 side: ExactBoolMeshSide::Left,
+                source_halfedge: 0,
                 source_face: 0,
                 edge: [0, 1],
                 fragment: 0,

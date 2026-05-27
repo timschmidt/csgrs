@@ -1668,7 +1668,10 @@ fn exercise_exact_boolmesh_bounds_disjoint_port() {
                     12
                 );
                 assert!(size_output.whole_source_edges.source_edge_runs.iter().all(
-                    |run| run.incident_faces.len() == 2 && run.incident_edges.len() == 2
+                    |run| run.incident_faces.len() == 2
+                        && run.incident_edges.len() == 2
+                        && run.source_halfedge / 3 == run.incident_faces[0]
+                        && run.incident_edges[0] == run.edge
                 ));
                 assert_eq!(size_output.halfedge_assembly.emitted_pairs, 12);
                 assert_eq!(size_output.halfedge_assembly.unfilled_halfedges, 0);
@@ -1688,6 +1691,8 @@ fn exercise_exact_boolmesh_bounds_disjoint_port() {
                 assert_eq!(size_output.whole_source_edges.source_edge_runs.len(), 6);
                 assert!(size_output.whole_source_edges.source_edge_runs.iter().all(
                     |run| run.side == hypermesh::exact::ExactBoolMeshSide::Left
+                        && run.source_halfedge / 3 == run.incident_faces[0]
+                        && run.incident_edges[0] == run.edge
                         && run.fragments.len() == 1
                 ));
                 assert_eq!(size_output.halfedge_assembly.emitted_pairs, 6);
