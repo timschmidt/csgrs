@@ -33752,7 +33752,7 @@ fn exact_boolmesh_workspace_routes_strict_coplanar_vertices_to_boolean45() {
         .expect("overlapping bounds must name the next boolmesh stage");
     assert_eq!(
         blocker.stage,
-        hypermesh::exact::ExactBoolMeshKernelStage::FacePairEdgeEmission
+        hypermesh::exact::ExactBoolMeshKernelStage::Triangulation
     );
     assert!(blocker.candidate_face_pairs > 0);
     assert!(
@@ -33776,7 +33776,7 @@ fn exact_boolmesh_workspace_routes_strict_coplanar_vertices_to_boolean45() {
     assert_eq!(
         execution.unwrap_err(),
         hypermesh::exact::ExactBoolMeshValidationError::PortBlocked(
-            hypermesh::exact::ExactBoolMeshKernelStage::FacePairEdgeEmission
+            hypermesh::exact::ExactBoolMeshKernelStage::Triangulation
         )
     );
 }
@@ -34237,10 +34237,10 @@ fn exact_boolmesh_kernel12_discovers_skew_edge_face_events() {
     let blocker = workspace
         .blocker
         .as_ref()
-        .expect("skew crossing must advance to the next boolmesh stage");
+        .expect("skew crossing should now advance past face-pair edge emission");
     assert_eq!(
         blocker.stage,
-        hypermesh::exact::ExactBoolMeshKernelStage::FacePairEdgeEmission
+        hypermesh::exact::ExactBoolMeshKernelStage::Triangulation
     );
     assert_eq!(
         hypermesh::exact::execute_exact_boolmesh_port(
@@ -34251,7 +34251,7 @@ fn exact_boolmesh_kernel12_discovers_skew_edge_face_events() {
         )
         .unwrap_err(),
         hypermesh::exact::ExactBoolMeshValidationError::PortBlocked(
-            hypermesh::exact::ExactBoolMeshKernelStage::FacePairEdgeEmission
+            hypermesh::exact::ExactBoolMeshKernelStage::Triangulation
         )
     );
     assert!(workspace.kernel12_events.iter().any(|event| matches!(
@@ -34298,8 +34298,8 @@ fn exact_boolmesh_kernel12_discovers_skew_edge_face_events() {
             .all(|pair| pair.edge[0] < pair.edge[1]),
         "retained graph events must normalize onto boolmesh's forward source halfedge schedule"
     );
-    assert_eq!(workspace.boolean03.p1q2.len(), 10);
-    assert_eq!(workspace.boolean03.p2q1.len(), 6);
+    assert_eq!(workspace.boolean03.p1q2.len(), 2);
+    assert_eq!(workspace.boolean03.p2q1.len(), 4);
     assert_eq!(
         workspace
             .pair_up
@@ -34568,6 +34568,7 @@ fn exact_boolmesh_kernel12_discovers_skew_edge_face_events() {
             .count(),
         size_output.new_face_pair_edges.unpaired_runs
     );
+    assert_eq!(size_output.new_face_pair_edges.unpaired_runs, 0);
     assert_eq!(size_output.source_edge_incident_gaps, 0);
     assert_eq!(size_output.face_halfedge_offsets.first().copied(), Some(0));
     assert!(

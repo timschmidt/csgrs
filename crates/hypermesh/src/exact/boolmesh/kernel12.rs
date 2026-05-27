@@ -2,34 +2,30 @@
 //!
 //! This file is intentionally scoped to the exact counterpart of legacy
 //! `boolean03::kernel12`: edge/face discovery produces `p1q2`/`p2q1`,
-//! signed `x12`/`x21`, and exact `v12`/`v21` intersection points.  The first
-//! lowered subcase is the certified proper segment/plane crossing, because it
-//! carries all Yap-style construction evidence required before topology
-//! mutation: source edge, opposite face, exact parameter, determinant ratio,
-//! exact point, and endpoint side facts.  Strict vertex/face endpoint shadows
-//! are also lowered once the endpoint is certified inside the opposite
-//! triangle.  Edge/edge boundary shadows and coplanar overlap lowering remain
-//! explicit `Kernel12` work until their boolmesh shadow rules are ported
-//! directly.
+//! signed `x12`/`x21`, and exact `v12`/`v21` intersection points.  The direct
+//! exact `intersect12` scheduler is authoritative for non-coplanar rows:
+//! retained intersection-graph events may replay against those rows, but they
+//! no longer append shortcut segment/plane rows outside the boolmesh schedule.
+//! That keeps topology mutation aligned with the published boolmesh kernel
+//! while following Yap's exact-object boundary from "Towards Exact Geometric
+//! Computation," *Computational Geometry* 7.1-2 (1997).  Coplanar split facts
+//! remain a separate exact bridge until the positive-area boolmesh coplanar
+//! branch is fully ported.
 
 use std::cmp::Ordering;
 use std::collections::BTreeSet;
 
-use hyperlimit::{PlaneSide, Point3, compare_reals};
+use hyperlimit::{Point3, compare_reals};
 
 use crate::exact::mesh::ExactMesh;
 
-use super::kernel_frame::{ExactBoolMeshKernelFrame, build_kernel_frame};
-use super::kernel12_boundary::{EndpointShadowLocation, classify_endpoint_shadow};
 use super::kernel12_coplanar::{ExactCoplanarKernel12Row, lower_coplanar_split_rows};
 use super::kernel12_intersect::{
     ExactKernel12IntersectHit, ExactKernel12IntersectTables, intersect12_exact,
 };
-use super::kernel12_op::{ExactKernel12Hit, ExactKernel12Input, kernel12_op};
 use super::{
     ExactBoolMeshEdgeEvent, ExactBoolMeshEdgeFacePair, ExactBoolMeshKernel12Event,
     ExactBoolMeshPointConstruction, ExactBoolMeshSide, Kernel12CoplanarEvidence,
-    SegmentPlaneRelation,
 };
 
 /// Lowered exact `kernel12` tables for the `Boolean03` package.
@@ -57,21 +53,18 @@ pub(super) struct ExactBoolMeshKernel12Lowering {
     pub(super) source_edge_events: Vec<ExactBoolMeshEdgeEvent>,
 }
 
-/// Lower certified segment/plane contacts into boolmesh tables.
+/// Lower direct boolmesh `intersect12` rows into exact topology tables.
 ///
-/// The sign is the oriented transition of the directed source edge through the
-/// opposite oriented face plane.  That is the exact analogue of the non-tie
-/// branch in boolmesh's shadow accumulation for proper crossings.  For
-/// endpoint contacts this ports the strict vertex/face part of
-/// `boolean03::kernel12`: legacy `Kernel02` contributes when a source endpoint
-/// shadows the opposite face interior, while edge/edge and boundary shadows
-/// stay out of this slice.  The segment/plane predicate split follows Moller,
-/// "A Fast Triangle-Triangle Intersection Test," *Journal of Graphics Tools*
-/// 2.2 (1997), and Guigue and Devillers, "Fast and Robust Triangle-Triangle
+/// The row source is the exact port of boolmesh's bidirectional
+/// `boolean03::kernel12::intersect12` loop.  Moller, "A Fast
+/// Triangle-Triangle Intersection Test," *Journal of Graphics Tools* 2.2
+/// (1997), and Guigue and Devillers, "Fast and Robust Triangle-Triangle
 /// Overlap Test Using Orientation Predicates," *Journal of Graphics Tools* 8.1
-/// (2003); retaining the parameter, point, endpoint side facts, and exact
-/// point-in-triangle predicate before mutating topology follows Yap, "Towards
-/// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997).
+/// (2003), remain the geometric substrate for retained event discovery, but
+/// retained events do not own row cardinality here.  They can only consume or
+/// validate rows already emitted by the exact boolmesh accumulator, preserving
+/// the algorithmic boundary required by Yap, "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7.1-2 (1997).
 pub(super) fn lower_kernel12_events(
     events: &[ExactBoolMeshKernel12Event],
     coplanar_evidence: &[Kernel12CoplanarEvidence],
@@ -80,8 +73,6 @@ pub(super) fn lower_kernel12_events(
 ) -> ExactBoolMeshKernel12Lowering {
     let mut left = Vec::<LoweredKernel12Event>::new();
     let mut right = Vec::<LoweredKernel12Event>::new();
-    let left_frame = build_kernel_frame(left_mesh);
-    let right_frame = build_kernel_frame(right_mesh);
     let intersect12 = intersect12_exact(left_mesh, right_mesh);
     let mut used_intersect12_hits = seed_intersect12_hits(&intersect12, &mut left, &mut right);
 
@@ -90,17 +81,7 @@ pub(super) fn lower_kernel12_events(
             match lower_intersect12_replay(event, &intersect12, &mut used_intersect12_hits) {
                 Intersect12Replay::Lowered(lowered) => Some(lowered),
                 Intersect12Replay::AlreadyConsumed => None,
-                Intersect12Replay::Missing => {
-                    lower_accumulator_replay(event, &left_frame, &right_frame).or_else(|| {
-                        match event.relation {
-                            SegmentPlaneRelation::ProperCrossing => lower_proper_crossing(event),
-                            SegmentPlaneRelation::EndpointOnPlane => {
-                                lower_strict_endpoint_shadow(event, left_mesh, right_mesh)
-                            }
-                            _ => None,
-                        }
-                    })
-                }
+                Intersect12Replay::Missing => None,
             };
         let Some(lowered) = lowered else {
             continue;
@@ -303,77 +284,6 @@ fn event_parameter_matches_intersect12_hit(
     }
 }
 
-/// Replay one retained exact event through the ported boolmesh accumulator.
-///
-/// This is the first normal-workspace consumer of the exact `Kernel12::op`
-/// port.  The replay keeps the boolmesh algorithmic contract: one source
-/// halfedge plus one opposite face feeds the `Kernel02` endpoint shadows and
-/// `Kernel11` edge shadows, and their signed sum becomes the row inserted into
-/// `p1q2`/`p2q1`.  We accept the replay only when the accumulator reconstructs
-/// the same exact point already retained by discovery; otherwise lowering falls
-/// back to the narrower certified subcases.  The guard is deliberate Yap-style
-/// exact-object replay, not a tolerance: see Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997).  The accumulator being
-/// replayed is the legacy boolmesh `boolean03::kernel12` control flow derived
-/// from the triangle-intersection pipeline of Moller (1997) and Guigue and
-/// Devillers (2003).
-fn lower_accumulator_replay(
-    event: &ExactBoolMeshKernel12Event,
-    left_frame: &ExactBoolMeshKernelFrame,
-    right_frame: &ExactBoolMeshKernelFrame,
-) -> Option<LoweredKernel12Event> {
-    let point = event.point.as_ref()?;
-    let parameter = event.parameter.clone()?;
-    let hit = replay_kernel12_event(event, left_frame, right_frame)?;
-    if !same_point(&hit.point, point) {
-        return None;
-    }
-    Some(LoweredKernel12Event {
-        edge_face: event.edge_face,
-        sign: hit.sign,
-        point: hit.point,
-        parameter: parameter.clone(),
-        point_construction: segment_plane_construction(event.edge_face, parameter),
-    })
-}
-
-fn replay_kernel12_event(
-    event: &ExactBoolMeshKernel12Event,
-    left_frame: &ExactBoolMeshKernelFrame,
-    right_frame: &ExactBoolMeshKernelFrame,
-) -> Option<ExactKernel12Hit> {
-    let (source_frame, source_face, opposite_face, fwd) =
-        match (event.edge_face.edge_side, event.edge_face.face_side) {
-            (ExactBoolMeshSide::Left, ExactBoolMeshSide::Right) => (
-                left_frame,
-                event.edge_face.face_pair.left_face,
-                event.edge_face.face,
-                true,
-            ),
-            (ExactBoolMeshSide::Right, ExactBoolMeshSide::Left) => (
-                right_frame,
-                event.edge_face.face_pair.right_face,
-                event.edge_face.face,
-                false,
-            ),
-            _ => return None,
-        };
-    let source_halfedge =
-        source_frame.source_halfedge_for_face_edge(source_face, event.edge_face.edge)?;
-    let expand = super::ExactReal::from(1);
-    let input = ExactKernel12Input {
-        ps_p: &left_frame.points,
-        ps_q: &right_frame.points,
-        hs_p: &left_frame.halfedges,
-        hs_q: &right_frame.halfedges,
-        ns_p: &left_frame.expansion_normals,
-        ns_q: &right_frame.expansion_normals,
-        expand: &expand,
-        fwd,
-    };
-    kernel12_op(&input, source_halfedge, opposite_face)
-}
-
 #[derive(Clone, Debug, PartialEq)]
 struct LoweredKernel12Event {
     edge_face: ExactBoolMeshEdgeFacePair,
@@ -381,45 +291,6 @@ struct LoweredKernel12Event {
     point: Point3,
     parameter: super::ExactReal,
     point_construction: ExactBoolMeshPointConstruction,
-}
-
-fn lower_proper_crossing(event: &ExactBoolMeshKernel12Event) -> Option<LoweredKernel12Event> {
-    let sign = signed_plane_transition(event.endpoint_sides)?;
-    let point = event.point.clone()?;
-    let parameter = event.parameter.clone()?;
-    event.parameter_ratio.as_ref()?;
-    Some(LoweredKernel12Event {
-        edge_face: event.edge_face,
-        sign,
-        point,
-        parameter: parameter.clone(),
-        point_construction: segment_plane_construction(event.edge_face, parameter),
-    })
-}
-
-fn lower_strict_endpoint_shadow(
-    event: &ExactBoolMeshKernel12Event,
-    left_mesh: &ExactMesh,
-    right_mesh: &ExactMesh,
-) -> Option<LoweredKernel12Event> {
-    let sign = signed_endpoint_transition(event.endpoint_sides)?;
-    let point = event.point.clone()?;
-    let parameter = event.parameter.clone()?;
-    if !is_endpoint_parameter(&parameter) {
-        return None;
-    }
-    if classify_endpoint_shadow(&point, event.edge_face, left_mesh, right_mesh)?
-        != EndpointShadowLocation::StrictInterior
-    {
-        return None;
-    }
-    Some(LoweredKernel12Event {
-        edge_face: event.edge_face,
-        sign,
-        point,
-        parameter: parameter.clone(),
-        point_construction: segment_plane_construction(event.edge_face, parameter),
-    })
 }
 
 fn source_edge_event(event: &LoweredKernel12Event, collision: usize) -> ExactBoolMeshEdgeEvent {
@@ -463,29 +334,6 @@ fn push_coplanar_row_if_new(events: &mut Vec<LoweredKernel12Event>, row: ExactCo
         parameter: row.parameter,
         point_construction: row.point_construction,
     });
-}
-
-fn signed_plane_transition(endpoint_sides: [Option<PlaneSide>; 2]) -> Option<i32> {
-    match endpoint_sides {
-        [Some(PlaneSide::Below), Some(PlaneSide::Above)] => Some(1),
-        [Some(PlaneSide::Above), Some(PlaneSide::Below)] => Some(-1),
-        _ => None,
-    }
-}
-
-fn signed_endpoint_transition(endpoint_sides: [Option<PlaneSide>; 2]) -> Option<i32> {
-    match endpoint_sides {
-        [Some(PlaneSide::On), Some(PlaneSide::Above)]
-        | [Some(PlaneSide::Below), Some(PlaneSide::On)] => Some(1),
-        [Some(PlaneSide::On), Some(PlaneSide::Below)]
-        | [Some(PlaneSide::Above), Some(PlaneSide::On)] => Some(-1),
-        _ => None,
-    }
-}
-
-fn is_endpoint_parameter(parameter: &super::ExactReal) -> bool {
-    compare_reals(parameter, &super::ExactReal::from(0)).value() == Some(Ordering::Equal)
-        || compare_reals(parameter, &super::ExactReal::from(1)).value() == Some(Ordering::Equal)
 }
 
 /// Coalesce certified identical `Kernel12` contributions by edge/face key.
@@ -625,7 +473,7 @@ pub(super) fn internal_fuzz_probe(selector: u8) -> bool {
             face_side: ExactBoolMeshSide::Right,
             face: 0,
         },
-        relation: SegmentPlaneRelation::ProperCrossing,
+        relation: super::SegmentPlaneRelation::ProperCrossing,
         point: Some(Point3::new(
             super::ExactReal::from(1),
             super::ExactReal::from(1),
@@ -653,11 +501,12 @@ pub(super) fn internal_fuzz_probe(selector: u8) -> bool {
 
 #[cfg(test)]
 mod tests {
+    use super::super::SegmentPlaneRelation;
     use super::*;
-    use crate::exact::SegmentPlaneParameterRatio;
     use crate::exact::SourceProvenance;
     use crate::exact::mesh::{ExactMesh, ExactPoint3, Triangle};
     use crate::exact::validation::ValidationPolicy;
+    use hyperlimit::PlaneSide;
 
     fn tetrahedron_i64(a: [i64; 3], b: [i64; 3], c: [i64; 3], d: [i64; 3]) -> ExactMesh {
         ExactMesh::from_i64_triangles(
@@ -680,27 +529,6 @@ mod tests {
             edge: [0, 1],
             face_side: ExactBoolMeshSide::Right,
             face: 0,
-        }
-    }
-
-    fn proper_event(endpoint_sides: [Option<PlaneSide>; 2]) -> ExactBoolMeshKernel12Event {
-        ExactBoolMeshKernel12Event {
-            edge_face: edge_face(),
-            relation: SegmentPlaneRelation::ProperCrossing,
-            point: Some(Point3::new(
-                super::super::ExactReal::from(1),
-                super::super::ExactReal::from(1),
-                super::super::ExactReal::from(1),
-            )),
-            parameter: Some(
-                (super::super::ExactReal::from(1) / super::super::ExactReal::from(2)).unwrap(),
-            ),
-            parameter_ratio: Some(SegmentPlaneParameterRatio {
-                numerator: super::super::ExactReal::from(1),
-                denominator: super::super::ExactReal::from(2),
-            }),
-            construction_failure: None,
-            endpoint_sides,
         }
     }
 
@@ -770,16 +598,6 @@ mod tests {
         (left, right)
     }
 
-    fn empty_mesh() -> ExactMesh {
-        ExactMesh::new_with_policy(
-            Vec::new(),
-            Vec::new(),
-            SourceProvenance::exact("empty exact boolmesh kernel12 fallback fixture"),
-            ValidationPolicy::ALLOW_BOUNDARY,
-        )
-        .unwrap()
-    }
-
     fn accumulator_replay_event() -> ExactBoolMeshKernel12Event {
         ExactBoolMeshKernel12Event {
             edge_face: edge_face(),
@@ -806,44 +624,38 @@ mod tests {
         event
     }
 
+    fn lowered_event(sign: i32) -> LoweredKernel12Event {
+        let parameter =
+            (super::super::ExactReal::from(1) / super::super::ExactReal::from(2)).unwrap();
+        LoweredKernel12Event {
+            edge_face: edge_face(),
+            sign,
+            point: Point3::new(
+                super::super::ExactReal::from(1),
+                super::super::ExactReal::from(1),
+                super::super::ExactReal::from(1),
+            ),
+            parameter: parameter.clone(),
+            point_construction: segment_plane_construction(edge_face(), parameter),
+        }
+    }
+
     #[test]
     fn coalesces_identical_edge_face_contributions() {
-        let left = empty_mesh();
-        let right = empty_mesh();
-        let lowering = lower_kernel12_events(
-            &[
-                proper_event([Some(PlaneSide::Below), Some(PlaneSide::Above)]),
-                proper_event([Some(PlaneSide::Below), Some(PlaneSide::Above)]),
-            ],
-            &[],
-            &left,
-            &right,
-        );
+        let mut lowered = vec![lowered_event(1), lowered_event(1)];
+        coalesce_lowered_events(&mut lowered);
 
-        assert_eq!(lowering.p1q2, vec![edge_face()]);
-        assert_eq!(lowering.x12, vec![2]);
-        assert_eq!(lowering.v12.len(), 1);
-        assert_eq!(lowering.source_edge_events.len(), 1);
+        assert_eq!(lowered.len(), 1);
+        assert_eq!(lowered[0].edge_face, edge_face());
+        assert_eq!(lowered[0].sign, 2);
     }
 
     #[test]
     fn drops_zero_sum_identical_edge_face_contributions() {
-        let left = empty_mesh();
-        let right = empty_mesh();
-        let lowering = lower_kernel12_events(
-            &[
-                proper_event([Some(PlaneSide::Below), Some(PlaneSide::Above)]),
-                proper_event([Some(PlaneSide::Above), Some(PlaneSide::Below)]),
-            ],
-            &[],
-            &left,
-            &right,
-        );
+        let mut lowered = vec![lowered_event(1), lowered_event(-1)];
+        coalesce_lowered_events(&mut lowered);
 
-        assert!(lowering.p1q2.is_empty());
-        assert!(lowering.x12.is_empty());
-        assert!(lowering.v12.is_empty());
-        assert!(lowering.source_edge_events.is_empty());
+        assert!(lowered.is_empty());
     }
 
     #[test]

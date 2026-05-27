@@ -25,7 +25,7 @@ use std::collections::BTreeMap;
 
 use hyperlimit::{Point3, compare_reals};
 
-use crate::exact::mesh::ExactMesh;
+use crate::exact::mesh::{ExactMesh, Triangle};
 
 use super::ExactReal;
 use super::kernel02::ExactKernel02Halfedge;
@@ -35,6 +35,12 @@ use super::kernel02::ExactKernel02Halfedge;
 pub(super) struct ExactBoolMeshKernelFrame {
     /// Vertex positions in exact boolmesh working coordinates.
     pub points: Vec<Point3>,
+    /// Source triangles in the frame's boolmesh working face order.
+    pub triangles: Vec<Triangle>,
+    /// Map from working face id to the original [`ExactMesh`] face id.
+    pub source_faces: Vec<usize>,
+    /// Map from working source halfedge id to the original face-local row.
+    pub source_halfedges: Vec<usize>,
     /// Directed halfedges, three source halfedges per face plus reverse rows.
     pub halfedges: Vec<ExactKernel02Halfedge>,
     /// Exact expansion directions indexed by source vertex.
@@ -93,20 +99,54 @@ impl ExactBoolMeshKernelFrame {
 /// targets, matching the way legacy boolmesh can ask a backward face edge for
 /// its forward partner through `pair`.
 pub(super) fn build_kernel_frame(mesh: &ExactMesh) -> ExactBoolMeshKernelFrame {
+    let face_order = (0..mesh.triangles().len()).collect::<Vec<_>>();
+    build_kernel_frame_with_face_order(mesh, &face_order)
+}
+
+/// Build the exact boolmesh frame with legacy manifold face scheduling.
+///
+/// Boolmesh's public `Manifold::new_impl` sorts source faces by a Morton code
+/// before `boolean03::kernel12::intersect12` walks forward halfedges.  The row
+/// order and even the edge/face pairs presented to `Kernel12::op` therefore
+/// depend on that working order.  This exact scheduler ports the same idea
+/// without primitive floats: centroid normalization, clamping, and 10-bit
+/// Morton buckets are computed by exact comparisons.  Returned rows still carry
+/// original source face ids so downstream `boolean45` can address the original
+/// exact mesh.  This is Yap's exact-object boundary applied to a boolmesh
+/// implementation detail: the scheduling object is replayed exactly before
+/// topology tables are mutated.
+pub(super) fn build_boolmesh_sorted_kernel_frame(mesh: &ExactMesh) -> ExactBoolMeshKernelFrame {
+    let mut face_order = (0..mesh.triangles().len()).collect::<Vec<_>>();
+    let morton = face_morton_codes(mesh);
+    face_order.sort_by_key(|face| (morton[*face], *face));
+    build_kernel_frame_with_face_order(mesh, &face_order)
+}
+
+fn build_kernel_frame_with_face_order(
+    mesh: &ExactMesh,
+    face_order: &[usize],
+) -> ExactBoolMeshKernelFrame {
     let points = mesh
         .vertices()
         .iter()
         .map(|vertex| vertex.to_hyperlimit_point())
         .collect::<Vec<_>>();
-    let source_count = mesh.triangles().len() * 3;
+    let triangles = face_order
+        .iter()
+        .filter_map(|face| mesh.triangles().get(*face).copied())
+        .collect::<Vec<_>>();
+    let source_count = triangles.len() * 3;
     let mut halfedges = Vec::with_capacity(source_count * 2);
-    for triangle in mesh.triangles() {
+    let mut source_halfedges = Vec::with_capacity(source_count);
+    for (working_face, triangle) in triangles.iter().enumerate() {
+        let original_face = face_order[working_face];
         for edge in 0..3 {
             halfedges.push(ExactKernel02Halfedge {
                 tail: triangle.0[edge],
                 head: triangle.0[(edge + 1) % 3],
                 pair: usize::MAX,
             });
+            source_halfedges.push(original_face * 3 + edge);
         }
     }
 
@@ -152,12 +192,87 @@ pub(super) fn build_kernel_frame(mesh: &ExactMesh) -> ExactBoolMeshKernelFrame {
     let expansion_normals = expansion_normals_from_faces(mesh);
     ExactBoolMeshKernelFrame {
         points,
+        triangles,
+        source_faces: face_order.to_vec(),
+        source_halfedges,
         halfedges,
         expansion_normals,
         paired_source_halfedges,
         boundary_source_halfedges,
         duplicate_directed_halfedges,
     }
+}
+
+fn face_morton_codes(mesh: &ExactMesh) -> Vec<u32> {
+    let Some(bounds) = mesh.bounds().mesh.as_ref() else {
+        return vec![0; mesh.triangles().len()];
+    };
+    mesh.triangles()
+        .iter()
+        .map(|triangle| {
+            let vertices = triangle
+                .0
+                .iter()
+                .filter_map(|vertex| mesh.vertices().get(*vertex))
+                .map(|vertex| vertex.to_hyperlimit_point())
+                .collect::<Vec<_>>();
+            if vertices.len() != 3 {
+                return u32::MAX;
+            }
+            let centroid = Point3::new(
+                centroid_axis(&vertices[0].x, &vertices[1].x, &vertices[2].x),
+                centroid_axis(&vertices[0].y, &vertices[1].y, &vertices[2].y),
+                centroid_axis(&vertices[0].z, &vertices[1].z, &vertices[2].z),
+            );
+            exact_morton_code(&centroid, &bounds.min, &bounds.max)
+        })
+        .collect()
+}
+
+fn centroid_axis(a: &ExactReal, b: &ExactReal, c: &ExactReal) -> ExactReal {
+    ((a.clone() + b.clone() + c.clone()) / ExactReal::from(3))
+        .expect("constant centroid denominator is nonzero")
+}
+
+fn exact_morton_code(point: &Point3, min: &Point3, max: &Point3) -> u32 {
+    let x = spread_bits_3(exact_morton_axis(&point.x, &min.x, &max.x));
+    let y = spread_bits_3(exact_morton_axis(&point.y, &min.y, &max.y));
+    let z = spread_bits_3(exact_morton_axis(&point.z, &min.z, &max.z));
+    x * 4 + y * 2 + z
+}
+
+fn exact_morton_axis(value: &ExactReal, min: &ExactReal, max: &ExactReal) -> u32 {
+    let span = max.clone() - min;
+    if compare_reals(&span, &ExactReal::from(0)).value() != Some(Ordering::Greater) {
+        return 0;
+    }
+    let scaled = ((value.clone() - min) * ExactReal::from(1024) / span)
+        .expect("positive morton span is nonzero");
+    if compare_reals(&scaled, &ExactReal::from(0)).value() != Some(Ordering::Greater) {
+        return 0;
+    }
+    if compare_reals(&scaled, &ExactReal::from(1023)).value() != Some(Ordering::Less) {
+        return 1023;
+    }
+    let mut lo = 0u32;
+    let mut hi = 1023u32;
+    while lo + 1 < hi {
+        let mid = (lo + hi) / 2;
+        if compare_reals(&scaled, &ExactReal::from(mid)).value() == Some(Ordering::Less) {
+            hi = mid;
+        } else {
+            lo = mid;
+        }
+    }
+    lo
+}
+
+fn spread_bits_3(mut value: u32) -> u32 {
+    debug_assert!(value <= 1023);
+    value = 0xFF0000FFu32 & value.wrapping_mul(0x00010001u32);
+    value = 0x0F00F00Fu32 & value.wrapping_mul(0x00000101u32);
+    value = 0xC30C30C3u32 & value.wrapping_mul(0x00000011u32);
+    0x49249249u32 & value.wrapping_mul(0x00000005u32)
 }
 
 #[cfg(feature = "internal-fuzzing")]
@@ -240,6 +355,16 @@ mod tests {
     fn tetrahedron() -> ExactMesh {
         ExactMesh::from_i64_triangles(
             &[0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0, 4],
+            &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
+        )
+        .unwrap()
+    }
+
+    fn tetrahedron_i64(a: [i64; 3], b: [i64; 3], c: [i64; 3], d: [i64; 3]) -> ExactMesh {
+        ExactMesh::from_i64_triangles(
+            &[
+                a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2], d[0], d[1], d[2],
+            ],
             &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
         )
         .unwrap()
@@ -333,5 +458,27 @@ mod tests {
                 .source_halfedge_for_face_edge(0, [0, usize::MAX])
                 .is_none()
         );
+    }
+
+    #[test]
+    fn sorted_frame_matches_boolmesh_morton_face_schedule_for_skew_tetrahedra() {
+        let left = build_boolmesh_sorted_kernel_frame(&tetrahedron_i64(
+            [0, 0, 0],
+            [4, 0, 0],
+            [0, 4, 0],
+            [0, 0, 4],
+        ));
+        let right = build_boolmesh_sorted_kernel_frame(&tetrahedron_i64(
+            [1, 1, -1],
+            [3, 1, 3],
+            [1, 3, 3],
+            [3, 3, 1],
+        ));
+
+        assert_eq!(left.source_faces, vec![3, 1, 0, 2]);
+        assert_eq!(right.source_faces, vec![0, 3, 1, 2]);
+        assert_eq!(left.source_halfedges[9], 6);
+        assert_eq!(right.source_halfedges[3], 9);
+        assert_eq!(right.source_halfedges[6], 3);
     }
 }

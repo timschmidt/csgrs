@@ -27,8 +27,6 @@ mod kernel11;
 #[cfg(feature = "exact-triangulation")]
 mod kernel12;
 #[cfg(feature = "exact-triangulation")]
-mod kernel12_boundary;
-#[cfg(feature = "exact-triangulation")]
 mod kernel12_coplanar;
 #[cfg(feature = "exact-triangulation")]
 mod kernel12_intersect;
@@ -1206,12 +1204,29 @@ impl ExactBoolMeshWorkspace {
                 mesh_bounds_unknown,
             })
         } else {
-            boolmesh_boolean45_blocker(
+            let blocker = boolmesh_boolean45_blocker(
                 no_split_kernel12,
                 boolean45.as_ref().expect("boolean45 is staged above"),
                 candidate_face_pairs.len(),
                 mesh_bounds_unknown,
-            )
+            );
+            if blocker.is_none()
+                && !boolean45_export_materializes_closed(
+                    boolean45.as_ref().expect("boolean45 is staged above"),
+                    &boolean03,
+                    left,
+                    right,
+                    operation,
+                )
+            {
+                Some(ExactBoolMeshPortBlocker {
+                    stage: ExactBoolMeshKernelStage::Triangulation,
+                    candidate_face_pairs: candidate_face_pairs.len(),
+                    mesh_bounds_unknown,
+                })
+            } else {
+                blocker
+            }
         };
         Self {
             operation,
@@ -1388,6 +1403,7 @@ impl ExactBoolMeshWorkspace {
         if self.blocker.is_some()
             || self.candidate_face_pairs.is_empty()
             || self.is_certified_no_intersection_kernel03()
+            || self.is_certified_split_boolean45()
         {
             Ok(())
         } else {
@@ -1764,6 +1780,34 @@ fn boolean45_simple_export_is_complete(stage: &ExactBoolMeshBoolean45Stage) -> b
         && stage.mesh_export.invalid_output_triangles == 0
         && stage.mesh_export.orientation_failures == 0
         && stage.mesh_export.triangles.len() == stage.output_triangles.triangles.len()
+}
+
+/// Return whether the staged `boolean45` export is already a closed exact mesh.
+///
+/// The staging counters can be internally balanced while still producing a
+/// triangle soup that fails the final [`ExactMesh`] closed-manifold replay.
+/// Treating that as a `Triangulation` blocker keeps the boolmesh port honest:
+/// the next missing algorithm is cleanup/triangulation parity, not another
+/// reporting shortcut.  This is the final object-replay guard advocated by
+/// Yap, "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+/// (1997), applied before the public executor can claim a completed boolean.
+#[cfg(feature = "exact-triangulation")]
+fn boolean45_export_materializes_closed(
+    stage: &ExactBoolMeshBoolean45Stage,
+    boolean03: &ExactBoolMeshBoolean03,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+) -> bool {
+    materialize_boolean45_export(
+        stage,
+        boolean03,
+        left,
+        right,
+        ValidationPolicy::CLOSED,
+        boolmesh_export_label(operation),
+    )
+    .is_ok()
 }
 
 #[cfg(feature = "exact-triangulation")]

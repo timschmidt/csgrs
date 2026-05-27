@@ -1822,7 +1822,7 @@ fn exercise_exact_boolmesh_kernel12_port() {
     workspace.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         workspace.blocker.as_ref().map(|blocker| blocker.stage),
-        Some(hypermesh::exact::ExactBoolMeshKernelStage::FacePairEdgeEmission)
+        Some(hypermesh::exact::ExactBoolMeshKernelStage::Triangulation)
     );
     assert_eq!(
         hypermesh::exact::execute_exact_boolmesh_port(
@@ -1833,7 +1833,7 @@ fn exercise_exact_boolmesh_kernel12_port() {
         )
         .unwrap_err(),
         hypermesh::exact::ExactBoolMeshValidationError::PortBlocked(
-            hypermesh::exact::ExactBoolMeshKernelStage::FacePairEdgeEmission
+            hypermesh::exact::ExactBoolMeshKernelStage::Triangulation
         )
     );
     assert!(workspace.kernel12_events.iter().any(|event| matches!(
@@ -1855,6 +1855,8 @@ fn exercise_exact_boolmesh_kernel12_port() {
         .iter()
         .chain(workspace.boolean03.p2q1.iter())
         .all(|pair| pair.edge[0] < pair.edge[1]));
+    assert_eq!(workspace.boolean03.p1q2.len(), 2);
+    assert_eq!(workspace.boolean03.p2q1.len(), 4);
     let size_output = workspace
         .boolean45
         .as_ref()
@@ -1932,6 +1934,7 @@ fn exercise_exact_boolmesh_kernel12_port() {
                 window[1].output_vertex,
             )
         })));
+    assert_eq!(size_output.new_face_pair_edges.unpaired_runs, 0);
     assert!(size_output.whole_source_edges.source_edge_runs.is_empty());
     assert_eq!(
         size_output.halfedge_assembly.output_halfedges.len(),

@@ -20,7 +20,7 @@ use hyperlimit::{Point3, PredicateOutcome, compare_reals};
 use crate::exact::bounds::ExactAabb3;
 use crate::exact::mesh::ExactMesh;
 
-use super::kernel_frame::{ExactBoolMeshKernelFrame, build_kernel_frame};
+use super::kernel_frame::{ExactBoolMeshKernelFrame, build_boolmesh_sorted_kernel_frame};
 use super::kernel02::ExactKernel02Halfedge;
 use super::kernel12_op::{ExactKernel12Input, kernel12_op};
 use super::{ExactBoolMeshEdgeFacePair, ExactBoolMeshFacePair, ExactBoolMeshSide, ExactReal};
@@ -37,10 +37,14 @@ pub(super) struct ExactKernel12IntersectTables {
 /// One exact `Kernel12::op` row found by the boolmesh broad loop.
 #[derive(Clone, Debug, PartialEq)]
 pub(super) struct ExactKernel12IntersectHit {
-    /// Source halfedge index in the boolmesh frame for the source operand.
+    /// Source halfedge index in the original operand face order.
     pub source_halfedge: usize,
-    /// Opposite face index in the opposite operand.
+    /// Opposite face index in the original opposite operand face order.
     pub opposite_face: usize,
+    /// Source halfedge row in the boolmesh-sorted scheduler frame.
+    scheduler_source_halfedge: usize,
+    /// Opposite face row in the boolmesh-sorted scheduler frame.
+    scheduler_opposite_face: usize,
     /// Exact boolmesh edge/face ownership key.
     pub edge_face: ExactBoolMeshEdgeFacePair,
     /// Signed boolmesh `x12`/`x21` contribution.
@@ -56,8 +60,8 @@ pub(super) fn intersect12_exact(
     left_mesh: &ExactMesh,
     right_mesh: &ExactMesh,
 ) -> ExactKernel12IntersectTables {
-    let left_frame = build_kernel_frame(left_mesh);
-    let right_frame = build_kernel_frame(right_mesh);
+    let left_frame = build_boolmesh_sorted_kernel_frame(left_mesh);
+    let right_frame = build_boolmesh_sorted_kernel_frame(right_mesh);
     ExactKernel12IntersectTables {
         p1q2: intersect12_direction(left_mesh, right_mesh, &left_frame, &right_frame, true),
         p2q1: intersect12_direction(left_mesh, right_mesh, &left_frame, &right_frame, false),
@@ -71,12 +75,12 @@ fn intersect12_direction(
     right_frame: &ExactBoolMeshKernelFrame,
     fwd: bool,
 ) -> Vec<ExactKernel12IntersectHit> {
-    let (source_mesh, opposite_mesh, source_frame, opposite_frame) = if fwd {
-        (left_mesh, right_mesh, left_frame, right_frame)
+    let (source_mesh, source_frame, opposite_frame) = if fwd {
+        (left_mesh, left_frame, right_frame)
     } else {
-        (right_mesh, left_mesh, right_frame, left_frame)
+        (right_mesh, right_frame, left_frame)
     };
-    let opposite_face_bounds = face_bounds(opposite_mesh, opposite_frame);
+    let opposite_face_bounds = face_bounds(opposite_frame);
     let expand = ExactReal::from(1);
     let input = ExactKernel12Input {
         ps_p: &left_frame.points,
@@ -113,10 +117,14 @@ fn intersect12_direction(
                 continue;
             };
             hits.push(ExactKernel12IntersectHit {
-                source_halfedge,
-                opposite_face,
+                source_halfedge: original_source_halfedge(source_frame, source_halfedge),
+                opposite_face: original_face(opposite_frame, opposite_face),
+                scheduler_source_halfedge: source_halfedge,
+                scheduler_opposite_face: opposite_face,
                 edge_face: edge_face_pair(
                     source_mesh,
+                    source_frame,
+                    opposite_frame,
                     source_halfedge,
                     source_half,
                     opposite_face,
@@ -130,20 +138,26 @@ fn intersect12_direction(
     }
 
     hits.sort_by(|left, right| {
-        (left.source_halfedge, left.opposite_face)
-            .cmp(&(right.source_halfedge, right.opposite_face))
+        (left.scheduler_source_halfedge, left.scheduler_opposite_face).cmp(&(
+            right.scheduler_source_halfedge,
+            right.scheduler_opposite_face,
+        ))
     });
     hits
 }
 
 fn edge_face_pair(
     source_mesh: &ExactMesh,
+    source_frame: &ExactBoolMeshKernelFrame,
+    opposite_frame: &ExactBoolMeshKernelFrame,
     source_halfedge: usize,
     source_half: ExactKernel02Halfedge,
     opposite_face: usize,
     fwd: bool,
 ) -> ExactBoolMeshEdgeFacePair {
-    let source_face = source_halfedge / 3;
+    let source_face = original_face(source_frame, source_halfedge / 3);
+    let opposite_face = original_face(opposite_frame, opposite_face);
+    let source_halfedge = original_source_halfedge(source_frame, source_halfedge);
     let edge = [source_half.tail, source_half.head];
     let face_pair = if fwd {
         ExactBoolMeshFacePair {
@@ -175,8 +189,25 @@ fn edge_face_pair(
     }
 }
 
-fn face_bounds(mesh: &ExactMesh, frame: &ExactBoolMeshKernelFrame) -> Vec<ExactAabb3> {
-    mesh.triangles()
+fn original_face(frame: &ExactBoolMeshKernelFrame, working_face: usize) -> usize {
+    frame
+        .source_faces
+        .get(working_face)
+        .copied()
+        .unwrap_or(working_face)
+}
+
+fn original_source_halfedge(frame: &ExactBoolMeshKernelFrame, working_halfedge: usize) -> usize {
+    frame
+        .source_halfedges
+        .get(working_halfedge)
+        .copied()
+        .unwrap_or(working_halfedge)
+}
+
+fn face_bounds(frame: &ExactBoolMeshKernelFrame) -> Vec<ExactAabb3> {
+    frame
+        .triangles
         .iter()
         .map(|triangle| {
             ExactAabb3::from_triangle([
@@ -490,6 +521,44 @@ mod tests {
         assert_eq!(hit.edge_face.face_pair.right_face, hit.opposite_face);
         assert_eq!(hit.edge_face.source_halfedge, hit.source_halfedge);
         assert_ne!(hit.sign, 0);
+    }
+
+    #[test]
+    fn intersect12_loop_matches_boolmesh_skew_tetrahedron_schedule() {
+        let left = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
+        let right = tetrahedron_i64([1, 1, -1], [3, 1, 3], [1, 3, 3], [3, 3, 1]);
+
+        let tables = intersect12_exact(&left, &right);
+
+        assert_eq!(
+            tables
+                .p1q2
+                .iter()
+                .map(|hit| [hit.scheduler_source_halfedge, hit.scheduler_opposite_face])
+                .collect::<Vec<_>>(),
+            vec![[9, 1], [9, 2]]
+        );
+        assert_eq!(
+            tables.p1q2.iter().map(|hit| hit.sign).collect::<Vec<_>>(),
+            vec![-1, 1]
+        );
+        assert_eq!(
+            tables
+                .p2q1
+                .iter()
+                .map(|hit| [hit.scheduler_source_halfedge, hit.scheduler_opposite_face])
+                .collect::<Vec<_>>(),
+            vec![[0, 2], [0, 3], [6, 2], [6, 3]]
+        );
+        assert_eq!(
+            tables.p2q1.iter().map(|hit| hit.sign).collect::<Vec<_>>(),
+            vec![-1, 1, -1, 1]
+        );
+        assert!(tables.p1q2.iter().chain(tables.p2q1.iter()).all(|hit| {
+            hit.edge_face.source_halfedge == hit.source_halfedge
+                && hit.edge_face.face == hit.opposite_face
+                && hit.edge_face.edge[0] < hit.edge_face.edge[1]
+        }));
     }
 
     #[test]
