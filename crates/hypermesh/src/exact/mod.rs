@@ -130,7 +130,9 @@ pub use boolmesh::{
     ExactBoolMeshPartialSourceEdgeStage, ExactBoolMeshPointConstruction, ExactBoolMeshPortBlocker,
     ExactBoolMeshRoutedEdgePoint, ExactBoolMeshSide, ExactBoolMeshSourceEdgePointRun,
     ExactBoolMeshSourceEdgeRun, ExactBoolMeshSourceVertex, ExactBoolMeshValidationError,
-    ExactBoolMeshWorkspace, exact_boolmesh_workspace, execute_exact_boolmesh_bounds_disjoint,
+    ExactBoolMeshWholeSourceEdgeFragment, ExactBoolMeshWholeSourceEdgeRun,
+    ExactBoolMeshWholeSourceEdgeStage, ExactBoolMeshWorkspace, exact_boolmesh_workspace,
+    execute_exact_boolmesh_bounds_disjoint,
 };
 pub use bounds::{AabbIntersectionKind, BoundsValidationError, ExactAabb3, MeshBounds};
 #[cfg(feature = "exact-triangulation")]

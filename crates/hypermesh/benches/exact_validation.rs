@@ -13042,6 +13042,7 @@ fn exact_boolmesh_bounds_disjoint_port(c: &mut Criterion) {
                     + size_output.new_edge_vertices.face_pair_runs.len()
                     + size_output.partial_source_edges.source_edge_runs.len()
                     + size_output.new_face_pair_edges.face_pair_runs.len()
+                    + size_output.whole_source_edges.source_edge_runs.len()
             })
         });
     }
@@ -13103,6 +13104,7 @@ fn exact_boolmesh_kernel12_port(c: &mut Criterion) {
                                 + stage.new_edge_vertices.face_pair_runs.len()
                                 + stage.partial_source_edges.source_edge_runs.len()
                                 + stage.new_face_pair_edges.face_pair_runs.len()
+                                + stage.whole_source_edges.source_edge_runs.len()
                         })
                         .unwrap_or(0)
             })

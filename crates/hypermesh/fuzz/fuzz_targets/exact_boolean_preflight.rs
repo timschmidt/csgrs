@@ -1568,6 +1568,43 @@ fn exercise_exact_boolmesh_bounds_disjoint_port() {
         assert!(size_output.new_edge_vertices.face_pair_runs.is_empty());
         assert!(size_output.partial_source_edges.source_edge_runs.is_empty());
         assert!(size_output.new_face_pair_edges.face_pair_runs.is_empty());
+        match operation {
+            ExactBooleanOperation::Union => {
+                assert_eq!(size_output.whole_source_edges.source_edge_runs.len(), 12);
+                assert_eq!(
+                    size_output
+                        .whole_source_edges
+                        .source_edge_runs
+                        .iter()
+                        .map(|run| run.fragments.len())
+                        .sum::<usize>(),
+                    12
+                );
+            }
+            ExactBooleanOperation::Intersection => {
+                assert!(size_output.whole_source_edges.source_edge_runs.is_empty());
+            }
+            ExactBooleanOperation::Difference => {
+                assert_eq!(size_output.whole_source_edges.source_edge_runs.len(), 6);
+                assert!(size_output.whole_source_edges.source_edge_runs.iter().all(
+                    |run| run.side == hypermesh::exact::ExactBoolMeshSide::Left
+                        && run.fragments.len() == 1
+                ));
+            }
+            ExactBooleanOperation::SelectedRegions(_) => unreachable!(),
+        }
+        if operation == ExactBooleanOperation::Union {
+            let mut malformed = workspace.clone();
+            malformed
+                .boolean45
+                .as_mut()
+                .unwrap()
+                .whole_source_edges
+                .source_edge_runs[0]
+                .fragments[0]
+                .output_head = usize::MAX;
+            assert!(malformed.validate_against_sources(&left, &right).is_err());
+        }
         let execution = hypermesh::exact::execute_exact_boolmesh_bounds_disjoint(
             &left,
             &right,
@@ -1666,6 +1703,7 @@ fn exercise_exact_boolmesh_kernel12_port() {
             .sum::<usize>(),
         size_output.inserted_intersection_vertices * 2
     );
+    assert!(size_output.whole_source_edges.source_edge_runs.is_empty());
     assert_eq!(
         workspace
             .pair_up

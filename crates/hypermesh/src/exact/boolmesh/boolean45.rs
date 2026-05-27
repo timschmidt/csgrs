@@ -12,7 +12,7 @@
 //! *SIGGRAPH* (1977).
 
 use std::cmp::Ordering;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 use hyperlimit::compare_reals;
 
@@ -29,6 +29,8 @@ use super::{
     ExactBoolMeshPartialSourceEdgeFragment, ExactBoolMeshPartialSourceEdgeRun,
     ExactBoolMeshPartialSourceEdgeStage, ExactBoolMeshRoutedEdgePoint, ExactBoolMeshSide,
     ExactBoolMeshSourceEdgePointRun, ExactBoolMeshSourceEdgeRun, ExactBoolMeshSourceVertex,
+    ExactBoolMeshWholeSourceEdgeFragment, ExactBoolMeshWholeSourceEdgeRun,
+    ExactBoolMeshWholeSourceEdgeStage,
 };
 
 /// Build the exact `boolean45::size_output` staging record.
@@ -60,6 +62,9 @@ use super::{
 /// kernel orders by the longest bounding-box coordinate of rounded output
 /// positions; this exact stage uses collision/output ids as deterministic
 /// symbolic ordering until face-local exact curve order is ported.
+/// Whole source-edge staging mirrors `append_whole_edges`: untouched retained
+/// source edges are copied with operation-signed orientation and exact output
+/// vertex ids.
 pub(super) fn size_output_stage(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -101,6 +106,14 @@ pub(super) fn size_output_stage(
         pair_up,
     );
     let new_face_pair_edges = stage_new_face_pair_edges(&new_edge_vertices);
+    let whole_source_edges = stage_whole_source_edges(
+        left,
+        right,
+        &vertex_allocation,
+        &i03,
+        &i30,
+        &partial_source_edges,
+    );
 
     let mut left_face_halfedge_counts = retained_vertex_counts(left.triangles(), &i03);
     let mut right_face_halfedge_counts = retained_vertex_counts(right.triangles(), &i30);
@@ -152,6 +165,7 @@ pub(super) fn size_output_stage(
         new_edge_vertices,
         partial_source_edges,
         new_face_pair_edges,
+        whole_source_edges,
         vertices_from_left: i03.iter().map(|value| signed_abs(*value)).sum(),
         vertices_from_right: i30.iter().map(|value| signed_abs(*value)).sum(),
         inserted_intersection_vertices: i12
@@ -753,6 +767,130 @@ fn routed_point_order(
     left.collision
         .cmp(&right.collision)
         .then_with(|| left.output_vertex.cmp(&right.output_vertex))
+}
+
+/// Stage legacy `boolean45::append_whole_edges` over untouched source edges.
+///
+/// Yap's "Towards Exact Geometric Computation" treats the combinatorial
+/// decision as part of the exact object pipeline, so this pass copies only
+/// source edges whose operation-signed endpoint allocations replay exactly.
+/// The emitted fragments keep the Weiler-Atherton-style boundary-fragment
+/// shape used by the boolmesh kernels without using rounded coordinates for
+/// orientation or identity.
+fn stage_whole_source_edges(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    allocation: &ExactBoolMeshOutputVertexAllocation,
+    i03: &[i32],
+    i30: &[i32],
+    partial_source_edges: &ExactBoolMeshPartialSourceEdgeStage,
+) -> ExactBoolMeshWholeSourceEdgeStage {
+    let touched_edges = partial_source_edges
+        .source_edge_runs
+        .iter()
+        .map(|run| (side_key(run.side), canonical_edge([run.tail, run.head])))
+        .collect::<BTreeSet<_>>();
+    let mut stage = ExactBoolMeshWholeSourceEdgeStage::default();
+    append_whole_source_edges_for_side(
+        ExactBoolMeshSide::Left,
+        left,
+        i03,
+        &allocation.left_vertex_output_starts,
+        &touched_edges,
+        &mut stage,
+    );
+    append_whole_source_edges_for_side(
+        ExactBoolMeshSide::Right,
+        right,
+        i30,
+        &allocation.right_vertex_output_starts,
+        &touched_edges,
+        &mut stage,
+    );
+    stage
+}
+
+fn append_whole_source_edges_for_side(
+    side: ExactBoolMeshSide,
+    mesh: &ExactMesh,
+    signed_counts: &[i32],
+    starts: &[Option<usize>],
+    touched_edges: &BTreeSet<(u8, [usize; 2])>,
+    stage: &mut ExactBoolMeshWholeSourceEdgeStage,
+) {
+    for source_edge in source_edges(mesh.triangles()) {
+        if touched_edges.contains(&(side_key(side), source_edge.edge)) {
+            continue;
+        }
+        let Some(signed_count) = signed_counts.get(source_edge.edge[0]).copied() else {
+            continue;
+        };
+        let count = signed_abs(signed_count);
+        if count == 0 {
+            continue;
+        }
+        let Some(Some(tail_start)) = starts.get(source_edge.edge[0]) else {
+            stage.missing_endpoint_allocations += 1;
+            continue;
+        };
+        let Some(Some(head_start)) = starts.get(source_edge.edge[1]) else {
+            stage.missing_endpoint_allocations += 1;
+            continue;
+        };
+        let reversed = signed_count < 0;
+        let fragments = (0..count)
+            .map(|copy| {
+                let tail = tail_start + copy;
+                let head = head_start + copy;
+                if reversed {
+                    ExactBoolMeshWholeSourceEdgeFragment {
+                        output_tail: head,
+                        output_head: tail,
+                        copy,
+                        reversed,
+                    }
+                } else {
+                    ExactBoolMeshWholeSourceEdgeFragment {
+                        output_tail: tail,
+                        output_head: head,
+                        copy,
+                        reversed,
+                    }
+                }
+            })
+            .collect();
+        stage
+            .source_edge_runs
+            .push(ExactBoolMeshWholeSourceEdgeRun {
+                side,
+                edge: source_edge.edge,
+                incident_faces: source_edge.incident_faces,
+                signed_count,
+                fragments,
+            });
+    }
+}
+
+#[derive(Clone, Debug)]
+struct SourceEdge {
+    edge: [usize; 2],
+    incident_faces: Vec<usize>,
+}
+
+fn source_edges(triangles: &[Triangle]) -> Vec<SourceEdge> {
+    let mut edges = BTreeMap::<[usize; 2], Vec<usize>>::new();
+    for (face, triangle) in triangles.iter().enumerate() {
+        for edge in triangle_edges(*triangle) {
+            edges.entry(canonical_edge(edge)).or_default().push(face);
+        }
+    }
+    edges
+        .into_iter()
+        .map(|(edge, incident_faces)| SourceEdge {
+            edge,
+            incident_faces,
+        })
+        .collect()
 }
 
 fn count_crossing_vertex(

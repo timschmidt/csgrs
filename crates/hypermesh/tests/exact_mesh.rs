@@ -33112,6 +33112,48 @@ fn exact_boolmesh_workspace_executes_bounds_disjoint_slice() {
     );
     assert!(size_output.partial_source_edges.source_edge_runs.is_empty());
     assert!(size_output.new_face_pair_edges.face_pair_runs.is_empty());
+    assert_eq!(size_output.whole_source_edges.source_edge_runs.len(), 12);
+    assert_eq!(
+        size_output.whole_source_edges.missing_endpoint_allocations,
+        0
+    );
+    assert_eq!(
+        size_output
+            .whole_source_edges
+            .source_edge_runs
+            .iter()
+            .map(|run| run.fragments.len())
+            .sum::<usize>(),
+        12
+    );
+    assert!(
+        size_output
+            .whole_source_edges
+            .source_edge_runs
+            .iter()
+            .all(|run| {
+                run.signed_count == 1
+                    && run.incident_faces.len() == 2
+                    && run.fragments.len() == 1
+                    && !run.fragments[0].reversed
+            })
+    );
+
+    let mut malformed_whole_edges = workspace.clone();
+    malformed_whole_edges
+        .boolean45
+        .as_mut()
+        .unwrap()
+        .whole_source_edges
+        .source_edge_runs[0]
+        .fragments[0]
+        .output_tail = usize::MAX;
+    assert_eq!(
+        malformed_whole_edges
+            .validate_against_sources(&left, &right)
+            .unwrap_err(),
+        hypermesh::exact::ExactBoolMeshValidationError::Boolean45WholeEdgeMismatch
+    );
 
     let union = hypermesh::exact::execute_exact_boolmesh_bounds_disjoint(
         &left,
@@ -33174,6 +33216,12 @@ fn exact_boolmesh_workspace_executes_bounds_disjoint_slice() {
             .face_pair_runs
             .is_empty()
     );
+    assert!(
+        intersection_size_output
+            .whole_source_edges
+            .source_edge_runs
+            .is_empty()
+    );
 
     let difference = hypermesh::exact::execute_exact_boolmesh_bounds_disjoint(
         &left,
@@ -33216,6 +33264,22 @@ fn exact_boolmesh_workspace_executes_bounds_disjoint_slice() {
             .right_vertex_output_starts
             .iter()
             .all(Option::is_none)
+    );
+    assert_eq!(
+        difference_size_output
+            .whole_source_edges
+            .source_edge_runs
+            .len(),
+        6
+    );
+    assert!(
+        difference_size_output
+            .whole_source_edges
+            .source_edge_runs
+            .iter()
+            .all(|run| run.side == hypermesh::exact::ExactBoolMeshSide::Left
+                && run.signed_count == 1
+                && run.fragments.len() == 1)
     );
 }
 
@@ -33454,6 +33518,7 @@ fn exact_boolmesh_kernel12_discovers_skew_edge_face_events() {
         size_output.new_face_pair_edges.face_pair_runs.len(),
         size_output.new_edge_vertices.face_pair_runs.len()
     );
+    assert!(size_output.whole_source_edges.source_edge_runs.is_empty());
     assert_eq!(
         size_output
             .new_face_pair_edges

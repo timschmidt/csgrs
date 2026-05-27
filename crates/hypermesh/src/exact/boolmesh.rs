@@ -47,6 +47,8 @@ use boolean45::{pair_source_edge_events, size_output_stage};
 use hyperlimit::{PlaneSide, Point3, PredicateOutcome};
 #[cfg(feature = "exact-triangulation")]
 use kernel12::lower_kernel12_events;
+#[cfg(feature = "exact-triangulation")]
+use std::collections::BTreeSet;
 
 /// Legacy boolmesh kernel stage represented by the exact port.
 ///
@@ -533,6 +535,46 @@ pub struct ExactBoolMeshNewFacePairStage {
     pub unpaired_runs: usize,
 }
 
+/// Retained source-edge fragment produced by exact `append_whole_edges`.
+#[cfg(feature = "exact-triangulation")]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ExactBoolMeshWholeSourceEdgeFragment {
+    /// Output tail vertex id.
+    pub output_tail: usize,
+    /// Output head vertex id.
+    pub output_head: usize,
+    /// Duplicate index for signed inclusion counts with magnitude > 1.
+    pub copy: usize,
+    /// Whether the source edge orientation was reversed by a negative count.
+    pub reversed: bool,
+}
+
+/// Exact retained source-edge run consumed by `append_whole_edges`.
+#[cfg(feature = "exact-triangulation")]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ExactBoolMeshWholeSourceEdgeRun {
+    /// Source edge owner.
+    pub side: ExactBoolMeshSide,
+    /// Chosen source-edge endpoints before sign reversal.
+    pub edge: [usize; 2],
+    /// Source faces incident to this undirected edge.
+    pub incident_faces: Vec<usize>,
+    /// Operation-signed retained edge multiplicity.
+    pub signed_count: i32,
+    /// Retained output fragments emitted for this source edge.
+    pub fragments: Vec<ExactBoolMeshWholeSourceEdgeFragment>,
+}
+
+/// Exact `boolean45::append_whole_edges` staging over untouched source edges.
+#[cfg(feature = "exact-triangulation")]
+#[derive(Clone, Debug, Default, Eq, PartialEq)]
+pub struct ExactBoolMeshWholeSourceEdgeStage {
+    /// Whole source-edge runs.
+    pub source_edge_runs: Vec<ExactBoolMeshWholeSourceEdgeRun>,
+    /// Untouched retained edges whose endpoint allocation was incomplete.
+    pub missing_endpoint_allocations: usize,
+}
+
 /// Exact `boolean45`-shaped output staging metadata.
 #[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -553,6 +595,8 @@ pub struct ExactBoolMeshBoolean45Stage {
     pub partial_source_edges: ExactBoolMeshPartialSourceEdgeStage,
     /// Exact new face-pair fragments, legacy `append_new_edges`.
     pub new_face_pair_edges: ExactBoolMeshNewFacePairStage,
+    /// Exact whole source-edge fragments, legacy `append_whole_edges`.
+    pub whole_source_edges: ExactBoolMeshWholeSourceEdgeStage,
     /// Number of vertices copied from the left operand.
     pub vertices_from_left: usize,
     /// Number of vertices copied from the right operand.
@@ -897,6 +941,8 @@ pub enum ExactBoolMeshValidationError {
     Boolean45PartialEdgeMismatch,
     /// A `boolean45::append_new_edges` staging record is stale or malformed.
     Boolean45NewEdgeMismatch,
+    /// A `boolean45::append_whole_edges` staging record is stale or malformed.
+    Boolean45WholeEdgeMismatch,
     /// Blocker candidate counts do not match retained candidates.
     BlockerCountMismatch,
     /// A non-disjoint workspace had no named boolmesh-stage blocker.
@@ -1323,7 +1369,112 @@ fn validate_boolean45_stage(
         right_faces,
         boolean03.p1q2.len() + boolean03.p2q1.len(),
     )?;
+    validate_boolean45_whole_edges(stage, left_vertices, right_vertices)?;
     Ok(())
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn validate_boolean45_whole_edges(
+    stage: &ExactBoolMeshBoolean45Stage,
+    left_vertices: usize,
+    right_vertices: usize,
+) -> Result<(), ExactBoolMeshValidationError> {
+    if stage.whole_source_edges.missing_endpoint_allocations != 0 {
+        return Err(ExactBoolMeshValidationError::Boolean45WholeEdgeMismatch);
+    }
+    let mut seen_edges = BTreeSet::<(u8, [usize; 2])>::new();
+    for run in &stage.whole_source_edges.source_edge_runs {
+        let vertex_count = match run.side {
+            ExactBoolMeshSide::Left => left_vertices,
+            ExactBoolMeshSide::Right => right_vertices,
+        };
+        if run.edge[0] >= vertex_count || run.edge[1] >= vertex_count || run.fragments.is_empty() {
+            return Err(ExactBoolMeshValidationError::Boolean45WholeEdgeMismatch);
+        }
+        if run.incident_faces.is_empty()
+            || !seen_edges.insert((
+                boolmesh_side_key(run.side),
+                canonical_boolmesh_edge(run.edge),
+            ))
+        {
+            return Err(ExactBoolMeshValidationError::Boolean45WholeEdgeMismatch);
+        }
+        if run.fragments.len() != signed_abs_i32(run.signed_count) || run.signed_count == 0 {
+            return Err(ExactBoolMeshValidationError::Boolean45WholeEdgeMismatch);
+        }
+        for fragment in &run.fragments {
+            validate_whole_edge_fragment(fragment, run, &stage.vertex_allocation)?;
+        }
+    }
+    Ok(())
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn validate_whole_edge_fragment(
+    fragment: &ExactBoolMeshWholeSourceEdgeFragment,
+    run: &ExactBoolMeshWholeSourceEdgeRun,
+    allocation: &ExactBoolMeshOutputVertexAllocation,
+) -> Result<(), ExactBoolMeshValidationError> {
+    if fragment.reversed != (run.signed_count < 0) {
+        return Err(ExactBoolMeshValidationError::Boolean45WholeEdgeMismatch);
+    }
+    let starts = match run.side {
+        ExactBoolMeshSide::Left => &allocation.left_vertex_output_starts,
+        ExactBoolMeshSide::Right => &allocation.right_vertex_output_starts,
+    };
+    let Some(Some(tail_start)) = starts.get(run.edge[0]) else {
+        return Err(ExactBoolMeshValidationError::Boolean45WholeEdgeMismatch);
+    };
+    let Some(Some(head_start)) = starts.get(run.edge[1]) else {
+        return Err(ExactBoolMeshValidationError::Boolean45WholeEdgeMismatch);
+    };
+    let tail_output = tail_start + fragment.copy;
+    let head_output = head_start + fragment.copy;
+    let expected = if fragment.reversed {
+        (head_output, tail_output)
+    } else {
+        (tail_output, head_output)
+    };
+    if (fragment.output_tail, fragment.output_head) != expected {
+        return Err(ExactBoolMeshValidationError::Boolean45WholeEdgeMismatch);
+    }
+    if allocation.output_vertex_origins.get(tail_output)
+        != Some(&ExactBoolMeshOutputVertexOrigin::SourceVertex {
+            source: ExactBoolMeshSourceVertex {
+                side: run.side,
+                vertex: run.edge[0],
+            },
+            copy: fragment.copy,
+        })
+        || allocation.output_vertex_origins.get(head_output)
+            != Some(&ExactBoolMeshOutputVertexOrigin::SourceVertex {
+                source: ExactBoolMeshSourceVertex {
+                    side: run.side,
+                    vertex: run.edge[1],
+                },
+                copy: fragment.copy,
+            })
+    {
+        return Err(ExactBoolMeshValidationError::Boolean45WholeEdgeMismatch);
+    }
+    Ok(())
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn boolmesh_side_key(side: ExactBoolMeshSide) -> u8 {
+    match side {
+        ExactBoolMeshSide::Left => 0,
+        ExactBoolMeshSide::Right => 1,
+    }
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn canonical_boolmesh_edge(edge: [usize; 2]) -> [usize; 2] {
+    if edge[0] <= edge[1] {
+        edge
+    } else {
+        [edge[1], edge[0]]
+    }
 }
 
 #[cfg(feature = "exact-triangulation")]
