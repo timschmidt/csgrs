@@ -2943,6 +2943,30 @@ fn line_mixed_bezier_arrangement_accepts_exact_bezier_extrema_box_separation() {
 }
 
 #[test]
+fn line_mixed_bezier_arrangement_accepts_exact_conic_extrema_box_separation() {
+    let line = LinePathSegment::new(p(0, 0), p(4, 0));
+    let quadratic = QuadraticBezier::new(p(0, 0), p(2, 2), p(4, 0));
+    let conic = RationalQuadraticBezier::new(p(0, 2), p(2, 0), p(4, 2), rq(1, 3)).unwrap();
+
+    let report = arrange_line_segments_with_mixed_beziers(
+        &[line],
+        &[quadratic],
+        &[],
+        &[conic],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+
+    assert_eq!(report.quadratic_fragments.len(), 1);
+    assert_eq!(report.rational_quadratic_fragments.len(), 1);
+    assert!(report.fragment_separations.iter().any(|separation| {
+        separation.left == MixedCurveFragmentRef::Quadratic(0)
+            && separation.right == MixedCurveFragmentRef::RationalQuadratic(0)
+            && separation.class == MixedCurveFragmentSeparationClass::LeftBelowRightY
+    }));
+}
+
+#[test]
 fn line_mixed_bezier_arrangement_accepts_certified_endpoint_corner_contact() {
     let line = LinePathSegment::new(p(0, 0), p(8, 0));
     let quadratic = QuadraticBezier::new(p(0, 0), p(2, 2), p(4, 0));

@@ -795,16 +795,10 @@ fn validate_curve_fragment_separation(
         });
     }
     for (index, fragment) in conics.iter().enumerate() {
-        let start = affine_homogeneous_point(&fragment.start_control, policy)?;
-        let control = affine_homogeneous_point(&fragment.control, policy)?;
-        let end = affine_homogeneous_point(&fragment.end_control, policy)?;
         boxes.push(FragmentBox {
             source: MixedCurveFragmentRef::RationalQuadratic(index),
             owner: MixedCurveSourceRef::RationalQuadratic(fragment.source_curve),
-            ..box_from_points([&start, &control, &end], policy)?.with_tangents(
-                homogeneous_endpoint_tangent(&fragment.start_control, &fragment.control),
-                homogeneous_endpoint_tangent(&fragment.control, &fragment.end_control),
-            )
+            ..box_from_conic_fragment(fragment, policy)?
         });
     }
     let mut separations = Vec::new();
@@ -990,6 +984,43 @@ fn box_from_cubic_fragment(
     Ok(hull.with_tangents(cubic_start_tangent(fragment), cubic_end_tangent(fragment)))
 }
 
+/// Build a certified coordinate-extrema box for a rational-quadratic fragment.
+///
+/// Rational conic coordinates are quotient curves `R(t)=N(t)/W(t)`. Following
+/// Yap's exact geometric-computation model, the mixed scheduler may use the
+/// resulting box only when every extremum witness is an exact retained object:
+/// derivative roots are solved from the denominator-cleared numerator
+/// `N'W - NW'`, admitted by exact `[0, 1]` comparisons, and evaluated only
+/// after proving the homogeneous weight is nonzero. The quotient-derivative
+/// form is the standard rational Bezier hodograph relation described by
+/// Farouki, *Pythagorean Hodograph Curves* (2008).
+fn box_from_conic_fragment(
+    fragment: &RationalQuadraticBezierRealFragment,
+    policy: PredicatePolicy,
+) -> Result<FragmentBox, LineMixedBezierArrangementError> {
+    let start = affine_homogeneous_point(&fragment.start_control, policy)?;
+    let end = affine_homogeneous_point(&fragment.end_control, policy)?;
+    let mut hull = box_from_points([&start, &end], policy)?;
+    for root in conic_coordinate_extrema_parameters(fragment, Coordinate::X, policy)? {
+        update_box_with_point(
+            &mut hull,
+            &eval_conic_fragment_real(fragment, &root, policy)?,
+            policy,
+        )?;
+    }
+    for root in conic_coordinate_extrema_parameters(fragment, Coordinate::Y, policy)? {
+        update_box_with_point(
+            &mut hull,
+            &eval_conic_fragment_real(fragment, &root, policy)?,
+            policy,
+        )?;
+    }
+    Ok(hull.with_tangents(
+        homogeneous_endpoint_tangent(&fragment.start_control, &fragment.control),
+        homogeneous_endpoint_tangent(&fragment.control, &fragment.end_control),
+    ))
+}
+
 fn box_from_points<'a, const N: usize>(
     points: [&'a Point2; N],
     policy: PredicatePolicy,
@@ -1072,6 +1103,55 @@ fn cubic_coordinate_extrema_parameters(
         }
     }
     Ok(accepted)
+}
+
+fn conic_coordinate_extrema_parameters(
+    fragment: &RationalQuadraticBezierRealFragment,
+    coordinate: Coordinate,
+    policy: PredicatePolicy,
+) -> Result<Vec<Real>, LineMixedBezierArrangementError> {
+    let numerator = conic_coordinate_power_coefficients(fragment, coordinate);
+    let denominator = conic_weight_power_coefficients(fragment);
+    let constant = numerator[1].clone() * denominator[0].clone()
+        - numerator[0].clone() * denominator[1].clone();
+    let linear = Real::from(2)
+        * (numerator[2].clone() * denominator[0].clone()
+            - numerator[0].clone() * denominator[2].clone());
+    let quadratic = numerator[2].clone() * denominator[1].clone()
+        - numerator[1].clone() * denominator[2].clone();
+    let roots = solve_quadratic_or_linear_real(quadratic, linear, constant, policy)?;
+    let mut accepted = Vec::new();
+    for root in roots {
+        if real_in_unit_interval(&root, policy)? {
+            accepted.push(root);
+        }
+    }
+    Ok(accepted)
+}
+
+fn conic_coordinate_power_coefficients(
+    fragment: &RationalQuadraticBezierRealFragment,
+    coordinate: Coordinate,
+) -> [Real; 3] {
+    let p0 = homogeneous_coordinate(&fragment.start_control, coordinate);
+    let p1 = homogeneous_coordinate(&fragment.control, coordinate);
+    let p2 = homogeneous_coordinate(&fragment.end_control, coordinate);
+    [
+        p0.clone(),
+        Real::from(2) * (p1.clone() - p0.clone()),
+        p0 - Real::from(2) * p1 + p2,
+    ]
+}
+
+fn conic_weight_power_coefficients(fragment: &RationalQuadraticBezierRealFragment) -> [Real; 3] {
+    let w0 = fragment.start_control.w.clone();
+    let w1 = fragment.control.w.clone();
+    let w2 = fragment.end_control.w.clone();
+    [
+        w0.clone(),
+        Real::from(2) * (w1.clone() - w0.clone()),
+        w0 - Real::from(2) * w1 + w2,
+    ]
 }
 
 fn solve_quadratic_or_linear_real(
@@ -1157,6 +1237,16 @@ fn coordinate_value(point: &Point2, coordinate: Coordinate) -> Real {
     }
 }
 
+fn homogeneous_coordinate(
+    point: &crate::bezier_arrangement::HomogeneousPoint2,
+    coordinate: Coordinate,
+) -> Real {
+    match coordinate {
+        Coordinate::X => point.x.clone(),
+        Coordinate::Y => point.y.clone(),
+    }
+}
+
 fn eval_quadratic_real(curve: &QuadraticBezier, parameter: &Real) -> Point2 {
     let one_minus_t = Real::one() - parameter.clone();
     let start_weight = one_minus_t.clone() * one_minus_t.clone();
@@ -1170,6 +1260,29 @@ fn eval_quadratic_real(curve: &QuadraticBezier, parameter: &Real) -> Point2 {
             + curve.control().y.clone() * control_weight
             + curve.end().y.clone() * end_weight,
     )
+}
+
+fn eval_conic_fragment_real(
+    fragment: &RationalQuadraticBezierRealFragment,
+    parameter: &Real,
+    policy: PredicatePolicy,
+) -> Result<Point2, LineMixedBezierArrangementError> {
+    let one_minus_t = Real::one() - parameter.clone();
+    let start_weight = one_minus_t.clone() * one_minus_t.clone();
+    let control_weight = Real::from(2) * one_minus_t * parameter.clone();
+    let end_weight = parameter.clone() * parameter.clone();
+    let homogeneous = crate::bezier_arrangement::HomogeneousPoint2 {
+        x: fragment.start_control.x.clone() * start_weight.clone()
+            + fragment.control.x.clone() * control_weight.clone()
+            + fragment.end_control.x.clone() * end_weight.clone(),
+        y: fragment.start_control.y.clone() * start_weight.clone()
+            + fragment.control.y.clone() * control_weight.clone()
+            + fragment.end_control.y.clone() * end_weight.clone(),
+        w: fragment.start_control.w.clone() * start_weight
+            + fragment.control.w.clone() * control_weight
+            + fragment.end_control.w.clone() * end_weight,
+    };
+    affine_homogeneous_point(&homogeneous, policy)
 }
 
 fn eval_cubic_real(curve: &CubicBezier, parameter: &Real) -> Point2 {
