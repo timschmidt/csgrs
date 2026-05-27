@@ -910,6 +910,10 @@ pub struct ExactBoolMeshLoopTriangulation {
     /// Output face containing the triangulated loop.
     pub output_face: usize,
     /// Index into [`ExactBoolMeshFaceLoopAssemblyStage::loops`].
+    ///
+    /// For holed/multi-loop faces this is the exterior loop selected by exact
+    /// projected area; [`Self::vertices`] then contains that exterior ring
+    /// followed by each hole ring in `hypertri` hole-start order.
     pub loop_index: usize,
     /// Source mesh side used to choose the projection.
     pub source_side: ExactBoolMeshSide,
@@ -931,12 +935,16 @@ pub struct ExactBoolMeshLoopTriangulation {
 #[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub struct ExactBoolMeshLoopTriangulationStage {
-    /// Simple single-loop output faces triangulated with `hypertri` earcut.
-    pub triangulations: Vec<ExactBoolMeshLoopTriangulation>,
-    /// Output faces with more than one assembled loop.
+    /// Output faces triangulated with `hypertri` earcut.
     ///
-    /// These are hole/cut candidates that must go through the later exact CDT
-    /// constraint path instead of being flattened into one simple polygon.
+    /// A record may represent either one simple loop or one holed output face
+    /// whose loops were flattened into an earcut-compatible polygon buffer.
+    pub triangulations: Vec<ExactBoolMeshLoopTriangulation>,
+    /// Multi-loop output faces that still could not be triangulated.
+    ///
+    /// This remains explicit for malformed or unsupported hole topologies; a
+    /// well-formed multi-loop face is now consumed by the exact holed-earcut
+    /// path and therefore does not increment this blocker.
     pub multi_loop_faces: usize,
     /// Single-loop candidates shorter than a polygon.
     pub short_loops: usize,
@@ -967,6 +975,9 @@ pub struct ExactBoolMeshTriangulatedOutputTriangle {
     /// Output face that owns the triangle.
     pub output_face: usize,
     /// Index into [`ExactBoolMeshFaceLoopAssemblyStage::loops`].
+    ///
+    /// For holed output faces this is the exterior loop selected during loop
+    /// triangulation.
     pub loop_index: usize,
     /// Source mesh side used to choose the projection.
     pub source_side: ExactBoolMeshSide,
@@ -984,12 +995,8 @@ pub struct ExactBoolMeshTriangulatedOutputTriangle {
 pub struct ExactBoolMeshOutputTriangleStage {
     /// Materialized output triangles in boolmesh face/loop traversal order.
     pub triangles: Vec<ExactBoolMeshTriangulatedOutputTriangle>,
-    /// Upstream simple-loop triangulation candidates that did not produce a
-    /// local index buffer and therefore cannot emit output triangles yet.
-    ///
-    /// Multi-loop faces are counted once, matching the current
-    /// [`ExactBoolMeshLoopTriangulationStage`] blocker granularity.  The later
-    /// exact CDT slice will refine this into hole/constraint records.
+    /// Upstream loop triangulation candidates that did not produce a local
+    /// index buffer and therefore cannot emit output triangles yet.
     pub missing_loop_triangulations: usize,
     /// Local triangle records that were not valid triples of distinct
     /// in-bounds loop-vertex indices.
@@ -3083,28 +3090,23 @@ fn validate_boolean45_loop_triangulation(
             .or_default()
             .push(loop_index);
     }
-    let expected_multi_loop_faces = loops_by_face
-        .values()
-        .filter(|loop_indices| loop_indices.len() > 1)
-        .count();
-    if stage.loop_triangulation.multi_loop_faces != expected_multi_loop_faces {
-        return Err(ExactBoolMeshValidationError::Boolean45LoopTriangulationMismatch);
-    }
-
-    let candidate_loops = loops_by_face
-        .values()
-        .filter_map(|loop_indices| (loop_indices.len() == 1).then_some(loop_indices[0]))
-        .collect::<Vec<_>>();
-    let expected_short_loops = candidate_loops
+    let candidate_faces = loops_by_face.values().collect::<Vec<_>>();
+    let expected_short_loops = candidate_faces
         .iter()
-        .filter(|loop_index| stage.face_loop_assembly.loops[**loop_index].vertices.len() < 3)
+        .filter(|loop_indices| {
+            loop_indices.iter().any(|loop_index| {
+                let face_loop = &stage.face_loop_assembly.loops[*loop_index];
+                face_loop.vertices.len() < 3 || face_loop.halfedges.len() < 3
+            })
+        })
         .count();
     if stage.loop_triangulation.short_loops != expected_short_loops {
         return Err(ExactBoolMeshValidationError::Boolean45LoopTriangulationMismatch);
     }
 
-    let triangulatable_candidates = candidate_loops.len() - expected_short_loops;
+    let triangulatable_candidates = candidate_faces.len() - expected_short_loops;
     let accounted_candidates = stage.loop_triangulation.triangulations.len()
+        + stage.loop_triangulation.multi_loop_faces
         + stage.loop_triangulation.missing_source_faces
         + stage.loop_triangulation.missing_vertex_coordinates
         + stage.loop_triangulation.triangulation_failures;
@@ -3112,16 +3114,25 @@ fn validate_boolean45_loop_triangulation(
         return Err(ExactBoolMeshValidationError::Boolean45LoopTriangulationMismatch);
     }
 
-    let mut seen_loops = BTreeSet::<usize>::new();
+    let mut seen_faces = BTreeSet::<usize>::new();
     for triangulation in &stage.loop_triangulation.triangulations {
-        if !seen_loops.insert(triangulation.loop_index) {
-            return Err(ExactBoolMeshValidationError::Boolean45LoopTriangulationMismatch);
-        }
         let Some(face_loop) = stage.face_loop_assembly.loops.get(triangulation.loop_index) else {
             return Err(ExactBoolMeshValidationError::Boolean45LoopTriangulationMismatch);
         };
+        if !seen_faces.insert(triangulation.output_face) {
+            return Err(ExactBoolMeshValidationError::Boolean45LoopTriangulationMismatch);
+        }
+        let Some(loop_indices) = loops_by_face.get(&triangulation.output_face) else {
+            return Err(ExactBoolMeshValidationError::Boolean45LoopTriangulationMismatch);
+        };
         if face_loop.output_face != triangulation.output_face
-            || face_loop.vertices != triangulation.vertices
+            || !loop_indices.contains(&triangulation.loop_index)
+            || !triangulation_vertices_match_face_loops(
+                &triangulation.vertices,
+                loop_indices,
+                triangulation.loop_index,
+                &stage.face_loop_assembly,
+            )
             || triangulation.triangles.is_empty()
             || !triangulation.triangles.len().is_multiple_of(3)
             || !source_face_in_bounds(
@@ -3147,6 +3158,37 @@ fn validate_boolean45_loop_triangulation(
     }
 
     Ok(())
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn triangulation_vertices_match_face_loops(
+    vertices: &[usize],
+    loop_indices: &[usize],
+    exterior_loop: usize,
+    face_loops: &ExactBoolMeshFaceLoopAssemblyStage,
+) -> bool {
+    let mut cursor = 0;
+    let mut seen = BTreeSet::<usize>::new();
+    let ordered = std::iter::once(exterior_loop).chain(
+        loop_indices
+            .iter()
+            .copied()
+            .filter(|loop_index| *loop_index != exterior_loop),
+    );
+    for loop_index in ordered {
+        let Some(face_loop) = face_loops.loops.get(loop_index) else {
+            return false;
+        };
+        if !seen.insert(loop_index) {
+            return false;
+        }
+        let end = cursor + face_loop.vertices.len();
+        if vertices.get(cursor..end) != Some(face_loop.vertices.as_slice()) {
+            return false;
+        }
+        cursor = end;
+    }
+    cursor == vertices.len() && seen.len() == loop_indices.len()
 }
 
 #[cfg(feature = "exact-triangulation")]

@@ -33746,15 +33746,10 @@ fn exact_boolmesh_workspace_routes_strict_coplanar_vertices_to_boolean45() {
         hypermesh::exact::ExactBooleanOperation::Union,
     );
     workspace.validate_against_sources(&left, &right).unwrap();
-    let blocker = workspace
-        .blocker
-        .as_ref()
-        .expect("overlapping bounds must name the next boolmesh stage");
-    assert_eq!(
-        blocker.stage,
-        hypermesh::exact::ExactBoolMeshKernelStage::Triangulation
+    assert!(
+        workspace.blocker.is_none(),
+        "strict coplanar vertex ownership should now flow through holed boolmesh triangulation"
     );
-    assert!(blocker.candidate_face_pairs > 0);
     assert!(
         workspace.kernel12_coplanar_events == 0
             && workspace.kernel12_unknown_events == 0
@@ -33766,19 +33761,35 @@ fn exact_boolmesh_workspace_routes_strict_coplanar_vertices_to_boolean45() {
             || workspace.boolean03.w30.iter().any(|winding| *winding != 0),
         "strict coplanar vertex ownership should flow through exact kernel03 counters"
     );
+    let size_output = workspace
+        .boolean45
+        .as_ref()
+        .expect("strict coplanar ownership should reach boolean45");
+    assert_eq!(size_output.loop_triangulation.multi_loop_faces, 0);
+    assert_eq!(size_output.loop_triangulation.triangulation_failures, 0);
+    assert!(
+        size_output
+            .loop_triangulation
+            .triangulations
+            .iter()
+            .any(|triangulation| triangulation.vertices.len() > 3),
+        "the coplanar base face must be triangulated as a holed/multi-loop face"
+    );
 
-    let execution = hypermesh::exact::execute_exact_boolmesh_bounds_disjoint(
+    let execution = hypermesh::exact::execute_exact_boolmesh_port(
         &left,
         &right,
         hypermesh::exact::ExactBooleanOperation::Union,
         ValidationPolicy::CLOSED,
-    );
+    )
+    .expect("holed exact boolmesh triangulation should materialize the strict coplanar union");
+    execution.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
-        execution.unwrap_err(),
-        hypermesh::exact::ExactBoolMeshValidationError::PortBlocked(
-            hypermesh::exact::ExactBoolMeshKernelStage::Triangulation
-        )
+        execution.shortcut,
+        hypermesh::exact::ExactBooleanShortcutKind::BoolMeshSplit
     );
+    assert_eq!(execution.mesh.vertices().len(), 8);
+    assert_eq!(execution.mesh.triangles().len(), 12);
 }
 
 #[test]

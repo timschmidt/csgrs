@@ -13192,6 +13192,42 @@ fn exact_boolmesh_cleanup_materialization_port(c: &mut Criterion) {
     }
 }
 
+fn exact_boolmesh_holed_triangulation_port(c: &mut Criterion) {
+    #[cfg(feature = "exact-triangulation")]
+    {
+        let left = ExactMesh::from_i64_triangles(
+            &[0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0, 4],
+            &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
+        )
+        .unwrap();
+        let right = ExactMesh::from_i64_triangles(
+            &[1, 1, 0, 2, 1, 0, 1, 2, 0, 1, 1, -1],
+            &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
+        )
+        .unwrap();
+
+        c.bench_function("exact_boolmesh_holed_triangulation_port", |b| {
+            b.iter(|| {
+                let execution = hypermesh::exact::execute_exact_boolmesh_port(
+                    &left,
+                    &right,
+                    hypermesh::exact::ExactBooleanOperation::Union,
+                    hypermesh::exact::ValidationPolicy::CLOSED,
+                )
+                .expect("strict coplanar fixture should materialize through holed triangulation");
+                execution.validate_against_sources(&left, &right).unwrap();
+                execution.mesh.vertices().len()
+                    + execution.mesh.triangles().len()
+                    + execution.mesh.facts().mesh.edge_count
+            })
+        });
+    }
+    #[cfg(not(feature = "exact-triangulation"))]
+    {
+        let _ = c;
+    }
+}
+
 fn exact_boolmesh_kernel12_endpoint_shadow_port(c: &mut Criterion) {
     #[cfg(feature = "exact-triangulation")]
     {
@@ -13688,6 +13724,7 @@ criterion_group!(
     exact_boolmesh_bounds_disjoint_port,
     exact_boolmesh_kernel12_port,
     exact_boolmesh_cleanup_materialization_port,
+    exact_boolmesh_holed_triangulation_port,
     exact_boolmesh_kernel12_endpoint_shadow_port,
     exact_boolmesh_kernel12_boundary_endpoint_shadow_port,
     exact_boolmesh_kernel11_shadow_port,

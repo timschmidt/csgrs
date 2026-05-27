@@ -1550,7 +1550,7 @@ fuzz_target!(|data: &[u8]| {
 
 #[cfg(feature = "exact-triangulation")]
 fn exercise_deterministic_case(selector: u8) {
-    match selector % 63 {
+    match selector % 64 {
         0 => exercise_partial_convex_union_boundary(),
         1 => exercise_face_interior_steiner_boundary(),
         2 => exercise_multi_component_coplanar_union(),
@@ -1614,6 +1614,7 @@ fn exercise_deterministic_case(selector: u8) {
         60 => exercise_exact_boolmesh_kernel12_coplanar_interval_port(),
         61 => exercise_exact_boolmesh_kernel03_winding_port(),
         62 => exercise_exact_boolmesh_cleanup_materialization_port(),
+        63 => exercise_exact_boolmesh_holed_triangulation_port(),
         _ => exercise_nonconvex_coplanar_volumetric_difference_fan_split(),
     }
 }
@@ -2076,6 +2077,49 @@ fn exercise_exact_boolmesh_cleanup_materialization_port() {
     assert_eq!(execution.mesh.triangles().len(), 6);
     assert_eq!(execution.mesh.facts().mesh.boundary_edges, 0);
     assert_eq!(execution.mesh.facts().mesh.duplicate_directed_edges, 0);
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn exercise_exact_boolmesh_holed_triangulation_port() {
+    let left = ExactMesh::from_i64_triangles(
+        &[0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0, 4],
+        &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
+    )
+    .expect("deterministic holed-triangulation left fixture must import");
+    let right = ExactMesh::from_i64_triangles(
+        &[1, 1, 0, 2, 1, 0, 1, 2, 0, 1, 1, -1],
+        &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
+    )
+    .expect("deterministic holed-triangulation right fixture must import");
+
+    let workspace = hypermesh::exact::exact_boolmesh_workspace(
+        &left,
+        &right,
+        ExactBooleanOperation::Union,
+    );
+    workspace.validate_against_sources(&left, &right).unwrap();
+    assert!(workspace.blocker.is_none());
+    let stage = workspace
+        .boolean45
+        .as_ref()
+        .expect("strict coplanar fixture must reach boolean45");
+    assert_eq!(stage.loop_triangulation.multi_loop_faces, 0);
+    assert!(stage
+        .loop_triangulation
+        .triangulations
+        .iter()
+        .any(|triangulation| triangulation.vertices.len() > 3));
+
+    let execution = hypermesh::exact::execute_exact_boolmesh_port(
+        &left,
+        &right,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("strict coplanar fixture should materialize through holed triangulation");
+    execution.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(execution.mesh.vertices().len(), 8);
+    assert_eq!(execution.mesh.triangles().len(), 12);
 }
 
 #[cfg(feature = "exact-triangulation")]
