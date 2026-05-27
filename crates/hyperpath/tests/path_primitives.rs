@@ -1659,6 +1659,21 @@ fn line_cubic_bezier_arrangement_promotes_exact_overlap_roots() {
     assert_eq!(report.cubic_fragments.len(), 3);
     assert_eq!(report.cubic_breakpoints[0][1].parameter, rq(1, 4));
     assert_eq!(report.cubic_breakpoints[0][2].parameter, rq(3, 4));
+    assert!(
+        report
+            .algebraic_overlap_endpoint_envelopes
+            .iter()
+            .any(|envelope| {
+                let span = &report.algebraic_overlap_source_spans[envelope.span];
+                span.source == LineCubicBezierAlgebraicOverlapBreakpointSequenceSource::Curve(0)
+                    && span.parameter_lower == rq(1, 4)
+                    && span.parameter_upper == rq(3, 4)
+                    && envelope.x_lower == rq(9, 2)
+                    && envelope.x_upper == r(6)
+                    && envelope.y_lower == r(0)
+                    && envelope.y_upper == r(0)
+            })
+    );
     assert_eq!(report.cubic_fragments[0].curve.end(), &pq(9, 2, 0, 1));
     assert_eq!(report.cubic_fragments[1].curve.start(), &pq(9, 2, 0, 1));
     assert_eq!(report.cubic_fragments[1].curve.end(), &pq(9, 2, 0, 1));

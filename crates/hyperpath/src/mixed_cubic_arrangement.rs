@@ -303,20 +303,24 @@ pub struct LineCubicBezierAlgebraicOverlapSourceSpan {
     pub parameter_upper: Real,
 }
 
-/// Conservative coordinate envelope for endpoints of a cubic overlap source span.
+/// Conservative coordinate envelope for a cubic overlap source span.
 ///
 /// The envelope is indexed by
 /// [`LineCubicBezierArrangementReport::algebraic_overlap_source_spans`]. It
-/// encloses only the two span endpoints: exact source endpoints and retained
-/// same-support inverse-boundary points. It is not a curve-interior hull and
-/// it does not sample the cubic image.
+/// encloses the two span endpoints, exact source endpoints and retained
+/// same-support inverse-boundary points, and certified interior coordinate
+/// extrema for curve-owned spans. It is still a retained replay box rather
+/// than a materialized algebraic subcurve: extrema are admitted only when exact
+/// comparison proves that the derivative root lies inside the retained source
+/// interval.
 ///
 /// This follows Yap, "Towards Exact Geometric Computation" (1997): represented
 /// roots and exact endpoint witnesses remain first-class retained objects
 /// until a later construction pass can materialize algebraic subcurves. The
 /// root intervals that make the source spans valid follow Collins and Loos,
-/// "Real Zeros of Polynomials" (1982); the coordinates here are exact
-/// same-support boundary witnesses already proven by the predicate layer.
+/// "Real Zeros of Polynomials" (1982); the cubic extrema use the derivative
+/// characterization of polynomial Bezier coordinates described by Farouki,
+/// "The Bernstein Polynomial Basis: A Centennial Retrospective" (2012).
 #[derive(Clone, Debug, PartialEq)]
 pub struct LineCubicBezierAlgebraicOverlapEndpointEnvelope {
     /// Index in [`LineCubicBezierArrangementReport::algebraic_overlap_source_spans`].
@@ -1522,20 +1526,19 @@ fn algebraic_cubic_overlap_endpoint_envelopes(
                 curves,
                 breakpoints,
             )?;
-            let (x_lower, x_upper) = certified_min_max(
-                &left.x_lower,
-                &left.x_upper,
-                &right.x_lower,
-                &right.x_upper,
-                policy,
-            )?;
-            let (y_lower, y_upper) = certified_min_max(
-                &left.y_lower,
-                &left.y_upper,
-                &right.y_lower,
-                &right.y_upper,
-                policy,
-            )?;
+            let mut points = vec![left, right];
+            if let LineCubicBezierAlgebraicOverlapBreakpointSequenceSource::Curve(curve_index) =
+                span.source
+            {
+                points.extend(algebraic_cubic_interval_interior_extrema(
+                    curves.get(curve_index)?,
+                    &span.parameter_lower,
+                    &span.parameter_upper,
+                    policy,
+                )?);
+            }
+            let (x_lower, x_upper, y_lower, y_upper) =
+                certified_point_interval_bounds(&points, policy)?;
             Some(LineCubicBezierAlgebraicOverlapEndpointEnvelope {
                 span: span_index,
                 x_lower,
@@ -2022,6 +2025,20 @@ fn algebraic_cubic_span_interior_extrema(
     span: &LineCubicBezierAlgebraicSourceSpan,
     policy: PredicatePolicy,
 ) -> Option<Vec<CubicPointInterval>> {
+    algebraic_cubic_interval_interior_extrema(
+        curve,
+        &span.parameter_lower,
+        &span.parameter_upper,
+        policy,
+    )
+}
+
+fn algebraic_cubic_interval_interior_extrema(
+    curve: &CubicBezier,
+    parameter_lower: &Real,
+    parameter_upper: &Real,
+    policy: PredicatePolicy,
+) -> Option<Vec<CubicPointInterval>> {
     // Retained algebraic spans use interval endpoints, so an extrema root is
     // admitted only when exact comparison proves it lies inside the retained
     // parameter interval. If membership is undecidable, the whole envelope is
@@ -2029,12 +2046,12 @@ fn algebraic_cubic_span_interior_extrema(
     // conservative construction boundary required by Yap (1997).
     let mut extrema = Vec::new();
     for root in cubic_derivative_roots(curve, CubicCoordinate::X, policy)? {
-        if real_in_closed_interval(&root, &span.parameter_lower, &span.parameter_upper, policy)? {
+        if real_in_closed_interval(&root, parameter_lower, parameter_upper, policy)? {
             extrema.push(point_exact_interval(&eval_cubic_real(curve, &root))?);
         }
     }
     for root in cubic_derivative_roots(curve, CubicCoordinate::Y, policy)? {
-        if real_in_closed_interval(&root, &span.parameter_lower, &span.parameter_upper, policy)? {
+        if real_in_closed_interval(&root, parameter_lower, parameter_upper, policy)? {
             extrema.push(point_exact_interval(&eval_cubic_real(curve, &root))?);
         }
     }

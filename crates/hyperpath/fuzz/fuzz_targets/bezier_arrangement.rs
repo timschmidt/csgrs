@@ -609,6 +609,20 @@ fuzz_target!(|data: &[u8]| {
         .iter()
         .any(|promotion| promotion.parameter
             == Real::new(Rational::new(3) / Rational::new(4))));
+    assert!(exact_cubic_overlap_report
+        .algebraic_overlap_endpoint_envelopes
+        .iter()
+        .any(|envelope| {
+            let span =
+                &exact_cubic_overlap_report.algebraic_overlap_source_spans[envelope.span];
+            span.source == LineCubicBezierAlgebraicOverlapBreakpointSequenceSource::Curve(0)
+                && span.parameter_lower == rq(1, 4)
+                && span.parameter_upper == rq(3, 4)
+                && envelope.x_lower == rq(9, 2)
+                && envelope.x_upper == r(6)
+                && envelope.y_lower == r(0)
+                && envelope.y_upper == r(0)
+        }));
     assert_eq!(exact_cubic_overlap_report.cubic_breakpoints[0].len(), 4);
     assert_eq!(exact_cubic_overlap_report.cubic_fragments.len(), 3);
     let nonlinear_cubic_overlap_curve =

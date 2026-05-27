@@ -753,6 +753,18 @@ fn path_predicates(c: &mut Criterion) {
             )
         })
     });
+    c.bench_function(
+        "line_cubic_bezier_exact_algebraic_overlap_extrema_envelopes",
+        |b| {
+            b.iter(|| {
+                arrange_line_segments_with_cubic_beziers(
+                    std::slice::from_ref(&line_cubic_exact_overlap_line),
+                    std::slice::from_ref(&line_cubic_exact_overlap),
+                    PredicatePolicy::default(),
+                )
+            })
+        },
+    );
     let line_cubic_nonlinear_overlap = CubicBezier::new(p(0, 0), p(100, 0), p(700, 0), p(800, 0));
     let line_cubic_nonlinear_overlap_line = LinePathSegment::new(p(200, 0), p(600, 0));
     c.bench_function("line_cubic_bezier_nonlinear_overlap_evidence", |b| {
