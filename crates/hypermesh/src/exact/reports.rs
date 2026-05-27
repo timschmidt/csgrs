@@ -794,6 +794,16 @@ pub enum ExactBooleanShortcutKind {
     /// Certified exact ray-parity separation for closed nonconvex-capable
     /// no-intersection meshes.
     WindingSeparated,
+    /// Certified direct boolmesh split-kernel execution.
+    ///
+    /// This is not a bounded special-case certificate. It names a completed
+    /// exact port of the boolmesh discovery, winding, edge-fragment, face
+    /// assembly, triangulation, and mesh-export pipeline. Keeping the result
+    /// tagged follows Yap, "Towards Exact Geometric Computation,"
+    /// *Computational Geometry* 7.1-2 (1997): the topology is accepted only
+    /// because the exact boolmesh stages replayed, not because an approximate
+    /// mesh happened to validate.
+    BoolMeshSplit,
     /// Certified single-triangle coplanar surface containment.
     CoplanarSurfaceContainment,
     /// Certified coplanar single-triangle intersection output.

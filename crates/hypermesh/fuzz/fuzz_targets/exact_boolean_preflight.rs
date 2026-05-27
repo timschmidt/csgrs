@@ -1790,7 +1790,19 @@ fn exercise_exact_boolmesh_kernel12_port() {
     workspace.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         workspace.blocker.as_ref().map(|blocker| blocker.stage),
-        Some(hypermesh::exact::ExactBoolMeshKernelStage::Kernel03)
+        Some(hypermesh::exact::ExactBoolMeshKernelStage::FacePairEdgeEmission)
+    );
+    assert_eq!(
+        hypermesh::exact::execute_exact_boolmesh_port(
+            &left,
+            &right,
+            ExactBooleanOperation::Intersection,
+            ValidationPolicy::CLOSED,
+        )
+        .unwrap_err(),
+        hypermesh::exact::ExactBoolMeshValidationError::PortBlocked(
+            hypermesh::exact::ExactBoolMeshKernelStage::FacePairEdgeEmission
+        )
     );
     assert!(workspace.kernel12_events.iter().any(|event| matches!(
         event.relation,
@@ -1800,6 +1812,11 @@ fn exercise_exact_boolmesh_kernel12_port() {
         !workspace.boolean03.p1q2.is_empty() || !workspace.boolean03.p2q1.is_empty(),
         "deterministic kernel12 fixture must lower proper crossings"
     );
+    let mut stale_kernel03 = workspace.clone();
+    stale_kernel03.boolean03.w03[0] += 1;
+    assert!(stale_kernel03
+        .validate_against_sources(&left, &right)
+        .is_err());
     let size_output = workspace
         .boolean45
         .as_ref()

@@ -329,15 +329,17 @@ pub struct ExactBoolMeshBoolean03 {
     pub w30: Vec<i32>,
 }
 
-/// Exact `kernel03` winding counters for the no-intersection boolmesh branch.
+/// Exact `kernel03` winding counters for a clear `kernel12` boolmesh branch.
 ///
-/// Legacy boolmesh fills `w03` and `w30` after `kernel12` has proved that no
-/// edge/face split records have to be inserted.  This port keeps the same data
-/// dependency: only a clear exact `kernel12` result may ask the existing exact
-/// closed-mesh winding query to classify every opposite vertex.  Following Yap,
-/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997), boundary and undecidable states stay explicit blockers rather than
-/// being rounded into inside/outside counters.
+/// Legacy boolmesh fills `w03` and `w30` after `kernel12`: the counters are
+/// consumed by `boolean45::size_output` together with operation coefficients
+/// to decide which source vertices survive and which inserted crossings are
+/// duplicated/reversed.  This exact port keeps the same dependency.  Only a
+/// clear exact `kernel12` result may ask the closed-mesh winding query to
+/// classify every opposite vertex.  Following Yap, "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7.1-2 (1997), boundary and
+/// undecidable states stay explicit blockers rather than being rounded into
+/// inside/outside counters.
 #[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, Eq, PartialEq)]
 struct ExactBoolMeshKernel03Winding {
@@ -347,20 +349,17 @@ struct ExactBoolMeshKernel03Winding {
     w30: Vec<i32>,
 }
 
-/// Classify closed, no-intersection operands for exact `kernel03`.
+/// Classify closed operands for exact `kernel03`.
 ///
-/// This is intentionally limited to the boolmesh branch where `kernel12` has
-/// no split points left to pair.  With no edge/face events, all vertices of a
-/// connected closed operand share the same winding class against the other
-/// closed operand, but the port still checks every vertex: that preserves the
-/// replay surface expected by Yap's exact-computation model and catches
-/// boundary or mixed states before `boolean45::size_output` consumes the
-/// integer counters.
+/// The no-intersection case is a uniform containment/separation query, while
+/// split cases may retain only the source vertices that are inside the
+/// opposite mesh for the requested operation.  In both cases boolmesh stores
+/// the same integer counters, so this port deliberately keeps one classifier
+/// and lets `boolean45::size_output` apply the operation signs.  Boundary or
+/// undecidable vertices remain a `kernel03` blocker, matching Yap's requirement
+/// that exact-computation topology decisions be certified before mutation.
 #[cfg(feature = "exact-triangulation")]
-fn classify_no_intersection_kernel03(
-    left: &ExactMesh,
-    right: &ExactMesh,
-) -> Option<ExactBoolMeshKernel03Winding> {
+fn classify_kernel03(left: &ExactMesh, right: &ExactMesh) -> Option<ExactBoolMeshKernel03Winding> {
     Some(ExactBoolMeshKernel03Winding {
         w03: classify_vertices_for_boolmesh_winding(left, right)?,
         w30: classify_vertices_for_boolmesh_winding(right, left)?,
@@ -994,9 +993,11 @@ impl ExactBoolMeshWorkspace {
     /// source sizes, exact broad-phase scheduling, and the retained
     /// `kernel12` edge/face discovery records before any topology is emitted.
     /// Certified disjoint mesh bounds produce an empty `Boolean03` package.
-    /// Non-coplanar segment/plane contacts advance the blocker to `kernel03`;
-    /// unresolved or coplanar discovery still names `kernel12`, because those
-    /// boolmesh branches are the next direct-port slices.
+    /// Non-coplanar segment/plane contacts now run through exact `kernel03`
+    /// source-vertex winding before naming the first blocked downstream
+    /// `boolean45` stage; unresolved or coplanar discovery still names
+    /// `kernel12`, because those boolmesh branches are the next direct-port
+    /// slices.
     pub fn from_sources(
         left: &ExactMesh,
         right: &ExactMesh,
@@ -1030,8 +1031,8 @@ impl ExactBoolMeshWorkspace {
         let no_split_kernel12 = kernel12_is_clear
             && kernel12_lowering.p1q2.is_empty()
             && kernel12_lowering.p2q1.is_empty();
-        let kernel03_winding = no_split_kernel12
-            .then(|| classify_no_intersection_kernel03(left, right))
+        let kernel03_winding = kernel12_is_clear
+            .then(|| classify_kernel03(left, right))
             .flatten();
         let (w03, w30) = kernel03_winding
             .as_ref()
@@ -1063,14 +1064,19 @@ impl ExactBoolMeshWorkspace {
                 candidate_face_pairs: candidate_face_pairs.len(),
                 mesh_bounds_unknown,
             })
-        } else if no_split_kernel12 && kernel03_winding.is_some() {
-            None
-        } else {
+        } else if kernel03_winding.is_none() {
             Some(ExactBoolMeshPortBlocker {
                 stage: ExactBoolMeshKernelStage::Kernel03,
                 candidate_face_pairs: candidate_face_pairs.len(),
                 mesh_bounds_unknown,
             })
+        } else {
+            boolmesh_boolean45_blocker(
+                no_split_kernel12,
+                boolean45.as_ref().expect("boolean45 is staged above"),
+                candidate_face_pairs.len(),
+                mesh_bounds_unknown,
+            )
         };
         Self {
             operation,
@@ -1133,6 +1139,27 @@ impl ExactBoolMeshWorkspace {
             && self.boolean03.v21.is_empty()
             && self.pair_up.source_edge_runs.is_empty()
             && self.boolean45.is_some()
+    }
+
+    /// Return whether the split boolmesh pipeline has reached mesh export.
+    ///
+    /// This is the executable shape for the ported crossing branch: `kernel12`
+    /// found real edge/face split events, `kernel03` supplied certified source
+    /// vertex winding counters, and `boolean45` assembled/exported all output
+    /// topology without explicit blockers.  It is the exact counterpart of the
+    /// legacy boolmesh path after `boolean45`, with f64 recovery removed; the
+    /// need for a replayable completed stage follows Yap, "Towards Exact
+    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997).
+    pub fn is_certified_split_boolean45(&self) -> bool {
+        self.blocker.is_none()
+            && (!self.boolean03.p1q2.is_empty() || !self.boolean03.p2q1.is_empty())
+            && self.kernel12_unknown_events == 0
+            && self.kernel12_construction_failures == 0
+            && self.kernel12_coplanar_events == 0
+            && self
+                .boolean45
+                .as_ref()
+                .is_some_and(boolean45_simple_export_is_complete)
     }
 
     /// Validate the workspace locally.
@@ -1243,6 +1270,85 @@ impl ExactBoolMeshWorkspace {
     }
 }
 
+#[cfg(feature = "exact-triangulation")]
+fn boolmesh_boolean45_blocker(
+    no_split_kernel12: bool,
+    stage: &ExactBoolMeshBoolean45Stage,
+    candidate_face_pairs: usize,
+    mesh_bounds_unknown: bool,
+) -> Option<ExactBoolMeshPortBlocker> {
+    if no_split_kernel12 || boolean45_simple_export_is_complete(stage) {
+        return None;
+    }
+    let blocker_stage = if stage.pair_up_unknown_or_unbalanced() {
+        ExactBoolMeshKernelStage::PairUp
+    } else if stage.source_edge_emission_blocked() {
+        ExactBoolMeshKernelStage::SourceEdgeEmission
+    } else if stage.face_pair_edge_emission_blocked() {
+        ExactBoolMeshKernelStage::FacePairEdgeEmission
+    } else if stage.face_assembly_blocked() {
+        ExactBoolMeshKernelStage::FaceAssembly
+    } else if stage.triangulation_or_export_blocked() {
+        ExactBoolMeshKernelStage::Triangulation
+    } else {
+        ExactBoolMeshKernelStage::Cleanup
+    };
+    Some(ExactBoolMeshPortBlocker {
+        stage: blocker_stage,
+        candidate_face_pairs,
+        mesh_bounds_unknown,
+    })
+}
+
+#[cfg(feature = "exact-triangulation")]
+trait ExactBoolMeshBoolean45Blockers {
+    fn pair_up_unknown_or_unbalanced(&self) -> bool;
+    fn source_edge_emission_blocked(&self) -> bool;
+    fn face_pair_edge_emission_blocked(&self) -> bool;
+    fn face_assembly_blocked(&self) -> bool;
+    fn triangulation_or_export_blocked(&self) -> bool;
+}
+
+#[cfg(feature = "exact-triangulation")]
+impl ExactBoolMeshBoolean45Blockers for ExactBoolMeshBoolean45Stage {
+    fn pair_up_unknown_or_unbalanced(&self) -> bool {
+        self.partial_source_edges.missing_parameter_orders > 0
+    }
+
+    fn source_edge_emission_blocked(&self) -> bool {
+        self.source_edge_incident_gaps > 0
+            || self.partial_source_edges.unpaired_runs > 0
+            || self.halfedge_assembly.source_edge_incident_gaps > 0
+    }
+
+    fn face_pair_edge_emission_blocked(&self) -> bool {
+        self.new_face_pair_edges.unpaired_runs > 0
+    }
+
+    fn face_assembly_blocked(&self) -> bool {
+        self.halfedge_assembly.face_overflows > 0
+            || self.halfedge_assembly.missing_source_face_maps > 0
+            || self.halfedge_assembly.unfilled_halfedges > 0
+            || self.face_loop_assembly.incomplete_faces > 0
+            || self.face_loop_assembly.repeated_halfedges > 0
+            || self.face_loop_assembly.non_loop_halfedges > 0
+    }
+
+    fn triangulation_or_export_blocked(&self) -> bool {
+        self.loop_triangulation.multi_loop_faces > 0
+            || self.loop_triangulation.short_loops > 0
+            || self.loop_triangulation.missing_source_faces > 0
+            || self.loop_triangulation.missing_vertex_coordinates > 0
+            || self.loop_triangulation.triangulation_failures > 0
+            || self.output_triangles.missing_loop_triangulations > 0
+            || self.output_triangles.invalid_local_triangles > 0
+            || self.mesh_export.missing_vertex_coordinates > 0
+            || self.mesh_export.blocked_output_triangles > 0
+            || self.mesh_export.invalid_output_triangles > 0
+            || self.mesh_export.orientation_failures > 0
+    }
+}
+
 /// Result of the currently executable exact boolmesh port slice.
 #[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, PartialEq)]
@@ -1272,6 +1378,10 @@ impl ExactBoolMeshExecution {
             Ok(())
         } else if self.workspace.is_certified_no_intersection_kernel03()
             && self.shortcut == boolmesh_no_intersection_shortcut(&self.workspace.boolean03)
+        {
+            Ok(())
+        } else if self.workspace.is_certified_split_boolean45()
+            && self.shortcut == ExactBooleanShortcutKind::BoolMeshSplit
         {
             Ok(())
         } else {
@@ -1458,6 +1568,8 @@ fn boolmesh_completed_shortcut(
         Some(ExactBooleanShortcutKind::BoundsDisjoint)
     } else if workspace.is_certified_no_intersection_kernel03() {
         Some(boolmesh_no_intersection_shortcut(&workspace.boolean03))
+    } else if workspace.is_certified_split_boolean45() {
+        Some(ExactBooleanShortcutKind::BoolMeshSplit)
     } else {
         None
     }
@@ -1479,14 +1591,28 @@ fn boolmesh_no_intersection_shortcut(
 #[cfg(feature = "exact-triangulation")]
 fn boolean45_simple_export_is_complete(stage: &ExactBoolMeshBoolean45Stage) -> bool {
     stage.source_edge_incident_gaps == 0
+        && stage.partial_source_edges.missing_parameter_orders == 0
+        && stage.partial_source_edges.unpaired_runs == 0
+        && stage.new_face_pair_edges.unpaired_runs == 0
         && stage.halfedge_assembly.unfilled_halfedges == 0
+        && stage.halfedge_assembly.face_overflows == 0
+        && stage.halfedge_assembly.missing_source_face_maps == 0
+        && stage.halfedge_assembly.source_edge_incident_gaps == 0
         && stage.face_loop_assembly.incomplete_faces == 0
+        && stage.face_loop_assembly.repeated_halfedges == 0
+        && stage.face_loop_assembly.non_loop_halfedges == 0
+        && stage.loop_triangulation.multi_loop_faces == 0
+        && stage.loop_triangulation.short_loops == 0
+        && stage.loop_triangulation.missing_source_faces == 0
+        && stage.loop_triangulation.missing_vertex_coordinates == 0
+        && stage.loop_triangulation.triangulation_failures == 0
+        && stage.output_triangles.missing_loop_triangulations == 0
+        && stage.output_triangles.invalid_local_triangles == 0
         && stage.mesh_export.missing_vertex_coordinates == 0
         && stage.mesh_export.blocked_output_triangles == 0
         && stage.mesh_export.invalid_output_triangles == 0
         && stage.mesh_export.orientation_failures == 0
-        && stage.mesh_export.triangles.len()
-            == stage.source_face_to_output_face.iter().flatten().count()
+        && stage.mesh_export.triangles.len() == stage.output_triangles.triangles.len()
 }
 
 #[cfg(feature = "exact-triangulation")]

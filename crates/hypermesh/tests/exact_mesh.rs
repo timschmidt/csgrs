@@ -34041,7 +34041,19 @@ fn exact_boolmesh_kernel12_discovers_skew_edge_face_events() {
         .expect("skew crossing must advance to the next boolmesh stage");
     assert_eq!(
         blocker.stage,
-        hypermesh::exact::ExactBoolMeshKernelStage::Kernel03
+        hypermesh::exact::ExactBoolMeshKernelStage::FacePairEdgeEmission
+    );
+    assert_eq!(
+        hypermesh::exact::execute_exact_boolmesh_port(
+            &left,
+            &right,
+            hypermesh::exact::ExactBooleanOperation::Intersection,
+            ValidationPolicy::CLOSED,
+        )
+        .unwrap_err(),
+        hypermesh::exact::ExactBoolMeshValidationError::PortBlocked(
+            hypermesh::exact::ExactBoolMeshKernelStage::FacePairEdgeEmission
+        )
     );
     assert!(workspace.kernel12_events.iter().any(|event| matches!(
         event.relation,
@@ -34065,6 +34077,14 @@ fn exact_boolmesh_kernel12_discovers_skew_edge_face_events() {
     assert_eq!(
         workspace.boolean03.p2q1.len(),
         workspace.boolean03.v21.len()
+    );
+    let mut stale_kernel03 = workspace.clone();
+    stale_kernel03.boolean03.w03[0] += 1;
+    assert_eq!(
+        stale_kernel03
+            .validate_against_sources(&left, &right)
+            .unwrap_err(),
+        hypermesh::exact::ExactBoolMeshValidationError::Boolean45SizeCountMismatch
     );
     assert!(
         !workspace.boolean03.p1q2.is_empty() || !workspace.boolean03.p2q1.is_empty(),

@@ -13084,7 +13084,7 @@ fn exact_boolmesh_kernel12_port(c: &mut Criterion) {
                 workspace.validate_against_sources(&left, &right).unwrap();
                 assert_eq!(
                     workspace.blocker.as_ref().map(|blocker| blocker.stage),
-                    Some(hypermesh::exact::ExactBoolMeshKernelStage::Kernel03)
+                    Some(hypermesh::exact::ExactBoolMeshKernelStage::FacePairEdgeEmission)
                 );
                 workspace
                     .kernel12_events
