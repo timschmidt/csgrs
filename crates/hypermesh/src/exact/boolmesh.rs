@@ -62,7 +62,7 @@ use boolean45::{pair_source_edge_events, size_output_stage};
 #[cfg(feature = "exact-triangulation")]
 use hyperlimit::{CoplanarProjection, PlaneSide, Point3, PredicateOutcome};
 #[cfg(feature = "exact-triangulation")]
-use kernel12::lower_kernel12_events;
+use kernel12::{ExactBoolMeshKernel12Lowering, lower_kernel12_events};
 #[cfg(feature = "exact-triangulation")]
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -1101,8 +1101,13 @@ pub struct ExactBoolMeshWorkspace {
     pub kernel12_unknown_events: usize,
     /// Certified crossings whose exact point construction failed.
     pub kernel12_construction_failures: usize,
-    /// Coplanar graph events retained by discovery but not yet lowered into
-    /// boolmesh edge/face split records.
+    /// Coplanar graph events not covered by direct exact boolmesh rows.
+    ///
+    /// Coplanar evidence is allowed to clear this counter only when the direct
+    /// `intersect12`/`Kernel12::op` port emitted a row for the same face pair.
+    /// This mirrors the legacy boolmesh algorithm while preserving Yap's exact
+    /// replay boundary: retained projected coplanar facts cannot disappear
+    /// unless a certified exact row has taken ownership of that face-pair work.
     pub kernel12_coplanar_events: usize,
     /// Current exact `Boolean03` package.
     pub boolean03: ExactBoolMeshBoolean03,
@@ -1150,12 +1155,14 @@ impl ExactBoolMeshWorkspace {
             matches!(mesh_bounds_relation, Some(PredicateOutcome::Unknown { .. }));
         let kernel12 = discover_kernel12_events(left, right);
         let kernel12_lowering = lower_kernel12_events(&kernel12.events, left, right);
+        let unresolved_coplanar_events =
+            count_uncovered_coplanar_events(&kernel12.coplanar_face_pairs, &kernel12_lowering);
         let pair_up = pair_source_edge_events(kernel12_lowering.source_edge_events.clone());
         let kernel12_is_clear = !mesh_bounds_unknown
             && !kernel12.graph_failed
             && kernel12.unknown_events == 0
             && kernel12.construction_failures == 0
-            && kernel12.coplanar_events == 0;
+            && unresolved_coplanar_events == 0;
         let no_split_kernel12 = kernel12_is_clear
             && kernel12_lowering.p1q2.is_empty()
             && kernel12_lowering.p2q1.is_empty();
@@ -1217,7 +1224,7 @@ impl ExactBoolMeshWorkspace {
             kernel12_events: kernel12.events,
             kernel12_unknown_events: kernel12.unknown_events,
             kernel12_construction_failures: kernel12.construction_failures,
-            kernel12_coplanar_events: kernel12.coplanar_events,
+            kernel12_coplanar_events: unresolved_coplanar_events,
             boolean03,
             pair_up,
             boolean45,
@@ -1836,6 +1843,7 @@ struct Kernel12Discovery {
     unknown_events: usize,
     construction_failures: usize,
     coplanar_events: usize,
+    coplanar_face_pairs: Vec<ExactBoolMeshFacePair>,
     graph_failed: bool,
 }
 
@@ -1878,6 +1886,7 @@ fn discover_kernel12_events(left: &ExactMesh, right: &ExactMesh) -> Kernel12Disc
                     }
                     if *relation == SegmentPlaneRelation::Coplanar {
                         discovery.coplanar_events += 1;
+                        discovery.coplanar_face_pairs.push(face_pair);
                     }
                     discovery.events.push(ExactBoolMeshKernel12Event {
                         edge_face: ExactBoolMeshEdgeFacePair {
@@ -1906,6 +1915,7 @@ fn discover_kernel12_events(left: &ExactMesh, right: &ExactMesh) -> Kernel12Disc
                 IntersectionEvent::CoplanarEdge { .. }
                 | IntersectionEvent::CoplanarVertex { .. } => {
                     discovery.coplanar_events += 1;
+                    discovery.coplanar_face_pairs.push(face_pair);
                 }
                 IntersectionEvent::Unknown => {
                     discovery.unknown_events += 1;
@@ -1914,6 +1924,29 @@ fn discover_kernel12_events(left: &ExactMesh, right: &ExactMesh) -> Kernel12Disc
         }
     }
     discovery
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn count_uncovered_coplanar_events(
+    coplanar_face_pairs: &[ExactBoolMeshFacePair],
+    lowering: &ExactBoolMeshKernel12Lowering,
+) -> usize {
+    coplanar_face_pairs
+        .iter()
+        .filter(|face_pair| !coplanar_face_pair_has_lowered_row(**face_pair, lowering))
+        .count()
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn coplanar_face_pair_has_lowered_row(
+    face_pair: ExactBoolMeshFacePair,
+    lowering: &ExactBoolMeshKernel12Lowering,
+) -> bool {
+    lowering
+        .p1q2
+        .iter()
+        .chain(lowering.p2q1.iter())
+        .any(|row| row.face_pair == face_pair)
 }
 
 #[cfg(feature = "exact-triangulation")]

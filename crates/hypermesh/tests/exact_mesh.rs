@@ -34093,10 +34093,17 @@ fn exact_boolmesh_kernel12_lowers_boundary_endpoint_edge_shadow_through_intersec
         &right,
         hypermesh::exact::ExactBooleanOperation::Intersection,
     );
-
     workspace.validate_against_sources(&left, &right).unwrap();
     assert_eq!(workspace.kernel12_unknown_events, 0);
     assert_eq!(workspace.kernel12_construction_failures, 0);
+    assert_eq!(
+        workspace.kernel12_coplanar_events, 0,
+        "retained coplanar boundary facts covered by exact intersect12 rows must not keep the workspace at Kernel12"
+    );
+    assert_ne!(
+        workspace.blocker.as_ref().map(|blocker| blocker.stage),
+        Some(hypermesh::exact::ExactBoolMeshKernelStage::Kernel12)
+    );
     assert_eq!(
         workspace.boolean03.p1q2.len(),
         workspace.boolean03.x12.len()
