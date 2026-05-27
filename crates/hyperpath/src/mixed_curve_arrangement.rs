@@ -189,6 +189,39 @@ pub struct MixedCurveFragmentSeparation {
     pub class: MixedCurveFragmentSeparationClass,
 }
 
+/// Exact coordinate envelope retained for one non-line mixed fragment.
+///
+/// This is the public counterpart of the scheduler's separation box. It is
+/// emitted before the bounded mixed graph accepts topology, so callers can
+/// replay the exact geometric facts used to admit or reject cross-source
+/// curve pairs. That is the Yap boundary from "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7.1-2 (1997): a numerical schedule
+/// may propose candidates, but accepted topology is backed by exact retained
+/// predicates and construction facts. Polynomial Bezier extrema are derived
+/// from Bernstein hodographs as in Farouki, *Pythagorean Hodograph Curves*
+/// (2008); rational-quadratic extrema use the denominator-cleared quotient
+/// derivative `N'W - NW'`, again only after exact membership and nonzero
+/// homogeneous-weight replay.
+#[derive(Clone, Debug, PartialEq)]
+pub struct MixedCurveFragmentEnvelope {
+    /// Non-line fragment in report fragment-index space.
+    pub fragment: MixedCurveFragmentRef,
+    /// Original source curve that produced `fragment`.
+    pub source: MixedCurveSourceRef,
+    /// Exact affine start point of the retained fragment.
+    pub start: Point2,
+    /// Exact affine end point of the retained fragment.
+    pub end: Point2,
+    /// Minimum x-coordinate over the retained fragment.
+    pub x_min: Real,
+    /// Maximum x-coordinate over the retained fragment.
+    pub x_max: Real,
+    /// Minimum y-coordinate over the retained fragment.
+    pub y_min: Real,
+    /// Maximum y-coordinate over the retained fragment.
+    pub y_max: Real,
+}
+
 /// Cached exact facts for a bounded mixed line/arc/Bezier/conic schedule.
 #[derive(Clone, Debug, PartialEq)]
 pub struct LineMixedBezierArrangementFacts {
@@ -322,6 +355,8 @@ pub struct LineMixedBezierArrangementReport {
     pub cubic_fragments: Vec<CubicBezierRealFragment>,
     /// Positive-length homogeneous conic fragments from the pairwise exact scheduler.
     pub rational_quadratic_fragments: Vec<RationalQuadraticBezierRealFragment>,
+    /// Exact coordinate envelopes for every retained non-line fragment.
+    pub fragment_envelopes: Vec<MixedCurveFragmentEnvelope>,
     /// Certificates for every accepted non-line fragment pair.
     pub fragment_separations: Vec<MixedCurveFragmentSeparation>,
     /// Shared retained topology graph over merged line and separated curve fragments.
@@ -449,13 +484,18 @@ pub fn arrange_line_segments_with_mixed_curves_and_provenance(
     sort_and_dedup_line_breakpoints(&mut line_breakpoints, policy)?;
 
     let line_fragments = build_line_fragments(&line_breakpoints, policy)?;
-    let fragment_separations = validate_curve_fragment_separation(
+    let fragment_boxes = build_curve_fragment_boxes(
         &arc_report.arc_fragments,
         &quadratic_report.bezier_fragments,
         &cubic_report.cubic_fragments,
         &rational_quadratic_report.conic_fragments,
         policy,
     )?;
+    let fragment_envelopes = fragment_boxes
+        .iter()
+        .map(MixedCurveFragmentEnvelope::from_box)
+        .collect::<Vec<_>>();
+    let fragment_separations = validate_curve_fragment_separation(&fragment_boxes, policy)?;
     let cell_graph = build_line_mixed_bezier_cell_graph(
         &line_fragments,
         &arc_report.arc_fragments,
@@ -528,6 +568,7 @@ pub fn arrange_line_segments_with_mixed_curves_and_provenance(
         quadratic_fragments: quadratic_report.bezier_fragments,
         cubic_fragments: cubic_report.cubic_fragments,
         rational_quadratic_fragments: rational_quadratic_report.conic_fragments,
+        fragment_envelopes,
         fragment_separations,
         cell_graph,
         facts,
@@ -765,13 +806,28 @@ impl FragmentBox {
     }
 }
 
-fn validate_curve_fragment_separation(
+impl MixedCurveFragmentEnvelope {
+    fn from_box(fragment_box: &FragmentBox) -> Self {
+        Self {
+            fragment: fragment_box.source,
+            source: fragment_box.owner,
+            start: fragment_box.start.clone(),
+            end: fragment_box.end.clone(),
+            x_min: fragment_box.x_min.clone(),
+            x_max: fragment_box.x_max.clone(),
+            y_min: fragment_box.y_min.clone(),
+            y_max: fragment_box.y_max.clone(),
+        }
+    }
+}
+
+fn build_curve_fragment_boxes(
     arcs: &[ExplicitArcArrangementFragment],
     quadratics: &[QuadraticBezierRealFragment],
     cubics: &[CubicBezierRealFragment],
     conics: &[RationalQuadraticBezierRealFragment],
     policy: PredicatePolicy,
-) -> Result<Vec<MixedCurveFragmentSeparation>, LineMixedBezierArrangementError> {
+) -> Result<Vec<FragmentBox>, LineMixedBezierArrangementError> {
     let mut boxes = Vec::new();
     for (index, fragment) in arcs.iter().enumerate() {
         boxes.push(FragmentBox {
@@ -801,6 +857,13 @@ fn validate_curve_fragment_separation(
             ..box_from_conic_fragment(fragment, policy)?
         });
     }
+    Ok(boxes)
+}
+
+fn validate_curve_fragment_separation(
+    boxes: &[FragmentBox],
+    policy: PredicatePolicy,
+) -> Result<Vec<MixedCurveFragmentSeparation>, LineMixedBezierArrangementError> {
     let mut separations = Vec::new();
     for left in 0..boxes.len() {
         for right in (left + 1)..boxes.len() {

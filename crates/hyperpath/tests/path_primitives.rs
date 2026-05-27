@@ -2935,6 +2935,23 @@ fn line_mixed_bezier_arrangement_accepts_exact_bezier_extrema_box_separation() {
 
     assert_eq!(report.quadratic_fragments.len(), 1);
     assert_eq!(report.cubic_fragments.len(), 1);
+    assert_eq!(report.fragment_envelopes.len(), 2);
+    let quadratic_envelope = report
+        .fragment_envelopes
+        .iter()
+        .find(|envelope| envelope.fragment == MixedCurveFragmentRef::Quadratic(0))
+        .unwrap();
+    assert_eq!(quadratic_envelope.source, MixedCurveSourceRef::Quadratic(0));
+    assert_eq!(quadratic_envelope.y_min, r(0));
+    assert_eq!(quadratic_envelope.y_max, r(1));
+    let cubic_envelope = report
+        .fragment_envelopes
+        .iter()
+        .find(|envelope| envelope.fragment == MixedCurveFragmentRef::Cubic(0))
+        .unwrap();
+    assert_eq!(cubic_envelope.source, MixedCurveSourceRef::Cubic(0));
+    assert_eq!(cubic_envelope.y_min, rq(13, 8));
+    assert_eq!(cubic_envelope.y_max, r(2));
     assert!(report.fragment_separations.iter().any(|separation| {
         separation.left == MixedCurveFragmentRef::Quadratic(0)
             && separation.right == MixedCurveFragmentRef::Cubic(0)
@@ -2959,6 +2976,26 @@ fn line_mixed_bezier_arrangement_accepts_exact_conic_extrema_box_separation() {
 
     assert_eq!(report.quadratic_fragments.len(), 1);
     assert_eq!(report.rational_quadratic_fragments.len(), 1);
+    assert_eq!(report.fragment_envelopes.len(), 2);
+    let quadratic_envelope = report
+        .fragment_envelopes
+        .iter()
+        .find(|envelope| envelope.fragment == MixedCurveFragmentRef::Quadratic(0))
+        .unwrap();
+    assert_eq!(quadratic_envelope.source, MixedCurveSourceRef::Quadratic(0));
+    assert_eq!(quadratic_envelope.y_min, r(0));
+    assert_eq!(quadratic_envelope.y_max, r(1));
+    let conic_envelope = report
+        .fragment_envelopes
+        .iter()
+        .find(|envelope| envelope.fragment == MixedCurveFragmentRef::RationalQuadratic(0))
+        .unwrap();
+    assert_eq!(
+        conic_envelope.source,
+        MixedCurveSourceRef::RationalQuadratic(0)
+    );
+    assert_eq!(conic_envelope.y_min, rq(3, 2));
+    assert_eq!(conic_envelope.y_max, r(2));
     assert!(report.fragment_separations.iter().any(|separation| {
         separation.left == MixedCurveFragmentRef::Quadratic(0)
             && separation.right == MixedCurveFragmentRef::RationalQuadratic(0)

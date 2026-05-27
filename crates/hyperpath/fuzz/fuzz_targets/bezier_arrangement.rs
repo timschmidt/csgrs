@@ -20,7 +20,7 @@ use hyperpath::{
     LineRationalQuadraticBezierIntersectionClass, LineRationalQuadraticBezierInverseRootDomain,
     LineRationalQuadraticBezierSupportOverlapMonotonicity, MixedCurveEndpointTangentClass,
     MixedCurveFragmentEndpoint, MixedCurveFragmentRef, MixedCurveFragmentSeparationClass,
-    QuadraticBezier, RationalQuadraticBezier, arrange_cubic_beziers,
+    MixedCurveSourceRef, QuadraticBezier, RationalQuadraticBezier, arrange_cubic_beziers,
     arrange_line_segments_with_cubic_beziers, arrange_line_segments_with_explicit_arcs,
     arrange_line_segments_with_mixed_beziers, arrange_line_segments_with_mixed_curves,
     arrange_line_segments_with_quadratic_beziers,
@@ -407,6 +407,20 @@ fuzz_target!(|data: &[u8]| {
         .any(|separation| separation.left == MixedCurveFragmentRef::Quadratic(0)
             && separation.right == MixedCurveFragmentRef::Cubic(0)
             && separation.class == MixedCurveFragmentSeparationClass::LeftBelowRightY));
+    assert!(extrema_separated_report
+        .fragment_envelopes
+        .iter()
+        .any(|envelope| envelope.fragment == MixedCurveFragmentRef::Quadratic(0)
+            && envelope.source == MixedCurveSourceRef::Quadratic(0)
+            && envelope.y_min == r(0)
+            && envelope.y_max == r(1)));
+    assert!(extrema_separated_report
+        .fragment_envelopes
+        .iter()
+        .any(|envelope| envelope.fragment == MixedCurveFragmentRef::Cubic(0)
+            && envelope.source == MixedCurveSourceRef::Cubic(0)
+            && envelope.y_min == rq(13, 8)
+            && envelope.y_max == r(2)));
     let conic_extrema_separated_report = arrange_line_segments_with_mixed_beziers(
         &[LinePathSegment::new(p(0, 0), p(4, 0))],
         &[QuadraticBezier::new(p(0, 0), p(2, 2), p(4, 0))],
@@ -421,6 +435,13 @@ fuzz_target!(|data: &[u8]| {
         .any(|separation| separation.left == MixedCurveFragmentRef::Quadratic(0)
             && separation.right == MixedCurveFragmentRef::RationalQuadratic(0)
             && separation.class == MixedCurveFragmentSeparationClass::LeftBelowRightY));
+    assert!(conic_extrema_separated_report
+        .fragment_envelopes
+        .iter()
+        .any(|envelope| envelope.fragment == MixedCurveFragmentRef::RationalQuadratic(0)
+            && envelope.source == MixedCurveSourceRef::RationalQuadratic(0)
+            && envelope.y_min == rq(3, 2)
+            && envelope.y_max == r(2)));
 
     let endpoint_contact_report = arrange_line_segments_with_mixed_beziers(
         &[LinePathSegment::new(p(0, 0), p(8, 0))],

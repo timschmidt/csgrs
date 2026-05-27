@@ -671,7 +671,7 @@ fn path_predicates(c: &mut Criterion) {
                 &[],
                 PredicatePolicy::default(),
             )
-            .map(|report| report.fragment_separations)
+            .map(|report| (report.fragment_envelopes, report.fragment_separations))
         })
     });
     let conic_extrema_box_conic =
@@ -685,7 +685,7 @@ fn path_predicates(c: &mut Criterion) {
                 std::slice::from_ref(&conic_extrema_box_conic),
                 PredicatePolicy::default(),
             )
-            .map(|report| report.fragment_separations)
+            .map(|report| (report.fragment_envelopes, report.fragment_separations))
         })
     });
     let mixed_evidence_line = LinePathSegment::new(p(200, 0), p(600, 0));
