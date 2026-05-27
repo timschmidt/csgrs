@@ -1161,8 +1161,8 @@ impl Real {
     /// If refinement cannot decide the order at the standard partial-order
     /// precision, this keeps `self`, matching the conservative behavior of
     /// [`PartialOrd`] callers that treat incomparability as no improvement.
-    pub fn min(self, other: Real) -> Real {
-        match self.partial_cmp(&other) {
+    pub fn min<'r>(&'r self, other: &'r Real) -> &'r Real {
+        match self.partial_cmp(other) {
             Some(Ordering::Greater) => other,
             _ => self,
         }
@@ -1173,8 +1173,8 @@ impl Real {
     /// If refinement cannot decide the order at the standard partial-order
     /// precision, this keeps `self`, matching the conservative behavior of
     /// [`PartialOrd`] callers that treat incomparability as no improvement.
-    pub fn max(self, other: Real) -> Real {
-        match self.partial_cmp(&other) {
+    pub fn max<'r>(&'r self, other: &'r Real) -> &'r Real {
+        match self.partial_cmp(other) {
             Some(Ordering::Less) => other,
             _ => self,
         }
