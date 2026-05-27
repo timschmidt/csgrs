@@ -18,7 +18,9 @@ use hyperlimit::{PlaneSide, Point3, compare_reals};
 
 use crate::exact::mesh::ExactMesh;
 
+use super::kernel_frame::{ExactBoolMeshKernelFrame, build_kernel_frame};
 use super::kernel12_boundary::{EndpointShadowLocation, classify_endpoint_shadow};
+use super::kernel12_op::{ExactKernel12Hit, ExactKernel12Input, kernel12_op};
 use super::{
     ExactBoolMeshEdgeEvent, ExactBoolMeshEdgeFacePair, ExactBoolMeshKernel12Event,
     ExactBoolMeshPointConstruction, ExactBoolMeshSide, SegmentPlaneRelation,
@@ -71,15 +73,19 @@ pub(super) fn lower_kernel12_events(
 ) -> ExactBoolMeshKernel12Lowering {
     let mut left = Vec::<LoweredKernel12Event>::new();
     let mut right = Vec::<LoweredKernel12Event>::new();
+    let left_frame = build_kernel_frame(left_mesh);
+    let right_frame = build_kernel_frame(right_mesh);
 
     for event in events {
-        let lowered = match event.relation {
-            SegmentPlaneRelation::ProperCrossing => lower_proper_crossing(event),
-            SegmentPlaneRelation::EndpointOnPlane => {
-                lower_strict_endpoint_shadow(event, left_mesh, right_mesh)
+        let lowered = lower_accumulator_replay(event, &left_frame, &right_frame).or_else(|| {
+            match event.relation {
+                SegmentPlaneRelation::ProperCrossing => lower_proper_crossing(event),
+                SegmentPlaneRelation::EndpointOnPlane => {
+                    lower_strict_endpoint_shadow(event, left_mesh, right_mesh)
+                }
+                _ => None,
             }
-            _ => None,
-        };
+        });
         let Some(lowered) = lowered else {
             continue;
         };
@@ -118,6 +124,76 @@ pub(super) fn lower_kernel12_events(
         v21: right.into_iter().map(|event| event.point).collect(),
         source_edge_events,
     }
+}
+
+/// Replay one retained exact event through the ported boolmesh accumulator.
+///
+/// This is the first normal-workspace consumer of the exact `Kernel12::op`
+/// port.  The replay keeps the boolmesh algorithmic contract: one source
+/// halfedge plus one opposite face feeds the `Kernel02` endpoint shadows and
+/// `Kernel11` edge shadows, and their signed sum becomes the row inserted into
+/// `p1q2`/`p2q1`.  We accept the replay only when the accumulator reconstructs
+/// the same exact point already retained by discovery; otherwise lowering falls
+/// back to the narrower certified subcases.  The guard is deliberate Yap-style
+/// exact-object replay, not a tolerance: see Yap, "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7.1-2 (1997).  The accumulator being
+/// replayed is the legacy boolmesh `boolean03::kernel12` control flow derived
+/// from the triangle-intersection pipeline of Moller (1997) and Guigue and
+/// Devillers (2003).
+fn lower_accumulator_replay(
+    event: &ExactBoolMeshKernel12Event,
+    left_frame: &ExactBoolMeshKernelFrame,
+    right_frame: &ExactBoolMeshKernelFrame,
+) -> Option<LoweredKernel12Event> {
+    let point = event.point.as_ref()?;
+    let parameter = event.parameter.clone()?;
+    let hit = replay_kernel12_event(event, left_frame, right_frame)?;
+    if !same_point(&hit.point, point) {
+        return None;
+    }
+    Some(LoweredKernel12Event {
+        edge_face: event.edge_face,
+        sign: hit.sign,
+        point: hit.point,
+        parameter,
+    })
+}
+
+fn replay_kernel12_event(
+    event: &ExactBoolMeshKernel12Event,
+    left_frame: &ExactBoolMeshKernelFrame,
+    right_frame: &ExactBoolMeshKernelFrame,
+) -> Option<ExactKernel12Hit> {
+    let (source_frame, source_face, opposite_face, fwd) =
+        match (event.edge_face.edge_side, event.edge_face.face_side) {
+            (ExactBoolMeshSide::Left, ExactBoolMeshSide::Right) => (
+                left_frame,
+                event.edge_face.face_pair.left_face,
+                event.edge_face.face,
+                true,
+            ),
+            (ExactBoolMeshSide::Right, ExactBoolMeshSide::Left) => (
+                right_frame,
+                event.edge_face.face_pair.right_face,
+                event.edge_face.face,
+                false,
+            ),
+            _ => return None,
+        };
+    let source_halfedge =
+        source_frame.source_halfedge_for_face_edge(source_face, event.edge_face.edge)?;
+    let expand = super::ExactReal::from(1);
+    let input = ExactKernel12Input {
+        ps_p: &left_frame.points,
+        ps_q: &right_frame.points,
+        hs_p: &left_frame.halfedges,
+        hs_q: &right_frame.halfedges,
+        ns_p: &left_frame.expansion_normals,
+        ns_q: &right_frame.expansion_normals,
+        expand: &expand,
+        fwd,
+    };
+    kernel12_op(&input, source_halfedge, opposite_face)
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -252,9 +328,13 @@ fn coalesce_lowered_events(events: &mut Vec<LoweredKernel12Event>) {
 
 fn same_lowered_construction(left: &LoweredKernel12Event, right: &LoweredKernel12Event) -> bool {
     compare_reals(&left.parameter, &right.parameter).value() == Some(Ordering::Equal)
-        && compare_reals(&left.point.x, &right.point.x).value() == Some(Ordering::Equal)
-        && compare_reals(&left.point.y, &right.point.y).value() == Some(Ordering::Equal)
-        && compare_reals(&left.point.z, &right.point.z).value() == Some(Ordering::Equal)
+        && same_point(&left.point, &right.point)
+}
+
+fn same_point(left: &Point3, right: &Point3) -> bool {
+    compare_reals(&left.x, &right.x).value() == Some(Ordering::Equal)
+        && compare_reals(&left.y, &right.y).value() == Some(Ordering::Equal)
+        && compare_reals(&left.z, &right.z).value() == Some(Ordering::Equal)
 }
 
 fn sort_lowered_events(events: &mut [LoweredKernel12Event]) {
@@ -276,11 +356,99 @@ fn sort_lowered_events(events: &mut [LoweredKernel12Event]) {
     });
 }
 
+#[cfg(feature = "internal-fuzzing")]
+pub(super) fn internal_fuzz_probe(selector: u8) -> bool {
+    let top = 5 + i64::from(selector % 2);
+    let left = ExactMesh::new_with_policy(
+        vec![
+            crate::exact::mesh::ExactPoint3::new(
+                super::ExactReal::from(1),
+                super::ExactReal::from(1),
+                super::ExactReal::from(0),
+            ),
+            crate::exact::mesh::ExactPoint3::new(
+                super::ExactReal::from(1),
+                super::ExactReal::from(1),
+                super::ExactReal::from(top),
+            ),
+            crate::exact::mesh::ExactPoint3::new(
+                super::ExactReal::from(2),
+                super::ExactReal::from(1),
+                super::ExactReal::from(0),
+            ),
+        ],
+        vec![crate::exact::mesh::Triangle([0, 1, 2])],
+        crate::exact::SourceProvenance::exact("exact boolmesh accumulator replay fuzz fixture"),
+        crate::exact::validation::ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("deterministic accumulator replay source fixture must import");
+    let right = ExactMesh::new_with_policy(
+        vec![
+            crate::exact::mesh::ExactPoint3::new(
+                super::ExactReal::from(0),
+                super::ExactReal::from(0),
+                super::ExactReal::from(4),
+            ),
+            crate::exact::mesh::ExactPoint3::new(
+                super::ExactReal::from(4),
+                super::ExactReal::from(0),
+                super::ExactReal::from(4),
+            ),
+            crate::exact::mesh::ExactPoint3::new(
+                super::ExactReal::from(0),
+                super::ExactReal::from(4),
+                super::ExactReal::from(4),
+            ),
+        ],
+        vec![crate::exact::mesh::Triangle([0, 1, 2])],
+        crate::exact::SourceProvenance::exact("exact boolmesh accumulator replay face fixture"),
+        crate::exact::validation::ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("deterministic accumulator replay opposite fixture must import");
+    let event = ExactBoolMeshKernel12Event {
+        edge_face: ExactBoolMeshEdgeFacePair {
+            face_pair: super::ExactBoolMeshFacePair {
+                left_face: 0,
+                right_face: 0,
+            },
+            edge_side: ExactBoolMeshSide::Left,
+            edge: [0, 1],
+            face_side: ExactBoolMeshSide::Right,
+            face: 0,
+        },
+        relation: SegmentPlaneRelation::ProperCrossing,
+        point: Some(Point3::new(
+            super::ExactReal::from(1),
+            super::ExactReal::from(1),
+            super::ExactReal::from(4),
+        )),
+        parameter: Some((super::ExactReal::from(4) / super::ExactReal::from(top)).unwrap()),
+        parameter_ratio: None,
+        construction_failure: None,
+        endpoint_sides: [None, None],
+    };
+    let lowering = lower_kernel12_events(&[event], &left, &right);
+    lowering.p1q2.len() == 1
+        && lowering.p2q1.is_empty()
+        && lowering.x12 == vec![1]
+        && lowering.source_edge_events.len() == 1
+        && same_point(
+            &lowering.v12[0],
+            &Point3::new(
+                super::ExactReal::from(1),
+                super::ExactReal::from(1),
+                super::ExactReal::from(4),
+            ),
+        )
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::exact::SegmentPlaneParameterRatio;
-    use crate::exact::mesh::ExactMesh;
+    use crate::exact::SourceProvenance;
+    use crate::exact::mesh::{ExactMesh, ExactPoint3, Triangle};
+    use crate::exact::validation::ValidationPolicy;
 
     fn tetrahedron_i64(a: [i64; 3], b: [i64; 3], c: [i64; 3], d: [i64; 3]) -> ExactMesh {
         ExactMesh::from_i64_triangles(
@@ -339,6 +507,74 @@ mod tests {
             parameter_ratio: None,
             construction_failure: None,
             endpoint_sides,
+        }
+    }
+
+    fn open_accumulator_replay_meshes() -> (ExactMesh, ExactMesh) {
+        let left = ExactMesh::new_with_policy(
+            vec![
+                ExactPoint3::new(
+                    super::super::ExactReal::from(1),
+                    super::super::ExactReal::from(1),
+                    super::super::ExactReal::from(0),
+                ),
+                ExactPoint3::new(
+                    super::super::ExactReal::from(1),
+                    super::super::ExactReal::from(1),
+                    super::super::ExactReal::from(5),
+                ),
+                ExactPoint3::new(
+                    super::super::ExactReal::from(2),
+                    super::super::ExactReal::from(1),
+                    super::super::ExactReal::from(0),
+                ),
+            ],
+            vec![Triangle([0, 1, 2])],
+            SourceProvenance::exact("exact boolmesh accumulator replay test source"),
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let right = ExactMesh::new_with_policy(
+            vec![
+                ExactPoint3::new(
+                    super::super::ExactReal::from(0),
+                    super::super::ExactReal::from(0),
+                    super::super::ExactReal::from(4),
+                ),
+                ExactPoint3::new(
+                    super::super::ExactReal::from(4),
+                    super::super::ExactReal::from(0),
+                    super::super::ExactReal::from(4),
+                ),
+                ExactPoint3::new(
+                    super::super::ExactReal::from(0),
+                    super::super::ExactReal::from(4),
+                    super::super::ExactReal::from(4),
+                ),
+            ],
+            vec![Triangle([0, 1, 2])],
+            SourceProvenance::exact("exact boolmesh accumulator replay test opposite"),
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        (left, right)
+    }
+
+    fn accumulator_replay_event() -> ExactBoolMeshKernel12Event {
+        ExactBoolMeshKernel12Event {
+            edge_face: edge_face(),
+            relation: SegmentPlaneRelation::ProperCrossing,
+            point: Some(Point3::new(
+                super::super::ExactReal::from(1),
+                super::super::ExactReal::from(1),
+                super::super::ExactReal::from(4),
+            )),
+            parameter: Some(
+                (super::super::ExactReal::from(4) / super::super::ExactReal::from(5)).unwrap(),
+            ),
+            parameter_ratio: None,
+            construction_failure: None,
+            endpoint_sides: [None, None],
         }
     }
 
@@ -404,6 +640,48 @@ mod tests {
         );
         assert!(lowering.x12.is_empty());
         assert!(lowering.v12.is_empty());
+        assert!(lowering.source_edge_events.is_empty());
+    }
+
+    #[test]
+    fn accumulator_replay_lowers_event_without_legacy_side_shortcut() {
+        let (left, right) = open_accumulator_replay_meshes();
+        let lowering = lower_kernel12_events(&[accumulator_replay_event()], &left, &right);
+
+        assert_eq!(lowering.p1q2, vec![edge_face()]);
+        assert_eq!(lowering.p2q1, Vec::new());
+        assert_eq!(lowering.x12, vec![1]);
+        assert!(lowering.x21.is_empty());
+        assert_eq!(
+            lowering.v12,
+            vec![Point3::new(
+                super::super::ExactReal::from(1),
+                super::super::ExactReal::from(1),
+                super::super::ExactReal::from(4),
+            )]
+        );
+        assert_eq!(lowering.source_edge_events.len(), 1);
+        assert_eq!(lowering.source_edge_events[0].tail, 0);
+        assert_eq!(lowering.source_edge_events[0].head, 1);
+    }
+
+    #[test]
+    fn accumulator_replay_rejects_inconsistent_retained_point() {
+        let (left, right) = open_accumulator_replay_meshes();
+        let mut event = accumulator_replay_event();
+        event.point = Some(Point3::new(
+            super::super::ExactReal::from(1),
+            super::super::ExactReal::from(1),
+            super::super::ExactReal::from(3),
+        ));
+        let lowering = lower_kernel12_events(&[event], &left, &right);
+
+        assert!(lowering.p1q2.is_empty());
+        assert!(lowering.p2q1.is_empty());
+        assert!(lowering.x12.is_empty());
+        assert!(lowering.x21.is_empty());
+        assert!(lowering.v12.is_empty());
+        assert!(lowering.v21.is_empty());
         assert!(lowering.source_edge_events.is_empty());
     }
 }

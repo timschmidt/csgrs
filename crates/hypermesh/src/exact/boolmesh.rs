@@ -107,6 +107,16 @@ pub fn exact_boolmesh_kernel_frame_probe_for_internal_fuzz(selector: u8) -> bool
     kernel_frame::internal_fuzz_probe(selector)
 }
 
+/// Exercise exact `Kernel12::op` replay from normal lowering.
+///
+/// This probe covers the handoff from retained exact edge/face events back to
+/// boolmesh halfedge rows.  It is kept behind `internal-fuzzing` because the
+/// public API remains the certified workspace, not individual kernel probes.
+#[cfg(all(feature = "exact-triangulation", feature = "internal-fuzzing"))]
+pub fn exact_boolmesh_kernel12_accumulator_replay_probe_for_internal_fuzz(selector: u8) -> bool {
+    kernel12::internal_fuzz_probe(selector)
+}
+
 /// Legacy boolmesh kernel stage represented by the exact port.
 ///
 /// These names intentionally mirror the old modules instead of inventing a new

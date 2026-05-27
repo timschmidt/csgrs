@@ -47,6 +47,40 @@ pub(super) struct ExactBoolMeshKernelFrame {
     pub duplicate_directed_halfedges: usize,
 }
 
+impl ExactBoolMeshKernelFrame {
+    /// Resolve a retained face-local edge into the boolmesh halfedge row.
+    ///
+    /// Legacy boolmesh `Kernel12::op` is addressed by a source halfedge index
+    /// and an opposite face index.  Exact discovery stores the geometric edge
+    /// as vertex endpoints instead.  This method is the exact-object replay
+    /// bridge: it maps the retained face/edge fact back onto the boolmesh
+    /// halfedge layout without re-running a floating orientation heuristic.
+    /// When the retained edge is opposite the source face order, the paired
+    /// reverse row is returned, matching boolmesh's forward-halfedge lowering
+    /// while keeping Yap's "Towards Exact Geometric Computation,"
+    /// *Computational Geometry* 7.1-2 (1997), separation between certified
+    /// input facts and topology mutation.
+    pub(super) fn source_halfedge_for_face_edge(
+        &self,
+        face: usize,
+        edge: [usize; 2],
+    ) -> Option<usize> {
+        let base = face.checked_mul(3)?;
+        for local in 0..3 {
+            let index = base + local;
+            let halfedge = *self.halfedges.get(index)?;
+            if [halfedge.tail, halfedge.head] == edge {
+                return Some(index);
+            }
+            if [halfedge.head, halfedge.tail] == edge {
+                let pair = halfedge.pair;
+                return self.halfedges.get(pair).map(|_| pair);
+            }
+        }
+        None
+    }
+}
+
 /// Build the exact boolmesh kernel frame for one mesh.
 ///
 /// The first `3 * mesh.triangles().len()` halfedges are always face-local
@@ -266,6 +300,33 @@ mod tests {
                 .iter()
                 .any(|normal| !real_is_zero(&normal.z)),
             "at least one expansion vector must preserve an exact z tie direction"
+        );
+    }
+
+    #[test]
+    fn frame_resolves_retained_face_edges_to_boolmesh_rows() {
+        let frame = build_kernel_frame(&tetrahedron());
+
+        assert_eq!(
+            frame.source_halfedge_for_face_edge(0, [0, 2]),
+            Some(0),
+            "face-local direction should use the source halfedge row"
+        );
+        let reverse = frame
+            .source_halfedge_for_face_edge(0, [2, 0])
+            .expect("closed tetrahedron reverse edge must be paired");
+        assert_ne!(reverse, 0);
+        assert_eq!(frame.halfedges[reverse].tail, 2);
+        assert_eq!(frame.halfedges[reverse].head, 0);
+        assert!(
+            frame
+                .source_halfedge_for_face_edge(usize::MAX, [0, 1])
+                .is_none()
+        );
+        assert!(
+            frame
+                .source_halfedge_for_face_edge(0, [0, usize::MAX])
+                .is_none()
         );
     }
 }
