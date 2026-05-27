@@ -1988,11 +1988,16 @@ fn cubic_ray_crossing(
 /// (Sturm, 1835) in the Collins-Loos real-root model, builds polynomial
 /// images for `X(t)` and `Y'(t)` using `hypersolve`'s resultant-backed image
 /// construction, and accepts a crossing only when interval evidence separates
-/// the root from endpoints, the x-image from the query point, and the
-/// derivative from zero. This follows Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997): exact algebraic
-/// witnesses may drive topology, but overlapping or undecidable intervals stay
-/// explicit uncertainty.
+/// the root from endpoints, the x-image from the query point, and the local
+/// derivative tower certifies odd multiplicity. Simple roots cross; double
+/// roots with nonzero second derivative touch and contribute zero crossings;
+/// triple roots with nonzero third derivative cross. This follows Yap,
+/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+/// (1997): exact algebraic witnesses may drive topology, but overlapping or
+/// undecidable intervals stay explicit uncertainty. The multiplicity replay is
+/// the standard Sturm/Collins-Loos represented-root discipline, while the
+/// derivative tower is the Bernstein hodograph model described by Farouki,
+/// *Pythagorean Hodograph Curves* (2008).
 fn algebraic_cubic_ray_crossing(
     point: &Point2,
     fragment: &CubicBezierRealFragment,
@@ -2000,6 +2005,7 @@ fn algebraic_cubic_ray_crossing(
     forward: bool,
     policy: PredicatePolicy,
 ) -> RayCrossingResult {
+    let triple_root = cubic_triple_root(&polynomial, policy);
     let roots = match isolate_cubic_ray_roots(polynomial, policy) {
         Some(roots) => roots,
         None => {
@@ -2016,6 +2022,7 @@ fn algebraic_cubic_ray_crossing(
     );
     let dy_coefficients = cubic_y_derivative_image_coefficients(fragment);
     let ddy_coefficients = cubic_y_second_derivative_image_coefficients(fragment);
+    let d3y = cubic_y_third_derivative(fragment);
     let mut crossings = 0usize;
     for root in roots {
         match algebraic_parameter_in_half_open_unit(&root, forward, policy) {
@@ -2028,8 +2035,7 @@ fn algebraic_cubic_ray_crossing(
             }
         }
 
-        let x_image = transform_algebraic_root_polynomial_image(&root, &x_coefficients, policy);
-        match compare_algebraic_image_to_real(&x_image, &point.x, policy) {
+        match compare_algebraic_root_polynomial_to_real(&root, &x_coefficients, &point.x, policy) {
             Some(Ordering::Less) => continue,
             Some(Ordering::Equal) => return RayCrossingResult::Boundary,
             Some(Ordering::Greater) => {}
@@ -2040,17 +2046,63 @@ fn algebraic_cubic_ray_crossing(
             }
         }
 
-        let dy_image = transform_algebraic_root_polynomial_image(&root, &dy_coefficients, policy);
-        match compare_algebraic_image_to_real(&dy_image, &Real::zero(), policy) {
+        if let Some(triple_root) = &triple_root {
+            match algebraic_root_interval_contains_real(&root, triple_root, policy) {
+                Some(true) => {
+                    match compare_reals_with_policy(&d3y, &Real::zero(), policy).value() {
+                        Some(Ordering::Less | Ordering::Greater) => {
+                            crossings += 1;
+                            continue;
+                        }
+                        Some(Ordering::Equal) => {
+                            return RayCrossingResult::Unknown(
+                                CurveArrangementLoopRoleBlocker::TangentContact,
+                            );
+                        }
+                        None => {
+                            return RayCrossingResult::Unknown(
+                                CurveArrangementLoopRoleBlocker::UnsupportedCubicRay,
+                            );
+                        }
+                    }
+                }
+                Some(false) => {}
+                None => {
+                    return RayCrossingResult::Unknown(
+                        CurveArrangementLoopRoleBlocker::UnsupportedCubicRay,
+                    );
+                }
+            }
+        }
+
+        match compare_algebraic_root_polynomial_to_real(
+            &root,
+            &dy_coefficients,
+            &Real::zero(),
+            policy,
+        ) {
             Some(Ordering::Equal) => {
-                let ddy_image =
-                    transform_algebraic_root_polynomial_image(&root, &ddy_coefficients, policy);
-                match compare_algebraic_image_to_real(&ddy_image, &Real::zero(), policy) {
+                match compare_algebraic_root_polynomial_to_real(
+                    &root,
+                    &ddy_coefficients,
+                    &Real::zero(),
+                    policy,
+                ) {
                     Some(Ordering::Less | Ordering::Greater) => continue,
                     Some(Ordering::Equal) => {
-                        return RayCrossingResult::Unknown(
-                            CurveArrangementLoopRoleBlocker::TangentContact,
-                        );
+                        match compare_reals_with_policy(&d3y, &Real::zero(), policy).value() {
+                            Some(Ordering::Less | Ordering::Greater) => crossings += 1,
+                            Some(Ordering::Equal) => {
+                                return RayCrossingResult::Unknown(
+                                    CurveArrangementLoopRoleBlocker::TangentContact,
+                                );
+                            }
+                            None => {
+                                return RayCrossingResult::Unknown(
+                                    CurveArrangementLoopRoleBlocker::UnsupportedCubicRay,
+                                );
+                            }
+                        }
                     }
                     None => {
                         return RayCrossingResult::Unknown(
@@ -2114,6 +2166,52 @@ fn isolate_cubic_ray_roots(
         }
     }
     Some(roots)
+}
+
+/// Certify that a cubic ray polynomial has exactly one root of multiplicity three.
+///
+/// For `P(t) = a t^3 + b t^2 + c t + d`, a triple root exists exactly when
+/// `b^2 = 3ac` and `b^3 = 27a^2d`, with root `-b/(3a)`. This coefficient
+/// certificate avoids asking an interval image of `P'` to be monotone at the
+/// multiple root, where it cannot be. That is the exact-object/exact-predicate
+/// split advocated by Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997): the retained cubic equation itself
+/// certifies the crossing multiplicity, and undecidable evidence still remains
+/// explicit uncertainty.
+fn cubic_triple_root(
+    polynomial: &(Real, Real, Real, Real),
+    policy: PredicatePolicy,
+) -> Option<Real> {
+    let (d, b, c, a) = polynomial;
+    if compare_reals_with_policy(a, &Real::zero(), policy).value()? == Ordering::Equal {
+        return None;
+    }
+    let first_identity = b.clone() * b.clone() - Real::from(3) * a.clone() * c.clone();
+    if compare_reals_with_policy(&first_identity, &Real::zero(), policy).value()? != Ordering::Equal
+    {
+        return None;
+    }
+    let second_identity =
+        b.clone() * b.clone() * b.clone() - Real::from(27) * a.clone() * a.clone() * d.clone();
+    if compare_reals_with_policy(&second_identity, &Real::zero(), policy).value()?
+        != Ordering::Equal
+    {
+        return None;
+    }
+    (-b.clone() / (Real::from(3) * a.clone())).ok()
+}
+
+fn algebraic_root_interval_contains_real(
+    root: &AlgebraicRootRepresentation,
+    value: &Real,
+    policy: PredicatePolicy,
+) -> Option<bool> {
+    if let Some(witness) = root.exact_rational_witness() {
+        return Some(compare_reals_with_policy(witness, value, policy).value()? == Ordering::Equal);
+    }
+    let lower = compare_reals_with_policy(&root.interval.lower, value, policy).value()?;
+    let upper = compare_reals_with_policy(&root.interval.upper, value, policy).value()?;
+    Some(lower != Ordering::Greater && upper != Ordering::Less)
 }
 
 fn algebraic_parameter_in_half_open_unit(
@@ -2182,6 +2280,36 @@ fn compare_algebraic_image_to_real(
     None
 }
 
+/// Compare a polynomial image at a represented algebraic root with a real value.
+///
+/// Multiple roots are exactly where interval images are least useful: the image
+/// of `Y'` or `Y''` can straddle zero at every practical refinement even though
+/// the represented root is a rational witness. Yap's EGC model permits using
+/// the exact constructed witness directly when available; otherwise this falls
+/// back to `hypersolve`'s algebraic-root polynomial image transform, matching
+/// the Collins-Loos represented-root discipline used for the root itself.
+fn compare_algebraic_root_polynomial_to_real(
+    root: &AlgebraicRootRepresentation,
+    coefficients: &[Real],
+    value: &Real,
+    policy: PredicatePolicy,
+) -> Option<Ordering> {
+    if let Some(witness) = root.exact_rational_witness() {
+        let image = eval_power_polynomial(coefficients, witness);
+        return compare_reals_with_policy(&image, value, policy).value();
+    }
+    let image = transform_algebraic_root_polynomial_image(root, coefficients, policy);
+    compare_algebraic_image_to_real(&image, value, policy)
+}
+
+fn eval_power_polynomial(coefficients: &[Real], parameter: &Real) -> Real {
+    let mut image = Real::zero();
+    for coefficient in coefficients.iter().rev() {
+        image = image * parameter.clone() + coefficient.clone();
+    }
+    image
+}
+
 fn cubic_coordinate_image_coefficients(p0: Real, p1: Real, p2: Real, p3: Real) -> Vec<Real> {
     let a = -p0.clone() + Real::from(3) * p1.clone() - Real::from(3) * p2.clone() + p3;
     let b = Real::from(3) * p0.clone() - Real::from(6) * p1.clone() + Real::from(3) * p2;
@@ -2214,6 +2342,16 @@ fn cubic_y_second_derivative_image_coefficients(fragment: &CubicBezierRealFragme
         Real::from(2) * coefficients[2].clone(),
         Real::from(6) * coefficients[3].clone(),
     ]
+}
+
+fn cubic_y_third_derivative(fragment: &CubicBezierRealFragment) -> Real {
+    let coefficients = cubic_coordinate_image_coefficients(
+        fragment.curve.start().y.clone(),
+        fragment.curve.control0().y.clone(),
+        fragment.curve.control1().y.clone(),
+        fragment.curve.end().y.clone(),
+    );
+    Real::from(6) * coefficients[3].clone()
 }
 
 fn conic_ray_crossing(

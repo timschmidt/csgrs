@@ -435,6 +435,35 @@ fn path_predicates(c: &mut Criterion) {
             .map(|report| report.cell_graph.loop_roles)
         })
     });
+    let triple_root_cubic_left_upper = CubicBezier::new(p(-1, 0), p(-1, 1), p(1, 1), p(1, 0));
+    let triple_root_cubic_left_lower = CubicBezier::new(p(1, 0), p(1, -1), p(-1, -1), p(-1, 0));
+    let triple_root_cubic_crossing = CubicBezier::new(
+        pq(3, 1, -5, 8),
+        pq(11, 3, 11, 8),
+        pq(13, 3, -5, 8),
+        pq(5, 1, 11, 8),
+    );
+    let triple_root_cubic_return = CubicBezier::new(
+        pq(5, 1, 11, 8),
+        pq(7, 1, 17, 24),
+        pq(7, 1, 1, 24),
+        pq(3, 1, -5, 8),
+    );
+    c.bench_function("cubic_bezier_triple_root_ray_loop_roles", |b| {
+        b.iter(|| {
+            arrange_cubic_beziers(
+                &[
+                    triple_root_cubic_left_upper.clone(),
+                    triple_root_cubic_left_lower.clone(),
+                    triple_root_cubic_crossing.clone(),
+                    triple_root_cubic_return.clone(),
+                ],
+                &[vec![], vec![], vec![], vec![]],
+                PredicatePolicy::default(),
+            )
+            .map(|report| report.cell_graph.loop_roles)
+        })
+    });
     let conic = RationalQuadraticBezier::new(p(0, 0), p(500, 200), p(1000, 0), r(2)).unwrap();
     c.bench_function("rational_quadratic_bezier_exact_eval", |b| {
         b.iter(|| conic.eval(half))

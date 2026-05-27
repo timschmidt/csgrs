@@ -5,14 +5,15 @@ use hyperpath::{
     BoardContourOrientation, CardinalPoint, CardinalRotation, CircularArc, CircularArcError,
     ClearanceStatus, ConstructionStamp, CornerLookaheadJoinClass, CubicBezier,
     CubicPythagoreanHodograph, CurveArrangementCellEdgeKind, CurveArrangementCellFaceClass,
-    CurveArrangementLoopRoleClass, DrillBoardClearanceReport, ExplicitArcArrangementClass,
-    ExplicitArcIntersectionClass, ExplicitArcOverlapClass, ExplicitArcPointClassification,
-    ExplicitArcSweepClass, ExplicitArcTangentClass, ExplicitCircleRelationClass,
-    ExplicitCircularArc, FeedPathElement, HigherOrderBezier, HigherOrderBezierError,
-    InfillGraphError, JerkLimitedFeedTimeReport, JerkRampPhaseProposal, JerkRampSpanProposal,
-    LineArcArrangementEventClass, LineArrangementCellFaceClass, LineArrangementError,
-    LineArrangementEventClass, LineCubicAlgebraicPointDomain, LineCubicAlgebraicRootDomain,
-    LineCubicBezierAlgebraicBreakpointDomain, LineCubicBezierAlgebraicBreakpointOrderClass,
+    CurveArrangementLoopRoleBlocker, CurveArrangementLoopRoleClass, DrillBoardClearanceReport,
+    ExplicitArcArrangementClass, ExplicitArcIntersectionClass, ExplicitArcOverlapClass,
+    ExplicitArcPointClassification, ExplicitArcSweepClass, ExplicitArcTangentClass,
+    ExplicitCircleRelationClass, ExplicitCircularArc, FeedPathElement, HigherOrderBezier,
+    HigherOrderBezierError, InfillGraphError, JerkLimitedFeedTimeReport, JerkRampPhaseProposal,
+    JerkRampSpanProposal, LineArcArrangementEventClass, LineArrangementCellFaceClass,
+    LineArrangementError, LineArrangementEventClass, LineCubicAlgebraicPointDomain,
+    LineCubicAlgebraicRootDomain, LineCubicBezierAlgebraicBreakpointDomain,
+    LineCubicBezierAlgebraicBreakpointOrderClass,
     LineCubicBezierAlgebraicBreakpointSequenceBlocker,
     LineCubicBezierAlgebraicBreakpointSequenceClass,
     LineCubicBezierAlgebraicBreakpointSequenceSource,
@@ -1229,6 +1230,44 @@ fn bezier_loop_roles_ignore_disjoint_tangent_ray_contacts() {
             .count(),
         2
     );
+}
+
+#[test]
+fn cubic_loop_roles_count_triple_ray_roots_as_crossings() {
+    let left_upper = CubicBezier::new(p(-1, 0), p(-1, 1), p(1, 1), p(1, 0));
+    let left_lower = CubicBezier::new(p(1, 0), p(1, -1), p(-1, -1), p(-1, 0));
+    let triple_crossing = CubicBezier::new(
+        pq(3, 1, -5, 8),
+        pq(11, 3, 11, 8),
+        pq(13, 3, -5, 8),
+        pq(5, 1, 11, 8),
+    );
+    let right_return = CubicBezier::new(
+        pq(5, 1, 11, 8),
+        pq(7, 1, 17, 24),
+        pq(7, 1, 1, 24),
+        pq(3, 1, -5, 8),
+    );
+
+    let report = arrange_cubic_beziers(
+        &[left_upper, left_lower, triple_crossing, right_return],
+        &[vec![], vec![], vec![], vec![]],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+
+    assert!(report.cell_graph.loop_roles.iter().any(|role| {
+        role.class == CurveArrangementLoopRoleClass::Material && role.containment_depth == Some(0)
+    }));
+    assert!(!report.cell_graph.loop_roles.iter().any(|role| {
+        matches!(
+            role.blocker,
+            Some(
+                CurveArrangementLoopRoleBlocker::TangentContact
+                    | CurveArrangementLoopRoleBlocker::UnsupportedCubicRay
+            )
+        )
+    }));
 }
 
 #[test]

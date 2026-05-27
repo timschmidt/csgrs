@@ -5,7 +5,7 @@ use std::cmp::Ordering;
 use hyperlimit::{PredicatePolicy, compare_reals_with_policy};
 use hyperpath::{
     ArcDirection, BezierParameter, CubicBezier, CurveArrangementCellFaceClass,
-    CurveArrangementLoopRoleClass,
+    CurveArrangementLoopRoleBlocker, CurveArrangementLoopRoleClass,
     ExplicitCircularArc, LineCubicAlgebraicPointDomain, LineCubicAlgebraicRootDomain,
     LineCubicBezierAlgebraicBreakpointDomain,
     LineCubicBezierAlgebraicBreakpointOrderClass, LineCubicBezierAlgebraicBreakpointSequenceClass,
@@ -456,6 +456,45 @@ fuzz_target!(|data: &[u8]| {
                 && role.containment_depth == Some(0))
             .count(),
         2
+    );
+    let triple_root_cubic_report = arrange_cubic_beziers(
+        &[
+            CubicBezier::new(p(-1, 0), p(-1, 1), p(1, 1), p(1, 0)),
+            CubicBezier::new(p(1, 0), p(1, -1), p(-1, -1), p(-1, 0)),
+            CubicBezier::new(
+                pq(3, 1, -5, 8),
+                pq(11, 3, 11, 8),
+                pq(13, 3, -5, 8),
+                pq(5, 1, 11, 8),
+            ),
+            CubicBezier::new(
+                pq(5, 1, 11, 8),
+                pq(7, 1, 17, 24),
+                pq(7, 1, 1, 24),
+                pq(3, 1, -5, 8),
+            ),
+        ],
+        &[vec![], vec![], vec![], vec![]],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert!(triple_root_cubic_report.cell_graph.loop_roles.iter().any(|role| {
+        role.class == CurveArrangementLoopRoleClass::Material && role.containment_depth == Some(0)
+    }));
+    assert!(
+        !triple_root_cubic_report
+            .cell_graph
+            .loop_roles
+            .iter()
+            .any(|role| {
+                matches!(
+                    role.blocker,
+                    Some(
+                        CurveArrangementLoopRoleBlocker::TangentContact
+                            | CurveArrangementLoopRoleBlocker::UnsupportedCubicRay
+                    )
+                )
+            })
     );
 
     let mixed_line = LinePathSegment::new(p(0, 0), p(20, 0));
