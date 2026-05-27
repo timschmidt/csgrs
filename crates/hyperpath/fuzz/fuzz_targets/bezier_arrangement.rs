@@ -28,7 +28,7 @@ use hyperpath::{
     arrange_rational_quadratic_beziers, intersect_axis_aligned_line_cubic_bezier,
     intersect_axis_aligned_line_quadratic_bezier,
     intersect_axis_aligned_line_rational_quadratic_bezier, intersect_line_cubic_bezier,
-    intersect_line_quadratic_bezier,
+    intersect_line_quadratic_bezier, intersect_line_rational_quadratic_bezier,
 };
 use hyperreal::{Rational, Real};
 use hypersolve::AlgebraicRootPolynomialImageStatus;
@@ -823,6 +823,31 @@ fuzz_target!(|data: &[u8]| {
             Some(Ordering::Equal)
         );
     }
+    let diagonal_conic = RationalQuadraticBezier::new(p(0, 0), p(2, 4), p(4, 0), r(1)).unwrap();
+    let diagonal_conic_line = LinePathSegment::new(p(0, 1), p(8, 5));
+    let diagonal_conic_report = intersect_line_rational_quadratic_bezier(
+        &diagonal_conic_line,
+        &diagonal_conic,
+        PredicatePolicy::default(),
+    );
+    assert_eq!(
+        diagonal_conic_report.class,
+        LineRationalQuadraticBezierIntersectionClass::TwoPoints
+    );
+    assert_eq!(diagonal_conic_report.intersections[0].parameter, rq(1, 4));
+    assert_eq!(diagonal_conic_report.intersections[1].parameter, rq(1, 2));
+    let diagonal_conic_arrangement = arrange_line_segments_with_rational_quadratic_beziers(
+        &[diagonal_conic_line],
+        &[diagonal_conic],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert_eq!(
+        diagonal_conic_arrangement.events[0].class,
+        LineRationalQuadraticBezierIntersectionClass::TwoPoints
+    );
+    assert_eq!(diagonal_conic_arrangement.line_breakpoints[0].len(), 4);
+    assert_eq!(diagonal_conic_arrangement.conic_breakpoints[0].len(), 4);
 
     let secant_conic = RationalQuadraticBezier::new(p(0, 0), p(4, 8), p(8, 0), r(1)).unwrap();
     let secant_line = LinePathSegment::new(p(0, 3), p(8, 3));

@@ -18,8 +18,7 @@ use crate::bezier_arrangement::{
     HomogeneousPoint2, LineRationalQuadraticBezierIntersection,
     LineRationalQuadraticBezierIntersectionClass, LineRationalQuadraticBezierIntersectionReport,
     LineRationalQuadraticBezierInverseBoundarySource, LineRationalQuadraticBezierInverseRootDomain,
-    LineRationalQuadraticBezierSupportOverlap,
-    intersect_axis_aligned_line_rational_quadratic_bezier,
+    LineRationalQuadraticBezierSupportOverlap, intersect_line_rational_quadratic_bezier,
 };
 use crate::curve_cell::{
     CurveArrangementCellError, CurveArrangementCellGraph, build_line_rational_quadratic_cell_graph,
@@ -464,8 +463,7 @@ pub fn arrange_line_segments_with_rational_quadratic_beziers_and_provenance(
 
     for (line_index, line) in lines.iter().enumerate() {
         for (curve_index, curve) in curves.iter().enumerate() {
-            let intersection =
-                intersect_axis_aligned_line_rational_quadratic_bezier(line, curve, policy);
+            let intersection = intersect_line_rational_quadratic_bezier(line, curve, policy);
             if intersection.class != LineRationalQuadraticBezierIntersectionClass::Unknown {
                 for event in &intersection.intersections {
                     insert_line_breakpoint(

@@ -93,16 +93,17 @@ use hyperpath::{
     import_specctra_text_route, import_specctra_trace_record, import_specctra_via_record,
     intersect_axis_aligned_line_cubic_bezier, intersect_axis_aligned_line_quadratic_bezier,
     intersect_axis_aligned_line_rational_quadratic_bezier, intersect_line_cubic_bezier,
-    intersect_line_quadratic_bezier, intersect_rectangular_regions, offset_axis_aligned_segment,
-    offset_cardinal_arc, offset_cubic_bezier_sample, offset_explicit_arc,
-    offset_higher_order_bezier_sample, offset_quadratic_bezier_sample,
-    parse_specctra_grid_route_records, parse_specctra_grid_trace_records,
-    serialize_specctra_grid_arc_wire_records, serialize_specctra_grid_keepout_records,
-    serialize_specctra_grid_route_records, serialize_specctra_grid_route_rule_records,
-    serialize_specctra_grid_trace_records, serialize_specctra_grid_via_records,
-    specctra_grid_arc_wire_record, specctra_grid_keepout_record, specctra_grid_route_rule_record,
-    specctra_grid_trace_record, specctra_grid_via_record, subtract_rectangular_region,
-    tangent_cross, tangent_dot, tangent_norm_squared,
+    intersect_line_quadratic_bezier, intersect_line_rational_quadratic_bezier,
+    intersect_rectangular_regions, offset_axis_aligned_segment, offset_cardinal_arc,
+    offset_cubic_bezier_sample, offset_explicit_arc, offset_higher_order_bezier_sample,
+    offset_quadratic_bezier_sample, parse_specctra_grid_route_records,
+    parse_specctra_grid_trace_records, serialize_specctra_grid_arc_wire_records,
+    serialize_specctra_grid_keepout_records, serialize_specctra_grid_route_records,
+    serialize_specctra_grid_route_rule_records, serialize_specctra_grid_trace_records,
+    serialize_specctra_grid_via_records, specctra_grid_arc_wire_record,
+    specctra_grid_keepout_record, specctra_grid_route_rule_record, specctra_grid_trace_record,
+    specctra_grid_via_record, subtract_rectangular_region, tangent_cross, tangent_dot,
+    tangent_norm_squared,
 };
 use hyperreal::{Rational, Real};
 use hypersolve::AlgebraicRootPolynomialImageStatus;
@@ -2234,6 +2235,68 @@ fn line_rational_quadratic_bezier_intersection_classifies_tangent() {
 }
 
 #[test]
+fn line_rational_quadratic_bezier_intersection_solves_general_diagonal_secant() {
+    let conic = RationalQuadraticBezier::new(p(0, 0), p(2, 4), p(4, 0), r(1)).unwrap();
+    let line = LinePathSegment::new(p(0, 1), p(8, 5));
+
+    let legacy_report = intersect_axis_aligned_line_rational_quadratic_bezier(
+        &line,
+        &conic,
+        PredicatePolicy::default(),
+    );
+    assert_eq!(
+        legacy_report.class,
+        LineRationalQuadraticBezierIntersectionClass::Unknown
+    );
+
+    let report =
+        intersect_line_rational_quadratic_bezier(&line, &conic, PredicatePolicy::default());
+
+    assert_eq!(
+        report.class,
+        LineRationalQuadraticBezierIntersectionClass::TwoPoints
+    );
+    assert_eq!(report.intersections.len(), 2);
+    assert_eq!(report.intersections[0].parameter, rq(1, 4));
+    assert_eq!(report.intersections[0].point, pq(1, 1, 3, 2));
+    assert_eq!(report.intersections[1].parameter, rq(1, 2));
+    assert_eq!(report.intersections[1].point, p(2, 2));
+}
+
+#[test]
+fn line_rational_quadratic_bezier_intersection_solves_general_diagonal_tangent() {
+    let conic = RationalQuadraticBezier::new(p(0, 0), p(2, 4), p(4, 0), r(1)).unwrap();
+    let line = LinePathSegment::new(pq(0, 1, 1, 2), pq(3, 1, 7, 2));
+
+    let report =
+        intersect_line_rational_quadratic_bezier(&line, &conic, PredicatePolicy::default());
+
+    assert_eq!(
+        report.class,
+        LineRationalQuadraticBezierIntersectionClass::Tangent
+    );
+    assert_eq!(report.intersections.len(), 1);
+    assert_eq!(report.intersections[0].parameter, rq(1, 4));
+    assert_eq!(report.intersections[0].point, pq(1, 1, 3, 2));
+}
+
+#[test]
+fn line_rational_quadratic_bezier_intersection_keeps_general_collinear_overlap_unknown() {
+    let conic = RationalQuadraticBezier::new(p(0, 0), p(2, 2), p(4, 4), r(1)).unwrap();
+    let line = LinePathSegment::new(p(1, 1), p(3, 3));
+
+    let report =
+        intersect_line_rational_quadratic_bezier(&line, &conic, PredicatePolicy::default());
+
+    assert_eq!(
+        report.class,
+        LineRationalQuadraticBezierIntersectionClass::Unknown
+    );
+    assert!(report.intersections.is_empty());
+    assert!(report.support_overlap.is_none());
+}
+
+#[test]
 fn line_rational_quadratic_bezier_arrangement_emits_homogeneous_fragments() {
     let conic = RationalQuadraticBezier::new(p(0, 0), p(4, 8), p(8, 0), r(1)).unwrap();
     let line = LinePathSegment::new(p(0, 3), p(8, 3));
@@ -2305,6 +2368,36 @@ fn line_rational_quadratic_bezier_arrangement_emits_homogeneous_fragments() {
         );
         assert!(half_edge.next.is_some());
     }
+}
+
+#[test]
+fn line_rational_quadratic_bezier_arrangement_splits_general_diagonal_secant() {
+    let conic = RationalQuadraticBezier::new(p(0, 0), p(2, 4), p(4, 0), r(1)).unwrap();
+    let line = LinePathSegment::new(p(0, 1), p(8, 5));
+
+    let report = arrange_line_segments_with_rational_quadratic_beziers(
+        &[line],
+        &[conic],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+
+    assert_eq!(
+        report.events[0].class,
+        LineRationalQuadraticBezierIntersectionClass::TwoPoints
+    );
+    assert_eq!(report.line_breakpoints[0].len(), 4);
+    assert_eq!(report.conic_breakpoints[0].len(), 4);
+    assert_eq!(report.conic_breakpoints[0][1].parameter, rq(1, 4));
+    assert_eq!(report.conic_breakpoints[0][1].point, pq(1, 1, 3, 2));
+    assert_eq!(report.conic_breakpoints[0][2].parameter, rq(1, 2));
+    assert_eq!(report.conic_breakpoints[0][2].point, p(2, 2));
+    assert_eq!(report.line_fragments.len(), 3);
+    assert_eq!(report.conic_fragments.len(), 3);
+    assert_eq!(
+        report.cell_graph.half_edges.len(),
+        report.cell_graph.edges.len() * 2
+    );
 }
 
 #[test]

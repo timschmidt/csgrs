@@ -52,14 +52,15 @@ use hyperpath::{
     import_specctra_via_record, intersect_axis_aligned_line_cubic_bezier,
     intersect_axis_aligned_line_quadratic_bezier,
     intersect_axis_aligned_line_rational_quadratic_bezier, intersect_line_cubic_bezier,
-    intersect_rectangular_regions, offset_axis_aligned_segment, offset_cardinal_arc,
-    offset_cubic_bezier_sample, offset_explicit_arc, offset_higher_order_bezier_sample,
-    offset_quadratic_bezier_sample, parse_specctra_grid_route_records,
-    parse_specctra_grid_trace_records, serialize_specctra_grid_arc_wire_records,
-    serialize_specctra_grid_keepout_records, serialize_specctra_grid_route_records,
-    serialize_specctra_grid_trace_records, serialize_specctra_grid_via_records,
-    specctra_grid_arc_wire_record, specctra_grid_keepout_record, specctra_grid_trace_record,
-    specctra_grid_via_record, subtract_rectangular_region,
+    intersect_line_rational_quadratic_bezier, intersect_rectangular_regions,
+    offset_axis_aligned_segment, offset_cardinal_arc, offset_cubic_bezier_sample,
+    offset_explicit_arc, offset_higher_order_bezier_sample, offset_quadratic_bezier_sample,
+    parse_specctra_grid_route_records, parse_specctra_grid_trace_records,
+    serialize_specctra_grid_arc_wire_records, serialize_specctra_grid_keepout_records,
+    serialize_specctra_grid_route_records, serialize_specctra_grid_trace_records,
+    serialize_specctra_grid_via_records, specctra_grid_arc_wire_record,
+    specctra_grid_keepout_record, specctra_grid_trace_record, specctra_grid_via_record,
+    subtract_rectangular_region,
 };
 use hyperreal::{Rational, Real};
 
@@ -380,6 +381,21 @@ fn path_predicates(c: &mut Criterion) {
             )
         })
     });
+    let line_conic_diagonal =
+        RationalQuadraticBezier::new(p(0, 0), p(500, 1000), p(1000, 0), r(1)).unwrap();
+    let line_conic_diagonal_line = LinePathSegment::new(p(0, 250), p(1000, 750));
+    c.bench_function(
+        "line_rational_quadratic_bezier_general_line_exact_events",
+        |b| {
+            b.iter(|| {
+                intersect_line_rational_quadratic_bezier(
+                    &line_conic_diagonal_line,
+                    &line_conic_diagonal,
+                    PredicatePolicy::default(),
+                )
+            })
+        },
+    );
     c.bench_function("line_rational_quadratic_bezier_arrangement_cleanup", |b| {
         b.iter(|| {
             arrange_line_segments_with_rational_quadratic_beziers(

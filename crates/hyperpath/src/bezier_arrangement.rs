@@ -1001,6 +1001,77 @@ fn intersect_axis_aligned_line_cubic_bezier_with_axis(
     }
 }
 
+/// Intersect a line segment with a rational quadratic conic exactly.
+///
+/// For a retained non-axis line this evaluates the homogeneous rational conic
+/// in the exact implicit line equation
+///
+/// `cross(line.end-line.start, (X/W, Y/W)-line.start) = 0`.
+///
+/// Multiplying by `W` gives the denominator-free Bernstein quadratic
+/// `dx*(Y-y0*W)-dy*(X-x0*W)`. Candidate roots are solved as exact `Real`
+/// objects, then replayed through rational evaluation so denominator-zero
+/// branches remain [`LineRationalQuadraticBezierIntersectionClass::Unknown`]
+/// rather than sampled topology. This follows Yap, "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7.1-2 (1997): construction is
+/// accepted only after exact predicate replay. The homogeneous rational curve
+/// model follows Farouki, *Pythagorean Hodograph Curves* (2008).
+pub fn intersect_line_rational_quadratic_bezier(
+    segment: &LinePathSegment,
+    curve: &RationalQuadraticBezier,
+    policy: PredicatePolicy,
+) -> LineRationalQuadraticBezierIntersectionReport {
+    if let Some(axis) = segment.facts().axis_aligned {
+        return intersect_axis_aligned_line_rational_quadratic_bezier_with_axis(
+            segment, curve, axis, policy,
+        );
+    }
+
+    let roots = match solve_rational_quadratic_implicit_line_roots(segment, curve, policy) {
+        Some(roots) => roots,
+        None => return line_rational_quadratic_unknown_report(),
+    };
+    let mut intersections = Vec::new();
+    for parameter in roots {
+        match parameter_in_unit_interval(&parameter, policy) {
+            Some(true) => {}
+            Some(false) => continue,
+            None => return line_rational_quadratic_unknown_report(),
+        }
+        let Some(point) = eval_rational_quadratic_at_real(curve, &parameter, policy) else {
+            return line_rational_quadratic_unknown_report();
+        };
+        match point_inside_segment_bounds(&point, segment, policy) {
+            Some(true) => {}
+            Some(false) => continue,
+            None => return line_rational_quadratic_unknown_report(),
+        }
+        if push_unique_rational_quadratic_intersection(&mut intersections, parameter, point, policy)
+            .is_none()
+        {
+            return line_rational_quadratic_unknown_report();
+        }
+    }
+    if sort_rational_quadratic_intersections(&mut intersections, policy).is_none() {
+        return line_rational_quadratic_unknown_report();
+    }
+    let class = match intersections.len() {
+        0 => LineRationalQuadraticBezierIntersectionClass::Disjoint,
+        1 => match implicit_line_rational_quadratic_roots_are_tangent(segment, curve, policy) {
+            Some(true) => LineRationalQuadraticBezierIntersectionClass::Tangent,
+            Some(false) => LineRationalQuadraticBezierIntersectionClass::OnePoint,
+            None => return line_rational_quadratic_unknown_report(),
+        },
+        2 => LineRationalQuadraticBezierIntersectionClass::TwoPoints,
+        _ => LineRationalQuadraticBezierIntersectionClass::Unknown,
+    };
+    LineRationalQuadraticBezierIntersectionReport {
+        class,
+        intersections,
+        support_overlap: None,
+    }
+}
+
 /// Intersect an axis-aligned line segment with a rational quadratic conic exactly.
 pub fn intersect_axis_aligned_line_rational_quadratic_bezier(
     segment: &LinePathSegment,
@@ -1010,6 +1081,15 @@ pub fn intersect_axis_aligned_line_rational_quadratic_bezier(
     let Some(axis) = segment.facts().axis_aligned else {
         return line_rational_quadratic_unknown_report();
     };
+    intersect_axis_aligned_line_rational_quadratic_bezier_with_axis(segment, curve, axis, policy)
+}
+
+fn intersect_axis_aligned_line_rational_quadratic_bezier_with_axis(
+    segment: &LinePathSegment,
+    curve: &RationalQuadraticBezier,
+    axis: Axis,
+    policy: PredicatePolicy,
+) -> LineRationalQuadraticBezierIntersectionReport {
     let fixed = match axis {
         Axis::X => segment.start().y.clone(),
         Axis::Y => segment.start().x.clone(),
@@ -1446,6 +1526,24 @@ fn solve_rational_quadratic_coordinate_roots(
     }
 }
 
+fn solve_rational_quadratic_implicit_line_roots(
+    segment: &LinePathSegment,
+    curve: &RationalQuadraticBezier,
+    policy: PredicatePolicy,
+) -> Option<Vec<Real>> {
+    let q0 = rational_conic_implicit_line_coefficient(segment, curve.start(), &Real::one());
+    let q1 =
+        rational_conic_implicit_line_coefficient(segment, curve.control(), curve.control_weight());
+    let q2 = rational_conic_implicit_line_coefficient(segment, curve.end(), &Real::one());
+    let a = q0.clone() - Real::from(2) * q1.clone() + q2;
+    let b = Real::from(2) * (q1 - q0.clone());
+    let c = q0;
+    match compare_reals_with_policy(&a, &Real::zero(), policy).value()? {
+        Ordering::Equal => solve_linear_root(b, c, policy),
+        Ordering::Less | Ordering::Greater => solve_quadratic_roots(a, b, c, policy),
+    }
+}
+
 fn solve_cubic_coordinate_roots_up_to_quadratic(
     curve: &CubicBezier,
     axis: Axis,
@@ -1750,6 +1848,18 @@ fn rational_conic_support_coefficient(
     fixed: &Real,
 ) -> Real {
     weight.clone() * (coordinate(point, axis) - fixed.clone())
+}
+
+fn rational_conic_implicit_line_coefficient(
+    segment: &LinePathSegment,
+    point: &Point2,
+    weight: &Real,
+) -> Real {
+    let dx = segment.end().x.clone() - segment.start().x.clone();
+    let dy = segment.end().y.clone() - segment.start().y.clone();
+    let x = weight.clone() * (point.x.clone() - segment.start().x.clone());
+    let y = weight.clone() * (point.y.clone() - segment.start().y.clone());
+    dx * y - dy * x
 }
 
 fn implicit_line_support_coefficient(segment: &LinePathSegment, point: &Point2) -> Real {
@@ -2703,6 +2813,27 @@ fn rational_quadratic_roots_are_tangent(
         rational_conic_support_coefficient(curve.control(), curve.control_weight(), axis, &fixed);
     let q2 = rational_conic_support_coefficient(curve.end(), &Real::one(), axis, &fixed);
     let a = q0.clone() - Real::from(2) * q1.clone() + q2.clone();
+    let b = Real::from(2) * (q1 - q0.clone());
+    let c = q0;
+    if compare_reals_with_policy(&a, &Real::zero(), policy).value()? == Ordering::Equal {
+        return Some(false);
+    }
+    let discriminant = b.clone() * b - Real::from(4) * a * c;
+    Some(
+        compare_reals_with_policy(&discriminant, &Real::zero(), policy).value()? == Ordering::Equal,
+    )
+}
+
+fn implicit_line_rational_quadratic_roots_are_tangent(
+    segment: &LinePathSegment,
+    curve: &RationalQuadraticBezier,
+    policy: PredicatePolicy,
+) -> Option<bool> {
+    let q0 = rational_conic_implicit_line_coefficient(segment, curve.start(), &Real::one());
+    let q1 =
+        rational_conic_implicit_line_coefficient(segment, curve.control(), curve.control_weight());
+    let q2 = rational_conic_implicit_line_coefficient(segment, curve.end(), &Real::one());
+    let a = q0.clone() - Real::from(2) * q1.clone() + q2;
     let b = Real::from(2) * (q1 - q0.clone());
     let c = q0;
     if compare_reals_with_policy(&a, &Real::zero(), policy).value()? == Ordering::Equal {
