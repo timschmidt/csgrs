@@ -33814,6 +33814,28 @@ fn exact_boolmesh_kernel03_classifies_nested_closed_no_intersection() {
             .zip(outer.triangles().iter())
             .all(|(actual, expected)| cyclic_triangle_eq(actual.0, expected.0))
     );
+    let union_execution = hypermesh::exact::execute_exact_boolmesh_port(
+        &inner,
+        &outer,
+        hypermesh::exact::ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap();
+    union_execution
+        .validate_against_sources(&inner, &outer)
+        .unwrap();
+    assert_eq!(
+        union_execution.shortcut,
+        hypermesh::exact::ExactBooleanShortcutKind::WindingContainment
+    );
+    assert!(
+        union_execution
+            .mesh
+            .triangles()
+            .iter()
+            .zip(outer.triangles().iter())
+            .all(|(actual, expected)| cyclic_triangle_eq(actual.0, expected.0))
+    );
 
     let intersection_workspace = hypermesh::exact::exact_boolmesh_workspace(
         &inner,
@@ -33871,6 +33893,28 @@ fn exact_boolmesh_kernel03_classifies_nested_closed_no_intersection() {
             .zip(inner.triangles().iter())
             .all(|(actual, expected)| cyclic_triangle_eq(actual.0, expected.0))
     );
+    let intersection_execution = hypermesh::exact::execute_exact_boolmesh_port(
+        &inner,
+        &outer,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap();
+    intersection_execution
+        .validate_against_sources(&inner, &outer)
+        .unwrap();
+    assert_eq!(
+        intersection_execution.shortcut,
+        hypermesh::exact::ExactBooleanShortcutKind::WindingContainment
+    );
+    assert!(
+        intersection_execution
+            .mesh
+            .triangles()
+            .iter()
+            .zip(inner.triangles().iter())
+            .all(|(actual, expected)| cyclic_triangle_eq(actual.0, expected.0))
+    );
 
     let difference_workspace = hypermesh::exact::exact_boolmesh_workspace(
         &inner,
@@ -33885,6 +33929,21 @@ fn exact_boolmesh_kernel03_classifies_nested_closed_no_intersection() {
     assert_eq!(difference_size_output.vertices_from_left, 0);
     assert_eq!(difference_size_output.vertices_from_right, 0);
     assert!(difference_size_output.mesh_export.triangles.is_empty());
+    let difference_execution = hypermesh::exact::execute_exact_boolmesh_port(
+        &inner,
+        &outer,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap();
+    difference_execution
+        .validate_against_sources(&inner, &outer)
+        .unwrap();
+    assert_eq!(
+        difference_execution.shortcut,
+        hypermesh::exact::ExactBooleanShortcutKind::WindingContainment
+    );
+    assert!(difference_execution.mesh.triangles().is_empty());
 
     let mut stale_winding = union_workspace.clone();
     stale_winding.boolean03.w03[0] = 0;

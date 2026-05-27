@@ -2006,6 +2006,19 @@ fn exercise_exact_boolmesh_kernel03_no_intersection_port() {
         assert_eq!(size_output.source_edge_incident_gaps, 0);
         assert_eq!(size_output.mesh_export.triangles.len(), output_faces);
         assert_eq!(size_output.halfedge_assembly.emitted_boundary_halfedges, 0);
+        let execution = hypermesh::exact::execute_exact_boolmesh_port(
+            &inner,
+            &outer,
+            operation,
+            ValidationPolicy::CLOSED,
+        )
+        .expect("kernel03 no-intersection boolmesh port should execute");
+        execution.validate_against_sources(&inner, &outer).unwrap();
+        assert_eq!(
+            execution.shortcut,
+            hypermesh::exact::ExactBooleanShortcutKind::WindingContainment
+        );
+        assert_eq!(execution.mesh.triangles().len(), output_faces);
 
         let mut stale_winding = workspace.clone();
         stale_winding.boolean03.w03[0] = 0;

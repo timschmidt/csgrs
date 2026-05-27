@@ -13164,6 +13164,14 @@ fn exact_boolmesh_kernel03_no_intersection_port(c: &mut Criterion) {
                     .validate_against_sources(&inner, &outer)
                     .unwrap();
                 assert!(intersection.is_certified_no_intersection_kernel03());
+                let execution = hypermesh::exact::execute_exact_boolmesh_port(
+                    &inner,
+                    &outer,
+                    hypermesh::exact::ExactBooleanOperation::Union,
+                    ValidationPolicy::CLOSED,
+                )
+                .unwrap();
+                execution.validate_against_sources(&inner, &outer).unwrap();
                 let union_stage = union.boolean45.as_ref().unwrap();
                 let intersection_stage = intersection.boolean45.as_ref().unwrap();
                 union
@@ -13188,6 +13196,7 @@ fn exact_boolmesh_kernel03_no_intersection_port(c: &mut Criterion) {
                     + union_stage.whole_source_edges.source_edge_runs.len()
                     + union_stage.halfedge_assembly.emitted_pairs
                     + union_stage.mesh_export.triangles.len()
+                    + execution.mesh.triangles().len()
                     + intersection_stage.vertices_from_left
                     + intersection_stage.whole_source_edges.source_edge_runs.len()
                     + intersection_stage.halfedge_assembly.emitted_pairs

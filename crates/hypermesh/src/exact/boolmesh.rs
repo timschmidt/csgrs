@@ -22,6 +22,8 @@ mod boolean45;
 mod kernel12;
 
 #[cfg(feature = "exact-triangulation")]
+use super::AabbIntersectionKind;
+#[cfg(feature = "exact-triangulation")]
 use super::boolean::ExactBooleanOperation;
 #[cfg(feature = "exact-triangulation")]
 use super::construction::{
@@ -43,8 +45,6 @@ use super::validation::ValidationPolicy;
 use super::winding::{
     ClosedMeshWindingRelation, classify_point_against_closed_mesh_winding_report,
 };
-#[cfg(feature = "exact-triangulation")]
-use super::{AabbIntersectionKind, MeshError};
 #[cfg(feature = "exact-triangulation")]
 use boolean45::{pair_source_edge_events, size_output_stage};
 #[cfg(feature = "exact-triangulation")]
@@ -1270,6 +1270,10 @@ impl ExactBoolMeshExecution {
             && self.shortcut == ExactBooleanShortcutKind::BoundsDisjoint
         {
             Ok(())
+        } else if self.workspace.is_certified_no_intersection_kernel03()
+            && self.shortcut == boolmesh_no_intersection_shortcut(&self.workspace.boolean03)
+        {
+            Ok(())
         } else {
             Err(ExactBoolMeshValidationError::ShortcutMismatch)
         }
@@ -1358,6 +1362,66 @@ pub fn exact_boolmesh_workspace(
     ExactBoolMeshWorkspace::from_sources(left, right, operation)
 }
 
+/// Execute the currently ported exact boolmesh pipeline.
+///
+/// This is the executable boundary for landed direct-port stages.  It accepts
+/// a workspace only after `Boolean03` and `boolean45` have produced a complete
+/// replayable mesh-export stage.  The first supported shapes are legacy
+/// boolmesh's empty-intersection no-contact paths: certified bounds disjoint
+/// operands and closed no-intersection operands classified by `kernel03`
+/// winding.  Yap, "Towards Exact Geometric Computation," *Computational
+/// Geometry* 7.1-2 (1997), is the contract here: unresolved stages return a
+/// typed blocker instead of falling back to toleranced construction.
+#[cfg(feature = "exact-triangulation")]
+pub fn execute_exact_boolmesh_port(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<ExactBoolMeshExecution, ExactBoolMeshValidationError> {
+    if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
+        return Err(ExactBoolMeshValidationError::PortBlocked(
+            ExactBoolMeshKernelStage::Boolean03,
+        ));
+    }
+    let workspace = ExactBoolMeshWorkspace::from_sources(left, right, operation);
+    workspace.validate()?;
+    let shortcut = boolmesh_completed_shortcut(&workspace).ok_or_else(|| {
+        ExactBoolMeshValidationError::PortBlocked(
+            workspace
+                .blocker
+                .as_ref()
+                .map(|blocker| blocker.stage)
+                .unwrap_or(ExactBoolMeshKernelStage::Boolean03),
+        )
+    })?;
+    let boolean45 = workspace
+        .boolean45
+        .as_ref()
+        .ok_or(ExactBoolMeshValidationError::MissingBlocker)?;
+    let mesh = if boolean45_simple_export_is_complete(boolean45) {
+        materialize_boolean45_export(
+            boolean45,
+            &workspace.boolean03,
+            left,
+            right,
+            validation,
+            boolmesh_export_label(operation),
+        )?
+    } else {
+        return Err(ExactBoolMeshValidationError::PortBlocked(
+            ExactBoolMeshKernelStage::Triangulation,
+        ));
+    };
+    let execution = ExactBoolMeshExecution {
+        workspace,
+        shortcut,
+        mesh,
+    };
+    execution.validate_against_sources(left, right)?;
+    Ok(execution)
+}
+
 /// Execute the currently ported exact boolmesh bounds-disjoint slice.
 ///
 /// This is intentionally small but not a report-only layer: it materializes the
@@ -1383,55 +1447,37 @@ pub fn execute_exact_boolmesh_bounds_disjoint(
                 .unwrap_or(ExactBoolMeshKernelStage::Boolean03),
         ));
     }
-    let boolean45 = workspace
-        .boolean45
-        .as_ref()
-        .ok_or(ExactBoolMeshValidationError::MissingBlocker)?;
-    let mesh = match operation {
-        ExactBooleanOperation::Union
-        | ExactBooleanOperation::Intersection
-        | ExactBooleanOperation::Difference
-            if boolean45_bounds_disjoint_export_is_complete(boolean45) =>
-        {
-            materialize_boolean45_export(
-                boolean45,
-                &workspace.boolean03,
-                left,
-                right,
-                validation,
-                boolmesh_export_label(operation),
-            )?
-        }
-        ExactBooleanOperation::Union => concatenate_meshes(left, right, validation)
-            .map_err(|_| ExactBoolMeshValidationError::InvalidOutputMesh)?,
-        ExactBooleanOperation::Intersection => {
-            empty_mesh("exact boolmesh empty disjoint intersection", validation)
-                .map_err(|_| ExactBoolMeshValidationError::InvalidOutputMesh)?
-        }
-        ExactBooleanOperation::Difference => ExactMesh::new_with_policy(
-            left.vertices().to_vec(),
-            left.triangles().to_vec(),
-            SourceProvenance::exact("exact boolmesh disjoint left difference"),
-            validation,
-        )
-        .map_err(|_| ExactBoolMeshValidationError::InvalidOutputMesh)?,
-        ExactBooleanOperation::SelectedRegions(_) => {
-            return Err(ExactBoolMeshValidationError::PortBlocked(
-                ExactBoolMeshKernelStage::Boolean03,
-            ));
-        }
-    };
-    let execution = ExactBoolMeshExecution {
-        workspace,
-        shortcut: ExactBooleanShortcutKind::BoundsDisjoint,
-        mesh,
-    };
-    execution.validate_against_sources(left, right)?;
-    Ok(execution)
+    execute_exact_boolmesh_port(left, right, operation, validation)
 }
 
 #[cfg(feature = "exact-triangulation")]
-fn boolean45_bounds_disjoint_export_is_complete(stage: &ExactBoolMeshBoolean45Stage) -> bool {
+fn boolmesh_completed_shortcut(
+    workspace: &ExactBoolMeshWorkspace,
+) -> Option<ExactBooleanShortcutKind> {
+    if workspace.is_certified_bounds_disjoint() {
+        Some(ExactBooleanShortcutKind::BoundsDisjoint)
+    } else if workspace.is_certified_no_intersection_kernel03() {
+        Some(boolmesh_no_intersection_shortcut(&workspace.boolean03))
+    } else {
+        None
+    }
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn boolmesh_no_intersection_shortcut(
+    boolean03: &ExactBoolMeshBoolean03,
+) -> ExactBooleanShortcutKind {
+    if boolean03.w03.iter().any(|winding| *winding != 0)
+        || boolean03.w30.iter().any(|winding| *winding != 0)
+    {
+        ExactBooleanShortcutKind::WindingContainment
+    } else {
+        ExactBooleanShortcutKind::WindingSeparated
+    }
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn boolean45_simple_export_is_complete(stage: &ExactBoolMeshBoolean45Stage) -> bool {
     stage.source_edge_incident_gaps == 0
         && stage.halfedge_assembly.unfilled_halfedges == 0
         && stage.face_loop_assembly.incomplete_faces == 0
@@ -1511,41 +1557,6 @@ fn boolmesh_export_label(operation: ExactBooleanOperation) -> &'static str {
         ExactBooleanOperation::Difference => "exact boolmesh exported difference",
         ExactBooleanOperation::SelectedRegions(_) => "exact boolmesh exported selected regions",
     }
-}
-
-#[cfg(feature = "exact-triangulation")]
-fn empty_mesh(label: &'static str, validation: ValidationPolicy) -> Result<ExactMesh, MeshError> {
-    ExactMesh::new_with_policy(
-        Vec::new(),
-        Vec::new(),
-        SourceProvenance::exact(label),
-        validation,
-    )
-}
-
-#[cfg(feature = "exact-triangulation")]
-fn concatenate_meshes(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    validation: ValidationPolicy,
-) -> Result<ExactMesh, MeshError> {
-    let mut vertices = left.vertices().to_vec();
-    let right_offset = vertices.len();
-    vertices.extend_from_slice(right.vertices());
-    let mut triangles = left.triangles().to_vec();
-    triangles.extend(right.triangles().iter().map(|triangle| {
-        Triangle([
-            triangle.0[0] + right_offset,
-            triangle.0[1] + right_offset,
-            triangle.0[2] + right_offset,
-        ])
-    }));
-    ExactMesh::new_with_policy(
-        vertices,
-        triangles,
-        SourceProvenance::exact("exact boolmesh disjoint union"),
-        validation,
-    )
 }
 
 #[cfg(feature = "exact-triangulation")]
