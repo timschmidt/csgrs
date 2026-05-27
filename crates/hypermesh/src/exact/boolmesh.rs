@@ -28,6 +28,8 @@ mod kernel12;
 mod kernel12_boundary;
 #[cfg(feature = "exact-triangulation")]
 mod kernel12_op;
+#[cfg(feature = "exact-triangulation")]
+mod kernel_frame;
 
 #[cfg(feature = "exact-triangulation")]
 use super::AabbIntersectionKind;
@@ -92,6 +94,17 @@ pub fn exact_boolmesh_kernel02_shadow_probe_for_internal_fuzz(selector: u8) -> b
 #[cfg(all(feature = "exact-triangulation", feature = "internal-fuzzing"))]
 pub fn exact_boolmesh_kernel12_shadow_accumulator_probe_for_internal_fuzz(selector: u8) -> bool {
     kernel12_op::internal_fuzz_probe(selector)
+}
+
+/// Exercise exact boolmesh working-frame construction from fuzz targets.
+///
+/// The frame builder is the handoff that turns retained exact meshes into the
+/// boolmesh-style halfedge/point/expansion package consumed by the ported
+/// kernels. Keeping it in the fuzz build catches topology-shape drift before
+/// `kernel12` lowering delegates to the accumulator.
+#[cfg(all(feature = "exact-triangulation", feature = "internal-fuzzing"))]
+pub fn exact_boolmesh_kernel_frame_probe_for_internal_fuzz(selector: u8) -> bool {
+    kernel_frame::internal_fuzz_probe(selector)
 }
 
 /// Legacy boolmesh kernel stage represented by the exact port.
