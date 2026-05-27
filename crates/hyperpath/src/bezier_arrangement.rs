@@ -876,15 +876,19 @@ fn intersect_axis_aligned_line_quadratic_bezier_with_axis(
 /// For non-axis lines this evaluates the cubic Bezier in the exact implicit
 /// line equation `cross(line.end-line.start, B(t)-line.start) = 0`. Constant,
 /// linear, and quadratic equations are solved as exact `Real` objects and
-/// replayed against the curve domain and segment bounds. Genuinely cubic
-/// equations remain [`LineCubicBezierIntersectionClass::Unknown`] for
-/// topology, but they now retain Sturm-isolated algebraic parameters and exact
-/// coordinate-image evidence for later schedulers. This is the Yap boundary
-/// from "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997): exact construction is
-/// admitted only when the predicate layer has a replayable object. The cubic
-/// Bezier carrier and tangent classification follow the polynomial-curve
-/// discipline in Farouki, *Pythagorean Hodograph Curves* (2008).
+/// replayed against the curve domain and segment bounds. If the implicit
+/// equation vanishes identically, the general same-support branch replays the
+/// segment's normalized line parameter as a scalar cubic image and promotes
+/// only monotone overlaps whose inverse witnesses are exact. Genuinely cubic
+/// point equations and unsupported inverse witnesses remain
+/// [`LineCubicBezierIntersectionClass::Unknown`] for topology, but point
+/// equations retain Sturm-isolated algebraic parameters and exact coordinate
+/// image evidence for later schedulers. This is the Yap boundary from
+/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+/// (1997): exact construction is admitted only when the predicate layer has a
+/// replayable object. The cubic Bezier carrier and tangent classification
+/// follow the polynomial-curve discipline in Farouki, *Pythagorean Hodograph
+/// Curves* (2008).
 pub fn intersect_line_cubic_bezier(
     segment: &LinePathSegment,
     curve: &CubicBezier,
@@ -896,7 +900,11 @@ pub fn intersect_line_cubic_bezier(
 
     let roots = match solve_cubic_implicit_line_roots_up_to_quadratic(segment, curve, policy) {
         Some(roots) => roots,
-        None => return true_cubic_general_line_algebraic_support_report(segment, curve, policy),
+        None => {
+            return cubic_general_line_overlap_report(segment, curve, policy).unwrap_or_else(
+                || true_cubic_general_line_algebraic_support_report(segment, curve, policy),
+            );
+        }
     };
     let mut intersections = Vec::new();
     for parameter in roots {
@@ -2168,6 +2176,93 @@ fn quadratic_general_line_overlap_report(
     }
 }
 
+fn cubic_general_line_overlap_report(
+    segment: &LinePathSegment,
+    curve: &CubicBezier,
+    policy: PredicatePolicy,
+) -> Option<LineCubicBezierIntersectionReport> {
+    // Non-axis same-support cubics use the retained segment's normalized line
+    // parameter as the scalar image:
+    //
+    //     s(t) = dot(B(t)-L0, L1-L0) / |L1-L0|^2.
+    //
+    // The implicit line equation must vanish at all four Bernstein controls.
+    // Only then do we allow overlap construction, and only when the scalar
+    // cubic has a Bernstein-sign monotonicity certificate and the overlap
+    // boundary inverses are exact `Real` parameters. This is Yap's retained
+    // object/predicate boundary in the same-support case: true algebraic
+    // inverse boundaries are not sampled into topology. The derivative
+    // Bernstein controls follow Farouki, Pythagorean-Hodograph Curves (2008).
+    if !cubic_general_same_support(segment, curve, policy)? {
+        return None;
+    }
+    let scalar_controls = cubic_line_parameter_controls(segment, curve)?;
+    if classify_cubic_hodograph_controls(&cubic_scalar_hodograph_controls(&scalar_controls), policy)
+        != LineCubicBezierSupportOverlapMonotonicity::Monotone
+    {
+        return Some(LineCubicBezierIntersectionReport {
+            class: LineCubicBezierIntersectionClass::Unknown,
+            intersections: Vec::new(),
+            algebraic_support_roots: Vec::new(),
+            support_overlap: None,
+        });
+    }
+
+    let curve_a = scalar_controls[0].clone();
+    let curve_b = scalar_controls[3].clone();
+    let overlap_min = max_real(
+        &min_real(&curve_a, &curve_b, policy)?,
+        &Real::zero(),
+        policy,
+    )?;
+    let overlap_max = min_real(&max_real(&curve_a, &curve_b, policy)?, &Real::one(), policy)?;
+    match compare_reals_with_policy(&overlap_min, &overlap_max, policy).value()? {
+        Ordering::Greater => Some(LineCubicBezierIntersectionReport {
+            class: LineCubicBezierIntersectionClass::Disjoint,
+            intersections: Vec::new(),
+            algebraic_support_roots: Vec::new(),
+            support_overlap: None,
+        }),
+        Ordering::Equal => {
+            let parameter = cubic_scalar_image_parameter(&scalar_controls, &overlap_min, policy)?;
+            let point = point_from_line_parameter(segment, overlap_min);
+            Some(LineCubicBezierIntersectionReport {
+                class: LineCubicBezierIntersectionClass::OnePoint,
+                intersections: vec![LineCubicBezierIntersection { parameter, point }],
+                algebraic_support_roots: Vec::new(),
+                support_overlap: None,
+            })
+        }
+        Ordering::Less => {
+            let mut intersections = vec![
+                LineCubicBezierIntersection {
+                    parameter: cubic_scalar_image_parameter(
+                        &scalar_controls,
+                        &overlap_min,
+                        policy,
+                    )?,
+                    point: point_from_line_parameter(segment, overlap_min),
+                },
+                LineCubicBezierIntersection {
+                    parameter: cubic_scalar_image_parameter(
+                        &scalar_controls,
+                        &overlap_max,
+                        policy,
+                    )?,
+                    point: point_from_line_parameter(segment, overlap_max),
+                },
+            ];
+            sort_cubic_intersections(&mut intersections, policy)?;
+            Some(LineCubicBezierIntersectionReport {
+                class: LineCubicBezierIntersectionClass::Overlap,
+                intersections,
+                algebraic_support_roots: Vec::new(),
+                support_overlap: None,
+            })
+        }
+    }
+}
+
 fn cubic_line_overlap_report(
     segment: &LinePathSegment,
     curve: &CubicBezier,
@@ -2570,6 +2665,23 @@ fn quadratic_general_same_support(
     )
 }
 
+fn cubic_general_same_support(
+    segment: &LinePathSegment,
+    curve: &CubicBezier,
+    policy: PredicatePolicy,
+) -> Option<bool> {
+    let q0 = implicit_line_support_coefficient(segment, curve.start());
+    let q1 = implicit_line_support_coefficient(segment, curve.control0());
+    let q2 = implicit_line_support_coefficient(segment, curve.control1());
+    let q3 = implicit_line_support_coefficient(segment, curve.end());
+    Some(
+        compare_reals_with_policy(&q0, &Real::zero(), policy).value()? == Ordering::Equal
+            && compare_reals_with_policy(&q1, &Real::zero(), policy).value()? == Ordering::Equal
+            && compare_reals_with_policy(&q2, &Real::zero(), policy).value()? == Ordering::Equal
+            && compare_reals_with_policy(&q3, &Real::zero(), policy).value()? == Ordering::Equal,
+    )
+}
+
 fn cubic_support_overlap(
     segment: &LinePathSegment,
     curve: &CubicBezier,
@@ -2598,6 +2710,14 @@ fn cubic_hodograph_controls(curve: &CubicBezier, axis: Axis) -> [Real; 3] {
         Real::from(3) * (control0.clone() - start),
         Real::from(3) * (control1.clone() - control0),
         Real::from(3) * (end - control1),
+    ]
+}
+
+fn cubic_scalar_hodograph_controls(controls: &[Real; 4]) -> [Real; 3] {
+    [
+        Real::from(3) * (controls[1].clone() - controls[0].clone()),
+        Real::from(3) * (controls[2].clone() - controls[1].clone()),
+        Real::from(3) * (controls[3].clone() - controls[2].clone()),
     ]
 }
 
@@ -2847,6 +2967,89 @@ fn cubic_line_image_parameter(
     match accepted.len() {
         1 => accepted.pop(),
         _ => None,
+    }
+}
+
+fn cubic_scalar_image_parameter(
+    controls: &[Real; 4],
+    value: &Real,
+    policy: PredicatePolicy,
+) -> Option<Real> {
+    match compare_reals_with_policy(value, &controls[0], policy).value()? {
+        Ordering::Equal => return Some(Real::zero()),
+        Ordering::Less | Ordering::Greater => {}
+    }
+    match compare_reals_with_policy(value, &controls[3], policy).value()? {
+        Ordering::Equal => return Some(Real::one()),
+        Ordering::Less | Ordering::Greater => {}
+    }
+    if cubic_scalar_image_is_affine(controls, policy)? {
+        let denominator = controls[3].clone() - controls[0].clone();
+        return match compare_reals_with_policy(&denominator, &Real::zero(), policy).value()? {
+            Ordering::Equal => None,
+            Ordering::Less | Ordering::Greater => {
+                ((value.clone() - controls[0].clone()) / denominator).ok()
+            }
+        };
+    }
+
+    let roots = solve_cubic_scalar_roots_up_to_quadratic(controls, value.clone(), policy)?;
+    let mut accepted: Vec<Real> = Vec::new();
+    for root in roots {
+        match parameter_in_unit_interval(&root, policy) {
+            Some(true) => {}
+            Some(false) => continue,
+            None => return None,
+        }
+        if accepted.iter().try_fold(false, |duplicate, existing| {
+            Some(
+                duplicate
+                    || compare_reals_with_policy(existing, &root, policy).value()?
+                        == Ordering::Equal,
+            )
+        })? {
+            continue;
+        }
+        accepted.push(root);
+    }
+    match accepted.len() {
+        1 => accepted.pop(),
+        _ => None,
+    }
+}
+
+fn cubic_scalar_image_is_affine(controls: &[Real; 4], policy: PredicatePolicy) -> Option<bool> {
+    let first = Real::from(3) * controls[1].clone()
+        - Real::from(2) * controls[0].clone()
+        - controls[3].clone();
+    let second = Real::from(3) * controls[2].clone()
+        - controls[0].clone()
+        - Real::from(2) * controls[3].clone();
+    Some(
+        compare_reals_with_policy(&first, &Real::zero(), policy).value()? == Ordering::Equal
+            && compare_reals_with_policy(&second, &Real::zero(), policy).value()?
+                == Ordering::Equal,
+    )
+}
+
+fn solve_cubic_scalar_roots_up_to_quadratic(
+    controls: &[Real; 4],
+    value: Real,
+    policy: PredicatePolicy,
+) -> Option<Vec<Real>> {
+    let a = -controls[0].clone() + Real::from(3) * controls[1].clone()
+        - Real::from(3) * controls[2].clone()
+        + controls[3].clone();
+    let b = Real::from(3) * controls[0].clone() - Real::from(6) * controls[1].clone()
+        + Real::from(3) * controls[2].clone();
+    let c = Real::from(3) * (controls[1].clone() - controls[0].clone());
+    let d = controls[0].clone() - value;
+    match compare_reals_with_policy(&a, &Real::zero(), policy).value()? {
+        Ordering::Equal => match compare_reals_with_policy(&b, &Real::zero(), policy).value()? {
+            Ordering::Equal => solve_linear_root(c, d, policy),
+            Ordering::Less | Ordering::Greater => solve_quadratic_roots(b, c, d, policy),
+        },
+        Ordering::Less | Ordering::Greater => None,
     }
 }
 
@@ -3251,6 +3454,18 @@ fn quadratic_line_parameter_controls(
     Some([
         normalized_line_parameter_for_weighted_point(segment, curve.start(), &Real::one())?,
         normalized_line_parameter_for_weighted_point(segment, curve.control(), &Real::one())?,
+        normalized_line_parameter_for_weighted_point(segment, curve.end(), &Real::one())?,
+    ])
+}
+
+fn cubic_line_parameter_controls(
+    segment: &LinePathSegment,
+    curve: &CubicBezier,
+) -> Option<[Real; 4]> {
+    Some([
+        normalized_line_parameter_for_weighted_point(segment, curve.start(), &Real::one())?,
+        normalized_line_parameter_for_weighted_point(segment, curve.control0(), &Real::one())?,
+        normalized_line_parameter_for_weighted_point(segment, curve.control1(), &Real::one())?,
         normalized_line_parameter_for_weighted_point(segment, curve.end(), &Real::one())?,
     ])
 }

@@ -670,6 +670,44 @@ fuzz_target!(|data: &[u8]| {
         }));
     assert_eq!(exact_cubic_overlap_report.cubic_breakpoints[0].len(), 4);
     assert_eq!(exact_cubic_overlap_report.cubic_fragments.len(), 3);
+    let general_cubic_overlap_curve = CubicBezier::new(
+        p(0, 0),
+        pq(8, 3, 8, 3),
+        pq(16, 3, 16, 3),
+        p(8, 8),
+    );
+    let general_cubic_overlap_line = LinePathSegment::new(p(2, 2), p(6, 6));
+    let general_cubic_overlap_report = arrange_line_segments_with_cubic_beziers(
+        &[general_cubic_overlap_line],
+        &[general_cubic_overlap_curve],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert_eq!(
+        general_cubic_overlap_report.events[0].class,
+        LineCubicBezierIntersectionClass::Overlap
+    );
+    assert_eq!(
+        general_cubic_overlap_report.events[0].intersection.intersections[0].parameter,
+        rq(1, 4)
+    );
+    assert_eq!(
+        general_cubic_overlap_report.events[0].intersection.intersections[1].parameter,
+        rq(3, 4)
+    );
+    assert_eq!(general_cubic_overlap_report.cubic_breakpoints[0].len(), 4);
+    let general_cubic_nonmonotone_curve = CubicBezier::new(p(0, 0), p(8, 8), p(0, 0), p(0, 0));
+    let general_cubic_nonmonotone_line = LinePathSegment::new(p(1, 1), p(3, 3));
+    let general_cubic_nonmonotone_report = intersect_line_cubic_bezier(
+        &general_cubic_nonmonotone_line,
+        &general_cubic_nonmonotone_curve,
+        PredicatePolicy::default(),
+    );
+    assert_eq!(
+        general_cubic_nonmonotone_report.class,
+        LineCubicBezierIntersectionClass::Unknown
+    );
+    assert!(general_cubic_nonmonotone_report.intersections.is_empty());
     let nonlinear_cubic_overlap_curve =
         CubicBezier::new(p(0, 0), p(1, 0), p(7, 0), p(8, 0));
     let nonlinear_cubic_overlap_line = LinePathSegment::new(p(-1, 0), p(9, 0));
