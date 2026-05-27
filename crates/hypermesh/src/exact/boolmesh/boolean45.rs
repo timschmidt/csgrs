@@ -13,6 +13,7 @@
 
 mod assembly;
 mod face_loops;
+mod output_triangles;
 mod triangulation;
 
 use std::cmp::Ordering;
@@ -22,6 +23,7 @@ use hyperlimit::compare_reals;
 
 use assembly::assemble_output_halfedges;
 use face_loops::assemble_output_face_loops;
+use output_triangles::materialize_output_triangles;
 use triangulation::triangulate_output_face_loops;
 
 use crate::exact::boolean::ExactBooleanOperation;
@@ -180,6 +182,7 @@ pub(super) fn size_output_stage(
         &halfedge_assembly,
         &face_loop_assembly,
     );
+    let output_triangles = materialize_output_triangles(&loop_triangulation);
 
     ExactBoolMeshBoolean45Stage {
         left_face_halfedge_counts,
@@ -194,6 +197,7 @@ pub(super) fn size_output_stage(
         halfedge_assembly,
         face_loop_assembly,
         loop_triangulation,
+        output_triangles,
         vertices_from_left: i03.iter().map(|value| signed_abs(*value)).sum(),
         vertices_from_right: i30.iter().map(|value| signed_abs(*value)).sum(),
         inserted_intersection_vertices: i12

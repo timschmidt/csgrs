@@ -13047,6 +13047,7 @@ fn exact_boolmesh_bounds_disjoint_port(c: &mut Criterion) {
                     + size_output.halfedge_assembly.emitted_pairs
                     + size_output.face_loop_assembly.loops.len()
                     + size_output.loop_triangulation.triangulations.len()
+                    + size_output.output_triangles.triangles.len()
             })
         });
     }
@@ -13113,6 +13114,7 @@ fn exact_boolmesh_kernel12_port(c: &mut Criterion) {
                                 + stage.halfedge_assembly.emitted_pairs
                                 + stage.face_loop_assembly.loops.len()
                                 + stage.loop_triangulation.triangulations.len()
+                                + stage.output_triangles.triangles.len()
                         })
                         .unwrap_or(0)
             })

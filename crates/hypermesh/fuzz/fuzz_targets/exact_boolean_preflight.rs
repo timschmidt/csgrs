@@ -217,6 +217,37 @@ fuzz_target!(|data: &[u8]| {
                     .is_err()
             );
         }
+        if let Some(boolean45) = workspace.boolean45.as_ref() {
+            assert_eq!(
+                boolean45.output_triangles.invalid_local_triangles,
+                0,
+                "valid boolmesh loop triangulations should materialize clean output triangles"
+            );
+            assert_eq!(
+                boolean45.output_triangles.triangles.len(),
+                boolean45
+                    .loop_triangulation
+                    .triangulations
+                    .iter()
+                    .map(|triangulation| triangulation.triangles.len() / 3)
+                    .sum::<usize>()
+            );
+            if !boolean45.output_triangles.triangles.is_empty() {
+                let mut corrupted_output = workspace.clone();
+                corrupted_output
+                    .boolean45
+                    .as_mut()
+                    .unwrap()
+                    .output_triangles
+                    .triangles[0]
+                    .vertices[0] = usize::MAX;
+                assert!(
+                    corrupted_output
+                        .validate_against_sources(&left, &right)
+                        .is_err()
+                );
+            }
+        }
         if workspace.is_certified_bounds_disjoint() {
             let execution = hypermesh::exact::execute_exact_boolmesh_bounds_disjoint(
                 &left,

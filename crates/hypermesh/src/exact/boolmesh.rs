@@ -750,6 +750,52 @@ pub struct ExactBoolMeshLoopTriangulationStage {
     pub triangulation_failures: usize,
 }
 
+/// One materialized triangle from an exact boolmesh output face.
+///
+/// Legacy boolmesh ultimately converts each triangulated face boundary into
+/// output triangle records after `boolean45` has assembled face-local
+/// halfedges.  This exact port keeps that same handoff replayable: local
+/// `hypertri` earcut indices are preserved in [`Self::local_triangle`] and
+/// resolved into boolmesh output vertex ids in [`Self::vertices`].  The
+/// separation follows Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997): the certified triangulation decision
+/// and the topology mutation that will later export mesh triangles remain
+/// distinct artifacts.
+#[cfg(feature = "exact-triangulation")]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct ExactBoolMeshTriangulatedOutputTriangle {
+    /// Output face that owns the triangle.
+    pub output_face: usize,
+    /// Index into [`ExactBoolMeshFaceLoopAssemblyStage::loops`].
+    pub loop_index: usize,
+    /// Source mesh side used to choose the projection.
+    pub source_side: ExactBoolMeshSide,
+    /// Source face used to choose the projection.
+    pub source_face: usize,
+    /// Local triangle indices returned by `hypertri` earcut.
+    pub local_triangle: [usize; 3],
+    /// Output vertex ids resolved through the loop triangulation vertex list.
+    pub vertices: [usize; 3],
+}
+
+/// Exact output-triangle materialization over triangulated boolmesh loops.
+#[cfg(feature = "exact-triangulation")]
+#[derive(Clone, Debug, Default, Eq, PartialEq)]
+pub struct ExactBoolMeshOutputTriangleStage {
+    /// Materialized output triangles in boolmesh face/loop traversal order.
+    pub triangles: Vec<ExactBoolMeshTriangulatedOutputTriangle>,
+    /// Upstream simple-loop triangulation candidates that did not produce a
+    /// local index buffer and therefore cannot emit output triangles yet.
+    ///
+    /// Multi-loop faces are counted once, matching the current
+    /// [`ExactBoolMeshLoopTriangulationStage`] blocker granularity.  The later
+    /// exact CDT slice will refine this into hole/constraint records.
+    pub missing_loop_triangulations: usize,
+    /// Local triangle records that were not valid triples of distinct
+    /// in-bounds loop-vertex indices.
+    pub invalid_local_triangles: usize,
+}
+
 /// Exact `boolean45`-shaped output staging metadata.
 #[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -778,6 +824,8 @@ pub struct ExactBoolMeshBoolean45Stage {
     pub face_loop_assembly: ExactBoolMeshFaceLoopAssemblyStage,
     /// Exact triangulation-prep over simple assembled output loops.
     pub loop_triangulation: ExactBoolMeshLoopTriangulationStage,
+    /// Exact output triangle triplets resolved from loop triangulations.
+    pub output_triangles: ExactBoolMeshOutputTriangleStage,
     /// Number of vertices copied from the left operand.
     pub vertices_from_left: usize,
     /// Number of vertices copied from the right operand.
@@ -1130,6 +1178,8 @@ pub enum ExactBoolMeshValidationError {
     Boolean45FaceLoopMismatch,
     /// A `boolean45` loop triangulation record is stale or malformed.
     Boolean45LoopTriangulationMismatch,
+    /// A `boolean45` materialized output-triangle record is stale or malformed.
+    Boolean45OutputTriangleMismatch,
     /// Blocker candidate counts do not match retained candidates.
     BlockerCountMismatch,
     /// A non-disjoint workspace had no named boolmesh-stage blocker.
@@ -1560,6 +1610,70 @@ fn validate_boolean45_stage(
     validate_boolean45_halfedge_assembly(stage, left_faces, right_faces)?;
     validate_boolean45_face_loops(stage)?;
     validate_boolean45_loop_triangulation(stage, left_faces, right_faces)?;
+    validate_boolean45_output_triangles(stage)?;
+    Ok(())
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn validate_boolean45_output_triangles(
+    stage: &ExactBoolMeshBoolean45Stage,
+) -> Result<(), ExactBoolMeshValidationError> {
+    let expected_missing = stage.loop_triangulation.multi_loop_faces
+        + stage.loop_triangulation.short_loops
+        + stage.loop_triangulation.missing_source_faces
+        + stage.loop_triangulation.missing_vertex_coordinates
+        + stage.loop_triangulation.triangulation_failures;
+    if stage.output_triangles.missing_loop_triangulations != expected_missing {
+        return Err(ExactBoolMeshValidationError::Boolean45OutputTriangleMismatch);
+    }
+
+    let mut expected_triangles = Vec::new();
+    let mut expected_invalid_local_triangles = 0;
+    for triangulation in &stage.loop_triangulation.triangulations {
+        for local_triangle in triangulation.triangles.chunks_exact(3) {
+            let local_triangle = [local_triangle[0], local_triangle[1], local_triangle[2]];
+            if local_triangle
+                .iter()
+                .any(|index| *index >= triangulation.vertices.len())
+                || local_triangle[0] == local_triangle[1]
+                || local_triangle[1] == local_triangle[2]
+                || local_triangle[2] == local_triangle[0]
+            {
+                expected_invalid_local_triangles += 1;
+                continue;
+            }
+            expected_triangles.push(ExactBoolMeshTriangulatedOutputTriangle {
+                output_face: triangulation.output_face,
+                loop_index: triangulation.loop_index,
+                source_side: triangulation.source_side,
+                source_face: triangulation.source_face,
+                local_triangle,
+                vertices: [
+                    triangulation.vertices[local_triangle[0]],
+                    triangulation.vertices[local_triangle[1]],
+                    triangulation.vertices[local_triangle[2]],
+                ],
+            });
+        }
+    }
+    expected_invalid_local_triangles += stage
+        .loop_triangulation
+        .triangulations
+        .iter()
+        .filter(|triangulation| {
+            !triangulation
+                .triangles
+                .chunks_exact(3)
+                .remainder()
+                .is_empty()
+        })
+        .count();
+    if stage.output_triangles.invalid_local_triangles != expected_invalid_local_triangles
+        || stage.output_triangles.triangles != expected_triangles
+    {
+        return Err(ExactBoolMeshValidationError::Boolean45OutputTriangleMismatch);
+    }
+
     Ok(())
 }
 
