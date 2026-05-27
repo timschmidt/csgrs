@@ -11,8 +11,8 @@ use hyperpath::{
     LineCubicBezierAlgebraicOverlapBreakpointDomain,
     LineCubicBezierAlgebraicOverlapBreakpointSequenceClass,
     LineCubicBezierAlgebraicOverlapBreakpointSequenceSource, LineCubicBezierIntersectionClass,
-    LineCubicBezierSupportOverlapMonotonicity, LineMixedBezierArrangementError, LinePathSegment,
-    LineQuadraticBezierIntersectionClass,
+    LineCubicBezierSupportOverlapMonotonicity, LineExplicitArcIntersectionClass,
+    LineMixedBezierArrangementError, LinePathSegment, LineQuadraticBezierIntersectionClass,
     LineRationalQuadraticBezierAlgebraicBreakpointDomain,
     LineRationalQuadraticBezierAlgebraicBreakpointOrderClass,
     LineRationalQuadraticBezierAlgebraicBreakpointSequenceClass,
@@ -21,7 +21,7 @@ use hyperpath::{
     LineRationalQuadraticBezierSupportOverlapMonotonicity, MixedCurveEndpointTangentClass,
     MixedCurveFragmentEndpoint, MixedCurveFragmentRef, MixedCurveFragmentSeparationClass,
     QuadraticBezier, RationalQuadraticBezier, arrange_cubic_beziers,
-    arrange_line_segments_with_cubic_beziers,
+    arrange_line_segments_with_cubic_beziers, arrange_line_segments_with_explicit_arcs,
     arrange_line_segments_with_mixed_beziers, arrange_line_segments_with_mixed_curves,
     arrange_line_segments_with_quadratic_beziers,
     arrange_line_segments_with_rational_quadratic_beziers, arrange_quadratic_beziers,
@@ -541,6 +541,25 @@ fuzz_target!(|data: &[u8]| {
     .unwrap();
     assert_eq!(sweep_tight_arc_report.arc_fragments.len(), 1);
     assert_eq!(sweep_tight_arc_report.quadratic_fragments.len(), 1);
+
+    let full_circle_arc =
+        ExplicitCircularArc::new(p(0, 0), r(5), p(5, 0), p(5, 0), ArcDirection::Ccw).unwrap();
+    let diagonal_arc_line = LinePathSegment::new(p(-6, -8), p(6, 8));
+    let diagonal_arc_intersection =
+        full_circle_arc.intersect_segment(&diagonal_arc_line, PredicatePolicy::default());
+    assert_eq!(
+        diagonal_arc_intersection.class,
+        LineExplicitArcIntersectionClass::Secant
+    );
+    assert_eq!(diagonal_arc_intersection.points, vec![p(-3, -4), p(3, 4)]);
+    let diagonal_arc_report = arrange_line_segments_with_explicit_arcs(
+        &[diagonal_arc_line],
+        &[full_circle_arc],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert_eq!(diagonal_arc_report.line_breakpoints[0].len(), 4);
+    assert_eq!(diagonal_arc_report.arc_breakpoints[0].len(), 3);
 
     let full_circle_overlap_error = arrange_line_segments_with_mixed_curves(
         &[LinePathSegment::new(p(0, 10), p(8, 10))],

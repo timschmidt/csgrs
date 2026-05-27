@@ -177,6 +177,16 @@ fn path_predicates(c: &mut Criterion) {
             )
         })
     });
+    let line_arc_general_lines = vec![LinePathSegment::new(p(-600, -800), p(600, 800))];
+    c.bench_function("line_arc_arrangement_general_line_cleanup", |b| {
+        b.iter(|| {
+            arrange_line_segments_with_explicit_arcs(
+                &line_arc_general_lines,
+                &line_arc_arcs,
+                PredicatePolicy::default(),
+            )
+        })
+    });
     let line_arc_cell_lines = vec![LinePathSegment::new(p(-500, 0), p(500, 0))];
     let line_arc_cell_arcs = vec![
         ExplicitCircularArc::new(p(0, 0), r(500), p(500, 0), p(-500, 0), ArcDirection::Ccw)
@@ -911,6 +921,12 @@ fn path_predicates(c: &mut Criterion) {
         b.iter(|| {
             explicit_arc
                 .intersect_axis_aligned_segment(&explicit_arc_line, PredicatePolicy::default())
+        })
+    });
+    let explicit_arc_general_line = LinePathSegment::new(p(-6, -8), p(6, 8));
+    c.bench_function("explicit_circular_arc_general_line_intersection", |b| {
+        b.iter(|| {
+            explicit_arc.intersect_segment(&explicit_arc_general_line, PredicatePolicy::default())
         })
     });
     let explicit_arc_subset =

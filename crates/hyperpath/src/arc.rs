@@ -760,6 +760,92 @@ impl ExplicitCircularArc {
         }
     }
 
+    /// Intersect this arc with a retained line segment.
+    ///
+    /// This predicate solves the exact line-circle equation
+    /// `|segment.start + u*(segment.end-segment.start) - center|^2 = r^2`
+    /// in the retained segment parameter `u`. Candidate roots are converted
+    /// back into exact points and accepted only after exact closed-segment
+    /// bounds and exact arc-sweep membership both replay successfully.
+    ///
+    /// The construction follows Yap, "Towards Exact Geometric Computation,"
+    /// *Computational Geometry* 7.1-2 (1997): exact geometric topology is
+    /// emitted only from replayable exact predicates, with undecidable signs
+    /// and square-root failures reported as
+    /// [`LineExplicitArcIntersectionClass::Unknown`]. The retained circular
+    /// arc object/predicate split is the same model used by exact circular-arc
+    /// arrangement kernels such as CGAL `Arrangement_on_surface_2`.
+    pub fn intersect_segment(
+        &self,
+        segment: &LinePathSegment,
+        policy: PredicatePolicy,
+    ) -> LineExplicitArcIntersectionReport {
+        let dx = segment.end().x.clone() - segment.start().x.clone();
+        let dy = segment.end().y.clone() - segment.start().y.clone();
+        let sx = segment.start().x.clone() - self.center.x.clone();
+        let sy = segment.start().y.clone() - self.center.y.clone();
+        let a = dx.clone() * dx.clone() + dy.clone() * dy.clone();
+        let b = Real::from(2) * (dx.clone() * sx.clone() + dy.clone() * sy.clone());
+        let c = sx.clone() * sx + sy.clone() * sy - self.facts.radius_squared.clone();
+
+        let Some(a_order) = compare_reals_with_policy(&a, &Real::zero(), policy).value() else {
+            return line_arc_unknown_report();
+        };
+        if a_order == Ordering::Equal {
+            return line_arc_unknown_report();
+        }
+
+        let discriminant = b.clone() * b.clone() - Real::from(4) * a.clone() * c;
+        let Some(discriminant_order) =
+            compare_reals_with_policy(&discriminant, &Real::zero(), policy).value()
+        else {
+            return line_arc_unknown_report();
+        };
+        if discriminant_order == Ordering::Less {
+            return line_arc_report(Vec::new());
+        }
+
+        let denominator = Real::from(2) * a;
+        let mut parameters = Vec::new();
+        if discriminant_order == Ordering::Equal {
+            let Ok(parameter) = -b / denominator else {
+                return line_arc_unknown_report();
+            };
+            parameters.push(parameter);
+        } else {
+            let Ok(root) = discriminant.sqrt() else {
+                return line_arc_unknown_report();
+            };
+            let Ok(first) = (-b.clone() - root.clone()) / denominator.clone() else {
+                return line_arc_unknown_report();
+            };
+            let Ok(second) = (-b + root) / denominator else {
+                return line_arc_unknown_report();
+            };
+            parameters.push(first);
+            parameters.push(second);
+        }
+
+        let mut accepted = Vec::new();
+        for parameter in parameters {
+            let candidate = point_on_segment_parameter(segment, &parameter);
+            match point_inside_segment_bounds(&candidate, segment, policy) {
+                Some(true) => {}
+                Some(false) => continue,
+                None => return line_arc_unknown_report(),
+            }
+            match self.classify_point(&candidate, policy) {
+                ExplicitArcPointClassification::OnArc => {
+                    push_unique_point(&mut accepted, candidate, policy);
+                }
+                ExplicitArcPointClassification::OnCircleOutsideSweep
+                | ExplicitArcPointClassification::OffCircle => {}
+                ExplicitArcPointClassification::Unknown => return line_arc_unknown_report(),
+            }
+        }
+        line_arc_report(accepted)
+    }
+
     /// Intersect this arc with a certified axis-aligned line segment.
     ///
     /// The method solves the retained line/circle equation on the segment's
@@ -1199,6 +1285,15 @@ fn point_on_axis_line(
         Axis::X => Point2::new(center.x.clone() + signed_root, segment.start().y.clone()),
         Axis::Y => Point2::new(segment.start().x.clone(), center.y.clone() + signed_root),
     }
+}
+
+fn point_on_segment_parameter(segment: &LinePathSegment, parameter: &Real) -> Point2 {
+    Point2::new(
+        segment.start().x.clone()
+            + parameter.clone() * (segment.end().x.clone() - segment.start().x.clone()),
+        segment.start().y.clone()
+            + parameter.clone() * (segment.end().y.clone() - segment.start().y.clone()),
+    )
 }
 
 fn point_inside_segment_bounds(

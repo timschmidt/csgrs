@@ -737,7 +737,7 @@ fn classify_line_arc_arrangement_event(
     arc_breakpoints: &mut [Vec<ExplicitArcArrangementBreakpoint>],
     policy: PredicatePolicy,
 ) -> Result<LineArcArrangementEvent, LineArrangementError> {
-    let report = arc.intersect_axis_aligned_segment(line, policy);
+    let report = arc.intersect_segment(line, policy);
     match report.class {
         LineExplicitArcIntersectionClass::Disjoint => Ok(LineArcArrangementEvent {
             line: line_index,

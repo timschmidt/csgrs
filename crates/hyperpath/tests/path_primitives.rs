@@ -412,7 +412,7 @@ fn line_arc_arrangement_splits_axis_lines_at_arc_events() {
 
     assert_eq!(report.events.len(), 2);
     assert_eq!(report.events[0].class, LineArcArrangementEventClass::Secant);
-    assert_eq!(report.events[0].points, vec![p(5, 0), p(-5, 0)]);
+    assert_eq!(report.events[0].points, vec![p(-5, 0), p(5, 0)]);
     assert_eq!(
         report.events[1].class,
         LineArcArrangementEventClass::Tangent
@@ -506,22 +506,30 @@ fn line_arc_cell_graph_keeps_full_circle_branch_cut_faces() {
 }
 
 #[test]
-fn line_arc_arrangement_reports_unknown_for_non_axis_line() {
-    let diagonal = LinePathSegment::new(p(-5, -5), p(5, 5));
+fn line_arc_arrangement_splits_general_lines_at_arc_events() {
+    let diagonal = LinePathSegment::new(p(-6, -8), p(6, 8));
     let arc = ExplicitCircularArc::new(p(0, 0), r(5), p(5, 0), p(5, 0), ArcDirection::Ccw).unwrap();
 
     let report =
         arrange_line_segments_with_explicit_arcs(&[diagonal], &[arc], PredicatePolicy::default())
             .unwrap();
 
+    assert_eq!(report.events[0].class, LineArcArrangementEventClass::Secant);
+    assert_eq!(report.events[0].points, vec![p(-3, -4), p(3, 4)]);
     assert_eq!(
-        report.events[0].class,
-        LineArcArrangementEventClass::Unknown
+        report.line_breakpoints[0]
+            .iter()
+            .map(|breakpoint| breakpoint.point.clone())
+            .collect::<Vec<_>>(),
+        vec![p(-6, -8), p(-3, -4), p(3, 4), p(6, 8)]
     );
-    assert_eq!(report.line_breakpoints[0].len(), 2);
-    assert_eq!(report.arc_breakpoints[0].len(), 1);
-    assert_eq!(report.line_fragments.len(), 1);
-    assert_eq!(report.arc_fragments.len(), 1);
+    assert_eq!(report.arc_breakpoints[0].len(), 3);
+    assert_eq!(report.line_fragments.len(), 3);
+    assert_eq!(report.arc_fragments.len(), 3);
+    assert_eq!(
+        report.cell_graph.half_edges.len(),
+        report.cell_graph.edges.len() * 2
+    );
 }
 
 #[test]
@@ -4310,6 +4318,27 @@ fn explicit_circular_arc_intersects_axis_aligned_segments_exactly() {
         diagonal_report.class,
         LineExplicitArcIntersectionClass::Unknown
     );
+    let general_diagonal = LinePathSegment::new(p(-6, -8), p(6, 8));
+    let general_report = minor.intersect_segment(&general_diagonal, PredicatePolicy::default());
+    assert_eq!(
+        general_report.class,
+        LineExplicitArcIntersectionClass::Tangent
+    );
+    assert_eq!(general_report.points, vec![p(3, 4)]);
+
+    let full_circle =
+        ExplicitCircularArc::new(p(0, 0), r(5), p(5, 0), p(5, 0), ArcDirection::Ccw).unwrap();
+    let full_report = full_circle.intersect_segment(&general_diagonal, PredicatePolicy::default());
+    assert_eq!(full_report.class, LineExplicitArcIntersectionClass::Secant);
+    assert_eq!(full_report.points, vec![p(-3, -4), p(3, 4)]);
+
+    let general_tangent = LinePathSegment::new(p(-1, 7), p(7, 1));
+    let tangent_report = minor.intersect_segment(&general_tangent, PredicatePolicy::default());
+    assert_eq!(
+        tangent_report.class,
+        LineExplicitArcIntersectionClass::Tangent
+    );
+    assert_eq!(tangent_report.points, vec![p(3, 4)]);
 }
 
 #[test]
