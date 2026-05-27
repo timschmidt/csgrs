@@ -70,7 +70,7 @@ pub(super) fn lower_coplanar_split_rows(
             continue;
         };
         match relation {
-            SegmentIntersection::EndpointTouch | SegmentIntersection::Proper => {
+            SegmentIntersection::EndpointTouch => {
                 for point in points {
                     push_point_side_row(
                         &mut rows,
@@ -82,7 +82,7 @@ pub(super) fn lower_coplanar_split_rows(
                         face_pair.right_face,
                         &point.point,
                         &point.left_parameter,
-                        1,
+                        CoplanarPointSign::EndpointTouch,
                     );
                     push_point_side_row(
                         &mut rows,
@@ -94,7 +94,35 @@ pub(super) fn lower_coplanar_split_rows(
                         face_pair.left_face,
                         &point.point,
                         &point.right_parameter,
-                        1,
+                        CoplanarPointSign::EndpointTouch,
+                    );
+                }
+            }
+            SegmentIntersection::Proper => {
+                for point in points {
+                    push_point_side_row(
+                        &mut rows,
+                        left,
+                        *face_pair,
+                        ExactBoolMeshSide::Left,
+                        *left_edge,
+                        face_pair.left_face,
+                        face_pair.right_face,
+                        &point.point,
+                        &point.left_parameter,
+                        CoplanarPointSign::Fixed(1),
+                    );
+                    push_point_side_row(
+                        &mut rows,
+                        right,
+                        *face_pair,
+                        ExactBoolMeshSide::Right,
+                        *right_edge,
+                        face_pair.right_face,
+                        face_pair.left_face,
+                        &point.point,
+                        &point.right_parameter,
+                        CoplanarPointSign::Fixed(1),
                     );
                 }
             }
@@ -165,7 +193,7 @@ fn push_point_side_row(
     opposite_face: usize,
     point: &Point3,
     parameter: &ExactReal,
-    sign: i32,
+    sign: CoplanarPointSign,
 ) {
     let Some((edge, source_face, source_halfedge, Some(parameter), _)) =
         normalize_boolmesh_source_edge(
@@ -192,6 +220,7 @@ fn push_point_side_row(
         ExactBoolMeshSide::Left => ExactBoolMeshSide::Right,
         ExactBoolMeshSide::Right => ExactBoolMeshSide::Left,
     };
+    let sign = sign.resolve(&parameter);
     rows.push(ExactCoplanarKernel12Row {
         edge_face: ExactBoolMeshEdgeFacePair {
             face_pair,
@@ -211,6 +240,38 @@ fn push_point_side_row(
             parameter,
         },
     });
+}
+
+/// Signed point-row policy after boolmesh source-edge normalization.
+///
+/// Proper intersections keep the positive `Kernel12::op` point-row sign that
+/// legacy boolmesh records before operation coefficients are applied.  Endpoint
+/// touches are the degenerate coplanar counterpart of the same event stream:
+/// after [`normalize_boolmesh_source_edge`] chooses the boolmesh halfedge row,
+/// a touch at the normalized head is the leaving event and a touch elsewhere is
+/// the entering event.  Keeping that topological sign separate from coordinate
+/// equality follows Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997), and preserves the signed row model
+/// consumed by boolmesh `boolean45::pair_up`.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum CoplanarPointSign {
+    Fixed(i32),
+    EndpointTouch,
+}
+
+impl CoplanarPointSign {
+    fn resolve(self, parameter: &ExactReal) -> i32 {
+        match self {
+            Self::Fixed(sign) => sign,
+            Self::EndpointTouch => {
+                if compare_reals(parameter, &ExactReal::from(1)).value() == Some(Ordering::Equal) {
+                    -1
+                } else {
+                    1
+                }
+            }
+        }
+    }
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -251,7 +312,7 @@ fn push_interval_side_rows(
             opposite_face,
             point,
             parameter,
-            if index == 0 { 1 } else { -1 },
+            CoplanarPointSign::Fixed(if index == 0 { 1 } else { -1 }),
         );
     }
 }
@@ -366,7 +427,7 @@ mod tests {
             left_edge: [1, 0],
             right_edge: [1, 0],
             relation: SegmentIntersection::EndpointTouch,
-            points: vec![split_point(p3(1, 0, 0), 0, 0)],
+            points: vec![split_point(p3(0, 0, 0), 1, 1)],
             interval: None,
         };
 
@@ -376,6 +437,28 @@ mod tests {
         assert_eq!(rows[0].edge_face.edge_side, ExactBoolMeshSide::Left);
         assert_eq!(rows[1].edge_face.edge_side, ExactBoolMeshSide::Right);
         assert!(rows.iter().all(|row| row.sign == 1));
+    }
+
+    #[test]
+    fn endpoint_touch_at_normalized_head_is_leaving_row() {
+        let left = tetrahedron_i64([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]);
+        let right = tetrahedron_i64([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, -1]);
+        let evidence = Kernel12CoplanarEvidence::Edge {
+            face_pair: ExactBoolMeshFacePair {
+                left_face: 0,
+                right_face: 0,
+            },
+            left_edge: [1, 0],
+            right_edge: [1, 0],
+            relation: SegmentIntersection::EndpointTouch,
+            points: vec![split_point(p3(1, 0, 0), 0, 0)],
+            interval: None,
+        };
+
+        let rows = lower_coplanar_split_rows(&[evidence], &left, &right);
+
+        assert_eq!(rows.len(), 2);
+        assert!(rows.iter().all(|row| row.sign == -1));
     }
 
     #[test]
@@ -394,8 +477,8 @@ mod tests {
                 points: Vec::new(),
                 interval: Some(CoplanarEdgeInterval {
                     endpoints: [
-                        split_point(p3(0, 0, 0), 0, 0),
-                        split_point(p3(1, 0, 0), 1, 1),
+                        split_point(p3(1, 0, 0), 0, 0),
+                        split_point(p3(0, 0, 0), 1, 1),
                     ],
                 }),
             },
@@ -406,8 +489,8 @@ mod tests {
                 },
                 left_edge: [1, 0],
                 right_edge: [1, 0],
-                relation: SegmentIntersection::EndpointTouch,
-                points: vec![split_point(p3(0, 0, 0), 0, 0)],
+                relation: SegmentIntersection::Proper,
+                points: vec![split_point(p3(1, 0, 0), 0, 0)],
                 interval: None,
             },
         ];
@@ -419,7 +502,7 @@ mod tests {
             let endpoint_rows = rows
                 .iter()
                 .filter(|row| {
-                    row.edge_face.edge_side == side && points_equal(&row.point, &p3(0, 0, 0))
+                    row.edge_face.edge_side == side && points_equal(&row.point, &p3(1, 0, 0))
                 })
                 .collect::<Vec<_>>();
             assert_eq!(endpoint_rows.len(), 2);
