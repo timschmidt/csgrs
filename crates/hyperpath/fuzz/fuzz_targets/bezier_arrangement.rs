@@ -27,7 +27,7 @@ use hyperpath::{
     arrange_line_segments_with_rational_quadratic_beziers, arrange_quadratic_beziers,
     arrange_rational_quadratic_beziers, intersect_axis_aligned_line_cubic_bezier,
     intersect_axis_aligned_line_quadratic_bezier,
-    intersect_axis_aligned_line_rational_quadratic_bezier,
+    intersect_axis_aligned_line_rational_quadratic_bezier, intersect_line_quadratic_bezier,
 };
 use hyperreal::{Rational, Real};
 use hypersolve::AlgebraicRootPolynomialImageStatus;
@@ -35,6 +35,10 @@ use libfuzzer_sys::fuzz_target;
 
 fn r(value: i64) -> Real {
     Real::new(Rational::new(value))
+}
+
+fn rq(numerator: i64, denominator: i64) -> Real {
+    Real::new(Rational::new(numerator) / Rational::new(denominator))
 }
 
 fn p(x: i64, y: i64) -> hyperlimit::Point2 {
@@ -167,6 +171,29 @@ fuzz_target!(|data: &[u8]| {
         LineQuadraticBezierIntersectionClass::Overlap
     );
     assert_eq!(nonlinear_overlap_report.bezier_breakpoints[0].len(), 4);
+
+    let diagonal_curve = QuadraticBezier::new(p(0, 0), p(2, 4), p(4, 0));
+    let diagonal_line = LinePathSegment::new(p(0, 1), p(4, 3));
+    let diagonal_intersection =
+        intersect_line_quadratic_bezier(&diagonal_line, &diagonal_curve, PredicatePolicy::default());
+    assert_eq!(
+        diagonal_intersection.class,
+        LineQuadraticBezierIntersectionClass::TwoPoints
+    );
+    assert_eq!(diagonal_intersection.intersections[0].parameter, rq(1, 4));
+    assert_eq!(diagonal_intersection.intersections[1].parameter, rq(1, 2));
+    let diagonal_report = arrange_line_segments_with_quadratic_beziers(
+        &[diagonal_line],
+        &[diagonal_curve],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert_eq!(
+        diagonal_report.events[0].class,
+        LineQuadraticBezierIntersectionClass::TwoPoints
+    );
+    assert_eq!(diagonal_report.line_breakpoints[0].len(), 4);
+    assert_eq!(diagonal_report.bezier_breakpoints[0].len(), 4);
 
     let cubic = CubicBezier::new(
         p(signed(data[1]), signed(data[2])),

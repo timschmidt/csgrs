@@ -84,7 +84,7 @@ pub use bezier_arrangement::{
     arrange_quadratic_beziers_with_provenance, arrange_rational_quadratic_beziers,
     arrange_rational_quadratic_beziers_with_provenance, intersect_axis_aligned_line_cubic_bezier,
     intersect_axis_aligned_line_quadratic_bezier,
-    intersect_axis_aligned_line_rational_quadratic_bezier,
+    intersect_axis_aligned_line_rational_quadratic_bezier, intersect_line_quadratic_bezier,
 };
 pub use cam::{
     AdditiveBeadLine, AdditiveInfillLink, BeadFillAxis, BeadPlanError, InfillGraphError,

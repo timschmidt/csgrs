@@ -5,7 +5,9 @@
 //! Its job is to promote certified line/quadratic-Bezier events into exact
 //! breakpoints on both source families, including events whose Bezier
 //! parameters are algebraic `Real` roots rather than rational
-//! [`crate::bezier::BezierParameter`] values.
+//! [`crate::bezier::BezierParameter`] values. Axis-aligned overlaps still use
+//! the specialized inverse-coordinate path, while ordinary point events use
+//! exact implicit-line substitution for any nondegenerate retained line.
 
 use std::cmp::Ordering;
 
@@ -15,7 +17,7 @@ use hyperreal::{Real, RealExactSetFacts};
 use crate::bezier::QuadraticBezier;
 use crate::bezier_arrangement::{
     LineQuadraticBezierIntersection, LineQuadraticBezierIntersectionClass,
-    LineQuadraticBezierIntersectionReport, intersect_axis_aligned_line_quadratic_bezier,
+    LineQuadraticBezierIntersectionReport, intersect_line_quadratic_bezier,
 };
 use crate::curve_cell::{
     CurveArrangementCellError, CurveArrangementCellGraph, build_line_quadratic_cell_graph,
@@ -117,7 +119,7 @@ pub struct LineQuadraticBezierArrangementFacts {
 /// Retained mixed line/quadratic-Bezier arrangement schedule and cell graph.
 ///
 /// The report promotes exact event witnesses from
-/// [`intersect_axis_aligned_line_quadratic_bezier`] into split fragments on
+/// [`crate::bezier_arrangement::intersect_line_quadratic_bezier`] into split fragments on
 /// both participating source families. Unlike
 /// [`crate::bezier_arrangement::arrange_quadratic_beziers`], Bezier
 /// breakpoints here are arbitrary exact [`Real`] roots, so secants at
@@ -183,7 +185,7 @@ pub fn arrange_line_segments_with_quadratic_beziers_and_provenance(
 
     for (line_index, line) in lines.iter().enumerate() {
         for (curve_index, curve) in curves.iter().enumerate() {
-            let intersection = intersect_axis_aligned_line_quadratic_bezier(line, curve, policy);
+            let intersection = intersect_line_quadratic_bezier(line, curve, policy);
             if intersection.class != LineQuadraticBezierIntersectionClass::Unknown {
                 for event in &intersection.intersections {
                     insert_line_breakpoint(
