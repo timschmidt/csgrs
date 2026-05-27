@@ -14,13 +14,11 @@
 
 use std::cmp::Ordering;
 
-use hyperlimit::{
-    CoplanarProjection, PlaneSide, Point3, Sign, TriangleLocation, classify_point_triangle,
-    compare_reals, project_point3, projected_polygon_area2_value,
-};
+use hyperlimit::{PlaneSide, Point3, compare_reals};
 
 use crate::exact::mesh::ExactMesh;
 
+use super::kernel12_boundary::{EndpointShadowLocation, classify_endpoint_shadow};
 use super::{
     ExactBoolMeshEdgeEvent, ExactBoolMeshEdgeFacePair, ExactBoolMeshKernel12Event,
     ExactBoolMeshPointConstruction, ExactBoolMeshSide, SegmentPlaneRelation,
@@ -154,7 +152,9 @@ fn lower_strict_endpoint_shadow(
     if !is_endpoint_parameter(&parameter) {
         return None;
     }
-    if !point_strictly_inside_opposite_face(&point, event.edge_face, left_mesh, right_mesh)? {
+    if classify_endpoint_shadow(&point, event.edge_face, left_mesh, right_mesh)?
+        != EndpointShadowLocation::StrictInterior
+    {
         return None;
     }
     Some(LoweredKernel12Event {
@@ -204,54 +204,6 @@ fn signed_endpoint_transition(endpoint_sides: [Option<PlaneSide>; 2]) -> Option<
 fn is_endpoint_parameter(parameter: &super::ExactReal) -> bool {
     compare_reals(parameter, &super::ExactReal::from(0)).value() == Some(Ordering::Equal)
         || compare_reals(parameter, &super::ExactReal::from(1)).value() == Some(Ordering::Equal)
-}
-
-fn point_strictly_inside_opposite_face(
-    point: &Point3,
-    edge_face: ExactBoolMeshEdgeFacePair,
-    left_mesh: &ExactMesh,
-    right_mesh: &ExactMesh,
-) -> Option<bool> {
-    let face_mesh = match edge_face.face_side {
-        ExactBoolMeshSide::Left => left_mesh,
-        ExactBoolMeshSide::Right => right_mesh,
-    };
-    let triangle = face_mesh.triangles().get(edge_face.face)?.0;
-    let face = [
-        face_mesh.vertices().get(triangle[0])?.to_hyperlimit_point(),
-        face_mesh.vertices().get(triangle[1])?.to_hyperlimit_point(),
-        face_mesh.vertices().get(triangle[2])?.to_hyperlimit_point(),
-    ];
-    let projection = choose_triangle_projection(&face)?;
-    classify_point_triangle(
-        &project_point3(&face[0], projection),
-        &project_point3(&face[1], projection),
-        &project_point3(&face[2], projection),
-        &project_point3(point, projection),
-    )
-    .value()
-    .map(|location| location == TriangleLocation::Inside)
-}
-
-fn choose_triangle_projection(points: &[Point3; 3]) -> Option<CoplanarProjection> {
-    [
-        CoplanarProjection::Xy,
-        CoplanarProjection::Xz,
-        CoplanarProjection::Yz,
-    ]
-    .into_iter()
-    .find(|&projection| {
-        let area = projected_polygon_area2_value(points, projection);
-        !matches!(real_sign(&area), Some(Sign::Zero) | None)
-    })
-}
-
-fn real_sign(value: &super::ExactReal) -> Option<Sign> {
-    match compare_reals(value, &super::ExactReal::from(0)).value()? {
-        Ordering::Less => Some(Sign::Negative),
-        Ordering::Equal => Some(Sign::Zero),
-        Ordering::Greater => Some(Sign::Positive),
-    }
 }
 
 /// Coalesce certified identical `Kernel12` contributions by edge/face key.
@@ -374,6 +326,22 @@ mod tests {
         }
     }
 
+    fn endpoint_event(
+        point: Point3,
+        parameter: super::super::ExactReal,
+        endpoint_sides: [Option<PlaneSide>; 2],
+    ) -> ExactBoolMeshKernel12Event {
+        ExactBoolMeshKernel12Event {
+            edge_face: edge_face(),
+            relation: SegmentPlaneRelation::EndpointOnPlane,
+            point: Some(point),
+            parameter: Some(parameter),
+            parameter_ratio: None,
+            construction_failure: None,
+            endpoint_sides,
+        }
+    }
+
     #[test]
     fn coalesces_identical_edge_face_contributions() {
         let left = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
@@ -407,6 +375,33 @@ mod tests {
         );
 
         assert!(lowering.p1q2.is_empty());
+        assert!(lowering.x12.is_empty());
+        assert!(lowering.v12.is_empty());
+        assert!(lowering.source_edge_events.is_empty());
+    }
+
+    #[test]
+    fn keeps_boundary_endpoint_shadows_for_kernel11() {
+        let left = tetrahedron_i64([2, 0, 0], [2, 0, 2], [3, 1, 1], [1, 1, 1]);
+        let right = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, -4]);
+        let lowering = lower_kernel12_events(
+            &[endpoint_event(
+                Point3::new(
+                    super::super::ExactReal::from(2),
+                    super::super::ExactReal::from(0),
+                    super::super::ExactReal::from(0),
+                ),
+                super::super::ExactReal::from(0),
+                [Some(PlaneSide::On), Some(PlaneSide::Above)],
+            )],
+            &left,
+            &right,
+        );
+
+        assert!(
+            lowering.p1q2.is_empty(),
+            "endpoint-on-edge shadows require boolmesh Kernel11 rather than strict vertex/face lowering"
+        );
         assert!(lowering.x12.is_empty());
         assert!(lowering.v12.is_empty());
         assert!(lowering.source_edge_events.is_empty());

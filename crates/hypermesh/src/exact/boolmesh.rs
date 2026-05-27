@@ -20,6 +20,8 @@
 mod boolean45;
 #[cfg(feature = "exact-triangulation")]
 mod kernel12;
+#[cfg(feature = "exact-triangulation")]
+mod kernel12_boundary;
 
 #[cfg(feature = "exact-triangulation")]
 use super::AabbIntersectionKind;
