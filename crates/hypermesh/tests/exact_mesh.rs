@@ -34292,11 +34292,14 @@ fn exact_boolmesh_kernel12_discovers_skew_edge_face_events() {
     assert!(
         workspace
             .boolean03
-            .x12
+            .p1q2
             .iter()
-            .chain(workspace.boolean03.x21.iter())
-            .all(|sign| sign.abs() == 1)
+            .chain(workspace.boolean03.p2q1.iter())
+            .all(|pair| pair.edge[0] < pair.edge[1]),
+        "retained graph events must normalize onto boolmesh's forward source halfedge schedule"
     );
+    assert_eq!(workspace.boolean03.p1q2.len(), 10);
+    assert_eq!(workspace.boolean03.p2q1.len(), 6);
     assert_eq!(
         workspace
             .pair_up
@@ -34315,7 +34318,13 @@ fn exact_boolmesh_kernel12_discovers_skew_edge_face_events() {
     assert_eq!(size_output.vertices_from_right, 0);
     assert_eq!(
         size_output.inserted_intersection_vertices,
-        workspace.boolean03.p1q2.len() + workspace.boolean03.p2q1.len()
+        workspace
+            .boolean03
+            .x12
+            .iter()
+            .chain(workspace.boolean03.x21.iter())
+            .map(|sign| sign.unsigned_abs() as usize)
+            .sum::<usize>()
     );
     assert_eq!(
         size_output.vertex_allocation.output_vertex_origins.len(),

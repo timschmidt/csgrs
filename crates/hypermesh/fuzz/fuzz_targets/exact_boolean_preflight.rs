@@ -1849,13 +1849,25 @@ fn exercise_exact_boolmesh_kernel12_port() {
     assert!(stale_kernel03
         .validate_against_sources(&left, &right)
         .is_err());
+    assert!(workspace
+        .boolean03
+        .p1q2
+        .iter()
+        .chain(workspace.boolean03.p2q1.iter())
+        .all(|pair| pair.edge[0] < pair.edge[1]));
     let size_output = workspace
         .boolean45
         .as_ref()
         .expect("kernel12 boolmesh workspace must size output");
     assert_eq!(
         size_output.inserted_intersection_vertices,
-        workspace.boolean03.p1q2.len() + workspace.boolean03.p2q1.len()
+        workspace
+            .boolean03
+            .x12
+            .iter()
+            .chain(workspace.boolean03.x21.iter())
+            .map(|sign| sign.unsigned_abs() as usize)
+            .sum::<usize>()
     );
     assert_eq!(size_output.source_edge_incident_gaps, 0);
     assert!(size_output.face_halfedge_offsets.windows(2).all(|window| window[0] <= window[1]));

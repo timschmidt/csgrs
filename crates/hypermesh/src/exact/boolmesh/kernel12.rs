@@ -213,6 +213,14 @@ fn lower_intersect12_replay(
         return Intersect12Replay::Missing;
     };
     for (index, hit) in table.iter().enumerate() {
+        if intersect12_hit_has_same_boolmesh_row(event, hit) {
+            let key = (side, index);
+            if used_hits.contains(&key) && !intersect12_hit_matches_event(event, hit) {
+                return Intersect12Replay::AlreadyConsumed;
+            }
+        }
+    }
+    for (index, hit) in table.iter().enumerate() {
         if !intersect12_hit_matches_event(event, hit) {
             continue;
         }
@@ -259,6 +267,25 @@ fn intersect12_hit_matches_event(
         && event.edge_face.face == hit.edge_face.face
         && same_point(point, &hit.point)
         && event_parameter_matches_intersect12_hit(event.edge_face.edge, parameter, hit)
+}
+
+fn intersect12_hit_has_same_boolmesh_row(
+    event: &ExactBoolMeshKernel12Event,
+    hit: &ExactKernel12IntersectHit,
+) -> bool {
+    // Legacy boolmesh owns row cardinality at the `intersect12` scheduler:
+    // one forward source halfedge and one opposite face call `Kernel12::op`.
+    // Retained graph evidence may disagree about the witness point when it was
+    // observed through a boundary or reverse face use, but it must not append a
+    // second topology row once this scheduled call emitted one.  This keeps the
+    // exact replay boundary advocated by Yap, "Towards Exact Geometric
+    // Computation," Computational Geometry 7.1-2 (1997): the certified
+    // combinatorial row is consumed as an exact object, not reconstructed from
+    // another geometric representative.
+    event.edge_face.source_halfedge == hit.edge_face.source_halfedge
+        && event.edge_face.face == hit.edge_face.face
+        && event.edge_face.edge_side == hit.edge_face.edge_side
+        && event.edge_face.face_side == hit.edge_face.face_side
 }
 
 fn event_parameter_matches_intersect12_hit(

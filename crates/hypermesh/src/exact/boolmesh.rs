@@ -1912,18 +1912,43 @@ fn discover_kernel12_events(left: &ExactMesh, right: &ExactMesh) -> Kernel12Disc
                     if *relation == SegmentPlaneRelation::ConstructionFailed {
                         discovery.construction_failures += 1;
                     }
+                    let (edge, source_face, source_halfedge, parameter, endpoint_sides) =
+                        normalize_boolmesh_source_edge(
+                            boolmesh_source_mesh(boolmesh_side(*segment_side), left, right),
+                            match segment_side {
+                                MeshSide::Left => face_pair.left_face,
+                                MeshSide::Right => face_pair.right_face,
+                            },
+                            *edge,
+                            parameter.clone(),
+                            *endpoint_sides,
+                        )
+                        .unwrap_or((
+                            *edge,
+                            match segment_side {
+                                MeshSide::Left => face_pair.left_face,
+                                MeshSide::Right => face_pair.right_face,
+                            },
+                            source_halfedge_for_event(left, right, face_pair, *segment_side, *edge)
+                                .unwrap_or(usize::MAX),
+                            parameter.clone(),
+                            *endpoint_sides,
+                        ));
+                    let face_pair = match segment_side {
+                        MeshSide::Left => ExactBoolMeshFacePair {
+                            left_face: source_face,
+                            right_face: face_pair.right_face,
+                        },
+                        MeshSide::Right => ExactBoolMeshFacePair {
+                            left_face: face_pair.left_face,
+                            right_face: source_face,
+                        },
+                    };
                     let edge_face = ExactBoolMeshEdgeFacePair {
                         face_pair,
                         edge_side: boolmesh_side(*segment_side),
-                        source_halfedge: source_halfedge_for_event(
-                            left,
-                            right,
-                            face_pair,
-                            *segment_side,
-                            *edge,
-                        )
-                        .unwrap_or(usize::MAX),
-                        edge: *edge,
+                        source_halfedge,
+                        edge,
                         face_side: boolmesh_side(*plane_side),
                         face: *plane_face,
                     };
@@ -1934,10 +1959,10 @@ fn discover_kernel12_events(left: &ExactMesh, right: &ExactMesh) -> Kernel12Disc
                         edge_face,
                         relation: *relation,
                         point: point.clone(),
-                        parameter: parameter.clone(),
+                        parameter,
                         parameter_ratio: parameter_ratio.clone(),
                         construction_failure: *construction_failure,
-                        endpoint_sides: *endpoint_sides,
+                        endpoint_sides,
                     });
                 }
                 IntersectionEvent::CoplanarEdge {
@@ -2371,6 +2396,76 @@ fn source_halfedge_for_face_edge(mesh: &ExactMesh, face: usize, edge: [usize; 2]
         .iter()
         .position(|candidate| *candidate == edge)
         .map(|local| 3 * face + local)
+}
+
+#[cfg(feature = "exact-triangulation")]
+/// Normalize retained graph events onto boolmesh's scheduled source row.
+///
+/// Legacy `boolean03::kernel12::intersect12` does not emit every directed
+/// triangle edge: it filters source halfedges with `Half::is_forward()`
+/// (`tail < head`) before calling `Kernel12::op`.  Exact graph discovery can
+/// retain the same geometric contact from the backward face use, so this
+/// function moves that event to the paired forward row, reverses the exact
+/// edge parameter, and swaps endpoint side facts before `p1q2`/`p2q1` are
+/// mutated.  That is the direct boolmesh scheduling contract with Yap-style
+/// exact evidence preservation: see Yap, "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7.1-2 (1997).
+pub(super) fn normalize_boolmesh_source_edge(
+    mesh: &ExactMesh,
+    source_face: usize,
+    edge: [usize; 2],
+    parameter: Option<ExactReal>,
+    endpoint_sides: [Option<PlaneSide>; 2],
+) -> Option<(
+    [usize; 2],
+    usize,
+    usize,
+    Option<ExactReal>,
+    [Option<PlaneSide>; 2],
+)> {
+    if edge[0] < edge[1] {
+        let source_halfedge = source_halfedge_for_face_edge(mesh, source_face, edge)?;
+        return Some((
+            edge,
+            source_face,
+            source_halfedge,
+            parameter,
+            endpoint_sides,
+        ));
+    }
+    if edge[0] == edge[1] {
+        return None;
+    }
+
+    let reversed = [edge[1], edge[0]];
+    let (forward_face, source_halfedge) =
+        boolmesh_forward_source_halfedge_for_edge(mesh, reversed)?;
+    Some((
+        reversed,
+        forward_face,
+        source_halfedge,
+        parameter.map(|value| ExactReal::from(1) - &value),
+        [endpoint_sides[1], endpoint_sides[0]],
+    ))
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn boolmesh_forward_source_halfedge_for_edge(
+    mesh: &ExactMesh,
+    edge: [usize; 2],
+) -> Option<(usize, usize)> {
+    if edge[0] >= edge[1] {
+        return None;
+    }
+    mesh.triangles()
+        .iter()
+        .enumerate()
+        .find_map(|(face, triangle)| {
+            boolmesh_triangle_edges(*triangle)
+                .iter()
+                .position(|candidate| *candidate == edge)
+                .map(|local| (face, 3 * face + local))
+        })
 }
 
 #[cfg(feature = "exact-triangulation")]

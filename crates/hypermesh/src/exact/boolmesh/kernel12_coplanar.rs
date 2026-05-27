@@ -24,7 +24,7 @@ use crate::exact::mesh::ExactMesh;
 
 use super::{
     ExactBoolMeshEdgeFacePair, ExactBoolMeshFacePair, ExactBoolMeshPointConstruction,
-    ExactBoolMeshSide, ExactReal, Kernel12CoplanarEvidence, source_halfedge_for_face_edge,
+    ExactBoolMeshSide, ExactReal, Kernel12CoplanarEvidence, normalize_boolmesh_source_edge,
 };
 
 /// One exact coplanar split point lowered as a boolmesh `kernel12` row.
@@ -166,8 +166,26 @@ fn push_point_side_row(
     parameter: &ExactReal,
     sign: i32,
 ) {
-    let Some(source_halfedge) = source_halfedge_for_face_edge(mesh, source_face, edge) else {
+    let Some((edge, source_face, source_halfedge, Some(parameter), _)) =
+        normalize_boolmesh_source_edge(
+            mesh,
+            source_face,
+            edge,
+            Some(parameter.clone()),
+            [None, None],
+        )
+    else {
         return;
+    };
+    let face_pair = match side {
+        ExactBoolMeshSide::Left => ExactBoolMeshFacePair {
+            left_face: source_face,
+            right_face: face_pair.right_face,
+        },
+        ExactBoolMeshSide::Right => ExactBoolMeshFacePair {
+            left_face: face_pair.left_face,
+            right_face: source_face,
+        },
     };
     let face_side = match side {
         ExactBoolMeshSide::Left => ExactBoolMeshSide::Right,
@@ -189,7 +207,7 @@ fn push_point_side_row(
             side,
             tail: edge[0],
             head: edge[1],
-            parameter: parameter.clone(),
+            parameter,
         },
     });
 }
@@ -205,16 +223,23 @@ fn push_interval_side_rows(
     opposite_face: usize,
     endpoints: [(&Point3, &ExactReal); 2],
 ) {
-    let mut endpoints = endpoints;
+    let mut endpoints = endpoints.map(|(point, parameter)| {
+        let normalized_parameter = if edge[0] > edge[1] {
+            ExactReal::from(1) - parameter
+        } else {
+            parameter.clone()
+        };
+        (point, parameter, normalized_parameter)
+    });
     endpoints.sort_by(|left, right| {
-        compare_reals(left.1, right.1)
+        compare_reals(&left.2, &right.2)
             .value()
             .unwrap_or(Ordering::Equal)
     });
-    if compare_reals(endpoints[0].1, endpoints[1].1).value() != Some(Ordering::Less) {
+    if compare_reals(&endpoints[0].2, &endpoints[1].2).value() != Some(Ordering::Less) {
         return;
     }
-    for (index, (point, parameter)) in endpoints.into_iter().enumerate() {
+    for (index, (point, parameter, _)) in endpoints.into_iter().enumerate() {
         push_point_side_row(
             rows,
             mesh,
