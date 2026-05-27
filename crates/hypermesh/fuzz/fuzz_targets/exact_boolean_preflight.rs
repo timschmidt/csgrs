@@ -1587,12 +1587,15 @@ fn exercise_exact_boolmesh_bounds_disjoint_port() {
                 assert_eq!(size_output.halfedge_assembly.unfilled_halfedges, 0);
                 assert_eq!(size_output.face_loop_assembly.loops.len(), 8);
                 assert_eq!(size_output.face_loop_assembly.incomplete_faces, 0);
+                assert_eq!(size_output.loop_triangulation.triangulations.len(), 8);
+                assert_eq!(size_output.loop_triangulation.triangulation_failures, 0);
             }
             ExactBooleanOperation::Intersection => {
                 assert!(size_output.whole_source_edges.source_edge_runs.is_empty());
                 assert_eq!(size_output.halfedge_assembly.emitted_pairs, 0);
                 assert_eq!(size_output.halfedge_assembly.unfilled_halfedges, 0);
                 assert!(size_output.face_loop_assembly.loops.is_empty());
+                assert!(size_output.loop_triangulation.triangulations.is_empty());
             }
             ExactBooleanOperation::Difference => {
                 assert_eq!(size_output.whole_source_edges.source_edge_runs.len(), 6);
@@ -1604,6 +1607,7 @@ fn exercise_exact_boolmesh_bounds_disjoint_port() {
                 assert_eq!(size_output.halfedge_assembly.unfilled_halfedges, 0);
                 assert_eq!(size_output.face_loop_assembly.loops.len(), 4);
                 assert_eq!(size_output.face_loop_assembly.incomplete_faces, 0);
+                assert_eq!(size_output.loop_triangulation.triangulations.len(), 4);
             }
             ExactBooleanOperation::SelectedRegions(_) => unreachable!(),
         }
@@ -1659,6 +1663,17 @@ fn exercise_exact_boolmesh_bounds_disjoint_port() {
                 .vertices
                 .clear();
             assert!(malformed_loops
+                .validate_against_sources(&left, &right)
+                .is_err());
+            let mut malformed_triangulation = workspace.clone();
+            malformed_triangulation
+                .boolean45
+                .as_mut()
+                .unwrap()
+                .loop_triangulation
+                .triangulations[0]
+                .triangles[0] = usize::MAX;
+            assert!(malformed_triangulation
                 .validate_against_sources(&left, &right)
                 .is_err());
         }
@@ -1780,6 +1795,22 @@ fn exercise_exact_boolmesh_kernel12_port() {
         .iter()
         .all(|face_loop| face_loop.halfedges.len() >= 3
             && face_loop.halfedges.len() == face_loop.vertices.len()));
+    assert_eq!(size_output.loop_triangulation.short_loops, 0);
+    assert_eq!(size_output.loop_triangulation.missing_source_faces, 0);
+    assert_eq!(
+        size_output.loop_triangulation.missing_vertex_coordinates,
+        0
+    );
+    assert_eq!(size_output.loop_triangulation.triangulation_failures, 0);
+    assert!(size_output
+        .loop_triangulation
+        .triangulations
+        .iter()
+        .all(|triangulation| triangulation.triangles.len().is_multiple_of(3)
+            && triangulation
+                .triangles
+                .iter()
+                .all(|index| *index < triangulation.vertices.len())));
     assert_eq!(
         workspace
             .pair_up

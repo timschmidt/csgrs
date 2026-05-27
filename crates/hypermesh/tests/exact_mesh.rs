@@ -33175,6 +33175,23 @@ fn exact_boolmesh_workspace_executes_bounds_disjoint_slice() {
             .iter()
             .all(|face_loop| face_loop.halfedges.len() == 3 && face_loop.vertices.len() == 3)
     );
+    assert_eq!(size_output.loop_triangulation.multi_loop_faces, 0);
+    assert_eq!(size_output.loop_triangulation.short_loops, 0);
+    assert_eq!(size_output.loop_triangulation.missing_source_faces, 0);
+    assert_eq!(size_output.loop_triangulation.missing_vertex_coordinates, 0);
+    assert_eq!(size_output.loop_triangulation.triangulation_failures, 0);
+    assert_eq!(
+        size_output.loop_triangulation.triangulations.len(),
+        left.triangles().len() + right.triangles().len()
+    );
+    assert!(
+        size_output
+            .loop_triangulation
+            .triangulations
+            .iter()
+            .all(|triangulation| triangulation.vertices.len() == 3
+                && triangulation.triangles.len() == 3)
+    );
 
     let mut malformed_whole_edges = workspace.clone();
     malformed_whole_edges
@@ -33234,6 +33251,20 @@ fn exact_boolmesh_workspace_executes_bounds_disjoint_slice() {
             .validate_against_sources(&left, &right)
             .unwrap_err(),
         hypermesh::exact::ExactBoolMeshValidationError::Boolean45FaceLoopMismatch
+    );
+    let mut malformed_loop_triangulation = workspace.clone();
+    malformed_loop_triangulation
+        .boolean45
+        .as_mut()
+        .unwrap()
+        .loop_triangulation
+        .triangulations[0]
+        .triangles[0] = usize::MAX;
+    assert_eq!(
+        malformed_loop_triangulation
+            .validate_against_sources(&left, &right)
+            .unwrap_err(),
+        hypermesh::exact::ExactBoolMeshValidationError::Boolean45LoopTriangulationMismatch
     );
 
     let union = hypermesh::exact::execute_exact_boolmesh_bounds_disjoint(
@@ -33321,6 +33352,12 @@ fn exact_boolmesh_workspace_executes_bounds_disjoint_slice() {
         intersection_size_output.face_loop_assembly.incomplete_faces,
         0
     );
+    assert!(
+        intersection_size_output
+            .loop_triangulation
+            .triangulations
+            .is_empty()
+    );
 
     let difference = hypermesh::exact::execute_exact_boolmesh_bounds_disjoint(
         &left,
@@ -33406,6 +33443,19 @@ fn exact_boolmesh_workspace_executes_bounds_disjoint_slice() {
             .loops
             .iter()
             .all(|face_loop| face_loop.halfedges.len() == 3 && face_loop.vertices.len() == 3)
+    );
+    assert_eq!(
+        difference_size_output
+            .loop_triangulation
+            .triangulations
+            .len(),
+        left.triangles().len()
+    );
+    assert_eq!(
+        difference_size_output
+            .loop_triangulation
+            .triangulation_failures,
+        0
     );
 }
 
@@ -33679,6 +33729,24 @@ fn exact_boolmesh_kernel12_discovers_skew_edge_face_events() {
             .iter()
             .all(|face_loop| face_loop.halfedges.len() >= 3
                 && face_loop.halfedges.len() == face_loop.vertices.len())
+    );
+    assert_eq!(size_output.loop_triangulation.short_loops, 0);
+    assert_eq!(size_output.loop_triangulation.missing_source_faces, 0);
+    assert_eq!(size_output.loop_triangulation.missing_vertex_coordinates, 0);
+    assert_eq!(size_output.loop_triangulation.triangulation_failures, 0);
+    assert!(
+        size_output
+            .loop_triangulation
+            .triangulations
+            .iter()
+            .all(
+                |triangulation| triangulation.triangles.len().is_multiple_of(3)
+                    && !triangulation.triangles.is_empty()
+                    && triangulation
+                        .triangles
+                        .iter()
+                        .all(|index| *index < triangulation.vertices.len())
+            )
     );
     assert_eq!(
         size_output
