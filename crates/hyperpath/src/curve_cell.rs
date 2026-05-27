@@ -1825,9 +1825,7 @@ fn explicit_arc_ray_crossing(
                     match compare_reals_with_policy(&candidate.x, &point.x, policy).value() {
                         Some(Ordering::Less) => RayCrossingResult::Crossings(0),
                         Some(Ordering::Equal) => RayCrossingResult::Boundary,
-                        Some(Ordering::Greater) => RayCrossingResult::Unknown(
-                            CurveArrangementLoopRoleBlocker::TangentContact,
-                        ),
+                        Some(Ordering::Greater) => RayCrossingResult::Crossings(0),
                         None => RayCrossingResult::Unknown(
                             CurveArrangementLoopRoleBlocker::UndecidablePredicate,
                         ),
@@ -1925,6 +1923,7 @@ fn quadratic_ray_crossing(
         forward,
         |t| eval_quadratic_cell_fragment(fragment, t),
         |t| quadratic_y_derivative(fragment, t),
+        |t| quadratic_y_second_derivative(fragment, t),
         policy,
     )
 }
@@ -1976,6 +1975,7 @@ fn cubic_ray_crossing(
         forward,
         |t| eval_cubic_cell_fragment(fragment, t),
         |t| cubic_y_derivative(fragment, t),
+        |t| cubic_y_second_derivative(fragment, t),
         policy,
     )
 }
@@ -2015,6 +2015,7 @@ fn algebraic_cubic_ray_crossing(
         fragment.curve.end().x.clone(),
     );
     let dy_coefficients = cubic_y_derivative_image_coefficients(fragment);
+    let ddy_coefficients = cubic_y_second_derivative_image_coefficients(fragment);
     let mut crossings = 0usize;
     for root in roots {
         match algebraic_parameter_in_half_open_unit(&root, forward, policy) {
@@ -2042,7 +2043,21 @@ fn algebraic_cubic_ray_crossing(
         let dy_image = transform_algebraic_root_polynomial_image(&root, &dy_coefficients, policy);
         match compare_algebraic_image_to_real(&dy_image, &Real::zero(), policy) {
             Some(Ordering::Equal) => {
-                return RayCrossingResult::Unknown(CurveArrangementLoopRoleBlocker::TangentContact);
+                let ddy_image =
+                    transform_algebraic_root_polynomial_image(&root, &ddy_coefficients, policy);
+                match compare_algebraic_image_to_real(&ddy_image, &Real::zero(), policy) {
+                    Some(Ordering::Less | Ordering::Greater) => continue,
+                    Some(Ordering::Equal) => {
+                        return RayCrossingResult::Unknown(
+                            CurveArrangementLoopRoleBlocker::TangentContact,
+                        );
+                    }
+                    None => {
+                        return RayCrossingResult::Unknown(
+                            CurveArrangementLoopRoleBlocker::UnsupportedCubicRay,
+                        );
+                    }
+                }
             }
             Some(Ordering::Less | Ordering::Greater) => crossings += 1,
             None => {
@@ -2188,6 +2203,19 @@ fn cubic_y_derivative_image_coefficients(fragment: &CubicBezierRealFragment) -> 
     ]
 }
 
+fn cubic_y_second_derivative_image_coefficients(fragment: &CubicBezierRealFragment) -> Vec<Real> {
+    let coefficients = cubic_coordinate_image_coefficients(
+        fragment.curve.start().y.clone(),
+        fragment.curve.control0().y.clone(),
+        fragment.curve.control1().y.clone(),
+        fragment.curve.end().y.clone(),
+    );
+    vec![
+        Real::from(2) * coefficients[2].clone(),
+        Real::from(6) * coefficients[3].clone(),
+    ]
+}
+
 fn conic_ray_crossing(
     point: &Point2,
     fragment: &RationalQuadraticCellFragment,
@@ -2216,21 +2244,35 @@ fn conic_ray_crossing(
         forward,
         |t| eval_conic_cell_fragment(fragment, t, policy),
         |t| conic_y_derivative_numerator(fragment, t, point),
+        |t| conic_y_second_derivative_numerator(fragment, t, point),
         policy,
     )
 }
 
-fn ray_crossings_from_roots<E, D>(
+/// Count root hits of a retained curve against a horizontal ray.
+///
+/// Simple roots toggle parity. If the first derivative of the scalar support
+/// equation vanishes, this routine asks for the second derivative and certifies
+/// a non-crossing even-multiplicity tangency when it is nonzero. That is the
+/// exact counterpart of the classical crossing-number rule, but with Yap's
+/// "Towards Exact Geometric Computation" boundary: tangency is ignored only
+/// after exact multiplicity evidence replays; higher multiplicity or
+/// undecidable derivative evidence remains [`CurveArrangementLoopRoleBlocker::TangentContact`].
+/// The derivative tests use the Bernstein/Farouki Bezier model and the
+/// homogeneous rational support equation for conics.
+fn ray_crossings_from_roots<E, D, D2>(
     point: &Point2,
     roots: Vec<Real>,
     forward: bool,
     mut eval: E,
     mut y_derivative: D,
+    mut y_second_derivative: D2,
     policy: PredicatePolicy,
 ) -> RayCrossingResult
 where
     E: FnMut(&Real) -> Option<Point2>,
     D: FnMut(&Real) -> Option<Real>,
+    D2: FnMut(&Real) -> Option<Real>,
 {
     let mut crossings = 0usize;
     for root in roots {
@@ -2263,7 +2305,24 @@ where
         };
         match compare_reals_with_policy(&derivative, &Real::zero(), policy).value() {
             Some(Ordering::Equal) => {
-                return RayCrossingResult::Unknown(CurveArrangementLoopRoleBlocker::TangentContact);
+                let Some(second_derivative) = y_second_derivative(&root) else {
+                    return RayCrossingResult::Unknown(
+                        CurveArrangementLoopRoleBlocker::UndecidablePredicate,
+                    );
+                };
+                match compare_reals_with_policy(&second_derivative, &Real::zero(), policy).value() {
+                    Some(Ordering::Less | Ordering::Greater) => continue,
+                    Some(Ordering::Equal) => {
+                        return RayCrossingResult::Unknown(
+                            CurveArrangementLoopRoleBlocker::TangentContact,
+                        );
+                    }
+                    None => {
+                        return RayCrossingResult::Unknown(
+                            CurveArrangementLoopRoleBlocker::UndecidablePredicate,
+                        );
+                    }
+                }
             }
             Some(Ordering::Less | Ordering::Greater) => {}
             None => {
@@ -2456,6 +2515,18 @@ fn quadratic_y_derivative(
     )
 }
 
+fn quadratic_y_second_derivative(
+    fragment: &QuadraticBezierRealFragment,
+    _parameter: &Real,
+) -> Option<Real> {
+    Some(
+        Real::from(2)
+            * (fragment.curve.start().y.clone()
+                - Real::from(2) * fragment.curve.control().y.clone()
+                + fragment.curve.end().y.clone()),
+    )
+}
+
 fn cubic_start_tangent(fragment: &CubicBezierRealFragment) -> Point2 {
     Point2::new(
         Real::from(3) * (fragment.curve.control0().x.clone() - fragment.curve.start().x.clone()),
@@ -2510,6 +2581,20 @@ fn cubic_y_derivative(fragment: &CubicBezierRealFragment, parameter: &Real) -> O
                 + parameter.clone()
                     * parameter.clone()
                     * (fragment.curve.end().y.clone() - fragment.curve.control1().y.clone())),
+    )
+}
+
+fn cubic_y_second_derivative(fragment: &CubicBezierRealFragment, parameter: &Real) -> Option<Real> {
+    Some(
+        Real::from(6)
+            * ((Real::one() - parameter.clone())
+                * (fragment.curve.start().y.clone()
+                    - Real::from(2) * fragment.curve.control0().y.clone()
+                    + fragment.curve.control1().y.clone())
+                + parameter.clone()
+                    * (fragment.curve.control0().y.clone()
+                        - Real::from(2) * fragment.curve.control1().y.clone()
+                        + fragment.curve.end().y.clone())),
     )
 }
 
@@ -2572,11 +2657,31 @@ fn conic_y_derivative_numerator(
     quadratic_y_derivative_from_controls(&y, parameter)
 }
 
+fn conic_y_second_derivative_numerator(
+    fragment: &RationalQuadraticCellFragment,
+    _parameter: &Real,
+    point: &Point2,
+) -> Option<Real> {
+    let y = [
+        fragment.start_control.y.clone() - point.y.clone() * fragment.start_control.w.clone(),
+        fragment.control.y.clone() - point.y.clone() * fragment.control.w.clone(),
+        fragment.end_control.y.clone() - point.y.clone() * fragment.end_control.w.clone(),
+    ];
+    quadratic_y_second_derivative_from_controls(&y)
+}
+
 fn quadratic_y_derivative_from_controls(controls: &[Real; 3], parameter: &Real) -> Option<Real> {
     Some(
         Real::from(2)
             * ((Real::one() - parameter.clone()) * (controls[1].clone() - controls[0].clone())
                 + parameter.clone() * (controls[2].clone() - controls[1].clone())),
+    )
+}
+
+fn quadratic_y_second_derivative_from_controls(controls: &[Real; 3]) -> Option<Real> {
+    Some(
+        Real::from(2)
+            * (controls[0].clone() - Real::from(2) * controls[1].clone() + controls[2].clone()),
     )
 }
 

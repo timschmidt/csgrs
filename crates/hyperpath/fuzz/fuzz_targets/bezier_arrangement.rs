@@ -436,6 +436,27 @@ fuzz_target!(|data: &[u8]| {
     .unwrap();
     assert_eq!(duplicate_cubic_report.cell_graph.edges.len(), 1);
     assert_eq!(duplicate_cubic_report.cell_graph.edges[0].fragments.len(), 2);
+    let tangent_quadratic_report = arrange_quadratic_beziers(
+        &[
+            QuadraticBezier::new(p(-1, 0), p(0, 1), p(1, 0)),
+            QuadraticBezier::new(p(1, 0), p(0, -1), p(-1, 0)),
+            QuadraticBezier::new(p(3, 1), p(4, 3), p(5, 1)),
+            QuadraticBezier::new(p(5, 1), p(4, -1), p(3, 1)),
+        ],
+        &[vec![], vec![], vec![], vec![]],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert_eq!(
+        tangent_quadratic_report
+            .cell_graph
+            .loop_roles
+            .iter()
+            .filter(|role| role.class == CurveArrangementLoopRoleClass::Material
+                && role.containment_depth == Some(0))
+            .count(),
+        2
+    );
 
     let mixed_line = LinePathSegment::new(p(0, 0), p(20, 0));
     let mixed_quadratic = QuadraticBezier::new(p(0, 0), p(2, 4), p(4, 0));

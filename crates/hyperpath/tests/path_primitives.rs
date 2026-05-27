@@ -1116,6 +1116,122 @@ fn explicit_arc_loop_role_reports_non_cardinal_representative_hole_role() {
 }
 
 #[test]
+fn explicit_arc_loop_role_ignores_disjoint_tangent_ray_contact() {
+    let left_upper =
+        ExplicitCircularArc::new(p(0, 0), r(1), p(-1, 0), p(1, 0), ArcDirection::Cw).unwrap();
+    let left_lower =
+        ExplicitCircularArc::new(p(0, 0), r(1), p(1, 0), p(-1, 0), ArcDirection::Cw).unwrap();
+    let right_upper = ExplicitCircularArc::new(
+        p(4, 1),
+        rq(1, 2),
+        pq(7, 2, 1, 1),
+        pq(9, 2, 1, 1),
+        ArcDirection::Cw,
+    )
+    .unwrap();
+    let right_lower = ExplicitCircularArc::new(
+        p(4, 1),
+        rq(1, 2),
+        pq(9, 2, 1, 1),
+        pq(7, 2, 1, 1),
+        ArcDirection::Cw,
+    )
+    .unwrap();
+
+    let report = arrange_explicit_arcs(
+        &[left_upper, left_lower, right_upper, right_lower],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert_eq!(
+        report
+            .cell_graph
+            .loop_roles
+            .iter()
+            .filter(|role| role.class == CurveArrangementLoopRoleClass::Material
+                && role.containment_depth == Some(0))
+            .count(),
+        2
+    );
+    assert!(
+        !report
+            .cell_graph
+            .loop_roles
+            .iter()
+            .any(|role| role.class == CurveArrangementLoopRoleClass::Uncertain)
+    );
+}
+
+#[test]
+fn bezier_loop_roles_ignore_disjoint_tangent_ray_contacts() {
+    let q_report = arrange_quadratic_beziers(
+        &[
+            QuadraticBezier::new(p(-1, 0), p(0, 1), p(1, 0)),
+            QuadraticBezier::new(p(1, 0), p(0, -1), p(-1, 0)),
+            QuadraticBezier::new(p(3, 1), p(4, 3), p(5, 1)),
+            QuadraticBezier::new(p(5, 1), p(4, -1), p(3, 1)),
+        ],
+        &[vec![], vec![], vec![], vec![]],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert_eq!(
+        q_report
+            .cell_graph
+            .loop_roles
+            .iter()
+            .filter(|role| role.class == CurveArrangementLoopRoleClass::Material
+                && role.containment_depth == Some(0))
+            .count(),
+        2
+    );
+
+    let c_report = arrange_cubic_beziers(
+        &[
+            CubicBezier::new(p(-1, 0), p(-1, 1), p(1, 1), p(1, 0)),
+            CubicBezier::new(p(1, 0), p(1, -1), p(-1, -1), p(-1, 0)),
+            CubicBezier::new(p(3, 1), pq(11, 3, 7, 3), pq(13, 3, 7, 3), p(5, 1)),
+            CubicBezier::new(p(5, 1), pq(13, 3, -1, 3), pq(11, 3, -1, 3), p(3, 1)),
+        ],
+        &[vec![], vec![], vec![], vec![]],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert_eq!(
+        c_report
+            .cell_graph
+            .loop_roles
+            .iter()
+            .filter(|role| role.class == CurveArrangementLoopRoleClass::Material
+                && role.containment_depth == Some(0))
+            .count(),
+        2
+    );
+
+    let conic_report = arrange_rational_quadratic_beziers(
+        &[
+            RationalQuadraticBezier::new(p(-1, 0), p(0, 1), p(1, 0), r(2)).unwrap(),
+            RationalQuadraticBezier::new(p(1, 0), p(0, -1), p(-1, 0), r(2)).unwrap(),
+            RationalQuadraticBezier::new(p(3, 1), p(4, 3), p(5, 1), r(2)).unwrap(),
+            RationalQuadraticBezier::new(p(5, 1), pq(4, 1, -1, 2), p(3, 1), r(2)).unwrap(),
+        ],
+        &[vec![], vec![], vec![], vec![]],
+        PredicatePolicy::default(),
+    )
+    .unwrap();
+    assert_eq!(
+        conic_report
+            .cell_graph
+            .loop_roles
+            .iter()
+            .filter(|role| role.class == CurveArrangementLoopRoleClass::Material
+                && role.containment_depth == Some(0))
+            .count(),
+        2
+    );
+}
+
+#[test]
 fn curve_cell_graph_merges_exact_duplicate_curved_spans() {
     let arc_forward =
         ExplicitCircularArc::new(p(4, 0), r(4), p(0, 0), p(8, 0), ArcDirection::Ccw).unwrap();

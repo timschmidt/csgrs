@@ -415,6 +415,26 @@ fn path_predicates(c: &mut Criterion) {
             .map(|report| report.cell_graph.edges)
         })
     });
+    let tangent_quadratic_left_upper = QuadraticBezier::new(p(-100, 0), p(0, 100), p(100, 0));
+    let tangent_quadratic_left_lower = QuadraticBezier::new(p(100, 0), p(0, -100), p(-100, 0));
+    let tangent_quadratic_right_upper = QuadraticBezier::new(p(300, 100), p(400, 300), p(500, 100));
+    let tangent_quadratic_right_lower =
+        QuadraticBezier::new(p(500, 100), p(400, -100), p(300, 100));
+    c.bench_function("quadratic_bezier_tangent_ray_loop_roles", |b| {
+        b.iter(|| {
+            arrange_quadratic_beziers(
+                &[
+                    tangent_quadratic_left_upper.clone(),
+                    tangent_quadratic_left_lower.clone(),
+                    tangent_quadratic_right_upper.clone(),
+                    tangent_quadratic_right_lower.clone(),
+                ],
+                &[vec![], vec![], vec![], vec![]],
+                PredicatePolicy::default(),
+            )
+            .map(|report| report.cell_graph.loop_roles)
+        })
+    });
     let conic = RationalQuadraticBezier::new(p(0, 0), p(500, 200), p(1000, 0), r(2)).unwrap();
     c.bench_function("rational_quadratic_bezier_exact_eval", |b| {
         b.iter(|| conic.eval(half))
