@@ -519,15 +519,11 @@ fn route_crossing_vertices(
         ExactBoolMeshSide::Right => pair.face_pair.right_face,
     };
     let incident_faces = incident_faces_for_edge(edge_mesh.triangles(), pair.edge);
-    let mut missing_source_edge_adjacencies =
-        usize::from(!incident_faces.contains(&primary_edge_face));
+    let missing_source_edge_adjacencies = usize::from(!incident_faces.contains(&primary_edge_face));
     let paired_edge_face = incident_faces
         .iter()
         .copied()
         .find(|face| *face != primary_edge_face);
-    if paired_edge_face.is_none() {
-        missing_source_edge_adjacencies += 1;
-    }
 
     for copy in 0..count {
         let output_vertex = start + copy;
@@ -970,7 +966,11 @@ fn count_crossing_vertex(
         *count += increment;
     }
 
-    usize::from(incident_faces.len() != 2)
+    let primary_edge_face = match pair.edge_side {
+        ExactBoolMeshSide::Left => pair.face_pair.left_face,
+        ExactBoolMeshSide::Right => pair.face_pair.right_face,
+    };
+    usize::from(!incident_faces.contains(&primary_edge_face))
 }
 
 fn incident_faces_for_edge(triangles: &[Triangle], edge: [usize; 2]) -> Vec<usize> {

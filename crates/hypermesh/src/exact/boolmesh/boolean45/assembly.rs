@@ -72,16 +72,13 @@ fn append_partial_source_halfedges(
     stage: &mut ExactBoolMeshHalfedgeAssemblyStage,
 ) {
     for run in &partial_source_edges.source_edge_runs {
-        let Some((&first_face, &second_face, &first_edge)) = run
-            .incident_faces
-            .first()
-            .zip(run.incident_faces.get(1))
-            .zip(run.incident_edges.first())
-            .map(|((first_face, second_face), first_edge)| (first_face, second_face, first_edge))
+        let Some((&first_face, &first_edge)) =
+            run.incident_faces.first().zip(run.incident_edges.first())
         else {
             stage.source_edge_incident_gaps += run.fragments.len();
             continue;
         };
+        let second_face = run.incident_faces.get(1).copied();
         let edge = [run.tail, run.head];
         for (fragment_index, fragment) in run.fragments.iter().enumerate() {
             let Some((tail, head)) = oriented_fragment_endpoints(
@@ -93,20 +90,36 @@ fn append_partial_source_halfedges(
                 stage.source_edge_incident_gaps += 1;
                 continue;
             };
-            emit_source_edge_pair(
-                run.side,
-                first_face,
-                second_face,
-                tail,
-                head,
-                edge,
-                fragment_index,
-                SourceEdgeEmissionKind::Partial,
-                source_face_to_output_face,
-                face_halfedge_offsets,
-                left_faces,
-                stage,
-            );
+            if let Some(second_face) = second_face {
+                emit_source_edge_pair(
+                    run.side,
+                    first_face,
+                    second_face,
+                    tail,
+                    head,
+                    edge,
+                    fragment_index,
+                    SourceEdgeEmissionKind::Partial,
+                    source_face_to_output_face,
+                    face_halfedge_offsets,
+                    left_faces,
+                    stage,
+                );
+            } else {
+                emit_source_boundary_halfedge(
+                    run.side,
+                    first_face,
+                    tail,
+                    head,
+                    edge,
+                    fragment_index,
+                    SourceEdgeEmissionKind::Partial,
+                    source_face_to_output_face,
+                    face_halfedge_offsets,
+                    left_faces,
+                    stage,
+                );
+            }
         }
     }
 }
@@ -291,10 +304,11 @@ fn emit_source_boundary_halfedge(
 ) {
     // Legacy boolmesh obtains boundary behavior from source halfedge topology:
     // an open mesh edge has one incident face instead of a reciprocal pair.
-    // The exact port records that one-sided combinatorial fact directly.  This
-    // follows Yap, "Towards Exact Geometric Computation," Comput. Geom. 7.1-2
-    // (1997): topology evidence is retained as object state, not recovered
-    // later from rounded coordinates or epsilon pairing.
+    // The exact port records that one-sided combinatorial fact directly for
+    // both split (`append_partial_edges`) and untouched (`append_whole_edges`)
+    // source edges.  This follows Yap, "Towards Exact Geometric Computation,"
+    // Comput. Geom. 7.1-2 (1997): topology evidence is retained as object
+    // state, not recovered later from rounded coordinates or epsilon pairing.
     let source_face = source_face_index(side, face, left_faces);
     let Some(Some(output_face)) = source_face_to_output_face.get(source_face) else {
         stage.missing_source_face_maps += 1;
@@ -411,5 +425,93 @@ fn source_face_index(side: ExactBoolMeshSide, face: usize, left_faces: usize) ->
     match side {
         ExactBoolMeshSide::Left => face,
         ExactBoolMeshSide::Right => left_faces + face,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::super::super::{
+        ExactBoolMeshNewFacePairStage, ExactBoolMeshOutputHalfedgeSource,
+        ExactBoolMeshPartialEdgePoint, ExactBoolMeshPartialEdgePointOrigin,
+        ExactBoolMeshPartialSourceEdgeFragment, ExactBoolMeshPartialSourceEdgeRun,
+        ExactBoolMeshPartialSourceEdgeStage, ExactBoolMeshSide, ExactBoolMeshSourceVertex,
+        ExactBoolMeshWholeSourceEdgeStage,
+    };
+    use super::*;
+
+    #[test]
+    fn partial_one_incident_run_emits_boundary_halfedge() {
+        let source = ExactBoolMeshSourceVertex {
+            side: ExactBoolMeshSide::Left,
+            vertex: 0,
+        };
+        let tail_point = ExactBoolMeshPartialEdgePoint {
+            output_vertex: 0,
+            is_tail: true,
+            order_index: 0,
+            collision: usize::MAX,
+            origin: ExactBoolMeshPartialEdgePointOrigin::RetainedEndpoint { source, copy: 0 },
+        };
+        let head_point = ExactBoolMeshPartialEdgePoint {
+            output_vertex: 1,
+            is_tail: false,
+            order_index: usize::MAX,
+            collision: usize::MAX,
+            origin: ExactBoolMeshPartialEdgePointOrigin::RetainedEndpoint {
+                source: ExactBoolMeshSourceVertex {
+                    side: ExactBoolMeshSide::Left,
+                    vertex: 1,
+                },
+                copy: 0,
+            },
+        };
+        let partial_source_edges = ExactBoolMeshPartialSourceEdgeStage {
+            source_edge_runs: vec![ExactBoolMeshPartialSourceEdgeRun {
+                side: ExactBoolMeshSide::Left,
+                tail: 0,
+                head: 1,
+                incident_faces: vec![0],
+                incident_edges: vec![[0, 1]],
+                points: vec![tail_point, head_point],
+                fragments: vec![ExactBoolMeshPartialSourceEdgeFragment {
+                    tail_point,
+                    head_point,
+                }],
+                unpaired_points: 0,
+            }],
+            unpaired_runs: 0,
+            missing_parameter_orders: 0,
+        };
+
+        let stage = assemble_output_halfedges(
+            &partial_source_edges,
+            &ExactBoolMeshNewFacePairStage::default(),
+            &ExactBoolMeshWholeSourceEdgeStage::default(),
+            &[Some(0)],
+            &[0, 1],
+            1,
+        );
+
+        assert_eq!(stage.emitted_pairs, 0);
+        assert_eq!(stage.emitted_boundary_halfedges, 1);
+        assert_eq!(stage.source_edge_incident_gaps, 0);
+        assert_eq!(stage.unfilled_halfedges, 0);
+        let halfedge = stage.output_halfedges[0].as_ref().unwrap();
+        assert_eq!(halfedge.tail, 0);
+        assert_eq!(halfedge.head, 1);
+        assert_eq!(halfedge.pair, 0);
+        assert_eq!(halfedge.face, 0);
+        assert_eq!(
+            halfedge.source,
+            ExactBoolMeshOutputHalfedgeSource::PartialSourceEdge {
+                side: ExactBoolMeshSide::Left,
+                source_face: 0,
+                edge: [0, 1],
+                fragment: 0,
+                forward: true,
+            }
+        );
+
+        assert_eq!(source.vertex, 0);
     }
 }

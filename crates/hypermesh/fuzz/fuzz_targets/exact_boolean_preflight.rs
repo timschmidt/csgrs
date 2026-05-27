@@ -1584,6 +1584,7 @@ fn exercise_deterministic_case(selector: u8) {
         44 => exercise_same_outer_holed_coplanar_retained_union(),
         45 => exercise_exact_boolmesh_bounds_disjoint_port(),
         46 => exercise_exact_boolmesh_kernel12_port(),
+        47 => exercise_exact_boolmesh_open_crossing_adjacency_port(),
         _ => exercise_nonconvex_coplanar_volumetric_difference_fan_split(),
     }
 }
@@ -1955,6 +1956,67 @@ fn exercise_exact_boolmesh_kernel12_port() {
     assert!(malformed_new_edges
         .validate_against_sources(&left, &right)
         .is_err());
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn exercise_exact_boolmesh_open_crossing_adjacency_port() {
+    let left = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 4, 0, 0, 0, 4, 0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("deterministic open boolmesh left fixture must import");
+    let right = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            1, -1, -1, 1, 3, -1, 1, -1, 1, 3, -1, -1, 3, 3, -1, 3, -1, 1,
+        ],
+        &[0, 1, 2, 3, 4, 5],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("deterministic open boolmesh right fixture must import");
+
+    let workspace = hypermesh::exact::exact_boolmesh_workspace(
+        &left,
+        &right,
+        ExactBooleanOperation::Intersection,
+    );
+    workspace.validate_against_sources(&left, &right).unwrap();
+    let size_output = workspace
+        .boolean45
+        .as_ref()
+        .expect("open crossing boolmesh workspace must size output");
+    assert!(size_output
+        .partial_source_edges
+        .source_edge_runs
+        .iter()
+        .any(|run| run.incident_faces.len() == 1 && !run.points.is_empty()));
+    assert_eq!(size_output.source_edge_incident_gaps, 0);
+    assert_eq!(size_output.halfedge_assembly.source_edge_incident_gaps, 0);
+    assert_eq!(
+        size_output
+            .new_edge_vertices
+            .face_pair_runs
+            .iter()
+            .map(|run| run.points.len())
+            .sum::<usize>(),
+        size_output
+            .partial_source_edges
+            .source_edge_runs
+            .iter()
+            .map(|run| {
+                run.points
+                    .iter()
+                    .filter(|point| {
+                        matches!(
+                            point.origin,
+                            hypermesh::exact::ExactBoolMeshPartialEdgePointOrigin::RoutedIntersection(_)
+                        )
+                    })
+                    .count()
+                    * run.incident_faces.len()
+            })
+            .sum::<usize>()
+    );
 }
 
 fn exercise_partial_convex_union_boundary() {

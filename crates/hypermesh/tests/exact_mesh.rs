@@ -34243,6 +34243,74 @@ fn exact_boolmesh_kernel12_discovers_skew_edge_face_events() {
 
 #[test]
 #[cfg(feature = "exact-triangulation")]
+fn exact_boolmesh_open_crossing_edges_are_not_adjacency_gaps() {
+    let left = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 4, 0, 0, 0, 4, 0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let right = ExactMesh::from_i64_triangles_with_policy(
+        &[1, -1, -1, 1, 3, -1, 1, -1, 1, 3, -1, -1, 3, 3, -1, 3, -1, 1],
+        &[0, 1, 2, 3, 4, 5],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+
+    let workspace = hypermesh::exact::exact_boolmesh_workspace(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+    );
+    workspace.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(workspace.kernel12_unknown_events, 0);
+    assert!(
+        !workspace.boolean03.p1q2.is_empty() || !workspace.boolean03.p2q1.is_empty(),
+        "open crossing triangles should lower exact edge-face events"
+    );
+    let size_output = workspace
+        .boolean45
+        .as_ref()
+        .expect("open crossing triangles should size boolean45 output");
+    assert!(
+        size_output
+            .partial_source_edges
+            .source_edge_runs
+            .iter()
+            .any(|run| run.incident_faces.len() == 1 && !run.points.is_empty()),
+        "open split source edges must be represented as one-incident exact runs"
+    );
+    assert_eq!(size_output.source_edge_incident_gaps, 0);
+    assert_eq!(size_output.halfedge_assembly.source_edge_incident_gaps, 0);
+    assert_eq!(
+        size_output
+            .new_edge_vertices
+            .face_pair_runs
+            .iter()
+            .map(|run| run.points.len())
+            .sum::<usize>(),
+        size_output
+            .partial_source_edges
+            .source_edge_runs
+            .iter()
+            .map(|run| {
+                run.points
+                    .iter()
+                    .filter(|point| {
+                        matches!(
+                            point.origin,
+                            hypermesh::exact::ExactBoolMeshPartialEdgePointOrigin::RoutedIntersection(_)
+                        )
+                    })
+                    .count()
+                    * run.incident_faces.len()
+            })
+            .sum::<usize>()
+    );
+}
+
+#[test]
+#[cfg(feature = "exact-triangulation")]
 fn exact_boolmesh_workspace_rejects_stale_replay() {
     let left = tetrahedron_i64([0, 0, 0], [2, 0, 0], [0, 2, 0], [0, 0, 2]);
     let right = tetrahedron_i64([10, 0, 0], [12, 0, 0], [10, 2, 0], [10, 0, 2]);
