@@ -915,6 +915,15 @@ pub struct ExactBoolMeshFaceLoopAssemblyStage {
     /// Output faces skipped because at least one sized halfedge slot is still
     /// unfilled by earlier boolmesh stages.
     pub incomplete_faces: usize,
+    /// Complete open-chain face halfedges dropped as lower-dimensional output.
+    ///
+    /// Boundary-only coplanar intervals can emit source and face-pair
+    /// halfedges that form an open chain instead of a surface loop.  Legacy
+    /// boolmesh's regularized mesh output does not triangulate such
+    /// lower-dimensional faces.  The exact port records their halfedge count
+    /// separately from malformed non-loop topology so validation can replay the
+    /// deletion instead of turning it into an untyped face-assembly failure.
+    pub dropped_open_chain_halfedges: usize,
     /// Complete-face halfedges that could not be consumed into closed loops.
     pub non_loop_halfedges: usize,
     /// Loop candidates that revisited a halfedge before closing.
@@ -3419,7 +3428,9 @@ fn validate_boolean45_face_loops(
         .map(|face| stage.face_halfedge_offsets[face + 1] - stage.face_halfedge_offsets[face])
         .sum::<usize>();
     if stage.face_loop_assembly.repeated_halfedges != 0
-        || stage.face_loop_assembly.non_loop_halfedges != expected_loop_halfedges - covered.len()
+        || stage.face_loop_assembly.non_loop_halfedges
+            + stage.face_loop_assembly.dropped_open_chain_halfedges
+            != expected_loop_halfedges - covered.len()
     {
         return Err(ExactBoolMeshValidationError::Boolean45FaceLoopMismatch);
     }

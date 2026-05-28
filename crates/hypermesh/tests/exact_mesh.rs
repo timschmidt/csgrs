@@ -34256,11 +34256,7 @@ fn exact_boolmesh_kernel12_lowers_coplanar_interval_endpoints() {
         workspace.blocker.as_ref().map(|blocker| blocker.stage),
         Some(hypermesh::exact::ExactBoolMeshKernelStage::SourceEdgeEmission)
     );
-    assert_eq!(
-        workspace.blocker.as_ref().map(|blocker| blocker.stage),
-        Some(hypermesh::exact::ExactBoolMeshKernelStage::FaceAssembly),
-        "boundary-only coplanar intervals now reach the next real boolmesh gap: lower-dimensional face assembly"
-    );
+    assert_eq!(workspace.blocker, None);
     assert!(workspace.boolean03.p1q2.len() >= 2);
     assert!(workspace.boolean03.p2q1.len() >= 2);
     assert_eq!(
@@ -34289,7 +34285,26 @@ fn exact_boolmesh_kernel12_lowers_coplanar_interval_endpoints() {
     let stage = workspace.boolean45.as_ref().unwrap();
     assert_eq!(stage.partial_source_edges.unpaired_runs, 0);
     assert_eq!(stage.new_face_pair_edges.unpaired_runs, 0);
-    assert_eq!(stage.halfedge_assembly.unfilled_halfedges, 2);
+    assert_eq!(stage.halfedge_assembly.unfilled_halfedges, 0);
+    assert_eq!(stage.face_loop_assembly.dropped_open_chain_halfedges, 6);
+    assert_eq!(stage.face_loop_assembly.non_loop_halfedges, 0);
+    assert!(stage.output_triangles.triangles.is_empty());
+    assert!(stage.mesh_export.triangles.is_empty());
+
+    let execution = hypermesh::exact::execute_exact_boolmesh_port(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("regularized boundary-only interval should export as an empty split");
+    execution.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        execution.shortcut,
+        hypermesh::exact::ExactBooleanShortcutKind::BoolMeshSplit
+    );
+    assert!(execution.mesh.triangles().is_empty());
+    assert_eq!(execution.mesh.facts().mesh.edge_count, 0);
 }
 
 #[test]

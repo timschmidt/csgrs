@@ -47,6 +47,9 @@ fn assemble_output_face_loop(
         stage.incomplete_faces += 1;
         return;
     }
+    let loops_before = stage.loops.len();
+    let non_loop_before = stage.non_loop_halfedges;
+    let repeated_before = stage.repeated_halfedges;
 
     let mut tail_to_halfedges = BTreeMap::<usize, VecDeque<usize>>::new();
     for slot in begin..end {
@@ -103,6 +106,32 @@ fn assemble_output_face_loop(
     if consumed.len() < expected {
         stage.non_loop_halfedges += expected - consumed.len();
     }
+    if stage.loops.len() == loops_before
+        && stage.repeated_halfedges == repeated_before
+        && stage.non_loop_halfedges > non_loop_before
+        && face_has_boundary_halfedge(output_face, halfedges, begin, end)
+    {
+        let dropped = stage.non_loop_halfedges - non_loop_before;
+        stage.non_loop_halfedges = non_loop_before;
+        stage.dropped_open_chain_halfedges += dropped;
+    }
+}
+
+fn face_has_boundary_halfedge(
+    output_face: usize,
+    halfedges: &ExactBoolMeshHalfedgeAssemblyStage,
+    begin: usize,
+    end: usize,
+) -> bool {
+    halfedges.output_halfedges[begin..end]
+        .iter()
+        .enumerate()
+        .any(|(local, halfedge)| {
+            let slot = begin + local;
+            halfedge
+                .as_ref()
+                .is_some_and(|halfedge| halfedge.face == output_face && halfedge.pair == slot)
+        })
 }
 
 fn next_loop_start(tail_to_halfedges: &BTreeMap<usize, VecDeque<usize>>) -> Option<usize> {
@@ -187,5 +216,62 @@ mod tests {
         assert_eq!(stage.loops.len(), 1);
         assert_eq!(stage.loops[0].halfedges, vec![0, 1]);
         assert_eq!(stage.loops[0].vertices, vec![0, 1]);
+    }
+
+    #[test]
+    fn open_boundary_chain_is_replayed_as_lower_dimensional_drop() {
+        let halfedges = ExactBoolMeshHalfedgeAssemblyStage {
+            output_halfedges: vec![
+                Some(ExactBoolMeshOutputHalfedge {
+                    tail: 1,
+                    head: 0,
+                    pair: 0,
+                    face: 0,
+                    source: ExactBoolMeshOutputHalfedgeSource::PartialSourceEdge {
+                        side: ExactBoolMeshSide::Left,
+                        source_halfedge: 0,
+                        source_face: 0,
+                        edge: [0, 1],
+                        fragment: 0,
+                        forward: true,
+                    },
+                }),
+                Some(ExactBoolMeshOutputHalfedge {
+                    tail: 0,
+                    head: 2,
+                    pair: 4,
+                    face: 0,
+                    source: ExactBoolMeshOutputHalfedgeSource::NewFacePair {
+                        side: ExactBoolMeshSide::Left,
+                        source_face: 0,
+                        opposite_face: 0,
+                        fragment: 0,
+                        forward: true,
+                    },
+                }),
+                Some(ExactBoolMeshOutputHalfedge {
+                    tail: 3,
+                    head: 1,
+                    pair: 5,
+                    face: 0,
+                    source: ExactBoolMeshOutputHalfedgeSource::NewFacePair {
+                        side: ExactBoolMeshSide::Left,
+                        source_face: 0,
+                        opposite_face: 0,
+                        fragment: 1,
+                        forward: true,
+                    },
+                }),
+            ],
+            ..ExactBoolMeshHalfedgeAssemblyStage::default()
+        };
+
+        let stage = assemble_output_face_loops(&halfedges, &[0, 3]);
+
+        assert!(stage.loops.is_empty());
+        assert_eq!(stage.incomplete_faces, 0);
+        assert_eq!(stage.repeated_halfedges, 0);
+        assert_eq!(stage.non_loop_halfedges, 0);
+        assert_eq!(stage.dropped_open_chain_halfedges, 3);
     }
 }

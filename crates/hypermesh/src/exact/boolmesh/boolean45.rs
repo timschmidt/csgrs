@@ -185,6 +185,11 @@ pub(super) fn size_output_stage(
         &mut left_face_halfedge_counts,
         &mut right_face_halfedge_counts,
     );
+    apply_open_partial_interval_face_counts(
+        &partial_source_edges,
+        &mut left_face_halfedge_counts,
+        &mut right_face_halfedge_counts,
+    );
 
     let source_face_counts = left_face_halfedge_counts
         .iter()
@@ -1497,6 +1502,46 @@ fn apply_suppressed_retained_tail_face_counts(
                     if let Some(count) = right_face_counts.get_mut(*source_face) {
                         *count = count.saturating_sub(run.suppressed_retained_tail_copies);
                     }
+                }
+            }
+        }
+    }
+}
+
+/// Apply open-boundary interval ownership to face slot counts.
+///
+/// For a one-incident source edge, boolmesh emits one boundary halfedge for a
+/// paired interval fragment.  The raw `size_output` crossing count sees the two
+/// interval endpoint rows independently and therefore reserves two source-face
+/// slots.  On open boundary intervals the fragment, not each endpoint, owns the
+/// source-face boundary topology.  This exact correction is replayed after
+/// partial-edge staging so it can use the certified `pair_up` fragment count,
+/// following Yap, "Towards Exact Geometric Computation," *Computational
+/// Geometry* 7.1-2 (1997): exact row pairing is established before topology
+/// cardinality is reduced.
+fn apply_open_partial_interval_face_counts(
+    partial_source_edges: &ExactBoolMeshPartialSourceEdgeStage,
+    left_face_counts: &mut [usize],
+    right_face_counts: &mut [usize],
+) {
+    for run in &partial_source_edges.source_edge_runs {
+        if run.incident_faces.len() != 1 || run.fragments.is_empty() {
+            continue;
+        }
+        let over_reserved = run.points.len().saturating_sub(run.fragments.len());
+        if over_reserved == 0 {
+            continue;
+        }
+        let source_face = run.incident_faces[0];
+        match run.side {
+            ExactBoolMeshSide::Left => {
+                if let Some(count) = left_face_counts.get_mut(source_face) {
+                    *count = count.saturating_sub(over_reserved);
+                }
+            }
+            ExactBoolMeshSide::Right => {
+                if let Some(count) = right_face_counts.get_mut(source_face) {
+                    *count = count.saturating_sub(over_reserved);
                 }
             }
         }

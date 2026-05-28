@@ -2263,16 +2263,15 @@ fn exercise_exact_boolmesh_kernel12_coplanar_interval_port() {
     );
     workspace.validate_against_sources(&left, &right).unwrap();
     assert_eq!(workspace.kernel12_coplanar_events, 0);
-    assert_eq!(
-        workspace.blocker.as_ref().map(|blocker| blocker.stage),
-        Some(hypermesh::exact::ExactBoolMeshKernelStage::FaceAssembly)
-    );
+    assert_eq!(workspace.blocker, None);
     assert!(workspace.boolean03.p1q2.len() >= 2);
     assert!(workspace.boolean03.p2q1.len() >= 2);
     let stage = workspace.boolean45.as_ref().unwrap();
     assert_eq!(stage.partial_source_edges.unpaired_runs, 0);
     assert_eq!(stage.new_face_pair_edges.unpaired_runs, 0);
-    assert_eq!(stage.halfedge_assembly.unfilled_halfedges, 2);
+    assert_eq!(stage.halfedge_assembly.unfilled_halfedges, 0);
+    assert_eq!(stage.face_loop_assembly.dropped_open_chain_halfedges, 6);
+    assert!(stage.output_triangles.triangles.is_empty());
     assert!(workspace
         .pair_up
         .source_edge_runs
@@ -2282,6 +2281,15 @@ fn exercise_exact_boolmesh_kernel12_coplanar_interval_port() {
             event.point,
             hypermesh::exact::ExactBoolMeshPointConstruction::EdgeParameter { .. }
         )));
+    let execution = hypermesh::exact::execute_exact_boolmesh_port(
+        &left,
+        &right,
+        ExactBooleanOperation::Intersection,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("boundary-only interval should materialize as an empty boolmesh split");
+    execution.validate_against_sources(&left, &right).unwrap();
+    assert!(execution.mesh.triangles().is_empty());
 }
 
 #[cfg(feature = "exact-triangulation")]
