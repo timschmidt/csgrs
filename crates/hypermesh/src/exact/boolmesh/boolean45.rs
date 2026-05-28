@@ -623,20 +623,22 @@ fn stage_partial_source_edges(
 
         for routed in &run.points {
             let order_key = (side_key(run.side), run.source_halfedge, routed.collision);
-            let Some(order) = order_index.get(&order_key).copied() else {
+            let Some(order) = order_index.get(&order_key) else {
                 missing_parameter_orders += 1;
                 continue;
             };
             points.push(ExactBoolMeshPartialEdgePoint {
                 output_vertex: routed.output_vertex,
                 is_tail: routed.is_tail,
-                order_index: order + 1,
+                order_index: order.index + 1,
                 collision: routed.collision,
                 origin: ExactBoolMeshPartialEdgePointOrigin::RoutedIntersection(*routed),
             });
         }
 
-        append_retained_endpoint(run.side, run.tail, signed_counts, starts, 0, &mut points);
+        if !retained_tail_owned_by_kernel12(run, signed_counts, &order_index) {
+            append_retained_endpoint(run.side, run.tail, signed_counts, starts, 0, &mut points);
+        }
         append_retained_endpoint(
             run.side,
             run.head,
@@ -676,19 +678,63 @@ fn stage_partial_source_edges(
     }
 }
 
+#[derive(Clone, Debug, PartialEq)]
+struct SourceEdgeOrder {
+    index: usize,
+    parameter: ExactReal,
+}
+
 fn source_edge_order_index(
     pair_up: &ExactBoolMeshPairUpStage,
-) -> BTreeMap<(u8, usize, usize), usize> {
+) -> BTreeMap<(u8, usize, usize), SourceEdgeOrder> {
     let mut order_index = BTreeMap::new();
     for run in &pair_up.source_edge_runs {
         for (index, event) in run.events.iter().enumerate() {
             order_index.insert(
                 (side_key(run.side), run.source_halfedge, event.collision),
-                index,
+                SourceEdgeOrder {
+                    index,
+                    parameter: event.parameter.clone(),
+                },
             );
         }
     }
     order_index
+}
+
+/// Return whether the source-tail retained endpoint is already owned by an
+/// exact `Kernel12` row in this `append_partial_edges` bucket.
+///
+/// Legacy boolmesh's coplanar branch does not duplicate a source-tail boundary
+/// as both a retained endpoint and a same-direction `pt_old` event.  The exact
+/// port reaches the same state from retained split rows: if a certified
+/// crossing is already at parameter `0` and has the same tail/head role that
+/// the retained source-tail copy would have, the crossing owns that boundary
+/// for source-edge pairing.  The check uses boolmesh's `hid_p` bucket, exact
+/// source-edge parameter, and operation-signed retained endpoint role; no
+/// coordinate tolerance is involved.  This follows Yap, "Towards Exact
+/// Geometric Computation," *Computational Geometry* 7.1-2 (1997), by keeping
+/// the duplicate-topology decision attached to exact construction evidence.
+fn retained_tail_owned_by_kernel12(
+    run: &ExactBoolMeshSourceEdgePointRun,
+    signed_counts: &[i32],
+    order_index: &BTreeMap<(u8, usize, usize), SourceEdgeOrder>,
+) -> bool {
+    let Some(signed_count) = signed_counts.get(run.tail).copied() else {
+        return false;
+    };
+    if signed_abs(signed_count) == 0 {
+        return false;
+    }
+    let retained_tail_role = signed_count > 0;
+    run.points.iter().any(|point| {
+        let key = (side_key(run.side), run.source_halfedge, point.collision);
+        order_index.get(&key).is_some_and(|order| {
+            point.is_tail == retained_tail_role
+                && compare_reals(&order.parameter, &ExactReal::from(0)).value()
+                    == Some(Ordering::Equal)
+        })
+    })
 }
 
 fn append_retained_endpoint(
@@ -1268,4 +1314,110 @@ fn canonical_edge(edge: [usize; 2]) -> [usize; 2] {
 
 fn signed_abs(value: i32) -> usize {
     value.unsigned_abs() as usize
+}
+
+#[cfg(test)]
+mod tests {
+    use super::super::{
+        ExactBoolMeshEdgeEvent, ExactBoolMeshOutputVertexOrigin, ExactBoolMeshPointConstruction,
+    };
+    use super::*;
+
+    fn edge_parameter_event(collision: usize, parameter: i64) -> ExactBoolMeshEdgeEvent {
+        ExactBoolMeshEdgeEvent {
+            side: ExactBoolMeshSide::Left,
+            source_halfedge: 6,
+            tail: 1,
+            head: 2,
+            parameter: ExactReal::from(parameter),
+            collision,
+            is_tail: false,
+            point: ExactBoolMeshPointConstruction::EdgeParameter {
+                side: ExactBoolMeshSide::Left,
+                tail: 1,
+                head: 2,
+                parameter: ExactReal::from(parameter),
+            },
+        }
+    }
+
+    #[test]
+    fn source_tail_kernel12_event_owns_duplicate_retained_tail_endpoint() {
+        let pair_up = ExactBoolMeshPairUpStage {
+            source_edge_runs: vec![ExactBoolMeshSourceEdgeRun {
+                side: ExactBoolMeshSide::Left,
+                source_halfedge: 6,
+                tail: 1,
+                head: 2,
+                events: vec![edge_parameter_event(7, 0)],
+                fragments: Vec::new(),
+                unpaired_events: 1,
+            }],
+            unknown_orderings: 0,
+            unpaired_event_runs: 1,
+        };
+        let order_index = source_edge_order_index(&pair_up);
+        let run = ExactBoolMeshSourceEdgePointRun {
+            side: ExactBoolMeshSide::Left,
+            source_halfedge: 6,
+            tail: 1,
+            head: 2,
+            points: vec![ExactBoolMeshRoutedEdgePoint {
+                output_vertex: 3,
+                order_index: 7,
+                collision: 7,
+                is_tail: true,
+                origin: ExactBoolMeshOutputVertexOrigin::Kernel12LeftEdgeRightFace {
+                    event: 0,
+                    copy: 0,
+                },
+            }],
+        };
+
+        assert!(retained_tail_owned_by_kernel12(
+            &run,
+            &[0, 1, 1],
+            &order_index
+        ));
+    }
+
+    #[test]
+    fn non_tail_parameter_keeps_retained_tail_endpoint() {
+        let pair_up = ExactBoolMeshPairUpStage {
+            source_edge_runs: vec![ExactBoolMeshSourceEdgeRun {
+                side: ExactBoolMeshSide::Left,
+                source_halfedge: 6,
+                tail: 1,
+                head: 2,
+                events: vec![edge_parameter_event(7, 1)],
+                fragments: Vec::new(),
+                unpaired_events: 1,
+            }],
+            unknown_orderings: 0,
+            unpaired_event_runs: 1,
+        };
+        let order_index = source_edge_order_index(&pair_up);
+        let run = ExactBoolMeshSourceEdgePointRun {
+            side: ExactBoolMeshSide::Left,
+            source_halfedge: 6,
+            tail: 1,
+            head: 2,
+            points: vec![ExactBoolMeshRoutedEdgePoint {
+                output_vertex: 3,
+                order_index: 7,
+                collision: 7,
+                is_tail: true,
+                origin: ExactBoolMeshOutputVertexOrigin::Kernel12LeftEdgeRightFace {
+                    event: 0,
+                    copy: 0,
+                },
+            }],
+        };
+
+        assert!(!retained_tail_owned_by_kernel12(
+            &run,
+            &[0, 1, 1],
+            &order_index
+        ));
+    }
 }
