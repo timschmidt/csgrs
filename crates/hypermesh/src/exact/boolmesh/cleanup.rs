@@ -9,11 +9,12 @@
 //! (1997), is the governing constraint here: cleanup may change topology only
 //! when exact predicates decide the equality or incidence being used.
 
-use std::collections::{BTreeMap, VecDeque};
+use std::collections::{BTreeMap, BTreeSet, VecDeque};
 
-use hyperlimit::{Point3, compare_reals};
+use hyperlimit::{Point3, Sign, compare_reals, orient3d_report, point_on_segment3};
 
 use crate::exact::mesh::{ExactPoint3, Triangle};
+use crate::exact::predicates::{TriangleDegeneracy, classify_triangle_degeneracy};
 
 /// Collapse exactly equal export coordinates and orient the resulting surface.
 ///
@@ -70,7 +71,343 @@ pub(super) fn cleanup_exact_export_vertices(
         })
         .collect::<Vec<_>>();
 
-    (unique_vertices, orient_triangle_components(triangles))
+    let triangles = split_edges_at_existing_vertices(&unique_points, triangles);
+    let triangles = orient_triangle_components(triangles);
+    let triangles = close_coplanar_boundary_loops(&unique_points, triangles);
+
+    (unique_vertices, triangles)
+}
+
+/// Split triangle edges at existing exact vertices that lie in their interiors.
+///
+/// This ports the part of boolmesh `simplify_topology` that makes later
+/// halfedge pairing possible after coincident slots have been welded.  A
+/// positive-area coplanar overlap can leave a source vertex exactly on a
+/// neighboring triangle edge; legacy boolmesh handles that before
+/// `Manifold::new_impl` by refining the triangle edge.  The exact port uses
+/// `hyperlimit::point_on_segment3` and exact coordinate inequality, following
+/// Yap's exact-geometric-computation contract: no epsilon decides whether a
+/// vertex lies on an edge, and each split preserves the original triangle
+/// orientation.
+fn split_edges_at_existing_vertices(points: &[Point3], triangles: Vec<Triangle>) -> Vec<Triangle> {
+    let mut triangles = triangles;
+    let max_splits = points
+        .len()
+        .saturating_mul(triangles.len())
+        .saturating_mul(3);
+    for _ in 0..max_splits {
+        let Some(split) = find_existing_vertex_edge_split(points, &triangles) else {
+            return triangles;
+        };
+        let triangle = triangles[split.face].0;
+        let edge = triangle_edge_indices(triangle, split.edge);
+        let opposite = triangle[(split.edge + 2) % 3];
+        let left = [edge[0], split.vertex, opposite];
+        let right = [split.vertex, edge[1], opposite];
+        if !triangle_is_exactly_nondegenerate(points, left)
+            || !triangle_is_exactly_nondegenerate(points, right)
+        {
+            return triangles;
+        }
+        triangles[split.face] = Triangle(left);
+        triangles.push(Triangle(right));
+    }
+    triangles
+}
+
+fn find_existing_vertex_edge_split(points: &[Point3], triangles: &[Triangle]) -> Option<EdgeSplit> {
+    for (face, triangle) in triangles.iter().enumerate() {
+        for edge in 0..3 {
+            let [tail, head] = triangle_edge_indices(triangle.0, edge);
+            for vertex in 0..points.len() {
+                if triangle.0.contains(&vertex)
+                    || !point_strictly_inside_segment(points, tail, head, vertex)
+                {
+                    continue;
+                }
+                return Some(EdgeSplit { face, edge, vertex });
+            }
+        }
+    }
+    None
+}
+
+#[derive(Clone, Copy)]
+struct EdgeSplit {
+    face: usize,
+    edge: usize,
+    vertex: usize,
+}
+
+fn triangle_edge_indices(triangle: [usize; 3], edge: usize) -> [usize; 2] {
+    match edge {
+        0 => [triangle[0], triangle[1]],
+        1 => [triangle[1], triangle[2]],
+        _ => [triangle[2], triangle[0]],
+    }
+}
+
+fn point_strictly_inside_segment(
+    points: &[Point3],
+    tail: usize,
+    head: usize,
+    vertex: usize,
+) -> bool {
+    point_on_segment3(&points[tail], &points[head], &points[vertex]).value() == Some(true)
+        && !exact_points_equal(&points[tail], &points[vertex])
+        && !exact_points_equal(&points[head], &points[vertex])
+}
+
+/// Fill exactly coplanar boundary cycles left by boolmesh topology cleanup.
+///
+/// Legacy boolmesh lets `simplify_topology` collapse and swap degenerate
+/// triangles before `Manifold::new_impl`; in positive-area coplanar overlaps
+/// that cleanup can leave a single oriented boundary cycle where source faces
+/// have already been welded into one exact output surface.  This is the exact
+/// port of that handoff, constrained by Yap, "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7.1-2 (1997): a cap is emitted only
+/// when the boundary graph is a set of simple directed degree-two cycles, all
+/// vertices in a cycle are certified coplanar by `hyperlimit::orient3d_report`,
+/// and every fan triangle is certified nondegenerate by
+/// `hyperlimit::classify_triangle3_degeneracy`.  The fan anchor is deliberately
+/// not fixed: boolmesh cleanup removes folded/collinear ears before manifold
+/// construction, so the exact port tries each boundary vertex and accepts only
+/// an anchor whose replay contains no degenerate or duplicate triangle.
+fn close_coplanar_boundary_loops(points: &[Point3], triangles: Vec<Triangle>) -> Vec<Triangle> {
+    let Some(boundary_loops) = directed_boundary_loops(&triangles) else {
+        return triangles;
+    };
+    if boundary_loops.is_empty() {
+        return triangles;
+    }
+
+    let mut occupied_triangles = triangles
+        .iter()
+        .map(|triangle| sorted_triangle(triangle.0))
+        .collect::<BTreeSet<_>>();
+    let base_edge_uses = edge_use_counts(&triangles);
+    let mut cap_triangles = Vec::new();
+    for boundary_loop in boundary_loops {
+        let Some(mut loop_caps) = triangulate_coplanar_boundary_loop(
+            points,
+            &boundary_loop,
+            &mut occupied_triangles,
+            &base_edge_uses,
+        ) else {
+            return triangles;
+        };
+        cap_triangles.append(&mut loop_caps);
+    }
+
+    if cap_triangles.is_empty() {
+        return triangles;
+    }
+
+    let mut closed = triangles;
+    closed.extend(cap_triangles);
+    orient_triangle_components(closed)
+}
+
+/// Extract simple directed boundary cycles from an already oriented soup.
+///
+/// Boolmesh's final manifold constructor expects each remaining boundary edge
+/// to be paired by cleanup, so this helper refuses ambiguous topology instead
+/// of guessing.  The degree-one directed-edge model mirrors the halfedge
+/// adjacency check used by `Manifold::new_impl`: every boundary vertex must
+/// have exactly one outgoing and one incoming boundary halfedge.
+fn directed_boundary_loops(triangles: &[Triangle]) -> Option<Vec<Vec<usize>>> {
+    let mut edge_uses = BTreeMap::<[usize; 2], Vec<[usize; 2]>>::new();
+    for triangle in triangles {
+        for edge in directed_edges(triangle.0) {
+            edge_uses.entry(sorted_edge(edge)).or_default().push(edge);
+        }
+    }
+
+    let mut successors = BTreeMap::<usize, usize>::new();
+    let mut predecessors = BTreeMap::<usize, usize>::new();
+    for uses in edge_uses.values() {
+        if uses.len() > 2 {
+            return None;
+        }
+        if uses.len() != 1 {
+            continue;
+        }
+        let [tail, head] = uses[0];
+        if tail == head
+            || successors.insert(tail, head).is_some()
+            || predecessors.insert(head, tail).is_some()
+        {
+            return None;
+        }
+    }
+
+    if successors.is_empty() {
+        return Some(Vec::new());
+    }
+    if successors.len() != predecessors.len()
+        || successors
+            .keys()
+            .any(|vertex| !predecessors.contains_key(vertex))
+    {
+        return None;
+    }
+
+    let mut visited = BTreeSet::new();
+    let mut loops = Vec::new();
+    for &start in successors.keys() {
+        if visited.contains(&start) {
+            continue;
+        }
+        let mut boundary_loop = Vec::new();
+        let mut current = start;
+        loop {
+            if !visited.insert(current) {
+                return None;
+            }
+            boundary_loop.push(current);
+            let next = *successors.get(&current)?;
+            if next == start {
+                break;
+            }
+            if visited.contains(&next) {
+                return None;
+            }
+            current = next;
+        }
+        if boundary_loop.len() < 3 {
+            return None;
+        }
+        loops.push(boundary_loop);
+    }
+
+    Some(loops)
+}
+
+fn triangulate_coplanar_boundary_loop(
+    points: &[Point3],
+    boundary_loop: &[usize],
+    occupied_triangles: &mut BTreeSet<[usize; 3]>,
+    base_edge_uses: &BTreeMap<[usize; 2], DirectedEdgeUseCount>,
+) -> Option<Vec<Triangle>> {
+    let plane = coplanar_loop_plane(points, boundary_loop)?;
+    if !boundary_loop
+        .iter()
+        .all(|&vertex| point_is_on_plane(points, plane, vertex))
+    {
+        return None;
+    }
+
+    for anchor_offset in 0..boundary_loop.len() {
+        let mut rotated = boundary_loop[anchor_offset..].to_vec();
+        rotated.extend_from_slice(&boundary_loop[..anchor_offset]);
+        let mut candidate_occupied = occupied_triangles.clone();
+        let mut candidate_edge_uses = base_edge_uses.clone();
+        let mut caps = Vec::with_capacity(boundary_loop.len().saturating_sub(2));
+        let anchor = rotated[0];
+        let mut valid_anchor = true;
+        for window in rotated[1..].windows(2) {
+            let triangle = [anchor, window[1], window[0]];
+            if !triangle_is_exactly_nondegenerate(points, triangle)
+                || !candidate_occupied.insert(sorted_triangle(triangle))
+                || !insert_triangle_preserving_two_manifold_edges(
+                    &mut candidate_edge_uses,
+                    triangle,
+                )
+            {
+                valid_anchor = false;
+                break;
+            }
+            caps.push(Triangle(triangle));
+        }
+        if valid_anchor {
+            *occupied_triangles = candidate_occupied;
+            return Some(caps);
+        }
+    }
+
+    None
+}
+
+fn coplanar_loop_plane(points: &[Point3], boundary_loop: &[usize]) -> Option<[usize; 3]> {
+    for left in 0..boundary_loop.len() {
+        for middle in left + 1..boundary_loop.len() {
+            for right in middle + 1..boundary_loop.len() {
+                let triangle = [
+                    boundary_loop[left],
+                    boundary_loop[middle],
+                    boundary_loop[right],
+                ];
+                if triangle_is_exactly_nondegenerate(points, triangle) {
+                    return Some(triangle);
+                }
+            }
+        }
+    }
+    None
+}
+
+fn point_is_on_plane(points: &[Point3], plane: [usize; 3], vertex: usize) -> bool {
+    orient3d_report(
+        &points[plane[0]],
+        &points[plane[1]],
+        &points[plane[2]],
+        &points[vertex],
+    )
+    .value()
+        == Some(Sign::Zero)
+}
+
+fn triangle_is_exactly_nondegenerate(points: &[Point3], triangle: [usize; 3]) -> bool {
+    classify_triangle_degeneracy(
+        &points[triangle[0]],
+        &points[triangle[1]],
+        &points[triangle[2]],
+    )
+    .degeneracy
+        == TriangleDegeneracy::NonDegenerate
+}
+
+#[derive(Clone, Copy, Debug, Default)]
+struct DirectedEdgeUseCount {
+    forward: usize,
+    reverse: usize,
+}
+
+fn edge_use_counts(triangles: &[Triangle]) -> BTreeMap<[usize; 2], DirectedEdgeUseCount> {
+    let mut edge_uses = BTreeMap::<[usize; 2], DirectedEdgeUseCount>::new();
+    for triangle in triangles {
+        for edge in directed_edges(triangle.0) {
+            let key = sorted_edge(edge);
+            let count = edge_uses.entry(key).or_default();
+            if edge == key {
+                count.forward += 1;
+            } else {
+                count.reverse += 1;
+            }
+        }
+    }
+    edge_uses
+}
+
+fn insert_triangle_preserving_two_manifold_edges(
+    edge_uses: &mut BTreeMap<[usize; 2], DirectedEdgeUseCount>,
+    triangle: [usize; 3],
+) -> bool {
+    let mut trial = edge_uses.clone();
+    for edge in directed_edges(triangle) {
+        let key = sorted_edge(edge);
+        let count = trial.entry(key).or_default();
+        if edge == key {
+            count.forward += 1;
+        } else {
+            count.reverse += 1;
+        }
+        if count.forward > 1 || count.reverse > 1 || count.forward + count.reverse > 2 {
+            return false;
+        }
+    }
+    *edge_uses = trial;
+    true
 }
 
 /// Orient a triangle soup by propagating halfedge direction constraints.
@@ -184,6 +521,11 @@ fn sorted_edge(edge: [usize; 2]) -> [usize; 2] {
     }
 }
 
+fn sorted_triangle(mut triangle: [usize; 3]) -> [usize; 3] {
+    triangle.sort_unstable();
+    triangle
+}
+
 fn exact_points_equal(left: &Point3, right: &Point3) -> bool {
     compare_reals(&left.x, &right.x).value() == Some(std::cmp::Ordering::Equal)
         && compare_reals(&left.y, &right.y).value() == Some(std::cmp::Ordering::Equal)
@@ -249,5 +591,105 @@ mod tests {
 
         assert_eq!(vertices.len(), 2);
         assert!(triangles.is_empty());
+    }
+
+    #[test]
+    fn cleanup_closes_exact_coplanar_boundary_cycle() {
+        let raw_vertices = vec![p(0, 0, 0), p(2, 0, 0), p(2, 2, 0), p(0, 2, 0), p(1, 1, 3)];
+        let raw_triangles = vec![
+            Triangle([0, 1, 4]),
+            Triangle([1, 2, 4]),
+            Triangle([2, 3, 4]),
+            Triangle([3, 0, 4]),
+        ];
+
+        let (vertices, triangles) = cleanup_exact_export_vertices(raw_vertices, &raw_triangles);
+        let points = vertices
+            .iter()
+            .map(ExactPoint3::to_hyperlimit_point)
+            .collect::<Vec<_>>();
+        let triangle_indices = triangles
+            .iter()
+            .map(|triangle| triangle.0)
+            .collect::<Vec<_>>();
+        let report =
+            validate_triangles_with_policy(&points, &triangle_indices, ValidationPolicy::CLOSED);
+
+        assert_eq!(triangles.len(), 6);
+        assert!(
+            report.is_valid(),
+            "cleanup should cap a certified coplanar boolmesh boundary cycle: {:?}",
+            report.diagnostics
+        );
+    }
+
+    #[test]
+    fn cleanup_splits_exact_vertices_on_boundary_edges_before_capping() {
+        let raw_vertices = vec![
+            p(4, 0, 0),
+            p(2, -1, 0),
+            p(5, -1, 0),
+            p(2, -1, -3),
+            p(2, 0, 0),
+            p(2, 2, 0),
+        ];
+        let raw_triangles = vec![
+            Triangle([4, 2, 1]),
+            Triangle([2, 4, 0]),
+            Triangle([3, 1, 2]),
+            Triangle([2, 5, 3]),
+            Triangle([1, 3, 5]),
+        ];
+
+        let (vertices, triangles) = cleanup_exact_export_vertices(raw_vertices, &raw_triangles);
+        let points = vertices
+            .iter()
+            .map(ExactPoint3::to_hyperlimit_point)
+            .collect::<Vec<_>>();
+        let triangle_indices = triangles
+            .iter()
+            .map(|triangle| triangle.0)
+            .collect::<Vec<_>>();
+        let report =
+            validate_triangles_with_policy(&points, &triangle_indices, ValidationPolicy::CLOSED);
+
+        assert!(
+            triangles.len() > raw_triangles.len(),
+            "edge refinement should materialize additional exact triangles"
+        );
+        assert!(
+            report.is_valid(),
+            "cleanup should split exact on-edge vertices before final capping: {:?}",
+            report.diagnostics
+        );
+    }
+
+    #[test]
+    fn cleanup_refuses_non_coplanar_boundary_cycle() {
+        let raw_vertices = vec![p(0, 0, 0), p(2, 0, 0), p(2, 2, 1), p(0, 2, 0), p(1, 1, 3)];
+        let raw_triangles = vec![
+            Triangle([0, 1, 4]),
+            Triangle([1, 2, 4]),
+            Triangle([2, 3, 4]),
+            Triangle([3, 0, 4]),
+        ];
+
+        let (vertices, triangles) = cleanup_exact_export_vertices(raw_vertices, &raw_triangles);
+        let points = vertices
+            .iter()
+            .map(ExactPoint3::to_hyperlimit_point)
+            .collect::<Vec<_>>();
+        let triangle_indices = triangles
+            .iter()
+            .map(|triangle| triangle.0)
+            .collect::<Vec<_>>();
+        let report =
+            validate_triangles_with_policy(&points, &triangle_indices, ValidationPolicy::CLOSED);
+
+        assert_eq!(triangles.len(), 4);
+        assert!(
+            !report.is_valid(),
+            "cleanup must not invent a cap without exact coplanarity"
+        );
     }
 }
