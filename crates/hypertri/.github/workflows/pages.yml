@@ -29,6 +29,12 @@ jobs:
           repository: ${{ github.repository_owner }}/hyperreal
           path: hyperreal
 
+      - name: Check out hyperlattice sibling
+        uses: actions/checkout@v6
+        with:
+          repository: ${{ github.repository_owner }}/hyperlattice
+          path: hyperlattice
+
       - name: Checkout hyperlimit sibling
         uses: actions/checkout@v6
         with:
