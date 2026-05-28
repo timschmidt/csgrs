@@ -2263,8 +2263,16 @@ fn exercise_exact_boolmesh_kernel12_coplanar_interval_port() {
     );
     workspace.validate_against_sources(&left, &right).unwrap();
     assert_eq!(workspace.kernel12_coplanar_events, 0);
+    assert_eq!(
+        workspace.blocker.as_ref().map(|blocker| blocker.stage),
+        Some(hypermesh::exact::ExactBoolMeshKernelStage::FaceAssembly)
+    );
     assert!(workspace.boolean03.p1q2.len() >= 2);
     assert!(workspace.boolean03.p2q1.len() >= 2);
+    let stage = workspace.boolean45.as_ref().unwrap();
+    assert_eq!(stage.partial_source_edges.unpaired_runs, 0);
+    assert_eq!(stage.new_face_pair_edges.unpaired_runs, 0);
+    assert_eq!(stage.halfedge_assembly.unfilled_halfedges, 2);
     assert!(workspace
         .pair_up
         .source_edge_runs

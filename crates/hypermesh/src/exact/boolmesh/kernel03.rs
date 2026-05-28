@@ -43,16 +43,14 @@ pub(super) struct ExactKernel03Winding {
 /// `winding03(mp, mq, expand, false)` for `w30`.  The exact port keeps that
 /// canonical operand model so the reverse direction can reuse the canonical
 /// left expansion directions for tie-breaking exactly like legacy `Kernel02`.
-/// Non-closed or malformed halfedge frames remain blockers for now because
-/// `boolean45` source-face retention assumes two-manifold source ownership.
+/// Malformed halfedge frames remain blockers.  Boundary halfedges are accepted:
+/// boolmesh supplies paired reverse rows for open source edges, and the exact
+/// frame does the same with replayable boundary rows so `Kernel02` can own
+/// boundary endpoint and interval ties without a separate ray-style fallback.
 pub(super) fn kernel03_winding(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Option<ExactKernel03Winding> {
-    if !left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold {
-        return None;
-    }
-
     let left_frame = build_kernel_frame(left);
     let right_frame = build_kernel_frame(right);
     if !kernel03_frame_is_replayable(left, &left_frame)
@@ -121,15 +119,14 @@ fn winding03_exact(
 
 /// Validate that a frame is faithful enough for boolmesh `kernel03` replay.
 ///
-/// Closed triangle meshes should have exactly three source halfedges per face,
-/// no synthetic boundary reverse rows in the source range, and no duplicate
-/// directed source rows.  Rejecting drift here keeps `kernel03` counters tied
-/// to the same halfedge object model consumed later by `boolean45`.
+/// Triangle meshes should have exactly three source halfedges per face and no
+/// duplicate directed source rows.  Boundary reverse rows may be appended after
+/// the source range; accepting them ports boolmesh's open-boundary halfedge
+/// object model while still rejecting source-row drift before `boolean45`.
 fn kernel03_frame_is_replayable(mesh: &ExactMesh, frame: &ExactBoolMeshKernelFrame) -> bool {
     let source_halfedges = mesh.triangles().len() * 3;
     frame.points.len() == mesh.vertices().len()
         && frame.source_halfedge_count() == source_halfedges
-        && frame.boundary_source_halfedges == 0
         && frame.duplicate_directed_halfedges == 0
         && frame.expansion_normals.len() == mesh.vertices().len()
 }
@@ -260,7 +257,7 @@ mod tests {
     }
 
     #[test]
-    fn winding03_rejects_open_source_frame() {
+    fn winding03_replays_open_boundary_source_frame() {
         let open = ExactMesh::from_i64_triangles_with_policy(
             &[0, 0, 0, 4, 0, 0, 0, 4, 0],
             &[0, 1, 2],
@@ -269,8 +266,15 @@ mod tests {
         .expect("open triangle fixture must import");
         let closed = tetrahedron_i64([0, 0, 0], [10, 0, 0], [0, 10, 0], [0, 0, 10]);
 
-        assert!(kernel03_winding(&open, &closed).is_none());
-        assert!(kernel03_winding(&closed, &open).is_none());
+        let open_closed =
+            kernel03_winding(&open, &closed).expect("open source boundary rows should replay");
+        assert_eq!(open_closed.w03, vec![1, 1, 1]);
+        assert_eq!(open_closed.w30, vec![0; closed.vertices().len()]);
+
+        let closed_open =
+            kernel03_winding(&closed, &open).expect("open target boundary rows should replay");
+        assert_eq!(closed_open.w03, vec![0; closed.vertices().len()]);
+        assert_eq!(closed_open.w30, vec![0; open.vertices().len()]);
     }
 
     #[test]

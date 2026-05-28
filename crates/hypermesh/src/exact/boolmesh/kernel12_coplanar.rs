@@ -56,6 +56,7 @@ pub(super) fn lower_coplanar_split_rows(
     right: &ExactMesh,
 ) -> Vec<ExactCoplanarKernel12Row> {
     let mut rows = Vec::new();
+    let interval_endpoints = interval_endpoint_coverages(evidence, left, right);
     for evidence in evidence {
         let Kernel12CoplanarEvidence::Edge {
             face_pair,
@@ -83,6 +84,7 @@ pub(super) fn lower_coplanar_split_rows(
                         &point.point,
                         &point.left_parameter,
                         CoplanarPointSign::EndpointTouch,
+                        &interval_endpoints,
                     );
                     push_point_side_row(
                         &mut rows,
@@ -95,6 +97,7 @@ pub(super) fn lower_coplanar_split_rows(
                         &point.point,
                         &point.right_parameter,
                         CoplanarPointSign::EndpointTouch,
+                        &interval_endpoints,
                     );
                 }
             }
@@ -111,6 +114,7 @@ pub(super) fn lower_coplanar_split_rows(
                         &point.point,
                         &point.left_parameter,
                         CoplanarPointSign::Fixed(1),
+                        &interval_endpoints,
                     );
                     push_point_side_row(
                         &mut rows,
@@ -123,6 +127,7 @@ pub(super) fn lower_coplanar_split_rows(
                         &point.point,
                         &point.right_parameter,
                         CoplanarPointSign::Fixed(1),
+                        &interval_endpoints,
                     );
                 }
             }
@@ -148,6 +153,7 @@ pub(super) fn lower_coplanar_split_rows(
                             &interval.endpoints[1].left_parameter,
                         ),
                     ],
+                    &interval_endpoints,
                 );
                 push_interval_side_rows(
                     &mut rows,
@@ -167,6 +173,7 @@ pub(super) fn lower_coplanar_split_rows(
                             &interval.endpoints[1].right_parameter,
                         ),
                     ],
+                    &interval_endpoints,
                 );
             }
             SegmentIntersection::Disjoint => {}
@@ -182,6 +189,144 @@ pub(super) fn lower_coplanar_split_rows(
     rows
 }
 
+/// Normalized interval endpoints that already own a coplanar boundary point.
+///
+/// Positive-length coplanar interval rows are the boolmesh `kernel12`
+/// ownership for their two exact endpoints on open-boundary source meshes.
+/// Retained graph evidence may also report the same physical point as an
+/// endpoint-touch on an adjacent boundary halfedge.  Lowering both creates a
+/// lone `pair_up` event on that adjacent edge for boundary-only overlaps.  The
+/// exact port records open-boundary interval endpoint coverage first, then
+/// skips only the redundant endpoint-touch row while preserving proper
+/// crossing rows and closed-shell shared endpoint rows at the same point.  This
+/// follows the row-ownership boundary of boolmesh's coplanar branch and Yap,
+/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+/// (1997): exact point equality selects a single replayable topology owner
+/// instead of an approximate duplicate.
+#[derive(Clone, Debug, PartialEq)]
+struct CoplanarIntervalEndpointCoverage {
+    edge_side: ExactBoolMeshSide,
+    face_side: ExactBoolMeshSide,
+    face: usize,
+    point: Point3,
+}
+
+fn interval_endpoint_coverages(
+    evidence: &[Kernel12CoplanarEvidence],
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Vec<CoplanarIntervalEndpointCoverage> {
+    let mut coverages = Vec::new();
+    for evidence in evidence {
+        let Kernel12CoplanarEvidence::Edge {
+            face_pair,
+            left_edge,
+            right_edge,
+            relation,
+            interval,
+            ..
+        } = evidence
+        else {
+            continue;
+        };
+        if !matches!(
+            relation,
+            SegmentIntersection::CollinearOverlap | SegmentIntersection::Identical
+        ) {
+            continue;
+        }
+        let Some(interval) = interval else {
+            continue;
+        };
+        extend_interval_endpoint_coverages(
+            &mut coverages,
+            left,
+            *face_pair,
+            ExactBoolMeshSide::Left,
+            *left_edge,
+            face_pair.left_face,
+            face_pair.right_face,
+            [
+                (
+                    &interval.endpoints[0].point,
+                    &interval.endpoints[0].left_parameter,
+                ),
+                (
+                    &interval.endpoints[1].point,
+                    &interval.endpoints[1].left_parameter,
+                ),
+            ],
+        );
+        extend_interval_endpoint_coverages(
+            &mut coverages,
+            right,
+            *face_pair,
+            ExactBoolMeshSide::Right,
+            *right_edge,
+            face_pair.right_face,
+            face_pair.left_face,
+            [
+                (
+                    &interval.endpoints[0].point,
+                    &interval.endpoints[0].right_parameter,
+                ),
+                (
+                    &interval.endpoints[1].point,
+                    &interval.endpoints[1].right_parameter,
+                ),
+            ],
+        );
+    }
+    coverages
+}
+
+#[allow(clippy::too_many_arguments)]
+fn extend_interval_endpoint_coverages(
+    coverages: &mut Vec<CoplanarIntervalEndpointCoverage>,
+    mesh: &ExactMesh,
+    _face_pair: ExactBoolMeshFacePair,
+    side: ExactBoolMeshSide,
+    edge: [usize; 2],
+    source_face: usize,
+    opposite_face: usize,
+    endpoints: [(&Point3, &ExactReal); 2],
+) {
+    if mesh.facts().mesh.boundary_edges == 0 {
+        return;
+    }
+    for (point, parameter) in endpoints {
+        let Some((_edge, _source_face, _source_halfedge, Some(_parameter), _)) =
+            normalize_boolmesh_source_edge(
+                mesh,
+                source_face,
+                edge,
+                Some(parameter.clone()),
+                [None, None],
+            )
+        else {
+            continue;
+        };
+        let face_side = match side {
+            ExactBoolMeshSide::Left => ExactBoolMeshSide::Right,
+            ExactBoolMeshSide::Right => ExactBoolMeshSide::Left,
+        };
+        let coverage = CoplanarIntervalEndpointCoverage {
+            edge_side: side,
+            face_side,
+            face: opposite_face,
+            point: point.clone(),
+        };
+        if !coverages.iter().any(|existing| {
+            existing.edge_side == coverage.edge_side
+                && existing.face_side == coverage.face_side
+                && existing.face == coverage.face
+                && points_equal(&existing.point, &coverage.point)
+        }) {
+            coverages.push(coverage);
+        }
+    }
+}
+
 #[allow(clippy::too_many_arguments)]
 fn push_point_side_row(
     rows: &mut Vec<ExactCoplanarKernel12Row>,
@@ -194,6 +339,7 @@ fn push_point_side_row(
     point: &Point3,
     parameter: &ExactReal,
     sign: CoplanarPointSign,
+    interval_endpoints: &[CoplanarIntervalEndpointCoverage],
 ) {
     let Some((edge, source_face, source_halfedge, Some(parameter), _)) =
         normalize_boolmesh_source_edge(
@@ -220,6 +366,16 @@ fn push_point_side_row(
         ExactBoolMeshSide::Left => ExactBoolMeshSide::Right,
         ExactBoolMeshSide::Right => ExactBoolMeshSide::Left,
     };
+    if sign == CoplanarPointSign::EndpointTouch
+        && interval_endpoints.iter().any(|coverage| {
+            coverage.edge_side == side
+                && coverage.face_side == face_side
+                && coverage.face == opposite_face
+                && points_equal(&coverage.point, point)
+        })
+    {
+        return;
+    }
     let sign = sign.resolve(&parameter);
     rows.push(ExactCoplanarKernel12Row {
         edge_face: ExactBoolMeshEdgeFacePair {
@@ -284,6 +440,7 @@ fn push_interval_side_rows(
     source_face: usize,
     opposite_face: usize,
     endpoints: [(&Point3, &ExactReal); 2],
+    interval_endpoints: &[CoplanarIntervalEndpointCoverage],
 ) {
     let mut endpoints = endpoints.map(|(point, parameter)| {
         let normalized_parameter = if edge[0] > edge[1] {
@@ -313,6 +470,7 @@ fn push_interval_side_rows(
             point,
             parameter,
             CoplanarPointSign::Fixed(if index == 0 { 1 } else { -1 }),
+            interval_endpoints,
         );
     }
 }
@@ -350,6 +508,7 @@ fn points_equal(left: &Point3, right: &Point3) -> bool {
 mod tests {
     use super::*;
     use crate::exact::graph::{CoplanarEdgeInterval, CoplanarEdgeSplitPoint};
+    use crate::exact::validation::ValidationPolicy;
 
     fn tetrahedron_i64(a: [i64; 3], b: [i64; 3], c: [i64; 3], d: [i64; 3]) -> ExactMesh {
         ExactMesh::from_i64_triangles(
@@ -363,6 +522,15 @@ mod tests {
 
     fn p3(x: i64, y: i64, z: i64) -> Point3 {
         Point3::new(ExactReal::from(x), ExactReal::from(y), ExactReal::from(z))
+    }
+
+    fn open_triangle_i64(a: [i64; 3], b: [i64; 3], c: [i64; 3]) -> ExactMesh {
+        ExactMesh::from_i64_triangles_with_policy(
+            &[a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2]],
+            &[0, 1, 2],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap()
     }
 
     fn split_point(
@@ -509,5 +677,49 @@ mod tests {
             assert!(endpoint_rows.iter().any(|row| row.sign == 1));
             assert!(endpoint_rows.iter().any(|row| row.sign == -1));
         }
+    }
+
+    #[test]
+    fn interval_endpoint_owns_adjacent_endpoint_touch_row() {
+        let left = open_triangle_i64([0, 0, 0], [1, 0, 0], [0, 1, 0]);
+        let right = open_triangle_i64([0, 0, 0], [1, 0, 0], [0, -1, 0]);
+        let evidence = [
+            Kernel12CoplanarEvidence::Edge {
+                face_pair: ExactBoolMeshFacePair {
+                    left_face: 0,
+                    right_face: 0,
+                },
+                left_edge: [0, 1],
+                right_edge: [0, 1],
+                relation: SegmentIntersection::CollinearOverlap,
+                points: Vec::new(),
+                interval: Some(CoplanarEdgeInterval {
+                    endpoints: [
+                        split_point(p3(0, 0, 0), 0, 0),
+                        split_point(p3(1, 0, 0), 1, 1),
+                    ],
+                }),
+            },
+            Kernel12CoplanarEvidence::Edge {
+                face_pair: ExactBoolMeshFacePair {
+                    left_face: 0,
+                    right_face: 0,
+                },
+                left_edge: [1, 2],
+                right_edge: [1, 2],
+                relation: SegmentIntersection::EndpointTouch,
+                points: vec![split_point(p3(1, 0, 0), 0, 0)],
+                interval: None,
+            },
+        ];
+
+        let rows = lower_coplanar_split_rows(&evidence, &left, &right);
+
+        assert_eq!(rows.len(), 4);
+        assert!(
+            rows.iter()
+                .all(|row| row.edge_face.edge == [0, 1] || row.edge_face.edge == [1, 0]),
+            "the adjacent endpoint-touch halfedge must not get a second row: {rows:?}"
+        );
     }
 }

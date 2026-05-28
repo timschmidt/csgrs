@@ -34248,6 +34248,19 @@ fn exact_boolmesh_kernel12_lowers_coplanar_interval_endpoints() {
         workspace.blocker.as_ref().map(|blocker| blocker.stage),
         Some(hypermesh::exact::ExactBoolMeshKernelStage::Kernel12)
     );
+    assert_ne!(
+        workspace.blocker.as_ref().map(|blocker| blocker.stage),
+        Some(hypermesh::exact::ExactBoolMeshKernelStage::Kernel03)
+    );
+    assert_ne!(
+        workspace.blocker.as_ref().map(|blocker| blocker.stage),
+        Some(hypermesh::exact::ExactBoolMeshKernelStage::SourceEdgeEmission)
+    );
+    assert_eq!(
+        workspace.blocker.as_ref().map(|blocker| blocker.stage),
+        Some(hypermesh::exact::ExactBoolMeshKernelStage::FaceAssembly),
+        "boundary-only coplanar intervals now reach the next real boolmesh gap: lower-dimensional face assembly"
+    );
     assert!(workspace.boolean03.p1q2.len() >= 2);
     assert!(workspace.boolean03.p2q1.len() >= 2);
     assert_eq!(
@@ -34273,6 +34286,10 @@ fn exact_boolmesh_kernel12_lowers_coplanar_interval_endpoints() {
                 hypermesh::exact::ExactBoolMeshPointConstruction::EdgeParameter { .. }
             ))
     );
+    let stage = workspace.boolean45.as_ref().unwrap();
+    assert_eq!(stage.partial_source_edges.unpaired_runs, 0);
+    assert_eq!(stage.new_face_pair_edges.unpaired_runs, 0);
+    assert_eq!(stage.halfedge_assembly.unfilled_halfedges, 2);
 }
 
 #[test]

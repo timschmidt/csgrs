@@ -13458,9 +13458,13 @@ fn exact_boolmesh_kernel12_coplanar_interval_port(c: &mut Criterion) {
                     &right,
                     hypermesh::exact::ExactBooleanOperation::Intersection,
                 );
+                workspace.validate_against_sources(&left, &right).unwrap();
+                let stage = workspace.boolean45.as_ref().unwrap();
                 workspace.boolean03.p1q2.len()
                     + workspace.boolean03.p2q1.len()
                     + workspace.kernel12_coplanar_events
+                    + stage.partial_source_edges.unpaired_runs
+                    + stage.halfedge_assembly.unfilled_halfedges
             })
         });
     }

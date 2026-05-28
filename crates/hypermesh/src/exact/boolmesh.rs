@@ -2149,7 +2149,9 @@ fn count_uncovered_coplanar_events(
 ) -> usize {
     coplanar_evidence
         .iter()
-        .filter(|evidence| !coplanar_evidence_has_lowered_row(evidence, lowering, left, right))
+        .filter(|evidence| {
+            !coplanar_evidence_has_lowered_row(evidence, coplanar_evidence, lowering, left, right)
+        })
         .count()
 }
 
@@ -2171,6 +2173,7 @@ fn count_uncovered_coplanar_events(
 #[cfg(feature = "exact-triangulation")]
 fn coplanar_evidence_has_lowered_row(
     evidence: &Kernel12CoplanarEvidence,
+    all_coplanar_evidence: &[Kernel12CoplanarEvidence],
     lowering: &ExactBoolMeshKernel12Lowering,
     left: &ExactMesh,
     right: &ExactMesh,
@@ -2193,7 +2196,12 @@ fn coplanar_evidence_has_lowered_row(
                             *left_edge,
                             *right_edge,
                             lowering,
-                        )
+                        ) || (*relation == SegmentIntersection::EndpointTouch
+                            && coplanar_endpoint_touch_is_owned_by_interval(
+                                point,
+                                *face_pair,
+                                all_coplanar_evidence,
+                            ))
                     })
             }
             SegmentIntersection::CollinearOverlap | SegmentIntersection::Identical => {
@@ -2241,6 +2249,44 @@ fn coplanar_evidence_has_lowered_row(
             TriangleLocation::Outside | TriangleLocation::Degenerate => false,
         },
     }
+}
+
+/// Return whether an endpoint-touch fact is already owned by an interval row.
+///
+/// The exact coplanar lowering gives positive-length interval endpoints
+/// ownership over coincident endpoint touches on adjacent source halfedges.
+/// Coverage must follow that same boolmesh row ownership, otherwise the
+/// intentionally skipped duplicate endpoint-touch row is misreported as an
+/// unlowered `Kernel12` event.  This is the replay side of Yap's exact-object
+/// boundary from "Towards Exact Geometric Computation," *Computational
+/// Geometry* 7.1-2 (1997): the exact point is still certified, but its topology
+/// owner is the interval endpoint row.
+#[cfg(feature = "exact-triangulation")]
+fn coplanar_endpoint_touch_is_owned_by_interval(
+    point: &CoplanarEdgeSplitPoint,
+    face_pair: ExactBoolMeshFacePair,
+    all_coplanar_evidence: &[Kernel12CoplanarEvidence],
+) -> bool {
+    all_coplanar_evidence.iter().any(|evidence| {
+        let Kernel12CoplanarEvidence::Edge {
+            face_pair: interval_face_pair,
+            relation,
+            interval: Some(interval),
+            ..
+        } = evidence
+        else {
+            return false;
+        };
+        *interval_face_pair == face_pair
+            && matches!(
+                relation,
+                SegmentIntersection::CollinearOverlap | SegmentIntersection::Identical
+            )
+            && interval
+                .endpoints
+                .iter()
+                .any(|endpoint| point_matches(&endpoint.point, &point.point))
+    })
 }
 
 #[cfg(feature = "exact-triangulation")]
