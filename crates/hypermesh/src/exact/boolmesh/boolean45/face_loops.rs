@@ -3,6 +3,9 @@
 //! Legacy triangulation first groups each output face's halfedges by tail
 //! vertex, then walks from the current head to the next halfedge with that
 //! tail.  This is the topological face-boundary step before triangulation.
+//! Closed walks with fewer than three halfedges are preserved here because
+//! legacy `assemble_halfs` returns raw loops; the later triangulation handoff
+//! owns the short-loop rejection.
 //! Following Yap, "Towards Exact Geometric Computation," *Computational
 //! Geometry* 7.1-2 (1997), this exact port records incomplete and malformed
 //! traversal states instead of using rounded geometry or panic-driven repair.
@@ -132,4 +135,57 @@ fn pop_consumed(
         }
     }
     tail_to_halfedges.retain(|_, queue| !queue.is_empty());
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::exact::{
+        ExactBoolMeshHalfedgeAssemblyStage, ExactBoolMeshOutputHalfedge,
+        ExactBoolMeshOutputHalfedgeSource, ExactBoolMeshSide,
+    };
+
+    #[test]
+    fn two_edge_closed_walk_is_preserved_for_triangulation_stage() {
+        let halfedges = ExactBoolMeshHalfedgeAssemblyStage {
+            output_halfedges: vec![
+                Some(ExactBoolMeshOutputHalfedge {
+                    tail: 0,
+                    head: 1,
+                    pair: 0,
+                    face: 0,
+                    source: ExactBoolMeshOutputHalfedgeSource::NewFacePair {
+                        side: ExactBoolMeshSide::Left,
+                        source_face: 0,
+                        opposite_face: 0,
+                        fragment: 0,
+                        forward: true,
+                    },
+                }),
+                Some(ExactBoolMeshOutputHalfedge {
+                    tail: 1,
+                    head: 0,
+                    pair: 1,
+                    face: 0,
+                    source: ExactBoolMeshOutputHalfedgeSource::NewFacePair {
+                        side: ExactBoolMeshSide::Left,
+                        source_face: 0,
+                        opposite_face: 0,
+                        fragment: 1,
+                        forward: true,
+                    },
+                }),
+            ],
+            ..ExactBoolMeshHalfedgeAssemblyStage::default()
+        };
+
+        let stage = assemble_output_face_loops(&halfedges, &[0, 2]);
+
+        assert_eq!(stage.incomplete_faces, 0);
+        assert_eq!(stage.repeated_halfedges, 0);
+        assert_eq!(stage.non_loop_halfedges, 0);
+        assert_eq!(stage.loops.len(), 1);
+        assert_eq!(stage.loops[0].halfedges, vec![0, 1]);
+        assert_eq!(stage.loops[0].vertices, vec![0, 1]);
+    }
 }

@@ -511,6 +511,7 @@ mod tests {
                     tail_point,
                     head_point,
                 }],
+                suppressed_retained_tail_copies: 0,
                 unpaired_points: 0,
             }],
             unpaired_runs: 0,

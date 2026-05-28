@@ -34273,9 +34273,13 @@ fn exact_boolmesh_kernel12_lowers_partial_positive_area_coplanar_overlap() {
         stage.new_face_pair_edges.unpaired_runs, 0,
         "source-tail coplanar Kernel12 rows must not leave dangling append_new_edges face-pair points"
     );
+    assert_eq!(
+        stage.halfedge_assembly.unfilled_halfedges, 0,
+        "source-tail ownership corrections must be replayed into face slot sizing before loop assembly"
+    );
+    assert_eq!(stage.face_loop_assembly.incomplete_faces, 0);
     assert!(
-        stage.face_loop_assembly.incomplete_faces > 0
-            || stage.face_loop_assembly.non_loop_halfedges > 0
+        stage.face_loop_assembly.non_loop_halfedges > 0
             || stage.face_loop_assembly.repeated_halfedges > 0,
         "partial positive-area overlap should now expose the next boolmesh face assembly blocker"
     );

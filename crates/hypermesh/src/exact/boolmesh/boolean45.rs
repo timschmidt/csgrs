@@ -146,24 +146,45 @@ pub(super) fn size_output_stage(
     let mut right_face_halfedge_counts = retained_vertex_counts(right.triangles(), &i30);
     let mut source_edge_incident_gaps = 0;
 
-    for (pair, signed_count) in boolean03.p1q2.iter().zip(i12.iter()) {
+    for (event, (pair, signed_count)) in boolean03.p1q2.iter().zip(i12.iter()).enumerate() {
+        let source_parameter = source_edge_parameter(left, pair.edge, &boolean03.v12[event]);
+        let suppress_opposite_face_count = source_tail_face_pair_owned_by_source_edge(
+            pair,
+            *signed_count < 0,
+            &i03,
+            source_parameter.as_ref(),
+        );
         source_edge_incident_gaps += count_crossing_vertex(
             pair,
             signed_abs(*signed_count),
             left,
             &mut left_face_halfedge_counts,
             &mut right_face_halfedge_counts,
+            !suppress_opposite_face_count,
         );
     }
-    for (pair, signed_count) in boolean03.p2q1.iter().zip(i21.iter()) {
+    for (event, (pair, signed_count)) in boolean03.p2q1.iter().zip(i21.iter()).enumerate() {
+        let source_parameter = source_edge_parameter(right, pair.edge, &boolean03.v21[event]);
+        let suppress_opposite_face_count = source_tail_face_pair_owned_by_source_edge(
+            pair,
+            *signed_count < 0,
+            &i30,
+            source_parameter.as_ref(),
+        );
         source_edge_incident_gaps += count_crossing_vertex(
             pair,
             signed_abs(*signed_count),
             right,
             &mut right_face_halfedge_counts,
             &mut left_face_halfedge_counts,
+            !suppress_opposite_face_count,
         );
     }
+    apply_suppressed_retained_tail_face_counts(
+        &partial_source_edges,
+        &mut left_face_halfedge_counts,
+        &mut right_face_halfedge_counts,
+    );
 
     let source_face_counts = left_face_halfedge_counts
         .iter()
@@ -762,9 +783,16 @@ fn stage_partial_source_edges(
             });
         }
 
-        if !retained_tail_owned_by_kernel12(run, signed_counts, &order_index) {
-            append_retained_endpoint(run.side, run.tail, signed_counts, starts, 0, &mut points);
-        }
+        let suppressed_retained_tail_copies =
+            if retained_tail_owned_by_kernel12(run, signed_counts, &order_index) {
+                signed_counts
+                    .get(run.tail)
+                    .map(|signed_count| signed_abs(*signed_count))
+                    .unwrap_or(0)
+            } else {
+                append_retained_endpoint(run.side, run.tail, signed_counts, starts, 0, &mut points);
+                0
+            };
         append_retained_endpoint(
             run.side,
             run.head,
@@ -793,6 +821,7 @@ fn stage_partial_source_edges(
             incident_edges: incident_uses.iter().map(|use_| use_.edge).collect(),
             points,
             fragments,
+            suppressed_retained_tail_copies,
             unpaired_points,
         });
     }
@@ -1330,6 +1359,7 @@ fn count_crossing_vertex(
     edge_mesh: &ExactMesh,
     edge_face_counts: &mut [usize],
     opposite_face_counts: &mut [usize],
+    count_opposite_face: bool,
 ) -> usize {
     let incident_faces =
         incident_faces_for_source_halfedge(edge_mesh.triangles(), pair.source_halfedge);
@@ -1338,8 +1368,10 @@ fn count_crossing_vertex(
             *count += increment;
         }
     }
-    if let Some(count) = opposite_face_counts.get_mut(pair.face) {
-        *count += increment;
+    if count_opposite_face {
+        if let Some(count) = opposite_face_counts.get_mut(pair.face) {
+            *count += increment;
+        }
     }
 
     let primary_edge_face = match pair.edge_side {
@@ -1347,6 +1379,44 @@ fn count_crossing_vertex(
         ExactBoolMeshSide::Right => pair.face_pair.right_face,
     };
     usize::from(!incident_faces.contains(&primary_edge_face))
+}
+
+/// Apply exact ownership corrections to the boolmesh-style face slot counts.
+///
+/// Legacy `boolean45::size_output` reserves one halfedge slot per retained
+/// source-vertex copy and per crossing contribution, then the mutation passes
+/// consume those slots.  The exact coplanar source-tail port can prove that a
+/// retained tail copy and the same-parameter `Kernel12` row represent the same
+/// boundary object before mutation.  Following Yap, "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7.1-2 (1997), the certified
+/// ownership decision is replayed into the combinatorial size object instead
+/// of leaving later face assembly with impossible empty slots.
+fn apply_suppressed_retained_tail_face_counts(
+    partial_source_edges: &ExactBoolMeshPartialSourceEdgeStage,
+    left_face_counts: &mut [usize],
+    right_face_counts: &mut [usize],
+) {
+    for run in &partial_source_edges.source_edge_runs {
+        if run.suppressed_retained_tail_copies == 0 {
+            continue;
+        }
+        match run.side {
+            ExactBoolMeshSide::Left => {
+                for source_face in &run.incident_faces {
+                    if let Some(count) = left_face_counts.get_mut(*source_face) {
+                        *count = count.saturating_sub(run.suppressed_retained_tail_copies);
+                    }
+                }
+            }
+            ExactBoolMeshSide::Right => {
+                for source_face in &run.incident_faces {
+                    if let Some(count) = right_face_counts.get_mut(*source_face) {
+                        *count = count.saturating_sub(run.suppressed_retained_tail_copies);
+                    }
+                }
+            }
+        }
+    }
 }
 
 fn incident_faces_for_source_halfedge(

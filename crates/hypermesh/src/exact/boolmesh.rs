@@ -684,6 +684,14 @@ pub struct ExactBoolMeshPartialSourceEdgeRun {
     pub points: Vec<ExactBoolMeshPartialEdgePoint>,
     /// Zipped tail/head source-edge fragments.
     pub fragments: Vec<ExactBoolMeshPartialSourceEdgeFragment>,
+    /// Retained source-tail copies deliberately omitted because an exact
+    /// source-tail `Kernel12` row already owns the same boundary role.
+    ///
+    /// This is the `append_partial_edges` companion to
+    /// [`ExactBoolMeshNewEdgeVertexStage::suppressed_source_tail_face_pair_points`]:
+    /// exact ownership changes the number of source-face slots that should be
+    /// reserved before halfedge emission.
+    pub suppressed_retained_tail_copies: usize,
     /// Number of points not paired into fragments.
     pub unpaired_points: usize,
 }
@@ -3245,8 +3253,12 @@ fn validate_boolean45_face_loops(
 
     let mut covered = BTreeSet::<usize>::new();
     for face_loop in &stage.face_loop_assembly.loops {
+        // Legacy boolmesh's `assemble_halfs` returns closed walks before
+        // asking triangulation whether the ring is usable.  Keep that boundary
+        // between topology assembly and polygon algorithms here: two-edge
+        // exact loops are valid face-assembly records and become
+        // `short_loops` in the later `hypertri` handoff.
         if face_loop.output_face >= output_face_count
-            || face_loop.halfedges.len() < 3
             || face_loop.halfedges.len() != face_loop.vertices.len()
         {
             return Err(ExactBoolMeshValidationError::Boolean45FaceLoopMismatch);
@@ -3795,6 +3807,7 @@ fn validate_boolean45_partial_edges(
         }
         if run.unpaired_points != unpaired_points
             || run.fragments.len() != tail_count.min(head_count)
+            || !suppressed_retained_tail_copies_replay(run, &stage.vertex_allocation)
         {
             return Err(ExactBoolMeshValidationError::Boolean45PartialEdgeMismatch);
         }
@@ -3813,6 +3826,47 @@ fn validate_boolean45_partial_edges(
         return Err(ExactBoolMeshValidationError::Boolean45PartialEdgeMismatch);
     }
     Ok(())
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn suppressed_retained_tail_copies_replay(
+    run: &ExactBoolMeshPartialSourceEdgeRun,
+    allocation: &ExactBoolMeshOutputVertexAllocation,
+) -> bool {
+    if run.suppressed_retained_tail_copies == 0 {
+        return true;
+    }
+    let source = ExactBoolMeshSourceVertex {
+        side: run.side,
+        vertex: run.tail,
+    };
+    let allocated_copies = allocation
+        .output_vertex_origins
+        .iter()
+        .filter(|origin| {
+            matches!(
+                origin,
+                ExactBoolMeshOutputVertexOrigin::SourceVertex {
+                    source: candidate,
+                    ..
+                } if *candidate == source
+            )
+        })
+        .count();
+    let retained_tail_points = run
+        .points
+        .iter()
+        .filter(|point| {
+            matches!(
+                point.origin,
+                ExactBoolMeshPartialEdgePointOrigin::RetainedEndpoint {
+                    source: candidate,
+                    ..
+                } if candidate == source
+            )
+        })
+        .count();
+    run.suppressed_retained_tail_copies <= allocated_copies && retained_tail_points == 0
 }
 
 #[cfg(feature = "exact-triangulation")]
