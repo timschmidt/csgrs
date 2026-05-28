@@ -230,7 +230,10 @@ pub(super) fn size_output_stage(
         &halfedge_assembly,
         &face_loop_assembly,
     );
-    let output_triangles = materialize_output_triangles(&loop_triangulation);
+    let output_triangles = materialize_output_triangles(
+        &loop_triangulation,
+        vertex_allocation.output_vertex_origins.len(),
+    );
     let mesh_export = stage_mesh_export(
         left,
         right,

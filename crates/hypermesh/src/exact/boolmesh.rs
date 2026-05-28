@@ -942,7 +942,7 @@ pub struct ExactBoolMeshFaceLoopAssemblyStage {
 
 /// Exact triangulation of one boolmesh output face loop.
 #[cfg(feature = "exact-triangulation")]
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct ExactBoolMeshLoopTriangulation {
     /// Output face containing the triangulated loop.
     pub output_face: usize,
@@ -978,6 +978,15 @@ pub struct ExactBoolMeshLoopTriangulation {
     pub projection: CoplanarProjection,
     /// Output vertex ids passed to `hypertri`, in polygon order.
     pub vertices: Vec<usize>,
+    /// Exact 3D Steiner points appended by CDT after the boolmesh vertices.
+    ///
+    /// These points are not legacy output-vertex allocations.  They are exact
+    /// constrained-triangulation witnesses lifted back onto the source face
+    /// plane and retained separately so validation can replay the
+    /// `hypertri`-introduced topology before final mesh export.  This follows
+    /// Yap's object/predicate split and the constrained-Delaunay subsegment
+    /// model of Lee and Lin.
+    pub steiner_points: Vec<ExactPoint3>,
     /// Local protected constraint edges consumed by CDT.
     ///
     /// Empty means the component was a single simple loop and used the exact
@@ -995,7 +1004,7 @@ pub struct ExactBoolMeshLoopTriangulation {
 
 /// Exact triangulation-prep stage over assembled boolmesh face loops.
 #[cfg(feature = "exact-triangulation")]
-#[derive(Clone, Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct ExactBoolMeshLoopTriangulationStage {
     /// Output faces triangulated with `hypertri` earcut.
     ///
@@ -1063,10 +1072,17 @@ pub struct ExactBoolMeshTriangulatedOutputTriangle {
 
 /// Exact output-triangle materialization over triangulated boolmesh loops.
 #[cfg(feature = "exact-triangulation")]
-#[derive(Clone, Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct ExactBoolMeshOutputTriangleStage {
     /// Materialized output triangles in boolmesh face/loop traversal order.
     pub triangles: Vec<ExactBoolMeshTriangulatedOutputTriangle>,
+    /// Exact Steiner vertices appended after normal boolmesh output vertices.
+    ///
+    /// Triangle vertex ids greater than or equal to the output allocation size
+    /// index this buffer in order.  Keeping these points at the output-triangle
+    /// stage makes the CDT lift replayable before mesh export mutates the
+    /// vertex buffer.
+    pub steiner_points: Vec<ExactPoint3>,
     /// Upstream loop triangulation candidates that did not produce a local
     /// index buffer and therefore cannot emit output triangles yet.
     pub missing_loop_triangulations: usize,
@@ -1085,10 +1101,12 @@ pub struct ExactBoolMeshOutputTriangleStage {
 /// 7.1-2 (1997), is the reason this object is explicit instead of hiding mesh
 /// construction behind a convenience cache.
 #[cfg(feature = "exact-triangulation")]
-#[derive(Clone, Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct ExactBoolMeshMeshExportStage {
     /// Number of boolmesh output vertex slots available to exported triangles.
     pub vertex_count: usize,
+    /// Exact Steiner vertices appended after boolmesh output allocation slots.
+    pub steiner_points: Vec<ExactPoint3>,
     /// Triangle index buffer ready for final `ExactMesh` construction.
     pub triangles: Vec<Triangle>,
     /// Output vertex origins whose exact coordinates cannot be recovered.
@@ -1104,7 +1122,7 @@ pub struct ExactBoolMeshMeshExportStage {
 
 /// Exact `boolean45`-shaped output staging metadata.
 #[cfg(feature = "exact-triangulation")]
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct ExactBoolMeshBoolean45Stage {
     /// Halfedge contribution count for each retained left source face.
     pub left_face_halfedge_counts: Vec<usize>,
@@ -1912,13 +1930,14 @@ fn materialize_boolean45_export(
     {
         return Err(ExactBoolMeshValidationError::Boolean45MeshExportMismatch);
     }
-    let raw_vertices = stage
+    let mut raw_vertices = stage
         .vertex_allocation
         .output_vertex_origins
         .iter()
         .map(|origin| output_vertex_origin_point(*origin, boolean03, left, right))
         .collect::<Option<Vec<_>>>()
         .ok_or(ExactBoolMeshValidationError::Boolean45MeshExportMismatch)?;
+    raw_vertices.extend(stage.mesh_export.steiner_points.iter().cloned());
     if raw_vertices.len() != stage.mesh_export.vertex_count {
         return Err(ExactBoolMeshValidationError::Boolean45MeshExportMismatch);
     }
@@ -3074,7 +3093,11 @@ fn validate_boolean45_mesh_export(
     left_vertices: usize,
     right_vertices: usize,
 ) -> Result<(), ExactBoolMeshValidationError> {
-    if stage.mesh_export.vertex_count != stage.vertex_allocation.output_vertex_origins.len() {
+    if stage.mesh_export.vertex_count
+        != stage.vertex_allocation.output_vertex_origins.len()
+            + stage.output_triangles.steiner_points.len()
+        || stage.mesh_export.steiner_points != stage.output_triangles.steiner_points
+    {
         return Err(ExactBoolMeshValidationError::Boolean45MeshExportMismatch);
     }
     let expected_missing_vertex_coordinates = stage
@@ -3150,13 +3173,18 @@ fn validate_boolean45_output_triangles(
     }
 
     let mut expected_triangles = Vec::new();
+    let mut expected_steiner_points = Vec::new();
     let mut expected_invalid_local_triangles = 0;
+    let allocation_vertex_count = stage.vertex_allocation.output_vertex_origins.len();
     for triangulation in &stage.loop_triangulation.triangulations {
+        let local_point_count = triangulation.vertices.len() + triangulation.steiner_points.len();
+        let steiner_output_offset = allocation_vertex_count + expected_steiner_points.len();
+        expected_steiner_points.extend(triangulation.steiner_points.iter().cloned());
         for local_triangle in triangulation.triangles.chunks_exact(3) {
             let local_triangle = [local_triangle[0], local_triangle[1], local_triangle[2]];
             if local_triangle
                 .iter()
-                .any(|index| *index >= triangulation.vertices.len())
+                .any(|index| *index >= local_point_count)
                 || local_triangle[0] == local_triangle[1]
                 || local_triangle[1] == local_triangle[2]
                 || local_triangle[2] == local_triangle[0]
@@ -3171,9 +3199,21 @@ fn validate_boolean45_output_triangles(
                 source_face: triangulation.source_face,
                 local_triangle,
                 vertices: [
-                    triangulation.vertices[local_triangle[0]],
-                    triangulation.vertices[local_triangle[1]],
-                    triangulation.vertices[local_triangle[2]],
+                    resolve_triangulation_local_vertex(
+                        local_triangle[0],
+                        &triangulation.vertices,
+                        steiner_output_offset,
+                    ),
+                    resolve_triangulation_local_vertex(
+                        local_triangle[1],
+                        &triangulation.vertices,
+                        steiner_output_offset,
+                    ),
+                    resolve_triangulation_local_vertex(
+                        local_triangle[2],
+                        &triangulation.vertices,
+                        steiner_output_offset,
+                    ),
                 ],
             });
         }
@@ -3191,12 +3231,25 @@ fn validate_boolean45_output_triangles(
         })
         .count();
     if stage.output_triangles.invalid_local_triangles != expected_invalid_local_triangles
+        || stage.output_triangles.steiner_points != expected_steiner_points
         || stage.output_triangles.triangles != expected_triangles
     {
         return Err(ExactBoolMeshValidationError::Boolean45OutputTriangleMismatch);
     }
 
     Ok(())
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn resolve_triangulation_local_vertex(
+    local: usize,
+    vertices: &[usize],
+    steiner_output_offset: usize,
+) -> usize {
+    vertices
+        .get(local)
+        .copied()
+        .unwrap_or_else(|| steiner_output_offset + local - vertices.len())
 }
 
 #[cfg(feature = "exact-triangulation")]
@@ -3354,17 +3407,14 @@ fn validate_boolean45_loop_triangulation(
         {
             return Err(ExactBoolMeshValidationError::Boolean45LoopTriangulationMismatch);
         }
+        let local_point_count = triangulation.vertices.len() + triangulation.steiner_points.len();
         if triangulation.constraint_edges.iter().any(|edge| {
-            edge[0] >= triangulation.vertices.len()
-                || edge[1] >= triangulation.vertices.len()
-                || edge[0] == edge[1]
+            edge[0] >= local_point_count || edge[1] >= local_point_count || edge[0] == edge[1]
         }) {
             return Err(ExactBoolMeshValidationError::Boolean45LoopTriangulationMismatch);
         }
         for triangle in triangulation.triangles.chunks_exact(3) {
-            if triangle
-                .iter()
-                .any(|vertex| *vertex >= triangulation.vertices.len())
+            if triangle.iter().any(|vertex| *vertex >= local_point_count)
                 || triangle[0] == triangle[1]
                 || triangle[1] == triangle[2]
                 || triangle[2] == triangle[0]

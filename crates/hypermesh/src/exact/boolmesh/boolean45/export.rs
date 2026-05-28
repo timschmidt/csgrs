@@ -13,6 +13,7 @@ use core::cmp::Ordering;
 
 use hyperlimit::{CoplanarProjection, Point3, compare_reals, project_point3 as project_point};
 
+use crate::exact::mesh::ExactPoint3;
 use crate::exact::mesh::{ExactMesh, Triangle};
 use crate::exact::region::choose_region_projection;
 use crate::exact::scalar::ExactReal;
@@ -43,8 +44,10 @@ pub(super) fn stage_mesh_export(
             )
         })
         .count();
+    let allocation_vertex_count = allocation.output_vertex_origins.len();
     let mut stage = ExactBoolMeshMeshExportStage {
-        vertex_count: allocation.output_vertex_origins.len(),
+        vertex_count: allocation_vertex_count + output_triangles.steiner_points.len(),
+        steiner_points: output_triangles.steiner_points.clone(),
         triangles: Vec::with_capacity(output_triangles.triangles.len()),
         missing_vertex_coordinates,
         blocked_output_triangles: output_triangles.missing_loop_triangulations
@@ -71,6 +74,7 @@ pub(super) fn stage_mesh_export(
             triangle.source_face,
             allocation,
             boolean03,
+            &output_triangles.steiner_points,
             left,
             right,
         ) else {
@@ -89,6 +93,7 @@ fn orient_triangle_to_source(
     source_face: usize,
     allocation: &ExactBoolMeshOutputVertexAllocation,
     boolean03: &ExactBoolMeshBoolean03,
+    steiner_points: &[ExactPoint3],
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Option<[usize; 3]> {
@@ -113,9 +118,30 @@ fn orient_triangle_to_source(
             .to_hyperlimit_point(),
     ];
     let output_points = [
-        output_vertex_point(vertices[0], allocation, boolean03, left, right)?,
-        output_vertex_point(vertices[1], allocation, boolean03, left, right)?,
-        output_vertex_point(vertices[2], allocation, boolean03, left, right)?,
+        export_vertex_point(
+            vertices[0],
+            allocation,
+            boolean03,
+            steiner_points,
+            left,
+            right,
+        )?,
+        export_vertex_point(
+            vertices[1],
+            allocation,
+            boolean03,
+            steiner_points,
+            left,
+            right,
+        )?,
+        export_vertex_point(
+            vertices[2],
+            allocation,
+            boolean03,
+            steiner_points,
+            left,
+            right,
+        )?,
     ];
     let source_sign = triangle_area_ordering(&source_points, projection)?;
     let output_sign = triangle_area_ordering(&output_points, projection)?;
@@ -123,6 +149,23 @@ fn orient_triangle_to_source(
         Some(vertices)
     } else {
         Some([vertices[0], vertices[2], vertices[1]])
+    }
+}
+
+fn export_vertex_point(
+    vertex: usize,
+    allocation: &ExactBoolMeshOutputVertexAllocation,
+    boolean03: &ExactBoolMeshBoolean03,
+    steiner_points: &[ExactPoint3],
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Option<Point3> {
+    if vertex < allocation.output_vertex_origins.len() {
+        output_vertex_point(vertex, allocation, boolean03, left, right)
+    } else {
+        steiner_points
+            .get(vertex - allocation.output_vertex_origins.len())
+            .map(ExactPoint3::to_hyperlimit_point)
     }
 }
 

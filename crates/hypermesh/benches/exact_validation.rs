@@ -13672,6 +13672,7 @@ fn exact_boolmesh_boolean45_triangulation_port(c: &mut Criterion) {
                 exact_boolmesh_boolean45_triangulation_probe_for_internal_fuzz(65)
                     && exact_boolmesh_boolean45_triangulation_probe_for_internal_fuzz(66)
                     && exact_boolmesh_boolean45_triangulation_probe_for_internal_fuzz(67)
+                    && exact_boolmesh_boolean45_triangulation_probe_for_internal_fuzz(68)
             })
         });
     }

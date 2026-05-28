@@ -19,7 +19,7 @@ use std::collections::BTreeMap;
 
 use hyperlimit::{Point2, Point3, RingPointLocation, classify_point_ring_even_odd, compare_reals};
 
-use crate::exact::mesh::ExactMesh;
+use crate::exact::mesh::{ExactMesh, ExactPoint3};
 use crate::exact::region::{choose_region_projection, project_for_hypertri};
 use crate::exact::scalar::ExactReal;
 
@@ -176,6 +176,7 @@ fn triangulate_output_face_loop_group(
             clipped_for_component,
             source_side,
             source_face,
+            source_mesh,
             projection,
         ) else {
             stage.triangulation_failures += 1;
@@ -205,6 +206,7 @@ fn triangulate_ring_component(
     clipped_loop_indices: Vec<usize>,
     source_side: ExactBoolMeshSide,
     source_face: usize,
+    source_mesh: &ExactMesh,
     projection: hyperlimit::CoplanarProjection,
 ) -> Option<ExactBoolMeshLoopTriangulation> {
     let mut vertices = Vec::new();
@@ -221,10 +223,20 @@ fn triangulate_ring_component(
         projected.extend(hole.projected.iter().cloned());
     }
 
-    let (triangles, constraint_edges) = if hole_indices.is_empty() {
-        (triangulate_simple_component(&projected)?, Vec::new())
+    let (triangles, constraint_edges, steiner_points) = if hole_indices.is_empty() {
+        (
+            triangulate_simple_component(&projected)?,
+            Vec::new(),
+            Vec::new(),
+        )
     } else {
-        triangulate_component_with_cdt(&projected, &hole_indices)?
+        triangulate_component_with_cdt(
+            &projected,
+            &hole_indices,
+            source_mesh,
+            source_face,
+            projection,
+        )?
     };
     if triangles.is_empty() {
         return None;
@@ -239,6 +251,7 @@ fn triangulate_ring_component(
         source_face,
         projection,
         vertices,
+        steiner_points,
         constraint_edges,
         triangles,
     })
@@ -330,6 +343,38 @@ fn squared_distance2(left: &hypertri::ExactPoint, right: &hypertri::ExactPoint) 
     (dx.clone() * &dx) + &(dy.clone() * &dy)
 }
 
+fn point3_sub(left: &Point3, right: &Point3) -> Point3 {
+    Point3::new(
+        sub_real(&left.x, &right.x),
+        sub_real(&left.y, &right.y),
+        sub_real(&left.z, &right.z),
+    )
+}
+
+fn cross(left: &Point3, right: &Point3) -> Point3 {
+    Point3::new(
+        sub_real(&mul_real(&left.y, &right.z), &mul_real(&left.z, &right.y)),
+        sub_real(&mul_real(&left.z, &right.x), &mul_real(&left.x, &right.z)),
+        sub_real(&mul_real(&left.x, &right.y), &mul_real(&left.y, &right.x)),
+    )
+}
+
+fn add_real(left: &ExactReal, right: &ExactReal) -> ExactReal {
+    left.clone() + right
+}
+
+fn sub_real(left: &ExactReal, right: &ExactReal) -> ExactReal {
+    left.clone() - right
+}
+
+fn mul_real(left: &ExactReal, right: &ExactReal) -> ExactReal {
+    left.clone() * right
+}
+
+fn div_real(numerator: ExactReal, denominator: &ExactReal) -> Option<ExactReal> {
+    (numerator / denominator).ok()
+}
+
 /// Triangulate a nested boolmesh face component through exact CDT constraints.
 ///
 /// Boolmesh's legacy `EarClip` receives the exterior and hole contours as
@@ -340,17 +385,19 @@ fn squared_distance2(left: &hypertri::ExactPoint, right: &hypertri::ExactPoint) 
 /// *Discrete & Computational Geometry* 1 (1986), and the edge-recovery CDT
 /// construction follows Shewchuk and Brown's constrained Delaunay treatment.
 /// Yap's exact-computation model is the guardrail here: if CDT inserts a
-/// Steiner point we cannot yet lift back into a boolmesh output vertex, this
-/// function refuses the handoff instead of approximating one.
+/// planar Steiner point, the point is accepted only after it is lifted back to
+/// the owning source face and reprojects exactly.
 fn triangulate_component_with_cdt(
     projected: &[hypertri::ExactPoint],
     hole_indices: &[usize],
-) -> Option<(Vec<usize>, Vec<[usize; 2]>)> {
+    source_mesh: &ExactMesh,
+    source_face: usize,
+    projection: hyperlimit::CoplanarProjection,
+) -> Option<(Vec<usize>, Vec<[usize; 2]>, Vec<ExactPoint3>)> {
     let mut ring_starts = Vec::with_capacity(hole_indices.len() + 1);
     ring_starts.push(0);
     ring_starts.extend(hole_indices.iter().copied());
     let mut constraints = Vec::new();
-    let mut constraint_edges = Vec::new();
     for (ring_position, &start) in ring_starts.iter().enumerate() {
         let end = ring_starts
             .get(ring_position + 1)
@@ -362,21 +409,95 @@ fn triangulate_component_with_cdt(
         for local in start..end {
             let next = if local + 1 == end { start } else { local + 1 };
             constraints.push(hypertri::Constraint::new(local, next));
-            constraint_edges.push([local, next]);
         }
     }
 
     let cdt = hypertri::cdt::constrained_delaunay(projected, &constraints).ok()?;
-    if cdt.points().len() != projected.len() {
+    if cdt.points().len() < projected.len() {
         return None;
     }
+    let steiner_points = cdt.points()[projected.len()..]
+        .iter()
+        .map(|point| lift_projected_boolmesh_steiner(source_mesh, source_face, projection, point))
+        .collect::<Option<Vec<_>>>()?;
     Some((
         cdt.triangles()
             .iter()
             .flat_map(|triangle| triangle.iter().copied())
             .collect(),
-        constraint_edges,
+        cdt.constraint_edges()
+            .iter()
+            .map(|edge| [edge.from, edge.to])
+            .collect::<Vec<_>>(),
+        steiner_points,
     ))
+}
+
+/// Lift a projected CDT Steiner point onto the exact source face plane.
+///
+/// The formula mirrors the face-cell CDT lift used elsewhere in hypermesh: the
+/// chosen projection has exact nonzero area, so the omitted coordinate is
+/// recovered from the retained source plane equation.  The result must
+/// reproject to the original CDT point before the boolmesh export stage can use
+/// it as topology, following Yap's exact object boundary.
+fn lift_projected_boolmesh_steiner(
+    mesh: &ExactMesh,
+    face: usize,
+    projection: hyperlimit::CoplanarProjection,
+    point: &hypertri::ExactPoint,
+) -> Option<ExactPoint3> {
+    let triangle = mesh.triangles().get(face)?.0;
+    let a = mesh.vertices().get(triangle[0])?.to_hyperlimit_point();
+    let b = mesh.vertices().get(triangle[1])?.to_hyperlimit_point();
+    let c = mesh.vertices().get(triangle[2])?.to_hyperlimit_point();
+    let ab = point3_sub(&b, &a);
+    let ac = point3_sub(&c, &a);
+    let normal = cross(&ab, &ac);
+    let plane_value = add_real(
+        &add_real(&mul_real(&normal.x, &a.x), &mul_real(&normal.y, &a.y)),
+        &mul_real(&normal.z, &a.z),
+    );
+
+    let lifted = match projection {
+        hyperlimit::CoplanarProjection::Xy => {
+            let x = point.x.clone();
+            let y = point.y.clone();
+            let z = div_real(
+                sub_real(
+                    &sub_real(&plane_value, &mul_real(&normal.x, &x)),
+                    &mul_real(&normal.y, &y),
+                ),
+                &normal.z,
+            )?;
+            Point3::new(x, y, z)
+        }
+        hyperlimit::CoplanarProjection::Xz => {
+            let x = point.x.clone();
+            let z = point.y.clone();
+            let y = div_real(
+                sub_real(
+                    &sub_real(&plane_value, &mul_real(&normal.x, &x)),
+                    &mul_real(&normal.z, &z),
+                ),
+                &normal.y,
+            )?;
+            Point3::new(x, y, z)
+        }
+        hyperlimit::CoplanarProjection::Yz => {
+            let y = point.x.clone();
+            let z = point.y.clone();
+            let x = div_real(
+                sub_real(
+                    &sub_real(&plane_value, &mul_real(&normal.y, &y)),
+                    &mul_real(&normal.z, &z),
+                ),
+                &normal.x,
+            )?;
+            Point3::new(x, y, z)
+        }
+    };
+    exact_points_equal(&project_for_hypertri(&lifted, projection), point)
+        .then(|| ExactPoint3::new(lifted.x, lifted.y, lifted.z))
 }
 
 fn partition_polygon_components(rings: Vec<ProjectedLoop>) -> Option<Vec<RingComponent>> {
@@ -513,6 +634,41 @@ fn exact_points_equal(left: &hypertri::ExactPoint, right: &hypertri::ExactPoint)
         && compare_reals(&left.y, &right.y).value() == Some(Ordering::Equal)
 }
 
+#[cfg(any(test, feature = "internal-fuzzing"))]
+fn cdt_crossing_constraint_steiner_lift_probe() -> bool {
+    fn p(x: i64, y: i64) -> hypertri::ExactPoint {
+        hypertri::ExactPoint::new(ExactReal::from(x), ExactReal::from(y))
+    }
+
+    let Ok(source) = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 4, 0, 0, 0, 4, 0],
+        &[0, 1, 2],
+        crate::exact::validation::ValidationPolicy::ALLOW_BOUNDARY,
+    ) else {
+        return false;
+    };
+    let Some((triangles, constraint_edges, steiner_points)) = triangulate_component_with_cdt(
+        &[p(0, 0), p(2, 2), p(0, 2), p(2, 0)],
+        &[],
+        &source,
+        0,
+        hyperlimit::CoplanarProjection::Xy,
+    ) else {
+        return false;
+    };
+
+    let Some(lifted) = steiner_points.first().map(ExactPoint3::to_hyperlimit_point) else {
+        return false;
+    };
+    steiner_points.len() == 1
+        && compare_reals(&lifted.x, &ExactReal::from(1)).value() == Some(Ordering::Equal)
+        && compare_reals(&lifted.y, &ExactReal::from(1)).value() == Some(Ordering::Equal)
+        && compare_reals(&lifted.z, &ExactReal::from(0)).value() == Some(Ordering::Equal)
+        && triangles.iter().any(|index| *index == 4)
+        && triangles.iter().all(|index| *index < 5)
+        && constraint_edges.iter().any(|edge| edge.contains(&4))
+}
+
 fn projected_area2_abs(points: &[hypertri::ExactPoint]) -> Option<ExactReal> {
     let signed = projected_area2_signed(points);
     match compare_reals(&signed, &ExactReal::from(0)).value()? {
@@ -600,16 +756,17 @@ pub(super) fn internal_fuzz_probe(selector: u8) -> bool {
         hypertri::ExactPoint::new(ExactReal::from(x), ExactReal::from(y))
     }
 
-    match selector % 3 {
+    match selector % 4 {
         0 => triangulate_simple_component(&[p(0, 0), p(2, 0), p(0, 2)]) == Some(vec![0, 1, 2]),
         1 => {
             triangulate_simple_component(&[p(0, 0), p(3, 0), p(4, 2), p(0, 1)])
                 == Some(vec![1, 2, 3, 0, 1, 3])
         }
-        _ => {
+        2 => {
             triangulate_simple_component(&[p(0, 0), p(4, 0), p(3, 1), p(0, 2)])
                 == Some(vec![0, 1, 2, 0, 2, 3])
         }
+        _ => cdt_crossing_constraint_steiner_lift_probe(),
     }
 }
 
@@ -870,6 +1027,14 @@ mod tests {
         assert_eq!(triangulation.vertices, vec![0, 1, 2, 3, 4, 5, 6, 7]);
         assert_eq!(triangulation.triangles.len(), 24);
         assert!(triangulation.triangles.iter().all(|index| *index < 8));
+    }
+
+    #[test]
+    fn cdt_steiner_vertices_are_lifted_to_exact_boolmesh_output_points() {
+        assert!(
+            cdt_crossing_constraint_steiner_lift_probe(),
+            "crossing CDT constraints must append, lift, and replay an exact Steiner vertex"
+        );
     }
 
     #[test]

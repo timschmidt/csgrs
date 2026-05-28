@@ -2379,6 +2379,7 @@ fn exercise_exact_boolmesh_boolean45_triangulation_port() {
     assert!(exact_boolmesh_boolean45_triangulation_probe_for_internal_fuzz(65));
     assert!(exact_boolmesh_boolean45_triangulation_probe_for_internal_fuzz(66));
     assert!(exact_boolmesh_boolean45_triangulation_probe_for_internal_fuzz(67));
+    assert!(exact_boolmesh_boolean45_triangulation_probe_for_internal_fuzz(68));
 }
 
 #[cfg(feature = "exact-triangulation")]
