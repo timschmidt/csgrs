@@ -4,8 +4,8 @@ use crate::computable::{Precision, Signal, scale, shift, should_stop, signed};
 use num::bigint::Sign;
 use num::{BigInt, BigUint, Signed, ToPrimitive};
 use num::{One, Zero};
-use serde::Deserialize;
-use serde::Serialize;
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
 use std::ops::Deref;
 use std::sync::LazyLock;
 
@@ -48,7 +48,8 @@ static NEG_SEVEN_RATIONAL: LazyLock<Rational> = LazyLock::new(|| Rational::new(-
 static NEG_SEVENTEEN_HALVES_RATIONAL: LazyLock<Rational> =
     LazyLock::new(|| Rational::fraction(-17, 2).unwrap());
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub(super) enum Approximation {
     // Exact integer leaf. This is the cheapest approximation source and also
     // exposes exact sign/MSD facts without any refinement.
@@ -165,7 +166,8 @@ pub(super) enum Approximation {
     PrescaledCot(Computable),
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub(super) enum SharedConstant {
     E,
     Pi,

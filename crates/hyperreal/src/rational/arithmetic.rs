@@ -3,6 +3,7 @@ use crate::structural::{RationalFacts, RationalStorageClass};
 use num::bigint::Sign::{self, *};
 use num::{BigInt, BigUint, ToPrimitive};
 use num::{One, Zero};
+#[cfg(feature = "serde")]
 use serde::{Deserialize, Deserializer, Serialize};
 use std::cmp::Ordering;
 use std::sync::LazyLock;
@@ -49,13 +50,15 @@ use std::sync::LazyLock;
 /// assert_eq!(four, Rational::new(4));
 /// ```
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct Rational {
     sign: Sign,
     numerator: BigUint,
     denominator: BigUint,
 }
 
+#[cfg(feature = "serde")]
 impl<'de> Deserialize<'de> for Rational {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
@@ -1995,6 +1998,7 @@ mod tests {
         assert_eq!(format!("{reduced}"), "1/2");
     }
 
+    #[cfg(feature = "serde")]
     #[test]
     fn serde_rejects_invalid_or_uncanonical_rational_state() {
         let bad = r#"{"sign":1,"numerator":[1],"denominator":[]}"#;

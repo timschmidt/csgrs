@@ -82,6 +82,7 @@ proptest! {
         prop_assert_eq!(imported.structural_facts(), facts);
     }
 
+    #[cfg(feature = "serde")]
     #[test]
     fn rational_serde_roundtrip_preserves_generated_exact_values(value in rational_strategy()) {
         let real = Real::new(value);

@@ -16,6 +16,7 @@ use core::cmp::Ordering;
 use num::Signed;
 use num::{BigInt, BigUint, bigint::Sign};
 use num::{One, Zero};
+#[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 use std::{
     cell::RefCell,
@@ -454,16 +455,17 @@ thread_local! {
 /// approximations proven for that node. The model follows the constructive/exact
 /// real arithmetic approach in Boehm et al., "Exact real arithmetic: a case
 /// study in higher order programming", <https://doi.org/10.1145/319838.319860>.
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Computable {
     pub(super) internal: Box<Approximation>,
-    #[serde(skip)]
+    #[cfg_attr(feature = "serde", serde(skip))]
     pub(crate) cache: RefCell<Cache>,
-    #[serde(skip)]
+    #[cfg_attr(feature = "serde", serde(skip))]
     pub(crate) bound: RefCell<BoundCache>,
-    #[serde(skip)]
+    #[cfg_attr(feature = "serde", serde(skip))]
     pub(crate) exact_sign: RefCell<ExactSignCache>,
-    #[serde(skip)]
+    #[cfg_attr(feature = "serde", serde(skip))]
     pub(crate) signal: Option<Signal>,
 }
 

@@ -52,4 +52,5 @@ pub use crate::simple::Simple;
 mod problem;
 pub use crate::problem::Problem;
 
+#[cfg(feature = "serde")]
 mod serde;

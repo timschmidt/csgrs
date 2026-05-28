@@ -1,3 +1,5 @@
+#![cfg(feature = "serde")]
+
 use ciborium::Value;
 use hyperreal::{Problem, Rational, Real, ZeroKnowledge};
 use proptest::prelude::*;

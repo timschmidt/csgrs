@@ -75,6 +75,7 @@ fn inverse_trig_domain_edges_are_exact_and_outside_edges_fail() {
     assert_eq!(r(-1_000_001, 1_000_000).acos(), Err(Problem::NotANumber));
 }
 
+#[cfg(feature = "serde")]
 #[test]
 fn serde_roundtrip_preserves_structural_facts_and_special_forms() {
     let cases = [

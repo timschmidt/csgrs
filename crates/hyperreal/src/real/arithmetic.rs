@@ -9,8 +9,11 @@ use crate::{
 use core::cmp::Ordering;
 use num::ToPrimitive;
 use num::bigint::{BigInt, BigUint, Sign};
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub(crate) struct ConstProductClass {
     // Signed pi power lets reciprocal products such as 1/pi and e^q/pi remain
     // symbolic instead of falling into a generic inverse node.
@@ -18,7 +21,8 @@ pub(crate) struct ConstProductClass {
     exp_power: Rational,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub(crate) struct ConstOffsetClass {
     // Invariant: the inner value pi^n*e^q + offset is constructed only when
     // cheaply certified positive. The outer Real.rational carries any sign.
@@ -27,7 +31,8 @@ pub(crate) struct ConstOffsetClass {
     offset: Rational,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub(crate) struct ConstProductSqrtClass {
     // Factored sqrt products are positive internally. Keeping the sqrt separate
     // allows later multiplication/division to cancel it exactly.
@@ -36,7 +41,8 @@ pub(crate) struct ConstProductSqrtClass {
     radicand: Rational,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub(crate) struct LnAffineClass {
     // Constructed only for positive offset + ln(base). This preserves the
     // nonzero/sign invariant shared by all non-Irrational classes.
@@ -44,7 +50,8 @@ pub(crate) struct LnAffineClass {
     base: Rational,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub(crate) struct LnProductClass {
     // Bases are sorted at construction so products compare and combine without
     // considering operand order.
@@ -52,7 +59,8 @@ pub(crate) struct LnProductClass {
     right: Rational,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub(crate) enum Class {
     // `Class` is a certificate, not the whole value: `Real.rational` scales the
     // mathematical value represented here. All variants except `Irrational` are
@@ -88,8 +96,6 @@ pub(crate) enum Class {
 }
 
 use Class::*;
-use serde::Deserialize;
-use serde::Serialize;
 use std::cell::Cell;
 
 #[derive(Clone, Copy, Debug, Default)]
@@ -939,7 +945,8 @@ pub type Signal = Arc<AtomicBool>;
 /// let answer = nine.sqrt().unwrap();
 /// assert_eq!(answer, three);
 /// ```
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Real {
     pub(super) rational: Rational,
     pub(super) class: Class,
@@ -948,9 +955,9 @@ pub struct Real {
     // scalar produced by dense algebra and matrix kernels; folding materializes
     // the rational leaf only when a generic approximation kernel actually needs it.
     pub(super) computable: Option<Computable>,
-    #[serde(skip)]
+    #[cfg_attr(feature = "serde", serde(skip))]
     pub(super) signal: Option<Signal>,
-    #[serde(skip, default)]
+    #[cfg_attr(feature = "serde", serde(skip, default))]
     pub(super) primitive_approx_cache: Cell<PrimitiveApproxCache>,
 }
 
