@@ -34157,6 +34157,10 @@ fn exact_boolmesh_kernel12_lowers_strict_endpoint_face_shadow() {
         hypermesh::exact::ExactBooleanShortcutKind::BoolMeshSplit
     );
     assert!(execution.mesh.triangles().is_empty());
+    assert!(
+        execution.mesh.vertices().is_empty(),
+        "boolmesh cleanup_unused_verts port should compact endpoint-only split vertices away"
+    );
     assert_eq!(execution.mesh.facts().mesh.edge_count, 0);
 }
 
@@ -34243,6 +34247,10 @@ fn exact_boolmesh_kernel12_lowers_boundary_endpoint_edge_shadow_through_intersec
         hypermesh::exact::ExactBooleanShortcutKind::BoolMeshSplit
     );
     assert!(execution.mesh.triangles().is_empty());
+    assert!(
+        execution.mesh.vertices().is_empty(),
+        "boolmesh cleanup_unused_verts port should compact endpoint-edge split vertices away"
+    );
     assert_eq!(execution.mesh.facts().mesh.edge_count, 0);
 }
 
@@ -34334,6 +34342,10 @@ fn exact_boolmesh_kernel12_lowers_coplanar_interval_endpoints() {
         hypermesh::exact::ExactBooleanShortcutKind::BoolMeshSplit
     );
     assert!(execution.mesh.triangles().is_empty());
+    assert!(
+        execution.mesh.vertices().is_empty(),
+        "boolmesh cleanup_unused_verts port should compact boundary-only interval vertices away"
+    );
     assert_eq!(execution.mesh.facts().mesh.edge_count, 0);
 }
 

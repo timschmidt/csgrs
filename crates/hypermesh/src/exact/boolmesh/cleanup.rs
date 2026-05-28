@@ -4,10 +4,11 @@
 //! `triangulate` and `Manifold::new_impl`.  This module ports the part needed at
 //! the exact object boundary: coincident output slots are merged only by exact
 //! coordinate equality, degenerate triangles created by that merge are dropped,
-//! and the remaining triangle soup is oriented as a halfedge surface.  Yap,
-//! "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-//! (1997), is the governing constraint here: cleanup may change topology only
-//! when exact predicates decide the equality or incidence being used.
+//! the remaining triangle soup is oriented as a halfedge surface, and vertices
+//! no longer referenced by any surviving triangle are removed.  Yap, "Towards
+//! Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997), is the
+//! governing constraint here: cleanup may change topology only when exact
+//! predicates decide the equality or incidence being used.
 
 use std::collections::{BTreeMap, BTreeSet, VecDeque};
 
@@ -27,12 +28,17 @@ use crate::exact::predicates::{TriangleDegeneracy, classify_triangle_degeneracy}
 /// - triangles that become index-degenerate after welding are removed;
 /// - each connected triangle component is flipped, when necessary, so every
 ///   two-face edge is traversed in opposite directions by its incident faces.
+/// - vertices made unused by those exact triangle deletions are compacted away.
 ///
 /// The orientation pass is the halfedge consistency condition used by the
 /// boolmesh boolean kernel after topology simplification; see Komikado's
 /// boolmesh-derived `simplify_topology`/`Manifold::new_impl` handoff in this
-/// crate.  The exact port keeps that algorithmic boundary but replaces the
-/// primitive-float equality shortcut with `hyperlimit::compare_reals`.
+/// crate.  The final compaction ports boolmesh `cleanup_unused_verts` without
+/// the legacy f64 Morton ordering: the ordering was a storage-locality detail,
+/// while the exact kernel's topological contract is the retained old-to-new
+/// vertex map over surviving triangle incidence.  The exact port keeps that
+/// algorithmic boundary but replaces the primitive-float equality shortcut
+/// with `hyperlimit::compare_reals`.
 pub(super) fn cleanup_exact_export_vertices(
     raw_vertices: Vec<ExactPoint3>,
     raw_triangles: &[Triangle],
@@ -76,7 +82,61 @@ pub(super) fn cleanup_exact_export_vertices(
     let triangles = close_coplanar_boundary_loops(&unique_points, triangles);
     let triangles = remove_internal_nonmanifold_triangles(triangles);
 
-    (unique_vertices, triangles)
+    compact_unused_vertices(unique_vertices, triangles)
+}
+
+/// Drop welded vertices that no surviving triangle references.
+///
+/// Legacy boolmesh `cleanup_unused_verts` runs immediately before
+/// `Manifold::new_impl`: it rewrites halfedge vertex ids through a dense map
+/// and truncates positions whose Morton code marked them unused.  The exact
+/// port keeps the dense-map topology step and removes only the f64 Morton
+/// sorting/truncation detail.  That is the Yap exact-object boundary applied to
+/// cleanup: a vertex is removed because triangle incidence no longer names it,
+/// not because a rounded coordinate bucket says it is disposable.
+fn compact_unused_vertices(
+    vertices: Vec<ExactPoint3>,
+    triangles: Vec<Triangle>,
+) -> (Vec<ExactPoint3>, Vec<Triangle>) {
+    if triangles.is_empty() {
+        return (Vec::new(), Vec::new());
+    }
+    if triangles
+        .iter()
+        .flat_map(|triangle| triangle.0)
+        .any(|vertex| vertex >= vertices.len())
+    {
+        return (vertices, triangles);
+    }
+
+    let mut used = vec![false; vertices.len()];
+    for triangle in &triangles {
+        for vertex in triangle.0 {
+            used[vertex] = true;
+        }
+    }
+
+    let mut old_to_new = vec![None; vertices.len()];
+    let mut compact_vertices = Vec::new();
+    for (old, vertex) in vertices.into_iter().enumerate() {
+        if used[old] {
+            old_to_new[old] = Some(compact_vertices.len());
+            compact_vertices.push(vertex);
+        }
+    }
+
+    let compact_triangles = triangles
+        .into_iter()
+        .map(|triangle| {
+            Triangle([
+                old_to_new[triangle.0[0]].expect("used triangle vertex must have a compact index"),
+                old_to_new[triangle.0[1]].expect("used triangle vertex must have a compact index"),
+                old_to_new[triangle.0[2]].expect("used triangle vertex must have a compact index"),
+            ])
+        })
+        .collect();
+
+    (compact_vertices, compact_triangles)
 }
 
 /// Split triangle edges at existing exact vertices that lie in their interiors.
@@ -643,8 +703,22 @@ mod tests {
 
         let (vertices, triangles) = cleanup_exact_export_vertices(raw_vertices, &raw_triangles);
 
-        assert_eq!(vertices.len(), 2);
+        assert!(
+            vertices.is_empty(),
+            "boolmesh cleanup_unused_verts should drop vertices left unused by exact degenerate-face deletion"
+        );
         assert!(triangles.is_empty());
+    }
+
+    #[test]
+    fn cleanup_compacts_vertices_left_unused_after_triangle_deletion() {
+        let raw_vertices = vec![p(9, 9, 9), p(0, 0, 0), p(2, 0, 0), p(0, 2, 0)];
+        let raw_triangles = vec![Triangle([1, 2, 3])];
+
+        let (vertices, triangles) = cleanup_exact_export_vertices(raw_vertices, &raw_triangles);
+
+        assert_eq!(vertices, vec![p(0, 0, 0), p(2, 0, 0), p(0, 2, 0)]);
+        assert_eq!(triangles, vec![Triangle([0, 1, 2])]);
     }
 
     #[test]

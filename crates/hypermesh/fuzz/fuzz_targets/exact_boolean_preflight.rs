@@ -2194,6 +2194,7 @@ fn exercise_exact_boolmesh_kernel12_endpoint_shadow_port() {
     .expect("endpoint-only intersection should materialize as an empty boolmesh split");
     execution.validate_against_sources(&left, &right).unwrap();
     assert!(execution.mesh.triangles().is_empty());
+    assert!(execution.mesh.vertices().is_empty());
 }
 
 #[cfg(feature = "exact-triangulation")]
@@ -2230,6 +2231,7 @@ fn exercise_exact_boolmesh_kernel12_boundary_endpoint_shadow_port() {
     .expect("boundary endpoint-only intersection should materialize as an empty boolmesh split");
     execution.validate_against_sources(&left, &right).unwrap();
     assert!(execution.mesh.triangles().is_empty());
+    assert!(execution.mesh.vertices().is_empty());
 }
 
 #[cfg(feature = "exact-triangulation")]
@@ -2320,6 +2322,7 @@ fn exercise_exact_boolmesh_kernel12_coplanar_interval_port() {
     .expect("boundary-only interval should materialize as an empty boolmesh split");
     execution.validate_against_sources(&left, &right).unwrap();
     assert!(execution.mesh.triangles().is_empty());
+    assert!(execution.mesh.vertices().is_empty());
 }
 
 #[cfg(feature = "exact-triangulation")]
