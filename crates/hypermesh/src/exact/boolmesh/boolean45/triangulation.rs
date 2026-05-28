@@ -1,21 +1,23 @@
 //! Exact triangulation-prep for boolmesh `boolean45` face loops.
 //!
 //! Legacy boolmesh assembles halfedge loops, then triangulates each output face
-//! boundary.  This module ports the first executable part of that handoff:
-//! simple and holed faces are projected with exact source-face evidence and
-//! sent to `hypertri` earcut.  That separation follows Yap, "Towards Exact
-//! Geometric Computation," *Computational Geometry* 7.1-2 (1997): assembled
-//! boundary loops remain replayable topology, while exact triangulation is a
-//! later certified object.  The simple/holed polygon triangulation step
-//! consumes `hypertri`'s exact earcut port; its simple-polygon basis is
+//! boundary.  This module ports that handoff with exact source-face evidence:
+//! simple components use `hypertri` earcut, while holed components lower their
+//! retained boundary rings to `hypertri` CDT constraints.  Disjoint positive
+//! contours remain separate components, matching legacy `EarClip` instead of
+//! being flattened into artificial holes.  That separation follows Yap,
+//! "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+//! (1997): assembled boundary loops remain replayable topology, while exact
+//! triangulation is a later certified object.  The simple-polygon basis is
 //! Meisters, "Polygons Have Ears," *The American Mathematical Monthly* 82.6
-//! (1975), and its hole-bridging reduction follows de Berg et al.,
-//! *Computational Geometry: Algorithms and Applications*.
+//! (1975), and the exact ring containment rule follows the even-odd model in
+//! Hormann and Agathos, "The Point in Polygon Problem for Arbitrary Polygons,"
+//! *Computational Geometry* 20.3 (2001).
 
 use std::cmp::Ordering;
 use std::collections::BTreeMap;
 
-use hyperlimit::{Point3, compare_reals};
+use hyperlimit::{Point2, Point3, RingPointLocation, classify_point_ring_even_odd, compare_reals};
 
 use crate::exact::mesh::ExactMesh;
 use crate::exact::region::{choose_region_projection, project_for_hypertri};
@@ -35,13 +37,15 @@ use super::geometry::output_vertex_point;
 /// polygon rings.  Its `EarClip::new` then clips degenerate two-edge walks
 /// before triangulation.  The exact port mirrors the same boundary by dropping
 /// short walks and exactly zero-area rings when at least one positive-area ring
-/// remains, then feeding a flat earcut-compatible vertex buffer plus
-/// hole-start offsets into `hypertri`.  A face whose usable loops are all
-/// zero-area is recorded as a regularized lower-dimensional deletion instead
-/// of a triangulation failure.  This matches the exact-computation contract in
-/// Yap, "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997): zero-area is a certified predicate result, not a tolerance outcome.
-/// The positive-area handoff uses the exact earcut basis from Meisters,
+/// remains, partitioning positive-area rings by exact containment, and then
+/// triangulating each connected component.  Single-loop components use
+/// `hypertri` earcut; components with retained hole constraints use
+/// `hypertri` CDT.  A face whose usable loops are all zero-area is recorded as
+/// a regularized lower-dimensional deletion instead of a triangulation
+/// failure.  This matches the exact-computation contract in Yap, "Towards
+/// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997):
+/// zero-area is a certified predicate result, not a tolerance outcome.  The
+/// positive-area simple-loop handoff uses the exact earcut basis from Meisters,
 /// "Polygons Have Ears," *The American Mathematical Monthly* 82.6 (1975).
 pub(super) fn triangulate_output_face_loops(
     left: &ExactMesh,
@@ -156,42 +160,29 @@ fn triangulate_output_face_loop_group(
         return;
     }
 
-    let Some(ordered) = order_polygon_rings(rings) else {
+    let (rings, mut clipped_loop_indices) = clip_boundary_covered_rings(rings);
+    let Some(components) = partition_polygon_components(rings) else {
         stage.triangulation_failures += 1;
         return;
     };
-    let (ordered, mut clipped_loop_indices) = clip_boundary_covered_hole_rings(ordered);
     clipped_loop_indices.extend(degenerate_loop_indices);
     clipped_loop_indices.sort_unstable();
-    let mut vertices = Vec::new();
-    let mut projected = Vec::new();
-    let mut hole_indices = Vec::new();
-    for (ring_index, ring) in ordered.iter().enumerate() {
-        if ring_index > 0 {
-            hole_indices.push(projected.len());
-        }
-        vertices.extend(ring.vertices.iter().copied());
-        projected.extend(ring.projected.iter().cloned());
+    let mut clipped_loop_indices = Some(clipped_loop_indices);
+    for component in components {
+        let clipped_for_component = clipped_loop_indices.take().unwrap_or_default();
+        let Some(triangulation) = triangulate_ring_component(
+            first_loop.output_face,
+            component,
+            clipped_for_component,
+            source_side,
+            source_face,
+            projection,
+        ) else {
+            stage.triangulation_failures += 1;
+            return;
+        };
+        stage.triangulations.push(triangulation);
     }
-
-    let Ok(triangles) = hypertri::earcut(&projected, &hole_indices) else {
-        stage.triangulation_failures += 1;
-        return;
-    };
-    if triangles.is_empty() {
-        stage.triangulation_failures += 1;
-        return;
-    }
-    stage.triangulations.push(ExactBoolMeshLoopTriangulation {
-        output_face: first_loop.output_face,
-        loop_index: ordered[0].loop_index,
-        clipped_loop_indices,
-        source_side,
-        source_face,
-        projection,
-        vertices,
-        triangles,
-    });
 }
 
 #[derive(Clone)]
@@ -202,51 +193,219 @@ struct ProjectedLoop {
     area_abs: ExactReal,
 }
 
-fn order_polygon_rings(rings: Vec<ProjectedLoop>) -> Option<Vec<ProjectedLoop>> {
-    let mut exterior = 0;
-    for index in 1..rings.len() {
-        match compare_reals(&rings[index].area_abs, &rings[exterior].area_abs).value()? {
-            Ordering::Greater => exterior = index,
-            Ordering::Equal | Ordering::Less => {}
-        }
-    }
-    let mut ordered = Vec::with_capacity(rings.len());
-    ordered.push(rings[exterior].clone());
-    ordered.extend(
-        rings
-            .into_iter()
-            .enumerate()
-            .filter_map(|(index, ring)| (index != exterior).then_some(ring)),
-    );
-    Some(ordered)
+#[derive(Clone)]
+struct RingComponent {
+    exterior: ProjectedLoop,
+    holes: Vec<ProjectedLoop>,
 }
 
-/// Drop hole rings already covered by the selected exterior boundary.
+fn triangulate_ring_component(
+    output_face: usize,
+    component: RingComponent,
+    clipped_loop_indices: Vec<usize>,
+    source_side: ExactBoolMeshSide,
+    source_face: usize,
+    projection: hyperlimit::CoplanarProjection,
+) -> Option<ExactBoolMeshLoopTriangulation> {
+    let mut vertices = Vec::new();
+    let mut projected = Vec::new();
+    let mut hole_indices = Vec::new();
+    let mut component_loop_indices = vec![component.exterior.loop_index];
+
+    vertices.extend(component.exterior.vertices.iter().copied());
+    projected.extend(component.exterior.projected.iter().cloned());
+    for hole in &component.holes {
+        hole_indices.push(projected.len());
+        component_loop_indices.push(hole.loop_index);
+        vertices.extend(hole.vertices.iter().copied());
+        projected.extend(hole.projected.iter().cloned());
+    }
+
+    let (triangles, constraint_edges) = if hole_indices.is_empty() {
+        (hypertri::earcut(&projected, &[]).ok()?, Vec::new())
+    } else {
+        triangulate_component_with_cdt(&projected, &hole_indices)?
+    };
+    if triangles.is_empty() {
+        return None;
+    }
+
+    Some(ExactBoolMeshLoopTriangulation {
+        output_face,
+        loop_index: component.exterior.loop_index,
+        clipped_loop_indices,
+        component_loop_indices,
+        source_side,
+        source_face,
+        projection,
+        vertices,
+        constraint_edges,
+        triangles,
+    })
+}
+
+/// Triangulate a nested boolmesh face component through exact CDT constraints.
+///
+/// Boolmesh's legacy `EarClip` receives the exterior and hole contours as
+/// protected boundary topology.  For the exact port, the same topology is
+/// lowered to a planar straight-line graph and routed through
+/// `hypertri::cdt::constrained_delaunay`; the protected-edge legality follows
+/// Lee and Lin, "Generalized Delaunay triangulation for planar graphs,"
+/// *Discrete & Computational Geometry* 1 (1986), and the edge-recovery CDT
+/// construction follows Shewchuk and Brown's constrained Delaunay treatment.
+/// Yap's exact-computation model is the guardrail here: if CDT inserts a
+/// Steiner point we cannot yet lift back into a boolmesh output vertex, this
+/// function refuses the handoff instead of approximating one.
+fn triangulate_component_with_cdt(
+    projected: &[hypertri::ExactPoint],
+    hole_indices: &[usize],
+) -> Option<(Vec<usize>, Vec<[usize; 2]>)> {
+    let mut ring_starts = Vec::with_capacity(hole_indices.len() + 1);
+    ring_starts.push(0);
+    ring_starts.extend(hole_indices.iter().copied());
+    let mut constraints = Vec::new();
+    let mut constraint_edges = Vec::new();
+    for (ring_position, &start) in ring_starts.iter().enumerate() {
+        let end = ring_starts
+            .get(ring_position + 1)
+            .copied()
+            .unwrap_or(projected.len());
+        if end.saturating_sub(start) < 3 {
+            return None;
+        }
+        for local in start..end {
+            let next = if local + 1 == end { start } else { local + 1 };
+            constraints.push(hypertri::Constraint::new(local, next));
+            constraint_edges.push([local, next]);
+        }
+    }
+
+    let cdt = hypertri::cdt::constrained_delaunay(projected, &constraints).ok()?;
+    if cdt.points().len() != projected.len() {
+        return None;
+    }
+    Some((
+        cdt.triangles()
+            .iter()
+            .flat_map(|triangle| triangle.iter().copied())
+            .collect(),
+        constraint_edges,
+    ))
+}
+
+fn partition_polygon_components(rings: Vec<ProjectedLoop>) -> Option<Vec<RingComponent>> {
+    if rings.is_empty() {
+        return Some(Vec::new());
+    }
+
+    let mut parents = vec![None; rings.len()];
+    for child in 0..rings.len() {
+        let mut parent = None;
+        for candidate in 0..rings.len() {
+            if child == candidate {
+                continue;
+            }
+            match point_in_projected_ring(&rings[candidate].projected, &rings[child].projected[0])?
+            {
+                RingPointLocation::Outside => {}
+                RingPointLocation::Boundary => return None,
+                RingPointLocation::Inside => {
+                    parent = match parent {
+                        None => Some(candidate),
+                        Some(current) => match compare_reals(
+                            &rings[candidate].area_abs,
+                            &rings[current].area_abs,
+                        )
+                        .value()?
+                        {
+                            Ordering::Less => Some(candidate),
+                            Ordering::Equal | Ordering::Greater => Some(current),
+                        },
+                    };
+                }
+            }
+        }
+        parents[child] = parent;
+    }
+
+    let depths = (0..rings.len())
+        .map(|index| ring_depth(index, &parents))
+        .collect::<Option<Vec<_>>>()?;
+    let mut components = Vec::new();
+    let mut exterior_to_component = BTreeMap::new();
+    for index in 0..rings.len() {
+        if depths[index] % 2 == 0 {
+            exterior_to_component.insert(index, components.len());
+            components.push(RingComponent {
+                exterior: rings[index].clone(),
+                holes: Vec::new(),
+            });
+        }
+    }
+    for index in 0..rings.len() {
+        if depths[index] % 2 == 1 {
+            let exterior = parents[index]?;
+            let component = exterior_to_component.get(&exterior).copied()?;
+            components[component].holes.push(rings[index].clone());
+        }
+    }
+    Some(components)
+}
+
+fn ring_depth(index: usize, parents: &[Option<usize>]) -> Option<usize> {
+    let mut depth = 0;
+    let mut current = index;
+    let mut seen = Vec::new();
+    while let Some(parent) = parents[current] {
+        if seen.contains(&parent) {
+            return None;
+        }
+        seen.push(parent);
+        depth += 1;
+        current = parent;
+    }
+    Some(depth)
+}
+
+fn point_in_projected_ring(
+    ring: &[hypertri::ExactPoint],
+    point: &hypertri::ExactPoint,
+) -> Option<RingPointLocation> {
+    let ring = ring
+        .iter()
+        .map(|point| Point2::new(point.x.clone(), point.y.clone()))
+        .collect::<Vec<_>>();
+    let point = Point2::new(point.x.clone(), point.y.clone());
+    classify_point_ring_even_odd(&ring, &point).value()
+}
+
+/// Drop rings already covered by a larger retained boundary ring.
 ///
 /// Legacy boolmesh's `EarClip::new` calls `clip_degenerate` before
-/// `cut_key_hole`: a coplanar overlap seam whose projected hole vertices are
-/// all already present on the exterior circular list is clipped as boundary
-/// degeneracy instead of being bridged as a geometric hole.  This exact
-/// pre-filter ports that behavior while keeping the dropped loop ids
-/// replayable for validation.  The separation follows Yap, "Towards Exact
-/// Geometric Computation," *Computational Geometry* 7.1-2 (1997): exact
-/// predicate decisions select topology before any polygon triangulation
-/// output is trusted.
-fn clip_boundary_covered_hole_rings(
-    mut rings: Vec<ProjectedLoop>,
-) -> (Vec<ProjectedLoop>, Vec<usize>) {
+/// `cut_key_hole`: a coplanar overlap seam whose projected ring vertices are
+/// all already present on a larger circular list is clipped as boundary
+/// degeneracy instead of being bridged as a geometric hole or triangulated as a
+/// separate contour.  This exact pre-filter ports that behavior while keeping
+/// the dropped loop ids replayable for validation.  The separation follows
+/// Yap, "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+/// (1997): exact predicate decisions select topology before any polygon
+/// triangulation output is trusted.
+fn clip_boundary_covered_rings(rings: Vec<ProjectedLoop>) -> (Vec<ProjectedLoop>, Vec<usize>) {
     if rings.len() < 2 {
         return (rings, Vec::new());
     }
-    let exterior_projected = rings[0].projected.clone();
     let mut active = Vec::with_capacity(rings.len());
     let mut clipped = Vec::new();
-    active.push(rings.remove(0));
-    for ring in rings {
-        if projected_ring_vertices_are_covered_by(&ring.projected, &exterior_projected) {
+    for ring in &rings {
+        if rings.iter().any(|candidate| {
+            candidate.loop_index != ring.loop_index
+                && compare_reals(&candidate.area_abs, &ring.area_abs).value()
+                    == Some(Ordering::Greater)
+                && projected_ring_vertices_are_covered_by(&ring.projected, &candidate.projected)
+        }) {
             clipped.push(ring.loop_index);
         } else {
-            active.push(ring);
+            active.push(ring.clone());
         }
     }
     (active, clipped)
@@ -370,6 +529,21 @@ mod tests {
         .unwrap()
     }
 
+    fn planar_source_with_disjoint_squares() -> ExactMesh {
+        ExactMesh::from_i64_triangles_with_policy(
+            &[
+                0, 0, 0, 10, 0, 0, 10, 10, 0, 0, 10, 0, //
+                20, 0, 0, 30, 0, 0, 30, 10, 0, 20, 10, 0,
+            ],
+            &[
+                0, 1, 2, 0, 2, 3, //
+                4, 5, 6, 4, 6, 7,
+            ],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap()
+    }
+
     fn empty_mesh() -> ExactMesh {
         ExactMesh::from_i64_triangles(&[], &[]).unwrap()
     }
@@ -474,6 +648,8 @@ mod tests {
         assert_eq!(stage.triangulations.len(), 1);
         let triangulation = &stage.triangulations[0];
         assert_eq!(triangulation.loop_index, 1);
+        assert_eq!(triangulation.component_loop_indices, vec![1, 0]);
+        assert_eq!(triangulation.constraint_edges.len(), 8);
         assert_eq!(triangulation.vertices, vec![0, 1, 2, 3, 4, 5, 6, 7]);
         assert_eq!(triangulation.triangles.len(), 24);
         assert!(triangulation.triangles.iter().all(|index| *index < 8));
@@ -522,6 +698,8 @@ mod tests {
         assert_eq!(stage.triangulations.len(), 1);
         let triangulation = &stage.triangulations[0];
         assert_eq!(triangulation.loop_index, 0);
+        assert_eq!(triangulation.component_loop_indices, vec![0]);
+        assert!(triangulation.constraint_edges.is_empty());
         assert_eq!(triangulation.vertices, vec![0, 1, 2, 3]);
         assert_eq!(triangulation.triangles.len(), 6);
         assert!(triangulation.triangles.iter().all(|index| *index < 4));
@@ -570,8 +748,62 @@ mod tests {
         let triangulation = &stage.triangulations[0];
         assert_eq!(triangulation.loop_index, 0);
         assert_eq!(triangulation.clipped_loop_indices, vec![1]);
+        assert_eq!(triangulation.component_loop_indices, vec![0]);
         assert_eq!(triangulation.vertices, vec![0, 1, 5, 4, 5, 6, 2, 3]);
         assert!(triangulation.triangles.iter().all(|index| *index < 8));
+    }
+
+    #[test]
+    fn disjoint_positive_area_loops_remain_separate_boolmesh_components() {
+        let left = planar_source_with_disjoint_squares();
+        let right = empty_mesh();
+        let boolean03 = empty_boolean03(left.vertices().len());
+        let allocation = source_allocation(left.vertices().len());
+        let mut output_halfedges = face_halfedges(&[0, 1, 2, 3], 0);
+        output_halfedges.extend(face_halfedges(&[4, 5, 6, 7], 4));
+        let halfedges = ExactBoolMeshHalfedgeAssemblyStage {
+            output_halfedges,
+            ..ExactBoolMeshHalfedgeAssemblyStage::default()
+        };
+        let face_loops = ExactBoolMeshFaceLoopAssemblyStage {
+            loops: vec![
+                ExactBoolMeshOutputFaceLoop {
+                    output_face: 0,
+                    halfedges: vec![0, 1, 2, 3],
+                    vertices: vec![0, 1, 2, 3],
+                },
+                ExactBoolMeshOutputFaceLoop {
+                    output_face: 0,
+                    halfedges: vec![4, 5, 6, 7],
+                    vertices: vec![4, 5, 6, 7],
+                },
+            ],
+            ..ExactBoolMeshFaceLoopAssemblyStage::default()
+        };
+
+        let stage = triangulate_output_face_loops(
+            &left,
+            &right,
+            &boolean03,
+            &allocation,
+            &halfedges,
+            &face_loops,
+        );
+
+        assert_eq!(stage.triangulation_failures, 0);
+        assert_eq!(stage.multi_loop_faces, 0);
+        assert_eq!(stage.triangulations.len(), 2);
+        assert!(
+            stage
+                .triangulations
+                .iter()
+                .all(|triangulation| triangulation.output_face == 0
+                    && triangulation.component_loop_indices.len() == 1
+                    && triangulation.triangles.len() == 6
+                    && triangulation.constraint_edges.is_empty())
+        );
+        assert_eq!(stage.triangulations[0].vertices, vec![0, 1, 2, 3]);
+        assert_eq!(stage.triangulations[1].vertices, vec![4, 5, 6, 7]);
     }
 
     #[test]

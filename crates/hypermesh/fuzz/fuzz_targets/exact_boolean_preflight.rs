@@ -278,6 +278,36 @@ fuzz_target!(|data: &[u8]| {
                         .is_err()
                 );
             }
+            if !boolean45.loop_triangulation.triangulations.is_empty() {
+                let mut corrupted_component = workspace.clone();
+                corrupted_component
+                    .boolean45
+                    .as_mut()
+                    .unwrap()
+                    .loop_triangulation
+                    .triangulations[0]
+                    .component_loop_indices
+                    .push(usize::MAX);
+                assert!(
+                    corrupted_component
+                        .validate_against_sources(&left, &right)
+                        .is_err()
+                );
+                let mut corrupted_constraint = workspace.clone();
+                corrupted_constraint
+                    .boolean45
+                    .as_mut()
+                    .unwrap()
+                    .loop_triangulation
+                    .triangulations[0]
+                    .constraint_edges
+                    .push([0, usize::MAX]);
+                assert!(
+                    corrupted_constraint
+                        .validate_against_sources(&left, &right)
+                        .is_err()
+                );
+            }
             if !boolean45.mesh_export.triangles.is_empty() {
                 let mut corrupted_export = workspace.clone();
                 corrupted_export

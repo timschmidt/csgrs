@@ -33421,6 +33421,36 @@ fn exact_boolmesh_workspace_executes_bounds_disjoint_slice() {
             .unwrap_err(),
         hypermesh::exact::ExactBoolMeshValidationError::Boolean45LoopTriangulationMismatch
     );
+    let mut malformed_loop_component = workspace.clone();
+    malformed_loop_component
+        .boolean45
+        .as_mut()
+        .unwrap()
+        .loop_triangulation
+        .triangulations[0]
+        .component_loop_indices
+        .push(usize::MAX);
+    assert_eq!(
+        malformed_loop_component
+            .validate_against_sources(&left, &right)
+            .unwrap_err(),
+        hypermesh::exact::ExactBoolMeshValidationError::Boolean45LoopTriangulationMismatch
+    );
+    let mut malformed_loop_constraint = workspace.clone();
+    malformed_loop_constraint
+        .boolean45
+        .as_mut()
+        .unwrap()
+        .loop_triangulation
+        .triangulations[0]
+        .constraint_edges
+        .push([0, usize::MAX]);
+    assert_eq!(
+        malformed_loop_constraint
+            .validate_against_sources(&left, &right)
+            .unwrap_err(),
+        hypermesh::exact::ExactBoolMeshValidationError::Boolean45LoopTriangulationMismatch
+    );
     let mut malformed_output_triangles = workspace.clone();
     malformed_output_triangles
         .boolean45

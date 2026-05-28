@@ -949,6 +949,17 @@ pub struct ExactBoolMeshLoopTriangulation {
     /// triangulatable.  The exact port records the skipped loops here so the
     /// stage remains replayable in Yap's certified-object sense.
     pub clipped_loop_indices: Vec<usize>,
+    /// Loop indices consumed by this connected triangulation component.
+    ///
+    /// Legacy boolmesh's `EarClip` can keep more than one simple contour for a
+    /// single output face when loops are disjoint instead of nested.  The exact
+    /// port therefore records the component loops separately from clipped
+    /// degenerate loops: validation can replay that every usable loop of the
+    /// output face was either triangulated by exactly one component or removed
+    /// by the certified degeneracy rule.  This keeps the object/topology split
+    /// required by Yap, "Towards Exact Geometric Computation,"
+    /// *Computational Geometry* 7.1-2 (1997).
+    pub component_loop_indices: Vec<usize>,
     /// Source mesh side used to choose the projection.
     pub source_side: ExactBoolMeshSide,
     /// Source face used to choose the projection.
@@ -957,6 +968,13 @@ pub struct ExactBoolMeshLoopTriangulation {
     pub projection: CoplanarProjection,
     /// Output vertex ids passed to `hypertri`, in polygon order.
     pub vertices: Vec<usize>,
+    /// Local protected constraint edges consumed by CDT.
+    ///
+    /// Empty means the component was a single simple loop and used the exact
+    /// earcut path.  Non-empty records the local boundary PSLG passed to
+    /// `hypertri::cdt::constrained_delaunay`; these are retained because CDT
+    /// legality excludes protected edges from Delaunay flips.
+    pub constraint_edges: Vec<[usize; 2]>,
     /// Flat local index buffer returned by exact earcut.
     ///
     /// Indices address [`Self::vertices`]. Keeping the local buffer rather
@@ -3219,7 +3237,13 @@ fn validate_boolean45_loop_triangulation(
     }
 
     let triangulatable_candidates = candidate_faces.len() - expected_short_loops;
-    let accounted_candidates = stage.loop_triangulation.triangulations.len()
+    let triangulated_faces = stage
+        .loop_triangulation
+        .triangulations
+        .iter()
+        .map(|triangulation| triangulation.output_face)
+        .collect::<BTreeSet<_>>();
+    let accounted_candidates = triangulated_faces.len()
         + stage.loop_triangulation.multi_loop_faces
         + stage.loop_triangulation.dropped_degenerate_faces.len()
         + stage.loop_triangulation.missing_source_faces
@@ -3229,7 +3253,8 @@ fn validate_boolean45_loop_triangulation(
         return Err(ExactBoolMeshValidationError::Boolean45LoopTriangulationMismatch);
     }
 
-    let mut seen_faces = BTreeSet::<usize>::new();
+    let mut covered_loops_by_face = BTreeMap::<usize, BTreeSet<usize>>::new();
+    let mut clipped_loops_by_face = BTreeMap::<usize, BTreeSet<usize>>::new();
     let mut dropped_faces = BTreeSet::<usize>::new();
     for output_face in &stage.loop_triangulation.dropped_degenerate_faces {
         let Some(loop_indices) = loops_by_face.get(output_face) else {
@@ -3247,9 +3272,7 @@ fn validate_boolean45_loop_triangulation(
         let Some(face_loop) = stage.face_loop_assembly.loops.get(triangulation.loop_index) else {
             return Err(ExactBoolMeshValidationError::Boolean45LoopTriangulationMismatch);
         };
-        if dropped_faces.contains(&triangulation.output_face)
-            || !seen_faces.insert(triangulation.output_face)
-        {
+        if dropped_faces.contains(&triangulation.output_face) {
             return Err(ExactBoolMeshValidationError::Boolean45LoopTriangulationMismatch);
         }
         let Some(loop_indices) = loops_by_face.get(&triangulation.output_face) else {
@@ -3259,9 +3282,8 @@ fn validate_boolean45_loop_triangulation(
             || !loop_indices.contains(&triangulation.loop_index)
             || !triangulation_vertices_match_face_loops(
                 &triangulation.vertices,
-                loop_indices,
+                &triangulation.component_loop_indices,
                 triangulation.loop_index,
-                &triangulation.clipped_loop_indices,
                 &stage.face_loop_assembly,
             )
             || triangulation.triangles.is_empty()
@@ -3273,6 +3295,60 @@ fn validate_boolean45_loop_triangulation(
                 right_faces,
             )
         {
+            return Err(ExactBoolMeshValidationError::Boolean45LoopTriangulationMismatch);
+        }
+        let component_loops = triangulation
+            .component_loop_indices
+            .iter()
+            .copied()
+            .collect::<BTreeSet<_>>();
+        let clipped_loops = triangulation
+            .clipped_loop_indices
+            .iter()
+            .copied()
+            .collect::<BTreeSet<_>>();
+        if component_loops.len() != triangulation.component_loop_indices.len()
+            || clipped_loops.len() != triangulation.clipped_loop_indices.len()
+            || !component_loops.contains(&triangulation.loop_index)
+            || component_loops.iter().any(|loop_index| {
+                !loop_indices.contains(loop_index)
+                    || !triangulation_face_loop_is_usable(
+                        &stage.face_loop_assembly.loops[*loop_index],
+                    )
+            })
+            || clipped_loops.iter().any(|loop_index| {
+                !loop_indices.contains(loop_index)
+                    || !triangulation_face_loop_is_usable(
+                        &stage.face_loop_assembly.loops[*loop_index],
+                    )
+                    || component_loops.contains(loop_index)
+            })
+        {
+            return Err(ExactBoolMeshValidationError::Boolean45LoopTriangulationMismatch);
+        }
+        let covered = covered_loops_by_face
+            .entry(triangulation.output_face)
+            .or_default();
+        if component_loops
+            .iter()
+            .any(|loop_index| !covered.insert(*loop_index))
+        {
+            return Err(ExactBoolMeshValidationError::Boolean45LoopTriangulationMismatch);
+        }
+        let clipped = clipped_loops_by_face
+            .entry(triangulation.output_face)
+            .or_default();
+        if clipped_loops
+            .iter()
+            .any(|loop_index| !clipped.insert(*loop_index))
+        {
+            return Err(ExactBoolMeshValidationError::Boolean45LoopTriangulationMismatch);
+        }
+        if triangulation.constraint_edges.iter().any(|edge| {
+            edge[0] >= triangulation.vertices.len()
+                || edge[1] >= triangulation.vertices.len()
+                || edge[0] == edge[1]
+        }) {
             return Err(ExactBoolMeshValidationError::Boolean45LoopTriangulationMismatch);
         }
         for triangle in triangulation.triangles.chunks_exact(3) {
@@ -3287,6 +3363,27 @@ fn validate_boolean45_loop_triangulation(
             }
         }
     }
+    for output_face in triangulated_faces {
+        let expected = loops_by_face[&output_face]
+            .iter()
+            .copied()
+            .filter(|loop_index| {
+                triangulation_face_loop_is_usable(&stage.face_loop_assembly.loops[*loop_index])
+            })
+            .collect::<BTreeSet<_>>();
+        let mut actual = covered_loops_by_face
+            .remove(&output_face)
+            .unwrap_or_default();
+        if let Some(clipped) = clipped_loops_by_face.remove(&output_face) {
+            if clipped.iter().any(|loop_index| actual.contains(loop_index)) {
+                return Err(ExactBoolMeshValidationError::Boolean45LoopTriangulationMismatch);
+            }
+            actual.extend(clipped);
+        }
+        if actual != expected {
+            return Err(ExactBoolMeshValidationError::Boolean45LoopTriangulationMismatch);
+        }
+    }
 
     Ok(())
 }
@@ -3294,36 +3391,25 @@ fn validate_boolean45_loop_triangulation(
 #[cfg(feature = "exact-triangulation")]
 fn triangulation_vertices_match_face_loops(
     vertices: &[usize],
-    loop_indices: &[usize],
+    component_loop_indices: &[usize],
     exterior_loop: usize,
-    clipped_loop_indices: &[usize],
     face_loops: &ExactBoolMeshFaceLoopAssemblyStage,
 ) -> bool {
     let mut cursor = 0;
-    let mut seen = BTreeSet::<usize>::new();
-    let clipped = clipped_loop_indices
-        .iter()
-        .copied()
-        .collect::<BTreeSet<_>>();
-    if clipped.len() != clipped_loop_indices.len()
-        || clipped.contains(&exterior_loop)
-        || !clipped
+    let mut unique = BTreeSet::<usize>::new();
+    if component_loop_indices.is_empty()
+        || !component_loop_indices.contains(&exterior_loop)
+        || component_loop_indices
             .iter()
-            .all(|loop_index| loop_indices.contains(loop_index))
-        || !clipped.iter().all(|loop_index| {
-            face_loops
-                .loops
-                .get(*loop_index)
-                .is_some_and(triangulation_face_loop_is_usable)
-        })
+            .any(|loop_index| !unique.insert(*loop_index))
     {
         return false;
     }
     let ordered = std::iter::once(exterior_loop).chain(
-        loop_indices
+        component_loop_indices
             .iter()
             .copied()
-            .filter(|loop_index| *loop_index != exterior_loop && !clipped.contains(loop_index)),
+            .filter(|loop_index| *loop_index != exterior_loop),
     );
     for loop_index in ordered {
         let Some(face_loop) = face_loops.loops.get(loop_index) else {
@@ -3332,9 +3418,6 @@ fn triangulation_vertices_match_face_loops(
         if !triangulation_face_loop_is_usable(face_loop) {
             continue;
         }
-        if !seen.insert(loop_index) {
-            return false;
-        }
         let end = cursor + face_loop.vertices.len();
         if vertices.get(cursor..end) != Some(face_loop.vertices.as_slice()) {
             return false;
@@ -3342,17 +3425,6 @@ fn triangulation_vertices_match_face_loops(
         cursor = end;
     }
     cursor == vertices.len()
-        && seen.len()
-            == loop_indices
-                .iter()
-                .filter(|loop_index| {
-                    !clipped.contains(loop_index)
-                        && face_loops
-                            .loops
-                            .get(**loop_index)
-                            .is_some_and(triangulation_face_loop_is_usable)
-                })
-                .count()
 }
 
 #[cfg(feature = "exact-triangulation")]
