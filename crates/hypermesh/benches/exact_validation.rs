@@ -13465,29 +13465,16 @@ fn exact_boolmesh_positive_area_coplanar_kernel12_port(c: &mut Criterion) {
         let right = tetrahedron_i64([2, -1, 0], [5, -1, 0], [2, 2, 0], [2, -1, -3]);
         c.bench_function("exact_boolmesh_positive_area_coplanar_kernel12_port", |b| {
             b.iter(|| {
-                let workspace = hypermesh::exact::exact_boolmesh_workspace(
+                let execution = hypermesh::exact::execute_exact_boolmesh_port(
                     &left,
                     &right,
                     hypermesh::exact::ExactBooleanOperation::Union,
-                );
-                workspace.kernel12_coplanar_events
-                    + workspace.boolean03.p1q2.len()
-                    + workspace.boolean03.p2q1.len()
-                    + workspace
-                        .boolean45
-                        .as_ref()
-                        .map(|stage| {
-                            stage.partial_source_edges.unpaired_runs
-                                + stage.new_face_pair_edges.unpaired_runs
-                                + stage.loop_triangulation.triangulations.len()
-                                + stage
-                                    .loop_triangulation
-                                    .triangulations
-                                    .iter()
-                                    .map(|triangulation| triangulation.clipped_loop_indices.len())
-                                    .sum::<usize>()
-                        })
-                        .unwrap_or(0)
+                    hypermesh::exact::ValidationPolicy::CLOSED,
+                )
+                .expect("positive-area coplanar boolmesh fixture should materialize");
+                execution.mesh.vertices().len()
+                    + execution.mesh.triangles().len()
+                    + execution.mesh.facts().mesh.edge_count
             })
         });
     }

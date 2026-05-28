@@ -34253,8 +34253,8 @@ fn exact_boolmesh_kernel12_lowers_partial_positive_area_coplanar_overlap() {
     );
     assert_eq!(
         workspace.blocker.as_ref().map(|blocker| blocker.stage),
-        Some(hypermesh::exact::ExactBoolMeshKernelStage::Triangulation),
-        "the next unfinished boolmesh stage should be triangulation, not face assembly"
+        None,
+        "positive-area coplanar overlap should complete through exact boolmesh cleanup"
     );
     assert!(workspace.boolean03.x12.iter().any(|sign| *sign > 0));
     assert!(workspace.boolean03.x12.iter().any(|sign| *sign < 0));
@@ -34300,6 +34300,23 @@ fn exact_boolmesh_kernel12_lowers_partial_positive_area_coplanar_overlap() {
     assert_eq!(stage.mesh_export.blocked_output_triangles, 0);
     assert_eq!(stage.mesh_export.invalid_output_triangles, 0);
     assert_eq!(stage.mesh_export.orientation_failures, 0);
+
+    let execution = hypermesh::exact::execute_exact_boolmesh_port(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("positive-area coplanar overlap should execute through exact boolmesh cleanup");
+    execution.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        execution.shortcut,
+        hypermesh::exact::ExactBooleanShortcutKind::BoolMeshSplit
+    );
+    assert_eq!(execution.mesh.vertices().len(), 9);
+    assert_eq!(execution.mesh.triangles().len(), 14);
+    assert_eq!(execution.mesh.facts().mesh.boundary_edges, 0);
+    assert_eq!(execution.mesh.facts().mesh.duplicate_directed_edges, 0);
 }
 
 #[test]

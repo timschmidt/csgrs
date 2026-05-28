@@ -2254,10 +2254,7 @@ fn exercise_exact_boolmesh_positive_area_coplanar_kernel12_port() {
         hypermesh::exact::exact_boolmesh_workspace(&left, &right, ExactBooleanOperation::Union);
     workspace.validate_against_sources(&left, &right).unwrap();
     assert_eq!(workspace.kernel12_coplanar_events, 0);
-    assert_eq!(
-        workspace.blocker.as_ref().map(|blocker| blocker.stage),
-        Some(hypermesh::exact::ExactBoolMeshKernelStage::Triangulation)
-    );
+    assert!(workspace.blocker.is_none());
     let stage = workspace
         .boolean45
         .as_ref()
@@ -2278,6 +2275,16 @@ fn exercise_exact_boolmesh_positive_area_coplanar_kernel12_port() {
     assert_eq!(stage.mesh_export.blocked_output_triangles, 0);
     assert!(workspace.boolean03.x12.iter().any(|sign| *sign < 0));
     assert!(workspace.boolean03.x21.iter().any(|sign| *sign < 0));
+    let execution = hypermesh::exact::execute_exact_boolmesh_port(
+        &left,
+        &right,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("positive-area coplanar boolmesh fixture should materialize");
+    execution.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(execution.mesh.vertices().len(), 9);
+    assert_eq!(execution.mesh.triangles().len(), 14);
 }
 
 #[cfg(feature = "exact-triangulation")]

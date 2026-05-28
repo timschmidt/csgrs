@@ -74,6 +74,7 @@ pub(super) fn cleanup_exact_export_vertices(
     let triangles = split_edges_at_existing_vertices(&unique_points, triangles);
     let triangles = orient_triangle_components(triangles);
     let triangles = close_coplanar_boundary_loops(&unique_points, triangles);
+    let triangles = remove_internal_nonmanifold_triangles(triangles);
 
     (unique_vertices, triangles)
 }
@@ -410,6 +411,59 @@ fn insert_triangle_preserving_two_manifold_edges(
     true
 }
 
+/// Remove internal interface triangles that are provably topological debris.
+///
+/// Boolmesh `simplify_topology` removes folded/overlapped local faces before
+/// handing the soup to `Manifold::new_impl`.  After exact on-edge refinement
+/// and conservative cap insertion, the same situation appears as a triangle
+/// whose three edges are all overfull: every edge has more than two incident
+/// faces, so the triangle cannot be part of a two-manifold boundary.  Following
+/// Yap's exact-object discipline, this pass accepts the mutation only when
+/// deleting the triangle and replaying halfedge orientation strictly reduces
+/// exact combinatorial edge defects; otherwise the unmodified soup is left for
+/// final validation to reject.
+fn remove_internal_nonmanifold_triangles(mut triangles: Vec<Triangle>) -> Vec<Triangle> {
+    for _ in 0..triangles.len() {
+        let baseline_defects = edge_topology_defects(&triangles);
+        let Some(face) = triangles.iter().enumerate().find_map(|(face, triangle)| {
+            triangle_all_edges_overfull(&triangles, *triangle).then_some(face)
+        }) else {
+            return triangles;
+        };
+
+        let mut candidate = triangles.clone();
+        candidate.remove(face);
+        candidate = orient_triangle_components(candidate);
+        if edge_topology_defects(&candidate) < baseline_defects {
+            triangles = candidate;
+        } else {
+            return triangles;
+        }
+    }
+    triangles
+}
+
+fn triangle_all_edges_overfull(triangles: &[Triangle], triangle: Triangle) -> bool {
+    let edge_uses = edge_use_counts(triangles);
+    directed_edges(triangle.0).iter().all(|edge| {
+        edge_uses
+            .get(&sorted_edge(*edge))
+            .is_some_and(|count| count.forward + count.reverse > 2)
+    })
+}
+
+fn edge_topology_defects(triangles: &[Triangle]) -> usize {
+    edge_use_counts(triangles)
+        .values()
+        .map(|count| {
+            let incident = count.forward + count.reverse;
+            incident.saturating_sub(2)
+                + count.forward.saturating_sub(1)
+                + count.reverse.saturating_sub(1)
+        })
+        .sum()
+}
+
 /// Orient a triangle soup by propagating halfedge direction constraints.
 ///
 /// Each manifold edge should be used once in each direction.  Local
@@ -660,6 +714,51 @@ mod tests {
         assert!(
             report.is_valid(),
             "cleanup should split exact on-edge vertices before final capping: {:?}",
+            report.diagnostics
+        );
+    }
+
+    #[test]
+    fn cleanup_removes_internal_coplanar_interface_after_edge_refinement() {
+        let raw_vertices = vec![
+            p(0, 0, 0),
+            p(4, 0, 0),
+            p(0, 4, 0),
+            p(0, 0, 4),
+            p(2, -1, 0),
+            p(5, -1, 0),
+            p(2, -1, -3),
+            p(2, 0, 0),
+            p(2, 2, 0),
+        ];
+        let raw_triangles = vec![
+            Triangle([1, 0, 2]),
+            Triangle([0, 1, 3]),
+            Triangle([1, 2, 3]),
+            Triangle([2, 0, 3]),
+            Triangle([7, 5, 4]),
+            Triangle([5, 7, 1]),
+            Triangle([6, 4, 5]),
+            Triangle([5, 8, 6]),
+            Triangle([4, 6, 8]),
+        ];
+
+        let (vertices, triangles) = cleanup_exact_export_vertices(raw_vertices, &raw_triangles);
+        let points = vertices
+            .iter()
+            .map(ExactPoint3::to_hyperlimit_point)
+            .collect::<Vec<_>>();
+        let triangle_indices = triangles
+            .iter()
+            .map(|triangle| triangle.0)
+            .collect::<Vec<_>>();
+        let report =
+            validate_triangles_with_policy(&points, &triangle_indices, ValidationPolicy::CLOSED);
+
+        assert_eq!(triangles.len(), 14);
+        assert!(
+            report.is_valid(),
+            "cleanup should remove the overfull internal coplanar interface triangle: {:?}",
             report.diagnostics
         );
     }
