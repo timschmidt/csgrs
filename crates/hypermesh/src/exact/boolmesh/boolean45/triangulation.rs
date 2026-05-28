@@ -34,10 +34,15 @@ use super::geometry::output_vertex_point;
 /// to its ear-clipper, with the outer loop and hole loops kept as separate
 /// polygon rings.  Its `EarClip::new` then clips degenerate two-edge walks
 /// before triangulation.  The exact port mirrors the same boundary by dropping
-/// short walks when at least one positive-area ring remains, then feeding a
-/// flat earcut-compatible vertex buffer plus hole-start offsets into
-/// `hypertri`.  A face with multiple loops is therefore no longer a blocker
-/// when exact projection, ring area, and hole bridging all replay.
+/// short walks and exactly zero-area rings when at least one positive-area ring
+/// remains, then feeding a flat earcut-compatible vertex buffer plus
+/// hole-start offsets into `hypertri`.  A face whose usable loops are all
+/// zero-area is recorded as a regularized lower-dimensional deletion instead
+/// of a triangulation failure.  This matches the exact-computation contract in
+/// Yap, "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+/// (1997): zero-area is a certified predicate result, not a tolerance outcome.
+/// The positive-area handoff uses the exact earcut basis from Meisters,
+/// "Polygons Have Ears," *The American Mathematical Monthly* 82.6 (1975).
 pub(super) fn triangulate_output_face_loops(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -111,6 +116,7 @@ fn triangulate_output_face_loop_group(
     };
 
     let mut rings = Vec::with_capacity(triangulatable_loop_indices.len());
+    let mut degenerate_loop_indices = Vec::new();
     for &loop_index in &triangulatable_loop_indices {
         let face_loop = &face_loops.loops[loop_index];
         let Some(points) =
@@ -127,23 +133,36 @@ fn triangulate_output_face_loop_group(
             stage.triangulation_failures += 1;
             return;
         };
-        if compare_reals(&area_abs, &ExactReal::from(0)).value() != Some(Ordering::Greater) {
-            stage.triangulation_failures += 1;
-            return;
+        match compare_reals(&area_abs, &ExactReal::from(0)).value() {
+            Some(Ordering::Greater) => {
+                rings.push(ProjectedLoop {
+                    loop_index,
+                    vertices: face_loop.vertices.clone(),
+                    projected,
+                    area_abs,
+                });
+            }
+            Some(Ordering::Equal) => {
+                degenerate_loop_indices.push(loop_index);
+            }
+            Some(Ordering::Less) | None => {
+                stage.triangulation_failures += 1;
+                return;
+            }
         }
-        rings.push(ProjectedLoop {
-            loop_index,
-            vertices: face_loop.vertices.clone(),
-            projected,
-            area_abs,
-        });
+    }
+    if rings.is_empty() {
+        stage.dropped_degenerate_faces.push(first_loop.output_face);
+        return;
     }
 
     let Some(ordered) = order_polygon_rings(rings) else {
         stage.triangulation_failures += 1;
         return;
     };
-    let (ordered, clipped_loop_indices) = clip_boundary_covered_hole_rings(ordered);
+    let (ordered, mut clipped_loop_indices) = clip_boundary_covered_hole_rings(ordered);
+    clipped_loop_indices.extend(degenerate_loop_indices);
+    clipped_loop_indices.sort_unstable();
     let mut vertices = Vec::new();
     let mut projected = Vec::new();
     let mut hole_indices = Vec::new();
@@ -325,6 +344,22 @@ mod tests {
             &[
                 0, 0, 0, 10, 0, 0, 10, 10, 0, 0, 10, 0, //
                 3, 3, 0, 7, 3, 0, 7, 7, 0, 3, 7, 0,
+            ],
+            &[
+                0, 1, 2, 0, 2, 3, //
+                4, 5, 6, 4, 6, 7,
+            ],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap()
+    }
+
+    fn planar_source_with_collinear_vertex() -> ExactMesh {
+        ExactMesh::from_i64_triangles_with_policy(
+            &[
+                0, 0, 0, 10, 0, 0, 10, 10, 0, 0, 10, 0, //
+                3, 3, 0, 7, 3, 0, 7, 7, 0, 3, 7, 0, //
+                5, 0, 0,
             ],
             &[
                 0, 1, 2, 0, 2, 3, //
@@ -537,6 +572,88 @@ mod tests {
         assert_eq!(triangulation.clipped_loop_indices, vec![1]);
         assert_eq!(triangulation.vertices, vec![0, 1, 5, 4, 5, 6, 2, 3]);
         assert!(triangulation.triangles.iter().all(|index| *index < 8));
+    }
+
+    #[test]
+    fn exact_zero_area_face_is_dropped_instead_of_blocking_triangulation() {
+        let left = planar_source_with_collinear_vertex();
+        let right = empty_mesh();
+        let boolean03 = empty_boolean03(left.vertices().len());
+        let allocation = source_allocation(left.vertices().len());
+        let output_halfedges = face_halfedges(&[0, 8, 1], 0);
+        let halfedges = ExactBoolMeshHalfedgeAssemblyStage {
+            output_halfedges,
+            ..ExactBoolMeshHalfedgeAssemblyStage::default()
+        };
+        let face_loops = ExactBoolMeshFaceLoopAssemblyStage {
+            loops: vec![ExactBoolMeshOutputFaceLoop {
+                output_face: 0,
+                halfedges: vec![0, 1, 2],
+                vertices: vec![0, 8, 1],
+            }],
+            ..ExactBoolMeshFaceLoopAssemblyStage::default()
+        };
+
+        let stage = triangulate_output_face_loops(
+            &left,
+            &right,
+            &boolean03,
+            &allocation,
+            &halfedges,
+            &face_loops,
+        );
+
+        assert!(stage.triangulations.is_empty());
+        assert_eq!(stage.short_loops, 0);
+        assert_eq!(stage.triangulation_failures, 0);
+        assert_eq!(stage.dropped_degenerate_faces, vec![0]);
+    }
+
+    #[test]
+    fn exact_zero_area_hole_ring_is_replayed_as_clipped_when_area_remains() {
+        let left = planar_source_with_collinear_vertex();
+        let right = empty_mesh();
+        let boolean03 = empty_boolean03(left.vertices().len());
+        let allocation = source_allocation(left.vertices().len());
+        let mut output_halfedges = face_halfedges(&[0, 1, 2, 3], 0);
+        output_halfedges.extend(face_halfedges(&[0, 8, 1], 4));
+        let halfedges = ExactBoolMeshHalfedgeAssemblyStage {
+            output_halfedges,
+            ..ExactBoolMeshHalfedgeAssemblyStage::default()
+        };
+        let face_loops = ExactBoolMeshFaceLoopAssemblyStage {
+            loops: vec![
+                ExactBoolMeshOutputFaceLoop {
+                    output_face: 0,
+                    halfedges: vec![0, 1, 2, 3],
+                    vertices: vec![0, 1, 2, 3],
+                },
+                ExactBoolMeshOutputFaceLoop {
+                    output_face: 0,
+                    halfedges: vec![4, 5, 6],
+                    vertices: vec![0, 8, 1],
+                },
+            ],
+            ..ExactBoolMeshFaceLoopAssemblyStage::default()
+        };
+
+        let stage = triangulate_output_face_loops(
+            &left,
+            &right,
+            &boolean03,
+            &allocation,
+            &halfedges,
+            &face_loops,
+        );
+
+        assert_eq!(stage.dropped_degenerate_faces, Vec::<usize>::new());
+        assert_eq!(stage.triangulation_failures, 0);
+        assert_eq!(stage.triangulations.len(), 1);
+        let triangulation = &stage.triangulations[0];
+        assert_eq!(triangulation.loop_index, 0);
+        assert_eq!(triangulation.clipped_loop_indices, vec![1]);
+        assert_eq!(triangulation.vertices, vec![0, 1, 2, 3]);
+        assert_eq!(triangulation.triangles.len(), 6);
     }
 
     #[test]

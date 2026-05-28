@@ -973,6 +973,16 @@ pub struct ExactBoolMeshLoopTriangulationStage {
     pub multi_loop_faces: usize,
     /// Single-loop candidates shorter than a polygon.
     pub short_loops: usize,
+    /// Output faces whose triangulatable loops have exactly zero projected area.
+    ///
+    /// These are not triangulation failures.  They are the regularized
+    /// lower-dimensional endpoint/edge contacts that legacy boolmesh removes
+    /// before final triangle emission in `EarClip::clip_degenerate` and
+    /// cleanup.  Keeping the output face ids makes the deletion replayable in
+    /// Yap's certified-object sense: the port can distinguish "no surface was
+    /// emitted because the exact face was lower-dimensional" from "the
+    /// triangulator failed."
+    pub dropped_degenerate_faces: Vec<usize>,
     /// Single-loop candidates whose source face/projection could not be
     /// recovered from emitted halfedge provenance.
     pub missing_source_faces: usize,
@@ -3156,6 +3166,7 @@ fn validate_boolean45_loop_triangulation(
     let triangulatable_candidates = candidate_faces.len() - expected_short_loops;
     let accounted_candidates = stage.loop_triangulation.triangulations.len()
         + stage.loop_triangulation.multi_loop_faces
+        + stage.loop_triangulation.dropped_degenerate_faces.len()
         + stage.loop_triangulation.missing_source_faces
         + stage.loop_triangulation.missing_vertex_coordinates
         + stage.loop_triangulation.triangulation_failures;
@@ -3164,11 +3175,26 @@ fn validate_boolean45_loop_triangulation(
     }
 
     let mut seen_faces = BTreeSet::<usize>::new();
+    let mut dropped_faces = BTreeSet::<usize>::new();
+    for output_face in &stage.loop_triangulation.dropped_degenerate_faces {
+        let Some(loop_indices) = loops_by_face.get(output_face) else {
+            return Err(ExactBoolMeshValidationError::Boolean45LoopTriangulationMismatch);
+        };
+        if !dropped_faces.insert(*output_face)
+            || !loop_indices.iter().any(|loop_index| {
+                triangulation_face_loop_is_usable(&stage.face_loop_assembly.loops[*loop_index])
+            })
+        {
+            return Err(ExactBoolMeshValidationError::Boolean45LoopTriangulationMismatch);
+        }
+    }
     for triangulation in &stage.loop_triangulation.triangulations {
         let Some(face_loop) = stage.face_loop_assembly.loops.get(triangulation.loop_index) else {
             return Err(ExactBoolMeshValidationError::Boolean45LoopTriangulationMismatch);
         };
-        if !seen_faces.insert(triangulation.output_face) {
+        if dropped_faces.contains(&triangulation.output_face)
+            || !seen_faces.insert(triangulation.output_face)
+        {
             return Err(ExactBoolMeshValidationError::Boolean45LoopTriangulationMismatch);
         }
         let Some(loop_indices) = loops_by_face.get(&triangulation.output_face) else {

@@ -34081,6 +34081,12 @@ fn exact_boolmesh_kernel12_lowers_strict_endpoint_face_shadow() {
         workspace.blocker.as_ref().map(|blocker| blocker.stage),
         Some(hypermesh::exact::ExactBoolMeshKernelStage::Kernel03)
     );
+    assert_eq!(workspace.blocker, None);
+    let stage = workspace.boolean45.as_ref().unwrap();
+    assert_eq!(stage.loop_triangulation.dropped_degenerate_faces.len(), 4);
+    assert!(stage.loop_triangulation.triangulations.is_empty());
+    assert!(stage.output_triangles.triangles.is_empty());
+    assert!(stage.mesh_export.triangles.is_empty());
     assert!(workspace.kernel12_events.iter().any(|event| {
         event.relation == SegmentPlaneRelation::EndpointOnPlane
             && event.endpoint_sides.contains(&Some(PlaneSide::On))
@@ -34107,6 +34113,21 @@ fn exact_boolmesh_kernel12_lowers_strict_endpoint_face_shadow() {
         !workspace.boolean03.p1q2.is_empty() || !workspace.boolean03.p2q1.is_empty(),
         "strict endpoint-on-face contacts must lower into boolmesh p/x/v tables"
     );
+
+    let execution = hypermesh::exact::execute_exact_boolmesh_port(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("regularized endpoint-only intersection should export as an empty split");
+    execution.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        execution.shortcut,
+        hypermesh::exact::ExactBooleanShortcutKind::BoolMeshSplit
+    );
+    assert!(execution.mesh.triangles().is_empty());
+    assert_eq!(execution.mesh.facts().mesh.edge_count, 0);
 }
 
 #[test]
@@ -34131,6 +34152,12 @@ fn exact_boolmesh_kernel12_lowers_boundary_endpoint_edge_shadow_through_intersec
         workspace.blocker.as_ref().map(|blocker| blocker.stage),
         Some(hypermesh::exact::ExactBoolMeshKernelStage::Kernel12)
     );
+    assert_eq!(workspace.blocker, None);
+    let stage = workspace.boolean45.as_ref().unwrap();
+    assert_eq!(stage.loop_triangulation.dropped_degenerate_faces.len(), 5);
+    assert!(stage.loop_triangulation.triangulations.is_empty());
+    assert!(stage.output_triangles.triangles.is_empty());
+    assert!(stage.mesh_export.triangles.is_empty());
     assert_eq!(
         workspace.boolean03.p1q2.len(),
         workspace.boolean03.x12.len()
@@ -34172,6 +34199,21 @@ fn exact_boolmesh_kernel12_lowers_boundary_endpoint_edge_shadow_through_intersec
             }),
         "direct intersect12 boundary rows must feed pair_up source-edge events"
     );
+
+    let execution = hypermesh::exact::execute_exact_boolmesh_port(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("regularized endpoint-edge intersection should export as an empty split");
+    execution.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        execution.shortcut,
+        hypermesh::exact::ExactBooleanShortcutKind::BoolMeshSplit
+    );
+    assert!(execution.mesh.triangles().is_empty());
+    assert_eq!(execution.mesh.facts().mesh.edge_count, 0);
 }
 
 #[test]

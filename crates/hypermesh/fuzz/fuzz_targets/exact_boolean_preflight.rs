@@ -2149,6 +2149,21 @@ fn exercise_exact_boolmesh_kernel12_endpoint_shadow_port() {
                     == Some(Ordering::Equal)
         }));
     assert!(!workspace.boolean03.p1q2.is_empty() || !workspace.boolean03.p2q1.is_empty());
+    assert_eq!(workspace.blocker, None);
+    let stage = workspace.boolean45.as_ref().unwrap();
+    assert_eq!(stage.loop_triangulation.dropped_degenerate_faces.len(), 4);
+    assert!(stage.output_triangles.triangles.is_empty());
+    assert!(stage.mesh_export.triangles.is_empty());
+
+    let execution = hypermesh::exact::execute_exact_boolmesh_port(
+        &left,
+        &right,
+        ExactBooleanOperation::Intersection,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("endpoint-only intersection should materialize as an empty boolmesh split");
+    execution.validate_against_sources(&left, &right).unwrap();
+    assert!(execution.mesh.triangles().is_empty());
 }
 
 #[cfg(feature = "exact-triangulation")]
@@ -2170,6 +2185,21 @@ fn exercise_exact_boolmesh_kernel12_boundary_endpoint_shadow_port() {
                 .as_ref()
                 .is_some_and(|point| compare_reals(&point.y, &ExactReal::from(0)).value() == Some(Ordering::Equal))
     }));
+    assert_eq!(workspace.blocker, None);
+    let stage = workspace.boolean45.as_ref().unwrap();
+    assert_eq!(stage.loop_triangulation.dropped_degenerate_faces.len(), 5);
+    assert!(stage.output_triangles.triangles.is_empty());
+    assert!(stage.mesh_export.triangles.is_empty());
+
+    let execution = hypermesh::exact::execute_exact_boolmesh_port(
+        &left,
+        &right,
+        ExactBooleanOperation::Intersection,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("boundary endpoint-only intersection should materialize as an empty boolmesh split");
+    execution.validate_against_sources(&left, &right).unwrap();
+    assert!(execution.mesh.triangles().is_empty());
 }
 
 #[cfg(feature = "exact-triangulation")]

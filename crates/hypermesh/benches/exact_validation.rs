@@ -13244,17 +13244,22 @@ fn exact_boolmesh_kernel12_endpoint_shadow_port(c: &mut Criterion) {
 
         c.bench_function("exact_boolmesh_kernel12_endpoint_shadow_port", |b| {
             b.iter(|| {
-                let workspace = hypermesh::exact::exact_boolmesh_workspace(
+                let execution = hypermesh::exact::execute_exact_boolmesh_port(
                     &left,
                     &right,
                     hypermesh::exact::ExactBooleanOperation::Intersection,
-                );
-                workspace.validate_against_sources(&left, &right).unwrap();
-                workspace
-                    .kernel12_events
-                    .iter()
-                    .filter(|event| event.relation == SegmentPlaneRelation::EndpointOnPlane)
-                    .count()
+                    hypermesh::exact::ValidationPolicy::CLOSED,
+                )
+                .expect("endpoint-only intersection should export as an empty boolmesh split");
+                execution.validate_against_sources(&left, &right).unwrap();
+                let workspace = &execution.workspace;
+                execution.mesh.triangles().len()
+                    + execution.mesh.facts().mesh.edge_count
+                    + workspace
+                        .kernel12_events
+                        .iter()
+                        .filter(|event| event.relation == SegmentPlaneRelation::EndpointOnPlane)
+                        .count()
                     + workspace.boolean03.p1q2.len()
                     + workspace.boolean03.p2q1.len()
                     + workspace.pair_up.source_edge_runs.len()
@@ -13295,13 +13300,20 @@ fn exact_boolmesh_kernel12_boundary_endpoint_shadow_port(c: &mut Criterion) {
             "exact_boolmesh_kernel12_boundary_endpoint_shadow_port",
             |b| {
                 b.iter(|| {
-                    let workspace = hypermesh::exact::exact_boolmesh_workspace(
+                    let execution = hypermesh::exact::execute_exact_boolmesh_port(
                         &left,
                         &right,
                         hypermesh::exact::ExactBooleanOperation::Intersection,
+                        hypermesh::exact::ValidationPolicy::CLOSED,
+                    )
+                    .expect(
+                        "boundary endpoint-only intersection should export as an empty boolmesh split",
                     );
-                    workspace.validate_against_sources(&left, &right).unwrap();
-                    workspace
+                    execution.validate_against_sources(&left, &right).unwrap();
+                    let workspace = &execution.workspace;
+                    execution.mesh.triangles().len()
+                        + execution.mesh.facts().mesh.edge_count
+                        + workspace
                         .kernel12_events
                         .iter()
                         .filter(|event| event.relation == SegmentPlaneRelation::EndpointOnPlane)
