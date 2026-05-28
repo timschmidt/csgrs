@@ -767,6 +767,7 @@ fn stage_partial_source_edges(
             ExactBoolMeshSide::Right => &allocation.right_vertex_output_starts,
         };
         let mut points = Vec::new();
+        let mut substituted_retained_tail_copies = BTreeSet::new();
 
         for routed in &run.points {
             let order_key = (side_key(run.side), run.source_halfedge, routed.collision);
@@ -774,25 +775,44 @@ fn stage_partial_source_edges(
                 missing_parameter_orders += 1;
                 continue;
             };
-            points.push(ExactBoolMeshPartialEdgePoint {
-                output_vertex: routed.output_vertex,
-                is_tail: routed.is_tail,
-                order_index: order.index + 1,
-                collision: routed.collision,
-                origin: ExactBoolMeshPartialEdgePointOrigin::RoutedIntersection(*routed),
-            });
+            if let Some(substitution) =
+                source_tail_retained_substitution(run, routed, signed_counts, starts, order)
+            {
+                substituted_retained_tail_copies.insert(substitution.copy);
+                points.push(ExactBoolMeshPartialEdgePoint {
+                    output_vertex: substitution.output_vertex,
+                    is_tail: routed.is_tail,
+                    order_index: order.index + 1,
+                    collision: routed.collision,
+                    origin: ExactBoolMeshPartialEdgePointOrigin::RetainedEndpoint {
+                        source: ExactBoolMeshSourceVertex {
+                            side: run.side,
+                            vertex: run.tail,
+                        },
+                        copy: substitution.copy,
+                    },
+                });
+            } else {
+                points.push(ExactBoolMeshPartialEdgePoint {
+                    output_vertex: routed.output_vertex,
+                    is_tail: routed.is_tail,
+                    order_index: order.index + 1,
+                    collision: routed.collision,
+                    origin: ExactBoolMeshPartialEdgePointOrigin::RoutedIntersection(*routed),
+                });
+            }
         }
 
-        let suppressed_retained_tail_copies =
-            if retained_tail_owned_by_kernel12(run, signed_counts, &order_index) {
-                signed_counts
-                    .get(run.tail)
-                    .map(|signed_count| signed_abs(*signed_count))
-                    .unwrap_or(0)
-            } else {
-                append_retained_endpoint(run.side, run.tail, signed_counts, starts, 0, &mut points);
-                0
-            };
+        append_retained_endpoint_excluding(
+            run.side,
+            run.tail,
+            signed_counts,
+            starts,
+            0,
+            &substituted_retained_tail_copies,
+            &mut points,
+        );
+        let suppressed_retained_tail_copies = substituted_retained_tail_copies.len();
         append_retained_endpoint(
             run.side,
             run.head,
@@ -857,39 +877,78 @@ fn source_edge_order_index(
     order_index
 }
 
-/// Return whether the source-tail retained endpoint is already owned by an
-/// exact `Kernel12` row in this `append_partial_edges` bucket.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+struct RetainedTailSubstitution {
+    output_vertex: usize,
+    copy: usize,
+}
+
+/// Substitute a source-tail `Kernel12` row with the retained output vertex.
 ///
-/// Legacy boolmesh's coplanar branch does not duplicate a source-tail boundary
-/// as both a retained endpoint and a same-direction `pt_old` event.  The exact
-/// port reaches the same state from retained split rows: if a certified
-/// crossing is already at parameter `0` and has the same tail/head role that
-/// the retained source-tail copy would have, the crossing owns that boundary
-/// for source-edge pairing.  The check uses boolmesh's `hid_p` bucket, exact
-/// source-edge parameter, and operation-signed retained endpoint role; no
-/// coordinate tolerance is involved.  This follows Yap, "Towards Exact
-/// Geometric Computation," *Computational Geometry* 7.1-2 (1997), by keeping
-/// the duplicate-topology decision attached to exact construction evidence.
-fn retained_tail_owned_by_kernel12(
+/// Positive-area coplanar lowering can produce a row exactly at source-edge
+/// parameter `0` whose operation-signed role is the same retained source-tail
+/// boundary that `append_partial_edges` would otherwise copy from `i03`/`i30`.
+/// The row still owns the ordering/provenance in the `pt_old` bucket, but the
+/// emitted halfedge endpoint must be the retained output vertex so boolmesh
+/// face walks close by vertex id before triangulation.  This is the exact
+/// object version of Yap's separation between certified construction and
+/// topology mutation in "Towards Exact Geometric Computation," *Computational
+/// Geometry* 7.1-2 (1997): the parameter-zero equality is proved exactly, then
+/// the combinatorial vertex identity is replayed explicitly.
+fn source_tail_retained_substitution(
     run: &ExactBoolMeshSourceEdgePointRun,
+    point: &ExactBoolMeshRoutedEdgePoint,
     signed_counts: &[i32],
-    order_index: &BTreeMap<(u8, usize, usize), SourceEdgeOrder>,
-) -> bool {
+    starts: &[Option<usize>],
+    order: &SourceEdgeOrder,
+) -> Option<RetainedTailSubstitution> {
     let Some(signed_count) = signed_counts.get(run.tail).copied() else {
-        return false;
+        return None;
     };
-    if signed_abs(signed_count) == 0 {
-        return false;
+    let count = signed_abs(signed_count);
+    if count == 0 || point.is_tail != (signed_count > 0) {
+        return None;
     }
-    let retained_tail_role = signed_count > 0;
-    run.points.iter().any(|point| {
-        let key = (side_key(run.side), run.source_halfedge, point.collision);
-        order_index.get(&key).is_some_and(|order| {
-            point.is_tail == retained_tail_role
-                && compare_reals(&order.parameter, &ExactReal::from(0)).value()
-                    == Some(Ordering::Equal)
-        })
+    if compare_reals(&order.parameter, &ExactReal::from(0)).value() != Some(Ordering::Equal) {
+        return None;
+    }
+    let copy = kernel12_origin_copy(point.origin)?;
+    if copy >= count {
+        return None;
+    }
+    let start = starts.get(run.tail).and_then(|start| *start)?;
+    Some(RetainedTailSubstitution {
+        output_vertex: start + copy,
+        copy,
     })
+}
+
+fn kernel12_origin_copy(origin: ExactBoolMeshOutputVertexOrigin) -> Option<usize> {
+    match origin {
+        ExactBoolMeshOutputVertexOrigin::Kernel12LeftEdgeRightFace { copy, .. }
+        | ExactBoolMeshOutputVertexOrigin::Kernel12RightEdgeLeftFace { copy, .. } => Some(copy),
+        ExactBoolMeshOutputVertexOrigin::SourceVertex { .. } => None,
+    }
+}
+
+fn append_retained_endpoint_excluding(
+    side: ExactBoolMeshSide,
+    vertex: usize,
+    signed_counts: &[i32],
+    starts: &[Option<usize>],
+    order_index: usize,
+    excluded_copies: &BTreeSet<usize>,
+    points: &mut Vec<ExactBoolMeshPartialEdgePoint>,
+) {
+    append_retained_endpoint_with_filter(
+        side,
+        vertex,
+        signed_counts,
+        starts,
+        order_index,
+        |copy| !excluded_copies.contains(&copy),
+        points,
+    );
 }
 
 fn append_retained_endpoint(
@@ -900,6 +959,28 @@ fn append_retained_endpoint(
     order_index: usize,
     points: &mut Vec<ExactBoolMeshPartialEdgePoint>,
 ) {
+    append_retained_endpoint_with_filter(
+        side,
+        vertex,
+        signed_counts,
+        starts,
+        order_index,
+        |_| true,
+        points,
+    );
+}
+
+fn append_retained_endpoint_with_filter<F>(
+    side: ExactBoolMeshSide,
+    vertex: usize,
+    signed_counts: &[i32],
+    starts: &[Option<usize>],
+    order_index: usize,
+    include_copy: F,
+    points: &mut Vec<ExactBoolMeshPartialEdgePoint>,
+) where
+    F: Fn(usize) -> bool,
+{
     let Some(signed_count) = signed_counts.get(vertex).copied() else {
         return;
     };
@@ -911,6 +992,9 @@ fn append_retained_endpoint(
         return;
     };
     for copy in 0..count {
+        if !include_copy(copy) {
+            continue;
+        }
         points.push(ExactBoolMeshPartialEdgePoint {
             output_vertex: start + copy,
             is_tail: if order_index == 0 {
@@ -1552,7 +1636,7 @@ mod tests {
     }
 
     #[test]
-    fn source_tail_kernel12_event_owns_duplicate_retained_tail_endpoint() {
+    fn source_tail_kernel12_event_substitutes_retained_tail_endpoint() {
         let pair_up = ExactBoolMeshPairUpStage {
             source_edge_runs: vec![ExactBoolMeshSourceEdgeRun {
                 side: ExactBoolMeshSide::Left,
@@ -1584,11 +1668,24 @@ mod tests {
             }],
         };
 
-        assert!(retained_tail_owned_by_kernel12(
-            &run,
-            &[0, 1, 1],
-            &order_index
-        ));
+        let routed = run.points[0];
+        let order = order_index
+            .get(&(side_key(run.side), run.source_halfedge, routed.collision))
+            .unwrap();
+
+        assert_eq!(
+            source_tail_retained_substitution(
+                &run,
+                &routed,
+                &[0, 1, 1],
+                &[None, Some(3), Some(4)],
+                order
+            ),
+            Some(RetainedTailSubstitution {
+                output_vertex: 3,
+                copy: 0
+            })
+        );
     }
 
     #[test]
@@ -1624,11 +1721,21 @@ mod tests {
             }],
         };
 
-        assert!(!retained_tail_owned_by_kernel12(
-            &run,
-            &[0, 1, 1],
-            &order_index
-        ));
+        let routed = run.points[0];
+        let order = order_index
+            .get(&(side_key(run.side), run.source_halfedge, routed.collision))
+            .unwrap();
+
+        assert_eq!(
+            source_tail_retained_substitution(
+                &run,
+                &routed,
+                &[0, 1, 1],
+                &[None, Some(3), Some(4)],
+                order
+            ),
+            None
+        );
     }
 
     #[test]

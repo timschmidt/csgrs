@@ -34253,8 +34253,8 @@ fn exact_boolmesh_kernel12_lowers_partial_positive_area_coplanar_overlap() {
     );
     assert_eq!(
         workspace.blocker.as_ref().map(|blocker| blocker.stage),
-        Some(hypermesh::exact::ExactBoolMeshKernelStage::FaceAssembly),
-        "the next unfinished boolmesh stage should be face assembly, not face-pair ownership"
+        Some(hypermesh::exact::ExactBoolMeshKernelStage::Triangulation),
+        "the next unfinished boolmesh stage should be triangulation, not face assembly"
     );
     assert!(workspace.boolean03.x12.iter().any(|sign| *sign > 0));
     assert!(workspace.boolean03.x12.iter().any(|sign| *sign < 0));
@@ -34278,10 +34278,12 @@ fn exact_boolmesh_kernel12_lowers_partial_positive_area_coplanar_overlap() {
         "source-tail ownership corrections must be replayed into face slot sizing before loop assembly"
     );
     assert_eq!(stage.face_loop_assembly.incomplete_faces, 0);
+    assert_eq!(stage.face_loop_assembly.non_loop_halfedges, 0);
+    assert_eq!(stage.face_loop_assembly.repeated_halfedges, 0);
     assert!(
-        stage.face_loop_assembly.non_loop_halfedges > 0
-            || stage.face_loop_assembly.repeated_halfedges > 0,
-        "partial positive-area overlap should now expose the next boolmesh face assembly blocker"
+        stage.loop_triangulation.short_loops > 0
+            || stage.loop_triangulation.triangulation_failures > 0,
+        "partial positive-area overlap should now expose the next boolmesh triangulation blocker"
     );
 }
 

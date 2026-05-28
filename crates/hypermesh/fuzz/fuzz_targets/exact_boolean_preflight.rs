@@ -2256,7 +2256,7 @@ fn exercise_exact_boolmesh_positive_area_coplanar_kernel12_port() {
     assert_eq!(workspace.kernel12_coplanar_events, 0);
     assert_eq!(
         workspace.blocker.as_ref().map(|blocker| blocker.stage),
-        Some(hypermesh::exact::ExactBoolMeshKernelStage::FaceAssembly)
+        Some(hypermesh::exact::ExactBoolMeshKernelStage::Triangulation)
     );
     let stage = workspace
         .boolean45
@@ -2264,7 +2264,8 @@ fn exercise_exact_boolmesh_positive_area_coplanar_kernel12_port() {
         .expect("positive-area coplanar rows must reach boolean45");
     assert_eq!(stage.halfedge_assembly.unfilled_halfedges, 0);
     assert_eq!(stage.face_loop_assembly.incomplete_faces, 0);
-    assert!(stage.face_loop_assembly.non_loop_halfedges > 0);
+    assert_eq!(stage.face_loop_assembly.non_loop_halfedges, 0);
+    assert!(stage.loop_triangulation.short_loops > 0);
     assert!(workspace.boolean03.x12.iter().any(|sign| *sign < 0));
     assert!(workspace.boolean03.x21.iter().any(|sign| *sign < 0));
 }
