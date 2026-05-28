@@ -37,6 +37,18 @@ jobs:
           repository: ${{ github.repository_owner }}/hyperlimit
           path: hyperlimit
 
+      - name: Check out hyperlattice sibling
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository_owner }}/hyperlattice
+          path: hyperlattice
+
+      - name: Check out hypersolve sibling
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository_owner }}/hypersolve
+          path: hypersolve
+
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
