@@ -30,6 +30,11 @@ use geometry::output_vertex_point;
 use output_triangles::materialize_output_triangles;
 use triangulation::triangulate_output_face_loops;
 
+#[cfg(feature = "internal-fuzzing")]
+pub(super) fn triangulation_internal_fuzz_probe(selector: u8) -> bool {
+    triangulation::internal_fuzz_probe(selector)
+}
+
 use crate::exact::boolean::ExactBooleanOperation;
 use crate::exact::mesh::{ExactMesh, Triangle};
 use crate::exact::scalar::ExactReal;

@@ -70,6 +70,8 @@ use hypermesh::exact::boolmesh::exact_boolmesh_kernel12_accumulator_replay_probe
 use hypermesh::exact::boolmesh::exact_boolmesh_kernel12_intersect_loop_probe_for_internal_fuzz;
 #[cfg(feature = "exact-triangulation")]
 use hypermesh::exact::boolmesh::exact_boolmesh_kernel03_winding_probe_for_internal_fuzz;
+#[cfg(feature = "exact-triangulation")]
+use hypermesh::exact::boolmesh::exact_boolmesh_boolean45_triangulation_probe_for_internal_fuzz;
 use libfuzzer_sys::fuzz_target;
 
 fuzz_target!(|data: &[u8]| {
@@ -1580,7 +1582,7 @@ fuzz_target!(|data: &[u8]| {
 
 #[cfg(feature = "exact-triangulation")]
 fn exercise_deterministic_case(selector: u8) {
-    match selector % 65 {
+    match selector % 66 {
         0 => exercise_partial_convex_union_boundary(),
         1 => exercise_face_interior_steiner_boundary(),
         2 => exercise_multi_component_coplanar_union(),
@@ -1646,6 +1648,7 @@ fn exercise_deterministic_case(selector: u8) {
         62 => exercise_exact_boolmesh_cleanup_materialization_port(),
         63 => exercise_exact_boolmesh_holed_triangulation_port(),
         64 => exercise_exact_boolmesh_positive_area_coplanar_kernel12_port(),
+        65 => exercise_exact_boolmesh_boolean45_triangulation_port(),
         _ => exercise_nonconvex_coplanar_volumetric_difference_fan_split(),
     }
 }
@@ -2369,6 +2372,13 @@ fn exercise_exact_boolmesh_positive_area_coplanar_kernel12_port() {
 #[cfg(feature = "exact-triangulation")]
 fn exercise_exact_boolmesh_kernel03_winding_port() {
     assert!(exact_boolmesh_kernel03_winding_probe_for_internal_fuzz(61));
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn exercise_exact_boolmesh_boolean45_triangulation_port() {
+    assert!(exact_boolmesh_boolean45_triangulation_probe_for_internal_fuzz(65));
+    assert!(exact_boolmesh_boolean45_triangulation_probe_for_internal_fuzz(66));
+    assert!(exact_boolmesh_boolean45_triangulation_probe_for_internal_fuzz(67));
 }
 
 #[cfg(feature = "exact-triangulation")]

@@ -150,6 +150,16 @@ pub fn exact_boolmesh_kernel03_winding_probe_for_internal_fuzz(selector: u8) -> 
     kernel03::internal_fuzz_probe(selector)
 }
 
+/// Exercise exact `boolean45` simple-loop triangulation branches from fuzz targets.
+///
+/// This keeps the direct ports of boolmesh `single_triangulate` and
+/// `square_triangulate` under adversarial builds while the public boolean API
+/// remains the staged boolmesh workspace.
+#[cfg(all(feature = "exact-triangulation", feature = "internal-fuzzing"))]
+pub fn exact_boolmesh_boolean45_triangulation_probe_for_internal_fuzz(selector: u8) -> bool {
+    boolean45::triangulation_internal_fuzz_probe(selector)
+}
+
 /// Legacy boolmesh kernel stage represented by the exact port.
 ///
 /// These names intentionally mirror the old modules instead of inventing a new

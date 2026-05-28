@@ -222,7 +222,7 @@ fn triangulate_ring_component(
     }
 
     let (triangles, constraint_edges) = if hole_indices.is_empty() {
-        (hypertri::earcut(&projected, &[]).ok()?, Vec::new())
+        (triangulate_simple_component(&projected)?, Vec::new())
     } else {
         triangulate_component_with_cdt(&projected, &hole_indices)?
     };
@@ -242,6 +242,92 @@ fn triangulate_ring_component(
         constraint_edges,
         triangles,
     })
+}
+
+/// Triangulate one simple boolmesh face component.
+///
+/// Legacy boolmesh does not send every simple face through its general
+/// ear-clipper.  `process_face` first handles three halfedges with
+/// `single_triangulate`, then four halfedges with `square_triangulate`, and
+/// only larger faces reach `general_triangulate`.  This exact port keeps that
+/// control flow: triangles are copied directly, quadrilaterals choose the same
+/// diagonal rule with exact projected orientation and exact squared lengths,
+/// and only larger loops use the Meisters ear theorem implementation in
+/// `hypertri::earcut`.  Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997), is the boundary condition here: the
+/// boolmesh topology branch is retained, while f64 epsilon orientation and
+/// length comparisons are replaced by exact predicates.
+fn triangulate_simple_component(projected: &[hypertri::ExactPoint]) -> Option<Vec<usize>> {
+    match projected.len() {
+        0..=2 => None,
+        3 => Some(vec![0, 1, 2]),
+        4 => triangulate_square_component(projected),
+        _ => hypertri::earcut(projected, &[]).ok(),
+    }
+}
+
+/// Port boolmesh `square_triangulate` with exact projected predicates.
+///
+/// Boolmesh first prefers the `(0, 2)` diagonal when both emitted triangles
+/// preserve the face orientation.  If that diagonal is invalid, it switches to
+/// `(1, 3)`; if both are valid, the longer first diagonal is avoided.  The
+/// exact port measures validity by the sign of the projected triangle area
+/// against the loop's exact signed area and compares squared diagonal lengths
+/// in the selected projection.  If neither diagonal is certified as a
+/// positive-area split, the loop is not a square-triangulate case in Yap's
+/// exact-object sense and is handed to the general exact earcut path.
+fn triangulate_square_component(projected: &[hypertri::ExactPoint]) -> Option<Vec<usize>> {
+    debug_assert_eq!(projected.len(), 4);
+    let loop_sign = square_orientation(projected)?;
+    let choice0 = [[0, 1, 2], [0, 2, 3]];
+    let choice1 = [[1, 2, 3], [0, 1, 3]];
+    let choice0_valid = triangles_match_orientation(projected, &choice0, loop_sign);
+    let choice1_valid = triangles_match_orientation(projected, &choice1, loop_sign);
+    if !choice0_valid && !choice1_valid {
+        return hypertri::earcut(projected, &[]).ok();
+    }
+    let use_choice1 = if !choice0_valid {
+        true
+    } else if choice1_valid {
+        compare_reals(
+            &squared_distance2(&projected[0], &projected[2]),
+            &squared_distance2(&projected[1], &projected[3]),
+        )
+        .value()
+        .is_some_and(|ordering| ordering == Ordering::Greater)
+    } else {
+        false
+    };
+    let triangles = if use_choice1 { choice1 } else { choice0 };
+    Some(triangles.into_iter().flatten().collect())
+}
+
+fn square_orientation(projected: &[hypertri::ExactPoint]) -> Option<Ordering> {
+    match compare_reals(&projected_area2_signed(projected), &ExactReal::from(0)).value()? {
+        Ordering::Equal => None,
+        ordering => Some(ordering),
+    }
+}
+
+fn triangles_match_orientation(
+    projected: &[hypertri::ExactPoint],
+    triangles: &[[usize; 3]; 2],
+    loop_sign: Ordering,
+) -> bool {
+    triangles.iter().all(|triangle| {
+        compare_reals(
+            &triangle_area2_signed(projected, *triangle),
+            &ExactReal::from(0),
+        )
+        .value()
+        .is_some_and(|triangle_sign| triangle_sign == loop_sign)
+    })
+}
+
+fn squared_distance2(left: &hypertri::ExactPoint, right: &hypertri::ExactPoint) -> ExactReal {
+    let dx = left.x.clone() - &right.x;
+    let dy = left.y.clone() - &right.y;
+    (dx.clone() * &dx) + &(dy.clone() * &dy)
 }
 
 /// Triangulate a nested boolmesh face component through exact CDT constraints.
@@ -428,16 +514,30 @@ fn exact_points_equal(left: &hypertri::ExactPoint, right: &hypertri::ExactPoint)
 }
 
 fn projected_area2_abs(points: &[hypertri::ExactPoint]) -> Option<ExactReal> {
+    let signed = projected_area2_signed(points);
+    match compare_reals(&signed, &ExactReal::from(0)).value()? {
+        Ordering::Less => Some(ExactReal::from(0) - &signed),
+        Ordering::Equal | Ordering::Greater => Some(signed),
+    }
+}
+
+fn projected_area2_signed(points: &[hypertri::ExactPoint]) -> ExactReal {
     let mut signed = ExactReal::from(0);
     for index in 0..points.len() {
         let current = &points[index];
         let next = &points[(index + 1) % points.len()];
         signed = signed + &((current.x.clone() * &next.y) - &(current.y.clone() * &next.x));
     }
-    match compare_reals(&signed, &ExactReal::from(0)).value()? {
-        Ordering::Less => Some(ExactReal::from(0) - &signed),
-        Ordering::Equal | Ordering::Greater => Some(signed),
-    }
+    signed
+}
+
+fn triangle_area2_signed(points: &[hypertri::ExactPoint], triangle: [usize; 3]) -> ExactReal {
+    let a = &points[triangle[0]];
+    let b = &points[triangle[1]];
+    let c = &points[triangle[2]];
+    ((a.x.clone() * &b.y) - &(a.y.clone() * &b.x))
+        + &((b.x.clone() * &c.y) - &(b.y.clone() * &c.x))
+        + &((c.x.clone() * &a.y) - &(c.y.clone() * &a.x))
 }
 
 fn loop_source_face(
@@ -486,6 +586,31 @@ fn output_loop_points(
         .iter()
         .map(|vertex| output_vertex_point(*vertex, allocation, boolean03, left, right))
         .collect()
+}
+
+/// Exercise exact `boolean45` simple-loop triangulation branches for fuzz builds.
+///
+/// The normal boolmesh workspace owns face-loop construction.  This probe is
+/// intentionally gated behind `internal-fuzzing` so adversarial builds can keep
+/// the direct ports of boolmesh `single_triangulate` and `square_triangulate`
+/// compiled and checked without exporting a partial triangulation API.
+#[cfg(feature = "internal-fuzzing")]
+pub(super) fn internal_fuzz_probe(selector: u8) -> bool {
+    fn p(x: i64, y: i64) -> hypertri::ExactPoint {
+        hypertri::ExactPoint::new(ExactReal::from(x), ExactReal::from(y))
+    }
+
+    match selector % 3 {
+        0 => triangulate_simple_component(&[p(0, 0), p(2, 0), p(0, 2)]) == Some(vec![0, 1, 2]),
+        1 => {
+            triangulate_simple_component(&[p(0, 0), p(3, 0), p(4, 2), p(0, 1)])
+                == Some(vec![1, 2, 3, 0, 1, 3])
+        }
+        _ => {
+            triangulate_simple_component(&[p(0, 0), p(4, 0), p(3, 1), p(0, 2)])
+                == Some(vec![0, 1, 2, 0, 2, 3])
+        }
+    }
 }
 
 #[cfg(test)]
@@ -539,6 +664,20 @@ mod tests {
                 0, 1, 2, 0, 2, 3, //
                 4, 5, 6, 4, 6, 7,
             ],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap()
+    }
+
+    fn planar_source_with_irregular_quad() -> ExactMesh {
+        ExactMesh::from_i64_triangles_with_policy(
+            &[
+                0, 0, 0, //
+                3, 0, 0, //
+                4, 2, 0, //
+                0, 1, 0,
+            ],
+            &[0, 1, 2, 0, 2, 3],
             ValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap()
@@ -604,6 +743,84 @@ mod tests {
                 })
             })
             .collect()
+    }
+
+    #[test]
+    fn simple_triangle_uses_boolmesh_single_triangulate_branch() {
+        let left = planar_source();
+        let right = empty_mesh();
+        let boolean03 = empty_boolean03(left.vertices().len());
+        let allocation = source_allocation(left.vertices().len());
+        let output_halfedges = face_halfedges(&[0, 1, 2], 0);
+        let halfedges = ExactBoolMeshHalfedgeAssemblyStage {
+            output_halfedges,
+            ..ExactBoolMeshHalfedgeAssemblyStage::default()
+        };
+        let face_loops = ExactBoolMeshFaceLoopAssemblyStage {
+            loops: vec![ExactBoolMeshOutputFaceLoop {
+                output_face: 0,
+                halfedges: vec![0, 1, 2],
+                vertices: vec![0, 1, 2],
+            }],
+            ..ExactBoolMeshFaceLoopAssemblyStage::default()
+        };
+
+        let stage = triangulate_output_face_loops(
+            &left,
+            &right,
+            &boolean03,
+            &allocation,
+            &halfedges,
+            &face_loops,
+        );
+
+        assert_eq!(stage.triangulation_failures, 0);
+        assert_eq!(stage.triangulations.len(), 1);
+        let triangulation = &stage.triangulations[0];
+        assert_eq!(triangulation.vertices, vec![0, 1, 2]);
+        assert_eq!(triangulation.triangles, vec![0, 1, 2]);
+        assert!(triangulation.constraint_edges.is_empty());
+    }
+
+    #[test]
+    fn quadrilateral_uses_exact_boolmesh_square_diagonal_rule() {
+        let left = planar_source_with_irregular_quad();
+        let right = empty_mesh();
+        let boolean03 = empty_boolean03(left.vertices().len());
+        let allocation = source_allocation(left.vertices().len());
+        let output_halfedges = face_halfedges(&[0, 1, 2, 3], 0);
+        let halfedges = ExactBoolMeshHalfedgeAssemblyStage {
+            output_halfedges,
+            ..ExactBoolMeshHalfedgeAssemblyStage::default()
+        };
+        let face_loops = ExactBoolMeshFaceLoopAssemblyStage {
+            loops: vec![ExactBoolMeshOutputFaceLoop {
+                output_face: 0,
+                halfedges: vec![0, 1, 2, 3],
+                vertices: vec![0, 1, 2, 3],
+            }],
+            ..ExactBoolMeshFaceLoopAssemblyStage::default()
+        };
+
+        let stage = triangulate_output_face_loops(
+            &left,
+            &right,
+            &boolean03,
+            &allocation,
+            &halfedges,
+            &face_loops,
+        );
+
+        assert_eq!(stage.triangulation_failures, 0);
+        assert_eq!(stage.triangulations.len(), 1);
+        let triangulation = &stage.triangulations[0];
+        assert_eq!(triangulation.vertices, vec![0, 1, 2, 3]);
+        assert_eq!(
+            triangulation.triangles,
+            vec![1, 2, 3, 0, 1, 3],
+            "boolmesh square_triangulate should avoid the longer exact (0,2) diagonal"
+        );
+        assert!(triangulation.constraint_edges.is_empty());
     }
 
     #[test]
