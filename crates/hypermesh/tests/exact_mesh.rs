@@ -34253,8 +34253,8 @@ fn exact_boolmesh_kernel12_lowers_partial_positive_area_coplanar_overlap() {
     );
     assert_eq!(
         workspace.blocker.as_ref().map(|blocker| blocker.stage),
-        Some(hypermesh::exact::ExactBoolMeshKernelStage::FacePairEdgeEmission),
-        "the next unfinished boolmesh stage should be face-pair ownership, not source-edge ownership"
+        Some(hypermesh::exact::ExactBoolMeshKernelStage::FaceAssembly),
+        "the next unfinished boolmesh stage should be face assembly, not face-pair ownership"
     );
     assert!(workspace.boolean03.x12.iter().any(|sign| *sign > 0));
     assert!(workspace.boolean03.x12.iter().any(|sign| *sign < 0));
@@ -34269,9 +34269,15 @@ fn exact_boolmesh_kernel12_lowers_partial_positive_area_coplanar_overlap() {
         stage.partial_source_edges.unpaired_runs, 0,
         "source-tail coplanar Kernel12 rows must own duplicate retained endpoints before append_partial_edges pairs source fragments"
     );
+    assert_eq!(
+        stage.new_face_pair_edges.unpaired_runs, 0,
+        "source-tail coplanar Kernel12 rows must not leave dangling append_new_edges face-pair points"
+    );
     assert!(
-        stage.new_face_pair_edges.unpaired_runs > 0,
-        "partial positive-area overlap should now expose the next boolmesh face-pair ownership blocker"
+        stage.face_loop_assembly.incomplete_faces > 0
+            || stage.face_loop_assembly.non_loop_halfedges > 0
+            || stage.face_loop_assembly.repeated_halfedges > 0,
+        "partial positive-area overlap should now expose the next boolmesh face assembly blocker"
     );
 }
 

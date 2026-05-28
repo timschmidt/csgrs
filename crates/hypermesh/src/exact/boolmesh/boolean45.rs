@@ -21,7 +21,7 @@ mod triangulation;
 use std::cmp::Ordering;
 use std::collections::{BTreeMap, BTreeSet};
 
-use hyperlimit::compare_reals;
+use hyperlimit::{Point3, compare_reals};
 
 use assembly::assemble_output_halfedges;
 use export::stage_mesh_export;
@@ -107,8 +107,16 @@ pub(super) fn size_output_stage(
         .map(|crossing| crossing_sign * crossing)
         .collect::<Vec<_>>();
     let vertex_allocation = allocate_output_vertices(&i03, &i30, &i12, &i21);
-    let new_edge_vertices =
-        route_new_edge_vertices(left, right, boolean03, &vertex_allocation, &i12, &i21);
+    let new_edge_vertices = route_new_edge_vertices(
+        left,
+        right,
+        boolean03,
+        &vertex_allocation,
+        &i03,
+        &i30,
+        &i12,
+        &i21,
+    );
     let partial_source_edges = stage_partial_source_edges(
         left,
         right,
@@ -441,39 +449,52 @@ fn route_new_edge_vertices(
     right: &ExactMesh,
     boolean03: &ExactBoolMeshBoolean03,
     allocation: &ExactBoolMeshOutputVertexAllocation,
+    i03: &[i32],
+    i30: &[i32],
     i12: &[i32],
     i21: &[i32],
 ) -> ExactBoolMeshNewEdgeVertexStage {
     let mut source_edge_runs = BTreeMap::<(u8, usize), SourceEdgePointBucket>::new();
     let mut face_pair_runs = BTreeMap::<(usize, usize), Vec<ExactBoolMeshRoutedEdgePoint>>::new();
     let mut missing_source_edge_adjacencies = 0;
+    let mut suppressed_source_tail_face_pair_points = 0;
 
     for (event, (pair, signed_count)) in boolean03.p1q2.iter().zip(i12.iter()).enumerate() {
-        missing_source_edge_adjacencies += route_crossing_vertices(
+        let source_parameter = source_edge_parameter(left, pair.edge, &boolean03.v12[event]);
+        let route = route_crossing_vertices(
             pair,
             *signed_count,
             allocation.p1q2_output_starts[event],
             event,
             left,
+            i03,
+            source_parameter.as_ref(),
             true,
             &allocation.output_vertex_origins,
             &mut source_edge_runs,
             &mut face_pair_runs,
         );
+        missing_source_edge_adjacencies += route.missing_source_edge_adjacencies;
+        suppressed_source_tail_face_pair_points += route.suppressed_source_tail_face_pair_points;
     }
     let collision_offset = boolean03.p1q2.len();
     for (event, (pair, signed_count)) in boolean03.p2q1.iter().zip(i21.iter()).enumerate() {
-        missing_source_edge_adjacencies += route_crossing_vertices(
+        let source_parameter = source_edge_parameter(right, pair.edge, &boolean03.v21[event]);
+        let route = route_crossing_vertices(
             pair,
             *signed_count,
             allocation.p2q1_output_starts[event],
             collision_offset + event,
             right,
+            i30,
+            source_parameter.as_ref(),
             false,
             &allocation.output_vertex_origins,
             &mut source_edge_runs,
             &mut face_pair_runs,
         );
+        missing_source_edge_adjacencies += route.missing_source_edge_adjacencies;
+        suppressed_source_tail_face_pair_points += route.suppressed_source_tail_face_pair_points;
     }
 
     ExactBoolMeshNewEdgeVertexStage {
@@ -502,7 +523,14 @@ fn route_new_edge_vertices(
             )
             .collect(),
         missing_source_edge_adjacencies,
+        suppressed_source_tail_face_pair_points,
     }
+}
+
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+struct RouteCrossingVertices {
+    missing_source_edge_adjacencies: usize,
+    suppressed_source_tail_face_pair_points: usize,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -512,20 +540,31 @@ fn route_crossing_vertices(
     start: Option<usize>,
     collision: usize,
     edge_mesh: &ExactMesh,
+    source_signed_counts: &[i32],
+    source_parameter: Option<&ExactReal>,
     fwd: bool,
     origins: &[ExactBoolMeshOutputVertexOrigin],
     source_edge_runs: &mut BTreeMap<(u8, usize), SourceEdgePointBucket>,
     face_pair_runs: &mut BTreeMap<(usize, usize), Vec<ExactBoolMeshRoutedEdgePoint>>,
-) -> usize {
+) -> RouteCrossingVertices {
     let count = signed_abs(signed_count);
     if count == 0 {
-        return 0;
+        return RouteCrossingVertices::default();
     }
     let Some(start) = start else {
-        return 1;
+        return RouteCrossingVertices {
+            missing_source_edge_adjacencies: 1,
+            suppressed_source_tail_face_pair_points: 0,
+        };
     };
 
     let dir = signed_count < 0;
+    let suppress_face_pair_points = source_tail_face_pair_owned_by_source_edge(
+        pair,
+        dir,
+        source_signed_counts,
+        source_parameter,
+    );
     let source_key = (side_key(pair.edge_side), pair.source_halfedge);
     let primary_edge_face = match pair.edge_side {
         ExactBoolMeshSide::Left => pair.face_pair.left_face,
@@ -561,28 +600,67 @@ fn route_crossing_vertices(
             .points
             .push(source_point);
 
-        let primary_point = ExactBoolMeshRoutedEdgePoint {
-            is_tail: if fwd { !dir } else { dir },
-            ..source_point
-        };
-        face_pair_runs
-            .entry(face_pair_key(pair, primary_edge_face))
-            .or_default()
-            .push(primary_point);
-
-        if let Some(paired_edge_face) = paired_edge_face {
-            let paired_point = ExactBoolMeshRoutedEdgePoint {
-                is_tail: if fwd { dir } else { !dir },
+        if !suppress_face_pair_points {
+            let primary_point = ExactBoolMeshRoutedEdgePoint {
+                is_tail: if fwd { !dir } else { dir },
                 ..source_point
             };
             face_pair_runs
-                .entry(face_pair_key(pair, paired_edge_face))
+                .entry(face_pair_key(pair, primary_edge_face))
                 .or_default()
-                .push(paired_point);
+                .push(primary_point);
+
+            if let Some(paired_edge_face) = paired_edge_face {
+                let paired_point = ExactBoolMeshRoutedEdgePoint {
+                    is_tail: if fwd { dir } else { !dir },
+                    ..source_point
+                };
+                face_pair_runs
+                    .entry(face_pair_key(pair, paired_edge_face))
+                    .or_default()
+                    .push(paired_point);
+            }
         }
     }
 
-    missing_source_edge_adjacencies
+    RouteCrossingVertices {
+        missing_source_edge_adjacencies,
+        suppressed_source_tail_face_pair_points: if suppress_face_pair_points {
+            count * (1 + usize::from(paired_edge_face.is_some()))
+        } else {
+            0
+        },
+    }
+}
+
+/// Return whether a source-tail `Kernel12` row should stay out of `pt_new`.
+///
+/// This is the face-pair side of the exact source-tail ownership rule in
+/// [`retained_tail_owned_by_kernel12`].  A row at source-edge parameter `0`
+/// whose operation-signed role matches the retained source-tail endpoint is
+/// already consumed by the source-edge `pt_old` path.  Legacy boolmesh's
+/// coplanar branch therefore does not also leave a dangling
+/// `append_new_edges` point on both incident face-pair buckets.  The exact
+/// port makes that rule explicit with source-halfedge ownership, exact
+/// parameter comparison, and signed retained endpoint counts, following Yap,
+/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+/// (1997).
+fn source_tail_face_pair_owned_by_source_edge(
+    pair: &ExactBoolMeshEdgeFacePair,
+    source_point_is_tail: bool,
+    source_signed_counts: &[i32],
+    source_parameter: Option<&ExactReal>,
+) -> bool {
+    let Some(parameter) = source_parameter else {
+        return false;
+    };
+    if compare_reals(parameter, &ExactReal::from(0)).value() != Some(Ordering::Equal) {
+        return false;
+    }
+    let Some(signed_count) = source_signed_counts.get(pair.edge[0]).copied() else {
+        return false;
+    };
+    signed_abs(signed_count) > 0 && source_point_is_tail == (signed_count > 0)
 }
 
 fn face_pair_key(pair: &ExactBoolMeshEdgeFacePair, edge_face: usize) -> (usize, usize) {
@@ -590,6 +668,54 @@ fn face_pair_key(pair: &ExactBoolMeshEdgeFacePair, edge_face: usize) -> (usize, 
         ExactBoolMeshSide::Left => (edge_face, pair.face),
         ExactBoolMeshSide::Right => (pair.face, edge_face),
     }
+}
+
+fn source_edge_parameter(mesh: &ExactMesh, edge: [usize; 2], point: &Point3) -> Option<ExactReal> {
+    let tail = mesh.vertices().get(edge[0])?.to_hyperlimit_point();
+    let head = mesh.vertices().get(edge[1])?.to_hyperlimit_point();
+    let deltas = [
+        head.x.clone() - &tail.x,
+        head.y.clone() - &tail.y,
+        head.z.clone() - &tail.z,
+    ];
+    let numerators = [
+        point.x.clone() - &tail.x,
+        point.y.clone() - &tail.y,
+        point.z.clone() - &tail.z,
+    ];
+    for axis in 0..3 {
+        if compare_reals(&deltas[axis], &ExactReal::from(0)).value() == Some(Ordering::Equal) {
+            continue;
+        }
+        let parameter = (&numerators[axis] / &deltas[axis]).ok()?;
+        if point_matches_edge_parameter(&tail, &head, point, &parameter) {
+            return Some(parameter);
+        }
+        return None;
+    }
+    None
+}
+
+fn point_matches_edge_parameter(
+    tail: &Point3,
+    head: &Point3,
+    point: &Point3,
+    parameter: &ExactReal,
+) -> bool {
+    axis_matches_parameter(&tail.x, &head.x, &point.x, parameter)
+        && axis_matches_parameter(&tail.y, &head.y, &point.y, parameter)
+        && axis_matches_parameter(&tail.z, &head.z, &point.z, parameter)
+}
+
+fn axis_matches_parameter(
+    tail: &ExactReal,
+    head: &ExactReal,
+    point: &ExactReal,
+    parameter: &ExactReal,
+) -> bool {
+    let delta = head.clone() - tail;
+    let expected = tail.clone() + &(parameter.clone() * delta);
+    compare_reals(&expected, point).value() == Some(Ordering::Equal)
 }
 
 fn stage_partial_source_edges(
@@ -1341,6 +1467,20 @@ mod tests {
         }
     }
 
+    fn edge_face_pair() -> ExactBoolMeshEdgeFacePair {
+        ExactBoolMeshEdgeFacePair {
+            face_pair: ExactBoolMeshFacePair {
+                left_face: 2,
+                right_face: 0,
+            },
+            edge_side: ExactBoolMeshSide::Left,
+            source_halfedge: 6,
+            edge: [1, 2],
+            face_side: ExactBoolMeshSide::Right,
+            face: 0,
+        }
+    }
+
     #[test]
     fn source_tail_kernel12_event_owns_duplicate_retained_tail_endpoint() {
         let pair_up = ExactBoolMeshPairUpStage {
@@ -1418,6 +1558,30 @@ mod tests {
             &run,
             &[0, 1, 1],
             &order_index
+        ));
+    }
+
+    #[test]
+    fn source_tail_kernel12_event_suppresses_duplicate_face_pair_points() {
+        let parameter = ExactReal::from(0);
+
+        assert!(source_tail_face_pair_owned_by_source_edge(
+            &edge_face_pair(),
+            true,
+            &[0, 1, 1],
+            Some(&parameter),
+        ));
+    }
+
+    #[test]
+    fn non_tail_parameter_keeps_face_pair_points() {
+        let parameter = ExactReal::from(1);
+
+        assert!(!source_tail_face_pair_owned_by_source_edge(
+            &edge_face_pair(),
+            true,
+            &[0, 1, 1],
+            Some(&parameter),
         ));
     }
 }

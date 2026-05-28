@@ -600,6 +600,15 @@ pub struct ExactBoolMeshNewEdgeVertexStage {
     pub face_pair_runs: Vec<ExactBoolMeshFacePairPointRun>,
     /// Events whose source edge did not expose the expected opposite face.
     pub missing_source_edge_adjacencies: usize,
+    /// Face-pair point insertions deliberately suppressed because the same
+    /// exact source-tail `Kernel12` row already owns the retained endpoint.
+    ///
+    /// Legacy boolmesh's coplanar ownership can consume such a row through the
+    /// source-edge `pt_old` bucket without also creating a dangling
+    /// `append_new_edges` fragment.  The exact port counts those suppressed
+    /// `pt_new` entries so validation can distinguish a ported ownership rule
+    /// from an accidental loss of topology.
+    pub suppressed_source_tail_face_pair_points: usize,
 }
 
 /// Point consumed by exact `boolean45::append_partial_edges`.
@@ -3898,7 +3907,11 @@ fn validate_boolean45_edge_point_routing(
         .sum::<usize>();
     if stage.source_edge_incident_gaps == 0
         && stage.partial_source_edges.missing_parameter_orders == 0
-        && face_pair_point_count != expected_face_pair_point_count
+        && face_pair_point_count
+            + stage
+                .new_edge_vertices
+                .suppressed_source_tail_face_pair_points
+            != expected_face_pair_point_count
     {
         return Err(ExactBoolMeshValidationError::Boolean45EdgePointRoutingMismatch);
     }
