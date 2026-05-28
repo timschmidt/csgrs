@@ -34280,11 +34280,26 @@ fn exact_boolmesh_kernel12_lowers_partial_positive_area_coplanar_overlap() {
     assert_eq!(stage.face_loop_assembly.incomplete_faces, 0);
     assert_eq!(stage.face_loop_assembly.non_loop_halfedges, 0);
     assert_eq!(stage.face_loop_assembly.repeated_halfedges, 0);
-    assert!(
-        stage.loop_triangulation.short_loops > 0
-            || stage.loop_triangulation.triangulation_failures > 0,
-        "partial positive-area overlap should now expose the next boolmesh triangulation blocker"
+    assert_eq!(
+        stage.loop_triangulation.short_loops, 0,
+        "boolmesh triangulation must clip short assembled walks when positive-area rings remain"
     );
+    assert_eq!(stage.loop_triangulation.triangulation_failures, 0);
+    assert_eq!(stage.loop_triangulation.triangulations.len(), 8);
+    assert!(
+        stage
+            .loop_triangulation
+            .triangulations
+            .iter()
+            .any(|triangulation| triangulation.clipped_loop_indices == vec![1]),
+        "boundary-covered coplanar seam loops should be clipped before the hypertri handoff"
+    );
+    assert_eq!(stage.output_triangles.missing_loop_triangulations, 0);
+    assert_eq!(stage.output_triangles.invalid_local_triangles, 0);
+    assert_eq!(stage.mesh_export.missing_vertex_coordinates, 0);
+    assert_eq!(stage.mesh_export.blocked_output_triangles, 0);
+    assert_eq!(stage.mesh_export.invalid_output_triangles, 0);
+    assert_eq!(stage.mesh_export.orientation_failures, 0);
 }
 
 #[test]

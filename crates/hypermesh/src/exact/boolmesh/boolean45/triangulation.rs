@@ -32,10 +32,12 @@ use super::geometry::output_vertex_point;
 ///
 /// Legacy boolmesh's `general_triangulate` passes all loops of one output face
 /// to its ear-clipper, with the outer loop and hole loops kept as separate
-/// polygon rings.  The exact port mirrors that boundary by feeding a flat
-/// earcut-compatible vertex buffer plus hole-start offsets into `hypertri`.
-/// A face with multiple loops is therefore no longer a blocker when exact
-/// projection, ring area, and hole bridging all replay.
+/// polygon rings.  Its `EarClip::new` then clips degenerate two-edge walks
+/// before triangulation.  The exact port mirrors the same boundary by dropping
+/// short walks when at least one positive-area ring remains, then feeding a
+/// flat earcut-compatible vertex buffer plus hole-start offsets into
+/// `hypertri`.  A face with multiple loops is therefore no longer a blocker
+/// when exact projection, ring area, and hole bridging all replay.
 pub(super) fn triangulate_output_face_loops(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -79,15 +81,20 @@ fn triangulate_output_face_loop_group(
     face_loops: &ExactBoolMeshFaceLoopAssemblyStage,
     stage: &mut ExactBoolMeshLoopTriangulationStage,
 ) {
-    if loop_indices.iter().any(|loop_index| {
-        face_loops.loops[*loop_index].vertices.len() < 3
-            || face_loops.loops[*loop_index].halfedges.len() < 3
-    }) {
+    let triangulatable_loop_indices = loop_indices
+        .iter()
+        .copied()
+        .filter(|loop_index| {
+            let face_loop = &face_loops.loops[*loop_index];
+            face_loop.vertices.len() >= 3 && face_loop.halfedges.len() >= 3
+        })
+        .collect::<Vec<_>>();
+    if triangulatable_loop_indices.is_empty() {
         stage.short_loops += 1;
         return;
     }
 
-    let first_loop = &face_loops.loops[loop_indices[0]];
+    let first_loop = &face_loops.loops[triangulatable_loop_indices[0]];
     let Some((source_side, source_face)) =
         loop_source_face(first_loop.halfedges.first().copied(), halfedges)
     else {
@@ -103,8 +110,8 @@ fn triangulate_output_face_loop_group(
         return;
     };
 
-    let mut rings = Vec::with_capacity(loop_indices.len());
-    for &loop_index in loop_indices {
+    let mut rings = Vec::with_capacity(triangulatable_loop_indices.len());
+    for &loop_index in &triangulatable_loop_indices {
         let face_loop = &face_loops.loops[loop_index];
         let Some(points) =
             output_loop_points(&face_loop.vertices, allocation, boolean03, left, right)
@@ -136,6 +143,7 @@ fn triangulate_output_face_loop_group(
         stage.triangulation_failures += 1;
         return;
     };
+    let (ordered, clipped_loop_indices) = clip_boundary_covered_hole_rings(ordered);
     let mut vertices = Vec::new();
     let mut projected = Vec::new();
     let mut hole_indices = Vec::new();
@@ -158,6 +166,7 @@ fn triangulate_output_face_loop_group(
     stage.triangulations.push(ExactBoolMeshLoopTriangulation {
         output_face: first_loop.output_face,
         loop_index: ordered[0].loop_index,
+        clipped_loop_indices,
         source_side,
         source_face,
         projection,
@@ -191,6 +200,53 @@ fn order_polygon_rings(rings: Vec<ProjectedLoop>) -> Option<Vec<ProjectedLoop>> 
             .filter_map(|(index, ring)| (index != exterior).then_some(ring)),
     );
     Some(ordered)
+}
+
+/// Drop hole rings already covered by the selected exterior boundary.
+///
+/// Legacy boolmesh's `EarClip::new` calls `clip_degenerate` before
+/// `cut_key_hole`: a coplanar overlap seam whose projected hole vertices are
+/// all already present on the exterior circular list is clipped as boundary
+/// degeneracy instead of being bridged as a geometric hole.  This exact
+/// pre-filter ports that behavior while keeping the dropped loop ids
+/// replayable for validation.  The separation follows Yap, "Towards Exact
+/// Geometric Computation," *Computational Geometry* 7.1-2 (1997): exact
+/// predicate decisions select topology before any polygon triangulation
+/// output is trusted.
+fn clip_boundary_covered_hole_rings(
+    mut rings: Vec<ProjectedLoop>,
+) -> (Vec<ProjectedLoop>, Vec<usize>) {
+    if rings.len() < 2 {
+        return (rings, Vec::new());
+    }
+    let exterior_projected = rings[0].projected.clone();
+    let mut active = Vec::with_capacity(rings.len());
+    let mut clipped = Vec::new();
+    active.push(rings.remove(0));
+    for ring in rings {
+        if projected_ring_vertices_are_covered_by(&ring.projected, &exterior_projected) {
+            clipped.push(ring.loop_index);
+        } else {
+            active.push(ring);
+        }
+    }
+    (active, clipped)
+}
+
+fn projected_ring_vertices_are_covered_by(
+    ring: &[hypertri::ExactPoint],
+    boundary: &[hypertri::ExactPoint],
+) -> bool {
+    ring.iter().all(|point| {
+        boundary
+            .iter()
+            .any(|candidate| exact_points_equal(point, candidate))
+    })
+}
+
+fn exact_points_equal(left: &hypertri::ExactPoint, right: &hypertri::ExactPoint) -> bool {
+    compare_reals(&left.x, &right.x).value() == Some(Ordering::Equal)
+        && compare_reals(&left.y, &right.y).value() == Some(Ordering::Equal)
 }
 
 fn projected_area2_abs(points: &[hypertri::ExactPoint]) -> Option<ExactReal> {
@@ -389,7 +445,7 @@ mod tests {
     }
 
     #[test]
-    fn holed_face_with_short_ring_remains_blocked() {
+    fn holed_face_ignores_short_ring_when_positive_area_ring_remains() {
         let left = planar_source();
         let right = empty_mesh();
         let boolean03 = empty_boolean03(left.vertices().len());
@@ -413,6 +469,93 @@ mod tests {
                     vertices: vec![4, 5],
                 },
             ],
+            ..ExactBoolMeshFaceLoopAssemblyStage::default()
+        };
+
+        let stage = triangulate_output_face_loops(
+            &left,
+            &right,
+            &boolean03,
+            &allocation,
+            &halfedges,
+            &face_loops,
+        );
+
+        assert_eq!(stage.short_loops, 0);
+        assert_eq!(stage.triangulation_failures, 0);
+        assert_eq!(stage.multi_loop_faces, 0);
+        assert_eq!(stage.triangulations.len(), 1);
+        let triangulation = &stage.triangulations[0];
+        assert_eq!(triangulation.loop_index, 0);
+        assert_eq!(triangulation.vertices, vec![0, 1, 2, 3]);
+        assert_eq!(triangulation.triangles.len(), 6);
+        assert!(triangulation.triangles.iter().all(|index| *index < 4));
+    }
+
+    #[test]
+    fn boundary_covered_hole_ring_is_clipped_before_hypertri() {
+        let left = planar_source();
+        let right = empty_mesh();
+        let boolean03 = empty_boolean03(left.vertices().len());
+        let allocation = source_allocation(left.vertices().len());
+        let mut output_halfedges = face_halfedges(&[0, 1, 5, 4, 5, 6, 2, 3], 0);
+        output_halfedges.extend(face_halfedges(&[1, 5, 4], 8));
+        let halfedges = ExactBoolMeshHalfedgeAssemblyStage {
+            output_halfedges,
+            ..ExactBoolMeshHalfedgeAssemblyStage::default()
+        };
+        let face_loops = ExactBoolMeshFaceLoopAssemblyStage {
+            loops: vec![
+                ExactBoolMeshOutputFaceLoop {
+                    output_face: 0,
+                    halfedges: vec![0, 1, 2, 3, 4, 5, 6, 7],
+                    vertices: vec![0, 1, 5, 4, 5, 6, 2, 3],
+                },
+                ExactBoolMeshOutputFaceLoop {
+                    output_face: 0,
+                    halfedges: vec![8, 9, 10],
+                    vertices: vec![1, 5, 4],
+                },
+            ],
+            ..ExactBoolMeshFaceLoopAssemblyStage::default()
+        };
+
+        let stage = triangulate_output_face_loops(
+            &left,
+            &right,
+            &boolean03,
+            &allocation,
+            &halfedges,
+            &face_loops,
+        );
+
+        assert_eq!(stage.short_loops, 0);
+        assert_eq!(stage.triangulation_failures, 0);
+        assert_eq!(stage.triangulations.len(), 1);
+        let triangulation = &stage.triangulations[0];
+        assert_eq!(triangulation.loop_index, 0);
+        assert_eq!(triangulation.clipped_loop_indices, vec![1]);
+        assert_eq!(triangulation.vertices, vec![0, 1, 5, 4, 5, 6, 2, 3]);
+        assert!(triangulation.triangles.iter().all(|index| *index < 8));
+    }
+
+    #[test]
+    fn all_short_face_remains_blocked() {
+        let left = planar_source();
+        let right = empty_mesh();
+        let boolean03 = empty_boolean03(left.vertices().len());
+        let allocation = source_allocation(left.vertices().len());
+        let output_halfedges = face_halfedges(&[0, 1], 0);
+        let halfedges = ExactBoolMeshHalfedgeAssemblyStage {
+            output_halfedges,
+            ..ExactBoolMeshHalfedgeAssemblyStage::default()
+        };
+        let face_loops = ExactBoolMeshFaceLoopAssemblyStage {
+            loops: vec![ExactBoolMeshOutputFaceLoop {
+                output_face: 0,
+                halfedges: vec![0, 1],
+                vertices: vec![0, 1],
+            }],
             ..ExactBoolMeshFaceLoopAssemblyStage::default()
         };
 

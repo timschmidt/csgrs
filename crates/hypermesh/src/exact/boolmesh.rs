@@ -931,8 +931,15 @@ pub struct ExactBoolMeshLoopTriangulation {
     ///
     /// For holed/multi-loop faces this is the exterior loop selected by exact
     /// projected area; [`Self::vertices`] then contains that exterior ring
-    /// followed by each hole ring in `hypertri` hole-start order.
+    /// followed by each retained hole ring in `hypertri` hole-start order.
     pub loop_index: usize,
+    /// Loop indices clipped before the `hypertri` handoff.
+    ///
+    /// Legacy boolmesh's `EarClip::clip_degenerate` removes boundary-covered
+    /// hole walks produced by coincident coplanar seams while keeping the face
+    /// triangulatable.  The exact port records the skipped loops here so the
+    /// stage remains replayable in Yap's certified-object sense.
+    pub clipped_loop_indices: Vec<usize>,
     /// Source mesh side used to choose the projection.
     pub source_side: ExactBoolMeshSide,
     /// Source face used to choose the projection.
@@ -3137,9 +3144,8 @@ fn validate_boolean45_loop_triangulation(
     let expected_short_loops = candidate_faces
         .iter()
         .filter(|loop_indices| {
-            loop_indices.iter().any(|loop_index| {
-                let face_loop = &stage.face_loop_assembly.loops[*loop_index];
-                face_loop.vertices.len() < 3 || face_loop.halfedges.len() < 3
+            !loop_indices.iter().any(|loop_index| {
+                triangulation_face_loop_is_usable(&stage.face_loop_assembly.loops[*loop_index])
             })
         })
         .count();
@@ -3174,6 +3180,7 @@ fn validate_boolean45_loop_triangulation(
                 &triangulation.vertices,
                 loop_indices,
                 triangulation.loop_index,
+                &triangulation.clipped_loop_indices,
                 &stage.face_loop_assembly,
             )
             || triangulation.triangles.is_empty()
@@ -3208,20 +3215,42 @@ fn triangulation_vertices_match_face_loops(
     vertices: &[usize],
     loop_indices: &[usize],
     exterior_loop: usize,
+    clipped_loop_indices: &[usize],
     face_loops: &ExactBoolMeshFaceLoopAssemblyStage,
 ) -> bool {
     let mut cursor = 0;
     let mut seen = BTreeSet::<usize>::new();
+    let clipped = clipped_loop_indices
+        .iter()
+        .copied()
+        .collect::<BTreeSet<_>>();
+    if clipped.len() != clipped_loop_indices.len()
+        || clipped.contains(&exterior_loop)
+        || !clipped
+            .iter()
+            .all(|loop_index| loop_indices.contains(loop_index))
+        || !clipped.iter().all(|loop_index| {
+            face_loops
+                .loops
+                .get(*loop_index)
+                .is_some_and(triangulation_face_loop_is_usable)
+        })
+    {
+        return false;
+    }
     let ordered = std::iter::once(exterior_loop).chain(
         loop_indices
             .iter()
             .copied()
-            .filter(|loop_index| *loop_index != exterior_loop),
+            .filter(|loop_index| *loop_index != exterior_loop && !clipped.contains(loop_index)),
     );
     for loop_index in ordered {
         let Some(face_loop) = face_loops.loops.get(loop_index) else {
             return false;
         };
+        if !triangulation_face_loop_is_usable(face_loop) {
+            continue;
+        }
         if !seen.insert(loop_index) {
             return false;
         }
@@ -3231,7 +3260,23 @@ fn triangulation_vertices_match_face_loops(
         }
         cursor = end;
     }
-    cursor == vertices.len() && seen.len() == loop_indices.len()
+    cursor == vertices.len()
+        && seen.len()
+            == loop_indices
+                .iter()
+                .filter(|loop_index| {
+                    !clipped.contains(loop_index)
+                        && face_loops
+                            .loops
+                            .get(**loop_index)
+                            .is_some_and(triangulation_face_loop_is_usable)
+                })
+                .count()
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn triangulation_face_loop_is_usable(face_loop: &ExactBoolMeshOutputFaceLoop) -> bool {
+    face_loop.vertices.len() >= 3 && face_loop.halfedges.len() >= 3
 }
 
 #[cfg(feature = "exact-triangulation")]

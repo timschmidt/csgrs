@@ -2265,7 +2265,17 @@ fn exercise_exact_boolmesh_positive_area_coplanar_kernel12_port() {
     assert_eq!(stage.halfedge_assembly.unfilled_halfedges, 0);
     assert_eq!(stage.face_loop_assembly.incomplete_faces, 0);
     assert_eq!(stage.face_loop_assembly.non_loop_halfedges, 0);
-    assert!(stage.loop_triangulation.short_loops > 0);
+    assert_eq!(stage.loop_triangulation.short_loops, 0);
+    assert_eq!(stage.loop_triangulation.triangulation_failures, 0);
+    assert!(
+        stage
+            .loop_triangulation
+            .triangulations
+            .iter()
+            .any(|triangulation| triangulation.clipped_loop_indices == vec![1])
+    );
+    assert_eq!(stage.output_triangles.missing_loop_triangulations, 0);
+    assert_eq!(stage.mesh_export.blocked_output_triangles, 0);
     assert!(workspace.boolean03.x12.iter().any(|sign| *sign < 0));
     assert!(workspace.boolean03.x21.iter().any(|sign| *sign < 0));
 }

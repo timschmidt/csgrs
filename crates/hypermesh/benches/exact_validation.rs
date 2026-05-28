@@ -13479,6 +13479,13 @@ fn exact_boolmesh_positive_area_coplanar_kernel12_port(c: &mut Criterion) {
                         .map(|stage| {
                             stage.partial_source_edges.unpaired_runs
                                 + stage.new_face_pair_edges.unpaired_runs
+                                + stage.loop_triangulation.triangulations.len()
+                                + stage
+                                    .loop_triangulation
+                                    .triangulations
+                                    .iter()
+                                    .map(|triangulation| triangulation.clipped_loop_indices.len())
+                                    .sum::<usize>()
                         })
                         .unwrap_or(0)
             })
