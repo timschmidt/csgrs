@@ -160,6 +160,16 @@ pub fn exact_boolmesh_boolean45_triangulation_probe_for_internal_fuzz(selector: 
     boolean45::triangulation_internal_fuzz_probe(selector)
 }
 
+/// Exercise exact boolmesh cleanup/simplification branches from fuzz targets.
+///
+/// This keeps the exact `simplify_topology` cleanup port compiled under
+/// adversarial builds while the public boolean API remains the staged boolmesh
+/// executor.
+#[cfg(all(feature = "exact-triangulation", feature = "internal-fuzzing"))]
+pub fn exact_boolmesh_cleanup_probe_for_internal_fuzz(selector: u8) -> bool {
+    cleanup::internal_fuzz_probe(selector)
+}
+
 /// Legacy boolmesh kernel stage represented by the exact port.
 ///
 /// These names intentionally mirror the old modules instead of inventing a new

@@ -72,6 +72,8 @@ use hypermesh::exact::boolmesh::exact_boolmesh_kernel12_intersect_loop_probe_for
 use hypermesh::exact::boolmesh::exact_boolmesh_kernel03_winding_probe_for_internal_fuzz;
 #[cfg(feature = "exact-triangulation")]
 use hypermesh::exact::boolmesh::exact_boolmesh_boolean45_triangulation_probe_for_internal_fuzz;
+#[cfg(feature = "exact-triangulation")]
+use hypermesh::exact::boolmesh::exact_boolmesh_cleanup_probe_for_internal_fuzz;
 use libfuzzer_sys::fuzz_target;
 
 fuzz_target!(|data: &[u8]| {
@@ -2088,6 +2090,9 @@ fn exercise_exact_boolmesh_kernel12_port() {
 
 #[cfg(feature = "exact-triangulation")]
 fn exercise_exact_boolmesh_cleanup_materialization_port() {
+    assert!(exact_boolmesh_cleanup_probe_for_internal_fuzz(0));
+    assert!(exact_boolmesh_cleanup_probe_for_internal_fuzz(1));
+
     let left = ExactMesh::from_i64_triangles(
         &[0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0, 4],
         &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],

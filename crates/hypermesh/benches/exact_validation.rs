@@ -5,6 +5,8 @@ use hyperlimit::Point3;
 #[cfg(all(feature = "exact-triangulation", feature = "internal-fuzzing"))]
 use hypermesh::exact::boolmesh::exact_boolmesh_boolean45_triangulation_probe_for_internal_fuzz;
 #[cfg(all(feature = "exact-triangulation", feature = "internal-fuzzing"))]
+use hypermesh::exact::boolmesh::exact_boolmesh_cleanup_probe_for_internal_fuzz;
+#[cfg(all(feature = "exact-triangulation", feature = "internal-fuzzing"))]
 use hypermesh::exact::boolmesh::exact_boolmesh_kernel_frame_probe_for_internal_fuzz;
 #[cfg(all(feature = "exact-triangulation", feature = "internal-fuzzing"))]
 use hypermesh::exact::boolmesh::exact_boolmesh_kernel02_shadow_probe_for_internal_fuzz;
@@ -13174,6 +13176,11 @@ fn exact_boolmesh_cleanup_materialization_port(c: &mut Criterion) {
 
         c.bench_function("exact_boolmesh_cleanup_materialization_port", |b| {
             b.iter(|| {
+                #[cfg(all(feature = "exact-triangulation", feature = "internal-fuzzing"))]
+                let cleanup_probe = exact_boolmesh_cleanup_probe_for_internal_fuzz(0)
+                    && exact_boolmesh_cleanup_probe_for_internal_fuzz(1);
+                #[cfg(not(all(feature = "exact-triangulation", feature = "internal-fuzzing")))]
+                let cleanup_probe = true;
                 let execution = hypermesh::exact::execute_exact_boolmesh_port(
                     &left,
                     &right,
@@ -13185,6 +13192,7 @@ fn exact_boolmesh_cleanup_materialization_port(c: &mut Criterion) {
                 execution.mesh.vertices().len()
                     + execution.mesh.triangles().len()
                     + execution.mesh.facts().mesh.edge_count
+                    + usize::from(cleanup_probe)
             })
         });
     }

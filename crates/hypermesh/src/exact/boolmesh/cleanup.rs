@@ -16,6 +16,8 @@ use hyperlimit::{Point3, Sign, compare_reals, orient3d_report, point_on_segment3
 
 use crate::exact::mesh::{ExactPoint3, Triangle};
 use crate::exact::predicates::{TriangleDegeneracy, classify_triangle_degeneracy};
+#[cfg(feature = "internal-fuzzing")]
+use crate::exact::scalar::ExactReal;
 
 /// Collapse exactly equal export coordinates and orient the resulting surface.
 ///
@@ -26,6 +28,8 @@ use crate::exact::predicates::{TriangleDegeneracy, classify_triangle_degeneracy}
 ///
 /// - vertices are welded only when all three coordinates compare exactly equal;
 /// - triangles that become index-degenerate after welding are removed;
+/// - exact duplicate opposite-oriented triangle pairs are canceled as
+///   zero-thickness interface debris;
 /// - each connected triangle component is flipped, when necessary, so every
 ///   two-face edge is traversed in opposite directions by its incident faces.
 /// - vertices made unused by those exact triangle deletions are compacted away.
@@ -77,6 +81,7 @@ pub(super) fn cleanup_exact_export_vertices(
         })
         .collect::<Vec<_>>();
 
+    let triangles = remove_isolated_opposite_duplicate_pairs(triangles);
     let triangles = split_edges_at_existing_vertices(&unique_points, triangles);
     let triangles = orient_triangle_components(triangles);
     let triangles = close_coplanar_boundary_loops(&unique_points, triangles);
@@ -137,6 +142,74 @@ fn compact_unused_vertices(
         .collect();
 
     (compact_vertices, compact_triangles)
+}
+
+/// Remove exact coincident opposite-facing triangle pairs.
+///
+/// Legacy boolmesh `simplify_topology` removes local zero-thickness interface
+/// debris before `Manifold::new_impl`.  After exact vertex welding, that debris
+/// appears as two triangles with the same three vertex ids and opposite
+/// halfedge directions.  The exact port cancels only the isolated case where
+/// each of the three undirected edges is used by exactly those two triangles;
+/// non-isolated coincident faces are left for the later overfull-edge cleanup
+/// or final validation.  This keeps the mutation inside Yap's exact-object
+/// boundary: equality is exact vertex identity after `compare_reals`, and
+/// topology is changed only for a replayable duplicate face pair.
+fn remove_isolated_opposite_duplicate_pairs(triangles: Vec<Triangle>) -> Vec<Triangle> {
+    if triangles.len() < 2 {
+        return triangles;
+    }
+
+    let edge_counts = edge_use_counts(&triangles);
+    let mut by_vertices = BTreeMap::<[usize; 3], Vec<usize>>::new();
+    for (face, triangle) in triangles.iter().enumerate() {
+        by_vertices
+            .entry(sorted_triangle(triangle.0))
+            .or_default()
+            .push(face);
+    }
+
+    let mut removed = vec![false; triangles.len()];
+    for faces in by_vertices.values() {
+        if faces.len() != 2 {
+            continue;
+        }
+        let left = triangles[faces[0]];
+        let right = triangles[faces[1]];
+        if !triangles_are_opposite_duplicates(left, right)
+            || !duplicate_pair_edges_are_isolated(left, &edge_counts)
+        {
+            continue;
+        }
+        removed[faces[0]] = true;
+        removed[faces[1]] = true;
+    }
+
+    triangles
+        .into_iter()
+        .enumerate()
+        .filter_map(|(face, triangle)| (!removed[face]).then_some(triangle))
+        .collect()
+}
+
+fn triangles_are_opposite_duplicates(left: Triangle, right: Triangle) -> bool {
+    sorted_triangle(left.0) == sorted_triangle(right.0)
+        && directed_edges(left.0).iter().all(|edge| {
+            directed_edges(right.0)
+                .iter()
+                .any(|candidate| *candidate == [edge[1], edge[0]])
+        })
+}
+
+fn duplicate_pair_edges_are_isolated(
+    triangle: Triangle,
+    edge_counts: &BTreeMap<[usize; 2], DirectedEdgeUseCount>,
+) -> bool {
+    directed_edges(triangle.0).iter().all(|edge| {
+        edge_counts
+            .get(&sorted_edge(*edge))
+            .is_some_and(|count| count.forward + count.reverse == 2)
+    })
 }
 
 /// Split triangle edges at existing exact vertices that lie in their interiors.
@@ -646,6 +719,36 @@ fn exact_points_equal(left: &Point3, right: &Point3) -> bool {
         && compare_reals(&left.z, &right.z).value() == Some(std::cmp::Ordering::Equal)
 }
 
+/// Exercise exact cleanup topology-cancellation branches for fuzz builds.
+///
+/// Normal callers reach cleanup through the staged boolmesh executor.  This
+/// probe is gated behind `internal-fuzzing` so adversarial builds can keep the
+/// direct `simplify_topology`-style duplicate-pair cancellation compiled
+/// without exposing a partial cleanup API.
+#[cfg(feature = "internal-fuzzing")]
+pub(super) fn internal_fuzz_probe(selector: u8) -> bool {
+    fn p(x: i64, y: i64, z: i64) -> ExactPoint3 {
+        ExactPoint3::new(ExactReal::from(x), ExactReal::from(y), ExactReal::from(z))
+    }
+
+    match selector % 2 {
+        0 => {
+            let (vertices, triangles) = cleanup_exact_export_vertices(
+                vec![p(0, 0, 0), p(2, 0, 0), p(0, 2, 0)],
+                &[Triangle([0, 1, 2]), Triangle([0, 2, 1])],
+            );
+            vertices.is_empty() && triangles.is_empty()
+        }
+        _ => {
+            let (vertices, triangles) = cleanup_exact_export_vertices(
+                vec![p(0, 0, 0), p(2, 0, 0), p(0, 2, 0), p(0, 0, 2)],
+                &[Triangle([0, 1, 2]), Triangle([0, 2, 3])],
+            );
+            vertices.len() == 4 && triangles.len() == 2
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -719,6 +822,40 @@ mod tests {
 
         assert_eq!(vertices, vec![p(0, 0, 0), p(2, 0, 0), p(0, 2, 0)]);
         assert_eq!(triangles, vec![Triangle([0, 1, 2])]);
+    }
+
+    #[test]
+    fn cleanup_cancels_isolated_opposite_duplicate_triangle_pair() {
+        let raw_vertices = vec![p(0, 0, 0), p(2, 0, 0), p(0, 2, 0)];
+        let raw_triangles = vec![Triangle([0, 1, 2]), Triangle([0, 2, 1])];
+
+        let (vertices, triangles) = cleanup_exact_export_vertices(raw_vertices, &raw_triangles);
+
+        assert!(
+            vertices.is_empty(),
+            "cleanup_unused_verts should compact vertices left by exact duplicate-pair cancellation"
+        );
+        assert!(
+            triangles.is_empty(),
+            "opposite exact duplicate triangles are zero-thickness interface debris"
+        );
+    }
+
+    #[test]
+    fn cleanup_leaves_nonisolated_duplicate_pair_for_topology_validation() {
+        let raw_vertices = vec![p(0, 0, 0), p(2, 0, 0), p(0, 2, 0), p(2, 2, 0)];
+        let raw_triangles = vec![
+            Triangle([0, 1, 2]),
+            Triangle([0, 2, 1]),
+            Triangle([1, 3, 2]),
+        ];
+
+        let (_vertices, triangles) = cleanup_exact_export_vertices(raw_vertices, &raw_triangles);
+
+        assert!(
+            triangles.len() >= 2,
+            "non-isolated coincident faces should remain visible to later exact topology checks"
+        );
     }
 
     #[test]
