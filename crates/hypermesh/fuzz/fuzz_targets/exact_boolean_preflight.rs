@@ -77,7 +77,8 @@ use hypermesh::exact::boolmesh::exact_boolmesh_cleanup_probe_for_internal_fuzz;
 use libfuzzer_sys::fuzz_target;
 
 fuzz_target!(|data: &[u8]| {
-    if let [b'C', b'A', b'S', b'E', selector] = data {
+    let deterministic_data = data.strip_suffix(b"\n").unwrap_or(data);
+    if let [b'C', b'A', b'S', b'E', selector] = deterministic_data {
         exercise_deterministic_case(*selector);
         return;
     }
