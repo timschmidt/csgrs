@@ -34568,9 +34568,10 @@ fn exact_boolmesh_source_edge_blocker_retains_boolean45_counters() {
         hypermesh::exact::ExactBoolMeshKernelStage::SourceEdgeEmission
     );
     assert_eq!(blocker.candidate_face_pairs, 33);
-    assert_eq!(blocker.partial_source_edge_unpaired_runs, 8);
-    assert_eq!(blocker.new_face_pair_unpaired_runs, 13);
-    assert_eq!(blocker.halfedge_unfilled_halfedges, 33);
+    assert_eq!(blocker.pair_up_unpaired_event_runs, 5);
+    assert_eq!(blocker.partial_source_edge_unpaired_runs, 5);
+    assert_eq!(blocker.new_face_pair_unpaired_runs, 10);
+    assert_eq!(blocker.halfedge_unfilled_halfedges, 15);
     assert_eq!(blocker.face_loop_incomplete_faces, 10);
     assert_eq!(blocker.source_edge_incident_gaps, 0);
     assert_eq!(blocker.loop_triangulation_failures, 0);
@@ -34952,14 +34953,7 @@ fn exact_boolmesh_kernel12_discovers_skew_edge_face_events() {
             && event.source_halfedge == run.source_halfedge
             && event.tail == run.tail
             && event.head == run.head));
-        assert_eq!(
-            run.fragments.len(),
-            run.events
-                .iter()
-                .filter(|event| event.is_tail)
-                .count()
-                .min(run.events.iter().filter(|event| !event.is_tail).count())
-        );
+        assert_eq!(run.fragments.len(), run.events.len() / 2);
     }
 
     let mut stale = workspace.clone();

@@ -76,10 +76,11 @@ use super::{
 /// Partial source-edge staging then mirrors `append_partial_edges`: retained
 /// endpoints from `i03`/`i30` are appended to each touched source-edge bucket,
 /// crossings are ordered by the exact parameter order produced by
-/// `pair_up`, and tail/head lists are zipped into source-edge fragments.
+/// `pair_up`, and legacy half-bucket pairing emits source-edge fragments.
 /// New face-pair staging mirrors `append_new_edges`: each `pt_new` bucket is
 /// ordered on the longest exact coordinate span of its output points, then
-/// partitioned into tail/head sides and zipped into fragments.
+/// partitioned by tail marker before legacy half-bucket pairing emits
+/// fragments.
 /// Whole source-edge staging mirrors `append_whole_edges`: untouched retained
 /// source edges are copied with operation-signed orientation and exact output
 /// vertex ids.
@@ -300,24 +301,11 @@ pub(super) fn pair_source_edge_events(
             .first()
             .map(|event| [event.tail, event.head])
             .unwrap_or([0, 0]);
-        let mut tails = events
-            .iter()
-            .filter(|event| event.is_tail)
-            .cloned()
-            .collect::<Vec<_>>();
-        let heads = events
-            .iter()
-            .filter(|event| !event.is_tail)
-            .cloned()
-            .collect::<Vec<_>>();
-        let pair_count = tails.len().min(heads.len());
-        let unpaired_events = tails.len().abs_diff(heads.len());
+        let unpaired_events = events.len() % 2;
         if unpaired_events > 0 {
             unpaired_event_runs += 1;
         }
-        let fragments = tails
-            .drain(..pair_count)
-            .zip(heads.into_iter().take(pair_count))
+        let fragments = pair_legacy_edge_events(&events)
             .map(|(tail_event, head_event)| ExactBoolMeshPairedEdgeFragment {
                 side,
                 source_halfedge,
@@ -343,6 +331,24 @@ pub(super) fn pair_source_edge_events(
         unknown_orderings,
         unpaired_event_runs,
     }
+}
+
+fn pair_legacy_edge_events(
+    events: &[ExactBoolMeshEdgeEvent],
+) -> impl Iterator<Item = (ExactBoolMeshEdgeEvent, ExactBoolMeshEdgeEvent)> {
+    let mut partitioned = events
+        .iter()
+        .filter(|event| event.is_tail)
+        .cloned()
+        .collect::<Vec<_>>();
+    partitioned.extend(events.iter().filter(|event| !event.is_tail).cloned());
+    let half = partitioned.len() / 2;
+    (0..half).map(move |index| {
+        (
+            partitioned[index].clone(),
+            partitioned[index + half].clone(),
+        )
+    })
 }
 
 fn sort_events(events: &mut [ExactBoolMeshEdgeEvent]) -> usize {
@@ -837,9 +843,7 @@ fn stage_partial_source_edges(
 
         points.sort_by(partial_point_order);
         let fragments = pair_partial_points(&points);
-        let tail_count = points.iter().filter(|point| point.is_tail).count();
-        let head_count = points.len() - tail_count;
-        let unpaired_points = tail_count.abs_diff(head_count);
+        let unpaired_points = points.len() % 2;
         if unpaired_points > 0 {
             unpaired_runs += 1;
         }
@@ -1026,27 +1030,18 @@ fn append_retained_endpoint_with_filter<F>(
 fn pair_partial_points(
     points: &[ExactBoolMeshPartialEdgePoint],
 ) -> Vec<ExactBoolMeshPartialSourceEdgeFragment> {
-    let mut tails = points
+    let mut partitioned = points
         .iter()
         .filter(|point| point.is_tail)
         .copied()
         .collect::<Vec<_>>();
-    let mut heads = points
-        .iter()
-        .filter(|point| !point.is_tail)
-        .copied()
-        .collect::<Vec<_>>();
-    tails.sort_by(partial_point_order);
-    heads.sort_by(partial_point_order);
-    tails
-        .into_iter()
-        .zip(heads)
-        .map(
-            |(tail_point, head_point)| ExactBoolMeshPartialSourceEdgeFragment {
-                tail_point,
-                head_point,
-            },
-        )
+    partitioned.extend(points.iter().filter(|point| !point.is_tail).copied());
+    let half = partitioned.len() / 2;
+    (0..half)
+        .map(|index| ExactBoolMeshPartialSourceEdgeFragment {
+            tail_point: partitioned[index],
+            head_point: partitioned[index + half],
+        })
         .collect()
 }
 
@@ -1076,9 +1071,7 @@ fn stage_new_face_pair_edges(
             assign_face_pair_order_indices(left, right, boolean03, allocation, &mut points);
             points.sort_by(routed_point_order);
             let fragments = pair_routed_points(&points);
-            let tail_count = points.iter().filter(|point| point.is_tail).count();
-            let head_count = points.len() - tail_count;
-            let unpaired_points = tail_count.abs_diff(head_count);
+            let unpaired_points = points.len() % 2;
             if unpaired_points > 0 {
                 unpaired_runs += 1;
             }
@@ -1238,27 +1231,18 @@ fn point_axis(point: &hyperlimit::Point3, axis: usize) -> &ExactReal {
 fn pair_routed_points(
     points: &[ExactBoolMeshRoutedEdgePoint],
 ) -> Vec<ExactBoolMeshNewFacePairFragment> {
-    let mut tails = points
+    let mut partitioned = points
         .iter()
         .filter(|point| point.is_tail)
         .copied()
         .collect::<Vec<_>>();
-    let mut heads = points
-        .iter()
-        .filter(|point| !point.is_tail)
-        .copied()
-        .collect::<Vec<_>>();
-    tails.sort_by(routed_point_order);
-    heads.sort_by(routed_point_order);
-    tails
-        .into_iter()
-        .zip(heads)
-        .map(
-            |(tail_point, head_point)| ExactBoolMeshNewFacePairFragment {
-                tail_point,
-                head_point,
-            },
-        )
+    partitioned.extend(points.iter().filter(|point| !point.is_tail).copied());
+    let half = partitioned.len() / 2;
+    (0..half)
+        .map(|index| ExactBoolMeshNewFacePairFragment {
+            tail_point: partitioned[index],
+            head_point: partitioned[index + half],
+        })
         .collect()
 }
 

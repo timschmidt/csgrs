@@ -186,7 +186,7 @@ pub enum ExactBoolMeshKernelStage {
     Boolean03,
     /// Output sizing and face map construction, legacy `boolean45::size_output`.
     SizeOutput,
-    /// Ordered edge-event tail/head pairing, legacy `boolean45::pair_up`.
+    /// Ordered edge-event half-bucket pairing, legacy `boolean45::pair_up`.
     PairUp,
     /// Source-edge fragment emission, legacy partial/whole edge stages.
     SourceEdgeEmission,
@@ -210,17 +210,17 @@ pub struct ExactBoolMeshPortBlocker {
     pub candidate_face_pairs: usize,
     /// Whether the whole-mesh AABB relation itself was undecidable.
     pub mesh_bounds_unknown: bool,
-    /// Exact `pair_up` runs whose tail/head event counts are unbalanced.
+    /// Exact `pair_up` runs with an odd number of source-edge events.
     pub pair_up_unpaired_event_runs: usize,
     /// Exact `pair_up` runs whose event ordering could not be certified.
     pub pair_up_unknown_orderings: usize,
     /// Source-edge incident face counts not resolved during output sizing.
     pub source_edge_incident_gaps: usize,
-    /// Partial source-edge runs whose emitted tail/head points are unbalanced.
+    /// Partial source-edge runs with an odd number of emitted points.
     pub partial_source_edge_unpaired_runs: usize,
     /// Partial source-edge points whose exact `pair_up` order was missing.
     pub partial_source_edge_missing_parameter_orders: usize,
-    /// New face-pair runs whose emitted tail/head points are unbalanced.
+    /// New face-pair runs with an odd number of emitted points.
     pub new_face_pair_unpaired_runs: usize,
     /// Output halfedge slots left unfilled after source/new edge emission.
     pub halfedge_unfilled_halfedges: usize,
@@ -421,8 +421,9 @@ pub struct ExactBoolMeshEdgeEvent {
 /// Paired source-edge fragment produced by exact `boolean45::pair_up`.
 ///
 /// The legacy boolmesh stage sorts [`EdgePt`] values along a source edge,
-/// partitions tail/head events, then creates partial halfedges by zipping the
-/// sorted halves.  This exact record keeps the same pairing decision but
+/// partitions tail-marked events before head-marked events, then creates
+/// partial halfedges by zipping the first and second halves of the bucket.
+/// This exact record keeps the same pairing decision but
 /// stores source event provenance instead of output vertex ids, because final
 /// vertex allocation is still owned by the later exact `boolean45` slices.
 #[cfg(feature = "exact-triangulation")]
@@ -436,9 +437,9 @@ pub struct ExactBoolMeshPairedEdgeFragment {
     pub tail: usize,
     /// Source edge head vertex.
     pub head: usize,
-    /// Event that contributes the fragment tail endpoint.
+    /// Event that contributes the first fragment endpoint.
     pub tail_event: ExactBoolMeshEdgeEvent,
-    /// Event that contributes the fragment head endpoint.
+    /// Event that contributes the second fragment endpoint.
     pub head_event: ExactBoolMeshEdgeEvent,
 }
 
@@ -446,9 +447,8 @@ pub struct ExactBoolMeshPairedEdgeFragment {
 ///
 /// Runs are the exact equivalent of the `pt_old` buckets consumed by
 /// `boolean45::append_partial_edges`.  Events are sorted by exact edge
-/// parameter, with collision id as the boolmesh tie-break.  Unpaired events are
-/// retained explicitly because endpoint retention from `kernel03` has not yet
-/// been ported into the exact path.
+/// parameter, with collision id as the boolmesh tie-break.  Odd event counts
+/// are retained explicitly because legacy `pair_up` requires even buckets.
 #[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactBoolMeshSourceEdgeRun {
@@ -465,9 +465,9 @@ pub struct ExactBoolMeshSourceEdgeRun {
     pub head: usize,
     /// Ordered events on this directed source edge.
     pub events: Vec<ExactBoolMeshEdgeEvent>,
-    /// Zipped tail/head fragments when both sides are present.
+    /// Fragments produced by legacy half-bucket pairing.
     pub fragments: Vec<ExactBoolMeshPairedEdgeFragment>,
-    /// Number of ordered events that could not yet be paired.
+    /// Number of ordered events left after legacy half-bucket pairing.
     pub unpaired_events: usize,
 }
 
@@ -783,7 +783,7 @@ pub struct ExactBoolMeshPartialSourceEdgeRun {
     pub incident_edges: Vec<[usize; 2]>,
     /// Ordered crossing and retained endpoint points.
     pub points: Vec<ExactBoolMeshPartialEdgePoint>,
-    /// Zipped tail/head source-edge fragments.
+    /// Fragments produced by legacy half-bucket pairing.
     pub fragments: Vec<ExactBoolMeshPartialSourceEdgeFragment>,
     /// Retained source-tail copies consumed through exact source-tail
     /// `Kernel12` rows instead of appended as separate endpoint records.
@@ -804,7 +804,7 @@ pub struct ExactBoolMeshPartialSourceEdgeRun {
 pub struct ExactBoolMeshPartialSourceEdgeStage {
     /// Partial source-edge runs.
     pub source_edge_runs: Vec<ExactBoolMeshPartialSourceEdgeRun>,
-    /// Runs whose tail/head counts are not balanced yet.
+    /// Runs whose point counts are odd.
     pub unpaired_runs: usize,
     /// Crossing points that could not be matched to an exact parameter order.
     pub missing_parameter_orders: usize,
@@ -814,9 +814,9 @@ pub struct ExactBoolMeshPartialSourceEdgeStage {
 #[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ExactBoolMeshNewFacePairFragment {
-    /// Tail point of the emitted new halfedge.
+    /// First point of the emitted new halfedge.
     pub tail_point: ExactBoolMeshRoutedEdgePoint,
-    /// Head point of the emitted new halfedge.
+    /// Second point of the emitted new halfedge.
     pub head_point: ExactBoolMeshRoutedEdgePoint,
 }
 
@@ -828,7 +828,7 @@ pub struct ExactBoolMeshNewFacePairRun {
     pub face_pair: ExactBoolMeshFacePair,
     /// Routed output vertices ordered for pairing.
     pub points: Vec<ExactBoolMeshRoutedEdgePoint>,
-    /// Zipped tail/head face-pair fragments.
+    /// Fragments produced by legacy half-bucket pairing.
     pub fragments: Vec<ExactBoolMeshNewFacePairFragment>,
     /// Number of points not paired into fragments.
     pub unpaired_points: usize,
@@ -840,7 +840,7 @@ pub struct ExactBoolMeshNewFacePairRun {
 pub struct ExactBoolMeshNewFacePairStage {
     /// New face-pair runs.
     pub face_pair_runs: Vec<ExactBoolMeshNewFacePairRun>,
-    /// Runs whose tail/head counts are not balanced yet.
+    /// Runs whose point counts are odd.
     pub unpaired_runs: usize,
 }
 
@@ -1674,7 +1674,7 @@ fn boolmesh_boolean45_blocker(
     if no_split_kernel12 || boolean45_simple_export_is_complete(stage) {
         return None;
     }
-    let blocker_stage = if stage.pair_up_unknown_or_unbalanced() {
+    let blocker_stage = if stage.pair_up_blocked() {
         ExactBoolMeshKernelStage::PairUp
     } else if stage.source_edge_emission_blocked() {
         ExactBoolMeshKernelStage::SourceEdgeEmission
@@ -1698,7 +1698,7 @@ fn boolmesh_boolean45_blocker(
 
 #[cfg(feature = "exact-triangulation")]
 trait ExactBoolMeshBoolean45Blockers {
-    fn pair_up_unknown_or_unbalanced(&self) -> bool;
+    fn pair_up_blocked(&self) -> bool;
     fn source_edge_emission_blocked(&self) -> bool;
     fn face_pair_edge_emission_blocked(&self) -> bool;
     fn face_assembly_blocked(&self) -> bool;
@@ -1707,7 +1707,7 @@ trait ExactBoolMeshBoolean45Blockers {
 
 #[cfg(feature = "exact-triangulation")]
 impl ExactBoolMeshBoolean45Blockers for ExactBoolMeshBoolean45Stage {
-    fn pair_up_unknown_or_unbalanced(&self) -> bool {
+    fn pair_up_blocked(&self) -> bool {
         self.partial_source_edges.missing_parameter_orders > 0
     }
 
@@ -3046,15 +3046,11 @@ fn validate_pair_up_stage(
         {
             return Err(ExactBoolMeshValidationError::PairUpEdgeOutOfBounds);
         }
-        let tail_count = run.events.iter().filter(|event| event.is_tail).count();
-        let head_count = run.events.len() - tail_count;
-        let unpaired_events = tail_count.abs_diff(head_count);
+        let unpaired_events = run.events.len() % 2;
         if unpaired_events > 0 {
             unpaired_event_runs += 1;
         }
-        if run.unpaired_events != unpaired_events
-            || run.fragments.len() != tail_count.min(head_count)
-        {
+        if run.unpaired_events != unpaired_events || run.fragments.len() != run.events.len() / 2 {
             return Err(ExactBoolMeshValidationError::PairUpRunCountMismatch);
         }
         for event in &run.events {
@@ -3070,9 +3066,6 @@ fn validate_pair_up_stage(
             }
             validate_pair_up_event(&fragment.tail_event, run, vertex_count)?;
             validate_pair_up_event(&fragment.head_event, run, vertex_count)?;
-            if !fragment.tail_event.is_tail || fragment.head_event.is_tail {
-                return Err(ExactBoolMeshValidationError::PairUpRunEventMismatch);
-            }
         }
     }
     if stage.unpaired_event_runs != unpaired_event_runs {
@@ -4097,24 +4090,17 @@ fn validate_boolean45_new_edges(
         {
             return Err(ExactBoolMeshValidationError::Boolean45NewEdgeMismatch);
         }
-        let tail_count = run.points.iter().filter(|point| point.is_tail).count();
-        let head_count = run.points.len() - tail_count;
-        let unpaired_points = tail_count.abs_diff(head_count);
+        let unpaired_points = run.points.len() % 2;
         if unpaired_points > 0 {
             unpaired_runs += 1;
         }
-        if run.unpaired_points != unpaired_points
-            || run.fragments.len() != tail_count.min(head_count)
-        {
+        if run.unpaired_points != unpaired_points || run.fragments.len() != run.points.len() / 2 {
             return Err(ExactBoolMeshValidationError::Boolean45NewEdgeMismatch);
         }
         for point in &run.points {
             validate_routed_edge_point(point, &stage.vertex_allocation, collision_count)?;
         }
         for fragment in &run.fragments {
-            if !fragment.tail_point.is_tail || fragment.head_point.is_tail {
-                return Err(ExactBoolMeshValidationError::Boolean45NewEdgeMismatch);
-            }
             validate_routed_edge_point(
                 &fragment.tail_point,
                 &stage.vertex_allocation,
@@ -4191,14 +4177,12 @@ fn validate_boolean45_partial_edges(
         {
             return Err(ExactBoolMeshValidationError::Boolean45PartialEdgeMismatch);
         }
-        let tail_count = run.points.iter().filter(|point| point.is_tail).count();
-        let head_count = run.points.len() - tail_count;
-        let unpaired_points = tail_count.abs_diff(head_count);
+        let unpaired_points = run.points.len() % 2;
         if unpaired_points > 0 {
             unpaired_runs += 1;
         }
         if run.unpaired_points != unpaired_points
-            || run.fragments.len() != tail_count.min(head_count)
+            || run.fragments.len() != run.points.len() / 2
             || !suppressed_retained_tail_copies_replay(run, &stage.vertex_allocation)
         {
             return Err(ExactBoolMeshValidationError::Boolean45PartialEdgeMismatch);
@@ -4207,9 +4191,6 @@ fn validate_boolean45_partial_edges(
             validate_partial_edge_point(point, &stage.vertex_allocation)?;
         }
         for fragment in &run.fragments {
-            if !fragment.tail_point.is_tail || fragment.head_point.is_tail {
-                return Err(ExactBoolMeshValidationError::Boolean45PartialEdgeMismatch);
-            }
             validate_partial_edge_point(&fragment.tail_point, &stage.vertex_allocation)?;
             validate_partial_edge_point(&fragment.head_point, &stage.vertex_allocation)?;
         }
