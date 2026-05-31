@@ -2115,7 +2115,7 @@ fn boolean_coplanar_surface_boundary_touch_intersection(
     certify_coplanar_surface_boundary_touch(left, right)
         .expect("caller checked coplanar boundary-touch surface intersection");
     if let Some(result) =
-        boolean_boolmesh_split_meshes(left, right, ExactBooleanOperation::Intersection, validation)
+        boolean_boolmesh_split_meshes(left, right, ExactBooleanOperation::Intersection, validation)?
     {
         return Ok(result);
     }
@@ -2138,7 +2138,7 @@ fn boolean_coplanar_surface_boundary_touch_difference(
     certify_coplanar_surface_boundary_touch(left, right)
         .expect("caller checked coplanar boundary-touch surface difference");
     if let Some(result) =
-        boolean_boolmesh_split_meshes(left, right, ExactBooleanOperation::Difference, validation)
+        boolean_boolmesh_split_meshes(left, right, ExactBooleanOperation::Difference, validation)?
     {
         return Ok(result);
     }
@@ -3946,7 +3946,7 @@ fn boolean_closed_boundary_only_contact_meshes(
     }
     if operation == ExactBooleanOperation::Union
         && let Some(result) =
-            boolean_boolmesh_split_meshes(left, right, ExactBooleanOperation::Union, validation)
+            boolean_boolmesh_split_meshes(left, right, ExactBooleanOperation::Union, validation)?
     {
         return Ok(Some(result));
     }
@@ -3996,7 +3996,7 @@ fn boolean_closed_boundary_touching_union(
         ))
     })?;
     if let Some(result) =
-        boolean_boolmesh_split_meshes(left, right, ExactBooleanOperation::Union, validation)
+        boolean_boolmesh_split_meshes(left, right, ExactBooleanOperation::Union, validation)?
     {
         return Ok(result);
     }
@@ -4027,7 +4027,7 @@ fn boolean_closed_boundary_touching_intersection(
         ))
     })?;
     if let Some(result) =
-        boolean_boolmesh_split_meshes(left, right, ExactBooleanOperation::Intersection, validation)
+        boolean_boolmesh_split_meshes(left, right, ExactBooleanOperation::Intersection, validation)?
     {
         return Ok(result);
     }
@@ -4055,7 +4055,7 @@ fn boolean_closed_boundary_touching_difference(
         ))
     })?;
     if let Some(result) =
-        boolean_boolmesh_split_meshes(left, right, ExactBooleanOperation::Difference, validation)
+        boolean_boolmesh_split_meshes(left, right, ExactBooleanOperation::Difference, validation)?
     {
         return Ok(result);
     }
@@ -5601,13 +5601,17 @@ fn boolean_boolmesh_split_meshes(
     right: &ExactMesh,
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
-) -> Option<ExactBooleanResult> {
+) -> Result<Option<ExactBooleanResult>, MeshError> {
     match execute_exact_boolmesh_port(left, right, operation, validation) {
-        Ok(execution) if execution.shortcut == ExactBooleanShortcutKind::BoolMeshSplit => Some(
+        Ok(execution) if execution.shortcut == ExactBooleanShortcutKind::BoolMeshSplit => Ok(Some(
             certified_shortcut_result(execution.mesh, execution.shortcut),
-        ),
-        Err(_) => None,
-        Ok(_) => None,
+        )),
+        Ok(_) | Err(ExactBoolMeshValidationError::PortBlocked(_)) => Ok(None),
+        Err(error) => Err(MeshError::one(MeshDiagnostic::new(
+            Severity::Error,
+            DiagnosticKind::UnsupportedExactOperation,
+            format!("exact boolmesh split failed: {error:?}"),
+        ))),
     }
 }
 
