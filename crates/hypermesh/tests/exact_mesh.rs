@@ -11081,6 +11081,99 @@ fn exact_nonconvex_boundary_containment_difference_materializes_cavity() {
 
 #[cfg(feature = "exact-triangulation")]
 #[test]
+fn exact_nonconvex_boundary_containment_materializes_regularized_containment() {
+    let container = upward_l_prism_i64([[0, 0], [8, 0], [8, 3], [3, 3], [3, 8], [0, 8]], 8);
+    let contained = axis_aligned_box_i64([1, 3, 4], [2, 4, 8]);
+
+    for (operation, expected_mesh) in [
+        (hypermesh::exact::ExactBooleanOperation::Union, &container),
+        (
+            hypermesh::exact::ExactBooleanOperation::Intersection,
+            &contained,
+        ),
+    ] {
+        let preflight =
+            hypermesh::exact::preflight_boolean_exact(&container, &contained, operation).unwrap();
+        preflight.validate().unwrap();
+        preflight
+            .validate_against_sources(&container, &contained)
+            .unwrap();
+        assert_eq!(
+            preflight.support,
+            hypermesh::exact::ExactBooleanSupport::CertifiedContainedBoundaryContainment
+        );
+        assert!(preflight.blocker.is_none());
+
+        let result = hypermesh::exact::boolean_exact(
+            &container,
+            &contained,
+            operation,
+            ValidationPolicy::CLOSED,
+        )
+        .unwrap();
+        result.validate().unwrap();
+        result
+            .validate_operation_against_sources(
+                &container,
+                &contained,
+                operation,
+                ValidationPolicy::CLOSED,
+                hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+            )
+            .unwrap();
+        assert_eq!(
+            result.kind,
+            hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+                shortcut: hypermesh::exact::ExactBooleanShortcutKind::ContainedBoundaryContainment
+            }
+        );
+        assert_eq!(result.mesh.vertices(), expected_mesh.vertices());
+        assert_eq!(result.mesh.triangles(), expected_mesh.triangles());
+    }
+
+    let reverse_preflight = hypermesh::exact::preflight_boolean_exact(
+        &contained,
+        &container,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    reverse_preflight.validate().unwrap();
+    reverse_preflight
+        .validate_against_sources(&contained, &container)
+        .unwrap();
+    assert_eq!(
+        reverse_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedContainedBoundaryContainment
+    );
+
+    let reverse_difference = hypermesh::exact::boolean_exact(
+        &contained,
+        &container,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap();
+    reverse_difference.validate().unwrap();
+    reverse_difference
+        .validate_operation_against_sources(
+            &contained,
+            &container,
+            hypermesh::exact::ExactBooleanOperation::Difference,
+            ValidationPolicy::CLOSED,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        reverse_difference.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ContainedBoundaryContainment
+        }
+    );
+    assert!(reverse_difference.mesh.triangles().is_empty());
+}
+
+#[cfg(feature = "exact-triangulation")]
+#[test]
 fn exact_boundary_containment_component_certificate_handles_multi_face_cap() {
     let container = top_subdivided_axis_aligned_box_i64([0, 0, 0], [8, 8, 8]);
     let removed = axis_aligned_box_i64([1, 1, 4], [7, 7, 8]);

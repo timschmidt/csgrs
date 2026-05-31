@@ -678,6 +678,9 @@ pub fn preflight_boolean_exact(
                 .or_else(|| certified_convex_intersection_support(left, right, operation))
                 .or_else(|| certified_convex_single_cap_difference_support(left, right, operation))
                 .or_else(|| certified_contained_boundary_difference_support(left, right, operation))
+                .or_else(|| {
+                    certified_contained_boundary_containment_support(left, right, operation)
+                })
                 .or(certified_winding_boolean_support(left, right)?)
                 .unwrap_or(ExactBooleanSupport::RequiresCertifiedWinding)
         }
@@ -732,6 +735,7 @@ pub fn preflight_boolean_exact(
             | ExactBooleanSupport::CertifiedFullFaceAdjacentUnion
             | ExactBooleanSupport::CertifiedContainedFaceAdjacentUnion
             | ExactBooleanSupport::CertifiedContainedBoundaryDifference
+            | ExactBooleanSupport::CertifiedContainedBoundaryContainment
             | ExactBooleanSupport::CertifiedContainedFaceAdjacentIntersection
             | ExactBooleanSupport::CertifiedContainedFaceAdjacentDifference
             | ExactBooleanSupport::CertifiedFullFaceAdjacentIntersection
@@ -1796,6 +1800,11 @@ pub fn boolean_exact_with_boundary_policy(
             }
             if let Some(result) =
                 boolean_contained_boundary_difference_meshes(left, right, operation, validation)?
+            {
+                return Ok(result);
+            }
+            if let Some(result) =
+                boolean_contained_boundary_containment_meshes(left, right, operation, validation)?
             {
                 return Ok(result);
             }
@@ -3469,6 +3478,58 @@ fn boolean_contained_boundary_difference_meshes(
 }
 
 #[cfg(feature = "exact-triangulation")]
+/// Materialize regularized booleans for closed boundary-contained solids.
+///
+/// The same retained cap certificate used by
+/// [`materialize_contained_boundary_difference`] proves that one closed solid
+/// lies inside the other while sharing same-oriented source-owned boundary
+/// caps. For union and intersection that certificate selects the outer or
+/// inner source shell directly; for the reverse difference the contained left
+/// volume is removed completely. The cavity-producing `container - removed`
+/// case stays with [`boolean_contained_boundary_difference_meshes`].
+fn boolean_contained_boundary_containment_meshes(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    let left_contains_right = has_contained_boundary_difference(left, right);
+    let right_contains_left = has_contained_boundary_difference(right, left);
+    let mesh = match operation {
+        ExactBooleanOperation::Union if left_contains_right => copy_mesh(
+            left,
+            "exact contained-boundary containment union keeps outer left",
+            validation,
+        )?,
+        ExactBooleanOperation::Union if right_contains_left => copy_mesh(
+            right,
+            "exact contained-boundary containment union keeps outer right",
+            validation,
+        )?,
+        ExactBooleanOperation::Intersection if left_contains_right => copy_mesh(
+            right,
+            "exact contained-boundary containment intersection keeps inner right",
+            validation,
+        )?,
+        ExactBooleanOperation::Intersection if right_contains_left => copy_mesh(
+            left,
+            "exact contained-boundary containment intersection keeps inner left",
+            validation,
+        )?,
+        ExactBooleanOperation::Difference if right_contains_left => empty_mesh(
+            "empty exact contained-boundary reverse difference",
+            validation,
+        )?,
+        _ => return Ok(None),
+    };
+
+    Ok(Some(certified_shortcut_result(
+        mesh,
+        ExactBooleanShortcutKind::ContainedBoundaryContainment,
+    )))
+}
+
+#[cfg(feature = "exact-triangulation")]
 fn contained_boundary_difference_error(error: ContainedBoundaryDifferenceError) -> MeshError {
     MeshError::one(MeshDiagnostic::new(
         Severity::Error,
@@ -4885,6 +4946,27 @@ fn certified_contained_boundary_difference_support(
     match operation {
         ExactBooleanOperation::Difference if has_contained_boundary_difference(left, right) => {
             Some(ExactBooleanSupport::CertifiedContainedBoundaryDifference)
+        }
+        _ => None,
+    }
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn certified_contained_boundary_containment_support(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+) -> Option<ExactBooleanSupport> {
+    let left_contains_right = has_contained_boundary_difference(left, right);
+    let right_contains_left = has_contained_boundary_difference(right, left);
+    match operation {
+        ExactBooleanOperation::Union | ExactBooleanOperation::Intersection
+            if left_contains_right || right_contains_left =>
+        {
+            Some(ExactBooleanSupport::CertifiedContainedBoundaryContainment)
+        }
+        ExactBooleanOperation::Difference if right_contains_left => {
+            Some(ExactBooleanSupport::CertifiedContainedBoundaryContainment)
         }
         _ => None,
     }
