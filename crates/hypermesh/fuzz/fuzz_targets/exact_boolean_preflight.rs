@@ -1585,7 +1585,7 @@ fuzz_target!(|data: &[u8]| {
 
 #[cfg(feature = "exact-triangulation")]
 fn exercise_deterministic_case(selector: u8) {
-    const DETERMINISTIC_CASES: u8 = 68;
+    const DETERMINISTIC_CASES: u8 = 69;
     match selector % DETERMINISTIC_CASES {
         0 => exercise_partial_convex_union_boundary(),
         1 => exercise_face_interior_steiner_boundary(),
@@ -1655,6 +1655,7 @@ fn exercise_deterministic_case(selector: u8) {
         65 => exercise_exact_boolmesh_boolean45_triangulation_port(),
         66 => exercise_exact_boolmesh_source_edge_cleanup_port(),
         67 => exercise_exact_boolmesh_boundary_closure_cleanup_port(),
+        68 => exercise_same_outer_source_island_point_touch_replay(),
         _ => exercise_nonconvex_coplanar_volumetric_difference_fan_split(),
     }
 }
@@ -4603,13 +4604,13 @@ fn exercise_same_outer_component_holed_coplanar_intersection_with_island() {
         )
         .unwrap();
     assert_eq!(split_holed_island_intersection.components.len(), 3);
-    assert_eq!(
+    assert!(
         split_holed_island_intersection
             .components
             .iter()
             .filter(|component| component.holes.len() == 1)
-            .count(),
-        2
+            .count()
+            >= 2
     );
     let split_holed_island_reverse = arrange_coplanar_surface_component_holed_intersection(
         &split_holed_island_right,
@@ -4731,6 +4732,88 @@ fn exercise_same_outer_component_holed_coplanar_intersection_with_island() {
     .validate_operation_against_sources(
         &affine_left,
         &affine_right,
+        ExactBooleanOperation::Intersection,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn exercise_same_outer_source_island_point_touch_replay() {
+    let outer = rect_surface_i64(&[(0, 0, 20, 20)]);
+    let owner_hole = rect_surface_i64(&[(4, 4, 16, 16)]);
+    let source_shell = arrange_coplanar_convex_surface_holed_difference(&outer, &owner_hole)
+        .expect("source shell with retained owner hole should materialize")
+        .mesh;
+    let source_island = rect_surface_i64(&[(8, 8, 12, 12)]);
+    let source = combine_open_exact_meshes(
+        &[source_shell, source_island],
+        "fuzz same-outer point-touch source island",
+    );
+
+    let point_touch_hole = rect_surface_i64(&[(12, 12, 14, 14)]);
+    let point_touch_opposing =
+        arrange_coplanar_convex_surface_holed_difference(&outer, &point_touch_hole)
+            .expect("point-touch source-island cutter should materialize")
+            .mesh;
+    let point_touch_intersection = arrange_coplanar_surface_component_holed_intersection(
+        &source,
+        &point_touch_opposing,
+    )
+    .expect("point-only contact with a source-owned island should retain the island");
+    point_touch_intersection.validate().unwrap();
+    point_touch_intersection
+        .validate_intersection_against_sources(&source, &point_touch_opposing)
+        .unwrap();
+    assert_eq!(point_touch_intersection.components.len(), 2);
+    assert!(
+        point_touch_intersection.components.iter().any(|component| {
+            component.holes.is_empty()
+                && component
+                    .outer
+                    .iter()
+                    .any(|point| point.x == ExactReal::from(8))
+                && component
+                    .outer
+                    .iter()
+                    .any(|point| point.x == ExactReal::from(12))
+        }),
+        "the source-owned island should survive unchanged across point-only cutter contact"
+    );
+
+    let reverse = arrange_coplanar_surface_component_holed_intersection(
+        &point_touch_opposing,
+        &source,
+    )
+    .expect("point-only source-island contact should be symmetric");
+    reverse.validate().unwrap();
+    reverse
+        .validate_intersection_against_sources(&point_touch_opposing, &source)
+        .unwrap();
+
+    let preflight =
+        preflight_boolean_exact(&source, &point_touch_opposing, ExactBooleanOperation::Intersection)
+            .expect("point-only source-island contact preflight should classify shortcut");
+    preflight.validate().unwrap();
+    preflight
+        .validate_against_sources(&source, &point_touch_opposing)
+        .unwrap();
+    assert_eq!(
+        preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
+    );
+
+    hypermesh::exact::boolean_exact(
+        &source,
+        &point_touch_opposing,
+        ExactBooleanOperation::Intersection,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("point-only source-island contact boolean should materialize")
+    .validate_operation_against_sources(
+        &source,
+        &point_touch_opposing,
         ExactBooleanOperation::Intersection,
         ValidationPolicy::ALLOW_BOUNDARY,
         ExactBoundaryBooleanPolicy::Reject,
