@@ -21,7 +21,10 @@ mod triangulation;
 use std::cmp::Ordering;
 use std::collections::{BTreeMap, BTreeSet};
 
-use hyperlimit::{Point3, compare_reals};
+use hyperlimit::{
+    CoplanarProjection, Point3, Sign, TriangleLocation, classify_point_triangle, compare_reals,
+    orient3d_report, project_point3,
+};
 
 use assembly::assemble_output_halfedges;
 use export::stage_mesh_export;
@@ -126,6 +129,7 @@ pub(super) fn size_output_stage(
     let partial_source_edges = stage_partial_source_edges(
         left,
         right,
+        boolean03,
         &vertex_allocation,
         &new_edge_vertices,
         &i03,
@@ -761,6 +765,7 @@ fn axis_matches_parameter(
 fn stage_partial_source_edges(
     left: &ExactMesh,
     right: &ExactMesh,
+    boolean03: &ExactBoolMeshBoolean03,
     allocation: &ExactBoolMeshOutputVertexAllocation,
     new_edge_vertices: &ExactBoolMeshNewEdgeVertexStage,
     i03: &[i32],
@@ -822,22 +827,55 @@ fn stage_partial_source_edges(
             }
         }
 
+        let mut suppressed_retained_tail_copies = substituted_retained_tail_copies;
+        let mut suppressed_retained_head_copies = BTreeSet::new();
+        if run.points.len() % 2 == 1 {
+            suppressed_retained_tail_copies.extend(
+                retained_endpoint_copies_owned_by_coplanar_face(
+                    run,
+                    run.tail,
+                    mesh,
+                    match run.side {
+                        ExactBoolMeshSide::Left => right,
+                        ExactBoolMeshSide::Right => left,
+                    },
+                    boolean03,
+                    signed_counts,
+                    starts,
+                ),
+            );
+            suppressed_retained_head_copies.extend(
+                retained_endpoint_copies_owned_by_coplanar_face(
+                    run,
+                    run.head,
+                    mesh,
+                    match run.side {
+                        ExactBoolMeshSide::Left => right,
+                        ExactBoolMeshSide::Right => left,
+                    },
+                    boolean03,
+                    signed_counts,
+                    starts,
+                ),
+            );
+        }
+
         append_retained_endpoint_excluding(
             run.side,
             run.tail,
             signed_counts,
             starts,
             0,
-            &substituted_retained_tail_copies,
+            &suppressed_retained_tail_copies,
             &mut points,
         );
-        let suppressed_retained_tail_copies = substituted_retained_tail_copies.len();
-        append_retained_endpoint(
+        append_retained_endpoint_excluding(
             run.side,
             run.head,
             signed_counts,
             starts,
             usize::MAX,
+            &suppressed_retained_head_copies,
             &mut points,
         );
 
@@ -858,7 +896,8 @@ fn stage_partial_source_edges(
             incident_edges: incident_uses.iter().map(|use_| use_.edge).collect(),
             points,
             fragments,
-            suppressed_retained_tail_copies,
+            suppressed_retained_tail_copies: suppressed_retained_tail_copies.len(),
+            suppressed_retained_head_copies: suppressed_retained_head_copies.len(),
             unpaired_points,
         });
     }
@@ -867,6 +906,143 @@ fn stage_partial_source_edges(
         source_edge_runs,
         unpaired_runs,
         missing_parameter_orders,
+    }
+}
+
+fn retained_endpoint_copies_owned_by_coplanar_face(
+    run: &ExactBoolMeshSourceEdgePointRun,
+    endpoint: usize,
+    mesh: &ExactMesh,
+    opposite: &ExactMesh,
+    boolean03: &ExactBoolMeshBoolean03,
+    signed_counts: &[i32],
+    starts: &[Option<usize>],
+) -> BTreeSet<usize> {
+    let Some(signed_count) = signed_counts.get(endpoint).copied() else {
+        return BTreeSet::new();
+    };
+    let count = signed_abs(signed_count);
+    if count == 0 || starts.get(endpoint).and_then(|start| *start).is_none() {
+        return BTreeSet::new();
+    }
+    let Some(endpoint_point) = mesh
+        .vertices()
+        .get(endpoint)
+        .map(|vertex| vertex.to_hyperlimit_point())
+    else {
+        return BTreeSet::new();
+    };
+
+    run.points
+        .iter()
+        .filter_map(|point| {
+            let (pair, copy, parameter) =
+                routed_point_opposite_face_pair(run.side, point.origin, boolean03, mesh)?;
+            if copy >= count
+                || pair.edge_side != run.side
+                || pair.source_halfedge != run.source_halfedge
+                || !source_edge_parameter_is_strict_interior(&parameter)
+                || !point_in_closed_mesh_triangle(opposite, pair.face, &endpoint_point)
+            {
+                return None;
+            }
+            Some(copy)
+        })
+        .collect()
+}
+
+fn routed_point_opposite_face_pair(
+    side: ExactBoolMeshSide,
+    origin: ExactBoolMeshOutputVertexOrigin,
+    boolean03: &ExactBoolMeshBoolean03,
+    mesh: &ExactMesh,
+) -> Option<(ExactBoolMeshEdgeFacePair, usize, ExactReal)> {
+    match (side, origin) {
+        (
+            ExactBoolMeshSide::Left,
+            ExactBoolMeshOutputVertexOrigin::Kernel12LeftEdgeRightFace { event, copy },
+        ) => {
+            let pair = *boolean03.p1q2.get(event)?;
+            let parameter = source_edge_parameter(mesh, pair.edge, boolean03.v12.get(event)?)?;
+            Some((pair, copy, parameter))
+        }
+        (
+            ExactBoolMeshSide::Right,
+            ExactBoolMeshOutputVertexOrigin::Kernel12RightEdgeLeftFace { event, copy },
+        ) => {
+            let pair = *boolean03.p2q1.get(event)?;
+            let parameter = source_edge_parameter(mesh, pair.edge, boolean03.v21.get(event)?)?;
+            Some((pair, copy, parameter))
+        }
+        _ => None,
+    }
+}
+
+fn source_edge_parameter_is_strict_interior(parameter: &ExactReal) -> bool {
+    compare_reals(parameter, &ExactReal::from(0)).value() == Some(Ordering::Greater)
+        && compare_reals(parameter, &ExactReal::from(1)).value() == Some(Ordering::Less)
+}
+
+fn point_in_closed_mesh_triangle(mesh: &ExactMesh, face: usize, point: &Point3) -> bool {
+    let Some(triangle) = triangle_points(mesh, face) else {
+        return false;
+    };
+    if orient3d_report(&triangle[0], &triangle[1], &triangle[2], point).value() != Some(Sign::Zero)
+    {
+        return false;
+    }
+    let Some(projection) = choose_triangle_projection(&triangle) else {
+        return false;
+    };
+    matches!(
+        classify_point_triangle(
+            &project_point3(&triangle[0], projection),
+            &project_point3(&triangle[1], projection),
+            &project_point3(&triangle[2], projection),
+            &project_point3(point, projection),
+        )
+        .value(),
+        Some(TriangleLocation::Inside | TriangleLocation::OnEdge | TriangleLocation::OnVertex)
+    )
+}
+
+fn triangle_points(mesh: &ExactMesh, face: usize) -> Option<[Point3; 3]> {
+    let triangle = mesh.triangles().get(face)?.0;
+    Some([
+        mesh.vertices().get(triangle[0])?.to_hyperlimit_point(),
+        mesh.vertices().get(triangle[1])?.to_hyperlimit_point(),
+        mesh.vertices().get(triangle[2])?.to_hyperlimit_point(),
+    ])
+}
+
+fn choose_triangle_projection(points: &[Point3; 3]) -> Option<CoplanarProjection> {
+    [
+        CoplanarProjection::Xy,
+        CoplanarProjection::Xz,
+        CoplanarProjection::Yz,
+    ]
+    .into_iter()
+    .find(|&projection| {
+        let area = projected_area2_signed(points, projection);
+        !matches!(real_sign(&area), Some(Sign::Zero) | None)
+    })
+}
+
+fn projected_area2_signed(points: &[Point3; 3], projection: CoplanarProjection) -> ExactReal {
+    let mut sum = ExactReal::from(0);
+    for index in 0..3 {
+        let current = project_point3(&points[index], projection);
+        let next = project_point3(&points[(index + 1) % 3], projection);
+        sum += &((current.x * &next.y) - &(current.y * &next.x));
+    }
+    sum
+}
+
+fn real_sign(value: &ExactReal) -> Option<Sign> {
+    match compare_reals(value, &ExactReal::from(0)).value()? {
+        Ordering::Less => Some(Sign::Negative),
+        Ordering::Equal => Some(Sign::Zero),
+        Ordering::Greater => Some(Sign::Positive),
     }
 }
 
@@ -962,25 +1138,6 @@ fn append_retained_endpoint_excluding(
         starts,
         order_index,
         |copy| !excluded_copies.contains(&copy),
-        points,
-    );
-}
-
-fn append_retained_endpoint(
-    side: ExactBoolMeshSide,
-    vertex: usize,
-    signed_counts: &[i32],
-    starts: &[Option<usize>],
-    order_index: usize,
-    points: &mut Vec<ExactBoolMeshPartialEdgePoint>,
-) {
-    append_retained_endpoint_with_filter(
-        side,
-        vertex,
-        signed_counts,
-        starts,
-        order_index,
-        |_| true,
         points,
     );
 }
@@ -1474,21 +1631,23 @@ fn apply_suppressed_retained_tail_face_counts(
     right_face_counts: &mut [usize],
 ) {
     for run in &partial_source_edges.source_edge_runs {
-        if run.suppressed_retained_tail_copies == 0 {
+        let suppressed_retained_endpoint_copies =
+            run.suppressed_retained_tail_copies + run.suppressed_retained_head_copies;
+        if suppressed_retained_endpoint_copies == 0 {
             continue;
         }
         match run.side {
             ExactBoolMeshSide::Left => {
                 for source_face in &run.incident_faces {
                     if let Some(count) = left_face_counts.get_mut(*source_face) {
-                        *count = count.saturating_sub(run.suppressed_retained_tail_copies);
+                        *count = count.saturating_sub(suppressed_retained_endpoint_copies);
                     }
                 }
             }
             ExactBoolMeshSide::Right => {
                 for source_face in &run.incident_faces {
                     if let Some(count) = right_face_counts.get_mut(*source_face) {
-                        *count = count.saturating_sub(run.suppressed_retained_tail_copies);
+                        *count = count.saturating_sub(suppressed_retained_endpoint_copies);
                     }
                 }
             }

@@ -786,7 +786,8 @@ pub struct ExactBoolMeshPartialSourceEdgeRun {
     /// Fragments produced by legacy half-bucket pairing.
     pub fragments: Vec<ExactBoolMeshPartialSourceEdgeFragment>,
     /// Retained source-tail copies consumed through exact source-tail
-    /// `Kernel12` rows instead of appended as separate endpoint records.
+    /// `Kernel12` rows or exact opposite-face ownership instead of appended
+    /// as separate endpoint records.
     ///
     /// This is the `append_partial_edges` companion to
     /// [`ExactBoolMeshNewEdgeVertexStage::suppressed_source_tail_face_pair_points`]:
@@ -794,6 +795,9 @@ pub struct ExactBoolMeshPartialSourceEdgeRun {
     /// edge point and the number of source-face slots that should be reserved
     /// before halfedge emission.
     pub suppressed_retained_tail_copies: usize,
+    /// Retained source-head copies consumed by an exact coplanar opposite-face
+    /// owner instead of appended as separate endpoint records.
+    pub suppressed_retained_head_copies: usize,
     /// Number of points not paired into fragments.
     pub unpaired_points: usize,
 }
@@ -4144,13 +4148,20 @@ fn validate_boolean45_partial_edges(
             )
         })
         .count();
-    let substituted_source_tail_points = stage
+    let substituted_source_endpoint_points = stage
         .partial_source_edges
         .source_edge_runs
         .iter()
-        .map(|run| run.suppressed_retained_tail_copies)
-        .sum::<usize>();
-    if routed_partial_points + substituted_source_tail_points
+        .flat_map(|run| run.points.iter())
+        .filter(|point| {
+            point.collision != usize::MAX
+                && matches!(
+                    point.origin,
+                    ExactBoolMeshPartialEdgePointOrigin::RetainedEndpoint { .. }
+                )
+        })
+        .count();
+    if routed_partial_points + substituted_source_endpoint_points
         != stage.inserted_intersection_vertices
     {
         return Err(ExactBoolMeshValidationError::Boolean45PartialEdgeMismatch);
@@ -4183,7 +4194,18 @@ fn validate_boolean45_partial_edges(
         }
         if run.unpaired_points != unpaired_points
             || run.fragments.len() != run.points.len() / 2
-            || !suppressed_retained_tail_copies_replay(run, &stage.vertex_allocation)
+            || !suppressed_retained_endpoint_copies_replay(
+                run,
+                &stage.vertex_allocation,
+                run.tail,
+                run.suppressed_retained_tail_copies,
+            )
+            || !suppressed_retained_endpoint_copies_replay(
+                run,
+                &stage.vertex_allocation,
+                run.head,
+                run.suppressed_retained_head_copies,
+            )
         {
             return Err(ExactBoolMeshValidationError::Boolean45PartialEdgeMismatch);
         }
@@ -4202,16 +4224,18 @@ fn validate_boolean45_partial_edges(
 }
 
 #[cfg(feature = "exact-triangulation")]
-fn suppressed_retained_tail_copies_replay(
+fn suppressed_retained_endpoint_copies_replay(
     run: &ExactBoolMeshPartialSourceEdgeRun,
     allocation: &ExactBoolMeshOutputVertexAllocation,
+    vertex: usize,
+    suppressed_copies: usize,
 ) -> bool {
-    if run.suppressed_retained_tail_copies == 0 {
+    if suppressed_copies == 0 {
         return true;
     }
     let source = ExactBoolMeshSourceVertex {
         side: run.side,
-        vertex: run.tail,
+        vertex,
     };
     let allocated_copies = allocation
         .output_vertex_origins
@@ -4226,7 +4250,7 @@ fn suppressed_retained_tail_copies_replay(
             )
         })
         .count();
-    let duplicate_retained_tail_points = run
+    let appended_retained_endpoint_points = run
         .points
         .iter()
         .filter(|point| {
@@ -4240,23 +4264,8 @@ fn suppressed_retained_tail_copies_replay(
                 )
         })
         .count();
-    let substituted_tail_points = run
-        .points
-        .iter()
-        .filter(|point| {
-            point.collision != usize::MAX
-                && matches!(
-                    point.origin,
-                    ExactBoolMeshPartialEdgePointOrigin::RetainedEndpoint {
-                        source: candidate,
-                        ..
-                    } if candidate == source
-                )
-        })
-        .count();
-    run.suppressed_retained_tail_copies <= allocated_copies
-        && duplicate_retained_tail_points == 0
-        && substituted_tail_points == run.suppressed_retained_tail_copies
+    suppressed_copies <= allocated_copies
+        && appended_retained_endpoint_points + suppressed_copies == allocated_copies
 }
 
 #[cfg(feature = "exact-triangulation")]
