@@ -836,6 +836,9 @@ pub struct ExactBoolMeshNewFacePairRun {
     pub face_pair: ExactBoolMeshFacePair,
     /// Routed output vertices ordered for pairing.
     pub points: Vec<ExactBoolMeshRoutedEdgePoint>,
+    /// Routed face-pair points consumed by an exact duplicate owner instead of
+    /// emitted into this `append_new_edges` bucket.
+    pub suppressed_points: usize,
     /// Fragments produced by legacy half-bucket pairing.
     pub fragments: Vec<ExactBoolMeshNewFacePairFragment>,
     /// Number of points not paired into fragments.
@@ -4173,19 +4176,32 @@ fn validate_boolean45_new_edges(
         .iter()
         .map(|run| run.points.len())
         .sum::<usize>();
+    let suppressed_new_points = stage
+        .new_face_pair_edges
+        .face_pair_runs
+        .iter()
+        .map(|run| run.suppressed_points)
+        .sum::<usize>();
     let routed_source_points = stage
         .new_edge_vertices
         .face_pair_runs
         .iter()
         .map(|run| run.points.len())
         .sum::<usize>();
-    if routed_new_points != routed_source_points {
+    if routed_new_points + suppressed_new_points != routed_source_points {
         return Err(ExactBoolMeshValidationError::Boolean45NewEdgeMismatch);
     }
-    for run in &stage.new_face_pair_edges.face_pair_runs {
+    for (run, source_run) in stage
+        .new_face_pair_edges
+        .face_pair_runs
+        .iter()
+        .zip(stage.new_edge_vertices.face_pair_runs.iter())
+    {
         if run.face_pair.left_face >= left_faces
             || run.face_pair.right_face >= right_faces
-            || run.points.is_empty()
+            || run.face_pair != source_run.face_pair
+            || run.points.len() + run.suppressed_points != source_run.points.len()
+            || (run.points.is_empty() && run.suppressed_points == 0)
             || run.points.windows(2).any(|window| {
                 routed_edge_point_order_key(&window[0]) > routed_edge_point_order_key(&window[1])
             })
@@ -4481,12 +4497,15 @@ fn validate_boolean45_edge_point_routing(
         && stage.partial_source_edges.missing_parameter_orders == 0
         && stage.partial_source_edges.unpaired_runs == 0
         && stage.new_face_pair_edges.unpaired_runs == 0
-        && face_pair_point_count
-            + stage
-                .new_edge_vertices
-                .suppressed_source_tail_face_pair_points
-            + suppressed_partial_source_edge_points
-            != expected_face_pair_point_count
+        && {
+            let replayed_face_pair_points = face_pair_point_count
+                + stage
+                    .new_edge_vertices
+                    .suppressed_source_tail_face_pair_points;
+            replayed_face_pair_points > expected_face_pair_point_count
+                || expected_face_pair_point_count - replayed_face_pair_points
+                    > suppressed_partial_source_edge_points
+        }
     {
         return Err(ExactBoolMeshValidationError::Boolean45EdgePointRoutingMismatch);
     }

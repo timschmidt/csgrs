@@ -1505,12 +1505,22 @@ fn stage_new_face_pair_edges(
     allocation: &ExactBoolMeshOutputVertexAllocation,
     new_edge_vertices: &ExactBoolMeshNewEdgeVertexStage,
 ) -> ExactBoolMeshNewFacePairStage {
+    let suppressed_points =
+        suppress_duplicate_face_pair_points(left, right, boolean03, allocation, new_edge_vertices);
     let mut unpaired_runs = 0;
     let face_pair_runs = new_edge_vertices
         .face_pair_runs
         .iter()
-        .map(|run| {
-            let mut points = run.points.clone();
+        .enumerate()
+        .map(|(run_index, run)| {
+            let mut points = run
+                .points
+                .iter()
+                .enumerate()
+                .filter(|(point_index, _)| !suppressed_points.contains(&(run_index, *point_index)))
+                .map(|(_, point)| *point)
+                .collect::<Vec<_>>();
+            let suppressed_count = run.points.len() - points.len();
             assign_face_pair_order_indices(left, right, boolean03, allocation, &mut points);
             points.sort_by(routed_point_order);
             let fragments = pair_routed_points(&points);
@@ -1521,6 +1531,7 @@ fn stage_new_face_pair_edges(
             ExactBoolMeshNewFacePairRun {
                 face_pair: run.face_pair,
                 points,
+                suppressed_points: suppressed_count,
                 fragments,
                 unpaired_points,
             }
@@ -1531,6 +1542,92 @@ fn stage_new_face_pair_edges(
         face_pair_runs,
         unpaired_runs,
     }
+}
+
+fn suppress_duplicate_face_pair_points(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    boolean03: &ExactBoolMeshBoolean03,
+    allocation: &ExactBoolMeshOutputVertexAllocation,
+    new_edge_vertices: &ExactBoolMeshNewEdgeVertexStage,
+) -> BTreeSet<(usize, usize)> {
+    let mut suppressed = BTreeSet::new();
+    for (run_index, run) in new_edge_vertices.face_pair_runs.iter().enumerate() {
+        if run.points.len() != 1 {
+            continue;
+        }
+        let point = run.points[0];
+        if let Some((other_run, other_point)) =
+            same_output_opposite_role_odd_face_pair_point(new_edge_vertices, run_index, point)
+        {
+            suppressed.insert((run_index, 0));
+            suppressed.insert((other_run, other_point));
+        } else if duplicate_coordinate_face_pair_point(
+            left,
+            right,
+            boolean03,
+            allocation,
+            new_edge_vertices,
+            run_index,
+            point,
+        )
+        .is_some()
+        {
+            suppressed.insert((run_index, 0));
+        }
+    }
+    suppressed
+}
+
+fn same_output_opposite_role_odd_face_pair_point(
+    new_edge_vertices: &ExactBoolMeshNewEdgeVertexStage,
+    singleton_run: usize,
+    singleton: ExactBoolMeshRoutedEdgePoint,
+) -> Option<(usize, usize)> {
+    new_edge_vertices
+        .face_pair_runs
+        .iter()
+        .enumerate()
+        .filter(|(run_index, run)| *run_index != singleton_run && run.points.len() % 2 == 1)
+        .find_map(|(run_index, run)| {
+            run.points
+                .iter()
+                .enumerate()
+                .find(|(_, point)| {
+                    point.output_vertex == singleton.output_vertex
+                        && point.is_tail != singleton.is_tail
+                })
+                .map(|(point_index, _)| (run_index, point_index))
+        })
+}
+
+fn duplicate_coordinate_face_pair_point(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    boolean03: &ExactBoolMeshBoolean03,
+    allocation: &ExactBoolMeshOutputVertexAllocation,
+    new_edge_vertices: &ExactBoolMeshNewEdgeVertexStage,
+    singleton_run: usize,
+    singleton: ExactBoolMeshRoutedEdgePoint,
+) -> Option<(usize, usize)> {
+    let singleton_point =
+        output_vertex_point(singleton.output_vertex, allocation, boolean03, left, right)?;
+    new_edge_vertices
+        .face_pair_runs
+        .iter()
+        .enumerate()
+        .filter(|(run_index, _)| *run_index != singleton_run)
+        .find_map(|(run_index, run)| {
+            run.points
+                .iter()
+                .enumerate()
+                .filter(|(_, point)| point.output_vertex != singleton.output_vertex)
+                .find(|(_, point)| {
+                    output_vertex_point(point.output_vertex, allocation, boolean03, left, right)
+                        .is_some_and(|candidate| same_point3(&candidate, &singleton_point))
+                })
+                .map(|(point_index, _)| (run_index, point_index))
+        })
 }
 
 /// Assign the exact face-local order used by boolmesh `append_new_edges`.
