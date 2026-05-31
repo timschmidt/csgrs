@@ -14,8 +14,9 @@ use std::collections::{BTreeMap, BTreeSet, VecDeque};
 
 use super::super::{
     ExactBoolMeshDroppedOpenChain, ExactBoolMeshDroppedOpenChainOwner,
-    ExactBoolMeshFaceLoopAssemblyStage, ExactBoolMeshHalfedgeAssemblyStage,
-    ExactBoolMeshOutputFaceLoop, ExactBoolMeshOutputHalfedgeSource,
+    ExactBoolMeshDroppedOpenChainSourceKind, ExactBoolMeshFaceLoopAssemblyStage,
+    ExactBoolMeshHalfedgeAssemblyStage, ExactBoolMeshOutputFaceLoop,
+    ExactBoolMeshOutputHalfedgeSource,
 };
 
 /// Assemble per-face closed boundary loops from emitted output halfedges.
@@ -145,6 +146,7 @@ fn assemble_output_face_loop(
                     non_loop_open_chains.push(ExactBoolMeshDroppedOpenChain {
                         output_face,
                         owner: dropped_open_chain_owner(halfedges, &loop_halfedges),
+                        source_kind: dropped_open_chain_source_kind(halfedges, &loop_halfedges),
                         halfedges: loop_halfedges.clone(),
                         vertices: loop_vertices.clone(),
                     });
@@ -165,6 +167,7 @@ fn assemble_output_face_loop(
             non_loop_open_chains.push(ExactBoolMeshDroppedOpenChain {
                 output_face,
                 owner: dropped_open_chain_owner(halfedges, &unconsumed),
+                source_kind: dropped_open_chain_source_kind(halfedges, &unconsumed),
                 vertices: unconsumed
                     .iter()
                     .filter_map(|slot| {
@@ -204,6 +207,7 @@ fn push_dropped_open_chain(
         .push(ExactBoolMeshDroppedOpenChain {
             output_face,
             owner: dropped_open_chain_owner(stage_halfedges, &halfedges),
+            source_kind: dropped_open_chain_source_kind(stage_halfedges, &halfedges),
             halfedges,
             vertices,
         });
@@ -242,6 +246,37 @@ fn output_halfedge_source_owner(
             side: *side,
             source_face: *source_face,
         },
+    }
+}
+
+fn dropped_open_chain_source_kind(
+    halfedges: &ExactBoolMeshHalfedgeAssemblyStage,
+    slots: &[usize],
+) -> ExactBoolMeshDroppedOpenChainSourceKind {
+    let mut has_source_edge = false;
+    let mut has_face_pair = false;
+    for slot in slots {
+        let Some(halfedge) = halfedges
+            .output_halfedges
+            .get(*slot)
+            .and_then(Option::as_ref)
+        else {
+            return ExactBoolMeshDroppedOpenChainSourceKind::Mixed;
+        };
+        match halfedge.source {
+            ExactBoolMeshOutputHalfedgeSource::PartialSourceEdge { .. }
+            | ExactBoolMeshOutputHalfedgeSource::WholeSourceEdge { .. } => {
+                has_source_edge = true;
+            }
+            ExactBoolMeshOutputHalfedgeSource::NewFacePair { .. } => {
+                has_face_pair = true;
+            }
+        }
+    }
+    match (has_source_edge, has_face_pair) {
+        (true, false) => ExactBoolMeshDroppedOpenChainSourceKind::SourceEdge,
+        (false, true) => ExactBoolMeshDroppedOpenChainSourceKind::FacePair,
+        _ => ExactBoolMeshDroppedOpenChainSourceKind::Mixed,
     }
 }
 
@@ -415,8 +450,9 @@ fn pop_consumed(
 mod tests {
     use super::*;
     use crate::exact::{
-        ExactBoolMeshDroppedOpenChainOwner, ExactBoolMeshHalfedgeAssemblyStage,
-        ExactBoolMeshOutputHalfedge, ExactBoolMeshOutputHalfedgeSource, ExactBoolMeshSide,
+        ExactBoolMeshDroppedOpenChainOwner, ExactBoolMeshDroppedOpenChainSourceKind,
+        ExactBoolMeshHalfedgeAssemblyStage, ExactBoolMeshOutputHalfedge,
+        ExactBoolMeshOutputHalfedgeSource, ExactBoolMeshSide,
     };
 
     #[test]
@@ -526,6 +562,10 @@ mod tests {
                 source_face: 0,
             })
         );
+        assert_eq!(
+            stage.dropped_open_chains[0].source_kind,
+            ExactBoolMeshDroppedOpenChainSourceKind::SourceEdge
+        );
     }
 
     #[test]
@@ -558,6 +598,10 @@ mod tests {
                 side: ExactBoolMeshSide::Left,
                 source_face: 0,
             })
+        );
+        assert_eq!(
+            stage.dropped_open_chains[0].source_kind,
+            ExactBoolMeshDroppedOpenChainSourceKind::FacePair
         );
     }
 
@@ -608,6 +652,14 @@ mod tests {
                     source_face: 0,
                 })
         }));
+        assert_eq!(
+            stage.dropped_open_chains[0].source_kind,
+            ExactBoolMeshDroppedOpenChainSourceKind::SourceEdge
+        );
+        assert_eq!(
+            stage.dropped_open_chains[1].source_kind,
+            ExactBoolMeshDroppedOpenChainSourceKind::FacePair
+        );
     }
 
     #[test]
@@ -687,6 +739,10 @@ mod tests {
                 side: ExactBoolMeshSide::Left,
                 source_face: 0,
             })
+        );
+        assert_eq!(
+            stage.dropped_open_chains[0].source_kind,
+            ExactBoolMeshDroppedOpenChainSourceKind::SourceEdge
         );
         assert_eq!(stage.loops.len(), 1);
         assert_eq!(stage.loops[0].halfedges, vec![2, 3]);

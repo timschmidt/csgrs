@@ -1029,6 +1029,8 @@ pub struct ExactBoolMeshDroppedOpenChain {
     pub output_face: usize,
     /// Source face that owns this chain when all chain halfedges agree.
     pub owner: Option<ExactBoolMeshDroppedOpenChainOwner>,
+    /// Source composition of the chain halfedges.
+    pub source_kind: ExactBoolMeshDroppedOpenChainSourceKind,
     /// Ordered output halfedge slots in the dropped chain.
     pub halfedges: Vec<usize>,
     /// Ordered output vertices at the chain halfedge tails.
@@ -1043,6 +1045,18 @@ pub struct ExactBoolMeshDroppedOpenChainOwner {
     pub side: ExactBoolMeshSide,
     /// Source face that owns the face-local chain.
     pub source_face: usize,
+}
+
+/// Source composition of a dropped open chain.
+#[cfg(feature = "exact-triangulation")]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ExactBoolMeshDroppedOpenChainSourceKind {
+    /// Every halfedge came from split or whole source-edge emission.
+    SourceEdge,
+    /// Every halfedge came from face-pair edge emission.
+    FacePair,
+    /// The chain mixes source-edge and face-pair fragments.
+    Mixed,
 }
 
 /// Exact face-loop assembly over `boolean45` output halfedges.
@@ -1060,11 +1074,11 @@ pub struct ExactBoolMeshFaceLoopAssemblyStage {
     /// Replayable lower-dimensional open chains dropped before triangulation.
     ///
     /// Earlier ports exposed only [`Self::dropped_open_chain_halfedges`].
-    /// Retaining the exact face-local chain topology and its unambiguous
-    /// source owner is the handoff needed for boundary-contact reconstruction:
-    /// future stages can tell which source face lost a lower-dimensional walk
-    /// and which ordered output vertices must be paired with clipped coplanar
-    /// face cells.
+    /// Retaining the exact face-local chain topology, source composition, and
+    /// unambiguous source owner is the handoff needed for boundary-contact
+    /// reconstruction: future stages can tell which source face lost a
+    /// lower-dimensional walk and which ordered output vertices must be paired
+    /// with clipped coplanar face cells.
     pub dropped_open_chains: Vec<ExactBoolMeshDroppedOpenChain>,
     /// Output faces skipped because at least one sized halfedge slot is still
     /// unfilled by earlier boolmesh stages.
@@ -4063,6 +4077,15 @@ fn validate_boolean45_face_loops(
         if chain.owner != inferred_owner {
             return Err(ExactBoolMeshValidationError::Boolean45FaceLoopMismatch);
         }
+        let source_kind =
+            dropped_open_chain_source_kind(chain.halfedges.iter().filter_map(|slot| {
+                stage.halfedge_assembly.output_halfedges[*slot]
+                    .as_ref()
+                    .map(|halfedge| &halfedge.source)
+            }));
+        if chain.source_kind != source_kind {
+            return Err(ExactBoolMeshValidationError::Boolean45FaceLoopMismatch);
+        }
     }
     if dropped_open_chain_halfedges != stage.face_loop_assembly.dropped_open_chain_halfedges {
         return Err(ExactBoolMeshValidationError::Boolean45FaceLoopMismatch);
@@ -4105,6 +4128,30 @@ fn output_halfedge_source_owner(
             side: *side,
             source_face: *source_face,
         },
+    }
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn dropped_open_chain_source_kind<'a>(
+    sources: impl Iterator<Item = &'a ExactBoolMeshOutputHalfedgeSource>,
+) -> ExactBoolMeshDroppedOpenChainSourceKind {
+    let mut has_source_edge = false;
+    let mut has_face_pair = false;
+    for source in sources {
+        match source {
+            ExactBoolMeshOutputHalfedgeSource::PartialSourceEdge { .. }
+            | ExactBoolMeshOutputHalfedgeSource::WholeSourceEdge { .. } => {
+                has_source_edge = true;
+            }
+            ExactBoolMeshOutputHalfedgeSource::NewFacePair { .. } => {
+                has_face_pair = true;
+            }
+        }
+    }
+    match (has_source_edge, has_face_pair) {
+        (true, false) => ExactBoolMeshDroppedOpenChainSourceKind::SourceEdge,
+        (false, true) => ExactBoolMeshDroppedOpenChainSourceKind::FacePair,
+        _ => ExactBoolMeshDroppedOpenChainSourceKind::Mixed,
     }
 }
 

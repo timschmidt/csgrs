@@ -34692,6 +34692,22 @@ fn exact_boolmesh_boundary_contact_advances_to_triangulation_blocker() {
             .face_loop_assembly
             .dropped_open_chains
             .iter()
+            .any(|chain| chain.source_kind
+                == hypermesh::exact::ExactBoolMeshDroppedOpenChainSourceKind::SourceEdge)
+    );
+    assert!(
+        stage
+            .face_loop_assembly
+            .dropped_open_chains
+            .iter()
+            .any(|chain| chain.source_kind
+                == hypermesh::exact::ExactBoolMeshDroppedOpenChainSourceKind::Mixed)
+    );
+    assert!(
+        stage
+            .face_loop_assembly
+            .dropped_open_chains
+            .iter()
             .any(|chain| chain.output_face == 20)
     );
     let mut stale_dropped_chain_owner = workspace.clone();
@@ -34704,6 +34720,31 @@ fn exact_boolmesh_boundary_contact_advances_to_triangulation_blocker() {
         .owner = None;
     assert_eq!(
         stale_dropped_chain_owner
+            .validate_against_sources(&left, &right)
+            .unwrap_err(),
+        hypermesh::exact::ExactBoolMeshValidationError::Boolean45FaceLoopMismatch
+    );
+    let mut stale_dropped_chain_kind = workspace.clone();
+    let stale_kind_index = stale_dropped_chain_kind
+        .boolean45
+        .as_ref()
+        .unwrap()
+        .face_loop_assembly
+        .dropped_open_chains
+        .iter()
+        .position(|chain| {
+            chain.source_kind != hypermesh::exact::ExactBoolMeshDroppedOpenChainSourceKind::Mixed
+        })
+        .expect("boundary contact should retain at least one non-mixed dropped chain");
+    stale_dropped_chain_kind
+        .boolean45
+        .as_mut()
+        .unwrap()
+        .face_loop_assembly
+        .dropped_open_chains[stale_kind_index]
+        .source_kind = hypermesh::exact::ExactBoolMeshDroppedOpenChainSourceKind::Mixed;
+    assert_eq!(
+        stale_dropped_chain_kind
             .validate_against_sources(&left, &right)
             .unwrap_err(),
         hypermesh::exact::ExactBoolMeshValidationError::Boolean45FaceLoopMismatch
