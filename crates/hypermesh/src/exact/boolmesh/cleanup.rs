@@ -84,6 +84,7 @@ pub(super) fn cleanup_exact_export_vertices(
     let triangles = remove_isolated_opposite_duplicate_pairs(triangles);
     let triangles = split_edges_at_existing_vertices(&unique_points, triangles);
     let triangles = orient_triangle_components(triangles);
+    let triangles = repair_coplanar_overfull_edge_pairs(&unique_points, triangles);
     let triangles = close_coplanar_boundary_loops(&unique_points, triangles);
     let triangles = remove_internal_nonmanifold_triangles(triangles);
     let triangles = close_coplanar_boundary_loops(&unique_points, triangles);
@@ -251,12 +252,14 @@ fn split_edges_at_existing_vertices(points: &[Point3], triangles: Vec<Triangle>)
 }
 
 fn find_existing_vertex_edge_split(points: &[Point3], triangles: &[Triangle]) -> Option<EdgeSplit> {
+    let edge_counts = edge_use_counts(triangles);
     for (face, triangle) in triangles.iter().enumerate() {
         for edge in 0..3 {
             let [tail, head] = triangle_edge_indices(triangle.0, edge);
             for vertex in 0..points.len() {
                 if triangle.0.contains(&vertex)
                     || !point_strictly_inside_segment(points, tail, head, vertex)
+                    || edge_already_has_exact_subedges(&edge_counts, tail, head, vertex)
                 {
                     continue;
                 }
@@ -265,6 +268,19 @@ fn find_existing_vertex_edge_split(points: &[Point3], triangles: &[Triangle]) ->
         }
     }
     None
+}
+
+fn edge_already_has_exact_subedges(
+    edge_counts: &BTreeMap<[usize; 2], DirectedEdgeUseCount>,
+    tail: usize,
+    head: usize,
+    vertex: usize,
+) -> bool {
+    edge_counts
+        .get(&sorted_edge([tail, head]))
+        .is_some_and(|count| count.forward > 1 || count.reverse > 1)
+        && edge_counts.contains_key(&sorted_edge([tail, vertex]))
+        && edge_counts.contains_key(&sorted_edge([vertex, head]))
 }
 
 #[derive(Clone, Copy)]
@@ -787,6 +803,98 @@ fn edge_topology_defects(triangles: &[Triangle]) -> usize {
         .sum()
 }
 
+/// Replace a local four-incident internal edge with a certified coplanar cap.
+///
+/// Boolmesh cleanup can emit both an unsplit source edge and exact subedges for
+/// the same local interface.  Once exact welding/orientation has replayed that
+/// state, the residue is a single overfull edge with two uses in each
+/// direction.  The legacy simplifier resolves this before `Manifold::new_impl`
+/// by removing one opposite pair and retriangulating the exposed coplanar
+/// quadrilateral.  The exact port accepts only candidates that reduce exact
+/// edge-topology defects and leave no directed boundary after the cap replay.
+fn repair_coplanar_overfull_edge_pairs(
+    points: &[Point3],
+    triangles: Vec<Triangle>,
+) -> Vec<Triangle> {
+    let mut triangles = triangles;
+    for _ in 0..triangles.len() {
+        let baseline_defects = edge_topology_defects(&triangles);
+        let Some(candidates) = overfull_edge_opposite_face_pairs(&triangles) else {
+            return triangles;
+        };
+        let mut best = None;
+        for [left, right] in candidates {
+            let mut candidate = triangles
+                .iter()
+                .copied()
+                .enumerate()
+                .filter_map(|(face, triangle)| (face != left && face != right).then_some(triangle))
+                .collect::<Vec<_>>();
+            candidate = orient_triangle_components(candidate);
+            candidate = close_coplanar_boundary_loops(points, candidate);
+            candidate = orient_triangle_components(candidate);
+            if boundary_directed_edges(&candidate).is_some_and(|edges| edges.is_empty()) {
+                let candidate_defects = edge_topology_defects(&candidate);
+                if candidate_defects < baseline_defects
+                    && best
+                        .as_ref()
+                        .is_none_or(|(best_defects, _)| candidate_defects < *best_defects)
+                {
+                    best = Some((candidate_defects, candidate));
+                }
+            }
+        }
+        let Some((_, candidate)) = best else {
+            return triangles;
+        };
+        triangles = candidate;
+    }
+    triangles
+}
+
+fn overfull_edge_opposite_face_pairs(triangles: &[Triangle]) -> Option<Vec<[usize; 2]>> {
+    let edge_uses = edge_use_records(triangles);
+    for uses in edge_uses.values() {
+        if uses.len() != 4 {
+            continue;
+        }
+        let forward = uses
+            .iter()
+            .filter(|edge_use| edge_use.forward)
+            .copied()
+            .collect::<Vec<_>>();
+        let reverse = uses
+            .iter()
+            .filter(|edge_use| !edge_use.forward)
+            .copied()
+            .collect::<Vec<_>>();
+        if forward.len() != 2 || reverse.len() != 2 {
+            continue;
+        }
+        return Some(
+            forward
+                .iter()
+                .flat_map(|left| reverse.iter().map(move |right| [left.face, right.face]))
+                .collect(),
+        );
+    }
+    None
+}
+
+fn edge_use_records(triangles: &[Triangle]) -> BTreeMap<[usize; 2], Vec<EdgeUse>> {
+    let mut edge_uses = BTreeMap::<[usize; 2], Vec<EdgeUse>>::new();
+    for (face, triangle) in triangles.iter().enumerate() {
+        for edge @ [tail, head] in directed_edges(triangle.0) {
+            let key = sorted_edge([tail, head]);
+            edge_uses.entry(key).or_default().push(EdgeUse {
+                face,
+                forward: edge == key,
+            });
+        }
+    }
+    edge_uses
+}
+
 /// Orient a triangle soup by propagating halfedge direction constraints.
 ///
 /// Each manifold edge should be used once in each direction.  Local
@@ -797,16 +905,7 @@ fn edge_topology_defects(triangles: &[Triangle]) -> usize {
 /// sorted direction, its neighbor must use the reverse direction, accounting for
 /// any flips already assigned.
 fn orient_triangle_components(triangles: Vec<Triangle>) -> Vec<Triangle> {
-    let mut edge_uses = BTreeMap::<[usize; 2], Vec<EdgeUse>>::new();
-    for (face, triangle) in triangles.iter().enumerate() {
-        for [tail, head] in directed_edges(triangle.0) {
-            let key = sorted_edge([tail, head]);
-            edge_uses.entry(key).or_default().push(EdgeUse {
-                face,
-                forward: [tail, head] == key,
-            });
-        }
-    }
+    let edge_uses = edge_use_records(&triangles);
 
     let mut adjacency = vec![Vec::<NeighborConstraint>::new(); triangles.len()];
     for uses in edge_uses.values() {
@@ -1169,6 +1268,68 @@ mod tests {
         assert!(
             report.is_valid(),
             "cleanup should remove the overfull internal coplanar interface triangle: {:?}",
+            report.diagnostics
+        );
+    }
+
+    #[test]
+    fn cleanup_repairs_skew_tetra_union_overfull_internal_edge() {
+        let raw_vertices = vec![
+            p(0, 0, 0),
+            p(4, 0, 0),
+            p(0, 4, 0),
+            p(0, 0, 4),
+            p(1, 1, -1),
+            p(3, 1, 3),
+            p(1, 3, 3),
+            p(3, 3, 1),
+            p(2, 2, 0),
+            p(2, 2, 0),
+            rp((1, 1), (3, 2), (0, 1)),
+            p(1, 2, 1),
+            rp((3, 2), (1, 1), (0, 1)),
+            p(2, 1, 1),
+        ];
+        let raw_triangles = vec![
+            Triangle([2, 1, 0]),
+            Triangle([12, 2, 8]),
+            Triangle([10, 2, 12]),
+            Triangle([1, 10, 9]),
+            Triangle([2, 1, 10]),
+            Triangle([0, 1, 3]),
+            Triangle([3, 1, 9]),
+            Triangle([3, 9, 11]),
+            Triangle([11, 13, 8]),
+            Triangle([11, 8, 2]),
+            Triangle([11, 2, 3]),
+            Triangle([0, 3, 2]),
+            Triangle([4, 10, 12]),
+            Triangle([5, 13, 11]),
+            Triangle([5, 11, 6]),
+            Triangle([4, 12, 8]),
+            Triangle([8, 13, 5]),
+            Triangle([8, 5, 7]),
+            Triangle([5, 6, 7]),
+            Triangle([7, 6, 11]),
+            Triangle([7, 11, 9]),
+            Triangle([9, 10, 4]),
+        ];
+
+        let (vertices, triangles) = cleanup_exact_export_vertices(raw_vertices, &raw_triangles);
+        let points = vertices
+            .iter()
+            .map(ExactPoint3::to_hyperlimit_point)
+            .collect::<Vec<_>>();
+        let triangle_indices = triangles
+            .iter()
+            .map(|triangle| triangle.0)
+            .collect::<Vec<_>>();
+        let report =
+            validate_triangles_with_policy(&points, &triangle_indices, ValidationPolicy::CLOSED);
+
+        assert!(
+            report.is_valid(),
+            "cleanup should repair the four-incident internal edge without leaking a boundary: {:?}",
             report.diagnostics
         );
     }

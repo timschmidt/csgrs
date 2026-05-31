@@ -1835,11 +1835,20 @@ pub fn boolean_exact_with_boundary_policy(
                 Ok(Some(result)) => return Ok(result),
                 Ok(None) => {}
                 Err(error) => {
-                    if error_has_duplicate_directed_edges(&error)
-                        && let Some(stage) =
-                            late_boolmesh_export_blocker_stage(left, right, operation, validation)
-                    {
-                        return Err(boolmesh_late_export_blocker_error(stage));
+                    if error_has_duplicate_directed_edges(&error) {
+                        match execute_exact_boolmesh_port(left, right, operation, validation) {
+                            Ok(execution) => {
+                                return Ok(certified_shortcut_result(
+                                    execution.mesh,
+                                    execution.shortcut,
+                                ));
+                            }
+                            Err(ExactBoolMeshValidationError::PortBlocked(
+                                stage @ (ExactBoolMeshKernelStage::Triangulation
+                                | ExactBoolMeshKernelStage::Cleanup),
+                            )) => return Err(boolmesh_late_export_blocker_error(stage)),
+                            _ => {}
+                        }
                     }
                     return Err(error);
                 }
@@ -5403,21 +5412,6 @@ fn boolean_boolmesh_port_meshes(
             DiagnosticKind::UnsupportedExactOperation,
             format!("exact boolmesh port failed: {error:?}"),
         ))),
-    }
-}
-
-#[cfg(feature = "exact-triangulation")]
-fn late_boolmesh_export_blocker_stage(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-) -> Option<ExactBoolMeshKernelStage> {
-    match execute_exact_boolmesh_port(left, right, operation, validation) {
-        Err(ExactBoolMeshValidationError::PortBlocked(
-            stage @ (ExactBoolMeshKernelStage::Triangulation | ExactBoolMeshKernelStage::Cleanup),
-        )) => Some(stage),
-        _ => None,
     }
 }
 

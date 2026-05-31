@@ -35193,7 +35193,7 @@ fn exact_boolmesh_kernel12_discovers_skew_edge_face_events() {
 
 #[test]
 #[cfg(feature = "exact-triangulation")]
-fn exact_boolmesh_skew_tetra_union_blocker_stops_legacy_duplicate_edges() {
+fn exact_boolmesh_skew_tetra_union_materializes_overfull_internal_edge_cleanup() {
     let left = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
     let right = tetrahedron_i64([1, 1, -1], [3, 1, 3], [1, 3, 3], [3, 3, 1]);
 
@@ -35205,41 +35205,35 @@ fn exact_boolmesh_skew_tetra_union_blocker_stops_legacy_duplicate_edges() {
     workspace.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         workspace.blocker.as_ref().map(|blocker| blocker.stage),
-        Some(hypermesh::exact::ExactBoolMeshKernelStage::Triangulation)
+        None,
+        "skew tetra union should complete through exact boolmesh cleanup"
     );
-    assert_eq!(
-        hypermesh::exact::execute_exact_boolmesh_port(
-            &left,
-            &right,
-            hypermesh::exact::ExactBooleanOperation::Union,
-            ValidationPolicy::CLOSED,
-        )
-        .unwrap_err(),
-        hypermesh::exact::ExactBoolMeshValidationError::PortBlocked(
-            hypermesh::exact::ExactBoolMeshKernelStage::Triangulation
-        )
-    );
-
-    let public_error = hypermesh::exact::boolean_exact(
+    let execution = hypermesh::exact::execute_exact_boolmesh_port(
         &left,
         &right,
         hypermesh::exact::ExactBooleanOperation::Union,
         ValidationPolicy::CLOSED,
     )
-    .unwrap_err();
-    assert!(public_error.diagnostics.iter().any(|diagnostic| {
-        diagnostic.kind == DiagnosticKind::UnsupportedExactOperation
-            && diagnostic
-                .message
-                .contains("exact boolmesh port blocked before certified mesh export: Triangulation")
-    }));
-    assert!(
-        public_error
-            .diagnostics
-            .iter()
-            .all(|diagnostic| diagnostic.kind != DiagnosticKind::DuplicateDirectedEdge),
-        "late boolmesh triangulation blockers must not fall through into legacy duplicate-edge output"
+    .expect("skew tetra union should materialize from the boolmesh port");
+    execution.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        execution.shortcut,
+        hypermesh::exact::ExactBooleanShortcutKind::BoolMeshSplit
     );
+    assert_eq!(execution.mesh.facts().mesh.boundary_edges, 0);
+    assert_eq!(execution.mesh.facts().mesh.duplicate_directed_edges, 0);
+    assert_eq!(execution.mesh.facts().mesh.non_manifold_edges, 0);
+
+    let public_result = hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("public exact boolean should consume the boolmesh union result");
+    assert_eq!(public_result.mesh.facts().mesh.boundary_edges, 0);
+    assert_eq!(public_result.mesh.facts().mesh.duplicate_directed_edges, 0);
+    assert_eq!(public_result.mesh.facts().mesh.non_manifold_edges, 0);
 }
 
 #[test]
