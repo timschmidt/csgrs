@@ -14,7 +14,7 @@ use std::collections::{BTreeMap, BTreeSet, VecDeque};
 
 use super::super::{
     ExactBoolMeshFaceLoopAssemblyStage, ExactBoolMeshHalfedgeAssemblyStage,
-    ExactBoolMeshOutputFaceLoop,
+    ExactBoolMeshOutputFaceLoop, ExactBoolMeshOutputHalfedgeSource,
 };
 
 /// Assemble per-face closed boundary loops from emitted output halfedges.
@@ -109,12 +109,32 @@ fn assemble_output_face_loop(
     if stage.loops.len() == loops_before
         && stage.repeated_halfedges == repeated_before
         && stage.non_loop_halfedges > non_loop_before
-        && face_has_boundary_halfedge(output_face, halfedges, begin, end)
+        && (face_has_boundary_halfedge(output_face, halfedges, begin, end)
+            || face_has_only_partial_source_edge_halfedges(output_face, halfedges, begin, end))
     {
         let dropped = stage.non_loop_halfedges - non_loop_before;
         stage.non_loop_halfedges = non_loop_before;
         stage.dropped_open_chain_halfedges += dropped;
     }
+}
+
+fn face_has_only_partial_source_edge_halfedges(
+    output_face: usize,
+    halfedges: &ExactBoolMeshHalfedgeAssemblyStage,
+    begin: usize,
+    end: usize,
+) -> bool {
+    halfedges.output_halfedges[begin..end]
+        .iter()
+        .all(|halfedge| {
+            halfedge.as_ref().is_some_and(|halfedge| {
+                halfedge.face == output_face
+                    && matches!(
+                        halfedge.source,
+                        ExactBoolMeshOutputHalfedgeSource::PartialSourceEdge { .. }
+                    )
+            })
+        })
 }
 
 fn face_has_boundary_halfedge(

@@ -1455,13 +1455,15 @@ fn longest_exact_axis(
         maxes[1].clone() - &mins[1],
         maxes[2].clone() - &mins[2],
     ];
-    let mut axis = 0;
-    for candidate in 1..3 {
-        if compare_reals(&spans[candidate], &spans[axis]).value()? == Ordering::Greater {
-            axis = candidate;
-        }
+    if compare_reals(&spans[0], &spans[1]).value()? == Ordering::Greater
+        && compare_reals(&spans[0], &spans[2]).value()? == Ordering::Greater
+    {
+        return Some(0);
     }
-    Some(axis)
+    if compare_reals(&spans[1], &spans[2]).value()? == Ordering::Greater {
+        return Some(1);
+    }
+    Some(2)
 }
 
 fn compare_output_vertex_axis(

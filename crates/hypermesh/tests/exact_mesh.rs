@@ -34519,7 +34519,8 @@ fn exact_boolmesh_kernel12_lowers_partial_positive_area_coplanar_overlap() {
             .loop_triangulation
             .triangulations
             .iter()
-            .any(|triangulation| triangulation.clipped_loop_indices == vec![1]),
+            .any(|triangulation| triangulation.output_face == 0
+                && triangulation.clipped_loop_indices == vec![2]),
         "boundary-covered coplanar seam loops should be clipped before the hypertri handoff"
     );
     assert_eq!(stage.output_triangles.missing_loop_triangulations, 0);
@@ -34563,6 +34564,8 @@ fn exact_boolmesh_source_edge_blocker_retains_boolean45_counters() {
         .blocker
         .as_ref()
         .expect("nonconvex source-edge split fixture should expose the next boolmesh blocker");
+    let stage = workspace.boolean45.as_ref().unwrap();
+    assert_eq!(stage.face_loop_assembly.dropped_open_chain_halfedges, 4);
     assert_eq!(
         blocker.stage,
         hypermesh::exact::ExactBoolMeshKernelStage::FaceAssembly
@@ -34573,7 +34576,7 @@ fn exact_boolmesh_source_edge_blocker_retains_boolean45_counters() {
     assert_eq!(blocker.new_face_pair_unpaired_runs, 0);
     assert_eq!(blocker.halfedge_unfilled_halfedges, 0);
     assert_eq!(blocker.face_loop_incomplete_faces, 0);
-    assert_eq!(blocker.face_loop_non_loop_halfedges, 42);
+    assert_eq!(blocker.face_loop_non_loop_halfedges, 38);
     assert_eq!(blocker.source_edge_incident_gaps, 0);
     assert_eq!(blocker.loop_triangulation_failures, 0);
     assert_eq!(blocker.mesh_export_blocked_output_triangles, 0);

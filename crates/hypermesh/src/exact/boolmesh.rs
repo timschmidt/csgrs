@@ -1024,11 +1024,13 @@ pub struct ExactBoolMeshFaceLoopAssemblyStage {
     /// Complete open-chain face halfedges dropped as lower-dimensional output.
     ///
     /// Boundary-only coplanar intervals can emit source and face-pair
-    /// halfedges that form an open chain instead of a surface loop.  Legacy
-    /// boolmesh's regularized mesh output does not triangulate such
-    /// lower-dimensional faces.  The exact port records their halfedge count
-    /// separately from malformed non-loop topology so validation can replay the
-    /// deletion instead of turning it into an untyped face-assembly failure.
+    /// halfedges that form an open chain instead of a surface loop.  Split
+    /// source-edge interval remnants can do the same on an otherwise retained
+    /// source face.  Legacy boolmesh's regularized mesh output does not
+    /// triangulate such lower-dimensional faces.  The exact port records their
+    /// halfedge count separately from malformed non-loop topology so validation
+    /// can replay the deletion instead of turning it into an untyped
+    /// face-assembly failure.
     pub dropped_open_chain_halfedges: usize,
     /// Complete-face halfedges that could not be consumed into closed loops.
     pub non_loop_halfedges: usize,
