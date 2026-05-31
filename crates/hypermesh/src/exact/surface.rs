@@ -3599,6 +3599,14 @@ fn same_outer_holed_source_island_retained_components(
             outer_cutters.push(opposite_hole.clone());
         }
     }
+    if let Some(components) = same_outer_holed_source_island_side_opening_components(
+        candidate,
+        &retained_holes,
+        &outer_cutters,
+        projection,
+    ) {
+        return Some(components);
+    }
     let outers = if outer_cutters.is_empty() {
         vec![candidate.outer.clone()]
     } else {
@@ -3654,6 +3662,53 @@ fn same_outer_holed_source_island_retained_components(
         .ok()?;
     }
     Some(components)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn same_outer_holed_source_island_side_opening_components(
+    candidate: &SourceHoledSurfaceComponent,
+    retained_holes: &[Vec<Point3>],
+    outer_cutters: &[Vec<Point3>],
+    projection: CoplanarProjection,
+) -> Option<Vec<CoplanarConvexHoledComponent>> {
+    if retained_holes.is_empty() || outer_cutters.is_empty() {
+        return None;
+    }
+    let mut boundary = candidate.outer.clone();
+    orient_polygon_ccw(&mut boundary, projection)?;
+    boundary = simplify_projected_polygon(boundary, projection);
+    let component = SimpleSurfaceComponent {
+        area2_abs: projected_area2_abs(&boundary, projection)?,
+        projection,
+        boundary,
+    };
+    let openings = outer_cutters
+        .iter()
+        .map(|cutter| {
+            let mut opening =
+                convex_polygon_intersection_boundary(&component.boundary, cutter, projection)?;
+            orient_polygon_ccw(&mut opening, projection)?;
+            opening = simplify_projected_polygon(opening, projection);
+            validate_projected_simple_loop(
+                &opening,
+                projection,
+                "coplanar same-outer holed source island side opening",
+            )
+            .ok()?;
+            Some(opening)
+        })
+        .collect::<Option<Vec<_>>>()?;
+    let holes = retained_holes
+        .iter()
+        .enumerate()
+        .map(|(right_index, ring)| ComponentHoleCandidate {
+            ring: ring.clone(),
+            right_index,
+        })
+        .collect::<Vec<_>>();
+    materialize_simple_source_removed_opening_hole_contact_component_holed_difference(
+        &component, &openings, &holes,
+    )
 }
 
 #[cfg(feature = "exact-triangulation")]

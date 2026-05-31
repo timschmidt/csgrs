@@ -28748,13 +28748,39 @@ fn exact_coplanar_component_holed_intersection_clips_same_outer_holed_source_isl
     )
     .expect("straddling island-hole cutter should materialize")
     .mesh;
-    assert!(
+    let straddling_intersection =
         hypermesh::exact::arrange_coplanar_surface_component_holed_intersection(
             &source,
             &straddling_opposing,
         )
-        .is_none(),
-        "a cutter that crosses a retained island hole still requires planar-cell extraction"
+        .expect("a cutter crossing a retained island hole should open the island remnant");
+    straddling_intersection.validate().unwrap();
+    straddling_intersection
+        .validate_intersection_against_sources(&source, &straddling_opposing)
+        .unwrap();
+    assert!(
+        straddling_intersection.components.iter().any(|component| {
+            component.holes.is_empty()
+                && component
+                    .outer
+                    .iter()
+                    .any(|point| real_eq(&point.x, &ExactReal::from(8)))
+                && component
+                    .outer
+                    .iter()
+                    .any(|point| real_eq(&point.x, &ExactReal::from(10)))
+        }),
+        "the left opened source-island remnant should retain the hole/cutter boundary"
+    );
+    assert!(
+        straddling_intersection.components.iter().any(|component| {
+            component.holes.is_empty()
+                && component
+                    .outer
+                    .iter()
+                    .any(|point| real_eq(&point.x, &ExactReal::from(14)))
+        }),
+        "the right source-island remnant should survive after the crossing cutter"
     );
 
     let preflight = hypermesh::exact::preflight_boolean_exact(
@@ -28782,6 +28808,37 @@ fn exact_coplanar_component_holed_intersection_clips_same_outer_holed_source_isl
     .validate_operation_against_sources(
         &source,
         &opposing,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
+
+    let straddling_preflight = hypermesh::exact::preflight_boolean_exact(
+        &source,
+        &straddling_opposing,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+    )
+    .expect("straddling island-hole cutter preflight should classify shortcut");
+    straddling_preflight.validate().unwrap();
+    straddling_preflight
+        .validate_against_sources(&source, &straddling_opposing)
+        .unwrap();
+    assert_eq!(
+        straddling_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
+    );
+
+    hypermesh::exact::boolean_exact(
+        &source,
+        &straddling_opposing,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("straddling island-hole cutter boolean should materialize")
+    .validate_operation_against_sources(
+        &source,
+        &straddling_opposing,
         hypermesh::exact::ExactBooleanOperation::Intersection,
         ValidationPolicy::ALLOW_BOUNDARY,
         hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
@@ -28931,13 +28988,44 @@ fn exact_coplanar_component_holed_intersection_splits_same_outer_holed_source_is
     )
     .expect("straddling island-hole cutter should materialize")
     .mesh;
-    assert!(
+    let straddling_intersection =
         hypermesh::exact::arrange_coplanar_surface_component_holed_intersection(
             &source,
             &straddling_opposing,
         )
-        .is_none(),
-        "a splitter that crosses a retained island hole still requires planar-cell extraction"
+        .expect("a splitter crossing a retained island hole should open the split remnant");
+    straddling_intersection.validate().unwrap();
+    straddling_intersection
+        .validate_intersection_against_sources(&source, &straddling_opposing)
+        .unwrap();
+    assert_eq!(
+        straddling_intersection.components.len(),
+        3,
+        "main component plus two opened split island remnants should survive"
+    );
+    assert!(
+        straddling_intersection.components.iter().any(|component| {
+            component.holes.is_empty()
+                && component
+                    .outer
+                    .iter()
+                    .any(|point| real_eq(&point.x, &ExactReal::from(8)))
+                && component
+                    .outer
+                    .iter()
+                    .any(|point| real_eq(&point.x, &ExactReal::from(9)))
+        }),
+        "the left split remnant should retain the consumed hole boundary as an opening"
+    );
+    assert!(
+        straddling_intersection.components.iter().any(|component| {
+            component.holes.is_empty()
+                && component
+                    .outer
+                    .iter()
+                    .any(|point| real_eq(&point.x, &ExactReal::from(13)))
+        }),
+        "the right split remnant should survive after the crossing splitter"
     );
 
     let preflight = hypermesh::exact::preflight_boolean_exact(
@@ -28965,6 +29053,37 @@ fn exact_coplanar_component_holed_intersection_splits_same_outer_holed_source_is
     .validate_operation_against_sources(
         &source,
         &opposing,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
+
+    let straddling_preflight = hypermesh::exact::preflight_boolean_exact(
+        &source,
+        &straddling_opposing,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+    )
+    .expect("straddling split island-hole preflight should classify shortcut");
+    straddling_preflight.validate().unwrap();
+    straddling_preflight
+        .validate_against_sources(&source, &straddling_opposing)
+        .unwrap();
+    assert_eq!(
+        straddling_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
+    );
+
+    hypermesh::exact::boolean_exact(
+        &source,
+        &straddling_opposing,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("straddling split island-hole boolean should materialize")
+    .validate_operation_against_sources(
+        &source,
+        &straddling_opposing,
         hypermesh::exact::ExactBooleanOperation::Intersection,
         ValidationPolicy::ALLOW_BOUNDARY,
         hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
