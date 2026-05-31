@@ -2314,7 +2314,7 @@ fn exercise_exact_boolmesh_kernel12_coplanar_interval_port() {
     assert_eq!(stage.partial_source_edges.unpaired_runs, 0);
     assert_eq!(stage.new_face_pair_edges.unpaired_runs, 0);
     assert_eq!(stage.halfedge_assembly.unfilled_halfedges, 0);
-    assert_eq!(stage.face_loop_assembly.dropped_open_chain_halfedges, 6);
+    assert_eq!(stage.face_loop_assembly.dropped_open_chain_halfedges, 2);
     assert!(stage.output_triangles.triangles.is_empty());
     assert!(workspace
         .pair_up
