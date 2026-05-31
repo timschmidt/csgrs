@@ -200,6 +200,15 @@ pub(super) fn size_output_stage(
         &mut left_face_halfedge_counts,
         &mut right_face_halfedge_counts,
     );
+    replay_emitted_face_halfedge_counts(
+        left.triangles().len(),
+        right.triangles().len(),
+        &partial_source_edges,
+        &new_face_pair_edges,
+        &whole_source_edges,
+        &mut left_face_halfedge_counts,
+        &mut right_face_halfedge_counts,
+    );
 
     let source_face_counts = left_face_halfedge_counts
         .iter()
@@ -1787,6 +1796,78 @@ fn apply_open_partial_interval_face_counts(
                     *count = count.saturating_sub(over_reserved);
                 }
             }
+        }
+    }
+}
+
+/// Size output face ranges from the fragments that the mutation pass will
+/// replay.
+///
+/// The legacy-style crossing count above remains useful for detecting source
+/// halfedge incidence gaps, but exact source-tail and duplicate face-pair
+/// ownership can prove before mutation that some raw `size_output` rows are
+/// not emitted as halfedges.  Once partial/new/whole fragments are staged, the
+/// certified topology object is the fragment list itself.  Replaying that list
+/// into face counts keeps `hs_r` sizing aligned with `append_*` emission
+/// without recovering topology from rounded coordinates.
+fn replay_emitted_face_halfedge_counts(
+    left_faces: usize,
+    right_faces: usize,
+    partial_source_edges: &ExactBoolMeshPartialSourceEdgeStage,
+    new_face_pair_edges: &ExactBoolMeshNewFacePairStage,
+    whole_source_edges: &ExactBoolMeshWholeSourceEdgeStage,
+    left_face_counts: &mut [usize],
+    right_face_counts: &mut [usize],
+) {
+    left_face_counts.fill(0);
+    right_face_counts.fill(0);
+
+    for run in &partial_source_edges.source_edge_runs {
+        replay_source_edge_fragment_counts(
+            run.side,
+            &run.incident_faces,
+            run.fragments.len(),
+            left_face_counts,
+            right_face_counts,
+        );
+    }
+    for run in &new_face_pair_edges.face_pair_runs {
+        if run.face_pair.left_face < left_faces
+            && let Some(count) = left_face_counts.get_mut(run.face_pair.left_face)
+        {
+            *count += run.fragments.len();
+        }
+        if run.face_pair.right_face < right_faces
+            && let Some(count) = right_face_counts.get_mut(run.face_pair.right_face)
+        {
+            *count += run.fragments.len();
+        }
+    }
+    for run in &whole_source_edges.source_edge_runs {
+        replay_source_edge_fragment_counts(
+            run.side,
+            &run.incident_faces,
+            run.fragments.len(),
+            left_face_counts,
+            right_face_counts,
+        );
+    }
+}
+
+fn replay_source_edge_fragment_counts(
+    side: ExactBoolMeshSide,
+    incident_faces: &[usize],
+    fragments: usize,
+    left_face_counts: &mut [usize],
+    right_face_counts: &mut [usize],
+) {
+    let face_counts = match side {
+        ExactBoolMeshSide::Left => left_face_counts,
+        ExactBoolMeshSide::Right => right_face_counts,
+    };
+    for source_face in incident_faces {
+        if let Some(count) = face_counts.get_mut(*source_face) {
+            *count += fragments;
         }
     }
 }
