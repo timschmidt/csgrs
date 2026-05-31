@@ -34566,10 +34566,11 @@ fn exact_boolmesh_source_edge_blocker_retains_boolean45_counters() {
         .as_ref()
         .expect("nonconvex source-edge split fixture should expose the next boolmesh blocker");
     let stage = workspace.boolean45.as_ref().unwrap();
-    assert_eq!(stage.face_loop_assembly.dropped_open_chain_halfedges, 15);
+    assert_eq!(stage.face_loop_assembly.dropped_open_chain_halfedges, 23);
+    assert_eq!(stage.face_loop_assembly.non_loop_halfedges, 0);
     assert_eq!(
         blocker.stage,
-        hypermesh::exact::ExactBoolMeshKernelStage::FaceAssembly
+        hypermesh::exact::ExactBoolMeshKernelStage::Triangulation
     );
     assert_eq!(blocker.candidate_face_pairs, 33);
     assert_eq!(blocker.pair_up_unpaired_event_runs, 5);
@@ -34577,10 +34578,13 @@ fn exact_boolmesh_source_edge_blocker_retains_boolean45_counters() {
     assert_eq!(blocker.new_face_pair_unpaired_runs, 0);
     assert_eq!(blocker.halfedge_unfilled_halfedges, 0);
     assert_eq!(blocker.face_loop_incomplete_faces, 0);
-    assert_eq!(blocker.face_loop_non_loop_halfedges, 8);
+    assert_eq!(blocker.face_loop_non_loop_halfedges, 0);
     assert_eq!(blocker.source_edge_incident_gaps, 0);
     assert_eq!(blocker.loop_triangulation_failures, 0);
     assert_eq!(blocker.mesh_export_blocked_output_triangles, 0);
+    assert_eq!(stage.mesh_export.invalid_output_triangles, 0);
+    assert_eq!(stage.mesh_export.orientation_failures, 0);
+    assert_eq!(stage.mesh_export.triangles.len(), 29);
 
     let mut stale_blocker = workspace.clone();
     stale_blocker
