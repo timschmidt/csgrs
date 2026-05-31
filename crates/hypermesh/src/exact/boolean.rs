@@ -3899,12 +3899,8 @@ fn boolean_closed_boundary_only_contact_meshes(
     }
     if operation == ExactBooleanOperation::Union
         && !certify_boundary_touching_report(left, right)?.is_certified()
-        && let Some(result) = boolean_completed_boolmesh_port_meshes(
-            left,
-            right,
-            ExactBooleanOperation::Union,
-            validation,
-        )
+        && let Some(result) =
+            boolean_boolmesh_split_meshes(left, right, ExactBooleanOperation::Union, validation)
     {
         return Ok(Some(result));
     }
@@ -3954,12 +3950,8 @@ fn boolean_closed_boundary_touching_union(
         ))
     })?;
     if !certify_boundary_touching_report(left, right)?.is_certified()
-        && let Some(result) = boolean_completed_boolmesh_port_meshes(
-            left,
-            right,
-            ExactBooleanOperation::Union,
-            validation,
-        )
+        && let Some(result) =
+            boolean_boolmesh_split_meshes(left, right, ExactBooleanOperation::Union, validation)
     {
         return Ok(result);
     }
@@ -3989,6 +3981,11 @@ fn boolean_closed_boundary_touching_intersection(
             "exact closed-boundary-touch intersection certificate did not replay",
         ))
     })?;
+    if let Some(result) =
+        boolean_boolmesh_split_meshes(left, right, ExactBooleanOperation::Intersection, validation)
+    {
+        return Ok(result);
+    }
     Ok(certified_shortcut_result(
         empty_mesh(
             "empty exact closed-boundary-touch regularized intersection",
@@ -4012,6 +4009,11 @@ fn boolean_closed_boundary_touching_difference(
             "exact closed-boundary-touch difference certificate did not replay",
         ))
     })?;
+    if let Some(result) =
+        boolean_boolmesh_split_meshes(left, right, ExactBooleanOperation::Difference, validation)
+    {
+        return Ok(result);
+    }
     Ok(certified_shortcut_result(
         copy_mesh(
             left,
@@ -5549,18 +5551,18 @@ fn boolean_boolmesh_port_meshes(
 }
 
 #[cfg(feature = "exact-triangulation")]
-fn boolean_completed_boolmesh_port_meshes(
+fn boolean_boolmesh_split_meshes(
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Option<ExactBooleanResult> {
     match execute_exact_boolmesh_port(left, right, operation, validation) {
-        Ok(execution) => Some(certified_shortcut_result(
-            execution.mesh,
-            execution.shortcut,
-        )),
+        Ok(execution) if execution.shortcut == ExactBooleanShortcutKind::BoolMeshSplit => Some(
+            certified_shortcut_result(execution.mesh, execution.shortcut),
+        ),
         Err(_) => None,
+        Ok(_) => None,
     }
 }
 

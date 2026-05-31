@@ -34274,6 +34274,23 @@ fn exact_boolmesh_kernel12_lowers_strict_endpoint_face_shadow() {
         "boolmesh cleanup_unused_verts port should compact endpoint-only split vertices away"
     );
     assert_eq!(execution.mesh.facts().mesh.edge_count, 0);
+
+    let public_result = hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("public endpoint-only intersection should consume the completed boolmesh split");
+    public_result.validate().unwrap();
+    assert_eq!(
+        public_result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::BoolMeshSplit
+        }
+    );
+    assert!(public_result.mesh.triangles().is_empty());
+    assert!(public_result.mesh.vertices().is_empty());
 }
 
 #[test]
@@ -34364,6 +34381,23 @@ fn exact_boolmesh_kernel12_lowers_boundary_endpoint_edge_shadow_through_intersec
         "boolmesh cleanup_unused_verts port should compact endpoint-edge split vertices away"
     );
     assert_eq!(execution.mesh.facts().mesh.edge_count, 0);
+
+    let public_result = hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("public endpoint-edge intersection should consume the completed boolmesh split");
+    public_result.validate().unwrap();
+    assert_eq!(
+        public_result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::BoolMeshSplit
+        }
+    );
+    assert!(public_result.mesh.triangles().is_empty());
+    assert!(public_result.mesh.vertices().is_empty());
 }
 
 #[test]
