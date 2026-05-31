@@ -28531,14 +28531,47 @@ fn exact_coplanar_component_holed_intersection_retains_same_outer_holed_source_i
         hypermesh::exact::arrange_coplanar_convex_surface_holed_difference(&outer, &crossing_hole)
             .expect("crossing island-hole cutter should materialize")
             .mesh;
-    assert!(
+    let merged_hole_intersection =
         hypermesh::exact::arrange_coplanar_surface_component_holed_intersection(
             &source,
             &crossing_opposing,
         )
-        .is_none(),
-        "partial overlap between island holes still requires planar-cell extraction"
+        .expect("partial overlap between island holes should replay as one retained union");
+    merged_hole_intersection.validate().unwrap();
+    merged_hole_intersection
+        .validate_intersection_against_sources(&source, &crossing_opposing)
+        .unwrap();
+    let merged_island = merged_hole_intersection
+        .components
+        .iter()
+        .find(|component| {
+            component
+                .outer
+                .iter()
+                .any(|point| real_eq(&point.x, &ExactReal::from(8)))
+        })
+        .expect("the source-owned holed island should survive with a merged retained hole");
+    assert_eq!(
+        merged_island.holes.len(),
+        1,
+        "overlapping island holes should merge into one retained removed ring"
     );
+    assert!(
+        merged_island.holes[0]
+            .iter()
+            .any(|point| real_eq(&point.x, &ExactReal::from(16))),
+        "the opposite cutter extent should be present in the merged hole"
+    );
+
+    let merged_reverse = hypermesh::exact::arrange_coplanar_surface_component_holed_intersection(
+        &crossing_opposing,
+        &source,
+    )
+    .expect("merged retained island hole replay should be symmetric");
+    merged_reverse.validate().unwrap();
+    merged_reverse
+        .validate_intersection_against_sources(&crossing_opposing, &source)
+        .unwrap();
 
     let preflight = hypermesh::exact::preflight_boolean_exact(
         &source,
@@ -28565,6 +28598,37 @@ fn exact_coplanar_component_holed_intersection_retains_same_outer_holed_source_i
     .validate_operation_against_sources(
         &source,
         &opposing,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
+
+    let merged_preflight = hypermesh::exact::preflight_boolean_exact(
+        &source,
+        &crossing_opposing,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+    )
+    .expect("merged island-hole overlap preflight should classify shortcut");
+    merged_preflight.validate().unwrap();
+    merged_preflight
+        .validate_against_sources(&source, &crossing_opposing)
+        .unwrap();
+    assert_eq!(
+        merged_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
+    );
+
+    hypermesh::exact::boolean_exact(
+        &source,
+        &crossing_opposing,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("merged island-hole overlap boolean should materialize")
+    .validate_operation_against_sources(
+        &source,
+        &crossing_opposing,
         hypermesh::exact::ExactBooleanOperation::Intersection,
         ValidationPolicy::ALLOW_BOUNDARY,
         hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,

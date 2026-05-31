@@ -3594,17 +3594,6 @@ fn same_outer_holed_source_island_retained_components(
             SimplePolygonInteraction::Connected => {}
         }
         if polygon_strictly_inside_simple_polygon(opposite_hole, &candidate.outer, projection)? {
-            for candidate_hole in &retained_holes {
-                if polygon_lies_in_closed_simple_polygon(candidate_hole, opposite_hole, projection)?
-                {
-                    continue;
-                }
-                if simple_polygon_interaction(candidate_hole, opposite_hole, projection)?
-                    != SimplePolygonInteraction::Disjoint
-                {
-                    return None;
-                }
-            }
             retained_holes.push(opposite_hole.clone());
         } else {
             outer_cutters.push(opposite_hole.clone());
@@ -3654,6 +3643,9 @@ fn same_outer_holed_source_island_retained_components(
     }
     for component in &mut components {
         remove_nested_same_outer_intersection_holes(&mut component.holes, projection)?;
+        component.holes =
+            merge_same_outer_intersection_hole_components(&component.holes, projection)?;
+        sort_polygons_for_replay(&mut component.holes, projection);
         validate_simple_component_loops_disjoint(
             &component.holes,
             projection,
