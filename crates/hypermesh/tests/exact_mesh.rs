@@ -34565,14 +34565,15 @@ fn exact_boolmesh_source_edge_blocker_retains_boolean45_counters() {
         .expect("nonconvex source-edge split fixture should expose the next boolmesh blocker");
     assert_eq!(
         blocker.stage,
-        hypermesh::exact::ExactBoolMeshKernelStage::FacePairEdgeEmission
+        hypermesh::exact::ExactBoolMeshKernelStage::FaceAssembly
     );
     assert_eq!(blocker.candidate_face_pairs, 33);
     assert_eq!(blocker.pair_up_unpaired_event_runs, 5);
     assert_eq!(blocker.partial_source_edge_unpaired_runs, 0);
-    assert_eq!(blocker.new_face_pair_unpaired_runs, 10);
-    assert_eq!(blocker.halfedge_unfilled_halfedges, 5);
-    assert_eq!(blocker.face_loop_incomplete_faces, 4);
+    assert_eq!(blocker.new_face_pair_unpaired_runs, 0);
+    assert_eq!(blocker.halfedge_unfilled_halfedges, 17);
+    assert_eq!(blocker.face_loop_incomplete_faces, 8);
+    assert_eq!(blocker.face_loop_non_loop_halfedges, 12);
     assert_eq!(blocker.source_edge_incident_gaps, 0);
     assert_eq!(blocker.loop_triangulation_failures, 0);
     assert_eq!(blocker.mesh_export_blocked_output_triangles, 0);

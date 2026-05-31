@@ -513,6 +513,7 @@ fn route_new_edge_vertices(
             left,
             i03,
             source_parameter.as_ref(),
+            &BTreeSet::new(),
             true,
             &allocation.output_vertex_origins,
             &mut source_edge_runs,
@@ -524,6 +525,8 @@ fn route_new_edge_vertices(
     let collision_offset = boolean03.p1q2.len();
     for (event, (pair, signed_count)) in boolean03.p2q1.iter().zip(i21.iter()).enumerate() {
         let source_parameter = source_edge_parameter(right, pair.edge, &boolean03.v21[event]);
+        let suppressed_face_pair_edge_faces =
+            suppressed_right_duplicate_face_pair_edge_faces(left, right, boolean03, event);
         let route = route_crossing_vertices(
             pair,
             *signed_count,
@@ -532,6 +535,7 @@ fn route_new_edge_vertices(
             right,
             i30,
             source_parameter.as_ref(),
+            &suppressed_face_pair_edge_faces,
             false,
             &allocation.output_vertex_origins,
             &mut source_edge_runs,
@@ -586,6 +590,7 @@ fn route_crossing_vertices(
     edge_mesh: &ExactMesh,
     source_signed_counts: &[i32],
     source_parameter: Option<&ExactReal>,
+    suppressed_face_pair_edge_faces: &BTreeSet<usize>,
     fwd: bool,
     origins: &[ExactBoolMeshOutputVertexOrigin],
     source_edge_runs: &mut BTreeMap<(u8, usize), SourceEdgePointBucket>,
@@ -603,7 +608,7 @@ fn route_crossing_vertices(
     };
 
     let dir = signed_count < 0;
-    let suppress_face_pair_points = source_tail_face_pair_owned_by_source_edge(
+    let suppress_all_face_pair_points = source_tail_face_pair_owned_by_source_edge(
         pair,
         dir,
         source_signed_counts,
@@ -644,7 +649,9 @@ fn route_crossing_vertices(
             .points
             .push(source_point);
 
-        if !suppress_face_pair_points {
+        if !suppress_all_face_pair_points
+            && !suppressed_face_pair_edge_faces.contains(&primary_edge_face)
+        {
             let primary_point = ExactBoolMeshRoutedEdgePoint {
                 is_tail: if fwd { !dir } else { dir },
                 ..source_point
@@ -654,7 +661,9 @@ fn route_crossing_vertices(
                 .or_default()
                 .push(primary_point);
 
-            if let Some(paired_edge_face) = paired_edge_face {
+            if let Some(paired_edge_face) = paired_edge_face
+                && !suppressed_face_pair_edge_faces.contains(&paired_edge_face)
+            {
                 let paired_point = ExactBoolMeshRoutedEdgePoint {
                     is_tail: if fwd { dir } else { !dir },
                     ..source_point
@@ -669,10 +678,15 @@ fn route_crossing_vertices(
 
     RouteCrossingVertices {
         missing_source_edge_adjacencies,
-        suppressed_source_tail_face_pair_points: if suppress_face_pair_points {
+        suppressed_source_tail_face_pair_points: if suppress_all_face_pair_points {
             count * (1 + usize::from(paired_edge_face.is_some()))
         } else {
-            0
+            count
+                * (usize::from(suppressed_face_pair_edge_faces.contains(&primary_edge_face))
+                    + usize::from(
+                        paired_edge_face
+                            .is_some_and(|face| suppressed_face_pair_edge_faces.contains(&face)),
+                    ))
         },
     }
 }
@@ -705,6 +719,88 @@ fn source_tail_face_pair_owned_by_source_edge(
         return false;
     };
     signed_abs(signed_count) > 0 && source_point_is_tail == (signed_count > 0)
+}
+
+fn suppressed_right_duplicate_face_pair_edge_faces(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    boolean03: &ExactBoolMeshBoolean03,
+    right_event: usize,
+) -> BTreeSet<usize> {
+    let Some(right_pair) = boolean03.p2q1.get(right_event) else {
+        return BTreeSet::new();
+    };
+    let Some(right_point) = boolean03.v21.get(right_event) else {
+        return BTreeSet::new();
+    };
+    if right_source_halfedge_opposite_face_count(boolean03, right_pair) < 3 {
+        return BTreeSet::new();
+    }
+    let has_left_edge_owner =
+        boolean03
+            .p1q2
+            .iter()
+            .zip(boolean03.v12.iter())
+            .any(|(left_pair, left_point)| {
+                same_point3(left_point, right_point)
+                    && face_contains_edge(left, right_pair.face, left_pair.edge)
+                    && face_contains_edge(right, left_pair.face, right_pair.edge)
+            });
+    if !has_left_edge_owner {
+        return BTreeSet::new();
+    }
+
+    incident_faces_for_source_halfedge(right.triangles(), right_pair.source_halfedge)
+        .into_iter()
+        .filter(|right_face| {
+            let mut same_point_left_owner = false;
+            let mut other_left_owner = false;
+            for (left_pair, left_point) in boolean03.p1q2.iter().zip(boolean03.v12.iter()) {
+                if left_pair.face != *right_face {
+                    continue;
+                }
+                let left_incident_faces =
+                    incident_faces_for_source_halfedge(left.triangles(), left_pair.source_halfedge);
+                if !left_incident_faces.contains(&right_pair.face) {
+                    continue;
+                }
+                if same_point3(left_point, right_point) {
+                    same_point_left_owner = true;
+                } else {
+                    other_left_owner = true;
+                }
+            }
+            same_point_left_owner || !other_left_owner
+        })
+        .collect()
+}
+
+fn right_source_halfedge_opposite_face_count(
+    boolean03: &ExactBoolMeshBoolean03,
+    right_pair: &ExactBoolMeshEdgeFacePair,
+) -> usize {
+    boolean03
+        .p2q1
+        .iter()
+        .filter(|pair| {
+            pair.source_halfedge == right_pair.source_halfedge && pair.edge == right_pair.edge
+        })
+        .map(|pair| pair.face)
+        .collect::<BTreeSet<_>>()
+        .len()
+}
+
+fn face_contains_edge(mesh: &ExactMesh, face: usize, edge: [usize; 2]) -> bool {
+    let Some(triangle) = mesh.triangles().get(face).map(|triangle| triangle.0) else {
+        return false;
+    };
+    triangle.contains(&edge[0]) && triangle.contains(&edge[1])
+}
+
+fn same_point3(left: &Point3, right: &Point3) -> bool {
+    compare_reals(&left.x, &right.x).value() == Some(Ordering::Equal)
+        && compare_reals(&left.y, &right.y).value() == Some(Ordering::Equal)
+        && compare_reals(&left.z, &right.z).value() == Some(Ordering::Equal)
 }
 
 fn face_pair_key(pair: &ExactBoolMeshEdgeFacePair, edge_face: usize) -> (usize, usize) {

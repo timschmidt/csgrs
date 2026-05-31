@@ -701,14 +701,15 @@ pub struct ExactBoolMeshNewEdgeVertexStage {
     pub face_pair_runs: Vec<ExactBoolMeshFacePairPointRun>,
     /// Events whose source edge did not expose the expected opposite face.
     pub missing_source_edge_adjacencies: usize,
-    /// Face-pair point insertions deliberately suppressed because the same
-    /// exact source-tail `Kernel12` row already owns the retained endpoint.
+    /// Face-pair point insertions deliberately suppressed because another
+    /// exact owner already covers that boolmesh boundary point.
     ///
     /// Legacy boolmesh's coplanar ownership can consume such a row through the
-    /// source-edge `pt_old` bucket without also creating a dangling
-    /// `append_new_edges` fragment.  The exact port counts those suppressed
-    /// `pt_new` entries so validation can distinguish a ported ownership rule
-    /// from an accidental loss of topology.
+    /// source-edge `pt_old` bucket or a same-coordinate left-edge/right-face
+    /// row without also creating a dangling `append_new_edges` fragment.  The
+    /// exact port counts those suppressed `pt_new` entries so validation can
+    /// distinguish a ported ownership rule from an accidental loss of
+    /// topology.
     pub suppressed_source_tail_face_pair_points: usize,
 }
 
