@@ -3897,6 +3897,17 @@ fn boolean_closed_boundary_only_contact_meshes(
     if !certified_closed_boundary_only_contact(left, right)? {
         return Ok(None);
     }
+    if operation == ExactBooleanOperation::Union
+        && !certify_boundary_touching_report(left, right)?.is_certified()
+        && let Some(result) = boolean_completed_boolmesh_port_meshes(
+            left,
+            right,
+            ExactBooleanOperation::Union,
+            validation,
+        )
+    {
+        return Ok(Some(result));
+    }
     let (mesh, shortcut) = match operation {
         ExactBooleanOperation::Union => (
             concatenate_meshes_with_options(
@@ -3942,6 +3953,16 @@ fn boolean_closed_boundary_touching_union(
             "exact closed-boundary-touch union certificate did not replay",
         ))
     })?;
+    if !certify_boundary_touching_report(left, right)?.is_certified()
+        && let Some(result) = boolean_completed_boolmesh_port_meshes(
+            left,
+            right,
+            ExactBooleanOperation::Union,
+            validation,
+        )
+    {
+        return Ok(result);
+    }
     Ok(certified_shortcut_result(
         concatenate_meshes_with_options(
             left,
@@ -5524,6 +5545,22 @@ fn boolean_boolmesh_port_meshes(
             DiagnosticKind::UnsupportedExactOperation,
             format!("exact boolmesh port failed: {error:?}"),
         ))),
+    }
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn boolean_completed_boolmesh_port_meshes(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Option<ExactBooleanResult> {
+    match execute_exact_boolmesh_port(left, right, operation, validation) {
+        Ok(execution) => Some(certified_shortcut_result(
+            execution.mesh,
+            execution.shortcut,
+        )),
+        Err(_) => None,
     }
 }
 

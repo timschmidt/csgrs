@@ -34959,7 +34959,7 @@ fn exact_boolmesh_boundary_contact_replays_closure_faces() {
     assert_eq!(
         public_result.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ClosedBoundaryTouchingUnion
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::BoolMeshSplit
         }
     );
 }
