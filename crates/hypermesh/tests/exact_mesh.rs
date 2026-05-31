@@ -34436,8 +34436,9 @@ fn exact_boolmesh_kernel12_lowers_coplanar_interval_endpoints() {
     assert_eq!(stage.partial_source_edges.unpaired_runs, 0);
     assert_eq!(stage.new_face_pair_edges.unpaired_runs, 0);
     assert_eq!(stage.halfedge_assembly.unfilled_halfedges, 0);
-    assert_eq!(stage.face_loop_assembly.dropped_open_chain_halfedges, 6);
+    assert_eq!(stage.face_loop_assembly.dropped_open_chain_halfedges, 2);
     assert_eq!(stage.face_loop_assembly.non_loop_halfedges, 0);
+    assert_eq!(stage.loop_triangulation.dropped_degenerate_faces.len(), 2);
     assert!(stage.output_triangles.triangles.is_empty());
     assert!(stage.mesh_export.triangles.is_empty());
 
@@ -34520,7 +34521,7 @@ fn exact_boolmesh_kernel12_lowers_partial_positive_area_coplanar_overlap() {
             .triangulations
             .iter()
             .any(|triangulation| triangulation.output_face == 0
-                && triangulation.clipped_loop_indices == vec![2]),
+                && triangulation.clipped_loop_indices.contains(&2)),
         "boundary-covered coplanar seam loops should be clipped before the hypertri handoff"
     );
     assert_eq!(stage.output_triangles.missing_loop_triangulations, 0);
@@ -34565,7 +34566,7 @@ fn exact_boolmesh_source_edge_blocker_retains_boolean45_counters() {
         .as_ref()
         .expect("nonconvex source-edge split fixture should expose the next boolmesh blocker");
     let stage = workspace.boolean45.as_ref().unwrap();
-    assert_eq!(stage.face_loop_assembly.dropped_open_chain_halfedges, 16);
+    assert_eq!(stage.face_loop_assembly.dropped_open_chain_halfedges, 15);
     assert_eq!(
         blocker.stage,
         hypermesh::exact::ExactBoolMeshKernelStage::FaceAssembly
@@ -34576,7 +34577,7 @@ fn exact_boolmesh_source_edge_blocker_retains_boolean45_counters() {
     assert_eq!(blocker.new_face_pair_unpaired_runs, 0);
     assert_eq!(blocker.halfedge_unfilled_halfedges, 0);
     assert_eq!(blocker.face_loop_incomplete_faces, 0);
-    assert_eq!(blocker.face_loop_non_loop_halfedges, 14);
+    assert_eq!(blocker.face_loop_non_loop_halfedges, 8);
     assert_eq!(blocker.source_edge_incident_gaps, 0);
     assert_eq!(blocker.loop_triangulation_failures, 0);
     assert_eq!(blocker.mesh_export_blocked_output_triangles, 0);

@@ -22,14 +22,19 @@ pub(super) fn assemble_output_face_loops(
     halfedges: &ExactBoolMeshHalfedgeAssemblyStage,
     face_halfedge_offsets: &[usize],
     exact_degenerate_halfedges: &[bool],
+    canonical_output_vertices: &[usize],
 ) -> ExactBoolMeshFaceLoopAssemblyStage {
-    let mut stage = ExactBoolMeshFaceLoopAssemblyStage::default();
+    let mut stage = ExactBoolMeshFaceLoopAssemblyStage {
+        canonical_output_vertices: canonical_output_vertices.to_vec(),
+        ..ExactBoolMeshFaceLoopAssemblyStage::default()
+    };
     for output_face in 0..face_halfedge_offsets.len().saturating_sub(1) {
         assemble_output_face_loop(
             output_face,
             halfedges,
             face_halfedge_offsets,
             exact_degenerate_halfedges,
+            canonical_output_vertices,
             &mut stage,
         );
     }
@@ -41,6 +46,7 @@ fn assemble_output_face_loop(
     halfedges: &ExactBoolMeshHalfedgeAssemblyStage,
     face_halfedge_offsets: &[usize],
     exact_degenerate_halfedges: &[bool],
+    canonical_output_vertices: &[usize],
     stage: &mut ExactBoolMeshFaceLoopAssemblyStage,
 ) {
     let begin = face_halfedge_offsets[output_face];
@@ -93,7 +99,11 @@ fn assemble_output_face_loop(
             loop_vertices.push(halfedge.tail);
             pop_consumed(&mut tail_to_halfedges, halfedge.tail, current);
 
-            if halfedge.head == loop_vertices[0] {
+            if halfedge.head == loop_vertices[0]
+                || (halfedge_chain_is_new_face_pair(halfedges, &loop_halfedges)
+                    && canonical_vertex(canonical_output_vertices, halfedge.head)
+                        == canonical_vertex(canonical_output_vertices, loop_vertices[0]))
+            {
                 stage.loops.push(ExactBoolMeshOutputFaceLoop {
                     output_face,
                     halfedges: loop_halfedges,
@@ -102,7 +112,19 @@ fn assemble_output_face_loop(
                 break;
             }
 
-            let Some(next) = pop_next_for_tail(&mut tail_to_halfedges, halfedge.head) else {
+            let next = pop_next_for_tail(&mut tail_to_halfedges, halfedge.head).or_else(|| {
+                if halfedge_chain_is_new_face_pair(halfedges, &loop_halfedges) {
+                    pop_next_new_face_pair_for_canonical_tail(
+                        &mut tail_to_halfedges,
+                        canonical_vertex(canonical_output_vertices, halfedge.head),
+                        halfedges,
+                        canonical_output_vertices,
+                    )
+                } else {
+                    None
+                }
+            });
+            let Some(next) = next else {
                 if halfedge_chain_is_partial_source_edge(halfedges, &loop_halfedges)
                     || halfedge_chain_is_exact_degenerate(
                         exact_degenerate_halfedges,
@@ -152,6 +174,23 @@ fn halfedge_chain_is_partial_source_edge(
         })
 }
 
+fn halfedge_chain_is_new_face_pair(
+    halfedges: &ExactBoolMeshHalfedgeAssemblyStage,
+    slots: &[usize],
+) -> bool {
+    !slots.is_empty()
+        && slots.iter().all(|slot| {
+            halfedges.output_halfedges[*slot]
+                .as_ref()
+                .is_some_and(|halfedge| {
+                    matches!(
+                        halfedge.source,
+                        ExactBoolMeshOutputHalfedgeSource::NewFacePair { .. }
+                    )
+                })
+        })
+}
+
 fn halfedge_chain_is_exact_degenerate(
     exact_degenerate_halfedges: &[bool],
     slots: &[usize],
@@ -163,6 +202,36 @@ fn halfedge_chain_is_exact_degenerate(
                 .copied()
                 .unwrap_or(false)
         })
+}
+
+fn pop_next_new_face_pair_for_canonical_tail(
+    tail_to_halfedges: &mut BTreeMap<usize, VecDeque<usize>>,
+    canonical_tail: usize,
+    halfedges: &ExactBoolMeshHalfedgeAssemblyStage,
+    canonical_output_vertices: &[usize],
+) -> Option<usize> {
+    let tail = tail_to_halfedges
+        .iter()
+        .filter_map(|(tail, queue)| {
+            let slot = queue.back().copied()?;
+            let halfedge = halfedges.output_halfedges[slot].as_ref()?;
+            let is_new_face_pair = matches!(
+                halfedge.source,
+                ExactBoolMeshOutputHalfedgeSource::NewFacePair { .. }
+            );
+            (is_new_face_pair
+                && canonical_vertex(canonical_output_vertices, *tail) == canonical_tail)
+                .then_some(*tail)
+        })
+        .next()?;
+    pop_next_for_tail(tail_to_halfedges, tail)
+}
+
+fn canonical_vertex(canonical_output_vertices: &[usize], vertex: usize) -> usize {
+    canonical_output_vertices
+        .get(vertex)
+        .copied()
+        .unwrap_or(vertex)
 }
 
 fn face_has_only_partial_source_edge_halfedges(
@@ -275,7 +344,7 @@ mod tests {
             ..ExactBoolMeshHalfedgeAssemblyStage::default()
         };
 
-        let stage = assemble_output_face_loops(&halfedges, &[0, 2], &[false, false]);
+        let stage = assemble_output_face_loops(&halfedges, &[0, 2], &[false, false], &[0, 1]);
 
         assert_eq!(stage.incomplete_faces, 0);
         assert_eq!(stage.repeated_halfedges, 0);
@@ -333,7 +402,8 @@ mod tests {
             ..ExactBoolMeshHalfedgeAssemblyStage::default()
         };
 
-        let stage = assemble_output_face_loops(&halfedges, &[0, 3], &[false, false, false]);
+        let stage =
+            assemble_output_face_loops(&halfedges, &[0, 3], &[false, false, false], &[0, 1, 2, 3]);
 
         assert!(stage.loops.is_empty());
         assert_eq!(stage.incomplete_faces, 0);
@@ -361,10 +431,52 @@ mod tests {
             ..ExactBoolMeshHalfedgeAssemblyStage::default()
         };
 
-        let stage = assemble_output_face_loops(&halfedges, &[0, 1], &[true]);
+        let stage = assemble_output_face_loops(&halfedges, &[0, 1], &[true], &[0, 1]);
 
         assert!(stage.loops.is_empty());
         assert_eq!(stage.non_loop_halfedges, 0);
         assert_eq!(stage.dropped_open_chain_halfedges, 1);
+    }
+
+    #[test]
+    fn new_face_pair_chain_can_close_by_exact_representative() {
+        let halfedges = ExactBoolMeshHalfedgeAssemblyStage {
+            output_halfedges: vec![
+                Some(ExactBoolMeshOutputHalfedge {
+                    tail: 0,
+                    head: 1,
+                    pair: 0,
+                    face: 0,
+                    source: ExactBoolMeshOutputHalfedgeSource::NewFacePair {
+                        side: ExactBoolMeshSide::Left,
+                        source_face: 0,
+                        opposite_face: 0,
+                        fragment: 0,
+                        forward: true,
+                    },
+                }),
+                Some(ExactBoolMeshOutputHalfedge {
+                    tail: 2,
+                    head: 3,
+                    pair: 1,
+                    face: 0,
+                    source: ExactBoolMeshOutputHalfedgeSource::NewFacePair {
+                        side: ExactBoolMeshSide::Left,
+                        source_face: 0,
+                        opposite_face: 0,
+                        fragment: 1,
+                        forward: true,
+                    },
+                }),
+            ],
+            ..ExactBoolMeshHalfedgeAssemblyStage::default()
+        };
+
+        let stage = assemble_output_face_loops(&halfedges, &[0, 2], &[false, false], &[0, 1, 1, 0]);
+
+        assert_eq!(stage.non_loop_halfedges, 0);
+        assert_eq!(stage.loops.len(), 1);
+        assert_eq!(stage.loops[0].halfedges, vec![0, 1]);
+        assert_eq!(stage.loops[0].vertices, vec![0, 2]);
     }
 }

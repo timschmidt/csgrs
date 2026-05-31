@@ -92,6 +92,14 @@ fn triangulate_output_face_loop_group(
     face_loops: &ExactBoolMeshFaceLoopAssemblyStage,
     stage: &mut ExactBoolMeshLoopTriangulationStage,
 ) {
+    let short_loop_indices = loop_indices
+        .iter()
+        .copied()
+        .filter(|loop_index| {
+            let face_loop = &face_loops.loops[*loop_index];
+            face_loop.vertices.len() < 3 || face_loop.halfedges.len() < 3
+        })
+        .collect::<Vec<_>>();
     let triangulatable_loop_indices = loop_indices
         .iter()
         .copied()
@@ -101,6 +109,15 @@ fn triangulate_output_face_loop_group(
         })
         .collect::<Vec<_>>();
     if triangulatable_loop_indices.is_empty() {
+        if all_short_loops_are_face_pair_seams(loop_indices, halfedges, face_loops) {
+            if let Some(face_loop) = loop_indices
+                .first()
+                .and_then(|loop_index| face_loops.loops.get(*loop_index))
+            {
+                stage.dropped_degenerate_faces.push(face_loop.output_face);
+            }
+            return;
+        }
         stage.short_loops += 1;
         return;
     }
@@ -167,6 +184,7 @@ fn triangulate_output_face_loop_group(
         stage.triangulation_failures += 1;
         return;
     };
+    clipped_loop_indices.extend(short_loop_indices);
     clipped_loop_indices.extend(degenerate_loop_indices);
     clipped_loop_indices.sort_unstable();
     let mut clipped_loop_indices = Some(clipped_loop_indices);
@@ -186,6 +204,34 @@ fn triangulate_output_face_loop_group(
         };
         stage.triangulations.push(triangulation);
     }
+}
+
+fn all_short_loops_are_face_pair_seams(
+    loop_indices: &[usize],
+    halfedges: &ExactBoolMeshHalfedgeAssemblyStage,
+    face_loops: &ExactBoolMeshFaceLoopAssemblyStage,
+) -> bool {
+    !loop_indices.is_empty()
+        && loop_indices.iter().all(|loop_index| {
+            let Some(face_loop) = face_loops.loops.get(*loop_index) else {
+                return false;
+            };
+            (face_loop.vertices.len() < 3 || face_loop.halfedges.len() < 3)
+                && !face_loop.halfedges.is_empty()
+                && face_loop.halfedges.iter().all(|slot| {
+                    halfedges
+                        .output_halfedges
+                        .get(*slot)
+                        .is_some_and(|halfedge| {
+                            halfedge.as_ref().is_some_and(|halfedge| {
+                                matches!(
+                                    halfedge.source,
+                                    ExactBoolMeshOutputHalfedgeSource::NewFacePair { .. }
+                                )
+                            })
+                        })
+                })
+        })
 }
 
 #[derive(Clone)]
@@ -904,6 +950,27 @@ mod tests {
             .collect()
     }
 
+    fn new_face_pair_halfedge(
+        tail: usize,
+        head: usize,
+        face: usize,
+        slot: usize,
+    ) -> Option<ExactBoolMeshOutputHalfedge> {
+        Some(ExactBoolMeshOutputHalfedge {
+            tail,
+            head,
+            pair: slot,
+            face,
+            source: ExactBoolMeshOutputHalfedgeSource::NewFacePair {
+                side: ExactBoolMeshSide::Left,
+                source_face: face,
+                opposite_face: 0,
+                fragment: slot,
+                forward: true,
+            },
+        })
+    }
+
     #[test]
     fn simple_triangle_uses_boolmesh_single_triangulate_branch() {
         let left = planar_source();
@@ -1270,6 +1337,92 @@ mod tests {
         assert_eq!(triangulation.clipped_loop_indices, vec![1]);
         assert_eq!(triangulation.vertices, vec![0, 1, 2, 3]);
         assert_eq!(triangulation.triangles.len(), 6);
+    }
+
+    #[test]
+    fn all_short_face_pair_seams_are_dropped_as_degenerate_faces() {
+        let left = planar_source();
+        let right = empty_mesh();
+        let boolean03 = empty_boolean03(left.vertices().len());
+        let allocation = source_allocation(left.vertices().len());
+        let halfedges = ExactBoolMeshHalfedgeAssemblyStage {
+            output_halfedges: vec![
+                new_face_pair_halfedge(0, 0, 0, 0),
+                new_face_pair_halfedge(1, 1, 0, 1),
+            ],
+            ..ExactBoolMeshHalfedgeAssemblyStage::default()
+        };
+        let face_loops = ExactBoolMeshFaceLoopAssemblyStage {
+            loops: vec![
+                ExactBoolMeshOutputFaceLoop {
+                    output_face: 0,
+                    halfedges: vec![0],
+                    vertices: vec![0],
+                },
+                ExactBoolMeshOutputFaceLoop {
+                    output_face: 0,
+                    halfedges: vec![1],
+                    vertices: vec![1],
+                },
+            ],
+            ..ExactBoolMeshFaceLoopAssemblyStage::default()
+        };
+
+        let stage = triangulate_output_face_loops(
+            &left,
+            &right,
+            &boolean03,
+            &allocation,
+            &halfedges,
+            &face_loops,
+        );
+
+        assert!(stage.triangulations.is_empty());
+        assert_eq!(stage.short_loops, 0);
+        assert_eq!(stage.dropped_degenerate_faces, vec![0]);
+    }
+
+    #[test]
+    fn positive_face_clips_short_face_pair_seam_loops() {
+        let left = planar_source();
+        let right = empty_mesh();
+        let boolean03 = empty_boolean03(left.vertices().len());
+        let allocation = source_allocation(left.vertices().len());
+        let mut output_halfedges = face_halfedges(&[0, 1, 2], 0);
+        output_halfedges.push(new_face_pair_halfedge(3, 3, 0, 3));
+        let halfedges = ExactBoolMeshHalfedgeAssemblyStage {
+            output_halfedges,
+            ..ExactBoolMeshHalfedgeAssemblyStage::default()
+        };
+        let face_loops = ExactBoolMeshFaceLoopAssemblyStage {
+            loops: vec![
+                ExactBoolMeshOutputFaceLoop {
+                    output_face: 0,
+                    halfedges: vec![0, 1, 2],
+                    vertices: vec![0, 1, 2],
+                },
+                ExactBoolMeshOutputFaceLoop {
+                    output_face: 0,
+                    halfedges: vec![3],
+                    vertices: vec![3],
+                },
+            ],
+            ..ExactBoolMeshFaceLoopAssemblyStage::default()
+        };
+
+        let stage = triangulate_output_face_loops(
+            &left,
+            &right,
+            &boolean03,
+            &allocation,
+            &halfedges,
+            &face_loops,
+        );
+
+        assert_eq!(stage.short_loops, 0);
+        assert_eq!(stage.dropped_degenerate_faces, Vec::<usize>::new());
+        assert_eq!(stage.triangulations.len(), 1);
+        assert_eq!(stage.triangulations[0].clipped_loop_indices, vec![1]);
     }
 
     #[test]

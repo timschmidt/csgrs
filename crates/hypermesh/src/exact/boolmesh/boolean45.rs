@@ -242,10 +242,13 @@ pub(super) fn size_output_stage(
         &vertex_allocation,
         &halfedge_assembly,
     );
+    let canonical_output_vertices =
+        canonical_output_vertices(left, right, boolean03, &vertex_allocation);
     let face_loop_assembly = assemble_output_face_loops(
         &halfedge_assembly,
         &face_halfedge_offsets,
         &exact_degenerate_halfedges,
+        &canonical_output_vertices,
     );
     let loop_triangulation = triangulate_output_face_loops(
         left,
@@ -291,6 +294,36 @@ pub(super) fn size_output_stage(
             .sum(),
         source_edge_incident_gaps,
     }
+}
+
+fn canonical_output_vertices(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    boolean03: &ExactBoolMeshBoolean03,
+    allocation: &ExactBoolMeshOutputVertexAllocation,
+) -> Vec<usize> {
+    let mut canonical = (0..allocation.output_vertex_origins.len()).collect::<Vec<_>>();
+    let mut points = Vec::with_capacity(allocation.output_vertex_origins.len());
+    for vertex in 0..allocation.output_vertex_origins.len() {
+        points.push(output_vertex_point(
+            vertex, allocation, boolean03, left, right,
+        ));
+    }
+    for vertex in 0..points.len() {
+        let Some(point) = &points[vertex] else {
+            continue;
+        };
+        for prior in 0..vertex {
+            let Some(prior_point) = &points[prior] else {
+                continue;
+            };
+            if same_point3(prior_point, point) {
+                canonical[vertex] = canonical[prior];
+                break;
+            }
+        }
+    }
+    canonical
 }
 
 fn exact_degenerate_output_halfedges(

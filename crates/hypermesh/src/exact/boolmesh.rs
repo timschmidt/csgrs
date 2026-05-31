@@ -1016,6 +1016,12 @@ pub struct ExactBoolMeshOutputFaceLoop {
 #[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub struct ExactBoolMeshFaceLoopAssemblyStage {
+    /// Canonical exact-coordinate representative for each output vertex.
+    ///
+    /// This is used only to validate face-loop walks that were closed by an
+    /// exact `NewFacePair` endpoint equality before final cleanup welds
+    /// coincident output slots.
+    pub canonical_output_vertices: Vec<usize>,
     /// Boundary loops assembled by following `head -> next tail` per face.
     pub loops: Vec<ExactBoolMeshOutputFaceLoop>,
     /// Output faces skipped because at least one sized halfedge slot is still
@@ -3415,7 +3421,7 @@ fn validate_boolean45_loop_triangulation(
         .filter(|loop_indices| {
             !loop_indices.iter().any(|loop_index| {
                 triangulation_face_loop_is_usable(&stage.face_loop_assembly.loops[*loop_index])
-            })
+            }) && !triangulation_loop_group_is_all_short_face_pair_seams(stage, loop_indices)
         })
         .count();
     if stage.loop_triangulation.short_loops != expected_short_loops {
@@ -3447,9 +3453,9 @@ fn validate_boolean45_loop_triangulation(
             return Err(ExactBoolMeshValidationError::Boolean45LoopTriangulationMismatch);
         };
         if !dropped_faces.insert(*output_face)
-            || !loop_indices.iter().any(|loop_index| {
+            || !(loop_indices.iter().any(|loop_index| {
                 triangulation_face_loop_is_usable(&stage.face_loop_assembly.loops[*loop_index])
-            })
+            }) || triangulation_loop_group_is_all_short_face_pair_seams(stage, loop_indices))
         {
             return Err(ExactBoolMeshValidationError::Boolean45LoopTriangulationMismatch);
         }
@@ -3504,7 +3510,7 @@ fn validate_boolean45_loop_triangulation(
             })
             || clipped_loops.iter().any(|loop_index| {
                 !loop_indices.contains(loop_index)
-                    || !triangulation_face_loop_is_usable(
+                    || !triangulation_face_loop_can_be_clipped(
                         &stage.face_loop_assembly.loops[*loop_index],
                     )
                     || component_loops.contains(loop_index)
@@ -3551,7 +3557,7 @@ fn validate_boolean45_loop_triangulation(
             .iter()
             .copied()
             .filter(|loop_index| {
-                triangulation_face_loop_is_usable(&stage.face_loop_assembly.loops[*loop_index])
+                triangulation_face_loop_can_be_clipped(&stage.face_loop_assembly.loops[*loop_index])
             })
             .collect::<BTreeSet<_>>();
         let mut actual = covered_loops_by_face
@@ -3616,10 +3622,60 @@ fn triangulation_face_loop_is_usable(face_loop: &ExactBoolMeshOutputFaceLoop) ->
 }
 
 #[cfg(feature = "exact-triangulation")]
+fn triangulation_face_loop_is_short(face_loop: &ExactBoolMeshOutputFaceLoop) -> bool {
+    face_loop.vertices.len() < 3 || face_loop.halfedges.len() < 3
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn triangulation_face_loop_can_be_clipped(face_loop: &ExactBoolMeshOutputFaceLoop) -> bool {
+    triangulation_face_loop_is_usable(face_loop) || triangulation_face_loop_is_short(face_loop)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn triangulation_loop_group_is_all_short_face_pair_seams(
+    stage: &ExactBoolMeshBoolean45Stage,
+    loop_indices: &[usize],
+) -> bool {
+    !loop_indices.is_empty()
+        && loop_indices.iter().all(|loop_index| {
+            let Some(face_loop) = stage.face_loop_assembly.loops.get(*loop_index) else {
+                return false;
+            };
+            triangulation_face_loop_is_short(face_loop)
+                && !face_loop.halfedges.is_empty()
+                && face_loop.halfedges.iter().all(|slot| {
+                    stage
+                        .halfedge_assembly
+                        .output_halfedges
+                        .get(*slot)
+                        .is_some_and(|halfedge| {
+                            halfedge.as_ref().is_some_and(|halfedge| {
+                                matches!(
+                                    halfedge.source,
+                                    ExactBoolMeshOutputHalfedgeSource::NewFacePair { .. }
+                                )
+                            })
+                        })
+                })
+        })
+}
+
+#[cfg(feature = "exact-triangulation")]
 fn validate_boolean45_face_loops(
     stage: &ExactBoolMeshBoolean45Stage,
 ) -> Result<(), ExactBoolMeshValidationError> {
     let output_face_count = stage.face_halfedge_offsets.len().saturating_sub(1);
+    if stage.face_loop_assembly.canonical_output_vertices.len()
+        != stage.vertex_allocation.output_vertex_origins.len()
+        || stage
+            .face_loop_assembly
+            .canonical_output_vertices
+            .iter()
+            .enumerate()
+            .any(|(vertex, canonical)| *canonical > vertex)
+    {
+        return Err(ExactBoolMeshValidationError::Boolean45FaceLoopMismatch);
+    }
     let expected_incomplete_faces = (0..output_face_count)
         .filter(|face| {
             let begin = stage.face_halfedge_offsets[*face];
@@ -3666,7 +3722,19 @@ fn validate_boolean45_face_loops(
             else {
                 return Err(ExactBoolMeshValidationError::Boolean45FaceLoopMismatch);
             };
-            if halfedge.head != next_halfedge.tail {
+            let head = stage
+                .face_loop_assembly
+                .canonical_output_vertices
+                .get(halfedge.head)
+                .copied()
+                .unwrap_or(halfedge.head);
+            let next_tail = stage
+                .face_loop_assembly
+                .canonical_output_vertices
+                .get(next_halfedge.tail)
+                .copied()
+                .unwrap_or(next_halfedge.tail);
+            if halfedge.head != next_halfedge.tail && head != next_tail {
                 return Err(ExactBoolMeshValidationError::Boolean45FaceLoopMismatch);
             }
         }
