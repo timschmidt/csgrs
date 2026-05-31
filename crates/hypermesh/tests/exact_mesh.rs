@@ -34685,7 +34685,28 @@ fn exact_boolmesh_boundary_contact_advances_to_triangulation_blocker() {
             .face_loop_assembly
             .dropped_open_chains
             .iter()
+            .all(|chain| chain.owner.is_some())
+    );
+    assert!(
+        stage
+            .face_loop_assembly
+            .dropped_open_chains
+            .iter()
             .any(|chain| chain.output_face == 20)
+    );
+    let mut stale_dropped_chain_owner = workspace.clone();
+    stale_dropped_chain_owner
+        .boolean45
+        .as_mut()
+        .unwrap()
+        .face_loop_assembly
+        .dropped_open_chains[0]
+        .owner = None;
+    assert_eq!(
+        stale_dropped_chain_owner
+            .validate_against_sources(&left, &right)
+            .unwrap_err(),
+        hypermesh::exact::ExactBoolMeshValidationError::Boolean45FaceLoopMismatch
     );
     assert_eq!(stage.loop_triangulation.dropped_degenerate_faces, [20]);
     assert_eq!(stage.output_triangles.invalid_local_triangles, 0);

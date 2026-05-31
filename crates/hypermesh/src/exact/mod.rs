@@ -120,10 +120,10 @@ pub use boolean::{
 #[cfg(feature = "exact-triangulation")]
 pub use boolmesh::{
     ExactBoolMeshBoolean03, ExactBoolMeshBoolean45Stage, ExactBoolMeshDroppedOpenChain,
-    ExactBoolMeshEdgeEvent, ExactBoolMeshEdgeFacePair, ExactBoolMeshExecution,
-    ExactBoolMeshFaceLoopAssemblyStage, ExactBoolMeshFacePair, ExactBoolMeshFacePairPointRun,
-    ExactBoolMeshHalfedgeAssemblyStage, ExactBoolMeshKernel12Event, ExactBoolMeshKernelStage,
-    ExactBoolMeshLoopTriangulation, ExactBoolMeshLoopTriangulationStage,
+    ExactBoolMeshDroppedOpenChainOwner, ExactBoolMeshEdgeEvent, ExactBoolMeshEdgeFacePair,
+    ExactBoolMeshExecution, ExactBoolMeshFaceLoopAssemblyStage, ExactBoolMeshFacePair,
+    ExactBoolMeshFacePairPointRun, ExactBoolMeshHalfedgeAssemblyStage, ExactBoolMeshKernel12Event,
+    ExactBoolMeshKernelStage, ExactBoolMeshLoopTriangulation, ExactBoolMeshLoopTriangulationStage,
     ExactBoolMeshMeshExportStage, ExactBoolMeshNewEdgeVertexStage,
     ExactBoolMeshNewFacePairFragment, ExactBoolMeshNewFacePairRun, ExactBoolMeshNewFacePairStage,
     ExactBoolMeshOutputFaceLoop, ExactBoolMeshOutputHalfedge, ExactBoolMeshOutputHalfedgeSource,

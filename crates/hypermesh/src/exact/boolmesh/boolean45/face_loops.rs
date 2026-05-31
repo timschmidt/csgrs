@@ -13,9 +13,9 @@
 use std::collections::{BTreeMap, BTreeSet, VecDeque};
 
 use super::super::{
-    ExactBoolMeshDroppedOpenChain, ExactBoolMeshFaceLoopAssemblyStage,
-    ExactBoolMeshHalfedgeAssemblyStage, ExactBoolMeshOutputFaceLoop,
-    ExactBoolMeshOutputHalfedgeSource,
+    ExactBoolMeshDroppedOpenChain, ExactBoolMeshDroppedOpenChainOwner,
+    ExactBoolMeshFaceLoopAssemblyStage, ExactBoolMeshHalfedgeAssemblyStage,
+    ExactBoolMeshOutputFaceLoop, ExactBoolMeshOutputHalfedgeSource,
 };
 
 /// Assemble per-face closed boundary loops from emitted output halfedges.
@@ -135,6 +135,7 @@ fn assemble_output_face_loop(
                 {
                     push_dropped_open_chain(
                         stage,
+                        halfedges,
                         output_face,
                         loop_halfedges.clone(),
                         loop_vertices.clone(),
@@ -143,6 +144,7 @@ fn assemble_output_face_loop(
                     stage.non_loop_halfedges += loop_halfedges.len();
                     non_loop_open_chains.push(ExactBoolMeshDroppedOpenChain {
                         output_face,
+                        owner: dropped_open_chain_owner(halfedges, &loop_halfedges),
                         halfedges: loop_halfedges.clone(),
                         vertices: loop_vertices.clone(),
                     });
@@ -162,6 +164,7 @@ fn assemble_output_face_loop(
         if !unconsumed.is_empty() {
             non_loop_open_chains.push(ExactBoolMeshDroppedOpenChain {
                 output_face,
+                owner: dropped_open_chain_owner(halfedges, &unconsumed),
                 vertices: unconsumed
                     .iter()
                     .filter_map(|slot| {
@@ -190,6 +193,7 @@ fn assemble_output_face_loop(
 
 fn push_dropped_open_chain(
     stage: &mut ExactBoolMeshFaceLoopAssemblyStage,
+    stage_halfedges: &ExactBoolMeshHalfedgeAssemblyStage,
     output_face: usize,
     halfedges: Vec<usize>,
     vertices: Vec<usize>,
@@ -199,9 +203,46 @@ fn push_dropped_open_chain(
         .dropped_open_chains
         .push(ExactBoolMeshDroppedOpenChain {
             output_face,
+            owner: dropped_open_chain_owner(stage_halfedges, &halfedges),
             halfedges,
             vertices,
         });
+}
+
+fn dropped_open_chain_owner(
+    halfedges: &ExactBoolMeshHalfedgeAssemblyStage,
+    slots: &[usize],
+) -> Option<ExactBoolMeshDroppedOpenChainOwner> {
+    let mut owner = None;
+    for slot in slots {
+        let halfedge = halfedges.output_halfedges.get(*slot)?.as_ref()?;
+        let current = output_halfedge_source_owner(&halfedge.source);
+        match owner {
+            Some(existing) if existing != current => return None,
+            Some(_) => {}
+            None => owner = Some(current),
+        }
+    }
+    owner
+}
+
+fn output_halfedge_source_owner(
+    source: &ExactBoolMeshOutputHalfedgeSource,
+) -> ExactBoolMeshDroppedOpenChainOwner {
+    match source {
+        ExactBoolMeshOutputHalfedgeSource::PartialSourceEdge {
+            side, source_face, ..
+        }
+        | ExactBoolMeshOutputHalfedgeSource::NewFacePair {
+            side, source_face, ..
+        }
+        | ExactBoolMeshOutputHalfedgeSource::WholeSourceEdge {
+            side, source_face, ..
+        } => ExactBoolMeshDroppedOpenChainOwner {
+            side: *side,
+            source_face: *source_face,
+        },
+    }
 }
 
 fn halfedge_chain_is_source_edge(
@@ -374,8 +415,8 @@ fn pop_consumed(
 mod tests {
     use super::*;
     use crate::exact::{
-        ExactBoolMeshHalfedgeAssemblyStage, ExactBoolMeshOutputHalfedge,
-        ExactBoolMeshOutputHalfedgeSource, ExactBoolMeshSide,
+        ExactBoolMeshDroppedOpenChainOwner, ExactBoolMeshHalfedgeAssemblyStage,
+        ExactBoolMeshOutputHalfedge, ExactBoolMeshOutputHalfedgeSource, ExactBoolMeshSide,
     };
 
     #[test]
@@ -478,6 +519,13 @@ mod tests {
         assert_eq!(stage.repeated_halfedges, 0);
         assert_eq!(stage.non_loop_halfedges, 0);
         assert_eq!(stage.dropped_open_chain_halfedges, 3);
+        assert_eq!(
+            stage.dropped_open_chains[0].owner,
+            Some(ExactBoolMeshDroppedOpenChainOwner {
+                side: ExactBoolMeshSide::Left,
+                source_face: 0,
+            })
+        );
     }
 
     #[test]
@@ -504,6 +552,13 @@ mod tests {
         assert!(stage.loops.is_empty());
         assert_eq!(stage.non_loop_halfedges, 0);
         assert_eq!(stage.dropped_open_chain_halfedges, 1);
+        assert_eq!(
+            stage.dropped_open_chains[0].owner,
+            Some(ExactBoolMeshDroppedOpenChainOwner {
+                side: ExactBoolMeshSide::Left,
+                source_face: 0,
+            })
+        );
     }
 
     #[test]
@@ -546,6 +601,13 @@ mod tests {
         assert!(stage.loops.is_empty());
         assert_eq!(stage.non_loop_halfedges, 0);
         assert_eq!(stage.dropped_open_chain_halfedges, 2);
+        assert!(stage.dropped_open_chains.iter().all(|chain| {
+            chain.owner
+                == Some(ExactBoolMeshDroppedOpenChainOwner {
+                    side: ExactBoolMeshSide::Left,
+                    source_face: 0,
+                })
+        }));
     }
 
     #[test]
@@ -619,6 +681,13 @@ mod tests {
 
         assert_eq!(stage.non_loop_halfedges, 0);
         assert_eq!(stage.dropped_open_chain_halfedges, 2);
+        assert_eq!(
+            stage.dropped_open_chains[0].owner,
+            Some(ExactBoolMeshDroppedOpenChainOwner {
+                side: ExactBoolMeshSide::Left,
+                source_face: 0,
+            })
+        );
         assert_eq!(stage.loops.len(), 1);
         assert_eq!(stage.loops[0].halfedges, vec![2, 3]);
     }

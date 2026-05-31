@@ -1027,10 +1027,22 @@ pub struct ExactBoolMeshOutputFaceLoop {
 pub struct ExactBoolMeshDroppedOpenChain {
     /// Output face that contained the chain.
     pub output_face: usize,
+    /// Source face that owns this chain when all chain halfedges agree.
+    pub owner: Option<ExactBoolMeshDroppedOpenChainOwner>,
     /// Ordered output halfedge slots in the dropped chain.
     pub halfedges: Vec<usize>,
     /// Ordered output vertices at the chain halfedge tails.
     pub vertices: Vec<usize>,
+}
+
+/// Unambiguous source face owning a dropped open chain.
+#[cfg(feature = "exact-triangulation")]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct ExactBoolMeshDroppedOpenChainOwner {
+    /// Source mesh side that owns the face-local chain.
+    pub side: ExactBoolMeshSide,
+    /// Source face that owns the face-local chain.
+    pub source_face: usize,
 }
 
 /// Exact face-loop assembly over `boolean45` output halfedges.
@@ -1048,10 +1060,11 @@ pub struct ExactBoolMeshFaceLoopAssemblyStage {
     /// Replayable lower-dimensional open chains dropped before triangulation.
     ///
     /// Earlier ports exposed only [`Self::dropped_open_chain_halfedges`].
-    /// Retaining the exact face-local chain topology is the handoff needed for
-    /// boundary-contact reconstruction: future stages can tell which source
-    /// face lost a lower-dimensional walk and which ordered output vertices
-    /// must be paired with clipped coplanar face cells.
+    /// Retaining the exact face-local chain topology and its unambiguous
+    /// source owner is the handoff needed for boundary-contact reconstruction:
+    /// future stages can tell which source face lost a lower-dimensional walk
+    /// and which ordered output vertices must be paired with clipped coplanar
+    /// face cells.
     pub dropped_open_chains: Vec<ExactBoolMeshDroppedOpenChain>,
     /// Output faces skipped because at least one sized halfedge slot is still
     /// unfilled by earlier boolmesh stages.
@@ -4022,6 +4035,8 @@ fn validate_boolean45_face_loops(
             return Err(ExactBoolMeshValidationError::Boolean45FaceLoopMismatch);
         }
         dropped_open_chain_halfedges += chain.halfedges.len();
+        let mut inferred_owner = None::<ExactBoolMeshDroppedOpenChainOwner>;
+        let mut mixed_owners = false;
         for (index, slot) in chain.halfedges.iter().copied().enumerate() {
             if covered.contains(&slot) || !dropped_covered.insert(slot) {
                 return Err(ExactBoolMeshValidationError::Boolean45FaceLoopMismatch);
@@ -4037,6 +4052,16 @@ fn validate_boolean45_face_loops(
             if halfedge.face != chain.output_face || halfedge.tail != chain.vertices[index] {
                 return Err(ExactBoolMeshValidationError::Boolean45FaceLoopMismatch);
             }
+            let current_owner = output_halfedge_source_owner(&halfedge.source);
+            match inferred_owner {
+                Some(owner) if owner != current_owner => mixed_owners = true,
+                Some(_) => {}
+                None => inferred_owner = Some(current_owner),
+            }
+        }
+        let inferred_owner = if mixed_owners { None } else { inferred_owner };
+        if chain.owner != inferred_owner {
+            return Err(ExactBoolMeshValidationError::Boolean45FaceLoopMismatch);
         }
     }
     if dropped_open_chain_halfedges != stage.face_loop_assembly.dropped_open_chain_halfedges {
@@ -4061,6 +4086,26 @@ fn validate_boolean45_face_loops(
         return Err(ExactBoolMeshValidationError::Boolean45FaceLoopMismatch);
     }
     Ok(())
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn output_halfedge_source_owner(
+    source: &ExactBoolMeshOutputHalfedgeSource,
+) -> ExactBoolMeshDroppedOpenChainOwner {
+    match source {
+        ExactBoolMeshOutputHalfedgeSource::PartialSourceEdge {
+            side, source_face, ..
+        }
+        | ExactBoolMeshOutputHalfedgeSource::NewFacePair {
+            side, source_face, ..
+        }
+        | ExactBoolMeshOutputHalfedgeSource::WholeSourceEdge {
+            side, source_face, ..
+        } => ExactBoolMeshDroppedOpenChainOwner {
+            side: *side,
+            source_face: *source_face,
+        },
+    }
 }
 
 #[cfg(feature = "exact-triangulation")]
