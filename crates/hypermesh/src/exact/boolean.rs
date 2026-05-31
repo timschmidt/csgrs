@@ -1835,7 +1835,7 @@ pub fn boolean_exact_with_boundary_policy(
                 Ok(Some(result)) => return Ok(result),
                 Ok(None) => {}
                 Err(error) => {
-                    if error_has_duplicate_directed_edges(&error) {
+                    if error_can_retry_certified_boolmesh(&error) {
                         match execute_exact_boolmesh_port(left, right, operation, validation) {
                             Ok(execution) => {
                                 return Ok(certified_shortcut_result(
@@ -5425,11 +5425,15 @@ fn boolmesh_late_export_blocker_error(stage: ExactBoolMeshKernelStage) -> MeshEr
 }
 
 #[cfg(feature = "exact-triangulation")]
-fn error_has_duplicate_directed_edges(error: &MeshError) -> bool {
-    error
-        .diagnostics
-        .iter()
-        .any(|diagnostic| diagnostic.kind == DiagnosticKind::DuplicateDirectedEdge)
+fn error_can_retry_certified_boolmesh(error: &MeshError) -> bool {
+    error.diagnostics.iter().any(|diagnostic| {
+        matches!(
+            diagnostic.kind,
+            DiagnosticKind::BoundaryEdge
+                | DiagnosticKind::DegenerateTriangle
+                | DiagnosticKind::DuplicateDirectedEdge
+        )
+    })
 }
 
 #[cfg(feature = "exact-triangulation")]
