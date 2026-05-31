@@ -34642,6 +34642,7 @@ fn exact_boolmesh_boundary_contact_advances_to_triangulation_blocker() {
     assert_eq!(blocker.partial_source_edge_unpaired_runs, 0);
     assert_eq!(blocker.new_face_pair_unpaired_runs, 0);
     assert_eq!(blocker.face_loop_non_loop_halfedges, 0);
+    assert_eq!(blocker.mesh_export_boundary_edges, 8);
 
     let stage = workspace
         .boolean45
@@ -34770,6 +34771,33 @@ fn exact_boolmesh_boundary_contact_advances_to_triangulation_blocker() {
     assert_eq!(stage.mesh_export.invalid_output_triangles, 0);
     assert_eq!(stage.mesh_export.orientation_failures, 0);
     assert_eq!(stage.mesh_export.triangles.len(), 18);
+    assert_eq!(
+        stage.mesh_export.boundary_edges,
+        vec![
+            [5, 0],
+            [0, 7],
+            [1, 3],
+            [7, 1],
+            [3, 5],
+            [12, 13],
+            [14, 12],
+            [13, 14],
+        ]
+    );
+    let mut stale_mesh_export_boundary = workspace.clone();
+    stale_mesh_export_boundary
+        .boolean45
+        .as_mut()
+        .unwrap()
+        .mesh_export
+        .boundary_edges
+        .pop();
+    assert_eq!(
+        stale_mesh_export_boundary
+            .validate_against_sources(&left, &right)
+            .unwrap_err(),
+        hypermesh::exact::ExactBoolMeshValidationError::Boolean45MeshExportMismatch
+    );
 
     let execution = hypermesh::exact::execute_exact_boolmesh_port(
         &left,

@@ -237,6 +237,8 @@ pub struct ExactBoolMeshPortBlocker {
     pub loop_triangulation_failures: usize,
     /// Output triangles blocked from mesh export.
     pub mesh_export_blocked_output_triangles: usize,
+    /// Boundary edges left open by the staged mesh export.
+    pub mesh_export_boundary_edges: usize,
 }
 
 #[cfg(feature = "exact-triangulation")]
@@ -262,6 +264,7 @@ impl ExactBoolMeshPortBlocker {
             face_loop_non_loop_halfedges: 0,
             loop_triangulation_failures: 0,
             mesh_export_blocked_output_triangles: 0,
+            mesh_export_boundary_edges: 0,
         }
     }
 
@@ -292,6 +295,7 @@ impl ExactBoolMeshPortBlocker {
             face_loop_non_loop_halfedges: boolean45.face_loop_assembly.non_loop_halfedges,
             loop_triangulation_failures: boolean45.loop_triangulation.triangulation_failures,
             mesh_export_blocked_output_triangles: boolean45.mesh_export.blocked_output_triangles,
+            mesh_export_boundary_edges: boolean45.mesh_export.boundary_edges.len(),
         }
     }
 }
@@ -1271,6 +1275,8 @@ pub struct ExactBoolMeshMeshExportStage {
     pub steiner_points: Vec<ExactPoint3>,
     /// Triangle index buffer ready for final `ExactMesh` construction.
     pub triangles: Vec<Triangle>,
+    /// Directed triangle edges with no opposite export triangle.
+    pub boundary_edges: Vec<[usize; 2]>,
     /// Output vertex origins whose exact coordinates cannot be recovered.
     pub missing_vertex_coordinates: usize,
     /// Upstream loop-triangulation records that block final triangle export.
@@ -3586,8 +3592,40 @@ fn validate_boolean45_mesh_export(
             return Err(ExactBoolMeshValidationError::Boolean45MeshExportMismatch);
         }
     }
+    if stage.mesh_export.boundary_edges
+        != boolmesh_mesh_export_boundary_edges(&stage.mesh_export.triangles)
+    {
+        return Err(ExactBoolMeshValidationError::Boolean45MeshExportMismatch);
+    }
 
     Ok(())
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn boolmesh_mesh_export_boundary_edges(triangles: &[Triangle]) -> Vec<[usize; 2]> {
+    let mut edge_uses = BTreeMap::<[usize; 2], Vec<[usize; 2]>>::new();
+    for triangle in triangles {
+        for edge in boolmesh_triangle_edges(*triangle) {
+            edge_uses
+                .entry(boolmesh_sorted_edge(edge))
+                .or_default()
+                .push(edge);
+        }
+    }
+    edge_uses
+        .values()
+        .filter(|uses| uses.len() == 1)
+        .map(|uses| uses[0])
+        .collect()
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn boolmesh_sorted_edge(edge: [usize; 2]) -> [usize; 2] {
+    if edge[0] <= edge[1] {
+        edge
+    } else {
+        [edge[1], edge[0]]
+    }
 }
 
 #[cfg(feature = "exact-triangulation")]

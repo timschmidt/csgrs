@@ -52,6 +52,7 @@ pub(super) fn stage_mesh_export(
         vertex_count: allocation_vertex_count + output_triangles.steiner_points.len(),
         steiner_points: output_triangles.steiner_points.clone(),
         triangles: Vec::with_capacity(output_triangles.triangles.len()),
+        boundary_edges: Vec::new(),
         missing_vertex_coordinates,
         blocked_output_triangles: output_triangles.missing_loop_triangulations
             + output_triangles.invalid_local_triangles,
@@ -110,8 +111,39 @@ pub(super) fn stage_mesh_export(
         };
         stage.triangles.push(Triangle(oriented));
     }
+    stage.boundary_edges = mesh_export_boundary_edges(&stage.triangles);
 
     stage
+}
+
+fn mesh_export_boundary_edges(triangles: &[Triangle]) -> Vec<[usize; 2]> {
+    let mut edge_uses = BTreeMap::<[usize; 2], Vec<[usize; 2]>>::new();
+    for triangle in triangles {
+        for edge in directed_edges(triangle.0) {
+            edge_uses.entry(sorted_edge(edge)).or_default().push(edge);
+        }
+    }
+    edge_uses
+        .values()
+        .filter(|uses| uses.len() == 1)
+        .map(|uses| uses[0])
+        .collect()
+}
+
+fn directed_edges(vertices: [usize; 3]) -> [[usize; 2]; 3] {
+    [
+        [vertices[0], vertices[1]],
+        [vertices[1], vertices[2]],
+        [vertices[2], vertices[0]],
+    ]
+}
+
+fn sorted_edge(edge: [usize; 2]) -> [usize; 2] {
+    if edge[0] <= edge[1] {
+        edge
+    } else {
+        [edge[1], edge[0]]
+    }
 }
 
 fn operation_reverses_source_side(
