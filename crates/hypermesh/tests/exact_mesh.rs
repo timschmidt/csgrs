@@ -29450,6 +29450,42 @@ fn exact_coplanar_component_union_materializes_same_outer_disjoint_holed_fill() 
         hypermesh::exact::arrange_coplanar_surface_component_union(&left, &nested).is_none(),
         "nested retained holes belong to containment/copy or later planar work"
     );
+    let nested_preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &nested,
+        hypermesh::exact::ExactBooleanOperation::Union,
+    )
+    .expect("nested same-outer holes should classify arrangement union shortcut");
+    nested_preflight.validate().unwrap();
+    nested_preflight
+        .validate_against_sources(&left, &nested)
+        .unwrap();
+    assert_eq!(
+        nested_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
+    );
+    let nested_result = hypermesh::exact::boolean_exact(
+        &left,
+        &nested,
+        hypermesh::exact::ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("nested same-outer union should materialize through arrangement union");
+    nested_result
+        .validate_operation_against_sources(
+            &left,
+            &nested,
+            hypermesh::exact::ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        nested_result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::CoplanarSurfaceArrangementUnion
+        }
+    );
 
     let preflight = hypermesh::exact::preflight_boolean_exact(
         &left,

@@ -5774,6 +5774,42 @@ fn exercise_same_outer_holed_coplanar_filled_union() {
     )
     .unwrap();
 
+    let nested_hole = ExactMesh::from_i64_triangles_with_policy(
+        &[1, 1, 0, 5, 1, 0, 5, 5, 0, 1, 5, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("same-outer nested hole fixture must import");
+    let nested = arrange_coplanar_convex_surface_holed_difference(&outer, &nested_hole)
+        .expect("same-outer nested annulus should materialize")
+        .mesh;
+    assert!(arrange_coplanar_surface_component_union(&left, &nested).is_none());
+    let nested_preflight = preflight_boolean_exact(&left, &nested, ExactBooleanOperation::Union)
+        .expect("same-outer nested union preflight should classify arrangement shortcut");
+    nested_preflight.validate().unwrap();
+    nested_preflight
+        .validate_against_sources(&left, &nested)
+        .unwrap();
+    assert_eq!(
+        nested_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
+    );
+    hypermesh::exact::boolean_exact(
+        &left,
+        &nested,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("same-outer nested union should materialize through arrangement union")
+    .validate_operation_against_sources(
+        &left,
+        &nested,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
+
     let preflight = preflight_boolean_exact(&left, &right, ExactBooleanOperation::Union)
         .expect("same-outer filled union preflight should classify shortcut");
     preflight.validate().unwrap();
