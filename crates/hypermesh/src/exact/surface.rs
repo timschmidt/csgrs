@@ -5138,9 +5138,10 @@ fn coplanar_mesh_pairwise_intersection_area2(
 /// same exact-cell replay now also accepts rectilinear nonconvex right holes
 /// cut by rectilinear left holes when every strict nested left hole survives as
 /// an output hole ring. Identical right/left holes and right holes strictly
-/// inside a left hole contribute no area; point contact, edge contact,
-/// non-rectilinear nonconvex overlap, and crossing boundaries outside this
-/// bounded certificate reject to the general planar arrangement layer.
+/// inside a left hole contribute no area. Lower-dimensional contact with a
+/// left hole removes no material and is ignored; non-rectilinear nonconvex
+/// overlap and crossing boundaries outside this bounded certificate reject to
+/// the general planar arrangement layer.
 ///
 /// The source rings are recovered by exact mesh incidence, and the final area
 /// equation is replayed as `area(left) - area(left ∩ right) == area(output)`.
@@ -5267,22 +5268,30 @@ fn same_outer_holed_difference_components(
             }
             match simple_polygon_interaction(left_hole, right_hole, projection)? {
                 SimplePolygonInteraction::Disjoint => {}
-                SimplePolygonInteraction::PointOnly => return None,
+                SimplePolygonInteraction::PointOnly => {}
                 SimplePolygonInteraction::Connected => {
-                    connected_cutters.push(left_hole.clone());
+                    match simple_polygon_contact(left_hole, right_hole, projection)? {
+                        SimplePolygonContact::Disjoint
+                        | SimplePolygonContact::PointOnly
+                        | SimplePolygonContact::PositiveLengthBoundary => continue,
+                        SimplePolygonContact::PositiveArea => {}
+                    }
                     if let (Some(right_rect), Some(left_rect)) = (
                         projected_axis_aligned_rectangle(right_hole, projection),
                         projected_axis_aligned_rectangle(left_hole, projection),
                     ) {
                         if !rectangles_overlap_with_positive_area(&right_rect, &left_rect)? {
-                            return None;
+                            continue;
                         }
+                        connected_cutters.push(left_hole.clone());
                         rectangular_cutters.push(left_rect);
                     } else if let Some(cutter) =
                         convex_retained_hole_intersection_polygon(left_hole, right_hole, projection)
                     {
+                        connected_cutters.push(left_hole.clone());
                         convex_cutters.push(cutter);
                     } else {
+                        connected_cutters.push(left_hole.clone());
                         requires_orthogonal_replay = true;
                     }
                 }
@@ -5856,6 +5865,12 @@ fn same_outer_holed_no_hole_difference_rings(
                 SimplePolygonInteraction::Disjoint => {}
                 SimplePolygonInteraction::PointOnly => {}
                 SimplePolygonInteraction::Connected => {
+                    match simple_polygon_contact(left_hole, right_hole, projection)? {
+                        SimplePolygonContact::Disjoint
+                        | SimplePolygonContact::PointOnly
+                        | SimplePolygonContact::PositiveLengthBoundary => continue,
+                        SimplePolygonContact::PositiveArea => {}
+                    }
                     if let (Some(right_rect), Some(left_rect)) = (
                         projected_axis_aligned_rectangle(right_hole, projection),
                         projected_axis_aligned_rectangle(left_hole, projection),

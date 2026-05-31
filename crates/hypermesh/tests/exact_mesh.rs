@@ -29861,6 +29861,42 @@ fn exact_coplanar_component_holed_union_retains_same_outer_common_holes() {
         .is_none(),
         "non-axis-aligned retained-hole edge contact is not a retained area certificate"
     );
+    let affine_touching_union =
+        hypermesh::exact::arrange_coplanar_surface_component_union(&affine_left, &affine_touching)
+            .expect("non-axis-aligned touching retained holes should fill the outer sheet");
+    affine_touching_union.validate().unwrap();
+    affine_touching_union
+        .validate_component_union_against_sources(&affine_left, &affine_touching)
+        .unwrap();
+    let affine_touching_preflight = hypermesh::exact::preflight_boolean_exact(
+        &affine_left,
+        &affine_touching,
+        hypermesh::exact::ExactBooleanOperation::Union,
+    )
+    .expect("non-axis-aligned touching retained union preflight should classify shortcut");
+    affine_touching_preflight.validate().unwrap();
+    affine_touching_preflight
+        .validate_against_sources(&affine_left, &affine_touching)
+        .unwrap();
+    assert_eq!(
+        affine_touching_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
+    );
+    hypermesh::exact::boolean_exact(
+        &affine_left,
+        &affine_touching,
+        hypermesh::exact::ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("non-axis-aligned touching retained union should materialize")
+    .validate_operation_against_sources(
+        &affine_left,
+        &affine_touching,
+        hypermesh::exact::ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
 
     let orthogonal_outer = rect_surface_i64(&[(0, 0, 10, 10)]);
     let orthogonal_left_hole = rect_surface_i64(&[(2, 2, 6, 6), (6, 2, 8, 4)]);
@@ -31115,6 +31151,57 @@ fn exact_coplanar_component_difference_replays_nonrectilinear_nonconvex_same_out
     .validate_operation_against_sources(
         &left,
         &right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
+
+    let touching_right_hole = affine_rect_surface_i64(&[(8, 12, 12, 13)], origin, basis_u, basis_v);
+    let touching_right =
+        hypermesh::exact::arrange_coplanar_affine_surface_difference(&outer, &touching_right_hole)
+            .expect("non-axis-aligned edge-contact right hole should materialize")
+            .mesh;
+    assert!(
+        hypermesh::exact::arrange_coplanar_surface_component_holed_difference(
+            &left,
+            &touching_right
+        )
+        .is_none(),
+        "the edge-contact remnant has no retained holes"
+    );
+    let touching_difference =
+        hypermesh::exact::arrange_coplanar_surface_component_difference(&left, &touching_right)
+            .expect("non-axis-aligned edge-contact right hole should replay as one filled loop");
+    touching_difference.validate().unwrap();
+    touching_difference
+        .validate_component_difference_against_sources(&left, &touching_right)
+        .unwrap();
+    assert_eq!(touching_difference.polygon.len(), 4);
+    let touching_preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &touching_right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .expect("non-axis-aligned touching difference preflight should classify shortcut");
+    touching_preflight.validate().unwrap();
+    touching_preflight
+        .validate_against_sources(&left, &touching_right)
+        .unwrap();
+    assert_eq!(
+        touching_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementDifference
+    );
+    hypermesh::exact::boolean_exact(
+        &left,
+        &touching_right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("non-axis-aligned touching component difference should materialize")
+    .validate_operation_against_sources(
+        &left,
+        &touching_right,
         hypermesh::exact::ExactBooleanOperation::Difference,
         ValidationPolicy::ALLOW_BOUNDARY,
         hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,

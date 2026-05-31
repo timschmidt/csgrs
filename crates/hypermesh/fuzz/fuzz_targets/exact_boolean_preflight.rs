@@ -5480,6 +5480,57 @@ fn exercise_same_outer_holed_coplanar_component_difference() {
     )
     .unwrap();
 
+    let affine_touching_right_hole =
+        affine_rect_surface_i64(&[(8, 12, 12, 13)], origin, basis_u, basis_v);
+    let affine_touching_right =
+        arrange_coplanar_affine_surface_difference(&affine_outer, &affine_touching_right_hole)
+            .expect("same-outer affine touching difference right should materialize")
+            .mesh;
+    assert!(
+        arrange_coplanar_surface_component_holed_difference(
+            &affine_left,
+            &affine_touching_right,
+        )
+        .is_none()
+    );
+    let affine_touching_difference =
+        arrange_coplanar_surface_component_difference(&affine_left, &affine_touching_right)
+            .expect("same-outer affine touching difference should replay as one filled loop");
+    affine_touching_difference.validate().unwrap();
+    affine_touching_difference
+        .validate_component_difference_against_sources(&affine_left, &affine_touching_right)
+        .unwrap();
+    assert_eq!(affine_touching_difference.polygon.len(), 4);
+    let affine_touching_preflight = preflight_boolean_exact(
+        &affine_left,
+        &affine_touching_right,
+        ExactBooleanOperation::Difference,
+    )
+    .expect("same-outer affine touching difference preflight should classify shortcut");
+    affine_touching_preflight.validate().unwrap();
+    affine_touching_preflight
+        .validate_against_sources(&affine_left, &affine_touching_right)
+        .unwrap();
+    assert_eq!(
+        affine_touching_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementDifference
+    );
+    hypermesh::exact::boolean_exact(
+        &affine_left,
+        &affine_touching_right,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("same-outer affine touching component difference should materialize")
+    .validate_operation_against_sources(
+        &affine_left,
+        &affine_touching_right,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
+
     let mixed_outer = ExactMesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 14, 0, 0, 14, 14, 0, 0, 14, 0],
         &[0, 1, 2, 0, 2, 3],
@@ -6046,6 +6097,39 @@ fn exercise_same_outer_holed_coplanar_retained_union() {
     assert!(
         arrange_coplanar_surface_component_holed_union(&affine_left, &affine_touching).is_none()
     );
+    let affine_touching_union =
+        arrange_coplanar_surface_component_union(&affine_left, &affine_touching)
+            .expect("same-outer affine touching retained holes should fill the outer sheet");
+    affine_touching_union.validate().unwrap();
+    affine_touching_union
+        .validate_component_union_against_sources(&affine_left, &affine_touching)
+        .unwrap();
+    let affine_touching_preflight =
+        preflight_boolean_exact(&affine_left, &affine_touching, ExactBooleanOperation::Union)
+            .expect("same-outer affine touching retained-union preflight should classify shortcut");
+    affine_touching_preflight.validate().unwrap();
+    affine_touching_preflight
+        .validate_against_sources(&affine_left, &affine_touching)
+        .unwrap();
+    assert_eq!(
+        affine_touching_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
+    );
+    hypermesh::exact::boolean_exact(
+        &affine_left,
+        &affine_touching,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("same-outer affine touching retained union should materialize")
+    .validate_operation_against_sources(
+        &affine_left,
+        &affine_touching,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
 
     let orthogonal_preflight = preflight_boolean_exact(
         &orthogonal_left,
