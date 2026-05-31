@@ -1651,6 +1651,8 @@ fn exercise_deterministic_case(selector: u8) {
         63 => exercise_exact_boolmesh_holed_triangulation_port(),
         64 => exercise_exact_boolmesh_positive_area_coplanar_kernel12_port(),
         65 => exercise_exact_boolmesh_boolean45_triangulation_port(),
+        66 => exercise_exact_boolmesh_source_edge_cleanup_port(),
+        67 => exercise_exact_boolmesh_boundary_closure_cleanup_port(),
         _ => exercise_nonconvex_coplanar_volumetric_difference_fan_split(),
     }
 }
@@ -2372,6 +2374,80 @@ fn exercise_exact_boolmesh_positive_area_coplanar_kernel12_port() {
     execution.validate_against_sources(&left, &right).unwrap();
     assert_eq!(execution.mesh.vertices().len(), 9);
     assert_eq!(execution.mesh.triangles().len(), 14);
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn exercise_exact_boolmesh_source_edge_cleanup_port() {
+    let left = upward_l_prism_i64([[0, 0], [8, 0], [8, 3], [3, 3], [3, 8], [0, 8]], 5);
+    let right = tetrahedron_i64([1, 1, 0], [7, 1, 0], [1, 7, 0], [1, 1, 5]);
+
+    let workspace =
+        hypermesh::exact::exact_boolmesh_workspace(&left, &right, ExactBooleanOperation::Union);
+    workspace.validate_against_sources(&left, &right).unwrap();
+    assert!(workspace.blocker.is_none());
+    let stage = workspace
+        .boolean45
+        .as_ref()
+        .expect("source-edge cleanup fixture must reach boolean45");
+    assert_eq!(stage.face_loop_assembly.dropped_open_chain_halfedges, 23);
+    assert_eq!(stage.partial_source_edges.unpaired_runs, 0);
+    assert_eq!(stage.new_face_pair_edges.unpaired_runs, 0);
+    assert_eq!(stage.halfedge_assembly.unfilled_halfedges, 0);
+    assert_eq!(stage.face_loop_assembly.non_loop_halfedges, 0);
+    assert_eq!(stage.loop_triangulation.triangulation_failures, 0);
+    assert_eq!(stage.mesh_export.triangles.len(), 29);
+
+    let execution = hypermesh::exact::execute_exact_boolmesh_port(
+        &left,
+        &right,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("source-edge cleanup fixture should materialize through boolmesh");
+    execution.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(execution.mesh.vertices().len(), 19);
+    assert_eq!(execution.mesh.triangles().len(), 34);
+    assert_eq!(execution.mesh.facts().mesh.boundary_edges, 0);
+    assert_eq!(execution.mesh.facts().mesh.non_manifold_vertices, 0);
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn exercise_exact_boolmesh_boundary_closure_cleanup_port() {
+    let left = upward_l_prism_i64([[0, 0], [8, 0], [8, 3], [3, 3], [3, 8], [0, 8]], 5);
+    let right = tetrahedron_i64([2, -1, 0], [5, -1, 0], [2, 2, 0], [2, -1, -3]);
+
+    let workspace =
+        hypermesh::exact::exact_boolmesh_workspace(&left, &right, ExactBooleanOperation::Union);
+    workspace.validate_against_sources(&left, &right).unwrap();
+    assert!(workspace.blocker.is_none());
+    let stage = workspace
+        .boolean45
+        .as_ref()
+        .expect("boundary closure fixture must reach boolean45");
+    assert_eq!(stage.face_loop_assembly.dropped_open_chain_halfedges, 32);
+    assert_eq!(stage.face_loop_assembly.non_loop_halfedges, 0);
+    assert_eq!(stage.mesh_export.triangles.len(), 18);
+    assert_eq!(stage.mesh_export.boundary_edges.len(), 8);
+    assert_eq!(stage.mesh_export.boundary_closure_records.len(), 8);
+    assert!(
+        stage
+            .face_loop_assembly
+            .dropped_open_chains
+            .iter()
+            .any(|chain| chain.source_kind
+                == hypermesh::exact::ExactBoolMeshDroppedOpenChainSourceKind::Mixed)
+    );
+
+    let execution = hypermesh::exact::execute_exact_boolmesh_port(
+        &left,
+        &right,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("boundary closure fixture should materialize through boolmesh");
+    execution.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(execution.mesh.facts().mesh.boundary_edges, 0);
+    assert_eq!(execution.mesh.facts().mesh.duplicate_directed_edges, 0);
 }
 
 #[cfg(feature = "exact-triangulation")]

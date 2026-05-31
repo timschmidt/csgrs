@@ -13511,6 +13511,63 @@ fn exact_boolmesh_positive_area_coplanar_kernel12_port(c: &mut Criterion) {
     }
 }
 
+fn exact_boolmesh_boundary_fragment_cleanup_port(c: &mut Criterion) {
+    #[cfg(feature = "exact-triangulation")]
+    {
+        let source_edge_left =
+            upward_l_prism_i64([[0, 0], [8, 0], [8, 3], [3, 3], [3, 8], [0, 8]], 5);
+        let source_edge_right = tetrahedron_i64([1, 1, 0], [7, 1, 0], [1, 7, 0], [1, 1, 5]);
+        let closure_left = upward_l_prism_i64([[0, 0], [8, 0], [8, 3], [3, 3], [3, 8], [0, 8]], 5);
+        let closure_right = tetrahedron_i64([2, -1, 0], [5, -1, 0], [2, 2, 0], [2, -1, -3]);
+
+        c.bench_function("exact_boolmesh_boundary_fragment_cleanup_port", |b| {
+            b.iter(|| {
+                let source_edge_execution = hypermesh::exact::execute_exact_boolmesh_port(
+                    &source_edge_left,
+                    &source_edge_right,
+                    hypermesh::exact::ExactBooleanOperation::Union,
+                    hypermesh::exact::ValidationPolicy::CLOSED,
+                )
+                .expect("source-edge cleanup fixture should materialize through boolmesh");
+                source_edge_execution
+                    .validate_against_sources(&source_edge_left, &source_edge_right)
+                    .unwrap();
+                let source_edge_stage = source_edge_execution.workspace.boolean45.as_ref().unwrap();
+
+                let closure_execution = hypermesh::exact::execute_exact_boolmesh_port(
+                    &closure_left,
+                    &closure_right,
+                    hypermesh::exact::ExactBooleanOperation::Union,
+                    hypermesh::exact::ValidationPolicy::CLOSED,
+                )
+                .expect("boundary closure fixture should materialize through boolmesh");
+                closure_execution
+                    .validate_against_sources(&closure_left, &closure_right)
+                    .unwrap();
+                let closure_stage = closure_execution.workspace.boolean45.as_ref().unwrap();
+
+                source_edge_execution.mesh.vertices().len()
+                    + source_edge_execution.mesh.triangles().len()
+                    + source_edge_stage
+                        .face_loop_assembly
+                        .dropped_open_chain_halfedges
+                    + source_edge_stage.mesh_export.triangles.len()
+                    + closure_execution.mesh.vertices().len()
+                    + closure_execution.mesh.triangles().len()
+                    + closure_stage
+                        .face_loop_assembly
+                        .dropped_open_chain_halfedges
+                    + closure_stage.mesh_export.boundary_closure_records.len()
+                    + closure_execution.mesh.facts().mesh.edge_count
+            })
+        });
+    }
+    #[cfg(not(feature = "exact-triangulation"))]
+    {
+        let _ = c;
+    }
+}
+
 fn exact_boolmesh_boolean45_halfedge_row_port(c: &mut Criterion) {
     #[cfg(feature = "exact-triangulation")]
     {
@@ -13808,6 +13865,7 @@ criterion_group!(
     exact_boolmesh_kernel12_intersect_boundary_endpoint_port,
     exact_boolmesh_kernel12_coplanar_interval_port,
     exact_boolmesh_positive_area_coplanar_kernel12_port,
+    exact_boolmesh_boundary_fragment_cleanup_port,
     exact_boolmesh_boolean45_halfedge_row_port,
     exact_boolmesh_kernel03_no_intersection_port,
     exact_boolmesh_kernel03_winding_port,
