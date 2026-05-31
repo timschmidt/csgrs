@@ -5253,6 +5253,52 @@ fn exercise_same_outer_holed_coplanar_multi_difference() {
     )
     .unwrap();
 
+    let touching_holes = ExactMesh::from_i64_triangles_with_policy(
+        &[
+            1, 1, 0, 2, 1, 0, 2, 2, 0, 1, 2, 0, //
+            6, 4, 0, 8, 4, 0, 8, 6, 0, 6, 6, 0,
+        ],
+        &[0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("same-outer touching multi-difference fixture must import");
+    let touching = arrange_coplanar_convex_surface_multi_holed_difference(&outer, &touching_holes)
+        .expect("same-outer touching right holes should materialize")
+        .mesh;
+    let touching_difference = arrange_coplanar_surface_multi_difference(&left, &touching)
+        .expect("same-outer touching right holes should replay as filled components");
+    touching_difference.validate().unwrap();
+    touching_difference
+        .validate_difference_against_sources(&left, &touching)
+        .unwrap();
+    assert_eq!(touching_difference.polygons.len(), 2);
+    let touching_preflight =
+        preflight_boolean_exact(&left, &touching, ExactBooleanOperation::Difference)
+            .expect("same-outer touching multi-difference preflight should classify shortcut");
+    touching_preflight.validate().unwrap();
+    touching_preflight
+        .validate_against_sources(&left, &touching)
+        .unwrap();
+    assert_eq!(
+        touching_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarSurfaceMultiDifference
+    );
+    hypermesh::exact::boolean_exact(
+        &left,
+        &touching,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("same-outer touching multi-difference should materialize")
+    .validate_operation_against_sources(
+        &left,
+        &touching,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
+
     let preflight = preflight_boolean_exact(&left, &right, ExactBooleanOperation::Difference)
         .expect("same-outer holed multi-difference preflight should classify shortcut");
     preflight.validate().unwrap();
@@ -5506,7 +5552,39 @@ fn exercise_same_outer_holed_coplanar_component_difference() {
     let touching = arrange_coplanar_convex_surface_holed_difference(&outer, &touching_hole)
         .expect("same-outer touching annulus should materialize")
         .mesh;
-    assert!(arrange_coplanar_surface_component_difference(&left, &touching).is_none());
+    let touching_difference = arrange_coplanar_surface_component_difference(&left, &touching)
+        .expect("same-outer touching right hole should replay as one filled loop");
+    touching_difference.validate().unwrap();
+    touching_difference
+        .validate_component_difference_against_sources(&left, &touching)
+        .unwrap();
+    assert_eq!(touching_difference.polygon.len(), 4);
+    let touching_preflight =
+        preflight_boolean_exact(&left, &touching, ExactBooleanOperation::Difference)
+            .expect("same-outer touching component-difference preflight should classify shortcut");
+    touching_preflight.validate().unwrap();
+    touching_preflight
+        .validate_against_sources(&left, &touching)
+        .unwrap();
+    assert_eq!(
+        touching_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementDifference
+    );
+    hypermesh::exact::boolean_exact(
+        &left,
+        &touching,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("same-outer touching component-difference should materialize")
+    .validate_operation_against_sources(
+        &left,
+        &touching,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
 
     let preflight = preflight_boolean_exact(&left, &right, ExactBooleanOperation::Difference)
         .expect("same-outer holed component-difference preflight should classify shortcut");

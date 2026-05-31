@@ -5736,9 +5736,9 @@ fn single_convex_cut_difference_polygon(
 /// against simple left holes, but only when each clipped removed region is a
 /// side-attached simple opening and the retained result has no holes. If a
 /// right hole strictly contains a left hole, the output is holed and belongs
-/// to the component-holed artifact instead. If rings touch, cross, or overlap
-/// outside these bounded certificates, the case remains general
-/// planar-arrangement work.
+/// to the component-holed artifact instead. Lower-dimensional hole contact
+/// does not remove area from the filled output. Crossings and overlaps outside
+/// these bounded certificates remain general planar-arrangement work.
 ///
 /// The certificate follows Yap, "Towards Exact Geometric Computation,"
 /// *Computational Geometry* 7.1-2 (1997): source boundary rings are recovered
@@ -5854,22 +5854,24 @@ fn same_outer_holed_no_hole_difference_rings(
             }
             match simple_polygon_interaction(left_hole, right_hole, projection)? {
                 SimplePolygonInteraction::Disjoint => {}
-                SimplePolygonInteraction::PointOnly => return None,
+                SimplePolygonInteraction::PointOnly => {}
                 SimplePolygonInteraction::Connected => {
-                    connected_cutters.push(left_hole.clone());
                     if let (Some(right_rect), Some(left_rect)) = (
                         projected_axis_aligned_rectangle(right_hole, projection),
                         projected_axis_aligned_rectangle(left_hole, projection),
                     ) {
                         if !rectangles_overlap_with_positive_area(&right_rect, &left_rect)? {
-                            return None;
+                            continue;
                         }
+                        connected_cutters.push(left_hole.clone());
                         rectangular_cutters.push(left_rect);
                     } else if let Some(cutter) =
                         convex_retained_hole_intersection_polygon(left_hole, right_hole, projection)
                     {
+                        connected_cutters.push(left_hole.clone());
                         convex_cutters.push(cutter);
                     } else {
+                        connected_cutters.push(left_hole.clone());
                         requires_orthogonal_replay = true;
                     }
                 }

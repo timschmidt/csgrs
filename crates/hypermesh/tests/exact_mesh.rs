@@ -30642,10 +30642,43 @@ fn exact_coplanar_multi_difference_materializes_same_outer_disjoint_hole_fills()
     )
     .expect("right touching-hole source fixture should materialize")
     .mesh;
-    assert!(
-        hypermesh::exact::arrange_coplanar_surface_multi_difference(&left, &touching).is_none(),
-        "hole boundary contact is not a no-hole filled-component certificate"
+    let touching_difference =
+        hypermesh::exact::arrange_coplanar_surface_multi_difference(&left, &touching)
+            .expect("touching same-outer right holes should replay as filled components");
+    touching_difference.validate().unwrap();
+    touching_difference
+        .validate_difference_against_sources(&left, &touching)
+        .unwrap();
+    assert_eq!(touching_difference.polygons.len(), 2);
+    let touching_preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &touching,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .expect("touching same-outer multi-difference preflight should classify shortcut");
+    touching_preflight.validate().unwrap();
+    touching_preflight
+        .validate_against_sources(&left, &touching)
+        .unwrap();
+    assert_eq!(
+        touching_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceMultiDifference
     );
+    hypermesh::exact::boolean_exact(
+        &left,
+        &touching,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("touching same-outer multi-difference should materialize")
+    .validate_operation_against_sources(
+        &left,
+        &touching,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
 
     let preflight = hypermesh::exact::preflight_boolean_exact(
         &left,
@@ -30912,10 +30945,43 @@ fn exact_coplanar_component_difference_materializes_same_outer_single_hole_fill(
         hypermesh::exact::arrange_coplanar_convex_surface_holed_difference(&outer, &touching_hole)
             .expect("touching annulus should materialize")
             .mesh;
-    assert!(
-        hypermesh::exact::arrange_coplanar_surface_component_difference(&left, &touching).is_none(),
-        "hole boundary contact is not a filled-hole certificate"
+    let touching_difference =
+        hypermesh::exact::arrange_coplanar_surface_component_difference(&left, &touching)
+            .expect("touching same-outer right hole should replay as one filled loop");
+    touching_difference.validate().unwrap();
+    touching_difference
+        .validate_component_difference_against_sources(&left, &touching)
+        .unwrap();
+    assert_eq!(touching_difference.polygon.len(), 4);
+    let touching_preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &touching,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+    )
+    .expect("touching same-outer component-difference preflight should classify shortcut");
+    touching_preflight.validate().unwrap();
+    touching_preflight
+        .validate_against_sources(&left, &touching)
+        .unwrap();
+    assert_eq!(
+        touching_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementDifference
     );
+    hypermesh::exact::boolean_exact(
+        &left,
+        &touching,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("touching same-outer component difference should materialize")
+    .validate_operation_against_sources(
+        &left,
+        &touching,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
 
     let containing_hole = ExactMesh::from_i64_triangles_with_policy(
         &[3, 3, 0, 7, 3, 0, 7, 7, 0, 3, 7, 0],
