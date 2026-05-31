@@ -5791,6 +5791,38 @@ fn exercise_same_outer_holed_coplanar_retained_union() {
         .expect("same-outer touching source should materialize")
         .mesh;
     assert!(arrange_coplanar_surface_component_holed_union(&left, &touching).is_none());
+    let touching_union = arrange_coplanar_surface_component_union(&left, &touching)
+        .expect("same-outer touching retained holes should fill the outer sheet");
+    touching_union.validate().unwrap();
+    touching_union
+        .validate_component_union_against_sources(&left, &touching)
+        .unwrap();
+    let touching_preflight =
+        preflight_boolean_exact(&left, &touching, ExactBooleanOperation::Union)
+            .expect("same-outer touching retained-union preflight should classify shortcut");
+    touching_preflight.validate().unwrap();
+    touching_preflight
+        .validate_against_sources(&left, &touching)
+        .unwrap();
+    assert_eq!(
+        touching_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
+    );
+    hypermesh::exact::boolean_exact(
+        &left,
+        &touching,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("same-outer touching retained union should materialize")
+    .validate_operation_against_sources(
+        &left,
+        &touching,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
 
     let preflight = preflight_boolean_exact(&left, &right, ExactBooleanOperation::Union)
         .expect("same-outer retained union preflight should classify shortcut");

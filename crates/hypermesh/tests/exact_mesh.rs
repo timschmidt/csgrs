@@ -29958,6 +29958,42 @@ fn exact_coplanar_component_holed_union_retains_same_outer_common_holes() {
             .is_none(),
         "hole boundary contact is outside the retained-ring union certificate"
     );
+    let touching_union =
+        hypermesh::exact::arrange_coplanar_surface_component_union(&left, &touching)
+            .expect("touching retained holes should fill the outer sheet");
+    touching_union.validate().unwrap();
+    touching_union
+        .validate_component_union_against_sources(&left, &touching)
+        .unwrap();
+    let touching_preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &touching,
+        hypermesh::exact::ExactBooleanOperation::Union,
+    )
+    .expect("touching retained-hole union preflight should classify filled shortcut");
+    touching_preflight.validate().unwrap();
+    touching_preflight
+        .validate_against_sources(&left, &touching)
+        .unwrap();
+    assert_eq!(
+        touching_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
+    );
+    hypermesh::exact::boolean_exact(
+        &left,
+        &touching,
+        hypermesh::exact::ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("touching retained-hole union should materialize as the filled outer sheet")
+    .validate_operation_against_sources(
+        &left,
+        &touching,
+        hypermesh::exact::ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
 
     let preflight = hypermesh::exact::preflight_boolean_exact(
         &left,
