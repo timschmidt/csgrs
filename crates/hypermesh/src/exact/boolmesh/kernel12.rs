@@ -166,6 +166,7 @@ fn lower_intersect12_hit(hit: &ExactKernel12IntersectHit) -> LoweredKernel12Even
     }
 }
 
+#[allow(clippy::large_enum_variant)]
 enum Intersect12Replay {
     Lowered(LoweredKernel12Event),
     AlreadyConsumed,

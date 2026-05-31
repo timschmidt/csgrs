@@ -763,7 +763,7 @@ fn fan_faces_cover_triangle(
             Some(_) => {}
             None => interior_point = Some(candidate.interior_point),
         }
-        area_sum = area_sum + candidate.area_abs;
+        area_sum += candidate.area_abs;
         fan_faces.push(fan_face);
     }
 
@@ -1005,7 +1005,7 @@ fn fan_patch_candidate(mesh: &ExactMesh, faces: [usize; 3]) -> Option<Option<Fan
         if real_sign(&area)? == Sign::Zero {
             return Some(None);
         }
-        signed_area2 = signed_area2 + area;
+        signed_area2 += area;
     }
 
     let area_abs = real_abs(&signed_area2)?;

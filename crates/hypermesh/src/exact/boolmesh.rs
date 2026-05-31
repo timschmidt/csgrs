@@ -1509,10 +1509,10 @@ impl ExactBoolMeshWorkspace {
                 return Err(ExactBoolMeshValidationError::Boolean03OwnershipMismatch);
             }
         }
-        if let Some(blocker) = &self.blocker {
-            if blocker.candidate_face_pairs != self.candidate_face_pairs.len() {
-                return Err(ExactBoolMeshValidationError::BlockerCountMismatch);
-            }
+        if let Some(blocker) = &self.blocker
+            && blocker.candidate_face_pairs != self.candidate_face_pairs.len()
+        {
+            return Err(ExactBoolMeshValidationError::BlockerCountMismatch);
         }
         if self.blocker.is_some()
             || self.candidate_face_pairs.is_empty()
@@ -1653,16 +1653,12 @@ impl ExactBoolMeshExecution {
         self.mesh
             .validate_retained_state()
             .map_err(|_| ExactBoolMeshValidationError::InvalidOutputMesh)?;
-        if self.workspace.is_certified_bounds_disjoint()
-            && self.shortcut == ExactBooleanShortcutKind::BoundsDisjoint
-        {
-            Ok(())
-        } else if self.workspace.is_certified_no_intersection_kernel03()
-            && self.shortcut == boolmesh_no_intersection_shortcut(&self.workspace.boolean03)
-        {
-            Ok(())
-        } else if self.workspace.is_certified_split_boolean45()
-            && self.shortcut == ExactBooleanShortcutKind::BoolMeshSplit
+        if (self.workspace.is_certified_bounds_disjoint()
+            && self.shortcut == ExactBooleanShortcutKind::BoundsDisjoint)
+            || (self.workspace.is_certified_no_intersection_kernel03()
+                && self.shortcut == boolmesh_no_intersection_shortcut(&self.workspace.boolean03))
+            || (self.workspace.is_certified_split_boolean45()
+                && self.shortcut == ExactBooleanShortcutKind::BoolMeshSplit)
         {
             Ok(())
         } else {
@@ -2010,6 +2006,7 @@ struct Kernel12Discovery {
 
 #[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, PartialEq)]
+#[allow(clippy::large_enum_variant)]
 pub(super) enum Kernel12CoplanarEvidence {
     Edge {
         face_pair: ExactBoolMeshFacePair,
@@ -2641,19 +2638,21 @@ fn source_halfedge_for_face_edge(mesh: &ExactMesh, face: usize, edge: [usize; 2]
 /// mutated.  That is the direct boolmesh scheduling contract with Yap-style
 /// exact evidence preservation: see Yap, "Towards Exact Geometric
 /// Computation," *Computational Geometry* 7.1-2 (1997).
+type NormalizedBoolMeshSourceEdge = (
+    [usize; 2],
+    usize,
+    usize,
+    Option<ExactReal>,
+    [Option<PlaneSide>; 2],
+);
+
 pub(super) fn normalize_boolmesh_source_edge(
     mesh: &ExactMesh,
     source_face: usize,
     edge: [usize; 2],
     parameter: Option<ExactReal>,
     endpoint_sides: [Option<PlaneSide>; 2],
-) -> Option<(
-    [usize; 2],
-    usize,
-    usize,
-    Option<ExactReal>,
-    [Option<PlaneSide>; 2],
-)> {
+) -> Option<NormalizedBoolMeshSourceEdge> {
     if edge[0] < edge[1] {
         let source_halfedge = source_halfedge_for_face_edge(mesh, source_face, edge)?;
         return Some((
@@ -2986,11 +2985,11 @@ fn validate_boolean45_stage(
         return Err(ExactBoolMeshValidationError::Boolean45FaceMapMismatch);
     }
 
-    let mut expected_output_face = 0;
-    for count in stage
+    for (expected_output_face, count) in stage
         .left_face_halfedge_counts
         .iter()
         .chain(stage.right_face_halfedge_counts.iter())
+        .enumerate()
     {
         let mapped = stage.source_face_to_output_face[expected_output_face];
         if *count == 0 {
@@ -3005,7 +3004,6 @@ fn validate_boolean45_stage(
         {
             return Err(ExactBoolMeshValidationError::Boolean45FaceMapMismatch);
         }
-        expected_output_face += 1;
     }
 
     let output_face_count = stage.source_face_to_output_face.iter().flatten().count();

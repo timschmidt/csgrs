@@ -45,6 +45,11 @@ use super::provenance::SourceProvenance;
 use super::scalar::ExactReal;
 use super::validation::ValidationPolicy;
 
+#[cfg(feature = "exact-triangulation")]
+type PolygonPair = (Vec<Vec<Point3>>, Vec<Vec<Point3>>);
+#[cfg(feature = "exact-triangulation")]
+type PolygonTriple = (Vec<Vec<Point3>>, Vec<Vec<Point3>>, Vec<Vec<Point3>>);
+
 /// Certified containment relation between two single-triangle coplanar sheets.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum CoplanarSurfaceContainment {
@@ -5419,10 +5424,10 @@ fn same_outer_holed_rectangular_difference_components(
     for retained_hole in retained_holes {
         let mut containing_remnant = None;
         for (index, remnant) in remnants.iter().enumerate() {
-            if polygon_strictly_inside_simple_polygon(&retained_hole, remnant, projection)? {
-                if containing_remnant.replace(index).is_some() {
-                    return None;
-                }
+            if polygon_strictly_inside_simple_polygon(&retained_hole, remnant, projection)?
+                && containing_remnant.replace(index).is_some()
+            {
+                return None;
             }
         }
         let index = containing_remnant?;
@@ -5611,10 +5616,10 @@ fn same_outer_holed_convex_difference_components(
     for retained_hole in retained_holes {
         let mut containing_remnant = None;
         for (index, remnant) in remnants.iter().enumerate() {
-            if polygon_strictly_inside_simple_polygon(&retained_hole, remnant, projection)? {
-                if containing_remnant.replace(index).is_some() {
-                    return None;
-                }
+            if polygon_strictly_inside_simple_polygon(&retained_hole, remnant, projection)?
+                && containing_remnant.replace(index).is_some()
+            {
+                return None;
             }
         }
         let index = containing_remnant?;
@@ -6727,9 +6732,9 @@ fn same_outer_retained_union_holes(
     let mut holes: Vec<Vec<Point3>> = Vec::new();
     for left_hole in &left.holes {
         for right_hole in &right.holes {
-            let retained_holes = if polygons_equal(left_hole, right_hole) {
-                vec![left_hole.clone()]
-            } else if polygon_strictly_inside_simple_polygon(left_hole, right_hole, projection)? {
+            let retained_holes = if polygons_equal(left_hole, right_hole)
+                || polygon_strictly_inside_simple_polygon(left_hole, right_hole, projection)?
+            {
                 vec![left_hole.clone()]
             } else if polygon_strictly_inside_simple_polygon(right_hole, left_hole, projection)? {
                 vec![right_hole.clone()]
@@ -10376,7 +10381,6 @@ fn coplanar_surface_difference_polygons(
     let Some(mut left_components) = left_component_meshes
         .iter()
         .cloned()
-        .into_iter()
         .map(|mesh| ConvexUnionComponent::from_mesh(MultiUnionSide::Left, mesh))
         .collect::<Option<Vec<_>>>()
     else {
@@ -10583,18 +10587,14 @@ fn coplanar_surface_difference_polygons(
                         )
                     {
                         remnants
-                    } else if let Some(opened) =
+                    } else {
                         materialize_side_cutter_opening_difference_consuming_holes(
                             component,
                             &cutter_indices,
                             &holes,
                             &right_components,
                             "coplanar no-hole side-cutter opening consumed-hole difference",
-                        )
-                    {
-                        opened
-                    } else {
-                        return None;
+                        )?
                     }
                 } else if let Some(remnants) =
                     materialize_crossing_side_cutter_multi_component_difference(
@@ -11128,7 +11128,7 @@ fn materialize_simple_source_side_cutter_difference(
 fn materialize_simple_source_side_cutter_difference_core(
     component: &SimpleSurfaceComponent,
     removed: &[Vec<Point3>],
-) -> Option<(Vec<Vec<Point3>>, Vec<Vec<Point3>>)> {
+) -> Option<PolygonPair> {
     if removed.is_empty() {
         return None;
     }
@@ -11246,7 +11246,7 @@ fn materialize_simple_source_side_cutter_point_touch_difference_core(
     component: &SimpleSurfaceComponent,
     removed: &[Vec<Point3>],
     label: &'static str,
-) -> Option<(Vec<Vec<Point3>>, Vec<Vec<Point3>>)> {
+) -> Option<PolygonPair> {
     if removed.len() < 2 {
         return None;
     }
@@ -14927,7 +14927,6 @@ pub fn arrange_coplanar_convex_surface_component_holed_difference(
     let Some(mut left_components) = left_component_meshes
         .iter()
         .cloned()
-        .into_iter()
         .map(|mesh| ConvexUnionComponent::from_mesh(MultiUnionSide::Left, mesh))
         .collect::<Option<Vec<_>>>()
     else {
@@ -14940,7 +14939,6 @@ pub fn arrange_coplanar_convex_surface_component_holed_difference(
     let Some(right_components) = right_component_meshes
         .iter()
         .cloned()
-        .into_iter()
         .map(|mesh| ConvexUnionComponent::from_mesh(MultiUnionSide::Right, mesh))
         .collect::<Option<Vec<_>>>()
     else {
@@ -15835,7 +15833,7 @@ fn materialize_simple_source_side_cutter_point_touch_grouped_hole_replay(
     holes: &[ComponentHoleCandidate],
     retain_disjoint_holes: bool,
     label: &'static str,
-) -> Option<(Vec<Vec<Point3>>, Vec<Vec<Point3>>, Vec<Vec<Point3>>)> {
+) -> Option<PolygonTriple> {
     if side_removed.len() < 2 || holes.is_empty() {
         return None;
     }
@@ -16976,14 +16974,12 @@ fn materialize_side_cutter_opening_difference_consuming_holes(
         return None;
     }
     let projection = component.projection;
-    let Some((removed_openings, mut opening)) = materialize_nonrectilinear_side_cutter_opening(
+    let (removed_openings, mut opening) = materialize_nonrectilinear_side_cutter_opening(
         component,
         cut_indices,
         right_components,
         label,
-    ) else {
-        return None;
-    };
+    )?;
     for hole in holes {
         if !hole_strictly_consumed_by_one_removed_opening(
             &hole.ring,
@@ -17029,7 +17025,7 @@ fn materialize_crossing_side_cutter_straddling_hole_replay(
     holes: &[ComponentHoleCandidate],
     right_components: &[ConvexUnionComponent],
     label: &'static str,
-) -> Option<(Vec<Vec<Point3>>, Vec<Vec<Point3>>, Vec<Vec<Point3>>)> {
+) -> Option<PolygonTriple> {
     if cut_indices.len() < 2 || holes.is_empty() {
         return None;
     }
@@ -18521,7 +18517,7 @@ fn materialize_side_cutter_multi_component_difference_core(
     cut_indices: &[usize],
     right_components: &[ConvexUnionComponent],
     label: &'static str,
-) -> Option<(Vec<Vec<Point3>>, Vec<Vec<Point3>>)> {
+) -> Option<PolygonPair> {
     if cut_indices.is_empty() {
         return None;
     }
@@ -18647,7 +18643,7 @@ fn materialize_side_cutter_point_touch_difference_core(
     cut_indices: &[usize],
     right_components: &[ConvexUnionComponent],
     label: &'static str,
-) -> Option<(Vec<Vec<Point3>>, Vec<Vec<Point3>>)> {
+) -> Option<PolygonPair> {
     if cut_indices.len() < 2 {
         return None;
     }
@@ -18828,7 +18824,7 @@ fn materialize_side_cutter_point_touch_removed_openings_core(
     component: &ConvexUnionComponent,
     removed_openings: &[Vec<Point3>],
     label: &'static str,
-) -> Option<(Vec<Vec<Point3>>, Vec<Vec<Point3>>)> {
+) -> Option<PolygonPair> {
     if removed_openings.len() < 2 {
         return None;
     }
@@ -19951,17 +19947,16 @@ fn polygon_to_retained_simple_open_mesh_with_label(
     projection: CoplanarProjection,
     label: &'static str,
 ) -> Option<ExactMesh> {
-    if let Some(mesh) = polygon_to_earcut_open_mesh_with_label(polygon, projection, label) {
-        if validate_mesh_uses_all_retained_vertices(
+    if let Some(mesh) = polygon_to_earcut_open_mesh_with_label(polygon, projection, label)
+        && validate_mesh_uses_all_retained_vertices(
             &mesh,
             polygon.len(),
             label,
             "surface mesh leaves a retained branch vertex unused",
         )
         .is_ok()
-        {
-            return Some(mesh);
-        }
+    {
+        return Some(mesh);
     }
 
     let vertices = polygon
@@ -20845,13 +20840,11 @@ fn validate_multi_surface_output_with_loop_policy(
         for point in polygon {
             for other_polygon in polygons.iter().skip(component + 1) {
                 for other in other_polygon {
-                    if points_equal(point, other) {
-                        if !allow_vertex_point_touches {
-                            return Err(surface_validation_error(
-                                label,
-                                "component loops share an exact point",
-                            ));
-                        }
+                    if points_equal(point, other) && !allow_vertex_point_touches {
+                        return Err(surface_validation_error(
+                            label,
+                            "component loops share an exact point",
+                        ));
                     }
                 }
             }
@@ -20977,13 +20970,13 @@ fn validate_multi_surface_output_with_loop_policy(
     }
     for left in 0..retained_points.len() {
         for right in left + 1..retained_points.len() {
-            if points_equal(retained_points[left], retained_points[right]) {
-                if !allow_vertex_point_touches {
-                    return Err(surface_validation_error(
-                        label,
-                        "multi-component retained loops repeat an exact point",
-                    ));
-                }
+            if points_equal(retained_points[left], retained_points[right])
+                && !allow_vertex_point_touches
+            {
+                return Err(surface_validation_error(
+                    label,
+                    "multi-component retained loops repeat an exact point",
+                ));
             }
         }
     }

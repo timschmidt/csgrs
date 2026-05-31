@@ -338,21 +338,17 @@ fn contained_face_adjacency_certificate(
     right: &ExactMesh,
     pairs: &[FacePairEvents],
 ) -> Option<ContainedFaceAdjacencyCertificate> {
-    for certificate in [
+    [
         single_face_contained_adjacency_certificate(left, right, pairs),
         component_contained_adjacency_certificate(left, right, pairs),
     ]
     .into_iter()
     .flatten()
-    {
-        if pairs
+    .find(|certificate| {
+        pairs
             .iter()
-            .all(|pair| contained_adjacency_contact_pair(left, right, pair, &certificate))
-        {
-            return Some(certificate);
-        }
-    }
-    None
+            .all(|pair| contained_adjacency_contact_pair(left, right, pair, certificate))
+    })
 }
 
 fn contained_boundary_difference_certificate(
@@ -360,20 +356,17 @@ fn contained_boundary_difference_certificate(
     removed: &ExactMesh,
     pairs: &[FacePairEvents],
 ) -> Option<ContainedFaceAdjacencyCertificate> {
-    for certificate in [
+    [
         single_face_contained_boundary_difference_certificate(container, removed, pairs),
         component_contained_boundary_difference_certificate(container, removed, pairs),
     ]
     .into_iter()
     .flatten()
-    {
-        if pairs.iter().all(|pair| {
-            contained_boundary_difference_contact_pair(container, removed, pair, &certificate)
-        }) {
-            return Some(certificate);
-        }
-    }
-    None
+    .find(|certificate| {
+        pairs.iter().all(|pair| {
+            contained_boundary_difference_contact_pair(container, removed, pair, certificate)
+        })
+    })
 }
 
 fn single_face_contained_adjacency_certificate(
@@ -1138,11 +1131,11 @@ fn connected_face_components(mesh: &ExactMesh) -> Option<Vec<Vec<usize>>> {
         visited[seed] = true;
         while let Some(face) = stack.pop() {
             component.push(face);
-            for neighbor in 0..mesh.triangles().len() {
-                if !visited[neighbor]
+            for (neighbor, neighbor_visited) in visited.iter_mut().enumerate() {
+                if !*neighbor_visited
                     && triangles_share_edge(mesh.triangles()[face], mesh.triangles()[neighbor])
                 {
-                    visited[neighbor] = true;
+                    *neighbor_visited = true;
                     stack.push(neighbor);
                 }
             }

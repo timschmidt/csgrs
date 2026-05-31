@@ -4948,7 +4948,7 @@ fn exact_face_region_triangulates_through_feature_gated_hypertri() {
     };
     assert_eq!(
         invalid_named_union.validate().unwrap_err(),
-        hypermesh::exact::ExactReportValidationError::StatusEvidenceMismatch
+        hypermesh::exact::ExactReportValidationError::SelectedRegionAssemblyViolatesSelection
     );
 
     let preflight = hypermesh::exact::preflight_boolean_exact(
@@ -5052,19 +5052,36 @@ fn exact_face_region_triangulates_through_feature_gated_hypertri() {
         hypermesh::exact::ExactReportValidationError::StatusEvidenceMismatch
     );
 
-    let unsupported_intersection = hypermesh::exact::boolean_exact(
+    let named_intersection = hypermesh::exact::boolean_exact(
         &left,
         &right,
         hypermesh::exact::ExactBooleanOperation::Intersection,
         ValidationPolicy::ALLOW_BOUNDARY,
     )
-    .unwrap_err();
-    assert!(
-        unsupported_intersection
-            .diagnostics
-            .iter()
-            .any(|diagnostic| diagnostic.kind == DiagnosticKind::UnsupportedExactOperation)
+    .unwrap();
+    named_intersection.validate().unwrap();
+    named_intersection
+        .validate_operation_against_sources(
+            &left,
+            &right,
+            hypermesh::exact::ExactBooleanOperation::Intersection,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        named_intersection.kind,
+        hypermesh::exact::ExactBooleanResultKind::OpenSurfaceArrangement {
+            operation: hypermesh::exact::ExactBooleanOperation::Intersection
+        }
     );
+    assert!(named_intersection.mesh.triangles().is_empty());
+    assert!(named_intersection.assembly.triangles.is_empty());
+    assert_eq!(
+        named_intersection.region_classifications.len(),
+        region_plan.regions.len() * right.triangles().len()
+    );
+
     let intersection_preflight = hypermesh::exact::preflight_boolean_exact(
         &left,
         &right,
@@ -5077,22 +5094,23 @@ fn exact_face_region_triangulates_through_feature_gated_hypertri() {
         .unwrap();
     assert_eq!(
         intersection_preflight.support,
-        hypermesh::exact::ExactBooleanSupport::RequiresCertifiedWinding
+        hypermesh::exact::ExactBooleanSupport::CertifiedOpenSurfaceArrangementIntersection
     );
-    let blocker = intersection_preflight.blocker.as_ref().unwrap();
+    assert!(intersection_preflight.blocker.is_none());
     assert_eq!(
-        blocker.kind,
-        hypermesh::exact::ExactBooleanBlockerKind::NeedsWinding
+        intersection_preflight.region_count,
+        region_plan.regions.len()
     );
-    assert!(blocker.candidate_pairs > 0);
-    blocker.validate_against_sources(&left, &right).unwrap();
-    let mut stale_blocker = blocker.clone();
-    stale_blocker.candidate_pairs += 1;
     assert_eq!(
-        stale_blocker
-            .validate_against_sources(&left, &right)
-            .unwrap_err(),
-        hypermesh::exact::ExactReportValidationError::SourceReplayMismatch
+        intersection_preflight.region_classifications.len(),
+        region_plan.regions.len() * right.triangles().len()
+    );
+    let mut relabeled_intersection_preflight = intersection_preflight.clone();
+    relabeled_intersection_preflight.support =
+        hypermesh::exact::ExactBooleanSupport::CertifiedOpenSurfaceArrangementUnion;
+    assert_eq!(
+        relabeled_intersection_preflight.validate().unwrap_err(),
+        hypermesh::exact::ExactReportValidationError::StatusEvidenceMismatch
     );
 
     let selected_preflight = hypermesh::exact::preflight_boolean_exact(
@@ -27133,7 +27151,7 @@ fn exact_coplanar_component_holed_intersection_merges_same_outer_holes() {
     assert!(
         orthogonal_intersection.components[0].holes[0]
             .iter()
-            .any(|point| real_eq(&point.y, &ExactReal::from(17)))
+            .any(|point| real_eq(&point.y, &ExactReal::from(16)))
     );
     let orthogonal_reverse =
         hypermesh::exact::arrange_coplanar_surface_component_holed_intersection(

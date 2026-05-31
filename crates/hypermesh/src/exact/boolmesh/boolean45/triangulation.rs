@@ -30,6 +30,8 @@ use super::super::{
 };
 use super::geometry::output_vertex_point;
 
+type CdtTriangulation = (Vec<usize>, Vec<[usize; 2]>, Vec<ExactPoint3>);
+
 /// Triangulate assembled boolmesh output loops.
 ///
 /// Legacy boolmesh's `general_triangulate` passes all loops of one output face
@@ -393,7 +395,7 @@ fn triangulate_component_with_cdt(
     source_mesh: &ExactMesh,
     source_face: usize,
     projection: hyperlimit::CoplanarProjection,
-) -> Option<(Vec<usize>, Vec<[usize; 2]>, Vec<ExactPoint3>)> {
+) -> Option<CdtTriangulation> {
     let mut ring_starts = Vec::with_capacity(hole_indices.len() + 1);
     ring_starts.push(0);
     ring_starts.extend(hole_indices.iter().copied());
@@ -664,7 +666,7 @@ fn cdt_crossing_constraint_steiner_lift_probe() -> bool {
         && compare_reals(&lifted.x, &ExactReal::from(1)).value() == Some(Ordering::Equal)
         && compare_reals(&lifted.y, &ExactReal::from(1)).value() == Some(Ordering::Equal)
         && compare_reals(&lifted.z, &ExactReal::from(0)).value() == Some(Ordering::Equal)
-        && triangles.iter().any(|index| *index == 4)
+        && triangles.contains(&4)
         && triangles.iter().all(|index| *index < 5)
         && constraint_edges.iter().any(|edge| edge.contains(&4))
 }
@@ -682,7 +684,7 @@ fn projected_area2_signed(points: &[hypertri::ExactPoint]) -> ExactReal {
     for index in 0..points.len() {
         let current = &points[index];
         let next = &points[(index + 1) % points.len()];
-        signed = signed + &((current.x.clone() * &next.y) - &(current.y.clone() * &next.x));
+        signed += &((current.x.clone() * &next.y) - &(current.y.clone() * &next.x));
     }
     signed
 }

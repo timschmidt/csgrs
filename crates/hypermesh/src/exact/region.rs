@@ -412,6 +412,8 @@ fn replay_region_plan(
 #[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ExactRegionSelection {
+    /// Drop regions from both meshes.
+    KeepNone,
     /// Keep regions originating from both meshes.
     KeepAll,
     /// Keep only regions originating from the left mesh.

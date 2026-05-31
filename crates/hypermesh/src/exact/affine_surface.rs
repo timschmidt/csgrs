@@ -237,7 +237,7 @@ fn certify_affine_basis(left: &ExactMesh, right: &ExactMesh) -> Option<CoplanarA
 fn certify_affine_mesh_cells(mesh: &ExactMesh, basis: &CoplanarAffineSurfaceBasis) -> bool {
     mesh_to_uv(mesh, basis)
         .as_ref()
-        .map_or(false, certify_axis_aligned_surface_cells)
+        .is_some_and(certify_axis_aligned_surface_cells)
 }
 
 #[cfg(feature = "exact-triangulation")]

@@ -32,8 +32,8 @@ use super::affine_solid::{
 };
 #[cfg(feature = "exact-triangulation")]
 use super::affine_surface::{
-    arrange_coplanar_affine_surface_difference, arrange_coplanar_affine_surface_intersection,
-    arrange_coplanar_affine_surface_union,
+    CoplanarAffineSurfaceBasis, arrange_coplanar_affine_surface_difference,
+    arrange_coplanar_affine_surface_intersection, arrange_coplanar_affine_surface_union,
 };
 #[cfg(feature = "exact-triangulation")]
 use super::boolmesh::{
@@ -525,6 +525,11 @@ pub fn preflight_boolean_exact(
             ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
         }
         ExactBooleanOperation::Difference
+            if has_non_axis_aligned_affine_surface_difference(left, right) =>
+        {
+            ExactBooleanSupport::CertifiedCoplanarAffineSurfaceDifference
+        }
+        ExactBooleanOperation::Difference
             if arrange_coplanar_surface_point_touch_difference(left, right).is_some() =>
         {
             // Point-touch consumed-hole differences carry explicit branch
@@ -538,11 +543,6 @@ pub fn preflight_boolean_exact(
             if arrange_coplanar_orthogonal_surface_difference(left, right).is_some() =>
         {
             ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceDifference
-        }
-        ExactBooleanOperation::Difference
-            if arrange_coplanar_affine_surface_difference(left, right).is_some() =>
-        {
-            ExactBooleanSupport::CertifiedCoplanarAffineSurfaceDifference
         }
         ExactBooleanOperation::Union if has_axis_aligned_box_union(left, right) => {
             ExactBooleanSupport::CertifiedAxisAlignedBoxUnion
@@ -1596,6 +1596,11 @@ pub fn boolean_exact_with_boundary_policy(
             boolean_coplanar_convex_component_holed_difference(left, right, validation)
         }
         ExactBooleanOperation::Difference
+            if has_non_axis_aligned_affine_surface_difference(left, right) =>
+        {
+            boolean_coplanar_affine_surface(left, right, operation, validation)
+        }
+        ExactBooleanOperation::Difference
             if arrange_coplanar_surface_point_touch_difference(left, right).is_some() =>
         {
             // Keep the retained branch/deleted-ring certificate ahead of the
@@ -1607,11 +1612,6 @@ pub fn boolean_exact_with_boundary_policy(
             if arrange_coplanar_orthogonal_surface_difference(left, right).is_some() =>
         {
             boolean_coplanar_orthogonal_surface(left, right, operation, validation)
-        }
-        ExactBooleanOperation::Difference
-            if arrange_coplanar_affine_surface_difference(left, right).is_some() =>
-        {
-            boolean_coplanar_affine_surface(left, right, operation, validation)
         }
         ExactBooleanOperation::Union if has_axis_aligned_box_union(left, right) => {
             boolean_axis_aligned_box_union(left, right, validation)
@@ -2666,6 +2666,27 @@ fn boolean_coplanar_affine_surface(
 }
 
 #[cfg(feature = "exact-triangulation")]
+fn has_non_axis_aligned_affine_surface_difference(left: &ExactMesh, right: &ExactMesh) -> bool {
+    arrange_coplanar_affine_surface_difference(left, right)
+        .as_ref()
+        .is_some_and(|arrangement| affine_basis_is_non_axis_aligned(&arrangement.basis))
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn affine_basis_is_non_axis_aligned(basis: &CoplanarAffineSurfaceBasis) -> bool {
+    let u = project_point3(&basis.basis_u, basis.projection);
+    let v = project_point3(&basis.basis_v, basis.projection);
+    !(projected_vector_axis_aligned(&u) && projected_vector_axis_aligned(&v))
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn projected_vector_axis_aligned(vector: &hyperlimit::Point2) -> bool {
+    let x_is_zero = compare_reals(&vector.x, &ExactReal::from(0)).value() == Some(Ordering::Equal);
+    let y_is_zero = compare_reals(&vector.y, &ExactReal::from(0)).value() == Some(Ordering::Equal);
+    x_is_zero ^ y_is_zero
+}
+
+#[cfg(feature = "exact-triangulation")]
 fn boolean_axis_aligned_box_union(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -3079,9 +3100,11 @@ type OpenSurfaceArrangementPlan = (
 /// proper non-coplanar crossings, and coplanar/boundary-only cases stay on
 /// their existing artifacts. The policy follows Yap, "Towards Exact Geometric
 /// Computation," *Computational Geometry* 7.1-2 (1997): a non-volumetric
-/// surface union retains every certified split region, while regularized
-/// difference retains the left split regions and discards the lower-dimensional
-/// crossing curve that triangle meshes cannot represent as an area cell.
+/// surface union retains every certified split region, regularized
+/// intersection retains none because the crossing curve is lower-dimensional,
+/// and regularized difference retains the left split regions. Triangle meshes
+/// cannot represent the shared curve as an area cell, so that projection stays
+/// explicit in the result kind and retained arrangement evidence.
 #[cfg(feature = "exact-triangulation")]
 fn boolean_open_surface_arrangement_meshes(
     left: &ExactMesh,
@@ -3098,8 +3121,9 @@ fn boolean_open_surface_arrangement_meshes(
 
     let selection = match operation {
         ExactBooleanOperation::Union => ExactRegionSelection::KeepAll,
+        ExactBooleanOperation::Intersection => ExactRegionSelection::KeepNone,
         ExactBooleanOperation::Difference => ExactRegionSelection::KeepLeft,
-        ExactBooleanOperation::Intersection | ExactBooleanOperation::SelectedRegions(_) => {
+        ExactBooleanOperation::SelectedRegions(_) => {
             unreachable!("open-surface arrangement plan filters unsupported operations")
         }
     };
@@ -3149,10 +3173,13 @@ fn open_surface_arrangement_plan_from_graph(
 ) -> Result<Option<OpenSurfaceArrangementPlan>, MeshError> {
     let support = match operation {
         ExactBooleanOperation::Union => ExactBooleanSupport::CertifiedOpenSurfaceArrangementUnion,
+        ExactBooleanOperation::Intersection => {
+            ExactBooleanSupport::CertifiedOpenSurfaceArrangementIntersection
+        }
         ExactBooleanOperation::Difference => {
             ExactBooleanSupport::CertifiedOpenSurfaceArrangementDifference
         }
-        ExactBooleanOperation::Intersection | ExactBooleanOperation::SelectedRegions(_) => {
+        ExactBooleanOperation::SelectedRegions(_) => {
             return Ok(None);
         }
     };
@@ -4209,7 +4236,7 @@ fn winding_readiness_report_from_graph(
             graph.event_count(),
             triangulations.len(),
             region_classifications,
-            if graph_requires_coplanar_volumetric_cells_for_sources(&graph, left, right) {
+            if graph_requires_coplanar_volumetric_cells_for_sources(graph, left, right) {
                 counts.into_blocker(ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells)
             } else {
                 counts.into_blocker(ExactBooleanBlockerKind::NeedsWinding)
@@ -4218,7 +4245,7 @@ fn winding_readiness_report_from_graph(
             coplanar_volumetric_evidence_if_required(graph, left, right),
         ));
     }
-    if graph_requires_coplanar_volumetric_cells_for_sources(&graph, left, right) {
+    if graph_requires_coplanar_volumetric_cells_for_sources(graph, left, right) {
         return Ok(winding_readiness_report(
             operation,
             ExactWindingReadinessStatus::CoplanarVolumetricCellsRequired,

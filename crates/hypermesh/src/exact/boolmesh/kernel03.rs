@@ -103,14 +103,14 @@ fn winding03_exact(
     };
 
     let mut winding = vec![0i32; subject.points.len()];
-    for vertex in 0..subject.points.len() {
+    for (vertex, winding_value) in winding.iter_mut().enumerate().take(subject.points.len()) {
         let point = subject.points.get(vertex)?;
         for face in 0..(target.source_halfedge_count() / 3) {
             if !point_in_face_xy_bounds(point, target, face)? {
                 continue;
             }
             if let Some(hit) = kernel02_op(&input, vertex, face) {
-                winding[vertex] += hit.sign * if fwd { 1 } else { -1 };
+                *winding_value += hit.sign * if fwd { 1 } else { -1 };
             }
         }
     }

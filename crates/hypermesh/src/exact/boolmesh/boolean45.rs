@@ -915,9 +915,7 @@ fn source_tail_retained_substitution(
     starts: &[Option<usize>],
     order: &SourceEdgeOrder,
 ) -> Option<RetainedTailSubstitution> {
-    let Some(signed_count) = signed_counts.get(run.tail).copied() else {
-        return None;
-    };
+    let signed_count = signed_counts.get(run.tail).copied()?;
     let count = signed_abs(signed_count);
     if count == 0 || point.is_tail != (signed_count > 0) {
         return None;
@@ -1465,10 +1463,8 @@ fn count_crossing_vertex(
             *count += increment;
         }
     }
-    if count_opposite_face {
-        if let Some(count) = opposite_face_counts.get_mut(pair.face) {
-            *count += increment;
-        }
+    if count_opposite_face && let Some(count) = opposite_face_counts.get_mut(pair.face) {
+        *count += increment;
     }
 
     let primary_edge_face = match pair.edge_side {

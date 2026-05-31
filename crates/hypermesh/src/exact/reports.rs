@@ -1188,9 +1188,10 @@ fn open_surface_arrangement_selection(
     operation: ExactBooleanOperation,
 ) -> Result<ExactRegionSelection, ExactReportValidationError> {
     match operation {
+        ExactBooleanOperation::Intersection => Ok(ExactRegionSelection::KeepNone),
         ExactBooleanOperation::Union => Ok(ExactRegionSelection::KeepAll),
         ExactBooleanOperation::Difference => Ok(ExactRegionSelection::KeepLeft),
-        ExactBooleanOperation::Intersection | ExactBooleanOperation::SelectedRegions(_) => {
+        ExactBooleanOperation::SelectedRegions(_) => {
             Err(ExactReportValidationError::StatusEvidenceMismatch)
         }
     }
@@ -1630,6 +1631,10 @@ pub enum ExactBooleanSupport {
     CertifiedOpenSurfaceDisjoint,
     /// Open non-coplanar surfaces were unioned by exact split-region assembly.
     CertifiedOpenSurfaceArrangementUnion,
+    /// Open non-coplanar surfaces were intersected by exact split-region
+    /// assembly and projected to an empty triangle mesh because the exact
+    /// intersection is lower-dimensional crossing curves.
+    CertifiedOpenSurfaceArrangementIntersection,
     /// Open non-coplanar surfaces were differenced by retaining the left split
     /// regions and discarding lower-dimensional crossing curves.
     CertifiedOpenSurfaceArrangementDifference,
@@ -1874,10 +1879,14 @@ impl ExactBooleanPreflight {
                 no_region_facts(self.region_count, &self.region_classifications)
             }
             ExactBooleanSupport::CertifiedOpenSurfaceArrangementUnion
+            | ExactBooleanSupport::CertifiedOpenSurfaceArrangementIntersection
             | ExactBooleanSupport::CertifiedOpenSurfaceArrangementDifference => {
                 let expected_operation = match self.support {
                     ExactBooleanSupport::CertifiedOpenSurfaceArrangementUnion => {
                         ExactBooleanOperation::Union
+                    }
+                    ExactBooleanSupport::CertifiedOpenSurfaceArrangementIntersection => {
+                        ExactBooleanOperation::Intersection
                     }
                     ExactBooleanSupport::CertifiedOpenSurfaceArrangementDifference => {
                         ExactBooleanOperation::Difference

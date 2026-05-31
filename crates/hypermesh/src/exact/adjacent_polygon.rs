@@ -219,8 +219,8 @@ fn collect_polygon_patch_candidates(
 
     let selected_set = selected.iter().copied().collect::<BTreeSet<_>>();
     let mut extensions = BTreeSet::new();
-    for face in selected.iter().copied() {
-        for &neighbor in neighbors.get(&face)? {
+    for face in selected.iter() {
+        for &neighbor in neighbors.get(face)? {
             if neighbor >= start_face && !selected_set.contains(&neighbor) {
                 extensions.insert(neighbor);
             }
@@ -330,7 +330,7 @@ fn polygon_patch_candidate(
             Some(_) => {}
             None => area_sign = Some(sign),
         }
-        signed_area2 = signed_area2 + area;
+        signed_area2 += area;
     }
 
     let area_abs = real_abs(&signed_area2)?;
