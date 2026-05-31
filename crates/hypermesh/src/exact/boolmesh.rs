@@ -4426,6 +4426,8 @@ fn validate_boolean45_edge_point_routing(
         .sum::<usize>();
     if stage.source_edge_incident_gaps == 0
         && stage.partial_source_edges.missing_parameter_orders == 0
+        && stage.partial_source_edges.unpaired_runs == 0
+        && stage.new_face_pair_edges.unpaired_runs == 0
         && face_pair_point_count
             + stage
                 .new_edge_vertices

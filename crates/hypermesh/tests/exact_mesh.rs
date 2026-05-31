@@ -34601,6 +34601,58 @@ fn exact_boolmesh_source_edge_split_materializes_through_cleanup_caps() {
 
 #[test]
 #[cfg(feature = "exact-triangulation")]
+fn exact_boolmesh_source_edge_blocker_replays_without_hard_validation_error() {
+    let left = upward_l_prism_i64([[0, 0], [8, 0], [8, 3], [3, 3], [3, 8], [0, 8]], 5);
+    let right = tetrahedron_i64([2, -1, 0], [5, -1, 0], [2, 2, 0], [2, -1, -3]);
+
+    let workspace = hypermesh::exact::exact_boolmesh_workspace(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+    );
+    workspace.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        workspace.blocker.as_ref().map(|blocker| blocker.stage),
+        Some(hypermesh::exact::ExactBoolMeshKernelStage::SourceEdgeEmission)
+    );
+
+    assert_eq!(
+        hypermesh::exact::execute_exact_boolmesh_port(
+            &left,
+            &right,
+            hypermesh::exact::ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+        )
+        .unwrap_err(),
+        hypermesh::exact::ExactBoolMeshValidationError::PortBlocked(
+            hypermesh::exact::ExactBoolMeshKernelStage::SourceEdgeEmission
+        )
+    );
+
+    let public_error = hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap_err();
+    assert!(public_error.diagnostics.iter().any(|diagnostic| {
+        diagnostic.kind == DiagnosticKind::UnsupportedExactOperation
+            && diagnostic
+                .message
+                .contains("named exact booleans require certified winding")
+    }));
+    assert!(
+        public_error
+            .diagnostics
+            .iter()
+            .all(|diagnostic| !diagnostic.message.contains("exact boolmesh port failed")),
+        "blocked boolmesh workspaces must stay typed blockers instead of surfacing as hard validation errors"
+    );
+}
+
+#[test]
+#[cfg(feature = "exact-triangulation")]
 fn exact_boolmesh_kernel12_discovers_skew_edge_face_events() {
     let left = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
     let right = tetrahedron_i64([1, 1, -1], [3, 1, 3], [1, 3, 3], [3, 3, 1]);
