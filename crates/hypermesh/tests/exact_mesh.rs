@@ -34565,7 +34565,7 @@ fn exact_boolmesh_source_edge_blocker_retains_boolean45_counters() {
         .as_ref()
         .expect("nonconvex source-edge split fixture should expose the next boolmesh blocker");
     let stage = workspace.boolean45.as_ref().unwrap();
-    assert_eq!(stage.face_loop_assembly.dropped_open_chain_halfedges, 15);
+    assert_eq!(stage.face_loop_assembly.dropped_open_chain_halfedges, 16);
     assert_eq!(
         blocker.stage,
         hypermesh::exact::ExactBoolMeshKernelStage::FaceAssembly
@@ -34576,7 +34576,7 @@ fn exact_boolmesh_source_edge_blocker_retains_boolean45_counters() {
     assert_eq!(blocker.new_face_pair_unpaired_runs, 0);
     assert_eq!(blocker.halfedge_unfilled_halfedges, 0);
     assert_eq!(blocker.face_loop_incomplete_faces, 0);
-    assert_eq!(blocker.face_loop_non_loop_halfedges, 15);
+    assert_eq!(blocker.face_loop_non_loop_halfedges, 14);
     assert_eq!(blocker.source_edge_incident_gaps, 0);
     assert_eq!(blocker.loop_triangulation_failures, 0);
     assert_eq!(blocker.mesh_export_blocked_output_triangles, 0);

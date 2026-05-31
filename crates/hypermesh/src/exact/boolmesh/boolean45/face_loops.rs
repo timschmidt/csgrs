@@ -21,10 +21,17 @@ use super::super::{
 pub(super) fn assemble_output_face_loops(
     halfedges: &ExactBoolMeshHalfedgeAssemblyStage,
     face_halfedge_offsets: &[usize],
+    exact_degenerate_halfedges: &[bool],
 ) -> ExactBoolMeshFaceLoopAssemblyStage {
     let mut stage = ExactBoolMeshFaceLoopAssemblyStage::default();
     for output_face in 0..face_halfedge_offsets.len().saturating_sub(1) {
-        assemble_output_face_loop(output_face, halfedges, face_halfedge_offsets, &mut stage);
+        assemble_output_face_loop(
+            output_face,
+            halfedges,
+            face_halfedge_offsets,
+            exact_degenerate_halfedges,
+            &mut stage,
+        );
     }
     stage
 }
@@ -33,6 +40,7 @@ fn assemble_output_face_loop(
     output_face: usize,
     halfedges: &ExactBoolMeshHalfedgeAssemblyStage,
     face_halfedge_offsets: &[usize],
+    exact_degenerate_halfedges: &[bool],
     stage: &mut ExactBoolMeshFaceLoopAssemblyStage,
 ) {
     let begin = face_halfedge_offsets[output_face];
@@ -95,7 +103,12 @@ fn assemble_output_face_loop(
             }
 
             let Some(next) = pop_next_for_tail(&mut tail_to_halfedges, halfedge.head) else {
-                if halfedge_chain_is_partial_source_edge(halfedges, &loop_halfedges) {
+                if halfedge_chain_is_partial_source_edge(halfedges, &loop_halfedges)
+                    || halfedge_chain_is_exact_degenerate(
+                        exact_degenerate_halfedges,
+                        &loop_halfedges,
+                    )
+                {
                     stage.dropped_open_chain_halfedges += loop_halfedges.len();
                 } else {
                     stage.non_loop_halfedges += loop_halfedges.len();
@@ -136,6 +149,19 @@ fn halfedge_chain_is_partial_source_edge(
                         ExactBoolMeshOutputHalfedgeSource::PartialSourceEdge { .. }
                     )
                 })
+        })
+}
+
+fn halfedge_chain_is_exact_degenerate(
+    exact_degenerate_halfedges: &[bool],
+    slots: &[usize],
+) -> bool {
+    !slots.is_empty()
+        && slots.iter().all(|slot| {
+            exact_degenerate_halfedges
+                .get(*slot)
+                .copied()
+                .unwrap_or(false)
         })
 }
 
@@ -249,7 +275,7 @@ mod tests {
             ..ExactBoolMeshHalfedgeAssemblyStage::default()
         };
 
-        let stage = assemble_output_face_loops(&halfedges, &[0, 2]);
+        let stage = assemble_output_face_loops(&halfedges, &[0, 2], &[false, false]);
 
         assert_eq!(stage.incomplete_faces, 0);
         assert_eq!(stage.repeated_halfedges, 0);
@@ -307,12 +333,38 @@ mod tests {
             ..ExactBoolMeshHalfedgeAssemblyStage::default()
         };
 
-        let stage = assemble_output_face_loops(&halfedges, &[0, 3]);
+        let stage = assemble_output_face_loops(&halfedges, &[0, 3], &[false, false, false]);
 
         assert!(stage.loops.is_empty());
         assert_eq!(stage.incomplete_faces, 0);
         assert_eq!(stage.repeated_halfedges, 0);
         assert_eq!(stage.non_loop_halfedges, 0);
         assert_eq!(stage.dropped_open_chain_halfedges, 3);
+    }
+
+    #[test]
+    fn exact_degenerate_open_chain_is_replayed_as_lower_dimensional_drop() {
+        let halfedges = ExactBoolMeshHalfedgeAssemblyStage {
+            output_halfedges: vec![Some(ExactBoolMeshOutputHalfedge {
+                tail: 0,
+                head: 1,
+                pair: 0,
+                face: 0,
+                source: ExactBoolMeshOutputHalfedgeSource::NewFacePair {
+                    side: ExactBoolMeshSide::Left,
+                    source_face: 0,
+                    opposite_face: 0,
+                    fragment: 0,
+                    forward: true,
+                },
+            })],
+            ..ExactBoolMeshHalfedgeAssemblyStage::default()
+        };
+
+        let stage = assemble_output_face_loops(&halfedges, &[0, 1], &[true]);
+
+        assert!(stage.loops.is_empty());
+        assert_eq!(stage.non_loop_halfedges, 0);
+        assert_eq!(stage.dropped_open_chain_halfedges, 1);
     }
 }

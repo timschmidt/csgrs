@@ -45,15 +45,15 @@ use crate::exact::scalar::ExactReal;
 use super::{
     ExactBoolMeshBoolean03, ExactBoolMeshBoolean45Stage, ExactBoolMeshEdgeEvent,
     ExactBoolMeshEdgeFacePair, ExactBoolMeshFacePair, ExactBoolMeshFacePairPointRun,
-    ExactBoolMeshNewEdgeVertexStage, ExactBoolMeshNewFacePairFragment, ExactBoolMeshNewFacePairRun,
-    ExactBoolMeshNewFacePairStage, ExactBoolMeshOutputVertexAllocation,
-    ExactBoolMeshOutputVertexOrigin, ExactBoolMeshPairUpStage, ExactBoolMeshPairedEdgeFragment,
-    ExactBoolMeshPartialEdgePoint, ExactBoolMeshPartialEdgePointOrigin,
-    ExactBoolMeshPartialSourceEdgeFragment, ExactBoolMeshPartialSourceEdgeRun,
-    ExactBoolMeshPartialSourceEdgeStage, ExactBoolMeshRoutedEdgePoint, ExactBoolMeshSide,
-    ExactBoolMeshSourceEdgePointRun, ExactBoolMeshSourceEdgeRun, ExactBoolMeshSourceVertex,
-    ExactBoolMeshWholeSourceEdgeFragment, ExactBoolMeshWholeSourceEdgeRun,
-    ExactBoolMeshWholeSourceEdgeStage,
+    ExactBoolMeshHalfedgeAssemblyStage, ExactBoolMeshNewEdgeVertexStage,
+    ExactBoolMeshNewFacePairFragment, ExactBoolMeshNewFacePairRun, ExactBoolMeshNewFacePairStage,
+    ExactBoolMeshOutputVertexAllocation, ExactBoolMeshOutputVertexOrigin, ExactBoolMeshPairUpStage,
+    ExactBoolMeshPairedEdgeFragment, ExactBoolMeshPartialEdgePoint,
+    ExactBoolMeshPartialEdgePointOrigin, ExactBoolMeshPartialSourceEdgeFragment,
+    ExactBoolMeshPartialSourceEdgeRun, ExactBoolMeshPartialSourceEdgeStage,
+    ExactBoolMeshRoutedEdgePoint, ExactBoolMeshSide, ExactBoolMeshSourceEdgePointRun,
+    ExactBoolMeshSourceEdgeRun, ExactBoolMeshSourceVertex, ExactBoolMeshWholeSourceEdgeFragment,
+    ExactBoolMeshWholeSourceEdgeRun, ExactBoolMeshWholeSourceEdgeStage,
 };
 
 /// Build the exact `boolean45::size_output` staging record.
@@ -235,7 +235,18 @@ pub(super) fn size_output_stage(
         &face_halfedge_offsets,
         left.triangles().len(),
     );
-    let face_loop_assembly = assemble_output_face_loops(&halfedge_assembly, &face_halfedge_offsets);
+    let exact_degenerate_halfedges = exact_degenerate_output_halfedges(
+        left,
+        right,
+        boolean03,
+        &vertex_allocation,
+        &halfedge_assembly,
+    );
+    let face_loop_assembly = assemble_output_face_loops(
+        &halfedge_assembly,
+        &face_halfedge_offsets,
+        &exact_degenerate_halfedges,
+    );
     let loop_triangulation = triangulate_output_face_loops(
         left,
         right,
@@ -280,6 +291,33 @@ pub(super) fn size_output_stage(
             .sum(),
         source_edge_incident_gaps,
     }
+}
+
+fn exact_degenerate_output_halfedges(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    boolean03: &ExactBoolMeshBoolean03,
+    allocation: &ExactBoolMeshOutputVertexAllocation,
+    halfedges: &ExactBoolMeshHalfedgeAssemblyStage,
+) -> Vec<bool> {
+    halfedges
+        .output_halfedges
+        .iter()
+        .map(|halfedge| {
+            let Some(halfedge) = halfedge else {
+                return false;
+            };
+            let Some(tail) = output_vertex_point(halfedge.tail, allocation, boolean03, left, right)
+            else {
+                return false;
+            };
+            let Some(head) = output_vertex_point(halfedge.head, allocation, boolean03, left, right)
+            else {
+                return false;
+            };
+            same_point3(&tail, &head)
+        })
+        .collect()
 }
 
 /// Pair lowered source-edge events with exact parameter ordering.
