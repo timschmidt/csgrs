@@ -345,7 +345,7 @@ fn close_coplanar_boundary_loops(points: &[Point3], triangles: Vec<Triangle>) ->
             &mut occupied_triangles,
             &base_edge_uses,
         ) else {
-            return triangles;
+            continue;
         };
         cap_triangles.append(&mut loop_caps);
     }
@@ -1436,6 +1436,52 @@ mod tests {
         assert!(
             !report.is_valid(),
             "cleanup must not invent a cap without exact coplanarity"
+        );
+    }
+
+    #[test]
+    fn cleanup_caps_independent_coplanar_boundary_cycle_beside_non_coplanar_cycle() {
+        let raw_vertices = vec![
+            p(0, 0, 0),
+            p(2, 0, 0),
+            p(2, 2, 0),
+            p(0, 2, 0),
+            p(1, 1, 3),
+            p(4, 0, 0),
+            p(6, 0, 0),
+            p(6, 2, 1),
+            p(4, 2, 0),
+            p(5, 1, 3),
+        ];
+        let raw_triangles = vec![
+            Triangle([0, 1, 4]),
+            Triangle([1, 2, 4]),
+            Triangle([2, 3, 4]),
+            Triangle([3, 0, 4]),
+            Triangle([5, 6, 9]),
+            Triangle([6, 7, 9]),
+            Triangle([7, 8, 9]),
+            Triangle([8, 5, 9]),
+        ];
+
+        let (vertices, triangles) = cleanup_exact_export_vertices(raw_vertices, &raw_triangles);
+        let points = vertices
+            .iter()
+            .map(ExactPoint3::to_hyperlimit_point)
+            .collect::<Vec<_>>();
+        let boundary_edges = boundary_directed_edges(&triangles).unwrap();
+        let triangle_indices = triangles
+            .iter()
+            .map(|triangle| triangle.0)
+            .collect::<Vec<_>>();
+        let report =
+            validate_triangles_with_policy(&points, &triangle_indices, ValidationPolicy::CLOSED);
+
+        assert_eq!(triangles.len(), 10);
+        assert_eq!(boundary_edges.len(), 4);
+        assert!(
+            !report.is_valid(),
+            "the independent non-coplanar cycle should remain visible to final validation"
         );
     }
 }
