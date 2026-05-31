@@ -1011,6 +1011,7 @@ fn exact_point3_eq(left: &Point3, right: &Point3) -> bool {
         && compare_reals(&left.z, &right.z).value() == Some(Ordering::Equal)
 }
 
+#[cfg(feature = "exact-triangulation")]
 fn base_fan_tetrahedron_i64(
     a: [i64; 3],
     b: [i64; 3],
