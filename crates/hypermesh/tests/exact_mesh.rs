@@ -34611,10 +34611,31 @@ fn exact_boolmesh_source_edge_blocker_replays_without_hard_validation_error() {
         hypermesh::exact::ExactBooleanOperation::Union,
     );
     workspace.validate_against_sources(&left, &right).unwrap();
+    let blocker = workspace
+        .blocker
+        .as_ref()
+        .expect("direct boolmesh still has a named source-edge blocker");
     assert_eq!(
-        workspace.blocker.as_ref().map(|blocker| blocker.stage),
-        Some(hypermesh::exact::ExactBoolMeshKernelStage::SourceEdgeEmission)
+        blocker.stage,
+        hypermesh::exact::ExactBoolMeshKernelStage::SourceEdgeEmission
     );
+    assert_eq!(blocker.candidate_face_pairs, 14);
+    assert_eq!(blocker.pair_up_unpaired_event_runs, 2);
+    assert_eq!(blocker.partial_source_edge_unpaired_runs, 3);
+    assert_eq!(blocker.new_face_pair_unpaired_runs, 5);
+    assert_eq!(blocker.face_loop_non_loop_halfedges, 1);
+
+    let stage = workspace
+        .boolean45
+        .as_ref()
+        .expect("source-edge blocker must retain boolean45 replay state");
+    assert_eq!(stage.partial_source_edges.missing_parameter_orders, 0);
+    assert_eq!(stage.source_edge_incident_gaps, 0);
+    assert_eq!(stage.halfedge_assembly.unfilled_halfedges, 0);
+    assert_eq!(stage.halfedge_assembly.source_edge_incident_gaps, 0);
+    assert_eq!(stage.mesh_export.blocked_output_triangles, 0);
+    assert_eq!(stage.mesh_export.invalid_output_triangles, 0);
+    assert_eq!(stage.mesh_export.orientation_failures, 0);
 
     assert_eq!(
         hypermesh::exact::execute_exact_boolmesh_port(
