@@ -35282,6 +35282,68 @@ fn exact_boolmesh_success_replaces_legacy_materialization_errors() {
 
 #[test]
 #[cfg(feature = "exact-triangulation")]
+fn exact_boolmesh_union_refines_collinear_holed_face_boundary() {
+    let left = axis_aligned_box_i64([2, 2, 2], [6, 6, 6]);
+    let right = tetrahedron_i64([1, 1, 0], [7, 1, 0], [1, 7, 0], [1, 1, 5]);
+
+    let workspace = hypermesh::exact::exact_boolmesh_workspace(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+    );
+    workspace.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(workspace.blocker, None);
+    let stage = workspace.boolean45.as_ref().unwrap();
+    assert_eq!(stage.loop_triangulation.triangulation_failures, 0);
+    assert_eq!(stage.mesh_export.blocked_output_triangles, 0);
+    assert!(
+        stage
+            .loop_triangulation
+            .triangulations
+            .iter()
+            .any(|triangulation| {
+                triangulation.component_loop_indices.len() == 2
+                    && triangulation.constraint_edges.len() == 8
+                    && triangulation.constraint_edges.iter().all(|edge| {
+                        triangulation.triangles.chunks_exact(3).any(|triangle| {
+                            (0..3).any(|side| {
+                                let a = triangle[side];
+                                let b = triangle[(side + 1) % 3];
+                                (a == edge[0] && b == edge[1]) || (a == edge[1] && b == edge[0])
+                            })
+                        })
+                    })
+            }),
+        "collinear hole-boundary vertices must remain as protected triangulation edges"
+    );
+
+    let execution = hypermesh::exact::execute_exact_boolmesh_port(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("collinear holed-face CDT fallback should complete boolmesh union");
+    execution.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(execution.mesh.vertices().len(), 16);
+    assert_eq!(execution.mesh.triangles().len(), 28);
+    assert_eq!(execution.mesh.facts().mesh.boundary_edges, 0);
+    assert_eq!(execution.mesh.facts().mesh.duplicate_directed_edges, 0);
+    assert_eq!(execution.mesh.facts().mesh.non_manifold_edges, 0);
+
+    let public_result = hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("public exact boolean should consume the completed boolmesh union");
+    assert_eq!(public_result.mesh.vertices().len(), 16);
+    assert_eq!(public_result.mesh.triangles().len(), 28);
+}
+
+#[test]
+#[cfg(feature = "exact-triangulation")]
 fn exact_boolmesh_open_crossing_edges_are_not_adjacency_gaps() {
     let left = ExactMesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 4, 0, 0, 0, 4, 0],

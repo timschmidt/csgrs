@@ -460,7 +460,28 @@ fn triangulate_component_with_cdt(
         }
     }
 
-    let cdt = hypertri::cdt::constrained_delaunay(projected, &constraints).ok()?;
+    let cdt = match hypertri::cdt::constrained_delaunay(projected, &constraints) {
+        Ok(cdt) => cdt,
+        Err(_) => {
+            // `hypertri`'s closed-polygon CDT fast path can omit exact
+            // collinear boundary vertices.  Boolmesh needs those subedges for
+            // adjacent split faces, so refine the polygon triangles locally
+            // before accepting the fallback.
+            let triangles = triangulate_polygon_with_boundary_refinement(
+                projected,
+                hole_indices,
+                &constraints,
+            )?;
+            return Some((
+                triangles,
+                constraints
+                    .iter()
+                    .map(|edge| [edge.from, edge.to])
+                    .collect::<Vec<_>>(),
+                Vec::new(),
+            ));
+        }
+    };
     if cdt.points().len() < projected.len() {
         return None;
     }
@@ -479,6 +500,170 @@ fn triangulate_component_with_cdt(
             .collect::<Vec<_>>(),
         steiner_points,
     ))
+}
+
+fn triangulate_polygon_with_boundary_refinement(
+    projected: &[hypertri::ExactPoint],
+    hole_indices: &[usize],
+    constraints: &[hypertri::Constraint],
+) -> Option<Vec<usize>> {
+    let mut triangles = hypertri::earcut(projected, hole_indices).ok()?;
+    let max_passes = constraints.len().saturating_mul(projected.len()).max(1);
+    for _ in 0..max_passes {
+        let Some(missing) = constraints
+            .iter()
+            .find(|constraint| !triangles_have_edge(&triangles, constraint.from, constraint.to))
+        else {
+            return Some(triangles);
+        };
+        if !split_collinear_boundary_edge(projected, &mut triangles, missing.from, missing.to) {
+            return None;
+        }
+    }
+    constraints
+        .iter()
+        .all(|constraint| triangles_have_edge(&triangles, constraint.from, constraint.to))
+        .then_some(triangles)
+}
+
+fn triangles_have_edge(triangles: &[usize], from: usize, to: usize) -> bool {
+    triangles.chunks_exact(3).any(|triangle| {
+        (0..3).any(|edge| {
+            let a = triangle[edge];
+            let b = triangle[(edge + 1) % 3];
+            (a == from && b == to) || (a == to && b == from)
+        })
+    })
+}
+
+fn split_collinear_boundary_edge(
+    projected: &[hypertri::ExactPoint],
+    triangles: &mut Vec<usize>,
+    from: usize,
+    to: usize,
+) -> bool {
+    let mut triangle_index = 0;
+    while triangle_index + 2 < triangles.len() {
+        let triangle = [
+            triangles[triangle_index],
+            triangles[triangle_index + 1],
+            triangles[triangle_index + 2],
+        ];
+        for edge in 0..3 {
+            let a = triangle[edge];
+            let b = triangle[(edge + 1) % 3];
+            let opposite = triangle[(edge + 2) % 3];
+            for mid in [from, to] {
+                if point_lies_strictly_between(projected, mid, a, b)
+                    && split_triangle_edge(
+                        projected,
+                        triangles,
+                        triangle_index,
+                        a,
+                        mid,
+                        b,
+                        opposite,
+                    )
+                {
+                    return true;
+                }
+            }
+        }
+        triangle_index += 3;
+    }
+    false
+}
+
+fn split_triangle_edge(
+    projected: &[hypertri::ExactPoint],
+    triangles: &mut Vec<usize>,
+    triangle_index: usize,
+    a: usize,
+    mid: usize,
+    b: usize,
+    opposite: usize,
+) -> bool {
+    let first = [a, mid, opposite];
+    let second = [mid, b, opposite];
+    if !triangle_is_non_degenerate(projected, first)
+        || !triangle_is_non_degenerate(projected, second)
+    {
+        return false;
+    }
+    triangles.splice(
+        triangle_index..triangle_index + 3,
+        first.into_iter().chain(second),
+    );
+    true
+}
+
+fn triangle_is_non_degenerate(projected: &[hypertri::ExactPoint], triangle: [usize; 3]) -> bool {
+    compare_reals(
+        &triangle_area2_signed(projected, triangle),
+        &ExactReal::from(0),
+    )
+    .value()
+    .is_some_and(|ordering| ordering != Ordering::Equal)
+}
+
+fn point_lies_strictly_between(
+    projected: &[hypertri::ExactPoint],
+    point: usize,
+    start: usize,
+    end: usize,
+) -> bool {
+    if point == start
+        || point == end
+        || projected
+            .get(point)
+            .zip(projected.get(start))
+            .is_none_or(|(point, start)| exact_points_equal(point, start))
+        || projected
+            .get(point)
+            .zip(projected.get(end))
+            .is_none_or(|(point, end)| exact_points_equal(point, end))
+    {
+        return false;
+    }
+    let Some(point) = projected.get(point) else {
+        return false;
+    };
+    let Some(start) = projected.get(start) else {
+        return false;
+    };
+    let Some(end) = projected.get(end) else {
+        return false;
+    };
+    let area = ((start.x.clone() * &point.y) - &(start.y.clone() * &point.x))
+        + &((point.x.clone() * &end.y) - &(point.y.clone() * &end.x))
+        + &((end.x.clone() * &start.y) - &(end.y.clone() * &start.x));
+    compare_reals(&area, &ExactReal::from(0)).value() == Some(Ordering::Equal)
+        && real_between_inclusive(&point.x, &start.x, &end.x)
+        && real_between_inclusive(&point.y, &start.y, &end.y)
+}
+
+fn real_between_inclusive(value: &ExactReal, start: &ExactReal, end: &ExactReal) -> bool {
+    let Some(start_to_end) = compare_reals(start, end).value() else {
+        return false;
+    };
+    match start_to_end {
+        Ordering::Less | Ordering::Equal => {
+            compare_reals(start, value)
+                .value()
+                .is_some_and(|ordering| ordering != Ordering::Greater)
+                && compare_reals(value, end)
+                    .value()
+                    .is_some_and(|ordering| ordering != Ordering::Greater)
+        }
+        Ordering::Greater => {
+            compare_reals(end, value)
+                .value()
+                .is_some_and(|ordering| ordering != Ordering::Greater)
+                && compare_reals(value, start)
+                    .value()
+                    .is_some_and(|ordering| ordering != Ordering::Greater)
+        }
+    }
 }
 
 /// Lift a projected CDT Steiner point onto the exact source face plane.
@@ -892,6 +1077,17 @@ mod tests {
         ExactMesh::from_i64_triangles(&[], &[]).unwrap()
     }
 
+    fn p(x: i64, y: i64) -> hypertri::ExactPoint {
+        hypertri::ExactPoint::new(ExactReal::from(x), ExactReal::from(y))
+    }
+
+    fn q(xn: i64, xd: i64, yn: i64, yd: i64) -> hypertri::ExactPoint {
+        hypertri::ExactPoint::new(
+            (ExactReal::from(xn) / &ExactReal::from(xd)).expect("nonzero denominator"),
+            (ExactReal::from(yn) / &ExactReal::from(yd)).expect("nonzero denominator"),
+        )
+    }
+
     fn source_allocation(vertex_count: usize) -> ExactBoolMeshOutputVertexAllocation {
         ExactBoolMeshOutputVertexAllocation {
             left_vertex_output_starts: (0..vertex_count).map(Some).collect(),
@@ -969,6 +1165,42 @@ mod tests {
                 forward: true,
             },
         })
+    }
+
+    #[test]
+    fn holed_face_refines_collinear_hole_boundary_edges_after_earcut() {
+        let projected = vec![
+            p(7, 1),
+            p(1, 7),
+            p(1, 1),
+            q(14, 5, 14, 5),
+            q(18, 5, 2, 1),
+            q(30, 11, 2, 1),
+            p(2, 2),
+            q(2, 1, 18, 5),
+        ];
+        let constraints = [
+            hypertri::Constraint::new(0, 1),
+            hypertri::Constraint::new(1, 2),
+            hypertri::Constraint::new(2, 0),
+            hypertri::Constraint::new(3, 4),
+            hypertri::Constraint::new(4, 5),
+            hypertri::Constraint::new(5, 6),
+            hypertri::Constraint::new(6, 7),
+            hypertri::Constraint::new(7, 3),
+        ];
+
+        assert!(hypertri::cdt::constrained_delaunay(&projected, &constraints).is_err());
+        let triangles =
+            triangulate_polygon_with_boundary_refinement(&projected, &[3], &constraints)
+                .expect("fallback should split collinear hole boundary edges");
+
+        for constraint in constraints {
+            assert!(
+                triangles_have_edge(&triangles, constraint.from, constraint.to),
+                "missing refined constraint {constraint:?} from {triangles:?}"
+            );
+        }
     }
 
     #[test]
