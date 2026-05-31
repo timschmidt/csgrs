@@ -3559,6 +3559,32 @@ fn exercise_component_holed_coplanar_intersection() {
     assert!(
         arrange_coplanar_surface_component_holed_intersection(&annulus, &crossing_hole).is_none()
     );
+    let crossing_preflight =
+        preflight_boolean_exact(&annulus, &crossing_hole, ExactBooleanOperation::Intersection)
+            .expect("partial-hole-overlap clipper should classify orthogonal shortcut");
+    crossing_preflight.validate().unwrap();
+    crossing_preflight
+        .validate_against_sources(&annulus, &crossing_hole)
+        .unwrap();
+    assert_eq!(
+        crossing_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceIntersection
+    );
+    hypermesh::exact::boolean_exact(
+        &annulus,
+        &crossing_hole,
+        ExactBooleanOperation::Intersection,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("partial-hole-overlap clipper should materialize through orthogonal intersection")
+    .validate_operation_against_sources(
+        &annulus,
+        &crossing_hole,
+        ExactBooleanOperation::Intersection,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
 
     let hole_edge_touch = ExactMesh::from_i64_triangles_with_policy(
         &[2, 2, 0, 4, 2, 0, 4, 8, 0, 2, 8, 0],

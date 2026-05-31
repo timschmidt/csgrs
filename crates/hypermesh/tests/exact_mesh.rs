@@ -26866,6 +26866,43 @@ fn exact_coplanar_component_holed_intersection_materializes_clipped_annulus() {
         .is_none(),
         "partial hole overlap must remain a full planar-arrangement case"
     );
+    let crossing_preflight = hypermesh::exact::preflight_boolean_exact(
+        &annulus,
+        &crossing_hole,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+    )
+    .expect("partial-hole-overlap clipper should classify through orthogonal intersection");
+    crossing_preflight.validate().unwrap();
+    crossing_preflight
+        .validate_against_sources(&annulus, &crossing_hole)
+        .unwrap();
+    assert_eq!(
+        crossing_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceIntersection
+    );
+    let crossing_result = hypermesh::exact::boolean_exact(
+        &annulus,
+        &crossing_hole,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("partial-hole-overlap clipper should materialize through orthogonal intersection");
+    crossing_result
+        .validate_operation_against_sources(
+            &annulus,
+            &crossing_hole,
+            hypermesh::exact::ExactBooleanOperation::Intersection,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        crossing_result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut:
+                hypermesh::exact::ExactBooleanShortcutKind::CoplanarOrthogonalSurfaceIntersection
+        }
+    );
 
     let hole_edge_touch = ExactMesh::from_i64_triangles_with_policy(
         &[2, 2, 0, 4, 2, 0, 4, 8, 0, 2, 8, 0],
