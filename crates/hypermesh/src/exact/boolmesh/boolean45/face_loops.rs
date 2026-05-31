@@ -95,7 +95,11 @@ fn assemble_output_face_loop(
             }
 
             let Some(next) = pop_next_for_tail(&mut tail_to_halfedges, halfedge.head) else {
-                stage.non_loop_halfedges += loop_halfedges.len();
+                if halfedge_chain_is_partial_source_edge(halfedges, &loop_halfedges) {
+                    stage.dropped_open_chain_halfedges += loop_halfedges.len();
+                } else {
+                    stage.non_loop_halfedges += loop_halfedges.len();
+                }
                 break;
             };
             current = next;
@@ -116,6 +120,23 @@ fn assemble_output_face_loop(
         stage.non_loop_halfedges = non_loop_before;
         stage.dropped_open_chain_halfedges += dropped;
     }
+}
+
+fn halfedge_chain_is_partial_source_edge(
+    halfedges: &ExactBoolMeshHalfedgeAssemblyStage,
+    slots: &[usize],
+) -> bool {
+    !slots.is_empty()
+        && slots.iter().all(|slot| {
+            halfedges.output_halfedges[*slot]
+                .as_ref()
+                .is_some_and(|halfedge| {
+                    matches!(
+                        halfedge.source,
+                        ExactBoolMeshOutputHalfedgeSource::PartialSourceEdge { .. }
+                    )
+                })
+        })
 }
 
 fn face_has_only_partial_source_edge_halfedges(
