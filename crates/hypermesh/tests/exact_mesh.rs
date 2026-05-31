@@ -34551,7 +34551,7 @@ fn exact_boolmesh_kernel12_lowers_partial_positive_area_coplanar_overlap() {
 
 #[test]
 #[cfg(feature = "exact-triangulation")]
-fn exact_boolmesh_source_edge_blocker_retains_boolean45_counters() {
+fn exact_boolmesh_source_edge_split_materializes_through_cleanup_caps() {
     let left = upward_l_prism_i64([[0, 0], [8, 0], [8, 3], [3, 3], [3, 8], [0, 8]], 5);
     let right = tetrahedron_i64([1, 1, 0], [7, 1, 0], [1, 7, 0], [1, 1, 5]);
 
@@ -34561,43 +34561,42 @@ fn exact_boolmesh_source_edge_blocker_retains_boolean45_counters() {
         hypermesh::exact::ExactBooleanOperation::Union,
     );
     workspace.validate_against_sources(&left, &right).unwrap();
-    let blocker = workspace
-        .blocker
-        .as_ref()
-        .expect("nonconvex source-edge split fixture should expose the next boolmesh blocker");
+    assert!(
+        workspace.blocker.is_none(),
+        "branched coplanar boundary cleanup should close the former source-edge split blocker"
+    );
     let stage = workspace.boolean45.as_ref().unwrap();
     assert_eq!(stage.face_loop_assembly.dropped_open_chain_halfedges, 23);
     assert_eq!(stage.face_loop_assembly.non_loop_halfedges, 0);
-    assert_eq!(
-        blocker.stage,
-        hypermesh::exact::ExactBoolMeshKernelStage::Triangulation
-    );
-    assert_eq!(blocker.candidate_face_pairs, 33);
-    assert_eq!(blocker.pair_up_unpaired_event_runs, 5);
-    assert_eq!(blocker.partial_source_edge_unpaired_runs, 0);
-    assert_eq!(blocker.new_face_pair_unpaired_runs, 0);
-    assert_eq!(blocker.halfedge_unfilled_halfedges, 0);
-    assert_eq!(blocker.face_loop_incomplete_faces, 0);
-    assert_eq!(blocker.face_loop_non_loop_halfedges, 0);
-    assert_eq!(blocker.source_edge_incident_gaps, 0);
-    assert_eq!(blocker.loop_triangulation_failures, 0);
-    assert_eq!(blocker.mesh_export_blocked_output_triangles, 0);
+    assert_eq!(workspace.candidate_face_pairs.len(), 33);
+    assert_eq!(workspace.pair_up.unpaired_event_runs, 5);
+    assert_eq!(stage.partial_source_edges.unpaired_runs, 0);
+    assert_eq!(stage.new_face_pair_edges.unpaired_runs, 0);
+    assert_eq!(stage.halfedge_assembly.unfilled_halfedges, 0);
+    assert_eq!(stage.face_loop_assembly.incomplete_faces, 0);
+    assert_eq!(stage.source_edge_incident_gaps, 0);
+    assert_eq!(stage.loop_triangulation.triangulation_failures, 0);
+    assert_eq!(stage.mesh_export.blocked_output_triangles, 0);
     assert_eq!(stage.mesh_export.invalid_output_triangles, 0);
     assert_eq!(stage.mesh_export.orientation_failures, 0);
     assert_eq!(stage.mesh_export.triangles.len(), 29);
 
-    let mut stale_blocker = workspace.clone();
-    stale_blocker
-        .blocker
-        .as_mut()
-        .unwrap()
-        .partial_source_edge_unpaired_runs += 1;
+    let execution = hypermesh::exact::execute_exact_boolmesh_port(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("branched coplanar cleanup caps should materialize the nonconvex source-edge split");
+    execution.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
-        stale_blocker
-            .validate_against_sources(&left, &right)
-            .unwrap_err(),
-        hypermesh::exact::ExactBoolMeshValidationError::BlockerCountMismatch
+        execution.shortcut,
+        hypermesh::exact::ExactBooleanShortcutKind::BoolMeshSplit
     );
+    assert_eq!(execution.mesh.vertices().len(), 19);
+    assert_eq!(execution.mesh.triangles().len(), 34);
+    assert_eq!(execution.mesh.facts().mesh.boundary_edges, 0);
+    assert_eq!(execution.mesh.facts().mesh.non_manifold_vertices, 0);
 }
 
 #[test]

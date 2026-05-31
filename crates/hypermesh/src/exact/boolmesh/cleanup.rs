@@ -86,6 +86,7 @@ pub(super) fn cleanup_exact_export_vertices(
     let triangles = orient_triangle_components(triangles);
     let triangles = close_coplanar_boundary_loops(&unique_points, triangles);
     let triangles = remove_internal_nonmanifold_triangles(triangles);
+    let triangles = close_coplanar_boundary_loops(&unique_points, triangles);
 
     compact_unused_vertices(unique_vertices, triangles)
 }
@@ -308,7 +309,7 @@ fn point_strictly_inside_segment(
 /// construction, so the exact port tries each boundary vertex and accepts only
 /// an anchor whose replay contains no degenerate or duplicate triangle.
 fn close_coplanar_boundary_loops(points: &[Point3], triangles: Vec<Triangle>) -> Vec<Triangle> {
-    let Some(boundary_loops) = directed_boundary_loops(&triangles) else {
+    let Some(boundary_loops) = coplanar_boundary_loops_for_capping(points, &triangles) else {
         return triangles;
     };
     if boundary_loops.is_empty() {
@@ -342,6 +343,17 @@ fn close_coplanar_boundary_loops(points: &[Point3], triangles: Vec<Triangle>) ->
     orient_triangle_components(closed)
 }
 
+fn coplanar_boundary_loops_for_capping(
+    points: &[Point3],
+    triangles: &[Triangle],
+) -> Option<Vec<Vec<usize>>> {
+    if let Some(boundary_loops) = directed_boundary_loops(triangles) {
+        return Some(boundary_loops);
+    }
+
+    branched_coplanar_boundary_cycle_cover(points, triangles)
+}
+
 /// Extract simple directed boundary cycles from an already oriented soup.
 ///
 /// Boolmesh's final manifold constructor expects each remaining boundary edge
@@ -350,23 +362,10 @@ fn close_coplanar_boundary_loops(points: &[Point3], triangles: Vec<Triangle>) ->
 /// adjacency check used by `Manifold::new_impl`: every boundary vertex must
 /// have exactly one outgoing and one incoming boundary halfedge.
 fn directed_boundary_loops(triangles: &[Triangle]) -> Option<Vec<Vec<usize>>> {
-    let mut edge_uses = BTreeMap::<[usize; 2], Vec<[usize; 2]>>::new();
-    for triangle in triangles {
-        for edge in directed_edges(triangle.0) {
-            edge_uses.entry(sorted_edge(edge)).or_default().push(edge);
-        }
-    }
-
+    let boundary_edges = boundary_directed_edges(triangles)?;
     let mut successors = BTreeMap::<usize, usize>::new();
     let mut predecessors = BTreeMap::<usize, usize>::new();
-    for uses in edge_uses.values() {
-        if uses.len() > 2 {
-            return None;
-        }
-        if uses.len() != 1 {
-            continue;
-        }
-        let [tail, head] = uses[0];
+    for [tail, head] in boundary_edges {
         if tail == head
             || successors.insert(tail, head).is_some()
             || predecessors.insert(head, tail).is_some()
@@ -415,6 +414,197 @@ fn directed_boundary_loops(triangles: &[Triangle]) -> Option<Vec<Vec<usize>>> {
     }
 
     Some(loops)
+}
+
+fn boundary_directed_edges(triangles: &[Triangle]) -> Option<Vec<[usize; 2]>> {
+    let mut edge_uses = BTreeMap::<[usize; 2], Vec<[usize; 2]>>::new();
+    for triangle in triangles {
+        for edge in directed_edges(triangle.0) {
+            edge_uses.entry(sorted_edge(edge)).or_default().push(edge);
+        }
+    }
+
+    let mut boundary_edges = Vec::new();
+    for uses in edge_uses.values() {
+        if uses.len() > 2 {
+            return None;
+        }
+        if uses.len() == 1 {
+            boundary_edges.push(uses[0]);
+        }
+    }
+    Some(boundary_edges)
+}
+
+fn branched_coplanar_boundary_cycle_cover(
+    points: &[Point3],
+    triangles: &[Triangle],
+) -> Option<Vec<Vec<usize>>> {
+    let boundary_edges = boundary_directed_edges(triangles)?;
+    if boundary_edges.is_empty() {
+        return Some(Vec::new());
+    }
+    if boundary_edges.len() > 64 {
+        return None;
+    }
+
+    let mut outgoing = BTreeMap::<usize, Vec<usize>>::new();
+    let mut all_edges = BTreeSet::<[usize; 2]>::new();
+    for edge @ [tail, head] in boundary_edges {
+        if tail == head || !all_edges.insert(edge) {
+            return None;
+        }
+        outgoing.entry(tail).or_default().push(head);
+    }
+    for heads in outgoing.values_mut() {
+        heads.sort_unstable();
+    }
+
+    let mut cycles = enumerate_simple_coplanar_boundary_cycles(points, &outgoing, all_edges.len());
+    cycles.sort_by(|left, right| right.len().cmp(&left.len()).then_with(|| left.cmp(right)));
+    cycles.dedup();
+    if cycles.is_empty() {
+        return None;
+    }
+
+    select_boundary_cycle_cover(&all_edges, &cycles)
+}
+
+fn enumerate_simple_coplanar_boundary_cycles(
+    points: &[Point3],
+    outgoing: &BTreeMap<usize, Vec<usize>>,
+    edge_count: usize,
+) -> Vec<Vec<usize>> {
+    let mut unique_cycles = BTreeSet::<Vec<usize>>::new();
+    for &start in outgoing.keys() {
+        let mut path = vec![start];
+        let mut visited = BTreeSet::from([start]);
+        enumerate_cycles_from(
+            points,
+            outgoing,
+            edge_count,
+            start,
+            start,
+            &mut path,
+            &mut visited,
+            &mut unique_cycles,
+        );
+    }
+    unique_cycles.into_iter().collect()
+}
+
+fn enumerate_cycles_from(
+    points: &[Point3],
+    outgoing: &BTreeMap<usize, Vec<usize>>,
+    edge_count: usize,
+    start: usize,
+    current: usize,
+    path: &mut Vec<usize>,
+    visited: &mut BTreeSet<usize>,
+    unique_cycles: &mut BTreeSet<Vec<usize>>,
+) {
+    if path.len() > edge_count {
+        return;
+    }
+    let Some(next_vertices) = outgoing.get(&current) else {
+        return;
+    };
+    for &next in next_vertices {
+        if next == start {
+            if path.len() >= 3 && boundary_loop_is_coplanar(points, path) {
+                unique_cycles.insert(path.clone());
+            }
+        } else if next > start && visited.insert(next) {
+            path.push(next);
+            enumerate_cycles_from(
+                points,
+                outgoing,
+                edge_count,
+                start,
+                next,
+                path,
+                visited,
+                unique_cycles,
+            );
+            path.pop();
+            visited.remove(&next);
+        }
+    }
+}
+
+fn boundary_loop_is_coplanar(points: &[Point3], boundary_loop: &[usize]) -> bool {
+    let Some(plane) = coplanar_loop_plane(points, boundary_loop) else {
+        return false;
+    };
+    boundary_loop
+        .iter()
+        .all(|&vertex| point_is_on_plane(points, plane, vertex))
+}
+
+fn select_boundary_cycle_cover(
+    all_edges: &BTreeSet<[usize; 2]>,
+    cycles: &[Vec<usize>],
+) -> Option<Vec<Vec<usize>>> {
+    let cycle_edges = cycles
+        .iter()
+        .map(|cycle| {
+            cycle
+                .iter()
+                .copied()
+                .zip(cycle.iter().copied().cycle().skip(1))
+                .map(|(tail, head)| [tail, head])
+                .collect::<BTreeSet<_>>()
+        })
+        .collect::<Vec<_>>();
+    let mut selected = Vec::new();
+    let mut covered = BTreeSet::new();
+    select_boundary_cycle_cover_recursive(
+        all_edges,
+        cycles,
+        &cycle_edges,
+        &mut covered,
+        &mut selected,
+    )
+}
+
+fn select_boundary_cycle_cover_recursive(
+    all_edges: &BTreeSet<[usize; 2]>,
+    cycles: &[Vec<usize>],
+    cycle_edges: &[BTreeSet<[usize; 2]>],
+    covered: &mut BTreeSet<[usize; 2]>,
+    selected: &mut Vec<Vec<usize>>,
+) -> Option<Vec<Vec<usize>>> {
+    let Some(next_edge) = all_edges
+        .iter()
+        .find(|edge| !covered.contains(*edge))
+        .copied()
+    else {
+        return Some(selected.clone());
+    };
+
+    for (cycle, edges) in cycles.iter().zip(cycle_edges) {
+        if !edges.contains(&next_edge)
+            || edges.iter().any(|edge| !all_edges.contains(edge))
+            || edges.iter().any(|edge| covered.contains(edge))
+        {
+            continue;
+        }
+        for edge in edges {
+            covered.insert(*edge);
+        }
+        selected.push(cycle.clone());
+        if let Some(solution) =
+            select_boundary_cycle_cover_recursive(all_edges, cycles, cycle_edges, covered, selected)
+        {
+            return Some(solution);
+        }
+        selected.pop();
+        for edge in edges {
+            covered.remove(edge);
+        }
+    }
+
+    None
 }
 
 fn triangulate_coplanar_boundary_loop(
@@ -759,6 +949,15 @@ mod tests {
         ExactPoint3::new(ExactReal::from(x), ExactReal::from(y), ExactReal::from(z))
     }
 
+    fn r(numerator: i64, denominator: i64) -> ExactReal {
+        (ExactReal::from(numerator) / &ExactReal::from(denominator))
+            .expect("test rational denominator is nonzero")
+    }
+
+    fn rp(x: (i64, i64), y: (i64, i64), z: (i64, i64)) -> ExactPoint3 {
+        ExactPoint3::new(r(x.0, x.1), r(y.0, y.1), r(z.0, z.1))
+    }
+
     #[test]
     fn cleanup_welds_and_orients_skew_split_topology() {
         let raw_vertices = vec![
@@ -970,6 +1169,82 @@ mod tests {
         assert!(
             report.is_valid(),
             "cleanup should remove the overfull internal coplanar interface triangle: {:?}",
+            report.diagnostics
+        );
+    }
+
+    #[test]
+    fn cleanup_closes_branched_coplanar_boundary_cycle_cover() {
+        let raw_vertices = vec![
+            p(0, 0, 0),
+            p(8, 0, 0),
+            p(8, 3, 0),
+            p(3, 3, 0),
+            p(3, 8, 0),
+            p(0, 8, 0),
+            p(0, 0, 5),
+            p(8, 0, 5),
+            p(8, 3, 5),
+            p(3, 3, 5),
+            p(3, 8, 5),
+            p(0, 8, 5),
+            p(1, 1, 0),
+            rp((19, 3), (1, 1), (0, 1)),
+            rp((1, 1), (19, 3), (0, 1)),
+            p(5, 3, 0),
+            rp((3, 1), (3, 1), (5, 3)),
+            p(3, 5, 0),
+            rp((3, 1), (43, 11), (10, 11)),
+        ];
+        let raw_triangles = vec![
+            Triangle([0, 12, 13]),
+            Triangle([0, 13, 1]),
+            Triangle([13, 15, 2]),
+            Triangle([1, 13, 2]),
+            Triangle([0, 5, 14]),
+            Triangle([0, 14, 12]),
+            Triangle([4, 17, 14]),
+            Triangle([4, 14, 5]),
+            Triangle([6, 7, 8]),
+            Triangle([6, 8, 9]),
+            Triangle([6, 9, 11]),
+            Triangle([9, 10, 11]),
+            Triangle([0, 1, 7]),
+            Triangle([0, 7, 6]),
+            Triangle([1, 2, 8]),
+            Triangle([1, 8, 7]),
+            Triangle([2, 9, 8]),
+            Triangle([9, 16, 18]),
+            Triangle([9, 18, 10]),
+            Triangle([4, 5, 11]),
+            Triangle([4, 11, 10]),
+            Triangle([0, 6, 5]),
+            Triangle([5, 6, 11]),
+            Triangle([17, 12, 14]),
+            Triangle([3, 12, 17]),
+            Triangle([15, 12, 3]),
+            Triangle([13, 12, 15]),
+            Triangle([15, 17, 18]),
+            Triangle([16, 15, 18]),
+        ];
+
+        let (vertices, triangles) = cleanup_exact_export_vertices(raw_vertices, &raw_triangles);
+        let points = vertices
+            .iter()
+            .map(ExactPoint3::to_hyperlimit_point)
+            .collect::<Vec<_>>();
+        let triangle_indices = triangles
+            .iter()
+            .map(|triangle| triangle.0)
+            .collect::<Vec<_>>();
+        let report =
+            validate_triangles_with_policy(&points, &triangle_indices, ValidationPolicy::CLOSED);
+
+        assert_eq!(vertices.len(), 19);
+        assert_eq!(triangles.len(), 34);
+        assert!(
+            report.is_valid(),
+            "cleanup should cap exact coplanar boundary cycles even when the boundary graph branches at shared vertices: {:?}",
             report.diagnostics
         );
     }
