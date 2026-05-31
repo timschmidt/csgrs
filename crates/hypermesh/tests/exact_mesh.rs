@@ -28352,13 +28352,29 @@ fn exact_coplanar_component_holed_intersection_clips_same_outer_source_hole_isla
     )
     .expect("point-touch source-island cutter should materialize")
     .mesh;
-    assert!(
+    let point_touch_intersection =
         hypermesh::exact::arrange_coplanar_surface_component_holed_intersection(
             &source,
             &point_touch_opposing,
         )
-        .is_none(),
-        "point-only contact with a source-owned island still requires planar-cell ownership"
+        .expect("point-only contact with a source-owned island should retain the island");
+    point_touch_intersection.validate().unwrap();
+    point_touch_intersection
+        .validate_intersection_against_sources(&source, &point_touch_opposing)
+        .unwrap();
+    assert!(
+        point_touch_intersection.components.iter().any(|component| {
+            component.holes.is_empty()
+                && component
+                    .outer
+                    .iter()
+                    .any(|point| real_eq(&point.x, &ExactReal::from(8)))
+                && component
+                    .outer
+                    .iter()
+                    .any(|point| real_eq(&point.x, &ExactReal::from(12)))
+        }),
+        "the source-owned island should survive unchanged across point-only cutter contact"
     );
 
     let split_preflight = hypermesh::exact::preflight_boolean_exact(
@@ -28386,6 +28402,37 @@ fn exact_coplanar_component_holed_intersection_clips_same_outer_source_hole_isla
     .validate_operation_against_sources(
         &source,
         &split_opposing,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
+
+    let point_touch_preflight = hypermesh::exact::preflight_boolean_exact(
+        &source,
+        &point_touch_opposing,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+    )
+    .expect("point-only source-island contact preflight should classify shortcut");
+    point_touch_preflight.validate().unwrap();
+    point_touch_preflight
+        .validate_against_sources(&source, &point_touch_opposing)
+        .unwrap();
+    assert_eq!(
+        point_touch_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
+    );
+
+    hypermesh::exact::boolean_exact(
+        &source,
+        &point_touch_opposing,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("point-only source-island contact boolean should materialize")
+    .validate_operation_against_sources(
+        &source,
+        &point_touch_opposing,
         hypermesh::exact::ExactBooleanOperation::Intersection,
         ValidationPolicy::ALLOW_BOUNDARY,
         hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,

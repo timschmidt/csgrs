@@ -3512,9 +3512,10 @@ fn collect_same_outer_source_islands_from_side(
 /// accepts only exact object-level facts: an opposite hole may have no effect
 /// because it lies in an already removed island hole, may consume the whole
 /// island, may become a new strict retained hole of the island, or may cut the
-/// island outer into simple remnants. Point-contact and partial-overlap hole
-/// relations still reject so a later planar-cell extractor owns those
-/// topologies.
+/// island outer into simple remnants. Point-only contact with the island
+/// outer removes no two-dimensional material and is accepted only after the
+/// full-area replay closes; partial-overlap hole relations still reject so a
+/// later planar-cell extractor owns those topologies.
 ///
 /// This follows Yap, "Towards Exact Geometric Computation," *Computational
 /// Geometry* 7.1-2 (1997): the retained island, its holes, and any additional
@@ -3590,7 +3591,7 @@ fn same_outer_holed_source_island_retained_components(
         }
         match simple_polygon_interaction(&candidate.outer, opposite_hole, projection)? {
             SimplePolygonInteraction::Disjoint => continue,
-            SimplePolygonInteraction::PointOnly => return None,
+            SimplePolygonInteraction::PointOnly => continue,
             SimplePolygonInteraction::Connected => {}
         }
         if polygon_strictly_inside_simple_polygon(opposite_hole, &candidate.outer, projection)? {
