@@ -6422,12 +6422,13 @@ fn axis_aligned_rectangle_difference_polygons(
 ///
 /// For two source-owned holed sheets with the same exact outer ring,
 /// `(outer - left_holes) union (outer - right_holes)` is `outer` when every
-/// left retained hole is strictly disjoint from every right retained hole. The
-/// result is an ordinary simple-loop surface, so the existing component-union
-/// artifact can carry it without inventing a new report. Equal, nested,
-/// touching, crossing, or overlapping holes are deliberately rejected here:
-/// equal/nested cases are copy/containment-shaped, while contact and overlap
-/// remain planar-arrangement work.
+/// left retained hole has no positive-area intersection with every right
+/// retained hole. The result is an ordinary simple-loop surface, so the
+/// existing component-union artifact can carry it without inventing a new
+/// report. Equal and nested holes are deliberately rejected here because they
+/// are copy/containment-shaped. Crossing or overlapping holes are rejected by
+/// the exact area replay below, while lower-dimensional hole contact is
+/// accepted because it removes no two-dimensional material from the union.
 ///
 /// The certificate follows Yap, "Towards Exact Geometric Computation,"
 /// *Computational Geometry* 7.1-2 (1997): source rings are recovered from mesh
@@ -6466,7 +6467,7 @@ fn same_outer_holed_filled_union_polygons(
                 &right_component.outer,
                 projection,
             ) {
-                same_outer_holes_are_strictly_cross_disjoint(
+                same_outer_holes_are_not_equal_or_nested(
                     &left_component.holes,
                     &right_component.holes,
                     projection,
@@ -6880,7 +6881,7 @@ fn convex_retained_hole_intersection_polygon(
 }
 
 #[cfg(feature = "exact-triangulation")]
-fn same_outer_holes_are_strictly_cross_disjoint(
+fn same_outer_holes_are_not_equal_or_nested(
     left_holes: &[Vec<Point3>],
     right_holes: &[Vec<Point3>],
     projection: CoplanarProjection,
@@ -6893,12 +6894,7 @@ fn same_outer_holes_are_strictly_cross_disjoint(
             {
                 return None;
             }
-            match simple_polygon_interaction(left_hole, right_hole, projection)? {
-                SimplePolygonInteraction::Disjoint => {}
-                SimplePolygonInteraction::PointOnly | SimplePolygonInteraction::Connected => {
-                    return None;
-                }
-            }
+            simple_polygon_interaction(left_hole, right_hole, projection)?;
         }
     }
     Some(())

@@ -29367,10 +29367,45 @@ fn exact_coplanar_component_union_materializes_same_outer_disjoint_holed_fill() 
         hypermesh::exact::arrange_coplanar_convex_surface_holed_difference(&outer, &touching_hole)
             .expect("touching annulus should materialize")
             .mesh;
-    assert!(
-        hypermesh::exact::arrange_coplanar_surface_component_union(&left, &touching).is_none(),
-        "point/edge hole contact is not a filled-outer certificate"
+    let touching_union =
+        hypermesh::exact::arrange_coplanar_surface_component_union(&left, &touching)
+            .expect("edge-touching same-outer holes should union to the filled outer sheet");
+    touching_union.validate().unwrap();
+    touching_union
+        .validate_component_union_against_sources(&left, &touching)
+        .unwrap();
+    assert_eq!(touching_union.polygon.len(), 4);
+
+    let touching_preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &touching,
+        hypermesh::exact::ExactBooleanOperation::Union,
+    )
+    .expect("touching-hole same-outer union preflight should classify shortcut");
+    touching_preflight.validate().unwrap();
+    touching_preflight
+        .validate_against_sources(&left, &touching)
+        .unwrap();
+    assert_eq!(
+        touching_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
     );
+
+    hypermesh::exact::boolean_exact(
+        &left,
+        &touching,
+        hypermesh::exact::ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("edge-touching same-outer holes should materialize")
+    .validate_operation_against_sources(
+        &left,
+        &touching,
+        hypermesh::exact::ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
 
     let nested_hole = ExactMesh::from_i64_triangles_with_policy(
         &[1, 1, 0, 5, 1, 0, 5, 5, 0, 1, 5, 0],

@@ -5577,7 +5577,37 @@ fn exercise_same_outer_holed_coplanar_filled_union() {
     let touching = arrange_coplanar_convex_surface_holed_difference(&outer, &touching_hole)
         .expect("same-outer touching annulus should materialize")
         .mesh;
-    assert!(arrange_coplanar_surface_component_union(&left, &touching).is_none());
+    let touching_union = arrange_coplanar_surface_component_union(&left, &touching)
+        .expect("edge-touching same-outer holes should fill the outer sheet");
+    touching_union.validate().unwrap();
+    touching_union
+        .validate_component_union_against_sources(&left, &touching)
+        .unwrap();
+    let touching_preflight = preflight_boolean_exact(&left, &touching, ExactBooleanOperation::Union)
+        .expect("edge-touching same-outer union preflight should classify shortcut");
+    touching_preflight.validate().unwrap();
+    touching_preflight
+        .validate_against_sources(&left, &touching)
+        .unwrap();
+    assert_eq!(
+        touching_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
+    );
+    hypermesh::exact::boolean_exact(
+        &left,
+        &touching,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("edge-touching same-outer union should materialize")
+    .validate_operation_against_sources(
+        &left,
+        &touching,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
 
     let preflight = preflight_boolean_exact(&left, &right, ExactBooleanOperation::Union)
         .expect("same-outer filled union preflight should classify shortcut");
