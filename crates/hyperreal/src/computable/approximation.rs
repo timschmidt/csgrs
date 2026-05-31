@@ -101,7 +101,6 @@ pub(super) enum Approximation {
     // rational in the node avoids a child Computable::approx call before
     // entering that series.
     AsinRational(Rational),
-    PrescaledAsin(Computable),
     // Generic non-rational asin uses the stable half-angle atan transform. A
     // deferred node keeps construction thin for symbolic radicals and endpoint
     // inputs that may never be approximated.
@@ -124,7 +123,6 @@ pub(super) enum Approximation {
     // approximation and keeps the exact value symbolic until the kernel rounds.
     AsinhRational(Rational),
     AtanhDirect(Computable),
-    PrescaledAtanh(Computable),
     AtanhRational(Rational),
     PrescaledCos(Computable),
     // Small exact-rational Real::cos construction uses this leaf to avoid
@@ -241,7 +239,6 @@ impl Approximation {
             PrescaledAtan(c) => atan_computable(signal, c, p),
             AtanRational(r) => atan_rational(signal, r, p),
             AsinRational(r) => asin_rational(signal, r, p),
-            PrescaledAsin(c) => asin_computable(signal, c, p),
             AsinDeferred(c) => asin_deferred(signal, c, p),
             AcosPositive(c) => acos_positive(signal, c, p),
             AcosPositiveRational(r) => acos_positive_rational(signal, r, p),
@@ -253,7 +250,6 @@ impl Approximation {
             PrescaledAsinh(c) => asinh_computable(signal, c, p),
             AsinhRational(r) => asinh_rational(signal, r, p),
             AtanhDirect(c) => atanh_direct(signal, c, p),
-            PrescaledAtanh(c) => atanh_computable(signal, c, p),
             AtanhRational(r) => atanh_rational(signal, r, p),
             PrescaledCos(c) => cos(signal, c, p),
             PrescaledCosRational(r) => cos_rational(signal, r, p),
@@ -2111,44 +2107,6 @@ fn asin_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt 
     scale(sum, calc_precision - p)
 }
 
-// Approximate asin(c) for small |c|.
-fn asin_computable(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
-    // Dedicated tiny-argument asin series. It avoids the generic atan/sqrt
-    // transform, which is overkill and slower when |x| is already very small.
-    if p >= 1 {
-        return Zero::zero();
-    }
-
-    let iterations_needed: i32 = -p / 2 + 4;
-    let calc_precision = p - bound_log2(2 * iterations_needed) - 5;
-    let op_prec = calc_precision - 3;
-    let op_appr = c.approx_signal(signal, op_prec);
-    let op_squared = scale(&op_appr * &op_appr, op_prec);
-
-    // Borrowed magnitude checks matter here because tiny inverse-trig benches
-    // run many short series from cold caches.
-    let max_trunc_error = BigUint::one()
-        << usize::try_from(p - 4 - calc_precision).expect("truncation shift is nonnegative");
-    let mut current_term = scale(op_appr, op_prec - calc_precision);
-    let mut sum = current_term.clone();
-    let mut n = 0_i32;
-
-    while current_term.magnitude() > &max_trunc_error {
-        if should_stop(signal) {
-            break;
-        }
-        n += 1;
-        current_term = scale(current_term * &op_squared, op_prec);
-        let numerator = (2 * n - 1) * (2 * n - 1);
-        let denominator = (2 * n) * (2 * n + 1);
-        current_term *= numerator;
-        current_term /= denominator;
-        sum += &current_term;
-    }
-
-    scale(sum, calc_precision - p)
-}
-
 fn asin_deferred(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     // Generic asin uses asin(x) = 2*atan(x / (sqrt(1-x^2)+1)).
     // Keeping this as one approximation node mirrors the deferred acos and
@@ -2325,42 +2283,6 @@ fn atanh_direct(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt
         .ln()
         .multiply(Computable::rational(HALF_RATIONAL.clone()))
         .approx_signal(signal, p)
-}
-
-// Approximate atanh(c) for small |c|.
-fn atanh_computable(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
-    // Dedicated tiny-argument atanh series, also reused by the ln1p kernel after
-    // it transforms ln(1+x) into 2*atanh(x/(2+x)).
-    if p >= 1 {
-        return Zero::zero();
-    }
-
-    let iterations_needed: i32 = -p / 2 + 4;
-    let calc_precision = p - bound_log2(2 * iterations_needed) - 5;
-    let op_prec = calc_precision - 3;
-    let op_appr = c.approx_signal(signal, op_prec);
-    let op_squared = scale(&op_appr * &op_appr, op_prec);
-
-    // Borrowed magnitude checks matter here because tiny inverse-hyperbolic
-    // benches run many short series from cold caches.
-    let max_trunc_error = BigUint::one()
-        << usize::try_from(p - 4 - calc_precision).expect("truncation shift is nonnegative");
-    let mut current_power = scale(op_appr, op_prec - calc_precision);
-    let mut current_term = current_power.clone();
-    let mut sum = current_term.clone();
-    let mut n = 1_i32;
-
-    while current_term.magnitude() > &max_trunc_error {
-        if should_stop(signal) {
-            break;
-        }
-        n += 2;
-        current_power = scale(current_power * &op_squared, op_prec);
-        current_term = &current_power / n;
-        sum += &current_term;
-    }
-
-    scale(sum, calc_precision - p)
 }
 
 fn atanh_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt {

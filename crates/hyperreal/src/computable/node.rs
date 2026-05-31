@@ -587,9 +587,6 @@ impl Computable {
                 (Approximation::AsinRational(left), Approximation::AsinRational(right)) => {
                     left == right
                 }
-                (Approximation::PrescaledAsin(left), Approximation::PrescaledAsin(right)) => {
-                    Computable::internal_structural_eq(left, right)
-                }
                 (Approximation::AsinDeferred(left), Approximation::AsinDeferred(right)) => {
                     Computable::internal_structural_eq(left, right)
                 }
@@ -623,9 +620,6 @@ impl Computable {
                     left == right
                 }
                 (Approximation::AtanhDirect(left), Approximation::AtanhDirect(right)) => {
-                    Computable::internal_structural_eq(left, right)
-                }
-                (Approximation::PrescaledAtanh(left), Approximation::PrescaledAtanh(right)) => {
                     Computable::internal_structural_eq(left, right)
                 }
                 (Approximation::AtanhRational(left), Approximation::AtanhRational(right)) => {
@@ -1806,13 +1800,11 @@ impl Computable {
                 | Approximation::AcoshNearOne(_)
                 | Approximation::AcoshDirect(_) => Some(Some(Sign::Plus)),
                 Approximation::PrescaledAtan(child)
-                | Approximation::PrescaledAsin(child)
                 | Approximation::AsinDeferred(child)
                 | Approximation::AsinhNearZero(child)
                 | Approximation::AsinhDirect(child)
                 | Approximation::PrescaledAsinh(child)
-                | Approximation::AtanhDirect(child)
-                | Approximation::PrescaledAtanh(child) => Some(child.exact_sign()),
+                | Approximation::AtanhDirect(child) => Some(child.exact_sign()),
                 Approximation::PrescaledExp(_) => Some(Some(Sign::Plus)),
                 Approximation::Negate(_)
                 | Approximation::Offset(_, _)
