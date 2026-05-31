@@ -147,6 +147,7 @@ fn assemble_output_face_loop(
                         output_face,
                         owner: dropped_open_chain_owner(halfedges, &loop_halfedges),
                         source_kind: dropped_open_chain_source_kind(halfedges, &loop_halfedges),
+                        heads: dropped_open_chain_heads(halfedges, &loop_halfedges),
                         halfedges: loop_halfedges.clone(),
                         vertices: loop_vertices.clone(),
                     });
@@ -168,6 +169,7 @@ fn assemble_output_face_loop(
                 output_face,
                 owner: dropped_open_chain_owner(halfedges, &unconsumed),
                 source_kind: dropped_open_chain_source_kind(halfedges, &unconsumed),
+                heads: dropped_open_chain_heads(halfedges, &unconsumed),
                 vertices: unconsumed
                     .iter()
                     .filter_map(|slot| {
@@ -208,9 +210,26 @@ fn push_dropped_open_chain(
             output_face,
             owner: dropped_open_chain_owner(stage_halfedges, &halfedges),
             source_kind: dropped_open_chain_source_kind(stage_halfedges, &halfedges),
+            heads: dropped_open_chain_heads(stage_halfedges, &halfedges),
             halfedges,
             vertices,
         });
+}
+
+fn dropped_open_chain_heads(
+    halfedges: &ExactBoolMeshHalfedgeAssemblyStage,
+    slots: &[usize],
+) -> Vec<usize> {
+    slots
+        .iter()
+        .filter_map(|slot| {
+            halfedges
+                .output_halfedges
+                .get(*slot)
+                .and_then(Option::as_ref)
+                .map(|halfedge| halfedge.head)
+        })
+        .collect()
 }
 
 fn dropped_open_chain_owner(
@@ -555,6 +574,7 @@ mod tests {
         assert_eq!(stage.repeated_halfedges, 0);
         assert_eq!(stage.non_loop_halfedges, 0);
         assert_eq!(stage.dropped_open_chain_halfedges, 3);
+        assert_eq!(stage.dropped_open_chains.len(), 3);
         assert_eq!(
             stage.dropped_open_chains[0].owner,
             Some(ExactBoolMeshDroppedOpenChainOwner {
@@ -565,6 +585,20 @@ mod tests {
         assert_eq!(
             stage.dropped_open_chains[0].source_kind,
             ExactBoolMeshDroppedOpenChainSourceKind::SourceEdge
+        );
+        assert_eq!(stage.dropped_open_chains[0].vertices, vec![1]);
+        assert_eq!(stage.dropped_open_chains[0].heads, vec![0]);
+        assert_eq!(
+            stage
+                .dropped_open_chains
+                .iter()
+                .map(|chain| (chain.vertices.as_slice(), chain.heads.as_slice()))
+                .collect::<Vec<_>>(),
+            vec![
+                (&[1][..], &[0][..]),
+                (&[0][..], &[2][..]),
+                (&[3][..], &[1][..]),
+            ]
         );
     }
 
@@ -603,6 +637,8 @@ mod tests {
             stage.dropped_open_chains[0].source_kind,
             ExactBoolMeshDroppedOpenChainSourceKind::FacePair
         );
+        assert_eq!(stage.dropped_open_chains[0].vertices, vec![0]);
+        assert_eq!(stage.dropped_open_chains[0].heads, vec![1]);
     }
 
     #[test]
@@ -656,10 +692,14 @@ mod tests {
             stage.dropped_open_chains[0].source_kind,
             ExactBoolMeshDroppedOpenChainSourceKind::SourceEdge
         );
+        assert_eq!(stage.dropped_open_chains[0].vertices, vec![0]);
+        assert_eq!(stage.dropped_open_chains[0].heads, vec![1]);
         assert_eq!(
             stage.dropped_open_chains[1].source_kind,
             ExactBoolMeshDroppedOpenChainSourceKind::FacePair
         );
+        assert_eq!(stage.dropped_open_chains[1].vertices, vec![2]);
+        assert_eq!(stage.dropped_open_chains[1].heads, vec![3]);
     }
 
     #[test]
@@ -744,6 +784,8 @@ mod tests {
             stage.dropped_open_chains[0].source_kind,
             ExactBoolMeshDroppedOpenChainSourceKind::SourceEdge
         );
+        assert_eq!(stage.dropped_open_chains[0].vertices, vec![0, 1]);
+        assert_eq!(stage.dropped_open_chains[0].heads, vec![1, 2]);
         assert_eq!(stage.loops.len(), 1);
         assert_eq!(stage.loops[0].halfedges, vec![2, 3]);
     }

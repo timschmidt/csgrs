@@ -34678,7 +34678,8 @@ fn exact_boolmesh_boundary_contact_advances_to_triangulation_blocker() {
             .face_loop_assembly
             .dropped_open_chains
             .iter()
-            .all(|chain| chain.halfedges.len() == chain.vertices.len())
+            .all(|chain| chain.halfedges.len() == chain.vertices.len()
+                && chain.halfedges.len() == chain.heads.len())
     );
     assert!(
         stage
@@ -34745,6 +34746,20 @@ fn exact_boolmesh_boundary_contact_advances_to_triangulation_blocker() {
         .source_kind = hypermesh::exact::ExactBoolMeshDroppedOpenChainSourceKind::Mixed;
     assert_eq!(
         stale_dropped_chain_kind
+            .validate_against_sources(&left, &right)
+            .unwrap_err(),
+        hypermesh::exact::ExactBoolMeshValidationError::Boolean45FaceLoopMismatch
+    );
+    let mut stale_dropped_chain_head = workspace.clone();
+    stale_dropped_chain_head
+        .boolean45
+        .as_mut()
+        .unwrap()
+        .face_loop_assembly
+        .dropped_open_chains[0]
+        .heads[0] = usize::MAX;
+    assert_eq!(
+        stale_dropped_chain_head
             .validate_against_sources(&left, &right)
             .unwrap_err(),
         hypermesh::exact::ExactBoolMeshValidationError::Boolean45FaceLoopMismatch

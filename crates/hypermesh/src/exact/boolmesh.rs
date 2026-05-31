@@ -1035,6 +1035,8 @@ pub struct ExactBoolMeshDroppedOpenChain {
     pub halfedges: Vec<usize>,
     /// Ordered output vertices at the chain halfedge tails.
     pub vertices: Vec<usize>,
+    /// Ordered output vertices at the chain halfedge heads.
+    pub heads: Vec<usize>,
 }
 
 /// Unambiguous source face owning a dropped open chain.
@@ -1074,11 +1076,11 @@ pub struct ExactBoolMeshFaceLoopAssemblyStage {
     /// Replayable lower-dimensional open chains dropped before triangulation.
     ///
     /// Earlier ports exposed only [`Self::dropped_open_chain_halfedges`].
-    /// Retaining the exact face-local chain topology, source composition, and
-    /// unambiguous source owner is the handoff needed for boundary-contact
-    /// reconstruction: future stages can tell which source face lost a
-    /// lower-dimensional walk and which ordered output vertices must be paired
-    /// with clipped coplanar face cells.
+    /// Retaining the exact face-local directed chain topology, source
+    /// composition, and unambiguous source owner is the handoff needed for
+    /// boundary-contact reconstruction: future stages can tell which source
+    /// face lost a lower-dimensional walk and which ordered output vertices
+    /// must be paired with clipped coplanar face cells.
     pub dropped_open_chains: Vec<ExactBoolMeshDroppedOpenChain>,
     /// Output faces skipped because at least one sized halfedge slot is still
     /// unfilled by earlier boolmesh stages.
@@ -4045,6 +4047,7 @@ fn validate_boolean45_face_loops(
         if chain.output_face >= output_face_count
             || chain.halfedges.is_empty()
             || chain.halfedges.len() != chain.vertices.len()
+            || chain.halfedges.len() != chain.heads.len()
         {
             return Err(ExactBoolMeshValidationError::Boolean45FaceLoopMismatch);
         }
@@ -4063,7 +4066,10 @@ fn validate_boolean45_face_loops(
             let Some(halfedge) = stage.halfedge_assembly.output_halfedges[slot].as_ref() else {
                 return Err(ExactBoolMeshValidationError::Boolean45FaceLoopMismatch);
             };
-            if halfedge.face != chain.output_face || halfedge.tail != chain.vertices[index] {
+            if halfedge.face != chain.output_face
+                || halfedge.tail != chain.vertices[index]
+                || halfedge.head != chain.heads[index]
+            {
                 return Err(ExactBoolMeshValidationError::Boolean45FaceLoopMismatch);
             }
             let current_owner = output_halfedge_source_owner(&halfedge.source);
