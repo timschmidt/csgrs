@@ -34784,6 +34784,29 @@ fn exact_boolmesh_boundary_contact_advances_to_triangulation_blocker() {
             [13, 14],
         ]
     );
+    assert_eq!(
+        stage
+            .mesh_export
+            .boundary_edge_records
+            .iter()
+            .map(|record| (
+                record.edge,
+                record.triangle,
+                record.source_side,
+                record.source_face
+            ))
+            .collect::<Vec<_>>(),
+        vec![
+            ([5, 0], 15, hypermesh::exact::ExactBoolMeshSide::Left, 18),
+            ([0, 7], 6, hypermesh::exact::ExactBoolMeshSide::Left, 9),
+            ([1, 3], 0, hypermesh::exact::ExactBoolMeshSide::Left, 1),
+            ([7, 1], 8, hypermesh::exact::ExactBoolMeshSide::Left, 11),
+            ([3, 5], 1, hypermesh::exact::ExactBoolMeshSide::Left, 3),
+            ([12, 13], 17, hypermesh::exact::ExactBoolMeshSide::Right, 1),
+            ([14, 12], 17, hypermesh::exact::ExactBoolMeshSide::Right, 1),
+            ([13, 14], 17, hypermesh::exact::ExactBoolMeshSide::Right, 1),
+        ]
+    );
     let mut stale_mesh_export_boundary = workspace.clone();
     stale_mesh_export_boundary
         .boolean45
@@ -34794,6 +34817,20 @@ fn exact_boolmesh_boundary_contact_advances_to_triangulation_blocker() {
         .pop();
     assert_eq!(
         stale_mesh_export_boundary
+            .validate_against_sources(&left, &right)
+            .unwrap_err(),
+        hypermesh::exact::ExactBoolMeshValidationError::Boolean45MeshExportMismatch
+    );
+    let mut stale_mesh_export_boundary_source = workspace.clone();
+    stale_mesh_export_boundary_source
+        .boolean45
+        .as_mut()
+        .unwrap()
+        .mesh_export
+        .boundary_edge_records[0]
+        .source_face = usize::MAX;
+    assert_eq!(
+        stale_mesh_export_boundary_source
             .validate_against_sources(&left, &right)
             .unwrap_err(),
         hypermesh::exact::ExactBoolMeshValidationError::Boolean45MeshExportMismatch

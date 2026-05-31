@@ -1277,6 +1277,8 @@ pub struct ExactBoolMeshMeshExportStage {
     pub triangles: Vec<Triangle>,
     /// Directed triangle edges with no opposite export triangle.
     pub boundary_edges: Vec<[usize; 2]>,
+    /// Source provenance for each directed export boundary edge.
+    pub boundary_edge_records: Vec<ExactBoolMeshMeshExportBoundaryEdge>,
     /// Output vertex origins whose exact coordinates cannot be recovered.
     pub missing_vertex_coordinates: usize,
     /// Upstream loop-triangulation records that block final triangle export.
@@ -1286,6 +1288,20 @@ pub struct ExactBoolMeshMeshExportStage {
     /// Triangles whose exact orientation could not be aligned to source face
     /// orientation.
     pub orientation_failures: usize,
+}
+
+/// Source provenance for one open edge in the final boolmesh export.
+#[cfg(feature = "exact-triangulation")]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct ExactBoolMeshMeshExportBoundaryEdge {
+    /// Directed exported edge with no opposite export triangle.
+    pub edge: [usize; 2],
+    /// Index of the exported triangle that owns this directed edge.
+    pub triangle: usize,
+    /// Source operand side that produced the owning exported triangle.
+    pub source_side: ExactBoolMeshSide,
+    /// Source face that produced the owning exported triangle.
+    pub source_face: usize,
 }
 
 /// Exact `boolean45`-shaped output staging metadata.
@@ -3596,6 +3612,41 @@ fn validate_boolean45_mesh_export(
         != boolmesh_mesh_export_boundary_edges(&stage.mesh_export.triangles)
     {
         return Err(ExactBoolMeshValidationError::Boolean45MeshExportMismatch);
+    }
+    if stage.mesh_export.boundary_edge_records.len() != stage.mesh_export.boundary_edges.len()
+        || stage
+            .mesh_export
+            .boundary_edge_records
+            .iter()
+            .map(|record| record.edge)
+            .collect::<Vec<_>>()
+            != stage.mesh_export.boundary_edges
+    {
+        return Err(ExactBoolMeshValidationError::Boolean45MeshExportMismatch);
+    }
+    for record in &stage.mesh_export.boundary_edge_records {
+        let Some(exported) = stage.mesh_export.triangles.get(record.triangle) else {
+            return Err(ExactBoolMeshValidationError::Boolean45MeshExportMismatch);
+        };
+        if !boolmesh_triangle_edges(*exported).contains(&record.edge) {
+            return Err(ExactBoolMeshValidationError::Boolean45MeshExportMismatch);
+        }
+        let source_face_count = match record.source_side {
+            ExactBoolMeshSide::Left => stage.left_face_halfedge_counts.len(),
+            ExactBoolMeshSide::Right => stage.right_face_halfedge_counts.len(),
+        };
+        if record.source_face >= source_face_count {
+            return Err(ExactBoolMeshValidationError::Boolean45MeshExportMismatch);
+        }
+        if stage.mesh_export.orientation_failures == 0 && expected_invalid_output_triangles == 0 {
+            let Some(source) = stage.output_triangles.triangles.get(record.triangle) else {
+                return Err(ExactBoolMeshValidationError::Boolean45MeshExportMismatch);
+            };
+            if source.source_side != record.source_side || source.source_face != record.source_face
+            {
+                return Err(ExactBoolMeshValidationError::Boolean45MeshExportMismatch);
+            }
+        }
     }
 
     Ok(())

@@ -21,8 +21,8 @@ use crate::exact::region::choose_region_projection;
 use crate::exact::scalar::ExactReal;
 
 use super::super::{
-    ExactBoolMeshBoolean03, ExactBoolMeshMeshExportStage, ExactBoolMeshOutputTriangleStage,
-    ExactBoolMeshOutputVertexAllocation, ExactBoolMeshSide,
+    ExactBoolMeshBoolean03, ExactBoolMeshMeshExportBoundaryEdge, ExactBoolMeshMeshExportStage,
+    ExactBoolMeshOutputTriangleStage, ExactBoolMeshOutputVertexAllocation, ExactBoolMeshSide,
 };
 use super::geometry::{output_vertex_origin_has_coordinate, output_vertex_point};
 
@@ -53,6 +53,7 @@ pub(super) fn stage_mesh_export(
         steiner_points: output_triangles.steiner_points.clone(),
         triangles: Vec::with_capacity(output_triangles.triangles.len()),
         boundary_edges: Vec::new(),
+        boundary_edge_records: Vec::new(),
         missing_vertex_coordinates,
         blocked_output_triangles: output_triangles.missing_loop_triangulations
             + output_triangles.invalid_local_triangles,
@@ -61,6 +62,7 @@ pub(super) fn stage_mesh_export(
     };
 
     let mut group_flips = BTreeMap::<(u8, usize, usize, usize), bool>::new();
+    let mut exported_sources = Vec::new();
     for triangle in &output_triangles.triangles {
         if triangle
             .vertices
@@ -110,23 +112,41 @@ pub(super) fn stage_mesh_export(
             triangle.vertices
         };
         stage.triangles.push(Triangle(oriented));
+        exported_sources.push((triangle.source_side, triangle.source_face));
     }
-    stage.boundary_edges = mesh_export_boundary_edges(&stage.triangles);
+    let boundary_records = mesh_export_boundary_edges(&stage.triangles, &exported_sources);
+    stage.boundary_edges = boundary_records.iter().map(|record| record.edge).collect();
+    stage.boundary_edge_records = boundary_records;
 
     stage
 }
 
-fn mesh_export_boundary_edges(triangles: &[Triangle]) -> Vec<[usize; 2]> {
-    let mut edge_uses = BTreeMap::<[usize; 2], Vec<[usize; 2]>>::new();
-    for triangle in triangles {
+fn mesh_export_boundary_edges(
+    triangles: &[Triangle],
+    sources: &[(ExactBoolMeshSide, usize)],
+) -> Vec<ExactBoolMeshMeshExportBoundaryEdge> {
+    let mut edge_uses = BTreeMap::<[usize; 2], Vec<([usize; 2], usize)>>::new();
+    for (triangle_index, triangle) in triangles.iter().enumerate() {
         for edge in directed_edges(triangle.0) {
-            edge_uses.entry(sorted_edge(edge)).or_default().push(edge);
+            edge_uses
+                .entry(sorted_edge(edge))
+                .or_default()
+                .push((edge, triangle_index));
         }
     }
     edge_uses
         .values()
         .filter(|uses| uses.len() == 1)
-        .map(|uses| uses[0])
+        .filter_map(|uses| {
+            let (edge, triangle) = uses[0];
+            let (source_side, source_face) = *sources.get(triangle)?;
+            Some(ExactBoolMeshMeshExportBoundaryEdge {
+                edge,
+                triangle,
+                source_side,
+                source_face,
+            })
+        })
         .collect()
 }
 
