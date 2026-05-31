@@ -969,6 +969,8 @@ fn stage_partial_source_edges(
         };
         let mut points = Vec::new();
         let mut substituted_retained_tail_copies = BTreeSet::new();
+        let mut retained_source_head_endpoint_copies = BTreeSet::new();
+        let mut suppressed_routed_intersection_points = 0;
 
         for routed in &run.points {
             let order_key = (side_key(run.side), run.source_halfedge, routed.collision);
@@ -976,6 +978,13 @@ fn stage_partial_source_edges(
                 missing_parameter_orders += 1;
                 continue;
             };
+            if let Some(copy) =
+                source_head_endpoint_duplicate_copy(run, routed, mesh, boolean03, signed_counts)
+                && !retained_source_head_endpoint_copies.insert(copy)
+            {
+                suppressed_routed_intersection_points += 1;
+                continue;
+            }
             if let Some(substitution) =
                 source_tail_retained_substitution(run, routed, signed_counts, starts, order)
             {
@@ -1036,6 +1045,26 @@ fn stage_partial_source_edges(
                 ),
             );
         }
+        if let Some(suppression) = single_routed_interval_retained_endpoint_suppression(
+            run,
+            mesh,
+            boolean03,
+            signed_counts,
+            starts,
+        ) {
+            match suppression.endpoint {
+                RetainedEndpoint::Tail => {
+                    if !suppressed_retained_head_copies.contains(&suppression.copy) {
+                        suppressed_retained_tail_copies.insert(suppression.copy);
+                    }
+                }
+                RetainedEndpoint::Head => {
+                    if !suppressed_retained_tail_copies.contains(&suppression.copy) {
+                        suppressed_retained_head_copies.insert(suppression.copy);
+                    }
+                }
+            }
+        }
 
         append_retained_endpoint_excluding(
             run.side,
@@ -1075,6 +1104,7 @@ fn stage_partial_source_edges(
             fragments,
             suppressed_retained_tail_copies: suppressed_retained_tail_copies.len(),
             suppressed_retained_head_copies: suppressed_retained_head_copies.len(),
+            suppressed_routed_intersection_points,
             unpaired_points,
         });
     }
@@ -1084,6 +1114,85 @@ fn stage_partial_source_edges(
         unpaired_runs,
         missing_parameter_orders,
     }
+}
+
+fn source_head_endpoint_duplicate_copy(
+    run: &ExactBoolMeshSourceEdgePointRun,
+    point: &ExactBoolMeshRoutedEdgePoint,
+    mesh: &ExactMesh,
+    boolean03: &ExactBoolMeshBoolean03,
+    signed_counts: &[i32],
+) -> Option<usize> {
+    let (pair, copy, parameter) =
+        routed_point_opposite_face_pair(run.side, point.origin, boolean03, mesh)?;
+    if pair.edge_side != run.side
+        || pair.source_halfedge != run.source_halfedge
+        || point.is_tail
+        || compare_reals(&parameter, &ExactReal::from(1)).value() != Some(Ordering::Equal)
+        || signed_counts.get(run.head).copied().map(signed_abs) != Some(0)
+    {
+        return None;
+    }
+    Some(copy)
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum RetainedEndpoint {
+    Tail,
+    Head,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+struct RetainedEndpointSuppression {
+    endpoint: RetainedEndpoint,
+    copy: usize,
+}
+
+fn single_routed_interval_retained_endpoint_suppression(
+    run: &ExactBoolMeshSourceEdgePointRun,
+    mesh: &ExactMesh,
+    boolean03: &ExactBoolMeshBoolean03,
+    signed_counts: &[i32],
+    starts: &[Option<usize>],
+) -> Option<RetainedEndpointSuppression> {
+    if run.points.len() != 1 {
+        return None;
+    }
+    let point = run.points[0];
+    let (pair, copy, parameter) =
+        routed_point_opposite_face_pair(run.side, point.origin, boolean03, mesh)?;
+    if pair.edge_side != run.side
+        || pair.source_halfedge != run.source_halfedge
+        || !source_edge_parameter_is_strict_interior(&parameter)
+    {
+        return None;
+    }
+    let endpoint = if point.is_tail {
+        RetainedEndpoint::Head
+    } else {
+        RetainedEndpoint::Tail
+    };
+    let vertex = match endpoint {
+        RetainedEndpoint::Tail => run.tail,
+        RetainedEndpoint::Head => run.head,
+    };
+    let retained_vertex = match endpoint {
+        RetainedEndpoint::Tail => run.head,
+        RetainedEndpoint::Head => run.tail,
+    };
+    let count = signed_counts.get(vertex).copied().map(signed_abs)?;
+    if copy >= count || starts.get(vertex).and_then(|start| *start).is_none() {
+        return None;
+    }
+    if signed_counts.get(retained_vertex).copied().map(signed_abs) == Some(0)
+        || starts
+            .get(retained_vertex)
+            .and_then(|start| *start)
+            .is_none()
+    {
+        return None;
+    }
+    Some(RetainedEndpointSuppression { endpoint, copy })
 }
 
 fn retained_endpoint_copies_owned_by_coplanar_face(

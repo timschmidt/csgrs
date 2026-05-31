@@ -799,6 +799,9 @@ pub struct ExactBoolMeshPartialSourceEdgeRun {
     /// Retained source-head copies consumed by an exact coplanar opposite-face
     /// owner instead of appended as separate endpoint records.
     pub suppressed_retained_head_copies: usize,
+    /// Routed source-edge intersection rows consumed by an earlier canonical
+    /// endpoint owner instead of emitted as separate partial-edge points.
+    pub suppressed_routed_intersection_points: usize,
     /// Number of points not paired into fragments.
     pub unpaired_points: usize,
 }
@@ -4256,7 +4259,15 @@ fn validate_boolean45_partial_edges(
                 )
         })
         .count();
-    if routed_partial_points + substituted_source_endpoint_points
+    let suppressed_routed_intersection_points = stage
+        .partial_source_edges
+        .source_edge_runs
+        .iter()
+        .map(|run| run.suppressed_routed_intersection_points)
+        .sum::<usize>();
+    if routed_partial_points
+        + substituted_source_endpoint_points
+        + suppressed_routed_intersection_points
         != stage.inserted_intersection_vertices
     {
         return Err(ExactBoolMeshValidationError::Boolean45PartialEdgeMismatch);
@@ -4289,6 +4300,17 @@ fn validate_boolean45_partial_edges(
         }
         if run.unpaired_points != unpaired_points
             || run.fragments.len() != run.points.len() / 2
+            || run.suppressed_routed_intersection_points
+                > stage
+                    .new_edge_vertices
+                    .source_edge_runs
+                    .iter()
+                    .find(|source_run| {
+                        source_run.side == run.side
+                            && source_run.source_halfedge == run.source_halfedge
+                    })
+                    .map(|source_run| source_run.points.len())
+                    .unwrap_or(0)
             || !suppressed_retained_endpoint_copies_replay(
                 run,
                 &stage.vertex_allocation,
@@ -4441,12 +4463,19 @@ fn validate_boolean45_edge_point_routing(
         .source_edge_runs
         .iter()
         .map(|run| {
-            run.points
+            (run.points
                 .iter()
                 .filter(|point| point.collision != usize::MAX)
                 .count()
+                + run.suppressed_routed_intersection_points)
                 * run.incident_faces.len()
         })
+        .sum::<usize>();
+    let suppressed_partial_source_edge_points = stage
+        .partial_source_edges
+        .source_edge_runs
+        .iter()
+        .map(|run| run.suppressed_routed_intersection_points)
         .sum::<usize>();
     if stage.source_edge_incident_gaps == 0
         && stage.partial_source_edges.missing_parameter_orders == 0
@@ -4456,6 +4485,7 @@ fn validate_boolean45_edge_point_routing(
             + stage
                 .new_edge_vertices
                 .suppressed_source_tail_face_pair_points
+            + suppressed_partial_source_edge_points
             != expected_face_pair_point_count
     {
         return Err(ExactBoolMeshValidationError::Boolean45EdgePointRoutingMismatch);

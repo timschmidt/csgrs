@@ -34601,7 +34601,7 @@ fn exact_boolmesh_source_edge_split_materializes_through_cleanup_caps() {
 
 #[test]
 #[cfg(feature = "exact-triangulation")]
-fn exact_boolmesh_source_edge_blocker_replays_without_hard_validation_error() {
+fn exact_boolmesh_boundary_contact_advances_to_face_pair_blocker() {
     let left = upward_l_prism_i64([[0, 0], [8, 0], [8, 3], [3, 3], [3, 8], [0, 8]], 5);
     let right = tetrahedron_i64([2, -1, 0], [5, -1, 0], [2, 2, 0], [2, -1, -3]);
 
@@ -34614,28 +34614,33 @@ fn exact_boolmesh_source_edge_blocker_replays_without_hard_validation_error() {
     let blocker = workspace
         .blocker
         .as_ref()
-        .expect("direct boolmesh still has a named source-edge blocker");
+        .expect("direct boolmesh still has a named cleanup blocker");
     assert_eq!(
         blocker.stage,
-        hypermesh::exact::ExactBoolMeshKernelStage::SourceEdgeEmission
+        hypermesh::exact::ExactBoolMeshKernelStage::FacePairEdgeEmission
     );
     assert_eq!(blocker.candidate_face_pairs, 14);
     assert_eq!(blocker.pair_up_unpaired_event_runs, 2);
-    assert_eq!(blocker.partial_source_edge_unpaired_runs, 3);
+    assert_eq!(blocker.partial_source_edge_unpaired_runs, 0);
     assert_eq!(blocker.new_face_pair_unpaired_runs, 5);
     assert_eq!(blocker.face_loop_non_loop_halfedges, 1);
 
     let stage = workspace
         .boolean45
         .as_ref()
-        .expect("source-edge blocker must retain boolean45 replay state");
+        .expect("face-pair blocker must retain boolean45 replay state");
     assert_eq!(stage.partial_source_edges.missing_parameter_orders, 0);
+    assert_eq!(stage.partial_source_edges.unpaired_runs, 0);
+    assert_eq!(stage.new_face_pair_edges.unpaired_runs, 5);
     assert_eq!(stage.source_edge_incident_gaps, 0);
     assert_eq!(stage.halfedge_assembly.unfilled_halfedges, 0);
     assert_eq!(stage.halfedge_assembly.source_edge_incident_gaps, 0);
+    assert_eq!(stage.face_loop_assembly.non_loop_halfedges, 1);
+    assert_eq!(stage.output_triangles.invalid_local_triangles, 0);
     assert_eq!(stage.mesh_export.blocked_output_triangles, 0);
     assert_eq!(stage.mesh_export.invalid_output_triangles, 0);
     assert_eq!(stage.mesh_export.orientation_failures, 0);
+    assert_eq!(stage.mesh_export.triangles.len(), 18);
 
     assert_eq!(
         hypermesh::exact::execute_exact_boolmesh_port(
@@ -34646,7 +34651,7 @@ fn exact_boolmesh_source_edge_blocker_replays_without_hard_validation_error() {
         )
         .unwrap_err(),
         hypermesh::exact::ExactBoolMeshValidationError::PortBlocked(
-            hypermesh::exact::ExactBoolMeshKernelStage::SourceEdgeEmission
+            hypermesh::exact::ExactBoolMeshKernelStage::FacePairEdgeEmission
         )
     );
 
