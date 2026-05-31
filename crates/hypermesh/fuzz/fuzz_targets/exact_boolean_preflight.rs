@@ -1584,7 +1584,8 @@ fuzz_target!(|data: &[u8]| {
 
 #[cfg(feature = "exact-triangulation")]
 fn exercise_deterministic_case(selector: u8) {
-    match selector % 66 {
+    const DETERMINISTIC_CASES: u8 = 68;
+    match selector % DETERMINISTIC_CASES {
         0 => exercise_partial_convex_union_boundary(),
         1 => exercise_face_interior_steiner_boundary(),
         2 => exercise_multi_component_coplanar_union(),
