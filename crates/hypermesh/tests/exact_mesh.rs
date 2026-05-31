@@ -35193,6 +35193,57 @@ fn exact_boolmesh_kernel12_discovers_skew_edge_face_events() {
 
 #[test]
 #[cfg(feature = "exact-triangulation")]
+fn exact_boolmesh_skew_tetra_union_blocker_stops_legacy_duplicate_edges() {
+    let left = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
+    let right = tetrahedron_i64([1, 1, -1], [3, 1, 3], [1, 3, 3], [3, 3, 1]);
+
+    let workspace = hypermesh::exact::exact_boolmesh_workspace(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+    );
+    workspace.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        workspace.blocker.as_ref().map(|blocker| blocker.stage),
+        Some(hypermesh::exact::ExactBoolMeshKernelStage::Triangulation)
+    );
+    assert_eq!(
+        hypermesh::exact::execute_exact_boolmesh_port(
+            &left,
+            &right,
+            hypermesh::exact::ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+        )
+        .unwrap_err(),
+        hypermesh::exact::ExactBoolMeshValidationError::PortBlocked(
+            hypermesh::exact::ExactBoolMeshKernelStage::Triangulation
+        )
+    );
+
+    let public_error = hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap_err();
+    assert!(public_error.diagnostics.iter().any(|diagnostic| {
+        diagnostic.kind == DiagnosticKind::UnsupportedExactOperation
+            && diagnostic
+                .message
+                .contains("exact boolmesh port blocked before certified mesh export: Triangulation")
+    }));
+    assert!(
+        public_error
+            .diagnostics
+            .iter()
+            .all(|diagnostic| diagnostic.kind != DiagnosticKind::DuplicateDirectedEdge),
+        "late boolmesh triangulation blockers must not fall through into legacy duplicate-edge output"
+    );
+}
+
+#[test]
+#[cfg(feature = "exact-triangulation")]
 fn exact_boolmesh_open_crossing_edges_are_not_adjacency_gaps() {
     let left = ExactMesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 4, 0, 0, 0, 4, 0],

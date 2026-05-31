@@ -37,7 +37,7 @@ use super::affine_surface::{
 };
 #[cfg(feature = "exact-triangulation")]
 use super::boolmesh::{
-    ExactBoolMeshValidationError, execute_exact_boolmesh_bounds_disjoint,
+    ExactBoolMeshKernelStage, ExactBoolMeshValidationError, execute_exact_boolmesh_bounds_disjoint,
     execute_exact_boolmesh_port,
 };
 #[cfg(feature = "exact-triangulation")]
@@ -1831,10 +1831,18 @@ pub fn boolean_exact_with_boundary_policy(
             )? {
                 return Ok(result);
             }
-            if let Some(result) =
-                boolean_volumetric_winding_regions(left, right, operation, validation)?
-            {
-                return Ok(result);
+            match boolean_volumetric_winding_regions(left, right, operation, validation) {
+                Ok(Some(result)) => return Ok(result),
+                Ok(None) => {}
+                Err(error) => {
+                    if error_has_duplicate_directed_edges(&error)
+                        && let Some(stage) =
+                            late_boolmesh_export_blocker_stage(left, right, operation, validation)
+                    {
+                        return Err(boolmesh_late_export_blocker_error(stage));
+                    }
+                    return Err(error);
+                }
             }
             if let Some(result) = boolean_boolmesh_port_meshes(left, right, operation, validation)?
             {
@@ -5386,6 +5394,9 @@ fn boolean_boolmesh_port_meshes(
             execution.mesh,
             execution.shortcut,
         ))),
+        Err(ExactBoolMeshValidationError::PortBlocked(
+            stage @ (ExactBoolMeshKernelStage::Triangulation | ExactBoolMeshKernelStage::Cleanup),
+        )) => Err(boolmesh_late_export_blocker_error(stage)),
         Err(ExactBoolMeshValidationError::PortBlocked(_)) => Ok(None),
         Err(error) => Err(MeshError::one(MeshDiagnostic::new(
             Severity::Error,
@@ -5393,6 +5404,38 @@ fn boolean_boolmesh_port_meshes(
             format!("exact boolmesh port failed: {error:?}"),
         ))),
     }
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn late_boolmesh_export_blocker_stage(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Option<ExactBoolMeshKernelStage> {
+    match execute_exact_boolmesh_port(left, right, operation, validation) {
+        Err(ExactBoolMeshValidationError::PortBlocked(
+            stage @ (ExactBoolMeshKernelStage::Triangulation | ExactBoolMeshKernelStage::Cleanup),
+        )) => Some(stage),
+        _ => None,
+    }
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn boolmesh_late_export_blocker_error(stage: ExactBoolMeshKernelStage) -> MeshError {
+    MeshError::one(MeshDiagnostic::new(
+        Severity::Error,
+        DiagnosticKind::UnsupportedExactOperation,
+        format!("exact boolmesh port blocked before certified mesh export: {stage:?}"),
+    ))
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn error_has_duplicate_directed_edges(error: &MeshError) -> bool {
+    error
+        .diagnostics
+        .iter()
+        .any(|diagnostic| diagnostic.kind == DiagnosticKind::DuplicateDirectedEdge)
 }
 
 #[cfg(feature = "exact-triangulation")]
