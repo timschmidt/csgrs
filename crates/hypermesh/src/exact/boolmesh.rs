@@ -210,6 +210,87 @@ pub struct ExactBoolMeshPortBlocker {
     pub candidate_face_pairs: usize,
     /// Whether the whole-mesh AABB relation itself was undecidable.
     pub mesh_bounds_unknown: bool,
+    /// Exact `pair_up` runs whose tail/head event counts are unbalanced.
+    pub pair_up_unpaired_event_runs: usize,
+    /// Exact `pair_up` runs whose event ordering could not be certified.
+    pub pair_up_unknown_orderings: usize,
+    /// Source-edge incident face counts not resolved during output sizing.
+    pub source_edge_incident_gaps: usize,
+    /// Partial source-edge runs whose emitted tail/head points are unbalanced.
+    pub partial_source_edge_unpaired_runs: usize,
+    /// Partial source-edge points whose exact `pair_up` order was missing.
+    pub partial_source_edge_missing_parameter_orders: usize,
+    /// New face-pair runs whose emitted tail/head points are unbalanced.
+    pub new_face_pair_unpaired_runs: usize,
+    /// Output halfedge slots left unfilled after source/new edge emission.
+    pub halfedge_unfilled_halfedges: usize,
+    /// Source-edge incident gaps still visible after halfedge assembly.
+    pub halfedge_source_edge_incident_gaps: usize,
+    /// Output source faces whose halfedges did not form a complete loop.
+    pub face_loop_incomplete_faces: usize,
+    /// Output face walks that did not close into loops.
+    pub face_loop_non_loop_halfedges: usize,
+    /// Output face loops rejected by exact triangulation.
+    pub loop_triangulation_failures: usize,
+    /// Output triangles blocked from mesh export.
+    pub mesh_export_blocked_output_triangles: usize,
+}
+
+#[cfg(feature = "exact-triangulation")]
+impl ExactBoolMeshPortBlocker {
+    fn from_stage(
+        stage: ExactBoolMeshKernelStage,
+        candidate_face_pairs: usize,
+        mesh_bounds_unknown: bool,
+    ) -> Self {
+        Self {
+            stage,
+            candidate_face_pairs,
+            mesh_bounds_unknown,
+            pair_up_unpaired_event_runs: 0,
+            pair_up_unknown_orderings: 0,
+            source_edge_incident_gaps: 0,
+            partial_source_edge_unpaired_runs: 0,
+            partial_source_edge_missing_parameter_orders: 0,
+            new_face_pair_unpaired_runs: 0,
+            halfedge_unfilled_halfedges: 0,
+            halfedge_source_edge_incident_gaps: 0,
+            face_loop_incomplete_faces: 0,
+            face_loop_non_loop_halfedges: 0,
+            loop_triangulation_failures: 0,
+            mesh_export_blocked_output_triangles: 0,
+        }
+    }
+
+    fn from_boolean45_stage(
+        stage: ExactBoolMeshKernelStage,
+        pair_up: &ExactBoolMeshPairUpStage,
+        boolean45: &ExactBoolMeshBoolean45Stage,
+        candidate_face_pairs: usize,
+        mesh_bounds_unknown: bool,
+    ) -> Self {
+        Self {
+            stage,
+            candidate_face_pairs,
+            mesh_bounds_unknown,
+            pair_up_unpaired_event_runs: pair_up.unpaired_event_runs,
+            pair_up_unknown_orderings: pair_up.unknown_orderings,
+            source_edge_incident_gaps: boolean45.source_edge_incident_gaps,
+            partial_source_edge_unpaired_runs: boolean45.partial_source_edges.unpaired_runs,
+            partial_source_edge_missing_parameter_orders: boolean45
+                .partial_source_edges
+                .missing_parameter_orders,
+            new_face_pair_unpaired_runs: boolean45.new_face_pair_edges.unpaired_runs,
+            halfedge_unfilled_halfedges: boolean45.halfedge_assembly.unfilled_halfedges,
+            halfedge_source_edge_incident_gaps: boolean45
+                .halfedge_assembly
+                .source_edge_incident_gaps,
+            face_loop_incomplete_faces: boolean45.face_loop_assembly.incomplete_faces,
+            face_loop_non_loop_halfedges: boolean45.face_loop_assembly.non_loop_halfedges,
+            loop_triangulation_failures: boolean45.loop_triangulation.triangulation_failures,
+            mesh_export_blocked_output_triangles: boolean45.mesh_export.blocked_output_triangles,
+        }
+    }
 }
 
 /// Exact face-pair key matching the boolmesh `p1q2`/`p2q1` ownership shape.
@@ -1304,20 +1385,21 @@ impl ExactBoolMeshWorkspace {
         let blocker = if candidate_face_pairs.is_empty() && !mesh_bounds_unknown {
             None
         } else if !kernel12_is_clear {
-            Some(ExactBoolMeshPortBlocker {
-                stage: ExactBoolMeshKernelStage::Kernel12,
-                candidate_face_pairs: candidate_face_pairs.len(),
+            Some(ExactBoolMeshPortBlocker::from_stage(
+                ExactBoolMeshKernelStage::Kernel12,
+                candidate_face_pairs.len(),
                 mesh_bounds_unknown,
-            })
+            ))
         } else if kernel03_winding.is_none() {
-            Some(ExactBoolMeshPortBlocker {
-                stage: ExactBoolMeshKernelStage::Kernel03,
-                candidate_face_pairs: candidate_face_pairs.len(),
+            Some(ExactBoolMeshPortBlocker::from_stage(
+                ExactBoolMeshKernelStage::Kernel03,
+                candidate_face_pairs.len(),
                 mesh_bounds_unknown,
-            })
+            ))
         } else {
             let blocker = boolmesh_boolean45_blocker(
                 no_split_kernel12,
+                &pair_up,
                 boolean45.as_ref().expect("boolean45 is staged above"),
                 candidate_face_pairs.len(),
                 mesh_bounds_unknown,
@@ -1333,11 +1415,13 @@ impl ExactBoolMeshWorkspace {
                     operation,
                 )
             {
-                Some(ExactBoolMeshPortBlocker {
-                    stage: ExactBoolMeshKernelStage::Triangulation,
-                    candidate_face_pairs: candidate_face_pairs.len(),
+                Some(ExactBoolMeshPortBlocker::from_boolean45_stage(
+                    ExactBoolMeshKernelStage::Triangulation,
+                    &pair_up,
+                    boolean45.as_ref().expect("boolean45 is staged above"),
+                    candidate_face_pairs.len(),
                     mesh_bounds_unknown,
-                })
+                ))
             } else {
                 blocker
             }
@@ -1514,6 +1598,34 @@ impl ExactBoolMeshWorkspace {
         {
             return Err(ExactBoolMeshValidationError::BlockerCountMismatch);
         }
+        if let Some(blocker) = &self.blocker {
+            let expected = match (blocker.stage, self.boolean45.as_ref()) {
+                (
+                    ExactBoolMeshKernelStage::PairUp
+                    | ExactBoolMeshKernelStage::SizeOutput
+                    | ExactBoolMeshKernelStage::SourceEdgeEmission
+                    | ExactBoolMeshKernelStage::FacePairEdgeEmission
+                    | ExactBoolMeshKernelStage::FaceAssembly
+                    | ExactBoolMeshKernelStage::Triangulation
+                    | ExactBoolMeshKernelStage::Cleanup,
+                    Some(boolean45),
+                ) => ExactBoolMeshPortBlocker::from_boolean45_stage(
+                    blocker.stage,
+                    &self.pair_up,
+                    boolean45,
+                    self.candidate_face_pairs.len(),
+                    blocker.mesh_bounds_unknown,
+                ),
+                _ => ExactBoolMeshPortBlocker::from_stage(
+                    blocker.stage,
+                    self.candidate_face_pairs.len(),
+                    blocker.mesh_bounds_unknown,
+                ),
+            };
+            if blocker != &expected {
+                return Err(ExactBoolMeshValidationError::BlockerCountMismatch);
+            }
+        }
         if self.blocker.is_some()
             || self.candidate_face_pairs.is_empty()
             || self.is_certified_no_intersection_kernel03()
@@ -1554,6 +1666,7 @@ impl ExactBoolMeshWorkspace {
 #[cfg(feature = "exact-triangulation")]
 fn boolmesh_boolean45_blocker(
     no_split_kernel12: bool,
+    pair_up: &ExactBoolMeshPairUpStage,
     stage: &ExactBoolMeshBoolean45Stage,
     candidate_face_pairs: usize,
     mesh_bounds_unknown: bool,
@@ -1574,11 +1687,13 @@ fn boolmesh_boolean45_blocker(
     } else {
         ExactBoolMeshKernelStage::Cleanup
     };
-    Some(ExactBoolMeshPortBlocker {
-        stage: blocker_stage,
+    Some(ExactBoolMeshPortBlocker::from_boolean45_stage(
+        blocker_stage,
+        pair_up,
+        stage,
         candidate_face_pairs,
         mesh_bounds_unknown,
-    })
+    ))
 }
 
 #[cfg(feature = "exact-triangulation")]

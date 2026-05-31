@@ -34549,6 +34549,49 @@ fn exact_boolmesh_kernel12_lowers_partial_positive_area_coplanar_overlap() {
 
 #[test]
 #[cfg(feature = "exact-triangulation")]
+fn exact_boolmesh_source_edge_blocker_retains_boolean45_counters() {
+    let left = upward_l_prism_i64([[0, 0], [8, 0], [8, 3], [3, 3], [3, 8], [0, 8]], 5);
+    let right = tetrahedron_i64([1, 1, 0], [7, 1, 0], [1, 7, 0], [1, 1, 5]);
+
+    let workspace = hypermesh::exact::exact_boolmesh_workspace(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+    );
+    workspace.validate_against_sources(&left, &right).unwrap();
+    let blocker = workspace
+        .blocker
+        .as_ref()
+        .expect("nonconvex source-edge split fixture should expose the next boolmesh blocker");
+    assert_eq!(
+        blocker.stage,
+        hypermesh::exact::ExactBoolMeshKernelStage::SourceEdgeEmission
+    );
+    assert_eq!(blocker.candidate_face_pairs, 33);
+    assert_eq!(blocker.partial_source_edge_unpaired_runs, 8);
+    assert_eq!(blocker.new_face_pair_unpaired_runs, 13);
+    assert_eq!(blocker.halfedge_unfilled_halfedges, 33);
+    assert_eq!(blocker.face_loop_incomplete_faces, 10);
+    assert_eq!(blocker.source_edge_incident_gaps, 0);
+    assert_eq!(blocker.loop_triangulation_failures, 0);
+    assert_eq!(blocker.mesh_export_blocked_output_triangles, 0);
+
+    let mut stale_blocker = workspace.clone();
+    stale_blocker
+        .blocker
+        .as_mut()
+        .unwrap()
+        .partial_source_edge_unpaired_runs += 1;
+    assert_eq!(
+        stale_blocker
+            .validate_against_sources(&left, &right)
+            .unwrap_err(),
+        hypermesh::exact::ExactBoolMeshValidationError::BlockerCountMismatch
+    );
+}
+
+#[test]
+#[cfg(feature = "exact-triangulation")]
 fn exact_boolmesh_kernel12_discovers_skew_edge_face_events() {
     let left = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
     let right = tetrahedron_i64([1, 1, -1], [3, 1, 3], [1, 3, 3], [3, 3, 1]);
