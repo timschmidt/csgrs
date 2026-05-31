@@ -3908,7 +3908,6 @@ fn boolean_closed_boundary_only_contact_meshes(
         return Ok(None);
     }
     if operation == ExactBooleanOperation::Union
-        && !certify_boundary_touching_report(left, right)?.is_certified()
         && let Some(result) =
             boolean_boolmesh_split_meshes(left, right, ExactBooleanOperation::Union, validation)
     {
@@ -3959,9 +3958,8 @@ fn boolean_closed_boundary_touching_union(
             "exact closed-boundary-touch union certificate did not replay",
         ))
     })?;
-    if !certify_boundary_touching_report(left, right)?.is_certified()
-        && let Some(result) =
-            boolean_boolmesh_split_meshes(left, right, ExactBooleanOperation::Union, validation)
+    if let Some(result) =
+        boolean_boolmesh_split_meshes(left, right, ExactBooleanOperation::Union, validation)
     {
         return Ok(result);
     }

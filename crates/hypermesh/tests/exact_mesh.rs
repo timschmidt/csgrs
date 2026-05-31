@@ -33932,6 +33932,23 @@ fn exact_boolmesh_workspace_routes_strict_coplanar_vertices_to_boolean45() {
     );
     assert_eq!(execution.mesh.vertices().len(), 8);
     assert_eq!(execution.mesh.triangles().len(), 12);
+
+    let public_result = hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("public strict-coplanar ownership union should consume the completed boolmesh split");
+    public_result.validate().unwrap();
+    assert_eq!(
+        public_result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::BoolMeshSplit
+        }
+    );
+    assert_eq!(public_result.mesh.vertices().len(), 8);
+    assert_eq!(public_result.mesh.triangles().len(), 12);
 }
 
 #[test]
@@ -34607,6 +34624,23 @@ fn exact_boolmesh_kernel12_lowers_partial_positive_area_coplanar_overlap() {
     assert_eq!(execution.mesh.triangles().len(), 14);
     assert_eq!(execution.mesh.facts().mesh.boundary_edges, 0);
     assert_eq!(execution.mesh.facts().mesh.duplicate_directed_edges, 0);
+
+    let public_result = hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("public positive-area coplanar union should consume the completed boolmesh split");
+    public_result.validate().unwrap();
+    assert_eq!(
+        public_result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::BoolMeshSplit
+        }
+    );
+    assert_eq!(public_result.mesh.vertices().len(), 9);
+    assert_eq!(public_result.mesh.triangles().len(), 14);
 }
 
 #[test]
