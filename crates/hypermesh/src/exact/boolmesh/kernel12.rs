@@ -432,7 +432,7 @@ pub(super) fn internal_fuzz_probe(selector: u8) -> bool {
             crate::exact::mesh::ExactPoint3::new(
                 super::ExactReal::from(2),
                 super::ExactReal::from(1),
-                super::ExactReal::from(0),
+                super::ExactReal::from(top),
             ),
         ],
         vec![crate::exact::mesh::Triangle([0, 1, 2])],
