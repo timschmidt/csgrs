@@ -142,7 +142,9 @@ use super::volumetric::{
     classify_triangulated_regions_against_opposite_meshes,
 };
 #[cfg(feature = "exact-triangulation")]
-use super::volumetric_cells::CoplanarVolumetricCellEvidenceReport;
+use super::volumetric_cells::{
+    CoplanarVolumetricCellEvidenceReport, CoplanarVolumetricCellObstacle,
+};
 #[cfg(feature = "exact-triangulation")]
 use super::winding::{
     ClosedMeshWindingMeshRelation, ClosedMeshWindingMeshReport, ClosedMeshWindingRelation,
@@ -674,13 +676,17 @@ pub fn preflight_boolean_exact(
         ExactBooleanOperation::Union
         | ExactBooleanOperation::Intersection
         | ExactBooleanOperation::Difference => {
-            certified_convex_boolean_support(left, right, operation)?
+            let shortcut_support = certified_convex_boolean_support(left, right, operation)?
                 .or_else(|| certified_convex_intersection_support(left, right, operation))
                 .or_else(|| certified_convex_single_cap_difference_support(left, right, operation))
                 .or_else(|| certified_contained_boundary_difference_support(left, right, operation))
                 .or_else(|| {
                     certified_contained_boundary_containment_support(left, right, operation)
-                })
+                });
+            shortcut_support
+                .or(certified_closed_boundary_only_contact_support(
+                    left, right, operation,
+                )?)
                 .or(certified_winding_boolean_support(left, right)?)
                 .unwrap_or(ExactBooleanSupport::RequiresCertifiedWinding)
         }
@@ -965,6 +971,22 @@ pub fn preflight_boolean_exact(
             coplanar_volumetric_evidence: coplanar_volumetric_evidence_if_required(
                 &graph, left, right,
             ),
+        });
+    }
+    if support == ExactBooleanSupport::RequiresBoundaryPolicy {
+        return Ok(ExactBooleanPreflight {
+            operation,
+            support,
+            graph_had_unknowns,
+            retained_face_pairs,
+            retained_events,
+            region_count: 0,
+            region_classifications: Vec::new(),
+            blocker: Some(
+                relation_counts.into_blocker(ExactBooleanBlockerKind::NeedsBoundaryPolicy),
+            ),
+            arrangement_readiness: None,
+            coplanar_volumetric_evidence: None,
         });
     }
 
@@ -1829,6 +1851,11 @@ pub fn boolean_exact_with_boundary_policy(
             if let Some(result) = boolean_axis_aligned_orthogonal_solid_cell_meshes(
                 left, right, operation, validation,
             )? {
+                return Ok(result);
+            }
+            if let Some(result) =
+                boolean_closed_boundary_only_contact_meshes(left, right, operation, validation)?
+            {
                 return Ok(result);
             }
             match boolean_volumetric_winding_regions(left, right, operation, validation) {
@@ -3814,6 +3841,83 @@ fn certified_closed_boundary_touching_regularized_report(
             ))
         })?;
     Ok(Some(report))
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn certified_closed_boundary_only_contact(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Result<bool, MeshError> {
+    if !left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold {
+        return Ok(false);
+    }
+    let evidence = super::volumetric_cells::certify_coplanar_volumetric_cell_evidence(left, right)?;
+    evidence
+        .validate_against_sources(left, right)
+        .map_err(|error| {
+            MeshError::one(MeshDiagnostic::new(
+                Severity::Error,
+                DiagnosticKind::UnsupportedExactOperation,
+                format!("exact boundary-only coplanar evidence replay failed: {error:?}"),
+            ))
+        })?;
+    Ok(evidence.obstacle == CoplanarVolumetricCellObstacle::BoundaryOnlyContact)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn certified_closed_boundary_only_contact_support(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+) -> Result<Option<ExactBooleanSupport>, MeshError> {
+    if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+        || !certified_closed_boundary_only_contact(left, right)?
+    {
+        return Ok(None);
+    }
+    Ok(Some(match operation {
+        ExactBooleanOperation::Union => ExactBooleanSupport::RequiresBoundaryPolicy,
+        ExactBooleanOperation::Intersection => {
+            ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
+        }
+        ExactBooleanOperation::Difference => {
+            ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference
+        }
+        ExactBooleanOperation::SelectedRegions(_) => unreachable!(),
+    }))
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn boolean_closed_boundary_only_contact_meshes(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    if !certified_closed_boundary_only_contact(left, right)? {
+        return Ok(None);
+    }
+    let (mesh, shortcut) = match operation {
+        ExactBooleanOperation::Intersection => (
+            empty_mesh(
+                "empty exact closed-boundary-only regularized intersection",
+                validation,
+            )?,
+            ExactBooleanShortcutKind::ClosedBoundaryTouchingIntersection,
+        ),
+        ExactBooleanOperation::Difference => (
+            copy_mesh(
+                left,
+                "exact closed-boundary-only regularized difference keeps left",
+                validation,
+            )?,
+            ExactBooleanShortcutKind::ClosedBoundaryTouchingDifference,
+        ),
+        ExactBooleanOperation::Union | ExactBooleanOperation::SelectedRegions(_) => {
+            return Ok(None);
+        }
+    };
+    Ok(Some(certified_shortcut_result(mesh, shortcut)))
 }
 
 #[cfg(feature = "exact-triangulation")]

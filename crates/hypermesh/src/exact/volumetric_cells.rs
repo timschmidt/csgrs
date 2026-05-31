@@ -19,11 +19,14 @@
 
 use std::cmp::Ordering;
 
-use hyperlimit::{PlaneSide, SegmentIntersection, TriangleLocation, compare_reals};
+use hyperlimit::{
+    CoplanarProjection, PlaneSide, Point3, SegmentIntersection, TriangleLocation,
+    classify_point_triangle, compare_reals, project_point3,
+};
 
 use super::construction::SegmentPlaneRelation;
 use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
-use super::graph::{ExactIntersectionGraph, IntersectionEvent, build_intersection_graph};
+use super::graph::{ExactIntersectionGraph, IntersectionEvent, MeshSide, build_intersection_graph};
 use super::intersection::MeshFacePairRelation;
 use super::mesh::ExactMesh;
 use super::scalar::ExactReal;
@@ -225,7 +228,11 @@ impl CoplanarVolumetricCellEvidenceReport {
             match pair.relation {
                 MeshFacePairRelation::Candidate => {
                     report.candidate_pairs += 1;
-                    if pair.events.iter().any(proper_crossing_event) {
+                    if pair
+                        .events
+                        .iter()
+                        .any(|event| proper_crossing_event(event, left, right))
+                    {
                         report.proper_crossing_candidate_pairs += 1;
                     }
                 }
@@ -255,7 +262,11 @@ impl CoplanarVolumetricCellEvidenceReport {
                         report.segment_plane_events += 1;
                         match relation {
                             SegmentPlaneRelation::ProperCrossing => {
-                                report.proper_crossing_events += 1
+                                if proper_crossing_event(event, left, right) {
+                                    report.proper_crossing_events += 1;
+                                } else {
+                                    report.boundary_segment_events += 1;
+                                }
                             }
                             SegmentPlaneRelation::ConstructionFailed => {
                                 report.construction_failed_events += 1
@@ -522,14 +533,77 @@ fn retained_plane_side(
     }
 }
 
-fn proper_crossing_event(event: &IntersectionEvent) -> bool {
-    matches!(
-        event,
-        IntersectionEvent::SegmentPlane {
-            relation: SegmentPlaneRelation::ProperCrossing,
-            ..
-        }
+fn proper_crossing_event(event: &IntersectionEvent, left: &ExactMesh, right: &ExactMesh) -> bool {
+    let IntersectionEvent::SegmentPlane {
+        relation: SegmentPlaneRelation::ProperCrossing,
+        plane_side,
+        plane_face,
+        point: Some(point),
+        ..
+    } = event
+    else {
+        return matches!(
+            event,
+            IntersectionEvent::SegmentPlane {
+                relation: SegmentPlaneRelation::ProperCrossing,
+                ..
+            }
+        );
+    };
+    let Some(triangle) = triangle_points(mesh_for_side(*plane_side, left, right), *plane_face)
+    else {
+        return true;
+    };
+    let Some(projection) = choose_triangle_projection(&triangle) else {
+        return true;
+    };
+    classify_point_triangle(
+        &project_point3(&triangle[0], projection),
+        &project_point3(&triangle[1], projection),
+        &project_point3(&triangle[2], projection),
+        &project_point3(point, projection),
     )
+    .value()
+        == Some(TriangleLocation::Inside)
+}
+
+fn mesh_for_side<'a>(side: MeshSide, left: &'a ExactMesh, right: &'a ExactMesh) -> &'a ExactMesh {
+    match side {
+        MeshSide::Left => left,
+        MeshSide::Right => right,
+    }
+}
+
+fn triangle_points(mesh: &ExactMesh, face: usize) -> Option<[Point3; 3]> {
+    let triangle = mesh.triangles().get(face)?.0;
+    Some([
+        mesh.vertices().get(triangle[0])?.to_hyperlimit_point(),
+        mesh.vertices().get(triangle[1])?.to_hyperlimit_point(),
+        mesh.vertices().get(triangle[2])?.to_hyperlimit_point(),
+    ])
+}
+
+fn choose_triangle_projection(points: &[Point3; 3]) -> Option<CoplanarProjection> {
+    [
+        CoplanarProjection::Xy,
+        CoplanarProjection::Xz,
+        CoplanarProjection::Yz,
+    ]
+    .into_iter()
+    .find(|&projection| {
+        let area = projected_area2_signed(points, projection);
+        compare_reals(&area, &ExactReal::from(0)).value() != Some(Ordering::Equal)
+    })
+}
+
+fn projected_area2_signed(points: &[Point3; 3], projection: CoplanarProjection) -> ExactReal {
+    let mut sum = ExactReal::from(0);
+    for index in 0..3 {
+        let current = project_point3(&points[index], projection);
+        let next = project_point3(&points[(index + 1) % 3], projection);
+        sum += &((current.x * &next.y) - &(current.y * &next.x));
+    }
+    sum
 }
 
 fn volumetric_cell_mesh_error(error: CoplanarVolumetricCellEvidenceError) -> MeshError {

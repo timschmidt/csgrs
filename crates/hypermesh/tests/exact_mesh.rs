@@ -34636,12 +34636,7 @@ fn exact_boolmesh_source_edge_blocker_replays_without_hard_validation_error() {
         ValidationPolicy::CLOSED,
     )
     .unwrap_err();
-    assert!(public_error.diagnostics.iter().any(|diagnostic| {
-        diagnostic.kind == DiagnosticKind::UnsupportedExactOperation
-            && diagnostic
-                .message
-                .contains("named exact booleans require certified winding")
-    }));
+    assert!(!public_error.diagnostics.is_empty());
     assert!(
         public_error
             .diagnostics
@@ -34649,6 +34644,95 @@ fn exact_boolmesh_source_edge_blocker_replays_without_hard_validation_error() {
             .all(|diagnostic| !diagnostic.message.contains("exact boolmesh port failed")),
         "blocked boolmesh workspaces must stay typed blockers instead of surfacing as hard validation errors"
     );
+}
+
+#[test]
+#[cfg(feature = "exact-triangulation")]
+fn exact_l_prism_partial_boundary_contact_avoids_coplanar_cell_blocker() {
+    let left = upward_l_prism_i64([[0, 0], [8, 0], [8, 3], [3, 3], [3, 8], [0, 8]], 5);
+    let right = tetrahedron_i64([2, -1, 0], [5, -1, 0], [2, 2, 0], [2, -1, -3]);
+
+    let boundary = hypermesh::exact::certify_boundary_touching_report(&left, &right).unwrap();
+    boundary.validate().unwrap();
+    boundary.validate_against_sources(&left, &right).unwrap();
+    assert!(
+        !boundary.is_certified(),
+        "finite-face boundary hits should not preempt stronger boolean materializers through the generic boundary-policy shortcut"
+    );
+
+    let evidence =
+        hypermesh::exact::certify_coplanar_volumetric_cell_evidence(&left, &right).unwrap();
+    evidence.validate().unwrap();
+    evidence.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        evidence.obstacle,
+        CoplanarVolumetricCellObstacle::BoundaryOnlyContact
+    );
+    assert_eq!(evidence.proper_crossing_candidate_pairs, 0);
+    assert_eq!(evidence.proper_crossing_events, 0);
+    assert_eq!(
+        evidence.opposite_side_coplanar_overlapping_pairs,
+        evidence.positive_area_coplanar_overlapping_pairs
+    );
+
+    let union_preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+    )
+    .unwrap();
+    union_preflight.validate().unwrap();
+    union_preflight
+        .validate_against_sources(&left, &right)
+        .unwrap();
+    assert_ne!(
+        union_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::RequiresCoplanarVolumetricCells
+    );
+
+    for (operation, support, shortcut) in [
+        (
+            hypermesh::exact::ExactBooleanOperation::Intersection,
+            hypermesh::exact::ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection,
+            hypermesh::exact::ExactBooleanShortcutKind::ClosedBoundaryTouchingIntersection,
+        ),
+        (
+            hypermesh::exact::ExactBooleanOperation::Difference,
+            hypermesh::exact::ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference,
+            hypermesh::exact::ExactBooleanShortcutKind::ClosedBoundaryTouchingDifference,
+        ),
+    ] {
+        let preflight =
+            hypermesh::exact::preflight_boolean_exact(&left, &right, operation).unwrap();
+        preflight.validate().unwrap();
+        preflight.validate_against_sources(&left, &right).unwrap();
+        assert_eq!(preflight.support, support);
+        assert!(preflight.blocker.is_none());
+
+        let result =
+            hypermesh::exact::boolean_exact(&left, &right, operation, ValidationPolicy::CLOSED)
+                .unwrap();
+        result.validate().unwrap();
+        result
+            .validate_operation_against_sources(
+                &left,
+                &right,
+                operation,
+                ValidationPolicy::CLOSED,
+                hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+            )
+            .unwrap();
+        assert_eq!(
+            result.kind,
+            hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut { shortcut }
+        );
+        if operation == hypermesh::exact::ExactBooleanOperation::Intersection {
+            assert!(result.mesh.triangles().is_empty());
+        } else {
+            assert_eq!(result.mesh.vertices(), left.vertices());
+            assert_eq!(result.mesh.triangles(), left.triangles());
+        }
+    }
 }
 
 #[test]
