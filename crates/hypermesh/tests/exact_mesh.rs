@@ -34619,7 +34619,7 @@ fn exact_boolmesh_source_edge_split_materializes_through_cleanup_caps() {
 
 #[test]
 #[cfg(feature = "exact-triangulation")]
-fn exact_boolmesh_boundary_contact_advances_to_triangulation_blocker() {
+fn exact_boolmesh_boundary_contact_replays_closure_faces() {
     let left = upward_l_prism_i64([[0, 0], [8, 0], [8, 3], [3, 3], [3, 8], [0, 8]], 5);
     let right = tetrahedron_i64([2, -1, 0], [5, -1, 0], [2, 2, 0], [2, -1, -3]);
 
@@ -34629,25 +34629,17 @@ fn exact_boolmesh_boundary_contact_advances_to_triangulation_blocker() {
         hypermesh::exact::ExactBooleanOperation::Union,
     );
     workspace.validate_against_sources(&left, &right).unwrap();
-    let blocker = workspace
-        .blocker
-        .as_ref()
-        .expect("direct boolmesh still has a named cleanup blocker");
-    assert_eq!(
-        blocker.stage,
-        hypermesh::exact::ExactBoolMeshKernelStage::Triangulation
+    assert!(
+        workspace.blocker.is_none(),
+        "dropped-chain closure replay should now complete the direct boolmesh export"
     );
-    assert_eq!(blocker.candidate_face_pairs, 14);
-    assert_eq!(blocker.pair_up_unpaired_event_runs, 2);
-    assert_eq!(blocker.partial_source_edge_unpaired_runs, 0);
-    assert_eq!(blocker.new_face_pair_unpaired_runs, 0);
-    assert_eq!(blocker.face_loop_non_loop_halfedges, 0);
-    assert_eq!(blocker.mesh_export_boundary_edges, 8);
+    assert_eq!(workspace.candidate_face_pairs.len(), 14);
+    assert_eq!(workspace.pair_up.unpaired_event_runs, 2);
 
     let stage = workspace
         .boolean45
         .as_ref()
-        .expect("triangulation blocker must retain boolean45 replay state");
+        .expect("completed boundary-contact export must retain boolean45 replay state");
     assert_eq!(stage.partial_source_edges.missing_parameter_orders, 0);
     assert_eq!(stage.partial_source_edges.unpaired_runs, 0);
     assert_eq!(stage.new_face_pair_edges.unpaired_runs, 0);
@@ -34937,11 +34929,11 @@ fn exact_boolmesh_boundary_contact_advances_to_triangulation_blocker() {
         hypermesh::exact::ExactBooleanOperation::Union,
         ValidationPolicy::CLOSED,
     )
-    .expect("closed-boundary-touch certification should bypass the blocked direct split export");
+    .expect("dropped-chain closure replay should materialize the direct boundary-contact export");
     execution.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         execution.shortcut,
-        hypermesh::exact::ExactBooleanShortcutKind::ClosedBoundaryTouchingUnion
+        hypermesh::exact::ExactBooleanShortcutKind::BoolMeshSplit
     );
     assert_eq!(execution.mesh.facts().mesh.boundary_edges, 0);
 

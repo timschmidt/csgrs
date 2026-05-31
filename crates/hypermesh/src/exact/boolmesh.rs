@@ -2028,7 +2028,7 @@ pub fn execute_exact_boolmesh_port(
             left,
             right,
             validation,
-            boolmesh_export_label(operation),
+            operation,
         )?
     } else {
         return Err(ExactBoolMeshValidationError::PortBlocked(
@@ -2361,7 +2361,7 @@ fn boolean45_export_materializes_closed(
         left,
         right,
         ValidationPolicy::CLOSED,
-        boolmesh_export_label(operation),
+        operation,
     )
     .is_ok()
 }
@@ -2373,7 +2373,7 @@ fn materialize_boolean45_export(
     left: &ExactMesh,
     right: &ExactMesh,
     validation: ValidationPolicy,
-    label: &'static str,
+    operation: ExactBooleanOperation,
 ) -> Result<ExactMesh, ExactBoolMeshValidationError> {
     if stage.mesh_export.missing_vertex_coordinates > 0
         || stage.mesh_export.blocked_output_triangles > 0
@@ -2393,18 +2393,28 @@ fn materialize_boolean45_export(
     if raw_vertices.len() != stage.mesh_export.vertex_count {
         return Err(ExactBoolMeshValidationError::Boolean45MeshExportMismatch);
     }
-    if all_export_vertices_are_used(raw_vertices.len(), &stage.mesh_export.triangles)
+    let mut export_triangles = stage.mesh_export.triangles.clone();
+    if let Some(closure_triangles) = boolmesh_boundary_closure_source_face_triangles(
+        stage,
+        &raw_vertices,
+        left,
+        right,
+        operation,
+    ) {
+        export_triangles.extend(closure_triangles);
+    }
+    let label = boolmesh_export_label(operation);
+    if all_export_vertices_are_used(raw_vertices.len(), &export_triangles)
         && let Ok(mesh) = ExactMesh::new_with_policy(
             raw_vertices.clone(),
-            stage.mesh_export.triangles.clone(),
+            export_triangles.clone(),
             SourceProvenance::exact(label),
             validation,
         )
     {
         return Ok(mesh);
     }
-    let (vertices, triangles) =
-        cleanup_exact_export_vertices(raw_vertices, &stage.mesh_export.triangles);
+    let (vertices, triangles) = cleanup_exact_export_vertices(raw_vertices, &export_triangles);
     ExactMesh::new_with_policy(
         vertices,
         triangles,
@@ -2412,6 +2422,72 @@ fn materialize_boolean45_export(
         validation,
     )
     .map_err(|_| ExactBoolMeshValidationError::InvalidOutputMesh)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn boolmesh_boundary_closure_source_face_triangles(
+    stage: &ExactBoolMeshBoolean45Stage,
+    raw_vertices: &[ExactPoint3],
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+) -> Option<Vec<Triangle>> {
+    if stage.mesh_export.boundary_edges.is_empty()
+        || stage.mesh_export.boundary_closure_records.len()
+            != stage.mesh_export.boundary_edge_records.len()
+    {
+        return None;
+    }
+    let mut owners = Vec::<(ExactBoolMeshSide, usize)>::new();
+    for record in &stage.mesh_export.boundary_closure_records {
+        let owner = (record.owner.side, record.owner.source_face);
+        if !owners.contains(&owner) {
+            owners.push(owner);
+        }
+    }
+    let mut triangles = Vec::with_capacity(owners.len());
+    for (side, source_face) in owners {
+        let source_mesh = match side {
+            ExactBoolMeshSide::Left => left,
+            ExactBoolMeshSide::Right => right,
+        };
+        let source_triangle = source_mesh.triangles().get(source_face)?.0;
+        let mut mapped = [0; 3];
+        for (slot, source_vertex) in source_triangle.iter().copied().enumerate() {
+            let source_point = source_mesh.vertices().get(source_vertex)?;
+            mapped[slot] = raw_vertices
+                .iter()
+                .position(|candidate| exact_points_equal(candidate, source_point))?;
+        }
+        if mapped[0] == mapped[1] || mapped[1] == mapped[2] || mapped[2] == mapped[0] {
+            return None;
+        }
+        if operation_reverses_boolmesh_source_side(operation, side) {
+            mapped.swap(1, 2);
+        }
+        triangles.push(Triangle(mapped));
+    }
+    (!triangles.is_empty()).then_some(triangles)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn operation_reverses_boolmesh_source_side(
+    operation: ExactBooleanOperation,
+    side: ExactBoolMeshSide,
+) -> bool {
+    matches!(
+        (operation, side),
+        (ExactBooleanOperation::Difference, ExactBoolMeshSide::Right)
+    )
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn exact_points_equal(left: &ExactPoint3, right: &ExactPoint3) -> bool {
+    let left = left.to_hyperlimit_point();
+    let right = right.to_hyperlimit_point();
+    compare_reals(&left.x, &right.x).value() == Some(std::cmp::Ordering::Equal)
+        && compare_reals(&left.y, &right.y).value() == Some(std::cmp::Ordering::Equal)
+        && compare_reals(&left.z, &right.z).value() == Some(std::cmp::Ordering::Equal)
 }
 
 #[cfg(feature = "exact-triangulation")]
