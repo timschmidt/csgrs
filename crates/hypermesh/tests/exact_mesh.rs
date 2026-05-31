@@ -34629,20 +34629,30 @@ fn exact_boolmesh_source_edge_blocker_replays_without_hard_validation_error() {
         )
     );
 
-    let public_error = hypermesh::exact::boolean_exact(
+    let public_result = hypermesh::exact::boolean_exact(
         &left,
         &right,
         hypermesh::exact::ExactBooleanOperation::Union,
         ValidationPolicy::CLOSED,
     )
-    .unwrap_err();
-    assert!(!public_error.diagnostics.is_empty());
-    assert!(
-        public_error
-            .diagnostics
-            .iter()
-            .all(|diagnostic| !diagnostic.message.contains("exact boolmesh port failed")),
-        "blocked boolmesh workspaces must stay typed blockers instead of surfacing as hard validation errors"
+    .expect(
+        "boundary-only evidence should materialize union before the blocked boolmesh port leaks",
+    );
+    public_result.validate().unwrap();
+    public_result
+        .validate_operation_against_sources(
+            &left,
+            &right,
+            hypermesh::exact::ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        public_result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ClosedBoundaryTouchingUnion
+        }
     );
 }
 
@@ -34685,10 +34695,11 @@ fn exact_l_prism_partial_boundary_contact_avoids_coplanar_cell_blocker() {
     union_preflight
         .validate_against_sources(&left, &right)
         .unwrap();
-    assert_ne!(
+    assert_eq!(
         union_preflight.support,
-        hypermesh::exact::ExactBooleanSupport::RequiresCoplanarVolumetricCells
+        hypermesh::exact::ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion
     );
+    assert!(union_preflight.blocker.is_none());
 
     for (operation, support, shortcut) in [
         (

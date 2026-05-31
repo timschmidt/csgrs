@@ -3876,7 +3876,7 @@ fn certified_closed_boundary_only_contact_support(
         return Ok(None);
     }
     Ok(Some(match operation {
-        ExactBooleanOperation::Union => ExactBooleanSupport::RequiresBoundaryPolicy,
+        ExactBooleanOperation::Union => ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion,
         ExactBooleanOperation::Intersection => {
             ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
         }
@@ -3898,6 +3898,16 @@ fn boolean_closed_boundary_only_contact_meshes(
         return Ok(None);
     }
     let (mesh, shortcut) = match operation {
+        ExactBooleanOperation::Union => (
+            concatenate_meshes_with_options(
+                left,
+                right,
+                false,
+                "exact closed-boundary-only regularized union preserving separate shells",
+                validation,
+            )?,
+            ExactBooleanShortcutKind::ClosedBoundaryTouchingUnion,
+        ),
         ExactBooleanOperation::Intersection => (
             empty_mesh(
                 "empty exact closed-boundary-only regularized intersection",
@@ -3913,9 +3923,7 @@ fn boolean_closed_boundary_only_contact_meshes(
             )?,
             ExactBooleanShortcutKind::ClosedBoundaryTouchingDifference,
         ),
-        ExactBooleanOperation::Union | ExactBooleanOperation::SelectedRegions(_) => {
-            return Ok(None);
-        }
+        ExactBooleanOperation::SelectedRegions(_) => return Ok(None),
     };
     Ok(Some(certified_shortcut_result(mesh, shortcut)))
 }
