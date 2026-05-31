@@ -13,8 +13,9 @@
 use std::collections::{BTreeMap, BTreeSet, VecDeque};
 
 use super::super::{
-    ExactBoolMeshFaceLoopAssemblyStage, ExactBoolMeshHalfedgeAssemblyStage,
-    ExactBoolMeshOutputFaceLoop, ExactBoolMeshOutputHalfedgeSource,
+    ExactBoolMeshDroppedOpenChain, ExactBoolMeshFaceLoopAssemblyStage,
+    ExactBoolMeshHalfedgeAssemblyStage, ExactBoolMeshOutputFaceLoop,
+    ExactBoolMeshOutputHalfedgeSource,
 };
 
 /// Assemble per-face closed boundary loops from emitted output halfedges.
@@ -64,6 +65,7 @@ fn assemble_output_face_loop(
     let loops_before = stage.loops.len();
     let non_loop_before = stage.non_loop_halfedges;
     let repeated_before = stage.repeated_halfedges;
+    let mut non_loop_open_chains = Vec::<ExactBoolMeshDroppedOpenChain>::new();
 
     let mut tail_to_halfedges = BTreeMap::<usize, VecDeque<usize>>::new();
     for slot in begin..end {
@@ -131,9 +133,19 @@ fn assemble_output_face_loop(
                         &loop_halfedges,
                     )
                 {
-                    stage.dropped_open_chain_halfedges += loop_halfedges.len();
+                    push_dropped_open_chain(
+                        stage,
+                        output_face,
+                        loop_halfedges.clone(),
+                        loop_vertices.clone(),
+                    );
                 } else {
                     stage.non_loop_halfedges += loop_halfedges.len();
+                    non_loop_open_chains.push(ExactBoolMeshDroppedOpenChain {
+                        output_face,
+                        halfedges: loop_halfedges.clone(),
+                        vertices: loop_vertices.clone(),
+                    });
                 }
                 break;
             };
@@ -143,7 +155,24 @@ fn assemble_output_face_loop(
 
     let expected = end - begin;
     if consumed.len() < expected {
-        stage.non_loop_halfedges += expected - consumed.len();
+        let unconsumed = (begin..end)
+            .filter(|slot| !consumed.contains(slot))
+            .collect::<Vec<_>>();
+        stage.non_loop_halfedges += unconsumed.len();
+        if !unconsumed.is_empty() {
+            non_loop_open_chains.push(ExactBoolMeshDroppedOpenChain {
+                output_face,
+                vertices: unconsumed
+                    .iter()
+                    .filter_map(|slot| {
+                        halfedges.output_halfedges[*slot]
+                            .as_ref()
+                            .map(|halfedge| halfedge.tail)
+                    })
+                    .collect(),
+                halfedges: unconsumed,
+            });
+        }
     }
     if stage.loops.len() == loops_before
         && stage.repeated_halfedges == repeated_before
@@ -155,7 +184,24 @@ fn assemble_output_face_loop(
         let dropped = stage.non_loop_halfedges - non_loop_before;
         stage.non_loop_halfedges = non_loop_before;
         stage.dropped_open_chain_halfedges += dropped;
+        stage.dropped_open_chains.append(&mut non_loop_open_chains);
     }
+}
+
+fn push_dropped_open_chain(
+    stage: &mut ExactBoolMeshFaceLoopAssemblyStage,
+    output_face: usize,
+    halfedges: Vec<usize>,
+    vertices: Vec<usize>,
+) {
+    stage.dropped_open_chain_halfedges += halfedges.len();
+    stage
+        .dropped_open_chains
+        .push(ExactBoolMeshDroppedOpenChain {
+            output_face,
+            halfedges,
+            vertices,
+        });
 }
 
 fn halfedge_chain_is_source_edge(

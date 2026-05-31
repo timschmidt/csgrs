@@ -34437,6 +34437,15 @@ fn exact_boolmesh_kernel12_lowers_coplanar_interval_endpoints() {
     assert_eq!(stage.new_face_pair_edges.unpaired_runs, 0);
     assert_eq!(stage.halfedge_assembly.unfilled_halfedges, 0);
     assert_eq!(stage.face_loop_assembly.dropped_open_chain_halfedges, 2);
+    assert_eq!(
+        stage
+            .face_loop_assembly
+            .dropped_open_chains
+            .iter()
+            .map(|chain| chain.halfedges.len())
+            .sum::<usize>(),
+        stage.face_loop_assembly.dropped_open_chain_halfedges
+    );
     assert_eq!(stage.face_loop_assembly.non_loop_halfedges, 0);
     assert_eq!(stage.loop_triangulation.dropped_degenerate_faces.len(), 2);
     assert!(stage.output_triangles.triangles.is_empty());
@@ -34567,6 +34576,15 @@ fn exact_boolmesh_source_edge_split_materializes_through_cleanup_caps() {
     );
     let stage = workspace.boolean45.as_ref().unwrap();
     assert_eq!(stage.face_loop_assembly.dropped_open_chain_halfedges, 23);
+    assert_eq!(
+        stage
+            .face_loop_assembly
+            .dropped_open_chains
+            .iter()
+            .map(|chain| chain.halfedges.len())
+            .sum::<usize>(),
+        stage.face_loop_assembly.dropped_open_chain_halfedges
+    );
     assert_eq!(stage.face_loop_assembly.non_loop_halfedges, 0);
     assert_eq!(workspace.candidate_face_pairs.len(), 33);
     assert_eq!(workspace.pair_up.unpaired_event_runs, 5);
@@ -34646,6 +34664,29 @@ fn exact_boolmesh_boundary_contact_advances_to_triangulation_blocker() {
     assert_eq!(stage.halfedge_assembly.source_edge_incident_gaps, 0);
     assert_eq!(stage.face_loop_assembly.non_loop_halfedges, 0);
     assert_eq!(stage.face_loop_assembly.dropped_open_chain_halfedges, 32);
+    assert_eq!(
+        stage
+            .face_loop_assembly
+            .dropped_open_chains
+            .iter()
+            .map(|chain| chain.halfedges.len())
+            .sum::<usize>(),
+        stage.face_loop_assembly.dropped_open_chain_halfedges
+    );
+    assert!(
+        stage
+            .face_loop_assembly
+            .dropped_open_chains
+            .iter()
+            .all(|chain| chain.halfedges.len() == chain.vertices.len())
+    );
+    assert!(
+        stage
+            .face_loop_assembly
+            .dropped_open_chains
+            .iter()
+            .any(|chain| chain.output_face == 20)
+    );
     assert_eq!(stage.loop_triangulation.dropped_degenerate_faces, [20]);
     assert_eq!(stage.output_triangles.invalid_local_triangles, 0);
     assert_eq!(stage.mesh_export.blocked_output_triangles, 0);

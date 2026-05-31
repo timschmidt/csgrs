@@ -1021,6 +1021,18 @@ pub struct ExactBoolMeshOutputFaceLoop {
     pub vertices: Vec<usize>,
 }
 
+/// Open lower-dimensional output face chain dropped before triangulation.
+#[cfg(feature = "exact-triangulation")]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ExactBoolMeshDroppedOpenChain {
+    /// Output face that contained the chain.
+    pub output_face: usize,
+    /// Ordered output halfedge slots in the dropped chain.
+    pub halfedges: Vec<usize>,
+    /// Ordered output vertices at the chain halfedge tails.
+    pub vertices: Vec<usize>,
+}
+
 /// Exact face-loop assembly over `boolean45` output halfedges.
 #[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
@@ -1033,6 +1045,14 @@ pub struct ExactBoolMeshFaceLoopAssemblyStage {
     pub canonical_output_vertices: Vec<usize>,
     /// Boundary loops assembled by following `head -> next tail` per face.
     pub loops: Vec<ExactBoolMeshOutputFaceLoop>,
+    /// Replayable lower-dimensional open chains dropped before triangulation.
+    ///
+    /// Earlier ports exposed only [`Self::dropped_open_chain_halfedges`].
+    /// Retaining the exact face-local chain topology is the handoff needed for
+    /// boundary-contact reconstruction: future stages can tell which source
+    /// face lost a lower-dimensional walk and which ordered output vertices
+    /// must be paired with clipped coplanar face cells.
+    pub dropped_open_chains: Vec<ExactBoolMeshDroppedOpenChain>,
     /// Output faces skipped because at least one sized halfedge slot is still
     /// unfilled by earlier boolmesh stages.
     pub incomplete_faces: usize,
@@ -3991,6 +4011,36 @@ fn validate_boolean45_face_loops(
                 return Err(ExactBoolMeshValidationError::Boolean45FaceLoopMismatch);
             }
         }
+    }
+    let mut dropped_covered = BTreeSet::<usize>::new();
+    let mut dropped_open_chain_halfedges = 0;
+    for chain in &stage.face_loop_assembly.dropped_open_chains {
+        if chain.output_face >= output_face_count
+            || chain.halfedges.is_empty()
+            || chain.halfedges.len() != chain.vertices.len()
+        {
+            return Err(ExactBoolMeshValidationError::Boolean45FaceLoopMismatch);
+        }
+        dropped_open_chain_halfedges += chain.halfedges.len();
+        for (index, slot) in chain.halfedges.iter().copied().enumerate() {
+            if covered.contains(&slot) || !dropped_covered.insert(slot) {
+                return Err(ExactBoolMeshValidationError::Boolean45FaceLoopMismatch);
+            }
+            if slot < stage.face_halfedge_offsets[chain.output_face]
+                || slot >= stage.face_halfedge_offsets[chain.output_face + 1]
+            {
+                return Err(ExactBoolMeshValidationError::Boolean45FaceLoopMismatch);
+            }
+            let Some(halfedge) = stage.halfedge_assembly.output_halfedges[slot].as_ref() else {
+                return Err(ExactBoolMeshValidationError::Boolean45FaceLoopMismatch);
+            };
+            if halfedge.face != chain.output_face || halfedge.tail != chain.vertices[index] {
+                return Err(ExactBoolMeshValidationError::Boolean45FaceLoopMismatch);
+            }
+        }
+    }
+    if dropped_open_chain_halfedges != stage.face_loop_assembly.dropped_open_chain_halfedges {
+        return Err(ExactBoolMeshValidationError::Boolean45FaceLoopMismatch);
     }
 
     let expected_loop_halfedges = (0..output_face_count)
