@@ -15,7 +15,7 @@
 //! *Computational Geometry* 20.3 (2001).
 
 use std::cmp::Ordering;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, VecDeque};
 
 use hyperlimit::{Point2, Point3, RingPointLocation, classify_point_ring_even_odd, compare_reals};
 
@@ -286,6 +286,7 @@ fn triangulate_ring_component(
             projection,
         )?
     };
+    let triangles = orient_local_triangle_components(triangles);
     if triangles.is_empty() {
         return None;
     }
@@ -303,6 +304,87 @@ fn triangulate_ring_component(
         constraint_edges,
         triangles,
     })
+}
+
+fn orient_local_triangle_components(triangles: Vec<usize>) -> Vec<usize> {
+    if !triangles.len().is_multiple_of(3) {
+        return triangles;
+    }
+    let triangle_count = triangles.len() / 3;
+    let mut oriented = triangles
+        .chunks_exact(3)
+        .map(|triangle| [triangle[0], triangle[1], triangle[2]])
+        .collect::<Vec<_>>();
+    let mut edge_uses = BTreeMap::<[usize; 2], Vec<(usize, [usize; 2])>>::new();
+    for (triangle_index, triangle) in oriented.iter().enumerate() {
+        for edge in triangle_edges(*triangle) {
+            edge_uses
+                .entry(sorted_local_edge(edge))
+                .or_default()
+                .push((triangle_index, edge));
+        }
+    }
+
+    let mut neighbors = vec![Vec::<(usize, bool)>::new(); triangle_count];
+    for uses in edge_uses.values() {
+        if uses.len() != 2 {
+            continue;
+        }
+        let (left_triangle, left_edge) = uses[0];
+        let (right_triangle, right_edge) = uses[1];
+        if left_triangle == right_triangle {
+            continue;
+        }
+        let same_direction = left_edge == right_edge;
+        neighbors[left_triangle].push((right_triangle, same_direction));
+        neighbors[right_triangle].push((left_triangle, same_direction));
+    }
+
+    let mut flipped = vec![None::<bool>; triangle_count];
+    for seed in 0..triangle_count {
+        if flipped[seed].is_some() {
+            continue;
+        }
+        flipped[seed] = Some(false);
+        let mut queue = VecDeque::from([seed]);
+        while let Some(current) = queue.pop_front() {
+            let current_flipped = flipped[current].unwrap_or(false);
+            for &(next, same_direction) in &neighbors[current] {
+                let next_flipped = current_flipped ^ same_direction;
+                match flipped[next] {
+                    Some(existing) if existing != next_flipped => return triangles,
+                    Some(_) => {}
+                    None => {
+                        flipped[next] = Some(next_flipped);
+                        queue.push_back(next);
+                    }
+                }
+            }
+        }
+    }
+
+    for (triangle, should_flip) in oriented.iter_mut().zip(flipped) {
+        if should_flip.unwrap_or(false) {
+            triangle.swap(1, 2);
+        }
+    }
+    oriented.into_iter().flatten().collect()
+}
+
+fn triangle_edges(triangle: [usize; 3]) -> [[usize; 2]; 3] {
+    [
+        [triangle[0], triangle[1]],
+        [triangle[1], triangle[2]],
+        [triangle[2], triangle[0]],
+    ]
+}
+
+fn sorted_local_edge(edge: [usize; 2]) -> [usize; 2] {
+    if edge[0] <= edge[1] {
+        edge
+    } else {
+        [edge[1], edge[0]]
+    }
 }
 
 /// Triangulate one simple boolmesh face component.

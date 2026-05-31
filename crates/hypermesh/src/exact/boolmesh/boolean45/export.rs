@@ -10,9 +10,11 @@
 //! topology can be rejected before retained mesh facts are built.
 
 use core::cmp::Ordering;
+use std::collections::BTreeMap;
 
 use hyperlimit::{CoplanarProjection, Point3, compare_reals, project_point3 as project_point};
 
+use crate::exact::ExactBooleanOperation;
 use crate::exact::mesh::ExactPoint3;
 use crate::exact::mesh::{ExactMesh, Triangle};
 use crate::exact::region::choose_region_projection;
@@ -31,6 +33,7 @@ pub(super) fn stage_mesh_export(
     boolean03: &ExactBoolMeshBoolean03,
     allocation: &ExactBoolMeshOutputVertexAllocation,
     output_triangles: &ExactBoolMeshOutputTriangleStage,
+    operation: ExactBooleanOperation,
 ) -> ExactBoolMeshMeshExportStage {
     let missing_vertex_coordinates = allocation
         .output_vertex_origins
@@ -56,6 +59,7 @@ pub(super) fn stage_mesh_export(
         orientation_failures: 0,
     };
 
+    let mut group_flips = BTreeMap::<(u8, usize, usize, usize), bool>::new();
     for triangle in &output_triangles.triangles {
         if triangle
             .vertices
@@ -68,7 +72,7 @@ pub(super) fn stage_mesh_export(
             stage.invalid_output_triangles += 1;
             continue;
         }
-        let Some(oriented) = orient_triangle_to_source(
+        let Some(needs_flip) = triangle_needs_flip_to_source(
             triangle.vertices,
             triangle.source_side,
             triangle.source_face,
@@ -81,13 +85,53 @@ pub(super) fn stage_mesh_export(
             stage.orientation_failures += 1;
             continue;
         };
+        let group = (
+            boolmesh_side_key(triangle.source_side),
+            triangle.source_face,
+            triangle.output_face,
+            triangle.loop_index,
+        );
+        let flip_group = if matches!(operation, ExactBooleanOperation::Difference) {
+            let operation_flip = operation_reverses_source_side(operation, triangle.source_side);
+            *group_flips
+                .entry(group)
+                .or_insert(needs_flip ^ operation_flip)
+        } else {
+            needs_flip
+        };
+        let oriented = if flip_group {
+            [
+                triangle.vertices[0],
+                triangle.vertices[2],
+                triangle.vertices[1],
+            ]
+        } else {
+            triangle.vertices
+        };
         stage.triangles.push(Triangle(oriented));
     }
 
     stage
 }
 
-fn orient_triangle_to_source(
+fn operation_reverses_source_side(
+    operation: ExactBooleanOperation,
+    source_side: ExactBoolMeshSide,
+) -> bool {
+    matches!(
+        (operation, source_side),
+        (ExactBooleanOperation::Difference, ExactBoolMeshSide::Right)
+    )
+}
+
+fn boolmesh_side_key(side: ExactBoolMeshSide) -> u8 {
+    match side {
+        ExactBoolMeshSide::Left => 0,
+        ExactBoolMeshSide::Right => 1,
+    }
+}
+
+fn triangle_needs_flip_to_source(
     vertices: [usize; 3],
     source_side: ExactBoolMeshSide,
     source_face: usize,
@@ -96,7 +140,7 @@ fn orient_triangle_to_source(
     steiner_points: &[ExactPoint3],
     left: &ExactMesh,
     right: &ExactMesh,
-) -> Option<[usize; 3]> {
+) -> Option<bool> {
     let source = match source_side {
         ExactBoolMeshSide::Left => left,
         ExactBoolMeshSide::Right => right,
@@ -145,11 +189,7 @@ fn orient_triangle_to_source(
     ];
     let source_sign = triangle_area_ordering(&source_points, projection)?;
     let output_sign = triangle_area_ordering(&output_points, projection)?;
-    if source_sign == output_sign {
-        Some(vertices)
-    } else {
-        Some([vertices[0], vertices[2], vertices[1]])
-    }
+    Some(source_sign != output_sign)
 }
 
 fn export_vertex_point(

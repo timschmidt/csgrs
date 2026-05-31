@@ -2075,6 +2075,16 @@ fn materialize_boolean45_export(
     if raw_vertices.len() != stage.mesh_export.vertex_count {
         return Err(ExactBoolMeshValidationError::Boolean45MeshExportMismatch);
     }
+    if all_export_vertices_are_used(raw_vertices.len(), &stage.mesh_export.triangles)
+        && let Ok(mesh) = ExactMesh::new_with_policy(
+            raw_vertices.clone(),
+            stage.mesh_export.triangles.clone(),
+            SourceProvenance::exact(label),
+            validation,
+        )
+    {
+        return Ok(mesh);
+    }
     let (vertices, triangles) =
         cleanup_exact_export_vertices(raw_vertices, &stage.mesh_export.triangles);
     ExactMesh::new_with_policy(
@@ -2084,6 +2094,20 @@ fn materialize_boolean45_export(
         validation,
     )
     .map_err(|_| ExactBoolMeshValidationError::InvalidOutputMesh)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn all_export_vertices_are_used(vertex_count: usize, triangles: &[Triangle]) -> bool {
+    let mut used = vec![false; vertex_count];
+    for triangle in triangles {
+        for vertex in triangle.0 {
+            let Some(slot) = used.get_mut(vertex) else {
+                return false;
+            };
+            *slot = true;
+        }
+    }
+    used.into_iter().all(|used| used)
 }
 
 #[cfg(feature = "exact-triangulation")]

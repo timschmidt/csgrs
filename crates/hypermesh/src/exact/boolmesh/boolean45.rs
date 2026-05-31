@@ -268,6 +268,7 @@ pub(super) fn size_output_stage(
         boolean03,
         &vertex_allocation,
         &output_triangles,
+        operation,
     );
 
     ExactBoolMeshBoolean45Stage {

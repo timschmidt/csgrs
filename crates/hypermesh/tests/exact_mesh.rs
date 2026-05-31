@@ -35344,6 +35344,85 @@ fn exact_boolmesh_union_refines_collinear_holed_face_boundary() {
 
 #[test]
 #[cfg(feature = "exact-triangulation")]
+fn exact_boolmesh_skew_tetra_difference_exports_closed_cavity() {
+    let left = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
+    let right = tetrahedron_i64([1, 1, -1], [3, 1, 3], [1, 3, 3], [3, 3, 1]);
+    let operation = hypermesh::exact::ExactBooleanOperation::Difference;
+    let workspace = hypermesh::exact::exact_boolmesh_workspace(&left, &right, operation);
+    workspace.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(workspace.blocker, None);
+    let stage = workspace.boolean45.as_ref().unwrap();
+    assert_eq!(stage.loop_triangulation.triangulation_failures, 0);
+    assert_eq!(stage.mesh_export.blocked_output_triangles, 0);
+    assert_eq!(stage.mesh_export.invalid_output_triangles, 0);
+    assert_eq!(stage.mesh_export.orientation_failures, 0);
+    assert_eq!(
+        stage.mesh_export.triangles.len(),
+        stage.output_triangles.triangles.len()
+    );
+    let raw_vertices = stage
+        .vertex_allocation
+        .output_vertex_origins
+        .iter()
+        .map(|origin| match origin {
+            hypermesh::exact::ExactBoolMeshOutputVertexOrigin::SourceVertex { source, .. } => {
+                let mesh = match source.side {
+                    hypermesh::exact::ExactBoolMeshSide::Left => &left,
+                    hypermesh::exact::ExactBoolMeshSide::Right => &right,
+                };
+                let point = mesh.vertices()[source.vertex].to_hyperlimit_point();
+                ExactPoint3::new(point.x, point.y, point.z)
+            }
+            hypermesh::exact::ExactBoolMeshOutputVertexOrigin::Kernel12LeftEdgeRightFace {
+                event,
+                ..
+            } => {
+                let point = workspace.boolean03.v12[*event].clone();
+                ExactPoint3::new(point.x, point.y, point.z)
+            }
+            hypermesh::exact::ExactBoolMeshOutputVertexOrigin::Kernel12RightEdgeLeftFace {
+                event,
+                ..
+            } => {
+                let point = workspace.boolean03.v21[*event].clone();
+                ExactPoint3::new(point.x, point.y, point.z)
+            }
+        })
+        .collect::<Vec<_>>();
+    let raw_mesh = ExactMesh::new_with_policy(
+        raw_vertices.clone(),
+        stage.mesh_export.triangles.clone(),
+        SourceProvenance::exact("skew tetra difference boolmesh regression"),
+        ValidationPolicy::CLOSED,
+    )
+    .expect("operation-aware right-side export orientation must be closed before cleanup");
+    assert_eq!(raw_mesh.facts().mesh.boundary_edges, 0);
+    assert_eq!(raw_mesh.facts().mesh.duplicate_directed_edges, 0);
+    assert_eq!(raw_mesh.facts().mesh.non_manifold_edges, 0);
+
+    let execution = hypermesh::exact::execute_exact_boolmesh_port(
+        &left,
+        &right,
+        operation,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("skew tetra difference should complete through exact boolmesh export");
+    execution.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(execution.mesh.vertices().len(), 10);
+    assert_eq!(execution.mesh.triangles().len(), 16);
+    assert_eq!(execution.mesh.facts().mesh.boundary_edges, 0);
+    assert_eq!(execution.mesh.facts().mesh.duplicate_directed_edges, 0);
+    assert_eq!(execution.mesh.facts().mesh.non_manifold_edges, 0);
+
+    let public_result =
+        hypermesh::exact::boolean_exact(&left, &right, operation, ValidationPolicy::CLOSED)
+            .expect("public exact difference should consume the completed boolmesh export");
+    assert_eq!(public_result.mesh.vertices().len(), 10);
+    assert_eq!(public_result.mesh.triangles().len(), 16);
+}
+
+#[test]
+#[cfg(feature = "exact-triangulation")]
 fn exact_boolmesh_open_crossing_edges_are_not_adjacency_gaps() {
     let left = ExactMesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 4, 0, 0, 0, 4, 0],
