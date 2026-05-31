@@ -35576,6 +35576,11 @@ fn exact_boolmesh_open_crossing_edges_are_not_adjacency_gaps() {
         hypermesh::exact::ExactBooleanOperation::Intersection,
     );
     workspace.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        workspace.blocker.as_ref().map(|blocker| blocker.stage),
+        None,
+        "open crossing surface chains should regularize to an empty boolmesh split"
+    );
     assert_eq!(workspace.kernel12_unknown_events, 0);
     assert!(
         !workspace.boolean03.p1q2.is_empty() || !workspace.boolean03.p2q1.is_empty(),
@@ -35636,6 +35641,20 @@ fn exact_boolmesh_open_crossing_edges_are_not_adjacency_gaps() {
             })
             .sum::<usize>()
     );
+    let execution = hypermesh::exact::execute_exact_boolmesh_port(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("regularized open-surface crossing should execute as an empty boolmesh split");
+    execution.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        execution.shortcut,
+        hypermesh::exact::ExactBooleanShortcutKind::BoolMeshSplit
+    );
+    assert!(execution.mesh.vertices().is_empty());
+    assert!(execution.mesh.triangles().is_empty());
 }
 
 #[test]

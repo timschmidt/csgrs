@@ -1420,6 +1420,7 @@ impl ExactBoolMeshWorkspace {
             ))
         } else {
             let blocker = boolmesh_boolean45_blocker(
+                operation,
                 no_split_kernel12,
                 &pair_up,
                 boolean45.as_ref().expect("boolean45 is staged above"),
@@ -1526,10 +1527,9 @@ impl ExactBoolMeshWorkspace {
             && self.kernel12_unknown_events == 0
             && self.kernel12_construction_failures == 0
             && self.kernel12_coplanar_events == 0
-            && self
-                .boolean45
-                .as_ref()
-                .is_some_and(boolean45_simple_export_is_complete)
+            && self.boolean45.as_ref().is_some_and(|stage| {
+                boolean45_export_is_complete_for_operation(self.operation, stage)
+            })
     }
 
     /// Validate the workspace locally.
@@ -1687,13 +1687,14 @@ impl ExactBoolMeshWorkspace {
 
 #[cfg(feature = "exact-triangulation")]
 fn boolmesh_boolean45_blocker(
+    operation: ExactBooleanOperation,
     no_split_kernel12: bool,
     pair_up: &ExactBoolMeshPairUpStage,
     stage: &ExactBoolMeshBoolean45Stage,
     candidate_face_pairs: usize,
     mesh_bounds_unknown: bool,
 ) -> Option<ExactBoolMeshPortBlocker> {
-    if no_split_kernel12 || boolean45_simple_export_is_complete(stage) {
+    if no_split_kernel12 || boolean45_export_is_complete_for_operation(operation, stage) {
         return None;
     }
     let blocker_stage = if stage.pair_up_blocked() {
@@ -1931,7 +1932,7 @@ pub fn execute_exact_boolmesh_port(
         .ok_or(ExactBoolMeshValidationError::MissingBlocker)?;
     let mesh = if boolmesh_shortcut_is_closed_boundary_touching(shortcut) {
         materialize_closed_boundary_touching_shortcut(left, right, operation, validation, shortcut)?
-    } else if boolean45_simple_export_is_complete(boolean45) {
+    } else if boolean45_export_is_complete_for_operation(operation, boolean45) {
         materialize_boolean45_export(
             boolean45,
             &workspace.boolean03,
@@ -2185,6 +2186,67 @@ fn boolean45_simple_export_is_complete(stage: &ExactBoolMeshBoolean45Stage) -> b
         && stage.mesh_export.invalid_output_triangles == 0
         && stage.mesh_export.orientation_failures == 0
         && stage.mesh_export.triangles.len() == stage.output_triangles.triangles.len()
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn boolean45_export_is_complete_for_operation(
+    operation: ExactBooleanOperation,
+    stage: &ExactBoolMeshBoolean45Stage,
+) -> bool {
+    boolean45_simple_export_is_complete(stage)
+        || boolean45_regularized_empty_intersection_is_complete(operation, stage)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn boolean45_regularized_empty_intersection_is_complete(
+    operation: ExactBooleanOperation,
+    stage: &ExactBoolMeshBoolean45Stage,
+) -> bool {
+    operation == ExactBooleanOperation::Intersection
+        && stage.inserted_intersection_vertices > 0
+        && stage.source_edge_incident_gaps == 0
+        && stage.partial_source_edges.missing_parameter_orders == 0
+        && stage.partial_source_edges.unpaired_runs > 0
+        && stage
+            .partial_source_edges
+            .source_edge_runs
+            .iter()
+            .all(|run| {
+                run.incident_faces.len() == 1
+                    && run.incident_edges.len() == 1
+                    && run.points.iter().all(|point| {
+                        matches!(
+                            point.origin,
+                            ExactBoolMeshPartialEdgePointOrigin::RoutedIntersection(_)
+                        )
+                    })
+            })
+        && stage.new_face_pair_edges.unpaired_runs == 0
+        && stage.whole_source_edges.source_edge_runs.is_empty()
+        && stage.halfedge_assembly.unfilled_halfedges == 0
+        && stage.halfedge_assembly.face_overflows == 0
+        && stage.halfedge_assembly.missing_source_face_maps == 0
+        && stage.halfedge_assembly.source_edge_incident_gaps == 0
+        && stage.halfedge_assembly.emitted_boundary_halfedges > 0
+        && stage.face_loop_assembly.loops.is_empty()
+        && stage.face_loop_assembly.incomplete_faces == 0
+        && stage.face_loop_assembly.repeated_halfedges == 0
+        && stage.face_loop_assembly.non_loop_halfedges > 0
+        && stage.loop_triangulation.triangulations.is_empty()
+        && stage.loop_triangulation.multi_loop_faces == 0
+        && stage.loop_triangulation.short_loops == 0
+        && stage.loop_triangulation.dropped_degenerate_faces.is_empty()
+        && stage.loop_triangulation.missing_source_faces == 0
+        && stage.loop_triangulation.missing_vertex_coordinates == 0
+        && stage.loop_triangulation.triangulation_failures == 0
+        && stage.output_triangles.triangles.is_empty()
+        && stage.output_triangles.missing_loop_triangulations == 0
+        && stage.output_triangles.invalid_local_triangles == 0
+        && stage.mesh_export.triangles.is_empty()
+        && stage.mesh_export.missing_vertex_coordinates == 0
+        && stage.mesh_export.blocked_output_triangles == 0
+        && stage.mesh_export.invalid_output_triangles == 0
+        && stage.mesh_export.orientation_failures == 0
 }
 
 /// Return whether the staged `boolean45` export is already a closed exact mesh.
