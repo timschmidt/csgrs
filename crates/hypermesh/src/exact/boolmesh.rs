@@ -40,7 +40,7 @@ mod kernel_frame;
 #[cfg(feature = "exact-triangulation")]
 use super::AabbIntersectionKind;
 #[cfg(feature = "exact-triangulation")]
-use super::boolean::ExactBooleanOperation;
+use super::boolean::{ExactBooleanOperation, certify_boundary_touching_report};
 #[cfg(feature = "exact-triangulation")]
 use super::construction::{
     SegmentPlaneConstructionFailure, SegmentPlaneParameterRatio, SegmentPlaneRelation,
@@ -61,6 +61,9 @@ use super::scalar::ExactReal;
 #[cfg(feature = "exact-triangulation")]
 use super::validation::ValidationPolicy;
 #[cfg(feature = "exact-triangulation")]
+use super::volumetric_cells::{
+    CoplanarVolumetricCellObstacle, certify_coplanar_volumetric_cell_evidence,
+};
 #[cfg(feature = "exact-triangulation")]
 use boolean45::{pair_source_edge_events, size_output_stage};
 #[cfg(feature = "exact-triangulation")]
@@ -1793,6 +1796,8 @@ impl ExactBoolMeshExecution {
                 && self.shortcut == boolmesh_no_intersection_shortcut(&self.workspace.boolean03))
             || (self.workspace.is_certified_split_boolean45()
                 && self.shortcut == ExactBooleanShortcutKind::BoolMeshSplit)
+            || (boolmesh_closed_boundary_touching_shortcut(left, right, self.workspace.operation)?
+                == Some(self.shortcut))
         {
             Ok(())
         } else {
@@ -1907,20 +1912,26 @@ pub fn execute_exact_boolmesh_port(
     }
     let workspace = ExactBoolMeshWorkspace::from_sources(left, right, operation);
     workspace.validate()?;
-    let shortcut = boolmesh_completed_shortcut(&workspace).ok_or_else(|| {
-        ExactBoolMeshValidationError::PortBlocked(
-            workspace
-                .blocker
-                .as_ref()
-                .map(|blocker| blocker.stage)
-                .unwrap_or(ExactBoolMeshKernelStage::Boolean03),
-        )
-    })?;
+    let shortcut = if let Some(shortcut) = boolmesh_completed_shortcut(&workspace) {
+        shortcut
+    } else {
+        boolmesh_closed_boundary_touching_shortcut(left, right, operation)?.ok_or_else(|| {
+            ExactBoolMeshValidationError::PortBlocked(
+                workspace
+                    .blocker
+                    .as_ref()
+                    .map(|blocker| blocker.stage)
+                    .unwrap_or(ExactBoolMeshKernelStage::Boolean03),
+            )
+        })?
+    };
     let boolean45 = workspace
         .boolean45
         .as_ref()
         .ok_or(ExactBoolMeshValidationError::MissingBlocker)?;
-    let mesh = if boolean45_simple_export_is_complete(boolean45) {
+    let mesh = if boolmesh_shortcut_is_closed_boundary_touching(shortcut) {
+        materialize_closed_boundary_touching_shortcut(left, right, operation, validation, shortcut)?
+    } else if boolean45_simple_export_is_complete(boolean45) {
         materialize_boolean45_export(
             boolean45,
             &workspace.boolean03,
@@ -1984,6 +1995,156 @@ fn boolmesh_completed_shortcut(
     } else {
         None
     }
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn boolmesh_closed_boundary_touching_shortcut(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+) -> Result<Option<ExactBooleanShortcutKind>, ExactBoolMeshValidationError> {
+    if !left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold {
+        return Ok(None);
+    }
+    if let Ok(report) = certify_boundary_touching_report(left, right)
+        && report.is_certified()
+    {
+        let report_replays = report.validate_against_sources(left, right).is_ok();
+        let union_is_lower_dimensional = operation != ExactBooleanOperation::Union
+            || report.blocker.coplanar_overlapping_pairs == 0;
+        if report_replays && union_is_lower_dimensional {
+            let shortcut = closed_boundary_touching_shortcut_for_operation(operation)?;
+            return Ok(Some(shortcut));
+        }
+    }
+
+    let evidence = certify_coplanar_volumetric_cell_evidence(left, right)
+        .map_err(|_| ExactBoolMeshValidationError::InvalidOutputMesh)?;
+    evidence
+        .validate_against_sources(left, right)
+        .map_err(|_| ExactBoolMeshValidationError::InvalidOutputMesh)?;
+    if evidence.obstacle != CoplanarVolumetricCellObstacle::BoundaryOnlyContact {
+        return Ok(None);
+    }
+    let shortcut = closed_boundary_touching_shortcut_for_operation(operation)?;
+    Ok(Some(shortcut))
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn closed_boundary_touching_shortcut_for_operation(
+    operation: ExactBooleanOperation,
+) -> Result<ExactBooleanShortcutKind, ExactBoolMeshValidationError> {
+    Ok(match operation {
+        ExactBooleanOperation::Union => ExactBooleanShortcutKind::ClosedBoundaryTouchingUnion,
+        ExactBooleanOperation::Intersection => {
+            ExactBooleanShortcutKind::ClosedBoundaryTouchingIntersection
+        }
+        ExactBooleanOperation::Difference => {
+            ExactBooleanShortcutKind::ClosedBoundaryTouchingDifference
+        }
+        ExactBooleanOperation::SelectedRegions(_) => {
+            return Err(ExactBoolMeshValidationError::ShortcutMismatch);
+        }
+    })
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn boolmesh_shortcut_is_closed_boundary_touching(shortcut: ExactBooleanShortcutKind) -> bool {
+    matches!(
+        shortcut,
+        ExactBooleanShortcutKind::ClosedBoundaryTouchingUnion
+            | ExactBooleanShortcutKind::ClosedBoundaryTouchingIntersection
+            | ExactBooleanShortcutKind::ClosedBoundaryTouchingDifference
+    )
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn materialize_closed_boundary_touching_shortcut(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+    shortcut: ExactBooleanShortcutKind,
+) -> Result<ExactMesh, ExactBoolMeshValidationError> {
+    match (operation, shortcut) {
+        (ExactBooleanOperation::Union, ExactBooleanShortcutKind::ClosedBoundaryTouchingUnion) => {
+            concatenate_boolmesh_meshes(
+                left,
+                right,
+                "exact boolmesh closed-boundary-touch union preserving separate shells",
+                validation,
+            )
+        }
+        (
+            ExactBooleanOperation::Intersection,
+            ExactBooleanShortcutKind::ClosedBoundaryTouchingIntersection,
+        ) => empty_boolmesh_mesh(
+            "empty exact boolmesh closed-boundary-touch regularized intersection",
+            validation,
+        ),
+        (
+            ExactBooleanOperation::Difference,
+            ExactBooleanShortcutKind::ClosedBoundaryTouchingDifference,
+        ) => copy_boolmesh_mesh(
+            left,
+            "exact boolmesh closed-boundary-touch regularized difference keeps left",
+            validation,
+        ),
+        _ => Err(ExactBoolMeshValidationError::ShortcutMismatch),
+    }
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn copy_boolmesh_mesh(
+    mesh: &ExactMesh,
+    label: &'static str,
+    validation: ValidationPolicy,
+) -> Result<ExactMesh, ExactBoolMeshValidationError> {
+    ExactMesh::new_with_policy(
+        mesh.vertices().to_vec(),
+        mesh.triangles().to_vec(),
+        SourceProvenance::exact(label),
+        validation,
+    )
+    .map_err(|_| ExactBoolMeshValidationError::InvalidOutputMesh)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn concatenate_boolmesh_meshes(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    label: &'static str,
+    validation: ValidationPolicy,
+) -> Result<ExactMesh, ExactBoolMeshValidationError> {
+    let mut vertices = left.vertices().to_vec();
+    let right_offset = vertices.len();
+    vertices.extend_from_slice(right.vertices());
+    let mut triangles = left.triangles().to_vec();
+    triangles.extend(right.triangles().iter().map(|triangle| {
+        let [a, b, c] = triangle.0;
+        Triangle([a + right_offset, b + right_offset, c + right_offset])
+    }));
+    ExactMesh::new_with_policy(
+        vertices,
+        triangles,
+        SourceProvenance::exact(label),
+        validation,
+    )
+    .map_err(|_| ExactBoolMeshValidationError::InvalidOutputMesh)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn empty_boolmesh_mesh(
+    label: &'static str,
+    validation: ValidationPolicy,
+) -> Result<ExactMesh, ExactBoolMeshValidationError> {
+    ExactMesh::new_with_policy(
+        Vec::new(),
+        Vec::new(),
+        SourceProvenance::exact(label),
+        validation,
+    )
+    .map_err(|_| ExactBoolMeshValidationError::InvalidOutputMesh)
 }
 
 #[cfg(feature = "exact-triangulation")]

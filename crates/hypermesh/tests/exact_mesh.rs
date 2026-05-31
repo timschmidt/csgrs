@@ -34653,18 +34653,19 @@ fn exact_boolmesh_boundary_contact_advances_to_triangulation_blocker() {
     assert_eq!(stage.mesh_export.orientation_failures, 0);
     assert_eq!(stage.mesh_export.triangles.len(), 18);
 
+    let execution = hypermesh::exact::execute_exact_boolmesh_port(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("closed-boundary-touch certification should bypass the blocked direct split export");
+    execution.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
-        hypermesh::exact::execute_exact_boolmesh_port(
-            &left,
-            &right,
-            hypermesh::exact::ExactBooleanOperation::Union,
-            ValidationPolicy::CLOSED,
-        )
-        .unwrap_err(),
-        hypermesh::exact::ExactBoolMeshValidationError::PortBlocked(
-            hypermesh::exact::ExactBoolMeshKernelStage::Triangulation
-        )
+        execution.shortcut,
+        hypermesh::exact::ExactBooleanShortcutKind::ClosedBoundaryTouchingUnion
     );
+    assert_eq!(execution.mesh.facts().mesh.boundary_edges, 0);
 
     let public_result = hypermesh::exact::boolean_exact(
         &left,
