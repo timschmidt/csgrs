@@ -12,6 +12,7 @@ use super::super::{
     ExactBoolMeshOutputHalfedgeSource, ExactBoolMeshPartialSourceEdgeStage, ExactBoolMeshSide,
     ExactBoolMeshWholeSourceEdgeStage,
 };
+use std::collections::BTreeMap;
 
 /// Emit exact boolmesh output halfedge slots from staged fragments.
 pub(super) fn assemble_output_halfedges(
@@ -151,11 +152,20 @@ fn append_new_face_pair_halfedges(
                 fragment: fragment_index,
                 forward: false,
             };
-            emit_halfedge_pair(
+            let (tail, head) = oriented_new_face_pair_endpoints(
                 left_source_face,
                 right_source_face,
                 fragment.tail_point.output_vertex,
                 fragment.head_point.output_vertex,
+                source_face_to_output_face,
+                face_halfedge_offsets,
+                stage,
+            );
+            emit_halfedge_pair(
+                left_source_face,
+                right_source_face,
+                tail,
+                head,
                 forward,
                 backward,
                 source_face_to_output_face,
@@ -164,6 +174,127 @@ fn append_new_face_pair_halfedges(
             );
         }
     }
+}
+
+fn oriented_new_face_pair_endpoints(
+    left_source_face: usize,
+    right_source_face: usize,
+    tail: usize,
+    head: usize,
+    source_face_to_output_face: &[Option<usize>],
+    face_halfedge_offsets: &[usize],
+    stage: &ExactBoolMeshHalfedgeAssemblyStage,
+) -> (usize, usize) {
+    let Some(Some(left_output_face)) = source_face_to_output_face.get(left_source_face) else {
+        return (tail, head);
+    };
+    let Some(Some(right_output_face)) = source_face_to_output_face.get(right_source_face) else {
+        return (tail, head);
+    };
+    // New face-pair rows arrive between partial and whole source-edge writes.
+    // When exact ownership suppressed duplicate rows, the already-written
+    // partial chains are the best replayable signal for which endpoint order
+    // closes the local face walk.  Keep legacy pair-up order on ties.
+    let current = new_face_pair_orientation_score(
+        *left_output_face,
+        *right_output_face,
+        tail,
+        head,
+        face_halfedge_offsets,
+        stage,
+    );
+    let reversed = new_face_pair_orientation_score(
+        *left_output_face,
+        *right_output_face,
+        head,
+        tail,
+        face_halfedge_offsets,
+        stage,
+    );
+    if reversed < current {
+        (head, tail)
+    } else {
+        (tail, head)
+    }
+}
+
+fn new_face_pair_orientation_score(
+    left_output_face: usize,
+    right_output_face: usize,
+    left_tail: usize,
+    left_head: usize,
+    face_halfedge_offsets: &[usize],
+    stage: &ExactBoolMeshHalfedgeAssemblyStage,
+) -> i32 {
+    let mut balances = BTreeMap::<(usize, usize), i32>::new();
+    add_face_vertex_balance(
+        left_output_face,
+        left_tail,
+        face_halfedge_offsets,
+        stage,
+        &mut balances,
+    );
+    add_face_vertex_balance(
+        left_output_face,
+        left_head,
+        face_halfedge_offsets,
+        stage,
+        &mut balances,
+    );
+    add_face_vertex_balance(
+        right_output_face,
+        left_tail,
+        face_halfedge_offsets,
+        stage,
+        &mut balances,
+    );
+    add_face_vertex_balance(
+        right_output_face,
+        left_head,
+        face_halfedge_offsets,
+        stage,
+        &mut balances,
+    );
+
+    *balances.entry((left_output_face, left_tail)).or_default() += 1;
+    *balances.entry((left_output_face, left_head)).or_default() -= 1;
+    *balances.entry((right_output_face, left_head)).or_default() += 1;
+    *balances.entry((right_output_face, left_tail)).or_default() -= 1;
+    balances.values().map(|balance| balance.abs()).sum()
+}
+
+fn add_face_vertex_balance(
+    output_face: usize,
+    vertex: usize,
+    face_halfedge_offsets: &[usize],
+    stage: &ExactBoolMeshHalfedgeAssemblyStage,
+    balances: &mut BTreeMap<(usize, usize), i32>,
+) {
+    let balance = face_vertex_balance(output_face, vertex, face_halfedge_offsets, stage);
+    balances.entry((output_face, vertex)).or_insert(balance);
+}
+
+fn face_vertex_balance(
+    output_face: usize,
+    vertex: usize,
+    face_halfedge_offsets: &[usize],
+    stage: &ExactBoolMeshHalfedgeAssemblyStage,
+) -> i32 {
+    let Some(begin) = face_halfedge_offsets.get(output_face).copied() else {
+        return 0;
+    };
+    let Some(end) = face_halfedge_offsets.get(output_face + 1).copied() else {
+        return 0;
+    };
+    let Some(written_end) = stage.face_write_offsets.get(output_face).copied() else {
+        return 0;
+    };
+    stage.output_halfedges[begin..written_end.min(end)]
+        .iter()
+        .filter_map(|halfedge| halfedge.as_ref())
+        .fold(0, |balance, halfedge| {
+            balance + i32::from(halfedge.tail == vertex) - i32::from(halfedge.head == vertex)
+        })
 }
 
 fn append_whole_source_halfedges(
