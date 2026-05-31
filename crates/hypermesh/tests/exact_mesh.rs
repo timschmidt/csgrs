@@ -34641,6 +34641,20 @@ fn exact_boolmesh_kernel12_lowers_partial_positive_area_coplanar_overlap() {
     );
     assert_eq!(public_result.mesh.vertices().len(), 9);
     assert_eq!(public_result.mesh.triangles().len(), 14);
+
+    let preflight = hypermesh::exact::preflight_boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+    )
+    .expect("completed positive-area coplanar boolmesh split should preflight");
+    preflight.validate().unwrap();
+    preflight.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedBoolMeshSplit
+    );
+    assert!(preflight.blocker.is_none());
 }
 
 #[test]

@@ -960,6 +960,20 @@ pub fn preflight_boolean_exact(
             ),
         });
     }
+    if certified_boolmesh_split_support(left, right, operation) {
+        return Ok(ExactBooleanPreflight {
+            operation,
+            support: ExactBooleanSupport::CertifiedBoolMeshSplit,
+            graph_had_unknowns: false,
+            retained_face_pairs: 0,
+            retained_events: 0,
+            region_count: 0,
+            region_classifications: Vec::new(),
+            blocker: None,
+            arrangement_readiness: None,
+            coplanar_volumetric_evidence: None,
+        });
+    }
     if graph_requires_coplanar_volumetric_cells_for_sources(&graph, left, right) {
         return Ok(ExactBooleanPreflight {
             operation,

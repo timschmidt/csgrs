@@ -2374,6 +2374,13 @@ fn exercise_exact_boolmesh_positive_area_coplanar_kernel12_port() {
     execution.validate_against_sources(&left, &right).unwrap();
     assert_eq!(execution.mesh.vertices().len(), 9);
     assert_eq!(execution.mesh.triangles().len(), 14);
+
+    let preflight = preflight_boolean_exact(&left, &right, ExactBooleanOperation::Union)
+        .expect("completed positive-area boolmesh split should preflight");
+    preflight.validate().unwrap();
+    preflight.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(preflight.support, ExactBooleanSupport::CertifiedBoolMeshSplit);
+    assert!(preflight.blocker.is_none());
 }
 
 #[cfg(feature = "exact-triangulation")]
