@@ -34807,6 +34807,101 @@ fn exact_boolmesh_boundary_contact_advances_to_triangulation_blocker() {
             ([13, 14], 17, hypermesh::exact::ExactBoolMeshSide::Right, 1),
         ]
     );
+    assert_eq!(
+        stage
+            .mesh_export
+            .boundary_closure_records
+            .iter()
+            .map(|record| (
+                record.boundary_edge,
+                record.dropped_open_chain,
+                record.chain_edge,
+                record.owner.side,
+                record.owner.source_face,
+                record.source_kind
+            ))
+            .collect::<Vec<_>>(),
+        vec![
+            (
+                0,
+                5,
+                0,
+                hypermesh::exact::ExactBoolMeshSide::Left,
+                2,
+                hypermesh::exact::ExactBoolMeshDroppedOpenChainSourceKind::SourceEdge
+            ),
+            (
+                1,
+                7,
+                1,
+                hypermesh::exact::ExactBoolMeshSide::Left,
+                8,
+                hypermesh::exact::ExactBoolMeshDroppedOpenChainSourceKind::SourceEdge
+            ),
+            (
+                2,
+                1,
+                0,
+                hypermesh::exact::ExactBoolMeshSide::Left,
+                0,
+                hypermesh::exact::ExactBoolMeshDroppedOpenChainSourceKind::SourceEdge
+            ),
+            (
+                3,
+                7,
+                0,
+                hypermesh::exact::ExactBoolMeshSide::Left,
+                8,
+                hypermesh::exact::ExactBoolMeshDroppedOpenChainSourceKind::SourceEdge
+            ),
+            (
+                4,
+                5,
+                1,
+                hypermesh::exact::ExactBoolMeshSide::Left,
+                2,
+                hypermesh::exact::ExactBoolMeshDroppedOpenChainSourceKind::SourceEdge
+            ),
+            (
+                5,
+                11,
+                0,
+                hypermesh::exact::ExactBoolMeshSide::Right,
+                0,
+                hypermesh::exact::ExactBoolMeshDroppedOpenChainSourceKind::SourceEdge
+            ),
+            (
+                6,
+                20,
+                0,
+                hypermesh::exact::ExactBoolMeshSide::Right,
+                3,
+                hypermesh::exact::ExactBoolMeshDroppedOpenChainSourceKind::Mixed
+            ),
+            (
+                7,
+                16,
+                0,
+                hypermesh::exact::ExactBoolMeshSide::Right,
+                2,
+                hypermesh::exact::ExactBoolMeshDroppedOpenChainSourceKind::SourceEdge
+            ),
+        ]
+    );
+    let mut stale_mesh_export_boundary_closure = workspace.clone();
+    stale_mesh_export_boundary_closure
+        .boolean45
+        .as_mut()
+        .unwrap()
+        .mesh_export
+        .boundary_closure_records[0]
+        .chain_edge = usize::MAX;
+    assert_eq!(
+        stale_mesh_export_boundary_closure
+            .validate_against_sources(&left, &right)
+            .unwrap_err(),
+        hypermesh::exact::ExactBoolMeshValidationError::Boolean45MeshExportMismatch
+    );
     let mut stale_mesh_export_boundary = workspace.clone();
     stale_mesh_export_boundary
         .boolean45

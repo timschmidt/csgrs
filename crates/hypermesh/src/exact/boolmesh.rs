@@ -1279,6 +1279,8 @@ pub struct ExactBoolMeshMeshExportStage {
     pub boundary_edges: Vec<[usize; 2]>,
     /// Source provenance for each directed export boundary edge.
     pub boundary_edge_records: Vec<ExactBoolMeshMeshExportBoundaryEdge>,
+    /// Dropped source-chain edges that mirror directed export boundary edges.
+    pub boundary_closure_records: Vec<ExactBoolMeshMeshExportBoundaryClosure>,
     /// Output vertex origins whose exact coordinates cannot be recovered.
     pub missing_vertex_coordinates: usize,
     /// Upstream loop-triangulation records that block final triangle export.
@@ -1302,6 +1304,22 @@ pub struct ExactBoolMeshMeshExportBoundaryEdge {
     pub source_side: ExactBoolMeshSide,
     /// Source face that produced the owning exported triangle.
     pub source_face: usize,
+}
+
+/// Dropped open-chain provenance that mirrors one mesh-export boundary edge.
+#[cfg(feature = "exact-triangulation")]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct ExactBoolMeshMeshExportBoundaryClosure {
+    /// Index into [`ExactBoolMeshMeshExportStage::boundary_edge_records`].
+    pub boundary_edge: usize,
+    /// Index into [`ExactBoolMeshFaceLoopAssemblyStage::dropped_open_chains`].
+    pub dropped_open_chain: usize,
+    /// Directed edge position inside the dropped chain.
+    pub chain_edge: usize,
+    /// Source face that owns the dropped chain edge.
+    pub owner: ExactBoolMeshDroppedOpenChainOwner,
+    /// Source composition of the dropped chain.
+    pub source_kind: ExactBoolMeshDroppedOpenChainSourceKind,
 }
 
 /// Exact `boolean45`-shaped output staging metadata.
@@ -3648,6 +3666,11 @@ fn validate_boolean45_mesh_export(
             }
         }
     }
+    if stage.mesh_export.boundary_closure_records
+        != boolmesh_mesh_export_boundary_closure_records(stage)
+    {
+        return Err(ExactBoolMeshValidationError::Boolean45MeshExportMismatch);
+    }
 
     Ok(())
 }
@@ -3667,6 +3690,44 @@ fn boolmesh_mesh_export_boundary_edges(triangles: &[Triangle]) -> Vec<[usize; 2]
         .values()
         .filter(|uses| uses.len() == 1)
         .map(|uses| uses[0])
+        .collect()
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn boolmesh_mesh_export_boundary_closure_records(
+    stage: &ExactBoolMeshBoolean45Stage,
+) -> Vec<ExactBoolMeshMeshExportBoundaryClosure> {
+    stage
+        .mesh_export
+        .boundary_edge_records
+        .iter()
+        .enumerate()
+        .filter_map(|(boundary_edge, record)| {
+            let reverse = [record.edge[1], record.edge[0]];
+            stage
+                .face_loop_assembly
+                .dropped_open_chains
+                .iter()
+                .enumerate()
+                .find_map(|(dropped_open_chain, chain)| {
+                    let owner = chain.owner?;
+                    if owner.side != record.source_side {
+                        return None;
+                    }
+                    chain
+                        .vertices
+                        .iter()
+                        .zip(chain.heads.iter())
+                        .position(|(tail, head)| [*tail, *head] == reverse)
+                        .map(|chain_edge| ExactBoolMeshMeshExportBoundaryClosure {
+                            boundary_edge,
+                            dropped_open_chain,
+                            chain_edge,
+                            owner,
+                            source_kind: chain.source_kind,
+                        })
+                })
+        })
         .collect()
 }
 

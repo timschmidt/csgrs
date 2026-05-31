@@ -267,6 +267,7 @@ pub(super) fn size_output_stage(
         right,
         boolean03,
         &vertex_allocation,
+        &face_loop_assembly,
         &output_triangles,
         operation,
     );

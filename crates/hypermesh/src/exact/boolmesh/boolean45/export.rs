@@ -21,8 +21,10 @@ use crate::exact::region::choose_region_projection;
 use crate::exact::scalar::ExactReal;
 
 use super::super::{
-    ExactBoolMeshBoolean03, ExactBoolMeshMeshExportBoundaryEdge, ExactBoolMeshMeshExportStage,
-    ExactBoolMeshOutputTriangleStage, ExactBoolMeshOutputVertexAllocation, ExactBoolMeshSide,
+    ExactBoolMeshBoolean03, ExactBoolMeshFaceLoopAssemblyStage,
+    ExactBoolMeshMeshExportBoundaryClosure, ExactBoolMeshMeshExportBoundaryEdge,
+    ExactBoolMeshMeshExportStage, ExactBoolMeshOutputTriangleStage,
+    ExactBoolMeshOutputVertexAllocation, ExactBoolMeshSide,
 };
 use super::geometry::{output_vertex_origin_has_coordinate, output_vertex_point};
 
@@ -32,6 +34,7 @@ pub(super) fn stage_mesh_export(
     right: &ExactMesh,
     boolean03: &ExactBoolMeshBoolean03,
     allocation: &ExactBoolMeshOutputVertexAllocation,
+    face_loops: &ExactBoolMeshFaceLoopAssemblyStage,
     output_triangles: &ExactBoolMeshOutputTriangleStage,
     operation: ExactBooleanOperation,
 ) -> ExactBoolMeshMeshExportStage {
@@ -54,6 +57,7 @@ pub(super) fn stage_mesh_export(
         triangles: Vec::with_capacity(output_triangles.triangles.len()),
         boundary_edges: Vec::new(),
         boundary_edge_records: Vec::new(),
+        boundary_closure_records: Vec::new(),
         missing_vertex_coordinates,
         blocked_output_triangles: output_triangles.missing_loop_triangulations
             + output_triangles.invalid_local_triangles,
@@ -117,6 +121,8 @@ pub(super) fn stage_mesh_export(
     let boundary_records = mesh_export_boundary_edges(&stage.triangles, &exported_sources);
     stage.boundary_edges = boundary_records.iter().map(|record| record.edge).collect();
     stage.boundary_edge_records = boundary_records;
+    stage.boundary_closure_records =
+        mesh_export_boundary_closure_records(&stage.boundary_edge_records, face_loops);
 
     stage
 }
@@ -146,6 +152,39 @@ fn mesh_export_boundary_edges(
                 source_side,
                 source_face,
             })
+        })
+        .collect()
+}
+
+fn mesh_export_boundary_closure_records(
+    boundary_edges: &[ExactBoolMeshMeshExportBoundaryEdge],
+    face_loops: &ExactBoolMeshFaceLoopAssemblyStage,
+) -> Vec<ExactBoolMeshMeshExportBoundaryClosure> {
+    boundary_edges
+        .iter()
+        .enumerate()
+        .filter_map(|(boundary_edge, record)| {
+            let reverse = [record.edge[1], record.edge[0]];
+            face_loops.dropped_open_chains.iter().enumerate().find_map(
+                |(dropped_open_chain, chain)| {
+                    let owner = chain.owner?;
+                    if owner.side != record.source_side {
+                        return None;
+                    }
+                    chain
+                        .vertices
+                        .iter()
+                        .zip(chain.heads.iter())
+                        .position(|(tail, head)| [*tail, *head] == reverse)
+                        .map(|chain_edge| ExactBoolMeshMeshExportBoundaryClosure {
+                            boundary_edge,
+                            dropped_open_chain,
+                            chain_edge,
+                            owner,
+                            source_kind: chain.source_kind,
+                        })
+                },
+            )
         })
         .collect()
 }
