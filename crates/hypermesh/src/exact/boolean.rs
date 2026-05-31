@@ -2082,6 +2082,11 @@ fn boolean_coplanar_surface_boundary_touch_intersection(
 ) -> Result<ExactBooleanResult, MeshError> {
     certify_coplanar_surface_boundary_touch(left, right)
         .expect("caller checked coplanar boundary-touch surface intersection");
+    if let Some(result) =
+        boolean_boolmesh_split_meshes(left, right, ExactBooleanOperation::Intersection, validation)
+    {
+        return Ok(result);
+    }
     let mesh = empty_mesh(
         "empty exact coplanar boundary-touch surface intersection",
         validation,
@@ -2100,6 +2105,11 @@ fn boolean_coplanar_surface_boundary_touch_difference(
 ) -> Result<ExactBooleanResult, MeshError> {
     certify_coplanar_surface_boundary_touch(left, right)
         .expect("caller checked coplanar boundary-touch surface difference");
+    if let Some(result) =
+        boolean_boolmesh_split_meshes(left, right, ExactBooleanOperation::Difference, validation)
+    {
+        return Ok(result);
+    }
     let mesh = copy_mesh(
         left,
         "exact coplanar boundary-touch surface difference keeps left",
