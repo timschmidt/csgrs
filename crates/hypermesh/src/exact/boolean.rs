@@ -37,8 +37,8 @@ use super::affine_surface::{
 };
 #[cfg(feature = "exact-triangulation")]
 use super::boolmesh::{
-    ExactBoolMeshKernelStage, ExactBoolMeshValidationError, execute_exact_boolmesh_bounds_disjoint,
-    execute_exact_boolmesh_port,
+    ExactBoolMeshKernelStage, ExactBoolMeshValidationError, exact_boolmesh_workspace,
+    execute_exact_boolmesh_bounds_disjoint, execute_exact_boolmesh_port,
 };
 #[cfg(feature = "exact-triangulation")]
 use super::bounds::AabbIntersectionKind;
@@ -605,7 +605,11 @@ pub fn preflight_boolean_exact(
         ExactBooleanOperation::Union
             if certified_closed_boundary_touching_union_report(left, right)?.is_some() =>
         {
-            ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion
+            if certified_boolmesh_split_support(left, right, operation) {
+                ExactBooleanSupport::CertifiedBoolMeshSplit
+            } else {
+                ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion
+            }
         }
         ExactBooleanOperation::Intersection
             if certified_closed_boundary_touching_regularized_report(left, right)?.is_some() =>
@@ -763,6 +767,7 @@ pub fn preflight_boolean_exact(
             | ExactBooleanSupport::CertifiedConvexSeparated
             | ExactBooleanSupport::CertifiedWindingContainment
             | ExactBooleanSupport::CertifiedWindingSeparated
+            | ExactBooleanSupport::CertifiedBoolMeshSplit
     ) {
         return Ok(ExactBooleanPreflight {
             operation,
@@ -1004,6 +1009,19 @@ pub fn preflight_boolean_exact(
         arrangement_readiness: None,
         coplanar_volumetric_evidence: winding_report.coplanar_volumetric_evidence,
     })
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn certified_boolmesh_split_support(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+) -> bool {
+    if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
+        return false;
+    }
+    let workspace = exact_boolmesh_workspace(left, right, operation);
+    workspace.validate().is_ok() && workspace.is_certified_split_boolean45()
 }
 
 #[cfg(feature = "exact-triangulation")]
@@ -3884,6 +3902,11 @@ fn certified_closed_boundary_only_contact_support(
         || !certified_closed_boundary_only_contact(left, right)?
     {
         return Ok(None);
+    }
+    if operation == ExactBooleanOperation::Union
+        && certified_boolmesh_split_support(left, right, operation)
+    {
+        return Ok(Some(ExactBooleanSupport::CertifiedBoolMeshSplit));
     }
     Ok(Some(match operation {
         ExactBooleanOperation::Union => ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion,

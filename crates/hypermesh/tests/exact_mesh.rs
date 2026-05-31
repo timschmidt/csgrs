@@ -35090,7 +35090,7 @@ fn exact_l_prism_partial_boundary_contact_avoids_coplanar_cell_blocker() {
         .unwrap();
     assert_eq!(
         union_preflight.support,
-        hypermesh::exact::ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion
+        hypermesh::exact::ExactBooleanSupport::CertifiedBoolMeshSplit
     );
     assert!(union_preflight.blocker.is_none());
 

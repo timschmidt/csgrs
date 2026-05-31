@@ -1685,6 +1685,9 @@ pub enum ExactBooleanSupport {
     /// A named operation was materialized from exact split regions classified
     /// by closed-mesh winding.
     CertifiedWindingMaterialized,
+    /// A named operation was materialized by the completed direct exact
+    /// boolmesh split pipeline.
+    CertifiedBoolMeshSplit,
     /// The retained graph contains certified boundary contact events. This
     /// includes coplanar touching and the closed-solid case where positive-area
     /// coplanar overlaps plus adjacent contact-only candidates are proven
@@ -1869,7 +1872,8 @@ impl ExactBooleanPreflight {
             | ExactBooleanSupport::CertifiedCoplanarSurfaceHoledDifference
             | ExactBooleanSupport::CertifiedConvexSeparated
             | ExactBooleanSupport::CertifiedWindingContainment
-            | ExactBooleanSupport::CertifiedWindingSeparated => {
+            | ExactBooleanSupport::CertifiedWindingSeparated
+            | ExactBooleanSupport::CertifiedBoolMeshSplit => {
                 if self.blocker.is_some() {
                     return Err(ExactReportValidationError::CertifiedReportHasBlocker);
                 }
