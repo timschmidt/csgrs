@@ -26881,6 +26881,35 @@ fn exact_coplanar_component_holed_intersection_materializes_clipped_annulus() {
         .is_none(),
         "hole boundary contact is not a retained strict-hole certificate"
     );
+    let touching_preflight = hypermesh::exact::preflight_boolean_exact(
+        &annulus,
+        &hole_edge_touch,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+    )
+    .expect("hole-edge-touching clipper should classify through orthogonal intersection");
+    touching_preflight.validate().unwrap();
+    touching_preflight
+        .validate_against_sources(&annulus, &hole_edge_touch)
+        .unwrap();
+    assert_eq!(
+        touching_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceIntersection
+    );
+    hypermesh::exact::boolean_exact(
+        &annulus,
+        &hole_edge_touch,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("hole-edge-touching clipper should materialize through orthogonal intersection")
+    .validate_operation_against_sources(
+        &annulus,
+        &hole_edge_touch,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
 
     let no_retained_hole = ExactMesh::from_i64_triangles_with_policy(
         &[1, 1, 0, 3, 1, 0, 3, 3, 0, 1, 3, 0],

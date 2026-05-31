@@ -3560,6 +3560,42 @@ fn exercise_component_holed_coplanar_intersection() {
         arrange_coplanar_surface_component_holed_intersection(&annulus, &crossing_hole).is_none()
     );
 
+    let hole_edge_touch = ExactMesh::from_i64_triangles_with_policy(
+        &[2, 2, 0, 4, 2, 0, 4, 8, 0, 2, 8, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("component-holed edge-touch clipper fixture must import");
+    assert!(
+        arrange_coplanar_surface_component_holed_intersection(&annulus, &hole_edge_touch).is_none()
+    );
+    let touching_preflight =
+        preflight_boolean_exact(&annulus, &hole_edge_touch, ExactBooleanOperation::Intersection)
+            .expect("edge-touch clipper preflight should classify orthogonal shortcut");
+    touching_preflight.validate().unwrap();
+    touching_preflight
+        .validate_against_sources(&annulus, &hole_edge_touch)
+        .unwrap();
+    assert_eq!(
+        touching_preflight.support,
+        ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceIntersection
+    );
+    hypermesh::exact::boolean_exact(
+        &annulus,
+        &hole_edge_touch,
+        ExactBooleanOperation::Intersection,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("edge-touch clipper intersection should materialize through orthogonal intersection")
+    .validate_operation_against_sources(
+        &annulus,
+        &hole_edge_touch,
+        ExactBooleanOperation::Intersection,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
+
     let no_retained_hole = ExactMesh::from_i64_triangles_with_policy(
         &[1, 1, 0, 3, 1, 0, 3, 3, 0, 1, 3, 0],
         &[0, 1, 2, 0, 2, 3],
