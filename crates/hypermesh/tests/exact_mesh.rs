@@ -28093,13 +28093,34 @@ fn exact_coplanar_component_holed_intersection_clips_same_outer_point_branch_hol
     )
     .expect("interior island cutter source should materialize")
     .mesh;
+    let holed_island = hypermesh::exact::arrange_coplanar_surface_component_holed_intersection(
+        &branch_source,
+        &interior_killer,
+    )
+    .expect("a strict interior cutter should leave a holed island remnant");
+    holed_island.validate().unwrap();
+    holed_island
+        .validate_intersection_against_sources(&branch_source, &interior_killer)
+        .unwrap();
+    let interior_remnant = holed_island
+        .components
+        .iter()
+        .find(|component| {
+            component.outer.iter().any(|point| {
+                real_eq(&point.x, &ExactReal::from(8)) && real_eq(&point.y, &ExactReal::from(8))
+            })
+        })
+        .expect("the filled island should survive as a holed component");
+    assert_eq!(
+        interior_remnant.holes.len(),
+        1,
+        "the opposite strict interior cutter must become a retained island hole"
+    );
     assert!(
-        hypermesh::exact::arrange_coplanar_surface_component_holed_intersection(
-            &branch_source,
-            &interior_killer,
-        )
-        .is_none(),
-        "a holed island remnant still belongs to the later planar-cell extractor"
+        interior_remnant.holes[0].iter().any(|point| {
+            real_eq(&point.x, &ExactReal::from(9)) && real_eq(&point.y, &ExactReal::from(9))
+        }),
+        "the exact cutter boundary should be retained as the island hole"
     );
 
     let preflight = hypermesh::exact::preflight_boolean_exact(
@@ -28127,6 +28148,37 @@ fn exact_coplanar_component_holed_intersection_clips_same_outer_point_branch_hol
     .validate_operation_against_sources(
         &branch_source,
         &partial_killer,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
+
+    let interior_preflight = hypermesh::exact::preflight_boolean_exact(
+        &branch_source,
+        &interior_killer,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+    )
+    .expect("strict interior source-island hole preflight should classify shortcut");
+    interior_preflight.validate().unwrap();
+    interior_preflight
+        .validate_against_sources(&branch_source, &interior_killer)
+        .unwrap();
+    assert_eq!(
+        interior_preflight.support,
+        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
+    );
+
+    hypermesh::exact::boolean_exact(
+        &branch_source,
+        &interior_killer,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .expect("strict interior source-island hole boolean should materialize")
+    .validate_operation_against_sources(
+        &branch_source,
+        &interior_killer,
         hypermesh::exact::ExactBooleanOperation::Intersection,
         ValidationPolicy::ALLOW_BOUNDARY,
         hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,

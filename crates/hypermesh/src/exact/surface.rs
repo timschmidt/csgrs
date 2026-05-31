@@ -3508,13 +3508,13 @@ fn collect_same_outer_source_islands_from_side(
 ///
 /// Source islands are not inferred from sampled triangle interiors. They are
 /// retained components that must be replayed against every opposite retained
-/// hole before they may appear in the Boolean output. For no-hole islands this
-/// delegates to the existing filled-loop clipper. For holed islands this
-/// bounded certificate accepts only exact object-level facts: an opposite hole
-/// may have no effect because it lies in an already removed island hole, may
-/// consume the whole island, or may become a new strict retained hole of the
-/// island. Crossing, point-contact, and partial-overlap hole relations still
-/// reject so a later planar-cell extractor owns those topologies.
+/// hole before they may appear in the Boolean output. This bounded certificate
+/// accepts only exact object-level facts: an opposite hole may have no effect
+/// because it lies in an already removed island hole, may consume the whole
+/// island, may become a new strict retained hole of the island, or may cut the
+/// island outer into simple remnants. Point-contact and partial-overlap hole
+/// relations still reject so a later planar-cell extractor owns those
+/// topologies.
 ///
 /// This follows Yap, "Towards Exact Geometric Computation," *Computational
 /// Geometry* 7.1-2 (1997): the retained island, its holes, and any additional
@@ -3531,30 +3531,6 @@ fn same_outer_source_island_retained_component(
     opposite_main: &SourceHoledSurfaceComponent,
     projection: CoplanarProjection,
 ) -> Option<Vec<CoplanarConvexHoledComponent>> {
-    if candidate.holes.is_empty() {
-        return match same_outer_source_island_opposite_hole_disposition(
-            &candidate.outer,
-            opposite_main,
-            projection,
-        )? {
-            SameOuterSourceIslandDisposition::Survives => {
-                Some(vec![CoplanarConvexHoledComponent {
-                    outer: candidate.outer.clone(),
-                    holes: Vec::new(),
-                }])
-            }
-            SameOuterSourceIslandDisposition::Consumed => Some(Vec::new()),
-            SameOuterSourceIslandDisposition::Clipped(remnants) => Some(
-                remnants
-                    .into_iter()
-                    .map(|outer| CoplanarConvexHoledComponent {
-                        outer,
-                        holes: Vec::new(),
-                    })
-                    .collect(),
-            ),
-        };
-    }
     same_outer_holed_source_island_retained_components(candidate, opposite_main, projection)
 }
 
@@ -3726,78 +3702,6 @@ fn same_outer_opposite_hole_is_inside_existing_island_hole(
     })
 }
 
-/// Classify a source-owned island against the opposite operand's retained holes.
-///
-/// Same-outer intersection is `outer - union(left_holes, right_holes)` plus
-/// any source-owned island components that remain filled. A candidate island
-/// therefore survives only if every opposite retained hole is disjoint from
-/// it. It is also certified when a named opposite hole consumes the whole
-/// island by exact loop equality or strict containment; that case contributes
-/// no output component, but it must still be accounted for so the cross-pair
-/// topology check does not reject the intersection. A third bounded case clips
-/// a convex source island by one or more crossing convex retained holes and
-/// emits every exact filled remnant whose boundary can be replayed as a simple
-/// loop. Interior cutters and holed remnants still reject so the general
-/// planar-cell extractor owns those topologies.
-///
-/// This is a direct use of Yap's retained-object paradigm from "Towards Exact
-/// Geometric Computation," *Computational Geometry* 7.1-2 (1997): the Boolean
-/// decision advances only after exact predicates classify named source loops.
-/// Segment contact is classified with the orientation-predicate relation used
-/// by Guigue and Devillers, "Fast and Robust Triangle-Triangle Overlap Test
-/// Using Orientation Predicates," *Journal of Graphics Tools* 8.1 (2003).
-/// The remnant clip reuses the exact orthogonal cell replay cited by
-/// [`same_outer_holed_orthogonal_no_hole_difference_polygons`] and the
-/// Weiler-Atherton retained-fragment replay cited by
-/// [`convex_cut_difference_polygons`].
-#[cfg(feature = "exact-triangulation")]
-fn same_outer_source_island_opposite_hole_disposition(
-    candidate_outer: &[Point3],
-    opposite_main: &SourceHoledSurfaceComponent,
-    projection: CoplanarProjection,
-) -> Option<SameOuterSourceIslandDisposition> {
-    let mut clipping_hole_indices = Vec::new();
-    let mut clipping_holes = Vec::new();
-    for (hole_index, opposite_hole) in opposite_main.holes.iter().enumerate() {
-        match simple_polygon_interaction(candidate_outer, opposite_hole, projection)? {
-            SimplePolygonInteraction::Disjoint => {}
-            SimplePolygonInteraction::PointOnly => return None,
-            SimplePolygonInteraction::Connected => {
-                if same_outer_source_island_consumed_by_hole(
-                    candidate_outer,
-                    opposite_hole,
-                    projection,
-                )? {
-                    return Some(SameOuterSourceIslandDisposition::Consumed);
-                }
-                clipping_hole_indices.push(hole_index);
-                clipping_holes.push(opposite_hole.clone());
-            }
-        }
-    }
-    if !clipping_holes.is_empty() {
-        let remnants = same_outer_source_island_clipped_components_by_holes(
-            candidate_outer,
-            &clipping_holes,
-            projection,
-        )?;
-        for (hole_index, opposite_hole) in opposite_main.holes.iter().enumerate() {
-            if clipping_hole_indices.contains(&hole_index) {
-                continue;
-            }
-            for remnant in &remnants {
-                if simple_polygon_interaction(remnant, opposite_hole, projection)?
-                    != SimplePolygonInteraction::Disjoint
-                {
-                    return None;
-                }
-            }
-        }
-        return Some(SameOuterSourceIslandDisposition::Clipped(remnants));
-    }
-    Some(SameOuterSourceIslandDisposition::Survives)
-}
-
 #[cfg(feature = "exact-triangulation")]
 fn same_outer_source_island_consumed_by_hole(
     candidate_outer: &[Point3],
@@ -3871,13 +3775,6 @@ fn same_outer_source_island_clipped_components_by_holes(
     )
     .ok()?;
     Some(remnants)
-}
-
-#[cfg(feature = "exact-triangulation")]
-enum SameOuterSourceIslandDisposition {
-    Survives,
-    Consumed,
-    Clipped(Vec<Vec<Point3>>),
 }
 
 #[cfg(feature = "exact-triangulation")]
