@@ -1569,11 +1569,6 @@ pub fn boolean_exact_with_boundary_policy(
             {
                 return Ok(result);
             }
-            if let Some(result) =
-                boolean_coplanar_surface_convex_union(left, right, operation, validation)?
-            {
-                return Ok(result);
-            }
             if let Some(result) = boolean_coplanar_cutter_hole_contact_difference_optional(
                 left, right, operation, validation,
             )? {
@@ -2706,29 +2701,6 @@ fn boolean_coplanar_surface_intersection(
     Ok(Some(certified_shortcut_result(
         mesh,
         ExactBooleanShortcutKind::CoplanarSurfaceIntersection,
-    )))
-}
-
-fn boolean_coplanar_surface_convex_union(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
-    if operation != ExactBooleanOperation::Union {
-        return Ok(None);
-    }
-    let Some(union) = union_single_triangle_coplanar_surfaces(left, right) else {
-        return Ok(None);
-    };
-    let mesh = copy_mesh(
-        &union.mesh,
-        "exact convex coplanar surface partial-overlap union",
-        validation,
-    )?;
-    Ok(Some(certified_shortcut_result(
-        mesh,
-        ExactBooleanShortcutKind::CoplanarSurfaceConvexUnion,
     )))
 }
 
