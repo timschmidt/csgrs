@@ -27222,8 +27222,13 @@ fn exact_coplanar_component_holed_intersection_materializes_clipped_annulus() {
     assert_eq!(
         result.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::exact::ExactBooleanShortcutKind::CoplanarSurfaceIntersection
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ArrangementCellComplex
         }
+    );
+    assert!(exact_mesh_vertex_sets_equal(&result.mesh, &intersection.mesh));
+    assert_eq!(
+        result.mesh.triangles().len(),
+        intersection.mesh.triangles().len()
     );
 }
 
