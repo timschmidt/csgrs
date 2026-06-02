@@ -6,7 +6,7 @@ use crate::classify::{
     PlaneSide, RayTriangleIntersection, SegmentTriangleIntersection, TetrahedronLocation,
     Triangle3Location, TriangleLocation,
 };
-use crate::geometry::{HomogeneousLine3, Plane3, Point2, Point3, Triangle2Facts, triangle2_facts};
+use crate::geometry::{triangle2_facts, HomogeneousLine3, Plane3, Point2, Point3, Triangle2Facts};
 use crate::predicate::{
     Certainty, Escalation, PredicateOutcome, PredicatePolicy, PredicateUse, RefinementNeed, Sign,
 };
@@ -15,8 +15,8 @@ use crate::predicates::orient::{
     orient2d_with_policy, orient3d_report_with_policy, orient3d_with_policy,
 };
 use crate::predicates::segment_plane::{
-    SegmentPlaneIntersection, SegmentPlaneRelation, SegmentPlaneValidationError,
-    intersect_segment_with_plane_values, point_plane_value,
+    intersect_segment_with_plane_values, point_plane_value, SegmentPlaneIntersection,
+    SegmentPlaneRelation, SegmentPlaneValidationError,
 };
 use crate::real::{add_ref, mul_ref, sub_ref};
 use crate::resolve::resolve_real_sign;

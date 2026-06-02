@@ -24,11 +24,423 @@ use crate::predicate::{
     Certainty, Escalation, PredicateOutcome, PredicatePolicy, RefinementNeed, Sign,
 };
 use crate::predicates::halfspace::{
-    HalfspaceFeasibilityReport, classify_halfspace_feasibility3_with_policy,
+    classify_halfspace_feasibility3_with_policy, HalfspaceFeasibilityReport,
 };
 use crate::predicates::order::compare_reals_with_policy;
 use crate::real::{add_ref, mul_ref, sub_ref};
 use crate::resolve::resolve_real_sign;
+
+/// Exact integer direction used by a witnessed support slab.
+///
+/// The vector is intentionally not normalized. k-DOP comparisons only require
+/// a consistent linear functional, and keeping integer directions preserves a
+/// cheap shared-scale support representation for callers that build broad
+/// phase objects from indexed point sets.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct SupportDopAxis3 {
+    /// Integer coefficients of the support direction.
+    pub direction: [i64; 3],
+}
+
+impl SupportDopAxis3 {
+    /// Construct a support axis from exact integer coefficients.
+    pub const fn new(direction: [i64; 3]) -> Self {
+        Self { direction }
+    }
+
+    /// Return whether this axis has at least one nonzero coefficient.
+    pub const fn is_nonzero(self) -> bool {
+        self.direction[0] != 0 || self.direction[1] != 0 || self.direction[2] != 0
+    }
+
+    /// Validate that the direction can define a support functional.
+    pub fn validate(self) -> Result<(), SupportDopValidationError> {
+        if self.is_nonzero() {
+            Ok(())
+        } else {
+            Err(SupportDopValidationError::ZeroAxis)
+        }
+    }
+
+    /// Convert this integer axis to the point-vector carrier used by
+    /// [`SupportDop3`].
+    pub fn to_point3(self) -> Point3 {
+        Point3::new(
+            Real::from(self.direction[0]),
+            Real::from(self.direction[1]),
+            Real::from(self.direction[2]),
+        )
+    }
+
+    /// Three axes that produce the same six planes as an exact AABB.
+    pub const fn orthogonal_axes() -> [Self; 3] {
+        [
+            Self::new([1, 0, 0]),
+            Self::new([0, 1, 0]),
+            Self::new([0, 0, 1]),
+        ]
+    }
+
+    /// Thirteen axes for a 26-DOP over axis, face-diagonal, and body-diagonal
+    /// support directions.
+    pub const fn kdop26_axes() -> [Self; 13] {
+        [
+            Self::new([1, 0, 0]),
+            Self::new([0, 1, 0]),
+            Self::new([0, 0, 1]),
+            Self::new([1, 1, 0]),
+            Self::new([1, -1, 0]),
+            Self::new([1, 0, 1]),
+            Self::new([1, 0, -1]),
+            Self::new([0, 1, 1]),
+            Self::new([0, 1, -1]),
+            Self::new([1, 1, 1]),
+            Self::new([1, 1, -1]),
+            Self::new([1, -1, 1]),
+            Self::new([-1, 1, 1]),
+        ]
+    }
+}
+
+/// Why a witnessed support-DOP consumer must conservatively expand exact slabs.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum SupportDopExpansionKind {
+    /// No expansion is needed; every slab is an exact summary of exact source
+    /// coordinates.
+    None,
+    /// The source entered through a primitive-float or external adapter edge.
+    LossyAdapter,
+    /// Coordinates were rounded to an integer grid before support extraction.
+    IntegerGridRounding,
+}
+
+/// Conservative-expansion metadata attached to witnessed support-DOP bounds.
+#[derive(Clone, Debug, PartialEq)]
+pub struct SupportDopExpansionReport {
+    /// Expansion source category.
+    pub kind: SupportDopExpansionKind,
+    /// Number of axes covered by this report.
+    pub axis_count: usize,
+    /// Number of slabs that must be treated as conservatively expanded.
+    pub expanded_slabs: usize,
+    /// Nonnegative distance expansion applied on both sides of each expanded
+    /// slab.
+    pub expansion: Real,
+}
+
+impl SupportDopExpansionReport {
+    /// Build an exact no-expansion report for `axis_count` slabs.
+    pub fn exact(axis_count: usize) -> Self {
+        Self {
+            kind: SupportDopExpansionKind::None,
+            axis_count,
+            expanded_slabs: 0,
+            expansion: Real::from(0),
+        }
+    }
+
+    /// Build an integer-grid rounding expansion report.
+    pub fn integer_grid_rounding(axis_count: usize, expansion: Real) -> Self {
+        Self {
+            kind: SupportDopExpansionKind::IntegerGridRounding,
+            axis_count,
+            expanded_slabs: axis_count,
+            expansion,
+        }
+    }
+
+    /// Build a lossy-adapter expansion report for `axis_count` slabs.
+    pub fn lossy_adapter(axis_count: usize) -> Self {
+        Self {
+            kind: SupportDopExpansionKind::LossyAdapter,
+            axis_count,
+            expanded_slabs: axis_count,
+            expansion: Real::from(0),
+        }
+    }
+
+    /// Validate internal report consistency.
+    pub fn validate(&self) -> Result<(), SupportDopValidationError> {
+        if !matches!(
+            compare_real_default(&self.expansion, &Real::from(0)),
+            Some(Ordering::Greater | Ordering::Equal)
+        ) {
+            return Err(SupportDopValidationError::NegativeExpansion);
+        }
+        match self.kind {
+            SupportDopExpansionKind::None => {
+                if self.expanded_slabs != 0
+                    || !matches!(
+                        compare_real_default(&self.expansion, &Real::from(0)),
+                        Some(Ordering::Equal)
+                    )
+                {
+                    return Err(SupportDopValidationError::ExpansionKindMismatch);
+                }
+            }
+            SupportDopExpansionKind::LossyAdapter
+            | SupportDopExpansionKind::IntegerGridRounding => {
+                if self.expanded_slabs != self.axis_count {
+                    return Err(SupportDopValidationError::ExpansionKindMismatch);
+                }
+            }
+        }
+        Ok(())
+    }
+}
+
+/// Exact support witness for one side of one witnessed k-DOP slab.
+#[derive(Clone, Debug, PartialEq)]
+pub struct SupportWitness3 {
+    /// Source point index that witnesses the retained support distance.
+    pub vertex: usize,
+    /// Exact point copied from the source point set at construction time.
+    pub point: Point3,
+    /// Exact unnormalized support distance along the slab axis.
+    pub distance: Real,
+}
+
+/// One min/max support slab with source-point witnesses.
+#[derive(Clone, Debug, PartialEq)]
+pub struct WitnessedSupportSlab3 {
+    /// Integer direction used by this support functional.
+    pub axis: SupportDopAxis3,
+    /// Minimum support witness.
+    pub min: SupportWitness3,
+    /// Maximum support witness.
+    pub max: SupportWitness3,
+}
+
+impl WitnessedSupportSlab3 {
+    /// Return the conservative minimum distance after applying the containing
+    /// expansion report.
+    pub fn conservative_min_distance(&self, expansion: &SupportDopExpansionReport) -> Real {
+        self.min.distance.clone() - expansion.expansion.clone()
+    }
+
+    /// Return the conservative maximum distance after applying the containing
+    /// expansion report.
+    pub fn conservative_max_distance(&self, expansion: &SupportDopExpansionReport) -> Real {
+        self.max.distance.clone() + expansion.expansion.clone()
+    }
+
+    /// Convert this witnessed slab to the classifier slab used by
+    /// [`SupportDop3`].
+    pub fn to_support_slab3(&self) -> SupportSlab3 {
+        SupportSlab3 {
+            axis: self.axis.to_point3(),
+            min: self.min.distance.clone(),
+            max: self.max.distance.clone(),
+            min_witness: Some(self.min.vertex),
+            max_witness: Some(self.max.vertex),
+        }
+    }
+}
+
+/// Exact k-DOP bounds with support-vertex witnesses.
+#[derive(Clone, Debug, PartialEq)]
+pub struct WitnessedSupportDop3 {
+    /// Number of points summarized by this object.
+    pub vertex_count: usize,
+    /// One min/max support slab per retained axis.
+    pub slabs: Vec<WitnessedSupportSlab3>,
+    /// Conservative adapter/rounding expansion metadata.
+    pub expansion: SupportDopExpansionReport,
+}
+
+impl WitnessedSupportDop3 {
+    /// Build a support-DOP from exact points and an explicit expansion report.
+    pub fn from_points_with_expansion(
+        points: &[Point3],
+        axes: &[SupportDopAxis3],
+        expansion: SupportDopExpansionReport,
+    ) -> Result<Self, SupportDopValidationError> {
+        if points.is_empty() {
+            return Err(SupportDopValidationError::EmptyPointSet);
+        }
+        if axes.is_empty() {
+            return Err(SupportDopValidationError::EmptyAxisSet);
+        }
+        if expansion.axis_count != axes.len() {
+            return Err(SupportDopValidationError::ExpansionAxisCountMismatch);
+        }
+        expansion.validate()?;
+        let slabs = axes
+            .iter()
+            .map(|&axis| compute_witnessed_slab(points, axis))
+            .collect::<Result<Vec<_>, _>>()?;
+        let support = Self {
+            vertex_count: points.len(),
+            slabs,
+            expansion,
+        };
+        support.validate_against_points(points)?;
+        Ok(support)
+    }
+
+    /// Build an exact no-expansion support-DOP from points.
+    pub fn from_points(
+        points: &[Point3],
+        axes: &[SupportDopAxis3],
+    ) -> Result<Self, SupportDopValidationError> {
+        Self::from_points_with_expansion(points, axes, SupportDopExpansionReport::exact(axes.len()))
+    }
+
+    /// Return this witnessed carrier as the predicate-level support-DOP
+    /// classifier.
+    pub fn to_support_dop3(&self) -> SupportDop3 {
+        SupportDop3::from_slabs(
+            self.slabs
+                .iter()
+                .map(WitnessedSupportSlab3::to_support_slab3)
+                .collect(),
+        )
+    }
+
+    /// Validate this k-DOP against exact source points.
+    pub fn validate_against_points(
+        &self,
+        points: &[Point3],
+    ) -> Result<(), SupportDopValidationError> {
+        if points.is_empty() {
+            return Err(SupportDopValidationError::EmptyPointSet);
+        }
+        if self.slabs.is_empty() {
+            return Err(SupportDopValidationError::EmptyAxisSet);
+        }
+        if self.vertex_count != points.len() {
+            return Err(SupportDopValidationError::VertexCountMismatch);
+        }
+        if self.expansion.axis_count != self.slabs.len() {
+            return Err(SupportDopValidationError::ExpansionAxisCountMismatch);
+        }
+        self.expansion.validate()?;
+        for slab in &self.slabs {
+            validate_witnessed_slab(slab, points)?;
+        }
+        Ok(())
+    }
+
+    /// Refresh slabs after a bounded set of point updates.
+    pub fn refresh_for_changed_vertices(
+        &mut self,
+        points: &[Point3],
+        changed_vertices: &[usize],
+    ) -> Result<SupportDopRefreshReport, SupportDopValidationError> {
+        if self.vertex_count != points.len() {
+            return Err(SupportDopValidationError::VertexCountMismatch);
+        }
+        if self.expansion.axis_count != self.slabs.len() {
+            return Err(SupportDopValidationError::ExpansionAxisCountMismatch);
+        }
+        for &vertex in changed_vertices {
+            if vertex >= points.len() {
+                return Err(SupportDopValidationError::ChangedVertexOutOfRange);
+            }
+        }
+
+        let mut report = SupportDopRefreshReport {
+            changed_vertices: changed_vertices.len(),
+            axis_count: self.slabs.len(),
+            axes_rebuilt: 0,
+            axes_extended: 0,
+            axes_unchanged: 0,
+            invalidated_witness_axes: 0,
+        };
+
+        for slab in &mut self.slabs {
+            let witness_invalidated = changed_vertices
+                .iter()
+                .any(|&vertex| vertex == slab.min.vertex || vertex == slab.max.vertex);
+            if witness_invalidated {
+                *slab = compute_witnessed_slab(points, slab.axis)?;
+                report.axes_rebuilt += 1;
+                report.invalidated_witness_axes += 1;
+                continue;
+            }
+
+            let mut extended = false;
+            for &vertex in changed_vertices {
+                let distance = support_distance_on_integer_axis(&points[vertex], slab.axis);
+                if matches!(
+                    compare_real_default(&distance, &slab.min.distance),
+                    Some(Ordering::Less)
+                ) {
+                    slab.min = support_witness(vertex, &points[vertex], distance.clone());
+                    extended = true;
+                }
+                if matches!(
+                    compare_real_default(&distance, &slab.max.distance),
+                    Some(Ordering::Greater)
+                ) {
+                    slab.max = support_witness(vertex, &points[vertex], distance);
+                    extended = true;
+                }
+            }
+
+            if extended {
+                report.axes_extended += 1;
+            } else {
+                report.axes_unchanged += 1;
+            }
+        }
+
+        self.validate_against_points(points)?;
+        Ok(report)
+    }
+}
+
+/// Refresh summary returned by
+/// [`WitnessedSupportDop3::refresh_for_changed_vertices`].
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct SupportDopRefreshReport {
+    /// Number of changed point indices supplied by the caller.
+    pub changed_vertices: usize,
+    /// Number of support axes retained by the k-DOP.
+    pub axis_count: usize,
+    /// Axes fully rebuilt because a min or max witness changed.
+    pub axes_rebuilt: usize,
+    /// Axes updated in place because a changed non-witness became more
+    /// extreme.
+    pub axes_extended: usize,
+    /// Axes untouched after evaluating changed non-witness points.
+    pub axes_unchanged: usize,
+    /// Axes whose retained support witness was explicitly invalidated.
+    pub invalidated_witness_axes: usize,
+}
+
+/// Error returned by witnessed support-DOP construction or replay.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum SupportDopValidationError {
+    /// No source points were supplied.
+    EmptyPointSet,
+    /// No support axes were supplied.
+    EmptyAxisSet,
+    /// An axis direction was zero.
+    ZeroAxis,
+    /// Retained point count disagrees with the source point count.
+    VertexCountMismatch,
+    /// Expansion report axis count disagrees with the slab count.
+    ExpansionAxisCountMismatch,
+    /// A support witness points outside the source point slice.
+    WitnessOutOfRange,
+    /// A retained witness point no longer matches the source point.
+    WitnessPointMismatch,
+    /// A retained witness distance no longer equals the axis dot product.
+    WitnessDistanceMismatch,
+    /// A min witness is not minimal for its axis.
+    WitnessNotMinimal,
+    /// A max witness is not maximal for its axis.
+    WitnessNotMaximal,
+    /// A min/max ordering could not be certified for a slab.
+    UnknownSlabOrder,
+    /// Expansion distance is negative or not certifiably nonnegative.
+    NegativeExpansion,
+    /// Expansion kind, slab count, or zero-expansion state is contradictory.
+    ExpansionKindMismatch,
+    /// A changed point index is outside the source point slice.
+    ChangedVertexOutOfRange,
+}
 
 /// One retained support slab of a 3D k-DOP.
 #[derive(Clone, Debug, PartialEq)]
@@ -986,6 +1398,111 @@ pub fn support_dop3_from_points_with_policy(
     policy: PredicatePolicy,
 ) -> PredicateOutcome<SupportDop3> {
     SupportDop3::from_points_with_policy(axes, points, policy)
+}
+
+/// Build a witnessed exact support k-DOP from integer axis directions and
+/// source points.
+pub fn witnessed_support_dop3_from_points(
+    points: &[Point3],
+    axes: &[SupportDopAxis3],
+) -> Result<WitnessedSupportDop3, SupportDopValidationError> {
+    WitnessedSupportDop3::from_points(points, axes)
+}
+
+fn compute_witnessed_slab(
+    points: &[Point3],
+    axis: SupportDopAxis3,
+) -> Result<WitnessedSupportSlab3, SupportDopValidationError> {
+    axis.validate()?;
+    let first = points
+        .first()
+        .ok_or(SupportDopValidationError::EmptyPointSet)?;
+    let first_distance = support_distance_on_integer_axis(first, axis);
+    let mut min = support_witness(0, first, first_distance.clone());
+    let mut max = support_witness(0, first, first_distance);
+    for (vertex, point) in points.iter().enumerate().skip(1) {
+        let distance = support_distance_on_integer_axis(point, axis);
+        if matches!(
+            compare_real_default(&distance, &min.distance),
+            Some(Ordering::Less)
+        ) {
+            min = support_witness(vertex, point, distance.clone());
+        }
+        if matches!(
+            compare_real_default(&distance, &max.distance),
+            Some(Ordering::Greater)
+        ) {
+            max = support_witness(vertex, point, distance);
+        }
+    }
+    Ok(WitnessedSupportSlab3 { axis, min, max })
+}
+
+fn validate_witnessed_slab(
+    slab: &WitnessedSupportSlab3,
+    points: &[Point3],
+) -> Result<(), SupportDopValidationError> {
+    slab.axis.validate()?;
+    validate_support_witness(&slab.min, slab.axis, points)?;
+    validate_support_witness(&slab.max, slab.axis, points)?;
+    match compare_real_default(&slab.min.distance, &slab.max.distance) {
+        Some(Ordering::Less | Ordering::Equal) => {}
+        Some(Ordering::Greater) => return Err(SupportDopValidationError::WitnessNotMinimal),
+        None => return Err(SupportDopValidationError::UnknownSlabOrder),
+    }
+    for point in points {
+        let distance = support_distance_on_integer_axis(point, slab.axis);
+        match compare_real_default(&distance, &slab.min.distance) {
+            Some(Ordering::Less) => return Err(SupportDopValidationError::WitnessNotMinimal),
+            Some(Ordering::Equal | Ordering::Greater) => {}
+            None => return Err(SupportDopValidationError::UnknownSlabOrder),
+        }
+        match compare_real_default(&distance, &slab.max.distance) {
+            Some(Ordering::Greater) => return Err(SupportDopValidationError::WitnessNotMaximal),
+            Some(Ordering::Less | Ordering::Equal) => {}
+            None => return Err(SupportDopValidationError::UnknownSlabOrder),
+        }
+    }
+    Ok(())
+}
+
+fn validate_support_witness(
+    retained: &SupportWitness3,
+    axis: SupportDopAxis3,
+    points: &[Point3],
+) -> Result<(), SupportDopValidationError> {
+    let point = points
+        .get(retained.vertex)
+        .ok_or(SupportDopValidationError::WitnessOutOfRange)?;
+    if point != &retained.point {
+        return Err(SupportDopValidationError::WitnessPointMismatch);
+    }
+    let replay_distance = support_distance_on_integer_axis(point, axis);
+    if !matches!(
+        compare_real_default(&replay_distance, &retained.distance),
+        Some(Ordering::Equal)
+    ) {
+        return Err(SupportDopValidationError::WitnessDistanceMismatch);
+    }
+    Ok(())
+}
+
+fn support_witness(vertex: usize, point: &Point3, distance: Real) -> SupportWitness3 {
+    SupportWitness3 {
+        vertex,
+        point: point.clone(),
+        distance,
+    }
+}
+
+fn support_distance_on_integer_axis(point: &Point3, axis: SupportDopAxis3) -> Real {
+    point.x.clone() * Real::from(axis.direction[0])
+        + point.y.clone() * Real::from(axis.direction[1])
+        + point.z.clone() * Real::from(axis.direction[2])
+}
+
+fn compare_real_default(left: &Real, right: &Real) -> Option<Ordering> {
+    compare_reals_with_policy(left, right, PredicatePolicy::default()).value()
 }
 
 fn validate_slab_bounds(slab: &SupportSlab3, policy: PredicatePolicy) -> PredicateOutcome<bool> {

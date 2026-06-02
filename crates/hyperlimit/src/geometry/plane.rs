@@ -4,21 +4,21 @@ use core::cmp::Ordering;
 
 use hyperreal::{Real, RealExactSetFacts, ZeroKnowledge};
 
-use crate::RealSymbolicDependencyMask;
 use crate::classify::{PlaneAabbRelation, PlaneSegmentRelation, PlaneSide, PlaneTriangleRelation};
 use crate::geometry::Point3;
 use crate::predicate::{
-    Certainty, Escalation, PredicateOutcome, PredicatePolicy, RefinementNeed, Sign,
+    Certainty, Escalation, PredicateOutcome, PredicatePolicy, PredicateUse, RefinementNeed, Sign,
 };
 use crate::predicates::order::compare_reals_with_policy;
-use crate::predicates::orient3d_with_policy;
+use crate::predicates::{orient3d_report_with_policy, orient3d_with_policy};
 use crate::real::{add_ref, mul_ref, sub_ref};
 use crate::resolve::{map_outcome, resolve_real_sign, signed_term_filter};
+use crate::RealSymbolicDependencyMask;
 
 pub use crate::batch::{
-    Orient3dCase, PointPlaneCase, classify_point_oriented_plane_batch,
-    classify_point_oriented_plane_batch_with_policy, classify_point_plane_batch,
-    classify_point_plane_batch_with_policy,
+    classify_point_oriented_plane_batch, classify_point_oriented_plane_batch_with_policy,
+    classify_point_plane_batch, classify_point_plane_batch_with_policy, Orient3dCase,
+    PointPlaneCase,
 };
 #[cfg(feature = "parallel")]
 pub use crate::batch::{
@@ -95,6 +95,99 @@ pub enum PlaneAabbReportValidationError {
     RelationMismatch,
     /// Recomputing from source geometry did not reproduce this report.
     SourceReplayMismatch,
+}
+
+/// Exact relation between one triangle and an oriented plane.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum TrianglePlaneRelation {
+    /// Every query vertex is strictly above the oriented plane.
+    StrictlyAbove,
+    /// Every query vertex is strictly below the oriented plane.
+    StrictlyBelow,
+    /// Every query vertex is on the plane.
+    Coplanar,
+    /// Query vertices occur on both sides, or on one side plus the plane.
+    Straddling,
+    /// At least one required orientation predicate was undecided.
+    Unknown,
+}
+
+/// Structural inconsistency in a retained triangle/plane report.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum TrianglePlaneValidationError {
+    /// The retained vertex sides do not derive the retained relation.
+    RelationMismatch,
+    /// Recomputing the classifier from supplied source geometry did not
+    /// reproduce this retained report.
+    SourceReplayMismatch,
+}
+
+/// Report-bearing triangle/plane classification with retained side facts.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct TrianglePlaneClassification {
+    /// Coarse relation.
+    pub relation: TrianglePlaneRelation,
+    /// Per-query-vertex side, or `None` when the predicate was undecided.
+    pub vertex_sides: [Option<PlaneSide>; 3],
+    /// Predicate certificates used by the three orientation tests.
+    pub predicates: Vec<PredicateUse>,
+}
+
+impl TrianglePlaneClassification {
+    /// Return whether every predicate used here was proof-producing.
+    pub fn all_proof_producing(&self) -> bool {
+        self.predicates
+            .iter()
+            .copied()
+            .all(PredicateUse::is_proof_producing)
+    }
+
+    /// Validate that retained vertex side facts imply the reported relation.
+    pub fn validate(&self) -> Result<(), TrianglePlaneValidationError> {
+        if triangle_plane_relation_from_sides(self.vertex_sides) == self.relation {
+            Ok(())
+        } else {
+            Err(TrianglePlaneValidationError::RelationMismatch)
+        }
+    }
+
+    /// Validate this report by recomputing it from source triangles.
+    pub fn validate_against_triangles(
+        &self,
+        plane: [&Point3; 3],
+        query: [&Point3; 3],
+        policy: PredicatePolicy,
+    ) -> Result<(), TrianglePlaneValidationError> {
+        self.validate()?;
+        let replay = classify_triangle_against_oriented_plane_with_policy(plane, query, policy);
+        if self == &replay {
+            Ok(())
+        } else {
+            Err(TrianglePlaneValidationError::SourceReplayMismatch)
+        }
+    }
+
+    /// Validate this report against indexed source triangles.
+    pub fn validate_against_sources(
+        &self,
+        points: &[Point3],
+        face: [usize; 3],
+        query: [usize; 3],
+    ) -> Result<(), TrianglePlaneValidationError> {
+        self.validate()?;
+        if !triangle_indices_in_range(points, face) || !triangle_indices_in_range(points, query) {
+            return Err(TrianglePlaneValidationError::SourceReplayMismatch);
+        }
+        let replay = classify_triangle_against_oriented_plane(
+            [&points[face[0]], &points[face[1]], &points[face[2]]],
+            [&points[query[0]], &points[query[1]], &points[query[2]]],
+        );
+        if self == &replay {
+            Ok(())
+        } else {
+            Err(TrianglePlaneValidationError::SourceReplayMismatch)
+        }
+    }
 }
 
 /// Report-bearing closed AABB/oriented-plane classification.
@@ -565,6 +658,76 @@ pub fn classify_plane_triangle_with_policy(
         PlaneTriangleRelation::BoundaryTouch
     };
     PredicateOutcome::decided(relation, certainty, stage)
+}
+
+/// Classify a query triangle against an oriented plane triangle and retain the
+/// three point/plane predicate certificates.
+pub fn classify_triangle_against_oriented_plane(
+    plane: [&Point3; 3],
+    query: [&Point3; 3],
+) -> TrianglePlaneClassification {
+    classify_triangle_against_oriented_plane_with_policy(plane, query, PredicatePolicy::default())
+}
+
+/// Classify a query triangle against an oriented plane triangle with an
+/// explicit predicate policy and retained per-vertex side facts.
+pub fn classify_triangle_against_oriented_plane_with_policy(
+    plane: [&Point3; 3],
+    query: [&Point3; 3],
+    policy: PredicatePolicy,
+) -> TrianglePlaneClassification {
+    let reports = [
+        orient3d_report_with_policy(plane[0], plane[1], plane[2], query[0], policy),
+        orient3d_report_with_policy(plane[0], plane[1], plane[2], query[1], policy),
+        orient3d_report_with_policy(plane[0], plane[1], plane[2], query[2], policy),
+    ];
+
+    let mut predicates = Vec::with_capacity(reports.len());
+    let mut sides = [None, None, None];
+    for (index, report) in reports.into_iter().enumerate() {
+        predicates.push(PredicateUse::from_certificate(report.certificate));
+        sides[index] = report.value().map(PlaneSide::from);
+    }
+
+    TrianglePlaneClassification {
+        relation: triangle_plane_relation_from_sides(sides),
+        vertex_sides: sides,
+        predicates,
+    }
+}
+
+/// Derive a retained triangle/plane relation from per-vertex side facts.
+pub fn triangle_plane_relation_from_sides(sides: [Option<PlaneSide>; 3]) -> TrianglePlaneRelation {
+    let Some([a, b, c]) = transpose_plane_sides(sides) else {
+        return TrianglePlaneRelation::Unknown;
+    };
+    let above = [a, b, c]
+        .iter()
+        .filter(|&&side| side == PlaneSide::Above)
+        .count();
+    let below = [a, b, c]
+        .iter()
+        .filter(|&&side| side == PlaneSide::Below)
+        .count();
+    let on = [a, b, c]
+        .iter()
+        .filter(|&&side| side == PlaneSide::On)
+        .count();
+
+    match (above, below, on) {
+        (3, 0, 0) => TrianglePlaneRelation::StrictlyAbove,
+        (0, 3, 0) => TrianglePlaneRelation::StrictlyBelow,
+        (0, 0, 3) => TrianglePlaneRelation::Coplanar,
+        _ => TrianglePlaneRelation::Straddling,
+    }
+}
+
+fn transpose_plane_sides(sides: [Option<PlaneSide>; 3]) -> Option<[PlaneSide; 3]> {
+    Some([sides[0]?, sides[1]?, sides[2]?])
+}
+
+fn triangle_indices_in_range(points: &[Point3], indices: [usize; 3]) -> bool {
+    indices.iter().all(|&index| index < points.len())
 }
 
 /// Classify a closed 3D AABB relative to a plane.
@@ -1264,21 +1427,15 @@ mod tests {
         let plane = Plane3::new(Point3::new(Real::pi(), trig, 0.into()), Real::e());
         let facts = plane.structural_facts();
 
-        assert!(
-            facts
-                .coefficient_symbolic_dependencies
-                .contains(RealSymbolicDependencyMask::PI)
-        );
-        assert!(
-            facts
-                .coefficient_symbolic_dependencies
-                .contains(RealSymbolicDependencyMask::TRIG)
-        );
-        assert!(
-            facts
-                .coefficient_symbolic_dependencies
-                .contains(RealSymbolicDependencyMask::EXP)
-        );
+        assert!(facts
+            .coefficient_symbolic_dependencies
+            .contains(RealSymbolicDependencyMask::PI));
+        assert!(facts
+            .coefficient_symbolic_dependencies
+            .contains(RealSymbolicDependencyMask::TRIG));
+        assert!(facts
+            .coefficient_symbolic_dependencies
+            .contains(RealSymbolicDependencyMask::EXP));
 
         let prepared = plane.prepare();
         assert_eq!(

@@ -1,6 +1,5 @@
 //! Orientation predicates.
 
-use crate::RealSymbolicDependencyMask;
 use crate::classify::LineSide;
 pub use crate::geometry::{Point2, Point3};
 use crate::predicate::{
@@ -9,13 +8,14 @@ use crate::predicate::{
 };
 use crate::real::{add_ref, mul_ref, sub_ref};
 use crate::resolve::{map_outcome, resolve_real_sign, signed_term_filter};
+use crate::RealSymbolicDependencyMask;
 use hyperreal::{Real, RealExactSetFacts, ZeroKnowledge};
 
 pub use crate::batch::{
-    Incircle2dCase, Insphere3dCase, Orient2dCase, Orient3dCase, classify_point_line_batch,
-    classify_point_line_batch_with_policy, incircle2d_batch, incircle2d_batch_with_policy,
-    insphere3d_batch, insphere3d_batch_with_policy, orient2d_batch, orient2d_batch_with_policy,
-    orient3d_batch, orient3d_batch_with_policy,
+    classify_point_line_batch, classify_point_line_batch_with_policy, incircle2d_batch,
+    incircle2d_batch_with_policy, insphere3d_batch, insphere3d_batch_with_policy, orient2d_batch,
+    orient2d_batch_with_policy, orient3d_batch, orient3d_batch_with_policy, Incircle2dCase,
+    Insphere3dCase, Orient2dCase, Orient3dCase,
 };
 #[cfg(feature = "parallel")]
 pub use crate::batch::{
@@ -1397,11 +1397,9 @@ mod tests {
             orient2d_f64([0.0, 0.0], [1.0, 0.0], [0.0, 1.0]).value(),
             Some(Sign::Positive)
         );
-        assert!(
-            orient2d_f64([0.0, 0.0], [f64::NAN, 0.0], [0.0, 1.0])
-                .value()
-                .is_none()
-        );
+        assert!(orient2d_f64([0.0, 0.0], [f64::NAN, 0.0], [0.0, 1.0])
+            .value()
+            .is_none());
     }
 
     #[test]

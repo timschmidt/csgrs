@@ -5,7 +5,7 @@
 //! without letting those hints replace certified predicates.
 
 use crate::geometry::Point2;
-use crate::real::{RealPredicateExt, RealZeroKnowledge, sub_ref};
+use crate::real::{sub_ref, RealPredicateExt, RealZeroKnowledge};
 
 /// Coordinate axis in a 2D predicate object.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]

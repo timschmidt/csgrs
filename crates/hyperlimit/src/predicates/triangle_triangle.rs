@@ -15,13 +15,13 @@ use crate::classify::{
     PlaneTriangleRelation, SegmentTriangleIntersection, TriangleLocation,
     TriangleTriangleIntersection,
 };
+use crate::geometry::plane::{classify_plane_triangle_with_policy, PreparedOrientedPlane3};
 use crate::geometry::Point3;
-use crate::geometry::plane::{PreparedOrientedPlane3, classify_plane_triangle_with_policy};
 use crate::predicate::{Escalation, PredicateOutcome, PredicatePolicy, RefinementNeed};
 use crate::predicates::coplanar::{
-    CoplanarTriangleClassification, CoplanarTriangleRelation, TriangleDegeneracy,
     choose_coplanar_projection, classify_coplanar_triangle_points, classify_triangle3_degeneracy,
-    project_point3, project_triangle3,
+    project_point3, project_triangle3, CoplanarTriangleClassification, CoplanarTriangleRelation,
+    TriangleDegeneracy,
 };
 use crate::predicates::segment::classify_segment_intersection_with_policy;
 use crate::predicates::triangle::{

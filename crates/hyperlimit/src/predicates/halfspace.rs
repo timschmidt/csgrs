@@ -24,7 +24,7 @@
 use hyperreal::Real;
 
 use crate::classify::{HalfspaceFeasibility, PlaneSide};
-use crate::geometry::{Plane3, Plane3Facts, Point3, intersect_three_planes};
+use crate::geometry::{intersect_three_planes, Plane3, Plane3Facts, Point3};
 use crate::plane::classify_point_plane_with_policy;
 use crate::predicate::{
     Certainty, Escalation, PredicateOutcome, PredicatePolicy, RefinementNeed, Sign,

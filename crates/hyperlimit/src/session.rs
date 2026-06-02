@@ -1496,12 +1496,10 @@ mod tests {
 
         assert_eq!(feasible.planes(), feasible_planes.as_slice());
         assert_eq!(feasible.plane_facts().len(), feasible_planes.len());
-        assert!(
-            feasible
-                .plane_facts()
-                .iter()
-                .all(|facts| facts.normal_has_sparse_support())
-        );
+        assert!(feasible
+            .plane_facts()
+            .iter()
+            .all(|facts| facts.normal_has_sparse_support()));
 
         let feasible_report = session
             .classify_prepared_halfspace_feasibility3(&feasible)
@@ -1677,11 +1675,9 @@ mod tests {
             }
         );
         assert!(session.approximate_view([0.0_f64, 0.0], 0, 0.0).is_none());
-        assert!(
-            session
-                .approximate_view([0.0_f64, 0.0], 53, f64::NAN)
-                .is_none()
-        );
+        assert!(session
+            .approximate_view([0.0_f64, 0.0], 53, f64::NAN)
+            .is_none());
         assert!(session.approximate_view([0.0_f64, 0.0], 53, -1.0).is_none());
     }
 

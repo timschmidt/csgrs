@@ -439,6 +439,84 @@ pub fn projected_polygon_area2_value(points: &[Point3], projection: CoplanarProj
     sum
 }
 
+/// Return the absolute doubled projected polygon area under a coordinate
+/// projection.
+pub fn projected_polygon_area2_abs_value(
+    points: &[Point3],
+    projection: CoplanarProjection,
+) -> Option<Real> {
+    let signed = projected_polygon_area2_value(points, projection);
+    match crate::predicates::order::compare_reals(&signed, &Real::from(0)).value()? {
+        core::cmp::Ordering::Less => Some(Real::from(0) - &signed),
+        core::cmp::Ordering::Equal | core::cmp::Ordering::Greater => Some(signed),
+    }
+}
+
+/// Return the exact midpoint of two 3D points.
+pub fn midpoint3(a: &Point3, b: &Point3) -> Point3 {
+    let half = (Real::from(1) / &Real::from(2)).expect("2 is nonzero");
+    Point3::new(
+        (a.x.clone() + &b.x) * &half,
+        (a.y.clone() + &b.y) * &half,
+        (a.z.clone() + &b.z) * &half,
+    )
+}
+
+/// Return the projected 2D vector from `from` to `to`.
+pub fn projected_vector3(from: &Point3, to: &Point3, projection: CoplanarProjection) -> Point2 {
+    let from = project_point3(from, projection);
+    let to = project_point3(to, projection);
+    Point2::new(to.x - &from.x, to.y - &from.y)
+}
+
+/// Return whether `left` is a smaller counter-clockwise turn from `base` than
+/// `right`, using exact 2D cross/dot comparisons.
+pub fn ccw_projected_turn_less(base: &Point2, left: &Point2, right: &Point2) -> Option<bool> {
+    let left_bucket = ccw_turn_bucket(base, left)?;
+    let right_bucket = ccw_turn_bucket(base, right)?;
+    if left_bucket != right_bucket {
+        return Some(left_bucket < right_bucket);
+    }
+    match crate::predicates::order::compare_reals(&cross2(left, right), &Real::from(0)).value()? {
+        core::cmp::Ordering::Greater => Some(true),
+        core::cmp::Ordering::Less | core::cmp::Ordering::Equal => Some(false),
+    }
+}
+
+/// Classify a 3D point after projecting it and a 3D triangle to a coordinate
+/// plane.
+pub fn classify_point_projected_triangle3(
+    point: &Point3,
+    triangle: [&Point3; 3],
+    projection: CoplanarProjection,
+) -> PredicateOutcome<TriangleLocation> {
+    let query = project_point3(point, projection);
+    let a = project_point3(triangle[0], projection);
+    let b = project_point3(triangle[1], projection);
+    let c = project_point3(triangle[2], projection);
+    classify_point_triangle(&a, &b, &c, &query)
+}
+
+/// Construct the exact 3D point where a segment crosses a projected 3D line.
+///
+/// Callers should only consume this helper after exact predicates have
+/// certified the segment/line topology.
+pub fn intersect_segment_with_projected_line3(
+    segment_start: &Point3,
+    segment_end: &Point3,
+    line_start: &Point3,
+    line_end: &Point3,
+    projection: CoplanarProjection,
+) -> Option<Point3> {
+    let parameter =
+        projected_line_parameter3(segment_start, segment_end, line_start, line_end, projection)?;
+    Some(interpolate_projected_point3(
+        segment_start,
+        segment_end,
+        &parameter,
+    ))
+}
+
 /// Return the exact signed 2D orientation determinant.
 ///
 /// This is the raw determinant value behind the orientation predicate. Callers
@@ -503,6 +581,40 @@ pub fn projected_line_parameter3(
         return None;
     }
     (d0 / &denominator).ok()
+}
+
+fn interpolate_projected_point3(start: &Point3, end: &Point3, t: &Real) -> Point3 {
+    let one_minus_t = Real::from(1) - t;
+    Point3::new(
+        start.x.clone() * &one_minus_t + end.x.clone() * t,
+        start.y.clone() * &one_minus_t + end.y.clone() * t,
+        start.z.clone() * &one_minus_t + end.z.clone() * t,
+    )
+}
+
+fn ccw_turn_bucket(base: &Point2, candidate: &Point2) -> Option<u8> {
+    match crate::predicates::order::compare_reals(&cross2(base, candidate), &Real::from(0))
+        .value()?
+    {
+        core::cmp::Ordering::Greater => Some(0),
+        core::cmp::Ordering::Less => Some(1),
+        core::cmp::Ordering::Equal => {
+            match crate::predicates::order::compare_reals(&dot2(base, candidate), &Real::from(0))
+                .value()?
+            {
+                core::cmp::Ordering::Greater | core::cmp::Ordering::Equal => Some(0),
+                core::cmp::Ordering::Less => Some(1),
+            }
+        }
+    }
+}
+
+fn cross2(left: &Point2, right: &Point2) -> Real {
+    left.x.clone() * &right.y - left.y.clone() * &right.x
+}
+
+fn dot2(left: &Point2, right: &Point2) -> Real {
+    left.x.clone() * &right.x + left.y.clone() * &right.y
 }
 
 /// Derive the collapsed coplanar relation from retained edge and vertex facts.

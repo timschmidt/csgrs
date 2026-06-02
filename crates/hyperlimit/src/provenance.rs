@@ -18,9 +18,10 @@ pub enum MeshSource {
     Exact,
     /// Primitive `f64` coordinates were checked and imported as exact dyadics.
     LossyF64,
-    /// Data came from a legacy boolmesh-derived adapter.
-    LegacyBoolmeshAdapter,
-    /// Data came from an external edge adapter such as OBJ, glam, or Bevy.
+    /// Data came from a boolmesh-derived adapter.
+    BoolmeshAdapter,
+    /// Data came from an external edge adapter such as OBJ, display, or runtime
+    /// preview code.
     ExternalAdapter,
 }
 
@@ -65,24 +66,24 @@ impl SourceProvenance {
         }
     }
 
-    /// Build provenance for a retained legacy boolmesh-derived adapter edge.
+    /// Build provenance for a retained boolmesh-derived adapter edge.
     ///
-    /// Legacy boolmesh topology is primitive-float and epsilon-bearing. It can
-    /// be retained for compatibility reports, but it must never enter an exact
-    /// topology boundary as if it were exact or merely a display view. This
+    /// Boolmesh-derived topology can be retained for compatibility reports,
+    /// but it must never enter an exact topology boundary as if it were exact
+    /// or merely a display view. This
     /// mirrors Yap, "Towards Exact Geometric Computation," *Computational
     /// Geometry* 7.1-2 (1997), by keeping approximate topology decisions
     /// outside exact object identity.
-    pub fn legacy_boolmesh_adapter(label: impl Into<String>) -> Self {
+    pub fn boolmesh_adapter(label: impl Into<String>) -> Self {
         Self {
-            source: MeshSource::LegacyBoolmeshAdapter,
+            source: MeshSource::BoolmeshAdapter,
             label: label.into(),
             approximation: ApproximationPolicy::ExplicitApproximateDecision,
         }
     }
 
-    /// Build provenance for an external edge adapter such as OBJ, glam, or
-    /// Bevy.
+    /// Build provenance for an external edge adapter such as OBJ, display, or
+    /// runtime preview code.
     pub fn external_adapter(label: impl Into<String>) -> Self {
         Self {
             source: MeshSource::ExternalAdapter,
@@ -112,12 +113,11 @@ impl SourceProvenance {
             (MeshSource::LossyF64, _) => {
                 Err(ConstructionProvenanceValidationError::LossySourcePolicyMismatch)
             }
-            (
-                MeshSource::LegacyBoolmeshAdapter,
-                ApproximationPolicy::ExplicitApproximateDecision,
-            ) => Ok(()),
-            (MeshSource::LegacyBoolmeshAdapter, _) => {
-                Err(ConstructionProvenanceValidationError::LegacyAdapterPolicyMismatch)
+            (MeshSource::BoolmeshAdapter, ApproximationPolicy::ExplicitApproximateDecision) => {
+                Ok(())
+            }
+            (MeshSource::BoolmeshAdapter, _) => {
+                Err(ConstructionProvenanceValidationError::BoolmeshAdapterPolicyMismatch)
             }
             (MeshSource::ExternalAdapter, ApproximationPolicy::EdgeOnly) => Ok(()),
             (MeshSource::ExternalAdapter, _) => {
@@ -151,9 +151,9 @@ pub enum ConstructionProvenanceValidationError {
     /// A lossy primitive-float source was not marked as an edge-only
     /// approximation boundary.
     LossySourcePolicyMismatch,
-    /// A legacy boolmesh adapter source was not marked as an explicit
+    /// A boolmesh adapter source was not marked as an explicit
     /// approximate topology decision.
-    LegacyAdapterPolicyMismatch,
+    BoolmeshAdapterPolicyMismatch,
     /// An external display/import adapter was not marked as an edge-only
     /// approximation boundary.
     ExternalAdapterPolicyMismatch,
@@ -248,7 +248,7 @@ mod tests {
     fn source_provenance_rejects_ambiguous_approximation_boundaries() {
         SourceProvenance::exact("caller").validate().unwrap();
         SourceProvenance::lossy_f64("import").validate().unwrap();
-        SourceProvenance::legacy_boolmesh_adapter("legacy")
+        SourceProvenance::boolmesh_adapter("boolmesh")
             .validate()
             .unwrap();
         SourceProvenance::external_adapter("obj")

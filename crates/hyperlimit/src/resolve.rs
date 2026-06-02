@@ -3,7 +3,7 @@
 use crate::predicate::{
     Certainty, Escalation, PredicateOutcome, PredicatePolicy, RefinementNeed, Sign, SignKnowledge,
 };
-use crate::real::{RealPredicateExt, sign_knowledge_from_real_facts};
+use crate::real::{sign_knowledge_from_real_facts, RealPredicateExt};
 use hyperreal::{Real, ZeroKnowledge};
 
 /// Resolve a Real sign through the common predicate pipeline.

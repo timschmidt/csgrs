@@ -5,11 +5,11 @@ use crate::classify::{
     Segment3Intersection, SegmentTriangleIntersection,
 };
 use crate::orient::{
-    Point2, Point3, classify_point_line_with_policy, incircle2d_with_policy,
-    insphere3d_with_policy, orient2d_with_policy, orient3d_with_policy,
+    classify_point_line_with_policy, incircle2d_with_policy, insphere3d_with_policy,
+    orient2d_with_policy, orient3d_with_policy, Point2, Point3,
 };
 use crate::plane::{
-    Plane3, classify_point_oriented_plane_with_policy, classify_point_plane_with_policy,
+    classify_point_oriented_plane_with_policy, classify_point_plane_with_policy, Plane3,
 };
 use crate::predicate::{PredicateOutcome, PredicatePolicy, Sign};
 use crate::predicates::distance::{

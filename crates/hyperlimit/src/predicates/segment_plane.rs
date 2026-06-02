@@ -14,12 +14,12 @@
 //! Triangle-Triangle Overlap Test Using Orientation Predicates," *Journal of
 //! Graphics Tools* 8.1 (2003).
 
-use crate::PreparedOrientedPlane3;
 use crate::classify::PlaneSide;
 use crate::geometry::{Plane3, Point3};
 use crate::predicate::PredicateUse;
 use crate::predicates::order::compare_reals;
 use crate::predicates::orient3d_report;
+use crate::PreparedOrientedPlane3;
 use hyperreal::Real;
 
 /// Exact segment relation to an oriented plane.
