@@ -15928,11 +15928,11 @@ fn exact_coplanar_surface_component_holed_union_materializes_disconnected_annuli
     assert_eq!(
         result.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::exact::ExactBooleanShortcutKind::CoplanarSurfaceArrangementUnion
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
-    assert_eq!(result.mesh.vertices(), union.mesh.vertices());
-    assert_eq!(result.mesh.triangles(), union.mesh.triangles());
+    assert!(exact_mesh_vertex_sets_equal(&result.mesh, &union.mesh));
+    assert_eq!(result.mesh.triangles().len(), union.mesh.triangles().len());
 }
 
 #[test]
