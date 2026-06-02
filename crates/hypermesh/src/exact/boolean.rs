@@ -2131,7 +2131,7 @@ fn coplanar_mesh_overlay_should_preempt_surface_paths(
         return false;
     }
     let total_triangles = left.triangles().len() + right.triangles().len();
-    if total_triangles <= 2 || total_triangles > 24 {
+    if total_triangles <= 2 || total_triangles > 48 {
         return false;
     }
     if certify_coplanar_convex_surface_equivalence(left, right).is_some()
@@ -2144,6 +2144,11 @@ fn coplanar_mesh_overlay_should_preempt_surface_paths(
         ExactBooleanOperation::Union => {
             if total_triangles > 12
                 && arrange_coplanar_surface_component_union(left, right).is_some()
+            {
+                return false;
+            }
+            if total_triangles > 24
+                && arrange_coplanar_surface_component_holed_union(left, right).is_some()
             {
                 return false;
             }
