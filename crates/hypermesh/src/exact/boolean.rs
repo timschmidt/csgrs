@@ -2131,7 +2131,7 @@ fn coplanar_mesh_overlay_should_preempt_surface_paths(
         return false;
     }
     let total_triangles = left.triangles().len() + right.triangles().len();
-    if total_triangles <= 2 || total_triangles > 48 {
+    if total_triangles <= 2 || total_triangles > 96 {
         return false;
     }
     if certify_coplanar_convex_surface_equivalence(left, right).is_some()
