@@ -6330,8 +6330,7 @@ fn exact_preflight_materializes_open_point_touch_union_but_keeps_other_ops_bound
     assert_eq!(
         intersection_result.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut:
-                hypermesh::exact::ExactBooleanShortcutKind::CoplanarSurfacePointTouchIntersection
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
     assert!(intersection_result.mesh.triangles().is_empty());
@@ -6390,8 +6389,7 @@ fn exact_preflight_materializes_open_point_touch_union_but_keeps_other_ops_bound
     assert_eq!(
         intersection.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut:
-                hypermesh::exact::ExactBooleanShortcutKind::CoplanarSurfacePointTouchIntersection
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
 

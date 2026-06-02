@@ -1983,6 +1983,8 @@ fn boolean_coplanar_mesh_overlay_optional(
     if !coplanar_mesh_overlay_should_preempt_surface_paths(left, right, operation) {
         return Ok(None);
     }
+    let allow_empty_overlay = operation == ExactBooleanOperation::Intersection
+        && arrange_coplanar_surface_point_touch_union(left, right).is_some();
     let boundary_policy = if operation == ExactBooleanOperation::Difference
         && coplanar_mesh_overlay_matches_surface_multi_difference(left, right)
     {
@@ -2011,6 +2013,7 @@ fn boolean_coplanar_mesh_overlay_optional(
         boundary_policy,
         projected_boundary_policy,
         "exact coplanar mesh overlay arrangement",
+        allow_empty_overlay,
     ) else {
         return Ok(None);
     };
@@ -2032,6 +2035,7 @@ fn materialize_coplanar_mesh_overlay_mesh(
     boundary_policy: ExactArrangement2dBoundaryPolicy,
     projected_boundary_policy: ProjectedOverlayBoundaryPolicy,
     provenance: &'static str,
+    allow_empty: bool,
 ) -> Option<ExactMesh> {
     let (carrier_points, projection) = coplanar_mesh_overlay_carrier(left, right)?;
     let mut rings = Vec::with_capacity(left.triangles().len() + right.triangles().len());
@@ -2047,11 +2051,21 @@ fn materialize_coplanar_mesh_overlay_mesh(
     )?);
     let overlay =
         build_exact_arrangement2d_overlay_with_boundary_policy(&rings, operation, boundary_policy);
-    if !overlay.is_complete()
-        || !overlay.faces.iter().any(|face| face.selected)
-        || overlay.output_loops.is_empty()
-    {
+    if !overlay.is_complete() {
         return None;
+    }
+    if !overlay.faces.iter().any(|face| face.selected) || overlay.output_loops.is_empty() {
+        return allow_empty
+            .then(|| {
+                ExactMesh::new_with_policy(
+                    Vec::new(),
+                    Vec::new(),
+                    SourceProvenance::exact(provenance),
+                    ValidationPolicy::ALLOW_BOUNDARY,
+                )
+                .ok()
+            })
+            .flatten();
     }
     mesh_from_projected_overlay_loops(
         &overlay.output_loops,
@@ -2136,7 +2150,11 @@ fn coplanar_mesh_overlay_should_preempt_surface_paths(
         return false;
     }
     let total_triangles = left.triangles().len() + right.triangles().len();
-    if total_triangles <= 2 || total_triangles > 96 {
+    if total_triangles > 96
+        || (total_triangles <= 2
+            && !(operation == ExactBooleanOperation::Intersection
+                && arrange_coplanar_surface_point_touch_union(left, right).is_some()))
+    {
         return false;
     }
     if certify_coplanar_convex_surface_equivalence(left, right).is_some()
@@ -2175,7 +2193,6 @@ fn coplanar_mesh_overlay_should_preempt_surface_paths(
                 return false;
             }
             if certify_coplanar_surface_boundary_touch(left, right).is_some()
-                || arrange_coplanar_surface_point_touch_union(left, right).is_some()
                 || intersect_single_triangle_coplanar_surfaces(left, right).is_some()
             {
                 return false;
@@ -2187,6 +2204,7 @@ fn coplanar_mesh_overlay_should_preempt_surface_paths(
                 || arrange_coplanar_surface_component_holed_intersection(left, right).is_some()
                 || arrange_coplanar_affine_surface_intersection(left, right).is_some()
                 || arrange_coplanar_orthogonal_surface_intersection(left, right).is_some()
+                || arrange_coplanar_surface_point_touch_union(left, right).is_some()
         }
         ExactBooleanOperation::Difference => {
             if certify_coplanar_surface_boundary_touch(left, right).is_some()
@@ -2408,6 +2426,7 @@ fn coplanar_mesh_overlay_matches_surface_multi_difference(
         ExactArrangement2dBoundaryPolicy::PreserveCollinear,
         ProjectedOverlayBoundaryPolicy::PreserveCollinear,
         "exact coplanar mesh overlay arrangement",
+        false,
     ) else {
         return false;
     };
