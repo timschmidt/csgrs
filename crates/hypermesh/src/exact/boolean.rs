@@ -1946,6 +1946,13 @@ fn materialize_simple_coplanar_overlay_arrangement(
     if loop_points.len() < 3 {
         return Ok(None);
     }
+    let signed_area_twice = projected_loop_signed_area_twice(&loop_points);
+    let Some(area_ordering) = compare_reals(&signed_area_twice, &Real::from(0)).value() else {
+        return Ok(None);
+    };
+    if area_ordering == Ordering::Equal {
+        return Ok(None);
+    }
     let operation = match operation {
         ExactBooleanOperation::Union => ExactArrangement2dSetOperation::Union,
         ExactBooleanOperation::Intersection => ExactArrangement2dSetOperation::Intersection,
@@ -1992,8 +1999,7 @@ fn materialize_simple_coplanar_overlay_arrangement(
             output[corner] = existing;
         }
         if operation == ExactArrangement2dSetOperation::Difference
-            && compare_reals(&output_loop.signed_area_twice, &Real::from(0)).value()
-                == Some(Ordering::Less)
+            && area_ordering == Ordering::Less
         {
             output.swap(1, 2);
         }
@@ -2018,6 +2024,16 @@ fn materialize_simple_coplanar_overlay_arrangement(
 
 fn point2_for_hypertri(point: &Point2) -> hypertri::ExactPoint {
     hypertri::ExactPoint::new(point.x.clone(), point.y.clone())
+}
+
+fn projected_loop_signed_area_twice(points: &[Point2]) -> Real {
+    let mut area = Real::from(0);
+    for index in 0..points.len() {
+        let current = &points[index];
+        let next = &points[(index + 1) % points.len()];
+        area = area + &(current.x.clone() * &next.y) - &(current.y.clone() * &next.x);
+    }
+    area
 }
 
 fn simplified_projected_loop_points(points: &[Point2]) -> Option<Vec<Point2>> {
@@ -2131,12 +2147,19 @@ fn single_triangle_coplanar_overlay_should_preempt_surface_paths(
     right: &ExactMesh,
     operation: ExactBooleanOperation,
 ) -> bool {
-    matches!(
-        operation,
-        ExactBooleanOperation::Union | ExactBooleanOperation::Difference
-    ) && left.triangles().len() == 1
-        && right.triangles().len() == 1
-        && (!left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold)
+    if left.triangles().len() != 1
+        || right.triangles().len() != 1
+        || (left.facts().mesh.closed_manifold && right.facts().mesh.closed_manifold)
+    {
+        return false;
+    }
+    match operation {
+        ExactBooleanOperation::Union | ExactBooleanOperation::Difference => true,
+        ExactBooleanOperation::Intersection => {
+            intersect_single_triangle_coplanar_surfaces(left, right).is_some()
+        }
+        ExactBooleanOperation::SelectedRegions(_) => false,
+    }
 }
 
 fn boolean_convex_intersection_meshes(
