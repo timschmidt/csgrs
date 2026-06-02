@@ -122,7 +122,8 @@ use super::surface::{
     certify_coplanar_convex_surface_containment, certify_coplanar_convex_surface_equivalence,
     certify_coplanar_surface_boundary_touch, certify_coplanar_surface_mesh_containment,
     certify_single_triangle_coplanar_containment, difference_single_triangle_coplanar_surfaces,
-    intersect_single_triangle_coplanar_surfaces, union_single_triangle_coplanar_surfaces,
+    intersect_single_triangle_coplanar_surfaces, order_mesh_boundary_loops,
+    union_single_triangle_coplanar_surfaces,
 };
 use super::validation::ValidationPolicy;
 use super::volumetric::{
@@ -139,7 +140,7 @@ use super::winding::{
 use hyperlimit::{
     CoplanarProjection, Point2, Point3, RingPointLocation, SegmentIntersection, Sign,
     TriangleLocation, classify_point_ring_even_odd, classify_point_triangle, compare_reals,
-    compare_reals_report, project_point3, projected_polygon_area2_value,
+    compare_reals_report, orient3d_report, project_point3, projected_polygon_area2_value,
 };
 use hyperreal::Real;
 use std::cmp::Ordering;
@@ -1471,6 +1472,11 @@ pub fn boolean_exact_with_boundary_policy(
         return Ok(result);
     }
     if let Some(result) =
+        boolean_coplanar_mesh_overlay_optional(left, right, operation, validation)?
+    {
+        return Ok(result);
+    }
+    if let Some(result) =
         boolean_direct_coplanar_surface_meshes(left, right, operation, validation)?
     {
         return Ok(result);
@@ -1973,61 +1979,14 @@ fn materialize_simple_coplanar_overlay_arrangement(
         left.vertices()[carrier[1]].clone(),
         left.vertices()[carrier[2]].clone(),
     ];
-    let Some(loops) = materialized_projected_overlay_loops(
+    let Some(mesh) = mesh_from_projected_overlay_loops(
         &requested_overlay.output_loops,
         &carrier_points,
         overlay.projection,
+        "exact coplanar overlay arrangement",
     ) else {
         return Ok(None);
     };
-    let Some(components) = group_projected_overlay_components(&loops) else {
-        return Ok(None);
-    };
-    let mut vertices = Vec::new();
-    let mut triangles = Vec::new();
-    for component in components {
-        let outer = &loops[component.outer];
-        let mut projected = outer
-            .points
-            .iter()
-            .map(point2_for_hypertri)
-            .collect::<Vec<_>>();
-        let mut polygon_points = outer.lifted.clone();
-        let mut hole_indices = Vec::with_capacity(component.holes.len());
-        for hole_index in component.holes {
-            let hole = &loops[hole_index];
-            hole_indices.push(projected.len());
-            projected.extend(hole.points.iter().map(point2_for_hypertri));
-            polygon_points.extend(hole.lifted.iter().cloned());
-        }
-        let local_to_global = polygon_points
-            .iter()
-            .map(|point| find_or_insert_exact_vertex(&mut vertices, point))
-            .collect::<Option<Vec<_>>>();
-        let Some(local_to_global) = local_to_global else {
-            return Ok(None);
-        };
-        let indices = match hypertri::earcut(&projected, &hole_indices) {
-            Ok(indices) if !indices.is_empty() && indices.len() % 3 == 0 => indices,
-            _ => return Ok(None),
-        };
-        for triangle in indices.chunks_exact(3) {
-            triangles.push(Triangle([
-                local_to_global[triangle[0]],
-                local_to_global[triangle[1]],
-                local_to_global[triangle[2]],
-            ]));
-        }
-    }
-    if triangles.is_empty() {
-        return Ok(None);
-    }
-    let mesh = ExactMesh::new_with_policy(
-        vertices,
-        triangles,
-        SourceProvenance::exact("exact coplanar overlay arrangement"),
-        ValidationPolicy::ALLOW_BOUNDARY,
-    )?;
     let mesh = copy_mesh(
         &mesh,
         "exact coplanar overlay arrangement boolean result",
@@ -2051,6 +2010,213 @@ struct MaterializedProjectedLoop {
 struct MaterializedProjectedComponent {
     outer: usize,
     holes: Vec<usize>,
+}
+
+fn boolean_coplanar_mesh_overlay_optional(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    if !coplanar_mesh_overlay_should_preempt_surface_paths(left, right, operation) {
+        return Ok(None);
+    }
+    let operation = match operation {
+        ExactBooleanOperation::Union => ExactArrangement2dSetOperation::Union,
+        ExactBooleanOperation::Intersection => ExactArrangement2dSetOperation::Intersection,
+        ExactBooleanOperation::Difference => ExactArrangement2dSetOperation::Difference,
+        ExactBooleanOperation::SelectedRegions(_) => return Ok(None),
+    };
+    let Some((carrier_points, projection)) = coplanar_mesh_overlay_carrier(left, right) else {
+        return Ok(None);
+    };
+    let mut rings = Vec::with_capacity(left.triangles().len() + right.triangles().len());
+    let Some(left_rings) =
+        projected_mesh_boundary_rings(ExactArrangement2dRegion::Left, left, projection)
+    else {
+        return Ok(None);
+    };
+    let Some(right_rings) =
+        projected_mesh_boundary_rings(ExactArrangement2dRegion::Right, right, projection)
+    else {
+        return Ok(None);
+    };
+    rings.extend(left_rings);
+    rings.extend(right_rings);
+    let overlay = build_exact_arrangement2d_overlay(&rings, operation);
+    if !overlay.is_complete()
+        || !overlay.faces.iter().any(|face| face.selected)
+        || overlay.output_loops.is_empty()
+    {
+        return Ok(None);
+    }
+    let Some(mesh) = mesh_from_projected_overlay_loops(
+        &overlay.output_loops,
+        &carrier_points,
+        projection,
+        "exact coplanar mesh overlay arrangement",
+    ) else {
+        return Ok(None);
+    };
+    let mesh = copy_mesh(
+        &mesh,
+        "exact coplanar mesh overlay arrangement boolean result",
+        validation,
+    )?;
+    Ok(Some(certified_shortcut_result(
+        mesh,
+        ExactBooleanShortcutKind::ArrangementCellComplex,
+    )))
+}
+
+fn mesh_from_projected_overlay_loops(
+    output_loops: &[super::arrangement2d::ExactArrangement2dOutputLoop],
+    carrier_points: &[Point3; 3],
+    projection: CoplanarProjection,
+    provenance: &'static str,
+) -> Option<ExactMesh> {
+    let loops = materialized_projected_overlay_loops(output_loops, carrier_points, projection)?;
+    let components = group_projected_overlay_components(&loops)?;
+    let mut vertices = Vec::new();
+    let mut triangles = Vec::new();
+    for component in components {
+        let outer = &loops[component.outer];
+        let mut projected = outer
+            .points
+            .iter()
+            .map(point2_for_hypertri)
+            .collect::<Vec<_>>();
+        let mut polygon_points = outer.lifted.clone();
+        let mut hole_indices = Vec::with_capacity(component.holes.len());
+        for hole_index in component.holes {
+            let hole = &loops[hole_index];
+            hole_indices.push(projected.len());
+            projected.extend(hole.points.iter().map(point2_for_hypertri));
+            polygon_points.extend(hole.lifted.iter().cloned());
+        }
+        let local_to_global = polygon_points
+            .iter()
+            .map(|point| find_or_insert_exact_vertex(&mut vertices, point))
+            .collect::<Option<Vec<_>>>()?;
+        let indices = match hypertri::earcut(&projected, &hole_indices) {
+            Ok(indices) if !indices.is_empty() && indices.len() % 3 == 0 => indices,
+            _ => return None,
+        };
+        for triangle in indices.chunks_exact(3) {
+            triangles.push(Triangle([
+                local_to_global[triangle[0]],
+                local_to_global[triangle[1]],
+                local_to_global[triangle[2]],
+            ]));
+        }
+    }
+    if triangles.is_empty() {
+        return None;
+    }
+    ExactMesh::new_with_policy(
+        vertices,
+        triangles,
+        SourceProvenance::exact(provenance),
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .ok()
+}
+
+fn coplanar_mesh_overlay_should_preempt_surface_paths(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+) -> bool {
+    if operation != ExactBooleanOperation::Union
+        || (left.facts().mesh.closed_manifold && right.facts().mesh.closed_manifold)
+    {
+        return false;
+    }
+    let total_triangles = left.triangles().len() + right.triangles().len();
+    if total_triangles <= 2 || total_triangles > 8 {
+        return false;
+    }
+    if certify_coplanar_convex_surface_equivalence(left, right).is_some()
+        || certify_coplanar_convex_surface_containment(left, right).is_some()
+        || certify_coplanar_surface_mesh_containment(left, right).is_some()
+        || arrange_coplanar_convex_surface_union(left, right).is_some()
+        || arrange_coplanar_convex_surface_component_union(left, right).is_some()
+        || arrange_coplanar_surface_multi_component_union(left, right).is_some()
+        || arrange_coplanar_surface_point_touch_union(left, right).is_some()
+    {
+        return false;
+    }
+    arrange_coplanar_surface_component_union(left, right).is_some()
+        || arrange_coplanar_surface_component_holed_union(left, right).is_some()
+}
+
+fn coplanar_mesh_overlay_carrier(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Option<([Point3; 3], CoplanarProjection)> {
+    let carrier_points =
+        first_projectable_triangle(left).or_else(|| first_projectable_triangle(right))?;
+    let projection = choose_triangle_projection(&carrier_points)?;
+    for mesh in [left, right] {
+        for point in mesh.vertices() {
+            if orient3d_report(
+                &carrier_points[0],
+                &carrier_points[1],
+                &carrier_points[2],
+                point,
+            )
+            .value()?
+                != Sign::Zero
+            {
+                return None;
+            }
+        }
+        for face in 0..mesh.triangles().len() {
+            let ring =
+                projected_mesh_face_ring(ExactArrangement2dRegion::Left, mesh, face, projection)?;
+            if compare_reals(
+                &projected_loop_signed_area_twice(&ring.vertices),
+                &Real::from(0),
+            )
+            .value()?
+                == Ordering::Equal
+            {
+                return None;
+            }
+        }
+    }
+    Some((carrier_points, projection))
+}
+
+fn first_projectable_triangle(mesh: &ExactMesh) -> Option<[Point3; 3]> {
+    for triangle in mesh.triangles() {
+        let points = [
+            mesh.vertices().get(triangle.0[0])?.clone(),
+            mesh.vertices().get(triangle.0[1])?.clone(),
+            mesh.vertices().get(triangle.0[2])?.clone(),
+        ];
+        if choose_triangle_projection(&points).is_some() {
+            return Some(points);
+        }
+    }
+    None
+}
+
+fn projected_mesh_boundary_rings(
+    region: ExactArrangement2dRegion,
+    mesh: &ExactMesh,
+    projection: CoplanarProjection,
+) -> Option<Vec<ExactArrangement2dRegionRing>> {
+    order_mesh_boundary_loops(mesh)?
+        .into_iter()
+        .map(|loop_vertices| {
+            let vertices = loop_vertices
+                .into_iter()
+                .map(|vertex| Some(project_point3(mesh.vertices().get(vertex)?, projection)))
+                .collect::<Option<Vec<_>>>()?;
+            Some(ExactArrangement2dRegionRing::new(region, vertices))
+        })
+        .collect()
 }
 
 fn materialized_projected_overlay_loops(

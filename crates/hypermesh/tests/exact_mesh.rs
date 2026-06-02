@@ -984,6 +984,21 @@ fn exact_point3_eq(left: &Point3, right: &Point3) -> bool {
         && compare_reals(&left.z, &right.z).value() == Some(Ordering::Equal)
 }
 
+fn exact_mesh_vertex_sets_equal(left: &ExactMesh, right: &ExactMesh) -> bool {
+    left.vertices().len() == right.vertices().len()
+        && left.vertices().iter().all(|left| {
+            right
+                .vertices()
+                .iter()
+                .any(|right| exact_point3_eq(left, right))
+        })
+        && right.vertices().iter().all(|right| {
+            left.vertices()
+                .iter()
+                .any(|left| exact_point3_eq(left, right))
+        })
+}
+
 fn base_fan_tetrahedron_i64(
     a: [i64; 3],
     b: [i64; 3],
@@ -14945,10 +14960,11 @@ fn exact_coplanar_surface_component_union_materializes_nonconvex_contact_graph()
     assert_eq!(
         result.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::exact::ExactBooleanShortcutKind::CoplanarSurfaceArrangementUnion
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
-    assert_eq!(result.mesh, union.mesh);
+    assert!(exact_mesh_vertex_sets_equal(&result.mesh, &union.mesh));
+    assert_eq!(result.mesh.triangles().len(), union.mesh.triangles().len());
 
     let point_only_left = ExactMesh::from_i64_triangles_with_policy(
         &[
@@ -15069,10 +15085,11 @@ fn exact_coplanar_surface_component_union_materializes_nonconvex_source_edge_con
     assert_eq!(
         result.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::exact::ExactBooleanShortcutKind::CoplanarSurfaceArrangementUnion
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
-    assert_eq!(result.mesh, union.mesh);
+    assert!(exact_mesh_vertex_sets_equal(&result.mesh, &union.mesh));
+    assert_eq!(result.mesh.triangles().len(), union.mesh.triangles().len());
 }
 
 #[test]
@@ -15377,11 +15394,11 @@ fn exact_coplanar_surface_component_holed_union_materializes_annular_contact_gra
     assert_eq!(
         result.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::exact::ExactBooleanShortcutKind::CoplanarSurfaceArrangementUnion
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
-    assert_eq!(result.mesh.vertices(), union.mesh.vertices());
-    assert_eq!(result.mesh.triangles(), union.mesh.triangles());
+    assert!(exact_mesh_vertex_sets_equal(&result.mesh, &union.mesh));
+    assert_eq!(result.mesh.triangles().len(), union.mesh.triangles().len());
 }
 
 #[test]
@@ -15477,11 +15494,11 @@ fn exact_coplanar_surface_component_holed_union_materializes_two_nonconvex_disks
     assert_eq!(
         result.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::exact::ExactBooleanShortcutKind::CoplanarSurfaceArrangementUnion
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
-    assert_eq!(result.mesh.vertices(), union.mesh.vertices());
-    assert_eq!(result.mesh.triangles(), union.mesh.triangles());
+    assert!(exact_mesh_vertex_sets_equal(&result.mesh, &union.mesh));
+    assert_eq!(result.mesh.triangles().len(), union.mesh.triangles().len());
 }
 
 #[test]

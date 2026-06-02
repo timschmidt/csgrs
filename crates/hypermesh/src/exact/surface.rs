@@ -2651,10 +2651,10 @@ fn order_single_mesh_boundary_loop(mesh: &ExactMesh) -> Option<Vec<usize>> {
 /// This is the multi-ring sibling of [`order_single_mesh_boundary_loop`]. It
 /// deliberately stays in mesh topology until each boundary cycle has been
 /// recovered: boundary edges must have one incident triangle, interior edges
-/// must have two, and every boundary vertex must have degree two. That is the
+/// must have two, and every boundary vertex must have degree two. The caller
 /// is still responsible for deciding which cycle is the outer ring by exact
 /// projected containment predicates; this helper only certifies incidence.
-fn order_mesh_boundary_loops(mesh: &ExactMesh) -> Option<Vec<Vec<usize>>> {
+pub fn order_mesh_boundary_loops(mesh: &ExactMesh) -> Option<Vec<Vec<usize>>> {
     let mut edge_counts: Vec<((usize, usize), usize)> = Vec::new();
     for triangle in mesh.triangles() {
         for (a, b) in [
