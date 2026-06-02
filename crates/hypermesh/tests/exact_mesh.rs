@@ -11349,10 +11349,19 @@ fn exact_named_booleans_handle_single_triangle_coplanar_containment() {
     )
     .unwrap();
     holed_difference.validate().unwrap();
+    holed_difference
+        .validate_operation_against_sources(
+            &outer,
+            &inner,
+            hypermesh::exact::ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
     assert_eq!(
         holed_difference.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::exact::ExactBooleanShortcutKind::CoplanarSurfaceHoledDifference
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
 
@@ -12242,6 +12251,15 @@ fn exact_named_booleans_intersect_partially_overlapping_coplanar_triangles() {
         }
     );
     intersection.validate().unwrap();
+    intersection
+        .validate_operation_against_sources(
+            &left,
+            &right,
+            hypermesh::exact::ExactBooleanOperation::Intersection,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
     assert!(!intersection.mesh.triangles().is_empty());
     assert!(intersection.mesh.vertices().len() >= 3);
 
@@ -12992,10 +13010,19 @@ fn exact_coplanar_triangle_difference_materializes_contained_hole_case() {
     )
     .unwrap();
     result.validate().unwrap();
+    result
+        .validate_operation_against_sources(
+            &outer,
+            &inner,
+            hypermesh::exact::ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
     assert_eq!(
         result.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::exact::ExactBooleanShortcutKind::CoplanarSurfaceHoledDifference
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
 
@@ -13054,6 +13081,15 @@ fn exact_coplanar_triangle_intersection_handles_quadrilateral_clip() {
     )
     .unwrap();
     intersection.validate().unwrap();
+    intersection
+        .validate_operation_against_sources(
+            &left,
+            &right,
+            hypermesh::exact::ExactBooleanOperation::Intersection,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::exact::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
     assert_eq!(
         intersection.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
