@@ -2127,9 +2127,7 @@ fn coplanar_mesh_overlay_should_preempt_surface_paths(
     right: &ExactMesh,
     operation: ExactBooleanOperation,
 ) -> bool {
-    if operation != ExactBooleanOperation::Union
-        || (left.facts().mesh.closed_manifold && right.facts().mesh.closed_manifold)
-    {
+    if left.facts().mesh.closed_manifold && right.facts().mesh.closed_manifold {
         return false;
     }
     let total_triangles = left.triangles().len() + right.triangles().len();
@@ -2139,15 +2137,38 @@ fn coplanar_mesh_overlay_should_preempt_surface_paths(
     if certify_coplanar_convex_surface_equivalence(left, right).is_some()
         || certify_coplanar_convex_surface_containment(left, right).is_some()
         || certify_coplanar_surface_mesh_containment(left, right).is_some()
-        || arrange_coplanar_convex_surface_union(left, right).is_some()
-        || arrange_coplanar_convex_surface_component_union(left, right).is_some()
-        || arrange_coplanar_surface_multi_component_union(left, right).is_some()
-        || arrange_coplanar_surface_point_touch_union(left, right).is_some()
     {
         return false;
     }
-    arrange_coplanar_surface_component_union(left, right).is_some()
-        || arrange_coplanar_surface_component_holed_union(left, right).is_some()
+    match operation {
+        ExactBooleanOperation::Union => {
+            if arrange_coplanar_convex_surface_union(left, right).is_some()
+                || arrange_coplanar_convex_surface_component_union(left, right).is_some()
+                || arrange_coplanar_surface_multi_component_union(left, right).is_some()
+                || arrange_coplanar_surface_point_touch_union(left, right).is_some()
+            {
+                return false;
+            }
+            arrange_coplanar_surface_component_union(left, right).is_some()
+                || arrange_coplanar_surface_component_holed_union(left, right).is_some()
+        }
+        ExactBooleanOperation::Intersection => {
+            if arrange_coplanar_convex_surface_intersection(left, right).is_some()
+                || arrange_coplanar_convex_surface_multi_intersection(left, right).is_some()
+                || arrange_coplanar_orthogonal_surface_intersection(left, right).is_some()
+                || arrange_coplanar_affine_surface_intersection(left, right).is_some()
+                || certify_coplanar_surface_boundary_touch(left, right).is_some()
+                || arrange_coplanar_surface_point_touch_union(left, right).is_some()
+                || intersect_single_triangle_coplanar_surfaces(left, right).is_some()
+            {
+                return false;
+            }
+            arrange_coplanar_surface_component_intersection(left, right).is_some()
+                || arrange_coplanar_surface_multi_component_intersection(left, right).is_some()
+                || arrange_coplanar_surface_component_holed_intersection(left, right).is_some()
+        }
+        ExactBooleanOperation::Difference | ExactBooleanOperation::SelectedRegions(_) => false,
+    }
 }
 
 fn coplanar_mesh_overlay_carrier(
