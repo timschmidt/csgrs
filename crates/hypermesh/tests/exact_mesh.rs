@@ -14515,9 +14515,11 @@ fn exact_coplanar_convex_surface_union_materializes_multiple_components() {
     assert_eq!(
         result.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::exact::ExactBooleanShortcutKind::CoplanarConvexSurfaceMultiUnion
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
+    assert!(exact_mesh_vertex_sets_equal(&result.mesh, &union.mesh));
+    assert_eq!(result.mesh.triangles().len(), union.mesh.triangles().len());
 }
 
 #[test]
