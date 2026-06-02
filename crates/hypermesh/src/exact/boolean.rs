@@ -34,8 +34,9 @@ use super::affine_surface::{
     arrange_coplanar_affine_surface_intersection, arrange_coplanar_affine_surface_union,
 };
 use super::arrangement2d::{
-    ExactArrangement2dRegion, ExactArrangement2dRegionRing, ExactArrangement2dSetOperation,
-    build_exact_arrangement2d_overlay,
+    ExactArrangement2dBoundaryPolicy, ExactArrangement2dRegion, ExactArrangement2dRegionRing,
+    ExactArrangement2dSetOperation, build_exact_arrangement2d_overlay,
+    build_exact_arrangement2d_overlay_with_boundary_policy,
 };
 use super::arrangement3d::ExactArrangement;
 use super::boolmesh::{
@@ -1984,6 +1985,7 @@ fn materialize_simple_coplanar_overlay_arrangement(
         &carrier_points,
         overlay.projection,
         "exact coplanar overlay arrangement",
+        ProjectedOverlayBoundaryPolicy::SimplifyCollinear,
     ) else {
         return Ok(None);
     };
@@ -2021,39 +2023,33 @@ fn boolean_coplanar_mesh_overlay_optional(
     if !coplanar_mesh_overlay_should_preempt_surface_paths(left, right, operation) {
         return Ok(None);
     }
+    let boundary_policy = if operation == ExactBooleanOperation::Difference
+        && coplanar_mesh_overlay_matches_surface_multi_difference(left, right)
+    {
+        ExactArrangement2dBoundaryPolicy::PreserveCollinear
+    } else {
+        ExactArrangement2dBoundaryPolicy::SimplifyCollinear
+    };
+    let projected_boundary_policy = match boundary_policy {
+        ExactArrangement2dBoundaryPolicy::SimplifyCollinear => {
+            ProjectedOverlayBoundaryPolicy::SimplifyCollinear
+        }
+        ExactArrangement2dBoundaryPolicy::PreserveCollinear => {
+            ProjectedOverlayBoundaryPolicy::PreserveCollinear
+        }
+    };
     let operation = match operation {
         ExactBooleanOperation::Union => ExactArrangement2dSetOperation::Union,
         ExactBooleanOperation::Intersection => ExactArrangement2dSetOperation::Intersection,
         ExactBooleanOperation::Difference => ExactArrangement2dSetOperation::Difference,
         ExactBooleanOperation::SelectedRegions(_) => return Ok(None),
     };
-    let Some((carrier_points, projection)) = coplanar_mesh_overlay_carrier(left, right) else {
-        return Ok(None);
-    };
-    let mut rings = Vec::with_capacity(left.triangles().len() + right.triangles().len());
-    let Some(left_rings) =
-        projected_mesh_boundary_rings(ExactArrangement2dRegion::Left, left, projection)
-    else {
-        return Ok(None);
-    };
-    let Some(right_rings) =
-        projected_mesh_boundary_rings(ExactArrangement2dRegion::Right, right, projection)
-    else {
-        return Ok(None);
-    };
-    rings.extend(left_rings);
-    rings.extend(right_rings);
-    let overlay = build_exact_arrangement2d_overlay(&rings, operation);
-    if !overlay.is_complete()
-        || !overlay.faces.iter().any(|face| face.selected)
-        || overlay.output_loops.is_empty()
-    {
-        return Ok(None);
-    }
-    let Some(mesh) = mesh_from_projected_overlay_loops(
-        &overlay.output_loops,
-        &carrier_points,
-        projection,
+    let Some(mesh) = materialize_coplanar_mesh_overlay_mesh(
+        left,
+        right,
+        operation,
+        boundary_policy,
+        projected_boundary_policy,
         "exact coplanar mesh overlay arrangement",
     ) else {
         return Ok(None);
@@ -2069,13 +2065,56 @@ fn boolean_coplanar_mesh_overlay_optional(
     )))
 }
 
+fn materialize_coplanar_mesh_overlay_mesh(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactArrangement2dSetOperation,
+    boundary_policy: ExactArrangement2dBoundaryPolicy,
+    projected_boundary_policy: ProjectedOverlayBoundaryPolicy,
+    provenance: &'static str,
+) -> Option<ExactMesh> {
+    let (carrier_points, projection) = coplanar_mesh_overlay_carrier(left, right)?;
+    let mut rings = Vec::with_capacity(left.triangles().len() + right.triangles().len());
+    rings.extend(projected_mesh_boundary_rings(
+        ExactArrangement2dRegion::Left,
+        left,
+        projection,
+    )?);
+    rings.extend(projected_mesh_boundary_rings(
+        ExactArrangement2dRegion::Right,
+        right,
+        projection,
+    )?);
+    let overlay =
+        build_exact_arrangement2d_overlay_with_boundary_policy(&rings, operation, boundary_policy);
+    if !overlay.is_complete()
+        || !overlay.faces.iter().any(|face| face.selected)
+        || overlay.output_loops.is_empty()
+    {
+        return None;
+    }
+    mesh_from_projected_overlay_loops(
+        &overlay.output_loops,
+        &carrier_points,
+        projection,
+        provenance,
+        projected_boundary_policy,
+    )
+}
+
 fn mesh_from_projected_overlay_loops(
     output_loops: &[super::arrangement2d::ExactArrangement2dOutputLoop],
     carrier_points: &[Point3; 3],
     projection: CoplanarProjection,
     provenance: &'static str,
+    boundary_policy: ProjectedOverlayBoundaryPolicy,
 ) -> Option<ExactMesh> {
-    let loops = materialized_projected_overlay_loops(output_loops, carrier_points, projection)?;
+    let loops = materialized_projected_overlay_loops(
+        output_loops,
+        carrier_points,
+        projection,
+        boundary_policy,
+    )?;
     let components = group_projected_overlay_components(&loops)?;
     let mut vertices = Vec::new();
     let mut triangles = Vec::new();
@@ -2120,6 +2159,12 @@ fn mesh_from_projected_overlay_loops(
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .ok()
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum ProjectedOverlayBoundaryPolicy {
+    SimplifyCollinear,
+    PreserveCollinear,
 }
 
 fn coplanar_mesh_overlay_should_preempt_surface_paths(
@@ -2184,13 +2229,13 @@ fn coplanar_mesh_overlay_should_preempt_surface_paths(
         }
         ExactBooleanOperation::Difference => {
             if certify_coplanar_surface_boundary_touch(left, right).is_some()
-                || arrange_coplanar_surface_multi_difference(left, right).is_some()
+                || (arrange_coplanar_surface_multi_difference(left, right).is_some()
+                    && !coplanar_mesh_overlay_matches_surface_multi_difference(left, right))
                 || arrange_coplanar_surface_side_cutter_difference(left, right).is_some()
                 || arrange_coplanar_surface_cutter_hole_contact_difference(left, right).is_some()
                 || arrange_coplanar_convex_surface_holed_difference(left, right).is_some()
                 || arrange_coplanar_convex_surface_multi_holed_difference(left, right).is_some()
-                || arrange_coplanar_convex_surface_component_holed_difference(left, right)
-                    .is_some()
+                || arrange_coplanar_convex_surface_component_holed_difference(left, right).is_some()
                 || arrange_coplanar_surface_component_holed_difference(left, right).is_some()
                 || arrange_coplanar_orthogonal_surface_difference(left, right).is_some()
                 || difference_single_triangle_coplanar_surfaces(left, right).is_some()
@@ -2202,6 +2247,7 @@ fn coplanar_mesh_overlay_should_preempt_surface_paths(
             arrange_coplanar_convex_surface_difference(left, right).is_some()
                 || arrange_coplanar_convex_surface_multi_difference(left, right).is_some()
                 || arrange_coplanar_surface_component_difference(left, right).is_some()
+                || coplanar_mesh_overlay_matches_surface_multi_difference(left, right)
                 || arrange_coplanar_surface_point_touch_difference(left, right).is_some()
                 || arrange_coplanar_affine_surface_difference(left, right).is_some()
         }
@@ -2282,10 +2328,11 @@ fn materialized_projected_overlay_loops(
     loops: &[super::arrangement2d::ExactArrangement2dOutputLoop],
     carrier_points: &[Point3; 3],
     projection: CoplanarProjection,
+    boundary_policy: ProjectedOverlayBoundaryPolicy,
 ) -> Option<Vec<MaterializedProjectedLoop>> {
     let mut materialized = Vec::with_capacity(loops.len());
     for loop_ in loops {
-        let loop_points = simplified_projected_loop_points(&loop_.points)?;
+        let loop_points = projected_loop_points_with_policy(&loop_.points, boundary_policy)?;
         if loop_points.len() < 3 {
             return None;
         }
@@ -2386,6 +2433,42 @@ fn point3_exact_equal(left: &Point3, right: &Point3) -> Option<bool> {
     )
 }
 
+fn coplanar_mesh_overlay_matches_surface_multi_difference(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> bool {
+    let Some(surface) = arrange_coplanar_surface_multi_difference(left, right) else {
+        return false;
+    };
+    let Some(overlay) = materialize_coplanar_mesh_overlay_mesh(
+        left,
+        right,
+        ExactArrangement2dSetOperation::Difference,
+        ExactArrangement2dBoundaryPolicy::PreserveCollinear,
+        ProjectedOverlayBoundaryPolicy::PreserveCollinear,
+        "exact coplanar mesh overlay arrangement",
+    ) else {
+        return false;
+    };
+    exact_mesh_vertex_sets_match(&overlay, &surface.mesh)
+        && overlay.triangles().len() == surface.mesh.triangles().len()
+}
+
+fn exact_mesh_vertex_sets_match(left: &ExactMesh, right: &ExactMesh) -> bool {
+    left.vertices().len() == right.vertices().len()
+        && left.vertices().iter().all(|left_point| {
+            right
+                .vertices()
+                .iter()
+                .any(|right_point| point3_exact_equal(left_point, right_point) == Some(true))
+        })
+        && right.vertices().iter().all(|right_point| {
+            left.vertices()
+                .iter()
+                .any(|left_point| point3_exact_equal(left_point, right_point) == Some(true))
+        })
+}
+
 fn point2_for_hypertri(point: &Point2) -> hypertri::ExactPoint {
     hypertri::ExactPoint::new(point.x.clone(), point.y.clone())
 }
@@ -2400,7 +2483,10 @@ fn projected_loop_signed_area_twice(points: &[Point2]) -> Real {
     area
 }
 
-fn simplified_projected_loop_points(points: &[Point2]) -> Option<Vec<Point2>> {
+fn projected_loop_points_with_policy(
+    points: &[Point2],
+    boundary_policy: ProjectedOverlayBoundaryPolicy,
+) -> Option<Vec<Point2>> {
     let mut simplified = Vec::<Point2>::new();
     for point in points {
         if simplified
@@ -2415,6 +2501,9 @@ fn simplified_projected_loop_points(points: &[Point2]) -> Option<Vec<Point2>> {
         && point2_exact_equal(simplified.first().unwrap(), simplified.last().unwrap()) == Some(true)
     {
         simplified.pop();
+    }
+    if boundary_policy == ProjectedOverlayBoundaryPolicy::PreserveCollinear {
+        return Some(simplified);
     }
 
     let mut changed = true;

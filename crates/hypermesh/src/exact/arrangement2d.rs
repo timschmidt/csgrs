@@ -164,6 +164,15 @@ pub struct ExactArrangement2dOverlay {
     pub blockers: Vec<ExactArrangement2dBlocker>,
 }
 
+/// Boundary loop export policy for selected overlay cells.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ExactArrangement2dBoundaryPolicy {
+    /// Remove exact collinear subdivision vertices from emitted loops.
+    SimplifyCollinear,
+    /// Preserve exact boundary-use vertices from the arrangement graph.
+    PreserveCollinear,
+}
+
 impl ExactArrangement2dOverlay {
     /// Return whether arrangement construction, face classification, and output
     /// loop simplification all completed.
@@ -380,6 +389,19 @@ pub fn build_exact_arrangement2d_overlay(
     rings: &[ExactArrangement2dRegionRing],
     operation: ExactArrangement2dSetOperation,
 ) -> ExactArrangement2dOverlay {
+    build_exact_arrangement2d_overlay_with_boundary_policy(
+        rings,
+        operation,
+        ExactArrangement2dBoundaryPolicy::SimplifyCollinear,
+    )
+}
+
+/// Build a 2D arrangement overlay with explicit output boundary policy.
+pub fn build_exact_arrangement2d_overlay_with_boundary_policy(
+    rings: &[ExactArrangement2dRegionRing],
+    operation: ExactArrangement2dSetOperation,
+    boundary_policy: ExactArrangement2dBoundaryPolicy,
+) -> ExactArrangement2dOverlay {
     let mut blockers = Vec::new();
     let normalized = normalize_region_rings(rings, &mut blockers);
     let segments = arrangement_segments_from_rings(&normalized);
@@ -397,8 +419,14 @@ pub fn build_exact_arrangement2d_overlay(
 
     let faces = classify_overlay_faces(&arrangement, &normalized, operation, &mut blockers);
     let output_loops = if blockers.is_empty() {
-        let mut loops = selected_output_loops(&arrangement, &faces, &mut blockers);
-        append_nested_unselected_hole_loops(&arrangement, &faces, &mut loops, &mut blockers);
+        let mut loops = selected_output_loops(&arrangement, &faces, boundary_policy, &mut blockers);
+        append_nested_unselected_hole_loops(
+            &arrangement,
+            &faces,
+            boundary_policy,
+            &mut loops,
+            &mut blockers,
+        );
         loops
     } else {
         Vec::new()
@@ -1193,6 +1221,7 @@ fn rational_real(numerator: i64, denominator: i64) -> Option<Real> {
 fn selected_output_loops(
     arrangement: &ExactArrangement2d,
     faces: &[ExactArrangement2dOverlayFace],
+    boundary_policy: ExactArrangement2dBoundaryPolicy,
     blockers: &mut Vec<ExactArrangement2dBlocker>,
 ) -> Vec<ExactArrangement2dOutputLoop> {
     let mut selected = vec![false; arrangement.faces.len()];
@@ -1243,12 +1272,13 @@ fn selected_output_loops(
         return Vec::new();
     }
 
-    stitch_selected_boundary_loops(fragments, arrangement, blockers)
+    stitch_selected_boundary_loops(fragments, arrangement, boundary_policy, blockers)
 }
 
 fn append_nested_unselected_hole_loops(
     arrangement: &ExactArrangement2d,
     faces: &[ExactArrangement2dOverlayFace],
+    boundary_policy: ExactArrangement2dBoundaryPolicy,
     loops: &mut Vec<ExactArrangement2dOutputLoop>,
     blockers: &mut Vec<ExactArrangement2dBlocker>,
 ) {
@@ -1259,7 +1289,9 @@ fn append_nested_unselected_hole_loops(
         let mut vertices = arrangement.faces[face.face].vertices.clone();
         vertices.reverse();
         let loop_index = loops.len();
-        simplify_loop_vertices(&mut vertices, arrangement, blockers);
+        if boundary_policy == ExactArrangement2dBoundaryPolicy::SimplifyCollinear {
+            simplify_loop_vertices(&mut vertices, arrangement, blockers);
+        }
         if vertices.len() < 3 {
             blockers.push(ExactArrangement2dBlocker::DegenerateOutputLoop { loop_index });
             continue;
@@ -1331,6 +1363,7 @@ fn parent_selection_state(
 fn stitch_selected_boundary_loops(
     fragments: Vec<[usize; 2]>,
     arrangement: &ExactArrangement2d,
+    boundary_policy: ExactArrangement2dBoundaryPolicy,
     blockers: &mut Vec<ExactArrangement2dBlocker>,
 ) -> Vec<ExactArrangement2dOutputLoop> {
     let mut outgoing = HashMap::<usize, Vec<usize>>::new();
@@ -1389,7 +1422,9 @@ fn stitch_selected_boundary_loops(
         }
 
         let loop_index = loops.len();
-        simplify_loop_vertices(&mut loop_vertices, arrangement, blockers);
+        if boundary_policy == ExactArrangement2dBoundaryPolicy::SimplifyCollinear {
+            simplify_loop_vertices(&mut loop_vertices, arrangement, blockers);
+        }
         if loop_vertices.len() < 3 {
             blockers.push(ExactArrangement2dBlocker::DegenerateOutputLoop { loop_index });
             continue;
@@ -1600,6 +1635,36 @@ mod tests {
         assert_eq!(overlay.output_loops.len(), 1);
         assert_eq!(overlay.output_loops[0].points.len(), 8);
         assert!(real_eq(&overlay.output_loops[0].signed_area_twice, 14));
+    }
+
+    #[test]
+    fn overlay_boundary_policy_can_preserve_collinear_split_vertices() {
+        let rings = [
+            ring(
+                ExactArrangement2dRegion::Left,
+                &[(0, 0), (4, 0), (4, 2), (0, 2)],
+            ),
+            ring(
+                ExactArrangement2dRegion::Right,
+                &[(2, 0), (6, 0), (6, 2), (2, 2)],
+            ),
+        ];
+        let simplified =
+            build_exact_arrangement2d_overlay(&rings, ExactArrangement2dSetOperation::Union);
+        let preserved = build_exact_arrangement2d_overlay_with_boundary_policy(
+            &rings,
+            ExactArrangement2dSetOperation::Union,
+            ExactArrangement2dBoundaryPolicy::PreserveCollinear,
+        );
+
+        assert!(simplified.blockers.is_empty(), "{:?}", simplified.blockers);
+        assert!(preserved.blockers.is_empty(), "{:?}", preserved.blockers);
+        assert_eq!(simplified.output_loops.len(), 1);
+        assert_eq!(preserved.output_loops.len(), 1);
+        assert_eq!(simplified.output_loops[0].points.len(), 4);
+        assert_eq!(preserved.output_loops[0].points.len(), 8);
+        assert!(real_eq(&simplified.output_loops[0].signed_area_twice, 24));
+        assert!(real_eq(&preserved.output_loops[0].signed_area_twice, 24));
     }
 
     #[test]

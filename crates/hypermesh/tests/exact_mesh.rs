@@ -16756,8 +16756,16 @@ fn exact_coplanar_convex_surface_difference_materializes_multiple_component_cuts
     assert_eq!(
         nonconvex_result.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::exact::ExactBooleanShortcutKind::CoplanarSurfaceMultiDifference
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ArrangementCellComplex
         }
+    );
+    assert!(exact_mesh_vertex_sets_equal(
+        &nonconvex_result.mesh,
+        &nonconvex_multi_cutter.mesh
+    ));
+    assert_eq!(
+        nonconvex_result.mesh.triangles().len(),
+        nonconvex_multi_cutter.mesh.triangles().len()
     );
 
     let partial_height_cutters = ExactMesh::from_i64_triangles_with_policy(
@@ -17409,8 +17417,19 @@ fn exact_coplanar_convex_surface_difference_materializes_multiple_component_cuts
     assert_eq!(
         multi_component_single_side_opening_result.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::exact::ExactBooleanShortcutKind::CoplanarSurfaceMultiDifference
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ArrangementCellComplex
         }
+    );
+    assert!(exact_mesh_vertex_sets_equal(
+        &multi_component_single_side_opening_result.mesh,
+        &multi_component_single_side_opening.mesh
+    ));
+    assert_eq!(
+        multi_component_single_side_opening_result
+            .mesh
+            .triangles()
+            .len(),
+        multi_component_single_side_opening.mesh.triangles().len()
     );
 
     let component_opening_left = ExactMesh::from_i64_triangles_with_policy(
@@ -25830,7 +25849,10 @@ fn exact_coplanar_orthogonal_surface_cells_materialize_nonconvex_outputs() {
             shortcut: hypermesh::exact::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
-    assert!(exact_mesh_vertex_sets_equal(&union_result.mesh, &l_union.mesh));
+    assert!(exact_mesh_vertex_sets_equal(
+        &union_result.mesh,
+        &l_union.mesh
+    ));
     assert_eq!(
         union_result.mesh.triangles().len(),
         l_union.mesh.triangles().len()
@@ -26357,7 +26379,10 @@ fn exact_coplanar_affine_surface_cells_materialize_rotated_nonconvex_outputs() {
             shortcut: hypermesh::exact::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
-    assert!(exact_mesh_vertex_sets_equal(&union_result.mesh, &l_union.mesh));
+    assert!(exact_mesh_vertex_sets_equal(
+        &union_result.mesh,
+        &l_union.mesh
+    ));
     assert_eq!(
         union_result.mesh.triangles().len(),
         l_union.mesh.triangles().len()
@@ -27272,7 +27297,10 @@ fn exact_coplanar_component_holed_intersection_materializes_clipped_annulus() {
             shortcut: hypermesh::exact::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
-    assert!(exact_mesh_vertex_sets_equal(&result.mesh, &intersection.mesh));
+    assert!(exact_mesh_vertex_sets_equal(
+        &result.mesh,
+        &intersection.mesh
+    ));
     assert_eq!(
         result.mesh.triangles().len(),
         intersection.mesh.triangles().len()
