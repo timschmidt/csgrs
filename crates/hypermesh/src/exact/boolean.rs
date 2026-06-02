@@ -2186,7 +2186,6 @@ fn coplanar_mesh_overlay_should_preempt_surface_paths(
                     .is_some()
                 || arrange_coplanar_surface_component_holed_difference(left, right).is_some()
                 || arrange_coplanar_orthogonal_surface_difference(left, right).is_some()
-                || arrange_coplanar_affine_surface_difference(left, right).is_some()
                 || difference_single_triangle_coplanar_surfaces(left, right).is_some()
                 || arrange_single_triangle_coplanar_difference(left, right).is_some()
                 || arrange_single_triangle_coplanar_holed_difference(left, right).is_some()
@@ -2196,6 +2195,7 @@ fn coplanar_mesh_overlay_should_preempt_surface_paths(
             arrange_coplanar_convex_surface_difference(left, right).is_some()
                 || arrange_coplanar_surface_component_difference(left, right).is_some()
                 || arrange_coplanar_surface_point_touch_difference(left, right).is_some()
+                || arrange_coplanar_affine_surface_difference(left, right).is_some()
         }
         ExactBooleanOperation::SelectedRegions(_) => false,
     }
