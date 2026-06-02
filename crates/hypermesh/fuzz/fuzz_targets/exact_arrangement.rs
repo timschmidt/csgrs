@@ -4,7 +4,7 @@ use hyperlimit::Point2;
 use hypermesh::exact::{
     ExactArrangement, ExactArrangement2dRegion, ExactArrangement2dRegionRing,
     ExactArrangement2dSetOperation, ExactBooleanOperation, ExactMesh,
-    ExactRegularizationPolicy, ValidationPolicy, build_exact_arrangement2d_overlay,
+    ExactRegularizationPolicy, ValidationPolicy, boolean_exact, build_exact_arrangement2d_overlay,
 };
 use hyperreal::Real;
 use libfuzzer_sys::fuzz_target;
@@ -72,6 +72,7 @@ fn exercise_mesh_arrangement(values: &[i64]) {
         &right,
         ExactRegularizationPolicy::RETAIN_ARTIFACTS,
     );
+    exercise_volume_graph_invariants(&arrangement);
     for operation in [
         ExactBooleanOperation::Union,
         ExactBooleanOperation::Intersection,
@@ -80,8 +81,48 @@ fn exercise_mesh_arrangement(values: &[i64]) {
         if let Ok(selected) =
             arrangement.select_with_policy(operation, ExactRegularizationPolicy::RETAIN_ARTIFACTS)
         {
-            let _ = selected.simplify_exact_with_policy(ExactRegularizationPolicy::RETAIN_ARTIFACTS);
+            if let Ok(simplified) =
+                selected.simplify_exact_with_policy(ExactRegularizationPolicy::RETAIN_ARTIFACTS)
+            {
+                if simplified.blockers.is_empty() {
+                    let _ = simplified.triangulate();
+                }
+            }
         }
+        if let Ok(result) = boolean_exact(&left, &right, operation, ValidationPolicy::ALLOW_BOUNDARY)
+        {
+            let _ = result.validate();
+        }
+    }
+}
+
+fn exercise_volume_graph_invariants(arrangement: &ExactArrangement) {
+    let Some(shells) = arrangement.shells_or_regions.as_ref() else {
+        return;
+    };
+    if shells.is_empty() || shells.iter().any(|shell| !shell.closed || !shell.manifold) {
+        assert!(arrangement.volume_regions.is_none());
+        assert!(arrangement.volume_adjacencies.is_none());
+        return;
+    }
+    let volume_regions = arrangement
+        .volume_regions
+        .as_ref()
+        .expect("closed manifold shells must expose volume regions");
+    let volume_adjacencies = arrangement
+        .volume_adjacencies
+        .as_ref()
+        .expect("closed manifold shells must expose volume adjacencies");
+    assert_eq!(volume_regions.len(), shells.len() + 1);
+    assert_eq!(volume_adjacencies.len(), shells.len());
+    assert!(volume_regions[0].exterior);
+    for adjacency in volume_adjacencies {
+        assert_eq!(adjacency.exterior_volume, 0);
+        assert!(adjacency.interior_volume < volume_regions.len());
+        assert_eq!(
+            adjacency.separating_face_cells,
+            shells[adjacency.shell_region].face_cells
+        );
     }
 }
 
