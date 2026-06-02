@@ -166,7 +166,7 @@ older certified shortcuts:
 ```rust,ignore
 use hypermesh::exact::{
     ExactArrangement, ExactBooleanOperation, ExactRegularizationPolicy,
-    ValidationPolicy, boolean_exact,
+    ValidationPolicy, boolean_exact, exact_arrangement_boolean_attempt_report,
 };
 
 let arrangement = ExactArrangement::from_meshes(&left, &right)?;
@@ -182,6 +182,14 @@ let result = boolean_exact(
     ExactBooleanOperation::Union,
     ValidationPolicy::ALLOW_BOUNDARY,
 )?;
+
+let attempt = exact_arrangement_boolean_attempt_report(
+    &left,
+    &right,
+    ExactBooleanOperation::Union,
+    ExactRegularizationPolicy::REGULARIZED_SOLID,
+)?;
+assert!(attempt.decline.is_none() || attempt.arrangement_blockers > 0);
 ```
 
 ## References

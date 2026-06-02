@@ -551,6 +551,9 @@ fn triangulate_simplified_face_group(
             if loops[hole_index].depth == loops[outer_index].depth + 1
                 && loop_contains_loop(&loops[outer_index], &loops[hole_index])?
             {
+                if used_as_hole[hole_index] {
+                    return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+                }
                 hole_indices.push(hole_index);
                 used_as_hole[hole_index] = true;
             }
@@ -637,6 +640,9 @@ fn triangulate_loop_with_holes(
     }
     let indices = hypertri::earcut(&projected, &hole_indices)
         .map_err(|_| ExactArrangementBlocker::NonManifoldCellComplex)?;
+    if indices.is_empty() {
+        return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+    }
     for triangle in indices.chunks_exact(3) {
         triangles.push(Triangle([
             local_to_global[triangle[0]],

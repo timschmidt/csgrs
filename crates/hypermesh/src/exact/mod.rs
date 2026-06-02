@@ -99,11 +99,12 @@ pub use audit::{
     ExactMeshAuditError, ExactMeshAuditFreshness, ExactMeshAuditReport, audit_exact_mesh,
 };
 pub use boolean::{
+    ExactArrangementBooleanAttempt, ExactArrangementBooleanDecline, ExactArrangementBooleanStage,
     ExactBooleanOperation, ExactBooleanPolicy, ExactBoundaryBooleanPolicy, boolean_exact,
     boolean_exact_with_boundary_policy, boolean_selected_regions, certify_boundary_touching_report,
     certify_open_surface_disjoint_report, certify_planar_arrangement_report,
     certify_refinement_report, certify_same_surface_report, certify_winding_readiness_report,
-    preflight_boolean_exact,
+    exact_arrangement_boolean_attempt_report, preflight_boolean_exact,
 };
 pub use bounds::{AabbIntersectionKind, BoundsValidationError, ExactAabb3, MeshBounds};
 pub use cell_complex::{

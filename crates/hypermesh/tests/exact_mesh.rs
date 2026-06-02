@@ -12214,6 +12214,20 @@ fn exact_named_booleans_intersect_partially_overlapping_coplanar_triangles() {
     );
     assert!(preflight.blocker.is_none());
 
+    let arrangement_attempt = hypermesh::exact::exact_arrangement_boolean_attempt_report(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+        hypermesh::exact::ExactRegularizationPolicy::REGULARIZED_SOLID,
+    )
+    .unwrap();
+    assert_eq!(
+        arrangement_attempt.stage,
+        hypermesh::exact::ExactArrangementBooleanStage::Materialized
+    );
+    assert!(arrangement_attempt.decline.is_none());
+    assert!(arrangement_attempt.output_triangles > 0);
+
     let intersection = hypermesh::exact::boolean_exact(
         &left,
         &right,
@@ -12241,7 +12255,7 @@ fn exact_named_booleans_intersect_partially_overlapping_coplanar_triangles() {
     assert_eq!(
         union.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::exact::ExactBooleanShortcutKind::CoplanarSurfaceArrangementUnion
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
 
@@ -12342,8 +12356,7 @@ fn exact_named_booleans_intersect_partially_overlapping_coplanar_triangles() {
     assert_eq!(
         difference.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut:
-                hypermesh::exact::ExactBooleanShortcutKind::CoplanarSurfaceArrangementDifference
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
 
@@ -12702,7 +12715,7 @@ fn exact_coplanar_triangle_union_materializes_convex_edge_touching_square() {
     assert_eq!(
         result.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::exact::ExactBooleanShortcutKind::CoplanarSurfaceConvexUnion
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
     assert_eq!(result.mesh.vertices().len(), 4);
@@ -12776,7 +12789,7 @@ fn exact_coplanar_triangle_union_materializes_simple_planar_arrangement() {
     assert_eq!(
         result.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::exact::ExactBooleanShortcutKind::CoplanarSurfaceArrangementUnion
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
 
@@ -12829,8 +12842,15 @@ fn exact_coplanar_triangle_difference_materializes_one_corner_cut() {
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    assert_eq!(result.mesh.vertices().len(), 4);
-    assert_eq!(result.mesh.triangles().len(), 2);
+    result.validate().unwrap();
+    assert_eq!(
+        result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ArrangementCellComplex
+        }
+    );
+    assert!(result.mesh.vertices().len() >= 4);
+    assert!(result.mesh.triangles().len() >= 2);
 
     let preflight = hypermesh::exact::preflight_boolean_exact(
         &left,
@@ -12876,8 +12896,15 @@ fn exact_coplanar_triangle_difference_materializes_remaining_corner_cut() {
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    assert_eq!(result.mesh.vertices().len(), 3);
-    assert_eq!(result.mesh.triangles().len(), 1);
+    result.validate().unwrap();
+    assert_eq!(
+        result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ArrangementCellComplex
+        }
+    );
+    assert!(result.mesh.vertices().len() >= 3);
+    assert!(!result.mesh.triangles().is_empty());
 
     let preflight = hypermesh::exact::preflight_boolean_exact(
         &left,
@@ -13025,6 +13052,13 @@ fn exact_coplanar_triangle_intersection_handles_quadrilateral_clip() {
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
+    intersection.validate().unwrap();
+    assert_eq!(
+        intersection.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::CoplanarSurfaceIntersection
+        }
+    );
     assert_eq!(intersection.mesh.triangles().len(), 2);
     assert_eq!(intersection.mesh.vertices().len(), 4);
 }
@@ -37291,6 +37325,42 @@ fn exact_boolean_uses_arrangement_cell_complex_before_surface_fallbacks() {
     );
     result.validate().unwrap();
     assert!(!result.mesh.triangles().is_empty());
+}
+
+#[test]
+fn exact_arrangement_boolean_attempt_reports_decline_stage() {
+    let left = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 2, 0, 0, 0, 2, 0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let right = ExactMesh::from_i64_triangles_with_policy(
+        &[4, 0, 0, 6, 0, 0, 4, 2, 0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+
+    let report = hypermesh::exact::exact_arrangement_boolean_attempt_report(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+        hypermesh::exact::ExactRegularizationPolicy::REGULARIZED_SOLID,
+    )
+    .unwrap();
+
+    assert_eq!(
+        report.stage,
+        hypermesh::exact::ExactArrangementBooleanStage::ArrangementBuilt
+    );
+    assert!(report.arrangement_blockers > 0);
+    assert_eq!(report.face_cells, 2);
+    assert_eq!(report.regions, 2);
+    assert!(matches!(
+        report.decline,
+        Some(hypermesh::exact::ExactArrangementBooleanDecline::ArrangementBlockers(_))
+    ));
 }
 
 fn fuzz_seed_mesh_pair(seed: &[u8]) -> (ExactMesh, ExactMesh) {

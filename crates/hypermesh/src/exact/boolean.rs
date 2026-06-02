@@ -33,6 +33,7 @@ use super::affine_surface::{
     CoplanarAffineSurfaceBasis, arrange_coplanar_affine_surface_difference,
     arrange_coplanar_affine_surface_intersection, arrange_coplanar_affine_surface_union,
 };
+use super::arrangement2d::ExactArrangement2dSetOperation;
 use super::arrangement3d::ExactArrangement;
 use super::boolmesh::{
     ExactBoolMeshKernelStage, ExactBoolMeshValidationError,
@@ -74,14 +75,14 @@ use super::orthogonal_surface::{
     CoplanarOrthogonalSurfaceOperation, arrange_coplanar_orthogonal_surface_difference,
     arrange_coplanar_orthogonal_surface_intersection, arrange_coplanar_orthogonal_surface_union,
 };
-use super::provenance::PredicateUse;
+use super::provenance::{PredicateUse, SourceProvenance};
 use super::region::{
     ExactBooleanAssemblyPlan, ExactRegionRetention, ExactRegionSelection,
     FaceRegionPlaneClassification, FaceRegionTriangulation,
     checked_classify_face_regions_against_opposite_planes,
     checked_triangulate_face_regions_with_earcut,
 };
-use super::regularization::ExactRegularizationPolicy;
+use super::regularization::{ExactArrangementBlocker, ExactRegularizationPolicy};
 use super::reports::{
     ExactBooleanBlocker, ExactBooleanBlockerKind, ExactBooleanPreflight, ExactBooleanResult,
     ExactBooleanResultKind, ExactBooleanShortcutKind, ExactBooleanSupport,
@@ -133,7 +134,7 @@ use super::winding::{
     WindingReportError, classify_mesh_vertices_against_closed_mesh_winding_report,
 };
 use hyperlimit::{
-    CoplanarProjection, Point3, SegmentIntersection, Sign, TriangleLocation,
+    CoplanarProjection, Point2, Point3, SegmentIntersection, Sign, TriangleLocation,
     classify_point_triangle, compare_reals, compare_reals_report, project_point3,
     projected_polygon_area2_value,
 };
@@ -163,6 +164,69 @@ impl ExactBooleanPolicy {
         validation: ValidationPolicy::ALLOW_BOUNDARY,
         reject_unknowns: true,
     };
+}
+
+/// Stage reached by an arrangement/cell-complex Boolean attempt.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ExactArrangementBooleanStage {
+    /// Arrangement construction was not attempted by the selected dispatch path.
+    NotAttempted,
+    /// The 3D arrangement was built.
+    ArrangementBuilt,
+    /// Arrangement face-cells were labeled.
+    Labeled,
+    /// Boolean selection completed.
+    Selected,
+    /// Exact simplification completed.
+    Simplified,
+    /// Exact triangulation completed.
+    Triangulated,
+    /// The triangulated mesh copied through the requested validation policy.
+    Materialized,
+}
+
+/// Why an arrangement/cell-complex Boolean attempt declined to produce output.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum ExactArrangementBooleanDecline {
+    /// The dispatch mode intentionally left this case to older certified paths.
+    DispatchGate,
+    /// Arrangement construction completed with blockers.
+    ArrangementBlockers(Vec<ExactArrangementBlocker>),
+    /// Cell labeling failed.
+    Labeling(ExactArrangementBlocker),
+    /// Boolean cell selection failed.
+    Selection(ExactArrangementBlocker),
+    /// Exact simplification failed.
+    Simplification(ExactArrangementBlocker),
+    /// Exact triangulation failed.
+    Triangulation(ExactArrangementBlocker),
+    /// The triangulated mesh did not satisfy the requested validation policy.
+    OutputValidation,
+}
+
+/// Auditable result of trying the arrangement/cell-complex Boolean pipeline.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactArrangementBooleanAttempt {
+    /// Operation attempted.
+    pub operation: ExactBooleanOperation,
+    /// Regularization policy used by the arrangement pipeline.
+    pub policy: ExactRegularizationPolicy,
+    /// Furthest stage reached.
+    pub stage: ExactArrangementBooleanStage,
+    /// Reason no output was produced, when the attempt declined.
+    pub decline: Option<ExactArrangementBooleanDecline>,
+    /// Arrangement blocker count observed after construction.
+    pub arrangement_blockers: usize,
+    /// Arrangement face-cell count, when construction succeeded.
+    pub face_cells: usize,
+    /// Connected shell/region count, when construction succeeded.
+    pub regions: usize,
+    /// Selected face-cell count, when selection succeeded.
+    pub selected_faces: usize,
+    /// Output vertex count, when triangulation succeeded.
+    pub output_vertices: usize,
+    /// Output triangle count, when triangulation succeeded.
+    pub output_triangles: usize,
 }
 
 /// Exact boolean operation request.
@@ -1391,9 +1455,13 @@ pub fn boolean_exact_with_boundary_policy(
     {
         return Ok(result);
     }
-    if let Some(result) =
-        boolean_arrangement_cell_complex_meshes(left, right, operation, validation)?
-    {
+    if let Some(result) = boolean_arrangement_cell_complex_meshes(
+        left,
+        right,
+        operation,
+        validation,
+        ArrangementCellComplexDispatch::PreemptLegacy,
+    )? {
         return Ok(result);
     }
     if let Some(result) = boolean_direct_adjacency_meshes(left, right, operation, validation)? {
@@ -1594,6 +1662,15 @@ pub fn boolean_exact_with_boundary_policy(
             )? {
                 return Ok(result);
             }
+            if let Some(result) = boolean_arrangement_cell_complex_meshes(
+                left,
+                right,
+                operation,
+                validation,
+                ArrangementCellComplexDispatch::Fallback,
+            )? {
+                return Ok(result);
+            }
             Err(MeshError::one(MeshDiagnostic::new(
                 Severity::Error,
                 DiagnosticKind::UnsupportedExactOperation,
@@ -1654,32 +1731,170 @@ fn boolean_coplanar_surface_boundary_touch_difference(
     ))
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum ArrangementCellComplexDispatch {
+    PreemptLegacy,
+    Fallback,
+}
+
+enum ArrangementCellComplexOutcome {
+    Materialized(ExactBooleanResult, ExactArrangementBooleanAttempt),
+    Declined(ExactArrangementBooleanAttempt),
+}
+
+/// Report how far the arrangement/cell-complex Boolean pipeline gets for an
+/// operation without falling through to legacy/specialized materializers.
+pub fn exact_arrangement_boolean_attempt_report(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    policy: ExactRegularizationPolicy,
+) -> Result<ExactArrangementBooleanAttempt, MeshError> {
+    Ok(
+        match run_arrangement_cell_complex_attempt(
+            left,
+            right,
+            operation,
+            policy,
+            Some(ValidationPolicy::ALLOW_BOUNDARY),
+        )? {
+            ArrangementCellComplexOutcome::Materialized(_, attempt)
+            | ArrangementCellComplexOutcome::Declined(attempt) => attempt,
+        },
+    )
+}
+
 fn boolean_arrangement_cell_complex_meshes(
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
+    dispatch: ArrangementCellComplexDispatch,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
-    if !arrangement_cell_complex_should_preempt_legacy_paths(left, right, operation) {
+    if dispatch == ArrangementCellComplexDispatch::PreemptLegacy
+        && !arrangement_cell_complex_should_preempt_legacy_paths(left, right, operation)
+    {
         return Ok(None);
     }
 
-    let policy = ExactRegularizationPolicy::REGULARIZED_SOLID;
-    let arrangement = ExactArrangement::from_meshes_with_policy(left, right, policy)?;
-    if !arrangement.is_complete() {
-        return Ok(None);
+    match run_arrangement_cell_complex_attempt(
+        left,
+        right,
+        operation,
+        ExactRegularizationPolicy::REGULARIZED_SOLID,
+        Some(validation),
+    )? {
+        ArrangementCellComplexOutcome::Materialized(result, _) => Ok(Some(result)),
+        ArrangementCellComplexOutcome::Declined(_)
+            if dispatch == ArrangementCellComplexDispatch::Fallback =>
+        {
+            match run_arrangement_cell_complex_attempt(
+                left,
+                right,
+                operation,
+                ExactRegularizationPolicy::RETAIN_ARTIFACTS,
+                Some(validation),
+            )? {
+                ArrangementCellComplexOutcome::Materialized(result, _) => Ok(Some(result)),
+                ArrangementCellComplexOutcome::Declined(_) => Ok(None),
+            }
+        }
+        ArrangementCellComplexOutcome::Declined(_) => Ok(None),
     }
-    let selected = match arrangement.select_with_policy(operation, policy) {
-        Ok(selected) => selected,
-        Err(_) => return Ok(None),
+}
+
+fn run_arrangement_cell_complex_attempt(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    policy: ExactRegularizationPolicy,
+    validation: Option<ValidationPolicy>,
+) -> Result<ArrangementCellComplexOutcome, MeshError> {
+    let arrangement = ExactArrangement::from_meshes_with_policy(left, right, policy)?;
+    let mut attempt = ExactArrangementBooleanAttempt {
+        operation,
+        policy,
+        stage: ExactArrangementBooleanStage::ArrangementBuilt,
+        decline: None,
+        arrangement_blockers: arrangement.blockers.len(),
+        face_cells: arrangement.face_cells.len(),
+        regions: arrangement
+            .shells_or_regions
+            .as_ref()
+            .map_or(0, |regions| regions.len()),
+        selected_faces: 0,
+        output_vertices: 0,
+        output_triangles: 0,
     };
+
+    if !arrangement.is_complete() {
+        if let Some(result) = materialize_simple_coplanar_overlay_arrangement(
+            left,
+            operation,
+            validation,
+            &arrangement,
+        )? {
+            attempt.stage = ExactArrangementBooleanStage::Materialized;
+            attempt.output_vertices = result.mesh.vertices().len();
+            attempt.output_triangles = result.mesh.triangles().len();
+            return Ok(ArrangementCellComplexOutcome::Materialized(result, attempt));
+        }
+        attempt.decline = Some(ExactArrangementBooleanDecline::ArrangementBlockers(
+            arrangement.blockers.clone(),
+        ));
+        return Ok(ArrangementCellComplexOutcome::Declined(attempt));
+    }
+
+    let labeled = match arrangement.label_regions(policy) {
+        Ok(labeled) => labeled,
+        Err(blocker) => {
+            attempt.decline = Some(ExactArrangementBooleanDecline::Labeling(blocker));
+            return Ok(ArrangementCellComplexOutcome::Declined(attempt));
+        }
+    };
+    attempt.stage = ExactArrangementBooleanStage::Labeled;
+    let selected = match labeled.select_with_policy(operation, policy) {
+        Ok(selected) if selected.blockers.is_empty() => selected,
+        Ok(selected) => {
+            attempt.selected_faces = selected.selected_faces.len();
+            attempt.decline = Some(ExactArrangementBooleanDecline::Selection(
+                selected.blockers[0].clone(),
+            ));
+            return Ok(ArrangementCellComplexOutcome::Declined(attempt));
+        }
+        Err(blocker) => {
+            attempt.decline = Some(ExactArrangementBooleanDecline::Selection(blocker));
+            return Ok(ArrangementCellComplexOutcome::Declined(attempt));
+        }
+    };
+    attempt.stage = ExactArrangementBooleanStage::Selected;
+    attempt.selected_faces = selected.selected_faces.len();
     let simplified = match selected.simplify_exact_with_policy(policy) {
-        Ok(simplified) => simplified,
-        Err(_) => return Ok(None),
+        Ok(simplified) if simplified.blockers.is_empty() => simplified,
+        Ok(simplified) => {
+            attempt.decline = Some(ExactArrangementBooleanDecline::Simplification(
+                simplified.blockers[0].clone(),
+            ));
+            return Ok(ArrangementCellComplexOutcome::Declined(attempt));
+        }
+        Err(blocker) => {
+            attempt.decline = Some(ExactArrangementBooleanDecline::Simplification(blocker));
+            return Ok(ArrangementCellComplexOutcome::Declined(attempt));
+        }
     };
+    attempt.stage = ExactArrangementBooleanStage::Simplified;
     let mesh = match simplified.triangulate() {
         Ok(mesh) => mesh,
-        Err(_) => return Ok(None),
+        Err(blocker) => {
+            attempt.decline = Some(ExactArrangementBooleanDecline::Triangulation(blocker));
+            return Ok(ArrangementCellComplexOutcome::Declined(attempt));
+        }
+    };
+    attempt.stage = ExactArrangementBooleanStage::Triangulated;
+    attempt.output_vertices = mesh.vertices().len();
+    attempt.output_triangles = mesh.triangles().len();
+    let Some(validation) = validation else {
+        return Ok(ArrangementCellComplexOutcome::Declined(attempt));
     };
     let mesh = match copy_mesh(
         &mesh,
@@ -1687,12 +1902,216 @@ fn boolean_arrangement_cell_complex_meshes(
         validation,
     ) {
         Ok(mesh) => mesh,
-        Err(_) => return Ok(None),
+        Err(_) => {
+            attempt.decline = Some(ExactArrangementBooleanDecline::OutputValidation);
+            return Ok(ArrangementCellComplexOutcome::Declined(attempt));
+        }
     };
+    attempt.stage = ExactArrangementBooleanStage::Materialized;
+    Ok(ArrangementCellComplexOutcome::Materialized(
+        certified_shortcut_result(mesh, ExactBooleanShortcutKind::ArrangementCellComplex),
+        attempt,
+    ))
+}
+
+fn materialize_simple_coplanar_overlay_arrangement(
+    left: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: Option<ValidationPolicy>,
+    arrangement: &ExactArrangement,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    if arrangement.carrier_plane_overlays.len() != 1
+        || !arrangement.face_plane_arrangements.is_empty()
+        || !arrangement
+            .carrier_plane_overlays
+            .iter()
+            .all(|overlay| overlay.overlay.is_complete())
+    {
+        return Ok(None);
+    }
+    let Some(validation) = validation else {
+        return Ok(None);
+    };
+    let overlay = &arrangement.carrier_plane_overlays[0];
+    if overlay.overlay.output_loops.len() != 1 {
+        return Ok(None);
+    }
+    let output_loop = &overlay.overlay.output_loops[0];
+    if output_loop.points.len() < 3 {
+        return Ok(None);
+    }
+    let Some(loop_points) = simplified_projected_loop_points(&output_loop.points) else {
+        return Ok(None);
+    };
+    if loop_points.len() < 3 {
+        return Ok(None);
+    }
+    let operation = match operation {
+        ExactBooleanOperation::Union => ExactArrangement2dSetOperation::Union,
+        ExactBooleanOperation::Intersection => ExactArrangement2dSetOperation::Intersection,
+        ExactBooleanOperation::Difference => ExactArrangement2dSetOperation::Difference,
+        ExactBooleanOperation::SelectedRegions(_) => return Ok(None),
+    };
+    if !overlay.overlay.faces.iter().any(|face| face.selected) {
+        return Ok(None);
+    }
+    let carrier = left.triangles()[overlay.left_face].0;
+    let carrier_points = [
+        left.vertices()[carrier[0]].clone(),
+        left.vertices()[carrier[1]].clone(),
+        left.vertices()[carrier[2]].clone(),
+    ];
+    let lifted_points = loop_points
+        .iter()
+        .map(|point| lift_projected_point_to_carrier(point, &carrier_points, overlay.projection))
+        .collect::<Option<Vec<_>>>();
+    let Some(lifted_points) = lifted_points else {
+        return Ok(None);
+    };
+    let projected = loop_points
+        .iter()
+        .map(point2_for_hypertri)
+        .collect::<Vec<_>>();
+    let indices = match hypertri::earcut(&projected, &[]) {
+        Ok(indices) if !indices.is_empty() => indices,
+        _ => return Ok(None),
+    };
+    let mut vertices = Vec::new();
+    let mut remap = vec![None; lifted_points.len()];
+    let mut triangles = Vec::new();
+    for triangle in indices.chunks_exact(3) {
+        let mut output = [0usize; 3];
+        for (corner, local) in triangle.iter().copied().enumerate() {
+            let Some(existing) = remap[local] else {
+                let next = vertices.len();
+                vertices.push(lifted_points[local].clone());
+                remap[local] = Some(next);
+                output[corner] = next;
+                continue;
+            };
+            output[corner] = existing;
+        }
+        if operation == ExactArrangement2dSetOperation::Difference
+            && compare_reals(&output_loop.signed_area_twice, &Real::from(0)).value()
+                == Some(Ordering::Less)
+        {
+            output.swap(1, 2);
+        }
+        triangles.push(Triangle(output));
+    }
+    let mesh = ExactMesh::new_with_policy(
+        vertices,
+        triangles,
+        SourceProvenance::exact("exact simple coplanar overlay arrangement"),
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )?;
+    let mesh = copy_mesh(
+        &mesh,
+        "exact simple coplanar overlay arrangement boolean result",
+        validation,
+    )?;
     Ok(Some(certified_shortcut_result(
         mesh,
         ExactBooleanShortcutKind::ArrangementCellComplex,
     )))
+}
+
+fn point2_for_hypertri(point: &Point2) -> hypertri::ExactPoint {
+    hypertri::ExactPoint::new(point.x.clone(), point.y.clone())
+}
+
+fn simplified_projected_loop_points(points: &[Point2]) -> Option<Vec<Point2>> {
+    let mut simplified = Vec::<Point2>::new();
+    for point in points {
+        if simplified
+            .last()
+            .is_some_and(|previous| point2_exact_equal(previous, point) == Some(true))
+        {
+            continue;
+        }
+        simplified.push(point.clone());
+    }
+    if simplified.len() > 1
+        && point2_exact_equal(simplified.first().unwrap(), simplified.last().unwrap()) == Some(true)
+    {
+        simplified.pop();
+    }
+
+    let mut changed = true;
+    while changed && simplified.len() >= 3 {
+        changed = false;
+        let mut next = Vec::new();
+        for index in 0..simplified.len() {
+            let previous = &simplified[(index + simplified.len() - 1) % simplified.len()];
+            let current = &simplified[index];
+            let following = &simplified[(index + 1) % simplified.len()];
+            match projected_turn_is_collinear(previous, current, following) {
+                Some(true) => {
+                    changed = true;
+                }
+                Some(false) => next.push(current.clone()),
+                None => return None,
+            }
+        }
+        simplified = next;
+    }
+    Some(simplified)
+}
+
+fn point2_exact_equal(left: &Point2, right: &Point2) -> Option<bool> {
+    Some(
+        compare_reals(&left.x, &right.x).value()? == Ordering::Equal
+            && compare_reals(&left.y, &right.y).value()? == Ordering::Equal,
+    )
+}
+
+fn projected_turn_is_collinear(
+    previous: &Point2,
+    current: &Point2,
+    following: &Point2,
+) -> Option<bool> {
+    let abx = current.x.clone() - &previous.x;
+    let aby = current.y.clone() - &previous.y;
+    let bcx = following.x.clone() - &current.x;
+    let bcy = following.y.clone() - &current.y;
+    let area = abx * &bcy - &(aby * &bcx);
+    Some(compare_reals(&area, &Real::from(0)).value()? == Ordering::Equal)
+}
+
+fn lift_projected_point_to_carrier(
+    point: &Point2,
+    carrier: &[Point3; 3],
+    projection: CoplanarProjection,
+) -> Option<Point3> {
+    let projected = [
+        project_point3(&carrier[0], projection),
+        project_point3(&carrier[1], projection),
+        project_point3(&carrier[2], projection),
+    ];
+    let ux = projected[1].x.clone() - &projected[0].x;
+    let uy = projected[1].y.clone() - &projected[0].y;
+    let vx = projected[2].x.clone() - &projected[0].x;
+    let vy = projected[2].y.clone() - &projected[0].y;
+    let wx = point.x.clone() - &projected[0].x;
+    let wy = point.y.clone() - &projected[0].y;
+    let det = ux.clone() * &vy - &(uy.clone() * &vx);
+    let a = ((wx.clone() * &vy - &(wy.clone() * &vx)) / &det).ok()?;
+    let b = ((ux * &wy - &(uy * &wx)) / &det).ok()?;
+    let p1 = vector_between(&carrier[0], &carrier[1]);
+    let p2 = vector_between(&carrier[0], &carrier[2]);
+    Some(Point3::new(
+        carrier[0].x.clone() + &(p1.x * &a) + &(p2.x * &b),
+        carrier[0].y.clone() + &(p1.y * &a) + &(p2.y * &b),
+        carrier[0].z.clone() + &(p1.z * &a) + &(p2.z * &b),
+    ))
+}
+
+fn vector_between(from: &Point3, to: &Point3) -> Point3 {
+    Point3::new(
+        to.x.clone() - &from.x,
+        to.y.clone() - &from.y,
+        to.z.clone() - &from.z,
+    )
 }
 
 fn arrangement_cell_complex_should_preempt_legacy_paths(
@@ -1700,10 +2119,24 @@ fn arrangement_cell_complex_should_preempt_legacy_paths(
     right: &ExactMesh,
     operation: ExactBooleanOperation,
 ) -> bool {
+    (matches!(
+        operation,
+        ExactBooleanOperation::Union | ExactBooleanOperation::Difference
+    ) && non_box_full_face_adjacency(left, right))
+        || single_triangle_coplanar_overlay_should_preempt_surface_paths(left, right, operation)
+}
+
+fn single_triangle_coplanar_overlay_should_preempt_surface_paths(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+) -> bool {
     matches!(
         operation,
         ExactBooleanOperation::Union | ExactBooleanOperation::Difference
-    ) && non_box_full_face_adjacency(left, right)
+    ) && left.triangles().len() == 1
+        && right.triangles().len() == 1
+        && (!left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold)
 }
 
 fn boolean_convex_intersection_meshes(

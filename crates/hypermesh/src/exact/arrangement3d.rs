@@ -186,8 +186,16 @@ pub struct ArrangementRegion {
     pub face_cells: Vec<usize>,
     /// Undirected adjacency pairs between face-cells in this region.
     pub adjacent_face_cells: Vec<[usize; 2]>,
+    /// Number of exact boundary edges incident to only one face-cell.
+    pub boundary_edges: usize,
     /// Number of exact boundary edges incident to more than two face-cells.
     pub non_manifold_edges: usize,
+    /// Source sides represented by this connected shell component.
+    pub source_sides: Vec<MeshSide>,
+    /// Whether every retained boundary edge has exactly two incident cells.
+    pub closed: bool,
+    /// Whether no retained boundary edge has more than two incident cells.
+    pub manifold: bool,
 }
 
 /// Exact 3D arrangement over two source meshes.
@@ -312,6 +320,14 @@ impl ExactArrangement3d {
         if shells_or_regions
             .as_ref()
             .is_some_and(|regions| regions.iter().any(|region| region.non_manifold_edges > 0))
+        {
+            blockers.push(ExactArrangementBlocker::NonManifoldCellComplex);
+        }
+        if policy == ExactRegularizationPolicy::REGULARIZED_SOLID
+            && (!left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold)
+            && shells_or_regions
+                .as_ref()
+                .is_some_and(|regions| regions.iter().any(|region| region.boundary_edges > 0))
         {
             blockers.push(ExactArrangementBlocker::NonManifoldCellComplex);
         }
@@ -1583,14 +1599,47 @@ fn arrangement_regions(face_cells: &[ArrangementFaceCell]) -> Vec<ArrangementReg
                 users.len() > 2 && users.iter().any(|cell| component.contains(cell))
             })
             .count();
+        let boundary_edges = edge_users
+            .iter()
+            .filter(|(_, users)| {
+                users.len() == 1 && users.iter().any(|cell| component.contains(cell))
+            })
+            .count();
+        let source_sides = arrangement_region_source_sides(&component, face_cells);
         regions.push(ArrangementRegion {
             face_cells: component,
             adjacent_face_cells,
+            boundary_edges,
             non_manifold_edges,
+            source_sides,
+            closed: boundary_edges == 0,
+            manifold: non_manifold_edges == 0,
         });
     }
     regions.sort_by_key(|region| region.face_cells.first().copied().unwrap_or(usize::MAX));
     regions
+}
+
+fn arrangement_region_source_sides(
+    component: &[usize],
+    face_cells: &[ArrangementFaceCell],
+) -> Vec<MeshSide> {
+    let mut has_left = false;
+    let mut has_right = false;
+    for &face_cell in component {
+        match face_cells[face_cell].carrier.side {
+            MeshSide::Left => has_left = true,
+            MeshSide::Right => has_right = true,
+        }
+    }
+    let mut sides = Vec::new();
+    if has_left {
+        sides.push(MeshSide::Left);
+    }
+    if has_right {
+        sides.push(MeshSide::Right);
+    }
+    sides
 }
 
 fn arrangement_edge_users(
@@ -2010,6 +2059,46 @@ mod tests {
         let mesh = simplified.triangulate().unwrap();
         assert_eq!(mesh.vertices().len(), 8);
         assert_eq!(mesh.triangles().len(), 8);
+    }
+
+    #[test]
+    fn regularized_solid_arrangement_blocks_open_shell_regions() {
+        let left = open_triangle_i64([0, 0, 0], [2, 0, 0], [0, 2, 0]);
+        let right = open_triangle_i64([4, 0, 0], [6, 0, 0], [4, 2, 0]);
+
+        let arrangement = ExactArrangement::from_meshes_with_policy(
+            &left,
+            &right,
+            ExactRegularizationPolicy::REGULARIZED_SOLID,
+        )
+        .unwrap();
+
+        assert!(
+            arrangement
+                .blockers
+                .contains(&ExactArrangementBlocker::NonManifoldCellComplex),
+            "{:?}",
+            arrangement.blockers
+        );
+        let regions = arrangement
+            .shells_or_regions
+            .as_ref()
+            .expect("arrangement should retain region diagnostics");
+        assert_eq!(regions.len(), 2);
+        assert!(regions.iter().all(|region| region.boundary_edges == 3));
+        assert!(regions.iter().all(|region| region.non_manifold_edges == 0));
+        assert!(regions.iter().all(|region| !region.closed));
+        assert!(regions.iter().all(|region| region.manifold));
+        assert!(
+            regions
+                .iter()
+                .any(|region| region.source_sides == vec![MeshSide::Left])
+        );
+        assert!(
+            regions
+                .iter()
+                .any(|region| region.source_sides == vec![MeshSide::Right])
+        );
     }
 
     #[test]
