@@ -1549,23 +1549,8 @@ pub fn boolean_exact_with_boundary_policy(
                     containment,
                 );
             }
-            let single_triangle_containment =
-                certify_single_triangle_coplanar_containment(left, right).is_some();
-            if operation == ExactBooleanOperation::Intersection
-                && !single_triangle_containment
-                && let Some(result) =
-                    boolean_coplanar_surface_intersection(left, right, operation, validation)?
-            {
-                return Ok(result);
-            }
             if let Some(result) =
                 boolean_coplanar_surface_containment(left, right, operation, validation)?
-            {
-                return Ok(result);
-            }
-            if operation != ExactBooleanOperation::Intersection
-                && let Some(result) =
-                    boolean_coplanar_surface_intersection(left, right, operation, validation)?
             {
                 return Ok(result);
             }
@@ -2156,7 +2141,8 @@ fn coplanar_mesh_overlay_should_preempt_surface_paths(
     }
     if certify_coplanar_convex_surface_equivalence(left, right).is_some()
         || certify_coplanar_convex_surface_containment(left, right).is_some()
-        || certify_coplanar_surface_mesh_containment(left, right).is_some()
+        || (operation != ExactBooleanOperation::Intersection
+            && certify_coplanar_surface_mesh_containment(left, right).is_some())
     {
         return false;
     }
@@ -2642,66 +2628,6 @@ fn boolean_coplanar_cutter_hole_contact_difference_optional(
             ))
         })
         .transpose()
-}
-
-fn boolean_coplanar_surface_intersection(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
-    if operation != ExactBooleanOperation::Intersection {
-        return Ok(None);
-    }
-    let Some(intersection) = intersect_single_triangle_coplanar_surfaces(left, right) else {
-        if let Some(intersection) = arrange_coplanar_surface_component_intersection(left, right) {
-            let mesh = copy_mesh(
-                &intersection.mesh,
-                "exact coplanar nonconvex component intersection",
-                validation,
-            )?;
-            return Ok(Some(certified_shortcut_result(
-                mesh,
-                ExactBooleanShortcutKind::CoplanarSurfaceIntersection,
-            )));
-        }
-        if let Some(intersection) =
-            arrange_coplanar_surface_multi_component_intersection(left, right)
-        {
-            let mesh = copy_mesh(
-                &intersection.mesh,
-                "exact coplanar nonconvex multi-component intersection",
-                validation,
-            )?;
-            return Ok(Some(certified_shortcut_result(
-                mesh,
-                ExactBooleanShortcutKind::CoplanarSurfaceIntersection,
-            )));
-        }
-        if let Some(intersection) =
-            arrange_coplanar_surface_component_holed_intersection(left, right)
-        {
-            let mesh = copy_mesh(
-                &intersection.mesh,
-                "exact coplanar component-holed surface intersection",
-                validation,
-            )?;
-            return Ok(Some(certified_shortcut_result(
-                mesh,
-                ExactBooleanShortcutKind::CoplanarSurfaceIntersection,
-            )));
-        }
-        return Ok(None);
-    };
-    let mesh = copy_mesh(
-        &intersection.mesh,
-        "exact coplanar surface partial-overlap intersection",
-        validation,
-    )?;
-    Ok(Some(certified_shortcut_result(
-        mesh,
-        ExactBooleanShortcutKind::CoplanarSurfaceIntersection,
-    )))
 }
 
 fn boolean_coplanar_convex_multi_holed_difference(

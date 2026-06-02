@@ -12572,10 +12572,17 @@ fn exact_coplanar_surface_intersection_merges_adjacent_face_cell_clips() {
     assert_eq!(
         result.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::exact::ExactBooleanShortcutKind::CoplanarSurfaceIntersection
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
-    assert_eq!(result.mesh.vertices().len(), 6);
+    assert!(exact_mesh_vertex_sets_equal(
+        &result.mesh,
+        &intersection.mesh
+    ));
+    assert_eq!(
+        result.mesh.triangles().len(),
+        intersection.mesh.triangles().len()
+    );
 }
 
 #[test]
@@ -12654,10 +12661,17 @@ fn exact_coplanar_surface_intersection_merges_disconnected_nonconvex_face_cell_c
     assert_eq!(
         result.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::exact::ExactBooleanShortcutKind::CoplanarSurfaceIntersection
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
-    assert_eq!(result.mesh.vertices().len(), 12);
+    assert!(exact_mesh_vertex_sets_equal(
+        &result.mesh,
+        &intersection.mesh
+    ));
+    assert_eq!(
+        result.mesh.triangles().len(),
+        intersection.mesh.triangles().len()
+    );
 }
 
 #[test]
@@ -25928,9 +25942,16 @@ fn exact_coplanar_orthogonal_surface_cells_materialize_nonconvex_outputs() {
     assert_eq!(
         intersection_result.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut:
-                hypermesh::exact::ExactBooleanShortcutKind::CoplanarOrthogonalSurfaceIntersection
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ArrangementCellComplex
         }
+    );
+    assert!(exact_mesh_vertex_sets_equal(
+        &intersection_result.mesh,
+        &intersection.mesh
+    ));
+    assert_eq!(
+        intersection_result.mesh.triangles().len(),
+        intersection.mesh.triangles().len()
     );
 
     let holed_left = rect_surface_i64(&[(0, 0, 10, 10), (10, 0, 12, 2)]);
@@ -26462,8 +26483,16 @@ fn exact_coplanar_affine_surface_cells_materialize_rotated_nonconvex_outputs() {
     assert_eq!(
         intersection_result.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::exact::ExactBooleanShortcutKind::CoplanarAffineSurfaceIntersection
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ArrangementCellComplex
         }
+    );
+    assert!(exact_mesh_vertex_sets_equal(
+        &intersection_result.mesh,
+        &intersection.mesh
+    ));
+    assert_eq!(
+        intersection_result.mesh.triangles().len(),
+        intersection.mesh.triangles().len()
     );
 
     let holed_left =
