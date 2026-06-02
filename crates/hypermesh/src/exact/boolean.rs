@@ -2156,6 +2156,8 @@ fn coplanar_mesh_overlay_should_preempt_surface_paths(
                 || arrange_coplanar_surface_component_holed_union(left, right).is_some()
                 || arrange_coplanar_surface_multi_component_union(left, right).is_some()
                 || arrange_coplanar_surface_point_touch_union(left, right).is_some()
+                || arrange_coplanar_orthogonal_surface_union(left, right).is_some()
+                || arrange_coplanar_affine_surface_union(left, right).is_some()
         }
         ExactBooleanOperation::Intersection => {
             if arrange_coplanar_orthogonal_surface_intersection(left, right).is_some()

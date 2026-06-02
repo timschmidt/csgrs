@@ -25811,8 +25811,13 @@ fn exact_coplanar_orthogonal_surface_cells_materialize_nonconvex_outputs() {
     assert_eq!(
         union_result.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::exact::ExactBooleanShortcutKind::CoplanarOrthogonalSurfaceUnion
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ArrangementCellComplex
         }
+    );
+    assert!(exact_mesh_vertex_sets_equal(&union_result.mesh, &l_union.mesh));
+    assert_eq!(
+        union_result.mesh.triangles().len(),
+        l_union.mesh.triangles().len()
     );
 
     let fan_l_left = fan_rect_surface_i64(&[(0, 0, 2, 6), (2, 0, 6, 2)]);
@@ -26333,8 +26338,13 @@ fn exact_coplanar_affine_surface_cells_materialize_rotated_nonconvex_outputs() {
     assert_eq!(
         union_result.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::exact::ExactBooleanShortcutKind::CoplanarAffineSurfaceUnion
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ArrangementCellComplex
         }
+    );
+    assert!(exact_mesh_vertex_sets_equal(&union_result.mesh, &l_union.mesh));
+    assert_eq!(
+        union_result.mesh.triangles().len(),
+        l_union.mesh.triangles().len()
     );
 
     let fan_l_left =
