@@ -15192,8 +15192,7 @@ fn exact_coplanar_surface_boundary_touch_intersection_and_difference_are_lower_d
     assert_eq!(
         intersection.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut:
-                hypermesh::exact::ExactBooleanShortcutKind::CoplanarSurfaceBoundaryTouchIntersection
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
     assert!(intersection.mesh.triangles().is_empty());

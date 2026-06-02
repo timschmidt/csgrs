@@ -1984,7 +1984,8 @@ fn boolean_coplanar_mesh_overlay_optional(
         return Ok(None);
     }
     let allow_empty_overlay = operation == ExactBooleanOperation::Intersection
-        && arrange_coplanar_surface_point_touch_union(left, right).is_some();
+        && (certify_coplanar_surface_boundary_touch(left, right).is_some()
+            || arrange_coplanar_surface_point_touch_union(left, right).is_some());
     let boundary_policy = if operation == ExactBooleanOperation::Difference
         && coplanar_mesh_overlay_matches_surface_multi_difference(left, right)
     {
@@ -2192,9 +2193,7 @@ fn coplanar_mesh_overlay_should_preempt_surface_paths(
             {
                 return false;
             }
-            if certify_coplanar_surface_boundary_touch(left, right).is_some()
-                || intersect_single_triangle_coplanar_surfaces(left, right).is_some()
-            {
+            if intersect_single_triangle_coplanar_surfaces(left, right).is_some() {
                 return false;
             }
             arrange_coplanar_convex_surface_intersection(left, right).is_some()
@@ -2204,6 +2203,7 @@ fn coplanar_mesh_overlay_should_preempt_surface_paths(
                 || arrange_coplanar_surface_component_holed_intersection(left, right).is_some()
                 || arrange_coplanar_affine_surface_intersection(left, right).is_some()
                 || arrange_coplanar_orthogonal_surface_intersection(left, right).is_some()
+                || certify_coplanar_surface_boundary_touch(left, right).is_some()
                 || arrange_coplanar_surface_point_touch_union(left, right).is_some()
         }
         ExactBooleanOperation::Difference => {
