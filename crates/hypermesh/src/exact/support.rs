@@ -125,7 +125,7 @@ fn support_dop_expansion_for_mesh_source(
 ) -> SupportDopExpansionReport {
     match source {
         MeshSource::Exact => SupportDopExpansionReport::exact(axis_count),
-        MeshSource::LossyF64 | MeshSource::BoolmeshAdapter | MeshSource::ExternalAdapter => {
+        MeshSource::LossyF64 | MeshSource::HypermeshAdapter | MeshSource::ExternalAdapter => {
             SupportDopExpansionReport::lossy_adapter(axis_count)
         }
     }

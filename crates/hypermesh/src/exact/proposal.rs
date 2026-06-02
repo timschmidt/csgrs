@@ -1,6 +1,6 @@
 //! Report-bearing acceptance boundary for exact mesh proposals.
 //!
-//! External importers, boolmesh adapters, SDF tessellators, and primitive-float
+//! External importers, hypermesh adapters, SDF tessellators, and primitive-float
 //! paths may all produce candidate meshes. In the Hyper exact stack those
 //! candidates are proposals until an [`ExactMesh`] has replayed its retained
 //! topology, bounds, provenance, and predicate evidence. This module packages
@@ -25,9 +25,9 @@ pub enum ExactMeshProposalSourceKind {
     /// Primitive-float coordinates were lifted as exact dyadic values and then
     /// replayed by exact mesh validation.
     LossyPrimitiveFloatProposal,
-    /// Boolmesh-derived topology was retained only as an approximate adapter
+    /// Hypermesh-derived topology was retained only as an approximate adapter
     /// proposal.
-    BoolmeshAdapterProposal,
+    HypermeshAdapterProposal,
     /// External importer or display/runtime adapter proposal.
     ExternalAdapterProposal,
 }
@@ -45,7 +45,7 @@ impl ExactMeshProposalSourceKind {
 pub enum ExactMeshProposalAcceptance {
     /// The mesh was exact input and replayed as a retained exact object.
     ExactInputReplayed,
-    /// A lossy, external, or boolmesh proposal replayed through exact mesh
+    /// A lossy, external, or hypermesh proposal replayed through exact mesh
     /// validation and retained predicate evidence.
     ProposalAcceptedAfterExactReplay,
 }
@@ -200,7 +200,7 @@ fn source_kind_for_mesh_source(source: MeshSource) -> ExactMeshProposalSourceKin
     match source {
         MeshSource::Exact => ExactMeshProposalSourceKind::ExactConstruction,
         MeshSource::LossyF64 => ExactMeshProposalSourceKind::LossyPrimitiveFloatProposal,
-        MeshSource::BoolmeshAdapter => ExactMeshProposalSourceKind::BoolmeshAdapterProposal,
+        MeshSource::HypermeshAdapter => ExactMeshProposalSourceKind::HypermeshAdapterProposal,
         MeshSource::ExternalAdapter => ExactMeshProposalSourceKind::ExternalAdapterProposal,
     }
 }
@@ -209,7 +209,7 @@ fn mesh_source_for_source_kind(source_kind: ExactMeshProposalSourceKind) -> Mesh
     match source_kind {
         ExactMeshProposalSourceKind::ExactConstruction => MeshSource::Exact,
         ExactMeshProposalSourceKind::LossyPrimitiveFloatProposal => MeshSource::LossyF64,
-        ExactMeshProposalSourceKind::BoolmeshAdapterProposal => MeshSource::BoolmeshAdapter,
+        ExactMeshProposalSourceKind::HypermeshAdapterProposal => MeshSource::HypermeshAdapter,
         ExactMeshProposalSourceKind::ExternalAdapterProposal => MeshSource::ExternalAdapter,
     }
 }
@@ -230,7 +230,7 @@ fn source_policy_matches(
             ExactMeshProposalSourceKind::ExternalAdapterProposal,
             ApproximationPolicy::EdgeOnly
         ) | (
-            ExactMeshProposalSourceKind::BoolmeshAdapterProposal,
+            ExactMeshProposalSourceKind::HypermeshAdapterProposal,
             ApproximationPolicy::ExplicitApproximateDecision
         )
     )

@@ -2614,18 +2614,18 @@ fn exact_provenance_validation_rejects_inconsistent_artifacts() {
         .unwrap_err(),
         hypermesh::exact::ConstructionProvenanceValidationError::LossySourcePolicyMismatch
     );
-    SourceProvenance::boolmesh_adapter("reported boolmesh adapter")
+    SourceProvenance::hypermesh_adapter("reported hypermesh adapter")
         .validate()
         .unwrap();
     assert_eq!(
         SourceProvenance {
-            source: MeshSource::BoolmeshAdapter,
-            label: "boolmesh edge cannot pretend to be display-only".to_string(),
+            source: MeshSource::HypermeshAdapter,
+            label: "hypermesh edge cannot pretend to be display-only".to_string(),
             approximation: ApproximationPolicy::EdgeOnly,
         }
         .validate()
         .unwrap_err(),
-        hypermesh::exact::ConstructionProvenanceValidationError::BoolmeshAdapterPolicyMismatch
+        hypermesh::exact::ConstructionProvenanceValidationError::HypermeshAdapterPolicyMismatch
     );
     SourceProvenance::external_adapter("reported external adapter")
         .validate()

@@ -24,8 +24,8 @@ pub enum MeshArtifactSourceKind {
     /// An accepted [`ExactMesh`] built from finite primitive floats lifted as
     /// exact dyadics and replayed by exact validation.
     HypermeshLossyF64Replay,
-    /// An accepted [`ExactMesh`] whose source was a boolmesh adapter.
-    HypermeshBoolmeshAdapterReplay,
+    /// An accepted [`ExactMesh`] whose source was a hypermesh adapter.
+    HypermeshAdapterReplay,
     /// An accepted [`ExactMesh`] whose source was an external adapter.
     HypermeshExternalAdapterReplay,
     /// BREP planar/analytic tessellation manifest with exact source replay.
@@ -375,7 +375,7 @@ impl MeshArtifactManifest {
 
     /// Build a manifest from an accepted exact mesh proposal report.
     ///
-    /// This is the proposal-facing adapter for boolmesh-derived topology,
+    /// This is the proposal-facing adapter for hypermesh-derived topology,
     /// primitive-float imports, and external producers that have already crossed
     /// [`certify_exact_mesh_proposal`](crate::exact::proposal::certify_exact_mesh_proposal).
     /// The proposal report must replay against `mesh` before the shared
@@ -689,7 +689,7 @@ fn source_kind_from_mesh_source(source: MeshSource) -> MeshArtifactSourceKind {
     match source {
         MeshSource::Exact => MeshArtifactSourceKind::HypermeshExact,
         MeshSource::LossyF64 => MeshArtifactSourceKind::HypermeshLossyF64Replay,
-        MeshSource::BoolmeshAdapter => MeshArtifactSourceKind::HypermeshBoolmeshAdapterReplay,
+        MeshSource::HypermeshAdapter => MeshArtifactSourceKind::HypermeshAdapterReplay,
         MeshSource::ExternalAdapter => MeshArtifactSourceKind::HypermeshExternalAdapterReplay,
     }
 }
@@ -700,7 +700,7 @@ fn numeric_contract_from_mesh_source(source: MeshSource) -> MeshNumericAdapterCo
             MeshNumericAdapterContract::exact(MeshCoordinateEvidence::ExactRational)
         }
         MeshSource::LossyF64 => MeshNumericAdapterContract::dyadic_lossy_replayed(),
-        MeshSource::BoolmeshAdapter | MeshSource::ExternalAdapter => MeshNumericAdapterContract {
+        MeshSource::HypermeshAdapter | MeshSource::ExternalAdapter => MeshNumericAdapterContract {
             coordinate_evidence: MeshCoordinateEvidence::CertifiedDerivedExact,
             exact_coordinate_replay: true,
             primitive_float_lowering: false,
