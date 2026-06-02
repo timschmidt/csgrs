@@ -7,8 +7,6 @@
 //! retained intersection-graph events may replay against those rows, but they
 //! no longer append shortcut segment/plane rows outside the boolmesh schedule.
 //! That keeps topology mutation aligned with the published boolmesh kernel
-//! while following Yap's exact-object boundary from "Towards Exact Geometric
-//! Computation," *Computational Geometry* 7.1-2 (1997).  Coplanar split facts
 //! remain a separate exact bridge until the positive-area boolmesh coplanar
 //! branch is fully ported.
 
@@ -56,15 +54,8 @@ pub(super) struct ExactBoolMeshKernel12Lowering {
 /// Lower direct boolmesh `intersect12` rows into exact topology tables.
 ///
 /// The row source is the exact port of boolmesh's bidirectional
-/// `boolean03::kernel12::intersect12` loop.  Moller, "A Fast
-/// Triangle-Triangle Intersection Test," *Journal of Graphics Tools* 2.2
-/// (1997), and Guigue and Devillers, "Fast and Robust Triangle-Triangle
-/// Overlap Test Using Orientation Predicates," *Journal of Graphics Tools* 8.1
-/// (2003), remain the geometric substrate for retained event discovery, but
 /// retained events do not own row cardinality here.  They can only consume or
 /// validate rows already emitted by the exact boolmesh accumulator, preserving
-/// the algorithmic boundary required by Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997).
 pub(super) fn lower_kernel12_events(
     events: &[ExactBoolMeshKernel12Event],
     coplanar_evidence: &[Kernel12CoplanarEvidence],
@@ -137,8 +128,6 @@ pub(super) fn lower_kernel12_events(
 /// events are still useful as fallbacks while boundary and coplanar discovery
 /// are being finished, but they should not be the primary row source once the
 /// accumulator loop can replay the row itself.  Trusting the row only after it
-/// carries exact construction witnesses follows Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997).
 fn seed_intersect12_hits(
     tables: &ExactKernel12IntersectTables,
     left: &mut Vec<LoweredKernel12Event>,
@@ -181,9 +170,6 @@ enum Intersect12Replay {
 /// after exact AABB scheduling and `Kernel12::op` accumulation.  If multiple
 /// retained graph events map to the same row, only the first can consume it;
 /// later matches are represented by that row and must not be re-lowered by the
-/// older segment/plane shortcut.  That row-level replay follows Yap's
-/// exact-object discipline from "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997): the retained event must agree with
 /// the exact boolmesh accumulator point and source-edge parameter before
 /// topology tables are mutated.
 fn lower_intersect12_replay(
@@ -260,8 +246,6 @@ fn intersect12_hit_has_same_boolmesh_row(
     // Retained graph evidence may disagree about the witness point when it was
     // observed through a boundary or reverse face use, but it must not append a
     // second topology row once this scheduled call emitted one.  This keeps the
-    // exact replay boundary advocated by Yap, "Towards Exact Geometric
-    // Computation," Computational Geometry 7.1-2 (1997): the certified
     // combinatorial row is consumed as an exact object, not reconstructed from
     // another geometric representative.
     event.edge_face.source_halfedge == hit.edge_face.source_halfedge
@@ -272,13 +256,13 @@ fn intersect12_hit_has_same_boolmesh_row(
 
 fn event_parameter_matches_intersect12_hit(
     event_edge: [usize; 2],
-    event_parameter: &super::ExactReal,
+    event_parameter: &super::Real,
     hit: &ExactKernel12IntersectHit,
 ) -> bool {
     if event_edge == hit.edge_face.edge {
         compare_reals(event_parameter, &hit.parameter).value() == Some(Ordering::Equal)
     } else if event_edge == [hit.edge_face.edge[1], hit.edge_face.edge[0]] {
-        let reversed = super::ExactReal::from(1) - &hit.parameter;
+        let reversed = super::Real::from(1) - &hit.parameter;
         compare_reals(event_parameter, &reversed).value() == Some(Ordering::Equal)
     } else {
         false
@@ -290,7 +274,7 @@ struct LoweredKernel12Event {
     edge_face: ExactBoolMeshEdgeFacePair,
     sign: i32,
     point: Point3,
-    parameter: super::ExactReal,
+    parameter: super::Real,
     point_construction: ExactBoolMeshPointConstruction,
 }
 
@@ -309,7 +293,7 @@ fn source_edge_event(event: &LoweredKernel12Event, collision: usize) -> ExactBoo
 
 fn segment_plane_construction(
     edge_face: ExactBoolMeshEdgeFacePair,
-    parameter: super::ExactReal,
+    parameter: super::Real,
 ) -> ExactBoolMeshPointConstruction {
     ExactBoolMeshPointConstruction::SegmentPlane {
         edge_side: edge_face.edge_side,
@@ -348,7 +332,6 @@ fn push_coplanar_row_if_new(events: &mut Vec<LoweredKernel12Event>, row: ExactCo
 /// boolmesh accumulation shape for cases where the exact point and parameter
 /// are certified identical.  Non-identical multi-shadow groups are left split
 /// until the full `Kernel11` interpolation rule is ported; collapsing them to a
-/// representative point would violate Yap's exact-object replay boundary.
 fn coalesce_lowered_events(events: &mut Vec<LoweredKernel12Event>) {
     sort_lowered_events(events);
     let mut coalesced = Vec::new();
@@ -419,20 +402,20 @@ pub(super) fn internal_fuzz_probe(selector: u8) -> bool {
     let top = 5 + i64::from(selector % 2);
     let left = ExactMesh::new_with_policy(
         vec![
-            crate::exact::mesh::ExactPoint3::new(
-                super::ExactReal::from(1),
-                super::ExactReal::from(1),
-                super::ExactReal::from(0),
+            crate::exact::mesh::Point3::new(
+                super::Real::from(1),
+                super::Real::from(1),
+                super::Real::from(0),
             ),
-            crate::exact::mesh::ExactPoint3::new(
-                super::ExactReal::from(1),
-                super::ExactReal::from(1),
-                super::ExactReal::from(top),
+            crate::exact::mesh::Point3::new(
+                super::Real::from(1),
+                super::Real::from(1),
+                super::Real::from(top),
             ),
-            crate::exact::mesh::ExactPoint3::new(
-                super::ExactReal::from(2),
-                super::ExactReal::from(1),
-                super::ExactReal::from(top),
+            crate::exact::mesh::Point3::new(
+                super::Real::from(2),
+                super::Real::from(1),
+                super::Real::from(top),
             ),
         ],
         vec![crate::exact::mesh::Triangle([0, 1, 2])],
@@ -442,20 +425,20 @@ pub(super) fn internal_fuzz_probe(selector: u8) -> bool {
     .expect("deterministic accumulator replay source fixture must import");
     let right = ExactMesh::new_with_policy(
         vec![
-            crate::exact::mesh::ExactPoint3::new(
-                super::ExactReal::from(0),
-                super::ExactReal::from(0),
-                super::ExactReal::from(4),
+            crate::exact::mesh::Point3::new(
+                super::Real::from(0),
+                super::Real::from(0),
+                super::Real::from(4),
             ),
-            crate::exact::mesh::ExactPoint3::new(
-                super::ExactReal::from(4),
-                super::ExactReal::from(0),
-                super::ExactReal::from(4),
+            crate::exact::mesh::Point3::new(
+                super::Real::from(4),
+                super::Real::from(0),
+                super::Real::from(4),
             ),
-            crate::exact::mesh::ExactPoint3::new(
-                super::ExactReal::from(0),
-                super::ExactReal::from(4),
-                super::ExactReal::from(4),
+            crate::exact::mesh::Point3::new(
+                super::Real::from(0),
+                super::Real::from(4),
+                super::Real::from(4),
             ),
         ],
         vec![crate::exact::mesh::Triangle([0, 1, 2])],
@@ -477,11 +460,11 @@ pub(super) fn internal_fuzz_probe(selector: u8) -> bool {
         },
         relation: super::SegmentPlaneRelation::ProperCrossing,
         point: Some(Point3::new(
-            super::ExactReal::from(1),
-            super::ExactReal::from(1),
-            super::ExactReal::from(4),
+            super::Real::from(1),
+            super::Real::from(1),
+            super::Real::from(4),
         )),
-        parameter: Some((super::ExactReal::from(4) / super::ExactReal::from(top)).unwrap()),
+        parameter: Some((super::Real::from(4) / super::Real::from(top)).unwrap()),
         parameter_ratio: None,
         construction_failure: None,
         endpoint_sides: [None, None],
@@ -494,9 +477,9 @@ pub(super) fn internal_fuzz_probe(selector: u8) -> bool {
         && same_point(
             &lowering.v12[0],
             &Point3::new(
-                super::ExactReal::from(1),
-                super::ExactReal::from(1),
-                super::ExactReal::from(4),
+                super::Real::from(1),
+                super::Real::from(1),
+                super::Real::from(4),
             ),
         )
 }
@@ -506,7 +489,7 @@ mod tests {
     use super::super::SegmentPlaneRelation;
     use super::*;
     use crate::exact::SourceProvenance;
-    use crate::exact::mesh::{ExactMesh, ExactPoint3, Triangle};
+    use crate::exact::mesh::{ExactMesh, Triangle};
     use crate::exact::validation::ValidationPolicy;
     use hyperlimit::PlaneSide;
 
@@ -536,7 +519,7 @@ mod tests {
 
     fn endpoint_event(
         point: Point3,
-        parameter: super::super::ExactReal,
+        parameter: super::super::Real,
         endpoint_sides: [Option<PlaneSide>; 2],
     ) -> ExactBoolMeshKernel12Event {
         ExactBoolMeshKernel12Event {
@@ -553,20 +536,20 @@ mod tests {
     fn open_accumulator_replay_meshes() -> (ExactMesh, ExactMesh) {
         let left = ExactMesh::new_with_policy(
             vec![
-                ExactPoint3::new(
-                    super::super::ExactReal::from(1),
-                    super::super::ExactReal::from(1),
-                    super::super::ExactReal::from(0),
+                Point3::new(
+                    super::super::Real::from(1),
+                    super::super::Real::from(1),
+                    super::super::Real::from(0),
                 ),
-                ExactPoint3::new(
-                    super::super::ExactReal::from(1),
-                    super::super::ExactReal::from(1),
-                    super::super::ExactReal::from(5),
+                Point3::new(
+                    super::super::Real::from(1),
+                    super::super::Real::from(1),
+                    super::super::Real::from(5),
                 ),
-                ExactPoint3::new(
-                    super::super::ExactReal::from(2),
-                    super::super::ExactReal::from(1),
-                    super::super::ExactReal::from(5),
+                Point3::new(
+                    super::super::Real::from(2),
+                    super::super::Real::from(1),
+                    super::super::Real::from(5),
                 ),
             ],
             vec![Triangle([0, 1, 2])],
@@ -576,20 +559,20 @@ mod tests {
         .unwrap();
         let right = ExactMesh::new_with_policy(
             vec![
-                ExactPoint3::new(
-                    super::super::ExactReal::from(0),
-                    super::super::ExactReal::from(0),
-                    super::super::ExactReal::from(4),
+                Point3::new(
+                    super::super::Real::from(0),
+                    super::super::Real::from(0),
+                    super::super::Real::from(4),
                 ),
-                ExactPoint3::new(
-                    super::super::ExactReal::from(4),
-                    super::super::ExactReal::from(0),
-                    super::super::ExactReal::from(4),
+                Point3::new(
+                    super::super::Real::from(4),
+                    super::super::Real::from(0),
+                    super::super::Real::from(4),
                 ),
-                ExactPoint3::new(
-                    super::super::ExactReal::from(0),
-                    super::super::ExactReal::from(4),
-                    super::super::ExactReal::from(4),
+                Point3::new(
+                    super::super::Real::from(0),
+                    super::super::Real::from(4),
+                    super::super::Real::from(4),
                 ),
             ],
             vec![Triangle([0, 1, 2])],
@@ -605,13 +588,11 @@ mod tests {
             edge_face: edge_face(),
             relation: SegmentPlaneRelation::ProperCrossing,
             point: Some(Point3::new(
-                super::super::ExactReal::from(1),
-                super::super::ExactReal::from(1),
-                super::super::ExactReal::from(4),
+                super::super::Real::from(1),
+                super::super::Real::from(1),
+                super::super::Real::from(4),
             )),
-            parameter: Some(
-                (super::super::ExactReal::from(4) / super::super::ExactReal::from(5)).unwrap(),
-            ),
+            parameter: Some((super::super::Real::from(4) / super::super::Real::from(5)).unwrap()),
             parameter_ratio: None,
             construction_failure: None,
             endpoint_sides: [None, None],
@@ -622,20 +603,19 @@ mod tests {
         let mut event = accumulator_replay_event();
         event.edge_face.edge = [1, 0];
         event.parameter =
-            Some((super::super::ExactReal::from(1) / super::super::ExactReal::from(5)).unwrap());
+            Some((super::super::Real::from(1) / super::super::Real::from(5)).unwrap());
         event
     }
 
     fn lowered_event(sign: i32) -> LoweredKernel12Event {
-        let parameter =
-            (super::super::ExactReal::from(1) / super::super::ExactReal::from(2)).unwrap();
+        let parameter = (super::super::Real::from(1) / super::super::Real::from(2)).unwrap();
         LoweredKernel12Event {
             edge_face: edge_face(),
             sign,
             point: Point3::new(
-                super::super::ExactReal::from(1),
-                super::super::ExactReal::from(1),
-                super::super::ExactReal::from(1),
+                super::super::Real::from(1),
+                super::super::Real::from(1),
+                super::super::Real::from(1),
             ),
             parameter: parameter.clone(),
             point_construction: segment_plane_construction(edge_face(), parameter),
@@ -667,11 +647,11 @@ mod tests {
         let lowering = lower_kernel12_events(
             &[endpoint_event(
                 Point3::new(
-                    super::super::ExactReal::from(2),
-                    super::super::ExactReal::from(0),
-                    super::super::ExactReal::from(0),
+                    super::super::Real::from(2),
+                    super::super::Real::from(0),
+                    super::super::Real::from(0),
                 ),
-                super::super::ExactReal::from(0),
+                super::super::Real::from(0),
                 [Some(PlaneSide::On), Some(PlaneSide::Above)],
             )],
             &[],
@@ -705,9 +685,9 @@ mod tests {
         assert_eq!(
             lowering.v12,
             vec![Point3::new(
-                super::super::ExactReal::from(1),
-                super::super::ExactReal::from(1),
-                super::super::ExactReal::from(4),
+                super::super::Real::from(1),
+                super::super::Real::from(1),
+                super::super::Real::from(4),
             )]
         );
         assert_eq!(lowering.source_edge_events.len(), 1);
@@ -729,7 +709,7 @@ mod tests {
         assert_eq!(
             compare_reals(
                 &lowering.source_edge_events[0].parameter,
-                &(super::super::ExactReal::from(4) / super::super::ExactReal::from(5)).unwrap()
+                &(super::super::Real::from(4) / super::super::Real::from(5)).unwrap()
             )
             .value(),
             Some(Ordering::Equal)
@@ -761,9 +741,9 @@ mod tests {
         let (left, right) = open_accumulator_replay_meshes();
         let mut event = accumulator_replay_event();
         event.point = Some(Point3::new(
-            super::super::ExactReal::from(1),
-            super::super::ExactReal::from(1),
-            super::super::ExactReal::from(3),
+            super::super::Real::from(1),
+            super::super::Real::from(1),
+            super::super::Real::from(3),
         ));
         let lowering = lower_kernel12_events(&[event], &[], &left, &right);
 
@@ -774,9 +754,9 @@ mod tests {
         assert_eq!(
             lowering.v12,
             vec![Point3::new(
-                super::super::ExactReal::from(1),
-                super::super::ExactReal::from(1),
-                super::super::ExactReal::from(4),
+                super::super::Real::from(1),
+                super::super::Real::from(1),
+                super::super::Real::from(4),
             )]
         );
         assert!(lowering.v21.is_empty());

@@ -8,21 +8,13 @@
 //! policy; exact consumers then decide whether the artifact may be used as a
 //! validation handoff or only as preview/proposal data.
 //!
-//! This follows Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7.1-2 (1997): the geometric object, approximate
-//! view, and proof-producing replay report are separate artifacts. The source
-//! kinds also name common meshing routes rather than hiding them behind
-//! anonymous triangles. Surface Nets preview routes are identified near the
-//! vocabulary introduced by Gibson, "Constrained Elastic Surface Nets"
-//! (1998); marching-cube-like preview/export routes are kept separate from
-//! Lorensen and Cline, "Marching Cubes" (1987); voxel greedy meshing is named
-//! as a display-adapter family following Lysenko, "Meshing in a Minecraft
-//! Game" (2012).
+//! The source kinds name common meshing routes rather than hiding them behind
+//! anonymous triangles. Preview/export routes stay distinct from exact replay
+//! routes so consumers can reject topology that was not retained as exact
+//! evidence.
 
-use super::{
-    ExactMesh, ExactMeshProposalReport, ExactMeshProposalReportError, ExactMeshValidationError,
-    MeshSource, ValidationPolicy, audit_exact_mesh,
-};
+use super::proposal::{ExactMeshProposalReport, ExactMeshProposalReportError};
+use super::{ExactMesh, ExactMeshValidationError, MeshSource, ValidationPolicy, audit_exact_mesh};
 
 /// Producer family for a mesh-shaped artifact.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -32,8 +24,8 @@ pub enum MeshArtifactSourceKind {
     /// An accepted [`ExactMesh`] built from finite primitive floats lifted as
     /// exact dyadics and replayed by exact validation.
     HypermeshLossyF64Replay,
-    /// An accepted [`ExactMesh`] whose source was a legacy boolmesh adapter.
-    HypermeshLegacyAdapterReplay,
+    /// An accepted [`ExactMesh`] whose source was a boolmesh adapter.
+    HypermeshBoolmeshAdapterReplay,
     /// An accepted [`ExactMesh`] whose source was an external adapter.
     HypermeshExternalAdapterReplay,
     /// BREP planar/analytic tessellation manifest with exact source replay.
@@ -56,11 +48,8 @@ impl MeshArtifactSourceKind {
     /// Return whether this producer family is intrinsically preview/export
     /// evidence.
     ///
-    /// A malicious or buggy adapter can attach exact-looking records to a
-    /// preview route. Yap's retained-object distinction in "Towards Exact
-    /// Geometric Computation" requires the route itself to remain visible, so
-    /// these source kinds are never validation handoffs even when their counts
-    /// and records are internally well shaped.
+    /// Preview routes are never validation handoffs, even when their counts and
+    /// records are internally well shaped.
     pub const fn is_preview_or_export_source(self) -> bool {
         matches!(self, Self::SdfSurfaceNetsPreview | Self::VoxelGreedyPreview)
     }
@@ -386,13 +375,12 @@ impl MeshArtifactManifest {
 
     /// Build a manifest from an accepted exact mesh proposal report.
     ///
-    /// This is the proposal-facing adapter for legacy booleans, primitive-float
-    /// imports, and external producers that have already crossed
-    /// [`certify_exact_mesh_proposal`](crate::exact::certify_exact_mesh_proposal).
+    /// This is the proposal-facing adapter for boolmesh-derived topology,
+    /// primitive-float imports, and external producers that have already crossed
+    /// [`certify_exact_mesh_proposal`](crate::exact::proposal::certify_exact_mesh_proposal).
     /// The proposal report must replay against `mesh` before the shared
     /// artifact is emitted. That keeps the accepted topology, source route, and
     /// lossy-adapter status coupled to the exact mesh audit, as required by
-    /// Yap's "Towards Exact Geometric Computation" retained-object model.
     pub fn from_exact_mesh_proposal(
         mesh: &ExactMesh,
         proposal: &ExactMeshProposalReport,
@@ -451,7 +439,6 @@ impl MeshArtifactManifest {
     /// Build a BREP exact-triangle handoff from explicit exact records.
     ///
     /// This route is for retained shell/face triangulations whose source loops
-    /// replay exactly. It is separate from preview tessellation because Yap's
     /// model treats approximate views and proof-bearing objects as distinct
     /// artifacts.
     pub fn brep_exact_triangle_handoff(
@@ -476,7 +463,6 @@ impl MeshArtifactManifest {
     /// Exposed voxel faces are retained as exact integer-grid evidence rather
     /// than as a lossy display mesh. Greedy display/export meshes should use
     /// [`Self::voxel_greedy_preview`] instead; this distinction follows the
-    /// exact-object versus approximate-view split in Yap's paper.
     pub fn voxel_exposed_face_handoff(
         source_label: impl Into<String>,
         source_version: u64,
@@ -703,7 +689,7 @@ fn source_kind_from_mesh_source(source: MeshSource) -> MeshArtifactSourceKind {
     match source {
         MeshSource::Exact => MeshArtifactSourceKind::HypermeshExact,
         MeshSource::LossyF64 => MeshArtifactSourceKind::HypermeshLossyF64Replay,
-        MeshSource::LegacyBoolmeshAdapter => MeshArtifactSourceKind::HypermeshLegacyAdapterReplay,
+        MeshSource::BoolmeshAdapter => MeshArtifactSourceKind::HypermeshBoolmeshAdapterReplay,
         MeshSource::ExternalAdapter => MeshArtifactSourceKind::HypermeshExternalAdapterReplay,
     }
 }
@@ -714,16 +700,14 @@ fn numeric_contract_from_mesh_source(source: MeshSource) -> MeshNumericAdapterCo
             MeshNumericAdapterContract::exact(MeshCoordinateEvidence::ExactRational)
         }
         MeshSource::LossyF64 => MeshNumericAdapterContract::dyadic_lossy_replayed(),
-        MeshSource::LegacyBoolmeshAdapter | MeshSource::ExternalAdapter => {
-            MeshNumericAdapterContract {
-                coordinate_evidence: MeshCoordinateEvidence::CertifiedDerivedExact,
-                exact_coordinate_replay: true,
-                primitive_float_lowering: false,
-                lossy_adapter_route: true,
-                source_replay_ready: true,
-                preview_only: false,
-            }
-        }
+        MeshSource::BoolmeshAdapter | MeshSource::ExternalAdapter => MeshNumericAdapterContract {
+            coordinate_evidence: MeshCoordinateEvidence::CertifiedDerivedExact,
+            exact_coordinate_replay: true,
+            primitive_float_lowering: false,
+            lossy_adapter_route: true,
+            source_replay_ready: true,
+            preview_only: false,
+        },
     }
 }
 

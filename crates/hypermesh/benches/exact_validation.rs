@@ -1,41 +1,49 @@
-#![cfg(feature = "exact")]
-
 use criterion::{Criterion, criterion_group, criterion_main};
 use hyperlimit::Point3;
-#[cfg(all(feature = "exact-triangulation", feature = "internal-fuzzing"))]
-use hypermesh::exact::boolmesh::exact_boolmesh_boolean45_triangulation_probe_for_internal_fuzz;
-#[cfg(all(feature = "exact-triangulation", feature = "internal-fuzzing"))]
-use hypermesh::exact::boolmesh::exact_boolmesh_cleanup_probe_for_internal_fuzz;
-#[cfg(all(feature = "exact-triangulation", feature = "internal-fuzzing"))]
-use hypermesh::exact::boolmesh::exact_boolmesh_kernel_frame_probe_for_internal_fuzz;
-#[cfg(all(feature = "exact-triangulation", feature = "internal-fuzzing"))]
-use hypermesh::exact::boolmesh::exact_boolmesh_kernel02_shadow_probe_for_internal_fuzz;
-#[cfg(all(feature = "exact-triangulation", feature = "internal-fuzzing"))]
-use hypermesh::exact::boolmesh::exact_boolmesh_kernel03_winding_probe_for_internal_fuzz;
-#[cfg(all(feature = "exact-triangulation", feature = "internal-fuzzing"))]
-use hypermesh::exact::boolmesh::exact_boolmesh_kernel11_shadow_probe_for_internal_fuzz;
-#[cfg(all(feature = "exact-triangulation", feature = "internal-fuzzing"))]
-use hypermesh::exact::boolmesh::exact_boolmesh_kernel12_accumulator_replay_probe_for_internal_fuzz;
-#[cfg(all(feature = "exact-triangulation", feature = "internal-fuzzing"))]
-use hypermesh::exact::boolmesh::exact_boolmesh_kernel12_intersect_loop_probe_for_internal_fuzz;
-#[cfg(all(feature = "exact-triangulation", feature = "internal-fuzzing"))]
-use hypermesh::exact::boolmesh::exact_boolmesh_kernel12_shadow_accumulator_probe_for_internal_fuzz;
-use hypermesh::exact::{
-    CoplanarArrangementOperation, ExactMesh, ExactPoint3, ExactReportValidationError,
-    FaceRegionPlaneRelation, MeshArtifactBlocker, MeshArtifactFaceRecord, MeshArtifactManifest,
-    MeshArtifactRole, MeshArtifactSourceKind, MeshArtifactVertexRecord, MeshCoordinateEvidence,
-    MeshFacePairClassification, MeshNumericAdapterContract, MeshTopologyEvidence, PredicateUse,
-    SegmentPlaneRelation, SourceProvenance, Triangle, ValidationPolicy,
+use hypermesh::exact::affine_surface::{
     arrange_coplanar_affine_surface_difference, arrange_coplanar_affine_surface_intersection,
     arrange_coplanar_affine_surface_union,
-    arrange_coplanar_convex_surface_component_holed_difference,
+};
+use hypermesh::exact::artifact::{
+    MeshArtifactBlocker, MeshArtifactFaceRecord, MeshArtifactManifest, MeshArtifactRole,
+    MeshArtifactSourceKind, MeshArtifactVertexRecord, MeshCoordinateEvidence,
+    MeshNumericAdapterContract, MeshTopologyEvidence, mesh_artifact_from_exact_mesh,
+    mesh_artifact_from_exact_mesh_proposal,
+};
+#[cfg(feature = "internal-fuzzing")]
+use hypermesh::exact::boolmesh::exact_boolmesh_boolean45_triangulation_probe_for_internal_fuzz;
+#[cfg(feature = "internal-fuzzing")]
+use hypermesh::exact::boolmesh::exact_boolmesh_cleanup_probe_for_internal_fuzz;
+#[cfg(feature = "internal-fuzzing")]
+use hypermesh::exact::boolmesh::exact_boolmesh_kernel_frame_probe_for_internal_fuzz;
+#[cfg(feature = "internal-fuzzing")]
+use hypermesh::exact::boolmesh::exact_boolmesh_kernel02_shadow_probe_for_internal_fuzz;
+#[cfg(feature = "internal-fuzzing")]
+use hypermesh::exact::boolmesh::exact_boolmesh_kernel03_winding_probe_for_internal_fuzz;
+#[cfg(feature = "internal-fuzzing")]
+use hypermesh::exact::boolmesh::exact_boolmesh_kernel11_shadow_probe_for_internal_fuzz;
+#[cfg(feature = "internal-fuzzing")]
+use hypermesh::exact::boolmesh::exact_boolmesh_kernel12_accumulator_replay_probe_for_internal_fuzz;
+#[cfg(feature = "internal-fuzzing")]
+use hypermesh::exact::boolmesh::exact_boolmesh_kernel12_intersect_loop_probe_for_internal_fuzz;
+#[cfg(feature = "internal-fuzzing")]
+use hypermesh::exact::boolmesh::exact_boolmesh_kernel12_shadow_accumulator_probe_for_internal_fuzz;
+use hypermesh::exact::orthogonal_surface::{
+    arrange_coplanar_orthogonal_surface_difference,
+    arrange_coplanar_orthogonal_surface_intersection, arrange_coplanar_orthogonal_surface_union,
+};
+use hypermesh::exact::planar::certify_planar_arrangement_evidence;
+use hypermesh::exact::proposal::certify_exact_mesh_proposal;
+use hypermesh::exact::region::{
+    FaceRegionPlaneRelation, checked_classify_face_regions_against_opposite_planes,
+};
+use hypermesh::exact::surface::{
+    CoplanarArrangementOperation, arrange_coplanar_convex_surface_component_holed_difference,
     arrange_coplanar_convex_surface_component_union, arrange_coplanar_convex_surface_difference,
     arrange_coplanar_convex_surface_holed_difference, arrange_coplanar_convex_surface_intersection,
     arrange_coplanar_convex_surface_multi_difference,
     arrange_coplanar_convex_surface_multi_holed_difference,
     arrange_coplanar_convex_surface_multi_union, arrange_coplanar_convex_surface_union,
-    arrange_coplanar_orthogonal_surface_difference,
-    arrange_coplanar_orthogonal_surface_intersection, arrange_coplanar_orthogonal_surface_union,
     arrange_coplanar_surface_component_difference,
     arrange_coplanar_surface_component_holed_difference,
     arrange_coplanar_surface_component_holed_intersection,
@@ -47,29 +55,31 @@ use hypermesh::exact::{
     arrange_coplanar_surface_point_touch_difference, arrange_coplanar_surface_point_touch_union,
     arrange_coplanar_surface_side_cutter_difference,
     arrange_single_triangle_coplanar_holed_difference, arrange_single_triangle_coplanar_union,
-    audit_exact_mesh, build_intersection_graph, certify_boundary_touching_report,
-    certify_convex_solid, certify_coplanar_convex_surface_containment,
-    certify_coplanar_convex_surface_equivalence, certify_coplanar_convex_surface_report,
-    certify_coplanar_surface_boundary_touch, certify_coplanar_surface_mesh_containment,
-    certify_coplanar_volumetric_cell_evidence, certify_exact_mesh_proposal,
-    certify_open_surface_disjoint_report, certify_planar_arrangement_evidence,
-    certify_planar_arrangement_report, certify_refinement_report, certify_same_surface_report,
-    certify_single_triangle_coplanar_containment,
-    certify_single_triangle_coplanar_containment_report, certify_winding_readiness_report,
-    checked_classify_face_regions_against_opposite_planes, classify_coplanar_triangles,
-    classify_mesh_face_pair, classify_mesh_face_pairs,
+    certify_coplanar_convex_surface_containment, certify_coplanar_convex_surface_equivalence,
+    certify_coplanar_convex_surface_report, certify_coplanar_surface_boundary_touch,
+    certify_coplanar_surface_mesh_containment, certify_single_triangle_coplanar_containment,
+    certify_single_triangle_coplanar_containment_report,
+    difference_single_triangle_coplanar_surfaces, intersect_single_triangle_coplanar_surfaces,
+    union_single_triangle_coplanar_surfaces,
+};
+use hypermesh::exact::volumetric_cells::certify_coplanar_volumetric_cell_evidence;
+use hypermesh::exact::{
+    ExactMesh, ExactReportValidationError, MeshFacePairClassification, PredicateUse,
+    SegmentPlaneRelation, SourceProvenance, Triangle, ValidationPolicy, audit_exact_mesh,
+    build_intersection_graph, certify_boundary_touching_report, certify_convex_solid,
+    certify_open_surface_disjoint_report, certify_planar_arrangement_report,
+    certify_refinement_report, certify_same_surface_report, certify_winding_readiness_report,
+    classify_coplanar_triangles, classify_mesh_face_pair, classify_mesh_face_pairs,
     classify_mesh_triangle_against_retained_face_plane,
     classify_mesh_vertices_against_convex_solid,
     classify_mesh_vertices_against_convex_solid_report, classify_triangle_triangle,
-    difference_single_triangle_coplanar_surfaces, inspect_f64_mesh_input, inspect_i64_mesh_input,
-    intersect_closed_convex_solids, intersect_segment_with_face_plane,
-    intersect_segment_with_retained_face_plane, intersect_single_triangle_coplanar_surfaces,
-    mesh_artifact_from_exact_mesh, mesh_artifact_from_exact_mesh_proposal,
-    subtract_closed_convex_solids_single_cap, union_single_triangle_coplanar_surfaces,
+    inspect_f64_mesh_input, inspect_i64_mesh_input, intersect_closed_convex_solids,
+    intersect_segment_with_face_plane, intersect_segment_with_retained_face_plane,
+    subtract_closed_convex_solids_single_cap,
 };
+
 use hyperreal::Real;
 
-#[cfg(feature = "exact-triangulation")]
 fn rect_surface_i64(rectangles: &[(i64, i64, i64, i64)]) -> ExactMesh {
     let mut coordinates = Vec::with_capacity(rectangles.len() * 12);
     let mut indices = Vec::with_capacity(rectangles.len() * 6);
@@ -91,7 +101,6 @@ fn rect_surface_i64(rectangles: &[(i64, i64, i64, i64)]) -> ExactMesh {
     .unwrap()
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn fan_rect_surface_i64(rectangles: &[(i64, i64, i64, i64)]) -> ExactMesh {
     let mut coordinates = Vec::with_capacity(rectangles.len() * 15);
     let mut indices = Vec::with_capacity(rectangles.len() * 12);
@@ -125,7 +134,6 @@ fn fan_rect_surface_i64(rectangles: &[(i64, i64, i64, i64)]) -> ExactMesh {
     .unwrap()
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn affine_rect_surface_i64(
     rectangles: &[(i64, i64, i64, i64)],
     origin: (i64, i64, i64),
@@ -156,7 +164,6 @@ fn affine_rect_surface_i64(
     .unwrap()
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn affine_fan_rect_surface_i64(
     rectangles: &[(i64, i64, i64, i64)],
     origin: (i64, i64, i64),
@@ -208,11 +215,10 @@ fn affine_fan_rect_surface_i64(
     .unwrap()
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn fan_surface_mesh_from_points(points: &[Point3]) -> ExactMesh {
     let vertices = points
         .iter()
-        .map(|point| ExactPoint3::new(point.x.clone(), point.y.clone(), point.z.clone()))
+        .map(|point| Point3::new(point.x.clone(), point.y.clone(), point.z.clone()))
         .collect::<Vec<_>>();
     let triangles = (1..points.len() - 1)
         .map(|index| Triangle([0, index, index + 1]))
@@ -226,7 +232,6 @@ fn fan_surface_mesh_from_points(points: &[Point3]) -> ExactMesh {
     .unwrap()
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn axis_aligned_box_i64(min: [i64; 3], max: [i64; 3]) -> ExactMesh {
     ExactMesh::from_i64_triangles(
         &[
@@ -242,7 +247,6 @@ fn axis_aligned_box_i64(min: [i64; 3], max: [i64; 3]) -> ExactMesh {
     .unwrap()
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn tetrahedron_i64(a: [i64; 3], b: [i64; 3], c: [i64; 3], d: [i64; 3]) -> ExactMesh {
     ExactMesh::from_i64_triangles(
         &[
@@ -253,7 +257,6 @@ fn tetrahedron_i64(a: [i64; 3], b: [i64; 3], c: [i64; 3], d: [i64; 3]) -> ExactM
     .unwrap()
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn downward_square_pyramid_i64(
     a: [i64; 3],
     b: [i64; 3],
@@ -274,7 +277,6 @@ fn downward_square_pyramid_i64(
     .unwrap()
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn downward_square_pyramid_opposite_diagonal_i64(
     a: [i64; 3],
     b: [i64; 3],
@@ -295,7 +297,6 @@ fn downward_square_pyramid_opposite_diagonal_i64(
     .unwrap()
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn downward_square_pyramid_quad_fan_i64(
     a: [i64; 3],
     b: [i64; 3],
@@ -317,7 +318,6 @@ fn downward_square_pyramid_quad_fan_i64(
     .unwrap()
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn downward_square_pyramid_two_branch_i64(
     a: [i64; 3],
     b: [i64; 3],
@@ -340,7 +340,6 @@ fn downward_square_pyramid_two_branch_i64(
     .unwrap()
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn l_prism_pair_i64() -> (ExactMesh, ExactMesh) {
     let vertices = &[
         0, 0, 0, 4, 0, 0, 4, 2, 0, 2, 2, 0, 2, 4, 0, 0, 4, 0, 0, 0, 5, 4, 0, 5, 4, 2, 5, 2, 2, 5,
@@ -373,7 +372,6 @@ fn l_prism_pair_i64() -> (ExactMesh, ExactMesh) {
     (left, right)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn upward_l_prism_i64(points: [[i64; 2]; 6], top_z: i64) -> ExactMesh {
     ExactMesh::from_i64_triangles(
         &[
@@ -424,7 +422,6 @@ fn upward_l_prism_i64(points: [[i64; 2]; 6], top_z: i64) -> ExactMesh {
     .unwrap()
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn upward_pentagonal_pyramid_i64(
     a: [i64; 3],
     b: [i64; 3],
@@ -446,7 +443,6 @@ fn upward_pentagonal_pyramid_i64(
     .unwrap()
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn downward_pentagonal_pyramid_fan_i64(
     a: [i64; 3],
     b: [i64; 3],
@@ -469,7 +465,6 @@ fn downward_pentagonal_pyramid_fan_i64(
     .unwrap()
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn upward_hexagonal_pyramid_i64(points: [[i64; 3]; 6], apex: [i64; 3]) -> ExactMesh {
     ExactMesh::from_i64_triangles(
         &[
@@ -503,7 +498,6 @@ fn upward_hexagonal_pyramid_i64(points: [[i64; 3]; 6], apex: [i64; 3]) -> ExactM
     .unwrap()
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn downward_hexagonal_pyramid_fan_i64(
     points: [[i64; 3]; 6],
     center: [i64; 3],
@@ -544,7 +538,6 @@ fn downward_hexagonal_pyramid_fan_i64(
     .unwrap()
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn upward_heptagonal_pyramid_i64(points: [[i64; 3]; 7], apex: [i64; 3]) -> ExactMesh {
     ExactMesh::from_i64_triangles(
         &[
@@ -581,7 +574,6 @@ fn upward_heptagonal_pyramid_i64(points: [[i64; 3]; 7], apex: [i64; 3]) -> Exact
     .unwrap()
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn downward_heptagonal_pyramid_fan_i64(
     points: [[i64; 3]; 7],
     center: [i64; 3],
@@ -625,7 +617,6 @@ fn downward_heptagonal_pyramid_fan_i64(
     .unwrap()
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn upward_octagonal_pyramid_i64(points: [[i64; 3]; 8], apex: [i64; 3]) -> ExactMesh {
     ExactMesh::from_i64_triangles(
         &[
@@ -665,7 +656,6 @@ fn upward_octagonal_pyramid_i64(points: [[i64; 3]; 8], apex: [i64; 3]) -> ExactM
     .unwrap()
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn downward_octagonal_pyramid_fan_i64(
     points: [[i64; 3]; 8],
     center: [i64; 3],
@@ -712,7 +702,6 @@ fn downward_octagonal_pyramid_fan_i64(
     .unwrap()
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn upward_nonagonal_pyramid_i64(points: [[i64; 3]; 9], apex: [i64; 3]) -> ExactMesh {
     ExactMesh::from_i64_triangles(
         &[
@@ -755,7 +744,6 @@ fn upward_nonagonal_pyramid_i64(points: [[i64; 3]; 9], apex: [i64; 3]) -> ExactM
     .unwrap()
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn downward_nonagonal_pyramid_fan_i64(
     points: [[i64; 3]; 9],
     center: [i64; 3],
@@ -807,7 +795,6 @@ fn downward_nonagonal_pyramid_fan_i64(
     .unwrap()
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn upward_polygonal_pyramid_i64(points: &[[i64; 3]], apex: [i64; 3]) -> ExactMesh {
     assert!(points.len() >= 3);
     let apex_index = points.len();
@@ -826,7 +813,6 @@ fn upward_polygonal_pyramid_i64(points: &[[i64; 3]], apex: [i64; 3]) -> ExactMes
     ExactMesh::from_i64_triangles(&coordinates, &indices).unwrap()
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn downward_polygonal_pyramid_fan_i64(
     points: &[[i64; 3]],
     center: [i64; 3],
@@ -851,7 +837,6 @@ fn downward_polygonal_pyramid_fan_i64(
     ExactMesh::from_i64_triangles(&coordinates, &indices).unwrap()
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn upward_square_pyramid_i64(
     a: [i64; 3],
     b: [i64; 3],
@@ -872,7 +857,6 @@ fn upward_square_pyramid_i64(
     .unwrap()
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn combine_exact_meshes(meshes: &[ExactMesh], label: &'static str) -> ExactMesh {
     let mut vertices = Vec::new();
     let mut triangles = Vec::new();
@@ -896,7 +880,6 @@ fn combine_exact_meshes(meshes: &[ExactMesh], label: &'static str) -> ExactMesh 
     .unwrap()
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn combine_open_exact_meshes(meshes: &[ExactMesh], label: &'static str) -> ExactMesh {
     let mut vertices = Vec::new();
     let mut triangles = Vec::new();
@@ -920,7 +903,6 @@ fn combine_open_exact_meshes(meshes: &[ExactMesh], label: &'static str) -> Exact
     .unwrap()
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn base_fan_tetrahedron_i64(
     a: [i64; 3],
     b: [i64; 3],
@@ -938,7 +920,6 @@ fn base_fan_tetrahedron_i64(
     .unwrap()
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn upper_base_fan_tetrahedron_i64(
     a: [i64; 3],
     b: [i64; 3],
@@ -956,7 +937,6 @@ fn upper_base_fan_tetrahedron_i64(
     .unwrap()
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn affine_box_i64(
     min: [i64; 3],
     max: [i64; 3],
@@ -993,7 +973,6 @@ fn affine_box_i64(
     .unwrap()
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn top_subdivided_axis_aligned_box_i64(min: [i64; 3], max: [i64; 3]) -> ExactMesh {
     let mid_x = (min[0] + max[0]) / 2;
     let mid_y = (min[1] + max[1]) / 2;
@@ -1029,7 +1008,7 @@ fn exact_tetrahedron_validation(c: &mut Criterion) {
             let points = mesh
                 .vertices()
                 .iter()
-                .map(|point| point.to_hyperlimit_point())
+                .map(|point| point.clone())
                 .collect::<Vec<_>>();
             let triangles = mesh
                 .triangles()
@@ -1263,9 +1242,9 @@ fn exact_mesh_proposal_acceptance(c: &mut Criterion) {
     .unwrap();
     let external = ExactMesh::new_with_policy(
         vec![
-            ExactPoint3::new(Real::from(0), Real::from(0), Real::from(0)),
-            ExactPoint3::new(Real::from(1), Real::from(0), Real::from(0)),
-            ExactPoint3::new(Real::from(0), Real::from(1), Real::from(0)),
+            Point3::new(Real::from(0), Real::from(0), Real::from(0)),
+            Point3::new(Real::from(1), Real::from(0), Real::from(0)),
+            Point3::new(Real::from(0), Real::from(1), Real::from(0)),
         ],
         vec![Triangle([0, 1, 2])],
         SourceProvenance::external_adapter("bench external proposal"),
@@ -1348,7 +1327,7 @@ fn exact_face_plane_fact_retention(c: &mut Criterion) {
             let points = mesh
                 .vertices()
                 .iter()
-                .map(|point| point.to_hyperlimit_point())
+                .map(|point| point.clone())
                 .collect::<Vec<_>>();
             let triangles = mesh
                 .triangles()
@@ -1499,7 +1478,7 @@ fn exact_bounds_candidate_generation(c: &mut Criterion) {
             let left_points = left
                 .vertices()
                 .iter()
-                .map(|point| point.to_hyperlimit_point())
+                .map(|point| point.clone())
                 .collect::<Vec<_>>();
             let left_triangles = left
                 .triangles()
@@ -1509,7 +1488,7 @@ fn exact_bounds_candidate_generation(c: &mut Criterion) {
             let right_points = right
                 .vertices()
                 .iter()
-                .map(|point| point.to_hyperlimit_point())
+                .map(|point| point.clone())
                 .collect::<Vec<_>>();
             let right_triangles = right
                 .triangles()
@@ -1590,7 +1569,7 @@ fn exact_support_dop_witness_refresh(c: &mut Criterion) {
     let mut changed_points = mesh
         .vertices()
         .iter()
-        .map(|point| point.to_hyperlimit_point())
+        .map(|point| point.clone())
         .collect::<Vec<_>>();
     changed_points[2] = Point3::new(Real::from(4), Real::from(5), Real::from(0));
 
@@ -2190,7 +2169,6 @@ fn exact_face_region_plan(c: &mut Criterion) {
 }
 
 fn exact_face_region_earcut(c: &mut Criterion) {
-    #[cfg(feature = "exact-triangulation")]
     {
         let left = ExactMesh::from_i64_triangles_with_policy(
             &[
@@ -2214,15 +2192,15 @@ fn exact_face_region_earcut(c: &mut Criterion) {
         c.bench_function("exact_face_region_earcut", |b| {
             b.iter(|| {
                 let triangulations =
-                    hypermesh::exact::checked_triangulate_face_regions_with_earcut(
+                    hypermesh::exact::region::checked_triangulate_face_regions_with_earcut(
                         &region_plan,
                         &left,
                         &right,
                     )
                     .unwrap();
-                hypermesh::exact::ExactBooleanAssemblyPlan::from_region_triangulations(
+                hypermesh::exact::region::ExactBooleanAssemblyPlan::from_region_triangulations(
                     &triangulations,
-                    hypermesh::exact::ExactRegionSelection::KeepAll,
+                    hypermesh::exact::region::ExactRegionSelection::KeepAll,
                 )
                 .unwrap()
             })
@@ -2230,7 +2208,7 @@ fn exact_face_region_earcut(c: &mut Criterion) {
         c.bench_function("exact_face_region_earcut_source_replay", |b| {
             b.iter(|| {
                 let triangulations =
-                    hypermesh::exact::checked_triangulate_face_regions_with_earcut(
+                    hypermesh::exact::region::checked_triangulate_face_regions_with_earcut(
                         &region_plan,
                         &left,
                         &right,
@@ -2242,17 +2220,19 @@ fn exact_face_region_earcut(c: &mut Criterion) {
                     .collect::<Vec<_>>()
             })
         });
-        let triangulations = hypermesh::exact::checked_triangulate_face_regions_with_earcut(
-            &region_plan,
-            &left,
-            &right,
-        )
-        .unwrap();
-        let assembly = hypermesh::exact::ExactBooleanAssemblyPlan::from_region_triangulations(
-            &triangulations,
-            hypermesh::exact::ExactRegionSelection::KeepAll,
-        )
-        .unwrap();
+        let triangulations =
+            hypermesh::exact::region::checked_triangulate_face_regions_with_earcut(
+                &region_plan,
+                &left,
+                &right,
+            )
+            .unwrap();
+        let assembly =
+            hypermesh::exact::region::ExactBooleanAssemblyPlan::from_region_triangulations(
+                &triangulations,
+                hypermesh::exact::region::ExactRegionSelection::KeepAll,
+            )
+            .unwrap();
         c.bench_function("exact_boolean_assembly_materialization", |b| {
             b.iter(|| {
                 assembly
@@ -2265,7 +2245,7 @@ fn exact_face_region_earcut(c: &mut Criterion) {
                 assembly.validate_against_sources(
                     &left,
                     &right,
-                    hypermesh::exact::ExactRegionSelection::KeepAll,
+                    hypermesh::exact::region::ExactRegionSelection::KeepAll,
                 )
             })
         });
@@ -2284,14 +2264,9 @@ fn exact_face_region_earcut(c: &mut Criterion) {
             },
         );
     }
-    #[cfg(not(feature = "exact-triangulation"))]
-    {
-        let _ = c;
-    }
 }
 
 fn exact_face_interior_steiner_provenance(c: &mut Criterion) {
-    #[cfg(feature = "exact-triangulation")]
     {
         let mesh = ExactMesh::from_i64_triangles_with_policy(
             &[0, 0, 0, 4, 0, 0, 0, 4, 0],
@@ -2299,30 +2274,25 @@ fn exact_face_interior_steiner_provenance(c: &mut Criterion) {
             ValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap();
-        let point2 = |x: i64, y: i64| {
-            hypertri::ExactPoint::new(
-                hypermesh::exact::ExactReal::from(x),
-                hypermesh::exact::ExactReal::from(y),
-            )
-        };
-        let triangulation = hypermesh::exact::FaceRegionTriangulation {
-            side: hypermesh::exact::MeshSide::Left,
+        let point2 = |x: i64, y: i64| hypertri::ExactPoint::new(Real::from(x), Real::from(y));
+        let triangulation = hypermesh::exact::region::FaceRegionTriangulation {
+            side: hypermesh::exact::graph::MeshSide::Left,
             face: 0,
             projection: hypermesh::exact::CoplanarProjection::Xy,
             boundary: vec![
-                hypermesh::exact::FaceSplitBoundaryNode::OriginalVertex {
+                hypermesh::exact::graph::FaceSplitBoundaryNode::OriginalVertex {
                     vertex: 0,
                     point: p3(0, 0, 0),
                 },
-                hypermesh::exact::FaceSplitBoundaryNode::OriginalVertex {
+                hypermesh::exact::graph::FaceSplitBoundaryNode::OriginalVertex {
                     vertex: 1,
                     point: p3(4, 0, 0),
                 },
-                hypermesh::exact::FaceSplitBoundaryNode::OriginalVertex {
+                hypermesh::exact::graph::FaceSplitBoundaryNode::OriginalVertex {
                     vertex: 2,
                     point: p3(0, 4, 0),
                 },
-                hypermesh::exact::FaceSplitBoundaryNode::FaceInterior { point: p3(1, 1, 0) },
+                hypermesh::exact::graph::FaceSplitBoundaryNode::FaceInterior { point: p3(1, 1, 0) },
             ],
             vertices: vec![point2(0, 0), point2(4, 0), point2(0, 4), point2(1, 1)],
             triangles: vec![0, 1, 3, 0, 3, 2],
@@ -2337,20 +2307,20 @@ fn exact_face_interior_steiner_provenance(c: &mut Criterion) {
             &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
         )
         .unwrap();
-        let boundary_centroid_triangulation = hypermesh::exact::FaceRegionTriangulation {
-            side: hypermesh::exact::MeshSide::Left,
+        let boundary_centroid_triangulation = hypermesh::exact::region::FaceRegionTriangulation {
+            side: hypermesh::exact::graph::MeshSide::Left,
             face: 0,
             projection: hypermesh::exact::CoplanarProjection::Xy,
             boundary: vec![
-                hypermesh::exact::FaceSplitBoundaryNode::OriginalVertex {
+                hypermesh::exact::graph::FaceSplitBoundaryNode::OriginalVertex {
                     vertex: 0,
                     point: p3(2, 1, 1),
                 },
-                hypermesh::exact::FaceSplitBoundaryNode::OriginalVertex {
+                hypermesh::exact::graph::FaceSplitBoundaryNode::OriginalVertex {
                     vertex: 1,
                     point: p3(14, 1, 1),
                 },
-                hypermesh::exact::FaceSplitBoundaryNode::OriginalVertex {
+                hypermesh::exact::graph::FaceSplitBoundaryNode::OriginalVertex {
                     vertex: 2,
                     point: p3(1, 14, 1),
                 },
@@ -2367,9 +2337,9 @@ fn exact_face_interior_steiner_provenance(c: &mut Criterion) {
                 )
                 .unwrap();
                 let assembly =
-                    hypermesh::exact::ExactBooleanAssemblyPlan::from_region_triangulations_with_sources(
+                    hypermesh::exact::region::ExactBooleanAssemblyPlan::from_region_triangulations_with_sources(
                         std::slice::from_ref(&triangulation),
-                        hypermesh::exact::ExactRegionSelection::KeepAll,
+                        hypermesh::exact::region::ExactRegionSelection::KeepAll,
                         &mesh,
                         &mesh,
                     )
@@ -2384,7 +2354,7 @@ fn exact_face_interior_steiner_provenance(c: &mut Criterion) {
                         &mesh,
                         ValidationPolicy::ALLOW_BOUNDARY,
                     ),
-                    hypermesh::exact::classify_triangulated_region_triangle_against_closed_mesh(
+                    hypermesh::exact::volumetric::classify_triangulated_region_triangle_against_closed_mesh(
                         &boundary_centroid_triangulation,
                         [0, 1, 2],
                         &target,
@@ -2393,40 +2363,30 @@ fn exact_face_interior_steiner_provenance(c: &mut Criterion) {
             })
         });
     }
-    #[cfg(not(feature = "exact-triangulation"))]
-    {
-        let _ = c;
-    }
 }
 
 fn exact_volumetric_witness_lattice(c: &mut Criterion) {
-    #[cfg(feature = "exact-triangulation")]
     {
-        let point2 = |x: i64, y: i64| {
-            hypertri::ExactPoint::new(
-                hypermesh::exact::ExactReal::from(x),
-                hypermesh::exact::ExactReal::from(y),
-            )
-        };
+        let point2 = |x: i64, y: i64| hypertri::ExactPoint::new(Real::from(x), Real::from(y));
         let target = ExactMesh::from_i64_triangles(
             &[0, 0, 0, 12, 0, 0, 0, 12, 0, 0, 0, 12],
             &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
         )
         .unwrap();
-        let triangulation = hypermesh::exact::FaceRegionTriangulation {
-            side: hypermesh::exact::MeshSide::Left,
+        let triangulation = hypermesh::exact::region::FaceRegionTriangulation {
+            side: hypermesh::exact::graph::MeshSide::Left,
             face: 0,
             projection: hypermesh::exact::CoplanarProjection::Xy,
             boundary: vec![
-                hypermesh::exact::FaceSplitBoundaryNode::OriginalVertex {
+                hypermesh::exact::graph::FaceSplitBoundaryNode::OriginalVertex {
                     vertex: 0,
                     point: p3(2, 1, 1),
                 },
-                hypermesh::exact::FaceSplitBoundaryNode::OriginalVertex {
+                hypermesh::exact::graph::FaceSplitBoundaryNode::OriginalVertex {
                     vertex: 1,
                     point: p3(14, 1, 1),
                 },
-                hypermesh::exact::FaceSplitBoundaryNode::OriginalVertex {
+                hypermesh::exact::graph::FaceSplitBoundaryNode::OriginalVertex {
                     vertex: 2,
                     point: p3(1, 14, 1),
                 },
@@ -2434,20 +2394,20 @@ fn exact_volumetric_witness_lattice(c: &mut Criterion) {
             vertices: vec![point2(2, 1), point2(14, 1), point2(1, 14)],
             triangles: vec![0, 1, 2],
         };
-        let exhausted_boundary = hypermesh::exact::FaceRegionTriangulation {
-            side: hypermesh::exact::MeshSide::Left,
+        let exhausted_boundary = hypermesh::exact::region::FaceRegionTriangulation {
+            side: hypermesh::exact::graph::MeshSide::Left,
             face: 0,
             projection: hypermesh::exact::CoplanarProjection::Xy,
             boundary: vec![
-                hypermesh::exact::FaceSplitBoundaryNode::OriginalVertex {
+                hypermesh::exact::graph::FaceSplitBoundaryNode::OriginalVertex {
                     vertex: 0,
                     point: p3(1, 1, 0),
                 },
-                hypermesh::exact::FaceSplitBoundaryNode::OriginalVertex {
+                hypermesh::exact::graph::FaceSplitBoundaryNode::OriginalVertex {
                     vertex: 1,
                     point: p3(5, 1, 0),
                 },
-                hypermesh::exact::FaceSplitBoundaryNode::OriginalVertex {
+                hypermesh::exact::graph::FaceSplitBoundaryNode::OriginalVertex {
                     vertex: 2,
                     point: p3(1, 5, 0),
                 },
@@ -2459,7 +2419,7 @@ fn exact_volumetric_witness_lattice(c: &mut Criterion) {
         c.bench_function("exact_volumetric_witness_lattice_boundary_retry", |b| {
             b.iter(|| {
                 let classification =
-                    hypermesh::exact::classify_triangulated_region_triangle_against_closed_mesh(
+                    hypermesh::exact::volumetric::classify_triangulated_region_triangle_against_closed_mesh(
                         &triangulation,
                         [0, 1, 2],
                         &target,
@@ -2467,7 +2427,7 @@ fn exact_volumetric_witness_lattice(c: &mut Criterion) {
                     .unwrap();
                 classification.representative_witness.validate().unwrap();
                 let exhausted =
-                    hypermesh::exact::classify_triangulated_region_triangle_against_closed_mesh(
+                    hypermesh::exact::volumetric::classify_triangulated_region_triangle_against_closed_mesh(
                         &exhausted_boundary,
                         [0, 1, 2],
                         &target,
@@ -2475,7 +2435,7 @@ fn exact_volumetric_witness_lattice(c: &mut Criterion) {
                     .unwrap();
                 assert_eq!(
                     exhausted.witness_attempts.len(),
-                    hypermesh::exact::EXACT_TRIANGLE_INTERIOR_WITNESSES.len()
+                    hypermesh::exact::witness::EXACT_TRIANGLE_INTERIOR_WITNESSES.len()
                 );
                 (
                     classification.validate_against_sources(&triangulation, &target),
@@ -2484,14 +2444,9 @@ fn exact_volumetric_witness_lattice(c: &mut Criterion) {
             })
         });
     }
-    #[cfg(not(feature = "exact-triangulation"))]
-    {
-        let _ = c;
-    }
 }
 
 fn exact_boolean_selected_regions(c: &mut Criterion) {
-    #[cfg(feature = "exact-triangulation")]
     {
         let left = ExactMesh::from_i64_triangles_with_policy(
             &[
@@ -2535,10 +2490,10 @@ fn exact_boolean_selected_regions(c: &mut Criterion) {
         });
         c.bench_function("exact_selected_region_mesh_handoff", |b| {
             b.iter(|| {
-                let mesh = hypermesh::exact::build_selected_region_mesh(
+                let mesh = hypermesh::exact::region::build_selected_region_mesh(
                     &left,
                     &right,
-                    hypermesh::exact::ExactRegionSelection::KeepAll,
+                    hypermesh::exact::region::ExactRegionSelection::KeepAll,
                     ValidationPolicy::ALLOW_BOUNDARY,
                 )
                 .unwrap();
@@ -2642,7 +2597,7 @@ fn exact_boolean_selected_regions(c: &mut Criterion) {
                 )
                 .unwrap();
                 let mut mesh_vertices = result.mesh.vertices().to_vec();
-                mesh_vertices[0] = ExactPoint3::new(Real::from(99), Real::from(0), Real::from(0));
+                mesh_vertices[0] = Point3::new(Real::from(99), Real::from(0), Real::from(0));
                 result.mesh = ExactMesh::new_with_policy(
                     mesh_vertices,
                     result.mesh.triangles().to_vec(),
@@ -2689,14 +2644,9 @@ fn exact_boolean_selected_regions(c: &mut Criterion) {
             })
         });
     }
-    #[cfg(not(feature = "exact-triangulation"))]
-    {
-        let _ = c;
-    }
 }
 
 fn exact_selected_region_undecided_validation(c: &mut Criterion) {
-    #[cfg(feature = "exact-triangulation")]
     {
         let left = ExactMesh::from_i64_triangles_with_policy(
             &[
@@ -2735,14 +2685,9 @@ fn exact_selected_region_undecided_validation(c: &mut Criterion) {
             })
         });
     }
-    #[cfg(not(feature = "exact-triangulation"))]
-    {
-        let _ = c;
-    }
 }
 
 fn exact_selected_region_preflight(c: &mut Criterion) {
-    #[cfg(feature = "exact-triangulation")]
     {
         let left = ExactMesh::from_i64_triangles_with_policy(
             &[
@@ -2766,7 +2711,7 @@ fn exact_selected_region_preflight(c: &mut Criterion) {
                     &left,
                     &right,
                     hypermesh::exact::ExactBooleanOperation::SelectedRegions(
-                        hypermesh::exact::ExactRegionSelection::KeepAll,
+                        hypermesh::exact::region::ExactRegionSelection::KeepAll,
                     ),
                 )
                 .unwrap();
@@ -2779,7 +2724,7 @@ fn exact_selected_region_preflight(c: &mut Criterion) {
                     &left,
                     &right,
                     hypermesh::exact::ExactBooleanOperation::SelectedRegions(
-                        hypermesh::exact::ExactRegionSelection::KeepAll,
+                        hypermesh::exact::region::ExactRegionSelection::KeepAll,
                     ),
                 )
                 .unwrap();
@@ -2799,7 +2744,7 @@ fn exact_selected_region_preflight(c: &mut Criterion) {
                     &left,
                     &right,
                     hypermesh::exact::ExactBooleanOperation::SelectedRegions(
-                        hypermesh::exact::ExactRegionSelection::KeepAll,
+                        hypermesh::exact::region::ExactRegionSelection::KeepAll,
                     ),
                 )
                 .unwrap();
@@ -2816,7 +2761,7 @@ fn exact_selected_region_preflight(c: &mut Criterion) {
                     &left,
                     &right,
                     hypermesh::exact::ExactBooleanOperation::SelectedRegions(
-                        hypermesh::exact::ExactRegionSelection::KeepAll,
+                        hypermesh::exact::region::ExactRegionSelection::KeepAll,
                     ),
                 )
                 .unwrap();
@@ -2858,7 +2803,7 @@ fn exact_selected_region_preflight(c: &mut Criterion) {
                     &left,
                     &right,
                     hypermesh::exact::ExactBooleanOperation::SelectedRegions(
-                        hypermesh::exact::ExactRegionSelection::KeepAll,
+                        hypermesh::exact::region::ExactRegionSelection::KeepAll,
                     ),
                 )
                 .unwrap();
@@ -2873,14 +2818,9 @@ fn exact_selected_region_preflight(c: &mut Criterion) {
             })
         });
     }
-    #[cfg(not(feature = "exact-triangulation"))]
-    {
-        let _ = c;
-    }
 }
 
 fn exact_boolean_preflight(c: &mut Criterion) {
-    #[cfg(feature = "exact-triangulation")]
     {
         let left = ExactMesh::from_i64_triangles_with_policy(
             &[
@@ -2942,14 +2882,9 @@ fn exact_boolean_preflight(c: &mut Criterion) {
             })
         });
     }
-    #[cfg(not(feature = "exact-triangulation"))]
-    {
-        let _ = c;
-    }
 }
 
 fn exact_winding_readiness_undecided_validation(c: &mut Criterion) {
-    #[cfg(feature = "exact-triangulation")]
     {
         let left = ExactMesh::from_i64_triangles_with_policy(
             &[
@@ -2993,10 +2928,6 @@ fn exact_winding_readiness_undecided_validation(c: &mut Criterion) {
             })
         });
     }
-    #[cfg(not(feature = "exact-triangulation"))]
-    {
-        let _ = c;
-    }
 }
 
 fn exact_closed_mesh_winding_parity(c: &mut Criterion) {
@@ -3039,7 +2970,6 @@ fn exact_closed_mesh_winding_parity(c: &mut Criterion) {
 }
 
 fn exact_boolean_winding_shortcuts(c: &mut Criterion) {
-    #[cfg(feature = "exact-triangulation")]
     {
         let outer = ExactMesh::from_i64_triangles(
             &[
@@ -3122,14 +3052,9 @@ fn exact_boolean_winding_shortcuts(c: &mut Criterion) {
             })
         });
     }
-    #[cfg(not(feature = "exact-triangulation"))]
-    {
-        let _ = c;
-    }
 }
 
 fn exact_boolean_boundary_preflight(c: &mut Criterion) {
-    #[cfg(feature = "exact-triangulation")]
     {
         let left = ExactMesh::from_i64_triangles_with_policy(
             &[0, 0, 0, 2, 0, 0, 0, 2, 0],
@@ -3335,14 +3260,9 @@ fn exact_boolean_boundary_preflight(c: &mut Criterion) {
             })
         });
     }
-    #[cfg(not(feature = "exact-triangulation"))]
-    {
-        let _ = c;
-    }
 }
 
 fn exact_boolean_same_surface(c: &mut Criterion) {
-    #[cfg(feature = "exact-triangulation")]
     {
         let vertices = [
             0, 0, 0, //
@@ -3400,14 +3320,9 @@ fn exact_boolean_same_surface(c: &mut Criterion) {
             })
         });
     }
-    #[cfg(not(feature = "exact-triangulation"))]
-    {
-        let _ = c;
-    }
 }
 
 fn exact_boolean_coplanar_convex_surface_equivalence(c: &mut Criterion) {
-    #[cfg(feature = "exact-triangulation")]
     {
         let vertices = &[0, 0, 0, 2, 0, 0, 2, 2, 0, 0, 2, 0];
         let left = ExactMesh::from_i64_triangles_with_policy(
@@ -3444,14 +3359,9 @@ fn exact_boolean_coplanar_convex_surface_equivalence(c: &mut Criterion) {
             })
         });
     }
-    #[cfg(not(feature = "exact-triangulation"))]
-    {
-        let _ = c;
-    }
 }
 
 fn exact_boolean_coplanar_convex_surface_containment(c: &mut Criterion) {
-    #[cfg(feature = "exact-triangulation")]
     {
         let outer = ExactMesh::from_i64_triangles_with_policy(
             &[0, 0, 0, 4, 0, 0, 4, 4, 0, 0, 4, 0],
@@ -3487,14 +3397,9 @@ fn exact_boolean_coplanar_convex_surface_containment(c: &mut Criterion) {
             })
         });
     }
-    #[cfg(not(feature = "exact-triangulation"))]
-    {
-        let _ = c;
-    }
 }
 
 fn exact_boolean_coplanar_convex_surface_arrangement_union(c: &mut Criterion) {
-    #[cfg(feature = "exact-triangulation")]
     {
         let left = ExactMesh::from_i64_triangles_with_policy(
             &[0, 0, 0, 2, 0, 0, 2, 2, 0, 0, 2, 0],
@@ -3542,14 +3447,9 @@ fn exact_boolean_coplanar_convex_surface_arrangement_union(c: &mut Criterion) {
             },
         );
     }
-    #[cfg(not(feature = "exact-triangulation"))]
-    {
-        let _ = c;
-    }
 }
 
 fn exact_boolean_coplanar_convex_surface_multi_union(c: &mut Criterion) {
-    #[cfg(feature = "exact-triangulation")]
     {
         let left = ExactMesh::from_i64_triangles_with_policy(
             &[
@@ -4423,14 +4323,9 @@ fn exact_boolean_coplanar_convex_surface_multi_union(c: &mut Criterion) {
             })
         });
     }
-    #[cfg(not(feature = "exact-triangulation"))]
-    {
-        let _ = c;
-    }
 }
 
 fn exact_boolean_coplanar_convex_surface_intersection(c: &mut Criterion) {
-    #[cfg(feature = "exact-triangulation")]
     {
         let left = ExactMesh::from_i64_triangles_with_policy(
             &[0, 0, 0, 2, 0, 0, 2, 2, 0, 0, 2, 0],
@@ -4475,14 +4370,9 @@ fn exact_boolean_coplanar_convex_surface_intersection(c: &mut Criterion) {
             })
         });
     }
-    #[cfg(not(feature = "exact-triangulation"))]
-    {
-        let _ = c;
-    }
 }
 
 fn exact_boolean_coplanar_convex_surface_arrangement_difference(c: &mut Criterion) {
-    #[cfg(feature = "exact-triangulation")]
     {
         let left = ExactMesh::from_i64_triangles_with_policy(
             &[0, 0, 0, 4, 0, 0, 4, 4, 0, 0, 4, 0],
@@ -4530,14 +4420,9 @@ fn exact_boolean_coplanar_convex_surface_arrangement_difference(c: &mut Criterio
             },
         );
     }
-    #[cfg(not(feature = "exact-triangulation"))]
-    {
-        let _ = c;
-    }
 }
 
 fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
-    #[cfg(feature = "exact-triangulation")]
     {
         let left = ExactMesh::from_i64_triangles_with_policy(
             &[0, 0, 0, 4, 0, 0, 4, 4, 0, 0, 4, 0],
@@ -9360,14 +9245,9 @@ fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
             },
         );
     }
-    #[cfg(not(feature = "exact-triangulation"))]
-    {
-        let _ = c;
-    }
 }
 
 fn exact_boolean_coplanar_convex_surface_multi_holed_difference(c: &mut Criterion) {
-    #[cfg(feature = "exact-triangulation")]
     {
         let left = ExactMesh::from_i64_triangles_with_policy(
             &[0, 0, 0, 10, 0, 0, 10, 10, 0, 0, 10, 0],
@@ -9414,14 +9294,9 @@ fn exact_boolean_coplanar_convex_surface_multi_holed_difference(c: &mut Criterio
             },
         );
     }
-    #[cfg(not(feature = "exact-triangulation"))]
-    {
-        let _ = c;
-    }
 }
 
 fn exact_boolean_coplanar_orthogonal_surface_cells(c: &mut Criterion) {
-    #[cfg(feature = "exact-triangulation")]
     {
         let l_left = rect_surface_i64(&[(0, 0, 2, 6), (2, 0, 6, 2)]);
         let l_right = rect_surface_i64(&[(2, 2, 4, 4)]);
@@ -9462,15 +9337,19 @@ fn exact_boolean_coplanar_orthogonal_surface_cells(c: &mut Criterion) {
             p3(6, 6, 0),
             p3(0, 6, 0),
         ];
-        let orthogonal_fan_rejection = hypermesh::exact::CoplanarOrthogonalSurfaceArrangement {
-            projection: hypermesh::exact::CoplanarProjection::Xy,
-            operation: hypermesh::exact::CoplanarOrthogonalSurfaceOperation::Union,
-            components: vec![hypermesh::exact::CoplanarOrthogonalSurfaceComponent {
-                outer: retained_outer.clone(),
-                holes: Vec::new(),
-            }],
-            mesh: fan_surface_mesh_from_points(&retained_outer),
-        };
+        let orthogonal_fan_rejection =
+            hypermesh::exact::orthogonal_surface::CoplanarOrthogonalSurfaceArrangement {
+                projection: hypermesh::exact::CoplanarProjection::Xy,
+                operation:
+                    hypermesh::exact::orthogonal_surface::CoplanarOrthogonalSurfaceOperation::Union,
+                components: vec![
+                    hypermesh::exact::orthogonal_surface::CoplanarOrthogonalSurfaceComponent {
+                        outer: retained_outer.clone(),
+                        holes: Vec::new(),
+                    },
+                ],
+                mesh: fan_surface_mesh_from_points(&retained_outer),
+            };
 
         c.bench_function("exact_boolean_coplanar_orthogonal_surface_cells", |b| {
             b.iter(|| {
@@ -9741,14 +9620,9 @@ fn exact_boolean_coplanar_orthogonal_surface_cells(c: &mut Criterion) {
             })
         });
     }
-    #[cfg(not(feature = "exact-triangulation"))]
-    {
-        let _ = c;
-    }
 }
 
 fn exact_boolean_coplanar_affine_surface_cells(c: &mut Criterion) {
-    #[cfg(feature = "exact-triangulation")]
     {
         let origin = (0, 0, 0);
         let basis_u = (2, 1, 0);
@@ -9800,20 +9674,24 @@ fn exact_boolean_coplanar_affine_surface_cells(c: &mut Criterion) {
             lift(6, 6),
             lift(0, 6),
         ];
-        let affine_fan_rejection = hypermesh::exact::CoplanarAffineSurfaceArrangement {
-            basis: hypermesh::exact::CoplanarAffineSurfaceBasis {
-                projection: hypermesh::exact::CoplanarProjection::Xy,
-                origin: p3(0, 0, 0),
-                basis_u: p3(2, 1, 0),
-                basis_v: p3(-1, 2, 0),
-            },
-            operation: hypermesh::exact::CoplanarOrthogonalSurfaceOperation::Union,
-            components: vec![hypermesh::exact::CoplanarOrthogonalSurfaceComponent {
-                outer: affine_outer.clone(),
-                holes: Vec::new(),
-            }],
-            mesh: fan_surface_mesh_from_points(&affine_outer),
-        };
+        let affine_fan_rejection =
+            hypermesh::exact::affine_surface::CoplanarAffineSurfaceArrangement {
+                basis: hypermesh::exact::affine_surface::CoplanarAffineSurfaceBasis {
+                    projection: hypermesh::exact::CoplanarProjection::Xy,
+                    origin: p3(0, 0, 0),
+                    basis_u: p3(2, 1, 0),
+                    basis_v: p3(-1, 2, 0),
+                },
+                operation:
+                    hypermesh::exact::orthogonal_surface::CoplanarOrthogonalSurfaceOperation::Union,
+                components: vec![
+                    hypermesh::exact::orthogonal_surface::CoplanarOrthogonalSurfaceComponent {
+                        outer: affine_outer.clone(),
+                        holes: Vec::new(),
+                    },
+                ],
+                mesh: fan_surface_mesh_from_points(&affine_outer),
+            };
 
         c.bench_function("exact_boolean_coplanar_affine_surface_cells", |b| {
             b.iter(|| {
@@ -9926,14 +9804,9 @@ fn exact_boolean_coplanar_affine_surface_cells(c: &mut Criterion) {
             })
         });
     }
-    #[cfg(not(feature = "exact-triangulation"))]
-    {
-        let _ = c;
-    }
 }
 
 fn exact_boolean_affine_box_cells(c: &mut Criterion) {
-    #[cfg(feature = "exact-triangulation")]
     {
         let origin = [0, 0, 0];
         let basis_u = [2, 1, 0];
@@ -9978,19 +9851,20 @@ fn exact_boolean_affine_box_cells(c: &mut Criterion) {
 
         c.bench_function("exact_boolean_affine_box_cells", |b| {
             b.iter(|| {
-                let union = hypermesh::exact::materialize_affine_box_union(
+                let union = hypermesh::exact::affine_box::materialize_affine_box_union(
                     &left,
                     &right,
                     ValidationPolicy::CLOSED,
                 )
                 .unwrap();
-                let intersection = hypermesh::exact::materialize_affine_box_intersection(
-                    &left,
-                    &right,
-                    ValidationPolicy::CLOSED,
-                )
-                .unwrap();
-                let difference = hypermesh::exact::materialize_affine_box_difference(
+                let intersection =
+                    hypermesh::exact::affine_box::materialize_affine_box_intersection(
+                        &left,
+                        &right,
+                        ValidationPolicy::CLOSED,
+                    )
+                    .unwrap();
+                let difference = hypermesh::exact::affine_box::materialize_affine_box_difference(
                     &left,
                     &right,
                     ValidationPolicy::CLOSED,
@@ -10073,7 +9947,7 @@ fn exact_boolean_affine_box_cells(c: &mut Criterion) {
         c.bench_function("exact_boolean_affine_orthogonal_solid_cells", |b| {
             b.iter(|| {
                 (
-                    hypermesh::exact::materialize_affine_orthogonal_solid_union(
+                    hypermesh::exact::affine_solid::materialize_affine_orthogonal_solid_union(
                         &affine_complex,
                         &affine_cutter,
                         ValidationPolicy::CLOSED,
@@ -10143,7 +10017,7 @@ fn exact_boolean_affine_box_cells(c: &mut Criterion) {
             |b| {
                 b.iter(|| {
                     (
-                        hypermesh::exact::materialize_affine_orthogonal_solid_union(
+                        hypermesh::exact::affine_solid::materialize_affine_orthogonal_solid_union(
                             &discovered_left,
                             &discovered_right,
                             ValidationPolicy::CLOSED,
@@ -10190,10 +10064,6 @@ fn exact_boolean_affine_box_cells(c: &mut Criterion) {
                 })
             },
         );
-    }
-    #[cfg(not(feature = "exact-triangulation"))]
-    {
-        let _ = c;
     }
 }
 
@@ -10247,7 +10117,6 @@ fn exact_convex_solid_classification(c: &mut Criterion) {
 }
 
 fn exact_boolean_coplanar_surface_containment(c: &mut Criterion) {
-    #[cfg(feature = "exact-triangulation")]
     {
         let outer = ExactMesh::from_i64_triangles_with_policy(
             &[0, 0, 0, 4, 0, 0, 0, 4, 0],
@@ -10282,10 +10151,10 @@ fn exact_boolean_coplanar_surface_containment(c: &mut Criterion) {
                 let mut report =
                     certify_single_triangle_coplanar_containment_report(&inner, &outer);
                 report.status =
-                    hypermesh::exact::CoplanarSurfaceContainmentStatus::DisjointOrUnknown;
+                    hypermesh::exact::surface::CoplanarSurfaceContainmentStatus::DisjointOrUnknown;
                 assert_eq!(
                     report.validate().unwrap_err(),
-                    hypermesh::exact::CoplanarSurfaceContainmentReportError::StatusRelationMismatch
+                    hypermesh::exact::surface::CoplanarSurfaceContainmentReportError::StatusRelationMismatch
                 );
             })
         });
@@ -10332,14 +10201,9 @@ fn exact_boolean_coplanar_surface_containment(c: &mut Criterion) {
             })
         });
     }
-    #[cfg(not(feature = "exact-triangulation"))]
-    {
-        let _ = c;
-    }
 }
 
 fn exact_boolean_open_surface_disjoint(c: &mut Criterion) {
-    #[cfg(feature = "exact-triangulation")]
     {
         let left = ExactMesh::from_i64_triangles_with_policy(
             &[0, 0, 0, 2, 0, 0, 0, 2, 0],
@@ -10372,14 +10236,9 @@ fn exact_boolean_open_surface_disjoint(c: &mut Criterion) {
             })
         });
     }
-    #[cfg(not(feature = "exact-triangulation"))]
-    {
-        let _ = c;
-    }
 }
 
 fn exact_policy_report_refinement_blocker_validation(c: &mut Criterion) {
-    #[cfg(feature = "exact-triangulation")]
     {
         let freshness_left = ExactMesh::from_i64_triangles_with_policy(
             &[0, 0, 0, 1, 0, 0, 0, 1, 0],
@@ -10473,14 +10332,9 @@ fn exact_policy_report_refinement_blocker_validation(c: &mut Criterion) {
             })
         });
     }
-    #[cfg(not(feature = "exact-triangulation"))]
-    {
-        let _ = c;
-    }
 }
 
 fn exact_boolean_coplanar_surface_intersection(c: &mut Criterion) {
-    #[cfg(feature = "exact-triangulation")]
     {
         let left = ExactMesh::from_i64_triangles_with_policy(
             &[0, 0, 0, 4, 0, 0, 0, 4, 0],
@@ -10677,11 +10531,12 @@ fn exact_boolean_coplanar_surface_intersection(c: &mut Criterion) {
         });
         c.bench_function("exact_multi_component_intersection_validation", |b| {
             b.iter(|| {
-                let multi = hypermesh::exact::arrange_coplanar_convex_surface_multi_intersection(
-                    &split_left,
-                    &bridge_right,
-                )
-                .unwrap();
+                let multi =
+                    hypermesh::exact::surface::arrange_coplanar_convex_surface_multi_intersection(
+                        &split_left,
+                        &bridge_right,
+                    )
+                    .unwrap();
                 let report = certify_planar_arrangement_report(
                     &split_left,
                     &bridge_right,
@@ -10701,7 +10556,7 @@ fn exact_boolean_coplanar_surface_intersection(c: &mut Criterion) {
                     report.validate(),
                     winding.validate_against_sources(&split_left, &bridge_right),
                     winding.validate(),
-                    hypermesh::exact::arrange_coplanar_convex_surface_multi_intersection(
+                    hypermesh::exact::surface::arrange_coplanar_convex_surface_multi_intersection(
                         &component_left,
                         &component_right,
                     )
@@ -10791,14 +10646,9 @@ fn exact_boolean_coplanar_surface_intersection(c: &mut Criterion) {
             })
         });
     }
-    #[cfg(not(feature = "exact-triangulation"))]
-    {
-        let _ = c;
-    }
 }
 
 fn exact_boolean_coplanar_surface_convex_union(c: &mut Criterion) {
-    #[cfg(feature = "exact-triangulation")]
     {
         let left = ExactMesh::from_i64_triangles_with_policy(
             &[0, 0, 0, 1, 0, 0, 0, 1, 0],
@@ -10833,14 +10683,9 @@ fn exact_boolean_coplanar_surface_convex_union(c: &mut Criterion) {
             })
         });
     }
-    #[cfg(not(feature = "exact-triangulation"))]
-    {
-        let _ = c;
-    }
 }
 
 fn exact_boolean_coplanar_surface_corner_difference(c: &mut Criterion) {
-    #[cfg(feature = "exact-triangulation")]
     {
         let left = ExactMesh::from_i64_triangles_with_policy(
             &[0, 0, 0, 4, 0, 0, 0, 4, 0],
@@ -10928,14 +10773,9 @@ fn exact_boolean_coplanar_surface_corner_difference(c: &mut Criterion) {
             })
         });
     }
-    #[cfg(not(feature = "exact-triangulation"))]
-    {
-        let _ = c;
-    }
 }
 
 fn exact_boolean_coplanar_surface_arrangement_union(c: &mut Criterion) {
-    #[cfg(feature = "exact-triangulation")]
     {
         let left = ExactMesh::from_i64_triangles_with_policy(
             &[0, 0, 0, 4, 0, 0, 0, 4, 0],
@@ -10974,14 +10814,9 @@ fn exact_boolean_coplanar_surface_arrangement_union(c: &mut Criterion) {
             })
         });
     }
-    #[cfg(not(feature = "exact-triangulation"))]
-    {
-        let _ = c;
-    }
 }
 
 fn exact_boolean_coplanar_surface_holed_difference(c: &mut Criterion) {
-    #[cfg(feature = "exact-triangulation")]
     {
         let outer = ExactMesh::from_i64_triangles_with_policy(
             &[0, 0, 0, 4, 0, 0, 0, 4, 0],
@@ -11016,14 +10851,9 @@ fn exact_boolean_coplanar_surface_holed_difference(c: &mut Criterion) {
             })
         });
     }
-    #[cfg(not(feature = "exact-triangulation"))]
-    {
-        let _ = c;
-    }
 }
 
 fn exact_boolean_convex_containment(c: &mut Criterion) {
-    #[cfg(feature = "exact-triangulation")]
     {
         let outer = ExactMesh::from_i64_triangles(
             &[
@@ -11076,14 +10906,9 @@ fn exact_boolean_convex_containment(c: &mut Criterion) {
             })
         });
     }
-    #[cfg(not(feature = "exact-triangulation"))]
-    {
-        let _ = c;
-    }
 }
 
 fn exact_boolean_convex_intersection(c: &mut Criterion) {
-    #[cfg(feature = "exact-triangulation")]
     {
         let left = ExactMesh::from_i64_triangles(
             &[0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0, 4],
@@ -11119,14 +10944,9 @@ fn exact_boolean_convex_intersection(c: &mut Criterion) {
             })
         });
     }
-    #[cfg(not(feature = "exact-triangulation"))]
-    {
-        let _ = c;
-    }
 }
 
 fn exact_boolean_volumetric_winding_materialization(c: &mut Criterion) {
-    #[cfg(feature = "exact-triangulation")]
     {
         let left = ExactMesh::from_i64_triangles(
             &[0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0, 4],
@@ -11325,9 +11145,10 @@ fn exact_boolean_volumetric_winding_materialization(c: &mut Criterion) {
 
         c.bench_function("exact_boolean_volumetric_winding_materialization", |b| {
             b.iter(|| {
-                let cells =
-                    hypermesh::exact::triangulate_all_face_cells_with_cdt(&graph, &left, &right)
-                        .unwrap();
+                let cells = hypermesh::exact::cells::triangulate_all_face_cells_with_cdt(
+                    &graph, &left, &right,
+                )
+                .unwrap();
                 (
                     cells,
                     hypermesh::exact::preflight_boolean_exact(
@@ -11385,7 +11206,7 @@ fn exact_boolean_volumetric_winding_materialization(c: &mut Criterion) {
         c.bench_function("exact_boolean_full_face_adjacent_union", |b| {
             b.iter(|| {
                 (
-                    hypermesh::exact::materialize_full_face_adjacent_union(
+                    hypermesh::exact::adjacent::materialize_full_face_adjacent_union(
                         &adjacent_left,
                         &adjacent_right,
                         ValidationPolicy::CLOSED,
@@ -11475,7 +11296,7 @@ fn exact_boolean_volumetric_winding_materialization(c: &mut Criterion) {
         c.bench_function("exact_boolean_full_face_adjacent_fan_patch_union", |b| {
             b.iter(|| {
                 (
-                    hypermesh::exact::materialize_full_face_adjacent_union(
+                    hypermesh::exact::adjacent::materialize_full_face_adjacent_union(
                         &adjacent_left,
                         &adjacent_fan_right,
                         ValidationPolicy::CLOSED,
@@ -11567,7 +11388,7 @@ fn exact_boolean_volumetric_winding_materialization(c: &mut Criterion) {
             |b| {
                 b.iter(|| {
                     (
-                        hypermesh::exact::materialize_full_face_adjacent_union(
+                        hypermesh::exact::adjacent::materialize_full_face_adjacent_union(
                             &adjacent_dual_fan_left,
                             &adjacent_dual_fan_right,
                             ValidationPolicy::CLOSED,
@@ -11632,7 +11453,7 @@ fn exact_boolean_volumetric_winding_materialization(c: &mut Criterion) {
             |b| {
                 b.iter(|| {
                     (
-                        hypermesh::exact::materialize_full_face_adjacent_union(
+                        hypermesh::exact::adjacent::materialize_full_face_adjacent_union(
                             &adjacent_quad_left,
                             &adjacent_quad_right,
                             ValidationPolicy::CLOSED,
@@ -11670,7 +11491,7 @@ fn exact_boolean_volumetric_winding_materialization(c: &mut Criterion) {
             |b| {
                 b.iter(|| {
                     (
-                        hypermesh::exact::materialize_full_face_adjacent_union(
+                        hypermesh::exact::adjacent::materialize_full_face_adjacent_union(
                             &adjacent_quad_left,
                             &adjacent_quad_fan_right,
                             ValidationPolicy::CLOSED,
@@ -11711,7 +11532,7 @@ fn exact_boolean_volumetric_winding_materialization(c: &mut Criterion) {
             |b| {
                 b.iter(|| {
                     (
-                        hypermesh::exact::materialize_full_face_adjacent_union(
+                        hypermesh::exact::adjacent::materialize_full_face_adjacent_union(
                             &adjacent_two_branch_left,
                             &adjacent_two_branch_right,
                             ValidationPolicy::CLOSED,
@@ -11752,7 +11573,7 @@ fn exact_boolean_volumetric_winding_materialization(c: &mut Criterion) {
             |b| {
                 b.iter(|| {
                     (
-                        hypermesh::exact::materialize_full_face_adjacent_union(
+                        hypermesh::exact::adjacent::materialize_full_face_adjacent_union(
                             &adjacent_l_prism_left,
                             &adjacent_l_prism_right,
                             ValidationPolicy::CLOSED,
@@ -11793,7 +11614,7 @@ fn exact_boolean_volumetric_winding_materialization(c: &mut Criterion) {
             |b| {
                 b.iter(|| {
                     (
-                        hypermesh::exact::materialize_full_face_adjacent_union(
+                        hypermesh::exact::adjacent::materialize_full_face_adjacent_union(
                             &adjacent_pentagon_left,
                             &adjacent_pentagon_fan_right,
                             ValidationPolicy::CLOSED,
@@ -11834,7 +11655,7 @@ fn exact_boolean_volumetric_winding_materialization(c: &mut Criterion) {
             |b| {
                 b.iter(|| {
                     (
-                        hypermesh::exact::materialize_full_face_adjacent_union(
+                        hypermesh::exact::adjacent::materialize_full_face_adjacent_union(
                             &adjacent_hexagon_left,
                             &adjacent_hexagon_fan_right,
                             ValidationPolicy::CLOSED,
@@ -11875,7 +11696,7 @@ fn exact_boolean_volumetric_winding_materialization(c: &mut Criterion) {
             |b| {
                 b.iter(|| {
                     (
-                        hypermesh::exact::materialize_full_face_adjacent_union(
+                        hypermesh::exact::adjacent::materialize_full_face_adjacent_union(
                             &adjacent_heptagon_left,
                             &adjacent_heptagon_fan_right,
                             ValidationPolicy::CLOSED,
@@ -11916,7 +11737,7 @@ fn exact_boolean_volumetric_winding_materialization(c: &mut Criterion) {
             |b| {
                 b.iter(|| {
                     (
-                        hypermesh::exact::materialize_full_face_adjacent_union(
+                        hypermesh::exact::adjacent::materialize_full_face_adjacent_union(
                             &adjacent_octagon_left,
                             &adjacent_octagon_fan_right,
                             ValidationPolicy::CLOSED,
@@ -11957,7 +11778,7 @@ fn exact_boolean_volumetric_winding_materialization(c: &mut Criterion) {
             |b| {
                 b.iter(|| {
                     (
-                        hypermesh::exact::materialize_full_face_adjacent_union(
+                        hypermesh::exact::adjacent::materialize_full_face_adjacent_union(
                             &adjacent_nonagon_left,
                             &adjacent_nonagon_fan_right,
                             ValidationPolicy::CLOSED,
@@ -11998,7 +11819,7 @@ fn exact_boolean_volumetric_winding_materialization(c: &mut Criterion) {
             |b| {
                 b.iter(|| {
                     (
-                        hypermesh::exact::materialize_full_face_adjacent_union(
+                        hypermesh::exact::adjacent::materialize_full_face_adjacent_union(
                             &adjacent_decagon_left,
                             &adjacent_decagon_fan_right,
                             ValidationPolicy::CLOSED,
@@ -12038,7 +11859,7 @@ fn exact_boolean_volumetric_winding_materialization(c: &mut Criterion) {
         c.bench_function("exact_boolean_contained_face_adjacent_union", |b| {
             b.iter(|| {
                 (
-                    hypermesh::exact::materialize_contained_face_adjacent_union(
+                    hypermesh::exact::contained_adjacent::materialize_contained_face_adjacent_union(
                         &contained_adjacent_left,
                         &contained_adjacent_right,
                         ValidationPolicy::CLOSED,
@@ -12129,7 +11950,7 @@ fn exact_boolean_volumetric_winding_materialization(c: &mut Criterion) {
                             .unwrap();
                         result.mesh.triangles().len()
                     }),
-                    hypermesh::exact::materialize_contained_face_adjacent_union(
+                    hypermesh::exact::contained_adjacent::materialize_contained_face_adjacent_union(
                         &contained_multi_left,
                         &contained_multi_right,
                         ValidationPolicy::CLOSED,
@@ -12158,7 +11979,7 @@ fn exact_boolean_volumetric_winding_materialization(c: &mut Criterion) {
                             .unwrap();
                         result.mesh.triangles().len()
                     }),
-                    hypermesh::exact::materialize_contained_face_adjacent_union(
+                    hypermesh::exact::contained_adjacent::materialize_contained_face_adjacent_union(
                         &contained_same_face_left,
                         &contained_same_face_right,
                         ValidationPolicy::CLOSED,
@@ -12190,7 +12011,7 @@ fn exact_boolean_volumetric_winding_materialization(c: &mut Criterion) {
                             .unwrap();
                         result.mesh.triangles().len()
                     }),
-                    hypermesh::exact::materialize_contained_face_adjacent_union(
+                    hypermesh::exact::contained_adjacent::materialize_contained_face_adjacent_union(
                         &contained_component_hole_left,
                         &contained_component_hole_right,
                         ValidationPolicy::CLOSED,
@@ -12222,7 +12043,7 @@ fn exact_boolean_volumetric_winding_materialization(c: &mut Criterion) {
                             .unwrap();
                         result.mesh.triangles().len()
                     }),
-                    hypermesh::exact::materialize_contained_face_adjacent_union(
+                    hypermesh::exact::contained_adjacent::materialize_contained_face_adjacent_union(
                         &contained_multi_face_left,
                         &contained_multi_face_right,
                         ValidationPolicy::CLOSED,
@@ -12254,7 +12075,7 @@ fn exact_boolean_volumetric_winding_materialization(c: &mut Criterion) {
                             .unwrap();
                         result.mesh.triangles().len()
                     }),
-                    hypermesh::exact::materialize_contained_face_adjacent_union(
+                    hypermesh::exact::contained_adjacent::materialize_contained_face_adjacent_union(
                         &contained_independent_multi_face_left,
                         &contained_independent_multi_face_right,
                         ValidationPolicy::CLOSED,
@@ -12746,7 +12567,8 @@ fn exact_boolean_volumetric_winding_materialization(c: &mut Criterion) {
             .triangles
             .first_mut()
         {
-            triangle.orientation = hypermesh::exact::ExactOutputTriangleOrientation::ReverseSource;
+            triangle.orientation =
+                hypermesh::exact::region::ExactOutputTriangleOrientation::ReverseSource;
         }
 
         c.bench_function(
@@ -12888,7 +12710,7 @@ fn exact_boolean_volumetric_winding_materialization(c: &mut Criterion) {
             |b| {
                 b.iter(|| {
                     (
-                        hypermesh::exact::materialize_contained_boundary_difference(
+                        hypermesh::exact::contained_adjacent::materialize_contained_boundary_difference(
                             &boundary_contained_nonconvex_outer,
                             &boundary_contained_nonconvex_inner,
                             ValidationPolicy::CLOSED,
@@ -12932,14 +12754,9 @@ fn exact_boolean_volumetric_winding_materialization(c: &mut Criterion) {
             },
         );
     }
-    #[cfg(not(feature = "exact-triangulation"))]
-    {
-        let _ = c;
-    }
 }
 
 fn exact_boolean_convex_single_cap_difference(c: &mut Criterion) {
-    #[cfg(feature = "exact-triangulation")]
     {
         let left = ExactMesh::from_i64_triangles(
             &[0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0, 4],
@@ -13014,14 +12831,9 @@ fn exact_boolean_convex_single_cap_difference(c: &mut Criterion) {
             })
         });
     }
-    #[cfg(not(feature = "exact-triangulation"))]
-    {
-        let _ = c;
-    }
 }
 
 fn exact_boolmesh_bounds_disjoint_port(c: &mut Criterion) {
-    #[cfg(feature = "exact-triangulation")]
     {
         let left = ExactMesh::from_i64_triangles(
             &[0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 2],
@@ -13036,14 +12848,14 @@ fn exact_boolmesh_bounds_disjoint_port(c: &mut Criterion) {
 
         c.bench_function("exact_boolmesh_bounds_disjoint_port", |b| {
             b.iter(|| {
-                let workspace = hypermesh::exact::exact_boolmesh_workspace(
+                let workspace = hypermesh::exact::boolmesh::exact_boolmesh_workspace(
                     &left,
                     &right,
                     hypermesh::exact::ExactBooleanOperation::Union,
                 );
                 workspace.validate_against_sources(&left, &right).unwrap();
                 let size_output = workspace.boolean45.as_ref().unwrap();
-                let execution = hypermesh::exact::execute_exact_boolmesh_bounds_disjoint(
+                let execution = hypermesh::exact::boolmesh::execute_exact_boolmesh_bounds_disjoint(
                     &left,
                     &right,
                     hypermesh::exact::ExactBooleanOperation::Union,
@@ -13078,14 +12890,9 @@ fn exact_boolmesh_bounds_disjoint_port(c: &mut Criterion) {
             })
         });
     }
-    #[cfg(not(feature = "exact-triangulation"))]
-    {
-        let _ = c;
-    }
 }
 
 fn exact_boolmesh_kernel12_port(c: &mut Criterion) {
-    #[cfg(feature = "exact-triangulation")]
     {
         let left = ExactMesh::from_i64_triangles(
             &[0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0, 4],
@@ -13100,7 +12907,7 @@ fn exact_boolmesh_kernel12_port(c: &mut Criterion) {
 
         c.bench_function("exact_boolmesh_kernel12_port", |b| {
             b.iter(|| {
-                let workspace = hypermesh::exact::exact_boolmesh_workspace(
+                let workspace = hypermesh::exact::boolmesh::exact_boolmesh_workspace(
                     &left,
                     &right,
                     hypermesh::exact::ExactBooleanOperation::Intersection,
@@ -13154,14 +12961,9 @@ fn exact_boolmesh_kernel12_port(c: &mut Criterion) {
             })
         });
     }
-    #[cfg(not(feature = "exact-triangulation"))]
-    {
-        let _ = c;
-    }
 }
 
 fn exact_boolmesh_cleanup_materialization_port(c: &mut Criterion) {
-    #[cfg(feature = "exact-triangulation")]
     {
         let left = ExactMesh::from_i64_triangles(
             &[0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0, 4],
@@ -13176,12 +12978,12 @@ fn exact_boolmesh_cleanup_materialization_port(c: &mut Criterion) {
 
         c.bench_function("exact_boolmesh_cleanup_materialization_port", |b| {
             b.iter(|| {
-                #[cfg(all(feature = "exact-triangulation", feature = "internal-fuzzing"))]
+                #[cfg(feature = "internal-fuzzing")]
                 let cleanup_probe = exact_boolmesh_cleanup_probe_for_internal_fuzz(0)
                     && exact_boolmesh_cleanup_probe_for_internal_fuzz(1);
-                #[cfg(not(all(feature = "exact-triangulation", feature = "internal-fuzzing")))]
+                #[cfg(not(feature = "internal-fuzzing"))]
                 let cleanup_probe = true;
-                let execution = hypermesh::exact::execute_exact_boolmesh_port(
+                let execution = hypermesh::exact::boolmesh::execute_exact_boolmesh_port(
                     &left,
                     &right,
                     hypermesh::exact::ExactBooleanOperation::Intersection,
@@ -13196,14 +12998,9 @@ fn exact_boolmesh_cleanup_materialization_port(c: &mut Criterion) {
             })
         });
     }
-    #[cfg(not(feature = "exact-triangulation"))]
-    {
-        let _ = c;
-    }
 }
 
 fn exact_boolmesh_holed_triangulation_port(c: &mut Criterion) {
-    #[cfg(feature = "exact-triangulation")]
     {
         let left = ExactMesh::from_i64_triangles(
             &[0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0, 4],
@@ -13218,7 +13015,7 @@ fn exact_boolmesh_holed_triangulation_port(c: &mut Criterion) {
 
         c.bench_function("exact_boolmesh_holed_triangulation_port", |b| {
             b.iter(|| {
-                let execution = hypermesh::exact::execute_exact_boolmesh_port(
+                let execution = hypermesh::exact::boolmesh::execute_exact_boolmesh_port(
                     &left,
                     &right,
                     hypermesh::exact::ExactBooleanOperation::Union,
@@ -13232,14 +13029,9 @@ fn exact_boolmesh_holed_triangulation_port(c: &mut Criterion) {
             })
         });
     }
-    #[cfg(not(feature = "exact-triangulation"))]
-    {
-        let _ = c;
-    }
 }
 
 fn exact_boolmesh_kernel12_endpoint_shadow_port(c: &mut Criterion) {
-    #[cfg(feature = "exact-triangulation")]
     {
         let left = ExactMesh::from_i64_triangles(
             &[1, 1, 0, 1, 1, 2, 2, 1, 1, 1, 2, 1],
@@ -13254,7 +13046,7 @@ fn exact_boolmesh_kernel12_endpoint_shadow_port(c: &mut Criterion) {
 
         c.bench_function("exact_boolmesh_kernel12_endpoint_shadow_port", |b| {
             b.iter(|| {
-                let execution = hypermesh::exact::execute_exact_boolmesh_port(
+                let execution = hypermesh::exact::boolmesh::execute_exact_boolmesh_port(
                     &left,
                     &right,
                     hypermesh::exact::ExactBooleanOperation::Intersection,
@@ -13286,14 +13078,9 @@ fn exact_boolmesh_kernel12_endpoint_shadow_port(c: &mut Criterion) {
             })
         });
     }
-    #[cfg(not(feature = "exact-triangulation"))]
-    {
-        let _ = c;
-    }
 }
 
 fn exact_boolmesh_kernel12_boundary_endpoint_shadow_port(c: &mut Criterion) {
-    #[cfg(feature = "exact-triangulation")]
     {
         let left = ExactMesh::from_i64_triangles(
             &[2, 0, 0, 2, 0, 2, 3, 1, 1, 1, 1, 1],
@@ -13310,7 +13097,7 @@ fn exact_boolmesh_kernel12_boundary_endpoint_shadow_port(c: &mut Criterion) {
             "exact_boolmesh_kernel12_boundary_endpoint_shadow_port",
             |b| {
                 b.iter(|| {
-                    let execution = hypermesh::exact::execute_exact_boolmesh_port(
+                    let execution = hypermesh::exact::boolmesh::execute_exact_boolmesh_port(
                         &left,
                         &right,
                         hypermesh::exact::ExactBooleanOperation::Intersection,
@@ -13335,119 +13122,114 @@ fn exact_boolmesh_kernel12_boundary_endpoint_shadow_port(c: &mut Criterion) {
             },
         );
     }
-    #[cfg(not(feature = "exact-triangulation"))]
-    {
-        let _ = c;
-    }
 }
 
 fn exact_boolmesh_kernel11_shadow_port(c: &mut Criterion) {
-    #[cfg(all(feature = "exact-triangulation", feature = "internal-fuzzing"))]
+    #[cfg(feature = "internal-fuzzing")]
     {
         c.bench_function("exact_boolmesh_kernel11_shadow_port", |b| {
             b.iter(|| exact_boolmesh_kernel11_shadow_probe_for_internal_fuzz(51))
         });
     }
-    #[cfg(not(all(feature = "exact-triangulation", feature = "internal-fuzzing")))]
+    #[cfg(not(feature = "internal-fuzzing"))]
     {
         let _ = c;
     }
 }
 
 fn exact_boolmesh_kernel02_shadow_port(c: &mut Criterion) {
-    #[cfg(all(feature = "exact-triangulation", feature = "internal-fuzzing"))]
+    #[cfg(feature = "internal-fuzzing")]
     {
         c.bench_function("exact_boolmesh_kernel02_shadow_port", |b| {
             b.iter(|| exact_boolmesh_kernel02_shadow_probe_for_internal_fuzz(52))
         });
     }
-    #[cfg(not(all(feature = "exact-triangulation", feature = "internal-fuzzing")))]
+    #[cfg(not(feature = "internal-fuzzing"))]
     {
         let _ = c;
     }
 }
 
 fn exact_boolmesh_kernel12_shadow_accumulator_port(c: &mut Criterion) {
-    #[cfg(all(feature = "exact-triangulation", feature = "internal-fuzzing"))]
+    #[cfg(feature = "internal-fuzzing")]
     {
         c.bench_function("exact_boolmesh_kernel12_shadow_accumulator_port", |b| {
             b.iter(|| exact_boolmesh_kernel12_shadow_accumulator_probe_for_internal_fuzz(53))
         });
     }
-    #[cfg(not(all(feature = "exact-triangulation", feature = "internal-fuzzing")))]
+    #[cfg(not(feature = "internal-fuzzing"))]
     {
         let _ = c;
     }
 }
 
 fn exact_boolmesh_kernel_frame_port(c: &mut Criterion) {
-    #[cfg(all(feature = "exact-triangulation", feature = "internal-fuzzing"))]
+    #[cfg(feature = "internal-fuzzing")]
     {
         c.bench_function("exact_boolmesh_kernel_frame_port", |b| {
             b.iter(|| exact_boolmesh_kernel_frame_probe_for_internal_fuzz(54))
         });
     }
-    #[cfg(not(all(feature = "exact-triangulation", feature = "internal-fuzzing")))]
+    #[cfg(not(feature = "internal-fuzzing"))]
     {
         let _ = c;
     }
 }
 
 fn exact_boolmesh_kernel12_accumulator_replay_port(c: &mut Criterion) {
-    #[cfg(all(feature = "exact-triangulation", feature = "internal-fuzzing"))]
+    #[cfg(feature = "internal-fuzzing")]
     {
         c.bench_function("exact_boolmesh_kernel12_accumulator_replay_port", |b| {
             b.iter(|| exact_boolmesh_kernel12_accumulator_replay_probe_for_internal_fuzz(55))
         });
     }
-    #[cfg(not(all(feature = "exact-triangulation", feature = "internal-fuzzing")))]
+    #[cfg(not(feature = "internal-fuzzing"))]
     {
         let _ = c;
     }
 }
 
 fn exact_boolmesh_kernel12_intersect_loop_port(c: &mut Criterion) {
-    #[cfg(all(feature = "exact-triangulation", feature = "internal-fuzzing"))]
+    #[cfg(feature = "internal-fuzzing")]
     {
         c.bench_function("exact_boolmesh_kernel12_intersect_loop_port", |b| {
             b.iter(|| exact_boolmesh_kernel12_intersect_loop_probe_for_internal_fuzz(56))
         });
     }
-    #[cfg(not(all(feature = "exact-triangulation", feature = "internal-fuzzing")))]
+    #[cfg(not(feature = "internal-fuzzing"))]
     {
         let _ = c;
     }
 }
 
 fn exact_boolmesh_kernel12_intersect_halfedge_row_port(c: &mut Criterion) {
-    #[cfg(all(feature = "exact-triangulation", feature = "internal-fuzzing"))]
+    #[cfg(feature = "internal-fuzzing")]
     {
         c.bench_function("exact_boolmesh_kernel12_intersect_halfedge_row_port", |b| {
             b.iter(|| exact_boolmesh_kernel12_intersect_loop_probe_for_internal_fuzz(58))
         });
     }
-    #[cfg(not(all(feature = "exact-triangulation", feature = "internal-fuzzing")))]
+    #[cfg(not(feature = "internal-fuzzing"))]
     {
         let _ = c;
     }
 }
 
 fn exact_boolmesh_kernel12_intersect_boundary_endpoint_port(c: &mut Criterion) {
-    #[cfg(all(feature = "exact-triangulation", feature = "internal-fuzzing"))]
+    #[cfg(feature = "internal-fuzzing")]
     {
         c.bench_function(
             "exact_boolmesh_kernel12_intersect_boundary_endpoint_port",
             |b| b.iter(|| exact_boolmesh_kernel12_intersect_loop_probe_for_internal_fuzz(60)),
         );
     }
-    #[cfg(not(all(feature = "exact-triangulation", feature = "internal-fuzzing")))]
+    #[cfg(not(feature = "internal-fuzzing"))]
     {
         let _ = c;
     }
 }
 
 fn exact_boolmesh_kernel12_coplanar_interval_port(c: &mut Criterion) {
-    #[cfg(feature = "exact-triangulation")]
     {
         let left = ExactMesh::from_i64_triangles_with_policy(
             &[0, 0, 0, 2, 0, 0, 0, 2, 0],
@@ -13463,7 +13245,7 @@ fn exact_boolmesh_kernel12_coplanar_interval_port(c: &mut Criterion) {
         .unwrap();
         c.bench_function("exact_boolmesh_kernel12_coplanar_interval_port", |b| {
             b.iter(|| {
-                let workspace = hypermesh::exact::exact_boolmesh_workspace(
+                let workspace = hypermesh::exact::boolmesh::exact_boolmesh_workspace(
                     &left,
                     &right,
                     hypermesh::exact::ExactBooleanOperation::Intersection,
@@ -13479,20 +13261,15 @@ fn exact_boolmesh_kernel12_coplanar_interval_port(c: &mut Criterion) {
             })
         });
     }
-    #[cfg(not(feature = "exact-triangulation"))]
-    {
-        let _ = c;
-    }
 }
 
 fn exact_boolmesh_positive_area_coplanar_kernel12_port(c: &mut Criterion) {
-    #[cfg(feature = "exact-triangulation")]
     {
         let left = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
         let right = tetrahedron_i64([2, -1, 0], [5, -1, 0], [2, 2, 0], [2, -1, -3]);
         c.bench_function("exact_boolmesh_positive_area_coplanar_kernel12_port", |b| {
             b.iter(|| {
-                let execution = hypermesh::exact::execute_exact_boolmesh_port(
+                let execution = hypermesh::exact::boolmesh::execute_exact_boolmesh_port(
                     &left,
                     &right,
                     hypermesh::exact::ExactBooleanOperation::Union,
@@ -13505,14 +13282,9 @@ fn exact_boolmesh_positive_area_coplanar_kernel12_port(c: &mut Criterion) {
             })
         });
     }
-    #[cfg(not(feature = "exact-triangulation"))]
-    {
-        let _ = c;
-    }
 }
 
 fn exact_boolmesh_boundary_fragment_cleanup_port(c: &mut Criterion) {
-    #[cfg(feature = "exact-triangulation")]
     {
         let source_edge_left =
             upward_l_prism_i64([[0, 0], [8, 0], [8, 3], [3, 3], [3, 8], [0, 8]], 5);
@@ -13522,19 +13294,20 @@ fn exact_boolmesh_boundary_fragment_cleanup_port(c: &mut Criterion) {
 
         c.bench_function("exact_boolmesh_boundary_fragment_cleanup_port", |b| {
             b.iter(|| {
-                let source_edge_execution = hypermesh::exact::execute_exact_boolmesh_port(
-                    &source_edge_left,
-                    &source_edge_right,
-                    hypermesh::exact::ExactBooleanOperation::Union,
-                    hypermesh::exact::ValidationPolicy::CLOSED,
-                )
-                .expect("source-edge cleanup fixture should materialize through boolmesh");
+                let source_edge_execution =
+                    hypermesh::exact::boolmesh::execute_exact_boolmesh_port(
+                        &source_edge_left,
+                        &source_edge_right,
+                        hypermesh::exact::ExactBooleanOperation::Union,
+                        hypermesh::exact::ValidationPolicy::CLOSED,
+                    )
+                    .expect("source-edge cleanup fixture should materialize through boolmesh");
                 source_edge_execution
                     .validate_against_sources(&source_edge_left, &source_edge_right)
                     .unwrap();
                 let source_edge_stage = source_edge_execution.workspace.boolean45.as_ref().unwrap();
 
-                let closure_execution = hypermesh::exact::execute_exact_boolmesh_port(
+                let closure_execution = hypermesh::exact::boolmesh::execute_exact_boolmesh_port(
                     &closure_left,
                     &closure_right,
                     hypermesh::exact::ExactBooleanOperation::Union,
@@ -13562,14 +13335,9 @@ fn exact_boolmesh_boundary_fragment_cleanup_port(c: &mut Criterion) {
             })
         });
     }
-    #[cfg(not(feature = "exact-triangulation"))]
-    {
-        let _ = c;
-    }
 }
 
 fn exact_boolmesh_boolean45_halfedge_row_port(c: &mut Criterion) {
-    #[cfg(feature = "exact-triangulation")]
     {
         let left = ExactMesh::from_i64_triangles_with_policy(
             &[1, 1, 0, 1, 1, 5, 2, 1, 5],
@@ -13585,7 +13353,7 @@ fn exact_boolmesh_boolean45_halfedge_row_port(c: &mut Criterion) {
         .unwrap();
         c.bench_function("exact_boolmesh_boolean45_halfedge_row_port", |b| {
             b.iter(|| {
-                let workspace = hypermesh::exact::exact_boolmesh_workspace(
+                let workspace = hypermesh::exact::boolmesh::exact_boolmesh_workspace(
                     &left,
                     &right,
                     hypermesh::exact::ExactBooleanOperation::Intersection,
@@ -13611,14 +13379,9 @@ fn exact_boolmesh_boolean45_halfedge_row_port(c: &mut Criterion) {
             })
         });
     }
-    #[cfg(not(feature = "exact-triangulation"))]
-    {
-        let _ = c;
-    }
 }
 
 fn exact_boolmesh_kernel03_no_intersection_port(c: &mut Criterion) {
-    #[cfg(feature = "exact-triangulation")]
     {
         let inner = ExactMesh::from_i64_triangles(
             &[1, 1, 1, 2, 1, 1, 1, 2, 1, 1, 1, 2],
@@ -13643,14 +13406,14 @@ fn exact_boolmesh_kernel03_no_intersection_port(c: &mut Criterion) {
 
         c.bench_function("exact_boolmesh_kernel03_no_intersection_port", |b| {
             b.iter(|| {
-                let union = hypermesh::exact::exact_boolmesh_workspace(
+                let union = hypermesh::exact::boolmesh::exact_boolmesh_workspace(
                     &inner,
                     &outer,
                     hypermesh::exact::ExactBooleanOperation::Union,
                 );
                 union.validate_against_sources(&inner, &outer).unwrap();
                 assert!(union.is_certified_no_intersection_kernel03());
-                let intersection = hypermesh::exact::exact_boolmesh_workspace(
+                let intersection = hypermesh::exact::boolmesh::exact_boolmesh_workspace(
                     &inner,
                     &outer,
                     hypermesh::exact::ExactBooleanOperation::Intersection,
@@ -13659,7 +13422,7 @@ fn exact_boolmesh_kernel03_no_intersection_port(c: &mut Criterion) {
                     .validate_against_sources(&inner, &outer)
                     .unwrap();
                 assert!(intersection.is_certified_no_intersection_kernel03());
-                let execution = hypermesh::exact::execute_exact_boolmesh_port(
+                let execution = hypermesh::exact::boolmesh::execute_exact_boolmesh_port(
                     &inner,
                     &outer,
                     hypermesh::exact::ExactBooleanOperation::Union,
@@ -13667,7 +13430,7 @@ fn exact_boolmesh_kernel03_no_intersection_port(c: &mut Criterion) {
                 )
                 .unwrap();
                 execution.validate_against_sources(&inner, &outer).unwrap();
-                let separated_execution = hypermesh::exact::execute_exact_boolmesh_port(
+                let separated_execution = hypermesh::exact::boolmesh::execute_exact_boolmesh_port(
                     &separated_left,
                     &separated_right,
                     hypermesh::exact::ExactBooleanOperation::Union,
@@ -13710,27 +13473,23 @@ fn exact_boolmesh_kernel03_no_intersection_port(c: &mut Criterion) {
             })
         });
     }
-    #[cfg(not(feature = "exact-triangulation"))]
-    {
-        let _ = c;
-    }
 }
 
 fn exact_boolmesh_kernel03_winding_port(c: &mut Criterion) {
-    #[cfg(all(feature = "exact-triangulation", feature = "internal-fuzzing"))]
+    #[cfg(feature = "internal-fuzzing")]
     {
         c.bench_function("exact_boolmesh_kernel03_winding_port", |b| {
             b.iter(|| exact_boolmesh_kernel03_winding_probe_for_internal_fuzz(61))
         });
     }
-    #[cfg(not(all(feature = "exact-triangulation", feature = "internal-fuzzing")))]
+    #[cfg(not(feature = "internal-fuzzing"))]
     {
         let _ = c;
     }
 }
 
 fn exact_boolmesh_boolean45_triangulation_port(c: &mut Criterion) {
-    #[cfg(all(feature = "exact-triangulation", feature = "internal-fuzzing"))]
+    #[cfg(feature = "internal-fuzzing")]
     {
         c.bench_function("exact_boolmesh_boolean45_triangulation_port", |b| {
             b.iter(|| {
@@ -13741,47 +13500,7 @@ fn exact_boolmesh_boolean45_triangulation_port(c: &mut Criterion) {
             })
         });
     }
-    #[cfg(not(all(feature = "exact-triangulation", feature = "internal-fuzzing")))]
-    {
-        let _ = c;
-    }
-}
-
-fn legacy_boolean_adapter_report(c: &mut Criterion) {
-    #[cfg(feature = "legacy-boolean")]
-    {
-        let left = hypermesh::prelude::Manifold::new(
-            &[
-                -0.866025, -1.0, 0.5, 0.0, -1.0, -1.0, 0.866025, -1.0, 0.5, 0.0, 1.0, 0.0,
-            ],
-            &[0, 3, 1, 1, 2, 0, 1, 3, 2, 2, 3, 0],
-        )
-        .unwrap();
-        let right = hypermesh::prelude::Manifold::new(
-            &[
-                -1.0, -0.866025, 0.5, -1.0, 0.0, -1.0, -1.0, 0.866025, 0.5, 1.0, 0.0, 0.0,
-            ],
-            &[1, 3, 0, 1, 0, 2, 2, 3, 1, 0, 3, 2],
-        )
-        .unwrap();
-
-        c.bench_function("legacy_boolean_adapter_report", |b| {
-            b.iter(|| {
-                let result = hypermesh::prelude::compute_boolean_with_report(
-                    &left,
-                    &right,
-                    hypermesh::prelude::OpType::Subtract,
-                )
-                .unwrap();
-                result.validate_operation_against_inputs(
-                    &left,
-                    &right,
-                    hypermesh::prelude::OpType::Subtract,
-                )
-            })
-        });
-    }
-    #[cfg(not(feature = "legacy-boolean"))]
+    #[cfg(not(feature = "internal-fuzzing"))]
     {
         let _ = c;
     }
@@ -13869,8 +13588,7 @@ criterion_group!(
     exact_boolmesh_boolean45_halfedge_row_port,
     exact_boolmesh_kernel03_no_intersection_port,
     exact_boolmesh_kernel03_winding_port,
-    exact_boolmesh_boolean45_triangulation_port,
-    legacy_boolean_adapter_report
+    exact_boolmesh_boolean45_triangulation_port
 );
 criterion_main!(benches);
 

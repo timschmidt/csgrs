@@ -4,40 +4,24 @@
 //! intersection graph and classifies them against opposite mesh face planes.
 //! The stage is intentionally still pre-boolean-output: it prepares certified
 //! side facts for later winding/inside-outside classification without using a
-//! primitive-float representative point. This follows Yap, "Towards Exact
-//! Geometric Computation," *Computational Geometry* 7.1-2 (1997): topology
-//! updates consume certified predicate facts, and undecided cases remain
-//! explicit.
+//! primitive-float representative point. Topology updates consume certified
+//! predicate facts, and undecided cases remain explicit.
 //!
-//! Plane-side classification is the same predicate boundary used by Moller,
-//! "A Fast Triangle-Triangle Intersection Test," *Journal of Graphics Tools*
-//! 2.2 (1997), and Guigue and Devillers, "Fast and Robust Triangle-Triangle
-//! Overlap Test Using Orientation Predicates," *Journal of Graphics Tools*
-//! 8.1 (2003), but routed through `hyperlimit::orient3d_report`.
 
-#[cfg(feature = "exact-triangulation")]
 use std::{cmp::Ordering, collections::BTreeMap};
 
 use hyperlimit::{PlaneSide, Point3, orient3d_report};
-#[cfg(feature = "exact-triangulation")]
 use hyperlimit::{Point2 as PredicatePoint2, Sign, compare_reals, orient2d_report, project_point3};
 
-#[cfg(feature = "exact-triangulation")]
 use super::coplanar::CoplanarProjection;
-#[cfg(feature = "exact-triangulation")]
 use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
-#[cfg(feature = "exact-triangulation")]
 use super::graph::SplitPlanDiagnosticKind;
-#[cfg(feature = "exact-triangulation")]
 use super::graph::SplitPlanValidationReport;
 use super::graph::{ExactFaceRegionPlan, FaceSplitBoundaryNode, MeshSide};
 use super::mesh::ExactMesh;
-#[cfg(feature = "exact-triangulation")]
-use super::mesh::{ExactPoint3, Triangle};
+use super::mesh::Triangle;
 use super::provenance::PredicateUse;
-#[cfg(feature = "exact-triangulation")]
 use super::provenance::SourceProvenance;
-#[cfg(feature = "exact-triangulation")]
 use super::validation::ValidationPolicy;
 
 /// Exact relation between a split region boundary and an opposite face plane.
@@ -79,8 +63,6 @@ pub struct FaceRegionPlaneClassification {
 /// The classification stores the per-boundary-node plane-side facts used to
 /// derive a coarser relation. Consumers such as future winding policy should
 /// be able to audit that derivation directly, rather than trusting a summary
-/// enum. This follows Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997): combinatorial decisions must remain
 /// tied to certified predicate facts and explicit unknowns.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum FaceRegionPlaneValidationError {
@@ -126,9 +108,6 @@ impl FaceRegionPlaneClassification {
     ///
     /// A retained region/plane side fact is only consumable by inside/outside
     /// policy when every predicate was proof-producing and the derived
-    /// relation is decided. Keeping this as a named predicate mirrors Yap's
-    /// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-    /// (1997): topology stages consume certified combinatorial facts, while
     /// undecided relations remain explicit refinement state.
     pub fn is_decided_and_proof_producing(&self) -> bool {
         self.all_proof_producing() && !matches!(self.relation, FaceRegionPlaneRelation::Unknown)
@@ -142,8 +121,6 @@ impl FaceRegionPlaneClassification {
     /// justifies the stored relation. It also checks that the retained plane
     /// came from the opposite mesh side, because winding and inside/outside
     /// policies consume these facts as cross-mesh evidence. Keeping that
-    /// provenance executable follows Yap, "Towards Exact Geometric
-    /// Computation," *Computational Geometry* 7.1-2 (1997): a combinatorial
     /// handoff should retain the exact predicate context it depends on.
     pub fn validate(&self) -> Result<(), FaceRegionPlaneValidationError> {
         if self.region_side == self.plane_side {
@@ -177,11 +154,8 @@ impl FaceRegionPlaneClassification {
     /// coarse relation. This source replay is stronger: it rebuilds the exact
     /// intersection graph, derives the face-region plan, reclassifies regions
     /// against opposite planes, and requires this artifact to appear in that
-    /// recomputed set. Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7.1-2 (1997), treats these predicate facts as
     /// computation history, so a future winding policy must not consume a
     /// copied or relabeled region/plane record.
-    #[cfg(feature = "exact-triangulation")]
     pub fn validate_against_sources(
         &self,
         left: &ExactMesh,
@@ -236,11 +210,7 @@ pub fn classify_face_regions_against_opposite_planes(
 ///
 /// This is the checked handoff for future winding/inside-outside policy:
 /// region loops must satisfy exact structural and source-face incidence
-/// validation before plane-side facts are produced. The staging follows Yap,
-/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997), by ensuring combinatorial consumers receive certified geometric
 /// objects rather than unchecked boundary loops.
-#[cfg(feature = "exact-triangulation")]
 pub fn checked_classify_face_regions_against_opposite_planes(
     regions: &ExactFaceRegionPlan,
     left: &ExactMesh,
@@ -256,7 +226,6 @@ pub fn checked_classify_face_regions_against_opposite_planes(
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn region_plan_report_to_mesh_error(report: SplitPlanValidationReport) -> MeshError {
     MeshError::new(
         report
@@ -288,7 +257,6 @@ fn region_plan_report_to_mesh_error(report: SplitPlanValidationReport) -> MeshEr
 }
 
 /// Exact earcut triangulation of one split face region.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, PartialEq)]
 pub struct FaceRegionTriangulation {
     /// Mesh side owning the source face.
@@ -305,7 +273,6 @@ pub struct FaceRegionTriangulation {
     pub triangles: Vec<usize>,
 }
 
-#[cfg(feature = "exact-triangulation")]
 impl FaceRegionTriangulation {
     /// Validate projected triangulation output before assembly consumes it.
     ///
@@ -313,11 +280,8 @@ impl FaceRegionTriangulation {
     /// assembly needs the stronger contract that every projected vertex still
     /// matches its retained 3D boundary source and that every output triangle
     /// is a certified non-degenerate projected triangle. This keeps the
-    /// triangulation handoff in Yap's exact-geometric-computation model:
     /// algorithms may transform representation, but each combinatorial result
     /// must carry enough certified facts to be audited before downstream
-    /// topology uses it. See Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7.1-2 (1997).
     pub fn validate(&self) -> hypertri::Result<()> {
         if self.vertices.len() != self.boundary.len() {
             return Err(hypertri::Error::InvalidInput {
@@ -359,10 +323,8 @@ impl FaceRegionTriangulation {
     ///
     /// The local audit checks projection and triangle-index invariants. This
     /// replay rebuilds the exact graph and region loops from the operands,
-    /// reruns the feature-gated exact `hypertri` handoff, and requires this
+    /// reruns the exact `hypertri` handoff, and requires this
     /// retained triangulation to match one recomputed artifact. That keeps
-    /// split-region triangulation aligned with Yap, "Towards Exact Geometric
-    /// Computation," *Computational Geometry* 7.1-2 (1997): triangulated
     /// combinatorics remain tied to the exact source faces and graph vertices
     /// that produced them.
     pub fn validate_against_sources(
@@ -389,7 +351,6 @@ impl FaceRegionTriangulation {
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn replay_region_plan(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -409,7 +370,6 @@ fn replay_region_plan(
 }
 
 /// Region selection policy for exact output assembly.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ExactRegionSelection {
     /// Drop regions from both meshes.
@@ -428,11 +388,8 @@ pub enum ExactRegionSelection {
 /// with its original orientation and sometimes with reversed orientation. The
 /// difference operation is the canonical case: portions of the right operand
 /// that are inside the left operand become inner boundary with reversed normal.
-/// Keeping this as explicit assembly state follows Yap, "Towards Exact
-/// Geometric Computation," *Computational Geometry* 7.1-2 (1997): boolean
 /// semantics are certified combinatorial choices, not post-hoc triangle-soup
 /// rewrites.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ExactRegionRetention {
     /// Drop this triangulated split region.
@@ -443,7 +400,6 @@ pub enum ExactRegionRetention {
     KeepReversed,
 }
 
-#[cfg(feature = "exact-triangulation")]
 impl ExactRegionSelection {
     const fn keeps(self, side: MeshSide) -> bool {
         matches!(
@@ -456,7 +412,6 @@ impl ExactRegionSelection {
 }
 
 /// One exact output vertex in an assembled region mesh.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactOutputVertex {
     /// Exact 3D point.
@@ -466,7 +421,6 @@ pub struct ExactOutputVertex {
 }
 
 /// One exact output triangle with source-region provenance.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ExactOutputTriangle {
     /// Indices into [`ExactBooleanAssemblyPlan::vertices`].
@@ -486,9 +440,6 @@ pub struct ExactOutputTriangle {
 /// source-incidence replay. It exists so named booleans can represent
 /// orientation-changing semantics, especially right-hand shell reversal for
 /// exact difference, without losing the source-face provenance required by
-/// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-/// 7.1-2 (1997).
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ExactOutputTriangleOrientation {
     /// The output triangle has the same projected orientation as its source
@@ -506,9 +457,6 @@ pub enum ExactOutputTriangleOrientation {
 /// that a future halfedge builder can materialize. It does not hide operation
 /// semantics in tolerances; callers pass an explicit region-selection policy,
 /// and undecided winding/inside-outside policy remains outside this assembly
-/// step. See Yap, "Towards Exact Geometric Computation," *Computational
-/// Geometry* 7.1-2 (1997).
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactBooleanAssemblyPlan {
     /// Exact output vertices.
@@ -517,10 +465,8 @@ pub struct ExactBooleanAssemblyPlan {
     pub triangles: Vec<ExactOutputTriangle>,
 }
 
-#[cfg(feature = "exact-triangulation")]
 impl ExactBooleanAssemblyPlan {
-    /// Assemble exact output triangles from feature-gated region
-    /// triangulations.
+    /// Assemble exact output triangles from region triangulations.
     pub fn from_region_triangulations(
         triangulations: &[FaceRegionTriangulation],
         selection: ExactRegionSelection,
@@ -544,11 +490,8 @@ impl ExactBooleanAssemblyPlan {
     /// its original source-face orientation according to the operation policy.
     /// This source-aware entry point compares exact projected orientation
     /// predicates and flips individual emitted triangles as needed. That keeps
-    /// the materialization boundary in Yap's exact-geometric-computation
     /// model: representation changes are allowed only when the predicate facts
     /// needed to justify their combinatorics are retained and replayable. See
-    /// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-    /// 7.1-2 (1997).
     pub fn from_region_triangulations_with_sources(
         triangulations: &[FaceRegionTriangulation],
         selection: ExactRegionSelection,
@@ -570,13 +513,11 @@ impl ExactBooleanAssemblyPlan {
         )
     }
 
-    /// Assemble exact output triangles from feature-gated region
-    /// triangulations with an arbitrary retention predicate.
+    /// Assemble exact output triangles from region triangulations with an
+    /// arbitrary retention predicate.
     ///
     /// The same split-region triangulation can be reused under alternate
     /// inside/outside semantics without replaying the narrow phase. This
-    /// follows Yap, "Towards Exact Geometric Computation," *Computational
-    /// Geometry* 7.1-2 (1997): split geometry is an exact intermediate
     /// artifact, while semantic policy stays explicit at the assembly boundary.
     pub fn from_region_triangulations_with_selection(
         triangulations: &[FaceRegionTriangulation],
@@ -591,16 +532,14 @@ impl ExactBooleanAssemblyPlan {
         })
     }
 
-    /// Assemble exact output triangles from feature-gated region
-    /// triangulations with explicit per-region orientation policy.
+    /// Assemble exact output triangles from region triangulations with explicit
+    /// per-region orientation policy.
     ///
     /// This is the assembly hook used by winding-backed named booleans. The
     /// classifier decides whether each exact split region is inside or outside
     /// the opposite closed mesh; this method then records that decision as
     /// kept, dropped, or source-reversed output topology. The split geometry
     /// and semantic retention policy remain separate auditable artifacts, as
-    /// required by Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7.1-2 (1997).
     pub fn from_region_triangulations_with_retention(
         triangulations: &[FaceRegionTriangulation],
         mut retain: impl FnMut(&FaceRegionTriangulation) -> ExactRegionRetention,
@@ -614,9 +553,6 @@ impl ExactBooleanAssemblyPlan {
     /// This is the named-boolean materialization hook: winding classification
     /// decides whether a split region is kept, dropped, or reversed, and this
     /// method uses exact source-face orientation predicates to make the emitted
-    /// triangle order match that decision. The predicate replay follows Yap,
-    /// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-    /// (1997), by treating output orientation as certified topology rather
     /// than a convention inherited blindly from a triangulation index buffer.
     pub fn from_region_triangulations_with_retention_and_sources(
         triangulations: &[FaceRegionTriangulation],
@@ -638,9 +574,6 @@ impl ExactBooleanAssemblyPlan {
     /// would collapse those exact cells back into an approximation, so this
     /// entry point exposes the local triangulation triangle to the caller's
     /// winding policy. Orientation replay is still source-aware and exact, in
-    /// the Yap sense that every combinatorial output decision remains tied to
-    /// predicate-certified source geometry. See Yap, "Towards Exact Geometric
-    /// Computation," *Computational Geometry* 7.1-2 (1997).
     pub fn from_region_triangulations_with_triangle_retention_and_sources(
         triangulations: &[FaceRegionTriangulation],
         left: &ExactMesh,
@@ -664,8 +597,6 @@ impl ExactBooleanAssemblyPlan {
     /// distinctness catches zero-area assembly artifacts before they reach mesh
     /// construction. These are exact
     /// `hyperlimit::compare_reals` checks, not tolerance comparisons,
-    /// following Yap, "Towards Exact Geometric Computation," *Computational
-    /// Geometry* 7.1-2 (1997): geometric decisions carry certified object
     /// facts instead of trusting duplicated coordinates.
     pub fn validate(&self) -> hypertri::Result<()> {
         for vertex in &self.vertices {
@@ -703,14 +634,12 @@ impl ExactBooleanAssemblyPlan {
 
     /// Validate and materialize the assembly plan as an [`ExactMesh`].
     ///
-    /// This is the exact replacement boundary for the legacy boolean mutation
+    /// This is the exact replacement boundary for the boolmesh mutation
     /// path: constructed output triangles are converted back into hypermesh
     /// exact vertices and triangle handles only after local assembly invariants
     /// have been audited. The resulting mesh is then checked by the same
     /// manifold and geometric validators used for caller-supplied exact meshes.
     ///
-    /// The local validation step follows Yap, "Towards Exact Geometric
-    /// Computation," *Computational Geometry* 7.1-2 (1997): constructed
     /// combinatorics must carry certified source and incidence facts before a
     /// topology consumer treats them as mesh state.
     pub fn to_exact_mesh(
@@ -722,7 +651,7 @@ impl ExactBooleanAssemblyPlan {
             .vertices
             .iter()
             .map(|vertex| {
-                ExactPoint3::new(
+                Point3::new(
                     vertex.point.x.clone(),
                     vertex.point.y.clone(),
                     vertex.point.z.clone(),
@@ -748,8 +677,6 @@ impl ExactBooleanAssemblyPlan {
     /// output policy. This checked entry point preserves the same handoff used
     /// by the selected-region pipeline: index/provenance invariants are
     /// checked before exact mesh validation consumes the output triangles.
-    /// The separation follows Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7.1-2 (1997), by validating constructed
     /// combinatorics before committing them to mesh topology.
     pub fn checked_to_exact_mesh(
         &self,
@@ -763,8 +690,6 @@ impl ExactBooleanAssemblyPlan {
     /// This is the preferred output boundary for selected-region booleans. It
     /// combines local assembly validation with exact source-face incidence
     /// replay before exact mesh construction receives any topology. That keeps
-    /// the final handoff aligned with Yap, "Towards Exact Geometric
-    /// Computation," *Computational Geometry* 7.1-2 (1997): every
     /// combinatorial consumer receives certified geometric facts, not a
     /// coordinate-only approximation of earlier construction history.
     pub fn checked_to_exact_mesh_with_sources(
@@ -790,8 +715,6 @@ impl ExactBooleanAssemblyPlan {
     /// Output triangles carry `source_side` and `source_face` so later boolean
     /// stages can audit where each triangle came from. This check replays that
     /// incidence with exact `hyperlimit::orient3d_report` predicates before
-    /// materialization consumes the plan. It follows Yap, "Towards Exact
-    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997): topology
     /// handoffs should retain and revalidate the geometric certificates they
     /// depend on.
     pub fn validate_source_face_incidence(
@@ -818,8 +741,6 @@ impl ExactBooleanAssemblyPlan {
     /// triangles are joined in a fan only when they share a retained output edge.
     /// No coordinate perturbation is introduced, and cloned vertices retain the
     /// same exact point and source witness. That preserves the object/predicate
-    /// boundary advocated by Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7.1-2 (1997), while allowing the mesh topology to
     /// represent point contacts as separate vertices.
     pub fn split_disconnected_vertex_fans(&mut self) -> hypertri::Result<usize> {
         let original_vertex_count = self.vertices.len();
@@ -855,8 +776,6 @@ impl ExactBooleanAssemblyPlan {
     /// triangulations, and selected-region assembly for the supplied policy,
     /// then requires the retained plan to match the recomputed one. That makes
     /// the selected-region policy part of the exact artifact boundary, in the
-    /// sense of Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7.1-2 (1997): downstream topology cannot
     /// consume a locally valid assembly that was relabeled from a different
     /// source pair or region-retention rule.
     pub fn validate_against_sources(
@@ -893,7 +812,6 @@ impl ExactBooleanAssemblyPlan {
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn validate_output_vertex_source(vertex: &ExactOutputVertex) -> hypertri::Result<()> {
     match points_equal(&vertex.point, boundary_node_point(&vertex.source)) {
         Some(true) => Ok(()),
@@ -906,7 +824,6 @@ fn validate_output_vertex_source(vertex: &ExactOutputVertex) -> hypertri::Result
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn validate_output_triangle_distinct_points(
     assembly: &ExactBooleanAssemblyPlan,
     triangle: &ExactOutputTriangle,
@@ -933,7 +850,6 @@ fn validate_output_triangle_distinct_points(
     Ok(())
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn validate_assembly_source_face_incidence(
     assembly: &ExactBooleanAssemblyPlan,
     left: &ExactMesh,
@@ -953,9 +869,9 @@ fn validate_assembly_source_face_incidence(
                 reason: "assembled output triangle references a missing source face",
             });
         };
-        let a = mesh.vertices()[source_triangle[0]].to_hyperlimit_point();
-        let b = mesh.vertices()[source_triangle[1]].to_hyperlimit_point();
-        let c = mesh.vertices()[source_triangle[2]].to_hyperlimit_point();
+        let a = mesh.vertices()[source_triangle[0]].clone();
+        let b = mesh.vertices()[source_triangle[1]].clone();
+        let c = mesh.vertices()[source_triangle[2]].clone();
         for &vertex in &triangle.vertices {
             let Some(output_vertex) = assembly.vertices.get(vertex) else {
                 return Err(hypertri::Error::InvalidInput {
@@ -981,7 +897,6 @@ fn validate_assembly_source_face_incidence(
     Ok(())
 }
 
-#[cfg(feature = "exact-triangulation")]
 /// Validate that an output triangle preserves its retained source-face
 /// orientation.
 ///
@@ -989,8 +904,6 @@ fn validate_assembly_source_face_incidence(
 /// plane. For boundary topology, the triangle also has to keep the same
 /// projected orientation as the source face it claims. The projection is chosen
 /// by a certified nonzero `hyperlimit::orient2d_report`, then both source and
-/// output signs are compared exactly. This follows Yap, "Towards Exact
-/// Geometric Computation," *Computational Geometry* 7.1-2 (1997): a topology
 /// handoff must retain the predicate facts that make orientation meaningful,
 /// rather than trusting vertex order as an unchecked label.
 fn validate_output_triangle_source_orientation(
@@ -1001,9 +914,9 @@ fn validate_output_triangle_source_orientation(
 ) -> hypertri::Result<()> {
     let projection = choose_region_projection(mesh, triangle.source_face)?;
     let source_points = [
-        mesh.vertices()[source_triangle[0]].to_hyperlimit_point(),
-        mesh.vertices()[source_triangle[1]].to_hyperlimit_point(),
-        mesh.vertices()[source_triangle[2]].to_hyperlimit_point(),
+        mesh.vertices()[source_triangle[0]].clone(),
+        mesh.vertices()[source_triangle[1]].clone(),
+        mesh.vertices()[source_triangle[2]].clone(),
     ];
     let source_sign = orient2d_report(
         &project_for_predicate(&source_points[0], projection),
@@ -1045,7 +958,6 @@ fn validate_output_triangle_source_orientation(
     Ok(())
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn assembly_validation_error(error: hypertri::Error) -> super::error::MeshError {
     super::error::MeshError::one(super::error::MeshDiagnostic::new(
         super::error::Severity::Error,
@@ -1056,12 +968,11 @@ fn assembly_validation_error(error: hypertri::Error) -> super::error::MeshError 
 
 /// Triangulate split face-region loops with `hypertri` exact earcut.
 ///
-/// This bridge is behind `hypermesh`'s `exact-triangulation` cargo feature, so
-/// users that only need validation, broad phase, or event graphs do not build
-/// or link triangulation code. The projection is selected only after a
-/// certified nonzero orientation predicate, matching the projection discipline
-/// used for coplanar overlap classification.
-#[cfg(feature = "exact-triangulation")]
+/// The projection is selected only after a certified nonzero orientation
+/// predicate, matching the projection discipline used for coplanar overlap
+/// classification. The earcut call follows Held, "FIST:
+/// Fast Industrial-Strength Triangulation of Polygons," *Algorithmica* 30
+/// (2001), with exact projected coordinates supplied by `hypertri`.
 pub fn triangulate_face_regions_with_earcut(
     regions: &ExactFaceRegionPlan,
     left: &ExactMesh,
@@ -1099,11 +1010,7 @@ pub fn triangulate_face_regions_with_earcut(
 /// This is the checked handoff from exact graph geometry into triangulation:
 /// region loops must first satisfy the structural and face-incidence
 /// invariants enforced by [`ExactFaceRegionPlan::validate`]. Only then are
-/// they projected and passed to `hypertri`. The staged contract follows Yap,
-/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997): certified geometric facts are validated before an algorithm turns
 /// them into downstream combinatorics.
-#[cfg(feature = "exact-triangulation")]
 pub fn checked_triangulate_face_regions_with_earcut(
     regions: &ExactFaceRegionPlan,
     left: &ExactMesh,
@@ -1133,14 +1040,12 @@ pub fn checked_triangulate_face_regions_with_earcut(
 
 /// Build a validated exact mesh from selected split regions of two inputs.
 ///
-/// This is the feature-gated exact-stack pipeline that replaces the old
-/// tolerance-driven "split then mutate" shape for the subset currently
-/// supported by the exact port. It intentionally accepts an explicit
+/// This exact-stack pipeline replaces the old tolerance-driven "split then
+/// mutate" shape for the subset currently supported by the exact port. It
+/// intentionally accepts an explicit
 /// [`ExactRegionSelection`] instead of pretending that winding/inside-outside
 /// policy has been solved by a floating representative point. The internal
-/// stages remain Yap-style auditable artifacts: event graph, region loops,
 /// exact triangulation, assembly plan, and final exact mesh validation.
-#[cfg(feature = "exact-triangulation")]
 pub fn build_selected_region_mesh(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -1174,8 +1079,6 @@ pub fn build_selected_region_mesh(
     // the richer report API. It must still cross the same certified
     // winding-handoff boundary as `boolean_selected_regions`: every retained
     // region/plane fact is audited and proof-producing before triangulation
-    // may materialize topology. This follows Yap, "Towards Exact Geometric
-    // Computation," Comput. Geom. 7.1-2 (1997): a shorter API cannot erase
     // undecided predicate state just because it returns fewer report fields.
     if region_classifications
         .iter()
@@ -1213,7 +1116,6 @@ pub fn build_selected_region_mesh(
     assembly.checked_to_exact_mesh_with_sources(left, right, policy)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn assemble_region_triangulations_with_retention(
     triangulations: &[FaceRegionTriangulation],
     sources: Option<(&ExactMesh, &ExactMesh)>,
@@ -1226,7 +1128,6 @@ fn assemble_region_triangulations_with_retention(
     )
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn assemble_region_triangulations_with_triangle_retention(
     triangulations: &[FaceRegionTriangulation],
     sources: Option<(&ExactMesh, &ExactMesh)>,
@@ -1284,15 +1185,12 @@ fn assemble_region_triangulations_with_triangle_retention(
     Ok(plan)
 }
 
-#[cfg(feature = "exact-triangulation")]
 /// Orient one emitted output triangle against its retained source face.
 ///
 /// Ear clipping works in the projected polygon's coordinate convention, while
 /// boolean output topology is a 3D source-face contract. The exact
 /// `orient2d_report` checks here replay both signs in the same certified
 /// projection and swap the emitted triangle when its raw order disagrees with
-/// the requested source orientation. This follows Yap, "Towards Exact
-/// Geometric Computation," *Computational Geometry* 7.1-2 (1997): an
 /// algorithmic representation change cannot silently become a topological
 /// decision unless exact predicates certify it.
 fn orient_output_triangle_for_source(
@@ -1331,7 +1229,6 @@ fn orient_output_triangle_for_source(
     Ok(())
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn source_face_projected_orientation(
     mesh: &ExactMesh,
     face: usize,
@@ -1343,9 +1240,9 @@ fn source_face_projected_orientation(
         });
     };
     let points = [
-        mesh.vertices()[triangle[0]].to_hyperlimit_point(),
-        mesh.vertices()[triangle[1]].to_hyperlimit_point(),
-        mesh.vertices()[triangle[2]].to_hyperlimit_point(),
+        mesh.vertices()[triangle[0]].clone(),
+        mesh.vertices()[triangle[1]].clone(),
+        mesh.vertices()[triangle[2]].clone(),
     ];
     let sign = orient2d_report(
         &project_for_predicate(&points[0], projection),
@@ -1364,7 +1261,6 @@ fn source_face_projected_orientation(
     Ok(sign)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn output_triangle_projected_orientation(
     vertices: &[ExactOutputVertex],
     output_vertices: [usize; 3],
@@ -1397,7 +1293,6 @@ fn output_triangle_projected_orientation(
     })
 }
 
-#[cfg(feature = "exact-triangulation")]
 /// Map a region-local boundary vertex into the compact output assembly.
 ///
 /// Region boundaries may carry split nodes that exact earcut does not consume in
@@ -1405,8 +1300,6 @@ fn output_triangle_projected_orientation(
 /// may describe the same exact 3D point through different boundary-node
 /// provenance. The assembly therefore welds exact-equal points globally while
 /// retaining one source witness for the vertex. This is a topological
-/// operation certified by exact equality predicates, following Yap, "Towards
-/// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997):
 /// downstream topology receives shared object identity only when exact
 /// predicate facts justify the merge.
 fn remap_region_vertex(
@@ -1440,7 +1333,6 @@ fn remap_region_vertex(
     Ok(index)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn incident_triangles(assembly: &ExactBooleanAssemblyPlan, vertex: usize) -> Vec<usize> {
     assembly
         .triangles
@@ -1455,7 +1347,6 @@ fn incident_triangles(assembly: &ExactBooleanAssemblyPlan, vertex: usize) -> Vec
         .collect()
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn vertex_fan_components(
     assembly: &ExactBooleanAssemblyPlan,
     vertex: usize,
@@ -1486,7 +1377,6 @@ fn vertex_fan_components(
     components.into_values().collect()
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn replace_triangle_vertex(triangle: &mut ExactOutputTriangle, old: usize, new: usize) {
     for vertex in &mut triangle.vertices {
         if *vertex == old {
@@ -1495,12 +1385,10 @@ fn replace_triangle_vertex(triangle: &mut ExactOutputTriangle, old: usize, new: 
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 struct DisjointTriangleFan {
     parent: Vec<usize>,
 }
 
-#[cfg(feature = "exact-triangulation")]
 impl DisjointTriangleFan {
     fn new(len: usize) -> Self {
         Self {
@@ -1537,9 +1425,9 @@ fn classify_region_against_face_plane(
     plane_face: usize,
 ) -> FaceRegionPlaneClassification {
     let tri = plane_mesh.triangles()[plane_face].0;
-    let a = plane_mesh.vertices()[tri[0]].to_hyperlimit_point();
-    let b = plane_mesh.vertices()[tri[1]].to_hyperlimit_point();
-    let c = plane_mesh.vertices()[tri[2]].to_hyperlimit_point();
+    let a = plane_mesh.vertices()[tri[0]].clone();
+    let b = plane_mesh.vertices()[tri[1]].clone();
+    let c = plane_mesh.vertices()[tri[2]].clone();
     let mut predicates = Vec::with_capacity(boundary.len());
     let mut node_sides = Vec::with_capacity(boundary.len());
 
@@ -1561,15 +1449,14 @@ fn classify_region_against_face_plane(
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 pub(crate) fn choose_region_projection(
     mesh: &ExactMesh,
     face: usize,
 ) -> hypertri::Result<CoplanarProjection> {
     let triangle = mesh.triangles()[face].0;
-    let a = mesh.vertices()[triangle[0]].to_hyperlimit_point();
-    let b = mesh.vertices()[triangle[1]].to_hyperlimit_point();
-    let c = mesh.vertices()[triangle[2]].to_hyperlimit_point();
+    let a = mesh.vertices()[triangle[0]].clone();
+    let b = mesh.vertices()[triangle[1]].clone();
+    let c = mesh.vertices()[triangle[2]].clone();
     for projection in [
         CoplanarProjection::Xy,
         CoplanarProjection::Xz,
@@ -1592,7 +1479,6 @@ pub(crate) fn choose_region_projection(
     })
 }
 
-#[cfg(feature = "exact-triangulation")]
 pub(crate) fn project_for_predicate(
     point: &Point3,
     projection: CoplanarProjection,
@@ -1600,7 +1486,6 @@ pub(crate) fn project_for_predicate(
     project_point3(point, projection)
 }
 
-#[cfg(feature = "exact-triangulation")]
 pub(crate) fn project_for_hypertri(
     point: &Point3,
     projection: CoplanarProjection,
@@ -1612,7 +1497,6 @@ pub(crate) fn project_for_hypertri(
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn validate_projected_boundary_vertex(
     vertex: &hypertri::ExactPoint,
     source: &FaceSplitBoundaryNode,
@@ -1630,7 +1514,6 @@ fn validate_projected_boundary_vertex(
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn validate_projected_triangle(
     a: &hypertri::ExactPoint,
     b: &hypertri::ExactPoint,
@@ -1666,7 +1549,6 @@ fn validate_projected_triangle(
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn exact_points_equal(left: &hypertri::ExactPoint, right: &hypertri::ExactPoint) -> Option<bool> {
     let x = compare_reals(&left.x, &right.x).value()?;
     let y = compare_reals(&left.y, &right.y).value()?;
@@ -1706,7 +1588,6 @@ pub(crate) fn boundary_node_point(node: &FaceSplitBoundaryNode) -> &Point3 {
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn points_equal(left: &Point3, right: &Point3) -> Option<bool> {
     let x = compare_reals(&left.x, &right.x).value()?;
     let y = compare_reals(&left.y, &right.y).value()?;

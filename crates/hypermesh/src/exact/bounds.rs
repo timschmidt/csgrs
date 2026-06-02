@@ -2,10 +2,8 @@
 //!
 //! AABB facts are acceleration facts, not topology certificates. An exact box
 //! can prove that two objects are disjoint; otherwise the pair must continue to
-//! a `hyperlimit` narrow-phase predicate before topology changes. This is the
-//! package split advocated by Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7.1-2 (1997): cheap geometric-object facts may
-//! schedule work, but certified predicates decide combinatorics.
+//! a `hyperlimit` narrow-phase predicate before topology changes. Cheap bounds
+//! may schedule work, but certified predicates decide combinatorics.
 
 use std::cmp::Ordering;
 
@@ -20,8 +18,6 @@ pub type AabbIntersectionKind = Aabb3Intersection;
 /// Structural inconsistency in retained exact bounds.
 ///
 /// Bounds are object-level acceleration facts, not topology certificates.
-/// Still, Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-/// 7.1-2 (1997), requires object facts consumed by predicate scheduling to be
 /// validated before they can reject or retain topological work.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum BoundsValidationError {
@@ -117,8 +113,6 @@ impl ExactAabb3 {
     /// Local validation proves only that each interval is ordered. Source
     /// replay rebuilds the box from the exact points and requires equality
     /// before the box may act as broad-phase evidence. This is the bounds-level
-    /// form of Yap's exact-geometric-computation contract from "Towards Exact
-    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997): a cheap
     /// object summary can schedule predicate work only while it still replays
     /// from the exact object it summarizes.
     pub fn validate_against_points(&self, points: &[Point3]) -> Result<(), BoundsValidationError> {
@@ -214,9 +208,6 @@ impl MeshBounds {
     ///
     /// Local validation proves only interval ordering and table shape. Source
     /// replay rebuilds the mesh and per-face AABBs from exact source geometry
-    /// and requires equality with this retained object. This preserves Yap's
-    /// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-    /// (1997), distinction between acceleration facts and topology decisions:
     /// broad-phase facts may schedule or reject work only while they still
     /// replay from the exact objects they summarize.
     pub fn validate_against_sources(

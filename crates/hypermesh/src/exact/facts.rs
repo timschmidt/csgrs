@@ -2,15 +2,14 @@
 //!
 //! These are retained structural facts, not proofs by themselves. Exact
 //! predicate reports are stored beside facts when a topological claim depends
-//! on a predicate. This mirrors Yap's separation of geometric objects,
 //! arithmetic kernels, and certified predicate decisions.
 
 use std::collections::{BTreeMap, BTreeSet};
 
 use super::provenance::PredicateUse;
-use super::scalar::ExactReal;
 use super::validation::{ValidationPolicy, validate_triangles, validate_triangles_with_policy};
 use hyperlimit::Point3;
+use hyperreal::Real;
 
 /// Facts known for one mesh vertex.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -33,8 +32,6 @@ pub struct VertexFacts {
 ///
 /// This is a topology fact, not a geometric predicate. CGAL-style
 /// triangulation data structures validate manifoldness by the local shape of
-/// each vertex star; see Boissonnat, Devillers, Pion, Teillaud, and Yvinec,
-/// "Triangulations in CGAL," *Computational Geometry* 22.1-3 (2002). Hypermesh
 /// stores the classification explicitly so boolean stages can reject a local
 /// nonmanifold mutation before it becomes a global mesh.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -91,17 +88,14 @@ pub struct OrientedFaceFacts {
 ///
 /// The coefficients satisfy `normal.x * x + normal.y * y + normal.z * z +
 /// offset = 0` for every source vertex on the face. Hypermesh deliberately
-/// stores the unnormalized determinant form rather than a unit normal: Yap,
-/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997), emphasizes retaining numerical structure so later predicates can
 /// reuse exact object facts instead of re-deriving topology from rounded
 /// representatives.
 #[derive(Clone, Debug, PartialEq)]
 pub struct FacePlaneFacts {
     /// Oriented plane normal from the indexed triangle order.
-    pub normal: [ExactReal; 3],
+    pub normal: [Real; 3],
     /// Exact plane offset.
-    pub offset: ExactReal,
+    pub offset: Real,
 }
 
 /// Facts known for one face.
@@ -159,9 +153,6 @@ pub struct MeshValidationFacts {
 ///
 /// This audits the structural certificates that travel with an [`ExactMesh`](crate::exact::ExactMesh).
 /// It does not re-run geometric predicates; instead it checks that the retained
-/// topology table is internally coherent. That separation follows Yap,
-/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997): object-level facts should be explicit and reusable, while
 /// topology-affecting predicate decisions remain separately certified.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum MeshFactsValidationError {
@@ -523,8 +514,6 @@ impl MeshValidationFacts {
     /// Local validation proves that the retained summary, vertex, edge, and
     /// face tables are internally coherent. Source replay rebuilds those facts
     /// from `points` and `triangles` and requires the retained object to match
-    /// the replay. This follows Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7.1-2 (1997): object-level structural facts
     /// remain reusable only while they can be audited against the exact source
     /// objects they summarize.
     pub fn validate_against_sources(
@@ -547,8 +536,6 @@ impl MeshValidationFacts {
     /// Boundary policy is an API-level contract rather than a numeric fact.
     /// Retaining it beside replay keeps open-surface artifacts from being
     /// consumed as if they were produced by a closed-surface constructor. This
-    /// follows Yap, "Towards Exact Geometric Computation," *Computational
-    /// Geometry* 7.1-2 (1997), by keeping exact object state, policy, and
     /// predicate evidence replayable as separate artifacts.
     pub fn validate_against_sources_with_policy(
         &self,

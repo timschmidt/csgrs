@@ -2,16 +2,15 @@
 //!
 //! Legacy boolmesh assembles halfedge loops, then triangulates each output face
 //! boundary.  This module ports that handoff with exact source-face evidence:
-//! simple components use `hypertri` earcut, while holed components lower their
-//! retained boundary rings to `hypertri` CDT constraints.  Disjoint positive
-//! contours remain separate components, matching legacy `EarClip` instead of
-//! being flattened into artificial holes.  That separation follows Yap,
-//! "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-//! (1997): assembled boundary loops remain replayable topology, while exact
-//! triangulation is a later certified object.  The simple-polygon basis is
-//! Meisters, "Polygons Have Ears," *The American Mathematical Monthly* 82.6
-//! (1975), and the exact ring containment rule follows the even-odd model in
-//! Hormann and Agathos, "The Point in Polygon Problem for Arbitrary Polygons,"
+//! simple components use `hypertri` earcut in the style of Held, "FIST:
+//! Fast Industrial-Strength Triangulation of Polygons," *Algorithmica* 30
+//! (2001), while holed components lower their retained boundary rings to
+//! `hypertri` CDT constraints following the constrained-triangulation model in
+//! Boissonnat et al., "Triangulations in CGAL," *Computational Geometry* 22.1-3
+//! (2002). Disjoint positive contours remain separate components, matching
+//! legacy `EarClip` instead of treating triangulation as a later certified
+//! object. Ring containment uses the even-odd classifier described by Hormann
+//! and Agathos, "The Point in Polygon Problem for Arbitrary Polygons,"
 //! *Computational Geometry* 20.3 (2001).
 
 use std::cmp::Ordering;
@@ -19,9 +18,9 @@ use std::collections::{BTreeMap, VecDeque};
 
 use hyperlimit::{Point2, Point3, RingPointLocation, classify_point_ring_even_odd, compare_reals};
 
-use crate::exact::mesh::{ExactMesh, ExactPoint3};
+use crate::exact::mesh::ExactMesh;
 use crate::exact::region::{choose_region_projection, project_for_hypertri};
-use crate::exact::scalar::ExactReal;
+use hyperreal::Real;
 
 use super::super::{
     ExactBoolMeshBoolean03, ExactBoolMeshFaceLoopAssemblyStage, ExactBoolMeshHalfedgeAssemblyStage,
@@ -30,7 +29,7 @@ use super::super::{
 };
 use super::geometry::output_vertex_point;
 
-type CdtTriangulation = (Vec<usize>, Vec<[usize; 2]>, Vec<ExactPoint3>);
+type CdtTriangulation = (Vec<usize>, Vec<[usize; 2]>, Vec<Point3>);
 
 /// Triangulate assembled boolmesh output loops.
 ///
@@ -44,11 +43,7 @@ type CdtTriangulation = (Vec<usize>, Vec<[usize; 2]>, Vec<ExactPoint3>);
 /// `hypertri` earcut; components with retained hole constraints use
 /// `hypertri` CDT.  A face whose usable loops are all zero-area is recorded as
 /// a regularized lower-dimensional deletion instead of a triangulation
-/// failure.  This matches the exact-computation contract in Yap, "Towards
-/// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997):
 /// zero-area is a certified predicate result, not a tolerance outcome.  The
-/// positive-area simple-loop handoff uses the exact earcut basis from Meisters,
-/// "Polygons Have Ears," *The American Mathematical Monthly* 82.6 (1975).
 pub(super) fn triangulate_output_face_loops(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -156,7 +151,7 @@ fn triangulate_output_face_loop_group(
             stage.triangulation_failures += 1;
             return;
         };
-        match compare_reals(&area_abs, &ExactReal::from(0)).value() {
+        match compare_reals(&area_abs, &Real::from(0)).value() {
             Some(Ordering::Greater) => {
                 rings.push(ProjectedLoop {
                     loop_index,
@@ -239,7 +234,7 @@ struct ProjectedLoop {
     loop_index: usize,
     vertices: Vec<usize>,
     projected: Vec<hypertri::ExactPoint>,
-    area_abs: ExactReal,
+    area_abs: Real,
 }
 
 #[derive(Clone)]
@@ -395,11 +390,9 @@ fn sorted_local_edge(edge: [usize; 2]) -> [usize; 2] {
 /// only larger faces reach `general_triangulate`.  This exact port keeps that
 /// control flow: triangles are copied directly, quadrilaterals choose the same
 /// diagonal rule with exact projected orientation and exact squared lengths,
-/// and only larger loops use the Meisters ear theorem implementation in
-/// `hypertri::earcut`.  Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997), is the boundary condition here: the
-/// boolmesh topology branch is retained, while f64 epsilon orientation and
-/// length comparisons are replaced by exact predicates.
+/// and larger simple components use the Held/FIST-style earcut path cited in
+/// the module docs. The boolmesh topology branch is retained, while f64
+/// epsilon orientation and length comparisons are replaced by exact predicates.
 fn triangulate_simple_component(projected: &[hypertri::ExactPoint]) -> Option<Vec<usize>> {
     match projected.len() {
         0..=2 => None,
@@ -417,8 +410,7 @@ fn triangulate_simple_component(projected: &[hypertri::ExactPoint]) -> Option<Ve
 /// exact port measures validity by the sign of the projected triangle area
 /// against the loop's exact signed area and compares squared diagonal lengths
 /// in the selected projection.  If neither diagonal is certified as a
-/// positive-area split, the loop is not a square-triangulate case in Yap's
-/// exact-object sense and is handed to the general exact earcut path.
+/// valid triangulation, the component is handed to the exact earcut path.
 fn triangulate_square_component(projected: &[hypertri::ExactPoint]) -> Option<Vec<usize>> {
     debug_assert_eq!(projected.len(), 4);
     let loop_sign = square_orientation(projected)?;
@@ -446,7 +438,7 @@ fn triangulate_square_component(projected: &[hypertri::ExactPoint]) -> Option<Ve
 }
 
 fn square_orientation(projected: &[hypertri::ExactPoint]) -> Option<Ordering> {
-    match compare_reals(&projected_area2_signed(projected), &ExactReal::from(0)).value()? {
+    match compare_reals(&projected_area2_signed(projected), &Real::from(0)).value()? {
         Ordering::Equal => None,
         ordering => Some(ordering),
     }
@@ -458,16 +450,13 @@ fn triangles_match_orientation(
     loop_sign: Ordering,
 ) -> bool {
     triangles.iter().all(|triangle| {
-        compare_reals(
-            &triangle_area2_signed(projected, *triangle),
-            &ExactReal::from(0),
-        )
-        .value()
-        .is_some_and(|triangle_sign| triangle_sign == loop_sign)
+        compare_reals(&triangle_area2_signed(projected, *triangle), &Real::from(0))
+            .value()
+            .is_some_and(|triangle_sign| triangle_sign == loop_sign)
     })
 }
 
-fn squared_distance2(left: &hypertri::ExactPoint, right: &hypertri::ExactPoint) -> ExactReal {
+fn squared_distance2(left: &hypertri::ExactPoint, right: &hypertri::ExactPoint) -> Real {
     let dx = left.x.clone() - &right.x;
     let dy = left.y.clone() - &right.y;
     (dx.clone() * &dx) + &(dy.clone() * &dy)
@@ -489,19 +478,19 @@ fn cross(left: &Point3, right: &Point3) -> Point3 {
     )
 }
 
-fn add_real(left: &ExactReal, right: &ExactReal) -> ExactReal {
+fn add_real(left: &Real, right: &Real) -> Real {
     left.clone() + right
 }
 
-fn sub_real(left: &ExactReal, right: &ExactReal) -> ExactReal {
+fn sub_real(left: &Real, right: &Real) -> Real {
     left.clone() - right
 }
 
-fn mul_real(left: &ExactReal, right: &ExactReal) -> ExactReal {
+fn mul_real(left: &Real, right: &Real) -> Real {
     left.clone() * right
 }
 
-fn div_real(numerator: ExactReal, denominator: &ExactReal) -> Option<ExactReal> {
+fn div_real(numerator: Real, denominator: &Real) -> Option<Real> {
     (numerator / denominator).ok()
 }
 
@@ -511,12 +500,9 @@ fn div_real(numerator: ExactReal, denominator: &ExactReal) -> Option<ExactReal> 
 /// protected boundary topology.  For the exact port, the same topology is
 /// lowered to a planar straight-line graph and routed through
 /// `hypertri::cdt::constrained_delaunay`; the protected-edge legality follows
-/// Lee and Lin, "Generalized Delaunay triangulation for planar graphs,"
-/// *Discrete & Computational Geometry* 1 (1986), and the edge-recovery CDT
-/// construction follows Shewchuk and Brown's constrained Delaunay treatment.
-/// Yap's exact-computation model is the guardrail here: if CDT inserts a
-/// planar Steiner point, the point is accepted only after it is lifted back to
-/// the owning source face and reprojects exactly.
+/// the constrained-triangulation model cited in the module docs. If `hypertri`
+/// introduces a planar Steiner point, the point is accepted only after it is
+/// lifted back to the owning source face and reprojects exactly.
 fn triangulate_component_with_cdt(
     projected: &[hypertri::ExactPoint],
     hole_indices: &[usize],
@@ -680,12 +666,9 @@ fn split_triangle_edge(
 }
 
 fn triangle_is_non_degenerate(projected: &[hypertri::ExactPoint], triangle: [usize; 3]) -> bool {
-    compare_reals(
-        &triangle_area2_signed(projected, triangle),
-        &ExactReal::from(0),
-    )
-    .value()
-    .is_some_and(|ordering| ordering != Ordering::Equal)
+    compare_reals(&triangle_area2_signed(projected, triangle), &Real::from(0))
+        .value()
+        .is_some_and(|ordering| ordering != Ordering::Equal)
 }
 
 fn point_lies_strictly_between(
@@ -719,12 +702,12 @@ fn point_lies_strictly_between(
     let area = ((start.x.clone() * &point.y) - &(start.y.clone() * &point.x))
         + &((point.x.clone() * &end.y) - &(point.y.clone() * &end.x))
         + &((end.x.clone() * &start.y) - &(end.y.clone() * &start.x));
-    compare_reals(&area, &ExactReal::from(0)).value() == Some(Ordering::Equal)
+    compare_reals(&area, &Real::from(0)).value() == Some(Ordering::Equal)
         && real_between_inclusive(&point.x, &start.x, &end.x)
         && real_between_inclusive(&point.y, &start.y, &end.y)
 }
 
-fn real_between_inclusive(value: &ExactReal, start: &ExactReal, end: &ExactReal) -> bool {
+fn real_between_inclusive(value: &Real, start: &Real, end: &Real) -> bool {
     let Some(start_to_end) = compare_reals(start, end).value() else {
         return false;
     };
@@ -754,17 +737,16 @@ fn real_between_inclusive(value: &ExactReal, start: &ExactReal, end: &ExactReal)
 /// chosen projection has exact nonzero area, so the omitted coordinate is
 /// recovered from the retained source plane equation.  The result must
 /// reproject to the original CDT point before the boolmesh export stage can use
-/// it as topology, following Yap's exact object boundary.
 fn lift_projected_boolmesh_steiner(
     mesh: &ExactMesh,
     face: usize,
     projection: hyperlimit::CoplanarProjection,
     point: &hypertri::ExactPoint,
-) -> Option<ExactPoint3> {
+) -> Option<Point3> {
     let triangle = mesh.triangles().get(face)?.0;
-    let a = mesh.vertices().get(triangle[0])?.to_hyperlimit_point();
-    let b = mesh.vertices().get(triangle[1])?.to_hyperlimit_point();
-    let c = mesh.vertices().get(triangle[2])?.to_hyperlimit_point();
+    let a = mesh.vertices().get(triangle[0])?.clone();
+    let b = mesh.vertices().get(triangle[1])?.clone();
+    let c = mesh.vertices().get(triangle[2])?.clone();
     let ab = point3_sub(&b, &a);
     let ac = point3_sub(&c, &a);
     let normal = cross(&ab, &ac);
@@ -812,7 +794,7 @@ fn lift_projected_boolmesh_steiner(
         }
     };
     exact_points_equal(&project_for_hypertri(&lifted, projection), point)
-        .then(|| ExactPoint3::new(lifted.x, lifted.y, lifted.z))
+        .then(|| Point3::new(lifted.x, lifted.y, lifted.z))
 }
 
 fn partition_polygon_components(rings: Vec<ProjectedLoop>) -> Option<Vec<RingComponent>> {
@@ -909,8 +891,6 @@ fn point_in_projected_ring(
 /// degeneracy instead of being bridged as a geometric hole or triangulated as a
 /// separate contour.  This exact pre-filter ports that behavior while keeping
 /// the dropped loop ids replayable for validation.  The separation follows
-/// Yap, "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997): exact predicate decisions select topology before any polygon
 /// triangulation output is trusted.
 fn clip_boundary_covered_rings(rings: Vec<ProjectedLoop>) -> (Vec<ProjectedLoop>, Vec<usize>) {
     if rings.len() < 2 {
@@ -952,7 +932,7 @@ fn exact_points_equal(left: &hypertri::ExactPoint, right: &hypertri::ExactPoint)
 #[cfg(any(test, feature = "internal-fuzzing"))]
 fn cdt_crossing_constraint_steiner_lift_probe() -> bool {
     fn p(x: i64, y: i64) -> hypertri::ExactPoint {
-        hypertri::ExactPoint::new(ExactReal::from(x), ExactReal::from(y))
+        hypertri::ExactPoint::new(Real::from(x), Real::from(y))
     }
 
     let Ok(source) = ExactMesh::from_i64_triangles_with_policy(
@@ -972,28 +952,28 @@ fn cdt_crossing_constraint_steiner_lift_probe() -> bool {
         return false;
     };
 
-    let Some(lifted) = steiner_points.first().map(ExactPoint3::to_hyperlimit_point) else {
+    let Some(lifted) = steiner_points.first().cloned() else {
         return false;
     };
     steiner_points.len() == 1
-        && compare_reals(&lifted.x, &ExactReal::from(1)).value() == Some(Ordering::Equal)
-        && compare_reals(&lifted.y, &ExactReal::from(1)).value() == Some(Ordering::Equal)
-        && compare_reals(&lifted.z, &ExactReal::from(0)).value() == Some(Ordering::Equal)
+        && compare_reals(&lifted.x, &Real::from(1)).value() == Some(Ordering::Equal)
+        && compare_reals(&lifted.y, &Real::from(1)).value() == Some(Ordering::Equal)
+        && compare_reals(&lifted.z, &Real::from(0)).value() == Some(Ordering::Equal)
         && triangles.contains(&4)
         && triangles.iter().all(|index| *index < 5)
         && constraint_edges.iter().any(|edge| edge.contains(&4))
 }
 
-fn projected_area2_abs(points: &[hypertri::ExactPoint]) -> Option<ExactReal> {
+fn projected_area2_abs(points: &[hypertri::ExactPoint]) -> Option<Real> {
     let signed = projected_area2_signed(points);
-    match compare_reals(&signed, &ExactReal::from(0)).value()? {
-        Ordering::Less => Some(ExactReal::from(0) - &signed),
+    match compare_reals(&signed, &Real::from(0)).value()? {
+        Ordering::Less => Some(Real::from(0) - &signed),
         Ordering::Equal | Ordering::Greater => Some(signed),
     }
 }
 
-fn projected_area2_signed(points: &[hypertri::ExactPoint]) -> ExactReal {
-    let mut signed = ExactReal::from(0);
+fn projected_area2_signed(points: &[hypertri::ExactPoint]) -> Real {
+    let mut signed = Real::from(0);
     for index in 0..points.len() {
         let current = &points[index];
         let next = &points[(index + 1) % points.len()];
@@ -1002,7 +982,7 @@ fn projected_area2_signed(points: &[hypertri::ExactPoint]) -> ExactReal {
     signed
 }
 
-fn triangle_area2_signed(points: &[hypertri::ExactPoint], triangle: [usize; 3]) -> ExactReal {
+fn triangle_area2_signed(points: &[hypertri::ExactPoint], triangle: [usize; 3]) -> Real {
     let a = &points[triangle[0]];
     let b = &points[triangle[1]];
     let c = &points[triangle[2]];
@@ -1068,7 +1048,7 @@ fn output_loop_points(
 #[cfg(feature = "internal-fuzzing")]
 pub(super) fn internal_fuzz_probe(selector: u8) -> bool {
     fn p(x: i64, y: i64) -> hypertri::ExactPoint {
-        hypertri::ExactPoint::new(ExactReal::from(x), ExactReal::from(y))
+        hypertri::ExactPoint::new(Real::from(x), Real::from(y))
     }
 
     match selector % 4 {
@@ -1088,12 +1068,12 @@ pub(super) fn internal_fuzz_probe(selector: u8) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::exact::validation::ValidationPolicy;
-    use crate::exact::{
+    use crate::exact::boolmesh::{
         ExactBoolMeshOutputFaceLoop, ExactBoolMeshOutputHalfedge,
         ExactBoolMeshOutputHalfedgeSource, ExactBoolMeshOutputVertexOrigin,
         ExactBoolMeshSourceVertex,
     };
+    use crate::exact::validation::ValidationPolicy;
 
     fn planar_source() -> ExactMesh {
         ExactMesh::from_i64_triangles_with_policy(
@@ -1160,13 +1140,13 @@ mod tests {
     }
 
     fn p(x: i64, y: i64) -> hypertri::ExactPoint {
-        hypertri::ExactPoint::new(ExactReal::from(x), ExactReal::from(y))
+        hypertri::ExactPoint::new(Real::from(x), Real::from(y))
     }
 
     fn q(xn: i64, xd: i64, yn: i64, yd: i64) -> hypertri::ExactPoint {
         hypertri::ExactPoint::new(
-            (ExactReal::from(xn) / &ExactReal::from(xd)).expect("nonzero denominator"),
-            (ExactReal::from(yn) / &ExactReal::from(yd)).expect("nonzero denominator"),
+            (Real::from(xn) / &Real::from(xd)).expect("nonzero denominator"),
+            (Real::from(yn) / &Real::from(yd)).expect("nonzero denominator"),
         )
     }
 

@@ -8,8 +8,6 @@
 //! [`hyperreal::Real`] objects while leaving broad-phase face-pair enumeration
 //! and workspace table insertion to the surrounding exact boolmesh stages.
 //!
-//! The retained witness construction follows Yap, "Towards Exact Geometric
-//! Computation," *Computational Geometry* 7.1-2 (1997): exact predicates and
 //! constructed coordinates remain replayable artifacts, and no primitive-float
 //! tolerance is used to recover topology.  The control flow and sign rules
 //! intentionally mirror boolmesh `boolean03::kernel12`, which is the published
@@ -21,9 +19,9 @@ use std::cmp::Ordering;
 
 use hyperlimit::{Point3, compare_reals};
 
-use super::ExactReal;
 use super::kernel02::{ExactKernel02Halfedge, ExactKernel02Input, kernel02_op};
 use super::kernel11::{ExactKernel11Halfedge, ExactKernel11Input, intersect, kernel11_op};
+use hyperreal::Real;
 
 /// Input package for exact `Kernel12::op`.
 ///
@@ -45,7 +43,7 @@ pub(super) struct ExactKernel12Input<'a> {
     /// Exact expansion directions for canonical second operand vertices.
     pub ns_q: &'a [Point3],
     /// Signed expansion scale used by equal-coordinate shadow ties.
-    pub expand: &'a ExactReal,
+    pub expand: &'a Real,
     /// Legacy direction flag: `true` emits `p1q2`, `false` emits `p2q1`.
     pub fwd: bool,
 }
@@ -180,10 +178,10 @@ pub(super) fn kernel12_op(
 
 #[cfg(feature = "internal-fuzzing")]
 pub(super) fn internal_fuzz_probe(selector: u8) -> bool {
-    let top = ExactReal::from(5 + i64::from(selector % 2));
+    let top = Real::from(5 + i64::from(selector % 2));
     let ps_p = vec![
         point(1, 1, 0),
-        Point3::new(ExactReal::from(1), ExactReal::from(1), top),
+        Point3::new(Real::from(1), Real::from(1), top),
     ];
     let ps_q = vec![point(0, 0, 4), point(4, 0, 4), point(0, 4, 4)];
     let hs_p = vec![ExactKernel02Halfedge {
@@ -194,7 +192,7 @@ pub(super) fn internal_fuzz_probe(selector: u8) -> bool {
     let hs_q = triangle_halfedges();
     let ns_p = vec![point(1, 1, 1), point(1, 1, 1)];
     let ns_q = vec![point(1, 1, 1), point(1, 1, 1), point(1, 1, 1)];
-    let expand = ExactReal::from(1);
+    let expand = Real::from(1);
     let input = ExactKernel12Input {
         ps_p: &ps_p,
         ps_q: &ps_q,
@@ -261,18 +259,18 @@ fn triangle_halfedges() -> Vec<ExactKernel02Halfedge> {
 }
 
 fn point(x: i64, y: i64, z: i64) -> Point3 {
-    Point3::new(ExactReal::from(x), ExactReal::from(y), ExactReal::from(z))
+    Point3::new(Real::from(x), Real::from(y), Real::from(z))
 }
 
-fn real_eq(value: &ExactReal, expected: i64) -> bool {
-    compare_reals(value, &ExactReal::from(expected)).value() == Some(Ordering::Equal)
+fn real_eq(value: &Real, expected: i64) -> bool {
+    compare_reals(value, &Real::from(expected)).value() == Some(Ordering::Equal)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    fn assert_real_eq(left: &ExactReal, right: i64) {
+    fn assert_real_eq(left: &Real, right: i64) {
         assert!(real_eq(left, right), "expected exact real to equal {right}");
     }
 
@@ -288,7 +286,7 @@ mod tests {
         let hs_q = triangle_halfedges();
         let ns_p = vec![point(1, 1, 1), point(1, 1, 1)];
         let ns_q = vec![point(1, 1, 1), point(1, 1, 1), point(1, 1, 1)];
-        let expand = ExactReal::from(1);
+        let expand = Real::from(1);
         let input = ExactKernel12Input {
             ps_p: &ps_p,
             ps_q: &ps_q,
@@ -319,7 +317,7 @@ mod tests {
         let hs_q = triangle_halfedges();
         let ns_p = vec![point(1, 1, 1), point(1, 1, 1)];
         let ns_q = vec![point(1, 1, 1), point(1, 1, 1), point(1, 1, 1)];
-        let expand = ExactReal::from(1);
+        let expand = Real::from(1);
         let input = ExactKernel12Input {
             ps_p: &ps_p,
             ps_q: &ps_q,

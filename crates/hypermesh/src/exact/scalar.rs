@@ -2,21 +2,16 @@
 //!
 //! Primitive floats are accepted only at named lossy input edges. The imported
 //! value is stored as an exact dyadic [`hyperreal::Real`], preserving the
-//! structural facts that Yap's exact-geometric-computation model relies on for
 //! exact predicate scheduling.
 
+use super::error::{DiagnosticKind, MeshDiagnostic, Severity};
 use hyperreal::Real;
 
-use super::error::{DiagnosticKind, MeshDiagnostic, Severity};
-
-/// Hypermesh's exact scalar type.
-pub type ExactReal = Real;
-
-/// A checked primitive-float import into [`ExactReal`].
+/// A checked primitive-float import into [`hyperreal::Real`].
 #[derive(Clone, Debug, PartialEq)]
 pub struct LossyF64Import {
     /// Exact dyadic value stored by `hyperreal`.
-    pub value: ExactReal,
+    pub value: Real,
     /// Original primitive-float bit pattern supplied by the caller.
     pub original_bits: u64,
 }
@@ -38,7 +33,7 @@ impl LossyF64Import {
             .with_coordinate(coordinate_index));
         }
 
-        let real = ExactReal::try_from(value).map_err(|problem| {
+        let real = Real::try_from(value).map_err(|problem| {
             MeshDiagnostic::new(
                 Severity::Error,
                 DiagnosticKind::CoordinateImportFailed,

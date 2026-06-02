@@ -6,9 +6,6 @@
 //! whose output is two boxes, and bounded orthogonal-cell cases whose planes
 //! are exactly the source box faces. The point is not to replace general
 //! volumetric cell extraction; it is to keep bounded, fully replayable
-//! coplanar-volumetric cases out of the unsupported bucket. That follows Yap,
-//! "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-//! (1997): exact structural facts, not floating tolerances, decide when a
 //! shortcut may mutate topology.
 
 use core::cmp::Ordering;
@@ -16,11 +13,11 @@ use core::cmp::Ordering;
 use hyperlimit::{Point3, compare_reals};
 
 use super::error::MeshError;
-use super::mesh::{ExactMesh, ExactPoint3, Triangle};
+use super::mesh::{ExactMesh, Triangle};
 use super::provenance::SourceProvenance;
-use super::scalar::ExactReal;
 use super::solid::certify_convex_solid;
 use super::validation::ValidationPolicy;
+use hyperreal::Real;
 
 /// Certified exact AABB box bounds retained by the shortcut.
 #[derive(Clone, Debug, PartialEq)]
@@ -33,8 +30,6 @@ struct AxisAlignedBox {
 ///
 /// The rows are structural topology, not geometric predicates. We keep them in
 /// one table so single-box and multi-component outputs replay identical shell
-/// orientation. Yap, "Towards Exact Geometric Computation," *Computational
-/// Geometry* 7.1-2 (1997), motivates retaining this exact combinatorial
 /// history beside the coordinates that certify it.
 const BOX_TRIANGLES: [[usize; 3]; 12] = [
     [0, 2, 1],
@@ -60,6 +55,13 @@ enum Axis {
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum AxisAlignedBoxOperation {
+    Union,
+    Intersection,
+    Difference,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum BoxCellOperation {
     Union,
     Difference,
@@ -77,66 +79,29 @@ enum CellFace {
 
 #[derive(Clone, Debug)]
 struct AxisAlignedBoxCellPlan {
-    x: Vec<ExactReal>,
-    y: Vec<ExactReal>,
-    z: Vec<ExactReal>,
+    x: Vec<Real>,
+    y: Vec<Real>,
+    z: Vec<Real>,
     selected: Vec<bool>,
     nx: usize,
     ny: usize,
     nz: usize,
 }
 
-/// Materialize the union of two certified axis-aligned boxes when it is a box.
-pub(crate) fn union_axis_aligned_boxes(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    validation: ValidationPolicy,
-) -> Result<Option<ExactMesh>, MeshError> {
-    let Some(bounds) = union_axis_aligned_box_bounds(left, right) else {
-        return Ok(None);
-    };
-    Ok(Some(bounds.to_mesh(
-        "exact axis-aligned coplanar-volumetric box union",
-        validation,
-    )?))
+#[derive(Clone, Debug)]
+struct AxisAlignedBoxCellGrid {
+    x: Vec<Real>,
+    y: Vec<Real>,
+    z: Vec<Real>,
+    nx: usize,
+    ny: usize,
+    nz: usize,
 }
 
-/// Materialize the positive-volume intersection of two certified boxes.
-///
-/// The output is one retained AABB exactly when all three exact coordinate
-/// intervals overlap with positive length. Face-only, edge-only, and
-/// point-only intersections are lower-dimensional boundary states and remain
-/// outside this closed-solid shortcut. That is Yap's exact-computation
-/// boundary from "Towards Exact Geometric Computation," *Computational
-/// Geometry* 7.1-2 (1997): emit topology only after exact predicates certify
-/// the result's dimension.
-pub(crate) fn intersection_axis_aligned_boxes(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    validation: ValidationPolicy,
-) -> Result<Option<ExactMesh>, MeshError> {
-    let Some(bounds) = intersection_axis_aligned_box_bounds(left, right) else {
-        return Ok(None);
-    };
-    Ok(Some(bounds.to_mesh(
-        "exact axis-aligned coplanar-volumetric box intersection",
-        validation,
-    )?))
-}
-
-/// Materialize `left - right` for a certified axis-aligned box slab cut.
-pub(crate) fn difference_axis_aligned_boxes(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    validation: ValidationPolicy,
-) -> Result<Option<ExactMesh>, MeshError> {
-    let Some(bounds) = difference_axis_aligned_box_bounds(left, right) else {
-        return Ok(None);
-    };
-    Ok(Some(bounds.to_mesh(
-        "exact axis-aligned coplanar-volumetric box difference",
-        validation,
-    )?))
+#[derive(Clone, Debug)]
+struct AxisAlignedBoxInputs {
+    left: AxisAlignedBox,
+    right: AxisAlignedBox,
 }
 
 /// Materialize `left - right` when a certified slab cut splits a box in two.
@@ -161,8 +126,6 @@ pub(crate) fn multi_difference_axis_aligned_boxes(
 /// retained output is the outer left shell plus the right shell with reversed
 /// orientation, forming a closed cavity. Boundary-coincident containment is not
 /// accepted here because it is not a strict volumetric cavity; that state
-/// belongs to the boundary/cell policy layer. This follows Yap, "Towards Exact
-/// Geometric Computation," *Computational Geometry* 7.1-2 (1997): exact
 /// interval predicates decide whether a topology shortcut may introduce an
 /// inner shell.
 pub(crate) fn nested_difference_axis_aligned_boxes(
@@ -190,8 +153,6 @@ pub(crate) fn nested_difference_axis_aligned_boxes(
 /// the output topology is empty rather than a boundary shell. We keep this as a
 /// separate shortcut instead of relying on a generic convex-containment report
 /// because the retained evidence is exactly the source AABB corner and interval
-/// facts. That follows Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997): topology is produced only by the
 /// exact structural predicates that justify it.
 pub(crate) fn empty_difference_axis_aligned_boxes(
     left: &ExactMesh,
@@ -214,8 +175,6 @@ pub(crate) fn empty_difference_axis_aligned_boxes(
 /// This is the bounded volumetric analogue of retained planar arrangements:
 /// all cell planes come from exact source box faces, and a cell is selected
 /// only when exact interval containment proves it belongs to the named set
-/// operation. Yap, "Towards Exact Geometric Computation," *Computational
-/// Geometry* 7.1-2 (1997), is the governing rule here: the shortcut may build
 /// topology from retained exact predicates, but it must not infer topology
 /// from approximate coordinate perturbations.
 pub(crate) fn cell_union_axis_aligned_boxes(
@@ -234,11 +193,10 @@ pub(crate) fn cell_union_axis_aligned_boxes(
 
 /// Materialize `left - right` as an exact orthogonal cell mesh.
 ///
-/// Unlike [`difference_axis_aligned_boxes`] and
-/// [`multi_difference_axis_aligned_boxes`], this path is allowed to emit a
-/// nonconvex orthogonal boundary. It is still narrow: both operands must be
-/// certified AABB-corner boxes, and every retained cell is decided by exact
-/// interval containment against those boxes.
+/// Unlike the one-box and split-slab difference shortcuts, this path is
+/// allowed to emit a nonconvex orthogonal boundary. It is still narrow: both
+/// operands must be certified AABB-corner boxes, and every retained cell is
+/// decided by exact interval containment against those boxes.
 pub(crate) fn cell_difference_axis_aligned_boxes(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -251,6 +209,92 @@ pub(crate) fn cell_difference_axis_aligned_boxes(
         "exact axis-aligned coplanar-volumetric box cell difference",
         validation,
     )
+}
+
+/// Return whether the named operation is certified by the axis-aligned box layer.
+///
+/// This is the certificate-only form used by affine normalization: source
+/// boxes are certified once and the operation-specific bounded shortcuts are
+/// replayed from those retained bounds instead of repeatedly reclassifying the
+/// same source meshes.
+pub(crate) fn has_axis_aligned_box_operation(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: AxisAlignedBoxOperation,
+) -> bool {
+    let Some(inputs) = certify_axis_aligned_box_inputs(left, right) else {
+        return false;
+    };
+    axis_aligned_box_operation_is_supported(&inputs, operation)
+}
+
+/// Materialize a certified axis-aligned box operation.
+///
+/// The branch priority matches the public boolean shortcuts: one-box union,
+/// positive-volume intersection, slab difference, split slab difference,
+/// strict nested cavity, contained-empty difference, then bounded orthogonal
+/// cell output for the remaining accepted union/difference cases.
+pub(crate) fn materialize_axis_aligned_box_operation(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: AxisAlignedBoxOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactMesh>, MeshError> {
+    let Some(inputs) = certify_axis_aligned_box_inputs(left, right) else {
+        return Ok(None);
+    };
+    materialize_axis_aligned_box_operation_from_inputs(&inputs, operation, validation)
+}
+
+/// Materialize only the single-box operation shortcuts.
+///
+/// This intentionally excludes split, nested, empty, and cell-complex
+/// difference/union outputs so public boolean dispatch can preserve the more
+/// specific shortcut labels for those broader AABB materializers.
+pub(crate) fn materialize_simple_axis_aligned_box_operation(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: AxisAlignedBoxOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactMesh>, MeshError> {
+    let Some(inputs) = certify_axis_aligned_box_inputs(left, right) else {
+        return Ok(None);
+    };
+    match operation {
+        AxisAlignedBoxOperation::Union => {
+            let Some(bounds) =
+                union_axis_aligned_box_bounds_from_boxes(&inputs.left, &inputs.right)
+            else {
+                return Ok(None);
+            };
+            Ok(Some(bounds.to_mesh(
+                "exact axis-aligned coplanar-volumetric box union",
+                validation,
+            )?))
+        }
+        AxisAlignedBoxOperation::Intersection => {
+            let Some(bounds) =
+                intersection_axis_aligned_box_bounds_from_boxes(&inputs.left, &inputs.right)
+            else {
+                return Ok(None);
+            };
+            Ok(Some(bounds.to_mesh(
+                "exact axis-aligned coplanar-volumetric box intersection",
+                validation,
+            )?))
+        }
+        AxisAlignedBoxOperation::Difference => {
+            let Some(bounds) =
+                difference_axis_aligned_box_bounds_from_boxes(&inputs.left, &inputs.right)
+            else {
+                return Ok(None);
+            };
+            Ok(Some(bounds.to_mesh(
+                "exact axis-aligned coplanar-volumetric box difference",
+                validation,
+            )?))
+        }
+    }
 }
 
 /// Return whether a box-union shortcut is certified for the operands.
@@ -285,12 +329,12 @@ pub(crate) fn has_axis_aligned_box_empty_difference(left: &ExactMesh, right: &Ex
 
 /// Return whether an orthogonal cell union is certified for the operands.
 pub(crate) fn has_axis_aligned_box_cell_union(left: &ExactMesh, right: &ExactMesh) -> bool {
-    axis_aligned_box_cell_plan(left, right, BoxCellOperation::Union).is_some()
+    has_axis_aligned_box_cell_operation(left, right, BoxCellOperation::Union)
 }
 
 /// Return whether an orthogonal cell difference is certified for the operands.
 pub(crate) fn has_axis_aligned_box_cell_difference(left: &ExactMesh, right: &ExactMesh) -> bool {
-    axis_aligned_box_cell_plan(left, right, BoxCellOperation::Difference).is_some()
+    has_axis_aligned_box_cell_operation(left, right, BoxCellOperation::Difference)
 }
 
 /// Return whether one mesh certifies as a retained exact axis-aligned box.
@@ -298,7 +342,6 @@ pub(crate) fn has_axis_aligned_box_cell_difference(left: &ExactMesh, right: &Exa
 /// Affine-normalized solid shortcuts use this as their local replay boundary:
 /// a transformed mesh may enter the existing orthogonal cell materializer only
 /// after its exact vertices, closed topology, and convexity certify as one
-/// AABB box. That keeps Yap's "Towards Exact Geometric Computation" object
 /// structure rule intact across the affine adapter instead of trusting a
 /// coordinate transform alone.
 pub(crate) fn is_axis_aligned_box(mesh: &ExactMesh) -> bool {
@@ -314,20 +357,23 @@ pub(crate) fn is_axis_aligned_box(mesh: &ExactMesh) -> bool {
 /// full-face-adjacent case whose regularized union is one closed box.
 /// Lower-dimensional intersection and subtraction outputs still stay with the
 /// boundary-policy layer. The equality, containment, and contact checks are
-/// retained structural predicates in Yap's sense, not approximate AABB tests;
-/// see Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-/// 7.1-2 (1997).
 fn union_axis_aligned_box_bounds(left: &ExactMesh, right: &ExactMesh) -> Option<AxisAlignedBox> {
-    let left = certify_axis_aligned_box(left)?;
-    let right = certify_axis_aligned_box(right)?;
-    if box_contains(&left, &right)? {
-        return Some(left);
+    let inputs = certify_axis_aligned_box_inputs(left, right)?;
+    union_axis_aligned_box_bounds_from_boxes(&inputs.left, &inputs.right)
+}
+
+fn union_axis_aligned_box_bounds_from_boxes(
+    left: &AxisAlignedBox,
+    right: &AxisAlignedBox,
+) -> Option<AxisAlignedBox> {
+    if box_contains(left, right)? {
+        return Some(left.clone());
     }
-    if box_contains(&right, &left)? {
-        return Some(right);
+    if box_contains(right, left)? {
+        return Some(right.clone());
     }
-    let axis = slab_merge_axis(&left, &right)?;
-    if !intervals_overlap_or_touch(&left, &right, axis)? {
+    let axis = slab_merge_axis(left, right)?;
+    if !intervals_overlap_or_touch(left, right, axis)? {
         return None;
     }
     let mut output = left.clone();
@@ -348,8 +394,14 @@ fn intersection_axis_aligned_box_bounds(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Option<AxisAlignedBox> {
-    let left = certify_axis_aligned_box(left)?;
-    let right = certify_axis_aligned_box(right)?;
+    let inputs = certify_axis_aligned_box_inputs(left, right)?;
+    intersection_axis_aligned_box_bounds_from_boxes(&inputs.left, &inputs.right)
+}
+
+fn intersection_axis_aligned_box_bounds_from_boxes(
+    left: &AxisAlignedBox,
+    right: &AxisAlignedBox,
+) -> Option<AxisAlignedBox> {
     let output = AxisAlignedBox {
         min: Point3::new(
             max_real(&left.min.x, &right.min.x)?,
@@ -373,18 +425,22 @@ fn intersection_axis_aligned_box_bounds(
 /// difference is exactly the left box. The face-adjacent case follows the
 /// regularized-solid convention described by Requicha, "Representations for
 /// Rigid Solids: Theory, Methods, and Systems," *ACM Computing Surveys* 12.4
-/// (1980), while the acceptance test itself remains Yap-style exact retained
-/// interval evidence from "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997).
 fn difference_axis_aligned_box_bounds(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Option<AxisAlignedBox> {
-    let mut output = certify_axis_aligned_box(left)?;
-    let right = certify_axis_aligned_box(right)?;
-    let axis = slab_merge_axis(&output, &right)?;
-    if !intervals_overlap_with_positive_length(&output, &right, axis)? {
-        return intervals_touch_exactly(&output, &right, axis)?.then_some(output);
+    let inputs = certify_axis_aligned_box_inputs(left, right)?;
+    difference_axis_aligned_box_bounds_from_boxes(&inputs.left, &inputs.right)
+}
+
+fn difference_axis_aligned_box_bounds_from_boxes(
+    left: &AxisAlignedBox,
+    right: &AxisAlignedBox,
+) -> Option<AxisAlignedBox> {
+    let mut output = left.clone();
+    let axis = slab_merge_axis(&output, right)?;
+    if !intervals_overlap_with_positive_length(&output, right, axis)? {
+        return intervals_touch_exactly(&output, right, axis)?.then_some(output);
     }
 
     let left_min = axis_min(&output.min, axis);
@@ -424,18 +480,21 @@ fn intervals_touch_exactly(
 /// The shortcut accepts exactly the retained-structure case where `right` is a
 /// positive-length slab strictly inside `left` on one axis and has equal exact
 /// bounds on the other two axes. The output is therefore the disjoint union of
-/// the two remaining boxes. This is the same exact-decision discipline Yap
-/// argues for in "Towards Exact Geometric Computation," *Computational
-/// Geometry* 7.1-2 (1997): no epsilon thickening, no speculative merging, and
 /// no hidden fallback to approximate topology.
 fn multi_difference_axis_aligned_box_bounds(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Option<[AxisAlignedBox; 2]> {
-    let left = certify_axis_aligned_box(left)?;
-    let right = certify_axis_aligned_box(right)?;
-    let axis = slab_merge_axis(&left, &right)?;
-    if !intervals_overlap_with_positive_length(&left, &right, axis)? {
+    let inputs = certify_axis_aligned_box_inputs(left, right)?;
+    multi_difference_axis_aligned_box_bounds_from_boxes(&inputs.left, &inputs.right)
+}
+
+fn multi_difference_axis_aligned_box_bounds_from_boxes(
+    left: &AxisAlignedBox,
+    right: &AxisAlignedBox,
+) -> Option<[AxisAlignedBox; 2]> {
+    let axis = slab_merge_axis(left, right)?;
+    if !intervals_overlap_with_positive_length(left, right, axis)? {
         return None;
     }
 
@@ -452,7 +511,7 @@ fn multi_difference_axis_aligned_box_bounds(
 
     let mut lower = left.clone();
     set_max_axis(&mut lower.max, axis, right_min.clone());
-    let mut upper = left;
+    let mut upper = left.clone();
     set_min_axis(&mut upper.min, axis, right_max.clone());
     Some([valid_box(lower)?, valid_box(upper)?])
 }
@@ -461,26 +520,36 @@ fn nested_difference_axis_aligned_box_bounds(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Option<(AxisAlignedBox, AxisAlignedBox)> {
-    let left = certify_axis_aligned_box(left)?;
-    let right = certify_axis_aligned_box(right)?;
+    let inputs = certify_axis_aligned_box_inputs(left, right)?;
+    nested_difference_axis_aligned_box_bounds_from_boxes(&inputs.left, &inputs.right)
+}
+
+fn nested_difference_axis_aligned_box_bounds_from_boxes(
+    left: &AxisAlignedBox,
+    right: &AxisAlignedBox,
+) -> Option<(AxisAlignedBox, AxisAlignedBox)> {
     if [Axis::X, Axis::Y, Axis::Z]
         .into_iter()
-        .all(|axis| interval_strictly_inside(&right, &left, axis))
+        .all(|axis| interval_strictly_inside(right, left, axis))
     {
-        Some((left, right))
+        Some((left.clone(), right.clone()))
     } else {
         None
     }
 }
 
 fn empty_difference_axis_aligned_box_bounds(left: &ExactMesh, right: &ExactMesh) -> bool {
-    let Some(left) = certify_axis_aligned_box(left) else {
+    let Some(inputs) = certify_axis_aligned_box_inputs(left, right) else {
         return false;
     };
-    let Some(right) = certify_axis_aligned_box(right) else {
-        return false;
-    };
-    box_contains(&right, &left) == Some(true)
+    empty_difference_axis_aligned_box_bounds_from_boxes(&inputs.left, &inputs.right)
+}
+
+fn empty_difference_axis_aligned_box_bounds_from_boxes(
+    left: &AxisAlignedBox,
+    right: &AxisAlignedBox,
+) -> bool {
+    box_contains(right, left) == Some(true)
 }
 
 fn materialize_axis_aligned_box_cells(
@@ -490,9 +559,21 @@ fn materialize_axis_aligned_box_cells(
     label: &'static str,
     validation: ValidationPolicy,
 ) -> Result<Option<ExactMesh>, MeshError> {
-    let Some(plan) = axis_aligned_box_cell_plan(left, right, operation) else {
+    let Some(inputs) = certify_axis_aligned_box_inputs(left, right) else {
         return Ok(None);
     };
+    let Some(plan) = axis_aligned_box_cell_plan_from_boxes(&inputs.left, &inputs.right, operation)
+    else {
+        return Ok(None);
+    };
+    materialize_axis_aligned_box_cell_plan(plan, label, validation)
+}
+
+fn materialize_axis_aligned_box_cell_plan(
+    plan: AxisAlignedBoxCellPlan,
+    label: &'static str,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactMesh>, MeshError> {
     let mut vertices = Vec::new();
     let mut triangles = Vec::new();
     for i in 0..plan.nx {
@@ -578,36 +659,75 @@ fn materialize_axis_aligned_box_cells(
     )?))
 }
 
-fn axis_aligned_box_cell_plan(
+fn has_axis_aligned_box_cell_operation(
     left: &ExactMesh,
     right: &ExactMesh,
     operation: BoxCellOperation,
-) -> Option<AxisAlignedBoxCellPlan> {
-    let left = certify_axis_aligned_box(left)?;
-    let right = certify_axis_aligned_box(right)?;
-    if !boxes_overlap_with_positive_volume(&left, &right)? {
+) -> bool {
+    let Some(inputs) = certify_axis_aligned_box_inputs(left, right) else {
+        return false;
+    };
+    axis_aligned_box_cell_selected_count_from_boxes(&inputs.left, &inputs.right, operation)
+        .is_some_and(|selected_count| selected_count != 0)
+}
+
+fn axis_aligned_box_cell_grid_from_boxes(
+    left: &AxisAlignedBox,
+    right: &AxisAlignedBox,
+) -> Option<AxisAlignedBoxCellGrid> {
+    if !boxes_overlap_with_positive_volume(left, right)? {
         return None;
     }
 
-    let x = sorted_unique_axis_coords(&left, &right, Axis::X)?;
-    let y = sorted_unique_axis_coords(&left, &right, Axis::Y)?;
-    let z = sorted_unique_axis_coords(&left, &right, Axis::Z)?;
+    let x = sorted_unique_axis_coords(left, right, Axis::X)?;
+    let y = sorted_unique_axis_coords(left, right, Axis::Y)?;
+    let z = sorted_unique_axis_coords(left, right, Axis::Z)?;
     let nx = x.len().checked_sub(1)?;
     let ny = y.len().checked_sub(1)?;
     let nz = z.len().checked_sub(1)?;
-    let mut selected = Vec::with_capacity(nx * ny * nz);
+    nx.checked_mul(ny)?.checked_mul(nz)?;
+    Some(AxisAlignedBoxCellGrid {
+        x,
+        y,
+        z,
+        nx,
+        ny,
+        nz,
+    })
+}
+
+fn axis_aligned_box_cell_selected_count_from_boxes(
+    left: &AxisAlignedBox,
+    right: &AxisAlignedBox,
+    operation: BoxCellOperation,
+) -> Option<usize> {
+    let grid = axis_aligned_box_cell_grid_from_boxes(left, right)?;
     let mut selected_count = 0usize;
-    for i in 0..nx {
-        for j in 0..ny {
-            for k in 0..nz {
-                let in_left =
-                    cell_inside_box(&x[i], &x[i + 1], &y[j], &y[j + 1], &z[k], &z[k + 1], &left)?;
-                let in_right =
-                    cell_inside_box(&x[i], &x[i + 1], &y[j], &y[j + 1], &z[k], &z[k + 1], &right)?;
-                let keep = match operation {
-                    BoxCellOperation::Union => in_left || in_right,
-                    BoxCellOperation::Difference => in_left && !in_right,
-                };
+    for i in 0..grid.nx {
+        for j in 0..grid.ny {
+            for k in 0..grid.nz {
+                if axis_aligned_box_cell_selected(&grid, left, right, i, j, k, operation)? {
+                    selected_count += 1;
+                }
+            }
+        }
+    }
+    Some(selected_count)
+}
+
+fn axis_aligned_box_cell_plan_from_boxes(
+    left: &AxisAlignedBox,
+    right: &AxisAlignedBox,
+    operation: BoxCellOperation,
+) -> Option<AxisAlignedBoxCellPlan> {
+    let grid = axis_aligned_box_cell_grid_from_boxes(left, right)?;
+    let cell_count = grid.nx.checked_mul(grid.ny)?.checked_mul(grid.nz)?;
+    let mut selected = Vec::with_capacity(cell_count);
+    let mut selected_count = 0usize;
+    for i in 0..grid.nx {
+        for j in 0..grid.ny {
+            for k in 0..grid.nz {
+                let keep = axis_aligned_box_cell_selected(&grid, left, right, i, j, k, operation)?;
                 if keep {
                     selected_count += 1;
                 }
@@ -619,14 +739,184 @@ fn axis_aligned_box_cell_plan(
         return None;
     }
     Some(AxisAlignedBoxCellPlan {
-        x,
-        y,
-        z,
+        x: grid.x,
+        y: grid.y,
+        z: grid.z,
         selected,
-        nx,
-        ny,
-        nz,
+        nx: grid.nx,
+        ny: grid.ny,
+        nz: grid.nz,
     })
+}
+
+fn axis_aligned_box_cell_selected(
+    grid: &AxisAlignedBoxCellGrid,
+    left: &AxisAlignedBox,
+    right: &AxisAlignedBox,
+    i: usize,
+    j: usize,
+    k: usize,
+    operation: BoxCellOperation,
+) -> Option<bool> {
+    let in_left = cell_inside_box(
+        &grid.x[i],
+        &grid.x[i + 1],
+        &grid.y[j],
+        &grid.y[j + 1],
+        &grid.z[k],
+        &grid.z[k + 1],
+        left,
+    )?;
+    let in_right = cell_inside_box(
+        &grid.x[i],
+        &grid.x[i + 1],
+        &grid.y[j],
+        &grid.y[j + 1],
+        &grid.z[k],
+        &grid.z[k + 1],
+        right,
+    )?;
+    Some(match operation {
+        BoxCellOperation::Union => in_left || in_right,
+        BoxCellOperation::Difference => in_left && !in_right,
+    })
+}
+
+fn certify_axis_aligned_box_inputs(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Option<AxisAlignedBoxInputs> {
+    Some(AxisAlignedBoxInputs {
+        left: certify_axis_aligned_box(left)?,
+        right: certify_axis_aligned_box(right)?,
+    })
+}
+
+fn axis_aligned_box_operation_is_supported(
+    inputs: &AxisAlignedBoxInputs,
+    operation: AxisAlignedBoxOperation,
+) -> bool {
+    match operation {
+        AxisAlignedBoxOperation::Union => {
+            union_axis_aligned_box_bounds_from_boxes(&inputs.left, &inputs.right).is_some()
+                || axis_aligned_box_cell_selected_count_from_boxes(
+                    &inputs.left,
+                    &inputs.right,
+                    BoxCellOperation::Union,
+                )
+                .is_some_and(|selected_count| selected_count != 0)
+        }
+        AxisAlignedBoxOperation::Intersection => {
+            intersection_axis_aligned_box_bounds_from_boxes(&inputs.left, &inputs.right).is_some()
+        }
+        AxisAlignedBoxOperation::Difference => {
+            difference_axis_aligned_box_bounds_from_boxes(&inputs.left, &inputs.right).is_some()
+                || multi_difference_axis_aligned_box_bounds_from_boxes(&inputs.left, &inputs.right)
+                    .is_some()
+                || nested_difference_axis_aligned_box_bounds_from_boxes(&inputs.left, &inputs.right)
+                    .is_some()
+                || empty_difference_axis_aligned_box_bounds_from_boxes(&inputs.left, &inputs.right)
+                || axis_aligned_box_cell_selected_count_from_boxes(
+                    &inputs.left,
+                    &inputs.right,
+                    BoxCellOperation::Difference,
+                )
+                .is_some_and(|selected_count| selected_count != 0)
+        }
+    }
+}
+
+fn materialize_axis_aligned_box_operation_from_inputs(
+    inputs: &AxisAlignedBoxInputs,
+    operation: AxisAlignedBoxOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactMesh>, MeshError> {
+    match operation {
+        AxisAlignedBoxOperation::Union => {
+            if let Some(bounds) =
+                union_axis_aligned_box_bounds_from_boxes(&inputs.left, &inputs.right)
+            {
+                return Ok(Some(bounds.to_mesh(
+                    "exact axis-aligned coplanar-volumetric box union",
+                    validation,
+                )?));
+            }
+            let Some(plan) = axis_aligned_box_cell_plan_from_boxes(
+                &inputs.left,
+                &inputs.right,
+                BoxCellOperation::Union,
+            ) else {
+                return Ok(None);
+            };
+            materialize_axis_aligned_box_cell_plan(
+                plan,
+                "exact axis-aligned coplanar-volumetric box cell union",
+                validation,
+            )
+        }
+        AxisAlignedBoxOperation::Intersection => {
+            let Some(bounds) =
+                intersection_axis_aligned_box_bounds_from_boxes(&inputs.left, &inputs.right)
+            else {
+                return Ok(None);
+            };
+            Ok(Some(bounds.to_mesh(
+                "exact axis-aligned coplanar-volumetric box intersection",
+                validation,
+            )?))
+        }
+        AxisAlignedBoxOperation::Difference => {
+            if let Some(bounds) =
+                difference_axis_aligned_box_bounds_from_boxes(&inputs.left, &inputs.right)
+            {
+                return Ok(Some(bounds.to_mesh(
+                    "exact axis-aligned coplanar-volumetric box difference",
+                    validation,
+                )?));
+            }
+            if let Some(bounds) =
+                multi_difference_axis_aligned_box_bounds_from_boxes(&inputs.left, &inputs.right)
+            {
+                return Ok(Some(boxes_to_mesh(
+                    &bounds,
+                    "exact axis-aligned coplanar-volumetric box split difference",
+                    validation,
+                )?));
+            }
+            if let Some((outer, inner)) =
+                nested_difference_axis_aligned_box_bounds_from_boxes(&inputs.left, &inputs.right)
+            {
+                return Ok(Some(nested_boxes_to_mesh(
+                    &outer,
+                    &inner,
+                    "exact axis-aligned coplanar-volumetric box nested difference",
+                    validation,
+                )?));
+            }
+            if empty_difference_axis_aligned_box_bounds_from_boxes(&inputs.left, &inputs.right) {
+                return Ok(Some(ExactMesh::new_with_policy(
+                    Vec::new(),
+                    Vec::new(),
+                    SourceProvenance::exact(
+                        "empty exact axis-aligned coplanar-volumetric box difference",
+                    ),
+                    validation,
+                )?));
+            }
+            let Some(plan) = axis_aligned_box_cell_plan_from_boxes(
+                &inputs.left,
+                &inputs.right,
+                BoxCellOperation::Difference,
+            ) else {
+                return Ok(None);
+            };
+            materialize_axis_aligned_box_cell_plan(
+                plan,
+                "exact axis-aligned coplanar-volumetric box cell difference",
+                validation,
+            )
+        }
+    }
 }
 
 /// Recognize a closed exact mesh as exactly its retained AABB.
@@ -642,7 +932,7 @@ fn certify_axis_aligned_box(mesh: &ExactMesh) -> Option<AxisAlignedBox> {
     valid_box(box_bounds.clone())?;
     let corners = box_bounds.corners();
     for vertex in mesh.vertices() {
-        let point = vertex.to_hyperlimit_point();
+        let point = vertex.clone();
         if !corners.iter().any(|corner| points_equal(corner, &point)) {
             return None;
         }
@@ -651,7 +941,7 @@ fn certify_axis_aligned_box(mesh: &ExactMesh) -> Option<AxisAlignedBox> {
         if !mesh
             .vertices()
             .iter()
-            .any(|vertex| points_equal(corner, &vertex.to_hyperlimit_point()))
+            .any(|vertex| points_equal(corner, &vertex.clone()))
         {
             return None;
         }
@@ -728,7 +1018,7 @@ fn nested_boxes_to_mesh(
 fn append_box(
     bounds: &AxisAlignedBox,
     reverse: bool,
-    vertices: &mut Vec<ExactPoint3>,
+    vertices: &mut Vec<Point3>,
     triangles: &mut Vec<Triangle>,
 ) {
     let offset = vertices.len();
@@ -736,7 +1026,7 @@ fn append_box(
         bounds
             .corners()
             .into_iter()
-            .map(|point| ExactPoint3::new(point.x, point.y, point.z)),
+            .map(|point| Point3::new(point.x, point.y, point.z)),
     );
     triangles.extend(BOX_TRIANGLES.iter().map(|[a, b, c]| {
         if reverse {
@@ -763,7 +1053,7 @@ fn emit_cell_face(
     j: usize,
     k: usize,
     face: CellFace,
-    vertices: &mut Vec<ExactPoint3>,
+    vertices: &mut Vec<Point3>,
     triangles: &mut Vec<Triangle>,
 ) {
     let x0 = &plan.x[i];
@@ -820,7 +1110,7 @@ fn emit_cell_face(
 }
 
 fn emit_quad(
-    vertices: &mut Vec<ExactPoint3>,
+    vertices: &mut Vec<Point3>,
     triangles: &mut Vec<Triangle>,
     a: Point3,
     b: Point3,
@@ -831,28 +1121,24 @@ fn emit_quad(
     emit_triangle(vertices, triangles, [a, c, d]);
 }
 
-fn emit_triangle(
-    vertices: &mut Vec<ExactPoint3>,
-    triangles: &mut Vec<Triangle>,
-    points: [Point3; 3],
-) {
+fn emit_triangle(vertices: &mut Vec<Point3>, triangles: &mut Vec<Triangle>, points: [Point3; 3]) {
     let [a, b, c] = points.map(|point| shared_vertex_index(vertices, point));
     triangles.push(Triangle([a, b, c]));
 }
 
-fn shared_vertex_index(vertices: &mut Vec<ExactPoint3>, point: Point3) -> usize {
+fn shared_vertex_index(vertices: &mut Vec<Point3>, point: Point3) -> usize {
     if let Some(index) = vertices
         .iter()
-        .position(|vertex| points_equal(&vertex.to_hyperlimit_point(), &point))
+        .position(|vertex| points_equal(&vertex.clone(), &point))
     {
         return index;
     }
     let index = vertices.len();
-    vertices.push(ExactPoint3::new(point.x, point.y, point.z));
+    vertices.push(Point3::new(point.x, point.y, point.z));
     index
 }
 
-fn point(x: &ExactReal, y: &ExactReal, z: &ExactReal) -> Point3 {
+fn point(x: &Real, y: &Real, z: &Real) -> Point3 {
     Point3::new(x.clone(), y.clone(), z.clone())
 }
 
@@ -928,7 +1214,7 @@ fn sorted_unique_axis_coords(
     left: &AxisAlignedBox,
     right: &AxisAlignedBox,
     axis: Axis,
-) -> Option<Vec<ExactReal>> {
+) -> Option<Vec<Real>> {
     let mut values = vec![
         axis_min(&left.min, axis).clone(),
         axis_max(&left.max, axis).clone(),
@@ -955,12 +1241,12 @@ fn sorted_unique_axis_coords(
 }
 
 fn cell_inside_box(
-    x_min: &ExactReal,
-    x_max: &ExactReal,
-    y_min: &ExactReal,
-    y_max: &ExactReal,
-    z_min: &ExactReal,
-    z_max: &ExactReal,
+    x_min: &Real,
+    x_max: &Real,
+    y_min: &Real,
+    y_max: &Real,
+    z_min: &Real,
+    z_max: &Real,
     bounds: &AxisAlignedBox,
 ) -> Option<bool> {
     Some(
@@ -971,8 +1257,8 @@ fn cell_inside_box(
 }
 
 fn interval_inside_axis(
-    cell_min: &ExactReal,
-    cell_max: &ExactReal,
+    cell_min: &Real,
+    cell_max: &Real,
     bounds: &AxisAlignedBox,
     axis: Axis,
 ) -> Option<bool> {
@@ -1007,7 +1293,7 @@ fn valid_box(bounds: AxisAlignedBox) -> Option<AxisAlignedBox> {
     valid.then_some(bounds)
 }
 
-fn axis_min(point: &Point3, axis: Axis) -> &ExactReal {
+fn axis_min(point: &Point3, axis: Axis) -> &Real {
     match axis {
         Axis::X => &point.x,
         Axis::Y => &point.y,
@@ -1015,11 +1301,11 @@ fn axis_min(point: &Point3, axis: Axis) -> &ExactReal {
     }
 }
 
-fn axis_max(point: &Point3, axis: Axis) -> &ExactReal {
+fn axis_max(point: &Point3, axis: Axis) -> &Real {
     axis_min(point, axis)
 }
 
-fn set_min_axis(point: &mut Point3, axis: Axis, value: ExactReal) {
+fn set_min_axis(point: &mut Point3, axis: Axis, value: Real) {
     match axis {
         Axis::X => point.x = value,
         Axis::Y => point.y = value,
@@ -1027,29 +1313,29 @@ fn set_min_axis(point: &mut Point3, axis: Axis, value: ExactReal) {
     }
 }
 
-fn set_max_axis(point: &mut Point3, axis: Axis, value: ExactReal) {
+fn set_max_axis(point: &mut Point3, axis: Axis, value: Real) {
     set_min_axis(point, axis, value);
 }
 
-fn min_real(left: &ExactReal, right: &ExactReal) -> Option<ExactReal> {
+fn min_real(left: &Real, right: &Real) -> Option<Real> {
     match cmp(left, right)? {
         Ordering::Less | Ordering::Equal => Some(left.clone()),
         Ordering::Greater => Some(right.clone()),
     }
 }
 
-fn max_real(left: &ExactReal, right: &ExactReal) -> Option<ExactReal> {
+fn max_real(left: &Real, right: &Real) -> Option<Real> {
     match cmp(left, right)? {
         Ordering::Greater | Ordering::Equal => Some(left.clone()),
         Ordering::Less => Some(right.clone()),
     }
 }
 
-fn cmp(left: &ExactReal, right: &ExactReal) -> Option<Ordering> {
+fn cmp(left: &Real, right: &Real) -> Option<Ordering> {
     compare_reals(left, right).value()
 }
 
-fn real_eq(left: &ExactReal, right: &ExactReal) -> bool {
+fn real_eq(left: &Real, right: &Real) -> bool {
     cmp(left, right) == Some(Ordering::Equal)
 }
 

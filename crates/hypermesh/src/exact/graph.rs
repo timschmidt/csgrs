@@ -3,17 +3,12 @@
 //! The graph here is intentionally an event graph, not yet a mutable boolean
 //! topology. It converts certified face-pair classifications into stable
 //! records for split points, coplanar edge contacts, containment facts, and
-//! unresolved predicate outcomes. This is the next layer in Yap's exact
-//! geometric computation split: predicates and constructions produce auditable
-//! events first; mesh mutation consumes those events only after validation.
-//! See Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-//! 7.1-2 (1997).
+//! split geometry. Predicates and constructions produce auditable events first;
+//! mesh mutation consumes those events only after validation.
 //!
-//! The event categories follow the triangle/triangle decomposition used by
-//! Guigue and Devillers, "Fast and Robust Triangle-Triangle Overlap Test Using
-//! Orientation Predicates," *Journal of Graphics Tools* 8.1 (2003): reject by
-//! plane side, retain non-coplanar segment/plane crossings, and handle
-//! coplanar overlap through projected segment and containment predicates.
+//! The event categories separate plane-side rejection, non-coplanar
+//! segment/plane crossings, and coplanar overlap through projected segment and
+//! containment predicates.
 
 use std::cmp::Ordering;
 use std::collections::{BTreeMap, BTreeSet};
@@ -34,7 +29,7 @@ use super::intersection::{
     MeshFacePairClassification, MeshFacePairRelation, classify_mesh_face_pairs,
 };
 use super::mesh::ExactMesh;
-use super::scalar::ExactReal;
+use hyperreal::Real;
 
 /// Side of a two-mesh graph event.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -49,8 +44,6 @@ pub enum MeshSide {
 ///
 /// The segment-plane variant intentionally retains the full exact construction
 /// certificate inline so graph validation can replay predicate, ratio, and
-/// point evidence without chasing side tables. Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997), treats that retained
 /// computation history as part of the exact object boundary; boxing the fields
 /// would reduce enum size but not the retained state that downstream audit
 /// paths must carry.
@@ -72,7 +65,7 @@ pub enum IntersectionEvent {
         /// Exact point for endpoint and proper-crossing events.
         point: Option<Point3>,
         /// Exact edge parameter when available.
-        parameter: Option<ExactReal>,
+        parameter: Option<Real>,
         /// Determinant ratio that produced the exact edge parameter for a
         /// proper crossing.
         parameter_ratio: Option<SegmentPlaneParameterRatio>,
@@ -112,12 +105,7 @@ pub enum IntersectionEvent {
 /// Retained projected edge contact in a coplanar face-pair overlap graph.
 ///
 /// These records are arrangement inputs, not final topology. They retain the
-/// exact projected segment/segment relation from the Guigue-Devillers style
 /// coplanar decomposition while keeping mutation deferred until the full
-/// planar graph can be assembled. See Guigue and Devillers, "Fast and Robust
-/// Triangle-Triangle Overlap Test Using Orientation Predicates," *Journal of
-/// Graphics Tools* 8.1 (2003), and Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997).
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct CoplanarEdgeOverlap {
     /// Edge in the left face.
@@ -149,8 +137,6 @@ pub struct CoplanarVertexOverlap {
 /// pairs. It groups edge contacts and vertex-in-triangle facts that were
 /// already certified by `hyperlimit`, but deliberately avoids inventing split
 /// vertices or planar cells until a later exact arrangement stage can retain
-/// their construction provenance. That boundary follows Yap, "Towards Exact
-/// Geometric Computation," *Computational Geometry* 7.1-2 (1997).
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct CoplanarOverlapGraph {
     /// Face index in the left mesh.
@@ -179,16 +165,14 @@ pub struct CoplanarEdgeSplitPoint {
     /// Exact 3D point on the shared coplanar face plane.
     pub point: Point3,
     /// Parameter on [`CoplanarEdgeOverlap::left_edge`].
-    pub left_parameter: ExactReal,
+    pub left_parameter: Real,
     /// Parameter on [`CoplanarEdgeOverlap::right_edge`].
-    pub right_parameter: ExactReal,
+    pub right_parameter: Real,
 }
 
 /// Exact endpoint pair for a positive-length coplanar edge interval.
 ///
 /// The endpoint order is by the left-edge parameter. Retaining both endpoint
-/// parameters follows Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997): a later planar-cell extractor can
 /// sort and merge interval topology from exact object facts rather than from
 /// projected labels or primitive-float coordinates.
 #[derive(Clone, Debug, PartialEq)]
@@ -222,8 +206,6 @@ impl CoplanarEdgeSplitConstruction {
     /// This is the geometry-aware version of [`Self::validate`]. It checks
     /// that each retained split point is exactly the interpolation of both
     /// source edges at the stored parameters. That retained construction check
-    /// follows Yap, "Towards Exact Geometric Computation," *Computational
-    /// Geometry* 7.1-2 (1997): planar topology may consume compact parameters,
     /// but those parameters must still replay to retained object geometry
     /// before they become combinatorial evidence.
     pub fn validate_against_edges(
@@ -262,9 +244,6 @@ pub struct CoplanarOverlapSplitGraph {
 ///
 /// The current port can already retain certified coplanar edge and
 /// vertex-contact facts. Full planar arrangements need a later stage that
-/// turns those facts into cells, loops, and output regions. Following Yap,
-/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997), this status names that boundary explicitly instead of letting
 /// callers infer it from a generic unsupported boolean result.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum CoplanarArrangementReadinessStatus {
@@ -431,9 +410,6 @@ impl CoplanarOverlapGraph {
     /// Structural validation proves that retained edge and vertex facts are
     /// locally coherent. Source replay rebuilds the exact intersection graph
     /// from `left` and `right`, extracts all coplanar overlap graphs, and
-    /// requires this graph to be present unchanged. This is the Yap-style
-    /// exact object boundary from "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7.1-2 (1997): projected coplanar topology
     /// evidence must remain tied to the operands whose predicates produced it.
     pub fn validate_against_sources(
         &self,
@@ -456,7 +432,6 @@ impl CoplanarOverlapGraph {
     /// This is still a pre-topology artifact. It constructs point events for
     /// proper crossings and endpoint touches, and explicitly marks collinear
     /// interval contacts as interval topology for a later exact planar
-    /// arrangement pass. The split follows Yap's exact-geometric-computation
     /// discipline: keep construction evidence with the graph instead of using
     /// projected predicate labels as if they were enough to mutate topology.
     pub fn split_constructions(
@@ -481,15 +456,12 @@ impl CoplanarArrangementReadinessReport {
     ///
     /// The report validates counts, not source geometry. That is still useful
     /// because exact topology staging often crosses API or serialization
-    /// boundaries before the next algorithm runs; Yap's exact-computation
     /// model requires those retained numerical-structure summaries to be
     /// auditable before they influence combinatorial output.
     pub fn validate(&self) -> Result<(), CoplanarArrangementReadinessValidationError> {
         if self.graph_count != self.overlapping_graphs + self.touching_graphs {
             return Err(CoplanarArrangementReadinessValidationError::GraphCountMismatch);
         }
-        // Yap, "Towards Exact Geometric Computation," Comput. Geom. 7.1-2
-        // (1997), treats the retained object-level structure as part of the
         // exact state. A compact planar-readiness report is therefore allowed
         // to summarize split constructions, but those summaries must still be
         // dominated by the edge contacts that produced them.
@@ -544,8 +516,6 @@ impl CoplanarArrangementReadinessReport {
     /// Local validation proves only that the compact counters are internally
     /// coherent. Source replay rebuilds the exact intersection graph and
     /// coplanar split summaries from `left` and `right`, then requires the
-    /// retained report to match that replay. This follows Yap, "Towards Exact
-    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997): a
     /// summarized exact-topology handoff must remain attached to the predicate
     /// and construction history that produced its numerical structure.
     pub fn validate_against_sources(
@@ -596,7 +566,6 @@ impl CoplanarOverlapSplitPlan {
     /// Mesh validation checks each retained split point against source-edge
     /// interpolation. This stronger audit also rebuilds the coplanar overlap
     /// graphs and split constructions from `left` and `right`, then compares
-    /// the whole public plan. Following Yap, exact planar-cell extraction
     /// should consume only split records whose construction history still
     /// replays from the source operands.
     pub fn validate_against_sources(
@@ -651,7 +620,6 @@ impl CoplanarOverlapSplitGraph {
     /// of the coplanar split plan, then requires this graph to appear
     /// unchanged. It keeps interval and point-split construction records as
     /// certified objects rather than detachable projected labels, matching the
-    /// exact-topology staging advocated by Yap.
     pub fn validate_against_sources(
         &self,
         left: &ExactMesh,
@@ -679,8 +647,6 @@ impl CoplanarOverlapSplitGraph {
 /// Structural inconsistency in a retained intersection graph event.
 ///
 /// This validates the graph record before split extraction or topology
-/// planning consumes it. Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997), treats exact predicate and
 /// construction artifacts as the boundary between numerical decisions and
 /// combinatorial mutation; a graph event whose coarse relation and retained
 /// payload disagree must be rejected at that boundary.
@@ -800,8 +766,6 @@ impl FacePairEvents {
     /// Plain [`FacePairEvents::validate`] checks relation/payload shape. This
     /// stronger handoff also checks that every retained face, edge, and vertex
     /// handle still belongs to the source meshes and to the face pair that
-    /// retained it. Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7.1-2 (1997), treats these combinatorial
     /// handles as part of the exact state: a later topology stage must not
     /// consume predicate evidence after it has been relabeled onto a different
     /// source object.
@@ -832,8 +796,6 @@ impl FacePairEvents {
     /// Source-handle validation proves the retained events still point into
     /// the supplied meshes. This method additionally rebuilds the exact
     /// intersection graph from `left` and `right`, then requires this pair to
-    /// appear unchanged. The replay check follows Yap, "Towards Exact
-    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997): exact
     /// event records are certified numerical/combinatorial objects, not labels
     /// that can be copied between face pairs.
     pub fn validate_against_sources(
@@ -971,7 +933,6 @@ impl ExactIntersectionGraph {
     /// [`Self::validate_against_meshes`] checks that retained event handles
     /// still belong to `left` and `right`. Source replay rebuilds the graph
     /// from those operands and requires exact equality, making the whole graph
-    /// artifact auditable before split planning consumes it under Yap's exact
     /// geometric-computation boundary.
     pub fn validate_against_sources(
         &self,
@@ -1015,7 +976,6 @@ impl ExactIntersectionGraph {
     /// The report first validates each retained overlap graph and its split
     /// construction records, then collapses them to counts that explain whether
     /// a named operation is blocked on boundary policy or true planar-cell
-    /// arrangement. This is a Yap-style exact boundary: certified graph
     /// evidence is preserved and checked, while the missing cell extraction
     /// algorithm remains an explicit status rather than a tolerance fallback.
     pub fn coplanar_arrangement_readiness_report(
@@ -1026,8 +986,6 @@ impl ExactIntersectionGraph {
         // Planar-readiness is a public compact view of retained graph state.
         // Before collapsing counts, replay the graph's face/edge/vertex handles
         // against the source meshes and later replay split parameters against
-        // source edges. Yap, "Towards Exact Geometric Computation," Comput.
-        // Geom. 7.1-2 (1997), makes those object handles part of the exact
         // state; stale handles must not survive simply because the summary
         // counters are internally coherent.
         self.validate_against_meshes(left, right).map_err(|error| {
@@ -1149,10 +1107,7 @@ impl ExactIntersectionGraph {
     ///
     /// This checked entry point rejects invalid segment/plane construction
     /// facts before point equality is used to form graph vertices. That keeps
-    /// the merge plan in Yap's certified-object layer rather than letting
     /// topology consume coordinates whose construction context has already
-    /// been lost. See Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7.1-2 (1997).
     pub fn checked_graph_vertex_plan(
         &self,
     ) -> Result<ExactGraphVertexPlan, SplitPlanValidationReport> {
@@ -1174,11 +1129,7 @@ impl ExactIntersectionGraph {
     ///
     /// The plan maps each split edge to an ordered chain from the original
     /// start vertex through merged exact graph vertices to the original end
-    /// vertex. It is deliberately still a plan, not a halfedge mutation: exact
-    /// geometric computation keeps certified event extraction separate from
-    /// topological updates until all assumptions are validated. See Yap,
-    /// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-    /// (1997).
+    /// vertex. It is deliberately still a plan, not a halfedge mutation.
     pub fn split_topology_plan(&self) -> ExactSplitTopologyPlan {
         let edge_splits = self.edge_split_plan();
         let graph_vertices = graph_vertex_plan(&edge_splits);
@@ -1191,8 +1142,6 @@ impl ExactIntersectionGraph {
     /// graph-vertex merging. It is the preferred path for production exact
     /// boolean topology because it rejects missing side facts, non-crossing
     /// split facts, and uncertified edge ordering before later stages can
-    /// consume them. The staged rejection follows Yap, "Towards Exact
-    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997): exact
     /// constructions become topology only after their combinatorial
     /// assumptions have been validated.
     pub fn checked_split_topology_plan(
@@ -1248,7 +1197,6 @@ impl ExactIntersectionGraph {
     /// This resolves face split work items into original and constructed
     /// boundary nodes with exact coordinates. It remains a pre-mutation handoff:
     /// no halfedges are created and no winding decision is inferred here. The
-    /// separation mirrors Yap's exact-computation staging, where certified
     /// predicates and constructions are validated before combinatorial edits.
     pub fn face_split_geometry_plan(
         &self,
@@ -1299,7 +1247,7 @@ pub struct EdgeSplitPoint {
     /// Opposite face whose plane produced the split.
     pub plane_face: usize,
     /// Exact parameter on the directed edge.
-    pub parameter: ExactReal,
+    pub parameter: Real,
     /// Determinant ratio that produced [`Self::parameter`].
     pub parameter_ratio: SegmentPlaneParameterRatio,
     /// Exact constructed point.
@@ -1326,11 +1274,8 @@ impl ExactEdgeSplitPlan {
     /// Validate exact edge split events before graph-vertex merging.
     ///
     /// This is the first handoff after segment/plane construction. It keeps
-    /// Yap's exact-computation separation intact by checking that each split
     /// point still carries certified opposite endpoint-side facts before later
     /// stages collapse points into graph vertices and topology chains. See
-    /// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-    /// 7.1-2 (1997).
     pub fn validate(&self) -> SplitPlanValidationReport {
         validate_edge_split_plan(self)
     }
@@ -1341,8 +1286,6 @@ impl ExactEdgeSplitPlan {
     /// extracts its edge split plan, and compares it with this artifact after
     /// local construction-fact validation. Replaying the first split handoff
     /// keeps segment/plane certificates attached to their original operands,
-    /// matching Yap's exact-computation discipline from "Towards Exact
-    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997).
     pub fn validate_against_sources(
         &self,
         left: &ExactMesh,
@@ -1373,7 +1316,7 @@ pub struct ExactGraphVertexUse {
     /// Opposite face whose plane produced the split.
     pub plane_face: usize,
     /// Exact parameter on the directed edge for this source use.
-    pub parameter: ExactReal,
+    pub parameter: Real,
     /// Determinant ratio that produced [`Self::parameter`].
     pub parameter_ratio: SegmentPlaneParameterRatio,
     /// Endpoint side facts that certified this source use.
@@ -1398,9 +1341,6 @@ impl ExactGraphVertexPlan {
     /// Validate merged graph vertices before topology consumes them.
     ///
     /// The graph-vertex plan is the first place where multiple exact
-    /// constructions may collapse to one topological vertex. Following Yap,
-    /// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-    /// (1997), this handoff preserves and validates the construction-side
     /// facts instead of trusting the representative coordinate alone.
     pub fn validate(&self) -> SplitPlanValidationReport {
         validate_graph_vertex_plan(self)
@@ -1411,7 +1351,6 @@ impl ExactGraphVertexPlan {
     /// Merged graph vertices are only meaningful for the exact split events
     /// that produced them. This method rebuilds those events from `left` and
     /// `right`, redoes the merge, and requires the public artifact to match the
-    /// replay, preserving Yap's distinction between certified algebraic facts
     /// and later combinatorial topology.
     pub fn validate_against_sources(
         &self,
@@ -1477,12 +1416,8 @@ impl ExactSplitTopologyPlan {
 
     /// Validate the non-mutating split-topology contract.
     ///
-    /// Yap's exact-geometric-computation model separates certified predicate
     /// events from combinatorial edits. This report is the handoff check: it
     /// rejects unresolved exact comparisons and malformed chain references
-    /// before any future halfedge mutation can consume the plan. See Yap,
-    /// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-    /// (1997).
     pub fn validate(&self) -> SplitPlanValidationReport {
         validate_split_topology_plan(self)
     }
@@ -1492,7 +1427,6 @@ impl ExactSplitTopologyPlan {
     /// The topology plan orders original edge endpoints and exact graph
     /// vertices into non-mutating chains. This source replay rebuilds the
     /// graph, graph-vertex merge, and topology from `left` and `right` before
-    /// comparing the public artifact, following Yap's requirement that topology
     /// decisions remain tied to exact predicate and construction evidence.
     pub fn validate_against_sources(
         &self,
@@ -1562,8 +1496,6 @@ impl ExactFaceSplitPlan {
     /// topology, and face-local work items from `left` and `right`, then
     /// compares the rebuilt plan with this public artifact. That keeps the
     /// copied face work list tied to the certified predicate/construction
-    /// chain required by Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7.1-2 (1997).
     pub fn validate_against_sources(
         &self,
         left: &ExactMesh,
@@ -1642,8 +1574,6 @@ pub struct SplitPlanDiagnostic {
 /// Split-plan diagnostics are public handoff evidence for exact graph,
 /// topology, and region stages. A diagnostic without the location data needed
 /// to interpret it is not useful to downstream exact-policy code. Keeping that
-/// evidence structured follows Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997): unresolved topology states should be
 /// explicit artifacts, not prose-only failures.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum SplitPlanReportValidationError {
@@ -1835,8 +1765,6 @@ fn require_graph_vertex(
 ///
 /// The variants distinguish original source vertices, retained intersection
 /// graph vertices, and later exact face-interior constructions. Keeping those
-/// witnesses typed follows Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997): downstream topology should consume
 /// explicit construction evidence instead of relabeling coordinates as if they
 /// came from an older source object.
 #[derive(Clone, Debug, PartialEq)]
@@ -1913,8 +1841,6 @@ impl ExactFaceSplitGeometryPlan {
     /// Segment/plane crossings create points that should be incident to the
     /// face whose boundary they are splitting. This check replays that
     /// incidence as exact `hyperlimit::orient3d_report` predicates rather than
-    /// trusting construction history or approximate coordinates, following
-    /// Yap's requirement that later topology stages consume certified facts.
     pub fn validate_boundary_incidence(
         &self,
         left: &ExactMesh,
@@ -1929,8 +1855,6 @@ impl ExactFaceSplitGeometryPlan {
     /// face plane. This check also rebuilds the exact intersection graph,
     /// topology, and split-boundary geometry from `left` and `right`, then
     /// compares the rebuilt artifact with this value. The replay boundary is
-    /// the same exact-artifact discipline described by Yap, "Towards Exact
-    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997): derived
     /// combinatorics are consumed only with their certified construction
     /// history still attached to the original operands.
     pub fn validate_against_sources(
@@ -1947,7 +1871,6 @@ impl ExactFaceSplitGeometryPlan {
     /// each affected triangle into one boundary loop in original face-edge
     /// order, inserting exact graph vertices along the split edges. It still
     /// does not decide winding, ownership, or boolean output; those decisions
-    /// remain certified downstream stages under Yap's exact-geometric-
     /// computation separation.
     pub fn region_plan(&self, left: &ExactMesh, right: &ExactMesh) -> ExactFaceRegionPlan {
         face_region_plan(self, left, right)
@@ -2001,8 +1924,6 @@ impl ExactFaceRegionPlan {
     /// and incident to their source face planes. This stronger check rebuilds
     /// the exact intersection graph, split topology, split boundary geometry,
     /// and final region loops from `left` and `right`, then requires the public
-    /// artifact to match that replay. The staging follows Yap, "Towards Exact
-    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997): exact
     /// algorithms should pass certified algebraic artifacts across topology
     /// boundaries instead of trusting copied combinatorial state.
     pub fn validate_against_sources(
@@ -2240,12 +2161,8 @@ fn push_graph_vertex_source_use_diagnostics(
     non_crossing_message: &'static str,
     missing_message: &'static str,
 ) {
-    // Yap's exact-geometric-computation contract is about the retained
     // construction object, not only the rounded coordinate it produced. Every
     // later graph/topology handoff therefore rechecks the determinant ratio and
-    // endpoint side facts before consuming a merged graph vertex. See Yap,
-    // "Towards Exact Geometric Computation," Computational Geometry 7.1-2
-    // (1997).
     if !ratio_matches_parameter(&vertex_use.parameter_ratio, &vertex_use.parameter) {
         diagnostics.push(
             SplitPlanDiagnostic::new(
@@ -2446,7 +2363,7 @@ fn face_pair_relation_needs_graph_construction(relation: MeshFacePairRelation) -
 fn validate_graph_segment_plane_event(
     relation: SegmentPlaneRelation,
     point: &Option<Point3>,
-    parameter: &Option<ExactReal>,
+    parameter: &Option<Real>,
     parameter_ratio: &Option<SegmentPlaneParameterRatio>,
     construction_failure: &Option<SegmentPlaneConstructionFailure>,
     endpoint_sides: [Option<PlaneSide>; 2],
@@ -2533,9 +2450,9 @@ fn opposite_strict_sides(sides: [Option<PlaneSide>; 2]) -> bool {
     )
 }
 
-fn ratio_matches_parameter(ratio: &SegmentPlaneParameterRatio, parameter: &ExactReal) -> bool {
+fn ratio_matches_parameter(ratio: &SegmentPlaneParameterRatio, parameter: &Real) -> bool {
     if matches!(
-        compare_reals(&ratio.denominator, &ExactReal::from(0)).value(),
+        compare_reals(&ratio.denominator, &Real::from(0)).value(),
         Some(Ordering::Equal) | None
     ) {
         return false;
@@ -3118,7 +3035,7 @@ fn face_boundary_node(
             })?;
             Ok(FaceSplitBoundaryNode::OriginalVertex {
                 vertex: *vertex,
-                point: point.to_hyperlimit_point(),
+                point: point.clone(),
             })
         }
         SplitEdgeNode::GraphVertex { graph_vertex } => {
@@ -3177,9 +3094,9 @@ fn validate_face_split_geometry_incidence(
         }
 
         let triangle = mesh.triangles()[face.face].0;
-        let a = mesh.vertices()[triangle[0]].to_hyperlimit_point();
-        let b = mesh.vertices()[triangle[1]].to_hyperlimit_point();
-        let c = mesh.vertices()[triangle[2]].to_hyperlimit_point();
+        let a = mesh.vertices()[triangle[0]].clone();
+        let b = mesh.vertices()[triangle[1]].clone();
+        let c = mesh.vertices()[triangle[2]].clone();
         for chain in &face.boundary_chains {
             for node in &chain.nodes {
                 let point = boundary_node_point(node);
@@ -3335,9 +3252,9 @@ fn validate_face_region_plan(
         }
 
         let triangle = mesh.triangles()[region.face].0;
-        let a = mesh.vertices()[triangle[0]].to_hyperlimit_point();
-        let b = mesh.vertices()[triangle[1]].to_hyperlimit_point();
-        let c = mesh.vertices()[triangle[2]].to_hyperlimit_point();
+        let a = mesh.vertices()[triangle[0]].clone();
+        let b = mesh.vertices()[triangle[1]].clone();
+        let c = mesh.vertices()[triangle[2]].clone();
         for node in &region.boundary {
             let point = boundary_node_point(node);
             match orient3d_report(&a, &b, &c, point).value() {
@@ -3471,9 +3388,6 @@ fn validate_coplanar_edge_split(
             let point = &split.points[0];
             validate_unit_parameter(&point.left_parameter)?;
             validate_unit_parameter(&point.right_parameter)?;
-
-            // Yap, "Towards Exact Geometric Computation," Comput. Geom. 7.1-2
-            // (1997), argues that exact constructions should retain the
             // numerical structure needed by later combinatorial decisions.
             // These edge parameters are the compact structure a future
             // planar-cell extractor will sort and merge, so endpoint/proper
@@ -3596,11 +3510,9 @@ fn coplanar_split_validation_mesh_error(error: CoplanarOverlapSplitValidationErr
     }
 }
 
-fn validate_unit_parameter(
-    parameter: &ExactReal,
-) -> Result<(), CoplanarOverlapSplitValidationError> {
-    let zero = ExactReal::from(0);
-    let one = ExactReal::from(1);
+fn validate_unit_parameter(parameter: &Real) -> Result<(), CoplanarOverlapSplitValidationError> {
+    let zero = Real::from(0);
+    let one = Real::from(1);
     match (
         compare_reals(parameter, &zero).value(),
         compare_reals(parameter, &one).value(),
@@ -3613,11 +3525,9 @@ fn validate_unit_parameter(
     }
 }
 
-fn parameter_is_endpoint(
-    parameter: &ExactReal,
-) -> Result<bool, CoplanarOverlapSplitValidationError> {
-    let zero = ExactReal::from(0);
-    let one = ExactReal::from(1);
+fn parameter_is_endpoint(parameter: &Real) -> Result<bool, CoplanarOverlapSplitValidationError> {
+    let zero = Real::from(0);
+    let one = Real::from(1);
     match (
         compare_reals(parameter, &zero).value(),
         compare_reals(parameter, &one).value(),
@@ -3629,10 +3539,10 @@ fn parameter_is_endpoint(
 }
 
 fn parameter_is_strict_interior(
-    parameter: &ExactReal,
+    parameter: &Real,
 ) -> Result<bool, CoplanarOverlapSplitValidationError> {
-    let zero = ExactReal::from(0);
-    let one = ExactReal::from(1);
+    let zero = Real::from(0);
+    let one = Real::from(1);
     match (
         compare_reals(parameter, &zero).value(),
         compare_reals(parameter, &one).value(),
@@ -3664,7 +3574,7 @@ fn edge_points(mesh: &ExactMesh, edge: [usize; 2]) -> Result<[Point3; 2], MeshEr
             .with_vertex(edge[1]),
         )
     })?;
-    Ok([start.to_hyperlimit_point(), end.to_hyperlimit_point()])
+    Ok([start.clone(), end.clone()])
 }
 
 fn endpoint_touch_split_point(
@@ -3677,8 +3587,8 @@ fn endpoint_touch_split_point(
             if projected_points_equal(left_point, right_point, projection)? {
                 return Some(CoplanarEdgeSplitPoint {
                     point: left_point.clone(),
-                    left_parameter: ExactReal::from(left_index as i64),
-                    right_parameter: ExactReal::from(right_index as i64),
+                    left_parameter: Real::from(left_index as i64),
+                    right_parameter: Real::from(right_index as i64),
                 });
             }
         }
@@ -3690,7 +3600,7 @@ fn endpoint_touch_split_point(
         if point_on_segment(&right_start, &right_end, &projected).value() == Some(true) {
             return Some(CoplanarEdgeSplitPoint {
                 point: left_point.clone(),
-                left_parameter: ExactReal::from(left_index as i64),
+                left_parameter: Real::from(left_index as i64),
                 right_parameter: endpoint_parameter_on_segment(
                     left_point, &right[0], &right[1], projection,
                 )?,
@@ -3711,7 +3621,7 @@ fn endpoint_touch_split_point(
                     &left[1],
                     projection,
                 )?,
-                right_parameter: ExactReal::from(right_index as i64),
+                right_parameter: Real::from(right_index as i64),
             });
         }
     }
@@ -3732,7 +3642,7 @@ fn coplanar_edge_interval(
                 &mut endpoints,
                 CoplanarEdgeSplitPoint {
                     point: point.clone(),
-                    left_parameter: ExactReal::from(left_index as i64),
+                    left_parameter: Real::from(left_index as i64),
                     right_parameter,
                 },
                 projection,
@@ -3748,7 +3658,7 @@ fn coplanar_edge_interval(
                 CoplanarEdgeSplitPoint {
                     point: point.clone(),
                     left_parameter,
-                    right_parameter: ExactReal::from(right_index as i64),
+                    right_parameter: Real::from(right_index as i64),
                 },
                 projection,
             )?;
@@ -3778,7 +3688,7 @@ fn certified_endpoint_parameter_on_segment(
     start: &Point3,
     end: &Point3,
     projection: CoplanarProjection,
-) -> Option<ExactReal> {
+) -> Option<Real> {
     let projected_start = project_point3(start, projection);
     let projected_end = project_point3(end, projection);
     let projected_point = project_point3(point, projection);
@@ -3808,7 +3718,7 @@ fn endpoint_parameter_on_segment(
     start: &Point3,
     end: &Point3,
     projection: CoplanarProjection,
-) -> Option<ExactReal> {
+) -> Option<Real> {
     projected_segment_parameter3(point, start, end, projection)
 }
 
@@ -3832,7 +3742,7 @@ fn proper_coplanar_edge_split_point(
 fn original_boundary_node(mesh: &ExactMesh, vertex: usize) -> FaceSplitBoundaryNode {
     FaceSplitBoundaryNode::OriginalVertex {
         vertex,
-        point: mesh.vertices()[vertex].to_hyperlimit_point(),
+        point: mesh.vertices()[vertex].clone(),
     }
 }
 

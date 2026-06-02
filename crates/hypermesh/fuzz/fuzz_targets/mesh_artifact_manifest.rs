@@ -1,10 +1,14 @@
 #![no_main]
 
-use hypermesh::exact::{
-    ExactMesh, MeshArtifactBlocker, MeshArtifactFaceRecord, MeshArtifactManifest,
-    MeshArtifactRole, MeshArtifactSourceKind, MeshArtifactVertexRecord, MeshCoordinateEvidence,
-    MeshNumericAdapterContract, MeshTopologyEvidence, ValidationPolicy,
+use hypermesh::exact::artifact::{
+    MeshArtifactBlocker, MeshArtifactFaceRecord, MeshArtifactManifest, MeshArtifactRole,
+    MeshArtifactSourceKind, MeshArtifactVertexRecord, MeshCoordinateEvidence,
+    MeshNumericAdapterContract, MeshTopologyEvidence,
 };
+use hypermesh::exact::{ExactMesh, ValidationPolicy};
+
+
+
 use libfuzzer_sys::fuzz_target;
 
 fn value(data: &[u8], index: usize) -> i64 {

@@ -6,78 +6,51 @@
 //! decisions with exact objects from `hyperreal`, `hyperlattice`, `hyperlimit`,
 //! and later `hypertri`.
 //!
-//! The staged split follows Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7.1-2 (1997): exact objects, predicate decisions,
 //! and topology mutations are separate artifacts that must replay together.
 //! The halfedge construction shape follows the legacy boolmesh kernels already
 //! in this crate (`boolean03` discovery/classification, then `boolean45`
 //! halfedge assembly).  The retained-fragment view is also compatible with the
-//! polygonal boundary model of Weiler and Atherton, "Hidden Surface Removal
-//! Using Polygon Area Sorting," *SIGGRAPH* (1977): intersections produce
 //! ordered boundary fragments before faces are emitted.
 
-#[cfg(feature = "exact-triangulation")]
 mod boolean45;
-#[cfg(feature = "exact-triangulation")]
 mod cleanup;
-#[cfg(feature = "exact-triangulation")]
 mod kernel02;
-#[cfg(feature = "exact-triangulation")]
 mod kernel03;
-#[cfg(feature = "exact-triangulation")]
 mod kernel11;
-#[cfg(feature = "exact-triangulation")]
 mod kernel12;
-#[cfg(feature = "exact-triangulation")]
 mod kernel12_coplanar;
-#[cfg(feature = "exact-triangulation")]
 mod kernel12_intersect;
-#[cfg(feature = "exact-triangulation")]
 mod kernel12_op;
-#[cfg(feature = "exact-triangulation")]
 mod kernel_frame;
 
-#[cfg(feature = "exact-triangulation")]
 use super::AabbIntersectionKind;
-#[cfg(feature = "exact-triangulation")]
-use super::boolean::{ExactBooleanOperation, certify_boundary_touching_report};
-#[cfg(feature = "exact-triangulation")]
+use super::boolean::{
+    ExactBooleanOperation, boundary_touching_report_from_graph, certify_boundary_touching_report,
+};
 use super::construction::{
     SegmentPlaneConstructionFailure, SegmentPlaneParameterRatio, SegmentPlaneRelation,
 };
-#[cfg(feature = "exact-triangulation")]
 use super::graph::{
-    CoplanarEdgeInterval, CoplanarEdgeSplitPoint, CoplanarOverlapSplitPlan, IntersectionEvent,
-    MeshSide, build_intersection_graph,
+    CoplanarEdgeInterval, CoplanarEdgeSplitPoint, CoplanarOverlapSplitPlan, ExactIntersectionGraph,
+    IntersectionEvent, MeshSide, build_intersection_graph,
 };
-#[cfg(feature = "exact-triangulation")]
-use super::mesh::{ExactMesh, ExactPoint3, Triangle};
-#[cfg(feature = "exact-triangulation")]
+use super::mesh::{ExactMesh, Triangle};
 use super::provenance::SourceProvenance;
-#[cfg(feature = "exact-triangulation")]
 use super::reports::ExactBooleanShortcutKind;
-#[cfg(feature = "exact-triangulation")]
-use super::scalar::ExactReal;
-#[cfg(feature = "exact-triangulation")]
 use super::validation::ValidationPolicy;
-#[cfg(feature = "exact-triangulation")]
 use super::volumetric_cells::{
-    CoplanarVolumetricCellObstacle, certify_coplanar_volumetric_cell_evidence,
+    CoplanarVolumetricCellEvidenceReport, CoplanarVolumetricCellObstacle,
+    certify_coplanar_volumetric_cell_evidence,
 };
-#[cfg(feature = "exact-triangulation")]
 use boolean45::{pair_source_edge_events, size_output_stage};
-#[cfg(feature = "exact-triangulation")]
 use cleanup::cleanup_exact_export_vertices;
-#[cfg(feature = "exact-triangulation")]
 use hyperlimit::{
     CoplanarProjection, PlaneSide, Point3, PredicateOutcome, SegmentIntersection, TriangleLocation,
     compare_reals,
 };
-#[cfg(feature = "exact-triangulation")]
+use hyperreal::Real;
 use kernel03::kernel03_winding;
-#[cfg(feature = "exact-triangulation")]
 use kernel12::{ExactBoolMeshKernel12Lowering, lower_kernel12_events};
-#[cfg(feature = "exact-triangulation")]
 use std::collections::{BTreeMap, BTreeSet};
 
 /// Exercise the exact `Kernel11` shadow primitive port from fuzz targets.
@@ -87,7 +60,7 @@ use std::collections::{BTreeMap, BTreeSet};
 /// `kernel12` lowering.  The probe keeps the boolmesh `kernel01`/`kernel11`
 /// branch behavior compiled under adversarial fuzz builds without exporting a
 /// partial boolean API.
-#[cfg(all(feature = "exact-triangulation", feature = "internal-fuzzing"))]
+#[cfg(feature = "internal-fuzzing")]
 pub fn exact_boolmesh_kernel11_shadow_probe_for_internal_fuzz(selector: u8) -> bool {
     kernel11::internal_fuzz_probe(selector)
 }
@@ -97,7 +70,7 @@ pub fn exact_boolmesh_kernel11_shadow_probe_for_internal_fuzz(selector: u8) -> b
 /// This remains gated behind `internal-fuzzing` for the same reason as the
 /// `Kernel11` probe: it compiles adversarial coverage for the direct boolmesh
 /// algorithm while the normal workspace still owns staged `kernel12` lowering.
-#[cfg(all(feature = "exact-triangulation", feature = "internal-fuzzing"))]
+#[cfg(feature = "internal-fuzzing")]
 pub fn exact_boolmesh_kernel02_shadow_probe_for_internal_fuzz(selector: u8) -> bool {
     kernel02::internal_fuzz_probe(selector)
 }
@@ -107,7 +80,7 @@ pub fn exact_boolmesh_kernel02_shadow_probe_for_internal_fuzz(selector: u8) -> b
 /// The normal workspace still owns event discovery and lowering.  This probe
 /// keeps the hard boolmesh accumulator compiled under adversarial builds until
 /// `kernel12` lowering delegates to it for boundary and mixed shadow rows.
-#[cfg(all(feature = "exact-triangulation", feature = "internal-fuzzing"))]
+#[cfg(feature = "internal-fuzzing")]
 pub fn exact_boolmesh_kernel12_shadow_accumulator_probe_for_internal_fuzz(selector: u8) -> bool {
     kernel12_op::internal_fuzz_probe(selector)
 }
@@ -118,7 +91,7 @@ pub fn exact_boolmesh_kernel12_shadow_accumulator_probe_for_internal_fuzz(select
 /// boolmesh-style halfedge/point/expansion package consumed by the ported
 /// kernels. Keeping it in the fuzz build catches topology-shape drift before
 /// `kernel12` lowering delegates to the accumulator.
-#[cfg(all(feature = "exact-triangulation", feature = "internal-fuzzing"))]
+#[cfg(feature = "internal-fuzzing")]
 pub fn exact_boolmesh_kernel_frame_probe_for_internal_fuzz(selector: u8) -> bool {
     kernel_frame::internal_fuzz_probe(selector)
 }
@@ -128,7 +101,7 @@ pub fn exact_boolmesh_kernel_frame_probe_for_internal_fuzz(selector: u8) -> bool
 /// This probe covers the handoff from retained exact edge/face events back to
 /// boolmesh halfedge rows.  It is kept behind `internal-fuzzing` because the
 /// public API remains the certified workspace, not individual kernel probes.
-#[cfg(all(feature = "exact-triangulation", feature = "internal-fuzzing"))]
+#[cfg(feature = "internal-fuzzing")]
 pub fn exact_boolmesh_kernel12_accumulator_replay_probe_for_internal_fuzz(selector: u8) -> bool {
     kernel12::internal_fuzz_probe(selector)
 }
@@ -138,7 +111,7 @@ pub fn exact_boolmesh_kernel12_accumulator_replay_probe_for_internal_fuzz(select
 /// This keeps the structural boolmesh edge-AABB/opposite-face scheduling path
 /// compiled under adversarial builds without exporting it as public API before
 /// the remaining boundary and coplanar `Kernel12` rows are wired through.
-#[cfg(all(feature = "exact-triangulation", feature = "internal-fuzzing"))]
+#[cfg(feature = "internal-fuzzing")]
 pub fn exact_boolmesh_kernel12_intersect_loop_probe_for_internal_fuzz(selector: u8) -> bool {
     kernel12_intersect::internal_fuzz_probe(selector)
 }
@@ -148,7 +121,7 @@ pub fn exact_boolmesh_kernel12_intersect_loop_probe_for_internal_fuzz(selector: 
 /// This is the retained-source-vertex classifier that fills boolmesh `w03` and
 /// `w30`.  Keeping it in the fuzz build stresses the hard handoff from exact
 /// `Kernel02` shadows into operation-signed `boolean45::size_output` counters.
-#[cfg(all(feature = "exact-triangulation", feature = "internal-fuzzing"))]
+#[cfg(feature = "internal-fuzzing")]
 pub fn exact_boolmesh_kernel03_winding_probe_for_internal_fuzz(selector: u8) -> bool {
     kernel03::internal_fuzz_probe(selector)
 }
@@ -158,7 +131,7 @@ pub fn exact_boolmesh_kernel03_winding_probe_for_internal_fuzz(selector: u8) -> 
 /// This keeps the direct ports of boolmesh `single_triangulate` and
 /// `square_triangulate` under adversarial builds while the public boolean API
 /// remains the staged boolmesh workspace.
-#[cfg(all(feature = "exact-triangulation", feature = "internal-fuzzing"))]
+#[cfg(feature = "internal-fuzzing")]
 pub fn exact_boolmesh_boolean45_triangulation_probe_for_internal_fuzz(selector: u8) -> bool {
     boolean45::triangulation_internal_fuzz_probe(selector)
 }
@@ -168,7 +141,7 @@ pub fn exact_boolmesh_boolean45_triangulation_probe_for_internal_fuzz(selector: 
 /// This keeps the exact `simplify_topology` cleanup port compiled under
 /// adversarial builds while the public boolean API remains the staged boolmesh
 /// executor.
-#[cfg(all(feature = "exact-triangulation", feature = "internal-fuzzing"))]
+#[cfg(feature = "internal-fuzzing")]
 pub fn exact_boolmesh_cleanup_probe_for_internal_fuzz(selector: u8) -> bool {
     cleanup::internal_fuzz_probe(selector)
 }
@@ -178,7 +151,6 @@ pub fn exact_boolmesh_cleanup_probe_for_internal_fuzz(selector: u8) -> bool {
 /// These names intentionally mirror the old modules instead of inventing a new
 /// boolean vocabulary.  A blocker can therefore say exactly which part of the
 /// boolmesh/paper pipeline has not yet been ported to exact predicates.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ExactBoolMeshKernelStage {
     /// Edge/triangle intersection discovery, legacy `boolean03::kernel12`.
@@ -204,7 +176,6 @@ pub enum ExactBoolMeshKernelStage {
 }
 
 /// Structured blocker for the exact boolmesh-kernel port.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ExactBoolMeshPortBlocker {
     /// First unported or unresolved boolmesh stage.
@@ -241,7 +212,6 @@ pub struct ExactBoolMeshPortBlocker {
     pub mesh_export_boundary_edges: usize,
 }
 
-#[cfg(feature = "exact-triangulation")]
 impl ExactBoolMeshPortBlocker {
     fn from_stage(
         stage: ExactBoolMeshKernelStage,
@@ -301,7 +271,6 @@ impl ExactBoolMeshPortBlocker {
 }
 
 /// Exact face-pair key matching the boolmesh `p1q2`/`p2q1` ownership shape.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct ExactBoolMeshFacePair {
     /// Source face from the left operand.
@@ -320,10 +289,6 @@ pub struct ExactBoolMeshFacePair {
 /// construction.  The `source_halfedge` field is the legacy boolmesh row key
 /// (`hid` in `boolean03::kernel12::intersect12`), retained exactly so the port
 /// does not recover face-local topology from rounded coordinates or endpoint
-/// coincidence.  That is the exact-object separation advocated by Yap,
-/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997).
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct ExactBoolMeshEdgeFacePair {
     /// Source face pair that retained this edge/face contact.
@@ -341,7 +306,6 @@ pub struct ExactBoolMeshEdgeFacePair {
 }
 
 /// Operand side used by exact boolmesh event provenance.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ExactBoolMeshSide {
     /// Left boolean operand.
@@ -351,7 +315,6 @@ pub enum ExactBoolMeshSide {
 }
 
 /// Exact source-owned vertex handle.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct ExactBoolMeshSourceVertex {
     /// Operand side that owns the vertex.
@@ -367,7 +330,6 @@ pub struct ExactBoolMeshSourceVertex {
 /// and lets predicates replay it.  Edge parameters are rational `Real` values
 /// so event ordering can use symbolic comparison instead of `dot(edge, point)`
 /// on rounded coordinates.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, PartialEq)]
 pub enum ExactBoolMeshPointConstruction {
     /// Existing source vertex reused without construction.
@@ -381,7 +343,7 @@ pub enum ExactBoolMeshPointConstruction {
         /// Source edge head vertex.
         head: usize,
         /// Exact edge parameter measured from `tail` toward `head`.
-        parameter: ExactReal,
+        parameter: Real,
     },
     /// Placeholder for a segment/plane construction owned by exact `kernel12`.
     SegmentPlane {
@@ -394,12 +356,11 @@ pub enum ExactBoolMeshPointConstruction {
         /// Opposite source face.
         face: usize,
         /// Exact edge parameter measured from `tail` toward `head`.
-        parameter: ExactReal,
+        parameter: Real,
     },
 }
 
 /// Ordered event on one source edge.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactBoolMeshEdgeEvent {
     /// Source edge owner.
@@ -408,7 +369,6 @@ pub struct ExactBoolMeshEdgeEvent {
     ///
     /// Boolmesh keys `pt_old` by `hid_p`, not by endpoint reconstruction.
     /// Retaining this row id lets exact `boolean45` replay the same bucket
-    /// ownership after exact `kernel12` lowering, in Yap's sense of carrying
     /// the certified combinatorial object beside the exact construction.
     pub source_halfedge: usize,
     /// Source edge tail vertex.
@@ -416,7 +376,7 @@ pub struct ExactBoolMeshEdgeEvent {
     /// Source edge head vertex.
     pub head: usize,
     /// Exact parameter used by the `boolean45::pair_up` port.
-    pub parameter: ExactReal,
+    pub parameter: Real,
     /// Collision/event id, preserving the boolmesh tie-break role of `cid`.
     pub collision: usize,
     /// Whether this event contributes a tail halfedge endpoint.
@@ -433,7 +393,6 @@ pub struct ExactBoolMeshEdgeEvent {
 /// This exact record keeps the same pairing decision but
 /// stores source event provenance instead of output vertex ids, because final
 /// vertex allocation is still owned by the later exact `boolean45` slices.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactBoolMeshPairedEdgeFragment {
     /// Source edge owner.
@@ -456,7 +415,6 @@ pub struct ExactBoolMeshPairedEdgeFragment {
 /// `boolean45::append_partial_edges`.  Events are sorted by exact edge
 /// parameter, with collision id as the boolmesh tie-break.  Odd event counts
 /// are retained explicitly because legacy `pair_up` requires even buckets.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactBoolMeshSourceEdgeRun {
     /// Source edge owner.
@@ -479,7 +437,6 @@ pub struct ExactBoolMeshSourceEdgeRun {
 }
 
 /// Exact `boolean45::pair_up` staging over lowered source-edge events.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct ExactBoolMeshPairUpStage {
     /// Ordered source-edge runs.
@@ -497,17 +454,9 @@ pub struct ExactBoolMeshPairUpStage {
 /// `f64` interpolation to discover edge/triangle contacts.  The exact port
 /// keeps the same edge/face ownership, but consumes the determinant-ratio
 /// segment/plane construction used by the exact narrow phase.  This is the
-/// Yap boundary in code: predicate side facts, exact parameter, constructed
 /// point, and source handles replay together before any topology mutation.
 ///
 /// The segment/plane event substrate follows the orientation-predicate
-/// decomposition used by Moller, "A Fast Triangle-Triangle Intersection
-/// Test," *Journal of Graphics Tools* 2.2 (1997), and Guigue and Devillers,
-/// "Fast and Robust Triangle-Triangle Overlap Test Using Orientation
-/// Predicates," *Journal of Graphics Tools* 8.1 (2003), with construction
-/// retained exactly as required by Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997).
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactBoolMeshKernel12Event {
     /// Edge/face ownership key for this event.
@@ -517,7 +466,7 @@ pub struct ExactBoolMeshKernel12Event {
     /// Exact intersection point for endpoint and proper-crossing events.
     pub point: Option<Point3>,
     /// Exact segment parameter measured from `edge[0]` toward `edge[1]`.
-    pub parameter: Option<ExactReal>,
+    pub parameter: Option<Real>,
     /// Determinant numerator/denominator that produced [`Self::parameter`].
     pub parameter_ratio: Option<SegmentPlaneParameterRatio>,
     /// Structured construction failure when side predicates certified a
@@ -533,7 +482,6 @@ pub struct ExactBoolMeshKernel12Event {
 /// a time.  Empty vectors are meaningful for certified disjoint operands: they
 /// prove the direct boolmesh workspace crossed discovery without invoking the
 /// primitive-float adapter.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactBoolMeshBoolean03 {
     /// Left-edge/right-face ownership pairs, legacy `p1q2`.
@@ -561,11 +509,8 @@ pub struct ExactBoolMeshBoolean03 {
 /// to decide which source vertices survive and which inserted crossings are
 /// duplicated/reversed.  This exact port keeps the same dependency.  Only a
 /// clear exact `kernel12` result may ask the closed-mesh winding query to
-/// classify every opposite vertex.  Following Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997), boundary and
 /// undecidable states stay explicit blockers rather than being rounded into
 /// inside/outside counters.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, Eq, PartialEq)]
 struct ExactBoolMeshKernel03Winding {
     /// Left source vertices classified against the right mesh, legacy `w03`.
@@ -583,9 +528,7 @@ struct ExactBoolMeshKernel03Winding {
 /// and lets `boolean45::size_output` apply the operation signs.  The counters
 /// are now produced by the direct exact `boolean03::kernel03` port: source
 /// vertices are queried against opposite boolmesh face rows and accumulated
-/// through exact `Kernel02::op`, following Yap's requirement that topology
 /// decisions replay through retained exact predicates before mutation.
-#[cfg(feature = "exact-triangulation")]
 fn classify_kernel03(left: &ExactMesh, right: &ExactMesh) -> Option<ExactBoolMeshKernel03Winding> {
     let winding = kernel03_winding(left, right)?;
     Some(ExactBoolMeshKernel03Winding {
@@ -601,7 +544,6 @@ fn classify_kernel03(left: &ExactMesh, right: &ExactMesh) -> Option<ExactBoolMes
 /// `ps_r`.  The exact port keeps the same allocation order, but records a
 /// replayable origin for each slot so the later halfedge and triangulation
 /// stages can construct coordinates from exact source or `kernel12` evidence.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ExactBoolMeshOutputVertexOrigin {
     /// Retained source vertex copy from one operand.
@@ -628,7 +570,6 @@ pub enum ExactBoolMeshOutputVertexOrigin {
 }
 
 /// Output vertex allocation produced before exact `boolean45` edge emission.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ExactBoolMeshOutputVertexAllocation {
     /// Output vertex start for each retained left source vertex.
@@ -644,7 +585,6 @@ pub struct ExactBoolMeshOutputVertexAllocation {
 }
 
 /// Output vertex routed into a boolmesh `EdgePt` bucket.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct ExactBoolMeshRoutedEdgePoint {
     /// Output vertex id allocated by exact `boolean45`.
@@ -665,7 +605,6 @@ pub struct ExactBoolMeshRoutedEdgePoint {
 }
 
 /// Exact counterpart to a `pt_old` bucket keyed by one directed source edge.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ExactBoolMeshSourceEdgePointRun {
     /// Source edge owner.
@@ -685,7 +624,6 @@ pub struct ExactBoolMeshSourceEdgePointRun {
 }
 
 /// Exact counterpart to a `pt_new` bucket keyed by one left/right face pair.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ExactBoolMeshFacePairPointRun {
     /// Source face pair owning the future new halfedge pair.
@@ -699,7 +637,6 @@ pub struct ExactBoolMeshFacePairPointRun {
 /// Legacy boolmesh pushes every allocated `v12`/`v21` vertex into one
 /// source-edge bucket and two face-pair buckets.  This structure keeps the
 /// same routing decisions without computing the later floating `EdgePt.val`.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub struct ExactBoolMeshNewEdgeVertexStage {
     /// Source-edge buckets, legacy `pt_old`.
@@ -721,7 +658,6 @@ pub struct ExactBoolMeshNewEdgeVertexStage {
 }
 
 /// Point consumed by exact `boolean45::append_partial_edges`.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ExactBoolMeshPartialEdgePointOrigin {
     /// Crossing point previously routed by `add_new_edge_verts`.
@@ -736,7 +672,6 @@ pub enum ExactBoolMeshPartialEdgePointOrigin {
 }
 
 /// Ordered point on a partial source-edge run.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct ExactBoolMeshPartialEdgePoint {
     /// Output vertex id.
@@ -752,7 +687,6 @@ pub struct ExactBoolMeshPartialEdgePoint {
 }
 
 /// Paired source-edge fragment produced by exact `append_partial_edges`.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ExactBoolMeshPartialSourceEdgeFragment {
     /// Tail point of the emitted partial halfedge.
@@ -762,7 +696,6 @@ pub struct ExactBoolMeshPartialSourceEdgeFragment {
 }
 
 /// Exact source-edge run consumed by `append_partial_edges`.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ExactBoolMeshPartialSourceEdgeRun {
     /// Source edge owner.
@@ -786,7 +719,6 @@ pub struct ExactBoolMeshPartialSourceEdgeRun {
     /// Legacy boolmesh gets this orientation from paired halfedges.  The exact
     /// port records it explicitly so `append_partial_edges` can emit
     /// head-to-tail face cycles without recovering orientation from rounded
-    /// coordinates.  This is the Yap-style exact object boundary: the
     /// combinatorial adjacency and its directed use are replayed together.
     pub incident_edges: Vec<[usize; 2]>,
     /// Ordered crossing and retained endpoint points.
@@ -814,7 +746,6 @@ pub struct ExactBoolMeshPartialSourceEdgeRun {
 }
 
 /// Exact `boolean45::append_partial_edges` staging over `pt_old`.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub struct ExactBoolMeshPartialSourceEdgeStage {
     /// Partial source-edge runs.
@@ -826,7 +757,6 @@ pub struct ExactBoolMeshPartialSourceEdgeStage {
 }
 
 /// Paired face-pair fragment produced by exact `append_new_edges`.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ExactBoolMeshNewFacePairFragment {
     /// First point of the emitted new halfedge.
@@ -836,7 +766,6 @@ pub struct ExactBoolMeshNewFacePairFragment {
 }
 
 /// Exact face-pair run consumed by `append_new_edges`.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ExactBoolMeshNewFacePairRun {
     /// Source face pair owning the new halfedge pair.
@@ -853,7 +782,6 @@ pub struct ExactBoolMeshNewFacePairRun {
 }
 
 /// Exact `boolean45::append_new_edges` staging over `pt_new`.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub struct ExactBoolMeshNewFacePairStage {
     /// New face-pair runs.
@@ -863,7 +791,6 @@ pub struct ExactBoolMeshNewFacePairStage {
 }
 
 /// Retained source-edge fragment produced by exact `append_whole_edges`.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ExactBoolMeshWholeSourceEdgeFragment {
     /// Output tail vertex id.
@@ -877,7 +804,6 @@ pub struct ExactBoolMeshWholeSourceEdgeFragment {
 }
 
 /// Exact retained source-edge run consumed by `append_whole_edges`.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ExactBoolMeshWholeSourceEdgeRun {
     /// Source edge owner.
@@ -899,7 +825,6 @@ pub struct ExactBoolMeshWholeSourceEdgeRun {
     ///
     /// This preserves the orientation boolmesh reads from its source
     /// halfedges before `append_whole_edges` writes retained boundary
-    /// fragments.  Yap, "Towards Exact Geometric Computation," requires this
     /// topological fact to be part of the certified artifact rather than an
     /// implicit floating-point reconstruction.
     pub incident_edges: Vec<[usize; 2]>,
@@ -910,7 +835,6 @@ pub struct ExactBoolMeshWholeSourceEdgeRun {
 }
 
 /// Exact `boolean45::append_whole_edges` staging over untouched source edges.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub struct ExactBoolMeshWholeSourceEdgeStage {
     /// Whole source-edge runs.
@@ -920,7 +844,6 @@ pub struct ExactBoolMeshWholeSourceEdgeStage {
 }
 
 /// Source provenance for one exact boolmesh output halfedge.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum ExactBoolMeshOutputHalfedgeSource {
     /// Halfedge emitted by legacy `append_partial_edges`.
@@ -969,7 +892,6 @@ pub enum ExactBoolMeshOutputHalfedgeSource {
 }
 
 /// Exact output halfedge slot produced by the `boolean45` emission passes.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ExactBoolMeshOutputHalfedge {
     /// Output vertex at the halfedge tail.
@@ -985,7 +907,6 @@ pub struct ExactBoolMeshOutputHalfedge {
 }
 
 /// Exact `boolean45` halfedge emission over partial, new, and whole fragments.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub struct ExactBoolMeshHalfedgeAssemblyStage {
     /// Output halfedge array, legacy `hs_r`.  `None` slots are explicit
@@ -1014,7 +935,6 @@ pub struct ExactBoolMeshHalfedgeAssemblyStage {
 }
 
 /// One output face boundary loop assembled from emitted boolmesh halfedges.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ExactBoolMeshOutputFaceLoop {
     /// Output face containing the loop.
@@ -1026,7 +946,6 @@ pub struct ExactBoolMeshOutputFaceLoop {
 }
 
 /// Open lower-dimensional output face chain dropped before triangulation.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ExactBoolMeshDroppedOpenChain {
     /// Output face that contained the chain.
@@ -1044,7 +963,6 @@ pub struct ExactBoolMeshDroppedOpenChain {
 }
 
 /// Unambiguous source face owning a dropped open chain.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct ExactBoolMeshDroppedOpenChainOwner {
     /// Source mesh side that owns the face-local chain.
@@ -1054,7 +972,6 @@ pub struct ExactBoolMeshDroppedOpenChainOwner {
 }
 
 /// Source composition of a dropped open chain.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ExactBoolMeshDroppedOpenChainSourceKind {
     /// Every halfedge came from split or whole source-edge emission.
@@ -1066,7 +983,6 @@ pub enum ExactBoolMeshDroppedOpenChainSourceKind {
 }
 
 /// Exact face-loop assembly over `boolean45` output halfedges.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub struct ExactBoolMeshFaceLoopAssemblyStage {
     /// Canonical exact-coordinate representative for each output vertex.
@@ -1107,7 +1023,6 @@ pub struct ExactBoolMeshFaceLoopAssemblyStage {
 }
 
 /// Exact triangulation of one boolmesh output face loop.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactBoolMeshLoopTriangulation {
     /// Output face containing the triangulated loop.
@@ -1123,7 +1038,6 @@ pub struct ExactBoolMeshLoopTriangulation {
     /// Legacy boolmesh's `EarClip::clip_degenerate` removes boundary-covered
     /// hole walks produced by coincident coplanar seams while keeping the face
     /// triangulatable.  The exact port records the skipped loops here so the
-    /// stage remains replayable in Yap's certified-object sense.
     pub clipped_loop_indices: Vec<usize>,
     /// Loop indices consumed by this connected triangulation component.
     ///
@@ -1133,8 +1047,6 @@ pub struct ExactBoolMeshLoopTriangulation {
     /// degenerate loops: validation can replay that every usable loop of the
     /// output face was either triangulated by exactly one component or removed
     /// by the certified degeneracy rule.  This keeps the object/topology split
-    /// required by Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7.1-2 (1997).
     pub component_loop_indices: Vec<usize>,
     /// Source mesh side used to choose the projection.
     pub source_side: ExactBoolMeshSide,
@@ -1150,9 +1062,7 @@ pub struct ExactBoolMeshLoopTriangulation {
     /// constrained-triangulation witnesses lifted back onto the source face
     /// plane and retained separately so validation can replay the
     /// `hypertri`-introduced topology before final mesh export.  This follows
-    /// Yap's object/predicate split and the constrained-Delaunay subsegment
-    /// model of Lee and Lin.
-    pub steiner_points: Vec<ExactPoint3>,
+    pub steiner_points: Vec<Point3>,
     /// Local protected constraint edges consumed by CDT.
     ///
     /// Empty means the component was a single simple loop and used the exact
@@ -1169,7 +1079,6 @@ pub struct ExactBoolMeshLoopTriangulation {
 }
 
 /// Exact triangulation-prep stage over assembled boolmesh face loops.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct ExactBoolMeshLoopTriangulationStage {
     /// Output faces triangulated with `hypertri` earcut.
@@ -1191,7 +1100,6 @@ pub struct ExactBoolMeshLoopTriangulationStage {
     /// lower-dimensional endpoint/edge contacts that legacy boolmesh removes
     /// before final triangle emission in `EarClip::clip_degenerate` and
     /// cleanup.  Keeping the output face ids makes the deletion replayable in
-    /// Yap's certified-object sense: the port can distinguish "no surface was
     /// emitted because the exact face was lower-dimensional" from "the
     /// triangulator failed."
     pub dropped_degenerate_faces: Vec<usize>,
@@ -1212,11 +1120,8 @@ pub struct ExactBoolMeshLoopTriangulationStage {
 /// halfedges.  This exact port keeps that same handoff replayable: local
 /// `hypertri` earcut indices are preserved in [`Self::local_triangle`] and
 /// resolved into boolmesh output vertex ids in [`Self::vertices`].  The
-/// separation follows Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997): the certified triangulation decision
 /// and the topology mutation that will later export mesh triangles remain
 /// distinct artifacts.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct ExactBoolMeshTriangulatedOutputTriangle {
     /// Output face that owns the triangle.
@@ -1237,7 +1142,6 @@ pub struct ExactBoolMeshTriangulatedOutputTriangle {
 }
 
 /// Exact output-triangle materialization over triangulated boolmesh loops.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct ExactBoolMeshOutputTriangleStage {
     /// Materialized output triangles in boolmesh face/loop traversal order.
@@ -1248,7 +1152,7 @@ pub struct ExactBoolMeshOutputTriangleStage {
     /// index this buffer in order.  Keeping these points at the output-triangle
     /// stage makes the CDT lift replayable before mesh export mutates the
     /// vertex buffer.
-    pub steiner_points: Vec<ExactPoint3>,
+    pub steiner_points: Vec<Point3>,
     /// Upstream loop triangulation candidates that did not produce a local
     /// index buffer and therefore cannot emit output triangles yet.
     pub missing_loop_triangulations: usize,
@@ -1263,16 +1167,13 @@ pub struct ExactBoolMeshOutputTriangleStage {
 /// into mesh triangles.  It intentionally stores output vertex ids and
 /// [`Triangle`] records rather than an [`ExactMesh`]: retained mesh facts are
 /// built only after validation proves the boolmesh topology can be replayed.
-/// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-/// 7.1-2 (1997), is the reason this object is explicit instead of hiding mesh
 /// construction behind a convenience cache.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct ExactBoolMeshMeshExportStage {
     /// Number of boolmesh output vertex slots available to exported triangles.
     pub vertex_count: usize,
     /// Exact Steiner vertices appended after boolmesh output allocation slots.
-    pub steiner_points: Vec<ExactPoint3>,
+    pub steiner_points: Vec<Point3>,
     /// Triangle index buffer ready for final `ExactMesh` construction.
     pub triangles: Vec<Triangle>,
     /// Directed triangle edges with no opposite export triangle.
@@ -1293,7 +1194,6 @@ pub struct ExactBoolMeshMeshExportStage {
 }
 
 /// Source provenance for one open edge in the final boolmesh export.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct ExactBoolMeshMeshExportBoundaryEdge {
     /// Directed exported edge with no opposite export triangle.
@@ -1307,7 +1207,6 @@ pub struct ExactBoolMeshMeshExportBoundaryEdge {
 }
 
 /// Dropped open-chain provenance that mirrors one mesh-export boundary edge.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct ExactBoolMeshMeshExportBoundaryClosure {
     /// Index into [`ExactBoolMeshMeshExportStage::boundary_edge_records`].
@@ -1323,7 +1222,6 @@ pub struct ExactBoolMeshMeshExportBoundaryClosure {
 }
 
 /// Exact `boolean45`-shaped output staging metadata.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactBoolMeshBoolean45Stage {
     /// Halfedge contribution count for each retained left source face.
@@ -1370,7 +1268,6 @@ pub struct ExactBoolMeshBoolean45Stage {
 }
 
 /// Exact boolmesh workspace for one pair of operands.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactBoolMeshWorkspace {
     /// Requested named operation.
@@ -1402,7 +1299,6 @@ pub struct ExactBoolMeshWorkspace {
     /// counter only after they replay through boolmesh `p/x/v` rows, while the
     /// remaining positive-area ownership work is exposed by downstream
     /// `boolean45` stages.  This mirrors the legacy boolmesh algorithm while
-    /// preserving Yap's exact replay boundary: retained projected coplanar
     /// facts cannot disappear unless a certified exact row has taken ownership
     /// of that row-level work.
     pub kernel12_coplanar_events: usize,
@@ -1433,6 +1329,43 @@ impl ExactBoolMeshWorkspace {
         right: &ExactMesh,
         operation: ExactBooleanOperation,
     ) -> Self {
+        Self::from_sources_with_options(left, right, operation, true, false, None)
+    }
+
+    fn from_sources_for_execution(
+        left: &ExactMesh,
+        right: &ExactMesh,
+        operation: ExactBooleanOperation,
+    ) -> Self {
+        Self::from_sources_with_options(left, right, operation, false, true, None)
+    }
+
+    fn from_sources_with_graph_for_execution(
+        left: &ExactMesh,
+        right: &ExactMesh,
+        operation: ExactBooleanOperation,
+        graph: &ExactIntersectionGraph,
+    ) -> Self {
+        Self::from_sources_with_options(left, right, operation, false, true, Some(graph))
+    }
+
+    fn from_sources_with_graph_for_support(
+        left: &ExactMesh,
+        right: &ExactMesh,
+        operation: ExactBooleanOperation,
+        graph: &ExactIntersectionGraph,
+    ) -> Self {
+        Self::from_sources_with_options(left, right, operation, true, false, Some(graph))
+    }
+
+    fn from_sources_with_options(
+        left: &ExactMesh,
+        right: &ExactMesh,
+        operation: ExactBooleanOperation,
+        probe_closed_export: bool,
+        skip_direct_shortcut_boolean45: bool,
+        graph: Option<&ExactIntersectionGraph>,
+    ) -> Self {
         let mesh_bounds_relation = match (&left.bounds().mesh, &right.bounds().mesh) {
             (Some(left_bounds), Some(right_bounds)) => {
                 Some(left_bounds.classify_intersection(right_bounds))
@@ -1450,7 +1383,10 @@ impl ExactBoolMeshWorkspace {
             .collect::<Vec<_>>();
         let mesh_bounds_unknown =
             matches!(mesh_bounds_relation, Some(PredicateOutcome::Unknown { .. }));
-        let kernel12 = discover_kernel12_events(left, right);
+        let kernel12 = match graph {
+            Some(graph) => discover_kernel12_events_from_graph(graph, left, right),
+            None => discover_kernel12_events(left, right),
+        };
         let kernel12_lowering =
             lower_kernel12_events(&kernel12.events, &kernel12.coplanar_evidence, left, right);
         let unresolved_coplanar_events = count_uncovered_coplanar_events(
@@ -1490,9 +1426,21 @@ impl ExactBoolMeshWorkspace {
             w03,
             w30,
         };
-        let boolean45 = Some(size_output_stage(
-            left, right, &boolean03, operation, &pair_up,
-        ));
+        let skip_boolean45 = skip_direct_shortcut_boolean45
+            && !mesh_bounds_unknown
+            && ((candidate_face_pairs.is_empty()
+                && !matches!(operation, ExactBooleanOperation::SelectedRegions(_)))
+                || (!candidate_face_pairs.is_empty()
+                    && kernel12_is_clear
+                    && kernel03_winding.is_some()
+                    && no_split_kernel12));
+        let boolean45 = if skip_boolean45 {
+            None
+        } else {
+            Some(size_output_stage(
+                left, right, &boolean03, operation, &pair_up,
+            ))
+        };
         let blocker = if candidate_face_pairs.is_empty() && !mesh_bounds_unknown {
             None
         } else if !kernel12_is_clear {
@@ -1507,20 +1455,21 @@ impl ExactBoolMeshWorkspace {
                 candidate_face_pairs.len(),
                 mesh_bounds_unknown,
             ))
-        } else {
+        } else if let Some(boolean45_stage) = boolean45.as_ref() {
             let blocker = boolmesh_boolean45_blocker(
                 operation,
                 no_split_kernel12,
                 &pair_up,
-                boolean45.as_ref().expect("boolean45 is staged above"),
+                boolean45_stage,
                 candidate_face_pairs.len(),
                 mesh_bounds_unknown,
             );
             if blocker
                 .as_ref()
                 .is_none_or(|blocker| blocker.stage == ExactBoolMeshKernelStage::Cleanup)
+                && probe_closed_export
                 && !boolean45_export_materializes_closed(
-                    boolean45.as_ref().expect("boolean45 is staged above"),
+                    boolean45_stage,
                     &boolean03,
                     left,
                     right,
@@ -1530,13 +1479,15 @@ impl ExactBoolMeshWorkspace {
                 Some(ExactBoolMeshPortBlocker::from_boolean45_stage(
                     ExactBoolMeshKernelStage::Triangulation,
                     &pair_up,
-                    boolean45.as_ref().expect("boolean45 is staged above"),
+                    boolean45_stage,
                     candidate_face_pairs.len(),
                     mesh_bounds_unknown,
                 ))
             } else {
                 blocker
             }
+        } else {
+            None
         };
         Self {
             operation,
@@ -1598,7 +1549,6 @@ impl ExactBoolMeshWorkspace {
             && self.boolean03.v12.is_empty()
             && self.boolean03.v21.is_empty()
             && self.pair_up.source_edge_runs.is_empty()
-            && self.boolean45.is_some()
     }
 
     /// Return whether the split boolmesh pipeline has reached mesh export.
@@ -1608,8 +1558,6 @@ impl ExactBoolMeshWorkspace {
     /// vertex winding counters, and `boolean45` assembled/exported all output
     /// topology without explicit blockers.  It is the exact counterpart of the
     /// legacy boolmesh path after `boolean45`, with f64 recovery removed; the
-    /// need for a replayable completed stage follows Yap, "Towards Exact
-    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997).
     pub fn is_certified_split_boolean45(&self) -> bool {
         self.blocker.is_none()
             && (!self.boolean03.p1q2.is_empty() || !self.boolean03.p2q1.is_empty())
@@ -1754,6 +1702,34 @@ impl ExactBoolMeshWorkspace {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> Result<(), ExactBoolMeshValidationError> {
+        self.validate_source_halfedges(left, right)?;
+        let replay = Self::from_sources(left, right, self.operation);
+        if self == &replay {
+            Ok(())
+        } else {
+            Err(ExactBoolMeshValidationError::SourceReplayMismatch)
+        }
+    }
+
+    fn validate_for_execution_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<(), ExactBoolMeshValidationError> {
+        self.validate_source_halfedges(left, right)?;
+        let replay = Self::from_sources(left, right, self.operation);
+        if self == &replay || self.matches_replay_with_elided_direct_shortcut_boolean45(replay) {
+            Ok(())
+        } else {
+            Err(ExactBoolMeshValidationError::SourceReplayMismatch)
+        }
+    }
+
+    fn validate_source_halfedges(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<(), ExactBoolMeshValidationError> {
         self.validate()?;
         for event in &self.kernel12_events {
             validate_edge_face_pair_source_halfedge(event.edge_face, left, right)?;
@@ -1765,16 +1741,26 @@ impl ExactBoolMeshWorkspace {
         if let Some(stage) = &self.boolean45 {
             validate_boolean45_source_halfedges(stage, left, right)?;
         }
-        let replay = Self::from_sources(left, right, self.operation);
-        if self == &replay {
-            Ok(())
-        } else {
-            Err(ExactBoolMeshValidationError::SourceReplayMismatch)
+        Ok(())
+    }
+
+    fn matches_replay_with_elided_direct_shortcut_boolean45(&self, mut replay: Self) -> bool {
+        if self.boolean45.is_some() || replay.boolean45.is_none() {
+            return false;
         }
+        let direct_bounds_disjoint = self.is_certified_bounds_disjoint()
+            && replay.is_certified_bounds_disjoint()
+            && !matches!(self.operation, ExactBooleanOperation::SelectedRegions(_));
+        let direct_kernel03_no_intersection = self.is_certified_no_intersection_kernel03()
+            && replay.is_certified_no_intersection_kernel03();
+        if !direct_bounds_disjoint && !direct_kernel03_no_intersection {
+            return false;
+        }
+        replay.boolean45 = None;
+        self == &replay
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn boolmesh_boolean45_blocker(
     operation: ExactBooleanOperation,
     no_split_kernel12: bool,
@@ -1808,7 +1794,6 @@ fn boolmesh_boolean45_blocker(
     ))
 }
 
-#[cfg(feature = "exact-triangulation")]
 trait ExactBoolMeshBoolean45Blockers {
     fn pair_up_blocked(&self) -> bool;
     fn source_edge_emission_blocked(&self) -> bool;
@@ -1817,7 +1802,6 @@ trait ExactBoolMeshBoolean45Blockers {
     fn triangulation_or_export_blocked(&self) -> bool;
 }
 
-#[cfg(feature = "exact-triangulation")]
 impl ExactBoolMeshBoolean45Blockers for ExactBoolMeshBoolean45Stage {
     fn pair_up_blocked(&self) -> bool {
         self.partial_source_edges.missing_parameter_orders > 0
@@ -1858,7 +1842,6 @@ impl ExactBoolMeshBoolean45Blockers for ExactBoolMeshBoolean45Stage {
 }
 
 /// Result of the currently executable exact boolmesh port slice.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactBoolMeshExecution {
     /// Workspace consumed by the execution.
@@ -1876,7 +1859,8 @@ impl ExactBoolMeshExecution {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> Result<(), ExactBoolMeshValidationError> {
-        self.workspace.validate_against_sources(left, right)?;
+        self.workspace
+            .validate_for_execution_against_sources(left, right)?;
         self.mesh
             .validate_retained_state()
             .map_err(|_| ExactBoolMeshValidationError::InvalidOutputMesh)?;
@@ -1897,7 +1881,6 @@ impl ExactBoolMeshExecution {
 }
 
 /// Validation failure for exact boolmesh-port artifacts.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ExactBoolMeshValidationError {
     /// Left winding/classification vector does not match source vertices.
@@ -1969,13 +1952,23 @@ pub enum ExactBoolMeshValidationError {
 }
 
 /// Build the exact boolmesh workspace for one operation.
-#[cfg(feature = "exact-triangulation")]
 pub fn exact_boolmesh_workspace(
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
 ) -> ExactBoolMeshWorkspace {
     ExactBoolMeshWorkspace::from_sources(left, right, operation)
+}
+
+/// Build a support-probe boolmesh workspace from a graph already validated by
+/// the caller.
+pub(crate) fn exact_boolmesh_workspace_from_graph_for_support(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    graph: &ExactIntersectionGraph,
+) -> ExactBoolMeshWorkspace {
+    ExactBoolMeshWorkspace::from_sources_with_graph_for_support(left, right, operation, graph)
 }
 
 /// Execute the currently ported exact boolmesh pipeline.
@@ -1985,10 +1978,7 @@ pub fn exact_boolmesh_workspace(
 /// replayable mesh-export stage.  The first supported shapes are legacy
 /// boolmesh's empty-intersection no-contact paths: certified bounds disjoint
 /// operands and closed no-intersection operands classified by `kernel03`
-/// winding.  Yap, "Towards Exact Geometric Computation," *Computational
-/// Geometry* 7.1-2 (1997), is the contract here: unresolved stages return a
 /// typed blocker instead of falling back to toleranced construction.
-#[cfg(feature = "exact-triangulation")]
 pub fn execute_exact_boolmesh_port(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -2000,12 +1990,58 @@ pub fn execute_exact_boolmesh_port(
             ExactBoolMeshKernelStage::Boolean03,
         ));
     }
-    let workspace = ExactBoolMeshWorkspace::from_sources(left, right, operation);
+    let workspace = ExactBoolMeshWorkspace::from_sources_for_execution(left, right, operation);
     workspace.validate()?;
+    execute_validated_exact_boolmesh_workspace(left, right, workspace, validation, None)
+}
+
+/// Execute the exact boolmesh pipeline from a graph already validated by the
+/// caller.
+///
+/// This keeps graph-backed boolean branches from rebuilding the same retained
+/// event graph just to discover `kernel12` rows for the boolmesh port. Public
+/// workspace/report constructors still own source replay; this adapter is only
+/// for internal callers that already crossed that handoff.
+pub(crate) fn execute_exact_boolmesh_port_from_graph(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+    graph: &ExactIntersectionGraph,
+) -> Result<ExactBoolMeshExecution, ExactBoolMeshValidationError> {
+    if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
+        return Err(ExactBoolMeshValidationError::PortBlocked(
+            ExactBoolMeshKernelStage::Boolean03,
+        ));
+    }
+    let workspace = ExactBoolMeshWorkspace::from_sources_with_graph_for_execution(
+        left, right, operation, graph,
+    );
+    workspace.validate()?;
+    execute_validated_exact_boolmesh_workspace(left, right, workspace, validation, Some(graph))
+}
+
+fn execute_validated_exact_boolmesh_workspace(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    workspace: ExactBoolMeshWorkspace,
+    validation: ValidationPolicy,
+    graph: Option<&ExactIntersectionGraph>,
+) -> Result<ExactBoolMeshExecution, ExactBoolMeshValidationError> {
     let shortcut = if let Some(shortcut) = boolmesh_completed_shortcut(&workspace) {
         shortcut
     } else {
-        boolmesh_closed_boundary_touching_shortcut(left, right, operation)?.ok_or_else(|| {
+        let shortcut = if let Some(graph) = graph {
+            boolmesh_closed_boundary_touching_shortcut_from_graph(
+                left,
+                right,
+                workspace.operation,
+                graph,
+            )?
+        } else {
+            boolmesh_closed_boundary_touching_shortcut(left, right, workspace.operation)?
+        };
+        shortcut.ok_or_else(|| {
             ExactBoolMeshValidationError::PortBlocked(
                 workspace
                     .blocker
@@ -2015,33 +2051,82 @@ pub fn execute_exact_boolmesh_port(
             )
         })?
     };
-    let boolean45 = workspace
-        .boolean45
-        .as_ref()
-        .ok_or(ExactBoolMeshValidationError::MissingBlocker)?;
-    let mesh = if boolmesh_shortcut_is_closed_boundary_touching(shortcut) {
-        materialize_closed_boundary_touching_shortcut(left, right, operation, validation, shortcut)?
-    } else if boolean45_export_is_complete_for_operation(operation, boolean45) {
-        materialize_boolean45_export(
+    let mesh = if boolmesh_shortcut_is_no_contact(workspace.operation, shortcut) {
+        materialize_no_contact_shortcut(left, right, workspace.operation, validation, shortcut)?
+    } else if shortcut == ExactBooleanShortcutKind::WindingContainment {
+        materialize_winding_containment_shortcut(
+            left,
+            right,
+            &workspace.boolean03,
+            workspace.operation,
+            validation,
+        )?
+    } else if boolmesh_shortcut_is_closed_boundary_touching(shortcut) {
+        materialize_closed_boundary_touching_shortcut(
+            left,
+            right,
+            workspace.operation,
+            validation,
+            shortcut,
+        )?
+    } else {
+        let boolean45 = workspace
+            .boolean45
+            .as_ref()
+            .ok_or(ExactBoolMeshValidationError::MissingBlocker)?;
+        if !boolean45_export_is_complete_for_operation(workspace.operation, boolean45) {
+            return Err(ExactBoolMeshValidationError::PortBlocked(
+                ExactBoolMeshKernelStage::Triangulation,
+            ));
+        }
+        match materialize_boolean45_export(
             boolean45,
             &workspace.boolean03,
             left,
             right,
             validation,
-            operation,
-        )?
-    } else {
-        return Err(ExactBoolMeshValidationError::PortBlocked(
-            ExactBoolMeshKernelStage::Triangulation,
-        ));
+            workspace.operation,
+        ) {
+            Ok(mesh) => mesh,
+            Err(_) => {
+                return Err(ExactBoolMeshValidationError::PortBlocked(
+                    ExactBoolMeshKernelStage::Triangulation,
+                ));
+            }
+        }
     };
     let execution = ExactBoolMeshExecution {
         workspace,
         shortcut,
         mesh,
     };
-    execution.validate_against_sources(left, right)?;
+    validate_materialized_boolmesh_execution(&execution)?;
     Ok(execution)
+}
+
+fn validate_materialized_boolmesh_execution(
+    execution: &ExactBoolMeshExecution,
+) -> Result<(), ExactBoolMeshValidationError> {
+    execution.workspace.validate()?;
+    execution
+        .mesh
+        .validate_retained_state()
+        .map_err(|_| ExactBoolMeshValidationError::InvalidOutputMesh)?;
+    if (execution.workspace.is_certified_bounds_disjoint()
+        && execution.shortcut == ExactBooleanShortcutKind::BoundsDisjoint)
+        || (execution.workspace.is_certified_no_intersection_kernel03()
+            && execution.shortcut
+                == boolmesh_no_intersection_shortcut(&execution.workspace.boolean03))
+        || (execution.workspace.is_certified_split_boolean45()
+            && execution.shortcut == ExactBooleanShortcutKind::BoolMeshSplit)
+        || (closed_boundary_touching_shortcut_for_operation(execution.workspace.operation).ok()
+            == Some(execution.shortcut)
+            && boolmesh_shortcut_is_closed_boundary_touching(execution.shortcut))
+    {
+        Ok(())
+    } else {
+        Err(ExactBoolMeshValidationError::ShortcutMismatch)
+    }
 }
 
 /// Execute the currently ported exact boolmesh bounds-disjoint slice.
@@ -2051,14 +2136,18 @@ pub fn execute_exact_boolmesh_port(
 /// empty `p1q2`/`p2q1` discovery.  Non-disjoint operands return
 /// [`ExactBoolMeshValidationError::PortBlocked`], naming the next direct port
 /// stage instead of routing through bounded planar certificates.
-#[cfg(feature = "exact-triangulation")]
 pub fn execute_exact_boolmesh_bounds_disjoint(
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<ExactBoolMeshExecution, ExactBoolMeshValidationError> {
-    let workspace = ExactBoolMeshWorkspace::from_sources(left, right, operation);
+    if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
+        return Err(ExactBoolMeshValidationError::PortBlocked(
+            ExactBoolMeshKernelStage::Boolean03,
+        ));
+    }
+    let workspace = ExactBoolMeshWorkspace::from_sources_for_execution(left, right, operation);
     workspace.validate()?;
     if !workspace.is_certified_bounds_disjoint() {
         return Err(ExactBoolMeshValidationError::PortBlocked(
@@ -2069,10 +2158,9 @@ pub fn execute_exact_boolmesh_bounds_disjoint(
                 .unwrap_or(ExactBoolMeshKernelStage::Boolean03),
         ));
     }
-    execute_exact_boolmesh_port(left, right, operation, validation)
+    execute_validated_exact_boolmesh_workspace(left, right, workspace, validation, None)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn boolmesh_completed_shortcut(
     workspace: &ExactBoolMeshWorkspace,
 ) -> Option<ExactBooleanShortcutKind> {
@@ -2087,7 +2175,6 @@ fn boolmesh_completed_shortcut(
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn boolmesh_closed_boundary_touching_shortcut(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -2099,10 +2186,10 @@ fn boolmesh_closed_boundary_touching_shortcut(
     if let Ok(report) = certify_boundary_touching_report(left, right)
         && report.is_certified()
     {
-        let report_replays = report.validate_against_sources(left, right).is_ok();
+        let report_valid = report.validate().is_ok();
         let union_is_lower_dimensional = operation != ExactBooleanOperation::Union
             || report.blocker.coplanar_overlapping_pairs == 0;
-        if report_replays && union_is_lower_dimensional {
+        if report_valid && union_is_lower_dimensional {
             let shortcut = closed_boundary_touching_shortcut_for_operation(operation)?;
             return Ok(Some(shortcut));
         }
@@ -2111,7 +2198,7 @@ fn boolmesh_closed_boundary_touching_shortcut(
     let evidence = certify_coplanar_volumetric_cell_evidence(left, right)
         .map_err(|_| ExactBoolMeshValidationError::InvalidOutputMesh)?;
     evidence
-        .validate_against_sources(left, right)
+        .validate()
         .map_err(|_| ExactBoolMeshValidationError::InvalidOutputMesh)?;
     if evidence.obstacle != CoplanarVolumetricCellObstacle::BoundaryOnlyContact {
         return Ok(None);
@@ -2120,7 +2207,38 @@ fn boolmesh_closed_boundary_touching_shortcut(
     Ok(Some(shortcut))
 }
 
-#[cfg(feature = "exact-triangulation")]
+fn boolmesh_closed_boundary_touching_shortcut_from_graph(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    graph: &ExactIntersectionGraph,
+) -> Result<Option<ExactBooleanShortcutKind>, ExactBoolMeshValidationError> {
+    if !left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold {
+        return Ok(None);
+    }
+    if let Ok(report) = boundary_touching_report_from_graph(graph, left, right)
+        && report.is_certified()
+    {
+        let report_valid = report.validate().is_ok();
+        let union_is_lower_dimensional = operation != ExactBooleanOperation::Union
+            || report.blocker.coplanar_overlapping_pairs == 0;
+        if report_valid && union_is_lower_dimensional {
+            let shortcut = closed_boundary_touching_shortcut_for_operation(operation)?;
+            return Ok(Some(shortcut));
+        }
+    }
+
+    let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(graph, left, right);
+    evidence
+        .validate()
+        .map_err(|_| ExactBoolMeshValidationError::InvalidOutputMesh)?;
+    if evidence.obstacle != CoplanarVolumetricCellObstacle::BoundaryOnlyContact {
+        return Ok(None);
+    }
+    let shortcut = closed_boundary_touching_shortcut_for_operation(operation)?;
+    Ok(Some(shortcut))
+}
+
 fn closed_boundary_touching_shortcut_for_operation(
     operation: ExactBooleanOperation,
 ) -> Result<ExactBooleanShortcutKind, ExactBoolMeshValidationError> {
@@ -2138,7 +2256,6 @@ fn closed_boundary_touching_shortcut_for_operation(
     })
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn boolmesh_shortcut_is_closed_boundary_touching(shortcut: ExactBooleanShortcutKind) -> bool {
     matches!(
         shortcut,
@@ -2148,7 +2265,114 @@ fn boolmesh_shortcut_is_closed_boundary_touching(shortcut: ExactBooleanShortcutK
     )
 }
 
-#[cfg(feature = "exact-triangulation")]
+fn boolmesh_shortcut_is_no_contact(
+    operation: ExactBooleanOperation,
+    shortcut: ExactBooleanShortcutKind,
+) -> bool {
+    shortcut == ExactBooleanShortcutKind::WindingSeparated
+        || (shortcut == ExactBooleanShortcutKind::BoundsDisjoint
+            && !matches!(operation, ExactBooleanOperation::SelectedRegions(_)))
+}
+
+fn materialize_no_contact_shortcut(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+    shortcut: ExactBooleanShortcutKind,
+) -> Result<ExactMesh, ExactBoolMeshValidationError> {
+    if !boolmesh_shortcut_is_no_contact(operation, shortcut) {
+        return Err(ExactBoolMeshValidationError::ShortcutMismatch);
+    }
+    match operation {
+        ExactBooleanOperation::Union => concatenate_boolmesh_meshes(
+            left,
+            right,
+            "exact boolmesh no-contact union preserving separate shells",
+            validation,
+        ),
+        ExactBooleanOperation::Intersection => {
+            empty_boolmesh_mesh(boolmesh_no_contact_empty_label(shortcut), validation)
+        }
+        ExactBooleanOperation::Difference => copy_boolmesh_mesh(
+            left,
+            boolmesh_no_contact_difference_label(shortcut),
+            validation,
+        ),
+        ExactBooleanOperation::SelectedRegions(_) => {
+            Err(ExactBoolMeshValidationError::ShortcutMismatch)
+        }
+    }
+}
+
+const fn boolmesh_no_contact_empty_label(shortcut: ExactBooleanShortcutKind) -> &'static str {
+    match shortcut {
+        ExactBooleanShortcutKind::BoundsDisjoint => {
+            "empty exact boolmesh bounds-disjoint intersection"
+        }
+        ExactBooleanShortcutKind::WindingSeparated => {
+            "empty exact boolmesh no-contact intersection"
+        }
+        _ => "empty exact boolmesh unsupported no-contact intersection",
+    }
+}
+
+const fn boolmesh_no_contact_difference_label(shortcut: ExactBooleanShortcutKind) -> &'static str {
+    match shortcut {
+        ExactBooleanShortcutKind::BoundsDisjoint => {
+            "exact boolmesh bounds-disjoint difference keeps left"
+        }
+        ExactBooleanShortcutKind::WindingSeparated => {
+            "exact boolmesh no-contact difference keeps left"
+        }
+        _ => "exact boolmesh unsupported no-contact difference",
+    }
+}
+
+fn materialize_winding_containment_shortcut(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    boolean03: &ExactBoolMeshBoolean03,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<ExactMesh, ExactBoolMeshValidationError> {
+    let left_inside_right = boolean03.w03.iter().any(|winding| *winding != 0);
+    let right_inside_left = boolean03.w30.iter().any(|winding| *winding != 0);
+    match (left_inside_right, right_inside_left, operation) {
+        (true, false, ExactBooleanOperation::Union) => copy_boolmesh_mesh(
+            right,
+            "exact boolmesh winding-containment union keeps right container",
+            validation,
+        ),
+        (true, false, ExactBooleanOperation::Intersection) => copy_boolmesh_mesh(
+            left,
+            "exact boolmesh winding-containment intersection keeps left contained shell",
+            validation,
+        ),
+        (true, false, ExactBooleanOperation::Difference) => empty_boolmesh_mesh(
+            "empty exact boolmesh winding-containment difference",
+            validation,
+        ),
+        (false, true, ExactBooleanOperation::Union) => copy_boolmesh_mesh(
+            left,
+            "exact boolmesh winding-containment union keeps left container",
+            validation,
+        ),
+        (false, true, ExactBooleanOperation::Intersection) => copy_boolmesh_mesh(
+            right,
+            "exact boolmesh winding-containment intersection keeps right contained shell",
+            validation,
+        ),
+        (false, true, ExactBooleanOperation::Difference) => subtract_contained_boolmesh_mesh(
+            left,
+            right,
+            "exact boolmesh winding-containment difference with inner reversed shell",
+            validation,
+        ),
+        _ => Err(ExactBoolMeshValidationError::ShortcutMismatch),
+    }
+}
+
 fn materialize_closed_boundary_touching_shortcut(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -2184,7 +2408,6 @@ fn materialize_closed_boundary_touching_shortcut(
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn copy_boolmesh_mesh(
     mesh: &ExactMesh,
     label: &'static str,
@@ -2199,7 +2422,29 @@ fn copy_boolmesh_mesh(
     .map_err(|_| ExactBoolMeshValidationError::InvalidOutputMesh)
 }
 
-#[cfg(feature = "exact-triangulation")]
+fn subtract_contained_boolmesh_mesh(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    label: &'static str,
+    validation: ValidationPolicy,
+) -> Result<ExactMesh, ExactBoolMeshValidationError> {
+    let mut vertices = left.vertices().to_vec();
+    let right_offset = vertices.len();
+    vertices.extend_from_slice(right.vertices());
+    let mut triangles = left.triangles().to_vec();
+    triangles.extend(right.triangles().iter().map(|triangle| {
+        let [a, b, c] = triangle.0;
+        Triangle([a + right_offset, c + right_offset, b + right_offset])
+    }));
+    ExactMesh::new_with_policy(
+        vertices,
+        triangles,
+        SourceProvenance::exact(label),
+        validation,
+    )
+    .map_err(|_| ExactBoolMeshValidationError::InvalidOutputMesh)
+}
+
 fn concatenate_boolmesh_meshes(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -2223,7 +2468,6 @@ fn concatenate_boolmesh_meshes(
     .map_err(|_| ExactBoolMeshValidationError::InvalidOutputMesh)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn empty_boolmesh_mesh(
     label: &'static str,
     validation: ValidationPolicy,
@@ -2237,7 +2481,6 @@ fn empty_boolmesh_mesh(
     .map_err(|_| ExactBoolMeshValidationError::InvalidOutputMesh)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn boolmesh_no_intersection_shortcut(
     boolean03: &ExactBoolMeshBoolean03,
 ) -> ExactBooleanShortcutKind {
@@ -2250,7 +2493,6 @@ fn boolmesh_no_intersection_shortcut(
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn boolean45_simple_export_is_complete(stage: &ExactBoolMeshBoolean45Stage) -> bool {
     stage.source_edge_incident_gaps == 0
         && stage.partial_source_edges.missing_parameter_orders == 0
@@ -2277,7 +2519,6 @@ fn boolean45_simple_export_is_complete(stage: &ExactBoolMeshBoolean45Stage) -> b
         && stage.mesh_export.triangles.len() == stage.output_triangles.triangles.len()
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn boolean45_export_is_complete_for_operation(
     operation: ExactBooleanOperation,
     stage: &ExactBoolMeshBoolean45Stage,
@@ -2286,7 +2527,6 @@ fn boolean45_export_is_complete_for_operation(
         || boolean45_regularized_empty_intersection_is_complete(operation, stage)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn boolean45_regularized_empty_intersection_is_complete(
     operation: ExactBooleanOperation,
     stage: &ExactBoolMeshBoolean45Stage,
@@ -2344,10 +2584,7 @@ fn boolean45_regularized_empty_intersection_is_complete(
 /// triangle soup that fails the final [`ExactMesh`] closed-manifold replay.
 /// Treating that as a `Triangulation` blocker keeps the boolmesh port honest:
 /// the next missing algorithm is cleanup/triangulation parity, not another
-/// reporting shortcut.  This is the final object-replay guard advocated by
-/// Yap, "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997), applied before the public executor can claim a completed boolean.
-#[cfg(feature = "exact-triangulation")]
+/// reporting shortcut.
 fn boolean45_export_materializes_closed(
     stage: &ExactBoolMeshBoolean45Stage,
     boolean03: &ExactBoolMeshBoolean03,
@@ -2366,7 +2603,6 @@ fn boolean45_export_materializes_closed(
     .is_ok()
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn materialize_boolean45_export(
     stage: &ExactBoolMeshBoolean45Stage,
     boolean03: &ExactBoolMeshBoolean03,
@@ -2424,10 +2660,9 @@ fn materialize_boolean45_export(
     .map_err(|_| ExactBoolMeshValidationError::InvalidOutputMesh)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn boolmesh_boundary_closure_source_face_triangles(
     stage: &ExactBoolMeshBoolean45Stage,
-    raw_vertices: &[ExactPoint3],
+    raw_vertices: &[Point3],
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
@@ -2470,7 +2705,6 @@ fn boolmesh_boundary_closure_source_face_triangles(
     (!triangles.is_empty()).then_some(triangles)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn operation_reverses_boolmesh_source_side(
     operation: ExactBooleanOperation,
     side: ExactBoolMeshSide,
@@ -2481,16 +2715,14 @@ fn operation_reverses_boolmesh_source_side(
     )
 }
 
-#[cfg(feature = "exact-triangulation")]
-fn exact_points_equal(left: &ExactPoint3, right: &ExactPoint3) -> bool {
-    let left = left.to_hyperlimit_point();
-    let right = right.to_hyperlimit_point();
+fn exact_points_equal(left: &Point3, right: &Point3) -> bool {
+    let left = left.clone();
+    let right = right.clone();
     compare_reals(&left.x, &right.x).value() == Some(std::cmp::Ordering::Equal)
         && compare_reals(&left.y, &right.y).value() == Some(std::cmp::Ordering::Equal)
         && compare_reals(&left.z, &right.z).value() == Some(std::cmp::Ordering::Equal)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn all_export_vertices_are_used(vertex_count: usize, triangles: &[Triangle]) -> bool {
     let mut used = vec![false; vertex_count];
     for triangle in triangles {
@@ -2504,20 +2736,19 @@ fn all_export_vertices_are_used(vertex_count: usize, triangles: &[Triangle]) -> 
     used.into_iter().all(|used| used)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn output_vertex_origin_point(
     origin: ExactBoolMeshOutputVertexOrigin,
     boolean03: &ExactBoolMeshBoolean03,
     left: &ExactMesh,
     right: &ExactMesh,
-) -> Option<ExactPoint3> {
+) -> Option<Point3> {
     let point = match origin {
         ExactBoolMeshOutputVertexOrigin::SourceVertex { source, .. } => {
             let mesh = match source.side {
                 ExactBoolMeshSide::Left => left,
                 ExactBoolMeshSide::Right => right,
             };
-            mesh.vertices().get(source.vertex)?.to_hyperlimit_point()
+            mesh.vertices().get(source.vertex)?.clone()
         }
         ExactBoolMeshOutputVertexOrigin::Kernel12LeftEdgeRightFace { event, .. } => {
             boolean03.v12.get(event)?.clone()
@@ -2526,10 +2757,9 @@ fn output_vertex_origin_point(
             boolean03.v21.get(event)?.clone()
         }
     };
-    Some(ExactPoint3::new(point.x, point.y, point.z))
+    Some(Point3::new(point.x, point.y, point.z))
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn boolmesh_export_label(operation: ExactBooleanOperation) -> &'static str {
     match operation {
         ExactBooleanOperation::Union => "exact boolmesh exported union",
@@ -2539,7 +2769,6 @@ fn boolmesh_export_label(operation: ExactBooleanOperation) -> &'static str {
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, Default, PartialEq)]
 struct Kernel12Discovery {
     events: Vec<ExactBoolMeshKernel12Event>,
@@ -2550,7 +2779,6 @@ struct Kernel12Discovery {
     graph_failed: bool,
 }
 
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, PartialEq)]
 #[allow(clippy::large_enum_variant)]
 pub(super) enum Kernel12CoplanarEvidence {
@@ -2572,7 +2800,6 @@ pub(super) enum Kernel12CoplanarEvidence {
     },
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn discover_kernel12_events(left: &ExactMesh, right: &ExactMesh) -> Kernel12Discovery {
     let graph = match build_intersection_graph(left, right) {
         Ok(graph) => graph,
@@ -2583,6 +2810,14 @@ fn discover_kernel12_events(left: &ExactMesh, right: &ExactMesh) -> Kernel12Disc
             };
         }
     };
+    discover_kernel12_events_from_graph(&graph, left, right)
+}
+
+fn discover_kernel12_events_from_graph(
+    graph: &ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Kernel12Discovery {
     let mut discovery = Kernel12Discovery::default();
     let split_plan = match graph.coplanar_overlap_split_plan(left, right) {
         Ok(plan) => Some(plan),
@@ -2721,7 +2956,6 @@ fn discover_kernel12_events(left: &ExactMesh, right: &ExactMesh) -> Kernel12Disc
     discovery
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn coplanar_edge_split_for_event(
     split_plan: Option<&CoplanarOverlapSplitPlan>,
     face_pair: ExactBoolMeshFacePair,
@@ -2749,7 +2983,6 @@ fn coplanar_edge_split_for_event(
         .unwrap_or_else(|| (Vec::new(), None))
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn count_uncovered_coplanar_events(
     coplanar_evidence: &[Kernel12CoplanarEvidence],
     lowering: &ExactBoolMeshKernel12Lowering,
@@ -2767,8 +3000,6 @@ fn count_uncovered_coplanar_events(
 /// Return whether retained coplanar graph evidence is already owned by the
 /// exact boolmesh port.
 ///
-/// Edge evidence deliberately stays at boolmesh row granularity. Yap's
-/// "Towards Exact Geometric Computation" requires retained facts to replay
 /// against the exact object that consumes them; for split facts, that consumer
 /// is the exact `intersect12`/`Kernel12::op` row. Positive-length coplanar
 /// edge overlap is therefore covered only when both split-interval endpoints
@@ -2779,7 +3010,6 @@ fn count_uncovered_coplanar_events(
 /// is different: legacy boolmesh does not emit a `kernel12` split row for it,
 /// and the exact direct `kernel03` port now owns that retained-vertex
 /// classification through `w03`/`w30` counters.
-#[cfg(feature = "exact-triangulation")]
 fn coplanar_evidence_has_lowered_row(
     evidence: &Kernel12CoplanarEvidence,
     all_coplanar_evidence: &[Kernel12CoplanarEvidence],
@@ -2842,7 +3072,7 @@ fn coplanar_evidence_has_lowered_row(
                 let Some(point) = boolmesh_source_mesh(source_side, left, right)
                     .vertices()
                     .get(*vertex)
-                    .map(ExactPoint3::to_hyperlimit_point)
+                    .cloned()
                 else {
                     return false;
                 };
@@ -2866,11 +3096,7 @@ fn coplanar_evidence_has_lowered_row(
 /// ownership over coincident endpoint touches on adjacent source halfedges.
 /// Coverage must follow that same boolmesh row ownership, otherwise the
 /// intentionally skipped duplicate endpoint-touch row is misreported as an
-/// unlowered `Kernel12` event.  This is the replay side of Yap's exact-object
-/// boundary from "Towards Exact Geometric Computation," *Computational
-/// Geometry* 7.1-2 (1997): the exact point is still certified, but its topology
 /// owner is the interval endpoint row.
-#[cfg(feature = "exact-triangulation")]
 fn coplanar_endpoint_touch_is_owned_by_interval(
     point: &CoplanarEdgeSplitPoint,
     face_pair: ExactBoolMeshFacePair,
@@ -2898,7 +3124,6 @@ fn coplanar_endpoint_touch_is_owned_by_interval(
     })
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn coplanar_edge_split_point_has_lowered_row(
     point: &CoplanarEdgeSplitPoint,
     face_pair: ExactBoolMeshFacePair,
@@ -2915,7 +3140,6 @@ fn coplanar_edge_split_point_has_lowered_row(
     })
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn lowered_rows(
     lowering: &ExactBoolMeshKernel12Lowering,
 ) -> impl Iterator<Item = (&ExactBoolMeshEdgeFacePair, &Point3)> {
@@ -2926,7 +3150,6 @@ fn lowered_rows(
         .chain(lowering.p2q1.iter().zip(lowering.v21.iter()))
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn lowered_row_matches_side_edge(
     row: &ExactBoolMeshEdgeFacePair,
     side: ExactBoolMeshSide,
@@ -2935,7 +3158,6 @@ fn lowered_row_matches_side_edge(
     row.edge_side == side && edge_same_undirected(row.edge, edge)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn lowered_row_owns_opposite_face(
     row: &ExactBoolMeshEdgeFacePair,
     source_side: ExactBoolMeshSide,
@@ -2955,19 +3177,17 @@ fn lowered_row_owns_opposite_face(
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn edge_same_undirected(left: [usize; 2], right: [usize; 2]) -> bool {
     left == right || left == [right[1], right[0]]
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn point_matches(left: &Point3, right: &Point3) -> bool {
     compare_reals(&left.x, &right.x).value() == Some(std::cmp::Ordering::Equal)
         && compare_reals(&left.y, &right.y).value() == Some(std::cmp::Ordering::Equal)
         && compare_reals(&left.z, &right.z).value() == Some(std::cmp::Ordering::Equal)
 }
 
-#[cfg(all(test, feature = "exact-triangulation"))]
+#[cfg(test)]
 mod tests {
     use super::*;
 
@@ -2982,7 +3202,7 @@ mod tests {
     }
 
     fn p3(x: i64, y: i64, z: i64) -> Point3 {
-        Point3::new(ExactReal::from(x), ExactReal::from(y), ExactReal::from(z))
+        Point3::new(Real::from(x), Real::from(y), Real::from(z))
     }
 
     fn edge_face() -> ExactBoolMeshEdgeFacePair {
@@ -3024,8 +3244,8 @@ mod tests {
     ) -> CoplanarEdgeSplitPoint {
         CoplanarEdgeSplitPoint {
             point,
-            left_parameter: ExactReal::from(left_parameter),
-            right_parameter: ExactReal::from(right_parameter),
+            left_parameter: Real::from(left_parameter),
+            right_parameter: Real::from(right_parameter),
         }
     }
 
@@ -3141,7 +3361,6 @@ mod tests {
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn boolmesh_side(side: MeshSide) -> ExactBoolMeshSide {
     match side {
         MeshSide::Left => ExactBoolMeshSide::Left,
@@ -3149,7 +3368,6 @@ fn boolmesh_side(side: MeshSide) -> ExactBoolMeshSide {
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn source_halfedge_for_event(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -3164,7 +3382,6 @@ fn source_halfedge_for_event(
     source_halfedge_for_face_edge(mesh, face, edge)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn source_halfedge_for_face_edge(mesh: &ExactMesh, face: usize, edge: [usize; 2]) -> Option<usize> {
     boolmesh_triangle_edges(*mesh.triangles().get(face)?)
         .iter()
@@ -3172,7 +3389,6 @@ fn source_halfedge_for_face_edge(mesh: &ExactMesh, face: usize, edge: [usize; 2]
         .map(|local| 3 * face + local)
 }
 
-#[cfg(feature = "exact-triangulation")]
 /// Normalize retained graph events onto boolmesh's scheduled source row.
 ///
 /// Legacy `boolean03::kernel12::intersect12` does not emit every directed
@@ -3181,14 +3397,11 @@ fn source_halfedge_for_face_edge(mesh: &ExactMesh, face: usize, edge: [usize; 2]
 /// retain the same geometric contact from the backward face use, so this
 /// function moves that event to the paired forward row, reverses the exact
 /// edge parameter, and swaps endpoint side facts before `p1q2`/`p2q1` are
-/// mutated.  That is the direct boolmesh scheduling contract with Yap-style
-/// exact evidence preservation: see Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997).
 type NormalizedBoolMeshSourceEdge = (
     [usize; 2],
     usize,
     usize,
-    Option<ExactReal>,
+    Option<Real>,
     [Option<PlaneSide>; 2],
 );
 
@@ -3196,7 +3409,7 @@ pub(super) fn normalize_boolmesh_source_edge(
     mesh: &ExactMesh,
     source_face: usize,
     edge: [usize; 2],
-    parameter: Option<ExactReal>,
+    parameter: Option<Real>,
     endpoint_sides: [Option<PlaneSide>; 2],
 ) -> Option<NormalizedBoolMeshSourceEdge> {
     if edge[0] < edge[1] {
@@ -3220,12 +3433,11 @@ pub(super) fn normalize_boolmesh_source_edge(
         reversed,
         forward_face,
         source_halfedge,
-        parameter.map(|value| ExactReal::from(1) - &value),
+        parameter.map(|value| Real::from(1) - &value),
         [endpoint_sides[1], endpoint_sides[0]],
     ))
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn boolmesh_forward_source_halfedge_for_edge(
     mesh: &ExactMesh,
     edge: [usize; 2],
@@ -3244,7 +3456,6 @@ fn boolmesh_forward_source_halfedge_for_edge(
         })
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn boolmesh_triangle_edges(triangle: Triangle) -> [[usize; 2]; 3] {
     [
         [triangle.0[0], triangle.0[1]],
@@ -3253,7 +3464,6 @@ fn boolmesh_triangle_edges(triangle: Triangle) -> [[usize; 2]; 3] {
     ]
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn validate_edge_face_pair_source_halfedge(
     pair: ExactBoolMeshEdgeFacePair,
     left: &ExactMesh,
@@ -3276,7 +3486,6 @@ fn validate_edge_face_pair_source_halfedge(
     Ok(())
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn validate_pair_up_source_halfedges(
     stage: &ExactBoolMeshPairUpStage,
     left: &ExactMesh,
@@ -3291,7 +3500,6 @@ fn validate_pair_up_source_halfedges(
     Ok(())
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn validate_boolean45_source_halfedges(
     stage: &ExactBoolMeshBoolean45Stage,
     left: &ExactMesh,
@@ -3318,7 +3526,6 @@ fn validate_boolean45_source_halfedges(
     Ok(())
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn boolmesh_source_mesh<'a>(
     side: ExactBoolMeshSide,
     left: &'a ExactMesh,
@@ -3330,7 +3537,6 @@ fn boolmesh_source_mesh<'a>(
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn source_halfedge_matches_edge(
     mesh: &ExactMesh,
     source_halfedge: usize,
@@ -3344,7 +3550,6 @@ fn source_halfedge_matches_edge(
     boolmesh_triangle_edges(triangle)[local] == edge
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn validate_edge_face_pair(
     pair: ExactBoolMeshEdgeFacePair,
     left_vertices: usize,
@@ -3385,7 +3590,6 @@ fn validate_edge_face_pair(
     Ok(())
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn validate_kernel12_event_shape(
     event: &ExactBoolMeshKernel12Event,
 ) -> Result<(), ExactBoolMeshValidationError> {
@@ -3448,7 +3652,6 @@ fn validate_kernel12_event_shape(
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn pair_up_event_count(stage: &ExactBoolMeshPairUpStage) -> usize {
     stage
         .source_edge_runs
@@ -3457,7 +3660,6 @@ fn pair_up_event_count(stage: &ExactBoolMeshPairUpStage) -> usize {
         .sum()
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn validate_pair_up_stage(
     stage: &ExactBoolMeshPairUpStage,
     left_vertices: usize,
@@ -3505,7 +3707,6 @@ fn validate_pair_up_stage(
     Ok(())
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn validate_boolean45_stage(
     stage: &ExactBoolMeshBoolean45Stage,
     boolean03: &ExactBoolMeshBoolean03,
@@ -3633,7 +3834,6 @@ fn validate_boolean45_stage(
     Ok(())
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn validate_boolean45_mesh_export(
     stage: &ExactBoolMeshBoolean45Stage,
     boolean03: &ExactBoolMeshBoolean03,
@@ -3751,7 +3951,6 @@ fn validate_boolean45_mesh_export(
     Ok(())
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn boolmesh_mesh_export_boundary_edges(triangles: &[Triangle]) -> Vec<[usize; 2]> {
     let mut edge_uses = BTreeMap::<[usize; 2], Vec<[usize; 2]>>::new();
     for triangle in triangles {
@@ -3769,7 +3968,6 @@ fn boolmesh_mesh_export_boundary_edges(triangles: &[Triangle]) -> Vec<[usize; 2]
         .collect()
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn boolmesh_mesh_export_boundary_closure_records(
     stage: &ExactBoolMeshBoolean45Stage,
 ) -> Vec<ExactBoolMeshMeshExportBoundaryClosure> {
@@ -3807,7 +4005,6 @@ fn boolmesh_mesh_export_boundary_closure_records(
         .collect()
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn boolmesh_sorted_edge(edge: [usize; 2]) -> [usize; 2] {
     if edge[0] <= edge[1] {
         edge
@@ -3816,7 +4013,6 @@ fn boolmesh_sorted_edge(edge: [usize; 2]) -> [usize; 2] {
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn validate_boolean45_output_triangles(
     stage: &ExactBoolMeshBoolean45Stage,
 ) -> Result<(), ExactBoolMeshValidationError> {
@@ -3897,7 +4093,6 @@ fn validate_boolean45_output_triangles(
     Ok(())
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn resolve_triangulation_local_vertex(
     local: usize,
     vertices: &[usize],
@@ -3909,7 +4104,6 @@ fn resolve_triangulation_local_vertex(
         .unwrap_or_else(|| steiner_output_offset + local - vertices.len())
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn output_vertex_origin_has_coordinate(
     origin: ExactBoolMeshOutputVertexOrigin,
     boolean03: &ExactBoolMeshBoolean03,
@@ -3930,7 +4124,6 @@ fn output_vertex_origin_has_coordinate(
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn validate_boolean45_loop_triangulation(
     stage: &ExactBoolMeshBoolean45Stage,
     left_faces: usize,
@@ -4105,7 +4298,6 @@ fn validate_boolean45_loop_triangulation(
     Ok(())
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn triangulation_vertices_match_face_loops(
     vertices: &[usize],
     component_loop_indices: &[usize],
@@ -4144,22 +4336,18 @@ fn triangulation_vertices_match_face_loops(
     cursor == vertices.len()
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn triangulation_face_loop_is_usable(face_loop: &ExactBoolMeshOutputFaceLoop) -> bool {
     face_loop.vertices.len() >= 3 && face_loop.halfedges.len() >= 3
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn triangulation_face_loop_is_short(face_loop: &ExactBoolMeshOutputFaceLoop) -> bool {
     face_loop.vertices.len() < 3 || face_loop.halfedges.len() < 3
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn triangulation_face_loop_can_be_clipped(face_loop: &ExactBoolMeshOutputFaceLoop) -> bool {
     triangulation_face_loop_is_usable(face_loop) || triangulation_face_loop_is_short(face_loop)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn triangulation_loop_group_is_all_short_face_pair_seams(
     stage: &ExactBoolMeshBoolean45Stage,
     loop_indices: &[usize],
@@ -4188,7 +4376,6 @@ fn triangulation_loop_group_is_all_short_face_pair_seams(
         })
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn validate_boolean45_face_loops(
     stage: &ExactBoolMeshBoolean45Stage,
 ) -> Result<(), ExactBoolMeshValidationError> {
@@ -4343,7 +4530,6 @@ fn validate_boolean45_face_loops(
     Ok(())
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn output_halfedge_source_owner(
     source: &ExactBoolMeshOutputHalfedgeSource,
 ) -> ExactBoolMeshDroppedOpenChainOwner {
@@ -4363,7 +4549,6 @@ fn output_halfedge_source_owner(
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn dropped_open_chain_source_kind<'a>(
     sources: impl Iterator<Item = &'a ExactBoolMeshOutputHalfedgeSource>,
 ) -> ExactBoolMeshDroppedOpenChainSourceKind {
@@ -4387,7 +4572,6 @@ fn dropped_open_chain_source_kind<'a>(
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn validate_boolean45_halfedge_assembly(
     stage: &ExactBoolMeshBoolean45Stage,
     left_faces: usize,
@@ -4468,7 +4652,6 @@ fn validate_boolean45_halfedge_assembly(
     Ok(())
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn expected_halfedge_source_incident_gaps(stage: &ExactBoolMeshBoolean45Stage) -> usize {
     let partial_gaps = stage
         .partial_source_edges
@@ -4487,7 +4670,6 @@ fn expected_halfedge_source_incident_gaps(stage: &ExactBoolMeshBoolean45Stage) -
     partial_gaps + whole_gaps
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn expected_halfedge_boundary_halfedges(stage: &ExactBoolMeshBoolean45Stage) -> usize {
     let partial_boundaries = stage
         .partial_source_edges
@@ -4506,7 +4688,6 @@ fn expected_halfedge_boundary_halfedges(stage: &ExactBoolMeshBoolean45Stage) -> 
     partial_boundaries + whole_boundaries
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn is_expected_boundary_halfedge_source(
     stage: &ExactBoolMeshBoolean45Stage,
     source: &ExactBoolMeshOutputHalfedgeSource,
@@ -4558,7 +4739,6 @@ fn is_expected_boundary_halfedge_source(
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn oriented_whole_run_edge(run: &ExactBoolMeshWholeSourceEdgeRun) -> [usize; 2] {
     if run.signed_count < 0 {
         [run.edge[1], run.edge[0]]
@@ -4567,7 +4747,6 @@ fn oriented_whole_run_edge(run: &ExactBoolMeshWholeSourceEdgeRun) -> [usize; 2] 
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn validate_halfedge_source(
     source: &ExactBoolMeshOutputHalfedgeSource,
     left_faces: usize,
@@ -4613,7 +4792,6 @@ fn validate_halfedge_source(
     Ok(())
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn source_face_in_bounds(
     side: ExactBoolMeshSide,
     face: usize,
@@ -4626,7 +4804,6 @@ fn source_face_in_bounds(
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn source_halfedge_in_bounds(
     side: ExactBoolMeshSide,
     source_halfedge: usize,
@@ -4639,7 +4816,6 @@ fn source_halfedge_in_bounds(
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn validate_boolean45_whole_edges(
     stage: &ExactBoolMeshBoolean45Stage,
     left_vertices: usize,
@@ -4686,7 +4862,6 @@ fn validate_boolean45_whole_edges(
     Ok(())
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn validate_whole_edge_fragment(
     fragment: &ExactBoolMeshWholeSourceEdgeFragment,
     run: &ExactBoolMeshWholeSourceEdgeRun,
@@ -4737,7 +4912,6 @@ fn validate_whole_edge_fragment(
     Ok(())
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn boolmesh_side_key(side: ExactBoolMeshSide) -> u8 {
     match side {
         ExactBoolMeshSide::Left => 0,
@@ -4745,7 +4919,6 @@ fn boolmesh_side_key(side: ExactBoolMeshSide) -> u8 {
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn canonical_boolmesh_edge(edge: [usize; 2]) -> [usize; 2] {
     if edge[0] <= edge[1] {
         edge
@@ -4754,7 +4927,6 @@ fn canonical_boolmesh_edge(edge: [usize; 2]) -> [usize; 2] {
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn validate_boolean45_new_edges(
     stage: &ExactBoolMeshBoolean45Stage,
     left_faces: usize,
@@ -4834,7 +5006,6 @@ fn validate_boolean45_new_edges(
     Ok(())
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn validate_boolean45_partial_edges(
     stage: &ExactBoolMeshBoolean45Stage,
     left_vertices: usize,
@@ -4953,7 +5124,6 @@ fn validate_boolean45_partial_edges(
     Ok(())
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn suppressed_retained_endpoint_copies_replay(
     run: &ExactBoolMeshPartialSourceEdgeRun,
     allocation: &ExactBoolMeshOutputVertexAllocation,
@@ -4998,7 +5168,6 @@ fn suppressed_retained_endpoint_copies_replay(
         && appended_retained_endpoint_points + suppressed_copies == allocated_copies
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn validate_partial_edge_point(
     point: &ExactBoolMeshPartialEdgePoint,
     allocation: &ExactBoolMeshOutputVertexAllocation,
@@ -5032,19 +5201,16 @@ fn validate_partial_edge_point(
     Ok(())
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn source_edge_use_matches(edge: [usize; 2], expected: [usize; 2], vertex_count: usize) -> bool {
     edge[0] < vertex_count
         && edge[1] < vertex_count
         && canonical_boolmesh_edge(edge) == canonical_boolmesh_edge(expected)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn partial_edge_point_order_key(point: &ExactBoolMeshPartialEdgePoint) -> (usize, usize, usize) {
     (point.order_index, point.collision, point.output_vertex)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn validate_boolean45_edge_point_routing(
     stage: &ExactBoolMeshBoolean45Stage,
     boolean03: &ExactBoolMeshBoolean03,
@@ -5137,7 +5303,6 @@ fn validate_boolean45_edge_point_routing(
     Ok(())
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn validate_routed_edge_point(
     point: &ExactBoolMeshRoutedEdgePoint,
     allocation: &ExactBoolMeshOutputVertexAllocation,
@@ -5155,12 +5320,10 @@ fn validate_routed_edge_point(
     Ok(())
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn routed_edge_point_order_key(point: &ExactBoolMeshRoutedEdgePoint) -> (usize, usize, usize) {
     (point.order_index, point.collision, point.output_vertex)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn validate_boolean45_vertex_allocation(
     allocation: &ExactBoolMeshOutputVertexAllocation,
     boolean03: &ExactBoolMeshBoolean03,
@@ -5224,7 +5387,6 @@ fn validate_boolean45_vertex_allocation(
     Ok(())
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn validate_source_vertex_runs(
     side: ExactBoolMeshSide,
     signed_counts: &[i32],
@@ -5252,7 +5414,6 @@ fn validate_source_vertex_runs(
     Ok(())
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn validate_kernel12_vertex_runs<F>(
     signed_counts: &[i32],
     starts: &[Option<usize>],
@@ -5280,7 +5441,6 @@ where
     Ok(())
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn expected_output_face_count_before(
     stage: &ExactBoolMeshBoolean45Stage,
     source_face: usize,
@@ -5294,7 +5454,6 @@ fn expected_output_face_count_before(
         .count()
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn boolean45_operation_coefficients(operation: ExactBooleanOperation) -> (i32, i32, i32) {
     match operation {
         ExactBooleanOperation::Union => (1, 1, -1),
@@ -5304,12 +5463,10 @@ fn boolean45_operation_coefficients(operation: ExactBooleanOperation) -> (i32, i
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn signed_abs_i32(value: i32) -> usize {
     value.unsigned_abs() as usize
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn validate_pair_up_event(
     event: &ExactBoolMeshEdgeEvent,
     run: &ExactBoolMeshSourceEdgeRun,

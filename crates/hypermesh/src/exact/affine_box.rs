@@ -5,14 +5,9 @@
 //! affine frame for two closed parallelepiped meshes, normalizes both solids
 //! into `(u, v, w)` AABB boxes, reuses the orthogonal box/cell materializers,
 //! and lifts the accepted output back to 3D. The basis, normalized replay, and
-//! lifted output are all exact object structure in the sense of Yap, "Towards
-//! Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997): no
 //! primitive-float fit or tolerance decides the topology.
 //!
 //! The selected cells are the affine image of the rectangular box subdivision
-//! described for orthogonal arrangements in de Berg, Cheong, van Kreveld, and
-//! Overmars, *Computational Geometry: Algorithms and Applications*, 3rd ed.
-//! (2008), Chapter 2. Affine coordinates are solved with exact Cramer-ratio
 //! determinants, and every accepted source vertex must reconstruct exactly
 //! from the retained frame before the orthogonal cell complex can be consumed.
 
@@ -21,16 +16,14 @@ use core::cmp::Ordering;
 use hyperlimit::{Point3, compare_reals};
 
 use super::box_solid::{
-    cell_difference_axis_aligned_boxes, cell_union_axis_aligned_boxes,
-    difference_axis_aligned_boxes, empty_difference_axis_aligned_boxes,
-    intersection_axis_aligned_boxes, is_axis_aligned_box, multi_difference_axis_aligned_boxes,
-    nested_difference_axis_aligned_boxes, union_axis_aligned_boxes,
+    AxisAlignedBoxOperation, has_axis_aligned_box_operation, is_axis_aligned_box,
+    materialize_axis_aligned_box_operation,
 };
 use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
-use super::mesh::{ExactMesh, ExactPoint3, Triangle};
+use super::mesh::{ExactMesh, Triangle};
 use super::provenance::SourceProvenance;
-use super::scalar::ExactReal;
 use super::validation::ValidationPolicy;
+use hyperreal::Real;
 
 /// Exact 3D affine frame for normalized box coordinates.
 ///
@@ -77,6 +70,13 @@ pub struct AffineBoxArrangement {
     pub mesh: ExactMesh,
 }
 
+#[derive(Clone, Debug)]
+struct AffineBoxInputs {
+    basis: AffineBoxBasis,
+    left_uvw: ExactMesh,
+    right_uvw: ExactMesh,
+}
+
 impl AffineBoxArrangement {
     /// Validate the retained affine output mesh and basis replay.
     ///
@@ -98,7 +98,6 @@ impl AffineBoxArrangement {
     /// Validate this affine-box output by replaying it from source meshes.
     ///
     /// The source replay recomputes basis discovery, normalized box
-    /// materialization, and 3D lifting. This follows Yap's exact-computation
     /// boundary: a closed output shell is not trusted as a standalone triangle
     /// soup when the retained source objects can still be checked.
     pub fn validate_against_sources(
@@ -153,23 +152,33 @@ pub fn materialize_affine_box_difference(
 
 /// Return whether an affine-box union is certified for these operands.
 pub fn has_affine_box_union(left: &ExactMesh, right: &ExactMesh) -> bool {
-    materialize_affine_box_union(left, right, ValidationPolicy::CLOSED)
-        .map(|arrangement| arrangement.is_some())
-        .unwrap_or(false)
+    has_affine_box_operation(left, right, AffineBoxOperation::Union)
 }
 
 /// Return whether an affine-box intersection is certified for these operands.
 pub fn has_affine_box_intersection(left: &ExactMesh, right: &ExactMesh) -> bool {
-    materialize_affine_box_intersection(left, right, ValidationPolicy::CLOSED)
-        .map(|arrangement| arrangement.is_some())
-        .unwrap_or(false)
+    has_affine_box_operation(left, right, AffineBoxOperation::Intersection)
 }
 
 /// Return whether an affine-box difference is certified for these operands.
 pub fn has_affine_box_difference(left: &ExactMesh, right: &ExactMesh) -> bool {
-    materialize_affine_box_difference(left, right, ValidationPolicy::CLOSED)
-        .map(|arrangement| arrangement.is_some())
-        .unwrap_or(false)
+    has_affine_box_operation(left, right, AffineBoxOperation::Difference)
+}
+
+fn has_affine_box_operation(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: AffineBoxOperation,
+) -> bool {
+    certify_affine_box_inputs(left, right, operation).is_some()
+}
+
+fn has_normalized_affine_box_operation(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: AffineBoxOperation,
+) -> bool {
+    has_axis_aligned_box_operation(left, right, operation.into())
 }
 
 fn materialize_affine_boxes(
@@ -178,29 +187,22 @@ fn materialize_affine_boxes(
     operation: AffineBoxOperation,
     validation: ValidationPolicy,
 ) -> Result<Option<AffineBoxArrangement>, MeshError> {
-    if is_axis_aligned_box(left) && is_axis_aligned_box(right) {
-        return Ok(None);
-    }
-    let Some(basis) = certify_affine_box_basis(left, right) else {
+    let Some(inputs) = certify_affine_box_inputs(left, right, operation) else {
         return Ok(None);
     };
-    let Some(left_uvw) = mesh_to_uvw(left, &basis, ValidationPolicy::CLOSED) else {
-        return Ok(None);
-    };
-    let Some(right_uvw) = mesh_to_uvw(right, &basis, ValidationPolicy::CLOSED) else {
-        return Ok(None);
-    };
-    if !is_axis_aligned_box(&left_uvw) || !is_axis_aligned_box(&right_uvw) {
-        return Ok(None);
-    }
 
-    let uvw_output = materialize_normalized_boxes(&left_uvw, &right_uvw, operation)?;
+    let uvw_output = materialize_normalized_boxes(&inputs.left_uvw, &inputs.right_uvw, operation)?;
     let Some(uvw_output) = uvw_output else {
         return Ok(None);
     };
-    let mesh = mesh_from_uvw(&uvw_output, &basis, operation.output_label(), validation)?;
+    let mesh = mesh_from_uvw(
+        &uvw_output,
+        &inputs.basis,
+        operation.output_label(),
+        validation,
+    )?;
     let arrangement = AffineBoxArrangement {
-        basis,
+        basis: inputs.basis,
         operation,
         mesh,
     };
@@ -213,51 +215,35 @@ fn materialize_normalized_boxes(
     right: &ExactMesh,
     operation: AffineBoxOperation,
 ) -> Result<Option<ExactMesh>, MeshError> {
-    match operation {
-        AffineBoxOperation::Union => {
-            if let Some(mesh) = union_axis_aligned_boxes(left, right, ValidationPolicy::CLOSED)? {
-                return Ok(Some(mesh));
-            }
-            cell_union_axis_aligned_boxes(left, right, ValidationPolicy::CLOSED)
-        }
-        AffineBoxOperation::Intersection => {
-            intersection_axis_aligned_boxes(left, right, ValidationPolicy::CLOSED)
-        }
-        AffineBoxOperation::Difference => {
-            if let Some(mesh) =
-                difference_axis_aligned_boxes(left, right, ValidationPolicy::CLOSED)?
-            {
-                return Ok(Some(mesh));
-            }
-            if let Some(mesh) =
-                multi_difference_axis_aligned_boxes(left, right, ValidationPolicy::CLOSED)?
-            {
-                return Ok(Some(mesh));
-            }
-            if let Some(mesh) =
-                nested_difference_axis_aligned_boxes(left, right, ValidationPolicy::CLOSED)?
-            {
-                return Ok(Some(mesh));
-            }
-            if let Some(mesh) =
-                empty_difference_axis_aligned_boxes(left, right, ValidationPolicy::CLOSED)?
-            {
-                return Ok(Some(mesh));
-            }
-            cell_difference_axis_aligned_boxes(left, right, ValidationPolicy::CLOSED)
-        }
-    }
+    materialize_axis_aligned_box_operation(left, right, operation.into(), ValidationPolicy::CLOSED)
 }
 
-fn certify_affine_box_basis(left: &ExactMesh, right: &ExactMesh) -> Option<AffineBoxBasis> {
-    candidate_affine_box_bases(left).into_iter().find(|basis| {
-        mesh_to_uvw(left, basis, ValidationPolicy::CLOSED)
-            .as_ref()
-            .is_some_and(is_axis_aligned_box)
-            && mesh_to_uvw(right, basis, ValidationPolicy::CLOSED)
-                .as_ref()
-                .is_some_and(is_axis_aligned_box)
-    })
+fn certify_affine_box_inputs(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: AffineBoxOperation,
+) -> Option<AffineBoxInputs> {
+    if is_axis_aligned_box(left) && is_axis_aligned_box(right) {
+        return None;
+    }
+    candidate_affine_box_bases(left)
+        .into_iter()
+        .find_map(|basis| {
+            let left_uvw = mesh_to_uvw(left, &basis, ValidationPolicy::CLOSED)?;
+            let right_uvw = mesh_to_uvw(right, &basis, ValidationPolicy::CLOSED)?;
+            if is_axis_aligned_box(&left_uvw)
+                && is_axis_aligned_box(&right_uvw)
+                && has_normalized_affine_box_operation(&left_uvw, &right_uvw, operation)
+            {
+                Some(AffineBoxInputs {
+                    basis,
+                    left_uvw,
+                    right_uvw,
+                })
+            } else {
+                None
+            }
+        })
 }
 
 /// Return candidate exact affine frames from a source parallelepiped mesh.
@@ -266,8 +252,6 @@ fn certify_affine_box_basis(left: &ExactMesh, right: &ExactMesh) -> Option<Affin
 /// the eight exact corners provide the object-level frame evidence. Affine
 /// cell-complex replay can then use those frames to normalize a larger
 /// rectangular grid without inventing axes from approximate edge clustering.
-/// This is the same object-first discipline described by Yap, "Towards Exact
-/// Geometric Computation," *Computational Geometry* 7.1-2 (1997).
 pub(crate) fn candidate_affine_box_bases(mesh: &ExactMesh) -> Vec<AffineBoxBasis> {
     mesh_points(mesh)
         .map(|points| candidate_bases(&points))
@@ -295,7 +279,7 @@ fn candidate_bases(points: &[Point3]) -> Vec<AffineBoxBasis> {
                         basis_v: sub3(&points[v], &points[origin]),
                         basis_w: sub3(&points[w], &points[origin]),
                     };
-                    if compare_reals(&basis.determinant(), &ExactReal::from(0)).value()
+                    if compare_reals(&basis.determinant(), &Real::from(0)).value()
                         == Some(Ordering::Equal)
                     {
                         continue;
@@ -311,7 +295,6 @@ fn candidate_bases(points: &[Point3]) -> Vec<AffineBoxBasis> {
 }
 
 fn points_match_parallelepiped_corners(points: &[Point3], basis: &AffineBoxBasis) -> bool {
-    // Yap's exact-object boundary lets us reject most candidate frames with
     // pure structural equality before using determinant ratios. For the source
     // box that supplies the basis, the eight corners must be exactly the subset
     // sums of the three basis vectors from one retained corner.
@@ -343,8 +326,7 @@ pub(crate) fn mesh_to_uvw(
         .vertices()
         .iter()
         .map(|point| {
-            point_to_uvw_checked(&point.to_hyperlimit_point(), basis)
-                .map(|uvw| ExactPoint3::new(uvw.x, uvw.y, uvw.z))
+            point_to_uvw_checked(&point.clone(), basis).map(|uvw| Point3::new(uvw.x, uvw.y, uvw.z))
         })
         .collect::<Option<Vec<_>>>()?;
     let triangles = triangles_for_affine_orientation(mesh, basis)?;
@@ -367,18 +349,17 @@ pub(crate) fn mesh_from_uvw(
         .vertices()
         .iter()
         .map(|point| {
-            let point = point.to_hyperlimit_point();
+            let point = point.clone();
             let lifted = point_from_uvw(&point.x, &point.y, &point.z, basis);
-            ExactPoint3::new(lifted.x, lifted.y, lifted.z)
+            Point3::new(lifted.x, lifted.y, lifted.z)
         })
         .collect::<Vec<_>>();
-    let triangles = if compare_reals(&basis.determinant(), &ExactReal::from(0)).value()
-        == Some(Ordering::Less)
-    {
-        mesh.triangles().iter().map(reverse_triangle).collect()
-    } else {
-        mesh.triangles().to_vec()
-    };
+    let triangles =
+        if compare_reals(&basis.determinant(), &Real::from(0)).value() == Some(Ordering::Less) {
+            mesh.triangles().iter().map(reverse_triangle).collect()
+        } else {
+            mesh.triangles().to_vec()
+        };
     ExactMesh::new_with_policy(
         vertices,
         triangles,
@@ -400,7 +381,7 @@ fn point_to_uvw_checked(point: &Point3, basis: &AffineBoxBasis) -> Option<Point3
 fn point_to_uvw(point: &Point3, basis: &AffineBoxBasis) -> Option<Point3> {
     let delta = sub3(point, &basis.origin);
     let denominator = basis.determinant();
-    if compare_reals(&denominator, &ExactReal::from(0)).value()? == Ordering::Equal {
+    if compare_reals(&denominator, &Real::from(0)).value()? == Ordering::Equal {
         return None;
     }
     let u = (det3(&delta, &basis.basis_v, &basis.basis_w) / &denominator).ok()?;
@@ -415,8 +396,7 @@ fn triangles_for_affine_orientation(
 ) -> Option<Vec<Triangle>> {
     // A negative determinant reverses orientation under the exact affine
     // coordinate map. Reversing triangle order keeps the normalized shell
-    // outward-facing while preserving Yap's exact-object/topology separation.
-    if compare_reals(&basis.determinant(), &ExactReal::from(0)).value()? == Ordering::Less {
+    if compare_reals(&basis.determinant(), &Real::from(0)).value()? == Ordering::Less {
         Some(mesh.triangles().iter().map(reverse_triangle).collect())
     } else {
         Some(mesh.triangles().to_vec())
@@ -428,7 +408,7 @@ fn reverse_triangle(triangle: &Triangle) -> Triangle {
     Triangle([a, c, b])
 }
 
-fn point_from_uvw(u: &ExactReal, v: &ExactReal, w: &ExactReal, basis: &AffineBoxBasis) -> Point3 {
+fn point_from_uvw(u: &Real, v: &Real, w: &Real, basis: &AffineBoxBasis) -> Point3 {
     Point3::new(
         add(
             &basis.origin.x,
@@ -460,7 +440,7 @@ fn mesh_points(mesh: &ExactMesh) -> Option<Vec<Point3>> {
     }
     let mut points = Vec::with_capacity(8);
     for vertex in mesh.vertices() {
-        let point = vertex.to_hyperlimit_point();
+        let point = vertex.clone();
         if points
             .iter()
             .any(|candidate| points_equal(candidate, &point))
@@ -473,7 +453,7 @@ fn mesh_points(mesh: &ExactMesh) -> Option<Vec<Point3>> {
 }
 
 impl AffineBoxBasis {
-    pub(crate) fn determinant(&self) -> ExactReal {
+    pub(crate) fn determinant(&self) -> Real {
         det3(&self.basis_u, &self.basis_v, &self.basis_w)
     }
 }
@@ -488,7 +468,17 @@ impl AffineBoxOperation {
     }
 }
 
-fn det3(a: &Point3, b: &Point3, c: &Point3) -> ExactReal {
+impl From<AffineBoxOperation> for AxisAlignedBoxOperation {
+    fn from(operation: AffineBoxOperation) -> Self {
+        match operation {
+            AffineBoxOperation::Union => Self::Union,
+            AffineBoxOperation::Intersection => Self::Intersection,
+            AffineBoxOperation::Difference => Self::Difference,
+        }
+    }
+}
+
+fn det3(a: &Point3, b: &Point3, c: &Point3) -> Real {
     let x_minor = sub(&mul(&b.y, &c.z), &mul(&b.z, &c.y));
     let y_minor = sub(&mul(&b.x, &c.z), &mul(&b.z, &c.x));
     let z_minor = sub(&mul(&b.x, &c.y), &mul(&b.y, &c.x));
@@ -518,19 +508,19 @@ fn points_equal(left: &Point3, right: &Point3) -> bool {
     real_eq(&left.x, &right.x) && real_eq(&left.y, &right.y) && real_eq(&left.z, &right.z)
 }
 
-fn real_eq(left: &ExactReal, right: &ExactReal) -> bool {
+fn real_eq(left: &Real, right: &Real) -> bool {
     compare_reals(left, right).value() == Some(Ordering::Equal)
 }
 
-fn add(left: &ExactReal, right: &ExactReal) -> ExactReal {
+fn add(left: &Real, right: &Real) -> Real {
     left.clone() + right
 }
 
-fn sub(left: &ExactReal, right: &ExactReal) -> ExactReal {
+fn sub(left: &Real, right: &Real) -> Real {
     left.clone() - right
 }
 
-fn mul(left: &ExactReal, right: &ExactReal) -> ExactReal {
+fn mul(left: &Real, right: &Real) -> Real {
     left.clone() * right
 }
 

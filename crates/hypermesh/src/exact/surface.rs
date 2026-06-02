@@ -10,44 +10,36 @@
 //! retained strict holes, independent consumed straddling-hole split groups,
 //! four-sided consumed branch groups, clipped nonconvex-source openings that
 //! consume strict holes, and the convex one-corner difference shapes that can
-//! be represented as an open triangle mesh. The
-//! predicates are the same projected orientation and point-in-triangle facts
-//! used by the coplanar overlap classifier, following
-//! Yap, "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-//! (1997): topology claims are emitted only when the combinatorial relation is
-//! certified, and missing general planar-cell output models remain explicit.
+//! be represented as an open triangle mesh. The predicates are the same
+//! projected orientation and point-in-triangle facts used by the coplanar
+//! overlap classifier: topology claims are emitted only when the
+//! combinatorial relation is certified, and missing general planar-cell output
+//! models remain explicit.
 //!
-//! The underlying coplanar test follows the orientation-predicate style of
-//! Guigue and Devillers, "Fast and Robust Triangle-Triangle Overlap Test Using
-//! Orientation Predicates," *Journal of Graphics Tools* 8.1 (2003), routed
-//! through `hyperlimit` by [`crate::exact::coplanar`].
+//! The underlying coplanar test is routed through `hyperlimit` by
+//! [`crate::exact::coplanar`].
 
 use core::cmp::Ordering;
 
-#[cfg(feature = "exact-triangulation")]
-use hyperlimit::classify_point_triangle;
 use hyperlimit::{
     Point2, Point3, SegmentIntersection, Sign, TriangleLocation, classify_segment_intersection,
-    compare_reals, interpolate_point3 as interpolate3, orient2d_report, orient2d_value,
-    point_on_segment, project_point3 as project_point,
+    compare_reals, interpolate_point3 as interpolate3, orient2d_report, point_on_segment,
+    project_point3 as project_point,
 };
 
 use super::coplanar::CoplanarTriangleClassification;
 use super::coplanar::{CoplanarProjection, CoplanarTriangleRelation, classify_coplanar_triangles};
 use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
-use super::mesh::{ExactMesh, ExactPoint3, Triangle};
-#[cfg(feature = "exact-triangulation")]
+use super::mesh::{ExactMesh, Triangle};
 use super::narrow::{TrianglePlaneRelation, classify_mesh_triangle_against_retained_face_plane};
 use super::narrow::{
     TriangleTriangleClassification, TriangleTriangleRelation, classify_triangle_triangle,
 };
 use super::provenance::SourceProvenance;
-use super::scalar::ExactReal;
 use super::validation::ValidationPolicy;
+use hyperreal::Real;
 
-#[cfg(feature = "exact-triangulation")]
 type PolygonPair = (Vec<Vec<Point3>>, Vec<Vec<Point3>>);
-#[cfg(feature = "exact-triangulation")]
 type PolygonTriple = (Vec<Vec<Point3>>, Vec<Vec<Point3>>, Vec<Vec<Point3>>);
 
 /// Certified containment relation between two single-triangle coplanar sheets.
@@ -103,8 +95,6 @@ pub struct CoplanarSurfaceContainmentReport {
 /// This checks the report metadata itself: shape rejection should not retain
 /// classifiers, coplanar-stage statuses should retain both the 3D and
 /// projected predicate artifacts, and certified containment must have reached
-/// the projected coplanar stage. Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997), treats those artifacts as the
 /// auditable boundary between certified topology and unsupported policy.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum CoplanarSurfaceContainmentReportError {
@@ -141,9 +131,6 @@ impl CoplanarSurfaceContainmentReport {
     ///
     /// Presence alone is not enough: the retained 3D and projected classifiers
     /// must replay to the status that carries them. This keeps a certified
-    /// containment relation tied to exact predicate artifacts, following Yap,
-    /// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-    /// (1997), instead of letting callers relabel disjoint or ambiguous
     /// classifier output as containment.
     pub fn validate(&self) -> Result<(), CoplanarSurfaceContainmentReportError> {
         match self.status {
@@ -207,8 +194,6 @@ impl CoplanarSurfaceContainmentReport {
     /// the stored status. This stronger source-aware check recomputes the
     /// single-triangle containment report from `left` and `right`, then
     /// compares the retained status and classifiers with that replay. This is
-    /// the same exact-computation discipline Yap advocates in "Towards Exact
-    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997): a
     /// shortcut certificate is not only locally well-formed, it must remain
     /// attached to the source objects whose predicates justified it.
     pub fn validate_against_sources(
@@ -303,8 +288,6 @@ impl CoplanarTriangleIntersection {
     /// the artifact. This method replays the output-side invariants before a
     /// downstream consumer trusts it as topology: polygon vertices must be
     /// exact-distinct, have certified nonzero projected area, and match the
-    /// fan-triangulated [`ExactMesh`]. This follows Yap, "Towards Exact
-    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997): a
     /// constructed geometric object should remain auditable at API handoffs.
     pub fn validate(&self) -> Result<(), MeshError> {
         validate_coplanar_surface_output(
@@ -318,13 +301,8 @@ impl CoplanarTriangleIntersection {
     /// Validate this intersection output against the source meshes.
     ///
     /// Local validation proves the retained polygon and mesh agree with each
-    /// other. Source replay recomputes the exact Sutherland-Hodgman clipped
     /// intersection from `left` and `right` and requires the retained object to
     /// match that replay. This keeps the shortcut output tied to its certified
-    /// predicate history, following Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7.1-2 (1997), and the clipping construction of
-    /// Sutherland and Hodgman, "Reentrant Polygon Clipping," *Communications of
-    /// the ACM* 17.1 (1974).
     pub fn validate_against_sources(
         &self,
         left: &ExactMesh,
@@ -370,14 +348,8 @@ pub struct CoplanarTriangleUnion {
 /// shortcuts. It keeps a single simple boundary loop plus the exact
 /// `hypertri` triangulation used to materialize it. Multi-loop or holed
 /// arrangements remain explicit blockers until the output model can retain
-/// multiple rings. The boundary construction follows the Weiler-Atherton
 /// clipping idea of traversing split polygon edges, but all split points,
 /// segment membership tests, and triangulation inputs are exact facts in
-/// Yap's sense; see Weiler and Atherton, "Hidden Surface Removal Using Polygon
-/// Area Sorting," *SIGGRAPH Computer Graphics* 11.2 (1977), and Yap,
-/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997).
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, PartialEq)]
 pub struct CoplanarTriangleArrangement {
     /// Projection used by exact 2D arrangement predicates and triangulation.
@@ -393,10 +365,7 @@ pub struct CoplanarTriangleArrangement {
 /// The retained arrangement output is operation-specific: the same two source
 /// sheets may have different certified loops for union, intersection, and
 /// difference. Passing the operation explicitly keeps the replay check inside
-/// Yap's "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997), model of auditable computation history instead of treating a
 /// triangulated sheet as a context-free mesh.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum CoplanarArrangementOperation {
     /// Replay a certified coplanar union arrangement.
@@ -407,7 +376,6 @@ pub enum CoplanarArrangementOperation {
     Difference,
 }
 
-#[cfg(feature = "exact-triangulation")]
 impl CoplanarTriangleArrangement {
     /// Validate the materialized planar-arrangement polygon and mesh.
     pub fn validate(&self) -> Result<(), MeshError> {
@@ -424,9 +392,6 @@ impl CoplanarTriangleArrangement {
     /// This first validates the retained loop and `hypertri` mesh, then
     /// recomputes the exact single-triangle arrangement for `operation` from
     /// the supplied sources and requires the retained artifact to match the
-    /// replay. The boundary-fragment traversal follows Weiler and Atherton,
-    /// "Hidden Surface Removal Using Polygon Area Sorting," *SIGGRAPH Computer
-    /// Graphics* 11.2 (1977); the source replay follows Yap's exact-computation
     /// requirement that constructed topology remain attached to its predicate
     /// history.
     pub fn validate_against_sources(
@@ -466,14 +431,9 @@ impl CoplanarTriangleArrangement {
 ///
 /// This artifact represents the narrow `outer - inner` sheet case where one
 /// coplanar triangle is certified strictly inside another. It retains both
-/// rings instead of flattening them into only a triangle soup, because Yap's
-/// exact-computation model requires the topological structure that justified
+/// exact computation model requires the topological structure that justified
 /// the output to remain auditable. Triangulation uses `hypertri`'s
-/// earcut-compatible hole index behind `exact-triangulation`; see Held,
-/// "FIST: Fast Industrial-Strength Triangulation of Polygons," *Algorithmica*
-/// 30 (2001), for ear-clipping triangulation of polygons with holes, with
 /// exact predicates replacing tolerance decisions here.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, PartialEq)]
 pub struct CoplanarTriangleHoledArrangement {
     /// Projection used by exact 2D arrangement predicates and triangulation.
@@ -493,10 +453,6 @@ pub struct CoplanarTriangleHoledArrangement {
 /// retained-plane coplanarity, projected convex hulls, and summed projected
 /// triangle areas. It deliberately does not infer nonconvex, holed, or
 /// overlapping arrangements: those require a richer cell complex. This is the
-/// Yap-style object-fact boundary for a multi-triangle shortcut, with the
-/// convex hull step following Andrew, "Another Efficient Algorithm for Convex
-/// Hulls in Two Dimensions," *Information Processing Letters* 9.5 (1979).
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, PartialEq)]
 pub struct CoplanarConvexSurfaceEquivalence {
     /// Projection used for hull and area certificates.
@@ -504,13 +460,12 @@ pub struct CoplanarConvexSurfaceEquivalence {
     /// Exact shared convex hull boundary.
     pub polygon: Vec<Point3>,
     /// Twice the projected area covered by the left mesh.
-    pub left_area2: ExactReal,
+    pub left_area2: Real,
     /// Twice the projected area covered by the right mesh.
-    pub right_area2: ExactReal,
+    pub right_area2: Real,
 }
 
 /// Certified containment relation between convex coplanar surface meshes.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum CoplanarConvexSurfaceContainment {
     /// Every left hull vertex lies in the closed right hull.
@@ -525,9 +480,7 @@ pub enum CoplanarConvexSurfaceContainment {
 /// containment. It accepts only convex sheets whose summed exact projected
 /// triangle areas equal their own convex hull areas, then classifies hull
 /// vertices by exact projected orientation predicates. This keeps the shortcut
-/// inside Yap's exact-computation boundary: nonconvex coverage, holes, and
 /// overlapping triangle soups remain explicit planar-arrangement work.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, PartialEq)]
 pub struct CoplanarConvexSurfaceContainmentCertificate {
     /// Projection used for hull and area certificates.
@@ -539,9 +492,9 @@ pub struct CoplanarConvexSurfaceContainmentCertificate {
     /// Exact right convex hull.
     pub right_hull: Vec<Point3>,
     /// Twice the projected area covered by the left mesh.
-    pub left_area2: ExactReal,
+    pub left_area2: Real,
     /// Twice the projected area covered by the right mesh.
-    pub right_area2: ExactReal,
+    pub right_area2: Real,
 }
 
 /// Certification status for convex coplanar surface relations.
@@ -549,10 +502,7 @@ pub struct CoplanarConvexSurfaceContainmentCertificate {
 /// This is a report-level status, not a fallback classifier. It records whether
 /// the convex multi-face shortcut reached a certified equivalence/containment
 /// relation or failed closed before a boolean shortcut could rely on it. That
-/// follows Yap, "Towards Exact Geometric Computation," *Computational
-/// Geometry* 7.1-2 (1997): unsupported topology remains explicit evidence
 /// instead of becoming a guessed winding decision.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum CoplanarConvexSurfaceReportStatus {
     /// At least one mesh was empty, or both inputs were single-triangle sheets
@@ -568,7 +518,6 @@ pub enum CoplanarConvexSurfaceReportStatus {
 }
 
 /// Validation failure for a convex coplanar surface report.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum CoplanarConvexSurfaceReportError {
     /// A rejected report unexpectedly retained a certificate.
@@ -593,7 +542,6 @@ pub enum CoplanarConvexSurfaceReportError {
 /// The report keeps the certified object-fact handoff separate from boolean
 /// execution. Equivalence and containment certificates retain hulls, areas, and
 /// exact projection choices, while rejected statuses retain no topology output.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, PartialEq)]
 pub struct CoplanarConvexSurfaceReport {
     /// Coarse certification status.
@@ -604,7 +552,6 @@ pub struct CoplanarConvexSurfaceReport {
     pub containment: Option<CoplanarConvexSurfaceContainmentCertificate>,
 }
 
-#[cfg(feature = "exact-triangulation")]
 impl CoplanarConvexSurfaceReport {
     /// Return whether this report certified an executable convex-surface
     /// shortcut.
@@ -664,8 +611,6 @@ impl CoplanarConvexSurfaceReport {
     /// ordering. This method first validates those retained facts locally, then
     /// recomputes the report from `left` and `right` and requires the replay
     /// to match. That keeps the shortcut certificate attached to its source
-    /// objects in Yap's sense; see Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7.1-2 (1997).
     pub fn validate_against_sources(
         &self,
         left: &ExactMesh,
@@ -684,14 +629,11 @@ impl CoplanarConvexSurfaceReport {
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 impl CoplanarConvexSurfaceContainmentCertificate {
     /// Validate retained hull topology, area, and containment ordering.
     ///
     /// The hull loops are part of the certificate, not derived commentary.
     /// Replaying exact loop distinctness, orientation, convexity, and
-    /// containment at this API boundary follows Yap, "Towards Exact Geometric
-    /// Computation," *Computational Geometry* 7.1-2 (1997): a named boolean
     /// shortcut may consume a certificate only when its retained structural
     /// facts still justify the collapsed relation.
     pub fn validate(&self) -> Result<(), MeshError> {
@@ -780,12 +722,10 @@ impl CoplanarConvexSurfaceContainmentCertificate {
     ///
     /// The retained hulls and projected areas are public certificate state. This
     /// method recomputes the convex coplanar containment certificate from the
-    /// supplied meshes and requires the retained state to match that replay,
-    /// following Yap, "Towards Exact Geometric Computation," *Computational
-    /// Geometry* 7.1-2 (1997): a shortcut certificate must remain attached to
-    /// the exact object facts that produced it. The hull construction follows
-    /// Andrew, "Another Efficient Algorithm for Convex Hulls in Two Dimensions,"
-    /// *Information Processing Letters* 9.5 (1979).
+    /// supplied meshes and requires the retained state to match that replay.
+    /// The hull construction follows Andrew, "Another Efficient Algorithm for
+    /// Convex Hulls in Two Dimensions," *Information Processing Letters* 9.5
+    /// (1979).
     pub fn validate_against_sources(
         &self,
         left: &ExactMesh,
@@ -812,12 +752,10 @@ impl CoplanarConvexSurfaceContainmentCertificate {
 /// Exact one-hole arrangement output for convex coplanar surface containment.
 ///
 /// The rings are retained as exact 3D points and validated separately from the
-/// triangulation so the output remains auditable in the sense of Yap, "Towards
-/// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997). The
-/// outer/inner rings are convex hulls certified by the monotone-chain hull of
-/// Andrew, "Another Efficient Algorithm for Convex Hulls in Two Dimensions,"
-/// *Information Processing Letters* 9.5 (1979).
-#[cfg(feature = "exact-triangulation")]
+/// triangle mesh. The outer and inner rings are convex hulls certified by
+/// Andrew's monotone-chain construction, then triangulated through the
+/// Held/FIST-style earcut path cited at
+/// [`polygons_to_retained_simple_open_mesh_with_label`].
 #[derive(Clone, Debug, PartialEq)]
 pub struct CoplanarConvexHoledArrangement {
     /// Projection used by exact 2D arrangement predicates and triangulation.
@@ -835,13 +773,8 @@ pub struct CoplanarConvexHoledArrangement {
 /// This is a bounded planar-cell promotion: one certified convex outer sheet
 /// minus several disjoint certified single-triangle holes. The output keeps
 /// every ring as exact topology and triangulates through `hypertri` using
-/// earcut-compatible hole starts. Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997), is the governing rule here: the
 /// multi-hole object is accepted only while its retained rings, exact area, and
 /// materialized mesh all replay from the source predicates. The triangulation
-/// handoff follows Held, "FIST: Fast Industrial-Strength Triangulation of
-/// Polygons," *Algorithmica* 30 (2001).
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, PartialEq)]
 pub struct CoplanarConvexMultiHoledArrangement {
     /// Projection used by exact 2D arrangement predicates and triangulation.
@@ -858,11 +791,6 @@ pub struct CoplanarConvexMultiHoledArrangement {
 ///
 /// The component is either a simple outer loop or one outer loop with one or
 /// more retained hole loops. It is kept as exact topology, not inferred from
-/// the output triangles, following Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997). The ring triangulation handoff uses
-/// Held, "FIST: Fast Industrial-Strength Triangulation of Polygons,"
-/// *Algorithmica* 30 (2001), through `hypertri`'s exact earcut adapter.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, PartialEq)]
 pub struct CoplanarConvexHoledComponent {
     /// Exact 3D outer ring, retained counter-clockwise.
@@ -891,10 +819,7 @@ pub struct CoplanarConvexHoledComponent {
 /// tangled cut/hole interactions still require a full planar subdivision. Each
 /// retained component must replay from exact component decomposition,
 /// containment, disjointness, contact, and area certificates before the
-/// materialized mesh is accepted, matching the retained-object contract in
-/// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-/// 7.1-2 (1997).
-#[cfg(feature = "exact-triangulation")]
+/// materialized mesh is accepted, matching the retained evidence contract in
 #[derive(Clone, Debug, PartialEq)]
 pub struct CoplanarConvexComponentHoledArrangement {
     /// Projection used by exact 2D arrangement predicates and triangulation.
@@ -905,15 +830,12 @@ pub struct CoplanarConvexComponentHoledArrangement {
     pub mesh: ExactMesh,
 }
 
-#[cfg(feature = "exact-triangulation")]
 impl CoplanarConvexHoledArrangement {
     /// Validate ring shape, strict containment, projected area, and mesh state.
     ///
     /// The retained rings are the certificate for a one-hole surface output:
     /// the hole must be a positive-area ring strictly inside the outer ring,
     /// and neither ring may repeat exact points. Keeping those conditions at
-    /// the public artifact boundary follows Yap, "Towards Exact Geometric
-    /// Computation," *Computational Geometry* 7.1-2 (1997): downstream code
     /// should consume certified topology, not infer it from a triangle soup.
     pub fn validate(&self) -> Result<(), MeshError> {
         validate_holed_surface_output(
@@ -930,9 +852,6 @@ impl CoplanarConvexHoledArrangement {
     /// The only operation represented by this artifact is `left - right` where
     /// the right convex sheet is strictly inside the left. Recomputing that
     /// arrangement from the sources prevents a locally valid ring pair from
-    /// being reused after either source hull changes. This follows Yap,
-    /// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-    /// (1997), and retains Andrew's exact convex-hull certificate boundary.
     pub fn validate_against_sources(
         &self,
         left: &ExactMesh,
@@ -957,7 +876,6 @@ impl CoplanarConvexHoledArrangement {
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 impl CoplanarConvexMultiHoledArrangement {
     /// Validate ring shape, disjointness, projected area, and mesh state.
     pub fn validate(&self) -> Result<(), MeshError> {
@@ -974,7 +892,6 @@ impl CoplanarConvexMultiHoledArrangement {
     ///
     /// Replaying the bounded multi-hole construction from the exact inputs
     /// prevents a locally valid set of rings from being reused after source
-    /// topology changes. That keeps the artifact in Yap's retained-state
     /// model rather than treating the output mesh as detached geometry.
     pub fn validate_against_sources(
         &self,
@@ -1000,7 +917,6 @@ impl CoplanarConvexMultiHoledArrangement {
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 impl CoplanarConvexComponentHoledArrangement {
     /// Validate component rings, holes, projected area, and mesh state.
     pub fn validate(&self) -> Result<(), MeshError> {
@@ -1016,9 +932,6 @@ impl CoplanarConvexComponentHoledArrangement {
     ///
     /// Recomputing the bounded construction from `left` and `right` prevents a
     /// locally valid component/hole set from being transplanted to another
-    /// source pair. That is the same source-replay discipline Yap requires in
-    /// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-    /// (1997): the output mesh is accepted only while its exact construction
     /// facts remain attached to the objects that produced them.
     pub fn validate_against_sources(
         &self,
@@ -1049,11 +962,9 @@ impl CoplanarConvexComponentHoledArrangement {
     /// disk components may meet through exact positive-length boundary arcs,
     /// their exposed boundary must replay as one outer ring plus strict hole
     /// rings, and exact area must equal the sum of source component areas.
-    /// Replaying from the sources keeps the same Yap-style retained object
-    /// boundary as the difference producer, while making the operation
-    /// explicit so a holed union cannot be relabeled as a subtraction. This is
-    /// the retained-state contract described by Yap, "Towards Exact Geometric
-    /// Computation," *Computational Geometry* 7.1-2 (1997).
+    /// It uses the same retained boundary checks as the difference producer,
+    /// while making the operation explicit so a holed union cannot be relabeled
+    /// as a subtraction.
     pub fn validate_union_against_sources(
         &self,
         left: &ExactMesh,
@@ -1084,9 +995,6 @@ impl CoplanarConvexComponentHoledArrangement {
     /// boundary holes, and the other as simple source disks that lie strictly
     /// inside a source outer ring while strictly containing every retained
     /// hole they expose. Replaying from the sources keeps the retained rings
-    /// tied to their exact mesh incidence and exact area predicates, following
-    /// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-    /// 7.1-2 (1997), instead of treating the triangulated output as an
     /// unproved planar arrangement.
     pub fn validate_intersection_against_sources(
         &self,
@@ -1116,8 +1024,6 @@ impl CoplanarConvexComponentHoledArrangement {
     /// This operation-specific replay covers bounded same-outer holed sheet
     /// subtraction in addition to the older convex-source component-holed
     /// difference. The replay keeps the artifact tied to exact retained
-    /// source rings and exact area predicates, matching Yap, "Towards Exact
-    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997): a
     /// component-holed mesh is accepted only while the source objects still
     /// prove the topology that produced it.
     pub fn validate_surface_difference_against_sources(
@@ -1150,14 +1056,10 @@ impl CoplanarConvexComponentHoledArrangement {
 /// This is the multi-face counterpart to [`CoplanarTriangleArrangement`]. It
 /// accepts only convex input sheets whose intersection, union, or difference
 /// boundary stitches into one exact simple loop. The construction follows the
-/// same boundary-fragment traversal idea as Weiler-Atherton clipping for union
 /// and difference, while the convex hull and input area certificates come from
 /// the retained exact object facts described in
-/// [`CoplanarConvexSurfaceEquivalence`]. Following Yap, "Towards Exact
-/// Geometric Computation," *Computational Geometry* 7.1-2 (1997), the output
 /// keeps the exact boundary loop and triangulated mesh as auditable state
 /// instead of hiding the planar arrangement behind a tolerance boolean.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, PartialEq)]
 pub struct CoplanarConvexArrangement {
     /// Projection used by exact 2D arrangement predicates and triangulation.
@@ -1168,7 +1070,6 @@ pub struct CoplanarConvexArrangement {
     pub mesh: ExactMesh,
 }
 
-#[cfg(feature = "exact-triangulation")]
 impl CoplanarConvexArrangement {
     /// Validate the materialized convex-surface arrangement polygon and mesh.
     pub fn validate(&self) -> Result<(), MeshError> {
@@ -1184,10 +1085,7 @@ impl CoplanarConvexArrangement {
     ///
     /// The replay is operation-specific because convex coplanar intersection,
     /// union, and difference retain different boundary loops. The construction
-    /// uses Sutherland-Hodgman half-plane clipping for convex intersection and
-    /// Weiler-Atherton-style boundary fragments for union/difference, but this
     /// method accepts the output only when exact source replay reproduces the
-    /// retained loop and mesh, following Yap's certified-state discipline.
     pub fn validate_against_sources(
         &self,
         left: &ExactMesh,
@@ -1231,16 +1129,10 @@ impl CoplanarConvexArrangement {
 /// disjoint loops, and pairwise clipped coplanar intersections that produce
 /// several disjoint positive-area components. It deliberately retains each
 /// loop separately instead of flattening the result into an opaque triangle
-/// soup. Difference loop construction follows the Weiler-Atherton
-/// boundary-fragment traversal idea, while intersection loops use the
-/// Sutherland-Hodgman convex clipping model; exact predicates and exact area
-/// replay keep both output forms within Yap's exact geometric computation
-/// contract. See Weiler and Atherton, "Hidden Surface Removal Using Polygon
-/// Area Sorting," *SIGGRAPH Computer Graphics* 11.2 (1977), Sutherland and
-/// Hodgman, "Reentrant Polygon Clipping," *Communications of the ACM* 17.1
-/// (1974), and Yap, "Towards Exact Geometric Computation," *Computational
-/// Geometry* 7.1-2 (1997).
-#[cfg(feature = "exact-triangulation")]
+/// soup. Difference loops use the boundary-fragment traversal idea from Weiler
+/// and Atherton, "Hidden Surface Removal Using Polygon Area Sorting,"
+/// *SIGGRAPH Computer Graphics* 11.2 (1977), while intersection loops use the
+/// Sutherland-Hodgman clipping helper cited at [`clip_convex_polygon`].
 #[derive(Clone, Debug, PartialEq)]
 pub struct CoplanarConvexMultiArrangement {
     /// Projection used by exact 2D arrangement predicates and triangulation.
@@ -1262,14 +1154,9 @@ pub struct CoplanarConvexMultiArrangement {
 /// component no longer forces an otherwise certified nonconvex union back to
 /// the generic planar-arrangement blocker. The artifact exists so the convex
 /// certificate does not silently weaken its invariant. Construction still
-/// follows exact Weiler-Atherton style boundary replay for each promoted loop,
-/// and triangulation is retained through `hypertri`'s FIST-style earcut
-/// handoff. See Weiler and Atherton, "Hidden Surface Removal Using Polygon
-/// Area Sorting," *SIGGRAPH Computer Graphics* 11.2 (1977), Held, "FIST:
-/// Fast Industrial-Strength Triangulation of Polygons," *Algorithmica* 30
-/// (2001), and Yap, "Towards Exact Geometric Computation," *Computational
-/// Geometry* 7.1-2 (1997).
-#[cfg(feature = "exact-triangulation")]
+/// validates each retained loop, and triangulation is retained through
+/// `hypertri`'s Held/FIST-style earcut handoff cited at
+/// [`polygons_to_retained_simple_open_mesh_with_label`].
 #[derive(Clone, Debug, PartialEq)]
 pub struct CoplanarSurfaceMultiArrangement {
     /// Projection used by exact 2D arrangement predicates and triangulation.
@@ -1290,14 +1177,8 @@ pub struct CoplanarSurfaceMultiArrangement {
 /// vertex-vertex contacts are certified directly, exact vertex-edge contacts
 /// are first promoted to retained edge-split vertices, and edge contacts,
 /// proper overlaps, nesting, and general planar subdivisions remain with the
-/// stronger arrangement paths. This follows
-/// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-/// 7.1-2 (1997): the combinatorial contract is named and validated rather
-/// than inferred from floating tolerances. The segment contact tests use the
-/// same orientation-predicate model as Guigue and Devillers, "Fast and Robust
-/// Triangle-Triangle Overlap Test Using Orientation Predicates," *Journal of
-/// Graphics Tools* 8.1 (2003).
-#[cfg(feature = "exact-triangulation")]
+/// stronger arrangement paths. Segment contact tests use exact orientation
+/// predicates rather than floating tolerances.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CoplanarSurfacePointTouchUnion {
     /// Projection used by exact 2D contact predicates and triangulation.
@@ -1320,16 +1201,8 @@ pub struct CoplanarSurfacePointTouchUnion {
 /// lower-dimensional branch evidence after the removed openings and retained
 /// components satisfy exact area and source-boundary ownership checks.
 ///
-/// The retained-fragment construction follows Weiler and Atherton, "Hidden
-/// Surface Removal Using Polygon Area Sorting," *SIGGRAPH Computer Graphics*
-/// 11.2 (1977). Segment contact is certified with the orientation-predicate
-/// model of Guigue and Devillers, "Fast and Robust Triangle-Triangle Overlap
-/// Test Using Orientation Predicates," *Journal of Graphics Tools* 8.1
-/// (2003). Yap, "Towards Exact Geometric Computation," *Computational
-/// Geometry* 7.1-2 (1997), is the reason this artifact is separate from the
 /// ordinary multi-difference object: the branch topology is explicit retained
 /// state, not a tolerance-side effect.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, PartialEq)]
 pub struct CoplanarSurfacePointTouchDifference {
     /// Projection used by exact 2D branch predicates and triangulation.
@@ -1351,11 +1224,6 @@ pub struct CoplanarSurfacePointTouchDifference {
 /// nonconvex simple remnant without retained hole rings; and the bounded
 /// same-outer holed subtraction whose result is one filled source-owned hole.
 /// The output keeps that loop as exact topology and triangulates it through
-/// `hypertri`'s FIST-style earcut handoff. See Held,
-/// "FIST: Fast Industrial-Strength Triangulation of Polygons,"
-/// *Algorithmica* 30 (2001), and Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997).
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, PartialEq)]
 pub struct CoplanarSurfaceArrangement {
     /// Projection used by exact 2D arrangement predicates and triangulation.
@@ -1366,7 +1234,6 @@ pub struct CoplanarSurfaceArrangement {
     pub mesh: ExactMesh,
 }
 
-#[cfg(feature = "exact-triangulation")]
 impl CoplanarConvexMultiArrangement {
     /// Validate component loops, projected area, and materialized mesh state.
     pub fn validate(&self) -> Result<(), MeshError> {
@@ -1384,8 +1251,6 @@ impl CoplanarConvexMultiArrangement {
     /// convex components replay from exact source-face topology. Recomputing
     /// the cluster union from `left` and `right` keeps the retained component
     /// loops attached to the predicates and source components that produced
-    /// them. This follows Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7.1-2 (1997): a multi-loop surface is
     /// certified only while its numerical/combinatorial history is replayable.
     pub fn validate_union_against_sources(
         &self,
@@ -1415,8 +1280,6 @@ impl CoplanarConvexMultiArrangement {
     /// Source replay recomputes the convex difference and verifies both the
     /// component loops and the materialized mesh, so a locally valid component
     /// set cannot be transplanted to a different pair of source sheets. This is
-    /// the same retained-computation contract described by Yap, "Towards Exact
-    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997).
     pub fn validate_against_sources(
         &self,
         left: &ExactMesh,
@@ -1445,9 +1308,6 @@ impl CoplanarConvexMultiArrangement {
     /// Pairwise clipped intersections are accepted only when every retained
     /// component loop and the combined mesh replay from the exact source
     /// triangles. This prevents a locally valid multi-loop artifact from being
-    /// reused after source topology or coordinates change, following Yap,
-    /// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-    /// (1997).
     pub fn validate_intersection_against_sources(
         &self,
         left: &ExactMesh,
@@ -1472,17 +1332,14 @@ impl CoplanarConvexMultiArrangement {
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 impl CoplanarConvexSurfaceEquivalence {
     /// Validate the retained equivalence certificate.
     ///
     /// This replays the retained convex hull as exact topology before checking
     /// area equality. The monotone-chain hull construction used to build the
-    /// certificate follows Andrew, "Another Efficient Algorithm for Convex
-    /// Hulls in Two Dimensions," *Information Processing Letters* 9.5 (1979);
-    /// the public validation follows Yap, "Towards Exact Geometric
-    /// Computation," *Computational Geometry* 7.1-2 (1997), by keeping that
-    /// hull auditable instead of trusting only an aggregate area.
+    /// hull follows Andrew, "Another Efficient Algorithm for Convex Hulls in
+    /// Two Dimensions," *Information Processing Letters* 9.5 (1979), keeping
+    /// the boundary auditable instead of trusting only an aggregate area.
     pub fn validate(&self) -> Result<(), MeshError> {
         validate_retained_convex_hull(
             "coplanar convex surface equivalence",
@@ -1495,7 +1352,7 @@ impl CoplanarConvexSurfaceEquivalence {
                 "shared hull projected area was undecided",
             )
         })?;
-        if compare_reals(&hull_area, &ExactReal::from(0)).value() != Some(Ordering::Greater) {
+        if compare_reals(&hull_area, &Real::from(0)).value() != Some(Ordering::Greater) {
             return Err(surface_validation_error(
                 "coplanar convex surface equivalence",
                 "shared hull has zero projected area",
@@ -1517,11 +1374,7 @@ impl CoplanarConvexSurfaceEquivalence {
     /// The retained shared hull and both covered-area facts are recomputed from
     /// `left` and `right` and compared with this certificate. That prevents a
     /// locally valid hull/area tuple from being transplanted between source
-    /// sheets, matching Yap's retained-computation discipline from "Towards
-    /// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997). The
-    /// replayed convex hull uses Andrew, "Another Efficient Algorithm for
-    /// Convex Hulls in Two Dimensions," *Information Processing Letters* 9.5
-    /// (1979), with exact predicate decisions.
+    /// meshes with different exact convex-hull evidence.
     pub fn validate_against_sources(
         &self,
         left: &ExactMesh,
@@ -1545,15 +1398,11 @@ impl CoplanarConvexSurfaceEquivalence {
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 impl CoplanarTriangleHoledArrangement {
     /// Validate ring shape, strict containment, projected area, and mesh state.
     ///
-    /// This validates the same retained one-hole certificate used by Held's
-    /// FIST-style triangulation handoff, but with exact ring predicates at the
-    /// API boundary; see Held, "FIST: Fast Industrial-Strength Triangulation
-    /// of Polygons," *Algorithmica* 30 (2001), and Yap, "Towards Exact
-    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997).
+    /// Triangulation uses the Held/FIST-style earcut handoff, but exact ring
+    /// predicates and source replay remain the acceptance criteria.
     pub fn validate(&self) -> Result<(), MeshError> {
         validate_holed_surface_output(
             self.projection,
@@ -1569,9 +1418,8 @@ impl CoplanarTriangleHoledArrangement {
     /// The artifact represents `left - right` for a strictly contained coplanar
     /// triangle. Replaying the exact arrangement from the sources ties the
     /// retained outer ring, hole ring, and `hypertri` mesh to the predicate
-    /// history that produced them, following Yap, "Towards Exact Geometric
-    /// Computation," *Computational Geometry* 7.1-2 (1997), and Held's
-    /// FIST-style triangulation handoff for polygon-with-hole inputs.
+    /// evidence that justified the Held/FIST-style polygon-with-hole
+    /// triangulation.
     pub fn validate_against_sources(
         &self,
         left: &ExactMesh,
@@ -1600,10 +1448,9 @@ impl CoplanarTriangleUnion {
     /// Validate the materialized convex-union polygon and mesh.
     ///
     /// The union shortcut is accepted only after exact hull coverage checks,
-    /// following Andrew's monotone-chain hull construction and Yap's exact
-    /// computation boundary. This method validates the persisted output
-    /// artifact itself: exact point distinctness, positive projected area,
-    /// retained convexity, and fan mesh consistency.
+    /// not from a sampled polygon repair. This method validates the persisted
+    /// output artifact itself: exact point distinctness, positive projected
+    /// area, retained convexity, and fan mesh consistency.
     pub fn validate(&self) -> Result<(), MeshError> {
         validate_retained_convex_hull("coplanar convex union", &self.polygon, self.projection)?;
         validate_coplanar_surface_output(
@@ -1619,9 +1466,7 @@ impl CoplanarTriangleUnion {
     /// The convex union shortcut is valid only when exact coverage proves the
     /// combined triangle surface equals the retained hull. This method recomputes
     /// that Andrew monotone-chain hull and its exact coverage checks from the
-    /// supplied sources before accepting the retained polygon and mesh. That is
-    /// the retained-object discipline advocated by Yap, "Towards Exact Geometric
-    /// Computation," *Computational Geometry* 7.1-2 (1997).
+    /// supplied sources before accepting the retained polygon and mesh.
     pub fn validate_against_sources(
         &self,
         left: &ExactMesh,
@@ -1689,8 +1534,6 @@ impl CoplanarTriangleDifference {
     /// the retained polygon is `left - right` for the source triangles. This
     /// replay check recomputes that bounded arrangement fragment and rejects a
     /// locally valid polygon/mesh pair that no longer belongs to the supplied
-    /// sources, following Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7.1-2 (1997).
     pub fn validate_against_sources(
         &self,
         left: &ExactMesh,
@@ -1715,7 +1558,6 @@ impl CoplanarTriangleDifference {
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 impl CoplanarSurfaceMultiArrangement {
     /// Validate nonconvex component loops, projected area, and mesh state.
     ///
@@ -1723,8 +1565,6 @@ impl CoplanarSurfaceMultiArrangement {
     /// exactly matched by the materialized mesh boundary. Unlike
     /// [`CoplanarConvexMultiArrangement`], strict convexity is not a
     /// precondition: this artifact is the named exact boundary for simple
-    /// nonconvex component outputs. That separation follows Yap, "Towards
-    /// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997), by
     /// making each topology contract explicit instead of hiding it in a
     /// triangle soup.
     pub fn validate(&self) -> Result<(), MeshError> {
@@ -1740,22 +1580,53 @@ impl CoplanarSurfaceMultiArrangement {
     ///
     /// Recomputing the bounded difference from exact source components keeps
     /// every retained simple loop attached to the source predicates that
-    /// produced it, matching Yap's retained-computation requirement from
-    /// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-    /// (1997).
     pub fn validate_difference_against_sources(
         &self,
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> Result<(), MeshError> {
         self.validate()?;
-        let replay = arrange_coplanar_surface_multi_difference(left, right).ok_or_else(|| {
+        let (projection, polygons) = coplanar_surface_difference_polygons(left, right)
+            .or_else(|| same_outer_holed_no_hole_difference_polygons(left, right))
+            .ok_or_else(|| {
+                surface_validation_error(
+                    "coplanar nonconvex multi-component arrangement",
+                    "source replay did not reproduce a nonconvex multi-component difference",
+                )
+            })?;
+        if polygons.len() < 2 {
+            return Err(surface_validation_error(
+                "coplanar nonconvex multi-component arrangement",
+                "source replay did not reproduce a nonconvex multi-component difference",
+            ));
+        }
+        if polygons.iter().all(|polygon| {
+            validate_projected_strictly_convex_loop(
+                polygon,
+                projection,
+                "coplanar nonconvex multi-component arrangement",
+            )
+            .is_ok()
+        }) && arrange_coplanar_convex_surface_multi_difference(left, right).is_some()
+        {
+            return Err(surface_validation_error(
+                "coplanar nonconvex multi-component arrangement",
+                "source replay did not reproduce a nonconvex multi-component difference",
+            ));
+        }
+        validate_multi_simple_surface_output(
+            projection,
+            &polygons,
+            &self.mesh,
+            "coplanar nonconvex multi-component arrangement",
+        )
+        .map_err(|_| {
             surface_validation_error(
                 "coplanar nonconvex multi-component arrangement",
                 "source replay did not reproduce a nonconvex multi-component difference",
             )
         })?;
-        if self == &replay {
+        if self.projection == projection && self.polygons == polygons {
             Ok(())
         } else {
             Err(surface_validation_error(
@@ -1769,9 +1640,6 @@ impl CoplanarSurfaceMultiArrangement {
     ///
     /// The retained union is accepted only while exact source replay rebuilds
     /// the same disconnected contact clusters, stitched loops, and
-    /// triangulated mesh. This keeps disconnected nonconvex unions in Yap's
-    /// retained-computation model from "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7.1-2 (1997): consumers receive a replayable
     /// arrangement artifact instead of a detached triangle soup.
     pub fn validate_union_against_sources(
         &self,
@@ -1802,8 +1670,6 @@ impl CoplanarSurfaceMultiArrangement {
     /// merges only positive-length adjacent clip components. Replaying from
     /// sources is therefore part of the certificate: it ties every retained
     /// loop to the source triangle pairs and exact area replay that produced
-    /// it, following Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7.1-2 (1997).
     pub fn validate_intersection_against_sources(
         &self,
         left: &ExactMesh,
@@ -1828,7 +1694,6 @@ impl CoplanarSurfaceMultiArrangement {
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 impl CoplanarSurfacePointTouchUnion {
     /// Validate branch-point component loops, exact point contacts, and mesh state.
     ///
@@ -1838,8 +1703,6 @@ impl CoplanarSurfacePointTouchUnion {
     /// inserted the touched edge point into the retained loop. The retained
     /// mesh itself keeps those vertices duplicated so each disk component
     /// still has an ordinary boundary loop.
-    /// This mirrors Yap's retained-state discipline from "Towards Exact
-    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997): the
     /// branch incidence is part of the explicit artifact contract.
     pub fn validate(&self) -> Result<(), MeshError> {
         validate_multi_surface_output_allowing_vertex_point_touches(
@@ -1880,7 +1743,6 @@ impl CoplanarSurfacePointTouchUnion {
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 impl CoplanarSurfacePointTouchDifference {
     /// Validate branch-point difference loops, exact point contacts, and mesh state.
     ///
@@ -1902,7 +1764,6 @@ impl CoplanarSurfacePointTouchDifference {
     ///
     /// Source replay rebuilds the side-cutter point-branch certificate and
     /// requires the same retained loops and duplicate branch vertices. This
-    /// keeps the artifact inside Yap's exact-computation model: a locally valid
     /// branch mesh is accepted only while the source predicates still justify
     /// exactly that topology.
     pub fn validate_difference_against_sources(
@@ -1929,14 +1790,12 @@ impl CoplanarSurfacePointTouchDifference {
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 impl CoplanarSurfaceArrangement {
     /// Validate the retained simple loop and mesh.
     ///
     /// The artifact deliberately does not require convexity. It does require
     /// one positive-area, counter-clockwise, self-disjoint loop whose
     /// triangulated mesh has exactly the same boundary. This keeps the output
-    /// inside Yap's exact-state discipline: callers receive a replayable
     /// combinatorial object, not only a triangle soup.
     pub fn validate(&self) -> Result<(), MeshError> {
         validate_coplanar_surface_output(
@@ -1951,8 +1810,6 @@ impl CoplanarSurfaceArrangement {
     ///
     /// Source replay recomputes the bounded contact construction from the
     /// supplied meshes and requires the retained loop and materialized mesh to
-    /// match. This follows Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7.1-2 (1997): a nonconvex shortcut remains
     /// certified only while the exact source topology, contact, and area facts
     /// that produced it are still present.
     pub fn validate_cutter_hole_contact_difference_against_sources(
@@ -1983,9 +1840,6 @@ impl CoplanarSurfaceArrangement {
     /// Source replay rebuilds the clipped cutter openings, retained boundary
     /// splice, and exact area equation from the supplied meshes. The artifact
     /// is accepted only when that replay reproduces the same loop and mesh,
-    /// keeping this single-loop nonconvex shortcut inside Yap's retained-state
-    /// model from "Towards Exact Geometric Computation," *Computational
-    /// Geometry* 7.1-2 (1997).
     pub fn validate_side_cutter_difference_against_sources(
         &self,
         left: &ExactMesh,
@@ -2014,11 +1868,9 @@ impl CoplanarSurfaceArrangement {
     /// The component-union path promotes one connected contact/overlap graph
     /// of convex source components into a single simple loop. Source replay
     /// rebuilds the exact component graph, retained boundary fragments, and
-    /// area certificate before accepting this copied artifact. This is the
-    /// object/predicate split advocated by Yap, "Towards Exact Geometric
-    /// Computation," *Computational Geometry* 7.1-2 (1997): the nonconvex
-    /// topology remains certified only while its exact construction history
-    /// still replays.
+    /// area certificate before accepting this copied artifact. The topology
+    /// remains certified only while its exact construction history still
+    /// replays.
     pub fn validate_component_union_against_sources(
         &self,
         left: &ExactMesh,
@@ -2048,9 +1900,6 @@ impl CoplanarSurfaceArrangement {
     /// wholly covered components, and then requires the one retained remnant
     /// or source-holed filled-hole component to match this loop and
     /// triangulation exactly. Keeping that construction history attached to
-    /// the artifact is the certified-object boundary required by Yap,
-    /// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-    /// (1997).
     pub fn validate_component_difference_against_sources(
         &self,
         left: &ExactMesh,
@@ -2079,9 +1928,6 @@ impl CoplanarSurfaceArrangement {
     /// Source replay recomputes the exact pairwise triangle clips, the
     /// positive-length contact graph, the stitched boundary loop, and the
     /// retained triangulation. That replay requirement keeps this bounded
-    /// planar-cell materializer aligned with Yap's retained exact object model
-    /// from "Towards Exact Geometric Computation," *Computational Geometry*
-    /// 7.1-2 (1997).
     pub fn validate_intersection_against_sources(
         &self,
         left: &ExactMesh,
@@ -2128,8 +1974,6 @@ pub fn certify_single_triangle_coplanar_containment(
 /// [`certify_single_triangle_coplanar_containment`]. It keeps the 3D
 /// `hyperlimit::orient3d_report`-backed triangle classifier and the projected
 /// coplanar classifier beside the collapsed containment status. That matches
-/// Yap, "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997): a topology shortcut should expose the certified predicate facts
 /// that justified it, and unsupported or ambiguous cases stay explicit.
 pub fn certify_single_triangle_coplanar_containment_report(
     left: &ExactMesh,
@@ -2147,7 +1991,7 @@ pub fn certify_single_triangle_coplanar_containment_report(
         .vertices()
         .iter()
         .chain(right.vertices())
-        .map(|point| point.to_hyperlimit_point())
+        .map(|point| point.clone())
         .collect::<Vec<_>>();
     let left_tri = left.triangles()[0].0;
     let right_offset = left.vertices().len();
@@ -2198,13 +2042,7 @@ pub fn certify_single_triangle_coplanar_containment_report(
 /// single-triangle sheets.
 ///
 /// This is the smallest exact replacement for a legacy partial-overlap case:
-/// Sutherland-Hodgman style half-plane clipping is performed with
 /// `hyperlimit::orient2d_report`, and edge/clip-line crossings are constructed
-/// as exact `Real` ratios. The algorithmic shape follows Sutherland and
-/// Hodgman, "Reentrant Polygon Clipping," *Communications of the ACM* 17.1
-/// (1974), but every combinatorial decision is certified as required by Yap,
-/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997).
 pub fn intersect_single_triangle_coplanar_surfaces(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -2260,11 +2098,9 @@ pub fn intersect_single_triangle_coplanar_surfaces(
 /// Hypermesh certifies that this hull is not overclaiming the union by clipping
 /// each fan triangle against both inputs and checking exact area coverage:
 /// `area(left clip) + area(right clip) - area(overlap clip) == area(fan)`.
-/// This preserves Yap's distinction between a constructed object and the
-/// certified predicates that justify its topology. The convex-hull
-/// construction is the standard monotone chain algorithm from Andrew, "Another
-/// Efficient Algorithm for Convex Hulls in Two Dimensions," *Information
-/// Processing Letters* 9.5 (1979), with exact comparisons and orientations.
+/// The convex-hull construction is the standard monotone-chain algorithm from
+/// Andrew, "Another Efficient Algorithm for Convex Hulls in Two Dimensions,"
+/// *Information Processing Letters* 9.5 (1979).
 pub fn union_single_triangle_coplanar_surfaces(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -2316,11 +2152,10 @@ pub fn union_single_triangle_coplanar_surfaces(
 /// shortcut must reject. It splits both triangle boundaries at exact
 /// intersections, keeps only edge fragments whose midpoints lie outside the
 /// opposite closed triangle, stitches one boundary loop, then triangulates
-/// that loop with feature-gated exact `hypertri` earcut. If the arrangement
+/// that loop with exact `hypertri` earcut. If the arrangement
 /// has multiple loops, undecided predicates, or lower-dimensional-only
 /// contact, the function returns `None` rather than weakening the topology
 /// decision.
-#[cfg(feature = "exact-triangulation")]
 pub fn arrange_single_triangle_coplanar_union(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -2334,9 +2169,7 @@ pub fn arrange_single_triangle_coplanar_union(
 /// The accepted output is one simple boundary loop. Cases that split the left
 /// triangle into multiple components or create a hole remain explicit
 /// planar-arrangement blockers, because an open triangle mesh without retained
-/// ring provenance would hide the topological structure Yap requires callers
 /// to audit.
-#[cfg(feature = "exact-triangulation")]
 pub fn arrange_single_triangle_coplanar_difference(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -2352,7 +2185,6 @@ pub fn arrange_single_triangle_coplanar_difference(
 /// the right triangle is certified inside the left triangle by projected
 /// `hyperlimit` point-in-triangle facts; otherwise multi-component and
 /// ambiguous cases remain explicit blockers.
-#[cfg(feature = "exact-triangulation")]
 pub fn arrange_single_triangle_coplanar_holed_difference(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -2383,12 +2215,12 @@ pub fn arrange_single_triangle_coplanar_holed_difference(
     let mut outer = left.triangles()[0]
         .0
         .iter()
-        .map(|&index| left.vertices()[index].to_hyperlimit_point())
+        .map(|&index| left.vertices()[index].clone())
         .collect::<Vec<_>>();
     let mut hole = right.triangles()[0]
         .0
         .iter()
-        .map(|&index| right.vertices()[index].to_hyperlimit_point())
+        .map(|&index| right.vertices()[index].clone())
         .collect::<Vec<_>>();
     orient_polygon_ccw(&mut outer, projection)?;
     orient_polygon_cw(&mut hole, projection)?;
@@ -2412,7 +2244,6 @@ pub fn arrange_single_triangle_coplanar_holed_difference(
 /// must compare equal vertex-for-vertex, and the sum of projected triangle
 /// areas for each mesh must equal the shared hull area. Nonconvex, holed, or
 /// overlapping triangle soups fail closed and remain planar-arrangement work.
-#[cfg(feature = "exact-triangulation")]
 pub fn certify_coplanar_convex_surface_equivalence(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -2444,7 +2275,6 @@ pub fn certify_coplanar_convex_surface_equivalence(
 /// shortcuts used by named booleans. It first rejects empty/single-triangle
 /// cases that belong to narrower APIs, then attempts equivalence before strict
 /// containment so equal hulls do not get reported as two-way containment.
-#[cfg(feature = "exact-triangulation")]
 pub fn certify_coplanar_convex_surface_report(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -2486,7 +2316,6 @@ pub fn certify_coplanar_convex_surface_report(
 /// exact area equality with their projected hulls. Hull containment is checked
 /// by exact orientation signs on every candidate inner hull vertex. Equal hulls
 /// are left to [`certify_coplanar_convex_surface_equivalence`].
-#[cfg(feature = "exact-triangulation")]
 pub fn certify_coplanar_convex_surface_containment(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -2519,15 +2348,19 @@ pub fn certify_coplanar_convex_surface_containment(
 ///
 /// This is the multi-face counterpart to
 /// [`arrange_single_triangle_coplanar_holed_difference`]. The retained output
-/// is one exact outer hull and one exact hole hull, triangulated through
-/// feature-gated `hypertri` earcut. Multi-hole or nonconvex differences still
-/// fail closed.
-#[cfg(feature = "exact-triangulation")]
+/// is one exact outer hull and one exact hole hull, triangulated through exact
+/// `hypertri` earcut. Multi-hole or nonconvex differences still fail closed.
 pub fn arrange_coplanar_convex_surface_holed_difference(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Option<CoplanarConvexHoledArrangement> {
     let certificate = certify_coplanar_convex_surface_containment(left, right)?;
+    arrange_coplanar_convex_surface_holed_difference_from_certificate(certificate)
+}
+
+pub(crate) fn arrange_coplanar_convex_surface_holed_difference_from_certificate(
+    certificate: CoplanarConvexSurfaceContainmentCertificate,
+) -> Option<CoplanarConvexHoledArrangement> {
     if certificate.relation != CoplanarConvexSurfaceContainment::RightInsideLeft {
         return None;
     }
@@ -2554,9 +2387,6 @@ pub fn arrange_coplanar_convex_surface_holed_difference(
 /// intentionally narrower than arbitrary planar-cell extraction: touching
 /// holes, nested holes, and nonconvex coverage still fail closed. The accepted
 /// case retains every component hull as a ring and replays exact area,
-/// matching Yap's exact-computation discipline from "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997).
-#[cfg(feature = "exact-triangulation")]
 pub fn arrange_coplanar_convex_surface_multi_holed_difference(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -2572,7 +2402,7 @@ pub fn arrange_coplanar_convex_surface_multi_holed_difference(
     orient_polygon_ccw(&mut outer, projection)?;
     let outer_area = projected_area2_abs(&outer, projection)?;
     let mut holes = Vec::new();
-    let mut hole_area_sum = ExactReal::from(0);
+    let mut hole_area_sum = Real::from(0);
     for component in connected_face_component_meshes(right)? {
         let hole_mesh = component;
         let mut hole = contained_hole_ring_for_multi_hole_difference(left, &hole_mesh, projection)?;
@@ -2607,7 +2437,6 @@ pub fn arrange_coplanar_convex_surface_multi_holed_difference(
     Some(arrangement)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn convex_outer_ring_for_multi_hole_difference(
     left: &ExactMesh,
 ) -> Option<(CoplanarProjection, Vec<Point3>)> {
@@ -2616,7 +2445,7 @@ fn convex_outer_ring_for_multi_hole_difference(
         let triangle = left.triangles()[0].0;
         let outer = triangle
             .iter()
-            .map(|&index| Some(left.vertices().get(index)?.to_hyperlimit_point()))
+            .map(|&index| Some(left.vertices().get(index)?.clone()))
             .collect::<Option<Vec<_>>>()?;
         return Some((projection, outer));
     }
@@ -2624,7 +2453,6 @@ fn convex_outer_ring_for_multi_hole_difference(
     Some((projection, outer))
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn contained_hole_ring_for_multi_hole_difference(
     left: &ExactMesh,
     hole_mesh: &ExactMesh,
@@ -2639,7 +2467,7 @@ fn contained_hole_ring_for_multi_hole_difference(
         let triangle = hole_mesh.triangles()[0].0;
         return triangle
             .iter()
-            .map(|&index| Some(hole_mesh.vertices().get(index)?.to_hyperlimit_point()))
+            .map(|&index| Some(hole_mesh.vertices().get(index)?.clone()))
             .collect::<Option<Vec<_>>>();
     }
     let certificate = certify_coplanar_convex_surface_containment(left, hole_mesh)?;
@@ -2656,11 +2484,8 @@ fn contained_hole_ring_for_multi_hole_difference(
 /// This is a topology-only decomposition, not a geometric planar arrangement.
 /// Components are formed by shared undirected source edges and are then
 /// recertified as convex coplanar sheets before they can become holes. That
-/// follows Yap's retained-state model from "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997): component boundaries
 /// come from exact mesh topology and must replay through later predicates
 /// rather than being inferred from rounded coordinates.
-#[cfg(feature = "exact-triangulation")]
 fn connected_face_component_meshes(mesh: &ExactMesh) -> Option<Vec<ExactMesh>> {
     if mesh.triangles().is_empty() {
         return None;
@@ -2690,7 +2515,6 @@ fn connected_face_component_meshes(mesh: &ExactMesh) -> Option<Vec<ExactMesh>> {
     Some(components)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn triangles_share_edge(left: Triangle, right: Triangle) -> bool {
     let left_edges = triangle_edges(left);
     let right_edges = triangle_edges(right);
@@ -2699,7 +2523,6 @@ fn triangles_share_edge(left: Triangle, right: Triangle) -> bool {
         .any(|left| right_edges.iter().any(|right| left == right))
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn triangle_edges(triangle: Triangle) -> [(usize, usize); 3] {
     [
         canonical_edge(triangle.0[0], triangle.0[1]),
@@ -2708,7 +2531,6 @@ fn triangle_edges(triangle: Triangle) -> [(usize, usize); 3] {
     ]
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn component_mesh(mesh: &ExactMesh, faces: &[usize]) -> Option<ExactMesh> {
     let mut vertices = Vec::new();
     let mut old_to_new: Vec<(usize, usize)> = Vec::new();
@@ -2747,11 +2569,7 @@ fn component_mesh(mesh: &ExactMesh, faces: &[usize]) -> Option<ExactMesh> {
 /// triangles. This is intentionally stricter than a general mesh traversal:
 /// multiple rings, non-manifold seams, dangling edges, and branch vertices are
 /// planar-arrangement inputs, not proof for the bounded nonconvex source
-/// difference path. The check preserves Yap's retained object/state split from
-/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997): source topology is replayed from exact mesh incidence before any
 /// coordinate predicate is used.
-#[cfg(feature = "exact-triangulation")]
 fn order_single_mesh_boundary_loop(mesh: &ExactMesh) -> Option<Vec<usize>> {
     let mut edge_counts: Vec<((usize, usize), usize)> = Vec::new();
     for triangle in mesh.triangles() {
@@ -2834,11 +2652,8 @@ fn order_single_mesh_boundary_loop(mesh: &ExactMesh) -> Option<Vec<usize>> {
 /// deliberately stays in mesh topology until each boundary cycle has been
 /// recovered: boundary edges must have one incident triangle, interior edges
 /// must have two, and every boundary vertex must have degree two. That is the
-/// exact structural object Yap asks algorithms to retain in "Towards Exact
-/// Geometric Computation," *Computational Geometry* 7.1-2 (1997). The caller
 /// is still responsible for deciding which cycle is the outer ring by exact
 /// projected containment predicates; this helper only certifies incidence.
-#[cfg(feature = "exact-triangulation")]
 fn order_mesh_boundary_loops(mesh: &ExactMesh) -> Option<Vec<Vec<usize>>> {
     let mut edge_counts: Vec<((usize, usize), usize)> = Vec::new();
     for triangle in mesh.triangles() {
@@ -2956,12 +2771,7 @@ fn order_mesh_boundary_loops(mesh: &ExactMesh) -> Option<Vec<Vec<usize>>> {
 /// exact convex sheet covers, then the output boundary is the convex polygon
 /// induced by retained vertices and exact edge intersections. The retained
 /// polygon is accepted only when its triangulated mesh validates, keeping the
-/// construction aligned with Yap's certified-object contract. The convex
-/// clipping boundary follows the Sutherland-Hodgman half-plane clipping model,
 /// but replaces tolerance tests with exact `hyperlimit` predicates; see
-/// Sutherland and Hodgman, "Reentrant Polygon Clipping," *Communications of the
-/// ACM* 17.1 (1974).
-#[cfg(feature = "exact-triangulation")]
 pub fn arrange_coplanar_convex_surface_intersection(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -2997,15 +2807,10 @@ pub fn arrange_coplanar_convex_surface_intersection(
 /// Certify and materialize disjoint coplanar intersection components.
 ///
 /// This conservative materializer clips every source triangle pair with the
-/// single-triangle Sutherland-Hodgman path, then accepts the result only when
 /// those positive-area clips form several pairwise disjoint simple loops. It
 /// is a bounded bridge toward full planar arrangements: adjacent fragments,
 /// nested loops, or overlapping components still return `None` and remain
-/// explicit planar-cell work. That keeps the implementation aligned with Yap,
-/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997), while using Sutherland and Hodgman's convex clipping construction
 /// for the local component geometry.
-#[cfg(feature = "exact-triangulation")]
 pub fn arrange_coplanar_convex_surface_multi_intersection(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -3025,13 +2830,8 @@ pub fn arrange_coplanar_convex_surface_multi_intersection(
 /// and nonconvex; convex and disjoint-convex cases stay with the narrower
 /// convex intersection certificates.
 ///
-/// The local clips use Sutherland and Hodgman's exact half-plane clipping
-/// construction, while the merge uses the Weiler-Atherton boundary-fragment
-/// idea already used by coplanar unions. Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997), is the reason the
 /// promoted loop must replay from retained convex clips and exact area
 /// equality rather than from sampled arrangement cells.
-#[cfg(feature = "exact-triangulation")]
 pub fn arrange_coplanar_surface_component_intersection(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -3075,7 +2875,6 @@ pub fn arrange_coplanar_surface_component_intersection(
 /// [`arrange_coplanar_convex_surface_multi_intersection`]. This keeps the
 /// public artifact contract explicit while advancing the remaining planar
 /// cell-arrangement work.
-#[cfg(feature = "exact-triangulation")]
 pub fn arrange_coplanar_surface_multi_component_intersection(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -3120,14 +2919,9 @@ pub fn arrange_coplanar_surface_multi_component_intersection(
 /// interior-disjoint coplanar faces, so the replay cannot double-count
 /// overlapping cover triangles.
 ///
-/// The local clips reuse Sutherland and Hodgman's half-plane construction
-/// (Sutherland and Hodgman, "Reentrant Polygon Clipping," *Communications of
-/// the ACM* 17.1, 1974), while the acceptance rule follows Yap, "Towards
-/// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997):
 /// topology-changing containment is emitted only when exact retained
 /// predicate/area facts prove whole-object coverage. In particular, retained
 /// holes remain holes because their uncovered area contributes no clip area.
-#[cfg(feature = "exact-triangulation")]
 pub fn certify_coplanar_surface_mesh_containment(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -3165,9 +2959,7 @@ pub fn certify_coplanar_surface_mesh_containment(
 /// The equality test is per subject triangle instead of whole-mesh only. That
 /// makes the certificate antagonistic to false positives where one covered
 /// triangle overcompensates for an uncovered triangle elsewhere, and it
-/// preserves Yap's object/state boundary by replaying each retained face as
 /// its own exact coverage claim.
-#[cfg(feature = "exact-triangulation")]
 fn coplanar_mesh_area_covered_by_mesh(
     subject: &ExactMesh,
     cover: &ExactMesh,
@@ -3177,10 +2969,10 @@ fn coplanar_mesh_area_covered_by_mesh(
         let subject_triangle = single_face_mesh(subject, subject_face)?;
         let subject_points = mesh_points(&subject_triangle);
         let subject_area = projected_area2_abs(&subject_points, projection)?;
-        if compare_reals(&subject_area, &ExactReal::from(0)).value() != Some(Ordering::Greater) {
+        if compare_reals(&subject_area, &Real::from(0)).value() != Some(Ordering::Greater) {
             return Some(false);
         }
-        let mut covered_area = ExactReal::from(0);
+        let mut covered_area = Real::from(0);
         for cover_face in 0..cover.triangles().len() {
             let cover_triangle = single_face_mesh(cover, cover_face)?;
             let Some((clip_projection, clip)) =
@@ -3192,7 +2984,7 @@ fn coplanar_mesh_area_covered_by_mesh(
                 return None;
             }
             let clip_area = projected_area2_abs(&clip, projection)?;
-            if compare_reals(&clip_area, &ExactReal::from(0)).value() == Some(Ordering::Greater) {
+            if compare_reals(&clip_area, &Real::from(0)).value() == Some(Ordering::Greater) {
                 covered_area = add(&covered_area, &clip_area);
             }
         }
@@ -3209,7 +3001,6 @@ fn coplanar_mesh_area_covered_by_mesh(
 /// interior-disjoint. Boundary contacts are fine: they carry no area in the
 /// triangle-mesh result channel and match the retained triangulation model
 /// used by exact open surfaces.
-#[cfg(feature = "exact-triangulation")]
 fn coplanar_mesh_faces_have_disjoint_interiors(
     mesh: &ExactMesh,
     projection: CoplanarProjection,
@@ -3227,7 +3018,7 @@ fn coplanar_mesh_faces_have_disjoint_interiors(
                 return None;
             }
             let clip_area = projected_area2_abs(&clip, projection)?;
-            if compare_reals(&clip_area, &ExactReal::from(0)).value() == Some(Ordering::Greater) {
+            if compare_reals(&clip_area, &Real::from(0)).value() == Some(Ordering::Greater) {
                 return Some(false);
             }
         }
@@ -3235,7 +3026,6 @@ fn coplanar_mesh_faces_have_disjoint_interiors(
     Some(true)
 }
 
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug)]
 struct SourceHoledSurfaceComponent {
     outer: Vec<Point3>,
@@ -3257,15 +3047,6 @@ struct SourceHoledSurfaceComponent {
 /// The retained rings are imported from mesh incidence, the disk/source
 /// ownership facts are exact simple-polygon predicates, and the final area is
 /// replayed by summing every pairwise triangle intersection. That is the
-/// object/predicate separation advocated by Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997). Local triangle clips
-/// use the exact Sutherland-Hodgman model already used by the convex
-/// intersection path; see Sutherland and Hodgman, "Reentrant Polygon
-/// Clipping," *Communications of the ACM* 17.1 (1974). Holed output
-/// triangulation is delegated to `hypertri`'s exact earcut adapter, following
-/// Held, "FIST: Fast Industrial-Strength Triangulation of Polygons,"
-/// *Algorithmica* 30 (2001).
-#[cfg(feature = "exact-triangulation")]
 pub fn arrange_coplanar_surface_component_holed_intersection(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -3303,18 +3084,7 @@ pub fn arrange_coplanar_surface_component_holed_intersection(
 ///
 /// Boundary rings still come from exact mesh incidence and the final retained
 /// area must equal the pairwise source-triangle intersection area. That is the
-/// retained object/predicate split advocated by Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997). The local face clips
-/// use Sutherland and Hodgman's half-plane clipping model from "Reentrant
-/// Polygon Clipping," *Communications of the ACM* 17.1 (1974). Convex removed
-/// union replay follows Weiler and Atherton, "Hidden Surface Removal Using
-/// Polygon Area Sorting," *SIGGRAPH Computer Graphics* 11.2 (1977), with the
 /// finite inclusion-exclusion area certificate used for convex arrangements
-/// in de Berg, Cheong, van Kreveld, and Overmars, *Computational Geometry:
-/// Algorithms and Applications*, 3rd ed. (2008). Triangulation follows Held,
-/// "FIST: Fast Industrial-Strength Triangulation of Polygons," *Algorithmica*
-/// 30 (2001), through `hypertri`'s exact earcut adapter.
-#[cfg(feature = "exact-triangulation")]
 fn arrange_coplanar_surface_component_holed_same_outer_intersection(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -3399,8 +3169,13 @@ fn arrange_coplanar_surface_component_holed_same_outer_intersection(
         "coplanar same-outer component-holed intersection",
     )
     .ok()?;
-    let intersection_area = coplanar_mesh_pairwise_intersection_area2(left, right, projection)?;
     let retained_area = component_holed_components_area2(&retained_components, projection)?;
+    let intersection_area = same_outer_component_holed_intersection_source_area2(
+        &left_components,
+        &right_components,
+        projection,
+    )
+    .or_else(|| coplanar_mesh_pairwise_intersection_area2(left, right, projection))?;
     if compare_reals(&intersection_area, &retained_area).value() != Some(Ordering::Equal) {
         return None;
     }
@@ -3414,6 +3189,91 @@ fn arrange_coplanar_surface_component_holed_same_outer_intersection(
     Some(arrangement)
 }
 
+fn same_outer_component_holed_intersection_source_area2(
+    left_components: &[SourceHoledSurfaceComponent],
+    right_components: &[SourceHoledSurfaceComponent],
+    projection: CoplanarProjection,
+) -> Option<Real> {
+    let mut matched_left = vec![false; left_components.len()];
+    let mut matched_right = vec![false; right_components.len()];
+    let mut matched_any = false;
+    let mut area = Real::from(0);
+    for (left_index, left) in left_components.iter().enumerate() {
+        for (right_index, right) in right_components.iter().enumerate() {
+            if polygons_equal_modulo_collinear(&left.outer, &right.outer, projection) {
+                if matched_left[left_index] || matched_right[right_index] {
+                    return None;
+                }
+                area = add(
+                    &area,
+                    &same_outer_component_pair_intersection_source_area2(left, right, projection)?,
+                );
+                matched_left[left_index] = true;
+                matched_right[right_index] = true;
+                matched_any = true;
+                continue;
+            }
+            match simple_polygon_interaction(&left.outer, &right.outer, projection)? {
+                SimplePolygonInteraction::Disjoint => {}
+                SimplePolygonInteraction::PointOnly | SimplePolygonInteraction::Connected => {
+                    return None;
+                }
+            }
+        }
+    }
+    if matched_any { Some(area) } else { None }
+}
+
+fn same_outer_component_pair_intersection_source_area2(
+    left: &SourceHoledSurfaceComponent,
+    right: &SourceHoledSurfaceComponent,
+    projection: CoplanarProjection,
+) -> Option<Real> {
+    let outer_area = projected_area2_abs(&left.outer, projection)?;
+    let hole_area =
+        same_outer_component_holed_intersection_hole_union_area2(left, right, projection)?;
+    if compare_reals(&outer_area, &hole_area).value() != Some(Ordering::Greater) {
+        return None;
+    }
+    Some(sub(&outer_area, &hole_area))
+}
+
+fn same_outer_component_holed_intersection_hole_union_area2(
+    left: &SourceHoledSurfaceComponent,
+    right: &SourceHoledSurfaceComponent,
+    projection: CoplanarProjection,
+) -> Option<Real> {
+    let mut source_holes: Vec<Vec<Point3>> =
+        Vec::with_capacity(left.holes.len() + right.holes.len());
+    for source_hole in left.holes.iter().chain(right.holes.iter()) {
+        if source_holes
+            .iter()
+            .any(|hole| polygons_equal(hole, source_hole))
+        {
+            continue;
+        }
+        let mut hole = source_hole.clone();
+        orient_polygon_ccw(&mut hole, projection)?;
+        source_holes.push(hole);
+    }
+    remove_nested_same_outer_intersection_holes(&mut source_holes, projection)?;
+
+    let mut union_area = Real::from(0);
+    for group in same_outer_intersection_hole_groups(&source_holes, projection)? {
+        let group_area = if group.len() == 1 {
+            projected_area2_abs(&source_holes[group[0]], projection)?
+        } else {
+            let group_holes = group
+                .into_iter()
+                .map(|index| source_holes[index].clone())
+                .collect::<Vec<_>>();
+            component_holed_union_source_area2(&group_holes, projection, true)?
+        };
+        union_area = add(&union_area, &group_area);
+    }
+    Some(union_area)
+}
+
 /// Retain source island components during same-outer intersections.
 ///
 /// A source mesh may already contain a filled component inside one of its
@@ -3423,10 +3283,7 @@ fn arrange_coplanar_surface_component_holed_same_outer_intersection(
 /// cell island rule: the nested component is accepted only when exact
 /// predicates prove it is owned by a named retained hole, possibly with
 /// point-only branch contact, and exact source replay later checks the whole
-/// Boolean area. Yap, "Towards Exact Geometric Computation," *Computational
-/// Geometry* 7.1-2 (1997), is the reason this stays as retained source
 /// topology instead of being inferred from mesh triangles.
-#[cfg(feature = "exact-triangulation")]
 fn same_outer_intersection_surviving_source_islands(
     left_main: &SourceHoledSurfaceComponent,
     right_main: &SourceHoledSurfaceComponent,
@@ -3453,7 +3310,6 @@ fn same_outer_intersection_surviving_source_islands(
     Some(islands)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn collect_same_outer_source_islands_from_side(
     owner_main: &SourceHoledSurfaceComponent,
     opposite_main: &SourceHoledSurfaceComponent,
@@ -3517,16 +3373,9 @@ fn collect_same_outer_source_islands_from_side(
 /// full-area replay closes; partial-overlap hole relations still reject so a
 /// later planar-cell extractor owns those topologies.
 ///
-/// This follows Yap, "Towards Exact Geometric Computation," *Computational
-/// Geometry* 7.1-2 (1997): the retained island, its holes, and any additional
 /// opposite holes are certified objects, not consequences of representative
 /// points. Boundary relation tests use the exact orientation-predicate segment
-/// classifier of Guigue and Devillers, "Fast and Robust Triangle-Triangle
-/// Overlap Test Using Orientation Predicates," *Journal of Graphics Tools*
-/// 8.1 (2003), while containment of nonconvex simple loops reuses the
-/// Held/FIST-backed simple-polygon location replay used elsewhere in this
 /// module.
-#[cfg(feature = "exact-triangulation")]
 fn same_outer_source_island_retained_component(
     candidate: &SourceHoledSurfaceComponent,
     opposite_main: &SourceHoledSurfaceComponent,
@@ -3535,7 +3384,6 @@ fn same_outer_source_island_retained_component(
     same_outer_holed_source_island_retained_components(candidate, opposite_main, projection)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn same_component_holes_equal(
     left: &[Vec<Point3>],
     right: &[Vec<Point3>],
@@ -3553,7 +3401,7 @@ fn same_component_holes_equal(
 ///
 /// The output for a holed island is
 /// `candidate.outer - union(candidate.holes, opposite_holes_inside_material)`.
-/// This helper recognizes bounded retained-object cases where that difference
+/// This helper recognizes bounded retained evidence cases where that difference
 /// can be replayed as one or more disjoint simple components. Opposite holes
 /// may be no-ops inside already removed island holes, consume the whole island,
 /// become strict retained holes, or cut the island outer into exact simple
@@ -3561,16 +3409,8 @@ fn same_component_holes_equal(
 /// containment to exactly one remnant, or omitted only when a deleted cutter
 /// wholly owns it.
 ///
-/// The object-first split follows Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997): named source loops, cutter loops,
 /// and produced remnants stay as exact objects until replay is certified.
 /// Segment contact classification uses the orientation-predicate relation of
-/// Guigue and Devillers, "Fast and Robust Triangle-Triangle Overlap Test Using
-/// Orientation Predicates," *Journal of Graphics Tools* 8.1 (2003). Simple
-/// containment uses the Held/FIST-backed simple-polygon location replay used
-/// throughout this module; see Held, "FIST: Fast Industrial-Strength
-/// Triangulation of Polygons," *Algorithmica* 30 (2001).
-#[cfg(feature = "exact-triangulation")]
 fn same_outer_holed_source_island_retained_components(
     candidate: &SourceHoledSurfaceComponent,
     opposite_main: &SourceHoledSurfaceComponent,
@@ -3665,7 +3505,6 @@ fn same_outer_holed_source_island_retained_components(
     Some(components)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn same_outer_holed_source_island_side_opening_components(
     candidate: &SourceHoledSurfaceComponent,
     retained_holes: &[Vec<Point3>],
@@ -3712,7 +3551,6 @@ fn same_outer_holed_source_island_side_opening_components(
     )
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn same_outer_island_hole_is_deleted_by_outer_cutters(
     island_hole: &[Point3],
     outer_cutters: &[Vec<Point3>],
@@ -3731,7 +3569,6 @@ fn same_outer_island_hole_is_deleted_by_outer_cutters(
     })
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn same_outer_opposite_hole_is_inside_existing_island_hole(
     opposite_hole: &[Point3],
     island_holes: &[Vec<Point3>],
@@ -3750,7 +3587,6 @@ fn same_outer_opposite_hole_is_inside_existing_island_hole(
     })
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn same_outer_source_island_consumed_by_hole(
     candidate_outer: &[Point3],
     opposite_hole: &[Point3],
@@ -3768,13 +3604,9 @@ fn same_outer_source_island_consumed_by_hole(
 /// source island. The construction first clips each opposite hole against the
 /// source loop, then replays the exact difference with the same bounded
 /// orthogonal arrangement and convex-fragment routines used by same-outer
-/// holed differences. Allowing multiple remnants is still a retained-object
+/// holed differences. Allowing multiple remnants is still a retained evidence
 /// certificate, not a general planar subdivision: all remnant loops must be
 /// simple and pairwise disjoint before callers may assign material to them.
-/// This is the Yap TEGC predicate/construction split applied to the
-/// split-remnant case; see Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997).
-#[cfg(feature = "exact-triangulation")]
 fn same_outer_source_island_clipped_components_by_holes(
     candidate_outer: &[Point3],
     opposite_holes: &[Vec<Point3>],
@@ -3825,7 +3657,6 @@ fn same_outer_source_island_clipped_components_by_holes(
     Some(remnants)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn same_outer_intersection_pair_is_accounted_source_island(
     left_component: &SourceHoledSurfaceComponent,
     right_component: &SourceHoledSurfaceComponent,
@@ -3849,7 +3680,6 @@ fn same_outer_intersection_pair_is_accounted_source_island(
     )
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn source_component_is_island_owned_by_matching_outer(
     candidate: &SourceHoledSurfaceComponent,
     opposite_main: &SourceHoledSurfaceComponent,
@@ -3876,7 +3706,6 @@ fn source_component_is_island_owned_by_matching_outer(
     Some(false)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn source_component_outer_inside_any_hole_allowing_point_branch(
     outer: &[Point3],
     container: &SourceHoledSurfaceComponent,
@@ -3897,7 +3726,6 @@ fn source_component_outer_inside_any_hole_allowing_point_branch(
     Some(false)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn merged_same_outer_intersection_holes(
     left: &SourceHoledSurfaceComponent,
     right: &SourceHoledSurfaceComponent,
@@ -3927,7 +3755,6 @@ fn merged_same_outer_intersection_holes(
     Some(holes)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn remove_nested_same_outer_intersection_holes(
     holes: &mut Vec<Vec<Point3>>,
     projection: CoplanarProjection,
@@ -3964,11 +3791,8 @@ fn remove_nested_same_outer_intersection_holes(
 /// This pass keeps all source retained holes available until after the
 /// interaction graph is known. That avoids operand-order artifacts where an
 /// early two-rectangle union would erase the rectangles needed to prove a
-/// later transitive union. The branch model follows Yap, "Towards Exact
-/// Geometric Computation," *Computational Geometry* 7.1-2 (1997): exact
 /// source objects are classified first, and only a certified connected
 /// rectangular component is promoted into one retained polygon.
-#[cfg(feature = "exact-triangulation")]
 fn merge_same_outer_intersection_hole_components(
     holes: &[Vec<Point3>],
     projection: CoplanarProjection,
@@ -3991,7 +3815,6 @@ fn merge_same_outer_intersection_hole_components(
     Some(merged)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn same_outer_intersection_hole_groups(
     holes: &[Vec<Point3>],
     projection: CoplanarProjection,
@@ -4038,20 +3861,9 @@ fn same_outer_intersection_hole_groups(
 /// annuli proven either by exact orthogonal cells or by a non-rectilinear
 /// exposed-fragment replay whose area equation closes.
 ///
-/// This is the same retained-object discipline Yap argues for in "Towards
-/// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997):
 /// source loops are first classified exactly, the candidate topology is
 /// constructed from retained exact boundary objects, and the caller still
 /// replays the full Boolean area before materialization. Orthogonal annuli use
-/// the cell-complex boundary model described by de Berg, Cheong, van Kreveld,
-/// and Overmars, *Computational Geometry: Algorithms and Applications*, 3rd
-/// ed. (2008), Chapter 2. Non-rectilinear annuli use the Weiler-Atherton
-/// exposed-fragment boundary traversal from Weiler and Atherton, "Hidden
-/// Surface Removal Using Polygon Area Sorting," *SIGGRAPH Computer Graphics*
-/// 11.2 (1977), with exact segment events classified in the style of Guigue
-/// and Devillers, "Fast and Robust Triangle-Triangle Overlap Test Using
-/// Orientation Predicates," *Journal of Graphics Tools* 8.1 (2003).
-#[cfg(feature = "exact-triangulation")]
 fn same_outer_intersection_components_with_orthogonal_hole_islands(
     left: &SourceHoledSurfaceComponent,
     right: &SourceHoledSurfaceComponent,
@@ -4141,15 +3953,7 @@ fn same_outer_intersection_components_with_orthogonal_hole_islands(
 /// connects the component, and the exact fragment stitch replays as one
 /// simple retained hole. Point-only and edge-only contact still reject,
 /// because those contacts do not prove a 2D removed owner for the Boolean
-/// topology. This is Yap's retained-object discipline from "Towards Exact
-/// Geometric Computation," *Computational Geometry* 7.1-2 (1997): topology
 /// advances from exact predicates over named source objects, then the output
-/// is accepted only after exact area replay. Boundary fragments follow Weiler
-/// and Atherton, "Hidden Surface Removal Using Polygon Area Sorting,"
-/// *SIGGRAPH Computer Graphics* 11.2 (1977), and segment predicates follow
-/// Guigue and Devillers, "Fast and Robust Triangle-Triangle Overlap Test
-/// Using Orientation Predicates," *Journal of Graphics Tools* 8.1 (2003).
-#[cfg(feature = "exact-triangulation")]
 fn same_outer_intersection_convex_hole_union_component(
     holes: &[Vec<Point3>],
     projection: CoplanarProjection,
@@ -4180,12 +3984,6 @@ fn same_outer_intersection_convex_hole_union_component(
 /// fallback covers the bounded non-axis-aligned simple-loop case, including
 /// clusters whose nonconvex removed boundary is represented by several exact
 /// source rings. It builds the exterior boundary from source fragments whose
-/// midpoints are outside every other retained hole, the Weiler-Atherton
-/// retained-fragment idea from Weiler and Atherton, "Hidden Surface Removal
-/// Using Polygon Area Sorting," *SIGGRAPH Computer Graphics* 11.2 (1977).
-/// Segment events use exact orientation predicates in the style of Guigue and
-/// Devillers, "Fast and Robust Triangle-Triangle Overlap Test Using
-/// Orientation Predicates," *Journal of Graphics Tools* 8.1 (2003).
 ///
 /// The helper is intentionally not a full planar arrangement extractor. Every
 /// source pair in the cluster must be connected through positive-area
@@ -4193,11 +3991,7 @@ fn same_outer_intersection_convex_hole_union_component(
 /// never create connectivity. The stitched loop is then compared to the exact
 /// union area of the source loops, using the local exact
 /// triangulation-plus-inclusion-exclusion replay from
-/// [`component_holed_union_source_area2`]. That final equality is the Yap
-/// promotion gate from "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997): the retained removed owner is named
 /// only when exact objects, exact predicates, and exact area agree.
-#[cfg(feature = "exact-triangulation")]
 fn same_outer_intersection_simple_hole_union_component(
     holes: &[Vec<Point3>],
     projection: CoplanarProjection,
@@ -4273,13 +4067,7 @@ fn same_outer_intersection_simple_hole_union_component(
 /// orthogonal case: every source hole must be an exact projected axis-aligned
 /// rectangle and their union must be one certified strip rectangle from
 /// [`rectangle_strip_union_polygon`]. The finite arrangement model is the
-/// standard rectangle-cell decomposition from de Berg, Cheong, van Kreveld,
-/// and Overmars, *Computational Geometry: Algorithms and Applications*, 3rd
-/// ed. (2008), Chapter 2, while the promotion boundary remains Yap,
-/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997): only exact source rectangles and exact area/loop replay may name a
 /// retained removed owner.
-#[cfg(feature = "exact-triangulation")]
 fn same_outer_intersection_rectangle_strip_hole_union_component(
     holes: &[Vec<Point3>],
     projection: CoplanarProjection,
@@ -4323,24 +4111,14 @@ fn same_outer_intersection_rectangle_strip_hole_union_component(
 /// This single-ring entry point rejects removed unions with holes/islands;
 /// [`same_outer_intersection_components_with_orthogonal_hole_islands`] consumes
 /// those annular unions and promotes their inner voids to output island
-/// components. Both paths keep Yap's predicate/construction separation from
-/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997): exact retained source loops name the candidate topology, the
 /// orthogonal cell complex performs the finite arrangement, and the caller
 /// still replays the full Boolean area equation. The rectilinear subdivision
-/// is the arrangement model described by de Berg, Cheong, van Kreveld, and
-/// Overmars, *Computational Geometry: Algorithms and Applications*, 3rd ed.
-/// (2008), Chapter 2; temporary simple-loop triangulation uses Held, "FIST:
-/// Fast Industrial-Strength Triangulation of Polygons," *Algorithmica* 30
-/// (2001), via `hypertri`.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug)]
 struct SameOuterHoleUnionReplay {
     outer: Vec<Point3>,
     islands: Vec<Vec<Point3>>,
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn same_outer_intersection_orthogonal_hole_union_component(
     holes: &[Vec<Point3>],
     projection: CoplanarProjection,
@@ -4352,7 +4130,6 @@ fn same_outer_intersection_orthogonal_hole_union_component(
     Some(replay.outer)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn same_outer_intersection_orthogonal_hole_union_replay(
     holes: &[Vec<Point3>],
     projection: CoplanarProjection,
@@ -4360,6 +4137,25 @@ fn same_outer_intersection_orthogonal_hole_union_replay(
     if holes.len() < 2 {
         return None;
     }
+    let mut connected_pairs = Vec::new();
+    let mut candidate_graph = UnionFind::new(holes.len());
+    for left_index in 0..holes.len() {
+        for right_index in left_index + 1..holes.len() {
+            match simple_polygon_interaction(&holes[left_index], &holes[right_index], projection)? {
+                SimplePolygonInteraction::Disjoint => {}
+                SimplePolygonInteraction::PointOnly => return None,
+                SimplePolygonInteraction::Connected => {
+                    candidate_graph.union(left_index, right_index);
+                    connected_pairs.push((left_index, right_index));
+                }
+            }
+        }
+    }
+    let candidate_root = candidate_graph.find(0);
+    if (1..holes.len()).any(|index| candidate_graph.find(index) != candidate_root) {
+        return None;
+    }
+
     let meshes = holes
         .iter()
         .map(|hole| {
@@ -4371,26 +4167,16 @@ fn same_outer_intersection_orthogonal_hole_union_replay(
         })
         .collect::<Option<Vec<_>>>()?;
     let mut overlap_graph = UnionFind::new(holes.len());
-    for left_index in 0..holes.len() {
-        for right_index in left_index + 1..holes.len() {
-            match simple_polygon_interaction(&holes[left_index], &holes[right_index], projection)? {
-                SimplePolygonInteraction::Disjoint => {}
-                SimplePolygonInteraction::PointOnly => return None,
-                SimplePolygonInteraction::Connected => {
-                    let intersection_area = coplanar_mesh_pairwise_intersection_area2(
-                        &meshes[left_index],
-                        &meshes[right_index],
-                        projection,
-                    )?;
-                    if compare_reals(&intersection_area, &ExactReal::from(0)).value()
-                        == Some(Ordering::Greater)
-                    {
-                        overlap_graph.union(left_index, right_index);
-                    } else {
-                        return None;
-                    }
-                }
-            }
+    for (left_index, right_index) in connected_pairs {
+        let intersection_area = coplanar_mesh_pairwise_intersection_area2(
+            &meshes[left_index],
+            &meshes[right_index],
+            projection,
+        )?;
+        if compare_reals(&intersection_area, &Real::from(0)).value() == Some(Ordering::Greater) {
+            overlap_graph.union(left_index, right_index);
+        } else {
+            return None;
         }
     }
     let root = overlap_graph.find(0);
@@ -4455,15 +4241,7 @@ fn same_outer_intersection_orthogonal_hole_union_replay(
 /// connected positive-area source-hole overlap graph, at least one
 /// non-axis-aligned retained edge, exposed boundary loops that classify as one
 /// outer removed ring plus one or more strict inner island rings, and exact
-/// equality between the loop area and the source union area. This is Yap's
-/// "Towards Exact Geometric Computation" (Computational Geometry 7.1-2,
-/// 1997) promotion rule applied directly: topology crosses the API boundary
 /// only when exact source objects, predicates, construction, and area replay
-/// agree. Boundary fragments follow Weiler and Atherton, "Hidden Surface
-/// Removal Using Polygon Area Sorting" (SIGGRAPH Computer Graphics 11.2,
-/// 1977); segment splitting uses the Guigue-Devillers orientation-predicate
-/// model cited by the surrounding union-fragment code.
-#[cfg(feature = "exact-triangulation")]
 fn same_outer_intersection_annular_hole_union_replay(
     holes: &[Vec<Point3>],
     projection: CoplanarProjection,
@@ -4472,7 +4250,6 @@ fn same_outer_intersection_annular_hole_union_replay(
         .or_else(|| same_outer_intersection_simple_annular_hole_union_replay(holes, projection))
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn same_outer_intersection_simple_annular_hole_union_replay(
     holes: &[Vec<Point3>],
     projection: CoplanarProjection,
@@ -4533,7 +4310,7 @@ fn same_outer_intersection_simple_annular_hole_union_replay(
         )
         .ok()?;
         let area = projected_area2_abs(loop_ring, projection)?;
-        if compare_reals(&area, &ExactReal::from(0)).value()? != Ordering::Greater {
+        if compare_reals(&area, &Real::from(0)).value()? != Ordering::Greater {
             return None;
         }
     }
@@ -4643,11 +4420,6 @@ fn same_outer_intersection_simple_annular_hole_union_replay(
 /// candidate edge and interpolate the retained 3D point.
 ///
 /// The bridge point is a triangulation aid, not Boolean topology. This
-/// follows Yap, "Towards Exact Geometric Computation," *Computational
-/// Geometry* 7.1-2 (1997): it is retained exact construction state, not a
-/// tolerance weld. The keyhole/bridge reduction follows Held, "FIST: Fast
-/// Industrial-Strength Triangulation of Polygons," *Algorithmica* 30 (2001).
-#[cfg(feature = "exact-triangulation")]
 fn split_outer_for_retained_hole_bridges(
     outer: &mut Vec<Point3>,
     holes: &[Vec<Point3>],
@@ -4659,7 +4431,6 @@ fn split_outer_for_retained_hole_bridges(
     Some(())
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn split_outer_for_retained_hole_bridge(
     outer: &mut Vec<Point3>,
     hole: &[Point3],
@@ -4719,14 +4490,13 @@ fn split_outer_for_retained_hole_bridge(
     Some(())
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn retained_hole_bridge_point_on_outer(
     outer: &[Point3],
     hole_anchor: &Point2,
     projection: CoplanarProjection,
 ) -> Option<Point3> {
-    let zero = ExactReal::from(0);
-    let one = ExactReal::from(1);
+    let zero = Real::from(0);
+    let one = Real::from(1);
     let mut bridge = None::<(Point3, Point2)>;
     for edge in 0..outer.len() {
         let start = &outer[edge];
@@ -4764,7 +4534,6 @@ fn retained_hole_bridge_point_on_outer(
     bridge.map(|(point, _)| point)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn arrange_coplanar_surface_component_holed_intersection_oriented(
     holed_source: &ExactMesh,
     clip_source: &ExactMesh,
@@ -4914,13 +4683,8 @@ fn arrange_coplanar_surface_component_holed_intersection_oriented(
 /// inside those holes. The importer therefore accepts one-ring components when
 /// at least one sibling component carries holes, then validates the whole
 /// component family with the same exact island/point-branch predicates used by
-/// the public component-holed artifact. That keeps the source side in Yap's
-/// retained-object model from "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997): islands are imported from mesh
 /// incidence and exact containment, not reconstructed from sampled triangle
-/// interiors. Segment contact uses the Guigue-Devillers orientation-predicate
 /// classifier through [`validate_component_holed_outer_relationships`].
-#[cfg(feature = "exact-triangulation")]
 fn source_holed_surface_components_from_mesh(
     mesh: &ExactMesh,
 ) -> Option<(CoplanarProjection, Vec<SourceHoledSurfaceComponent>)> {
@@ -4958,12 +4722,7 @@ fn source_holed_surface_components_from_mesh(
             .map(|ring| {
                 let mut points = ring
                     .into_iter()
-                    .map(|index| {
-                        component_mesh
-                            .vertices()
-                            .get(index)
-                            .map(ExactPoint3::to_hyperlimit_point)
-                    })
+                    .map(|index| component_mesh.vertices().get(index).cloned())
                     .collect::<Option<Vec<_>>>()?;
                 points = simplify_projected_polygon(points, component_projection);
                 validate_projected_simple_loop(
@@ -5064,14 +4823,13 @@ fn source_holed_surface_components_from_mesh(
     Some((projection, components))
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn component_holed_components_area2(
     components: &[CoplanarConvexHoledComponent],
     projection: CoplanarProjection,
-) -> Option<ExactReal> {
+) -> Option<Real> {
     components
         .iter()
-        .try_fold(ExactReal::from(0), |area, component| {
+        .try_fold(Real::from(0), |area, component| {
             Some(add(
                 &area,
                 &component_holed_component_area2(component, projection)?,
@@ -5079,16 +4837,15 @@ fn component_holed_components_area2(
         })
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn component_holed_component_area2(
     component: &CoplanarConvexHoledComponent,
     projection: CoplanarProjection,
-) -> Option<ExactReal> {
+) -> Option<Real> {
     let outer_area = projected_area2_abs(&component.outer, projection)?;
     let hole_area = component
         .holes
         .iter()
-        .try_fold(ExactReal::from(0), |area, hole| {
+        .try_fold(Real::from(0), |area, hole| {
             Some(add(&area, &projected_area2_abs(hole, projection)?))
         })?;
     if compare_reals(&outer_area, &hole_area).value() != Some(Ordering::Greater) {
@@ -5097,13 +4854,12 @@ fn component_holed_component_area2(
     Some(sub(&outer_area, &hole_area))
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn coplanar_mesh_pairwise_intersection_area2(
     left: &ExactMesh,
     right: &ExactMesh,
     projection: CoplanarProjection,
-) -> Option<ExactReal> {
-    let mut area = ExactReal::from(0);
+) -> Option<Real> {
+    let mut area = Real::from(0);
     for left_face in 0..left.triangles().len() {
         let left_triangle = single_face_mesh(left, left_face)?;
         for right_face in 0..right.triangles().len() {
@@ -5117,7 +4873,7 @@ fn coplanar_mesh_pairwise_intersection_area2(
                 return None;
             }
             let clip_area = projected_area2_abs(&clip, projection)?;
-            if compare_reals(&clip_area, &ExactReal::from(0)).value() == Some(Ordering::Greater) {
+            if compare_reals(&clip_area, &Real::from(0)).value() == Some(Ordering::Greater) {
                 area = add(&area, &clip_area);
             }
         }
@@ -5145,20 +4901,7 @@ fn coplanar_mesh_pairwise_intersection_area2(
 ///
 /// The source rings are recovered by exact mesh incidence, and the final area
 /// equation is replayed as `area(left) - area(left ∩ right) == area(output)`.
-/// That follows Yap, "Towards Exact Geometric Computation," *Computational
-/// Geometry* 7.1-2 (1997): output topology is emitted only with retained
 /// source objects and exact predicate/area proof. Local face intersections use
-/// Sutherland and Hodgman, "Reentrant Polygon Clipping," *Communications of
-/// the ACM* 17.1 (1974). Convex partial subtraction uses the retained
-/// boundary-fragment traversal of Weiler and Atherton, "Hidden Surface Removal
-/// Using Polygon Area Sorting," *SIGGRAPH Computer Graphics* 11.2 (1977), with
-/// exact segment predicates in the style of Guigue and Devillers, "Fast and
-/// Robust Triangle-Triangle Overlap Test Using Orientation Predicates,"
-/// *Journal of Graphics Tools* 8.1 (2003). Holed output triangulation follows
-/// Held, "FIST:
-/// Fast Industrial-Strength Triangulation of Polygons," *Algorithmica* 30
-/// (2001), through `hypertri`'s exact earcut adapter.
-#[cfg(feature = "exact-triangulation")]
 pub fn arrange_coplanar_surface_component_holed_difference(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -5223,7 +4966,12 @@ pub fn arrange_coplanar_surface_component_holed_difference(
     .ok()?;
 
     let left_area = mesh_projected_area2(left, projection)?;
-    let intersection_area = coplanar_mesh_pairwise_intersection_area2(left, right, projection)?;
+    let intersection_area = same_outer_component_holed_intersection_source_area2(
+        &left_components,
+        &right_components,
+        projection,
+    )
+    .or_else(|| coplanar_mesh_pairwise_intersection_area2(left, right, projection))?;
     let difference_area = sub(&left_area, &intersection_area);
     let retained_area = component_holed_components_area2(&retained_components, projection)?;
     if compare_reals(&difference_area, &retained_area).value() != Some(Ordering::Equal) {
@@ -5239,7 +4987,6 @@ pub fn arrange_coplanar_surface_component_holed_difference(
     Some(arrangement)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn same_outer_holed_difference_components(
     left: &SourceHoledSurfaceComponent,
     right: &SourceHoledSurfaceComponent,
@@ -5348,16 +5095,9 @@ fn same_outer_holed_difference_components(
 /// projected axis-aligned left holes.
 ///
 /// This is the component-holed sibling of
-/// [`axis_aligned_rectangle_difference_polygons`]. It keeps the same Yap-style
-/// exact-computation boundary from Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997): all topology comes from retained
 /// source rings plus exact predicates, and the caller still replays the final
-/// area equation. The orthogonal cells are the finite arrangement described by
-/// de Berg, Cheong, van Kreveld, and Overmars, *Computational Geometry:
-/// Algorithms and Applications*, 3rd ed. (2008), Chapter 2. Each retained
 /// hole is assigned only if it is strictly inside exactly one remnant loop, so
 /// crossing/touching cases cannot be smuggled into the component-holed artifact.
-#[cfg(feature = "exact-triangulation")]
 fn same_outer_holed_rectangular_difference_components(
     source: &[Point3],
     retained_holes: Vec<Vec<Point3>>,
@@ -5408,15 +5148,7 @@ fn same_outer_holed_rectangular_difference_components(
 /// components; otherwise the helper rejects instead of silently consuming
 /// topology that belongs to a broader planar arrangement.
 ///
-/// The promotion follows Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997): retained source loops and exact cell
 /// predicates decide topology before any mesh is emitted. The finite
-/// rectilinear subdivision is the orthogonal arrangement model from de Berg,
-/// Cheong, van Kreveld, and Overmars, *Computational Geometry: Algorithms and
-/// Applications*, 3rd ed. (2008), Chapter 2. Temporary loop triangulation uses
-/// Held, "FIST: Fast Industrial-Strength Triangulation of Polygons,"
-/// *Algorithmica* 30 (2001), through `hypertri`.
-#[cfg(feature = "exact-triangulation")]
 fn same_outer_holed_orthogonal_difference_components(
     source: &[Point3],
     retained_holes: Vec<Vec<Point3>>,
@@ -5516,7 +5248,6 @@ fn same_outer_holed_orthogonal_difference_components(
     Some(components)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn simple_loop_mesh_for_orthogonal_replay(
     loop_points: &[Point3],
     projection: CoplanarProjection,
@@ -5538,18 +5269,9 @@ fn simple_loop_mesh_for_orthogonal_replay(
 /// components, and satisfy the exact area equation in
 /// [`multi_side_opened_difference_polygons`]. Mixed rectangle/nonrectangle
 /// cutter families enter this same path after exact rectangle clipping converts
-/// the orthogonal cutters into ordinary retained convex loops. That is the Yap
-/// retained-object boundary from "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997): no witness point decides the
 /// topology; retained source rings, exact clipping, exact segment predicates,
 /// and exact area replay do.
 ///
-/// The fragment walk is the Weiler-Atherton boundary traversal from Weiler and
-/// Atherton, "Hidden Surface Removal Using Polygon Area Sorting," *SIGGRAPH
-/// Computer Graphics* 11.2 (1977), and the clipped convex regions are produced
-/// with the Sutherland-Hodgman half-plane clipping model, "Reentrant Polygon
-/// Clipping," *Communications of the ACM* 17.1 (1974).
-#[cfg(feature = "exact-triangulation")]
 fn same_outer_holed_convex_difference_components(
     source: &[Point3],
     retained_holes: Vec<Vec<Point3>>,
@@ -5595,12 +5317,7 @@ fn same_outer_holed_convex_difference_components(
 /// retained-fragment path instead of adding a parallel reporting layer. Each
 /// rectangle is intersected exactly with the source retained rectangle and the
 /// positive-area clipped rectangle is emitted as a source-owned convex loop.
-/// The construction is the finite orthogonal arrangement step from de Berg,
-/// Cheong, van Kreveld, and Overmars, *Computational Geometry: Algorithms and
-/// Applications*, 3rd ed. (2008), Chapter 2, but the result is handed to the
-/// Yap-style exact replay boundary in
 /// [`same_outer_holed_convex_difference_components`].
-#[cfg(feature = "exact-triangulation")]
 fn clipped_rectangular_cutters_as_convex_polygons(
     source: &[Point3],
     cutters: &[ProjectedRectangle],
@@ -5645,12 +5362,7 @@ fn clipped_rectangular_cutters_as_convex_polygons(
 /// loops, and exact area replay for the whole set. Keeping these cases explicit
 /// avoids pretending this is a general planar subdivision while still
 /// accepting common nonrectangular corner-cut and mixed convex/orthogonal
-/// cutter topologies. The predicate/construction split follows Yap,
-/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997), and the single-cutter boundary walk is the same
-/// Weiler-Atherton-style retained fragment traversal used by
 /// [`arrange_coplanar_convex_surface_difference`].
-#[cfg(feature = "exact-triangulation")]
 fn convex_cut_difference_polygons(
     source: &[Point3],
     cutters: &[Vec<Point3>],
@@ -5676,16 +5388,9 @@ fn convex_cut_difference_polygons(
 ///
 /// The output loop is stitched from exact source and cutter boundary fragments
 /// using [`collect_convex_difference_boundary_fragments`]. This is the bounded
-/// retained-object version of Weiler-Atherton boundary traversal: candidate
 /// fragments are chosen by exact convex side predicates, stitched into one
 /// simple loop, and accepted only after
 /// [`convex_difference_boundary_area_matches_inputs`] replays
-/// `area(source) = area(output) + area(source ∩ cutter)`. See Weiler and
-/// Atherton, "Hidden Surface Removal Using Polygon Area Sorting," *SIGGRAPH
-/// Computer Graphics* 11.2 (1977), Sutherland and Hodgman, "Reentrant Polygon
-/// Clipping," *Communications of the ACM* 17.1 (1974), and Yap, "Towards
-/// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997).
-#[cfg(feature = "exact-triangulation")]
 fn single_convex_cut_difference_polygon(
     source: &[Point3],
     cutter: &[Point3],
@@ -5749,25 +5454,11 @@ fn single_convex_cut_difference_polygon(
 /// does not remove area from the filled output. Crossings and overlaps outside
 /// these bounded certificates remain general planar-arrangement work.
 ///
-/// The certificate follows Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997): source boundary rings are recovered
 /// from exact mesh incidence, topology changes are named by retained source
 /// rings, and the result is accepted only after exact area replay. The area
-/// replay sums pairwise Sutherland-Hodgman triangle clips (Sutherland and
-/// Hodgman, "Reentrant Polygon Clipping," *Communications of the ACM* 17.1,
-/// 1974). Convex partial subtraction uses the Weiler-Atherton retained
-/// boundary-fragment traversal from Weiler and Atherton, "Hidden Surface
-/// Removal Using Polygon Area Sorting," *SIGGRAPH Computer Graphics* 11.2
-/// (1977). The rectilinear overlap branch is the bounded orthogonal cell
-/// decomposition described by de Berg, Cheong, van Kreveld, and Overmars,
-/// *Computational Geometry: Algorithms and Applications*, 3rd ed. (2008),
 /// Chapter 2. The non-rectilinear simple fallback uses the same
-/// Weiler-Atherton retained-boundary walk, with exact simple-polygon
 /// containment tests, rather than sampled winding representatives. Retained
 /// simple loops are triangulated through the same FIST-style earcut handoff
-/// described by Held, "FIST: Fast Industrial-Strength Triangulation of
-/// Polygons," *Algorithmica* 30 (2001).
-#[cfg(feature = "exact-triangulation")]
 fn same_outer_holed_no_hole_difference_polygons(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -5825,20 +5516,22 @@ fn same_outer_holed_no_hole_difference_polygons(
     .ok()?;
 
     let left_area = mesh_projected_area2(left, projection)?;
-    let intersection_area = coplanar_mesh_pairwise_intersection_area2(left, right, projection)?;
+    let intersection_area = same_outer_component_holed_intersection_source_area2(
+        &left_components,
+        &right_components,
+        projection,
+    )
+    .or_else(|| coplanar_mesh_pairwise_intersection_area2(left, right, projection))?;
     let difference_area = sub(&left_area, &intersection_area);
-    let retained_area = polygons
-        .iter()
-        .try_fold(ExactReal::from(0), |area, polygon| {
-            Some(add(&area, &projected_area2_abs(polygon, projection)?))
-        })?;
+    let retained_area = polygons.iter().try_fold(Real::from(0), |area, polygon| {
+        Some(add(&area, &projected_area2_abs(polygon, projection)?))
+    })?;
     if compare_reals(&difference_area, &retained_area).value() != Some(Ordering::Equal) {
         return None;
     }
     Some((projection, polygons))
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn same_outer_holed_no_hole_difference_rings(
     left: &SourceHoledSurfaceComponent,
     right: &SourceHoledSurfaceComponent,
@@ -5967,19 +5660,8 @@ fn same_outer_holed_no_hole_difference_rings(
 /// subtraction may emit only simple no-hole filled components.
 ///
 /// This is deliberately not arbitrary planar-cell extraction. It is the
-/// Weiler-Atherton retained-fragment construction from Weiler and Atherton,
-/// "Hidden Surface Removal Using Polygon Area Sorting," *SIGGRAPH Computer
-/// Graphics* 11.2 (1977), constrained by Yap's object/predicate discipline
-/// from "Towards Exact Geometric Computation," *Computational Geometry*
-/// 7.1-2 (1997): every intersection vertex is exact, every topological
 /// ownership claim is checked by exact simple-polygon predicates, and the
 /// final area equation must close before an artifact is emitted. Segment
-/// events use the orientation-predicate model of Guigue and Devillers,
-/// "Fast and Robust Triangle-Triangle Overlap Test Using Orientation
-/// Predicates," *Journal of Graphics Tools* 8.1 (2003); temporary
-/// simple-loop triangulation uses Held, "FIST: Fast Industrial-Strength
-/// Triangulation of Polygons," *Algorithmica* 30 (2001), through `hypertri`.
-#[cfg(feature = "exact-triangulation")]
 fn same_outer_holed_simple_no_hole_difference_polygons(
     source: &[Point3],
     cutters: &[Vec<Point3>],
@@ -6056,7 +5738,7 @@ fn same_outer_holed_simple_no_hole_difference_polygons(
         return None;
     }
 
-    let mut output_area = ExactReal::from(0);
+    let mut output_area = Real::from(0);
     for polygon in &mut polygons {
         orient_polygon_ccw(polygon, projection)?;
         *polygon = simplify_projected_polygon(core::mem::take(polygon), projection);
@@ -6075,7 +5757,7 @@ fn same_outer_holed_simple_no_hole_difference_polygons(
     )
     .ok()?;
 
-    let mut removed_area = ExactReal::from(0);
+    let mut removed_area = Real::from(0);
     for opening in &removed {
         removed_area = add(&removed_area, &projected_area2_abs(opening, projection)?);
     }
@@ -6098,14 +5780,6 @@ fn same_outer_holed_simple_no_hole_difference_polygons(
 /// additional side-attachment checks. This helper only certifies the exact
 /// intersection boundary: source fragments whose midpoints lie in the cutter
 /// plus cutter fragments whose midpoints lie in the source. That is the
-/// retained-boundary fragment rule from Weiler and Atherton, "Hidden Surface
-/// Removal Using Polygon Area Sorting," *SIGGRAPH Computer Graphics* 11.2
-/// (1977), promoted only under Yap's exact-object model from "Towards Exact
-/// Geometric Computation," *Computational Geometry* 7.1-2 (1997). Point and
-/// segment events are split by exact orientation predicates in the style of
-/// Guigue and Devillers, "Fast and Robust Triangle-Triangle Overlap Test
-/// Using Orientation Predicates," *Journal of Graphics Tools* 8.1 (2003).
-#[cfg(feature = "exact-triangulation")]
 fn simple_retained_hole_intersection_polygons(
     source: &[Point3],
     cutter: &[Point3],
@@ -6139,7 +5813,7 @@ fn simple_retained_hole_intersection_polygons(
         *opening = simplify_projected_polygon(core::mem::take(opening), projection);
         validate_projected_simple_loop(opening, projection, label).ok()?;
         let area = projected_area2_abs(opening, projection)?;
-        if compare_reals(&area, &ExactReal::from(0)).value() != Some(Ordering::Greater) {
+        if compare_reals(&area, &Real::from(0)).value() != Some(Ordering::Greater) {
             return None;
         }
     }
@@ -6147,7 +5821,6 @@ fn simple_retained_hole_intersection_polygons(
     Some(openings)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn collect_simple_intersection_boundary_fragments(
     polygon: &[Point3],
     other: &[Point3],
@@ -6201,17 +5874,8 @@ fn collect_simple_intersection_boundary_fragments(
 /// holes, but no output loop may contain a retained hole. Holed remnants remain
 /// on [`same_outer_holed_orthogonal_difference_components`].
 ///
-/// This is a finite exact arrangement step in Yap's sense: source loops are
 /// retained as exact objects, the orthogonal cell decomposition uses exact
 /// predicates, and the caller replays the global area equation before emitting
-/// a boolean artifact; see Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997). The grid subdivision is the
-/// rectilinear arrangement model from de Berg, Cheong, van Kreveld, and
-/// Overmars, *Computational Geometry: Algorithms and Applications*, 3rd ed.
-/// (2008), Chapter 2. Temporary simple-loop triangulation goes through
-/// Held, "FIST: Fast Industrial-Strength Triangulation of Polygons,"
-/// *Algorithmica* 30 (2001), via `hypertri`.
-#[cfg(feature = "exact-triangulation")]
 fn same_outer_holed_orthogonal_no_hole_difference_polygons(
     source: &[Point3],
     cutters: &[Vec<Point3>],
@@ -6278,7 +5942,6 @@ fn same_outer_holed_orthogonal_no_hole_difference_polygons(
     Some(polygons)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn rectangles_overlap_with_positive_area(
     left: &ProjectedRectangle,
     right: &ProjectedRectangle,
@@ -6308,13 +5971,6 @@ fn rectangles_overlap_with_positive_area(
 /// splits the source rectangle by every exact cutter interval, keeps cells
 /// whose midpoint is inside the source and outside all cutters, and stitches
 /// the exposed cell boundary into simple retained loops. The midpoint is an
-/// exact rational construction, so the occupancy decision remains in Yap's
-/// exact-object model from "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997). The finite cell traversal is the
-/// standard orthogonal arrangement model described by de Berg, Cheong, van
-/// Kreveld, and Overmars, *Computational Geometry: Algorithms and
-/// Applications*, 3rd ed. (2008), Chapter 2.
-#[cfg(feature = "exact-triangulation")]
 fn axis_aligned_rectangle_difference_polygons(
     source: &ProjectedRectangle,
     cutters: &[ProjectedRectangle],
@@ -6447,17 +6103,10 @@ fn axis_aligned_rectangle_difference_polygons(
 /// the exact area replay below, while lower-dimensional hole contact is
 /// accepted because it removes no two-dimensional material from the union.
 ///
-/// The certificate follows Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997): source rings are recovered from mesh
 /// incidence, every topological claim is checked by exact predicates, and the
 /// final retained outer area is replayed as
 /// `area(left) + area(right) - area(left intersect right)`. The intersection
-/// term is the existing exact Sutherland-Hodgman triangle clip sum
-/// (Sutherland and Hodgman, "Reentrant Polygon Clipping," *Communications of
 /// the ACM* 17.1, 1974); triangulation of the retained simple loop uses the
-/// Held FIST-style `hypertri` handoff (Held, "FIST: Fast Industrial-Strength
-/// Triangulation of Polygons," *Algorithmica* 30, 2001).
-#[cfg(feature = "exact-triangulation")]
 fn same_outer_holed_filled_union_polygons(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -6519,13 +6168,16 @@ fn same_outer_holed_filled_union_polygons(
 
     let left_area = mesh_projected_area2(left, projection)?;
     let right_area = mesh_projected_area2(right, projection)?;
-    let intersection_area = coplanar_mesh_pairwise_intersection_area2(left, right, projection)?;
+    let intersection_area = same_outer_component_holed_intersection_source_area2(
+        &left_components,
+        &right_components,
+        projection,
+    )
+    .or_else(|| coplanar_mesh_pairwise_intersection_area2(left, right, projection))?;
     let union_area = sub(&add(&left_area, &right_area), &intersection_area);
-    let retained_area = polygons
-        .iter()
-        .try_fold(ExactReal::from(0), |area, polygon| {
-            Some(add(&area, &projected_area2_abs(polygon, projection)?))
-        })?;
+    let retained_area = polygons.iter().try_fold(Real::from(0), |area, polygon| {
+        Some(add(&area, &projected_area2_abs(polygon, projection)?))
+    })?;
     if compare_reals(&union_area, &retained_area).value() != Some(Ordering::Equal) {
         return None;
     }
@@ -6551,24 +6203,11 @@ fn same_outer_holed_filled_union_polygons(
 /// arrangement layer because their output boundary is not a bounded retained
 /// simple-ring certificate.
 ///
-/// This follows Yap, "Towards Exact Geometric Computation," *Computational
-/// Geometry* 7.1-2 (1997): the topology is expressed in source-owned objects
 /// and certified predicates, not sampled triangles. The final equality
 /// `area(union) == area(retained rings)` is replayed with the exact
-/// Sutherland-Hodgman triangle-clip sum from Sutherland and Hodgman,
-/// "Reentrant Polygon Clipping," *Communications of the ACM* 17.1 (1974).
-/// Segment contact is separated with the orientation-predicate model of
-/// Guigue and Devillers, "Fast and Robust Triangle-Triangle Overlap Test
-/// Using Orientation Predicates," *Journal of Graphics Tools* 8.1 (2003), so
 /// point/edge-only hole contact remains lower-dimensional evidence instead of
-/// a retained hole. The simple-ring fallback uses the same Weiler-Atherton
-/// retained-boundary fragment walk as the no-hole difference path (Weiler and
-/// Atherton, "Hidden Surface Removal Using Polygon Area Sorting," *SIGGRAPH
 /// Computer Graphics* 11.2, 1977), with exact area replay as the promotion
 /// gate. The retained holed rings are triangulated through the same FIST-style
-/// `hypertri` earcut handoff described by Held, "FIST: Fast
-/// Industrial-Strength Triangulation of Polygons," *Algorithmica* 30 (2001).
-#[cfg(feature = "exact-triangulation")]
 fn same_outer_holed_retained_union(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -6654,7 +6293,12 @@ fn same_outer_holed_retained_union(
 
     let left_area = mesh_projected_area2(left, projection)?;
     let right_area = mesh_projected_area2(right, projection)?;
-    let intersection_area = coplanar_mesh_pairwise_intersection_area2(left, right, projection)?;
+    let intersection_area = same_outer_component_holed_intersection_source_area2(
+        &left_components,
+        &right_components,
+        projection,
+    )
+    .or_else(|| coplanar_mesh_pairwise_intersection_area2(left, right, projection))?;
     let union_area = sub(&add(&left_area, &right_area), &intersection_area);
     let retained_area = component_holed_components_area2(&retained_components, projection)?;
     if compare_reals(&union_area, &retained_area).value() != Some(Ordering::Equal) {
@@ -6671,7 +6315,6 @@ fn same_outer_holed_retained_union(
     Some(arrangement)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn source_holed_component_to_retained(
     component: &SourceHoledSurfaceComponent,
     projection: CoplanarProjection,
@@ -6686,7 +6329,6 @@ fn source_holed_component_to_retained(
     Some(CoplanarConvexHoledComponent { outer, holes })
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn same_outer_retained_union_holes(
     left: &SourceHoledSurfaceComponent,
     right: &SourceHoledSurfaceComponent,
@@ -6755,15 +6397,8 @@ fn same_outer_retained_union_holes(
 /// as retained holes; orthogonal islands-with-holes and positive-length
 /// boundary contacts remain explicit planar-arrangement work.
 ///
-/// This is the same proof-before-promotion rule as Yap, "Towards Exact
-/// Geometric Computation," *Computational Geometry* 7.1-2 (1997): topology is
 /// emitted from retained exact objects and exact predicates, not from sampled
 /// points. The rectilinear subdivision is the finite cell arrangement described
-/// by de Berg, Cheong, van Kreveld, and Overmars, *Computational Geometry:
-/// Algorithms and Applications*, 3rd ed. (2008), Chapter 2. The temporary
-/// simple-loop triangulation uses Held, "FIST: Fast Industrial-Strength
-/// Triangulation of Polygons," *Algorithmica* 30 (2001), through `hypertri`.
-#[cfg(feature = "exact-triangulation")]
 fn orthogonal_retained_hole_intersection_polygons(
     left: &[Point3],
     right: &[Point3],
@@ -6820,7 +6455,7 @@ fn orthogonal_retained_hole_intersection_polygons(
         )
         .ok()?;
         let area = projected_area2_abs(&hole, projection)?;
-        if compare_reals(&area, &ExactReal::from(0)).value() != Some(Ordering::Greater) {
+        if compare_reals(&area, &Real::from(0)).value() != Some(Ordering::Greater) {
             return None;
         }
         orient_polygon_cw(&mut hole, projection)?;
@@ -6845,17 +6480,9 @@ fn orthogonal_retained_hole_intersection_polygons(
 /// Equal and nested intersections are retained source rings directly; this
 /// helper covers the bounded partial-overlap case where two source-owned holes
 /// are both strictly convex and their intersection has positive area. The
-/// intersection polygon is built with the same exact Sutherland-Hodgman-style
-/// half-plane clipping facts used elsewhere in this module; see Sutherland and
-/// Hodgman, "Reentrant Polygon Clipping," *Communications of the ACM* 17.1
-/// (1974). The positive-area check on the clipped retained object rejects
 /// point-only and edge-only contact before it can masquerade as a
 /// two-dimensional retained hole; segment events are still classified by the
-/// Guigue and Devillers orientation-predicate model cited at the caller. This
-/// is exactly the object/predicate separation advocated by Yap, "Towards Exact
-/// Geometric Computation," *Computational Geometry* 7.1-2 (1997): only a
 /// replayable positive-area retained object may remove topology.
-#[cfg(feature = "exact-triangulation")]
 fn convex_retained_hole_intersection_polygon(
     left: &[Point3],
     right: &[Point3],
@@ -6891,13 +6518,12 @@ fn convex_retained_hole_intersection_polygon(
     )
     .ok()?;
     let area = projected_area2_abs(&intersection, projection)?;
-    if compare_reals(&area, &ExactReal::from(0)).value() != Some(Ordering::Greater) {
+    if compare_reals(&area, &Real::from(0)).value() != Some(Ordering::Greater) {
         return None;
     }
     Some(intersection)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn same_outer_holes_are_not_equal_or_nested(
     left_holes: &[Vec<Point3>],
     right_holes: &[Vec<Point3>],
@@ -6917,7 +6543,6 @@ fn same_outer_holes_are_not_equal_or_nested(
     Some(())
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn arrange_coplanar_convex_surface_pairwise_triangle_multi_intersection(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -6966,7 +6591,6 @@ fn arrange_coplanar_convex_surface_pairwise_triangle_multi_intersection(
     Some(arrangement)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn coplanar_surface_pairwise_triangle_intersection_polygons(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -7068,7 +6692,6 @@ fn coplanar_surface_pairwise_triangle_intersection_polygons(
     Some((projection, polygons))
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn pairwise_coplanar_triangle_intersection_polygon(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -7082,12 +6705,12 @@ fn pairwise_coplanar_triangle_intersection_polygon(
         CoplanarSurfaceContainment::LeftInsideRight => left.triangles()[0]
             .0
             .iter()
-            .map(|&index| left.vertices()[index].to_hyperlimit_point())
+            .map(|&index| left.vertices()[index].clone())
             .collect::<Vec<_>>(),
         CoplanarSurfaceContainment::RightInsideLeft => right.triangles()[0]
             .0
             .iter()
-            .map(|&index| right.vertices()[index].to_hyperlimit_point())
+            .map(|&index| right.vertices()[index].clone())
             .collect::<Vec<_>>(),
     };
     orient_polygon_ccw(&mut polygon, projection)?;
@@ -7103,11 +6726,7 @@ fn pairwise_coplanar_triangle_intersection_polygon(
 /// intersection. Boundary-only contacts are ignored for triangle-mesh
 /// intersection output, while touching or overlapping output loops are
 /// rejected so the general arrangement layer remains explicit. The clipping
-/// step reuses Sutherland and Hodgman's convex half-plane construction, and
-/// the artifact contract follows Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997): exact component structure is kept
 /// until every output loop and triangulation replays from source facts.
-#[cfg(feature = "exact-triangulation")]
 fn arrange_coplanar_convex_surface_component_intersection(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -7226,7 +6845,6 @@ fn arrange_coplanar_convex_surface_component_intersection(
     Some(arrangement)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn single_face_mesh(mesh: &ExactMesh, face: usize) -> Option<ExactMesh> {
     let triangle = mesh.triangles().get(face)?.0;
     let vertices = triangle
@@ -7242,14 +6860,12 @@ fn single_face_mesh(mesh: &ExactMesh, face: usize) -> Option<ExactMesh> {
     .ok()
 }
 
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum MultiUnionSide {
     Left,
     Right,
 }
 
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug)]
 struct ConvexUnionComponent {
     side: MultiUnionSide,
@@ -7258,7 +6874,6 @@ struct ConvexUnionComponent {
     hull: Vec<Point3>,
 }
 
-#[cfg(feature = "exact-triangulation")]
 impl ConvexUnionComponent {
     fn from_mesh(side: MultiUnionSide, mesh: ExactMesh) -> Option<Self> {
         let (projection, mut hull) = convex_component_hull(&mesh)?;
@@ -7278,11 +6893,7 @@ impl ConvexUnionComponent {
 /// path. This type is the nonconvex-capable fallback: each connected source
 /// component is imported either as its exact convex hull or as one certified
 /// simple source boundary from [`SimpleSurfaceComponent`]. The output remains
-/// a list of source-owned disks, so it follows Yap's retained-object model
-/// from "Towards Exact Geometric Computation," *Computational Geometry*
-/// 7.1-2 (1997), instead of collapsing a branch vertex into an opaque
 /// triangle soup.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug)]
 struct PointTouchSourceComponent {
     side: MultiUnionSide,
@@ -7290,7 +6901,6 @@ struct PointTouchSourceComponent {
     polygon: Vec<Point3>,
 }
 
-#[cfg(feature = "exact-triangulation")]
 impl PointTouchSourceComponent {
     fn from_mesh(side: MultiUnionSide, mesh: ExactMesh) -> Option<Self> {
         if let Some(component) = ConvexUnionComponent::from_mesh(side, mesh.clone()) {
@@ -7314,20 +6924,15 @@ impl PointTouchSourceComponent {
 /// This is the nonconvex-source counterpart to [`ConvexUnionComponent`]. It is
 /// deliberately a disk-only object: the exact mesh boundary must form one
 /// degree-two ring, the projected ring must be simple, and the ring area must
-/// equal the sum of source-triangle areas. That is the Yap-style certificate
 /// boundary for consuming a triangulated source sheet without first replacing
-/// it by its convex hull; see Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997). The boundary ordering itself is
 /// pure mesh topology, not coordinate clustering.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug)]
 struct SimpleSurfaceComponent {
     projection: CoplanarProjection,
     boundary: Vec<Point3>,
-    area2_abs: ExactReal,
+    area2_abs: Real,
 }
 
-#[cfg(feature = "exact-triangulation")]
 impl SimpleSurfaceComponent {
     fn from_mesh(mesh: ExactMesh) -> Option<Self> {
         if mesh.triangles().is_empty() {
@@ -7343,11 +6948,7 @@ impl SimpleSurfaceComponent {
         let projection = choose_mesh_projection(&mesh)?;
         let mut boundary = order_single_mesh_boundary_loop(&mesh)?
             .into_iter()
-            .map(|index| {
-                mesh.vertices()
-                    .get(index)
-                    .map(ExactPoint3::to_hyperlimit_point)
-            })
+            .map(|index| mesh.vertices().get(index).cloned())
             .collect::<Option<Vec<_>>>()?;
         orient_polygon_ccw(&mut boundary, projection)?;
         boundary = simplify_projected_polygon(boundary, projection);
@@ -7370,7 +6971,6 @@ impl SimpleSurfaceComponent {
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum ConvexUnionComponentRelation {
     Disjoint,
@@ -7378,7 +6978,6 @@ enum ConvexUnionComponentRelation {
     PositiveArea,
 }
 
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum VertexPointContactRelation {
     Disjoint,
@@ -7386,7 +6985,6 @@ enum VertexPointContactRelation {
     InvalidBoundaryContact,
 }
 
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug)]
 struct VertexPointContactPlan {
     relation: VertexPointContactRelation,
@@ -7398,12 +6996,10 @@ struct VertexPointContactPlan {
 ///
 /// This helper intentionally accepts single-triangle components, unlike the
 /// public multi-face convex-surface shortcut. Multi-component union clustering
-/// needs to keep each exact source component as a Yap-style retained object
-/// before deciding whether it is an untouched output loop or participates in a
-/// two-component union. The hull certificate uses Andrew, "Another Efficient
-/// Algorithm for Convex Hulls in Two Dimensions," *Information Processing
-/// Letters* 9.5 (1979), with exact projected orientation predicates.
-#[cfg(feature = "exact-triangulation")]
+/// uses it before deciding whether a component is an untouched output loop or
+/// participates in a two-component union. The hull certificate uses Andrew,
+/// "Another Efficient Algorithm for Convex Hulls in Two Dimensions,"
+/// *Information Processing Letters* 9.5 (1979).
 fn convex_component_hull(mesh: &ExactMesh) -> Option<(CoplanarProjection, Vec<Point3>)> {
     if mesh.triangles().is_empty() {
         return None;
@@ -7426,7 +7022,6 @@ fn convex_component_hull(mesh: &ExactMesh) -> Option<(CoplanarProjection, Vec<Po
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn convex_union_component_relation(
     left: &[Point3],
     right: &[Point3],
@@ -7440,14 +7035,13 @@ fn convex_union_component_relation(
         return Some(ConvexUnionComponentRelation::BoundaryOnly);
     }
     let area = projected_area2_abs(&intersection, projection)?;
-    match compare_reals(&area, &ExactReal::from(0)).value()? {
+    match compare_reals(&area, &Real::from(0)).value()? {
         Ordering::Greater => Some(ConvexUnionComponentRelation::PositiveArea),
         Ordering::Equal => Some(ConvexUnionComponentRelation::BoundaryOnly),
         Ordering::Less => None,
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn materialize_two_component_union(
     left: &ConvexUnionComponent,
     right: &ConvexUnionComponent,
@@ -7477,7 +7071,6 @@ fn materialize_two_component_union(
     arrange_single_triangle_coplanar_union(&left.mesh, &right.mesh).map(|union| union.polygon)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn materialize_component_union_group(
     components: &[ConvexUnionComponent],
     members: &[usize],
@@ -7500,13 +7093,8 @@ fn materialize_component_union_group(
 /// exact pairwise component relations prove there is no positive-area overlap
 /// and the sum of retained component areas equals the exact hull area. Because
 /// all components are subsets of that hull, area equality proves there is no
-/// gap. The argument is the same retained-object discipline Yap requires in
-/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997): topology is promoted from exact structural facts, not from a
-/// primitive-float polygon repair pass. The hull itself uses Andrew,
-/// "Another Efficient Algorithm for Convex Hulls in Two Dimensions,"
-/// *Information Processing Letters* 9.5 (1979).
-#[cfg(feature = "exact-triangulation")]
+/// primitive-float polygon repair pass. The hull itself uses Andrew's
+/// monotone-chain construction.
 fn materialize_component_union_convex_hull_by_area(
     components: &[ConvexUnionComponent],
     members: &[usize],
@@ -7553,7 +7141,7 @@ fn materialize_component_union_convex_hull_by_area(
     )
     .ok()?;
     let hull_area = projected_area2_abs(&hull, projection)?;
-    let mut component_area = ExactReal::from(0);
+    let mut component_area = Real::from(0);
     for &member in members {
         component_area = add(
             &component_area,
@@ -7573,11 +7161,7 @@ fn materialize_component_union_convex_hull_by_area(
 /// only clusters whose exact projected component hulls are axis-aligned
 /// rectangles sharing one interval, while the other interval is connected by
 /// exact overlap/touch coverage. The output rectangle is therefore a retained
-/// consequence of exact source coordinates. That is the Yap-style contract
-/// from "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997): promote topology only when the combinatorial structure is certified
 /// by exact data.
-#[cfg(feature = "exact-triangulation")]
 fn materialize_rectangle_strip_union_cluster(
     components: &[ConvexUnionComponent],
     members: &[usize],
@@ -7591,22 +7175,19 @@ fn materialize_rectangle_strip_union_cluster(
         .or_else(|| rectangle_strip_union_polygon(&rectangles, projection, StripVariableAxis::V))
 }
 
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum StripVariableAxis {
     U,
     V,
 }
 
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug)]
 struct ProjectedRectangle {
     min: Point2,
     max: Point2,
-    dropped: ExactReal,
+    dropped: Real,
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn projected_axis_aligned_rectangle(
     polygon: &[Point3],
     projection: CoplanarProjection,
@@ -7673,9 +7254,6 @@ fn projected_axis_aligned_rectangle(
 /// The accepted object is still the same retained rectangle: every vertex must
 /// lie on the rectangle boundary, all four corners must be present, and the
 /// dropped coordinate must replay exactly. That keeps the construction within
-/// Yap's retained-object discipline from "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997).
-#[cfg(feature = "exact-triangulation")]
 fn projected_axis_aligned_boundary_rectangle(
     polygon: &[Point3],
     projection: CoplanarProjection,
@@ -7737,7 +7315,6 @@ fn projected_axis_aligned_boundary_rectangle(
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn rectangle_strip_union_polygon(
     rectangles: &[ProjectedRectangle],
     projection: CoplanarProjection,
@@ -7802,8 +7379,7 @@ fn rectangle_strip_union_polygon(
     ])
 }
 
-#[cfg(feature = "exact-triangulation")]
-fn sort_intervals_by_min(intervals: &mut [(ExactReal, ExactReal)]) -> Option<()> {
+fn sort_intervals_by_min(intervals: &mut [(Real, Real)]) -> Option<()> {
     for index in 1..intervals.len() {
         let mut cursor = index;
         while cursor > 0
@@ -7816,40 +7392,35 @@ fn sort_intervals_by_min(intervals: &mut [(ExactReal, ExactReal)]) -> Option<()>
     Some(())
 }
 
-#[cfg(feature = "exact-triangulation")]
-fn strip_variable_min(rect: &ProjectedRectangle, axis: StripVariableAxis) -> &ExactReal {
+fn strip_variable_min(rect: &ProjectedRectangle, axis: StripVariableAxis) -> &Real {
     match axis {
         StripVariableAxis::U => &rect.min.x,
         StripVariableAxis::V => &rect.min.y,
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
-fn strip_variable_max(rect: &ProjectedRectangle, axis: StripVariableAxis) -> &ExactReal {
+fn strip_variable_max(rect: &ProjectedRectangle, axis: StripVariableAxis) -> &Real {
     match axis {
         StripVariableAxis::U => &rect.max.x,
         StripVariableAxis::V => &rect.max.y,
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
-fn strip_fixed_min(rect: &ProjectedRectangle, axis: StripVariableAxis) -> &ExactReal {
+fn strip_fixed_min(rect: &ProjectedRectangle, axis: StripVariableAxis) -> &Real {
     match axis {
         StripVariableAxis::U => &rect.min.y,
         StripVariableAxis::V => &rect.min.x,
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
-fn strip_fixed_max(rect: &ProjectedRectangle, axis: StripVariableAxis) -> &ExactReal {
+fn strip_fixed_max(rect: &ProjectedRectangle, axis: StripVariableAxis) -> &Real {
     match axis {
         StripVariableAxis::U => &rect.max.y,
         StripVariableAxis::V => &rect.max.x,
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
-fn dropped_coordinate(point: &Point3, projection: CoplanarProjection) -> ExactReal {
+fn dropped_coordinate(point: &Point3, projection: CoplanarProjection) -> Real {
     match projection {
         CoplanarProjection::Xy => point.z.clone(),
         CoplanarProjection::Xz => point.y.clone(),
@@ -7857,11 +7428,10 @@ fn dropped_coordinate(point: &Point3, projection: CoplanarProjection) -> ExactRe
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn point_from_projection(
-    u: &ExactReal,
-    v: &ExactReal,
-    dropped: &ExactReal,
+    u: &Real,
+    v: &Real,
+    dropped: &Real,
     projection: CoplanarProjection,
 ) -> Point3 {
     match projection {
@@ -7876,10 +7446,8 @@ fn point_from_projection(
 /// This is the multi-component counterpart to the single-triangle convex union
 /// shortcut: build the Andrew monotone-chain hull of both component rings,
 /// then replay every fan triangle by exact clipping against both inputs. The
-/// coverage equality is a Yap-style certificate that the hull is not
-/// overclaiming a gap, and the clipping pass follows Sutherland and Hodgman,
-/// "Reentrant Polygon Clipping," *Communications of the ACM* 17.1 (1974).
-#[cfg(feature = "exact-triangulation")]
+/// clipping is handled by the Sutherland-Hodgman helper cited at
+/// [`clip_convex_polygon`].
 fn convex_union_hull_covered_by_components(
     left: &[Point3],
     right: &[Point3],
@@ -7903,7 +7471,6 @@ fn convex_union_hull_covered_by_components(
     Some(hull)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn sort_polygons_for_replay(polygons: &mut [Vec<Point3>], projection: CoplanarProjection) {
     polygons.sort_by(|left, right| {
         compare_point2(
@@ -7914,7 +7481,6 @@ fn sort_polygons_for_replay(polygons: &mut [Vec<Point3>], projection: CoplanarPr
     });
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn sort_components_for_replay(
     components: &mut [CoplanarConvexHoledComponent],
     projection: CoplanarProjection,
@@ -7928,16 +7494,14 @@ fn sort_components_for_replay(
     });
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn polygon_min_projected_point(polygon: &[Point3], projection: CoplanarProjection) -> Point2 {
     polygon
         .iter()
         .map(|point| project_point(point, projection))
         .min_by(|left, right| compare_point2(left, right).unwrap_or(Ordering::Equal))
-        .unwrap_or_else(|| Point2::new(ExactReal::from(0), ExactReal::from(0)))
+        .unwrap_or_else(|| Point2::new(Real::from(0), Real::from(0)))
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn canonicalize_polygon_start_by_min_projected_point(
     polygon: &mut [Point3],
     projection: CoplanarProjection,
@@ -7957,12 +7521,10 @@ fn canonicalize_polygon_start_by_min_projected_point(
     polygon.rotate_left(min_index);
 }
 
-#[cfg(feature = "exact-triangulation")]
 struct UnionFind {
     parent: Vec<usize>,
 }
 
-#[cfg(feature = "exact-triangulation")]
 impl UnionFind {
     fn new(len: usize) -> Self {
         Self {
@@ -7999,10 +7561,7 @@ impl UnionFind {
 /// accepted only when fan-triangle area coverage proves the loop equals the
 /// union. Full-edge contacts can therefore materialize when the retained loop
 /// replay proves a positive-area sheet; point-only contacts are left to the
-/// explicit point-touch union artifact. The traversal follows the Weiler-Atherton
 /// boundary-fragment idea, with exact `hyperlimit` orientation predicates
-/// providing Yap-style certified combinatorial decisions.
-#[cfg(feature = "exact-triangulation")]
 pub fn arrange_coplanar_convex_surface_union(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -8041,12 +7600,9 @@ pub fn arrange_coplanar_convex_surface_union(
 /// multi-component, but exact component clustering proves the requested union
 /// has one simple boundary loop. The accepted many-component cluster is the
 /// same axis-aligned rectangle-strip certificate used by
-/// [`arrange_coplanar_convex_surface_multi_union`]. Following Yap, "Towards
-/// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997), the
 /// output loop is promoted only when exact source-coordinate intervals replay
 /// the complete covered strip; general planar subdivisions still remain
 /// explicit future arrangement work.
-#[cfg(feature = "exact-triangulation")]
 pub fn arrange_coplanar_convex_surface_component_union(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -8077,12 +7633,7 @@ pub fn arrange_coplanar_convex_surface_component_union(
 /// strip; point-only contacts are handled by the explicit point-touch artifact,
 /// while non-convex component loops and cases requiring a general planar
 /// subdivision remain explicit arrangement work. The
-/// clustering is retained object structure in Yap's sense; see Yap, "Towards
-/// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997), and
-/// the convex hull certificate follows Andrew, "Another Efficient Algorithm
 /// for Convex Hulls in Two Dimensions," *Information Processing Letters* 9.5
-/// (1979).
-#[cfg(feature = "exact-triangulation")]
 pub fn arrange_coplanar_convex_surface_multi_union(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -8101,7 +7652,6 @@ pub fn arrange_coplanar_convex_surface_multi_union(
     Some(arrangement)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn coplanar_convex_surface_component_union_polygons(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -8177,7 +7727,6 @@ fn coplanar_convex_surface_component_union_polygons(
                     // Full-edge cross-source contacts are not topology by
                     // themselves. We only cluster them so the later
                     // rectangle-strip replay can prove a covered interval
-                    // complex, preserving Yap's exact-object boundary.
                     union_find.union(left_index, right_index);
                 }
                 ConvexUnionComponentRelation::PositiveArea => {
@@ -8232,13 +7781,6 @@ fn coplanar_convex_surface_component_union_polygons(
 /// it still requires source-holed ring replay and exact union-area equality,
 /// so it is not the ordinary convex component-union shortcut.
 ///
-/// Boundary traversal follows the Weiler-Atherton fragment idea from Weiler
-/// and Atherton, "Hidden Surface Removal Using Polygon Area Sorting,"
-/// *SIGGRAPH Computer Graphics* 11.2 (1977), while the finite exact union-area
-/// certificate keeps the output inside Yap's retained-state model from
-/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997).
-#[cfg(feature = "exact-triangulation")]
 pub fn arrange_coplanar_surface_component_union(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -8300,12 +7842,6 @@ pub fn arrange_coplanar_surface_component_union(
 /// point-touch artifact, and non-simple stitched loops remain explicit
 /// planar-arrangement work.
 ///
-/// The boundary-fragment construction follows Weiler and Atherton, "Hidden
-/// Surface Removal Using Polygon Area Sorting," *SIGGRAPH Computer Graphics*
-/// 11.2 (1977). Exact finite inclusion-exclusion area replay for each stitched
-/// cluster keeps the shortcut in Yap's retained-state model from "Towards
-/// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997).
-#[cfg(feature = "exact-triangulation")]
 pub fn arrange_coplanar_surface_multi_component_union(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -8361,16 +7897,9 @@ pub fn arrange_coplanar_surface_multi_component_union(
 /// retained boundaries, and general planar subdivisions remain outside this
 /// bounded path.
 ///
-/// The exposed-boundary traversal follows the Weiler-Atherton boundary
-/// fragment model (Weiler and Atherton, "Hidden Surface Removal Using Polygon
-/// Area Sorting," *SIGGRAPH Computer Graphics* 11.2, 1977), while the retained
-/// ring triangulation uses Held, "FIST: Fast Industrial-Strength
-/// Triangulation of Polygons," *Algorithmica* 30 (2001). Yap, "Towards Exact
-/// Geometric Computation," *Computational Geometry* 7.1-2 (1997), is the
 /// acceptance policy: no hole topology is inferred from samples or a triangle
 /// soup; the retained rings, exact contacts, and exact area replay are the
 /// certificate.
-#[cfg(feature = "exact-triangulation")]
 pub fn arrange_coplanar_surface_component_holed_union(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -8535,7 +8064,6 @@ pub fn arrange_coplanar_surface_component_holed_union(
     Some(arrangement)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn component_holed_union_contact_groups(
     contact_graph: &mut UnionFind,
     len: usize,
@@ -8556,7 +8084,6 @@ fn component_holed_union_contact_groups(
     groups
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn component_holed_union_group_has_positive_area_overlap(
     group: &[usize],
     positive_area_contacts: &[(usize, usize)],
@@ -8570,25 +8097,15 @@ fn component_holed_union_group_has_positive_area_overlap(
 ///
 /// A group is either a copied source-owned disk with no holes or a connected
 /// union of source disks whose exposed boundary fragments replay as retained
-/// rings. The boundary-fragment traversal is the Weiler-Atherton area-sorting
-/// model (Weiler and Atherton, "Hidden Surface Removal Using Polygon Area
-/// Sorting," *SIGGRAPH Computer Graphics* 11.2, 1977), and the final retained
-/// rings are triangulated by the same Held FIST-style ear clipping cited on
-/// the public materializer. Following Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997), each group checks
 /// exact area equality against only the source loops that generated it, so a
 /// disconnected no-hole component cannot subsidize a holed component whose
 /// stitched boundary silently filled unsupported cells. Positive-area source
 /// overlaps use bounded convex inclusion-exclusion, the finite exact area
-/// replay described by de Berg, Cheong, van Kreveld, and Overmars,
-/// *Computational Geometry: Algorithms and Applications*, 3rd ed. (2008),
 /// Chapter 2. Nonconvex positive-area overlaps are accepted only after exact
 /// ear clipping decomposes each simple source loop into a small set of convex
-/// retained triangles, preserving Yap's exact-object paradigm without widening
 /// this shortcut into a general planar arrangement engine. Exact point
 /// contacts are lower-dimensional facts: they are inserted as retained split
 /// vertices on the output rings but do not contribute area or connectivity.
-#[cfg(feature = "exact-triangulation")]
 fn component_holed_union_component_from_group(
     components: &[PointTouchSourceComponent],
     group: &[usize],
@@ -8660,7 +8177,6 @@ fn component_holed_union_component_from_group(
     Some(CoplanarConvexHoledComponent { outer, holes })
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn polygon_has_non_axis_aligned_edge(
     polygon: &[Point3],
     projection: CoplanarProjection,
@@ -8675,7 +8191,6 @@ fn polygon_has_non_axis_aligned_edge(
     Some(false)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn component_holed_union_rings(
     loops: Vec<Vec<Point3>>,
     projection: CoplanarProjection,
@@ -8696,7 +8211,7 @@ fn component_holed_union_rings(
             Ordering::Less => {}
         }
     }
-    if compare_reals(&largest_area, &ExactReal::from(0)).value()? != Ordering::Greater {
+    if compare_reals(&largest_area, &Real::from(0)).value()? != Ordering::Greater {
         return None;
     }
     let mut outer = None;
@@ -8711,7 +8226,6 @@ fn component_holed_union_rings(
     Some((outer?, holes))
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn component_holed_union_area_matches_sources(
     outer: &[Point3],
     holes: &[Vec<Point3>],
@@ -8720,7 +8234,7 @@ fn component_holed_union_area_matches_sources(
     has_positive_area_overlap: bool,
 ) -> Option<bool> {
     let outer_area = projected_area2_abs(outer, projection)?;
-    let mut hole_area = ExactReal::from(0);
+    let mut hole_area = Real::from(0);
     for hole in holes {
         hole_area = add(&hole_area, &projected_area2_abs(hole, projection)?);
     }
@@ -8743,20 +8257,14 @@ fn component_holed_union_area_matches_sources(
 /// first take the convex-region path and then fall back to exact
 /// triangulation-plus-inclusion-exclusion for simple nonconvex loops.
 ///
-/// This mirrors Yap, "Towards Exact Geometric Computation," *Computational
-/// Geometry* 7.1-2 (1997): the certificate is a retained finite exact
 /// computation over source-owned regions. The finite union formula is the
-/// standard inclusion-exclusion proof over convex cells described by de Berg,
-/// Cheong, van Kreveld, and Overmars, *Computational Geometry: Algorithms and
-/// Applications*, 3rd ed. (2008), Chapter 2.
-#[cfg(feature = "exact-triangulation")]
 fn component_holed_union_source_area2(
     source_loops: &[Vec<Point3>],
     projection: CoplanarProjection,
     has_positive_area_overlap: bool,
-) -> Option<ExactReal> {
+) -> Option<Real> {
     if !has_positive_area_overlap {
-        let mut source_area = ExactReal::from(0);
+        let mut source_area = Real::from(0);
         for source_loop in source_loops {
             source_area = add(&source_area, &projected_area2_abs(source_loop, projection)?);
         }
@@ -8781,17 +8289,14 @@ fn component_holed_union_source_area2(
 ///
 /// Each simple source loop is oriented counter-clockwise and decomposed by the
 /// local exact ear clipper. Ear clipping is the finite triangulation theorem
-/// of Meisters, "Polygons Have Ears," *American Mathematical Monthly* 82.6
-/// (1975), implemented here with exact projected orientation and
 /// point-in-triangle predicates. The resulting convex source triangles are
 /// then fed to the same bounded inclusion-exclusion replay used by convex
 /// sectors, so the materializer can certify small nonconvex overlaps while
 /// still rejecting larger arrangements that need a real planar cell engine.
-#[cfg(feature = "exact-triangulation")]
 fn component_holed_union_triangulated_source_area2(
     source_loops: &[Vec<Point3>],
     projection: CoplanarProjection,
-) -> Option<ExactReal> {
+) -> Option<Real> {
     let mut source_regions = Vec::new();
     for source_loop in source_loops {
         let mut polygon = source_loop.clone();
@@ -8843,15 +8348,9 @@ fn component_holed_union_triangulated_source_area2(
 /// certificate: intersection is empty as a surface, and difference preserves
 /// the left surface, but no additional union topology is inferred here.
 ///
-/// The promotion rule follows Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997): lower-dimensional topology is exposed
 /// only after the exact combinatorics prove the absence of positive-area cells.
-/// Edge contacts use the orientation-predicate segment relation of Guigue and
-/// Devillers, "Fast and Robust Triangle-Triangle Overlap Test Using
-/// Orientation Predicates," *Journal of Graphics Tools* 8.1 (2003), while
 /// strict containment uses the same exact earcut-based simple-polygon location
 /// replay used elsewhere in this module.
-#[cfg(feature = "exact-triangulation")]
 pub fn certify_coplanar_surface_boundary_touch(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -8947,13 +8446,7 @@ pub fn certify_coplanar_surface_boundary_touch(
 /// incidence through the named artifact rather than through an accidental
 /// welded vertex.
 ///
-/// The construction follows Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997), by promoting topology only from
 /// replayable exact source facts. Segment contacts are classified with the
-/// orientation-predicate model used by Guigue and Devillers, "Fast and Robust
-/// Triangle-Triangle Overlap Test Using Orientation Predicates," *Journal of
-/// Graphics Tools* 8.1 (2003).
-#[cfg(feature = "exact-triangulation")]
 pub fn arrange_coplanar_surface_point_touch_union(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -9134,16 +8627,8 @@ pub fn arrange_coplanar_surface_point_touch_union(
 /// that the final output loops meet only at exact points, and triangulates
 /// each loop independently.
 ///
-/// The construction is still a retained-object shortcut in Yap's sense from
-/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997): no sampled arrangement cells are inferred. Connected overlap and
-/// boundary-contact groups use the same Weiler-Atherton exposed-fragment
 /// stitcher used by source component unions, and point branches are split
 /// using exact segment
-/// predicates in the style of Guigue and Devillers, "Fast and Robust
-/// Triangle-Triangle Overlap Test Using Orientation Predicates," *Journal of
-/// Graphics Tools* 8.1 (2003).
-#[cfg(feature = "exact-triangulation")]
 fn arrange_coplanar_mixed_boundary_point_union_from_components(
     left_components: Vec<ExactMesh>,
     right_components: Vec<ExactMesh>,
@@ -9316,13 +8801,6 @@ fn arrange_coplanar_mixed_boundary_point_union_from_components(
 /// only have exact vertex-vertex or vertex-edge point contacts. Vertex-edge
 /// contacts are promoted to shared retained vertices before triangulation so
 /// branch incidence is explicit. The segment rejection predicates follow
-/// Guigue and Devillers, "Fast and Robust Triangle-Triangle Overlap Test Using
-/// Orientation Predicates," *Journal of Graphics Tools* 8.1 (2003), while
-/// simple-loop location and triangulation use Held, "FIST: Fast
-/// Industrial-Strength Triangulation of Polygons," *Algorithmica* 30 (2001).
-/// The retained branch topology follows Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997).
-#[cfg(feature = "exact-triangulation")]
 fn arrange_coplanar_simple_surface_point_touch_union_from_components(
     left_components: Vec<ExactMesh>,
     right_components: Vec<ExactMesh>,
@@ -9430,7 +8908,6 @@ fn arrange_coplanar_simple_surface_point_touch_union_from_components(
     Some(union)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn coplanar_surface_component_union_loop(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -9574,7 +9051,6 @@ fn coplanar_surface_component_union_loop(
     Some((projection, polygon))
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn coplanar_surface_component_union_polygons(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -9728,13 +9204,7 @@ fn coplanar_surface_component_union_polygons(
 /// simple loop, every source loop lies in that retained loop, and exact area
 /// proves the loop has not filled an unsupported hole.
 ///
-/// The exposed-boundary traversal follows Weiler and Atherton, "Hidden
-/// Surface Removal Using Polygon Area Sorting," *SIGGRAPH Computer Graphics*
-/// 11.2 (1977). The promotion rule is Yap's retained-object discipline from
-/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997): no output topology is accepted unless the exact source loops and
 /// exact replayed boundary determine it.
-#[cfg(feature = "exact-triangulation")]
 fn coplanar_simple_surface_component_union_polygons(
     left_component_meshes: Vec<ExactMesh>,
     right_component_meshes: Vec<ExactMesh>,
@@ -9846,8 +9316,6 @@ fn coplanar_simple_surface_component_union_polygons(
 /// right hull and reversed right-boundary fragments inside the left hull. The
 /// result is accepted only when exact area proves
 /// `area(output) + area(left ∩ right) == area(left)`, keeping the construction
-/// inside Yap's certified object-state boundary.
-#[cfg(feature = "exact-triangulation")]
 pub fn arrange_coplanar_convex_surface_difference(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -9906,7 +9374,6 @@ pub fn arrange_coplanar_convex_surface_difference(
 /// `area(left) - area(left ∩ right)`. Holed outputs are handled by
 /// [`arrange_coplanar_convex_surface_holed_difference`]; single-loop outputs
 /// stay on the simpler arrangement path.
-#[cfg(feature = "exact-triangulation")]
 pub fn arrange_coplanar_convex_surface_multi_difference(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -9915,7 +9382,6 @@ pub fn arrange_coplanar_convex_surface_multi_difference(
         .or_else(|| arrange_coplanar_convex_surface_component_difference(left, right))
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn arrange_coplanar_convex_surface_multi_difference_convex(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -9989,14 +9455,9 @@ fn arrange_coplanar_convex_surface_multi_difference_convex(
 /// exact convex difference certificates and emits convex remnants.
 /// Point-only boundary contacts, strict interior holes, and overlapping
 /// nonconvex loops still return `None` so the general arrangement layer remains
-/// explicit. This follows Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997): the shortcut promotes output loops
 /// only from retained exact component, containment, intersection, and area
 /// evidence, never from sampled polygon surgery. The orthogonal no-hole path is
-/// the bounded cell arrangement of de Berg, Cheong, van Kreveld, and Overmars,
-/// *Computational Geometry: Algorithms and Applications*, 3rd ed. (2008),
 /// Chapter 2, consumed only after exact retained grid occupancy is known.
-#[cfg(feature = "exact-triangulation")]
 fn arrange_coplanar_convex_surface_component_difference(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -10183,14 +9644,8 @@ fn arrange_coplanar_convex_surface_component_difference(
 /// Hole-producing cuts, outside clipping against a nonconvex source boundary,
 /// point-only boundary contacts, overlapping output loops, and
 /// self-intersections remain explicit planar-arrangement work. This follows
-/// Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997): the system may
 /// broaden the object model only when the exact construction history and
 /// output topology are both retained. The boundary-fragment replay is the
-/// Weiler-Atherton retained-edge idea, not a sampled polygon clip; see Weiler
-/// and Atherton, "Hidden Surface Removal Using Polygon Area Sorting,"
-/// *SIGGRAPH Computer Graphics* 11.2 (1977).
-#[cfg(feature = "exact-triangulation")]
 pub fn arrange_coplanar_surface_multi_difference(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -10245,13 +9700,6 @@ pub fn arrange_coplanar_surface_multi_difference(
 /// available for explicit validation.
 ///
 /// The loop is promoted only after exact source-component replay and retained
-/// area/topology checks, following Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997). The boundary
-/// construction underneath is the Weiler-Atherton retained-fragment model
-/// cited by the multi-difference path; the same-outer source-holed case uses
-/// retained mesh-incidence rings plus the exact Sutherland-Hodgman area replay
-/// cited by [`same_outer_holed_no_hole_difference_polygons`].
-#[cfg(feature = "exact-triangulation")]
 pub fn arrange_coplanar_surface_component_difference(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -10318,13 +9766,7 @@ pub fn arrange_coplanar_surface_component_difference(
 /// nonconvex loop can now be emitted beside unrelated retained source loops
 /// instead of being forced through the single-loop side-cutter artifact.
 ///
-/// The policy follows Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997): this function promotes only loops
 /// produced by exact source-component replay and exact area/topology checks.
-/// Side-cutter openings use the Weiler-Atherton retained-fragment traversal
-/// from Weiler and Atherton, "Hidden Surface Removal Using Polygon Area
-/// Sorting," *SIGGRAPH Computer Graphics* 11.2 (1977).
-#[cfg(feature = "exact-triangulation")]
 fn coplanar_surface_difference_polygons(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -10617,12 +10059,6 @@ fn coplanar_surface_difference_polygons(
 /// holes, so no-hole artifacts still leave them to the component-holed path.
 ///
 /// The emitted loops are stitched from retained source-boundary fragments and
-/// reversed removed-boundary fragments, following Weiler and Atherton,
-/// "Hidden Surface Removal Using Polygon Area Sorting," *SIGGRAPH Computer
-/// Graphics* 11.2 (1977). Exact area replay is the final promotion gate, in
-/// the sense of Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997).
-#[cfg(feature = "exact-triangulation")]
 fn coplanar_simple_surface_difference_polygons(
     left_component_meshes: Vec<ExactMesh>,
     right_component_meshes: Vec<ExactMesh>,
@@ -10768,16 +10204,9 @@ fn coplanar_simple_surface_difference_polygons(
 /// ownership, connected-opening union, and exact area replay.
 ///
 /// The fragment traversal is the same retained-boundary construction as
-/// Weiler and Atherton, "Hidden Surface Removal Using Polygon Area Sorting,"
-/// *SIGGRAPH Computer Graphics* 11.2 (1977). Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997), is the reason this
 /// helper promotes only stitched loops that replay exact source/cutter
 /// predicates; point-only and non-simple branch outputs remain unsupported
 /// instead of being selected by tolerance samples. Segment intersections use
-/// the exact orientation-predicate classifier from Guigue and Devillers,
-/// "Fast and Robust Triangle-Triangle Overlap Test Using Orientation
-/// Predicates," *Journal of Graphics Tools* 8.1 (2003).
-#[cfg(feature = "exact-triangulation")]
 fn simple_source_convex_crossing_removed_openings(
     component: &SimpleSurfaceComponent,
     cutter: &[Point3],
@@ -10825,7 +10254,6 @@ fn simple_source_convex_crossing_removed_openings(
     Some(openings)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn collect_source_inside_convex_intersection_fragments(
     source: &[Point3],
     convex: &[Point3],
@@ -10868,7 +10296,6 @@ fn collect_source_inside_convex_intersection_fragments(
     Some(())
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn collect_convex_inside_source_intersection_fragments(
     convex: &[Point3],
     source: &[Point3],
@@ -10911,7 +10338,6 @@ fn collect_convex_inside_source_intersection_fragments(
     Some(())
 }
 
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum SimpleSourceConvexRegionRelation {
     Disjoint,
@@ -10927,10 +10353,6 @@ enum SimpleSourceConvexRegionRelation {
 /// split topology. Only certified disjoint and boundary-only cases are
 /// returned here; side-attached contained cutters are handled before this
 /// helper. Segment relations use the exact orientation-predicate classifier
-/// described by Guigue and Devillers, "Fast and Robust Triangle-Triangle
-/// Overlap Test Using Orientation Predicates," *Journal of Graphics Tools*
-/// 8.1 (2003).
-#[cfg(feature = "exact-triangulation")]
 fn simple_source_convex_region_relation(
     source: &[Point3],
     convex: &[Point3],
@@ -10985,8 +10407,6 @@ fn simple_source_convex_region_relation(
 /// source. This helper therefore rejects every proper source/cutter edge
 /// crossing while allowing exact collinear boundary overlap for side-attached
 /// openings. That keeps outside clipping out of this bounded certificate, as
-/// required by Yap's exact-object discipline.
-#[cfg(feature = "exact-triangulation")]
 fn polygon_lies_in_closed_simple_polygon(
     polygon: &[Point3],
     source: &[Point3],
@@ -11020,7 +10440,6 @@ fn polygon_lies_in_closed_simple_polygon(
     Some(true)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn simple_boundary_attachment_count(
     outer: &[Point3],
     removed: &[Point3],
@@ -11037,11 +10456,8 @@ fn simple_boundary_attachment_count(
 /// exact positive-length attachment to two or more source boundary edges.
 /// This is the nonconvex-source analogue of
 /// [`certify_removed_openings_split_source_component`]. It keeps the shortcut
-/// in Yap's retained-object model from "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997): the split is promoted from exact
 /// side ownership plus area replay, not from a sampled point in each output
 /// component.
-#[cfg(feature = "exact-triangulation")]
 fn certify_simple_removed_openings_split_source_component(
     outer: &[Point3],
     removed_openings: &[Vec<Point3>],
@@ -11068,12 +10484,8 @@ fn certify_simple_removed_openings_split_source_component(
 /// contract used by the convex side-cutter path, generalized at the
 /// source-boundary containment predicate. Point-only contacts between removed
 /// openings are admitted only when a positive-area or positive-length contact
-/// already connects those openings through the same removed group. In Yap's
-/// terminology from "Towards Exact Geometric Computation," *Computational
-/// Geometry* 7.1-2 (1997), the point is lower-dimensional evidence that may
 /// be replayed after the exact 2D/1D ownership certificate exists; it is never
 /// allowed to supply graph connectivity for the boolean topology.
-#[cfg(feature = "exact-triangulation")]
 fn materialize_simple_source_side_cutter_difference(
     component: &SimpleSurfaceComponent,
     removed: &[Vec<Point3>],
@@ -11082,7 +10494,6 @@ fn materialize_simple_source_side_cutter_difference(
         .map(|(_, polygons)| polygons)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn materialize_simple_source_side_cutter_difference_core(
     component: &SimpleSurfaceComponent,
     removed: &[Vec<Point3>],
@@ -11150,7 +10561,7 @@ fn materialize_simple_source_side_cutter_difference_core(
     } else {
         stitch_disjoint_simple_loops(fragments, projection)?
     };
-    let mut output_area = ExactReal::from(0);
+    let mut output_area = Real::from(0);
     for polygon in &mut polygons {
         orient_polygon_ccw(polygon, projection)?;
         *polygon = simplify_projected_polygon(polygon.clone(), projection);
@@ -11168,7 +10579,7 @@ fn materialize_simple_source_side_cutter_difference_core(
         "coplanar nonconvex source side-cutter difference",
     )
     .ok()?;
-    let mut removed_area = ExactReal::from(0);
+    let mut removed_area = Real::from(0);
     for polygon in &removed {
         removed_area = add(&removed_area, &projected_area2_abs(polygon, projection)?);
     }
@@ -11191,15 +10602,8 @@ fn materialize_simple_source_side_cutter_difference_core(
 /// removed contacts are still merged into simple openings first, while
 /// point-only contacts are kept as branch facts rather than graph edges.
 ///
-/// Retained fragments follow Weiler and Atherton, "Hidden Surface Removal
-/// Using Polygon Area Sorting," *SIGGRAPH Computer Graphics* 11.2 (1977).
 /// Segment/contact decisions are exact orientation-predicate decisions in the
-/// sense of Guigue and Devillers, "Fast and Robust Triangle-Triangle Overlap
-/// Test Using Orientation Predicates," *Journal of Graphics Tools* 8.1
-/// (2003). The final promotion gate is Yap's exact-object rule from "Towards
-/// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997): the
 /// source area must equal retained plus removed area exactly.
-#[cfg(feature = "exact-triangulation")]
 fn materialize_simple_source_side_cutter_point_touch_difference_core(
     component: &SimpleSurfaceComponent,
     removed: &[Vec<Point3>],
@@ -11262,7 +10666,7 @@ fn materialize_simple_source_side_cutter_point_touch_difference_core(
         return None;
     }
 
-    let mut output_area = ExactReal::from(0);
+    let mut output_area = Real::from(0);
     for polygon in &mut polygons {
         orient_polygon_ccw(polygon, projection)?;
         *polygon = simplify_projected_polygon(polygon.clone(), projection);
@@ -11274,7 +10678,7 @@ fn materialize_simple_source_side_cutter_point_touch_difference_core(
     )
     .ok()?;
 
-    let mut removed_area = ExactReal::from(0);
+    let mut removed_area = Real::from(0);
     for polygon in &removed {
         removed_area = add(&removed_area, &projected_area2_abs(polygon, projection)?);
     }
@@ -11301,17 +10705,7 @@ fn materialize_simple_source_side_cutter_point_touch_difference_core(
 /// source-boundary ownership, retained-fragment stitching, and area replay.
 ///
 /// Endpoint-on-edge incidence is certified with the same exact
-/// orientation/segment predicates used by Guigue and Devillers, "Fast and
-/// Robust Triangle-Triangle Overlap Test Using Orientation Predicates,"
-/// *Journal of Graphics Tools* 8.1 (2003). The promotion boundary follows
-/// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-/// 7.1-2 (1997): the incidence is retained evidence, not a tolerance
 /// decision, and the boolean object is exposed only after the exact replay
-/// succeeds. The retained-loop construction remains the Weiler-Atherton
-/// boundary-fragment traversal from Weiler and Atherton, "Hidden Surface
-/// Removal Using Polygon Area Sorting," *SIGGRAPH Computer Graphics* 11.2
-/// (1977).
-#[cfg(feature = "exact-triangulation")]
 fn materialize_simple_source_vertex_edge_side_cutter_point_touch_difference(
     component: &SimpleSurfaceComponent,
     removed: &[Vec<Point3>],
@@ -11358,7 +10752,6 @@ fn materialize_simple_source_vertex_edge_side_cutter_point_touch_difference(
 /// contacts are still merged into one removed opening, but point-only contacts
 /// merely authorize the branch-aware retained-loop walk. The returned boolean
 /// records whether at least one exact point-only contact was observed.
-#[cfg(feature = "exact-triangulation")]
 fn merge_connected_simple_removed_openings_allowing_branches(
     openings: &[Vec<Point3>],
     projection: CoplanarProjection,
@@ -11413,9 +10806,6 @@ fn merge_connected_simple_removed_openings_allowing_branches(
 /// stitch into one simple union boundary can be certified locally: exposed
 /// boundary fragments from every opening are replayed, every original opening
 /// must lie in the stitched union, and the union area must not exceed the sum
-/// of the exact input areas. This is the same retained-object discipline Yap
-/// argues for in "Towards Exact Geometric Computation," *Computational
-/// Geometry* 7.1-2 (1997): the merged topology is promoted only from retained
 /// exact boundary facts and exact area inequalities, not by choosing sample
 /// points in overlapping bays.
 ///
@@ -11425,13 +10815,6 @@ fn merge_connected_simple_removed_openings_allowing_branches(
 /// positive-length contact through other openings; this mirrors the
 /// lower-dimensional-incidence policy used by the convex side-cutter and
 /// cutter/hole materializers. Boundary and crossing tests use the exact
-/// orientation-predicate classifier of Guigue and Devillers, "Fast and Robust
-/// Triangle-Triangle Overlap Test Using Orientation Predicates," *Journal of
-/// Graphics Tools* 8.1 (2003). The exposed-fragment replay follows the
-/// Weiler-Atherton boundary traversal; see Weiler and Atherton, "Hidden
-/// Surface Removal Using Polygon Area Sorting," *SIGGRAPH Computer Graphics*
-/// 11.2 (1977).
-#[cfg(feature = "exact-triangulation")]
 fn merge_connected_simple_removed_openings(
     openings: &[Vec<Point3>],
     projection: CoplanarProjection,
@@ -11481,7 +10864,6 @@ fn merge_connected_simple_removed_openings(
     Some(merged)
 }
 
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum SimplePolygonInteraction {
     Disjoint,
@@ -11489,7 +10871,6 @@ enum SimplePolygonInteraction {
     Connected,
 }
 
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum SimplePolygonContact {
     Disjoint,
@@ -11498,7 +10879,6 @@ enum SimplePolygonContact {
     PositiveArea,
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn simple_polygon_interaction(
     left: &[Point3],
     right: &[Point3],
@@ -11543,12 +10923,9 @@ fn simple_polygon_interaction(
 
 /// Classify the dimensionality of contact between two retained simple loops.
 ///
-/// Guigue and Devillers' orientation-predicate segment relation separates
 /// proper crossings from collinear boundary overlap, and exact simple-polygon
 /// location separates strict interior containment from lower-dimensional
-/// contact. Yap's exact-computation model is the reason this returns `None`
 /// rather than guessing when any predicate cannot certify the topology.
-#[cfg(feature = "exact-triangulation")]
 fn simple_polygon_contact(
     left: &[Point3],
     right: &[Point3],
@@ -11604,7 +10981,6 @@ fn simple_polygon_contact(
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn final_loops_have_only_point_touches(
     polygons: &[Vec<Point3>],
     projection: CoplanarProjection,
@@ -11628,7 +11004,6 @@ fn final_loops_have_only_point_touches(
     Some(saw_point_touch)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn materialize_simple_removed_opening_union_group(
     openings: &[Vec<Point3>],
     group: &[usize],
@@ -11645,13 +11020,7 @@ fn materialize_simple_removed_opening_union_group(
 /// other loops, stitches those fragments into one simple ring, verifies every
 /// source loop lies in the retained ring, and rejects any candidate whose area
 /// exceeds the sum of exact input areas. That last inequality is a compact
-/// Yap-style promotion gate from "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997): a stitched outer ring that silently
 /// fills an unsupported hole cannot be accepted as a boolean result. The
-/// retained-fragment traversal is the Weiler-Atherton idea from Weiler and
-/// Atherton, "Hidden Surface Removal Using Polygon Area Sorting," *SIGGRAPH
-/// Computer Graphics* 11.2 (1977).
-#[cfg(feature = "exact-triangulation")]
 fn materialize_simple_polygon_union_group(
     polygons: &[Vec<Point3>],
     group: &[usize],
@@ -11680,7 +11049,7 @@ fn materialize_simple_polygon_union_group(
     union = simplify_projected_polygon(union, projection);
     validate_projected_simple_loop(&union, projection, label).ok()?;
 
-    let mut input_area = ExactReal::from(0);
+    let mut input_area = Real::from(0);
     for opening in &group_openings {
         if !polygon_lies_in_closed_simple_polygon(opening, &union, projection)? {
             return None;
@@ -11694,7 +11063,6 @@ fn materialize_simple_polygon_union_group(
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn stitch_simple_union_loops(
     mut fragments: Vec<DirectedFragment>,
     projection: CoplanarProjection,
@@ -11737,7 +11105,6 @@ fn stitch_simple_union_loops(
     Some(loops)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn collect_simple_union_boundary_fragments(
     polygon_index: usize,
     polygons: &[Vec<Point3>],
@@ -11783,7 +11150,6 @@ fn collect_simple_union_boundary_fragments(
     Some(())
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn simple_union_fragment_is_exposed(
     a: &Point3,
     b: &Point3,
@@ -11812,7 +11178,6 @@ fn simple_union_fragment_is_exposed(
     Some(true)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn segment_has_same_direction_boundary_overlap(
     a: &Point3,
     b: &Point3,
@@ -11831,9 +11196,7 @@ fn segment_has_same_direction_boundary_overlap(
                 let other_dx = sub(&other_end.x, &other_start.x);
                 let other_dy = sub(&other_end.y, &other_start.y);
                 let dot = add(&mul(&dx, &other_dx), &mul(&dy, &other_dy));
-                return Some(
-                    compare_reals(&dot, &ExactReal::from(0)).value()? == Ordering::Greater,
-                );
+                return Some(compare_reals(&dot, &Real::from(0)).value()? == Ordering::Greater);
             }
             SegmentIntersection::Disjoint
             | SegmentIntersection::EndpointTouch
@@ -11843,7 +11206,6 @@ fn segment_has_same_direction_boundary_overlap(
     Some(false)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn collect_simple_removed_difference_fragments(
     removed_index: usize,
     outer: &[Point3],
@@ -11910,14 +11272,8 @@ fn collect_simple_removed_difference_fragments(
 /// triangle arrangement certificate so widening this artifact does not reorder
 /// exact support classification. Rectangular cases belong to the orthogonal
 /// cell materializer; branch and split cases remain for the general
-/// planar-cell materializer. This follows Yap, "Towards Exact Geometric
 /// Computation,"
-/// *Computational Geometry* 7.1-2 (1997): topology is promoted only from
 /// retained exact boundary and area facts. The boundary splice follows the
-/// Weiler-Atherton retained-fragment construction; see Weiler and Atherton,
-/// "Hidden Surface Removal Using Polygon Area Sorting," *SIGGRAPH Computer
-/// Graphics* 11.2 (1977).
-#[cfg(feature = "exact-triangulation")]
 pub fn arrange_coplanar_surface_side_cutter_difference(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -12022,14 +11378,10 @@ pub fn arrange_coplanar_surface_side_cutter_difference(
 /// arrangement: retained holes, boundary-only ambiguities, and non-branch
 /// single-cut remnants stay on their narrower artifacts. Strict interior
 /// holes may be deleted here only when exact containment proves every ring is
-/// wholly owned by one removed branch opening. The retained-object split
-/// follows Yap, "Towards Exact Geometric Computation," *Computational
-/// Geometry* 7.1-2 (1997): every emitted loop is either an unchanged exact
+/// wholly owned by one removed branch opening. The retained evidence split
 /// source hull or the replay of a local branch subtraction, and every omitted
 /// ring has a named removed owner. The branch subtraction itself uses the
-/// Weiler-Atherton retained-fragment walk cited by
 /// [`materialize_side_cutter_point_touch_difference_core`].
-#[cfg(feature = "exact-triangulation")]
 pub fn arrange_coplanar_surface_point_touch_difference(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -12234,17 +11586,12 @@ pub fn arrange_coplanar_surface_point_touch_difference(
 /// Positive-dimensional removed contacts are merged first; point-only contacts
 /// remain explicit groups. Retained output loops are then stitched from exact
 /// source and removed-boundary fragments with the branch-aware
-/// Weiler-Atherton walk, and the exact area equation is replayed before the
-/// mesh is exported. This follows Yap's retained-object requirement from
-/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997): a point branch is accepted only when exact topology, containment,
 /// and area facts name the output object. Strict holes may be omitted only
 /// when the same exact branch replay proves that one removed opening owns the
 /// entire ring. For multi-component simple-source operands this remains
 /// source-local: unaffected disks are copied as exact retained loops, covered
 /// disks may be dropped, and only the components with branch side cutters are
 /// replayed by the branch subtraction core.
-#[cfg(feature = "exact-triangulation")]
 fn arrange_coplanar_simple_surface_point_touch_difference(
     left_component_meshes: Vec<ExactMesh>,
     right_component_meshes: Vec<ExactMesh>,
@@ -12448,14 +11795,7 @@ fn arrange_coplanar_simple_surface_point_touch_difference(
 /// opened. Point coincidences inside a removed group are accepted only when
 /// positive-area or positive-length contacts already connect the same group,
 /// so point-only contact never supplies the ownership edge. This follows
-/// Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997), with the fragment
-/// traversal matching the retained boundary idea from Weiler and Atherton,
-/// "Hidden Surface Removal Using Polygon Area Sorting," *SIGGRAPH Computer
-/// Graphics* 11.2 (1977). Orthogonal-cell rectangular replay follows de Berg,
-/// Cheong, van Kreveld, and Overmars, *Computational Geometry: Algorithms and
 /// Applications*, 3rd ed., Chapter 2.
-#[cfg(feature = "exact-triangulation")]
 pub fn arrange_coplanar_surface_cutter_hole_contact_difference(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -12639,16 +11979,8 @@ pub fn arrange_coplanar_surface_cutter_hole_contact_difference(
 /// remnant would create a hole, and a cutter whose result is nonconvex cannot
 /// be represented by the convex component output model, so both cases stay
 /// explicit planar-arrangement work unless the orthogonal-cell replay proves a
-/// set of no-hole simple loops. This is Yap's retained-computation model
-/// applied to bounded Weiler-Atherton and orthogonal-cell traversals: each
 /// promoted loop is produced by an already audited exact arrangement fragment,
-/// not by a sampled polygon clip. See Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997), Weiler and Atherton,
-/// "Hidden Surface Removal Using Polygon Area Sorting," *SIGGRAPH Computer
-/// Graphics* 11.2 (1977), and de Berg, Cheong, van Kreveld, and Overmars,
-/// *Computational Geometry: Algorithms and Applications*, 3rd ed. (2008),
 /// Chapter 2.
-#[cfg(feature = "exact-triangulation")]
 fn materialize_component_multi_cutter_difference(
     component: &ConvexUnionComponent,
     cutter_indices: &[usize],
@@ -12731,11 +12063,6 @@ fn materialize_component_multi_cutter_difference(
 /// [`crate::exact::orthogonal_surface`]. Accepting only hole-free components
 /// keeps the output model honest while still materializing nonconvex
 /// partial-height multi-cutter remnants from exact grid occupancy. This is the
-/// orthogonal arrangement model of de Berg, Cheong, van Kreveld, and Overmars,
-/// *Computational Geometry: Algorithms and Applications*, 3rd ed. (2008),
-/// Chapter 2, constrained by Yap's retained exact-object rule from "Towards
-/// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997).
-#[cfg(feature = "exact-triangulation")]
 fn materialize_rectangle_multi_cutter_no_hole_cell_difference(
     component: &ConvexUnionComponent,
     cutter_indices: &[usize],
@@ -12778,7 +12105,6 @@ fn materialize_rectangle_multi_cutter_no_hole_cell_difference(
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn merge_component_meshes<'a>(
     meshes: impl IntoIterator<Item = &'a ExactMesh>,
     label: &'static str,
@@ -12814,11 +12140,8 @@ fn merge_component_meshes<'a>(
 /// multi-difference path uses this fallback only after connected-component
 /// convex import fails, and every resulting triangle piece is still replayed
 /// through the same exact contact, fragment, and area certificates before it
-/// can affect topology. This is Yap's retained-object rule from "Towards
-/// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997): the
 /// fallback preserves concrete source pieces instead of flattening the cutter
 /// graph into an approximate polygon.
-#[cfg(feature = "exact-triangulation")]
 fn triangle_piece_component_meshes(mesh: &ExactMesh) -> Option<Vec<ExactMesh>> {
     if mesh.triangles().is_empty() {
         return None;
@@ -12849,13 +12172,7 @@ fn triangle_piece_component_meshes(mesh: &ExactMesh) -> Option<Vec<ExactMesh>> {
 /// cutter must be an exact rectangle on the same retained plane, and all
 /// cutters must span the left rectangle on one fixed projected axis. The
 /// output is then the exact interval difference along the other axis, emitted
-/// as independent rectangle loops. This follows Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997): topology is promoted
 /// only from exact retained interval facts. The rectangle-cell viewpoint is a
-/// bounded orthogonal subdivision; see de Berg, Cheong, van Kreveld, and
-/// Overmars, *Computational Geometry: Algorithms and Applications*, 3rd ed.
-/// (2008), Chapter 2.
-#[cfg(feature = "exact-triangulation")]
 fn materialize_rectangle_multi_cutter_difference(
     left: &[Point3],
     cutters: &[Vec<Point3>],
@@ -12892,7 +12209,6 @@ fn materialize_rectangle_multi_cutter_difference(
     })
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn rectangle_multi_cutter_difference_polygons(
     left: &ProjectedRectangle,
     cutters: &[ProjectedRectangle],
@@ -12954,15 +12270,14 @@ fn rectangle_multi_cutter_difference_polygons(
         .collect()
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn rectangle_interval_polygon(
     left: &ProjectedRectangle,
     projection: CoplanarProjection,
     variable_axis: StripVariableAxis,
-    fixed_min: &ExactReal,
-    fixed_max: &ExactReal,
-    variable_min: &ExactReal,
-    variable_max: &ExactReal,
+    fixed_min: &Real,
+    fixed_max: &Real,
+    variable_min: &Real,
+    variable_max: &Real,
 ) -> Option<Vec<Point3>> {
     if real_order(variable_min, variable_max)? != Ordering::Less
         || real_order(fixed_min, fixed_max)? != Ordering::Less
@@ -12991,15 +12306,10 @@ fn rectangle_interval_polygon(
 ///
 /// The rectangle set is interpreted as retained exact geometry, not as a
 /// rounded floating approximation. The cell decomposition follows the
-/// arrangement model used by de Berg, Cheong, van Kreveld, and Overmars,
-/// *Computational Geometry: Algorithms and Applications*, 3rd ed. (2008):
 /// rectangle coordinates induce exact vertical and horizontal slabs, occupied
 /// cells contribute boundary fragments, and the result is accepted only when
-/// those fragments stitch into one simple loop. Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997), is the governing
 /// rule here: every branch decision is made from exact coordinates and
 /// predicates, and unsupported topology is rejected rather than approximated.
-#[cfg(feature = "exact-triangulation")]
 fn axis_aligned_rectangle_union_polygon(
     rectangles: &[ProjectedRectangle],
     projection: CoplanarProjection,
@@ -13097,14 +12407,7 @@ fn axis_aligned_rectangle_union_polygon(
 /// not preserved as a hole because the side cutter removes part of it, but the
 /// exact union of the two removed convex regions can still be replayed as one
 /// simple boundary. The union boundary is assembled from exact fragments whose
-/// midpoints lie outside the opposite convex component, in the Weiler-Atherton
 /// boundary-traversal sense, while every predicate decision is exact as
-/// required by Yap, "Towards Exact Geometric Computation," *Computational
-/// Geometry* 7.1-2 (1997). Segment contact is classified with the
-/// orientation-predicate model of Guigue and Devillers, "Fast and Robust
-/// Triangle-Triangle Overlap Test Using Orientation Predicates," *Journal of
-/// Graphics Tools* 8.1 (2003).
-#[cfg(feature = "exact-triangulation")]
 fn two_convex_cutter_hole_removed_polygon(
     hole: &[Point3],
     clipped_cutter: &[Point3],
@@ -13152,16 +12455,9 @@ fn two_convex_cutter_hole_removed_polygon(
 /// contact, disconnected holes, high-order graphs beyond the retained
 /// inclusion-exclusion cap, and branch structures that do not stitch into
 /// exactly one simple loop remain unsupported. The acceptance rule is the same
-/// exact-state rule Yap gives in "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997): the shortcut promotes topology only
 /// from retained predicates and exact area replay. Boundary fragments follow
-/// Weiler and Atherton, "Hidden Surface Removal Using Polygon Area Sorting,"
-/// *SIGGRAPH Computer Graphics* 11.2 (1977), segment contact decisions use
-/// Guigue and Devillers, "Fast and Robust Triangle-Triangle Overlap Test Using
-/// Orientation Predicates," *Journal of Graphics Tools* 8.1 (2003), and the
 /// bounded overlap area replay is an exact finite inclusion-exclusion
 /// certificate over retained convex intersections.
-#[cfg(feature = "exact-triangulation")]
 fn connected_convex_contact_union_polygon(
     regions: &[Vec<Point3>],
     projection: CoplanarProjection,
@@ -13177,10 +12473,8 @@ fn connected_convex_contact_union_polygon(
 /// Those point contacts are not branch decisions for this bounded
 /// intersection materializer, because the promoted component still requires a
 /// positive-length connected contact graph, a simple stitched boundary, and an
-/// exact finite union-area replay. This is the same Yap retained-object rule
 /// used by [`connected_convex_contact_union_polygon`], but with the weaker
 /// local contact policy needed for face-cell triangulations.
-#[cfg(feature = "exact-triangulation")]
 fn connected_convex_face_cell_union_polygon(
     regions: &[Vec<Point3>],
     projection: CoplanarProjection,
@@ -13194,11 +12488,7 @@ fn connected_convex_face_cell_union_polygon(
 /// point-only contacts are ignored by the connectivity graph and are allowed
 /// only when the final stitched boundary is one simple loop with exact area
 /// replay. This is useful for removed cutter/hole groups where one point
-/// coincidence is covered by another positive overlap, and follows Yap,
-/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997), by making the accepted topology depend on replayed object facts
 /// instead of a representative sample.
-#[cfg(feature = "exact-triangulation")]
 fn connected_convex_contact_union_polygon_allowing_incidental_point_touches(
     regions: &[Vec<Point3>],
     projection: CoplanarProjection,
@@ -13215,9 +12505,6 @@ fn connected_convex_contact_union_polygon_allowing_incidental_point_touches(
 /// [`connected_convex_contact_union_polygon`]: every graph edge must be a
 /// positive-area overlap, while disjoint pairs are allowed only when other
 /// overlaps connect the full component. The final boundary and finite
-/// inclusion-exclusion area are replayed exactly, matching Yap, "Towards
-/// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997).
-#[cfg(feature = "exact-triangulation")]
 fn connected_convex_overlap_union_polygon(
     regions: &[Vec<Point3>],
     projection: CoplanarProjection,
@@ -13272,7 +12559,6 @@ fn connected_convex_overlap_union_polygon(
     Some(polygon)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn connected_convex_union_polygon_with_contact_policy(
     regions: &[Vec<Point3>],
     projection: CoplanarProjection,
@@ -13347,13 +12633,8 @@ fn connected_convex_union_polygon_with_contact_policy(
 /// outer sheet by retained boundary fragments, accepting only the case where
 /// every group opens through one positive-length outer-edge attachment and the
 /// final boundary stitches into one simple loop. This is a bounded
-/// Weiler-Atherton-style fragment construction; see Weiler and Atherton,
-/// "Hidden Surface Removal Using Polygon Area Sorting," *SIGGRAPH Computer
-/// Graphics* 11.2 (1977). Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997), is the reason this helper requires
 /// exact contact groups and exact area replay instead of sampling a point in
 /// each prospective bay.
-#[cfg(feature = "exact-triangulation")]
 fn materialize_multi_cutter_hole_opening_difference(
     outer: &[Point3],
     removed_regions: &[RemovedRegionCandidate],
@@ -13402,13 +12683,8 @@ fn materialize_multi_cutter_hole_opening_difference(
 /// replayed as a simple removed loop, each removed loop must have one
 /// positive-length attachment to the convex outer boundary, and
 /// [`multi_side_opened_difference_polygon`] checks the final exact area
-/// equation. This follows Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997): the hole is omitted only when the
 /// exact retained contact graph names the removed owner, not when a sampled
 /// point happens to lie in a bay. The boundary stitching is the same retained
-/// fragment construction as Weiler and Atherton, "Hidden Surface Removal Using
-/// Polygon Area Sorting," *SIGGRAPH Computer Graphics* 11.2 (1977).
-#[cfg(feature = "exact-triangulation")]
 fn materialize_mixed_cutter_hole_and_side_opening_difference(
     outer: &[Point3],
     removed_regions: &[RemovedRegionCandidate],
@@ -13465,11 +12741,7 @@ fn materialize_mixed_cutter_hole_and_side_opening_difference(
 /// That point is not allowed to provide connectivity: it is accepted only when
 /// both incident regions are already in the same positive-connected group and
 /// the later retained-fragment stitch plus exact area replay still proves one
-/// simple removed boundary. This is the same object-level gate Yap requires in
-/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997): point coincidences may be retained as facts, but they cannot invent
 /// topology.
-#[cfg(feature = "exact-triangulation")]
 fn removed_region_contact_groups_allowing_incidental_points(
     regions: &[RemovedRegionCandidate],
     projection: CoplanarProjection,
@@ -13481,11 +12753,9 @@ fn removed_region_contact_groups_allowing_incidental_points(
 ///
 /// Positive-area and positive-length contacts still create ordinary connected
 /// removed groups. Point-only contacts are reported separately instead of
-/// creating connectivity. This is the predicate split required by Yap's exact
 /// computation model: a vertex contact may authorize a named branch artifact
 /// only after the positive-dimensional groups and final retained loops replay
 /// exactly.
-#[cfg(feature = "exact-triangulation")]
 fn removed_region_contact_groups_allowing_branch_points(
     regions: &[RemovedRegionCandidate],
     projection: CoplanarProjection,
@@ -13543,7 +12813,6 @@ fn removed_region_contact_groups_allowing_branch_points(
     ))
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn polygons_share_exact_vertex(left: &[Point3], right: &[Point3]) -> bool {
     left.iter().any(|left_point| {
         right
@@ -13552,7 +12821,6 @@ fn polygons_share_exact_vertex(left: &[Point3], right: &[Point3]) -> bool {
     })
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn removed_region_contact_groups_with_policy(
     regions: &[RemovedRegionCandidate],
     projection: CoplanarProjection,
@@ -13615,7 +12883,6 @@ fn removed_region_contact_groups_with_policy(
 /// area replay certify the group. Keeping this as a small helper lets the
 /// single-opening, multi-opening, and component-holed paths share the same
 /// removed-region proof obligation.
-#[cfg(feature = "exact-triangulation")]
 fn materialize_removed_region_group_polygon(
     regions: &[RemovedRegionCandidate],
     group: &[usize],
@@ -13624,7 +12891,6 @@ fn materialize_removed_region_group_polygon(
     materialize_removed_region_group_polygon_with_policy(regions, group, projection, false)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn materialize_removed_region_group_polygon_allowing_incidental_points(
     regions: &[RemovedRegionCandidate],
     group: &[usize],
@@ -13633,7 +12899,6 @@ fn materialize_removed_region_group_polygon_allowing_incidental_points(
     materialize_removed_region_group_polygon_with_policy(regions, group, projection, true)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn materialize_removed_region_group_polygon_with_policy(
     regions: &[RemovedRegionCandidate],
     group: &[usize],
@@ -13673,11 +12938,7 @@ fn materialize_removed_region_group_polygon_with_policy(
 /// contact replay exact inclusion-exclusion area. A single cutter-only group
 /// is already one clipped convex removed region, but it is still reoriented
 /// and loop-validated here before it participates in the multi-opening
-/// difference certificate. This preserves Yap's object-level replay boundary
-/// from "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997): even the singleton shortcut is a retained exact region, not a
 /// sampled polygon bay.
-#[cfg(feature = "exact-triangulation")]
 fn materialize_removed_region_group_or_single_polygon(
     regions: &[RemovedRegionCandidate],
     group: &[usize],
@@ -13703,9 +12964,6 @@ fn materialize_removed_region_group_or_single_polygon(
 /// fragments outside every removed loop plus reversed removed-loop fragments
 /// strictly inside the outer loop. The final area equation is checked exactly:
 /// `area(output) + sum(area(removed_i)) == area(outer)`. That is the
-/// object-level exactness boundary advocated by Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997).
-#[cfg(feature = "exact-triangulation")]
 fn multi_side_opened_difference_polygon(
     outer: &[Point3],
     removed: &[Vec<Point3>],
@@ -13745,7 +13003,7 @@ fn multi_side_opened_difference_polygon(
 
     let outer_area = projected_area2_abs(&outer, projection)?;
     let output_area = projected_area2_abs(&polygon, projection)?;
-    let mut removed_area = ExactReal::from(0);
+    let mut removed_area = Real::from(0);
     for removed_polygon in &removed {
         removed_area = add(
             &removed_area,
@@ -13770,18 +13028,12 @@ fn multi_side_opened_difference_polygon(
 /// already been promoted by exact contact/union replay; this helper only
 /// replays the source subtraction by retaining outer-boundary fragments
 /// outside every removed loop and reversed removed-boundary fragments inside
-/// the source. That is the Weiler-Atherton retained-boundary traversal from
-/// Weiler and Atherton, "Hidden Surface Removal Using Polygon Area Sorting,"
-/// *SIGGRAPH Computer Graphics* 11.2 (1977).
 ///
-/// The promotion boundary follows Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997): every removed loop must lie in the
 /// closed convex source, own at least one positive-length source-boundary
 /// attachment, stitch to simple disjoint retained loops, and satisfy the exact
 /// area equation `area(source) = sum(area(output_i)) + sum(area(removed_j))`.
 /// If any of those object-level facts fail, the later general planar-cell
 /// materializer must carry the topology explicitly.
-#[cfg(feature = "exact-triangulation")]
 fn multi_side_opened_difference_polygons(
     outer: &[Point3],
     removed: &[Vec<Point3>],
@@ -13820,7 +13072,7 @@ fn multi_side_opened_difference_polygons(
     if polygons.is_empty() {
         return None;
     }
-    let mut output_area = ExactReal::from(0);
+    let mut output_area = Real::from(0);
     for polygon in &mut polygons {
         orient_polygon_ccw(polygon, projection)?;
         *polygon = simplify_projected_polygon(polygon.clone(), projection);
@@ -13829,7 +13081,7 @@ fn multi_side_opened_difference_polygons(
     }
     validate_simple_component_loops_disjoint(&polygons, projection, label).ok()?;
 
-    let mut removed_area = ExactReal::from(0);
+    let mut removed_area = Real::from(0);
     for removed_polygon in &removed {
         removed_area = add(
             &removed_area,
@@ -13846,7 +13098,6 @@ fn multi_side_opened_difference_polygons(
     Some(polygons)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn collect_outer_difference_fragments(
     outer: &[Point3],
     removed: &[Vec<Point3>],
@@ -13889,7 +13140,6 @@ fn collect_outer_difference_fragments(
     Some(())
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn collect_removed_difference_fragments(
     removed_index: usize,
     outer: &[Point3],
@@ -13939,7 +13189,6 @@ fn collect_removed_difference_fragments(
     Some(())
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn point_outside_all_simple_polygons(
     point: &Point3,
     polygons: &[Vec<Point3>],
@@ -13953,7 +13202,6 @@ fn point_outside_all_simple_polygons(
     Some(true)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn point_outside_other_simple_polygons(
     point: &Point3,
     polygon_index: usize,
@@ -13971,7 +13219,6 @@ fn point_outside_other_simple_polygons(
     Some(true)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn collect_multi_convex_union_boundary_fragments(
     region_index: usize,
     regions: &[Vec<Point3>],
@@ -14030,7 +13277,6 @@ fn collect_multi_convex_union_boundary_fragments(
     Some(())
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn multi_convex_contact_union_area_matches_inputs(
     polygon: &[Point3],
     regions: &[Vec<Point3>],
@@ -14047,21 +13293,17 @@ fn multi_convex_contact_union_area_matches_inputs(
 /// every nonempty subset is intersected exactly by repeated convex clipping,
 /// and the alternating subset areas are compared with the stitched boundary
 /// area by [`multi_convex_contact_union_area_matches_inputs`]. The cap keeps
-/// the certificate replay bounded and auditable, preserving Yap's retained
-/// exact-object discipline from "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997).
-#[cfg(feature = "exact-triangulation")]
 fn convex_region_union_area_inclusion_exclusion(
     regions: &[Vec<Point3>],
     projection: CoplanarProjection,
-) -> Option<ExactReal> {
+) -> Option<Real> {
     const MAX_INCLUSION_EXCLUSION_REGIONS: usize = 8;
     if regions.is_empty() || regions.len() > MAX_INCLUSION_EXCLUSION_REGIONS {
         return None;
     }
 
     let subset_count = 1usize.checked_shl(regions.len() as u32)?;
-    let mut area = ExactReal::from(0);
+    let mut area = Real::from(0);
     for mask in 1..subset_count {
         let subset_area = convex_region_subset_intersection_area(regions, projection, mask)?;
         if mask.count_ones() % 2 == 1 {
@@ -14073,12 +13315,11 @@ fn convex_region_union_area_inclusion_exclusion(
     Some(area)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn convex_region_subset_intersection_area(
     regions: &[Vec<Point3>],
     projection: CoplanarProjection,
     mask: usize,
-) -> Option<ExactReal> {
+) -> Option<Real> {
     let mut intersection = None::<Vec<Point3>>;
     for (index, region) in regions.iter().enumerate() {
         if mask & (1usize << index) == 0 {
@@ -14093,18 +13334,17 @@ fn convex_region_subset_intersection_area(
             region.clone()
         });
         if intersection.as_ref()?.len() < 3 {
-            return Some(ExactReal::from(0));
+            return Some(Real::from(0));
         }
     }
     let intersection = intersection?;
     if intersection.len() < 3 {
-        Some(ExactReal::from(0))
+        Some(Real::from(0))
     } else {
         projected_area2_abs(&intersection, projection)
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn convex_polygons_touch_on_positive_boundary(
     left: &[Point3],
     right: &[Point3],
@@ -14131,7 +13371,6 @@ fn convex_polygons_touch_on_positive_boundary(
     Some(false)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn vertex_point_contact_plan(
     left: &[Point3],
     right: &[Point3],
@@ -14232,10 +13471,6 @@ fn vertex_point_contact_plan(
 /// predicates. Positive-area overlap, proper crossings, and collinear edge
 /// contact are rejected; vertex-edge touches are returned as split points so
 /// the caller can retain the branch vertex explicitly. This is the bounded
-/// exact-computation discipline described by Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997), with segment
-/// predicates following Guigue and Devillers (2003).
-#[cfg(feature = "exact-triangulation")]
 fn simple_vertex_point_contact_plan(
     left: &[Point3],
     right: &[Point3],
@@ -14327,7 +13562,6 @@ fn simple_vertex_point_contact_plan(
     })
 }
 
-#[cfg(feature = "exact-triangulation")]
 impl VertexPointContactPlan {
     fn invalid() -> Self {
         Self {
@@ -14338,7 +13572,6 @@ impl VertexPointContactPlan {
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn polygon_has_exact_vertex(polygon: &[Point3], point: &Point3) -> bool {
     polygon
         .iter()
@@ -14357,7 +13590,6 @@ fn segments_share_exact_endpoint(
         || points_equal(left_end, right_end)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn split_polygon_at_boundary_points(
     polygon: &[Point3],
     points: &[Point3],
@@ -14389,8 +13621,7 @@ fn split_polygon_at_boundary_points(
     if output.len() < 3 { None } else { Some(output) }
 }
 
-#[cfg(feature = "exact-triangulation")]
-fn sort_reals_and_dedup(values: &mut Vec<ExactReal>) -> Option<()> {
+fn sort_reals_and_dedup(values: &mut Vec<Real>) -> Option<()> {
     for index in 1..values.len() {
         let mut cursor = index;
         while cursor > 0 && real_order(&values[cursor], &values[cursor - 1])? == Ordering::Less {
@@ -14402,13 +13633,11 @@ fn sort_reals_and_dedup(values: &mut Vec<ExactReal>) -> Option<()> {
     Some(())
 }
 
-#[cfg(feature = "exact-triangulation")]
-fn midpoint_real(left: &ExactReal, right: &ExactReal) -> ExactReal {
-    let half = (ExactReal::from(1) / &ExactReal::from(2)).expect("2 is nonzero");
+fn midpoint_real(left: &Real, right: &Real) -> Real {
+    let half = (Real::from(1) / &Real::from(2)).expect("2 is nonzero");
     mul(&add(left, right), &half)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn point_strictly_inside_projected_rectangle(point: &Point2, rect: &ProjectedRectangle) -> bool {
     real_order(&rect.min.x, &point.x) == Some(Ordering::Less)
         && real_order(&point.x, &rect.max.x) == Some(Ordering::Less)
@@ -14416,7 +13645,6 @@ fn point_strictly_inside_projected_rectangle(point: &Point2, rect: &ProjectedRec
         && real_order(&point.y, &rect.max.y) == Some(Ordering::Less)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn rectangles_touch_on_positive_boundary(
     left: &ProjectedRectangle,
     right: &ProjectedRectangle,
@@ -14443,19 +13671,17 @@ fn rectangles_touch_on_positive_boundary(
     Some(vertical_touch || horizontal_touch)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn intervals_overlap_with_positive_length(
-    left_min: &ExactReal,
-    left_max: &ExactReal,
-    right_min: &ExactReal,
-    right_max: &ExactReal,
+    left_min: &Real,
+    left_max: &Real,
+    right_min: &Real,
+    right_max: &Real,
 ) -> Option<bool> {
     let overlap_min = exact_max_real(left_min, right_min)?;
     let overlap_max = exact_min_real(left_max, right_max)?;
     Some(real_order(&overlap_min, &overlap_max)? == Ordering::Less)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn side_opened_difference_polygon(
     outer: &ProjectedRectangle,
     removed: &[Point3],
@@ -14538,12 +13764,7 @@ fn side_opened_difference_polygon(
 /// relative interior of one outer edge, and carry that segment as a retained
 /// boundary edge. The output walks the long outer boundary path around the
 /// attachment and then the reverse removed-region boundary path. This is the
-/// same retained-fragment discipline Yap requires in "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997): no sampled point or
 /// floating tolerance decides topology. The boundary splice follows the
-/// Weiler-Atherton clipping traversal idea from "Hidden Surface Removal Using
-/// Polygon Area Sorting," *SIGGRAPH Computer Graphics* 11.2 (1977).
-#[cfg(feature = "exact-triangulation")]
 fn convex_side_opened_difference_polygon(
     outer: &[Point3],
     removed: &[Point3],
@@ -14581,9 +13802,6 @@ fn convex_side_opened_difference_polygon(
 ///
 /// `edge` names the oriented outer edge, and `start..end` is the positive
 /// parameter interval on that edge. Keeping these exact source vertices is the
-/// retained-object boundary Yap argues for in "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997).
-#[cfg(feature = "exact-triangulation")]
 struct ConvexOpenedSideAttachment {
     edge: usize,
     start: Point3,
@@ -14596,7 +13814,6 @@ struct ConvexOpenedSideAttachment {
 /// boundary hits, and non-edge attachment so that the later topology splice is
 /// a direct replay of one exact boundary fact rather than a planar arrangement
 /// guess.
-#[cfg(feature = "exact-triangulation")]
 fn convex_opened_side_attachment(
     outer: &[Point3],
     removed: &[Point3],
@@ -14611,8 +13828,8 @@ fn convex_opened_side_attachment(
                 continue;
             }
             let parameter = projected_segment_parameter(start, end, point, projection)?;
-            if real_order(&ExactReal::from(0), &parameter)? == Ordering::Less
-                && real_order(&parameter, &ExactReal::from(1))? == Ordering::Less
+            if real_order(&Real::from(0), &parameter)? == Ordering::Less
+                && real_order(&parameter, &Real::from(1))? == Ordering::Less
             {
                 boundary_points.push((edge, point.clone(), parameter));
             }
@@ -14641,7 +13858,6 @@ fn convex_opened_side_attachment(
 /// The edge may be oriented either way because the caller has already oriented
 /// the removed polygon and chooses the reverse traversal needed for the opened
 /// loop.
-#[cfg(feature = "exact-triangulation")]
 fn polygon_has_edge_between(polygon: &[Point3], left: &Point3, right: &Point3) -> bool {
     (0..polygon.len()).any(|index| {
         let start = &polygon[index];
@@ -14651,7 +13867,6 @@ fn polygon_has_edge_between(polygon: &[Point3], left: &Point3, right: &Point3) -
     })
 }
 
-#[cfg(feature = "exact-triangulation")]
 enum OpenedSideAttachment {
     Left { low: Point3, high: Point3 },
     Right { low: Point3, high: Point3 },
@@ -14659,7 +13874,6 @@ enum OpenedSideAttachment {
     Top { low: Point3, high: Point3 },
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn opened_side_attachment(
     outer: &ProjectedRectangle,
     removed: &[Point3],
@@ -14712,7 +13926,6 @@ fn opened_side_attachment(
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn vertical_attachment_points(
     points: &mut Vec<Point3>,
     outer: &ProjectedRectangle,
@@ -14749,7 +13962,6 @@ fn vertical_attachment_points(
     Some(Some((low, high)))
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn horizontal_attachment_points(
     points: &mut Vec<Point3>,
     outer: &ProjectedRectangle,
@@ -14786,7 +13998,6 @@ fn horizontal_attachment_points(
     Some(Some((low, high)))
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn removed_boundary_path_reverse(
     polygon: &[Point3],
     start: &Point3,
@@ -14815,16 +14026,14 @@ fn removed_boundary_path_reverse(
     Some(path)
 }
 
-#[cfg(feature = "exact-triangulation")]
-fn exact_min_real(left: &ExactReal, right: &ExactReal) -> Option<ExactReal> {
+fn exact_min_real(left: &Real, right: &Real) -> Option<Real> {
     match real_order(left, right)? {
         Ordering::Less | Ordering::Equal => Some(left.clone()),
         Ordering::Greater => Some(right.clone()),
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
-fn exact_max_real(left: &ExactReal, right: &ExactReal) -> Option<ExactReal> {
+fn exact_max_real(left: &Real, right: &Real) -> Option<Real> {
     match real_order(left, right)? {
         Ordering::Greater | Ordering::Equal => Some(left.clone()),
         Ordering::Less => Some(right.clone()),
@@ -14862,16 +14071,9 @@ fn exact_max_real(left: &ExactReal, right: &ExactReal) -> Option<ExactReal> {
 /// one output loop or consumed by exactly one removed opening. Point-only
 /// contacts, branch opening graphs, and overlapping multi-cutter outputs that
 /// leave unassigned holes still need a full planar subdivision. This preserves
-/// Yap's rule from
-/// "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997): every promoted loop is justified by
 /// exact source topology, containment, or area replay, and unsupported
 /// combinatorics remain explicit. The rectangular
-/// multi-cutter/strict-hole replay is the bounded cell arrangement of de Berg,
-/// Cheong, van Kreveld, and Overmars, *Computational Geometry: Algorithms and
-/// Applications*, 3rd ed. (2008), Chapter 2, promoted only after retained cell
 /// topology exposes simple outer rings and strict hole rings.
-#[cfg(feature = "exact-triangulation")]
 pub fn arrange_coplanar_convex_surface_component_holed_difference(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -15246,14 +14448,7 @@ pub fn arrange_coplanar_convex_surface_component_holed_difference(
 /// ownership, non-simple branch outputs, and unsupported boundary-straddling
 /// holes remain outside this certificate.
 ///
-/// The source disk is retained object state in Yap's sense: topology is read
 /// from mesh incidence and replayed by exact containment/area predicates; see
-/// Yap, "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997). The opened boundaries use the Weiler-Atherton retained-fragment
-/// traversal cited by the no-hole nonconvex source path. Hole triangulation is
-/// delegated to `hypertri`'s exact earcut adapter, following Held, "FIST: Fast
-/// Industrial-Strength Triangulation of Polygons," *Algorithmica* 30 (2001).
-#[cfg(feature = "exact-triangulation")]
 fn arrange_coplanar_simple_surface_component_holed_difference(
     left_component_meshes: Vec<ExactMesh>,
     right_component_meshes: Vec<ExactMesh>,
@@ -15483,13 +14678,11 @@ fn arrange_coplanar_simple_surface_component_holed_difference(
     Some(arrangement)
 }
 
-#[cfg(feature = "exact-triangulation")]
 struct ComponentHoleCandidate {
     ring: Vec<Point3>,
     right_index: usize,
 }
 
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug)]
 struct RemovedRegionCandidate {
     right_index: usize,
@@ -15497,7 +14690,6 @@ struct RemovedRegionCandidate {
     region: Vec<Point3>,
 }
 
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug)]
 struct SimpleRemovedRegionCandidate {
     right_index: Option<usize>,
@@ -15518,15 +14710,8 @@ struct SimpleRemovedRegionCandidate {
 /// The helper deliberately uses simple-polygon contact and exposed-fragment
 /// replay instead of convex-only contact facts, because clipped
 /// `source ∩ cutter` openings need not remain convex. This is still a bounded
-/// retained-object certificate, not a general arrangement solver: point-only
+/// retained evidence certificate, not a general arrangement solver: point-only
 /// contacts do not connect components, non-simple unions reject, and the final
-/// source subtraction must replay exact area. That follows Yap, "Towards
-/// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997). The
-/// exposed boundary construction is Weiler-Atherton retained traversal from
-/// Weiler and Atherton, "Hidden Surface Removal Using Polygon Area Sorting,"
-/// *SIGGRAPH Computer Graphics* 11.2 (1977), with segment relations certified
-/// by the Guigue-Devillers orientation-predicate classifier.
-#[cfg(feature = "exact-triangulation")]
 fn materialize_simple_source_removed_opening_hole_contact_component_holed_difference(
     component: &SimpleSurfaceComponent,
     removed_openings: &[Vec<Point3>],
@@ -15587,14 +14772,9 @@ fn materialize_simple_source_removed_opening_hole_contact_component_holed_differ
 /// strict containment in one retained loop or consumed by exactly one removed
 /// opening.
 ///
-/// That separation is the retained-object discipline from Yap, "Towards Exact
-/// Geometric Computation," *Computational Geometry* 7.1-2 (1997): point
 /// branches may widen the topological carrier, but strict hole ownership still
 /// has to replay from exact source facts. The boundary reconstruction is the
-/// Weiler-Atherton retained-fragment traversal cited by the no-hole
 /// side-cutter materializers, and hole triangulation remains delegated to the
-/// exact `hypertri` earcut adapter following Held's FIST algorithm.
-#[cfg(feature = "exact-triangulation")]
 fn materialize_simple_source_side_cutter_component_holed_difference(
     component: &SimpleSurfaceComponent,
     side_removed: &[Vec<Point3>],
@@ -15645,14 +14825,9 @@ fn materialize_simple_source_side_cutter_component_holed_difference(
 /// contact, contact with multiple openings, and all-consumed cases reject so
 /// the no-hole point-touch or future planar-cell artifact owns the topology.
 ///
-/// The certificate follows Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997): omitted rings and retained rings
 /// are both named by exact object predicates. Removed-opening unions and the
-/// final branch loops are Weiler-Atherton retained-fragment replays, and
-/// contact dimensionality is decided by the Guigue-Devillers
 /// orientation-predicate segment classifier used by
 /// [`simple_polygon_interaction`].
-#[cfg(feature = "exact-triangulation")]
 fn materialize_simple_source_side_cutter_point_touch_component_holed_difference_consuming_hole_contacts(
     component: &SimpleSurfaceComponent,
     side_removed: &[Vec<Point3>],
@@ -15776,15 +14951,9 @@ fn materialize_simple_source_side_cutter_point_touch_component_holed_difference_
 /// strict holes disjoint from every removed group are assigned to the emitted
 /// output loops; otherwise every hole must be consumed.
 ///
-/// The policy is Yap's retained-object model from "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997): a deleted ring is
 /// accepted only after exact predicates name the removed object that owns it,
 /// while retained rings remain explicit output objects. Grouped removed
-/// objects are built by the Weiler-Atherton retained-fragment construction
-/// cited by [`materialize_simple_polygon_union_group`], and contact
-/// dimensionality is certified by the Guigue-Devillers orientation-predicate
 /// classifier exposed through [`simple_polygon_interaction`].
-#[cfg(feature = "exact-triangulation")]
 fn materialize_simple_source_side_cutter_point_touch_grouped_hole_replay(
     component: &SimpleSurfaceComponent,
     side_removed: &[Vec<Point3>],
@@ -15949,7 +15118,6 @@ fn materialize_simple_source_side_cutter_point_touch_grouped_hole_replay(
 /// This wrapper keeps the component-holed artifact honest: disjoint strict
 /// rings remain output holes and are assigned by exact containment after the
 /// grouped removed openings split the source.
-#[cfg(feature = "exact-triangulation")]
 fn materialize_simple_source_side_cutter_point_touch_component_holed_difference_consuming_hole_contact_groups(
     component: &SimpleSurfaceComponent,
     side_removed: &[Vec<Point3>],
@@ -15993,13 +15161,9 @@ fn materialize_simple_source_side_cutter_point_touch_component_holed_difference_
 /// that is allowed only when exact simple-polygon containment names exactly
 /// one removed opening as the owner of every omitted ring.
 ///
-/// This is the retained-object rule from Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997), applied to branch
 /// topology: branch vertices and consumed rings are object facts carried by
 /// the certificate, not sampled side effects. The boundary replay remains the
-/// Weiler-Atherton traversal cited by
 /// [`materialize_simple_source_side_cutter_point_touch_difference_core`].
-#[cfg(feature = "exact-triangulation")]
 fn materialize_simple_source_side_cutter_point_touch_difference_consuming_holes(
     component: &SimpleSurfaceComponent,
     side_removed: &[Vec<Point3>],
@@ -16052,16 +15216,11 @@ fn materialize_simple_source_side_cutter_point_touch_difference_consuming_holes(
 /// name a 2D removed object, and holes touching multiple openings stay with
 /// the future planar-cell extractor.
 ///
-/// The policy is Yap's retained-object discipline from "Towards Exact
-/// Geometric Computation," *Computational Geometry* 7.1-2 (1997): omitting a
 /// ring requires exact object ownership, not a sampled witness. The
 /// opening/hole unions and retained branch loops use the same
-/// Weiler-Atherton retained-fragment replay cited by
 /// [`materialize_simple_polygon_union_group`] and
 /// [`materialize_simple_source_side_cutter_point_touch_difference_core`],
-/// with segment contacts classified by the Guigue-Devillers
 /// orientation-predicate tests used throughout this module.
-#[cfg(feature = "exact-triangulation")]
 fn materialize_simple_source_side_cutter_point_touch_difference_consuming_hole_contacts(
     component: &SimpleSurfaceComponent,
     side_removed: &[Vec<Point3>],
@@ -16161,7 +15320,6 @@ fn materialize_simple_source_side_cutter_point_touch_difference_consuming_hole_c
 /// every strict ring must be consumed by a grouped removed object, so the
 /// public artifact remains [`CoplanarSurfacePointTouchDifference`] rather than
 /// an empty component-holed carrier.
-#[cfg(feature = "exact-triangulation")]
 fn materialize_simple_source_side_cutter_point_touch_difference_consuming_hole_contact_groups(
     component: &SimpleSurfaceComponent,
     side_removed: &[Vec<Point3>],
@@ -16189,7 +15347,6 @@ fn materialize_simple_source_side_cutter_point_touch_difference_consuming_hole_c
 /// contact proof as the component-holed path, then promotes only when every
 /// strict hole belongs to a consumed exact union group and the retained loops
 /// are disjoint simple source-owned outputs.
-#[cfg(feature = "exact-triangulation")]
 fn materialize_simple_source_removed_opening_hole_contact_difference_consuming_holes(
     component: &SimpleSurfaceComponent,
     removed_openings: &[Vec<Point3>],
@@ -16231,7 +15388,6 @@ fn materialize_simple_source_removed_opening_hole_contact_difference_consuming_h
     Some(polygons)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn materialize_simple_source_removed_opening_hole_contact_openings(
     component: &SimpleSurfaceComponent,
     removed_openings: &[Vec<Point3>],
@@ -16313,7 +15469,6 @@ fn materialize_simple_source_removed_opening_hole_contact_openings(
     Some((merged_openings, consumed_holes))
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn simple_removed_region_contact_groups(
     regions: &[SimpleRemovedRegionCandidate],
     projection: CoplanarProjection,
@@ -16367,20 +15522,11 @@ fn simple_removed_region_contact_groups(
 /// retained and assigned to emitted output loops after the side openings are
 /// stitched.
 ///
-/// This keeps the shortcut inside Yap's retained-object model from "Towards
-/// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997):
 /// consumed topology is named by exact contact groups and exact area replay,
 /// never by a sampled witness point. The removed-loop and final source
-/// difference boundaries are Weiler-Atherton retained-fragment traversals; see
-/// Weiler and Atherton, "Hidden Surface Removal Using Polygon Area Sorting,"
-/// *SIGGRAPH Computer Graphics* 11.2 (1977). Point-only connectivity remains
 /// unsupported because it is a branch decision for the later planar-cell
 /// extractor; incidental point contacts are admitted only inside an already
 /// positive-connected removed group. Segment contact is classified by the
-/// exact orientation predicates of Guigue and Devillers, "Fast and Robust
-/// Triangle-Triangle Overlap Test Using Orientation Predicates," *Journal of
-/// Graphics Tools* 8.1 (2003).
-#[cfg(feature = "exact-triangulation")]
 fn materialize_simple_source_cutter_hole_contact_component_holed_difference(
     component: &SimpleSurfaceComponent,
     cut_indices: &[usize],
@@ -16510,14 +15656,11 @@ fn materialize_simple_source_cutter_hole_contact_component_holed_difference(
 /// pairwise disjoint before the fallback cut/hole assignment could run. That
 /// was unnecessarily global for multi-component differences: one left
 /// component may consume an overlapping cutter/hole group while an independent
-/// left component retains a strict hole. Following Yap, "Towards Exact
-/// Geometric Computation," *Computational Geometry* 7.1-2 (1997), this helper
 /// keeps the proof local to the exact source component whose topology is being
 /// emitted. Components unrelated to that source component cannot invalidate
 /// its retained loop; related components are still required to replay as
 /// disjoint whenever the narrower fallback path relies on simple hole
 /// assignment instead of explicit removed-region contact groups.
-#[cfg(feature = "exact-triangulation")]
 fn component_relevant_right_regions_are_disjoint(
     cut_indices: &[usize],
     holes: &[ComponentHoleCandidate],
@@ -16556,11 +15699,8 @@ fn component_relevant_right_regions_are_disjoint(
 /// This private object is intentionally smaller than
 /// [`CoplanarConvexHoledComponent`]: it is the exact subtraction replay before
 /// choosing whether the public artifact is component-holed or no-hole
-/// multi-difference. Keeping that layer separate follows Yap, "Towards Exact
-/// Geometric Computation," *Computational Geometry* 7.1-2 (1997): the
 /// predicates certify contact, containment, and area first; only after that do
 /// we expose the boolean object with the topology it actually owns.
-#[cfg(feature = "exact-triangulation")]
 struct CutterHoleContactSplitComponent {
     outer: Vec<Point3>,
     holes: Vec<Vec<Point3>>,
@@ -16568,7 +15708,7 @@ struct CutterHoleContactSplitComponent {
 
 /// Replay mixed cutter/hole openings while optionally retaining strict holes.
 ///
-/// This helper is the shared exact-object builder behind
+/// This helper is the shared exact evidence builder behind
 /// [`materialize_cutter_hole_contact_component_holed_difference`] and
 /// [`materialize_cutter_hole_contact_multi_component_difference_consuming_holes`].
 /// It does not decide the public artifact family. A connected group of clipped
@@ -16582,11 +15722,7 @@ struct CutterHoleContactSplitComponent {
 /// holes, or several disjoint retained components produced by side-to-side
 /// consumed groups. Callers then choose whether that evidence is a
 /// component-holed output or a no-hole multi-difference. Boundary fragments
-/// follow Weiler and Atherton, "Hidden Surface Removal Using Polygon Area
-/// Sorting," *SIGGRAPH Computer Graphics* 11.2 (1977); acceptance follows
-/// Yap's exact-computation boundary by requiring simple retained loops, exact
 /// hole ownership, and exact area replay before promotion.
-#[cfg(feature = "exact-triangulation")]
 fn materialize_cutter_hole_contact_split_components(
     component: &ConvexUnionComponent,
     cut_indices: &[usize],
@@ -16765,11 +15901,6 @@ fn materialize_cutter_hole_contact_split_components(
 /// the opened loop. Point-only connectivity and branch graphs still require a
 /// full planar subdivision; incidental point contacts are admitted only inside
 /// an already positive-connected removed group. Boundary fragments follow
-/// Weiler and Atherton, "Hidden Surface Removal Using Polygon Area Sorting,"
-/// *SIGGRAPH Computer Graphics* 11.2 (1977), and the replay/retained ring
-/// split follows Yap, "Towards Exact Geometric Computation," *Computational
-/// Geometry* 7.1-2 (1997).
-#[cfg(feature = "exact-triangulation")]
 fn materialize_cutter_hole_contact_component_holed_difference(
     component: &ConvexUnionComponent,
     cut_indices: &[usize],
@@ -16803,14 +15934,8 @@ fn materialize_cutter_hole_contact_component_holed_difference(
 /// outer loops for [`arrange_coplanar_surface_multi_difference`], not a
 /// component-holed artifact with empty hole lists.
 ///
-/// The distinction is the object/predicate separation in Yap, "Towards Exact
-/// Geometric Computation," *Computational Geometry* 7.1-2 (1997): once exact
 /// contact topology proves the holes are removed, the retained boolean object
 /// should expose only the no-hole surface loops it actually owns. The loop
-/// construction is still the Weiler-Atherton retained-fragment traversal cited
-/// by the holed sibling; see Weiler and Atherton, "Hidden Surface Removal
-/// Using Polygon Area Sorting," *SIGGRAPH Computer Graphics* 11.2 (1977).
-#[cfg(feature = "exact-triangulation")]
 fn materialize_cutter_hole_contact_multi_component_difference_consuming_holes(
     component: &ConvexUnionComponent,
     cut_indices: &[usize],
@@ -16863,19 +15988,9 @@ fn materialize_cutter_hole_contact_multi_component_difference_consuming_holes(
 /// split by an opening boundary remains unsupported because its ownership
 /// would require a general planar-cell subdivision.
 ///
-/// This is a bounded retained-fragment construction in the sense of Yap,
-/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997): no floating witness selects the bay topology. The boundary splice
-/// is the same Weiler-Atherton retained-edge traversal used elsewhere in this
-/// module; see Weiler and Atherton, "Hidden Surface Removal Using Polygon Area
-/// Sorting," *SIGGRAPH Computer Graphics* 11.2 (1977). Fully rectangular
-/// cases remain with the orthogonal cell materializer of de Berg, Cheong, van
-/// Kreveld, and Overmars, *Computational Geometry: Algorithms and
-/// Applications*, 3rd ed. (2008), Chapter 2, so this helper covers the
 /// non-rectilinear multi-cutter gap instead of changing rectilinear shortcut
 /// precedence. Branch graphs and partially consumed holes stay outside this
 /// helper because they require explicit planar-cell ownership.
-#[cfg(feature = "exact-triangulation")]
 fn materialize_connected_multi_cutter_component_holed_difference(
     component: &ConvexUnionComponent,
     cut_indices: &[usize],
@@ -16913,14 +16028,8 @@ fn materialize_connected_multi_cutter_component_holed_difference(
 /// one removed opening. Any retained, boundary-touching, or ambiguously owned
 /// ring must stay with the component-holed or planar-cell materializer.
 ///
-/// The rule is deliberately object-level, following Yap, "Towards Exact
-/// Geometric Computation," *Computational Geometry* 7.1-2 (1997): deleting a
 /// hole is a topology change justified by exact containment in a named
 /// removed object. The removed/opened boundary replay is the
-/// Weiler-Atherton retained-fragment traversal from Weiler and Atherton,
-/// "Hidden Surface Removal Using Polygon Area Sorting," *SIGGRAPH Computer
-/// Graphics* 11.2 (1977).
-#[cfg(feature = "exact-triangulation")]
 fn materialize_side_cutter_opening_difference_consuming_holes(
     component: &ConvexUnionComponent,
     cut_indices: &[usize],
@@ -16958,25 +16067,16 @@ fn materialize_side_cutter_opening_difference_consuming_holes(
 ///
 /// The ordinary crossing side-cutter split starts from clipped cutter loops
 /// only, then assigns unrelated strict holes to retained output loops. This
-/// helper owns the harder retained-object case where a strict right-side ring
+/// helper owns the harder retained evidence case where a strict right-side ring
 /// positively overlaps the crossing cutter group and must first be unioned
 /// into the removed object. A group is promoted only when it contains at least
 /// two side cutters with an exact proper boundary crossing, contains a
 /// contacted hole, replays as one simple source-owned removed loop, and the
 /// later source subtraction satisfies the exact area equation.
 ///
-/// This is not a general planar-cell extractor. It is the same Yap boundary
-/// used throughout this module: "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997), treats topology as certified object
 /// state, so the deleted ring is admitted only after exact contact predicates
 /// name the removed object. The retained boundary stitch is the
-/// Weiler-Atherton construction, Weiler and Atherton, "Hidden Surface Removal
-/// Using Polygon Area Sorting," *SIGGRAPH Computer Graphics* 11.2 (1977);
 /// proper crossing/contact dimensionality uses orientation-predicate segment
-/// classification in the style of Guigue and Devillers, "Fast and Robust
-/// Triangle-Triangle Overlap Test Using Orientation Predicates," *Journal of
-/// Graphics Tools* 8.1 (2003).
-#[cfg(feature = "exact-triangulation")]
 fn materialize_crossing_side_cutter_straddling_hole_replay(
     component: &ConvexUnionComponent,
     cut_indices: &[usize],
@@ -17141,7 +16241,6 @@ fn materialize_crossing_side_cutter_straddling_hole_replay(
     Some((removed_openings, cut_polygons, retained_holes))
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn materialize_crossing_side_cutter_component_holed_difference_consuming_hole_contact_groups(
     component: &ConvexUnionComponent,
     cut_indices: &[usize],
@@ -17172,7 +16271,6 @@ fn materialize_crossing_side_cutter_component_holed_difference_consuming_hole_co
     )
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn materialize_crossing_side_cutter_multi_component_difference_consuming_hole_contact_groups(
     component: &ConvexUnionComponent,
     cut_indices: &[usize],
@@ -17205,15 +16303,8 @@ fn materialize_crossing_side_cutter_multi_component_difference_consuming_hole_co
 /// Boundary contact, overlap with several removed openings, or holes that
 /// straddle a split boundary stay outside this bounded certificate.
 ///
-/// The construction follows Yap's retained-object rule from "Towards Exact
-/// Geometric Computation," *Computational Geometry* 7.1-2 (1997): the wider
 /// shortcut is admitted only when retained split loops, consumed holes, and
 /// retained holes replay from exact predicates. The split-loop boundary
-/// traversal is the Weiler-Atherton retained-fragment construction used by
-/// [`materialize_side_cutter_multi_component_difference`]; see Weiler and
-/// Atherton, "Hidden Surface Removal Using Polygon Area Sorting," *SIGGRAPH
-/// Computer Graphics* 11.2 (1977).
-#[cfg(feature = "exact-triangulation")]
 fn materialize_side_cutter_multi_component_holed_difference(
     component: &ConvexUnionComponent,
     cut_indices: &[usize],
@@ -17267,15 +16358,8 @@ fn materialize_side_cutter_multi_component_holed_difference(
 /// area equation, and retained/consumed hole assignment.
 ///
 /// The boundary-crossing test uses the orientation-predicate segment
-/// classifier in the style of Guigue and Devillers, "Fast and Robust
-/// Triangle-Triangle Overlap Test Using Orientation Predicates," *Journal of
-/// Graphics Tools* 8.1 (2003). The promotion follows Yap, "Towards Exact
-/// Geometric Computation," *Computational Geometry* 7.1-2 (1997): proper
 /// crossings are retained predicate facts, while the emitted boolean object
 /// must still replay as exact retained loops before it crosses the API
-/// boundary. The loop materialization is the Weiler-Atherton retained-edge
-/// traversal cited by [`materialize_side_cutter_multi_component_difference`].
-#[cfg(feature = "exact-triangulation")]
 fn materialize_crossing_side_cutter_multi_component_holed_difference(
     component: &ConvexUnionComponent,
     cut_indices: &[usize],
@@ -17310,15 +16394,7 @@ fn materialize_crossing_side_cutter_multi_component_holed_difference(
 /// branch coordinates. Strict holes are still assigned by exact containment in
 /// one retained loop or consumed by exactly one removed opening.
 ///
-/// The branch replay uses the same Weiler-Atherton retained-fragment walk as
-/// the no-hole point-touch difference. The hole-ownership rule follows Yap,
-/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997): adding a branch carrier does not license sampled hole assignment.
 /// Every retained/consumed ring is named by exact predicates before the
-/// `hypertri` earcut handoff triangulates the holed components, following
-/// Held, "FIST: Fast Industrial-Strength Triangulation of Polygons,"
-/// *Algorithmica* 30 (2001).
-#[cfg(feature = "exact-triangulation")]
 fn materialize_side_cutter_point_touch_component_holed_difference(
     component: &ConvexUnionComponent,
     cut_indices: &[usize],
@@ -17380,16 +16456,9 @@ fn materialize_side_cutter_point_touch_component_holed_difference(
 /// names the deletion; the plain no-hole all-rectangle route remains with the
 /// orthogonal-cell shortcuts.
 ///
-/// This is a bounded retained-object certificate in Yap's sense from
-/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997): the omitted ring is named by exact removed-object topology, and
 /// the retained rings are named by exact containment in emitted loops. The
-/// removed-opening unions and final branch loops use the Weiler-Atherton
-/// retained-fragment construction cited by
 /// [`materialize_side_cutter_point_touch_removed_openings_core`], and contact
-/// dimensionality is certified by the Guigue-Devillers orientation-predicate
 /// segment classifier used throughout this module.
-#[cfg(feature = "exact-triangulation")]
 fn materialize_side_cutter_point_touch_component_holed_difference_consuming_hole_contacts(
     component: &ConvexUnionComponent,
     cut_indices: &[usize],
@@ -17542,22 +16611,13 @@ fn materialize_side_cutter_point_touch_component_holed_difference_consuming_hole
 /// consumed when the whole cutter/ring contact group replays as one simple
 /// removed object. Point-only hole contact is rejected, and hole-only contact
 /// groups are rejected because they do not name a removed object. The same
-/// proof also covers the all-rectangular clipped-cutter case: de Berg et al.'s
-/// orthogonal subdivision view can explain the cells, but Yap's retained
 /// object boundary still requires the consumed ring to be tied to an explicit
 /// removed group before the branch loops are emitted.
 ///
-/// The policy follows Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997): a ring is either retained as an
 /// exact output object or deleted only after exact predicates identify the
 /// removed object that owns it. The grouped removed object is built by the
-/// Weiler-Atherton retained-fragment construction cited by
 /// [`materialize_simple_polygon_union_group`], and contact dimensionality is
-/// certified by the Guigue-Devillers orientation-predicate classifier exposed
 /// through [`simple_polygon_interaction`]. Final holed output is still
-/// triangulated only after exact ring assignment, following Held, "FIST: Fast
-/// Industrial-Strength Triangulation of Polygons," *Algorithmica* 30 (2001).
-#[cfg(feature = "exact-triangulation")]
 fn materialize_side_cutter_point_touch_component_holed_difference_consuming_hole_contact_groups(
     component: &ConvexUnionComponent,
     cut_indices: &[usize],
@@ -17731,12 +16791,7 @@ fn materialize_side_cutter_point_touch_component_holed_difference_consuming_hole
 /// output; retained holes stay with
 /// [`materialize_side_cutter_point_touch_component_holed_difference`].
 ///
-/// Yap's "Towards Exact Geometric Computation," *Computational Geometry*
-/// 7.1-2 (1997), is the policy boundary: deleting a ring is a certified
 /// object-level fact, not a consequence of a representative point. The branch
-/// loops themselves are still stitched by the Weiler-Atherton retained-edge
-/// replay cited by [`materialize_side_cutter_point_touch_difference_core`].
-#[cfg(feature = "exact-triangulation")]
 fn materialize_side_cutter_point_touch_difference_consuming_holes(
     component: &ConvexUnionComponent,
     cut_indices: &[usize],
@@ -17796,14 +16851,8 @@ fn materialize_side_cutter_point_touch_difference_consuming_holes(
 /// ownership object; ordinary all-rectangle no-hole subtraction remains
 /// delegated to the orthogonal arrangement layer.
 ///
-/// Yap's "Towards Exact Geometric Computation," *Computational Geometry*
-/// 7.1-2 (1997), is the certificate boundary: deleting a ring is permitted
 /// only after exact predicates name the removed object that owns it. The
-/// opening union and branch replay use the Weiler-Atherton retained-boundary
-/// construction cited by [`materialize_simple_polygon_union_group`] and
 /// [`materialize_side_cutter_point_touch_removed_openings_core`]; contacts
-/// are exact Guigue-Devillers orientation-predicate classifications.
-#[cfg(feature = "exact-triangulation")]
 fn materialize_side_cutter_point_touch_difference_consuming_hole_contacts(
     component: &ConvexUnionComponent,
     cut_indices: &[usize],
@@ -17926,15 +16975,9 @@ fn materialize_side_cutter_point_touch_difference_consuming_hole_contacts(
 /// cutter/ring contact graph and retained branch replay, not by widening to a
 /// generic sampled rectilinear cell difference.
 ///
-/// This follows Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997): a deleted ring must be named by an
 /// exact removed object before retained topology is emitted. The group unions
-/// and branch replay use the Weiler-Atherton retained-fragment construction
-/// cited by [`materialize_simple_polygon_union_group`] and
 /// [`materialize_side_cutter_point_touch_removed_openings_core`]. Contact
-/// dimensionality is classified by the Guigue-Devillers orientation
 /// predicates exposed through [`simple_polygon_interaction`].
-#[cfg(feature = "exact-triangulation")]
 fn materialize_side_cutter_point_touch_difference_consuming_hole_contact_groups(
     component: &ConvexUnionComponent,
     cut_indices: &[usize],
@@ -18107,11 +17150,8 @@ fn materialize_side_cutter_point_touch_difference_consuming_hole_contact_groups(
 /// the reusable no-hole core for side-cutter-only differences and mixed
 /// component/holed differences.
 ///
-/// This is the retained-object discipline from Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997): a point coincidence is
 /// retained evidence, but it is not a topological adjacency unless the
 /// positive-contact graph and exact area replay already prove the object.
-#[cfg(feature = "exact-triangulation")]
 fn materialize_nonrectilinear_side_cutter_opening(
     component: &ConvexUnionComponent,
     cut_indices: &[usize],
@@ -18190,7 +17230,7 @@ fn materialize_nonrectilinear_side_cutter_opening(
 
     let component_area = projected_area2_abs(&component.hull, projection)?;
     let opening_area = projected_area2_abs(&opening, projection)?;
-    let mut removed_area = ExactReal::from(0);
+    let mut removed_area = Real::from(0);
     for removed_opening in &removed_openings {
         removed_area = add(
             &removed_area,
@@ -18219,14 +17259,7 @@ fn materialize_nonrectilinear_side_cutter_opening(
 /// This is a bounded planar-cell promotion, not a tolerance polygon clip. The
 /// retained fragments are precisely the outside portions of the convex source
 /// boundary and the reversed inside portions of removed cutter groups, in the
-/// Weiler-Atherton retained-boundary style; see Weiler and Atherton, "Hidden
-/// Surface Removal Using Polygon Area Sorting," *SIGGRAPH Computer Graphics*
-/// 11.2 (1977). The reason the helper demands exact attachment, simplicity,
-/// disjointness, and area replay is Yap's object-level requirement from
-/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997): the shortcut may widen only when retained combinatorial facts, not
 /// sampled witnesses, determine the output topology.
-#[cfg(feature = "exact-triangulation")]
 fn materialize_side_cutter_multi_component_difference(
     component: &ConvexUnionComponent,
     cut_indices: &[usize],
@@ -18253,14 +17286,8 @@ fn materialize_side_cutter_multi_component_difference(
 /// generic side-cutter consequence.
 ///
 /// The crossing predicate is the exact orientation-based segment classifier
-/// used throughout this module, following Guigue and Devillers, "Fast and
-/// Robust Triangle-Triangle Overlap Test Using Orientation Predicates,"
-/// *Journal of Graphics Tools* 8.1 (2003). The later retained-loop replay
-/// remains the Yap-style object proof from "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997): the crossings only
 /// authorize attempting the retained object, and exact area/topology replay
 /// still decides whether it is a certified boolean result.
-#[cfg(feature = "exact-triangulation")]
 fn materialize_crossing_side_cutter_multi_component_difference(
     component: &ConvexUnionComponent,
     cut_indices: &[usize],
@@ -18285,7 +17312,6 @@ fn materialize_crossing_side_cutter_multi_component_difference(
     )
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn clipped_side_cutter_openings_have_proper_boundary_crossing(
     component: &ConvexUnionComponent,
     cut_indices: &[usize],
@@ -18296,7 +17322,6 @@ fn clipped_side_cutter_openings_have_proper_boundary_crossing(
     simple_loops_have_proper_boundary_crossing(&clipped_openings, component.projection)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn clipped_side_cutter_opening_loops(
     component: &ConvexUnionComponent,
     cut_indices: &[usize],
@@ -18326,7 +17351,6 @@ fn clipped_side_cutter_opening_loops(
     Some(clipped_openings)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn simple_loops_have_proper_boundary_crossing(
     loops: &[Vec<Point3>],
     projection: CoplanarProjection,
@@ -18345,7 +17369,6 @@ fn simple_loops_have_proper_boundary_crossing(
     Some(false)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn simple_loops_have_endpoint_on_edge_branch(
     loops: &[Vec<Point3>],
     projection: CoplanarProjection,
@@ -18361,7 +17384,6 @@ fn simple_loops_have_endpoint_on_edge_branch(
     false
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn simple_loop_pair_has_endpoint_on_edge_branch(
     left: &[Point3],
     right: &[Point3],
@@ -18385,7 +17407,6 @@ fn simple_loop_pair_has_endpoint_on_edge_branch(
     false
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn point_on_segment_strict_interior(
     start: &Point3,
     end: &Point3,
@@ -18397,7 +17418,6 @@ fn point_on_segment_strict_interior(
         && point_on_projected_segment(start, end, point, projection)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn simple_loop_pair_has_proper_boundary_crossing(
     left: &[Point3],
     right: &[Point3],
@@ -18433,13 +17453,7 @@ fn simple_loop_pair_has_proper_boundary_crossing(
 /// helper rejects so the component/holed or later planar-cell materializer
 /// owns that topology.
 ///
-/// The distinction is Yap's retained-object discipline from "Towards Exact
-/// Geometric Computation," *Computational Geometry* 7.1-2 (1997): removing a
 /// source ring is a certified topology change, not a side effect of polygon
-/// clipping. The retained split loops are the Weiler-Atherton fragment replay
-/// described in Weiler and Atherton, "Hidden Surface Removal Using Polygon
-/// Area Sorting," *SIGGRAPH Computer Graphics* 11.2 (1977).
-#[cfg(feature = "exact-triangulation")]
 fn materialize_side_cutter_multi_component_difference_consuming_holes(
     component: &ConvexUnionComponent,
     cut_indices: &[usize],
@@ -18469,7 +17483,6 @@ fn materialize_side_cutter_multi_component_difference_consuming_holes(
     Some(polygons)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn materialize_side_cutter_multi_component_difference_core(
     component: &ConvexUnionComponent,
     cut_indices: &[usize],
@@ -18557,7 +17570,7 @@ fn materialize_side_cutter_multi_component_difference_core(
     if polygons.len() < 2 {
         return None;
     }
-    let mut output_area = ExactReal::from(0);
+    let mut output_area = Real::from(0);
     for polygon in &mut polygons {
         orient_polygon_ccw(polygon, projection)?;
         *polygon = simplify_projected_polygon(polygon.clone(), projection);
@@ -18570,7 +17583,7 @@ fn materialize_side_cutter_multi_component_difference_core(
         return None;
     }
 
-    let mut removed_area = ExactReal::from(0);
+    let mut removed_area = Real::from(0);
     for opening in &removed_openings {
         removed_area = add(&removed_area, &projected_area2_abs(opening, projection)?);
     }
@@ -18591,11 +17604,8 @@ fn materialize_side_cutter_multi_component_difference_core(
 /// bounded case where clipped removed openings have at least one point-only
 /// contact, the contact does not provide connectivity for the removed-region
 /// groups, and the retained components validate with exact shared vertices.
-/// The same Weiler-Atherton retained-fragment construction and exact area
 /// replay are used, but the loop-disjointness predicate is the branch-aware
-/// one. That keeps the topology promotion explicit in Yap's sense instead of
 /// weakening the existing multi-difference contract.
-#[cfg(feature = "exact-triangulation")]
 fn materialize_side_cutter_point_touch_difference_core(
     component: &ConvexUnionComponent,
     cut_indices: &[usize],
@@ -18690,7 +17700,7 @@ fn materialize_side_cutter_point_touch_difference_core(
     if polygons.len() < 2 {
         return None;
     }
-    let mut output_area = ExactReal::from(0);
+    let mut output_area = Real::from(0);
     for polygon in &mut polygons {
         orient_polygon_ccw(polygon, projection)?;
         *polygon = simplify_projected_polygon(polygon.clone(), projection);
@@ -18702,7 +17712,7 @@ fn materialize_side_cutter_point_touch_difference_core(
     )
     .ok()?;
 
-    let mut removed_area = ExactReal::from(0);
+    let mut removed_area = Real::from(0);
     for opening in &removed_openings {
         removed_area = add(&removed_area, &projected_area2_abs(opening, projection)?);
     }
@@ -18725,15 +17735,8 @@ fn materialize_side_cutter_point_touch_difference_core(
 /// removed opening edge. Shared input vertices are deliberately excluded so
 /// the ordinary shared-vertex branch keeps its own proof path.
 ///
-/// The branch predicate is exact segment incidence, following Guigue and
-/// Devillers, "Fast and Robust Triangle-Triangle Overlap Test Using
-/// Orientation Predicates," *Journal of Graphics Tools* 8.1 (2003). As in
-/// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-/// 7.1-2 (1997), this predicate only authorizes a retained-object replay:
-/// the emitted loops still come from the Weiler-Atherton retained-fragment
 /// walk and exact area validation in
 /// [`materialize_side_cutter_point_touch_difference_core`].
-#[cfg(feature = "exact-triangulation")]
 fn materialize_vertex_edge_side_cutter_point_touch_difference(
     component: &ConvexUnionComponent,
     cut_indices: &[usize],
@@ -18769,15 +17772,7 @@ fn materialize_vertex_edge_side_cutter_point_touch_difference(
 /// loops must satisfy the exact area equation
 /// `source = retained + removed`.
 ///
-/// This is the same retained-object split advocated by Yap, "Towards Exact
-/// Geometric Computation," *Computational Geometry* 7.1-2 (1997): predicate
 /// evidence names the removed objects first, then the boolean object is
-/// emitted. Boundary fragments follow Weiler and Atherton, "Hidden Surface
-/// Removal Using Polygon Area Sorting," *SIGGRAPH Computer Graphics* 11.2
-/// (1977), and contacts are classified by the exact orientation predicates of
-/// Guigue and Devillers, "Fast and Robust Triangle-Triangle Overlap Test
-/// Using Orientation Predicates," *Journal of Graphics Tools* 8.1 (2003).
-#[cfg(feature = "exact-triangulation")]
 fn materialize_side_cutter_point_touch_removed_openings_core(
     component: &ConvexUnionComponent,
     removed_openings: &[Vec<Point3>],
@@ -18848,7 +17843,7 @@ fn materialize_side_cutter_point_touch_removed_openings_core(
     if polygons.len() < 2 {
         return None;
     }
-    let mut output_area = ExactReal::from(0);
+    let mut output_area = Real::from(0);
     for polygon in &mut polygons {
         orient_polygon_ccw(polygon, projection)?;
         *polygon = simplify_projected_polygon(polygon.clone(), projection);
@@ -18860,7 +17855,7 @@ fn materialize_side_cutter_point_touch_removed_openings_core(
     )
     .ok()?;
 
-    let mut removed_area = ExactReal::from(0);
+    let mut removed_area = Real::from(0);
     for opening in &openings {
         removed_area = add(&removed_area, &projected_area2_abs(opening, projection)?);
     }
@@ -18880,10 +17875,6 @@ fn materialize_side_cutter_point_touch_removed_openings_core(
 /// boundary contact with the source component. Point touches are deliberately
 /// ignored: they are branch vertices in the planar subdivision and need their
 /// own cell traversal. The segment relation is the same orientation-predicate
-/// classifier used throughout the module, following Guigue and Devillers,
-/// "Fast and Robust Triangle-Triangle Overlap Test Using Orientation
-/// Predicates," *Journal of Graphics Tools* 8.1 (2003).
-#[cfg(feature = "exact-triangulation")]
 fn convex_boundary_attachment_count(
     outer: &[Point3],
     removed: &[Point3],
@@ -18892,7 +17883,6 @@ fn convex_boundary_attachment_count(
     Some(convex_boundary_attachment_edges(outer, removed, projection)?.len())
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn convex_boundary_attachment_edges(
     outer: &[Point3],
     removed: &[Point3],
@@ -18935,12 +17925,8 @@ fn convex_boundary_attachment_edges(
 /// or more source sides. This admits both independent side-to-side barriers
 /// and the higher-order four-sided branch-group fixture, while rejecting a
 /// speculative split caused only by point contacts or interior stitching. The
-/// policy is deliberately predicate-first in Yap's sense from "Towards Exact
-/// Geometric Computation," *Computational Geometry* 7.1-2 (1997): a retained
 /// multi-component object is exposed only after exact side ownership has been
-/// proved, with the actual rings still validated by the Weiler-Atherton
 /// retained-fragment replay in [`multi_side_opened_difference_polygons`].
-#[cfg(feature = "exact-triangulation")]
 fn certify_removed_openings_split_source_component(
     outer: &[Point3],
     removed_openings: &[Vec<Point3>],
@@ -18966,10 +17952,7 @@ fn certify_removed_openings_split_source_component(
 /// collects exact positive-length source-boundary attachments across all
 /// branch openings and requires at least two distinct source edges before a
 /// component-holed branch artifact can be emitted. The distinction follows
-/// Yap's retained-object boundary from "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997): branch topology is promoted only
 /// after exact source-side ownership names the split.
-#[cfg(feature = "exact-triangulation")]
 fn certify_removed_openings_collectively_split_source_component(
     outer: &[Point3],
     removed_openings: &[Vec<Point3>],
@@ -18995,11 +17978,8 @@ fn certify_removed_openings_collectively_split_source_component(
 /// omitted from the retained component only when exact simple-polygon
 /// containment proves the whole ring is strictly inside one removed opening.
 /// Zero or two owner openings are rejected so ambiguous ownership and
-/// branch-point subdivision stay explicit. This is the retained-object
-/// discipline Yap argues for in "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997): the output topology changes only
+/// branch-point subdivision stay explicit. This is the retained evidence
 /// when exact source facts identify the owner of the removed ring.
-#[cfg(feature = "exact-triangulation")]
 fn hole_strictly_consumed_by_one_removed_opening(
     hole: &[Point3],
     removed_openings: &[Vec<Point3>],
@@ -19024,7 +18004,6 @@ fn hole_strictly_consumed_by_one_removed_opening(
 /// an unowned hole: usually a straddling ring, a boundary contact, or a branch
 /// case. Those remain outside this bounded certificate so a later planar-cell
 /// materializer can carry the exact split topology explicitly.
-#[cfg(feature = "exact-triangulation")]
 fn assign_holes_to_connected_multi_cutter_opening(
     holes: &[ComponentHoleCandidate],
     opening: &[Point3],
@@ -19062,13 +18041,7 @@ fn assign_holes_to_connected_multi_cutter_opening(
 /// so those remain on the smaller convex-difference and cutter/hole-contact
 /// certificates.
 ///
-/// The promotion rule is Yap's retained exact-object discipline from "Towards
-/// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997): the
 /// component-holed shortcut may widen only when exact cell occupancy carries
-/// the topology. The rectilinear subdivision itself follows de Berg, Cheong,
-/// van Kreveld, and Overmars, *Computational Geometry: Algorithms and
-/// Applications*, 3rd ed. (2008), Chapter 2.
-#[cfg(feature = "exact-triangulation")]
 fn materialize_rectangle_multi_cutter_component_holed_cell_difference(
     component: &ConvexUnionComponent,
     cutter_indices: &[usize],
@@ -19159,13 +18132,8 @@ fn materialize_rectangle_multi_cutter_component_holed_cell_difference(
 /// loops may be nonconvex simple loops, so containment is checked by exact
 /// retained-edge rejection plus exact earcut coverage rather than by convex
 /// half-space signs. This check is the local substitute for a full planar
-/// subdivision. Following Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997), ambiguous boundary contact or
 /// partial hole/remnant overlap returns `None` rather than inventing topology
 /// from an approximate sample point. The triangulated containment probe uses
-/// Held, "FIST: Fast Industrial-Strength Triangulation of Polygons,"
-/// *Algorithmica* 30 (2001), through `hypertri`'s exact earcut adapter.
-#[cfg(feature = "exact-triangulation")]
 fn assign_holes_to_cut_component_outputs(
     holes: &[Vec<Point3>],
     cut_polygons: &[Vec<Point3>],
@@ -19194,13 +18162,10 @@ fn assign_holes_to_cut_component_outputs(
 /// retained only when exact simple-polygon containment proves it lies strictly
 /// inside one emitted retained loop. If it is not retained, it may be omitted
 /// only when [`hole_strictly_consumed_by_one_removed_opening`] proves exactly
-/// one removed side opening owns the whole ring. Yap's "Towards Exact
-/// Geometric Computation," *Computational Geometry* 7.1-2 (1997), is the
 /// governing rule here: the topology of a hole cannot be inferred from a
 /// representative sample or floating tolerance, so every unowned or multiply
 /// owned ring rejects the shortcut and waits for a full planar-cell
 /// materializer.
-#[cfg(feature = "exact-triangulation")]
 fn assign_holes_to_side_cutter_split_outputs(
     holes: &[Vec<Point3>],
     cut_polygons: &[Vec<Point3>],
@@ -19231,7 +18196,6 @@ fn assign_holes_to_side_cutter_split_outputs(
     Some(holes_by_cut)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn polygon_strictly_inside_convex_polygon(
     inner: &[Point3],
     outer: &[Point3],
@@ -19253,15 +18217,9 @@ fn polygon_strictly_inside_convex_polygon(
 /// This is the nonconvex counterpart to
 /// [`polygon_strictly_inside_convex_polygon`]. It first rejects any retained
 /// edge contact using the exact orientation-predicate segment classifier of
-/// Guigue and Devillers, "Fast and Robust Triangle-Triangle Overlap Test Using
-/// Orientation Predicates," *Journal of Graphics Tools* 8.1 (2003). It then
 /// classifies every inner vertex against an exact earcut triangulation of the
-/// outer ring, using Held, "FIST: Fast Industrial-Strength Triangulation of
-/// Polygons," *Algorithmica* 30 (2001). Yap's "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997), is the reason the
 /// routine returns `None` on undecided topology instead of accepting a sampled
 /// representative point.
-#[cfg(feature = "exact-triangulation")]
 fn polygon_strictly_inside_simple_polygon(
     inner: &[Point3],
     outer: &[Point3],
@@ -19281,7 +18239,6 @@ fn polygon_strictly_inside_simple_polygon(
         })
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn rings_have_any_edge_contact(
     left: &[Point3],
     right: &[Point3],
@@ -19307,7 +18264,6 @@ fn rings_have_any_edge_contact(
     Some(false)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn simple_polygon_location(
     point: &Point3,
     polygon: &[Point3],
@@ -19354,7 +18310,6 @@ fn simple_polygon_location(
 /// corner remaining outside the right triangle. Both variants reuse the exact
 /// clipped intersection polygon to find replacement vertices on the adjacent
 /// left edges. The candidate output is accepted only when exact projected area
-/// proves `area(output) + area(intersection) == area(left)`, following Yap's
 /// requirement that constructed topology be justified by certified facts.
 pub fn difference_single_triangle_coplanar_surfaces(
     left: &ExactMesh,
@@ -19523,7 +18478,7 @@ fn combined_points(left: &ExactMesh, right: &ExactMesh) -> Vec<Point3> {
     left.vertices()
         .iter()
         .chain(right.vertices())
-        .map(|point| point.to_hyperlimit_point())
+        .map(|point| point.clone())
         .collect()
 }
 
@@ -19536,6 +18491,12 @@ fn all_in_closed_triangle(locations: &[Option<TriangleLocation>; 3]) -> bool {
     })
 }
 
+/// Clip one convex projected polygon by another.
+///
+/// This is the Sutherland-Hodgman half-plane pass from Sutherland and Hodgman,
+/// "Reentrant Polygon Clipping," *Communications of the ACM* 17.1 (1974),
+/// with inside tests and line intersections performed through exact retained
+/// 3D evidence.
 fn clip_convex_polygon(
     subject: &[Point3],
     clip: &[Point3],
@@ -19558,14 +18519,9 @@ fn clip_convex_polygon(
         let a = &clip[edge];
         let b = &clip[(edge + 1) % clip.len()];
         let a2 = &clip2[edge];
-        // Sutherland-Hodgman clipping traverses every edge of the clipping
-        // polygon, not just triangle edges. Yap's retained-state discipline
         // requires the projected 2D edge used for the predicate to match the
         // exact 3D edge used for the construction; modulo `clip.len()` keeps
         // multi-face convex surface clips from replaying the wrong half-plane.
-        // See Sutherland and Hodgman, "Reentrant Polygon Clipping,"
-        // Communications of the ACM 17.1 (1974), and Yap, "Towards Exact
-        // Geometric Computation," Computational Geometry 7.1-2 (1997).
         let b2 = &clip2[(edge + 1) % clip.len()];
         let input = output;
         output = Vec::new();
@@ -19616,18 +18572,7 @@ fn intersect_segment_with_projected_line(
     line_b: &Point3,
     projection: CoplanarProjection,
 ) -> Option<Point3> {
-    let a = project_point(line_a, projection);
-    let b = project_point(line_b, projection);
-    let q0 = project_point(p0, projection);
-    let q1 = project_point(p1, projection);
-    let d0 = orient2d_value(&a, &b, &q0);
-    let d1 = orient2d_value(&a, &b, &q1);
-    let denominator = sub(&d0, &d1);
-    if compare_reals(&denominator, &ExactReal::from(0)).value() == Some(Ordering::Equal) {
-        return None;
-    }
-    let t = (d0 / &denominator).ok()?;
-    Some(interpolate3(p0, p1, &t))
+    hyperlimit::intersect_segment_with_projected_line3(p0, p1, line_a, line_b, projection)
 }
 
 fn simplify_projected_polygon(
@@ -19677,7 +18622,7 @@ fn polygon_to_open_mesh_with_label(polygon: &[Point3], label: &'static str) -> O
     }
     let vertices = polygon
         .iter()
-        .map(|point| ExactPoint3::new(point.x.clone(), point.y.clone(), point.z.clone()))
+        .map(|point| Point3::new(point.x.clone(), point.y.clone(), point.z.clone()))
         .collect::<Vec<_>>();
     let triangles = (1..polygon.len() - 1)
         .map(|index| Triangle([0, index, index + 1]))
@@ -19691,7 +18636,6 @@ fn polygon_to_open_mesh_with_label(polygon: &[Point3], label: &'static str) -> O
     .ok()
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn polygon_to_earcut_open_mesh(
     polygon: &[Point3],
     projection: CoplanarProjection,
@@ -19703,7 +18647,6 @@ fn polygon_to_earcut_open_mesh(
     )
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn polygon_to_earcut_open_mesh_with_label(
     polygon: &[Point3],
     projection: CoplanarProjection,
@@ -19726,7 +18669,7 @@ fn polygon_to_earcut_open_mesh_with_label(
     }
     let vertices = polygon
         .iter()
-        .map(|point| ExactPoint3::new(point.x.clone(), point.y.clone(), point.z.clone()))
+        .map(|point| Point3::new(point.x.clone(), point.y.clone(), point.z.clone()))
         .collect::<Vec<_>>();
     let triangles = indices
         .chunks_exact(3)
@@ -19741,7 +18684,6 @@ fn polygon_to_earcut_open_mesh_with_label(
     .ok()
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn polygon_to_earcut_open_mesh_with_hole(
     outer: &[Point3],
     hole: &[Point3],
@@ -19761,7 +18703,7 @@ fn polygon_to_earcut_open_mesh_with_hole(
     }
     let vertices = points
         .iter()
-        .map(|point| ExactPoint3::new(point.x.clone(), point.y.clone(), point.z.clone()))
+        .map(|point| Point3::new(point.x.clone(), point.y.clone(), point.z.clone()))
         .collect::<Vec<_>>();
     let triangles = indices
         .chunks_exact(3)
@@ -19776,7 +18718,6 @@ fn polygon_to_earcut_open_mesh_with_hole(
     .ok()
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn polygon_to_earcut_open_mesh_with_holes(
     outer: &[Point3],
     holes: &[Vec<Point3>],
@@ -19802,7 +18743,7 @@ fn polygon_to_earcut_open_mesh_with_holes(
     }
     let vertices = points
         .iter()
-        .map(|point| ExactPoint3::new(point.x.clone(), point.y.clone(), point.z.clone()))
+        .map(|point| Point3::new(point.x.clone(), point.y.clone(), point.z.clone()))
         .collect::<Vec<_>>();
     let triangles = indices
         .chunks_exact(3)
@@ -19817,7 +18758,6 @@ fn polygon_to_earcut_open_mesh_with_holes(
     .ok()
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn polygons_to_earcut_open_mesh(
     polygons: &[Vec<Point3>],
     projection: CoplanarProjection,
@@ -19829,7 +18769,6 @@ fn polygons_to_earcut_open_mesh(
     )
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn polygons_to_earcut_open_mesh_with_label(
     polygons: &[Vec<Point3>],
     projection: CoplanarProjection,
@@ -19860,17 +18799,13 @@ fn polygons_to_earcut_open_mesh_with_label(
 
 /// Triangulate simple loops while preserving every retained boundary vertex.
 ///
-/// `hypertri`'s FIST-style earcut handoff is the preferred triangulator for
-/// nonconvex loops, following Held, "FIST: Fast Industrial-Strength
-/// Triangulation of Polygons," *Algorithmica* 30 (2001). Some point-touch
-/// branch certificates intentionally introduce a collinear vertex on a source
-/// edge; a triangulator may omit that coordinate from triangles while still
-/// covering the area. Yap's "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997), requires us to retain that branch
-/// vertex as combinatorial state, so this helper falls back to an exact
-/// predicate ear clipper when the earcut mesh does not use all retained
-/// vertices.
-#[cfg(feature = "exact-triangulation")]
+/// `hypertri`'s earcut handoff follows Held, "FIST:
+/// Fast Industrial-Strength Triangulation of Polygons," *Algorithmica* 30
+/// (2001). Branch certificates intentionally introduce collinear source-edge
+/// vertices; a triangulator may omit those coordinates from triangles while
+/// preserving area. Since this path treats each retained vertex as
+/// combinatorial state, it falls back to an exact predicate ear clipper when
+/// the earcut mesh does not use all retained vertices.
 fn polygons_to_retained_simple_open_mesh_with_label(
     polygons: &[Vec<Point3>],
     projection: CoplanarProjection,
@@ -19899,7 +18834,6 @@ fn polygons_to_retained_simple_open_mesh_with_label(
     .ok()
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn polygon_to_retained_simple_open_mesh_with_label(
     polygon: &[Point3],
     projection: CoplanarProjection,
@@ -19919,7 +18853,7 @@ fn polygon_to_retained_simple_open_mesh_with_label(
 
     let vertices = polygon
         .iter()
-        .map(|point| ExactPoint3::new(point.x.clone(), point.y.clone(), point.z.clone()))
+        .map(|point| Point3::new(point.x.clone(), point.y.clone(), point.z.clone()))
         .collect::<Vec<_>>();
     let triangles = retained_simple_polygon_ear_clip_triangles(polygon, projection)?;
     ExactMesh::new_with_policy(
@@ -19931,7 +18865,6 @@ fn polygon_to_retained_simple_open_mesh_with_label(
     .ok()
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn retained_simple_polygon_ear_clip_triangles(
     polygon: &[Point3],
     projection: CoplanarProjection,
@@ -19986,7 +18919,6 @@ fn retained_simple_polygon_ear_clip_triangles(
     Some(triangles)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn is_positive_projected_triangle(
     polygon: &[Point3],
     triangle: [usize; 3],
@@ -19994,7 +18926,7 @@ fn is_positive_projected_triangle(
 ) -> Option<bool> {
     let points = triangle_points(polygon, triangle);
     let area = projected_area2_signed(&points, projection)?;
-    Some(compare_reals(&area, &ExactReal::from(0)).value() == Some(Ordering::Greater))
+    Some(compare_reals(&area, &Real::from(0)).value() == Some(Ordering::Greater))
 }
 
 /// Triangulate weakly convex point-touch components without dropping splits.
@@ -20007,10 +18939,7 @@ fn is_positive_projected_triangle(
 /// general triangulator: the retained loop was produced from an exact convex
 /// hull plus exact edge splits, and the fan is accepted only when exact area
 /// predicates prove nondegenerate use of every retained vertex. This follows
-/// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-/// 7.1-2 (1997), by preserving the structural split point instead of relying
 /// on downstream tolerance repair.
-#[cfg(feature = "exact-triangulation")]
 fn weak_convex_polygons_to_open_mesh_with_label(
     polygons: &[Vec<Point3>],
     projection: CoplanarProjection,
@@ -20026,7 +18955,7 @@ fn weak_convex_polygons_to_open_mesh_with_label(
         vertices.extend(
             polygon
                 .iter()
-                .map(|point| ExactPoint3::new(point.x.clone(), point.y.clone(), point.z.clone())),
+                .map(|point| Point3::new(point.x.clone(), point.y.clone(), point.z.clone())),
         );
         let local = weak_convex_polygon_fan_triangles(polygon, projection)?;
         triangles.extend(local.into_iter().map(|triangle| {
@@ -20043,7 +18972,6 @@ fn weak_convex_polygons_to_open_mesh_with_label(
     .ok()
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn weak_convex_polygon_fan_triangles(
     polygon: &[Point3],
     projection: CoplanarProjection,
@@ -20057,7 +18985,7 @@ fn weak_convex_polygon_fan_triangles(
             let c = (root + step + 1) % polygon.len();
             let cell = vec![polygon[a].clone(), polygon[b].clone(), polygon[c].clone()];
             let area = projected_area2_abs(&cell, projection)?;
-            if compare_reals(&area, &ExactReal::from(0)).value() != Some(Ordering::Greater) {
+            if compare_reals(&area, &Real::from(0)).value() != Some(Ordering::Greater) {
                 valid = false;
                 break;
             }
@@ -20070,7 +18998,6 @@ fn weak_convex_polygon_fan_triangles(
     None
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn component_holed_components_to_earcut_open_mesh(
     components: &[CoplanarConvexHoledComponent],
     projection: CoplanarProjection,
@@ -20102,7 +19029,6 @@ fn component_holed_components_to_earcut_open_mesh(
     .ok()
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn component_holed_component_to_earcut_open_mesh(
     component: &CoplanarConvexHoledComponent,
     projection: CoplanarProjection,
@@ -20145,14 +19071,9 @@ fn component_holed_component_to_earcut_open_mesh(
 /// nonconvex retained hole. Such a cell is useful to the triangulator's
 /// internal proof, but it is not part of the materialized surface. Filtering
 /// those cells before the full retained-boundary validator keeps the output in
-/// Yap's retained object model from "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997): the hole boundary remains exact
 /// exported topology, and any remaining invalid triangulation is still
 /// rejected by the same boundary, area, and source-replay checks. This is the
-/// same keyhole/earcut discipline described by Held, "FIST: Fast
-/// Industrial-Strength Triangulation of Polygons," *Algorithmica* 30 (2001),
 /// with an explicit retained-hole guard.
-#[cfg(feature = "exact-triangulation")]
 fn discard_component_holed_hole_fill_triangles(
     mesh: ExactMesh,
     component: &CoplanarConvexHoledComponent,
@@ -20202,14 +19123,9 @@ fn discard_component_holed_hole_fill_triangles(
 ///
 /// A holed polygon can be reduced to a simple polygon by adding a visible
 /// bridge between the outer ring and the hole. The construction is the same
-/// keyhole idea used by Held, "FIST: Fast Industrial-Strength Triangulation
-/// of Polygons," *Algorithmica* 30 (2001), but the bridge is selected with
 /// exact segment and containment predicates and duplicate bridge endpoints are
-/// mapped back to the retained rings. Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997), is the acceptance
 /// rule: the bridge is not new boundary state, and the resulting mesh is
 /// accepted only if retained-ring validation proves it is an interior edge.
-#[cfg(feature = "exact-triangulation")]
 fn component_holed_component_to_keyholed_open_mesh(
     component: &CoplanarConvexHoledComponent,
     projection: CoplanarProjection,
@@ -20255,7 +19171,6 @@ fn component_holed_component_to_keyholed_open_mesh(
     None
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn component_holed_keyhole_mesh_for_bridge(
     outer: &[Point3],
     hole: &[Point3],
@@ -20323,7 +19238,7 @@ fn component_holed_keyhole_mesh_for_bridge(
         }
         let cell = triangle_points(&points, mapped);
         let signed_area = projected_area2_signed(&cell, projection)?;
-        match compare_reals(&signed_area, &ExactReal::from(0)).value()? {
+        match compare_reals(&signed_area, &Real::from(0)).value()? {
             Ordering::Greater => triangles.push(Triangle(mapped)),
             Ordering::Less => triangles.push(Triangle([mapped[2], mapped[1], mapped[0]])),
             Ordering::Equal => {}
@@ -20334,7 +19249,7 @@ fn component_holed_keyhole_mesh_for_bridge(
     }
     let vertices = points
         .iter()
-        .map(|point| ExactPoint3::new(point.x.clone(), point.y.clone(), point.z.clone()))
+        .map(|point| Point3::new(point.x.clone(), point.y.clone(), point.z.clone()))
         .collect::<Vec<_>>();
     ExactMesh::new_with_policy(
         vertices,
@@ -20345,7 +19260,6 @@ fn component_holed_keyhole_mesh_for_bridge(
     .ok()
 }
 
-#[cfg(feature = "exact-triangulation")]
 /// Build a retained-ring mesh from the local keyhole ear clipper.
 ///
 /// The returned mesh uses exactly the original outer and hole vertices; the
@@ -20368,7 +19282,7 @@ fn component_holed_keyhole_mesh_from_ear_clip(
     let points = outer.iter().chain(hole).cloned().collect::<Vec<_>>();
     let vertices = points
         .iter()
-        .map(|point| ExactPoint3::new(point.x.clone(), point.y.clone(), point.z.clone()))
+        .map(|point| Point3::new(point.x.clone(), point.y.clone(), point.z.clone()))
         .collect::<Vec<_>>();
     ExactMesh::new_with_policy(
         vertices,
@@ -20386,12 +19300,9 @@ fn component_holed_keyhole_mesh_from_ear_clip(
 /// duplicates or a reflex retained corner away. This local clipper keeps the
 /// weakly simple walk as the combinatorial object and tests ears with exact
 /// orientation and point-in-triangle predicates, then maps duplicate bridge
-/// copies back to the retained rings. That is the same retained-state rule
-/// from Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-/// 7.1-2 (1997), while the ear-clipping theorem is the polygon triangulation
-/// basis used by Held, "FIST: Fast Industrial-Strength Triangulation of
-/// Polygons," *Algorithmica* 30 (2001).
-#[cfg(feature = "exact-triangulation")]
+/// copies back to the retained rings. It is the retained-state fallback beside
+/// the FIST-style earcut path cited in
+/// [`polygons_to_retained_simple_open_mesh_with_label`].
 fn retained_keyhole_ear_clip_triangles(
     keyhole_points: &[Point3],
     index_map: &[usize],
@@ -20472,7 +19383,6 @@ fn retained_keyhole_ear_clip_triangles(
     Some(triangles)
 }
 
-#[cfg(feature = "exact-triangulation")]
 /// Map one keyhole ear back to the retained outer/hole vertex set.
 ///
 /// Ears wholly inside the retained hole are triangulator artifacts and are not
@@ -20499,7 +19409,7 @@ fn push_mapped_keyhole_triangle(
     }
     let cell = triangle_points(keyhole_points, keyhole_triangle);
     let signed_area = projected_area2_signed(&cell, projection)?;
-    match compare_reals(&signed_area, &ExactReal::from(0)).value()? {
+    match compare_reals(&signed_area, &Real::from(0)).value()? {
         Ordering::Greater => triangles.push(Triangle(mapped)),
         Ordering::Less => triangles.push(Triangle([mapped[2], mapped[1], mapped[0]])),
         Ordering::Equal => {}
@@ -20507,7 +19417,6 @@ fn push_mapped_keyhole_triangle(
     Some(())
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn component_holed_bridge_is_valid(
     outer: &[Point3],
     hole: &[Point3],
@@ -20533,7 +19442,6 @@ fn component_holed_bridge_is_valid(
     Some(true)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn component_holed_bridge_respects_ring(
     a: &Point3,
     b: &Point3,
@@ -20562,7 +19470,6 @@ fn component_holed_bridge_respects_ring(
     Some(true)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn project_for_hypertri(point: &Point3, projection: CoplanarProjection) -> hypertri::ExactPoint {
     match projection {
         CoplanarProjection::Xy => hypertri::ExactPoint::new(point.x.clone(), point.y.clone()),
@@ -20589,8 +19496,6 @@ fn validate_coplanar_surface_output(
     // unordered set with a positive absolute area. Requiring counter-clockwise
     // order keeps the output compatible with the signed-area and boundary
     // replay used by later planar-cell and winding stages. This is the same
-    // retained structural-information principle Yap advocates in "Towards
-    // Exact Geometric Computation," Computational Geometry 7.1-2 (1997).
     validate_projected_ring_orientation(
         polygon,
         projection,
@@ -20604,7 +19509,7 @@ fn validate_coplanar_surface_output(
             "surface polygon projected area was undecided",
         ));
     };
-    if compare_reals(&area, &ExactReal::from(0)).value() != Some(Ordering::Greater) {
+    if compare_reals(&area, &Real::from(0)).value() != Some(Ordering::Greater) {
         return Err(surface_validation_error(
             label,
             "surface polygon has zero projected area",
@@ -20625,7 +19530,7 @@ fn validate_coplanar_surface_output(
     }
 
     for (index, point) in polygon.iter().enumerate() {
-        if !points_equal(point, &mesh.vertices()[index].to_hyperlimit_point()) {
+        if !points_equal(point, &mesh.vertices()[index].clone()) {
             return Err(surface_validation_error(
                 label,
                 "surface mesh vertex does not match polygon point",
@@ -20687,7 +19592,6 @@ fn validate_coplanar_surface_output(
     })
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn validate_multi_surface_output(
     projection: CoplanarProjection,
     polygons: &[Vec<Point3>],
@@ -20697,7 +19601,6 @@ fn validate_multi_surface_output(
     validate_multi_surface_output_with_loop_policy(projection, polygons, mesh, label, true, false)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn validate_multi_simple_surface_output(
     projection: CoplanarProjection,
     polygons: &[Vec<Point3>],
@@ -20707,7 +19610,6 @@ fn validate_multi_simple_surface_output(
     validate_multi_surface_output_with_loop_policy(projection, polygons, mesh, label, false, false)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn validate_multi_surface_output_allowing_vertex_point_touches(
     projection: CoplanarProjection,
     polygons: &[Vec<Point3>],
@@ -20725,7 +19627,6 @@ fn validate_multi_surface_output_allowing_vertex_point_touches(
     )
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn validate_multi_surface_output_with_loop_policy(
     projection: CoplanarProjection,
     polygons: &[Vec<Point3>],
@@ -20761,7 +19662,7 @@ fn validate_multi_surface_output_with_loop_policy(
         range_start = range_end;
     }
 
-    let mut retained_area = ExactReal::from(0);
+    let mut retained_area = Real::from(0);
     let retained_points = polygons
         .iter()
         .flat_map(|polygon| polygon.iter())
@@ -20777,7 +19678,7 @@ fn validate_multi_surface_output_with_loop_policy(
         let area = projected_area2_abs(polygon, projection).ok_or_else(|| {
             surface_validation_error(label, "component projected area was undecided")
         })?;
-        if compare_reals(&area, &ExactReal::from(0)).value() != Some(Ordering::Greater) {
+        if compare_reals(&area, &Real::from(0)).value() != Some(Ordering::Greater) {
             return Err(surface_validation_error(
                 label,
                 "component loop has zero projected area",
@@ -20829,7 +19730,7 @@ fn validate_multi_surface_output_with_loop_policy(
     let mut vertex_offset = 0;
     for polygon in polygons {
         for (local_index, point) in polygon.iter().enumerate() {
-            let mesh_point = mesh.vertices()[vertex_offset + local_index].to_hyperlimit_point();
+            let mesh_point = mesh.vertices()[vertex_offset + local_index].clone();
             if !points_equal(point, &mesh_point) {
                 return Err(surface_validation_error(
                     label,
@@ -20909,11 +19810,9 @@ fn validate_multi_surface_output_with_loop_policy(
             "multi-component mesh projected area does not match retained loop area",
         ));
     }
-    let retained_signed_area = polygons
-        .iter()
-        .try_fold(ExactReal::from(0), |area, polygon| {
-            Some(add(&area, &projected_area2_signed(polygon, projection)?))
-        });
+    let retained_signed_area = polygons.iter().try_fold(Real::from(0), |area, polygon| {
+        Some(add(&area, &projected_area2_signed(polygon, projection)?))
+    });
     let retained_signed_area = retained_signed_area.ok_or_else(|| {
         surface_validation_error(label, "multi-component retained signed area was undecided")
     })?;
@@ -20943,7 +19842,6 @@ fn validate_multi_surface_output_with_loop_policy(
     })
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn validate_component_holed_surface_output(
     projection: CoplanarProjection,
     components: &[CoplanarConvexHoledComponent],
@@ -20971,8 +19869,8 @@ fn validate_component_holed_surface_output(
     let mut retained_rings = Vec::new();
     let mut hole_ranges = Vec::new();
     let mut expected_vertices = 0;
-    let mut retained_area = ExactReal::from(0);
-    let mut retained_signed_area = ExactReal::from(0);
+    let mut retained_area = Real::from(0);
+    let mut retained_signed_area = Real::from(0);
 
     for component in components {
         if component.outer.len() < 3 || component.holes.iter().any(|hole| hole.len() < 3) {
@@ -21005,14 +19903,14 @@ fn validate_component_holed_surface_output(
             projected_area2_signed(&component.outer, projection).ok_or_else(|| {
                 surface_validation_error(label, "component outer signed area was undecided")
             })?;
-        if compare_reals(&outer_area, &ExactReal::from(0)).value() != Some(Ordering::Greater) {
+        if compare_reals(&outer_area, &Real::from(0)).value() != Some(Ordering::Greater) {
             return Err(surface_validation_error(
                 label,
                 "component outer ring has zero projected area",
             ));
         }
 
-        let mut hole_area_sum = ExactReal::from(0);
+        let mut hole_area_sum = Real::from(0);
         let mut component_signed_area = outer_signed;
         for hole in &component.holes {
             let hole_start = expected_vertices;
@@ -21038,7 +19936,7 @@ fn validate_component_holed_surface_output(
             let hole_signed = projected_area2_signed(hole, projection).ok_or_else(|| {
                 surface_validation_error(label, "component hole signed area was undecided")
             })?;
-            if compare_reals(&hole_area, &ExactReal::from(0)).value() != Some(Ordering::Greater) {
+            if compare_reals(&hole_area, &Real::from(0)).value() != Some(Ordering::Greater) {
                 return Err(surface_validation_error(
                     label,
                     "component hole has zero projected area",
@@ -21091,7 +19989,7 @@ fn validate_component_holed_surface_output(
         })
         .collect::<Vec<_>>();
     for (index, point) in retained_points.iter().enumerate() {
-        if !points_equal(point, &mesh.vertices()[index].to_hyperlimit_point()) {
+        if !points_equal(point, &mesh.vertices()[index].clone()) {
             return Err(surface_validation_error(
                 label,
                 "mesh vertex does not match retained component-holed point",
@@ -21176,15 +20074,8 @@ fn validate_component_holed_surface_output(
 /// output component may be an island inside another component's retained
 /// hole. The island may be strictly inside the hole or may touch the hole at
 /// exact branch vertices, but positive-length or proper contact still rejects
-/// to the later planar-cell extractor. This follows Yap, "Towards Exact
-/// Geometric Computation," *Computational Geometry* 7.1-2 (1997): the branch
 /// coordinate is retained object topology, not a tolerance weld inferred from
 /// triangles. Segment incidence is checked with the orientation-predicate
-/// model of Guigue and Devillers, "Fast and Robust Triangle-Triangle Overlap
-/// Test Using Orientation Predicates," *Journal of Graphics Tools* 8.1
-/// (2003), while nonconvex containment uses the exact simple-polygon location
-/// replay also used by Held's FIST triangulation adapter.
-#[cfg(feature = "exact-triangulation")]
 fn validate_component_holed_outer_relationships(
     components: &[CoplanarConvexHoledComponent],
     projection: CoplanarProjection,
@@ -21249,7 +20140,6 @@ fn validate_component_holed_outer_relationships(
     Ok(())
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn validate_component_holed_cross_hole_branch_contact(
     left: &CoplanarConvexHoledComponent,
     right: &CoplanarConvexHoledComponent,
@@ -21265,7 +20155,6 @@ fn validate_component_holed_cross_hole_branch_contact(
     Ok(())
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn component_outer_inside_any_hole_allowing_point_branch(
     outer: &[Point3],
     container: &CoplanarConvexHoledComponent,
@@ -21287,12 +20176,8 @@ fn component_outer_inside_any_hole_allowing_point_branch(
 /// strict interior witness and only exact endpoint contact with the hole
 /// boundary. This mirrors the rectilinear cell-complex island rule in
 /// `orthogonal_surface`, but keeps the predicate local to retained simple
-/// loops. Yap, "Towards Exact Geometric Computation," *Computational
-/// Geometry* 7.1-2 (1997), is the acceptance boundary: a point branch is
 /// explicit retained topology, while positive-dimensional contact remains
-/// unsupported. Segment contact is certified with the Guigue-Devillers
 /// orientation-predicate classifier.
-#[cfg(feature = "exact-triangulation")]
 fn component_outer_lies_in_hole_allowing_point_branch(
     outer: &[Point3],
     hole: &[Point3],
@@ -21337,13 +20222,9 @@ fn component_outer_lies_in_hole_allowing_point_branch(
 /// Return the retained component that owns a mesh vertex index.
 ///
 /// Multi-component planar-arrangement artifacts are not just bags of triangles:
-/// each output component retains its own loop and its own triangulation. Yap,
-/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997), frames this as retained numerical/combinatorial structure, so a
 /// triangle may only reference vertices from one retained component. Otherwise
 /// a later consumer could observe topology that was never certified by the
 /// component loop predicates.
-#[cfg(feature = "exact-triangulation")]
 fn component_for_retained_vertex(
     index: usize,
     ranges: &[core::ops::Range<usize>],
@@ -21356,8 +20237,6 @@ fn component_for_retained_vertex(
 /// Validate that every retained output vertex participates in triangulation.
 ///
 /// Retained boundary vertices are part of the certified output topology, not
-/// spare coordinates attached to a triangle soup. Following Yap, "Towards
-/// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997), the
 /// materialized mesh must consume every retained vertex before area or winding
 /// summaries are allowed to stand in for the object. This catches isolated
 /// ring vertices directly at the API boundary instead of relying on aggregate
@@ -21385,15 +20264,10 @@ fn validate_mesh_uses_all_retained_vertices(
 /// Validate that the mesh boundary is exactly the retained ring boundary.
 ///
 /// A materialized surface is a triangulation of retained loops, not merely a
-/// triangle soup with matching area. Following Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997), the retained
 /// combinatorial structure must be replayable at the public artifact
 /// boundary. We therefore compare the undirected boundary edges used by the
 /// triangle mesh against the retained consecutive ring edges before signed
 /// area summaries are allowed to certify the output. The boundary-as-chain
-/// viewpoint is the standard planar subdivision invariant; see de Berg,
-/// Cheong, van Kreveld, and Overmars, *Computational Geometry: Algorithms and
-/// Applications*, 3rd ed. (2008), Chapter 2.
 fn validate_mesh_boundary_matches_retained_rings(
     mesh: &ExactMesh,
     retained_rings: &[core::ops::Range<usize>],
@@ -21458,15 +20332,10 @@ fn canonical_edge(a: usize, b: usize) -> (usize, usize) {
 /// Validate mesh edges against retained ring edges.
 ///
 /// Retained loops/rings are exact topological constraints on the triangulated
-/// surface. Yap, "Towards Exact Geometric Computation," *Computational
-/// Geometry* 7.1-2 (1997), argues for preserving such numerical structural
 /// information instead of reconstructing it from rounded output geometry. We
 /// therefore reject any materialized triangle edge whose exact projected
 /// segment crosses, overlaps, or touches a retained ring edge away from a
 /// shared endpoint or identical retained boundary edge. The segment predicate
-/// is the orientation-based closed-segment classifier used by Guigue and
-/// Devillers, "Fast and Robust Triangle-Triangle Overlap Test Using
-/// Orientation Predicates," *Journal of Graphics Tools* 8.1 (2003).
 fn validate_mesh_edges_respect_retained_rings(
     mesh: &ExactMesh,
     projection: CoplanarProjection,
@@ -21484,7 +20353,6 @@ fn validate_mesh_edges_respect_retained_rings(
     )
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn validate_mesh_edges_respect_retained_rings_allowing_exact_endpoint_touches(
     mesh: &ExactMesh,
     projection: CoplanarProjection,
@@ -21528,10 +20396,10 @@ fn validate_mesh_edges_respect_retained_rings_with_policy(
             if canonical_edge(edge_a, edge_b) == canonical_edge(ring_a, ring_b) {
                 continue;
             }
-            let edge_start = mesh.vertices()[edge_a].to_hyperlimit_point();
-            let edge_end = mesh.vertices()[edge_b].to_hyperlimit_point();
-            let ring_start = mesh.vertices()[ring_a].to_hyperlimit_point();
-            let ring_end = mesh.vertices()[ring_b].to_hyperlimit_point();
+            let edge_start = mesh.vertices()[edge_a].clone();
+            let edge_end = mesh.vertices()[edge_b].clone();
+            let ring_start = mesh.vertices()[ring_a].clone();
+            let ring_end = mesh.vertices()[ring_b].clone();
             match classify_segment_intersection(
                 &project_point(&edge_start, projection),
                 &project_point(&edge_end, projection),
@@ -21618,15 +20486,15 @@ fn mesh_edge_contains_retained_endpoint_touch(
     ring_b: usize,
     retained_rings: &[core::ops::Range<usize>],
 ) -> bool {
-    let edge_start = mesh.vertices()[edge_a].to_hyperlimit_point();
-    let edge_end = mesh.vertices()[edge_b].to_hyperlimit_point();
-    let ring_start = mesh.vertices()[ring_a].to_hyperlimit_point();
-    let ring_end = mesh.vertices()[ring_b].to_hyperlimit_point();
+    let edge_start = mesh.vertices()[edge_a].clone();
+    let edge_end = mesh.vertices()[edge_b].clone();
+    let ring_start = mesh.vertices()[ring_a].clone();
+    let ring_end = mesh.vertices()[ring_b].clone();
     retained_rings
         .iter()
         .filter(|ring| ring.contains(&edge_a) && ring.contains(&edge_b))
         .flat_map(|ring| ring.clone())
-        .map(|index| mesh.vertices()[index].to_hyperlimit_point())
+        .map(|index| mesh.vertices()[index].clone())
         .any(|candidate| {
             point_on_projected_segment(&edge_start, &edge_end, &candidate, projection)
                 && (points_equal(&candidate, &ring_start) || points_equal(&candidate, &ring_end))
@@ -21640,9 +20508,7 @@ fn mesh_edge_contains_retained_endpoint_touch(
 /// longer collinear segment while still using the split vertex in an incident
 /// triangle. For this artifact only, we accept such a boundary edge when it
 /// covers a same-component chain of retained collinear ring edges exactly.
-/// This keeps the split point as retained Yap-style state while avoiding a
 /// tolerance weld or a degenerate boundary triangle.
-#[cfg(feature = "exact-triangulation")]
 fn validate_mesh_boundary_matches_retained_rings_allowing_collinear_splits(
     mesh: &ExactMesh,
     projection: CoplanarProjection,
@@ -21697,7 +20563,6 @@ fn validate_mesh_boundary_matches_retained_rings_allowing_collinear_splits(
     Ok(())
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn retained_collinear_boundary_chain(
     mesh: &ExactMesh,
     projection: CoplanarProjection,
@@ -21717,7 +20582,6 @@ fn retained_collinear_boundary_chain(
         })
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn retained_collinear_boundary_chain_direction(
     mesh: &ExactMesh,
     projection: CoplanarProjection,
@@ -21731,15 +20595,15 @@ fn retained_collinear_boundary_chain_direction(
     let len = ring.end.checked_sub(ring.start)?;
     let mut cursor = left.checked_sub(ring.start)?;
     let target = right.checked_sub(ring.start)?;
-    let start = mesh.vertices()[left].to_hyperlimit_point();
-    let end = mesh.vertices()[right].to_hyperlimit_point();
+    let start = mesh.vertices()[left].clone();
+    let end = mesh.vertices()[right].clone();
     let mut edges = Vec::new();
     for _ in 0..len {
         let next = (cursor + 1) % len;
         let vertex = ring.start + cursor;
         let next_vertex = ring.start + next;
-        let point = mesh.vertices()[vertex].to_hyperlimit_point();
-        let next_point = mesh.vertices()[next_vertex].to_hyperlimit_point();
+        let point = mesh.vertices()[vertex].clone();
+        let next_point = mesh.vertices()[next_vertex].clone();
         if !point_on_projected_segment(&start, &end, &point, projection)
             || !point_on_projected_segment(&start, &end, &next_point, projection)
         {
@@ -21777,12 +20641,8 @@ fn retained_ring_edges(
 /// Validate that a retained projected loop has no non-adjacent edge contacts.
 ///
 /// A retained boundary loop is part of the exact combinatorial state, not a
-/// display hint. Following Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997), the loop is accepted only when exact
 /// predicates certify that non-adjacent closed edges are disjoint. The segment
 /// relation is supplied by `hyperlimit`'s orientation-predicate classifier,
-/// following Guigue and Devillers, "Fast and Robust Triangle-Triangle Overlap
-/// Test Using Orientation Predicates," *Journal of Graphics Tools* 8.1 (2003).
 fn validate_projected_simple_loop(
     polygon: &[Point3],
     projection: CoplanarProjection,
@@ -21832,12 +20692,8 @@ fn validate_projected_simple_loop(
 /// arrangement artifacts: outer/component loops are retained counter-clockwise
 /// and holes clockwise before `hypertri` receives them. Rechecking that fact
 /// at the public artifact boundary prevents a caller from reversing a ring
-/// while leaving the triangle soup untouched. This follows Yap, "Towards
-/// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997):
 /// structural numerical facts retained during construction must be replayable
 /// before downstream topology consumes the object. The signed area is the
-/// standard shoelace determinant; see Preparata and Shamos, *Computational
-/// Geometry: An Introduction* (1985), Chapter 1.
 fn validate_projected_ring_orientation(
     polygon: &[Point3],
     projection: CoplanarProjection,
@@ -21853,7 +20709,7 @@ fn validate_projected_ring_orientation(
         Sign::Negative => Ordering::Less,
         Sign::Zero => Ordering::Equal,
     };
-    if compare_reals(&area, &ExactReal::from(0)).value() != Some(expected_ordering) {
+    if compare_reals(&area, &Real::from(0)).value() != Some(expected_ordering) {
         return Err(surface_validation_error(label, message));
     }
     Ok(())
@@ -21864,8 +20720,6 @@ fn validate_projected_ring_orientation(
 /// The convex coplanar arrangement shortcuts are intentionally bounded to
 /// convex retained boundaries. Their later containment checks use exact
 /// half-plane tests for convex polygons, so the convexity precondition is
-/// certified at the retained artifact boundary. This follows Yap, "Towards
-/// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997):
 /// structural preconditions become explicit checked facts before another
 /// certified predicate is allowed to consume them.
 fn validate_projected_strictly_convex_loop(
@@ -21912,9 +20766,6 @@ fn validate_projected_strictly_convex_loop(
 /// caller can serialize or clone those certificates, so validation must replay
 /// the hull's exact point distinctness, orientation, simplicity, and strict
 /// convexity rather than accepting an area scalar by itself. This is the
-/// certificate-side analogue of Yap's exact-geometric-computation boundary:
-/// see Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-/// 7.1-2 (1997).
 fn validate_retained_convex_hull(
     label: &'static str,
     hull: &[Point3],
@@ -21940,16 +20791,10 @@ fn validate_retained_convex_hull(
 
 /// Validate that retained convex components are pairwise separated.
 ///
-/// Yap's exact-geometric-computation model treats the combinatorial structure
 /// as the artifact being certified, not a byproduct of rounded coordinates:
-/// see Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-/// 7.1-2 (1997). Multi-component convex differences therefore retain each
 /// component only after exact projected segment tests and exact convex
 /// containment tests prove that no two loops cross, touch, or nest. The
 /// segment predicate is the orientation-based closed-segment classifier used
-/// by Guigue and Devillers, "Fast and Robust Triangle-Triangle Overlap Test
-/// Using Orientation Predicates," *Journal of Graphics Tools* 8.1 (2003).
-#[cfg(feature = "exact-triangulation")]
 fn validate_component_loops_disjoint(
     polygons: &[Vec<Point3>],
     projection: CoplanarProjection,
@@ -22043,9 +20888,6 @@ fn validate_component_loops_disjoint(
 /// vertices are the only allowed cross-loop incidence. Vertex-edge contacts
 /// must have been split into shared retained vertices before validation;
 /// positive-length edge contact, crossings, and nesting are rejected with the
-/// same orientation-predicate segment model cited above from Guigue and
-/// Devillers (2003), keeping the branch case bounded in Yap's sense.
-#[cfg(feature = "exact-triangulation")]
 fn validate_component_loops_disjoint_allowing_vertex_point_touches(
     polygons: &[Vec<Point3>],
     projection: CoplanarProjection,
@@ -22117,14 +20959,8 @@ fn validate_component_loops_disjoint_allowing_vertex_point_touches(
 ///
 /// Component-holed outputs may now retain nonconvex outer loops produced by
 /// exact convex-cutter replay. Pairwise disjointness therefore cannot use
-/// convex half-space signs. The check keeps Yap's retained topology boundary:
 /// exact segment contact rejects shared or crossing edges, then exact
 /// triangulated point-in-polygon checks reject nesting. Segment relations use
-/// Guigue and Devillers, "Fast and Robust Triangle-Triangle Overlap Test Using
-/// Orientation Predicates," *Journal of Graphics Tools* 8.1 (2003), and the
-/// simple-polygon interior probe uses Held, "FIST: Fast Industrial-Strength
-/// Triangulation of Polygons," *Algorithmica* 30 (2001).
-#[cfg(feature = "exact-triangulation")]
 fn validate_simple_component_loops_disjoint(
     polygons: &[Vec<Point3>],
     projection: CoplanarProjection,
@@ -22192,7 +21028,6 @@ fn validate_simple_component_loops_disjoint(
 /// the first point-touch producer, which emits convex component hulls, but it
 /// keeps the validation API semantically complete for future bounded branch
 /// artifacts without weakening existing disjoint-loop validators.
-#[cfg(feature = "exact-triangulation")]
 fn validate_simple_component_loops_disjoint_allowing_vertex_point_touches(
     polygons: &[Vec<Point3>],
     projection: CoplanarProjection,
@@ -22258,7 +21093,6 @@ fn validate_simple_component_loops_disjoint_allowing_vertex_point_touches(
     Ok(())
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn validate_loop_segments_disjoint_or_shared_vertices(
     left: &[Point3],
     right: &[Point3],
@@ -22325,7 +21159,6 @@ fn validate_exact_point_set_distinct(
     Ok(())
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn validate_holed_surface_output(
     projection: CoplanarProjection,
     outer: &[Point3],
@@ -22352,7 +21185,7 @@ fn validate_holed_surface_output(
         ));
     }
     for (index, point) in outer.iter().chain(hole).enumerate() {
-        if !points_equal(point, &mesh.vertices()[index].to_hyperlimit_point()) {
+        if !points_equal(point, &mesh.vertices()[index].clone()) {
             return Err(surface_validation_error(
                 label,
                 "mesh vertex does not match retained ring point",
@@ -22411,8 +21244,8 @@ fn validate_holed_surface_output(
         .ok_or_else(|| surface_validation_error(label, "outer projected area was undecided"))?;
     let hole_area = projected_area2_abs(hole, projection)
         .ok_or_else(|| surface_validation_error(label, "hole projected area was undecided"))?;
-    if compare_reals(&outer_area, &ExactReal::from(0)).value() != Some(Ordering::Greater)
-        || compare_reals(&hole_area, &ExactReal::from(0)).value() != Some(Ordering::Greater)
+    if compare_reals(&outer_area, &Real::from(0)).value() != Some(Ordering::Greater)
+        || compare_reals(&hole_area, &Real::from(0)).value() != Some(Ordering::Greater)
     {
         return Err(surface_validation_error(
             label,
@@ -22482,7 +21315,6 @@ fn validate_holed_surface_output(
     })
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn validate_multi_holed_surface_output(
     projection: CoplanarProjection,
     outer: &[Point3],
@@ -22508,7 +21340,7 @@ fn validate_multi_holed_surface_output(
         .chain(holes.iter().flat_map(|hole| hole.iter()))
         .collect::<Vec<_>>();
     for (index, point) in retained_points.iter().enumerate() {
-        if !points_equal(point, &mesh.vertices()[index].to_hyperlimit_point()) {
+        if !points_equal(point, &mesh.vertices()[index].clone()) {
             return Err(surface_validation_error(
                 label,
                 "mesh vertex does not match retained ring point",
@@ -22571,7 +21403,7 @@ fn validate_multi_holed_surface_output(
         .ok_or_else(|| surface_validation_error(label, "outer projected area was undecided"))?;
     let outer_signed_area = projected_area2_signed(outer, projection)
         .ok_or_else(|| surface_validation_error(label, "outer signed area was undecided"))?;
-    let mut hole_area_sum = ExactReal::from(0);
+    let mut hole_area_sum = Real::from(0);
     let mut retained_signed_area = outer_signed_area;
     for hole in holes {
         validate_exact_point_set_distinct(hole, label, "hole ring repeats an exact point")?;
@@ -22588,7 +21420,7 @@ fn validate_multi_holed_surface_output(
             .ok_or_else(|| surface_validation_error(label, "hole projected area was undecided"))?;
         let hole_signed_area = projected_area2_signed(hole, projection)
             .ok_or_else(|| surface_validation_error(label, "hole signed area was undecided"))?;
-        if compare_reals(&hole_area, &ExactReal::from(0)).value() != Some(Ordering::Greater) {
+        if compare_reals(&hole_area, &Real::from(0)).value() != Some(Ordering::Greater) {
             return Err(surface_validation_error(
                 label,
                 "hole rings must have positive projected area",
@@ -22650,11 +21482,8 @@ fn validate_multi_holed_surface_output(
 /// One-hole planar arrangement artifacts retain the outer ring and the hole
 /// ring as separate topology. A materialized triangle whose three vertices all
 /// come from the hole ring is not an annulus triangle; it fills the void that
-/// the retained certificate says must remain absent. Following Yap, "Towards
-/// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997), this
 /// combinatorial fact is checked before area replay so a downstream consumer
 /// never has to infer it from aggregate signed areas.
-#[cfg(feature = "exact-triangulation")]
 fn validate_holed_mesh_triangle_uses_outer_ring(
     triangle: [usize; 3],
     outer_len: usize,
@@ -22669,14 +21498,12 @@ fn validate_holed_mesh_triangle_uses_outer_ring(
     Ok(())
 }
 
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum ArrangementOperation {
     Union,
     Difference,
 }
 
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum ConvexPolygonLocation {
     Inside,
@@ -22684,14 +21511,12 @@ enum ConvexPolygonLocation {
     Outside,
 }
 
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug)]
 struct DirectedFragment {
     start: Point3,
     end: Point3,
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn arrange_single_triangle_coplanar_surfaces(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -22764,7 +21589,6 @@ fn arrange_single_triangle_coplanar_surfaces(
     Some(arrangement)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn simple_union_boundary_by_exact_angle(
     left_mesh: &ExactMesh,
     right_mesh: &ExactMesh,
@@ -22809,13 +21633,12 @@ fn simple_union_boundary_by_exact_angle(
     Some(boundary)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn average_point3(points: &[Point3]) -> Option<Point3> {
     if points.is_empty() {
         return None;
     }
-    let inv_len = (ExactReal::from(1) / &ExactReal::from(points.len() as i64)).ok()?;
-    let mut sum = Point3::new(ExactReal::from(0), ExactReal::from(0), ExactReal::from(0));
+    let inv_len = (Real::from(1) / &Real::from(points.len() as i64)).ok()?;
+    let mut sum = Point3::new(Real::from(0), Real::from(0), Real::from(0));
     for point in points {
         sum = Point3::new(
             add(&sum.x, &point.x),
@@ -22830,7 +21653,6 @@ fn average_point3(points: &[Point3]) -> Option<Point3> {
     ))
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn single_retained_plane(left: &ExactMesh, right: &ExactMesh) -> Option<bool> {
     for face in 0..left.triangles().len() {
         let classification =
@@ -22849,16 +21671,8 @@ fn single_retained_plane(left: &ExactMesh, right: &ExactMesh) -> Option<bool> {
     Some(true)
 }
 
-#[cfg(feature = "exact-triangulation")]
-type ConvexSurfaceHullsAndAreas = (
-    CoplanarProjection,
-    Vec<Point3>,
-    Vec<Point3>,
-    ExactReal,
-    ExactReal,
-);
+type ConvexSurfaceHullsAndAreas = (CoplanarProjection, Vec<Point3>, Vec<Point3>, Real, Real);
 
-#[cfg(feature = "exact-triangulation")]
 fn convex_surface_hulls_and_areas(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -22887,7 +21701,6 @@ fn convex_surface_hulls_and_areas(
     Some((projection, left_hull, right_hull, left_area, right_area))
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn choose_mesh_projection(mesh: &ExactMesh) -> Option<CoplanarProjection> {
     let triangle = mesh.triangles().first()?.0;
     let points = mesh_points(mesh);
@@ -22906,18 +21719,13 @@ fn choose_mesh_projection(mesh: &ExactMesh) -> Option<CoplanarProjection> {
     None
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn mesh_points(mesh: &ExactMesh) -> Vec<Point3> {
-    mesh.vertices()
-        .iter()
-        .map(ExactPoint3::to_hyperlimit_point)
-        .collect()
+    mesh.vertices().iter().cloned().collect()
 }
 
-#[cfg(feature = "exact-triangulation")]
-fn mesh_projected_area2(mesh: &ExactMesh, projection: CoplanarProjection) -> Option<ExactReal> {
+fn mesh_projected_area2(mesh: &ExactMesh, projection: CoplanarProjection) -> Option<Real> {
     let points = mesh_points(mesh);
-    let mut area = ExactReal::from(0);
+    let mut area = Real::from(0);
     for triangle in mesh.triangles() {
         let tri = triangle
             .0
@@ -22929,7 +21737,6 @@ fn mesh_projected_area2(mesh: &ExactMesh, projection: CoplanarProjection) -> Opt
     Some(area)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn polygons_equal(left: &[Point3], right: &[Point3]) -> bool {
     if left.len() != right.len() {
         return false;
@@ -22953,11 +21760,7 @@ fn polygons_equal(left: &[Point3], right: &[Point3]) -> bool {
 /// Compare retained loops after removing exact collinear subdivision points.
 ///
 /// Source-owned same-outer certificates must not depend on triangulation-only
-/// bridge vertices that lie exactly on an existing outer edge. Yap,
-/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997), permits this simplification because it is an exact predicate
 /// replay over retained points, not a tolerance weld.
-#[cfg(feature = "exact-triangulation")]
 fn polygons_equal_modulo_collinear(
     left: &[Point3],
     right: &[Point3],
@@ -22968,7 +21771,6 @@ fn polygons_equal_modulo_collinear(
     polygons_equal(&left, &right)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn polygon_in_closed_convex_polygon(
     inner: &[Point3],
     outer: &[Point3],
@@ -22983,7 +21785,6 @@ fn polygon_in_closed_convex_polygon(
         .try_fold(true, |all_inside, inside| Some(all_inside && inside?))
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn point_in_closed_convex_polygon(
     point: &Point3,
     polygon: &[Point3],
@@ -22992,7 +21793,6 @@ fn point_in_closed_convex_polygon(
     Some(convex_polygon_location(point, polygon, projection)? != ConvexPolygonLocation::Outside)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn convex_polygon_location(
     point: &Point3,
     polygon: &[Point3],
@@ -23018,7 +21818,6 @@ fn convex_polygon_location(
     })
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn compare_points_around_center(
     a: &Point3,
     b: &Point3,
@@ -23035,12 +21834,7 @@ fn compare_points_around_center(
         (false, true) => return Ordering::Greater,
         _ => {}
     }
-    let sign = orient2d_report(
-        &Point2::new(ExactReal::from(0), ExactReal::from(0)),
-        &av,
-        &bv,
-    )
-    .value();
+    let sign = orient2d_report(&Point2::new(Real::from(0), Real::from(0)), &av, &bv).value();
     match sign {
         Some(Sign::Positive) => Ordering::Less,
         Some(Sign::Negative) => Ordering::Greater,
@@ -23048,19 +21842,17 @@ fn compare_points_around_center(
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn upper_half(vector: &Point2) -> bool {
-    match compare_reals(&vector.y, &ExactReal::from(0)).value() {
+    match compare_reals(&vector.y, &Real::from(0)).value() {
         Some(Ordering::Greater) => true,
         Some(Ordering::Less) => false,
         Some(Ordering::Equal) => {
-            compare_reals(&vector.x, &ExactReal::from(0)).value() != Some(Ordering::Less)
+            compare_reals(&vector.x, &Real::from(0)).value() != Some(Ordering::Less)
         }
         None => true,
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn union_boundary_area_is_covered(
     polygon: &[Point3],
     left: &[Point3],
@@ -23088,7 +21880,6 @@ fn union_boundary_area_is_covered(
     Some(true)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn convex_union_boundary_area_matches_inputs(
     polygon: &[Point3],
     left: &[Point3],
@@ -23102,13 +21893,12 @@ fn convex_union_boundary_area_matches_inputs(
     let intersection_area = if intersection.len() >= 3 {
         projected_area2_abs(&intersection, projection)?
     } else {
-        ExactReal::from(0)
+        Real::from(0)
     };
     let expected = sub(&add(&left_area, &right_area), &intersection_area);
     Some(compare_reals(&union_area, &expected).value() == Some(Ordering::Equal))
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn convex_difference_boundary_area_matches_inputs(
     polygon: &[Point3],
     left: &[Point3],
@@ -23121,20 +21911,19 @@ fn convex_difference_boundary_area_matches_inputs(
     let intersection_area = if intersection.len() >= 3 {
         projected_area2_abs(&intersection, projection)?
     } else {
-        ExactReal::from(0)
+        Real::from(0)
     };
     let reconstructed_left = add(&output_area, &intersection_area);
     Some(compare_reals(&reconstructed_left, &left_area).value() == Some(Ordering::Equal))
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn convex_multi_difference_boundary_area_matches_inputs(
     polygons: &[Vec<Point3>],
     left: &[Point3],
     right: &[Point3],
     projection: CoplanarProjection,
 ) -> Option<bool> {
-    let mut output_area = ExactReal::from(0);
+    let mut output_area = Real::from(0);
     for polygon in polygons {
         output_area = add(&output_area, &projected_area2_abs(polygon, projection)?);
     }
@@ -23143,13 +21932,12 @@ fn convex_multi_difference_boundary_area_matches_inputs(
     let intersection_area = if intersection.len() >= 3 {
         projected_area2_abs(&intersection, projection)?
     } else {
-        ExactReal::from(0)
+        Real::from(0)
     };
     let reconstructed_left = add(&output_area, &intersection_area);
     Some(compare_reals(&reconstructed_left, &left_area).value() == Some(Ordering::Equal))
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn convex_polygon_intersection_boundary(
     left: &[Point3],
     right: &[Point3],
@@ -23188,29 +21976,26 @@ fn convex_polygon_intersection_boundary(
     Some(simplify_projected_polygon(points, projection))
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn triangle_points(points: &[Point3], tri: [usize; 3]) -> Vec<Point3> {
     tri.iter().map(|&index| points[index].clone()).collect()
 }
 
 fn orient_polygon_ccw(points: &mut [Point3], projection: CoplanarProjection) -> Option<()> {
     let area = projected_area2_signed(points, projection)?;
-    if compare_reals(&area, &ExactReal::from(0)).value() == Some(Ordering::Less) {
+    if compare_reals(&area, &Real::from(0)).value() == Some(Ordering::Less) {
         points.reverse();
     }
     Some(())
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn orient_polygon_cw(points: &mut [Point3], projection: CoplanarProjection) -> Option<()> {
     let area = projected_area2_signed(points, projection)?;
-    if compare_reals(&area, &ExactReal::from(0)).value() == Some(Ordering::Greater) {
+    if compare_reals(&area, &Real::from(0)).value() == Some(Ordering::Greater) {
         points.reverse();
     }
     Some(())
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn collect_boundary_fragments(
     polygon: &[Point3],
     other: &[Point3],
@@ -23276,7 +22061,6 @@ fn collect_boundary_fragments(
     Some(())
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn collect_convex_union_boundary_fragments(
     polygon: &[Point3],
     other: &[Point3],
@@ -23319,7 +22103,6 @@ fn collect_convex_union_boundary_fragments(
     Some(())
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn collect_convex_difference_boundary_fragments(
     polygon: &[Point3],
     other: &[Point3],
@@ -23369,7 +22152,6 @@ fn collect_convex_difference_boundary_fragments(
     Some(())
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn add_projected_edge_intersections(
     a0: &Point3,
     a1: &Point3,
@@ -23408,7 +22190,6 @@ fn add_projected_edge_intersections(
     Some(())
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn signs_straddle(left: Sign, right: Sign) -> bool {
     matches!(
         (left, right),
@@ -23416,7 +22197,6 @@ fn signs_straddle(left: Sign, right: Sign) -> bool {
     )
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn sort_points_along_segment(
     points: &mut [Point3],
     start: &Point3,
@@ -23436,33 +22216,30 @@ fn sort_points_along_segment(
     Some(())
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn projected_segment_parameter(
     start: &Point3,
     end: &Point3,
     point: &Point3,
     projection: CoplanarProjection,
-) -> Option<ExactReal> {
+) -> Option<Real> {
     let start = project_point(start, projection);
     let end = project_point(end, projection);
     let point = project_point(point, projection);
     let dx = sub(&end.x, &start.x);
-    if compare_reals(&dx, &ExactReal::from(0)).value() != Some(Ordering::Equal) {
+    if compare_reals(&dx, &Real::from(0)).value() != Some(Ordering::Equal) {
         return (sub(&point.x, &start.x) / &dx).ok();
     }
     let dy = sub(&end.y, &start.y);
-    if compare_reals(&dy, &ExactReal::from(0)).value() != Some(Ordering::Equal) {
+    if compare_reals(&dy, &Real::from(0)).value() != Some(Ordering::Equal) {
         return (sub(&point.y, &start.y) / &dy).ok();
     }
     None
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn dedup_points(points: &mut Vec<Point3>) {
     points.dedup_by(|right, left| points_equal(left, right));
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn stitch_simple_loop(
     mut fragments: Vec<DirectedFragment>,
     projection: CoplanarProjection,
@@ -23497,7 +22274,6 @@ fn stitch_simple_loop(
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn stitch_disjoint_simple_loops(
     mut fragments: Vec<DirectedFragment>,
     projection: CoplanarProjection,
@@ -23548,10 +22324,6 @@ fn stitch_disjoint_simple_loops(
 /// outgoing edge with the smallest counter-clockwise turn from the incoming
 /// edge, computed with exact projected cross/dot predicates rather than an
 /// angle tolerance. This is the local planar-graph walk used by the
-/// Weiler-Atherton retained-boundary construction, and the explicit branch
-/// walk is the topology certificate Yap calls for in "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997).
-#[cfg(feature = "exact-triangulation")]
 fn stitch_branching_simple_loops(
     mut fragments: Vec<DirectedFragment>,
     projection: CoplanarProjection,
@@ -23587,7 +22359,6 @@ fn stitch_branching_simple_loops(
     if loops.len() < 2 { None } else { Some(loops) }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn select_ccw_branch_continuation(
     fragments: &[DirectedFragment],
     previous: &Point3,
@@ -23612,91 +22383,35 @@ fn select_ccw_branch_continuation(
     best.map(|(index, _)| index)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn projected_vector(from: &Point3, to: &Point3, projection: CoplanarProjection) -> Point2 {
-    let from = project_point(from, projection);
-    let to = project_point(to, projection);
-    Point2 {
-        x: sub(&to.x, &from.x),
-        y: sub(&to.y, &from.y),
-    }
+    hyperlimit::projected_vector3(from, to, projection)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn ccw_turn_less(base: &Point2, left: &Point2, right: &Point2) -> Option<bool> {
-    let left_bucket = ccw_turn_bucket(base, left)?;
-    let right_bucket = ccw_turn_bucket(base, right)?;
-    if left_bucket != right_bucket {
-        return Some(left_bucket < right_bucket);
-    }
-    match compare_reals(&cross2(left, right), &ExactReal::from(0)).value()? {
-        Ordering::Greater => Some(true),
-        Ordering::Less => Some(false),
-        Ordering::Equal => Some(false),
-    }
+    hyperlimit::ccw_projected_turn_less(base, left, right)
 }
 
-#[cfg(feature = "exact-triangulation")]
-fn ccw_turn_bucket(base: &Point2, candidate: &Point2) -> Option<u8> {
-    match compare_reals(&cross2(base, candidate), &ExactReal::from(0)).value()? {
-        Ordering::Greater => Some(0),
-        Ordering::Less => Some(1),
-        Ordering::Equal => {
-            match compare_reals(&dot2(base, candidate), &ExactReal::from(0)).value()? {
-                Ordering::Greater | Ordering::Equal => Some(0),
-                Ordering::Less => Some(1),
-            }
-        }
-    }
-}
-
-#[cfg(feature = "exact-triangulation")]
-fn cross2(left: &Point2, right: &Point2) -> ExactReal {
-    sub(&mul(&left.x, &right.y), &mul(&left.y, &right.x))
-}
-
-#[cfg(feature = "exact-triangulation")]
-fn dot2(left: &Point2, right: &Point2) -> ExactReal {
-    add(&mul(&left.x, &right.x), &mul(&left.y, &right.y))
-}
-
-#[cfg(feature = "exact-triangulation")]
 fn midpoint3(a: &Point3, b: &Point3) -> Point3 {
-    let half = (ExactReal::from(1) / &ExactReal::from(2)).expect("2 is nonzero");
-    Point3::new(
-        mul(&add(&a.x, &b.x), &half),
-        mul(&add(&a.y, &b.y), &half),
-        mul(&add(&a.z, &b.z), &half),
-    )
+    hyperlimit::midpoint3(a, b)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn point_in_projected_triangle(
     point: &Point3,
     triangle: &[Point3],
     projection: CoplanarProjection,
 ) -> Option<TriangleLocation> {
-    let query = project_point(point, projection);
-    let a = project_point(&triangle[0], projection);
-    let b = project_point(&triangle[1], projection);
-    let c = project_point(&triangle[2], projection);
-    classify_point_triangle(&a, &b, &c, &query).value()
+    hyperlimit::classify_point_projected_triangle3(
+        point,
+        [&triangle[0], &triangle[1], &triangle[2]],
+        projection,
+    )
+    .value()
 }
 
-fn projected_area2_signed(points: &[Point3], projection: CoplanarProjection) -> Option<ExactReal> {
-    if points.len() < 3 {
-        return Some(ExactReal::from(0));
-    }
-    let mut sum = ExactReal::from(0);
-    for index in 0..points.len() {
-        let current = project_point(&points[index], projection);
-        let next = project_point(&points[(index + 1) % points.len()], projection);
-        sum = add(
-            &sum,
-            &sub(&mul(&current.x, &next.y), &mul(&current.y, &next.x)),
-        );
-    }
-    Some(sum)
+fn projected_area2_signed(points: &[Point3], projection: CoplanarProjection) -> Option<Real> {
+    Some(hyperlimit::projected_polygon_area2_value(
+        points, projection,
+    ))
 }
 
 fn surface_validation_error(label: &'static str, reason: &'static str) -> MeshError {
@@ -23818,10 +22533,10 @@ fn fan_triangle_covered_by_inputs(
     };
     let covered = sub(
         &add(
-            &projected_area2_abs(&left_clip, projection).unwrap_or_else(|| ExactReal::from(0)),
-            &projected_area2_abs(&right_clip, projection).unwrap_or_else(|| ExactReal::from(0)),
+            &projected_area2_abs(&left_clip, projection).unwrap_or_else(|| Real::from(0)),
+            &projected_area2_abs(&right_clip, projection).unwrap_or_else(|| Real::from(0)),
         ),
-        &projected_area2_abs(&both_clip, projection).unwrap_or_else(|| ExactReal::from(0)),
+        &projected_area2_abs(&both_clip, projection).unwrap_or_else(|| Real::from(0)),
     );
     Some(compare_reals(&covered, &fan_area).value() == Some(Ordering::Equal))
 }
@@ -23841,32 +22556,17 @@ fn point_on_projected_segment(
         == Some(true)
 }
 
-fn projected_area2_abs(points: &[Point3], projection: CoplanarProjection) -> Option<ExactReal> {
-    if points.len() < 3 {
-        return Some(ExactReal::from(0));
-    }
-    let mut sum = ExactReal::from(0);
-    for index in 0..points.len() {
-        let current = project_point(&points[index], projection);
-        let next = project_point(&points[(index + 1) % points.len()], projection);
-        sum = add(
-            &sum,
-            &sub(&mul(&current.x, &next.y), &mul(&current.y, &next.x)),
-        );
-    }
-    match compare_reals(&sum, &ExactReal::from(0)).value()? {
-        Ordering::Less => Some(sub(&ExactReal::from(0), &sum)),
-        Ordering::Equal | Ordering::Greater => Some(sum),
-    }
+fn projected_area2_abs(points: &[Point3], projection: CoplanarProjection) -> Option<Real> {
+    hyperlimit::projected_polygon_area2_abs_value(points, projection)
 }
 
-fn projected_mesh_area2_abs(mesh: &ExactMesh, projection: CoplanarProjection) -> Option<ExactReal> {
-    let mut area = ExactReal::from(0);
+fn projected_mesh_area2_abs(mesh: &ExactMesh, projection: CoplanarProjection) -> Option<Real> {
+    let mut area = Real::from(0);
     for triangle in mesh.triangles() {
         let points = triangle
             .0
             .iter()
-            .map(|&index| mesh.vertices()[index].to_hyperlimit_point())
+            .map(|&index| mesh.vertices()[index].clone())
             .collect::<Vec<_>>();
         area = add(&area, &projected_area2_abs(&points, projection)?);
     }
@@ -23878,20 +22578,13 @@ fn projected_mesh_area2_abs(mesh: &ExactMesh, projection: CoplanarProjection) ->
 /// The retained planar-arrangement rings describe both area and orientation;
 /// triangle soup with the same absolute area but reversed winding is not the
 /// same certified artifact. This check replays the same determinant sum used
-/// for ring orientation before the mesh crosses an API boundary, following
-/// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-/// 7.1-2 (1997), and the oriented-area determinant described by Preparata
-/// and Shamos, *Computational Geometry: An Introduction* (1985), Chapter 1.
-fn projected_mesh_area2_signed(
-    mesh: &ExactMesh,
-    projection: CoplanarProjection,
-) -> Option<ExactReal> {
-    let mut area = ExactReal::from(0);
+fn projected_mesh_area2_signed(mesh: &ExactMesh, projection: CoplanarProjection) -> Option<Real> {
+    let mut area = Real::from(0);
     for triangle in mesh.triangles() {
         let points = triangle
             .0
             .iter()
-            .map(|&index| mesh.vertices()[index].to_hyperlimit_point())
+            .map(|&index| mesh.vertices()[index].clone())
             .collect::<Vec<_>>();
         area = add(&area, &projected_area2_signed(&points, projection)?);
     }
@@ -23905,13 +22598,11 @@ fn compare_point2(left: &Point2, right: &Point2) -> Option<Ordering> {
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
-fn real_order(left: &ExactReal, right: &ExactReal) -> Option<Ordering> {
+fn real_order(left: &Real, right: &Real) -> Option<Ordering> {
     compare_reals(left, right).value()
 }
 
-#[cfg(feature = "exact-triangulation")]
-fn real_equal(left: &ExactReal, right: &ExactReal) -> bool {
+fn real_equal(left: &Real, right: &Real) -> bool {
     real_order(left, right) == Some(Ordering::Equal)
 }
 
@@ -23926,14 +22617,14 @@ fn points_equal(left: &Point3, right: &Point3) -> bool {
         && compare_reals(&left.z, &right.z).value() == Some(Ordering::Equal)
 }
 
-fn add(left: &ExactReal, right: &ExactReal) -> ExactReal {
+fn add(left: &Real, right: &Real) -> Real {
     left.clone() + right
 }
 
-fn sub(left: &ExactReal, right: &ExactReal) -> ExactReal {
+fn sub(left: &Real, right: &Real) -> Real {
     left.clone() - right
 }
 
-fn mul(left: &ExactReal, right: &ExactReal) -> ExactReal {
+fn mul(left: &Real, right: &Real) -> Real {
     left.clone() * right
 }

@@ -4,14 +4,13 @@
 </h1>
 
 `hypermesh` is the experimental 3D mesh-topology crate in the Hyper workspace. It
-contains a legacy float-oriented closed-mesh boolean engine and a newer exact-stack
-boundary for mesh validation, provenance, face-pair classification, coplanar
-arrangements, split plans, exact-aware boolean preflight, and feature-gated exact
-boolean assembly.
+uses Hyper-native exact scalar evidence for mesh validation, provenance, face-pair
+classification, coplanar arrangements, split plans, exact-aware boolean preflight, and
+exact boolean assembly.
 
-The crate is in transition: the legacy path is useful for current mesh boolean
-experiments, while the exact path is where Hyper-native topology decisions are being
-made auditable.
+`hyperreal` is the canonical geometry scalar. Primitive floats are only accepted at
+explicit import or preview boundaries where approximation policy and provenance are
+recorded.
 
 ## Hyper Ecosystem
 
@@ -57,18 +56,15 @@ tolerance-based repair can all change output topology. Engines also need broad-p
 pruning and locality for speed, while exact incidence decisions are needed at branch
 points.
 
-`hypermesh` splits those concerns. The legacy boolean path remains available for closed
-manifold float buffers. The exact path records imported-coordinate provenance, mesh
-facts, validation diagnostics, face-pair relations, split plans, coplanar arrangements,
-and boolean readiness reports so topology decisions can move toward exact predicates
-without globally canonicalizing every coordinate.
+`hypermesh` splits those concerns. The exact path records imported-coordinate
+provenance, mesh facts, validation diagnostics, face-pair relations, split plans,
+coplanar arrangements, and boolean readiness reports so topology decisions are made
+from exact predicates and retained evidence.
 
 ## Main Types
 
-- `Manifold`, `OpType`, `LegacyBooleanReport`, `LegacyBooleanResult`, and
-  `compute_boolean_with_report` are the legacy closed-mesh boolean API.
-- `exact::ExactMesh`, `ExactPoint3`, `Triangle`, `MeshFacts`, and `ValidationReport`
-  describe exact-aware mesh inputs and diagnostics.
+- `exact::ExactMesh`, `hyperlimit::Point3`, `Triangle`, `MeshFacts`, and
+  `ValidationReport` describe exact-aware mesh inputs and diagnostics.
 - `ValidationPolicy`, `BoundaryPolicy`, `MeshValidationFacts`, `VertexFacts`,
   `EdgeFacts`, `FaceFacts`, and `FacePlaneFacts` retain topology and determinant-form
   face-plane evidence.
@@ -83,12 +79,11 @@ without globally canonicalizing every coordinate.
 
 ## Precision Model
 
-The legacy boolean engine remains float operationally. The exact path imports finite
-`f64` coordinates by dyadic lifting into `hyperreal::Real` and records lossy import
-policy explicitly. Integer-grid input is lifted directly into exact `Real` values, and
-retained face planes keep unnormalized determinant coefficients instead of unit normals.
-Exact predicates and validation reports should be the source of topology decisions as
-kernels are ported.
+Geometry is stored as `hyperreal::Real`. Finite `f64` coordinates can be imported by
+dyadic lifting with lossy import policy recorded explicitly; integer-grid input is
+lifted directly into exact `Real` values. Retained face planes keep unnormalized
+determinant coefficients instead of unit normals. Exact predicates and validation
+reports are the source of topology decisions.
 
 Unresolved coplanar, boundary, or winding readiness is reported as a blocker rather than
 patched with a tolerance.
@@ -103,8 +98,8 @@ unless a downstream topology stage needs that evidence.
 The performance direction is to combine broad-phase pruning with exact local decisions.
 Morton broad-phase, retained bounds, face-pair classification, split plans, support
 DOPs, coplanar arrangement reports, and handoff packages are intended to narrow work
-before expensive predicates or topology rebuilds. Feature flags keep legacy boolean,
-exact validation, exact triangulation, Rayon, and Bevy/demo surfaces separable.
+before expensive predicates or topology rebuilds. Feature flags are reserved for
+diagnostic/probing hooks and Bevy/demo surfaces.
 
 Future benchmarks should separate broad phase, narrow classification, split planning,
 region assembly, and simplification so exactness work can be optimized without hiding
@@ -114,38 +109,25 @@ where time is spent.
 
 Implemented today:
 
-- feature-gated `exact`, `exact-triangulation`, and `legacy-boolean` paths;
-- legacy `Manifold::new` and `compute_boolean_with_report` for union, subtraction, and
-  intersection over closed manifold triangle meshes;
-- Morton broad phase, triangle intersection kernels, topology simplification, and
-  ear-clipping support in the legacy engine;
+- exact mesh topology path;
 - exact mesh, bounds, facts, provenance, validation, audit, face-pair, coplanar,
   construction, split-plan, support, surface, winding, convex-solid, consumer-readiness,
   handoff-package, preflight, and exact-boolean APIs;
 - tests, proptests, fuzz targets, examples, and exact-validation benchmarks.
 
-Known limits: inputs must already be closed and manifold for the legacy path, and the
-exact path is not yet a full replacement for every boolean/intersection/simplification
-kernel.
+Known limits: unsupported boolean/intersection/simplification topology is reported as a
+diagnostic instead of falling back to tolerance-based geometry.
 
 ## Installation
 
 ```toml
 [dependencies]
-hypermesh = "0.2.0"
-```
-
-For exact validation without legacy boolean kernels:
-
-```toml
-[dependencies]
-hypermesh = { version = "0.2.0", default-features = false, features = ["exact"] }
+hypermesh = "0.3.0"
 ```
 
 ## Usage
 
-The exact-facing path is the default feature set and is the preferred boundary for new
-code:
+The exact-facing path is always available and is the preferred boundary for new code:
 
 ```rust,ignore
 use hypermesh::exact::{ExactMesh, ValidationPolicy};
@@ -173,18 +155,6 @@ assert_eq!(facts.mesh.boundary_edges, 3);
 mesh.validate_retained_state()?;
 ```
 
-The legacy boolean adapter is opt-in and should be treated as an approximate runtime
-surface:
-
-```rust,ignore
-use hypermesh::prelude::*;
-
-let left = Manifold::new(&positions_a, &indices_a)?;
-let right = Manifold::new(&positions_b, &indices_b)?;
-let result = compute_boolean_with_report(&left, &right, OpType::Subtract)?;
-assert!(result.report.used_primitive_float_adapter);
-```
-
 Use exact validation, audit, face-pair classification, split-plan, preflight,
 consumer-readiness, and handoff-package reports to audit topology before relying on
 boolean output.
@@ -203,10 +173,16 @@ boolean output.
 - Boissonnat, Jean-Daniel, Olivier Devillers, Sylvain Pion, Monique Teillaud, and
   Mariette Yvinec. "Triangulations in CGAL." *Computational Geometry* 22.1-3 (2002):
   5-19.
+- Held, Martin. "FIST: Fast Industrial-Strength Triangulation of Polygons."
+  *Algorithmica* 30 (2001).
 - de Berg, Mark, Otfried Cheong, Marc van Kreveld, and Mark Overmars. *Computational
   Geometry: Algorithms and Applications*. Springer.
 - Preparata, Franco P., and Michael Ian Shamos. *Computational Geometry: An
   Introduction*. Springer, 1985.
+- Andrew, A. M. "Another Efficient Algorithm for Convex Hulls in Two Dimensions."
+  *Information Processing Letters* 9.5 (1979).
+- Hormann, Kai, and Alexander Agathos. "The Point in Polygon Problem for Arbitrary
+  Polygons." *Computational Geometry* 20.3 (2001).
 - Sutherland, Ivan E., and Gary W. Hodgman. "Reentrant Polygon Clipping."
   *Communications of the ACM* 17.1 (1974): 32-42.
 - Weiler, Kevin, and Peter Atherton. "Hidden Surface Removal Using Polygon Area
@@ -222,6 +198,7 @@ Useful local checks:
 
 ```sh
 cargo test
-cargo test --no-default-features --features exact
-cargo bench --bench exact_validation --features exact
+cargo test --no-default-features
+cargo check --features internal-fuzzing
+cargo bench --bench exact_validation
 ```

@@ -4,8 +4,6 @@
 //! sizing and emitting output topology.  The exact port keeps the boolmesh
 //! allocation order but recovers coordinates from retained source or
 //! `kernel12` construction evidence only at triangulation/export boundaries.
-//! This is the Yap boundary from "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7.1-2 (1997): topology ids and exact numeric
 //! objects are connected by replayable provenance, not by tolerance welding.
 
 use hyperlimit::Point3;
@@ -70,5 +68,5 @@ fn source_vertex_point(
     };
     mesh.vertices()
         .get(source.vertex)
-        .map(|point| point.to_hyperlimit_point())
+        .map(|point| point.clone())
 }

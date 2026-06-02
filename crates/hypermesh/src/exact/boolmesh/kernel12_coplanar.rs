@@ -7,8 +7,6 @@
 //! that same row stream.  The row payload is exact edge-parameter evidence, not
 //! a primitive-coordinate reconstruction.
 //!
-//! The replay boundary follows Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7.1-2 (1997): the retained split points and
 //! interval endpoints must carry exact source-edge parameters and source
 //! halfedge ownership before they become topology rows.  The tail/head
 //! convention intentionally matches the boolmesh `boolean45::pair_up` signed
@@ -24,7 +22,7 @@ use crate::exact::mesh::ExactMesh;
 
 use super::{
     ExactBoolMeshEdgeFacePair, ExactBoolMeshFacePair, ExactBoolMeshPointConstruction,
-    ExactBoolMeshSide, ExactReal, Kernel12CoplanarEvidence, normalize_boolmesh_source_edge,
+    ExactBoolMeshSide, Kernel12CoplanarEvidence, Real, normalize_boolmesh_source_edge,
 };
 
 /// One exact coplanar split point lowered as a boolmesh `kernel12` row.
@@ -37,7 +35,7 @@ pub(super) struct ExactCoplanarKernel12Row {
     /// Exact endpoint copied into `v12`/`v21`.
     pub(super) point: Point3,
     /// Exact source-edge parameter consumed by `pair_up`.
-    pub(super) parameter: ExactReal,
+    pub(super) parameter: Real,
     /// Replayable source construction for the inserted endpoint.
     pub(super) point_construction: ExactBoolMeshPointConstruction,
 }
@@ -199,9 +197,6 @@ pub(super) fn lower_coplanar_split_rows(
 /// exact port records open-boundary interval endpoint coverage first, then
 /// skips only the redundant endpoint-touch row while preserving proper
 /// crossing rows and closed-shell shared endpoint rows at the same point.  This
-/// follows the row-ownership boundary of boolmesh's coplanar branch and Yap,
-/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997): exact point equality selects a single replayable topology owner
 /// instead of an approximate duplicate.
 #[derive(Clone, Debug, PartialEq)]
 struct CoplanarIntervalEndpointCoverage {
@@ -289,7 +284,7 @@ fn extend_interval_endpoint_coverages(
     edge: [usize; 2],
     source_face: usize,
     opposite_face: usize,
-    endpoints: [(&Point3, &ExactReal); 2],
+    endpoints: [(&Point3, &Real); 2],
 ) {
     if mesh.facts().mesh.boundary_edges == 0 {
         return;
@@ -337,7 +332,7 @@ fn push_point_side_row(
     source_face: usize,
     opposite_face: usize,
     point: &Point3,
-    parameter: &ExactReal,
+    parameter: &Real,
     sign: CoplanarPointSign,
     interval_endpoints: &[CoplanarIntervalEndpointCoverage],
 ) {
@@ -406,8 +401,6 @@ fn push_point_side_row(
 /// after [`normalize_boolmesh_source_edge`] chooses the boolmesh halfedge row,
 /// a touch at the normalized head is the leaving event and a touch elsewhere is
 /// the entering event.  Keeping that topological sign separate from coordinate
-/// equality follows Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997), and preserves the signed row model
 /// consumed by boolmesh `boolean45::pair_up`.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum CoplanarPointSign {
@@ -416,11 +409,11 @@ enum CoplanarPointSign {
 }
 
 impl CoplanarPointSign {
-    fn resolve(self, parameter: &ExactReal) -> i32 {
+    fn resolve(self, parameter: &Real) -> i32 {
         match self {
             Self::Fixed(sign) => sign,
             Self::EndpointTouch => {
-                if compare_reals(parameter, &ExactReal::from(1)).value() == Some(Ordering::Equal) {
+                if compare_reals(parameter, &Real::from(1)).value() == Some(Ordering::Equal) {
                     -1
                 } else {
                     1
@@ -439,12 +432,12 @@ fn push_interval_side_rows(
     edge: [usize; 2],
     source_face: usize,
     opposite_face: usize,
-    endpoints: [(&Point3, &ExactReal); 2],
+    endpoints: [(&Point3, &Real); 2],
     interval_endpoints: &[CoplanarIntervalEndpointCoverage],
 ) {
     let mut endpoints = endpoints.map(|(point, parameter)| {
         let normalized_parameter = if edge[0] > edge[1] {
-            ExactReal::from(1) - parameter
+            Real::from(1) - parameter
         } else {
             parameter.clone()
         };
@@ -521,7 +514,7 @@ mod tests {
     }
 
     fn p3(x: i64, y: i64, z: i64) -> Point3 {
-        Point3::new(ExactReal::from(x), ExactReal::from(y), ExactReal::from(z))
+        Point3::new(Real::from(x), Real::from(y), Real::from(z))
     }
 
     fn open_triangle_i64(a: [i64; 3], b: [i64; 3], c: [i64; 3]) -> ExactMesh {
@@ -540,8 +533,8 @@ mod tests {
     ) -> CoplanarEdgeSplitPoint {
         CoplanarEdgeSplitPoint {
             point,
-            left_parameter: ExactReal::from(left_parameter),
-            right_parameter: ExactReal::from(right_parameter),
+            left_parameter: Real::from(left_parameter),
+            right_parameter: Real::from(right_parameter),
         }
     }
 

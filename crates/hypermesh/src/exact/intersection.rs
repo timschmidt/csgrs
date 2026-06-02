@@ -7,9 +7,6 @@
 //! continue into exact overlap-graph construction. Retained exact face-plane
 //! coefficients are used as a cached plane-separation filter before the full
 //! triangle classifier is rebuilt, and candidate split events reuse those
-//! retained planes for segment/plane construction. That boundary follows Yap,
-//! "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-//! (1997): acceleration facts can remove impossible events, but topological
 //! mutations wait for certified predicates and exact constructions.
 
 use hyperlimit::PredicateOutcome;
@@ -26,8 +23,6 @@ use super::narrow::{
 /// Structural inconsistency in one exact face-pair scheduler record.
 ///
 /// This validates the retained broad/narrow classification record rather than
-/// recomputing predicates. Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997), separates certified predicate
 /// decisions from later topology mutation; the scheduler relation, AABB
 /// outcome, triangle classifier, and retained split events must agree before
 /// graph construction consumes the pair.
@@ -186,8 +181,6 @@ impl MeshFacePairClassification {
     /// retained face handles and requires exact equality with this record. This
     /// keeps broad-phase rejection, retained-plane separation, coplanar
     /// refinement, and candidate construction evidence attached to the source
-    /// objects that produced them, following Yap, "Towards Exact Geometric
-    /// Computation," *Computational Geometry* 7.1-2 (1997).
     pub fn validate_against_sources(
         &self,
         left: &ExactMesh,
@@ -259,15 +252,10 @@ pub fn classify_mesh_face_pair(
     let mut points = left
         .vertices()
         .iter()
-        .map(|point| point.to_hyperlimit_point())
+        .map(|point| point.clone())
         .collect::<Vec<_>>();
     let right_offset = points.len();
-    points.extend(
-        right
-            .vertices()
-            .iter()
-            .map(|point| point.to_hyperlimit_point()),
-    );
+    points.extend(right.vertices().iter().map(|point| point.clone()));
 
     let left_tri = left.triangles()[left_face].0;
     let mut right_tri = right.triangles()[right_face].0;
@@ -343,8 +331,8 @@ fn retained_triangle_edge_events(
     triangle_edges(segment_mesh.triangles()[segment_face].0)
         .into_iter()
         .map(|edge| {
-            let p0 = segment_mesh.vertices()[edge[0]].to_hyperlimit_point();
-            let p1 = segment_mesh.vertices()[edge[1]].to_hyperlimit_point();
+            let p0 = segment_mesh.vertices()[edge[0]].clone();
+            let p1 = segment_mesh.vertices()[edge[1]].clone();
             intersect_segment_with_retained_face_plane(plane, &p0, &p1)
         })
         .collect()

@@ -4,8 +4,6 @@
 //! been assembled and face boundaries triangulated.  This module ports that
 //! handoff as a replayable staging artifact: output vertex ids are still the
 //! boolmesh allocation ids, and triangle ids are the materialized `hypertri`
-//! triplets from the previous stage.  Yap, "Towards Exact Geometric
-//! Computation," *Computational Geometry* 7.1-2 (1997), motivates keeping this
 //! export candidate separate from final `ExactMesh` construction so stale
 //! topology can be rejected before retained mesh facts are built.
 
@@ -15,10 +13,9 @@ use std::collections::BTreeMap;
 use hyperlimit::{CoplanarProjection, Point3, compare_reals, project_point3 as project_point};
 
 use crate::exact::ExactBooleanOperation;
-use crate::exact::mesh::ExactPoint3;
 use crate::exact::mesh::{ExactMesh, Triangle};
 use crate::exact::region::choose_region_projection;
-use crate::exact::scalar::ExactReal;
+use hyperreal::Real;
 
 use super::super::{
     ExactBoolMeshBoolean03, ExactBoolMeshFaceLoopAssemblyStage,
@@ -228,7 +225,7 @@ fn triangle_needs_flip_to_source(
     source_face: usize,
     allocation: &ExactBoolMeshOutputVertexAllocation,
     boolean03: &ExactBoolMeshBoolean03,
-    steiner_points: &[ExactPoint3],
+    steiner_points: &[Point3],
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Option<bool> {
@@ -239,18 +236,9 @@ fn triangle_needs_flip_to_source(
     let projection = choose_region_projection(source, source_face).ok()?;
     let source_triangle = source.triangles().get(source_face)?.0;
     let source_points = [
-        source
-            .vertices()
-            .get(source_triangle[0])?
-            .to_hyperlimit_point(),
-        source
-            .vertices()
-            .get(source_triangle[1])?
-            .to_hyperlimit_point(),
-        source
-            .vertices()
-            .get(source_triangle[2])?
-            .to_hyperlimit_point(),
+        source.vertices().get(source_triangle[0])?.clone(),
+        source.vertices().get(source_triangle[1])?.clone(),
+        source.vertices().get(source_triangle[2])?.clone(),
     ];
     let output_points = [
         export_vertex_point(
@@ -287,7 +275,7 @@ fn export_vertex_point(
     vertex: usize,
     allocation: &ExactBoolMeshOutputVertexAllocation,
     boolean03: &ExactBoolMeshBoolean03,
-    steiner_points: &[ExactPoint3],
+    steiner_points: &[Point3],
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Option<Point3> {
@@ -296,7 +284,7 @@ fn export_vertex_point(
     } else {
         steiner_points
             .get(vertex - allocation.output_vertex_origins.len())
-            .map(ExactPoint3::to_hyperlimit_point)
+            .cloned()
     }
 }
 
@@ -305,15 +293,15 @@ fn triangle_area_ordering(
     projection: CoplanarProjection,
 ) -> Option<Ordering> {
     let area = projected_area2_signed(points, projection);
-    match compare_reals(&area, &ExactReal::from(0)).value()? {
+    match compare_reals(&area, &Real::from(0)).value()? {
         Ordering::Less => Some(Ordering::Less),
         Ordering::Greater => Some(Ordering::Greater),
         Ordering::Equal => None,
     }
 }
 
-fn projected_area2_signed(points: &[Point3; 3], projection: CoplanarProjection) -> ExactReal {
-    let mut sum = ExactReal::from(0);
+fn projected_area2_signed(points: &[Point3; 3], projection: CoplanarProjection) -> Real {
+    let mut sum = Real::from(0);
     for index in 0..3 {
         let current = project_point(&points[index], projection);
         let next = project_point(&points[(index + 1) % 3], projection);
@@ -325,14 +313,14 @@ fn projected_area2_signed(points: &[Point3; 3], projection: CoplanarProjection) 
     sum
 }
 
-fn add(left: &ExactReal, right: &ExactReal) -> ExactReal {
+fn add(left: &Real, right: &Real) -> Real {
     left.clone() + right
 }
 
-fn sub(left: &ExactReal, right: &ExactReal) -> ExactReal {
+fn sub(left: &Real, right: &Real) -> Real {
     left.clone() - right
 }
 
-fn mul(left: &ExactReal, right: &ExactReal) -> ExactReal {
+fn mul(left: &Real, right: &Real) -> Real {
     left.clone() * right
 }

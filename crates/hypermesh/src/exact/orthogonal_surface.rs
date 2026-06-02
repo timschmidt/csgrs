@@ -4,10 +4,9 @@
 //! The accepted operands are coplanar axis-aligned rectangular surface pieces on
 //! one coordinate plane. They are lowered into an exact rectilinear cell complex,
 //! the requested boolean is evaluated per cell, and retained boundary loops are
-//! extracted before `hypertri` sees any polygon. That ordering follows Yap,
-//! "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997):
-//! combinatorial topology is promoted from exact object structure, not from a
-//! primitive-float polygon repair pass.
+//! extracted before `hypertri` sees any polygon. Combinatorial topology is
+//! promoted from exact object structure, not from a primitive-float polygon
+//! repair pass.
 //! Same-operand rectangles may overlap in positive area; those cells use set
 //! occupancy (`covered by at least one retained source rectangle`) and are
 //! accepted only when the resulting loops and mesh replay. This keeps
@@ -22,8 +21,6 @@
 //! coordinates just like ordinary point-touch component branches.
 //!
 //! The grid subdivision is the orthogonal analogue of the arrangement viewpoint
-//! in de Berg, Cheong, van Kreveld, and Overmars, *Computational Geometry:
-//! Algorithms and Applications*, 3rd ed. (2008), Chapter 2. Earcut is only the
 //! final triangulation handoff; retained loops and cell occupancy are the
 //! certified topology artifact.
 
@@ -36,10 +33,10 @@ use hyperlimit::{
 
 use super::coplanar::CoplanarProjection;
 use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
-use super::mesh::{ExactMesh, ExactPoint3, Triangle};
+use super::mesh::{ExactMesh, Triangle};
 use super::provenance::SourceProvenance;
-use super::scalar::ExactReal;
 use super::validation::ValidationPolicy;
+use hyperreal::Real;
 
 /// Boolean operation handled by the orthogonal coplanar surface cell complex.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -57,7 +54,6 @@ pub enum CoplanarOrthogonalSurfaceOperation {
 /// The outer loop is retained counter-clockwise and holes are retained
 /// clockwise. The loops are exact topology evidence for the cell complex. They
 /// are not reconstructed from the triangulated mesh after the fact; that keeps
-/// the output aligned with Yap's exact-object boundary.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CoplanarOrthogonalSurfaceComponent {
     /// Counter-clockwise outer boundary of this connected component.
@@ -99,7 +95,6 @@ impl CoplanarOrthogonalSurfaceArrangement {
     ///
     /// The validation is intentionally about the retained artifact, not only the
     /// triangle soup: loops must be simple, oriented, mutually disjoint, and the
-    /// triangulated mesh must replay their signed area. This mirrors Yap's
     /// requirement that exact computation preserve enough combinatorial history
     /// to audit later decisions.
     pub fn validate(&self) -> Result<(), MeshError> {
@@ -116,8 +111,6 @@ impl CoplanarOrthogonalSurfaceArrangement {
     /// A locally valid cell complex cannot be transplanted to another boolean
     /// request. Rebuilding the exact grid from the source meshes keeps the
     /// retained loops tied to the exact rectangular source objects that produced
-    /// them, following Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7.1-2 (1997).
     pub fn validate_against_sources(
         &self,
         left: &ExactMesh,
@@ -137,7 +130,6 @@ impl CoplanarOrthogonalSurfaceArrangement {
 }
 
 /// Certify and materialize an orthogonal coplanar surface union.
-#[cfg(feature = "exact-triangulation")]
 pub fn arrange_coplanar_orthogonal_surface_union(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -146,7 +138,6 @@ pub fn arrange_coplanar_orthogonal_surface_union(
 }
 
 /// Certify and materialize an orthogonal coplanar surface intersection.
-#[cfg(feature = "exact-triangulation")]
 pub fn arrange_coplanar_orthogonal_surface_intersection(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -159,7 +150,6 @@ pub fn arrange_coplanar_orthogonal_surface_intersection(
 }
 
 /// Certify and materialize an orthogonal coplanar surface difference.
-#[cfg(feature = "exact-triangulation")]
 pub fn arrange_coplanar_orthogonal_surface_difference(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -167,7 +157,6 @@ pub fn arrange_coplanar_orthogonal_surface_difference(
     arrange_coplanar_orthogonal_surface(left, right, CoplanarOrthogonalSurfaceOperation::Difference)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn arrange_coplanar_orthogonal_surface(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -203,27 +192,24 @@ fn arrange_coplanar_orthogonal_surface(
     Some(arrangement)
 }
 
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug)]
 struct RectangleExtraction {
     projection: CoplanarProjection,
-    dropped: ExactReal,
+    dropped: Real,
     rectangles: Vec<ProjectedRectangle>,
 }
 
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug)]
 struct ProjectedRectangle {
     min: Point2,
     max: Point2,
-    dropped: ExactReal,
+    dropped: Real,
 }
 
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug)]
 struct RectangleGroup {
     rectangle: ProjectedRectangle,
-    area2: ExactReal,
+    area2: Real,
     corners: Vec<Point2>,
     triangles: usize,
 }
@@ -233,10 +219,8 @@ struct RectangleGroup {
 /// The first path accepts the common two-triangle rectangle grammar. The
 /// fallback below replays arbitrary triangulations against their exact vertex
 /// grid and promotes only cells whose clipped source area exactly equals the
-/// cell area. Both paths follow Yap's proof-before-promotion EGC discipline:
 /// accepted cells are certified by exact predicates and algebra, not by sampled
 /// occupancy or floating tolerances.
-#[cfg(feature = "exact-triangulation")]
 fn extract_axis_aligned_rectangles(mesh: &ExactMesh) -> Option<RectangleExtraction> {
     extract_axis_aligned_rectangle_halves(mesh).or_else(|| extract_axis_aligned_surface_cells(mesh))
 }
@@ -246,23 +230,16 @@ fn extract_axis_aligned_rectangles(mesh: &ExactMesh) -> Option<RectangleExtracti
 /// Affine surface booleans use this as the post-normalization replay gate: a
 /// candidate affine basis is only evidence if each source mesh becomes a
 /// certified orthogonal cell complex under exact coordinate transformation.
-/// This keeps the affine basis in Yap's exact-object model instead of treating
 /// it as a heuristic change of coordinates.
-#[cfg(feature = "exact-triangulation")]
 pub(super) fn certify_axis_aligned_surface_cells(mesh: &ExactMesh) -> bool {
     extract_axis_aligned_rectangles(mesh).is_some()
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn extract_axis_aligned_rectangle_halves(mesh: &ExactMesh) -> Option<RectangleExtraction> {
     if mesh.triangles().is_empty() {
         return None;
     }
-    let points = mesh
-        .vertices()
-        .iter()
-        .map(ExactPoint3::to_hyperlimit_point)
-        .collect::<Vec<_>>();
+    let points = mesh.vertices().iter().cloned().collect::<Vec<_>>();
     let (projection, dropped) = choose_coordinate_plane(&points)?;
     let mut groups = Vec::<RectangleGroup>::new();
     for triangle in mesh.triangles() {
@@ -340,26 +317,17 @@ fn extract_axis_aligned_rectangle_halves(mesh: &ExactMesh) -> Option<RectangleEx
 /// cell-arrangement importer for harder source meshes whose orthogonal surface
 /// cells were split by extra diagonals or fan vertices. It builds the exact
 /// coordinate grid from retained source vertices, clips every source triangle
-/// against every grid cell with the Sutherland-Hodgman half-plane construction
-/// (Sutherland and Hodgman, "Reentrant Polygon Clipping," *Communications of
 /// the ACM* 17.1, 1974), and promotes a cell only when the sum of clipped exact
 /// triangle areas equals the cell area exactly.
 ///
-/// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-/// 7.1-2 (1997), is the policy boundary: midpoint occupancy would be a sample,
 /// so this importer uses retained source triangles plus exact area replay. A
 /// partially covered cell, overlapping source coverage, or undecidable
 /// arithmetic rejects instead of being rounded into an orthogonal cell.
-#[cfg(feature = "exact-triangulation")]
 fn extract_axis_aligned_surface_cells(mesh: &ExactMesh) -> Option<RectangleExtraction> {
     if mesh.triangles().is_empty() {
         return None;
     }
-    let points = mesh
-        .vertices()
-        .iter()
-        .map(ExactPoint3::to_hyperlimit_point)
-        .collect::<Vec<_>>();
+    let points = mesh.vertices().iter().cloned().collect::<Vec<_>>();
     let (projection, dropped) = choose_coordinate_plane(&points)?;
     if points
         .iter()
@@ -395,8 +363,7 @@ fn extract_axis_aligned_surface_cells(mesh: &ExactMesh) -> Option<RectangleExtra
                 })
                 .collect::<Option<Vec<_>>>()?;
             if projected.len() != 3
-                || compare_reals(&point2_polygon_area2_abs(&projected)?, &ExactReal::from(0))
-                    .value()?
+                || compare_reals(&point2_polygon_area2_abs(&projected)?, &Real::from(0)).value()?
                     == Ordering::Equal
             {
                 return None;
@@ -419,7 +386,7 @@ fn extract_axis_aligned_surface_cells(mesh: &ExactMesh) -> Option<RectangleExtra
                 dropped: dropped.clone(),
             };
             let cell_area = rectangle_area2(&rectangle);
-            let mut covered_area = ExactReal::from(0);
+            let mut covered_area = Real::from(0);
             for triangle in &triangles {
                 let clipped = clip_projected_polygon_to_rectangle(triangle, &rectangle)?;
                 if clipped.len() >= 3 {
@@ -432,8 +399,8 @@ fn extract_axis_aligned_surface_cells(mesh: &ExactMesh) -> Option<RectangleExtra
             match compare_reals(&covered_area, &cell_area).value()? {
                 Ordering::Equal => rectangles.push(rectangle),
                 Ordering::Less
-                    if compare_reals(&covered_area, &ExactReal::from(0)).value()?
-                        == Ordering::Equal => {}
+                    if compare_reals(&covered_area, &Real::from(0)).value()? == Ordering::Equal => {
+                }
                 Ordering::Less | Ordering::Greater => return None,
             }
         }
@@ -459,7 +426,6 @@ fn extract_axis_aligned_surface_cells(mesh: &ExactMesh) -> Option<RectangleExtra
     })
 }
 
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum ClipBoundary {
     MinX,
@@ -468,7 +434,6 @@ enum ClipBoundary {
     MaxY,
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn clip_projected_polygon_to_rectangle(
     polygon: &[Point2],
     rectangle: &ProjectedRectangle,
@@ -489,7 +454,6 @@ fn clip_projected_polygon_to_rectangle(
     Some(clipped)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn clip_point2_polygon_half_plane(
     polygon: &[Point2],
     rectangle: &ProjectedRectangle,
@@ -524,7 +488,6 @@ fn clip_point2_polygon_half_plane(
     Some(output)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn point2_inside_clip_boundary(
     point: &Point2,
     rectangle: &ProjectedRectangle,
@@ -538,7 +501,6 @@ fn point2_inside_clip_boundary(
     })
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn point2_segment_clip_intersection(
     start: &Point2,
     end: &Point2,
@@ -575,8 +537,7 @@ fn point2_segment_clip_intersection(
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
-fn choose_coordinate_plane(points: &[Point3]) -> Option<(CoplanarProjection, ExactReal)> {
+fn choose_coordinate_plane(points: &[Point3]) -> Option<(CoplanarProjection, Real)> {
     let first = points.first()?;
     if points.iter().all(|point| real_equal(&point.z, &first.z)) {
         Some((CoplanarProjection::Xy, first.z.clone()))
@@ -589,11 +550,10 @@ fn choose_coordinate_plane(points: &[Point3]) -> Option<(CoplanarProjection, Exa
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn triangle_axis_aligned_rectangle(
     triangle: &[Point3],
     projection: CoplanarProjection,
-    dropped: &ExactReal,
+    dropped: &Real,
 ) -> Option<ProjectedRectangle> {
     if triangle.len() != 3
         || triangle
@@ -661,13 +621,12 @@ fn triangle_axis_aligned_rectangle(
     Some(rectangle)
 }
 
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug)]
 struct OrthogonalCellComplex {
     projection: CoplanarProjection,
-    dropped: ExactReal,
-    xs: Vec<ExactReal>,
-    ys: Vec<ExactReal>,
+    dropped: Real,
+    xs: Vec<Real>,
+    ys: Vec<Real>,
     y_cells: usize,
     occupied: Vec<bool>,
 }
@@ -681,12 +640,6 @@ struct OrthogonalCellComplex {
 /// boolean set occupancy before the operation is evaluated; the retained output
 /// is therefore a set arrangement, not a multiplicity-carrying surface cover.
 /// That promotion is allowed only because the exact cell grid remains retained
-/// and the loops are revalidated afterward, following Yap, "Towards Exact
-/// Geometric Computation," *Computational Geometry* 7.1-2 (1997). This is the
-/// orthogonal-cell specialization of the arrangement model in de Berg, Cheong,
-/// van Kreveld, and Overmars, *Computational Geometry: Algorithms and
-/// Applications*, 3rd ed. (2008), Chapter 2.
-#[cfg(feature = "exact-triangulation")]
 fn build_orthogonal_cell_complex(
     projection: CoplanarProjection,
     left: &[ProjectedRectangle],
@@ -759,7 +712,6 @@ fn build_orthogonal_cell_complex(
     })
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn extract_components_from_cells(
     complex: &OrthogonalCellComplex,
 ) -> Option<Vec<CoplanarOrthogonalSurfaceComponent>> {
@@ -792,7 +744,7 @@ fn extract_components_from_cells(
             for mut loop_points in loops.drain(..) {
                 loop_points = simplify_projected_polygon(loop_points, complex.projection);
                 let signed = projected_area2_signed(&loop_points, complex.projection)?;
-                match compare_reals(&signed, &ExactReal::from(0)).value()? {
+                match compare_reals(&signed, &Real::from(0)).value()? {
                     Ordering::Greater => {
                         if outer.replace(loop_points).is_some() {
                             return None;
@@ -823,7 +775,6 @@ fn extract_components_from_cells(
     Some(components)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn cell_neighbors(
     x: usize,
     y: usize,
@@ -846,14 +797,12 @@ fn cell_neighbors(
     neighbors.into_iter()
 }
 
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug)]
 struct DirectedFragment {
     start: Point3,
     end: Point3,
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn loops_for_component(
     complex: &OrthogonalCellComplex,
     cells: &[(usize, usize)],
@@ -898,7 +847,6 @@ fn loops_for_component(
     stitch_loops(fragments, complex.projection)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn stitch_loops(
     mut fragments: Vec<DirectedFragment>,
     projection: CoplanarProjection,
@@ -951,7 +899,6 @@ fn stitch_loops(
     Some(loops)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn components_to_mesh(
     components: &[CoplanarOrthogonalSurfaceComponent],
     projection: CoplanarProjection,
@@ -976,7 +923,6 @@ fn components_to_mesh(
     .ok()
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn component_to_mesh(
     component: &CoplanarOrthogonalSurfaceComponent,
     projection: CoplanarProjection,
@@ -987,7 +933,6 @@ fn component_to_mesh(
     component_to_earcut_mesh(component, projection)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn component_to_earcut_mesh(
     component: &CoplanarOrthogonalSurfaceComponent,
     projection: CoplanarProjection,
@@ -1008,7 +953,7 @@ fn component_to_earcut_mesh(
     }
     let vertices = points
         .iter()
-        .map(|point| ExactPoint3::new(point.x.clone(), point.y.clone(), point.z.clone()))
+        .map(|point| Point3::new(point.x.clone(), point.y.clone(), point.z.clone()))
         .collect::<Vec<_>>();
     let triangles = indices
         .chunks_exact(3)
@@ -1032,12 +977,8 @@ fn component_to_earcut_mesh(
 /// that by converting one holed ring into a simple "keyhole" polygon with an
 /// exact visible bridge, then mapping duplicated bridge endpoints back onto the
 /// retained outer and hole vertices. This is the keyhole construction used by
-/// Held, "FIST: Fast Industrial-Strength Triangulation of Polygons,"
-/// *Algorithmica* 30 (2001), with Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997), supplying the acceptance discipline:
 /// the bridge is an internal proof edge, while all exported vertices and
 /// boundary edges remain the exact retained cell-complex topology.
-#[cfg(feature = "exact-triangulation")]
 fn component_to_keyholed_mesh(
     component: &CoplanarOrthogonalSurfaceComponent,
     projection: CoplanarProjection,
@@ -1074,7 +1015,6 @@ fn component_to_keyholed_mesh(
     None
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn keyhole_mesh_for_bridge(
     outer: &[Point3],
     hole: &[Point3],
@@ -1128,7 +1068,7 @@ fn keyhole_mesh_for_bridge(
         }
         let cell = triangle_points(&points, mapped);
         let signed_area = projected_area2_signed(&cell, projection)?;
-        match compare_reals(&signed_area, &ExactReal::from(0)).value()? {
+        match compare_reals(&signed_area, &Real::from(0)).value()? {
             Ordering::Greater => triangles.push(Triangle(mapped)),
             Ordering::Less => triangles.push(Triangle([mapped[2], mapped[1], mapped[0]])),
             Ordering::Equal => {}
@@ -1139,7 +1079,7 @@ fn keyhole_mesh_for_bridge(
     }
     let vertices = points
         .iter()
-        .map(|point| ExactPoint3::new(point.x.clone(), point.y.clone(), point.z.clone()))
+        .map(|point| Point3::new(point.x.clone(), point.y.clone(), point.z.clone()))
         .collect::<Vec<_>>();
     ExactMesh::new_with_policy(
         vertices,
@@ -1150,7 +1090,6 @@ fn keyhole_mesh_for_bridge(
     .ok()
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn keyhole_bridge_is_valid(
     outer: &[Point3],
     hole: &[Point3],
@@ -1176,7 +1115,6 @@ fn keyhole_bridge_is_valid(
     Some(true)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn keyhole_bridge_respects_ring(
     a: &Point3,
     b: &Point3,
@@ -1205,7 +1143,6 @@ fn keyhole_bridge_respects_ring(
     Some(true)
 }
 
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum LoopPointLocation {
     Inside,
@@ -1213,7 +1150,6 @@ enum LoopPointLocation {
     Outside,
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn loop_point_location(
     point: &Point3,
     loop_points: &[Point3],
@@ -1351,8 +1287,6 @@ fn validate_components(
 /// Validate cross-component contact with retained hole boundaries.
 ///
 /// Orthogonal cell extraction may produce a filled island inside a removed
-/// rectilinear ring. Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997), requires that this relationship stay
 /// explicit in retained object topology. Exact point-only contact is retained
 /// as a named branch by duplicating the shared coordinate in each component
 /// mesh. Positive-length or proper contact is still a higher-valence planar
@@ -1394,8 +1328,6 @@ fn validate_cross_component_hole_contacts(
 /// inside the hole and no positive-dimensional boundary crossing proves the
 /// whole outer loop of `inner` stays in that hole; point-only contact is
 /// retained as explicit branch topology. This is the finite cell-complex
-/// relation from de Berg, Cheong, van Kreveld, and Overmars' planar-
-/// subdivision model, kept in Yap's retained-object style.
 fn component_strictly_inside_retained_hole(
     inner: &CoplanarOrthogonalSurfaceComponent,
     outer: &CoplanarOrthogonalSurfaceComponent,
@@ -1462,7 +1394,7 @@ fn validate_component_mesh(
         ));
     }
     for (mesh_point, retained_point) in mesh.vertices().iter().zip(retained_points) {
-        if !points_equal(&mesh_point.to_hyperlimit_point(), retained_point) {
+        if !points_equal(&mesh_point.clone(), retained_point) {
             return Err(orthogonal_error(
                 "orthogonal mesh vertex does not match retained loop point",
             ));
@@ -1507,7 +1439,7 @@ fn validate_component_mesh(
         &retained_rings,
         "orthogonal mesh boundary does not match retained loops",
     )?;
-    let mut retained_signed_area = ExactReal::from(0);
+    let mut retained_signed_area = Real::from(0);
     for component in components {
         retained_signed_area = add(
             &retained_signed_area,
@@ -1535,8 +1467,6 @@ fn validate_component_mesh(
 /// Return the retained component range that owns a mesh vertex index.
 ///
 /// Orthogonal cell arrangements retain topology as loop ranges before they are
-/// triangulated. Yap, "Towards Exact Geometric Computation," *Computational
-/// Geometry* 7.1-2 (1997), treats that retained combinatorial state as part of
 /// the exact object, so validation rejects triangles spanning components rather
 /// than letting a later area check hide the copied topology error.
 fn component_for_retained_vertex(
@@ -1551,8 +1481,6 @@ fn component_for_retained_vertex(
 /// Validate that every retained output vertex participates in triangulation.
 ///
 /// Retained ring vertices are certified boundary state, not optional display
-/// coordinates. This follows Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997): the triangulated artifact must replay
 /// the exact object structure before signed-area summaries can certify it.
 fn validate_mesh_uses_all_retained_vertices(
     mesh: &ExactMesh,
@@ -1577,10 +1505,7 @@ fn validate_mesh_uses_all_retained_vertices(
 /// Validate that mesh boundary edges exactly match retained ring edges.
 ///
 /// A cell arrangement materializes retained loops, not an arbitrary triangle
-/// soup with matching area. Under Yap's exact-object boundary, the mesh must
 /// replay those loop edges exactly. The boundary-as-chain invariant is the
-/// planar-subdivision view used by de Berg, Cheong, van Kreveld, and Overmars,
-/// *Computational Geometry: Algorithms and Applications*, 3rd ed. (2008),
 /// Chapter 2.
 fn validate_mesh_boundary_matches_retained_rings(
     mesh: &ExactMesh,
@@ -1644,11 +1569,6 @@ fn canonical_edge(a: usize, b: usize) -> (usize, usize) {
 ///
 /// Interior triangulation edges may not cross, overlap, or touch retained
 /// boundary rings except at shared endpoints or identical boundary edges. This
-/// is the retained-topology counterpart to Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997). The segment relation is
-/// supplied by the orientation-predicate classifier used by Guigue and
-/// Devillers, "Fast and Robust Triangle-Triangle Overlap Test Using
-/// Orientation Predicates," *Journal of Graphics Tools* 8.1 (2003).
 fn validate_mesh_edges_respect_retained_rings(
     mesh: &ExactMesh,
     projection: CoplanarProjection,
@@ -1673,10 +1593,10 @@ fn validate_mesh_edges_respect_retained_rings(
             if canonical_edge(edge_a, edge_b) == canonical_edge(ring_a, ring_b) {
                 continue;
             }
-            let edge_start = mesh.vertices()[edge_a].to_hyperlimit_point();
-            let edge_end = mesh.vertices()[edge_b].to_hyperlimit_point();
-            let ring_start = mesh.vertices()[ring_a].to_hyperlimit_point();
-            let ring_end = mesh.vertices()[ring_b].to_hyperlimit_point();
+            let edge_start = mesh.vertices()[edge_a].clone();
+            let edge_end = mesh.vertices()[edge_b].clone();
+            let ring_start = mesh.vertices()[ring_a].clone();
+            let ring_end = mesh.vertices()[ring_b].clone();
             match classify_segment_intersection(
                 &project_point(&edge_start, projection),
                 &project_point(&edge_end, projection),
@@ -1755,7 +1675,7 @@ fn validate_loop(
     validate_simple_loop(loop_points, projection)?;
     let area = projected_area2_signed(loop_points, projection)
         .ok_or_else(|| orthogonal_error(format!("{label} signed area was undecided")))?;
-    match compare_reals(&area, &ExactReal::from(0)).value() {
+    match compare_reals(&area, &Real::from(0)).value() {
         Some(Ordering::Greater) if expected == Sign::Positive => Ok(()),
         Some(Ordering::Less) if expected == Sign::Negative => Ok(()),
         Some(_) => Err(orthogonal_error(format!("{label} has wrong orientation"))),
@@ -1840,13 +1760,9 @@ fn loop_edges_intersect(
 /// Dimensional contact between two retained component loops.
 ///
 /// Orthogonal cell booleans can leave several retained components meeting at a
-/// grid vertex, for example a checkerboard difference. Under Yap, "Towards
-/// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997), that
 /// branch is acceptable only when it is explicitly retained as object topology:
 /// the loops remain separate and the mesh duplicates the shared coordinate.
 /// The segment relation itself is the orientation-predicate classifier of
-/// Guigue and Devillers, "Fast and Robust Triangle-Triangle Overlap Test Using
-/// Orientation Predicates," *Journal of Graphics Tools* 8.1 (2003).
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum LoopContact {
     Disjoint,
@@ -1955,15 +1871,14 @@ fn project_for_hypertri(point: &Point3, projection: CoplanarProjection) -> hyper
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn cell_index(x: usize, y: usize, y_cells: usize) -> usize {
     x * y_cells + y
 }
 
 fn point_from_projection(
-    u: &ExactReal,
-    v: &ExactReal,
-    dropped: &ExactReal,
+    u: &Real,
+    v: &Real,
+    dropped: &Real,
     projection: CoplanarProjection,
 ) -> Point3 {
     match projection {
@@ -1973,7 +1888,7 @@ fn point_from_projection(
     }
 }
 
-fn dropped_coordinate(point: &Point3, projection: CoplanarProjection) -> ExactReal {
+fn dropped_coordinate(point: &Point3, projection: CoplanarProjection) -> Real {
     match projection {
         CoplanarProjection::Xy => point.z.clone(),
         CoplanarProjection::Xz => point.y.clone(),
@@ -1981,7 +1896,6 @@ fn dropped_coordinate(point: &Point3, projection: CoplanarProjection) -> ExactRe
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn rectangle_corners2(rectangle: &ProjectedRectangle) -> [Point2; 4] {
     [
         Point2::new(rectangle.min.x.clone(), rectangle.min.y.clone()),
@@ -1991,8 +1905,7 @@ fn rectangle_corners2(rectangle: &ProjectedRectangle) -> [Point2; 4] {
     ]
 }
 
-#[cfg(feature = "exact-triangulation")]
-fn rectangle_area2(rectangle: &ProjectedRectangle) -> ExactReal {
+fn rectangle_area2(rectangle: &ProjectedRectangle) -> Real {
     let area = mul(
         &sub(&rectangle.max.x, &rectangle.min.x),
         &sub(&rectangle.max.y, &rectangle.min.y),
@@ -2000,14 +1913,12 @@ fn rectangle_area2(rectangle: &ProjectedRectangle) -> ExactReal {
     add(&area, &area)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn rectangles_equal(left: &ProjectedRectangle, right: &ProjectedRectangle) -> bool {
     real_equal(&left.dropped, &right.dropped)
         && point2_equal(&left.min, &right.min)
         && point2_equal(&left.max, &right.max)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn point_strictly_inside_projected_rectangle(point: &Point2, rect: &ProjectedRectangle) -> bool {
     real_order(&rect.min.x, &point.x) == Some(Ordering::Less)
         && real_order(&point.x, &rect.max.x) == Some(Ordering::Less)
@@ -2054,51 +1965,29 @@ fn point_on_projected_segment(
     )
 }
 
-fn projected_area2_abs(points: &[Point3], projection: CoplanarProjection) -> Option<ExactReal> {
-    let signed = projected_area2_signed(points, projection)?;
-    match compare_reals(&signed, &ExactReal::from(0)).value()? {
-        Ordering::Less => Some(sub(&ExactReal::from(0), &signed)),
-        Ordering::Equal | Ordering::Greater => Some(signed),
-    }
+fn projected_area2_abs(points: &[Point3], projection: CoplanarProjection) -> Option<Real> {
+    hyperlimit::projected_polygon_area2_abs_value(points, projection)
 }
 
-fn projected_area2_signed(points: &[Point3], projection: CoplanarProjection) -> Option<ExactReal> {
-    if points.len() < 3 {
-        return Some(ExactReal::from(0));
-    }
-    let mut sum = ExactReal::from(0);
-    for index in 0..points.len() {
-        let current = project_point(&points[index], projection);
-        let next = project_point(&points[(index + 1) % points.len()], projection);
-        sum = add(
-            &sum,
-            &sub(&mul(&current.x, &next.y), &mul(&current.y, &next.x)),
-        );
-    }
-    Some(sum)
+fn projected_area2_signed(points: &[Point3], projection: CoplanarProjection) -> Option<Real> {
+    Some(hyperlimit::projected_polygon_area2_value(
+        points, projection,
+    ))
 }
 
-fn projected_mesh_area2_signed(
-    mesh: &ExactMesh,
-    projection: CoplanarProjection,
-) -> Option<ExactReal> {
-    let mut area = ExactReal::from(0);
+fn projected_mesh_area2_signed(mesh: &ExactMesh, projection: CoplanarProjection) -> Option<Real> {
+    let mut area = Real::from(0);
     for triangle in mesh.triangles() {
         let points = triangle
             .0
             .iter()
-            .map(|&index| {
-                mesh.vertices()
-                    .get(index)
-                    .map(ExactPoint3::to_hyperlimit_point)
-            })
+            .map(|&index| mesh.vertices().get(index).cloned())
             .collect::<Option<Vec<_>>>()?;
         area = add(&area, &projected_area2_signed(&points, projection)?);
     }
     Some(area)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn triangle_points(points: &[Point3], tri: [usize; 3]) -> Vec<Point3> {
     tri.iter().map(|&index| points[index].clone()).collect()
 }
@@ -2108,7 +1997,7 @@ fn polygon_min_projected_point(polygon: &[Point3], projection: CoplanarProjectio
         .iter()
         .map(|point| project_point(point, projection))
         .min_by(|left, right| compare_point2(left, right).unwrap_or(Ordering::Equal))
-        .unwrap_or_else(|| Point2::new(ExactReal::from(0), ExactReal::from(0)))
+        .unwrap_or_else(|| Point2::new(Real::from(0), Real::from(0)))
 }
 
 fn simplify_projected_polygon(
@@ -2148,8 +2037,7 @@ fn remove_duplicate_neighbors(points: &mut Vec<Point3>) {
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
-fn sort_reals_and_dedup(values: &mut Vec<ExactReal>) -> Option<()> {
+fn sort_reals_and_dedup(values: &mut Vec<Real>) -> Option<()> {
     for index in 1..values.len() {
         let mut cursor = index;
         while cursor > 0 && real_order(&values[cursor], &values[cursor - 1])? == Ordering::Less {
@@ -2161,19 +2049,13 @@ fn sort_reals_and_dedup(values: &mut Vec<ExactReal>) -> Option<()> {
     Some(())
 }
 
-#[cfg(feature = "exact-triangulation")]
-fn midpoint_real(left: &ExactReal, right: &ExactReal) -> ExactReal {
-    let half = (ExactReal::from(1) / &ExactReal::from(2)).expect("2 is nonzero");
+fn midpoint_real(left: &Real, right: &Real) -> Real {
+    let half = (Real::from(1) / &Real::from(2)).expect("2 is nonzero");
     mul(&add(left, right), &half)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn midpoint3(left: &Point3, right: &Point3) -> Point3 {
-    Point3::new(
-        midpoint_real(&left.x, &right.x),
-        midpoint_real(&left.y, &right.y),
-        midpoint_real(&left.z, &right.z),
-    )
+    hyperlimit::midpoint3(left, right)
 }
 
 fn compare_point2(left: &Point2, right: &Point2) -> Option<Ordering> {
@@ -2191,7 +2073,6 @@ fn point2_equal(left: &Point2, right: &Point2) -> bool {
     real_equal(&left.x, &right.x) && real_equal(&left.y, &right.y)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn dedup_point2_neighbors(points: &mut Vec<Point2>) {
     points.dedup_by(|right, left| point2_equal(left, right));
     if points.len() > 1 && point2_equal(points.first().unwrap(), points.last().unwrap()) {
@@ -2199,12 +2080,11 @@ fn dedup_point2_neighbors(points: &mut Vec<Point2>) {
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
-fn point2_polygon_area2_abs(points: &[Point2]) -> Option<ExactReal> {
+fn point2_polygon_area2_abs(points: &[Point2]) -> Option<Real> {
     if points.len() < 3 {
-        return Some(ExactReal::from(0));
+        return Some(Real::from(0));
     }
-    let mut signed = ExactReal::from(0);
+    let mut signed = Real::from(0);
     for index in 0..points.len() {
         let current = &points[index];
         let next = &points[(index + 1) % points.len()];
@@ -2213,43 +2093,43 @@ fn point2_polygon_area2_abs(points: &[Point2]) -> Option<ExactReal> {
             &sub(&mul(&current.x, &next.y), &mul(&current.y, &next.x)),
         );
     }
-    match compare_reals(&signed, &ExactReal::from(0)).value()? {
-        Ordering::Less => Some(sub(&ExactReal::from(0), &signed)),
+    match compare_reals(&signed, &Real::from(0)).value()? {
+        Ordering::Less => Some(sub(&Real::from(0), &signed)),
         Ordering::Equal | Ordering::Greater => Some(signed),
     }
 }
 
-fn real_order(left: &ExactReal, right: &ExactReal) -> Option<Ordering> {
+fn real_order(left: &Real, right: &Real) -> Option<Ordering> {
     compare_reals(left, right).value()
 }
 
-fn real_equal(left: &ExactReal, right: &ExactReal) -> bool {
+fn real_equal(left: &Real, right: &Real) -> bool {
     real_order(left, right) == Some(Ordering::Equal)
 }
 
-fn exact_min_real(left: &ExactReal, right: &ExactReal) -> Option<ExactReal> {
+fn exact_min_real(left: &Real, right: &Real) -> Option<Real> {
     match real_order(left, right)? {
         Ordering::Less | Ordering::Equal => Some(left.clone()),
         Ordering::Greater => Some(right.clone()),
     }
 }
 
-fn exact_max_real(left: &ExactReal, right: &ExactReal) -> Option<ExactReal> {
+fn exact_max_real(left: &Real, right: &Real) -> Option<Real> {
     match real_order(left, right)? {
         Ordering::Greater | Ordering::Equal => Some(left.clone()),
         Ordering::Less => Some(right.clone()),
     }
 }
 
-fn add(left: &ExactReal, right: &ExactReal) -> ExactReal {
+fn add(left: &Real, right: &Real) -> Real {
     left.clone() + right
 }
 
-fn sub(left: &ExactReal, right: &ExactReal) -> ExactReal {
+fn sub(left: &Real, right: &Real) -> Real {
     left.clone() - right
 }
 
-fn mul(left: &ExactReal, right: &ExactReal) -> ExactReal {
+fn mul(left: &Real, right: &Real) -> Real {
     left.clone() * right
 }
 

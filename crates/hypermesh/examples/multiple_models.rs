@@ -7,7 +7,9 @@ use bevy::pbr::wireframe::{Wireframe, WireframeColor, WireframePlugin};
 use bevy::prelude::*;
 use bevy::render::mesh::PrimitiveTopology;
 use bevy_panorbit_camera::{PanOrbitCamera, PanOrbitCameraPlugin};
-use hypermesh::prelude::*;
+use hypermesh::exact::{
+    ExactBooleanOperation, ExactMesh, ValidationPolicy, approximate_mesh_f64_view, boolean_exact,
+};
 
 #[derive(Component)]
 struct ToggleableMesh;
@@ -31,64 +33,27 @@ fn setup(
     mut mats: ResMut<Assets<StandardMaterial>>,
     mut meshes: ResMut<Assets<Mesh>>,
 ) {
-    let obj_path_1 = "examples/models/gargoyle.obj";
-    let obj_path_2 = "examples/models/double-torus.obj";
-    let (m0, _) = tobj::load_obj(
-        obj_path_1,
-        &tobj::LoadOptions {
-            ..Default::default()
-        },
+    let left = exact_box([-3, -2, -2], [1, 2, 2]);
+    let right = exact_box([0, -1, -1], [3, 1, 1]);
+    let difference = boolean_exact(
+        &left,
+        &right,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::CLOSED,
     )
-    .expect("Failed to load the first obj file");
-    let (m1, _) = tobj::load_obj(
-        obj_path_2,
-        &tobj::LoadOptions {
-            ..Default::default()
-        },
-    )
-    .expect("Failed to load the second obj file");
+    .expect("overlapping boxes should be supported by exact boolean shortcuts")
+    .mesh;
 
-    let mut mfs = vec![];
-    for m in [&m0[0].mesh, &m1[0].mesh] {
-        mfs.push(
-            Manifold::new(
-                &m.positions.iter().map(|&v| v as f64).collect::<Vec<_>>(),
-                &m.indices.iter().map(|&v| v as usize).collect::<Vec<_>>(),
-            )
-            .unwrap(),
-        );
-    }
-    mfs.push(
-        compute_boolean_with_report(&mfs[0], &mfs[1], OpType::Subtract)
-            .unwrap()
-            .mesh,
-    );
+    let meshes_to_draw = [left, right, difference];
+    let colors = [BLUE, GREEN, WHITE];
 
-    for (i, mf) in mfs.iter().enumerate() {
-        let mut m = Mesh::new(
-            PrimitiveTopology::TriangleList,
-            RenderAssetUsages::default(),
-        );
-        let mut pos = vec![];
-        let mut vns = vec![];
-        for (fid, hs) in mf.hs.chunks(3).enumerate() {
-            let p0 = mf.ps[hs[0].tail];
-            let p1 = mf.ps[hs[1].tail];
-            let p2 = mf.ps[hs[2].tail];
-            let n = mf.face_normals[fid];
-            pos.push([p0.x as f32, p0.y as f32, p0.z as f32]);
-            pos.push([p1.x as f32, p1.y as f32, p1.z as f32]);
-            pos.push([p2.x as f32, p2.y as f32, p2.z as f32]);
-            vns.push([n.x as f32, n.y as f32, n.z as f32]);
-            vns.push([n.x as f32, n.y as f32, n.z as f32]);
-            vns.push([n.x as f32, n.y as f32, n.z as f32]);
-        }
-        m.insert_attribute(Mesh::ATTRIBUTE_POSITION, pos);
-        m.insert_attribute(Mesh::ATTRIBUTE_NORMAL, vns);
-
+    for (i, mesh) in meshes_to_draw.iter().enumerate() {
         cmds.spawn((
-            Mesh3d(meshes.add(m).clone()),
-            MeshMaterial3d(mats.add(StandardMaterial { ..default() })),
+            Mesh3d(meshes.add(bevy_mesh_from_exact(mesh))),
+            MeshMaterial3d(mats.add(StandardMaterial {
+                base_color: colors[i].into(),
+                ..default()
+            })),
             Transform::default(),
             Wireframe,
             WireframeColor {
@@ -104,7 +69,7 @@ fn setup(
     }
     cmds.spawn((PointLight::default(), Transform::from_xyz(2., 5., 2.)));
     cmds.spawn((
-        Transform::from_translation(Vec3::new(0., 2., 3.)),
+        Transform::from_translation(Vec3::new(0., 3., 6.)),
         PanOrbitCamera::default(),
     ));
 }
@@ -113,16 +78,63 @@ fn toggle_mesh_visibility(
     keyboard: Res<ButtonInput<KeyCode>>,
     mut query: Query<&mut Visibility, With<ToggleableMesh>>,
 ) {
-    let cb = |visibility: &mut Visibility| {
-        *visibility = match visibility {
-            Visibility::Visible => Visibility::Hidden,
-            Visibility::Hidden => Visibility::Visible,
-            Visibility::Inherited => Visibility::Hidden,
-        };
-    };
-    let mut vis: Vec<_> = query.iter_mut().collect();
     if keyboard.just_pressed(KeyCode::Space) {
-        cb(&mut vis[0]);
-        cb(&mut vis[1]);
+        for mut visibility in query.iter_mut() {
+            *visibility = match *visibility {
+                Visibility::Visible => Visibility::Hidden,
+                Visibility::Hidden | Visibility::Inherited => Visibility::Visible,
+            };
+        }
     }
+}
+
+fn exact_box(min: [i64; 3], max: [i64; 3]) -> ExactMesh {
+    ExactMesh::from_i64_triangles_with_policy(
+        &[
+            min[0], min[1], min[2], max[0], min[1], min[2], max[0], max[1], min[2], min[0], max[1],
+            min[2], min[0], min[1], max[2], max[0], min[1], max[2], max[0], max[1], max[2], min[0],
+            max[1], max[2],
+        ],
+        &[
+            0, 2, 1, 0, 3, 2, 4, 5, 6, 4, 6, 7, 0, 1, 5, 0, 5, 4, 1, 2, 6, 1, 6, 5, 2, 3, 7, 2, 7,
+            6, 3, 0, 4, 3, 4, 7,
+        ],
+        ValidationPolicy::CLOSED,
+    )
+    .expect("axis-aligned integer box should be closed")
+}
+
+fn bevy_mesh_from_exact(mesh: &ExactMesh) -> Mesh {
+    let view = approximate_mesh_f64_view(mesh).expect("exact mesh should have a fresh f64 view");
+    let mut positions = Vec::with_capacity(view.indices.len());
+    let mut normals = Vec::with_capacity(view.indices.len());
+
+    for triangle in view.indices.chunks_exact(3) {
+        let p0 = position_at(&view.positions, triangle[0]);
+        let p1 = position_at(&view.positions, triangle[1]);
+        let p2 = position_at(&view.positions, triangle[2]);
+        let normal = (Vec3::from_array(p1) - Vec3::from_array(p0))
+            .cross(Vec3::from_array(p2) - Vec3::from_array(p0))
+            .normalize_or_zero()
+            .to_array();
+        positions.extend_from_slice(&[p0, p1, p2]);
+        normals.extend_from_slice(&[normal, normal, normal]);
+    }
+
+    let mut out = Mesh::new(
+        PrimitiveTopology::TriangleList,
+        RenderAssetUsages::default(),
+    );
+    out.insert_attribute(Mesh::ATTRIBUTE_POSITION, positions);
+    out.insert_attribute(Mesh::ATTRIBUTE_NORMAL, normals);
+    out
+}
+
+fn position_at(positions: &[f64], index: usize) -> [f32; 3] {
+    let base = index * 3;
+    [
+        positions[base] as f32,
+        positions[base + 1] as f32,
+        positions[base + 2] as f32,
+    ]
 }

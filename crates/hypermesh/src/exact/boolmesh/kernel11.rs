@@ -12,8 +12,6 @@
 //!
 //! The tie rule in `shadows` is the boolmesh simulation-of-simplicity hook:
 //! equal coordinates compare by the signed expansion direction.  Keeping that
-//! symbolic tie separate from arithmetic equality follows Yap, "Towards Exact
-//! Geometric Computation," *Computational Geometry* 7.1-2 (1997): exact
 //! predicates and combinatorial topology are represented as replayable facts
 //! instead of being recovered from rounded coordinates.
 
@@ -23,7 +21,7 @@ use std::cmp::Ordering;
 
 use hyperlimit::{Point2, Point3, compare_reals};
 
-use super::ExactReal;
+use hyperreal::Real;
 
 /// Exact directed halfedge handle used by the `Kernel11` port.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -42,13 +40,13 @@ pub(super) struct ExactKernel11Halfedge {
 #[derive(Clone, Debug, PartialEq)]
 pub(super) struct ExactKernel11Intersection {
     /// Projected `x` coordinate.
-    pub x: ExactReal,
+    pub x: Real,
     /// Projected `y` coordinate.
-    pub y: ExactReal,
+    pub y: Real,
     /// Interpolated `z` on the first edge.
-    pub p_z: ExactReal,
+    pub p_z: Real,
     /// Interpolated `z` on the second edge.
-    pub q_z: ExactReal,
+    pub q_z: Real,
 }
 
 /// Signed exact `Kernel11` edge/edge shadow contribution.
@@ -75,7 +73,7 @@ pub(super) struct ExactKernel11Input<'a> {
     /// Exact expansion directions for second operand vertices.
     pub ns_q: &'a [Point3],
     /// Signed expansion scale.  Only the sign participates in tie decisions.
-    pub expand: &'a ExactReal,
+    pub expand: &'a Real,
 }
 
 /// Port of legacy boolmesh `kernel11::Kernel11::op`.
@@ -179,12 +177,12 @@ pub(super) fn kernel11_op(
 /// signed expansion direction (`dir < 0`) exactly like the legacy float code;
 /// this is the symbolic tie rule that lets `Kernel11` choose a consistent side
 /// for endpoint-on-edge contacts.
-pub(super) fn shadows(p: &ExactReal, q: &ExactReal, direction: &ExactReal) -> Option<bool> {
+pub(super) fn shadows(p: &Real, q: &Real, direction: &Real) -> Option<bool> {
     match compare_reals(p, q).value()? {
         Ordering::Less => Some(true),
         Ordering::Greater => Some(false),
         Ordering::Equal => {
-            Some(compare_reals(direction, &ExactReal::from(0)).value()? == Ordering::Less)
+            Some(compare_reals(direction, &Real::from(0)).value()? == Ordering::Less)
         }
     }
 }
@@ -202,7 +200,7 @@ pub(super) fn shadows01(
     hs_q: &[ExactKernel11Halfedge],
     ns_p: &[Point3],
     ns_q: &[Point3],
-    expand: &ExactReal,
+    expand: &Real,
     reverse: bool,
 ) -> Option<(i32, Point2)> {
     let q_half = *hs_q.get(q1)?;
@@ -252,7 +250,7 @@ pub(super) fn shadows01(
 /// back to the left endpoint after producing an invalid quotient.  The exact
 /// port makes that branch explicit: interpolation is underdetermined along
 /// this axis, so the retained endpoint witness is the stable boolmesh choice.
-pub(super) fn interpolate(left: &Point3, right: &Point3, x: &ExactReal) -> Option<Point2> {
+pub(super) fn interpolate(left: &Point3, right: &Point3, x: &Real) -> Option<Point2> {
     let dx = sub(&right.x, &left.x);
     if real_is_zero(&dx)? {
         return Some(Point2::new(left.y.clone(), left.z.clone()));
@@ -273,13 +271,13 @@ pub(super) fn intersect(
 ) -> Option<ExactKernel11Intersection> {
     let dy_left = sub(&q_left.y, &p_left.y);
     let dy_right = sub(&q_right.y, &p_right.y);
-    if compare_reals(&mul(&dy_left, &dy_right), &ExactReal::from(0)).value()? == Ordering::Greater {
+    if compare_reals(&mul(&dy_left, &dy_right), &Real::from(0)).value()? == Ordering::Greater {
         return None;
     }
     let use_left = abs_less(&dy_left, &dy_right)?;
     let denominator = sub(&dy_left, &dy_right);
     let lambda = if real_is_zero(&denominator)? {
-        ExactReal::from(0)
+        Real::from(0)
     } else if use_left {
         (dy_left.clone() / &denominator).ok()?
     } else {
@@ -309,23 +307,23 @@ pub(super) fn intersect(
 
 #[cfg(feature = "internal-fuzzing")]
 pub(super) fn internal_fuzz_probe(selector: u8) -> bool {
-    let y_high = ExactReal::from(3 + i64::from(selector % 2));
+    let y_high = Real::from(3 + i64::from(selector % 2));
     let ps_p = vec![
-        Point3::new(ExactReal::from(2), ExactReal::from(1), ExactReal::from(0)),
-        Point3::new(ExactReal::from(2), y_high, ExactReal::from(0)),
+        Point3::new(Real::from(2), Real::from(1), Real::from(0)),
+        Point3::new(Real::from(2), y_high, Real::from(0)),
     ];
     let ps_q = vec![
-        Point3::new(ExactReal::from(0), ExactReal::from(0), ExactReal::from(4)),
-        Point3::new(ExactReal::from(4), ExactReal::from(4), ExactReal::from(4)),
+        Point3::new(Real::from(0), Real::from(0), Real::from(4)),
+        Point3::new(Real::from(4), Real::from(4), Real::from(4)),
     ];
     let hs_p = vec![ExactKernel11Halfedge { tail: 0, head: 1 }];
     let hs_q = vec![ExactKernel11Halfedge { tail: 0, head: 1 }];
     let ns_p = vec![
-        Point3::new(ExactReal::from(1), ExactReal::from(1), ExactReal::from(1)),
-        Point3::new(ExactReal::from(1), ExactReal::from(1), ExactReal::from(1)),
+        Point3::new(Real::from(1), Real::from(1), Real::from(1)),
+        Point3::new(Real::from(1), Real::from(1), Real::from(1)),
     ];
     let ns_q = ns_p.clone();
-    let expand = ExactReal::from(1);
+    let expand = Real::from(1);
     let input = ExactKernel11Input {
         ps_p: &ps_p,
         ps_q: &ps_q,
@@ -336,44 +334,44 @@ pub(super) fn internal_fuzz_probe(selector: u8) -> bool {
         expand: &expand,
     };
     kernel11_op(&input, 0, 0)
-        .is_some_and(|hit| hit.sign <= 0 && real_order(&hit.point.x, &ExactReal::from(2)).is_some())
+        .is_some_and(|hit| hit.sign <= 0 && real_order(&hit.point.x, &Real::from(2)).is_some())
 }
 
-fn abs_less(left: &ExactReal, right: &ExactReal) -> Option<bool> {
+fn abs_less(left: &Real, right: &Real) -> Option<bool> {
     Some(compare_reals(&abs(left)?, &abs(right)?).value()? == Ordering::Less)
 }
 
-fn abs(value: &ExactReal) -> Option<ExactReal> {
-    match compare_reals(value, &ExactReal::from(0)).value()? {
-        Ordering::Less => Some(sub(&ExactReal::from(0), value)),
+fn abs(value: &Real) -> Option<Real> {
+    match compare_reals(value, &Real::from(0)).value()? {
+        Ordering::Less => Some(sub(&Real::from(0), value)),
         Ordering::Equal | Ordering::Greater => Some(value.clone()),
     }
 }
 
-fn distance_squared(left: &Point3, right: &Point3) -> ExactReal {
+fn distance_squared(left: &Point3, right: &Point3) -> Real {
     let dx = sub(&left.x, &right.x);
     let dy = sub(&left.y, &right.y);
     let dz = sub(&left.z, &right.z);
     add(&add(&mul(&dx, &dx), &mul(&dy, &dy)), &mul(&dz, &dz))
 }
 
-fn real_is_zero(value: &ExactReal) -> Option<bool> {
-    Some(compare_reals(value, &ExactReal::from(0)).value()? == Ordering::Equal)
+fn real_is_zero(value: &Real) -> Option<bool> {
+    Some(compare_reals(value, &Real::from(0)).value()? == Ordering::Equal)
 }
 
-fn real_order(left: &ExactReal, right: &ExactReal) -> Option<Ordering> {
+fn real_order(left: &Real, right: &Real) -> Option<Ordering> {
     compare_reals(left, right).value()
 }
 
-fn add(left: &ExactReal, right: &ExactReal) -> ExactReal {
+fn add(left: &Real, right: &Real) -> Real {
     left.clone() + right
 }
 
-fn sub(left: &ExactReal, right: &ExactReal) -> ExactReal {
+fn sub(left: &Real, right: &Real) -> Real {
     left.clone() - right
 }
 
-fn mul(left: &ExactReal, right: &ExactReal) -> ExactReal {
+fn mul(left: &Real, right: &Real) -> Real {
     left.clone() * right
 }
 
@@ -382,68 +380,32 @@ mod tests {
     use super::*;
 
     fn point(x: i64, y: i64, z: i64) -> Point3 {
-        Point3::new(ExactReal::from(x), ExactReal::from(y), ExactReal::from(z))
+        Point3::new(Real::from(x), Real::from(y), Real::from(z))
     }
 
-    fn assert_real_eq(left: &ExactReal, right: i64) {
+    fn assert_real_eq(left: &Real, right: i64) {
         assert_eq!(
-            compare_reals(left, &ExactReal::from(right)).value(),
+            compare_reals(left, &Real::from(right)).value(),
             Some(Ordering::Equal)
         );
     }
 
     #[test]
     fn shadows_uses_exact_order_and_tie_direction() {
-        assert!(
-            shadows(
-                &ExactReal::from(1),
-                &ExactReal::from(2),
-                &ExactReal::from(0)
-            )
-            .unwrap()
-        );
-        assert!(
-            !shadows(
-                &ExactReal::from(3),
-                &ExactReal::from(2),
-                &ExactReal::from(0)
-            )
-            .unwrap()
-        );
-        assert!(
-            shadows(
-                &ExactReal::from(2),
-                &ExactReal::from(2),
-                &ExactReal::from(-1)
-            )
-            .unwrap()
-        );
-        assert!(
-            !shadows(
-                &ExactReal::from(2),
-                &ExactReal::from(2),
-                &ExactReal::from(0)
-            )
-            .unwrap()
-        );
-        assert!(
-            !shadows(
-                &ExactReal::from(2),
-                &ExactReal::from(2),
-                &ExactReal::from(1)
-            )
-            .unwrap()
-        );
+        assert!(shadows(&Real::from(1), &Real::from(2), &Real::from(0)).unwrap());
+        assert!(!shadows(&Real::from(3), &Real::from(2), &Real::from(0)).unwrap());
+        assert!(shadows(&Real::from(2), &Real::from(2), &Real::from(-1)).unwrap());
+        assert!(!shadows(&Real::from(2), &Real::from(2), &Real::from(0)).unwrap());
+        assert!(!shadows(&Real::from(2), &Real::from(2), &Real::from(1)).unwrap());
     }
 
     #[test]
     fn interpolate_replays_exact_yz_and_zero_x_extent_fallback() {
-        let yz = interpolate(&point(0, 0, 10), &point(4, 4, 18), &ExactReal::from(2)).unwrap();
+        let yz = interpolate(&point(0, 0, 10), &point(4, 4, 18), &Real::from(2)).unwrap();
         assert_real_eq(&yz.x, 2);
         assert_real_eq(&yz.y, 14);
 
-        let fallback =
-            interpolate(&point(2, 7, 11), &point(2, 9, 13), &ExactReal::from(2)).unwrap();
+        let fallback = interpolate(&point(2, 7, 11), &point(2, 9, 13), &Real::from(2)).unwrap();
         assert_real_eq(&fallback.x, 7);
         assert_real_eq(&fallback.y, 11);
     }
@@ -455,7 +417,7 @@ mod tests {
         let hs_q = vec![ExactKernel11Halfedge { tail: 0, head: 1 }];
         let ns_p = vec![point(1, 1, 1), point(1, 1, 1)];
         let ns_q = ns_p.clone();
-        let expand = ExactReal::from(1);
+        let expand = Real::from(1);
 
         let (inside, yz) =
             shadows01(0, 0, &ps_p, &ps_q, &hs_q, &ns_p, &ns_q, &expand, false).unwrap();
@@ -491,7 +453,7 @@ mod tests {
         let hs_q = vec![ExactKernel11Halfedge { tail: 0, head: 1 }];
         let ns_p = vec![point(1, 1, 1), point(1, 1, 1)];
         let ns_q = ns_p.clone();
-        let expand = ExactReal::from(1);
+        let expand = Real::from(1);
         let input = ExactKernel11Input {
             ps_p: &ps_p,
             ps_q: &ps_q,

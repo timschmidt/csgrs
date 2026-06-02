@@ -3,12 +3,7 @@
 //! Legacy boolmesh schedules `Kernel12::op` by intersecting every forward
 //! source halfedge AABB with the opposite mesh face collider.  This module
 //! ports that scheduling loop directly over exact AABB facts and exact
-//! `Kernel12::op` rows.  The broad phase is still only a scheduler: following
-//! Yap, "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-//! (1997), exact boxes may reject disjoint work, but retained exact predicates
 //! and accumulator witnesses decide topology.  The control flow intentionally
-//! mirrors boolmesh `boolean03::kernel12::intersect12`; Moller (1997) and
-//! Guigue and Devillers (2003) remain the narrow-phase triangle-intersection
 //! substrate around this boolmesh stage.
 
 #![allow(dead_code)]
@@ -23,7 +18,7 @@ use crate::exact::mesh::ExactMesh;
 use super::kernel_frame::{ExactBoolMeshKernelFrame, build_boolmesh_sorted_kernel_frame};
 use super::kernel02::ExactKernel02Halfedge;
 use super::kernel12_op::{ExactKernel12Input, kernel12_op};
-use super::{ExactBoolMeshEdgeFacePair, ExactBoolMeshFacePair, ExactBoolMeshSide, ExactReal};
+use super::{ExactBoolMeshEdgeFacePair, ExactBoolMeshFacePair, ExactBoolMeshSide, Real};
 
 /// Exact `intersect12` output before `boolean45` consumes source-edge runs.
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -52,7 +47,7 @@ pub(super) struct ExactKernel12IntersectHit {
     /// Exact boolmesh `v12`/`v21` witness.
     pub point: Point3,
     /// Exact source-edge parameter reconstructed from [`Self::point`].
-    pub parameter: ExactReal,
+    pub parameter: Real,
 }
 
 /// Run the exact boolmesh `intersect12` loop in both directions.
@@ -81,7 +76,7 @@ fn intersect12_direction(
         (right_mesh, right_frame, left_frame)
     };
     let opposite_face_bounds = face_bounds(opposite_frame);
-    let expand = ExactReal::from(1);
+    let expand = Real::from(1);
     let input = ExactKernel12Input {
         ps_p: &left_frame.points,
         ps_q: &right_frame.points,
@@ -238,7 +233,7 @@ fn source_edge_parameter(
     points: &[Point3],
     halfedge: ExactKernel02Halfedge,
     point: &Point3,
-) -> Option<ExactReal> {
+) -> Option<Real> {
     let tail = points.get(halfedge.tail)?;
     let head = points.get(halfedge.head)?;
     let deltas = [
@@ -252,7 +247,7 @@ fn source_edge_parameter(
         sub(&point.z, &tail.z),
     ];
     for axis in 0..3 {
-        if real_order(&deltas[axis], &ExactReal::from(0))? == Ordering::Equal {
+        if real_order(&deltas[axis], &Real::from(0))? == Ordering::Equal {
             continue;
         }
         let parameter = (numerators[axis].clone() / deltas[axis].clone()).ok()?;
@@ -268,19 +263,14 @@ fn point_matches_edge_parameter(
     tail: &Point3,
     head: &Point3,
     point: &Point3,
-    parameter: &ExactReal,
+    parameter: &Real,
 ) -> bool {
     axis_matches_parameter(&tail.x, &head.x, &point.x, parameter)
         && axis_matches_parameter(&tail.y, &head.y, &point.y, parameter)
         && axis_matches_parameter(&tail.z, &head.z, &point.z, parameter)
 }
 
-fn axis_matches_parameter(
-    tail: &ExactReal,
-    head: &ExactReal,
-    point: &ExactReal,
-    parameter: &ExactReal,
-) -> bool {
+fn axis_matches_parameter(tail: &Real, head: &Real, point: &Real, parameter: &Real) -> bool {
     let delta = sub(head, tail);
     let expected = tail.clone() + &mul(parameter, &delta);
     real_order(&expected, point) == Some(Ordering::Equal)
@@ -290,15 +280,15 @@ fn is_forward(halfedge: ExactKernel02Halfedge) -> bool {
     halfedge.tail < halfedge.head
 }
 
-fn real_order(left: &ExactReal, right: &ExactReal) -> Option<Ordering> {
+fn real_order(left: &Real, right: &Real) -> Option<Ordering> {
     compare_reals(left, right).value()
 }
 
-fn sub(left: &ExactReal, right: &ExactReal) -> ExactReal {
+fn sub(left: &Real, right: &Real) -> Real {
     left.clone() - right
 }
 
-fn mul(left: &ExactReal, right: &ExactReal) -> ExactReal {
+fn mul(left: &Real, right: &Real) -> Real {
     left.clone() * right
 }
 
@@ -323,12 +313,11 @@ pub(super) fn internal_fuzz_probe(selector: u8) -> bool {
     tables.p1q2.len() == 1
         && tables.p2q1.is_empty()
         && tables.p1q2[0].sign == 1
-        && real_order(&tables.p1q2[0].point.z, &ExactReal::from(4)) == Some(Ordering::Equal)
+        && real_order(&tables.p1q2[0].point.z, &Real::from(4)) == Some(Ordering::Equal)
 }
 
 /// Boundary endpoint/edge fixture for the direct boolmesh `intersect12` port.
 ///
-/// Yap's "Towards Exact Geometric Computation" requires the branch condition
 /// itself to be exact; this fixture places the source endpoint `(2, 0, 0)` on
 /// an opposite triangle boundary edge, so accepting the row must come from the
 /// exact `Kernel12::op` `Kernel11` shadow sum rather than a floating tolerance
@@ -354,24 +343,24 @@ fn tetrahedron_i64(a: [i64; 3], b: [i64; 3], c: [i64; 3], d: [i64; 3]) -> ExactM
 
 #[cfg(any(test, feature = "internal-fuzzing"))]
 fn boundary_endpoint_hit(hit: &ExactKernel12IntersectHit) -> bool {
-    real_order(&hit.point.x, &ExactReal::from(2)) == Some(Ordering::Equal)
-        && real_order(&hit.point.y, &ExactReal::from(0)) == Some(Ordering::Equal)
-        && real_order(&hit.point.z, &ExactReal::from(0)) == Some(Ordering::Equal)
-        && (real_order(&hit.parameter, &ExactReal::from(0)) == Some(Ordering::Equal)
-            || real_order(&hit.parameter, &ExactReal::from(1)) == Some(Ordering::Equal))
+    real_order(&hit.point.x, &Real::from(2)) == Some(Ordering::Equal)
+        && real_order(&hit.point.y, &Real::from(0)) == Some(Ordering::Equal)
+        && real_order(&hit.point.z, &Real::from(0)) == Some(Ordering::Equal)
+        && (real_order(&hit.parameter, &Real::from(0)) == Some(Ordering::Equal)
+            || real_order(&hit.parameter, &Real::from(1)) == Some(Ordering::Equal))
 }
 
 #[cfg(any(test, feature = "internal-fuzzing"))]
 fn halfedge_row_key_meshes() -> (ExactMesh, ExactMesh) {
     use crate::exact::SourceProvenance;
-    use crate::exact::mesh::{ExactPoint3, Triangle};
+    use crate::exact::mesh::Triangle;
     use crate::exact::validation::ValidationPolicy;
 
     let left = ExactMesh::new_with_policy(
         vec![
-            ExactPoint3::new(ExactReal::from(1), ExactReal::from(1), ExactReal::from(0)),
-            ExactPoint3::new(ExactReal::from(1), ExactReal::from(1), ExactReal::from(5)),
-            ExactPoint3::new(ExactReal::from(2), ExactReal::from(1), ExactReal::from(5)),
+            Point3::new(Real::from(1), Real::from(1), Real::from(0)),
+            Point3::new(Real::from(1), Real::from(1), Real::from(5)),
+            Point3::new(Real::from(2), Real::from(1), Real::from(5)),
         ],
         vec![Triangle([2, 0, 1])],
         SourceProvenance::exact("exact boolmesh intersect12 halfedge row fixture"),
@@ -380,9 +369,9 @@ fn halfedge_row_key_meshes() -> (ExactMesh, ExactMesh) {
     .unwrap();
     let right = ExactMesh::new_with_policy(
         vec![
-            ExactPoint3::new(ExactReal::from(0), ExactReal::from(0), ExactReal::from(4)),
-            ExactPoint3::new(ExactReal::from(4), ExactReal::from(0), ExactReal::from(4)),
-            ExactPoint3::new(ExactReal::from(0), ExactReal::from(4), ExactReal::from(4)),
+            Point3::new(Real::from(0), Real::from(0), Real::from(4)),
+            Point3::new(Real::from(4), Real::from(0), Real::from(4)),
+            Point3::new(Real::from(0), Real::from(4), Real::from(4)),
         ],
         vec![Triangle([0, 1, 2])],
         SourceProvenance::exact("exact boolmesh intersect12 halfedge row opposite"),
@@ -395,14 +384,14 @@ fn halfedge_row_key_meshes() -> (ExactMesh, ExactMesh) {
 #[cfg(any(test, feature = "internal-fuzzing"))]
 fn open_crossing_meshes(top: i64, plane_z: i64) -> (ExactMesh, ExactMesh) {
     use crate::exact::SourceProvenance;
-    use crate::exact::mesh::{ExactPoint3, Triangle};
+    use crate::exact::mesh::Triangle;
     use crate::exact::validation::ValidationPolicy;
 
     let left = ExactMesh::new_with_policy(
         vec![
-            ExactPoint3::new(ExactReal::from(1), ExactReal::from(1), ExactReal::from(0)),
-            ExactPoint3::new(ExactReal::from(1), ExactReal::from(1), ExactReal::from(top)),
-            ExactPoint3::new(ExactReal::from(2), ExactReal::from(1), ExactReal::from(top)),
+            Point3::new(Real::from(1), Real::from(1), Real::from(0)),
+            Point3::new(Real::from(1), Real::from(1), Real::from(top)),
+            Point3::new(Real::from(2), Real::from(1), Real::from(top)),
         ],
         vec![Triangle([0, 1, 2])],
         SourceProvenance::exact("exact boolmesh intersect12 source fixture"),
@@ -411,21 +400,9 @@ fn open_crossing_meshes(top: i64, plane_z: i64) -> (ExactMesh, ExactMesh) {
     .unwrap();
     let right = ExactMesh::new_with_policy(
         vec![
-            ExactPoint3::new(
-                ExactReal::from(0),
-                ExactReal::from(0),
-                ExactReal::from(plane_z),
-            ),
-            ExactPoint3::new(
-                ExactReal::from(4),
-                ExactReal::from(0),
-                ExactReal::from(plane_z),
-            ),
-            ExactPoint3::new(
-                ExactReal::from(0),
-                ExactReal::from(4),
-                ExactReal::from(plane_z),
-            ),
+            Point3::new(Real::from(0), Real::from(0), Real::from(plane_z)),
+            Point3::new(Real::from(4), Real::from(0), Real::from(plane_z)),
+            Point3::new(Real::from(0), Real::from(4), Real::from(plane_z)),
         ],
         vec![Triangle([0, 1, 2])],
         SourceProvenance::exact("exact boolmesh intersect12 opposite fixture"),
@@ -456,22 +433,19 @@ mod tests {
         assert_eq!(hit.edge_face.face, 0);
         assert_eq!(hit.sign, 1);
         assert_eq!(
-            real_order(&hit.point.x, &ExactReal::from(1)),
+            real_order(&hit.point.x, &Real::from(1)),
             Some(Ordering::Equal)
         );
         assert_eq!(
-            real_order(&hit.point.y, &ExactReal::from(1)),
+            real_order(&hit.point.y, &Real::from(1)),
             Some(Ordering::Equal)
         );
         assert_eq!(
-            real_order(&hit.point.z, &ExactReal::from(4)),
+            real_order(&hit.point.z, &Real::from(4)),
             Some(Ordering::Equal)
         );
         assert_eq!(
-            real_order(
-                &hit.parameter,
-                &(ExactReal::from(4) / ExactReal::from(5)).unwrap()
-            ),
+            real_order(&hit.parameter, &(Real::from(4) / Real::from(5)).unwrap()),
             Some(Ordering::Equal)
         );
     }

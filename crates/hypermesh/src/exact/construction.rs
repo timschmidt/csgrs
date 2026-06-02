@@ -3,15 +3,13 @@
 //! The reusable segment/plane event model lives in `hyperlimit`: endpoint
 //! predicates decide the combinatorial relation, and proper crossings retain
 //! the exact determinant-ratio parameter `d0 / (d0 - d1)`. That is the
-//! predicate/construction split described by Yap, "Towards Exact Geometric
-//! Computation," *Computational Geometry* 7.1-2 (1997). `hypermesh` keeps only
 //! mesh-specific adapters here, such as indexing a face plane from a mesh or
 //! reusing retained [`FacePlaneFacts`].
 
 use hyperlimit::{PlaneSide, Point3, compare_reals, intersect_segment_with_plane_values};
 
 use super::facts::FacePlaneFacts;
-use super::scalar::ExactReal;
+use hyperreal::Real;
 
 pub use hyperlimit::{
     SegmentPlaneConstructionFailure, SegmentPlaneIntersection, SegmentPlaneParameterRatio,
@@ -47,8 +45,6 @@ pub fn intersect_segment_with_face_plane(
 /// This cached construction path consumes determinant-form coefficients
 /// retained in [`FacePlaneFacts`] and builds the same segment event as
 /// [`intersect_segment_with_oriented_plane`] without reconstructing a
-/// point-defined plane. Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997), treats this retained numerical
 /// structure as part of the exact object model: constructions should reuse
 /// certified object facts rather than reintroducing representative primitive
 /// normals.
@@ -64,17 +60,17 @@ pub fn intersect_segment_with_retained_face_plane(
     intersect_segment_with_plane_values(&d0, &d1, p0, p1, sides, Vec::new())
 }
 
-fn retained_point_plane_value(plane: &FacePlaneFacts, point: &Point3) -> ExactReal {
+fn retained_point_plane_value(plane: &FacePlaneFacts, point: &Point3) -> Real {
     plane.normal[0].clone() * point.x.clone()
         + plane.normal[1].clone() * point.y.clone()
         + plane.normal[2].clone() * point.z.clone()
         + &plane.offset
 }
 
-fn retained_plane_side(value: &ExactReal) -> Option<PlaneSide> {
+fn retained_plane_side(value: &Real) -> Option<PlaneSide> {
     // `hyperlimit::orient3d_report(a, b, c, p)` uses the opposite sign
     // convention from the stored `(b - a) x (c - a)` dot-product form.
-    match compare_reals(value, &ExactReal::from(0)).value()? {
+    match compare_reals(value, &Real::from(0)).value()? {
         core::cmp::Ordering::Less => Some(PlaneSide::Above),
         core::cmp::Ordering::Equal => Some(PlaneSide::On),
         core::cmp::Ordering::Greater => Some(PlaneSide::Below),

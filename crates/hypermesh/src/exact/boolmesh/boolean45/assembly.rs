@@ -3,8 +3,6 @@
 //! Legacy boolmesh writes partial source-edge fragments, new face-pair
 //! fragments, and whole source edges into one `hs_r` array using per-face
 //! cursors.  This module keeps that mutation order and makes every written
-//! halfedge replayable.  Following Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7.1-2 (1997), incomplete upstream decisions remain
 //! explicit unfilled slots rather than being patched by numerical guesses.
 
 use super::super::{
@@ -376,8 +374,6 @@ fn oriented_fragment_endpoints(
 ) -> Option<(usize, usize)> {
     // Boolmesh receives this orientation from its halfedge structure.  The
     // exact port replays the same combinatorial choice from retained directed
-    // source-edge uses, which is the kind of topology/numeric separation Yap
-    // requires in "Towards Exact Geometric Computation" (1997).
     if desired_edge == stored_edge {
         Some((tail, head))
     } else if desired_edge == [stored_edge[1], stored_edge[0]] {
@@ -459,8 +455,6 @@ fn emit_source_boundary_halfedge(
     // an open mesh edge has one incident face instead of a reciprocal pair.
     // The exact port records that one-sided combinatorial fact directly for
     // both split (`append_partial_edges`) and untouched (`append_whole_edges`)
-    // source edges.  This follows Yap, "Towards Exact Geometric Computation,"
-    // Comput. Geom. 7.1-2 (1997): topology evidence is retained as object
     // state, not recovered later from rounded coordinates or epsilon pairing.
     let source_face = source_face_index(side, face, left_faces);
     let Some(Some(output_face)) = source_face_to_output_face.get(source_face) else {

@@ -12,8 +12,6 @@
 //! instead of the earlier axis-ray fallback.  Ties are handled through the
 //! exact expansion directions in [`super::kernel_frame`], preserving the
 //! simulation-of-simplicity role that boolmesh assigns to vertex normals while
-//! satisfying Yap's "Towards Exact Geometric Computation," *Computational
-//! Geometry* 7.1-2 (1997): topology counters are emitted only from replayable
 //! exact predicates and constructions.
 
 #![allow(dead_code)]
@@ -24,9 +22,9 @@ use hyperlimit::{Point3, compare_reals};
 
 use crate::exact::mesh::ExactMesh;
 
-use super::ExactReal;
 use super::kernel_frame::{ExactBoolMeshKernelFrame, build_kernel_frame};
 use super::kernel02::{ExactKernel02Input, kernel02_op};
+use hyperreal::Real;
 
 /// Bidirectional `kernel03` winding counters.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -59,7 +57,7 @@ pub(super) fn kernel03_winding(
         return None;
     }
 
-    let expand = ExactReal::from(1);
+    let expand = Real::from(1);
     let w03 = winding03_exact(&left_frame, &right_frame, &expand, true)?;
     let w30 = winding03_exact(&left_frame, &right_frame, &expand, false)?;
 
@@ -76,7 +74,7 @@ pub(super) fn kernel03_winding(
 fn winding03_exact(
     left: &ExactBoolMeshKernelFrame,
     right: &ExactBoolMeshKernelFrame,
-    expand: &ExactReal,
+    expand: &Real,
     fwd: bool,
 ) -> Option<Vec<i32>> {
     let subject = if fwd { left } else { right };
@@ -143,10 +141,10 @@ fn point_in_face_xy_bounds(
     face: usize,
 ) -> Option<bool> {
     let base = face.checked_mul(3)?;
-    let mut min_x = None::<&ExactReal>;
-    let mut max_x = None::<&ExactReal>;
-    let mut min_y = None::<&ExactReal>;
-    let mut max_y = None::<&ExactReal>;
+    let mut min_x = None::<&Real>;
+    let mut max_x = None::<&Real>;
+    let mut min_y = None::<&Real>;
+    let mut max_y = None::<&Real>;
 
     for local in 0..3 {
         let halfedge = *frame.halfedges.get(base + local)?;
@@ -169,10 +167,7 @@ fn point_in_face_xy_bounds(
     )
 }
 
-fn choose_min<'a>(
-    current: Option<&'a ExactReal>,
-    candidate: &'a ExactReal,
-) -> Option<&'a ExactReal> {
+fn choose_min<'a>(current: Option<&'a Real>, candidate: &'a Real) -> Option<&'a Real> {
     match current {
         Some(current)
             if compare_reals(candidate, current)
@@ -185,10 +180,7 @@ fn choose_min<'a>(
     }
 }
 
-fn choose_max<'a>(
-    current: Option<&'a ExactReal>,
-    candidate: &'a ExactReal,
-) -> Option<&'a ExactReal> {
+fn choose_max<'a>(current: Option<&'a Real>, candidate: &'a Real) -> Option<&'a Real> {
     match current {
         Some(current)
             if compare_reals(candidate, current)

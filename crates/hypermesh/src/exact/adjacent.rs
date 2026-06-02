@@ -8,9 +8,6 @@
 //! internal faces and welding only their exact shared vertices.
 //!
 //! This module keeps that promotion as a source-replayed certificate rather
-//! than a mesh rewrite heuristic. The object/predicate separation follows Yap,
-//! "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-//! (1997): exact boundary evidence is retained and replayed before it is
 //! allowed to change output topology.
 //!
 //! The union artifact is also the proof object used by named boolean dispatch
@@ -29,15 +26,17 @@ use hyperlimit::{
 
 use super::adjacent_polygon::polygon_patch_pairs;
 use super::construction::SegmentPlaneRelation;
-use super::graph::{FacePairEvents, IntersectionEvent, MeshSide, build_intersection_graph};
+use super::graph::{
+    ExactIntersectionGraph, FacePairEvents, IntersectionEvent, MeshSide, build_intersection_graph,
+};
 use super::intersection::MeshFacePairRelation;
-use super::mesh::{ExactMesh, ExactMeshValidationError, ExactPoint3, Triangle};
+use super::mesh::{ExactMesh, ExactMeshValidationError, Triangle};
 use super::provenance::SourceProvenance;
-use super::scalar::ExactReal;
 use super::validation::ValidationPolicy;
 use super::winding::{
     ClosedMeshWindingRelation, classify_mesh_vertices_against_closed_mesh_winding_report,
 };
+use hyperreal::Real;
 
 /// One exact whole-face adjacency consumed by a merged union.
 ///
@@ -79,6 +78,12 @@ pub struct FullFaceAdjacentUnion {
     pub mesh: ExactMesh,
 }
 
+/// Opaque retained certificate for full-face adjacency.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(crate) struct FullFaceAdjacentCertificate {
+    inner: FullFaceAdjacencyCertificate,
+}
+
 /// Validation failure for a retained full-face adjacency materialization.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum FullFaceAdjacentUnionError {
@@ -99,7 +104,6 @@ impl FullFaceAdjacentUnion {
     ///
     /// Local validation cannot prove the deleted faces still come from the
     /// original sources; [`Self::validate_against_sources`] performs that
-    /// replay. This split mirrors Yap's exact-computation boundary: a copied
     /// construction artifact must be internally coherent before it can be
     /// checked against source objects.
     pub fn validate(&self) -> Result<(), FullFaceAdjacentUnionError> {
@@ -164,7 +168,16 @@ impl FullFaceAdjacentUnion {
 
 /// Return whether the sources can be unioned by exact full-face adjacency.
 pub fn has_full_face_adjacent_union(left: &ExactMesh, right: &ExactMesh) -> bool {
-    materialize_full_face_adjacent_union(left, right, ValidationPolicy::CLOSED).is_some()
+    full_face_adjacent_certificate(left, right).is_some()
+}
+
+/// Return the retained full-face adjacency certificate for these sources.
+pub(crate) fn full_face_adjacent_certificate(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Option<FullFaceAdjacentCertificate> {
+    full_face_adjacent_union_certificate(left, right)
+        .map(|inner| FullFaceAdjacentCertificate { inner })
 }
 
 /// Materialize a regularized union across exact coincident whole faces.
@@ -178,11 +191,44 @@ pub fn materialize_full_face_adjacent_union(
     right: &ExactMesh,
     validation: ValidationPolicy,
 ) -> Option<FullFaceAdjacentUnion> {
+    let certificate = full_face_adjacent_certificate(left, right)?;
+    materialize_full_face_adjacent_union_from_certificate(left, right, &certificate, validation)
+}
+
+pub(crate) fn materialize_full_face_adjacent_union_from_certificate(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    certificate: &FullFaceAdjacentCertificate,
+    validation: ValidationPolicy,
+) -> Option<FullFaceAdjacentUnion> {
+    let certificate = &certificate.inner;
+    let mesh = merged_union_mesh(left, right, certificate, validation)?;
+    let union = FullFaceAdjacentUnion {
+        shared_faces: certificate.shared_faces.clone(),
+        shared_patches: certificate.shared_patches.clone(),
+        mesh,
+    };
+    union.validate().ok()?;
+    Some(union)
+}
+
+fn full_face_adjacent_union_certificate(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Option<FullFaceAdjacencyCertificate> {
     if !left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold {
         return None;
     }
     let graph = build_intersection_graph(left, right).ok()?;
-    graph.validate_against_sources(left, right).ok()?;
+    graph.validate_against_meshes(left, right).ok()?;
+    full_face_adjacent_union_certificate_from_graph(left, right, &graph)
+}
+
+fn full_face_adjacent_union_certificate_from_graph(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    graph: &ExactIntersectionGraph,
+) -> Option<FullFaceAdjacencyCertificate> {
     if graph.has_unknowns() || graph.face_pairs.is_empty() {
         return None;
     }
@@ -198,14 +244,7 @@ pub fn materialize_full_face_adjacent_union(
         return None;
     }
 
-    let mesh = merged_union_mesh(left, right, &certificate, validation)?;
-    let union = FullFaceAdjacentUnion {
-        shared_faces: certificate.shared_faces,
-        shared_patches: certificate.shared_patches,
-        mesh,
-    };
-    union.validate().ok()?;
-    Some(union)
+    Some(certificate)
 }
 
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
@@ -324,7 +363,6 @@ fn adjacency_contact_pair(
     if consumed_by_certificate(certificate, pair) {
         // A bounded source disk may replay partly as exact whole-face pairs and
         // partly as a polygon patch. Cross-record coplanar edge contacts are
-        // still internal to the deleted source-owned interface; Yap's TEGC
         // model requires that we keep this as certificate replay, not as a
         // loose tolerance merge.
         return matches!(
@@ -337,9 +375,9 @@ fn adjacency_contact_pair(
     {
         // Retained side faces around a nonconvex source-owned disk can cross
         // the deleted cap triangulation at exact boundary points even when no
-        // output-volume intersection exists. Hormann-Agathos/Yap exact
-        // boundary replay keeps those proper crossings tied to a consumed
-        // source face instead of relaxing the general candidate gate.
+        // output-volume intersection exists. Exact boundary replay keeps
+        // those proper crossings tied to a consumed source face instead of
+        // relaxing the general candidate gate.
         return pair.events.iter().all(consumed_boundary_candidate_event);
     }
 
@@ -349,8 +387,6 @@ fn adjacency_contact_pair(
             // A side face may share only an exact source edge with the other
             // solid after a full-face weld. Positive-area coplanar overlap is
             // different topology and must wait for the general arrangement
-            // path. Yap, "Towards Exact Geometric Computation," Comput. Geom.
-            // 7.1-2 (1997), is the reason this remains an explicit certified
             // distinction instead of a tolerance-based merge.
             !same_whole_face_any_orientation(left, pair.left_face, right, pair.right_face)
                 && !coplanar_pair_has_positive_area_evidence(pair)
@@ -408,9 +444,9 @@ fn same_whole_face_any_orientation(
 
 fn closed_boundary_contact_only(left: &ExactMesh, right: &ExactMesh) -> Option<bool> {
     let left_in_right = classify_mesh_vertices_against_closed_mesh_winding_report(left, right);
-    left_in_right.validate_against_sources(left, right).ok()?;
+    left_in_right.validate().ok()?;
     let right_in_left = classify_mesh_vertices_against_closed_mesh_winding_report(right, left);
-    right_in_left.validate_against_sources(right, left).ok()?;
+    right_in_left.validate().ok()?;
     Some(
         mesh_vertices_are_boundary_or_outside(&left_in_right)
             && mesh_vertices_are_boundary_or_outside(&right_in_left)
@@ -667,9 +703,9 @@ fn insert_patch_seam_map(
 
     let mut pairs = Vec::new();
     for right_vertex in right_vertices {
-        let right_point = right.vertices().get(right_vertex)?.to_hyperlimit_point();
+        let right_point = right.vertices().get(right_vertex)?.clone();
         if let Some(left_vertex) = left_vertices.iter().copied().find(|&left_vertex| {
-            let left_point = left.vertices()[left_vertex].to_hyperlimit_point();
+            let left_point = left.vertices()[left_vertex].clone();
             points_equal(&left_point, &right_point) == Some(true)
         }) {
             pairs.push((right_vertex, left_vertex));
@@ -681,7 +717,7 @@ fn insert_patch_seam_map(
 fn map_left_vertex(
     left: &ExactMesh,
     left_vertex_map: &mut [Option<usize>],
-    vertices: &mut Vec<ExactPoint3>,
+    vertices: &mut Vec<Point3>,
     vertex: usize,
 ) -> Option<usize> {
     if let Some(mapped) = left_vertex_map.get(vertex).copied().flatten() {
@@ -699,7 +735,7 @@ fn map_right_vertex(
     right_to_left: &BTreeMap<usize, usize>,
     left_vertex_map: &mut [Option<usize>],
     right_vertex_map: &mut [Option<usize>],
-    vertices: &mut Vec<ExactPoint3>,
+    vertices: &mut Vec<Point3>,
     vertex: usize,
 ) -> Option<usize> {
     if let Some(&left_vertex) = right_to_left.get(&vertex) {
@@ -725,8 +761,6 @@ fn fan_faces_cover_triangle(
     // opposite-oriented coplanar triangles sharing one strict interior fan
     // point and covering the three boundary edges. The exact projected area
     // equality is a construction replay guard; the topological decision still
-    // comes from retained point/plane/triangle predicates following Yap,
-    // "Towards Exact Geometric Computation," Comput. Geom. 7.1-2 (1997).
     let whole_triangle = whole_mesh.triangles().get(whole_face)?.0;
     let whole_points = triangle_points(whole_mesh, whole_triangle)?;
     let projection = choose_triangle_projection(&whole_points)?;
@@ -736,7 +770,7 @@ fn fan_faces_cover_triangle(
     let mut fan_faces = Vec::new();
     let mut covered_edges = BTreeSet::new();
     let mut interior_point = None::<Point3>;
-    let mut area_sum = ExactReal::from(0);
+    let mut area_sum = Real::from(0);
 
     for (fan_face, fan_triangle) in fan_mesh.triangles().iter().enumerate() {
         if consumed_fan_faces.contains(&fan_face) {
@@ -781,7 +815,7 @@ fn fan_faces_cover_triangle(
 struct FanTriangleCandidate {
     covered_edge: usize,
     interior_point: Point3,
-    area_abs: ExactReal,
+    area_abs: Real,
 }
 
 fn fan_triangle_in_whole_triangle(
@@ -840,7 +874,7 @@ fn fan_triangle_in_whole_triangle(
         _ => return Some(None),
     };
     let area_abs = real_abs(&fan_area)?;
-    if compare_reals(&area_abs, &ExactReal::from(0)).value() != Some(Ordering::Greater) {
+    if compare_reals(&area_abs, &Real::from(0)).value() != Some(Ordering::Greater) {
         return Some(None);
     }
     Some(Some(FanTriangleCandidate {
@@ -854,9 +888,6 @@ fn fan_triangle_in_whole_triangle(
 ///
 /// This is the two-sided counterpart to [`fan_faces_cover_triangle`]: each
 /// source contributes a three-triangle fan over the same exact boundary
-/// triangle, but the interior fan vertex may differ. The proof follows Yap's
-/// object/predicate split from "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997): boundary equality is certified by
 /// exact vertex identity plus exact projected signed-area cancellation, while
 /// each fan point is independently proven to lie strictly inside the boundary
 /// triangle. The routine intentionally remains a bounded certificate for a
@@ -905,8 +936,8 @@ fn dual_fan_patch_pairs(
 struct FanPatchCandidate {
     faces: Vec<usize>,
     boundary_points: [Point3; 3],
-    signed_area2: ExactReal,
-    area_abs: ExactReal,
+    signed_area2: Real,
+    area_abs: Real,
 }
 
 fn fan_patch_candidates(
@@ -962,18 +993,12 @@ fn fan_patch_candidate(mesh: &ExactMesh, faces: [usize; 3]) -> Option<Option<Fan
     }
 
     let boundary_points = [
-        mesh.vertices()
-            .get(boundary_vertices[0])?
-            .to_hyperlimit_point(),
-        mesh.vertices()
-            .get(boundary_vertices[1])?
-            .to_hyperlimit_point(),
-        mesh.vertices()
-            .get(boundary_vertices[2])?
-            .to_hyperlimit_point(),
+        mesh.vertices().get(boundary_vertices[0])?.clone(),
+        mesh.vertices().get(boundary_vertices[1])?.clone(),
+        mesh.vertices().get(boundary_vertices[2])?.clone(),
     ];
     let projection = choose_triangle_projection(&boundary_points)?;
-    let interior_point = mesh.vertices().get(interior_vertex)?.to_hyperlimit_point();
+    let interior_point = mesh.vertices().get(interior_vertex)?.clone();
     if point_on_triangle_plane(&boundary_points, &interior_point) != Some(true) {
         return Some(None);
     }
@@ -988,7 +1013,7 @@ fn fan_patch_candidate(mesh: &ExactMesh, faces: [usize; 3]) -> Option<Option<Fan
         return Some(None);
     }
 
-    let mut signed_area2 = ExactReal::from(0);
+    let mut signed_area2 = Real::from(0);
     for face in faces {
         let triangle = mesh.triangles().get(face)?.0;
         if !triangle.contains(&interior_vertex) {
@@ -1009,7 +1034,7 @@ fn fan_patch_candidate(mesh: &ExactMesh, faces: [usize; 3]) -> Option<Option<Fan
     }
 
     let area_abs = real_abs(&signed_area2)?;
-    if compare_reals(&area_abs, &ExactReal::from(0)).value() != Some(Ordering::Greater) {
+    if compare_reals(&area_abs, &Real::from(0)).value() != Some(Ordering::Greater) {
         return Some(None);
     }
     let boundary_area_abs = real_abs(&projected_polygon_area2_value(&boundary_points, projection))?;
@@ -1030,7 +1055,7 @@ fn fan_patch_candidates_match(left: &FanPatchCandidate, right: &FanPatchCandidat
         && compare_reals(&left.area_abs, &right.area_abs).value() == Some(Ordering::Equal)
         && compare_reals(
             &(left.signed_area2.clone() + right.signed_area2.clone()),
-            &ExactReal::from(0),
+            &Real::from(0),
         )
         .value()
             == Some(Ordering::Equal)
@@ -1069,15 +1094,15 @@ fn choose_polygon_projection(points: &[Point3]) -> Option<CoplanarProjection> {
     })
 }
 
-fn real_abs(value: &ExactReal) -> Option<ExactReal> {
+fn real_abs(value: &Real) -> Option<Real> {
     match real_sign(value)? {
         Sign::Negative => Some(-value.clone()),
         Sign::Zero | Sign::Positive => Some(value.clone()),
     }
 }
 
-fn real_sign(value: &ExactReal) -> Option<Sign> {
-    match compare_reals(value, &ExactReal::from(0)).value()? {
+fn real_sign(value: &Real) -> Option<Sign> {
+    match compare_reals(value, &Real::from(0)).value()? {
         Ordering::Less => Some(Sign::Negative),
         Ordering::Equal => Some(Sign::Zero),
         Ordering::Greater => Some(Sign::Positive),
@@ -1130,9 +1155,9 @@ fn same_whole_face_vertices(
 
 fn triangle_points(mesh: &ExactMesh, triangle: [usize; 3]) -> Option<[Point3; 3]> {
     Some([
-        mesh.vertices().get(triangle[0])?.to_hyperlimit_point(),
-        mesh.vertices().get(triangle[1])?.to_hyperlimit_point(),
-        mesh.vertices().get(triangle[2])?.to_hyperlimit_point(),
+        mesh.vertices().get(triangle[0])?.clone(),
+        mesh.vertices().get(triangle[1])?.clone(),
+        mesh.vertices().get(triangle[2])?.clone(),
     ])
 }
 

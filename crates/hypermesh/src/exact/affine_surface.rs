@@ -5,14 +5,10 @@
 //! parallelogram in a shared exact affine basis. The operands are transformed
 //! into exact `(u, v, 0)` rectangle meshes, replayed through
 //! [`crate::exact::orthogonal_surface`], and transformed back to 3D only after
-//! the retained cell topology validates. The staging follows Yap, "Towards
-//! Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997): the
 //! affine basis and transformed cell complex are retained exact object
 //! structure, not a primitive-float normalization.
 //!
 //! The cell subdivision is the affine image of the planar-arrangement
-//! decomposition described in de Berg, Cheong, van Kreveld, and Overmars,
-//! *Computational Geometry: Algorithms and Applications*, 3rd ed. (2008),
 //! Chapter 2. Affine coordinates are constructed with exact determinant ratios,
 //! and every accepted source vertex must reconstruct exactly from the retained
 //! basis before the orthogonal cell complex is allowed to decide topology.
@@ -25,7 +21,7 @@ use hyperlimit::{
 
 use super::coplanar::CoplanarProjection;
 use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
-use super::mesh::{ExactMesh, ExactPoint3};
+use super::mesh::ExactMesh;
 use super::orthogonal_surface::{
     CoplanarOrthogonalSurfaceArrangement, CoplanarOrthogonalSurfaceComponent,
     CoplanarOrthogonalSurfaceOperation, arrange_coplanar_orthogonal_surface_difference,
@@ -33,8 +29,8 @@ use super::orthogonal_surface::{
     certify_axis_aligned_surface_cells,
 };
 use super::provenance::SourceProvenance;
-use super::scalar::ExactReal;
 use super::validation::ValidationPolicy;
+use hyperreal::Real;
 
 /// Exact affine basis used to normalize parallelogram source cells.
 ///
@@ -77,7 +73,6 @@ impl CoplanarAffineSurfaceArrangement {
     ///
     /// Validation maps the output back into the retained affine basis and then
     /// reuses the orthogonal-cell validator. This keeps the affine output
-    /// artifact auditable with the same Yap-style object/predicate boundary as
     /// the normalized cell complex.
     pub fn validate(&self) -> Result<(), MeshError> {
         let uv_components = self
@@ -108,8 +103,6 @@ impl CoplanarAffineSurfaceArrangement {
     ///
     /// Replaying the affine-basis discovery and cell arrangement prevents a
     /// locally valid transformed mesh from being relabeled as another source
-    /// boolean. This directly applies Yap, "Towards Exact Geometric
-    /// Computation," *Computational Geometry* 7.1-2 (1997), at the API
     /// boundary: exact outputs remain tied to the exact source objects and
     /// predicates that produced them.
     pub fn validate_against_sources(
@@ -131,7 +124,6 @@ impl CoplanarAffineSurfaceArrangement {
 }
 
 /// Certify and materialize an affine-rectilinear coplanar surface union.
-#[cfg(feature = "exact-triangulation")]
 pub fn arrange_coplanar_affine_surface_union(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -140,7 +132,6 @@ pub fn arrange_coplanar_affine_surface_union(
 }
 
 /// Certify and materialize an affine-rectilinear coplanar surface intersection.
-#[cfg(feature = "exact-triangulation")]
 pub fn arrange_coplanar_affine_surface_intersection(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -153,7 +144,6 @@ pub fn arrange_coplanar_affine_surface_intersection(
 }
 
 /// Certify and materialize an affine-rectilinear coplanar surface difference.
-#[cfg(feature = "exact-triangulation")]
 pub fn arrange_coplanar_affine_surface_difference(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -161,7 +151,6 @@ pub fn arrange_coplanar_affine_surface_difference(
     arrange_coplanar_affine_surface(left, right, CoplanarOrthogonalSurfaceOperation::Difference)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn arrange_coplanar_affine_surface(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -197,7 +186,6 @@ fn arrange_coplanar_affine_surface(
     Some(arrangement)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn certify_affine_basis(left: &ExactMesh, right: &ExactMesh) -> Option<CoplanarAffineSurfaceBasis> {
     let left_quads = extract_parallelogram_quads(left).unwrap_or_default();
     let right_quads = extract_parallelogram_quads(right).unwrap_or_default();
@@ -206,7 +194,6 @@ fn certify_affine_basis(left: &ExactMesh, right: &ExactMesh) -> Option<CoplanarA
     }
 
     // A paired parallelogram from either operand is enough to define a
-    // candidate affine frame, but it is not enough to accept the boolean. Yap's
     // EGC boundary is the replay step below: every source vertex must map back
     // exactly and both normalized meshes must certify as orthogonal cells
     // before this basis becomes evidence.
@@ -233,14 +220,12 @@ fn certify_affine_basis(left: &ExactMesh, right: &ExactMesh) -> Option<CoplanarA
     None
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn certify_affine_mesh_cells(mesh: &ExactMesh, basis: &CoplanarAffineSurfaceBasis) -> bool {
     mesh_to_uv(mesh, basis)
         .as_ref()
         .is_some_and(certify_axis_aligned_surface_cells)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn extract_parallelogram_quads(mesh: &ExactMesh) -> Option<Vec<[Point3; 4]>> {
     if mesh.triangles().is_empty() || !mesh.triangles().len().is_multiple_of(2) {
         return None;
@@ -273,7 +258,6 @@ fn extract_parallelogram_quads(mesh: &ExactMesh) -> Option<Vec<[Point3; 4]>> {
     Some(quads)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn shared_triangle_point_count(mesh: &ExactMesh, left: usize, right: usize) -> usize {
     let left_tri = mesh.triangles()[left].0;
     let right_tri = mesh.triangles()[right].0;
@@ -282,15 +266,14 @@ fn shared_triangle_point_count(mesh: &ExactMesh, left: usize, right: usize) -> u
         .filter(|&&left_index| {
             right_tri.iter().any(|&right_index| {
                 points_equal(
-                    &mesh.vertices()[left_index].to_hyperlimit_point(),
-                    &mesh.vertices()[right_index].to_hyperlimit_point(),
+                    &mesh.vertices()[left_index].clone(),
+                    &mesh.vertices()[right_index].clone(),
                 )
             })
         })
         .count()
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn unique_triangle_pair_points(
     points: &[Point3],
     mesh: &ExactMesh,
@@ -314,7 +297,6 @@ fn unique_triangle_pair_points(
     <[Point3; 4]>::try_from(unique).ok()
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn parallelogram_order(
     points: &[Point3; 4],
     projection: CoplanarProjection,
@@ -340,7 +322,7 @@ fn parallelogram_order(
                 let a2 = project_point(&points[adjacent_a], projection);
                 let b2 = project_point(&points[adjacent_b], projection);
                 let cross = cross2(&sub2(&a2, &origin2), &sub2(&b2, &origin2));
-                match compare_reals(&cross, &ExactReal::from(0)).value()? {
+                match compare_reals(&cross, &Real::from(0)).value()? {
                     Ordering::Greater => {
                         return Some([
                             points[origin].clone(),
@@ -365,7 +347,6 @@ fn parallelogram_order(
     None
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn triangle_pair_area_matches_quad(
     points: &[Point3],
     mesh: &ExactMesh,
@@ -380,7 +361,6 @@ fn triangle_pair_area_matches_quad(
     Some(compare_reals(&add(&left_area, &right_area), &quad_area).value()? == Ordering::Equal)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn basis_from_ordered_parallelogram(
     ordered: &[Point3; 4],
     projection: CoplanarProjection,
@@ -390,7 +370,7 @@ fn basis_from_ordered_parallelogram(
     let basis_v = sub3(&ordered[3], &origin);
     let u2 = project_vector(&basis_u, projection);
     let v2 = project_vector(&basis_v, projection);
-    if compare_reals(&cross2(&u2, &v2), &ExactReal::from(0)).value()? == Ordering::Equal {
+    if compare_reals(&cross2(&u2, &v2), &Real::from(0)).value()? == Ordering::Equal {
         return None;
     }
     Some(CoplanarAffineSurfaceBasis {
@@ -401,7 +381,6 @@ fn basis_from_ordered_parallelogram(
     })
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn validate_affine_rectangle_quad(
     quad: &[Point3; 4],
     basis: &CoplanarAffineSurfaceBasis,
@@ -487,8 +466,8 @@ fn mesh_to_uv(mesh: &ExactMesh, basis: &CoplanarAffineSurfaceBasis) -> Option<Ex
         .vertices()
         .iter()
         .map(|point| {
-            point_to_uv_checked(&point.to_hyperlimit_point(), basis)
-                .map(|uv| ExactPoint3::new(uv.x, uv.y, ExactReal::from(0)))
+            point_to_uv_checked(&point.clone(), basis)
+                .map(|uv| Point3::new(uv.x, uv.y, Real::from(0)))
         })
         .collect::<Option<Vec<_>>>()?;
     ExactMesh::new_with_policy(
@@ -505,9 +484,9 @@ fn mesh_from_uv(mesh: &ExactMesh, basis: &CoplanarAffineSurfaceBasis) -> Option<
         .vertices()
         .iter()
         .map(|point| {
-            let point = point.to_hyperlimit_point();
+            let point = point.clone();
             let lifted = point_from_uv(&point.x, &point.y, basis);
-            ExactPoint3::new(lifted.x, lifted.y, lifted.z)
+            Point3::new(lifted.x, lifted.y, lifted.z)
         })
         .collect::<Vec<_>>();
     ExactMesh::new_with_policy(
@@ -521,7 +500,7 @@ fn mesh_from_uv(mesh: &ExactMesh, basis: &CoplanarAffineSurfaceBasis) -> Option<
 
 fn point_to_uv3_checked(point: &Point3, basis: &CoplanarAffineSurfaceBasis) -> Option<Point3> {
     let uv = point_to_uv_checked(point, basis)?;
-    Some(Point3::new(uv.x, uv.y, ExactReal::from(0)))
+    Some(Point3::new(uv.x, uv.y, Real::from(0)))
 }
 
 fn point_to_uv_checked(point: &Point3, basis: &CoplanarAffineSurfaceBasis) -> Option<Point2> {
@@ -541,7 +520,7 @@ fn point_to_uv(point: &Point3, basis: &CoplanarAffineSurfaceBasis) -> Option<Poi
     let basis_v = project_vector(&basis.basis_v, basis.projection);
     let delta = sub2(&point, &origin);
     let denominator = cross2(&basis_u, &basis_v);
-    if compare_reals(&denominator, &ExactReal::from(0)).value()? == Ordering::Equal {
+    if compare_reals(&denominator, &Real::from(0)).value()? == Ordering::Equal {
         return None;
     }
     let u = (cross2(&delta, &basis_v) / &denominator).ok()?;
@@ -549,7 +528,7 @@ fn point_to_uv(point: &Point3, basis: &CoplanarAffineSurfaceBasis) -> Option<Poi
     Some(Point2::new(u, v))
 }
 
-fn point_from_uv(u: &ExactReal, v: &ExactReal, basis: &CoplanarAffineSurfaceBasis) -> Point3 {
+fn point_from_uv(u: &Real, v: &Real, basis: &CoplanarAffineSurfaceBasis) -> Point3 {
     Point3::new(
         add(
             &basis.origin.x,
@@ -566,7 +545,6 @@ fn point_from_uv(u: &ExactReal, v: &ExactReal, basis: &CoplanarAffineSurfaceBasi
     )
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn choose_projection(points: &[Point3; 4]) -> Option<CoplanarProjection> {
     let candidates = [
         CoplanarProjection::Xy,
@@ -590,12 +568,11 @@ fn choose_projection(points: &[Point3; 4]) -> Option<CoplanarProjection> {
     None
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn triangle_area2_abs(
     points: &[Point3],
     triangle: [usize; 3],
     projection: CoplanarProjection,
-) -> Option<ExactReal> {
+) -> Option<Real> {
     let triangle = [
         points.get(triangle[0])?.clone(),
         points.get(triangle[1])?.clone(),
@@ -604,18 +581,16 @@ fn triangle_area2_abs(
     projected_area2_abs(&triangle, projection)
 }
 
-#[cfg(feature = "exact-triangulation")]
-fn projected_area2_abs(points: &[Point3], projection: CoplanarProjection) -> Option<ExactReal> {
+fn projected_area2_abs(points: &[Point3], projection: CoplanarProjection) -> Option<Real> {
     let signed = projected_area2_signed(points, projection);
-    match compare_reals(&signed, &ExactReal::from(0)).value()? {
-        Ordering::Less => Some(sub(&ExactReal::from(0), &signed)),
+    match compare_reals(&signed, &Real::from(0)).value()? {
+        Ordering::Less => Some(sub(&Real::from(0), &signed)),
         Ordering::Equal | Ordering::Greater => Some(signed),
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
-fn projected_area2_signed(points: &[Point3], projection: CoplanarProjection) -> ExactReal {
-    let mut sum = ExactReal::from(0);
+fn projected_area2_signed(points: &[Point3], projection: CoplanarProjection) -> Real {
+    let mut sum = Real::from(0);
     for index in 0..points.len() {
         let current = project_point(&points[index], projection);
         let next = project_point(&points[(index + 1) % points.len()], projection);
@@ -643,7 +618,7 @@ fn sub3(left: &Point3, right: &Point3) -> Point3 {
     )
 }
 
-fn cross2(left: &Point2, right: &Point2) -> ExactReal {
+fn cross2(left: &Point2, right: &Point2) -> Real {
     sub(&mul(&left.x, &right.y), &mul(&left.y, &right.x))
 }
 
@@ -652,15 +627,13 @@ fn point2_sum_equal(left_a: &Point2, left_b: &Point2, right_a: &Point2, right_b:
         && real_equal(&add(&left_a.y, &left_b.y), &add(&right_a.y, &right_b.y))
 }
 
-#[cfg(feature = "exact-triangulation")]
-fn push_unique_real(values: &mut Vec<ExactReal>, value: ExactReal) {
+fn push_unique_real(values: &mut Vec<Real>, value: Real) {
     if !values.iter().any(|candidate| real_equal(candidate, &value)) {
         values.push(value);
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
-fn sort_reals_and_dedup(values: &mut Vec<ExactReal>) -> Option<()> {
+fn sort_reals_and_dedup(values: &mut Vec<Real>) -> Option<()> {
     for index in 1..values.len() {
         let mut cursor = index;
         while cursor > 0 && real_order(&values[cursor], &values[cursor - 1])? == Ordering::Less {
@@ -672,35 +645,31 @@ fn sort_reals_and_dedup(values: &mut Vec<ExactReal>) -> Option<()> {
     Some(())
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn mesh_points(mesh: &ExactMesh) -> Vec<Point3> {
-    mesh.vertices()
-        .iter()
-        .map(ExactPoint3::to_hyperlimit_point)
-        .collect()
+    mesh.vertices().iter().cloned().collect()
 }
 
 fn points_equal(left: &Point3, right: &Point3) -> bool {
     real_equal(&left.x, &right.x) && real_equal(&left.y, &right.y) && real_equal(&left.z, &right.z)
 }
 
-fn real_order(left: &ExactReal, right: &ExactReal) -> Option<Ordering> {
+fn real_order(left: &Real, right: &Real) -> Option<Ordering> {
     compare_reals(left, right).value()
 }
 
-fn real_equal(left: &ExactReal, right: &ExactReal) -> bool {
+fn real_equal(left: &Real, right: &Real) -> bool {
     real_order(left, right) == Some(Ordering::Equal)
 }
 
-fn add(left: &ExactReal, right: &ExactReal) -> ExactReal {
+fn add(left: &Real, right: &Real) -> Real {
     left.clone() + right
 }
 
-fn sub(left: &ExactReal, right: &ExactReal) -> ExactReal {
+fn sub(left: &Real, right: &Real) -> Real {
     left.clone() - right
 }
 
-fn mul(left: &ExactReal, right: &ExactReal) -> ExactReal {
+fn mul(left: &Real, right: &Real) -> Real {
     left.clone() * right
 }
 

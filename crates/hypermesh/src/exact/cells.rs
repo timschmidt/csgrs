@@ -6,48 +6,35 @@
 //! inside/outside winding can decide which pieces survive. This module turns
 //! the retained intersection graph into a planar straight-line graph per
 //! source face and triangulates it with `hypertri`'s constrained Delaunay
-//! implementation. The staging follows Yap, "Towards Exact Geometric
-//! Computation," *Computational Geometry* 7.1-2 (1997): graph events become
 //! topology only after exact predicate and construction evidence is retained.
 //!
 //! The constrained triangulation call uses the constrained-Delaunay criterion
-//! of Lee and Lin, "Generalized Delaunay triangulation for planar graphs,"
-//! *Discrete & Computational Geometry* 1 (1986), as implemented by `hypertri`;
-//! `hypermesh` still validates every emitted triangle against its exact 3D
-//! source point before boolean assembly consumes it.
+//! of Lee and Lin, "Generalized Delaunay Triangulation for Planar Graphs,"
+//! *Discrete & Computational Geometry*. `hypermesh` still validates every
+//! emitted triangle against its exact 3D source point before boolean assembly
+//! consumes it.
 
-#[cfg(feature = "exact-triangulation")]
 use std::{cmp::Ordering, collections::BTreeSet};
 
-#[cfg(feature = "exact-triangulation")]
 use hyperlimit::{
     Point2, Point3, TriangleLocation, classify_point_triangle, compare_reals, point_on_segment,
 };
-#[cfg(feature = "exact-triangulation")]
 use hypertri::Constraint;
 
-#[cfg(feature = "exact-triangulation")]
 use super::construction::SegmentPlaneRelation;
-#[cfg(feature = "exact-triangulation")]
 use super::coplanar::CoplanarProjection;
-#[cfg(feature = "exact-triangulation")]
 use super::graph::{
     CoplanarOverlapSplitPlan, ExactFaceRegionPlan, ExactIntersectionGraph, ExactSplitTopologyPlan,
     FacePairEvents, FaceRegionBoundary, FaceSplitBoundaryNode, IntersectionEvent, MeshSide,
 };
-#[cfg(feature = "exact-triangulation")]
 use super::intersection::MeshFacePairRelation;
-#[cfg(feature = "exact-triangulation")]
 use super::mesh::ExactMesh;
-#[cfg(feature = "exact-triangulation")]
 use super::region::{
     FaceRegionTriangulation, boundary_node_point, choose_region_projection, project_for_hypertri,
     project_for_predicate,
 };
-#[cfg(feature = "exact-triangulation")]
-use super::scalar::ExactReal;
+use hyperreal::Real;
 
-#[cfg(feature = "exact-triangulation")]
 /// Candidate constraint edge from the opposite coplanar triangle boundary.
 ///
 /// These records are local to one source face. They gather exact split points
@@ -59,16 +46,14 @@ struct CoplanarCellEdge {
     points: Vec<CoplanarCellEdgePoint>,
 }
 
-#[cfg(feature = "exact-triangulation")]
 /// Exact point on a [`CoplanarCellEdge`] with its edge parameter.
 #[derive(Clone, Debug)]
 struct CoplanarCellEdgePoint {
-    parameter: ExactReal,
+    parameter: Real,
     point: Point3,
 }
 
 /// Full-face cell plan used by winding-materialized booleans.
-#[cfg(feature = "exact-triangulation")]
 pub type ExactFaceCellTriangulationPlan = (ExactFaceRegionPlan, Vec<FaceRegionTriangulation>);
 
 /// Triangulate every source face into exact constrained planar cells.
@@ -126,7 +111,6 @@ pub fn triangulate_all_face_cells_with_cdt(
     Ok(Some((ExactFaceRegionPlan { regions }, triangulations)))
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn triangulate_one_face_cell_graph(
     graph: &ExactIntersectionGraph,
     topology: &ExactSplitTopologyPlan,
@@ -148,7 +132,7 @@ fn triangulate_one_face_cell_graph(
             &mut boundary,
             FaceSplitBoundaryNode::OriginalVertex {
                 vertex,
-                point: mesh.vertices()[vertex].to_hyperlimit_point(),
+                point: mesh.vertices()[vertex].clone(),
             },
         )?;
     }
@@ -193,7 +177,6 @@ fn triangulate_one_face_cell_graph(
                 // segment-plane constructions while the closed overlap of the
                 // two finite triangles is only a point. That point is valid
                 // graph evidence, but it does not cut a positive-area
-                // source-face cell. Yap's exact-computation boundary lets us
                 // discard it here only because the retained overlap incidence
                 // was checked exactly; it remains available in the graph for
                 // boundary-policy reports.
@@ -237,13 +220,11 @@ fn triangulate_one_face_cell_graph(
             );
         }
     }
-
-    // Lee and Lin's constrained-Delaunay lemma is consumed through
+    // Lee-Lin constrained-Delaunay triangulation is provided by
     // `hypertri::cdt::constrained_delaunay`; every input point and constraint
-    // above is exact graph/source evidence. `hypertri` may append exact
-    // Steiner points when constraints cross; in Yap's object/predicate split
-    // those points become usable topology only after we retain an exact 3D
-    // witness and replay its source-face incidence.
+    // above is exact graph/source evidence. Any appended exact Steiner points
+    // become usable topology only after we retain an exact 3D witness and
+    // replay its source-face incidence.
     let cdt = hypertri::cdt::constrained_delaunay(&vertices, &constraints)?;
     if cdt.points().len() < vertices.len() {
         return Err(hypertri::Error::InvalidInput {
@@ -294,7 +275,6 @@ fn triangulate_one_face_cell_graph(
     )))
 }
 
-#[cfg(feature = "exact-triangulation")]
 #[allow(clippy::too_many_arguments)]
 /// Append exact constraints induced by coplanar source-face overlaps.
 ///
@@ -304,10 +284,6 @@ fn triangulate_one_face_cell_graph(
 /// two unsplit copies of a partial shared patch. The input facts come from
 /// [`ExactIntersectionGraph::coplanar_overlap_split_plan`], whose edge
 /// crossings, collinear intervals, and vertex-containment facts follow the
-/// coplanar decomposition of Guigue and Devillers, "Fast and Robust
-/// Triangle-Triangle Overlap Test Using Orientation Predicates," *Journal of
-/// Graphics Tools* 8.1 (2003). As in Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997), those facts become
 /// topology only after exact parameters are sorted and replayed as local CDT
 /// constraints on the source face.
 fn append_coplanar_face_cell_constraints(
@@ -384,9 +360,9 @@ fn append_coplanar_face_cell_constraints(
             )?;
             for edge in coplanar_edges_incident_to_vertex(&edges, vertex_overlap.vertex) {
                 let parameter = if edge[0] == vertex_overlap.vertex {
-                    ExactReal::from(0)
+                    Real::from(0)
                 } else {
-                    ExactReal::from(1)
+                    Real::from(1)
                 };
                 push_coplanar_cell_edge_point(&mut edges, edge, parameter, point.clone())?;
             }
@@ -426,7 +402,6 @@ fn append_coplanar_face_cell_constraints(
     Ok(())
 }
 
-#[cfg(feature = "exact-triangulation")]
 /// Return whether a coplanar split graph touches the requested source face.
 fn coplanar_split_graph_involves_face(
     left_face: usize,
@@ -440,7 +415,6 @@ fn coplanar_split_graph_involves_face(
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 /// Return the opposite triangle's directed edges for one source-face graph.
 fn coplanar_opposite_edges(
     left_face: usize,
@@ -468,7 +442,6 @@ fn coplanar_opposite_edges(
         .collect())
 }
 
-#[cfg(feature = "exact-triangulation")]
 /// Return exact directed triangle edges incident to a retained vertex.
 fn triangle_edges(triangle: [usize; 3]) -> [[usize; 2]; 3] {
     [
@@ -478,7 +451,6 @@ fn triangle_edges(triangle: [usize; 3]) -> [[usize; 2]; 3] {
     ]
 }
 
-#[cfg(feature = "exact-triangulation")]
 /// Return opposite-face edges that use `vertex` as an endpoint.
 fn coplanar_edges_incident_to_vertex(edges: &[CoplanarCellEdge], vertex: usize) -> Vec<[usize; 2]> {
     edges
@@ -488,7 +460,6 @@ fn coplanar_edges_incident_to_vertex(edges: &[CoplanarCellEdge], vertex: usize) 
         .collect()
 }
 
-#[cfg(feature = "exact-triangulation")]
 /// Fetch a retained exact vertex point from the requested source mesh.
 fn vertex_point_for_side(
     side: MeshSide,
@@ -502,18 +473,17 @@ fn vertex_point_for_side(
     };
     mesh.vertices()
         .get(vertex)
-        .map(|point| point.to_hyperlimit_point())
+        .map(|point| point.clone())
         .ok_or(hypertri::Error::InvalidInput {
             reason: "face-cell coplanar vertex overlap references a missing vertex",
         })
 }
 
-#[cfg(feature = "exact-triangulation")]
 /// Insert one exact point on one opposite-face edge, deduplicating by point.
 fn push_coplanar_cell_edge_point(
     edges: &mut [CoplanarCellEdge],
     edge: [usize; 2],
-    parameter: ExactReal,
+    parameter: Real,
     point: Point3,
 ) -> hypertri::Result<()> {
     let Some(entry) = edges.iter_mut().find(|entry| entry.edge == edge) else {
@@ -534,7 +504,6 @@ fn push_coplanar_cell_edge_point(
     Ok(())
 }
 
-#[cfg(feature = "exact-triangulation")]
 /// Sort edge points by their exact edge parameter.
 fn sort_coplanar_cell_edge_points(points: &mut Vec<CoplanarCellEdgePoint>) -> hypertri::Result<()> {
     let mut ordered = Vec::<CoplanarCellEdgePoint>::with_capacity(points.len());
@@ -557,7 +526,6 @@ fn sort_coplanar_cell_edge_points(points: &mut Vec<CoplanarCellEdgePoint>) -> hy
     Ok(())
 }
 
-#[cfg(feature = "exact-triangulation")]
 /// Drop repeated exact points after sorting.
 fn dedup_coplanar_cell_edge_points(
     points: &mut Vec<CoplanarCellEdgePoint>,
@@ -576,7 +544,6 @@ fn dedup_coplanar_cell_edge_points(
     Ok(())
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn append_closed_constraint_loop_triangles(
     vertices: &[hypertri::ExactPoint],
     constraints: &[Constraint],
@@ -617,11 +584,11 @@ fn append_closed_constraint_loop_triangles(
         // Closed constraint loops are the exact planar cells that `hypertri`'s
         // polygon dispatch treats as holes when an exterior boundary ring is
         // present. Triangulating those loop interiors explicitly preserves both
-        // sides of the arrangement for winding policy. Earcut is used only
-        // after the loop graph has been certified as a simple degree-two cycle;
-        // this follows Yap's rule that topology changes consume exact
-        // combinatorial facts, and the loop triangulation itself is still
-        // predicate-validated by `FaceRegionTriangulation::validate`.
+        // sides of the arrangement for winding policy. Earcut follows Held,
+        // "FIST: Fast Industrial-Strength Triangulation of Polygons,"
+        // *Algorithmica* 30 (2001), and is used only after the loop graph has
+        // been certified as a simple degree-two cycle. The loop triangulation
+        // is still predicate-validated by `FaceRegionTriangulation::validate`.
         let loop_triangles = hypertri::earcut(&loop_vertices, &[])?;
         for triangle in loop_triangles.chunks_exact(3) {
             triangles.extend([
@@ -634,7 +601,6 @@ fn append_closed_constraint_loop_triangles(
     Ok(())
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn lift_projected_face_cell_point(
     mesh: &ExactMesh,
     face: usize,
@@ -642,9 +608,9 @@ fn lift_projected_face_cell_point(
     point: &hypertri::ExactPoint,
 ) -> hypertri::Result<Point3> {
     let triangle = mesh.triangles()[face].0;
-    let a = mesh.vertices()[triangle[0]].to_hyperlimit_point();
-    let b = mesh.vertices()[triangle[1]].to_hyperlimit_point();
-    let c = mesh.vertices()[triangle[2]].to_hyperlimit_point();
+    let a = mesh.vertices()[triangle[0]].clone();
+    let b = mesh.vertices()[triangle[1]].clone();
+    let c = mesh.vertices()[triangle[2]].clone();
     let ab = point3_sub(&b, &a);
     let ac = point3_sub(&c, &a);
     let normal = cross(&ab, &ac);
@@ -656,7 +622,6 @@ fn lift_projected_face_cell_point(
     // The projection was selected by an exact nonzero projected area, so the
     // dropped normal component is the denominator that recovers the omitted
     // coordinate on the source plane. This is the same retained-construction
-    // discipline as Yap's exact computation model: the planar Steiner vertex
     // is not accepted until the 3D lift reprojects exactly.
     let lifted = match projection {
         CoplanarProjection::Xy => {
@@ -712,7 +677,6 @@ fn lift_projected_face_cell_point(
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn positive_area_interior_constraints(
     vertices: &[hypertri::ExactPoint],
     constraints: &[Constraint],
@@ -728,7 +692,6 @@ fn positive_area_interior_constraints(
     Ok(retained)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn constraint_lies_on_source_boundary(
     vertices: &[hypertri::ExactPoint],
     constraint: Constraint,
@@ -745,7 +708,6 @@ fn constraint_lies_on_source_boundary(
     Ok(false)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn planarized_interior_constraints(
     constraint_edges: &[Constraint],
     vertices: &[hypertri::ExactPoint],
@@ -761,7 +723,6 @@ fn planarized_interior_constraints(
     Ok(constraints)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn constraint_lies_on_any(
     edge: Constraint,
     vertices: &[hypertri::ExactPoint],
@@ -775,7 +736,6 @@ fn constraint_lies_on_any(
     Ok(false)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn edge_is_subsegment_of_constraint(
     edge: Constraint,
     vertices: &[hypertri::ExactPoint],
@@ -803,7 +763,6 @@ fn edge_is_subsegment_of_constraint(
         && point_on_closed_segment(edge_end, start, end)?)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn point_on_closed_segment(
     point: &hypertri::ExactPoint,
     start: &hypertri::ExactPoint,
@@ -820,7 +779,6 @@ fn point_on_closed_segment(
     })
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn exact_points_equal(
     left: &hypertri::ExactPoint,
     right: &hypertri::ExactPoint,
@@ -830,10 +788,9 @@ fn exact_points_equal(
     Ok(x == Ordering::Equal && y == Ordering::Equal)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn compare_ordering(
-    left: &ExactReal,
-    right: &ExactReal,
+    left: &Real,
+    right: &Real,
     predicate: &'static str,
 ) -> hypertri::Result<Ordering> {
     compare_reals(left, right)
@@ -841,12 +798,10 @@ fn compare_ordering(
         .ok_or(hypertri::Error::PredicateUndecided { predicate })
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn predicate_point2(point: &hypertri::ExactPoint) -> Point2 {
     Point2::new(point.x.clone(), point.y.clone())
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn point3_sub(left: &Point3, right: &Point3) -> Point3 {
     Point3::new(
         sub_real(&left.x, &right.x),
@@ -855,7 +810,6 @@ fn point3_sub(left: &Point3, right: &Point3) -> Point3 {
     )
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn cross(left: &Point3, right: &Point3) -> Point3 {
     Point3::new(
         sub_real(&mul_real(&left.y, &right.z), &mul_real(&left.z, &right.y)),
@@ -864,31 +818,22 @@ fn cross(left: &Point3, right: &Point3) -> Point3 {
     )
 }
 
-#[cfg(feature = "exact-triangulation")]
-fn add_real(left: &ExactReal, right: &ExactReal) -> ExactReal {
+fn add_real(left: &Real, right: &Real) -> Real {
     left.clone() + right
 }
 
-#[cfg(feature = "exact-triangulation")]
-fn sub_real(left: &ExactReal, right: &ExactReal) -> ExactReal {
+fn sub_real(left: &Real, right: &Real) -> Real {
     left.clone() - right
 }
 
-#[cfg(feature = "exact-triangulation")]
-fn mul_real(left: &ExactReal, right: &ExactReal) -> ExactReal {
+fn mul_real(left: &Real, right: &Real) -> Real {
     left.clone() * right
 }
 
-#[cfg(feature = "exact-triangulation")]
-fn div_real(
-    numerator: ExactReal,
-    denominator: &ExactReal,
-    reason: &'static str,
-) -> hypertri::Result<ExactReal> {
+fn div_real(numerator: Real, denominator: &Real, reason: &'static str) -> hypertri::Result<Real> {
     (numerator / denominator).map_err(|_| hypertri::Error::InvalidInput { reason })
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn order_simple_cycle(adjacency: &[Vec<usize>], start: usize) -> hypertri::Result<Vec<usize>> {
     let mut ordered = vec![start];
     let mut previous = start;
@@ -917,7 +862,6 @@ fn order_simple_cycle(adjacency: &[Vec<usize>], start: usize) -> hypertri::Resul
     Ok(ordered)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn push_cell_node(
     nodes: &mut Vec<FaceSplitBoundaryNode>,
     node: FaceSplitBoundaryNode,
@@ -937,7 +881,6 @@ fn push_cell_node(
     Ok(nodes.len() - 1)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn push_constraint(
     constraints: &mut Vec<Constraint>,
     unique: &mut BTreeSet<(usize, usize)>,
@@ -953,7 +896,6 @@ fn push_constraint(
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 /// Add exact source-triangle boundary constraints after retained split points
 /// have been inserted.
 ///
@@ -962,9 +904,6 @@ fn push_constraint(
 /// inconsistent, because the triangulation can only contain the subsegments
 /// once the intermediate point is part of the object. The boundary is
 /// therefore rebuilt by sorting all exact-on-edge nodes with certified
-/// parameter comparisons. This is the same object/predicate separation Yap
-/// describes in "Towards Exact Geometric Computation," *Computational
-/// Geometry* 7.1-2 (1997): the combinatorial constraint list is derived only
 /// after exact incidence and ordering facts are available.
 fn append_subdivided_source_boundary_constraints(
     vertices: &[hypertri::ExactPoint],
@@ -987,9 +926,8 @@ fn append_subdivided_source_boundary_constraints(
     Ok(())
 }
 
-#[cfg(feature = "exact-triangulation")]
-fn sort_boundary_chain(chain: &mut Vec<(usize, ExactReal)>) -> hypertri::Result<()> {
-    let mut ordered = Vec::<(usize, ExactReal)>::with_capacity(chain.len());
+fn sort_boundary_chain(chain: &mut Vec<(usize, Real)>) -> hypertri::Result<()> {
+    let mut ordered = Vec::<(usize, Real)>::with_capacity(chain.len());
     for candidate in chain.drain(..) {
         let mut insert_at = ordered.len();
         for (index, (_, parameter)) in ordered.iter().enumerate() {
@@ -1011,14 +949,13 @@ fn sort_boundary_chain(chain: &mut Vec<(usize, ExactReal)>) -> hypertri::Result<
     Ok(())
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn segment_parameter(
     point: &hypertri::ExactPoint,
     start: &hypertri::ExactPoint,
     end: &hypertri::ExactPoint,
-) -> hypertri::Result<ExactReal> {
+) -> hypertri::Result<Real> {
     let dx = sub_real(&end.x, &start.x);
-    if compare_ordering(&dx, &ExactReal::from(0), "face-cell boundary dx")? != Ordering::Equal {
+    if compare_ordering(&dx, &Real::from(0), "face-cell boundary dx")? != Ordering::Equal {
         return div_real(
             sub_real(&point.x, &start.x),
             &dx,
@@ -1026,7 +963,7 @@ fn segment_parameter(
         );
     }
     let dy = sub_real(&end.y, &start.y);
-    if compare_ordering(&dy, &ExactReal::from(0), "face-cell boundary dy")? != Ordering::Equal {
+    if compare_ordering(&dy, &Real::from(0), "face-cell boundary dy")? != Ordering::Equal {
         return div_real(
             sub_real(&point.y, &start.y),
             &dy,
@@ -1038,7 +975,6 @@ fn segment_parameter(
     })
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn pair_involves_face(pair: &FacePairEvents, side: MeshSide, face: usize) -> bool {
     match side {
         MeshSide::Left => pair.left_face == face,
@@ -1046,12 +982,9 @@ fn pair_involves_face(pair: &FacePairEvents, side: MeshSide, face: usize) -> boo
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn pair_has_proper_crossing(pair: &FacePairEvents) -> bool {
     // Contact-only candidate pairs can occur next to coplanar source-face
     // overlaps. They are valid graph evidence, but they do not cut a positive
-    // area source-face cell. Following Yap, "Towards Exact Geometric
-    // Computation," Comput. Geom. 7.1-2 (1997), only retained proper
     // segment/plane constructions become topology constraints here; endpoint
     // and coplanar contacts stay explicit graph facts for boundary policy.
     pair.events.iter().any(|event| {
@@ -1065,7 +998,6 @@ fn pair_has_proper_crossing(pair: &FacePairEvents) -> bool {
     })
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn graph_vertex_in_face_pair(
     vertex: &super::graph::ExactGraphVertex,
     pair: &FacePairEvents,
@@ -1081,7 +1013,6 @@ fn graph_vertex_in_face_pair(
     })
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn point_lies_in_face_pair_overlap(
     point: &Point3,
     pair: &FacePairEvents,
@@ -1094,7 +1025,6 @@ fn point_lies_in_face_pair_overlap(
         && point_triangle_location_is_closed(right_location))
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn classify_point_on_mesh_face(
     mesh: &ExactMesh,
     face: usize,
@@ -1103,9 +1033,9 @@ fn classify_point_on_mesh_face(
     let projection = choose_region_projection(mesh, face)?;
     let triangle = mesh.triangles()[face].0;
     let vertices = [
-        mesh.vertices()[triangle[0]].to_hyperlimit_point(),
-        mesh.vertices()[triangle[1]].to_hyperlimit_point(),
-        mesh.vertices()[triangle[2]].to_hyperlimit_point(),
+        mesh.vertices()[triangle[0]].clone(),
+        mesh.vertices()[triangle[1]].clone(),
+        mesh.vertices()[triangle[2]].clone(),
     ];
     classify_point_triangle(
         &project_for_predicate(&vertices[0], projection),
@@ -1119,7 +1049,6 @@ fn classify_point_on_mesh_face(
     })
 }
 
-#[cfg(feature = "exact-triangulation")]
 const fn point_triangle_location_is_closed(location: TriangleLocation) -> bool {
     matches!(
         location,
@@ -1127,7 +1056,6 @@ const fn point_triangle_location_is_closed(location: TriangleLocation) -> bool {
     )
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn points_equal(left: &Point3, right: &Point3) -> Option<bool> {
     Some(
         compare_reals(&left.x, &right.x).value()? == std::cmp::Ordering::Equal
@@ -1136,7 +1064,7 @@ fn points_equal(left: &Point3, right: &Point3) -> Option<bool> {
     )
 }
 
-#[cfg(all(test, feature = "exact-triangulation"))]
+#[cfg(test)]
 mod tests {
     use super::super::validation::ValidationPolicy;
     use super::*;
@@ -1147,20 +1075,20 @@ mod tests {
     }
 
     fn ep(x: i64, y: i64) -> hypertri::ExactPoint {
-        hypertri::ExactPoint::new(ExactReal::from(x), ExactReal::from(y))
+        hypertri::ExactPoint::new(Real::from(x), Real::from(y))
     }
 
     fn assert_point(point: &Point3, x: i64, y: i64, z: i64) {
         assert_eq!(
-            compare_reals(&point.x, &ExactReal::from(x)).value(),
+            compare_reals(&point.x, &Real::from(x)).value(),
             Some(Ordering::Equal)
         );
         assert_eq!(
-            compare_reals(&point.y, &ExactReal::from(y)).value(),
+            compare_reals(&point.y, &Real::from(y)).value(),
             Some(Ordering::Equal)
         );
         assert_eq!(
-            compare_reals(&point.z, &ExactReal::from(z)).value(),
+            compare_reals(&point.z, &Real::from(z)).value(),
             Some(Ordering::Equal)
         );
     }

@@ -8,8 +8,6 @@
 //! over exact [`hyperreal::Real`] objects and leaves broad-phase collision
 //! enumeration to later workspace wiring.
 //!
-//! The exact split follows Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7.1-2 (1997): shadow predicates, interpolation
 //! witnesses, and signed topology counters are retained as exact replayable
 //! decisions.  The loop and sign rules intentionally mirror
 //! `boolean03::kernel02` from the boolmesh kernel instead of replacing it with
@@ -21,8 +19,8 @@ use std::cmp::Ordering;
 
 use hyperlimit::{Point3, compare_reals};
 
-use super::ExactReal;
 use super::kernel11::{ExactKernel11Halfedge, interpolate, shadows, shadows01};
+use hyperreal::Real;
 
 /// Exact halfedge record needed by the `Kernel02` port.
 ///
@@ -66,7 +64,7 @@ pub(super) struct ExactKernel02Input<'a> {
     /// Exact expansion directions for opposite-face vertices.
     pub ns_q: &'a [Point3],
     /// Signed expansion scale.  Only the sign is used by equal-coordinate ties.
-    pub expand: &'a ExactReal,
+    pub expand: &'a Real,
     /// Legacy direction flag: `true` for `p` against `q`, `false` for reverse.
     pub fwd: bool,
 }
@@ -77,7 +75,7 @@ pub(super) struct ExactKernel02Hit {
     /// Signed contribution accumulated exactly like legacy `s02`.
     pub sign: i32,
     /// Final interpolated face height used by `Kernel12` witness construction.
-    pub z: ExactReal,
+    pub z: Real,
 }
 
 /// Port of legacy boolmesh `kernel02::Kernel02::op`.
@@ -98,7 +96,7 @@ pub(super) fn kernel02_op(
     let mut yzz_rl: [Option<Point3>; 2] = [None, None];
     let mut shadows_state = false;
     let mut closest_vid = None::<usize>;
-    let mut min_metric = None::<ExactReal>;
+    let mut min_metric = None::<Real>;
 
     let pos_p = input.ps_p.get(p0)?;
     let shadow_halfedges = input
@@ -181,17 +179,17 @@ pub(super) fn kernel02_op(
 
 #[cfg(feature = "internal-fuzzing")]
 pub(super) fn internal_fuzz_probe(selector: u8) -> bool {
-    let lift = ExactReal::from(4 + i64::from(selector % 2));
+    let lift = Real::from(4 + i64::from(selector % 2));
     let ps_p = vec![point(1, 1, 0), point(3, 3, 0)];
     let ps_q = vec![
-        Point3::new(ExactReal::from(0), ExactReal::from(0), lift.clone()),
-        Point3::new(ExactReal::from(4), ExactReal::from(0), lift.clone()),
-        Point3::new(ExactReal::from(0), ExactReal::from(4), lift),
+        Point3::new(Real::from(0), Real::from(0), lift.clone()),
+        Point3::new(Real::from(4), Real::from(0), lift.clone()),
+        Point3::new(Real::from(0), Real::from(4), lift),
     ];
     let hs_q = triangle_halfedges();
     let ns_p = vec![point(1, 1, 1), point(1, 1, 1)];
     let ns_q = vec![point(1, 1, 1), point(1, 1, 1), point(1, 1, 1)];
-    let expand = ExactReal::from(1);
+    let expand = Real::from(1);
     let input = ExactKernel02Input {
         ps_p: &ps_p,
         ps_q: &ps_q,
@@ -203,7 +201,7 @@ pub(super) fn internal_fuzz_probe(selector: u8) -> bool {
     };
 
     let inside = kernel02_op(&input, 0, 0)
-        .is_some_and(|hit| hit.sign == 1 && real_order(&hit.z, &ExactReal::from(4)).is_some());
+        .is_some_and(|hit| hit.sign == 1 && real_order(&hit.z, &Real::from(4)).is_some());
     let outside = kernel02_op(&input, 1, 0).is_none();
     inside && outside
 }
@@ -244,33 +242,33 @@ fn triangle_halfedges() -> Vec<ExactKernel02Halfedge> {
 }
 
 fn point(x: i64, y: i64, z: i64) -> Point3 {
-    Point3::new(ExactReal::from(x), ExactReal::from(y), ExactReal::from(z))
+    Point3::new(Real::from(x), Real::from(y), Real::from(z))
 }
 
-fn distance_squared(left: &Point3, right: &Point3) -> ExactReal {
+fn distance_squared(left: &Point3, right: &Point3) -> Real {
     let dx = sub(&left.x, &right.x);
     let dy = sub(&left.y, &right.y);
     let dz = sub(&left.z, &right.z);
     add(&add(&mul(&dx, &dx), &mul(&dy, &dy)), &mul(&dz, &dz))
 }
 
-fn real_less(left: &ExactReal, right: &ExactReal) -> Option<bool> {
+fn real_less(left: &Real, right: &Real) -> Option<bool> {
     Some(compare_reals(left, right).value()? == Ordering::Less)
 }
 
-fn real_order(left: &ExactReal, right: &ExactReal) -> Option<Ordering> {
+fn real_order(left: &Real, right: &Real) -> Option<Ordering> {
     compare_reals(left, right).value()
 }
 
-fn add(left: &ExactReal, right: &ExactReal) -> ExactReal {
+fn add(left: &Real, right: &Real) -> Real {
     left.clone() + right
 }
 
-fn sub(left: &ExactReal, right: &ExactReal) -> ExactReal {
+fn sub(left: &Real, right: &Real) -> Real {
     left.clone() - right
 }
 
-fn mul(left: &ExactReal, right: &ExactReal) -> ExactReal {
+fn mul(left: &Real, right: &Real) -> Real {
     left.clone() * right
 }
 
@@ -278,9 +276,9 @@ fn mul(left: &ExactReal, right: &ExactReal) -> ExactReal {
 mod tests {
     use super::*;
 
-    fn assert_real_eq(left: &ExactReal, right: i64) {
+    fn assert_real_eq(left: &Real, right: i64) {
         assert_eq!(
-            compare_reals(left, &ExactReal::from(right)).value(),
+            compare_reals(left, &Real::from(right)).value(),
             Some(Ordering::Equal)
         );
     }
@@ -292,7 +290,7 @@ mod tests {
         let hs_q = triangle_halfedges();
         let ns_p = vec![point(1, 1, 1), point(1, 1, 1)];
         let ns_q = vec![point(1, 1, 1), point(1, 1, 1), point(1, 1, 1)];
-        let expand = ExactReal::from(1);
+        let expand = Real::from(1);
         let input = ExactKernel02Input {
             ps_p: &ps_p,
             ps_q: &ps_q,
@@ -316,7 +314,7 @@ mod tests {
         let hs_q = triangle_halfedges();
         let ns_p = vec![point(1, 1, 1), point(1, 1, 1)];
         let ns_q = vec![point(1, 1, 1), point(1, 1, 1), point(1, 1, 1)];
-        let expand = ExactReal::from(1);
+        let expand = Real::from(1);
         let input = ExactKernel02Input {
             ps_p: &ps_p,
             ps_q: &ps_q,
@@ -343,7 +341,7 @@ mod tests {
         hs_q[2].pair = usize::MAX;
         let ns_p = vec![point(1, 1, 1)];
         let ns_q = vec![point(1, 1, 1), point(1, 1, 1), point(1, 1, 1)];
-        let expand = ExactReal::from(1);
+        let expand = Real::from(1);
         let input = ExactKernel02Input {
             ps_p: &ps_p,
             ps_q: &ps_q,

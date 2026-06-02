@@ -3,14 +3,11 @@
 //! This module is the branch-face companion to [`crate::exact::adjacent`].
 //! It accepts source-owned, coplanar face disks when both solids replay the same
 //! simple projected boundary with opposite signed area. The certificate keeps a
-//! strict separation in Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7.1-2 (1997): source topology is replayed as face
 //! lists and edge incidences, while exact predicates certify that replayed
 //! topology is valid in both source and projected spaces.
 //!
 //! The strict point-in-ring check uses the even-odd crossing classifier of
 //! Hormann and Agathos, "The point in polygon problem for arbitrary polygons,"
-//! *Computational Geometry* 20.3 (2001). Boundary loop ordering uses a degree-two
 //! cycle reconstruction over the candidate boundary edge graph. Broader non-rectilinear
 //! coplanar-cell materialization remains intentionally separate from this full-face
 //! shortcut.
@@ -25,7 +22,7 @@ use hyperlimit::{
 };
 
 use super::mesh::ExactMesh;
-use super::scalar::ExactReal;
+use hyperreal::Real;
 
 const MAX_POLYGON_PATCH_ENUMERATION_FACES: usize = 9;
 const MAX_POLYGON_PATCH_ENUMERATION_BOUNDARY: usize = 9;
@@ -36,8 +33,8 @@ const MAX_POLYGON_PATCH_COMPONENT_BOUNDARY: usize = 32;
 struct PolygonPatchCandidate {
     faces: Vec<usize>,
     boundary_points: Vec<Point3>,
-    signed_area2: ExactReal,
-    area_abs: ExactReal,
+    signed_area2: Real,
+    area_abs: Real,
 }
 
 /// Discover source-owned simple-polygon adjacency patch pairs.
@@ -45,7 +42,6 @@ struct PolygonPatchCandidate {
 /// The input triangles are split into edge-connected components, and each component is
 /// exhaustively searched for triangulated-disk candidates within practical bounds.
 ///
-/// Algorithmically this follows Yap, "Towards Exact Geometric Computation"'s
 /// object/predicate split: source topology is replayed from combinatorial adjacency,
 /// while exact predicates certify coplanarity, interior inclusion, and signed-area
 /// compatibility.
@@ -91,9 +87,6 @@ pub(crate) fn polygon_patch_pairs(
 /// Internal fuzz hook for source-disk full-face adjacency discovery.
 ///
 /// This is intentionally available only under `internal-fuzzing`. It lets the
-/// fuzz crate exercise the exact object replay boundary described by Yap,
-/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997), without making the private polygon-patch candidate model part of the
 /// stable hypermesh API.
 #[cfg(feature = "internal-fuzzing")]
 #[doc(hidden)]
@@ -149,9 +142,6 @@ fn polygon_patch_candidates(
         }
         let mut seen = BTreeSet::<Vec<usize>>::new();
         // The old bounded search rejected a valid full-face adjacency whenever a
-        // source-owned disk exceeded the practical subset-enumeration cap. Yap,
-        // "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-        // (1997), draws the useful line here at exact source replay: a whole
         // connected component is a concrete exact object and may be certified
         // directly. It is still a bounded certificate, so adversarial components
         // above the explicit face/boundary caps must wait for the general planar
@@ -167,8 +157,7 @@ fn polygon_patch_candidates(
         // only extensions whose id is at least `start_face`, so each connected
         // subset has a unique minimum-face root. Starting only at component[0]
         // misses valid source disks nested inside a larger coplanar source
-        // component, which is exactly the kind of retained-object/topology split
-        // Yap's exact-computing model requires us to preserve.
+        // component, which is exactly the kind of retained evidence/topology split
         for &start_face in &component {
             collect_polygon_patch_candidates(
                 mesh,
@@ -283,11 +272,7 @@ fn polygon_patch_candidate(
     }
     let boundary_points = boundary_vertices
         .iter()
-        .map(|&vertex| {
-            mesh.vertices()
-                .get(vertex)
-                .map(|point| point.to_hyperlimit_point())
-        })
+        .map(|&vertex| mesh.vertices().get(vertex).map(|point| point.clone()))
         .collect::<Option<Vec<_>>>()?;
     let Some(projection) = choose_polygon_projection(&boundary_points) else {
         return Some(None);
@@ -301,7 +286,7 @@ fn polygon_patch_candidate(
         .collect::<Vec<_>>();
 
     let mut area_sign = None;
-    let mut signed_area2 = ExactReal::from(0);
+    let mut signed_area2 = Real::from(0);
     for &face in faces {
         let triangle = mesh.triangles().get(face)?.0;
         let points = triangle_points(mesh, triangle)?;
@@ -376,8 +361,6 @@ fn edge_connected_face_neighbors(
 
 fn faces_are_coplanar(mesh: &ExactMesh, left_face: usize, right_face: usize) -> Option<bool> {
     // Source-disk discovery is a planar certificate, not a shell-connectivity
-    // walk.  Yap, "Towards Exact Geometric Computation," *Computational
-    // Geometry* 7.1-2 (1997), is the relevant boundary: we split source
     // topology by exact retained planes before promoting a connected component
     // to a planar disk candidate.
     let left_triangle = mesh.triangles().get(left_face)?.0;
@@ -536,7 +519,7 @@ fn polygon_patch_candidates_match(
         && compare_reals(&left.area_abs, &right.area_abs).value() == Some(Ordering::Equal)
         && compare_reals(
             &(left.signed_area2.clone() + right.signed_area2.clone()),
-            &ExactReal::from(0),
+            &Real::from(0),
         )
         .value()
             == Some(Ordering::Equal)
@@ -579,9 +562,9 @@ fn choose_polygon_projection(points: &[Point3]) -> Option<CoplanarProjection> {
 
 fn triangle_points(mesh: &ExactMesh, triangle: [usize; 3]) -> Option<[Point3; 3]> {
     Some([
-        mesh.vertices().get(triangle[0])?.to_hyperlimit_point(),
-        mesh.vertices().get(triangle[1])?.to_hyperlimit_point(),
-        mesh.vertices().get(triangle[2])?.to_hyperlimit_point(),
+        mesh.vertices().get(triangle[0])?.clone(),
+        mesh.vertices().get(triangle[1])?.clone(),
+        mesh.vertices().get(triangle[2])?.clone(),
     ])
 }
 
@@ -601,15 +584,15 @@ const fn canonical_edge(left: usize, right: usize) -> (usize, usize) {
     }
 }
 
-fn real_abs(value: &ExactReal) -> Option<ExactReal> {
+fn real_abs(value: &Real) -> Option<Real> {
     match real_sign(value)? {
         Sign::Negative => Some(-value.clone()),
         Sign::Zero | Sign::Positive => Some(value.clone()),
     }
 }
 
-fn real_sign(value: &ExactReal) -> Option<Sign> {
-    match compare_reals(value, &ExactReal::from(0)).value()? {
+fn real_sign(value: &Real) -> Option<Sign> {
+    match compare_reals(value, &Real::from(0)).value()? {
         Ordering::Less => Some(Sign::Negative),
         Ordering::Equal => Some(Sign::Zero),
         Ordering::Greater => Some(Sign::Positive),

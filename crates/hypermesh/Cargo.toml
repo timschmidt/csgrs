@@ -12,39 +12,29 @@ categories = ["algorithms", "mathematics", "graphics", "simulation", "game-devel
 exclude = ["/examples", ".gitignore"]
 
 [dependencies]
-glam = { version = "0.30.9", optional = true }
 # Hyper sibling dependency switch: keep both local path and crates.io lines; do not remove either.
 # Development mode uses the local path lines. For release, comment those and uncomment the crates.io lines.
-hyperlattice = { path = "../hyperlattice", optional = true }
-hyperlimit = { path = "../hyperlimit", optional = true }
-hyperreal = { path = "../hyperreal", optional = true }
-hypertri = { path = "../hypertri", default-features = false, optional = true }
-# hyperlattice = { version = "0.6.0", optional = true }
-# hyperlimit = { version = "0.4.0", optional = true }
-# hyperreal = { version = "0.13.0", optional = true }
-# hypertri = { version = "0.3.0", default-features = false, optional = true }
-rayon =  { version = "1.11.0", optional = true }
-
-tobj = {version = "4.0.3", optional = true}
+hyperlattice = { path = "../hyperlattice" }
+hyperlimit = { path = "../hyperlimit" }
+hyperreal = { path = "../hyperreal" }
+hypertri = { path = "../hypertri", default-features = false, features = ["earcut", "cdt"] }
+# hyperlattice = { version = "0.6.0" }
+# hyperlimit = { version = "0.4.0" }
+# hyperreal = { version = "0.13.0" }
+# hypertri = { version = "0.3.0", default-features = false, features = ["earcut", "cdt"] }
 bevy = { version = "0.16.1", optional = true }
 bevy_panorbit_camera = { version = "0.26.0", optional = true }
 
 [dev-dependencies]
-criterion = "0.5"
+criterion = { version = "0.5", default-features = false, features = ["cargo_bench_support"] }
 proptest = "1.7.0"
 
 [features]
-default = ["exact"]
-exact = ["dep:hyperlattice", "dep:hyperlimit", "dep:hyperreal"]
-exact-triangulation = ["exact", "dep:hypertri", "hypertri/earcut", "hypertri/cdt"]
-legacy-boolean = ["dep:glam"]
+default = []
 internal-fuzzing = []
 verbose = []
-rayon = ["legacy-boolean", "dep:rayon"]
 
 bevy = [
-    "legacy-boolean",
-    "dep:tobj",
     "dep:bevy",
     "dep:bevy_panorbit_camera",
 ]
@@ -62,4 +52,3 @@ required-features = ["bevy"]
 [[bench]]
 name = "exact_validation"
 harness = false
-required-features = ["exact-triangulation"]

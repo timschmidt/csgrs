@@ -1,19 +1,15 @@
 //! Report-bearing acceptance boundary for exact mesh proposals.
 //!
-//! External importers, legacy boolean adapters, SDF tessellators, and
-//! primitive-float paths may all produce candidate meshes. In the Hyper exact
-//! stack those candidates are proposals until an [`ExactMesh`] has replayed
-//! its retained topology, bounds, provenance, and predicate evidence. This
-//! module packages that replay into a small report so downstream code cannot
-//! silently treat an adapter output as trusted topology.
+//! External importers, boolmesh adapters, SDF tessellators, and primitive-float
+//! paths may all produce candidate meshes. In the Hyper exact stack those
+//! candidates are proposals until an [`ExactMesh`] has replayed its retained
+//! topology, bounds, provenance, and predicate evidence. This module packages
+//! that replay into a small report so downstream code cannot silently treat an
+//! adapter output as trusted topology.
 //!
-//! The contract follows Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7.1-2 (1997): approximate or external computation
-//! may help generate objects, but combinatorial use must be guarded by exact
-//! object validation and certificate replay. The distinction also matches
-//! Requicha, "Representations for Rigid Solids: Theory, Methods, and
-//! Systems," *ACM Computing Surveys* 12.4 (1980): a representation is useful
-//! only when its validity and source semantics are explicit.
+//! Approximate or external computation may help generate objects, but
+//! combinatorial use is guarded by exact object validation and certificate
+//! replay. The report keeps validity and source semantics explicit.
 
 use super::audit::{ExactMeshAuditError, ExactMeshAuditReport, audit_exact_mesh};
 use super::{
@@ -29,9 +25,9 @@ pub enum ExactMeshProposalSourceKind {
     /// Primitive-float coordinates were lifted as exact dyadic values and then
     /// replayed by exact mesh validation.
     LossyPrimitiveFloatProposal,
-    /// Legacy boolmesh-derived topology was retained only as an approximate
-    /// adapter proposal.
-    LegacyBooleanProposal,
+    /// Boolmesh-derived topology was retained only as an approximate adapter
+    /// proposal.
+    BoolmeshAdapterProposal,
     /// External importer or display/runtime adapter proposal.
     ExternalAdapterProposal,
 }
@@ -49,7 +45,7 @@ impl ExactMeshProposalSourceKind {
 pub enum ExactMeshProposalAcceptance {
     /// The mesh was exact input and replayed as a retained exact object.
     ExactInputReplayed,
-    /// A lossy, external, or legacy proposal replayed through exact mesh
+    /// A lossy, external, or boolmesh proposal replayed through exact mesh
     /// validation and retained predicate evidence.
     ProposalAcceptedAfterExactReplay,
 }
@@ -204,7 +200,7 @@ fn source_kind_for_mesh_source(source: MeshSource) -> ExactMeshProposalSourceKin
     match source {
         MeshSource::Exact => ExactMeshProposalSourceKind::ExactConstruction,
         MeshSource::LossyF64 => ExactMeshProposalSourceKind::LossyPrimitiveFloatProposal,
-        MeshSource::LegacyBoolmeshAdapter => ExactMeshProposalSourceKind::LegacyBooleanProposal,
+        MeshSource::BoolmeshAdapter => ExactMeshProposalSourceKind::BoolmeshAdapterProposal,
         MeshSource::ExternalAdapter => ExactMeshProposalSourceKind::ExternalAdapterProposal,
     }
 }
@@ -213,7 +209,7 @@ fn mesh_source_for_source_kind(source_kind: ExactMeshProposalSourceKind) -> Mesh
     match source_kind {
         ExactMeshProposalSourceKind::ExactConstruction => MeshSource::Exact,
         ExactMeshProposalSourceKind::LossyPrimitiveFloatProposal => MeshSource::LossyF64,
-        ExactMeshProposalSourceKind::LegacyBooleanProposal => MeshSource::LegacyBoolmeshAdapter,
+        ExactMeshProposalSourceKind::BoolmeshAdapterProposal => MeshSource::BoolmeshAdapter,
         ExactMeshProposalSourceKind::ExternalAdapterProposal => MeshSource::ExternalAdapter,
     }
 }
@@ -234,7 +230,7 @@ fn source_policy_matches(
             ExactMeshProposalSourceKind::ExternalAdapterProposal,
             ApproximationPolicy::EdgeOnly
         ) | (
-            ExactMeshProposalSourceKind::LegacyBooleanProposal,
+            ExactMeshProposalSourceKind::BoolmeshAdapterProposal,
             ApproximationPolicy::ExplicitApproximateDecision
         )
     )

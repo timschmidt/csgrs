@@ -6,8 +6,6 @@
 //! Closed walks with fewer than three halfedges are preserved here because
 //! legacy `assemble_halfs` returns raw loops; the later triangulation handoff
 //! owns the short-loop rejection.
-//! Following Yap, "Towards Exact Geometric Computation," *Computational
-//! Geometry* 7.1-2 (1997), this exact port records incomplete and malformed
 //! traversal states instead of using rounded geometry or panic-driven repair.
 
 use std::collections::{BTreeMap, BTreeSet, VecDeque};
@@ -468,7 +466,7 @@ fn pop_consumed(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::exact::{
+    use crate::exact::boolmesh::{
         ExactBoolMeshDroppedOpenChainOwner, ExactBoolMeshDroppedOpenChainSourceKind,
         ExactBoolMeshHalfedgeAssemblyStage, ExactBoolMeshOutputHalfedge,
         ExactBoolMeshOutputHalfedgeSource, ExactBoolMeshSide,

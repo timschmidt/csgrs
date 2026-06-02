@@ -1,13 +1,12 @@
 #![no_main]
 
-use hypermesh::exact::{
-    ExactMesh, ExactPoint3, audit_exact_mesh, build_intersection_graph,
-    classify_coplanar_triangles, classify_face_regions_against_opposite_planes,
-    classify_mesh_face_pair, classify_mesh_face_pairs,
-    classify_mesh_triangle_against_retained_face_plane, classify_triangle_triangle,
-    inspect_f64_mesh_input, intersect_segment_with_face_plane,
-    intersect_segment_with_retained_face_plane,
-};
+use hyperlimit::Point3;
+use hypermesh::exact::{ExactMesh, audit_exact_mesh, build_intersection_graph, classify_coplanar_triangles, classify_mesh_face_pair, classify_mesh_face_pairs, classify_mesh_triangle_against_retained_face_plane, classify_triangle_triangle, inspect_f64_mesh_input, intersect_segment_with_face_plane, intersect_segment_with_retained_face_plane};
+
+use hypermesh::exact::region::{classify_face_regions_against_opposite_planes};
+
+
+use hyperreal::Real;
 use libfuzzer_sys::fuzz_target;
 
 fuzz_target!(|data: &[u8]| {
@@ -273,7 +272,7 @@ fuzz_target!(|data: &[u8]| {
         }
         if mesh.facts().mesh.closed_manifold && !mesh.triangles().is_empty() {
             let boundary_vertex = mesh.triangles()[0].0[0];
-            let boundary_point = mesh.vertices()[boundary_vertex].to_hyperlimit_point();
+            let boundary_point = mesh.vertices()[boundary_vertex].clone();
             let point_winding = hypermesh::exact::classify_point_against_closed_mesh_winding_report(
                 &boundary_point,
                 &mesh,
@@ -297,8 +296,8 @@ fuzz_target!(|data: &[u8]| {
         }
         if !mesh.triangles().is_empty() {
             if mesh.vertices().len() >= 2 {
-                let p0 = mesh.vertices()[0].to_hyperlimit_point();
-                let p1 = mesh.vertices()[1].to_hyperlimit_point();
+                let p0 = mesh.vertices()[0].clone();
+                let p1 = mesh.vertices()[1].clone();
                 let _ = intersect_segment_with_retained_face_plane(
                     &mesh.facts().faces[0].plane,
                     &p0,
@@ -373,9 +372,8 @@ fuzz_target!(|data: &[u8]| {
                     for classification in classifications {
                         let _ = classification.validate();
                     }
-                    #[cfg(feature = "exact-triangulation")]
-                    let _ =
-                        hypermesh::exact::checked_classify_face_regions_against_opposite_planes(
+                                        let _ =
+                        hypermesh::exact::region::checked_classify_face_regions_against_opposite_planes(
                             &region_plan,
                             &mesh,
                             &mesh,
@@ -385,10 +383,9 @@ fuzz_target!(|data: &[u8]| {
                                 let _ = classification.validate();
                             }
                         });
-                    #[cfg(feature = "exact-triangulation")]
-                    {
+                                        {
                         if let Ok(triangulations) =
-                            hypermesh::exact::checked_triangulate_face_regions_with_earcut(
+                            hypermesh::exact::region::checked_triangulate_face_regions_with_earcut(
                                 &region_plan,
                                 &mesh,
                                 &mesh,
@@ -398,9 +395,9 @@ fuzz_target!(|data: &[u8]| {
                                 let _ = triangulation.validate();
                             }
                             let _ =
-                                hypermesh::exact::ExactBooleanAssemblyPlan::from_region_triangulations(
+                                hypermesh::exact::region::ExactBooleanAssemblyPlan::from_region_triangulations(
                                     &triangulations,
-                                    hypermesh::exact::ExactRegionSelection::KeepAll,
+                                    hypermesh::exact::region::ExactRegionSelection::KeepAll,
                                 );
                         }
                     }
@@ -414,9 +411,11 @@ fuzz_target!(|data: &[u8]| {
             .chunks_exact(3)
             .take(5)
             .filter_map(|coords| {
-                ExactPoint3::from_f64_lossy([coords[0], coords[1], coords[2]], 0)
-                    .ok()
-                    .map(|point| point.to_hyperlimit_point())
+                Some(Point3::new(
+                    Real::try_from(coords[0]).ok()?,
+                    Real::try_from(coords[1]).ok()?,
+                    Real::try_from(coords[2]).ok()?,
+                ))
             })
             .collect::<Vec<_>>();
         if points.len() == 5 {
@@ -434,9 +433,11 @@ fuzz_target!(|data: &[u8]| {
             .chunks_exact(3)
             .take(6)
             .filter_map(|coords| {
-                ExactPoint3::from_f64_lossy([coords[0], coords[1], coords[2]], 0)
-                    .ok()
-                    .map(|point| point.to_hyperlimit_point())
+                Some(Point3::new(
+                    Real::try_from(coords[0]).ok()?,
+                    Real::try_from(coords[1]).ok()?,
+                    Real::try_from(coords[2]).ok()?,
+                ))
             })
             .collect::<Vec<_>>();
         if points.len() == 6 {

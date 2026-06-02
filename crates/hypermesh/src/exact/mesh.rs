@@ -1,12 +1,10 @@
 //! Exact mesh construction and storage.
 //!
-//! `ExactMesh` stores coordinates as `hyperlattice::Vector3` over
-//! `hyperreal::Real` and mirrors them into `hyperlimit::Point3` only when
-//! predicate-facing APIs need point facts. Primitive-float construction is a
-//! named lossy adapter and validates every coordinate before import.
+//! `ExactMesh` stores coordinates as `hyperlimit::Point3` over
+//! `hyperreal::Real`. Primitive-float construction is a named lossy adapter
+//! and validates every coordinate before import.
 
-use hyperlattice::Vector3;
-use hyperlimit::Point3;
+pub use hyperlimit::Point3;
 
 use super::adapter::{
     ExactI64MeshInputReport, LossyF64MeshInputReport, inspect_f64_mesh_input,
@@ -30,46 +28,10 @@ use super::readiness::{
     ExactMeshConsumerReadinessError, ExactMeshConsumerReadinessReport,
     exact_mesh_consumer_readiness,
 };
-use super::scalar::{ExactReal, LossyF64Import};
+use super::scalar::LossyF64Import;
 use super::validation::{ValidationPolicy, ValidationReport, validate_triangles_with_policy};
 use super::view::{ApproximateMeshF64View, ApproximateMeshF64ViewError, approximate_mesh_f64_view};
-
-/// Exact 3D point stored in hypermesh.
-#[derive(Clone, Debug, PartialEq)]
-pub struct ExactPoint3 {
-    coordinates: Vector3,
-}
-
-impl ExactPoint3 {
-    /// Construct a point from exact coordinates.
-    pub fn new(x: ExactReal, y: ExactReal, z: ExactReal) -> Self {
-        Self {
-            coordinates: Vector3::new([x, y, z]),
-        }
-    }
-
-    /// Import a point from a finite primitive-float triplet.
-    pub fn from_f64_lossy(values: [f64; 3], first_coordinate: usize) -> Result<Self, MeshError> {
-        let x = LossyF64Import::new(values[0], first_coordinate).map_err(MeshError::one)?;
-        let y = LossyF64Import::new(values[1], first_coordinate + 1).map_err(MeshError::one)?;
-        let z = LossyF64Import::new(values[2], first_coordinate + 2).map_err(MeshError::one)?;
-        Ok(Self::new(x.value, y.value, z.value))
-    }
-
-    /// Return exact coordinates.
-    pub const fn coordinates(&self) -> &Vector3 {
-        &self.coordinates
-    }
-
-    /// Convert to the `hyperlimit` point carrier used by exact predicates.
-    pub fn to_hyperlimit_point(&self) -> Point3 {
-        Point3::new(
-            self.coordinates.0[0].clone(),
-            self.coordinates.0[1].clone(),
-            self.coordinates.0[2].clone(),
-        )
-    }
-}
+use hyperreal::Real;
 
 /// Triangle index triplet.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -78,7 +40,7 @@ pub struct Triangle(pub [usize; 3]);
 /// Exact triangular mesh with retained validation facts.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactMesh {
-    vertices: Vec<ExactPoint3>,
+    vertices: Vec<Point3>,
     triangles: Vec<Triangle>,
     bounds: MeshBounds,
     facts: MeshValidationFacts,
@@ -86,11 +48,16 @@ pub struct ExactMesh {
     provenance: ConstructionProvenance,
 }
 
+fn point_from_f64_lossy(values: [f64; 3], first_coordinate: usize) -> Result<Point3, MeshError> {
+    let x = LossyF64Import::new(values[0], first_coordinate).map_err(MeshError::one)?;
+    let y = LossyF64Import::new(values[1], first_coordinate + 1).map_err(MeshError::one)?;
+    let z = LossyF64Import::new(values[2], first_coordinate + 2).map_err(MeshError::one)?;
+    Ok(Point3::new(x.value, y.value, z.value))
+}
+
 /// Error returned when an [`ExactMesh`] retained-state audit fails.
 ///
 /// This is a whole-object consistency check over topology facts, exact bounds,
-/// and construction provenance. It follows Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997), by treating retained
 /// object facts and proof-producing predicate provenance as part of the
 /// certified mesh state rather than as incidental cache entries.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -123,7 +90,7 @@ pub enum ExactMeshValidationError {
 impl ExactMesh {
     /// Construct an exact mesh from exact vertices and triangle indices.
     pub fn new(
-        vertices: Vec<ExactPoint3>,
+        vertices: Vec<Point3>,
         triangles: Vec<Triangle>,
         source: SourceProvenance,
     ) -> Result<Self, MeshError> {
@@ -132,7 +99,7 @@ impl ExactMesh {
 
     /// Construct an exact mesh with an explicit validation policy.
     pub fn new_with_policy(
-        vertices: Vec<ExactPoint3>,
+        vertices: Vec<Point3>,
         triangles: Vec<Triangle>,
         source: SourceProvenance,
         policy: ValidationPolicy,
@@ -142,10 +109,7 @@ impl ExactMesh {
             return Err(MeshError::new(index_diagnostics));
         }
 
-        let points = vertices
-            .iter()
-            .map(ExactPoint3::to_hyperlimit_point)
-            .collect::<Vec<_>>();
+        let points = vertices.iter().cloned().collect::<Vec<_>>();
         let triangle_indices = triangles.iter().map(|tri| tri.0).collect::<Vec<_>>();
         let bounds = MeshBounds::from_triangles(&points, &triangle_indices);
         let report = validate_triangles_with_policy(&points, &triangle_indices, policy);
@@ -175,14 +139,14 @@ impl ExactMesh {
     }
 
     /// Construct an exact mesh from flat hyperreal coordinates.
-    pub fn from_real_triangles(pos: &[ExactReal], idx: &[usize]) -> Result<Self, MeshError> {
+    pub fn from_real_triangles(pos: &[Real], idx: &[usize]) -> Result<Self, MeshError> {
         Self::from_real_triangles_with_policy(pos, idx, ValidationPolicy::CLOSED)
     }
 
     /// Construct an exact mesh from flat hyperreal coordinates with an explicit
     /// validation policy.
     pub fn from_real_triangles_with_policy(
-        pos: &[ExactReal],
+        pos: &[Real],
         idx: &[usize],
         policy: ValidationPolicy,
     ) -> Result<Self, MeshError> {
@@ -203,7 +167,7 @@ impl ExactMesh {
 
         let vertices = pos
             .chunks_exact(3)
-            .map(|coords| ExactPoint3::new(coords[0].clone(), coords[1].clone(), coords[2].clone()))
+            .map(|coords| Point3::new(coords[0].clone(), coords[1].clone(), coords[2].clone()))
             .collect::<Vec<_>>();
         let triangles = idx
             .chunks_exact(3)
@@ -242,7 +206,7 @@ impl ExactMesh {
 
         let mut vertices = Vec::with_capacity(pos.len() / 3);
         for (vertex, coords) in pos.chunks_exact(3).enumerate() {
-            let point = ExactPoint3::from_f64_lossy([coords[0], coords[1], coords[2]], vertex * 3)?;
+            let point = point_from_f64_lossy([coords[0], coords[1], coords[2]], vertex * 3)?;
             vertices.push(point);
         }
 
@@ -268,7 +232,6 @@ impl ExactMesh {
     ///
     /// Integer grid input is lifted directly into `hyperreal::Real` without a
     /// primitive-float edge. Keeping grid coordinates exact and structurally
-    /// visible follows Yap's recommendation to retain object-level numerical
     /// structure for downstream exact predicates and determinant schedules.
     pub fn from_i64_triangles(pos: &[i64], idx: &[usize]) -> Result<Self, MeshError> {
         Self::from_i64_triangles_with_policy(pos, idx, ValidationPolicy::CLOSED)
@@ -299,10 +262,10 @@ impl ExactMesh {
         let vertices = pos
             .chunks_exact(3)
             .map(|coords| {
-                ExactPoint3::new(
-                    ExactReal::from(coords[0]),
-                    ExactReal::from(coords[1]),
-                    ExactReal::from(coords[2]),
+                Point3::new(
+                    Real::from(coords[0]),
+                    Real::from(coords[1]),
+                    Real::from(coords[2]),
                 )
             })
             .collect::<Vec<_>>();
@@ -325,7 +288,7 @@ impl ExactMesh {
     }
 
     /// Return exact vertices.
-    pub fn vertices(&self) -> &[ExactPoint3] {
+    pub fn vertices(&self) -> &[Point3] {
         &self.vertices
     }
 
@@ -353,7 +316,6 @@ impl ExactMesh {
     /// The policy is part of the exact artifact boundary: an open-surface mesh
     /// constructed with [`ValidationPolicy::ALLOW_BOUNDARY`] must not later be
     /// mistaken for closed-solid evidence merely because its structural facts
-    /// replay. Yap's exact-geometric-computation model keeps such
     /// approximation and domain policies visible at API boundaries.
     pub const fn validation_policy(&self) -> ValidationPolicy {
         self.validation_policy
@@ -372,8 +334,6 @@ impl ExactMesh {
     /// want to audit that its retained bounds, topology facts, and provenance
     /// still agree before consuming them. The bounds and topology facts are
     /// replayed from the exact vertices and triangle rows before acceptance;
-    /// this follows Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7.1-2 (1997), by treating retained object
     /// structure as valid only while it reproduces from the exact source
     /// object it summarizes.
     pub fn validate_retained_state(&self) -> Result<(), ExactMeshValidationError> {
@@ -389,11 +349,7 @@ impl ExactMesh {
                 actual: self.facts.mesh.face_count,
             });
         }
-        let points = self
-            .vertices
-            .iter()
-            .map(ExactPoint3::to_hyperlimit_point)
-            .collect::<Vec<_>>();
+        let points = self.vertices.iter().cloned().collect::<Vec<_>>();
         let triangles = self
             .triangles
             .iter()

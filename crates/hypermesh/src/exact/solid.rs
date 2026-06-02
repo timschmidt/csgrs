@@ -3,10 +3,8 @@
 //! The routines in this module are intentionally narrow: they certify a closed
 //! triangular mesh as an oriented convex polyhedron and classify points or
 //! vertex sets with exact oriented halfspace predicates. They do not implement
-//! arbitrary winding. This follows Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7.1-2 (1997): application-level topology decisions
-//! must be made from certified predicate facts, with unsupported cases kept
-//! explicit rather than hidden behind approximate representative points.
+//! arbitrary winding. Unsupported cases stay explicit rather than hidden behind
+//! approximate representative points.
 
 use std::cmp::Ordering;
 
@@ -14,7 +12,7 @@ use hyperlimit::{PlaneSide, Point3, compare_reals, orient3d_report};
 
 use super::mesh::ExactMesh;
 use super::provenance::PredicateUse;
-use super::scalar::ExactReal;
+use hyperreal::Real;
 
 /// Certified orientation of a closed triangular surface.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -46,8 +44,6 @@ pub enum ConvexSolidClassification {
 ///
 /// These checks validate the report model itself, not the geometry from
 /// scratch. They are intentionally tied to the certificate-carrying APIs in
-/// this module: Yap, "Towards Exact Geometric Computation," *Computational
-/// Geometry* 7.1-2 (1997), argues that application-level decisions should be
 /// justified by retained exact facts. A report that contradicts those retained
 /// facts must be treated as invalid before a shortcut consumes it.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -139,9 +135,6 @@ impl ConvexSolidFacts {
     ///
     /// The local validator checks only the state tuple and retained predicate
     /// shape. This replay check recomputes convex-solid certification from the
-    /// supplied mesh and requires equality with the retained facts. In Yap's
-    /// exact-geometric-computation model, "Towards Exact Geometric
-    /// Computation," *Computational Geometry* 7.1-2 (1997), this is the
     /// boundary between a coherent certificate object and one still attached
     /// to the particular geometry whose predicates produced it.
     pub fn validate_against_source(&self, mesh: &ExactMesh) -> Result<(), ConvexSolidReportError> {
@@ -192,8 +185,6 @@ impl ConvexSolidPointClassification {
     /// This recomputes the point halfspace walk from `point` and `solid` after
     /// the local report audit succeeds. Keeping the retained relation and
     /// predicate certificates replayable against the original source objects
-    /// follows Yap, "Towards Exact Geometric Computation," *Computational
-    /// Geometry* 7.1-2 (1997): a containment shortcut must not be separable
     /// from the exact predicates that justified it.
     pub fn validate_against_sources(
         &self,
@@ -266,7 +257,6 @@ impl ConvexSolidMeshClassification {
     /// The mesh summary must be derivable from the retained per-vertex point
     /// reports. This is the local audit check for convex-containment boolean
     /// shortcuts; it keeps the topological decision coupled to the exact
-    /// predicates that justified it, matching Yap's EGC separation between
     /// certified decisions and explicit uncertainty.
     pub fn validate(&self) -> Result<(), ConvexSolidReportError> {
         self.solid_facts
@@ -330,9 +320,6 @@ impl ConvexSolidMeshClassification {
     /// retained per-vertex point classifications. This replay check
     /// recomputes the whole report from `subject` and `solid`, catching stale
     /// report objects that remain internally coherent but no longer belong to
-    /// the source meshes. That is Yap's retained-state discipline applied to
-    /// convex shortcut booleans; see "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7.1-2 (1997).
     pub fn validate_against_sources(
         &self,
         subject: &ExactMesh,
@@ -356,7 +343,6 @@ impl ConvexSolidMeshClassification {
 /// volume convention used here, interior points of a positively oriented
 /// closed surface therefore lie on the above side of every face. The signed
 /// volume orientation is exact `Real` arithmetic and is compared through
-/// `hyperlimit::compare_reals`, keeping Yap's exact predicate boundary intact.
 pub fn certify_convex_solid(mesh: &ExactMesh) -> ConvexSolidFacts {
     if !mesh.facts().mesh.closed_manifold {
         return ConvexSolidFacts {
@@ -382,15 +368,15 @@ pub fn certify_convex_solid(mesh: &ExactMesh) -> ConvexSolidFacts {
     let mut saw_unknown = false;
     for triangle in mesh.triangles() {
         let tri = triangle.0;
-        let a = mesh.vertices()[tri[0]].to_hyperlimit_point();
-        let b = mesh.vertices()[tri[1]].to_hyperlimit_point();
-        let c = mesh.vertices()[tri[2]].to_hyperlimit_point();
+        let a = mesh.vertices()[tri[0]].clone();
+        let b = mesh.vertices()[tri[1]].clone();
+        let c = mesh.vertices()[tri[2]].clone();
 
         for (vertex, point) in mesh.vertices().iter().enumerate() {
             if tri.contains(&vertex) {
                 continue;
             }
-            let report = orient3d_report(&a, &b, &c, &point.to_hyperlimit_point());
+            let report = orient3d_report(&a, &b, &c, &point.clone());
             predicates.push(PredicateUse::from_certificate(report.certificate));
             let Some(side) = report.value().map(PlaneSide::from) else {
                 saw_unknown = true;
@@ -430,8 +416,6 @@ pub fn classify_point_against_convex_solid(
 /// This is the auditable form of [`classify_point_against_convex_solid`].
 /// Each face halfspace query records the `hyperlimit::orient3d_report`
 /// certificate that drove the relation. Keeping those certificates near the
-/// point/solid decision follows Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997): topological shortcuts should expose
 /// the exact predicates they consumed rather than returning only a collapsed
 /// boolean-like answer.
 pub fn classify_point_against_convex_solid_report(
@@ -460,7 +444,6 @@ pub fn classify_mesh_vertices_against_convex_solid(
 /// This report-returning API is the boolean-shortcut audit artifact. It
 /// separates the solid certification predicates from the per-vertex halfspace
 /// predicates so callers can inspect whether a containment/disjoint shortcut
-/// was entirely proof-producing. This is the Yap-style exact computation
 /// contract used throughout the port: predicates and uncertainty stay explicit
 /// at API boundaries.
 pub fn classify_mesh_vertices_against_convex_solid_report(
@@ -482,7 +465,7 @@ pub fn classify_mesh_vertices_against_convex_solid_report(
     let mut vertices = Vec::with_capacity(subject.vertices().len());
     for vertex in subject.vertices() {
         let classification =
-            classify_point_with_convex_facts_report(&vertex.to_hyperlimit_point(), solid, &facts);
+            classify_point_with_convex_facts_report(&vertex.clone(), solid, &facts);
         match classification.relation {
             ConvexSolidPointRelation::Inside => inside += 1,
             ConvexSolidPointRelation::Boundary => boundary += 1,
@@ -535,9 +518,9 @@ fn classify_point_with_convex_facts_report(
     let mut predicates = Vec::with_capacity(solid.triangles().len());
     for triangle in solid.triangles() {
         let tri = triangle.0;
-        let a = solid.vertices()[tri[0]].to_hyperlimit_point();
-        let b = solid.vertices()[tri[1]].to_hyperlimit_point();
-        let c = solid.vertices()[tri[2]].to_hyperlimit_point();
+        let a = solid.vertices()[tri[0]].clone();
+        let b = solid.vertices()[tri[1]].clone();
+        let c = solid.vertices()[tri[2]].clone();
         let report = orient3d_report(&a, &b, &c, point);
         predicates.push(PredicateUse::from_certificate(report.certificate));
         let Some(side) = report.value().map(PlaneSide::from) else {
@@ -573,21 +556,21 @@ fn mesh_orientation(mesh: &ExactMesh) -> ClosedMeshOrientation {
         .map(|triangle| {
             let tri = triangle.0;
             determinant_from_origin(
-                &mesh.vertices()[tri[0]].to_hyperlimit_point(),
-                &mesh.vertices()[tri[1]].to_hyperlimit_point(),
-                &mesh.vertices()[tri[2]].to_hyperlimit_point(),
+                &mesh.vertices()[tri[0]].clone(),
+                &mesh.vertices()[tri[1]].clone(),
+                &mesh.vertices()[tri[2]].clone(),
             )
         })
-        .fold(ExactReal::from(0), |sum, det| &sum + &det);
+        .fold(Real::from(0), |sum, det| &sum + &det);
 
-    match compare_reals(&signed_volume, &ExactReal::from(0)).value() {
+    match compare_reals(&signed_volume, &Real::from(0)).value() {
         Some(Ordering::Greater) => ClosedMeshOrientation::Positive,
         Some(Ordering::Less) => ClosedMeshOrientation::Negative,
         _ => ClosedMeshOrientation::Unknown,
     }
 }
 
-fn determinant_from_origin(a: &Point3, b: &Point3, c: &Point3) -> ExactReal {
+fn determinant_from_origin(a: &Point3, b: &Point3, c: &Point3) -> Real {
     let by_cz = &b.y * &c.z;
     let bz_cy = &b.z * &c.y;
     let bx_cz = &b.x * &c.z;

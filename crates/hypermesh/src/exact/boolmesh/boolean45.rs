@@ -4,12 +4,8 @@
 //! sorts each side by `EdgePt.val`, and zips the sorted halves into partial
 //! halfedges.  Boolmesh keys the old-source-edge buckets by `hid_p`; this
 //! exact port keeps that row id and orders by the retained edge parameter from
-//! `kernel12` rather than a rounded dot product.  Yap, "Towards Exact
-//! Geometric Computation," *Computational Geometry* 7.1-2 (1997), is the rule
 //! here: the pairing decision consumes certified construction parameters and
 //! combinatorial row identity before final topology mutation.  The
-//! boundary-fragment pairing model follows Weiler and Atherton, "Hidden
-//! Surface Removal Using Polygon Area Sorting," *SIGGRAPH* (1977).
 
 mod assembly;
 mod export;
@@ -40,7 +36,7 @@ pub(super) fn triangulation_internal_fuzz_probe(selector: u8) -> bool {
 
 use crate::exact::boolean::ExactBooleanOperation;
 use crate::exact::mesh::{ExactMesh, Triangle};
-use crate::exact::scalar::ExactReal;
+use hyperreal::Real;
 
 use super::{
     ExactBoolMeshBoolean03, ExactBoolMeshBoolean45Stage, ExactBoolMeshEdgeEvent,
@@ -65,14 +61,11 @@ use super::{
 /// that source-edge adjacency is recovered from exact source triangles instead
 /// of indexing the primitive halfedge array.
 ///
-/// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-/// 7.1-2 (1997), motivates keeping this as replayable integer topology
 /// staging rather than constructing coordinates during sizing.  The counting
 /// semantics themselves follow the boolmesh `boolean45::size_output` kernel.
 /// The vertex allocation below is the exact counterpart of boolmesh's
 /// `exclusive_scan` ranges and `duplicate_verts` calls; exact coordinate
 /// construction is deferred, which is the separation between topology and
-/// numeric objects required by Yap's exact-computation paradigm.
 /// The new-edge routing is the exact counterpart to `add_new_edge_verts`:
 /// every allocated crossing vertex is placed into one source-edge bucket and
 /// two left/right face-pair buckets before later pairing/emission stages.
@@ -671,7 +664,7 @@ fn route_crossing_vertices(
     collision: usize,
     edge_mesh: &ExactMesh,
     source_signed_counts: &[i32],
-    source_parameter: Option<&ExactReal>,
+    source_parameter: Option<&Real>,
     suppressed_face_pair_edge_faces: &BTreeSet<usize>,
     fwd: bool,
     origins: &[ExactBoolMeshOutputVertexOrigin],
@@ -782,19 +775,16 @@ fn route_crossing_vertices(
 /// coplanar branch therefore does not also leave a dangling
 /// `append_new_edges` point on both incident face-pair buckets.  The exact
 /// port makes that rule explicit with source-halfedge ownership, exact
-/// parameter comparison, and signed retained endpoint counts, following Yap,
-/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997).
 fn source_tail_face_pair_owned_by_source_edge(
     pair: &ExactBoolMeshEdgeFacePair,
     source_point_is_tail: bool,
     source_signed_counts: &[i32],
-    source_parameter: Option<&ExactReal>,
+    source_parameter: Option<&Real>,
 ) -> bool {
     let Some(parameter) = source_parameter else {
         return false;
     };
-    if compare_reals(parameter, &ExactReal::from(0)).value() != Some(Ordering::Equal) {
+    if compare_reals(parameter, &Real::from(0)).value() != Some(Ordering::Equal) {
         return false;
     }
     let Some(signed_count) = source_signed_counts.get(pair.edge[0]).copied() else {
@@ -892,9 +882,9 @@ fn face_pair_key(pair: &ExactBoolMeshEdgeFacePair, edge_face: usize) -> (usize, 
     }
 }
 
-fn source_edge_parameter(mesh: &ExactMesh, edge: [usize; 2], point: &Point3) -> Option<ExactReal> {
-    let tail = mesh.vertices().get(edge[0])?.to_hyperlimit_point();
-    let head = mesh.vertices().get(edge[1])?.to_hyperlimit_point();
+fn source_edge_parameter(mesh: &ExactMesh, edge: [usize; 2], point: &Point3) -> Option<Real> {
+    let tail = mesh.vertices().get(edge[0])?.clone();
+    let head = mesh.vertices().get(edge[1])?.clone();
     let deltas = [
         head.x.clone() - &tail.x,
         head.y.clone() - &tail.y,
@@ -906,7 +896,7 @@ fn source_edge_parameter(mesh: &ExactMesh, edge: [usize; 2], point: &Point3) -> 
         point.z.clone() - &tail.z,
     ];
     for axis in 0..3 {
-        if compare_reals(&deltas[axis], &ExactReal::from(0)).value() == Some(Ordering::Equal) {
+        if compare_reals(&deltas[axis], &Real::from(0)).value() == Some(Ordering::Equal) {
             continue;
         }
         let parameter = (&numerators[axis] / &deltas[axis]).ok()?;
@@ -922,19 +912,14 @@ fn point_matches_edge_parameter(
     tail: &Point3,
     head: &Point3,
     point: &Point3,
-    parameter: &ExactReal,
+    parameter: &Real,
 ) -> bool {
     axis_matches_parameter(&tail.x, &head.x, &point.x, parameter)
         && axis_matches_parameter(&tail.y, &head.y, &point.y, parameter)
         && axis_matches_parameter(&tail.z, &head.z, &point.z, parameter)
 }
 
-fn axis_matches_parameter(
-    tail: &ExactReal,
-    head: &ExactReal,
-    point: &ExactReal,
-    parameter: &ExactReal,
-) -> bool {
+fn axis_matches_parameter(tail: &Real, head: &Real, point: &Real, parameter: &Real) -> bool {
     let delta = head.clone() - tail;
     let expected = tail.clone() + &(parameter.clone() * delta);
     compare_reals(&expected, point).value() == Some(Ordering::Equal)
@@ -1129,7 +1114,7 @@ fn source_head_endpoint_duplicate_copy(
     if pair.edge_side != run.side
         || pair.source_halfedge != run.source_halfedge
         || point.is_tail
-        || compare_reals(&parameter, &ExactReal::from(1)).value() != Some(Ordering::Equal)
+        || compare_reals(&parameter, &Real::from(1)).value() != Some(Ordering::Equal)
         || signed_counts.get(run.head).copied().map(signed_abs) != Some(0)
     {
         return None;
@@ -1212,11 +1197,7 @@ fn retained_endpoint_copies_owned_by_coplanar_face(
     if count == 0 || starts.get(endpoint).and_then(|start| *start).is_none() {
         return BTreeSet::new();
     }
-    let Some(endpoint_point) = mesh
-        .vertices()
-        .get(endpoint)
-        .map(|vertex| vertex.to_hyperlimit_point())
-    else {
+    let Some(endpoint_point) = mesh.vertices().get(endpoint).map(|vertex| vertex.clone()) else {
         return BTreeSet::new();
     };
 
@@ -1243,7 +1224,7 @@ fn routed_point_opposite_face_pair(
     origin: ExactBoolMeshOutputVertexOrigin,
     boolean03: &ExactBoolMeshBoolean03,
     mesh: &ExactMesh,
-) -> Option<(ExactBoolMeshEdgeFacePair, usize, ExactReal)> {
+) -> Option<(ExactBoolMeshEdgeFacePair, usize, Real)> {
     match (side, origin) {
         (
             ExactBoolMeshSide::Left,
@@ -1265,9 +1246,9 @@ fn routed_point_opposite_face_pair(
     }
 }
 
-fn source_edge_parameter_is_strict_interior(parameter: &ExactReal) -> bool {
-    compare_reals(parameter, &ExactReal::from(0)).value() == Some(Ordering::Greater)
-        && compare_reals(parameter, &ExactReal::from(1)).value() == Some(Ordering::Less)
+fn source_edge_parameter_is_strict_interior(parameter: &Real) -> bool {
+    compare_reals(parameter, &Real::from(0)).value() == Some(Ordering::Greater)
+        && compare_reals(parameter, &Real::from(1)).value() == Some(Ordering::Less)
 }
 
 fn point_in_closed_mesh_triangle(mesh: &ExactMesh, face: usize, point: &Point3) -> bool {
@@ -1296,9 +1277,9 @@ fn point_in_closed_mesh_triangle(mesh: &ExactMesh, face: usize, point: &Point3) 
 fn triangle_points(mesh: &ExactMesh, face: usize) -> Option<[Point3; 3]> {
     let triangle = mesh.triangles().get(face)?.0;
     Some([
-        mesh.vertices().get(triangle[0])?.to_hyperlimit_point(),
-        mesh.vertices().get(triangle[1])?.to_hyperlimit_point(),
-        mesh.vertices().get(triangle[2])?.to_hyperlimit_point(),
+        mesh.vertices().get(triangle[0])?.clone(),
+        mesh.vertices().get(triangle[1])?.clone(),
+        mesh.vertices().get(triangle[2])?.clone(),
     ])
 }
 
@@ -1315,8 +1296,8 @@ fn choose_triangle_projection(points: &[Point3; 3]) -> Option<CoplanarProjection
     })
 }
 
-fn projected_area2_signed(points: &[Point3; 3], projection: CoplanarProjection) -> ExactReal {
-    let mut sum = ExactReal::from(0);
+fn projected_area2_signed(points: &[Point3; 3], projection: CoplanarProjection) -> Real {
+    let mut sum = Real::from(0);
     for index in 0..3 {
         let current = project_point3(&points[index], projection);
         let next = project_point3(&points[(index + 1) % 3], projection);
@@ -1325,8 +1306,8 @@ fn projected_area2_signed(points: &[Point3; 3], projection: CoplanarProjection) 
     sum
 }
 
-fn real_sign(value: &ExactReal) -> Option<Sign> {
-    match compare_reals(value, &ExactReal::from(0)).value()? {
+fn real_sign(value: &Real) -> Option<Sign> {
+    match compare_reals(value, &Real::from(0)).value()? {
         Ordering::Less => Some(Sign::Negative),
         Ordering::Equal => Some(Sign::Zero),
         Ordering::Greater => Some(Sign::Positive),
@@ -1336,7 +1317,7 @@ fn real_sign(value: &ExactReal) -> Option<Sign> {
 #[derive(Clone, Debug, PartialEq)]
 struct SourceEdgeOrder {
     index: usize,
-    parameter: ExactReal,
+    parameter: Real,
 }
 
 fn source_edge_order_index(
@@ -1371,9 +1352,6 @@ struct RetainedTailSubstitution {
 /// The row still owns the ordering/provenance in the `pt_old` bucket, but the
 /// emitted halfedge endpoint must be the retained output vertex so boolmesh
 /// face walks close by vertex id before triangulation.  This is the exact
-/// object version of Yap's separation between certified construction and
-/// topology mutation in "Towards Exact Geometric Computation," *Computational
-/// Geometry* 7.1-2 (1997): the parameter-zero equality is proved exactly, then
 /// the combinatorial vertex identity is replayed explicitly.
 fn source_tail_retained_substitution(
     run: &ExactBoolMeshSourceEdgePointRun,
@@ -1387,7 +1365,7 @@ fn source_tail_retained_substitution(
     if count == 0 || point.is_tail != (signed_count > 0) {
         return None;
     }
-    if compare_reals(&order.parameter, &ExactReal::from(0)).value() != Some(Ordering::Equal) {
+    if compare_reals(&order.parameter, &Real::from(0)).value() != Some(Ordering::Equal) {
         return None;
     }
     let copy = kernel12_origin_copy(point.origin)?;
@@ -1641,8 +1619,6 @@ fn duplicate_coordinate_face_pair_point(
 /// point order are compared with exact predicates, and the resulting ordinal is
 /// stored as a replayable topology artifact.
 ///
-/// This follows Yap, "Towards Exact Geometric Computation," *Computational
-/// Geometry* 7.1-2 (1997): numeric comparisons are certified before topology
 /// pairing consumes them.  The bucket algorithm itself is the boolmesh
 /// `boolean45::append_new_edges` rule.
 fn assign_face_pair_order_indices(
@@ -1763,7 +1739,7 @@ fn compare_output_vertex_axis(
     .value()
 }
 
-fn point_axis(point: &hyperlimit::Point3, axis: usize) -> &ExactReal {
+fn point_axis(point: &hyperlimit::Point3, axis: usize) -> &Real {
     match axis {
         0 => &point.x,
         1 => &point.y,
@@ -1801,10 +1777,8 @@ fn routed_point_order(
 
 /// Stage legacy `boolean45::append_whole_edges` over untouched source edges.
 ///
-/// Yap's "Towards Exact Geometric Computation" treats the combinatorial
 /// decision as part of the exact object pipeline, so this pass copies only
 /// source edges whose operation-signed endpoint allocations replay exactly.
-/// The emitted fragments keep the Weiler-Atherton-style boundary-fragment
 /// shape used by the boolmesh kernels without using rounded coordinates for
 /// orientation or identity.  The source row retained on each run is the exact
 /// counterpart of boolmesh's `append_whole_edges` loop over `hid_p` with
@@ -2007,8 +1981,6 @@ fn count_crossing_vertex(
 /// source-vertex copy and per crossing contribution, then the mutation passes
 /// consume those slots.  The exact coplanar source-tail port can prove that a
 /// retained tail copy and the same-parameter `Kernel12` row represent the same
-/// boundary object before mutation.  Following Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997), the certified
 /// ownership decision is replayed into the combinatorial size object instead
 /// of leaving later face assembly with impossible empty slots.
 fn apply_suppressed_retained_tail_face_counts(
@@ -2049,8 +2021,6 @@ fn apply_suppressed_retained_tail_face_counts(
 /// slots.  On open boundary intervals the fragment, not each endpoint, owns the
 /// source-face boundary topology.  This exact correction is replayed after
 /// partial-edge staging so it can use the certified `pair_up` fragment count,
-/// following Yap, "Towards Exact Geometric Computation," *Computational
-/// Geometry* 7.1-2 (1997): exact row pairing is established before topology
 /// cardinality is reduced.
 fn apply_open_partial_interval_face_counts(
     partial_source_edges: &ExactBoolMeshPartialSourceEdgeStage,
@@ -2172,7 +2142,6 @@ fn incident_faces_for_source_halfedge(
 /// present, follows by matching the undirected source edge.  The ordered uses
 /// let the exact stages emit a halfedge to `face_of(hid_p)` and then to
 /// `face_of(pair(hid_p))`, matching boolmesh while avoiding any rounded
-/// orientation recovery.  This follows Yap, "Towards Exact Geometric
 /// Computation," by making the combinatorial orientation a replayed exact
 /// artifact.
 fn directed_edge_uses_for_source_halfedge(
@@ -2259,14 +2228,14 @@ mod tests {
             source_halfedge: 6,
             tail: 1,
             head: 2,
-            parameter: ExactReal::from(parameter),
+            parameter: Real::from(parameter),
             collision,
             is_tail: false,
             point: ExactBoolMeshPointConstruction::EdgeParameter {
                 side: ExactBoolMeshSide::Left,
                 tail: 1,
                 head: 2,
-                parameter: ExactReal::from(parameter),
+                parameter: Real::from(parameter),
             },
         }
     }
@@ -2390,7 +2359,7 @@ mod tests {
 
     #[test]
     fn source_tail_kernel12_event_suppresses_duplicate_face_pair_points() {
-        let parameter = ExactReal::from(0);
+        let parameter = Real::from(0);
 
         assert!(source_tail_face_pair_owned_by_source_edge(
             &edge_face_pair(),
@@ -2402,7 +2371,7 @@ mod tests {
 
     #[test]
     fn non_tail_parameter_keeps_face_pair_points() {
-        let parameter = ExactReal::from(1);
+        let parameter = Real::from(1);
 
         assert!(!source_tail_face_pair_owned_by_source_edge(
             &edge_face_pair(),

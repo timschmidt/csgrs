@@ -424,14 +424,6 @@ cargo:rerun-if-env-changed=CXXFLAGS_x86_64_unknown_linux_gnu
 CXXFLAGS_x86_64_unknown_linux_gnu = None
 cargo:rerun-if-env-changed=CXXFLAGS_x86_64-unknown-linux-gnu
 CXXFLAGS_x86_64-unknown-linux-gnu = None
-exit status: 0
-exit status: 0
-exit status: 0
-exit status: 0
-exit status: 0
-exit status: 0
-exit status: 0
-exit status: 0
 cargo:rerun-if-env-changed=CXX_x86_64-unknown-linux-gnu
 CXX_x86_64-unknown-linux-gnu = None
 cargo:rerun-if-env-changed=CXX_x86_64_unknown_linux_gnu
@@ -468,6 +460,14 @@ cargo:rerun-if-env-changed=CXXFLAGS_x86_64_unknown_linux_gnu
 CXXFLAGS_x86_64_unknown_linux_gnu = None
 cargo:rerun-if-env-changed=CXXFLAGS_x86_64-unknown-linux-gnu
 CXXFLAGS_x86_64-unknown-linux-gnu = None
+exit status: 0
+exit status: 0
+exit status: 0
+exit status: 0
+exit status: 0
+exit status: 0
+exit status: 0
+exit status: 0
 cargo:rerun-if-env-changed=CXX_x86_64-unknown-linux-gnu
 CXX_x86_64-unknown-linux-gnu = None
 cargo:rerun-if-env-changed=CXX_x86_64_unknown_linux_gnu

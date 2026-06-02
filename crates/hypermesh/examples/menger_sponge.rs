@@ -7,8 +7,8 @@ use bevy::pbr::wireframe::{Wireframe, WireframeColor, WireframePlugin};
 use bevy::prelude::*;
 use bevy::render::mesh::PrimitiveTopology;
 use bevy_panorbit_camera::{PanOrbitCamera, PanOrbitCameraPlugin};
-use hypermesh::prelude::*;
-use std::f64::consts::PI;
+use hypermesh::exact::{ExactMesh, ValidationPolicy, approximate_mesh_f64_view};
+
 use std::time::Instant;
 
 #[derive(Component)]
@@ -34,12 +34,12 @@ fn setup(
 ) {
     let now = Instant::now();
 
-    let num = 4;
-    let res = menger_sponge(num);
+    let level = 3;
+    let sponge = menger_sponge(level);
 
     println!(
-        ">>>>>>>>>>>>>> Compute a menger sponge of level {}, elapsed time: {:?}",
-        num,
+        "computed exact integer-grid Menger sponge level {}, elapsed time: {:?}",
+        level,
         now.elapsed()
     );
 
@@ -49,34 +49,13 @@ fn setup(
         PanOrbitCamera::default(),
     ));
 
-    let mut m = Mesh::new(
-        PrimitiveTopology::TriangleList,
-        RenderAssetUsages::default(),
-    );
-    let mut pos = vec![];
-    let mut vns = vec![];
-    for (fid, hs) in res.hs.chunks(3).enumerate() {
-        let p0 = res.ps[hs[0].tail];
-        let p1 = res.ps[hs[1].tail];
-        let p2 = res.ps[hs[2].tail];
-        let n = res.face_normals[fid];
-        pos.push([p0.x as f32, p0.y as f32, p0.z as f32]);
-        pos.push([p1.x as f32, p1.y as f32, p1.z as f32]);
-        pos.push([p2.x as f32, p2.y as f32, p2.z as f32]);
-        vns.push([n.x as f32, n.y as f32, n.z as f32]);
-        vns.push([n.x as f32, n.y as f32, n.z as f32]);
-        vns.push([n.x as f32, n.y as f32, n.z as f32]);
-    }
-    m.insert_attribute(Mesh::ATTRIBUTE_POSITION, pos);
-    m.insert_attribute(Mesh::ATTRIBUTE_NORMAL, vns);
-
     cmds.spawn((
-        Mesh3d(meshes.add(m).clone()),
+        Mesh3d(meshes.add(bevy_mesh_from_exact(&sponge))),
         MeshMaterial3d(mats.add(StandardMaterial {
             base_color: GRAY.into(),
             ..default()
         })),
-        Transform::default(),
+        Transform::from_scale(Vec3::splat(1.0 / 27.0)).with_translation(Vec3::splat(-0.5)),
         Wireframe,
         WireframeColor {
             color: Srgba::rgb(0.3, 0.3, 0.3).into(),
@@ -85,122 +64,104 @@ fn setup(
     ));
 }
 
-pub fn menger_sponge(n: usize) -> Manifold {
-    let res = Manifold::new(&PS, &TS).unwrap();
-    let mut holes = vec![];
-    fractal(&res, &mut holes, 0., 0., 1., 1, n);
-    let holes_z = compose(&holes).unwrap();
-
-    let rot = |rx: f64, ry: f64, rz: f64| {
-        let ts = holes_z.hs.iter().map(|h| h.tail).collect::<Vec<_>>();
-        let mut ps = holes_z.ps.clone();
-        let x = rx as hypermesh::Real;
-        let y = ry as hypermesh::Real;
-        let z = rz as hypermesh::Real;
-        let r = hypermesh::Mat3::from_euler(glam::EulerRot::XYZ, x, y, z);
-        for p in ps.iter_mut() {
-            *p = r * *p;
-        }
-        let mut flat = vec![];
-        for p in ps {
-            flat.push(if (p.x - 0.5).abs() < 1e-4 {
-                0.5
-            } else if (p.x + 0.5).abs() < 1e-4 {
-                -0.5
-            } else {
-                p.x
-            });
-            flat.push(if (p.y - 0.5).abs() < 1e-4 {
-                0.5
-            } else if (p.y + 0.5).abs() < 1e-4 {
-                -0.5
-            } else {
-                p.y
-            });
-            flat.push(if (p.z - 0.5).abs() < 1e-4 {
-                0.5
-            } else if (p.z + 0.5).abs() < 1e-4 {
-                -0.5
-            } else {
-                p.z
-            });
-        }
-        Manifold::new(&flat, &ts).unwrap()
-    };
-
-    let holes_x = rot(PI / 2., 0., 0.);
-    let holes_y = rot(0., PI / 2., 0.);
-
-    let res = compute_boolean_with_report(&res, &holes_z, OpType::Subtract)
-        .unwrap()
-        .mesh;
-    let res = compute_boolean_with_report(&res, &holes_x, OpType::Subtract)
-        .unwrap()
-        .mesh;
-    compute_boolean_with_report(&res, &holes_y, OpType::Subtract)
-        .unwrap()
-        .mesh
+fn menger_sponge(level: usize) -> ExactMesh {
+    let side = 3_i64.pow(level as u32);
+    let mut coordinates = Vec::new();
+    let mut indices = Vec::new();
+    append_menger_cells(level, [0, 0, 0], side, &mut coordinates, &mut indices);
+    ExactMesh::from_i64_triangles_with_policy(&coordinates, &indices, ValidationPolicy::CLOSED)
+        .expect("generated Menger sponge should be a closed exact mesh")
 }
 
-const PS: [f64; 24] = [
-    -0.5, -0.5, -0.5, -0.5, -0.5, 0.5, -0.5, 0.5, -0.5, -0.5, 0.5, 0.5, 0.5, -0.5, -0.5, 0.5, -0.5,
-    0.5, 0.5, 0.5, -0.5, 0.5, 0.5, 0.5,
-];
-
-const TS: [usize; 36] = [
-    1, 0, 4, 2, 4, 0, 1, 3, 0, 3, 1, 5, 3, 2, 0, 3, 7, 2, 5, 4, 6, 5, 1, 4, 6, 4, 2, 7, 6, 2, 7, 3,
-    5, 7, 5, 6,
-];
-
-pub fn compose(ms: &Vec<Manifold>) -> std::result::Result<Manifold, String> {
-    let mut ps = vec![];
-    let mut ts = vec![];
-    let mut offset = 0;
-    for m in ms {
-        for h in m.hs.iter() {
-            ts.push(h.tail + offset);
-        }
-        for p in m.ps.iter() {
-            ps.push(p.x);
-            ps.push(p.y);
-            ps.push(p.z);
-        }
-        offset += m.nv;
-    }
-    Manifold::new(&ps, &ts)
-}
-
-pub fn fractal(
-    hole: &Manifold,
-    holes: &mut Vec<Manifold>,
-    x: f64,
-    y: f64,
-    w: f64,
-    depth: usize,
-    depth_max: usize,
+fn append_menger_cells(
+    level: usize,
+    origin: [i64; 3],
+    side: i64,
+    coordinates: &mut Vec<i64>,
+    indices: &mut Vec<usize>,
 ) {
-    let w = w / 3.;
-    let p = hole
-        .ps
-        .iter()
-        .flat_map(|p| [p.x * w + x, p.y * w + y, p.z])
-        .collect::<Vec<f64>>();
-    holes.push(Manifold::new(&p, &TS).unwrap());
-
-    if depth == depth_max {
+    if level == 0 {
+        append_box(
+            origin,
+            [origin[0] + side, origin[1] + side, origin[2] + side],
+            coordinates,
+            indices,
+        );
         return;
     }
 
-    for xy in [
-        (x - w, y - w),
-        (x - w, y),
-        (x - w, y + w),
-        (x, y + w),
-        (x + w, y + w),
-        (x + w, y),
-        (x + w, y - w),
-        (x, y - w),
-    ] {
-        fractal(hole, holes, xy.0, xy.1, w, depth + 1, depth_max);
+    let step = side / 3;
+    for x in 0..3 {
+        for y in 0..3 {
+            for z in 0..3 {
+                let middle_axes = usize::from(x == 1) + usize::from(y == 1) + usize::from(z == 1);
+                if middle_axes >= 2 {
+                    continue;
+                }
+                append_menger_cells(
+                    level - 1,
+                    [
+                        origin[0] + i64::from(x) * step,
+                        origin[1] + i64::from(y) * step,
+                        origin[2] + i64::from(z) * step,
+                    ],
+                    step,
+                    coordinates,
+                    indices,
+                );
+            }
+        }
     }
+}
+
+fn append_box(min: [i64; 3], max: [i64; 3], coordinates: &mut Vec<i64>, indices: &mut Vec<usize>) {
+    let base = coordinates.len() / 3;
+    coordinates.extend_from_slice(&[
+        min[0], min[1], min[2], max[0], min[1], min[2], max[0], max[1], min[2], min[0], max[1],
+        min[2], min[0], min[1], max[2], max[0], min[1], max[2], max[0], max[1], max[2], min[0],
+        max[1], max[2],
+    ]);
+    indices.extend(
+        [
+            0, 2, 1, 0, 3, 2, 4, 5, 6, 4, 6, 7, 0, 1, 5, 0, 5, 4, 1, 2, 6, 1, 6, 5, 2, 3, 7, 2, 7,
+            6, 3, 0, 4, 3, 4, 7,
+        ]
+        .into_iter()
+        .map(|index| base + index),
+    );
+}
+
+fn bevy_mesh_from_exact(mesh: &ExactMesh) -> Mesh {
+    let view = approximate_mesh_f64_view(mesh).expect("exact mesh should have a fresh f64 view");
+    let mut positions = Vec::with_capacity(view.indices.len());
+    let mut normals = Vec::with_capacity(view.indices.len());
+
+    for triangle in view.indices.chunks_exact(3) {
+        let p0 = position_at(&view.positions, triangle[0]);
+        let p1 = position_at(&view.positions, triangle[1]);
+        let p2 = position_at(&view.positions, triangle[2]);
+        let normal = (Vec3::from_array(p1) - Vec3::from_array(p0))
+            .cross(Vec3::from_array(p2) - Vec3::from_array(p0))
+            .normalize_or_zero()
+            .to_array();
+        positions.extend_from_slice(&[p0, p1, p2]);
+        normals.extend_from_slice(&[normal, normal, normal]);
+    }
+
+    let mut out = Mesh::new(
+        PrimitiveTopology::TriangleList,
+        RenderAssetUsages::default(),
+    );
+    out.insert_attribute(Mesh::ATTRIBUTE_POSITION, positions);
+    out.insert_attribute(Mesh::ATTRIBUTE_NORMAL, normals);
+    out
+}
+
+fn position_at(positions: &[f64], index: usize) -> [f32; 3] {
+    let base = index * 3;
+    [
+        positions[base] as f32,
+        positions[base + 1] as f32,
+        positions[base + 2] as f32,
+    ]
 }

@@ -5,8 +5,6 @@
 //! incidental caches. It summarizes the validated object state after
 //! [`ExactMesh::validate_retained_state`](super::ExactMesh::validate_retained_state)
 //! has replayed bounds, topology facts, and predicate provenance from the exact
-//! source rows. This follows Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7.1-2 (1997): exact geometric software should make
 //! proof-bearing and cache-bearing boundaries explicit instead of accepting
 //! rounded representatives or stale facts as topology.
 
@@ -102,8 +100,6 @@ pub enum ExactMeshAuditError {
 /// This is advisory cache metadata, not a topology certificate. It gives
 /// downstream voxel, physics, export, and boolean staging code a stable way to
 /// reject stale retained facts before falling back to recomputation. The split
-/// follows Yap, "Towards Exact Geometric Computation," *Computational
-/// Geometry* 7.1-2 (1997): exact object identity, cached facts, approximate
 /// views, and proof-producing predicates should remain separately auditable.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ExactMeshAuditFreshness {

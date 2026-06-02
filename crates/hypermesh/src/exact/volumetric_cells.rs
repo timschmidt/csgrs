@@ -7,15 +7,11 @@
 //! evidence, whether that evidence is only a boundary-contact candidate, and
 //! whether it is mixed with non-coplanar crossing events that require a later
 //! certified cell materializer.
-//!
-//! The boundary follows Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7.1-2 (1997): exact predicates and construction
-//! events are retained as auditable objects, and a missing topological
-//! algorithm is represented as explicit exact state rather than as a tolerance
-//! fallback. The cell-obstacle vocabulary is also aligned with Weiler and
-//! Atherton, "Hidden Surface Removal Using Polygon Area Sorting," *SIGGRAPH
-//! Computer Graphics* 11.2 (1977), where surface classification depends on
-//! correctly retaining face/edge intersection structure before traversal.
+//! Exact predicates and construction events are retained as auditable objects,
+//! and a missing topological algorithm is represented as explicit exact state
+//! rather than as a tolerance fallback. The cell-obstacle vocabulary is also
+//! classification depends on correctly retaining face/edge intersection
+//! structure before traversal.
 
 use std::cmp::Ordering;
 
@@ -29,7 +25,7 @@ use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
 use super::graph::{ExactIntersectionGraph, IntersectionEvent, MeshSide, build_intersection_graph};
 use super::intersection::MeshFacePairRelation;
 use super::mesh::ExactMesh;
-use super::scalar::ExactReal;
+use hyperreal::Real;
 
 /// Most specific retained obstacle for volumetric coplanar source-face cells.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -88,8 +84,6 @@ pub enum CoplanarVolumetricCellEvidenceError {
 /// Freshness status for retained coplanar volumetric-cell evidence.
 ///
 /// The variants separate local report drift from source-replay drift. That
-/// split follows Yap, "Towards Exact Geometric Computation," *Computational
-/// Geometry* 7.1-2 (1997): exact geometric systems should expose retained
 /// predicate/construction state as auditable objects, then require those
 /// objects to replay from their source operands before topology consumes them.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -159,8 +153,6 @@ pub struct CoplanarVolumetricCellEvidenceReport {
     /// These are boundary-only adjacencies, such as two closed solids sharing a
     /// full face. The side test replays exact off-plane vertices from each
     /// closed operand against the retained shared face plane. That distinction
-    /// is the retained-object boundary Yap argues for in "Towards Exact
-    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997): a
     /// coplanar face-pair blocker should not be inferred from a sampled point
     /// near the shared face.
     pub opposite_side_coplanar_overlapping_pairs: usize,
@@ -358,7 +350,6 @@ impl CoplanarVolumetricCellEvidenceReport {
     /// validates that graph against the same meshes, reconstructs this compact
     /// evidence report, and requires byte-for-byte equality. This keeps
     /// coplanar volumetric-cell blockers attached to the exact source objects
-    /// whose predicates produced them, as required by Yap's exact-geometric-
     /// computation model.
     pub fn validate_against_sources(
         &self,
@@ -379,9 +370,6 @@ impl CoplanarVolumetricCellEvidenceReport {
     ///
     /// Local validation runs before source replay so a scheduler can report
     /// whether copied volumetric-cell evidence has mutated internally or has
-    /// merely gone stale because the operands changed. That mirrors Yap's
-    /// retained-state discipline from "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7.1-2 (1997), and keeps missing coplanar cell
     /// extraction explicit instead of collapsing it to a tolerance decision.
     pub fn freshness_against_sources(
         &self,
@@ -405,7 +393,7 @@ pub fn certify_coplanar_volumetric_cell_evidence(
 ) -> Result<CoplanarVolumetricCellEvidenceReport, MeshError> {
     let graph = build_intersection_graph(left, right)?;
     graph
-        .validate_against_sources(left, right)
+        .validate_against_meshes(left, right)
         .map_err(volumetric_cell_graph_mesh_error)?;
     let report = CoplanarVolumetricCellEvidenceReport::from_graph(&graph, left, right);
     report.validate().map_err(volumetric_cell_mesh_error)?;
@@ -456,7 +444,6 @@ enum CoplanarOverlapSideEvidence {
 /// operand vertex against the retained plane of the left face. If all off-plane
 /// vertices of an operand lie on one exact side, that side is used as the local
 /// ownership witness. This is deliberately an object-level certificate in
-/// Yap's sense: the later cell materializer receives explicit
 /// same-side/opposite-side evidence instead of a tolerance-derived "touching"
 /// label.
 fn classify_coplanar_overlap_sides(
@@ -502,7 +489,7 @@ fn mesh_off_plane_side(
 ) -> Option<PlaneSide> {
     let mut side = None;
     for vertex in mesh.vertices() {
-        match retained_plane_side(plane, &vertex.to_hyperlimit_point())? {
+        match retained_plane_side(plane, &vertex.clone())? {
             PlaneSide::On => {}
             candidate => {
                 if let Some(existing) = side {
@@ -526,7 +513,7 @@ fn retained_plane_side(
     let y_term = &plane.normal[1] * &point.y;
     let z_term = &plane.normal[2] * &point.z;
     let value = &(&(&x_term + &y_term) + &z_term) + &plane.offset;
-    match compare_reals(&value, &ExactReal::from(0)).value()? {
+    match compare_reals(&value, &Real::from(0)).value()? {
         Ordering::Less => Some(PlaneSide::Above),
         Ordering::Equal => Some(PlaneSide::On),
         Ordering::Greater => Some(PlaneSide::Below),
@@ -577,9 +564,9 @@ fn mesh_for_side<'a>(side: MeshSide, left: &'a ExactMesh, right: &'a ExactMesh) 
 fn triangle_points(mesh: &ExactMesh, face: usize) -> Option<[Point3; 3]> {
     let triangle = mesh.triangles().get(face)?.0;
     Some([
-        mesh.vertices().get(triangle[0])?.to_hyperlimit_point(),
-        mesh.vertices().get(triangle[1])?.to_hyperlimit_point(),
-        mesh.vertices().get(triangle[2])?.to_hyperlimit_point(),
+        mesh.vertices().get(triangle[0])?.clone(),
+        mesh.vertices().get(triangle[1])?.clone(),
+        mesh.vertices().get(triangle[2])?.clone(),
     ])
 }
 
@@ -592,12 +579,12 @@ fn choose_triangle_projection(points: &[Point3; 3]) -> Option<CoplanarProjection
     .into_iter()
     .find(|&projection| {
         let area = projected_area2_signed(points, projection);
-        compare_reals(&area, &ExactReal::from(0)).value() != Some(Ordering::Equal)
+        compare_reals(&area, &Real::from(0)).value() != Some(Ordering::Equal)
     })
 }
 
-fn projected_area2_signed(points: &[Point3; 3], projection: CoplanarProjection) -> ExactReal {
-    let mut sum = ExactReal::from(0);
+fn projected_area2_signed(points: &[Point3; 3], projection: CoplanarProjection) -> Real {
+    let mut sum = Real::from(0);
     for index in 0..3 {
         let current = project_point3(&points[index], projection);
         let next = project_point3(&points[(index + 1) % 3], projection);
@@ -620,6 +607,6 @@ fn volumetric_cell_graph_mesh_error(
     MeshError::one(MeshDiagnostic::new(
         Severity::Error,
         DiagnosticKind::UnsupportedExactOperation,
-        format!("retained volumetric-cell graph failed source replay: {error:?}"),
+        format!("retained volumetric-cell graph failed source-mesh validation: {error:?}"),
     ))
 }

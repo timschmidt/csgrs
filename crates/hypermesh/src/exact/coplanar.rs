@@ -4,7 +4,6 @@
 //! projection selection, projected segment/triangle predicates, retained
 //! predicate certificates, and self-validation. `hypermesh` re-exports those
 //! helpers so mesh topology code consumes one shared implementation of the
-//! Yap-style predicate/construction boundary.
 
 pub use hyperlimit::{
     CoplanarProjection, CoplanarTriangleClassification, CoplanarTriangleRelation,

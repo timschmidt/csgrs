@@ -10,23 +10,15 @@ cargo-fuzz = true
 [dependencies]
 # Hyper sibling dependency switch: keep both local path and crates.io lines; do not remove either.
 # Development mode uses the local path lines. For release, comment those and uncomment the crates.io lines.
-hypermesh = { path = "..", default-features = false, features = ["exact", "internal-fuzzing"] }
-hyperlimit = { path = "../../hyperlimit", optional = true }
-hypertri = { path = "../../hypertri", default-features = false, optional = true }
-# hypermesh = { version = "0.3.0", default-features = false, features = ["exact"] }
-# hyperlimit = { version = "0.4.0", optional = true }
-# hypertri = { version = "0.3.0", default-features = false, optional = true }
+hypermesh = { path = "..", default-features = false, features = ["internal-fuzzing"] }
+hyperlimit = { path = "../../hyperlimit" }
+hyperreal = { path = "../../hyperreal" }
+hypertri = { path = "../../hypertri", default-features = false, features = ["cdt", "earcut"] }
+# hypermesh = { version = "0.3.0", default-features = false, features = ["internal-fuzzing"] }
+# hyperlimit = { version = "0.4.0" }
+# hyperreal = { version = "0.13.0" }
+# hypertri = { version = "0.3.0", default-features = false, features = ["cdt", "earcut"] }
 libfuzzer-sys = "0.4"
-
-[features]
-exact-triangulation = [
-    "hypermesh/exact-triangulation",
-    "dep:hyperlimit",
-    "dep:hypertri",
-    "hypertri/cdt",
-    "hypertri/earcut",
-]
-legacy-boolean = ["hypermesh/legacy-boolean"]
 
 [[bin]]
 name = "exact_mesh_input"
@@ -55,7 +47,6 @@ path = "fuzz_targets/exact_boolean_preflight.rs"
 test = false
 doc = false
 bench = false
-required-features = ["exact-triangulation"]
 
 [[bin]]
 name = "exact_adjacent_polygon"
@@ -63,12 +54,3 @@ path = "fuzz_targets/exact_adjacent_polygon.rs"
 test = false
 doc = false
 bench = false
-required-features = ["exact-triangulation"]
-
-[[bin]]
-name = "legacy_boolean_adapter"
-path = "fuzz_targets/legacy_boolean_adapter.rs"
-test = false
-doc = false
-bench = false
-required-features = ["legacy-boolean"]

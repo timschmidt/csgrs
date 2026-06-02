@@ -4,17 +4,22 @@
 //! as another local tolerance algorithm. Instead this module exposes certified
 //! primitives that legacy kernels can migrate onto: classify triangle vertices
 //! against an oriented face plane and retain the predicate route. Plane-side
-//! tests are one of the core predicates used by Moller, "A Fast Triangle-
-//! Triangle Intersection Test," *Journal of Graphics Tools* 2.2 (1997), and
-//! by Guigue and Devillers, "Fast and Robust Triangle-Triangle Overlap Test
-//! Using Orientation Predicates," *Journal of Graphics Tools* 8.1 (2003).
-//! Hypermesh follows the latter style: orientation predicates come from
-//! `hyperlimit`, and Yap's exact-geometric-computation boundary keeps the
-//! certificate with the classification.
+//! orientation predicates come from `hyperlimit`, and each classification
+//! retains the certificate that produced it.
+//!
+//! The plane-side rejection and candidate staging follows Moller, "A Fast
+//! Triangle-Triangle Intersection Test," *Journal of Graphics Tools* 2.2
+//! (1997). Coplanar overlap is delegated to exact orientation predicates in
+//! the style of Guigue and Devillers, "Fast and Robust Triangle-Triangle
+//! Overlap Test Using Orientation Predicates," *Journal of Graphics Tools* 8.1
+//! (2003).
 
 use core::cmp::Ordering;
 
-use hyperlimit::{PlaneSide, Point3, Sign, compare_reals, orient3d_report};
+use hyperlimit::{
+    PlaneSide, Point3, classify_triangle_against_oriented_plane, compare_reals,
+    triangle_plane_relation_from_sides,
+};
 
 use super::construction::{SegmentPlaneIntersection, intersect_segment_with_face_plane};
 use super::coplanar::{
@@ -22,101 +27,11 @@ use super::coplanar::{
 };
 use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
 use super::mesh::ExactMesh;
-use super::provenance::PredicateUse;
-use super::scalar::ExactReal;
+use hyperreal::Real;
 
-/// Exact relation between one triangle and another triangle's oriented plane.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum TrianglePlaneRelation {
-    /// Every query vertex is strictly above the oriented plane.
-    StrictlyAbove,
-    /// Every query vertex is strictly below the oriented plane.
-    StrictlyBelow,
-    /// Every query vertex is on the plane.
-    Coplanar,
-    /// Query vertices occur on both sides, or on one side plus the plane.
-    Straddling,
-    /// At least one required orientation predicate was undecided.
-    Unknown,
-}
-
-/// Structural inconsistency in a triangle/plane classifier report.
-///
-/// This validates the retained side facts and collapsed relation without
-/// replaying predicates. Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997), requires topology-facing decisions
-/// to carry enough certified structure that later stages can reject incoherent
-/// artifacts before using them.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum TrianglePlaneValidationError {
-    /// The retained vertex sides do not derive the retained relation.
-    RelationMismatch,
-    /// Recomputing the classifier from the supplied source triangle and plane
-    /// did not reproduce this retained report.
-    SourceReplayMismatch,
-}
-
-/// Certified triangle/plane classification with retained predicate routes.
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct TrianglePlaneClassification {
-    /// Coarse relation.
-    pub relation: TrianglePlaneRelation,
-    /// Per-query-vertex side, or `None` when the predicate was undecided.
-    pub vertex_sides: [Option<PlaneSide>; 3],
-    /// Predicate certificates used by the three orientation tests.
-    pub predicates: Vec<PredicateUse>,
-}
-
-impl TrianglePlaneClassification {
-    /// Return whether every predicate used here was proof-producing.
-    pub fn all_proof_producing(&self) -> bool {
-        self.predicates
-            .iter()
-            .copied()
-            .all(PredicateUse::is_proof_producing)
-    }
-
-    /// Validate that retained vertex side facts imply the reported relation.
-    ///
-    /// The predicate certificates may be empty for retained-plane classifiers,
-    /// but the side/relation model is the same as the direct predicate route.
-    pub fn validate(&self) -> Result<(), TrianglePlaneValidationError> {
-        if relation_from_sides(self.vertex_sides) == self.relation {
-            Ok(())
-        } else {
-            Err(TrianglePlaneValidationError::RelationMismatch)
-        }
-    }
-
-    /// Validate this classifier against the source point and triangle handles.
-    ///
-    /// Local validation checks only that retained side facts imply the retained
-    /// relation. Source replay recomputes the three exact orientation
-    /// predicates from `points`, `face`, and `query`, then requires the
-    /// retained classifier to match the replay. This keeps the plane-side
-    /// certificate attached to the exact predicate history required by Yap,
-    /// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-    /// (1997), and by the orientation-predicate formulation of Guigue and
-    /// Devillers, "Fast and Robust Triangle-Triangle Overlap Test Using
-    /// Orientation Predicates," *Journal of Graphics Tools* 8.1 (2003).
-    pub fn validate_against_sources(
-        &self,
-        points: &[Point3],
-        face: [usize; 3],
-        query: [usize; 3],
-    ) -> Result<(), TrianglePlaneValidationError> {
-        self.validate()?;
-        if !indices_in_range(points, face) || !indices_in_range(points, query) {
-            return Err(TrianglePlaneValidationError::SourceReplayMismatch);
-        }
-        let replay = classify_triangle_against_face_plane(points, face, query);
-        if self == &replay {
-            Ok(())
-        } else {
-            Err(TrianglePlaneValidationError::SourceReplayMismatch)
-        }
-    }
-}
+pub use hyperlimit::{
+    TrianglePlaneClassification, TrianglePlaneRelation, TrianglePlaneValidationError,
+};
 
 /// Certified coarse relation between two exact triangles.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -147,7 +62,6 @@ pub enum TriangleTriangleRelation {
 /// This is the narrow-phase handoff check before mesh face-pair scheduling.
 /// It verifies that the two plane classifications, optional coplanar report,
 /// and retained segment/plane construction events agree with the collapsed
-/// relation. The check follows Yap's EGC staging: exact predicates and
 /// constructions remain auditable objects until validated by the consumer
 /// layer.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -179,8 +93,6 @@ pub enum TriangleTriangleValidationError {
 /// Certified triangle/triangle coarse classification.
 ///
 /// This intentionally stops before coplanar overlap and full intersection
-/// graph assembly. The first stage of Moller (1997) and Guigue-Devillers
-/// (2003) rejects triangles whose vertices are all on one strict side of the
 /// other triangle's plane. Hypermesh performs that stage through
 /// `hyperlimit::orient3d_report` and keeps the segment/plane construction
 /// events needed by the later exact splitter.
@@ -295,9 +207,6 @@ impl TriangleTriangleClassification {
     /// including plane-side predicates, coplanar projection predicates, and
     /// candidate segment/plane construction events, then requires exact
     /// equality with this retained report. This is the auditable-object
-    /// boundary advocated by Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7.1-2 (1997), applied to the
-    /// Guigue-Devillers triangle/triangle predicate staging.
     pub fn validate_against_sources(
         &self,
         points: &[Point3],
@@ -323,27 +232,10 @@ pub fn classify_triangle_against_face_plane(
     face: [usize; 3],
     query: [usize; 3],
 ) -> TrianglePlaneClassification {
-    let a = &points[face[0]];
-    let b = &points[face[1]];
-    let c = &points[face[2]];
-    let reports = [
-        orient3d_report(a, b, c, &points[query[0]]),
-        orient3d_report(a, b, c, &points[query[1]]),
-        orient3d_report(a, b, c, &points[query[2]]),
-    ];
-
-    let mut predicates = Vec::with_capacity(reports.len());
-    let mut sides = [None, None, None];
-    for (index, report) in reports.into_iter().enumerate() {
-        predicates.push(PredicateUse::from_certificate(report.certificate));
-        sides[index] = report.value().map(side_from_sign);
-    }
-
-    TrianglePlaneClassification {
-        relation: relation_from_sides(sides),
-        vertex_sides: sides,
-        predicates,
-    }
+    classify_triangle_against_oriented_plane(
+        [&points[face[0]], &points[face[1]], &points[face[2]]],
+        [&points[query[0]], &points[query[1]], &points[query[2]]],
+    )
 }
 
 /// Classify a mesh triangle against a retained exact face plane.
@@ -351,8 +243,6 @@ pub fn classify_triangle_against_face_plane(
 /// This is the cached-object counterpart to
 /// [`classify_triangle_against_face_plane`]. It evaluates the unnormalized
 /// determinant-form plane coefficients retained in [`super::facts::FacePlaneFacts`]
-/// and compares the exact `Real` result to zero. Yap, "Towards Exact
-/// Geometric Computation," *Computational Geometry* 7.1-2 (1997), motivates
 /// this shape directly: object-level numerical structure should survive so
 /// later topology stages can reuse exact facts instead of reconstructing
 /// normals or representative floats.
@@ -380,12 +270,12 @@ pub fn classify_mesh_triangle_against_retained_face_plane(
     let query = query_mesh.triangles()[query_face].0;
     let mut sides = [None, None, None];
     for (side, vertex) in sides.iter_mut().zip(query) {
-        let point = query_mesh.vertices()[vertex].to_hyperlimit_point();
+        let point = query_mesh.vertices()[vertex].clone();
         *side = retained_plane_side(plane, &point);
     }
 
     Ok(TrianglePlaneClassification {
-        relation: relation_from_sides(sides),
+        relation: triangle_plane_relation_from_sides(sides),
         vertex_sides: sides,
         predicates: Vec::new(),
     })
@@ -449,7 +339,7 @@ fn retained_plane_side(plane: &super::facts::FacePlaneFacts, point: &Point3) -> 
     // `hyperlimit::orient3d_report(a, b, c, p)` uses the opposite sign
     // convention from this stored `(b - a) x (c - a)` dot-product form, so the
     // exact comparison is inverted to preserve the public `PlaneSide` contract.
-    match compare_reals(&value, &ExactReal::from(0)).value()? {
+    match compare_reals(&value, &Real::from(0)).value()? {
         Ordering::Less => Some(PlaneSide::Above),
         Ordering::Equal => Some(PlaneSide::On),
         Ordering::Greater => Some(PlaneSide::Below),
@@ -468,45 +358,12 @@ fn index_error(message: &'static str, face: Option<usize>, vertex: Option<usize>
     MeshError::one(diagnostic)
 }
 
-fn add(left: &ExactReal, right: &ExactReal) -> ExactReal {
+fn add(left: &Real, right: &Real) -> Real {
     left.clone() + right
 }
 
-fn mul(left: &ExactReal, right: &ExactReal) -> ExactReal {
+fn mul(left: &Real, right: &Real) -> Real {
     left.clone() * right
-}
-
-fn side_from_sign(sign: Sign) -> PlaneSide {
-    PlaneSide::from(sign)
-}
-
-fn relation_from_sides(sides: [Option<PlaneSide>; 3]) -> TrianglePlaneRelation {
-    let Some([a, b, c]) = transpose_sides(sides) else {
-        return TrianglePlaneRelation::Unknown;
-    };
-    let above = [a, b, c]
-        .iter()
-        .filter(|&&side| side == PlaneSide::Above)
-        .count();
-    let below = [a, b, c]
-        .iter()
-        .filter(|&&side| side == PlaneSide::Below)
-        .count();
-    let on = [a, b, c]
-        .iter()
-        .filter(|&&side| side == PlaneSide::On)
-        .count();
-
-    match (above, below, on) {
-        (3, 0, 0) => TrianglePlaneRelation::StrictlyAbove,
-        (0, 3, 0) => TrianglePlaneRelation::StrictlyBelow,
-        (0, 0, 3) => TrianglePlaneRelation::Coplanar,
-        _ => TrianglePlaneRelation::Straddling,
-    }
-}
-
-fn transpose_sides(sides: [Option<PlaneSide>; 3]) -> Option<[PlaneSide; 3]> {
-    Some([sides[0]?, sides[1]?, sides[2]?])
 }
 
 fn indices_in_range(points: &[Point3], indices: [usize; 3]) -> bool {

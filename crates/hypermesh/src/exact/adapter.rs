@@ -5,10 +5,9 @@
 //! finite floats are lifted as exact dyadics, index ranges are checked against
 //! the lifted vertex count, and repeated triangle indices are rejected before
 //! predicate work begins. Topology is still certified later by
-//! [`ExactMesh`](super::ExactMesh). This boundary follows Yap, "Towards Exact
-//! Geometric Computation," *Computational Geometry* 7.1-2 (1997): approximate
-//! input channels can propose exact objects only after their approximation
-//! policy and conversion evidence are explicit.
+//! [`ExactMesh`](super::ExactMesh). Approximate input channels can propose exact
+//! objects only after their approximation policy and conversion evidence are
+//! explicit.
 
 use super::{
     ApproximationPolicy, DiagnosticKind, LossyF64Import, MeshDiagnostic, MeshSource, Severity,
@@ -41,8 +40,6 @@ pub struct LossyF64MeshInputReport {
 /// Integer coordinate streams are exact source data rather than lossy adapter
 /// data, but their buffer shape and index rows still need an explicit report
 /// before topology predicates run. Keeping this input audit separate from
-/// [`ExactMesh`](super::ExactMesh) follows Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997): construction evidence
 /// and topology certificates should be visible artifacts, not hidden side
 /// effects of a successful constructor.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -135,8 +132,6 @@ pub enum ExactI64MeshInputReportValidationError {
 /// This is a preconstruction adapter diagnostic, not a topology claim. `Ready`
 /// means the flat stream can be handed to exact mesh construction; exact
 /// manifoldness and predicate decisions still happen later. This is the input
-/// analogue of Yap's exact-object boundary in "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997).
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum LossyF64MeshInputReadiness {
     /// The report is internally valid and has no error diagnostics.

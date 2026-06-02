@@ -3,10 +3,10 @@
 //! This module is the general, nonconvex counterpart to the convex halfspace
 //! classifier in [`crate::exact::solid`]. It uses axis-aligned rays and exact
 //! `Real` arithmetic, then treats ray/edge and ray/vertex degeneracies as
-//! explicit retry-or-unknown states. That is the Yap-style boundary from
-//! "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-//! (1997): a winding decision is certified only when the combinatorial parity
-//! was obtained without hidden tolerance choices.
+//! explicit blockers so a selected parity result was obtained without hidden
+//! tolerance choices. The parity query is the standard ray-crossing point
+//! classification described by Preparata and Shamos, *Computational Geometry:
+//! An Introduction* (1985), with exact predicates replacing tolerance tests.
 
 use std::cmp::Ordering;
 
@@ -90,7 +90,6 @@ impl PointMeshWindingReport {
     /// relations must carry an axis and parity-compatible crossing count;
     /// unknown reports must retain evidence that all attempted axes were
     /// blocked by degeneracy or undecidable comparisons. The split mirrors
-    /// Yap's exact-geometric-computation discipline: exact topology states and
     /// unresolved states are separate public values, not nearby booleans.
     pub fn validate(&self) -> Result<(), WindingReportError> {
         if self.tested_axes > WindingRayAxis::ALL.len() {
@@ -291,9 +290,6 @@ pub fn classify_point_against_closed_mesh_winding(
 /// the 3D plane intersection sign is compared exactly. If a ray hits a
 /// projected edge/vertex, that axis is rejected rather than "nudged" by an
 /// epsilon; another exact axis may still decide the relation. This keeps the
-/// classical parity idea inside Yap's exact-computation contract from
-/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997).
 pub fn classify_point_against_closed_mesh_winding_report(
     point: &Point3,
     mesh: &ExactMesh,
@@ -318,9 +314,9 @@ pub fn classify_point_against_closed_mesh_winding_report(
         .map(|triangle| {
             let [a, b, c] = triangle.0;
             [
-                mesh.vertices()[a].to_hyperlimit_point(),
-                mesh.vertices()[b].to_hyperlimit_point(),
-                mesh.vertices()[c].to_hyperlimit_point(),
+                mesh.vertices()[a].clone(),
+                mesh.vertices()[b].clone(),
+                mesh.vertices()[c].clone(),
             ]
         })
         .collect::<Vec<_>>();
@@ -404,10 +400,7 @@ pub fn classify_mesh_vertices_against_closed_mesh_winding_report(
     let mut boundary = 0_usize;
     let mut vertices = Vec::with_capacity(subject.vertices().len());
     for vertex in subject.vertices() {
-        let report = classify_point_against_closed_mesh_winding_report(
-            &vertex.to_hyperlimit_point(),
-            target,
-        );
+        let report = classify_point_against_closed_mesh_winding_report(&vertex.clone(), target);
         match report.relation {
             ClosedMeshWindingRelation::Inside => inside += 1,
             ClosedMeshWindingRelation::Outside => outside += 1,

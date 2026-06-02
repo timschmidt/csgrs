@@ -4,7 +4,7 @@
 //! primitive-float kernels. This module is the exact-stack replacement
 //! boundary for the subset that is currently implemented: build certified
 //! intersection events, form exact split-region loops, classify those regions,
-//! triangulate them through feature-gated exact `hypertri`, assemble exact 3D
+//! triangulate them through exact `hypertri`, assemble exact 3D
 //! output triangles, and validate the resulting [`ExactMesh`].
 //!
 //! The operation policy is deliberately explicit. No-intersection named
@@ -12,87 +12,74 @@
 //! coplanar, or exact ray-parity winding shortcuts; remaining split-region
 //! cases require a selected-region policy or an explicit unsupported report
 //! instead of a silently approximate union/intersection/difference decision.
-//! This follows Yap, "Towards Exact Geometric Computation," *Computational
-//! Geometry* 7.1-2 (1997): topology decisions must be certified or represented
-//! as policy choices/unknowns.
+//! Topology decisions must be certified or represented as policy choices or
+//! unknowns.
 
-#[cfg(feature = "exact-triangulation")]
-use super::adjacent::{has_full_face_adjacent_union, materialize_full_face_adjacent_union};
-#[cfg(feature = "exact-triangulation")]
+use super::adjacent::{
+    full_face_adjacent_certificate, has_full_face_adjacent_union,
+    materialize_full_face_adjacent_union_from_certificate,
+};
 use super::affine_box::{
-    AffineBoxOperation, has_affine_box_difference, has_affine_box_intersection,
-    has_affine_box_union, materialize_affine_box_difference, materialize_affine_box_intersection,
+    has_affine_box_difference, has_affine_box_intersection, has_affine_box_union,
+    materialize_affine_box_difference, materialize_affine_box_intersection,
     materialize_affine_box_union,
 };
-#[cfg(feature = "exact-triangulation")]
 use super::affine_solid::{
     AffineOrthogonalSolidOperation, has_affine_orthogonal_solid_cells,
     materialize_affine_orthogonal_solid_difference,
     materialize_affine_orthogonal_solid_intersection, materialize_affine_orthogonal_solid_union,
 };
-#[cfg(feature = "exact-triangulation")]
 use super::affine_surface::{
     CoplanarAffineSurfaceBasis, arrange_coplanar_affine_surface_difference,
     arrange_coplanar_affine_surface_intersection, arrange_coplanar_affine_surface_union,
 };
-#[cfg(feature = "exact-triangulation")]
 use super::boolmesh::{
-    ExactBoolMeshKernelStage, ExactBoolMeshValidationError, exact_boolmesh_workspace,
-    execute_exact_boolmesh_bounds_disjoint, execute_exact_boolmesh_port,
+    ExactBoolMeshKernelStage, ExactBoolMeshValidationError,
+    exact_boolmesh_workspace_from_graph_for_support, execute_exact_boolmesh_bounds_disjoint,
+    execute_exact_boolmesh_port, execute_exact_boolmesh_port_from_graph,
 };
-#[cfg(feature = "exact-triangulation")]
 use super::bounds::AabbIntersectionKind;
-#[cfg(feature = "exact-triangulation")]
 use super::box_solid::{
-    cell_difference_axis_aligned_boxes, cell_union_axis_aligned_boxes,
-    difference_axis_aligned_boxes, empty_difference_axis_aligned_boxes,
-    has_axis_aligned_box_cell_difference, has_axis_aligned_box_cell_union,
-    has_axis_aligned_box_difference, has_axis_aligned_box_empty_difference,
-    has_axis_aligned_box_intersection, has_axis_aligned_box_multi_difference,
-    has_axis_aligned_box_nested_difference, has_axis_aligned_box_union,
-    intersection_axis_aligned_boxes, is_axis_aligned_box, multi_difference_axis_aligned_boxes,
-    nested_difference_axis_aligned_boxes, union_axis_aligned_boxes,
+    AxisAlignedBoxOperation, cell_difference_axis_aligned_boxes, cell_union_axis_aligned_boxes,
+    empty_difference_axis_aligned_boxes, has_axis_aligned_box_cell_difference,
+    has_axis_aligned_box_cell_union, has_axis_aligned_box_difference,
+    has_axis_aligned_box_empty_difference, has_axis_aligned_box_intersection,
+    has_axis_aligned_box_multi_difference, has_axis_aligned_box_nested_difference,
+    has_axis_aligned_box_union, is_axis_aligned_box, materialize_simple_axis_aligned_box_operation,
+    multi_difference_axis_aligned_boxes, nested_difference_axis_aligned_boxes,
 };
-#[cfg(feature = "exact-triangulation")]
 use super::cells::triangulate_all_face_cells_with_cdt;
-#[cfg(feature = "exact-triangulation")]
 use super::construction::SegmentPlaneRelation;
-#[cfg(feature = "exact-triangulation")]
 use super::contained_adjacent::{
-    ContainedBoundaryDifferenceError, has_contained_boundary_difference,
-    has_contained_face_adjacent_union, materialize_contained_boundary_difference,
-    replay_contained_face_adjacent_union,
+    ContainedBoundaryContainment, ContainedBoundaryDifferenceCertificate,
+    contained_boundary_containment_from_graph,
+    contained_boundary_difference_certificate_from_graph, contained_face_adjacent_certificate,
+    has_contained_boundary_difference_from_graph, has_contained_face_adjacent_union,
+    materialize_contained_boundary_difference_from_graph,
+    materialize_contained_boundary_difference_from_retained_certificate,
+    materialize_contained_face_adjacent_union_from_certificate,
 };
-#[cfg(feature = "exact-triangulation")]
 use super::convex::{intersect_closed_convex_solids, subtract_closed_convex_solids_single_cap};
-#[cfg(feature = "exact-triangulation")]
 use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
-#[cfg(feature = "exact-triangulation")]
 use super::graph::{FacePairEvents, IntersectionEvent, MeshSide, build_intersection_graph};
-#[cfg(feature = "exact-triangulation")]
 use super::intersection::MeshFacePairRelation;
-#[cfg(feature = "exact-triangulation")]
 use super::mesh::{ExactMesh, Triangle};
-#[cfg(feature = "exact-triangulation")]
 use super::orthogonal_solid::{
     AxisAlignedOrthogonalSolidOperation, has_axis_aligned_orthogonal_solid_cells,
+    has_empty_axis_aligned_orthogonal_solid_cell_intersection,
     materialize_axis_aligned_orthogonal_solid_cells,
 };
-#[cfg(feature = "exact-triangulation")]
 use super::orthogonal_surface::{
     CoplanarOrthogonalSurfaceOperation, arrange_coplanar_orthogonal_surface_difference,
     arrange_coplanar_orthogonal_surface_intersection, arrange_coplanar_orthogonal_surface_union,
 };
-#[cfg(feature = "exact-triangulation")]
 use super::provenance::PredicateUse;
-#[cfg(feature = "exact-triangulation")]
 use super::region::{
     ExactBooleanAssemblyPlan, ExactRegionRetention, ExactRegionSelection,
     FaceRegionPlaneClassification, FaceRegionTriangulation,
     checked_classify_face_regions_against_opposite_planes,
     checked_triangulate_face_regions_with_earcut,
 };
-#[cfg(feature = "exact-triangulation")]
 use super::reports::{
     ExactBooleanBlocker, ExactBooleanBlockerKind, ExactBooleanPreflight, ExactBooleanResult,
     ExactBooleanResultKind, ExactBooleanShortcutKind, ExactBooleanSupport,
@@ -101,20 +88,17 @@ use super::reports::{
     ExactRefinementReport, ExactRefinementStatus, ExactSameSurfaceReport, ExactSameSurfaceStatus,
     ExactWindingReadinessReport, ExactWindingReadinessStatus,
 };
-#[cfg(feature = "exact-triangulation")]
-use super::scalar::ExactReal;
-#[cfg(feature = "exact-triangulation")]
 use super::solid::{
     ConvexSolidMeshClassification, ConvexSolidMeshRelation, ConvexSolidPointRelation,
     classify_mesh_vertices_against_convex_solid_report,
 };
-#[cfg(feature = "exact-triangulation")]
 use super::surface::{
-    CoplanarArrangementOperation, CoplanarConvexSurfaceContainment, CoplanarSurfaceContainment,
-    arrange_coplanar_convex_surface_component_holed_difference,
+    CoplanarConvexSurfaceContainment, CoplanarConvexSurfaceContainmentCertificate,
+    CoplanarSurfaceContainment, arrange_coplanar_convex_surface_component_holed_difference,
     arrange_coplanar_convex_surface_component_union, arrange_coplanar_convex_surface_difference,
-    arrange_coplanar_convex_surface_holed_difference, arrange_coplanar_convex_surface_intersection,
-    arrange_coplanar_convex_surface_multi_difference,
+    arrange_coplanar_convex_surface_holed_difference,
+    arrange_coplanar_convex_surface_holed_difference_from_certificate,
+    arrange_coplanar_convex_surface_intersection, arrange_coplanar_convex_surface_multi_difference,
     arrange_coplanar_convex_surface_multi_holed_difference,
     arrange_coplanar_convex_surface_multi_intersection,
     arrange_coplanar_convex_surface_multi_union, arrange_coplanar_convex_surface_union,
@@ -134,29 +118,24 @@ use super::surface::{
     certify_single_triangle_coplanar_containment, difference_single_triangle_coplanar_surfaces,
     intersect_single_triangle_coplanar_surfaces, union_single_triangle_coplanar_surfaces,
 };
-#[cfg(feature = "exact-triangulation")]
 use super::validation::ValidationPolicy;
-#[cfg(feature = "exact-triangulation")]
 use super::volumetric::{
     ExactVolumetricRegionClassification, ExactVolumetricRegionError, ExactVolumetricRegionRelation,
     classify_triangulated_regions_against_opposite_meshes,
 };
-#[cfg(feature = "exact-triangulation")]
 use super::volumetric_cells::{
     CoplanarVolumetricCellEvidenceReport, CoplanarVolumetricCellObstacle,
 };
-#[cfg(feature = "exact-triangulation")]
 use super::winding::{
     ClosedMeshWindingMeshRelation, ClosedMeshWindingMeshReport, ClosedMeshWindingRelation,
     WindingReportError, classify_mesh_vertices_against_closed_mesh_winding_report,
 };
-#[cfg(feature = "exact-triangulation")]
 use hyperlimit::{
     CoplanarProjection, Point3, SegmentIntersection, Sign, TriangleLocation,
     classify_point_triangle, compare_reals, compare_reals_report, project_point3,
     projected_polygon_area2_value,
 };
-#[cfg(feature = "exact-triangulation")]
+use hyperreal::Real;
 use std::cmp::Ordering;
 
 /// Exact selected-region boolean policy.
@@ -165,7 +144,6 @@ use std::cmp::Ordering;
 /// records the currently certified operation semantics: retain selected split
 /// regions, optionally reject unresolved graph events, then validate the
 /// materialized exact output mesh.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct ExactBooleanPolicy {
     /// Which source-side regions should be retained in the output assembly.
@@ -176,7 +154,6 @@ pub struct ExactBooleanPolicy {
     pub reject_unknowns: bool,
 }
 
-#[cfg(feature = "exact-triangulation")]
 impl ExactBooleanPolicy {
     /// Keep all selected-region output and allow boundary meshes.
     pub const KEEP_ALL_BOUNDARY: Self = Self {
@@ -192,7 +169,6 @@ impl ExactBooleanPolicy {
 /// to legacy float winding. Certified shortcut cases execute directly, while
 /// remaining named overlaps return [`DiagnosticKind::UnsupportedExactOperation`]
 /// until split-region inside/outside classification is complete.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ExactBooleanOperation {
     /// Assemble explicitly selected source-side split regions.
@@ -210,13 +186,9 @@ pub enum ExactBooleanOperation {
 /// Boundary-only policy for named exact boolean operations.
 ///
 /// Triangle meshes cannot represent lower-dimensional set intersections
-/// without adding a separate curve/point output channel. Following Yap,
-/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997), this policy makes that application-layer projection explicit:
 /// certified coplanar-touching graphs are either rejected, or projected into a
 /// triangle-mesh-only result that preserves separate shells and discards
 /// lower-dimensional intersection geometry.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ExactBoundaryBooleanPolicy {
     /// Reject boundary-only named booleans until a caller chooses a projection
@@ -233,7 +205,6 @@ pub enum ExactBoundaryBooleanPolicy {
 /// output mesh was produced. It does not use primitive-float representatives
 /// for topology, and it does not hide unresolved exact predicates unless the
 /// caller explicitly disables [`ExactBooleanPolicy::reject_unknowns`].
-#[cfg(feature = "exact-triangulation")]
 pub fn boolean_selected_regions(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -288,15 +259,13 @@ pub fn boolean_selected_regions(
         volumetric_classifications: Vec::new(),
         mesh,
     };
-    result
-        .validate_against_sources(left, right)
-        .map_err(|error| {
-            MeshError::one(MeshDiagnostic::new(
-                Severity::Error,
-                DiagnosticKind::UnsupportedExactOperation,
-                format!("exact selected-region result/source replay failed: {error:?}"),
-            ))
-        })?;
+    result.validate().map_err(|error| {
+        MeshError::one(MeshDiagnostic::new(
+            Severity::Error,
+            DiagnosticKind::UnsupportedExactOperation,
+            format!("exact selected-region result validation failed: {error:?}"),
+        ))
+    })?;
     Ok(result)
 }
 
@@ -308,7 +277,6 @@ pub fn boolean_selected_regions(
 /// [`ExactBooleanSupport::RequiresCertifiedWinding`] once all available
 /// classifications are proof-producing. This keeps the missing operation
 /// semantics visible at the API boundary instead of approximating them.
-#[cfg(feature = "exact-triangulation")]
 pub fn preflight_boolean_exact(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -373,326 +341,11 @@ pub fn preflight_boolean_exact(
         }
         ExactBooleanOperation::Union
         | ExactBooleanOperation::Intersection
-        | ExactBooleanOperation::Difference
-            if certify_coplanar_convex_surface_equivalence(left, right).is_some() =>
-        {
-            ExactBooleanSupport::CertifiedCoplanarConvexSurfaceEquivalence
-        }
-        ExactBooleanOperation::Union | ExactBooleanOperation::Intersection
-            if certify_coplanar_convex_surface_containment(left, right).is_some() =>
-        {
-            ExactBooleanSupport::CertifiedCoplanarConvexSurfaceContainment
-        }
-        ExactBooleanOperation::Intersection
-            if arrange_coplanar_convex_surface_intersection(left, right).is_some() =>
-        {
-            ExactBooleanSupport::CertifiedCoplanarConvexSurfaceIntersection
-        }
-        ExactBooleanOperation::Intersection
-            if arrange_coplanar_convex_surface_multi_intersection(left, right).is_some() =>
-        {
-            ExactBooleanSupport::CertifiedCoplanarConvexSurfaceIntersection
-        }
-        ExactBooleanOperation::Intersection
-            if arrange_coplanar_surface_component_intersection(left, right).is_some()
-                || arrange_coplanar_surface_multi_component_intersection(left, right).is_some() =>
-        {
-            ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
-        }
-        ExactBooleanOperation::Intersection
-            if arrange_coplanar_surface_component_holed_intersection(left, right).is_some() =>
-        {
-            ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
-        }
-        ExactBooleanOperation::Intersection
-            if arrange_coplanar_orthogonal_surface_intersection(left, right).is_some() =>
-        {
-            ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceIntersection
-        }
-        ExactBooleanOperation::Intersection
-            if arrange_coplanar_affine_surface_intersection(left, right).is_some() =>
-        {
-            ExactBooleanSupport::CertifiedCoplanarAffineSurfaceIntersection
-        }
-        ExactBooleanOperation::Union
-            if arrange_coplanar_convex_surface_union(left, right).is_some() =>
-        {
-            ExactBooleanSupport::CertifiedCoplanarConvexSurfaceArrangementUnion
-        }
-        ExactBooleanOperation::Union
-            if arrange_coplanar_convex_surface_component_union(left, right).is_some() =>
-        {
-            ExactBooleanSupport::CertifiedCoplanarConvexSurfaceArrangementUnion
-        }
-        ExactBooleanOperation::Union
-            if arrange_coplanar_surface_component_union(left, right).is_some() =>
-        {
-            ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
-        }
-        ExactBooleanOperation::Union
-            if arrange_coplanar_surface_component_holed_union(left, right).is_some() =>
-        {
-            ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
-        }
-        ExactBooleanOperation::Union
-            if arrange_coplanar_surface_multi_component_union(left, right).is_some() =>
-        {
-            ExactBooleanSupport::CertifiedCoplanarSurfaceMultiUnion
-        }
-        ExactBooleanOperation::Union
-            if arrange_coplanar_convex_surface_multi_union(left, right).is_some() =>
-        {
-            ExactBooleanSupport::CertifiedCoplanarConvexSurfaceMultiUnion
-        }
-        ExactBooleanOperation::Union
-            if arrange_coplanar_surface_point_touch_union(left, right).is_some() =>
-        {
-            ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchUnion
-        }
-        ExactBooleanOperation::Intersection
-            if certify_coplanar_surface_boundary_touch(left, right).is_some() =>
-        {
-            ExactBooleanSupport::CertifiedCoplanarSurfaceBoundaryTouchIntersection
-        }
-        ExactBooleanOperation::Difference
-            if certify_coplanar_surface_boundary_touch(left, right).is_some() =>
-        {
-            ExactBooleanSupport::CertifiedCoplanarSurfaceBoundaryTouchDifference
-        }
-        ExactBooleanOperation::Intersection
-            if arrange_coplanar_surface_point_touch_union(left, right).is_some() =>
-        {
-            ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchIntersection
-        }
-        ExactBooleanOperation::Difference
-            if arrange_coplanar_surface_point_touch_union(left, right).is_some() =>
-        {
-            ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchDifference
-        }
-        ExactBooleanOperation::Union
-            if arrange_coplanar_orthogonal_surface_union(left, right).is_some() =>
-        {
-            ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceUnion
-        }
-        ExactBooleanOperation::Union
-            if arrange_coplanar_affine_surface_union(left, right).is_some() =>
-        {
-            ExactBooleanSupport::CertifiedCoplanarAffineSurfaceUnion
-        }
-        ExactBooleanOperation::Difference
-            if arrange_coplanar_convex_surface_difference(left, right).is_some() =>
-        {
-            ExactBooleanSupport::CertifiedCoplanarConvexSurfaceArrangementDifference
-        }
-        ExactBooleanOperation::Difference
-            if arrange_coplanar_convex_surface_multi_difference(left, right).is_some() =>
-        {
-            ExactBooleanSupport::CertifiedCoplanarConvexSurfaceMultiDifference
-        }
-        ExactBooleanOperation::Difference
-            if arrange_coplanar_surface_component_difference(left, right).is_some() =>
-        {
-            ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementDifference
-        }
-        ExactBooleanOperation::Difference
-            if arrange_coplanar_surface_multi_difference(left, right).is_some() =>
-        {
-            ExactBooleanSupport::CertifiedCoplanarSurfaceMultiDifference
-        }
-        ExactBooleanOperation::Difference
-            if arrange_coplanar_surface_side_cutter_difference(left, right).is_some() =>
-        {
-            ExactBooleanSupport::CertifiedCoplanarSurfaceSideCutterDifference
-        }
-        ExactBooleanOperation::Difference
-            if arrange_coplanar_surface_cutter_hole_contact_difference(left, right).is_some() =>
-        {
-            ExactBooleanSupport::CertifiedCoplanarSurfaceCutterHoleContactDifference
-        }
-        ExactBooleanOperation::Difference
-            if arrange_coplanar_convex_surface_holed_difference(left, right).is_some() =>
-        {
-            ExactBooleanSupport::CertifiedCoplanarConvexSurfaceHoledDifference
-        }
-        ExactBooleanOperation::Difference
-            if arrange_coplanar_convex_surface_multi_holed_difference(left, right).is_some() =>
-        {
-            ExactBooleanSupport::CertifiedCoplanarConvexSurfaceMultiHoledDifference
-        }
-        ExactBooleanOperation::Difference
-            if arrange_coplanar_convex_surface_component_holed_difference(left, right)
-                .is_some()
-                || arrange_coplanar_surface_component_holed_difference(left, right).is_some() =>
-        {
-            ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
-        }
-        ExactBooleanOperation::Difference
-            if has_non_axis_aligned_affine_surface_difference(left, right) =>
-        {
-            ExactBooleanSupport::CertifiedCoplanarAffineSurfaceDifference
-        }
-        ExactBooleanOperation::Difference
-            if arrange_coplanar_surface_point_touch_difference(left, right).is_some() =>
-        {
-            // Point-touch consumed-hole differences carry explicit branch
-            // vertices and deleted-ring ownership. Yap, "Towards Exact
-            // Geometric Computation," Computational Geometry 7.1-2 (1997),
-            // treats that retained object evidence as stronger than a later
-            // generic orthogonal-cell explanation of the same area.
-            ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchDifference
-        }
-        ExactBooleanOperation::Difference
-            if arrange_coplanar_orthogonal_surface_difference(left, right).is_some() =>
-        {
-            ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceDifference
-        }
-        ExactBooleanOperation::Union if has_axis_aligned_box_union(left, right) => {
-            ExactBooleanSupport::CertifiedAxisAlignedBoxUnion
-        }
-        ExactBooleanOperation::Intersection if has_axis_aligned_box_intersection(left, right) => {
-            ExactBooleanSupport::CertifiedAxisAlignedBoxIntersection
-        }
-        ExactBooleanOperation::Difference if has_axis_aligned_box_difference(left, right) => {
-            ExactBooleanSupport::CertifiedAxisAlignedBoxDifference
-        }
-        ExactBooleanOperation::Difference if has_axis_aligned_box_multi_difference(left, right) => {
-            ExactBooleanSupport::CertifiedAxisAlignedBoxMultiDifference
-        }
-        ExactBooleanOperation::Difference
-            if has_axis_aligned_box_nested_difference(left, right) =>
-        {
-            ExactBooleanSupport::CertifiedAxisAlignedBoxNestedDifference
-        }
-        ExactBooleanOperation::Difference if has_axis_aligned_box_empty_difference(left, right) => {
-            ExactBooleanSupport::CertifiedAxisAlignedBoxEmptyDifference
-        }
-        ExactBooleanOperation::Union if has_affine_box_union(left, right) => {
-            ExactBooleanSupport::CertifiedAffineBoxUnion
-        }
-        ExactBooleanOperation::Intersection if has_affine_box_intersection(left, right) => {
-            ExactBooleanSupport::CertifiedAffineBoxIntersection
-        }
-        ExactBooleanOperation::Difference if has_affine_box_difference(left, right) => {
-            ExactBooleanSupport::CertifiedAffineBoxDifference
-        }
-        ExactBooleanOperation::Union
-            if has_affine_orthogonal_solid_cells(
-                left,
-                right,
-                AffineOrthogonalSolidOperation::Union,
-            ) =>
-        {
-            ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellUnion
-        }
-        ExactBooleanOperation::Intersection
-            if has_affine_orthogonal_solid_cells(
-                left,
-                right,
-                AffineOrthogonalSolidOperation::Intersection,
-            ) =>
-        {
-            ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellIntersection
-        }
-        ExactBooleanOperation::Difference
-            if has_affine_orthogonal_solid_cells(
-                left,
-                right,
-                AffineOrthogonalSolidOperation::Difference,
-            ) =>
-        {
-            ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellDifference
-        }
-        ExactBooleanOperation::Union
-            if certified_closed_boundary_touching_union_report(left, right)?.is_some() =>
-        {
-            if certified_boolmesh_split_support(left, right, operation) {
-                ExactBooleanSupport::CertifiedBoolMeshSplit
-            } else {
-                ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion
-            }
-        }
-        ExactBooleanOperation::Intersection
-            if certified_closed_boundary_touching_regularized_report(left, right)?.is_some() =>
-        {
-            ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
-        }
-        ExactBooleanOperation::Difference
-            if certified_closed_boundary_touching_regularized_report(left, right)?.is_some() =>
-        {
-            ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference
-        }
-        ExactBooleanOperation::Intersection
-            if has_empty_axis_aligned_orthogonal_solid_intersection(left, right)? =>
-        {
-            ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellIntersection
-        }
-        ExactBooleanOperation::Union
-        | ExactBooleanOperation::Intersection
-        | ExactBooleanOperation::Difference
-            if certify_coplanar_convex_surface_containment(left, right).is_some() =>
-        {
-            ExactBooleanSupport::CertifiedCoplanarConvexSurfaceContainment
-        }
-        ExactBooleanOperation::Union
-        | ExactBooleanOperation::Intersection
-        | ExactBooleanOperation::Difference
-            if certified_coplanar_surface_boolean_support(left, right, operation).is_some() =>
-        {
-            ExactBooleanSupport::CertifiedCoplanarSurfaceContainment
-        }
-        ExactBooleanOperation::Intersection
-            if intersect_single_triangle_coplanar_surfaces(left, right).is_some() =>
-        {
-            ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
-        }
-        ExactBooleanOperation::Union
-            if union_single_triangle_coplanar_surfaces(left, right).is_some() =>
-        {
-            ExactBooleanSupport::CertifiedCoplanarSurfaceConvexUnion
-        }
-        ExactBooleanOperation::Union
-            if arrange_single_triangle_coplanar_union(left, right).is_some() =>
-        {
-            ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
-        }
-        ExactBooleanOperation::Difference
-            if difference_single_triangle_coplanar_surfaces(left, right).is_some() =>
-        {
-            ExactBooleanSupport::CertifiedCoplanarSurfaceCornerDifference
-        }
-        ExactBooleanOperation::Difference
-            if arrange_single_triangle_coplanar_difference(left, right).is_some() =>
-        {
-            ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementDifference
-        }
-        ExactBooleanOperation::Difference
-            if arrange_single_triangle_coplanar_holed_difference(left, right).is_some() =>
-        {
-            ExactBooleanSupport::CertifiedCoplanarSurfaceHoledDifference
-        }
-        ExactBooleanOperation::Union
-        | ExactBooleanOperation::Intersection
-        | ExactBooleanOperation::Difference
-            if certify_open_surface_disjoint_report(left, right)?.is_certified() =>
-        {
-            ExactBooleanSupport::CertifiedOpenSurfaceDisjoint
-        }
-        ExactBooleanOperation::Union
-        | ExactBooleanOperation::Intersection
         | ExactBooleanOperation::Difference => {
-            let shortcut_support = certified_convex_boolean_support(left, right, operation)?
-                .or_else(|| certified_convex_intersection_support(left, right, operation))
-                .or_else(|| certified_convex_single_cap_difference_support(left, right, operation))
-                .or_else(|| certified_contained_boundary_difference_support(left, right, operation))
-                .or_else(|| {
-                    certified_contained_boundary_containment_support(left, right, operation)
-                });
-            shortcut_support
-                .or(certified_closed_boundary_only_contact_support(
-                    left, right, operation,
-                )?)
-                .or(certified_winding_boolean_support(left, right)?)
-                .unwrap_or(ExactBooleanSupport::RequiresCertifiedWinding)
+            preflight_direct_coplanar_surface_support(left, right, operation).unwrap_or_else(|| {
+                preflight_tail_shortcut_support(left, right, operation)
+                    .unwrap_or(ExactBooleanSupport::RequiresCertifiedWinding)
+            })
         }
     };
 
@@ -835,6 +488,61 @@ pub fn preflight_boolean_exact(
             coplanar_volumetric_evidence: None,
         });
     }
+    if support == ExactBooleanSupport::RequiresCertifiedWinding
+        && let Some(open_surface_support) =
+            certified_open_surface_disjoint_support_from_graph(&graph, left, right, operation)
+    {
+        return Ok(certified_shortcut_preflight(
+            operation,
+            open_surface_support,
+        ));
+    }
+    if support == ExactBooleanSupport::RequiresCertifiedWinding
+        && let Some(convex_support) =
+            certified_convex_boolean_support_from_graph(&graph, left, right, operation)?
+    {
+        return Ok(certified_shortcut_preflight(operation, convex_support));
+    }
+    if support == ExactBooleanSupport::RequiresCertifiedWinding
+        && let Some(contained_support) = certified_contained_boundary_difference_support_from_graph(
+            &graph, left, right, operation,
+        )
+        .or_else(|| {
+            certified_contained_boundary_containment_support_from_graph(
+                &graph, left, right, operation,
+            )
+        })
+    {
+        return Ok(certified_shortcut_preflight(operation, contained_support));
+    }
+    if support == ExactBooleanSupport::RequiresCertifiedWinding
+        && let Some(boundary_support) = certified_closed_boundary_only_contact_support_from_graph(
+            &graph, left, right, operation,
+        )?
+    {
+        return Ok(certified_shortcut_preflight(operation, boundary_support));
+    }
+    if support == ExactBooleanSupport::RequiresCertifiedWinding
+        && let Some(boundary_support) =
+            certified_closed_boundary_touching_support_from_graph(&graph, left, right, operation)?
+    {
+        return Ok(certified_shortcut_preflight(operation, boundary_support));
+    }
+    if support == ExactBooleanSupport::RequiresCertifiedWinding
+        && operation == ExactBooleanOperation::Intersection
+        && has_empty_axis_aligned_orthogonal_solid_intersection(left, right)?
+    {
+        return Ok(certified_shortcut_preflight(
+            operation,
+            ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellIntersection,
+        ));
+    }
+    if support == ExactBooleanSupport::RequiresCertifiedWinding
+        && let Some(winding_support) =
+            certified_winding_boolean_support_from_graph(&graph, left, right)?
+    {
+        return Ok(certified_shortcut_preflight(operation, winding_support));
+    }
     if let Some((support, region_classifications, _triangulations)) =
         open_surface_arrangement_plan_from_graph(&graph, left, right, operation)?
     {
@@ -921,38 +629,22 @@ pub fn preflight_boolean_exact(
             coplanar_volumetric_evidence: None,
         });
     }
-    if let Some((region_classifications, triangulations, _volumetric_classifications)) =
-        volumetric_winding_region_plan_from_graph(&graph, left, right)?.filter(
-            |(_, triangulations, volumetric_classifications)| {
-                let decided = volumetric_classifications
-                    .iter()
-                    .all(|classification| classification.relation.is_materialization_decided());
-                let retains = operation_retains_any_volumetric_region(
-                    operation,
-                    triangulations,
-                    volumetric_classifications,
-                );
-                decided
-                    && retains
-                    && volumetric_plan_materializes_operation(
-                        operation,
-                        triangulations,
-                        volumetric_classifications,
-                        left,
-                        right,
-                        ValidationPolicy::CLOSED,
-                    )
-            },
-        )
-    {
+    if let Some(materialized) = materialize_volumetric_winding_region_plan_from_graph(
+        &graph,
+        left,
+        right,
+        operation,
+        ValidationPolicy::CLOSED,
+        VolumetricWindingMaterializationFailure::ReturnNone,
+    )? {
         return Ok(ExactBooleanPreflight {
             operation,
             support: ExactBooleanSupport::CertifiedWindingMaterialized,
             graph_had_unknowns,
             retained_face_pairs,
             retained_events,
-            region_count: triangulations.len(),
-            region_classifications,
+            region_count: materialized.triangulations.len(),
+            region_classifications: materialized.region_classifications,
             blocker: None,
             arrangement_readiness: None,
             coplanar_volumetric_evidence: coplanar_volumetric_evidence_if_required(
@@ -960,7 +652,7 @@ pub fn preflight_boolean_exact(
             ),
         });
     }
-    if certified_boolmesh_split_support(left, right, operation) {
+    if certified_boolmesh_split_support_from_graph(&graph, left, right, operation) {
         return Ok(ExactBooleanPreflight {
             operation,
             support: ExactBooleanSupport::CertifiedBoolMeshSplit,
@@ -1025,8 +717,274 @@ pub fn preflight_boolean_exact(
     })
 }
 
-#[cfg(feature = "exact-triangulation")]
-fn certified_boolmesh_split_support(
+fn preflight_direct_coplanar_surface_support(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+) -> Option<ExactBooleanSupport> {
+    match operation {
+        ExactBooleanOperation::Union => {
+            if certify_coplanar_convex_surface_equivalence(left, right).is_some() {
+                return Some(ExactBooleanSupport::CertifiedCoplanarConvexSurfaceEquivalence);
+            }
+            if certify_coplanar_convex_surface_containment(left, right).is_some() {
+                return Some(ExactBooleanSupport::CertifiedCoplanarConvexSurfaceContainment);
+            }
+            if arrange_coplanar_convex_surface_union(left, right).is_some() {
+                return Some(ExactBooleanSupport::CertifiedCoplanarConvexSurfaceArrangementUnion);
+            }
+            if arrange_coplanar_convex_surface_component_union(left, right).is_some() {
+                return Some(ExactBooleanSupport::CertifiedCoplanarConvexSurfaceArrangementUnion);
+            }
+            if arrange_coplanar_surface_component_union(left, right).is_some() {
+                return Some(ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion);
+            }
+            if arrange_coplanar_surface_component_holed_union(left, right).is_some() {
+                return Some(ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion);
+            }
+            if arrange_coplanar_surface_multi_component_union(left, right).is_some() {
+                return Some(ExactBooleanSupport::CertifiedCoplanarSurfaceMultiUnion);
+            }
+            if arrange_coplanar_convex_surface_multi_union(left, right).is_some() {
+                return Some(ExactBooleanSupport::CertifiedCoplanarConvexSurfaceMultiUnion);
+            }
+            if arrange_coplanar_surface_point_touch_union(left, right).is_some() {
+                return Some(ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchUnion);
+            }
+            if arrange_coplanar_orthogonal_surface_union(left, right).is_some() {
+                return Some(ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceUnion);
+            }
+            if arrange_coplanar_affine_surface_union(left, right).is_some() {
+                return Some(ExactBooleanSupport::CertifiedCoplanarAffineSurfaceUnion);
+            }
+            None
+        }
+        ExactBooleanOperation::Intersection => {
+            if certify_coplanar_convex_surface_equivalence(left, right).is_some() {
+                return Some(ExactBooleanSupport::CertifiedCoplanarConvexSurfaceEquivalence);
+            }
+            if certify_coplanar_convex_surface_containment(left, right).is_some() {
+                return Some(ExactBooleanSupport::CertifiedCoplanarConvexSurfaceContainment);
+            }
+            if arrange_coplanar_convex_surface_intersection(left, right).is_some() {
+                return Some(ExactBooleanSupport::CertifiedCoplanarConvexSurfaceIntersection);
+            }
+            if arrange_coplanar_convex_surface_multi_intersection(left, right).is_some() {
+                return Some(ExactBooleanSupport::CertifiedCoplanarConvexSurfaceIntersection);
+            }
+            if arrange_coplanar_surface_component_intersection(left, right).is_some()
+                || arrange_coplanar_surface_multi_component_intersection(left, right).is_some()
+            {
+                return Some(ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection);
+            }
+            if arrange_coplanar_surface_component_holed_intersection(left, right).is_some() {
+                return Some(ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection);
+            }
+            if arrange_coplanar_orthogonal_surface_intersection(left, right).is_some() {
+                return Some(ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceIntersection);
+            }
+            if arrange_coplanar_affine_surface_intersection(left, right).is_some() {
+                return Some(ExactBooleanSupport::CertifiedCoplanarAffineSurfaceIntersection);
+            }
+            if certify_coplanar_surface_boundary_touch(left, right).is_some() {
+                return Some(
+                    ExactBooleanSupport::CertifiedCoplanarSurfaceBoundaryTouchIntersection,
+                );
+            }
+            if arrange_coplanar_surface_point_touch_union(left, right).is_some() {
+                return Some(ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchIntersection);
+            }
+            None
+        }
+        ExactBooleanOperation::Difference => {
+            if certify_coplanar_convex_surface_equivalence(left, right).is_some() {
+                return Some(ExactBooleanSupport::CertifiedCoplanarConvexSurfaceEquivalence);
+            }
+            if certify_coplanar_surface_boundary_touch(left, right).is_some() {
+                return Some(ExactBooleanSupport::CertifiedCoplanarSurfaceBoundaryTouchDifference);
+            }
+            if arrange_coplanar_surface_point_touch_union(left, right).is_some() {
+                return Some(ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchDifference);
+            }
+            if arrange_coplanar_convex_surface_difference(left, right).is_some() {
+                return Some(
+                    ExactBooleanSupport::CertifiedCoplanarConvexSurfaceArrangementDifference,
+                );
+            }
+            if arrange_coplanar_convex_surface_multi_difference(left, right).is_some() {
+                return Some(ExactBooleanSupport::CertifiedCoplanarConvexSurfaceMultiDifference);
+            }
+            if arrange_coplanar_surface_component_difference(left, right).is_some() {
+                return Some(ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementDifference);
+            }
+            if arrange_coplanar_surface_multi_difference(left, right).is_some() {
+                return Some(ExactBooleanSupport::CertifiedCoplanarSurfaceMultiDifference);
+            }
+            if arrange_coplanar_surface_side_cutter_difference(left, right).is_some() {
+                return Some(ExactBooleanSupport::CertifiedCoplanarSurfaceSideCutterDifference);
+            }
+            if arrange_coplanar_surface_cutter_hole_contact_difference(left, right).is_some() {
+                return Some(
+                    ExactBooleanSupport::CertifiedCoplanarSurfaceCutterHoleContactDifference,
+                );
+            }
+            if arrange_coplanar_convex_surface_holed_difference(left, right).is_some() {
+                return Some(ExactBooleanSupport::CertifiedCoplanarConvexSurfaceHoledDifference);
+            }
+            if arrange_coplanar_convex_surface_multi_holed_difference(left, right).is_some() {
+                return Some(
+                    ExactBooleanSupport::CertifiedCoplanarConvexSurfaceMultiHoledDifference,
+                );
+            }
+            if arrange_coplanar_convex_surface_component_holed_difference(left, right).is_some()
+                || arrange_coplanar_surface_component_holed_difference(left, right).is_some()
+            {
+                return Some(
+                    ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference,
+                );
+            }
+            if has_non_axis_aligned_affine_surface_difference(left, right) {
+                return Some(ExactBooleanSupport::CertifiedCoplanarAffineSurfaceDifference);
+            }
+            if arrange_coplanar_surface_point_touch_difference(left, right).is_some() {
+                return Some(ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchDifference);
+            }
+            if arrange_coplanar_orthogonal_surface_difference(left, right).is_some() {
+                return Some(ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceDifference);
+            }
+            None
+        }
+        ExactBooleanOperation::SelectedRegions(_) => None,
+    }
+}
+
+fn preflight_tail_shortcut_support(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+) -> Option<ExactBooleanSupport> {
+    match operation {
+        ExactBooleanOperation::Difference if has_axis_aligned_box_multi_difference(left, right) => {
+            Some(ExactBooleanSupport::CertifiedAxisAlignedBoxMultiDifference)
+        }
+        ExactBooleanOperation::Difference
+            if has_axis_aligned_box_nested_difference(left, right) =>
+        {
+            Some(ExactBooleanSupport::CertifiedAxisAlignedBoxNestedDifference)
+        }
+        ExactBooleanOperation::Difference if has_axis_aligned_box_empty_difference(left, right) => {
+            Some(ExactBooleanSupport::CertifiedAxisAlignedBoxEmptyDifference)
+        }
+        ExactBooleanOperation::Union if has_affine_box_union(left, right) => {
+            Some(ExactBooleanSupport::CertifiedAffineBoxUnion)
+        }
+        ExactBooleanOperation::Intersection if has_affine_box_intersection(left, right) => {
+            Some(ExactBooleanSupport::CertifiedAffineBoxIntersection)
+        }
+        ExactBooleanOperation::Difference if has_affine_box_difference(left, right) => {
+            Some(ExactBooleanSupport::CertifiedAffineBoxDifference)
+        }
+        ExactBooleanOperation::Union
+            if has_affine_orthogonal_solid_cells(
+                left,
+                right,
+                AffineOrthogonalSolidOperation::Union,
+            ) =>
+        {
+            Some(ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellUnion)
+        }
+        ExactBooleanOperation::Intersection
+            if has_affine_orthogonal_solid_cells(
+                left,
+                right,
+                AffineOrthogonalSolidOperation::Intersection,
+            ) =>
+        {
+            Some(ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellIntersection)
+        }
+        ExactBooleanOperation::Difference
+            if has_affine_orthogonal_solid_cells(
+                left,
+                right,
+                AffineOrthogonalSolidOperation::Difference,
+            ) =>
+        {
+            Some(ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellDifference)
+        }
+        ExactBooleanOperation::Union
+        | ExactBooleanOperation::Intersection
+        | ExactBooleanOperation::Difference
+            if certify_coplanar_convex_surface_containment(left, right).is_some() =>
+        {
+            Some(ExactBooleanSupport::CertifiedCoplanarConvexSurfaceContainment)
+        }
+        ExactBooleanOperation::Union
+        | ExactBooleanOperation::Intersection
+        | ExactBooleanOperation::Difference
+            if certified_coplanar_surface_boolean_support(left, right, operation).is_some() =>
+        {
+            Some(ExactBooleanSupport::CertifiedCoplanarSurfaceContainment)
+        }
+        ExactBooleanOperation::Intersection
+            if intersect_single_triangle_coplanar_surfaces(left, right).is_some() =>
+        {
+            Some(ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection)
+        }
+        ExactBooleanOperation::Union
+            if union_single_triangle_coplanar_surfaces(left, right).is_some() =>
+        {
+            Some(ExactBooleanSupport::CertifiedCoplanarSurfaceConvexUnion)
+        }
+        ExactBooleanOperation::Union
+            if arrange_single_triangle_coplanar_union(left, right).is_some() =>
+        {
+            Some(ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion)
+        }
+        ExactBooleanOperation::Difference
+            if difference_single_triangle_coplanar_surfaces(left, right).is_some() =>
+        {
+            Some(ExactBooleanSupport::CertifiedCoplanarSurfaceCornerDifference)
+        }
+        ExactBooleanOperation::Difference
+            if arrange_single_triangle_coplanar_difference(left, right).is_some() =>
+        {
+            Some(ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementDifference)
+        }
+        ExactBooleanOperation::Difference
+            if arrange_single_triangle_coplanar_holed_difference(left, right).is_some() =>
+        {
+            Some(ExactBooleanSupport::CertifiedCoplanarSurfaceHoledDifference)
+        }
+        ExactBooleanOperation::Union
+        | ExactBooleanOperation::Intersection
+        | ExactBooleanOperation::Difference => {
+            certified_convex_intersection_support(left, right, operation)
+                .or_else(|| certified_convex_single_cap_difference_support(left, right, operation))
+        }
+        ExactBooleanOperation::SelectedRegions(_) => None,
+    }
+}
+
+fn certified_shortcut_preflight(
+    operation: ExactBooleanOperation,
+    support: ExactBooleanSupport,
+) -> ExactBooleanPreflight {
+    ExactBooleanPreflight {
+        operation,
+        support,
+        graph_had_unknowns: false,
+        retained_face_pairs: 0,
+        retained_events: 0,
+        region_count: 0,
+        region_classifications: Vec::new(),
+        blocker: None,
+        arrangement_readiness: None,
+        coplanar_volumetric_evidence: None,
+    }
+}
+
+fn certified_boolmesh_split_support_from_graph(
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
@@ -1034,11 +992,10 @@ fn certified_boolmesh_split_support(
     if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
         return false;
     }
-    let workspace = exact_boolmesh_workspace(left, right, operation);
+    let workspace = exact_boolmesh_workspace_from_graph_for_support(left, right, operation, graph);
     workspace.validate().is_ok() && workspace.is_certified_split_boolean45()
 }
 
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 struct GraphRelationCounts {
     candidate_pairs: usize,
@@ -1048,7 +1005,6 @@ struct GraphRelationCounts {
     construction_failed_events: usize,
 }
 
-#[cfg(feature = "exact-triangulation")]
 impl GraphRelationCounts {
     const fn into_blocker(self, kind: ExactBooleanBlockerKind) -> ExactBooleanBlocker {
         ExactBooleanBlocker {
@@ -1062,7 +1018,6 @@ impl GraphRelationCounts {
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn graph_relation_counts(graph: &super::graph::ExactIntersectionGraph) -> GraphRelationCounts {
     let mut counts = GraphRelationCounts::default();
     for pair in &graph.face_pairs {
@@ -1097,7 +1052,6 @@ fn graph_relation_counts(graph: &super::graph::ExactIntersectionGraph) -> GraphR
     counts
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn unique_classified_region_count(classifications: &[FaceRegionPlaneClassification]) -> usize {
     let mut unique = Vec::new();
     for classification in classifications {
@@ -1109,7 +1063,6 @@ fn unique_classified_region_count(classifications: &[FaceRegionPlaneClassificati
     unique.len()
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn graph_requires_boundary_policy(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
@@ -1124,7 +1077,6 @@ fn graph_requires_boundary_policy(
     certified_closed_boundary_contact(left, right)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn graph_has_only_coplanar_touching_pairs(graph: &super::graph::ExactIntersectionGraph) -> bool {
     !graph.face_pairs.is_empty()
         && graph
@@ -1133,7 +1085,6 @@ fn graph_has_only_coplanar_touching_pairs(graph: &super::graph::ExactIntersectio
             .all(|pair| pair.relation == MeshFacePairRelation::CoplanarTouching)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn graph_has_only_coplanar_contact_pairs(graph: &super::graph::ExactIntersectionGraph) -> bool {
     !graph.face_pairs.is_empty()
         && graph.face_pairs.iter().all(|pair| {
@@ -1148,23 +1099,18 @@ fn graph_has_only_coplanar_contact_pairs(graph: &super::graph::ExactIntersection
             .any(|pair| pair.relation == MeshFacePairRelation::CoplanarOverlapping)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn graph_requires_planar_arrangement(graph: &super::graph::ExactIntersectionGraph) -> bool {
     graph_has_only_coplanar_contact_pairs(graph)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn graph_requires_coplanar_volumetric_cells(counts: &GraphRelationCounts) -> bool {
     // Coplanar source-face cells inside a closed volumetric overlap are not a
     // planar-surface output problem and not ordinary non-coplanar winding
-    // cells. Following Yap, "Towards Exact Geometric Computation," Comput.
-    // Geom. 7.1-2 (1997), keep that missing topology stage as a named exact
     // state instead of approximating the cells or relabeling them as generic
     // winding readiness.
     counts.coplanar_overlapping_pairs + counts.coplanar_touching_pairs > 0
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn graph_requires_coplanar_volumetric_cells_for_sources(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
@@ -1179,15 +1125,12 @@ fn graph_requires_coplanar_volumetric_cells_for_sources(
     // volumetric-cell blocker: opposite-side shared faces are boundary contact,
     // while same-side or undecided positive-area overlap needs the missing
     // coplanar volumetric-cell materializer. Keeping the decision in
-    // `CoplanarVolumetricCellEvidenceReport` follows Yap, "Towards Exact
-    // Geometric Computation," Comput. Geom. 7.1-2 (1997): topology policy must
     // consume replayable exact object evidence, not aggregate counters.
     CoplanarVolumetricCellEvidenceReport::from_graph(graph, left, right)
         .obstacle
         .requires_coplanar_volumetric_cells()
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn coplanar_volumetric_evidence_if_required(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
@@ -1204,7 +1147,6 @@ fn coplanar_volumetric_evidence_if_required(
         .then_some(evidence)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn graph_has_only_boundary_contact_pairs(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
@@ -1217,7 +1159,6 @@ fn graph_has_only_boundary_contact_pairs(
             .all(|pair| boundary_contact_pair_shape(pair, left, right))
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn boundary_contact_pair_shape(pair: &FacePairEvents, left: &ExactMesh, right: &ExactMesh) -> bool {
     match pair.relation {
         MeshFacePairRelation::CoplanarTouching | MeshFacePairRelation::CoplanarOverlapping => true,
@@ -1231,7 +1172,6 @@ fn boundary_contact_pair_shape(pair: &FacePairEvents, left: &ExactMesh, right: &
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn boundary_contact_candidate_event(
     event: &IntersectionEvent,
     left: &ExactMesh,
@@ -1240,8 +1180,6 @@ fn boundary_contact_candidate_event(
     // Positive-area coplanar contact between closed solids also retains
     // adjacent non-coplanar face pairs where an endpoint or coplanar source
     // edge lies on the opposite plane. Those are still boundary facts, not
-    // volumetric crossings. Yap, "Towards Exact Geometric Computation,"
-    // Comput. Geom. 7.1-2 (1997), requires us to preserve that event
     // distinction instead of collapsing every retained candidate into the
     // same unsupported topology bucket.
     match event {
@@ -1265,7 +1203,6 @@ fn boundary_contact_candidate_event(
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn proper_crossing_outside_plane_face(
     event: &IntersectionEvent,
     left: &ExactMesh,
@@ -1290,7 +1227,6 @@ fn proper_crossing_outside_plane_face(
     };
     // A segment/supporting-plane crossing outside the finite opposite triangle
     // is retained construction evidence, but it is not a surface crossing.
-    // Yap's exact-computation boundary lets boundary-policy certificates keep
     // this distinction exactly instead of treating every proper plane crossing
     // as volume overlap.
     classify_point_triangle(
@@ -1303,7 +1239,6 @@ fn proper_crossing_outside_plane_face(
         == Some(TriangleLocation::Outside)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn mesh_for_side<'a>(side: MeshSide, left: &'a ExactMesh, right: &'a ExactMesh) -> &'a ExactMesh {
     match side {
         MeshSide::Left => left,
@@ -1311,17 +1246,15 @@ fn mesh_for_side<'a>(side: MeshSide, left: &'a ExactMesh, right: &'a ExactMesh) 
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn triangle_points(mesh: &ExactMesh, face: usize) -> Option<[Point3; 3]> {
     let triangle = mesh.triangles().get(face)?.0;
     Some([
-        mesh.vertices().get(triangle[0])?.to_hyperlimit_point(),
-        mesh.vertices().get(triangle[1])?.to_hyperlimit_point(),
-        mesh.vertices().get(triangle[2])?.to_hyperlimit_point(),
+        mesh.vertices().get(triangle[0])?.clone(),
+        mesh.vertices().get(triangle[1])?.clone(),
+        mesh.vertices().get(triangle[2])?.clone(),
     ])
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn choose_triangle_projection(points: &[Point3; 3]) -> Option<CoplanarProjection> {
     [
         CoplanarProjection::Xy,
@@ -1335,22 +1268,22 @@ fn choose_triangle_projection(points: &[Point3; 3]) -> Option<CoplanarProjection
     })
 }
 
-#[cfg(feature = "exact-triangulation")]
-fn real_sign(value: &ExactReal) -> Option<Sign> {
-    match compare_reals(value, &ExactReal::from(0)).value()? {
+fn real_sign(value: &Real) -> Option<Sign> {
+    match compare_reals(value, &Real::from(0)).value()? {
         Ordering::Less => Some(Sign::Negative),
         Ordering::Equal => Some(Sign::Zero),
         Ordering::Greater => Some(Sign::Positive),
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
-fn non_box_full_face_adjacency(left: &ExactMesh, right: &ExactMesh) -> bool {
-    has_full_face_adjacent_union(left, right)
-        && !(is_axis_aligned_box(left) && is_axis_aligned_box(right))
+fn both_axis_aligned_boxes(left: &ExactMesh, right: &ExactMesh) -> bool {
+    is_axis_aligned_box(left) && is_axis_aligned_box(right)
 }
 
-#[cfg(feature = "exact-triangulation")]
+fn non_box_full_face_adjacency(left: &ExactMesh, right: &ExactMesh) -> bool {
+    !both_axis_aligned_boxes(left, right) && has_full_face_adjacent_union(left, right)
+}
+
 fn certified_closed_boundary_contact(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -1360,13 +1293,9 @@ fn certified_closed_boundary_contact(
     }
 
     let left_in_right = classify_mesh_vertices_against_closed_mesh_winding_report(left, right);
-    left_in_right
-        .validate_against_sources(left, right)
-        .map_err(winding_error)?;
+    left_in_right.validate().map_err(winding_error)?;
     let right_in_left = classify_mesh_vertices_against_closed_mesh_winding_report(right, left);
-    right_in_left
-        .validate_against_sources(right, left)
-        .map_err(winding_error)?;
+    right_in_left.validate().map_err(winding_error)?;
 
     Ok(mesh_vertices_are_boundary_or_outside(&left_in_right)
         && mesh_vertices_are_boundary_or_outside(&right_in_left)
@@ -1374,7 +1303,6 @@ fn certified_closed_boundary_contact(
             || mesh_vertices_touch_boundary(&right_in_left)))
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn mesh_vertices_are_boundary_or_outside(report: &ClosedMeshWindingMeshReport) -> bool {
     report.target_closed
         && report.vertices.iter().all(|vertex| {
@@ -1385,7 +1313,6 @@ fn mesh_vertices_are_boundary_or_outside(report: &ClosedMeshWindingMeshReport) -
         })
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn mesh_vertices_touch_boundary(report: &ClosedMeshWindingMeshReport) -> bool {
     report
         .vertices
@@ -1397,9 +1324,8 @@ fn mesh_vertices_touch_boundary(report: &ClosedMeshWindingMeshReport) -> bool {
 ///
 /// This entry point makes unsupported named booleans explicit rather than
 /// silently dispatching to legacy tolerance code. That is a deliberate
-/// exact-computation boundary: unsupported topology semantics are diagnostics,
+/// exact computation boundary: unsupported topology semantics are diagnostics,
 /// not approximate decisions.
-#[cfg(feature = "exact-triangulation")]
 pub fn boolean_exact(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -1428,7 +1354,6 @@ pub fn boolean_exact(
 /// intersection and difference do not need that projection policy once the
 /// same exact boundary-touch report proves no shared interior volume; those
 /// two operations use certified shortcuts before the policy layer.
-#[cfg(feature = "exact-triangulation")]
 pub fn boolean_exact_with_boundary_policy(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -1436,8 +1361,8 @@ pub fn boolean_exact_with_boundary_policy(
     validation: ValidationPolicy,
     boundary_policy: ExactBoundaryBooleanPolicy,
 ) -> Result<ExactBooleanResult, MeshError> {
-    match operation {
-        ExactBooleanOperation::SelectedRegions(selection) => boolean_selected_regions(
+    if let ExactBooleanOperation::SelectedRegions(selection) = operation {
+        return boolean_selected_regions(
             left,
             right,
             ExactBooleanPolicy {
@@ -1445,328 +1370,100 @@ pub fn boolean_exact_with_boundary_policy(
                 validation,
                 reject_unknowns: true,
             },
-        ),
-        ExactBooleanOperation::Union
-        | ExactBooleanOperation::Intersection
-        | ExactBooleanOperation::Difference
-            if left.triangles().is_empty() || right.triangles().is_empty() =>
-        {
-            boolean_empty_operand(left, right, operation, validation)
-        }
-        ExactBooleanOperation::Union
-        | ExactBooleanOperation::Intersection
-        | ExactBooleanOperation::Difference
-            if meshes_are_certified_bounds_disjoint(left, right) =>
-        {
-            boolean_disjoint_meshes(left, right, operation, validation)
-        }
-        ExactBooleanOperation::Union
-        | ExactBooleanOperation::Intersection
-        | ExactBooleanOperation::Difference
-            if meshes_are_certified_identical(left, right) =>
-        {
-            boolean_identical_meshes(left, operation, validation)
-        }
-        ExactBooleanOperation::Union
-        | ExactBooleanOperation::Intersection
-        | ExactBooleanOperation::Difference
-            if meshes_are_certified_same_surface(left, right) =>
-        {
-            boolean_same_surface_meshes(left, operation, validation)
-        }
-        ExactBooleanOperation::Union if has_axis_aligned_box_union(left, right) => {
-            boolean_axis_aligned_box_union(left, right, validation)
-        }
-        ExactBooleanOperation::Intersection if has_axis_aligned_box_intersection(left, right) => {
-            boolean_axis_aligned_box_intersection(left, right, validation)
-        }
-        ExactBooleanOperation::Difference if has_axis_aligned_box_difference(left, right) => {
-            boolean_axis_aligned_box_difference(left, right, validation)
-        }
-        ExactBooleanOperation::Union if non_box_full_face_adjacency(left, right) => {
-            boolean_full_face_adjacent_union(left, right, validation)
-        }
-        ExactBooleanOperation::Union if has_contained_face_adjacent_union(left, right) => {
-            boolean_contained_face_adjacent_union(left, right, validation)
-        }
-        ExactBooleanOperation::Intersection if has_contained_face_adjacent_union(left, right) => {
-            boolean_contained_face_adjacent_intersection(left, right, validation)
-        }
-        ExactBooleanOperation::Difference if has_contained_face_adjacent_union(left, right) => {
-            boolean_contained_face_adjacent_difference(left, right, validation)
-        }
-        ExactBooleanOperation::Intersection if non_box_full_face_adjacency(left, right) => {
-            boolean_full_face_adjacent_intersection(left, right, validation)
-        }
-        ExactBooleanOperation::Difference if non_box_full_face_adjacency(left, right) => {
-            boolean_full_face_adjacent_difference(left, right, validation)
-        }
-        ExactBooleanOperation::Union
-        | ExactBooleanOperation::Intersection
-        | ExactBooleanOperation::Difference
-            if certify_coplanar_convex_surface_equivalence(left, right).is_some() =>
-        {
-            boolean_coplanar_convex_equivalent_surfaces(left, operation, validation)
-        }
-        ExactBooleanOperation::Union | ExactBooleanOperation::Intersection
-            if certify_coplanar_convex_surface_containment(left, right).is_some() =>
-        {
-            boolean_coplanar_convex_containment_surfaces(left, right, operation, validation)
-        }
-        ExactBooleanOperation::Intersection
-            if arrange_coplanar_convex_surface_intersection(left, right).is_some() =>
-        {
-            boolean_coplanar_convex_arrangement_intersection(left, right, validation)
-        }
-        ExactBooleanOperation::Intersection
-            if arrange_coplanar_convex_surface_multi_intersection(left, right).is_some() =>
-        {
-            boolean_coplanar_convex_multi_intersection(left, right, validation)
-        }
-        ExactBooleanOperation::Intersection
-            if arrange_coplanar_surface_component_holed_intersection(left, right).is_some() =>
-        {
-            boolean_coplanar_surface_intersection(left, right, operation, validation)
-                .map(|result| result.expect("caller checked coplanar component-holed intersection"))
-        }
-        ExactBooleanOperation::Intersection
-            if arrange_coplanar_orthogonal_surface_intersection(left, right).is_some() =>
-        {
-            boolean_coplanar_orthogonal_surface(left, right, operation, validation)
-        }
-        ExactBooleanOperation::Intersection
-            if arrange_coplanar_affine_surface_intersection(left, right).is_some() =>
-        {
-            boolean_coplanar_affine_surface(left, right, operation, validation)
-        }
-        ExactBooleanOperation::Union
-            if arrange_coplanar_convex_surface_union(left, right).is_some() =>
-        {
-            boolean_coplanar_convex_arrangement_union(left, right, validation)
-        }
-        ExactBooleanOperation::Union
-            if arrange_coplanar_convex_surface_component_union(left, right).is_some() =>
-        {
-            boolean_coplanar_convex_arrangement_union(left, right, validation)
-        }
-        ExactBooleanOperation::Union
-            if arrange_coplanar_surface_component_union(left, right).is_some() =>
-        {
-            boolean_coplanar_surface_component_union(left, right, validation)
-        }
-        ExactBooleanOperation::Union
-            if arrange_coplanar_surface_component_holed_union(left, right).is_some() =>
-        {
-            boolean_coplanar_surface_component_holed_union(left, right, validation)
-        }
-        ExactBooleanOperation::Union
-            if arrange_coplanar_surface_multi_component_union(left, right).is_some() =>
-        {
-            boolean_coplanar_surface_multi_component_union(left, right, validation)
-        }
-        ExactBooleanOperation::Union
-            if arrange_coplanar_convex_surface_multi_union(left, right).is_some() =>
-        {
-            boolean_coplanar_convex_multi_union(left, right, validation)
-        }
-        ExactBooleanOperation::Union
-            if arrange_coplanar_surface_point_touch_union(left, right).is_some() =>
-        {
-            boolean_coplanar_surface_point_touch_union(left, right, validation)
-        }
-        ExactBooleanOperation::Intersection
-            if certify_coplanar_surface_boundary_touch(left, right).is_some() =>
-        {
-            boolean_coplanar_surface_boundary_touch_intersection(left, right, validation)
-        }
-        ExactBooleanOperation::Difference
-            if certify_coplanar_surface_boundary_touch(left, right).is_some() =>
-        {
-            boolean_coplanar_surface_boundary_touch_difference(left, right, validation)
-        }
-        ExactBooleanOperation::Intersection
-            if arrange_coplanar_surface_point_touch_union(left, right).is_some() =>
-        {
-            boolean_coplanar_surface_point_touch_intersection(left, right, validation)
-        }
-        ExactBooleanOperation::Difference
-            if arrange_coplanar_surface_point_touch_union(left, right).is_some() =>
-        {
-            boolean_coplanar_surface_point_touch_difference(left, right, validation)
-        }
-        ExactBooleanOperation::Union
-            if arrange_coplanar_orthogonal_surface_union(left, right).is_some() =>
-        {
-            boolean_coplanar_orthogonal_surface(left, right, operation, validation)
-        }
-        ExactBooleanOperation::Union
-            if arrange_coplanar_affine_surface_union(left, right).is_some() =>
-        {
-            boolean_coplanar_affine_surface(left, right, operation, validation)
-        }
-        ExactBooleanOperation::Difference
-            if arrange_coplanar_convex_surface_difference(left, right).is_some() =>
-        {
-            boolean_coplanar_convex_arrangement_difference(left, right, validation)
-        }
-        ExactBooleanOperation::Difference
-            if arrange_coplanar_convex_surface_multi_difference(left, right).is_some() =>
-        {
-            boolean_coplanar_convex_multi_difference(left, right, validation)
-        }
-        ExactBooleanOperation::Difference
-            if arrange_coplanar_surface_component_difference(left, right).is_some() =>
-        {
-            boolean_coplanar_component_difference(left, right, validation)
-        }
-        ExactBooleanOperation::Difference
-            if arrange_coplanar_surface_multi_difference(left, right).is_some() =>
-        {
-            boolean_coplanar_multi_difference(left, right, validation)
-        }
-        ExactBooleanOperation::Difference
-            if arrange_coplanar_surface_side_cutter_difference(left, right).is_some() =>
-        {
-            boolean_coplanar_side_cutter_difference(left, right, validation)
-        }
-        ExactBooleanOperation::Difference
-            if arrange_coplanar_surface_cutter_hole_contact_difference(left, right).is_some() =>
-        {
-            boolean_coplanar_cutter_hole_contact_difference(left, right, validation)
-        }
-        ExactBooleanOperation::Difference
-            if arrange_coplanar_convex_surface_holed_difference(left, right).is_some() =>
-        {
-            boolean_coplanar_convex_containment_surfaces(left, right, operation, validation)
-        }
-        ExactBooleanOperation::Difference
-            if arrange_coplanar_convex_surface_multi_holed_difference(left, right).is_some() =>
-        {
-            boolean_coplanar_convex_multi_holed_difference(left, right, operation, validation).map(
-                |result| result.expect("caller checked convex coplanar multi-holed difference"),
-            )
-        }
-        ExactBooleanOperation::Difference
-            if arrange_coplanar_convex_surface_component_holed_difference(left, right)
-                .is_some()
-                || arrange_coplanar_surface_component_holed_difference(left, right).is_some() =>
-        {
-            boolean_coplanar_convex_component_holed_difference(left, right, validation)
-        }
-        ExactBooleanOperation::Difference
-            if has_non_axis_aligned_affine_surface_difference(left, right) =>
-        {
-            boolean_coplanar_affine_surface(left, right, operation, validation)
-        }
-        ExactBooleanOperation::Difference
-            if arrange_coplanar_surface_point_touch_difference(left, right).is_some() =>
-        {
-            // Keep the retained branch/deleted-ring certificate ahead of the
-            // generic orthogonal-cell materializer. The exact topology is the
-            // object being certified here, per Yap's TEGC model.
-            boolean_coplanar_surface_point_touch_difference(left, right, validation)
-        }
-        ExactBooleanOperation::Difference
-            if arrange_coplanar_orthogonal_surface_difference(left, right).is_some() =>
-        {
-            boolean_coplanar_orthogonal_surface(left, right, operation, validation)
-        }
-        ExactBooleanOperation::Union if has_axis_aligned_box_union(left, right) => {
-            boolean_axis_aligned_box_union(left, right, validation)
-        }
-        ExactBooleanOperation::Intersection if has_axis_aligned_box_intersection(left, right) => {
-            boolean_axis_aligned_box_intersection(left, right, validation)
-        }
-        ExactBooleanOperation::Difference if has_axis_aligned_box_difference(left, right) => {
-            boolean_axis_aligned_box_difference(left, right, validation)
-        }
-        ExactBooleanOperation::Difference if has_axis_aligned_box_multi_difference(left, right) => {
-            boolean_axis_aligned_box_multi_difference(left, right, validation)
-        }
-        ExactBooleanOperation::Difference
-            if has_axis_aligned_box_nested_difference(left, right) =>
-        {
-            boolean_axis_aligned_box_nested_difference(left, right, validation)
-        }
-        ExactBooleanOperation::Difference if has_axis_aligned_box_empty_difference(left, right) => {
-            boolean_axis_aligned_box_empty_difference(left, right, validation)
-        }
-        ExactBooleanOperation::Union if has_affine_box_union(left, right) => {
-            boolean_affine_box(left, right, AffineBoxOperation::Union, validation)
-        }
-        ExactBooleanOperation::Intersection if has_affine_box_intersection(left, right) => {
-            boolean_affine_box(left, right, AffineBoxOperation::Intersection, validation)
-        }
-        ExactBooleanOperation::Difference if has_affine_box_difference(left, right) => {
-            boolean_affine_box(left, right, AffineBoxOperation::Difference, validation)
-        }
-        ExactBooleanOperation::Union
-            if has_affine_orthogonal_solid_cells(
-                left,
-                right,
-                AffineOrthogonalSolidOperation::Union,
-            ) =>
-        {
-            boolean_affine_orthogonal_solid(
-                left,
-                right,
-                AffineOrthogonalSolidOperation::Union,
-                validation,
-            )
-        }
-        ExactBooleanOperation::Intersection
-            if has_affine_orthogonal_solid_cells(
-                left,
-                right,
-                AffineOrthogonalSolidOperation::Intersection,
-            ) =>
-        {
-            boolean_affine_orthogonal_solid(
-                left,
-                right,
-                AffineOrthogonalSolidOperation::Intersection,
-                validation,
-            )
-        }
-        ExactBooleanOperation::Difference
-            if has_affine_orthogonal_solid_cells(
-                left,
-                right,
-                AffineOrthogonalSolidOperation::Difference,
-            ) =>
-        {
-            boolean_affine_orthogonal_solid(
-                left,
-                right,
-                AffineOrthogonalSolidOperation::Difference,
-                validation,
-            )
-        }
-        ExactBooleanOperation::Union
-            if certified_closed_boundary_touching_union_report(left, right)?.is_some() =>
-        {
-            boolean_closed_boundary_touching_union(left, right, validation)
-        }
-        ExactBooleanOperation::Intersection
-            if certified_closed_boundary_touching_regularized_report(left, right)?.is_some() =>
-        {
-            boolean_closed_boundary_touching_intersection(left, right, validation)
-        }
-        ExactBooleanOperation::Difference
-            if certified_closed_boundary_touching_regularized_report(left, right)?.is_some() =>
-        {
-            boolean_closed_boundary_touching_difference(left, right, validation)
-        }
-        ExactBooleanOperation::Union
-        | ExactBooleanOperation::Intersection
-        | ExactBooleanOperation::Difference
-            if certify_coplanar_convex_surface_containment(left, right).is_some() =>
-        {
-            boolean_coplanar_convex_containment_surfaces(left, right, operation, validation)
-        }
+        );
+    }
+    if left.triangles().is_empty() || right.triangles().is_empty() {
+        return boolean_empty_operand(left, right, operation, validation);
+    }
+    if meshes_are_certified_bounds_disjoint(left, right) {
+        return boolean_disjoint_meshes(left, right, operation, validation);
+    }
+    if meshes_are_certified_identical(left, right) {
+        return boolean_identical_meshes(left, operation, validation);
+    }
+    if meshes_are_certified_same_surface(left, right) {
+        return boolean_same_surface_meshes(left, operation, validation);
+    }
+    if let Some(result) =
+        boolean_axis_aligned_box_operation_optional(left, right, operation, validation)?
+    {
+        return Ok(result);
+    }
+    if let Some(result) = boolean_direct_adjacency_meshes(left, right, operation, validation)? {
+        return Ok(result);
+    }
+    if let Some(result) =
+        boolean_direct_coplanar_surface_meshes(left, right, operation, validation)?
+    {
+        return Ok(result);
+    }
+
+    match operation {
+        ExactBooleanOperation::SelectedRegions(_) => unreachable!("handled by caller"),
         ExactBooleanOperation::Union
         | ExactBooleanOperation::Intersection
         | ExactBooleanOperation::Difference => {
+            if let Some(result) = boolean_axis_aligned_box_special_difference_optional(
+                left, right, operation, validation,
+            )? {
+                return Ok(result);
+            }
+            if let Some(result) = boolean_affine_box_optional(left, right, operation, validation)? {
+                return Ok(result);
+            }
+            if let Some(result) =
+                boolean_affine_orthogonal_solid_optional(left, right, operation, validation)?
+            {
+                return Ok(result);
+            }
+
+            let graph = build_intersection_graph(left, right)?;
+            validate_graph_source_handoff(&graph, left, right)?;
+            match operation {
+                ExactBooleanOperation::Union => {
+                    if let Some(report) =
+                        certified_closed_boundary_touching_union_report_from_graph(
+                            &graph, left, right,
+                        )?
+                    {
+                        return boolean_closed_boundary_touching_union(
+                            &graph, left, right, validation, report,
+                        );
+                    }
+                }
+                ExactBooleanOperation::Intersection => {
+                    if let Some(report) =
+                        certified_closed_boundary_touching_regularized_report_from_graph(
+                            &graph, left, right,
+                        )?
+                    {
+                        return boolean_closed_boundary_touching_intersection(
+                            &graph, left, right, validation, report,
+                        );
+                    }
+                }
+                ExactBooleanOperation::Difference => {
+                    if let Some(report) =
+                        certified_closed_boundary_touching_regularized_report_from_graph(
+                            &graph, left, right,
+                        )?
+                    {
+                        return boolean_closed_boundary_touching_difference(
+                            &graph, left, right, validation, report,
+                        );
+                    }
+                }
+                ExactBooleanOperation::SelectedRegions(_) => unreachable!("handled above"),
+            }
+            if let Some(containment) = certify_coplanar_convex_surface_containment(left, right) {
+                return boolean_coplanar_convex_containment_surfaces(
+                    left,
+                    right,
+                    operation,
+                    validation,
+                    containment,
+                );
+            }
             let single_triangle_containment =
                 certify_single_triangle_coplanar_containment(left, right).is_some();
             if operation == ExactBooleanOperation::Intersection
@@ -1837,29 +1534,24 @@ pub fn boolean_exact_with_boundary_policy(
             {
                 return Ok(result);
             }
-            if let Some(result) =
-                boolean_open_surface_disjoint_meshes(left, right, operation, validation)?
-            {
+            if let Some(result) = boolean_open_surface_disjoint_or_arrangement_meshes_from_graph(
+                &graph, left, right, operation, validation,
+            )? {
                 return Ok(result);
             }
-            if let Some(result) =
-                boolean_open_surface_arrangement_meshes(left, right, operation, validation)?
-            {
+            if let Some(result) = boolean_convex_containment_meshes_from_graph(
+                &graph, left, right, operation, validation,
+            )? {
                 return Ok(result);
             }
-            if let Some(result) =
-                boolean_convex_containment_meshes(left, right, operation, validation)?
-            {
+            if let Some(result) = boolean_contained_boundary_difference_meshes_from_graph(
+                &graph, left, right, operation, validation,
+            )? {
                 return Ok(result);
             }
-            if let Some(result) =
-                boolean_contained_boundary_difference_meshes(left, right, operation, validation)?
-            {
-                return Ok(result);
-            }
-            if let Some(result) =
-                boolean_contained_boundary_containment_meshes(left, right, operation, validation)?
-            {
+            if let Some(result) = boolean_contained_boundary_containment_meshes_from_graph(
+                &graph, left, right, operation, validation,
+            )? {
                 return Ok(result);
             }
             if let Some(result) =
@@ -1885,43 +1577,8 @@ pub fn boolean_exact_with_boundary_policy(
             )? {
                 return Ok(result);
             }
-            if let Some(result) =
-                boolean_closed_boundary_only_contact_meshes(left, right, operation, validation)?
-            {
-                return Ok(result);
-            }
-            match boolean_volumetric_winding_regions(left, right, operation, validation) {
-                Ok(Some(result)) => return Ok(result),
-                Ok(None) => {}
-                Err(error) => {
-                    if error_can_retry_certified_boolmesh(&error) {
-                        match execute_exact_boolmesh_port(left, right, operation, validation) {
-                            Ok(execution) => {
-                                return Ok(certified_shortcut_result(
-                                    execution.mesh,
-                                    execution.shortcut,
-                                ));
-                            }
-                            Err(ExactBoolMeshValidationError::PortBlocked(
-                                stage @ (ExactBoolMeshKernelStage::Triangulation
-                                | ExactBoolMeshKernelStage::Cleanup),
-                            )) => return Err(boolmesh_late_export_blocker_error(stage)),
-                            _ => {}
-                        }
-                    }
-                    return Err(error);
-                }
-            }
-            if let Some(result) = boolean_boolmesh_port_meshes(left, right, operation, validation)?
-            {
-                return Ok(result);
-            }
-            if let Some(result) =
-                boolean_winding_containment_meshes(left, right, operation, validation)?
-            {
-                return Ok(result);
-            }
-            if let Some(result) = boolean_boundary_touching_meshes(
+            if let Some(result) = boolean_retained_graph_fallback_meshes_from_graph(
+                &graph,
                 left,
                 right,
                 operation,
@@ -1939,181 +1596,21 @@ pub fn boolean_exact_with_boundary_policy(
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
-fn boolean_coplanar_convex_arrangement_union(
-    left: &ExactMesh,
-    right: &ExactMesh,
+fn copied_shortcut_result_from_mesh(
+    mesh: &ExactMesh,
+    label: &'static str,
+    shortcut: ExactBooleanShortcutKind,
     validation: ValidationPolicy,
 ) -> Result<ExactBooleanResult, MeshError> {
-    let union = arrange_coplanar_convex_surface_union(left, right)
-        .or_else(|| arrange_coplanar_convex_surface_component_union(left, right))
-        .expect("caller checked convex coplanar arrangement union");
-    let mesh = copy_mesh(
-        &union.mesh,
-        "exact coplanar convex arrangement union",
-        validation,
-    )?;
-    Ok(certified_shortcut_result(
-        mesh,
-        ExactBooleanShortcutKind::CoplanarConvexSurfaceArrangementUnion,
-    ))
+    let mesh = copy_mesh(mesh, label, validation)?;
+    Ok(certified_shortcut_result(mesh, shortcut))
 }
 
-#[cfg(feature = "exact-triangulation")]
-fn boolean_coplanar_convex_multi_union(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    validation: ValidationPolicy,
-) -> Result<ExactBooleanResult, MeshError> {
-    let union = arrange_coplanar_convex_surface_multi_union(left, right)
-        .expect("caller checked convex coplanar multi-component union");
-    let mesh = copy_mesh(
-        &union.mesh,
-        "exact coplanar convex multi-component union",
-        validation,
-    )?;
-    Ok(certified_shortcut_result(
-        mesh,
-        ExactBooleanShortcutKind::CoplanarConvexSurfaceMultiUnion,
-    ))
-}
-
-#[cfg(feature = "exact-triangulation")]
-fn boolean_coplanar_surface_component_union(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    validation: ValidationPolicy,
-) -> Result<ExactBooleanResult, MeshError> {
-    let union = arrange_coplanar_surface_component_union(left, right)
-        .expect("caller checked coplanar nonconvex component union");
-    union.validate_component_union_against_sources(left, right)?;
-    let mesh = copy_mesh(
-        &union.mesh,
-        "exact coplanar nonconvex component union",
-        validation,
-    )?;
-    Ok(certified_shortcut_result(
-        mesh,
-        ExactBooleanShortcutKind::CoplanarSurfaceArrangementUnion,
-    ))
-}
-
-#[cfg(feature = "exact-triangulation")]
-fn boolean_coplanar_surface_multi_component_union(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    validation: ValidationPolicy,
-) -> Result<ExactBooleanResult, MeshError> {
-    let union = arrange_coplanar_surface_multi_component_union(left, right)
-        .expect("caller checked coplanar nonconvex multi-component union");
-    union.validate_union_against_sources(left, right)?;
-    let mesh = copy_mesh(
-        &union.mesh,
-        "exact coplanar nonconvex multi-component union",
-        validation,
-    )?;
-    Ok(certified_shortcut_result(
-        mesh,
-        ExactBooleanShortcutKind::CoplanarSurfaceMultiUnion,
-    ))
-}
-
-#[cfg(feature = "exact-triangulation")]
-fn boolean_coplanar_surface_component_holed_union(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    validation: ValidationPolicy,
-) -> Result<ExactBooleanResult, MeshError> {
-    let union = arrange_coplanar_surface_component_holed_union(left, right)
-        .expect("caller checked coplanar component-holed surface union");
-    union.validate_union_against_sources(left, right)?;
-    let mesh = copy_mesh(
-        &union.mesh,
-        "exact coplanar component-holed surface union",
-        validation,
-    )?;
-    Ok(certified_shortcut_result(
-        mesh,
-        ExactBooleanShortcutKind::CoplanarSurfaceArrangementUnion,
-    ))
-}
-
-#[cfg(feature = "exact-triangulation")]
-fn boolean_coplanar_surface_point_touch_union(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    validation: ValidationPolicy,
-) -> Result<ExactBooleanResult, MeshError> {
-    let union = arrange_coplanar_surface_point_touch_union(left, right)
-        .expect("caller checked coplanar point-touch surface union");
-    union.validate_union_against_sources(left, right)?;
-    let mesh = copy_mesh(
-        &union.mesh,
-        "exact coplanar point-touch surface union",
-        validation,
-    )?;
-    Ok(certified_shortcut_result(
-        mesh,
-        ExactBooleanShortcutKind::CoplanarSurfacePointTouchUnion,
-    ))
-}
-
-#[cfg(feature = "exact-triangulation")]
-fn boolean_coplanar_surface_point_touch_intersection(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    validation: ValidationPolicy,
-) -> Result<ExactBooleanResult, MeshError> {
-    let union = arrange_coplanar_surface_point_touch_union(left, right)
-        .expect("caller checked coplanar point-touch surface intersection");
-    union.validate_union_against_sources(left, right)?;
-    let mesh = empty_mesh(
-        "empty exact coplanar point-touch surface intersection",
-        validation,
-    )?;
-    Ok(certified_shortcut_result(
-        mesh,
-        ExactBooleanShortcutKind::CoplanarSurfacePointTouchIntersection,
-    ))
-}
-
-#[cfg(feature = "exact-triangulation")]
-fn boolean_coplanar_surface_point_touch_difference(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    validation: ValidationPolicy,
-) -> Result<ExactBooleanResult, MeshError> {
-    let mesh = if let Some(union) = arrange_coplanar_surface_point_touch_union(left, right) {
-        union.validate_union_against_sources(left, right)?;
-        copy_mesh(
-            left,
-            "exact coplanar point-touch surface difference keeps left",
-            validation,
-        )?
-    } else {
-        let difference = arrange_coplanar_surface_point_touch_difference(left, right)
-            .expect("caller checked coplanar point-touch surface difference");
-        difference.validate_difference_against_sources(left, right)?;
-        copy_mesh(
-            &difference.mesh,
-            "exact coplanar point-touch surface difference",
-            validation,
-        )?
-    };
-    Ok(certified_shortcut_result(
-        mesh,
-        ExactBooleanShortcutKind::CoplanarSurfacePointTouchDifference,
-    ))
-}
-
-#[cfg(feature = "exact-triangulation")]
 fn boolean_coplanar_surface_boundary_touch_intersection(
     left: &ExactMesh,
     right: &ExactMesh,
     validation: ValidationPolicy,
 ) -> Result<ExactBooleanResult, MeshError> {
-    certify_coplanar_surface_boundary_touch(left, right)
-        .expect("caller checked coplanar boundary-touch surface intersection");
     if let Some(result) =
         boolean_boolmesh_split_meshes(left, right, ExactBooleanOperation::Intersection, validation)?
     {
@@ -2129,14 +1626,11 @@ fn boolean_coplanar_surface_boundary_touch_intersection(
     ))
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn boolean_coplanar_surface_boundary_touch_difference(
     left: &ExactMesh,
     right: &ExactMesh,
     validation: ValidationPolicy,
 ) -> Result<ExactBooleanResult, MeshError> {
-    certify_coplanar_surface_boundary_touch(left, right)
-        .expect("caller checked coplanar boundary-touch surface difference");
     if let Some(result) =
         boolean_boolmesh_split_meshes(left, right, ExactBooleanOperation::Difference, validation)?
     {
@@ -2153,7 +1647,6 @@ fn boolean_coplanar_surface_boundary_touch_difference(
     ))
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn boolean_convex_intersection_meshes(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -2166,7 +1659,6 @@ fn boolean_convex_intersection_meshes(
     let Some(intersection) = intersect_closed_convex_solids(left, right) else {
         return Ok(None);
     };
-    intersection.validate_against_sources(left, right)?;
     let mesh = copy_mesh(
         &intersection.mesh,
         "exact closed-convex solid intersection",
@@ -2178,149 +1670,6 @@ fn boolean_convex_intersection_meshes(
     )))
 }
 
-#[cfg(feature = "exact-triangulation")]
-fn boolean_coplanar_convex_arrangement_intersection(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    validation: ValidationPolicy,
-) -> Result<ExactBooleanResult, MeshError> {
-    let intersection = arrange_coplanar_convex_surface_intersection(left, right)
-        .expect("caller checked convex coplanar arrangement intersection");
-    intersection.validate_against_sources(
-        left,
-        right,
-        CoplanarArrangementOperation::Intersection,
-    )?;
-    let mesh = copy_mesh(
-        &intersection.mesh,
-        "exact coplanar convex arrangement intersection",
-        validation,
-    )?;
-    Ok(certified_shortcut_result(
-        mesh,
-        ExactBooleanShortcutKind::CoplanarConvexSurfaceIntersection,
-    ))
-}
-
-#[cfg(feature = "exact-triangulation")]
-fn boolean_coplanar_convex_multi_intersection(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    validation: ValidationPolicy,
-) -> Result<ExactBooleanResult, MeshError> {
-    let intersection = arrange_coplanar_convex_surface_multi_intersection(left, right)
-        .expect("caller checked convex coplanar multi-component intersection");
-    intersection.validate_intersection_against_sources(left, right)?;
-    let mesh = copy_mesh(
-        &intersection.mesh,
-        "exact coplanar convex multi-component intersection",
-        validation,
-    )?;
-    Ok(certified_shortcut_result(
-        mesh,
-        ExactBooleanShortcutKind::CoplanarConvexSurfaceIntersection,
-    ))
-}
-
-#[cfg(feature = "exact-triangulation")]
-fn boolean_coplanar_convex_arrangement_difference(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    validation: ValidationPolicy,
-) -> Result<ExactBooleanResult, MeshError> {
-    let difference = arrange_coplanar_convex_surface_difference(left, right)
-        .expect("caller checked convex coplanar arrangement difference");
-    let mesh = copy_mesh(
-        &difference.mesh,
-        "exact coplanar convex arrangement difference",
-        validation,
-    )?;
-    Ok(certified_shortcut_result(
-        mesh,
-        ExactBooleanShortcutKind::CoplanarConvexSurfaceArrangementDifference,
-    ))
-}
-
-#[cfg(feature = "exact-triangulation")]
-fn boolean_coplanar_convex_multi_difference(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    validation: ValidationPolicy,
-) -> Result<ExactBooleanResult, MeshError> {
-    let difference = arrange_coplanar_convex_surface_multi_difference(left, right)
-        .expect("caller checked convex coplanar multi-component difference");
-    let mesh = copy_mesh(
-        &difference.mesh,
-        "exact coplanar convex multi-component difference",
-        validation,
-    )?;
-    Ok(certified_shortcut_result(
-        mesh,
-        ExactBooleanShortcutKind::CoplanarConvexSurfaceMultiDifference,
-    ))
-}
-
-#[cfg(feature = "exact-triangulation")]
-fn boolean_coplanar_multi_difference(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    validation: ValidationPolicy,
-) -> Result<ExactBooleanResult, MeshError> {
-    let difference = arrange_coplanar_surface_multi_difference(left, right)
-        .expect("caller checked coplanar nonconvex multi-component difference");
-    difference.validate_difference_against_sources(left, right)?;
-    let mesh = copy_mesh(
-        &difference.mesh,
-        "exact coplanar nonconvex multi-component difference",
-        validation,
-    )?;
-    Ok(certified_shortcut_result(
-        mesh,
-        ExactBooleanShortcutKind::CoplanarSurfaceMultiDifference,
-    ))
-}
-
-#[cfg(feature = "exact-triangulation")]
-fn boolean_coplanar_component_difference(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    validation: ValidationPolicy,
-) -> Result<ExactBooleanResult, MeshError> {
-    let difference = arrange_coplanar_surface_component_difference(left, right)
-        .expect("caller checked coplanar nonconvex component difference");
-    difference.validate_component_difference_against_sources(left, right)?;
-    let mesh = copy_mesh(
-        &difference.mesh,
-        "exact coplanar component difference",
-        validation,
-    )?;
-    Ok(certified_shortcut_result(
-        mesh,
-        ExactBooleanShortcutKind::CoplanarSurfaceArrangementDifference,
-    ))
-}
-
-#[cfg(feature = "exact-triangulation")]
-fn boolean_coplanar_side_cutter_difference(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    validation: ValidationPolicy,
-) -> Result<ExactBooleanResult, MeshError> {
-    let difference = arrange_coplanar_surface_side_cutter_difference(left, right)
-        .expect("caller checked coplanar side-cutter difference");
-    difference.validate_side_cutter_difference_against_sources(left, right)?;
-    let mesh = copy_mesh(
-        &difference.mesh,
-        "exact coplanar side-cutter difference",
-        validation,
-    )?;
-    Ok(certified_shortcut_result(
-        mesh,
-        ExactBooleanShortcutKind::CoplanarSurfaceSideCutterDifference,
-    ))
-}
-
-#[cfg(feature = "exact-triangulation")]
 fn boolean_coplanar_cutter_hole_contact_difference_optional(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -2332,7 +1681,6 @@ fn boolean_coplanar_cutter_hole_contact_difference_optional(
     }
     arrange_coplanar_surface_cutter_hole_contact_difference(left, right)
         .map(|difference| {
-            difference.validate_cutter_hole_contact_difference_against_sources(left, right)?;
             let mesh = copy_mesh(
                 &difference.mesh,
                 "exact coplanar cutter-hole contact difference",
@@ -2346,22 +1694,6 @@ fn boolean_coplanar_cutter_hole_contact_difference_optional(
         .transpose()
 }
 
-#[cfg(feature = "exact-triangulation")]
-fn boolean_coplanar_cutter_hole_contact_difference(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    validation: ValidationPolicy,
-) -> Result<ExactBooleanResult, MeshError> {
-    boolean_coplanar_cutter_hole_contact_difference_optional(
-        left,
-        right,
-        ExactBooleanOperation::Difference,
-        validation,
-    )
-    .map(|result| result.expect("caller checked coplanar cutter-hole contact difference"))
-}
-
-#[cfg(feature = "exact-triangulation")]
 fn boolean_coplanar_surface_intersection(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -2373,7 +1705,6 @@ fn boolean_coplanar_surface_intersection(
     }
     let Some(intersection) = intersect_single_triangle_coplanar_surfaces(left, right) else {
         if let Some(intersection) = arrange_coplanar_surface_component_intersection(left, right) {
-            intersection.validate_intersection_against_sources(left, right)?;
             let mesh = copy_mesh(
                 &intersection.mesh,
                 "exact coplanar nonconvex component intersection",
@@ -2387,7 +1718,6 @@ fn boolean_coplanar_surface_intersection(
         if let Some(intersection) =
             arrange_coplanar_surface_multi_component_intersection(left, right)
         {
-            intersection.validate_intersection_against_sources(left, right)?;
             let mesh = copy_mesh(
                 &intersection.mesh,
                 "exact coplanar nonconvex multi-component intersection",
@@ -2401,7 +1731,6 @@ fn boolean_coplanar_surface_intersection(
         if let Some(intersection) =
             arrange_coplanar_surface_component_holed_intersection(left, right)
         {
-            intersection.validate_intersection_against_sources(left, right)?;
             let mesh = copy_mesh(
                 &intersection.mesh,
                 "exact coplanar component-holed surface intersection",
@@ -2425,7 +1754,6 @@ fn boolean_coplanar_surface_intersection(
     )))
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn boolean_coplanar_surface_convex_union(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -2449,7 +1777,6 @@ fn boolean_coplanar_surface_convex_union(
     )))
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn boolean_coplanar_surface_arrangement_union(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -2461,7 +1788,6 @@ fn boolean_coplanar_surface_arrangement_union(
     }
     let Some(union) = arrange_single_triangle_coplanar_union(left, right) else {
         if let Some(union) = arrange_coplanar_surface_component_union(left, right) {
-            union.validate_component_union_against_sources(left, right)?;
             let mesh = copy_mesh(&union.mesh, "exact coplanar component union", validation)?;
             return Ok(Some(certified_shortcut_result(
                 mesh,
@@ -2469,7 +1795,6 @@ fn boolean_coplanar_surface_arrangement_union(
             )));
         }
         if let Some(union) = arrange_coplanar_surface_component_holed_union(left, right) {
-            union.validate_union_against_sources(left, right)?;
             let mesh = copy_mesh(
                 &union.mesh,
                 "exact coplanar component-holed surface union",
@@ -2482,7 +1807,6 @@ fn boolean_coplanar_surface_arrangement_union(
         }
         return arrange_coplanar_surface_multi_component_union(left, right)
             .map(|union| {
-                union.validate_union_against_sources(left, right)?;
                 let mesh = copy_mesh(
                     &union.mesh,
                     "exact coplanar nonconvex multi-component union",
@@ -2495,7 +1819,6 @@ fn boolean_coplanar_surface_arrangement_union(
             })
             .or_else(|| {
                 arrange_coplanar_surface_point_touch_union(left, right).map(|union| {
-                    union.validate_union_against_sources(left, right)?;
                     let mesh = copy_mesh(
                         &union.mesh,
                         "exact coplanar point-touch surface union",
@@ -2520,7 +1843,6 @@ fn boolean_coplanar_surface_arrangement_union(
     )))
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn boolean_coplanar_surface_corner_difference(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -2544,7 +1866,6 @@ fn boolean_coplanar_surface_corner_difference(
     )))
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn boolean_coplanar_surface_arrangement_difference(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -2568,7 +1889,6 @@ fn boolean_coplanar_surface_arrangement_difference(
     )))
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn boolean_coplanar_surface_holed_difference(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -2592,7 +1912,6 @@ fn boolean_coplanar_surface_holed_difference(
     )))
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn boolean_coplanar_convex_multi_holed_difference(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -2606,7 +1925,6 @@ fn boolean_coplanar_convex_multi_holed_difference(
     else {
         return Ok(None);
     };
-    difference.validate_against_sources(left, right)?;
     let mesh = copy_mesh(
         &difference.mesh,
         "exact coplanar convex multi-holed difference",
@@ -2618,7 +1936,6 @@ fn boolean_coplanar_convex_multi_holed_difference(
     )))
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn boolean_coplanar_convex_component_holed_difference_optional(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -2631,7 +1948,6 @@ fn boolean_coplanar_convex_component_holed_difference_optional(
     arrange_coplanar_convex_surface_component_holed_difference(left, right)
         .or_else(|| arrange_coplanar_surface_component_holed_difference(left, right))
         .map(|difference| {
-            difference.validate_surface_difference_against_sources(left, right)?;
             let mesh = copy_mesh(
                 &difference.mesh,
                 "exact coplanar component-holed difference",
@@ -2645,22 +1961,6 @@ fn boolean_coplanar_convex_component_holed_difference_optional(
         .transpose()
 }
 
-#[cfg(feature = "exact-triangulation")]
-fn boolean_coplanar_convex_component_holed_difference(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    validation: ValidationPolicy,
-) -> Result<ExactBooleanResult, MeshError> {
-    boolean_coplanar_convex_component_holed_difference_optional(
-        left,
-        right,
-        ExactBooleanOperation::Difference,
-        validation,
-    )
-    .map(|result| result.expect("caller checked convex coplanar component-holed difference"))
-}
-
-#[cfg(feature = "exact-triangulation")]
 fn boolean_coplanar_orthogonal_surface_optional(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -2680,7 +1980,6 @@ fn boolean_coplanar_orthogonal_surface_optional(
     let Some(arrangement) = arrangement else {
         return Ok(None);
     };
-    arrangement.validate_against_sources(left, right)?;
     let (label, shortcut) = match arrangement.operation {
         CoplanarOrthogonalSurfaceOperation::Union => (
             "exact coplanar orthogonal surface union",
@@ -2699,18 +1998,6 @@ fn boolean_coplanar_orthogonal_surface_optional(
     Ok(Some(certified_shortcut_result(mesh, shortcut)))
 }
 
-#[cfg(feature = "exact-triangulation")]
-fn boolean_coplanar_orthogonal_surface(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-) -> Result<ExactBooleanResult, MeshError> {
-    boolean_coplanar_orthogonal_surface_optional(left, right, operation, validation)
-        .map(|result| result.expect("caller checked coplanar orthogonal surface arrangement"))
-}
-
-#[cfg(feature = "exact-triangulation")]
 fn boolean_coplanar_affine_surface_optional(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -2730,7 +2017,6 @@ fn boolean_coplanar_affine_surface_optional(
     let Some(arrangement) = arrangement else {
         return Ok(None);
     };
-    arrangement.validate_against_sources(left, right)?;
     let (label, shortcut) = match arrangement.operation {
         CoplanarOrthogonalSurfaceOperation::Union => (
             "exact coplanar affine surface union",
@@ -2749,123 +2035,351 @@ fn boolean_coplanar_affine_surface_optional(
     Ok(Some(certified_shortcut_result(mesh, shortcut)))
 }
 
-#[cfg(feature = "exact-triangulation")]
-fn boolean_coplanar_affine_surface(
+fn boolean_direct_coplanar_surface_meshes(
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
-) -> Result<ExactBooleanResult, MeshError> {
-    boolean_coplanar_affine_surface_optional(left, right, operation, validation)
-        .map(|result| result.expect("caller checked coplanar affine surface arrangement"))
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    match operation {
+        ExactBooleanOperation::Union => {
+            if certify_coplanar_convex_surface_equivalence(left, right).is_some() {
+                return Ok(Some(boolean_coplanar_convex_equivalent_surfaces(
+                    left, operation, validation,
+                )?));
+            }
+            if let Some(containment) = certify_coplanar_convex_surface_containment(left, right) {
+                return Ok(Some(boolean_coplanar_convex_containment_surfaces(
+                    left,
+                    right,
+                    operation,
+                    validation,
+                    containment,
+                )?));
+            }
+            if let Some(union) = arrange_coplanar_convex_surface_union(left, right) {
+                return Ok(Some(copied_shortcut_result_from_mesh(
+                    &union.mesh,
+                    "exact coplanar convex arrangement union",
+                    ExactBooleanShortcutKind::CoplanarConvexSurfaceArrangementUnion,
+                    validation,
+                )?));
+            }
+            if let Some(union) = arrange_coplanar_convex_surface_component_union(left, right) {
+                return Ok(Some(copied_shortcut_result_from_mesh(
+                    &union.mesh,
+                    "exact coplanar convex arrangement union",
+                    ExactBooleanShortcutKind::CoplanarConvexSurfaceArrangementUnion,
+                    validation,
+                )?));
+            }
+            if let Some(union) = arrange_coplanar_surface_component_union(left, right) {
+                return Ok(Some(copied_shortcut_result_from_mesh(
+                    &union.mesh,
+                    "exact coplanar nonconvex component union",
+                    ExactBooleanShortcutKind::CoplanarSurfaceArrangementUnion,
+                    validation,
+                )?));
+            }
+            if let Some(union) = arrange_coplanar_surface_component_holed_union(left, right) {
+                return Ok(Some(copied_shortcut_result_from_mesh(
+                    &union.mesh,
+                    "exact coplanar component-holed surface union",
+                    ExactBooleanShortcutKind::CoplanarSurfaceArrangementUnion,
+                    validation,
+                )?));
+            }
+            if let Some(union) = arrange_coplanar_surface_multi_component_union(left, right) {
+                return Ok(Some(copied_shortcut_result_from_mesh(
+                    &union.mesh,
+                    "exact coplanar nonconvex multi-component union",
+                    ExactBooleanShortcutKind::CoplanarSurfaceMultiUnion,
+                    validation,
+                )?));
+            }
+            if let Some(union) = arrange_coplanar_convex_surface_multi_union(left, right) {
+                return Ok(Some(copied_shortcut_result_from_mesh(
+                    &union.mesh,
+                    "exact coplanar convex multi-component union",
+                    ExactBooleanShortcutKind::CoplanarConvexSurfaceMultiUnion,
+                    validation,
+                )?));
+            }
+            if let Some(union) = arrange_coplanar_surface_point_touch_union(left, right) {
+                return Ok(Some(copied_shortcut_result_from_mesh(
+                    &union.mesh,
+                    "exact coplanar point-touch surface union",
+                    ExactBooleanShortcutKind::CoplanarSurfacePointTouchUnion,
+                    validation,
+                )?));
+            }
+            if let Some(result) =
+                boolean_coplanar_orthogonal_surface_optional(left, right, operation, validation)?
+            {
+                return Ok(Some(result));
+            }
+            boolean_coplanar_affine_surface_optional(left, right, operation, validation)
+        }
+        ExactBooleanOperation::Intersection => {
+            if certify_coplanar_convex_surface_equivalence(left, right).is_some() {
+                return Ok(Some(boolean_coplanar_convex_equivalent_surfaces(
+                    left, operation, validation,
+                )?));
+            }
+            if let Some(containment) = certify_coplanar_convex_surface_containment(left, right) {
+                return Ok(Some(boolean_coplanar_convex_containment_surfaces(
+                    left,
+                    right,
+                    operation,
+                    validation,
+                    containment,
+                )?));
+            }
+            if let Some(intersection) = arrange_coplanar_convex_surface_intersection(left, right) {
+                return Ok(Some(copied_shortcut_result_from_mesh(
+                    &intersection.mesh,
+                    "exact coplanar convex arrangement intersection",
+                    ExactBooleanShortcutKind::CoplanarConvexSurfaceIntersection,
+                    validation,
+                )?));
+            }
+            if let Some(intersection) =
+                arrange_coplanar_convex_surface_multi_intersection(left, right)
+            {
+                return Ok(Some(copied_shortcut_result_from_mesh(
+                    &intersection.mesh,
+                    "exact coplanar convex multi-component intersection",
+                    ExactBooleanShortcutKind::CoplanarConvexSurfaceIntersection,
+                    validation,
+                )?));
+            }
+            if let Some(intersection) =
+                arrange_coplanar_surface_component_holed_intersection(left, right)
+            {
+                return Ok(Some(copied_shortcut_result_from_mesh(
+                    &intersection.mesh,
+                    "exact coplanar component-holed surface intersection",
+                    ExactBooleanShortcutKind::CoplanarSurfaceIntersection,
+                    validation,
+                )?));
+            }
+            if let Some(result) =
+                boolean_coplanar_orthogonal_surface_optional(left, right, operation, validation)?
+            {
+                return Ok(Some(result));
+            }
+            if let Some(result) =
+                boolean_coplanar_affine_surface_optional(left, right, operation, validation)?
+            {
+                return Ok(Some(result));
+            }
+            if certify_coplanar_surface_boundary_touch(left, right).is_some() {
+                return Ok(Some(boolean_coplanar_surface_boundary_touch_intersection(
+                    left, right, validation,
+                )?));
+            }
+            if arrange_coplanar_surface_point_touch_union(left, right).is_some() {
+                let mesh = empty_mesh(
+                    "empty exact coplanar point-touch surface intersection",
+                    validation,
+                )?;
+                return Ok(Some(certified_shortcut_result(
+                    mesh,
+                    ExactBooleanShortcutKind::CoplanarSurfacePointTouchIntersection,
+                )));
+            }
+            Ok(None)
+        }
+        ExactBooleanOperation::Difference => {
+            if certify_coplanar_convex_surface_equivalence(left, right).is_some() {
+                return Ok(Some(boolean_coplanar_convex_equivalent_surfaces(
+                    left, operation, validation,
+                )?));
+            }
+            if certify_coplanar_surface_boundary_touch(left, right).is_some() {
+                return Ok(Some(boolean_coplanar_surface_boundary_touch_difference(
+                    left, right, validation,
+                )?));
+            }
+            if arrange_coplanar_surface_point_touch_union(left, right).is_some() {
+                return Ok(Some(copied_shortcut_result_from_mesh(
+                    left,
+                    "exact coplanar point-touch surface difference keeps left",
+                    ExactBooleanShortcutKind::CoplanarSurfacePointTouchDifference,
+                    validation,
+                )?));
+            }
+            if let Some(difference) = arrange_coplanar_convex_surface_difference(left, right) {
+                return Ok(Some(copied_shortcut_result_from_mesh(
+                    &difference.mesh,
+                    "exact coplanar convex arrangement difference",
+                    ExactBooleanShortcutKind::CoplanarConvexSurfaceArrangementDifference,
+                    validation,
+                )?));
+            }
+            if let Some(difference) = arrange_coplanar_convex_surface_multi_difference(left, right)
+            {
+                return Ok(Some(copied_shortcut_result_from_mesh(
+                    &difference.mesh,
+                    "exact coplanar convex multi-component difference",
+                    ExactBooleanShortcutKind::CoplanarConvexSurfaceMultiDifference,
+                    validation,
+                )?));
+            }
+            if let Some(difference) = arrange_coplanar_surface_component_difference(left, right) {
+                return Ok(Some(copied_shortcut_result_from_mesh(
+                    &difference.mesh,
+                    "exact coplanar component difference",
+                    ExactBooleanShortcutKind::CoplanarSurfaceArrangementDifference,
+                    validation,
+                )?));
+            }
+            if let Some(difference) = arrange_coplanar_surface_multi_difference(left, right) {
+                return Ok(Some(copied_shortcut_result_from_mesh(
+                    &difference.mesh,
+                    "exact coplanar nonconvex multi-component difference",
+                    ExactBooleanShortcutKind::CoplanarSurfaceMultiDifference,
+                    validation,
+                )?));
+            }
+            if let Some(difference) = arrange_coplanar_surface_side_cutter_difference(left, right) {
+                return Ok(Some(copied_shortcut_result_from_mesh(
+                    &difference.mesh,
+                    "exact coplanar side-cutter difference",
+                    ExactBooleanShortcutKind::CoplanarSurfaceSideCutterDifference,
+                    validation,
+                )?));
+            }
+            if let Some(result) = boolean_coplanar_cutter_hole_contact_difference_optional(
+                left, right, operation, validation,
+            )? {
+                return Ok(Some(result));
+            }
+            if let Some(difference) = arrange_coplanar_convex_surface_holed_difference(left, right)
+            {
+                return Ok(Some(copied_shortcut_result_from_mesh(
+                    &difference.mesh,
+                    "exact coplanar convex containment holed difference",
+                    ExactBooleanShortcutKind::CoplanarConvexSurfaceHoledDifference,
+                    validation,
+                )?));
+            }
+            if let Some(result) =
+                boolean_coplanar_convex_multi_holed_difference(left, right, operation, validation)?
+            {
+                return Ok(Some(result));
+            }
+            if let Some(result) = boolean_coplanar_convex_component_holed_difference_optional(
+                left, right, operation, validation,
+            )? {
+                return Ok(Some(result));
+            }
+            if let Some(arrangement) = arrange_coplanar_affine_surface_difference(left, right)
+                && affine_basis_is_non_axis_aligned(&arrangement.basis)
+            {
+                let mesh = copy_mesh(
+                    &arrangement.mesh,
+                    "exact coplanar affine surface difference",
+                    validation,
+                )?;
+                return Ok(Some(certified_shortcut_result(
+                    mesh,
+                    ExactBooleanShortcutKind::CoplanarAffineSurfaceDifference,
+                )));
+            }
+            if let Some(difference) = arrange_coplanar_surface_point_touch_difference(left, right) {
+                // Keep the retained branch/deleted-ring certificate ahead of the
+                // generic orthogonal-cell materializer. The exact topology is the
+                return Ok(Some(copied_shortcut_result_from_mesh(
+                    &difference.mesh,
+                    "exact coplanar point-touch surface difference",
+                    ExactBooleanShortcutKind::CoplanarSurfacePointTouchDifference,
+                    validation,
+                )?));
+            }
+            boolean_coplanar_orthogonal_surface_optional(left, right, operation, validation)
+        }
+        ExactBooleanOperation::SelectedRegions(_) => Ok(None),
+    }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn has_non_axis_aligned_affine_surface_difference(left: &ExactMesh, right: &ExactMesh) -> bool {
     arrange_coplanar_affine_surface_difference(left, right)
         .as_ref()
         .is_some_and(|arrangement| affine_basis_is_non_axis_aligned(&arrangement.basis))
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn affine_basis_is_non_axis_aligned(basis: &CoplanarAffineSurfaceBasis) -> bool {
     let u = project_point3(&basis.basis_u, basis.projection);
     let v = project_point3(&basis.basis_v, basis.projection);
     !(projected_vector_axis_aligned(&u) && projected_vector_axis_aligned(&v))
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn projected_vector_axis_aligned(vector: &hyperlimit::Point2) -> bool {
-    let x_is_zero = compare_reals(&vector.x, &ExactReal::from(0)).value() == Some(Ordering::Equal);
-    let y_is_zero = compare_reals(&vector.y, &ExactReal::from(0)).value() == Some(Ordering::Equal);
+    let x_is_zero = compare_reals(&vector.x, &Real::from(0)).value() == Some(Ordering::Equal);
+    let y_is_zero = compare_reals(&vector.y, &Real::from(0)).value() == Some(Ordering::Equal);
     x_is_zero ^ y_is_zero
 }
 
-#[cfg(feature = "exact-triangulation")]
-fn boolean_axis_aligned_box_union(
+fn boolean_axis_aligned_box_operation_optional(
     left: &ExactMesh,
     right: &ExactMesh,
+    operation: ExactBooleanOperation,
     validation: ValidationPolicy,
-) -> Result<ExactBooleanResult, MeshError> {
-    let mesh = union_axis_aligned_boxes(left, right, validation)?
-        .expect("caller checked axis-aligned box union");
-    Ok(certified_shortcut_result(
-        mesh,
-        ExactBooleanShortcutKind::AxisAlignedBoxUnion,
-    ))
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    let (operation, shortcut) = match operation {
+        ExactBooleanOperation::Union => (
+            AxisAlignedBoxOperation::Union,
+            ExactBooleanShortcutKind::AxisAlignedBoxUnion,
+        ),
+        ExactBooleanOperation::Intersection => (
+            AxisAlignedBoxOperation::Intersection,
+            ExactBooleanShortcutKind::AxisAlignedBoxIntersection,
+        ),
+        ExactBooleanOperation::Difference => (
+            AxisAlignedBoxOperation::Difference,
+            ExactBooleanShortcutKind::AxisAlignedBoxDifference,
+        ),
+        ExactBooleanOperation::SelectedRegions(_) => return Ok(None),
+    };
+    let Some(mesh) =
+        materialize_simple_axis_aligned_box_operation(left, right, operation, validation)?
+    else {
+        return Ok(None);
+    };
+    Ok(Some(certified_shortcut_result(mesh, shortcut)))
 }
 
-#[cfg(feature = "exact-triangulation")]
-fn boolean_axis_aligned_box_intersection(
+fn boolean_axis_aligned_box_special_difference_optional(
     left: &ExactMesh,
     right: &ExactMesh,
+    operation: ExactBooleanOperation,
     validation: ValidationPolicy,
-) -> Result<ExactBooleanResult, MeshError> {
-    let mesh = intersection_axis_aligned_boxes(left, right, validation)?
-        .expect("caller checked axis-aligned box intersection");
-    Ok(certified_shortcut_result(
-        mesh,
-        ExactBooleanShortcutKind::AxisAlignedBoxIntersection,
-    ))
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    if operation != ExactBooleanOperation::Difference {
+        return Ok(None);
+    }
+    if let Some(mesh) = multi_difference_axis_aligned_boxes(left, right, validation)? {
+        return Ok(Some(certified_shortcut_result(
+            mesh,
+            ExactBooleanShortcutKind::AxisAlignedBoxMultiDifference,
+        )));
+    }
+    if let Some(mesh) = nested_difference_axis_aligned_boxes(left, right, validation)? {
+        return Ok(Some(certified_shortcut_result(
+            mesh,
+            ExactBooleanShortcutKind::AxisAlignedBoxNestedDifference,
+        )));
+    }
+    if let Some(mesh) = empty_difference_axis_aligned_boxes(left, right, validation)? {
+        return Ok(Some(certified_shortcut_result(
+            mesh,
+            ExactBooleanShortcutKind::AxisAlignedBoxEmptyDifference,
+        )));
+    }
+    Ok(None)
 }
 
-#[cfg(feature = "exact-triangulation")]
-fn boolean_axis_aligned_box_difference(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    validation: ValidationPolicy,
-) -> Result<ExactBooleanResult, MeshError> {
-    let mesh = difference_axis_aligned_boxes(left, right, validation)?
-        .expect("caller checked axis-aligned box difference");
-    Ok(certified_shortcut_result(
-        mesh,
-        ExactBooleanShortcutKind::AxisAlignedBoxDifference,
-    ))
-}
-
-#[cfg(feature = "exact-triangulation")]
-fn boolean_axis_aligned_box_multi_difference(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    validation: ValidationPolicy,
-) -> Result<ExactBooleanResult, MeshError> {
-    let mesh = multi_difference_axis_aligned_boxes(left, right, validation)?
-        .expect("caller checked axis-aligned box split difference");
-    Ok(certified_shortcut_result(
-        mesh,
-        ExactBooleanShortcutKind::AxisAlignedBoxMultiDifference,
-    ))
-}
-
-#[cfg(feature = "exact-triangulation")]
-fn boolean_axis_aligned_box_nested_difference(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    validation: ValidationPolicy,
-) -> Result<ExactBooleanResult, MeshError> {
-    let mesh = nested_difference_axis_aligned_boxes(left, right, validation)?
-        .expect("caller checked axis-aligned box nested difference");
-    Ok(certified_shortcut_result(
-        mesh,
-        ExactBooleanShortcutKind::AxisAlignedBoxNestedDifference,
-    ))
-}
-
-#[cfg(feature = "exact-triangulation")]
-fn boolean_axis_aligned_box_empty_difference(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    validation: ValidationPolicy,
-) -> Result<ExactBooleanResult, MeshError> {
-    let mesh = empty_difference_axis_aligned_boxes(left, right, validation)?
-        .expect("caller checked axis-aligned box empty difference");
-    Ok(certified_shortcut_result(
-        mesh,
-        ExactBooleanShortcutKind::AxisAlignedBoxEmptyDifference,
-    ))
-}
-
-#[cfg(feature = "exact-triangulation")]
 fn boolean_axis_aligned_box_cell_meshes(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -2892,7 +2406,6 @@ fn boolean_axis_aligned_box_cell_meshes(
     Ok(Some(certified_shortcut_result(mesh, shortcut)))
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn boolean_axis_aligned_orthogonal_solid_cell_meshes(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -2929,31 +2442,22 @@ fn boolean_axis_aligned_orthogonal_solid_cell_meshes(
     )))
 }
 
-#[cfg(feature = "exact-triangulation")]
 /// Return whether exact orthogonal occupancy certifies an empty intersection.
 ///
 /// This is intentionally narrower than the general orthogonal-cell shortcut:
 /// ordinary nonempty unions/intersections/differences should keep the more
 /// specific graph, box-cell, and boundary-touch certificates when available.
 /// The empty cavity case can have overlapping AABBs and no graph events, so
-/// this retained-object witness is checked before falling through to winding,
-/// following Yap, "Towards Exact Geometric Computation," *Computational
-/// Geometry* 7.1-2 (1997).
+/// this retained evidence witness is checked before falling through to winding,
 fn has_empty_axis_aligned_orthogonal_solid_intersection(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Result<bool, MeshError> {
-    Ok(materialize_axis_aligned_orthogonal_solid_cells(
-        left,
-        right,
-        AxisAlignedOrthogonalSolidOperation::Intersection,
-        "empty exact axis-aligned orthogonal solid cell intersection",
-        ValidationPolicy::CLOSED,
-    )?
-    .is_some_and(|mesh| mesh.vertices().is_empty() && mesh.triangles().is_empty()))
+    Ok(has_empty_axis_aligned_orthogonal_solid_cell_intersection(
+        left, right,
+    ))
 }
 
-#[cfg(feature = "exact-triangulation")]
 const fn axis_aligned_orthogonal_solid_operation(
     operation: ExactBooleanOperation,
 ) -> Option<AxisAlignedOrthogonalSolidOperation> {
@@ -2967,7 +2471,6 @@ const fn axis_aligned_orthogonal_solid_operation(
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 const fn axis_aligned_orthogonal_solid_support(
     operation: AxisAlignedOrthogonalSolidOperation,
 ) -> ExactBooleanSupport {
@@ -2984,7 +2487,6 @@ const fn axis_aligned_orthogonal_solid_support(
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 const fn axis_aligned_orthogonal_solid_shortcut(
     operation: AxisAlignedOrthogonalSolidOperation,
 ) -> ExactBooleanShortcutKind {
@@ -3001,40 +2503,43 @@ const fn axis_aligned_orthogonal_solid_shortcut(
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
-fn boolean_affine_box(
+fn boolean_affine_box_optional(
     left: &ExactMesh,
     right: &ExactMesh,
-    operation: AffineBoxOperation,
+    operation: ExactBooleanOperation,
     validation: ValidationPolicy,
-) -> Result<ExactBooleanResult, MeshError> {
-    let arrangement = match operation {
-        AffineBoxOperation::Union => materialize_affine_box_union(left, right, validation)?,
-        AffineBoxOperation::Intersection => {
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    let Some((arrangement, shortcut)) = (match operation {
+        ExactBooleanOperation::Union => materialize_affine_box_union(left, right, validation)?
+            .map(|arrangement| (arrangement, ExactBooleanShortcutKind::AffineBoxUnion)),
+        ExactBooleanOperation::Intersection => {
             materialize_affine_box_intersection(left, right, validation)?
+                .map(|arrangement| (arrangement, ExactBooleanShortcutKind::AffineBoxIntersection))
         }
-        AffineBoxOperation::Difference => {
+        ExactBooleanOperation::Difference => {
             materialize_affine_box_difference(left, right, validation)?
+                .map(|arrangement| (arrangement, ExactBooleanShortcutKind::AffineBoxDifference))
         }
-    }
-    .expect("caller checked affine box materialization");
-    arrangement.validate_against_sources(left, right)?;
-    let shortcut = match operation {
-        AffineBoxOperation::Union => ExactBooleanShortcutKind::AffineBoxUnion,
-        AffineBoxOperation::Intersection => ExactBooleanShortcutKind::AffineBoxIntersection,
-        AffineBoxOperation::Difference => ExactBooleanShortcutKind::AffineBoxDifference,
+        ExactBooleanOperation::SelectedRegions(_) => None,
+    }) else {
+        return Ok(None);
     };
-    Ok(certified_shortcut_result(arrangement.mesh, shortcut))
+    Ok(Some(certified_shortcut_result(arrangement.mesh, shortcut)))
 }
 
-#[cfg(feature = "exact-triangulation")]
-fn boolean_affine_orthogonal_solid(
+fn boolean_affine_orthogonal_solid_optional(
     left: &ExactMesh,
     right: &ExactMesh,
-    operation: AffineOrthogonalSolidOperation,
+    operation: ExactBooleanOperation,
     validation: ValidationPolicy,
-) -> Result<ExactBooleanResult, MeshError> {
-    let arrangement = match operation {
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    let affine_operation = match operation {
+        ExactBooleanOperation::Union => AffineOrthogonalSolidOperation::Union,
+        ExactBooleanOperation::Intersection => AffineOrthogonalSolidOperation::Intersection,
+        ExactBooleanOperation::Difference => AffineOrthogonalSolidOperation::Difference,
+        ExactBooleanOperation::SelectedRegions(_) => return Ok(None),
+    };
+    let arrangement = match affine_operation {
         AffineOrthogonalSolidOperation::Union => {
             materialize_affine_orthogonal_solid_union(left, right, validation)?
         }
@@ -3044,34 +2549,29 @@ fn boolean_affine_orthogonal_solid(
         AffineOrthogonalSolidOperation::Difference => {
             materialize_affine_orthogonal_solid_difference(left, right, validation)?
         }
-    }
-    .expect("caller checked affine orthogonal solid materialization");
-    arrangement.validate_against_sources(left, right)?;
+    };
+    let Some(arrangement) = arrangement else {
+        return Ok(None);
+    };
     let shortcut = match operation {
-        AffineOrthogonalSolidOperation::Union => {
-            ExactBooleanShortcutKind::AffineOrthogonalSolidCellUnion
-        }
-        AffineOrthogonalSolidOperation::Intersection => {
+        ExactBooleanOperation::Union => ExactBooleanShortcutKind::AffineOrthogonalSolidCellUnion,
+        ExactBooleanOperation::Intersection => {
             ExactBooleanShortcutKind::AffineOrthogonalSolidCellIntersection
         }
-        AffineOrthogonalSolidOperation::Difference => {
+        ExactBooleanOperation::Difference => {
             ExactBooleanShortcutKind::AffineOrthogonalSolidCellDifference
         }
+        ExactBooleanOperation::SelectedRegions(_) => unreachable!("returned above"),
     };
-    Ok(certified_shortcut_result(arrangement.mesh, shortcut))
+    Ok(Some(certified_shortcut_result(arrangement.mesh, shortcut)))
 }
 
-#[cfg(feature = "exact-triangulation")]
-fn boolean_open_surface_disjoint_meshes(
+fn materialize_open_surface_disjoint_meshes(
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
-    if !certify_open_surface_disjoint_report(left, right)?.is_certified() {
-        return Ok(None);
-    }
-
+) -> Result<ExactBooleanResult, MeshError> {
     let mesh = match operation {
         ExactBooleanOperation::Union => concatenate_meshes_with_options(
             left,
@@ -3091,10 +2591,41 @@ fn boolean_open_surface_disjoint_meshes(
         ExactBooleanOperation::SelectedRegions(_) => unreachable!("handled by caller"),
     };
 
-    Ok(Some(certified_shortcut_result(
+    Ok(certified_shortcut_result(
         mesh,
         ExactBooleanShortcutKind::OpenSurfaceDisjoint,
-    )))
+    ))
+}
+
+fn boolean_open_surface_disjoint_or_arrangement_meshes_from_graph(
+    graph: &super::graph::ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    if !mesh_is_open_surface(left) || !mesh_is_open_surface(right) {
+        return Ok(None);
+    }
+    let disjoint_report = open_surface_disjoint_report_from_graph(graph, left, right);
+    if disjoint_report.is_certified() {
+        return materialize_open_surface_disjoint_meshes(left, right, operation, validation)
+            .map(Some);
+    }
+    let graph_had_unknowns = graph.has_unknowns();
+    let Some(plan) = open_surface_arrangement_plan_from_graph(graph, left, right, operation)?
+    else {
+        return Ok(None);
+    };
+    materialize_open_surface_arrangement_plan(
+        left,
+        right,
+        operation,
+        validation,
+        graph_had_unknowns,
+        plan,
+    )
+    .map(Some)
 }
 
 /// Certify whether two open surface meshes are disjoint by exact graph facts.
@@ -3102,18 +2633,25 @@ fn boolean_open_surface_disjoint_meshes(
 /// This is the report form of the open-surface named-boolean shortcut. It
 /// validates the open-surface precondition from exact mesh facts, then records
 /// the retained graph relation counts that prove no face pair survived exact
-/// scheduling. See Yap, "Towards Exact Geometric Computation," *Computational
-/// Geometry* 7.1-2 (1997): the absence of intersection topology is a certified
 /// graph fact, not a tolerance side effect.
-#[cfg(feature = "exact-triangulation")]
 pub fn certify_open_surface_disjoint_report(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Result<ExactOpenSurfaceDisjointReport, MeshError> {
+    let graph = build_intersection_graph(left, right)?;
+    validate_graph_source_handoff(&graph, left, right)?;
+    Ok(open_surface_disjoint_report_from_graph(&graph, left, right))
+}
+
+fn open_surface_disjoint_report_from_graph(
+    graph: &super::graph::ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> ExactOpenSurfaceDisjointReport {
     let left_open_surface = mesh_is_open_surface(left);
     let right_open_surface = mesh_is_open_surface(right);
     if !left_open_surface || !right_open_surface {
-        return Ok(open_surface_disjoint_report(
+        return open_surface_disjoint_report(
             ExactOpenSurfaceDisjointStatus::NotOpenSurface,
             left_open_surface,
             right_open_surface,
@@ -3121,12 +2659,10 @@ pub fn certify_open_surface_disjoint_report(
             0,
             0,
             GraphRelationCounts::default(),
-        ));
+        );
     }
-    let graph = build_intersection_graph(left, right)?;
-    validate_graph_source_handoff(&graph, left, right)?;
     let graph_had_unknowns = graph.has_unknowns();
-    let counts = graph_relation_counts(&graph);
+    let counts = graph_relation_counts(graph);
     let status = if graph_had_unknowns {
         ExactOpenSurfaceDisjointStatus::GraphUnknowns
     } else if graph.face_pairs.is_empty() {
@@ -3134,7 +2670,7 @@ pub fn certify_open_surface_disjoint_report(
     } else {
         ExactOpenSurfaceDisjointStatus::GraphHasFacePairs
     };
-    Ok(open_surface_disjoint_report(
+    open_surface_disjoint_report(
         status,
         left_open_surface,
         right_open_surface,
@@ -3142,10 +2678,23 @@ pub fn certify_open_surface_disjoint_report(
         graph.face_pairs.len(),
         graph.event_count(),
         counts,
-    ))
+    )
 }
 
-#[cfg(feature = "exact-triangulation")]
+fn certified_open_surface_disjoint_support_from_graph(
+    graph: &super::graph::ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+) -> Option<ExactBooleanSupport> {
+    if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
+        return None;
+    }
+    open_surface_disjoint_report_from_graph(graph, left, right)
+        .is_certified()
+        .then_some(ExactBooleanSupport::CertifiedOpenSurfaceDisjoint)
+}
+
 fn open_surface_disjoint_report(
     status: ExactOpenSurfaceDisjointStatus,
     left_open_surface: bool,
@@ -3171,7 +2720,6 @@ fn open_surface_disjoint_report(
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn mesh_is_open_surface(mesh: &ExactMesh) -> bool {
     !mesh.triangles().is_empty()
         && !mesh.facts().mesh.closed_manifold
@@ -3180,7 +2728,6 @@ fn mesh_is_open_surface(mesh: &ExactMesh) -> bool {
         && mesh.facts().mesh.non_manifold_vertices == 0
 }
 
-#[cfg(feature = "exact-triangulation")]
 /// Retained split-region artifacts that certify an open-surface arrangement.
 type OpenSurfaceArrangementPlan = (
     ExactBooleanSupport,
@@ -3193,27 +2740,20 @@ type OpenSurfaceArrangementPlan = (
 /// This is deliberately narrower than general surface booleans: both operands
 /// must already be accepted open manifold surfaces, the graph must contain
 /// proper non-coplanar crossings, and coplanar/boundary-only cases stay on
-/// their existing artifacts. The policy follows Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997): a non-volumetric
 /// surface union retains every certified split region, regularized
 /// intersection retains none because the crossing curve is lower-dimensional,
 /// and regularized difference retains the left split regions. Triangle meshes
 /// cannot represent the shared curve as an area cell, so that projection stays
 /// explicit in the result kind and retained arrangement evidence.
-#[cfg(feature = "exact-triangulation")]
-fn boolean_open_surface_arrangement_meshes(
+fn materialize_open_surface_arrangement_plan(
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
-    let graph = build_intersection_graph(left, right)?;
-    let Some((_support, _region_classifications, _triangulations)) =
-        open_surface_arrangement_plan_from_graph(&graph, left, right, operation)?
-    else {
-        return Ok(None);
-    };
-
+    graph_had_unknowns: bool,
+    plan: OpenSurfaceArrangementPlan,
+) -> Result<ExactBooleanResult, MeshError> {
+    let (_support, region_classifications, triangulations) = plan;
     let selection = match operation {
         ExactBooleanOperation::Union => ExactRegionSelection::KeepAll,
         ExactBooleanOperation::Intersection => ExactRegionSelection::KeepNone,
@@ -3223,43 +2763,45 @@ fn boolean_open_surface_arrangement_meshes(
         }
     };
     // Open-surface arrangement is not a closed-volumetric inside/outside
-    // decision. Yap, "Towards Exact Geometric Computation," Comput. Geom.
-    // 7.1-2 (1997), requires the policy boundary to remain explicit: selected
     // split regions are retained by surface operation, and no winding label is
     // invented for a mesh that has no closed volume.
-    let result = boolean_selected_regions(
+    let assembly = ExactBooleanAssemblyPlan::from_region_triangulations_with_sources(
+        &triangulations,
+        selection,
         left,
         right,
-        ExactBooleanPolicy {
-            selection,
-            validation,
-            reject_unknowns: true,
-        },
-    )?;
+    )
+    .map_err(|error| {
+        MeshError::one(MeshDiagnostic::new(
+            Severity::Error,
+            DiagnosticKind::IndexOutOfBounds,
+            format!("open-surface arrangement assembly failed: {error}"),
+        ))
+    })?;
+    let mesh = assembly.checked_to_exact_mesh_with_sources(left, right, validation)?;
     let result = ExactBooleanResult {
         kind: ExactBooleanResultKind::OpenSurfaceArrangement { operation },
-        ..result
+        graph_had_unknowns,
+        region_classifications,
+        triangulations,
+        assembly,
+        volumetric_classifications: Vec::new(),
+        mesh,
     };
-    result
-        .validate_against_sources(left, right)
-        .map_err(|error| {
-            MeshError::one(MeshDiagnostic::new(
-                Severity::Error,
-                DiagnosticKind::UnsupportedExactOperation,
-                format!("open-surface arrangement source replay failed: {error:?}"),
-            ))
-        })?;
-    Ok(Some(result))
+    result.validate().map_err(|error| {
+        MeshError::one(MeshDiagnostic::new(
+            Severity::Error,
+            DiagnosticKind::UnsupportedExactOperation,
+            format!("open-surface arrangement validation failed: {error:?}"),
+        ))
+    })?;
+    Ok(result)
 }
 
 /// Build the retained exact split-region plan for open-surface arrangement.
 ///
 /// The returned classifications are not used to decide inside/outside; they
 /// are retained proof-producing side facts that make the arrangement replayable
-/// and keep unsupported coplanar or unresolved cases explicit, matching Yap's
-/// exact-state discipline from "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997).
-#[cfg(feature = "exact-triangulation")]
 fn open_surface_arrangement_plan_from_graph(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
@@ -3319,9 +2861,6 @@ fn open_surface_arrangement_plan_from_graph(
 /// Endpoint, edge-only, and coplanar contacts need separate topology policies.
 /// This gate keeps the open-surface union shortcut tied to exact proper
 /// segment/plane construction facts rather than a tolerance-style overlap
-/// guess, following Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997).
-#[cfg(feature = "exact-triangulation")]
 fn graph_has_proper_surface_crossing(graph: &super::graph::ExactIntersectionGraph) -> bool {
     graph.face_pairs.iter().any(|pair| {
         pair.relation == MeshFacePairRelation::Candidate
@@ -3337,7 +2876,6 @@ fn graph_has_proper_surface_crossing(graph: &super::graph::ExactIntersectionGrap
     })
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn boolean_coplanar_surface_containment(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -3396,7 +2934,6 @@ fn boolean_coplanar_surface_containment(
     )))
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn certified_coplanar_surface_boolean_support(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -3426,7 +2963,6 @@ fn certified_coplanar_surface_boolean_support(
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn boolean_same_surface_meshes(
     mesh: &ExactMesh,
     operation: ExactBooleanOperation,
@@ -3448,56 +2984,156 @@ fn boolean_same_surface_meshes(
     ))
 }
 
-#[cfg(feature = "exact-triangulation")]
 /// Materialize the certified full-face/fan-patch adjacent regularized union.
-fn boolean_full_face_adjacent_union(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    validation: ValidationPolicy,
-) -> Result<ExactBooleanResult, MeshError> {
-    let union = replay_full_face_adjacent_certificate(left, right, validation)?;
-    Ok(certified_shortcut_result(
-        union.mesh,
-        ExactBooleanShortcutKind::FullFaceAdjacentUnion,
-    ))
+fn boolean_full_face_adjacent_union_from_artifact(
+    union: super::adjacent::FullFaceAdjacentUnion,
+) -> ExactBooleanResult {
+    certified_shortcut_result(union.mesh, ExactBooleanShortcutKind::FullFaceAdjacentUnion)
 }
 
-#[cfg(feature = "exact-triangulation")]
 /// Materialize the certified contained-face adjacent regularized union.
 ///
 /// A strictly contained opposite-oriented boundary triangle is a bounded
 /// coplanar-volumetric cell case: the contained source face is deleted, and
 /// the containing source face is replaced by a holed remnant whose inner ring
 /// welds to the other solid. The replayed certificate keeps the branch within
-/// Yap's exact object/predicate boundary instead of treating the contact as a
 /// mesh tolerance merge.
-fn boolean_contained_face_adjacent_union(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    validation: ValidationPolicy,
-) -> Result<ExactBooleanResult, MeshError> {
-    let union = replay_contained_face_adjacent_union(left, right, validation)?;
-    Ok(certified_shortcut_result(
+fn boolean_contained_face_adjacent_union_from_artifact(
+    union: super::contained_adjacent::ContainedFaceAdjacentUnion,
+) -> ExactBooleanResult {
+    certified_shortcut_result(
         union.mesh,
         ExactBooleanShortcutKind::ContainedFaceAdjacentUnion,
-    ))
+    )
 }
 
-#[cfg(feature = "exact-triangulation")]
+fn boolean_direct_adjacency_meshes(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    match operation {
+        ExactBooleanOperation::Union => {
+            if let Some(result) =
+                boolean_full_face_adjacency_optional(left, right, operation, validation)?
+            {
+                return Ok(Some(result));
+            }
+            if let Some(result) =
+                boolean_contained_face_adjacency_optional(left, right, operation, validation)?
+            {
+                return Ok(Some(result));
+            }
+        }
+        ExactBooleanOperation::Intersection => {
+            if let Some(result) =
+                boolean_contained_face_adjacency_optional(left, right, operation, validation)?
+            {
+                return Ok(Some(result));
+            }
+            if let Some(result) =
+                boolean_full_face_adjacency_optional(left, right, operation, validation)?
+            {
+                return Ok(Some(result));
+            }
+        }
+        ExactBooleanOperation::Difference => {
+            if let Some(result) =
+                boolean_contained_face_adjacency_optional(left, right, operation, validation)?
+            {
+                return Ok(Some(result));
+            }
+            if let Some(result) =
+                boolean_full_face_adjacency_optional(left, right, operation, validation)?
+            {
+                return Ok(Some(result));
+            }
+        }
+        ExactBooleanOperation::SelectedRegions(_) => {}
+    }
+    Ok(None)
+}
+
+fn boolean_full_face_adjacency_optional(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    if both_axis_aligned_boxes(left, right) {
+        return Ok(None);
+    }
+    let Some(certificate) = full_face_adjacent_certificate(left, right) else {
+        return Ok(None);
+    };
+    let result = match operation {
+        ExactBooleanOperation::Union => {
+            let Some(union) = materialize_full_face_adjacent_union_from_certificate(
+                left,
+                right,
+                &certificate,
+                validation,
+            ) else {
+                return Ok(None);
+            };
+            boolean_full_face_adjacent_union_from_artifact(union)
+        }
+        ExactBooleanOperation::Intersection => {
+            boolean_full_face_adjacent_intersection(left, right, validation)?
+        }
+        ExactBooleanOperation::Difference => {
+            boolean_full_face_adjacent_difference(left, right, validation)?
+        }
+        ExactBooleanOperation::SelectedRegions(_) => return Ok(None),
+    };
+    Ok(Some(result))
+}
+
+fn boolean_contained_face_adjacency_optional(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    let Some(certificate) = contained_face_adjacent_certificate(left, right) else {
+        return Ok(None);
+    };
+    let result = match operation {
+        ExactBooleanOperation::Union => {
+            let Some(union) = materialize_contained_face_adjacent_union_from_certificate(
+                left,
+                right,
+                &certificate,
+                validation,
+            ) else {
+                return Ok(None);
+            };
+            boolean_contained_face_adjacent_union_from_artifact(union)
+        }
+        ExactBooleanOperation::Intersection => {
+            boolean_contained_face_adjacent_intersection(left, right, validation)?
+        }
+        ExactBooleanOperation::Difference => {
+            boolean_contained_face_adjacent_difference(left, right, validation)?
+        }
+        ExactBooleanOperation::SelectedRegions(_) => return Ok(None),
+    };
+    Ok(Some(result))
+}
+
 /// Materialize the empty regularized intersection for contained-face adjacency.
 ///
 /// A strictly contained opposite-oriented boundary face proves contact along a
-/// two-dimensional boundary subset, not positive volume. The contained-face
-/// union artifact is replayed before returning the empty mesh so the shortcut
-/// remains source-bound; this follows Yap, "Towards Exact Geometric
-/// Computation," *Comput. Geom.* 7.1-2 (1997), where exact programs expose the
-/// predicates and objects that justify each topological branch.
+/// two-dimensional boundary subset, not positive volume. The dispatch guard
+/// has just replayed the contained-face adjacency certificate; the branch can
+/// therefore return the empty mesh without constructing a union artifact it
+/// and objects that justify each topological branch.
 fn boolean_contained_face_adjacent_intersection(
-    left: &ExactMesh,
-    right: &ExactMesh,
+    _left: &ExactMesh,
+    _right: &ExactMesh,
     validation: ValidationPolicy,
 ) -> Result<ExactBooleanResult, MeshError> {
-    replay_contained_face_adjacent_union(left, right, ValidationPolicy::CLOSED)?;
     Ok(certified_shortcut_result(
         empty_mesh(
             "empty exact contained-face adjacent regularized intersection",
@@ -3507,19 +3143,16 @@ fn boolean_contained_face_adjacent_intersection(
     ))
 }
 
-#[cfg(feature = "exact-triangulation")]
 /// Materialize the left-preserving regularized difference for contained-face adjacency.
 ///
-/// Boundary-only contained-face contact removes no left volume. Replaying the
-/// contained-face certificate first keeps the difference shortcut tied to the
-/// same exact source evidence as the holed union path, rather than relying on
-/// tolerance-side effects at the shared patch.
+/// Boundary-only contained-face contact removes no left volume. The dispatch
+/// guard has just replayed the contained-face certificate, so this branch
+/// avoids constructing a union mesh that it discards.
 fn boolean_contained_face_adjacent_difference(
     left: &ExactMesh,
-    right: &ExactMesh,
+    _right: &ExactMesh,
     validation: ValidationPolicy,
 ) -> Result<ExactBooleanResult, MeshError> {
-    replay_contained_face_adjacent_union(left, right, ValidationPolicy::CLOSED)?;
     Ok(certified_shortcut_result(
         copy_mesh(
             left,
@@ -3530,18 +3163,16 @@ fn boolean_contained_face_adjacent_difference(
     ))
 }
 
-#[cfg(feature = "exact-triangulation")]
 /// Materialize a boundary-contained closed-solid difference.
 ///
 /// This is the nonconvex-capable sibling of the convex boundary-containment
 /// difference: the removed solid is certified inside the left container by
 /// exact winding replay and touches the container through same-oriented
 /// source-owned caps. The output replaces those container caps with exact
-/// holed remnants and appends the removed shell reversed, following Yap,
-/// "Towards Exact Geometric Computation," *Comput. Geom.* 7.1-2 (1997), by
 /// materializing only the retained exact cap object instead of inferring a
 /// cavity from approximate representatives.
-fn boolean_contained_boundary_difference_meshes(
+fn boolean_contained_boundary_difference_meshes_from_graph(
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
@@ -3550,20 +3181,17 @@ fn boolean_contained_boundary_difference_meshes(
     if operation != ExactBooleanOperation::Difference {
         return Ok(None);
     }
-    let Some(difference) = materialize_contained_boundary_difference(left, right, validation)
+    let Some(difference) =
+        materialize_contained_boundary_difference_from_graph(left, right, graph, validation)
     else {
         return Ok(None);
     };
-    difference
-        .validate_against_sources(left, right)
-        .map_err(contained_boundary_difference_error)?;
     Ok(Some(certified_shortcut_result(
         difference.mesh,
         ExactBooleanShortcutKind::ContainedBoundaryDifference,
     )))
 }
 
-#[cfg(feature = "exact-triangulation")]
 /// Materialize regularized booleans for closed boundary-contained solids.
 ///
 /// The same retained cap certificate used by
@@ -3572,41 +3200,50 @@ fn boolean_contained_boundary_difference_meshes(
 /// caps. For union and intersection that certificate selects the outer or
 /// inner source shell directly; for the reverse difference the contained left
 /// volume is removed completely. The cavity-producing `container - removed`
-/// case stays with [`boolean_contained_boundary_difference_meshes`].
-fn boolean_contained_boundary_containment_meshes(
+/// case stays with [`boolean_contained_boundary_difference_meshes_from_graph`].
+fn boolean_contained_boundary_containment_meshes_from_graph(
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
-    let left_contains_right = has_contained_boundary_difference(left, right);
-    let right_contains_left = has_contained_boundary_difference(right, left);
+    let Some(containment) = contained_boundary_containment_from_graph(left, right, graph) else {
+        return Ok(None);
+    };
     let mesh = match operation {
-        ExactBooleanOperation::Union if left_contains_right => copy_mesh(
-            left,
-            "exact contained-boundary containment union keeps outer left",
-            validation,
-        )?,
-        ExactBooleanOperation::Union if right_contains_left => copy_mesh(
-            right,
-            "exact contained-boundary containment union keeps outer right",
-            validation,
-        )?,
-        ExactBooleanOperation::Intersection if left_contains_right => copy_mesh(
-            right,
-            "exact contained-boundary containment intersection keeps inner right",
-            validation,
-        )?,
-        ExactBooleanOperation::Intersection if right_contains_left => copy_mesh(
-            left,
-            "exact contained-boundary containment intersection keeps inner left",
-            validation,
-        )?,
-        ExactBooleanOperation::Difference if right_contains_left => empty_mesh(
-            "empty exact contained-boundary reverse difference",
-            validation,
-        )?,
-        _ => return Ok(None),
+        ExactBooleanOperation::Union => match containment {
+            ContainedBoundaryContainment::LeftContainsRight => copy_mesh(
+                left,
+                "exact contained-boundary containment union keeps outer left",
+                validation,
+            )?,
+            ContainedBoundaryContainment::RightContainsLeft => copy_mesh(
+                right,
+                "exact contained-boundary containment union keeps outer right",
+                validation,
+            )?,
+        },
+        ExactBooleanOperation::Intersection => match containment {
+            ContainedBoundaryContainment::LeftContainsRight => copy_mesh(
+                right,
+                "exact contained-boundary containment intersection keeps inner right",
+                validation,
+            )?,
+            ContainedBoundaryContainment::RightContainsLeft => copy_mesh(
+                left,
+                "exact contained-boundary containment intersection keeps inner left",
+                validation,
+            )?,
+        },
+        ExactBooleanOperation::Difference => match containment {
+            ContainedBoundaryContainment::RightContainsLeft => empty_mesh(
+                "empty exact contained-boundary reverse difference",
+                validation,
+            )?,
+            ContainedBoundaryContainment::LeftContainsRight => return Ok(None),
+        },
+        ExactBooleanOperation::SelectedRegions(_) => return Ok(None),
     };
 
     Ok(Some(certified_shortcut_result(
@@ -3615,30 +3252,18 @@ fn boolean_contained_boundary_containment_meshes(
     )))
 }
 
-#[cfg(feature = "exact-triangulation")]
-fn contained_boundary_difference_error(error: ContainedBoundaryDifferenceError) -> MeshError {
-    MeshError::one(MeshDiagnostic::new(
-        Severity::Error,
-        DiagnosticKind::UnsupportedExactOperation,
-        format!("exact contained-boundary difference/source replay failed: {error:?}"),
-    ))
-}
-
-#[cfg(feature = "exact-triangulation")]
 /// Materialize the empty regularized intersection for certified adjacency.
 ///
 /// Regularized solid booleans drop lower-dimensional boundary contact from
 /// the intersection volume, so an exact full-face/fan-patch adjacency has no
-/// volume to emit. The certificate is still replayed before constructing the
-/// empty mesh, following Yap, "Towards Exact Geometric Computation," *Comput.
-/// Geom.* 7.1-2 (1997): topology decisions must be tied to exact retained
-/// combinatorial evidence.
+/// volume to emit. The dispatch guard has just replayed the certificate, so
+/// the branch can avoid constructing the adjacent union mesh that it discards,
+/// while still tying the topology decision to exact retained combinatorial
 fn boolean_full_face_adjacent_intersection(
-    left: &ExactMesh,
-    right: &ExactMesh,
+    _left: &ExactMesh,
+    _right: &ExactMesh,
     validation: ValidationPolicy,
 ) -> Result<ExactBooleanResult, MeshError> {
-    replay_full_face_adjacent_certificate(left, right, ValidationPolicy::CLOSED)?;
     Ok(certified_shortcut_result(
         empty_mesh(
             "empty exact full-face adjacent regularized intersection",
@@ -3648,19 +3273,17 @@ fn boolean_full_face_adjacent_intersection(
     ))
 }
 
-#[cfg(feature = "exact-triangulation")]
 /// Materialize the left-preserving regularized difference for certified adjacency.
 ///
-/// A boundary-only full-face/fan-patch contact removes no left volume, but the
-/// exact adjacency certificate is replayed before the left source is copied.
-/// This keeps the shortcut in Yap's exact-computation paradigm rather than
-/// relying on floating-point coincidence or tolerance-side effects.
+/// A boundary-only full-face/fan-patch contact removes no left volume. The
+/// dispatch guard has just replayed the exact adjacency certificate, so the
+/// left source can be copied without materializing a union mesh that this
+/// branch discards.
 fn boolean_full_face_adjacent_difference(
     left: &ExactMesh,
-    right: &ExactMesh,
+    _right: &ExactMesh,
     validation: ValidationPolicy,
 ) -> Result<ExactBooleanResult, MeshError> {
-    replay_full_face_adjacent_certificate(left, right, ValidationPolicy::CLOSED)?;
     Ok(certified_shortcut_result(
         copy_mesh(
             left,
@@ -3671,40 +3294,6 @@ fn boolean_full_face_adjacent_difference(
     ))
 }
 
-#[cfg(feature = "exact-triangulation")]
-/// Replay the source-bound full-face/fan-patch adjacency certificate.
-///
-/// The union artifact is the canonical certificate because it must prove
-/// closed inputs, exact boundary-only winding, opposite-oriented shared faces
-/// or bounded fan patches, seam-only vertex welding, and a closed output mesh.
-/// Reusing it for intersection and difference preserves Yap's requirement that
-/// exact geometric programs expose and replay the exact state justifying a
-/// combinatorial branch.
-fn replay_full_face_adjacent_certificate(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    validation: ValidationPolicy,
-) -> Result<super::adjacent::FullFaceAdjacentUnion, MeshError> {
-    let union = materialize_full_face_adjacent_union(left, right, validation).ok_or_else(|| {
-        MeshError::one(MeshDiagnostic::new(
-            Severity::Error,
-            DiagnosticKind::UnsupportedExactOperation,
-            "exact full-face adjacent certificate did not replay",
-        ))
-    })?;
-    union
-        .validate_against_sources(left, right)
-        .map_err(|error| {
-            MeshError::one(MeshDiagnostic::new(
-                Severity::Error,
-                DiagnosticKind::UnsupportedExactOperation,
-                format!("exact full-face adjacent certificate/source replay failed: {error:?}"),
-            ))
-        })?;
-    Ok(union)
-}
-
-#[cfg(feature = "exact-triangulation")]
 fn boolean_coplanar_convex_equivalent_surfaces(
     mesh: &ExactMesh,
     operation: ExactBooleanOperation,
@@ -3729,16 +3318,15 @@ fn boolean_coplanar_convex_equivalent_surfaces(
     ))
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn boolean_coplanar_convex_containment_surfaces(
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
+    containment: CoplanarConvexSurfaceContainmentCertificate,
 ) -> Result<ExactBooleanResult, MeshError> {
-    let containment = certify_coplanar_convex_surface_containment(left, right)
-        .expect("caller checked convex coplanar containment");
-    let mesh = match (containment.relation, operation) {
+    let relation = containment.relation;
+    let mesh = match (relation, operation) {
         (CoplanarConvexSurfaceContainment::LeftInsideRight, ExactBooleanOperation::Union) => {
             copy_mesh(
                 right,
@@ -3776,8 +3364,15 @@ fn boolean_coplanar_convex_containment_surfaces(
             validation,
         )?,
         (CoplanarConvexSurfaceContainment::RightInsideLeft, ExactBooleanOperation::Difference) => {
-            let difference = arrange_coplanar_convex_surface_holed_difference(left, right)
-                .expect("right-inside-left containment should materialize one holed sheet");
+            let Some(difference) =
+                arrange_coplanar_convex_surface_holed_difference_from_certificate(containment)
+            else {
+                return Err(MeshError::one(MeshDiagnostic::new(
+                    Severity::Error,
+                    DiagnosticKind::UnsupportedExactOperation,
+                    "exact coplanar convex containment certificate did not materialize holed difference",
+                )));
+            };
             copy_mesh(
                 &difference.mesh,
                 "exact coplanar convex containment holed difference",
@@ -3787,7 +3382,7 @@ fn boolean_coplanar_convex_containment_surfaces(
         (_, ExactBooleanOperation::SelectedRegions(_)) => unreachable!("handled by caller"),
     };
 
-    let shortcut = if containment.relation == CoplanarConvexSurfaceContainment::RightInsideLeft
+    let shortcut = if relation == CoplanarConvexSurfaceContainment::RightInsideLeft
         && operation == ExactBooleanOperation::Difference
     {
         ExactBooleanShortcutKind::CoplanarConvexSurfaceHoledDifference
@@ -3798,18 +3393,14 @@ fn boolean_coplanar_convex_containment_surfaces(
     Ok(certified_shortcut_result(mesh, shortcut))
 }
 
-#[cfg(feature = "exact-triangulation")]
-/// Certify union-safe lower-dimensional contact between closed solids.
-///
-/// [`certify_boundary_touching_report`] also certifies positive-area coplanar
-/// boundary overlaps. Union deliberately rejects those here unless an earlier
-/// face-patch/cell certificate handled them, because they require a stronger
-/// output-topology proof than simply preserving two exact shells.
-fn certified_closed_boundary_touching_union_report(
+fn certified_closed_boundary_touching_union_report_from_graph(
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Result<Option<ExactBoundaryTouchingReport>, MeshError> {
-    let Some(report) = certified_closed_boundary_touching_regularized_report(left, right)? else {
+    let Some(report) =
+        certified_closed_boundary_touching_regularized_report_from_graph(graph, left, right)?
+    else {
         return Ok(None);
     };
     // Regularized solid union may preserve separate shells when two closed
@@ -3817,11 +3408,8 @@ fn certified_closed_boundary_touching_union_report(
     // coplanar overlap is deliberately excluded here: those contacts need a
     // full face-patch or volumetric-cell certificate before the two closed
     // objects can be projected into one triangle mesh. This keeps the exact
-    // predicate/topology split explicit in the sense of Yap, "Towards Exact
-    // Geometric Computation," Comput. Geom. 7.1-2 (1997), and follows the
     // regularized-set view of solid modeling described by Requicha,
     // "Representations for Rigid Solids: Theory, Methods, and Systems,"
-    // ACM Computing Surveys 12.4 (1980).
     if report.blocker.candidate_pairs
         + report.blocker.coplanar_touching_pairs
         + report.blocker.coplanar_overlapping_pairs
@@ -3831,18 +3419,16 @@ fn certified_closed_boundary_touching_union_report(
     }
     if report.blocker.coplanar_overlapping_pairs != 0 {
         let coplanar_evidence =
-            super::volumetric_cells::certify_coplanar_volumetric_cell_evidence(left, right)?;
-        coplanar_evidence
-            .validate_against_sources(left, right)
-            .map_err(|error| {
-                MeshError::one(MeshDiagnostic::new(
-                    Severity::Error,
-                    DiagnosticKind::UnsupportedExactOperation,
-                    format!(
-                        "exact closed-boundary-touch coplanar evidence replay failed: {error:?}"
-                    ),
-                ))
-            })?;
+            CoplanarVolumetricCellEvidenceReport::from_graph(graph, left, right);
+        coplanar_evidence.validate().map_err(|error| {
+            MeshError::one(MeshDiagnostic::new(
+                Severity::Error,
+                DiagnosticKind::UnsupportedExactOperation,
+                format!(
+                    "exact closed-boundary-touch coplanar evidence validation failed: {error:?}"
+                ),
+            ))
+        })?;
         if coplanar_evidence.positive_area_coplanar_overlapping_pairs != 0 {
             return Ok(None);
         }
@@ -3850,75 +3436,99 @@ fn certified_closed_boundary_touching_union_report(
     Ok(Some(report))
 }
 
-#[cfg(feature = "exact-triangulation")]
-/// Certify regularized lower-dimensional contact between closed solids.
-///
-/// [`certify_boundary_touching_report`] also certifies open-surface touching
-/// cases, where the caller still must decide whether to preserve separate
-/// shells. This helper deliberately narrows that report to closed manifolds.
-/// In the regularized solid model, exact boundary-only contact has empty
-/// intersection volume and subtracts no volume from the left operand. The
-/// source-replayed report keeps that decision in the object/predicate split
-/// advocated by Yap, "Towards Exact Geometric Computation," *Computational
-/// Geometry* 7.1-2 (1997): graph events and closed-mesh winding evidence are
-/// retained instead of replaced by an epsilon contact test.
-fn certified_closed_boundary_touching_regularized_report(
+fn certified_closed_boundary_touching_regularized_report_from_graph(
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Result<Option<ExactBoundaryTouchingReport>, MeshError> {
     if !left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold {
         return Ok(None);
     }
-    let report = certify_boundary_touching_report(left, right)?;
+    let report = boundary_touching_report_from_graph(graph, left, right)?;
+    certified_closed_boundary_touching_regularized_report_from_report(report)
+}
+
+fn certified_closed_boundary_touching_regularized_report_from_report(
+    report: ExactBoundaryTouchingReport,
+) -> Result<Option<ExactBoundaryTouchingReport>, MeshError> {
     if !report.is_certified() {
         return Ok(None);
     }
-    report
-        .validate_against_sources(left, right)
-        .map_err(|error| {
-            MeshError::one(MeshDiagnostic::new(
-                Severity::Error,
-                DiagnosticKind::UnsupportedExactOperation,
-                format!("exact closed-boundary-touch report/source replay failed: {error:?}"),
-            ))
-        })?;
+    report.validate().map_err(|error| {
+        MeshError::one(MeshDiagnostic::new(
+            Severity::Error,
+            DiagnosticKind::UnsupportedExactOperation,
+            format!("exact closed-boundary-touch report validation failed: {error:?}"),
+        ))
+    })?;
     Ok(Some(report))
 }
 
-#[cfg(feature = "exact-triangulation")]
-fn certified_closed_boundary_only_contact(
+fn certified_closed_boundary_touching_support_from_graph(
+    graph: &super::graph::ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+) -> Result<Option<ExactBooleanSupport>, MeshError> {
+    Ok(match operation {
+        ExactBooleanOperation::Union
+            if certified_closed_boundary_touching_union_report_from_graph(graph, left, right)?
+                .is_some() =>
+        {
+            Some(ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion)
+        }
+        ExactBooleanOperation::Intersection
+            if certified_closed_boundary_touching_regularized_report_from_graph(
+                graph, left, right,
+            )?
+            .is_some() =>
+        {
+            Some(ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection)
+        }
+        ExactBooleanOperation::Difference
+            if certified_closed_boundary_touching_regularized_report_from_graph(
+                graph, left, right,
+            )?
+            .is_some() =>
+        {
+            Some(ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference)
+        }
+        _ => None,
+    })
+}
+
+fn certified_closed_boundary_only_contact_from_graph(
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Result<bool, MeshError> {
     if !left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold {
         return Ok(false);
     }
-    let evidence = super::volumetric_cells::certify_coplanar_volumetric_cell_evidence(left, right)?;
-    evidence
-        .validate_against_sources(left, right)
-        .map_err(|error| {
-            MeshError::one(MeshDiagnostic::new(
-                Severity::Error,
-                DiagnosticKind::UnsupportedExactOperation,
-                format!("exact boundary-only coplanar evidence replay failed: {error:?}"),
-            ))
-        })?;
+    let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(graph, left, right);
+    evidence.validate().map_err(|error| {
+        MeshError::one(MeshDiagnostic::new(
+            Severity::Error,
+            DiagnosticKind::UnsupportedExactOperation,
+            format!("exact boundary-only coplanar evidence validation failed: {error:?}"),
+        ))
+    })?;
     Ok(evidence.obstacle == CoplanarVolumetricCellObstacle::BoundaryOnlyContact)
 }
 
-#[cfg(feature = "exact-triangulation")]
-fn certified_closed_boundary_only_contact_support(
+fn certified_closed_boundary_only_contact_support_from_graph(
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
 ) -> Result<Option<ExactBooleanSupport>, MeshError> {
     if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-        || !certified_closed_boundary_only_contact(left, right)?
+        || !certified_closed_boundary_only_contact_from_graph(graph, left, right)?
     {
         return Ok(None);
     }
     if operation == ExactBooleanOperation::Union
-        && certified_boolmesh_split_support(left, right, operation)
+        && certified_boolmesh_split_support_from_graph(graph, left, right, operation)
     {
         return Ok(Some(ExactBooleanSupport::CertifiedBoolMeshSplit));
     }
@@ -3934,19 +3544,24 @@ fn certified_closed_boundary_only_contact_support(
     }))
 }
 
-#[cfg(feature = "exact-triangulation")]
-fn boolean_closed_boundary_only_contact_meshes(
+fn boolean_closed_boundary_only_contact_meshes_from_graph(
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
-    if !certified_closed_boundary_only_contact(left, right)? {
+    if !certified_closed_boundary_only_contact_from_graph(graph, left, right)? {
         return Ok(None);
     }
     if operation == ExactBooleanOperation::Union
-        && let Some(result) =
-            boolean_boolmesh_split_meshes(left, right, ExactBooleanOperation::Union, validation)?
+        && let Some(result) = boolean_boolmesh_split_meshes_from_graph(
+            graph,
+            left,
+            right,
+            ExactBooleanOperation::Union,
+            validation,
+        )?
     {
         return Ok(Some(result));
     }
@@ -3981,23 +3596,22 @@ fn boolean_closed_boundary_only_contact_meshes(
     Ok(Some(certified_shortcut_result(mesh, shortcut)))
 }
 
-#[cfg(feature = "exact-triangulation")]
 /// Materialize the regularized union for closed lower-dimensional contact.
 fn boolean_closed_boundary_touching_union(
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
     validation: ValidationPolicy,
+    report: ExactBoundaryTouchingReport,
 ) -> Result<ExactBooleanResult, MeshError> {
-    certified_closed_boundary_touching_union_report(left, right)?.ok_or_else(|| {
-        MeshError::one(MeshDiagnostic::new(
-            Severity::Error,
-            DiagnosticKind::UnsupportedExactOperation,
-            "exact closed-boundary-touch union certificate did not replay",
-        ))
-    })?;
-    if let Some(result) =
-        boolean_boolmesh_split_meshes(left, right, ExactBooleanOperation::Union, validation)?
-    {
+    validate_consumed_boundary_touching_report(&report, "closed-boundary-touch union")?;
+    if let Some(result) = boolean_boolmesh_split_meshes_from_graph(
+        graph,
+        left,
+        right,
+        ExactBooleanOperation::Union,
+        validation,
+    )? {
         return Ok(result);
     }
     Ok(certified_shortcut_result(
@@ -4012,23 +3626,22 @@ fn boolean_closed_boundary_touching_union(
     ))
 }
 
-#[cfg(feature = "exact-triangulation")]
 /// Materialize the empty regularized intersection for closed boundary contact.
 fn boolean_closed_boundary_touching_intersection(
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
     validation: ValidationPolicy,
+    report: ExactBoundaryTouchingReport,
 ) -> Result<ExactBooleanResult, MeshError> {
-    certified_closed_boundary_touching_regularized_report(left, right)?.ok_or_else(|| {
-        MeshError::one(MeshDiagnostic::new(
-            Severity::Error,
-            DiagnosticKind::UnsupportedExactOperation,
-            "exact closed-boundary-touch intersection certificate did not replay",
-        ))
-    })?;
-    if let Some(result) =
-        boolean_boolmesh_split_meshes(left, right, ExactBooleanOperation::Intersection, validation)?
-    {
+    validate_consumed_boundary_touching_report(&report, "closed-boundary-touch intersection")?;
+    if let Some(result) = boolean_boolmesh_split_meshes_from_graph(
+        graph,
+        left,
+        right,
+        ExactBooleanOperation::Intersection,
+        validation,
+    )? {
         return Ok(result);
     }
     Ok(certified_shortcut_result(
@@ -4040,23 +3653,22 @@ fn boolean_closed_boundary_touching_intersection(
     ))
 }
 
-#[cfg(feature = "exact-triangulation")]
 /// Materialize the left-preserving difference for closed boundary contact.
 fn boolean_closed_boundary_touching_difference(
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
     validation: ValidationPolicy,
+    report: ExactBoundaryTouchingReport,
 ) -> Result<ExactBooleanResult, MeshError> {
-    certified_closed_boundary_touching_regularized_report(left, right)?.ok_or_else(|| {
-        MeshError::one(MeshDiagnostic::new(
-            Severity::Error,
-            DiagnosticKind::UnsupportedExactOperation,
-            "exact closed-boundary-touch difference certificate did not replay",
-        ))
-    })?;
-    if let Some(result) =
-        boolean_boolmesh_split_meshes(left, right, ExactBooleanOperation::Difference, validation)?
-    {
+    validate_consumed_boundary_touching_report(&report, "closed-boundary-touch difference")?;
+    if let Some(result) = boolean_boolmesh_split_meshes_from_graph(
+        graph,
+        left,
+        right,
+        ExactBooleanOperation::Difference,
+        validation,
+    )? {
         return Ok(result);
     }
     Ok(certified_shortcut_result(
@@ -4069,8 +3681,21 @@ fn boolean_closed_boundary_touching_difference(
     ))
 }
 
-#[cfg(feature = "exact-triangulation")]
-fn boolean_boundary_touching_meshes(
+fn validate_consumed_boundary_touching_report(
+    report: &ExactBoundaryTouchingReport,
+    label: &str,
+) -> Result<(), MeshError> {
+    report.validate().map_err(|error| {
+        MeshError::one(MeshDiagnostic::new(
+            Severity::Error,
+            DiagnosticKind::UnsupportedExactOperation,
+            format!("exact {label} consumed invalid certificate: {error:?}"),
+        ))
+    })
+}
+
+fn boolean_boundary_touching_meshes_from_graph(
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
@@ -4080,9 +3705,11 @@ fn boolean_boundary_touching_meshes(
     if boundary_policy == ExactBoundaryBooleanPolicy::Reject {
         return Ok(None);
     }
-    if !certify_boundary_touching_report(left, right)?.is_certified() {
+    let report = boundary_touching_report_from_graph(graph, left, right)?;
+    if !report.is_certified() {
         return Ok(None);
     }
+    validate_consumed_boundary_touching_report(&report, "boundary-policy projection")?;
 
     let mesh = match operation {
         ExactBooleanOperation::Union => concatenate_meshes_with_options(
@@ -4112,9 +3739,7 @@ fn boolean_boundary_touching_meshes(
 /// The report keeps the exact graph relation counts used by boundary-policy
 /// preflight and by [`boolean_exact_with_boundary_policy`]. Boundary-only
 /// topology is intentionally not silently materialized by the default named
-/// boolean API; Yap's exact computation model requires this projection into a
 /// triangle-mesh-only result to be an explicit caller policy.
-#[cfg(feature = "exact-triangulation")]
 pub fn certify_boundary_touching_report(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -4132,7 +3757,6 @@ pub fn certify_boundary_touching_report(
 /// single-triangle and convex multi-face coplanar shortcuts are reported as
 /// already materialized so callers can distinguish a missing output model from
 /// a handled certified fragment.
-#[cfg(feature = "exact-triangulation")]
 pub fn certify_planar_arrangement_report(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -4160,9 +3784,7 @@ pub fn certify_planar_arrangement_report(
 /// This is the standalone report form of the `UnresolvedGraph` preflight
 /// branch. It separates unknown predicate outcomes and failed exact
 /// constructions from later boundary, planar-arrangement, or winding policy,
-/// following Yap's requirement that unresolved combinatorics stay explicit
 /// rather than being folded into a generic unsupported boolean.
-#[cfg(feature = "exact-triangulation")]
 pub fn certify_refinement_report(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -4179,8 +3801,6 @@ pub fn certify_refinement_report(
 /// booleans: it extracts the certified graph, rejects unresolved/boundary/
 /// planar-arrangement cases into explicit statuses, then validates split
 /// regions and records opposite-plane classifications. It is an auditable
-/// replacement for "try winding with floats" in Yap's exact-computation model.
-#[cfg(feature = "exact-triangulation")]
 pub fn certify_winding_readiness_report(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -4191,14 +3811,11 @@ pub fn certify_winding_readiness_report(
     winding_readiness_report_from_graph(&graph, left, right, operation)
 }
 
-#[cfg(feature = "exact-triangulation")]
 /// Validate the retained graph/source-handle handoff for public reports.
 ///
-/// Boolean preflight and report constructors are public exact-computation
+/// Boolean preflight and report constructors are public exact computation
 /// boundaries. They must reject a retained graph whose face, edge, vertex, or
 /// plane handles no longer replay against the source meshes before policy
-/// reports can consume those events. This follows Yap, "Towards Exact
-/// Geometric Computation," *Computational Geometry* 7.1-2 (1997): exact state
 /// includes the combinatorial object handles attached to predicate evidence,
 /// not just the numeric predicate result.
 fn validate_graph_source_handoff(
@@ -4217,8 +3834,7 @@ fn validate_graph_source_handoff(
         })
 }
 
-#[cfg(feature = "exact-triangulation")]
-fn boundary_touching_report_from_graph(
+pub(crate) fn boundary_touching_report_from_graph(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
@@ -4245,7 +3861,6 @@ fn boundary_touching_report_from_graph(
     })
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn refinement_report_from_graph(
     graph: &super::graph::ExactIntersectionGraph,
     operation: ExactBooleanOperation,
@@ -4268,7 +3883,6 @@ fn refinement_report_from_graph(
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn planar_arrangement_report_from_graph(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
@@ -4306,7 +3920,6 @@ fn planar_arrangement_report_from_graph(
     ))
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn planar_arrangement_report(
     operation: ExactBooleanOperation,
     status: ExactPlanarArrangementStatus,
@@ -4334,7 +3947,6 @@ fn planar_arrangement_report(
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn coplanar_surface_output_already_materialized(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -4344,6 +3956,9 @@ fn coplanar_surface_output_already_materialized(
         || certify_coplanar_convex_surface_containment(left, right).is_some()
     {
         return true;
+    }
+    if left.triangles().len() == 1 && right.triangles().len() == 1 {
+        return single_triangle_coplanar_output_already_materialized(left, right, operation);
     }
     match operation {
         ExactBooleanOperation::Intersection => {
@@ -4384,7 +3999,28 @@ fn coplanar_surface_output_already_materialized(
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
+fn single_triangle_coplanar_output_already_materialized(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+) -> bool {
+    match operation {
+        ExactBooleanOperation::Intersection => {
+            intersect_single_triangle_coplanar_surfaces(left, right).is_some()
+        }
+        ExactBooleanOperation::Union => {
+            union_single_triangle_coplanar_surfaces(left, right).is_some()
+                || arrange_single_triangle_coplanar_union(left, right).is_some()
+        }
+        ExactBooleanOperation::Difference => {
+            difference_single_triangle_coplanar_surfaces(left, right).is_some()
+                || arrange_single_triangle_coplanar_difference(left, right).is_some()
+                || arrange_single_triangle_coplanar_holed_difference(left, right).is_some()
+        }
+        ExactBooleanOperation::SelectedRegions(_) => false,
+    }
+}
+
 fn winding_readiness_report_from_graph(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
@@ -4464,36 +4100,22 @@ fn winding_readiness_report_from_graph(
             None,
         ));
     }
-    if let Some((region_classifications, triangulations, _volumetric_classifications)) =
-        volumetric_winding_region_plan_from_graph(graph, left, right)?.filter(
-            |(_, triangulations, volumetric_classifications)| {
-                volumetric_classifications
-                    .iter()
-                    .all(|classification| classification.relation.is_materialization_decided())
-                    && operation_retains_any_volumetric_region(
-                        operation,
-                        triangulations,
-                        volumetric_classifications,
-                    )
-                    && volumetric_plan_materializes_operation(
-                        operation,
-                        triangulations,
-                        volumetric_classifications,
-                        left,
-                        right,
-                        ValidationPolicy::CLOSED,
-                    )
-            },
-        )
-    {
+    if let Some(materialized) = materialize_volumetric_winding_region_plan_from_graph(
+        graph,
+        left,
+        right,
+        operation,
+        ValidationPolicy::CLOSED,
+        VolumetricWindingMaterializationFailure::ReturnNone,
+    )? {
         return Ok(winding_readiness_report(
             operation,
             ExactWindingReadinessStatus::Ready,
             graph_had_unknowns,
             graph.face_pairs.len(),
             graph.event_count(),
-            triangulations.len(),
-            region_classifications,
+            materialized.triangulations.len(),
+            materialized.region_classifications,
             if graph_requires_coplanar_volumetric_cells_for_sources(graph, left, right) {
                 counts.into_blocker(ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells)
             } else {
@@ -4550,7 +4172,6 @@ fn winding_readiness_report_from_graph(
     ))
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn winding_readiness_report(
     operation: ExactBooleanOperation,
     status: ExactWindingReadinessStatus,
@@ -4577,20 +4198,24 @@ fn winding_readiness_report(
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
-fn boolean_convex_containment_meshes(
+fn boolean_convex_containment_meshes_from_graph(
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
-    let Some(support) = certified_convex_boolean_support(left, right, operation)? else {
+    let Some(shortcut) =
+        certified_convex_boolean_shortcut_from_graph(graph, left, right, operation)?
+    else {
         return Ok(None);
     };
 
-    let left_in_right = classify_mesh_vertices_against_convex_solid_report(left, right);
-    let right_in_left = classify_mesh_vertices_against_convex_solid_report(right, left);
-    let mesh = match (left_in_right.relation, right_in_left.relation, operation) {
+    let mesh = match (
+        shortcut.left_in_right.relation,
+        shortcut.right_in_left.relation,
+        operation,
+    ) {
         (ConvexSolidMeshRelation::StrictlyInside, _, ExactBooleanOperation::Union) => copy_mesh(
             right,
             "exact convex containment union keeps outer right",
@@ -4653,7 +4278,10 @@ fn boolean_convex_containment_meshes(
             validation,
         )?,
         (_, _, ExactBooleanOperation::Union)
-            if convex_boundary_containment_is_supported(&left_in_right, &right_in_left) =>
+            if convex_boundary_containment_is_supported(
+                &shortcut.left_in_right,
+                &shortcut.right_in_left,
+            ) =>
         {
             copy_mesh(
                 right,
@@ -4662,7 +4290,10 @@ fn boolean_convex_containment_meshes(
             )?
         }
         (_, _, ExactBooleanOperation::Intersection)
-            if convex_boundary_containment_is_supported(&left_in_right, &right_in_left) =>
+            if convex_boundary_containment_is_supported(
+                &shortcut.left_in_right,
+                &shortcut.right_in_left,
+            ) =>
         {
             copy_mesh(
                 left,
@@ -4671,7 +4302,10 @@ fn boolean_convex_containment_meshes(
             )?
         }
         (_, _, ExactBooleanOperation::Difference)
-            if convex_boundary_containment_is_supported(&left_in_right, &right_in_left) =>
+            if convex_boundary_containment_is_supported(
+                &shortcut.left_in_right,
+                &shortcut.right_in_left,
+            ) =>
         {
             empty_mesh(
                 "empty exact convex boundary containment difference",
@@ -4679,7 +4313,10 @@ fn boolean_convex_containment_meshes(
             )?
         }
         (_, _, ExactBooleanOperation::Union)
-            if convex_boundary_containment_is_supported(&right_in_left, &left_in_right) =>
+            if convex_boundary_containment_is_supported(
+                &shortcut.right_in_left,
+                &shortcut.left_in_right,
+            ) =>
         {
             copy_mesh(
                 left,
@@ -4688,7 +4325,10 @@ fn boolean_convex_containment_meshes(
             )?
         }
         (_, _, ExactBooleanOperation::Intersection)
-            if convex_boundary_containment_is_supported(&right_in_left, &left_in_right) =>
+            if convex_boundary_containment_is_supported(
+                &shortcut.right_in_left,
+                &shortcut.left_in_right,
+            ) =>
         {
             copy_mesh(
                 right,
@@ -4697,11 +4337,21 @@ fn boolean_convex_containment_meshes(
             )?
         }
         (_, _, ExactBooleanOperation::Difference)
-            if convex_boundary_containment_is_supported(&right_in_left, &left_in_right)
-                && has_contained_boundary_difference(left, right) =>
+            if convex_boundary_containment_is_supported(
+                &shortcut.right_in_left,
+                &shortcut.left_in_right,
+            ) =>
         {
+            let Some(certificate) = shortcut.contained_boundary_difference.as_ref() else {
+                return Ok(None);
+            };
             let Some(difference) =
-                materialize_contained_boundary_difference(left, right, validation)
+                materialize_contained_boundary_difference_from_retained_certificate(
+                    left,
+                    right,
+                    certificate,
+                    validation,
+                )
             else {
                 return Ok(None);
             };
@@ -4713,7 +4363,7 @@ fn boolean_convex_containment_meshes(
 
     Ok(Some(certified_shortcut_result(
         mesh,
-        match support {
+        match shortcut.support {
             ExactBooleanSupport::CertifiedConvexContainment => {
                 ExactBooleanShortcutKind::ConvexContainment
             }
@@ -4725,27 +4375,18 @@ fn boolean_convex_containment_meshes(
     )))
 }
 
-#[cfg(feature = "exact-triangulation")]
-fn boolean_winding_containment_meshes(
+fn materialize_winding_containment_meshes(
+    shortcut: CertifiedWindingBooleanShortcut,
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
-    let Some(support) = certified_winding_boolean_support(left, right)? else {
-        return Ok(None);
-    };
-
-    let left_in_right = classify_mesh_vertices_against_closed_mesh_winding_report(left, right);
-    left_in_right
-        .validate_against_sources(left, right)
-        .map_err(winding_error)?;
-    let right_in_left = classify_mesh_vertices_against_closed_mesh_winding_report(right, left);
-    right_in_left
-        .validate_against_sources(right, left)
-        .map_err(winding_error)?;
-
-    let mesh = match (left_in_right.relation, right_in_left.relation, operation) {
+    let mesh = match (
+        shortcut.left_in_right.relation,
+        shortcut.right_in_left.relation,
+        operation,
+    ) {
         (ClosedMeshWindingMeshRelation::StrictlyInside, _, ExactBooleanOperation::Union) => {
             copy_mesh(
                 right,
@@ -4817,7 +4458,7 @@ fn boolean_winding_containment_meshes(
 
     Ok(Some(certified_shortcut_result(
         mesh,
-        match support {
+        match shortcut.support {
             ExactBooleanSupport::CertifiedWindingContainment => {
                 ExactBooleanShortcutKind::WindingContainment
             }
@@ -4829,27 +4470,142 @@ fn boolean_winding_containment_meshes(
     )))
 }
 
-#[cfg(feature = "exact-triangulation")]
 type VolumetricWindingRegionPlan = (
     Vec<FaceRegionPlaneClassification>,
     Vec<FaceRegionTriangulation>,
     Vec<ExactVolumetricRegionClassification>,
 );
 
-#[cfg(feature = "exact-triangulation")]
-fn boolean_volumetric_winding_regions(
+struct MaterializedVolumetricWindingRegionPlan {
+    region_classifications: Vec<FaceRegionPlaneClassification>,
+    triangulations: Vec<FaceRegionTriangulation>,
+    volumetric_classifications: Vec<ExactVolumetricRegionClassification>,
+    assembly: ExactBooleanAssemblyPlan,
+    mesh: ExactMesh,
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum VolumetricWindingMaterializationFailure {
+    ReturnError,
+    ReturnNone,
+}
+
+fn boolean_volumetric_winding_regions_from_graph(
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
+    let Some(materialized) = materialize_volumetric_winding_region_plan_from_graph(
+        graph,
+        left,
+        right,
+        operation,
+        validation,
+        VolumetricWindingMaterializationFailure::ReturnError,
+    )?
+    else {
+        return Ok(None);
+    };
+    let result = ExactBooleanResult {
+        kind: ExactBooleanResultKind::WindingMaterialized { operation },
+        graph_had_unknowns: false,
+        region_classifications: materialized.region_classifications,
+        triangulations: materialized.triangulations,
+        assembly: materialized.assembly,
+        volumetric_classifications: materialized.volumetric_classifications,
+        mesh: materialized.mesh,
+    };
+    result.validate().map_err(|error| {
+        MeshError::one(MeshDiagnostic::new(
+            Severity::Error,
+            DiagnosticKind::UnsupportedExactOperation,
+            format!("exact winding-materialized result validation failed: {error:?}"),
+        ))
+    })?;
+    Ok(Some(result))
+}
+
+fn boolean_retained_graph_fallback_meshes_from_graph(
+    graph: &super::graph::ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+    boundary_policy: ExactBoundaryBooleanPolicy,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    if let Some(result) = boolean_closed_boundary_only_contact_meshes_from_graph(
+        graph, left, right, operation, validation,
+    )? {
+        return Ok(Some(result));
+    }
+
+    match boolean_volumetric_winding_regions_from_graph(graph, left, right, operation, validation) {
+        Ok(Some(result)) => return Ok(Some(result)),
+        Ok(None) => {}
+        Err(error) => {
+            if error_can_retry_certified_boolmesh(&error) {
+                match execute_exact_boolmesh_port_from_graph(
+                    left, right, operation, validation, graph,
+                ) {
+                    Ok(execution) => {
+                        return Ok(Some(certified_shortcut_result(
+                            execution.mesh,
+                            execution.shortcut,
+                        )));
+                    }
+                    Err(ExactBoolMeshValidationError::PortBlocked(
+                        stage @ (ExactBoolMeshKernelStage::Triangulation
+                        | ExactBoolMeshKernelStage::Cleanup),
+                    )) => return Err(boolmesh_late_export_blocker_error(stage)),
+                    _ => {}
+                }
+            }
+            return Err(error);
+        }
+    }
+
+    if let Some(result) =
+        boolean_boolmesh_port_meshes_from_graph(graph, left, right, operation, validation)?
+    {
+        return Ok(Some(result));
+    }
+
+    if let Some(shortcut) = certified_winding_boolean_shortcut_from_graph(graph, left, right)?
+        && let Some(result) =
+            materialize_winding_containment_meshes(shortcut, left, right, operation, validation)?
+    {
+        return Ok(Some(result));
+    }
+
+    if let Some(result) = boolean_boundary_touching_meshes_from_graph(
+        graph,
+        left,
+        right,
+        operation,
+        validation,
+        boundary_policy,
+    )? {
+        return Ok(Some(result));
+    }
+
+    Ok(None)
+}
+
+fn materialize_volumetric_winding_region_plan_from_graph(
+    graph: &super::graph::ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+    failure: VolumetricWindingMaterializationFailure,
+) -> Result<Option<MaterializedVolumetricWindingRegionPlan>, MeshError> {
     if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
         return Ok(None);
     }
-    let graph = build_intersection_graph(left, right)?;
-    validate_graph_source_handoff(&graph, left, right)?;
     let Some((region_classifications, triangulations, volumetric_classifications)) =
-        volumetric_winding_region_plan_from_graph(&graph, left, right)?
+        volumetric_winding_region_plan_from_graph(graph, left, right)?
     else {
         return Ok(None);
     };
@@ -4867,7 +4623,7 @@ fn boolean_volumetric_winding_regions(
         return Ok(None);
     }
 
-    let mut assembly =
+    let assembly_result =
         ExactBooleanAssemblyPlan::from_region_triangulations_with_triangle_retention_and_sources(
             &triangulations,
             left,
@@ -4880,52 +4636,49 @@ fn boolean_volumetric_winding_regions(
                     &volumetric_classifications,
                 )
             },
-        )
-        .map_err(|error| {
-            MeshError::one(MeshDiagnostic::new(
+        );
+    let mut assembly = match assembly_result {
+        Ok(assembly) => assembly,
+        Err(_error) if failure == VolumetricWindingMaterializationFailure::ReturnNone => {
+            return Ok(None);
+        }
+        Err(error) => {
+            return Err(MeshError::one(MeshDiagnostic::new(
                 Severity::Error,
                 DiagnosticKind::IndexOutOfBounds,
                 format!("exact winding region assembly failed: {error}"),
-            ))
-        })?;
-    assembly.split_disconnected_vertex_fans().map_err(|error| {
-        MeshError::one(MeshDiagnostic::new(
+            )));
+        }
+    };
+    if let Err(error) = assembly.split_disconnected_vertex_fans() {
+        if failure == VolumetricWindingMaterializationFailure::ReturnNone {
+            return Ok(None);
+        }
+        return Err(MeshError::one(MeshDiagnostic::new(
             Severity::Error,
             DiagnosticKind::IndexOutOfBounds,
             format!("exact winding region vertex-fan split failed: {error}"),
-        ))
-    })?;
+        )));
+    }
     let mesh = match assembly.checked_to_exact_mesh_with_sources(left, right, validation) {
         Ok(mesh) => mesh,
         Err(_error)
-            if graph_requires_coplanar_volumetric_cells_for_sources(&graph, left, right) =>
+            if failure == VolumetricWindingMaterializationFailure::ReturnNone
+                || graph_requires_coplanar_volumetric_cells_for_sources(graph, left, right) =>
         {
             return Ok(None);
         }
         Err(error) => return Err(error),
     };
-    let result = ExactBooleanResult {
-        kind: ExactBooleanResultKind::WindingMaterialized { operation },
-        graph_had_unknowns: false,
+    Ok(Some(MaterializedVolumetricWindingRegionPlan {
         region_classifications,
         triangulations,
-        assembly,
         volumetric_classifications,
+        assembly,
         mesh,
-    };
-    result
-        .validate_against_sources(left, right)
-        .map_err(|error| {
-            MeshError::one(MeshDiagnostic::new(
-                Severity::Error,
-                DiagnosticKind::UnsupportedExactOperation,
-                format!("exact winding-materialized result/source replay failed: {error:?}"),
-            ))
-        })?;
-    Ok(Some(result))
+    }))
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn volumetric_winding_region_plan_from_graph(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
@@ -4950,7 +4703,6 @@ fn volumetric_winding_region_plan_from_graph(
         Err(_error) if graph_requires_coplanar_volumetric_cells_for_sources(graph, left, right) => {
             // Coplanar source-face overlaps can expose constraint-normalization
             // cases that are not part of the current bounded volumetric cell
-            // materializer. Keep Yap's exact boundary explicit: the caller
             // receives `RequiresCoplanarVolumetricCells` instead of a generic
             // triangulation failure or a tolerance fallback.
             return Ok(None);
@@ -4978,7 +4730,6 @@ fn volumetric_winding_region_plan_from_graph(
     )))
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn operation_retains_any_volumetric_region(
     operation: ExactBooleanOperation,
     triangulations: &[FaceRegionTriangulation],
@@ -4996,41 +4747,6 @@ fn operation_retains_any_volumetric_region(
     })
 }
 
-#[cfg(feature = "exact-triangulation")]
-fn volumetric_plan_materializes_operation(
-    operation: ExactBooleanOperation,
-    triangulations: &[FaceRegionTriangulation],
-    classifications: &[ExactVolumetricRegionClassification],
-    left: &ExactMesh,
-    right: &ExactMesh,
-    validation: ValidationPolicy,
-) -> bool {
-    let Ok(mut assembly) =
-        ExactBooleanAssemblyPlan::from_region_triangulations_with_triangle_retention_and_sources(
-            triangulations,
-            left,
-            right,
-            |triangulation, triangle| {
-                volumetric_retention_for_operation(
-                    operation,
-                    triangulation,
-                    triangle,
-                    classifications,
-                )
-            },
-        )
-    else {
-        return false;
-    };
-    if assembly.split_disconnected_vertex_fans().is_err() {
-        return false;
-    }
-    assembly
-        .checked_to_exact_mesh_with_sources(left, right, validation)
-        .is_ok()
-}
-
-#[cfg(feature = "exact-triangulation")]
 fn volumetric_retention_for_operation(
     operation: ExactBooleanOperation,
     triangulation: &FaceRegionTriangulation,
@@ -5047,8 +4763,6 @@ fn volumetric_retention_for_operation(
     // Boundary cells arise when every exact representative for a source-face
     // cell lies on the opposite closed mesh boundary. In mixed coplanar
     // volumetric overlaps that means the same geometric patch is normally
-    // emitted by both operands. Yap, "Towards Exact Geometric Computation,"
-    // Comput. Geom. 7.1-2 (1997), requires that this non-strict state remain
     // explicit, so we consume it through a deterministic owner policy instead
     // of pretending it is inside or outside: union/intersection keep the left
     // copy and drop the coincident right copy; difference drops coincident
@@ -5077,7 +4791,6 @@ fn volumetric_retention_for_operation(
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn boolean_convex_single_cap_difference_meshes(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -5090,7 +4803,6 @@ fn boolean_convex_single_cap_difference_meshes(
     let Some(difference) = subtract_closed_convex_solids_single_cap(left, right) else {
         return Ok(None);
     };
-    difference.validate_against_sources(left, right)?;
     let mesh = copy_mesh(
         &difference.mesh,
         "exact closed-convex single-cap difference",
@@ -5102,7 +4814,6 @@ fn boolean_convex_single_cap_difference_meshes(
     )))
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn certified_convex_intersection_support(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -5118,7 +4829,6 @@ fn certified_convex_intersection_support(
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn certified_convex_single_cap_difference_support(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -5134,49 +4844,69 @@ fn certified_convex_single_cap_difference_support(
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
-fn certified_contained_boundary_difference_support(
+fn certified_contained_boundary_difference_support_from_graph(
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
 ) -> Option<ExactBooleanSupport> {
     match operation {
-        ExactBooleanOperation::Difference if has_contained_boundary_difference(left, right) => {
+        ExactBooleanOperation::Difference
+            if has_contained_boundary_difference_from_graph(left, right, graph) =>
+        {
             Some(ExactBooleanSupport::CertifiedContainedBoundaryDifference)
         }
         _ => None,
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
-fn certified_contained_boundary_containment_support(
+fn certified_contained_boundary_containment_support_from_graph(
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
 ) -> Option<ExactBooleanSupport> {
-    let left_contains_right = has_contained_boundary_difference(left, right);
-    let right_contains_left = has_contained_boundary_difference(right, left);
+    let containment = contained_boundary_containment_from_graph(left, right, graph)?;
     match operation {
-        ExactBooleanOperation::Union | ExactBooleanOperation::Intersection
-            if left_contains_right || right_contains_left =>
+        ExactBooleanOperation::Union | ExactBooleanOperation::Intersection => {
+            Some(ExactBooleanSupport::CertifiedContainedBoundaryContainment)
+        }
+        ExactBooleanOperation::Difference
+            if containment == ContainedBoundaryContainment::RightContainsLeft =>
         {
             Some(ExactBooleanSupport::CertifiedContainedBoundaryContainment)
         }
-        ExactBooleanOperation::Difference if right_contains_left => {
-            Some(ExactBooleanSupport::CertifiedContainedBoundaryContainment)
-        }
-        _ => None,
+        ExactBooleanOperation::Difference => None,
+        ExactBooleanOperation::SelectedRegions(_) => None,
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
-fn certified_convex_boolean_support(
+struct CertifiedConvexBooleanShortcut {
+    support: ExactBooleanSupport,
+    left_in_right: ConvexSolidMeshClassification,
+    right_in_left: ConvexSolidMeshClassification,
+    contained_boundary_difference: Option<ContainedBoundaryDifferenceCertificate>,
+}
+
+fn certified_convex_boolean_support_from_graph(
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
 ) -> Result<Option<ExactBooleanSupport>, MeshError> {
-    let graph = build_intersection_graph(left, right)?;
-    let relation_counts = graph_relation_counts(&graph);
+    Ok(
+        certified_convex_boolean_shortcut_from_graph(graph, left, right, operation)?
+            .map(|shortcut| shortcut.support),
+    )
+}
+
+fn certified_convex_boolean_shortcut_from_graph(
+    graph: &super::graph::ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+) -> Result<Option<CertifiedConvexBooleanShortcut>, MeshError> {
+    let relation_counts = graph_relation_counts(graph);
     if graph.has_unknowns() || relation_counts.construction_failed_events > 0 {
         return Ok(None);
     }
@@ -5184,7 +4914,7 @@ fn certified_convex_boolean_support(
     let left_in_right = classify_mesh_vertices_against_convex_solid_report(left, right);
     let right_in_left = classify_mesh_vertices_against_convex_solid_report(right, left);
     if graph.face_pairs.is_empty() {
-        return Ok(match (left_in_right.relation, right_in_left.relation) {
+        let support = match (left_in_right.relation, right_in_left.relation) {
             (ConvexSolidMeshRelation::StrictlyInside, _)
             | (_, ConvexSolidMeshRelation::StrictlyInside) => {
                 Some(ExactBooleanSupport::CertifiedConvexContainment)
@@ -5193,7 +4923,13 @@ fn certified_convex_boolean_support(
                 Some(ExactBooleanSupport::CertifiedConvexSeparated)
             }
             _ => None,
-        });
+        };
+        return Ok(support.map(|support| CertifiedConvexBooleanShortcut {
+            support,
+            left_in_right,
+            right_in_left,
+            contained_boundary_difference: None,
+        }));
     }
 
     let left_boundary_inside_right =
@@ -5205,13 +4941,28 @@ fn certified_convex_boolean_support(
         ExactBooleanOperation::Union | ExactBooleanOperation::Intersection
     ) && (left_boundary_inside_right || right_boundary_inside_left)
     {
-        return Ok(Some(ExactBooleanSupport::CertifiedConvexContainment));
+        return Ok(Some(CertifiedConvexBooleanShortcut {
+            support: ExactBooleanSupport::CertifiedConvexContainment,
+            left_in_right,
+            right_in_left,
+            contained_boundary_difference: None,
+        }));
     }
+    let contained_boundary_difference =
+        if operation == ExactBooleanOperation::Difference && right_boundary_inside_left {
+            contained_boundary_difference_certificate_from_graph(left, right, graph)
+        } else {
+            None
+        };
     if operation == ExactBooleanOperation::Difference
-        && (left_boundary_inside_right
-            || (right_boundary_inside_left && has_contained_boundary_difference(left, right)))
+        && (left_boundary_inside_right || contained_boundary_difference.is_some())
     {
-        return Ok(Some(ExactBooleanSupport::CertifiedConvexContainment));
+        return Ok(Some(CertifiedConvexBooleanShortcut {
+            support: ExactBooleanSupport::CertifiedConvexContainment,
+            left_in_right,
+            right_in_left,
+            contained_boundary_difference,
+        }));
     }
 
     Ok(None)
@@ -5220,8 +4971,6 @@ fn certified_convex_boolean_support(
 /// Return whether one certified convex solid is contained in another while
 /// touching its boundary.
 ///
-/// This is the bounded coplanar-volumetric containment case. Yap, "Towards
-/// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997),
 /// argues that such topology decisions must be retained as exact predicate
 /// facts: every subject vertex is certified inside or on the container, at
 /// least one vertex is exactly on the boundary, the container has at least one
@@ -5231,7 +4980,6 @@ fn certified_convex_boolean_support(
 /// convex solid is inside or on the other convex solid, a separate sampled
 /// graph traversal is not allowed to veto the containment with a stale
 /// tolerance-style crossing interpretation.
-#[cfg(feature = "exact-triangulation")]
 fn convex_boundary_containment_is_supported(
     subject_in_container: &ConvexSolidMeshClassification,
     container_in_subject: &ConvexSolidMeshClassification,
@@ -5254,13 +5002,28 @@ fn convex_boundary_containment_is_supported(
             .any(|vertex| matches!(vertex.relation, ConvexSolidPointRelation::Outside))
 }
 
-#[cfg(feature = "exact-triangulation")]
-fn certified_winding_boolean_support(
+struct CertifiedWindingBooleanShortcut {
+    support: ExactBooleanSupport,
+    left_in_right: ClosedMeshWindingMeshReport,
+    right_in_left: ClosedMeshWindingMeshReport,
+}
+
+fn certified_winding_boolean_support_from_graph(
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Result<Option<ExactBooleanSupport>, MeshError> {
-    let graph = build_intersection_graph(left, right)?;
-    validate_graph_source_handoff(&graph, left, right)?;
+    Ok(
+        certified_winding_boolean_shortcut_from_graph(graph, left, right)?
+            .map(|shortcut| shortcut.support),
+    )
+}
+
+fn certified_winding_boolean_shortcut_from_graph(
+    graph: &super::graph::ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Result<Option<CertifiedWindingBooleanShortcut>, MeshError> {
     if graph.has_unknowns()
         || !graph.face_pairs.is_empty()
         || !left.facts().mesh.closed_manifold
@@ -5270,14 +5033,10 @@ fn certified_winding_boolean_support(
     }
 
     let left_in_right = classify_mesh_vertices_against_closed_mesh_winding_report(left, right);
-    left_in_right
-        .validate_against_sources(left, right)
-        .map_err(winding_error)?;
+    left_in_right.validate().map_err(winding_error)?;
     let right_in_left = classify_mesh_vertices_against_closed_mesh_winding_report(right, left);
-    right_in_left
-        .validate_against_sources(right, left)
-        .map_err(winding_error)?;
-    Ok(match (left_in_right.relation, right_in_left.relation) {
+    right_in_left.validate().map_err(winding_error)?;
+    let support = match (left_in_right.relation, right_in_left.relation) {
         (ClosedMeshWindingMeshRelation::StrictlyInside, _)
         | (_, ClosedMeshWindingMeshRelation::StrictlyInside) => {
             Some(ExactBooleanSupport::CertifiedWindingContainment)
@@ -5286,10 +5045,14 @@ fn certified_winding_boolean_support(
             Some(ExactBooleanSupport::CertifiedWindingSeparated)
         }
         _ => None,
-    })
+    };
+    Ok(support.map(|support| CertifiedWindingBooleanShortcut {
+        support,
+        left_in_right,
+        right_in_left,
+    }))
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn winding_error(error: WindingReportError) -> MeshError {
     MeshError::one(MeshDiagnostic::new(
         Severity::Error,
@@ -5298,7 +5061,6 @@ fn winding_error(error: WindingReportError) -> MeshError {
     ))
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn volumetric_error(error: ExactVolumetricRegionError) -> MeshError {
     MeshError::one(MeshDiagnostic::new(
         Severity::Error,
@@ -5307,7 +5069,6 @@ fn volumetric_error(error: ExactVolumetricRegionError) -> MeshError {
     ))
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn copy_mesh(
     mesh: &ExactMesh,
     label: &'static str,
@@ -5321,7 +5082,6 @@ fn copy_mesh(
     )
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn concatenate_meshes_with_options(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -5349,7 +5109,6 @@ fn concatenate_meshes_with_options(
     )
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn meshes_are_certified_bounds_disjoint(left: &ExactMesh, right: &ExactMesh) -> bool {
     let (Some(left_bounds), Some(right_bounds)) = (&left.bounds().mesh, &right.bounds().mesh)
     else {
@@ -5358,26 +5117,21 @@ fn meshes_are_certified_bounds_disjoint(left: &ExactMesh, right: &ExactMesh) -> 
     left_bounds.classify_intersection(right_bounds).value() == Some(AabbIntersectionKind::Disjoint)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn meshes_are_certified_identical(left: &ExactMesh, right: &ExactMesh) -> bool {
     left.triangles() == right.triangles()
         && left.vertices().len() == right.vertices().len()
         && vertices_are_certified_equal(left, right)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn meshes_are_certified_same_surface(left: &ExactMesh, right: &ExactMesh) -> bool {
     certify_same_surface_report(left, right).is_certified()
 }
 
-#[cfg(feature = "exact-triangulation")]
 /// Certify whether two meshes represent the same triangle surface.
 ///
 /// The report preserves the exact coordinate-equality predicate certificates
 /// used to find a vertex bijection and the sorted triangle sets compared after
 /// remapping. This is the auditable form of the same-surface shortcut used by
-/// named exact booleans, following Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997): exact topology decisions should
 /// expose the predicate facts that justify them.
 pub fn certify_same_surface_report(left: &ExactMesh, right: &ExactMesh) -> ExactSameSurfaceReport {
     if left.vertices().len() != right.vertices().len() {
@@ -5423,7 +5177,6 @@ pub fn certify_same_surface_report(left: &ExactMesh, right: &ExactMesh) -> Exact
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn same_surface_report(
     status: ExactSameSurfaceStatus,
     left_to_right: Vec<usize>,
@@ -5440,21 +5193,19 @@ fn same_surface_report(
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn vertices_are_certified_equal(left: &ExactMesh, right: &ExactMesh) -> bool {
     left.vertices()
         .iter()
         .zip(right.vertices())
         .all(|(left, right)| {
-            let left = left.to_hyperlimit_point();
-            let right = right.to_hyperlimit_point();
+            let left = left.clone();
+            let right = right.clone();
             compare_reals(&left.x, &right.x).value() == Some(Ordering::Equal)
                 && compare_reals(&left.y, &right.y).value() == Some(Ordering::Equal)
                 && compare_reals(&left.z, &right.z).value() == Some(Ordering::Equal)
         })
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn certified_vertex_permutation_report(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -5464,14 +5215,14 @@ fn certified_vertex_permutation_report(
     let mut predicates = Vec::new();
 
     for left_vertex in left.vertices() {
-        let left_point = left_vertex.to_hyperlimit_point();
+        let left_point = left_vertex.clone();
         let mut match_index = None;
         let mut saw_undecided = false;
         for (right_index, right_vertex) in right.vertices().iter().enumerate() {
             if used_right[right_index] {
                 continue;
             }
-            let right_point = right_vertex.to_hyperlimit_point();
+            let right_point = right_vertex.clone();
             let x = compare_reals_report(&left_point.x, &right_point.x);
             let y = compare_reals_report(&left_point.y, &right_point.y);
             let z = compare_reals_report(&left_point.z, &right_point.z);
@@ -5513,7 +5264,6 @@ fn certified_vertex_permutation_report(
     (left_to_right, predicates, ExactSameSurfaceStatus::Certified)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn invert_permutation(permutation: &[usize]) -> Vec<usize> {
     let mut inverse = vec![0; permutation.len()];
     for (left_index, &right_index) in permutation.iter().enumerate() {
@@ -5522,7 +5272,6 @@ fn invert_permutation(permutation: &[usize]) -> Vec<usize> {
     inverse
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn sorted_triangle_sets(mesh: &ExactMesh, right_to_left: Option<&[usize]>) -> Vec<[usize; 3]> {
     mesh.triangles()
         .iter()
@@ -5537,7 +5286,6 @@ fn sorted_triangle_sets(mesh: &ExactMesh, right_to_left: Option<&[usize]>) -> Ve
         .collect()
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn boolean_disjoint_meshes(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -5567,18 +5315,16 @@ fn boolean_disjoint_meshes(
 /// [`ExactBoolMeshValidationError::PortBlocked`] means the exact port has
 /// reached an unported boolmesh stage and the historical exact materializers
 /// may still handle the case.  Other boolmesh validation errors are reported
-/// as hard exact-operation failures.  That separation follows Yap, "Towards
-/// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997): a
 /// topology-changing decision is either certified, explicitly unknown, or a
 /// validation failure.
-#[cfg(feature = "exact-triangulation")]
-fn boolean_boolmesh_port_meshes(
+fn boolean_boolmesh_port_meshes_from_graph(
+    graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
-    match execute_exact_boolmesh_port(left, right, operation, validation) {
+    match execute_exact_boolmesh_port_from_graph(left, right, operation, validation, graph) {
         Ok(execution) => Ok(Some(certified_shortcut_result(
             execution.mesh,
             execution.shortcut,
@@ -5590,12 +5336,11 @@ fn boolean_boolmesh_port_meshes(
         Err(error) => Err(MeshError::one(MeshDiagnostic::new(
             Severity::Error,
             DiagnosticKind::UnsupportedExactOperation,
-            format!("exact boolmesh port failed: {error:?}"),
+            format!("exact boolmesh graph-backed port failed: {error:?}"),
         ))),
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn boolean_boolmesh_split_meshes(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -5615,7 +5360,26 @@ fn boolean_boolmesh_split_meshes(
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
+fn boolean_boolmesh_split_meshes_from_graph(
+    graph: &super::graph::ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    match execute_exact_boolmesh_port_from_graph(left, right, operation, validation, graph) {
+        Ok(execution) if execution.shortcut == ExactBooleanShortcutKind::BoolMeshSplit => Ok(Some(
+            certified_shortcut_result(execution.mesh, execution.shortcut),
+        )),
+        Ok(_) | Err(ExactBoolMeshValidationError::PortBlocked(_)) => Ok(None),
+        Err(error) => Err(MeshError::one(MeshDiagnostic::new(
+            Severity::Error,
+            DiagnosticKind::UnsupportedExactOperation,
+            format!("exact boolmesh graph-backed split failed: {error:?}"),
+        ))),
+    }
+}
+
 fn boolmesh_late_export_blocker_error(stage: ExactBoolMeshKernelStage) -> MeshError {
     MeshError::one(MeshDiagnostic::new(
         Severity::Error,
@@ -5624,7 +5388,6 @@ fn boolmesh_late_export_blocker_error(stage: ExactBoolMeshKernelStage) -> MeshEr
     ))
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn error_can_retry_certified_boolmesh(error: &MeshError) -> bool {
     error.diagnostics.iter().any(|diagnostic| {
         matches!(
@@ -5636,7 +5399,6 @@ fn error_can_retry_certified_boolmesh(error: &MeshError) -> bool {
     })
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn boolean_empty_operand(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -5666,7 +5428,6 @@ fn boolean_empty_operand(
     ))
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn boolean_identical_meshes(
     mesh: &ExactMesh,
     operation: ExactBooleanOperation,
@@ -5696,7 +5457,6 @@ fn boolean_identical_meshes(
     ))
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn empty_mesh(label: &'static str, validation: ValidationPolicy) -> Result<ExactMesh, MeshError> {
     ExactMesh::new_with_policy(
         Vec::new(),
@@ -5706,7 +5466,6 @@ fn empty_mesh(label: &'static str, validation: ValidationPolicy) -> Result<Exact
     )
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn certified_shortcut_result(
     mesh: ExactMesh,
     shortcut: ExactBooleanShortcutKind,
@@ -5725,7 +5484,6 @@ fn certified_shortcut_result(
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn boundary_policy_shortcut_result(
     mesh: ExactMesh,
     operation: ExactBooleanOperation,
@@ -5744,7 +5502,6 @@ fn boundary_policy_shortcut_result(
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn concatenate_meshes(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -5766,7 +5523,7 @@ fn concatenate_meshes(
     )
 }
 
-#[cfg(all(test, feature = "exact-triangulation"))]
+#[cfg(test)]
 mod tests {
     use super::*;
 

@@ -5,12 +5,12 @@
 //! certificates. [`ApproximateMeshF64View`] lowers exact coordinates through
 //! [`hyperreal::Real::to_f64_lossy`] only after replaying retained mesh state,
 //! and can validate the retained primitive-float rows back against the exact
-//! mesh. This follows Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7.1-2 (1997): approximate representatives may be
 //! useful, but exact geometric decisions must remain tied to exact objects and
 //! proof-producing predicates.
 
 use super::{ExactMesh, ExactMeshAuditError, ExactMeshAuditReport, audit_exact_mesh};
+use hyperlimit::Point3;
+use hyperreal::Real;
 
 /// Primitive-float view of an [`ExactMesh`] with replay metadata.
 #[derive(Clone, Debug, PartialEq)]
@@ -85,8 +85,6 @@ pub enum ApproximateMeshF64ViewError {
 ///
 /// The status is an adapter diagnostic only. `Current` means the lossy view
 /// still replays bit-for-bit from the exact mesh; it does not authorize
-/// primitive-float topology decisions. This follows Yap, "Towards Exact
-/// Geometric Computation," *Computational Geometry* 7.1-2 (1997), by keeping
 /// exact predicates and approximate representatives separate.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ApproximateMeshF64ViewFreshness {
@@ -115,7 +113,7 @@ impl ApproximateMeshF64View {
         let mut positions = Vec::with_capacity(mesh.vertices().len() * 3);
         for (vertex_index, vertex) in mesh.vertices().iter().enumerate() {
             for coordinate in 0..3 {
-                let Some(value) = vertex.coordinates().0[coordinate].to_f64_lossy() else {
+                let Some(value) = point_coordinate(vertex, coordinate).to_f64_lossy() else {
                     return Err(ApproximateMeshF64ViewError::CoordinateExportFailed {
                         vertex: vertex_index,
                         coordinate,
@@ -183,7 +181,7 @@ impl ApproximateMeshF64View {
             }
             let vertex = coordinate / 3;
             let lane = coordinate % 3;
-            let Some(expected) = mesh.vertices()[vertex].coordinates().0[lane].to_f64_lossy()
+            let Some(expected) = point_coordinate(&mesh.vertices()[vertex], lane).to_f64_lossy()
             else {
                 return Err(ApproximateMeshF64ViewError::CoordinateExportFailed {
                     vertex,
@@ -240,4 +238,13 @@ pub fn approximate_mesh_f64_view(
     mesh: &ExactMesh,
 ) -> Result<ApproximateMeshF64View, ApproximateMeshF64ViewError> {
     ApproximateMeshF64View::from_mesh(mesh)
+}
+
+fn point_coordinate(point: &Point3, coordinate: usize) -> &Real {
+    match coordinate {
+        0 => &point.x,
+        1 => &point.y,
+        2 => &point.z,
+        _ => unreachable!("validated 3D coordinate lane"),
+    }
 }

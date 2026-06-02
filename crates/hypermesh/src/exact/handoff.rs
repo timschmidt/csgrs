@@ -6,8 +6,6 @@
 //! keeps that boundary explicit: a mesh is not a solid handoff merely because
 //! it has triangles; it must replay retained state, certify closed manifold
 //! topology, retain exact rational coordinates, and expose exact face-plane
-//! facts. The separation follows Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7.1-2 (1997), where exact objects, approximate
 //! views, and certified predicate decisions are distinct artifacts.
 
 use super::{ExactMesh, ExactMeshAuditReport, MeshSource, ValidationPolicy, audit_exact_mesh};
@@ -32,8 +30,6 @@ pub struct ExactSolidHandoffReport {
 /// This report is the non-solid counterpart to [`ExactSolidHandoffReport`].
 /// It accepts closed shells and boundary-allowed open surfaces, but still
 /// requires exact retained mesh state, exact rational coordinates, face-plane
-/// coverage, and mesh bounds. That split follows Yap, "Towards Exact
-/// Geometric Computation," *Computational Geometry* 7.1-2 (1997): exact
 /// object evidence should stay separate from consumer-domain interpretation.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ExactSurfaceHandoffReport {
@@ -110,8 +106,6 @@ pub enum ExactSurfaceHandoffError {
 /// This is a downstream scheduling diagnostic, not a new proof. `Current`
 /// means the handoff report still replays as exact closed-solid evidence;
 /// other variants tell a caller whether to recompute, reject as non-solid, or
-/// discard stale metadata. The split follows Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997), by keeping exact
 /// object facts and consumer-domain readiness separate.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ExactSolidHandoffFreshness {

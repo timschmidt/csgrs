@@ -13,8 +13,6 @@
 //! keep exact unnormalized incident face-plane normals.  In legacy boolmesh the
 //! smoothed vertex normals are only used as simulation-of-simplicity directions
 //! in shadow ties; removing trigonometric angle weights and unit-length
-//! normalization is the exact-arithmetic analogue of Yap, "Towards Exact
-//! Geometric Computation," *Computational Geometry* 7.1-2 (1997): predicates
 //! consume retained exact object facts instead of reintroducing rounded
 //! representatives.
 
@@ -27,8 +25,8 @@ use hyperlimit::{Point3, compare_reals};
 
 use crate::exact::mesh::{ExactMesh, Triangle};
 
-use super::ExactReal;
 use super::kernel02::ExactKernel02Halfedge;
+use hyperreal::Real;
 
 /// Exact boolmesh-style kernel input for one mesh.
 #[derive(Clone, Debug, PartialEq)]
@@ -63,13 +61,11 @@ impl ExactBoolMeshKernelFrame {
     ///
     /// Legacy boolmesh `Kernel12::op` is addressed by a source halfedge index
     /// and an opposite face index.  Exact discovery stores the geometric edge
-    /// as vertex endpoints instead.  This method is the exact-object replay
+    /// as vertex endpoints instead.  This method is the exact evidence replay
     /// bridge: it maps the retained face/edge fact back onto the boolmesh
     /// halfedge layout without re-running a floating orientation heuristic.
     /// When the retained edge is opposite the source face order, the paired
     /// reverse row is returned, matching boolmesh's forward-halfedge lowering
-    /// while keeping Yap's "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7.1-2 (1997), separation between certified
     /// input facts and topology mutation.
     pub(super) fn source_halfedge_for_face_edge(
         &self,
@@ -112,7 +108,6 @@ pub(super) fn build_kernel_frame(mesh: &ExactMesh) -> ExactBoolMeshKernelFrame {
 /// without primitive floats: centroid normalization, clamping, and 10-bit
 /// Morton buckets are computed by exact comparisons.  Returned rows still carry
 /// original source face ids so downstream `boolean45` can address the original
-/// exact mesh.  This is Yap's exact-object boundary applied to a boolmesh
 /// implementation detail: the scheduling object is replayed exactly before
 /// topology tables are mutated.
 pub(super) fn build_boolmesh_sorted_kernel_frame(mesh: &ExactMesh) -> ExactBoolMeshKernelFrame {
@@ -129,7 +124,7 @@ fn build_kernel_frame_with_face_order(
     let points = mesh
         .vertices()
         .iter()
-        .map(|vertex| vertex.to_hyperlimit_point())
+        .map(|vertex| vertex.clone())
         .collect::<Vec<_>>();
     let triangles = face_order
         .iter()
@@ -214,7 +209,7 @@ fn face_morton_codes(mesh: &ExactMesh) -> Vec<u32> {
                 .0
                 .iter()
                 .filter_map(|vertex| mesh.vertices().get(*vertex))
-                .map(|vertex| vertex.to_hyperlimit_point())
+                .map(|vertex| vertex.clone())
                 .collect::<Vec<_>>();
             if vertices.len() != 3 {
                 return u32::MAX;
@@ -229,8 +224,8 @@ fn face_morton_codes(mesh: &ExactMesh) -> Vec<u32> {
         .collect()
 }
 
-fn centroid_axis(a: &ExactReal, b: &ExactReal, c: &ExactReal) -> ExactReal {
-    ((a.clone() + b.clone() + c.clone()) / ExactReal::from(3))
+fn centroid_axis(a: &Real, b: &Real, c: &Real) -> Real {
+    ((a.clone() + b.clone() + c.clone()) / Real::from(3))
         .expect("constant centroid denominator is nonzero")
 }
 
@@ -241,24 +236,24 @@ fn exact_morton_code(point: &Point3, min: &Point3, max: &Point3) -> u32 {
     x * 4 + y * 2 + z
 }
 
-fn exact_morton_axis(value: &ExactReal, min: &ExactReal, max: &ExactReal) -> u32 {
+fn exact_morton_axis(value: &Real, min: &Real, max: &Real) -> u32 {
     let span = max.clone() - min;
-    if compare_reals(&span, &ExactReal::from(0)).value() != Some(Ordering::Greater) {
+    if compare_reals(&span, &Real::from(0)).value() != Some(Ordering::Greater) {
         return 0;
     }
-    let scaled = ((value.clone() - min) * ExactReal::from(1024) / span)
-        .expect("positive morton span is nonzero");
-    if compare_reals(&scaled, &ExactReal::from(0)).value() != Some(Ordering::Greater) {
+    let scaled =
+        ((value.clone() - min) * Real::from(1024) / span).expect("positive morton span is nonzero");
+    if compare_reals(&scaled, &Real::from(0)).value() != Some(Ordering::Greater) {
         return 0;
     }
-    if compare_reals(&scaled, &ExactReal::from(1023)).value() != Some(Ordering::Less) {
+    if compare_reals(&scaled, &Real::from(1023)).value() != Some(Ordering::Less) {
         return 1023;
     }
     let mut lo = 0u32;
     let mut hi = 1023u32;
     while lo + 1 < hi {
         let mid = (lo + hi) / 2;
-        if compare_reals(&scaled, &ExactReal::from(mid)).value() == Some(Ordering::Less) {
+        if compare_reals(&scaled, &Real::from(mid)).value() == Some(Ordering::Less) {
             hi = mid;
         } else {
             lo = mid;
@@ -312,9 +307,9 @@ fn expansion_normals_from_faces(mesh: &ExactMesh) -> Vec<Point3> {
 
     for (vertex, normal) in normals.iter_mut().enumerate() {
         if point_is_zero(normal) {
-            *normal = first_incident_normal[vertex].clone().unwrap_or_else(|| {
-                Point3::new(ExactReal::from(1), ExactReal::from(1), ExactReal::from(1))
-            });
+            *normal = first_incident_normal[vertex]
+                .clone()
+                .unwrap_or_else(|| Point3::new(Real::from(1), Real::from(1), Real::from(1)));
         }
     }
     normals
@@ -334,22 +329,22 @@ fn add_points(left: &Point3, right: &Point3) -> Point3 {
 }
 
 fn zero_point() -> Point3 {
-    Point3::new(ExactReal::from(0), ExactReal::from(0), ExactReal::from(0))
+    Point3::new(Real::from(0), Real::from(0), Real::from(0))
 }
 
 fn point_is_zero(point: &Point3) -> bool {
     real_is_zero(&point.x) && real_is_zero(&point.y) && real_is_zero(&point.z)
 }
 
-fn real_is_zero(value: &ExactReal) -> bool {
-    compare_reals(value, &ExactReal::from(0)).value() == Some(Ordering::Equal)
+fn real_is_zero(value: &Real) -> bool {
+    compare_reals(value, &Real::from(0)).value() == Some(Ordering::Equal)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::exact::SourceProvenance;
-    use crate::exact::mesh::{ExactPoint3, Triangle};
+    use crate::exact::mesh::Triangle;
     use crate::exact::validation::ValidationPolicy;
 
     fn tetrahedron() -> ExactMesh {
@@ -392,9 +387,9 @@ mod tests {
     fn frame_appends_reverse_rows_for_boundary_edges() {
         let mesh = ExactMesh::new_with_policy(
             vec![
-                ExactPoint3::new(ExactReal::from(0), ExactReal::from(0), ExactReal::from(0)),
-                ExactPoint3::new(ExactReal::from(4), ExactReal::from(0), ExactReal::from(0)),
-                ExactPoint3::new(ExactReal::from(0), ExactReal::from(4), ExactReal::from(0)),
+                Point3::new(Real::from(0), Real::from(0), Real::from(0)),
+                Point3::new(Real::from(4), Real::from(0), Real::from(0)),
+                Point3::new(Real::from(0), Real::from(4), Real::from(0)),
             ],
             vec![Triangle([0, 1, 2])],
             SourceProvenance::exact("exact boolmesh frame boundary fixture"),

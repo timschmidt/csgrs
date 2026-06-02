@@ -3,8 +3,6 @@
 //! [`ExactMeshHandoffPackage`] is a convenience envelope over independently
 //! validated reports: retained-state audit, consumer readiness, exact surface
 //! handoff, exact solid handoff, and lossy display/export view. It does not
-//! weaken the individual report contracts. This follows Yap, "Towards Exact
-//! Geometric Computation," *Computational Geometry* 7.1-2 (1997): downstream
 //! systems may cache and route exact geometric artifacts, but cached packages
 //! must replay against exact source objects instead of becoming unexamined
 //! topology authority.
@@ -34,8 +32,6 @@ pub struct ExactMeshHandoffPackage {
 ///
 /// Domain selection is explicit because surface evidence, solid evidence, and
 /// approximate display/export evidence are not interchangeable. This follows
-/// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-/// 7.1-2 (1997), by keeping exact object semantics and adapter semantics out
 /// of implicit control-flow conventions such as "field is present enough."
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ExactMeshConsumerDomain {
@@ -51,8 +47,6 @@ pub enum ExactMeshConsumerDomain {
 ///
 /// This is a scheduler-friendly view over package availability. It keeps exact
 /// geometry domains, closed-volume readiness, and lossy adapter domains
-/// separated, following Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997): approximate representatives are
 /// useful artifacts, but exact object evidence should remain distinguishable
 /// in every consumer-facing boundary.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -126,8 +120,6 @@ impl ExactMeshDomainSummary {
     /// Closed-volume evidence is preferred over surface evidence because it
     /// carries stricter downstream semantics. Lossy adapter domains are never
     /// returned by this helper. This keeps scheduler preference aligned with
-    /// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-    /// 7.1-2 (1997): exact object evidence should drive geometric decisions,
     /// while approximate representatives remain named adapter outputs.
     pub fn preferred_exact_geometry_domain(&self) -> Option<ExactMeshConsumerDomain> {
         if self.has_domain(ExactMeshConsumerDomain::Solid) {
@@ -152,8 +144,6 @@ impl ExactMeshDomainSummary {
     /// Use this when copied scheduler metadata may have crossed a queue or
     /// serialization boundary but the source mesh is not currently loaded. The
     /// summary must first replay from the package before the preferred exact
-    /// geometry domain is accepted. This follows Yap, "Towards Exact
-    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997): cached
     /// routing facts are usable only while they replay from exact object
     /// evidence, and lossy adapter evidence is never a substitute for exact
     /// geometry.
@@ -187,8 +177,6 @@ impl ExactMeshDomainSummary {
     /// prevents downstream schedulers from selecting a preferred exact domain
     /// and then manually unwrapping a different optional report. The guard is
     /// deliberately exact-only: lossy display/export views are never returned
-    /// by this helper. This follows Yap, "Towards Exact Geometric
-    /// Computation," *Computational Geometry* 7.1-2 (1997), by requiring
     /// cached routing metadata to replay before it can authorize consumption
     /// of exact geometric evidence.
     pub fn preferred_exact_geometry_report_against_package<'a>(
@@ -222,8 +210,6 @@ impl ExactMeshDomainSummary {
     /// This is the copied-metadata counterpart to
     /// [`ExactMeshHandoffPackage::require_domain`]. It lets schedulers reject
     /// missing capabilities without reinterpreting raw vectors. Exact geometry
-    /// and lossy adapter domains remain distinct, following Yap, "Towards
-    /// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997).
     pub fn require_domain(
         &self,
         domain: ExactMeshConsumerDomain,
@@ -240,8 +226,6 @@ impl ExactMeshDomainSummary {
     /// This is useful when copied scheduler metadata is stored beside a
     /// retained handoff package but the source mesh is not currently loaded.
     /// It rejects stale summary metadata before accepting the requested
-    /// capability. The split follows Yap, "Towards Exact Geometric
-    /// Computation," *Computational Geometry* 7.1-2 (1997), by requiring
     /// cached facts to replay from the artifact they summarize.
     pub fn require_domain_against_package(
         &self,
@@ -299,8 +283,6 @@ impl ExactMeshDomainSummary {
     /// This is a local replay check for copied scheduler metadata. It does not
     /// prove that the package itself is fresh for a mesh; callers should pair
     /// this with [`ExactMeshHandoffPackage::validate_against_mesh`] at source
-    /// boundaries. The split follows Yap, "Towards Exact Geometric
-    /// Computation," *Computational Geometry* 7.1-2 (1997), by treating cached
     /// metadata as reusable only while it replays from the exact artifact it
     /// summarizes.
     pub fn validate_against_package(
@@ -346,8 +328,6 @@ impl ExactMeshDomainSummary {
     /// This is the strongest summary replay boundary: the package must replay
     /// from the exact mesh, then the summary must replay from that package. It
     /// is intended for downstream schedulers that receive copied summary
-    /// metadata beside a retained package. Yap, "Towards Exact Geometric
-    /// Computation," *Computational Geometry* 7.1-2 (1997), motivates this
     /// separation by treating cached facts as reusable only when they replay
     /// from the exact object whose semantics they summarize.
     pub fn validate_against_mesh(
@@ -408,8 +388,6 @@ impl ExactMeshConsumerDomain {
     ///
     /// Surface and solid domains are exact geometry handoffs. The
     /// approximate `f64` view is an adapter artifact for display/export and is
-    /// never topology authority. This follows Yap, "Towards Exact Geometric
-    /// Computation," *Computational Geometry* 7.1-2 (1997), by keeping exact
     /// object evidence separate from approximate representatives.
     pub const fn is_exact_geometry(self) -> bool {
         matches!(self, Self::Surface | Self::Solid)
@@ -436,8 +414,6 @@ impl ExactMeshConsumerDomain {
 /// This enum keeps consumer extraction typed. A caller that asks for solid
 /// evidence receives a solid handoff report, while a caller that asks for a
 /// lossy view receives the view artifact and cannot accidentally reinterpret
-/// it as exact topology. The separation follows Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997), by keeping exact
 /// object evidence and approximate adapter evidence distinct at API
 /// boundaries.
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -463,7 +439,6 @@ impl<'a> ExactMeshDomainReportRef<'a> {
     /// Return the exact mesh audit shared by the selected report.
     ///
     /// This lets downstream code compare source identity without flattening
-    /// variant-specific reports. It preserves Yap's separation between exact
     /// object evidence and domain-specific consumers by exposing only the
     /// common retained-state audit at this layer.
     pub const fn audit(&self) -> &'a ExactMeshAuditReport {
@@ -557,9 +532,6 @@ impl ExactMeshHandoffPackage {
     /// the package is fresh for a current mesh; only
     /// [`ExactMeshHandoffPackage::validate_against_mesh`] can do that. It does
     /// reject self-contradictory packages where readiness flags, inner audits,
-    /// and optional domain reports no longer agree. That split follows Yap,
-    /// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-    /// (1997): cached exact artifacts need local consistency checks and source
     /// replay checks rather than being trusted because they are well-typed.
     pub fn validate_internal(&self) -> Result<(), ExactMeshHandoffPackageError> {
         if self.readiness.audit != self.audit {
@@ -611,8 +583,6 @@ impl ExactMeshHandoffPackage {
     /// The order is stable: surface, solid, then lossy display/export view.
     /// This helper keeps downstream routing from duplicating optional-field
     /// inspection and preserves the package as the single authority for domain
-    /// availability. As in Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7.1-2 (1997), approximate views remain named
     /// adapter artifacts rather than implicit substitutes for exact topology.
     pub fn available_domains(&self) -> Vec<ExactMeshConsumerDomain> {
         let mut domains = Vec::with_capacity(3);
@@ -643,8 +613,6 @@ impl ExactMeshHandoffPackage {
 
     /// Return only lossy adapter domains currently present in this package.
     ///
-    /// Keeping lossy domains separately enumerable follows Yap, "Towards Exact
-    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997): useful
     /// approximate representatives should remain explicitly labeled and should
     /// not be confused with exact object evidence.
     pub fn lossy_adapter_domains(&self) -> Vec<ExactMeshConsumerDomain> {
@@ -690,8 +658,6 @@ impl ExactMeshHandoffPackage {
     ///
     /// Closed-solid evidence is preferred over surface evidence because it has
     /// stricter volumetric semantics. Approximate display/export views are
-    /// never returned. This keeps downstream routing aligned with Yap, "Towards
-    /// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997):
     /// exact object evidence, not lossy representatives, drives geometric
     /// decisions.
     pub fn require_preferred_exact_geometry_domain(
@@ -723,8 +689,6 @@ impl ExactMeshHandoffPackage {
     /// primitive-float views are excluded even when present. This packages the
     /// selected exact domain and borrowed report together so consumers do not
     /// split scheduler preference from report extraction. The design follows
-    /// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-    /// 7.1-2 (1997): exact object evidence should cross API boundaries as
     /// retained, replayable artifacts rather than implicit optional-field
     /// conventions.
     pub fn preferred_exact_geometry_report(
@@ -806,10 +770,9 @@ impl ExactMeshHandoffPackage {
     ///
     /// Use this at external crate boundaries where a retained package may have
     /// crossed caches, serialization, or scheduling queues. It rejects stale
-    /// packages before checking domain presence, preventing an old optional
-    /// field from authorizing a current mesh. This mirrors Yap's exact
-    /// geometric computation discipline: cached artifacts are useful only
-    /// while they replay from the exact object whose semantics they summarize.
+    /// packages before checking domain presence, so cached artifacts are used
+    /// only while they replay from the exact object whose semantics they
+    /// summarize.
     pub fn require_domain_against_mesh(
         &self,
         mesh: &ExactMesh,

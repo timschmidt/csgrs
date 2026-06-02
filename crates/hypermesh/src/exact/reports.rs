@@ -3,47 +3,34 @@
 //! These types are the public evidence objects produced by the exact boolean
 //! staging layer. They intentionally carry graph counts, predicate
 //! certificates, and checked handoff artifacts instead of collapsing exact
-//! topology decisions to `bool`. This follows Yap, "Towards Exact Geometric
-//! Computation," *Computational Geometry* 7.1-2 (1997): a geometric program
-//! should expose whether a combinatorial decision was certified, unsupported,
-//! or blocked on an application-level policy.
+//! topology decisions to `bool`. Callers can inspect whether a combinatorial
+//! decision was certified, unsupported, or blocked on an application-level
+//! policy.
 
-#[cfg(feature = "exact-triangulation")]
 use hyperlimit::{Point3, compare_reals};
-#[cfg(feature = "exact-triangulation")]
 use std::cmp::Ordering;
 
-#[cfg(feature = "exact-triangulation")]
 use super::ExactMesh;
-#[cfg(feature = "exact-triangulation")]
-use super::MeshSide;
-#[cfg(feature = "exact-triangulation")]
 use super::boolean::{
     ExactBooleanOperation, ExactBoundaryBooleanPolicy, boolean_exact_with_boundary_policy,
     certify_boundary_touching_report, certify_open_surface_disjoint_report,
     certify_planar_arrangement_report, certify_refinement_report, certify_same_surface_report,
     certify_winding_readiness_report, preflight_boolean_exact,
 };
-#[cfg(feature = "exact-triangulation")]
+use super::graph::MeshSide;
 use super::graph::{
     CoplanarArrangementReadinessReport, CoplanarArrangementReadinessStatus, ExactIntersectionGraph,
     IntersectionEvent, build_intersection_graph,
 };
-#[cfg(feature = "exact-triangulation")]
 use super::intersection::MeshFacePairRelation;
-#[cfg(feature = "exact-triangulation")]
 use super::provenance::PredicateUse;
-#[cfg(feature = "exact-triangulation")]
 use super::region::{
     ExactBooleanAssemblyPlan, ExactOutputTriangle, ExactOutputTriangleOrientation,
     ExactRegionSelection, FaceRegionPlaneClassification, FaceRegionPlaneValidationError,
     FaceRegionTriangulation, boundary_node_point,
 };
-#[cfg(feature = "exact-triangulation")]
 use super::validation::ValidationPolicy;
-#[cfg(feature = "exact-triangulation")]
 use super::volumetric::{ExactVolumetricRegionClassification, ExactVolumetricRegionError};
-#[cfg(feature = "exact-triangulation")]
 use super::volumetric_cells::CoplanarVolumetricCellEvidenceReport;
 
 /// Validation failure for an exact report object.
@@ -51,10 +38,7 @@ use super::volumetric_cells::CoplanarVolumetricCellEvidenceReport;
 /// Report validation checks the evidence object itself, not the original
 /// geometry. It lets tests, fuzzing, and downstream policy code assert that
 /// status, blocker kind, graph counts, and retained artifacts agree before
-/// later topology stages consume them. This follows Yap, "Towards Exact
-/// Geometric Computation," *Computational Geometry* 7.1-2 (1997), by making
 /// metadata consistency part of the certified boundary.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum ExactReportValidationError {
     /// A certified shortcut report unexpectedly carried a blocker.
@@ -185,14 +169,11 @@ pub enum ExactReportValidationError {
 
 /// Shared freshness status for copied exact boolean reports.
 ///
-/// This type is intentionally smaller than one enum per report. Yap, "Towards
-/// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997),
 /// warrants replayable exact state at predicate/construction/topology
 /// boundaries, but not redundant metadata vocabularies for each wrapper. The
 /// shared status preserves the useful distinction between local report drift
 /// and source-replay drift while keeping [`ExactReportValidationError`] as the
 /// detailed diagnostic surface.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ExactReportFreshness {
     /// The report validates locally and replays exactly from the source meshes.
@@ -228,7 +209,6 @@ pub enum ExactReportFreshness {
     SourceReplayMismatch,
 }
 
-#[cfg(feature = "exact-triangulation")]
 impl From<ExactReportValidationError> for ExactReportFreshness {
     fn from(error: ExactReportValidationError) -> Self {
         match error {
@@ -276,7 +256,6 @@ impl From<ExactReportValidationError> for ExactReportFreshness {
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn blocker_kind(
     blocker: Option<&ExactBooleanBlocker>,
     expected: ExactBooleanBlockerKind,
@@ -288,7 +267,6 @@ fn blocker_kind(
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn no_region_facts(
     region_count: usize,
     classifications: &[FaceRegionPlaneClassification],
@@ -300,7 +278,6 @@ fn no_region_facts(
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn blocker_pair_count(blocker: &ExactBooleanBlocker) -> usize {
     blocker.candidate_pairs
         + blocker.coplanar_overlapping_pairs
@@ -308,7 +285,6 @@ fn blocker_pair_count(blocker: &ExactBooleanBlocker) -> usize {
         + blocker.unknown_pairs
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn validate_blocker_count_bounds(
     blocker: &ExactBooleanBlocker,
     retained_face_pairs: usize,
@@ -326,14 +302,11 @@ fn validate_blocker_count_bounds(
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn validate_arrangement_readiness_matches_blocker(
     readiness: &CoplanarArrangementReadinessReport,
     blocker: &ExactBooleanBlocker,
 ) -> Result<(), ExactReportValidationError> {
     // The compact readiness report and the blocker are two public views of the
-    // same retained coplanar graph state. Yap, "Towards Exact Geometric
-    // Computation," Comput. Geom. 7.1-2 (1997), treats retained numerical
     // structure as part of the exact state; a later planar-cell or winding
     // policy must not be able to consume a summary with relabeled graph counts.
     if readiness.overlapping_graphs != blocker.coplanar_overlapping_pairs
@@ -347,17 +320,14 @@ fn validate_arrangement_readiness_matches_blocker(
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn blocker_has_any_evidence(blocker: &ExactBooleanBlocker) -> bool {
     blocker_pair_count(blocker) != 0 || blocker.construction_failed_events != 0
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn blocker_has_refinement_evidence(blocker: &ExactBooleanBlocker) -> bool {
     blocker.unknown_pairs != 0 || blocker.construction_failed_events != 0
 }
 
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 struct BlockerSourceCounts {
     candidate_pairs: usize,
@@ -367,7 +337,6 @@ struct BlockerSourceCounts {
     construction_failed_events: usize,
 }
 
-#[cfg(feature = "exact-triangulation")]
 impl BlockerSourceCounts {
     const fn into_blocker(self, kind: ExactBooleanBlockerKind) -> ExactBooleanBlocker {
         ExactBooleanBlocker {
@@ -381,7 +350,6 @@ impl BlockerSourceCounts {
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn blocker_source_counts(graph: &ExactIntersectionGraph) -> BlockerSourceCounts {
     let mut counts = BlockerSourceCounts::default();
     for pair in &graph.face_pairs {
@@ -416,14 +384,11 @@ fn blocker_source_counts(graph: &ExactIntersectionGraph) -> BlockerSourceCounts 
     counts
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn validate_refinement_partition(
     graph_unknown_status: bool,
     blocker: &ExactBooleanBlocker,
 ) -> Result<(), ExactReportValidationError> {
     // Unknown predicate outcomes and failed exact constructions are both
-    // refinement evidence. Yap, "Towards Exact Geometric Computation,"
-    // Comput. Geom. 7.1-2 (1997), keeps this before topology policy:
     // boundary, planar-cell, and winding reports must not consume unresolved
     // construction state under a resolved status label.
     if graph_unknown_status {
@@ -439,12 +404,10 @@ fn validate_refinement_partition(
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn operation_is_selected_region(operation: ExactBooleanOperation) -> bool {
     matches!(operation, ExactBooleanOperation::SelectedRegions(_))
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn checked_region_facts(
     region_count: usize,
     classifications: &[FaceRegionPlaneClassification],
@@ -469,8 +432,6 @@ fn checked_region_facts(
             classification.plane_face,
         );
         // Each region/plane side fact is retained numerical structure, not a
-        // multiset. Yap, "Towards Exact Geometric Computation," Comput. Geom.
-        // 7.1-2 (1997), makes this bookkeeping part of the exact state:
         // duplicate certificates would let later winding code over-count or
         // relabel already-consumed side evidence.
         if unique_classifications.contains(&classification_key) {
@@ -480,10 +441,7 @@ fn checked_region_facts(
         // A winding-ready handoff is stronger than a stored classification
         // artifact: future inside/outside policy must be able to consume
         // decided side facts, not an "unknown" region/plane relation. This is
-        // Yap's exact-computation boundary applied to report state: undecided
         // predicates remain explicit blockers instead of being mislabeled as a
-        // ready topological decision. See Yap, "Towards Exact Geometric
-        // Computation," Computational Geometry 7.1-2 (1997).
         if !classification.is_decided_and_proof_producing() {
             return Err(ExactReportValidationError::RegionClassificationNotProofProducing);
         }
@@ -491,16 +449,12 @@ fn checked_region_facts(
     // `region_count` is a retained combinatorial fact, not a display counter.
     // It must match the unique region handles covered by plane classifications
     // so a later winding policy cannot silently consume stale or relabeled
-    // side facts. This is Yap's exact-state discipline applied to compact
-    // report metadata; see Yap, "Towards Exact Geometric Computation,"
-    // Computational Geometry 7.1-2 (1997).
     if unique_regions.len() != region_count {
         return Err(ExactReportValidationError::RegionCountMismatch);
     }
     Ok(())
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn validate_coplanar_volumetric_evidence_matches_blocker(
     evidence: &CoplanarVolumetricCellEvidenceReport,
     blocker: &ExactBooleanBlocker,
@@ -519,7 +473,6 @@ fn validate_coplanar_volumetric_evidence_matches_blocker(
     Ok(())
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn validate_coplanar_volumetric_evidence_shape(
     evidence: &CoplanarVolumetricCellEvidenceReport,
     retained_face_pairs: usize,
@@ -537,7 +490,6 @@ fn validate_coplanar_volumetric_evidence_shape(
     Ok(())
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn coplanar_volumetric_evidence_event_count(
     evidence: &CoplanarVolumetricCellEvidenceReport,
 ) -> usize {
@@ -548,7 +500,6 @@ fn coplanar_volumetric_evidence_event_count(
 }
 
 /// Auditable result of an exact selected-region boolean pipeline.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactBooleanResult {
     /// Declared production path for this result.
@@ -574,10 +525,7 @@ pub struct ExactBooleanResult {
 /// empty vectors. That distinction matters for exact computing: selected-region
 /// assembly, certified shortcuts, and boundary-policy projections are different
 /// application contracts even when they all produce an empty mesh. The design
-/// follows Yap, "Towards Exact Geometric Computation," *Computational
-/// Geometry* 7.1-2 (1997), by retaining the policy boundary that produced the
 /// topology.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ExactBooleanResultKind {
     /// The result came from split-region classification and selected assembly.
@@ -604,8 +552,6 @@ pub enum ExactBooleanResultKind {
     /// region classifications are proof-producing arrangement facts rather
     /// than winding facts. Keeping this as a named result kind, instead of
     /// relabeling it as caller-selected regions, preserves the operation
-    /// boundary required by Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7.1-2 (1997).
     OpenSurfaceArrangement {
         /// Named open-surface operation executed by split-region assembly.
         operation: ExactBooleanOperation,
@@ -617,8 +563,6 @@ pub enum ExactBooleanResultKind {
     /// The exact geometry used for this path is the same region split evidence
     /// as selected-region policy, but the retention policy is the certified
     /// inside/outside decision for a named volumetric boolean.
-    /// This follows Yap, "Towards Exact Geometric Computation," *Computational
-    /// Geometry* 7.1-2 (1997): semantic policy appears as an API boundary.
     WindingMaterialized {
         /// Named operation executed by the winding-backed materialization.
         operation: ExactBooleanOperation,
@@ -630,10 +574,7 @@ pub enum ExactBooleanResultKind {
 /// This enum is intentionally narrower than [`ExactBooleanSupport`]: it names
 /// only cases that have already materialized output topology. Retaining the
 /// exact shortcut reason on [`ExactBooleanResultKind`] gives downstream audit
-/// code the same explicit proof boundary advocated by Yap, "Towards Exact
-/// Geometric Computation," *Computational Geometry* 7.1-2 (1997), instead of
 /// reducing all shortcut outputs to an undifferentiated mesh.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ExactBooleanShortcutKind {
     /// Exact empty-operand semantics.
@@ -802,8 +743,6 @@ pub enum ExactBooleanShortcutKind {
     /// This is not a bounded special-case certificate. It names a completed
     /// exact port of the boolmesh discovery, winding, edge-fragment, face
     /// assembly, triangulation, and mesh-export pipeline. Keeping the result
-    /// tagged follows Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7.1-2 (1997): the topology is accepted only
     /// because the exact boolmesh stages replayed, not because an approximate
     /// mesh happened to validate.
     BoolMeshSplit,
@@ -824,7 +763,6 @@ pub enum ExactBooleanShortcutKind {
     CoplanarSurfaceHoledDifference,
 }
 
-#[cfg(feature = "exact-triangulation")]
 impl ExactBooleanResult {
     /// Validate the retained artifacts in this selected-region or shortcut
     /// boolean result.
@@ -859,9 +797,6 @@ impl ExactBooleanResult {
     /// source witness, but their exact point must still replay to the retained
     /// boundary. The retained assembly must also avoid dead vertices so the
     /// topology handoff is the exact set consumed by mesh materialization. That
-    /// keeps the final boolean handoff aligned with Yap,
-    /// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-    /// (1997): downstream topology receives a coherent chain of exact evidence
     /// rather than an opaque output mesh.
     pub fn validate(&self) -> Result<(), ExactReportValidationError> {
         let retains_region_artifacts = matches!(
@@ -911,8 +846,6 @@ impl ExactBooleanResult {
                 classification.plane_side,
                 classification.plane_face,
             );
-            // Yap, "Towards Exact Geometric Computation," Comput. Geom. 7.1-2
-            // (1997), treats retained numerical/combinatorial facts as part of
             // the exact state. A selected-region result cannot retain the same
             // region/plane side fact twice and still be a coherent winding
             // handoff.
@@ -931,9 +864,6 @@ impl ExactBooleanResult {
                 .map_err(|_| ExactReportValidationError::InvalidTriangulation)?;
             let triangulation_key = (triangulation.side, triangulation.face);
             // Each triangulation is the exact image of one retained
-            // source-region loop after feature-gated `hypertri` earcut. Yap,
-            // "Towards Exact Geometric Computation," Comput. Geom. 7.1-2
-            // (1997), requires that combinatorial handoff to remain an
             // auditable object; duplicating it would make output assembly
             // provenance ambiguous even if the triangle soup still validates.
             if unique_triangulations.contains(&triangulation_key) {
@@ -1012,6 +942,22 @@ impl ExactBooleanResult {
                 })
         {
             return Err(ExactReportValidationError::OrphanedVolumetricClassification);
+        }
+        if retains_volumetric_artifacts {
+            for classification in &self.volumetric_classifications {
+                let Some(triangulation) = self.triangulations.iter().find(|triangulation| {
+                    triangulation.side == classification.region_side
+                        && triangulation.face == classification.region_face
+                        && triangulation.triangles.chunks_exact(3).any(|triangle| {
+                            classification.triangle == [triangle[0], triangle[1], triangle[2]]
+                        })
+                }) else {
+                    return Err(ExactReportValidationError::OrphanedVolumetricClassification);
+                };
+                classification
+                    .validate_representatives_against_triangulation(triangulation)
+                    .map_err(ExactReportValidationError::InvalidVolumetricClassification)?;
+            }
         }
         if retains_region_artifacts
             && self.assembly.triangles.iter().any(|triangle| {
@@ -1108,8 +1054,6 @@ impl ExactBooleanResult {
     /// stronger check also requires the original source meshes and replays each
     /// selected-region output triangle against the retained `source_side` and
     /// `source_face` labels. That source-aware replay is the executable form of
-    /// the provenance contract Yap calls for in "Towards Exact Geometric
-    /// Computation," *Computational Geometry* 7.1-2 (1997): constructed
     /// topology must remain tied to the geometric objects and predicate facts
     /// that produced it, not just to a locally consistent output mesh.
     pub fn validate_against_sources(
@@ -1163,8 +1107,6 @@ impl ExactBooleanResult {
     /// requires the whole result object to match. That closes the shortcut
     /// replay gap: a certified output mesh cannot be relabeled as a different
     /// named operation or shortcut kind while still passing the source audit.
-    /// This follows Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7.1-2 (1997), by treating the operation policy
     /// itself as part of the exact computation history.
     pub fn validate_operation_against_sources(
         &self,
@@ -1186,7 +1128,6 @@ impl ExactBooleanResult {
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn open_surface_arrangement_selection(
     operation: ExactBooleanOperation,
 ) -> Result<ExactRegionSelection, ExactReportValidationError> {
@@ -1200,14 +1141,11 @@ fn open_surface_arrangement_selection(
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 /// Local per-cell retention state for a winding-materialized result.
 ///
 /// This mirrors the named-boolean assembly policy, but lives in the public
 /// report validator so a copied result can be audited without re-running the
 /// boolean executor. Keeping the operation decision replayable from retained
-/// per-cell winding facts follows Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997): a materialized topology result is
 /// only valid while the retained predicate facts still justify exactly the
 /// emitted combinatorics.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -1217,7 +1155,6 @@ enum WindingCellRetention {
     KeepReversed,
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn validate_winding_materialized_assembly_matches_operation(
     operation: ExactBooleanOperation,
     triangulations: &[FaceRegionTriangulation],
@@ -1299,7 +1236,6 @@ fn validate_winding_materialized_assembly_matches_operation(
     Ok(())
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn winding_cell_retention_for_operation(
     operation: ExactBooleanOperation,
     triangulation: &FaceRegionTriangulation,
@@ -1318,7 +1254,6 @@ fn winding_cell_retention_for_operation(
     // documented in `boolean::volumetric_retention_for_operation`: union and
     // intersection keep the left boundary copy and drop the coincident right
     // copy, while difference drops coincident boundary cells. This preserves
-    // Yap's predicate/construction boundary by making the non-strict state
     // explicit in retained report validation.
     match (operation, triangulation.side, classification.relation) {
         (
@@ -1355,7 +1290,6 @@ fn winding_cell_retention_for_operation(
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn output_triangle_matches_triangulated_cell(
     output: &ExactOutputTriangle,
     assembly: &ExactBooleanAssemblyPlan,
@@ -1380,7 +1314,6 @@ fn output_triangle_matches_triangulated_cell(
     exact_point_sets_equal(&output_points, &cell_points)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn exact_point_sets_equal(left: &[&Point3], right: &[&Point3]) -> bool {
     if left.len() != right.len() {
         return false;
@@ -1397,7 +1330,6 @@ fn exact_point_sets_equal(left: &[&Point3], right: &[&Point3]) -> bool {
     true
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn validate_output_mesh_matches_assembly(
     assembly: &ExactBooleanAssemblyPlan,
     mesh: &ExactMesh,
@@ -1408,13 +1340,11 @@ fn validate_output_mesh_matches_assembly(
         return Err(ExactReportValidationError::OutputMeshAssemblyMismatch);
     }
     // The materialized mesh is an edge artifact of the retained assembly, not
-    // a replacement for it. Yap, "Towards Exact Geometric Computation,"
-    // Comput. Geom. 7.1-2 (1997), treats the retained numerical/
     // combinatorial chain as part of the exact object state, so the triangle
     // soup returned to callers must replay exactly from the audited assembly
     // plan for both selected-region and winding-materialized outputs.
     for (assembly_vertex, mesh_vertex) in assembly.vertices.iter().zip(mesh.vertices()) {
-        let mesh_point = mesh_vertex.to_hyperlimit_point();
+        let mesh_point = mesh_vertex.clone();
         if !points_equal(&assembly_vertex.point, &mesh_point) {
             return Err(ExactReportValidationError::OutputMeshAssemblyMismatch);
         }
@@ -1427,7 +1357,6 @@ fn validate_output_mesh_matches_assembly(
     Ok(())
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn points_equal(left: &Point3, right: &Point3) -> bool {
     matches!(
         compare_reals(&left.x, &right.x).value(),
@@ -1441,7 +1370,6 @@ fn points_equal(left: &Point3, right: &Point3) -> bool {
     )
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn selection_keeps(selection: ExactRegionSelection, side: MeshSide) -> bool {
     matches!(
         (selection, side),
@@ -1453,13 +1381,10 @@ fn selection_keeps(selection: ExactRegionSelection, side: MeshSide) -> bool {
 
 /// Certified support level for a requested exact boolean operation.
 ///
-/// This is the named-boolean staging boundary. Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997), frames exact geometric
 /// computing as an application-level contract: unresolved combinatorics must be
 /// represented explicitly instead of being decided by approximate arithmetic.
 /// These variants therefore distinguish executable certified shortcuts from
 /// cases whose split regions are available but still need exact winding policy.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ExactBooleanSupport {
     /// The request is an explicit selected-region assembly policy.
@@ -1717,7 +1642,6 @@ pub enum ExactBooleanSupport {
 /// nontrivial named booleans, the report exposes the certified split-region
 /// plane classifications that a future exact winding/inside-outside rule must
 /// consume, without dispatching to the legacy tolerance kernel.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactBooleanPreflight {
     /// Requested operation.
@@ -1742,8 +1666,6 @@ pub struct ExactBooleanPreflight {
     /// planar arrangement boundary.
     ///
     /// This deliberately keeps the exact graph handoff visible at the public
-    /// preflight boundary. Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7.1-2 (1997), treats unresolved topology as
     /// structured program state; the positive-area coplanar graph evidence
     /// must not be flattened into a generic "unsupported" boolean.
     pub arrangement_readiness: Option<CoplanarArrangementReadinessReport>,
@@ -1752,21 +1674,16 @@ pub struct ExactBooleanPreflight {
     ///
     /// This report separates boundary-only opposite-side shared faces from
     /// same-side or undecided positive-area coplanar overlap. Retaining it
-    /// beside preflight follows Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7.1-2 (1997): the public report carries the
     /// exact object evidence that authorized either a blocker or a
     /// winding-materialized consumption of coplanar source-face cells.
     pub coplanar_volumetric_evidence: Option<CoplanarVolumetricCellEvidenceReport>,
 }
 
-#[cfg(feature = "exact-triangulation")]
 impl ExactBooleanPreflight {
     /// Validate this preflight report against the supplied source meshes.
     ///
     /// [`validate`](Self::validate) checks internal consistency. This method
     /// also replays the exact preflight construction from the original meshes
-    /// and requires byte-for-byte-equivalent retained evidence. Yap, "Towards
-    /// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997),
     /// frames exact geometric state as certified computation history; a cached
     /// preflight report must therefore stay tied to the sources that produced
     /// its graph counts, blockers, and retained classifications.
@@ -1788,8 +1705,6 @@ impl ExactBooleanPreflight {
     /// Validate support, blocker, and retained artifact consistency.
     pub fn validate(&self) -> Result<(), ExactReportValidationError> {
         // Preflight is the public contract between exact graph construction and
-        // later boolean policy. Yap, "Towards Exact Geometric Computation,"
-        // Computational Geometry 7.1-2 (1997), requires this boundary to
         // expose exact state rather than hide contradictions behind a boolean
         // success/failure bit.
         if (self.retained_face_pairs == 0 && self.retained_events != 0)
@@ -2129,12 +2044,10 @@ impl ExactBooleanPreflight {
 
 /// Missing exact policy or refinement that blocks named boolean output.
 ///
-/// This is a report object, not an error. Yap's exact-computation model treats
 /// unresolved application-layer topology as first-class state: a caller should
 /// be able to distinguish "needs exact winding" from "needs a boundary output
 /// policy" or "needs predicate refinement" without interpreting prose
 /// diagnostics.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ExactBooleanBlocker {
     /// Missing policy or refinement class.
@@ -2152,16 +2065,13 @@ pub struct ExactBooleanBlocker {
     pub construction_failed_events: usize,
 }
 
-#[cfg(feature = "exact-triangulation")]
 impl ExactBooleanBlocker {
     /// Validate that this blocker kind is justified by retained graph relation
     /// counts.
     ///
     /// The counts are exact graph evidence, not decoration. A blocker that
     /// says "needs planar arrangement" while retaining unknown or non-coplanar
-    /// candidate pairs would collapse distinct exact-computation states into
-    /// one policy bucket. Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7.1-2 (1997), requires those unresolved
+    /// candidate pairs would collapse distinct exact computation states into
     /// states to stay explicit.
     pub fn validate_for_kind(
         &self,
@@ -2213,9 +2123,6 @@ impl ExactBooleanBlocker {
     /// requested blocker class. Source replay rebuilds the exact intersection
     /// graph from `left` and `right`, recomputes those counters, and requires
     /// this public blocker to match the replay for its retained kind. This is
-    /// the report-level counterpart to the graph replay boundary described by
-    /// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-    /// 7.1-2 (1997): a policy blocker must remain tied to the exact predicate
     /// and construction evidence that blocked the named boolean.
     pub fn validate_against_sources(
         &self,
@@ -2238,7 +2145,6 @@ impl ExactBooleanBlocker {
 }
 
 /// Exact boolean preflight blocker kind.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ExactBooleanBlockerKind {
     /// Predicate or equality refinement is required before policy can run.
@@ -2259,10 +2165,7 @@ pub enum ExactBooleanBlockerKind {
 /// Refinement is the stage before application-level topology policy: exact
 /// graph extraction retained an unknown predicate outcome or a construction
 /// whose endpoint predicates certified an event but whose exact point/parameter
-/// could not be built. Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997), treats this as a different state
 /// from winding or planar-arrangement policy, so it has a separate report.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum ExactRefinementStatus {
     /// The graph contains no retained unknowns or construction failures.
@@ -2278,7 +2181,6 @@ pub enum ExactRefinementStatus {
 /// failed exact constructions, retaining the graph counts that justify the
 /// answer. Later boundary, planar-arrangement, or winding reports should only
 /// run as policy once this report is not required.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ExactRefinementReport {
     /// Named operation whose graph was inspected.
@@ -2295,7 +2197,6 @@ pub struct ExactRefinementReport {
     pub blocker: Option<ExactBooleanBlocker>,
 }
 
-#[cfg(feature = "exact-triangulation")]
 impl ExactRefinementReport {
     /// Return whether exact predicate/construction refinement is required.
     pub const fn is_required(&self) -> bool {
@@ -2308,8 +2209,6 @@ impl ExactRefinementReport {
     /// recomputes the retained graph report from `left` and `right` for the
     /// same operation and requires equality, keeping refinement evidence tied
     /// to the source objects whose exact predicates produced it as required by
-    /// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-    /// 7.1-2 (1997).
     pub fn validate_against_sources(
         &self,
         left: &ExactMesh,
@@ -2367,7 +2266,6 @@ impl ExactRefinementReport {
 /// Same-surface detection is stronger than identical storage equality: it
 /// allows vertex reindexing and face orientation changes when exact coordinate
 /// equality proves a bijection and the remapped triangle vertex sets match.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum ExactSameSurfaceStatus {
     /// The meshes have different vertex counts.
@@ -2389,10 +2287,7 @@ pub enum ExactSameSurfaceStatus {
 /// This is the report form of the same-surface boolean shortcut. It retains
 /// the exact vertex permutation, remapped triangle sets, and scalar equality
 /// predicate certificates used to prove coordinate equality. The design
-/// follows Yap, "Towards Exact Geometric Computation," *Computational
-/// Geometry* 7.1-2 (1997): shortcut topology decisions expose their certified
 /// predicate trail rather than collapsing directly to `bool`.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ExactSameSurfaceReport {
     /// Coarse same-surface certification status.
@@ -2409,7 +2304,6 @@ pub struct ExactSameSurfaceReport {
     pub predicates: Vec<PredicateUse>,
 }
 
-#[cfg(feature = "exact-triangulation")]
 impl ExactSameSurfaceReport {
     /// Return whether same-surface equivalence was certified.
     pub const fn is_certified(&self) -> bool {
@@ -2430,8 +2324,6 @@ impl ExactSameSurfaceReport {
     /// retain coordinate predicates, vertex-matching failures may keep only the
     /// partial left-to-right matches and predicate trail, and triangle-set
     /// mismatches must retain a valid full vertex permutation. This keeps a
-    /// failed shortcut auditable under Yap, "Towards Exact Geometric
-    /// Computation," *Computational Geometry* 7.1-2 (1997), instead of
     /// allowing callers to attach arbitrary topology artifacts to a rejection.
     pub fn validate(&self) -> Result<(), ExactReportValidationError> {
         match self.status {
@@ -2491,8 +2383,6 @@ impl ExactSameSurfaceReport {
     /// [`Self::validate`] checks that the retained permutation, remapped
     /// triangle sets, and predicate-use trail are locally coherent. This
     /// stronger check recomputes the same-surface certificate from `left` and
-    /// `right` and requires exact report equality. That follows Yap, "Towards
-    /// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997):
     /// a shortcut certificate is retained numerical and combinatorial state
     /// attached to particular source objects, not a portable label that can be
     /// pasted onto another mesh pair.
@@ -2510,7 +2400,6 @@ impl ExactSameSurfaceReport {
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn validate_full_permutation(
     left_to_right: &[usize],
     right_to_left: &[usize],
@@ -2526,7 +2415,6 @@ fn validate_full_permutation(
     Ok(())
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn is_partial_injective_mapping(mapping: &[usize]) -> bool {
     let mut seen = Vec::with_capacity(mapping.len());
     for &right in mapping {
@@ -2539,7 +2427,6 @@ fn is_partial_injective_mapping(mapping: &[usize]) -> bool {
 }
 
 /// Certification status for an open-surface disjoint shortcut.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum ExactOpenSurfaceDisjointStatus {
     /// At least one input is not an open surface mesh under exact validation facts.
@@ -2555,11 +2442,7 @@ pub enum ExactOpenSurfaceDisjointStatus {
 /// Auditable report for certified open-surface disjointness.
 ///
 /// This report retains the mesh-shape precondition and exact graph relation
-/// counts used by the open-surface named-boolean shortcut. Following Yap,
-/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997), a no-intersection shortcut is exposed as certified graph state, not
 /// as a hidden primitive-float or AABB-only decision.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ExactOpenSurfaceDisjointReport {
     /// Coarse certification status.
@@ -2578,7 +2461,6 @@ pub struct ExactOpenSurfaceDisjointReport {
     pub blocker: ExactBooleanBlocker,
 }
 
-#[cfg(feature = "exact-triangulation")]
 impl ExactOpenSurfaceDisjointReport {
     /// Return whether open-surface disjointness was certified.
     pub const fn is_certified(&self) -> bool {
@@ -2589,9 +2471,6 @@ impl ExactOpenSurfaceDisjointReport {
     ///
     /// Open-surface disjointness is certified graph absence plus mesh-shape
     /// preconditions. This method recomputes both from `left` and `right`
-    /// after the local report audit, following Yap's retained-state discipline
-    /// from "Towards Exact Geometric Computation," *Computational Geometry*
-    /// 7.1-2 (1997).
     pub fn validate_against_sources(
         &self,
         left: &ExactMesh,
@@ -2615,8 +2494,6 @@ impl ExactOpenSurfaceDisjointReport {
             return Err(ExactReportValidationError::GraphUnknownStatusMismatch);
         }
         // Graph unknowns are refinement state, not open-surface topology
-        // policy. Keeping this partition explicit follows Yap, "Towards Exact
-        // Geometric Computation," Computational Geometry 7.1-2 (1997): a
         // later policy stage must not consume an unresolved predicate as if it
         // were certified no-intersection or winding evidence.
         let expected_kind = if matches!(self.status, ExactOpenSurfaceDisjointStatus::GraphUnknowns)
@@ -2638,8 +2515,6 @@ impl ExactOpenSurfaceDisjointReport {
             self.retained_events,
         )?;
         // Status is certified combinatorial state, not a label layered over
-        // arbitrary counts. Yap, "Towards Exact Geometric Computation,"
-        // Computational Geometry 7.1-2 (1997), keeps these states explicit so
         // refinement, topology policy, and certified shortcuts are not
         // accidentally conflated.
         match self.status {
@@ -2682,7 +2557,6 @@ impl ExactOpenSurfaceDisjointReport {
 }
 
 /// Certification status for boundary-only graph shortcuts.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum ExactBoundaryTouchingStatus {
     /// Exact graph extraction retained unresolved events.
@@ -2702,9 +2576,7 @@ pub enum ExactBoundaryTouchingStatus {
 /// Boundary-only contacts require a caller-selected output policy because a
 /// triangle mesh cannot encode the lower-dimensional intersection itself.
 /// This report retains the exact graph counts that justify that policy gap,
-/// keeping the application boundary explicit in Yap's exact-geometric-
 /// computation sense.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ExactBoundaryTouchingReport {
     /// Coarse boundary-touching certification status.
@@ -2719,7 +2591,6 @@ pub struct ExactBoundaryTouchingReport {
     pub blocker: ExactBooleanBlocker,
 }
 
-#[cfg(feature = "exact-triangulation")]
 impl ExactBoundaryTouchingReport {
     /// Return whether the graph is certified boundary-only contact.
     pub const fn is_certified(&self) -> bool {
@@ -2735,7 +2606,6 @@ impl ExactBoundaryTouchingReport {
         }
         // A boundary-only policy is meaningful only after the graph is
         // resolved. Unknown graph events remain refinement blockers, preserving
-        // Yap's exact-state separation between undecided predicates and
         // application-level topology policy. Positive-area coplanar overlaps
         // can still be boundary-only for closed solids, but that certification
         // is source-replayed by the report constructor; local validation only
@@ -2759,8 +2629,6 @@ impl ExactBoundaryTouchingReport {
         )?;
         // Boundary-only contact is an application policy boundary. Keep its
         // evidence separated from graph refinement and non-boundary winding
-        // cases as required by Yap, "Towards Exact Geometric Computation,"
-        // Computational Geometry 7.1-2 (1997).
         match self.status {
             ExactBoundaryTouchingStatus::GraphUnknowns => {}
             ExactBoundaryTouchingStatus::NotBoundaryOnly => {
@@ -2796,9 +2664,6 @@ impl ExactBoundaryTouchingReport {
     ///
     /// Boundary-only contact is a policy boundary over a resolved exact graph.
     /// Recomputing the report from the source meshes ensures the retained
-    /// graph counts were not relabeled after construction, matching Yap,
-    /// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-    /// (1997).
     pub fn validate_against_sources(
         &self,
         left: &ExactMesh,
@@ -2816,7 +2681,6 @@ impl ExactBoundaryTouchingReport {
 }
 
 /// Certification status for planar-arrangement blockers.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum ExactPlanarArrangementStatus {
     /// Selected-region assembly already carries its own explicit region policy.
@@ -2843,10 +2707,7 @@ pub enum ExactPlanarArrangementStatus {
 /// This report records when the exact graph proves that a named intersection,
 /// union, or difference needs planar arrangement materialization instead of a
 /// volumetric winding rule. Narrow single-triangle outputs are reported
-/// separately as already materialized. This follows Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997): missing application
 /// topology is explicit certified state rather than an approximate fallback.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ExactPlanarArrangementReport {
     /// Requested named operation.
@@ -2866,7 +2727,6 @@ pub struct ExactPlanarArrangementReport {
     pub arrangement_readiness: Option<CoplanarArrangementReadinessReport>,
 }
 
-#[cfg(feature = "exact-triangulation")]
 impl ExactPlanarArrangementReport {
     /// Return whether this operation is blocked on planar arrangement output.
     pub const fn is_required(&self) -> bool {
@@ -2882,7 +2742,6 @@ impl ExactPlanarArrangementReport {
         }
         // A graph-unknown arrangement report has not reached planar-cell
         // policy. It is still blocked on predicate/construction refinement, a
-        // distinct exact-computation state in Yap's sense.
         let expected_kind = match self.status {
             ExactPlanarArrangementStatus::GraphUnknowns => ExactBooleanBlockerKind::NeedsRefinement,
             ExactPlanarArrangementStatus::BoundaryPolicyRequired => {
@@ -2903,8 +2762,6 @@ impl ExactPlanarArrangementReport {
             self.retained_events,
         )?;
         // Planar-cell extraction is a distinct topological obligation. These
-        // checks preserve the exact-state partition advocated by Yap, "Towards
-        // Exact Geometric Computation," Computational Geometry 7.1-2 (1997):
         // selected-region calls, unresolved graphs, already materialized
         // shortcuts, and missing planar arrangements must not masquerade as
         // one another.
@@ -2997,8 +2854,6 @@ impl ExactPlanarArrangementReport {
     /// The retained arrangement-readiness summary is a compact view of exact
     /// coplanar graph state. This source replay recomputes that view for the
     /// same operation and rejects stale count/blocker summaries before a
-    /// planar-cell materializer consumes them, following Yap, "Towards Exact
-    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997).
     pub fn validate_against_sources(
         &self,
         left: &ExactMesh,
@@ -3017,9 +2872,6 @@ impl ExactPlanarArrangementReport {
     /// Classify whether this retained blocker report is fresh for `left` and `right`.
     ///
     /// The method first checks local report integrity and then recomputes the
-    /// operation-specific blocker from the source meshes. That mirrors Yap's
-    /// retained-object discipline from "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7.1-2 (1997): stale counts, stale readiness,
     /// and source-drift are distinct facts a scheduler can react to.
     pub fn freshness_against_sources(
         &self,
@@ -3037,7 +2889,6 @@ impl ExactPlanarArrangementReport {
 }
 
 /// Certification status for the remaining exact winding handoff.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum ExactWindingReadinessStatus {
     /// Selected-region assembly already carries its own explicit region policy.
@@ -3068,11 +2919,8 @@ pub enum ExactWindingReadinessStatus {
 /// This report is the certified boundary immediately before full named
 /// union/intersection/difference winding semantics. It retains exact graph
 /// counts and checked split-region plane classifications, but deliberately
-/// does not choose inside/outside output. Following Yap, "Towards Exact
-/// Geometric Computation," *Computational Geometry* 7.1-2 (1997), the missing
 /// topological policy remains explicit state instead of a hidden tolerance
 /// decision.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactWindingReadinessReport {
     /// Requested named operation.
@@ -3103,7 +2951,6 @@ pub struct ExactWindingReadinessReport {
     pub coplanar_volumetric_evidence: Option<CoplanarVolumetricCellEvidenceReport>,
 }
 
-#[cfg(feature = "exact-triangulation")]
 impl ExactWindingReadinessReport {
     /// Return whether the report reached the winding-ready handoff.
     pub const fn is_ready(&self) -> bool {
@@ -3116,9 +2963,6 @@ impl ExactWindingReadinessReport {
     /// without choosing the final inside/outside policy. This replay
     /// recomputes the whole public report for the same operation, making stale
     /// region facts and blocker summaries fail before downstream topology
-    /// consumes them. This is the report-level form of Yap's exact-state
-    /// contract in "Towards Exact Geometric Computation," *Computational
-    /// Geometry* 7.1-2 (1997).
     pub fn validate_against_sources(
         &self,
         left: &ExactMesh,
@@ -3138,8 +2982,6 @@ impl ExactWindingReadinessReport {
     ///
     /// Local integrity is checked before source replay so copied reports can
     /// distinguish stale region classifications from source-geometry drift.
-    /// This directly applies Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7.1-2 (1997): retained predicate and topology
     /// summaries must replay before later winding policy consumes them.
     pub fn freshness_against_sources(
         &self,

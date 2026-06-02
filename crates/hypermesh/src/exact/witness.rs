@@ -5,14 +5,12 @@
 //! This module keeps that policy as data: each witness is an exact positive
 //! barycentric combination of the cell triangle vertices. The classifier tries
 //! the centroid first, then a fixed lattice of rational interior points. That
-//! follows Yap, "Towards Exact Geometric Computation," *Computational
-//! Geometry* 7.1-2 (1997): unresolved boundary or ray-degeneracy states remain
 //! explicit, while the pipeline is allowed to try another exact object
 //! representation before declaring the cell undecided.
 
 use hyperlimit::Point3;
 
-use super::scalar::ExactReal;
+use hyperreal::Real;
 
 /// Exact positive barycentric witness for one triangulated source-face cell.
 ///
@@ -21,7 +19,6 @@ use super::scalar::ExactReal;
 /// source vertices. All production witnesses are strict interior points:
 /// every weight is positive and the denominator is exactly the weight sum.
 /// Keeping that certificate next to the winding result makes the sample choice
-/// auditable under Yap's exact-computation model instead of relying on an
 /// implicit perturbation rule.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct ExactTriangleInteriorWitness {
@@ -77,10 +74,8 @@ impl ExactTriangleInteriorWitness {
 
     /// Materialize the exact representative point for a triangle.
     ///
-    /// The arithmetic stays in [`ExactReal`], so replaying this method and then
+    /// The arithmetic stays in [`Real`], so replaying this method and then
     /// replaying the winding report is an exact object-level check in the sense
-    /// of Yap, "Towards Exact Geometric Computation," *Computational
-    /// Geometry* 7.1-2 (1997).
     pub(crate) fn point_for_triangle(
         self,
         a: &Point3,
@@ -88,7 +83,7 @@ impl ExactTriangleInteriorWitness {
         c: &Point3,
     ) -> Result<Point3, ExactTriangleInteriorWitnessError> {
         self.validate()?;
-        let inv = (ExactReal::from(1) / &ExactReal::from(self.denominator))
+        let inv = (Real::from(1) / &Real::from(self.denominator))
             .expect("strict interior witness denominator is nonzero");
         Ok(Point3::new(
             weighted_real(&a.x, &b.x, &c.x, self.weights, &inv),
@@ -113,8 +108,6 @@ pub enum ExactTriangleInteriorWitnessError {
 /// asymmetric points matter for adversarial arrangements where symmetric
 /// points sit on retained boundaries or ray-degenerate loci. No randomness or
 /// floating perturbation is introduced; every candidate remains a replayable
-/// exact barycentric object as required by Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997).
 pub const EXACT_TRIANGLE_INTERIOR_WITNESSES: &[ExactTriangleInteriorWitness] = &[
     ExactTriangleInteriorWitness::new([1, 1, 1]),
     ExactTriangleInteriorWitness::new([2, 1, 1]),
@@ -146,16 +139,10 @@ pub const EXACT_TRIANGLE_INTERIOR_WITNESSES: &[ExactTriangleInteriorWitness] = &
     ExactTriangleInteriorWitness::new([2, 3, 5]),
 ];
 
-fn weighted_real(
-    a: &ExactReal,
-    b: &ExactReal,
-    c: &ExactReal,
-    weights: [i64; 3],
-    inv_denominator: &ExactReal,
-) -> ExactReal {
-    (a.clone() * ExactReal::from(weights[0])
-        + b.clone() * ExactReal::from(weights[1])
-        + c.clone() * ExactReal::from(weights[2]))
+fn weighted_real(a: &Real, b: &Real, c: &Real, weights: [i64; 3], inv_denominator: &Real) -> Real {
+    (a.clone() * Real::from(weights[0])
+        + b.clone() * Real::from(weights[1])
+        + c.clone() * Real::from(weights[2]))
         * inv_denominator
 }
 

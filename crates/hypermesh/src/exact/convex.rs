@@ -3,15 +3,13 @@
 //! This module handles certified object-level closed-convex boolean fragments.
 //! Each output face is produced by clipping a source face polygon against the
 //! other solid's exact oriented halfspaces, then the resulting triangle mesh is
-//! revalidated through [`ExactMesh`]. That follows Yap, "Towards Exact
-//! Geometric Computation," *Computational Geometry* 7.1-2 (1997): boolean
-//! topology is emitted only from retained object facts and proof-producing
-//! predicate routes.
+//! revalidated through [`ExactMesh`]. Boolean topology is emitted only from
+//! retained object facts and proof-producing predicate routes.
 //!
-//! The clipping pass is the convex-polyhedron specialization of Sutherland and
+//! The clipping is the convex halfspace specialization of Sutherland and
 //! Hodgman, "Reentrant Polygon Clipping," *Communications of the ACM* 17.1
-//! (1974). Hypermesh replaces screen-space floating tests with
-//! `hyperlimit::orient3d_report` and exact determinant-ratio interpolation.
+//! (1974), using `hyperlimit::orient3d_report` and exact determinant-ratio
+//! interpolation.
 
 use std::cmp::Ordering;
 
@@ -20,13 +18,13 @@ use hyperlimit::{
 };
 
 use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
-use super::mesh::{ExactMesh, ExactPoint3, Triangle};
+use super::mesh::{ExactMesh, Triangle};
 use super::provenance::SourceProvenance;
-use super::scalar::ExactReal;
 use super::solid::{
     ClosedMeshOrientation, ConvexSolidFacts, ConvexSolidReportError, certify_convex_solid,
 };
 use super::validation::ValidationPolicy;
+use hyperreal::Real;
 
 /// Certified intersection of two closed convex solids.
 #[derive(Clone, Debug, PartialEq)]
@@ -62,7 +60,6 @@ impl ConvexSolidIntersection {
 
     /// Recompute this intersection from the supplied source meshes.
     ///
-    /// Yap's exact-computation boundary treats retained artifacts as certified
     /// computation history, not detached meshes. This replay check rejects an
     /// otherwise coherent intersection if its source solids or clipped output
     /// no longer match the operands that produced it.
@@ -95,13 +92,11 @@ impl ConvexSolidIntersection {
 ///
 /// This is intentionally not a general convex difference implementation.
 /// Difference of two convex solids can be nonconvex or holed, so emitting a
-/// mesh without winding/cell decomposition would violate Yap's exact geometric
 /// computation boundary. The supported case is narrower and auditable: every
 /// left vertex is inside all but one right halfspace, the remaining right
 /// halfspace cuts the left solid in exactly one cap loop, and the retained
 /// output is the closed convex solid on the outside of that one certified
 /// plane. This is the 3D analogue of a one-corner clipped polygon fragment,
-/// with the clipping idea following Sutherland-Hodgman while all signs and
 /// interpolation ratios remain exact.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ConvexSolidSingleCapDifference {
@@ -205,9 +200,6 @@ pub fn intersect_closed_convex_solids(
 /// Return whether the retained triangle shell encloses nonzero exact volume.
 ///
 /// This guard is what keeps closed-convex intersection from promoting
-/// face-only or edge-only contact to a volumetric boolean result. Yap,
-/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997), is the relevant discipline here: the topology shortcut is allowed
 /// only after an exact predicate, here the signed tetrahedral volume sum,
 /// proves the result is a solid instead of a lower-dimensional boundary.
 fn mesh_has_nonzero_signed_volume(mesh: &ExactMesh) -> Option<bool> {
@@ -217,17 +209,17 @@ fn mesh_has_nonzero_signed_volume(mesh: &ExactMesh) -> Option<bool> {
         .map(|triangle| {
             let tri = triangle.0;
             determinant_from_origin(
-                &mesh.vertices()[tri[0]].to_hyperlimit_point(),
-                &mesh.vertices()[tri[1]].to_hyperlimit_point(),
-                &mesh.vertices()[tri[2]].to_hyperlimit_point(),
+                &mesh.vertices()[tri[0]].clone(),
+                &mesh.vertices()[tri[1]].clone(),
+                &mesh.vertices()[tri[2]].clone(),
             )
         })
-        .fold(ExactReal::from(0), |sum, det| &sum + &det);
+        .fold(Real::from(0), |sum, det| &sum + &det);
 
-    Some(compare_reals(&signed_volume, &ExactReal::from(0)).value()? != Ordering::Equal)
+    Some(compare_reals(&signed_volume, &Real::from(0)).value()? != Ordering::Equal)
 }
 
-fn determinant_from_origin(a: &Point3, b: &Point3, c: &Point3) -> ExactReal {
+fn determinant_from_origin(a: &Point3, b: &Point3, c: &Point3) -> Real {
     let by_cz = &b.y * &c.z;
     let bz_cy = &b.z * &c.y;
     let bx_cz = &b.x * &c.z;
@@ -251,7 +243,6 @@ fn determinant_from_origin(a: &Point3, b: &Point3, c: &Point3) -> ExactReal {
 /// Returns `None` unless both operands are closed convex solids and the right
 /// operand removes exactly one cap from the left operand. The cap boundary is
 /// replayed from clipped source-face edges on the cutting plane rather than
-/// inferred from approximate coordinates, preserving Yap's retained
 /// computation-history discipline. General convex difference remains a
 /// planar-cell/winding problem because the output can be nonconvex or contain
 /// holes.
@@ -323,7 +314,7 @@ fn clipped_source_faces(
         let mut polygon = triangle
             .0
             .iter()
-            .map(|&index| source.vertices()[index].to_hyperlimit_point())
+            .map(|&index| source.vertices()[index].clone())
             .collect::<Vec<_>>();
         for clip_triangle in clip.triangles() {
             polygon = clip_polygon_by_face(&polygon, clip, clip_triangle.0, clip_facts, keep)?;
@@ -351,7 +342,7 @@ fn clipped_source_faces_by_face(
         let mut polygon = triangle
             .0
             .iter()
-            .map(|&index| source.vertices()[index].to_hyperlimit_point())
+            .map(|&index| source.vertices()[index].clone())
             .collect::<Vec<_>>();
         polygon = clip_polygon_by_face(&polygon, clip, face, clip_facts, keep)?;
         simplify_polygon(&mut polygon);
@@ -372,9 +363,9 @@ fn clip_polygon_by_face(
     if polygon.is_empty() {
         return Some(Vec::new());
     }
-    let a = clip.vertices()[face[0]].to_hyperlimit_point();
-    let b = clip.vertices()[face[1]].to_hyperlimit_point();
-    let c = clip.vertices()[face[2]].to_hyperlimit_point();
+    let a = clip.vertices()[face[0]].clone();
+    let b = clip.vertices()[face[1]].clone();
+    let c = clip.vertices()[face[2]].clone();
 
     let mut output = Vec::new();
     let mut previous = polygon.last()?.clone();
@@ -426,13 +417,13 @@ fn single_active_cutting_face(
 ) -> Option<usize> {
     let mut active = None;
     for (face_index, triangle) in right.triangles().iter().enumerate() {
-        let a = right.vertices()[triangle.0[0]].to_hyperlimit_point();
-        let b = right.vertices()[triangle.0[1]].to_hyperlimit_point();
-        let c = right.vertices()[triangle.0[2]].to_hyperlimit_point();
+        let a = right.vertices()[triangle.0[0]].clone();
+        let b = right.vertices()[triangle.0[1]].clone();
+        let c = right.vertices()[triangle.0[2]].clone();
         let mut outside = 0;
         let mut inside = 0;
         for vertex in left.vertices() {
-            let side = point_side(&a, &b, &c, &vertex.to_hyperlimit_point())?;
+            let side = point_side(&a, &b, &c, &vertex.clone())?;
             if side_is_outside(right_facts.orientation, side) {
                 outside += 1;
             } else {
@@ -454,9 +445,9 @@ fn cap_polygon_from_clipped_faces(
     clip: &ExactMesh,
     face: [usize; 3],
 ) -> Option<Vec<Point3>> {
-    let a = clip.vertices()[face[0]].to_hyperlimit_point();
-    let b = clip.vertices()[face[1]].to_hyperlimit_point();
-    let c = clip.vertices()[face[2]].to_hyperlimit_point();
+    let a = clip.vertices()[face[0]].clone();
+    let b = clip.vertices()[face[1]].clone();
+    let c = clip.vertices()[face[2]].clone();
     let mut segments = Vec::new();
     for polygon in polygons {
         if polygon.len() < 2 {
@@ -483,9 +474,6 @@ fn cap_polygon_from_clipped_faces(
 /// Clipped source faces may split a geometric cap edge at source-triangle
 /// diagonals. Collapsing those collinear points creates T-junctions, so the
 /// cap is triangulated through an exact rational centroid and every retained
-/// boundary segment is emitted as a triangle edge. This follows Yap's retained
-/// numerical structural information principle from "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997): the cap topology is
 /// built from replayable exact construction facts, not a simplified float view.
 fn cap_polygons(cap: &[Point3]) -> Option<Vec<Vec<Point3>>> {
     if cap.len() < 3 {
@@ -512,10 +500,10 @@ fn cap_polygons(cap: &[Point3]) -> Option<Vec<Vec<Point3>>> {
 }
 
 fn polygon_centroid(points: &[Point3]) -> Option<Point3> {
-    let count = ExactReal::from(i64::try_from(points.len()).ok()?);
-    let mut x = ExactReal::from(0);
-    let mut y = ExactReal::from(0);
-    let mut z = ExactReal::from(0);
+    let count = Real::from(i64::try_from(points.len()).ok()?);
+    let mut x = Real::from(0);
+    let mut y = Real::from(0);
+    let mut z = Real::from(0);
     for point in points {
         x = add(&x, &point.x);
         y = add(&y, &point.y);
@@ -588,14 +576,14 @@ fn intersect_segment_with_plane(
     let d0 = orient3d_value(a, b, c, p0);
     let d1 = orient3d_value(a, b, c, p1);
     let denominator = sub(&d0, &d1);
-    if compare_reals(&denominator, &ExactReal::from(0)).value() == Some(Ordering::Equal) {
+    if compare_reals(&denominator, &Real::from(0)).value() == Some(Ordering::Equal) {
         return None;
     }
     let t = (d0 / &denominator).ok()?;
     Some(interpolate3(p0, p1, &t))
 }
 
-fn orient3d_value(a: &Point3, b: &Point3, c: &Point3, d: &Point3) -> ExactReal {
+fn orient3d_value(a: &Point3, b: &Point3, c: &Point3, d: &Point3) -> Real {
     let adx = sub(&a.x, &d.x);
     let ady = sub(&a.y, &d.y);
     let adz = sub(&a.z, &d.z);
@@ -621,7 +609,7 @@ fn polygons_to_closed_mesh(
     label: &str,
     validation: ValidationPolicy,
 ) -> Option<ExactMesh> {
-    let mut vertices: Vec<ExactPoint3> = Vec::new();
+    let mut vertices: Vec<Point3> = Vec::new();
     let mut triangles = Vec::new();
     for polygon in polygons {
         let base = intern_point(&mut vertices, &polygon[0]);
@@ -645,14 +633,14 @@ fn polygons_to_closed_mesh(
     .ok()
 }
 
-fn intern_point(vertices: &mut Vec<ExactPoint3>, point: &Point3) -> usize {
+fn intern_point(vertices: &mut Vec<Point3>, point: &Point3) -> usize {
     if let Some(index) = vertices
         .iter()
         .position(|existing| point_equals_exact(existing, point))
     {
         index
     } else {
-        vertices.push(ExactPoint3::new(
+        vertices.push(Point3::new(
             point.x.clone(),
             point.y.clone(),
             point.z.clone(),
@@ -661,11 +649,10 @@ fn intern_point(vertices: &mut Vec<ExactPoint3>, point: &Point3) -> usize {
     }
 }
 
-fn point_equals_exact(left: &ExactPoint3, right: &Point3) -> bool {
-    let coordinates = left.coordinates();
-    compare_reals(&coordinates.0[0], &right.x).value() == Some(Ordering::Equal)
-        && compare_reals(&coordinates.0[1], &right.y).value() == Some(Ordering::Equal)
-        && compare_reals(&coordinates.0[2], &right.z).value() == Some(Ordering::Equal)
+fn point_equals_exact(left: &Point3, right: &Point3) -> bool {
+    compare_reals(&left.x, &right.x).value() == Some(Ordering::Equal)
+        && compare_reals(&left.y, &right.y).value() == Some(Ordering::Equal)
+        && compare_reals(&left.z, &right.z).value() == Some(Ordering::Equal)
 }
 
 fn simplify_polygon(points: &mut Vec<Point3>) {
@@ -698,9 +685,9 @@ fn points_are_collinear(a: &Point3, b: &Point3, c: &Point3) -> bool {
     let cross_x = sub(&mul(&aby, &acz), &mul(&abz, &acy));
     let cross_y = sub(&mul(&abz, &acx), &mul(&abx, &acz));
     let cross_z = sub(&mul(&abx, &acy), &mul(&aby, &acx));
-    compare_reals(&cross_x, &ExactReal::from(0)).value() == Some(Ordering::Equal)
-        && compare_reals(&cross_y, &ExactReal::from(0)).value() == Some(Ordering::Equal)
-        && compare_reals(&cross_z, &ExactReal::from(0)).value() == Some(Ordering::Equal)
+    compare_reals(&cross_x, &Real::from(0)).value() == Some(Ordering::Equal)
+        && compare_reals(&cross_y, &Real::from(0)).value() == Some(Ordering::Equal)
+        && compare_reals(&cross_z, &Real::from(0)).value() == Some(Ordering::Equal)
 }
 
 fn side_is_outside(orientation: ClosedMeshOrientation, side: PlaneSide) -> bool {
@@ -717,15 +704,15 @@ fn points_equal(left: &Point3, right: &Point3) -> bool {
         && compare_reals(&left.z, &right.z).value() == Some(Ordering::Equal)
 }
 
-fn add(left: &ExactReal, right: &ExactReal) -> ExactReal {
+fn add(left: &Real, right: &Real) -> Real {
     left.clone() + right
 }
 
-fn sub(left: &ExactReal, right: &ExactReal) -> ExactReal {
+fn sub(left: &Real, right: &Real) -> Real {
     left.clone() - right
 }
 
-fn mul(left: &ExactReal, right: &ExactReal) -> ExactReal {
+fn mul(left: &Real, right: &Real) -> Real {
     left.clone() * right
 }
 

@@ -4,8 +4,6 @@
 //! specific artifact: surface geometry, closed-solid evidence, or a lossy
 //! preview/export view. [`ExactMeshConsumerReadinessReport`] is that routing
 //! record. It is deliberately a summary, not a replacement for the underlying
-//! audit, handoff, or view reports. The design follows Yap, "Towards Exact
-//! Geometric Computation," *Computational Geometry* 7.1-2 (1997): exact
 //! geometric systems should expose object facts, adapter boundaries, and
 //! cached readiness separately so approximate or domain-specific consumers
 //! cannot silently reinterpret topology evidence.

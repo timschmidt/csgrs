@@ -3,15 +3,11 @@
 //! This module is deliberately a certificate layer, not a general arrangement
 //! materializer. It packages the retained coplanar overlap graph, exact split
 //! constructions, and readiness counters into a replayable report that names
-//! the specific obstacle left for the general planar-cell extractor. That is
-//! the Yap boundary from "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7.1-2 (1997): exact numerical and combinatorial
-//! evidence is retained and validated before a later topology algorithm is
-//! allowed to mutate mesh cells.
+//! the specific obstacle left for the general planar-cell extractor. Exact
+//! numerical and combinatorial evidence is retained and validated before a
+//! later topology algorithm is allowed to mutate mesh cells.
 //!
-//! The obstacle vocabulary follows the planar subdivision concerns described
-//! in de Berg, Cheong, van Kreveld, and Overmars, *Computational Geometry:
-//! Algorithms and Applications*, 3rd ed. (2008): arrangements are governed by
+//! The obstacle vocabulary follows standard planar subdivision concerns:
 //! vertices, edges, faces, incidences, and special cases such as overlapping
 //! edges or high-valence branch vertices. Hypermesh keeps those cases explicit
 //! until a certified cell traversal owns them.
@@ -109,8 +105,6 @@ pub enum ExactPlanarArrangementEvidenceError {
 /// Freshness status for retained planar-arrangement evidence.
 ///
 /// This enum is intentionally more specific than a boolean cache-valid flag.
-/// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-/// 7.1-2 (1997), treats exact predicates, constructions, and retained
 /// combinatorial state as separate artifacts that must replay together. A
 /// copied planar-arrangement handoff can therefore be locally malformed,
 /// locally stale with respect to one family of counters, or locally coherent
@@ -200,11 +194,7 @@ pub struct ExactPlanarArrangementEvidenceReport {
     ///
     /// This keeps source-side ownership at the exact handoff boundary instead
     /// of collapsing a high-valence projected point into an unlabeled count.
-    /// That is the object/provenance split advocated by Yap, "Towards Exact
-    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997), and it
     /// is the incidence information a later arrangement traversal needs in the
-    /// sense of de Berg et al., *Computational Geometry: Algorithms and
-    /// Applications*, 3rd ed. (2008).
     pub left_branch_point_count: usize,
     /// Number of branch points touched by at least one right-mesh source edge
     /// or vertex event.
@@ -222,7 +212,6 @@ impl ExactPlanarArrangementEvidenceReport {
     ///
     /// This method still validates the split plan locally and derives
     /// branch-point evidence by merging projected split coordinates with exact
-    /// `hyperlimit::compare_reals` comparisons. It follows Yap's exact-object
     /// discipline by rejecting unresolved projected equality instead of using a
     /// primitive-float merge tolerance.
     pub fn from_split_plan(
@@ -429,7 +418,6 @@ impl ExactPlanarArrangementEvidenceReport {
     ///
     /// Source replay rebuilds the intersection graph, split plan, readiness
     /// summary, branch-point evidence, and obstacle classification from `left`
-    /// and `right`. This is the report-level version of Yap's exact geometric
     /// computation contract: a retained arrangement handoff must still be the
     /// artifact produced by the operands it claims to summarize.
     pub fn validate_against_sources(
@@ -451,8 +439,6 @@ impl ExactPlanarArrangementEvidenceReport {
     ///
     /// The check first validates local report integrity and only then replays
     /// the report from `left` and `right`. This preserves the object/predicate
-    /// boundary advocated by Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7.1-2 (1997): callers can distinguish a copied
     /// report whose internal counters were mutated from a coherent report that
     /// simply belongs to an older source configuration.
     pub fn freshness_against_sources(
@@ -472,7 +458,7 @@ impl ExactPlanarArrangementEvidenceReport {
 
 /// Certify retained coplanar graph evidence for the general arrangement stage.
 ///
-/// The function rebuilds and validates the exact intersection graph, replays
+/// The function builds and validates the exact intersection graph, checks
 /// coplanar split constructions against source edges, derives a compact
 /// obstacle report, and validates that report before returning it. It does not
 /// triangulate or materialize a general planar arrangement.
@@ -482,13 +468,11 @@ pub fn certify_planar_arrangement_evidence(
 ) -> Result<ExactPlanarArrangementEvidenceReport, MeshError> {
     let graph = build_intersection_graph(left, right)?;
     graph
-        .validate_against_sources(left, right)
-        .map_err(planar_source_replay_mesh_error)?;
+        .validate_against_meshes(left, right)
+        .map_err(planar_graph_mesh_error)?;
     let readiness = graph.coplanar_arrangement_readiness_report(left, right)?;
     let split_plan = graph.coplanar_overlap_split_plan(left, right)?;
-    split_plan
-        .validate_against_sources(left, right)
-        .map_err(planar_split_mesh_error)?;
+    split_plan.validate_against_meshes(left, right)?;
     let report =
         ExactPlanarArrangementEvidenceReport::from_split_plan(readiness, &split_plan, left, right)
             .map_err(planar_evidence_mesh_error)?;
@@ -619,7 +603,7 @@ fn vertex_overlap_point(
         MeshSide::Left => left.vertices().get(vertex),
         MeshSide::Right => right.vertices().get(vertex),
     }
-    .map(|point| point.to_hyperlimit_point())
+    .map(|point| point.clone())
 }
 
 fn planar_evidence_mesh_error(error: ExactPlanarArrangementEvidenceError) -> MeshError {
@@ -630,20 +614,10 @@ fn planar_evidence_mesh_error(error: ExactPlanarArrangementEvidenceError) -> Mes
     ))
 }
 
-fn planar_split_mesh_error(error: super::graph::CoplanarOverlapSplitValidationError) -> MeshError {
+fn planar_graph_mesh_error(error: super::graph::IntersectionGraphValidationError) -> MeshError {
     MeshError::one(MeshDiagnostic::new(
         Severity::Error,
         DiagnosticKind::UnsupportedExactOperation,
-        format!("retained coplanar split plan failed exact replay: {error:?}"),
-    ))
-}
-
-fn planar_source_replay_mesh_error(
-    error: super::graph::IntersectionGraphValidationError,
-) -> MeshError {
-    MeshError::one(MeshDiagnostic::new(
-        Severity::Error,
-        DiagnosticKind::UnsupportedExactOperation,
-        format!("retained intersection graph failed exact source replay: {error:?}"),
+        format!("retained intersection graph failed exact source-mesh validation: {error:?}"),
     ))
 }

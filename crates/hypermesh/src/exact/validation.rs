@@ -1,9 +1,8 @@
 //! Exact topology validation for triangular meshes.
 //!
 //! The validator treats edge incidence as combinatorial data and triangle
-//! degeneracy as an exact predicate question. No epsilon is used. This follows
-//! Yap's exact-geometric-computation requirement that topology decisions be
-//! separated from approximate numeric convenience.
+//! degeneracy as an exact predicate question. No epsilon is used; exact
+//! topology validation stays separated from approximate numeric convenience.
 
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -15,7 +14,7 @@ use super::facts::{
     TriangleFacts, VertexFacts, VertexLinkKind,
 };
 use super::predicates::{TriangleDegeneracy, classify_triangle_degeneracy};
-use super::scalar::ExactReal;
+use hyperreal::Real;
 
 /// Validation result for a triangle mesh.
 #[derive(Clone, Debug, PartialEq)]
@@ -80,7 +79,6 @@ pub fn validate_triangles(points: &[Point3], triangles: &[[usize; 3]]) -> Valida
 /// Closed validation treats boundary edges as errors. Boundary-allowed
 /// validation still records boundary facts but does not promote them to fatal
 /// diagnostics. The policy object keeps that topological contract explicit,
-/// following Yap's exact-geometric-computation principle that uncertainty and
 /// approximation policies must be visible at API boundaries.
 pub fn validate_triangles_with_policy(
     points: &[Point3],
@@ -392,7 +390,7 @@ fn face_plane_facts(points: &[Point3], tri: [usize; 3]) -> FacePlaneFacts {
         sub(&mul(&ux, &vy), &mul(&uy, &vx)),
     ];
     let offset = sub(
-        &ExactReal::from(0),
+        &Real::from(0),
         &add(
             &add(&mul(&normal[0], &a.x), &mul(&normal[1], &a.y)),
             &mul(&normal[2], &a.z),
@@ -401,14 +399,14 @@ fn face_plane_facts(points: &[Point3], tri: [usize; 3]) -> FacePlaneFacts {
     FacePlaneFacts { normal, offset }
 }
 
-fn add(left: &ExactReal, right: &ExactReal) -> ExactReal {
+fn add(left: &Real, right: &Real) -> Real {
     left.clone() + right
 }
 
-fn sub(left: &ExactReal, right: &ExactReal) -> ExactReal {
+fn sub(left: &Real, right: &Real) -> Real {
     left.clone() - right
 }
 
-fn mul(left: &ExactReal, right: &ExactReal) -> ExactReal {
+fn mul(left: &Real, right: &Real) -> Real {
     left.clone() * right
 }

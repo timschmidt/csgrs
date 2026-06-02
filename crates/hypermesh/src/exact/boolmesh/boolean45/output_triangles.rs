@@ -4,12 +4,8 @@
 //! been assembled and triangulated.  This module ports that handoff without
 //! exporting the final mesh yet: each local `hypertri` index triple is resolved
 //! through the boolmesh output-vertex list into a replayable triangle record.
-//! Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-//! 7.1-2 (1997), is the boundary condition here: the exact triangulation
 //! certificate and the topology mutation remain separate and source-replayable.
 //! The simple-loop local index buffers consumed here come from the earcut
-//! stage based on Meisters, "Polygons Have Ears," *The American Mathematical
-//! Monthly* 82.6 (1975).
 
 use super::super::{
     ExactBoolMeshLoopTriangulationStage, ExactBoolMeshOutputTriangleStage,

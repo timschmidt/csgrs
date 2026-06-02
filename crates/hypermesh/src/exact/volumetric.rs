@@ -6,12 +6,9 @@
 //! cell, classify that point by the closed opposite mesh's exact ray-parity
 //! winding report, and retain the classification beside the output assembly.
 //! The classifier tries the centroid first, then deterministic exact
-//! barycentric interior witnesses if that centroid lies on the opposite
-//! boundary or gives an undecided ray. This is the Yap boundary from "Towards
-//! Exact Geometric Computation,"
-//! *Computational Geometry* 7.1-2 (1997): a boolean face is kept, dropped, or
-//! orientation-reversed only from replayable exact evidence, never from a
-//! primitive-float sample or tolerance nudge.
+//! barycentric interior witnesses if that centroid lies on the opposite mesh
+//! boundary. Output orientation is changed only from replayable exact
+//! evidence, never from a primitive-float sample or tolerance nudge.
 
 use hyperlimit::Point3;
 
@@ -29,7 +26,6 @@ use super::witness::{
 
 /// Exact relation between one triangulated split cell and the opposite closed
 /// mesh.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ExactVolumetricRegionRelation {
     /// The opposite mesh was not a closed two-manifold.
@@ -57,17 +53,15 @@ impl ExactVolumetricRegionRelation {
     ///
     /// Boundary classifications are not strict winding facts, but they are
     /// exact outcomes: every deterministic interior witness for the retained
-    /// source cell replayed to the opposite closed mesh boundary. Following
-    /// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-    /// 7.1-2 (1997), the boolean pipeline may consume that state only through
-    /// an explicit topology policy; it must not relabel it as inside/outside.
+    /// source cell replayed to the opposite closed mesh boundary. The boolean
+    /// pipeline may consume that state only through an explicit topology
+    /// policy; it must not relabel it as inside/outside.
     pub const fn is_materialization_decided(self) -> bool {
         matches!(self, Self::Inside | Self::Outside | Self::Boundary)
     }
 }
 
 /// Retained winding evidence for one triangulated split cell.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactVolumetricRegionClassification {
     /// Mesh side owning the split source face.
@@ -80,8 +74,6 @@ pub struct ExactVolumetricRegionClassification {
     /// A single source face can be divided by several exact intersection
     /// segments. Retaining the local triangle handles makes the winding
     /// decision a per-cell certificate instead of a face-wide approximation,
-    /// following Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7.1-2 (1997).
     pub triangle: [usize; 3],
     /// Exact interior representative point used for winding parity.
     ///
@@ -95,9 +87,6 @@ pub struct ExactVolumetricRegionClassification {
     ///
     /// Retaining the integer weights keeps the representative tied to the
     /// source triangle rather than to an opaque coordinate. Replaying those
-    /// weights is the object-level evidence boundary described by Yap,
-    /// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-    /// (1997): predicates consume exact objects, and the object construction is
     /// itself auditable.
     pub representative_witness: ExactTriangleInteriorWitness,
     /// Relation derived from [`Self::winding`].
@@ -111,8 +100,6 @@ pub struct ExactVolumetricRegionClassification {
     /// retry up to the first strict witness. Boundary/unknown classifications
     /// retain the full deterministic witness lattice, proving that no hidden
     /// perturbation was used after all exact candidates remained non-strict.
-    /// This is the Yap retained-object boundary from "Towards Exact Geometric
-    /// Computation," *Computational Geometry* 7.1-2 (1997): an unresolved cell
     /// carries replayable failed exact attempts instead of only a status bit.
     pub witness_attempts: Vec<ExactVolumetricWitnessAttempt>,
 }
@@ -124,7 +111,6 @@ pub struct ExactVolumetricRegionClassification {
 /// boundary/unknown attempts is important evidence: when the final
 /// classification is non-strict, the caller can distinguish "one sample was
 /// boundary" from "the deterministic exact witness lattice was exhausted."
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactVolumetricWitnessAttempt {
     /// Exact barycentric witness used for this attempt.
@@ -145,8 +131,6 @@ impl ExactVolumetricRegionClassification {
     /// from a retained triangulation. This local audit checks the part that can
     /// be verified without the source mesh, namely that the relation mirrors
     /// the retained exact winding report and that the winding report is itself
-    /// coherent. Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7.1-2 (1997), makes this separation important:
     /// local certificate shape and source-object replay are both explicit.
     pub fn validate(&self) -> Result<(), ExactVolumetricRegionError> {
         self.representative_witness
@@ -162,6 +146,39 @@ impl ExactVolumetricRegionClassification {
         Ok(())
     }
 
+    /// Validate retained representative points against the retained
+    /// triangulation cell without replaying the opposite source mesh.
+    pub fn validate_representatives_against_triangulation(
+        &self,
+        triangulation: &FaceRegionTriangulation,
+    ) -> Result<(), ExactVolumetricRegionError> {
+        self.validate()?;
+        if triangulation.side != self.region_side || triangulation.face != self.region_face {
+            return Err(ExactVolumetricRegionError::InvalidTriangulation);
+        }
+        triangulation
+            .validate()
+            .map_err(|_| ExactVolumetricRegionError::InvalidTriangulation)?;
+        if !triangulation
+            .triangles
+            .chunks_exact(3)
+            .any(|candidate| candidate == self.triangle)
+        {
+            return Err(ExactVolumetricRegionError::InvalidTriangleIndex);
+        }
+        let (a, b, c) = triangle_points(triangulation, self.triangle)?;
+        for attempt in &self.witness_attempts {
+            let expected = attempt
+                .witness
+                .point_for_triangle(a, b, c)
+                .map_err(ExactVolumetricRegionError::InvalidRepresentativeWitness)?;
+            if expected != attempt.representative {
+                return Err(ExactVolumetricRegionError::RepresentativeAttemptMismatch);
+            }
+        }
+        Ok(())
+    }
+
     /// Validate this classification by recomputing it from the retained
     /// triangulation cell and target mesh.
     pub fn validate_against_sources(
@@ -169,7 +186,7 @@ impl ExactVolumetricRegionClassification {
         triangulation: &FaceRegionTriangulation,
         target: &ExactMesh,
     ) -> Result<(), ExactVolumetricRegionError> {
-        self.validate()?;
+        self.validate_representatives_against_triangulation(triangulation)?;
         let replay = classify_triangulated_region_triangle_against_closed_mesh(
             triangulation,
             self.triangle,
@@ -184,7 +201,6 @@ impl ExactVolumetricRegionClassification {
 }
 
 /// Validation or source-replay failure for volumetric region classifications.
-#[cfg(feature = "exact-triangulation")]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ExactVolumetricRegionError {
     /// The retained triangulation did not pass its exact handoff audit.
@@ -224,10 +240,7 @@ pub enum ExactVolumetricRegionError {
 /// [`classify_triangulated_regions_against_opposite_meshes`]. The centroid is
 /// built as rational `Real` arithmetic, then classified by
 /// [`classify_point_against_closed_mesh_winding_report`]. No primitive-float
-/// representative enters the decision. This follows Yap, "Towards Exact
-/// Geometric Computation," *Computational Geometry* 7.1-2 (1997), by keeping
 /// the proposal point and the winding decision inside exact arithmetic.
-#[cfg(feature = "exact-triangulation")]
 pub fn classify_triangulated_region_against_closed_mesh(
     triangulation: &FaceRegionTriangulation,
     target: &ExactMesh,
@@ -245,11 +258,8 @@ pub fn classify_triangulated_region_against_closed_mesh(
 /// subdivided by constrained intersection segments; using one sample for the
 /// entire face would make inside/outside topology depend on an arbitrary
 /// triangulator order. Retrying with retained exact interior witnesses follows
-/// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-/// 7.1-2 (1997): unresolved predicate outcomes remain explicit, but a
 /// representational accident such as "centroid is on the boundary" should not
 /// force an approximate perturbation.
-#[cfg(feature = "exact-triangulation")]
 pub fn classify_triangulated_region_triangle_against_closed_mesh(
     triangulation: &FaceRegionTriangulation,
     triangle: [usize; 3],
@@ -284,7 +294,6 @@ pub fn classify_triangulated_region_triangle_against_closed_mesh(
 }
 
 /// Classify every split-region triangle against its opposite closed mesh.
-#[cfg(feature = "exact-triangulation")]
 pub fn classify_triangulated_regions_against_opposite_meshes(
     triangulations: &[FaceRegionTriangulation],
     left: &ExactMesh,
@@ -307,7 +316,6 @@ pub fn classify_triangulated_regions_against_opposite_meshes(
     Ok(classifications)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn relation_from_winding(relation: ClosedMeshWindingRelation) -> ExactVolumetricRegionRelation {
     match relation {
         ClosedMeshWindingRelation::NotClosed => ExactVolumetricRegionRelation::NotClosed,
@@ -318,7 +326,6 @@ fn relation_from_winding(relation: ClosedMeshWindingRelation) -> ExactVolumetric
     }
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn first_triangle(
     triangulation: &FaceRegionTriangulation,
 ) -> Result<[usize; 3], ExactVolumetricRegionError> {
@@ -330,7 +337,6 @@ fn first_triangle(
     Ok([triangle[0], triangle[1], triangle[2]])
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn triangle_points(
     triangulation: &FaceRegionTriangulation,
     triangle: [usize; 3],
@@ -356,7 +362,6 @@ fn triangle_points(
     Ok((a, b, c))
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn classify_representative(
     triangulation: &FaceRegionTriangulation,
     triangle: [usize; 3],
@@ -375,7 +380,6 @@ fn classify_representative(
     })
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn classify_witness_attempt(
     witness: ExactTriangleInteriorWitness,
     representative: Point3,
@@ -383,7 +387,7 @@ fn classify_witness_attempt(
 ) -> Result<ExactVolumetricWitnessAttempt, ExactVolumetricRegionError> {
     let winding = classify_point_against_closed_mesh_winding_report(&representative, target);
     winding
-        .validate_against_sources(&representative, target)
+        .validate()
         .map_err(ExactVolumetricRegionError::Winding)?;
     Ok(ExactVolumetricWitnessAttempt {
         witness,
@@ -393,7 +397,6 @@ fn classify_witness_attempt(
     })
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn classification_from_attempts(
     triangulation: &FaceRegionTriangulation,
     triangle: [usize; 3],
@@ -415,7 +418,6 @@ fn classification_from_attempts(
     classify_representative(triangulation, triangle, &attempt, attempts)
 }
 
-#[cfg(feature = "exact-triangulation")]
 fn validate_witness_attempts(
     classification: &ExactVolumetricRegionClassification,
 ) -> Result<(), ExactVolumetricRegionError> {

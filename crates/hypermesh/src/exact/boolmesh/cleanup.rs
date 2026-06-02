@@ -5,8 +5,6 @@
 //! the exact object boundary: coincident output slots are merged only by exact
 //! coordinate equality, degenerate triangles created by that merge are dropped,
 //! the remaining triangle soup is oriented as a halfedge surface, and vertices
-//! no longer referenced by any surviving triangle are removed.  Yap, "Towards
-//! Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997), is the
 //! governing constraint here: cleanup may change topology only when exact
 //! predicates decide the equality or incidence being used.
 
@@ -14,10 +12,10 @@ use std::collections::{BTreeMap, BTreeSet, VecDeque};
 
 use hyperlimit::{Point3, Sign, compare_reals, orient3d_report, point_on_segment3};
 
-use crate::exact::mesh::{ExactPoint3, Triangle};
+use crate::exact::mesh::Triangle;
 use crate::exact::predicates::{TriangleDegeneracy, classify_triangle_degeneracy};
 #[cfg(feature = "internal-fuzzing")]
-use crate::exact::scalar::ExactReal;
+use hyperreal::Real;
 
 /// Collapse exactly equal export coordinates and orient the resulting surface.
 ///
@@ -44,14 +42,11 @@ use crate::exact::scalar::ExactReal;
 /// algorithmic boundary but replaces the primitive-float equality shortcut
 /// with `hyperlimit::compare_reals`.
 pub(super) fn cleanup_exact_export_vertices(
-    raw_vertices: Vec<ExactPoint3>,
+    raw_vertices: Vec<Point3>,
     raw_triangles: &[Triangle],
-) -> (Vec<ExactPoint3>, Vec<Triangle>) {
-    let raw_points = raw_vertices
-        .iter()
-        .map(ExactPoint3::to_hyperlimit_point)
-        .collect::<Vec<_>>();
-    let mut unique_vertices = Vec::<ExactPoint3>::new();
+) -> (Vec<Point3>, Vec<Triangle>) {
+    let raw_points = raw_vertices.iter().cloned().collect::<Vec<_>>();
+    let mut unique_vertices = Vec::<Point3>::new();
     let mut unique_points = Vec::<Point3>::new();
     let mut remap = Vec::with_capacity(raw_vertices.len());
 
@@ -98,13 +93,13 @@ pub(super) fn cleanup_exact_export_vertices(
 /// `Manifold::new_impl`: it rewrites halfedge vertex ids through a dense map
 /// and truncates positions whose Morton code marked them unused.  The exact
 /// port keeps the dense-map topology step and removes only the f64 Morton
-/// sorting/truncation detail.  That is the Yap exact-object boundary applied to
-/// cleanup: a vertex is removed because triangle incidence no longer names it,
-/// not because a rounded coordinate bucket says it is disposable.
+/// sorting/truncation detail: a vertex is removed because triangle incidence
+/// no longer names it, not because a rounded coordinate bucket says it is
+/// disposable.
 fn compact_unused_vertices(
-    vertices: Vec<ExactPoint3>,
+    vertices: Vec<Point3>,
     triangles: Vec<Triangle>,
-) -> (Vec<ExactPoint3>, Vec<Triangle>) {
+) -> (Vec<Point3>, Vec<Triangle>) {
     if triangles.is_empty() {
         return (Vec::new(), Vec::new());
     }
@@ -154,7 +149,6 @@ fn compact_unused_vertices(
 /// halfedge directions.  The exact port cancels only the isolated case where
 /// each of the three undirected edges is used by exactly those two triangles;
 /// non-isolated coincident faces are left for the later overfull-edge cleanup
-/// or final validation.  This keeps the mutation inside Yap's exact-object
 /// boundary: equality is exact vertex identity after `compare_reals`, and
 /// topology is changed only for a replayable duplicate face pair.
 fn remove_isolated_opposite_duplicate_pairs(triangles: Vec<Triangle>) -> Vec<Triangle> {
@@ -221,8 +215,6 @@ fn duplicate_pair_edges_are_isolated(
 /// positive-area coplanar overlap can leave a source vertex exactly on a
 /// neighboring triangle edge; legacy boolmesh handles that before
 /// `Manifold::new_impl` by refining the triangle edge.  The exact port uses
-/// `hyperlimit::point_on_segment3` and exact coordinate inequality, following
-/// Yap's exact-geometric-computation contract: no epsilon decides whether a
 /// vertex lies on an edge, and each split preserves the original triangle
 /// orientation.
 fn split_edges_at_existing_vertices(points: &[Point3], triangles: Vec<Triangle>) -> Vec<Triangle> {
@@ -315,8 +307,6 @@ fn point_strictly_inside_segment(
 /// triangles before `Manifold::new_impl`; in positive-area coplanar overlaps
 /// that cleanup can leave a single oriented boundary cycle where source faces
 /// have already been welded into one exact output surface.  This is the exact
-/// port of that handoff, constrained by Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997): a cap is emitted only
 /// when the boundary graph is a set of simple directed degree-two cycles, all
 /// vertices in a cycle are certified coplanar by `hyperlimit::orient3d_report`,
 /// and every fan triangle is certified nondegenerate by
@@ -756,8 +746,6 @@ fn insert_triangle_preserving_two_manifold_edges(
 /// handing the soup to `Manifold::new_impl`.  After exact on-edge refinement
 /// and conservative cap insertion, the same situation appears as a triangle
 /// whose three edges are all overfull: every edge has more than two incident
-/// faces, so the triangle cannot be part of a two-manifold boundary.  Following
-/// Yap's exact-object discipline, this pass accepts the mutation only when
 /// deleting the triangle and replaying halfedge orientation strictly reduces
 /// exact combinatorial edge defects; otherwise the unmodified soup is left for
 /// final validation to reject.
@@ -1016,8 +1004,8 @@ fn exact_points_equal(left: &Point3, right: &Point3) -> bool {
 /// without exposing a partial cleanup API.
 #[cfg(feature = "internal-fuzzing")]
 pub(super) fn internal_fuzz_probe(selector: u8) -> bool {
-    fn p(x: i64, y: i64, z: i64) -> ExactPoint3 {
-        ExactPoint3::new(ExactReal::from(x), ExactReal::from(y), ExactReal::from(z))
+    fn p(x: i64, y: i64, z: i64) -> Point3 {
+        Point3::new(Real::from(x), Real::from(y), Real::from(z))
     }
 
     match selector % 2 {
@@ -1041,20 +1029,20 @@ pub(super) fn internal_fuzz_probe(selector: u8) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::exact::scalar::ExactReal;
     use crate::exact::validation::{ValidationPolicy, validate_triangles_with_policy};
+    use hyperreal::Real;
 
-    fn p(x: i64, y: i64, z: i64) -> ExactPoint3 {
-        ExactPoint3::new(ExactReal::from(x), ExactReal::from(y), ExactReal::from(z))
+    fn p(x: i64, y: i64, z: i64) -> Point3 {
+        Point3::new(Real::from(x), Real::from(y), Real::from(z))
     }
 
-    fn r(numerator: i64, denominator: i64) -> ExactReal {
-        (ExactReal::from(numerator) / &ExactReal::from(denominator))
+    fn r(numerator: i64, denominator: i64) -> Real {
+        (Real::from(numerator) / &Real::from(denominator))
             .expect("test rational denominator is nonzero")
     }
 
-    fn rp(x: (i64, i64), y: (i64, i64), z: (i64, i64)) -> ExactPoint3 {
-        ExactPoint3::new(r(x.0, x.1), r(y.0, y.1), r(z.0, z.1))
+    fn rp(x: (i64, i64), y: (i64, i64), z: (i64, i64)) -> Point3 {
+        Point3::new(r(x.0, x.1), r(y.0, y.1), r(z.0, z.1))
     }
 
     #[test]
@@ -1077,10 +1065,7 @@ mod tests {
         ];
 
         let (vertices, triangles) = cleanup_exact_export_vertices(raw_vertices, &raw_triangles);
-        let points = vertices
-            .iter()
-            .map(ExactPoint3::to_hyperlimit_point)
-            .collect::<Vec<_>>();
+        let points = vertices.iter().cloned().collect::<Vec<_>>();
         let triangle_indices = triangles
             .iter()
             .map(|triangle| triangle.0)
@@ -1167,10 +1152,7 @@ mod tests {
         ];
 
         let (vertices, triangles) = cleanup_exact_export_vertices(raw_vertices, &raw_triangles);
-        let points = vertices
-            .iter()
-            .map(ExactPoint3::to_hyperlimit_point)
-            .collect::<Vec<_>>();
+        let points = vertices.iter().cloned().collect::<Vec<_>>();
         let triangle_indices = triangles
             .iter()
             .map(|triangle| triangle.0)
@@ -1205,10 +1187,7 @@ mod tests {
         ];
 
         let (vertices, triangles) = cleanup_exact_export_vertices(raw_vertices, &raw_triangles);
-        let points = vertices
-            .iter()
-            .map(ExactPoint3::to_hyperlimit_point)
-            .collect::<Vec<_>>();
+        let points = vertices.iter().cloned().collect::<Vec<_>>();
         let triangle_indices = triangles
             .iter()
             .map(|triangle| triangle.0)
@@ -1253,10 +1232,7 @@ mod tests {
         ];
 
         let (vertices, triangles) = cleanup_exact_export_vertices(raw_vertices, &raw_triangles);
-        let points = vertices
-            .iter()
-            .map(ExactPoint3::to_hyperlimit_point)
-            .collect::<Vec<_>>();
+        let points = vertices.iter().cloned().collect::<Vec<_>>();
         let triangle_indices = triangles
             .iter()
             .map(|triangle| triangle.0)
@@ -1316,10 +1292,7 @@ mod tests {
         ];
 
         let (vertices, triangles) = cleanup_exact_export_vertices(raw_vertices, &raw_triangles);
-        let points = vertices
-            .iter()
-            .map(ExactPoint3::to_hyperlimit_point)
-            .collect::<Vec<_>>();
+        let points = vertices.iter().cloned().collect::<Vec<_>>();
         let triangle_indices = triangles
             .iter()
             .map(|triangle| triangle.0)
@@ -1390,10 +1363,7 @@ mod tests {
         ];
 
         let (vertices, triangles) = cleanup_exact_export_vertices(raw_vertices, &raw_triangles);
-        let points = vertices
-            .iter()
-            .map(ExactPoint3::to_hyperlimit_point)
-            .collect::<Vec<_>>();
+        let points = vertices.iter().cloned().collect::<Vec<_>>();
         let triangle_indices = triangles
             .iter()
             .map(|triangle| triangle.0)
@@ -1421,10 +1391,7 @@ mod tests {
         ];
 
         let (vertices, triangles) = cleanup_exact_export_vertices(raw_vertices, &raw_triangles);
-        let points = vertices
-            .iter()
-            .map(ExactPoint3::to_hyperlimit_point)
-            .collect::<Vec<_>>();
+        let points = vertices.iter().cloned().collect::<Vec<_>>();
         let triangle_indices = triangles
             .iter()
             .map(|triangle| triangle.0)
@@ -1465,10 +1432,7 @@ mod tests {
         ];
 
         let (vertices, triangles) = cleanup_exact_export_vertices(raw_vertices, &raw_triangles);
-        let points = vertices
-            .iter()
-            .map(ExactPoint3::to_hyperlimit_point)
-            .collect::<Vec<_>>();
+        let points = vertices.iter().cloned().collect::<Vec<_>>();
         let boundary_edges = boundary_directed_edges(&triangles).unwrap();
         let triangle_indices = triangles
             .iter()

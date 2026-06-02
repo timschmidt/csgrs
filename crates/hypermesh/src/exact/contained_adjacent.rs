@@ -12,14 +12,10 @@
 //! The shortcut is intentionally narrow. It replays exact boundary-only
 //! winding evidence, retained graph events, strict point-in-triangle facts, and
 //! the holed face triangulation before it can authorize a closed output mesh.
-//! This is the same object/predicate boundary advocated by Yap, "Towards Exact
-//! Geometric Computation," *Computational Geometry* 7.1-2 (1997): a missing
 //! general cell materializer becomes explicit state unless a retained exact
 //! certificate owns this bounded topology change.
 //!
 //! The holed planar face uses the same earcut-compatible ring triangulation
-//! surface as [`crate::exact::surface`]. See Held, "FIST: Fast
-//! Industrial-Strength Triangulation of Polygons," *Algorithmica* 30 (2001),
 //! for the ring triangulation model; exact Hyper predicates supply the
 //! topology guards here instead of tolerance tests.
 
@@ -30,12 +26,12 @@ use hyperlimit::{
 };
 
 use super::construction::SegmentPlaneRelation;
-use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
-use super::graph::{FacePairEvents, IntersectionEvent, MeshSide, build_intersection_graph};
+use super::graph::{
+    ExactIntersectionGraph, FacePairEvents, IntersectionEvent, MeshSide, build_intersection_graph,
+};
 use super::intersection::MeshFacePairRelation;
-use super::mesh::{ExactMesh, ExactMeshValidationError, ExactPoint3, Triangle};
+use super::mesh::{ExactMesh, ExactMeshValidationError, Triangle};
 use super::provenance::SourceProvenance;
-use super::scalar::ExactReal;
 use super::surface::{
     arrange_coplanar_convex_surface_holed_difference,
     arrange_coplanar_convex_surface_multi_holed_difference,
@@ -45,6 +41,7 @@ use super::validation::ValidationPolicy;
 use super::winding::{
     ClosedMeshWindingRelation, classify_mesh_vertices_against_closed_mesh_winding_report,
 };
+use hyperreal::Real;
 
 use std::cmp::Ordering;
 
@@ -85,12 +82,7 @@ pub struct ContainedFaceAdjacentUnion {
 /// report layer: the retained source face sets replay the exact hole object
 /// before any mesh is accepted.
 ///
-/// The certificate follows Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997): topology promotion is tied to exact
 /// source-owned objects and predicate replay. The holed cap triangulation is
-/// the same exact-ring handoff used for contained-face adjacency; see Held,
-/// "FIST: Fast Industrial-Strength Triangulation of Polygons," *Algorithmica*
-/// 30 (2001), for the planar ring triangulation model.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ContainedBoundaryDifference {
     /// First container face replaced by a holed cap remnant.
@@ -103,6 +95,12 @@ pub struct ContainedBoundaryDifference {
     pub containing_faces: Vec<usize>,
     /// Closed output mesh for `container - removed`.
     pub mesh: ExactMesh,
+}
+
+/// Opaque retained certificate for contained-face adjacency.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(crate) struct ContainedFaceAdjacentCertificate {
+    inner: ContainedFaceAdjacencyCertificate,
 }
 
 /// Validation failure for a retained contained-face adjacency materialization.
@@ -127,12 +125,26 @@ pub enum ContainedBoundaryDifferenceError {
     SourceReplayMismatch,
 }
 
+/// Which source shell contains the other through a certified boundary cap.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum ContainedBoundaryContainment {
+    /// The left/source shell is the container and the right/source shell is removed.
+    LeftContainsRight,
+    /// The right/source shell is the container and the left/source shell is removed.
+    RightContainsLeft,
+}
+
+/// Opaque retained certificate for a boundary-contained difference.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(crate) struct ContainedBoundaryDifferenceCertificate {
+    inner: ContainedFaceAdjacencyCertificate,
+}
+
 impl ContainedFaceAdjacentUnion {
     /// Validate the retained output mesh without consulting source operands.
     ///
     /// Source face indices are replayed separately by
     /// [`Self::validate_against_sources`]. Keeping local output validation and
-    /// source replay as separate checks follows Yap's retained-state model:
     /// copied topology must first be a coherent exact object, then it must be
     /// proven to still come from the named sources.
     pub fn validate(&self) -> Result<(), ContainedFaceAdjacentUnionError> {
@@ -171,8 +183,6 @@ impl ContainedBoundaryDifference {
     /// The local check proves only that the retained mesh is still a coherent
     /// closed exact object. [`Self::validate_against_sources`] replays the
     /// source-owned caps and the reversed removed shell, keeping the artifact in
-    /// the predicate/object discipline described by Yap, "Towards Exact
-    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997).
     pub fn validate(&self) -> Result<(), ContainedBoundaryDifferenceError> {
         self.mesh
             .validate_retained_state()
@@ -208,14 +218,47 @@ impl ContainedBoundaryDifference {
 
 /// Return whether the sources can be unioned by contained-face adjacency.
 pub fn has_contained_face_adjacent_union(left: &ExactMesh, right: &ExactMesh) -> bool {
-    materialize_contained_face_adjacent_union(left, right, ValidationPolicy::CLOSED).is_some()
+    contained_face_adjacent_certificate(left, right).is_some()
+}
+
+/// Return the retained contained-face adjacency certificate for these sources.
+pub(crate) fn contained_face_adjacent_certificate(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Option<ContainedFaceAdjacentCertificate> {
+    contained_face_adjacent_union_certificate(left, right)
+        .map(|inner| ContainedFaceAdjacentCertificate { inner })
 }
 
 /// Return whether `container - removed` has a bounded exact boundary-cavity
 /// materialization.
 pub fn has_contained_boundary_difference(container: &ExactMesh, removed: &ExactMesh) -> bool {
-    materialize_contained_boundary_difference(container, removed, ValidationPolicy::CLOSED)
-        .is_some()
+    contained_boundary_difference_source_certificate(container, removed, false).is_some()
+}
+
+/// Return whether `container - removed` has a bounded exact boundary-cavity
+/// materialization using an already-retained graph.
+pub(crate) fn has_contained_boundary_difference_from_graph(
+    container: &ExactMesh,
+    removed: &ExactMesh,
+    graph: &ExactIntersectionGraph,
+) -> bool {
+    contained_boundary_difference_certificate_from_graph(container, removed, graph).is_some()
+}
+
+/// Return the certified boundary-containment relation using an already-retained graph.
+pub(crate) fn contained_boundary_containment_from_graph(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    graph: &ExactIntersectionGraph,
+) -> Option<ContainedBoundaryContainment> {
+    if contained_boundary_difference_certificate_from_graph(left, right, graph).is_some() {
+        return Some(ContainedBoundaryContainment::LeftContainsRight);
+    }
+    if contained_boundary_difference_certificate_from_reversed_graph(right, left, graph).is_some() {
+        return Some(ContainedBoundaryContainment::RightContainsLeft);
+    }
+    None
 }
 
 /// Materialize a regularized union across one strictly contained shared face.
@@ -224,20 +267,24 @@ pub fn materialize_contained_face_adjacent_union(
     right: &ExactMesh,
     validation: ValidationPolicy,
 ) -> Option<ContainedFaceAdjacentUnion> {
-    if !left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold {
-        return None;
-    }
-    let graph = build_intersection_graph(left, right).ok()?;
-    graph.validate_against_sources(left, right).ok()?;
-    if graph.has_unknowns() || graph.face_pairs.is_empty() {
-        return None;
-    }
-    if !closed_boundary_contact_only(left, right)? {
-        return None;
-    }
+    let certificate = contained_face_adjacent_certificate(left, right)?;
+    materialize_contained_face_adjacent_union_from_certificate(
+        left,
+        right,
+        &certificate,
+        validation,
+    )
+}
 
-    let certificate = contained_face_adjacency_certificate(left, right, &graph.face_pairs)?;
-    let mesh = contained_face_union_mesh(left, right, &certificate, validation)?;
+/// Materialize a contained-face adjacent union from an already-retained certificate.
+pub(crate) fn materialize_contained_face_adjacent_union_from_certificate(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    certificate: &ContainedFaceAdjacentCertificate,
+    validation: ValidationPolicy,
+) -> Option<ContainedFaceAdjacentUnion> {
+    let certificate = &certificate.inner;
+    let mesh = contained_face_union_mesh(left, right, certificate, validation)?;
     let union = ContainedFaceAdjacentUnion {
         containing_side: certificate.containing_side,
         containing_face: certificate.containing_face(),
@@ -248,6 +295,25 @@ pub fn materialize_contained_face_adjacent_union(
     };
     union.validate().ok()?;
     Some(union)
+}
+
+fn contained_face_adjacent_union_certificate(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Option<ContainedFaceAdjacencyCertificate> {
+    if !left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold {
+        return None;
+    }
+    let graph = build_intersection_graph(left, right).ok()?;
+    graph.validate_against_meshes(left, right).ok()?;
+    if graph.has_unknowns() || graph.face_pairs.is_empty() {
+        return None;
+    }
+    if !closed_boundary_contact_only(left, right)? {
+        return None;
+    }
+
+    contained_face_adjacency_certificate(left, right, &graph.face_pairs)
 }
 
 /// Materialize `container - removed` for a contained solid that touches the
@@ -263,21 +329,54 @@ pub fn materialize_contained_boundary_difference(
     removed: &ExactMesh,
     validation: ValidationPolicy,
 ) -> Option<ContainedBoundaryDifference> {
-    if !container.facts().mesh.closed_manifold || !removed.facts().mesh.closed_manifold {
-        return None;
-    }
-    let graph = build_intersection_graph(container, removed).ok()?;
-    graph.validate_against_sources(container, removed).ok()?;
-    if graph.has_unknowns() || graph.face_pairs.is_empty() {
-        return None;
-    }
-    if !closed_boundary_containment(container, removed)? {
-        return None;
-    }
+    let certificate = contained_boundary_difference_source_certificate(container, removed, false)?;
+    materialize_contained_boundary_difference_from_certificate(
+        container,
+        removed,
+        &certificate,
+        validation,
+    )
+}
 
+/// Materialize `container - removed` using an already-retained graph.
+pub(crate) fn materialize_contained_boundary_difference_from_graph(
+    container: &ExactMesh,
+    removed: &ExactMesh,
+    graph: &ExactIntersectionGraph,
+    validation: ValidationPolicy,
+) -> Option<ContainedBoundaryDifference> {
     let certificate =
-        contained_boundary_difference_certificate(container, removed, &graph.face_pairs)?;
-    let mesh = contained_boundary_difference_mesh(container, removed, &certificate, validation)?;
+        contained_boundary_difference_certificate_from_graph(container, removed, graph)?;
+    materialize_contained_boundary_difference_from_retained_certificate(
+        container,
+        removed,
+        &certificate,
+        validation,
+    )
+}
+
+/// Materialize `container - removed` from an already-retained certificate.
+pub(crate) fn materialize_contained_boundary_difference_from_retained_certificate(
+    container: &ExactMesh,
+    removed: &ExactMesh,
+    certificate: &ContainedBoundaryDifferenceCertificate,
+    validation: ValidationPolicy,
+) -> Option<ContainedBoundaryDifference> {
+    materialize_contained_boundary_difference_from_certificate(
+        container,
+        removed,
+        &certificate.inner,
+        validation,
+    )
+}
+
+fn materialize_contained_boundary_difference_from_certificate(
+    container: &ExactMesh,
+    removed: &ExactMesh,
+    certificate: &ContainedFaceAdjacencyCertificate,
+    validation: ValidationPolicy,
+) -> Option<ContainedBoundaryDifference> {
+    let mesh = contained_boundary_difference_mesh(container, removed, certificate, validation)?;
     let difference = ContainedBoundaryDifference {
         containing_face: certificate.containing_face(),
         contained_face: certificate.contained_faces()[0],
@@ -287,6 +386,139 @@ pub fn materialize_contained_boundary_difference(
     };
     difference.validate().ok()?;
     Some(difference)
+}
+
+fn contained_boundary_difference_source_certificate(
+    container: &ExactMesh,
+    removed: &ExactMesh,
+    replay_graph: bool,
+) -> Option<ContainedFaceAdjacencyCertificate> {
+    if !container.facts().mesh.closed_manifold || !removed.facts().mesh.closed_manifold {
+        return None;
+    }
+    let graph = build_intersection_graph(container, removed).ok()?;
+    if replay_graph {
+        graph.validate_against_sources(container, removed).ok()?;
+    } else {
+        graph.validate_against_meshes(container, removed).ok()?;
+    }
+    if graph.has_unknowns() || graph.face_pairs.is_empty() {
+        return None;
+    }
+    if !closed_boundary_containment(container, removed, replay_graph)? {
+        return None;
+    }
+
+    contained_boundary_difference_certificate(container, removed, &graph.face_pairs)
+}
+
+pub(crate) fn contained_boundary_difference_certificate_from_graph(
+    container: &ExactMesh,
+    removed: &ExactMesh,
+    graph: &ExactIntersectionGraph,
+) -> Option<ContainedBoundaryDifferenceCertificate> {
+    if !container.facts().mesh.closed_manifold || !removed.facts().mesh.closed_manifold {
+        return None;
+    }
+    graph.validate_against_meshes(container, removed).ok()?;
+    if graph.has_unknowns() || graph.face_pairs.is_empty() {
+        return None;
+    }
+    if !closed_boundary_containment(container, removed, false)? {
+        return None;
+    }
+
+    contained_boundary_difference_certificate(container, removed, &graph.face_pairs)
+        .map(|inner| ContainedBoundaryDifferenceCertificate { inner })
+}
+
+fn contained_boundary_difference_certificate_from_reversed_graph(
+    container: &ExactMesh,
+    removed: &ExactMesh,
+    graph: &ExactIntersectionGraph,
+) -> Option<ContainedBoundaryDifferenceCertificate> {
+    if !container.facts().mesh.closed_manifold || !removed.facts().mesh.closed_manifold {
+        return None;
+    }
+    graph.validate_against_meshes(removed, container).ok()?;
+    if graph.has_unknowns() || graph.face_pairs.is_empty() {
+        return None;
+    }
+    if !closed_boundary_containment(container, removed, false)? {
+        return None;
+    }
+
+    let face_pairs = mirrored_face_pairs(&graph.face_pairs);
+    contained_boundary_difference_certificate(container, removed, &face_pairs)
+        .map(|inner| ContainedBoundaryDifferenceCertificate { inner })
+}
+
+fn mirrored_face_pairs(pairs: &[FacePairEvents]) -> Vec<FacePairEvents> {
+    pairs
+        .iter()
+        .map(|pair| FacePairEvents {
+            left_face: pair.right_face,
+            right_face: pair.left_face,
+            relation: pair.relation,
+            projection: pair.projection,
+            events: pair
+                .events
+                .iter()
+                .map(mirrored_intersection_event)
+                .collect(),
+        })
+        .collect()
+}
+
+fn mirrored_intersection_event(event: &IntersectionEvent) -> IntersectionEvent {
+    match event {
+        IntersectionEvent::SegmentPlane {
+            segment_side,
+            edge,
+            plane_side,
+            plane_face,
+            relation,
+            point,
+            parameter,
+            parameter_ratio,
+            construction_failure,
+            endpoint_sides,
+        } => IntersectionEvent::SegmentPlane {
+            segment_side: opposite_side(*segment_side),
+            edge: *edge,
+            plane_side: opposite_side(*plane_side),
+            plane_face: *plane_face,
+            relation: *relation,
+            point: point.clone(),
+            parameter: parameter.clone(),
+            parameter_ratio: parameter_ratio.clone(),
+            construction_failure: *construction_failure,
+            endpoint_sides: *endpoint_sides,
+        },
+        IntersectionEvent::CoplanarEdge {
+            left_edge,
+            right_edge,
+            relation,
+        } => IntersectionEvent::CoplanarEdge {
+            left_edge: *right_edge,
+            right_edge: *left_edge,
+            relation: *relation,
+        },
+        IntersectionEvent::CoplanarVertex {
+            vertex_side,
+            vertex,
+            triangle_side,
+            triangle_face,
+            location,
+        } => IntersectionEvent::CoplanarVertex {
+            vertex_side: opposite_side(*vertex_side),
+            vertex: *vertex,
+            triangle_side: opposite_side(*triangle_side),
+            triangle_face: *triangle_face,
+            location: *location,
+        },
+        IntersectionEvent::Unknown => IntersectionEvent::Unknown,
+    }
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -541,8 +773,6 @@ fn component_contained_boundary_difference_for_faces(
 /// overlaps form one convex containing surface and one strictly contained
 /// convex cap set. The check is performed by replaying the retained source
 /// face sets through the coplanar convex holed surface artifacts, preserving
-/// Yap's source-object discipline from "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997), rather than deciding containment by
 /// sampled representative points.
 fn component_contained_adjacency_certificate(
     left: &ExactMesh,
@@ -581,9 +811,6 @@ struct OverlapFaceComponent {
 /// general coplanar volumetric cell materializer. Treating disconnected
 /// source patches as one polygon would invent topology that no exact source
 /// object owns. We therefore group the bipartite overlap graph by shared left
-/// or right source faces before replaying each patch. This follows Yap,
-/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997): exact combinatorial objects, not numerical proximity, decide which
 /// topology can be promoted.
 fn overlap_face_components(overlapping: &[&FacePairEvents]) -> Option<Vec<OverlapFaceComponent>> {
     if overlapping.is_empty() {
@@ -700,8 +927,6 @@ fn push_unique_face(faces: &mut Vec<usize>, face: usize) {
 ///
 /// The accepted topology replaces several independent source faces with
 /// one-hole remnants or several contained caps on the same source face with a
-/// retained multi-hole remnant. Following Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997), the merge accepts only
 /// source-owned caps whose projection and orientation replay exactly; arbitrary
 /// branch graphs still remain explicit planar/coplanar-volumetric blockers.
 fn merge_contained_face_candidate(
@@ -851,7 +1076,6 @@ fn retained_plane_crossing_is_not_inside_plane_face(
     // supporting plane even when the constructed point lies outside that
     // finite triangle, or exactly on its boundary. That construction is exact
     // evidence for splitting, not for volume overlap; preserving the
-    // distinction is the Yap-style predicate/object boundary this bounded
     // shortcut consumes. Strict interior crossings remain blockers.
     let Some(triangle) = triangle_points(mesh_for_side(*plane_side, left, right), *plane_face)
     else {
@@ -1046,18 +1270,13 @@ fn contained_face_patch_groups(
 /// face components: one connected cap uses the convex one-hole surface
 /// artifact, while several independent caps use the convex multi-hole surface
 /// artifact. Both retain exact rings and validate exact area before
-/// triangulation. That is the same retained-object discipline Yap argues for
-/// in "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997): the closed-solid shortcut consumes a certified planar object rather
 /// than inferring holes from triangle soup. The ring triangulation handoff
-/// follows Held, "FIST: Fast Industrial-Strength Triangulation of Polygons,"
-/// *Algorithmica* 30 (2001).
 fn append_contained_face_patch_group(
     left: &ExactMesh,
     right: &ExactMesh,
     containing_side: MeshSide,
     group: &ContainedFacePatchGroup,
-    vertices: &mut Vec<ExactPoint3>,
+    vertices: &mut Vec<Point3>,
     triangles: &mut Vec<Triangle>,
 ) -> Option<()> {
     let containing_mesh = faces_mesh(
@@ -1093,18 +1312,9 @@ fn faces_mesh(mesh: &ExactMesh, faces: &[usize], label: &'static str) -> Option<
     for &face in faces {
         let triangle = mesh.triangles().get(face)?.0;
         triangles.push(Triangle([
-            map_point(
-                &mut vertices,
-                &mesh.vertices().get(triangle[0])?.to_hyperlimit_point(),
-            )?,
-            map_point(
-                &mut vertices,
-                &mesh.vertices().get(triangle[1])?.to_hyperlimit_point(),
-            )?,
-            map_point(
-                &mut vertices,
-                &mesh.vertices().get(triangle[2])?.to_hyperlimit_point(),
-            )?,
+            map_point(&mut vertices, &mesh.vertices().get(triangle[0])?.clone())?,
+            map_point(&mut vertices, &mesh.vertices().get(triangle[1])?.clone())?,
+            map_point(&mut vertices, &mesh.vertices().get(triangle[2])?.clone())?,
         ]));
     }
     ExactMesh::new_with_policy(
@@ -1202,7 +1412,7 @@ const fn canonical_edge(left: usize, right: usize) -> (usize, usize) {
 fn append_source_mesh_without_face(
     mesh: &ExactMesh,
     skip_faces: Vec<usize>,
-    vertices: &mut Vec<ExactPoint3>,
+    vertices: &mut Vec<Point3>,
     triangles: &mut Vec<Triangle>,
 ) -> Option<()> {
     for (face, triangle) in mesh.triangles().iter().enumerate() {
@@ -1210,18 +1420,9 @@ fn append_source_mesh_without_face(
             continue;
         }
         triangles.push(Triangle([
-            map_point(
-                vertices,
-                &mesh.vertices().get(triangle.0[0])?.to_hyperlimit_point(),
-            )?,
-            map_point(
-                vertices,
-                &mesh.vertices().get(triangle.0[1])?.to_hyperlimit_point(),
-            )?,
-            map_point(
-                vertices,
-                &mesh.vertices().get(triangle.0[2])?.to_hyperlimit_point(),
-            )?,
+            map_point(vertices, &mesh.vertices().get(triangle.0[0])?.clone())?,
+            map_point(vertices, &mesh.vertices().get(triangle.0[1])?.clone())?,
+            map_point(vertices, &mesh.vertices().get(triangle.0[2])?.clone())?,
         ]));
     }
     Some(())
@@ -1230,7 +1431,7 @@ fn append_source_mesh_without_face(
 fn append_source_mesh_without_face_reversed(
     mesh: &ExactMesh,
     skip_faces: Vec<usize>,
-    vertices: &mut Vec<ExactPoint3>,
+    vertices: &mut Vec<Point3>,
     triangles: &mut Vec<Triangle>,
 ) -> Option<()> {
     for (face, triangle) in mesh.triangles().iter().enumerate() {
@@ -1238,18 +1439,9 @@ fn append_source_mesh_without_face_reversed(
             continue;
         }
         let mapped = [
-            map_point(
-                vertices,
-                &mesh.vertices().get(triangle.0[0])?.to_hyperlimit_point(),
-            )?,
-            map_point(
-                vertices,
-                &mesh.vertices().get(triangle.0[1])?.to_hyperlimit_point(),
-            )?,
-            map_point(
-                vertices,
-                &mesh.vertices().get(triangle.0[2])?.to_hyperlimit_point(),
-            )?,
+            map_point(vertices, &mesh.vertices().get(triangle.0[0])?.clone())?,
+            map_point(vertices, &mesh.vertices().get(triangle.0[1])?.clone())?,
+            map_point(vertices, &mesh.vertices().get(triangle.0[2])?.clone())?,
         ];
         triangles.push(Triangle([mapped[0], mapped[2], mapped[1]]));
     }
@@ -1260,25 +1452,16 @@ fn append_holed_replacement(
     mesh: &ExactMesh,
     projection: CoplanarProjection,
     target_sign: Sign,
-    vertices: &mut Vec<ExactPoint3>,
+    vertices: &mut Vec<Point3>,
     triangles: &mut Vec<Triangle>,
 ) -> Option<()> {
     let source_sign = first_projected_mesh_triangle_sign(mesh, projection)?;
     let flip = source_sign != target_sign;
     for triangle in mesh.triangles() {
         let mapped = [
-            map_point(
-                vertices,
-                &mesh.vertices().get(triangle.0[0])?.to_hyperlimit_point(),
-            )?,
-            map_point(
-                vertices,
-                &mesh.vertices().get(triangle.0[1])?.to_hyperlimit_point(),
-            )?,
-            map_point(
-                vertices,
-                &mesh.vertices().get(triangle.0[2])?.to_hyperlimit_point(),
-            )?,
+            map_point(vertices, &mesh.vertices().get(triangle.0[0])?.clone())?,
+            map_point(vertices, &mesh.vertices().get(triangle.0[1])?.clone())?,
+            map_point(vertices, &mesh.vertices().get(triangle.0[2])?.clone())?,
         ];
         triangles.push(if flip {
             Triangle([mapped[0], mapped[2], mapped[1]])
@@ -1289,10 +1472,10 @@ fn append_holed_replacement(
     Some(())
 }
 
-fn map_point(vertices: &mut Vec<ExactPoint3>, point: &Point3) -> Option<usize> {
+fn map_point(vertices: &mut Vec<Point3>, point: &Point3) -> Option<usize> {
     if let Some(existing) = vertices
         .iter()
-        .position(|candidate| points_equal(&candidate.to_hyperlimit_point(), point) == Some(true))
+        .position(|candidate| points_equal(&candidate.clone(), point) == Some(true))
     {
         return Some(existing);
     }
@@ -1301,8 +1484,8 @@ fn map_point(vertices: &mut Vec<ExactPoint3>, point: &Point3) -> Option<usize> {
     Some(mapped)
 }
 
-fn point_to_exact(point: &Point3) -> ExactPoint3 {
-    ExactPoint3::new(point.x.clone(), point.y.clone(), point.z.clone())
+fn point_to_exact(point: &Point3) -> Point3 {
+    Point3::new(point.x.clone(), point.y.clone(), point.z.clone())
 }
 
 fn skip_faces_for_side(
@@ -1336,9 +1519,9 @@ fn mesh_for_side<'a>(side: MeshSide, left: &'a ExactMesh, right: &'a ExactMesh) 
 fn triangle_points(mesh: &ExactMesh, face: usize) -> Option<[Point3; 3]> {
     let triangle = mesh.triangles().get(face)?.0;
     Some([
-        mesh.vertices().get(triangle[0])?.to_hyperlimit_point(),
-        mesh.vertices().get(triangle[1])?.to_hyperlimit_point(),
-        mesh.vertices().get(triangle[2])?.to_hyperlimit_point(),
+        mesh.vertices().get(triangle[0])?.clone(),
+        mesh.vertices().get(triangle[1])?.clone(),
+        mesh.vertices().get(triangle[2])?.clone(),
     ])
 }
 
@@ -1370,9 +1553,9 @@ fn first_projected_mesh_triangle_sign(
 ) -> Option<Sign> {
     mesh.triangles().iter().find_map(|triangle| {
         let points = [
-            mesh.vertices().get(triangle.0[0])?.to_hyperlimit_point(),
-            mesh.vertices().get(triangle.0[1])?.to_hyperlimit_point(),
-            mesh.vertices().get(triangle.0[2])?.to_hyperlimit_point(),
+            mesh.vertices().get(triangle.0[0])?.clone(),
+            mesh.vertices().get(triangle.0[1])?.clone(),
+            mesh.vertices().get(triangle.0[2])?.clone(),
         ];
         projected_triangle_sign(&points, projection)
     })
@@ -1385,9 +1568,9 @@ fn mesh_projected_faces_all_have_sign(
 ) -> Option<bool> {
     for triangle in mesh.triangles() {
         let points = [
-            mesh.vertices().get(triangle.0[0])?.to_hyperlimit_point(),
-            mesh.vertices().get(triangle.0[1])?.to_hyperlimit_point(),
-            mesh.vertices().get(triangle.0[2])?.to_hyperlimit_point(),
+            mesh.vertices().get(triangle.0[0])?.clone(),
+            mesh.vertices().get(triangle.0[1])?.clone(),
+            mesh.vertices().get(triangle.0[2])?.clone(),
         ];
         if projected_triangle_sign(&points, projection)? != sign {
             return Some(false);
@@ -1396,8 +1579,8 @@ fn mesh_projected_faces_all_have_sign(
     Some(true)
 }
 
-fn real_sign(value: &ExactReal) -> Option<Sign> {
-    match compare_reals(value, &ExactReal::from(0)).value()? {
+fn real_sign(value: &Real) -> Option<Sign> {
+    match compare_reals(value, &Real::from(0)).value()? {
         Ordering::Less => Some(Sign::Negative),
         Ordering::Equal => Some(Sign::Zero),
         Ordering::Greater => Some(Sign::Positive),
@@ -1414,9 +1597,9 @@ fn points_equal(left: &Point3, right: &Point3) -> Option<bool> {
 
 fn closed_boundary_contact_only(left: &ExactMesh, right: &ExactMesh) -> Option<bool> {
     let left_in_right = classify_mesh_vertices_against_closed_mesh_winding_report(left, right);
-    left_in_right.validate_against_sources(left, right).ok()?;
+    left_in_right.validate().ok()?;
     let right_in_left = classify_mesh_vertices_against_closed_mesh_winding_report(right, left);
-    right_in_left.validate_against_sources(right, left).ok()?;
+    right_in_left.validate().ok()?;
     Some(
         mesh_vertices_are_boundary_or_outside(&left_in_right)
             && mesh_vertices_are_boundary_or_outside(&right_in_left)
@@ -1444,17 +1627,29 @@ fn mesh_vertices_touch_boundary(report: &super::winding::ClosedMeshWindingMeshRe
         .any(|vertex| vertex.relation == ClosedMeshWindingRelation::Boundary)
 }
 
-fn closed_boundary_containment(container: &ExactMesh, removed: &ExactMesh) -> Option<bool> {
+fn closed_boundary_containment(
+    container: &ExactMesh,
+    removed: &ExactMesh,
+    replay_reports: bool,
+) -> Option<bool> {
     let removed_in_container =
         classify_mesh_vertices_against_closed_mesh_winding_report(removed, container);
-    removed_in_container
-        .validate_against_sources(removed, container)
-        .ok()?;
+    if replay_reports {
+        removed_in_container
+            .validate_against_sources(removed, container)
+            .ok()?;
+    } else {
+        removed_in_container.validate().ok()?;
+    }
     let container_in_removed =
         classify_mesh_vertices_against_closed_mesh_winding_report(container, removed);
-    container_in_removed
-        .validate_against_sources(container, removed)
-        .ok()?;
+    if replay_reports {
+        container_in_removed
+            .validate_against_sources(container, removed)
+            .ok()?;
+    } else {
+        container_in_removed.validate().ok()?;
+    }
     Some(
         removed_in_container.target_closed
             && container_in_removed.target_closed
@@ -1479,31 +1674,4 @@ fn closed_boundary_containment(container: &ExactMesh, removed: &ExactMesh) -> Op
                 .iter()
                 .any(|vertex| vertex.relation == ClosedMeshWindingRelation::Outside),
     )
-}
-
-fn contained_adjacency_error(error: ContainedFaceAdjacentUnionError) -> MeshError {
-    MeshError::one(MeshDiagnostic::new(
-        Severity::Error,
-        DiagnosticKind::UnsupportedExactOperation,
-        format!("exact contained-face adjacent union/source replay failed: {error:?}"),
-    ))
-}
-
-pub(crate) fn replay_contained_face_adjacent_union(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    validation: ValidationPolicy,
-) -> Result<ContainedFaceAdjacentUnion, MeshError> {
-    let union =
-        materialize_contained_face_adjacent_union(left, right, validation).ok_or_else(|| {
-            MeshError::one(MeshDiagnostic::new(
-                Severity::Error,
-                DiagnosticKind::UnsupportedExactOperation,
-                "exact contained-face adjacent union certificate did not replay",
-            ))
-        })?;
-    union
-        .validate_against_sources(left, right)
-        .map_err(contained_adjacency_error)?;
-    Ok(union)
 }
