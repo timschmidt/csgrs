@@ -226,8 +226,16 @@ pub struct ExactArrangementBooleanAttempt {
     pub face_cells: usize,
     /// Connected shell/region count, when construction succeeded.
     pub regions: usize,
+    /// Volume-region count, when closed shell topology produced a volume graph.
+    pub volume_regions: usize,
+    /// Volume adjacency count, when closed shell topology produced a volume graph.
+    pub volume_adjacencies: usize,
+    /// Retained lower-dimensional artifact count.
+    pub lower_dimensional_artifacts: usize,
     /// Selected face-cell count, when selection succeeded.
     pub selected_faces: usize,
+    /// Selected volume-region count, when selection succeeded.
+    pub selected_volume_regions: usize,
     /// Output vertex count, when triangulation succeeded.
     pub output_vertices: usize,
     /// Output triangle count, when triangulation succeeded.
@@ -1792,7 +1800,17 @@ fn run_arrangement_cell_complex_attempt(
             .shells_or_regions
             .as_ref()
             .map_or(0, |regions| regions.len()),
+        volume_regions: arrangement
+            .volume_regions
+            .as_ref()
+            .map_or(0, |regions| regions.len()),
+        volume_adjacencies: arrangement
+            .volume_adjacencies
+            .as_ref()
+            .map_or(0, |adjacencies| adjacencies.len()),
+        lower_dimensional_artifacts: arrangement.lower_dimensional_artifacts.len(),
         selected_faces: 0,
+        selected_volume_regions: 0,
         output_vertices: 0,
         output_triangles: 0,
     };
@@ -1840,6 +1858,7 @@ fn run_arrangement_cell_complex_attempt(
     };
     attempt.stage = ExactArrangementBooleanStage::Selected;
     attempt.selected_faces = selected.selected_faces.len();
+    attempt.selected_volume_regions = selected.selected_volume_regions.len();
     let simplified = match selected.simplify_exact_with_policy(policy) {
         Ok(simplified) if simplified.blockers.is_empty() => simplified,
         Ok(simplified) => {

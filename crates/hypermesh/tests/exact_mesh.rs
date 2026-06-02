@@ -37523,10 +37523,41 @@ fn exact_arrangement_boolean_attempt_reports_decline_stage() {
     assert!(report.arrangement_blockers > 0);
     assert_eq!(report.face_cells, 2);
     assert_eq!(report.regions, 2);
+    assert_eq!(report.volume_regions, 0);
+    assert_eq!(report.volume_adjacencies, 0);
+    assert_eq!(report.lower_dimensional_artifacts, 0);
+    assert_eq!(report.selected_volume_regions, 0);
     assert!(matches!(
         report.decline,
         Some(hypermesh::exact::ExactArrangementBooleanDecline::ArrangementBlockers(_))
     ));
+}
+
+#[test]
+fn exact_arrangement_boolean_attempt_reports_volume_graph_counts() {
+    let left = tetrahedron_i64([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]);
+    let right = tetrahedron_i64([3, 0, 0], [4, 0, 0], [3, 1, 0], [3, 0, 1]);
+
+    let report = hypermesh::exact::exact_arrangement_boolean_attempt_report(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+        hypermesh::exact::ExactRegularizationPolicy::REGULARIZED_SOLID,
+    )
+    .unwrap();
+
+    assert_eq!(
+        report.stage,
+        hypermesh::exact::ExactArrangementBooleanStage::Materialized
+    );
+    assert_eq!(report.face_cells, 8);
+    assert_eq!(report.regions, 2);
+    assert_eq!(report.volume_regions, 3);
+    assert_eq!(report.volume_adjacencies, 2);
+    assert_eq!(report.selected_faces, 8);
+    assert_eq!(report.selected_volume_regions, 2);
+    assert_eq!(report.lower_dimensional_artifacts, 0);
+    assert!(report.decline.is_none());
 }
 
 fn fuzz_seed_mesh_pair(seed: &[u8]) -> (ExactMesh, ExactMesh) {
