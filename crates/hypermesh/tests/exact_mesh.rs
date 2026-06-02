@@ -12247,6 +12247,10 @@ fn exact_named_booleans_intersect_partially_overlapping_coplanar_triangles() {
         arrangement_attempt.stage,
         hypermesh::exact::ExactArrangementBooleanStage::Materialized
     );
+    assert_eq!(
+        arrangement_attempt.materialized_shortcut,
+        Some(hypermesh::exact::ExactBooleanShortcutKind::ArrangementCellComplex)
+    );
     assert!(arrangement_attempt.decline.is_none());
     assert!(arrangement_attempt.output_triangles > 0);
 
@@ -35766,6 +35770,23 @@ fn exact_boolmesh_kernel12_lowers_coplanar_interval_endpoints() {
     );
     assert_eq!(execution.mesh.facts().mesh.edge_count, 0);
 
+    let arrangement_attempt = hypermesh::exact::exact_arrangement_boolean_attempt_report(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Intersection,
+        hypermesh::exact::ExactRegularizationPolicy::REGULARIZED_SOLID,
+    )
+    .expect("arrangement attempt should formally delegate completed boolmesh split");
+    assert_eq!(
+        arrangement_attempt.stage,
+        hypermesh::exact::ExactArrangementBooleanStage::Materialized
+    );
+    assert_eq!(
+        arrangement_attempt.materialized_shortcut,
+        Some(hypermesh::exact::ExactBooleanShortcutKind::BoolMeshSplit)
+    );
+    assert_eq!(arrangement_attempt.output_triangles, 0);
+
     let public_result = hypermesh::exact::boolean_exact(
         &left,
         &right,
@@ -37521,6 +37542,7 @@ fn exact_arrangement_boolean_attempt_reports_decline_stage() {
         hypermesh::exact::ExactArrangementBooleanStage::ArrangementBuilt
     );
     assert!(report.arrangement_blockers > 0);
+    assert_eq!(report.materialized_shortcut, None);
     assert_eq!(report.face_cells, 2);
     assert_eq!(report.regions, 2);
     assert_eq!(report.volume_regions, 0);
@@ -37557,6 +37579,10 @@ fn exact_arrangement_boolean_attempt_reports_volume_graph_counts() {
     assert_eq!(report.selected_faces, 8);
     assert_eq!(report.selected_volume_regions, 2);
     assert_eq!(report.lower_dimensional_artifacts, 0);
+    assert_eq!(
+        report.materialized_shortcut,
+        Some(hypermesh::exact::ExactBooleanShortcutKind::ArrangementCellComplex)
+    );
     assert!(report.decline.is_none());
 }
 

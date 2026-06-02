@@ -220,6 +220,8 @@ pub struct ExactArrangementBooleanAttempt {
     pub stage: ExactArrangementBooleanStage,
     /// Reason no output was produced, when the attempt declined.
     pub decline: Option<ExactArrangementBooleanDecline>,
+    /// Certified shortcut that materialized output, when one did.
+    pub materialized_shortcut: Option<ExactBooleanShortcutKind>,
     /// Arrangement blocker count observed after construction.
     pub arrangement_blockers: usize,
     /// Arrangement face-cell count, when construction succeeded.
@@ -1794,6 +1796,7 @@ fn run_arrangement_cell_complex_attempt(
         policy,
         stage: ExactArrangementBooleanStage::ArrangementBuilt,
         decline: None,
+        materialized_shortcut: None,
         arrangement_blockers: arrangement.blockers.len(),
         face_cells: arrangement.face_cells.len(),
         regions: arrangement
@@ -1824,6 +1827,23 @@ fn run_arrangement_cell_complex_attempt(
             &arrangement,
         )? {
             attempt.stage = ExactArrangementBooleanStage::Materialized;
+            attempt.materialized_shortcut = Some(ExactBooleanShortcutKind::ArrangementCellComplex);
+            attempt.output_vertices = result.mesh.vertices().len();
+            attempt.output_triangles = result.mesh.triangles().len();
+            return Ok(ArrangementCellComplexOutcome::Materialized(result, attempt));
+        }
+        if !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+            && certified_boolmesh_split_support_from_graph(
+                &arrangement.graph,
+                left,
+                right,
+                operation,
+            )
+            && let Some(validation) = validation
+            && let Some(result) = boolean_boolmesh_split_meshes(left, right, operation, validation)?
+        {
+            attempt.stage = ExactArrangementBooleanStage::Materialized;
+            attempt.materialized_shortcut = Some(ExactBooleanShortcutKind::BoolMeshSplit);
             attempt.output_vertices = result.mesh.vertices().len();
             attempt.output_triangles = result.mesh.triangles().len();
             return Ok(ArrangementCellComplexOutcome::Materialized(result, attempt));
@@ -1898,6 +1918,7 @@ fn run_arrangement_cell_complex_attempt(
         }
     };
     attempt.stage = ExactArrangementBooleanStage::Materialized;
+    attempt.materialized_shortcut = Some(ExactBooleanShortcutKind::ArrangementCellComplex);
     Ok(ArrangementCellComplexOutcome::Materialized(
         certified_shortcut_result(mesh, ExactBooleanShortcutKind::ArrangementCellComplex),
         attempt,
