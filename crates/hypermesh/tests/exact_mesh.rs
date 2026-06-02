@@ -16679,9 +16679,16 @@ fn exact_coplanar_convex_surface_difference_materializes_multiple_component_cuts
     assert_eq!(
         nonrectangular_result.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut:
-                hypermesh::exact::ExactBooleanShortcutKind::CoplanarConvexSurfaceMultiDifference
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ArrangementCellComplex
         }
+    );
+    assert!(exact_mesh_vertex_sets_equal(
+        &nonrectangular_result.mesh,
+        &nonrectangular_multi_cutter.mesh
+    ));
+    assert_eq!(
+        nonrectangular_result.mesh.triangles().len(),
+        nonrectangular_multi_cutter.mesh.triangles().len()
     );
 
     let nonconvex_multi_cutter_right = ExactMesh::from_i64_triangles_with_policy(

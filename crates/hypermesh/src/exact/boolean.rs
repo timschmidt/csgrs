@@ -2184,7 +2184,6 @@ fn coplanar_mesh_overlay_should_preempt_surface_paths(
         }
         ExactBooleanOperation::Difference => {
             if certify_coplanar_surface_boundary_touch(left, right).is_some()
-                || arrange_coplanar_convex_surface_multi_difference(left, right).is_some()
                 || arrange_coplanar_surface_multi_difference(left, right).is_some()
                 || arrange_coplanar_surface_side_cutter_difference(left, right).is_some()
                 || arrange_coplanar_surface_cutter_hole_contact_difference(left, right).is_some()
@@ -2201,6 +2200,7 @@ fn coplanar_mesh_overlay_should_preempt_surface_paths(
                 return false;
             }
             arrange_coplanar_convex_surface_difference(left, right).is_some()
+                || arrange_coplanar_convex_surface_multi_difference(left, right).is_some()
                 || arrange_coplanar_surface_component_difference(left, right).is_some()
                 || arrange_coplanar_surface_point_touch_difference(left, right).is_some()
                 || arrange_coplanar_affine_surface_difference(left, right).is_some()
