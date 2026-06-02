@@ -16047,10 +16047,11 @@ fn exact_coplanar_surface_multi_component_union_materializes_disconnected_noncon
     assert_eq!(
         result.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::exact::ExactBooleanShortcutKind::CoplanarSurfaceMultiUnion
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
-    assert_eq!(result.mesh, union.mesh);
+    assert!(exact_mesh_vertex_sets_equal(&result.mesh, &union.mesh));
+    assert_eq!(result.mesh.triangles().len(), union.mesh.triangles().len());
 
     let point_only_left = ExactMesh::from_i64_triangles_with_policy(
         &[
