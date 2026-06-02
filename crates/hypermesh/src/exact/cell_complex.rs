@@ -5,7 +5,9 @@
 //! triangulation/export remains a later step with its own approximation or
 //! triangulation policy.
 
-use super::arrangement3d::{ArrangementFaceCell, ExactArrangement, ExactArrangement3d};
+use super::arrangement3d::{
+    ArrangementFaceCell, ArrangementVolumeRegion, ExactArrangement, ExactArrangement3d,
+};
 use super::boolean::ExactBooleanOperation;
 use super::graph::MeshSide;
 use super::regularization::{
@@ -47,6 +49,21 @@ pub struct ExactCellComplexFace {
     pub opposite: ExactOppositeRegionLabel,
 }
 
+/// Labeled volume region induced by closed arrangement shells.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ExactCellComplexVolumeRegion {
+    /// Volume-region index from the source arrangement graph.
+    pub index: usize,
+    /// Whether this region is the unbounded exterior.
+    pub exterior: bool,
+    /// Shell components bounding this volume.
+    pub boundary_shells: Vec<usize>,
+    /// Whether the volume is owned by the left source shell graph.
+    pub in_left: bool,
+    /// Whether the volume is owned by the right source shell graph.
+    pub in_right: bool,
+}
+
 /// Exact cell complex built from a 3D arrangement.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactCellComplex {
@@ -61,6 +78,8 @@ pub struct ExactCellComplex {
 pub struct ExactLabeledCellComplex {
     /// Labeled face-cells.
     pub faces: Vec<ExactCellComplexFace>,
+    /// Labeled volume-region graph nodes.
+    pub volume_regions: Vec<ExactCellComplexVolumeRegion>,
     /// Blockers inherited or introduced during labeling.
     pub blockers: Vec<ExactArrangementBlocker>,
 }
@@ -70,8 +89,12 @@ pub struct ExactLabeledCellComplex {
 pub struct ExactSelectedCellComplex {
     /// Labeled face-cells.
     pub faces: Vec<ExactCellComplexFace>,
+    /// Labeled volume-region graph nodes.
+    pub volume_regions: Vec<ExactCellComplexVolumeRegion>,
     /// Indices of selected `faces`.
     pub selected_faces: Vec<usize>,
+    /// Indices of selected `volume_regions`.
+    pub selected_volume_regions: Vec<usize>,
     /// Boolean operation used for selection.
     pub operation: ExactBooleanOperation,
     /// Blockers inherited or introduced during selection.
@@ -103,12 +126,22 @@ impl ExactCellComplex {
             .cloned()
             .map(|cell| label_face_cell(cell, &mut blockers))
             .collect::<Vec<_>>();
+        let volume_regions = self
+            .arrangement
+            .volume_regions
+            .as_ref()
+            .map(|regions| regions.iter().map(label_volume_region).collect())
+            .unwrap_or_default();
         if !blockers.is_empty()
             && policy.unresolved == super::regularization::ExactUnresolvedPolicy::Block
         {
             return Err(blockers[0].clone());
         }
-        Ok(ExactLabeledCellComplex { faces, blockers })
+        Ok(ExactLabeledCellComplex {
+            faces,
+            volume_regions,
+            blockers,
+        })
     }
 }
 
@@ -147,6 +180,7 @@ impl ExactLabeledCellComplex {
     ) -> Result<ExactSelectedCellComplex, ExactArrangementBlocker> {
         let mut blockers = self.blockers;
         let mut selected_faces = Vec::new();
+        let mut selected_volume_regions = Vec::new();
         for (index, face) in self.faces.iter().enumerate() {
             if face.opposite == ExactOppositeRegionLabel::Boundary
                 && policy.lower_dimensional == ExactLowerDimensionalPolicy::ReportBlocker
@@ -159,6 +193,11 @@ impl ExactLabeledCellComplex {
                 None => blockers.push(ExactArrangementBlocker::UnresolvedRegionClassification),
             }
         }
+        for (index, volume) in self.volume_regions.iter().enumerate() {
+            if select_volume_region(volume, operation) {
+                selected_volume_regions.push(index);
+            }
+        }
         if !blockers.is_empty()
             && policy.unresolved == super::regularization::ExactUnresolvedPolicy::Block
         {
@@ -166,7 +205,9 @@ impl ExactLabeledCellComplex {
         }
         Ok(ExactSelectedCellComplex {
             faces: self.faces,
+            volume_regions: self.volume_regions,
             selected_faces,
+            selected_volume_regions,
             operation,
             blockers,
         })
@@ -235,6 +276,16 @@ fn label_face_cell(
     }
 }
 
+fn label_volume_region(region: &ArrangementVolumeRegion) -> ExactCellComplexVolumeRegion {
+    ExactCellComplexVolumeRegion {
+        index: region.index,
+        exterior: region.exterior,
+        boundary_shells: region.boundary_shells.clone(),
+        in_left: region.source_sides.contains(&MeshSide::Left),
+        in_right: region.source_sides.contains(&MeshSide::Right),
+    }
+}
+
 fn select_face(face: &ExactCellComplexFace, operation: ExactBooleanOperation) -> Option<bool> {
     let inside = match face.opposite {
         ExactOppositeRegionLabel::Inside | ExactOppositeRegionLabel::Boundary => true,
@@ -250,6 +301,21 @@ fn select_face(face: &ExactCellComplexFace, operation: ExactBooleanOperation) ->
         },
         ExactBooleanOperation::SelectedRegions(selection) => {
             Some(selection.keeps(mesh_side_for_source(face.source)))
+        }
+    }
+}
+
+fn select_volume_region(
+    region: &ExactCellComplexVolumeRegion,
+    operation: ExactBooleanOperation,
+) -> bool {
+    match operation {
+        ExactBooleanOperation::Union => region.in_left || region.in_right,
+        ExactBooleanOperation::Intersection => region.in_left && region.in_right,
+        ExactBooleanOperation::Difference => region.in_left && !region.in_right,
+        ExactBooleanOperation::SelectedRegions(selection) => {
+            (region.in_left && selection.keeps(MeshSide::Left))
+                || (region.in_right && selection.keeps(MeshSide::Right))
         }
     }
 }
@@ -303,6 +369,7 @@ mod tests {
     fn selected_region_operation_respects_requested_source_side() {
         let labeled = ExactLabeledCellComplex {
             faces: vec![labeled_face(MeshSide::Left), labeled_face(MeshSide::Right)],
+            volume_regions: Vec::new(),
             blockers: Vec::new(),
         };
 

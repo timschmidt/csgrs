@@ -109,8 +109,8 @@ pub use boolean::{
 };
 pub use bounds::{AabbIntersectionKind, BoundsValidationError, ExactAabb3, MeshBounds};
 pub use cell_complex::{
-    ExactCellComplex, ExactCellComplexFace, ExactCellRegionLabel, ExactLabeledCellComplex,
-    ExactOppositeRegionLabel, ExactSelectedCellComplex,
+    ExactCellComplex, ExactCellComplexFace, ExactCellComplexVolumeRegion, ExactCellRegionLabel,
+    ExactLabeledCellComplex, ExactOppositeRegionLabel, ExactSelectedCellComplex,
 };
 pub use construction::{
     SegmentPlaneConstructionFailure, SegmentPlaneIntersection, SegmentPlaneParameterRatio,

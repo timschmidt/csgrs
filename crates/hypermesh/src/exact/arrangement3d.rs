@@ -2250,6 +2250,8 @@ mod tests {
         );
         let selected = labeled.select(ExactBooleanOperation::Union).unwrap();
         assert_eq!(selected.selected_faces.len(), 8);
+        assert_eq!(selected.volume_regions.len(), 3);
+        assert_eq!(selected.selected_volume_regions, vec![1, 2]);
         assert!(
             selected
                 .validate_against_sources(
@@ -2259,6 +2261,19 @@ mod tests {
                 )
                 .is_ok()
         );
+
+        let intersection = arrangement
+            .label_regions(ExactRegularizationPolicy::REGULARIZED_SOLID)
+            .unwrap()
+            .select(ExactBooleanOperation::Intersection)
+            .unwrap();
+        assert!(intersection.selected_volume_regions.is_empty());
+        let difference = arrangement
+            .label_regions(ExactRegularizationPolicy::REGULARIZED_SOLID)
+            .unwrap()
+            .select(ExactBooleanOperation::Difference)
+            .unwrap();
+        assert_eq!(difference.selected_volume_regions, vec![1]);
 
         let simplified = selected.simplify_exact().unwrap();
         assert_eq!(simplified.faces.len(), 8);

@@ -749,7 +749,9 @@ mod tests {
                 selected_face(0, &[0, 1, 2], &[v0.clone(), v1, v2.clone()]),
                 selected_face(1, &[0, 2, 3], &[v0, v2, v3]),
             ],
+            volume_regions: Vec::new(),
             selected_faces: vec![0, 1],
+            selected_volume_regions: Vec::new(),
             operation: ExactBooleanOperation::Union,
             blockers: Vec::new(),
         };
@@ -799,7 +801,9 @@ mod tests {
                 selected_face(0, &[0, 1, 2, 3], &outer),
                 selected_face(1, &[4, 5, 6, 7], &hole),
             ],
+            volume_regions: Vec::new(),
             selected_faces: vec![0, 1],
+            selected_volume_regions: Vec::new(),
             operation: ExactBooleanOperation::Union,
             blockers: Vec::new(),
         };
