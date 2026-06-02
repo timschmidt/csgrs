@@ -401,7 +401,8 @@ pub enum ExactRegionRetention {
 }
 
 impl ExactRegionSelection {
-    const fn keeps(self, side: MeshSide) -> bool {
+    /// Return whether this selection retains regions from `side`.
+    pub const fn keeps(self, side: MeshSide) -> bool {
         matches!(
             (self, side),
             (Self::KeepAll, _)

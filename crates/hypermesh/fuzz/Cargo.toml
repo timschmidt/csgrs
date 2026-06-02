@@ -54,3 +54,10 @@ path = "fuzz_targets/exact_adjacent_polygon.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "exact_arrangement"
+path = "fuzz_targets/exact_arrangement.rs"
+test = false
+doc = false
+bench = false

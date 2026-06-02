@@ -15,6 +15,9 @@ pub mod affine_box;
 pub mod affine_solid;
 #[doc(hidden)]
 pub mod affine_surface;
+#[doc(hidden)]
+pub mod arrangement2d;
+pub mod arrangement3d;
 pub mod artifact;
 pub mod audit;
 pub mod boolean;
@@ -23,6 +26,7 @@ pub mod boolmesh;
 pub mod bounds;
 #[doc(hidden)]
 pub mod box_solid;
+pub mod cell_complex;
 #[doc(hidden)]
 pub mod cells;
 pub mod construction;
@@ -50,8 +54,10 @@ pub mod provenance;
 pub mod readiness;
 #[doc(hidden)]
 pub mod region;
+pub mod regularization;
 pub mod reports;
 pub mod scalar;
+pub mod simplify;
 pub mod solid;
 pub mod support;
 #[doc(hidden)]
@@ -75,6 +81,20 @@ pub use adapter::{
 pub use adjacent_polygon::{
     polygon_patch_candidate_face_sets_for_internal_fuzz, polygon_patch_pairs_for_internal_fuzz,
 };
+pub use arrangement2d::{
+    ExactArrangement2d, ExactArrangement2dBlocker, ExactArrangement2dEdge, ExactArrangement2dFace,
+    ExactArrangement2dInputSegment, ExactArrangement2dOutputLoop, ExactArrangement2dOverlay,
+    ExactArrangement2dOverlayFace, ExactArrangement2dRegion, ExactArrangement2dRegionRing,
+    ExactArrangement2dSegmentSource, ExactArrangement2dSetOperation, ExactArrangement2dVertex,
+    build_exact_arrangement2d, build_exact_arrangement2d_overlay, exact_arrangement2d_face_witness,
+};
+pub use arrangement3d::{
+    ArrangementCarrierPlaneOverlay, ArrangementEdge, ArrangementEdgeProvenance,
+    ArrangementFaceCarrier, ArrangementFaceCell, ArrangementFaceCellNode,
+    ArrangementFacePlaneArrangement, ArrangementLowerDimensionalArtifact,
+    ArrangementOppositeClassification, ArrangementRegion, ArrangementVertex,
+    ArrangementVertexProvenance, ExactArrangement, ExactArrangement3d,
+};
 pub use audit::{
     ExactMeshAuditError, ExactMeshAuditFreshness, ExactMeshAuditReport, audit_exact_mesh,
 };
@@ -86,6 +106,10 @@ pub use boolean::{
     preflight_boolean_exact,
 };
 pub use bounds::{AabbIntersectionKind, BoundsValidationError, ExactAabb3, MeshBounds};
+pub use cell_complex::{
+    ExactCellComplex, ExactCellComplexFace, ExactCellRegionLabel, ExactLabeledCellComplex,
+    ExactOppositeRegionLabel, ExactSelectedCellComplex,
+};
 pub use construction::{
     SegmentPlaneConstructionFailure, SegmentPlaneIntersection, SegmentPlaneParameterRatio,
     SegmentPlaneRelation, SegmentPlaneValidationError, intersect_segment_with_face_plane,
@@ -135,6 +159,10 @@ pub use readiness::{
     ExactMeshConsumerReadinessError, ExactMeshConsumerReadinessFreshness,
     ExactMeshConsumerReadinessReport, exact_mesh_consumer_readiness,
 };
+pub use regularization::{
+    ExactArrangementBlocker, ExactLowerDimensionalPolicy, ExactRegularizationPolicy,
+    ExactUnresolvedPolicy,
+};
 pub use reports::{
     ExactBooleanBlocker, ExactBooleanBlockerKind, ExactBooleanPreflight, ExactBooleanResult,
     ExactBooleanResultKind, ExactBooleanShortcutKind, ExactBooleanSupport,
@@ -145,6 +173,7 @@ pub use reports::{
     ExactWindingReadinessStatus,
 };
 pub use scalar::LossyF64Import;
+pub use simplify::{ExactSimplifiedCellComplex, ExactSimplifiedFaceCell};
 pub use solid::{
     ClosedMeshOrientation, ConvexSolidClassification, ConvexSolidFacts,
     ConvexSolidMeshClassification, ConvexSolidMeshRelation, ConvexSolidPointClassification,

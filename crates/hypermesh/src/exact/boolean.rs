@@ -33,6 +33,7 @@ use super::affine_surface::{
     CoplanarAffineSurfaceBasis, arrange_coplanar_affine_surface_difference,
     arrange_coplanar_affine_surface_intersection, arrange_coplanar_affine_surface_union,
 };
+use super::arrangement3d::ExactArrangement;
 use super::boolmesh::{
     ExactBoolMeshKernelStage, ExactBoolMeshValidationError,
     exact_boolmesh_workspace_from_graph_for_support, execute_exact_boolmesh_bounds_disjoint,
@@ -80,6 +81,7 @@ use super::region::{
     checked_classify_face_regions_against_opposite_planes,
     checked_triangulate_face_regions_with_earcut,
 };
+use super::regularization::ExactRegularizationPolicy;
 use super::reports::{
     ExactBooleanBlocker, ExactBooleanBlockerKind, ExactBooleanPreflight, ExactBooleanResult,
     ExactBooleanResultKind, ExactBooleanShortcutKind, ExactBooleanSupport,
@@ -1389,6 +1391,11 @@ pub fn boolean_exact_with_boundary_policy(
     {
         return Ok(result);
     }
+    if let Some(result) =
+        boolean_arrangement_cell_complex_meshes(left, right, operation, validation)?
+    {
+        return Ok(result);
+    }
     if let Some(result) = boolean_direct_adjacency_meshes(left, right, operation, validation)? {
         return Ok(result);
     }
@@ -1645,6 +1652,58 @@ fn boolean_coplanar_surface_boundary_touch_difference(
         mesh,
         ExactBooleanShortcutKind::CoplanarSurfaceBoundaryTouchDifference,
     ))
+}
+
+fn boolean_arrangement_cell_complex_meshes(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    if !arrangement_cell_complex_should_preempt_legacy_paths(left, right, operation) {
+        return Ok(None);
+    }
+
+    let policy = ExactRegularizationPolicy::REGULARIZED_SOLID;
+    let arrangement = ExactArrangement::from_meshes_with_policy(left, right, policy)?;
+    if !arrangement.is_complete() {
+        return Ok(None);
+    }
+    let selected = match arrangement.select_with_policy(operation, policy) {
+        Ok(selected) => selected,
+        Err(_) => return Ok(None),
+    };
+    let simplified = match selected.simplify_exact_with_policy(policy) {
+        Ok(simplified) => simplified,
+        Err(_) => return Ok(None),
+    };
+    let mesh = match simplified.triangulate() {
+        Ok(mesh) => mesh,
+        Err(_) => return Ok(None),
+    };
+    let mesh = match copy_mesh(
+        &mesh,
+        "exact arrangement cell-complex boolean result",
+        validation,
+    ) {
+        Ok(mesh) => mesh,
+        Err(_) => return Ok(None),
+    };
+    Ok(Some(certified_shortcut_result(
+        mesh,
+        ExactBooleanShortcutKind::ArrangementCellComplex,
+    )))
+}
+
+fn arrangement_cell_complex_should_preempt_legacy_paths(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+) -> bool {
+    matches!(
+        operation,
+        ExactBooleanOperation::Union | ExactBooleanOperation::Difference
+    ) && non_box_full_face_adjacency(left, right)
 }
 
 fn boolean_convex_intersection_meshes(

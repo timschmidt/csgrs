@@ -746,6 +746,13 @@ pub enum ExactBooleanShortcutKind {
     /// because the exact boolmesh stages replayed, not because an approximate
     /// mesh happened to validate.
     BoolMeshSplit,
+    /// Certified exact arrangement/cell-complex materialization.
+    ///
+    /// The output was produced by building retained 3D arrangement cells,
+    /// labeling them against the opposite mesh, selecting the named Boolean
+    /// boundary cells, exact-simplifying the selected cell complex, and only
+    /// then triangulating to an [`ExactMesh`].
+    ArrangementCellComplex,
     /// Certified single-triangle coplanar surface containment.
     CoplanarSurfaceContainment,
     /// Certified coplanar single-triangle intersection output.

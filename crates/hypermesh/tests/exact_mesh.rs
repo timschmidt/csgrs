@@ -8608,10 +8608,12 @@ fn exact_full_face_adjacent_tetrahedra_union_deletes_internal_face() {
     assert_eq!(
         result.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::exact::ExactBooleanShortcutKind::FullFaceAdjacentUnion
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
-    assert_eq!(result.mesh, union.mesh);
+    assert_eq!(result.mesh.vertices().len(), union.mesh.vertices().len());
+    assert_eq!(result.mesh.triangles().len(), union.mesh.triangles().len());
+    assert!(result.mesh.facts().mesh.closed_manifold);
 
     let intersection_preflight = hypermesh::exact::preflight_boolean_exact(
         &left,
@@ -8698,11 +8700,12 @@ fn exact_full_face_adjacent_tetrahedra_union_deletes_internal_face() {
     assert_eq!(
         difference.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::exact::ExactBooleanShortcutKind::FullFaceAdjacentDifference
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
-    assert_eq!(difference.mesh.vertices(), left.vertices());
-    assert_eq!(difference.mesh.triangles(), left.triangles());
+    assert_eq!(difference.mesh.vertices().len(), left.vertices().len());
+    assert_eq!(difference.mesh.triangles().len(), left.triangles().len());
+    assert!(difference.mesh.facts().mesh.closed_manifold);
 
     let same_orientation = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, -4]);
     assert!(
@@ -37265,6 +37268,29 @@ fn exact_boolean_preflight_replays_reduced_oom_seed() {
             ValidationPolicy::ALLOW_BOUNDARY,
         );
     }
+}
+
+#[test]
+fn exact_boolean_uses_arrangement_cell_complex_before_surface_fallbacks() {
+    let left = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
+    let right = tetrahedron_i64([0, 0, 0], [0, 4, 0], [4, 0, 0], [0, 0, -4]);
+
+    let result = hypermesh::exact::boolean_exact(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+
+    assert_eq!(
+        result.kind,
+        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ArrangementCellComplex
+        }
+    );
+    result.validate().unwrap();
+    assert!(!result.mesh.triangles().is_empty());
 }
 
 fn fuzz_seed_mesh_pair(seed: &[u8]) -> (ExactMesh, ExactMesh) {

@@ -111,8 +111,9 @@ Implemented today:
 
 - exact mesh topology path;
 - exact mesh, bounds, facts, provenance, validation, audit, face-pair, coplanar,
-  construction, split-plan, support, surface, winding, convex-solid, consumer-readiness,
-  handoff-package, preflight, and exact-boolean APIs;
+  construction, split-plan, support, surface, winding, convex-solid, exact arrangement,
+  cell-complex simplification, consumer-readiness, handoff-package, preflight, and
+  exact-boolean APIs;
 - tests, proptests, fuzz targets, examples, and exact-validation benchmarks.
 
 Known limits: unsupported boolean/intersection/simplification topology is reported as a
@@ -159,6 +160,30 @@ Use exact validation, audit, face-pair classification, split-plan, preflight,
 consumer-readiness, and handoff-package reports to audit topology before relying on
 boolean output.
 
+Named booleans first try the exact arrangement/cell-complex path before falling back to
+older certified shortcuts:
+
+```rust,ignore
+use hypermesh::exact::{
+    ExactArrangement, ExactBooleanOperation, ExactRegularizationPolicy,
+    ValidationPolicy, boolean_exact,
+};
+
+let arrangement = ExactArrangement::from_meshes(&left, &right)?;
+let mesh = arrangement
+    .label_regions(ExactRegularizationPolicy::REGULARIZED_SOLID)?
+    .select(ExactBooleanOperation::Union)?
+    .simplify_exact()?
+    .triangulate()?;
+
+let result = boolean_exact(
+    &left,
+    &right,
+    ExactBooleanOperation::Union,
+    ValidationPolicy::ALLOW_BOUNDARY,
+)?;
+```
+
 ## References
 
 - Yap, Chee K. "Towards Exact Geometric Computation." *Computational Geometry* 7.1-2
@@ -200,5 +225,6 @@ Useful local checks:
 cargo test
 cargo test --no-default-features
 cargo check --features internal-fuzzing
+cargo fuzz run exact_arrangement
 cargo bench --bench exact_validation
 ```
