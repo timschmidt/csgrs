@@ -13666,11 +13666,11 @@ fn exact_coplanar_convex_surface_union_materializes_simple_loop() {
     assert_eq!(
         result.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut:
-                hypermesh::exact::ExactBooleanShortcutKind::CoplanarConvexSurfaceArrangementUnion
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
-    assert_eq!(result.mesh.vertices().len(), union.mesh.vertices().len());
+    assert!(exact_mesh_vertex_sets_equal(&result.mesh, &union.mesh));
+    assert_eq!(result.mesh.triangles().len(), union.mesh.triangles().len());
 
     let union_arrangement_report = hypermesh::exact::certify_planar_arrangement_report(
         &left,
@@ -13842,10 +13842,11 @@ fn exact_coplanar_convex_surface_union_materializes_full_edge_touching_rectangle
     assert_eq!(
         result.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut:
-                hypermesh::exact::ExactBooleanShortcutKind::CoplanarConvexSurfaceArrangementUnion
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
+    assert!(exact_mesh_vertex_sets_equal(&result.mesh, &union.mesh));
+    assert_eq!(result.mesh.triangles().len(), union.mesh.triangles().len());
 
     let point_touching_right = ExactMesh::from_i64_triangles_with_policy(
         &[2, 2, 0, 4, 2, 0, 4, 4, 0, 2, 4, 0],

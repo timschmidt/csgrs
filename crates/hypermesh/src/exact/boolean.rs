@@ -2142,15 +2142,13 @@ fn coplanar_mesh_overlay_should_preempt_surface_paths(
     }
     match operation {
         ExactBooleanOperation::Union => {
-            if arrange_coplanar_convex_surface_union(left, right).is_some() {
-                return false;
-            }
             if total_triangles > 12
                 && arrange_coplanar_surface_component_union(left, right).is_some()
             {
                 return false;
             }
-            arrange_coplanar_convex_surface_component_union(left, right).is_some()
+            arrange_coplanar_convex_surface_union(left, right).is_some()
+                || arrange_coplanar_convex_surface_component_union(left, right).is_some()
                 || arrange_coplanar_convex_surface_multi_union(left, right).is_some()
                 || arrange_coplanar_surface_component_union(left, right).is_some()
                 || arrange_coplanar_surface_component_holed_union(left, right).is_some()
