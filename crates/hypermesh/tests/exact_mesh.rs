@@ -13719,8 +13719,16 @@ fn exact_coplanar_convex_surface_union_materializes_simple_loop() {
     assert_eq!(
         intersection_result.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::exact::ExactBooleanShortcutKind::CoplanarConvexSurfaceIntersection
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ArrangementCellComplex
         }
+    );
+    assert!(exact_mesh_vertex_sets_equal(
+        &intersection_result.mesh,
+        &intersection_output.mesh
+    ));
+    assert_eq!(
+        intersection_result.mesh.triangles().len(),
+        intersection_output.mesh.triangles().len()
     );
 
     let intersection_arrangement_report = hypermesh::exact::certify_planar_arrangement_report(
@@ -26905,9 +26913,11 @@ fn exact_multi_component_coplanar_intersection_materializes_component_hulls() {
     assert_eq!(
         result.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::exact::ExactBooleanShortcutKind::CoplanarConvexSurfaceIntersection
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
+    assert!(exact_mesh_vertex_sets_equal(&result.mesh, &multi.mesh));
+    assert_eq!(result.mesh.triangles().len(), multi.mesh.triangles().len());
 }
 
 #[test]
@@ -27118,6 +27128,16 @@ fn exact_coplanar_component_holed_intersection_materializes_clipped_annulus() {
         crossing_preflight.support,
         hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceIntersection
     );
+    let crossing_intersection =
+        hypermesh::exact::orthogonal_surface::arrange_coplanar_orthogonal_surface_intersection(
+            &annulus,
+            &crossing_hole,
+        )
+        .expect("partial-hole-overlap clipper should materialize through orthogonal cells");
+    crossing_intersection.validate().unwrap();
+    crossing_intersection
+        .validate_against_sources(&annulus, &crossing_hole)
+        .unwrap();
     let crossing_result = hypermesh::exact::boolean_exact(
         &annulus,
         &crossing_hole,
@@ -27137,9 +27157,16 @@ fn exact_coplanar_component_holed_intersection_materializes_clipped_annulus() {
     assert_eq!(
         crossing_result.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut:
-                hypermesh::exact::ExactBooleanShortcutKind::CoplanarOrthogonalSurfaceIntersection
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ArrangementCellComplex
         }
+    );
+    assert!(exact_mesh_vertex_sets_equal(
+        &crossing_result.mesh,
+        &crossing_intersection.mesh
+    ));
+    assert_eq!(
+        crossing_result.mesh.triangles().len(),
+        crossing_intersection.mesh.triangles().len()
     );
 
     let hole_edge_touch = ExactMesh::from_i64_triangles_with_policy(
