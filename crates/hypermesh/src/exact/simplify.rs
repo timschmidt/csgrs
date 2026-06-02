@@ -19,8 +19,9 @@ use super::regularization::{ExactArrangementBlocker, ExactRegularizationPolicy};
 use super::validation::ValidationPolicy;
 use super::view::{ApproximateMeshF64View, approximate_mesh_f64_view};
 use hyperlimit::{
-    Point2, Point3, RingPointLocation, Sign, classify_point_ring_even_odd, compare_reals,
-    orient2d_report, point3_equal, project_point3, projected_polygon_area2_value,
+    Point2, Point3, RingPointLocation, Sign, TriangleLocation, classify_point_ring_even_odd,
+    classify_point_triangle, compare_reals, orient2d_report, point3_equal, project_point3,
+    projected_polygon_area2_value,
 };
 use hyperreal::Real;
 
@@ -513,6 +514,7 @@ struct ProjectedFaceLoop {
     boundary: Vec<Point3>,
     projection: CoplanarProjection,
     projected: Vec<Point2>,
+    witness: Point2,
     depth: usize,
 }
 
@@ -533,10 +535,12 @@ fn triangulate_simplified_face_group(
             .iter()
             .map(|point| project_point3(point, projection))
             .collect::<Vec<_>>();
+        let witness = projected_loop_interior_witness(&projected)?;
         loops.push(ProjectedFaceLoop {
             boundary,
             projection,
             projected,
+            witness,
             depth: 0,
         });
     }
@@ -588,15 +592,111 @@ fn loop_contains_loop(
     container: &ProjectedFaceLoop,
     child: &ProjectedFaceLoop,
 ) -> Result<bool, ExactArrangementBlocker> {
-    let Some(witness) = child.projected.first() else {
-        return Ok(false);
-    };
-    match classify_point_ring_even_odd(&container.projected, witness).value() {
-        Some(RingPointLocation::Inside) => Ok(true),
-        Some(RingPointLocation::Outside) => Ok(false),
-        Some(RingPointLocation::Boundary) => Err(ExactArrangementBlocker::NonManifoldCellComplex),
-        None => Err(ExactArrangementBlocker::UndecidableOrdering),
+    match classify_point_ring_even_odd(&container.projected, &child.witness).value() {
+        Some(RingPointLocation::Inside) => {}
+        Some(RingPointLocation::Outside) => return Ok(false),
+        Some(RingPointLocation::Boundary) => {
+            return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+        }
+        None => return Err(ExactArrangementBlocker::UndecidableOrdering),
     }
+    for point in &child.projected {
+        match classify_point_ring_even_odd(&container.projected, point).value() {
+            Some(RingPointLocation::Inside) => {}
+            Some(RingPointLocation::Outside) => return Ok(false),
+            Some(RingPointLocation::Boundary) => {
+                return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+            }
+            None => return Err(ExactArrangementBlocker::UndecidableOrdering),
+        }
+    }
+    Ok(true)
+}
+
+fn projected_loop_interior_witness(points: &[Point2]) -> Result<Point2, ExactArrangementBlocker> {
+    if points.len() < 3 {
+        return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+    }
+    let signed_area_twice = signed_area_twice_points(points);
+    let orientation = match compare_reals(&signed_area_twice, &Real::from(0)).value() {
+        Some(Ordering::Greater) => Sign::Positive,
+        Some(Ordering::Less) => Sign::Negative,
+        Some(Ordering::Equal) => return Err(ExactArrangementBlocker::NonManifoldCellComplex),
+        None => return Err(ExactArrangementBlocker::UndecidableOrdering),
+    };
+
+    for index in 0..points.len() {
+        let previous = &points[(index + points.len() - 1) % points.len()];
+        let current = &points[index];
+        let next = &points[(index + 1) % points.len()];
+        match orient2d_report(previous, current, next).value() {
+            Some(sign) if sign == orientation => {}
+            Some(Sign::Zero | Sign::Positive | Sign::Negative) => continue,
+            None => return Err(ExactArrangementBlocker::UndecidableOrdering),
+        }
+
+        let mut contains_vertex = false;
+        for (candidate_index, candidate) in points.iter().enumerate() {
+            if candidate_index == index
+                || candidate_index == (index + points.len() - 1) % points.len()
+                || candidate_index == (index + 1) % points.len()
+            {
+                continue;
+            }
+            match classify_point_triangle(previous, current, next, candidate).value() {
+                Some(TriangleLocation::Inside) => {
+                    contains_vertex = true;
+                    break;
+                }
+                Some(
+                    TriangleLocation::Outside
+                    | TriangleLocation::OnEdge
+                    | TriangleLocation::OnVertex,
+                ) => {}
+                Some(TriangleLocation::Degenerate) => {
+                    contains_vertex = true;
+                    break;
+                }
+                None => return Err(ExactArrangementBlocker::UndecidableOrdering),
+            }
+        }
+        if contains_vertex {
+            continue;
+        }
+
+        let witness = triangle_centroid_2d(previous, current, next)?;
+        match classify_point_ring_even_odd(points, &witness).value() {
+            Some(RingPointLocation::Inside) => return Ok(witness),
+            Some(RingPointLocation::Outside | RingPointLocation::Boundary) => {}
+            None => return Err(ExactArrangementBlocker::UndecidableOrdering),
+        }
+    }
+
+    Err(ExactArrangementBlocker::NonManifoldCellComplex)
+}
+
+fn signed_area_twice_points(points: &[Point2]) -> Real {
+    let mut area = Real::from(0);
+    for index in 0..points.len() {
+        let current = &points[index];
+        let next = &points[(index + 1) % points.len()];
+        area = area + &(current.x.clone() * &next.y) - &(current.y.clone() * &next.x);
+    }
+    area
+}
+
+fn triangle_centroid_2d(
+    a: &Point2,
+    b: &Point2,
+    c: &Point2,
+) -> Result<Point2, ExactArrangementBlocker> {
+    let third = (Real::from(1) / &Real::from(3))
+        .ok()
+        .ok_or(ExactArrangementBlocker::UndecidableOrdering)?;
+    Ok(Point2::new(
+        (a.x.clone() + &b.x + &c.x) * &third,
+        (a.y.clone() + &b.y + &c.y) * &third,
+    ))
 }
 
 fn triangulate_loop_with_holes(
@@ -815,5 +915,32 @@ mod tests {
 
         assert_eq!(mesh.vertices().len(), 8);
         assert_eq!(mesh.triangles().len(), 8);
+    }
+
+    #[test]
+    fn triangulation_uses_interior_witness_for_nested_hole_ownership() {
+        let outer = vec![
+            Point2::new(Real::from(0), Real::from(0)),
+            Point2::new(Real::from(8), Real::from(0)),
+            Point2::new(Real::from(8), Real::from(8)),
+            Point2::new(Real::from(0), Real::from(8)),
+        ];
+        let hole = vec![
+            Point2::new(Real::from(1), Real::from(1)),
+            Point2::new(Real::from(1), Real::from(7)),
+            Point2::new(Real::from(7), Real::from(7)),
+            Point2::new(Real::from(7), Real::from(1)),
+        ];
+
+        let witness = projected_loop_interior_witness(&hole).unwrap();
+
+        assert_eq!(
+            classify_point_ring_even_odd(&hole, &witness).value(),
+            Some(RingPointLocation::Inside)
+        );
+        assert_eq!(
+            classify_point_ring_even_odd(&outer, &witness).value(),
+            Some(RingPointLocation::Inside)
+        );
     }
 }

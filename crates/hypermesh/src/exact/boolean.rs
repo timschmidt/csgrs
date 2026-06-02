@@ -2004,6 +2004,7 @@ fn materialize_simple_coplanar_overlay_arrangement(
 struct MaterializedProjectedLoop {
     points: Vec<Point2>,
     lifted: Vec<Point3>,
+    witness: Point2,
     area_ordering: Ordering,
     signed_area_twice: Real,
 }
@@ -2360,6 +2361,7 @@ fn materialized_projected_overlay_loops(
         if area_ordering == Ordering::Equal {
             return None;
         }
+        let witness = projected_loop_interior_witness(&loop_points, &signed_area_twice)?;
         let lifted = loop_points
             .iter()
             .map(|point| lift_projected_point_to_carrier(point, carrier_points, projection))
@@ -2367,6 +2369,7 @@ fn materialized_projected_overlay_loops(
         materialized.push(MaterializedProjectedLoop {
             points: loop_points,
             lifted,
+            witness,
             area_ordering,
             signed_area_twice,
         });
@@ -2395,11 +2398,10 @@ fn group_projected_overlay_components(
         if hole.area_ordering != Ordering::Less {
             continue;
         }
-        let witness = hole.points.first()?;
         let mut owner = None::<(usize, Real)>;
         for (component_index, component) in components.iter().enumerate() {
             let outer = &loops[component.outer];
-            match classify_point_ring_even_odd(&outer.points, witness).value()? {
+            match classify_point_ring_even_odd(&outer.points, &hole.witness).value()? {
                 RingPointLocation::Inside => {
                     let replace = owner.as_ref().is_none_or(|(_, owner_area)| {
                         compare_reals(&outer.signed_area_twice, owner_area).value()
@@ -2501,6 +2503,61 @@ fn projected_loop_signed_area_twice(points: &[Point2]) -> Real {
         area = area + &(current.x.clone() * &next.y) - &(current.y.clone() * &next.x);
     }
     area
+}
+
+fn projected_loop_interior_witness(points: &[Point2], signed_area_twice: &Real) -> Option<Point2> {
+    if points.len() < 3 {
+        return None;
+    }
+    let orientation = match compare_reals(signed_area_twice, &Real::from(0)).value()? {
+        Ordering::Greater => Sign::Positive,
+        Ordering::Less => Sign::Negative,
+        Ordering::Equal => return None,
+    };
+
+    for index in 0..points.len() {
+        let previous = &points[(index + points.len() - 1) % points.len()];
+        let current = &points[index];
+        let next = &points[(index + 1) % points.len()];
+        match hyperlimit::orient2d_report(previous, current, next).value()? {
+            sign if sign == orientation => {}
+            Sign::Zero | Sign::Positive | Sign::Negative => continue,
+        }
+
+        let mut contains_vertex = false;
+        for (candidate_index, candidate) in points.iter().enumerate() {
+            if candidate_index == index
+                || candidate_index == (index + points.len() - 1) % points.len()
+                || candidate_index == (index + 1) % points.len()
+            {
+                continue;
+            }
+            match classify_point_triangle(previous, current, next, candidate).value()? {
+                TriangleLocation::Inside | TriangleLocation::Degenerate => {
+                    contains_vertex = true;
+                    break;
+                }
+                TriangleLocation::Outside
+                | TriangleLocation::OnEdge
+                | TriangleLocation::OnVertex => {}
+            }
+        }
+        if contains_vertex {
+            continue;
+        }
+
+        let third = (Real::from(1) / &Real::from(3)).ok()?;
+        let witness = Point2::new(
+            (previous.x.clone() + &current.x + &next.x) * &third,
+            (previous.y.clone() + &current.y + &next.y) * &third,
+        );
+        match classify_point_ring_even_odd(points, &witness).value()? {
+            RingPointLocation::Inside => return Some(witness),
+            RingPointLocation::Outside | RingPointLocation::Boundary => {}
+        }
+    }
+
+    None
 }
 
 fn projected_loop_points_with_policy(
