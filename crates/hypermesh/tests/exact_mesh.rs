@@ -12498,9 +12498,11 @@ fn exact_multi_component_coplanar_intersection_materializes_before_winding() {
     assert_eq!(
         result.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::exact::ExactBooleanShortcutKind::CoplanarConvexSurfaceIntersection
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
+    assert!(exact_mesh_vertex_sets_equal(&result.mesh, &multi.mesh));
+    assert_eq!(result.mesh.triangles().len(), multi.mesh.triangles().len());
 }
 
 #[test]
