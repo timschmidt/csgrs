@@ -92,8 +92,9 @@ pub use arrangement3d::{
     ArrangementCarrierPlaneOverlay, ArrangementEdge, ArrangementEdgeProvenance,
     ArrangementFaceCarrier, ArrangementFaceCell, ArrangementFaceCellNode,
     ArrangementFacePlaneArrangement, ArrangementLowerDimensionalArtifact,
-    ArrangementOppositeClassification, ArrangementRegion, ArrangementVertex,
-    ArrangementVertexProvenance, ExactArrangement, ExactArrangement3d,
+    ArrangementOppositeClassification, ArrangementRegion, ArrangementRegionEdgeIncidence,
+    ArrangementRegionSide, ArrangementVertex, ArrangementVertexProvenance,
+    ArrangementVolumeAdjacency, ArrangementVolumeRegion, ExactArrangement, ExactArrangement3d,
 };
 pub use audit::{
     ExactMeshAuditError, ExactMeshAuditFreshness, ExactMeshAuditReport, audit_exact_mesh,

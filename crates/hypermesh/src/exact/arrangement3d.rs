@@ -186,6 +186,10 @@ pub struct ArrangementRegion {
     pub face_cells: Vec<usize>,
     /// Undirected adjacency pairs between face-cells in this region.
     pub adjacent_face_cells: Vec<[usize; 2]>,
+    /// Exact edge incidences internal or boundary to this shell component.
+    pub edge_incidences: Vec<ArrangementRegionEdgeIncidence>,
+    /// Oriented sides contributed by face cells in this shell component.
+    pub oriented_sides: Vec<ArrangementRegionSide>,
     /// Number of exact boundary edges incident to only one face-cell.
     pub boundary_edges: usize,
     /// Number of exact boundary edges incident to more than two face-cells.
@@ -196,6 +200,58 @@ pub struct ArrangementRegion {
     pub closed: bool,
     /// Whether no retained boundary edge has more than two incident cells.
     pub manifold: bool,
+}
+
+/// Exact edge incidence for one connected arrangement shell.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ArrangementRegionEdgeIncidence {
+    /// Canonical exact boundary edge.
+    pub edge: [ArrangementFaceCellNode; 2],
+    /// Face-cells in the owning shell incident to this edge.
+    pub face_cells: Vec<usize>,
+    /// Whether this edge is used by exactly one retained face-cell.
+    pub boundary: bool,
+    /// Whether this edge has more than two retained incident face-cells.
+    pub non_manifold: bool,
+}
+
+/// Oriented side evidence for a face cell in a shell component.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ArrangementRegionSide {
+    /// Face-cell contributing this side.
+    pub face_cell: usize,
+    /// Source side whose boundary owns the face-cell carrier.
+    pub source: MeshSide,
+    /// Carrier face index in the source mesh.
+    pub source_face: usize,
+    /// Boundary node order as emitted by the carrier-face arrangement.
+    pub boundary: Vec<ArrangementFaceCellNode>,
+}
+
+/// Exact volume-region node induced by closed manifold shell components.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ArrangementVolumeRegion {
+    /// Volume-region index in the arrangement volume graph.
+    pub index: usize,
+    /// Whether this is the unbounded exterior region.
+    pub exterior: bool,
+    /// Shell components bounding this volume region.
+    pub boundary_shells: Vec<usize>,
+    /// Source sides whose closed shell interiors contribute this volume.
+    pub source_sides: Vec<MeshSide>,
+}
+
+/// Adjacency between two volume regions across one closed shell component.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ArrangementVolumeAdjacency {
+    /// Shell component crossed by this adjacency.
+    pub shell_region: usize,
+    /// Unbounded/outside volume-region index for the shell.
+    pub exterior_volume: usize,
+    /// Bounded/interior volume-region index for the shell.
+    pub interior_volume: usize,
+    /// Face-cells forming the separating shell.
+    pub separating_face_cells: Vec<usize>,
 }
 
 /// Exact 3D arrangement over two source meshes.
@@ -215,6 +271,10 @@ pub struct ExactArrangement3d {
     pub lower_dimensional_artifacts: Vec<ArrangementLowerDimensionalArtifact>,
     /// Connected face-cell regions/shell components retained by the arrangement.
     pub shells_or_regions: Option<Vec<ArrangementRegion>>,
+    /// Explicit volume regions induced by closed manifold shell components.
+    pub volume_regions: Option<Vec<ArrangementVolumeRegion>>,
+    /// Volume adjacency through closed shell components.
+    pub volume_adjacencies: Option<Vec<ArrangementVolumeAdjacency>>,
     /// Retained exact intersection graph.
     pub graph: ExactIntersectionGraph,
     /// Checked split topology, when exact ordering/equality completed.
@@ -317,6 +377,8 @@ impl ExactArrangement3d {
             &mut blockers,
         );
         let shells_or_regions = Some(arrangement_regions(&face_cells));
+        let (volume_regions, volume_adjacencies) =
+            arrangement_volume_graph(shells_or_regions.as_ref().map_or(&[][..], Vec::as_slice));
         if shells_or_regions
             .as_ref()
             .is_some_and(|regions| regions.iter().any(|region| region.non_manifold_edges > 0))
@@ -340,6 +402,8 @@ impl ExactArrangement3d {
             face_plane_arrangements,
             lower_dimensional_artifacts,
             shells_or_regions,
+            volume_regions,
+            volume_adjacencies,
             graph,
             topology,
             region_plan,
@@ -1559,15 +1623,23 @@ fn arrangement_regions(face_cells: &[ArrangementFaceCell]) -> Vec<ArrangementReg
     let mut adjacency = vec![Vec::<usize>::new(); face_cells.len()];
     let edge_users = arrangement_edge_users(face_cells);
     let mut adjacent_pairs = Vec::<[usize; 2]>::new();
-    for left in 0..face_cells.len() {
-        for right in (left + 1)..face_cells.len() {
-            if face_cells_share_boundary_edge(&face_cells[left], &face_cells[right]) {
+    for (_, users) in &edge_users {
+        for left_index in 0..users.len() {
+            for right_index in (left_index + 1)..users.len() {
+                let left = users[left_index];
+                let right = users[right_index];
                 adjacency[left].push(right);
                 adjacency[right].push(left);
-                adjacent_pairs.push([left, right]);
+                adjacent_pairs.push(canonical_face_pair(left, right));
             }
         }
     }
+    for neighbors in &mut adjacency {
+        neighbors.sort_unstable();
+        neighbors.dedup();
+    }
+    adjacent_pairs.sort_unstable();
+    adjacent_pairs.dedup();
 
     let mut seen = vec![false; face_cells.len()];
     let mut regions = Vec::new();
@@ -1593,22 +1665,22 @@ fn arrangement_regions(face_cells: &[ArrangementFaceCell]) -> Vec<ArrangementReg
             .copied()
             .filter(|[left, right]| component.contains(left) && component.contains(right))
             .collect::<Vec<_>>();
-        let non_manifold_edges = edge_users
+        let edge_incidences = arrangement_region_edge_incidences(&component, &edge_users);
+        let non_manifold_edges = edge_incidences
             .iter()
-            .filter(|(_, users)| {
-                users.len() > 2 && users.iter().any(|cell| component.contains(cell))
-            })
+            .filter(|incidence| incidence.non_manifold)
             .count();
-        let boundary_edges = edge_users
+        let boundary_edges = edge_incidences
             .iter()
-            .filter(|(_, users)| {
-                users.len() == 1 && users.iter().any(|cell| component.contains(cell))
-            })
+            .filter(|incidence| incidence.boundary)
             .count();
+        let oriented_sides = arrangement_region_oriented_sides(&component, face_cells);
         let source_sides = arrangement_region_source_sides(&component, face_cells);
         regions.push(ArrangementRegion {
             face_cells: component,
             adjacent_face_cells,
+            edge_incidences,
+            oriented_sides,
             boundary_edges,
             non_manifold_edges,
             source_sides,
@@ -1618,6 +1690,101 @@ fn arrangement_regions(face_cells: &[ArrangementFaceCell]) -> Vec<ArrangementReg
     }
     regions.sort_by_key(|region| region.face_cells.first().copied().unwrap_or(usize::MAX));
     regions
+}
+
+const fn canonical_face_pair(left: usize, right: usize) -> [usize; 2] {
+    if left <= right {
+        [left, right]
+    } else {
+        [right, left]
+    }
+}
+
+fn arrangement_region_edge_incidences(
+    component: &[usize],
+    edge_users: &[([ArrangementFaceCellNode; 2], Vec<usize>)],
+) -> Vec<ArrangementRegionEdgeIncidence> {
+    edge_users
+        .iter()
+        .filter_map(|(edge, users)| {
+            let mut face_cells = users
+                .iter()
+                .copied()
+                .filter(|cell| component.contains(cell))
+                .collect::<Vec<_>>();
+            if face_cells.is_empty() {
+                return None;
+            }
+            face_cells.sort_unstable();
+            let incident_count = face_cells.len();
+            Some(ArrangementRegionEdgeIncidence {
+                edge: edge.clone(),
+                face_cells,
+                boundary: incident_count == 1,
+                non_manifold: incident_count > 2,
+            })
+        })
+        .collect()
+}
+
+fn arrangement_region_oriented_sides(
+    component: &[usize],
+    face_cells: &[ArrangementFaceCell],
+) -> Vec<ArrangementRegionSide> {
+    component
+        .iter()
+        .map(|&face_cell| {
+            let cell = &face_cells[face_cell];
+            ArrangementRegionSide {
+                face_cell,
+                source: cell.carrier.side,
+                source_face: cell.carrier.face,
+                boundary: cell.boundary.clone(),
+            }
+        })
+        .collect()
+}
+
+fn arrangement_volume_graph(
+    shell_regions: &[ArrangementRegion],
+) -> (
+    Option<Vec<ArrangementVolumeRegion>>,
+    Option<Vec<ArrangementVolumeAdjacency>>,
+) {
+    if shell_regions.is_empty()
+        || shell_regions
+            .iter()
+            .any(|region| !region.closed || !region.manifold)
+    {
+        return (None, None);
+    }
+
+    let mut volume_regions = Vec::with_capacity(shell_regions.len() + 1);
+    volume_regions.push(ArrangementVolumeRegion {
+        index: 0,
+        exterior: true,
+        boundary_shells: (0..shell_regions.len()).collect(),
+        source_sides: Vec::new(),
+    });
+
+    let mut volume_adjacencies = Vec::with_capacity(shell_regions.len());
+    for (shell_index, shell) in shell_regions.iter().enumerate() {
+        let interior_volume = volume_regions.len();
+        volume_regions.push(ArrangementVolumeRegion {
+            index: interior_volume,
+            exterior: false,
+            boundary_shells: vec![shell_index],
+            source_sides: shell.source_sides.clone(),
+        });
+        volume_adjacencies.push(ArrangementVolumeAdjacency {
+            shell_region: shell_index,
+            exterior_volume: 0,
+            interior_volume,
+            separating_face_cells: shell.face_cells.clone(),
+        });
+    }
+
+    (Some(volume_regions), Some(volume_adjacencies))
 }
 
 fn arrangement_region_source_sides(
@@ -1659,12 +1826,6 @@ fn arrangement_edge_users(
         }
     }
     edge_users
-}
-
-fn face_cells_share_boundary_edge(left: &ArrangementFaceCell, right: &ArrangementFaceCell) -> bool {
-    let left_edges = cell_boundary_edges(left);
-    let right_edges = cell_boundary_edges(right);
-    left_edges.iter().any(|edge| right_edges.contains(edge))
 }
 
 fn cell_boundary_edges(cell: &ArrangementFaceCell) -> Vec<[ArrangementFaceCellNode; 2]> {
@@ -2011,6 +2172,61 @@ mod tests {
                 .map(|regions| regions.len()),
             Some(2)
         );
+        let regions = arrangement.shells_or_regions.as_ref().unwrap();
+        assert!(regions.iter().all(|region| region.closed));
+        assert!(regions.iter().all(|region| region.manifold));
+        assert!(regions.iter().all(|region| region.face_cells.len() == 4));
+        assert!(
+            regions
+                .iter()
+                .all(|region| region.adjacent_face_cells.len() == 6)
+        );
+        assert!(
+            regions
+                .iter()
+                .all(|region| region.edge_incidences.len() == 6)
+        );
+        assert!(
+            regions.iter().all(
+                |region| region
+                    .edge_incidences
+                    .iter()
+                    .all(|incidence| incidence.face_cells.len() == 2
+                        && !incidence.boundary
+                        && !incidence.non_manifold)
+            )
+        );
+        assert!(
+            regions
+                .iter()
+                .all(|region| region.oriented_sides.len() == 4)
+        );
+        assert!(regions.iter().all(|region| {
+            region
+                .oriented_sides
+                .iter()
+                .all(|side| side.boundary.len() == 3)
+        }));
+        let volume_regions = arrangement
+            .volume_regions
+            .as_ref()
+            .expect("closed shell arrangement should expose volume regions");
+        assert_eq!(volume_regions.len(), 3);
+        assert!(volume_regions[0].exterior);
+        assert_eq!(volume_regions[0].boundary_shells, vec![0, 1]);
+        assert_eq!(volume_regions[1].boundary_shells, vec![0]);
+        assert_eq!(volume_regions[2].boundary_shells, vec![1]);
+        let volume_adjacencies = arrangement
+            .volume_adjacencies
+            .as_ref()
+            .expect("closed shell arrangement should expose volume adjacencies");
+        assert_eq!(volume_adjacencies.len(), 2);
+        assert!(
+            volume_adjacencies
+                .iter()
+                .all(|adjacency| adjacency.exterior_volume == 0
+                    && adjacency.separating_face_cells.len() == 4)
+        );
         assert!(arrangement.validate_against_sources(&left, &right).is_ok());
     }
 
@@ -2086,9 +2302,27 @@ mod tests {
             .expect("arrangement should retain region diagnostics");
         assert_eq!(regions.len(), 2);
         assert!(regions.iter().all(|region| region.boundary_edges == 3));
+        assert!(
+            regions
+                .iter()
+                .all(|region| region.edge_incidences.len() == 3)
+        );
+        assert!(regions.iter().all(|region| {
+            region
+                .edge_incidences
+                .iter()
+                .all(|incidence| incidence.boundary && incidence.face_cells.len() == 1)
+        }));
+        assert!(
+            regions
+                .iter()
+                .all(|region| region.oriented_sides.len() == 1)
+        );
         assert!(regions.iter().all(|region| region.non_manifold_edges == 0));
         assert!(regions.iter().all(|region| !region.closed));
         assert!(regions.iter().all(|region| region.manifold));
+        assert!(arrangement.volume_regions.is_none());
+        assert!(arrangement.volume_adjacencies.is_none());
         assert!(
             regions
                 .iter()
