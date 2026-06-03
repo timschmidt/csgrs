@@ -165,8 +165,9 @@ fn exercise_volume_graph_invariants(arrangement: &ExactArrangement) {
     assert_eq!(volume_adjacencies.len(), shells.len());
     assert!(volume_regions[0].exterior);
     for adjacency in volume_adjacencies {
-        assert_eq!(adjacency.exterior_volume, 0);
+        assert!(adjacency.exterior_volume < volume_regions.len());
         assert!(adjacency.interior_volume < volume_regions.len());
+        assert_ne!(adjacency.exterior_volume, adjacency.interior_volume);
         assert_eq!(
             adjacency.separating_face_cells,
             shells[adjacency.shell_region].face_cells

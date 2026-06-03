@@ -25,7 +25,8 @@ use super::regularization::{
     ExactArrangementBlocker, ExactLowerDimensionalPolicy, ExactRegularizationPolicy,
 };
 use super::winding::{
-    ClosedMeshWindingRelation, PointMeshWindingReport,
+    ClosedMeshWindingMeshRelation, ClosedMeshWindingRelation, PointMeshWindingReport,
+    classify_mesh_vertices_against_closed_mesh_winding_report,
     classify_point_against_closed_mesh_winding_report,
 };
 use core::cmp::Ordering;
@@ -377,8 +378,11 @@ impl ExactArrangement3d {
             &mut blockers,
         );
         let shells_or_regions = Some(arrangement_regions(&face_cells));
-        let (volume_regions, volume_adjacencies) =
-            arrangement_volume_graph(shells_or_regions.as_ref().map_or(&[][..], Vec::as_slice));
+        let (volume_regions, volume_adjacencies) = arrangement_volume_graph(
+            shells_or_regions.as_ref().map_or(&[][..], Vec::as_slice),
+            left,
+            right,
+        );
         if shells_or_regions
             .as_ref()
             .is_some_and(|regions| regions.iter().any(|region| region.non_manifold_edges > 0))
@@ -1750,6 +1754,8 @@ fn arrangement_region_oriented_sides(
 
 fn arrangement_volume_graph(
     shell_regions: &[ArrangementRegion],
+    left: &ExactMesh,
+    right: &ExactMesh,
 ) -> (
     Option<Vec<ArrangementVolumeRegion>>,
     Option<Vec<ArrangementVolumeAdjacency>>,
@@ -1760,6 +1766,10 @@ fn arrangement_volume_graph(
             .any(|region| !region.closed || !region.manifold)
     {
         return (None, None);
+    }
+
+    if let Some(nested) = nested_two_shell_volume_graph(shell_regions, left, right) {
+        return nested;
     }
 
     let mut volume_regions = Vec::with_capacity(shell_regions.len() + 1);
@@ -1788,6 +1798,83 @@ fn arrangement_volume_graph(
     }
 
     (Some(volume_regions), Some(volume_adjacencies))
+}
+
+fn nested_two_shell_volume_graph(
+    shell_regions: &[ArrangementRegion],
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Option<(
+    Option<Vec<ArrangementVolumeRegion>>,
+    Option<Vec<ArrangementVolumeAdjacency>>,
+)> {
+    if shell_regions.len() != 2 {
+        return None;
+    }
+    let left_shell = shell_regions
+        .iter()
+        .position(|region| region.source_sides == [MeshSide::Left]);
+    let right_shell = shell_regions
+        .iter()
+        .position(|region| region.source_sides == [MeshSide::Right]);
+    let (Some(left_shell), Some(right_shell)) = (left_shell, right_shell) else {
+        return None;
+    };
+
+    let left_in_right = classify_mesh_vertices_against_closed_mesh_winding_report(left, right);
+    let right_in_left = classify_mesh_vertices_against_closed_mesh_winding_report(right, left);
+    let (outer_shell, inner_shell, outer_side, inner_side) =
+        match (left_in_right.relation, right_in_left.relation) {
+            (ClosedMeshWindingMeshRelation::StrictlyInside, _) => {
+                (right_shell, left_shell, MeshSide::Right, MeshSide::Left)
+            }
+            (_, ClosedMeshWindingMeshRelation::StrictlyInside) => {
+                (left_shell, right_shell, MeshSide::Left, MeshSide::Right)
+            }
+            _ => return None,
+        };
+
+    let between_volume = 1;
+    let inner_volume = 2;
+    let mut inner_source_sides = vec![outer_side];
+    if inner_side != outer_side {
+        inner_source_sides.push(inner_side);
+    }
+    let volume_regions = vec![
+        ArrangementVolumeRegion {
+            index: 0,
+            exterior: true,
+            boundary_shells: vec![outer_shell],
+            source_sides: Vec::new(),
+        },
+        ArrangementVolumeRegion {
+            index: between_volume,
+            exterior: false,
+            boundary_shells: vec![outer_shell, inner_shell],
+            source_sides: vec![outer_side],
+        },
+        ArrangementVolumeRegion {
+            index: inner_volume,
+            exterior: false,
+            boundary_shells: vec![inner_shell],
+            source_sides: inner_source_sides,
+        },
+    ];
+    let volume_adjacencies = vec![
+        ArrangementVolumeAdjacency {
+            shell_region: outer_shell,
+            exterior_volume: 0,
+            interior_volume: between_volume,
+            separating_face_cells: shell_regions[outer_shell].face_cells.clone(),
+        },
+        ArrangementVolumeAdjacency {
+            shell_region: inner_shell,
+            exterior_volume: between_volume,
+            interior_volume: inner_volume,
+            separating_face_cells: shell_regions[inner_shell].face_cells.clone(),
+        },
+    ];
+    Some((Some(volume_regions), Some(volume_adjacencies)))
 }
 
 fn arrangement_region_source_sides(
@@ -2231,6 +2318,62 @@ mod tests {
                     && adjacency.separating_face_cells.len() == 4)
         );
         assert!(arrangement.validate_against_sources(&left, &right).is_ok());
+    }
+
+    #[test]
+    fn nested_tetrahedra_build_nested_volume_regions() {
+        let left = tetrahedron_i64([0, 0, 0], [10, 0, 0], [0, 10, 0], [0, 0, 10]);
+        let right = tetrahedron_i64([1, 1, 1], [2, 1, 1], [1, 2, 1], [1, 1, 2]);
+
+        let arrangement = ExactArrangement::from_meshes(&left, &right).unwrap();
+
+        assert!(
+            arrangement.blockers.is_empty(),
+            "{:?}",
+            arrangement.blockers
+        );
+        let volume_regions = arrangement
+            .volume_regions
+            .as_ref()
+            .expect("nested closed shells should expose volume regions");
+        assert_eq!(volume_regions.len(), 3);
+        assert!(volume_regions[0].exterior);
+        assert_eq!(volume_regions[0].source_sides, Vec::<MeshSide>::new());
+        assert_eq!(volume_regions[1].source_sides, vec![MeshSide::Left]);
+        assert_eq!(
+            volume_regions[2].source_sides,
+            vec![MeshSide::Left, MeshSide::Right]
+        );
+        let volume_adjacencies = arrangement
+            .volume_adjacencies
+            .as_ref()
+            .expect("nested closed shells should expose volume adjacencies");
+        assert_eq!(volume_adjacencies.len(), 2);
+        assert_eq!(volume_adjacencies[0].exterior_volume, 0);
+        assert_eq!(volume_adjacencies[0].interior_volume, 1);
+        assert_eq!(volume_adjacencies[1].exterior_volume, 1);
+        assert_eq!(volume_adjacencies[1].interior_volume, 2);
+
+        let union = arrangement
+            .clone()
+            .label_regions(ExactRegularizationPolicy::REGULARIZED_SOLID)
+            .unwrap()
+            .select(ExactBooleanOperation::Union)
+            .unwrap();
+        assert_eq!(union.selected_volume_regions, vec![1, 2]);
+        let intersection = arrangement
+            .clone()
+            .label_regions(ExactRegularizationPolicy::REGULARIZED_SOLID)
+            .unwrap()
+            .select(ExactBooleanOperation::Intersection)
+            .unwrap();
+        assert_eq!(intersection.selected_volume_regions, vec![2]);
+        let difference = arrangement
+            .label_regions(ExactRegularizationPolicy::REGULARIZED_SOLID)
+            .unwrap()
+            .select(ExactBooleanOperation::Difference)
+            .unwrap();
+        assert_eq!(difference.selected_volume_regions, vec![1]);
     }
 
     #[test]
