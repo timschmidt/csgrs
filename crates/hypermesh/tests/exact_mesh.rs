@@ -23076,6 +23076,19 @@ fn exact_coplanar_component_holed_difference_accepts_nonconvex_outer_with_strict
                 ArrangementCellComplex
         }
     );
+
+    let arrangement_attempt = hypermesh::exact::exact_arrangement_boolean_attempt_report(
+        &left,
+        &right,
+        hypermesh::exact::ExactBooleanOperation::Difference,
+        hypermesh::exact::ExactRegularizationPolicy::REGULARIZED_SOLID,
+    )
+    .unwrap();
+    assert_eq!(
+        arrangement_attempt.materialized_shortcut,
+        Some(hypermesh::exact::ExactBooleanShortcutKind::ArrangementCellComplex)
+    );
+    assert!(arrangement_attempt.decline.is_none());
 }
 
 #[test]

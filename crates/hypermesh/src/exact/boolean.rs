@@ -1818,6 +1818,18 @@ fn run_arrangement_cell_complex_attempt(
         output_triangles: 0,
     };
 
+    if !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+        && let Some(validation) = validation
+        && let Some(result) =
+            boolean_coplanar_mesh_overlay_optional(left, right, operation, validation)?
+    {
+        attempt.stage = ExactArrangementBooleanStage::Materialized;
+        attempt.materialized_shortcut = Some(ExactBooleanShortcutKind::ArrangementCellComplex);
+        attempt.output_vertices = result.mesh.vertices().len();
+        attempt.output_triangles = result.mesh.triangles().len();
+        return Ok(ArrangementCellComplexOutcome::Materialized(result, attempt));
+    }
+
     if !arrangement.is_complete() {
         if let Some(result) = materialize_simple_coplanar_overlay_arrangement(
             left,
