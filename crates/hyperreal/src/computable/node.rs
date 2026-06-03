@@ -1031,6 +1031,21 @@ impl Computable {
         }
     }
 
+    fn prescaled_asin(value: Computable) -> Computable {
+        // Tiny non-rational asin inputs use the direct odd-power series. This
+        // mirrors prescaled atan/asinh dispatch and avoids building the generic
+        // atan/sqrt transform once the argument is structurally small.
+        crate::trace_dispatch!("computable", "constructor", "prescaled-asin");
+        let sign = value.exact_sign();
+        Self {
+            internal: Box::new(Approximation::PrescaledAsin(value)),
+            cache: RefCell::new(Cache::Invalid),
+            bound: RefCell::new(BoundCache::Invalid),
+            exact_sign: RefCell::new(sign.map_or(ExactSignCache::Invalid, ExactSignCache::Valid)),
+            signal: None,
+        }
+    }
+
     fn asinh_rational_deferred(rational: Rational) -> Computable {
         // Same series as `prescaled_asinh`, but exact rationals can skip the
         // child Computable wrapper and feed the kernel directly.
@@ -1041,6 +1056,21 @@ impl Computable {
             cache: RefCell::new(Cache::Invalid),
             bound: RefCell::new(BoundCache::Invalid),
             exact_sign: RefCell::new(ExactSignCache::Valid(sign)),
+            signal: None,
+        }
+    }
+
+    fn prescaled_atanh(value: Computable) -> Computable {
+        // Tiny non-rational atanh inputs use the direct odd-power series. This
+        // keeps parity with exact-rational AtanhRational and avoids the heavier
+        // log-ratio graph for already-small symbolic arguments.
+        crate::trace_dispatch!("computable", "constructor", "prescaled-atanh");
+        let sign = value.exact_sign();
+        Self {
+            internal: Box::new(Approximation::PrescaledAtanh(value)),
+            cache: RefCell::new(Cache::Invalid),
+            bound: RefCell::new(BoundCache::Invalid),
+            exact_sign: RefCell::new(sign.map_or(ExactSignCache::Invalid, ExactSignCache::Valid)),
             signal: None,
         }
     }
@@ -3343,6 +3373,11 @@ impl Computable {
             crate::trace_dispatch!("computable", "asin", "known-negative-symmetry");
             return self.negate().asin().negate();
         }
+        let (_, planned_msd) = self.planning_sign_and_msd();
+        if planned_msd.flatten().is_some_and(|msd| msd <= -4) {
+            crate::trace_dispatch!("computable", "asin", "structural-tiny-prescaled");
+            return Self::prescaled_asin(self);
+        }
 
         crate::trace_dispatch!("computable", "asin", "generic-atan-sqrt-transform");
         Self::asin_deferred(self)
@@ -3594,6 +3629,11 @@ impl Computable {
         if self.exact_sign() == Some(Sign::Minus) {
             crate::trace_dispatch!("computable", "atanh", "known-negative-symmetry");
             return self.negate().atanh().negate();
+        }
+        let (_, planned_msd) = self.planning_sign_and_msd();
+        if planned_msd.flatten().is_some_and(|msd| msd <= -4) {
+            crate::trace_dispatch!("computable", "atanh", "structural-tiny-prescaled");
+            return Self::prescaled_atanh(self);
         }
 
         // General formula 1/2 * ln((1+x)/(1-x)). Tiny exact rationals avoid
@@ -5434,6 +5474,34 @@ mod tests {
         assert_approx(near_one.clone().asin(), -40, "1725553881793", 2);
         assert_approx(near_one.clone().acos(), -40, "1554944386", 2);
         assert_approx(near_one.atanh(), -40, "7976218668587", 2);
+    }
+
+    #[test]
+    fn tiny_non_rational_asin_uses_prescaled_series() {
+        let tiny = Computable::rational(Rational::new(2))
+            .sqrt()
+            .shift_left(-20);
+        let result = tiny.clone().asin();
+
+        assert!(matches!(
+            result.internal.as_ref(),
+            Approximation::PrescaledAsin(_)
+        ));
+        assert_close(result, Computable::asin_deferred(tiny), -80, 4);
+    }
+
+    #[test]
+    fn tiny_non_rational_atanh_uses_prescaled_series() {
+        let tiny = Computable::rational(Rational::new(2))
+            .sqrt()
+            .shift_left(-20);
+        let result = tiny.clone().atanh();
+
+        assert!(matches!(
+            result.internal.as_ref(),
+            Approximation::PrescaledAtanh(_)
+        ));
+        assert_close(result, Computable::atanh_direct_deferred(tiny), -80, 4);
     }
 
     #[test]
