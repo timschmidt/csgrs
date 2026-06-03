@@ -256,6 +256,25 @@ pub struct ArrangementVolumeAdjacency {
     pub interior_volume: usize,
     /// Face-cells forming the separating shell.
     pub separating_face_cells: Vec<usize>,
+    /// Oriented face-cell sides making this volume boundary explicit.
+    pub oriented_face_sides: Vec<ArrangementVolumeFaceSide>,
+}
+
+/// Oriented face-cell side crossing between two volume regions.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ArrangementVolumeFaceSide {
+    /// Face-cell contributing this volume side.
+    pub face_cell: usize,
+    /// Source side whose boundary owns the face-cell carrier.
+    pub source: MeshSide,
+    /// Carrier face index in the source mesh.
+    pub source_face: usize,
+    /// Boundary node order as emitted by the carrier-face arrangement.
+    pub boundary: Vec<ArrangementFaceCellNode>,
+    /// Volume on the outside of the owning shell.
+    pub exterior_volume: usize,
+    /// Volume on the inside of the owning shell.
+    pub interior_volume: usize,
 }
 
 /// Exact 3D arrangement over two source meshes.
@@ -1811,6 +1830,7 @@ fn arrangement_volume_graph(
             exterior_volume: 0,
             interior_volume,
             separating_face_cells: shell.face_cells.clone(),
+            oriented_face_sides: arrangement_volume_face_sides(shell, 0, interior_volume),
         });
     }
 
@@ -1872,6 +1892,7 @@ fn validate_arrangement_volume_graph(
         shell_adjacency_counts[adjacency.shell_region] += 1;
         let shell = &shell_regions[adjacency.shell_region];
         if !same_usize_set(&adjacency.separating_face_cells, &shell.face_cells)
+            || !volume_face_sides_match_shell(adjacency, shell)
             || !volume_regions[adjacency.exterior_volume]
                 .boundary_shells
                 .contains(&adjacency.shell_region)
@@ -1903,6 +1924,44 @@ fn same_usize_set(left: &[usize], right: &[usize]) -> bool {
     right.sort_unstable();
     right.dedup();
     left == right
+}
+
+fn volume_face_sides_match_shell(
+    adjacency: &ArrangementVolumeAdjacency,
+    shell: &ArrangementRegion,
+) -> bool {
+    if adjacency.oriented_face_sides.len() != shell.oriented_sides.len() {
+        return false;
+    }
+    shell.oriented_sides.iter().all(|side| {
+        adjacency.oriented_face_sides.iter().any(|volume_side| {
+            volume_side.face_cell == side.face_cell
+                && volume_side.source == side.source
+                && volume_side.source_face == side.source_face
+                && volume_side.boundary == side.boundary
+                && volume_side.exterior_volume == adjacency.exterior_volume
+                && volume_side.interior_volume == adjacency.interior_volume
+        })
+    })
+}
+
+fn arrangement_volume_face_sides(
+    shell: &ArrangementRegion,
+    exterior_volume: usize,
+    interior_volume: usize,
+) -> Vec<ArrangementVolumeFaceSide> {
+    shell
+        .oriented_sides
+        .iter()
+        .map(|side| ArrangementVolumeFaceSide {
+            face_cell: side.face_cell,
+            source: side.source,
+            source_face: side.source_face,
+            boundary: side.boundary.clone(),
+            exterior_volume,
+            interior_volume,
+        })
+        .collect()
 }
 
 fn nested_shell_volume_graph(
@@ -2123,6 +2182,11 @@ fn push_nested_shell_volume(
         exterior_volume,
         interior_volume: volume,
         separating_face_cells: shell_regions[shell].face_cells.clone(),
+        oriented_face_sides: arrangement_volume_face_sides(
+            &shell_regions[shell],
+            exterior_volume,
+            volume,
+        ),
     });
     for &child in &children[shell] {
         push_nested_shell_volume(
@@ -2335,12 +2399,22 @@ fn nested_two_shell_volume_graph(
             exterior_volume: 0,
             interior_volume: between_volume,
             separating_face_cells: shell_regions[outer_shell].face_cells.clone(),
+            oriented_face_sides: arrangement_volume_face_sides(
+                &shell_regions[outer_shell],
+                0,
+                between_volume,
+            ),
         },
         ArrangementVolumeAdjacency {
             shell_region: inner_shell,
             exterior_volume: between_volume,
             interior_volume: inner_volume,
             separating_face_cells: shell_regions[inner_shell].face_cells.clone(),
+            oriented_face_sides: arrangement_volume_face_sides(
+                &shell_regions[inner_shell],
+                between_volume,
+                inner_volume,
+            ),
         },
     ];
     Some((Some(volume_regions), Some(volume_adjacencies)))
@@ -2839,7 +2913,13 @@ mod tests {
             volume_adjacencies
                 .iter()
                 .all(|adjacency| adjacency.exterior_volume == 0
-                    && adjacency.separating_face_cells.len() == 4)
+                    && adjacency.separating_face_cells.len() == 4
+                    && adjacency.oriented_face_sides.len() == 4
+                    && adjacency.oriented_face_sides.iter().all(|side| {
+                        side.exterior_volume == adjacency.exterior_volume
+                            && side.interior_volume == adjacency.interior_volume
+                            && adjacency.separating_face_cells.contains(&side.face_cell)
+                    }))
         );
         assert!(arrangement.validate_against_sources(&left, &right).is_ok());
     }
@@ -2909,6 +2989,7 @@ mod tests {
             .select(ExactBooleanOperation::Union)
             .unwrap();
         assert_eq!(union.selected_volume_regions, vec![1, 2]);
+        assert_eq!(union.selected_faces.len(), 4);
         let intersection = arrangement
             .clone()
             .label_regions(ExactRegularizationPolicy::REGULARIZED_SOLID)
@@ -2916,12 +2997,14 @@ mod tests {
             .select(ExactBooleanOperation::Intersection)
             .unwrap();
         assert_eq!(intersection.selected_volume_regions, vec![2]);
+        assert_eq!(intersection.selected_faces.len(), 4);
         let difference = arrangement
             .label_regions(ExactRegularizationPolicy::REGULARIZED_SOLID)
             .unwrap()
             .select(ExactBooleanOperation::Difference)
             .unwrap();
         assert_eq!(difference.selected_volume_regions, vec![1]);
+        assert_eq!(difference.selected_faces.len(), 8);
     }
 
     #[test]
