@@ -4050,7 +4050,9 @@ impl Computable {
             ) {
                 match (left_sign, right_sign) {
                     (Sign::Plus, Sign::Minus) if left_msd > right_msd => Some(Sign::Plus),
-                    (Sign::Minus, Sign::Plus) if right_msd > left_msd => Some(Sign::Minus),
+                    (Sign::Plus, Sign::Minus) if right_msd > left_msd => Some(Sign::Minus),
+                    (Sign::Minus, Sign::Plus) if left_msd > right_msd => Some(Sign::Minus),
+                    (Sign::Minus, Sign::Plus) if right_msd > left_msd => Some(Sign::Plus),
                     (Sign::Plus, Sign::Plus) => Some(Sign::Plus),
                     (Sign::Minus, Sign::Minus) => Some(Sign::Minus),
                     (Sign::NoSign, Sign::NoSign) => Some(Sign::NoSign),

@@ -375,6 +375,8 @@ impl Real {
         use crate::real::Class;
 
         if matches!(self.class, Class::One)
+            && self.computable.is_none()
+            && self.signal.is_none()
             && let fast @ Some(_) = self.rational.to_f64_lossy()
         {
             // Exact rationals can often be rounded to f64 without touching the
@@ -759,6 +761,17 @@ mod tests {
         let approx = value.to_f64_lossy().unwrap();
         assert!(approx.is_sign_negative());
         assert!((approx + std::f64::consts::SQRT_2).abs() < 1e-15);
+    }
+
+    #[test]
+    fn borrowed_f64_lossy_keeps_positive_translation_over_negative_symbolic_tail() {
+        let sqrt_two = Real::from(2).sqrt().unwrap();
+        let value = Real::from(10) + (Real::from(1) - sqrt_two);
+
+        let approx = value.to_f64_lossy().unwrap();
+
+        assert!(approx.is_sign_positive());
+        assert!((approx - (11.0 - std::f64::consts::SQRT_2)).abs() < 1e-12);
     }
 
     #[test]
