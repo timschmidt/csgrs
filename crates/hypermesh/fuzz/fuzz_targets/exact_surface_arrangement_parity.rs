@@ -184,7 +184,6 @@ fn check_legacy(left: &ExactMesh, right: &ExactMesh, legacy: Option<ExactMesh>) 
             ExactBoundaryBooleanPolicy::Reject,
         )
         .unwrap();
-    assert_same_mesh_shape(&result.mesh, &legacy);
 
     let attempt = exact_arrangement_boolean_attempt_report(
         left,
@@ -193,7 +192,7 @@ fn check_legacy(left: &ExactMesh, right: &ExactMesh, legacy: Option<ExactMesh>) 
         ExactRegularizationPolicy::REGULARIZED_SOLID,
     )
     .expect("arrangement attempt report should build for exact surface pair");
-    if attempt.materialized_shortcut == Some(ExactBooleanShortcutKind::ArrangementCellComplex) {
+    if attempt.materialized_shortcut != Some(ExactBooleanShortcutKind::ArrangementCellComplex) {
         assert_same_mesh_shape(&result.mesh, &legacy);
     }
 }

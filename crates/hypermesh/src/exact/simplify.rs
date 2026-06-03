@@ -12,19 +12,19 @@ use super::arrangement3d::{
 };
 use super::boolean::ExactBooleanOperation;
 use super::cell_complex::{
-    ExactCellComplexFace, ExactCellRegionLabel, ExactOppositeRegionLabel,
-    ExactSelectedCellComplex, ExactSelectedFaceOrientation,
+    ExactCellComplexFace, ExactCellRegionLabel, ExactOppositeRegionLabel, ExactSelectedCellComplex,
+    ExactSelectedFaceOrientation,
 };
 use super::coplanar::CoplanarProjection;
 use super::mesh::{ExactMesh, Triangle};
 use super::provenance::{ApproximationPolicy, SourceProvenance};
 use super::regularization::{ExactArrangementBlocker, ExactRegularizationPolicy};
 use super::validation::ValidationPolicy;
-use super::view::{approximate_mesh_f64_view, ApproximateMeshF64View};
+use super::view::{ApproximateMeshF64View, approximate_mesh_f64_view};
 use hyperlimit::{
-    classify_point_ring_even_odd, classify_point_triangle, compare_reals, orient2d_report,
-    point3_equal, project_point3, projected_polygon_area2_value, Point2, Point3, RingPointLocation,
-    Sign, TriangleLocation,
+    Point2, Point3, RingPointLocation, Sign, TriangleLocation, classify_point_ring_even_odd,
+    classify_point_triangle, compare_reals, orient2d_report, point3_equal, project_point3,
+    projected_polygon_area2_value,
 };
 use hyperreal::Real;
 

@@ -1401,35 +1401,60 @@ fn stitch_selected_boundary_loops(
     boundary_policy: ExactArrangement2dBoundaryPolicy,
     blockers: &mut Vec<ExactArrangement2dBlocker>,
 ) -> Vec<ExactArrangement2dOutputLoop> {
-    let mut outgoing = HashMap::<usize, Vec<usize>>::new();
-    for fragment in fragments {
-        outgoing.entry(fragment[0]).or_default().push(fragment[1]);
+    let mut outgoing = HashMap::<usize, Vec<SelectedBoundaryFragment>>::new();
+    let mut fragment_records = Vec::with_capacity(fragments.len());
+    for (id, fragment) in fragments.into_iter().enumerate() {
+        let record = SelectedBoundaryFragment {
+            id,
+            start: fragment[0],
+            end: fragment[1],
+        };
+        outgoing.entry(record.start).or_default().push(record);
+        fragment_records.push(record);
     }
-    for (vertex, ends) in &outgoing {
-        if ends.len() != 1 {
-            blockers
-                .push(ExactArrangement2dBlocker::NonManifoldSelectedBoundary { vertex: *vertex });
-        }
-    }
-    if !blockers.is_empty() {
+    let mut used = vec![false; fragment_records.len()];
+    if fragment_records.is_empty() {
         return Vec::new();
     }
 
     let mut loops = Vec::new();
-    while !outgoing.is_empty() {
-        let Some((&start, _)) = outgoing.iter().min_by(|(left, _), (right, _)| {
-            compare_point2_lexicographic(
-                &arrangement.vertices[**left].point,
-                &arrangement.vertices[**right].point,
-            )
-            .value()
-            .unwrap_or(Ordering::Equal)
-        }) else {
+    while used.iter().any(|used| !*used) {
+        let Some(start_fragment) = fragment_records
+            .iter()
+            .filter(|fragment| !used[fragment.id])
+            .min_by(|left, right| {
+                compare_point2_lexicographic(
+                    &arrangement.vertices[left.start].point,
+                    &arrangement.vertices[right.start].point,
+                )
+                .value()
+                .unwrap_or(Ordering::Equal)
+                .then_with(|| {
+                    compare_point2_lexicographic(
+                        &arrangement.vertices[left.end].point,
+                        &arrangement.vertices[right.end].point,
+                    )
+                    .value()
+                    .unwrap_or(Ordering::Equal)
+                })
+            })
+            .copied()
+        else {
             break;
         };
+        let start = start_fragment.start;
         let mut current = start;
+        let mut fragment = start_fragment;
         let mut loop_vertices = Vec::new();
+        let mut local_steps = 0usize;
         loop {
+            if local_steps > fragment_records.len().saturating_add(1) {
+                blockers.push(ExactArrangement2dBlocker::NonManifoldSelectedBoundary {
+                    vertex: current,
+                });
+                return Vec::new();
+            }
+            local_steps += 1;
             if loop_vertices.contains(&current) && current != start {
                 blockers.push(ExactArrangement2dBlocker::NonManifoldSelectedBoundary {
                     vertex: current,
@@ -1437,23 +1462,29 @@ fn stitch_selected_boundary_loops(
                 return Vec::new();
             }
             loop_vertices.push(current);
-            let Some(mut ends) = outgoing.remove(&current) else {
-                blockers.push(ExactArrangement2dBlocker::NonManifoldSelectedBoundary {
-                    vertex: current,
-                });
-                return Vec::new();
-            };
-            let next = ends.remove(0);
-            if !ends.is_empty() {
+            if used[fragment.id] {
                 blockers.push(ExactArrangement2dBlocker::NonManifoldSelectedBoundary {
                     vertex: current,
                 });
                 return Vec::new();
             }
-            current = next;
+            used[fragment.id] = true;
+            let previous = current;
+            current = fragment.end;
             if current == start {
                 break;
             }
+            let Some(next_fragment) = select_next_boundary_fragment(
+                previous,
+                current,
+                outgoing.get(&current).map_or(&[][..], Vec::as_slice),
+                &used,
+                arrangement,
+                blockers,
+            ) else {
+                return Vec::new();
+            };
+            fragment = next_fragment;
         }
 
         let loop_index = loops.len();
@@ -1487,6 +1518,65 @@ fn stitch_selected_boundary_loops(
         });
     }
     loops
+}
+
+#[derive(Clone, Copy, Debug)]
+struct SelectedBoundaryFragment {
+    id: usize,
+    start: usize,
+    end: usize,
+}
+
+fn select_next_boundary_fragment(
+    previous: usize,
+    current: usize,
+    candidates: &[SelectedBoundaryFragment],
+    used: &[bool],
+    arrangement: &ExactArrangement2d,
+    blockers: &mut Vec<ExactArrangement2dBlocker>,
+) -> Option<SelectedBoundaryFragment> {
+    let available = candidates
+        .iter()
+        .filter(|candidate| !used[candidate.id])
+        .copied()
+        .collect::<Vec<_>>();
+    if available.is_empty() {
+        blockers.push(ExactArrangement2dBlocker::NonManifoldSelectedBoundary { vertex: current });
+        return None;
+    }
+    if available.len() == 1 {
+        return available.first().copied();
+    }
+
+    let mut ordered = Vec::with_capacity(available.len() + 1);
+    ordered.push(DirectedNeighbor {
+        vertex: previous,
+        edge: usize::MAX,
+    });
+    ordered.extend(available.iter().map(|candidate| DirectedNeighbor {
+        vertex: candidate.end,
+        edge: candidate.id,
+    }));
+    if sort_neighbors_around_vertex(current, &mut ordered, &arrangement.vertices, blockers).is_err()
+    {
+        return None;
+    }
+    let reverse_index = ordered
+        .iter()
+        .position(|entry| entry.vertex == previous && entry.edge == usize::MAX)?;
+    for offset in 1..ordered.len() {
+        let index = (reverse_index + ordered.len() - offset) % ordered.len();
+        let entry = ordered[index];
+        if entry.edge == usize::MAX {
+            continue;
+        }
+        return available
+            .iter()
+            .find(|candidate| candidate.id == entry.edge)
+            .copied();
+    }
+    blockers.push(ExactArrangement2dBlocker::NonManifoldSelectedBoundary { vertex: current });
+    None
 }
 
 fn simplify_loop_vertices(

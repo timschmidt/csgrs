@@ -1857,8 +1857,7 @@ fn validate_arrangement_volume_graph(
     {
         return;
     }
-    let (Some(volume_regions), Some(volume_adjacencies)) =
-        (volume_regions, volume_adjacencies)
+    let (Some(volume_regions), Some(volume_adjacencies)) = (volume_regions, volume_adjacencies)
     else {
         push_unique_blocker(blockers, ExactArrangementBlocker::NonManifoldCellComplex);
         return;
@@ -2990,10 +2989,12 @@ mod tests {
             .unwrap();
         assert_eq!(union.selected_volume_regions, vec![1, 2]);
         assert_eq!(union.selected_faces.len(), 4);
-        assert!(union
-            .selected_face_orientations
-            .iter()
-            .all(|orientation| !orientation.reverse && orientation.from_volume_adjacency));
+        assert!(
+            union
+                .selected_face_orientations
+                .iter()
+                .all(|orientation| !orientation.reverse && orientation.from_volume_adjacency)
+        );
         let intersection = arrangement
             .clone()
             .label_regions(ExactRegularizationPolicy::REGULARIZED_SOLID)
@@ -3002,10 +3003,12 @@ mod tests {
             .unwrap();
         assert_eq!(intersection.selected_volume_regions, vec![2]);
         assert_eq!(intersection.selected_faces.len(), 4);
-        assert!(intersection
-            .selected_face_orientations
-            .iter()
-            .all(|orientation| !orientation.reverse && orientation.from_volume_adjacency));
+        assert!(
+            intersection
+                .selected_face_orientations
+                .iter()
+                .all(|orientation| !orientation.reverse && orientation.from_volume_adjacency)
+        );
         let difference = arrangement
             .label_regions(ExactRegularizationPolicy::REGULARIZED_SOLID)
             .unwrap()
@@ -3021,10 +3024,12 @@ mod tests {
                 .count(),
             4
         );
-        assert!(difference
-            .selected_face_orientations
-            .iter()
-            .all(|orientation| orientation.from_volume_adjacency));
+        assert!(
+            difference
+                .selected_face_orientations
+                .iter()
+                .all(|orientation| orientation.from_volume_adjacency)
+        );
     }
 
     #[test]

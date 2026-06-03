@@ -2035,10 +2035,10 @@ fn boolean_coplanar_mesh_overlay_optional(
         && (certify_coplanar_surface_boundary_touch(left, right).is_some()
             || arrange_coplanar_surface_point_touch_union(left, right).is_some());
     let boundary_policy = match operation {
-        ExactBooleanOperation::Difference => coplanar_mesh_overlay_surface_difference_boundary_policy(
-            left, right,
-        )
-        .unwrap_or(ExactArrangement2dBoundaryPolicy::SimplifyCollinear),
+        ExactBooleanOperation::Difference => {
+            coplanar_mesh_overlay_materialized_difference_boundary_policy(left, right)
+                .unwrap_or(ExactArrangement2dBoundaryPolicy::SimplifyCollinear)
+        }
         ExactBooleanOperation::Intersection => {
             if arrange_coplanar_surface_component_holed_intersection(left, right).is_some() {
                 coplanar_mesh_overlay_surface_intersection_boundary_policy(left, right)
@@ -2165,19 +2165,22 @@ fn mesh_from_projected_overlay(
             projected.extend(hole.points.iter().map(point2_for_hypertri));
             polygon_points.extend(hole.lifted.iter().cloned());
         }
-        let local_to_global = polygon_points
+        let mut component_vertices = Vec::new();
+        let local_to_component = polygon_points
             .iter()
-            .map(|point| find_or_insert_exact_vertex(&mut vertices, point))
+            .map(|point| find_or_insert_exact_vertex(&mut component_vertices, point))
             .collect::<Option<Vec<_>>>()?;
         let indices = match hypertri::earcut(&projected, &hole_indices) {
             Ok(indices) if !indices.is_empty() && indices.len() % 3 == 0 => indices,
             _ => return None,
         };
+        let component_offset = vertices.len();
+        vertices.extend(component_vertices);
         for triangle in indices.chunks_exact(3) {
             triangles.push(Triangle([
-                local_to_global[triangle[0]],
-                local_to_global[triangle[1]],
-                local_to_global[triangle[2]],
+                component_offset + local_to_component[triangle[0]],
+                component_offset + local_to_component[triangle[1]],
+                component_offset + local_to_component[triangle[2]],
             ]));
         }
     }
@@ -2220,19 +2223,22 @@ fn coplanar_mesh_overlay_should_preempt_surface_paths(
     }
     if certify_coplanar_convex_surface_containment(left, right).is_some()
         && !(operation == ExactBooleanOperation::Difference
-            && coplanar_mesh_overlay_surface_difference_boundary_policy(left, right).is_some())
+            && coplanar_mesh_overlay_materialized_difference_boundary_policy(left, right).is_some())
     {
         return false;
     }
     if operation != ExactBooleanOperation::Intersection
         && certify_coplanar_surface_mesh_containment(left, right).is_some()
         && !(operation == ExactBooleanOperation::Difference
-            && coplanar_mesh_overlay_surface_difference_boundary_policy(left, right).is_some())
+            && coplanar_mesh_overlay_materialized_difference_boundary_policy(left, right).is_some())
     {
         return false;
     }
     match operation {
         ExactBooleanOperation::Union => {
+            if arrange_coplanar_surface_point_touch_union(left, right).is_some() {
+                return false;
+            }
             if total_triangles > 12
                 && arrange_coplanar_surface_component_union(left, right).is_some()
             {
@@ -2249,7 +2255,6 @@ fn coplanar_mesh_overlay_should_preempt_surface_paths(
                 || arrange_coplanar_surface_component_union(left, right).is_some()
                 || arrange_coplanar_surface_component_holed_union(left, right).is_some()
                 || arrange_coplanar_surface_multi_component_union(left, right).is_some()
-                || arrange_coplanar_surface_point_touch_union(left, right).is_some()
                 || arrange_coplanar_orthogonal_surface_union(left, right).is_some()
                 || arrange_coplanar_affine_surface_union(left, right).is_some()
         }
@@ -2280,7 +2285,8 @@ fn coplanar_mesh_overlay_should_preempt_surface_paths(
                 || arrange_coplanar_surface_point_touch_union(left, right).is_some()
         }
         ExactBooleanOperation::Difference => {
-            if coplanar_mesh_overlay_surface_difference_boundary_policy(left, right).is_some() {
+            if coplanar_mesh_overlay_materialized_difference_boundary_policy(left, right).is_some()
+            {
                 return true;
             }
             arrange_coplanar_convex_surface_difference(left, right).is_some()
@@ -2424,7 +2430,7 @@ fn point3_exact_equal(left: &Point3, right: &Point3) -> Option<bool> {
     )
 }
 
-fn coplanar_mesh_overlay_surface_difference_boundary_policy(
+fn coplanar_mesh_overlay_materialized_difference_boundary_policy(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Option<ExactArrangement2dBoundaryPolicy> {
@@ -2432,11 +2438,25 @@ fn coplanar_mesh_overlay_surface_difference_boundary_policy(
         ExactArrangement2dBoundaryPolicy::SimplifyCollinear,
         ExactArrangement2dBoundaryPolicy::PreserveCollinear,
     ] {
-        if coplanar_mesh_overlay_matches_legacy_surface_difference_with_policy(
+        let projected_boundary_policy = match boundary_policy {
+            ExactArrangement2dBoundaryPolicy::SimplifyCollinear => {
+                ProjectedOverlayBoundaryPolicy::SimplifyCollinear
+            }
+            ExactArrangement2dBoundaryPolicy::PreserveCollinear => {
+                ProjectedOverlayBoundaryPolicy::PreserveCollinear
+            }
+        };
+        if materialize_coplanar_mesh_overlay_mesh(
             left,
             right,
+            ExactArrangement2dSetOperation::Difference,
             boundary_policy,
-        ) {
+            projected_boundary_policy,
+            "exact coplanar mesh overlay arrangement",
+            false,
+        )
+        .is_some()
+        {
             return Some(boundary_policy);
         }
     }
@@ -2448,99 +2468,7 @@ fn coplanar_mesh_overlay_difference_ready(left: &ExactMesh, right: &ExactMesh) -
         left,
         right,
         ExactBooleanOperation::Difference,
-    ) && coplanar_mesh_overlay_surface_difference_boundary_policy(left, right).is_some()
-}
-
-fn coplanar_mesh_overlay_matches_legacy_surface_difference_with_policy(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    boundary_policy: ExactArrangement2dBoundaryPolicy,
-) -> bool {
-    let projected_boundary_policy = match boundary_policy {
-        ExactArrangement2dBoundaryPolicy::SimplifyCollinear => {
-            ProjectedOverlayBoundaryPolicy::SimplifyCollinear
-        }
-        ExactArrangement2dBoundaryPolicy::PreserveCollinear => {
-            ProjectedOverlayBoundaryPolicy::PreserveCollinear
-        }
-    };
-    let Some(overlay) = materialize_coplanar_mesh_overlay_mesh(
-        left,
-        right,
-        ExactArrangement2dSetOperation::Difference,
-        boundary_policy,
-        projected_boundary_policy,
-        "exact coplanar mesh overlay arrangement",
-        false,
-    ) else {
-        return false;
-    };
-
-    // These legacy materializers are retained here as exact proof fixtures:
-    // the public Boolean result can use the arrangement output once it replays
-    // the same exact boundary as the older surface-specific artifact.
-    if certify_coplanar_surface_boundary_touch(left, right).is_some()
-        && exact_meshes_have_same_shape(&overlay, left)
-    {
-        return true;
-    }
-    if let Some(surface) = arrange_coplanar_surface_multi_difference(left, right)
-        && exact_meshes_have_same_shape(&overlay, &surface.mesh)
-    {
-        return true;
-    }
-    if let Some(surface) = arrange_coplanar_surface_side_cutter_difference(left, right)
-        && exact_meshes_have_same_shape(&overlay, &surface.mesh)
-    {
-        return true;
-    }
-    if let Some(surface) = arrange_coplanar_surface_cutter_hole_contact_difference(left, right)
-        && exact_meshes_have_same_shape(&overlay, &surface.mesh)
-    {
-        return true;
-    }
-    if let Some(surface) = arrange_coplanar_convex_surface_holed_difference(left, right)
-        && exact_meshes_have_same_shape(&overlay, &surface.mesh)
-    {
-        return true;
-    }
-    if let Some(surface) = arrange_coplanar_convex_surface_multi_holed_difference(left, right)
-        && exact_meshes_have_same_shape(&overlay, &surface.mesh)
-    {
-        return true;
-    }
-    if let Some(surface) = arrange_coplanar_convex_surface_component_holed_difference(left, right)
-        && exact_meshes_have_same_shape(&overlay, &surface.mesh)
-    {
-        return true;
-    }
-    if let Some(surface) = arrange_coplanar_surface_component_holed_difference(left, right)
-        && exact_meshes_have_same_shape(&overlay, &surface.mesh)
-    {
-        return true;
-    }
-    if let Some(surface) = arrange_coplanar_orthogonal_surface_difference(left, right)
-        && exact_meshes_have_same_shape(&overlay, &surface.mesh)
-    {
-        return true;
-    }
-    if let Some(surface) = difference_single_triangle_coplanar_surfaces(left, right)
-        && exact_meshes_have_same_shape(&overlay, &surface.mesh)
-    {
-        return true;
-    }
-    if let Some(surface) = arrange_single_triangle_coplanar_difference(left, right)
-        && exact_meshes_have_same_shape(&overlay, &surface.mesh)
-    {
-        return true;
-    }
-    if let Some(surface) = arrange_single_triangle_coplanar_holed_difference(left, right)
-        && exact_meshes_have_same_shape(&overlay, &surface.mesh)
-    {
-        return true;
-    }
-
-    false
+    ) && coplanar_mesh_overlay_materialized_difference_boundary_policy(left, right).is_some()
 }
 
 fn coplanar_mesh_overlay_surface_intersection_boundary_policy(
@@ -2688,9 +2616,10 @@ fn exact_mesh_boundary_edges(mesh: &ExactMesh) -> Option<Vec<ExactBoundaryEdge>>
                 mesh.vertices().get(start)?.clone(),
                 mesh.vertices().get(end)?.clone(),
             ];
-            if let Some(existing) = edges.iter_mut().find(|existing| {
-                point3_edge_exact_equal(&existing.endpoints, &edge) == Some(true)
-            }) {
+            if let Some(existing) = edges
+                .iter_mut()
+                .find(|existing| point3_edge_exact_equal(&existing.endpoints, &edge) == Some(true))
+            {
                 existing.count += 1;
             } else {
                 edges.push(ExactBoundaryEdge {
@@ -2716,8 +2645,7 @@ fn triangle_edges(triangle: &Triangle) -> [[usize; 2]; 3] {
 
 fn point3_edge_exact_equal(left: &[Point3; 2], right: &[Point3; 2]) -> Option<bool> {
     Some(
-        (point3_exact_equal(&left[0], &right[0])?
-            && point3_exact_equal(&left[1], &right[1])?)
+        (point3_exact_equal(&left[0], &right[0])? && point3_exact_equal(&left[1], &right[1])?)
             || (point3_exact_equal(&left[0], &right[1])?
                 && point3_exact_equal(&left[1], &right[0])?),
     )
@@ -6576,6 +6504,49 @@ mod tests {
             &same_side_left,
             &same_side_right
         ));
+    }
+
+    #[test]
+    fn coplanar_overlay_certifies_component_holed_contact_difference() {
+        let left = ExactMesh::from_i64_triangles_with_policy(
+            &[0, 0, 0, 20, 0, 0, 20, 20, 0, 0, 20, 0],
+            &[0, 1, 2, 0, 2, 3],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let opening_plus_hole = ExactMesh::from_i64_triangles_with_policy(
+            &[
+                8, 8, 0, 12, 10, 0, 8, 12, 0, //
+                0, 9, 0, 10, 8, 0, 10, 12, 0, 0, 11, 0, //
+                15, 15, 0, 17, 15, 0, 17, 17, 0, 15, 17, 0,
+            ],
+            &[
+                0, 1, 2, //
+                3, 4, 5, 3, 5, 6, //
+                7, 8, 9, 7, 9, 10,
+            ],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+
+        assert!(coplanar_mesh_overlay_difference_ready(
+            &left,
+            &opening_plus_hole
+        ));
+        let result = boolean_coplanar_mesh_overlay_optional(
+            &left,
+            &opening_plus_hole,
+            ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap()
+        .expect("certified overlay should materialize component-holed difference");
+        assert_eq!(
+            result.kind,
+            ExactBooleanResultKind::CertifiedShortcut {
+                shortcut: ExactBooleanShortcutKind::ArrangementCellComplex
+            }
+        );
     }
 
     fn tetrahedron_i64(a: [i64; 3], b: [i64; 3], c: [i64; 3], d: [i64; 3]) -> ExactMesh {

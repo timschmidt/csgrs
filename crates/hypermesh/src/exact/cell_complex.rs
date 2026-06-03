@@ -214,8 +214,7 @@ impl ExactLabeledCellComplex {
                 &self.volume_regions,
                 &self.volume_adjacencies,
                 operation,
-            )
-        {
+            ) {
             selected
         } else {
             let selected_faces =
