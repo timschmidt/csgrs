@@ -130,15 +130,30 @@ pub fn simplify_selected_cell_complex(
     let mut zero_area_cells_removed = 0;
     let mut interior_edges_removed = 0;
     let selected_face_orientations = selected.selected_face_orientations.clone();
+    let require_volume_orientations = !matches!(
+        selected.operation,
+        ExactBooleanOperation::SelectedRegions(_)
+    ) && !selected.volume_adjacencies.is_empty();
 
     for source_face in selected.selected_faces {
         let mut face = selected.faces[source_face].clone();
-        orient_selected_face(
-            &mut face,
+        match selected_face_reverse_orientation(
+            &face,
             source_face,
             selected.operation,
             &selected_face_orientations,
-        );
+            require_volume_orientations,
+        ) {
+            Ok(true) => {
+                face.cell.boundary.reverse();
+                face.cell.boundary_points.reverse();
+            }
+            Ok(false) => {}
+            Err(blocker) => {
+                blockers.push(blocker);
+                continue;
+            }
+        }
         duplicate_boundary_nodes_removed += remove_consecutive_duplicate_nodes(&mut face);
         collinear_boundary_nodes_removed +=
             remove_collinear_boundary_nodes(&mut face, &mut blockers);
@@ -475,24 +490,35 @@ fn canonicalize_boundary_start(face: &mut ExactCellComplexFace) {
     }
 }
 
-fn orient_selected_face(
-    face: &mut ExactCellComplexFace,
+fn selected_face_reverse_orientation(
+    face: &ExactCellComplexFace,
     source_face: usize,
     operation: ExactBooleanOperation,
     orientations: &[ExactSelectedFaceOrientation],
-) {
-    let reverse = orientations
+    require_volume_orientation: bool,
+) -> Result<bool, ExactArrangementBlocker> {
+    let mut matches = orientations
         .iter()
-        .find(|orientation| orientation.face == source_face)
-        .map(|orientation| orientation.reverse)
-        .unwrap_or_else(|| {
-            operation == ExactBooleanOperation::Difference
-                && face.source == ExactCellRegionLabel::RightBoundary
-        });
-    if reverse {
-        face.cell.boundary.reverse();
-        face.cell.boundary_points.reverse();
+        .filter(|orientation| orientation.face == source_face);
+    let first = matches.next();
+    if let Some(first) = first {
+        for orientation in matches {
+            if orientation.reverse != first.reverse
+                || orientation.from_volume_adjacency != first.from_volume_adjacency
+            {
+                return Err(ExactArrangementBlocker::UnresolvedRegionClassification);
+            }
+        }
+        if require_volume_orientation && !first.from_volume_adjacency {
+            return Err(ExactArrangementBlocker::UnresolvedRegionClassification);
+        }
+        return Ok(first.reverse);
     }
+    if require_volume_orientation {
+        return Err(ExactArrangementBlocker::UnresolvedRegionClassification);
+    }
+    Ok(operation == ExactBooleanOperation::Difference
+        && face.source == ExactCellRegionLabel::RightBoundary)
 }
 
 const fn side_key(side: super::graph::MeshSide) -> usize {
@@ -959,6 +985,7 @@ mod tests {
     use super::*;
     use crate::exact::arrangement3d::{
         ArrangementFaceCarrier, ArrangementFaceCell, ArrangementFaceCellNode,
+        ArrangementVolumeAdjacency, ArrangementVolumeFaceSide,
     };
     use crate::exact::cell_complex::{
         ExactCellComplexFace, ExactCellRegionLabel, ExactOppositeRegionLabel,
@@ -970,11 +997,8 @@ mod tests {
         Point3::new(Real::from(x), Real::from(y), Real::from(z))
     }
 
-    fn source_node(vertex: usize) -> ArrangementFaceCellNode {
-        ArrangementFaceCellNode::SourceVertex {
-            side: MeshSide::Left,
-            vertex,
-        }
+    fn source_node_on(side: MeshSide, vertex: usize) -> ArrangementFaceCellNode {
+        ArrangementFaceCellNode::SourceVertex { side, vertex }
     }
 
     fn selected_face(
@@ -982,19 +1006,57 @@ mod tests {
         vertices: &[usize],
         points: &[Point3],
     ) -> ExactCellComplexFace {
+        selected_face_with_source(
+            MeshSide::Left,
+            ExactCellRegionLabel::LeftBoundary,
+            vertices,
+            points,
+        )
+    }
+
+    fn selected_face_with_source(
+        side: MeshSide,
+        source: ExactCellRegionLabel,
+        vertices: &[usize],
+        points: &[Point3],
+    ) -> ExactCellComplexFace {
         ExactCellComplexFace {
             cell: ArrangementFaceCell {
                 carrier: ArrangementFaceCarrier {
-                    side: MeshSide::Left,
+                    side,
                     face: 0,
                     triangle: [0, 1, 2],
                 },
-                boundary: vertices.iter().map(|vertex| source_node(*vertex)).collect(),
+                boundary: vertices
+                    .iter()
+                    .map(|vertex| source_node_on(side, *vertex))
+                    .collect(),
                 boundary_points: points.to_vec(),
                 opposite: None,
             },
-            source: ExactCellRegionLabel::LeftBoundary,
+            source,
             opposite: ExactOppositeRegionLabel::Outside,
+        }
+    }
+
+    fn dummy_volume_adjacency(face_cell: usize) -> ArrangementVolumeAdjacency {
+        ArrangementVolumeAdjacency {
+            shell_region: 0,
+            exterior_volume: 0,
+            interior_volume: 1,
+            separating_face_cells: vec![face_cell],
+            oriented_face_sides: vec![ArrangementVolumeFaceSide {
+                face_cell,
+                source: MeshSide::Right,
+                source_face: 0,
+                boundary: vec![
+                    source_node_on(MeshSide::Right, 0),
+                    source_node_on(MeshSide::Right, 1),
+                    source_node_on(MeshSide::Right, 2),
+                ],
+                exterior_volume: 0,
+                interior_volume: 1,
+            }],
         }
     }
 
@@ -1064,6 +1126,70 @@ mod tests {
         assert_eq!(
             compare_reals(&area, &Real::from(0)).value(),
             Some(Ordering::Less)
+        );
+    }
+
+    #[test]
+    fn simplification_blocks_missing_volume_orientation_evidence() {
+        let points = [p(0, 0, 0), p(1, 0, 0), p(0, 1, 0)];
+        let selected = ExactSelectedCellComplex {
+            faces: vec![selected_face_with_source(
+                MeshSide::Right,
+                ExactCellRegionLabel::RightBoundary,
+                &[0, 1, 2],
+                &points,
+            )],
+            volume_regions: Vec::new(),
+            volume_adjacencies: vec![dummy_volume_adjacency(0)],
+            lower_dimensional_artifacts: Vec::new(),
+            selected_faces: vec![0],
+            selected_face_orientations: Vec::new(),
+            selected_volume_regions: Vec::new(),
+            operation: ExactBooleanOperation::Difference,
+            blockers: Vec::new(),
+        };
+
+        assert_eq!(
+            simplify_selected_cell_complex(selected, ExactRegularizationPolicy::REGULARIZED_SOLID),
+            Err(ExactArrangementBlocker::UnresolvedRegionClassification)
+        );
+    }
+
+    #[test]
+    fn simplification_prefers_volume_orientation_over_difference_source_rule() {
+        let points = [p(0, 0, 0), p(1, 0, 0), p(0, 1, 0)];
+        let selected = ExactSelectedCellComplex {
+            faces: vec![selected_face_with_source(
+                MeshSide::Right,
+                ExactCellRegionLabel::RightBoundary,
+                &[0, 1, 2],
+                &points,
+            )],
+            volume_regions: Vec::new(),
+            volume_adjacencies: vec![dummy_volume_adjacency(0)],
+            lower_dimensional_artifacts: Vec::new(),
+            selected_faces: vec![0],
+            selected_face_orientations: vec![ExactSelectedFaceOrientation {
+                face: 0,
+                reverse: false,
+                from_volume_adjacency: true,
+            }],
+            selected_volume_regions: Vec::new(),
+            operation: ExactBooleanOperation::Difference,
+            blockers: Vec::new(),
+        };
+
+        let simplified =
+            simplify_selected_cell_complex(selected, ExactRegularizationPolicy::REGULARIZED_SOLID)
+                .unwrap();
+        let area = projected_polygon_area2_value(
+            &simplified.faces[0].face.cell.boundary_points,
+            CoplanarProjection::Xy,
+        );
+
+        assert_eq!(
+            compare_reals(&area, &Real::from(0)).value(),
+            Some(Ordering::Greater)
         );
     }
 
