@@ -386,6 +386,13 @@ impl ExactArrangement3d {
             &face_cells,
             left,
             right,
+            &mut blockers,
+        );
+        validate_arrangement_volume_graph(
+            shells_or_regions.as_ref().map_or(&[][..], Vec::as_slice),
+            volume_regions.as_deref(),
+            volume_adjacencies.as_deref(),
+            &mut blockers,
         );
         if shells_or_regions
             .as_ref()
@@ -1761,6 +1768,7 @@ fn arrangement_volume_graph(
     face_cells: &[ArrangementFaceCell],
     left: &ExactMesh,
     right: &ExactMesh,
+    blockers: &mut Vec<ExactArrangementBlocker>,
 ) -> (
     Option<Vec<ArrangementVolumeRegion>>,
     Option<Vec<ArrangementVolumeAdjacency>>,
@@ -1773,7 +1781,7 @@ fn arrangement_volume_graph(
         return (None, None);
     }
 
-    if let Some(nested) = nested_shell_volume_graph(shell_regions, face_cells) {
+    if let Some(nested) = nested_shell_volume_graph(shell_regions, face_cells, blockers) {
         return nested;
     }
 
@@ -1809,9 +1817,98 @@ fn arrangement_volume_graph(
     (Some(volume_regions), Some(volume_adjacencies))
 }
 
+fn validate_arrangement_volume_graph(
+    shell_regions: &[ArrangementRegion],
+    volume_regions: Option<&[ArrangementVolumeRegion]>,
+    volume_adjacencies: Option<&[ArrangementVolumeAdjacency]>,
+    blockers: &mut Vec<ExactArrangementBlocker>,
+) {
+    if shell_regions.is_empty() {
+        if volume_regions.is_some_and(|regions| !regions.is_empty())
+            || volume_adjacencies.is_some_and(|adjacencies| !adjacencies.is_empty())
+        {
+            push_unique_blocker(blockers, ExactArrangementBlocker::NonManifoldCellComplex);
+        }
+        return;
+    }
+    if shell_regions
+        .iter()
+        .any(|region| !region.closed || !region.manifold)
+    {
+        return;
+    }
+    let (Some(volume_regions), Some(volume_adjacencies)) =
+        (volume_regions, volume_adjacencies)
+    else {
+        push_unique_blocker(blockers, ExactArrangementBlocker::NonManifoldCellComplex);
+        return;
+    };
+    if volume_regions
+        .iter()
+        .enumerate()
+        .any(|(index, region)| region.index != index)
+    {
+        push_unique_blocker(blockers, ExactArrangementBlocker::NonManifoldCellComplex);
+    }
+    if volume_regions
+        .iter()
+        .filter(|region| region.exterior)
+        .count()
+        != 1
+    {
+        push_unique_blocker(blockers, ExactArrangementBlocker::NonManifoldCellComplex);
+    }
+
+    let mut shell_adjacency_counts = vec![0usize; shell_regions.len()];
+    for adjacency in volume_adjacencies {
+        if adjacency.shell_region >= shell_regions.len()
+            || adjacency.exterior_volume >= volume_regions.len()
+            || adjacency.interior_volume >= volume_regions.len()
+            || adjacency.exterior_volume == adjacency.interior_volume
+        {
+            push_unique_blocker(blockers, ExactArrangementBlocker::NonManifoldCellComplex);
+            continue;
+        }
+        shell_adjacency_counts[adjacency.shell_region] += 1;
+        let shell = &shell_regions[adjacency.shell_region];
+        if !same_usize_set(&adjacency.separating_face_cells, &shell.face_cells)
+            || !volume_regions[adjacency.exterior_volume]
+                .boundary_shells
+                .contains(&adjacency.shell_region)
+            || !volume_regions[adjacency.interior_volume]
+                .boundary_shells
+                .contains(&adjacency.shell_region)
+        {
+            push_unique_blocker(blockers, ExactArrangementBlocker::NonManifoldCellComplex);
+        }
+    }
+    if shell_adjacency_counts.into_iter().any(|count| count != 1) {
+        push_unique_blocker(blockers, ExactArrangementBlocker::NonManifoldCellComplex);
+    }
+    if volume_regions.iter().any(|region| {
+        region
+            .boundary_shells
+            .iter()
+            .any(|shell| *shell >= shell_regions.len())
+    }) {
+        push_unique_blocker(blockers, ExactArrangementBlocker::NonManifoldCellComplex);
+    }
+}
+
+fn same_usize_set(left: &[usize], right: &[usize]) -> bool {
+    let mut left = left.to_vec();
+    let mut right = right.to_vec();
+    left.sort_unstable();
+    left.dedup();
+    right.sort_unstable();
+    right.dedup();
+    left == right
+}
+
 fn nested_shell_volume_graph(
     shell_regions: &[ArrangementRegion],
     face_cells: &[ArrangementFaceCell],
+    blockers: &mut Vec<ExactArrangementBlocker>,
 ) -> Option<(
     Option<Vec<ArrangementVolumeRegion>>,
     Option<Vec<ArrangementVolumeAdjacency>>,
@@ -1837,6 +1934,10 @@ fn nested_shell_volume_graph(
             ClosedMeshOrientation::Positive | ClosedMeshOrientation::Negative
         )
     }) {
+        push_unique_blocker(
+            blockers,
+            ExactArrangementBlocker::UnresolvedRegionClassification,
+        );
         return None;
     }
     let mut contains = vec![vec![false; shell_regions.len()]; shell_regions.len()];
@@ -1854,9 +1955,17 @@ fn nested_shell_volume_graph(
             {
                 ClosedMeshWindingRelation::Inside => contains[contained][container] = true,
                 ClosedMeshWindingRelation::Outside => {}
-                ClosedMeshWindingRelation::Boundary
-                | ClosedMeshWindingRelation::Unknown
-                | ClosedMeshWindingRelation::NotClosed => return None,
+                ClosedMeshWindingRelation::Boundary => {
+                    push_unique_blocker(blockers, ExactArrangementBlocker::NonManifoldCellComplex);
+                    return None;
+                }
+                ClosedMeshWindingRelation::Unknown | ClosedMeshWindingRelation::NotClosed => {
+                    push_unique_blocker(
+                        blockers,
+                        ExactArrangementBlocker::UnresolvedRegionClassification,
+                    );
+                    return None;
+                }
             }
         }
     }
@@ -1864,6 +1973,7 @@ fn nested_shell_volume_graph(
     for left in 0..shell_regions.len() {
         for right in (left + 1)..shell_regions.len() {
             if contains[left][right] && contains[right][left] {
+                push_unique_blocker(blockers, ExactArrangementBlocker::NonManifoldCellComplex);
                 return None;
             }
         }
@@ -1879,6 +1989,12 @@ fn nested_shell_volume_graph(
         };
         parents[shell] = Some(parent);
     }
+    diagnose_same_source_same_orientation_nesting(
+        shell_regions,
+        &shell_orientations,
+        &parents,
+        blockers,
+    );
 
     let mut children = vec![Vec::<usize>::new(); shell_regions.len()];
     for (shell, parent) in parents.iter().enumerate() {
@@ -1937,6 +2053,35 @@ fn deepest_containing_shell(containers: &[usize], contains: &[Vec<bool>]) -> Opt
         }
     }
     best
+}
+
+fn diagnose_same_source_same_orientation_nesting(
+    shell_regions: &[ArrangementRegion],
+    shell_orientations: &[ClosedMeshOrientation],
+    parents: &[Option<usize>],
+    blockers: &mut Vec<ExactArrangementBlocker>,
+) {
+    for (shell, parent) in parents.iter().enumerate() {
+        let Some(parent) = *parent else {
+            continue;
+        };
+        for source in &shell_regions[shell].source_sides {
+            if shell_regions[parent].source_sides.contains(source)
+                && shell_orientations.get(shell) == shell_orientations.get(parent)
+            {
+                push_unique_blocker(blockers, ExactArrangementBlocker::NonManifoldCellComplex);
+            }
+        }
+    }
+}
+
+fn push_unique_blocker(
+    blockers: &mut Vec<ExactArrangementBlocker>,
+    blocker: ExactArrangementBlocker,
+) {
+    if !blockers.contains(&blocker) {
+        blockers.push(blocker);
+    }
 }
 
 fn push_nested_shell_volume(
@@ -2700,6 +2845,30 @@ mod tests {
     }
 
     #[test]
+    fn volume_graph_validation_rejects_missing_shell_adjacency() {
+        let left = tetrahedron_i64([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]);
+        let right = tetrahedron_i64([3, 0, 0], [4, 0, 0], [3, 1, 0], [3, 0, 1]);
+        let arrangement = ExactArrangement::from_meshes(&left, &right).unwrap();
+        let shell_regions = arrangement.shells_or_regions.as_ref().unwrap();
+        let volume_regions = arrangement.volume_regions.as_ref().unwrap();
+        let mut stale_adjacencies = arrangement.volume_adjacencies.clone().unwrap();
+        stale_adjacencies.pop();
+        let mut blockers = Vec::new();
+
+        validate_arrangement_volume_graph(
+            shell_regions,
+            Some(volume_regions),
+            Some(&stale_adjacencies),
+            &mut blockers,
+        );
+
+        assert_eq!(
+            blockers,
+            vec![ExactArrangementBlocker::NonManifoldCellComplex]
+        );
+    }
+
+    #[test]
     fn nested_tetrahedra_build_nested_volume_regions() {
         let left = tetrahedron_i64([0, 0, 0], [10, 0, 0], [0, 10, 0], [0, 0, 10]);
         let right = tetrahedron_i64([1, 1, 1], [2, 1, 1], [1, 2, 1], [1, 1, 2]);
@@ -2861,6 +3030,35 @@ mod tests {
             .select(ExactBooleanOperation::Difference)
             .unwrap();
         assert_eq!(difference.selected_volume_regions, vec![left_volume.index]);
+    }
+
+    #[test]
+    fn same_source_same_orientation_nested_shell_reports_nonmanifold_volume() {
+        let left = two_tetrahedra_i64(&[
+            [[0, 0, 0], [20, 0, 0], [0, 20, 0], [0, 0, 20]],
+            [[1, 1, 1], [2, 1, 1], [1, 2, 1], [1, 1, 2]],
+        ]);
+        let right = tetrahedron_i64([30, 0, 0], [31, 0, 0], [30, 1, 0], [30, 0, 1]);
+
+        let arrangement = ExactArrangement::from_meshes(&left, &right).unwrap();
+
+        assert!(
+            arrangement
+                .blockers
+                .contains(&ExactArrangementBlocker::NonManifoldCellComplex),
+            "{:?}",
+            arrangement.blockers
+        );
+        assert!(
+            arrangement.volume_regions.is_some(),
+            "diagnostic volume graph should still be retained"
+        );
+        assert_eq!(
+            arrangement
+                .label_regions(ExactRegularizationPolicy::REGULARIZED_SOLID)
+                .unwrap_err(),
+            ExactArrangementBlocker::NonManifoldCellComplex
+        );
     }
 
     #[test]
