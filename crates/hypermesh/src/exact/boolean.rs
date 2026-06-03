@@ -2018,10 +2018,9 @@ fn boolean_coplanar_mesh_overlay_optional(
     let allow_empty_overlay = operation == ExactBooleanOperation::Intersection
         && (certify_coplanar_surface_boundary_touch(left, right).is_some()
             || arrange_coplanar_surface_point_touch_union(left, right).is_some());
-    let boundary_policy = if operation == ExactBooleanOperation::Difference
-        && coplanar_mesh_overlay_matches_surface_multi_difference(left, right)
-    {
-        ExactArrangement2dBoundaryPolicy::PreserveCollinear
+    let boundary_policy = if operation == ExactBooleanOperation::Difference {
+        coplanar_mesh_overlay_surface_difference_boundary_policy(left, right)
+            .unwrap_or(ExactArrangement2dBoundaryPolicy::SimplifyCollinear)
     } else {
         ExactArrangement2dBoundaryPolicy::SimplifyCollinear
     };
@@ -2238,26 +2237,15 @@ fn coplanar_mesh_overlay_should_preempt_surface_paths(
                 || arrange_coplanar_surface_point_touch_union(left, right).is_some()
         }
         ExactBooleanOperation::Difference => {
-            if certify_coplanar_surface_boundary_touch(left, right).is_some()
-                || (arrange_coplanar_surface_multi_difference(left, right).is_some()
-                    && !coplanar_mesh_overlay_matches_surface_multi_difference(left, right))
-                || arrange_coplanar_surface_side_cutter_difference(left, right).is_some()
-                || arrange_coplanar_surface_cutter_hole_contact_difference(left, right).is_some()
-                || arrange_coplanar_convex_surface_holed_difference(left, right).is_some()
-                || arrange_coplanar_convex_surface_multi_holed_difference(left, right).is_some()
-                || arrange_coplanar_convex_surface_component_holed_difference(left, right).is_some()
-                || arrange_coplanar_surface_component_holed_difference(left, right).is_some()
-                || arrange_coplanar_orthogonal_surface_difference(left, right).is_some()
-                || difference_single_triangle_coplanar_surfaces(left, right).is_some()
-                || arrange_single_triangle_coplanar_difference(left, right).is_some()
-                || arrange_single_triangle_coplanar_holed_difference(left, right).is_some()
-            {
+            if certify_coplanar_surface_boundary_touch(left, right).is_some() {
                 return false;
+            }
+            if coplanar_mesh_overlay_surface_difference_boundary_policy(left, right).is_some() {
+                return true;
             }
             arrange_coplanar_convex_surface_difference(left, right).is_some()
                 || arrange_coplanar_convex_surface_multi_difference(left, right).is_some()
                 || arrange_coplanar_surface_component_difference(left, right).is_some()
-                || coplanar_mesh_overlay_matches_surface_multi_difference(left, right)
                 || arrange_coplanar_surface_point_touch_difference(left, right).is_some()
                 || arrange_coplanar_affine_surface_difference(left, right).is_some()
         }
@@ -2396,26 +2384,114 @@ fn point3_exact_equal(left: &Point3, right: &Point3) -> Option<bool> {
     )
 }
 
-fn coplanar_mesh_overlay_matches_surface_multi_difference(
+fn coplanar_mesh_overlay_surface_difference_boundary_policy(
     left: &ExactMesh,
     right: &ExactMesh,
+) -> Option<ExactArrangement2dBoundaryPolicy> {
+    for boundary_policy in [
+        ExactArrangement2dBoundaryPolicy::SimplifyCollinear,
+        ExactArrangement2dBoundaryPolicy::PreserveCollinear,
+    ] {
+        if coplanar_mesh_overlay_matches_legacy_surface_difference_with_policy(
+            left,
+            right,
+            boundary_policy,
+        ) {
+            return Some(boundary_policy);
+        }
+    }
+    None
+}
+
+fn coplanar_mesh_overlay_matches_legacy_surface_difference_with_policy(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    boundary_policy: ExactArrangement2dBoundaryPolicy,
 ) -> bool {
-    let Some(surface) = arrange_coplanar_surface_multi_difference(left, right) else {
-        return false;
+    let projected_boundary_policy = match boundary_policy {
+        ExactArrangement2dBoundaryPolicy::SimplifyCollinear => {
+            ProjectedOverlayBoundaryPolicy::SimplifyCollinear
+        }
+        ExactArrangement2dBoundaryPolicy::PreserveCollinear => {
+            ProjectedOverlayBoundaryPolicy::PreserveCollinear
+        }
     };
     let Some(overlay) = materialize_coplanar_mesh_overlay_mesh(
         left,
         right,
         ExactArrangement2dSetOperation::Difference,
-        ExactArrangement2dBoundaryPolicy::PreserveCollinear,
-        ProjectedOverlayBoundaryPolicy::PreserveCollinear,
+        boundary_policy,
+        projected_boundary_policy,
         "exact coplanar mesh overlay arrangement",
         false,
     ) else {
         return false;
     };
-    exact_mesh_vertex_sets_match(&overlay, &surface.mesh)
-        && overlay.triangles().len() == surface.mesh.triangles().len()
+
+    // These legacy materializers are retained here as exact proof fixtures:
+    // the public Boolean result can use the arrangement output once it replays
+    // the same exact boundary as the older surface-specific artifact.
+    if let Some(surface) = arrange_coplanar_surface_multi_difference(left, right)
+        && exact_meshes_have_same_shape(&overlay, &surface.mesh)
+    {
+        return true;
+    }
+    if let Some(surface) = arrange_coplanar_surface_side_cutter_difference(left, right)
+        && exact_meshes_have_same_shape(&overlay, &surface.mesh)
+    {
+        return true;
+    }
+    if let Some(surface) = arrange_coplanar_surface_cutter_hole_contact_difference(left, right)
+        && exact_meshes_have_same_shape(&overlay, &surface.mesh)
+    {
+        return true;
+    }
+    if let Some(surface) = arrange_coplanar_convex_surface_holed_difference(left, right)
+        && exact_meshes_have_same_shape(&overlay, &surface.mesh)
+    {
+        return true;
+    }
+    if let Some(surface) = arrange_coplanar_convex_surface_multi_holed_difference(left, right)
+        && exact_meshes_have_same_shape(&overlay, &surface.mesh)
+    {
+        return true;
+    }
+    if let Some(surface) = arrange_coplanar_convex_surface_component_holed_difference(left, right)
+        && exact_meshes_have_same_shape(&overlay, &surface.mesh)
+    {
+        return true;
+    }
+    if let Some(surface) = arrange_coplanar_surface_component_holed_difference(left, right)
+        && exact_meshes_have_same_shape(&overlay, &surface.mesh)
+    {
+        return true;
+    }
+    if let Some(surface) = arrange_coplanar_orthogonal_surface_difference(left, right)
+        && exact_meshes_have_same_shape(&overlay, &surface.mesh)
+    {
+        return true;
+    }
+    if let Some(surface) = difference_single_triangle_coplanar_surfaces(left, right)
+        && exact_meshes_have_same_shape(&overlay, &surface.mesh)
+    {
+        return true;
+    }
+    if let Some(surface) = arrange_single_triangle_coplanar_difference(left, right)
+        && exact_meshes_have_same_shape(&overlay, &surface.mesh)
+    {
+        return true;
+    }
+    if let Some(surface) = arrange_single_triangle_coplanar_holed_difference(left, right)
+        && exact_meshes_have_same_shape(&overlay, &surface.mesh)
+    {
+        return true;
+    }
+
+    false
+}
+
+fn exact_meshes_have_same_shape(left: &ExactMesh, right: &ExactMesh) -> bool {
+    exact_mesh_vertex_sets_match(left, right) && left.triangles().len() == right.triangles().len()
 }
 
 fn exact_mesh_vertex_sets_match(left: &ExactMesh, right: &ExactMesh) -> bool {

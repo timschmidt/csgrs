@@ -16282,7 +16282,7 @@ fn exact_coplanar_convex_surface_difference_materializes_simple_loop() {
     assert_eq!(
         result.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::exact::ExactBooleanShortcutKind::CoplanarConvexSurfaceArrangementDifference
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
     assert_eq!(
@@ -16391,7 +16391,7 @@ fn exact_coplanar_convex_surface_difference_materializes_multiple_components() {
         result.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
             shortcut:
-                hypermesh::exact::ExactBooleanShortcutKind::CoplanarConvexSurfaceMultiDifference
+                hypermesh::exact::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
     assert_eq!(result.mesh.vertices().len(), 8);
@@ -16501,7 +16501,7 @@ fn exact_coplanar_convex_surface_difference_materializes_left_component_cut() {
         result.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
             shortcut:
-                hypermesh::exact::ExactBooleanShortcutKind::CoplanarConvexSurfaceMultiDifference
+                hypermesh::exact::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
 }
@@ -16855,7 +16855,7 @@ fn exact_coplanar_convex_surface_difference_materializes_multiple_component_cuts
     assert_eq!(
         partial_height_result.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::exact::ExactBooleanShortcutKind::CoplanarSurfaceMultiDifference
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
 
@@ -17162,7 +17162,7 @@ fn exact_coplanar_convex_surface_difference_materializes_multiple_component_cuts
         single_side_opening_result.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
             shortcut:
-                hypermesh::exact::ExactBooleanShortcutKind::CoplanarConvexSurfaceArrangementDifference
+                hypermesh::exact::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
 
@@ -17550,7 +17550,7 @@ fn exact_coplanar_convex_surface_difference_materializes_multiple_component_cuts
         component_opening_result.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
             shortcut:
-                hypermesh::exact::ExactBooleanShortcutKind::CoplanarSurfaceArrangementDifference
+                hypermesh::exact::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
 
@@ -19789,7 +19789,7 @@ fn exact_coplanar_convex_surface_difference_materializes_multiple_component_cuts
         result.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
             shortcut:
-                hypermesh::exact::ExactBooleanShortcutKind::CoplanarConvexSurfaceMultiDifference
+                hypermesh::exact::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
 }
@@ -21199,7 +21199,7 @@ fn exact_coplanar_convex_surface_difference_materializes_component_holes() {
         mixed_result.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
             shortcut: hypermesh::exact::ExactBooleanShortcutKind::
-                CoplanarConvexSurfaceComponentHoledDifference
+                ArrangementCellComplex
         }
     );
 
@@ -21314,7 +21314,7 @@ fn exact_coplanar_convex_surface_difference_materializes_component_holes() {
         nonrectangular_holed_result.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
             shortcut: hypermesh::exact::ExactBooleanShortcutKind::
-                CoplanarConvexSurfaceComponentHoledDifference
+                ArrangementCellComplex
         }
     );
 
@@ -21399,7 +21399,7 @@ fn exact_coplanar_convex_surface_difference_materializes_component_holes() {
         partial_height_holed_result.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
             shortcut: hypermesh::exact::ExactBooleanShortcutKind::
-                CoplanarConvexSurfaceComponentHoledDifference
+                ArrangementCellComplex
         }
     );
 
@@ -21514,7 +21514,7 @@ fn exact_coplanar_convex_surface_difference_materializes_component_holes() {
         channel_holed_result.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
             shortcut: hypermesh::exact::ExactBooleanShortcutKind::
-                CoplanarConvexSurfaceComponentHoledDifference
+                ArrangementCellComplex
         }
     );
 
@@ -21691,7 +21691,7 @@ fn exact_coplanar_convex_surface_difference_materializes_component_holes() {
         contact_result.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
             shortcut: hypermesh::exact::ExactBooleanShortcutKind::
-                CoplanarSurfaceCutterHoleContactDifference
+                ArrangementCellComplex
         }
     );
 
@@ -23073,7 +23073,7 @@ fn exact_coplanar_component_holed_difference_accepts_nonconvex_outer_with_strict
         result.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
             shortcut: hypermesh::exact::ExactBooleanShortcutKind::
-                CoplanarConvexSurfaceComponentHoledDifference
+                ArrangementCellComplex
         }
     );
 }
@@ -25806,7 +25806,7 @@ fn exact_coplanar_cutter_hole_contact_accepts_mixed_side_openings_without_retain
         result.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
             shortcut: hypermesh::exact::ExactBooleanShortcutKind::
-                CoplanarSurfaceCutterHoleContactDifference
+                ArrangementCellComplex
         }
     );
 }
@@ -31348,7 +31348,7 @@ fn exact_coplanar_multi_difference_materializes_same_outer_disjoint_hole_fills()
     assert_eq!(
         result.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::exact::ExactBooleanShortcutKind::CoplanarSurfaceMultiDifference
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
 }
@@ -31691,7 +31691,7 @@ fn exact_coplanar_component_difference_materializes_same_outer_single_hole_fill(
         result.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
             shortcut:
-                hypermesh::exact::ExactBooleanShortcutKind::CoplanarSurfaceArrangementDifference
+                hypermesh::exact::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
 }
