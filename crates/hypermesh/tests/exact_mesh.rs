@@ -27409,7 +27409,7 @@ fn exact_coplanar_component_holed_intersection_merges_same_outer_holes() {
         hypermesh::exact::surface::arrange_coplanar_surface_component_holed_intersection(
             &right, &left
         ),
-        Some(intersection)
+        Some(intersection.clone())
     );
 
     let overlapping_hole = ExactMesh::from_i64_triangles_with_policy(
@@ -28063,9 +28063,11 @@ fn exact_coplanar_component_holed_intersection_merges_same_outer_holes() {
     assert_eq!(
         result.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::exact::ExactBooleanShortcutKind::CoplanarSurfaceIntersection
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
+    assert!(exact_mesh_vertex_sets_equal(&result.mesh, &intersection.mesh));
+    assert_eq!(result.mesh.triangles().len(), intersection.mesh.triangles().len());
 }
 
 #[test]

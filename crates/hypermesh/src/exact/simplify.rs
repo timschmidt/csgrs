@@ -760,14 +760,53 @@ fn triangulate_loop_with_holes(
     if indices.is_empty() {
         return Err(ExactArrangementBlocker::NonManifoldCellComplex);
     }
-    for triangle in indices.chunks_exact(3) {
+    let mut emitted_triangles = indices.chunks_exact(3);
+    for triangle in &mut emitted_triangles {
+        validate_emitted_triangle_area(&polygon_points, projection, triangle)?;
         triangles.push(Triangle([
             local_to_global[triangle[0]],
             local_to_global[triangle[1]],
             local_to_global[triangle[2]],
         ]));
     }
+    if !emitted_triangles.remainder().is_empty() {
+        return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+    }
     Ok(())
+}
+
+fn validate_emitted_triangle_area(
+    polygon_points: &[Point3],
+    projection: CoplanarProjection,
+    triangle: &[usize],
+) -> Result<(), ExactArrangementBlocker> {
+    let [a, b, c] = triangle else {
+        return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+    };
+    let points = [
+        polygon_points
+            .get(*a)
+            .ok_or(ExactArrangementBlocker::NonManifoldCellComplex)?
+            .clone(),
+        polygon_points
+            .get(*b)
+            .ok_or(ExactArrangementBlocker::NonManifoldCellComplex)?
+            .clone(),
+        polygon_points
+            .get(*c)
+            .ok_or(ExactArrangementBlocker::NonManifoldCellComplex)?
+            .clone(),
+    ];
+    match compare_reals(
+        &projected_polygon_area2_value(&points, projection),
+        &Real::from(0),
+    )
+    .value()
+    {
+        Some(Ordering::Less | Ordering::Greater) => Ok(()),
+        Some(Ordering::Equal) => Err(ExactArrangementBlocker::NonManifoldCellComplex),
+        None => Err(ExactArrangementBlocker::UndecidableOrdering),
+    }
 }
 
 fn oriented_loop_points_for_triangulation(
@@ -978,6 +1017,16 @@ mod tests {
 
         assert_eq!(mesh.vertices().len(), 8);
         assert_eq!(mesh.triangles().len(), 8);
+    }
+
+    #[test]
+    fn triangulation_rejects_degenerate_emitted_triangle() {
+        let points = [p(0, 0, 0), p(1, 0, 0), p(2, 0, 0)];
+
+        assert_eq!(
+            validate_emitted_triangle_area(&points, CoplanarProjection::Xy, &[0, 1, 2]),
+            Err(ExactArrangementBlocker::NonManifoldCellComplex)
+        );
     }
 
     #[test]

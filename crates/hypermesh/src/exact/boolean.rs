@@ -2030,11 +2030,22 @@ fn boolean_coplanar_mesh_overlay_optional(
     let allow_empty_overlay = operation == ExactBooleanOperation::Intersection
         && (certify_coplanar_surface_boundary_touch(left, right).is_some()
             || arrange_coplanar_surface_point_touch_union(left, right).is_some());
-    let boundary_policy = if operation == ExactBooleanOperation::Difference {
-        coplanar_mesh_overlay_surface_difference_boundary_policy(left, right)
-            .unwrap_or(ExactArrangement2dBoundaryPolicy::SimplifyCollinear)
-    } else {
-        ExactArrangement2dBoundaryPolicy::SimplifyCollinear
+    let boundary_policy = match operation {
+        ExactBooleanOperation::Difference => coplanar_mesh_overlay_surface_difference_boundary_policy(
+            left, right,
+        )
+        .unwrap_or(ExactArrangement2dBoundaryPolicy::SimplifyCollinear),
+        ExactBooleanOperation::Intersection => {
+            if arrange_coplanar_surface_component_holed_intersection(left, right).is_some() {
+                coplanar_mesh_overlay_surface_intersection_boundary_policy(left, right)
+                    .unwrap_or(ExactArrangement2dBoundaryPolicy::SimplifyCollinear)
+            } else {
+                ExactArrangement2dBoundaryPolicy::SimplifyCollinear
+            }
+        }
+        ExactBooleanOperation::Union | ExactBooleanOperation::SelectedRegions(_) => {
+            ExactArrangement2dBoundaryPolicy::SimplifyCollinear
+        }
     };
     let projected_boundary_policy = match boundary_policy {
         ExactArrangement2dBoundaryPolicy::SimplifyCollinear => {
@@ -2237,15 +2248,22 @@ fn coplanar_mesh_overlay_should_preempt_surface_paths(
                 || arrange_coplanar_affine_surface_union(left, right).is_some()
         }
         ExactBooleanOperation::Intersection => {
+            let component_holed =
+                arrange_coplanar_surface_component_holed_intersection(left, right).is_some();
+            let overlay_boundary_policy = component_holed
+                .then(|| coplanar_mesh_overlay_surface_intersection_boundary_policy(left, right));
+            let overlay_boundary_policy = overlay_boundary_policy.flatten();
             if arrange_coplanar_orthogonal_surface_intersection(left, right).is_some()
-                && arrange_coplanar_surface_component_holed_intersection(left, right).is_some()
+                && component_holed
+                && overlay_boundary_policy.is_none()
             {
                 return false;
             }
             if intersect_single_triangle_coplanar_surfaces(left, right).is_some() {
                 return false;
             }
-            arrange_coplanar_convex_surface_intersection(left, right).is_some()
+            overlay_boundary_policy.is_some()
+                || arrange_coplanar_convex_surface_intersection(left, right).is_some()
                 || arrange_coplanar_convex_surface_multi_intersection(left, right).is_some()
                 || arrange_coplanar_surface_component_intersection(left, right).is_some()
                 || arrange_coplanar_surface_multi_component_intersection(left, right).is_some()
@@ -2503,6 +2521,92 @@ fn coplanar_mesh_overlay_matches_legacy_surface_difference_with_policy(
         return true;
     }
     if let Some(surface) = arrange_single_triangle_coplanar_holed_difference(left, right)
+        && exact_meshes_have_same_shape(&overlay, &surface.mesh)
+    {
+        return true;
+    }
+
+    false
+}
+
+fn coplanar_mesh_overlay_surface_intersection_boundary_policy(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Option<ExactArrangement2dBoundaryPolicy> {
+    for boundary_policy in [
+        ExactArrangement2dBoundaryPolicy::SimplifyCollinear,
+        ExactArrangement2dBoundaryPolicy::PreserveCollinear,
+    ] {
+        if coplanar_mesh_overlay_matches_legacy_surface_intersection_with_policy(
+            left,
+            right,
+            boundary_policy,
+        ) {
+            return Some(boundary_policy);
+        }
+    }
+    None
+}
+
+fn coplanar_mesh_overlay_matches_legacy_surface_intersection_with_policy(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    boundary_policy: ExactArrangement2dBoundaryPolicy,
+) -> bool {
+    let projected_boundary_policy = match boundary_policy {
+        ExactArrangement2dBoundaryPolicy::SimplifyCollinear => {
+            ProjectedOverlayBoundaryPolicy::SimplifyCollinear
+        }
+        ExactArrangement2dBoundaryPolicy::PreserveCollinear => {
+            ProjectedOverlayBoundaryPolicy::PreserveCollinear
+        }
+    };
+    let Some(overlay) = materialize_coplanar_mesh_overlay_mesh(
+        left,
+        right,
+        ExactArrangement2dSetOperation::Intersection,
+        boundary_policy,
+        projected_boundary_policy,
+        "exact coplanar mesh overlay arrangement",
+        false,
+    ) else {
+        return false;
+    };
+
+    // Surface-specific intersection materializers are retained as proof
+    // fixtures while the arrangement layer takes ownership of matching
+    // multi-loop and holed outputs.
+    if let Some(surface) = arrange_coplanar_surface_component_holed_intersection(left, right)
+        && exact_meshes_have_same_shape(&overlay, &surface.mesh)
+    {
+        return true;
+    }
+    if let Some(surface) = arrange_coplanar_orthogonal_surface_intersection(left, right)
+        && exact_meshes_have_same_shape(&overlay, &surface.mesh)
+    {
+        return true;
+    }
+    if let Some(surface) = arrange_coplanar_affine_surface_intersection(left, right)
+        && exact_meshes_have_same_shape(&overlay, &surface.mesh)
+    {
+        return true;
+    }
+    if let Some(surface) = arrange_coplanar_surface_multi_component_intersection(left, right)
+        && exact_meshes_have_same_shape(&overlay, &surface.mesh)
+    {
+        return true;
+    }
+    if let Some(surface) = arrange_coplanar_surface_component_intersection(left, right)
+        && exact_meshes_have_same_shape(&overlay, &surface.mesh)
+    {
+        return true;
+    }
+    if let Some(surface) = arrange_coplanar_convex_surface_multi_intersection(left, right)
+        && exact_meshes_have_same_shape(&overlay, &surface.mesh)
+    {
+        return true;
+    }
+    if let Some(surface) = arrange_coplanar_convex_surface_intersection(left, right)
         && exact_meshes_have_same_shape(&overlay, &surface.mesh)
     {
         return true;
