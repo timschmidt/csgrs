@@ -6,7 +6,8 @@
 //! triangulation policy.
 
 use super::arrangement3d::{
-    ArrangementFaceCell, ArrangementVolumeRegion, ExactArrangement, ExactArrangement3d,
+    ArrangementFaceCell, ArrangementLowerDimensionalArtifact, ArrangementVolumeRegion,
+    ExactArrangement, ExactArrangement3d,
 };
 use super::boolean::ExactBooleanOperation;
 use super::graph::MeshSide;
@@ -80,6 +81,8 @@ pub struct ExactLabeledCellComplex {
     pub faces: Vec<ExactCellComplexFace>,
     /// Labeled volume-region graph nodes.
     pub volume_regions: Vec<ExactCellComplexVolumeRegion>,
+    /// Retained lower-dimensional arrangement artifacts under policy.
+    pub lower_dimensional_artifacts: Vec<ArrangementLowerDimensionalArtifact>,
     /// Blockers inherited or introduced during labeling.
     pub blockers: Vec<ExactArrangementBlocker>,
 }
@@ -91,6 +94,8 @@ pub struct ExactSelectedCellComplex {
     pub faces: Vec<ExactCellComplexFace>,
     /// Labeled volume-region graph nodes.
     pub volume_regions: Vec<ExactCellComplexVolumeRegion>,
+    /// Retained lower-dimensional arrangement artifacts under policy.
+    pub lower_dimensional_artifacts: Vec<ArrangementLowerDimensionalArtifact>,
     /// Indices of selected `faces`.
     pub selected_faces: Vec<usize>,
     /// Indices of selected `volume_regions`.
@@ -140,6 +145,7 @@ impl ExactCellComplex {
         Ok(ExactLabeledCellComplex {
             faces,
             volume_regions,
+            lower_dimensional_artifacts: self.arrangement.lower_dimensional_artifacts,
             blockers,
         })
     }
@@ -206,6 +212,7 @@ impl ExactLabeledCellComplex {
         Ok(ExactSelectedCellComplex {
             faces: self.faces,
             volume_regions: self.volume_regions,
+            lower_dimensional_artifacts: self.lower_dimensional_artifacts,
             selected_faces,
             selected_volume_regions,
             operation,
@@ -370,6 +377,7 @@ mod tests {
         let labeled = ExactLabeledCellComplex {
             faces: vec![labeled_face(MeshSide::Left), labeled_face(MeshSide::Right)],
             volume_regions: Vec::new(),
+            lower_dimensional_artifacts: Vec::new(),
             blockers: Vec::new(),
         };
 

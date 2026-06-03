@@ -7,7 +7,9 @@
 
 use std::cmp::Ordering;
 
-use super::arrangement3d::{ArrangementFaceCellNode, ExactArrangement};
+use super::arrangement3d::{
+    ArrangementFaceCellNode, ArrangementLowerDimensionalArtifact, ExactArrangement,
+};
 use super::boolean::ExactBooleanOperation;
 use super::cell_complex::{
     ExactCellComplexFace, ExactCellRegionLabel, ExactOppositeRegionLabel, ExactSelectedCellComplex,
@@ -41,6 +43,8 @@ pub struct ExactSimplifiedCellComplex {
     pub operation: ExactBooleanOperation,
     /// Canonical selected face-cells.
     pub faces: Vec<ExactSimplifiedFaceCell>,
+    /// Retained lower-dimensional arrangement artifacts under policy.
+    pub lower_dimensional_artifacts: Vec<ArrangementLowerDimensionalArtifact>,
     /// Number of duplicate selected cells removed.
     pub duplicate_cells_removed: usize,
     /// Number of consecutive duplicate boundary nodes removed.
@@ -180,6 +184,7 @@ pub fn simplify_selected_cell_complex(
     Ok(ExactSimplifiedCellComplex {
         operation: selected.operation,
         faces,
+        lower_dimensional_artifacts: selected.lower_dimensional_artifacts,
         duplicate_cells_removed,
         duplicate_boundary_nodes_removed,
         collinear_boundary_nodes_removed,
@@ -850,6 +855,7 @@ mod tests {
                 selected_face(1, &[0, 2, 3], &[v0, v2, v3]),
             ],
             volume_regions: Vec::new(),
+            lower_dimensional_artifacts: Vec::new(),
             selected_faces: vec![0, 1],
             selected_volume_regions: Vec::new(),
             operation: ExactBooleanOperation::Union,
@@ -902,6 +908,7 @@ mod tests {
                 selected_face(1, &[4, 5, 6, 7], &hole),
             ],
             volume_regions: Vec::new(),
+            lower_dimensional_artifacts: Vec::new(),
             selected_faces: vec![0, 1],
             selected_volume_regions: Vec::new(),
             operation: ExactBooleanOperation::Union,
@@ -915,6 +922,31 @@ mod tests {
 
         assert_eq!(mesh.vertices().len(), 8);
         assert_eq!(mesh.triangles().len(), 8);
+    }
+
+    #[test]
+    fn simplification_retains_lower_dimensional_artifacts() {
+        let point = p(1, 1, 0);
+        let artifact = ArrangementLowerDimensionalArtifact::PointContact {
+            left_face: 0,
+            right_face: 1,
+            point,
+        };
+        let selected = ExactSelectedCellComplex {
+            faces: Vec::new(),
+            volume_regions: Vec::new(),
+            lower_dimensional_artifacts: vec![artifact.clone()],
+            selected_faces: Vec::new(),
+            selected_volume_regions: Vec::new(),
+            operation: ExactBooleanOperation::Intersection,
+            blockers: Vec::new(),
+        };
+
+        let simplified =
+            simplify_selected_cell_complex(selected, ExactRegularizationPolicy::RETAIN_ARTIFACTS)
+                .unwrap();
+
+        assert_eq!(simplified.lower_dimensional_artifacts, vec![artifact]);
     }
 
     #[test]
