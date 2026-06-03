@@ -19,11 +19,11 @@ use super::mesh::{ExactMesh, Triangle};
 use super::provenance::{ApproximationPolicy, SourceProvenance};
 use super::regularization::{ExactArrangementBlocker, ExactRegularizationPolicy};
 use super::validation::ValidationPolicy;
-use super::view::{ApproximateMeshF64View, approximate_mesh_f64_view};
+use super::view::{approximate_mesh_f64_view, ApproximateMeshF64View};
 use hyperlimit::{
-    Point2, Point3, RingPointLocation, Sign, TriangleLocation, classify_point_ring_even_odd,
-    classify_point_triangle, compare_reals, orient2d_report, point3_equal, project_point3,
-    projected_polygon_area2_value,
+    classify_point_ring_even_odd, classify_point_triangle, compare_reals, orient2d_report,
+    point3_equal, project_point3, projected_polygon_area2_value, Point2, Point3, RingPointLocation,
+    Sign, TriangleLocation,
 };
 use hyperreal::Real;
 
@@ -711,8 +711,16 @@ fn triangulate_loop_with_holes(
     vertices: &mut Vec<Point3>,
     triangles: &mut Vec<Triangle>,
 ) -> Result<(), ExactArrangementBlocker> {
-    let mut polygon_points = loops[outer_index].boundary.clone();
     let projection = loops[outer_index].projection;
+    let mut polygon_points = if hole_loop_indices.is_empty() {
+        loops[outer_index].boundary.clone()
+    } else {
+        oriented_loop_points_for_triangulation(
+            &loops[outer_index].boundary,
+            projection,
+            Ordering::Greater,
+        )?
+    };
     let mut projected = polygon_points
         .iter()
         .map(|point| project_for_hypertri(point, projection))
@@ -723,10 +731,14 @@ fn triangulate_loop_with_holes(
             return Err(ExactArrangementBlocker::NonManifoldCellComplex);
         }
         hole_indices.push(projected.len());
-        polygon_points.extend(loops[hole_index].boundary.iter().cloned());
+        let hole_points = oriented_loop_points_for_triangulation(
+            &loops[hole_index].boundary,
+            projection,
+            Ordering::Less,
+        )?;
+        polygon_points.extend(hole_points.iter().cloned());
         projected.extend(
-            loops[hole_index]
-                .boundary
+            hole_points
                 .iter()
                 .map(|point| project_for_hypertri(point, projection)),
         );
@@ -756,6 +768,24 @@ fn triangulate_loop_with_holes(
         ]));
     }
     Ok(())
+}
+
+fn oriented_loop_points_for_triangulation(
+    points: &[Point3],
+    projection: CoplanarProjection,
+    expected: Ordering,
+) -> Result<Vec<Point3>, ExactArrangementBlocker> {
+    let area = projected_polygon_area2_value(points, projection);
+    match compare_reals(&area, &Real::from(0)).value() {
+        Some(Ordering::Equal) => Err(ExactArrangementBlocker::NonManifoldCellComplex),
+        Some(ordering) if ordering == expected => Ok(points.to_vec()),
+        Some(Ordering::Less | Ordering::Greater) => {
+            let mut reversed = points.to_vec();
+            reversed.reverse();
+            Ok(reversed)
+        }
+        None => Err(ExactArrangementBlocker::UndecidableOrdering),
+    }
 }
 
 fn find_or_insert_vertex(
@@ -902,6 +932,32 @@ mod tests {
     fn triangulation_preserves_grouped_hole_loop() {
         let outer = [p(0, 0, 0), p(4, 0, 0), p(4, 4, 0), p(0, 4, 0)];
         let hole = [p(1, 1, 0), p(1, 3, 0), p(3, 3, 0), p(3, 1, 0)];
+        let selected = ExactSelectedCellComplex {
+            faces: vec![
+                selected_face(0, &[0, 1, 2, 3], &outer),
+                selected_face(1, &[4, 5, 6, 7], &hole),
+            ],
+            volume_regions: Vec::new(),
+            lower_dimensional_artifacts: Vec::new(),
+            selected_faces: vec![0, 1],
+            selected_volume_regions: Vec::new(),
+            operation: ExactBooleanOperation::Union,
+            blockers: Vec::new(),
+        };
+
+        let simplified =
+            simplify_selected_cell_complex(selected, ExactRegularizationPolicy::REGULARIZED_SOLID)
+                .unwrap();
+        let mesh = simplified.triangulate().unwrap();
+
+        assert_eq!(mesh.vertices().len(), 8);
+        assert_eq!(mesh.triangles().len(), 8);
+    }
+
+    #[test]
+    fn triangulation_normalizes_outer_and_hole_orientation() {
+        let outer = [p(0, 4, 0), p(4, 4, 0), p(4, 0, 0), p(0, 0, 0)];
+        let hole = [p(3, 1, 0), p(3, 3, 0), p(1, 3, 0), p(1, 1, 0)];
         let selected = ExactSelectedCellComplex {
             faces: vec![
                 selected_face(0, &[0, 1, 2, 3], &outer),
