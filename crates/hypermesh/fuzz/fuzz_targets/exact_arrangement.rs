@@ -164,7 +164,23 @@ fn exercise_volume_graph_invariants(arrangement: &ExactArrangement) {
     assert_eq!(volume_regions.len(), shells.len() + 1);
     assert_eq!(volume_adjacencies.len(), shells.len());
     assert!(volume_regions[0].exterior);
+    assert_eq!(
+        volume_regions
+            .iter()
+            .filter(|region| region.exterior)
+            .count(),
+        1
+    );
+    let mut volume_indices = BTreeSet::new();
+    for (expected, region) in volume_regions.iter().enumerate() {
+        assert_eq!(region.index, expected);
+        assert!(volume_indices.insert(region.index));
+        for &shell in &region.boundary_shells {
+            assert!(shell < shells.len());
+        }
+    }
     for adjacency in volume_adjacencies {
+        assert!(adjacency.shell_region < shells.len());
         assert!(adjacency.exterior_volume < volume_regions.len());
         assert!(adjacency.interior_volume < volume_regions.len());
         assert_ne!(adjacency.exterior_volume, adjacency.interior_volume);
@@ -172,6 +188,20 @@ fn exercise_volume_graph_invariants(arrangement: &ExactArrangement) {
             adjacency.separating_face_cells,
             shells[adjacency.shell_region].face_cells
         );
+    }
+    for operation in [
+        ExactBooleanOperation::Union,
+        ExactBooleanOperation::Intersection,
+        ExactBooleanOperation::Difference,
+    ] {
+        if let Ok(selected) = arrangement
+            .clone()
+            .select_with_policy(operation, ExactRegularizationPolicy::RETAIN_ARTIFACTS)
+        {
+            for selected_volume in selected.selected_volume_regions {
+                assert!(selected_volume < volume_regions.len());
+            }
+        }
     }
 }
 
