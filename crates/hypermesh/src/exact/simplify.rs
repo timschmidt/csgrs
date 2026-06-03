@@ -22,9 +22,9 @@ use super::regularization::{ExactArrangementBlocker, ExactRegularizationPolicy};
 use super::validation::ValidationPolicy;
 use super::view::{ApproximateMeshF64View, approximate_mesh_f64_view};
 use hyperlimit::{
-    Point2, Point3, RingPointLocation, Sign, TriangleLocation, classify_point_ring_even_odd,
-    classify_point_triangle, compare_reals, orient2d_report, point3_equal, project_point3,
-    projected_polygon_area2_value,
+    Point2, Point3, RingPointLocation, SegmentIntersection, Sign, TriangleLocation,
+    classify_point_ring_even_odd, classify_point_triangle, classify_segment_intersection,
+    compare_reals, orient2d_report, point3_equal, project_point3, projected_polygon_area2_value,
 };
 use hyperreal::Real;
 
@@ -565,6 +565,7 @@ fn triangulate_simplified_face_group(
         });
     }
     compute_loop_depths(&mut loops)?;
+    validate_loop_topology(&loops)?;
     let mut used_as_hole = vec![false; loops.len()];
     for outer_index in 0..loops.len() {
         if loops[outer_index].depth % 2 != 0 {
@@ -592,6 +593,75 @@ fn triangulate_simplified_face_group(
     Ok(())
 }
 
+fn validate_loop_topology(loops: &[ProjectedFaceLoop]) -> Result<(), ExactArrangementBlocker> {
+    for left_index in 0..loops.len() {
+        for right_index in (left_index + 1)..loops.len() {
+            validate_loop_boundaries_are_disjoint(
+                &loops[left_index].projected,
+                &loops[right_index].projected,
+            )?;
+            if loops[left_index].depth == loops[right_index].depth {
+                validate_same_depth_loops_are_area_disjoint(
+                    &loops[left_index],
+                    &loops[right_index],
+                )?;
+            }
+        }
+    }
+    Ok(())
+}
+
+fn validate_loop_boundaries_are_disjoint(
+    left: &[Point2],
+    right: &[Point2],
+) -> Result<(), ExactArrangementBlocker> {
+    for left_index in 0..left.len() {
+        let left_next = (left_index + 1) % left.len();
+        for right_index in 0..right.len() {
+            let right_next = (right_index + 1) % right.len();
+            match classify_segment_intersection(
+                &left[left_index],
+                &left[left_next],
+                &right[right_index],
+                &right[right_next],
+            )
+            .value()
+            {
+                Some(SegmentIntersection::Disjoint) => {}
+                Some(
+                    SegmentIntersection::Proper
+                    | SegmentIntersection::EndpointTouch
+                    | SegmentIntersection::CollinearOverlap
+                    | SegmentIntersection::Identical,
+                ) => return Err(ExactArrangementBlocker::NonManifoldCellComplex),
+                None => return Err(ExactArrangementBlocker::UndecidableOrdering),
+            }
+        }
+    }
+    Ok(())
+}
+
+fn validate_same_depth_loops_are_area_disjoint(
+    left: &ProjectedFaceLoop,
+    right: &ProjectedFaceLoop,
+) -> Result<(), ExactArrangementBlocker> {
+    validate_same_depth_loop_witness_outside(left, right)?;
+    validate_same_depth_loop_witness_outside(right, left)
+}
+
+fn validate_same_depth_loop_witness_outside(
+    container: &ProjectedFaceLoop,
+    candidate: &ProjectedFaceLoop,
+) -> Result<(), ExactArrangementBlocker> {
+    match classify_point_ring_even_odd(&container.projected, &candidate.witness).value() {
+        Some(RingPointLocation::Outside) => Ok(()),
+        Some(RingPointLocation::Inside | RingPointLocation::Boundary) => {
+            Err(ExactArrangementBlocker::NonManifoldCellComplex)
+        }
+        None => Err(ExactArrangementBlocker::UndecidableOrdering),
+    }
+}
+
 fn compute_loop_depths(loops: &mut [ProjectedFaceLoop]) -> Result<(), ExactArrangementBlocker> {
     for loop_index in 0..loops.len() {
         let mut depth = 0;
@@ -612,14 +682,6 @@ fn loop_contains_loop(
     container: &ProjectedFaceLoop,
     child: &ProjectedFaceLoop,
 ) -> Result<bool, ExactArrangementBlocker> {
-    match classify_point_ring_even_odd(&container.projected, &child.witness).value() {
-        Some(RingPointLocation::Inside) => {}
-        Some(RingPointLocation::Outside) => return Ok(false),
-        Some(RingPointLocation::Boundary) => {
-            return Err(ExactArrangementBlocker::NonManifoldCellComplex);
-        }
-        None => return Err(ExactArrangementBlocker::UndecidableOrdering),
-    }
     for point in &child.projected {
         match classify_point_ring_even_odd(&container.projected, point).value() {
             Some(RingPointLocation::Inside) => {}
@@ -629,6 +691,14 @@ fn loop_contains_loop(
             }
             None => return Err(ExactArrangementBlocker::UndecidableOrdering),
         }
+    }
+    match classify_point_ring_even_odd(&container.projected, &child.witness).value() {
+        Some(RingPointLocation::Inside) => {}
+        Some(RingPointLocation::Outside) => return Ok(false),
+        Some(RingPointLocation::Boundary) => {
+            return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+        }
+        None => return Err(ExactArrangementBlocker::UndecidableOrdering),
     }
     Ok(true)
 }
@@ -1072,6 +1142,94 @@ mod tests {
 
         assert_eq!(mesh.vertices().len(), 8);
         assert_eq!(mesh.triangles().len(), 8);
+    }
+
+    #[test]
+    fn triangulation_rejects_overlapping_same_depth_loops() {
+        let left = [p(0, 0, 0), p(4, 0, 0), p(4, 4, 0), p(0, 4, 0)];
+        let right = [p(2, 1, 0), p(6, 1, 0), p(6, 3, 0), p(2, 3, 0)];
+        let selected = ExactSelectedCellComplex {
+            faces: vec![
+                selected_face(0, &[0, 1, 2, 3], &left),
+                selected_face(1, &[4, 5, 6, 7], &right),
+            ],
+            volume_regions: Vec::new(),
+            volume_adjacencies: Vec::new(),
+            lower_dimensional_artifacts: Vec::new(),
+            selected_faces: vec![0, 1],
+            selected_face_orientations: Vec::new(),
+            selected_volume_regions: Vec::new(),
+            operation: ExactBooleanOperation::Union,
+            blockers: Vec::new(),
+        };
+
+        let simplified =
+            simplify_selected_cell_complex(selected, ExactRegularizationPolicy::REGULARIZED_SOLID)
+                .unwrap();
+
+        assert_eq!(
+            simplified.triangulate(),
+            Err(ExactArrangementBlocker::NonManifoldCellComplex)
+        );
+    }
+
+    #[test]
+    fn triangulation_rejects_point_touching_same_depth_loops() {
+        let left = [p(0, 0, 0), p(2, 0, 0), p(2, 2, 0), p(0, 2, 0)];
+        let right = [p(2, 2, 0), p(4, 2, 0), p(4, 4, 0), p(2, 4, 0)];
+        let selected = ExactSelectedCellComplex {
+            faces: vec![
+                selected_face(0, &[0, 1, 2, 3], &left),
+                selected_face(1, &[4, 5, 6, 7], &right),
+            ],
+            volume_regions: Vec::new(),
+            volume_adjacencies: Vec::new(),
+            lower_dimensional_artifacts: Vec::new(),
+            selected_faces: vec![0, 1],
+            selected_face_orientations: Vec::new(),
+            selected_volume_regions: Vec::new(),
+            operation: ExactBooleanOperation::Union,
+            blockers: Vec::new(),
+        };
+
+        let simplified =
+            simplify_selected_cell_complex(selected, ExactRegularizationPolicy::REGULARIZED_SOLID)
+                .unwrap();
+
+        assert_eq!(
+            simplified.triangulate(),
+            Err(ExactArrangementBlocker::NonManifoldCellComplex)
+        );
+    }
+
+    #[test]
+    fn triangulation_preserves_nested_island_inside_hole() {
+        let outer = [p(0, 0, 0), p(8, 0, 0), p(8, 8, 0), p(0, 8, 0)];
+        let hole = [p(1, 1, 0), p(1, 7, 0), p(7, 7, 0), p(7, 1, 0)];
+        let island = [p(3, 3, 0), p(5, 3, 0), p(5, 5, 0), p(3, 5, 0)];
+        let selected = ExactSelectedCellComplex {
+            faces: vec![
+                selected_face(0, &[0, 1, 2, 3], &outer),
+                selected_face(1, &[4, 5, 6, 7], &hole),
+                selected_face(2, &[8, 9, 10, 11], &island),
+            ],
+            volume_regions: Vec::new(),
+            volume_adjacencies: Vec::new(),
+            lower_dimensional_artifacts: Vec::new(),
+            selected_faces: vec![0, 1, 2],
+            selected_face_orientations: Vec::new(),
+            selected_volume_regions: Vec::new(),
+            operation: ExactBooleanOperation::Union,
+            blockers: Vec::new(),
+        };
+
+        let simplified =
+            simplify_selected_cell_complex(selected, ExactRegularizationPolicy::REGULARIZED_SOLID)
+                .unwrap();
+        let mesh = simplified.triangulate().unwrap();
+
+        assert_eq!(mesh.vertices().len(), 12);
+        assert_eq!(mesh.triangles().len(), 10);
     }
 
     #[test]
