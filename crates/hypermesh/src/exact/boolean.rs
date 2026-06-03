@@ -2200,10 +2200,17 @@ fn coplanar_mesh_overlay_should_preempt_surface_paths(
     {
         return false;
     }
-    if certify_coplanar_convex_surface_equivalence(left, right).is_some()
-        || certify_coplanar_convex_surface_containment(left, right).is_some()
-        || (operation != ExactBooleanOperation::Intersection
-            && certify_coplanar_surface_mesh_containment(left, right).is_some())
+    if certify_coplanar_convex_surface_equivalence(left, right).is_some() {
+        return false;
+    }
+    if certify_coplanar_convex_surface_containment(left, right).is_some()
+        && !(operation == ExactBooleanOperation::Difference
+            && coplanar_mesh_overlay_surface_difference_boundary_policy(left, right).is_some())
+    {
+        return false;
+    }
+    if operation != ExactBooleanOperation::Intersection
+        && certify_coplanar_surface_mesh_containment(left, right).is_some()
     {
         return false;
     }

@@ -13553,11 +13553,12 @@ fn exact_named_booleans_handle_coplanar_convex_surface_containment() {
     assert_eq!(
         difference.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut:
-                hypermesh::exact::ExactBooleanShortcutKind::CoplanarConvexSurfaceHoledDifference
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
     assert!(!difference.mesh.triangles().is_empty());
+    assert!(exact_mesh_vertex_sets_equal(&difference.mesh, &holed.mesh));
+    assert_eq!(difference.mesh.triangles().len(), holed.mesh.triangles().len());
 
     let intersection = hypermesh::exact::boolean_exact(
         &outer,
