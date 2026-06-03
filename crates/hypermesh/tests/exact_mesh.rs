@@ -6218,7 +6218,7 @@ fn exact_preflight_materializes_open_point_touch_union_but_keeps_other_ops_bound
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchUnion
+        hypermesh::exact::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let open_intersection_preflight = hypermesh::exact::preflight_boolean_exact(
         &left,
@@ -6232,7 +6232,7 @@ fn exact_preflight_materializes_open_point_touch_union_but_keeps_other_ops_bound
         .unwrap();
     assert_eq!(
         open_intersection_preflight.support,
-        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchIntersection
+        hypermesh::exact::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let open_difference_preflight = hypermesh::exact::preflight_boolean_exact(
         &left,
@@ -12230,7 +12230,7 @@ fn exact_named_booleans_intersect_partially_overlapping_coplanar_triangles() {
     .unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
+        hypermesh::exact::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     assert!(preflight.blocker.is_none());
 
@@ -12302,7 +12302,7 @@ fn exact_named_booleans_intersect_partially_overlapping_coplanar_triangles() {
     union_preflight.validate().unwrap();
     assert_eq!(
         union_preflight.support,
-        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
+        hypermesh::exact::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     assert!(union_preflight.blocker.is_none());
 
@@ -12557,7 +12557,7 @@ fn exact_coplanar_surface_intersection_merges_adjacent_face_cell_clips() {
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
+        hypermesh::exact::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     assert!(preflight.blocker.is_none());
 
@@ -12637,7 +12637,7 @@ fn exact_coplanar_surface_intersection_merges_disconnected_nonconvex_face_cell_c
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
+        hypermesh::exact::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     assert!(preflight.blocker.is_none());
 
@@ -12779,7 +12779,7 @@ fn exact_coplanar_triangle_union_materializes_convex_edge_touching_square() {
     .unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceConvexUnion
+        hypermesh::exact::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     assert!(preflight.blocker.is_none());
 }
@@ -12851,7 +12851,7 @@ fn exact_coplanar_triangle_union_materializes_simple_planar_arrangement() {
     .unwrap();
     assert_eq!(
         union_preflight.support,
-        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
+        hypermesh::exact::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     assert!(union_preflight.blocker.is_none());
 }
@@ -13640,7 +13640,7 @@ fn exact_coplanar_convex_surface_union_materializes_simple_loop() {
     preflight.validate().unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarConvexSurfaceArrangementUnion
+        hypermesh::exact::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     assert!(preflight.blocker.is_none());
 
@@ -13711,7 +13711,7 @@ fn exact_coplanar_convex_surface_union_materializes_simple_loop() {
     intersection.validate().unwrap();
     assert_eq!(
         intersection.support,
-        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarConvexSurfaceIntersection
+        hypermesh::exact::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let intersection_output =
@@ -13846,7 +13846,7 @@ fn exact_coplanar_convex_surface_union_materializes_full_edge_touching_rectangle
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarConvexSurfaceArrangementUnion
+        hypermesh::exact::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let result = hypermesh::exact::boolean_exact(
@@ -13916,7 +13916,7 @@ fn exact_coplanar_convex_surface_union_materializes_full_edge_touching_rectangle
     point_preflight.validate().unwrap();
     assert_eq!(
         point_preflight.support,
-        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchUnion
+        hypermesh::exact::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let point_result = hypermesh::exact::boolean_exact(
         &left,
@@ -13937,7 +13937,7 @@ fn exact_coplanar_convex_surface_union_materializes_full_edge_touching_rectangle
     assert_eq!(
         point_result.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::exact::ExactBooleanShortcutKind::CoplanarSurfacePointTouchUnion
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
 }
@@ -14081,10 +14081,10 @@ fn exact_coplanar_nonconvex_surface_point_touch_union_materializes_branch_only_c
                 (operation, preflight.support),
                 (
                     hypermesh::exact::ExactBooleanOperation::Union,
-                    hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchUnion
+                    hypermesh::exact::ExactBooleanSupport::CertifiedArrangementCellComplex
                 ) | (
                     hypermesh::exact::ExactBooleanOperation::Intersection,
-                    hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchIntersection
+                    hypermesh::exact::ExactBooleanSupport::CertifiedArrangementCellComplex
                 ) | (
                     hypermesh::exact::ExactBooleanOperation::Difference,
                     hypermesh::exact::ExactBooleanSupport::CertifiedArrangementCellComplex
@@ -14252,7 +14252,7 @@ fn exact_coplanar_surface_point_touch_union_materializes_multiple_branch_compone
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchUnion
+        hypermesh::exact::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 }
 
@@ -14324,7 +14324,7 @@ fn exact_coplanar_surface_point_touch_union_absorbs_mixed_edge_and_point_contact
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchUnion
+        hypermesh::exact::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let result = hypermesh::exact::boolean_exact(
@@ -14346,7 +14346,7 @@ fn exact_coplanar_surface_point_touch_union_absorbs_mixed_edge_and_point_contact
     assert_eq!(
         result.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::exact::ExactBooleanShortcutKind::CoplanarSurfacePointTouchUnion
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
 }
@@ -14419,7 +14419,7 @@ fn exact_coplanar_surface_point_touch_union_absorbs_mixed_overlap_and_point_cont
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchUnion
+        hypermesh::exact::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let result = hypermesh::exact::boolean_exact(
@@ -14441,7 +14441,7 @@ fn exact_coplanar_surface_point_touch_union_absorbs_mixed_overlap_and_point_cont
     assert_eq!(
         result.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::exact::ExactBooleanShortcutKind::CoplanarSurfacePointTouchUnion
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
 }
@@ -14509,7 +14509,7 @@ fn exact_coplanar_convex_surface_union_materializes_multiple_components() {
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarConvexSurfaceMultiUnion
+        hypermesh::exact::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     assert!(preflight.blocker.is_none());
 
@@ -14623,7 +14623,7 @@ fn exact_coplanar_convex_surface_union_materializes_bridged_strip_cluster() {
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarConvexSurfaceMultiUnion
+        hypermesh::exact::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let result = hypermesh::exact::boolean_exact(
@@ -14721,7 +14721,7 @@ fn exact_coplanar_convex_surface_union_materializes_single_bridged_strip_cluster
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarConvexSurfaceArrangementUnion
+        hypermesh::exact::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let result = hypermesh::exact::boolean_exact(
@@ -14852,7 +14852,7 @@ fn exact_coplanar_convex_surface_union_materializes_nonrectangular_hull_cluster(
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarConvexSurfaceArrangementUnion
+        hypermesh::exact::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let result = hypermesh::exact::boolean_exact(
@@ -14972,7 +14972,7 @@ fn exact_coplanar_surface_component_union_materializes_nonconvex_contact_graph()
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
+        hypermesh::exact::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let result = hypermesh::exact::boolean_exact(
@@ -15097,7 +15097,7 @@ fn exact_coplanar_surface_component_union_materializes_nonconvex_source_edge_con
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
+        hypermesh::exact::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let result = hypermesh::exact::boolean_exact(
@@ -15177,7 +15177,7 @@ fn exact_coplanar_surface_boundary_touch_intersection_and_difference_are_lower_d
         .unwrap();
     assert_eq!(
         intersection_preflight.support,
-        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceBoundaryTouchIntersection
+        hypermesh::exact::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let intersection = hypermesh::exact::boolean_exact(
@@ -15266,7 +15266,7 @@ fn exact_coplanar_surface_boundary_touch_intersection_and_difference_are_lower_d
     .unwrap();
     assert_ne!(
         overlap_preflight.support,
-        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceBoundaryTouchIntersection
+        hypermesh::exact::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 }
 
@@ -15404,7 +15404,7 @@ fn exact_coplanar_surface_component_holed_union_materializes_annular_contact_gra
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
+        hypermesh::exact::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let result = hypermesh::exact::boolean_exact(
@@ -15504,7 +15504,7 @@ fn exact_coplanar_surface_component_holed_union_materializes_two_nonconvex_disks
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
+        hypermesh::exact::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let result = hypermesh::exact::boolean_exact(
@@ -15934,7 +15934,7 @@ fn exact_coplanar_surface_component_holed_union_materializes_disconnected_annuli
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
+        hypermesh::exact::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let result = hypermesh::exact::boolean_exact(
@@ -16057,7 +16057,7 @@ fn exact_coplanar_surface_multi_component_union_materializes_disconnected_noncon
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceMultiUnion
+        hypermesh::exact::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let result = hypermesh::exact::boolean_exact(
@@ -16181,7 +16181,7 @@ fn exact_coplanar_convex_surface_union_materializes_edge_touching_strip_cluster(
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarConvexSurfaceArrangementUnion
+        hypermesh::exact::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let result = hypermesh::exact::boolean_exact(
@@ -25788,7 +25788,7 @@ fn exact_coplanar_orthogonal_surface_cells_materialize_nonconvex_outputs() {
         .unwrap();
     assert_eq!(
         union_preflight.support,
-        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceUnion
+        hypermesh::exact::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let union_result = hypermesh::exact::boolean_exact(
         &l_left,
@@ -25842,7 +25842,7 @@ fn exact_coplanar_orthogonal_surface_cells_materialize_nonconvex_outputs() {
         .unwrap();
     assert_eq!(
         fan_l_preflight.support,
-        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceUnion
+        hypermesh::exact::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let partial_cell = ExactMesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 2, 0, 0, 0, 2, 0],
@@ -26284,7 +26284,7 @@ fn exact_coplanar_orthogonal_surface_cells_materialize_nonconvex_outputs() {
     assert_eq!(
         overlap_union_result.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ArrangementCellComplex
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::CoplanarOrthogonalSurfaceUnion
         }
     );
 }
@@ -26331,7 +26331,7 @@ fn exact_coplanar_affine_surface_cells_materialize_rotated_nonconvex_outputs() {
         .unwrap();
     assert_eq!(
         union_preflight.support,
-        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarAffineSurfaceUnion
+        hypermesh::exact::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let union_result = hypermesh::exact::boolean_exact(
         &l_left,
@@ -26388,7 +26388,7 @@ fn exact_coplanar_affine_surface_cells_materialize_rotated_nonconvex_outputs() {
         .unwrap();
     assert_eq!(
         fan_l_preflight.support,
-        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarAffineSurfaceUnion
+        hypermesh::exact::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let partial_affine_cell = ExactMesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 4, 2, 0, -2, 4, 0],
@@ -26899,7 +26899,7 @@ fn exact_multi_component_coplanar_intersection_materializes_component_hulls() {
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarConvexSurfaceIntersection
+        hypermesh::exact::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let result = hypermesh::exact::boolean_exact(
@@ -27134,7 +27134,7 @@ fn exact_coplanar_component_holed_intersection_materializes_clipped_annulus() {
         .unwrap();
     assert_eq!(
         crossing_preflight.support,
-        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceIntersection
+        hypermesh::exact::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let crossing_intersection =
         hypermesh::exact::orthogonal_surface::arrange_coplanar_orthogonal_surface_intersection(
@@ -27203,7 +27203,7 @@ fn exact_coplanar_component_holed_intersection_materializes_clipped_annulus() {
         .unwrap();
     assert_eq!(
         touching_preflight.support,
-        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceIntersection
+        hypermesh::exact::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     hypermesh::exact::boolean_exact(
         &annulus,
@@ -27248,7 +27248,7 @@ fn exact_coplanar_component_holed_intersection_materializes_clipped_annulus() {
         .unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
+        hypermesh::exact::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let result = hypermesh::exact::boolean_exact(
@@ -27974,7 +27974,7 @@ fn exact_coplanar_component_holed_intersection_merges_same_outer_holes() {
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
+        hypermesh::exact::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let result = hypermesh::exact::boolean_exact(
@@ -28809,7 +28809,7 @@ fn exact_coplanar_component_holed_intersection_clips_same_outer_source_hole_isla
         .unwrap();
     assert_eq!(
         split_preflight.support,
-        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
+        hypermesh::exact::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     hypermesh::exact::boolean_exact(
@@ -28840,7 +28840,7 @@ fn exact_coplanar_component_holed_intersection_clips_same_outer_source_hole_isla
         .unwrap();
     assert_eq!(
         point_touch_preflight.support,
-        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
+        hypermesh::exact::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     hypermesh::exact::boolean_exact(
@@ -28871,7 +28871,7 @@ fn exact_coplanar_component_holed_intersection_clips_same_outer_source_hole_isla
         .unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
+        hypermesh::exact::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     hypermesh::exact::boolean_exact(
@@ -29060,7 +29060,7 @@ fn exact_coplanar_component_holed_intersection_retains_same_outer_holed_source_i
         .unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
+        hypermesh::exact::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     hypermesh::exact::boolean_exact(
@@ -29308,7 +29308,7 @@ fn exact_coplanar_component_holed_intersection_clips_same_outer_holed_source_isl
         .unwrap();
     assert_eq!(
         straddling_preflight.support,
-        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
+        hypermesh::exact::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     hypermesh::exact::boolean_exact(
@@ -29529,7 +29529,7 @@ fn exact_coplanar_component_holed_intersection_splits_same_outer_holed_source_is
         .unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
+        hypermesh::exact::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     hypermesh::exact::boolean_exact(
@@ -29560,7 +29560,7 @@ fn exact_coplanar_component_holed_intersection_splits_same_outer_holed_source_is
         .unwrap();
     assert_eq!(
         straddling_preflight.support,
-        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
+        hypermesh::exact::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     hypermesh::exact::boolean_exact(
@@ -35734,14 +35734,14 @@ fn exact_boolmesh_kernel12_lowers_coplanar_interval_endpoints() {
         hypermesh::exact::ExactBooleanOperation::Intersection,
         hypermesh::exact::ExactRegularizationPolicy::REGULARIZED_SOLID,
     )
-    .expect("arrangement attempt should formally delegate completed boolmesh split");
+    .expect("arrangement attempt should materialize the coplanar interval split");
     assert_eq!(
         arrangement_attempt.stage,
         hypermesh::exact::ExactArrangementBooleanStage::Materialized
     );
     assert_eq!(
         arrangement_attempt.materialized_shortcut,
-        Some(hypermesh::exact::ExactBooleanShortcutKind::BoolMeshSplit)
+        Some(hypermesh::exact::ExactBooleanShortcutKind::ArrangementCellComplex)
     );
     assert_eq!(arrangement_attempt.output_triangles, 0);
 
@@ -35751,12 +35751,12 @@ fn exact_boolmesh_kernel12_lowers_coplanar_interval_endpoints() {
         hypermesh::exact::ExactBooleanOperation::Intersection,
         ValidationPolicy::ALLOW_BOUNDARY,
     )
-    .expect("public coplanar interval intersection should consume the completed boolmesh split");
+    .expect("public coplanar interval intersection should materialize through arrangement");
     public_result.validate().unwrap();
     assert_eq!(
         public_result.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::exact::ExactBooleanShortcutKind::BoolMeshSplit
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
     assert!(public_result.mesh.triangles().is_empty());
