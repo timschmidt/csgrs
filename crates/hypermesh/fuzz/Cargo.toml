@@ -61,3 +61,10 @@ path = "fuzz_targets/exact_arrangement.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "exact_surface_arrangement_parity"
+path = "fuzz_targets/exact_surface_arrangement_parity.rs"
+test = false
+doc = false
+bench = false
