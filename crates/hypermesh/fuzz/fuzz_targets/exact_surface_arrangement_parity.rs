@@ -16,38 +16,40 @@ use hypermesh::exact::surface::{
     arrange_single_triangle_coplanar_holed_difference, difference_single_triangle_coplanar_surfaces,
 };
 use hypermesh::exact::{
-    ExactBooleanOperation, ExactBooleanShortcutKind, ExactBoundaryBooleanPolicy, ExactMesh,
-    ExactRegularizationPolicy, ValidationPolicy, boolean_exact,
+    ExactArrangement, ExactBooleanOperation, ExactBooleanResultKind, ExactBooleanShortcutKind,
+    ExactBoundaryBooleanPolicy, ExactLabeledCellComplex, ExactMesh, ExactRegularizationPolicy,
+    ValidationPolicy, boolean_exact,
     exact_arrangement_boolean_attempt_report, preflight_boolean_exact,
 };
 use libfuzzer_sys::fuzz_target;
 
 fuzz_target!(|data: &[u8]| {
-    let span = 12 + i64::from(byte(data, 0) % 12);
+    let b = |index: usize| byte(data, index + 1);
+    let span = 12 + i64::from(b(0) % 12);
     let left = rect_mesh(0, 0, span, span);
     let strict_hole = rect_mesh(
-        2 + i64::from(byte(data, 1) % 3),
-        2 + i64::from(byte(data, 2) % 3),
-        5 + i64::from(byte(data, 3) % 5),
-        5 + i64::from(byte(data, 4) % 5),
+        2 + i64::from(b(1) % 3),
+        2 + i64::from(b(2) % 3),
+        5 + i64::from(b(3) % 5),
+        5 + i64::from(b(4) % 5),
     );
     let retained_holes = multi_rect_mesh(&[
         (
             2,
             2,
-            4 + i64::from(byte(data, 5) % 3),
-            4 + i64::from(byte(data, 6) % 3),
+            4 + i64::from(b(5) % 3),
+            4 + i64::from(b(6) % 3),
         ),
         (
             span - 5,
             span - 5,
             span - 2,
-            span - 2 + i64::from(byte(data, 7) % 2),
+            span - 2 + i64::from(b(7) % 2),
         ),
     ]);
-    let side_cutter = rect_mesh(-2, 3, 4 + i64::from(byte(data, 8) % 5), span - 3);
+    let side_cutter = rect_mesh(-2, 3, 4 + i64::from(b(8) % 5), span - 3);
     let crossing_cutter = triangle_mesh([
-        [0, 4 + i64::from(byte(data, 9) % 4), 0],
+        [0, 4 + i64::from(b(9) % 4), 0],
         [span / 2, span / 2, 0],
         [0, span - 2, 0],
     ]);
@@ -55,23 +57,41 @@ fuzz_target!(|data: &[u8]| {
     let single_left = triangle_mesh([[0, 0, 0], [span, 0, 0], [0, span, 0]]);
     let single_right = triangle_mesh([[1, 1, 0], [span / 2, 1, 0], [1, span / 2, 0]]);
 
-    exercise_pair(&left, &strict_hole);
-    exercise_pair(&left, &retained_holes);
-    exercise_pair(&left, &side_cutter);
-    exercise_pair(&left, &crossing_cutter);
-    exercise_pair(&left, &point_touch);
-    exercise_pair(&single_left, &single_right);
-
-    if let Some(holed_left) = arrange_coplanar_convex_surface_holed_difference(&left, &strict_hole)
-    {
-        exercise_pair(&holed_left.mesh, &side_cutter);
-        exercise_pair(&holed_left.mesh, &crossing_cutter);
-    }
-    if let Some(multi_holed_left) =
-        arrange_coplanar_convex_surface_multi_holed_difference(&left, &retained_holes)
-    {
-        exercise_pair(&multi_holed_left.mesh, &side_cutter);
-        exercise_pair(&multi_holed_left.mesh, &crossing_cutter);
+    match byte(data, 0) % 10 {
+        0 => exercise_pair(&left, &strict_hole),
+        1 => exercise_pair(&left, &retained_holes),
+        2 => exercise_pair(&left, &side_cutter),
+        3 => exercise_pair(&left, &crossing_cutter),
+        4 => exercise_pair(&left, &point_touch),
+        5 => exercise_pair(&single_left, &single_right),
+        6 => {
+            if let Some(holed_left) =
+                arrange_coplanar_convex_surface_holed_difference(&left, &strict_hole)
+            {
+                exercise_pair(&holed_left.mesh, &side_cutter);
+            }
+        }
+        7 => {
+            if let Some(holed_left) =
+                arrange_coplanar_convex_surface_holed_difference(&left, &strict_hole)
+            {
+                exercise_pair(&holed_left.mesh, &crossing_cutter);
+            }
+        }
+        8 => {
+            if let Some(multi_holed_left) =
+                arrange_coplanar_convex_surface_multi_holed_difference(&left, &retained_holes)
+            {
+                exercise_pair(&multi_holed_left.mesh, &side_cutter);
+            }
+        }
+        _ => {
+            if let Some(multi_holed_left) =
+                arrange_coplanar_convex_surface_multi_holed_difference(&left, &retained_holes)
+            {
+                exercise_pair(&multi_holed_left.mesh, &crossing_cutter);
+            }
+        }
     }
 });
 
@@ -80,6 +100,7 @@ fn byte(data: &[u8], index: usize) -> u8 {
 }
 
 fn exercise_pair(left: &ExactMesh, right: &ExactMesh) {
+    exercise_arrangement_pipeline(left, right);
     check_legacy(
         left,
         right,
@@ -154,6 +175,130 @@ fn exercise_pair(left: &ExactMesh, right: &ExactMesh) {
         right,
         arrange_single_triangle_coplanar_holed_difference(left, right).map(|artifact| artifact.mesh),
     );
+}
+
+fn exercise_arrangement_pipeline(left: &ExactMesh, right: &ExactMesh) {
+    let Ok(arrangement) = ExactArrangement::from_meshes_with_policy(
+        left,
+        right,
+        ExactRegularizationPolicy::RETAIN_ARTIFACTS,
+    ) else {
+        return;
+    };
+    let _ = arrangement.validate_against_sources_with_policy(
+        left,
+        right,
+        ExactRegularizationPolicy::RETAIN_ARTIFACTS,
+    );
+    let Ok(labeled) = arrangement
+        .clone()
+        .label_regions(ExactRegularizationPolicy::RETAIN_ARTIFACTS)
+    else {
+        return;
+    };
+    for operation in [
+        ExactBooleanOperation::Union,
+        ExactBooleanOperation::Intersection,
+        ExactBooleanOperation::Difference,
+    ] {
+        exercise_arrangement_operation(left, right, &labeled, operation);
+        check_arrangement_attempt_shortcut_consistency(left, right, operation);
+    }
+}
+
+fn exercise_arrangement_operation(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    labeled: &ExactLabeledCellComplex,
+    operation: ExactBooleanOperation,
+) {
+    let Ok(selected) =
+        labeled
+            .clone()
+            .select_with_policy(operation, ExactRegularizationPolicy::RETAIN_ARTIFACTS)
+    else {
+        return;
+    };
+    let _ = selected.validate_against_sources(
+        left,
+        right,
+        ExactRegularizationPolicy::RETAIN_ARTIFACTS,
+    );
+    if !selected.volume_adjacencies.is_empty() {
+        assert!(
+            selected
+                .selected_face_orientations
+                .iter()
+                .all(|orientation| orientation.from_volume_adjacency)
+        );
+    }
+    let Ok(simplified) =
+        selected.simplify_exact_with_policy(ExactRegularizationPolicy::RETAIN_ARTIFACTS)
+    else {
+        return;
+    };
+    let _ = simplified.validate_against_sources(
+        left,
+        right,
+        ExactRegularizationPolicy::RETAIN_ARTIFACTS,
+    );
+    if simplified.blockers.is_empty() {
+        let Ok(mesh) = simplified.triangulate() else {
+            return;
+        };
+        mesh.validate_retained_state().unwrap();
+        if let Ok(result) = boolean_exact(left, right, operation, ValidationPolicy::ALLOW_BOUNDARY)
+            && result.kind
+                == (ExactBooleanResultKind::CertifiedShortcut {
+                    shortcut: ExactBooleanShortcutKind::ArrangementCellComplex,
+                })
+        {
+            assert_same_mesh_shape(&result.mesh, &mesh);
+        }
+    }
+}
+
+fn check_arrangement_attempt_shortcut_consistency(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+) {
+    let Ok(attempt) = exact_arrangement_boolean_attempt_report(
+        left,
+        right,
+        operation,
+        ExactRegularizationPolicy::REGULARIZED_SOLID,
+    ) else {
+        return;
+    };
+    let Some(shortcut) = attempt.materialized_shortcut else {
+        return;
+    };
+    let Ok(result) = boolean_exact(left, right, operation, ValidationPolicy::ALLOW_BOUNDARY) else {
+        return;
+    };
+    result.validate().unwrap();
+    match shortcut {
+        ExactBooleanShortcutKind::BoolMeshSplit => {
+            assert_eq!(
+                result.kind,
+                ExactBooleanResultKind::CertifiedShortcut { shortcut }
+            );
+            assert_eq!(result.mesh.vertices().len(), attempt.output_vertices);
+            assert_eq!(result.mesh.triangles().len(), attempt.output_triangles);
+        }
+        ExactBooleanShortcutKind::ArrangementCellComplex => {
+            if result.kind
+                == (ExactBooleanResultKind::CertifiedShortcut {
+                    shortcut: ExactBooleanShortcutKind::ArrangementCellComplex,
+                })
+            {
+                assert_eq!(result.mesh.vertices().len(), attempt.output_vertices);
+                assert_eq!(result.mesh.triangles().len(), attempt.output_triangles);
+            }
+        }
+        _ => {}
+    }
 }
 
 fn check_legacy(left: &ExactMesh, right: &ExactMesh, legacy: Option<ExactMesh>) {
