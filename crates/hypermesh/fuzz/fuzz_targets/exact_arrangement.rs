@@ -25,6 +25,7 @@ fuzz_target!(|data: &[u8]| {
 
     exercise_planar_overlay(&values);
     exercise_mesh_arrangement(&values);
+    exercise_nested_shell_cavity();
 });
 
 fn exercise_planar_overlay(values: &[i64]) {
@@ -205,6 +206,51 @@ fn exercise_volume_graph_invariants(arrangement: &ExactArrangement) {
     }
 }
 
+fn exercise_nested_shell_cavity() {
+    let Some(left) = tetrahedron_with_reversed_inner() else {
+        return;
+    };
+    let Some(right) = tetrahedron_mesh(
+        &[
+            [30, 0, 0],
+            [31, 0, 0],
+            [30, 1, 0],
+            [30, 0, 1],
+        ],
+        ValidationPolicy::CLOSED,
+    ) else {
+        return;
+    };
+    let Ok(arrangement) = ExactArrangement::from_meshes_with_policy(
+        &left,
+        &right,
+        ExactRegularizationPolicy::REGULARIZED_SOLID,
+    ) else {
+        return;
+    };
+    exercise_volume_graph_invariants(&arrangement);
+    let Ok(labeled) = arrangement.label_regions(ExactRegularizationPolicy::REGULARIZED_SOLID)
+    else {
+        return;
+    };
+    let empty_cavity = labeled
+        .volume_regions
+        .iter()
+        .find(|region| !region.exterior && !region.in_left && !region.in_right)
+        .map(|region| region.index);
+    let Some(empty_cavity) = empty_cavity else {
+        return;
+    };
+    for operation in [
+        ExactBooleanOperation::Union,
+        ExactBooleanOperation::Difference,
+    ] {
+        if let Ok(selected) = labeled.clone().select(operation) {
+            assert!(!selected.selected_volume_regions.contains(&empty_cavity));
+        }
+    }
+}
+
 fn square_ring(
     region: ExactArrangement2dRegion,
     x: i64,
@@ -233,4 +279,44 @@ fn tetrahedron_from_values(values: &[i64]) -> Option<ExactMesh> {
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .ok()
+}
+
+fn tetrahedron_mesh(points: &[[i64; 3]; 4], policy: ValidationPolicy) -> Option<ExactMesh> {
+    ExactMesh::from_i64_triangles_with_policy(
+        &[
+            points[0][0],
+            points[0][1],
+            points[0][2],
+            points[1][0],
+            points[1][1],
+            points[1][2],
+            points[2][0],
+            points[2][1],
+            points[2][2],
+            points[3][0],
+            points[3][1],
+            points[3][2],
+        ],
+        &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
+        policy,
+    )
+    .ok()
+}
+
+fn tetrahedron_with_reversed_inner() -> Option<ExactMesh> {
+    let outer = [[0, 0, 0], [20, 0, 0], [0, 20, 0], [0, 0, 20]];
+    let inner = [[1, 1, 1], [2, 1, 1], [1, 2, 1], [1, 1, 2]];
+    let mut vertices = Vec::new();
+    for point in outer.iter().chain(inner.iter()) {
+        vertices.extend(point);
+    }
+    let shell_triangles = [[0, 2, 1], [0, 1, 3], [1, 2, 3], [2, 0, 3]];
+    let mut triangles = Vec::new();
+    for tri in shell_triangles {
+        triangles.extend([tri[0], tri[1], tri[2]]);
+    }
+    for tri in shell_triangles {
+        triangles.extend([4 + tri[0], 4 + tri[2], 4 + tri[1]]);
+    }
+    ExactMesh::from_i64_triangles_with_policy(&vertices, &triangles, ValidationPolicy::CLOSED).ok()
 }
