@@ -40,9 +40,8 @@ use super::arrangement2d::{
 };
 use super::arrangement3d::ExactArrangement;
 use super::boolmesh::{
-    ExactBoolMeshKernelStage, ExactBoolMeshValidationError,
-    exact_boolmesh_workspace_from_graph_for_support, execute_exact_boolmesh_bounds_disjoint,
-    execute_exact_boolmesh_port_from_graph,
+    ExactBoolMeshValidationError, exact_boolmesh_workspace_from_graph_for_support,
+    execute_exact_boolmesh_bounds_disjoint, execute_exact_boolmesh_port_from_graph,
 };
 use super::bounds::AabbIntersectionKind;
 use super::box_solid::{
@@ -1760,26 +1759,14 @@ fn run_arrangement_cell_complex_attempt(
             attempt.output_triangles = result.mesh.triangles().len();
             return Ok(ArrangementCellComplexOutcome::Materialized(result, attempt));
         }
-        if !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-            && certified_boolmesh_split_support_from_graph(
-                &arrangement.graph,
-                left,
-                right,
-                operation,
-            )
-            && let Some(validation) = validation
-            && let Some(result) = boolean_boolmesh_split_meshes_from_graph(
-                &arrangement.graph,
-                left,
-                right,
-                operation,
-                validation,
-            )?
-        {
-            attempt.stage = ExactArrangementBooleanStage::Materialized;
-            attempt.materialized_shortcut = Some(ExactBooleanShortcutKind::BoolMeshSplit);
-            attempt.output_vertices = result.mesh.vertices().len();
-            attempt.output_triangles = result.mesh.triangles().len();
+        if let Some(result) = materialize_arrangement_boolmesh_split_delegate(
+            &mut attempt,
+            &arrangement,
+            left,
+            right,
+            operation,
+            validation,
+        )? {
             return Ok(ArrangementCellComplexOutcome::Materialized(result, attempt));
         }
         attempt.decline = Some(ExactArrangementBooleanDecline::ArrangementBlockers(
@@ -1791,6 +1778,16 @@ fn run_arrangement_cell_complex_attempt(
     let labeled = match arrangement.label_regions(policy) {
         Ok(labeled) => labeled,
         Err(blocker) => {
+            if let Some(result) = materialize_arrangement_boolmesh_split_delegate(
+                &mut attempt,
+                &arrangement,
+                left,
+                right,
+                operation,
+                validation,
+            )? {
+                return Ok(ArrangementCellComplexOutcome::Materialized(result, attempt));
+            }
             attempt.decline = Some(ExactArrangementBooleanDecline::Labeling(blocker));
             return Ok(ArrangementCellComplexOutcome::Declined(attempt));
         }
@@ -1800,12 +1797,32 @@ fn run_arrangement_cell_complex_attempt(
         Ok(selected) if selected.blockers.is_empty() => selected,
         Ok(selected) => {
             attempt.selected_faces = selected.selected_faces.len();
+            if let Some(result) = materialize_arrangement_boolmesh_split_delegate(
+                &mut attempt,
+                &arrangement,
+                left,
+                right,
+                operation,
+                validation,
+            )? {
+                return Ok(ArrangementCellComplexOutcome::Materialized(result, attempt));
+            }
             attempt.decline = Some(ExactArrangementBooleanDecline::Selection(
                 selected.blockers[0].clone(),
             ));
             return Ok(ArrangementCellComplexOutcome::Declined(attempt));
         }
         Err(blocker) => {
+            if let Some(result) = materialize_arrangement_boolmesh_split_delegate(
+                &mut attempt,
+                &arrangement,
+                left,
+                right,
+                operation,
+                validation,
+            )? {
+                return Ok(ArrangementCellComplexOutcome::Materialized(result, attempt));
+            }
             attempt.decline = Some(ExactArrangementBooleanDecline::Selection(blocker));
             return Ok(ArrangementCellComplexOutcome::Declined(attempt));
         }
@@ -1816,12 +1833,32 @@ fn run_arrangement_cell_complex_attempt(
     let simplified = match selected.simplify_exact_with_policy(policy) {
         Ok(simplified) if simplified.blockers.is_empty() => simplified,
         Ok(simplified) => {
+            if let Some(result) = materialize_arrangement_boolmesh_split_delegate(
+                &mut attempt,
+                &arrangement,
+                left,
+                right,
+                operation,
+                validation,
+            )? {
+                return Ok(ArrangementCellComplexOutcome::Materialized(result, attempt));
+            }
             attempt.decline = Some(ExactArrangementBooleanDecline::Simplification(
                 simplified.blockers[0].clone(),
             ));
             return Ok(ArrangementCellComplexOutcome::Declined(attempt));
         }
         Err(blocker) => {
+            if let Some(result) = materialize_arrangement_boolmesh_split_delegate(
+                &mut attempt,
+                &arrangement,
+                left,
+                right,
+                operation,
+                validation,
+            )? {
+                return Ok(ArrangementCellComplexOutcome::Materialized(result, attempt));
+            }
             attempt.decline = Some(ExactArrangementBooleanDecline::Simplification(blocker));
             return Ok(ArrangementCellComplexOutcome::Declined(attempt));
         }
@@ -1830,6 +1867,16 @@ fn run_arrangement_cell_complex_attempt(
     let mesh = match simplified.triangulate() {
         Ok(mesh) => mesh,
         Err(blocker) => {
+            if let Some(result) = materialize_arrangement_boolmesh_split_delegate(
+                &mut attempt,
+                &arrangement,
+                left,
+                right,
+                operation,
+                validation,
+            )? {
+                return Ok(ArrangementCellComplexOutcome::Materialized(result, attempt));
+            }
             attempt.decline = Some(ExactArrangementBooleanDecline::Triangulation(blocker));
             return Ok(ArrangementCellComplexOutcome::Declined(attempt));
         }
@@ -1847,6 +1894,16 @@ fn run_arrangement_cell_complex_attempt(
     ) {
         Ok(mesh) => mesh,
         Err(_) => {
+            if let Some(result) = materialize_arrangement_boolmesh_split_delegate(
+                &mut attempt,
+                &arrangement,
+                left,
+                right,
+                operation,
+                Some(validation),
+            )? {
+                return Ok(ArrangementCellComplexOutcome::Materialized(result, attempt));
+            }
             attempt.decline = Some(ExactArrangementBooleanDecline::OutputValidation);
             return Ok(ArrangementCellComplexOutcome::Declined(attempt));
         }
@@ -1857,6 +1914,40 @@ fn run_arrangement_cell_complex_attempt(
         certified_shortcut_result(mesh, ExactBooleanShortcutKind::ArrangementCellComplex),
         attempt,
     ))
+}
+
+fn materialize_arrangement_boolmesh_split_delegate(
+    attempt: &mut ExactArrangementBooleanAttempt,
+    arrangement: &ExactArrangement,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: Option<ValidationPolicy>,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+        || !certified_boolmesh_split_support_from_graph(&arrangement.graph, left, right, operation)
+    {
+        return Ok(None);
+    }
+    let Some(validation) = validation else {
+        return Ok(None);
+    };
+    let Some(result) = boolean_boolmesh_split_meshes_from_graph(
+        &arrangement.graph,
+        left,
+        right,
+        operation,
+        validation,
+    )?
+    else {
+        return Ok(None);
+    };
+    attempt.stage = ExactArrangementBooleanStage::Materialized;
+    attempt.decline = None;
+    attempt.materialized_shortcut = Some(ExactBooleanShortcutKind::BoolMeshSplit);
+    attempt.output_vertices = result.mesh.vertices().len();
+    attempt.output_triangles = result.mesh.triangles().len();
+    Ok(Some(result))
 }
 
 fn materialize_simple_coplanar_overlay_arrangement(
@@ -4221,11 +4312,6 @@ fn certified_closed_boundary_only_contact_support_from_graph(
     {
         return Ok(None);
     }
-    if operation == ExactBooleanOperation::Union
-        && certified_boolmesh_split_support_from_graph(graph, left, right, operation)
-    {
-        return Ok(Some(ExactBooleanSupport::CertifiedBoolMeshSplit));
-    }
     Ok(Some(match operation {
         ExactBooleanOperation::Union => ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion,
         ExactBooleanOperation::Intersection => {
@@ -4247,17 +4333,6 @@ fn boolean_closed_boundary_only_contact_meshes_from_graph(
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
     if !certified_closed_boundary_only_contact_from_graph(graph, left, right)? {
         return Ok(None);
-    }
-    if operation == ExactBooleanOperation::Union
-        && let Some(result) = boolean_boolmesh_split_meshes_from_graph(
-            graph,
-            left,
-            right,
-            ExactBooleanOperation::Union,
-            validation,
-        )?
-    {
-        return Ok(Some(result));
     }
     let (mesh, shortcut) = match operation {
         ExactBooleanOperation::Union => (
@@ -4292,22 +4367,13 @@ fn boolean_closed_boundary_only_contact_meshes_from_graph(
 
 /// Materialize the regularized union for closed lower-dimensional contact.
 fn boolean_closed_boundary_touching_union(
-    graph: &super::graph::ExactIntersectionGraph,
+    _graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
     validation: ValidationPolicy,
     report: ExactBoundaryTouchingReport,
 ) -> Result<ExactBooleanResult, MeshError> {
     validate_consumed_boundary_touching_report(&report, "closed-boundary-touch union")?;
-    if let Some(result) = boolean_boolmesh_split_meshes_from_graph(
-        graph,
-        left,
-        right,
-        ExactBooleanOperation::Union,
-        validation,
-    )? {
-        return Ok(result);
-    }
     Ok(certified_shortcut_result(
         concatenate_meshes_with_options(
             left,
@@ -4322,22 +4388,13 @@ fn boolean_closed_boundary_touching_union(
 
 /// Materialize the empty regularized intersection for closed boundary contact.
 fn boolean_closed_boundary_touching_intersection(
-    graph: &super::graph::ExactIntersectionGraph,
-    left: &ExactMesh,
-    right: &ExactMesh,
+    _graph: &super::graph::ExactIntersectionGraph,
+    _left: &ExactMesh,
+    _right: &ExactMesh,
     validation: ValidationPolicy,
     report: ExactBoundaryTouchingReport,
 ) -> Result<ExactBooleanResult, MeshError> {
     validate_consumed_boundary_touching_report(&report, "closed-boundary-touch intersection")?;
-    if let Some(result) = boolean_boolmesh_split_meshes_from_graph(
-        graph,
-        left,
-        right,
-        ExactBooleanOperation::Intersection,
-        validation,
-    )? {
-        return Ok(result);
-    }
     Ok(certified_shortcut_result(
         empty_mesh(
             "empty exact closed-boundary-touch regularized intersection",
@@ -4349,22 +4406,13 @@ fn boolean_closed_boundary_touching_intersection(
 
 /// Materialize the left-preserving difference for closed boundary contact.
 fn boolean_closed_boundary_touching_difference(
-    graph: &super::graph::ExactIntersectionGraph,
+    _graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
-    right: &ExactMesh,
+    _right: &ExactMesh,
     validation: ValidationPolicy,
     report: ExactBoundaryTouchingReport,
 ) -> Result<ExactBooleanResult, MeshError> {
     validate_consumed_boundary_touching_report(&report, "closed-boundary-touch difference")?;
-    if let Some(result) = boolean_boolmesh_split_meshes_from_graph(
-        graph,
-        left,
-        right,
-        ExactBooleanOperation::Difference,
-        validation,
-    )? {
-        return Ok(result);
-    }
     Ok(certified_shortcut_result(
         copy_mesh(
             left,
@@ -5230,31 +5278,17 @@ fn boolean_retained_graph_fallback_meshes_from_graph(
         Ok(Some(result)) => return Ok(Some(result)),
         Ok(None) => {}
         Err(error) => {
-            if error_can_retry_certified_boolmesh(&error) {
-                match execute_exact_boolmesh_port_from_graph(
-                    left, right, operation, validation, graph,
-                ) {
-                    Ok(execution) => {
-                        return Ok(Some(certified_shortcut_result(
-                            execution.mesh,
-                            execution.shortcut,
-                        )));
-                    }
-                    Err(ExactBoolMeshValidationError::PortBlocked(
-                        stage @ (ExactBoolMeshKernelStage::Triangulation
-                        | ExactBoolMeshKernelStage::Cleanup),
-                    )) => return Err(boolmesh_late_export_blocker_error(stage)),
-                    _ => {}
-                }
+            if let Some(result) = boolean_arrangement_cell_complex_meshes(
+                left,
+                right,
+                operation,
+                validation,
+                ArrangementCellComplexDispatch::Fallback,
+            )? {
+                return Ok(Some(result));
             }
             return Err(error);
         }
-    }
-
-    if let Some(result) =
-        boolean_boolmesh_port_meshes_from_graph(graph, left, right, operation, validation)?
-    {
-        return Ok(Some(result));
     }
 
     if let Some(shortcut) = certified_winding_boolean_shortcut_from_graph(graph, left, right)?
@@ -5992,40 +6026,6 @@ fn boolean_disjoint_meshes(
     ))
 }
 
-/// Execute the landed direct boolmesh port from the public exact boolean path.
-///
-/// This is deliberately a fall-through adapter, not a compatibility fallback:
-/// a completed boolmesh workspace materializes from the retained `boolean45`
-/// mesh export and becomes an audited certified shortcut result, while
-/// [`ExactBoolMeshValidationError::PortBlocked`] means the exact port has
-/// reached an unported boolmesh stage and the historical exact materializers
-/// may still handle the case.  Other boolmesh validation errors are reported
-/// topology-changing decision is either certified, explicitly unknown, or a
-/// validation failure.
-fn boolean_boolmesh_port_meshes_from_graph(
-    graph: &super::graph::ExactIntersectionGraph,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
-    match execute_exact_boolmesh_port_from_graph(left, right, operation, validation, graph) {
-        Ok(execution) => Ok(Some(certified_shortcut_result(
-            execution.mesh,
-            execution.shortcut,
-        ))),
-        Err(ExactBoolMeshValidationError::PortBlocked(
-            stage @ (ExactBoolMeshKernelStage::Triangulation | ExactBoolMeshKernelStage::Cleanup),
-        )) => Err(boolmesh_late_export_blocker_error(stage)),
-        Err(ExactBoolMeshValidationError::PortBlocked(_)) => Ok(None),
-        Err(error) => Err(MeshError::one(MeshDiagnostic::new(
-            Severity::Error,
-            DiagnosticKind::UnsupportedExactOperation,
-            format!("exact boolmesh graph-backed port failed: {error:?}"),
-        ))),
-    }
-}
-
 fn boolean_boolmesh_split_meshes_from_graph(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
@@ -6044,25 +6044,6 @@ fn boolean_boolmesh_split_meshes_from_graph(
             format!("exact boolmesh graph-backed split failed: {error:?}"),
         ))),
     }
-}
-
-fn boolmesh_late_export_blocker_error(stage: ExactBoolMeshKernelStage) -> MeshError {
-    MeshError::one(MeshDiagnostic::new(
-        Severity::Error,
-        DiagnosticKind::UnsupportedExactOperation,
-        format!("exact boolmesh port blocked before certified mesh export: {stage:?}"),
-    ))
-}
-
-fn error_can_retry_certified_boolmesh(error: &MeshError) -> bool {
-    error.diagnostics.iter().any(|diagnostic| {
-        matches!(
-            diagnostic.kind,
-            DiagnosticKind::BoundaryEdge
-                | DiagnosticKind::DegenerateTriangle
-                | DiagnosticKind::DuplicateDirectedEdge
-        )
-    })
 }
 
 fn boolean_empty_operand(

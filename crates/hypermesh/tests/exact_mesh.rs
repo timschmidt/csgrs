@@ -35048,16 +35048,16 @@ fn exact_boolmesh_workspace_routes_strict_coplanar_vertices_to_boolean45() {
         hypermesh::exact::ExactBooleanOperation::Union,
         ValidationPolicy::CLOSED,
     )
-    .expect("public strict-coplanar ownership union should consume the completed boolmesh split");
+    .expect("public strict-coplanar ownership union should use boundary-contact ownership");
     public_result.validate().unwrap();
     assert_eq!(
         public_result.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::exact::ExactBooleanShortcutKind::BoolMeshSplit
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ClosedBoundaryTouchingUnion
         }
     );
     assert_eq!(public_result.mesh.vertices().len(), 8);
-    assert_eq!(public_result.mesh.triangles().len(), 12);
+    assert_eq!(public_result.mesh.triangles().len(), 8);
 }
 
 #[test]
@@ -35506,12 +35506,13 @@ fn exact_boolmesh_kernel12_lowers_strict_endpoint_face_shadow() {
         hypermesh::exact::ExactBooleanOperation::Intersection,
         ValidationPolicy::CLOSED,
     )
-    .expect("public endpoint-only intersection should consume the completed boolmesh split");
+    .expect("public endpoint-only intersection should use boundary-contact ownership");
     public_result.validate().unwrap();
     assert_eq!(
         public_result.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::exact::ExactBooleanShortcutKind::BoolMeshSplit
+            shortcut:
+                hypermesh::exact::ExactBooleanShortcutKind::ClosedBoundaryTouchingIntersection
         }
     );
     assert!(public_result.mesh.triangles().is_empty());
@@ -35612,12 +35613,12 @@ fn exact_boolmesh_kernel12_lowers_boundary_endpoint_edge_shadow_through_intersec
         hypermesh::exact::ExactBooleanOperation::Intersection,
         ValidationPolicy::CLOSED,
     )
-    .expect("public endpoint-edge intersection should consume the completed boolmesh split");
+    .expect("public endpoint-edge intersection should materialize through arrangement");
     public_result.validate().unwrap();
     assert_eq!(
         public_result.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::exact::ExactBooleanShortcutKind::BoolMeshSplit
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
     assert!(public_result.mesh.triangles().is_empty());
@@ -35853,16 +35854,16 @@ fn exact_boolmesh_kernel12_lowers_partial_positive_area_coplanar_overlap() {
         hypermesh::exact::ExactBooleanOperation::Union,
         ValidationPolicy::CLOSED,
     )
-    .expect("public positive-area coplanar union should consume the completed boolmesh split");
+    .expect("public positive-area coplanar union should use boundary-contact ownership");
     public_result.validate().unwrap();
     assert_eq!(
         public_result.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::exact::ExactBooleanShortcutKind::BoolMeshSplit
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ClosedBoundaryTouchingUnion
         }
     );
-    assert_eq!(public_result.mesh.vertices().len(), 9);
-    assert_eq!(public_result.mesh.triangles().len(), 14);
+    assert_eq!(public_result.mesh.vertices().len(), 8);
+    assert_eq!(public_result.mesh.triangles().len(), 8);
 
     let preflight = hypermesh::exact::preflight_boolean_exact(
         &left,
@@ -35874,7 +35875,7 @@ fn exact_boolmesh_kernel12_lowers_partial_positive_area_coplanar_overlap() {
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::exact::ExactBooleanSupport::CertifiedBoolMeshSplit
+        hypermesh::exact::ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion
     );
     assert!(preflight.blocker.is_none());
 }
@@ -36319,7 +36320,7 @@ fn exact_boolmesh_boundary_contact_replays_closure_faces() {
     assert_eq!(
         public_result.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::exact::ExactBooleanShortcutKind::BoolMeshSplit
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ClosedBoundaryTouchingUnion
         }
     );
 }
@@ -36366,7 +36367,7 @@ fn exact_l_prism_partial_boundary_contact_avoids_coplanar_cell_blocker() {
         .unwrap();
     assert_eq!(
         union_preflight.support,
-        hypermesh::exact::ExactBooleanSupport::CertifiedBoolMeshSplit
+        hypermesh::exact::ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion
     );
     assert!(union_preflight.blocker.is_none());
 
