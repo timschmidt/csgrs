@@ -502,6 +502,7 @@ pub fn preflight_boolean_exact(
             | ExactBooleanSupport::CertifiedWindingContainment
             | ExactBooleanSupport::CertifiedWindingSeparated
             | ExactBooleanSupport::CertifiedBoolMeshSplit
+            | ExactBooleanSupport::CertifiedArrangementCellComplex
     ) {
         return Ok(ExactBooleanPreflight {
             operation,
@@ -886,6 +887,9 @@ fn preflight_direct_coplanar_surface_support(
             }
             if arrange_coplanar_surface_point_touch_union(left, right).is_some() {
                 return Some(ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchDifference);
+            }
+            if coplanar_mesh_overlay_difference_ready(left, right) {
+                return Some(ExactBooleanSupport::CertifiedArrangementCellComplex);
             }
             if arrange_coplanar_convex_surface_difference(left, right).is_some() {
                 return Some(
@@ -2437,6 +2441,14 @@ fn coplanar_mesh_overlay_surface_difference_boundary_policy(
         }
     }
     None
+}
+
+fn coplanar_mesh_overlay_difference_ready(left: &ExactMesh, right: &ExactMesh) -> bool {
+    coplanar_mesh_overlay_should_preempt_surface_paths(
+        left,
+        right,
+        ExactBooleanOperation::Difference,
+    ) && coplanar_mesh_overlay_surface_difference_boundary_policy(left, right).is_some()
 }
 
 fn coplanar_mesh_overlay_matches_legacy_surface_difference_with_policy(
@@ -4982,6 +4994,7 @@ fn coplanar_surface_output_already_materialized(
                 || arrange_coplanar_surface_component_difference(left, right).is_some()
                 || arrange_coplanar_surface_multi_difference(left, right).is_some()
                 || arrange_coplanar_surface_cutter_hole_contact_difference(left, right).is_some()
+                || coplanar_mesh_overlay_difference_ready(left, right)
                 || arrange_coplanar_convex_surface_holed_difference(left, right).is_some()
                 || arrange_coplanar_convex_surface_multi_holed_difference(left, right).is_some()
                 || arrange_coplanar_orthogonal_surface_difference(left, right).is_some()

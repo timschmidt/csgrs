@@ -1620,6 +1620,10 @@ pub enum ExactBooleanSupport {
     /// A named operation was materialized by the completed direct exact
     /// boolmesh split pipeline.
     CertifiedBoolMeshSplit,
+    /// A named operation was materialized by the exact arrangement/cell-complex
+    /// pipeline with legacy surface materializers retained only as proof
+    /// fixtures.
+    CertifiedArrangementCellComplex,
     /// The retained graph contains certified boundary contact events. This
     /// includes coplanar touching and the closed-solid case where positive-area
     /// coplanar overlaps plus adjacent contact-only candidates are proven
@@ -1795,7 +1799,8 @@ impl ExactBooleanPreflight {
             | ExactBooleanSupport::CertifiedConvexSeparated
             | ExactBooleanSupport::CertifiedWindingContainment
             | ExactBooleanSupport::CertifiedWindingSeparated
-            | ExactBooleanSupport::CertifiedBoolMeshSplit => {
+            | ExactBooleanSupport::CertifiedBoolMeshSplit
+            | ExactBooleanSupport::CertifiedArrangementCellComplex => {
                 if self.blocker.is_some() {
                     return Err(ExactReportValidationError::CertifiedReportHasBlocker);
                 }
