@@ -25,6 +25,7 @@ use super::provenance::SourceProvenance;
 use super::regularization::{
     ExactArrangementBlocker, ExactLowerDimensionalPolicy, ExactRegularizationPolicy,
 };
+use super::solid::ClosedMeshOrientation;
 use super::validation::ValidationPolicy;
 use super::winding::{
     ClosedMeshWindingMeshRelation, ClosedMeshWindingRelation, PointMeshWindingReport,
@@ -1826,6 +1827,18 @@ fn nested_shell_volume_graph(
         .iter()
         .map(|region| shell_region_mesh(region, face_cells))
         .collect::<Option<Vec<_>>>()?;
+    let shell_orientations = shell_meshes
+        .iter()
+        .map(exact_mesh_orientation)
+        .collect::<Option<Vec<_>>>()?;
+    if shell_orientations.iter().any(|orientation| {
+        !matches!(
+            orientation,
+            ClosedMeshOrientation::Positive | ClosedMeshOrientation::Negative
+        )
+    }) {
+        return None;
+    }
     let mut contains = vec![vec![false; shell_regions.len()]; shell_regions.len()];
     for contained in 0..shell_regions.len() {
         let witness = shell_region_witness(shell_regions.get(contained)?, face_cells)?;
@@ -1891,6 +1904,8 @@ fn nested_shell_volume_graph(
             root,
             0,
             &[],
+            &[],
+            &shell_orientations,
             shell_regions,
             &children,
             &mut shell_volume,
@@ -1928,6 +1943,8 @@ fn push_nested_shell_volume(
     shell: usize,
     exterior_volume: usize,
     exterior_source_sides: &[MeshSide],
+    exterior_source_shells: &[(MeshSide, usize)],
+    shell_orientations: &[ClosedMeshOrientation],
     shell_regions: &[ArrangementRegion],
     children: &[Vec<usize>],
     shell_volume: &mut [Option<usize>],
@@ -1936,8 +1953,15 @@ fn push_nested_shell_volume(
 ) {
     let volume = volume_regions.len();
     let mut source_sides = exterior_source_sides.to_vec();
+    let mut source_shells = exterior_source_shells.to_vec();
     for side in &shell_regions[shell].source_sides {
-        push_unique_mesh_side(&mut source_sides, *side);
+        apply_nested_shell_source_side(
+            &mut source_sides,
+            &mut source_shells,
+            *side,
+            shell,
+            shell_orientations,
+        );
     }
     let mut boundary_shells = Vec::with_capacity(children[shell].len() + 1);
     boundary_shells.push(shell);
@@ -1960,6 +1984,8 @@ fn push_nested_shell_volume(
             child,
             volume,
             &source_sides,
+            &source_shells,
+            shell_orientations,
             shell_regions,
             children,
             shell_volume,
@@ -1969,9 +1995,32 @@ fn push_nested_shell_volume(
     }
 }
 
-fn push_unique_mesh_side(sides: &mut Vec<MeshSide>, side: MeshSide) {
-    if !sides.contains(&side) {
-        sides.push(side);
+fn apply_nested_shell_source_side(
+    sides: &mut Vec<MeshSide>,
+    source_shells: &mut Vec<(MeshSide, usize)>,
+    side: MeshSide,
+    shell: usize,
+    shell_orientations: &[ClosedMeshOrientation],
+) {
+    match source_shells
+        .iter()
+        .rposition(|(active_side, _)| *active_side == side)
+        .and_then(|position| {
+            source_shells
+                .get(position)
+                .map(|(_, active_shell)| (position, *active_shell))
+        }) {
+        Some((position, active_shell))
+            if shell_orientations.get(active_shell) != shell_orientations.get(shell) =>
+        {
+            source_shells.remove(position);
+            sides.retain(|active| *active != side);
+        }
+        Some(_) => {}
+        None => {
+            source_shells.push((side, shell));
+            sides.push(side);
+        }
     }
 }
 
@@ -2019,6 +2068,49 @@ fn shell_region_mesh(
         ValidationPolicy::CLOSED,
     )
     .ok()
+}
+
+fn exact_mesh_orientation(mesh: &ExactMesh) -> Option<ClosedMeshOrientation> {
+    if !mesh.facts().mesh.closed_manifold {
+        return Some(ClosedMeshOrientation::NotClosed);
+    }
+    let signed_volume = mesh
+        .triangles()
+        .iter()
+        .map(|triangle| {
+            let tri = triangle.0;
+            determinant_from_origin(
+                &mesh.vertices()[tri[0]],
+                &mesh.vertices()[tri[1]],
+                &mesh.vertices()[tri[2]],
+            )
+        })
+        .fold(Real::from(0), |sum, det| &sum + &det);
+
+    match compare_reals(&signed_volume, &Real::from(0)).value()? {
+        Ordering::Greater => Some(ClosedMeshOrientation::Positive),
+        Ordering::Less => Some(ClosedMeshOrientation::Negative),
+        Ordering::Equal => Some(ClosedMeshOrientation::Unknown),
+    }
+}
+
+fn determinant_from_origin(a: &Point3, b: &Point3, c: &Point3) -> Real {
+    let by_cz = &b.y * &c.z;
+    let bz_cy = &b.z * &c.y;
+    let bx_cz = &b.x * &c.z;
+    let bz_cx = &b.z * &c.x;
+    let bx_cy = &b.x * &c.y;
+    let by_cx = &b.y * &c.x;
+
+    let x_minor = &by_cz - &bz_cy;
+    let y_minor = &bx_cz - &bz_cx;
+    let z_minor = &bx_cy - &by_cx;
+
+    let x_term = &a.x * &x_minor;
+    let y_term = &a.y * &y_minor;
+    let z_term = &a.z * &z_minor;
+
+    &(&x_term - &y_term) + &z_term
 }
 
 fn find_or_insert_shell_vertex(vertices: &mut Vec<Point3>, point: &Point3) -> Option<usize> {
@@ -2490,6 +2582,35 @@ mod tests {
         ExactMesh::from_i64_triangles(&vertices, &triangles).unwrap()
     }
 
+    fn tetrahedron_with_reversed_inner_i64(
+        outer: [[i64; 3]; 4],
+        inner: [[i64; 3]; 4],
+    ) -> ExactMesh {
+        let mut vertices = Vec::new();
+        for point in outer.iter().chain(inner.iter()) {
+            vertices.extend(point);
+        }
+        let outer_start = 0usize;
+        let inner_start = 4usize;
+        let shell_triangles = [[0, 2, 1], [0, 1, 3], [1, 2, 3], [2, 0, 3]];
+        let mut triangles = Vec::new();
+        for tri in shell_triangles {
+            triangles.extend([
+                outer_start + tri[0],
+                outer_start + tri[1],
+                outer_start + tri[2],
+            ]);
+        }
+        for tri in shell_triangles {
+            triangles.extend([
+                inner_start + tri[0],
+                inner_start + tri[2],
+                inner_start + tri[1],
+            ]);
+        }
+        ExactMesh::from_i64_triangles(&vertices, &triangles).unwrap()
+    }
+
     fn open_triangle_i64(a: [i64; 3], b: [i64; 3], c: [i64; 3]) -> ExactMesh {
         ExactMesh::from_i64_triangles_with_policy(
             &[a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2]],
@@ -2681,6 +2802,59 @@ mod tests {
             2
         );
 
+        let difference = arrangement
+            .label_regions(ExactRegularizationPolicy::REGULARIZED_SOLID)
+            .unwrap()
+            .select(ExactBooleanOperation::Difference)
+            .unwrap();
+        assert_eq!(difference.selected_volume_regions, vec![left_volume.index]);
+    }
+
+    #[test]
+    fn same_source_reversed_nested_shell_builds_cavity_volume() {
+        let left = tetrahedron_with_reversed_inner_i64(
+            [[0, 0, 0], [20, 0, 0], [0, 20, 0], [0, 0, 20]],
+            [[1, 1, 1], [2, 1, 1], [1, 2, 1], [1, 1, 2]],
+        );
+        let right = tetrahedron_i64([30, 0, 0], [31, 0, 0], [30, 1, 0], [30, 0, 1]);
+
+        let arrangement = ExactArrangement::from_meshes(&left, &right).unwrap();
+
+        assert!(
+            arrangement.blockers.is_empty(),
+            "{:?}",
+            arrangement.blockers
+        );
+        let volume_regions = arrangement
+            .volume_regions
+            .as_ref()
+            .expect("closed shells should expose volume regions");
+        assert_eq!(volume_regions.len(), 4);
+        assert_eq!(
+            volume_regions
+                .iter()
+                .filter(|region| region.exterior && region.source_sides.is_empty())
+                .count(),
+            1
+        );
+        let cavity = volume_regions
+            .iter()
+            .find(|region| !region.exterior && region.source_sides.is_empty())
+            .expect("oppositely oriented nested left shell should bound an empty cavity");
+        let left_volume = volume_regions
+            .iter()
+            .find(|region| region.source_sides == [MeshSide::Left])
+            .expect("between outer shell and cavity should remain left-owned");
+        assert!(left_volume.boundary_shells.len() >= 2);
+
+        let union = arrangement
+            .clone()
+            .label_regions(ExactRegularizationPolicy::REGULARIZED_SOLID)
+            .unwrap()
+            .select(ExactBooleanOperation::Union)
+            .unwrap();
+        assert!(!union.selected_volume_regions.contains(&cavity.index));
+        assert!(union.selected_volume_regions.contains(&left_volume.index));
         let difference = arrangement
             .label_regions(ExactRegularizationPolicy::REGULARIZED_SOLID)
             .unwrap()
