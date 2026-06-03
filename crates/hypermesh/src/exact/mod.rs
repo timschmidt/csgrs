@@ -113,6 +113,7 @@ pub use bounds::{AabbIntersectionKind, BoundsValidationError, ExactAabb3, MeshBo
 pub use cell_complex::{
     ExactCellComplex, ExactCellComplexFace, ExactCellComplexVolumeRegion, ExactCellRegionLabel,
     ExactLabeledCellComplex, ExactOppositeRegionLabel, ExactSelectedCellComplex,
+    ExactSelectedFaceOrientation,
 };
 pub use construction::{
     SegmentPlaneConstructionFailure, SegmentPlaneIntersection, SegmentPlaneParameterRatio,
