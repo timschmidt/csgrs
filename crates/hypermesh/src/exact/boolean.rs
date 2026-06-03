@@ -2249,9 +2249,6 @@ fn coplanar_mesh_overlay_should_preempt_surface_paths(
                 || arrange_coplanar_surface_point_touch_union(left, right).is_some()
         }
         ExactBooleanOperation::Difference => {
-            if certify_coplanar_surface_boundary_touch(left, right).is_some() {
-                return false;
-            }
             if coplanar_mesh_overlay_surface_difference_boundary_policy(left, right).is_some() {
                 return true;
             }
@@ -2443,6 +2440,11 @@ fn coplanar_mesh_overlay_matches_legacy_surface_difference_with_policy(
     // These legacy materializers are retained here as exact proof fixtures:
     // the public Boolean result can use the arrangement output once it replays
     // the same exact boundary as the older surface-specific artifact.
+    if certify_coplanar_surface_boundary_touch(left, right).is_some()
+        && exact_meshes_have_same_shape(&overlay, left)
+    {
+        return true;
+    }
     if let Some(surface) = arrange_coplanar_surface_multi_difference(left, right)
         && exact_meshes_have_same_shape(&overlay, &surface.mesh)
     {
