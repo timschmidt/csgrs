@@ -68,3 +68,10 @@ path = "fuzz_targets/exact_surface_arrangement_parity.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "exact_boolean_pipeline_parity"
+path = "fuzz_targets/exact_boolean_pipeline_parity.rs"
+test = false
+doc = false
+bench = false
