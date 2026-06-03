@@ -1004,15 +1004,15 @@ fn project_for_hypertri(point: &Point3, projection: CoplanarProjection) -> hyper
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::exact::arrangement3d::{
+    use crate::arrangement3d::{
         ArrangementFaceCarrier, ArrangementFaceCell, ArrangementFaceCellNode,
         ArrangementVolumeAdjacency, ArrangementVolumeFaceSide,
     };
-    use crate::exact::cell_complex::{
+    use crate::cell_complex::{
         ExactCellComplexFace, ExactCellRegionLabel, ExactOppositeRegionLabel,
         ExactSelectedCellComplex, ExactSelectedFaceOrientation,
     };
-    use crate::exact::graph::MeshSide;
+    use crate::graph::MeshSide;
 
     fn p(x: i64, y: i64, z: i64) -> Point3 {
         Point3::new(Real::from(x), Real::from(y), Real::from(z))

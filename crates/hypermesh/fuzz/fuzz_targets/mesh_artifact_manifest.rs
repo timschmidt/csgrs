@@ -1,11 +1,11 @@
 #![no_main]
 
-use hypermesh::exact::artifact::{
+use hypermesh::artifact::{
     MeshArtifactBlocker, MeshArtifactFaceRecord, MeshArtifactManifest, MeshArtifactRole,
     MeshArtifactSourceKind, MeshArtifactVertexRecord, MeshCoordinateEvidence,
     MeshNumericAdapterContract, MeshTopologyEvidence,
 };
-use hypermesh::exact::{ExactMesh, ValidationPolicy};
+use hypermesh::{ExactMesh, ValidationPolicy};
 
 
 

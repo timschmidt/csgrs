@@ -7,7 +7,7 @@ use bevy::pbr::wireframe::{Wireframe, WireframeColor, WireframePlugin};
 use bevy::prelude::*;
 use bevy::render::mesh::PrimitiveTopology;
 use bevy_panorbit_camera::{PanOrbitCamera, PanOrbitCameraPlugin};
-use hypermesh::exact::{ExactMesh, ValidationPolicy, approximate_mesh_f64_view};
+use hypermesh::{ExactMesh, ValidationPolicy, approximate_mesh_f64_view};
 
 use std::time::Instant;
 

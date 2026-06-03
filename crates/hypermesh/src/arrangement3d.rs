@@ -2761,8 +2761,8 @@ fn mesh_for_side<'a>(side: MeshSide, left: &'a ExactMesh, right: &'a ExactMesh) 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::exact::boolean::ExactBooleanOperation;
-    use crate::exact::validation::ValidationPolicy;
+    use crate::boolean::ExactBooleanOperation;
+    use crate::validation::ValidationPolicy;
 
     fn tetrahedron_i64(a: [i64; 3], b: [i64; 3], c: [i64; 3], d: [i64; 3]) -> ExactMesh {
         ExactMesh::from_i64_triangles(
@@ -3435,7 +3435,7 @@ mod tests {
             &right,
             ExactRegularizationPolicy {
                 lower_dimensional: ExactLowerDimensionalPolicy::ReportBlocker,
-                unresolved: crate::exact::regularization::ExactUnresolvedPolicy::RetainArtifacts,
+                unresolved: crate::regularization::ExactUnresolvedPolicy::RetainArtifacts,
             },
         )
         .unwrap();

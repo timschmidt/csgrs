@@ -59,7 +59,7 @@ pub enum AffineBoxOperation {
 /// This is a shortcut artifact, not a general convex boolean. It exists only
 /// when both input meshes certify as boxes in one exact affine frame and the
 /// corresponding normalized AABB operation is already supported by
-/// [`crate::exact::box_solid`].
+/// [`crate::box_solid`].
 #[derive(Clone, Debug, PartialEq)]
 pub struct AffineBoxArrangement {
     /// Shared affine frame used to normalize both source boxes.

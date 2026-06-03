@@ -3,7 +3,7 @@
 use std::cmp::Ordering;
 
 use hyperlimit::{Point3, compare_reals};
-use hypermesh::exact::surface::{
+use hypermesh::surface::{
     arrange_coplanar_convex_surface_component_holed_difference,
     arrange_coplanar_convex_surface_difference, arrange_coplanar_convex_surface_holed_difference,
     arrange_coplanar_convex_surface_multi_difference,
@@ -15,7 +15,7 @@ use hypermesh::exact::surface::{
     arrange_coplanar_surface_side_cutter_difference, arrange_single_triangle_coplanar_difference,
     arrange_single_triangle_coplanar_holed_difference, difference_single_triangle_coplanar_surfaces,
 };
-use hypermesh::exact::{
+use hypermesh::{
     ExactArrangement, ExactBooleanOperation, ExactBooleanResultKind, ExactBooleanShortcutKind,
     ExactBoundaryBooleanPolicy, ExactLabeledCellComplex, ExactMesh, ExactRegularizationPolicy,
     ValidationPolicy, boolean_exact,
@@ -279,14 +279,6 @@ fn check_arrangement_attempt_shortcut_consistency(
     };
     result.validate().unwrap();
     match shortcut {
-        ExactBooleanShortcutKind::BoolMeshSplit => {
-            assert_eq!(
-                result.kind,
-                ExactBooleanResultKind::CertifiedShortcut { shortcut }
-            );
-            assert_eq!(result.mesh.vertices().len(), attempt.output_vertices);
-            assert_eq!(result.mesh.triangles().len(), attempt.output_triangles);
-        }
         ExactBooleanShortcutKind::ArrangementCellComplex => {
             if result.kind
                 == (ExactBooleanResultKind::CertifiedShortcut {

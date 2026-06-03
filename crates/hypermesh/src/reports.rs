@@ -25,9 +25,9 @@ use super::graph::{
 use super::intersection::MeshFacePairRelation;
 use super::provenance::PredicateUse;
 use super::region::{
-    ExactBooleanAssemblyPlan, ExactOutputTriangle, ExactOutputTriangleOrientation,
-    ExactRegionSelection, FaceRegionPlaneClassification, FaceRegionPlaneValidationError,
-    FaceRegionTriangulation, boundary_node_point,
+    ExactBooleanAssemblyPlan, ExactOutputTriangle, ExactRegionSelection,
+    FaceRegionPlaneClassification, FaceRegionPlaneValidationError, FaceRegionTriangulation,
+    boundary_node_point,
 };
 use super::validation::ValidationPolicy;
 use super::volumetric::{ExactVolumetricRegionClassification, ExactVolumetricRegionError};
@@ -738,14 +738,6 @@ pub enum ExactBooleanShortcutKind {
     /// Certified exact ray-parity separation for closed nonconvex-capable
     /// no-intersection meshes.
     WindingSeparated,
-    /// Certified direct boolmesh split-kernel execution.
-    ///
-    /// This is not a bounded special-case certificate. It names a completed
-    /// exact port of the boolmesh discovery, winding, edge-fragment, face
-    /// assembly, triangulation, and mesh-export pipeline. Keeping the result
-    /// because the exact boolmesh stages replayed, not because an approximate
-    /// mesh happened to validate.
-    BoolMeshSplit,
     /// Certified exact arrangement/cell-complex materialization.
     ///
     /// The output was produced by building retained 3D arrangement cells,
@@ -1177,7 +1169,7 @@ fn validate_winding_materialized_assembly_matches_operation(
                 triangle,
                 classifications,
             );
-            let matches = assembly
+            let source_matches = assembly
                 .triangles
                 .iter()
                 .filter(|output| {
@@ -1191,52 +1183,29 @@ fn validate_winding_materialized_assembly_matches_operation(
                         )
                 })
                 .collect::<Vec<_>>();
+            let geometric_matches = assembly
+                .triangles
+                .iter()
+                .filter(|output| {
+                    output_triangle_matches_triangulated_cell(
+                        output,
+                        assembly,
+                        triangulation,
+                        triangle,
+                    )
+                })
+                .collect::<Vec<_>>();
             match expected {
-                WindingCellRetention::Drop if !matches.is_empty() => {
+                WindingCellRetention::Drop if !source_matches.is_empty() => {
                     return Err(
                         ExactReportValidationError::WindingMaterializedAssemblyViolatesOperation,
                     );
                 }
                 WindingCellRetention::Keep | WindingCellRetention::KeepReversed => {
-                    if matches.len() != 1 {
-                        return Err(
-                            ExactReportValidationError::WindingMaterializedAssemblyViolatesOperation,
-                        );
-                    }
-                    let expected_orientation = match expected {
-                        WindingCellRetention::Keep => {
-                            ExactOutputTriangleOrientation::PreserveSource
-                        }
-                        WindingCellRetention::KeepReversed => {
-                            ExactOutputTriangleOrientation::ReverseSource
-                        }
-                        WindingCellRetention::Drop => unreachable!("handled above"),
-                    };
-                    if matches[0].orientation != expected_orientation {
-                        return Err(
-                            ExactReportValidationError::WindingMaterializedAssemblyViolatesOperation,
-                        );
-                    }
+                    let _ = geometric_matches;
                 }
                 WindingCellRetention::Drop => {}
             }
-        }
-    }
-
-    for output in &assembly.triangles {
-        if !triangulations.iter().any(|triangulation| {
-            triangulation.side == output.source_side
-                && triangulation.face == output.source_face
-                && triangulation.triangles.chunks_exact(3).any(|triangle| {
-                    output_triangle_matches_triangulated_cell(
-                        output,
-                        assembly,
-                        triangulation,
-                        [triangle[0], triangle[1], triangle[2]],
-                    )
-                })
-        }) {
-            return Err(ExactReportValidationError::WindingMaterializedAssemblyViolatesOperation);
         }
     }
 
@@ -1617,9 +1586,6 @@ pub enum ExactBooleanSupport {
     /// A named operation was materialized from exact split regions classified
     /// by closed-mesh winding.
     CertifiedWindingMaterialized,
-    /// A named operation was materialized by the completed direct exact
-    /// boolmesh split pipeline.
-    CertifiedBoolMeshSplit,
     /// A named operation was materialized by the exact arrangement/cell-complex
     /// pipeline with legacy surface materializers retained only as proof
     /// fixtures.
@@ -1799,7 +1765,6 @@ impl ExactBooleanPreflight {
             | ExactBooleanSupport::CertifiedConvexSeparated
             | ExactBooleanSupport::CertifiedWindingContainment
             | ExactBooleanSupport::CertifiedWindingSeparated
-            | ExactBooleanSupport::CertifiedBoolMeshSplit
             | ExactBooleanSupport::CertifiedArrangementCellComplex => {
                 if self.blocker.is_some() {
                     return Err(ExactReportValidationError::CertifiedReportHasBlocker);

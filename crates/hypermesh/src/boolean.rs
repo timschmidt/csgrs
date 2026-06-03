@@ -1,8 +1,7 @@
 //! Exact boolean operation entry points.
 //!
-//! The legacy boolmesh-derived public API mutates triangle topology through
-//! primitive-float kernels. This module is the exact-stack replacement
-//! boundary for the subset that is currently implemented: build certified
+//! This module is the exact-stack Boolean boundary for the subset that is
+//! currently implemented: build certified
 //! intersection events, form exact split-region loops, classify those regions,
 //! triangulate them through exact `hypertri`, assemble exact 3D
 //! output triangles, and validate the resulting [`ExactMesh`].
@@ -39,10 +38,6 @@ use super::arrangement2d::{
     build_exact_arrangement2d_overlay, build_exact_arrangement2d_overlay_with_boundary_policy,
 };
 use super::arrangement3d::ExactArrangement;
-use super::boolmesh::{
-    ExactBoolMeshValidationError, exact_boolmesh_workspace_from_graph_for_support,
-    execute_exact_boolmesh_bounds_disjoint, execute_exact_boolmesh_port_from_graph,
-};
 use super::bounds::AabbIntersectionKind;
 use super::box_solid::{
     AxisAlignedBoxOperation, cell_difference_axis_aligned_boxes, cell_union_axis_aligned_boxes,
@@ -100,30 +95,22 @@ use super::solid::{
 };
 use super::surface::{
     CoplanarConvexSurfaceContainment, CoplanarConvexSurfaceContainmentCertificate,
-    CoplanarSurfaceContainment, arrange_coplanar_convex_surface_component_holed_difference,
-    arrange_coplanar_convex_surface_component_union, arrange_coplanar_convex_surface_difference,
-    arrange_coplanar_convex_surface_holed_difference,
+    CoplanarSurfaceContainment, arrange_coplanar_convex_surface_component_union,
     arrange_coplanar_convex_surface_holed_difference_from_certificate,
-    arrange_coplanar_convex_surface_intersection, arrange_coplanar_convex_surface_multi_difference,
-    arrange_coplanar_convex_surface_multi_holed_difference,
+    arrange_coplanar_convex_surface_intersection,
     arrange_coplanar_convex_surface_multi_intersection,
     arrange_coplanar_convex_surface_multi_union, arrange_coplanar_convex_surface_union,
-    arrange_coplanar_surface_component_difference,
-    arrange_coplanar_surface_component_holed_difference,
     arrange_coplanar_surface_component_holed_intersection,
     arrange_coplanar_surface_component_holed_union,
     arrange_coplanar_surface_component_intersection, arrange_coplanar_surface_component_union,
-    arrange_coplanar_surface_cutter_hole_contact_difference,
     arrange_coplanar_surface_multi_component_intersection,
-    arrange_coplanar_surface_multi_component_union, arrange_coplanar_surface_multi_difference,
-    arrange_coplanar_surface_point_touch_difference, arrange_coplanar_surface_point_touch_union,
-    arrange_coplanar_surface_side_cutter_difference, arrange_single_triangle_coplanar_difference,
-    arrange_single_triangle_coplanar_holed_difference, arrange_single_triangle_coplanar_union,
-    certify_coplanar_convex_surface_containment, certify_coplanar_convex_surface_equivalence,
-    certify_coplanar_surface_boundary_touch, certify_coplanar_surface_mesh_containment,
-    certify_single_triangle_coplanar_containment, difference_single_triangle_coplanar_surfaces,
-    intersect_single_triangle_coplanar_surfaces, order_mesh_boundary_loops,
-    union_single_triangle_coplanar_surfaces,
+    arrange_coplanar_surface_multi_component_union, arrange_coplanar_surface_point_touch_union,
+    arrange_single_triangle_coplanar_difference, arrange_single_triangle_coplanar_holed_difference,
+    arrange_single_triangle_coplanar_union, certify_coplanar_convex_surface_containment,
+    certify_coplanar_convex_surface_equivalence, certify_coplanar_surface_boundary_touch,
+    certify_coplanar_surface_mesh_containment, certify_single_triangle_coplanar_containment,
+    difference_single_triangle_coplanar_surfaces, intersect_single_triangle_coplanar_surfaces,
+    order_mesh_boundary_loops, union_single_triangle_coplanar_surfaces,
 };
 use super::validation::ValidationPolicy;
 use super::volumetric::{
@@ -500,7 +487,6 @@ pub fn preflight_boolean_exact(
             | ExactBooleanSupport::CertifiedConvexSeparated
             | ExactBooleanSupport::CertifiedWindingContainment
             | ExactBooleanSupport::CertifiedWindingSeparated
-            | ExactBooleanSupport::CertifiedBoolMeshSplit
             | ExactBooleanSupport::CertifiedArrangementCellComplex
     ) {
         return Ok(ExactBooleanPreflight {
@@ -731,20 +717,6 @@ pub fn preflight_boolean_exact(
             coplanar_volumetric_evidence: coplanar_volumetric_evidence_if_required(
                 &graph, left, right,
             ),
-        });
-    }
-    if certified_boolmesh_split_support_from_graph(&graph, left, right, operation) {
-        return Ok(ExactBooleanPreflight {
-            operation,
-            support: ExactBooleanSupport::CertifiedBoolMeshSplit,
-            graph_had_unknowns: false,
-            retained_face_pairs: 0,
-            retained_events: 0,
-            region_count: 0,
-            region_classifications: Vec::new(),
-            blocker: None,
-            arrangement_readiness: None,
-            coplanar_volumetric_evidence: None,
         });
     }
     if graph_requires_coplanar_volumetric_cells_for_sources(&graph, left, right) {
@@ -1019,19 +991,6 @@ fn certified_shortcut_preflight(
         arrangement_readiness: None,
         coplanar_volumetric_evidence: None,
     }
-}
-
-fn certified_boolmesh_split_support_from_graph(
-    graph: &super::graph::ExactIntersectionGraph,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-) -> bool {
-    if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
-        return false;
-    }
-    let workspace = exact_boolmesh_workspace_from_graph_for_support(left, right, operation, graph);
-    workspace.validate().is_ok() && workspace.is_certified_split_boolean45()
 }
 
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
@@ -1776,16 +1735,6 @@ fn run_arrangement_cell_complex_attempt(
             attempt.output_triangles = result.mesh.triangles().len();
             return Ok(ArrangementCellComplexOutcome::Materialized(result, attempt));
         }
-        if let Some(result) = materialize_arrangement_boolmesh_split_delegate(
-            &mut attempt,
-            &arrangement,
-            left,
-            right,
-            operation,
-            validation,
-        )? {
-            return Ok(ArrangementCellComplexOutcome::Materialized(result, attempt));
-        }
         attempt.decline = Some(ExactArrangementBooleanDecline::ArrangementBlockers(
             arrangement.blockers.clone(),
         ));
@@ -1795,16 +1744,6 @@ fn run_arrangement_cell_complex_attempt(
     let labeled = match arrangement.label_regions(policy) {
         Ok(labeled) => labeled,
         Err(blocker) => {
-            if let Some(result) = materialize_arrangement_boolmesh_split_delegate(
-                &mut attempt,
-                &arrangement,
-                left,
-                right,
-                operation,
-                validation,
-            )? {
-                return Ok(ArrangementCellComplexOutcome::Materialized(result, attempt));
-            }
             attempt.decline = Some(ExactArrangementBooleanDecline::Labeling(blocker));
             return Ok(ArrangementCellComplexOutcome::Declined(attempt));
         }
@@ -1814,32 +1753,12 @@ fn run_arrangement_cell_complex_attempt(
         Ok(selected) if selected.blockers.is_empty() => selected,
         Ok(selected) => {
             attempt.selected_faces = selected.selected_faces.len();
-            if let Some(result) = materialize_arrangement_boolmesh_split_delegate(
-                &mut attempt,
-                &arrangement,
-                left,
-                right,
-                operation,
-                validation,
-            )? {
-                return Ok(ArrangementCellComplexOutcome::Materialized(result, attempt));
-            }
             attempt.decline = Some(ExactArrangementBooleanDecline::Selection(
                 selected.blockers[0].clone(),
             ));
             return Ok(ArrangementCellComplexOutcome::Declined(attempt));
         }
         Err(blocker) => {
-            if let Some(result) = materialize_arrangement_boolmesh_split_delegate(
-                &mut attempt,
-                &arrangement,
-                left,
-                right,
-                operation,
-                validation,
-            )? {
-                return Ok(ArrangementCellComplexOutcome::Materialized(result, attempt));
-            }
             attempt.decline = Some(ExactArrangementBooleanDecline::Selection(blocker));
             return Ok(ArrangementCellComplexOutcome::Declined(attempt));
         }
@@ -1850,32 +1769,12 @@ fn run_arrangement_cell_complex_attempt(
     let simplified = match selected.simplify_exact_with_policy(policy) {
         Ok(simplified) if simplified.blockers.is_empty() => simplified,
         Ok(simplified) => {
-            if let Some(result) = materialize_arrangement_boolmesh_split_delegate(
-                &mut attempt,
-                &arrangement,
-                left,
-                right,
-                operation,
-                validation,
-            )? {
-                return Ok(ArrangementCellComplexOutcome::Materialized(result, attempt));
-            }
             attempt.decline = Some(ExactArrangementBooleanDecline::Simplification(
                 simplified.blockers[0].clone(),
             ));
             return Ok(ArrangementCellComplexOutcome::Declined(attempt));
         }
         Err(blocker) => {
-            if let Some(result) = materialize_arrangement_boolmesh_split_delegate(
-                &mut attempt,
-                &arrangement,
-                left,
-                right,
-                operation,
-                validation,
-            )? {
-                return Ok(ArrangementCellComplexOutcome::Materialized(result, attempt));
-            }
             attempt.decline = Some(ExactArrangementBooleanDecline::Simplification(blocker));
             return Ok(ArrangementCellComplexOutcome::Declined(attempt));
         }
@@ -1884,16 +1783,6 @@ fn run_arrangement_cell_complex_attempt(
     let mesh = match simplified.triangulate() {
         Ok(mesh) => mesh,
         Err(blocker) => {
-            if let Some(result) = materialize_arrangement_boolmesh_split_delegate(
-                &mut attempt,
-                &arrangement,
-                left,
-                right,
-                operation,
-                validation,
-            )? {
-                return Ok(ArrangementCellComplexOutcome::Materialized(result, attempt));
-            }
             attempt.decline = Some(ExactArrangementBooleanDecline::Triangulation(blocker));
             return Ok(ArrangementCellComplexOutcome::Declined(attempt));
         }
@@ -1911,16 +1800,6 @@ fn run_arrangement_cell_complex_attempt(
     ) {
         Ok(mesh) => mesh,
         Err(_) => {
-            if let Some(result) = materialize_arrangement_boolmesh_split_delegate(
-                &mut attempt,
-                &arrangement,
-                left,
-                right,
-                operation,
-                Some(validation),
-            )? {
-                return Ok(ArrangementCellComplexOutcome::Materialized(result, attempt));
-            }
             attempt.decline = Some(ExactArrangementBooleanDecline::OutputValidation);
             return Ok(ArrangementCellComplexOutcome::Declined(attempt));
         }
@@ -1931,40 +1810,6 @@ fn run_arrangement_cell_complex_attempt(
         certified_shortcut_result(mesh, ExactBooleanShortcutKind::ArrangementCellComplex),
         attempt,
     ))
-}
-
-fn materialize_arrangement_boolmesh_split_delegate(
-    attempt: &mut ExactArrangementBooleanAttempt,
-    arrangement: &ExactArrangement,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: Option<ValidationPolicy>,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
-    if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-        || !certified_boolmesh_split_support_from_graph(&arrangement.graph, left, right, operation)
-    {
-        return Ok(None);
-    }
-    let Some(validation) = validation else {
-        return Ok(None);
-    };
-    let Some(result) = boolean_boolmesh_split_meshes_from_graph(
-        &arrangement.graph,
-        left,
-        right,
-        operation,
-        validation,
-    )?
-    else {
-        return Ok(None);
-    };
-    attempt.stage = ExactArrangementBooleanStage::Materialized;
-    attempt.decline = None;
-    attempt.materialized_shortcut = Some(ExactBooleanShortcutKind::BoolMeshSplit);
-    attempt.output_vertices = result.mesh.vertices().len();
-    attempt.output_triangles = result.mesh.triangles().len();
-    Ok(Some(result))
 }
 
 fn materialize_simple_coplanar_overlay_arrangement(
@@ -2066,12 +1911,8 @@ fn boolean_coplanar_mesh_overlay_optional(
                 .unwrap_or(ExactArrangement2dBoundaryPolicy::SimplifyCollinear)
         }
         ExactBooleanOperation::Intersection => {
-            if arrange_coplanar_surface_component_holed_intersection(left, right).is_some() {
-                coplanar_mesh_overlay_surface_intersection_boundary_policy(left, right)
-                    .unwrap_or(ExactArrangement2dBoundaryPolicy::SimplifyCollinear)
-            } else {
-                ExactArrangement2dBoundaryPolicy::SimplifyCollinear
-            }
+            coplanar_mesh_overlay_surface_intersection_boundary_policy(left, right)
+                .unwrap_or(ExactArrangement2dBoundaryPolicy::SimplifyCollinear)
         }
         ExactBooleanOperation::Union | ExactBooleanOperation::SelectedRegions(_) => {
             ExactArrangement2dBoundaryPolicy::SimplifyCollinear
@@ -2312,6 +2153,9 @@ fn coplanar_mesh_overlay_should_preempt_surface_paths(
     right: &ExactMesh,
     operation: ExactBooleanOperation,
 ) -> bool {
+    if coplanar_surface_containment_should_use_named_path(left, right, operation) {
+        return false;
+    }
     if left.facts().mesh.closed_manifold && right.facts().mesh.closed_manifold {
         return false;
     }
@@ -2341,8 +2185,6 @@ fn coplanar_mesh_overlay_should_preempt_surface_paths(
         }
         ExactBooleanOperation::Intersection => {
             coplanar_mesh_overlay_surface_intersection_boundary_policy(left, right).is_some()
-                || certify_coplanar_surface_boundary_touch(left, right).is_some()
-                || arrange_coplanar_surface_point_touch_union(left, right).is_some()
         }
         ExactBooleanOperation::Difference => {
             coplanar_mesh_overlay_difference_materializes(left, right)
@@ -2486,17 +2328,24 @@ fn coplanar_mesh_overlay_materialized_difference_boundary_policy(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Option<ExactArrangement2dBoundaryPolicy> {
+    coplanar_mesh_overlay_materialized_boundary_policy(
+        left,
+        right,
+        ExactArrangement2dSetOperation::Difference,
+        false,
+    )
+}
+
+fn coplanar_mesh_overlay_materialized_boundary_policy(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactArrangement2dSetOperation,
+    allow_empty: bool,
+) -> Option<ExactArrangement2dBoundaryPolicy> {
     for boundary_policy in [
         ExactArrangement2dBoundaryPolicy::SimplifyCollinear,
         ExactArrangement2dBoundaryPolicy::PreserveCollinear,
     ] {
-        if coplanar_mesh_overlay_matches_legacy_surface_difference_with_policy(
-            left,
-            right,
-            boundary_policy,
-        ) {
-            return Some(boundary_policy);
-        }
         let projected_boundary_policy = match boundary_policy {
             ExactArrangement2dBoundaryPolicy::SimplifyCollinear => {
                 ProjectedOverlayBoundaryPolicy::SimplifyCollinear
@@ -2508,11 +2357,11 @@ fn coplanar_mesh_overlay_materialized_difference_boundary_policy(
         if materialize_coplanar_mesh_overlay_mesh(
             left,
             right,
-            ExactArrangement2dSetOperation::Difference,
+            operation,
             boundary_policy,
             projected_boundary_policy,
             "exact coplanar mesh overlay arrangement",
-            false,
+            allow_empty,
         )
         .is_some()
         {
@@ -2538,315 +2387,33 @@ fn coplanar_mesh_overlay_surface_intersection_boundary_policy(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Option<ExactArrangement2dBoundaryPolicy> {
-    for boundary_policy in [
-        ExactArrangement2dBoundaryPolicy::SimplifyCollinear,
-        ExactArrangement2dBoundaryPolicy::PreserveCollinear,
-    ] {
-        if coplanar_mesh_overlay_matches_legacy_surface_intersection_with_policy(
-            left,
-            right,
-            boundary_policy,
-        ) {
-            return Some(boundary_policy);
-        }
-    }
-    None
+    coplanar_mesh_overlay_materialized_boundary_policy(
+        left,
+        right,
+        ExactArrangement2dSetOperation::Intersection,
+        true,
+    )
 }
 
 fn coplanar_mesh_overlay_surface_union_boundary_policy(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Option<ExactArrangement2dBoundaryPolicy> {
-    for boundary_policy in [
-        ExactArrangement2dBoundaryPolicy::SimplifyCollinear,
-        ExactArrangement2dBoundaryPolicy::PreserveCollinear,
-    ] {
-        if coplanar_mesh_overlay_matches_legacy_surface_union_with_policy(
-            left,
-            right,
-            boundary_policy,
-        ) {
-            return Some(boundary_policy);
-        }
-    }
-    None
-}
-
-fn coplanar_mesh_overlay_matches_legacy_surface_union_with_policy(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    boundary_policy: ExactArrangement2dBoundaryPolicy,
-) -> bool {
-    let projected_boundary_policy = match boundary_policy {
-        ExactArrangement2dBoundaryPolicy::SimplifyCollinear => {
-            ProjectedOverlayBoundaryPolicy::SimplifyCollinear
-        }
-        ExactArrangement2dBoundaryPolicy::PreserveCollinear => {
-            ProjectedOverlayBoundaryPolicy::PreserveCollinear
-        }
-    };
-    let Some(overlay) = materialize_coplanar_mesh_overlay_mesh(
+    coplanar_mesh_overlay_materialized_boundary_policy(
         left,
         right,
         ExactArrangement2dSetOperation::Union,
-        boundary_policy,
-        projected_boundary_policy,
-        "exact coplanar mesh overlay arrangement",
         false,
-    ) else {
-        return false;
-    };
-
-    // Surface union materializers are proof fixtures: production should use
-    // the arrangement overlay whenever it replays the same exact boundary.
-    if let Some(surface) = arrange_coplanar_convex_surface_union(left, right)
-        && exact_meshes_have_same_shape(&overlay, &surface.mesh)
-    {
-        return true;
-    }
-    if let Some(surface) = arrange_coplanar_convex_surface_component_union(left, right)
-        && exact_meshes_have_same_shape(&overlay, &surface.mesh)
-    {
-        return true;
-    }
-    if let Some(surface) = arrange_coplanar_surface_component_union(left, right)
-        && exact_meshes_have_same_shape(&overlay, &surface.mesh)
-    {
-        return true;
-    }
-    if let Some(surface) = arrange_coplanar_surface_component_holed_union(left, right)
-        && exact_meshes_have_same_shape(&overlay, &surface.mesh)
-    {
-        return true;
-    }
-    if let Some(surface) = arrange_coplanar_surface_multi_component_union(left, right)
-        && exact_meshes_have_same_shape(&overlay, &surface.mesh)
-    {
-        return true;
-    }
-    if let Some(surface) = arrange_coplanar_convex_surface_multi_union(left, right)
-        && exact_meshes_have_same_shape(&overlay, &surface.mesh)
-    {
-        return true;
-    }
-    if let Some(surface) = arrange_coplanar_surface_point_touch_union(left, right)
-        && exact_meshes_have_same_shape(&overlay, &surface.mesh)
-    {
-        return true;
-    }
-    if let Some(surface) = arrange_coplanar_orthogonal_surface_union(left, right)
-        && exact_meshes_have_same_shape(&overlay, &surface.mesh)
-    {
-        return true;
-    }
-    if let Some(surface) = arrange_coplanar_affine_surface_union(left, right)
-        && exact_meshes_have_same_shape(&overlay, &surface.mesh)
-    {
-        return true;
-    }
-    if let Some(surface) = union_single_triangle_coplanar_surfaces(left, right)
-        && exact_meshes_have_same_shape(&overlay, &surface.mesh)
-    {
-        return true;
-    }
-    if let Some(surface) = arrange_single_triangle_coplanar_union(left, right)
-        && exact_meshes_have_same_shape(&overlay, &surface.mesh)
-    {
-        return true;
-    }
-
-    false
+    )
 }
 
-fn coplanar_mesh_overlay_matches_legacy_surface_intersection_with_policy(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    boundary_policy: ExactArrangement2dBoundaryPolicy,
-) -> bool {
-    let projected_boundary_policy = match boundary_policy {
-        ExactArrangement2dBoundaryPolicy::SimplifyCollinear => {
-            ProjectedOverlayBoundaryPolicy::SimplifyCollinear
-        }
-        ExactArrangement2dBoundaryPolicy::PreserveCollinear => {
-            ProjectedOverlayBoundaryPolicy::PreserveCollinear
-        }
-    };
-    let Some(overlay) = materialize_coplanar_mesh_overlay_mesh(
-        left,
-        right,
-        ExactArrangement2dSetOperation::Intersection,
-        boundary_policy,
-        projected_boundary_policy,
-        "exact coplanar mesh overlay arrangement",
-        false,
-    ) else {
-        return false;
-    };
-
-    // Surface-specific intersection materializers are retained as proof
-    // fixtures while the arrangement layer takes ownership of matching
-    // multi-loop and holed outputs.
-    if let Some(surface) = arrange_coplanar_surface_component_holed_intersection(left, right)
-        && exact_meshes_have_same_shape(&overlay, &surface.mesh)
-    {
-        return true;
-    }
-    if let Some(surface) = arrange_coplanar_orthogonal_surface_intersection(left, right)
-        && exact_meshes_have_same_shape(&overlay, &surface.mesh)
-    {
-        return true;
-    }
-    if let Some(surface) = arrange_coplanar_affine_surface_intersection(left, right)
-        && exact_meshes_have_same_shape(&overlay, &surface.mesh)
-    {
-        return true;
-    }
-    if let Some(surface) = arrange_coplanar_surface_multi_component_intersection(left, right)
-        && exact_meshes_have_same_shape(&overlay, &surface.mesh)
-    {
-        return true;
-    }
-    if let Some(surface) = arrange_coplanar_surface_component_intersection(left, right)
-        && exact_meshes_have_same_shape(&overlay, &surface.mesh)
-    {
-        return true;
-    }
-    if let Some(surface) = arrange_coplanar_convex_surface_multi_intersection(left, right)
-        && exact_meshes_have_same_shape(&overlay, &surface.mesh)
-    {
-        return true;
-    }
-    if let Some(surface) = arrange_coplanar_convex_surface_intersection(left, right)
-        && exact_meshes_have_same_shape(&overlay, &surface.mesh)
-    {
-        return true;
-    }
-    if let Some(surface) = intersect_single_triangle_coplanar_surfaces(left, right)
-        && exact_meshes_have_same_shape(&overlay, &surface.mesh)
-    {
-        return true;
-    }
-
-    false
-}
-
-fn coplanar_mesh_overlay_matches_legacy_surface_difference_with_policy(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    boundary_policy: ExactArrangement2dBoundaryPolicy,
-) -> bool {
-    let projected_boundary_policy = match boundary_policy {
-        ExactArrangement2dBoundaryPolicy::SimplifyCollinear => {
-            ProjectedOverlayBoundaryPolicy::SimplifyCollinear
-        }
-        ExactArrangement2dBoundaryPolicy::PreserveCollinear => {
-            ProjectedOverlayBoundaryPolicy::PreserveCollinear
-        }
-    };
-    let Some(overlay) = materialize_coplanar_mesh_overlay_mesh(
-        left,
-        right,
-        ExactArrangement2dSetOperation::Difference,
-        boundary_policy,
-        projected_boundary_policy,
-        "exact coplanar mesh overlay arrangement",
-        false,
-    ) else {
-        return false;
-    };
-
-    // Difference materializers remain proof fixtures: production should use
-    // the arrangement overlay whenever it replays the same exact retained
-    // boundary as a legacy coplanar surface artifact.
-    if let Some(surface) = arrange_coplanar_convex_surface_difference(left, right)
-        && exact_meshes_have_same_shape(&overlay, &surface.mesh)
-    {
-        return true;
-    }
-    if let Some(surface) = arrange_coplanar_convex_surface_multi_difference(left, right)
-        && exact_meshes_have_same_shape(&overlay, &surface.mesh)
-    {
-        return true;
-    }
-    if let Some(surface) = arrange_coplanar_convex_surface_holed_difference(left, right)
-        && exact_meshes_have_same_shape(&overlay, &surface.mesh)
-    {
-        return true;
-    }
-    if let Some(surface) = arrange_coplanar_convex_surface_multi_holed_difference(left, right)
-        && exact_meshes_have_same_shape(&overlay, &surface.mesh)
-    {
-        return true;
-    }
-    if let Some(surface) = arrange_coplanar_convex_surface_component_holed_difference(left, right)
-        && exact_meshes_have_same_shape(&overlay, &surface.mesh)
-    {
-        return true;
-    }
-    if let Some(surface) = arrange_coplanar_surface_component_holed_difference(left, right)
-        && exact_meshes_have_same_shape(&overlay, &surface.mesh)
-    {
-        return true;
-    }
-    if let Some(surface) = arrange_coplanar_surface_multi_difference(left, right)
-        && exact_meshes_have_same_shape(&overlay, &surface.mesh)
-    {
-        return true;
-    }
-    if let Some(surface) = arrange_coplanar_surface_component_difference(left, right)
-        && exact_meshes_have_same_shape(&overlay, &surface.mesh)
-    {
-        return true;
-    }
-    if let Some(surface) = arrange_coplanar_surface_side_cutter_difference(left, right)
-        && exact_meshes_have_same_shape(&overlay, &surface.mesh)
-    {
-        return true;
-    }
-    if let Some(surface) = arrange_coplanar_surface_point_touch_difference(left, right)
-        && exact_meshes_have_same_shape(&overlay, &surface.mesh)
-    {
-        return true;
-    }
-    if let Some(surface) = arrange_coplanar_surface_cutter_hole_contact_difference(left, right)
-        && exact_meshes_have_same_shape(&overlay, &surface.mesh)
-    {
-        return true;
-    }
-    if let Some(surface) = arrange_coplanar_orthogonal_surface_difference(left, right)
-        && exact_meshes_have_same_shape(&overlay, &surface.mesh)
-    {
-        return true;
-    }
-    if let Some(surface) = arrange_coplanar_affine_surface_difference(left, right)
-        && exact_meshes_have_same_shape(&overlay, &surface.mesh)
-    {
-        return true;
-    }
-    if let Some(surface) = difference_single_triangle_coplanar_surfaces(left, right)
-        && exact_meshes_have_same_shape(&overlay, &surface.mesh)
-    {
-        return true;
-    }
-    if let Some(surface) = arrange_single_triangle_coplanar_difference(left, right)
-        && exact_meshes_have_same_shape(&overlay, &surface.mesh)
-    {
-        return true;
-    }
-    if let Some(surface) = arrange_single_triangle_coplanar_holed_difference(left, right)
-        && exact_meshes_have_same_shape(&overlay, &surface.mesh)
-    {
-        return true;
-    }
-
-    false
-}
-
+#[cfg(test)]
 fn exact_meshes_have_same_shape(left: &ExactMesh, right: &ExactMesh) -> bool {
     (exact_mesh_vertex_sets_match(left, right) && left.triangles().len() == right.triangles().len())
         || exact_mesh_boundary_edges_match(left, right)
 }
 
+#[cfg(test)]
 fn exact_mesh_vertex_sets_match(left: &ExactMesh, right: &ExactMesh) -> bool {
     left.vertices().len() == right.vertices().len()
         && left.vertices().iter().all(|left_point| {
@@ -2862,12 +2429,14 @@ fn exact_mesh_vertex_sets_match(left: &ExactMesh, right: &ExactMesh) -> bool {
         })
 }
 
+#[cfg(test)]
 #[derive(Clone, Debug)]
 struct ExactBoundaryEdge {
     endpoints: [Point3; 2],
     count: usize,
 }
 
+#[cfg(test)]
 fn exact_mesh_boundary_edges_match(left: &ExactMesh, right: &ExactMesh) -> bool {
     let Some(left_edges) = exact_mesh_boundary_edges(left) else {
         return false;
@@ -2893,6 +2462,7 @@ fn exact_mesh_boundary_edges_match(left: &ExactMesh, right: &ExactMesh) -> bool 
         })
 }
 
+#[cfg(test)]
 fn exact_mesh_boundary_edges(mesh: &ExactMesh) -> Option<Vec<ExactBoundaryEdge>> {
     let mut edges = Vec::<ExactBoundaryEdge>::new();
     for triangle in mesh.triangles() {
@@ -2920,6 +2490,7 @@ fn exact_mesh_boundary_edges(mesh: &ExactMesh) -> Option<Vec<ExactBoundaryEdge>>
     Some(edges.into_iter().filter(|edge| edge.count == 1).collect())
 }
 
+#[cfg(test)]
 fn triangle_edges(triangle: &Triangle) -> [[usize; 2]; 3] {
     [
         [triangle.0[0], triangle.0[1]],
@@ -2928,6 +2499,7 @@ fn triangle_edges(triangle: &Triangle) -> [[usize; 2]; 3] {
     ]
 }
 
+#[cfg(test)]
 fn point3_edge_exact_equal(left: &[Point3; 2], right: &[Point3; 2]) -> Option<bool> {
     Some(
         (point3_exact_equal(&left[0], &right[0])? && point3_exact_equal(&left[1], &right[1])?)
@@ -3055,11 +2627,25 @@ fn arrangement_cell_complex_should_preempt_legacy_paths(
     right: &ExactMesh,
     operation: ExactBooleanOperation,
 ) -> bool {
+    if coplanar_surface_containment_should_use_named_path(left, right, operation) {
+        return false;
+    }
     (matches!(
         operation,
         ExactBooleanOperation::Union | ExactBooleanOperation::Difference
     ) && non_box_full_face_adjacency(left, right))
         || single_triangle_coplanar_overlay_should_preempt_surface_paths(left, right, operation)
+}
+
+fn coplanar_surface_containment_should_use_named_path(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+) -> bool {
+    matches!(
+        operation,
+        ExactBooleanOperation::Union | ExactBooleanOperation::Intersection
+    ) && certify_single_triangle_coplanar_containment(left, right).is_some()
 }
 
 fn single_triangle_coplanar_overlay_should_preempt_surface_paths(
@@ -3205,7 +2791,7 @@ fn boolean_direct_coplanar_surface_meshes(
                     containment,
                 )?));
             }
-            if let Some(result) = boolean_coplanar_surface_overlay_from_legacy_proof(
+            if let Some(result) = boolean_coplanar_surface_overlay_from_exact_arrangement(
                 left, right, operation, validation,
             )? {
                 return Ok(Some(result));
@@ -3288,7 +2874,7 @@ fn boolean_direct_coplanar_surface_meshes(
                     containment,
                 )?));
             }
-            if let Some(result) = boolean_coplanar_surface_overlay_from_legacy_proof(
+            if let Some(result) = boolean_coplanar_surface_overlay_from_exact_arrangement(
                 left, right, operation, validation,
             )? {
                 return Ok(Some(result));
@@ -3359,7 +2945,7 @@ fn boolean_direct_coplanar_surface_meshes(
                     left, right, validation,
                 )?));
             }
-            if let Some(result) = boolean_coplanar_surface_overlay_from_legacy_proof(
+            if let Some(result) = boolean_coplanar_surface_overlay_from_exact_arrangement(
                 left, right, operation, validation,
             )? {
                 return Ok(Some(result));
@@ -3383,12 +2969,15 @@ fn boolean_direct_coplanar_surface_meshes(
     }
 }
 
-fn boolean_coplanar_surface_overlay_from_legacy_proof(
+fn boolean_coplanar_surface_overlay_from_exact_arrangement(
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
+    if coplanar_surface_containment_should_use_named_path(left, right, operation) {
+        return Ok(None);
+    }
     let (operation, boundary_policy) = match operation {
         ExactBooleanOperation::Union => (
             ExactArrangement2dSetOperation::Union,
@@ -4147,6 +3736,9 @@ fn boolean_direct_adjacency_meshes(
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
+    if coplanar_surface_containment_should_use_named_path(left, right, operation) {
+        return Ok(None);
+    }
     match operation {
         ExactBooleanOperation::Union => {
             if let Some(result) =
@@ -5722,15 +5314,57 @@ fn materialize_volumetric_winding_region_plan_from_graph(
             )));
         }
     };
-    if let Err(error) = assembly.split_disconnected_vertex_fans() {
+    if let Err(error) = assembly.refine_edges_at_existing_vertices(left, right) {
         if failure == VolumetricWindingMaterializationFailure::ReturnNone {
             return Ok(None);
         }
         return Err(MeshError::one(MeshDiagnostic::new(
             Severity::Error,
             DiagnosticKind::IndexOutOfBounds,
-            format!("exact winding region vertex-fan split failed: {error}"),
+            format!("exact winding region edge refinement failed: {error}"),
         )));
+    }
+    if let Err(error) = assembly.orient_paired_edge_uses() {
+        if failure == VolumetricWindingMaterializationFailure::ReturnNone {
+            return Ok(None);
+        }
+        return Err(MeshError::one(MeshDiagnostic::new(
+            Severity::Error,
+            DiagnosticKind::IndexOutOfBounds,
+            format!("exact winding region edge orientation failed: {error}"),
+        )));
+    }
+    if let Err(error) = assembly.remove_duplicate_triangle_vertex_sets() {
+        if failure == VolumetricWindingMaterializationFailure::ReturnNone {
+            return Ok(None);
+        }
+        return Err(MeshError::one(MeshDiagnostic::new(
+            Severity::Error,
+            DiagnosticKind::IndexOutOfBounds,
+            format!("exact winding region duplicate-cell removal failed: {error}"),
+        )));
+    }
+    if let Err(error) = assembly.orient_paired_edge_uses() {
+        if failure == VolumetricWindingMaterializationFailure::ReturnNone {
+            return Ok(None);
+        }
+        return Err(MeshError::one(MeshDiagnostic::new(
+            Severity::Error,
+            DiagnosticKind::IndexOutOfBounds,
+            format!("exact winding region post-dedup orientation failed: {error}"),
+        )));
+    }
+    if operation == ExactBooleanOperation::Difference {
+        if let Err(error) = assembly.split_disconnected_vertex_fans() {
+            if failure == VolumetricWindingMaterializationFailure::ReturnNone {
+                return Ok(None);
+            }
+            return Err(MeshError::one(MeshDiagnostic::new(
+                Severity::Error,
+                DiagnosticKind::IndexOutOfBounds,
+                format!("exact winding region vertex-fan split failed: {error}"),
+            )));
+        }
     }
     let mesh = match assembly.checked_to_exact_mesh_with_sources(left, right, validation) {
         Ok(mesh) => mesh,
@@ -6364,39 +5998,22 @@ fn boolean_disjoint_meshes(
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<ExactBooleanResult, MeshError> {
-    let execution = execute_exact_boolmesh_bounds_disjoint(left, right, operation, validation)
-        .map_err(|error| {
-            MeshError::one(MeshDiagnostic::new(
-                Severity::Error,
-                DiagnosticKind::UnsupportedExactOperation,
-                format!("exact boolmesh bounds-disjoint slice failed: {error:?}"),
-            ))
-        })?;
-
+    let mesh = match operation {
+        ExactBooleanOperation::Union => concatenate_meshes(left, right, validation)?,
+        ExactBooleanOperation::Intersection => {
+            empty_mesh("empty exact bounds-disjoint intersection", validation)?
+        }
+        ExactBooleanOperation::Difference => copy_mesh(
+            left,
+            "exact bounds-disjoint difference keeps left",
+            validation,
+        )?,
+        ExactBooleanOperation::SelectedRegions(_) => unreachable!("handled by caller"),
+    };
     Ok(certified_shortcut_result(
-        execution.mesh,
-        execution.shortcut,
+        mesh,
+        ExactBooleanShortcutKind::BoundsDisjoint,
     ))
-}
-
-fn boolean_boolmesh_split_meshes_from_graph(
-    graph: &super::graph::ExactIntersectionGraph,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
-    match execute_exact_boolmesh_port_from_graph(left, right, operation, validation, graph) {
-        Ok(execution) if execution.shortcut == ExactBooleanShortcutKind::BoolMeshSplit => Ok(Some(
-            certified_shortcut_result(execution.mesh, execution.shortcut),
-        )),
-        Ok(_) | Err(ExactBoolMeshValidationError::PortBlocked(_)) => Ok(None),
-        Err(error) => Err(MeshError::one(MeshDiagnostic::new(
-            Severity::Error,
-            DiagnosticKind::UnsupportedExactOperation,
-            format!("exact boolmesh graph-backed split failed: {error:?}"),
-        ))),
-    }
 }
 
 fn boolean_empty_operand(
@@ -6587,13 +6204,6 @@ mod tests {
         let (carrier_points, projection) = coplanar_mesh_overlay_carrier(&left, &right).unwrap();
         let boundary_policy =
             coplanar_mesh_overlay_materialized_difference_boundary_policy(&left, &right).unwrap();
-        assert!(
-            coplanar_mesh_overlay_matches_legacy_surface_difference_with_policy(
-                &left,
-                &right,
-                boundary_policy,
-            )
-        );
         let projected_boundary_policy = match boundary_policy {
             ExactArrangement2dBoundaryPolicy::SimplifyCollinear => {
                 ProjectedOverlayBoundaryPolicy::SimplifyCollinear

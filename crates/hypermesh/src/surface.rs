@@ -17,7 +17,7 @@
 //! models remain explicit.
 //!
 //! The underlying coplanar test is routed through `hyperlimit` by
-//! [`crate::exact::coplanar`].
+//! [`crate::coplanar`].
 
 use core::cmp::Ordering;
 
@@ -6392,7 +6392,7 @@ fn same_outer_retained_union_holes(
 /// rectilinear case where a nonconvex retained hole overlaps another
 /// rectilinear hole and the common removed region is still a set of simple
 /// retained loops. The source hole rings are first triangulated as exact open
-/// surfaces and then replayed by [`crate::exact::orthogonal_surface`]'s cell
+/// surfaces and then replayed by [`crate::orthogonal_surface`]'s cell
 /// arrangement. Only no-hole orthogonal intersection components are imported
 /// as retained holes; orthogonal islands-with-holes and positive-length
 /// boundary contacts remain explicit planar-arrangement work.
@@ -12060,7 +12060,7 @@ fn materialize_component_multi_cutter_difference(
 /// to the simple-loop surface artifact. The cell arrangement may produce
 /// holes, but [`CoplanarSurfaceMultiArrangement`] cannot retain ring topology;
 /// those cases are rejected here and left to
-/// [`crate::exact::orthogonal_surface`]. Accepting only hole-free components
+/// [`crate::orthogonal_surface`]. Accepting only hole-free components
 /// keeps the output model honest while still materializing nonconvex
 /// partial-height multi-cutter remnants from exact grid occupancy. This is the
 fn materialize_rectangle_multi_cutter_no_hole_cell_difference(

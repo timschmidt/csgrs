@@ -377,7 +377,7 @@ impl MeshArtifactManifest {
     ///
     /// This is the proposal-facing adapter for hypermesh-derived topology,
     /// primitive-float imports, and external producers that have already crossed
-    /// [`certify_exact_mesh_proposal`](crate::exact::proposal::certify_exact_mesh_proposal).
+    /// [`certify_exact_mesh_proposal`](crate::proposal::certify_exact_mesh_proposal).
     /// The proposal report must replay against `mesh` before the shared
     /// artifact is emitted. That keeps the accepted topology, source route, and
     /// lossy-adapter status coupled to the exact mesh audit, as required by

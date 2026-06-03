@@ -1,7 +1,7 @@
 //! Exact ray-parity winding classification for closed triangle meshes.
 //!
 //! This module is the general, nonconvex counterpart to the convex halfspace
-//! classifier in [`crate::exact::solid`]. It uses axis-aligned rays and exact
+//! classifier in [`crate::solid`]. It uses axis-aligned rays and exact
 //! `Real` arithmetic, then treats ray/edge and ray/vertex degeneracies as
 //! explicit blockers so a selected parity result was obtained without hidden
 //! tolerance choices. The parity query is the standard ray-crossing point

@@ -1,6 +1,6 @@
 //! Exact affine-frame orthogonal solid cell complexes.
 //!
-//! [`crate::exact::affine_box`] normalizes two parallelepiped boxes into one
+//! [`crate::affine_box`] normalizes two parallelepiped boxes into one
 //! exact `(u, v, w)` frame before reusing orthogonal box materializers. This
 //! module extends that retained evidence route to the bounded cell-complex case:
 //! if a shared frame is recovered from a retained affine box or exact

@@ -1,9 +1,9 @@
 #![no_main]
 
 use hyperlimit::Point3;
-use hypermesh::exact::{ExactMesh, audit_exact_mesh, build_intersection_graph, classify_coplanar_triangles, classify_mesh_face_pair, classify_mesh_face_pairs, classify_mesh_triangle_against_retained_face_plane, classify_triangle_triangle, inspect_i64_mesh_input, intersect_segment_with_face_plane, intersect_segment_with_retained_face_plane};
+use hypermesh::{ExactMesh, audit_exact_mesh, build_intersection_graph, classify_coplanar_triangles, classify_mesh_face_pair, classify_mesh_face_pairs, classify_mesh_triangle_against_retained_face_plane, classify_triangle_triangle, inspect_i64_mesh_input, intersect_segment_with_face_plane, intersect_segment_with_retained_face_plane};
 
-use hypermesh::exact::region::{classify_face_regions_against_opposite_planes};
+use hypermesh::region::{classify_face_regions_against_opposite_planes};
 
 
 use hyperreal::Real;
@@ -31,24 +31,24 @@ fuzz_target!(|data: &[u8]| {
         audit.validate_against_mesh(&mesh).unwrap();
         assert_eq!(
             audit.freshness_against_mesh(&mesh),
-            hypermesh::exact::ExactMeshAuditFreshness::Current
+            hypermesh::ExactMeshAuditFreshness::Current
         );
         let readiness = mesh.consumer_readiness().unwrap();
         assert_eq!(
             readiness.freshness_against_mesh(&mesh),
-            hypermesh::exact::ExactMeshConsumerReadinessFreshness::Current
+            hypermesh::ExactMeshConsumerReadinessFreshness::Current
         );
         readiness.validate_against_mesh(&mesh).unwrap();
         let package = mesh.handoff_package().unwrap();
         assert_eq!(
             package.freshness_against_mesh(&mesh),
-            hypermesh::exact::ExactMeshHandoffPackageFreshness::Current
+            hypermesh::ExactMeshHandoffPackageFreshness::Current
         );
         package.validate_internal().unwrap();
         package.validate_against_mesh(&mesh).unwrap();
-        let surface_domain = hypermesh::exact::ExactMeshConsumerDomain::Surface;
-        let solid_domain = hypermesh::exact::ExactMeshConsumerDomain::Solid;
-        let approximate_domain = hypermesh::exact::ExactMeshConsumerDomain::ApproximateF64View;
+        let surface_domain = hypermesh::ExactMeshConsumerDomain::Surface;
+        let solid_domain = hypermesh::ExactMeshConsumerDomain::Solid;
+        let approximate_domain = hypermesh::ExactMeshConsumerDomain::ApproximateF64View;
         assert_eq!(
             package.has_domain(surface_domain),
             package.surface.is_some()
@@ -168,11 +168,11 @@ fuzz_target!(|data: &[u8]| {
             .unwrap();
         assert_eq!(
             domain_summary.freshness_against_package(&package),
-            hypermesh::exact::ExactMeshDomainSummaryFreshness::Current
+            hypermesh::ExactMeshDomainSummaryFreshness::Current
         );
         assert_eq!(
             domain_summary.freshness_against_mesh(&package, &mesh),
-            hypermesh::exact::ExactMeshDomainSummaryFreshness::Current
+            hypermesh::ExactMeshDomainSummaryFreshness::Current
         );
         if package.has_domain(approximate_domain) {
             package.require_domain(approximate_domain).unwrap();
@@ -231,21 +231,21 @@ fuzz_target!(|data: &[u8]| {
         let _ = mesh.solid_handoff().map(|handoff| {
             assert_eq!(
                 handoff.freshness_against_mesh(&mesh),
-                hypermesh::exact::ExactSolidHandoffFreshness::Current
+                hypermesh::ExactSolidHandoffFreshness::Current
             );
             handoff.validate_against_mesh(&mesh)
         });
         let _ = mesh.surface_handoff().map(|handoff| {
             assert_eq!(
                 handoff.freshness_against_mesh(&mesh),
-                hypermesh::exact::ExactSurfaceHandoffFreshness::Current
+                hypermesh::ExactSurfaceHandoffFreshness::Current
             );
             handoff.validate_against_mesh(&mesh)
         });
         let _ = mesh.approximate_f64_view().map(|view| {
             assert_eq!(
                 view.freshness_against_mesh(&mesh),
-                hypermesh::exact::ApproximateMeshF64ViewFreshness::Current
+                hypermesh::ApproximateMeshF64ViewFreshness::Current
             );
             view.validate_against_mesh(&mesh)
         });
@@ -258,8 +258,8 @@ fuzz_target!(|data: &[u8]| {
             .bounds()
             .validate(mesh.vertices().len(), mesh.triangles().len());
         let _ = mesh.bounds().candidate_face_pairs(mesh.bounds());
-        let axes = hypermesh::exact::SupportDopAxis3::kdop26_axes();
-        let support = hypermesh::exact::support_dop_for_mesh(&mesh, &axes);
+        let axes = hypermesh::SupportDopAxis3::kdop26_axes();
+        let support = hypermesh::support_dop_for_mesh(&mesh, &axes);
         if mesh.vertices().is_empty() {
             assert!(support.is_err());
         } else {
@@ -267,13 +267,13 @@ fuzz_target!(|data: &[u8]| {
             support.validate_against_mesh(&mesh).unwrap();
             assert_eq!(
                 support.expansion.kind,
-                hypermesh::exact::SupportDopExpansionKind::None
+                hypermesh::SupportDopExpansionKind::None
             );
         }
         if mesh.facts().mesh.closed_manifold && !mesh.triangles().is_empty() {
             let boundary_vertex = mesh.triangles()[0].0[0];
             let boundary_point = mesh.vertices()[boundary_vertex].clone();
-            let point_winding = hypermesh::exact::classify_point_against_closed_mesh_winding_report(
+            let point_winding = hypermesh::classify_point_against_closed_mesh_winding_report(
                 &boundary_point,
                 &mesh,
             );
@@ -282,16 +282,16 @@ fuzz_target!(|data: &[u8]| {
                 .unwrap();
             assert_eq!(
                 point_winding.relation,
-                hypermesh::exact::ClosedMeshWindingRelation::Boundary
+                hypermesh::ClosedMeshWindingRelation::Boundary
             );
             let mesh_winding =
-                hypermesh::exact::classify_mesh_vertices_against_closed_mesh_winding_report(
+                hypermesh::classify_mesh_vertices_against_closed_mesh_winding_report(
                     &mesh, &mesh,
                 );
             mesh_winding.validate_against_sources(&mesh, &mesh).unwrap();
             assert_eq!(
                 mesh_winding.relation,
-                hypermesh::exact::ClosedMeshWindingMeshRelation::BoundaryOrMixed
+                hypermesh::ClosedMeshWindingMeshRelation::BoundaryOrMixed
             );
         }
         if !mesh.triangles().is_empty() {
@@ -373,7 +373,7 @@ fuzz_target!(|data: &[u8]| {
                         let _ = classification.validate();
                     }
                                         let _ =
-                        hypermesh::exact::region::checked_classify_face_regions_against_opposite_planes(
+                        hypermesh::region::checked_classify_face_regions_against_opposite_planes(
                             &region_plan,
                             &mesh,
                             &mesh,
@@ -385,7 +385,7 @@ fuzz_target!(|data: &[u8]| {
                         });
                                         {
                         if let Ok(triangulations) =
-                            hypermesh::exact::region::checked_triangulate_face_regions_with_earcut(
+                            hypermesh::region::checked_triangulate_face_regions_with_earcut(
                                 &region_plan,
                                 &mesh,
                                 &mesh,
@@ -395,9 +395,9 @@ fuzz_target!(|data: &[u8]| {
                                 let _ = triangulation.validate();
                             }
                             let _ =
-                                hypermesh::exact::region::ExactBooleanAssemblyPlan::from_region_triangulations(
+                                hypermesh::region::ExactBooleanAssemblyPlan::from_region_triangulations(
                                     &triangulations,
-                                    hypermesh::exact::region::ExactRegionSelection::KeepAll,
+                                    hypermesh::region::ExactRegionSelection::KeepAll,
                                 );
                         }
                     }
@@ -420,8 +420,8 @@ fuzz_target!(|data: &[u8]| {
             })
             .collect::<Vec<_>>();
         let _ = intersect_segment_with_face_plane(&points, [0, 1, 2], [3, 4]).validate();
-        let axes = hypermesh::exact::SupportDopAxis3::orthogonal_axes();
-        if let Ok(mut support) = hypermesh::exact::SupportDop3::from_points(&points, &axes) {
+        let axes = hypermesh::SupportDopAxis3::orthogonal_axes();
+        if let Ok(mut support) = hypermesh::SupportDop3::from_points(&points, &axes) {
             support.validate_against_points(&points).unwrap();
             let _ = support.refresh_for_changed_vertices(&points, &[0]).unwrap();
         }

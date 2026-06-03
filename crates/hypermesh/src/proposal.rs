@@ -101,7 +101,7 @@ impl ExactMeshProposalReport {
     /// Build a proposal report after exact retained-state replay.
     ///
     /// The returned report is positive evidence: the mesh has already passed
-    /// [`ExactMesh::validate_retained_state`](crate::exact::ExactMesh::validate_retained_state)
+    /// [`ExactMesh::validate_retained_state`](crate::ExactMesh::validate_retained_state)
     /// through [`audit_exact_mesh`]. Approximate or external source categories
     /// remain visible in the report instead of being rewritten as exact input.
     pub fn from_mesh(mesh: &ExactMesh) -> Result<Self, ExactMeshProposalReportError> {

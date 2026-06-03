@@ -4,7 +4,7 @@
 //! non-axis-aligned parallelogram grids. Each source cell must certify as one
 //! parallelogram in a shared exact affine basis. The operands are transformed
 //! into exact `(u, v, 0)` rectangle meshes, replayed through
-//! [`crate::exact::orthogonal_surface`], and transformed back to 3D only after
+//! [`crate::orthogonal_surface`], and transformed back to 3D only after
 //! affine basis and transformed cell complex are retained exact object
 //! structure, not a primitive-float normalization.
 //!

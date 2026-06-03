@@ -1,6 +1,6 @@
 //! Source-owned triangulated-disk full-face adjacency certificates.
 //!
-//! This module is the branch-face companion to [`crate::exact::adjacent`].
+//! This module is the branch-face companion to [`crate::adjacent`].
 //! It accepts source-owned, coplanar face disks when both solids replay the same
 //! simple projected boundary with opposite signed area. The certificate keeps a
 //! lists and edge incidences, while exact predicates certify that replayed
@@ -612,7 +612,7 @@ mod tests {
     use std::collections::BTreeSet;
 
     use super::*;
-    use crate::exact::ValidationPolicy;
+    use crate::ValidationPolicy;
     use proptest::prelude::*;
 
     fn open_mesh(points: &[[i64; 3]], triangles: &[usize]) -> ExactMesh {

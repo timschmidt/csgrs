@@ -4,7 +4,7 @@ use std::cmp::Ordering;
 use std::collections::BTreeSet;
 
 use hyperlimit::{Point2, compare_reals};
-use hypermesh::exact::{
+use hypermesh::{
     ExactArrangement, ExactArrangement2dRegion, ExactArrangement2dRegionRing,
     ExactArrangement2dSetOperation, ExactBooleanOperation, ExactMesh,
     ExactRegularizationPolicy, ValidationPolicy, boolean_exact, build_exact_arrangement2d_overlay,
@@ -57,7 +57,7 @@ fn exercise_planar_overlay(values: &[i64]) {
 }
 
 fn exercise_overlay_component_invariants(
-    overlay: &hypermesh::exact::ExactArrangement2dOverlay,
+    overlay: &hypermesh::ExactArrangement2dOverlay,
 ) {
     let mut assigned_holes = BTreeSet::new();
     for component in &overlay.output_components {

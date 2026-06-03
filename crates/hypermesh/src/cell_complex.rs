@@ -461,11 +461,11 @@ const fn mesh_side_for_source(source: ExactCellRegionLabel) -> MeshSide {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::exact::arrangement3d::{
+    use crate::arrangement3d::{
         ArrangementFaceCarrier, ArrangementFaceCell, ArrangementFaceCellNode,
         ArrangementVolumeFaceSide,
     };
-    use crate::exact::region::ExactRegionSelection;
+    use crate::region::ExactRegionSelection;
     use hyperlimit::Point3;
     use hyperreal::Real;
 

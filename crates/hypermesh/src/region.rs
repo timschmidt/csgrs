@@ -10,7 +10,7 @@
 
 use std::{cmp::Ordering, collections::BTreeMap};
 
-use hyperlimit::{PlaneSide, Point3, orient3d_report};
+use hyperlimit::{PlaneSide, Point3, orient3d_report, point_on_segment};
 use hyperlimit::{Point2 as PredicatePoint2, Sign, compare_reals, orient2d_report, project_point3};
 
 use super::coplanar::CoplanarProjection;
@@ -635,11 +635,10 @@ impl ExactBooleanAssemblyPlan {
 
     /// Validate and materialize the assembly plan as an [`ExactMesh`].
     ///
-    /// This is the exact replacement boundary for the boolmesh mutation
-    /// path: constructed output triangles are converted back into hypermesh
-    /// exact vertices and triangle handles only after local assembly invariants
-    /// have been audited. The resulting mesh is then checked by the same
-    /// manifold and geometric validators used for caller-supplied exact meshes.
+    /// Constructed output triangles are converted back into hypermesh exact
+    /// vertices and triangle handles only after local assembly invariants have
+    /// been audited. The resulting mesh is then checked by the same manifold
+    /// and geometric validators used for caller-supplied exact meshes.
     ///
     /// combinatorics must carry certified source and incidence facts before a
     /// topology consumer treats them as mesh state.
@@ -769,6 +768,127 @@ impl ExactBooleanAssemblyPlan {
         Ok(cloned_vertices)
     }
 
+    /// Orient retained triangle components so paired edges have opposite use.
+    ///
+    /// Winding selection can retain exact cells from different source faces
+    /// whose source-local orientation conventions do not yet agree across the
+    /// selected volume boundary. This pass uses only retained topology: every
+    /// two-triangle edge imposes a parity constraint, and flipping one side of
+    /// a component also toggles the triangle's recorded source-orientation
+    /// evidence. Boundary and non-manifold edges are left as diagnostics for
+    /// later mesh validation; contradictory parity means the selected complex
+    /// is not orientable as a triangle manifold.
+    pub fn orient_paired_edge_uses(&mut self) -> hypertri::Result<usize> {
+        let edge_uses = assembly_edge_uses(self);
+        let mut adjacency = vec![Vec::<TriangleOrientationConstraint>::new(); self.triangles.len()];
+        for uses in edge_uses.values() {
+            let [left, right] = uses.as_slice() else {
+                continue;
+            };
+            let same_direction = left.forward_with_key == right.forward_with_key;
+            adjacency[left.triangle].push(TriangleOrientationConstraint {
+                triangle: right.triangle,
+                flip_relative_to_current: same_direction,
+            });
+            adjacency[right.triangle].push(TriangleOrientationConstraint {
+                triangle: left.triangle,
+                flip_relative_to_current: same_direction,
+            });
+        }
+
+        let mut flips = vec![None; self.triangles.len()];
+        for start in 0..self.triangles.len() {
+            if flips[start].is_some() {
+                continue;
+            }
+            flips[start] = Some(false);
+            let mut stack = vec![start];
+            while let Some(triangle) = stack.pop() {
+                let current_flip = flips[triangle].ok_or(hypertri::Error::InvalidInput {
+                    reason: "triangle orientation traversal lost assigned parity",
+                })?;
+                for constraint in &adjacency[triangle] {
+                    let required = current_flip ^ constraint.flip_relative_to_current;
+                    match flips[constraint.triangle] {
+                        Some(existing) if existing != required => {
+                            return Err(hypertri::Error::InvalidInput {
+                                reason: "selected triangle component has contradictory edge orientation",
+                            });
+                        }
+                        Some(_) => {}
+                        None => {
+                            flips[constraint.triangle] = Some(required);
+                            stack.push(constraint.triangle);
+                        }
+                    }
+                }
+            }
+        }
+
+        let mut flipped = 0;
+        for (triangle, flip) in self.triangles.iter_mut().zip(flips) {
+            if flip == Some(true) {
+                triangle.vertices.swap(1, 2);
+                triangle.orientation = toggled_output_orientation(triangle.orientation);
+                flipped += 1;
+            }
+        }
+        self.validate()?;
+        Ok(flipped)
+    }
+
+    /// Split retained triangle edges at exact vertices already present in the
+    /// assembly.
+    ///
+    /// Volumetric cell extraction can legitimately retain one face-cell
+    /// triangle whose edge is collinear with several smaller cells emitted
+    /// from an adjacent source face. A triangle mesh cannot represent that
+    /// T-junction as a closed two-manifold, so the larger triangle is refined
+    /// by replaying source-face incidence and exact projected point-on-segment
+    /// predicates. No new coordinates are introduced.
+    pub fn refine_edges_at_existing_vertices(
+        &mut self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> hypertri::Result<usize> {
+        let mut splits = 0;
+        let max_passes = self
+            .triangles
+            .len()
+            .saturating_mul(self.vertices.len())
+            .saturating_mul(3)
+            .max(1);
+        for _ in 0..max_passes {
+            let Some(split) = find_existing_vertex_edge_split(self, left, right)? else {
+                self.validate()?;
+                return Ok(splits);
+            };
+            apply_existing_vertex_edge_split(self, split, left, right)?;
+            splits += 1;
+        }
+        Err(hypertri::Error::InvalidInput {
+            reason: "assembly edge refinement did not converge",
+        })
+    }
+
+    /// Remove duplicate exact triangle handles after cell refinement.
+    ///
+    /// When both operands contribute the same boundary cell, selection keeps
+    /// enough evidence to prove coincidence before this normal-form pass drops
+    /// the duplicate topological face. The key is the sorted output vertex set;
+    /// exact-equal vertices have already been welded by assembly.
+    pub fn remove_duplicate_triangle_vertex_sets(&mut self) -> hypertri::Result<usize> {
+        let original_len = self.triangles.len();
+        let mut seen = std::collections::BTreeSet::<[usize; 3]>::new();
+        self.triangles.retain(|triangle| {
+            let mut key = triangle.vertices;
+            key.sort_unstable();
+            seen.insert(key)
+        });
+        self.validate()?;
+        Ok(original_len - self.triangles.len())
+    }
+
     /// Recompute this assembly plan from source meshes and a region selection.
     ///
     /// Local validation and source-face incidence prove that this plan is
@@ -809,6 +929,209 @@ impl ExactBooleanAssemblyPlan {
             Err(hypertri::Error::InvalidInput {
                 reason: "assembly source replay mismatch",
             })
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+struct AssemblyEdgeUse {
+    triangle: usize,
+    forward_with_key: bool,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+struct TriangleOrientationConstraint {
+    triangle: usize,
+    flip_relative_to_current: bool,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+struct ExistingVertexEdgeSplit {
+    triangle: usize,
+    edge: usize,
+    vertex: usize,
+}
+
+fn assembly_edge_uses(
+    assembly: &ExactBooleanAssemblyPlan,
+) -> BTreeMap<[usize; 2], Vec<AssemblyEdgeUse>> {
+    let mut edge_uses = BTreeMap::<[usize; 2], Vec<AssemblyEdgeUse>>::new();
+    for (triangle_index, triangle) in assembly.triangles.iter().enumerate() {
+        for edge in [
+            [triangle.vertices[0], triangle.vertices[1]],
+            [triangle.vertices[1], triangle.vertices[2]],
+            [triangle.vertices[2], triangle.vertices[0]],
+        ] {
+            let mut key = edge;
+            key.sort_unstable();
+            edge_uses.entry(key).or_default().push(AssemblyEdgeUse {
+                triangle: triangle_index,
+                forward_with_key: edge == key,
+            });
+        }
+    }
+    edge_uses
+}
+
+fn find_existing_vertex_edge_split(
+    assembly: &ExactBooleanAssemblyPlan,
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> hypertri::Result<Option<ExistingVertexEdgeSplit>> {
+    for (triangle_index, triangle) in assembly.triangles.iter().enumerate() {
+        let projection = assembly_triangle_projection(triangle, left, right)?;
+        for edge in 0..3 {
+            let start = triangle.vertices[edge];
+            let end = triangle.vertices[(edge + 1) % 3];
+            for candidate in 0..assembly.vertices.len() {
+                if triangle.vertices.contains(&candidate) {
+                    continue;
+                }
+                if !assembly_vertex_lies_on_source_face(assembly, triangle, candidate, left, right)?
+                {
+                    continue;
+                }
+                if assembly_vertex_lies_strictly_on_projected_edge(
+                    assembly, candidate, start, end, projection,
+                )? {
+                    return Ok(Some(ExistingVertexEdgeSplit {
+                        triangle: triangle_index,
+                        edge,
+                        vertex: candidate,
+                    }));
+                }
+            }
+        }
+    }
+    Ok(None)
+}
+
+fn apply_existing_vertex_edge_split(
+    assembly: &mut ExactBooleanAssemblyPlan,
+    split: ExistingVertexEdgeSplit,
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> hypertri::Result<()> {
+    let original = assembly.triangles[split.triangle].clone();
+    let a = original.vertices[split.edge];
+    let b = original.vertices[(split.edge + 1) % 3];
+    let c = original.vertices[(split.edge + 2) % 3];
+    let mut first_vertices = [a, split.vertex, c];
+    let mut second_vertices = [split.vertex, b, c];
+    let triangulation = FaceRegionTriangulation {
+        side: original.source_side,
+        face: original.source_face,
+        projection: assembly_triangle_projection(&original, left, right)?,
+        boundary: Vec::new(),
+        vertices: Vec::new(),
+        triangles: Vec::new(),
+    };
+    orient_output_triangle_for_source(
+        &triangulation,
+        &assembly.vertices,
+        &mut first_vertices,
+        original.orientation,
+        left,
+        right,
+    )?;
+    orient_output_triangle_for_source(
+        &triangulation,
+        &assembly.vertices,
+        &mut second_vertices,
+        original.orientation,
+        left,
+        right,
+    )?;
+    let first = ExactOutputTriangle {
+        vertices: first_vertices,
+        source_side: original.source_side,
+        source_face: original.source_face,
+        orientation: original.orientation,
+    };
+    let second = ExactOutputTriangle {
+        vertices: second_vertices,
+        source_side: original.source_side,
+        source_face: original.source_face,
+        orientation: original.orientation,
+    };
+    validate_output_triangle_distinct_points(assembly, &first)?;
+    validate_output_triangle_distinct_points(assembly, &second)?;
+    assembly
+        .triangles
+        .splice(split.triangle..split.triangle + 1, [first, second]);
+    Ok(())
+}
+
+fn assembly_triangle_projection(
+    triangle: &ExactOutputTriangle,
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> hypertri::Result<CoplanarProjection> {
+    let mesh = match triangle.source_side {
+        MeshSide::Left => left,
+        MeshSide::Right => right,
+    };
+    choose_region_projection(mesh, triangle.source_face)
+}
+
+fn assembly_vertex_lies_on_source_face(
+    assembly: &ExactBooleanAssemblyPlan,
+    triangle: &ExactOutputTriangle,
+    vertex: usize,
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> hypertri::Result<bool> {
+    let mesh = match triangle.source_side {
+        MeshSide::Left => left,
+        MeshSide::Right => right,
+    };
+    let source_triangle = mesh.triangles()[triangle.source_face].0;
+    let a = &mesh.vertices()[source_triangle[0]];
+    let b = &mesh.vertices()[source_triangle[1]];
+    let c = &mesh.vertices()[source_triangle[2]];
+    orient3d_report(a, b, c, &assembly.vertices[vertex].point)
+        .value()
+        .map(|sign| sign == Sign::Zero)
+        .ok_or(hypertri::Error::PredicateUndecided {
+            predicate: "assembly_refinement_source_face_incidence",
+        })
+}
+
+fn assembly_vertex_lies_strictly_on_projected_edge(
+    assembly: &ExactBooleanAssemblyPlan,
+    candidate: usize,
+    start: usize,
+    end: usize,
+    projection: CoplanarProjection,
+) -> hypertri::Result<bool> {
+    let candidate_point = &assembly.vertices[candidate].point;
+    let start_point = &assembly.vertices[start].point;
+    let end_point = &assembly.vertices[end].point;
+    if points_equal(candidate_point, start_point) == Some(true)
+        || points_equal(candidate_point, end_point) == Some(true)
+    {
+        return Ok(false);
+    }
+    point_on_segment(
+        &project_for_predicate(start_point, projection),
+        &project_for_predicate(end_point, projection),
+        &project_for_predicate(candidate_point, projection),
+    )
+    .value()
+    .ok_or(hypertri::Error::PredicateUndecided {
+        predicate: "assembly_refinement_point_on_edge",
+    })
+}
+
+const fn toggled_output_orientation(
+    orientation: ExactOutputTriangleOrientation,
+) -> ExactOutputTriangleOrientation {
+    match orientation {
+        ExactOutputTriangleOrientation::PreserveSource => {
+            ExactOutputTriangleOrientation::ReverseSource
+        }
+        ExactOutputTriangleOrientation::ReverseSource => {
+            ExactOutputTriangleOrientation::PreserveSource
         }
     }
 }
@@ -1354,17 +1677,26 @@ fn vertex_fan_components(
     incident: &[usize],
 ) -> Vec<Vec<usize>> {
     let mut fan = DisjointTriangleFan::new(incident.len());
-    let mut edge_uses = BTreeMap::<usize, Vec<usize>>::new();
+    let mut edge_uses = BTreeMap::<usize, Vec<VertexFanEdgeUse>>::new();
     for (local_triangle, &triangle_index) in incident.iter().enumerate() {
-        for &corner in &assembly.triangles[triangle_index].vertices {
-            if corner != vertex {
-                edge_uses.entry(corner).or_default().push(local_triangle);
-            }
+        for edge_use in vertex_fan_edge_uses(
+            local_triangle,
+            vertex,
+            assembly.triangles[triangle_index].vertices,
+        ) {
+            edge_uses.entry(edge_use.other).or_default().push(edge_use);
         }
     }
     for uses in edge_uses.values() {
         if let [left, right] = uses.as_slice() {
-            fan.union(*left, *right);
+            // Two triangles are adjacent across a retained edge only when the
+            // edge is traversed in opposite directions. Same-direction uses
+            // are separate sheets that must be split before ExactMesh
+            // validation, otherwise they materialize as duplicate directed
+            // edges.
+            if left.forward_from_vertex != right.forward_from_vertex {
+                fan.union(left.local_triangle, right.local_triangle);
+            }
         }
     }
 
@@ -1376,6 +1708,39 @@ fn vertex_fan_components(
             .push(triangle_index);
     }
     components.into_values().collect()
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+struct VertexFanEdgeUse {
+    local_triangle: usize,
+    other: usize,
+    forward_from_vertex: bool,
+}
+
+fn vertex_fan_edge_uses(
+    local_triangle: usize,
+    vertex: usize,
+    triangle: [usize; 3],
+) -> Vec<VertexFanEdgeUse> {
+    let mut uses = Vec::with_capacity(2);
+    for index in 0..3 {
+        let from = triangle[index];
+        let to = triangle[(index + 1) % 3];
+        if from == vertex {
+            uses.push(VertexFanEdgeUse {
+                local_triangle,
+                other: to,
+                forward_from_vertex: true,
+            });
+        } else if to == vertex {
+            uses.push(VertexFanEdgeUse {
+                local_triangle,
+                other: from,
+                forward_from_vertex: false,
+            });
+        }
+    }
+    uses
 }
 
 fn replace_triangle_vertex(triangle: &mut ExactOutputTriangle, old: usize, new: usize) {

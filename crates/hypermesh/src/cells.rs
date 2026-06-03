@@ -225,31 +225,56 @@ fn triangulate_one_face_cell_graph(
     // above is exact graph/source evidence. Any appended exact Steiner points
     // become usable topology only after we retain an exact 3D witness and
     // replay its source-face incidence.
-    let cdt = hypertri::cdt::constrained_delaunay(&vertices, &constraints)?;
-    if cdt.points().len() < vertices.len() {
-        return Err(hypertri::Error::InvalidInput {
-            reason: "face-cell CDT dropped an input vertex",
-        });
-    }
-    if cdt.points().len() > vertices.len() {
-        for point in &cdt.points()[vertices.len()..] {
-            let lifted = lift_projected_face_cell_point(mesh, face, projection, point)?;
-            boundary.push(FaceSplitBoundaryNode::FaceInterior { point: lifted });
-        }
-        vertices = cdt.points().to_vec();
-    }
-    if boundary.len() != vertices.len() {
-        return Err(hypertri::Error::InvalidInput {
-            reason: "face-cell CDT point and source witness counts differ",
-        });
-    }
-    let planarized_interior_constraints =
-        planarized_interior_constraints(cdt.constraint_edges(), &vertices, &interior_constraints)?;
-    let mut triangles = cdt
-        .triangles()
-        .iter()
-        .flat_map(|triangle| triangle.iter().copied())
-        .collect::<Vec<_>>();
+    let (mut triangles, planarized_interior_constraints) =
+        match hypertri::cdt::constrained_delaunay(&vertices, &constraints) {
+            Ok(cdt) => {
+                if cdt.points().len() < vertices.len() {
+                    return Err(hypertri::Error::InvalidInput {
+                        reason: "face-cell CDT dropped an input vertex",
+                    });
+                }
+                if cdt.points().len() > vertices.len() {
+                    for point in &cdt.points()[vertices.len()..] {
+                        let lifted = lift_projected_face_cell_point(mesh, face, projection, point)?;
+                        boundary.push(FaceSplitBoundaryNode::FaceInterior { point: lifted });
+                    }
+                    vertices = cdt.points().to_vec();
+                }
+                if boundary.len() != vertices.len() {
+                    return Err(hypertri::Error::InvalidInput {
+                        reason: "face-cell CDT point and source witness counts differ",
+                    });
+                }
+                let planarized = planarized_interior_constraints(
+                    cdt.constraint_edges(),
+                    &vertices,
+                    &interior_constraints,
+                )?;
+                let triangles = cdt
+                    .triangles()
+                    .iter()
+                    .flat_map(|triangle| triangle.iter().copied())
+                    .collect::<Vec<_>>();
+                (triangles, planarized)
+            }
+            Err(error) => {
+                if let Some(triangles) = triangulate_source_triangle_with_closed_constraint_loops(
+                    &vertices,
+                    &interior_constraints,
+                )? {
+                    (triangles, Vec::new())
+                } else if let Some(triangles) =
+                    triangulate_source_triangle_with_collinear_constraint_refinement(
+                        &vertices,
+                        &constraints,
+                    )?
+                {
+                    (triangles, interior_constraints.clone())
+                } else {
+                    return Err(error);
+                }
+            }
+        };
     append_closed_constraint_loop_triangles(
         &vertices,
         &planarized_interior_constraints,
@@ -786,6 +811,273 @@ fn exact_points_equal(
     let x = compare_ordering(&left.x, &right.x, "face-cell projected x equality")?;
     let y = compare_ordering(&left.y, &right.y, "face-cell projected y equality")?;
     Ok(x == Ordering::Equal && y == Ordering::Equal)
+}
+
+fn triangulate_source_triangle_with_closed_constraint_loops(
+    vertices: &[hypertri::ExactPoint],
+    interior_constraints: &[Constraint],
+) -> hypertri::Result<Option<Vec<usize>>> {
+    if interior_constraints.is_empty() {
+        return Ok(None);
+    }
+    let mut adjacency = vec![Vec::<usize>::new(); vertices.len()];
+    for constraint in interior_constraints {
+        adjacency[constraint.from].push(constraint.to);
+        adjacency[constraint.to].push(constraint.from);
+    }
+
+    let mut seen = vec![false; vertices.len()];
+    let mut loops = Vec::<Vec<usize>>::new();
+    for start in 0..vertices.len() {
+        if adjacency[start].is_empty() || seen[start] {
+            continue;
+        }
+        let mut stack = vec![start];
+        let mut component = Vec::new();
+        seen[start] = true;
+        while let Some(vertex) = stack.pop() {
+            component.push(vertex);
+            for &next in &adjacency[vertex] {
+                if !seen[next] {
+                    seen[next] = true;
+                    stack.push(next);
+                }
+            }
+        }
+        if component.len() < 3 || component.iter().any(|&vertex| adjacency[vertex].len() != 2) {
+            return Ok(None);
+        }
+        loops.push(order_simple_cycle(&adjacency, component[0])?);
+    }
+    if loops.is_empty() {
+        return Ok(None);
+    }
+
+    let mut projected = vec![
+        vertices[0].clone(),
+        vertices[1].clone(),
+        vertices[2].clone(),
+    ];
+    let mut local_to_global = vec![0, 1, 2];
+    let mut hole_indices = Vec::with_capacity(loops.len());
+    for loop_vertices in &loops {
+        hole_indices.push(projected.len());
+        for &vertex in loop_vertices {
+            projected.push(vertices[vertex].clone());
+            local_to_global.push(vertex);
+        }
+    }
+
+    let mut triangles = hypertri::earcut(&projected, &hole_indices)?
+        .chunks_exact(3)
+        .flat_map(|triangle| {
+            [
+                local_to_global[triangle[0]],
+                local_to_global[triangle[1]],
+                local_to_global[triangle[2]],
+            ]
+        })
+        .collect::<Vec<_>>();
+
+    for loop_vertices in &loops {
+        let loop_points = loop_vertices
+            .iter()
+            .map(|&vertex| vertices[vertex].clone())
+            .collect::<Vec<_>>();
+        let loop_triangles = hypertri::earcut(&loop_points, &[])?;
+        for triangle in loop_triangles.chunks_exact(3) {
+            triangles.extend([
+                loop_vertices[triangle[0]],
+                loop_vertices[triangle[1]],
+                loop_vertices[triangle[2]],
+            ]);
+        }
+    }
+
+    refine_missing_constraint_edges(vertices, &mut triangles, interior_constraints)?;
+    let all_constraints_present = interior_constraints
+        .iter()
+        .all(|constraint| triangles_have_edge(&triangles, constraint.from, constraint.to));
+    Ok(all_constraints_present.then_some(triangles))
+}
+
+fn triangulate_source_triangle_with_collinear_constraint_refinement(
+    vertices: &[hypertri::ExactPoint],
+    constraints: &[Constraint],
+) -> hypertri::Result<Option<Vec<usize>>> {
+    if vertices.len() < 3 {
+        return Ok(None);
+    }
+    let mut triangles = vec![0, 1, 2];
+    let max_passes = constraints.len().saturating_mul(vertices.len()).max(1);
+    refine_missing_constraint_edges_with_pass_limit(
+        vertices,
+        &mut triangles,
+        constraints,
+        max_passes,
+    )?;
+    if constraints
+        .iter()
+        .all(|constraint| triangles_have_edge(&triangles, constraint.from, constraint.to))
+    {
+        Ok(Some(triangles))
+    } else {
+        Ok(None)
+    }
+}
+
+fn refine_missing_constraint_edges(
+    vertices: &[hypertri::ExactPoint],
+    triangles: &mut Vec<usize>,
+    constraints: &[Constraint],
+) -> hypertri::Result<()> {
+    let max_passes = constraints.len().saturating_mul(vertices.len()).max(1);
+    refine_missing_constraint_edges_with_pass_limit(vertices, triangles, constraints, max_passes)
+}
+
+fn refine_missing_constraint_edges_with_pass_limit(
+    vertices: &[hypertri::ExactPoint],
+    triangles: &mut Vec<usize>,
+    constraints: &[Constraint],
+    max_passes: usize,
+) -> hypertri::Result<()> {
+    for _ in 0..max_passes {
+        let Some(missing) = constraints
+            .iter()
+            .find(|constraint| !triangles_have_edge(triangles, constraint.from, constraint.to))
+        else {
+            return Ok(());
+        };
+        if !split_collinear_triangle_edge(vertices, triangles, missing.from, missing.to)? {
+            return Ok(());
+        }
+    }
+    Ok(())
+}
+
+fn triangles_have_edge(triangles: &[usize], from: usize, to: usize) -> bool {
+    triangles.chunks_exact(3).any(|triangle| {
+        (0..3).any(|edge| {
+            let a = triangle[edge];
+            let b = triangle[(edge + 1) % 3];
+            (a == from && b == to) || (a == to && b == from)
+        })
+    })
+}
+
+fn split_collinear_triangle_edge(
+    vertices: &[hypertri::ExactPoint],
+    triangles: &mut Vec<usize>,
+    from: usize,
+    to: usize,
+) -> hypertri::Result<bool> {
+    let mut triangle_index = 0;
+    while triangle_index + 2 < triangles.len() {
+        let triangle = [
+            triangles[triangle_index],
+            triangles[triangle_index + 1],
+            triangles[triangle_index + 2],
+        ];
+        for edge in 0..3 {
+            let a = triangle[edge];
+            let b = triangle[(edge + 1) % 3];
+            let opposite = triangle[(edge + 2) % 3];
+            for mid in [from, to] {
+                if point_lies_strictly_between(vertices, mid, a, b)?
+                    && split_triangle_edge(
+                        vertices,
+                        triangles,
+                        triangle_index,
+                        a,
+                        mid,
+                        b,
+                        opposite,
+                    )?
+                {
+                    return Ok(true);
+                }
+            }
+        }
+        triangle_index += 3;
+    }
+    Ok(false)
+}
+
+fn split_triangle_edge(
+    vertices: &[hypertri::ExactPoint],
+    triangles: &mut Vec<usize>,
+    triangle_index: usize,
+    a: usize,
+    mid: usize,
+    b: usize,
+    opposite: usize,
+) -> hypertri::Result<bool> {
+    let first = [a, mid, opposite];
+    let second = [mid, b, opposite];
+    if !triangle_is_non_degenerate(vertices, first)?
+        || !triangle_is_non_degenerate(vertices, second)?
+    {
+        return Ok(false);
+    }
+    triangles.splice(
+        triangle_index..triangle_index + 3,
+        first.into_iter().chain(second),
+    );
+    Ok(true)
+}
+
+fn triangle_is_non_degenerate(
+    vertices: &[hypertri::ExactPoint],
+    triangle: [usize; 3],
+) -> hypertri::Result<bool> {
+    Ok(compare_ordering(
+        &triangle_area2_signed(vertices, triangle)?,
+        &Real::from(0),
+        "face-cell refined triangle area",
+    )? != Ordering::Equal)
+}
+
+fn triangle_area2_signed(
+    vertices: &[hypertri::ExactPoint],
+    triangle: [usize; 3],
+) -> hypertri::Result<Real> {
+    let [a, b, c] = triangle;
+    let a = vertices.get(a).ok_or(hypertri::Error::InvalidInput {
+        reason: "face-cell refined triangle references missing vertex",
+    })?;
+    let b = vertices.get(b).ok_or(hypertri::Error::InvalidInput {
+        reason: "face-cell refined triangle references missing vertex",
+    })?;
+    let c = vertices.get(c).ok_or(hypertri::Error::InvalidInput {
+        reason: "face-cell refined triangle references missing vertex",
+    })?;
+    Ok(((a.x.clone() * &b.y) - &(a.y.clone() * &b.x))
+        + &((b.x.clone() * &c.y) - &(b.y.clone() * &c.x))
+        + &((c.x.clone() * &a.y) - &(c.y.clone() * &a.x)))
+}
+
+fn point_lies_strictly_between(
+    vertices: &[hypertri::ExactPoint],
+    point: usize,
+    start: usize,
+    end: usize,
+) -> hypertri::Result<bool> {
+    if point == start || point == end {
+        return Ok(false);
+    }
+    let point_ref = vertices.get(point).ok_or(hypertri::Error::InvalidInput {
+        reason: "face-cell refined split point is out of range",
+    })?;
+    let start_ref = vertices.get(start).ok_or(hypertri::Error::InvalidInput {
+        reason: "face-cell refined edge start is out of range",
+    })?;
+    let end_ref = vertices.get(end).ok_or(hypertri::Error::InvalidInput {
+        reason: "face-cell refined edge end is out of range",
+    })?;
+    if exact_points_equal(point_ref, start_ref)? || exact_points_equal(point_ref, end_ref)? {
+        return Ok(false);
+    }
+    Ok(point_on_closed_segment(point_ref, start_ref, end_ref)?)
 }
 
 fn compare_ordering(

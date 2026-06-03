@@ -3,7 +3,7 @@
 use std::cmp::Ordering;
 
 use hyperlimit::{Point3, compare_reals};
-use hypermesh::exact::surface::{
+use hypermesh::surface::{
     arrange_coplanar_convex_surface_component_holed_difference,
     arrange_coplanar_convex_surface_component_union, arrange_coplanar_convex_surface_difference,
     arrange_coplanar_convex_surface_holed_difference,
@@ -24,7 +24,7 @@ use hypermesh::exact::surface::{
     arrange_single_triangle_coplanar_union, difference_single_triangle_coplanar_surfaces,
     intersect_single_triangle_coplanar_surfaces, union_single_triangle_coplanar_surfaces,
 };
-use hypermesh::exact::{
+use hypermesh::{
     ExactArrangement, ExactBooleanOperation, ExactBooleanResultKind, ExactBooleanShortcutKind,
     ExactBooleanSupport, ExactMesh, ExactRegularizationPolicy, ValidationPolicy, boolean_exact,
     exact_arrangement_boolean_attempt_report, preflight_boolean_exact,
@@ -128,19 +128,9 @@ fn operation_from_byte(byte: u8) -> ExactBooleanOperation {
 }
 
 fn exercise_case(left: &ExactMesh, right: &ExactMesh, operation: ExactBooleanOperation) {
-    exercise_boolmesh_workspace(left, right, operation);
     exercise_preflight_public_consistency(left, right, operation);
     exercise_arrangement_public_consistency(left, right, operation);
     exercise_surface_fallback_parity(left, right, operation);
-}
-
-fn exercise_boolmesh_workspace(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-) {
-    let workspace = hypermesh::exact::boolmesh::exact_boolmesh_workspace(left, right, operation);
-    let _ = workspace.validate_against_sources(left, right);
 }
 
 fn exercise_preflight_public_consistency(
@@ -164,12 +154,6 @@ fn exercise_preflight_public_consistency(
             result.kind,
             ExactBooleanResultKind::CertifiedShortcut {
                 shortcut: ExactBooleanShortcutKind::ArrangementCellComplex,
-            }
-        ),
-        ExactBooleanSupport::CertifiedBoolMeshSplit => assert_eq!(
-            result.kind,
-            ExactBooleanResultKind::CertifiedShortcut {
-                shortcut: ExactBooleanShortcutKind::BoolMeshSplit,
             }
         ),
         _ => {}
@@ -205,14 +189,6 @@ fn exercise_arrangement_public_consistency(
             assert_eq!(result.mesh.vertices().len(), attempt.output_vertices);
             assert_eq!(result.mesh.triangles().len(), attempt.output_triangles);
             check_direct_arrangement_triangulation(left, right, operation, &result.mesh);
-        }
-        ExactBooleanShortcutKind::BoolMeshSplit => {
-            assert_eq!(
-                result.kind,
-                ExactBooleanResultKind::CertifiedShortcut { shortcut }
-            );
-            assert_eq!(result.mesh.vertices().len(), attempt.output_vertices);
-            assert_eq!(result.mesh.triangles().len(), attempt.output_triangles);
         }
         _ => {}
     }

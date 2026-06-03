@@ -2,7 +2,7 @@
 
 use std::collections::BTreeSet;
 
-use hypermesh::exact::{ExactMesh, ValidationPolicy, polygon_patch_candidate_face_sets_for_internal_fuzz, polygon_patch_pairs_for_internal_fuzz};
+use hypermesh::{ExactMesh, ValidationPolicy, polygon_patch_candidate_face_sets_for_internal_fuzz, polygon_patch_pairs_for_internal_fuzz};
 
 
 

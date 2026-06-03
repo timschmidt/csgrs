@@ -151,7 +151,7 @@ pub struct MeshValidationFacts {
 
 /// Error returned when retained mesh validation facts contradict themselves.
 ///
-/// This audits the structural certificates that travel with an [`ExactMesh`](crate::exact::ExactMesh).
+/// This audits the structural certificates that travel with an [`ExactMesh`](crate::ExactMesh).
 /// It does not re-run geometric predicates; instead it checks that the retained
 /// topology-affecting predicate decisions remain separately certified.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]

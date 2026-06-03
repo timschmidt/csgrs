@@ -70,7 +70,7 @@ pub struct CoplanarOrthogonalSurfaceComponent {
 /// an exact axis-aligned cell replay proves the topology. Components that meet
 /// only at exact grid vertices are retained as separate components with
 /// duplicated coordinates, which is the cell-complex analogue of the bounded
-/// point-touch branch artifact in [`crate::exact::surface`]. Components nested
+/// point-touch branch artifact in [`crate::surface`]. Components nested
 /// inside retained holes are also accepted when the island is strictly inside
 /// the hole or touches the hole boundary only at exact grid vertices. That
 /// covers rectilinear island outputs without requiring a general

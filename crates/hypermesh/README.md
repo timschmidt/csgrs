@@ -131,7 +131,7 @@ hypermesh = "0.3.0"
 The exact-facing path is always available and is the preferred boundary for new code:
 
 ```rust,ignore
-use hypermesh::exact::{ExactMesh, ValidationPolicy};
+use hypermesh::{ExactMesh, ValidationPolicy};
 
 let input = ExactMesh::inspect_i64_triangles(&[
     0, 0, 0,
@@ -164,7 +164,7 @@ Named booleans first try the exact arrangement/cell-complex path before falling 
 older certified shortcuts:
 
 ```rust,ignore
-use hypermesh::exact::{
+use hypermesh::{
     ExactArrangement, ExactBooleanOperation, ExactRegularizationPolicy,
     ValidationPolicy, boolean_exact, exact_arrangement_boolean_attempt_report,
 };

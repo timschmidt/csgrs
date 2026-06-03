@@ -2,34 +2,25 @@
 
 use std::cmp::Ordering;
 
-use hyperlimit::{PlaneSide, Point3, compare_reals};
-use hypermesh::exact::proposal::certify_exact_mesh_proposal;
-use hypermesh::exact::{CoplanarTriangleRelation, ExactBooleanOperation, ExactBooleanPolicy, ExactBooleanSupport, ExactBoundaryBooleanPolicy, ExactMesh, SourceProvenance, SegmentPlaneRelation, Triangle, ValidationPolicy, boolean_exact_with_boundary_policy, boolean_selected_regions, build_intersection_graph, certify_boundary_touching_report, certify_convex_solid, certify_open_surface_disjoint_report, certify_planar_arrangement_report, certify_refinement_report, certify_same_surface_report, certify_winding_readiness_report, classify_coplanar_triangles, classify_mesh_face_pair, classify_mesh_face_pairs, classify_mesh_vertices_against_convex_solid, classify_mesh_vertices_against_convex_solid_report, classify_point_against_convex_solid_report, classify_triangle_against_face_plane, classify_triangle_triangle, intersect_closed_convex_solids, preflight_boolean_exact, subtract_closed_convex_solids_single_cap};
-use hypermesh::exact::graph::{FaceSplitBoundaryNode};
+use hyperlimit::{Point3, compare_reals};
+use hypermesh::proposal::certify_exact_mesh_proposal;
+use hypermesh::{CoplanarTriangleRelation, ExactBooleanOperation, ExactBooleanPolicy, ExactBooleanSupport, ExactBoundaryBooleanPolicy, ExactMesh, SourceProvenance, Triangle, ValidationPolicy, boolean_exact_with_boundary_policy, boolean_selected_regions, build_intersection_graph, certify_boundary_touching_report, certify_convex_solid, certify_open_surface_disjoint_report, certify_planar_arrangement_report, certify_refinement_report, certify_same_surface_report, certify_winding_readiness_report, classify_coplanar_triangles, classify_mesh_face_pair, classify_mesh_face_pairs, classify_mesh_vertices_against_convex_solid, classify_mesh_vertices_against_convex_solid_report, classify_point_against_convex_solid_report, classify_triangle_against_face_plane, classify_triangle_triangle, intersect_closed_convex_solids, preflight_boolean_exact, subtract_closed_convex_solids_single_cap};
+use hypermesh::graph::{FaceSplitBoundaryNode};
 
-use hypermesh::exact::region::{ExactRegionSelection, FaceRegionPlaneRelation, build_selected_region_mesh};
-use hypermesh::exact::surface::{CoplanarArrangementOperation, CoplanarSurfaceContainment, CoplanarSurfaceContainmentStatus, arrange_coplanar_convex_surface_component_holed_difference, arrange_coplanar_convex_surface_component_union, arrange_coplanar_convex_surface_difference, arrange_coplanar_convex_surface_holed_difference, arrange_coplanar_convex_surface_intersection, arrange_coplanar_convex_surface_multi_difference, arrange_coplanar_convex_surface_multi_holed_difference, arrange_coplanar_convex_surface_multi_intersection, arrange_coplanar_convex_surface_multi_union, arrange_coplanar_convex_surface_union, arrange_coplanar_surface_component_difference, arrange_coplanar_surface_component_holed_difference, arrange_coplanar_surface_component_holed_intersection, arrange_coplanar_surface_component_holed_union, arrange_coplanar_surface_component_intersection, arrange_coplanar_surface_component_union, arrange_coplanar_surface_cutter_hole_contact_difference, arrange_coplanar_surface_multi_component_intersection, arrange_coplanar_surface_multi_component_union, arrange_coplanar_surface_multi_difference, arrange_coplanar_surface_point_touch_difference, arrange_coplanar_surface_point_touch_union, arrange_coplanar_surface_side_cutter_difference, arrange_single_triangle_coplanar_difference, arrange_single_triangle_coplanar_holed_difference, arrange_single_triangle_coplanar_union, certify_coplanar_convex_surface_containment, certify_coplanar_convex_surface_equivalence, certify_coplanar_convex_surface_report, certify_coplanar_surface_boundary_touch, certify_coplanar_surface_mesh_containment, certify_single_triangle_coplanar_containment, certify_single_triangle_coplanar_containment_report, difference_single_triangle_coplanar_surfaces, intersect_single_triangle_coplanar_surfaces, union_single_triangle_coplanar_surfaces};
+use hypermesh::region::{ExactRegionSelection, FaceRegionPlaneRelation, build_selected_region_mesh};
+use hypermesh::surface::{CoplanarArrangementOperation, CoplanarSurfaceContainment, CoplanarSurfaceContainmentStatus, arrange_coplanar_convex_surface_component_holed_difference, arrange_coplanar_convex_surface_component_union, arrange_coplanar_convex_surface_difference, arrange_coplanar_convex_surface_holed_difference, arrange_coplanar_convex_surface_intersection, arrange_coplanar_convex_surface_multi_difference, arrange_coplanar_convex_surface_multi_holed_difference, arrange_coplanar_convex_surface_multi_intersection, arrange_coplanar_convex_surface_multi_union, arrange_coplanar_convex_surface_union, arrange_coplanar_surface_component_difference, arrange_coplanar_surface_component_holed_difference, arrange_coplanar_surface_component_holed_intersection, arrange_coplanar_surface_component_holed_union, arrange_coplanar_surface_component_intersection, arrange_coplanar_surface_component_union, arrange_coplanar_surface_cutter_hole_contact_difference, arrange_coplanar_surface_multi_component_intersection, arrange_coplanar_surface_multi_component_union, arrange_coplanar_surface_multi_difference, arrange_coplanar_surface_point_touch_difference, arrange_coplanar_surface_point_touch_union, arrange_coplanar_surface_side_cutter_difference, arrange_single_triangle_coplanar_difference, arrange_single_triangle_coplanar_holed_difference, arrange_single_triangle_coplanar_union, certify_coplanar_convex_surface_containment, certify_coplanar_convex_surface_equivalence, certify_coplanar_convex_surface_report, certify_coplanar_surface_boundary_touch, certify_coplanar_surface_mesh_containment, certify_single_triangle_coplanar_containment, certify_single_triangle_coplanar_containment_report, difference_single_triangle_coplanar_surfaces, intersect_single_triangle_coplanar_surfaces, union_single_triangle_coplanar_surfaces};
 
-use hypermesh::exact::affine_surface::{CoplanarAffineSurfaceArrangement, CoplanarAffineSurfaceBasis, arrange_coplanar_affine_surface_difference, arrange_coplanar_affine_surface_intersection, arrange_coplanar_affine_surface_union};
-use hypermesh::exact::orthogonal_surface::{CoplanarOrthogonalSurfaceArrangement, CoplanarOrthogonalSurfaceComponent, CoplanarOrthogonalSurfaceOperation, arrange_coplanar_orthogonal_surface_difference, arrange_coplanar_orthogonal_surface_intersection, arrange_coplanar_orthogonal_surface_union};
-use hypermesh::exact::planar::{certify_planar_arrangement_evidence};
-use hypermesh::exact::volumetric_cells::{certify_coplanar_volumetric_cell_evidence};
+use hypermesh::affine_surface::{CoplanarAffineSurfaceArrangement, CoplanarAffineSurfaceBasis, arrange_coplanar_affine_surface_difference, arrange_coplanar_affine_surface_intersection, arrange_coplanar_affine_surface_union};
+use hypermesh::orthogonal_surface::{CoplanarOrthogonalSurfaceArrangement, CoplanarOrthogonalSurfaceComponent, CoplanarOrthogonalSurfaceOperation, arrange_coplanar_orthogonal_surface_difference, arrange_coplanar_orthogonal_surface_intersection, arrange_coplanar_orthogonal_surface_union};
+use hypermesh::planar::{certify_planar_arrangement_evidence};
+use hypermesh::volumetric_cells::{certify_coplanar_volumetric_cell_evidence};
 
 use hyperreal::Real;
-use hypermesh::exact::{CoplanarProjection};
+use hypermesh::{CoplanarProjection};
 
-use hypermesh::exact::region::{ExactBooleanAssemblyPlan, FaceRegionTriangulation};
+use hypermesh::region::{ExactBooleanAssemblyPlan, FaceRegionTriangulation};
 
 
-use hypermesh::exact::boolmesh::exact_boolmesh_kernel11_shadow_probe_for_internal_fuzz;
-use hypermesh::exact::boolmesh::exact_boolmesh_kernel02_shadow_probe_for_internal_fuzz;
-use hypermesh::exact::boolmesh::exact_boolmesh_kernel12_shadow_accumulator_probe_for_internal_fuzz;
-use hypermesh::exact::boolmesh::exact_boolmesh_kernel_frame_probe_for_internal_fuzz;
-use hypermesh::exact::boolmesh::exact_boolmesh_kernel12_accumulator_replay_probe_for_internal_fuzz;
-use hypermesh::exact::boolmesh::exact_boolmesh_kernel12_intersect_loop_probe_for_internal_fuzz;
-use hypermesh::exact::boolmesh::exact_boolmesh_kernel03_winding_probe_for_internal_fuzz;
-use hypermesh::exact::boolmesh::exact_boolmesh_boolean45_triangulation_probe_for_internal_fuzz;
-use hypermesh::exact::boolmesh::exact_boolmesh_cleanup_probe_for_internal_fuzz;
 use libfuzzer_sys::fuzz_target;
 
 fuzz_target!(|data: &[u8]| {
@@ -159,153 +150,13 @@ fuzz_target!(|data: &[u8]| {
     }
     let _ = right.provenance().validate();
 
-    for operation in [
-        ExactBooleanOperation::Union,
-        ExactBooleanOperation::Intersection,
-        ExactBooleanOperation::Difference,
-    ] {
-        let workspace = hypermesh::exact::boolmesh::exact_boolmesh_workspace(&left, &right, operation);
-        let _ = workspace.validate_against_sources(&left, &right);
-        let mut corrupted = workspace.clone();
-        corrupted.boolean03.w30.push(0);
-        assert!(corrupted.validate_against_sources(&left, &right).is_err());
-        if !workspace.kernel12_events.is_empty() {
-            let mut corrupted_event = workspace.clone();
-            corrupted_event.kernel12_events[0].edge_face.edge[0] = left.vertices().len();
-            assert!(
-                corrupted_event
-                    .validate_against_sources(&left, &right)
-                    .is_err()
-            );
-        }
-        if !workspace.boolean03.p1q2.is_empty() || !workspace.boolean03.p2q1.is_empty() {
-            let mut corrupted_lowering = workspace.clone();
-            corrupted_lowering.boolean03.x12.push(1);
-            assert!(
-                corrupted_lowering
-                    .validate_against_sources(&left, &right)
-                    .is_err()
-            );
-            let mut corrupted_pairing = workspace.clone();
-            corrupted_pairing.pair_up.source_edge_runs[0].unpaired_events += 1;
-            assert!(
-                corrupted_pairing
-                    .validate_against_sources(&left, &right)
-                    .is_err()
-            );
-        }
-        if let Some(boolean45) = workspace.boolean45.as_ref() {
-            assert_eq!(
-                boolean45.output_triangles.invalid_local_triangles,
-                0,
-                "valid boolmesh loop triangulations should materialize clean output triangles"
-            );
-            assert_eq!(
-                boolean45.output_triangles.triangles.len(),
-                boolean45
-                    .loop_triangulation
-                    .triangulations
-                    .iter()
-                    .map(|triangulation| triangulation.triangles.len() / 3)
-                    .sum::<usize>()
-            );
-            assert_eq!(
-                boolean45.mesh_export.vertex_count,
-                boolean45.vertex_allocation.output_vertex_origins.len()
-            );
-            assert_eq!(
-                boolean45.mesh_export.triangles.len(),
-                boolean45.output_triangles.triangles.len()
-            );
-            assert_eq!(
-                boolean45.mesh_export.blocked_output_triangles,
-                boolean45.output_triangles.missing_loop_triangulations
-                    + boolean45.output_triangles.invalid_local_triangles
-            );
-            assert!(
-                boolean45.mesh_export.orientation_failures
-                    <= boolean45.output_triangles.triangles.len()
-            );
-            if !boolean45.output_triangles.triangles.is_empty() {
-                let mut corrupted_output = workspace.clone();
-                corrupted_output
-                    .boolean45
-                    .as_mut()
-                    .unwrap()
-                    .output_triangles
-                    .triangles[0]
-                    .vertices[0] = usize::MAX;
-                assert!(
-                    corrupted_output
-                        .validate_against_sources(&left, &right)
-                        .is_err()
-                );
-            }
-            if !boolean45.loop_triangulation.triangulations.is_empty() {
-                let mut corrupted_component = workspace.clone();
-                corrupted_component
-                    .boolean45
-                    .as_mut()
-                    .unwrap()
-                    .loop_triangulation
-                    .triangulations[0]
-                    .component_loop_indices
-                    .push(usize::MAX);
-                assert!(
-                    corrupted_component
-                        .validate_against_sources(&left, &right)
-                        .is_err()
-                );
-                let mut corrupted_constraint = workspace.clone();
-                corrupted_constraint
-                    .boolean45
-                    .as_mut()
-                    .unwrap()
-                    .loop_triangulation
-                    .triangulations[0]
-                    .constraint_edges
-                    .push([0, usize::MAX]);
-                assert!(
-                    corrupted_constraint
-                        .validate_against_sources(&left, &right)
-                        .is_err()
-                );
-            }
-            if !boolean45.mesh_export.triangles.is_empty() {
-                let mut corrupted_export = workspace.clone();
-                corrupted_export
-                    .boolean45
-                    .as_mut()
-                    .unwrap()
-                    .mesh_export
-                    .triangles[0]
-                    .0[0] = usize::MAX;
-                assert!(
-                    corrupted_export
-                        .validate_against_sources(&left, &right)
-                        .is_err()
-                );
-            }
-        }
-        if workspace.is_certified_bounds_disjoint() {
-            let execution = hypermesh::exact::boolmesh::execute_exact_boolmesh_bounds_disjoint(
-                &left,
-                &right,
-                operation,
-                ValidationPolicy::ALLOW_BOUNDARY,
-            )
-            .expect("certified disjoint boolmesh slice should execute");
-            execution.validate_against_sources(&left, &right).unwrap();
-        }
-    }
-
     if left.facts().mesh.closed_manifold && !right.vertices().is_empty() {
         let point = right.vertices()[0].clone();
         let point_winding =
-            hypermesh::exact::classify_point_against_closed_mesh_winding_report(&point, &left);
+            hypermesh::classify_point_against_closed_mesh_winding_report(&point, &left);
         let _ = point_winding.validate_against_sources(&point, &left);
         let mesh_winding =
-            hypermesh::exact::classify_mesh_vertices_against_closed_mesh_winding_report(
+            hypermesh::classify_mesh_vertices_against_closed_mesh_winding_report(
                 &right, &left,
             );
         let _ = mesh_winding.validate_against_sources(&right, &left);
@@ -318,10 +169,10 @@ fuzz_target!(|data: &[u8]| {
     if right.facts().mesh.closed_manifold && !left.vertices().is_empty() {
         let point = left.vertices()[0].clone();
         let point_winding =
-            hypermesh::exact::classify_point_against_closed_mesh_winding_report(&point, &right);
+            hypermesh::classify_point_against_closed_mesh_winding_report(&point, &right);
         let _ = point_winding.validate_against_sources(&point, &right);
         let mesh_winding =
-            hypermesh::exact::classify_mesh_vertices_against_closed_mesh_winding_report(
+            hypermesh::classify_mesh_vertices_against_closed_mesh_winding_report(
                 &left, &right,
             );
         let _ = mesh_winding.validate_against_sources(&left, &right);
@@ -414,7 +265,7 @@ fuzz_target!(|data: &[u8]| {
             );
             if matches!(
                 result.kind,
-                hypermesh::exact::ExactBooleanResultKind::WindingMaterialized { .. }
+                hypermesh::ExactBooleanResultKind::WindingMaterialized { .. }
             ) {
                 let mut missing_volumetric = result.clone();
                 missing_volumetric.volumetric_classifications.clear();
@@ -446,8 +297,8 @@ fuzz_target!(|data: &[u8]| {
             let _ = blocker.validate_against_sources(&left, &right);
         }
         let mut blocked = report.clone();
-        blocked.blocker = Some(hypermesh::exact::ExactBooleanBlocker {
-            kind: hypermesh::exact::ExactBooleanBlockerKind::NeedsWinding,
+        blocked.blocker = Some(hypermesh::ExactBooleanBlocker {
+            kind: hypermesh::ExactBooleanBlockerKind::NeedsWinding,
             candidate_pairs: 1,
             coplanar_overlapping_pairs: 0,
             coplanar_touching_pairs: 0,
@@ -582,10 +433,10 @@ fuzz_target!(|data: &[u8]| {
         let _ = report.validate_against_sources(&left, &right);
         if matches!(
             report.status,
-            hypermesh::exact::ExactOpenSurfaceDisjointStatus::GraphUnknowns
+            hypermesh::ExactOpenSurfaceDisjointStatus::GraphUnknowns
         ) {
             let mut wrong_kind = report.clone();
-            wrong_kind.blocker.kind = hypermesh::exact::ExactBooleanBlockerKind::NeedsWinding;
+            wrong_kind.blocker.kind = hypermesh::ExactBooleanBlockerKind::NeedsWinding;
             assert!(wrong_kind.validate().is_err());
         } else {
             let mut unresolved = report.clone();
@@ -605,10 +456,10 @@ fuzz_target!(|data: &[u8]| {
         let _ = report.validate_against_sources(&right, &left);
         if matches!(
             report.status,
-            hypermesh::exact::ExactOpenSurfaceDisjointStatus::GraphUnknowns
+            hypermesh::ExactOpenSurfaceDisjointStatus::GraphUnknowns
         ) {
             let mut wrong_kind = report.clone();
-            wrong_kind.blocker.kind = hypermesh::exact::ExactBooleanBlockerKind::NeedsWinding;
+            wrong_kind.blocker.kind = hypermesh::ExactBooleanBlockerKind::NeedsWinding;
             assert!(wrong_kind.validate().is_err());
         } else {
             let mut unresolved = report.clone();
@@ -628,11 +479,11 @@ fuzz_target!(|data: &[u8]| {
         let _ = report.validate_against_sources(&left, &right);
         if matches!(
             report.status,
-            hypermesh::exact::ExactBoundaryTouchingStatus::GraphUnknowns
+            hypermesh::ExactBoundaryTouchingStatus::GraphUnknowns
         ) {
             let mut wrong_kind = report.clone();
             wrong_kind.blocker.kind =
-                hypermesh::exact::ExactBooleanBlockerKind::NeedsBoundaryPolicy;
+                hypermesh::ExactBooleanBlockerKind::NeedsBoundaryPolicy;
             assert!(wrong_kind.validate().is_err());
         } else {
             let mut unresolved = report.clone();
@@ -652,11 +503,11 @@ fuzz_target!(|data: &[u8]| {
         let _ = report.validate_against_sources(&right, &left);
         if matches!(
             report.status,
-            hypermesh::exact::ExactBoundaryTouchingStatus::GraphUnknowns
+            hypermesh::ExactBoundaryTouchingStatus::GraphUnknowns
         ) {
             let mut wrong_kind = report.clone();
             wrong_kind.blocker.kind =
-                hypermesh::exact::ExactBooleanBlockerKind::NeedsBoundaryPolicy;
+                hypermesh::ExactBooleanBlockerKind::NeedsBoundaryPolicy;
             assert!(wrong_kind.validate().is_err());
         } else {
             let mut unresolved = report.clone();
@@ -679,15 +530,15 @@ fuzz_target!(|data: &[u8]| {
             let _ = report.blocker.validate_against_sources(&left, &right);
             if matches!(
                 report.status,
-                hypermesh::exact::ExactPlanarArrangementStatus::GraphUnknowns
+                hypermesh::ExactPlanarArrangementStatus::GraphUnknowns
             ) {
                 let mut wrong_kind = report.clone();
                 wrong_kind.blocker.kind =
-                    hypermesh::exact::ExactBooleanBlockerKind::NeedsPlanarArrangement;
+                    hypermesh::ExactBooleanBlockerKind::NeedsPlanarArrangement;
                 assert!(wrong_kind.validate().is_err());
                 assert_ne!(
                     wrong_kind.freshness_against_sources(&left, &right),
-                    hypermesh::exact::ExactReportFreshness::Current
+                    hypermesh::ExactReportFreshness::Current
                 );
             } else {
                 let mut unresolved = report.clone();
@@ -695,7 +546,7 @@ fuzz_target!(|data: &[u8]| {
                 assert!(unresolved.validate().is_err());
                 assert_ne!(
                     unresolved.freshness_against_sources(&left, &right),
-                    hypermesh::exact::ExactReportFreshness::Current
+                    hypermesh::ExactReportFreshness::Current
                 );
             }
             if report.arrangement_readiness.is_some() {
@@ -707,7 +558,7 @@ fuzz_target!(|data: &[u8]| {
                 assert!(mismatched_readiness.validate().is_err());
                 assert_ne!(
                     mismatched_readiness.freshness_against_sources(&left, &right),
-                    hypermesh::exact::ExactReportFreshness::Current
+                    hypermesh::ExactReportFreshness::Current
                 );
             }
         },
@@ -717,12 +568,12 @@ fuzz_target!(|data: &[u8]| {
         let _ = report.validate_against_sources(&left, &right);
         let _ = report.freshness_against_sources(&left, &right);
         let mut stale_obstacle = report.clone();
-        stale_obstacle.obstacle = hypermesh::exact::planar::PlanarArrangementObstacle::NoCoplanarOverlap;
+        stale_obstacle.obstacle = hypermesh::planar::PlanarArrangementObstacle::NoCoplanarOverlap;
         if stale_obstacle != report {
             assert!(stale_obstacle.validate().is_err());
             assert_ne!(
                 stale_obstacle.freshness_against_sources(&left, &right),
-                hypermesh::exact::planar::ExactPlanarArrangementEvidenceFreshness::Current
+                hypermesh::planar::ExactPlanarArrangementEvidenceFreshness::Current
             );
         }
         let mut stale_branch_side = report.clone();
@@ -732,7 +583,7 @@ fuzz_target!(|data: &[u8]| {
             assert!(stale_branch_side.validate().is_err());
             assert_eq!(
                 stale_branch_side.freshness_against_sources(&left, &right),
-                hypermesh::exact::planar::ExactPlanarArrangementEvidenceFreshness::StaleBranchPoints
+                hypermesh::planar::ExactPlanarArrangementEvidenceFreshness::StaleBranchPoints
             );
         }
     });
@@ -745,7 +596,7 @@ fuzz_target!(|data: &[u8]| {
         assert!(stale_counts.validate().is_err());
         assert_ne!(
             stale_counts.freshness_against_sources(&left, &right),
-            hypermesh::exact::volumetric_cells::CoplanarVolumetricCellEvidenceFreshness::Current
+            hypermesh::volumetric_cells::CoplanarVolumetricCellEvidenceFreshness::Current
         );
         let mut stale_side_counts = report.clone();
         stale_side_counts.same_side_coplanar_overlapping_pairs =
@@ -754,7 +605,7 @@ fuzz_target!(|data: &[u8]| {
             assert!(stale_side_counts.validate().is_err());
             assert_eq!(
                 stale_side_counts.freshness_against_sources(&left, &right),
-                hypermesh::exact::volumetric_cells::CoplanarVolumetricCellEvidenceFreshness::StaleCoplanarEvidence
+                hypermesh::volumetric_cells::CoplanarVolumetricCellEvidenceFreshness::StaleCoplanarEvidence
             );
         }
     });
@@ -813,14 +664,14 @@ fuzz_target!(|data: &[u8]| {
             let _ = report.freshness_against_sources(&left, &right);
             if !matches!(
                 report.status,
-                hypermesh::exact::ExactWindingReadinessStatus::GraphUnknowns
+                hypermesh::ExactWindingReadinessStatus::GraphUnknowns
             ) {
                 let mut unresolved = report.clone();
                 unresolved.blocker.construction_failed_events += 1;
                 assert!(unresolved.validate().is_err());
                 assert_ne!(
                     unresolved.freshness_against_sources(&left, &right),
-                    hypermesh::exact::ExactReportFreshness::Current
+                    hypermesh::ExactReportFreshness::Current
                 );
             }
             if report.arrangement_readiness.is_some() {
@@ -832,7 +683,7 @@ fuzz_target!(|data: &[u8]| {
                 assert!(mismatched_readiness.validate().is_err());
                 assert_ne!(
                     mismatched_readiness.freshness_against_sources(&left, &right),
-                    hypermesh::exact::ExactReportFreshness::Current
+                    hypermesh::ExactReportFreshness::Current
                 );
             }
             let mut undecided_region = report;
@@ -842,7 +693,7 @@ fuzz_target!(|data: &[u8]| {
                 assert!(undecided_region.validate().is_err());
                 assert_ne!(
                     undecided_region.freshness_against_sources(&left, &right),
-                    hypermesh::exact::ExactReportFreshness::Current
+                    hypermesh::ExactReportFreshness::Current
                 );
             }
         },
@@ -1600,29 +1451,6 @@ fn exercise_deterministic_case(selector: u8) {
         42 => exercise_same_outer_holed_coplanar_component_difference(),
         43 => exercise_same_outer_holed_coplanar_filled_union(),
         44 => exercise_same_outer_holed_coplanar_retained_union(),
-        45 => exercise_exact_boolmesh_bounds_disjoint_port(),
-        46 => exercise_exact_boolmesh_kernel12_port(),
-        47 => exercise_exact_boolmesh_open_crossing_adjacency_port(),
-        48 => exercise_exact_boolmesh_kernel03_no_intersection_port(),
-        49 => exercise_exact_boolmesh_kernel12_endpoint_shadow_port(),
-        50 => exercise_exact_boolmesh_kernel12_boundary_endpoint_shadow_port(),
-        51 => exercise_exact_boolmesh_kernel11_shadow_port(),
-        52 => exercise_exact_boolmesh_kernel02_shadow_port(),
-        53 => exercise_exact_boolmesh_kernel12_shadow_accumulator_port(),
-        54 => exercise_exact_boolmesh_kernel_frame_port(),
-        55 => exercise_exact_boolmesh_kernel12_accumulator_replay_port(),
-        56 => exercise_exact_boolmesh_kernel12_intersect_loop_port(),
-        57 => exercise_exact_boolmesh_kernel12_intersect_halfedge_row_port(),
-        58 => exercise_exact_boolmesh_boolean45_halfedge_row_port(),
-        59 => exercise_exact_boolmesh_kernel12_intersect_boundary_endpoint_port(),
-        60 => exercise_exact_boolmesh_kernel12_coplanar_interval_port(),
-        61 => exercise_exact_boolmesh_kernel03_winding_port(),
-        62 => exercise_exact_boolmesh_cleanup_materialization_port(),
-        63 => exercise_exact_boolmesh_holed_triangulation_port(),
-        64 => exercise_exact_boolmesh_positive_area_coplanar_kernel12_port(),
-        65 => exercise_exact_boolmesh_boolean45_triangulation_port(),
-        66 => exercise_exact_boolmesh_source_edge_cleanup_port(),
-        67 => exercise_exact_boolmesh_boundary_closure_cleanup_port(),
         68 => exercise_same_outer_source_island_point_touch_replay(),
         _ => exercise_nonconvex_coplanar_volumetric_difference_fan_split(),
     }
@@ -1637,1019 +1465,28 @@ fn deterministic_case_is_integration_scale(case: u8) -> bool {
 }
 
 
-fn exercise_exact_boolmesh_bounds_disjoint_port() {
-    let left = ExactMesh::from_i64_triangles(
-        &[0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 2],
-        &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
-    )
-    .expect("deterministic boolmesh left fixture must import");
-    let right = ExactMesh::from_i64_triangles(
-        &[10, 0, 0, 12, 0, 0, 10, 2, 0, 10, 0, 2],
-        &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
-    )
-    .expect("deterministic boolmesh right fixture must import");
 
-    for operation in [
-        ExactBooleanOperation::Union,
-        ExactBooleanOperation::Intersection,
-        ExactBooleanOperation::Difference,
-    ] {
-        let workspace = hypermesh::exact::boolmesh::exact_boolmesh_workspace(&left, &right, operation);
-        workspace.validate_against_sources(&left, &right).unwrap();
-        assert!(workspace.is_certified_bounds_disjoint());
-        let size_output = workspace
-            .boolean45
-            .as_ref()
-            .expect("bounds-disjoint boolmesh workspace must size output");
-        assert_eq!(size_output.inserted_intersection_vertices, 0);
-        assert_eq!(size_output.source_edge_incident_gaps, 0);
-        assert!(size_output.face_halfedge_offsets.windows(2).all(|window| window[0] <= window[1]));
-        assert_eq!(
-            size_output.vertex_allocation.output_vertex_origins.len(),
-            size_output.vertices_from_left
-                + size_output.vertices_from_right
-                + size_output.inserted_intersection_vertices
-        );
-        assert!(size_output.new_edge_vertices.source_edge_runs.is_empty());
-        assert!(size_output.new_edge_vertices.face_pair_runs.is_empty());
-        assert!(size_output.partial_source_edges.source_edge_runs.is_empty());
-        assert!(size_output.new_face_pair_edges.face_pair_runs.is_empty());
-        match operation {
-            ExactBooleanOperation::Union => {
-                assert_eq!(size_output.whole_source_edges.source_edge_runs.len(), 12);
-                assert_eq!(
-                    size_output
-                        .whole_source_edges
-                        .source_edge_runs
-                        .iter()
-                        .map(|run| run.fragments.len())
-                        .sum::<usize>(),
-                    12
-                );
-                assert!(size_output.whole_source_edges.source_edge_runs.iter().all(
-                    |run| run.incident_faces.len() == 2
-                        && run.incident_edges.len() == 2
-                        && run.source_halfedge / 3 == run.incident_faces[0]
-                        && run.incident_edges[0] == run.edge
-                ));
-                assert_eq!(size_output.halfedge_assembly.emitted_pairs, 12);
-                assert_eq!(size_output.halfedge_assembly.unfilled_halfedges, 0);
-                assert_eq!(size_output.face_loop_assembly.loops.len(), 8);
-                assert_eq!(size_output.face_loop_assembly.incomplete_faces, 0);
-                assert_eq!(size_output.loop_triangulation.triangulations.len(), 8);
-                assert_eq!(size_output.loop_triangulation.triangulation_failures, 0);
-            }
-            ExactBooleanOperation::Intersection => {
-                assert!(size_output.whole_source_edges.source_edge_runs.is_empty());
-                assert_eq!(size_output.halfedge_assembly.emitted_pairs, 0);
-                assert_eq!(size_output.halfedge_assembly.unfilled_halfedges, 0);
-                assert!(size_output.face_loop_assembly.loops.is_empty());
-                assert!(size_output.loop_triangulation.triangulations.is_empty());
-            }
-            ExactBooleanOperation::Difference => {
-                assert_eq!(size_output.whole_source_edges.source_edge_runs.len(), 6);
-                assert!(size_output.whole_source_edges.source_edge_runs.iter().all(
-                    |run| run.side == hypermesh::exact::boolmesh::ExactBoolMeshSide::Left
-                        && run.source_halfedge / 3 == run.incident_faces[0]
-                        && run.incident_edges[0] == run.edge
-                        && run.fragments.len() == 1
-                ));
-                assert_eq!(size_output.halfedge_assembly.emitted_pairs, 6);
-                assert_eq!(size_output.halfedge_assembly.unfilled_halfedges, 0);
-                assert_eq!(size_output.face_loop_assembly.loops.len(), 4);
-                assert_eq!(size_output.face_loop_assembly.incomplete_faces, 0);
-                assert_eq!(size_output.loop_triangulation.triangulations.len(), 4);
-            }
-            ExactBooleanOperation::SelectedRegions(_) => unreachable!(),
-        }
-        assert_eq!(
-            size_output.halfedge_assembly.output_halfedges.len(),
-            size_output.face_halfedge_offsets.last().copied().unwrap()
-        );
-        assert_eq!(size_output.halfedge_assembly.face_overflows, 0);
-        assert_eq!(size_output.halfedge_assembly.missing_source_face_maps, 0);
-        assert_eq!(
-            size_output
-                .halfedge_assembly
-                .emitted_boundary_halfedges,
-            0
-        );
-        assert_eq!(size_output.face_loop_assembly.repeated_halfedges, 0);
-        let mut malformed_boundary_count = workspace.clone();
-        malformed_boundary_count
-            .boolean45
-            .as_mut()
-            .unwrap()
-            .halfedge_assembly
-            .emitted_boundary_halfedges += 1;
-        assert!(malformed_boundary_count
-            .validate_against_sources(&left, &right)
-            .is_err());
-        if operation == ExactBooleanOperation::Union {
-            let mut malformed = workspace.clone();
-            malformed
-                .boolean45
-                .as_mut()
-                .unwrap()
-                .whole_source_edges
-                .source_edge_runs[0]
-                .fragments[0]
-                .output_head = usize::MAX;
-            assert!(malformed.validate_against_sources(&left, &right).is_err());
-            let mut malformed_edge_use = workspace.clone();
-            malformed_edge_use
-                .boolean45
-                .as_mut()
-                .unwrap()
-                .whole_source_edges
-                .source_edge_runs[0]
-                .incident_edges[0] = [usize::MAX, 0];
-            assert!(malformed_edge_use
-                .validate_against_sources(&left, &right)
-                .is_err());
-            let mut malformed_halfedges = workspace.clone();
-            malformed_halfedges
-                .boolean45
-                .as_mut()
-                .unwrap()
-                .halfedge_assembly
-                .output_halfedges[0]
-                .as_mut()
-                .unwrap()
-                .pair = usize::MAX;
-            assert!(malformed_halfedges
-                .validate_against_sources(&left, &right)
-                .is_err());
-            let mut malformed_loops = workspace.clone();
-            malformed_loops
-                .boolean45
-                .as_mut()
-                .unwrap()
-                .face_loop_assembly
-                .loops[0]
-                .vertices
-                .clear();
-            assert!(malformed_loops
-                .validate_against_sources(&left, &right)
-                .is_err());
-            let mut malformed_triangulation = workspace.clone();
-            malformed_triangulation
-                .boolean45
-                .as_mut()
-                .unwrap()
-                .loop_triangulation
-                .triangulations[0]
-                .triangles[0] = usize::MAX;
-            assert!(malformed_triangulation
-                .validate_against_sources(&left, &right)
-                .is_err());
-        }
-        let execution = hypermesh::exact::boolmesh::execute_exact_boolmesh_bounds_disjoint(
-            &left,
-            &right,
-            operation,
-            ValidationPolicy::CLOSED,
-        )
-        .expect("deterministic bounds-disjoint boolmesh slice should execute");
-        execution.validate_against_sources(&left, &right).unwrap();
-    }
-}
 
-fn exercise_exact_boolmesh_kernel12_port() {
-    let left = ExactMesh::from_i64_triangles(
-        &[0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0, 4],
-        &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
-    )
-    .expect("deterministic boolmesh kernel12 left fixture must import");
-    let right = ExactMesh::from_i64_triangles(
-        &[1, 1, -1, 3, 1, 3, 1, 3, 3, 3, 3, 1],
-        &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
-    )
-    .expect("deterministic boolmesh kernel12 right fixture must import");
 
-    let workspace = hypermesh::exact::boolmesh::exact_boolmesh_workspace(
-        &left,
-        &right,
-        ExactBooleanOperation::Intersection,
-    );
-    workspace.validate_against_sources(&left, &right).unwrap();
-    assert!(workspace.blocker.is_none());
-    let execution = hypermesh::exact::boolmesh::execute_exact_boolmesh_port(
-        &left,
-        &right,
-        ExactBooleanOperation::Intersection,
-        ValidationPolicy::CLOSED,
-    )
-    .expect("deterministic boolmesh kernel12 fixture must materialize after exact cleanup");
-    execution.validate_against_sources(&left, &right).unwrap();
-    assert_eq!(
-        execution.shortcut,
-        hypermesh::exact::ExactBooleanShortcutKind::BoolMeshSplit
-    );
-    assert_eq!(execution.mesh.vertices().len(), 5);
-    assert_eq!(execution.mesh.triangles().len(), 6);
-    assert!(execution.mesh.facts().mesh.closed_manifold);
-    assert!(workspace.kernel12_events.iter().any(|event| matches!(
-        event.relation,
-        SegmentPlaneRelation::ProperCrossing | SegmentPlaneRelation::EndpointOnPlane
-    )));
-    assert!(
-        !workspace.boolean03.p1q2.is_empty() || !workspace.boolean03.p2q1.is_empty(),
-        "deterministic kernel12 fixture must lower proper crossings"
-    );
-    let mut stale_kernel03 = workspace.clone();
-    stale_kernel03.boolean03.w03[0] += 1;
-    assert!(stale_kernel03
-        .validate_against_sources(&left, &right)
-        .is_err());
-    assert!(workspace
-        .boolean03
-        .p1q2
-        .iter()
-        .chain(workspace.boolean03.p2q1.iter())
-        .all(|pair| pair.edge[0] < pair.edge[1]));
-    assert_eq!(workspace.boolean03.p1q2.len(), 2);
-    assert_eq!(workspace.boolean03.p2q1.len(), 4);
-    let size_output = workspace
-        .boolean45
-        .as_ref()
-        .expect("kernel12 boolmesh workspace must size output");
-    assert_eq!(
-        size_output.inserted_intersection_vertices,
-        workspace
-            .boolean03
-            .x12
-            .iter()
-            .chain(workspace.boolean03.x21.iter())
-            .map(|sign| sign.unsigned_abs() as usize)
-            .sum::<usize>()
-    );
-    assert_eq!(size_output.source_edge_incident_gaps, 0);
-    assert!(size_output.face_halfedge_offsets.windows(2).all(|window| window[0] <= window[1]));
-    assert_eq!(
-        size_output.vertex_allocation.output_vertex_origins.len(),
-        size_output.vertices_from_left
-            + size_output.vertices_from_right
-            + size_output.inserted_intersection_vertices
-    );
-    assert_eq!(
-        size_output
-            .new_edge_vertices
-            .source_edge_runs
-            .iter()
-            .map(|run| run.points.len())
-            .sum::<usize>(),
-        size_output.inserted_intersection_vertices
-    );
-    assert_eq!(
-        size_output
-            .new_edge_vertices
-            .face_pair_runs
-            .iter()
-            .map(|run| run.points.len())
-            .sum::<usize>(),
-        size_output.inserted_intersection_vertices * 2
-    );
-    assert_eq!(
-        size_output
-            .partial_source_edges
-            .source_edge_runs
-            .iter()
-            .flat_map(|run| run.points.iter())
-            .filter(|point| matches!(
-                point.origin,
-                hypermesh::exact::boolmesh::ExactBoolMeshPartialEdgePointOrigin::RoutedIntersection(_)
-            ))
-            .count(),
-        size_output.inserted_intersection_vertices
-    );
-    assert_eq!(
-        size_output
-            .new_face_pair_edges
-            .face_pair_runs
-            .iter()
-            .map(|run| run.points.len())
-            .sum::<usize>(),
-        size_output.inserted_intersection_vertices * 2
-    );
-    assert!(size_output
-        .new_face_pair_edges
-        .face_pair_runs
-        .iter()
-        .all(|run| run.points.windows(2).all(|window| {
-            (
-                window[0].order_index,
-                window[0].collision,
-                window[0].output_vertex,
-            ) <= (
-                window[1].order_index,
-                window[1].collision,
-                window[1].output_vertex,
-            )
-        })));
-    assert_eq!(size_output.new_face_pair_edges.unpaired_runs, 0);
-    assert!(size_output.whole_source_edges.source_edge_runs.is_empty());
-    assert_eq!(
-        size_output.halfedge_assembly.output_halfedges.len(),
-        size_output.face_halfedge_offsets.last().copied().unwrap()
-    );
-    assert_eq!(size_output.halfedge_assembly.face_overflows, 0);
-    assert_eq!(size_output.halfedge_assembly.missing_source_face_maps, 0);
-    assert_eq!(
-        size_output.halfedge_assembly.emitted_pairs * 2
-            + size_output.halfedge_assembly.emitted_boundary_halfedges
-            + size_output.halfedge_assembly.unfilled_halfedges,
-        size_output.halfedge_assembly.output_halfedges.len()
-    );
-    assert_eq!(size_output.face_loop_assembly.repeated_halfedges, 0);
-    assert_eq!(size_output.face_loop_assembly.non_loop_halfedges, 0);
-    assert!(size_output
-        .face_loop_assembly
-        .loops
-        .iter()
-        .all(|face_loop| face_loop.halfedges.len() >= 3
-            && face_loop.halfedges.len() == face_loop.vertices.len()));
-    assert_eq!(size_output.loop_triangulation.short_loops, 0);
-    assert_eq!(size_output.loop_triangulation.missing_source_faces, 0);
-    assert_eq!(
-        size_output.loop_triangulation.missing_vertex_coordinates,
-        0
-    );
-    assert_eq!(size_output.loop_triangulation.triangulation_failures, 0);
-    assert!(size_output
-        .loop_triangulation
-        .triangulations
-        .iter()
-        .all(|triangulation| triangulation.triangles.len().is_multiple_of(3)
-            && triangulation
-                .triangles
-                .iter()
-                .all(|index| *index < triangulation.vertices.len())));
-    assert_eq!(
-        workspace
-            .pair_up
-            .source_edge_runs
-            .iter()
-            .map(|run| run.events.len())
-            .sum::<usize>(),
-        workspace.boolean03.p1q2.len() + workspace.boolean03.p2q1.len()
-    );
-    let mut malformed = workspace.clone();
-    malformed
-        .boolean45
-        .as_mut()
-        .unwrap()
-        .source_face_to_output_face
-        .push(Some(0));
-    assert!(malformed.validate_against_sources(&left, &right).is_err());
-    let mut malformed_allocation = workspace.clone();
-    malformed_allocation
-        .boolean45
-        .as_mut()
-        .unwrap()
-        .vertex_allocation
-        .output_vertex_origins
-        .clear();
-    assert!(malformed_allocation
-        .validate_against_sources(&left, &right)
-        .is_err());
-    let mut malformed_edge_points = workspace.clone();
-    malformed_edge_points
-        .boolean45
-        .as_mut()
-        .unwrap()
-        .new_edge_vertices
-        .source_edge_runs[0]
-        .points[0]
-        .collision = usize::MAX;
-    assert!(malformed_edge_points
-        .validate_against_sources(&left, &right)
-        .is_err());
-    let mut malformed_partial_edges = workspace.clone();
-    malformed_partial_edges
-        .boolean45
-        .as_mut()
-        .unwrap()
-        .partial_source_edges
-        .source_edge_runs[0]
-        .points[0]
-        .output_vertex = usize::MAX;
-    assert!(malformed_partial_edges
-        .validate_against_sources(&left, &right)
-        .is_err());
-    let mut malformed_new_edges = workspace.clone();
-    malformed_new_edges
-        .boolean45
-        .as_mut()
-        .unwrap()
-        .new_face_pair_edges
-        .face_pair_runs[0]
-        .points[0]
-        .collision = usize::MAX;
-    assert!(malformed_new_edges
-        .validate_against_sources(&left, &right)
-        .is_err());
-    let mut stale_new_edge_order = workspace.clone();
-    stale_new_edge_order
-        .boolean45
-        .as_mut()
-        .unwrap()
-        .new_face_pair_edges
-        .face_pair_runs[0]
-        .points[0]
-        .order_index = usize::MAX;
-    assert!(stale_new_edge_order
-        .validate_against_sources(&left, &right)
-        .is_err());
-}
 
-fn exercise_exact_boolmesh_cleanup_materialization_port() {
-    assert!(exact_boolmesh_cleanup_probe_for_internal_fuzz(0));
-    assert!(exact_boolmesh_cleanup_probe_for_internal_fuzz(1));
 
-    let left = ExactMesh::from_i64_triangles(
-        &[0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0, 4],
-        &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
-    )
-    .expect("deterministic cleanup left fixture must import");
-    let right = ExactMesh::from_i64_triangles(
-        &[1, 1, -1, 3, 1, 3, 1, 3, 3, 3, 3, 1],
-        &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
-    )
-    .expect("deterministic cleanup right fixture must import");
 
-    let execution = hypermesh::exact::boolmesh::execute_exact_boolmesh_port(
-        &left,
-        &right,
-        ExactBooleanOperation::Intersection,
-        ValidationPolicy::CLOSED,
-    )
-    .expect("exact cleanup must certify the skew boolmesh split fixture");
-    execution.validate_against_sources(&left, &right).unwrap();
-    assert_eq!(execution.mesh.vertices().len(), 5);
-    assert_eq!(execution.mesh.triangles().len(), 6);
-    assert_eq!(execution.mesh.facts().mesh.boundary_edges, 0);
-    assert_eq!(execution.mesh.facts().mesh.duplicate_directed_edges, 0);
-}
 
-fn exercise_exact_boolmesh_holed_triangulation_port() {
-    let left = ExactMesh::from_i64_triangles(
-        &[0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0, 4],
-        &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
-    )
-    .expect("deterministic holed-triangulation left fixture must import");
-    let right = ExactMesh::from_i64_triangles(
-        &[1, 1, 0, 2, 1, 0, 1, 2, 0, 1, 1, -1],
-        &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
-    )
-    .expect("deterministic holed-triangulation right fixture must import");
 
-    let workspace = hypermesh::exact::boolmesh::exact_boolmesh_workspace(
-        &left,
-        &right,
-        ExactBooleanOperation::Union,
-    );
-    workspace.validate_against_sources(&left, &right).unwrap();
-    assert!(workspace.blocker.is_none());
-    let stage = workspace
-        .boolean45
-        .as_ref()
-        .expect("strict coplanar fixture must reach boolean45");
-    assert_eq!(stage.loop_triangulation.multi_loop_faces, 0);
-    assert!(stage
-        .loop_triangulation
-        .triangulations
-        .iter()
-        .any(|triangulation| triangulation.vertices.len() > 3));
 
-    let execution = hypermesh::exact::boolmesh::execute_exact_boolmesh_port(
-        &left,
-        &right,
-        ExactBooleanOperation::Union,
-        ValidationPolicy::CLOSED,
-    )
-    .expect("strict coplanar fixture should materialize through holed triangulation");
-    execution.validate_against_sources(&left, &right).unwrap();
-    assert_eq!(execution.mesh.vertices().len(), 8);
-    assert_eq!(execution.mesh.triangles().len(), 12);
-}
 
-fn exercise_exact_boolmesh_kernel12_endpoint_shadow_port() {
-    let left = tetrahedron_i64([1, 1, 0], [1, 1, 2], [2, 1, 1], [1, 2, 1]);
-    let right = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, -4]);
 
-    let workspace =
-        hypermesh::exact::boolmesh::exact_boolmesh_workspace(&left, &right, ExactBooleanOperation::Intersection);
-    workspace.validate_against_sources(&left, &right).unwrap();
-    assert_eq!(workspace.kernel12_unknown_events, 0);
-    assert_eq!(workspace.kernel12_construction_failures, 0);
-    assert_eq!(workspace.kernel12_coplanar_events, 0);
-    assert!(workspace.kernel12_events.iter().any(|event| {
-        event.relation == SegmentPlaneRelation::EndpointOnPlane
-            && event.endpoint_sides.contains(&Some(PlaneSide::On))
-    }));
-    assert!(workspace
-        .pair_up
-        .source_edge_runs
-        .iter()
-        .flat_map(|run| run.events.iter())
-        .any(|event| {
-            compare_reals(&event.parameter, &Real::from(0)).value() == Some(Ordering::Equal)
-                || compare_reals(&event.parameter, &Real::from(1)).value()
-                    == Some(Ordering::Equal)
-        }));
-    assert!(!workspace.boolean03.p1q2.is_empty() || !workspace.boolean03.p2q1.is_empty());
-    assert_eq!(workspace.blocker, None);
-    let stage = workspace.boolean45.as_ref().unwrap();
-    assert_eq!(stage.loop_triangulation.dropped_degenerate_faces.len(), 4);
-    assert!(stage.output_triangles.triangles.is_empty());
-    assert!(stage.mesh_export.triangles.is_empty());
 
-    let execution = hypermesh::exact::boolmesh::execute_exact_boolmesh_port(
-        &left,
-        &right,
-        ExactBooleanOperation::Intersection,
-        ValidationPolicy::CLOSED,
-    )
-    .expect("endpoint-only intersection should materialize as an empty boolmesh split");
-    execution.validate_against_sources(&left, &right).unwrap();
-    assert!(execution.mesh.triangles().is_empty());
-    assert!(execution.mesh.vertices().is_empty());
-}
 
-fn exercise_exact_boolmesh_kernel12_boundary_endpoint_shadow_port() {
-    let left = tetrahedron_i64([2, 0, 0], [2, 0, 2], [3, 1, 1], [1, 1, 1]);
-    let right = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, -4]);
 
-    let workspace =
-        hypermesh::exact::boolmesh::exact_boolmesh_workspace(&left, &right, ExactBooleanOperation::Intersection);
-    workspace.validate_against_sources(&left, &right).unwrap();
-    assert_eq!(workspace.kernel12_unknown_events, 0);
-    assert_eq!(workspace.kernel12_construction_failures, 0);
-    assert_eq!(workspace.kernel12_coplanar_events, 0);
-    assert!(workspace.kernel12_events.iter().any(|event| {
-        event.relation == SegmentPlaneRelation::EndpointOnPlane
-            && event.endpoint_sides.contains(&Some(PlaneSide::On))
-            && event
-                .point
-                .as_ref()
-                .is_some_and(|point| compare_reals(&point.y, &Real::from(0)).value() == Some(Ordering::Equal))
-    }));
-    assert_eq!(workspace.blocker, None);
-    let stage = workspace.boolean45.as_ref().unwrap();
-    assert_eq!(stage.loop_triangulation.dropped_degenerate_faces.len(), 5);
-    assert!(stage.output_triangles.triangles.is_empty());
-    assert!(stage.mesh_export.triangles.is_empty());
 
-    let execution = hypermesh::exact::boolmesh::execute_exact_boolmesh_port(
-        &left,
-        &right,
-        ExactBooleanOperation::Intersection,
-        ValidationPolicy::CLOSED,
-    )
-    .expect("boundary endpoint-only intersection should materialize as an empty boolmesh split");
-    execution.validate_against_sources(&left, &right).unwrap();
-    assert!(execution.mesh.triangles().is_empty());
-    assert!(execution.mesh.vertices().is_empty());
-}
 
-fn exercise_exact_boolmesh_kernel11_shadow_port() {
-    assert!(exact_boolmesh_kernel11_shadow_probe_for_internal_fuzz(51));
-}
 
-fn exercise_exact_boolmesh_kernel02_shadow_port() {
-    assert!(exact_boolmesh_kernel02_shadow_probe_for_internal_fuzz(52));
-}
 
-fn exercise_exact_boolmesh_kernel12_shadow_accumulator_port() {
-    assert!(exact_boolmesh_kernel12_shadow_accumulator_probe_for_internal_fuzz(53));
-}
 
-fn exercise_exact_boolmesh_kernel_frame_port() {
-    assert!(exact_boolmesh_kernel_frame_probe_for_internal_fuzz(54));
-}
 
-fn exercise_exact_boolmesh_kernel12_accumulator_replay_port() {
-    assert!(exact_boolmesh_kernel12_accumulator_replay_probe_for_internal_fuzz(55));
-}
 
-fn exercise_exact_boolmesh_kernel12_intersect_loop_port() {
-    assert!(exact_boolmesh_kernel12_intersect_loop_probe_for_internal_fuzz(56));
-}
 
-fn exercise_exact_boolmesh_kernel12_intersect_halfedge_row_port() {
-    assert!(exact_boolmesh_kernel12_intersect_loop_probe_for_internal_fuzz(58));
-}
-
-fn exercise_exact_boolmesh_kernel12_intersect_boundary_endpoint_port() {
-    assert!(exact_boolmesh_kernel12_intersect_loop_probe_for_internal_fuzz(60));
-}
-
-fn exercise_exact_boolmesh_kernel12_coplanar_interval_port() {
-    let left = ExactMesh::from_i64_triangles_with_policy(
-        &[0, 0, 0, 2, 0, 0, 0, 2, 0],
-        &[0, 1, 2],
-        ValidationPolicy::ALLOW_BOUNDARY,
-    )
-    .expect("deterministic boolmesh coplanar interval left fixture must import");
-    let right = ExactMesh::from_i64_triangles_with_policy(
-        &[1, 0, 0, 2, 0, 0, 1, -2, 0],
-        &[0, 1, 2],
-        ValidationPolicy::ALLOW_BOUNDARY,
-    )
-    .expect("deterministic boolmesh coplanar interval right fixture must import");
-    let workspace = hypermesh::exact::boolmesh::exact_boolmesh_workspace(
-        &left,
-        &right,
-        ExactBooleanOperation::Intersection,
-    );
-    workspace.validate_against_sources(&left, &right).unwrap();
-    assert_eq!(workspace.kernel12_coplanar_events, 0);
-    assert_eq!(workspace.blocker, None);
-    assert!(workspace.boolean03.p1q2.len() >= 2);
-    assert!(workspace.boolean03.p2q1.len() >= 2);
-    let stage = workspace.boolean45.as_ref().unwrap();
-    assert_eq!(stage.partial_source_edges.unpaired_runs, 0);
-    assert_eq!(stage.new_face_pair_edges.unpaired_runs, 0);
-    assert_eq!(stage.halfedge_assembly.unfilled_halfedges, 0);
-    assert_eq!(stage.face_loop_assembly.dropped_open_chain_halfedges, 2);
-    assert!(stage.output_triangles.triangles.is_empty());
-    assert!(workspace
-        .pair_up
-        .source_edge_runs
-        .iter()
-        .flat_map(|run| run.events.iter())
-        .any(|event| matches!(
-            event.point,
-            hypermesh::exact::boolmesh::ExactBoolMeshPointConstruction::EdgeParameter { .. }
-        )));
-    let execution = hypermesh::exact::boolmesh::execute_exact_boolmesh_port(
-        &left,
-        &right,
-        ExactBooleanOperation::Intersection,
-        ValidationPolicy::CLOSED,
-    )
-    .expect("boundary-only interval should materialize as an empty boolmesh split");
-    execution.validate_against_sources(&left, &right).unwrap();
-    assert!(execution.mesh.triangles().is_empty());
-    assert!(execution.mesh.vertices().is_empty());
-}
-
-fn exercise_exact_boolmesh_positive_area_coplanar_kernel12_port() {
-    let left = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
-    let right = tetrahedron_i64([2, -1, 0], [5, -1, 0], [2, 2, 0], [2, -1, -3]);
-    let workspace =
-        hypermesh::exact::boolmesh::exact_boolmesh_workspace(&left, &right, ExactBooleanOperation::Union);
-    workspace.validate_against_sources(&left, &right).unwrap();
-    assert_eq!(workspace.kernel12_coplanar_events, 0);
-    assert!(workspace.blocker.is_none());
-    let stage = workspace
-        .boolean45
-        .as_ref()
-        .expect("positive-area coplanar rows must reach boolean45");
-    assert_eq!(stage.halfedge_assembly.unfilled_halfedges, 0);
-    assert_eq!(stage.face_loop_assembly.incomplete_faces, 0);
-    assert_eq!(stage.face_loop_assembly.non_loop_halfedges, 0);
-    assert_eq!(stage.loop_triangulation.short_loops, 0);
-    assert_eq!(stage.loop_triangulation.triangulation_failures, 0);
-    assert!(
-        stage
-            .loop_triangulation
-            .triangulations
-            .iter()
-            .any(|triangulation| triangulation.output_face == 0
-                && triangulation.clipped_loop_indices.contains(&2))
-    );
-    assert_eq!(stage.output_triangles.missing_loop_triangulations, 0);
-    assert_eq!(stage.mesh_export.blocked_output_triangles, 0);
-    assert!(workspace.boolean03.x12.iter().any(|sign| *sign < 0));
-    assert!(workspace.boolean03.x21.iter().any(|sign| *sign < 0));
-    let execution = hypermesh::exact::boolmesh::execute_exact_boolmesh_port(
-        &left,
-        &right,
-        ExactBooleanOperation::Union,
-        ValidationPolicy::CLOSED,
-    )
-    .expect("positive-area coplanar boolmesh fixture should materialize");
-    execution.validate_against_sources(&left, &right).unwrap();
-    assert_eq!(execution.mesh.vertices().len(), 9);
-    assert_eq!(execution.mesh.triangles().len(), 14);
-
-    let preflight = preflight_boolean_exact(&left, &right, ExactBooleanOperation::Union)
-        .expect("completed positive-area boolmesh split should preflight");
-    preflight.validate().unwrap();
-    preflight.validate_against_sources(&left, &right).unwrap();
-    assert_eq!(preflight.support, ExactBooleanSupport::CertifiedBoolMeshSplit);
-    assert!(preflight.blocker.is_none());
-}
-
-fn exercise_exact_boolmesh_source_edge_cleanup_port() {
-    let left = upward_l_prism_i64([[0, 0], [8, 0], [8, 3], [3, 3], [3, 8], [0, 8]], 5);
-    let right = tetrahedron_i64([1, 1, 0], [7, 1, 0], [1, 7, 0], [1, 1, 5]);
-
-    let workspace =
-        hypermesh::exact::boolmesh::exact_boolmesh_workspace(&left, &right, ExactBooleanOperation::Union);
-    workspace.validate_against_sources(&left, &right).unwrap();
-    assert!(workspace.blocker.is_none());
-    let stage = workspace
-        .boolean45
-        .as_ref()
-        .expect("source-edge cleanup fixture must reach boolean45");
-    assert_eq!(stage.face_loop_assembly.dropped_open_chain_halfedges, 23);
-    assert_eq!(stage.partial_source_edges.unpaired_runs, 0);
-    assert_eq!(stage.new_face_pair_edges.unpaired_runs, 0);
-    assert_eq!(stage.halfedge_assembly.unfilled_halfedges, 0);
-    assert_eq!(stage.face_loop_assembly.non_loop_halfedges, 0);
-    assert_eq!(stage.loop_triangulation.triangulation_failures, 0);
-    assert_eq!(stage.mesh_export.triangles.len(), 29);
-
-    let execution = hypermesh::exact::boolmesh::execute_exact_boolmesh_port(
-        &left,
-        &right,
-        ExactBooleanOperation::Union,
-        ValidationPolicy::CLOSED,
-    )
-    .expect("source-edge cleanup fixture should materialize through boolmesh");
-    execution.validate_against_sources(&left, &right).unwrap();
-    assert_eq!(execution.mesh.vertices().len(), 19);
-    assert_eq!(execution.mesh.triangles().len(), 34);
-    assert_eq!(execution.mesh.facts().mesh.boundary_edges, 0);
-    assert_eq!(execution.mesh.facts().mesh.non_manifold_vertices, 0);
-}
-
-fn exercise_exact_boolmesh_boundary_closure_cleanup_port() {
-    let left = upward_l_prism_i64([[0, 0], [8, 0], [8, 3], [3, 3], [3, 8], [0, 8]], 5);
-    let right = tetrahedron_i64([2, -1, 0], [5, -1, 0], [2, 2, 0], [2, -1, -3]);
-
-    let workspace =
-        hypermesh::exact::boolmesh::exact_boolmesh_workspace(&left, &right, ExactBooleanOperation::Union);
-    workspace.validate_against_sources(&left, &right).unwrap();
-    assert!(workspace.blocker.is_none());
-    let stage = workspace
-        .boolean45
-        .as_ref()
-        .expect("boundary closure fixture must reach boolean45");
-    assert_eq!(stage.face_loop_assembly.dropped_open_chain_halfedges, 32);
-    assert_eq!(stage.face_loop_assembly.non_loop_halfedges, 0);
-    assert_eq!(stage.mesh_export.triangles.len(), 18);
-    assert_eq!(stage.mesh_export.boundary_edges.len(), 8);
-    assert_eq!(stage.mesh_export.boundary_closure_records.len(), 8);
-    assert!(
-        stage
-            .face_loop_assembly
-            .dropped_open_chains
-            .iter()
-            .any(|chain| chain.source_kind
-                == hypermesh::exact::boolmesh::ExactBoolMeshDroppedOpenChainSourceKind::Mixed)
-    );
-
-    let execution = hypermesh::exact::boolmesh::execute_exact_boolmesh_port(
-        &left,
-        &right,
-        ExactBooleanOperation::Union,
-        ValidationPolicy::CLOSED,
-    )
-    .expect("boundary closure fixture should materialize through boolmesh");
-    execution.validate_against_sources(&left, &right).unwrap();
-    assert_eq!(execution.mesh.facts().mesh.boundary_edges, 0);
-    assert_eq!(execution.mesh.facts().mesh.duplicate_directed_edges, 0);
-}
-
-fn exercise_exact_boolmesh_kernel03_winding_port() {
-    assert!(exact_boolmesh_kernel03_winding_probe_for_internal_fuzz(61));
-}
-
-fn exercise_exact_boolmesh_boolean45_triangulation_port() {
-    assert!(exact_boolmesh_boolean45_triangulation_probe_for_internal_fuzz(65));
-    assert!(exact_boolmesh_boolean45_triangulation_probe_for_internal_fuzz(66));
-    assert!(exact_boolmesh_boolean45_triangulation_probe_for_internal_fuzz(67));
-    assert!(exact_boolmesh_boolean45_triangulation_probe_for_internal_fuzz(68));
-}
-
-fn exercise_exact_boolmesh_boolean45_halfedge_row_port() {
-    let left = ExactMesh::from_i64_triangles_with_policy(
-        &[1, 1, 0, 1, 1, 5, 2, 1, 5],
-        &[2, 0, 1],
-        ValidationPolicy::ALLOW_BOUNDARY,
-    )
-    .expect("deterministic boolean45 halfedge-row source fixture must import");
-    let right = ExactMesh::from_i64_triangles_with_policy(
-        &[0, 0, 4, 4, 0, 4, 0, 4, 4],
-        &[0, 1, 2],
-        ValidationPolicy::ALLOW_BOUNDARY,
-    )
-    .expect("deterministic boolean45 halfedge-row opposite fixture must import");
-    let workspace = hypermesh::exact::boolmesh::exact_boolmesh_workspace(
-        &left,
-        &right,
-        ExactBooleanOperation::Intersection,
-    );
-    workspace.validate_against_sources(&left, &right).unwrap();
-    assert!(workspace
-        .pair_up
-        .source_edge_runs
-        .iter()
-        .any(|run| run.source_halfedge == 1 && run.tail == 0 && run.head == 1));
-    let size_output = workspace
-        .boolean45
-        .as_ref()
-        .expect("halfedge-row crossing must reach boolean45");
-    assert!(size_output
-        .new_edge_vertices
-        .source_edge_runs
-        .iter()
-        .any(|run| run.source_halfedge == 1 && run.tail == 0 && run.head == 1));
-    assert!(size_output
-        .partial_source_edges
-        .source_edge_runs
-        .iter()
-        .any(|run| run.source_halfedge == 1
-            && run.incident_faces == vec![0]
-            && run.incident_edges == vec![[0, 1]]));
-}
-
-fn exercise_exact_boolmesh_kernel03_no_intersection_port() {
-    let inner = ExactMesh::from_i64_triangles(
-        &[1, 1, 1, 2, 1, 1, 1, 2, 1, 1, 1, 2],
-        &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
-    )
-    .expect("deterministic boolmesh kernel03 inner fixture must import");
-    let outer = ExactMesh::from_i64_triangles(
-        &[0, 0, 0, 10, 0, 0, 0, 10, 0, 0, 0, 10],
-        &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
-    )
-    .expect("deterministic boolmesh kernel03 outer fixture must import");
-
-    for (operation, left_vertices, right_vertices, output_faces) in [
-        (
-            ExactBooleanOperation::Union,
-            0,
-            outer.vertices().len(),
-            outer.triangles().len(),
-        ),
-        (
-            ExactBooleanOperation::Intersection,
-            inner.vertices().len(),
-            0,
-            inner.triangles().len(),
-        ),
-        (ExactBooleanOperation::Difference, 0, 0, 0),
-    ] {
-        let workspace = hypermesh::exact::boolmesh::exact_boolmesh_workspace(&inner, &outer, operation);
-        workspace.validate_against_sources(&inner, &outer).unwrap();
-        assert!(workspace.blocker.is_none());
-        assert!(!workspace.is_certified_bounds_disjoint());
-        assert!(workspace.is_certified_no_intersection_kernel03());
-        assert_eq!(workspace.boolean03.w03, vec![1; inner.vertices().len()]);
-        assert_eq!(workspace.boolean03.w30, vec![0; outer.vertices().len()]);
-        assert!(workspace.boolean03.p1q2.is_empty());
-        assert!(workspace.boolean03.p2q1.is_empty());
-        let size_output = workspace
-            .boolean45
-            .as_ref()
-            .expect("kernel03 no-intersection workspace must size output");
-        assert_eq!(size_output.vertices_from_left, left_vertices);
-        assert_eq!(size_output.vertices_from_right, right_vertices);
-        assert_eq!(size_output.inserted_intersection_vertices, 0);
-        assert_eq!(size_output.source_edge_incident_gaps, 0);
-        assert_eq!(size_output.mesh_export.triangles.len(), output_faces);
-        assert_eq!(size_output.halfedge_assembly.emitted_boundary_halfedges, 0);
-        let execution = hypermesh::exact::boolmesh::execute_exact_boolmesh_port(
-            &inner,
-            &outer,
-            operation,
-            ValidationPolicy::CLOSED,
-        )
-        .expect("kernel03 no-intersection boolmesh port should execute");
-        execution.validate_against_sources(&inner, &outer).unwrap();
-        assert_eq!(
-            execution.shortcut,
-            hypermesh::exact::ExactBooleanShortcutKind::WindingContainment
-        );
-        assert_eq!(execution.mesh.triangles().len(), output_faces);
-
-        let mut stale_winding = workspace.clone();
-        stale_winding.boolean03.w03[0] = 0;
-        assert!(stale_winding
-            .validate_against_sources(&inner, &outer)
-            .is_err());
-    }
-
-    let separated_left = ExactMesh::from_i64_triangles(
-        &[0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0, 4],
-        &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
-    )
-    .expect("deterministic boolmesh separated-left fixture must import");
-    let separated_right = ExactMesh::from_i64_triangles(
-        &[4, 4, 4, 4, 0, 4, 0, 4, 4, 4, 4, 0],
-        &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
-    )
-    .expect("deterministic boolmesh separated-right fixture must import");
-
-    for (operation, output_faces) in [
-        (
-            ExactBooleanOperation::Union,
-            separated_left.triangles().len() + separated_right.triangles().len(),
-        ),
-        (ExactBooleanOperation::Intersection, 0),
-        (
-            ExactBooleanOperation::Difference,
-            separated_left.triangles().len(),
-        ),
-    ] {
-        let workspace =
-            hypermesh::exact::boolmesh::exact_boolmesh_workspace(&separated_left, &separated_right, operation);
-        workspace
-            .validate_against_sources(&separated_left, &separated_right)
-            .unwrap();
-        assert!(workspace.blocker.is_none());
-        assert!(!workspace.is_certified_bounds_disjoint());
-        assert!(workspace.is_certified_no_intersection_kernel03());
-        assert_eq!(
-            workspace.boolean03.w03,
-            vec![0; separated_left.vertices().len()]
-        );
-        assert_eq!(
-            workspace.boolean03.w30,
-            vec![0; separated_right.vertices().len()]
-        );
-        let execution = hypermesh::exact::boolmesh::execute_exact_boolmesh_port(
-            &separated_left,
-            &separated_right,
-            operation,
-            ValidationPolicy::CLOSED,
-        )
-        .expect("separated overlapping-AABB boolmesh port should execute");
-        execution
-            .validate_against_sources(&separated_left, &separated_right)
-            .unwrap();
-        assert_eq!(
-            execution.shortcut,
-            hypermesh::exact::ExactBooleanShortcutKind::WindingSeparated
-        );
-        assert_eq!(execution.mesh.triangles().len(), output_faces);
-    }
-}
-
-fn exercise_exact_boolmesh_open_crossing_adjacency_port() {
-    let left = ExactMesh::from_i64_triangles_with_policy(
-        &[0, 0, 0, 4, 0, 0, 0, 4, 0],
-        &[0, 1, 2],
-        ValidationPolicy::ALLOW_BOUNDARY,
-    )
-    .expect("deterministic open boolmesh left fixture must import");
-    let right = ExactMesh::from_i64_triangles_with_policy(
-        &[
-            1, -1, -1, 1, 3, -1, 1, -1, 1, 3, -1, -1, 3, 3, -1, 3, -1, 1,
-        ],
-        &[0, 1, 2, 3, 4, 5],
-        ValidationPolicy::ALLOW_BOUNDARY,
-    )
-    .expect("deterministic open boolmesh right fixture must import");
-
-    let workspace = hypermesh::exact::boolmesh::exact_boolmesh_workspace(
-        &left,
-        &right,
-        ExactBooleanOperation::Intersection,
-    );
-    workspace.validate_against_sources(&left, &right).unwrap();
-    let size_output = workspace
-        .boolean45
-        .as_ref()
-        .expect("open crossing boolmesh workspace must size output");
-    assert!(size_output
-        .partial_source_edges
-        .source_edge_runs
-        .iter()
-        .any(|run| run.incident_faces.len() == 1 && !run.points.is_empty()));
-    assert_eq!(size_output.source_edge_incident_gaps, 0);
-    assert_eq!(size_output.halfedge_assembly.source_edge_incident_gaps, 0);
-    assert_eq!(
-        size_output
-            .new_edge_vertices
-            .face_pair_runs
-            .iter()
-            .map(|run| run.points.len())
-            .sum::<usize>(),
-        size_output
-            .partial_source_edges
-            .source_edge_runs
-            .iter()
-            .map(|run| {
-                run.points
-                    .iter()
-                    .filter(|point| {
-                        matches!(
-                            point.origin,
-                            hypermesh::exact::boolmesh::ExactBoolMeshPartialEdgePointOrigin::RoutedIntersection(_)
-                        )
-                    })
-                    .count()
-                    * run.incident_faces.len()
-            })
-            .sum::<usize>()
-    );
-}
 
 fn exercise_partial_convex_union_boundary() {
     let left = ExactMesh::from_i64_triangles(
@@ -2673,15 +1510,15 @@ fn exercise_partial_convex_union_boundary() {
     );
     let graph = build_intersection_graph(&left, &right).expect("fixture graph should build");
     let (_regions, cells) =
-        hypermesh::exact::cells::triangulate_all_face_cells_with_cdt(&graph, &left, &right)
+        hypermesh::cells::triangulate_all_face_cells_with_cdt(&graph, &left, &right)
             .expect("fixture cell triangulation should not error")
             .expect("fixture should produce exact planar cells");
     assert!(cells.iter().any(|cell| {
-        cell.side == hypermesh::exact::graph::MeshSide::Left
+        cell.side == hypermesh::graph::MeshSide::Left
             && cell.face == 2
             && cell.triangles.len() / 3 == 7
     }));
-    let result = hypermesh::exact::boolean_exact(
+    let result = hypermesh::boolean_exact(
         &left,
         &right,
         ExactBooleanOperation::Union,
@@ -2702,7 +1539,7 @@ fn exercise_partial_convex_union_boundary() {
     missing_volumetric.volumetric_classifications.clear();
     assert!(matches!(
         missing_volumetric.validate(),
-        Err(hypermesh::exact::ExactReportValidationError::MissingVolumetricClassifications)
+        Err(hypermesh::ExactReportValidationError::MissingVolumetricClassifications)
     ));
 }
 
@@ -2743,7 +1580,7 @@ fn exercise_multi_component_coplanar_union() {
         ExactBooleanSupport::CertifiedCoplanarConvexSurfaceMultiUnion
     );
 
-    let result = hypermesh::exact::boolean_exact(
+    let result = hypermesh::boolean_exact(
         &left,
         &right,
         ExactBooleanOperation::Union,
@@ -2783,7 +1620,7 @@ fn exercise_multi_component_coplanar_union() {
             CoplanarArrangementOperation::Union,
         )
         .unwrap();
-    let edge_touch_result = hypermesh::exact::boolean_exact(
+    let edge_touch_result = hypermesh::boolean_exact(
         &edge_touch_left,
         &edge_touch_right,
         ExactBooleanOperation::Union,
@@ -2825,7 +1662,7 @@ fn exercise_multi_component_coplanar_union() {
         point_touch_preflight.support,
         ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchUnion
     );
-    let point_touch_result = hypermesh::exact::boolean_exact(
+    let point_touch_result = hypermesh::boolean_exact(
         &edge_touch_left,
         &point_touch_right,
         ExactBooleanOperation::Union,
@@ -2857,14 +1694,14 @@ fn exercise_multi_component_coplanar_union() {
         point_touch_difference.support,
         ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchDifference
     );
-    hypermesh::exact::boolean_exact(
+    hypermesh::boolean_exact(
         &edge_touch_left,
         &point_touch_right,
         ExactBooleanOperation::Intersection,
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .expect("point-touching convex surface intersection should materialize empty");
-    hypermesh::exact::boolean_exact(
+    hypermesh::boolean_exact(
         &edge_touch_left,
         &point_touch_right,
         ExactBooleanOperation::Difference,
@@ -2909,7 +1746,7 @@ fn exercise_multi_component_coplanar_union() {
         .support,
         ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchUnion
     );
-    hypermesh::exact::boolean_exact(
+    hypermesh::boolean_exact(
         &mixed_contact_left,
         &mixed_contact_right,
         ExactBooleanOperation::Union,
@@ -2955,7 +1792,7 @@ fn exercise_multi_component_coplanar_union() {
         .support,
         ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchUnion
     );
-    hypermesh::exact::boolean_exact(
+    hypermesh::boolean_exact(
         &mixed_overlap_left,
         &mixed_overlap_right,
         ExactBooleanOperation::Union,
@@ -3028,7 +1865,7 @@ fn exercise_multi_component_coplanar_union() {
         .expect("nonconvex point-touch preflight should classify")
         .validate()
         .unwrap();
-        hypermesh::exact::boolean_exact(
+        hypermesh::boolean_exact(
             &nonconvex_point_touch_left,
             &nonconvex_point_touch_right,
             operation,
@@ -3097,7 +1934,7 @@ fn exercise_multi_component_coplanar_union() {
         nonconvex_edge_preflight.support,
         ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
     );
-    hypermesh::exact::boolean_exact(
+    hypermesh::boolean_exact(
         &nonconvex_point_touch_left,
         &nonconvex_edge_touch_right,
         ExactBooleanOperation::Union,
@@ -3117,7 +1954,7 @@ fn exercise_multi_component_coplanar_union() {
         nonconvex_edge_intersection.support,
         ExactBooleanSupport::CertifiedCoplanarSurfaceBoundaryTouchIntersection
     );
-    let nonconvex_edge_intersection_result = hypermesh::exact::boolean_exact(
+    let nonconvex_edge_intersection_result = hypermesh::boolean_exact(
         &nonconvex_point_touch_left,
         &nonconvex_edge_touch_right,
         ExactBooleanOperation::Intersection,
@@ -3137,7 +1974,7 @@ fn exercise_multi_component_coplanar_union() {
         nonconvex_edge_difference.support,
         ExactBooleanSupport::CertifiedCoplanarSurfaceBoundaryTouchDifference
     );
-    let nonconvex_edge_difference_result = hypermesh::exact::boolean_exact(
+    let nonconvex_edge_difference_result = hypermesh::boolean_exact(
         &nonconvex_point_touch_left,
         &nonconvex_edge_touch_right,
         ExactBooleanOperation::Difference,
@@ -3217,7 +2054,7 @@ fn exercise_multi_component_coplanar_union() {
         bridge_preflight.support,
         ExactBooleanSupport::CertifiedCoplanarConvexSurfaceMultiUnion
     );
-    let bridge_result = hypermesh::exact::boolean_exact(
+    let bridge_result = hypermesh::boolean_exact(
         &bridge_left,
         &bridge_right,
         ExactBooleanOperation::Union,
@@ -3263,7 +2100,7 @@ fn exercise_multi_component_coplanar_union() {
             CoplanarArrangementOperation::Union,
         )
         .unwrap();
-    let single_bridge_result = hypermesh::exact::boolean_exact(
+    let single_bridge_result = hypermesh::boolean_exact(
         &single_bridge_left,
         &single_bridge_right,
         ExactBooleanOperation::Union,
@@ -3309,7 +2146,7 @@ fn exercise_multi_component_coplanar_union() {
             CoplanarArrangementOperation::Union,
         )
         .unwrap();
-    let edge_bridge_result = hypermesh::exact::boolean_exact(
+    let edge_bridge_result = hypermesh::boolean_exact(
         &edge_bridge_left,
         &edge_bridge_right,
         ExactBooleanOperation::Union,
@@ -3377,7 +2214,7 @@ fn exercise_nonrectangular_component_union_hull_coverage() {
         ExactBooleanSupport::CertifiedCoplanarConvexSurfaceArrangementUnion
     );
 
-    let result = hypermesh::exact::boolean_exact(
+    let result = hypermesh::boolean_exact(
         &left,
         &right,
         ExactBooleanOperation::Union,
@@ -3441,7 +2278,7 @@ fn exercise_holed_coplanar_mesh_containment() {
         preflight.support,
         ExactBooleanSupport::CertifiedCoplanarSurfaceContainment
     );
-    hypermesh::exact::boolean_exact(
+    hypermesh::boolean_exact(
         &annulus,
         &cover,
         ExactBooleanOperation::Intersection,
@@ -3515,7 +2352,7 @@ fn exercise_component_holed_coplanar_intersection() {
         crossing_preflight.support,
         ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceIntersection
     );
-    hypermesh::exact::boolean_exact(
+    hypermesh::boolean_exact(
         &annulus,
         &crossing_hole,
         ExactBooleanOperation::Intersection,
@@ -3551,7 +2388,7 @@ fn exercise_component_holed_coplanar_intersection() {
         touching_preflight.support,
         ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceIntersection
     );
-    hypermesh::exact::boolean_exact(
+    hypermesh::boolean_exact(
         &annulus,
         &hole_edge_touch,
         ExactBooleanOperation::Intersection,
@@ -3588,7 +2425,7 @@ fn exercise_component_holed_coplanar_intersection() {
         preflight.support,
         ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
     );
-    hypermesh::exact::boolean_exact(
+    hypermesh::boolean_exact(
         &annulus,
         &clipper,
         ExactBooleanOperation::Intersection,
@@ -3670,7 +2507,7 @@ fn exercise_same_outer_component_holed_coplanar_intersection() {
     overlap_preflight
         .validate_against_sources(&left, &overlapping)
         .unwrap();
-    hypermesh::exact::boolean_exact(
+    hypermesh::boolean_exact(
         &left,
         &overlapping,
         ExactBooleanOperation::Intersection,
@@ -3733,7 +2570,7 @@ fn exercise_same_outer_component_holed_coplanar_intersection() {
     bridge_preflight
         .validate_against_sources(&bridge_left, &bridge_right)
         .unwrap();
-    hypermesh::exact::boolean_exact(
+    hypermesh::boolean_exact(
         &bridge_left,
         &bridge_right,
         ExactBooleanOperation::Intersection,
@@ -3779,7 +2616,7 @@ fn exercise_same_outer_component_holed_coplanar_intersection() {
     nonrect_bridge_preflight
         .validate_against_sources(&bridge_left, &nonrect_bridge)
         .unwrap();
-    hypermesh::exact::boolean_exact(
+    hypermesh::boolean_exact(
         &bridge_left,
         &nonrect_bridge,
         ExactBooleanOperation::Intersection,
@@ -3849,7 +2686,7 @@ fn exercise_same_outer_component_holed_coplanar_intersection() {
         orthogonal_preflight.support,
         ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
     );
-    hypermesh::exact::boolean_exact(
+    hypermesh::boolean_exact(
         &orthogonal_left,
         &orthogonal_right,
         ExactBooleanOperation::Intersection,
@@ -3930,7 +2767,7 @@ fn exercise_same_outer_component_holed_coplanar_intersection() {
         affine_preflight.support,
         ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
     );
-    hypermesh::exact::boolean_exact(
+    hypermesh::boolean_exact(
         &affine_left,
         &affine_right,
         ExactBooleanOperation::Intersection,
@@ -4036,7 +2873,7 @@ fn exercise_same_outer_component_holed_coplanar_intersection() {
         disconnected_preflight.support,
         ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
     );
-    hypermesh::exact::boolean_exact(
+    hypermesh::boolean_exact(
         &disconnected_left,
         &disconnected_right,
         ExactBooleanOperation::Intersection,
@@ -4091,7 +2928,7 @@ fn exercise_same_outer_component_holed_coplanar_intersection() {
         preflight.support,
         ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
     );
-    hypermesh::exact::boolean_exact(
+    hypermesh::boolean_exact(
         &left,
         &right,
         ExactBooleanOperation::Intersection,
@@ -4169,7 +3006,7 @@ fn exercise_same_outer_component_holed_coplanar_intersection_with_island() {
         preflight.support,
         ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
     );
-    hypermesh::exact::boolean_exact(
+    hypermesh::boolean_exact(
         &left,
         &right,
         ExactBooleanOperation::Intersection,
@@ -4727,7 +3564,7 @@ fn exercise_same_outer_component_holed_coplanar_intersection_with_island() {
         affine_preflight.support,
         ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
     );
-    hypermesh::exact::boolean_exact(
+    hypermesh::boolean_exact(
         &affine_left,
         &affine_right,
         ExactBooleanOperation::Intersection,
@@ -4808,7 +3645,7 @@ fn exercise_same_outer_source_island_point_touch_replay() {
         ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
     );
 
-    hypermesh::exact::boolean_exact(
+    hypermesh::boolean_exact(
         &source,
         &point_touch_opposing,
         ExactBooleanOperation::Intersection,
@@ -4947,7 +3784,7 @@ fn exercise_same_outer_component_holed_coplanar_difference() {
         preflight.support,
         ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
     );
-    hypermesh::exact::boolean_exact(
+    hypermesh::boolean_exact(
         &left,
         &right,
         ExactBooleanOperation::Difference,
@@ -4974,7 +3811,7 @@ fn exercise_same_outer_component_holed_coplanar_difference() {
         partial_preflight.support,
         ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
     );
-    hypermesh::exact::boolean_exact(
+    hypermesh::boolean_exact(
         &partial_left,
         &partial_right,
         ExactBooleanOperation::Difference,
@@ -5004,7 +3841,7 @@ fn exercise_same_outer_component_holed_coplanar_difference() {
         nonrect_partial_preflight.support,
         ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
     );
-    hypermesh::exact::boolean_exact(
+    hypermesh::boolean_exact(
         &nonrect_partial_left,
         &partial_right,
         ExactBooleanOperation::Difference,
@@ -5070,7 +3907,7 @@ fn exercise_same_outer_component_holed_coplanar_difference() {
         mixed_preflight.support,
         ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
     );
-    hypermesh::exact::boolean_exact(
+    hypermesh::boolean_exact(
         &mixed_left,
         &mixed_right,
         ExactBooleanOperation::Difference,
@@ -5125,7 +3962,7 @@ fn exercise_same_outer_component_holed_coplanar_difference() {
         orthogonal_preflight.support,
         ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
     );
-    hypermesh::exact::boolean_exact(
+    hypermesh::boolean_exact(
         &orthogonal_left,
         &orthogonal_right,
         ExactBooleanOperation::Difference,
@@ -5239,7 +4076,7 @@ fn exercise_same_outer_holed_coplanar_multi_difference() {
         orthogonal_preflight.support,
         ExactBooleanSupport::CertifiedCoplanarSurfaceMultiDifference
     );
-    hypermesh::exact::boolean_exact(
+    hypermesh::boolean_exact(
         &orthogonal_left,
         &orthogonal_right,
         ExactBooleanOperation::Difference,
@@ -5285,7 +4122,7 @@ fn exercise_same_outer_holed_coplanar_multi_difference() {
         touching_preflight.support,
         ExactBooleanSupport::CertifiedCoplanarSurfaceMultiDifference
     );
-    hypermesh::exact::boolean_exact(
+    hypermesh::boolean_exact(
         &left,
         &touching,
         ExactBooleanOperation::Difference,
@@ -5309,7 +4146,7 @@ fn exercise_same_outer_holed_coplanar_multi_difference() {
         preflight.support,
         ExactBooleanSupport::CertifiedCoplanarSurfaceMultiDifference
     );
-    hypermesh::exact::boolean_exact(
+    hypermesh::boolean_exact(
         &left,
         &right,
         ExactBooleanOperation::Difference,
@@ -5414,7 +4251,7 @@ fn exercise_same_outer_holed_coplanar_component_difference() {
         nonrect_preflight.support,
         ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementDifference
     );
-    hypermesh::exact::boolean_exact(
+    hypermesh::boolean_exact(
         &nonrect_left,
         &nonrect_right,
         ExactBooleanOperation::Difference,
@@ -5465,7 +4302,7 @@ fn exercise_same_outer_holed_coplanar_component_difference() {
         affine_preflight.support,
         ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementDifference
     );
-    hypermesh::exact::boolean_exact(
+    hypermesh::boolean_exact(
         &affine_left,
         &affine_right,
         ExactBooleanOperation::Difference,
@@ -5516,7 +4353,7 @@ fn exercise_same_outer_holed_coplanar_component_difference() {
         affine_touching_preflight.support,
         ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementDifference
     );
-    hypermesh::exact::boolean_exact(
+    hypermesh::boolean_exact(
         &affine_left,
         &affine_touching_right,
         ExactBooleanOperation::Difference,
@@ -5579,7 +4416,7 @@ fn exercise_same_outer_holed_coplanar_component_difference() {
         mixed_preflight.support,
         ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementDifference
     );
-    hypermesh::exact::boolean_exact(
+    hypermesh::boolean_exact(
         &mixed_left,
         &mixed_right,
         ExactBooleanOperation::Difference,
@@ -5622,7 +4459,7 @@ fn exercise_same_outer_holed_coplanar_component_difference() {
         touching_preflight.support,
         ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementDifference
     );
-    hypermesh::exact::boolean_exact(
+    hypermesh::boolean_exact(
         &left,
         &touching,
         ExactBooleanOperation::Difference,
@@ -5646,7 +4483,7 @@ fn exercise_same_outer_holed_coplanar_component_difference() {
         preflight.support,
         ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementDifference
     );
-    hypermesh::exact::boolean_exact(
+    hypermesh::boolean_exact(
         &left,
         &right,
         ExactBooleanOperation::Difference,
@@ -5722,7 +4559,7 @@ fn exercise_same_outer_holed_coplanar_filled_union() {
         touching_preflight.support,
         ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
     );
-    hypermesh::exact::boolean_exact(
+    hypermesh::boolean_exact(
         &left,
         &touching,
         ExactBooleanOperation::Union,
@@ -5758,7 +4595,7 @@ fn exercise_same_outer_holed_coplanar_filled_union() {
         nested_preflight.support,
         ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
     );
-    hypermesh::exact::boolean_exact(
+    hypermesh::boolean_exact(
         &left,
         &nested,
         ExactBooleanOperation::Union,
@@ -5782,7 +4619,7 @@ fn exercise_same_outer_holed_coplanar_filled_union() {
         preflight.support,
         ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
     );
-    hypermesh::exact::boolean_exact(
+    hypermesh::boolean_exact(
         &left,
         &right,
         ExactBooleanOperation::Union,
@@ -5972,7 +4809,7 @@ fn exercise_same_outer_holed_coplanar_retained_union() {
         touching_preflight.support,
         ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
     );
-    hypermesh::exact::boolean_exact(
+    hypermesh::boolean_exact(
         &left,
         &touching,
         ExactBooleanOperation::Union,
@@ -5996,7 +4833,7 @@ fn exercise_same_outer_holed_coplanar_retained_union() {
         preflight.support,
         ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
     );
-    hypermesh::exact::boolean_exact(
+    hypermesh::boolean_exact(
         &left,
         &right,
         ExactBooleanOperation::Union,
@@ -6023,7 +4860,7 @@ fn exercise_same_outer_holed_coplanar_retained_union() {
         overlapping_preflight.support,
         ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
     );
-    hypermesh::exact::boolean_exact(
+    hypermesh::boolean_exact(
         &left,
         &overlapping,
         ExactBooleanOperation::Union,
@@ -6050,7 +4887,7 @@ fn exercise_same_outer_holed_coplanar_retained_union() {
         nonrectangular_preflight.support,
         ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
     );
-    hypermesh::exact::boolean_exact(
+    hypermesh::boolean_exact(
         &left,
         &nonrectangular_overlap,
         ExactBooleanOperation::Union,
@@ -6108,7 +4945,7 @@ fn exercise_same_outer_holed_coplanar_retained_union() {
         affine_preflight.support,
         ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
     );
-    hypermesh::exact::boolean_exact(
+    hypermesh::boolean_exact(
         &affine_left,
         &affine_right,
         ExactBooleanOperation::Union,
@@ -6150,7 +4987,7 @@ fn exercise_same_outer_holed_coplanar_retained_union() {
         affine_touching_preflight.support,
         ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
     );
-    hypermesh::exact::boolean_exact(
+    hypermesh::boolean_exact(
         &affine_left,
         &affine_touching,
         ExactBooleanOperation::Union,
@@ -6180,7 +5017,7 @@ fn exercise_same_outer_holed_coplanar_retained_union() {
         orthogonal_preflight.support,
         ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
     );
-    hypermesh::exact::boolean_exact(
+    hypermesh::boolean_exact(
         &orthogonal_left,
         &orthogonal_right,
         ExactBooleanOperation::Union,
@@ -6240,7 +5077,7 @@ fn exercise_nonconvex_component_union_loop() {
         ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
     );
 
-    let result = hypermesh::exact::boolean_exact(
+    let result = hypermesh::boolean_exact(
         &left,
         &right,
         ExactBooleanOperation::Union,
@@ -6323,7 +5160,7 @@ fn exercise_nonconvex_multi_component_union_loop() {
         ExactBooleanSupport::CertifiedCoplanarSurfaceMultiUnion
     );
 
-    let result = hypermesh::exact::boolean_exact(
+    let result = hypermesh::boolean_exact(
         &left,
         &right,
         ExactBooleanOperation::Union,
@@ -6414,7 +5251,7 @@ fn exercise_component_holed_coplanar_union() {
         ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
     );
 
-    let result = hypermesh::exact::boolean_exact(
+    let result = hypermesh::boolean_exact(
         &left,
         &right,
         ExactBooleanOperation::Union,
@@ -6509,7 +5346,7 @@ fn exercise_disconnected_component_holed_coplanar_union() {
         ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
     );
 
-    let result = hypermesh::exact::boolean_exact(
+    let result = hypermesh::boolean_exact(
         &left,
         &right,
         ExactBooleanOperation::Union,
@@ -6580,7 +5417,7 @@ fn exercise_two_disk_component_holed_coplanar_union() {
         ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
     );
 
-    hypermesh::exact::boolean_exact(
+    hypermesh::boolean_exact(
         &left,
         &right,
         ExactBooleanOperation::Union,
@@ -6651,7 +5488,7 @@ fn exercise_overlapping_component_holed_coplanar_union() {
         ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
     );
 
-    hypermesh::exact::boolean_exact(
+    hypermesh::boolean_exact(
         &left,
         &right,
         ExactBooleanOperation::Union,
@@ -6714,7 +5551,7 @@ fn exercise_nonconvex_overlap_component_holed_coplanar_union() {
         ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
     );
 
-    hypermesh::exact::boolean_exact(
+    hypermesh::boolean_exact(
         &left,
         &right,
         ExactBooleanOperation::Union,
@@ -6786,7 +5623,7 @@ fn exercise_point_branch_component_holed_coplanar_union() {
         ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
     );
 
-    hypermesh::exact::boolean_exact(
+    hypermesh::boolean_exact(
         &left,
         &right,
         ExactBooleanOperation::Union,
@@ -6855,7 +5692,7 @@ fn exercise_contact_opening_with_retained_hole() {
         ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
     );
 
-    let result = hypermesh::exact::boolean_exact(
+    let result = hypermesh::boolean_exact(
         &left,
         &opening_plus_hole,
         ExactBooleanOperation::Difference,
@@ -7024,7 +5861,7 @@ fn exercise_connected_multi_cutter_opening_with_retained_hole() {
         ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
     );
 
-    let result = hypermesh::exact::boolean_exact(
+    let result = hypermesh::boolean_exact(
         &left,
         &connected_opening,
         ExactBooleanOperation::Difference,
@@ -7107,7 +5944,7 @@ fn exercise_multiple_side_cutter_openings_with_retained_hole() {
         ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
     );
 
-    let result = hypermesh::exact::boolean_exact(
+    let result = hypermesh::boolean_exact(
         &left,
         &openings,
         ExactBooleanOperation::Difference,
@@ -7763,7 +6600,7 @@ fn exercise_consumed_hole_side_cutter_openings() {
         multi_component_preflight.support,
         ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
     );
-    let multi_component_result = hypermesh::exact::boolean_exact(
+    let multi_component_result = hypermesh::boolean_exact(
         &multi_component_consumed,
         &multi_component_consumed_right,
         ExactBooleanOperation::Difference,
@@ -8147,7 +6984,7 @@ fn exercise_side_cutter_opening_without_holes() {
         single_preflight.support,
         ExactBooleanSupport::CertifiedCoplanarConvexSurfaceArrangementDifference
     );
-    let single_result = hypermesh::exact::boolean_exact(
+    let single_result = hypermesh::boolean_exact(
         &left,
         &single_cutter,
         ExactBooleanOperation::Difference,
@@ -8185,7 +7022,7 @@ fn exercise_side_cutter_opening_without_holes() {
         ExactBooleanSupport::CertifiedCoplanarSurfaceSideCutterDifference
     );
 
-    let result = hypermesh::exact::boolean_exact(
+    let result = hypermesh::boolean_exact(
         &left,
         &cutters,
         ExactBooleanOperation::Difference,
@@ -8245,7 +7082,7 @@ fn exercise_side_cutter_opening_without_holes() {
         multi_component_side_opening_preflight.support,
         ExactBooleanSupport::CertifiedCoplanarSurfaceMultiDifference
     );
-    let multi_component_side_opening_result = hypermesh::exact::boolean_exact(
+    let multi_component_side_opening_result = hypermesh::boolean_exact(
         &multi_component_side_opening_left,
         &cutters,
         ExactBooleanOperation::Difference,
@@ -8293,7 +7130,7 @@ fn exercise_side_cutter_opening_without_holes() {
         multi_component_single_preflight.support,
         ExactBooleanSupport::CertifiedCoplanarSurfaceMultiDifference
     );
-    let multi_component_single_result = hypermesh::exact::boolean_exact(
+    let multi_component_single_result = hypermesh::boolean_exact(
         &multi_component_side_opening_left,
         &single_cutter,
         ExactBooleanOperation::Difference,
@@ -8338,7 +7175,7 @@ fn exercise_side_cutter_opening_without_holes() {
         point_branch_preflight.support,
         ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchDifference
     );
-    let point_branch_result = hypermesh::exact::boolean_exact(
+    let point_branch_result = hypermesh::boolean_exact(
         &left,
         &point_only,
         ExactBooleanOperation::Difference,
@@ -8356,8 +7193,8 @@ fn exercise_side_cutter_opening_without_holes() {
         .unwrap();
     assert_eq!(
         point_branch_result.kind,
-        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::exact::ExactBooleanShortcutKind::CoplanarSurfacePointTouchDifference
+        hypermesh::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::ExactBooleanShortcutKind::CoplanarSurfacePointTouchDifference
         }
     );
 
@@ -8621,7 +7458,7 @@ fn exercise_side_cutter_opening_without_holes() {
         grouped_straddling_preflight.support,
         ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchDifference
     );
-    let grouped_straddling_result = hypermesh::exact::boolean_exact(
+    let grouped_straddling_result = hypermesh::boolean_exact(
         &grouped_straddling_branch_left,
         &grouped_straddling_branch_right,
         ExactBooleanOperation::Difference,
@@ -8689,7 +7526,7 @@ fn exercise_side_cutter_opening_without_holes() {
         orthogonal_grouped_preflight.support,
         ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchDifference
     );
-    let orthogonal_grouped_result = hypermesh::exact::boolean_exact(
+    let orthogonal_grouped_result = hypermesh::boolean_exact(
         &grouped_straddling_branch_left,
         &orthogonal_grouped_straddling_branch_right,
         ExactBooleanOperation::Difference,
@@ -8769,7 +7606,7 @@ fn exercise_side_cutter_opening_without_holes() {
         grouped_retained_preflight.support,
         ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
     );
-    let grouped_retained_result = hypermesh::exact::boolean_exact(
+    let grouped_retained_result = hypermesh::boolean_exact(
         &grouped_straddling_branch_left,
         &grouped_straddling_retained_right,
         ExactBooleanOperation::Difference,
@@ -8917,7 +7754,7 @@ fn exercise_side_cutter_opening_without_holes() {
         multi_component_grouped_preflight.support,
         ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
     );
-    hypermesh::exact::boolean_exact(
+    hypermesh::boolean_exact(
         &multi_component_grouped_left,
         &multi_component_grouped_right,
         ExactBooleanOperation::Difference,
@@ -9027,7 +7864,7 @@ fn exercise_side_cutter_opening_without_holes() {
         multi_component_point_branch_preflight.support,
         ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchDifference
     );
-    let multi_component_point_branch_result = hypermesh::exact::boolean_exact(
+    let multi_component_point_branch_result = hypermesh::boolean_exact(
         &multi_component_point_branch_left,
         &point_only,
         ExactBooleanOperation::Difference,
@@ -9045,8 +7882,8 @@ fn exercise_side_cutter_opening_without_holes() {
         .unwrap();
     assert_eq!(
         multi_component_point_branch_result.kind,
-        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::exact::ExactBooleanShortcutKind::CoplanarSurfacePointTouchDifference
+        hypermesh::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::ExactBooleanShortcutKind::CoplanarSurfacePointTouchDifference
         }
     );
 
@@ -9101,7 +7938,7 @@ fn exercise_side_cutter_opening_without_holes() {
         multi_component_point_branch_holed_preflight.support,
         ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
     );
-    let multi_component_point_branch_holed_result = hypermesh::exact::boolean_exact(
+    let multi_component_point_branch_holed_result = hypermesh::boolean_exact(
         &multi_component_point_branch_left,
         &multi_component_point_branch_straddling_right,
         ExactBooleanOperation::Difference,
@@ -9151,7 +7988,7 @@ fn exercise_side_cutter_opening_without_holes() {
         nonconvex_point_branch_preflight.support,
         ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchDifference
     );
-    let nonconvex_point_branch_result = hypermesh::exact::boolean_exact(
+    let nonconvex_point_branch_result = hypermesh::boolean_exact(
         &nonconvex_left,
         &point_only,
         ExactBooleanOperation::Difference,
@@ -9169,8 +8006,8 @@ fn exercise_side_cutter_opening_without_holes() {
         .unwrap();
     assert_eq!(
         nonconvex_point_branch_result.kind,
-        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::exact::ExactBooleanShortcutKind::CoplanarSurfacePointTouchDifference
+        hypermesh::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::ExactBooleanShortcutKind::CoplanarSurfacePointTouchDifference
         }
     );
 
@@ -9292,7 +8129,7 @@ fn exercise_side_cutter_opening_without_holes() {
         nonconvex_grouped_preflight.support,
         ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchDifference
     );
-    hypermesh::exact::boolean_exact(
+    hypermesh::boolean_exact(
         &nonconvex_grouped_left,
         &nonconvex_grouped_right,
         ExactBooleanOperation::Difference,
@@ -9354,7 +8191,7 @@ fn exercise_side_cutter_opening_without_holes() {
         nonconvex_grouped_retained_preflight.support,
         ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
     );
-    hypermesh::exact::boolean_exact(
+    hypermesh::boolean_exact(
         &nonconvex_grouped_left,
         &nonconvex_grouped_retained_right,
         ExactBooleanOperation::Difference,
@@ -9449,7 +8286,7 @@ fn exercise_side_cutter_opening_without_holes() {
         multi_component_nonconvex_grouped_preflight.support,
         ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
     );
-    hypermesh::exact::boolean_exact(
+    hypermesh::boolean_exact(
         &multi_component_nonconvex_grouped_left,
         &multi_component_nonconvex_grouped_right,
         ExactBooleanOperation::Difference,
@@ -9566,7 +8403,7 @@ fn exercise_side_cutter_opening_without_holes() {
         multi_component_nonconvex_preflight.support,
         ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchDifference
     );
-    let multi_component_nonconvex_result = hypermesh::exact::boolean_exact(
+    let multi_component_nonconvex_result = hypermesh::boolean_exact(
         &multi_component_nonconvex_left,
         &point_only,
         ExactBooleanOperation::Difference,
@@ -9584,8 +8421,8 @@ fn exercise_side_cutter_opening_without_holes() {
         .unwrap();
     assert_eq!(
         multi_component_nonconvex_result.kind,
-        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::exact::ExactBooleanShortcutKind::CoplanarSurfacePointTouchDifference
+        hypermesh::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::ExactBooleanShortcutKind::CoplanarSurfacePointTouchDifference
         }
     );
 
@@ -9640,7 +8477,7 @@ fn exercise_side_cutter_opening_without_holes() {
         multi_component_nonconvex_holed_preflight.support,
         ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
     );
-    let multi_component_nonconvex_holed_result = hypermesh::exact::boolean_exact(
+    let multi_component_nonconvex_holed_result = hypermesh::boolean_exact(
         &multi_component_nonconvex_left,
         &multi_component_nonconvex_point_branch_straddling_right,
         ExactBooleanOperation::Difference,
@@ -9689,7 +8526,7 @@ fn exercise_side_cutter_opening_without_holes() {
         incidental_preflight.support,
         ExactBooleanSupport::CertifiedCoplanarSurfaceSideCutterDifference
     );
-    hypermesh::exact::boolean_exact(
+    hypermesh::boolean_exact(
         &left,
         &incidental_point_cutters,
         ExactBooleanOperation::Difference,
@@ -9779,7 +8616,7 @@ fn exercise_component_coplanar_intersection() {
         nonconvex_preflight.support,
         ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
     );
-    let nonconvex_result = hypermesh::exact::boolean_exact(
+    let nonconvex_result = hypermesh::boolean_exact(
         &nonconvex_left,
         &covering,
         ExactBooleanOperation::Intersection,
@@ -9848,7 +8685,7 @@ fn exercise_component_coplanar_intersection() {
         disconnected_preflight.support,
         ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
     );
-    let disconnected_result = hypermesh::exact::boolean_exact(
+    let disconnected_result = hypermesh::boolean_exact(
         &disconnected_nonconvex_left,
         &disconnected_covering,
         ExactBooleanOperation::Intersection,
@@ -9900,7 +8737,7 @@ fn exercise_component_coplanar_difference() {
         ExactBooleanSupport::CertifiedCoplanarConvexSurfaceMultiDifference
     );
 
-    let result = hypermesh::exact::boolean_exact(
+    let result = hypermesh::boolean_exact(
         &left,
         &right,
         ExactBooleanOperation::Difference,
@@ -10143,7 +8980,7 @@ fn exercise_component_coplanar_difference() {
         component_opening_preflight.support,
         ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementDifference
     );
-    let component_opening_result = hypermesh::exact::boolean_exact(
+    let component_opening_result = hypermesh::boolean_exact(
         &component_opening_left,
         &component_opening_right,
         ExactBooleanOperation::Difference,
@@ -10846,7 +9683,7 @@ fn exercise_component_coplanar_difference() {
         partial_height_preflight.support,
         ExactBooleanSupport::CertifiedCoplanarSurfaceMultiDifference
     );
-    let partial_height_result = hypermesh::exact::boolean_exact(
+    let partial_height_result = hypermesh::boolean_exact(
         &wide_left,
         &partial_height_cutters,
         ExactBooleanOperation::Difference,
@@ -10856,8 +9693,8 @@ fn exercise_component_coplanar_difference() {
     partial_height_result.validate().unwrap();
     assert_eq!(
         partial_height_result.kind,
-        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::exact::ExactBooleanShortcutKind::CoplanarSurfaceMultiDifference
+        hypermesh::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::ExactBooleanShortcutKind::CoplanarSurfaceMultiDifference
         }
     );
     let contained_hole_cutters = ExactMesh::from_i64_triangles_with_policy(
@@ -11398,7 +10235,7 @@ fn exercise_component_coplanar_difference() {
         partial_height_component_holed_preflight.support,
         ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
     );
-    let partial_height_component_holed_result = hypermesh::exact::boolean_exact(
+    let partial_height_component_holed_result = hypermesh::boolean_exact(
         &holed_left,
         &holed_partial_height_cutters_right,
         ExactBooleanOperation::Difference,
@@ -11408,8 +10245,8 @@ fn exercise_component_coplanar_difference() {
     partial_height_component_holed_result.validate().unwrap();
     assert_eq!(
         partial_height_component_holed_result.kind,
-        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::exact::ExactBooleanShortcutKind::
+        hypermesh::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::ExactBooleanShortcutKind::
                 CoplanarConvexSurfaceComponentHoledDifference
         }
     );
@@ -11566,7 +10403,7 @@ fn exercise_component_coplanar_difference() {
         affine_contact_preflight.support,
         ExactBooleanSupport::CertifiedCoplanarSurfaceCutterHoleContactDifference
     );
-    let affine_contact_boolean = hypermesh::exact::boolean_exact(
+    let affine_contact_boolean = hypermesh::boolean_exact(
         &affine_contact_left,
         &affine_contact_right,
         ExactBooleanOperation::Difference,
@@ -11576,8 +10413,8 @@ fn exercise_component_coplanar_difference() {
     affine_contact_boolean.validate().unwrap();
     assert_eq!(
         affine_contact_boolean.kind,
-        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::exact::ExactBooleanShortcutKind::
+        hypermesh::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::ExactBooleanShortcutKind::
                 CoplanarSurfaceCutterHoleContactDifference
         }
     );
@@ -11641,7 +10478,7 @@ fn exercise_component_coplanar_difference() {
         rectangular_overlap_preflight.support,
         ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceDifference
     );
-    let rectangular_overlap_result = hypermesh::exact::boolean_exact(
+    let rectangular_overlap_result = hypermesh::boolean_exact(
         &nonrect_contact_left,
         &rectangular_overlap_right,
         ExactBooleanOperation::Difference,
@@ -11651,8 +10488,8 @@ fn exercise_component_coplanar_difference() {
     rectangular_overlap_result.validate().unwrap();
     assert_eq!(
         rectangular_overlap_result.kind,
-        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::exact::ExactBooleanShortcutKind::
+        hypermesh::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::ExactBooleanShortcutKind::
                 CoplanarOrthogonalSurfaceDifference
         }
     );
@@ -11825,7 +10662,7 @@ fn exercise_component_coplanar_difference() {
         incidental_point_preflight.support,
         ExactBooleanSupport::CertifiedCoplanarSurfaceCutterHoleContactDifference
     );
-    hypermesh::exact::boolean_exact(
+    hypermesh::boolean_exact(
         &nonrect_contact_left,
         &incidental_point_group_right,
         ExactBooleanOperation::Difference,
@@ -11876,7 +10713,7 @@ fn exercise_component_coplanar_difference() {
         union_preflight.support,
         ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceUnion
     );
-    hypermesh::exact::boolean_exact(
+    hypermesh::boolean_exact(
         &l_left,
         &l_right,
         ExactBooleanOperation::Union,
@@ -12172,7 +11009,7 @@ fn exercise_component_coplanar_difference() {
         overlap_union_preflight.support,
         ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceUnion
     );
-    let overlap_union_result = hypermesh::exact::boolean_exact(
+    let overlap_union_result = hypermesh::boolean_exact(
         &overlap_source_left,
         &overlap_source_right,
         ExactBooleanOperation::Union,
@@ -12182,8 +11019,8 @@ fn exercise_component_coplanar_difference() {
     overlap_union_result.validate().unwrap();
     assert_eq!(
         overlap_union_result.kind,
-        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::exact::ExactBooleanShortcutKind::CoplanarOrthogonalSurfaceUnion
+        hypermesh::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::ExactBooleanShortcutKind::CoplanarOrthogonalSurfaceUnion
         }
     );
 
@@ -12470,7 +11307,7 @@ fn exercise_face_interior_steiner_boundary() {
     )
     .unwrap();
     let triangulation = FaceRegionTriangulation {
-        side: hypermesh::exact::graph::MeshSide::Left,
+        side: hypermesh::graph::MeshSide::Left,
         face: 0,
         projection: CoplanarProjection::Xy,
         boundary: vec![
@@ -12549,7 +11386,7 @@ fn exercise_face_interior_steiner_boundary() {
     assert!(preflight.blocker.is_none());
     assert!(preflight.region_count > 0);
 
-    let union = hypermesh::exact::boolean_exact(
+    let union = hypermesh::boolean_exact(
         &crossing_left,
         &crossing_right,
         ExactBooleanOperation::Union,
@@ -12567,7 +11404,7 @@ fn exercise_face_interior_steiner_boundary() {
         .unwrap();
     assert_eq!(
         union.kind,
-        hypermesh::exact::ExactBooleanResultKind::OpenSurfaceArrangement {
+        hypermesh::ExactBooleanResultKind::OpenSurfaceArrangement {
             operation: ExactBooleanOperation::Union,
         }
     );
@@ -12586,7 +11423,7 @@ fn exercise_face_interior_steiner_boundary() {
         difference.support,
         ExactBooleanSupport::CertifiedOpenSurfaceArrangementDifference
     );
-    let difference_result = hypermesh::exact::boolean_exact(
+    let difference_result = hypermesh::boolean_exact(
         &crossing_left,
         &crossing_right,
         ExactBooleanOperation::Difference,
@@ -12604,7 +11441,7 @@ fn exercise_face_interior_steiner_boundary() {
         .unwrap();
     assert_eq!(
         difference_result.kind,
-        hypermesh::exact::ExactBooleanResultKind::OpenSurfaceArrangement {
+        hypermesh::ExactBooleanResultKind::OpenSurfaceArrangement {
             operation: ExactBooleanOperation::Difference,
         }
     );
@@ -12626,7 +11463,7 @@ fn exercise_face_interior_steiner_boundary() {
     assert!(intersection.blocker.is_none());
     assert!(intersection.region_count > 0);
 
-    let intersection_result = hypermesh::exact::boolean_exact(
+    let intersection_result = hypermesh::boolean_exact(
         &crossing_left,
         &crossing_right,
         ExactBooleanOperation::Intersection,
@@ -12644,7 +11481,7 @@ fn exercise_face_interior_steiner_boundary() {
         .unwrap();
     assert_eq!(
         intersection_result.kind,
-        hypermesh::exact::ExactBooleanResultKind::OpenSurfaceArrangement {
+        hypermesh::ExactBooleanResultKind::OpenSurfaceArrangement {
             operation: ExactBooleanOperation::Intersection,
         }
     );
@@ -12657,7 +11494,7 @@ fn exercise_boundary_centroid_volumetric_representative() {
     )
     .unwrap();
     let triangulation = FaceRegionTriangulation {
-        side: hypermesh::exact::graph::MeshSide::Left,
+        side: hypermesh::graph::MeshSide::Left,
         face: 0,
         projection: CoplanarProjection::Xy,
         boundary: vec![
@@ -12683,17 +11520,17 @@ fn exercise_boundary_centroid_volumetric_representative() {
         Real::from(1),
     );
     let centroid_report =
-        hypermesh::exact::classify_point_against_closed_mesh_winding_report(&centroid, &target);
+        hypermesh::classify_point_against_closed_mesh_winding_report(&centroid, &target);
     assert_eq!(
         centroid_report.relation,
-        hypermesh::exact::ClosedMeshWindingRelation::Boundary
+        hypermesh::ClosedMeshWindingRelation::Boundary
     );
     centroid_report
         .validate_against_sources(&centroid, &target)
         .unwrap();
 
     let classification =
-        hypermesh::exact::volumetric::classify_triangulated_region_triangle_against_closed_mesh(
+        hypermesh::volumetric::classify_triangulated_region_triangle_against_closed_mesh(
             &triangulation,
             [0, 1, 2],
             &target,
@@ -12701,11 +11538,11 @@ fn exercise_boundary_centroid_volumetric_representative() {
         .unwrap();
     assert_eq!(
         classification.relation,
-        hypermesh::exact::volumetric::ExactVolumetricRegionRelation::Inside
+        hypermesh::volumetric::ExactVolumetricRegionRelation::Inside
     );
     assert_eq!(
         classification.representative_witness,
-        hypermesh::exact::witness::ExactTriangleInteriorWitness::new([2, 1, 1])
+        hypermesh::witness::ExactTriangleInteriorWitness::new([2, 1, 1])
     );
     assert_eq!(classification.witness_attempts.len(), 2);
     classification.representative_witness.validate().unwrap();
@@ -12721,7 +11558,7 @@ fn exercise_exhausted_boundary_volumetric_representatives() {
     )
     .unwrap();
     let triangulation = FaceRegionTriangulation {
-        side: hypermesh::exact::graph::MeshSide::Left,
+        side: hypermesh::graph::MeshSide::Left,
         face: 0,
         projection: CoplanarProjection::Xy,
         boundary: vec![
@@ -12743,7 +11580,7 @@ fn exercise_exhausted_boundary_volumetric_representatives() {
     };
 
     let classification =
-        hypermesh::exact::volumetric::classify_triangulated_region_triangle_against_closed_mesh(
+        hypermesh::volumetric::classify_triangulated_region_triangle_against_closed_mesh(
             &triangulation,
             [0, 1, 2],
             &target,
@@ -12751,11 +11588,11 @@ fn exercise_exhausted_boundary_volumetric_representatives() {
         .unwrap();
     assert_eq!(
         classification.relation,
-        hypermesh::exact::volumetric::ExactVolumetricRegionRelation::Boundary
+        hypermesh::volumetric::ExactVolumetricRegionRelation::Boundary
     );
     assert_eq!(
         classification.witness_attempts.len(),
-        hypermesh::exact::witness::EXACT_TRIANGLE_INTERIOR_WITNESSES.len()
+        hypermesh::witness::EXACT_TRIANGLE_INTERIOR_WITNESSES.len()
     );
     classification
         .validate_against_sources(&triangulation, &target)
@@ -12773,7 +11610,7 @@ fn exercise_closed_coplanar_overlap_boundary_policy() {
         .validate_against_meshes(&left, &right)
         .expect("graph should replay against sources");
     assert!(graph.face_pairs.iter().any(|pair| {
-        pair.relation == hypermesh::exact::MeshFacePairRelation::CoplanarOverlapping
+        pair.relation == hypermesh::MeshFacePairRelation::CoplanarOverlapping
     }));
 
     let boundary_report = certify_boundary_touching_report(&left, &right)
@@ -12784,7 +11621,7 @@ fn exercise_closed_coplanar_overlap_boundary_policy() {
         .unwrap();
     assert_eq!(
         boundary_report.status,
-        hypermesh::exact::ExactBoundaryTouchingStatus::Certified
+        hypermesh::ExactBoundaryTouchingStatus::Certified
     );
     assert!(boundary_report.blocker.coplanar_overlapping_pairs > 0);
 
@@ -12796,10 +11633,10 @@ fn exercise_closed_coplanar_overlap_boundary_policy() {
         .unwrap();
     assert_eq!(
         planar_report.status,
-        hypermesh::exact::ExactPlanarArrangementStatus::BoundaryPolicyRequired
+        hypermesh::ExactPlanarArrangementStatus::BoundaryPolicyRequired
     );
 
-    let direct_union = hypermesh::exact::adjacent::materialize_full_face_adjacent_union(
+    let direct_union = hypermesh::adjacent::materialize_full_face_adjacent_union(
         &left,
         &right,
         ValidationPolicy::CLOSED,
@@ -12840,8 +11677,8 @@ fn exercise_closed_coplanar_overlap_boundary_policy() {
         .unwrap();
     assert_eq!(
         union.kind,
-        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::exact::ExactBooleanShortcutKind::FullFaceAdjacentUnion
+        hypermesh::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::ExactBooleanShortcutKind::FullFaceAdjacentUnion
         }
     );
     assert_eq!(union.mesh, direct_union.mesh);
@@ -12876,8 +11713,8 @@ fn exercise_closed_coplanar_overlap_boundary_policy() {
         .unwrap();
     assert_eq!(
         intersection.kind,
-        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::exact::ExactBooleanShortcutKind::FullFaceAdjacentIntersection
+        hypermesh::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::ExactBooleanShortcutKind::FullFaceAdjacentIntersection
         }
     );
     assert!(intersection.mesh.triangles().is_empty());
@@ -12912,8 +11749,8 @@ fn exercise_closed_coplanar_overlap_boundary_policy() {
         .unwrap();
     assert_eq!(
         difference.kind,
-        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::exact::ExactBooleanShortcutKind::FullFaceAdjacentDifference
+        hypermesh::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::ExactBooleanShortcutKind::FullFaceAdjacentDifference
         }
     );
     assert_eq!(difference.mesh.vertices(), left.vertices());
@@ -12942,7 +11779,7 @@ fn exercise_closed_vertex_touch_boundary_policy() {
         graph
             .face_pairs
             .iter()
-            .any(|pair| { pair.relation == hypermesh::exact::MeshFacePairRelation::Candidate })
+            .any(|pair| { pair.relation == hypermesh::MeshFacePairRelation::Candidate })
     );
 
     let boundary_report = certify_boundary_touching_report(&left, &right)
@@ -12953,7 +11790,7 @@ fn exercise_closed_vertex_touch_boundary_policy() {
         .unwrap();
     assert_eq!(
         boundary_report.status,
-        hypermesh::exact::ExactBoundaryTouchingStatus::Certified
+        hypermesh::ExactBoundaryTouchingStatus::Certified
     );
     assert!(boundary_report.blocker.candidate_pairs > 0);
 
@@ -12965,7 +11802,7 @@ fn exercise_closed_vertex_touch_boundary_policy() {
         preflight.support,
         ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion
     );
-    let union = hypermesh::exact::boolean_exact(
+    let union = hypermesh::boolean_exact(
         &left,
         &right,
         ExactBooleanOperation::Union,
@@ -12983,8 +11820,8 @@ fn exercise_closed_vertex_touch_boundary_policy() {
         .unwrap();
     assert_eq!(
         union.kind,
-        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ClosedBoundaryTouchingUnion
+        hypermesh::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::ExactBooleanShortcutKind::ClosedBoundaryTouchingUnion
         }
     );
 
@@ -12999,7 +11836,7 @@ fn exercise_closed_vertex_touch_boundary_policy() {
         intersection_preflight.support,
         ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
     );
-    let intersection = hypermesh::exact::boolean_exact(
+    let intersection = hypermesh::boolean_exact(
         &left,
         &right,
         ExactBooleanOperation::Intersection,
@@ -13028,7 +11865,7 @@ fn exercise_closed_vertex_touch_boundary_policy() {
         difference_preflight.support,
         ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference
     );
-    let difference = hypermesh::exact::boolean_exact(
+    let difference = hypermesh::boolean_exact(
         &left,
         &right,
         ExactBooleanOperation::Difference,
@@ -14107,7 +12944,7 @@ fn exercise_full_face_adjacent_union() {
     let right = tetrahedron_i64([0, 0, 0], [0, 4, 0], [4, 0, 0], [0, 0, -4]);
 
     let union =
-        hypermesh::exact::adjacent::materialize_full_face_adjacent_union(&left, &right, ValidationPolicy::CLOSED)
+        hypermesh::adjacent::materialize_full_face_adjacent_union(&left, &right, ValidationPolicy::CLOSED)
             .expect("full-face adjacent fuzz fixture should materialize");
     union.validate().unwrap();
     union.validate_against_sources(&left, &right).unwrap();
@@ -14146,8 +12983,8 @@ fn exercise_full_face_adjacent_union() {
         .unwrap();
     assert_eq!(
         result.kind,
-        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::exact::ExactBooleanShortcutKind::FullFaceAdjacentUnion
+        hypermesh::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::ExactBooleanShortcutKind::FullFaceAdjacentUnion
         }
     );
 
@@ -14180,8 +13017,8 @@ fn exercise_full_face_adjacent_union() {
         .unwrap();
     assert_eq!(
         intersection.kind,
-        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::exact::ExactBooleanShortcutKind::FullFaceAdjacentIntersection
+        hypermesh::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::ExactBooleanShortcutKind::FullFaceAdjacentIntersection
         }
     );
     assert!(intersection.mesh.triangles().is_empty());
@@ -14215,8 +13052,8 @@ fn exercise_full_face_adjacent_union() {
         .unwrap();
     assert_eq!(
         difference.kind,
-        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::exact::ExactBooleanShortcutKind::FullFaceAdjacentDifference
+        hypermesh::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::ExactBooleanShortcutKind::FullFaceAdjacentDifference
         }
     );
     assert_eq!(difference.mesh.vertices(), left.vertices());
@@ -14224,7 +13061,7 @@ fn exercise_full_face_adjacent_union() {
 
     let same_orientation = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, -4]);
     assert!(
-        hypermesh::exact::adjacent::materialize_full_face_adjacent_union(
+        hypermesh::adjacent::materialize_full_face_adjacent_union(
             &left,
             &same_orientation,
             ValidationPolicy::CLOSED,
@@ -14234,7 +13071,7 @@ fn exercise_full_face_adjacent_union() {
 
     let same_side_overlap = tetrahedron_i64([0, 0, 0], [0, 4, 0], [4, 0, 0], [0, 0, 2]);
     assert!(
-        hypermesh::exact::adjacent::materialize_full_face_adjacent_union(
+        hypermesh::adjacent::materialize_full_face_adjacent_union(
             &left,
             &same_side_overlap,
             ValidationPolicy::CLOSED,
@@ -14244,7 +13081,7 @@ fn exercise_full_face_adjacent_union() {
 
     let fan_right =
         base_fan_tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [1, 1, 0], [0, 0, -4]);
-    let fan_union = hypermesh::exact::adjacent::materialize_full_face_adjacent_union(
+    let fan_union = hypermesh::adjacent::materialize_full_face_adjacent_union(
         &left,
         &fan_right,
         ValidationPolicy::CLOSED,
@@ -14332,7 +13169,7 @@ fn exercise_full_face_adjacent_union() {
     let same_side_fan =
         base_fan_tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [1, 1, 0], [0, 0, 2]);
     assert!(
-        hypermesh::exact::adjacent::materialize_full_face_adjacent_union(
+        hypermesh::adjacent::materialize_full_face_adjacent_union(
             &left,
             &same_side_fan,
             ValidationPolicy::CLOSED,
@@ -14344,7 +13181,7 @@ fn exercise_full_face_adjacent_union() {
         upper_base_fan_tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [1, 1, 0], [0, 0, 4]);
     let dual_fan_right =
         base_fan_tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [2, 1, 0], [0, 0, -4]);
-    let dual_fan_union = hypermesh::exact::adjacent::materialize_full_face_adjacent_union(
+    let dual_fan_union = hypermesh::adjacent::materialize_full_face_adjacent_union(
         &dual_fan_left,
         &dual_fan_right,
         ValidationPolicy::CLOSED,
@@ -14392,7 +13229,7 @@ fn exercise_full_face_adjacent_union() {
         [0, 4, 0],
         [2, 2, -4],
     );
-    let quad_union = hypermesh::exact::adjacent::materialize_full_face_adjacent_union(
+    let quad_union = hypermesh::adjacent::materialize_full_face_adjacent_union(
         &quad_left,
         &quad_right,
         ValidationPolicy::CLOSED,
@@ -14434,7 +13271,7 @@ fn exercise_full_face_adjacent_union() {
         [2, 2, 0],
         [2, 2, -4],
     );
-    let quad_fan_union = hypermesh::exact::adjacent::materialize_full_face_adjacent_union(
+    let quad_fan_union = hypermesh::adjacent::materialize_full_face_adjacent_union(
         &quad_left,
         &quad_fan_right,
         ValidationPolicy::CLOSED,
@@ -14460,7 +13297,7 @@ fn exercise_full_face_adjacent_union() {
         [2, 2, 4],
     );
     assert!(
-        hypermesh::exact::adjacent::materialize_full_face_adjacent_union(
+        hypermesh::adjacent::materialize_full_face_adjacent_union(
             &quad_left,
             &same_side_quad_fan,
             ValidationPolicy::CLOSED,
@@ -14498,7 +13335,7 @@ fn exercise_full_face_adjacent_union() {
     );
     let two_branch_left =
         upward_square_pyramid_i64([0, 0, 0], [6, 0, 0], [6, 6, 0], [0, 6, 0], [3, 3, 5]);
-    let two_branch_union = hypermesh::exact::adjacent::materialize_full_face_adjacent_union(
+    let two_branch_union = hypermesh::adjacent::materialize_full_face_adjacent_union(
         &two_branch_left,
         &two_branch_right,
         ValidationPolicy::CLOSED,
@@ -14524,7 +13361,7 @@ fn exercise_full_face_adjacent_union() {
         [3, 3, 5],
     );
     assert!(
-        hypermesh::exact::adjacent::materialize_full_face_adjacent_union(
+        hypermesh::adjacent::materialize_full_face_adjacent_union(
             &two_branch_left,
             &same_side_two_branch,
             ValidationPolicy::CLOSED,
@@ -14554,7 +13391,7 @@ fn exercise_full_face_adjacent_union() {
     let l_boundary = [[0, 0], [4, 0], [4, 2], [2, 2], [2, 4], [0, 4]];
     let l_left = upward_l_prism_i64(l_boundary, 5);
     let l_right = downward_l_prism_i64(l_boundary, -5);
-    let l_union = hypermesh::exact::adjacent::materialize_full_face_adjacent_union(
+    let l_union = hypermesh::adjacent::materialize_full_face_adjacent_union(
         &l_left,
         &l_right,
         ValidationPolicy::CLOSED,
@@ -14570,7 +13407,7 @@ fn exercise_full_face_adjacent_union() {
 
     let same_side_l = upward_l_prism_i64(l_boundary, 5);
     assert!(
-        hypermesh::exact::adjacent::materialize_full_face_adjacent_union(
+        hypermesh::adjacent::materialize_full_face_adjacent_union(
             &l_left,
             &same_side_l,
             ValidationPolicy::CLOSED,
@@ -14614,7 +13451,7 @@ fn exercise_full_face_adjacent_union() {
         [2, 2, 0],
         [2, 2, -4],
     );
-    let pentagon_union = hypermesh::exact::adjacent::materialize_full_face_adjacent_union(
+    let pentagon_union = hypermesh::adjacent::materialize_full_face_adjacent_union(
         &pentagon_left,
         &pentagon_fan_right,
         ValidationPolicy::CLOSED,
@@ -14640,7 +13477,7 @@ fn exercise_full_face_adjacent_union() {
         [2, 2, 4],
     );
     assert!(
-        hypermesh::exact::adjacent::materialize_full_face_adjacent_union(
+        hypermesh::adjacent::materialize_full_face_adjacent_union(
             &pentagon_left,
             &same_side_pentagon_fan,
             ValidationPolicy::CLOSED,
@@ -14678,7 +13515,7 @@ fn exercise_full_face_adjacent_union() {
     let hexagon_left = upward_hexagonal_pyramid_i64(hexagon_boundary, [2, 3, 5]);
     let hexagon_fan_right =
         downward_hexagonal_pyramid_fan_i64(hexagon_boundary, [2, 3, 0], [2, 3, -5]);
-    let hexagon_union = hypermesh::exact::adjacent::materialize_full_face_adjacent_union(
+    let hexagon_union = hypermesh::adjacent::materialize_full_face_adjacent_union(
         &hexagon_left,
         &hexagon_fan_right,
         ValidationPolicy::CLOSED,
@@ -14700,7 +13537,7 @@ fn exercise_full_face_adjacent_union() {
     let same_side_hexagon_fan =
         upward_hexagonal_pyramid_fan_i64(hexagon_boundary, [2, 3, 0], [2, 3, 5]);
     assert!(
-        hypermesh::exact::adjacent::materialize_full_face_adjacent_union(
+        hypermesh::adjacent::materialize_full_face_adjacent_union(
             &hexagon_left,
             &same_side_hexagon_fan,
             ValidationPolicy::CLOSED,
@@ -14739,7 +13576,7 @@ fn exercise_full_face_adjacent_union() {
     let heptagon_left = upward_heptagonal_pyramid_i64(heptagon_boundary, [2, 4, 6]);
     let heptagon_fan_right =
         downward_heptagonal_pyramid_fan_i64(heptagon_boundary, [2, 4, 0], [2, 4, -6]);
-    let heptagon_union = hypermesh::exact::adjacent::materialize_full_face_adjacent_union(
+    let heptagon_union = hypermesh::adjacent::materialize_full_face_adjacent_union(
         &heptagon_left,
         &heptagon_fan_right,
         ValidationPolicy::CLOSED,
@@ -14761,7 +13598,7 @@ fn exercise_full_face_adjacent_union() {
     let same_side_heptagon_fan =
         upward_heptagonal_pyramid_fan_i64(heptagon_boundary, [2, 4, 0], [2, 4, 6]);
     assert!(
-        hypermesh::exact::adjacent::materialize_full_face_adjacent_union(
+        hypermesh::adjacent::materialize_full_face_adjacent_union(
             &heptagon_left,
             &same_side_heptagon_fan,
             ValidationPolicy::CLOSED,
@@ -14801,7 +13638,7 @@ fn exercise_full_face_adjacent_union() {
     let octagon_left = upward_octagonal_pyramid_i64(octagon_boundary, [2, 4, 7]);
     let octagon_fan_right =
         downward_octagonal_pyramid_fan_i64(octagon_boundary, [2, 4, 0], [2, 4, -7]);
-    let octagon_union = hypermesh::exact::adjacent::materialize_full_face_adjacent_union(
+    let octagon_union = hypermesh::adjacent::materialize_full_face_adjacent_union(
         &octagon_left,
         &octagon_fan_right,
         ValidationPolicy::CLOSED,
@@ -14823,7 +13660,7 @@ fn exercise_full_face_adjacent_union() {
     let same_side_octagon_fan =
         upward_octagonal_pyramid_fan_i64(octagon_boundary, [2, 4, 0], [2, 4, 7]);
     assert!(
-        hypermesh::exact::adjacent::materialize_full_face_adjacent_union(
+        hypermesh::adjacent::materialize_full_face_adjacent_union(
             &octagon_left,
             &same_side_octagon_fan,
             ValidationPolicy::CLOSED,
@@ -14868,7 +13705,7 @@ fn exercise_nonagon_full_face_adjacent_union() {
     let nonagon_left = upward_nonagonal_pyramid_i64(nonagon_boundary, [2, 4, 8]);
     let nonagon_fan_right =
         downward_nonagonal_pyramid_fan_i64(nonagon_boundary, [2, 4, 0], [2, 4, -8]);
-    let nonagon_union = hypermesh::exact::adjacent::materialize_full_face_adjacent_union(
+    let nonagon_union = hypermesh::adjacent::materialize_full_face_adjacent_union(
         &nonagon_left,
         &nonagon_fan_right,
         ValidationPolicy::CLOSED,
@@ -14890,7 +13727,7 @@ fn exercise_nonagon_full_face_adjacent_union() {
     let same_side_nonagon_fan =
         upward_nonagonal_pyramid_fan_i64(nonagon_boundary, [2, 4, 0], [2, 4, 8]);
     assert!(
-        hypermesh::exact::adjacent::materialize_full_face_adjacent_union(
+        hypermesh::adjacent::materialize_full_face_adjacent_union(
             &nonagon_left,
             &same_side_nonagon_fan,
             ValidationPolicy::CLOSED,
@@ -14933,7 +13770,7 @@ fn exercise_decagon_full_face_adjacent_union() {
     ];
     let left = upward_polygonal_pyramid_i64(&boundary, [3, 5, 9]);
     let right = downward_polygonal_pyramid_fan_i64(&boundary, [3, 5, 0], [3, 5, -9]);
-    let union = hypermesh::exact::adjacent::materialize_full_face_adjacent_union(
+    let union = hypermesh::adjacent::materialize_full_face_adjacent_union(
         &left,
         &right,
         ValidationPolicy::CLOSED,
@@ -14949,7 +13786,7 @@ fn exercise_decagon_full_face_adjacent_union() {
 
     let same_side = upward_polygonal_pyramid_i64(&boundary, [3, 5, 9]);
     assert!(
-        hypermesh::exact::adjacent::materialize_full_face_adjacent_union(
+        hypermesh::adjacent::materialize_full_face_adjacent_union(
             &left,
             &same_side,
             ValidationPolicy::CLOSED,
@@ -14989,10 +13826,10 @@ fn exercise_contained_face_adjacent_union() {
         .unwrap();
     assert_eq!(
         boundary_report.status,
-        hypermesh::exact::ExactBoundaryTouchingStatus::Certified
+        hypermesh::ExactBoundaryTouchingStatus::Certified
     );
 
-    let union = hypermesh::exact::contained_adjacent::materialize_contained_face_adjacent_union(
+    let union = hypermesh::contained_adjacent::materialize_contained_face_adjacent_union(
         &left,
         &right,
         ValidationPolicy::CLOSED,
@@ -15035,8 +13872,8 @@ fn exercise_contained_face_adjacent_union() {
         .unwrap();
     assert_eq!(
         result.kind,
-        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ContainedFaceAdjacentUnion
+        hypermesh::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::ExactBooleanShortcutKind::ContainedFaceAdjacentUnion
         }
     );
     assert_eq!(result.mesh, union.mesh);
@@ -15070,8 +13907,8 @@ fn exercise_contained_face_adjacent_union() {
         .unwrap();
     assert_eq!(
         intersection.kind,
-        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ContainedFaceAdjacentIntersection
+        hypermesh::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::ExactBooleanShortcutKind::ContainedFaceAdjacentIntersection
         }
     );
     assert!(intersection.mesh.vertices().is_empty());
@@ -15107,8 +13944,8 @@ fn exercise_contained_face_adjacent_union() {
         .unwrap();
     assert_eq!(
         difference.kind,
-        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ContainedFaceAdjacentDifference
+        hypermesh::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::ExactBooleanShortcutKind::ContainedFaceAdjacentDifference
         }
     );
     assert_eq!(difference.mesh.vertices(), left.vertices());
@@ -15133,8 +13970,8 @@ fn exercise_contained_face_adjacent_union() {
         .unwrap();
     assert_eq!(
         reverse_difference.kind,
-        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ContainedFaceAdjacentDifference
+        hypermesh::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::ExactBooleanShortcutKind::ContainedFaceAdjacentDifference
         }
     );
     assert_eq!(reverse_difference.mesh.vertices(), right.vertices());
@@ -15142,7 +13979,7 @@ fn exercise_contained_face_adjacent_union() {
 
     let same_side_inner = tetrahedron_i64([1, 1, 0], [2, 1, 0], [1, 2, 0], [1, 1, 3]);
     assert!(
-        hypermesh::exact::contained_adjacent::materialize_contained_face_adjacent_union(
+        hypermesh::contained_adjacent::materialize_contained_face_adjacent_union(
             &left,
             &same_side_inner,
             ValidationPolicy::CLOSED,
@@ -15162,7 +13999,7 @@ fn exercise_contained_face_adjacent_union() {
         &[right_a, right_b],
         "contained-face adjacent fuzz two-cap fixture",
     );
-    let multi_union = hypermesh::exact::contained_adjacent::materialize_contained_face_adjacent_union(
+    let multi_union = hypermesh::contained_adjacent::materialize_contained_face_adjacent_union(
         &multi_left,
         &multi_right,
         ValidationPolicy::CLOSED,
@@ -15202,7 +14039,7 @@ fn exercise_contained_face_adjacent_union() {
         ],
         "contained-face adjacent fuzz same-face two-hole fixture",
     );
-    let same_face_union = hypermesh::exact::contained_adjacent::materialize_contained_face_adjacent_union(
+    let same_face_union = hypermesh::contained_adjacent::materialize_contained_face_adjacent_union(
         &same_face_left,
         &same_face_right,
         ValidationPolicy::CLOSED,
@@ -15242,7 +14079,7 @@ fn exercise_contained_face_adjacent_union() {
         [1, 3, 0],
         [2, 2, -3],
     );
-    let component_hole_union = hypermesh::exact::contained_adjacent::materialize_contained_face_adjacent_union(
+    let component_hole_union = hypermesh::contained_adjacent::materialize_contained_face_adjacent_union(
         &component_hole_left,
         &component_hole_right,
         ValidationPolicy::CLOSED,
@@ -15288,7 +14125,7 @@ fn exercise_contained_face_adjacent_union() {
         [3, 5, 0],
         [4, 3, -3],
     );
-    let multi_face_union = hypermesh::exact::contained_adjacent::materialize_contained_face_adjacent_union(
+    let multi_face_union = hypermesh::contained_adjacent::materialize_contained_face_adjacent_union(
         &multi_face_left,
         &multi_face_right,
         ValidationPolicy::CLOSED,
@@ -15359,7 +14196,7 @@ fn exercise_contained_face_adjacent_union() {
         "contained-face adjacent fuzz independent multi-face caps",
     );
     let independent_multi_face_union =
-        hypermesh::exact::contained_adjacent::materialize_contained_face_adjacent_union(
+        hypermesh::contained_adjacent::materialize_contained_face_adjacent_union(
             &independent_multi_face_left,
             &independent_multi_face_right,
             ValidationPolicy::CLOSED,
@@ -15410,9 +14247,9 @@ fn exercise_axis_aligned_coplanar_volumetric_boxes() {
     union.validate().unwrap();
     assert_eq!(
         union.support,
-        hypermesh::exact::ExactBooleanSupport::CertifiedAxisAlignedBoxUnion
+        hypermesh::ExactBooleanSupport::CertifiedAxisAlignedBoxUnion
     );
-    let union_result = hypermesh::exact::boolean_exact(
+    let union_result = hypermesh::boolean_exact(
         &left,
         &right,
         ExactBooleanOperation::Union,
@@ -15438,7 +14275,7 @@ fn exercise_axis_aligned_coplanar_volumetric_boxes() {
         face_union.support,
         ExactBooleanSupport::CertifiedAxisAlignedBoxUnion
     );
-    let face_union_result = hypermesh::exact::boolean_exact(
+    let face_union_result = hypermesh::boolean_exact(
         &face_left,
         &face_right,
         ExactBooleanOperation::Union,
@@ -15463,7 +14300,7 @@ fn exercise_axis_aligned_coplanar_volumetric_boxes() {
         ExactBooleanSupport::CertifiedAxisAlignedBoxDifference
     );
     assert!(intersect_closed_convex_solids(&face_left, &face_right).is_none());
-    let face_difference_result = hypermesh::exact::boolean_exact(
+    let face_difference_result = hypermesh::boolean_exact(
         &face_left,
         &face_right,
         ExactBooleanOperation::Difference,
@@ -15492,7 +14329,7 @@ fn exercise_axis_aligned_coplanar_volumetric_boxes() {
         face_intersection.support,
         ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
     );
-    let face_intersection_result = hypermesh::exact::boolean_exact(
+    let face_intersection_result = hypermesh::boolean_exact(
         &face_left,
         &face_right,
         ExactBooleanOperation::Intersection,
@@ -15519,7 +14356,7 @@ fn exercise_axis_aligned_coplanar_volumetric_boxes() {
         edge_union.support,
         ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion
     );
-    let edge_union_result = hypermesh::exact::boolean_exact(
+    let edge_union_result = hypermesh::boolean_exact(
         &face_left,
         &edge_right,
         ExactBooleanOperation::Union,
@@ -15537,8 +14374,8 @@ fn exercise_axis_aligned_coplanar_volumetric_boxes() {
         .unwrap();
     assert_eq!(
         edge_union_result.kind,
-        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ClosedBoundaryTouchingUnion
+        hypermesh::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::ExactBooleanShortcutKind::ClosedBoundaryTouchingUnion
         }
     );
     let edge_intersection =
@@ -15549,7 +14386,7 @@ fn exercise_axis_aligned_coplanar_volumetric_boxes() {
         edge_intersection.support,
         ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
     );
-    let edge_intersection_result = hypermesh::exact::boolean_exact(
+    let edge_intersection_result = hypermesh::boolean_exact(
         &face_left,
         &edge_right,
         ExactBooleanOperation::Intersection,
@@ -15574,7 +14411,7 @@ fn exercise_axis_aligned_coplanar_volumetric_boxes() {
         edge_difference.support,
         ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference
     );
-    let edge_difference_result = hypermesh::exact::boolean_exact(
+    let edge_difference_result = hypermesh::boolean_exact(
         &face_left,
         &edge_right,
         ExactBooleanOperation::Difference,
@@ -15598,9 +14435,9 @@ fn exercise_axis_aligned_coplanar_volumetric_boxes() {
     difference.validate().unwrap();
     assert_eq!(
         difference.support,
-        hypermesh::exact::ExactBooleanSupport::CertifiedAxisAlignedBoxDifference
+        hypermesh::ExactBooleanSupport::CertifiedAxisAlignedBoxDifference
     );
-    let difference_result = hypermesh::exact::boolean_exact(
+    let difference_result = hypermesh::boolean_exact(
         &left,
         &right,
         ExactBooleanOperation::Difference,
@@ -15625,9 +14462,9 @@ fn exercise_axis_aligned_coplanar_volumetric_boxes() {
     split_difference.validate().unwrap();
     assert_eq!(
         split_difference.support,
-        hypermesh::exact::ExactBooleanSupport::CertifiedAxisAlignedBoxMultiDifference
+        hypermesh::ExactBooleanSupport::CertifiedAxisAlignedBoxMultiDifference
     );
-    let split_result = hypermesh::exact::boolean_exact(
+    let split_result = hypermesh::boolean_exact(
         &split_left,
         &split_right,
         ExactBooleanOperation::Difference,
@@ -15657,7 +14494,7 @@ fn exercise_axis_aligned_coplanar_volumetric_boxes() {
         nested_difference.support,
         ExactBooleanSupport::CertifiedAxisAlignedBoxNestedDifference
     );
-    let nested_result = hypermesh::exact::boolean_exact(
+    let nested_result = hypermesh::boolean_exact(
         &nested_left,
         &nested_right,
         ExactBooleanOperation::Difference,
@@ -15687,7 +14524,7 @@ fn exercise_axis_aligned_coplanar_volumetric_boxes() {
         contained_union.support,
         ExactBooleanSupport::CertifiedAxisAlignedBoxUnion
     );
-    let contained_union_result = hypermesh::exact::boolean_exact(
+    let contained_union_result = hypermesh::boolean_exact(
         &contained_outer,
         &contained_inner,
         ExactBooleanOperation::Union,
@@ -15715,7 +14552,7 @@ fn exercise_axis_aligned_coplanar_volumetric_boxes() {
         empty_difference.support,
         ExactBooleanSupport::CertifiedAxisAlignedBoxEmptyDifference
     );
-    let empty_difference_result = hypermesh::exact::boolean_exact(
+    let empty_difference_result = hypermesh::boolean_exact(
         &contained_inner,
         &contained_outer,
         ExactBooleanOperation::Difference,
@@ -15744,7 +14581,7 @@ fn exercise_axis_aligned_coplanar_volumetric_boxes() {
         boundary_touching_difference.support,
         ExactBooleanSupport::CertifiedAxisAlignedBoxEmptyDifference
     );
-    let boundary_touching_result = hypermesh::exact::boolean_exact(
+    let boundary_touching_result = hypermesh::boolean_exact(
         &boundary_touching_inner,
         &contained_outer,
         ExactBooleanOperation::Difference,
@@ -15781,9 +14618,9 @@ fn exercise_axis_aligned_coplanar_volumetric_boxes() {
     cell_union.validate().unwrap();
     assert_eq!(
         cell_union.support,
-        hypermesh::exact::ExactBooleanSupport::CertifiedAxisAlignedBoxCellUnion
+        hypermesh::ExactBooleanSupport::CertifiedAxisAlignedBoxCellUnion
     );
-    let cell_union_result = hypermesh::exact::boolean_exact(
+    let cell_union_result = hypermesh::boolean_exact(
         &cell_left,
         &cell_right,
         ExactBooleanOperation::Union,
@@ -15808,7 +14645,7 @@ fn exercise_axis_aligned_coplanar_volumetric_boxes() {
         cell_intersection.support,
         ExactBooleanSupport::CertifiedAxisAlignedBoxIntersection
     );
-    let cell_intersection_result = hypermesh::exact::boolean_exact(
+    let cell_intersection_result = hypermesh::boolean_exact(
         &cell_left,
         &cell_right,
         ExactBooleanOperation::Intersection,
@@ -15831,9 +14668,9 @@ fn exercise_axis_aligned_coplanar_volumetric_boxes() {
     cell_difference.validate().unwrap();
     assert_eq!(
         cell_difference.support,
-        hypermesh::exact::ExactBooleanSupport::CertifiedAxisAlignedBoxCellDifference
+        hypermesh::ExactBooleanSupport::CertifiedAxisAlignedBoxCellDifference
     );
-    let cell_result = hypermesh::exact::boolean_exact(
+    let cell_result = hypermesh::boolean_exact(
         &cell_left,
         &cell_right,
         ExactBooleanOperation::Difference,
@@ -15856,7 +14693,7 @@ fn exercise_axis_aligned_orthogonal_solid_cell_complexes() {
     let right = axis_aligned_box_i64([1, 1, 0], [3, 3, 2]);
     let fan_left = top_subdivided_axis_aligned_box_i64([0, 0, 0], [2, 2, 2]);
     let fan_right = axis_aligned_box_i64([1, 1, 0], [3, 3, 2]);
-    let complex = hypermesh::exact::boolean_exact(
+    let complex = hypermesh::boolean_exact(
         &left,
         &right,
         ExactBooleanOperation::Union,
@@ -15873,7 +14710,7 @@ fn exercise_axis_aligned_orthogonal_solid_cell_complexes() {
         union.support,
         ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellUnion
     );
-    let union_result = hypermesh::exact::boolean_exact(
+    let union_result = hypermesh::boolean_exact(
         &complex,
         &cutter,
         ExactBooleanOperation::Union,
@@ -15898,7 +14735,7 @@ fn exercise_axis_aligned_orthogonal_solid_cell_complexes() {
         intersection.support,
         ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellIntersection
     );
-    let intersection_result = hypermesh::exact::boolean_exact(
+    let intersection_result = hypermesh::boolean_exact(
         &complex,
         &cutter,
         ExactBooleanOperation::Intersection,
@@ -15922,7 +14759,7 @@ fn exercise_axis_aligned_orthogonal_solid_cell_complexes() {
         difference.support,
         ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellDifference
     );
-    let difference_result = hypermesh::exact::boolean_exact(
+    let difference_result = hypermesh::boolean_exact(
         &complex,
         &cutter,
         ExactBooleanOperation::Difference,
@@ -15946,7 +14783,7 @@ fn exercise_axis_aligned_orthogonal_solid_cell_complexes() {
         fan_union.support,
         ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellUnion
     );
-    let fan_union_result = hypermesh::exact::boolean_exact(
+    let fan_union_result = hypermesh::boolean_exact(
         &fan_left,
         &fan_right,
         ExactBooleanOperation::Union,
@@ -15983,7 +14820,7 @@ fn exercise_axis_aligned_orthogonal_solid_cell_complexes() {
 
     let outer = axis_aligned_box_i64([0, 0, 0], [8, 8, 8]);
     let cavity = axis_aligned_box_i64([2, 2, 2], [6, 6, 6]);
-    let hollow = hypermesh::exact::boolean_exact(
+    let hollow = hypermesh::boolean_exact(
         &outer,
         &cavity,
         ExactBooleanOperation::Difference,
@@ -16000,7 +14837,7 @@ fn exercise_axis_aligned_orthogonal_solid_cell_complexes() {
         empty_intersection.support,
         ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellIntersection
     );
-    let empty_intersection_result = hypermesh::exact::boolean_exact(
+    let empty_intersection_result = hypermesh::boolean_exact(
         &hollow,
         &floating,
         ExactBooleanOperation::Intersection,
@@ -16028,7 +14865,7 @@ fn exercise_affine_coplanar_volumetric_boxes() {
     let right = affine_box_i64([1, 1, 0], [3, 3, 2], origin, basis_u, basis_v, basis_w);
 
     let arrangement =
-        hypermesh::exact::affine_box::materialize_affine_box_union(&left, &right, ValidationPolicy::CLOSED)
+        hypermesh::affine_box::materialize_affine_box_union(&left, &right, ValidationPolicy::CLOSED)
             .expect("affine box union fixture should not error")
             .expect("affine box union should materialize");
     arrangement.validate().unwrap();
@@ -16039,7 +14876,7 @@ fn exercise_affine_coplanar_volumetric_boxes() {
     union.validate().unwrap();
     union.validate_against_sources(&left, &right).unwrap();
     assert_eq!(union.support, ExactBooleanSupport::CertifiedAffineBoxUnion);
-    let union_result = hypermesh::exact::boolean_exact(
+    let union_result = hypermesh::boolean_exact(
         &left,
         &right,
         ExactBooleanOperation::Union,
@@ -16063,7 +14900,7 @@ fn exercise_affine_coplanar_volumetric_boxes() {
         intersection.support,
         ExactBooleanSupport::CertifiedAffineBoxIntersection
     );
-    let intersection_result = hypermesh::exact::boolean_exact(
+    let intersection_result = hypermesh::boolean_exact(
         &left,
         &right,
         ExactBooleanOperation::Intersection,
@@ -16087,7 +14924,7 @@ fn exercise_affine_coplanar_volumetric_boxes() {
         difference.support,
         ExactBooleanSupport::CertifiedAffineBoxDifference
     );
-    let difference_result = hypermesh::exact::boolean_exact(
+    let difference_result = hypermesh::boolean_exact(
         &left,
         &right,
         ExactBooleanOperation::Difference,
@@ -16106,7 +14943,7 @@ fn exercise_affine_coplanar_volumetric_boxes() {
 
     let point_touch = affine_box_i64([2, 2, 2], [3, 3, 3], origin, basis_u, basis_v, basis_w);
     assert!(
-        hypermesh::exact::affine_box::materialize_affine_box_union(
+        hypermesh::affine_box::materialize_affine_box_union(
             &left,
             &point_touch,
             ValidationPolicy::CLOSED
@@ -16122,7 +14959,7 @@ fn exercise_affine_coplanar_volumetric_boxes() {
     let left = affine_box_i64([0, 0, 0], [2, 2, 2], origin, basis_u, basis_v, basis_w);
     let right = affine_box_i64([1, 1, 0], [3, 3, 2], origin, basis_u, basis_v, basis_w);
     let arrangement =
-        hypermesh::exact::affine_box::materialize_affine_box_union(&left, &right, ValidationPolicy::CLOSED)
+        hypermesh::affine_box::materialize_affine_box_union(&left, &right, ValidationPolicy::CLOSED)
             .expect("left-handed affine box union fixture should not error")
             .expect("left-handed affine box union should materialize");
     arrangement.validate().unwrap();
@@ -16136,7 +14973,7 @@ fn exercise_affine_orthogonal_solid_cell_complexes() {
     let basis_w = [0, 1, 2];
     let left = affine_box_i64([0, 0, 0], [2, 2, 2], origin, basis_u, basis_v, basis_w);
     let right = affine_box_i64([1, 1, 0], [3, 3, 2], origin, basis_u, basis_v, basis_w);
-    let complex = hypermesh::exact::boolean_exact(
+    let complex = hypermesh::boolean_exact(
         &left,
         &right,
         ExactBooleanOperation::Union,
@@ -16146,7 +14983,7 @@ fn exercise_affine_orthogonal_solid_cell_complexes() {
     .mesh;
     let cutter = affine_box_i64([2, 0, 0], [3, 2, 2], origin, basis_u, basis_v, basis_w);
 
-    let arrangement = hypermesh::exact::affine_solid::materialize_affine_orthogonal_solid_union(
+    let arrangement = hypermesh::affine_solid::materialize_affine_orthogonal_solid_union(
         &complex,
         &cutter,
         ValidationPolicy::CLOSED,
@@ -16165,7 +15002,7 @@ fn exercise_affine_orthogonal_solid_cell_complexes() {
         union.support,
         ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellUnion
     );
-    hypermesh::exact::boolean_exact(
+    hypermesh::boolean_exact(
         &complex,
         &cutter,
         ExactBooleanOperation::Union,
@@ -16189,7 +15026,7 @@ fn exercise_affine_orthogonal_solid_cell_complexes() {
         intersection.support,
         ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellIntersection
     );
-    hypermesh::exact::boolean_exact(
+    hypermesh::boolean_exact(
         &complex,
         &cutter,
         ExactBooleanOperation::Intersection,
@@ -16212,7 +15049,7 @@ fn exercise_affine_orthogonal_solid_cell_complexes() {
         difference.support,
         ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellDifference
     );
-    hypermesh::exact::boolean_exact(
+    hypermesh::boolean_exact(
         &complex,
         &cutter,
         ExactBooleanOperation::Difference,
@@ -16230,7 +15067,7 @@ fn exercise_affine_orthogonal_solid_cell_complexes() {
 
     let outer = affine_box_i64([0, 0, 0], [8, 8, 8], origin, basis_u, basis_v, basis_w);
     let cavity = affine_box_i64([2, 2, 2], [6, 6, 6], origin, basis_u, basis_v, basis_w);
-    let hollow = hypermesh::exact::boolean_exact(
+    let hollow = hypermesh::boolean_exact(
         &outer,
         &cavity,
         ExactBooleanOperation::Difference,
@@ -16247,7 +15084,7 @@ fn exercise_affine_orthogonal_solid_cell_complexes() {
         empty_intersection.support,
         ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellIntersection
     );
-    let empty_intersection_result = hypermesh::exact::boolean_exact(
+    let empty_intersection_result = hypermesh::boolean_exact(
         &hollow,
         &floating,
         ExactBooleanOperation::Intersection,
@@ -16275,7 +15112,7 @@ fn exercise_affine_orthogonal_solid_cell_complex_frame_discovery() {
     let left_b = affine_box_i64([1, 1, 0], [3, 3, 2], origin, basis_u, basis_v, basis_w);
     let right_a = affine_box_i64([2, 0, 0], [4, 2, 2], origin, basis_u, basis_v, basis_w);
     let right_b = affine_box_i64([3, 1, 0], [5, 3, 2], origin, basis_u, basis_v, basis_w);
-    let left_complex = hypermesh::exact::boolean_exact(
+    let left_complex = hypermesh::boolean_exact(
         &left_a,
         &left_b,
         ExactBooleanOperation::Union,
@@ -16283,7 +15120,7 @@ fn exercise_affine_orthogonal_solid_cell_complex_frame_discovery() {
     )
     .expect("left affine complex should materialize")
     .mesh;
-    let right_complex = hypermesh::exact::boolean_exact(
+    let right_complex = hypermesh::boolean_exact(
         &right_a,
         &right_b,
         ExactBooleanOperation::Union,
@@ -16336,7 +15173,7 @@ fn exercise_mixed_coplanar_volumetric_materialization() {
         .validate_against_meshes(&left, &right)
         .expect("graph should replay against sources");
     assert!(graph.face_pairs.iter().any(|pair| {
-        pair.relation == hypermesh::exact::MeshFacePairRelation::CoplanarOverlapping
+        pair.relation == hypermesh::MeshFacePairRelation::CoplanarOverlapping
     }));
 
     for (operation, support) in [
@@ -16364,11 +15201,11 @@ fn exercise_mixed_coplanar_volumetric_materialization() {
         winding.validate().unwrap();
         assert_eq!(
             winding.status,
-            hypermesh::exact::ExactWindingReadinessStatus::Ready
+            hypermesh::ExactWindingReadinessStatus::Ready
         );
 
         let result =
-            hypermesh::exact::boolean_exact(&left, &right, operation, ValidationPolicy::CLOSED)
+            hypermesh::boolean_exact(&left, &right, operation, ValidationPolicy::CLOSED)
                 .expect("mixed coplanar-volumetric boolean should materialize");
         result.validate().unwrap();
         result
@@ -16395,7 +15232,7 @@ fn exercise_non_rectilinear_coplanar_volumetric_materialization() {
         .validate_against_meshes(&left, &right)
         .expect("graph should replay against sources");
     assert!(graph.face_pairs.iter().any(|pair| {
-        pair.relation == hypermesh::exact::MeshFacePairRelation::CoplanarOverlapping
+        pair.relation == hypermesh::MeshFacePairRelation::CoplanarOverlapping
     }));
 
     for operation in [
@@ -16420,7 +15257,7 @@ fn exercise_non_rectilinear_coplanar_volumetric_materialization() {
         assert!(evidence.obstacle.requires_coplanar_volumetric_cells());
 
         let result =
-            hypermesh::exact::boolean_exact(&left, &right, operation, ValidationPolicy::CLOSED)
+            hypermesh::boolean_exact(&left, &right, operation, ValidationPolicy::CLOSED)
                 .expect("non-rectilinear coplanar-volumetric boolean should materialize");
         result
             .validate_operation_against_sources(
@@ -16434,24 +15271,24 @@ fn exercise_non_rectilinear_coplanar_volumetric_materialization() {
         assert!(result.mesh.facts().mesh.closed_manifold);
         if operation == ExactBooleanOperation::Union {
             let mut mislabeled = result.clone();
-            mislabeled.kind = hypermesh::exact::ExactBooleanResultKind::WindingMaterialized {
+            mislabeled.kind = hypermesh::ExactBooleanResultKind::WindingMaterialized {
                 operation: ExactBooleanOperation::Difference,
             };
             assert!(matches!(
                 mislabeled.validate(),
                 Err(
-                    hypermesh::exact::ExactReportValidationError::
+                    hypermesh::ExactReportValidationError::
                         WindingMaterializedAssemblyViolatesOperation
                 )
             ));
             let mut wrong_orientation = result.clone();
             if let Some(triangle) = wrong_orientation.assembly.triangles.first_mut() {
                 triangle.orientation =
-                    hypermesh::exact::region::ExactOutputTriangleOrientation::ReverseSource;
+                    hypermesh::region::ExactOutputTriangleOrientation::ReverseSource;
                 assert!(matches!(
                     wrong_orientation.validate(),
                     Err(
-                        hypermesh::exact::ExactReportValidationError::
+                        hypermesh::ExactReportValidationError::
                             WindingMaterializedAssemblyViolatesOperation
                     )
                 ));
@@ -16468,7 +15305,7 @@ fn exercise_non_rectilinear_coplanar_volumetric_materialization() {
     assert!(evidence.obstacle.requires_coplanar_volumetric_cells());
     assert_eq!(
         classify_mesh_vertices_against_convex_solid(&inner, &outer),
-        hypermesh::exact::ConvexSolidMeshRelation::BoundaryOrMixed
+        hypermesh::ConvexSolidMeshRelation::BoundaryOrMixed
     );
 
     for (operation, support, shortcut) in [
@@ -16496,7 +15333,7 @@ fn exercise_non_rectilinear_coplanar_volumetric_materialization() {
         assert_eq!(preflight.coplanar_volumetric_evidence.is_none(), shortcut);
 
         let result =
-            hypermesh::exact::boolean_exact(&outer, &inner, operation, ValidationPolicy::CLOSED)
+            hypermesh::boolean_exact(&outer, &inner, operation, ValidationPolicy::CLOSED)
                 .expect("boundary-contained convex boolean should materialize");
         result.validate().unwrap();
         result
@@ -16510,8 +15347,8 @@ fn exercise_non_rectilinear_coplanar_volumetric_materialization() {
             .unwrap();
         assert_eq!(
             result.kind,
-            hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-                shortcut: hypermesh::exact::ExactBooleanShortcutKind::ConvexContainment,
+            hypermesh::ExactBooleanResultKind::CertifiedShortcut {
+                shortcut: hypermesh::ExactBooleanShortcutKind::ConvexContainment,
             }
         );
         if operation == ExactBooleanOperation::Difference {
@@ -16520,7 +15357,7 @@ fn exercise_non_rectilinear_coplanar_volumetric_materialization() {
         }
     }
 
-    let reverse_difference = hypermesh::exact::boolean_exact(
+    let reverse_difference = hypermesh::boolean_exact(
         &inner,
         &outer,
         ExactBooleanOperation::Difference,
@@ -16538,8 +15375,8 @@ fn exercise_non_rectilinear_coplanar_volumetric_materialization() {
         .unwrap();
     assert_eq!(
         reverse_difference.kind,
-        hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ConvexContainment,
+        hypermesh::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::ExactBooleanShortcutKind::ConvexContainment,
         }
     );
     assert!(reverse_difference.mesh.triangles().is_empty());
@@ -16547,7 +15384,7 @@ fn exercise_non_rectilinear_coplanar_volumetric_materialization() {
     let nonconvex_container =
         upward_l_prism_i64([[0, 0], [8, 0], [8, 3], [3, 3], [3, 8], [0, 8]], 8);
     let boundary_cutter = axis_aligned_box_i64([1, 3, 4], [2, 4, 8]);
-    let boundary_difference = hypermesh::exact::contained_adjacent::materialize_contained_boundary_difference(
+    let boundary_difference = hypermesh::contained_adjacent::materialize_contained_boundary_difference(
         &nonconvex_container,
         &boundary_cutter,
         ValidationPolicy::CLOSED,
@@ -16573,7 +15410,7 @@ fn exercise_non_rectilinear_coplanar_volumetric_materialization() {
         preflight.support,
         ExactBooleanSupport::CertifiedContainedBoundaryDifference
     );
-    let result = hypermesh::exact::boolean_exact(
+    let result = hypermesh::boolean_exact(
         &nonconvex_container,
         &boundary_cutter,
         ExactBooleanOperation::Difference,
@@ -16593,7 +15430,7 @@ fn exercise_non_rectilinear_coplanar_volumetric_materialization() {
 
     let fan_container = top_subdivided_axis_aligned_box_i64([0, 0, 0], [8, 8, 8]);
     let fan_removed = axis_aligned_box_i64([1, 1, 4], [7, 7, 8]);
-    let fan_difference = hypermesh::exact::contained_adjacent::materialize_contained_boundary_difference(
+    let fan_difference = hypermesh::contained_adjacent::materialize_contained_boundary_difference(
         &fan_container,
         &fan_removed,
         ValidationPolicy::CLOSED,
@@ -16617,7 +15454,7 @@ fn exercise_nonconvex_coplanar_volumetric_difference_fan_split() {
         .validate_against_meshes(&left, &right)
         .expect("graph should replay against sources");
     assert!(graph.face_pairs.iter().any(|pair| {
-        pair.relation == hypermesh::exact::MeshFacePairRelation::CoplanarOverlapping
+        pair.relation == hypermesh::MeshFacePairRelation::CoplanarOverlapping
     }));
 
     for operation in [
@@ -16634,7 +15471,7 @@ fn exercise_nonconvex_coplanar_volumetric_difference_fan_split() {
             ExactBooleanSupport::CertifiedWindingMaterialized
         );
         let result =
-            hypermesh::exact::boolean_exact(&left, &right, operation, ValidationPolicy::CLOSED)
+            hypermesh::boolean_exact(&left, &right, operation, ValidationPolicy::CLOSED)
                 .expect("nonconvex coplanar-volumetric boolean should materialize");
         result
             .validate_operation_against_sources(
