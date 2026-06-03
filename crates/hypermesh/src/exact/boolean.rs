@@ -101,30 +101,22 @@ use super::solid::{
 };
 use super::surface::{
     CoplanarConvexSurfaceContainment, CoplanarConvexSurfaceContainmentCertificate,
-    CoplanarSurfaceContainment, arrange_coplanar_convex_surface_component_holed_difference,
-    arrange_coplanar_convex_surface_component_union, arrange_coplanar_convex_surface_difference,
-    arrange_coplanar_convex_surface_holed_difference,
+    CoplanarSurfaceContainment, arrange_coplanar_convex_surface_component_union,
     arrange_coplanar_convex_surface_holed_difference_from_certificate,
-    arrange_coplanar_convex_surface_intersection, arrange_coplanar_convex_surface_multi_difference,
-    arrange_coplanar_convex_surface_multi_holed_difference,
+    arrange_coplanar_convex_surface_intersection,
     arrange_coplanar_convex_surface_multi_intersection,
     arrange_coplanar_convex_surface_multi_union, arrange_coplanar_convex_surface_union,
-    arrange_coplanar_surface_component_difference,
-    arrange_coplanar_surface_component_holed_difference,
     arrange_coplanar_surface_component_holed_intersection,
     arrange_coplanar_surface_component_holed_union,
     arrange_coplanar_surface_component_intersection, arrange_coplanar_surface_component_union,
-    arrange_coplanar_surface_cutter_hole_contact_difference,
     arrange_coplanar_surface_multi_component_intersection,
-    arrange_coplanar_surface_multi_component_union, arrange_coplanar_surface_multi_difference,
-    arrange_coplanar_surface_point_touch_difference, arrange_coplanar_surface_point_touch_union,
-    arrange_coplanar_surface_side_cutter_difference, arrange_single_triangle_coplanar_difference,
-    arrange_single_triangle_coplanar_holed_difference, arrange_single_triangle_coplanar_union,
-    certify_coplanar_convex_surface_containment, certify_coplanar_convex_surface_equivalence,
-    certify_coplanar_surface_boundary_touch, certify_coplanar_surface_mesh_containment,
-    certify_single_triangle_coplanar_containment, difference_single_triangle_coplanar_surfaces,
-    intersect_single_triangle_coplanar_surfaces, order_mesh_boundary_loops,
-    union_single_triangle_coplanar_surfaces,
+    arrange_coplanar_surface_multi_component_union, arrange_coplanar_surface_point_touch_union,
+    arrange_single_triangle_coplanar_difference, arrange_single_triangle_coplanar_holed_difference,
+    arrange_single_triangle_coplanar_union, certify_coplanar_convex_surface_containment,
+    certify_coplanar_convex_surface_equivalence, certify_coplanar_surface_boundary_touch,
+    certify_coplanar_surface_mesh_containment, certify_single_triangle_coplanar_containment,
+    difference_single_triangle_coplanar_surfaces, intersect_single_triangle_coplanar_surfaces,
+    order_mesh_boundary_loops, union_single_triangle_coplanar_surfaces,
 };
 use super::validation::ValidationPolicy;
 use super::volumetric::{
@@ -1513,21 +1505,6 @@ pub fn boolean_exact_with_boundary_policy(
             {
                 return Ok(result);
             }
-            if let Some(result) = boolean_coplanar_cutter_hole_contact_difference_optional(
-                left, right, operation, validation,
-            )? {
-                return Ok(result);
-            }
-            if let Some(result) =
-                boolean_coplanar_convex_multi_holed_difference(left, right, operation, validation)?
-            {
-                return Ok(result);
-            }
-            if let Some(result) = boolean_coplanar_convex_component_holed_difference_optional(
-                left, right, operation, validation,
-            )? {
-                return Ok(result);
-            }
             if let Some(result) =
                 boolean_coplanar_orthogonal_surface_optional(left, right, operation, validation)?
             {
@@ -2765,79 +2742,6 @@ fn boolean_convex_intersection_meshes(
     )))
 }
 
-fn boolean_coplanar_cutter_hole_contact_difference_optional(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
-    if operation != ExactBooleanOperation::Difference {
-        return Ok(None);
-    }
-    arrange_coplanar_surface_cutter_hole_contact_difference(left, right)
-        .map(|difference| {
-            let mesh = copy_mesh(
-                &difference.mesh,
-                "exact coplanar cutter-hole contact difference",
-                validation,
-            )?;
-            Ok(certified_shortcut_result(
-                mesh,
-                ExactBooleanShortcutKind::CoplanarSurfaceCutterHoleContactDifference,
-            ))
-        })
-        .transpose()
-}
-
-fn boolean_coplanar_convex_multi_holed_difference(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
-    if operation != ExactBooleanOperation::Difference {
-        return Ok(None);
-    }
-    let Some(difference) = arrange_coplanar_convex_surface_multi_holed_difference(left, right)
-    else {
-        return Ok(None);
-    };
-    let mesh = copy_mesh(
-        &difference.mesh,
-        "exact coplanar convex multi-holed difference",
-        validation,
-    )?;
-    Ok(Some(certified_shortcut_result(
-        mesh,
-        ExactBooleanShortcutKind::CoplanarConvexSurfaceMultiHoledDifference,
-    )))
-}
-
-fn boolean_coplanar_convex_component_holed_difference_optional(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
-    if operation != ExactBooleanOperation::Difference {
-        return Ok(None);
-    }
-    arrange_coplanar_convex_surface_component_holed_difference(left, right)
-        .or_else(|| arrange_coplanar_surface_component_holed_difference(left, right))
-        .map(|difference| {
-            let mesh = copy_mesh(
-                &difference.mesh,
-                "exact coplanar component-holed difference",
-                validation,
-            )?;
-            Ok(certified_shortcut_result(
-                mesh,
-                ExactBooleanShortcutKind::CoplanarConvexSurfaceComponentHoledDifference,
-            ))
-        })
-        .transpose()
-}
-
 fn boolean_coplanar_orthogonal_surface_optional(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -3074,79 +2978,6 @@ fn boolean_direct_coplanar_surface_meshes(
                     left, right, validation,
                 )?));
             }
-            if arrange_coplanar_surface_point_touch_union(left, right).is_some() {
-                return Ok(Some(copied_shortcut_result_from_mesh(
-                    left,
-                    "exact coplanar point-touch surface difference keeps left",
-                    ExactBooleanShortcutKind::CoplanarSurfacePointTouchDifference,
-                    validation,
-                )?));
-            }
-            if let Some(difference) = arrange_coplanar_convex_surface_difference(left, right) {
-                return Ok(Some(copied_shortcut_result_from_mesh(
-                    &difference.mesh,
-                    "exact coplanar convex arrangement difference",
-                    ExactBooleanShortcutKind::CoplanarConvexSurfaceArrangementDifference,
-                    validation,
-                )?));
-            }
-            if let Some(difference) = arrange_coplanar_convex_surface_multi_difference(left, right)
-            {
-                return Ok(Some(copied_shortcut_result_from_mesh(
-                    &difference.mesh,
-                    "exact coplanar convex multi-component difference",
-                    ExactBooleanShortcutKind::CoplanarConvexSurfaceMultiDifference,
-                    validation,
-                )?));
-            }
-            if let Some(difference) = arrange_coplanar_surface_component_difference(left, right) {
-                return Ok(Some(copied_shortcut_result_from_mesh(
-                    &difference.mesh,
-                    "exact coplanar component difference",
-                    ExactBooleanShortcutKind::CoplanarSurfaceArrangementDifference,
-                    validation,
-                )?));
-            }
-            if let Some(difference) = arrange_coplanar_surface_multi_difference(left, right) {
-                return Ok(Some(copied_shortcut_result_from_mesh(
-                    &difference.mesh,
-                    "exact coplanar nonconvex multi-component difference",
-                    ExactBooleanShortcutKind::CoplanarSurfaceMultiDifference,
-                    validation,
-                )?));
-            }
-            if let Some(difference) = arrange_coplanar_surface_side_cutter_difference(left, right) {
-                return Ok(Some(copied_shortcut_result_from_mesh(
-                    &difference.mesh,
-                    "exact coplanar side-cutter difference",
-                    ExactBooleanShortcutKind::CoplanarSurfaceSideCutterDifference,
-                    validation,
-                )?));
-            }
-            if let Some(result) = boolean_coplanar_cutter_hole_contact_difference_optional(
-                left, right, operation, validation,
-            )? {
-                return Ok(Some(result));
-            }
-            if let Some(difference) = arrange_coplanar_convex_surface_holed_difference(left, right)
-            {
-                return Ok(Some(copied_shortcut_result_from_mesh(
-                    &difference.mesh,
-                    "exact coplanar convex containment holed difference",
-                    ExactBooleanShortcutKind::CoplanarConvexSurfaceHoledDifference,
-                    validation,
-                )?));
-            }
-            if let Some(result) =
-                boolean_coplanar_convex_multi_holed_difference(left, right, operation, validation)?
-            {
-                return Ok(Some(result));
-            }
-            if let Some(result) = boolean_coplanar_convex_component_holed_difference_optional(
-                left, right, operation, validation,
-            )? {
-                return Ok(Some(result));
-            }
             if let Some(arrangement) = arrange_coplanar_affine_surface_difference(left, right)
                 && affine_basis_is_non_axis_aligned(&arrangement.basis)
             {
@@ -3159,16 +2990,6 @@ fn boolean_direct_coplanar_surface_meshes(
                     mesh,
                     ExactBooleanShortcutKind::CoplanarAffineSurfaceDifference,
                 )));
-            }
-            if let Some(difference) = arrange_coplanar_surface_point_touch_difference(left, right) {
-                // Keep the retained branch/deleted-ring certificate ahead of the
-                // generic orthogonal-cell materializer. The exact topology is the
-                return Ok(Some(copied_shortcut_result_from_mesh(
-                    &difference.mesh,
-                    "exact coplanar point-touch surface difference",
-                    ExactBooleanShortcutKind::CoplanarSurfacePointTouchDifference,
-                    validation,
-                )?));
             }
             boolean_coplanar_orthogonal_surface_optional(left, right, operation, validation)
         }
