@@ -891,48 +891,8 @@ fn preflight_direct_coplanar_surface_support(
             if arrange_coplanar_surface_point_touch_union(left, right).is_some() {
                 return Some(ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchDifference);
             }
-            if arrange_coplanar_convex_surface_difference(left, right).is_some() {
-                return Some(
-                    ExactBooleanSupport::CertifiedCoplanarConvexSurfaceArrangementDifference,
-                );
-            }
-            if arrange_coplanar_convex_surface_multi_difference(left, right).is_some() {
-                return Some(ExactBooleanSupport::CertifiedCoplanarConvexSurfaceMultiDifference);
-            }
-            if arrange_coplanar_surface_component_difference(left, right).is_some() {
-                return Some(ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementDifference);
-            }
-            if arrange_coplanar_surface_multi_difference(left, right).is_some() {
-                return Some(ExactBooleanSupport::CertifiedCoplanarSurfaceMultiDifference);
-            }
-            if arrange_coplanar_surface_side_cutter_difference(left, right).is_some() {
-                return Some(ExactBooleanSupport::CertifiedCoplanarSurfaceSideCutterDifference);
-            }
-            if arrange_coplanar_surface_cutter_hole_contact_difference(left, right).is_some() {
-                return Some(
-                    ExactBooleanSupport::CertifiedCoplanarSurfaceCutterHoleContactDifference,
-                );
-            }
-            if arrange_coplanar_convex_surface_holed_difference(left, right).is_some() {
-                return Some(ExactBooleanSupport::CertifiedCoplanarConvexSurfaceHoledDifference);
-            }
-            if arrange_coplanar_convex_surface_multi_holed_difference(left, right).is_some() {
-                return Some(
-                    ExactBooleanSupport::CertifiedCoplanarConvexSurfaceMultiHoledDifference,
-                );
-            }
-            if arrange_coplanar_convex_surface_component_holed_difference(left, right).is_some()
-                || arrange_coplanar_surface_component_holed_difference(left, right).is_some()
-            {
-                return Some(
-                    ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference,
-                );
-            }
             if has_non_axis_aligned_affine_surface_difference(left, right) {
                 return Some(ExactBooleanSupport::CertifiedCoplanarAffineSurfaceDifference);
-            }
-            if arrange_coplanar_surface_point_touch_difference(left, right).is_some() {
-                return Some(ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchDifference);
             }
             if arrange_coplanar_orthogonal_surface_difference(left, right).is_some() {
                 return Some(ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceDifference);
@@ -1024,21 +984,6 @@ fn preflight_tail_shortcut_support(
             if arrange_single_triangle_coplanar_union(left, right).is_some() =>
         {
             Some(ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion)
-        }
-        ExactBooleanOperation::Difference
-            if difference_single_triangle_coplanar_surfaces(left, right).is_some() =>
-        {
-            Some(ExactBooleanSupport::CertifiedCoplanarSurfaceCornerDifference)
-        }
-        ExactBooleanOperation::Difference
-            if arrange_single_triangle_coplanar_difference(left, right).is_some() =>
-        {
-            Some(ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementDifference)
-        }
-        ExactBooleanOperation::Difference
-            if arrange_single_triangle_coplanar_holed_difference(left, right).is_some() =>
-        {
-            Some(ExactBooleanSupport::CertifiedCoplanarSurfaceHoledDifference)
         }
         ExactBooleanOperation::Union
         | ExactBooleanOperation::Intersection
