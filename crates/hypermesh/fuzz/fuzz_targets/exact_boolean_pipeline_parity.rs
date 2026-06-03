@@ -4,13 +4,22 @@ use std::cmp::Ordering;
 
 use hyperlimit::{Point3, compare_reals};
 use hypermesh::exact::surface::{
-    arrange_coplanar_convex_surface_component_union, arrange_coplanar_convex_surface_holed_difference,
-    arrange_coplanar_convex_surface_intersection, arrange_coplanar_convex_surface_multi_intersection,
+    arrange_coplanar_convex_surface_component_holed_difference,
+    arrange_coplanar_convex_surface_component_union, arrange_coplanar_convex_surface_difference,
+    arrange_coplanar_convex_surface_holed_difference,
+    arrange_coplanar_convex_surface_intersection, arrange_coplanar_convex_surface_multi_difference,
+    arrange_coplanar_convex_surface_multi_holed_difference,
+    arrange_coplanar_convex_surface_multi_intersection,
     arrange_coplanar_convex_surface_multi_union, arrange_coplanar_convex_surface_union,
+    arrange_coplanar_surface_component_difference,
+    arrange_coplanar_surface_component_holed_difference,
     arrange_coplanar_surface_component_holed_intersection,
     arrange_coplanar_surface_component_holed_union, arrange_coplanar_surface_component_intersection,
     arrange_coplanar_surface_component_union, arrange_coplanar_surface_multi_component_intersection,
-    arrange_coplanar_surface_multi_component_union, arrange_coplanar_surface_point_touch_union,
+    arrange_coplanar_surface_multi_component_union, arrange_coplanar_surface_multi_difference,
+    arrange_coplanar_surface_point_touch_difference, arrange_coplanar_surface_point_touch_union,
+    arrange_coplanar_surface_side_cutter_difference,
+    arrange_coplanar_surface_cutter_hole_contact_difference,
     arrange_single_triangle_coplanar_difference, arrange_single_triangle_coplanar_holed_difference,
     arrange_single_triangle_coplanar_union, difference_single_triangle_coplanar_surfaces,
     intersect_single_triangle_coplanar_surfaces, union_single_triangle_coplanar_surfaces,
@@ -262,13 +271,7 @@ fn exercise_surface_fallback_parity(
             continue;
         };
         result.validate().unwrap();
-        if result.kind
-            != (ExactBooleanResultKind::CertifiedShortcut {
-                shortcut: ExactBooleanShortcutKind::ArrangementCellComplex,
-            })
-        {
-            assert_same_mesh_shape(&result.mesh, &legacy);
-        }
+        assert_same_mesh_shape(&result.mesh, &legacy);
     }
 }
 
@@ -311,6 +314,26 @@ fn legacy_outputs(
         .flatten()
         .collect(),
         ExactBooleanOperation::Difference => [
+            arrange_coplanar_convex_surface_difference(left, right).map(|artifact| artifact.mesh),
+            arrange_coplanar_convex_surface_multi_difference(left, right)
+                .map(|artifact| artifact.mesh),
+            arrange_coplanar_convex_surface_holed_difference(left, right)
+                .map(|artifact| artifact.mesh),
+            arrange_coplanar_convex_surface_multi_holed_difference(left, right)
+                .map(|artifact| artifact.mesh),
+            arrange_coplanar_convex_surface_component_holed_difference(left, right)
+                .map(|artifact| artifact.mesh),
+            arrange_coplanar_surface_component_holed_difference(left, right)
+                .map(|artifact| artifact.mesh),
+            arrange_coplanar_surface_multi_difference(left, right).map(|artifact| artifact.mesh),
+            arrange_coplanar_surface_component_difference(left, right)
+                .map(|artifact| artifact.mesh),
+            arrange_coplanar_surface_side_cutter_difference(left, right)
+                .map(|artifact| artifact.mesh),
+            arrange_coplanar_surface_point_touch_difference(left, right)
+                .map(|artifact| artifact.mesh),
+            arrange_coplanar_surface_cutter_hole_contact_difference(left, right)
+                .map(|artifact| artifact.mesh),
             difference_single_triangle_coplanar_surfaces(left, right).map(|artifact| artifact.mesh),
             arrange_single_triangle_coplanar_difference(left, right).map(|artifact| artifact.mesh),
             arrange_single_triangle_coplanar_holed_difference(left, right)
@@ -364,19 +387,95 @@ fn triangle_mesh(points: [[i64; 3]; 3]) -> ExactMesh {
 }
 
 fn assert_same_mesh_shape(left: &ExactMesh, right: &ExactMesh) {
-    assert_eq!(left.triangles().len(), right.triangles().len());
-    assert_eq!(left.vertices().len(), right.vertices().len());
-    assert!(left.vertices().iter().all(|left_point| {
-        right
-            .vertices()
-            .iter()
-            .any(|right_point| point3_exact_equal(left_point, right_point))
-    }));
-    assert!(right.vertices().iter().all(|right_point| {
-        left.vertices()
-            .iter()
-            .any(|left_point| point3_exact_equal(left_point, right_point))
-    }));
+    assert!(
+        exact_mesh_vertex_sets_match(left, right) && left.triangles().len() == right.triangles().len()
+            || exact_mesh_boundary_edges_match(left, right),
+        "meshes do not have the same exact vertex set or boundary"
+    );
+}
+
+fn exact_mesh_vertex_sets_match(left: &ExactMesh, right: &ExactMesh) -> bool {
+    left.vertices().len() == right.vertices().len()
+        && left.vertices().iter().all(|left_point| {
+            right
+                .vertices()
+                .iter()
+                .any(|right_point| point3_exact_equal(left_point, right_point))
+        })
+        && right.vertices().iter().all(|right_point| {
+            left.vertices()
+                .iter()
+                .any(|left_point| point3_exact_equal(left_point, right_point))
+        })
+}
+
+#[derive(Clone)]
+struct ExactBoundaryEdge {
+    endpoints: [Point3; 2],
+    count: usize,
+}
+
+fn exact_mesh_boundary_edges_match(left: &ExactMesh, right: &ExactMesh) -> bool {
+    let Some(left_edges) = exact_mesh_boundary_edges(left) else {
+        return false;
+    };
+    let Some(right_edges) = exact_mesh_boundary_edges(right) else {
+        return false;
+    };
+    !left_edges.is_empty()
+        && left_edges.len() == right_edges.len()
+        && left_edges.iter().all(|left_edge| {
+            right_edges.iter().any(|right_edge| {
+                left_edge.count == right_edge.count
+                    && point3_edge_exact_equal(&left_edge.endpoints, &right_edge.endpoints)
+            })
+        })
+        && right_edges.iter().all(|right_edge| {
+            left_edges.iter().any(|left_edge| {
+                left_edge.count == right_edge.count
+                    && point3_edge_exact_equal(&right_edge.endpoints, &left_edge.endpoints)
+            })
+        })
+}
+
+fn exact_mesh_boundary_edges(mesh: &ExactMesh) -> Option<Vec<ExactBoundaryEdge>> {
+    let mut edges = Vec::<ExactBoundaryEdge>::new();
+    for triangle in mesh.triangles() {
+        for [start, end] in triangle_edges(triangle.0) {
+            let edge = [
+                mesh.vertices().get(start)?.clone(),
+                mesh.vertices().get(end)?.clone(),
+            ];
+            if let Some(existing) = edges
+                .iter_mut()
+                .find(|existing| point3_edge_exact_equal(&existing.endpoints, &edge))
+            {
+                existing.count += 1;
+            } else {
+                edges.push(ExactBoundaryEdge {
+                    endpoints: edge,
+                    count: 1,
+                });
+            }
+        }
+    }
+    if edges.iter().any(|edge| edge.count > 2) {
+        return None;
+    }
+    Some(edges.into_iter().filter(|edge| edge.count == 1).collect())
+}
+
+fn triangle_edges(triangle: [usize; 3]) -> [[usize; 2]; 3] {
+    [
+        [triangle[0], triangle[1]],
+        [triangle[1], triangle[2]],
+        [triangle[2], triangle[0]],
+    ]
+}
+
+fn point3_edge_exact_equal(left: &[Point3; 2], right: &[Point3; 2]) -> bool {
+    point3_exact_equal(&left[0], &right[0]) && point3_exact_equal(&left[1], &right[1])
+        || point3_exact_equal(&left[0], &right[1]) && point3_exact_equal(&left[1], &right[0])
 }
 
 fn point3_exact_equal(left: &Point3, right: &Point3) -> bool {
