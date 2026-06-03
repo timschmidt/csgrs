@@ -20492,10 +20492,11 @@ fn exact_coplanar_component_holed_difference_materializes_nonconvex_source_disk_
     assert_eq!(
         result.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::exact::ExactBooleanShortcutKind::
-                CoplanarConvexSurfaceComponentHoledDifference
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
+    assert!(exact_mesh_vertex_sets_equal(&result.mesh, &holed.mesh));
+    assert_eq!(result.mesh.triangles().len(), holed.mesh.triangles().len());
 
     let opening_and_hole = ExactMesh::from_i64_triangles_with_policy(
         &[
@@ -21040,10 +21041,10 @@ fn exact_coplanar_convex_surface_difference_materializes_multiple_holes() {
     assert_eq!(
         result.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut:
-                hypermesh::exact::ExactBooleanShortcutKind::CoplanarConvexSurfaceMultiHoledDifference
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
+    assert!(exact_mesh_vertex_sets_equal(&result.mesh, &difference.mesh));
     assert_eq!(
         result.mesh.vertices().len(),
         difference.mesh.vertices().len()
@@ -21088,9 +21089,16 @@ fn exact_coplanar_convex_surface_difference_materializes_multiple_holes() {
     assert_eq!(
         square_result.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut:
-                hypermesh::exact::ExactBooleanShortcutKind::CoplanarConvexSurfaceMultiHoledDifference
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ArrangementCellComplex
         }
+    );
+    assert!(exact_mesh_vertex_sets_equal(
+        &square_result.mesh,
+        &square_difference.mesh
+    ));
+    assert_eq!(
+        square_result.mesh.triangles().len(),
+        square_difference.mesh.triangles().len()
     );
 }
 
@@ -21727,10 +21735,11 @@ fn exact_coplanar_convex_surface_difference_materializes_component_holes() {
     assert_eq!(
         result.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::exact::ExactBooleanShortcutKind::
-                CoplanarConvexSurfaceComponentHoledDifference
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
+    assert!(exact_mesh_vertex_sets_equal(&result.mesh, &difference.mesh));
+    assert_eq!(result.mesh.triangles().len(), difference.mesh.triangles().len());
 }
 
 #[test]
@@ -21827,9 +21836,16 @@ fn exact_coplanar_surface_cutter_hole_contact_accepts_nonrectangular_convex_pair
     assert_eq!(
         result.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::exact::ExactBooleanShortcutKind::
-                CoplanarSurfaceCutterHoleContactDifference
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ArrangementCellComplex
         }
+    );
+    assert!(exact_mesh_vertex_sets_equal(
+        &result.mesh,
+        &contact_difference.mesh
+    ));
+    assert_eq!(
+        result.mesh.triangles().len(),
+        contact_difference.mesh.triangles().len()
     );
 }
 
@@ -22663,9 +22679,16 @@ fn exact_coplanar_surface_cutter_hole_contact_accepts_nonrectangular_contact_cha
     assert_eq!(
         result.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::exact::ExactBooleanShortcutKind::
-                CoplanarSurfaceCutterHoleContactDifference
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ArrangementCellComplex
         }
+    );
+    assert!(exact_mesh_vertex_sets_equal(
+        &result.mesh,
+        &contact_difference.mesh
+    ));
+    assert_eq!(
+        result.mesh.triangles().len(),
+        contact_difference.mesh.triangles().len()
     );
 
     let disconnected_hole = ExactMesh::from_i64_triangles_with_policy(
@@ -26002,9 +26025,16 @@ fn exact_coplanar_orthogonal_surface_cells_materialize_nonconvex_outputs() {
     assert_eq!(
         holed_result.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut:
-                hypermesh::exact::ExactBooleanShortcutKind::CoplanarOrthogonalSurfaceDifference
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ArrangementCellComplex
         }
+    );
+    assert!(exact_mesh_vertex_sets_equal(
+        &holed_result.mesh,
+        &holed_difference.mesh
+    ));
+    assert_eq!(
+        holed_result.mesh.triangles().len(),
+        holed_difference.mesh.triangles().len()
     );
 
     let nested_left = rect_surface_i64(&[(0, 0, 10, 10)]);
@@ -31095,10 +31125,11 @@ fn exact_coplanar_component_holed_difference_materializes_nested_same_outer_hole
     assert_eq!(
         result.kind,
         hypermesh::exact::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut:
-                hypermesh::exact::ExactBooleanShortcutKind::CoplanarConvexSurfaceComponentHoledDifference
+            shortcut: hypermesh::exact::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
+    assert!(exact_mesh_vertex_sets_equal(&result.mesh, &difference.mesh));
+    assert_eq!(result.mesh.triangles().len(), difference.mesh.triangles().len());
 }
 
 #[test]

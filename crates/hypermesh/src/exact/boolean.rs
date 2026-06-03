@@ -2222,6 +2222,8 @@ fn coplanar_mesh_overlay_should_preempt_surface_paths(
     }
     if operation != ExactBooleanOperation::Intersection
         && certify_coplanar_surface_mesh_containment(left, right).is_some()
+        && !(operation == ExactBooleanOperation::Difference
+            && coplanar_mesh_overlay_surface_difference_boundary_policy(left, right).is_some())
     {
         return false;
     }
@@ -2616,7 +2618,8 @@ fn coplanar_mesh_overlay_matches_legacy_surface_intersection_with_policy(
 }
 
 fn exact_meshes_have_same_shape(left: &ExactMesh, right: &ExactMesh) -> bool {
-    exact_mesh_vertex_sets_match(left, right) && left.triangles().len() == right.triangles().len()
+    (exact_mesh_vertex_sets_match(left, right) && left.triangles().len() == right.triangles().len())
+        || exact_mesh_boundary_edges_match(left, right)
 }
 
 fn exact_mesh_vertex_sets_match(left: &ExactMesh, right: &ExactMesh) -> bool {
@@ -2632,6 +2635,80 @@ fn exact_mesh_vertex_sets_match(left: &ExactMesh, right: &ExactMesh) -> bool {
                 .iter()
                 .any(|left_point| point3_exact_equal(left_point, right_point) == Some(true))
         })
+}
+
+#[derive(Clone, Debug)]
+struct ExactBoundaryEdge {
+    endpoints: [Point3; 2],
+    count: usize,
+}
+
+fn exact_mesh_boundary_edges_match(left: &ExactMesh, right: &ExactMesh) -> bool {
+    let Some(left_edges) = exact_mesh_boundary_edges(left) else {
+        return false;
+    };
+    let Some(right_edges) = exact_mesh_boundary_edges(right) else {
+        return false;
+    };
+    !left_edges.is_empty()
+        && left_edges.len() == right_edges.len()
+        && left_edges.iter().all(|left_edge| {
+            right_edges.iter().any(|right_edge| {
+                left_edge.count == right_edge.count
+                    && point3_edge_exact_equal(&left_edge.endpoints, &right_edge.endpoints)
+                        == Some(true)
+            })
+        })
+        && right_edges.iter().all(|right_edge| {
+            left_edges.iter().any(|left_edge| {
+                left_edge.count == right_edge.count
+                    && point3_edge_exact_equal(&right_edge.endpoints, &left_edge.endpoints)
+                        == Some(true)
+            })
+        })
+}
+
+fn exact_mesh_boundary_edges(mesh: &ExactMesh) -> Option<Vec<ExactBoundaryEdge>> {
+    let mut edges = Vec::<ExactBoundaryEdge>::new();
+    for triangle in mesh.triangles() {
+        for [start, end] in triangle_edges(triangle) {
+            let edge = [
+                mesh.vertices().get(start)?.clone(),
+                mesh.vertices().get(end)?.clone(),
+            ];
+            if let Some(existing) = edges.iter_mut().find(|existing| {
+                point3_edge_exact_equal(&existing.endpoints, &edge) == Some(true)
+            }) {
+                existing.count += 1;
+            } else {
+                edges.push(ExactBoundaryEdge {
+                    endpoints: edge,
+                    count: 1,
+                });
+            }
+        }
+    }
+    if edges.iter().any(|edge| edge.count > 2) {
+        return None;
+    }
+    Some(edges.into_iter().filter(|edge| edge.count == 1).collect())
+}
+
+fn triangle_edges(triangle: &Triangle) -> [[usize; 2]; 3] {
+    [
+        [triangle.0[0], triangle.0[1]],
+        [triangle.0[1], triangle.0[2]],
+        [triangle.0[2], triangle.0[0]],
+    ]
+}
+
+fn point3_edge_exact_equal(left: &[Point3; 2], right: &[Point3; 2]) -> Option<bool> {
+    Some(
+        (point3_exact_equal(&left[0], &right[0])?
+            && point3_exact_equal(&left[1], &right[1])?)
+            || (point3_exact_equal(&left[0], &right[1])?
+                && point3_exact_equal(&left[1], &right[0])?),
+    )
 }
 
 fn point2_for_hypertri(point: &Point2) -> hypertri::ExactPoint {
@@ -6444,6 +6521,25 @@ fn concatenate_meshes(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn exact_mesh_shape_accepts_same_boundary_with_different_triangulation() {
+        let diagonal = ExactMesh::from_i64_triangles_with_policy(
+            &[0, 0, 0, 4, 0, 0, 4, 4, 0, 0, 4, 0],
+            &[0, 1, 2, 0, 2, 3],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let centered = ExactMesh::from_i64_triangles_with_policy(
+            &[0, 0, 0, 4, 0, 0, 4, 4, 0, 0, 4, 0, 2, 2, 0],
+            &[0, 1, 4, 1, 2, 4, 2, 3, 4, 3, 0, 4],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+
+        assert!(exact_mesh_boundary_edges_match(&diagonal, &centered));
+        assert!(exact_meshes_have_same_shape(&diagonal, &centered));
+    }
 
     #[test]
     fn coplanar_volumetric_gate_uses_source_side_evidence() {
