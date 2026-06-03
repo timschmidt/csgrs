@@ -128,6 +128,10 @@ fn exercise_mesh_arrangement(values: &[i64]) {
             if let Ok(simplified) =
                 selected.simplify_exact_with_policy(ExactRegularizationPolicy::RETAIN_ARTIFACTS)
             {
+                assert_eq!(
+                    simplified.lower_dimensional_artifacts,
+                    arrangement.lower_dimensional_artifacts
+                );
                 if simplified.blockers.is_empty() {
                     let _ = simplified.triangulate();
                 }
