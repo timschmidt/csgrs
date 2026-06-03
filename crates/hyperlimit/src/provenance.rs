@@ -18,8 +18,8 @@ pub enum MeshSource {
     Exact,
     /// Primitive `f64` coordinates were checked and imported as exact dyadics.
     LossyF64,
-    /// Data came from a boolmesh-derived adapter.
-    BoolmeshAdapter,
+    /// Data came from a hypermesh-derived adapter.
+    HypermeshAdapter,
     /// Data came from an external edge adapter such as OBJ, display, or runtime
     /// preview code.
     ExternalAdapter,
@@ -66,17 +66,17 @@ impl SourceProvenance {
         }
     }
 
-    /// Build provenance for a retained boolmesh-derived adapter edge.
+    /// Build provenance for a retained hypermesh-derived adapter edge.
     ///
-    /// Boolmesh-derived topology can be retained for compatibility reports,
+    /// Hypermesh-derived topology can be retained for compatibility reports,
     /// but it must never enter an exact topology boundary as if it were exact
     /// or merely a display view. This
     /// mirrors Yap, "Towards Exact Geometric Computation," *Computational
     /// Geometry* 7.1-2 (1997), by keeping approximate topology decisions
     /// outside exact object identity.
-    pub fn boolmesh_adapter(label: impl Into<String>) -> Self {
+    pub fn hypermesh_adapter(label: impl Into<String>) -> Self {
         Self {
-            source: MeshSource::BoolmeshAdapter,
+            source: MeshSource::HypermeshAdapter,
             label: label.into(),
             approximation: ApproximationPolicy::ExplicitApproximateDecision,
         }
@@ -113,11 +113,11 @@ impl SourceProvenance {
             (MeshSource::LossyF64, _) => {
                 Err(ConstructionProvenanceValidationError::LossySourcePolicyMismatch)
             }
-            (MeshSource::BoolmeshAdapter, ApproximationPolicy::ExplicitApproximateDecision) => {
+            (MeshSource::HypermeshAdapter, ApproximationPolicy::ExplicitApproximateDecision) => {
                 Ok(())
             }
-            (MeshSource::BoolmeshAdapter, _) => {
-                Err(ConstructionProvenanceValidationError::BoolmeshAdapterPolicyMismatch)
+            (MeshSource::HypermeshAdapter, _) => {
+                Err(ConstructionProvenanceValidationError::HypermeshAdapterPolicyMismatch)
             }
             (MeshSource::ExternalAdapter, ApproximationPolicy::EdgeOnly) => Ok(()),
             (MeshSource::ExternalAdapter, _) => {
@@ -151,9 +151,9 @@ pub enum ConstructionProvenanceValidationError {
     /// A lossy primitive-float source was not marked as an edge-only
     /// approximation boundary.
     LossySourcePolicyMismatch,
-    /// A boolmesh adapter source was not marked as an explicit
+    /// A hypermesh adapter source was not marked as an explicit
     /// approximate topology decision.
-    BoolmeshAdapterPolicyMismatch,
+    HypermeshAdapterPolicyMismatch,
     /// An external display/import adapter was not marked as an edge-only
     /// approximation boundary.
     ExternalAdapterPolicyMismatch,
@@ -248,7 +248,7 @@ mod tests {
     fn source_provenance_rejects_ambiguous_approximation_boundaries() {
         SourceProvenance::exact("caller").validate().unwrap();
         SourceProvenance::lossy_f64("import").validate().unwrap();
-        SourceProvenance::boolmesh_adapter("boolmesh")
+        SourceProvenance::hypermesh_adapter("hypermesh")
             .validate()
             .unwrap();
         SourceProvenance::external_adapter("obj")
