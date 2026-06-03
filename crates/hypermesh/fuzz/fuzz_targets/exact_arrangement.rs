@@ -1,6 +1,9 @@
 #![no_main]
 
-use hyperlimit::Point2;
+use std::cmp::Ordering;
+use std::collections::BTreeSet;
+
+use hyperlimit::{Point2, compare_reals};
 use hypermesh::exact::{
     ExactArrangement, ExactArrangement2dRegion, ExactArrangement2dRegionRing,
     ExactArrangement2dSetOperation, ExactBooleanOperation, ExactMesh,
@@ -46,8 +49,49 @@ fn exercise_planar_overlay(values: &[i64]) {
         ExactArrangement2dSetOperation::Difference,
     ] {
         let overlay = build_exact_arrangement2d_overlay(&[left.clone(), right.clone()], operation);
-        let _ = overlay.is_complete();
+        if overlay.is_complete() {
+            exercise_overlay_component_invariants(&overlay);
+        }
     }
+}
+
+fn exercise_overlay_component_invariants(
+    overlay: &hypermesh::exact::ExactArrangement2dOverlay,
+) {
+    let mut assigned_holes = BTreeSet::new();
+    for component in &overlay.output_components {
+        assert!(component.outer_loop < overlay.output_loops.len());
+        assert_eq!(
+            compare_reals(
+                &overlay.output_loops[component.outer_loop].signed_area_twice,
+                &Real::from(0),
+            )
+            .value(),
+            Some(Ordering::Greater)
+        );
+        for &hole_loop in &component.hole_loops {
+            assert!(hole_loop < overlay.output_loops.len());
+            assert!(assigned_holes.insert(hole_loop));
+            assert_eq!(
+                compare_reals(
+                    &overlay.output_loops[hole_loop].signed_area_twice,
+                    &Real::from(0),
+                )
+                .value(),
+                Some(Ordering::Less)
+            );
+        }
+    }
+    let negative_loops = overlay
+        .output_loops
+        .iter()
+        .enumerate()
+        .filter(|(_, loop_)| {
+            compare_reals(&loop_.signed_area_twice, &Real::from(0)).value()
+                == Some(Ordering::Less)
+        })
+        .count();
+    assert_eq!(assigned_holes.len(), negative_loops);
 }
 
 fn exercise_mesh_arrangement(values: &[i64]) {
