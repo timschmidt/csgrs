@@ -42,7 +42,7 @@ use super::arrangement3d::ExactArrangement;
 use super::boolmesh::{
     ExactBoolMeshKernelStage, ExactBoolMeshValidationError,
     exact_boolmesh_workspace_from_graph_for_support, execute_exact_boolmesh_bounds_disjoint,
-    execute_exact_boolmesh_port, execute_exact_boolmesh_port_from_graph,
+    execute_exact_boolmesh_port_from_graph,
 };
 use super::bounds::AabbIntersectionKind;
 use super::box_solid::{
@@ -1620,15 +1620,10 @@ fn copied_shortcut_result_from_mesh(
 }
 
 fn boolean_coplanar_surface_boundary_touch_intersection(
-    left: &ExactMesh,
-    right: &ExactMesh,
+    _left: &ExactMesh,
+    _right: &ExactMesh,
     validation: ValidationPolicy,
 ) -> Result<ExactBooleanResult, MeshError> {
-    if let Some(result) =
-        boolean_boolmesh_split_meshes(left, right, ExactBooleanOperation::Intersection, validation)?
-    {
-        return Ok(result);
-    }
     let mesh = empty_mesh(
         "empty exact coplanar boundary-touch surface intersection",
         validation,
@@ -1641,14 +1636,9 @@ fn boolean_coplanar_surface_boundary_touch_intersection(
 
 fn boolean_coplanar_surface_boundary_touch_difference(
     left: &ExactMesh,
-    right: &ExactMesh,
+    _right: &ExactMesh,
     validation: ValidationPolicy,
 ) -> Result<ExactBooleanResult, MeshError> {
-    if let Some(result) =
-        boolean_boolmesh_split_meshes(left, right, ExactBooleanOperation::Difference, validation)?
-    {
-        return Ok(result);
-    }
     let mesh = copy_mesh(
         left,
         "exact coplanar boundary-touch surface difference keeps left",
@@ -1801,7 +1791,13 @@ fn run_arrangement_cell_complex_attempt(
                 operation,
             )
             && let Some(validation) = validation
-            && let Some(result) = boolean_boolmesh_split_meshes(left, right, operation, validation)?
+            && let Some(result) = boolean_boolmesh_split_meshes_from_graph(
+                &arrangement.graph,
+                left,
+                right,
+                operation,
+                validation,
+            )?
         {
             attempt.stage = ExactArrangementBooleanStage::Materialized;
             attempt.materialized_shortcut = Some(ExactBooleanShortcutKind::BoolMeshSplit);
@@ -2740,6 +2736,7 @@ fn single_triangle_coplanar_overlay_should_preempt_surface_paths(
         ExactBooleanOperation::Union | ExactBooleanOperation::Difference => true,
         ExactBooleanOperation::Intersection => {
             intersect_single_triangle_coplanar_surfaces(left, right).is_some()
+                || certify_coplanar_surface_boundary_touch(left, right).is_some()
         }
         ExactBooleanOperation::SelectedRegions(_) => false,
     }
@@ -6204,25 +6201,6 @@ fn boolean_boolmesh_port_meshes_from_graph(
             Severity::Error,
             DiagnosticKind::UnsupportedExactOperation,
             format!("exact boolmesh graph-backed port failed: {error:?}"),
-        ))),
-    }
-}
-
-fn boolean_boolmesh_split_meshes(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
-    match execute_exact_boolmesh_port(left, right, operation, validation) {
-        Ok(execution) if execution.shortcut == ExactBooleanShortcutKind::BoolMeshSplit => Ok(Some(
-            certified_shortcut_result(execution.mesh, execution.shortcut),
-        )),
-        Ok(_) | Err(ExactBoolMeshValidationError::PortBlocked(_)) => Ok(None),
-        Err(error) => Err(MeshError::one(MeshDiagnostic::new(
-            Severity::Error,
-            DiagnosticKind::UnsupportedExactOperation,
-            format!("exact boolmesh split failed: {error:?}"),
         ))),
     }
 }
