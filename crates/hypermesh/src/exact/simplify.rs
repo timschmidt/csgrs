@@ -823,6 +823,7 @@ fn triangulate_loop_with_holes(
     triangles: &mut Vec<Triangle>,
 ) -> Result<(), ExactArrangementBlocker> {
     let projection = loops[outer_index].projection;
+    let output_orientation = projected_loop_orientation(&loops[outer_index].boundary, projection)?;
     let mut polygon_points = if hole_loop_indices.is_empty() {
         loops[outer_index].boundary.clone()
     } else {
@@ -874,16 +875,36 @@ fn triangulate_loop_with_holes(
     let mut emitted_triangles = indices.chunks_exact(3);
     for triangle in &mut emitted_triangles {
         validate_emitted_triangle_area(&polygon_points, projection, triangle)?;
-        triangles.push(Triangle([
-            local_to_global[triangle[0]],
-            local_to_global[triangle[1]],
-            local_to_global[triangle[2]],
-        ]));
+        if !hole_indices.is_empty() && output_orientation == Ordering::Less {
+            triangles.push(Triangle([
+                local_to_global[triangle[0]],
+                local_to_global[triangle[2]],
+                local_to_global[triangle[1]],
+            ]));
+        } else {
+            triangles.push(Triangle([
+                local_to_global[triangle[0]],
+                local_to_global[triangle[1]],
+                local_to_global[triangle[2]],
+            ]));
+        }
     }
     if !emitted_triangles.remainder().is_empty() {
         return Err(ExactArrangementBlocker::NonManifoldCellComplex);
     }
     Ok(())
+}
+
+fn projected_loop_orientation(
+    points: &[Point3],
+    projection: CoplanarProjection,
+) -> Result<Ordering, ExactArrangementBlocker> {
+    let area = projected_polygon_area2_value(points, projection);
+    match compare_reals(&area, &Real::from(0)).value() {
+        Some(ordering @ (Ordering::Less | Ordering::Greater)) => Ok(ordering),
+        Some(Ordering::Equal) => Err(ExactArrangementBlocker::NonManifoldCellComplex),
+        None => Err(ExactArrangementBlocker::UndecidableOrdering),
+    }
 }
 
 fn validate_emitted_triangle_area(
@@ -1271,6 +1292,53 @@ mod tests {
     }
 
     #[test]
+    fn triangulation_preserves_volume_reversed_holed_orientation() {
+        let outer = [p(0, 0, 0), p(4, 0, 0), p(4, 4, 0), p(0, 4, 0)];
+        let hole = [p(1, 1, 0), p(1, 3, 0), p(3, 3, 0), p(3, 1, 0)];
+        let selected = ExactSelectedCellComplex {
+            faces: vec![
+                selected_face(0, &[0, 1, 2, 3], &outer),
+                selected_face(1, &[4, 5, 6, 7], &hole),
+            ],
+            volume_regions: Vec::new(),
+            volume_adjacencies: vec![dummy_volume_adjacency(0), dummy_volume_adjacency(1)],
+            lower_dimensional_artifacts: Vec::new(),
+            selected_faces: vec![0, 1],
+            selected_face_orientations: vec![
+                ExactSelectedFaceOrientation {
+                    face: 0,
+                    reverse: true,
+                    from_volume_adjacency: true,
+                },
+                ExactSelectedFaceOrientation {
+                    face: 1,
+                    reverse: true,
+                    from_volume_adjacency: true,
+                },
+            ],
+            selected_volume_regions: Vec::new(),
+            operation: ExactBooleanOperation::Difference,
+            blockers: Vec::new(),
+        };
+
+        let simplified =
+            simplify_selected_cell_complex(selected, ExactRegularizationPolicy::REGULARIZED_SOLID)
+                .unwrap();
+        let mesh = simplified.triangulate().unwrap();
+
+        assert_eq!(mesh.vertices().len(), 8);
+        assert_eq!(mesh.triangles().len(), 8);
+        assert_eq!(
+            compare_reals(
+                &mesh_projected_area2(&mesh, CoplanarProjection::Xy),
+                &Real::from(0)
+            )
+            .value(),
+            Some(Ordering::Less)
+        );
+    }
+
+    #[test]
     fn triangulation_rejects_overlapping_same_depth_loops() {
         let left = [p(0, 0, 0), p(4, 0, 0), p(4, 4, 0), p(0, 4, 0)];
         let right = [p(2, 1, 0), p(6, 1, 0), p(6, 3, 0), p(2, 3, 0)];
@@ -1420,5 +1488,18 @@ mod tests {
             classify_point_ring_even_odd(&outer, &witness).value(),
             Some(RingPointLocation::Inside)
         );
+    }
+
+    fn mesh_projected_area2(mesh: &ExactMesh, projection: CoplanarProjection) -> Real {
+        mesh.triangles()
+            .iter()
+            .fold(Real::from(0), |area, triangle| {
+                let points = [
+                    mesh.vertices()[triangle.0[0]].clone(),
+                    mesh.vertices()[triangle.0[1]].clone(),
+                    mesh.vertices()[triangle.0[2]].clone(),
+                ];
+                area + &projected_polygon_area2_value(&points, projection)
+            })
     }
 }
