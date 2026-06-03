@@ -20,10 +20,12 @@ use super::graph::{
     ExactIntersectionGraph, ExactSplitTopologyPlan, FaceRegionBoundary, FaceSplitBoundaryNode,
     MeshSide, SplitEdgeNode, SplitPlanValidationReport, build_intersection_graph,
 };
-use super::mesh::ExactMesh;
+use super::mesh::{ExactMesh, Triangle};
+use super::provenance::SourceProvenance;
 use super::regularization::{
     ExactArrangementBlocker, ExactLowerDimensionalPolicy, ExactRegularizationPolicy,
 };
+use super::validation::ValidationPolicy;
 use super::winding::{
     ClosedMeshWindingMeshRelation, ClosedMeshWindingRelation, PointMeshWindingReport,
     classify_mesh_vertices_against_closed_mesh_winding_report,
@@ -380,6 +382,7 @@ impl ExactArrangement3d {
         let shells_or_regions = Some(arrangement_regions(&face_cells));
         let (volume_regions, volume_adjacencies) = arrangement_volume_graph(
             shells_or_regions.as_ref().map_or(&[][..], Vec::as_slice),
+            &face_cells,
             left,
             right,
         );
@@ -1754,6 +1757,7 @@ fn arrangement_region_oriented_sides(
 
 fn arrangement_volume_graph(
     shell_regions: &[ArrangementRegion],
+    face_cells: &[ArrangementFaceCell],
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> (
@@ -1766,6 +1770,10 @@ fn arrangement_volume_graph(
             .any(|region| !region.closed || !region.manifold)
     {
         return (None, None);
+    }
+
+    if let Some(nested) = nested_shell_volume_graph(shell_regions, face_cells) {
+        return nested;
     }
 
     if let Some(nested) = nested_two_shell_volume_graph(shell_regions, left, right) {
@@ -1798,6 +1806,230 @@ fn arrangement_volume_graph(
     }
 
     (Some(volume_regions), Some(volume_adjacencies))
+}
+
+fn nested_shell_volume_graph(
+    shell_regions: &[ArrangementRegion],
+    face_cells: &[ArrangementFaceCell],
+) -> Option<(
+    Option<Vec<ArrangementVolumeRegion>>,
+    Option<Vec<ArrangementVolumeAdjacency>>,
+)> {
+    if shell_regions
+        .iter()
+        .any(|region| region.source_sides.len() != 1)
+    {
+        return None;
+    }
+
+    let shell_meshes = shell_regions
+        .iter()
+        .map(|region| shell_region_mesh(region, face_cells))
+        .collect::<Option<Vec<_>>>()?;
+    let mut contains = vec![vec![false; shell_regions.len()]; shell_regions.len()];
+    for contained in 0..shell_regions.len() {
+        let witness = shell_region_witness(shell_regions.get(contained)?, face_cells)?;
+        for container in 0..shell_regions.len() {
+            if contained == container {
+                continue;
+            }
+            match classify_point_against_closed_mesh_winding_report(
+                &witness,
+                &shell_meshes[container],
+            )
+            .relation
+            {
+                ClosedMeshWindingRelation::Inside => contains[contained][container] = true,
+                ClosedMeshWindingRelation::Outside => {}
+                ClosedMeshWindingRelation::Boundary
+                | ClosedMeshWindingRelation::Unknown
+                | ClosedMeshWindingRelation::NotClosed => return None,
+            }
+        }
+    }
+
+    for left in 0..shell_regions.len() {
+        for right in (left + 1)..shell_regions.len() {
+            if contains[left][right] && contains[right][left] {
+                return None;
+            }
+        }
+    }
+
+    let mut parents = vec![None; shell_regions.len()];
+    for shell in 0..shell_regions.len() {
+        let containers = (0..shell_regions.len())
+            .filter(|&candidate| contains[shell][candidate])
+            .collect::<Vec<_>>();
+        let Some(parent) = deepest_containing_shell(&containers, &contains) else {
+            continue;
+        };
+        parents[shell] = Some(parent);
+    }
+
+    let mut children = vec![Vec::<usize>::new(); shell_regions.len()];
+    for (shell, parent) in parents.iter().enumerate() {
+        if let Some(parent) = *parent {
+            children[parent].push(shell);
+        }
+    }
+
+    let roots = (0..shell_regions.len())
+        .filter(|&shell| parents[shell].is_none())
+        .collect::<Vec<_>>();
+    let mut volume_regions = Vec::with_capacity(shell_regions.len() + 1);
+    volume_regions.push(ArrangementVolumeRegion {
+        index: 0,
+        exterior: true,
+        boundary_shells: roots.clone(),
+        source_sides: Vec::new(),
+    });
+    let mut volume_adjacencies = Vec::with_capacity(shell_regions.len());
+    let mut shell_volume = vec![None; shell_regions.len()];
+    for root in roots {
+        push_nested_shell_volume(
+            root,
+            0,
+            &[],
+            shell_regions,
+            &children,
+            &mut shell_volume,
+            &mut volume_regions,
+            &mut volume_adjacencies,
+        );
+    }
+
+    if shell_volume.iter().any(Option::is_none) {
+        return None;
+    }
+
+    Some((Some(volume_regions), Some(volume_adjacencies)))
+}
+
+fn deepest_containing_shell(containers: &[usize], contains: &[Vec<bool>]) -> Option<usize> {
+    let mut best = None;
+    let mut best_depth = 0usize;
+    for &candidate in containers {
+        let depth = containers
+            .iter()
+            .filter(|&&other| other != candidate && contains[candidate][other])
+            .count();
+        if best.is_none() || depth > best_depth {
+            best = Some(candidate);
+            best_depth = depth;
+        } else if depth == best_depth {
+            return None;
+        }
+    }
+    best
+}
+
+fn push_nested_shell_volume(
+    shell: usize,
+    exterior_volume: usize,
+    exterior_source_sides: &[MeshSide],
+    shell_regions: &[ArrangementRegion],
+    children: &[Vec<usize>],
+    shell_volume: &mut [Option<usize>],
+    volume_regions: &mut Vec<ArrangementVolumeRegion>,
+    volume_adjacencies: &mut Vec<ArrangementVolumeAdjacency>,
+) {
+    let volume = volume_regions.len();
+    let mut source_sides = exterior_source_sides.to_vec();
+    for side in &shell_regions[shell].source_sides {
+        push_unique_mesh_side(&mut source_sides, *side);
+    }
+    let mut boundary_shells = Vec::with_capacity(children[shell].len() + 1);
+    boundary_shells.push(shell);
+    boundary_shells.extend(children[shell].iter().copied());
+    volume_regions.push(ArrangementVolumeRegion {
+        index: volume,
+        exterior: false,
+        boundary_shells,
+        source_sides: source_sides.clone(),
+    });
+    shell_volume[shell] = Some(volume);
+    volume_adjacencies.push(ArrangementVolumeAdjacency {
+        shell_region: shell,
+        exterior_volume,
+        interior_volume: volume,
+        separating_face_cells: shell_regions[shell].face_cells.clone(),
+    });
+    for &child in &children[shell] {
+        push_nested_shell_volume(
+            child,
+            volume,
+            &source_sides,
+            shell_regions,
+            children,
+            shell_volume,
+            volume_regions,
+            volume_adjacencies,
+        );
+    }
+}
+
+fn push_unique_mesh_side(sides: &mut Vec<MeshSide>, side: MeshSide) {
+    if !sides.contains(&side) {
+        sides.push(side);
+    }
+}
+
+fn shell_region_witness(
+    shell: &ArrangementRegion,
+    face_cells: &[ArrangementFaceCell],
+) -> Option<Point3> {
+    shell
+        .face_cells
+        .iter()
+        .filter_map(|&cell| face_cells.get(cell))
+        .flat_map(|cell| cell.boundary_points.iter())
+        .next()
+        .cloned()
+}
+
+fn shell_region_mesh(
+    shell: &ArrangementRegion,
+    face_cells: &[ArrangementFaceCell],
+) -> Option<ExactMesh> {
+    let mut vertices = Vec::new();
+    let mut triangles = Vec::new();
+    for &cell_index in &shell.face_cells {
+        let cell = face_cells.get(cell_index)?;
+        if cell.boundary_points.len() < 3 {
+            return None;
+        }
+        let boundary = cell
+            .boundary_points
+            .iter()
+            .map(|point| find_or_insert_shell_vertex(&mut vertices, point))
+            .collect::<Option<Vec<_>>>()?;
+        for index in 1..cell.boundary_points.len() - 1 {
+            triangles.push(Triangle([
+                boundary[0],
+                boundary[index],
+                boundary[index + 1],
+            ]));
+        }
+    }
+    ExactMesh::new_with_policy(
+        vertices,
+        triangles,
+        SourceProvenance::exact("exact arrangement shell replay"),
+        ValidationPolicy::CLOSED,
+    )
+    .ok()
+}
+
+fn find_or_insert_shell_vertex(vertices: &mut Vec<Point3>, point: &Point3) -> Option<usize> {
+    for (index, existing) in vertices.iter().enumerate() {
+        if point3_equal(existing, point).value()? {
+            return Some(index);
+        }
+    }
+    let index = vertices.len();
+    vertices.push(point.clone());
+    Some(index)
 }
 
 fn nested_two_shell_volume_graph(
@@ -2232,6 +2464,32 @@ mod tests {
         .unwrap()
     }
 
+    fn two_tetrahedra_i64(tetrahedra: &[[[i64; 3]; 4]]) -> ExactMesh {
+        let mut vertices = Vec::new();
+        let mut triangles = Vec::new();
+        for tetrahedron in tetrahedra {
+            let start = vertices.len() / 3;
+            for point in tetrahedron {
+                vertices.extend(point);
+            }
+            triangles.extend([
+                start,
+                start + 2,
+                start + 1,
+                start,
+                start + 1,
+                start + 3,
+                start + 1,
+                start + 2,
+                start + 3,
+                start + 2,
+                start,
+                start + 3,
+            ]);
+        }
+        ExactMesh::from_i64_triangles(&vertices, &triangles).unwrap()
+    }
+
     fn open_triangle_i64(a: [i64; 3], b: [i64; 3], c: [i64; 3]) -> ExactMesh {
         ExactMesh::from_i64_triangles_with_policy(
             &[a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2]],
@@ -2374,6 +2632,61 @@ mod tests {
             .select(ExactBooleanOperation::Difference)
             .unwrap();
         assert_eq!(difference.selected_volume_regions, vec![1]);
+    }
+
+    #[test]
+    fn nested_tetrahedron_with_two_inner_shells_builds_volume_tree() {
+        let left = tetrahedron_i64([0, 0, 0], [20, 0, 0], [0, 20, 0], [0, 0, 20]);
+        let right = two_tetrahedra_i64(&[
+            [[1, 1, 1], [2, 1, 1], [1, 2, 1], [1, 1, 2]],
+            [[5, 1, 1], [6, 1, 1], [5, 2, 1], [5, 1, 2]],
+        ]);
+
+        let arrangement = ExactArrangement::from_meshes(&left, &right).unwrap();
+
+        assert!(
+            arrangement.blockers.is_empty(),
+            "{:?}",
+            arrangement.blockers
+        );
+        let volume_regions = arrangement
+            .volume_regions
+            .as_ref()
+            .expect("nested closed shells should expose volume regions");
+        assert_eq!(volume_regions.len(), 4);
+        assert!(volume_regions[0].exterior);
+        assert_eq!(volume_regions[0].source_sides, Vec::<MeshSide>::new());
+        let left_volume = volume_regions
+            .iter()
+            .find(|region| region.source_sides == [MeshSide::Left])
+            .expect("outer shell interior should be left-owned");
+        assert_eq!(left_volume.boundary_shells.len(), 3);
+        assert_eq!(
+            volume_regions
+                .iter()
+                .filter(|region| region.source_sides == [MeshSide::Left, MeshSide::Right])
+                .count(),
+            2
+        );
+        let volume_adjacencies = arrangement
+            .volume_adjacencies
+            .as_ref()
+            .expect("nested closed shells should expose volume adjacencies");
+        assert_eq!(volume_adjacencies.len(), 3);
+        assert_eq!(
+            volume_adjacencies
+                .iter()
+                .filter(|adjacency| adjacency.exterior_volume == left_volume.index)
+                .count(),
+            2
+        );
+
+        let difference = arrangement
+            .label_regions(ExactRegularizationPolicy::REGULARIZED_SOLID)
+            .unwrap()
+            .select(ExactBooleanOperation::Difference)
+            .unwrap();
+        assert_eq!(difference.selected_volume_regions, vec![left_volume.index]);
     }
 
     #[test]
