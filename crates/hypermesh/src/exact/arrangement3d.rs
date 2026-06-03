@@ -1502,7 +1502,8 @@ fn extend_arrangement2d_blockers(
             ExactArrangement2dBlocker::UnresolvedSegmentOrdering { .. }
             | ExactArrangement2dBlocker::UnresolvedAngleOrdering { .. }
             | ExactArrangement2dBlocker::UnresolvedFaceArea { .. }
-            | ExactArrangement2dBlocker::UnresolvedRingNormalization { .. } => {
+            | ExactArrangement2dBlocker::UnresolvedRingNormalization { .. }
+            | ExactArrangement2dBlocker::UnresolvedOutputLoopContainment { .. } => {
                 blockers.push(ExactArrangementBlocker::UndecidableOrdering)
             }
             ExactArrangement2dBlocker::DegenerateSegment { .. }
@@ -1512,7 +1513,9 @@ fn extend_arrangement2d_blockers(
             | ExactArrangement2dBlocker::UnresolvedRingClassification { .. }
             | ExactArrangement2dBlocker::FaceWitnessOnBoundary { .. }
             | ExactArrangement2dBlocker::NonManifoldSelectedBoundary { .. }
-            | ExactArrangement2dBlocker::DegenerateOutputLoop { .. } => {
+            | ExactArrangement2dBlocker::DegenerateOutputLoop { .. }
+            | ExactArrangement2dBlocker::OutputHoleWithoutOuter { .. }
+            | ExactArrangement2dBlocker::OutputLoopBoundaryContainment { .. } => {
                 blockers.push(ExactArrangementBlocker::NonManifoldCellComplex)
             }
         }

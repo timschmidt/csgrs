@@ -34,9 +34,9 @@ use super::affine_surface::{
     arrange_coplanar_affine_surface_intersection, arrange_coplanar_affine_surface_union,
 };
 use super::arrangement2d::{
-    ExactArrangement2dBoundaryPolicy, ExactArrangement2dRegion, ExactArrangement2dRegionRing,
-    ExactArrangement2dSetOperation, build_exact_arrangement2d_overlay,
-    build_exact_arrangement2d_overlay_with_boundary_policy,
+    ExactArrangement2dBoundaryPolicy, ExactArrangement2dOverlay, ExactArrangement2dRegion,
+    ExactArrangement2dRegionRing, ExactArrangement2dSetOperation,
+    build_exact_arrangement2d_overlay, build_exact_arrangement2d_overlay_with_boundary_policy,
 };
 use super::arrangement3d::ExactArrangement;
 use super::boolmesh::{
@@ -139,9 +139,9 @@ use super::winding::{
     WindingReportError, classify_mesh_vertices_against_closed_mesh_winding_report,
 };
 use hyperlimit::{
-    CoplanarProjection, Point2, Point3, RingPointLocation, SegmentIntersection, Sign,
-    TriangleLocation, classify_point_ring_even_odd, classify_point_triangle, compare_reals,
-    compare_reals_report, orient3d_report, project_point3, projected_polygon_area2_value,
+    CoplanarProjection, Point2, Point3, SegmentIntersection, Sign, TriangleLocation,
+    classify_point_triangle, compare_reals, compare_reals_report, orient3d_report, project_point3,
+    projected_polygon_area2_value,
 };
 use hyperreal::Real;
 use std::cmp::Ordering;
@@ -1980,8 +1980,8 @@ fn materialize_simple_coplanar_overlay_arrangement(
         left.vertices()[carrier[1]].clone(),
         left.vertices()[carrier[2]].clone(),
     ];
-    let Some(mesh) = mesh_from_projected_overlay_loops(
-        &requested_overlay.output_loops,
+    let Some(mesh) = mesh_from_projected_overlay(
+        &requested_overlay,
         &carrier_points,
         overlay.projection,
         "exact coplanar overlay arrangement",
@@ -2004,15 +2004,6 @@ fn materialize_simple_coplanar_overlay_arrangement(
 struct MaterializedProjectedLoop {
     points: Vec<Point2>,
     lifted: Vec<Point3>,
-    witness: Point2,
-    area_ordering: Ordering,
-    signed_area_twice: Real,
-}
-
-#[derive(Clone, Debug)]
-struct MaterializedProjectedComponent {
-    outer: usize,
-    holes: Vec<usize>,
 }
 
 fn boolean_coplanar_mesh_overlay_optional(
@@ -2109,8 +2100,8 @@ fn materialize_coplanar_mesh_overlay_mesh(
             })
             .flatten();
     }
-    mesh_from_projected_overlay_loops(
-        &overlay.output_loops,
+    mesh_from_projected_overlay(
+        &overlay,
         &carrier_points,
         projection,
         provenance,
@@ -2118,33 +2109,32 @@ fn materialize_coplanar_mesh_overlay_mesh(
     )
 }
 
-fn mesh_from_projected_overlay_loops(
-    output_loops: &[super::arrangement2d::ExactArrangement2dOutputLoop],
+fn mesh_from_projected_overlay(
+    overlay: &ExactArrangement2dOverlay,
     carrier_points: &[Point3; 3],
     projection: CoplanarProjection,
     provenance: &'static str,
     boundary_policy: ProjectedOverlayBoundaryPolicy,
 ) -> Option<ExactMesh> {
     let loops = materialized_projected_overlay_loops(
-        output_loops,
+        &overlay.output_loops,
         carrier_points,
         projection,
         boundary_policy,
     )?;
-    let components = group_projected_overlay_components(&loops)?;
     let mut vertices = Vec::new();
     let mut triangles = Vec::new();
-    for component in components {
-        let outer = &loops[component.outer];
+    for component in &overlay.output_components {
+        let outer = loops.get(component.outer_loop)?;
         let mut projected = outer
             .points
             .iter()
             .map(point2_for_hypertri)
             .collect::<Vec<_>>();
         let mut polygon_points = outer.lifted.clone();
-        let mut hole_indices = Vec::with_capacity(component.holes.len());
-        for hole_index in component.holes {
-            let hole = &loops[hole_index];
+        let mut hole_indices = Vec::with_capacity(component.hole_loops.len());
+        for &hole_index in &component.hole_loops {
+            let hole = loops.get(hole_index)?;
             hole_indices.push(projected.len());
             projected.extend(hole.points.iter().map(point2_for_hypertri));
             polygon_points.extend(hole.lifted.iter().cloned());
@@ -2361,7 +2351,6 @@ fn materialized_projected_overlay_loops(
         if area_ordering == Ordering::Equal {
             return None;
         }
-        let witness = projected_loop_interior_witness(&loop_points, &signed_area_twice)?;
         let lifted = loop_points
             .iter()
             .map(|point| lift_projected_point_to_carrier(point, carrier_points, projection))
@@ -2369,56 +2358,9 @@ fn materialized_projected_overlay_loops(
         materialized.push(MaterializedProjectedLoop {
             points: loop_points,
             lifted,
-            witness,
-            area_ordering,
-            signed_area_twice,
         });
     }
     Some(materialized)
-}
-
-fn group_projected_overlay_components(
-    loops: &[MaterializedProjectedLoop],
-) -> Option<Vec<MaterializedProjectedComponent>> {
-    let mut components = loops
-        .iter()
-        .enumerate()
-        .filter_map(|(index, loop_)| {
-            (loop_.area_ordering == Ordering::Greater).then_some(MaterializedProjectedComponent {
-                outer: index,
-                holes: Vec::new(),
-            })
-        })
-        .collect::<Vec<_>>();
-    if components.is_empty() {
-        return None;
-    }
-
-    for (hole_index, hole) in loops.iter().enumerate() {
-        if hole.area_ordering != Ordering::Less {
-            continue;
-        }
-        let mut owner = None::<(usize, Real)>;
-        for (component_index, component) in components.iter().enumerate() {
-            let outer = &loops[component.outer];
-            match classify_point_ring_even_odd(&outer.points, &hole.witness).value()? {
-                RingPointLocation::Inside => {
-                    let replace = owner.as_ref().is_none_or(|(_, owner_area)| {
-                        compare_reals(&outer.signed_area_twice, owner_area).value()
-                            == Some(Ordering::Less)
-                    });
-                    if replace {
-                        owner = Some((component_index, outer.signed_area_twice.clone()));
-                    }
-                }
-                RingPointLocation::Outside => {}
-                RingPointLocation::Boundary => return None,
-            }
-        }
-        let (owner, _) = owner?;
-        components[owner].holes.push(hole_index);
-    }
-    Some(components)
 }
 
 fn projected_mesh_face_ring(
@@ -2503,61 +2445,6 @@ fn projected_loop_signed_area_twice(points: &[Point2]) -> Real {
         area = area + &(current.x.clone() * &next.y) - &(current.y.clone() * &next.x);
     }
     area
-}
-
-fn projected_loop_interior_witness(points: &[Point2], signed_area_twice: &Real) -> Option<Point2> {
-    if points.len() < 3 {
-        return None;
-    }
-    let orientation = match compare_reals(signed_area_twice, &Real::from(0)).value()? {
-        Ordering::Greater => Sign::Positive,
-        Ordering::Less => Sign::Negative,
-        Ordering::Equal => return None,
-    };
-
-    for index in 0..points.len() {
-        let previous = &points[(index + points.len() - 1) % points.len()];
-        let current = &points[index];
-        let next = &points[(index + 1) % points.len()];
-        match hyperlimit::orient2d_report(previous, current, next).value()? {
-            sign if sign == orientation => {}
-            Sign::Zero | Sign::Positive | Sign::Negative => continue,
-        }
-
-        let mut contains_vertex = false;
-        for (candidate_index, candidate) in points.iter().enumerate() {
-            if candidate_index == index
-                || candidate_index == (index + points.len() - 1) % points.len()
-                || candidate_index == (index + 1) % points.len()
-            {
-                continue;
-            }
-            match classify_point_triangle(previous, current, next, candidate).value()? {
-                TriangleLocation::Inside | TriangleLocation::Degenerate => {
-                    contains_vertex = true;
-                    break;
-                }
-                TriangleLocation::Outside
-                | TriangleLocation::OnEdge
-                | TriangleLocation::OnVertex => {}
-            }
-        }
-        if contains_vertex {
-            continue;
-        }
-
-        let third = (Real::from(1) / &Real::from(3)).ok()?;
-        let witness = Point2::new(
-            (previous.x.clone() + &current.x + &next.x) * &third,
-            (previous.y.clone() + &current.y + &next.y) * &third,
-        );
-        match classify_point_ring_even_odd(points, &witness).value()? {
-            RingPointLocation::Inside => return Some(witness),
-            RingPointLocation::Outside | RingPointLocation::Boundary => {}
-        }
-    }
-
-    None
 }
 
 fn projected_loop_points_with_policy(

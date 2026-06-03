@@ -151,6 +151,17 @@ pub struct ExactArrangement2dOutputLoop {
     pub signed_area_twice: Real,
 }
 
+/// A connected selected output component with zero or more owned holes.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ExactArrangement2dOutputComponent {
+    /// Index into [`ExactArrangement2dOverlay::output_loops`] for the positive
+    /// outer loop.
+    pub outer_loop: usize,
+    /// Indices into [`ExactArrangement2dOverlay::output_loops`] for negative
+    /// hole loops owned by `outer_loop`.
+    pub hole_loops: Vec<usize>,
+}
+
 /// Region overlay/simplification output over a 2D exact arrangement.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactArrangement2dOverlay {
@@ -160,6 +171,8 @@ pub struct ExactArrangement2dOverlay {
     pub faces: Vec<ExactArrangement2dOverlayFace>,
     /// Simplified boundary loops of the selected cells.
     pub output_loops: Vec<ExactArrangement2dOutputLoop>,
+    /// Exact ownership grouping for `output_loops`.
+    pub output_components: Vec<ExactArrangement2dOutputComponent>,
     /// Explicit reasons why the overlay is incomplete.
     pub blockers: Vec<ExactArrangement2dBlocker>,
 }
@@ -256,6 +269,18 @@ pub enum ExactArrangement2dBlocker {
     NonManifoldSelectedBoundary { vertex: usize },
     /// A selected output loop collapsed during exact simplification.
     DegenerateOutputLoop { loop_index: usize },
+    /// A negative output loop was not strictly contained by any positive loop.
+    OutputHoleWithoutOuter { loop_index: usize },
+    /// Exact output loop nesting could not be decided.
+    UnresolvedOutputLoopContainment {
+        container_loop: usize,
+        child_loop: usize,
+    },
+    /// Output loops touched while classifying strict component/hole ownership.
+    OutputLoopBoundaryContainment {
+        container_loop: usize,
+        child_loop: usize,
+    },
 }
 
 /// Exact planar segment arrangement.
@@ -413,12 +438,13 @@ pub fn build_exact_arrangement2d_overlay_with_boundary_policy(
             arrangement,
             faces: Vec::new(),
             output_loops: Vec::new(),
+            output_components: Vec::new(),
             blockers,
         };
     }
 
     let faces = classify_overlay_faces(&arrangement, &normalized, operation, &mut blockers);
-    let output_loops = if blockers.is_empty() {
+    let mut output_loops = if blockers.is_empty() {
         let mut loops = selected_output_loops(&arrangement, &faces, boundary_policy, &mut blockers);
         append_nested_unselected_hole_loops(
             &arrangement,
@@ -431,11 +457,20 @@ pub fn build_exact_arrangement2d_overlay_with_boundary_policy(
     } else {
         Vec::new()
     };
+    let output_components = if blockers.is_empty() {
+        output_loop_components(&output_loops, &mut blockers)
+    } else {
+        Vec::new()
+    };
+    if !blockers.is_empty() {
+        output_loops.clear();
+    }
 
     ExactArrangement2dOverlay {
         arrangement,
         faces,
         output_loops,
+        output_components,
         blockers,
     }
 }
@@ -1492,6 +1527,100 @@ fn simplify_loop_vertices(
     }
 }
 
+fn output_loop_components(
+    loops: &[ExactArrangement2dOutputLoop],
+    blockers: &mut Vec<ExactArrangement2dBlocker>,
+) -> Vec<ExactArrangement2dOutputComponent> {
+    let mut components = Vec::new();
+    for (loop_index, loop_) in loops.iter().enumerate() {
+        match compare_reals(&loop_.signed_area_twice, &Real::from(0)).value() {
+            Some(Ordering::Greater) => components.push(ExactArrangement2dOutputComponent {
+                outer_loop: loop_index,
+                hole_loops: Vec::new(),
+            }),
+            Some(Ordering::Less) => {}
+            Some(Ordering::Equal) => {
+                blockers.push(ExactArrangement2dBlocker::DegenerateOutputLoop { loop_index })
+            }
+            None => {
+                blockers.push(ExactArrangement2dBlocker::UnresolvedFaceArea { face: loop_index })
+            }
+        }
+    }
+
+    for (hole_index, hole) in loops.iter().enumerate() {
+        if compare_reals(&hole.signed_area_twice, &Real::from(0)).value() != Some(Ordering::Less) {
+            continue;
+        }
+        let mut owner = None::<(usize, Real)>;
+        for (component_index, component) in components.iter().enumerate() {
+            let outer = &loops[component.outer_loop];
+            let contains = output_loop_strictly_contains_loop(
+                outer,
+                component.outer_loop,
+                hole,
+                hole_index,
+                blockers,
+            );
+            match contains {
+                Some(true) => {
+                    let replace = owner.as_ref().is_none_or(|(_, owner_area)| {
+                        compare_reals(&outer.signed_area_twice, owner_area).value()
+                            == Some(Ordering::Less)
+                    });
+                    if replace {
+                        owner = Some((component_index, outer.signed_area_twice.clone()));
+                    }
+                }
+                Some(false) => {}
+                None => {}
+            }
+        }
+        match owner {
+            Some((component_index, _)) => components[component_index].hole_loops.push(hole_index),
+            None => blockers.push(ExactArrangement2dBlocker::OutputHoleWithoutOuter {
+                loop_index: hole_index,
+            }),
+        }
+    }
+
+    if blockers.is_empty() {
+        components
+    } else {
+        Vec::new()
+    }
+}
+
+fn output_loop_strictly_contains_loop(
+    container: &ExactArrangement2dOutputLoop,
+    container_loop: usize,
+    child: &ExactArrangement2dOutputLoop,
+    child_loop: usize,
+    blockers: &mut Vec<ExactArrangement2dBlocker>,
+) -> Option<bool> {
+    for point in &child.points {
+        match classify_point_ring_even_odd(&container.points, point).value() {
+            Some(RingPointLocation::Inside) => {}
+            Some(RingPointLocation::Outside) => return Some(false),
+            Some(RingPointLocation::Boundary) => {
+                blockers.push(ExactArrangement2dBlocker::OutputLoopBoundaryContainment {
+                    container_loop,
+                    child_loop,
+                });
+                return None;
+            }
+            None => {
+                blockers.push(ExactArrangement2dBlocker::UnresolvedOutputLoopContainment {
+                    container_loop,
+                    child_loop,
+                });
+                return None;
+            }
+        }
+    }
+    Some(true)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1696,5 +1825,48 @@ mod tests {
         let negative = overlay.output_loops.len() - positive;
         assert_eq!(positive, 1);
         assert_eq!(negative, 1);
+        assert_eq!(overlay.output_components.len(), 1);
+        assert_eq!(overlay.output_components[0].hole_loops.len(), 1);
+    }
+
+    #[test]
+    fn nested_even_odd_rings_emit_separate_island_component() {
+        let overlay = build_exact_arrangement2d_overlay(
+            &[
+                ring(
+                    ExactArrangement2dRegion::Left,
+                    &[(0, 0), (8, 0), (8, 8), (0, 8)],
+                ),
+                ring(
+                    ExactArrangement2dRegion::Left,
+                    &[(1, 1), (1, 7), (7, 7), (7, 1)],
+                ),
+                ring(
+                    ExactArrangement2dRegion::Left,
+                    &[(3, 3), (5, 3), (5, 5), (3, 5)],
+                ),
+            ],
+            ExactArrangement2dSetOperation::Union,
+        );
+
+        assert!(overlay.blockers.is_empty(), "{:?}", overlay.blockers);
+        assert_eq!(overlay.output_loops.len(), 3);
+        assert_eq!(overlay.output_components.len(), 2);
+        assert_eq!(
+            overlay
+                .output_components
+                .iter()
+                .filter(|component| component.hole_loops.len() == 1)
+                .count(),
+            1
+        );
+        assert_eq!(
+            overlay
+                .output_components
+                .iter()
+                .filter(|component| component.hole_loops.is_empty())
+                .count(),
+            1
+        );
     }
 }

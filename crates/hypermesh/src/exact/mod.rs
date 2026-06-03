@@ -83,10 +83,11 @@ pub use adjacent_polygon::{
 };
 pub use arrangement2d::{
     ExactArrangement2d, ExactArrangement2dBlocker, ExactArrangement2dEdge, ExactArrangement2dFace,
-    ExactArrangement2dInputSegment, ExactArrangement2dOutputLoop, ExactArrangement2dOverlay,
-    ExactArrangement2dOverlayFace, ExactArrangement2dRegion, ExactArrangement2dRegionRing,
-    ExactArrangement2dSegmentSource, ExactArrangement2dSetOperation, ExactArrangement2dVertex,
-    build_exact_arrangement2d, build_exact_arrangement2d_overlay, exact_arrangement2d_face_witness,
+    ExactArrangement2dInputSegment, ExactArrangement2dOutputComponent,
+    ExactArrangement2dOutputLoop, ExactArrangement2dOverlay, ExactArrangement2dOverlayFace,
+    ExactArrangement2dRegion, ExactArrangement2dRegionRing, ExactArrangement2dSegmentSource,
+    ExactArrangement2dSetOperation, ExactArrangement2dVertex, build_exact_arrangement2d,
+    build_exact_arrangement2d_overlay, exact_arrangement2d_face_witness,
 };
 pub use arrangement3d::{
     ArrangementCarrierPlaneOverlay, ArrangementEdge, ArrangementEdgeProvenance,
