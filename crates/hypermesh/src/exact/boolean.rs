@@ -2131,7 +2131,7 @@ fn materialize_coplanar_mesh_overlay_mesh(
     if !overlay.is_complete() {
         return None;
     }
-    if !overlay.faces.iter().any(|face| face.selected) || overlay.output_loops.is_empty() {
+    if !overlay.faces.iter().any(|face| face.selected) {
         return allow_empty
             .then(|| {
                 ExactMesh::new_with_policy(
@@ -2151,6 +2151,16 @@ fn materialize_coplanar_mesh_overlay_mesh(
         provenance,
         projected_boundary_policy,
     )
+    .or_else(|| {
+        (operation == ExactArrangement2dSetOperation::Difference).then(|| {
+            mesh_from_selected_projected_overlay_faces(
+                &overlay,
+                &carrier_points,
+                projection,
+                provenance,
+            )
+        })?
+    })
 }
 
 fn mesh_from_projected_overlay(
@@ -2199,6 +2209,75 @@ fn mesh_from_projected_overlay(
                 component_offset + local_to_component[triangle[0]],
                 component_offset + local_to_component[triangle[1]],
                 component_offset + local_to_component[triangle[2]],
+            ]));
+        }
+    }
+    if triangles.is_empty() {
+        return None;
+    }
+    ExactMesh::new_with_policy(
+        vertices,
+        triangles,
+        SourceProvenance::exact(provenance),
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .ok()
+}
+
+fn mesh_from_selected_projected_overlay_faces(
+    overlay: &ExactArrangement2dOverlay,
+    carrier_points: &[Point3; 3],
+    projection: CoplanarProjection,
+    provenance: &'static str,
+) -> Option<ExactMesh> {
+    let mut vertices = Vec::new();
+    let mut triangles = Vec::new();
+    for face in overlay.faces.iter().filter(|face| face.selected) {
+        let arrangement_face = overlay.arrangement.faces.get(face.face)?;
+        if arrangement_face.vertices.len() < 3 {
+            continue;
+        }
+        let mut points = arrangement_face
+            .vertices
+            .iter()
+            .map(|vertex| {
+                overlay
+                    .arrangement
+                    .vertices
+                    .get(*vertex)
+                    .map(|vertex| vertex.point.clone())
+            })
+            .collect::<Option<Vec<_>>>()?;
+        points = projected_loop_points_with_policy(
+            &points,
+            ProjectedOverlayBoundaryPolicy::SimplifyCollinear,
+        )?;
+        if points.len() < 3 {
+            continue;
+        }
+        match compare_reals(&projected_loop_signed_area_twice(&points), &Real::from(0)).value()? {
+            Ordering::Greater => {}
+            Ordering::Less => points.reverse(),
+            Ordering::Equal => continue,
+        }
+        let projected = points.iter().map(point2_for_hypertri).collect::<Vec<_>>();
+        let lifted = points
+            .iter()
+            .map(|point| lift_projected_point_to_carrier(point, carrier_points, projection))
+            .collect::<Option<Vec<_>>>()?;
+        let local_to_global = lifted
+            .iter()
+            .map(|point| find_or_insert_exact_vertex(&mut vertices, point))
+            .collect::<Option<Vec<_>>>()?;
+        let indices = match hypertri::earcut(&projected, &[]) {
+            Ok(indices) if !indices.is_empty() && indices.len() % 3 == 0 => indices,
+            _ => return None,
+        };
+        for triangle in indices.chunks_exact(3) {
+            triangles.push(Triangle([
+                local_to_global[triangle[0]],
+                local_to_global[triangle[1]],
+                local_to_global[triangle[2]],
             ]));
         }
     }
@@ -6355,6 +6434,64 @@ mod tests {
             &same_side_left,
             &same_side_right
         ));
+    }
+
+    #[test]
+    fn selected_overlay_faces_triangulate_simple_coplanar_difference_cells() {
+        let left = ExactMesh::from_i64_triangles_with_policy(
+            &[0, 0, 0, 4, 0, 0, 4, 4, 0, 0, 4, 0],
+            &[0, 1, 2, 0, 2, 3],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let right = ExactMesh::from_i64_triangles_with_policy(
+            &[2, 0, 0, 4, 0, 0, 4, 2, 0, 2, 2, 0],
+            &[0, 1, 2, 0, 2, 3],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let (carrier_points, projection) = coplanar_mesh_overlay_carrier(&left, &right).unwrap();
+        let boundary_policy =
+            coplanar_mesh_overlay_materialized_difference_boundary_policy(&left, &right).unwrap();
+        let projected_boundary_policy = match boundary_policy {
+            ExactArrangement2dBoundaryPolicy::SimplifyCollinear => {
+                ProjectedOverlayBoundaryPolicy::SimplifyCollinear
+            }
+            ExactArrangement2dBoundaryPolicy::PreserveCollinear => {
+                ProjectedOverlayBoundaryPolicy::PreserveCollinear
+            }
+        };
+        let mut rings =
+            projected_mesh_boundary_rings(ExactArrangement2dRegion::Left, &left, projection)
+                .unwrap();
+        rings.extend(
+            projected_mesh_boundary_rings(ExactArrangement2dRegion::Right, &right, projection)
+                .unwrap(),
+        );
+        let overlay = build_exact_arrangement2d_overlay_with_boundary_policy(
+            &rings,
+            ExactArrangement2dSetOperation::Difference,
+            boundary_policy,
+        );
+        assert!(overlay.is_complete());
+        let selected_faces = mesh_from_selected_projected_overlay_faces(
+            &overlay,
+            &carrier_points,
+            projection,
+            "test selected-face coplanar overlay difference",
+        )
+        .expect("selected arrangement faces should triangulate directly");
+        let canonical = materialize_coplanar_mesh_overlay_mesh(
+            &left,
+            &right,
+            ExactArrangement2dSetOperation::Difference,
+            boundary_policy,
+            projected_boundary_policy,
+            "test canonical coplanar overlay difference",
+            false,
+        )
+        .expect("canonical overlay should materialize");
+        assert!(exact_meshes_have_same_shape(&selected_faces, &canonical));
     }
 
     #[test]
