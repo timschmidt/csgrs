@@ -882,14 +882,14 @@ fn preflight_direct_coplanar_surface_support(
             if certify_coplanar_convex_surface_equivalence(left, right).is_some() {
                 return Some(ExactBooleanSupport::CertifiedCoplanarConvexSurfaceEquivalence);
             }
+            if coplanar_mesh_overlay_difference_ready(left, right) {
+                return Some(ExactBooleanSupport::CertifiedArrangementCellComplex);
+            }
             if certify_coplanar_surface_boundary_touch(left, right).is_some() {
                 return Some(ExactBooleanSupport::CertifiedCoplanarSurfaceBoundaryTouchDifference);
             }
             if arrange_coplanar_surface_point_touch_union(left, right).is_some() {
                 return Some(ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchDifference);
-            }
-            if coplanar_mesh_overlay_difference_ready(left, right) {
-                return Some(ExactBooleanSupport::CertifiedArrangementCellComplex);
             }
             if arrange_coplanar_convex_surface_difference(left, right).is_some() {
                 return Some(
@@ -2285,15 +2285,7 @@ fn coplanar_mesh_overlay_should_preempt_surface_paths(
                 || arrange_coplanar_surface_point_touch_union(left, right).is_some()
         }
         ExactBooleanOperation::Difference => {
-            if coplanar_mesh_overlay_materialized_difference_boundary_policy(left, right).is_some()
-            {
-                return true;
-            }
-            arrange_coplanar_convex_surface_difference(left, right).is_some()
-                || arrange_coplanar_convex_surface_multi_difference(left, right).is_some()
-                || arrange_coplanar_surface_component_difference(left, right).is_some()
-                || arrange_coplanar_surface_point_touch_difference(left, right).is_some()
-                || arrange_coplanar_affine_surface_difference(left, right).is_some()
+            coplanar_mesh_overlay_difference_materializes(left, right)
         }
         ExactBooleanOperation::SelectedRegions(_) => false,
     }
@@ -2464,11 +2456,15 @@ fn coplanar_mesh_overlay_materialized_difference_boundary_policy(
 }
 
 fn coplanar_mesh_overlay_difference_ready(left: &ExactMesh, right: &ExactMesh) -> bool {
-    coplanar_mesh_overlay_should_preempt_surface_paths(
-        left,
-        right,
-        ExactBooleanOperation::Difference,
-    ) && coplanar_mesh_overlay_materialized_difference_boundary_policy(left, right).is_some()
+    !left.facts().mesh.closed_manifold
+        && !right.facts().mesh.closed_manifold
+        && left.triangles().len() + right.triangles().len() <= 96
+        && certify_coplanar_convex_surface_equivalence(left, right).is_none()
+        && coplanar_mesh_overlay_difference_materializes(left, right)
+}
+
+fn coplanar_mesh_overlay_difference_materializes(left: &ExactMesh, right: &ExactMesh) -> bool {
+    coplanar_mesh_overlay_materialized_difference_boundary_policy(left, right).is_some()
 }
 
 fn coplanar_mesh_overlay_surface_intersection_boundary_policy(
@@ -4917,19 +4913,9 @@ fn coplanar_surface_output_already_materialized(
                 || arrange_single_triangle_coplanar_union(left, right).is_some()
         }
         ExactBooleanOperation::Difference => {
-            arrange_coplanar_convex_surface_difference(left, right).is_some()
-                || arrange_coplanar_convex_surface_multi_difference(left, right).is_some()
-                || arrange_coplanar_surface_component_difference(left, right).is_some()
-                || arrange_coplanar_surface_multi_difference(left, right).is_some()
-                || arrange_coplanar_surface_cutter_hole_contact_difference(left, right).is_some()
-                || coplanar_mesh_overlay_difference_ready(left, right)
-                || arrange_coplanar_convex_surface_holed_difference(left, right).is_some()
-                || arrange_coplanar_convex_surface_multi_holed_difference(left, right).is_some()
+            coplanar_mesh_overlay_difference_ready(left, right)
                 || arrange_coplanar_orthogonal_surface_difference(left, right).is_some()
                 || arrange_coplanar_affine_surface_difference(left, right).is_some()
-                || difference_single_triangle_coplanar_surfaces(left, right).is_some()
-                || arrange_single_triangle_coplanar_difference(left, right).is_some()
-                || arrange_single_triangle_coplanar_holed_difference(left, right).is_some()
         }
         ExactBooleanOperation::SelectedRegions(_) => false,
     }

@@ -6246,7 +6246,7 @@ fn exact_preflight_materializes_open_point_touch_union_but_keeps_other_ops_bound
         .unwrap();
     assert_eq!(
         open_difference_preflight.support,
-        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchDifference
+        hypermesh::exact::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     assert!(!open_intersection_preflight.graph_had_unknowns);
     assert_eq!(open_intersection_preflight.retained_face_pairs, 0);
@@ -12376,7 +12376,7 @@ fn exact_named_booleans_intersect_partially_overlapping_coplanar_triangles() {
     .unwrap();
     assert_eq!(
         difference_preflight.support,
-        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementDifference
+        hypermesh::exact::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     assert!(difference_preflight.blocker.is_none());
     let difference = hypermesh::exact::boolean_exact(
@@ -12910,7 +12910,7 @@ fn exact_coplanar_triangle_difference_materializes_one_corner_cut() {
     .unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceCornerDifference
+        hypermesh::exact::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     assert!(preflight.blocker.is_none());
 }
@@ -12964,7 +12964,7 @@ fn exact_coplanar_triangle_difference_materializes_remaining_corner_cut() {
     .unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceCornerDifference
+        hypermesh::exact::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     assert!(preflight.blocker.is_none());
 }
@@ -13065,7 +13065,7 @@ fn exact_coplanar_triangle_difference_materializes_contained_hole_case() {
     .unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceHoledDifference
+        hypermesh::exact::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     assert!(preflight.blocker.is_none());
     let report = hypermesh::exact::certify_planar_arrangement_report(
@@ -14087,7 +14087,7 @@ fn exact_coplanar_nonconvex_surface_point_touch_union_materializes_branch_only_c
                     hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchIntersection
                 ) | (
                     hypermesh::exact::ExactBooleanOperation::Difference,
-                    hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchDifference
+                    hypermesh::exact::ExactBooleanSupport::CertifiedArrangementCellComplex
                 )
             ),
             "unexpected branch-only point-touch preflight support for {:?}: {:?}",
@@ -15217,7 +15217,7 @@ fn exact_coplanar_surface_boundary_touch_intersection_and_difference_are_lower_d
         .unwrap();
     assert_eq!(
         difference_preflight.support,
-        hypermesh::exact::ExactBooleanSupport::CertifiedCoplanarSurfaceBoundaryTouchDifference
+        hypermesh::exact::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let difference = hypermesh::exact::boolean_exact(
