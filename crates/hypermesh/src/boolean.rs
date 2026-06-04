@@ -1437,13 +1437,9 @@ pub fn boolean_exact_with_boundary_policy(
     {
         return Ok(result);
     }
-    if let Some(result) = boolean_arrangement_cell_complex_meshes(
-        left,
-        right,
-        operation,
-        validation,
-        ArrangementCellComplexDispatch::PreemptLegacy,
-    )? {
+    if let Some(result) =
+        boolean_arrangement_cell_complex_meshes(left, right, operation, validation, true)?
+    {
         return Ok(result);
     }
     if let Some(result) = boolean_direct_adjacency_meshes(left, right, operation, validation)? {
@@ -1591,13 +1587,9 @@ pub fn boolean_exact_with_boundary_policy(
             {
                 return Ok(result);
             }
-            if let Some(result) = boolean_arrangement_cell_complex_meshes(
-                left,
-                right,
-                operation,
-                validation,
-                ArrangementCellComplexDispatch::Fallback,
-            )? {
+            if let Some(result) =
+                boolean_arrangement_cell_complex_meshes(left, right, operation, validation, false)?
+            {
                 return Ok(result);
             }
             if let Some(result) = boolean_arrangement_volumetric_split_cell_recovery_from_graph(
@@ -1676,12 +1668,6 @@ fn boolean_coplanar_surface_boundary_touch_difference(
     ))
 }
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-enum ArrangementCellComplexDispatch {
-    PreemptLegacy,
-    Fallback,
-}
-
 enum ArrangementCellComplexOutcome {
     Materialized(ExactBooleanResult, ExactArrangementBooleanAttempt),
     Declined(ExactArrangementBooleanAttempt),
@@ -1715,9 +1701,9 @@ fn boolean_arrangement_cell_complex_meshes(
     right: &ExactMesh,
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
-    dispatch: ArrangementCellComplexDispatch,
+    require_preempt_certification: bool,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
-    if dispatch == ArrangementCellComplexDispatch::PreemptLegacy
+    if require_preempt_certification
         && !arrangement_cell_complex_should_preempt_legacy_paths(left, right, operation)
     {
         return Ok(None);
@@ -1729,7 +1715,7 @@ fn boolean_arrangement_cell_complex_meshes(
         operation,
         ExactRegularizationPolicy::REGULARIZED_SOLID,
         Some(validation),
-        dispatch == ArrangementCellComplexDispatch::Fallback,
+        true,
     ) {
         Ok(outcome) => outcome,
         Err(_) => return Ok(None),
@@ -3399,7 +3385,7 @@ fn arrangement_cell_complex_should_preempt_legacy_paths(
         operation,
         ExactBooleanOperation::Union | ExactBooleanOperation::Difference
     ) && non_box_full_face_adjacency(left, right))
-        || single_triangle_coplanar_overlay_should_preempt_surface_paths(left, right, operation)
+        || coplanar_mesh_overlay_should_preempt_surface_paths(left, right, operation)
 }
 
 fn coplanar_surface_containment_should_use_named_path(
@@ -3411,31 +3397,6 @@ fn coplanar_surface_containment_should_use_named_path(
         operation,
         ExactBooleanOperation::Union | ExactBooleanOperation::Intersection
     ) && certify_single_triangle_coplanar_containment(left, right).is_some()
-}
-
-fn single_triangle_coplanar_overlay_should_preempt_surface_paths(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-) -> bool {
-    if left.triangles().len() != 1
-        || right.triangles().len() != 1
-        || (left.facts().mesh.closed_manifold && right.facts().mesh.closed_manifold)
-    {
-        return false;
-    }
-    if matches!(
-        operation,
-        ExactBooleanOperation::Union | ExactBooleanOperation::Intersection
-    ) && certify_single_triangle_coplanar_containment(left, right).is_some()
-    {
-        return false;
-    }
-    match operation {
-        ExactBooleanOperation::Union | ExactBooleanOperation::Difference => true,
-        ExactBooleanOperation::Intersection => true,
-        ExactBooleanOperation::SelectedRegions(_) => false,
-    }
 }
 
 fn boolean_convex_intersection_meshes(
@@ -6821,6 +6782,44 @@ mod tests {
                 shortcut: ExactBooleanShortcutKind::ArrangementCellComplex
             }
         );
+    }
+
+    #[test]
+    fn arrangement_preempts_multi_triangle_coplanar_overlay_not_containment() {
+        let left = ExactMesh::from_i64_triangles_with_policy(
+            &[0, 0, 0, 4, 0, 0, 4, 4, 0, 0, 4, 0],
+            &[0, 1, 2, 0, 2, 3],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let right = ExactMesh::from_i64_triangles_with_policy(
+            &[2, 2, 0, 6, 2, 0, 6, 6, 0, 2, 6, 0],
+            &[0, 1, 2, 0, 2, 3],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        assert!(coplanar_mesh_overlay_should_preempt_surface_paths(
+            &left,
+            &right,
+            ExactBooleanOperation::Union
+        ));
+        assert!(arrangement_cell_complex_should_preempt_legacy_paths(
+            &left,
+            &right,
+            ExactBooleanOperation::Union
+        ));
+
+        let inner = ExactMesh::from_i64_triangles_with_policy(
+            &[1, 1, 0, 2, 1, 0, 1, 2, 0],
+            &[0, 1, 2],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        assert!(!arrangement_cell_complex_should_preempt_legacy_paths(
+            &inner,
+            &left,
+            ExactBooleanOperation::Union
+        ));
     }
 
     fn tetrahedron_i64(a: [i64; 3], b: [i64; 3], c: [i64; 3], d: [i64; 3]) -> ExactMesh {
