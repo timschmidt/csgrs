@@ -15914,7 +15914,6 @@ fn exact_coplanar_convex_surface_difference_materializes_simple_loop() {
         .unwrap();
     assert_eq!(difference.polygon.len(), 6);
     assert!(!difference.mesh.triangles().is_empty());
-
     let preflight = hypermesh::preflight_boolean_exact(
         &left,
         &right,
@@ -31608,6 +31607,27 @@ fn exact_convex_difference_materializes_multi_face_overlap() {
     difference.validate_against_sources(&left, &right).unwrap();
     assert!(difference.mesh.facts().mesh.closed_manifold);
     assert!(!difference.mesh.triangles().is_empty());
+    let arrangement = hypermesh::ExactArrangement::from_meshes_with_policy(
+        &left,
+        &right,
+        hypermesh::ExactRegularizationPolicy::REGULARIZED_SOLID,
+    )
+    .unwrap();
+    assert!(
+        !arrangement
+            .blockers
+            .contains(&hypermesh::ExactArrangementBlocker::UnresolvedRegionClassification),
+        "{:?}",
+        arrangement.blockers
+    );
+    assert!(arrangement.face_cells.iter().any(|cell| {
+        cell.opposite.as_ref().is_some_and(|opposite| {
+            opposite.winding.relation == hypermesh::ClosedMeshWindingRelation::Unknown
+                && opposite.convex_fallback.as_ref().is_some_and(|fallback| {
+                    fallback.relation == hypermesh::ConvexSolidPointRelation::Inside
+                })
+        })
+    }));
 
     let preflight = hypermesh::preflight_boolean_exact(
         &left,
@@ -31618,7 +31638,7 @@ fn exact_convex_difference_materializes_multi_face_overlap() {
     preflight.validate().unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedWindingMaterialized
+        hypermesh::ExactBooleanSupport::CertifiedConvexDifference
     );
     assert!(preflight.blocker.is_none());
 
@@ -31640,8 +31660,8 @@ fn exact_convex_difference_materializes_multi_face_overlap() {
         .unwrap();
     assert_eq!(
         result.kind,
-        hypermesh::ExactBooleanResultKind::WindingMaterialized {
-            operation: hypermesh::ExactBooleanOperation::Difference
+        hypermesh::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::ExactBooleanShortcutKind::ConvexDifference
         }
     );
     assert!(result.mesh.facts().mesh.closed_manifold);

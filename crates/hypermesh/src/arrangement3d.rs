@@ -25,7 +25,10 @@ use super::provenance::SourceProvenance;
 use super::regularization::{
     ExactArrangementBlocker, ExactLowerDimensionalPolicy, ExactRegularizationPolicy,
 };
-use super::solid::ClosedMeshOrientation;
+use super::solid::{
+    ClosedMeshOrientation, ConvexSolidPointClassification, ConvexSolidPointRelation,
+    classify_point_against_convex_solid_report,
+};
 use super::validation::ValidationPolicy;
 use super::winding::{
     ClosedMeshWindingMeshRelation, ClosedMeshWindingRelation, PointMeshWindingReport,
@@ -114,6 +117,8 @@ pub struct ArrangementOppositeClassification {
     pub representative: Point3,
     /// Winding report against the opposite mesh.
     pub winding: PointMeshWindingReport,
+    /// Exact convex-solid fallback used when axis-ray winding is degenerate.
+    pub convex_fallback: Option<ConvexSolidPointClassification>,
 }
 
 /// Exact face cell in the retained arrangement.
@@ -2837,15 +2842,32 @@ fn classify_opposite(
         MeshSide::Right => left,
     };
     let winding = classify_point_against_closed_mesh_winding_report(&point, target);
+    let convex_fallback = if matches!(winding.relation, ClosedMeshWindingRelation::Unknown) {
+        let fallback = classify_point_against_convex_solid_report(&point, target);
+        if matches!(
+            fallback.relation,
+            ConvexSolidPointRelation::Inside
+                | ConvexSolidPointRelation::Boundary
+                | ConvexSolidPointRelation::Outside
+        ) {
+            Some(fallback)
+        } else {
+            None
+        }
+    } else {
+        None
+    };
     if matches!(
         winding.relation,
         ClosedMeshWindingRelation::Unknown | ClosedMeshWindingRelation::NotClosed
-    ) {
+    ) && convex_fallback.is_none()
+    {
         blockers.push(ExactArrangementBlocker::UnresolvedRegionClassification);
     }
     ArrangementOppositeClassification {
         representative: point,
         winding,
+        convex_fallback,
     }
 }
 

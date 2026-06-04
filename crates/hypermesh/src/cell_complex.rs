@@ -15,6 +15,7 @@ use super::regularization::{
     ExactArrangementBlocker, ExactLowerDimensionalPolicy, ExactRegularizationPolicy,
 };
 use super::simplify::{ExactSimplifiedCellComplex, simplify_selected_cell_complex};
+use super::solid::ConvexSolidPointRelation;
 use super::winding::ClosedMeshWindingRelation;
 
 /// Region label for one arrangement face-cell.
@@ -281,22 +282,36 @@ fn label_face_cell(cell: ArrangementFaceCell) -> ExactCellComplexFace {
         MeshSide::Left => ExactCellRegionLabel::LeftBoundary,
         MeshSide::Right => ExactCellRegionLabel::RightBoundary,
     };
-    let opposite = match cell
+    let opposite = cell
         .opposite
         .as_ref()
-        .map(|opposite| opposite.winding.relation)
-    {
-        Some(ClosedMeshWindingRelation::Inside) => ExactOppositeRegionLabel::Inside,
-        Some(ClosedMeshWindingRelation::Outside) => ExactOppositeRegionLabel::Outside,
-        Some(ClosedMeshWindingRelation::Boundary) => ExactOppositeRegionLabel::Boundary,
-        Some(ClosedMeshWindingRelation::Unknown | ClosedMeshWindingRelation::NotClosed) | None => {
-            ExactOppositeRegionLabel::Unknown
-        }
-    };
+        .map_or(ExactOppositeRegionLabel::Unknown, label_opposite_region);
     ExactCellComplexFace {
         cell,
         source,
         opposite,
+    }
+}
+
+fn label_opposite_region(
+    opposite: &super::arrangement3d::ArrangementOppositeClassification,
+) -> ExactOppositeRegionLabel {
+    match opposite.winding.relation {
+        ClosedMeshWindingRelation::Inside => ExactOppositeRegionLabel::Inside,
+        ClosedMeshWindingRelation::Outside => ExactOppositeRegionLabel::Outside,
+        ClosedMeshWindingRelation::Boundary => ExactOppositeRegionLabel::Boundary,
+        ClosedMeshWindingRelation::Unknown | ClosedMeshWindingRelation::NotClosed => match opposite
+            .convex_fallback
+            .as_ref()
+            .map(|fallback| fallback.relation)
+        {
+            Some(ConvexSolidPointRelation::Inside) => ExactOppositeRegionLabel::Inside,
+            Some(ConvexSolidPointRelation::Outside) => ExactOppositeRegionLabel::Outside,
+            Some(ConvexSolidPointRelation::Boundary) => ExactOppositeRegionLabel::Boundary,
+            Some(ConvexSolidPointRelation::Unknown)
+            | Some(ConvexSolidPointRelation::NotCertifiedConvex)
+            | None => ExactOppositeRegionLabel::Unknown,
+        },
     }
 }
 

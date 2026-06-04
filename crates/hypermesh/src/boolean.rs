@@ -769,6 +769,11 @@ pub fn preflight_boolean_exact(
             ),
         });
     }
+    if support == ExactBooleanSupport::RequiresCertifiedWinding
+        && let Some(convex_support) = certified_convex_difference_support(left, right, operation)
+    {
+        return Ok(certified_shortcut_preflight(operation, convex_support));
+    }
     if let Some(materialized) = materialize_volumetric_winding_region_plan_from_graph(
         &graph,
         left,
@@ -794,11 +799,6 @@ pub fn preflight_boolean_exact(
     }
     if support == ExactBooleanSupport::RequiresCertifiedWinding
         && let Some(convex_support) = certified_convex_union_support(left, right, operation)
-    {
-        return Ok(certified_shortcut_preflight(operation, convex_support));
-    }
-    if support == ExactBooleanSupport::RequiresCertifiedWinding
-        && let Some(convex_support) = certified_convex_difference_support(left, right, operation)
     {
         return Ok(certified_shortcut_preflight(operation, convex_support));
     }
@@ -1649,6 +1649,11 @@ pub fn boolean_exact_with_boundary_policy(
             if let Some(result) = boolean_arrangement_unregularized_sheet_complex_meshes(
                 left, right, operation, validation,
             )? {
+                return Ok(result);
+            }
+            if let Some(result) =
+                boolean_convex_difference_meshes(left, right, operation, validation)?
+            {
                 return Ok(result);
             }
             if let Some(result) = boolean_retained_graph_fallback_meshes_from_graph(

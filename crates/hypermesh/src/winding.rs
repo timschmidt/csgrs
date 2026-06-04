@@ -359,6 +359,22 @@ pub fn classify_point_against_closed_mesh_winding_report(
         last_unknown += axis_report.unknown_hits;
     }
 
+    if let Some(boundary_hits) = exact_boundary_hits(point, &triangles)
+        && boundary_hits != 0
+    {
+        return PointMeshWindingReport {
+            relation: ClosedMeshWindingRelation::Boundary,
+            axis: Some(WindingRayAxis::X),
+            tested_axes: WindingRayAxis::ALL.len(),
+            triangle_count: triangles.len(),
+            crossings: 0,
+            boundary_hits,
+            degenerate_hits: last_degenerate,
+            parallel_faces: 0,
+            unknown_hits: last_unknown,
+        };
+    }
+
     PointMeshWindingReport {
         relation: ClosedMeshWindingRelation::Unknown,
         axis: None,
@@ -370,6 +386,45 @@ pub fn classify_point_against_closed_mesh_winding_report(
         parallel_faces: 0,
         unknown_hits: last_unknown,
     }
+}
+
+fn exact_boundary_hits(point: &Point3, triangles: &[[Point3; 3]]) -> Option<usize> {
+    let mut hits = 0usize;
+    let mut unresolved = false;
+    for triangle in triangles {
+        match point_on_closed_triangle(point, triangle) {
+            Some(true) => hits += 1,
+            Some(false) => {}
+            None => unresolved = true,
+        }
+    }
+    if hits != 0 {
+        Some(hits)
+    } else if unresolved {
+        None
+    } else {
+        Some(0)
+    }
+}
+
+fn point_on_closed_triangle(point: &Point3, triangle: &[Point3; 3]) -> Option<bool> {
+    match point_on_triangle_plane(point, triangle) {
+        Some(true) => {}
+        Some(false) => return Some(false),
+        None => return None,
+    }
+
+    let mut unresolved = false;
+    for axis in WindingRayAxis::ALL {
+        match projected_point_relation(point, triangle, axis) {
+            ProjectedPointRelation::Inside | ProjectedPointRelation::Boundary => {
+                return Some(true);
+            }
+            ProjectedPointRelation::Outside => return Some(false),
+            ProjectedPointRelation::Unknown => unresolved = true,
+        }
+    }
+    if unresolved { None } else { Some(false) }
 }
 
 /// Classify every vertex of `subject` against a closed target mesh.
