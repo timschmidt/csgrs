@@ -49,11 +49,8 @@ use super::box_solid::{
 use super::cells::triangulate_all_face_cells_with_cdt;
 use super::construction::SegmentPlaneRelation;
 use super::contained_adjacent::{
-    ContainedBoundaryContainment, ContainedBoundaryDifferenceCertificate,
-    contained_boundary_containment_from_graph,
-    contained_boundary_difference_certificate_from_graph, contained_face_adjacent_certificate,
-    has_contained_boundary_difference_from_graph, has_contained_face_adjacent_union,
-    materialize_contained_boundary_difference_from_graph,
+    ContainedBoundaryDifferenceCertificate, contained_boundary_difference_certificate_from_graph,
+    contained_face_adjacent_certificate, has_contained_face_adjacent_union,
     materialize_contained_boundary_difference_from_retained_certificate,
     materialize_contained_face_adjacent_union_from_certificate,
 };
@@ -446,8 +443,6 @@ pub fn preflight_boolean_exact(
             | ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellDifference
             | ExactBooleanSupport::CertifiedFullFaceAdjacentUnion
             | ExactBooleanSupport::CertifiedContainedFaceAdjacentUnion
-            | ExactBooleanSupport::CertifiedContainedBoundaryDifference
-            | ExactBooleanSupport::CertifiedContainedBoundaryContainment
             | ExactBooleanSupport::CertifiedContainedFaceAdjacentIntersection
             | ExactBooleanSupport::CertifiedContainedFaceAdjacentDifference
             | ExactBooleanSupport::CertifiedFullFaceAdjacentIntersection
@@ -563,18 +558,6 @@ pub fn preflight_boolean_exact(
         return Ok(certified_shortcut_preflight(operation, convex_support));
     }
     if support == ExactBooleanSupport::RequiresCertifiedWinding
-        && let Some(contained_support) = certified_contained_boundary_difference_support_from_graph(
-            &graph, left, right, operation,
-        )
-        .or_else(|| {
-            certified_contained_boundary_containment_support_from_graph(
-                &graph, left, right, operation,
-            )
-        })
-    {
-        return Ok(certified_shortcut_preflight(operation, contained_support));
-    }
-    if support == ExactBooleanSupport::RequiresCertifiedWinding
         && let Some(convex_support) =
             certified_convex_boolean_support_from_graph(&graph, left, right, operation)?
     {
@@ -594,6 +577,23 @@ pub fn preflight_boolean_exact(
             operation,
             ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellIntersection,
         ));
+    }
+    if support == ExactBooleanSupport::RequiresCertifiedWinding
+        && contained_boundary_arrangement_should_preflight(&graph, left, right, operation)
+        && arrangement_cell_complex_output_materializes_for_preflight(left, right, operation)?
+    {
+        return Ok(ExactBooleanPreflight {
+            operation,
+            support: ExactBooleanSupport::CertifiedArrangementCellComplex,
+            graph_had_unknowns,
+            retained_face_pairs,
+            retained_events,
+            region_count: 0,
+            region_classifications: Vec::new(),
+            blocker: None,
+            arrangement_readiness: None,
+            coplanar_volumetric_evidence: None,
+        });
     }
     if support == ExactBooleanSupport::RequiresCertifiedWinding
         && arrangement_volume_graph_materializes(left, right, operation)?
@@ -1480,15 +1480,17 @@ pub fn boolean_exact_with_boundary_policy(
             )? {
                 return Ok(result);
             }
-            if let Some(result) = boolean_contained_boundary_difference_meshes_from_graph(
-                &graph, left, right, operation, validation,
-            )? {
-                return Ok(result);
-            }
-            if let Some(result) = boolean_contained_boundary_containment_meshes_from_graph(
-                &graph, left, right, operation, validation,
-            )? {
-                return Ok(result);
+            if contained_boundary_arrangement_should_preflight(&graph, left, right, operation) {
+                if let Some(result) =
+                    boolean_arrangement_volume_graph_meshes(left, right, operation, validation)?
+                {
+                    return Ok(result);
+                }
+                if let Some(result) = boolean_arrangement_cell_complex_meshes(
+                    left, right, operation, validation, false,
+                )? {
+                    return Ok(result);
+                }
             }
             if matches!(
                 operation,
@@ -1719,6 +1721,34 @@ fn arrangement_cell_complex_materializes_for_preflight(
         }
         Ok(_) | Err(_) => Ok(false),
     }
+}
+
+fn arrangement_cell_complex_output_materializes_for_preflight(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+) -> Result<bool, MeshError> {
+    if boolean_arrangement_volume_graph_meshes(left, right, operation, ValidationPolicy::CLOSED)?
+        .is_some()
+    {
+        return Ok(true);
+    }
+    boolean_arrangement_cell_complex_meshes(left, right, operation, ValidationPolicy::CLOSED, false)
+        .map(|result| result.is_some())
+}
+
+fn contained_boundary_arrangement_should_preflight(
+    graph: &super::graph::ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+) -> bool {
+    matches!(
+        operation,
+        ExactBooleanOperation::Union
+            | ExactBooleanOperation::Intersection
+            | ExactBooleanOperation::Difference
+    ) && contained_boundary_difference_certificate_from_graph(left, right, graph).is_some()
 }
 
 fn boolean_arrangement_volume_graph_meshes(
@@ -4144,95 +4174,6 @@ fn boolean_contained_face_adjacent_difference(
     ))
 }
 
-/// Materialize a boundary-contained closed-solid difference.
-///
-/// This is the nonconvex-capable sibling of the convex boundary-containment
-/// difference: the removed solid is certified inside the left container by
-/// exact winding replay and touches the container through same-oriented
-/// source-owned caps. The output replaces those container caps with exact
-/// materializing only the retained exact cap object instead of inferring a
-/// cavity from approximate representatives.
-fn boolean_contained_boundary_difference_meshes_from_graph(
-    graph: &super::graph::ExactIntersectionGraph,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
-    if operation != ExactBooleanOperation::Difference {
-        return Ok(None);
-    }
-    let Some(difference) =
-        materialize_contained_boundary_difference_from_graph(left, right, graph, validation)
-    else {
-        return Ok(None);
-    };
-    Ok(Some(certified_shortcut_result(
-        difference.mesh,
-        ExactBooleanShortcutKind::ContainedBoundaryDifference,
-    )))
-}
-
-/// Materialize regularized booleans for closed boundary-contained solids.
-///
-/// The same retained cap certificate used by
-/// [`materialize_contained_boundary_difference`] proves that one closed solid
-/// lies inside the other while sharing same-oriented source-owned boundary
-/// caps. For union and intersection that certificate selects the outer or
-/// inner source shell directly; for the reverse difference the contained left
-/// volume is removed completely. The cavity-producing `container - removed`
-/// case stays with [`boolean_contained_boundary_difference_meshes_from_graph`].
-fn boolean_contained_boundary_containment_meshes_from_graph(
-    graph: &super::graph::ExactIntersectionGraph,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
-    let Some(containment) = contained_boundary_containment_from_graph(left, right, graph) else {
-        return Ok(None);
-    };
-    let mesh = match operation {
-        ExactBooleanOperation::Union => match containment {
-            ContainedBoundaryContainment::LeftContainsRight => copy_mesh(
-                left,
-                "exact contained-boundary containment union keeps outer left",
-                validation,
-            )?,
-            ContainedBoundaryContainment::RightContainsLeft => copy_mesh(
-                right,
-                "exact contained-boundary containment union keeps outer right",
-                validation,
-            )?,
-        },
-        ExactBooleanOperation::Intersection => match containment {
-            ContainedBoundaryContainment::LeftContainsRight => copy_mesh(
-                right,
-                "exact contained-boundary containment intersection keeps inner right",
-                validation,
-            )?,
-            ContainedBoundaryContainment::RightContainsLeft => copy_mesh(
-                left,
-                "exact contained-boundary containment intersection keeps inner left",
-                validation,
-            )?,
-        },
-        ExactBooleanOperation::Difference => match containment {
-            ContainedBoundaryContainment::RightContainsLeft => empty_mesh(
-                "empty exact contained-boundary reverse difference",
-                validation,
-            )?,
-            ContainedBoundaryContainment::LeftContainsRight => return Ok(None),
-        },
-        ExactBooleanOperation::SelectedRegions(_) => return Ok(None),
-    };
-
-    Ok(Some(certified_shortcut_result(
-        mesh,
-        ExactBooleanShortcutKind::ContainedBoundaryContainment,
-    )))
-}
-
 /// Materialize the empty regularized intersection for certified adjacency.
 ///
 /// Regularized solid booleans drop lower-dimensional boundary contact from
@@ -5552,43 +5493,6 @@ fn certified_direct_convex_boolean_support(
     operation: ExactBooleanOperation,
 ) -> Option<ExactBooleanSupport> {
     certified_convex_intersection_support(left, right, operation)
-}
-
-fn certified_contained_boundary_difference_support_from_graph(
-    graph: &super::graph::ExactIntersectionGraph,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-) -> Option<ExactBooleanSupport> {
-    match operation {
-        ExactBooleanOperation::Difference
-            if has_contained_boundary_difference_from_graph(left, right, graph) =>
-        {
-            Some(ExactBooleanSupport::CertifiedContainedBoundaryDifference)
-        }
-        _ => None,
-    }
-}
-
-fn certified_contained_boundary_containment_support_from_graph(
-    graph: &super::graph::ExactIntersectionGraph,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-) -> Option<ExactBooleanSupport> {
-    let containment = contained_boundary_containment_from_graph(left, right, graph)?;
-    match operation {
-        ExactBooleanOperation::Union | ExactBooleanOperation::Intersection => {
-            Some(ExactBooleanSupport::CertifiedContainedBoundaryContainment)
-        }
-        ExactBooleanOperation::Difference
-            if containment == ContainedBoundaryContainment::RightContainsLeft =>
-        {
-            Some(ExactBooleanSupport::CertifiedContainedBoundaryContainment)
-        }
-        ExactBooleanOperation::Difference => None,
-        ExactBooleanOperation::SelectedRegions(_) => None,
-    }
 }
 
 struct CertifiedConvexBooleanShortcut {

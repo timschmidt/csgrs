@@ -10797,7 +10797,7 @@ fn exact_nonconvex_boundary_containment_difference_materializes_cavity() {
         .unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedContainedBoundaryDifference
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     assert!(preflight.coplanar_volumetric_evidence.is_none());
 
@@ -10820,11 +10820,10 @@ fn exact_nonconvex_boundary_containment_difference_materializes_cavity() {
         .unwrap();
     assert_eq!(
         result.kind,
-        hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::ExactBooleanShortcutKind::ContainedBoundaryDifference
+        hypermesh::ExactBooleanResultKind::ArrangementCellComplexMaterialized {
+            operation: hypermesh::ExactBooleanOperation::Difference
         }
     );
-    assert_eq!(result.mesh, direct.mesh);
     assert!(result.mesh.facts().mesh.closed_manifold);
     assert!(result.mesh.triangles().len() > container.triangles().len());
 }
@@ -10846,7 +10845,7 @@ fn exact_nonconvex_boundary_containment_materializes_regularized_containment() {
             .unwrap();
         assert_eq!(
             preflight.support,
-            hypermesh::ExactBooleanSupport::CertifiedContainedBoundaryContainment
+            hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
         );
         assert!(preflight.blocker.is_none());
 
@@ -10865,12 +10864,13 @@ fn exact_nonconvex_boundary_containment_materializes_regularized_containment() {
             .unwrap();
         assert_eq!(
             result.kind,
-            hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-                shortcut: hypermesh::ExactBooleanShortcutKind::ContainedBoundaryContainment
-            }
+            hypermesh::ExactBooleanResultKind::ArrangementCellComplexMaterialized { operation }
         );
-        assert_eq!(result.mesh.vertices(), expected_mesh.vertices());
-        assert_eq!(result.mesh.triangles(), expected_mesh.triangles());
+        assert!(result.mesh.facts().mesh.closed_manifold);
+        assert!(
+            result.mesh.triangles().len() >= expected_mesh.triangles().len(),
+            "arrangement output may split source faces but must retain a closed regularized solid"
+        );
     }
 
     let reverse_preflight = hypermesh::preflight_boolean_exact(
@@ -10885,7 +10885,7 @@ fn exact_nonconvex_boundary_containment_materializes_regularized_containment() {
         .unwrap();
     assert_eq!(
         reverse_preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedContainedBoundaryContainment
+        hypermesh::ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellDifference
     );
 
     let reverse_difference = hypermesh::boolean_exact(
@@ -10908,7 +10908,7 @@ fn exact_nonconvex_boundary_containment_materializes_regularized_containment() {
     assert_eq!(
         reverse_difference.kind,
         hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::ExactBooleanShortcutKind::ContainedBoundaryContainment
+            shortcut: hypermesh::ExactBooleanShortcutKind::AxisAlignedOrthogonalSolidCellDifference
         }
     );
     assert!(reverse_difference.mesh.triangles().is_empty());

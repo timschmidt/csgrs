@@ -125,15 +125,6 @@ pub enum ContainedBoundaryDifferenceError {
     SourceReplayMismatch,
 }
 
-/// Which source shell contains the other through a certified boundary cap.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub(crate) enum ContainedBoundaryContainment {
-    /// The left/source shell is the container and the right/source shell is removed.
-    LeftContainsRight,
-    /// The right/source shell is the container and the left/source shell is removed.
-    RightContainsLeft,
-}
-
 /// Opaque retained certificate for a boundary-contained difference.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(crate) struct ContainedBoundaryDifferenceCertificate {
@@ -236,31 +227,6 @@ pub fn has_contained_boundary_difference(container: &ExactMesh, removed: &ExactM
     contained_boundary_difference_source_certificate(container, removed, false).is_some()
 }
 
-/// Return whether `container - removed` has a bounded exact boundary-cavity
-/// materialization using an already-retained graph.
-pub(crate) fn has_contained_boundary_difference_from_graph(
-    container: &ExactMesh,
-    removed: &ExactMesh,
-    graph: &ExactIntersectionGraph,
-) -> bool {
-    contained_boundary_difference_certificate_from_graph(container, removed, graph).is_some()
-}
-
-/// Return the certified boundary-containment relation using an already-retained graph.
-pub(crate) fn contained_boundary_containment_from_graph(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    graph: &ExactIntersectionGraph,
-) -> Option<ContainedBoundaryContainment> {
-    if contained_boundary_difference_certificate_from_graph(left, right, graph).is_some() {
-        return Some(ContainedBoundaryContainment::LeftContainsRight);
-    }
-    if contained_boundary_difference_certificate_from_reversed_graph(right, left, graph).is_some() {
-        return Some(ContainedBoundaryContainment::RightContainsLeft);
-    }
-    None
-}
-
 /// Materialize a regularized union across one strictly contained shared face.
 pub fn materialize_contained_face_adjacent_union(
     left: &ExactMesh,
@@ -331,23 +297,6 @@ pub fn materialize_contained_boundary_difference(
 ) -> Option<ContainedBoundaryDifference> {
     let certificate = contained_boundary_difference_source_certificate(container, removed, false)?;
     materialize_contained_boundary_difference_from_certificate(
-        container,
-        removed,
-        &certificate,
-        validation,
-    )
-}
-
-/// Materialize `container - removed` using an already-retained graph.
-pub(crate) fn materialize_contained_boundary_difference_from_graph(
-    container: &ExactMesh,
-    removed: &ExactMesh,
-    graph: &ExactIntersectionGraph,
-    validation: ValidationPolicy,
-) -> Option<ContainedBoundaryDifference> {
-    let certificate =
-        contained_boundary_difference_certificate_from_graph(container, removed, graph)?;
-    materialize_contained_boundary_difference_from_retained_certificate(
         container,
         removed,
         &certificate,
@@ -430,95 +379,6 @@ pub(crate) fn contained_boundary_difference_certificate_from_graph(
 
     contained_boundary_difference_certificate(container, removed, &graph.face_pairs)
         .map(|inner| ContainedBoundaryDifferenceCertificate { inner })
-}
-
-fn contained_boundary_difference_certificate_from_reversed_graph(
-    container: &ExactMesh,
-    removed: &ExactMesh,
-    graph: &ExactIntersectionGraph,
-) -> Option<ContainedBoundaryDifferenceCertificate> {
-    if !container.facts().mesh.closed_manifold || !removed.facts().mesh.closed_manifold {
-        return None;
-    }
-    graph.validate_against_meshes(removed, container).ok()?;
-    if graph.has_unknowns() || graph.face_pairs.is_empty() {
-        return None;
-    }
-    if !closed_boundary_containment(container, removed, false)? {
-        return None;
-    }
-
-    let face_pairs = mirrored_face_pairs(&graph.face_pairs);
-    contained_boundary_difference_certificate(container, removed, &face_pairs)
-        .map(|inner| ContainedBoundaryDifferenceCertificate { inner })
-}
-
-fn mirrored_face_pairs(pairs: &[FacePairEvents]) -> Vec<FacePairEvents> {
-    pairs
-        .iter()
-        .map(|pair| FacePairEvents {
-            left_face: pair.right_face,
-            right_face: pair.left_face,
-            relation: pair.relation,
-            projection: pair.projection,
-            events: pair
-                .events
-                .iter()
-                .map(mirrored_intersection_event)
-                .collect(),
-        })
-        .collect()
-}
-
-fn mirrored_intersection_event(event: &IntersectionEvent) -> IntersectionEvent {
-    match event {
-        IntersectionEvent::SegmentPlane {
-            segment_side,
-            edge,
-            plane_side,
-            plane_face,
-            relation,
-            point,
-            parameter,
-            parameter_ratio,
-            construction_failure,
-            endpoint_sides,
-        } => IntersectionEvent::SegmentPlane {
-            segment_side: opposite_side(*segment_side),
-            edge: *edge,
-            plane_side: opposite_side(*plane_side),
-            plane_face: *plane_face,
-            relation: *relation,
-            point: point.clone(),
-            parameter: parameter.clone(),
-            parameter_ratio: parameter_ratio.clone(),
-            construction_failure: *construction_failure,
-            endpoint_sides: *endpoint_sides,
-        },
-        IntersectionEvent::CoplanarEdge {
-            left_edge,
-            right_edge,
-            relation,
-        } => IntersectionEvent::CoplanarEdge {
-            left_edge: *right_edge,
-            right_edge: *left_edge,
-            relation: *relation,
-        },
-        IntersectionEvent::CoplanarVertex {
-            vertex_side,
-            vertex,
-            triangle_side,
-            triangle_face,
-            location,
-        } => IntersectionEvent::CoplanarVertex {
-            vertex_side: opposite_side(*vertex_side),
-            vertex: *vertex,
-            triangle_side: opposite_side(*triangle_side),
-            triangle_face: *triangle_face,
-            location: *location,
-        },
-        IntersectionEvent::Unknown => IntersectionEvent::Unknown,
-    }
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
