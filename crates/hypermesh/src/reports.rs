@@ -589,18 +589,6 @@ pub enum ExactBooleanShortcutKind {
     /// Certified left-preserving coplanar difference for positive-length
     /// boundary touching surfaces.
     CoplanarSurfaceBoundaryTouchDifference,
-    /// Certified orthogonal-cell union of coplanar rectangular surface pieces.
-    CoplanarOrthogonalSurfaceUnion,
-    /// Certified orthogonal-cell intersection of coplanar rectangular surfaces.
-    CoplanarOrthogonalSurfaceIntersection,
-    /// Certified orthogonal-cell difference of coplanar rectangular surfaces.
-    CoplanarOrthogonalSurfaceDifference,
-    /// Certified affine-cell union of coplanar parallelogram surface pieces.
-    CoplanarAffineSurfaceUnion,
-    /// Certified affine-cell intersection of coplanar parallelogram surfaces.
-    CoplanarAffineSurfaceIntersection,
-    /// Certified affine-cell difference of coplanar parallelogram surfaces.
-    CoplanarAffineSurfaceDifference,
     /// Exact coplanar convex surface containment, modulo triangulation.
     CoplanarConvexSurfaceContainment,
     /// Certified one-hole coplanar convex surface difference.
@@ -1341,23 +1329,6 @@ pub enum ExactBooleanSupport {
     /// Difference preserves the left coplanar surface because the right
     /// surface only touches it on exact positive-length boundary arcs.
     CertifiedCoplanarSurfaceBoundaryTouchDifference,
-    /// Union was materialized by an exact orthogonal coplanar surface cell
-    /// complex.
-    CertifiedCoplanarOrthogonalSurfaceUnion,
-    /// Intersection was materialized by an exact orthogonal coplanar surface
-    /// cell complex.
-    CertifiedCoplanarOrthogonalSurfaceIntersection,
-    /// Difference was materialized by an exact orthogonal coplanar surface cell
-    /// complex.
-    CertifiedCoplanarOrthogonalSurfaceDifference,
-    /// Union was materialized by an exact affine coplanar surface cell complex.
-    CertifiedCoplanarAffineSurfaceUnion,
-    /// Intersection was materialized by an exact affine coplanar surface cell
-    /// complex.
-    CertifiedCoplanarAffineSurfaceIntersection,
-    /// Difference was materialized by an exact affine coplanar surface cell
-    /// complex.
-    CertifiedCoplanarAffineSurfaceDifference,
     /// A named operation was answered by exact coplanar convex surface
     /// containment, ignoring triangulation.
     CertifiedCoplanarConvexSurfaceContainment,
@@ -1602,12 +1573,6 @@ impl ExactBooleanPreflight {
             | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceEquivalence
             | ExactBooleanSupport::CertifiedCoplanarSurfaceBoundaryTouchIntersection
             | ExactBooleanSupport::CertifiedCoplanarSurfaceBoundaryTouchDifference
-            | ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceUnion
-            | ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceIntersection
-            | ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceDifference
-            | ExactBooleanSupport::CertifiedCoplanarAffineSurfaceUnion
-            | ExactBooleanSupport::CertifiedCoplanarAffineSurfaceIntersection
-            | ExactBooleanSupport::CertifiedCoplanarAffineSurfaceDifference
             | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceContainment
             | ExactBooleanSupport::CertifiedAxisAlignedBoxUnion
             | ExactBooleanSupport::CertifiedAxisAlignedBoxIntersection

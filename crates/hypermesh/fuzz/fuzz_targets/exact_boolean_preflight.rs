@@ -2351,7 +2351,7 @@ fn exercise_component_holed_coplanar_intersection() {
         .unwrap();
     assert_eq!(
         crossing_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceIntersection
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     hypermesh::boolean_exact(
         &annulus,
@@ -2387,7 +2387,7 @@ fn exercise_component_holed_coplanar_intersection() {
         .unwrap();
     assert_eq!(
         touching_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceIntersection
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     hypermesh::boolean_exact(
         &annulus,
@@ -10475,7 +10475,7 @@ fn exercise_component_coplanar_difference() {
     rectangular_overlap_preflight.validate().unwrap();
     assert_eq!(
         rectangular_overlap_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let rectangular_overlap_result = hypermesh::boolean_exact(
         &nonrect_contact_left,
@@ -10487,9 +10487,8 @@ fn exercise_component_coplanar_difference() {
     rectangular_overlap_result.validate().unwrap();
     assert_eq!(
         rectangular_overlap_result.kind,
-        hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::ExactBooleanShortcutKind::
-                CoplanarOrthogonalSurfaceDifference
+        hypermesh::ExactBooleanResultKind::ArrangementCellComplexMaterialized {
+            operation: ExactBooleanOperation::Difference
         }
     );
     let pairwise_overlap_graph_right = ExactMesh::from_i64_triangles_with_policy(
@@ -10710,7 +10709,7 @@ fn exercise_component_coplanar_difference() {
         .unwrap();
     assert_eq!(
         union_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceUnion
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     hypermesh::boolean_exact(
         &l_left,
@@ -10745,7 +10744,7 @@ fn exercise_component_coplanar_difference() {
         .unwrap();
     assert_eq!(
         fan_l_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceUnion
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let partial_cell = ExactMesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 2, 0, 0, 0, 2, 0],
@@ -10794,7 +10793,7 @@ fn exercise_component_coplanar_difference() {
     holed_preflight.validate().unwrap();
     assert_eq!(
         holed_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let nested_left = rect_surface_i64(&[(0, 0, 10, 10)]);
@@ -10824,7 +10823,7 @@ fn exercise_component_coplanar_difference() {
     nested_preflight.validate().unwrap();
     assert_eq!(
         nested_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let hole_branch_left = rect_surface_i64(&[(0, 0, 5, 5)]);
@@ -10874,7 +10873,7 @@ fn exercise_component_coplanar_difference() {
     hole_branch_preflight.validate().unwrap();
     assert_eq!(
         hole_branch_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let invalid_positive_hole_contact = CoplanarOrthogonalSurfaceArrangement {
         projection: CoplanarProjection::Xy,
@@ -10950,7 +10949,7 @@ fn exercise_component_coplanar_difference() {
     branch_preflight.validate().unwrap();
     assert_eq!(
         branch_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let mut stale_branch = branch_difference.clone();
     stale_branch.components[0].outer[0] = point3(99, 99, 0);
@@ -11006,7 +11005,7 @@ fn exercise_component_coplanar_difference() {
     overlap_union_preflight.validate().unwrap();
     assert_eq!(
         overlap_union_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceUnion
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let overlap_union_result = hypermesh::boolean_exact(
         &overlap_source_left,
@@ -11018,9 +11017,7 @@ fn exercise_component_coplanar_difference() {
     overlap_union_result.validate().unwrap();
     assert_eq!(
         overlap_union_result.kind,
-        hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::ExactBooleanShortcutKind::CoplanarOrthogonalSurfaceUnion
-        }
+        hypermesh::ExactBooleanResultKind::ArrangementCellComplexMaterialized { operation: ExactBooleanOperation::Union }
     );
 
     let origin = (0, 0, 0);
@@ -11045,7 +11042,7 @@ fn exercise_component_coplanar_difference() {
     affine_union_preflight.validate().unwrap();
     assert_eq!(
         affine_union_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarAffineSurfaceUnion
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let affine_fan_l_left = affine_fan_rect_surface_i64(
@@ -11074,7 +11071,7 @@ fn exercise_component_coplanar_difference() {
         .unwrap();
     assert_eq!(
         affine_fan_union_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarAffineSurfaceUnion
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let partial_affine_cell = ExactMesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 4, 2, 0, -2, 4, 0],
@@ -11139,7 +11136,7 @@ fn exercise_component_coplanar_difference() {
     affine_nested_preflight.validate().unwrap();
     assert_eq!(
         affine_nested_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarAffineSurfaceDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let affine_hole_branch_left =
@@ -11191,7 +11188,7 @@ fn exercise_component_coplanar_difference() {
     affine_hole_branch_preflight.validate().unwrap();
     assert_eq!(
         affine_hole_branch_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarAffineSurfaceDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let affine_graph_left = affine_rect_surface_i64(&[(0, 0, 12, 10)], origin, basis_u, basis_v);
@@ -11244,7 +11241,7 @@ fn exercise_component_coplanar_difference() {
     affine_branch_preflight.validate().unwrap();
     assert_eq!(
         affine_branch_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarAffineSurfaceDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let retained_outer = vec![

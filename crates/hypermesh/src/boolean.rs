@@ -30,10 +30,6 @@ use super::affine_solid::{
     materialize_affine_orthogonal_solid_difference,
     materialize_affine_orthogonal_solid_intersection, materialize_affine_orthogonal_solid_union,
 };
-use super::affine_surface::{
-    CoplanarAffineSurfaceBasis, arrange_coplanar_affine_surface_difference,
-    arrange_coplanar_affine_surface_intersection, arrange_coplanar_affine_surface_union,
-};
 use super::arrangement2d::{
     ExactArrangement2dBlocker, ExactArrangement2dBoundaryPolicy, ExactArrangement2dOverlay,
     ExactArrangement2dRegion, ExactArrangement2dRegionRing, ExactArrangement2dSetOperation,
@@ -72,10 +68,6 @@ use super::orthogonal_solid::{
     AxisAlignedOrthogonalSolidOperation, has_axis_aligned_orthogonal_solid_cells,
     has_empty_axis_aligned_orthogonal_solid_cell_intersection,
     materialize_axis_aligned_orthogonal_solid_cells,
-};
-use super::orthogonal_surface::{
-    CoplanarOrthogonalSurfaceOperation, arrange_coplanar_orthogonal_surface_difference,
-    arrange_coplanar_orthogonal_surface_intersection, arrange_coplanar_orthogonal_surface_union,
 };
 use super::provenance::{PredicateUse, SourceProvenance};
 use super::region::{
@@ -443,12 +435,6 @@ pub fn preflight_boolean_exact(
             | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceEquivalence
             | ExactBooleanSupport::CertifiedCoplanarSurfaceBoundaryTouchIntersection
             | ExactBooleanSupport::CertifiedCoplanarSurfaceBoundaryTouchDifference
-            | ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceUnion
-            | ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceIntersection
-            | ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceDifference
-            | ExactBooleanSupport::CertifiedCoplanarAffineSurfaceUnion
-            | ExactBooleanSupport::CertifiedCoplanarAffineSurfaceIntersection
-            | ExactBooleanSupport::CertifiedCoplanarAffineSurfaceDifference
             | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceContainment
             | ExactBooleanSupport::CertifiedAxisAlignedBoxUnion
             | ExactBooleanSupport::CertifiedAxisAlignedBoxIntersection
@@ -888,12 +874,6 @@ fn preflight_direct_coplanar_surface_support(
             if coplanar_mesh_overlay_surface_union_boundary_policy(left, right).is_some() {
                 return Some(ExactBooleanSupport::CertifiedArrangementCellComplex);
             }
-            if arrange_coplanar_orthogonal_surface_union(left, right).is_some() {
-                return Some(ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceUnion);
-            }
-            if arrange_coplanar_affine_surface_union(left, right).is_some() {
-                return Some(ExactBooleanSupport::CertifiedCoplanarAffineSurfaceUnion);
-            }
             None
         }
         ExactBooleanOperation::Intersection => {
@@ -907,12 +887,6 @@ fn preflight_direct_coplanar_surface_support(
                 || certify_coplanar_surface_boundary_touch(left, right).is_some()
             {
                 return Some(ExactBooleanSupport::CertifiedArrangementCellComplex);
-            }
-            if arrange_coplanar_orthogonal_surface_intersection(left, right).is_some() {
-                return Some(ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceIntersection);
-            }
-            if arrange_coplanar_affine_surface_intersection(left, right).is_some() {
-                return Some(ExactBooleanSupport::CertifiedCoplanarAffineSurfaceIntersection);
             }
             if certify_coplanar_surface_boundary_touch(left, right).is_some() {
                 return Some(
@@ -930,12 +904,6 @@ fn preflight_direct_coplanar_surface_support(
             }
             if certify_coplanar_surface_boundary_touch(left, right).is_some() {
                 return Some(ExactBooleanSupport::CertifiedCoplanarSurfaceBoundaryTouchDifference);
-            }
-            if has_non_axis_aligned_affine_surface_difference(left, right) {
-                return Some(ExactBooleanSupport::CertifiedCoplanarAffineSurfaceDifference);
-            }
-            if arrange_coplanar_orthogonal_surface_difference(left, right).is_some() {
-                return Some(ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceDifference);
             }
             None
         }
@@ -1560,16 +1528,6 @@ pub fn boolean_exact_with_boundary_policy(
             }
             if let Some(result) =
                 boolean_coplanar_surface_containment(left, right, operation, validation)?
-            {
-                return Ok(result);
-            }
-            if let Some(result) =
-                boolean_coplanar_orthogonal_surface_optional(left, right, operation, validation)?
-            {
-                return Ok(result);
-            }
-            if let Some(result) =
-                boolean_coplanar_affine_surface_optional(left, right, operation, validation)?
             {
                 return Ok(result);
             }
@@ -3503,80 +3461,6 @@ fn boolean_convex_intersection_meshes(
     )))
 }
 
-fn boolean_coplanar_orthogonal_surface_optional(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
-    let arrangement = match operation {
-        ExactBooleanOperation::Union => arrange_coplanar_orthogonal_surface_union(left, right),
-        ExactBooleanOperation::Intersection => {
-            arrange_coplanar_orthogonal_surface_intersection(left, right)
-        }
-        ExactBooleanOperation::Difference => {
-            arrange_coplanar_orthogonal_surface_difference(left, right)
-        }
-        ExactBooleanOperation::SelectedRegions(_) => None,
-    };
-    let Some(arrangement) = arrangement else {
-        return Ok(None);
-    };
-    let (label, shortcut) = match arrangement.operation {
-        CoplanarOrthogonalSurfaceOperation::Union => (
-            "exact coplanar orthogonal surface union",
-            ExactBooleanShortcutKind::CoplanarOrthogonalSurfaceUnion,
-        ),
-        CoplanarOrthogonalSurfaceOperation::Intersection => (
-            "exact coplanar orthogonal surface intersection",
-            ExactBooleanShortcutKind::CoplanarOrthogonalSurfaceIntersection,
-        ),
-        CoplanarOrthogonalSurfaceOperation::Difference => (
-            "exact coplanar orthogonal surface difference",
-            ExactBooleanShortcutKind::CoplanarOrthogonalSurfaceDifference,
-        ),
-    };
-    let mesh = copy_mesh(&arrangement.mesh, label, validation)?;
-    Ok(Some(certified_shortcut_result(mesh, shortcut)))
-}
-
-fn boolean_coplanar_affine_surface_optional(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
-    let arrangement = match operation {
-        ExactBooleanOperation::Union => arrange_coplanar_affine_surface_union(left, right),
-        ExactBooleanOperation::Intersection => {
-            arrange_coplanar_affine_surface_intersection(left, right)
-        }
-        ExactBooleanOperation::Difference => {
-            arrange_coplanar_affine_surface_difference(left, right)
-        }
-        ExactBooleanOperation::SelectedRegions(_) => None,
-    };
-    let Some(arrangement) = arrangement else {
-        return Ok(None);
-    };
-    let (label, shortcut) = match arrangement.operation {
-        CoplanarOrthogonalSurfaceOperation::Union => (
-            "exact coplanar affine surface union",
-            ExactBooleanShortcutKind::CoplanarAffineSurfaceUnion,
-        ),
-        CoplanarOrthogonalSurfaceOperation::Intersection => (
-            "exact coplanar affine surface intersection",
-            ExactBooleanShortcutKind::CoplanarAffineSurfaceIntersection,
-        ),
-        CoplanarOrthogonalSurfaceOperation::Difference => (
-            "exact coplanar affine surface difference",
-            ExactBooleanShortcutKind::CoplanarAffineSurfaceDifference,
-        ),
-    };
-    let mesh = copy_mesh(&arrangement.mesh, label, validation)?;
-    Ok(Some(certified_shortcut_result(mesh, shortcut)))
-}
-
 fn boolean_direct_coplanar_surface_meshes(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -3609,16 +3493,6 @@ fn boolean_direct_coplanar_surface_meshes(
             )? {
                 return Ok(Some(result));
             }
-            if let Some(result) =
-                boolean_coplanar_orthogonal_surface_optional(left, right, operation, validation)?
-            {
-                return Ok(Some(result));
-            }
-            if let Some(result) =
-                boolean_coplanar_affine_surface_optional(left, right, operation, validation)?
-            {
-                return Ok(Some(result));
-            }
             Ok(None)
         }
         ExactBooleanOperation::Intersection => {
@@ -3639,16 +3513,6 @@ fn boolean_direct_coplanar_surface_meshes(
             if let Some(result) = boolean_coplanar_surface_overlay_from_exact_arrangement(
                 left, right, operation, validation,
             )? {
-                return Ok(Some(result));
-            }
-            if let Some(result) =
-                boolean_coplanar_orthogonal_surface_optional(left, right, operation, validation)?
-            {
-                return Ok(Some(result));
-            }
-            if let Some(result) =
-                boolean_coplanar_affine_surface_optional(left, right, operation, validation)?
-            {
                 return Ok(Some(result));
             }
             if certify_coplanar_surface_boundary_touch(left, right).is_some() {
@@ -3674,20 +3538,7 @@ fn boolean_direct_coplanar_surface_meshes(
             )? {
                 return Ok(Some(result));
             }
-            if let Some(arrangement) = arrange_coplanar_affine_surface_difference(left, right)
-                && affine_basis_is_non_axis_aligned(&arrangement.basis)
-            {
-                let mesh = copy_mesh(
-                    &arrangement.mesh,
-                    "exact coplanar affine surface difference",
-                    validation,
-                )?;
-                return Ok(Some(certified_shortcut_result(
-                    mesh,
-                    ExactBooleanShortcutKind::CoplanarAffineSurfaceDifference,
-                )));
-            }
-            boolean_coplanar_orthogonal_surface_optional(left, right, operation, validation)
+            Ok(None)
         }
         ExactBooleanOperation::SelectedRegions(_) => Ok(None),
     }
@@ -3756,24 +3607,6 @@ fn coplanar_surface_materializers_should_yield_to_closed_boundary_shortcut(
     operation: ExactBooleanOperation,
 ) -> Result<bool, MeshError> {
     coplanar_mesh_overlay_should_yield_to_closed_boundary_shortcut(left, right, operation)
-}
-
-fn has_non_axis_aligned_affine_surface_difference(left: &ExactMesh, right: &ExactMesh) -> bool {
-    arrange_coplanar_affine_surface_difference(left, right)
-        .as_ref()
-        .is_some_and(|arrangement| affine_basis_is_non_axis_aligned(&arrangement.basis))
-}
-
-fn affine_basis_is_non_axis_aligned(basis: &CoplanarAffineSurfaceBasis) -> bool {
-    let u = project_point3(&basis.basis_u, basis.projection);
-    let v = project_point3(&basis.basis_v, basis.projection);
-    !(projected_vector_axis_aligned(&u) && projected_vector_axis_aligned(&v))
-}
-
-fn projected_vector_axis_aligned(vector: &hyperlimit::Point2) -> bool {
-    let x_is_zero = compare_reals(&vector.x, &Real::from(0)).value() == Some(Ordering::Equal);
-    let y_is_zero = compare_reals(&vector.y, &Real::from(0)).value() == Some(Ordering::Equal);
-    x_is_zero ^ y_is_zero
 }
 
 fn boolean_axis_aligned_box_operation_optional(
@@ -5394,19 +5227,11 @@ fn coplanar_surface_output_already_materialized(
         ExactBooleanOperation::Intersection => {
             coplanar_mesh_overlay_surface_intersection_boundary_policy(left, right).is_some()
                 || certify_coplanar_surface_boundary_touch(left, right).is_some()
-                || arrange_coplanar_orthogonal_surface_intersection(left, right).is_some()
-                || arrange_coplanar_affine_surface_intersection(left, right).is_some()
         }
         ExactBooleanOperation::Union => {
             coplanar_mesh_overlay_surface_union_boundary_policy(left, right).is_some()
-                || arrange_coplanar_orthogonal_surface_union(left, right).is_some()
-                || arrange_coplanar_affine_surface_union(left, right).is_some()
         }
-        ExactBooleanOperation::Difference => {
-            coplanar_mesh_overlay_difference_ready(left, right)
-                || arrange_coplanar_orthogonal_surface_difference(left, right).is_some()
-                || arrange_coplanar_affine_surface_difference(left, right).is_some()
-        }
+        ExactBooleanOperation::Difference => coplanar_mesh_overlay_difference_ready(left, right),
         ExactBooleanOperation::SelectedRegions(_) => false,
     }
 }
