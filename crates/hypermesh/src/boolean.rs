@@ -1778,25 +1778,6 @@ fn boolean_arrangement_cell_complex_meshes(
     };
     match outcome {
         ArrangementCellComplexOutcome::Materialized(result, _) => Ok(Some(result)),
-        ArrangementCellComplexOutcome::Declined(_)
-            if dispatch == ArrangementCellComplexDispatch::Fallback =>
-        {
-            let fallback = match run_arrangement_cell_complex_attempt(
-                left,
-                right,
-                operation,
-                ExactRegularizationPolicy::RETAIN_ARTIFACTS,
-                Some(validation),
-                dispatch == ArrangementCellComplexDispatch::Fallback,
-            ) {
-                Ok(outcome) => outcome,
-                Err(_) => return Ok(None),
-            };
-            match fallback {
-                ArrangementCellComplexOutcome::Materialized(result, _) => Ok(Some(result)),
-                ArrangementCellComplexOutcome::Declined(_) => Ok(None),
-            }
-        }
         ArrangementCellComplexOutcome::Declined(_) => Ok(None),
     }
 }
