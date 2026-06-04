@@ -556,6 +556,12 @@ pub enum ExactBooleanResultKind {
         /// Named open-surface operation executed by split-region assembly.
         operation: ExactBooleanOperation,
     },
+    /// The result was produced by regularizing exact arrangement cell-complex
+    /// evidence for a named volumetric boolean.
+    ArrangementCellComplexMaterialized {
+        /// Named operation executed by the arrangement cell-complex pipeline.
+        operation: ExactBooleanOperation,
+    },
     /// The result was produced by materializing split regions after exact
     /// closed-mesh winding classified each source region against the opposite
     /// operand.
@@ -767,11 +773,13 @@ impl ExactBooleanResult {
             self.kind,
             ExactBooleanResultKind::SelectedRegions { .. }
                 | ExactBooleanResultKind::OpenSurfaceArrangement { .. }
+                | ExactBooleanResultKind::ArrangementCellComplexMaterialized { .. }
                 | ExactBooleanResultKind::WindingMaterialized { .. }
         );
         let retains_volumetric_artifacts = matches!(
             self.kind,
-            ExactBooleanResultKind::WindingMaterialized { .. }
+            ExactBooleanResultKind::ArrangementCellComplexMaterialized { .. }
+                | ExactBooleanResultKind::WindingMaterialized { .. }
         );
         if !retains_region_artifacts
             && (!self.region_classifications.is_empty()
@@ -980,7 +988,9 @@ impl ExactBooleanResult {
             validate_output_mesh_matches_assembly(&self.assembly, &self.mesh)?;
         }
 
-        if let ExactBooleanResultKind::WindingMaterialized { operation } = self.kind {
+        if let ExactBooleanResultKind::ArrangementCellComplexMaterialized { operation }
+        | ExactBooleanResultKind::WindingMaterialized { operation } = self.kind
+        {
             validate_winding_materialized_assembly_matches_operation(
                 operation,
                 &self.triangulations,
@@ -1030,6 +1040,7 @@ impl ExactBooleanResult {
             self.kind,
             ExactBooleanResultKind::SelectedRegions { .. }
                 | ExactBooleanResultKind::OpenSurfaceArrangement { .. }
+                | ExactBooleanResultKind::ArrangementCellComplexMaterialized { .. }
                 | ExactBooleanResultKind::WindingMaterialized { .. }
         ) {
             self.assembly
@@ -1038,7 +1049,8 @@ impl ExactBooleanResult {
         }
         if matches!(
             self.kind,
-            ExactBooleanResultKind::WindingMaterialized { .. }
+            ExactBooleanResultKind::ArrangementCellComplexMaterialized { .. }
+                | ExactBooleanResultKind::WindingMaterialized { .. }
         ) {
             for classification in &self.volumetric_classifications {
                 let Some(triangulation) = self.triangulations.iter().find(|triangulation| {

@@ -10561,7 +10561,7 @@ fn exact_non_rectilinear_coplanar_volumetric_overlap_splits_source_faces() {
             .unwrap();
         assert_eq!(
             result.kind,
-            hypermesh::ExactBooleanResultKind::WindingMaterialized { operation }
+            hypermesh::ExactBooleanResultKind::ArrangementCellComplexMaterialized { operation }
         );
         assert!(result.mesh.facts().mesh.closed_manifold);
         let retained_cell_triangles = result
@@ -10637,7 +10637,7 @@ fn exact_nonconvex_coplanar_volumetric_overlap_materializes_from_winding_cells()
             .unwrap();
         assert_eq!(
             result.kind,
-            hypermesh::ExactBooleanResultKind::WindingMaterialized { operation }
+            hypermesh::ExactBooleanResultKind::ArrangementCellComplexMaterialized { operation }
         );
         assert!(result.mesh.facts().mesh.closed_manifold);
         if operation == hypermesh::ExactBooleanOperation::Difference {
@@ -31330,7 +31330,7 @@ fn exact_named_booleans_materialize_partial_convex_intersection() {
     union.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         union.kind,
-        hypermesh::ExactBooleanResultKind::WindingMaterialized {
+        hypermesh::ExactBooleanResultKind::ArrangementCellComplexMaterialized {
             operation: hypermesh::ExactBooleanOperation::Union
         }
     );
@@ -31413,7 +31413,7 @@ fn exact_named_booleans_materialize_partial_convex_intersection() {
         .unwrap();
     assert_eq!(
         difference.kind,
-        hypermesh::ExactBooleanResultKind::WindingMaterialized {
+        hypermesh::ExactBooleanResultKind::ArrangementCellComplexMaterialized {
             operation: hypermesh::ExactBooleanOperation::Difference
         }
     );
@@ -31849,7 +31849,7 @@ fn exact_named_booleans_materialize_polygonal_cap_convex_difference() {
     result.validate().unwrap();
     assert_eq!(
         result.kind,
-        hypermesh::ExactBooleanResultKind::WindingMaterialized {
+        hypermesh::ExactBooleanResultKind::ArrangementCellComplexMaterialized {
             operation: hypermesh::ExactBooleanOperation::Difference
         }
     );
@@ -33956,7 +33956,7 @@ fn exact_arrangement_boolean_attempt_reports_volume_graph_counts() {
 }
 
 #[test]
-fn exact_arrangement_delegates_unregularized_sheet_complex_to_winding_materializer() {
+fn exact_arrangement_regularizes_unregularized_sheet_complex_without_winding_fallback() {
     let left = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
     let right = tetrahedron_i64([1, 1, 0], [5, 1, 0], [1, 5, 0], [1, 1, 4]);
 
@@ -33992,9 +33992,9 @@ fn exact_arrangement_delegates_unregularized_sheet_complex_to_winding_materializ
     assert_eq!(report.decline, None);
     assert_eq!(
         report.materialized_shortcut,
-        Some(hypermesh::ExactBooleanShortcutKind::WindingMaterialized)
+        Some(hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex)
     );
-    assert!(report.arrangement_blockers >= 2);
+    assert_eq!(report.arrangement_blockers, 0);
     assert!(report.output_vertices > 0);
     assert!(report.output_triangles > 0);
 
@@ -34005,6 +34005,12 @@ fn exact_arrangement_delegates_unregularized_sheet_complex_to_winding_materializ
         ValidationPolicy::CLOSED,
     )
     .unwrap();
+    assert_eq!(
+        result.kind,
+        hypermesh::ExactBooleanResultKind::ArrangementCellComplexMaterialized {
+            operation: hypermesh::ExactBooleanOperation::Union
+        }
+    );
     result
         .validate_operation_against_sources(
             &left,
