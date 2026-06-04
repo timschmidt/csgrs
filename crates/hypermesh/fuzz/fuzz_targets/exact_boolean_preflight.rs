@@ -1507,7 +1507,7 @@ fn exercise_partial_convex_union_boundary() {
         .expect("preflight report must validate");
     assert_eq!(
         preflight.support,
-        ExactBooleanSupport::CertifiedWindingMaterialized
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let graph = build_intersection_graph(&left, &right).expect("fixture graph should build");
     let (_regions, cells) =
@@ -1525,7 +1525,7 @@ fn exercise_partial_convex_union_boundary() {
         ExactBooleanOperation::Union,
         ValidationPolicy::CLOSED,
     )
-    .expect("partial convex union should materialize from exact winding cells");
+    .expect("partial convex union should materialize from exact arrangement cells");
     result
         .validate_operation_against_sources(
             &left,
@@ -1534,7 +1534,7 @@ fn exercise_partial_convex_union_boundary() {
             ValidationPolicy::CLOSED,
             ExactBoundaryBooleanPolicy::Reject,
         )
-        .expect("winding-materialized union should replay");
+        .expect("arrangement-materialized union should replay");
     assert!(result.mesh.facts().mesh.closed_manifold);
     let mut missing_volumetric = result;
     missing_volumetric.volumetric_classifications.clear();
@@ -15246,7 +15246,7 @@ fn exercise_non_rectilinear_coplanar_volumetric_materialization() {
         preflight.validate_against_sources(&left, &right).unwrap();
         assert_eq!(
             preflight.support,
-            ExactBooleanSupport::CertifiedWindingMaterialized
+            ExactBooleanSupport::CertifiedArrangementCellComplex
         );
         let evidence = preflight
             .coplanar_volumetric_evidence
@@ -15284,13 +15284,7 @@ fn exercise_non_rectilinear_coplanar_volumetric_materialization() {
             if let Some(triangle) = wrong_orientation.assembly.triangles.first_mut() {
                 triangle.orientation =
                     hypermesh::region::ExactOutputTriangleOrientation::ReverseSource;
-                assert!(matches!(
-                    wrong_orientation.validate(),
-                    Err(
-                        hypermesh::ExactReportValidationError::
-                            WindingMaterializedAssemblyViolatesOperation
-                    )
-                ));
+                assert!(wrong_orientation.validate_against_sources(&left, &right).is_err());
             }
         }
     }
@@ -15467,7 +15461,7 @@ fn exercise_nonconvex_coplanar_volumetric_difference_fan_split() {
         preflight.validate_against_sources(&left, &right).unwrap();
         assert_eq!(
             preflight.support,
-            ExactBooleanSupport::CertifiedWindingMaterialized
+            ExactBooleanSupport::CertifiedArrangementCellComplex
         );
         let result =
             hypermesh::boolean_exact(&left, &right, operation, ValidationPolicy::CLOSED)

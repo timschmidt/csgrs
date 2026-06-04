@@ -4953,12 +4953,13 @@ fn exact_face_region_triangulates_through_feature_gated_hypertri() {
         hypermesh::ExactReportValidationError::MissingRegionFacts
     );
     let mut relabeled_preflight = preflight.clone();
-    relabeled_preflight.support = hypermesh::ExactBooleanSupport::CertifiedWindingMaterialized;
+    relabeled_preflight.support =
+        hypermesh::ExactBooleanSupport::CertifiedOpenSurfaceArrangementIntersection;
     assert_eq!(
         relabeled_preflight
             .validate_against_sources(&left, &right)
             .unwrap_err(),
-        hypermesh::ExactReportValidationError::SourceReplayMismatch
+        hypermesh::ExactReportValidationError::StatusEvidenceMismatch
     );
 
     let named_difference = hypermesh::boolean_exact(
@@ -7652,7 +7653,7 @@ fn exact_axis_aligned_orthogonal_solid_intersection_materializes_empty_cavity_ce
     assert!(intersection.mesh.triangles().is_empty());
 
     let mut stale = preflight.clone();
-    stale.support = hypermesh::ExactBooleanSupport::CertifiedWindingMaterialized;
+    stale.support = hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex;
     assert!(stale.validate_against_sources(&hollow, &floating).is_err());
 }
 

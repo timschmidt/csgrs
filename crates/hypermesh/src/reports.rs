@@ -1501,9 +1501,6 @@ pub enum ExactBooleanSupport {
     /// A named operation was answered by exact ray-parity separation for
     /// closed, possibly nonconvex meshes with no retained face intersections.
     CertifiedWindingSeparated,
-    /// A named operation was materialized from exact split regions classified
-    /// by closed-mesh winding.
-    CertifiedWindingMaterialized,
     /// A named operation was materialized by the exact arrangement/cell-complex
     /// pipeline with legacy surface materializers retained only as proof
     /// fixtures.
@@ -1610,8 +1607,7 @@ impl ExactBooleanPreflight {
         if self.coplanar_volumetric_evidence.is_some()
             && !matches!(
                 self.support,
-                ExactBooleanSupport::CertifiedWindingMaterialized
-                    | ExactBooleanSupport::CertifiedArrangementCellComplex
+                ExactBooleanSupport::CertifiedArrangementCellComplex
                     | ExactBooleanSupport::RequiresCoplanarVolumetricCells
             )
         {
@@ -1747,26 +1743,6 @@ impl ExactBooleanPreflight {
                     return Err(ExactReportValidationError::UnexpectedArrangementReadiness);
                 }
                 no_region_facts(self.region_count, &self.region_classifications)
-            }
-            ExactBooleanSupport::CertifiedWindingMaterialized => {
-                if operation_is_selected_region(self.operation)
-                    || self.graph_had_unknowns
-                    || self.blocker.is_some()
-                    || self.retained_face_pairs == 0
-                {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
-                }
-                if self.arrangement_readiness.is_some() {
-                    return Err(ExactReportValidationError::UnexpectedArrangementReadiness);
-                }
-                if let Some(evidence) = &self.coplanar_volumetric_evidence {
-                    validate_coplanar_volumetric_evidence_shape(
-                        evidence,
-                        self.retained_face_pairs,
-                        self.retained_events,
-                    )?;
-                }
-                checked_region_facts(self.region_count, &self.region_classifications)
             }
             ExactBooleanSupport::RequiresBoundaryPolicy => {
                 if operation_is_selected_region(self.operation) || self.graph_had_unknowns {

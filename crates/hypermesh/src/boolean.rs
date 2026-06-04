@@ -774,29 +774,6 @@ pub fn preflight_boolean_exact(
     {
         return Ok(certified_shortcut_preflight(operation, convex_support));
     }
-    if let Some(materialized) = materialize_volumetric_winding_region_plan_from_graph(
-        &graph,
-        left,
-        right,
-        operation,
-        ValidationPolicy::CLOSED,
-        VolumetricWindingMaterializationFailure::ReturnNone,
-    )? {
-        return Ok(ExactBooleanPreflight {
-            operation,
-            support: ExactBooleanSupport::CertifiedWindingMaterialized,
-            graph_had_unknowns,
-            retained_face_pairs,
-            retained_events,
-            region_count: materialized.triangulations.len(),
-            region_classifications: materialized.region_classifications,
-            blocker: None,
-            arrangement_readiness: None,
-            coplanar_volumetric_evidence: coplanar_volumetric_evidence_if_required(
-                &graph, left, right,
-            ),
-        });
-    }
     if support == ExactBooleanSupport::RequiresCertifiedWinding
         && let Some(convex_support) = certified_convex_union_support(left, right, operation)
     {
@@ -1656,6 +1633,15 @@ pub fn boolean_exact_with_boundary_policy(
             {
                 return Ok(result);
             }
+            if let Some(result) = boolean_arrangement_cell_complex_meshes(
+                left,
+                right,
+                operation,
+                validation,
+                ArrangementCellComplexDispatch::Fallback,
+            )? {
+                return Ok(result);
+            }
             if let Some(result) = boolean_retained_graph_fallback_meshes_from_graph(
                 &graph,
                 left,
@@ -1663,15 +1649,6 @@ pub fn boolean_exact_with_boundary_policy(
                 operation,
                 validation,
                 boundary_policy,
-            )? {
-                return Ok(result);
-            }
-            if let Some(result) = boolean_arrangement_cell_complex_meshes(
-                left,
-                right,
-                operation,
-                validation,
-                ArrangementCellComplexDispatch::Fallback,
             )? {
                 return Ok(result);
             }
