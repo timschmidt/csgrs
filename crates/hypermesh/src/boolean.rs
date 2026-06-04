@@ -1642,7 +1642,20 @@ pub fn boolean_exact_with_boundary_policy(
             )? {
                 return Ok(result);
             }
-            if let Some(result) = boolean_retained_graph_fallback_meshes_from_graph(
+            if let Some(result) = boolean_arrangement_volumetric_split_cell_recovery_from_graph(
+                &graph, left, right, operation, validation,
+            )? {
+                return Ok(result);
+            }
+            if let Some(shortcut) =
+                certified_winding_boolean_shortcut_from_graph(&graph, left, right)?
+                && let Some(result) = materialize_winding_containment_meshes(
+                    shortcut, left, right, operation, validation,
+                )?
+            {
+                return Ok(result);
+            }
+            if let Some(result) = boolean_boundary_touching_meshes_from_graph(
                 &graph,
                 left,
                 right,
@@ -1997,6 +2010,17 @@ fn run_arrangement_cell_complex_attempt(
                 return Ok(ArrangementCellComplexOutcome::Materialized(result, attempt));
             }
         }
+        if let Some(outcome) = arrangement_volumetric_split_cell_recovery_outcome_if_enabled(
+            regularize_unregularized_sheet_complex,
+            validation,
+            &mut attempt,
+            &arrangement.graph,
+            left,
+            right,
+            operation,
+        )? {
+            return Ok(outcome);
+        }
         attempt.decline = Some(ExactArrangementBooleanDecline::ArrangementBlockers(
             arrangement.blockers.clone(),
         ));
@@ -2006,6 +2030,17 @@ fn run_arrangement_cell_complex_attempt(
     let labeled = match arrangement.label_regions(policy) {
         Ok(labeled) => labeled,
         Err(blocker) => {
+            if let Some(outcome) = arrangement_volumetric_split_cell_recovery_outcome_if_enabled(
+                regularize_unregularized_sheet_complex,
+                validation,
+                &mut attempt,
+                &arrangement.graph,
+                left,
+                right,
+                operation,
+            )? {
+                return Ok(outcome);
+            }
             attempt.decline = Some(ExactArrangementBooleanDecline::Labeling(blocker));
             return Ok(ArrangementCellComplexOutcome::Declined(attempt));
         }
@@ -2015,12 +2050,34 @@ fn run_arrangement_cell_complex_attempt(
         Ok(selected) if selected.blockers.is_empty() => selected,
         Ok(selected) => {
             attempt.selected_faces = selected.selected_faces.len();
+            if let Some(outcome) = arrangement_volumetric_split_cell_recovery_outcome_if_enabled(
+                regularize_unregularized_sheet_complex,
+                validation,
+                &mut attempt,
+                &arrangement.graph,
+                left,
+                right,
+                operation,
+            )? {
+                return Ok(outcome);
+            }
             attempt.decline = Some(ExactArrangementBooleanDecline::Selection(
                 selected.blockers[0].clone(),
             ));
             return Ok(ArrangementCellComplexOutcome::Declined(attempt));
         }
         Err(blocker) => {
+            if let Some(outcome) = arrangement_volumetric_split_cell_recovery_outcome_if_enabled(
+                regularize_unregularized_sheet_complex,
+                validation,
+                &mut attempt,
+                &arrangement.graph,
+                left,
+                right,
+                operation,
+            )? {
+                return Ok(outcome);
+            }
             attempt.decline = Some(ExactArrangementBooleanDecline::Selection(blocker));
             return Ok(ArrangementCellComplexOutcome::Declined(attempt));
         }
@@ -2031,12 +2088,34 @@ fn run_arrangement_cell_complex_attempt(
     let simplified = match selected.simplify_exact_with_policy(policy) {
         Ok(simplified) if simplified.blockers.is_empty() => simplified,
         Ok(simplified) => {
+            if let Some(outcome) = arrangement_volumetric_split_cell_recovery_outcome_if_enabled(
+                regularize_unregularized_sheet_complex,
+                validation,
+                &mut attempt,
+                &arrangement.graph,
+                left,
+                right,
+                operation,
+            )? {
+                return Ok(outcome);
+            }
             attempt.decline = Some(ExactArrangementBooleanDecline::Simplification(
                 simplified.blockers[0].clone(),
             ));
             return Ok(ArrangementCellComplexOutcome::Declined(attempt));
         }
         Err(blocker) => {
+            if let Some(outcome) = arrangement_volumetric_split_cell_recovery_outcome_if_enabled(
+                regularize_unregularized_sheet_complex,
+                validation,
+                &mut attempt,
+                &arrangement.graph,
+                left,
+                right,
+                operation,
+            )? {
+                return Ok(outcome);
+            }
             attempt.decline = Some(ExactArrangementBooleanDecline::Simplification(blocker));
             return Ok(ArrangementCellComplexOutcome::Declined(attempt));
         }
@@ -2045,6 +2124,17 @@ fn run_arrangement_cell_complex_attempt(
     let mesh = match simplified.triangulate() {
         Ok(mesh) => mesh,
         Err(blocker) => {
+            if let Some(outcome) = arrangement_volumetric_split_cell_recovery_outcome_if_enabled(
+                regularize_unregularized_sheet_complex,
+                validation,
+                &mut attempt,
+                &arrangement.graph,
+                left,
+                right,
+                operation,
+            )? {
+                return Ok(outcome);
+            }
             attempt.decline = Some(ExactArrangementBooleanDecline::Triangulation(blocker));
             return Ok(ArrangementCellComplexOutcome::Declined(attempt));
         }
@@ -2062,6 +2152,17 @@ fn run_arrangement_cell_complex_attempt(
     ) {
         Ok(mesh) => mesh,
         Err(_) => {
+            if let Some(outcome) = arrangement_volumetric_split_cell_recovery_outcome_if_enabled(
+                regularize_unregularized_sheet_complex,
+                Some(validation),
+                &mut attempt,
+                &arrangement.graph,
+                left,
+                right,
+                operation,
+            )? {
+                return Ok(outcome);
+            }
             attempt.decline = Some(ExactArrangementBooleanDecline::OutputValidation);
             return Ok(ArrangementCellComplexOutcome::Declined(attempt));
         }
@@ -2142,13 +2243,63 @@ fn boolean_arrangement_regularized_sheet_complex_from_graph(
     // Unregularized sheet arrangements already retain exact split cells but can
     // lack a closed shell graph. The volumetric split-cell assembly supplies
     // the missing regularized caps without changing predicates or tolerances.
+    boolean_arrangement_volumetric_split_cell_recovery_from_graph(
+        graph, left, right, operation, validation,
+    )
+}
+
+fn arrangement_volumetric_split_cell_recovery_outcome(
+    attempt: &mut ExactArrangementBooleanAttempt,
+    graph: &super::graph::ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ArrangementCellComplexOutcome>, MeshError> {
+    let Some(result) = boolean_arrangement_volumetric_split_cell_recovery_from_graph(
+        graph, left, right, operation, validation,
+    )?
+    else {
+        return Ok(None);
+    };
+    attempt.stage = ExactArrangementBooleanStage::Materialized;
+    attempt.decline = None;
+    attempt.materialized_shortcut = Some(ExactBooleanShortcutKind::ArrangementCellComplex);
+    attempt.arrangement_blockers = 0;
+    attempt.output_vertices = result.mesh.vertices().len();
+    attempt.output_triangles = result.mesh.triangles().len();
+    Ok(Some(ArrangementCellComplexOutcome::Materialized(
+        result,
+        attempt.clone(),
+    )))
+}
+
+fn arrangement_volumetric_split_cell_recovery_outcome_if_enabled(
+    enabled: bool,
+    validation: Option<ValidationPolicy>,
+    attempt: &mut ExactArrangementBooleanAttempt,
+    graph: &super::graph::ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+) -> Result<Option<ArrangementCellComplexOutcome>, MeshError> {
+    let Some(validation) = validation.filter(|_| enabled) else {
+        return Ok(None);
+    };
+    arrangement_volumetric_split_cell_recovery_outcome(
+        attempt, graph, left, right, operation, validation,
+    )
+}
+
+fn boolean_arrangement_volumetric_split_cell_recovery_from_graph(
+    graph: &super::graph::ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
     let Some(materialized) = materialize_volumetric_winding_region_plan_from_graph(
-        graph,
-        left,
-        right,
-        operation,
-        validation,
-        VolumetricWindingMaterializationFailure::ReturnNone,
+        graph, left, right, operation, validation,
     )?
     else {
         return Ok(None);
@@ -2180,7 +2331,7 @@ fn boolean_recovered_single_coplanar_boundary_union(
         return Ok(None);
     }
 
-    let Some(boundary_result) = boolean_volumetric_winding_regions_from_graph(
+    let Some(boundary_result) = boolean_arrangement_volumetric_split_cell_recovery_from_graph(
         graph,
         left,
         right,
@@ -5364,7 +5515,6 @@ fn winding_readiness_report_from_graph(
         right,
         operation,
         ValidationPolicy::CLOSED,
-        VolumetricWindingMaterializationFailure::ReturnNone,
     )? {
         return Ok(winding_readiness_report(
             operation,
@@ -5742,130 +5892,12 @@ struct MaterializedVolumetricWindingRegionPlan {
     mesh: ExactMesh,
 }
 
-#[derive(Clone, Copy, PartialEq, Eq)]
-enum VolumetricWindingMaterializationFailure {
-    ReturnError,
-    ReturnNone,
-}
-
-fn boolean_volumetric_winding_regions_from_graph(
-    graph: &super::graph::ExactIntersectionGraph,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
-    let Some(materialized) = materialize_volumetric_winding_region_plan_from_graph(
-        graph,
-        left,
-        right,
-        operation,
-        validation,
-        VolumetricWindingMaterializationFailure::ReturnError,
-    )?
-    else {
-        return Ok(None);
-    };
-    let result = ExactBooleanResult {
-        kind: ExactBooleanResultKind::ArrangementCellComplexMaterialized { operation },
-        graph_had_unknowns: false,
-        region_classifications: materialized.region_classifications,
-        triangulations: materialized.triangulations,
-        assembly: materialized.assembly,
-        volumetric_classifications: materialized.volumetric_classifications,
-        mesh: materialized.mesh,
-    };
-    result.validate().map_err(|error| {
-        MeshError::one(MeshDiagnostic::new(
-            Severity::Error,
-            DiagnosticKind::UnsupportedExactOperation,
-            format!("exact volumetric materialized result validation failed: {error:?}"),
-        ))
-    })?;
-    Ok(Some(result))
-}
-
-fn boolean_retained_graph_fallback_meshes_from_graph(
-    graph: &super::graph::ExactIntersectionGraph,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-    boundary_policy: ExactBoundaryBooleanPolicy,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
-    if let Some(result) = boolean_closed_boundary_only_contact_meshes_from_graph(
-        graph, left, right, operation, validation,
-    )? {
-        return Ok(Some(result));
-    }
-
-    match boolean_volumetric_winding_regions_from_graph(graph, left, right, operation, validation) {
-        Ok(Some(result)) => return Ok(Some(result)),
-        Ok(None) => {}
-        Err(error) => {
-            if let Some(result) = boolean_arrangement_cell_complex_meshes(
-                left,
-                right,
-                operation,
-                validation,
-                ArrangementCellComplexDispatch::Fallback,
-            )? {
-                return Ok(Some(result));
-            }
-            if let Some(result) = boolean_convex_union_meshes(left, right, operation, validation)? {
-                return Ok(Some(result));
-            }
-            if let Some(result) =
-                boolean_convex_intersection_meshes(left, right, operation, validation)?
-            {
-                return Ok(Some(result));
-            }
-            if let Some(result) =
-                boolean_convex_difference_meshes(left, right, operation, validation)?
-            {
-                return Ok(Some(result));
-            }
-            return Err(error);
-        }
-    }
-
-    if let Some(shortcut) = certified_winding_boolean_shortcut_from_graph(graph, left, right)?
-        && let Some(result) =
-            materialize_winding_containment_meshes(shortcut, left, right, operation, validation)?
-    {
-        return Ok(Some(result));
-    }
-
-    if let Some(result) = boolean_boundary_touching_meshes_from_graph(
-        graph,
-        left,
-        right,
-        operation,
-        validation,
-        boundary_policy,
-    )? {
-        return Ok(Some(result));
-    }
-    if let Some(result) = boolean_convex_union_meshes(left, right, operation, validation)? {
-        return Ok(Some(result));
-    }
-    if let Some(result) = boolean_convex_intersection_meshes(left, right, operation, validation)? {
-        return Ok(Some(result));
-    }
-    if let Some(result) = boolean_convex_difference_meshes(left, right, operation, validation)? {
-        return Ok(Some(result));
-    }
-
-    Ok(None)
-}
-
 fn materialize_volumetric_winding_region_plan_from_graph(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
-    failure: VolumetricWindingMaterializationFailure,
 ) -> Result<Option<MaterializedVolumetricWindingRegionPlan>, MeshError> {
     if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
         return Ok(None);
@@ -5905,78 +5937,31 @@ fn materialize_volumetric_winding_region_plan_from_graph(
         );
     let mut assembly = match assembly_result {
         Ok(assembly) => assembly,
-        Err(_error) if failure == VolumetricWindingMaterializationFailure::ReturnNone => {
-            return Ok(None);
-        }
-        Err(error) => {
-            return Err(MeshError::one(MeshDiagnostic::new(
-                Severity::Error,
-                DiagnosticKind::IndexOutOfBounds,
-                format!("exact winding region assembly failed: {error}"),
-            )));
-        }
+        Err(_) => return Ok(None),
     };
-    if let Err(error) = assembly.refine_edges_at_existing_vertices(left, right) {
-        if failure == VolumetricWindingMaterializationFailure::ReturnNone {
-            return Ok(None);
-        }
-        return Err(MeshError::one(MeshDiagnostic::new(
-            Severity::Error,
-            DiagnosticKind::IndexOutOfBounds,
-            format!("exact winding region edge refinement failed: {error}"),
-        )));
+    if assembly
+        .refine_edges_at_existing_vertices(left, right)
+        .is_err()
+    {
+        return Ok(None);
     }
-    if let Err(error) = assembly.orient_paired_edge_uses() {
-        if failure == VolumetricWindingMaterializationFailure::ReturnNone {
-            return Ok(None);
-        }
-        return Err(MeshError::one(MeshDiagnostic::new(
-            Severity::Error,
-            DiagnosticKind::IndexOutOfBounds,
-            format!("exact winding region edge orientation failed: {error}"),
-        )));
+    if assembly.orient_paired_edge_uses().is_err() {
+        return Ok(None);
     }
-    if let Err(error) = assembly.remove_duplicate_triangle_vertex_sets() {
-        if failure == VolumetricWindingMaterializationFailure::ReturnNone {
-            return Ok(None);
-        }
-        return Err(MeshError::one(MeshDiagnostic::new(
-            Severity::Error,
-            DiagnosticKind::IndexOutOfBounds,
-            format!("exact winding region duplicate-cell removal failed: {error}"),
-        )));
+    if assembly.remove_duplicate_triangle_vertex_sets().is_err() {
+        return Ok(None);
     }
-    if let Err(error) = assembly.orient_paired_edge_uses() {
-        if failure == VolumetricWindingMaterializationFailure::ReturnNone {
-            return Ok(None);
-        }
-        return Err(MeshError::one(MeshDiagnostic::new(
-            Severity::Error,
-            DiagnosticKind::IndexOutOfBounds,
-            format!("exact winding region post-dedup orientation failed: {error}"),
-        )));
+    if assembly.orient_paired_edge_uses().is_err() {
+        return Ok(None);
     }
-    if operation == ExactBooleanOperation::Difference {
-        if let Err(error) = assembly.split_disconnected_vertex_fans() {
-            if failure == VolumetricWindingMaterializationFailure::ReturnNone {
-                return Ok(None);
-            }
-            return Err(MeshError::one(MeshDiagnostic::new(
-                Severity::Error,
-                DiagnosticKind::IndexOutOfBounds,
-                format!("exact winding region vertex-fan split failed: {error}"),
-            )));
-        }
+    if operation == ExactBooleanOperation::Difference
+        && assembly.split_disconnected_vertex_fans().is_err()
+    {
+        return Ok(None);
     }
     let mesh = match assembly.checked_to_exact_mesh_with_sources(left, right, validation) {
         Ok(mesh) => mesh,
-        Err(_error)
-            if failure == VolumetricWindingMaterializationFailure::ReturnNone
-                || graph_requires_coplanar_volumetric_cells_for_sources(graph, left, right) =>
-        {
-            return Ok(None);
-        }
-        Err(error) => return Err(error),
+        Err(_error) => return Ok(None),
     };
     Ok(Some(MaterializedVolumetricWindingRegionPlan {
         region_classifications,
