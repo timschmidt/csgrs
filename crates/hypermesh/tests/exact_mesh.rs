@@ -7800,7 +7800,7 @@ fn exact_affine_coplanar_volumetric_boxes_materialize_cell_complexes() {
         .unwrap();
     assert_eq!(
         union_preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedAffineBoxUnion
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     assert!(union_preflight.blocker.is_none());
 
@@ -7839,7 +7839,7 @@ fn exact_affine_coplanar_volumetric_boxes_materialize_cell_complexes() {
         .unwrap();
     assert_eq!(
         intersection_preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedAffineBoxIntersection
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let intersection = hypermesh::boolean_exact(
         &left,
@@ -7879,7 +7879,7 @@ fn exact_affine_coplanar_volumetric_boxes_materialize_cell_complexes() {
         .unwrap();
     assert_eq!(
         difference_preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedAffineBoxDifference
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let difference = hypermesh::boolean_exact(
         &left,
@@ -8163,7 +8163,7 @@ fn exact_affine_orthogonal_solid_cell_complexes_discover_shared_frame() {
     assert!(difference.mesh.facts().mesh.closed_manifold);
 
     let mut stale = union_preflight.clone();
-    stale.support = hypermesh::ExactBooleanSupport::CertifiedAffineBoxUnion;
+    stale.support = hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex;
     assert!(stale.validate_against_sources(&first, &second).is_err());
 }
 
@@ -8300,7 +8300,7 @@ fn exact_affine_box_materialization_is_not_basis_orientation_dependent() {
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedAffineBoxUnion
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 }
 

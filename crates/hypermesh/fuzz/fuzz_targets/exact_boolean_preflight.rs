@@ -14871,7 +14871,10 @@ fn exercise_affine_coplanar_volumetric_boxes() {
         .expect("affine box union preflight should classify shortcut");
     union.validate().unwrap();
     union.validate_against_sources(&left, &right).unwrap();
-    assert_eq!(union.support, ExactBooleanSupport::CertifiedAffineBoxUnion);
+    assert_eq!(
+        union.support,
+        ExactBooleanSupport::CertifiedArrangementCellComplex
+    );
     let union_result = hypermesh::boolean_exact(
         &left,
         &right,
@@ -14894,7 +14897,7 @@ fn exercise_affine_coplanar_volumetric_boxes() {
     intersection.validate().unwrap();
     assert_eq!(
         intersection.support,
-        ExactBooleanSupport::CertifiedAffineBoxIntersection
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let intersection_result = hypermesh::boolean_exact(
         &left,
@@ -14918,7 +14921,7 @@ fn exercise_affine_coplanar_volumetric_boxes() {
     difference.validate().unwrap();
     assert_eq!(
         difference.support,
-        ExactBooleanSupport::CertifiedAffineBoxDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let difference_result = hypermesh::boolean_exact(
         &left,

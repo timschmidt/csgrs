@@ -610,12 +610,6 @@ pub enum ExactBooleanShortcutKind {
     /// Certified orthogonal-cell difference of axis-aligned solid cell
     /// complexes.
     AxisAlignedOrthogonalSolidCellDifference,
-    /// Certified affine-frame union of coplanar-volumetric box solids.
-    AffineBoxUnion,
-    /// Certified affine-frame intersection of coplanar-volumetric box solids.
-    AffineBoxIntersection,
-    /// Certified affine-frame difference of coplanar-volumetric box solids.
-    AffineBoxDifference,
     /// Certified affine-frame orthogonal-cell union of solid cell complexes.
     AffineOrthogonalSolidCellUnion,
     /// Certified affine-frame orthogonal-cell intersection of solid cell
@@ -1315,15 +1309,6 @@ pub enum ExactBooleanSupport {
     /// Difference was materialized as an exact orthogonal cell complex from
     /// certified axis-aligned solid cell-complex sources.
     CertifiedAxisAlignedOrthogonalSolidCellDifference,
-    /// Union was materialized by normalizing two affine-box solids into one
-    /// exact box-cell frame.
-    CertifiedAffineBoxUnion,
-    /// Intersection was materialized by normalizing two affine-box solids into
-    /// one exact box-cell frame.
-    CertifiedAffineBoxIntersection,
-    /// Difference was materialized by normalizing two affine-box solids into
-    /// one exact box-cell frame.
-    CertifiedAffineBoxDifference,
     /// Union was materialized by normalizing affine-frame orthogonal solid
     /// cell complexes into one exact cell grid.
     CertifiedAffineOrthogonalSolidCellUnion,
@@ -1498,9 +1483,6 @@ impl ExactBooleanPreflight {
             | ExactBooleanSupport::CertifiedAxisAlignedBoxMultiDifference
             | ExactBooleanSupport::CertifiedAxisAlignedBoxNestedDifference
             | ExactBooleanSupport::CertifiedAxisAlignedBoxEmptyDifference
-            | ExactBooleanSupport::CertifiedAffineBoxUnion
-            | ExactBooleanSupport::CertifiedAffineBoxIntersection
-            | ExactBooleanSupport::CertifiedAffineBoxDifference
             | ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellUnion
             | ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellIntersection
             | ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellDifference

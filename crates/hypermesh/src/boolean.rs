@@ -22,8 +22,6 @@ use super::adjacent::{
 };
 use super::affine_box::{
     has_affine_box_difference, has_affine_box_intersection, has_affine_box_union,
-    materialize_affine_box_difference, materialize_affine_box_intersection,
-    materialize_affine_box_union,
 };
 use super::affine_solid::{
     AffineOrthogonalSolidOperation, has_affine_orthogonal_solid_cells,
@@ -406,9 +404,6 @@ pub fn preflight_boolean_exact(
             | ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellUnion
             | ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellIntersection
             | ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellDifference
-            | ExactBooleanSupport::CertifiedAffineBoxUnion
-            | ExactBooleanSupport::CertifiedAffineBoxIntersection
-            | ExactBooleanSupport::CertifiedAffineBoxDifference
             | ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellUnion
             | ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellIntersection
             | ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellDifference
@@ -874,13 +869,13 @@ fn preflight_tail_shortcut_support(
             Some(ExactBooleanSupport::CertifiedAxisAlignedBoxEmptyDifference)
         }
         ExactBooleanOperation::Union if has_affine_box_union(left, right) => {
-            Some(ExactBooleanSupport::CertifiedAffineBoxUnion)
+            Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
         }
         ExactBooleanOperation::Intersection if has_affine_box_intersection(left, right) => {
-            Some(ExactBooleanSupport::CertifiedAffineBoxIntersection)
+            Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
         }
         ExactBooleanOperation::Difference if has_affine_box_difference(left, right) => {
-            Some(ExactBooleanSupport::CertifiedAffineBoxDifference)
+            Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
         }
         ExactBooleanOperation::Union
             if has_affine_orthogonal_solid_cells(
@@ -1394,15 +1389,11 @@ pub fn boolean_exact_with_boundary_policy(
             )? {
                 return Ok(result);
             }
-            if let Some(result) = boolean_affine_box_optional(left, right, operation, validation)? {
-                return Ok(result);
-            }
             if let Some(result) =
                 boolean_affine_orthogonal_solid_optional(left, right, operation, validation)?
             {
                 return Ok(result);
             }
-
             let graph = build_intersection_graph(left, right)?;
             validate_graph_source_handoff(&graph, left, right)?;
             match operation {
@@ -3706,36 +3697,20 @@ const fn axis_aligned_orthogonal_solid_shortcut(
     }
 }
 
-fn boolean_affine_box_optional(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
-    let Some((arrangement, shortcut)) = (match operation {
-        ExactBooleanOperation::Union => materialize_affine_box_union(left, right, validation)?
-            .map(|arrangement| (arrangement, ExactBooleanShortcutKind::AffineBoxUnion)),
-        ExactBooleanOperation::Intersection => {
-            materialize_affine_box_intersection(left, right, validation)?
-                .map(|arrangement| (arrangement, ExactBooleanShortcutKind::AffineBoxIntersection))
-        }
-        ExactBooleanOperation::Difference => {
-            materialize_affine_box_difference(left, right, validation)?
-                .map(|arrangement| (arrangement, ExactBooleanShortcutKind::AffineBoxDifference))
-        }
-        ExactBooleanOperation::SelectedRegions(_) => None,
-    }) else {
-        return Ok(None);
-    };
-    Ok(Some(certified_shortcut_result(arrangement.mesh, shortcut)))
-}
-
 fn boolean_affine_orthogonal_solid_optional(
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
+    if match operation {
+        ExactBooleanOperation::Union => has_affine_box_union(left, right),
+        ExactBooleanOperation::Intersection => has_affine_box_intersection(left, right),
+        ExactBooleanOperation::Difference => has_affine_box_difference(left, right),
+        ExactBooleanOperation::SelectedRegions(_) => false,
+    } {
+        return Ok(None);
+    }
     let affine_operation = match operation {
         ExactBooleanOperation::Union => AffineOrthogonalSolidOperation::Union,
         ExactBooleanOperation::Intersection => AffineOrthogonalSolidOperation::Intersection,
