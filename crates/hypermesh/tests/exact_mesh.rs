@@ -11364,6 +11364,12 @@ fn exact_named_booleans_handle_single_triangle_coplanar_containment() {
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
+    assert_eq!(
+        union.kind,
+        hypermesh::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
+        }
+    );
     assert_eq!(union.mesh.triangles(), outer.triangles());
     assert_eq!(union.mesh.vertices(), outer.vertices());
 
@@ -11374,6 +11380,12 @@ fn exact_named_booleans_handle_single_triangle_coplanar_containment() {
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
+    assert_eq!(
+        intersection.kind,
+        hypermesh::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
+        }
+    );
     assert_eq!(intersection.mesh.triangles(), inner.triangles());
     assert_eq!(intersection.mesh.vertices(), inner.vertices());
 
@@ -11384,6 +11396,12 @@ fn exact_named_booleans_handle_single_triangle_coplanar_containment() {
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
+    assert_eq!(
+        empty_difference.kind,
+        hypermesh::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
+        }
+    );
     assert!(empty_difference.mesh.triangles().is_empty());
     assert!(empty_difference.mesh.vertices().is_empty());
 
@@ -13545,7 +13563,23 @@ fn exact_named_booleans_handle_coplanar_convex_surface_containment() {
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    assert_eq!(intersection.mesh.triangles(), inner.triangles());
+    intersection
+        .validate_operation_against_sources(
+            &outer,
+            &inner,
+            hypermesh::ExactBooleanOperation::Intersection,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        intersection.kind,
+        hypermesh::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
+        }
+    );
+    assert!(exact_mesh_vertex_sets_equal(&intersection.mesh, &inner));
+    assert_eq!(intersection.mesh.triangles().len(), inner.triangles().len());
 }
 
 #[test]

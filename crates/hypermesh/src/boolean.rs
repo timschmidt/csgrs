@@ -90,10 +90,7 @@ use super::solid::{
     classify_mesh_vertices_against_convex_solid_report,
 };
 use super::surface::{
-    CoplanarConvexSurfaceContainment, CoplanarConvexSurfaceContainmentCertificate,
-    CoplanarSurfaceContainment, certify_coplanar_convex_surface_containment,
     certify_coplanar_convex_surface_equivalence, certify_coplanar_surface_boundary_touch,
-    certify_coplanar_surface_mesh_containment, certify_single_triangle_coplanar_containment,
     order_mesh_boundary_loops,
 };
 use super::validation::ValidationPolicy;
@@ -432,7 +429,6 @@ pub fn preflight_boolean_exact(
             | ExactBooleanSupport::CertifiedBoundsDisjoint
             | ExactBooleanSupport::CertifiedIdentical
             | ExactBooleanSupport::CertifiedSameSurface
-            | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceContainment
             | ExactBooleanSupport::CertifiedAxisAlignedBoxUnion
             | ExactBooleanSupport::CertifiedAxisAlignedBoxIntersection
             | ExactBooleanSupport::CertifiedAxisAlignedBoxDifference
@@ -461,7 +457,6 @@ pub fn preflight_boolean_exact(
             | ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference
             | ExactBooleanSupport::CertifiedOpenSurfaceDisjoint
             | ExactBooleanSupport::CertifiedMixedDimensionalRegularizedSolid
-            | ExactBooleanSupport::CertifiedCoplanarSurfaceContainment
             | ExactBooleanSupport::CertifiedConvexUnion
             | ExactBooleanSupport::CertifiedConvexIntersection
             | ExactBooleanSupport::CertifiedConvexDifference
@@ -862,18 +857,12 @@ fn preflight_direct_coplanar_surface_support(
 ) -> Option<ExactBooleanSupport> {
     match operation {
         ExactBooleanOperation::Union => {
-            if certify_coplanar_convex_surface_containment(left, right).is_some() {
-                return Some(ExactBooleanSupport::CertifiedCoplanarConvexSurfaceContainment);
-            }
             if coplanar_mesh_overlay_surface_union_boundary_policy(left, right).is_some() {
                 return Some(ExactBooleanSupport::CertifiedArrangementCellComplex);
             }
             None
         }
         ExactBooleanOperation::Intersection => {
-            if certify_coplanar_convex_surface_containment(left, right).is_some() {
-                return Some(ExactBooleanSupport::CertifiedCoplanarConvexSurfaceContainment);
-            }
             if coplanar_mesh_overlay_surface_intersection_boundary_policy(left, right).is_some()
                 || certify_coplanar_surface_boundary_touch(left, right).is_some()
             {
@@ -945,20 +934,6 @@ fn preflight_tail_shortcut_support(
             ) =>
         {
             Some(ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellDifference)
-        }
-        ExactBooleanOperation::Union
-        | ExactBooleanOperation::Intersection
-        | ExactBooleanOperation::Difference
-            if certify_coplanar_convex_surface_containment(left, right).is_some() =>
-        {
-            Some(ExactBooleanSupport::CertifiedCoplanarConvexSurfaceContainment)
-        }
-        ExactBooleanOperation::Union
-        | ExactBooleanOperation::Intersection
-        | ExactBooleanOperation::Difference
-            if certified_coplanar_surface_boolean_support(left, right, operation).is_some() =>
-        {
-            Some(ExactBooleanSupport::CertifiedCoplanarSurfaceContainment)
         }
         ExactBooleanOperation::Union
         | ExactBooleanOperation::Intersection
@@ -1494,20 +1469,6 @@ pub fn boolean_exact_with_boundary_policy(
                     }
                 }
                 ExactBooleanOperation::SelectedRegions(_) => unreachable!("handled above"),
-            }
-            if let Some(containment) = certify_coplanar_convex_surface_containment(left, right) {
-                return boolean_coplanar_convex_containment_surfaces(
-                    left,
-                    right,
-                    operation,
-                    validation,
-                    containment,
-                );
-            }
-            if let Some(result) =
-                boolean_coplanar_surface_containment(left, right, operation, validation)?
-            {
-                return Ok(result);
             }
             if let Some(result) = boolean_open_surface_disjoint_or_arrangement_meshes_from_graph(
                 &graph, left, right, operation, validation,
@@ -2829,27 +2790,11 @@ fn coplanar_mesh_overlay_should_preempt_surface_paths(
     right: &ExactMesh,
     operation: ExactBooleanOperation,
 ) -> bool {
-    if coplanar_surface_containment_should_use_named_path(left, right, operation) {
-        return false;
-    }
     if left.facts().mesh.closed_manifold && right.facts().mesh.closed_manifold {
         return false;
     }
     let total_triangles = left.triangles().len() + right.triangles().len();
     if total_triangles > 96 {
-        return false;
-    }
-    if certify_coplanar_convex_surface_containment(left, right).is_some()
-        && !(operation == ExactBooleanOperation::Difference
-            && coplanar_mesh_overlay_materialized_difference_boundary_policy(left, right).is_some())
-    {
-        return false;
-    }
-    if operation != ExactBooleanOperation::Intersection
-        && certify_coplanar_surface_mesh_containment(left, right).is_some()
-        && !(operation == ExactBooleanOperation::Difference
-            && coplanar_mesh_overlay_materialized_difference_boundary_policy(left, right).is_some())
-    {
         return false;
     }
     match operation {
@@ -3007,35 +2952,6 @@ fn coplanar_mesh_overlay_materialized_difference_boundary_policy(
         ExactArrangement2dSetOperation::Difference,
         true,
     )
-}
-
-fn materialize_coplanar_difference_overlay_with_any_boundary_policy(
-    left: &ExactMesh,
-    right: &ExactMesh,
-) -> Option<ExactMesh> {
-    for (boundary_policy, projected_boundary_policy) in [
-        (
-            ExactArrangement2dBoundaryPolicy::SimplifyCollinear,
-            ProjectedOverlayBoundaryPolicy::SimplifyCollinear,
-        ),
-        (
-            ExactArrangement2dBoundaryPolicy::PreserveCollinear,
-            ProjectedOverlayBoundaryPolicy::PreserveCollinear,
-        ),
-    ] {
-        if let Some(mesh) = materialize_coplanar_mesh_overlay_mesh(
-            left,
-            right,
-            ExactArrangement2dSetOperation::Difference,
-            boundary_policy,
-            projected_boundary_policy,
-            "exact coplanar difference overlay arrangement",
-            false,
-        ) {
-            return Some(mesh);
-        }
-    }
-    None
 }
 
 fn coplanar_mesh_overlay_materialized_boundary_policy(
@@ -3328,25 +3244,11 @@ fn arrangement_cell_complex_should_preempt_legacy_paths(
     right: &ExactMesh,
     operation: ExactBooleanOperation,
 ) -> bool {
-    if coplanar_surface_containment_should_use_named_path(left, right, operation) {
-        return false;
-    }
     (matches!(
         operation,
         ExactBooleanOperation::Union | ExactBooleanOperation::Difference
     ) && non_box_full_face_adjacency(left, right))
         || coplanar_mesh_overlay_should_preempt_surface_paths(left, right, operation)
-}
-
-fn coplanar_surface_containment_should_use_named_path(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-) -> bool {
-    matches!(
-        operation,
-        ExactBooleanOperation::Union | ExactBooleanOperation::Intersection
-    ) && certify_single_triangle_coplanar_containment(left, right).is_some()
 }
 
 fn boolean_convex_intersection_meshes(
@@ -3385,15 +3287,6 @@ fn boolean_direct_coplanar_surface_meshes(
     }
     match operation {
         ExactBooleanOperation::Union => {
-            if let Some(containment) = certify_coplanar_convex_surface_containment(left, right) {
-                return Ok(Some(boolean_coplanar_convex_containment_surfaces(
-                    left,
-                    right,
-                    operation,
-                    validation,
-                    containment,
-                )?));
-            }
             if let Some(result) = boolean_coplanar_surface_overlay_from_exact_arrangement(
                 left, right, operation, validation,
             )? {
@@ -3402,15 +3295,6 @@ fn boolean_direct_coplanar_surface_meshes(
             Ok(None)
         }
         ExactBooleanOperation::Intersection => {
-            if let Some(containment) = certify_coplanar_convex_surface_containment(left, right) {
-                return Ok(Some(boolean_coplanar_convex_containment_surfaces(
-                    left,
-                    right,
-                    operation,
-                    validation,
-                    containment,
-                )?));
-            }
             if let Some(result) = boolean_coplanar_surface_overlay_from_exact_arrangement(
                 left, right, operation, validation,
             )? {
@@ -3436,9 +3320,6 @@ fn boolean_coplanar_surface_overlay_from_exact_arrangement(
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
-    if coplanar_surface_containment_should_use_named_path(left, right, operation) {
-        return Ok(None);
-    }
     let (operation, boundary_policy) = match operation {
         ExactBooleanOperation::Union => (
             ExactArrangement2dSetOperation::Union,
@@ -4065,93 +3946,6 @@ fn graph_has_proper_surface_crossing(graph: &super::graph::ExactIntersectionGrap
     })
 }
 
-fn boolean_coplanar_surface_containment(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
-    let Some(containment) = certified_coplanar_surface_boolean_support(left, right, operation)
-    else {
-        return Ok(None);
-    };
-
-    let mesh = match (containment, operation) {
-        (CoplanarSurfaceContainment::LeftInsideRight, ExactBooleanOperation::Union) => copy_mesh(
-            right,
-            "exact coplanar surface containment union keeps outer right",
-            validation,
-        )?,
-        (CoplanarSurfaceContainment::LeftInsideRight, ExactBooleanOperation::Intersection) => {
-            copy_mesh(
-                left,
-                "exact coplanar surface containment intersection keeps inner left",
-                validation,
-            )?
-        }
-        (CoplanarSurfaceContainment::LeftInsideRight, ExactBooleanOperation::Difference) => {
-            empty_mesh(
-                "empty exact coplanar surface containment difference",
-                validation,
-            )?
-        }
-        (CoplanarSurfaceContainment::RightInsideLeft, ExactBooleanOperation::Union) => copy_mesh(
-            left,
-            "exact coplanar surface containment union keeps outer left",
-            validation,
-        )?,
-        (CoplanarSurfaceContainment::RightInsideLeft, ExactBooleanOperation::Intersection) => {
-            copy_mesh(
-                right,
-                "exact coplanar surface containment intersection keeps inner right",
-                validation,
-            )?
-        }
-        (
-            CoplanarSurfaceContainment::RightInsideLeft,
-            ExactBooleanOperation::Difference | ExactBooleanOperation::SelectedRegions(_),
-        )
-        | (
-            CoplanarSurfaceContainment::LeftInsideRight,
-            ExactBooleanOperation::SelectedRegions(_),
-        ) => unreachable!("unsupported or selected operation filtered by caller"),
-    };
-
-    Ok(Some(certified_shortcut_result(
-        mesh,
-        ExactBooleanShortcutKind::CoplanarSurfaceContainment,
-    )))
-}
-
-fn certified_coplanar_surface_boolean_support(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-) -> Option<CoplanarSurfaceContainment> {
-    let containment = certify_single_triangle_coplanar_containment(left, right)
-        .or_else(|| certify_coplanar_surface_mesh_containment(left, right))?;
-    match (containment, operation) {
-        (
-            CoplanarSurfaceContainment::LeftInsideRight,
-            ExactBooleanOperation::Union
-            | ExactBooleanOperation::Intersection
-            | ExactBooleanOperation::Difference,
-        )
-        | (
-            CoplanarSurfaceContainment::RightInsideLeft,
-            ExactBooleanOperation::Union | ExactBooleanOperation::Intersection,
-        ) => Some(containment),
-        (
-            CoplanarSurfaceContainment::RightInsideLeft,
-            ExactBooleanOperation::Difference | ExactBooleanOperation::SelectedRegions(_),
-        )
-        | (
-            CoplanarSurfaceContainment::LeftInsideRight,
-            ExactBooleanOperation::SelectedRegions(_),
-        ) => None,
-    }
-}
-
 fn boolean_same_surface_meshes(
     mesh: &ExactMesh,
     operation: ExactBooleanOperation,
@@ -4202,9 +3996,6 @@ fn boolean_direct_adjacency_meshes(
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
-    if coplanar_surface_containment_should_use_named_path(left, right, operation) {
-        return Ok(None);
-    }
     match operation {
         ExactBooleanOperation::Union => {
             if let Some(result) =
@@ -4487,81 +4278,6 @@ fn boolean_full_face_adjacent_difference(
         )?,
         ExactBooleanShortcutKind::FullFaceAdjacentDifference,
     ))
-}
-
-fn boolean_coplanar_convex_containment_surfaces(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-    containment: CoplanarConvexSurfaceContainmentCertificate,
-) -> Result<ExactBooleanResult, MeshError> {
-    let relation = containment.relation;
-    let mesh = match (relation, operation) {
-        (CoplanarConvexSurfaceContainment::LeftInsideRight, ExactBooleanOperation::Union) => {
-            copy_mesh(
-                right,
-                "exact coplanar convex containment union keeps outer right",
-                validation,
-            )?
-        }
-        (
-            CoplanarConvexSurfaceContainment::LeftInsideRight,
-            ExactBooleanOperation::Intersection,
-        ) => copy_mesh(
-            left,
-            "exact coplanar convex containment intersection keeps inner left",
-            validation,
-        )?,
-        (CoplanarConvexSurfaceContainment::LeftInsideRight, ExactBooleanOperation::Difference) => {
-            empty_mesh(
-                "empty exact coplanar convex containment difference",
-                validation,
-            )?
-        }
-        (CoplanarConvexSurfaceContainment::RightInsideLeft, ExactBooleanOperation::Union) => {
-            copy_mesh(
-                left,
-                "exact coplanar convex containment union keeps outer left",
-                validation,
-            )?
-        }
-        (
-            CoplanarConvexSurfaceContainment::RightInsideLeft,
-            ExactBooleanOperation::Intersection,
-        ) => copy_mesh(
-            right,
-            "exact coplanar convex containment intersection keeps inner right",
-            validation,
-        )?,
-        (CoplanarConvexSurfaceContainment::RightInsideLeft, ExactBooleanOperation::Difference) => {
-            let Some(difference) =
-                materialize_coplanar_difference_overlay_with_any_boundary_policy(left, right)
-            else {
-                return Err(MeshError::one(MeshDiagnostic::new(
-                    Severity::Error,
-                    DiagnosticKind::UnsupportedExactOperation,
-                    "exact coplanar convex containment arrangement did not materialize holed difference",
-                )));
-            };
-            copy_mesh(
-                &difference,
-                "exact coplanar convex containment holed difference",
-                validation,
-            )?
-        }
-        (_, ExactBooleanOperation::SelectedRegions(_)) => unreachable!("handled by caller"),
-    };
-
-    let shortcut = if relation == CoplanarConvexSurfaceContainment::RightInsideLeft
-        && operation == ExactBooleanOperation::Difference
-    {
-        ExactBooleanShortcutKind::CoplanarConvexSurfaceHoledDifference
-    } else {
-        ExactBooleanShortcutKind::CoplanarConvexSurfaceContainment
-    };
-
-    Ok(certified_shortcut_result(mesh, shortcut))
 }
 
 fn certified_closed_boundary_touching_union_report_from_graph(
@@ -5080,9 +4796,7 @@ fn coplanar_surface_output_already_materialized(
     right: &ExactMesh,
     operation: ExactBooleanOperation,
 ) -> bool {
-    if certify_coplanar_convex_surface_equivalence(left, right).is_some()
-        || certify_coplanar_convex_surface_containment(left, right).is_some()
-    {
+    if certify_coplanar_convex_surface_equivalence(left, right).is_some() {
         return true;
     }
     match operation {
@@ -6686,7 +6400,64 @@ mod tests {
     }
 
     #[test]
-    fn arrangement_preempts_multi_triangle_coplanar_overlay_not_containment() {
+    fn coplanar_overlay_materializes_containment_union_and_intersection() {
+        let outer_triangle = ExactMesh::from_i64_triangles_with_policy(
+            &[0, 0, 0, 4, 0, 0, 0, 4, 0],
+            &[0, 1, 2],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let inner_triangle = ExactMesh::from_i64_triangles_with_policy(
+            &[1, 1, 0, 2, 1, 0, 1, 2, 0],
+            &[0, 1, 2],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let outer_square = ExactMesh::from_i64_triangles_with_policy(
+            &[0, 0, 0, 4, 0, 0, 4, 4, 0, 0, 4, 0],
+            &[0, 1, 2, 0, 2, 3],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let inner_square = ExactMesh::from_i64_triangles_with_policy(
+            &[1, 1, 0, 2, 1, 0, 2, 2, 0, 1, 2, 0],
+            &[0, 1, 2, 0, 2, 3],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+
+        for (outer, inner) in [
+            (&outer_triangle, &inner_triangle),
+            (&outer_square, &inner_square),
+        ] {
+            let union = materialize_coplanar_mesh_overlay_mesh(
+                outer,
+                inner,
+                ExactArrangement2dSetOperation::Union,
+                ExactArrangement2dBoundaryPolicy::SimplifyCollinear,
+                ProjectedOverlayBoundaryPolicy::SimplifyCollinear,
+                "test coplanar containment union overlay",
+                false,
+            )
+            .expect("containment union should materialize through arrangement overlay");
+            assert!(exact_meshes_have_same_shape(&union, outer));
+
+            let intersection = materialize_coplanar_mesh_overlay_mesh(
+                outer,
+                inner,
+                ExactArrangement2dSetOperation::Intersection,
+                ExactArrangement2dBoundaryPolicy::SimplifyCollinear,
+                ProjectedOverlayBoundaryPolicy::SimplifyCollinear,
+                "test coplanar containment intersection overlay",
+                false,
+            )
+            .expect("containment intersection should materialize through arrangement overlay");
+            assert!(exact_meshes_have_same_shape(&intersection, inner));
+        }
+    }
+
+    #[test]
+    fn arrangement_preempts_multi_triangle_coplanar_overlay_including_containment() {
         let left = ExactMesh::from_i64_triangles_with_policy(
             &[0, 0, 0, 4, 0, 0, 4, 4, 0, 0, 4, 0],
             &[0, 1, 2, 0, 2, 3],
@@ -6716,7 +6487,7 @@ mod tests {
             ValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap();
-        assert!(!arrangement_cell_complex_should_preempt_legacy_paths(
+        assert!(arrangement_cell_complex_should_preempt_legacy_paths(
             &inner,
             &left,
             ExactBooleanOperation::Union

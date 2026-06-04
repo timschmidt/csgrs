@@ -581,10 +581,6 @@ pub enum ExactBooleanShortcutKind {
     /// Exact coordinate equality and matching triangle sets, modulo indexing
     /// and face orientation.
     SameSurface,
-    /// Exact coplanar convex surface containment, modulo triangulation.
-    CoplanarConvexSurfaceContainment,
-    /// Certified one-hole coplanar convex surface difference.
-    CoplanarConvexSurfaceHoledDifference,
     /// Certified union of coplanar-volumetric axis-aligned boxes.
     AxisAlignedBoxUnion,
     /// Certified positive-volume intersection of coplanar-volumetric
@@ -695,8 +691,6 @@ pub enum ExactBooleanShortcutKind {
     /// boundary cells, exact-simplifying the selected cell complex, and only
     /// then triangulating to an [`ExactMesh`].
     ArrangementCellComplex,
-    /// Certified single-triangle coplanar surface containment.
-    CoplanarSurfaceContainment,
 }
 
 impl ExactBooleanResult {
@@ -1312,9 +1306,6 @@ pub enum ExactBooleanSupport {
     /// A named operation was answered by exact coordinate equality and matching
     /// triangle vertex sets, ignoring per-face orientation.
     CertifiedSameSurface,
-    /// A named operation was answered by exact coplanar convex surface
-    /// containment, ignoring triangulation.
-    CertifiedCoplanarConvexSurfaceContainment,
     /// Union was materialized as one exact axis-aligned box from two
     /// coplanar-volumetric slab-overlapping boxes.
     CertifiedAxisAlignedBoxUnion,
@@ -1424,9 +1415,6 @@ pub enum ExactBooleanSupport {
     CertifiedConvexIntersection,
     /// Difference was materialized for two overlapping closed convex solids.
     CertifiedConvexDifference,
-    /// A named operation was answered by certified single-triangle coplanar
-    /// surface containment.
-    CertifiedCoplanarSurfaceContainment,
     /// A named operation was answered by a certified no-intersection convex
     /// separated relation that was not caught by mesh-level AABBs.
     CertifiedConvexSeparated,
@@ -1553,7 +1541,6 @@ impl ExactBooleanPreflight {
             | ExactBooleanSupport::CertifiedBoundsDisjoint
             | ExactBooleanSupport::CertifiedIdentical
             | ExactBooleanSupport::CertifiedSameSurface
-            | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceContainment
             | ExactBooleanSupport::CertifiedAxisAlignedBoxUnion
             | ExactBooleanSupport::CertifiedAxisAlignedBoxIntersection
             | ExactBooleanSupport::CertifiedAxisAlignedBoxDifference
@@ -1583,7 +1570,6 @@ impl ExactBooleanPreflight {
             | ExactBooleanSupport::CertifiedConvexUnion
             | ExactBooleanSupport::CertifiedConvexIntersection
             | ExactBooleanSupport::CertifiedConvexDifference
-            | ExactBooleanSupport::CertifiedCoplanarSurfaceContainment
             | ExactBooleanSupport::CertifiedConvexSeparated
             | ExactBooleanSupport::CertifiedWindingContainment
             | ExactBooleanSupport::CertifiedWindingSeparated => {

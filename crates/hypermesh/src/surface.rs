@@ -1,15 +1,14 @@
 //! Exact coplanar surface certificates used by the boolean pipeline.
 //!
 //! Legacy coplanar materializers live in the test/fuzz source tree now.  The
-//! library keeps only production certifiers here: containment, convex surface
-//! equivalence/containment, conservative whole-mesh containment, boundary-loop
-//! recovery, and boundary-touch detection.
+//! library keeps only production certifiers here: convex surface equivalence,
+//! boundary-loop recovery, and boundary-touch detection.
 
 use core::cmp::Ordering;
 
 use hyperlimit::{
-    Point2, Point3, SegmentIntersection, Sign, TriangleLocation, classify_segment_intersection,
-    compare_reals, orient2d_report, project_point3, proper_segment_intersection_point,
+    Point2, Point3, SegmentIntersection, Sign, classify_segment_intersection, compare_reals,
+    orient2d_report, project_point3, proper_segment_intersection_point,
 };
 use hyperreal::Real;
 
@@ -19,15 +18,6 @@ use super::narrow::{
     TrianglePlaneRelation, TriangleTriangleRelation,
     classify_mesh_triangle_against_retained_face_plane, classify_triangle_triangle,
 };
-
-/// Certified containment relation between two single-triangle coplanar sheets.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum CoplanarSurfaceContainment {
-    /// Every left triangle vertex lies in the closed right triangle.
-    LeftInsideRight,
-    /// Every right triangle vertex lies in the closed left triangle.
-    RightInsideLeft,
-}
 
 /// Certified equivalence of two convex coplanar surface meshes.
 #[derive(Clone, Debug, PartialEq)]
@@ -42,72 +32,7 @@ pub struct CoplanarConvexSurfaceEquivalence {
     pub right_area2: Real,
 }
 
-/// Certified containment relation between convex coplanar surface meshes.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum CoplanarConvexSurfaceContainment {
-    /// Every left hull vertex lies in the closed right hull.
-    LeftInsideRight,
-    /// Every right hull vertex lies in the closed left hull.
-    RightInsideLeft,
-}
-
-/// Certified containment of two convex coplanar surface meshes.
-#[derive(Clone, Debug, PartialEq)]
-pub struct CoplanarConvexSurfaceContainmentCertificate {
-    /// Projection used for hull and area certificates.
-    pub projection: CoplanarProjection,
-    /// Certified containment relation.
-    pub relation: CoplanarConvexSurfaceContainment,
-    /// Exact left convex hull.
-    pub left_hull: Vec<Point3>,
-    /// Exact right convex hull.
-    pub right_hull: Vec<Point3>,
-    /// Twice the projected area covered by the left mesh.
-    pub left_area2: Real,
-    /// Twice the projected area covered by the right mesh.
-    pub right_area2: Real,
-}
-
 type ConvexSurfaceHullsAndAreas = (CoplanarProjection, Vec<Point3>, Vec<Point3>, Real, Real);
-
-/// Certify that one single-triangle coplanar sheet lies inside the other.
-pub fn certify_single_triangle_coplanar_containment(
-    left: &ExactMesh,
-    right: &ExactMesh,
-) -> Option<CoplanarSurfaceContainment> {
-    if left.triangles().len() != 1 || right.triangles().len() != 1 {
-        return None;
-    }
-
-    let points = combined_points(left, right);
-    let left_tri = left.triangles()[0].0;
-    let right_tri = right.triangles()[0]
-        .0
-        .map(|index| index + left.vertices().len());
-    let classification = classify_triangle_triangle(&points, left_tri, right_tri);
-    if !matches!(
-        classification.relation,
-        TriangleTriangleRelation::CoplanarTouching | TriangleTriangleRelation::CoplanarOverlapping
-    ) {
-        return None;
-    }
-
-    let coplanar = classify_coplanar_triangles(&points, left_tri, right_tri);
-    if matches!(
-        coplanar.relation,
-        CoplanarTriangleRelation::Unknown | CoplanarTriangleRelation::Disjoint
-    ) {
-        return None;
-    }
-
-    let left_inside_right = all_in_closed_triangle(&coplanar.left_vertices_in_right);
-    let right_inside_left = all_in_closed_triangle(&coplanar.right_vertices_in_left);
-    match (left_inside_right, right_inside_left) {
-        (true, false) => Some(CoplanarSurfaceContainment::LeftInsideRight),
-        (false, true) => Some(CoplanarSurfaceContainment::RightInsideLeft),
-        _ => None,
-    }
-}
 
 /// Certify that two coplanar open meshes cover the same convex surface.
 pub fn certify_coplanar_convex_surface_equivalence(
@@ -131,66 +56,6 @@ pub fn certify_coplanar_convex_surface_equivalence(
         left_area2: left_area,
         right_area2: right_area,
     })
-}
-
-/// Certify strict containment between two convex coplanar surface meshes.
-pub fn certify_coplanar_convex_surface_containment(
-    left: &ExactMesh,
-    right: &ExactMesh,
-) -> Option<CoplanarConvexSurfaceContainmentCertificate> {
-    let (projection, left_hull, right_hull, left_area, right_area) =
-        convex_surface_hulls_and_areas(left, right)?;
-    if polygons_equal(&left_hull, &right_hull) {
-        return None;
-    }
-    let relation = if polygon_in_closed_convex_polygon(&left_hull, &right_hull, projection)? {
-        CoplanarConvexSurfaceContainment::LeftInsideRight
-    } else if polygon_in_closed_convex_polygon(&right_hull, &left_hull, projection)? {
-        CoplanarConvexSurfaceContainment::RightInsideLeft
-    } else {
-        return None;
-    };
-    Some(CoplanarConvexSurfaceContainmentCertificate {
-        projection,
-        relation,
-        left_hull,
-        right_hull,
-        left_area2: left_area,
-        right_area2: right_area,
-    })
-}
-
-/// Certify whole-surface containment for coplanar triangulated sheets.
-pub fn certify_coplanar_surface_mesh_containment(
-    left: &ExactMesh,
-    right: &ExactMesh,
-) -> Option<CoplanarSurfaceContainment> {
-    if left.triangles().is_empty() || right.triangles().is_empty() {
-        return None;
-    }
-    if certify_single_triangle_coplanar_containment(left, right).is_some()
-        || certify_coplanar_convex_surface_containment(left, right).is_some()
-        || certify_coplanar_convex_surface_equivalence(left, right).is_some()
-    {
-        return None;
-    }
-    if !single_retained_plane(left, right)? {
-        return None;
-    }
-    let projection = choose_mesh_projection(left).or_else(|| choose_mesh_projection(right))?;
-    if !coplanar_mesh_faces_have_disjoint_interiors(left, projection)?
-        || !coplanar_mesh_faces_have_disjoint_interiors(right, projection)?
-    {
-        return None;
-    }
-
-    let left_inside_right = coplanar_mesh_area_covered_by_mesh(left, right, projection)?;
-    let right_inside_left = coplanar_mesh_area_covered_by_mesh(right, left, projection)?;
-    match (left_inside_right, right_inside_left) {
-        (true, false) => Some(CoplanarSurfaceContainment::LeftInsideRight),
-        (false, true) => Some(CoplanarSurfaceContainment::RightInsideLeft),
-        _ => None,
-    }
 }
 
 /// Recover all topological boundary loops from a triangulated surface mesh.
@@ -352,23 +217,6 @@ pub fn certify_coplanar_surface_boundary_touch(
     saw_positive_length_boundary_touch.then_some(projection)
 }
 
-fn combined_points(left: &ExactMesh, right: &ExactMesh) -> Vec<Point3> {
-    left.vertices()
-        .iter()
-        .chain(right.vertices())
-        .cloned()
-        .collect()
-}
-
-fn all_in_closed_triangle(locations: &[Option<TriangleLocation>; 3]) -> bool {
-    locations.iter().all(|location| {
-        matches!(
-            location,
-            Some(TriangleLocation::Inside | TriangleLocation::OnEdge | TriangleLocation::OnVertex)
-        )
-    })
-}
-
 fn single_retained_plane(left: &ExactMesh, right: &ExactMesh) -> Option<bool> {
     for face in 0..left.triangles().len() {
         let classification =
@@ -442,61 +290,6 @@ fn mesh_projected_area2(mesh: &ExactMesh, projection: CoplanarProjection) -> Opt
         area = area + projected_area2_abs(&triangle_points(mesh, face), projection)?;
     }
     Some(area)
-}
-
-fn coplanar_mesh_area_covered_by_mesh(
-    subject: &ExactMesh,
-    cover: &ExactMesh,
-    projection: CoplanarProjection,
-) -> Option<bool> {
-    for subject_face in 0..subject.triangles().len() {
-        let subject_triangle = triangle_points(subject, subject_face);
-        let subject_area = projected_area2_abs(&subject_triangle, projection)?;
-        if compare_reals(&subject_area, &Real::from(0)).value() != Some(Ordering::Greater) {
-            return Some(false);
-        }
-        let mut covered_area = Real::from(0);
-        for cover_face in 0..cover.triangles().len() {
-            let cover_triangle = triangle_points(cover, cover_face);
-            let Some(clip) = pairwise_coplanar_triangle_intersection_polygon_points(
-                &subject_triangle,
-                &cover_triangle,
-            ) else {
-                continue;
-            };
-            let clip_area = projected_area2_abs(&clip, projection)?;
-            if compare_reals(&clip_area, &Real::from(0)).value() == Some(Ordering::Greater) {
-                covered_area = covered_area + clip_area;
-            }
-        }
-        if compare_reals(&covered_area, &subject_area).value() != Some(Ordering::Equal) {
-            return Some(false);
-        }
-    }
-    Some(true)
-}
-
-fn coplanar_mesh_faces_have_disjoint_interiors(
-    mesh: &ExactMesh,
-    projection: CoplanarProjection,
-) -> Option<bool> {
-    for left_face in 0..mesh.triangles().len() {
-        let left_triangle = triangle_points(mesh, left_face);
-        for right_face in left_face + 1..mesh.triangles().len() {
-            let right_triangle = triangle_points(mesh, right_face);
-            let Some(clip) = pairwise_coplanar_triangle_intersection_polygon_points(
-                &left_triangle,
-                &right_triangle,
-            ) else {
-                continue;
-            };
-            let clip_area = projected_area2_abs(&clip, projection)?;
-            if compare_reals(&clip_area, &Real::from(0)).value() == Some(Ordering::Greater) {
-                return Some(false);
-            }
-        }
-    }
-    Some(true)
 }
 
 fn pairwise_coplanar_triangle_intersection_polygon_points(
@@ -696,19 +489,6 @@ fn polygons_equal(left: &[Point3], right: &[Point3]) -> bool {
             .zip(right.iter().rev().cycle().skip(offset))
             .take(left.len())
             .all(|(left, right)| points_equal(left, right))
-    })
-}
-
-fn polygon_in_closed_convex_polygon(
-    inner: &[Point3],
-    outer: &[Point3],
-    projection: CoplanarProjection,
-) -> Option<bool> {
-    if inner.len() < 3 || outer.len() < 3 {
-        return Some(false);
-    }
-    inner.iter().try_fold(true, |all_inside, point| {
-        Some(all_inside && point_in_closed_convex_polygon(point, outer, projection)?)
     })
 }
 

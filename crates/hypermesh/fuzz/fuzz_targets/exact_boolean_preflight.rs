@@ -2277,7 +2277,7 @@ fn exercise_holed_coplanar_mesh_containment() {
         .unwrap();
     assert_eq!(
         preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceContainment
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     hypermesh::boolean_exact(
         &annulus,

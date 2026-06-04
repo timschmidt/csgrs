@@ -1262,7 +1262,11 @@ fn selected_output_loops(
     let mut selected = vec![false; arrangement.faces.len()];
     for face in faces.iter().filter(|face| face.selected) {
         if face.face < selected.len() {
-            selected[face.face] = true;
+            match parent_selection_state(arrangement, faces, face, blockers) {
+                Some(true) => {}
+                Some(false) => selected[face.face] = true,
+                None => {}
+            }
         }
     }
 
