@@ -3,7 +3,8 @@
 use std::cmp::Ordering;
 
 use hyperlimit::{Point3, compare_reals};
-use hypermesh::surface::{
+mod support;
+use support::legacy_surface::{
     arrange_coplanar_convex_surface_component_holed_difference,
     arrange_coplanar_convex_surface_difference, arrange_coplanar_convex_surface_holed_difference,
     arrange_coplanar_convex_surface_multi_difference,

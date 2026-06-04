@@ -588,41 +588,12 @@ pub enum ExactBooleanShortcutKind {
     SameSurface,
     /// Exact coplanar convex surface coverage, modulo triangulation.
     CoplanarConvexSurfaceEquivalence,
-    /// Certified positive-area intersection of convex coplanar surface meshes.
-    CoplanarConvexSurfaceIntersection,
-    /// Certified simple-loop union of convex coplanar surface meshes.
-    CoplanarConvexSurfaceArrangementUnion,
-    /// Certified multi-component union of convex coplanar surface meshes.
-    CoplanarConvexSurfaceMultiUnion,
-    /// Certified multi-component union with at least one nonconvex coplanar
-    /// simple-loop component.
-    CoplanarSurfaceMultiUnion,
-    /// Certified coplanar union whose retained surface components meet only
-    /// at exact shared vertices.
-    CoplanarSurfacePointTouchUnion,
-    /// Certified empty coplanar intersection for point-touching surfaces.
-    CoplanarSurfacePointTouchIntersection,
-    /// Certified left-preserving coplanar difference for point-touching surfaces.
-    CoplanarSurfacePointTouchDifference,
     /// Certified empty coplanar intersection for positive-length boundary
     /// touching surfaces.
     CoplanarSurfaceBoundaryTouchIntersection,
     /// Certified left-preserving coplanar difference for positive-length
     /// boundary touching surfaces.
     CoplanarSurfaceBoundaryTouchDifference,
-    /// Certified simple-loop difference of convex coplanar surface meshes.
-    CoplanarConvexSurfaceArrangementDifference,
-    /// Certified multi-component difference of convex coplanar surface meshes.
-    CoplanarConvexSurfaceMultiDifference,
-    /// Certified multi-component difference with at least one nonconvex
-    /// coplanar simple-loop component.
-    CoplanarSurfaceMultiDifference,
-    /// Certified nonconvex simple-loop difference where a side cutter opens a
-    /// contained coplanar hole to the component boundary.
-    CoplanarSurfaceCutterHoleContactDifference,
-    /// Certified nonconvex simple-loop difference from exact side-cutter
-    /// openings with no retained hole rings.
-    CoplanarSurfaceSideCutterDifference,
     /// Certified orthogonal-cell union of coplanar rectangular surface pieces.
     CoplanarOrthogonalSurfaceUnion,
     /// Certified orthogonal-cell intersection of coplanar rectangular surfaces.
@@ -639,11 +610,6 @@ pub enum ExactBooleanShortcutKind {
     CoplanarConvexSurfaceContainment,
     /// Certified one-hole coplanar convex surface difference.
     CoplanarConvexSurfaceHoledDifference,
-    /// Certified multi-hole coplanar convex surface difference.
-    CoplanarConvexSurfaceMultiHoledDifference,
-    /// Certified multi-component coplanar convex surface difference where at
-    /// least one component retains exact holes.
-    CoplanarConvexSurfaceComponentHoledDifference,
     /// Certified union of coplanar-volumetric axis-aligned boxes.
     AxisAlignedBoxUnion,
     /// Certified positive-volume intersection of coplanar-volumetric
@@ -738,6 +704,9 @@ pub enum ExactBooleanShortcutKind {
     /// Certified exact ray-parity separation for closed nonconvex-capable
     /// no-intersection meshes.
     WindingSeparated,
+    /// Certified exact split-region materialization driven by closed-mesh
+    /// winding classifications.
+    WindingMaterialized,
     /// Certified exact arrangement/cell-complex materialization.
     ///
     /// The output was produced by building retained 3D arrangement cells,
@@ -747,19 +716,6 @@ pub enum ExactBooleanShortcutKind {
     ArrangementCellComplex,
     /// Certified single-triangle coplanar surface containment.
     CoplanarSurfaceContainment,
-    /// Certified coplanar single-triangle intersection output.
-    CoplanarSurfaceIntersection,
-    /// Certified convex coplanar single-triangle union output.
-    CoplanarSurfaceConvexUnion,
-    /// Certified simple planar-arrangement coplanar union, including the
-    /// bounded single-triangle path and nonconvex component-union loops.
-    CoplanarSurfaceArrangementUnion,
-    /// Certified one-corner coplanar single-triangle difference output.
-    CoplanarSurfaceCornerDifference,
-    /// Certified simple planar-arrangement coplanar single-triangle difference.
-    CoplanarSurfaceArrangementDifference,
-    /// Certified one-hole coplanar single-triangle difference.
-    CoplanarSurfaceHoledDifference,
 }
 
 impl ExactBooleanResult {
@@ -1377,47 +1333,12 @@ pub enum ExactBooleanSupport {
     /// A named operation was answered by exact coplanar convex surface
     /// equivalence, ignoring triangulation.
     CertifiedCoplanarConvexSurfaceEquivalence,
-    /// Intersection was materialized between convex coplanar surface meshes.
-    CertifiedCoplanarConvexSurfaceIntersection,
-    /// Union was materialized by a simple-loop arrangement between convex
-    /// coplanar surface meshes.
-    CertifiedCoplanarConvexSurfaceArrangementUnion,
-    /// Union was materialized as multiple exact simple-loop components
-    /// between convex coplanar surface meshes.
-    CertifiedCoplanarConvexSurfaceMultiUnion,
-    /// Union was materialized as multiple exact simple-loop components with
-    /// at least one nonconvex retained coplanar loop.
-    CertifiedCoplanarSurfaceMultiUnion,
-    /// Union was materialized as retained coplanar surface components that
-    /// meet only at exact shared vertices.
-    CertifiedCoplanarSurfacePointTouchUnion,
-    /// Intersection was materialized as empty because coplanar surfaces meet
-    /// only at exact points.
-    CertifiedCoplanarSurfacePointTouchIntersection,
-    /// Difference preserves the left coplanar surface because the right
-    /// surface meets it only at exact points.
-    CertifiedCoplanarSurfacePointTouchDifference,
     /// Intersection is empty as a surface because the operands meet only on
     /// exact positive-length boundary arcs.
     CertifiedCoplanarSurfaceBoundaryTouchIntersection,
     /// Difference preserves the left coplanar surface because the right
     /// surface only touches it on exact positive-length boundary arcs.
     CertifiedCoplanarSurfaceBoundaryTouchDifference,
-    /// Difference was materialized by a simple-loop arrangement between
-    /// convex coplanar surface meshes.
-    CertifiedCoplanarConvexSurfaceArrangementDifference,
-    /// Difference was materialized as multiple exact simple-loop components
-    /// between convex coplanar surface meshes.
-    CertifiedCoplanarConvexSurfaceMultiDifference,
-    /// Difference was materialized as multiple exact simple-loop components
-    /// with at least one nonconvex retained coplanar loop.
-    CertifiedCoplanarSurfaceMultiDifference,
-    /// Difference was materialized as one nonconvex simple loop after exact
-    /// cutter/hole boundary contact opened a retained hole to the boundary.
-    CertifiedCoplanarSurfaceCutterHoleContactDifference,
-    /// Difference was materialized as one nonconvex simple loop from exact
-    /// side-cutter openings with no retained hole rings.
-    CertifiedCoplanarSurfaceSideCutterDifference,
     /// Union was materialized by an exact orthogonal coplanar surface cell
     /// complex.
     CertifiedCoplanarOrthogonalSurfaceUnion,
@@ -1438,15 +1359,6 @@ pub enum ExactBooleanSupport {
     /// A named operation was answered by exact coplanar convex surface
     /// containment, ignoring triangulation.
     CertifiedCoplanarConvexSurfaceContainment,
-    /// Difference was materialized as a one-hole arrangement between
-    /// contained convex coplanar surface meshes.
-    CertifiedCoplanarConvexSurfaceHoledDifference,
-    /// Difference was materialized as multiple retained holes inside a
-    /// convex coplanar surface mesh.
-    CertifiedCoplanarConvexSurfaceMultiHoledDifference,
-    /// Difference was materialized as multiple retained components where at
-    /// least one component carries retained holes.
-    CertifiedCoplanarConvexSurfaceComponentHoledDifference,
     /// Union was materialized as one exact axis-aligned box from two
     /// coplanar-volumetric slab-overlapping boxes.
     CertifiedAxisAlignedBoxUnion,
@@ -1555,25 +1467,6 @@ pub enum ExactBooleanSupport {
     /// A named operation was answered by certified single-triangle coplanar
     /// surface containment.
     CertifiedCoplanarSurfaceContainment,
-    /// Intersection was materialized by exact clipping of two coplanar
-    /// single-triangle surfaces.
-    CertifiedCoplanarSurfaceIntersection,
-    /// Union was materialized as a certified convex polygon for two coplanar
-    /// single-triangle surfaces.
-    CertifiedCoplanarSurfaceConvexUnion,
-    /// Union was materialized by a simple single-loop planar arrangement,
-    /// either for two coplanar single-triangle surfaces or for one certified
-    /// nonconvex component-union loop.
-    CertifiedCoplanarSurfaceArrangementUnion,
-    /// Difference was materialized as a certified one-corner cut from a
-    /// coplanar single-triangle surface.
-    CertifiedCoplanarSurfaceCornerDifference,
-    /// Difference was materialized by the simple single-loop planar arrangement
-    /// for two coplanar single-triangle surfaces.
-    CertifiedCoplanarSurfaceArrangementDifference,
-    /// Difference was materialized as a one-hole planar arrangement for
-    /// contained coplanar single-triangle surfaces.
-    CertifiedCoplanarSurfaceHoledDifference,
     /// A named operation was answered by a certified no-intersection convex
     /// separated relation that was not caught by mesh-level AABBs.
     CertifiedConvexSeparated,
@@ -1704,20 +1597,8 @@ impl ExactBooleanPreflight {
             | ExactBooleanSupport::CertifiedIdentical
             | ExactBooleanSupport::CertifiedSameSurface
             | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceEquivalence
-            | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceIntersection
-            | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceArrangementUnion
-            | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceMultiUnion
-            | ExactBooleanSupport::CertifiedCoplanarSurfaceMultiUnion
-            | ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchUnion
-            | ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchIntersection
-            | ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchDifference
             | ExactBooleanSupport::CertifiedCoplanarSurfaceBoundaryTouchIntersection
             | ExactBooleanSupport::CertifiedCoplanarSurfaceBoundaryTouchDifference
-            | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceArrangementDifference
-            | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceMultiDifference
-            | ExactBooleanSupport::CertifiedCoplanarSurfaceMultiDifference
-            | ExactBooleanSupport::CertifiedCoplanarSurfaceCutterHoleContactDifference
-            | ExactBooleanSupport::CertifiedCoplanarSurfaceSideCutterDifference
             | ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceUnion
             | ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceIntersection
             | ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceDifference
@@ -1725,9 +1606,6 @@ impl ExactBooleanPreflight {
             | ExactBooleanSupport::CertifiedCoplanarAffineSurfaceIntersection
             | ExactBooleanSupport::CertifiedCoplanarAffineSurfaceDifference
             | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceContainment
-            | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceHoledDifference
-            | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceMultiHoledDifference
-            | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
             | ExactBooleanSupport::CertifiedAxisAlignedBoxUnion
             | ExactBooleanSupport::CertifiedAxisAlignedBoxIntersection
             | ExactBooleanSupport::CertifiedAxisAlignedBoxDifference
@@ -1756,12 +1634,6 @@ impl ExactBooleanPreflight {
             | ExactBooleanSupport::CertifiedConvexIntersection
             | ExactBooleanSupport::CertifiedConvexSingleCapDifference
             | ExactBooleanSupport::CertifiedCoplanarSurfaceContainment
-            | ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
-            | ExactBooleanSupport::CertifiedCoplanarSurfaceConvexUnion
-            | ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
-            | ExactBooleanSupport::CertifiedCoplanarSurfaceCornerDifference
-            | ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementDifference
-            | ExactBooleanSupport::CertifiedCoplanarSurfaceHoledDifference
             | ExactBooleanSupport::CertifiedConvexSeparated
             | ExactBooleanSupport::CertifiedWindingContainment
             | ExactBooleanSupport::CertifiedWindingSeparated

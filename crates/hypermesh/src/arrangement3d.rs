@@ -413,11 +413,47 @@ impl ExactArrangement3d {
             volume_adjacencies.as_deref(),
             &mut blockers,
         );
+        if shells_or_regions.as_ref().is_some_and(|regions| {
+            regions.iter().any(|region| {
+                region.boundary_edges > 0
+                    && region.non_manifold_edges > 0
+                    && region.source_sides.len() > 1
+            })
+        }) {
+            push_unique_blocker(
+                &mut blockers,
+                ExactArrangementBlocker::UnregularizedOpenSheetComplex,
+            );
+        }
         if shells_or_regions
             .as_ref()
             .is_some_and(|regions| regions.iter().any(|region| region.non_manifold_edges > 0))
         {
-            blockers.push(ExactArrangementBlocker::NonManifoldCellComplex);
+            let regularizable_closed_coincident =
+                shells_or_regions.as_ref().is_some_and(|regions| {
+                    regions.iter().all(|region| {
+                        region.non_manifold_edges == 0
+                            || (region.boundary_edges == 0 && region.source_sides.len() > 1)
+                    })
+                });
+            if !regularizable_closed_coincident {
+                // Closed coincident source sheets can still be selected from
+                // exact face labels and canonicalized away in simplification.
+                // Open mixed-source sheet complexes need true volume-boundary
+                // reconstruction and remain blockers.
+                let blocker = if shells_or_regions.as_ref().is_some_and(|regions| {
+                    regions.iter().any(|region| {
+                        region.boundary_edges > 0
+                            && region.non_manifold_edges > 0
+                            && region.source_sides.len() > 1
+                    })
+                }) {
+                    ExactArrangementBlocker::UnregularizedCoincidentSheetComplex
+                } else {
+                    ExactArrangementBlocker::NonManifoldCellComplex
+                };
+                push_unique_blocker(&mut blockers, blocker);
+            }
         }
         if policy == ExactRegularizationPolicy::REGULARIZED_SOLID
             && (!left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold)
@@ -1702,7 +1738,8 @@ fn arrangement_regions(face_cells: &[ArrangementFaceCell]) -> Vec<ArrangementReg
             .copied()
             .filter(|[left, right]| component.contains(left) && component.contains(right))
             .collect::<Vec<_>>();
-        let edge_incidences = arrangement_region_edge_incidences(&component, &edge_users);
+        let edge_incidences =
+            arrangement_region_edge_incidences(&component, &edge_users, face_cells);
         let non_manifold_edges = edge_incidences
             .iter()
             .filter(|incidence| incidence.non_manifold)
@@ -1740,28 +1777,85 @@ const fn canonical_face_pair(left: usize, right: usize) -> [usize; 2] {
 fn arrangement_region_edge_incidences(
     component: &[usize],
     edge_users: &[([ArrangementFaceCellNode; 2], Vec<usize>)],
+    face_cells: &[ArrangementFaceCell],
 ) -> Vec<ArrangementRegionEdgeIncidence> {
     edge_users
         .iter()
         .filter_map(|(edge, users)| {
-            let mut face_cells = users
+            let mut incident_face_cells = users
                 .iter()
                 .copied()
                 .filter(|cell| component.contains(cell))
                 .collect::<Vec<_>>();
-            if face_cells.is_empty() {
+            if incident_face_cells.is_empty() {
                 return None;
             }
-            face_cells.sort_unstable();
-            let incident_count = face_cells.len();
+            incident_face_cells.sort_unstable();
+            let incident_count = regularized_incident_sheet_count(&incident_face_cells, face_cells);
             Some(ArrangementRegionEdgeIncidence {
                 edge: edge.clone(),
-                face_cells,
+                face_cells: incident_face_cells,
                 boundary: incident_count == 1,
                 non_manifold: incident_count > 2,
             })
         })
         .collect()
+}
+
+fn regularized_incident_sheet_count(
+    incident_cells: &[usize],
+    all_face_cells: &[ArrangementFaceCell],
+) -> usize {
+    let mut representatives = Vec::<usize>::new();
+    'incident: for &cell in incident_cells {
+        for &representative in &representatives {
+            let Some(left) = all_face_cells.get(cell) else {
+                continue;
+            };
+            let Some(right) = all_face_cells.get(representative) else {
+                continue;
+            };
+            if exact_boundary_loops_equivalent(&left.boundary_points, &right.boundary_points) {
+                continue 'incident;
+            }
+        }
+        representatives.push(cell);
+    }
+    representatives.len()
+}
+
+fn exact_boundary_loops_equivalent(left: &[Point3], right: &[Point3]) -> bool {
+    exact_boundary_loops_same_orientation(left, right)
+        || exact_boundary_loops_opposite_orientation(left, right)
+}
+
+fn exact_boundary_loops_same_orientation(left: &[Point3], right: &[Point3]) -> bool {
+    if left.len() != right.len() {
+        return false;
+    }
+    if left.is_empty() {
+        return true;
+    }
+    (0..right.len()).any(|offset| {
+        (0..left.len()).all(|index| {
+            point3_equal(&left[index], &right[(offset + index) % right.len()]).value() == Some(true)
+        })
+    })
+}
+
+fn exact_boundary_loops_opposite_orientation(left: &[Point3], right: &[Point3]) -> bool {
+    if left.len() != right.len() {
+        return false;
+    }
+    if left.is_empty() {
+        return true;
+    }
+    (0..right.len()).any(|offset| {
+        (0..left.len()).all(|index| {
+            let right_index = (offset + right.len() - index) % right.len();
+            point3_equal(&left[index], &right[right_index]).value() == Some(true)
+        })
+    })
 }
 
 fn arrangement_region_oriented_sides(
@@ -2441,15 +2535,20 @@ fn arrangement_region_source_sides(
     sides
 }
 
+struct ArrangementFaceCellBoundaryEdge {
+    nodes: [ArrangementFaceCellNode; 2],
+    points: Option<[Point3; 2]>,
+}
+
 fn arrangement_edge_users(
     face_cells: &[ArrangementFaceCell],
 ) -> Vec<([ArrangementFaceCellNode; 2], Vec<usize>)> {
-    let mut edge_users = Vec::<([ArrangementFaceCellNode; 2], Vec<usize>)>::new();
+    let mut edge_users = Vec::<(ArrangementFaceCellBoundaryEdge, Vec<usize>)>::new();
     for (cell_index, cell) in face_cells.iter().enumerate() {
         for edge in cell_boundary_edges(cell) {
             if let Some((_, users)) = edge_users
                 .iter_mut()
-                .find(|(existing, _)| existing == &edge)
+                .find(|(existing, _)| boundary_edges_equivalent(existing, &edge))
             {
                 users.push(cell_index);
             } else {
@@ -2458,20 +2557,49 @@ fn arrangement_edge_users(
         }
     }
     edge_users
+        .into_iter()
+        .map(|(edge, users)| (edge.nodes, users))
+        .collect()
 }
 
-fn cell_boundary_edges(cell: &ArrangementFaceCell) -> Vec<[ArrangementFaceCellNode; 2]> {
+fn cell_boundary_edges(cell: &ArrangementFaceCell) -> Vec<ArrangementFaceCellBoundaryEdge> {
     if cell.boundary.len() < 2 {
         return Vec::new();
     }
     (0..cell.boundary.len())
         .map(|index| {
-            canonical_cell_edge(
-                cell.boundary[index].clone(),
-                cell.boundary[(index + 1) % cell.boundary.len()].clone(),
-            )
+            let next = (index + 1) % cell.boundary.len();
+            let nodes =
+                canonical_cell_edge(cell.boundary[index].clone(), cell.boundary[next].clone());
+            let points = if cell.boundary_points.len() == cell.boundary.len() {
+                Some([
+                    cell.boundary_points[index].clone(),
+                    cell.boundary_points[next].clone(),
+                ])
+            } else {
+                None
+            };
+            ArrangementFaceCellBoundaryEdge { nodes, points }
         })
         .collect()
+}
+
+fn boundary_edges_equivalent(
+    left: &ArrangementFaceCellBoundaryEdge,
+    right: &ArrangementFaceCellBoundaryEdge,
+) -> bool {
+    left.nodes == right.nodes
+        || match (&left.points, &right.points) {
+            (Some(left), Some(right)) => exact_undirected_point_edges_equal(left, right),
+            _ => false,
+        }
+}
+
+fn exact_undirected_point_edges_equal(left: &[Point3; 2], right: &[Point3; 2]) -> bool {
+    (point3_equal(&left[0], &right[0]).value() == Some(true)
+        && point3_equal(&left[1], &right[1]).value() == Some(true))
+        || (point3_equal(&left[0], &right[1]).value() == Some(true)
+            && point3_equal(&left[1], &right[0]).value() == Some(true))
 }
 
 fn canonical_cell_edge(
@@ -2764,6 +2892,10 @@ mod tests {
     use crate::boolean::ExactBooleanOperation;
     use crate::validation::ValidationPolicy;
 
+    fn p3(x: i64, y: i64, z: i64) -> Point3 {
+        Point3::new(Real::from(x), Real::from(y), Real::from(z))
+    }
+
     fn tetrahedron_i64(a: [i64; 3], b: [i64; 3], c: [i64; 3], d: [i64; 3]) -> ExactMesh {
         ExactMesh::from_i64_triangles(
             &[
@@ -2945,6 +3077,44 @@ mod tests {
             blockers,
             vec![ExactArrangementBlocker::NonManifoldCellComplex]
         );
+    }
+
+    #[test]
+    fn region_edge_users_merge_exact_geometric_edge_coincidence() {
+        let cell = |side, vertices: [usize; 3], points: [Point3; 3]| ArrangementFaceCell {
+            carrier: ArrangementFaceCarrier {
+                side,
+                face: 0,
+                triangle: vertices,
+            },
+            boundary: vertices
+                .iter()
+                .map(|vertex| ArrangementFaceCellNode::SourceVertex {
+                    side,
+                    vertex: *vertex,
+                })
+                .collect(),
+            boundary_points: points.to_vec(),
+            opposite: None,
+        };
+        let left = cell(
+            MeshSide::Left,
+            [0, 1, 2],
+            [p3(0, 0, 0), p3(1, 0, 0), p3(0, 1, 0)],
+        );
+        let right = cell(
+            MeshSide::Right,
+            [3, 4, 5],
+            [p3(1, 0, 0), p3(0, 0, 0), p3(1, 1, 0)],
+        );
+
+        let edge_users = arrangement_edge_users(&[left, right]);
+        let shared = edge_users
+            .iter()
+            .find(|(_, users)| users.as_slice() == [0, 1])
+            .expect("exact coincident geometric edge should share one incidence");
+
+        assert_eq!(shared.1, vec![0, 1]);
     }
 
     #[test]

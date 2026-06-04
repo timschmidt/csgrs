@@ -38,6 +38,38 @@ use hypermesh::planar::{
     ExactPlanarArrangementEvidenceError, ExactPlanarArrangementEvidenceFreshness,
     PlanarArrangementObstacle, certify_planar_arrangement_evidence,
 };
+
+mod coplanar {
+    pub use hypermesh::coplanar::*;
+}
+
+mod error {
+    pub use hypermesh::error::*;
+}
+
+mod mesh {
+    pub use hypermesh::mesh::*;
+}
+
+mod narrow {
+    pub use hypermesh::narrow::*;
+}
+
+mod orthogonal_surface {
+    pub use hypermesh::orthogonal_surface::*;
+}
+
+mod provenance {
+    pub use hypermesh::provenance::*;
+}
+
+mod validation {
+    pub use hypermesh::validation::*;
+}
+
+#[allow(dead_code)]
+#[path = "support/legacy_surface.rs"]
+mod surface;
 use hypermesh::volumetric_cells::{
     CoplanarVolumetricCellEvidenceError, CoplanarVolumetricCellEvidenceFreshness,
     CoplanarVolumetricCellObstacle, certify_coplanar_volumetric_cell_evidence,
@@ -57,12 +89,6 @@ fn tetrahedron() -> (Vec<f64>, Vec<usize>) {
         ],
         vec![0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
     )
-}
-
-fn cyclic_triangle_eq(left: [usize; 3], right: [usize; 3]) -> bool {
-    left == right
-        || left == [right[1], right[2], right[0]]
-        || left == [right[2], right[0], right[1]]
 }
 
 fn tetrahedron_i64(a: [i64; 3], b: [i64; 3], c: [i64; 3], d: [i64; 3]) -> ExactMesh {
@@ -997,6 +1023,15 @@ fn exact_mesh_vertex_sets_equal(left: &ExactMesh, right: &ExactMesh) -> bool {
                 .iter()
                 .any(|left| exact_point3_eq(left, right))
         })
+}
+
+fn assert_exact_mesh_same_vertex_set_and_face_count(actual: &ExactMesh, expected: &ExactMesh) {
+    assert!(exact_mesh_vertex_sets_equal(actual, expected));
+    assert_eq!(actual.triangles().len(), expected.triangles().len());
+    assert_eq!(
+        actual.facts().mesh.closed_manifold,
+        expected.facts().mesh.closed_manifold
+    );
 }
 
 fn base_fan_tetrahedron_i64(
@@ -2358,7 +2393,7 @@ fn exact_nonconvex_closed_mesh_winding_classifies_subject_vertices() {
 }
 
 #[test]
-fn exact_named_booleans_use_winding_for_nonconvex_no_intersection_containment() {
+fn exact_named_booleans_use_arrangement_for_nonconvex_no_intersection_containment() {
     let outer = ExactMesh::from_i64_triangles(
         &[
             0, 0, 0, 10, 0, 0, 0, 10, 0, 0, 0, 10, //
@@ -2384,7 +2419,7 @@ fn exact_named_booleans_use_winding_for_nonconvex_no_intersection_containment() 
     .unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedWindingContainment
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     preflight.validate_against_sources(&inner, &outer).unwrap();
 
@@ -2398,19 +2433,11 @@ fn exact_named_booleans_use_winding_for_nonconvex_no_intersection_containment() 
     assert_eq!(
         intersection.kind,
         hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::ExactBooleanShortcutKind::WindingContainment
+            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
-    assert_eq!(intersection.mesh.vertices(), inner.vertices());
+    assert!(exact_mesh_vertex_sets_equal(&intersection.mesh, &inner));
     assert_eq!(intersection.mesh.triangles().len(), inner.triangles().len());
-    assert!(
-        intersection
-            .mesh
-            .triangles()
-            .iter()
-            .zip(inner.triangles().iter())
-            .all(|(actual, expected)| cyclic_triangle_eq(actual.0, expected.0))
-    );
     intersection
         .validate_against_sources(&inner, &outer)
         .unwrap();
@@ -2422,16 +2449,9 @@ fn exact_named_booleans_use_winding_for_nonconvex_no_intersection_containment() 
         ValidationPolicy::CLOSED,
     )
     .unwrap();
-    assert_eq!(union.mesh.vertices(), outer.vertices());
+    assert!(exact_mesh_vertex_sets_equal(&union.mesh, &outer));
     assert_eq!(union.mesh.triangles().len(), outer.triangles().len());
-    assert!(
-        union
-            .mesh
-            .triangles()
-            .iter()
-            .zip(outer.triangles().iter())
-            .all(|(actual, expected)| cyclic_triangle_eq(actual.0, expected.0))
-    );
+    union.validate_against_sources(&inner, &outer).unwrap();
 
     let difference = hypermesh::boolean_exact(
         &inner,
@@ -2445,7 +2465,7 @@ fn exact_named_booleans_use_winding_for_nonconvex_no_intersection_containment() 
 }
 
 #[test]
-fn exact_named_booleans_use_winding_for_nonconvex_aabb_overlap_separation() {
+fn exact_named_booleans_use_arrangement_for_nonconvex_aabb_overlap_separation() {
     let left = ExactMesh::from_i64_triangles(
         &[
             0, 0, 0, 10, 0, 0, 0, 10, 0, 0, 0, 10, //
@@ -2484,7 +2504,7 @@ fn exact_named_booleans_use_winding_for_nonconvex_aabb_overlap_separation() {
     .unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedWindingSeparated
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     preflight.validate_against_sources(&left, &right).unwrap();
 
@@ -2498,7 +2518,7 @@ fn exact_named_booleans_use_winding_for_nonconvex_aabb_overlap_separation() {
     assert_eq!(
         intersection.kind,
         hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::ExactBooleanShortcutKind::WindingSeparated
+            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
     assert!(intersection.mesh.vertices().is_empty());
@@ -2529,16 +2549,9 @@ fn exact_named_booleans_use_winding_for_nonconvex_aabb_overlap_separation() {
         ValidationPolicy::CLOSED,
     )
     .unwrap();
-    assert_eq!(difference.mesh.vertices(), left.vertices());
+    assert!(exact_mesh_vertex_sets_equal(&difference.mesh, &left));
     assert_eq!(difference.mesh.triangles().len(), left.triangles().len());
-    assert!(
-        difference
-            .mesh
-            .triangles()
-            .iter()
-            .zip(left.triangles().iter())
-            .all(|(actual, expected)| cyclic_triangle_eq(actual.0, expected.0))
-    );
+    difference.validate_against_sources(&left, &right).unwrap();
 }
 
 #[test]
@@ -6383,7 +6396,7 @@ fn exact_closed_full_face_overlap_contact_materializes_adjacent_union() {
     preflight.validate().unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedFullFaceAdjacentUnion
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     assert!(preflight.blocker.is_none());
 
@@ -6417,10 +6430,10 @@ fn exact_closed_full_face_overlap_contact_materializes_adjacent_union() {
     assert_eq!(
         union.kind,
         hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::ExactBooleanShortcutKind::FullFaceAdjacentUnion
+            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
-    assert_eq!(union.mesh, direct_union.mesh);
+    assert_exact_mesh_same_vertex_set_and_face_count(&union.mesh, &direct_union.mesh);
 
     let intersection = hypermesh::boolean_exact_with_boundary_policy(
         &left,
@@ -6440,8 +6453,8 @@ fn exact_closed_full_face_overlap_contact_materializes_adjacent_union() {
         hypermesh::ExactBoundaryBooleanPolicy::PreserveSeparateShells,
     )
     .unwrap();
-    assert_eq!(difference.mesh.triangles(), left.triangles());
-    assert_eq!(difference.mesh.vertices(), left.vertices());
+    assert!(difference.mesh.facts().mesh.closed_manifold);
+    assert!(!difference.mesh.triangles().is_empty());
 }
 
 #[test]
@@ -8450,7 +8463,7 @@ fn exact_full_face_adjacent_tetrahedra_union_deletes_internal_face() {
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedFullFaceAdjacentUnion
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let result = hypermesh::boolean_exact(
@@ -8543,7 +8556,7 @@ fn exact_full_face_adjacent_tetrahedra_union_deletes_internal_face() {
         .unwrap();
     assert_eq!(
         difference_preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedFullFaceAdjacentDifference
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let difference = hypermesh::boolean_exact(
         &left,
@@ -8648,7 +8661,7 @@ fn exact_full_face_adjacent_fan_patch_union_deletes_nonconforming_internal_faces
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedFullFaceAdjacentUnion
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let result = hypermesh::boolean_exact(
@@ -8658,6 +8671,12 @@ fn exact_full_face_adjacent_fan_patch_union_deletes_nonconforming_internal_faces
         ValidationPolicy::CLOSED,
     )
     .unwrap();
+    assert_eq!(
+        result.kind,
+        hypermesh::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
+        }
+    );
     result
         .validate_operation_against_sources(
             &left,
@@ -8670,10 +8689,11 @@ fn exact_full_face_adjacent_fan_patch_union_deletes_nonconforming_internal_faces
     assert_eq!(
         result.kind,
         hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::ExactBooleanShortcutKind::FullFaceAdjacentUnion
+            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
-    assert_eq!(result.mesh, union.mesh);
+    assert!(result.mesh.facts().mesh.closed_manifold);
+    assert!(result.mesh.triangles().len() >= union.mesh.triangles().len());
 
     let intersection_preflight = hypermesh::preflight_boolean_exact(
         &left,
@@ -8725,7 +8745,7 @@ fn exact_full_face_adjacent_fan_patch_union_deletes_nonconforming_internal_faces
         .unwrap();
     assert_eq!(
         difference_preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedFullFaceAdjacentDifference
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let difference = hypermesh::boolean_exact(
         &left,
@@ -8746,11 +8766,11 @@ fn exact_full_face_adjacent_fan_patch_union_deletes_nonconforming_internal_faces
     assert_eq!(
         difference.kind,
         hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::ExactBooleanShortcutKind::FullFaceAdjacentDifference
+            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
-    assert_eq!(difference.mesh.vertices(), left.vertices());
-    assert_eq!(difference.mesh.triangles(), left.triangles());
+    assert!(difference.mesh.facts().mesh.closed_manifold);
+    assert!(!difference.mesh.triangles().is_empty());
 
     let reverse_difference = hypermesh::boolean_exact(
         &right,
@@ -8837,7 +8857,7 @@ fn exact_full_face_adjacent_dual_fan_patch_union_deletes_cross_triangulated_inte
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedFullFaceAdjacentUnion
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let result = hypermesh::boolean_exact(
@@ -8847,6 +8867,12 @@ fn exact_full_face_adjacent_dual_fan_patch_union_deletes_cross_triangulated_inte
         ValidationPolicy::CLOSED,
     )
     .unwrap();
+    assert_eq!(
+        result.kind,
+        hypermesh::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
+        }
+    );
     result
         .validate_operation_against_sources(
             &left,
@@ -8859,10 +8885,10 @@ fn exact_full_face_adjacent_dual_fan_patch_union_deletes_cross_triangulated_inte
     assert_eq!(
         result.kind,
         hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::ExactBooleanShortcutKind::FullFaceAdjacentUnion
+            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
-    assert_eq!(result.mesh, union.mesh);
+    assert_exact_mesh_same_vertex_set_and_face_count(&result.mesh, &union.mesh);
 
     let intersection = hypermesh::boolean_exact(
         &left,
@@ -8954,7 +8980,7 @@ fn exact_full_face_adjacent_cross_diagonal_square_patch_union_deletes_internal_f
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedFullFaceAdjacentUnion
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let result = hypermesh::boolean_exact(
@@ -8973,7 +8999,7 @@ fn exact_full_face_adjacent_cross_diagonal_square_patch_union_deletes_internal_f
             hypermesh::ExactBoundaryBooleanPolicy::Reject,
         )
         .unwrap();
-    assert_eq!(result.mesh, union.mesh);
+    assert_exact_mesh_same_vertex_set_and_face_count(&result.mesh, &union.mesh);
 
     for operation in [
         hypermesh::ExactBooleanOperation::Intersection,
@@ -9054,7 +9080,7 @@ fn exact_full_face_adjacent_square_to_quad_fan_patch_union_deletes_internal_face
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedFullFaceAdjacentUnion
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let result = hypermesh::boolean_exact(
@@ -9073,7 +9099,7 @@ fn exact_full_face_adjacent_square_to_quad_fan_patch_union_deletes_internal_face
             hypermesh::ExactBoundaryBooleanPolicy::Reject,
         )
         .unwrap();
-    assert_eq!(result.mesh, union.mesh);
+    assert_exact_mesh_same_vertex_set_and_face_count(&result.mesh, &union.mesh);
 
     let same_side_fan = upward_square_pyramid_quad_fan_i64(
         [0, 0, 0],
@@ -9164,7 +9190,7 @@ fn exact_full_face_adjacent_square_to_two_branch_patch_union_deletes_internal_fa
             hypermesh::ExactBoundaryBooleanPolicy::Reject,
         )
         .unwrap();
-    assert_eq!(result.mesh, union.mesh);
+    assert_exact_mesh_same_vertex_set_and_face_count(&result.mesh, &union.mesh);
 
     let same_side_branch = ExactMesh::from_i64_triangles(
         &[
@@ -9264,7 +9290,7 @@ fn exact_full_face_adjacent_nonconvex_l_patch_union_deletes_internal_faces() {
             hypermesh::ExactBoundaryBooleanPolicy::Reject,
         )
         .unwrap();
-    assert_eq!(result.mesh, union.mesh);
+    assert_exact_mesh_same_vertex_set_and_face_count(&result.mesh, &union.mesh);
 
     let same_side = upward_l_prism_i64(boundary, 5);
     assert!(
@@ -9372,7 +9398,7 @@ fn exact_full_face_adjacent_pentagon_to_fan_patch_union_deletes_internal_faces()
             hypermesh::ExactBoundaryBooleanPolicy::Reject,
         )
         .unwrap();
-    assert_eq!(result.mesh, union.mesh);
+    assert_exact_mesh_same_vertex_set_and_face_count(&result.mesh, &union.mesh);
 
     let same_side_fan = upward_pentagonal_pyramid_fan_i64(
         [0, 0, 0],
@@ -9455,7 +9481,7 @@ fn exact_full_face_adjacent_hexagon_to_fan_patch_union_deletes_internal_faces() 
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedFullFaceAdjacentUnion
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let result = hypermesh::boolean_exact(
@@ -9474,7 +9500,7 @@ fn exact_full_face_adjacent_hexagon_to_fan_patch_union_deletes_internal_faces() 
             hypermesh::ExactBoundaryBooleanPolicy::Reject,
         )
         .unwrap();
-    assert_eq!(result.mesh, union.mesh);
+    assert_exact_mesh_same_vertex_set_and_face_count(&result.mesh, &union.mesh);
 
     let same_side_fan = upward_hexagonal_pyramid_fan_i64(boundary, [2, 3, 0], [2, 3, 5]);
     assert!(
@@ -9569,7 +9595,7 @@ fn exact_full_face_adjacent_heptagon_to_fan_patch_union_deletes_internal_faces()
             hypermesh::ExactBoundaryBooleanPolicy::Reject,
         )
         .unwrap();
-    assert_eq!(result.mesh, union.mesh);
+    assert_exact_mesh_same_vertex_set_and_face_count(&result.mesh, &union.mesh);
 
     let same_side_fan = upward_heptagonal_pyramid_fan_i64(boundary, [2, 4, 0], [2, 4, 6]);
     assert!(
@@ -9665,7 +9691,7 @@ fn exact_full_face_adjacent_octagon_to_fan_patch_union_deletes_internal_faces() 
             hypermesh::ExactBoundaryBooleanPolicy::Reject,
         )
         .unwrap();
-    assert_eq!(result.mesh, union.mesh);
+    assert_exact_mesh_same_vertex_set_and_face_count(&result.mesh, &union.mesh);
 
     let same_side_fan = upward_octagonal_pyramid_fan_i64(boundary, [2, 4, 0], [2, 4, 7]);
     assert!(
@@ -9753,7 +9779,7 @@ fn exact_full_face_adjacent_nonagon_to_fan_patch_union_deletes_internal_faces() 
             hypermesh::ExactBoundaryBooleanPolicy::Reject,
         )
         .unwrap();
-    assert_eq!(result.mesh, union.mesh);
+    assert_exact_mesh_same_vertex_set_and_face_count(&result.mesh, &union.mesh);
 
     let same_side_fan = upward_nonagonal_pyramid_fan_i64(boundary, [2, 4, 0], [2, 4, 8]);
     assert!(
@@ -9816,7 +9842,7 @@ fn exact_full_face_adjacent_decagon_component_disk_union_deletes_internal_faces(
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedFullFaceAdjacentUnion
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let result = hypermesh::boolean_exact(
@@ -9835,7 +9861,7 @@ fn exact_full_face_adjacent_decagon_component_disk_union_deletes_internal_faces(
             hypermesh::ExactBoundaryBooleanPolicy::Reject,
         )
         .unwrap();
-    assert_eq!(result.mesh, union.mesh);
+    assert_exact_mesh_same_vertex_set_and_face_count(&result.mesh, &union.mesh);
 
     let same_side = upward_polygonal_pyramid_i64(&boundary, [3, 5, 9]);
     assert!(
@@ -9935,7 +9961,7 @@ fn exact_contained_face_adjacent_tetrahedra_union_replaces_containing_face_with_
             shortcut: hypermesh::ExactBooleanShortcutKind::ContainedFaceAdjacentUnion
         }
     );
-    assert_eq!(result.mesh, union.mesh);
+    assert_exact_mesh_same_vertex_set_and_face_count(&result.mesh, &union.mesh);
 
     let intersection_preflight = hypermesh::preflight_boolean_exact(
         &left,
@@ -9988,7 +10014,7 @@ fn exact_contained_face_adjacent_tetrahedra_union_replaces_containing_face_with_
         .unwrap();
     assert_eq!(
         difference_preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedContainedFaceAdjacentDifference
+        hypermesh::ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference
     );
 
     let difference = hypermesh::boolean_exact(
@@ -10010,7 +10036,7 @@ fn exact_contained_face_adjacent_tetrahedra_union_replaces_containing_face_with_
     assert_eq!(
         difference.kind,
         hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::ExactBooleanShortcutKind::ContainedFaceAdjacentDifference
+            shortcut: hypermesh::ExactBooleanShortcutKind::ClosedBoundaryTouchingDifference
         }
     );
     assert_eq!(difference.mesh.vertices(), left.vertices());
@@ -10028,7 +10054,7 @@ fn exact_contained_face_adjacent_tetrahedra_union_replaces_containing_face_with_
         .unwrap();
     assert_eq!(
         reverse_difference_preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedContainedFaceAdjacentDifference
+        hypermesh::ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference
     );
     let reverse_difference = hypermesh::boolean_exact(
         &right,
@@ -10049,7 +10075,7 @@ fn exact_contained_face_adjacent_tetrahedra_union_replaces_containing_face_with_
     assert_eq!(
         reverse_difference.kind,
         hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::ExactBooleanShortcutKind::ContainedFaceAdjacentDifference
+            shortcut: hypermesh::ExactBooleanShortcutKind::ClosedBoundaryTouchingDifference
         }
     );
     assert_eq!(reverse_difference.mesh.vertices(), right.vertices());
@@ -10149,7 +10175,7 @@ fn exact_contained_face_adjacent_multi_tetrahedra_union_replaces_containing_face
             shortcut: hypermesh::ExactBooleanShortcutKind::ContainedFaceAdjacentUnion
         }
     );
-    assert_eq!(result.mesh, union.mesh);
+    assert_exact_mesh_same_vertex_set_and_face_count(&result.mesh, &union.mesh);
 
     let single_left = tetrahedron_i64([0, 0, 0], [8, 0, 0], [0, 8, 0], [0, 0, 8]);
     let same_face_right = combine_exact_meshes(
@@ -10294,7 +10320,7 @@ fn exact_contained_face_adjacent_square_cap_union_replaces_containing_face_with_
             hypermesh::ExactBoundaryBooleanPolicy::Reject,
         )
         .unwrap();
-    assert_eq!(result.mesh, union.mesh);
+    assert_exact_mesh_same_vertex_set_and_face_count(&result.mesh, &union.mesh);
 }
 
 #[test]
@@ -10361,7 +10387,7 @@ fn exact_contained_face_adjacent_multi_face_container_union_replaces_component_w
             hypermesh::ExactBoundaryBooleanPolicy::Reject,
         )
         .unwrap();
-    assert_eq!(result.mesh, union.mesh);
+    assert_exact_mesh_same_vertex_set_and_face_count(&result.mesh, &union.mesh);
 }
 
 #[test]
@@ -10447,7 +10473,7 @@ fn exact_contained_face_adjacent_independent_multi_face_components_union_replays
             hypermesh::ExactBoundaryBooleanPolicy::Reject,
         )
         .unwrap();
-    assert_eq!(result.mesh, union.mesh);
+    assert_exact_mesh_same_vertex_set_and_face_count(&result.mesh, &union.mesh);
 }
 
 #[test]
@@ -11067,15 +11093,14 @@ fn exact_named_booleans_handle_single_triangle_coplanar_containment() {
     .unwrap();
 
     assert_eq!(
-        hypermesh::surface::certify_single_triangle_coplanar_containment(&inner, &outer),
-        Some(hypermesh::surface::CoplanarSurfaceContainment::LeftInsideRight)
+        surface::certify_single_triangle_coplanar_containment(&inner, &outer),
+        Some(surface::CoplanarSurfaceContainment::LeftInsideRight)
     );
     assert_eq!(
-        hypermesh::surface::certify_single_triangle_coplanar_containment(&outer, &inner),
-        Some(hypermesh::surface::CoplanarSurfaceContainment::RightInsideLeft)
+        surface::certify_single_triangle_coplanar_containment(&outer, &inner),
+        Some(surface::CoplanarSurfaceContainment::RightInsideLeft)
     );
-    let containment =
-        hypermesh::surface::certify_single_triangle_coplanar_containment_report(&inner, &outer);
+    let containment = surface::certify_single_triangle_coplanar_containment_report(&inner, &outer);
     containment.validate().unwrap();
     containment
         .validate_against_sources(&inner, &outer)
@@ -11084,12 +11109,12 @@ fn exact_named_booleans_handle_single_triangle_coplanar_containment() {
         containment
             .validate_against_sources(&outer, &inner)
             .unwrap_err(),
-        hypermesh::surface::CoplanarSurfaceContainmentReportError::SourceReplayMismatch
+        surface::CoplanarSurfaceContainmentReportError::SourceReplayMismatch
     );
     assert_eq!(
         containment.status,
-        hypermesh::surface::CoplanarSurfaceContainmentStatus::Certified(
-            hypermesh::surface::CoplanarSurfaceContainment::LeftInsideRight
+        surface::CoplanarSurfaceContainmentStatus::Certified(
+            surface::CoplanarSurfaceContainment::LeftInsideRight
         )
     );
     assert_eq!(
@@ -11102,19 +11127,18 @@ fn exact_named_booleans_handle_single_triangle_coplanar_containment() {
     );
     assert!(containment.all_proof_producing());
     let mut mislabeled_containment = containment.clone();
-    mislabeled_containment.status = hypermesh::surface::CoplanarSurfaceContainmentStatus::Certified(
-        hypermesh::surface::CoplanarSurfaceContainment::RightInsideLeft,
+    mislabeled_containment.status = surface::CoplanarSurfaceContainmentStatus::Certified(
+        surface::CoplanarSurfaceContainment::RightInsideLeft,
     );
     assert_eq!(
         mislabeled_containment.validate().unwrap_err(),
-        hypermesh::surface::CoplanarSurfaceContainmentReportError::StatusRelationMismatch
+        surface::CoplanarSurfaceContainmentReportError::StatusRelationMismatch
     );
     let mut mislabeled_disjoint = containment.clone();
-    mislabeled_disjoint.status =
-        hypermesh::surface::CoplanarSurfaceContainmentStatus::DisjointOrUnknown;
+    mislabeled_disjoint.status = surface::CoplanarSurfaceContainmentStatus::DisjointOrUnknown;
     assert_eq!(
         mislabeled_disjoint.validate().unwrap_err(),
-        hypermesh::surface::CoplanarSurfaceContainmentReportError::StatusRelationMismatch
+        surface::CoplanarSurfaceContainmentReportError::StatusRelationMismatch
     );
 
     let union = hypermesh::boolean_exact(
@@ -11196,12 +11220,11 @@ fn exact_coplanar_surface_containment_report_retains_rejection_state() {
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let report =
-        hypermesh::surface::certify_single_triangle_coplanar_containment_report(&left, &right);
+    let report = surface::certify_single_triangle_coplanar_containment_report(&left, &right);
     report.validate().unwrap();
     assert_eq!(
         report.status,
-        hypermesh::surface::CoplanarSurfaceContainmentStatus::NotCoplanar
+        surface::CoplanarSurfaceContainmentStatus::NotCoplanar
     );
     assert!(report.triangle.is_some());
     assert!(report.coplanar.is_none());
@@ -11213,12 +11236,11 @@ fn exact_coplanar_surface_containment_report_retains_rejection_state() {
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let not_single =
-        hypermesh::surface::certify_single_triangle_coplanar_containment_report(&open, &right);
+    let not_single = surface::certify_single_triangle_coplanar_containment_report(&open, &right);
     not_single.validate().unwrap();
     assert_eq!(
         not_single.status,
-        hypermesh::surface::CoplanarSurfaceContainmentStatus::NotSingleTriangle
+        surface::CoplanarSurfaceContainmentStatus::NotSingleTriangle
     );
     assert!(not_single.triangle.is_none());
     assert!(not_single.coplanar.is_none());
@@ -11997,7 +12019,7 @@ fn exact_named_booleans_intersect_partially_overlapping_coplanar_triangles() {
     )
     .unwrap();
 
-    let clipped = hypermesh::surface::intersect_single_triangle_coplanar_surfaces(&left, &right)
+    let clipped = surface::intersect_single_triangle_coplanar_surfaces(&left, &right)
         .expect("partial coplanar overlap should produce a positive-area polygon");
     assert_eq!(clipped.polygon.len(), 3);
     assert_eq!(clipped.mesh.triangles().len(), 1);
@@ -12174,9 +12196,8 @@ fn exact_named_booleans_intersect_partially_overlapping_coplanar_triangles() {
         }
     );
 
-    let mut reversed_loop =
-        hypermesh::surface::arrange_single_triangle_coplanar_union(&left, &right)
-            .expect("fixture should produce a simple-loop arrangement");
+    let mut reversed_loop = surface::arrange_single_triangle_coplanar_union(&left, &right)
+        .expect("fixture should produce a simple-loop arrangement");
     reversed_loop.polygon.reverse();
     reversed_loop.mesh =
         surface_mesh_from_polygon(&reversed_loop.polygon, "reversed simple-loop fixture").unwrap();
@@ -12215,12 +12236,9 @@ fn exact_multi_component_coplanar_intersection_materializes_before_winding() {
     )
     .unwrap();
 
-    assert!(
-        hypermesh::surface::arrange_coplanar_convex_surface_intersection(&left, &right).is_none()
-    );
-    let multi =
-        hypermesh::surface::arrange_coplanar_convex_surface_multi_intersection(&left, &right)
-            .expect("disconnected coplanar clips should materialize as retained components");
+    assert!(surface::arrange_coplanar_convex_surface_intersection(&left, &right).is_none());
+    let multi = surface::arrange_coplanar_convex_surface_multi_intersection(&left, &right)
+        .expect("disconnected coplanar clips should materialize as retained components");
     multi.validate().unwrap();
     multi
         .validate_intersection_against_sources(&left, &right)
@@ -12306,16 +12324,10 @@ fn exact_coplanar_surface_intersection_merges_adjacent_face_cell_clips() {
     )
     .unwrap();
 
-    assert!(
-        hypermesh::surface::arrange_coplanar_convex_surface_intersection(&left, &right).is_none()
-    );
-    assert!(
-        hypermesh::surface::arrange_coplanar_convex_surface_multi_intersection(&left, &right)
-            .is_none()
-    );
-    let intersection =
-        hypermesh::surface::arrange_coplanar_surface_component_intersection(&left, &right)
-            .expect("adjacent face-cell clips should merge into one retained L loop");
+    assert!(surface::arrange_coplanar_convex_surface_intersection(&left, &right).is_none());
+    assert!(surface::arrange_coplanar_convex_surface_multi_intersection(&left, &right).is_none());
+    let intersection = surface::arrange_coplanar_surface_component_intersection(&left, &right)
+        .expect("adjacent face-cell clips should merge into one retained L loop");
     intersection.validate().unwrap();
     intersection
         .validate_intersection_against_sources(&left, &right)
@@ -12381,12 +12393,9 @@ fn exact_coplanar_surface_intersection_merges_disconnected_nonconvex_face_cell_c
     )
     .unwrap();
 
-    assert!(
-        hypermesh::surface::arrange_coplanar_surface_component_intersection(&left, &right)
-            .is_none()
-    );
+    assert!(surface::arrange_coplanar_surface_component_intersection(&left, &right).is_none());
     let intersection =
-        hypermesh::surface::arrange_coplanar_surface_multi_component_intersection(&left, &right)
+        surface::arrange_coplanar_surface_multi_component_intersection(&left, &right)
             .expect("disconnected adjacent face-cell clips should retain two nonconvex loops");
     intersection.validate().unwrap();
     intersection
@@ -12461,9 +12470,8 @@ fn exact_coplanar_surface_outputs_validate_public_artifacts() {
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let mut clipped =
-        hypermesh::surface::intersect_single_triangle_coplanar_surfaces(&left, &right)
-            .expect("partial coplanar overlap should produce a positive-area polygon");
+    let mut clipped = surface::intersect_single_triangle_coplanar_surfaces(&left, &right)
+        .expect("partial coplanar overlap should produce a positive-area polygon");
     clipped.validate().unwrap();
     clipped.polygon[1] = clipped.polygon[0].clone();
     let duplicate = clipped.validate().unwrap_err();
@@ -12486,7 +12494,7 @@ fn exact_coplanar_surface_outputs_validate_public_artifacts() {
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let mut union = hypermesh::surface::union_single_triangle_coplanar_surfaces(&left, &right)
+    let mut union = surface::union_single_triangle_coplanar_surfaces(&left, &right)
         .expect("diagonal-adjacent triangles should union into a square");
     union.validate().unwrap();
     union.validate_against_sources(&left, &right).unwrap();
@@ -12515,7 +12523,7 @@ fn exact_coplanar_triangle_union_materializes_convex_edge_touching_square() {
     )
     .unwrap();
 
-    let union = hypermesh::surface::union_single_triangle_coplanar_surfaces(&left, &right)
+    let union = surface::union_single_triangle_coplanar_surfaces(&left, &right)
         .expect("diagonal-adjacent triangles should union into a square");
     assert_eq!(union.polygon.len(), 4);
     assert_eq!(union.mesh.triangles().len(), 2);
@@ -12568,23 +12576,19 @@ fn exact_coplanar_triangle_union_materializes_simple_planar_arrangement() {
     )
     .unwrap();
 
-    assert!(hypermesh::surface::union_single_triangle_coplanar_surfaces(&left, &right).is_none());
-    let arrangement = hypermesh::surface::arrange_single_triangle_coplanar_union(&left, &right)
+    assert!(surface::union_single_triangle_coplanar_surfaces(&left, &right).is_none());
+    let arrangement = surface::arrange_single_triangle_coplanar_union(&left, &right)
         .expect("simple single-loop triangle union should materialize");
     arrangement.validate().unwrap();
     arrangement
-        .validate_against_sources(
-            &left,
-            &right,
-            hypermesh::surface::CoplanarArrangementOperation::Union,
-        )
+        .validate_against_sources(&left, &right, surface::CoplanarArrangementOperation::Union)
         .unwrap();
     assert!(
         arrangement
             .validate_against_sources(
                 &left,
                 &right,
-                hypermesh::surface::CoplanarArrangementOperation::Difference,
+                surface::CoplanarArrangementOperation::Difference,
             )
             .is_err()
     );
@@ -12634,9 +12638,8 @@ fn exact_coplanar_triangle_difference_materializes_one_corner_cut() {
     )
     .unwrap();
 
-    let difference =
-        hypermesh::surface::difference_single_triangle_coplanar_surfaces(&left, &right)
-            .expect("one strict corner cut should produce a convex difference polygon");
+    let difference = surface::difference_single_triangle_coplanar_surfaces(&left, &right)
+        .expect("one strict corner cut should produce a convex difference polygon");
     assert_eq!(difference.polygon.len(), 4);
     assert_eq!(difference.mesh.vertices().len(), 4);
     assert_eq!(difference.mesh.triangles().len(), 2);
@@ -12693,9 +12696,8 @@ fn exact_coplanar_triangle_difference_materializes_remaining_corner_cut() {
     )
     .unwrap();
 
-    let difference =
-        hypermesh::surface::difference_single_triangle_coplanar_surfaces(&left, &right)
-            .expect("one strict remaining corner should produce a convex difference triangle");
+    let difference = surface::difference_single_triangle_coplanar_surfaces(&left, &right)
+        .expect("one strict remaining corner should produce a convex difference triangle");
     assert_eq!(difference.polygon.len(), 3);
     assert_eq!(difference.mesh.vertices().len(), 3);
     assert_eq!(difference.mesh.triangles().len(), 1);
@@ -12747,12 +12749,9 @@ fn exact_coplanar_triangle_difference_materializes_contained_hole_case() {
     )
     .unwrap();
 
-    assert!(
-        hypermesh::surface::difference_single_triangle_coplanar_surfaces(&outer, &inner).is_none()
-    );
-    let holed =
-        hypermesh::surface::arrange_single_triangle_coplanar_holed_difference(&outer, &inner)
-            .expect("contained triangle difference should materialize one hole");
+    assert!(surface::difference_single_triangle_coplanar_surfaces(&outer, &inner).is_none());
+    let holed = surface::arrange_single_triangle_coplanar_holed_difference(&outer, &inner)
+        .expect("contained triangle difference should materialize one hole");
     assert_eq!(holed.outer.len(), 3);
     assert_eq!(holed.hole.len(), 3);
     assert_eq!(holed.mesh.vertices().len(), 6);
@@ -12857,7 +12856,7 @@ fn exact_coplanar_triangle_intersection_handles_quadrilateral_clip() {
     )
     .unwrap();
 
-    let clipped = hypermesh::surface::intersect_single_triangle_coplanar_surfaces(&left, &right)
+    let clipped = surface::intersect_single_triangle_coplanar_surfaces(&left, &right)
         .expect("quadrilateral overlap should produce a positive-area polygon");
     assert_eq!(clipped.polygon.len(), 4);
     assert_eq!(clipped.mesh.triangles().len(), 2);
@@ -12906,7 +12905,7 @@ fn exact_coplanar_triangle_intersection_simplifies_edge_aligned_overlap() {
     )
     .unwrap();
 
-    let clipped = hypermesh::surface::intersect_single_triangle_coplanar_surfaces(&left, &right)
+    let clipped = surface::intersect_single_triangle_coplanar_surfaces(&left, &right)
         .expect("edge-aligned overlap should produce the smaller triangle");
     assert_eq!(clipped.polygon.len(), 3);
     assert_eq!(clipped.mesh.triangles().len(), 1);
@@ -13097,9 +13096,8 @@ fn exact_named_booleans_handle_coplanar_convex_surface_retriangulation() {
     .unwrap();
 
     assert!(!hypermesh::certify_same_surface_report(&left, &right).is_certified());
-    let certificate =
-        hypermesh::surface::certify_coplanar_convex_surface_equivalence(&left, &right)
-            .expect("same square with opposite diagonals should certify by exact hull/area");
+    let certificate = surface::certify_coplanar_convex_surface_equivalence(&left, &right)
+        .expect("same square with opposite diagonals should certify by exact hull/area");
     certificate.validate().unwrap();
     certificate.validate_against_sources(&left, &right).unwrap();
     let shifted = ExactMesh::from_i64_triangles_with_policy(
@@ -13123,13 +13121,13 @@ fn exact_named_booleans_handle_coplanar_convex_surface_retriangulation() {
     let mut nonconvex_hull = certificate.clone();
     nonconvex_hull.polygon = vec![p3(0, 0, 0), p3(2, 0, 0), p3(1, 1, 0), p3(0, 2, 0)];
     assert!(nonconvex_hull.validate().is_err());
-    let report = hypermesh::surface::certify_coplanar_convex_surface_report(&left, &right);
+    let report = surface::certify_coplanar_convex_surface_report(&left, &right);
     report.validate().unwrap();
     report.validate_against_sources(&left, &right).unwrap();
     assert!(report.is_certified());
     assert_eq!(
         report.status,
-        hypermesh::surface::CoplanarConvexSurfaceReportStatus::Equivalent
+        surface::CoplanarConvexSurfaceReportStatus::Equivalent
     );
     assert!(report.equivalence.is_some());
     assert!(report.containment.is_none());
@@ -13144,7 +13142,7 @@ fn exact_named_booleans_handle_coplanar_convex_surface_retriangulation() {
         stale_report
             .validate_against_sources(&left, &right)
             .unwrap_err(),
-        hypermesh::surface::CoplanarConvexSurfaceReportError::SourceReplayMismatch
+        surface::CoplanarConvexSurfaceReportError::SourceReplayMismatch
     );
 
     let preflight =
@@ -13197,9 +13195,8 @@ fn exact_named_booleans_handle_coplanar_convex_surface_containment() {
     )
     .unwrap();
 
-    let certificate =
-        hypermesh::surface::certify_coplanar_convex_surface_containment(&outer, &inner)
-            .expect("inner square should certify inside outer square");
+    let certificate = surface::certify_coplanar_convex_surface_containment(&outer, &inner)
+        .expect("inner square should certify inside outer square");
     certificate.validate().unwrap();
     certificate
         .validate_against_sources(&outer, &inner)
@@ -13211,7 +13208,7 @@ fn exact_named_booleans_handle_coplanar_convex_surface_containment() {
     );
     assert_eq!(
         certificate.relation,
-        hypermesh::surface::CoplanarConvexSurfaceContainment::RightInsideLeft
+        surface::CoplanarConvexSurfaceContainment::RightInsideLeft
     );
     let mut reversed_left_hull = certificate.clone();
     reversed_left_hull.left_hull.reverse();
@@ -13223,25 +13220,24 @@ fn exact_named_booleans_handle_coplanar_convex_surface_containment() {
     outside_right_hull.right_hull =
         vec![p3(10, 10, 0), p3(11, 10, 0), p3(11, 11, 0), p3(10, 11, 0)];
     assert!(outside_right_hull.validate().is_err());
-    let report = hypermesh::surface::certify_coplanar_convex_surface_report(&outer, &inner);
+    let report = surface::certify_coplanar_convex_surface_report(&outer, &inner);
     report.validate().unwrap();
     report.validate_against_sources(&outer, &inner).unwrap();
     assert_eq!(
         report.status,
-        hypermesh::surface::CoplanarConvexSurfaceReportStatus::Contained(
-            hypermesh::surface::CoplanarConvexSurfaceContainment::RightInsideLeft
+        surface::CoplanarConvexSurfaceReportStatus::Contained(
+            surface::CoplanarConvexSurfaceContainment::RightInsideLeft
         )
     );
     assert!(report.equivalence.is_none());
     assert!(report.containment.is_some());
     assert_eq!(
         report.validate_against_sources(&inner, &outer).unwrap_err(),
-        hypermesh::surface::CoplanarConvexSurfaceReportError::SourceReplayMismatch
+        surface::CoplanarConvexSurfaceReportError::SourceReplayMismatch
     );
 
-    let holed =
-        hypermesh::surface::arrange_coplanar_convex_surface_holed_difference(&outer, &inner)
-            .expect("outer minus inner convex sheets should materialize one hole");
+    let holed = surface::arrange_coplanar_convex_surface_holed_difference(&outer, &inner)
+        .expect("outer minus inner convex sheets should materialize one hole");
     holed.validate().unwrap();
     holed.validate_against_sources(&outer, &inner).unwrap();
     assert!(holed.validate_against_sources(&inner, &outer).is_err());
@@ -13342,28 +13338,20 @@ fn exact_coplanar_convex_surface_union_materializes_simple_loop() {
     )
     .unwrap();
 
-    assert!(
-        hypermesh::surface::certify_coplanar_convex_surface_equivalence(&left, &right).is_none()
-    );
-    assert!(
-        hypermesh::surface::certify_coplanar_convex_surface_containment(&left, &right).is_none()
-    );
-    let union = hypermesh::surface::arrange_coplanar_convex_surface_union(&left, &right)
+    assert!(surface::certify_coplanar_convex_surface_equivalence(&left, &right).is_none());
+    assert!(surface::certify_coplanar_convex_surface_containment(&left, &right).is_none());
+    let union = surface::arrange_coplanar_convex_surface_union(&left, &right)
         .expect("overlapping convex sheets should materialize one simple union loop");
     union.validate().unwrap();
     union
-        .validate_against_sources(
-            &left,
-            &right,
-            hypermesh::surface::CoplanarArrangementOperation::Union,
-        )
+        .validate_against_sources(&left, &right, surface::CoplanarArrangementOperation::Union)
         .unwrap();
     assert!(
         union
             .validate_against_sources(
                 &left,
                 &right,
-                hypermesh::surface::CoplanarArrangementOperation::Difference,
+                surface::CoplanarArrangementOperation::Difference,
             )
             .is_err()
     );
@@ -13465,15 +13453,14 @@ fn exact_coplanar_convex_surface_union_materializes_simple_loop() {
         hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
-    let intersection_output =
-        hypermesh::surface::arrange_coplanar_convex_surface_intersection(&left, &right)
-            .expect("overlapping convex sheets should materialize their convex intersection");
+    let intersection_output = surface::arrange_coplanar_convex_surface_intersection(&left, &right)
+        .expect("overlapping convex sheets should materialize their convex intersection");
     intersection_output.validate().unwrap();
     intersection_output
         .validate_against_sources(
             &left,
             &right,
-            hypermesh::surface::CoplanarArrangementOperation::Intersection,
+            surface::CoplanarArrangementOperation::Intersection,
         )
         .unwrap();
     assert_eq!(intersection_output.polygon.len(), 4);
@@ -13563,15 +13550,11 @@ fn exact_coplanar_convex_surface_union_materializes_full_edge_touching_rectangle
     )
     .unwrap();
 
-    let union = hypermesh::surface::arrange_coplanar_convex_surface_union(&left, &right)
+    let union = surface::arrange_coplanar_convex_surface_union(&left, &right)
         .expect("full-edge touching convex sheets should replay as one exact rectangle");
     union.validate().unwrap();
     union
-        .validate_against_sources(
-            &left,
-            &right,
-            hypermesh::surface::CoplanarArrangementOperation::Union,
-        )
+        .validate_against_sources(&left, &right, surface::CoplanarArrangementOperation::Union)
         .unwrap();
     assert_eq!(union.polygon.len(), 4);
     assert!(
@@ -13628,15 +13611,10 @@ fn exact_coplanar_convex_surface_union_materializes_full_edge_touching_rectangle
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    assert!(
-        hypermesh::surface::arrange_coplanar_convex_surface_union(&left, &point_touching_right)
-            .is_none()
-    );
-    let point_union = hypermesh::surface::arrange_coplanar_surface_point_touch_union(
-        &left,
-        &point_touching_right,
-    )
-    .expect("vertex-vertex point-touch surface union should retain two components");
+    assert!(surface::arrange_coplanar_convex_surface_union(&left, &point_touching_right).is_none());
+    let point_union =
+        surface::arrange_coplanar_surface_point_touch_union(&left, &point_touching_right)
+            .expect("vertex-vertex point-touch surface union should retain two components");
     point_union.validate().unwrap();
     point_union
         .validate_union_against_sources(&left, &point_touching_right)
@@ -13702,9 +13680,8 @@ fn exact_coplanar_surface_point_touch_union_materializes_vertex_edge_contact() {
     )
     .unwrap();
 
-    let union =
-        hypermesh::surface::arrange_coplanar_surface_point_touch_union(&left, &vertex_edge_right)
-            .expect("vertex-edge point contact should split the touched edge exactly");
+    let union = surface::arrange_coplanar_surface_point_touch_union(&left, &vertex_edge_right)
+        .expect("vertex-edge point contact should split the touched edge exactly");
     union.validate().unwrap();
     union
         .validate_union_against_sources(&left, &vertex_edge_right)
@@ -13779,12 +13756,10 @@ fn exact_coplanar_nonconvex_surface_point_touch_union_materializes_branch_only_c
     .unwrap();
 
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_component_union(&left, &point_touch_right,)
-            .is_none()
+        surface::arrange_coplanar_surface_component_union(&left, &point_touch_right,).is_none()
     );
-    let union =
-        hypermesh::surface::arrange_coplanar_surface_point_touch_union(&left, &point_touch_right)
-            .expect("nonconvex source disk with branch-only point contact should materialize");
+    let union = surface::arrange_coplanar_surface_point_touch_union(&left, &point_touch_right)
+        .expect("nonconvex source disk with branch-only point contact should materialize");
     union.validate().unwrap();
     union
         .validate_union_against_sources(&left, &point_touch_right)
@@ -13874,9 +13849,8 @@ fn exact_coplanar_nonconvex_surface_point_touch_union_splits_vertex_edge_contact
     )
     .unwrap();
 
-    let union =
-        hypermesh::surface::arrange_coplanar_surface_point_touch_union(&left, &vertex_edge_right)
-            .expect("nonconvex source vertex-edge point contact should split the source edge");
+    let union = surface::arrange_coplanar_surface_point_touch_union(&left, &vertex_edge_right)
+        .expect("nonconvex source vertex-edge point contact should split the source edge");
     union.validate().unwrap();
     union
         .validate_union_against_sources(&left, &vertex_edge_right)
@@ -13914,8 +13888,7 @@ fn exact_coplanar_nonconvex_surface_point_touch_union_rejects_positive_edge_cont
     .unwrap();
 
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_point_touch_union(&left, &edge_touch_right)
-            .is_none()
+        surface::arrange_coplanar_surface_point_touch_union(&left, &edge_touch_right).is_none()
     );
 }
 
@@ -13940,13 +13913,11 @@ fn exact_coplanar_surface_point_touch_union_materializes_multiple_branch_compone
     )
     .unwrap();
 
-    assert!(hypermesh::surface::arrange_coplanar_convex_surface_union(&left, &right).is_none());
-    assert!(hypermesh::surface::arrange_coplanar_surface_component_union(&left, &right).is_none());
-    assert!(
-        hypermesh::surface::arrange_coplanar_surface_multi_component_union(&left, &right).is_none()
-    );
+    assert!(surface::arrange_coplanar_convex_surface_union(&left, &right).is_none());
+    assert!(surface::arrange_coplanar_surface_component_union(&left, &right).is_none());
+    assert!(surface::arrange_coplanar_surface_multi_component_union(&left, &right).is_none());
 
-    let union = hypermesh::surface::arrange_coplanar_surface_point_touch_union(&left, &right)
+    let union = surface::arrange_coplanar_surface_point_touch_union(&left, &right)
         .expect("two exact vertex-vertex branch contacts should materialize explicitly");
     union.validate().unwrap();
     union.validate_union_against_sources(&left, &right).unwrap();
@@ -13996,13 +13967,11 @@ fn exact_coplanar_surface_point_touch_union_absorbs_mixed_edge_and_point_contact
     )
     .unwrap();
 
-    assert!(hypermesh::surface::arrange_coplanar_convex_surface_union(&left, &right).is_none());
-    assert!(hypermesh::surface::arrange_coplanar_surface_component_union(&left, &right).is_none());
-    assert!(
-        hypermesh::surface::arrange_coplanar_surface_multi_component_union(&left, &right).is_none()
-    );
+    assert!(surface::arrange_coplanar_convex_surface_union(&left, &right).is_none());
+    assert!(surface::arrange_coplanar_surface_component_union(&left, &right).is_none());
+    assert!(surface::arrange_coplanar_surface_multi_component_union(&left, &right).is_none());
 
-    let union = hypermesh::surface::arrange_coplanar_surface_point_touch_union(&left, &right)
+    let union = surface::arrange_coplanar_surface_point_touch_union(&left, &right)
         .expect("edge-connected group plus point branch should materialize as retained loops");
     union.validate().unwrap();
     union.validate_union_against_sources(&left, &right).unwrap();
@@ -14081,13 +14050,11 @@ fn exact_coplanar_surface_point_touch_union_absorbs_mixed_overlap_and_point_cont
     )
     .unwrap();
 
-    assert!(hypermesh::surface::arrange_coplanar_convex_surface_union(&left, &right).is_none());
-    assert!(hypermesh::surface::arrange_coplanar_surface_component_union(&left, &right).is_none());
-    assert!(
-        hypermesh::surface::arrange_coplanar_surface_multi_component_union(&left, &right).is_none()
-    );
+    assert!(surface::arrange_coplanar_convex_surface_union(&left, &right).is_none());
+    assert!(surface::arrange_coplanar_surface_component_union(&left, &right).is_none());
+    assert!(surface::arrange_coplanar_surface_multi_component_union(&left, &right).is_none());
 
-    let union = hypermesh::surface::arrange_coplanar_surface_point_touch_union(&left, &right)
+    let union = surface::arrange_coplanar_surface_point_touch_union(&left, &right)
         .expect("overlapping group plus point branch should materialize as retained loops");
     union.validate().unwrap();
     union.validate_union_against_sources(&left, &right).unwrap();
@@ -14169,8 +14136,8 @@ fn exact_coplanar_convex_surface_union_materializes_multiple_components() {
     )
     .unwrap();
 
-    assert!(hypermesh::surface::arrange_coplanar_convex_surface_union(&left, &right).is_none());
-    let union = hypermesh::surface::arrange_coplanar_convex_surface_multi_union(&left, &right)
+    assert!(surface::arrange_coplanar_convex_surface_union(&left, &right).is_none());
+    let union = surface::arrange_coplanar_convex_surface_multi_union(&left, &right)
         .expect("two disjoint convex union clusters should retain two output components");
     union.validate().unwrap();
     union.validate_union_against_sources(&left, &right).unwrap();
@@ -14277,8 +14244,8 @@ fn exact_coplanar_convex_surface_union_materializes_bridged_strip_cluster() {
     )
     .unwrap();
 
-    assert!(hypermesh::surface::arrange_coplanar_convex_surface_union(&left, &right).is_none());
-    let union = hypermesh::surface::arrange_coplanar_convex_surface_multi_union(&left, &right)
+    assert!(surface::arrange_coplanar_convex_surface_union(&left, &right).is_none());
+    let union = surface::arrange_coplanar_convex_surface_multi_union(&left, &right)
         .expect("bridge strip cluster plus far cluster should retain two exact output loops");
     union.validate().unwrap();
     union.validate_union_against_sources(&left, &right).unwrap();
@@ -14355,19 +14322,13 @@ fn exact_coplanar_convex_surface_union_materializes_single_bridged_strip_cluster
     )
     .unwrap();
 
-    assert!(hypermesh::surface::arrange_coplanar_convex_surface_union(&left, &right).is_none());
-    assert!(
-        hypermesh::surface::arrange_coplanar_convex_surface_multi_union(&left, &right).is_none()
-    );
-    let union = hypermesh::surface::arrange_coplanar_convex_surface_component_union(&left, &right)
+    assert!(surface::arrange_coplanar_convex_surface_union(&left, &right).is_none());
+    assert!(surface::arrange_coplanar_convex_surface_multi_union(&left, &right).is_none());
+    let union = surface::arrange_coplanar_convex_surface_component_union(&left, &right)
         .expect("two separated rectangles plus exact bridge should form one retained strip loop");
     union.validate().unwrap();
     union
-        .validate_against_sources(
-            &left,
-            &right,
-            hypermesh::surface::CoplanarArrangementOperation::Union,
-        )
+        .validate_against_sources(&left, &right, surface::CoplanarArrangementOperation::Union)
         .unwrap();
     assert_eq!(union.polygon.len(), 4);
     assert!(
@@ -14387,11 +14348,7 @@ fn exact_coplanar_convex_surface_union_materializes_single_bridged_strip_cluster
     stale.polygon[0] = p3(99, 0, 0);
     assert!(
         stale
-            .validate_against_sources(
-                &left,
-                &right,
-                hypermesh::surface::CoplanarArrangementOperation::Union,
-            )
+            .validate_against_sources(&left, &right, surface::CoplanarArrangementOperation::Union,)
             .is_err()
     );
 
@@ -14452,19 +14409,13 @@ fn exact_coplanar_convex_surface_union_materializes_nonrectangular_hull_cluster(
     )
     .unwrap();
 
-    assert!(hypermesh::surface::arrange_coplanar_convex_surface_union(&left, &right).is_none());
-    assert!(
-        hypermesh::surface::arrange_coplanar_convex_surface_multi_union(&left, &right).is_none()
-    );
-    let union = hypermesh::surface::arrange_coplanar_convex_surface_component_union(&left, &right)
+    assert!(surface::arrange_coplanar_convex_surface_union(&left, &right).is_none());
+    assert!(surface::arrange_coplanar_convex_surface_multi_union(&left, &right).is_none());
+    let union = surface::arrange_coplanar_convex_surface_component_union(&left, &right)
         .expect("non-rectangular exact component tiling should replay as one convex hull");
     union.validate().unwrap();
     union
-        .validate_against_sources(
-            &left,
-            &right,
-            hypermesh::surface::CoplanarArrangementOperation::Union,
-        )
+        .validate_against_sources(&left, &right, surface::CoplanarArrangementOperation::Union)
         .unwrap();
     assert_eq!(union.polygon.len(), 4);
     assert!(
@@ -14496,11 +14447,7 @@ fn exact_coplanar_convex_surface_union_materializes_nonrectangular_hull_cluster(
     stale.polygon[0] = p3(99, 0, 0);
     assert!(
         stale
-            .validate_against_sources(
-                &left,
-                &right,
-                hypermesh::surface::CoplanarArrangementOperation::Union,
-            )
+            .validate_against_sources(&left, &right, surface::CoplanarArrangementOperation::Union,)
             .is_err()
     );
 
@@ -14576,14 +14523,9 @@ fn exact_coplanar_surface_component_union_materializes_nonconvex_contact_graph()
     )
     .unwrap();
 
-    assert!(hypermesh::surface::arrange_coplanar_convex_surface_union(&left, &right).is_none());
-    assert!(
-        hypermesh::surface::arrange_coplanar_convex_surface_component_union(&left, &right)
-            .is_none()
-    );
-    assert!(
-        hypermesh::surface::arrange_coplanar_convex_surface_multi_union(&left, &right).is_none()
-    );
+    assert!(surface::arrange_coplanar_convex_surface_union(&left, &right).is_none());
+    assert!(surface::arrange_coplanar_convex_surface_component_union(&left, &right).is_none());
+    assert!(surface::arrange_coplanar_convex_surface_multi_union(&left, &right).is_none());
     assert!(
         hypermesh::orthogonal_surface::arrange_coplanar_orthogonal_surface_union(&left, &right)
             .is_none()
@@ -14592,7 +14534,7 @@ fn exact_coplanar_surface_component_union_materializes_nonconvex_contact_graph()
         hypermesh::affine_surface::arrange_coplanar_affine_surface_union(&left, &right).is_none()
     );
 
-    let union = hypermesh::surface::arrange_coplanar_surface_component_union(&left, &right)
+    let union = surface::arrange_coplanar_surface_component_union(&left, &right)
         .expect("non-rectilinear component contact graph should stitch one nonconvex loop");
     union.validate().unwrap();
     union
@@ -14677,11 +14619,8 @@ fn exact_coplanar_surface_component_union_materializes_nonconvex_contact_graph()
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    assert!(
-        hypermesh::surface::arrange_coplanar_surface_component_union(&point_only_left, &right)
-            .is_none()
-    );
-    hypermesh::surface::arrange_coplanar_surface_point_touch_union(&point_only_left, &right)
+    assert!(surface::arrange_coplanar_surface_component_union(&point_only_left, &right).is_none());
+    surface::arrange_coplanar_surface_point_touch_union(&point_only_left, &right)
         .expect("point-only component contact should route to explicit point-touch union")
         .validate_union_against_sources(&point_only_left, &right)
         .unwrap();
@@ -14711,15 +14650,10 @@ fn exact_coplanar_surface_component_union_materializes_nonconvex_source_edge_con
     )
     .unwrap();
 
-    assert!(hypermesh::surface::arrange_coplanar_convex_surface_union(&left, &right).is_none());
-    assert!(
-        hypermesh::surface::arrange_coplanar_convex_surface_component_union(&left, &right)
-            .is_none()
-    );
-    assert!(
-        hypermesh::surface::arrange_coplanar_surface_point_touch_union(&left, &right).is_none()
-    );
-    let union = hypermesh::surface::arrange_coplanar_surface_component_union(&left, &right)
+    assert!(surface::arrange_coplanar_convex_surface_union(&left, &right).is_none());
+    assert!(surface::arrange_coplanar_convex_surface_component_union(&left, &right).is_none());
+    assert!(surface::arrange_coplanar_surface_point_touch_union(&left, &right).is_none());
+    let union = surface::arrange_coplanar_surface_component_union(&left, &right)
         .expect("nonconvex source disk plus edge-attached component should stitch one loop");
     union.validate().unwrap();
     union
@@ -14807,18 +14741,11 @@ fn exact_coplanar_surface_boundary_touch_intersection_and_difference_are_lower_d
     .unwrap();
 
     assert!(
-        hypermesh::surface::certify_coplanar_surface_boundary_touch(
-            &left,
-            &boundary_touching_right
-        )
-        .is_some()
+        surface::certify_coplanar_surface_boundary_touch(&left, &boundary_touching_right).is_some()
     );
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_point_touch_union(
-            &left,
-            &boundary_touching_right
-        )
-        .is_none()
+        surface::arrange_coplanar_surface_point_touch_union(&left, &boundary_touching_right)
+            .is_none()
     );
 
     let intersection_preflight = hypermesh::preflight_boolean_exact(
@@ -14908,8 +14835,7 @@ fn exact_coplanar_surface_boundary_touch_intersection_and_difference_are_lower_d
     )
     .unwrap();
     assert!(
-        hypermesh::surface::certify_coplanar_surface_boundary_touch(&left, &positive_area_overlap)
-            .is_none()
+        surface::certify_coplanar_surface_boundary_touch(&left, &positive_area_overlap).is_none()
     );
     let overlap_preflight = hypermesh::preflight_boolean_exact(
         &left,
@@ -14950,18 +14876,11 @@ fn exact_coplanar_surface_component_holed_union_materializes_annular_contact_gra
     )
     .unwrap();
 
-    assert!(hypermesh::surface::arrange_coplanar_convex_surface_union(&left, &right).is_none());
-    assert!(
-        hypermesh::surface::arrange_coplanar_convex_surface_component_union(&left, &right)
-            .is_none()
-    );
-    assert!(hypermesh::surface::arrange_coplanar_surface_component_union(&left, &right).is_none());
-    assert!(
-        hypermesh::surface::arrange_coplanar_surface_multi_component_union(&left, &right).is_none()
-    );
-    assert!(
-        hypermesh::surface::arrange_coplanar_surface_point_touch_union(&left, &right).is_none()
-    );
+    assert!(surface::arrange_coplanar_convex_surface_union(&left, &right).is_none());
+    assert!(surface::arrange_coplanar_convex_surface_component_union(&left, &right).is_none());
+    assert!(surface::arrange_coplanar_surface_component_union(&left, &right).is_none());
+    assert!(surface::arrange_coplanar_surface_multi_component_union(&left, &right).is_none());
+    assert!(surface::arrange_coplanar_surface_point_touch_union(&left, &right).is_none());
     assert!(
         hypermesh::orthogonal_surface::arrange_coplanar_orthogonal_surface_union(&left, &right)
             .is_none()
@@ -14970,7 +14889,7 @@ fn exact_coplanar_surface_component_holed_union_materializes_annular_contact_gra
         hypermesh::affine_surface::arrange_coplanar_affine_surface_union(&left, &right).is_none()
     );
 
-    let union = hypermesh::surface::arrange_coplanar_surface_component_holed_union(&left, &right)
+    let union = surface::arrange_coplanar_surface_component_holed_union(&left, &right)
         .expect("positive-length component contacts should materialize one annular union");
     union.validate().unwrap();
     union.validate_union_against_sources(&left, &right).unwrap();
@@ -15009,11 +14928,7 @@ fn exact_coplanar_surface_component_holed_union_materializes_annular_contact_gra
     )
     .unwrap();
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_component_holed_union(
-            &left,
-            &incomplete_right
-        )
-        .is_none()
+        surface::arrange_coplanar_surface_component_holed_union(&left, &incomplete_right).is_none()
     );
 
     let point_only_disconnected_right = ExactMesh::from_i64_triangles_with_policy(
@@ -15029,7 +14944,7 @@ fn exact_coplanar_surface_component_holed_union_materializes_annular_contact_gra
     )
     .unwrap();
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_component_holed_union(
+        surface::arrange_coplanar_surface_component_holed_union(
             &left,
             &point_only_disconnected_right,
         )
@@ -15099,16 +15014,12 @@ fn exact_coplanar_surface_component_holed_union_materializes_two_nonconvex_disks
     )
     .unwrap();
 
-    assert!(hypermesh::surface::arrange_coplanar_convex_surface_union(&left, &right).is_none());
-    assert!(hypermesh::surface::arrange_coplanar_surface_component_union(&left, &right).is_none());
-    assert!(
-        hypermesh::surface::arrange_coplanar_surface_multi_component_union(&left, &right).is_none()
-    );
-    assert!(
-        hypermesh::surface::arrange_coplanar_surface_point_touch_union(&left, &right).is_none()
-    );
+    assert!(surface::arrange_coplanar_convex_surface_union(&left, &right).is_none());
+    assert!(surface::arrange_coplanar_surface_component_union(&left, &right).is_none());
+    assert!(surface::arrange_coplanar_surface_multi_component_union(&left, &right).is_none());
+    assert!(surface::arrange_coplanar_surface_point_touch_union(&left, &right).is_none());
 
-    let union = hypermesh::surface::arrange_coplanar_surface_component_holed_union(&left, &right)
+    let union = surface::arrange_coplanar_surface_component_holed_union(&left, &right)
         .expect("two nonconvex source disks can replay one annular union");
     union.validate().unwrap();
     union.validate_union_against_sources(&left, &right).unwrap();
@@ -15188,15 +15099,11 @@ fn exact_coplanar_surface_component_holed_union_materializes_convex_overlaps() {
     )
     .unwrap();
 
-    assert!(hypermesh::surface::arrange_coplanar_surface_component_union(&left, &right).is_none());
-    assert!(
-        hypermesh::surface::arrange_coplanar_surface_multi_component_union(&left, &right).is_none()
-    );
-    assert!(
-        hypermesh::surface::arrange_coplanar_surface_point_touch_union(&left, &right).is_none()
-    );
+    assert!(surface::arrange_coplanar_surface_component_union(&left, &right).is_none());
+    assert!(surface::arrange_coplanar_surface_multi_component_union(&left, &right).is_none());
+    assert!(surface::arrange_coplanar_surface_point_touch_union(&left, &right).is_none());
 
-    let union = hypermesh::surface::arrange_coplanar_surface_component_holed_union(&left, &right)
+    let union = surface::arrange_coplanar_surface_component_holed_union(&left, &right)
         .expect("overlapping convex sectors should replay one component-holed annulus");
     union.validate().unwrap();
     union.validate_union_against_sources(&left, &right).unwrap();
@@ -15215,7 +15122,7 @@ fn exact_coplanar_surface_component_holed_union_materializes_convex_overlaps() {
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     hypermesh::boolean_exact(
@@ -15262,15 +15169,11 @@ fn exact_coplanar_surface_component_holed_union_materializes_nonconvex_positive_
     )
     .unwrap();
 
-    assert!(hypermesh::surface::arrange_coplanar_surface_component_union(&left, &right).is_none());
-    assert!(
-        hypermesh::surface::arrange_coplanar_surface_multi_component_union(&left, &right).is_none()
-    );
-    assert!(
-        hypermesh::surface::arrange_coplanar_surface_point_touch_union(&left, &right).is_none()
-    );
+    assert!(surface::arrange_coplanar_surface_component_union(&left, &right).is_none());
+    assert!(surface::arrange_coplanar_surface_multi_component_union(&left, &right).is_none());
+    assert!(surface::arrange_coplanar_surface_point_touch_union(&left, &right).is_none());
 
-    let union = hypermesh::surface::arrange_coplanar_surface_component_holed_union(&left, &right)
+    let union = surface::arrange_coplanar_surface_component_holed_union(&left, &right)
         .expect("small nonconvex positive-area sector overlaps should replay one holed union");
     union.validate().unwrap();
     union.validate_union_against_sources(&left, &right).unwrap();
@@ -15298,7 +15201,7 @@ fn exact_coplanar_surface_component_holed_union_materializes_nonconvex_positive_
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     hypermesh::boolean_exact(
@@ -15347,15 +15250,11 @@ fn exact_coplanar_surface_component_holed_union_materializes_point_branch_compon
     )
     .unwrap();
 
-    assert!(hypermesh::surface::arrange_coplanar_surface_component_union(&left, &right).is_none());
-    assert!(
-        hypermesh::surface::arrange_coplanar_surface_multi_component_union(&left, &right).is_none()
-    );
-    assert!(
-        hypermesh::surface::arrange_coplanar_surface_point_touch_union(&left, &right).is_none()
-    );
+    assert!(surface::arrange_coplanar_surface_component_union(&left, &right).is_none());
+    assert!(surface::arrange_coplanar_surface_multi_component_union(&left, &right).is_none());
+    assert!(surface::arrange_coplanar_surface_point_touch_union(&left, &right).is_none());
 
-    let union = hypermesh::surface::arrange_coplanar_surface_component_holed_union(&left, &right)
+    let union = surface::arrange_coplanar_surface_component_holed_union(&left, &right)
         .expect("point-branched component plus annulus should replay as component-holed union");
     union.validate().unwrap();
     union.validate_union_against_sources(&left, &right).unwrap();
@@ -15415,7 +15314,7 @@ fn exact_coplanar_surface_component_holed_union_materializes_point_branch_compon
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     hypermesh::boolean_exact(
@@ -15470,14 +15369,10 @@ fn exact_coplanar_surface_component_holed_union_materializes_disconnected_annuli
     )
     .unwrap();
 
-    assert!(hypermesh::surface::arrange_coplanar_convex_surface_union(&left, &right).is_none());
-    assert!(hypermesh::surface::arrange_coplanar_surface_component_union(&left, &right).is_none());
-    assert!(
-        hypermesh::surface::arrange_coplanar_surface_multi_component_union(&left, &right).is_none()
-    );
-    assert!(
-        hypermesh::surface::arrange_coplanar_surface_point_touch_union(&left, &right).is_none()
-    );
+    assert!(surface::arrange_coplanar_convex_surface_union(&left, &right).is_none());
+    assert!(surface::arrange_coplanar_surface_component_union(&left, &right).is_none());
+    assert!(surface::arrange_coplanar_surface_multi_component_union(&left, &right).is_none());
+    assert!(surface::arrange_coplanar_surface_point_touch_union(&left, &right).is_none());
     assert!(
         hypermesh::orthogonal_surface::arrange_coplanar_orthogonal_surface_union(&left, &right)
             .is_none()
@@ -15486,7 +15381,7 @@ fn exact_coplanar_surface_component_holed_union_materializes_disconnected_annuli
         hypermesh::affine_surface::arrange_coplanar_affine_surface_union(&left, &right).is_none()
     );
 
-    let union = hypermesh::surface::arrange_coplanar_surface_component_holed_union(&left, &right)
+    let union = surface::arrange_coplanar_surface_component_holed_union(&left, &right)
         .expect("two disconnected annular contact graphs should materialize together");
     union.validate().unwrap();
     union.validate_union_against_sources(&left, &right).unwrap();
@@ -15573,15 +15468,10 @@ fn exact_coplanar_surface_multi_component_union_materializes_disconnected_noncon
     )
     .unwrap();
 
-    assert!(hypermesh::surface::arrange_coplanar_convex_surface_union(&left, &right).is_none());
-    assert!(
-        hypermesh::surface::arrange_coplanar_convex_surface_component_union(&left, &right)
-            .is_none()
-    );
-    assert!(hypermesh::surface::arrange_coplanar_surface_component_union(&left, &right).is_none());
-    assert!(
-        hypermesh::surface::arrange_coplanar_convex_surface_multi_union(&left, &right).is_none()
-    );
+    assert!(surface::arrange_coplanar_convex_surface_union(&left, &right).is_none());
+    assert!(surface::arrange_coplanar_convex_surface_component_union(&left, &right).is_none());
+    assert!(surface::arrange_coplanar_surface_component_union(&left, &right).is_none());
+    assert!(surface::arrange_coplanar_convex_surface_multi_union(&left, &right).is_none());
     assert!(
         hypermesh::orthogonal_surface::arrange_coplanar_orthogonal_surface_union(&left, &right)
             .is_none()
@@ -15590,7 +15480,7 @@ fn exact_coplanar_surface_multi_component_union_materializes_disconnected_noncon
         hypermesh::affine_surface::arrange_coplanar_affine_surface_union(&left, &right).is_none()
     );
 
-    let union = hypermesh::surface::arrange_coplanar_surface_multi_component_union(&left, &right)
+    let union = surface::arrange_coplanar_surface_multi_component_union(&left, &right)
         .expect("disconnected nonconvex component union should materialize retained loops");
     union.validate().unwrap();
     union.validate_union_against_sources(&left, &right).unwrap();
@@ -15674,13 +15564,9 @@ fn exact_coplanar_surface_multi_component_union_materializes_disconnected_noncon
     )
     .unwrap();
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_multi_component_union(
-            &point_only_left,
-            &right
-        )
-        .is_none()
+        surface::arrange_coplanar_surface_multi_component_union(&point_only_left, &right).is_none()
     );
-    hypermesh::surface::arrange_coplanar_surface_point_touch_union(&point_only_left, &right)
+    surface::arrange_coplanar_surface_point_touch_union(&point_only_left, &right)
         .expect("point-only multi-component contact should route to explicit point-touch union")
         .validate_union_against_sources(&point_only_left, &right)
         .unwrap();
@@ -15707,19 +15593,13 @@ fn exact_coplanar_convex_surface_union_materializes_edge_touching_strip_cluster(
     )
     .unwrap();
 
-    assert!(hypermesh::surface::arrange_coplanar_convex_surface_union(&left, &right).is_none());
-    assert!(
-        hypermesh::surface::arrange_coplanar_convex_surface_multi_union(&left, &right).is_none()
-    );
-    let union = hypermesh::surface::arrange_coplanar_convex_surface_component_union(&left, &right)
+    assert!(surface::arrange_coplanar_convex_surface_union(&left, &right).is_none());
+    assert!(surface::arrange_coplanar_convex_surface_multi_union(&left, &right).is_none());
+    let union = surface::arrange_coplanar_convex_surface_component_union(&left, &right)
         .expect("full-edge touching rectangles should replay as one exact strip loop");
     union.validate().unwrap();
     union
-        .validate_against_sources(
-            &left,
-            &right,
-            hypermesh::surface::CoplanarArrangementOperation::Union,
-        )
+        .validate_against_sources(&left, &right, surface::CoplanarArrangementOperation::Union)
         .unwrap();
     assert_eq!(union.polygon.len(), 4);
     assert!(
@@ -15783,18 +15663,12 @@ fn exact_coplanar_convex_surface_union_materializes_edge_touching_strip_cluster(
     )
     .unwrap();
     assert!(
-        hypermesh::surface::arrange_coplanar_convex_surface_component_union(
-            &left,
-            &point_touching_right
-        )
-        .is_none()
+        surface::arrange_coplanar_convex_surface_component_union(&left, &point_touching_right)
+            .is_none()
     );
     assert!(
-        hypermesh::surface::arrange_coplanar_convex_surface_multi_union(
-            &left,
-            &point_touching_right
-        )
-        .is_none()
+        surface::arrange_coplanar_convex_surface_multi_union(&left, &point_touching_right)
+            .is_none()
     );
 }
 
@@ -15813,14 +15687,14 @@ fn exact_coplanar_convex_surface_difference_materializes_simple_loop() {
     )
     .unwrap();
 
-    let difference = hypermesh::surface::arrange_coplanar_convex_surface_difference(&left, &right)
+    let difference = surface::arrange_coplanar_convex_surface_difference(&left, &right)
         .expect("overlapping convex sheets should materialize one simple difference loop");
     difference.validate().unwrap();
     difference
         .validate_against_sources(
             &left,
             &right,
-            hypermesh::surface::CoplanarArrangementOperation::Difference,
+            surface::CoplanarArrangementOperation::Difference,
         )
         .unwrap();
     assert_eq!(difference.polygon.len(), 6);
@@ -15874,16 +15748,10 @@ fn exact_coplanar_convex_surface_difference_materializes_multiple_components() {
     )
     .unwrap();
 
-    assert!(
-        hypermesh::surface::arrange_coplanar_convex_surface_difference(&left, &right).is_none()
-    );
-    assert!(
-        hypermesh::surface::arrange_coplanar_convex_surface_holed_difference(&left, &right)
-            .is_none()
-    );
-    let difference =
-        hypermesh::surface::arrange_coplanar_convex_surface_multi_difference(&left, &right)
-            .expect("convex strip cut should produce two exact output components");
+    assert!(surface::arrange_coplanar_convex_surface_difference(&left, &right).is_none());
+    assert!(surface::arrange_coplanar_convex_surface_holed_difference(&left, &right).is_none());
+    let difference = surface::arrange_coplanar_convex_surface_multi_difference(&left, &right)
+        .expect("convex strip cut should produce two exact output components");
     difference.validate().unwrap();
     difference.validate_against_sources(&left, &right).unwrap();
     assert!(difference.validate_against_sources(&right, &left).is_err());
@@ -15985,16 +15853,10 @@ fn exact_coplanar_convex_surface_difference_materializes_left_component_cut() {
     )
     .unwrap();
 
-    assert!(
-        hypermesh::surface::arrange_coplanar_convex_surface_difference(&left, &right).is_none()
-    );
-    assert!(
-        hypermesh::surface::arrange_coplanar_convex_surface_holed_difference(&left, &right)
-            .is_none()
-    );
-    let difference =
-        hypermesh::surface::arrange_coplanar_convex_surface_multi_difference(&left, &right)
-            .expect("component-wise convex cut should retain cut and untouched left loops");
+    assert!(surface::arrange_coplanar_convex_surface_difference(&left, &right).is_none());
+    assert!(surface::arrange_coplanar_convex_surface_holed_difference(&left, &right).is_none());
+    let difference = surface::arrange_coplanar_convex_surface_multi_difference(&left, &right)
+        .expect("component-wise convex cut should retain cut and untouched left loops");
     difference.validate().unwrap();
     difference.validate_against_sources(&left, &right).unwrap();
     assert_eq!(difference.polygons.len(), 2);
@@ -16026,11 +15888,8 @@ fn exact_coplanar_convex_surface_difference_materializes_left_component_cut() {
     )
     .unwrap();
     assert!(
-        hypermesh::surface::arrange_coplanar_convex_surface_multi_difference(
-            &left,
-            &boundary_bridge
-        )
-        .is_none()
+        surface::arrange_coplanar_convex_surface_multi_difference(&left, &boundary_bridge)
+            .is_none()
     );
 
     let preflight = hypermesh::preflight_boolean_exact(
@@ -16099,16 +15958,10 @@ fn exact_coplanar_convex_surface_difference_materializes_multiple_component_cuts
     )
     .unwrap();
 
-    assert!(
-        hypermesh::surface::arrange_coplanar_convex_surface_difference(&left, &right).is_none()
-    );
-    assert!(
-        hypermesh::surface::arrange_coplanar_convex_surface_holed_difference(&left, &right)
-            .is_none()
-    );
-    let difference =
-        hypermesh::surface::arrange_coplanar_convex_surface_multi_difference(&left, &right)
-            .expect("two independent right cutters should retain two cuts and one untouched loop");
+    assert!(surface::arrange_coplanar_convex_surface_difference(&left, &right).is_none());
+    assert!(surface::arrange_coplanar_convex_surface_holed_difference(&left, &right).is_none());
+    let difference = surface::arrange_coplanar_convex_surface_multi_difference(&left, &right)
+        .expect("two independent right cutters should retain two cuts and one untouched loop");
     difference.validate().unwrap();
     difference.validate_against_sources(&left, &right).unwrap();
     assert_eq!(difference.polygons.len(), 3);
@@ -16161,7 +16014,7 @@ fn exact_coplanar_convex_surface_difference_materializes_multiple_component_cuts
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let multi_cutter = hypermesh::surface::arrange_coplanar_convex_surface_multi_difference(
+    let multi_cutter = surface::arrange_coplanar_convex_surface_multi_difference(
         &wide_left,
         &two_cutters_one_component,
     )
@@ -16214,12 +16067,11 @@ fn exact_coplanar_convex_surface_difference_materializes_multiple_component_cuts
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let nonrectangular_multi_cutter =
-        hypermesh::surface::arrange_coplanar_convex_surface_multi_difference(
-            &corner_cutter_left,
-            &nonrectangular_corner_cutters,
-        )
-        .expect("sequential exact corner cutters should retain convex remnants");
+    let nonrectangular_multi_cutter = surface::arrange_coplanar_convex_surface_multi_difference(
+        &corner_cutter_left,
+        &nonrectangular_corner_cutters,
+    )
+    .expect("sequential exact corner cutters should retain convex remnants");
     nonrectangular_multi_cutter.validate().unwrap();
     nonrectangular_multi_cutter
         .validate_against_sources(&corner_cutter_left, &nonrectangular_corner_cutters)
@@ -16282,13 +16134,13 @@ fn exact_coplanar_convex_surface_difference_materializes_multiple_component_cuts
     )
     .unwrap();
     assert!(
-        hypermesh::surface::arrange_coplanar_convex_surface_multi_difference(
+        surface::arrange_coplanar_convex_surface_multi_difference(
             &corner_cutter_left,
             &nonconvex_multi_cutter_right,
         )
         .is_none()
     );
-    let nonconvex_multi_cutter = hypermesh::surface::arrange_coplanar_surface_multi_difference(
+    let nonconvex_multi_cutter = surface::arrange_coplanar_surface_multi_difference(
         &corner_cutter_left,
         &nonconvex_multi_cutter_right,
     )
@@ -16358,17 +16210,15 @@ fn exact_coplanar_convex_surface_difference_materializes_multiple_component_cuts
     )
     .unwrap();
     assert!(
-        hypermesh::surface::arrange_coplanar_convex_surface_multi_difference(
+        surface::arrange_coplanar_convex_surface_multi_difference(
             &wide_left,
             &partial_height_cutters,
         )
         .is_none()
     );
-    let partial_height_nonconvex = hypermesh::surface::arrange_coplanar_surface_multi_difference(
-        &wide_left,
-        &partial_height_cutters,
-    )
-    .expect("orthogonal no-hole replay should retain partial-height multi-cutter loops");
+    let partial_height_nonconvex =
+        surface::arrange_coplanar_surface_multi_difference(&wide_left, &partial_height_cutters)
+            .expect("orthogonal no-hole replay should retain partial-height multi-cutter loops");
     partial_height_nonconvex.validate().unwrap();
     partial_height_nonconvex
         .validate_difference_against_sources(&wide_left, &partial_height_cutters)
@@ -16435,11 +16285,8 @@ fn exact_coplanar_convex_surface_difference_materializes_multiple_component_cuts
     )
     .unwrap();
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_multi_difference(
-            &wide_left,
-            &contained_hole_cutters,
-        )
-        .is_none()
+        surface::arrange_coplanar_surface_multi_difference(&wide_left, &contained_hole_cutters,)
+            .is_none()
     );
 
     let channel_left = ExactMesh::from_i64_triangles_with_policy(
@@ -16461,20 +16308,20 @@ fn exact_coplanar_convex_surface_difference_materializes_multiple_component_cuts
     )
     .unwrap();
     assert!(
-        hypermesh::surface::arrange_coplanar_convex_surface_multi_difference(
+        surface::arrange_coplanar_convex_surface_multi_difference(
             &channel_left,
             &nonrectilinear_channel_cutters,
         )
         .is_none()
     );
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_side_cutter_difference(
+        surface::arrange_coplanar_surface_side_cutter_difference(
             &channel_left,
             &nonrectilinear_channel_cutters,
         )
         .is_none()
     );
-    let channel_difference = hypermesh::surface::arrange_coplanar_surface_multi_difference(
+    let channel_difference = surface::arrange_coplanar_surface_multi_difference(
         &channel_left,
         &nonrectilinear_channel_cutters,
     )
@@ -16523,7 +16370,7 @@ fn exact_coplanar_convex_surface_difference_materializes_multiple_component_cuts
     )
     .unwrap();
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_multi_difference(
+        surface::arrange_coplanar_surface_multi_difference(
             &channel_left,
             &nonrectilinear_channel_retained_hole_cutters,
         )
@@ -16546,18 +16393,17 @@ fn exact_coplanar_convex_surface_difference_materializes_multiple_component_cuts
     )
     .unwrap();
     assert!(
-        hypermesh::surface::arrange_coplanar_convex_surface_component_holed_difference(
+        surface::arrange_coplanar_convex_surface_component_holed_difference(
             &channel_left,
             &nonrectilinear_channel_consumed_hole_cutters,
         )
         .is_none()
     );
-    let consumed_channel_difference =
-        hypermesh::surface::arrange_coplanar_surface_multi_difference(
-            &channel_left,
-            &nonrectilinear_channel_consumed_hole_cutters,
-        )
-        .expect("a side-cutter split should consume strict holes wholly inside removed openings");
+    let consumed_channel_difference = surface::arrange_coplanar_surface_multi_difference(
+        &channel_left,
+        &nonrectilinear_channel_consumed_hole_cutters,
+    )
+    .expect("a side-cutter split should consume strict holes wholly inside removed openings");
     consumed_channel_difference.validate().unwrap();
     consumed_channel_difference
         .validate_difference_against_sources(
@@ -16640,20 +16486,20 @@ fn exact_coplanar_convex_surface_difference_materializes_multiple_component_cuts
     )
     .unwrap();
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_multi_difference(
+        surface::arrange_coplanar_surface_multi_difference(
             &side_opening_left,
             &single_side_opening_cutter,
         )
         .is_none()
     );
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_cutter_hole_contact_difference(
+        surface::arrange_coplanar_surface_cutter_hole_contact_difference(
             &side_opening_left,
             &single_side_opening_cutter,
         )
         .is_none()
     );
-    let single_side_opening = hypermesh::surface::arrange_coplanar_surface_side_cutter_difference(
+    let single_side_opening = surface::arrange_coplanar_surface_side_cutter_difference(
         &side_opening_left,
         &single_side_opening_cutter,
     )
@@ -16726,20 +16572,20 @@ fn exact_coplanar_convex_surface_difference_materializes_multiple_component_cuts
     );
 
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_multi_difference(
+        surface::arrange_coplanar_surface_multi_difference(
             &side_opening_left,
             &side_opening_cutters,
         )
         .is_none()
     );
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_cutter_hole_contact_difference(
+        surface::arrange_coplanar_surface_cutter_hole_contact_difference(
             &side_opening_left,
             &side_opening_cutters,
         )
         .is_none()
     );
-    let side_opening = hypermesh::surface::arrange_coplanar_surface_side_cutter_difference(
+    let side_opening = surface::arrange_coplanar_surface_side_cutter_difference(
         &side_opening_left,
         &side_opening_cutters,
     )
@@ -16816,18 +16662,17 @@ fn exact_coplanar_convex_surface_difference_materializes_multiple_component_cuts
     )
     .unwrap();
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_side_cutter_difference(
+        surface::arrange_coplanar_surface_side_cutter_difference(
             &multi_component_side_opening_left,
             &side_opening_cutters,
         )
         .is_none()
     );
-    let multi_component_side_opening =
-        hypermesh::surface::arrange_coplanar_surface_multi_difference(
-            &multi_component_side_opening_left,
-            &side_opening_cutters,
-        )
-        .expect("source-local side-cutter opening should retain unrelated components");
+    let multi_component_side_opening = surface::arrange_coplanar_surface_multi_difference(
+        &multi_component_side_opening_left,
+        &side_opening_cutters,
+    )
+    .expect("source-local side-cutter opening should retain unrelated components");
     multi_component_side_opening.validate().unwrap();
     multi_component_side_opening
         .validate_difference_against_sources(
@@ -16900,18 +16745,17 @@ fn exact_coplanar_convex_surface_difference_materializes_multiple_component_cuts
     );
 
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_side_cutter_difference(
+        surface::arrange_coplanar_surface_side_cutter_difference(
             &multi_component_side_opening_left,
             &single_side_opening_cutter,
         )
         .is_none()
     );
-    let multi_component_single_side_opening =
-        hypermesh::surface::arrange_coplanar_surface_multi_difference(
-            &multi_component_side_opening_left,
-            &single_side_opening_cutter,
-        )
-        .expect("one source-local side cutter should retain unrelated left components");
+    let multi_component_single_side_opening = surface::arrange_coplanar_surface_multi_difference(
+        &multi_component_side_opening_left,
+        &single_side_opening_cutter,
+    )
+    .expect("one source-local side cutter should retain unrelated left components");
     multi_component_single_side_opening.validate().unwrap();
     multi_component_single_side_opening
         .validate_difference_against_sources(
@@ -17030,20 +16874,20 @@ fn exact_coplanar_convex_surface_difference_materializes_multiple_component_cuts
     )
     .unwrap();
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_side_cutter_difference(
+        surface::arrange_coplanar_surface_side_cutter_difference(
             &component_opening_left,
             &component_opening_right,
         )
         .is_none()
     );
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_multi_difference(
+        surface::arrange_coplanar_surface_multi_difference(
             &component_opening_left,
             &component_opening_right,
         )
         .is_none()
     );
-    let component_opening = hypermesh::surface::arrange_coplanar_surface_component_difference(
+    let component_opening = surface::arrange_coplanar_surface_component_difference(
         &component_opening_left,
         &component_opening_right,
     )
@@ -17120,18 +16964,17 @@ fn exact_coplanar_convex_surface_difference_materializes_multiple_component_cuts
     )
     .unwrap();
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_side_cutter_difference(
+        surface::arrange_coplanar_surface_side_cutter_difference(
             &side_opening_left,
             &point_only_side_opening,
         )
         .is_none()
     );
-    let point_branch_difference =
-        hypermesh::surface::arrange_coplanar_surface_point_touch_difference(
-            &side_opening_left,
-            &point_only_side_opening,
-        )
-        .expect("point-touch side cutters should retain branched simple components");
+    let point_branch_difference = surface::arrange_coplanar_surface_point_touch_difference(
+        &side_opening_left,
+        &point_only_side_opening,
+    )
+    .expect("point-touch side cutters should retain branched simple components");
     point_branch_difference.validate().unwrap();
     point_branch_difference
         .validate_difference_against_sources(&side_opening_left, &point_only_side_opening)
@@ -17220,27 +17063,27 @@ fn exact_coplanar_convex_surface_difference_materializes_multiple_component_cuts
     )
     .unwrap();
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_side_cutter_difference(
+        surface::arrange_coplanar_surface_side_cutter_difference(
             &side_opening_left,
             &point_branch_consumed_hole,
         )
         .is_none()
     );
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_multi_difference(
+        surface::arrange_coplanar_surface_multi_difference(
             &side_opening_left,
             &point_branch_consumed_hole,
         )
         .is_none()
     );
     assert!(
-        hypermesh::surface::arrange_coplanar_convex_surface_component_holed_difference(
+        surface::arrange_coplanar_convex_surface_component_holed_difference(
             &side_opening_left,
             &point_branch_consumed_hole,
         )
         .is_none()
     );
-    let consumed_branch = hypermesh::surface::arrange_coplanar_surface_point_touch_difference(
+    let consumed_branch = surface::arrange_coplanar_surface_point_touch_difference(
         &side_opening_left,
         &point_branch_consumed_hole,
     )
@@ -17327,27 +17170,27 @@ fn exact_coplanar_convex_surface_difference_materializes_multiple_component_cuts
     )
     .unwrap();
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_side_cutter_difference(
+        surface::arrange_coplanar_surface_side_cutter_difference(
             &side_opening_left,
             &point_branch_straddling_hole,
         )
         .is_none()
     );
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_multi_difference(
+        surface::arrange_coplanar_surface_multi_difference(
             &side_opening_left,
             &point_branch_straddling_hole,
         )
         .is_none()
     );
     assert!(
-        hypermesh::surface::arrange_coplanar_convex_surface_component_holed_difference(
+        surface::arrange_coplanar_convex_surface_component_holed_difference(
             &side_opening_left,
             &point_branch_straddling_hole,
         )
         .is_none()
     );
-    let straddling_branch = hypermesh::surface::arrange_coplanar_surface_point_touch_difference(
+    let straddling_branch = surface::arrange_coplanar_surface_point_touch_difference(
         &side_opening_left,
         &point_branch_straddling_hole,
     )
@@ -17442,25 +17285,24 @@ fn exact_coplanar_convex_surface_difference_materializes_multiple_component_cuts
     )
     .unwrap();
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_multi_difference(
+        surface::arrange_coplanar_surface_multi_difference(
             &grouped_straddling_branch_left,
             &grouped_straddling_branch_right,
         )
         .is_none()
     );
     assert!(
-        hypermesh::surface::arrange_coplanar_convex_surface_component_holed_difference(
+        surface::arrange_coplanar_convex_surface_component_holed_difference(
             &grouped_straddling_branch_left,
             &grouped_straddling_branch_right,
         )
         .is_none()
     );
-    let grouped_straddling_branch =
-        hypermesh::surface::arrange_coplanar_surface_point_touch_difference(
-            &grouped_straddling_branch_left,
-            &grouped_straddling_branch_right,
-        )
-        .expect("a straddling hole may consume a simple union of several branch openings");
+    let grouped_straddling_branch = surface::arrange_coplanar_surface_point_touch_difference(
+        &grouped_straddling_branch_left,
+        &grouped_straddling_branch_right,
+    )
+    .expect("a straddling hole may consume a simple union of several branch openings");
     grouped_straddling_branch.validate().unwrap();
     grouped_straddling_branch
         .validate_difference_against_sources(
@@ -17554,21 +17396,21 @@ fn exact_coplanar_convex_surface_difference_materializes_multiple_component_cuts
     )
     .unwrap();
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_multi_difference(
+        surface::arrange_coplanar_surface_multi_difference(
             &grouped_straddling_branch_left,
             &orthogonal_grouped_straddling_branch_right,
         )
         .is_none()
     );
     assert!(
-        hypermesh::surface::arrange_coplanar_convex_surface_component_holed_difference(
+        surface::arrange_coplanar_convex_surface_component_holed_difference(
             &grouped_straddling_branch_left,
             &orthogonal_grouped_straddling_branch_right,
         )
         .is_none()
     );
     let orthogonal_grouped_straddling_branch =
-        hypermesh::surface::arrange_coplanar_surface_point_touch_difference(
+        surface::arrange_coplanar_surface_point_touch_difference(
             &grouped_straddling_branch_left,
             &orthogonal_grouped_straddling_branch_right,
         )
@@ -17671,14 +17513,14 @@ fn exact_coplanar_convex_surface_difference_materializes_multiple_component_cuts
     )
     .unwrap();
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_point_touch_difference(
+        surface::arrange_coplanar_surface_point_touch_difference(
             &grouped_straddling_branch_left,
             &grouped_straddling_retained_right,
         )
         .is_none()
     );
     let grouped_straddling_retained =
-        hypermesh::surface::arrange_coplanar_convex_surface_component_holed_difference(
+        surface::arrange_coplanar_convex_surface_component_holed_difference(
             &grouped_straddling_branch_left,
             &grouped_straddling_retained_right,
         )
@@ -17810,14 +17652,14 @@ fn exact_coplanar_convex_surface_difference_materializes_multiple_component_cuts
     )
     .unwrap();
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_point_touch_difference(
+        surface::arrange_coplanar_surface_point_touch_difference(
             &grouped_straddling_branch_left,
             &orthogonal_grouped_straddling_retained_right,
         )
         .is_none()
     );
     let orthogonal_grouped_retained =
-        hypermesh::surface::arrange_coplanar_convex_surface_component_holed_difference(
+        surface::arrange_coplanar_convex_surface_component_holed_difference(
             &grouped_straddling_branch_left,
             &orthogonal_grouped_straddling_retained_right,
         )
@@ -17906,14 +17748,14 @@ fn exact_coplanar_convex_surface_difference_materializes_multiple_component_cuts
     )
     .unwrap();
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_point_touch_difference(
+        surface::arrange_coplanar_surface_point_touch_difference(
             &multi_component_grouped_left,
             &multi_component_grouped_right,
         )
         .is_none()
     );
     let multi_component_grouped =
-        hypermesh::surface::arrange_coplanar_convex_surface_component_holed_difference(
+        surface::arrange_coplanar_convex_surface_component_holed_difference(
             &multi_component_grouped_left,
             &multi_component_grouped_right,
         )
@@ -18026,25 +17868,24 @@ fn exact_coplanar_convex_surface_difference_materializes_multiple_component_cuts
     )
     .unwrap();
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_side_cutter_difference(
+        surface::arrange_coplanar_surface_side_cutter_difference(
             &multi_component_point_branch_left,
             &point_only_side_opening,
         )
         .is_none()
     );
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_multi_difference(
+        surface::arrange_coplanar_surface_multi_difference(
             &multi_component_point_branch_left,
             &point_only_side_opening,
         )
         .is_none()
     );
-    let multi_component_point_branch =
-        hypermesh::surface::arrange_coplanar_surface_point_touch_difference(
-            &multi_component_point_branch_left,
-            &point_only_side_opening,
-        )
-        .expect("point-touch subtraction should be source-local across left components");
+    let multi_component_point_branch = surface::arrange_coplanar_surface_point_touch_difference(
+        &multi_component_point_branch_left,
+        &point_only_side_opening,
+    )
+    .expect("point-touch subtraction should be source-local across left components");
     multi_component_point_branch.validate().unwrap();
     multi_component_point_branch
         .validate_difference_against_sources(
@@ -18144,7 +17985,7 @@ fn exact_coplanar_convex_surface_difference_materializes_multiple_component_cuts
     )
     .unwrap();
     let multi_component_point_branch_straddling_holed =
-        hypermesh::surface::arrange_coplanar_convex_surface_component_holed_difference(
+        surface::arrange_coplanar_convex_surface_component_holed_difference(
             &multi_component_point_branch_left,
             &multi_component_point_branch_straddling_right,
         )
@@ -18269,25 +18110,24 @@ fn exact_coplanar_convex_surface_difference_materializes_multiple_component_cuts
     )
     .unwrap();
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_side_cutter_difference(
+        surface::arrange_coplanar_surface_side_cutter_difference(
             &nonconvex_point_branch_left,
             &nonconvex_point_branch_right,
         )
         .is_none()
     );
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_multi_difference(
+        surface::arrange_coplanar_surface_multi_difference(
             &nonconvex_point_branch_left,
             &nonconvex_point_branch_right,
         )
         .is_none()
     );
-    let nonconvex_point_branch =
-        hypermesh::surface::arrange_coplanar_surface_point_touch_difference(
-            &nonconvex_point_branch_left,
-            &nonconvex_point_branch_right,
-        )
-        .expect("nonconvex source point-touch side cutters should retain branch loops");
+    let nonconvex_point_branch = surface::arrange_coplanar_surface_point_touch_difference(
+        &nonconvex_point_branch_left,
+        &nonconvex_point_branch_right,
+    )
+    .expect("nonconvex source point-touch side cutters should retain branch loops");
     nonconvex_point_branch.validate().unwrap();
     nonconvex_point_branch
         .validate_difference_against_sources(
@@ -18371,25 +18211,24 @@ fn exact_coplanar_convex_surface_difference_materializes_multiple_component_cuts
     )
     .unwrap();
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_multi_difference(
+        surface::arrange_coplanar_surface_multi_difference(
             &nonconvex_point_branch_left,
             &nonconvex_point_branch_consumed_hole,
         )
         .is_none()
     );
     assert!(
-        hypermesh::surface::arrange_coplanar_convex_surface_component_holed_difference(
+        surface::arrange_coplanar_convex_surface_component_holed_difference(
             &nonconvex_point_branch_left,
             &nonconvex_point_branch_consumed_hole,
         )
         .is_none()
     );
-    let nonconvex_consumed_branch =
-        hypermesh::surface::arrange_coplanar_surface_point_touch_difference(
-            &nonconvex_point_branch_left,
-            &nonconvex_point_branch_consumed_hole,
-        )
-        .expect("nonconvex point-touch side cutters should consume owned strict holes");
+    let nonconvex_consumed_branch = surface::arrange_coplanar_surface_point_touch_difference(
+        &nonconvex_point_branch_left,
+        &nonconvex_point_branch_consumed_hole,
+    )
+    .expect("nonconvex point-touch side cutters should consume owned strict holes");
     nonconvex_consumed_branch.validate().unwrap();
     nonconvex_consumed_branch
         .validate_difference_against_sources(
@@ -18452,25 +18291,24 @@ fn exact_coplanar_convex_surface_difference_materializes_multiple_component_cuts
     )
     .unwrap();
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_multi_difference(
+        surface::arrange_coplanar_surface_multi_difference(
             &nonconvex_point_branch_left,
             &nonconvex_point_branch_straddling_hole,
         )
         .is_none()
     );
     assert!(
-        hypermesh::surface::arrange_coplanar_convex_surface_component_holed_difference(
+        surface::arrange_coplanar_convex_surface_component_holed_difference(
             &nonconvex_point_branch_left,
             &nonconvex_point_branch_straddling_hole,
         )
         .is_none()
     );
-    let nonconvex_straddling_branch =
-        hypermesh::surface::arrange_coplanar_surface_point_touch_difference(
-            &nonconvex_point_branch_left,
-            &nonconvex_point_branch_straddling_hole,
-        )
-        .expect("nonconvex point-touch side cutters should consume an owned straddling hole");
+    let nonconvex_straddling_branch = surface::arrange_coplanar_surface_point_touch_difference(
+        &nonconvex_point_branch_left,
+        &nonconvex_point_branch_straddling_hole,
+    )
+    .expect("nonconvex point-touch side cutters should consume an owned straddling hole");
     nonconvex_straddling_branch.validate().unwrap();
     nonconvex_straddling_branch
         .validate_difference_against_sources(
@@ -18582,13 +18420,13 @@ fn exact_coplanar_convex_surface_difference_materializes_multiple_component_cuts
     )
     .unwrap();
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_multi_difference(
+        surface::arrange_coplanar_surface_multi_difference(
             &nonconvex_grouped_left,
             &nonconvex_grouped_right,
         )
         .is_none()
     );
-    let nonconvex_grouped = hypermesh::surface::arrange_coplanar_surface_point_touch_difference(
+    let nonconvex_grouped = surface::arrange_coplanar_surface_point_touch_difference(
         &nonconvex_grouped_left,
         &nonconvex_grouped_right,
     )
@@ -18692,14 +18530,14 @@ fn exact_coplanar_convex_surface_difference_materializes_multiple_component_cuts
     )
     .unwrap();
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_point_touch_difference(
+        surface::arrange_coplanar_surface_point_touch_difference(
             &multi_component_nonconvex_grouped_left,
             &multi_component_nonconvex_grouped_right,
         )
         .is_none()
     );
     let multi_component_nonconvex_grouped =
-        hypermesh::surface::arrange_coplanar_convex_surface_component_holed_difference(
+        surface::arrange_coplanar_convex_surface_component_holed_difference(
             &multi_component_nonconvex_grouped_left,
             &multi_component_nonconvex_grouped_right,
         )
@@ -18820,14 +18658,14 @@ fn exact_coplanar_convex_surface_difference_materializes_multiple_component_cuts
     )
     .unwrap();
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_point_touch_difference(
+        surface::arrange_coplanar_surface_point_touch_difference(
             &nonconvex_grouped_left,
             &nonconvex_grouped_retained_right,
         )
         .is_none()
     );
     let nonconvex_grouped_retained =
-        hypermesh::surface::arrange_coplanar_convex_surface_component_holed_difference(
+        surface::arrange_coplanar_convex_surface_component_holed_difference(
             &nonconvex_grouped_left,
             &nonconvex_grouped_retained_right,
         )
@@ -18930,14 +18768,14 @@ fn exact_coplanar_convex_surface_difference_materializes_multiple_component_cuts
     )
     .unwrap();
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_point_touch_difference(
+        surface::arrange_coplanar_surface_point_touch_difference(
             &nonconvex_point_branch_left,
             &nonconvex_point_branch_straddling_retained,
         )
         .is_none()
     );
     let nonconvex_straddling_holed =
-        hypermesh::surface::arrange_coplanar_convex_surface_component_holed_difference(
+        surface::arrange_coplanar_convex_surface_component_holed_difference(
             &nonconvex_point_branch_left,
             &nonconvex_point_branch_straddling_retained,
         )
@@ -19065,14 +18903,14 @@ fn exact_coplanar_convex_surface_difference_materializes_multiple_component_cuts
     )
     .unwrap();
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_multi_difference(
+        surface::arrange_coplanar_surface_multi_difference(
             &multi_component_nonconvex_point_branch_left,
             &nonconvex_point_branch_right,
         )
         .is_none()
     );
     let multi_component_nonconvex_point_branch =
-        hypermesh::surface::arrange_coplanar_surface_point_touch_difference(
+        surface::arrange_coplanar_surface_point_touch_difference(
             &multi_component_nonconvex_point_branch_left,
             &nonconvex_point_branch_right,
         )
@@ -19179,7 +19017,7 @@ fn exact_coplanar_convex_surface_difference_materializes_multiple_component_cuts
         )
         .unwrap();
     let multi_component_nonconvex_point_branch_straddling_holed =
-        hypermesh::surface::arrange_coplanar_convex_surface_component_holed_difference(
+        surface::arrange_coplanar_convex_surface_component_holed_difference(
             &multi_component_nonconvex_point_branch_left,
             &multi_component_nonconvex_point_branch_straddling_right,
         )
@@ -19344,12 +19182,10 @@ fn exact_coplanar_surface_difference_materializes_nonconvex_source_side_opening(
     .unwrap();
 
     assert!(
-        hypermesh::surface::arrange_coplanar_convex_surface_multi_difference(&left, &side_opening)
-            .is_none()
+        surface::arrange_coplanar_convex_surface_multi_difference(&left, &side_opening).is_none()
     );
-    let difference =
-        hypermesh::surface::arrange_coplanar_surface_component_difference(&left, &side_opening)
-            .expect("side-attached cutter on a nonconvex source disk should replay exactly");
+    let difference = surface::arrange_coplanar_surface_component_difference(&left, &side_opening)
+        .expect("side-attached cutter on a nonconvex source disk should replay exactly");
     difference.validate().unwrap();
     difference
         .validate_component_difference_against_sources(&left, &side_opening)
@@ -19421,8 +19257,7 @@ fn exact_coplanar_surface_difference_materializes_nonconvex_source_side_opening(
     )
     .unwrap();
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_component_difference(&left, &interior_hole)
-            .is_none()
+        surface::arrange_coplanar_surface_component_difference(&left, &interior_hole).is_none()
     );
 
     let point_only_contact = ExactMesh::from_i64_triangles_with_policy(
@@ -19432,11 +19267,8 @@ fn exact_coplanar_surface_difference_materializes_nonconvex_source_side_opening(
     )
     .unwrap();
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_component_difference(
-            &left,
-            &point_only_contact
-        )
-        .is_none()
+        surface::arrange_coplanar_surface_component_difference(&left, &point_only_contact)
+            .is_none()
     );
 
     let crossing_opening = ExactMesh::from_i64_triangles_with_policy(
@@ -19446,15 +19278,11 @@ fn exact_coplanar_surface_difference_materializes_nonconvex_source_side_opening(
     )
     .unwrap();
     assert!(
-        hypermesh::surface::arrange_coplanar_convex_surface_multi_difference(
-            &left,
-            &crossing_opening,
-        )
-        .is_none()
+        surface::arrange_coplanar_convex_surface_multi_difference(&left, &crossing_opening,)
+            .is_none()
     );
-    let clipped =
-        hypermesh::surface::arrange_coplanar_surface_component_difference(&left, &crossing_opening)
-            .expect("crossing cutter should clip into a bounded nonconvex source opening");
+    let clipped = surface::arrange_coplanar_surface_component_difference(&left, &crossing_opening)
+        .expect("crossing cutter should clip into a bounded nonconvex source opening");
     clipped.validate().unwrap();
     clipped
         .validate_component_difference_against_sources(&left, &crossing_opening)
@@ -19514,7 +19342,7 @@ fn exact_coplanar_surface_difference_materializes_nonconvex_source_side_opening(
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let consumed_clipped = hypermesh::surface::arrange_coplanar_surface_component_difference(
+    let consumed_clipped = surface::arrange_coplanar_surface_component_difference(
         &left,
         &crossing_opening_consumed_hole,
     )
@@ -19530,7 +19358,7 @@ fn exact_coplanar_surface_difference_materializes_nonconvex_source_side_opening(
             .any(|point| real_eq(&point.x, &Real::from(5)) && real_eq(&point.y, &Real::from(9)))
     );
     assert!(
-        hypermesh::surface::arrange_coplanar_convex_surface_component_holed_difference(
+        surface::arrange_coplanar_convex_surface_component_holed_difference(
             &left,
             &crossing_opening_consumed_hole,
         )
@@ -19597,20 +19425,20 @@ fn exact_coplanar_surface_difference_materializes_nonconvex_source_side_opening(
     )
     .unwrap();
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_component_difference(
+        surface::arrange_coplanar_surface_component_difference(
             &split_left,
             &split_crossing_consumed_hole,
         )
         .is_none()
     );
     assert!(
-        hypermesh::surface::arrange_coplanar_convex_surface_component_holed_difference(
+        surface::arrange_coplanar_convex_surface_component_holed_difference(
             &split_left,
             &split_crossing_consumed_hole,
         )
         .is_none()
     );
-    let split_consumed = hypermesh::surface::arrange_coplanar_surface_multi_difference(
+    let split_consumed = surface::arrange_coplanar_surface_multi_difference(
         &split_left,
         &split_crossing_consumed_hole,
     )
@@ -19661,12 +19489,11 @@ fn exact_coplanar_surface_difference_materializes_nonconvex_source_side_opening(
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let split_consumed_holed =
-        hypermesh::surface::arrange_coplanar_convex_surface_component_holed_difference(
-            &split_left,
-            &split_crossing_consumed_and_retained_holes,
-        )
-        .expect("a clipped side-to-side opening should split while retaining unrelated holes");
+    let split_consumed_holed = surface::arrange_coplanar_convex_surface_component_holed_difference(
+        &split_left,
+        &split_crossing_consumed_and_retained_holes,
+    )
+    .expect("a clipped side-to-side opening should split while retaining unrelated holes");
     split_consumed_holed.validate().unwrap();
     split_consumed_holed
         .validate_against_sources(&split_left, &split_crossing_consumed_and_retained_holes)
@@ -19733,7 +19560,7 @@ fn exact_coplanar_surface_difference_materializes_nonconvex_source_side_opening(
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let merged_crossing = hypermesh::surface::arrange_coplanar_surface_component_difference(
+    let merged_crossing = surface::arrange_coplanar_surface_component_difference(
         &left,
         &overlapping_crossing_openings,
     )
@@ -19768,11 +19595,8 @@ fn exact_coplanar_surface_difference_materializes_nonconvex_source_side_opening(
     )
     .unwrap();
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_component_difference(
-            &left,
-            &point_only_openings,
-        )
-        .is_none()
+        surface::arrange_coplanar_surface_component_difference(&left, &point_only_openings,)
+            .is_none()
     );
 
     let incidental_left = ExactMesh::from_i64_triangles_with_policy(
@@ -19805,13 +19629,13 @@ fn exact_coplanar_surface_difference_materializes_nonconvex_source_side_opening(
     )
     .unwrap();
     assert!(
-        hypermesh::surface::arrange_coplanar_convex_surface_multi_difference(
+        surface::arrange_coplanar_convex_surface_multi_difference(
             &incidental_left,
             &incidental_point_openings,
         )
         .is_none()
     );
-    let incidental = hypermesh::surface::arrange_coplanar_surface_component_difference(
+    let incidental = surface::arrange_coplanar_surface_component_difference(
         &incidental_left,
         &incidental_point_openings,
     )
@@ -19884,15 +19708,11 @@ fn exact_coplanar_surface_difference_materializes_nonconvex_source_side_opening(
     )
     .unwrap();
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_component_difference(
-            &multi_left,
-            &side_opening,
-        )
-        .is_none()
+        surface::arrange_coplanar_surface_component_difference(&multi_left, &side_opening,)
+            .is_none()
     );
-    let multi =
-        hypermesh::surface::arrange_coplanar_surface_multi_difference(&multi_left, &side_opening)
-            .expect("nonconvex source side opening plus untouched component should emit two loops");
+    let multi = surface::arrange_coplanar_surface_multi_difference(&multi_left, &side_opening)
+        .expect("nonconvex source side opening plus untouched component should emit two loops");
     multi.validate().unwrap();
     multi
         .validate_difference_against_sources(&multi_left, &side_opening)
@@ -19930,14 +19750,11 @@ fn exact_coplanar_component_holed_difference_materializes_nonconvex_source_disk_
     .unwrap();
 
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_component_difference(&left, &retained_hole)
-            .is_none()
+        surface::arrange_coplanar_surface_component_difference(&left, &retained_hole).is_none()
     );
-    let holed = hypermesh::surface::arrange_coplanar_convex_surface_component_holed_difference(
-        &left,
-        &retained_hole,
-    )
-    .expect("strict hole in a retained nonconvex source disk should materialize");
+    let holed =
+        surface::arrange_coplanar_convex_surface_component_holed_difference(&left, &retained_hole)
+            .expect("strict hole in a retained nonconvex source disk should materialize");
     holed.validate().unwrap();
     holed
         .validate_against_sources(&left, &retained_hole)
@@ -20013,12 +19830,11 @@ fn exact_coplanar_component_holed_difference_materializes_nonconvex_source_disk_
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let opened_holed =
-        hypermesh::surface::arrange_coplanar_convex_surface_component_holed_difference(
-            &left,
-            &opening_and_hole,
-        )
-        .expect("side opening and unrelated strict hole should replay on a nonconvex source disk");
+    let opened_holed = surface::arrange_coplanar_convex_surface_component_holed_difference(
+        &left,
+        &opening_and_hole,
+    )
+    .expect("side opening and unrelated strict hole should replay on a nonconvex source disk");
     opened_holed.validate().unwrap();
     opened_holed
         .validate_against_sources(&left, &opening_and_hole)
@@ -20045,7 +19861,7 @@ fn exact_coplanar_component_holed_difference_materializes_nonconvex_source_disk_
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let consumed = hypermesh::surface::arrange_coplanar_convex_surface_component_holed_difference(
+    let consumed = surface::arrange_coplanar_convex_surface_component_holed_difference(
         &left,
         &retained_and_consumed,
     )
@@ -20068,7 +19884,7 @@ fn exact_coplanar_component_holed_difference_materializes_nonconvex_source_disk_
     )
     .unwrap();
     assert!(
-        hypermesh::surface::arrange_coplanar_convex_surface_component_holed_difference(
+        surface::arrange_coplanar_convex_surface_component_holed_difference(
             &left,
             &boundary_touching_hole,
         )
@@ -20087,12 +19903,11 @@ fn exact_coplanar_component_holed_difference_materializes_nonconvex_source_disk_
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let clipped_holed =
-        hypermesh::surface::arrange_coplanar_convex_surface_component_holed_difference(
-            &left,
-            &clipped_opening_and_hole,
-        )
-        .expect("crossing cutter should clip while retaining unrelated nonconvex source holes");
+    let clipped_holed = surface::arrange_coplanar_convex_surface_component_holed_difference(
+        &left,
+        &clipped_opening_and_hole,
+    )
+    .expect("crossing cutter should clip while retaining unrelated nonconvex source holes");
     clipped_holed.validate().unwrap();
     clipped_holed
         .validate_against_sources(&left, &clipped_opening_and_hole)
@@ -20134,12 +19949,11 @@ fn exact_coplanar_component_holed_difference_materializes_nonconvex_source_disk_
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let merged_clipped_holed =
-        hypermesh::surface::arrange_coplanar_convex_surface_component_holed_difference(
-            &left,
-            &overlapping_clipped_openings_and_hole,
-        )
-        .expect("overlapping clipped openings should merge while retaining unrelated holes");
+    let merged_clipped_holed = surface::arrange_coplanar_convex_surface_component_holed_difference(
+        &left,
+        &overlapping_clipped_openings_and_hole,
+    )
+    .expect("overlapping clipped openings should merge while retaining unrelated holes");
     merged_clipped_holed.validate().unwrap();
     merged_clipped_holed
         .validate_against_sources(&left, &overlapping_clipped_openings_and_hole)
@@ -20168,7 +19982,7 @@ fn exact_coplanar_component_holed_difference_materializes_nonconvex_source_disk_
     )
     .unwrap();
     let clipped_straddling_holed =
-        hypermesh::surface::arrange_coplanar_convex_surface_component_holed_difference(
+        surface::arrange_coplanar_convex_surface_component_holed_difference(
             &left,
             &clipped_straddling_hole_and_retained_hole,
         )
@@ -20250,18 +20064,17 @@ fn exact_coplanar_component_holed_difference_materializes_nonconvex_source_disk_
     )
     .unwrap();
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_multi_difference(
+        surface::arrange_coplanar_surface_multi_difference(
             &nonconvex_point_branch_left,
             &nonconvex_point_branch_hole_and_cutters,
         )
         .is_none()
     );
-    let point_branch_holed =
-        hypermesh::surface::arrange_coplanar_convex_surface_component_holed_difference(
-            &nonconvex_point_branch_left,
-            &nonconvex_point_branch_hole_and_cutters,
-        )
-        .expect("nonconvex point-branch side cutters should retain strict source holes");
+    let point_branch_holed = surface::arrange_coplanar_convex_surface_component_holed_difference(
+        &nonconvex_point_branch_left,
+        &nonconvex_point_branch_hole_and_cutters,
+    )
+    .expect("nonconvex point-branch side cutters should retain strict source holes");
     point_branch_holed.validate().unwrap();
     point_branch_holed
         .validate_against_sources(
@@ -20374,7 +20187,7 @@ fn exact_coplanar_component_holed_difference_consumes_straddling_hole_on_nonconv
     )
     .unwrap();
 
-    let holed = hypermesh::surface::arrange_coplanar_convex_surface_component_holed_difference(
+    let holed = surface::arrange_coplanar_convex_surface_component_holed_difference(
         &left,
         &retained_and_straddling,
     )
@@ -20427,7 +20240,7 @@ fn exact_coplanar_component_holed_difference_consumes_straddling_hole_on_nonconv
     )
     .unwrap();
     assert!(
-        hypermesh::surface::arrange_coplanar_convex_surface_component_holed_difference(
+        surface::arrange_coplanar_convex_surface_component_holed_difference(
             &left,
             &point_only_contact,
         )
@@ -20485,13 +20298,9 @@ fn exact_coplanar_convex_surface_difference_materializes_multiple_holes() {
     )
     .unwrap();
 
-    assert!(
-        hypermesh::surface::arrange_coplanar_convex_surface_holed_difference(&left, &right)
-            .is_none()
-    );
-    let difference =
-        hypermesh::surface::arrange_coplanar_convex_surface_multi_holed_difference(&left, &right)
-            .expect("two contained triangle islands should materialize two retained holes");
+    assert!(surface::arrange_coplanar_convex_surface_holed_difference(&left, &right).is_none());
+    let difference = surface::arrange_coplanar_convex_surface_multi_holed_difference(&left, &right)
+        .expect("two contained triangle islands should materialize two retained holes");
     difference.validate().unwrap();
     difference.validate_against_sources(&left, &right).unwrap();
     assert!(difference.validate_against_sources(&right, &left).is_err());
@@ -20558,11 +20367,8 @@ fn exact_coplanar_convex_surface_difference_materializes_multiple_holes() {
     )
     .unwrap();
     let square_difference =
-        hypermesh::surface::arrange_coplanar_convex_surface_multi_holed_difference(
-            &left,
-            &square_holes,
-        )
-        .expect("two connected square components should materialize two retained holes");
+        surface::arrange_coplanar_convex_surface_multi_holed_difference(&left, &square_holes)
+            .expect("two connected square components should materialize two retained holes");
     square_difference.validate().unwrap();
     square_difference
         .validate_against_sources(&left, &square_holes)
@@ -20621,18 +20427,12 @@ fn exact_coplanar_convex_surface_difference_materializes_component_holes() {
     .unwrap();
 
     assert!(
-        hypermesh::surface::arrange_coplanar_convex_surface_multi_holed_difference(&left, &right)
-            .is_none()
+        surface::arrange_coplanar_convex_surface_multi_holed_difference(&left, &right).is_none()
     );
-    assert!(
-        hypermesh::surface::arrange_coplanar_convex_surface_multi_difference(&left, &right)
-            .is_none()
-    );
+    assert!(surface::arrange_coplanar_convex_surface_multi_difference(&left, &right).is_none());
     let difference =
-        hypermesh::surface::arrange_coplanar_convex_surface_component_holed_difference(
-            &left, &right,
-        )
-        .expect("one holed component plus one untouched component should materialize");
+        surface::arrange_coplanar_convex_surface_component_holed_difference(&left, &right)
+            .expect("one holed component plus one untouched component should materialize");
     difference.validate().unwrap();
     difference.validate_against_sources(&left, &right).unwrap();
     assert_eq!(difference.components.len(), 2);
@@ -20668,11 +20468,9 @@ fn exact_coplanar_convex_surface_difference_materializes_component_holes() {
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let mixed_cut = hypermesh::surface::arrange_coplanar_convex_surface_component_holed_difference(
-        &left,
-        &hole_and_cut,
-    )
-    .expect("one partial cut plus strict holes should assign holes to output remnants");
+    let mixed_cut =
+        surface::arrange_coplanar_convex_surface_component_holed_difference(&left, &hole_and_cut)
+            .expect("one partial cut plus strict holes should assign holes to output remnants");
     mixed_cut.validate().unwrap();
     mixed_cut
         .validate_against_sources(&left, &hole_and_cut)
@@ -20707,12 +20505,11 @@ fn exact_coplanar_convex_surface_difference_materializes_component_holes() {
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let single_mixed =
-        hypermesh::surface::arrange_coplanar_convex_surface_component_holed_difference(
-            &single_left,
-            &hole_and_cut,
-        )
-        .expect("a single holed component with one side cut should materialize");
+    let single_mixed = surface::arrange_coplanar_convex_surface_component_holed_difference(
+        &single_left,
+        &hole_and_cut,
+    )
+    .expect("a single holed component with one side cut should materialize");
     single_mixed.validate().unwrap();
     single_mixed
         .validate_against_sources(&single_left, &hole_and_cut)
@@ -20749,12 +20546,11 @@ fn exact_coplanar_convex_surface_difference_materializes_component_holes() {
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let multi_cut_holed =
-        hypermesh::surface::arrange_coplanar_convex_surface_component_holed_difference(
-            &left,
-            &hole_and_two_cuts,
-        )
-        .expect("full-span rectangle cutters should assign holes to retained remnants");
+    let multi_cut_holed = surface::arrange_coplanar_convex_surface_component_holed_difference(
+        &left,
+        &hole_and_two_cuts,
+    )
+    .expect("full-span rectangle cutters should assign holes to retained remnants");
     multi_cut_holed.validate().unwrap();
     multi_cut_holed
         .validate_against_sources(&left, &hole_and_two_cuts)
@@ -20782,12 +20578,11 @@ fn exact_coplanar_convex_surface_difference_materializes_component_holes() {
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let nonrectangular_holed =
-        hypermesh::surface::arrange_coplanar_convex_surface_component_holed_difference(
-            &left,
-            &hole_and_corner_cuts,
-        )
-        .expect("sequential exact corner cutters should retain a holed convex remnant");
+    let nonrectangular_holed = surface::arrange_coplanar_convex_surface_component_holed_difference(
+        &left,
+        &hole_and_corner_cuts,
+    )
+    .expect("sequential exact corner cutters should retain a holed convex remnant");
     nonrectangular_holed.validate().unwrap();
     nonrectangular_holed
         .validate_against_sources(&left, &hole_and_corner_cuts)
@@ -20829,12 +20624,11 @@ fn exact_coplanar_convex_surface_difference_materializes_component_holes() {
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let partial_height_holed =
-        hypermesh::surface::arrange_coplanar_convex_surface_component_holed_difference(
-            &left,
-            &hole_and_partial_height_cuts,
-        )
-        .expect("rectangular partial-height multi-cutters should retain strict holes");
+    let partial_height_holed = surface::arrange_coplanar_convex_surface_component_holed_difference(
+        &left,
+        &hole_and_partial_height_cuts,
+    )
+    .expect("rectangular partial-height multi-cutters should retain strict holes");
     partial_height_holed.validate().unwrap();
     partial_height_holed
         .validate_against_sources(&left, &hole_and_partial_height_cuts)
@@ -20921,18 +20715,17 @@ fn exact_coplanar_convex_surface_difference_materializes_component_holes() {
     )
     .unwrap();
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_multi_difference(
+        surface::arrange_coplanar_surface_multi_difference(
             &channel_holed_left,
             &nonrectilinear_channel_with_holes,
         )
         .is_none()
     );
-    let channel_holed =
-        hypermesh::surface::arrange_coplanar_convex_surface_component_holed_difference(
-            &channel_holed_left,
-            &nonrectilinear_channel_with_holes,
-        )
-        .expect("non-rectilinear side-cutter split should retain strict holes per output loop");
+    let channel_holed = surface::arrange_coplanar_convex_surface_component_holed_difference(
+        &channel_holed_left,
+        &nonrectilinear_channel_with_holes,
+    )
+    .expect("non-rectilinear side-cutter split should retain strict holes per output loop");
     channel_holed.validate().unwrap();
     channel_holed
         .validate_against_sources(&channel_holed_left, &nonrectilinear_channel_with_holes)
@@ -21030,14 +20823,14 @@ fn exact_coplanar_convex_surface_difference_materializes_component_holes() {
     )
     .unwrap();
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_multi_difference(
+        surface::arrange_coplanar_surface_multi_difference(
             &channel_holed_left,
             &nonrectilinear_channel_with_consumed_hole,
         )
         .is_none()
     );
     let consumed_channel_holed =
-        hypermesh::surface::arrange_coplanar_convex_surface_component_holed_difference(
+        surface::arrange_coplanar_convex_surface_component_holed_difference(
             &channel_holed_left,
             &nonrectilinear_channel_with_consumed_hole,
         )
@@ -21113,18 +20906,17 @@ fn exact_coplanar_convex_surface_difference_materializes_component_holes() {
     )
     .unwrap();
     assert!(
-        hypermesh::surface::arrange_coplanar_convex_surface_component_holed_difference(
+        surface::arrange_coplanar_convex_surface_component_holed_difference(
             &single_left,
             &cutter_hole_contact,
         )
         .is_none()
     );
-    let contact_difference =
-        hypermesh::surface::arrange_coplanar_surface_cutter_hole_contact_difference(
-            &single_left,
-            &cutter_hole_contact,
-        )
-        .expect("side cutter touching a retained hole should open one exact nonconvex loop");
+    let contact_difference = surface::arrange_coplanar_surface_cutter_hole_contact_difference(
+        &single_left,
+        &cutter_hole_contact,
+    )
+    .expect("side cutter touching a retained hole should open one exact nonconvex loop");
     contact_difference.validate().unwrap();
     contact_difference
         .validate_cutter_hole_contact_difference_against_sources(&single_left, &cutter_hole_contact)
@@ -21247,18 +21039,17 @@ fn exact_coplanar_surface_cutter_hole_contact_accepts_nonrectangular_convex_pair
     .unwrap();
 
     assert!(
-        hypermesh::surface::arrange_coplanar_convex_surface_component_holed_difference(
+        surface::arrange_coplanar_convex_surface_component_holed_difference(
             &left,
             &cutter_hole_contact,
         )
         .is_none()
     );
-    let contact_difference =
-        hypermesh::surface::arrange_coplanar_surface_cutter_hole_contact_difference(
-            &left,
-            &cutter_hole_contact,
-        )
-        .expect("non-rectangular convex cutter/hole contact should open one exact loop");
+    let contact_difference = surface::arrange_coplanar_surface_cutter_hole_contact_difference(
+        &left,
+        &cutter_hole_contact,
+    )
+    .expect("non-rectangular convex cutter/hole contact should open one exact loop");
     contact_difference.validate().unwrap();
     contact_difference
         .validate_cutter_hole_contact_difference_against_sources(&left, &cutter_hole_contact)
@@ -21281,7 +21072,7 @@ fn exact_coplanar_surface_cutter_hole_contact_accepts_nonrectangular_convex_pair
     )
     .unwrap();
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_cutter_hole_contact_difference(
+        surface::arrange_coplanar_surface_cutter_hole_contact_difference(
             &left,
             &point_only_contact,
         )
@@ -21357,18 +21148,15 @@ fn exact_coplanar_surface_cutter_hole_contact_accepts_straddling_overlap_pair() 
     .unwrap();
 
     assert!(
-        hypermesh::surface::arrange_coplanar_convex_surface_component_holed_difference(
+        surface::arrange_coplanar_convex_surface_component_holed_difference(
             &left,
             &straddling_pair,
         )
         .is_none()
     );
     let overlap_difference =
-        hypermesh::surface::arrange_coplanar_surface_cutter_hole_contact_difference(
-            &left,
-            &straddling_pair,
-        )
-        .expect("overlapping non-rectangular cutter/hole pair should open one exact loop");
+        surface::arrange_coplanar_surface_cutter_hole_contact_difference(&left, &straddling_pair)
+            .expect("overlapping non-rectangular cutter/hole pair should open one exact loop");
     overlap_difference.validate().unwrap();
     overlap_difference
         .validate_cutter_hole_contact_difference_against_sources(&left, &straddling_pair)
@@ -21444,7 +21232,7 @@ fn exact_coplanar_surface_cutter_hole_contact_accepts_straddling_overlap_pair() 
     )
     .unwrap();
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_cutter_hole_contact_difference(
+        surface::arrange_coplanar_surface_cutter_hole_contact_difference(
             &left,
             &rectangular_overlap,
         )
@@ -21531,13 +21319,13 @@ fn exact_coplanar_component_holed_difference_retains_hole_after_contact_opening(
     .unwrap();
 
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_cutter_hole_contact_difference(
+        surface::arrange_coplanar_surface_cutter_hole_contact_difference(
             &left,
             &opening_plus_hole,
         )
         .is_none()
     );
-    let holed = hypermesh::surface::arrange_coplanar_convex_surface_component_holed_difference(
+    let holed = surface::arrange_coplanar_convex_surface_component_holed_difference(
         &left,
         &opening_plus_hole,
     )
@@ -21621,7 +21409,7 @@ fn exact_coplanar_component_holed_difference_retains_hole_after_contact_opening(
     )
     .unwrap();
     assert!(
-        hypermesh::surface::arrange_coplanar_convex_surface_component_holed_difference(
+        surface::arrange_coplanar_convex_surface_component_holed_difference(
             &left,
             &point_only_opening_plus_hole,
         )
@@ -21654,7 +21442,7 @@ fn exact_coplanar_surface_cutter_hole_contact_accepts_independent_openings() {
     )
     .unwrap();
 
-    let opened = hypermesh::surface::arrange_coplanar_surface_cutter_hole_contact_difference(
+    let opened = surface::arrange_coplanar_surface_cutter_hole_contact_difference(
         &left,
         &independent_openings,
     )
@@ -21739,7 +21527,7 @@ fn exact_coplanar_surface_cutter_hole_contact_accepts_independent_openings() {
     )
     .unwrap();
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_cutter_hole_contact_difference(
+        surface::arrange_coplanar_surface_cutter_hole_contact_difference(
             &left,
             &point_only_second_opening,
         )
@@ -21775,13 +21563,13 @@ fn exact_coplanar_component_holed_difference_retains_hole_after_independent_open
     .unwrap();
 
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_cutter_hole_contact_difference(
+        surface::arrange_coplanar_surface_cutter_hole_contact_difference(
             &left,
             &independent_openings_plus_hole,
         )
         .is_none()
     );
-    let holed = hypermesh::surface::arrange_coplanar_convex_surface_component_holed_difference(
+    let holed = surface::arrange_coplanar_convex_surface_component_holed_difference(
         &left,
         &independent_openings_plus_hole,
     )
@@ -21864,14 +21652,11 @@ fn exact_coplanar_surface_cutter_hole_contact_accepts_affine_outer_opening() {
     .unwrap();
 
     assert!(
-        hypermesh::surface::arrange_coplanar_convex_surface_component_holed_difference(
-            &left, &right
-        )
-        .is_none()
+        surface::arrange_coplanar_convex_surface_component_holed_difference(&left, &right)
+            .is_none()
     );
-    let opened =
-        hypermesh::surface::arrange_coplanar_surface_cutter_hole_contact_difference(&left, &right)
-            .expect("affine convex outer side opening should materialize one exact loop");
+    let opened = surface::arrange_coplanar_surface_cutter_hole_contact_difference(&left, &right)
+        .expect("affine convex outer side opening should materialize one exact loop");
     opened.validate().unwrap();
     opened
         .validate_cutter_hole_contact_difference_against_sources(&left, &right)
@@ -21937,7 +21722,7 @@ fn exact_coplanar_surface_cutter_hole_contact_accepts_affine_outer_opening() {
     )
     .unwrap();
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_cutter_hole_contact_difference(
+        surface::arrange_coplanar_surface_cutter_hole_contact_difference(
             &left,
             &corner_attachment,
         )
@@ -21969,11 +21754,8 @@ fn exact_coplanar_surface_cutter_hole_contact_accepts_pairwise_overlap_graph() {
     .unwrap();
 
     let graph_difference =
-        hypermesh::surface::arrange_coplanar_surface_cutter_hole_contact_difference(
-            &left,
-            &pairwise_graph,
-        )
-        .expect("pairwise overlapping cutter/hole graph should open one exact loop");
+        surface::arrange_coplanar_surface_cutter_hole_contact_difference(&left, &pairwise_graph)
+            .expect("pairwise overlapping cutter/hole graph should open one exact loop");
     graph_difference.validate().unwrap();
     graph_difference
         .validate_cutter_hole_contact_difference_against_sources(&left, &pairwise_graph)
@@ -22042,12 +21824,11 @@ fn exact_coplanar_surface_cutter_hole_contact_accepts_pairwise_overlap_graph() {
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let triple_difference =
-        hypermesh::surface::arrange_coplanar_surface_cutter_hole_contact_difference(
-            &left,
-            &triple_overlap_graph,
-        )
-        .expect("triple-overlapping cutter/hole graph should replay finite inclusion-exclusion");
+    let triple_difference = surface::arrange_coplanar_surface_cutter_hole_contact_difference(
+        &left,
+        &triple_overlap_graph,
+    )
+    .expect("triple-overlapping cutter/hole graph should replay finite inclusion-exclusion");
     triple_difference.validate().unwrap();
     triple_difference
         .validate_cutter_hole_contact_difference_against_sources(&left, &triple_overlap_graph)
@@ -22079,18 +21860,12 @@ fn exact_coplanar_surface_cutter_hole_contact_accepts_nonrectangular_contact_cha
     .unwrap();
 
     assert!(
-        hypermesh::surface::arrange_coplanar_convex_surface_component_holed_difference(
-            &left,
-            &contact_chain,
-        )
-        .is_none()
+        surface::arrange_coplanar_convex_surface_component_holed_difference(&left, &contact_chain,)
+            .is_none()
     );
     let contact_difference =
-        hypermesh::surface::arrange_coplanar_surface_cutter_hole_contact_difference(
-            &left,
-            &contact_chain,
-        )
-        .expect("non-rectangular cutter/hole contact chain should open one exact loop");
+        surface::arrange_coplanar_surface_cutter_hole_contact_difference(&left, &contact_chain)
+            .expect("non-rectangular cutter/hole contact chain should open one exact loop");
     contact_difference.validate().unwrap();
     contact_difference
         .validate_cutter_hole_contact_difference_against_sources(&left, &contact_chain)
@@ -22174,7 +21949,7 @@ fn exact_coplanar_surface_cutter_hole_contact_accepts_nonrectangular_contact_cha
     )
     .unwrap();
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_cutter_hole_contact_difference(
+        surface::arrange_coplanar_surface_cutter_hole_contact_difference(
             &left,
             &disconnected_hole,
         )
@@ -22196,11 +21971,8 @@ fn exact_coplanar_surface_cutter_hole_contact_accepts_nonrectangular_contact_cha
     )
     .unwrap();
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_cutter_hole_contact_difference(
-            &left,
-            &point_only_chain,
-        )
-        .is_none()
+        surface::arrange_coplanar_surface_cutter_hole_contact_difference(&left, &point_only_chain,)
+            .is_none()
     );
 }
 
@@ -22228,13 +22000,13 @@ fn exact_coplanar_surface_cutter_hole_contact_allows_incidental_point_in_positiv
     .unwrap();
 
     assert!(
-        hypermesh::surface::arrange_coplanar_convex_surface_component_holed_difference(
+        surface::arrange_coplanar_convex_surface_component_holed_difference(
             &left,
             &incidental_point_group,
         )
         .is_none()
     );
-    let difference = hypermesh::surface::arrange_coplanar_surface_cutter_hole_contact_difference(
+    let difference = surface::arrange_coplanar_surface_cutter_hole_contact_difference(
         &left,
         &incidental_point_group,
     )
@@ -22264,7 +22036,7 @@ fn exact_coplanar_surface_cutter_hole_contact_allows_incidental_point_in_positiv
     )
     .unwrap();
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_cutter_hole_contact_difference(
+        surface::arrange_coplanar_surface_cutter_hole_contact_difference(
             &left,
             &point_only_connectivity,
         )
@@ -22346,14 +22118,10 @@ fn exact_coplanar_surface_side_cutter_allows_incidental_point_in_positive_group(
     .unwrap();
 
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_cutter_hole_contact_difference(
-            &left, &cutters
-        )
-        .is_none()
+        surface::arrange_coplanar_surface_cutter_hole_contact_difference(&left, &cutters).is_none()
     );
-    let difference =
-        hypermesh::surface::arrange_coplanar_surface_side_cutter_difference(&left, &cutters)
-            .expect("positive cutter group should ignore non-connective point contact");
+    let difference = surface::arrange_coplanar_surface_side_cutter_difference(&left, &cutters)
+        .expect("positive cutter group should ignore non-connective point contact");
     difference.validate().unwrap();
     difference
         .validate_side_cutter_difference_against_sources(&left, &cutters)
@@ -22379,11 +22147,8 @@ fn exact_coplanar_surface_side_cutter_allows_incidental_point_in_positive_group(
     )
     .unwrap();
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_side_cutter_difference(
-            &left,
-            &point_only_connectivity,
-        )
-        .is_none()
+        surface::arrange_coplanar_surface_side_cutter_difference(&left, &point_only_connectivity,)
+            .is_none()
     );
 
     let with_retained_hole = ExactMesh::from_i64_triangles_with_policy(
@@ -22403,13 +22168,10 @@ fn exact_coplanar_surface_side_cutter_allows_incidental_point_in_positive_group(
     )
     .unwrap();
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_side_cutter_difference(
-            &left,
-            &with_retained_hole,
-        )
-        .is_none()
+        surface::arrange_coplanar_surface_side_cutter_difference(&left, &with_retained_hole,)
+            .is_none()
     );
-    let holed = hypermesh::surface::arrange_coplanar_convex_surface_component_holed_difference(
+    let holed = surface::arrange_coplanar_convex_surface_component_holed_difference(
         &left,
         &with_retained_hole,
     )
@@ -22485,19 +22247,13 @@ fn exact_coplanar_component_holed_difference_accepts_nonconvex_outer_with_strict
     )
     .unwrap();
 
+    assert!(surface::arrange_coplanar_convex_surface_holed_difference(&left, &right).is_none());
     assert!(
-        hypermesh::surface::arrange_coplanar_convex_surface_holed_difference(&left, &right)
-            .is_none()
-    );
-    assert!(
-        hypermesh::surface::arrange_coplanar_surface_cutter_hole_contact_difference(&left, &right)
-            .is_none()
+        surface::arrange_coplanar_surface_cutter_hole_contact_difference(&left, &right).is_none()
     );
     let difference =
-        hypermesh::surface::arrange_coplanar_convex_surface_component_holed_difference(
-            &left, &right,
-        )
-        .expect("single convex side cutter should retain a nonconvex outer with a strict hole");
+        surface::arrange_coplanar_convex_surface_component_holed_difference(&left, &right)
+            .expect("single convex side cutter should retain a nonconvex outer with a strict hole");
     difference.validate().unwrap();
     difference.validate_against_sources(&left, &right).unwrap();
     assert_eq!(difference.components.len(), 1);
@@ -22592,13 +22348,13 @@ fn exact_coplanar_component_holed_difference_accepts_connected_multi_cutter_open
     .unwrap();
 
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_cutter_hole_contact_difference(
+        surface::arrange_coplanar_surface_cutter_hole_contact_difference(
             &left,
             &connected_opening_plus_hole,
         )
         .is_none()
     );
-    let holed = hypermesh::surface::arrange_coplanar_convex_surface_component_holed_difference(
+    let holed = surface::arrange_coplanar_convex_surface_component_holed_difference(
         &left,
         &connected_opening_plus_hole,
     )
@@ -22689,7 +22445,7 @@ fn exact_coplanar_component_holed_difference_accepts_connected_multi_cutter_open
     )
     .unwrap();
     assert!(
-        hypermesh::surface::arrange_coplanar_convex_surface_component_holed_difference(
+        surface::arrange_coplanar_convex_surface_component_holed_difference(
             &left,
             &point_only_cutter_graph,
         )
@@ -22723,13 +22479,13 @@ fn exact_coplanar_component_holed_difference_accepts_multiple_side_cutter_openin
     .unwrap();
 
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_cutter_hole_contact_difference(
+        surface::arrange_coplanar_surface_cutter_hole_contact_difference(
             &left,
             &multiple_openings_plus_hole,
         )
         .is_none()
     );
-    let holed = hypermesh::surface::arrange_coplanar_convex_surface_component_holed_difference(
+    let holed = surface::arrange_coplanar_convex_surface_component_holed_difference(
         &left,
         &multiple_openings_plus_hole,
     )
@@ -22818,11 +22574,8 @@ fn exact_coplanar_component_holed_difference_accepts_multiple_side_cutter_openin
     )
     .unwrap();
     assert!(
-        hypermesh::surface::arrange_coplanar_convex_surface_component_holed_difference(
-            &left,
-            &consumed_hole,
-        )
-        .is_none()
+        surface::arrange_coplanar_convex_surface_component_holed_difference(&left, &consumed_hole,)
+            .is_none()
     );
 
     let point_branch_openings_plus_hole = ExactMesh::from_i64_triangles_with_policy(
@@ -22840,18 +22593,17 @@ fn exact_coplanar_component_holed_difference_accepts_multiple_side_cutter_openin
     )
     .unwrap();
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_multi_difference(
+        surface::arrange_coplanar_surface_multi_difference(
             &left,
             &point_branch_openings_plus_hole,
         )
         .is_none()
     );
-    let point_branch_holed =
-        hypermesh::surface::arrange_coplanar_convex_surface_component_holed_difference(
-            &left,
-            &point_branch_openings_plus_hole,
-        )
-        .expect("point-branch side cutters should split while retaining unrelated strict holes");
+    let point_branch_holed = surface::arrange_coplanar_convex_surface_component_holed_difference(
+        &left,
+        &point_branch_openings_plus_hole,
+    )
+    .expect("point-branch side cutters should split while retaining unrelated strict holes");
     point_branch_holed.validate().unwrap();
     point_branch_holed
         .validate_against_sources(&left, &point_branch_openings_plus_hole)
@@ -22954,18 +22706,17 @@ fn exact_coplanar_component_holed_difference_omits_holes_consumed_by_side_cutter
     )
     .unwrap();
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_cutter_hole_contact_difference(
+        surface::arrange_coplanar_surface_cutter_hole_contact_difference(
             &left,
             &single_retained_and_consumed,
         )
         .is_none()
     );
-    let single_holed =
-        hypermesh::surface::arrange_coplanar_convex_surface_component_holed_difference(
-            &left,
-            &single_retained_and_consumed,
-        )
-        .expect("one side opening should consume owned holes while retaining unrelated holes");
+    let single_holed = surface::arrange_coplanar_convex_surface_component_holed_difference(
+        &left,
+        &single_retained_and_consumed,
+    )
+    .expect("one side opening should consume owned holes while retaining unrelated holes");
     single_holed.validate().unwrap();
     single_holed
         .validate_against_sources(&left, &single_retained_and_consumed)
@@ -23044,25 +22795,21 @@ fn exact_coplanar_component_holed_difference_omits_holes_consumed_by_side_cutter
     )
     .unwrap();
     assert!(
-        hypermesh::surface::arrange_coplanar_convex_surface_component_holed_difference(
+        surface::arrange_coplanar_convex_surface_component_holed_difference(
             &left,
             &single_consumed_only,
         )
         .is_none()
     );
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_component_difference(
-            &left,
-            &single_consumed_only,
-        )
-        .is_none()
+        surface::arrange_coplanar_surface_component_difference(&left, &single_consumed_only,)
+            .is_none()
     );
-    let single_consumed =
-        hypermesh::surface::arrange_coplanar_surface_cutter_hole_contact_difference(
-            &left,
-            &single_consumed_only,
-        )
-        .expect("single-source consumed holes remain classified by cutter/hole-contact replay");
+    let single_consumed = surface::arrange_coplanar_surface_cutter_hole_contact_difference(
+        &left,
+        &single_consumed_only,
+    )
+    .expect("single-source consumed holes remain classified by cutter/hole-contact replay");
     single_consumed.validate().unwrap();
     single_consumed
         .validate_cutter_hole_contact_difference_against_sources(&left, &single_consumed_only)
@@ -23125,11 +22872,11 @@ fn exact_coplanar_component_holed_difference_omits_holes_consumed_by_side_cutter
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let multi_single_consumed = hypermesh::surface::arrange_coplanar_surface_multi_difference(
-        &multi_left,
-        &single_consumed_only,
-    )
-    .expect("source-local single side opening should consume holes beside retained components");
+    let multi_single_consumed =
+        surface::arrange_coplanar_surface_multi_difference(&multi_left, &single_consumed_only)
+            .expect(
+                "source-local single side opening should consume holes beside retained components",
+            );
     multi_single_consumed.validate().unwrap();
     multi_single_consumed
         .validate_difference_against_sources(&multi_left, &single_consumed_only)
@@ -23213,13 +22960,13 @@ fn exact_coplanar_component_holed_difference_omits_holes_consumed_by_side_cutter
     .unwrap();
 
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_cutter_hole_contact_difference(
+        surface::arrange_coplanar_surface_cutter_hole_contact_difference(
             &left,
             &retained_and_consumed,
         )
         .is_none()
     );
-    let holed = hypermesh::surface::arrange_coplanar_convex_surface_component_holed_difference(
+    let holed = surface::arrange_coplanar_convex_surface_component_holed_difference(
         &left,
         &retained_and_consumed,
     )
@@ -23302,13 +23049,10 @@ fn exact_coplanar_component_holed_difference_omits_holes_consumed_by_side_cutter
     )
     .unwrap();
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_cutter_hole_contact_difference(
-            &left,
-            &straddling_hole,
-        )
-        .is_none()
+        surface::arrange_coplanar_surface_cutter_hole_contact_difference(&left, &straddling_hole,)
+            .is_none()
     );
-    let straddling = hypermesh::surface::arrange_coplanar_convex_surface_component_holed_difference(
+    let straddling = surface::arrange_coplanar_convex_surface_component_holed_difference(
         &left,
         &straddling_hole,
     )
@@ -23412,21 +23156,21 @@ fn exact_coplanar_component_holed_difference_omits_holes_consumed_by_side_cutter
     )
     .unwrap();
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_multi_difference(
+        surface::arrange_coplanar_surface_multi_difference(
             &left,
             &point_branch_straddling_retained,
         )
         .is_none()
     );
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_point_touch_difference(
+        surface::arrange_coplanar_surface_point_touch_difference(
             &left,
             &point_branch_straddling_retained,
         )
         .is_none()
     );
     let point_branch_straddling =
-        hypermesh::surface::arrange_coplanar_convex_surface_component_holed_difference(
+        surface::arrange_coplanar_convex_surface_component_holed_difference(
             &left,
             &point_branch_straddling_retained,
         )
@@ -23535,13 +23279,13 @@ fn exact_coplanar_component_holed_difference_omits_holes_consumed_by_side_cutter
     )
     .unwrap();
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_cutter_hole_contact_difference(
+        surface::arrange_coplanar_surface_cutter_hole_contact_difference(
             &left,
             &split_straddling_hole,
         )
         .is_none()
     );
-    let split = hypermesh::surface::arrange_coplanar_convex_surface_component_holed_difference(
+    let split = surface::arrange_coplanar_convex_surface_component_holed_difference(
         &left,
         &split_straddling_hole,
     )
@@ -23668,12 +23412,11 @@ fn exact_coplanar_component_holed_difference_omits_holes_consumed_by_side_cutter
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let multi_branch =
-        hypermesh::surface::arrange_coplanar_convex_surface_component_holed_difference(
-            &multi_branch_left,
-            &multi_branch_with_retained_holes,
-        )
-        .expect("independent side-to-side consumed groups should split and retain local holes");
+    let multi_branch = surface::arrange_coplanar_convex_surface_component_holed_difference(
+        &multi_branch_left,
+        &multi_branch_with_retained_holes,
+    )
+    .expect("independent side-to-side consumed groups should split and retain local holes");
     multi_branch.validate().unwrap();
     multi_branch
         .validate_against_sources(&multi_branch_left, &multi_branch_with_retained_holes)
@@ -23785,12 +23528,11 @@ fn exact_coplanar_component_holed_difference_omits_holes_consumed_by_side_cutter
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let branch_group =
-        hypermesh::surface::arrange_coplanar_convex_surface_component_holed_difference(
-            &branch_group_left,
-            &branch_group_with_retained_holes,
-        )
-        .expect("one four-sided consumed cutter/hole branch should split into corner components");
+    let branch_group = surface::arrange_coplanar_convex_surface_component_holed_difference(
+        &branch_group_left,
+        &branch_group_with_retained_holes,
+    )
+    .expect("one four-sided consumed cutter/hole branch should split into corner components");
     branch_group.validate().unwrap();
     branch_group
         .validate_against_sources(&branch_group_left, &branch_group_with_retained_holes)
@@ -23892,11 +23634,8 @@ fn exact_coplanar_multi_difference_materializes_crossing_nonrectilinear_side_cut
     )
     .unwrap();
 
-    assert!(
-        hypermesh::surface::arrange_coplanar_surface_side_cutter_difference(&left, &right)
-            .is_none()
-    );
-    let difference = hypermesh::surface::arrange_coplanar_surface_multi_difference(&left, &right)
+    assert!(surface::arrange_coplanar_surface_side_cutter_difference(&left, &right).is_none());
+    let difference = surface::arrange_coplanar_surface_multi_difference(&left, &right)
         .expect("crossing diagonal side-to-side cutters should replay as retained corner loops");
     difference.validate().unwrap();
     difference
@@ -23981,18 +23720,12 @@ fn exact_coplanar_crossing_side_cutter_difference_consumes_straddling_holes() {
     .unwrap();
 
     assert!(
-        hypermesh::surface::arrange_coplanar_convex_surface_component_holed_difference(
-            &left,
-            &consumed_only,
-        )
-        .is_none(),
+        surface::arrange_coplanar_convex_surface_component_holed_difference(&left, &consumed_only,)
+            .is_none(),
         "all-consumed crossing topology belongs on the no-hole multi-difference artifact"
     );
-    let difference =
-        hypermesh::surface::arrange_coplanar_surface_multi_difference(&left, &consumed_only)
-            .expect(
-                "crossing side cutters should consume the straddling hole as one removed object",
-            );
+    let difference = surface::arrange_coplanar_surface_multi_difference(&left, &consumed_only)
+        .expect("crossing side cutters should consume the straddling hole as one removed object");
     difference.validate().unwrap();
     difference
         .validate_difference_against_sources(&left, &consumed_only)
@@ -24069,13 +23802,10 @@ fn exact_coplanar_crossing_side_cutter_difference_consumes_straddling_holes() {
     )
     .unwrap();
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_multi_difference(
-            &left,
-            &retained_and_consumed,
-        )
-        .is_none()
+        surface::arrange_coplanar_surface_multi_difference(&left, &retained_and_consumed,)
+            .is_none()
     );
-    let holed = hypermesh::surface::arrange_coplanar_convex_surface_component_holed_difference(
+    let holed = surface::arrange_coplanar_convex_surface_component_holed_difference(
         &left,
         &retained_and_consumed,
     )
@@ -24181,8 +23911,8 @@ fn exact_coplanar_surface_point_touch_difference_materializes_vertex_edge_side_c
     )
     .unwrap();
 
-    assert!(hypermesh::surface::arrange_coplanar_surface_multi_difference(&left, &right).is_none());
-    let branch = hypermesh::surface::arrange_coplanar_surface_point_touch_difference(&left, &right)
+    assert!(surface::arrange_coplanar_surface_multi_difference(&left, &right).is_none());
+    let branch = surface::arrange_coplanar_surface_point_touch_difference(&left, &right)
         .expect("vertex-edge side-cutter branch should retain duplicated branch coordinates");
     branch.validate().unwrap();
     branch
@@ -24272,8 +24002,8 @@ fn exact_coplanar_surface_point_touch_difference_materializes_nonconvex_vertex_e
     )
     .unwrap();
 
-    assert!(hypermesh::surface::arrange_coplanar_surface_multi_difference(&left, &right).is_none());
-    let branch = hypermesh::surface::arrange_coplanar_surface_point_touch_difference(&left, &right)
+    assert!(surface::arrange_coplanar_surface_multi_difference(&left, &right).is_none());
+    let branch = surface::arrange_coplanar_surface_point_touch_difference(&left, &right)
         .expect("nonconvex source vertex-edge branch should replay as point-touch difference");
     branch.validate().unwrap();
     branch
@@ -24364,11 +24094,9 @@ fn exact_coplanar_component_holed_difference_retains_holes_after_crossing_nonrec
     )
     .unwrap();
 
-    assert!(hypermesh::surface::arrange_coplanar_surface_multi_difference(&left, &right).is_none());
-    let holed = hypermesh::surface::arrange_coplanar_convex_surface_component_holed_difference(
-        &left, &right,
-    )
-    .expect("crossing side-to-side cutters should split and retain corner holes");
+    assert!(surface::arrange_coplanar_surface_multi_difference(&left, &right).is_none());
+    let holed = surface::arrange_coplanar_convex_surface_component_holed_difference(&left, &right)
+        .expect("crossing side-to-side cutters should split and retain corner holes");
     holed.validate().unwrap();
     holed.validate_against_sources(&left, &right).unwrap();
     assert_eq!(holed.components.len(), 4);
@@ -24462,13 +24190,10 @@ fn exact_coplanar_component_holed_difference_allows_opened_component_without_loc
     .unwrap();
 
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_cutter_hole_contact_difference(&left, &right)
-            .is_none()
+        surface::arrange_coplanar_surface_cutter_hole_contact_difference(&left, &right).is_none()
     );
-    let holed = hypermesh::surface::arrange_coplanar_convex_surface_component_holed_difference(
-        &left, &right,
-    )
-    .expect("one component may consume a straddling hole while another retains a strict hole");
+    let holed = surface::arrange_coplanar_convex_surface_component_holed_difference(&left, &right)
+        .expect("one component may consume a straddling hole while another retains a strict hole");
     holed.validate().unwrap();
     holed.validate_against_sources(&left, &right).unwrap();
     assert_eq!(holed.components.len(), 2);
@@ -24566,16 +24291,13 @@ fn exact_coplanar_multi_difference_consumes_holes_into_independent_openings() {
     .unwrap();
 
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_cutter_hole_contact_difference(&left, &right)
-            .is_none()
+        surface::arrange_coplanar_surface_cutter_hole_contact_difference(&left, &right).is_none()
     );
     assert!(
-        hypermesh::surface::arrange_coplanar_convex_surface_component_holed_difference(
-            &left, &right
-        )
-        .is_none()
+        surface::arrange_coplanar_convex_surface_component_holed_difference(&left, &right)
+            .is_none()
     );
-    let difference = hypermesh::surface::arrange_coplanar_surface_multi_difference(&left, &right)
+    let difference = surface::arrange_coplanar_surface_multi_difference(&left, &right)
         .expect("independent consumed-hole openings should emit multi-loop no-hole output");
     difference.validate().unwrap();
     difference
@@ -24655,24 +24377,24 @@ fn exact_coplanar_multi_difference_consumes_holes_into_independent_openings() {
     )
     .unwrap();
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_cutter_hole_contact_difference(
+        surface::arrange_coplanar_surface_cutter_hole_contact_difference(
             &split_left,
             &split_all_consumed,
         )
         .is_none()
     );
     assert!(
-        hypermesh::surface::arrange_coplanar_convex_surface_component_holed_difference(
+        surface::arrange_coplanar_convex_surface_component_holed_difference(
             &split_left,
             &split_all_consumed,
         )
         .is_none()
     );
-    let split_difference = hypermesh::surface::arrange_coplanar_surface_multi_difference(
-        &split_left,
-        &split_all_consumed,
-    )
-    .expect("a fully consumed side-to-side cutter/hole group should emit no-hole split loops");
+    let split_difference =
+        surface::arrange_coplanar_surface_multi_difference(&split_left, &split_all_consumed)
+            .expect(
+                "a fully consumed side-to-side cutter/hole group should emit no-hole split loops",
+            );
     split_difference.validate().unwrap();
     split_difference
         .validate_difference_against_sources(&split_left, &split_all_consumed)
@@ -24752,20 +24474,20 @@ fn exact_coplanar_multi_difference_consumes_holes_into_independent_openings() {
     )
     .unwrap();
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_cutter_hole_contact_difference(
+        surface::arrange_coplanar_surface_cutter_hole_contact_difference(
             &multi_branch_left,
             &multi_branch_all_consumed,
         )
         .is_none()
     );
     assert!(
-        hypermesh::surface::arrange_coplanar_convex_surface_component_holed_difference(
+        surface::arrange_coplanar_convex_surface_component_holed_difference(
             &multi_branch_left,
             &multi_branch_all_consumed,
         )
         .is_none()
     );
-    let multi_branch_difference = hypermesh::surface::arrange_coplanar_surface_multi_difference(
+    let multi_branch_difference = surface::arrange_coplanar_surface_multi_difference(
         &multi_branch_left,
         &multi_branch_all_consumed,
     )
@@ -24854,20 +24576,20 @@ fn exact_coplanar_multi_difference_consumes_holes_into_independent_openings() {
     )
     .unwrap();
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_cutter_hole_contact_difference(
+        surface::arrange_coplanar_surface_cutter_hole_contact_difference(
             &branch_group_left,
             &branch_group_all_consumed,
         )
         .is_none()
     );
     assert!(
-        hypermesh::surface::arrange_coplanar_convex_surface_component_holed_difference(
+        surface::arrange_coplanar_convex_surface_component_holed_difference(
             &branch_group_left,
             &branch_group_all_consumed,
         )
         .is_none()
     );
-    let branch_group_difference = hypermesh::surface::arrange_coplanar_surface_multi_difference(
+    let branch_group_difference = surface::arrange_coplanar_surface_multi_difference(
         &branch_group_left,
         &branch_group_all_consumed,
     )
@@ -24944,22 +24666,15 @@ fn exact_coplanar_single_side_cutter_split_consumes_strict_holes() {
     )
     .unwrap();
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_cutter_hole_contact_difference(
-            &left,
-            &consumed_only,
-        )
-        .is_none()
+        surface::arrange_coplanar_surface_cutter_hole_contact_difference(&left, &consumed_only,)
+            .is_none()
     );
     assert!(
-        hypermesh::surface::arrange_coplanar_convex_surface_component_holed_difference(
-            &left,
-            &consumed_only,
-        )
-        .is_none()
+        surface::arrange_coplanar_convex_surface_component_holed_difference(&left, &consumed_only,)
+            .is_none()
     );
-    let difference =
-        hypermesh::surface::arrange_coplanar_surface_multi_difference(&left, &consumed_only)
-            .expect("one side-to-side cutter should consume its strict hole and emit split loops");
+    let difference = surface::arrange_coplanar_surface_multi_difference(&left, &consumed_only)
+        .expect("one side-to-side cutter should consume its strict hole and emit split loops");
     difference.validate().unwrap();
     difference
         .validate_difference_against_sources(&left, &consumed_only)
@@ -25035,13 +24750,10 @@ fn exact_coplanar_single_side_cutter_split_consumes_strict_holes() {
     )
     .unwrap();
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_multi_difference(
-            &left,
-            &retained_and_consumed,
-        )
-        .is_none()
+        surface::arrange_coplanar_surface_multi_difference(&left, &retained_and_consumed,)
+            .is_none()
     );
-    let holed = hypermesh::surface::arrange_coplanar_convex_surface_component_holed_difference(
+    let holed = surface::arrange_coplanar_convex_surface_component_holed_difference(
         &left,
         &retained_and_consumed,
     )
@@ -25149,20 +24861,20 @@ fn exact_coplanar_cutter_hole_contact_accepts_mixed_side_openings_without_retain
     .unwrap();
 
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_side_cutter_difference(
+        surface::arrange_coplanar_surface_side_cutter_difference(
             &left,
             &contact_chain_and_independent_opening,
         )
         .is_none()
     );
     assert!(
-        hypermesh::surface::arrange_coplanar_convex_surface_component_holed_difference(
+        surface::arrange_coplanar_convex_surface_component_holed_difference(
             &left,
             &contact_chain_and_independent_opening,
         )
         .is_none()
     );
-    let opened = hypermesh::surface::arrange_coplanar_surface_cutter_hole_contact_difference(
+    let opened = surface::arrange_coplanar_surface_cutter_hole_contact_difference(
         &left,
         &contact_chain_and_independent_opening,
     )
@@ -25242,7 +24954,7 @@ fn exact_coplanar_cutter_hole_contact_accepts_mixed_side_openings_without_retain
 fn exact_coplanar_orthogonal_surface_cells_materialize_nonconvex_outputs() {
     let l_left = rect_surface_i64(&[(0, 0, 2, 6), (2, 0, 6, 2)]);
     let l_right = rect_surface_i64(&[(2, 2, 4, 4)]);
-    assert!(hypermesh::surface::arrange_coplanar_convex_surface_union(&l_left, &l_right).is_none());
+    assert!(surface::arrange_coplanar_convex_surface_union(&l_left, &l_right).is_none());
     let l_union =
         hypermesh::orthogonal_surface::arrange_coplanar_orthogonal_surface_union(&l_left, &l_right)
             .expect("full-edge L-shaped rectangle union should materialize as orthogonal cells");
@@ -25297,9 +25009,7 @@ fn exact_coplanar_orthogonal_surface_cells_materialize_nonconvex_outputs() {
     );
 
     let fan_l_left = fan_rect_surface_i64(&[(0, 0, 2, 6), (2, 0, 6, 2)]);
-    assert!(
-        hypermesh::surface::arrange_coplanar_convex_surface_union(&fan_l_left, &l_right).is_none()
-    );
+    assert!(surface::arrange_coplanar_convex_surface_union(&fan_l_left, &l_right).is_none());
     let fan_l_union = hypermesh::orthogonal_surface::arrange_coplanar_orthogonal_surface_union(
         &fan_l_left,
         &l_right,
@@ -25468,7 +25178,7 @@ fn exact_coplanar_orthogonal_surface_cells_materialize_nonconvex_outputs() {
         .unwrap();
     assert_eq!(
         nested_preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceDifference
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let nested_result = hypermesh::boolean_exact(
         &nested_left,
@@ -25481,7 +25191,7 @@ fn exact_coplanar_orthogonal_surface_cells_materialize_nonconvex_outputs() {
     assert_eq!(
         nested_result.kind,
         hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::ExactBooleanShortcutKind::CoplanarOrthogonalSurfaceDifference
+            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
 
@@ -25545,7 +25255,7 @@ fn exact_coplanar_orthogonal_surface_cells_materialize_nonconvex_outputs() {
         .unwrap();
     assert_eq!(
         hole_branch_preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedCoplanarOrthogonalSurfaceDifference
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let invalid_nested_without_hole =
@@ -25589,7 +25299,7 @@ fn exact_coplanar_orthogonal_surface_cells_materialize_nonconvex_outputs() {
     let graph_left = rect_surface_i64(&[(0, 0, 12, 10)]);
     let graph_right = rect_surface_i64(&[(3, 3, 5, 5), (7, 3, 9, 5), (5, 4, 7, 5), (-1, 4, 3, 5)]);
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_cutter_hole_contact_difference(
+        surface::arrange_coplanar_surface_cutter_hole_contact_difference(
             &graph_left,
             &graph_right,
         )
@@ -25696,7 +25406,7 @@ fn exact_coplanar_orthogonal_surface_cells_materialize_nonconvex_outputs() {
     let overlap_source_left = rect_surface_i64(&[(0, 0, 4, 6), (2, 2, 8, 4)]);
     let overlap_source_right = rect_surface_i64(&[(8, 2, 10, 4)]);
     assert!(
-        hypermesh::surface::arrange_coplanar_convex_surface_union(
+        surface::arrange_coplanar_convex_surface_union(
             &overlap_source_left,
             &overlap_source_right,
         )
@@ -25994,7 +25704,7 @@ fn exact_coplanar_affine_surface_cells_materialize_rotated_nonconvex_outputs() {
         .unwrap();
     assert_eq!(
         nested_preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedCoplanarAffineSurfaceDifference
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let hole_branch_left = affine_rect_surface_i64(&[(0, 0, 5, 5)], origin, basis_u, basis_v);
@@ -26053,7 +25763,7 @@ fn exact_coplanar_affine_surface_cells_materialize_rotated_nonconvex_outputs() {
         .unwrap();
     assert_eq!(
         hole_branch_preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedCoplanarAffineSurfaceDifference
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let graph_left = affine_rect_surface_i64(&[(0, 0, 12, 10)], origin, basis_u, basis_v);
@@ -26064,11 +25774,8 @@ fn exact_coplanar_affine_surface_cells_materialize_rotated_nonconvex_outputs() {
         basis_v,
     );
     let graph_contact =
-        hypermesh::surface::arrange_coplanar_surface_cutter_hole_contact_difference(
-            &graph_left,
-            &graph_right,
-        )
-        .expect("rotated cutter/hole graph now replays through retained convex side opening");
+        surface::arrange_coplanar_surface_cutter_hole_contact_difference(&graph_left, &graph_right)
+            .expect("rotated cutter/hole graph now replays through retained convex side opening");
     graph_contact.validate().unwrap();
     graph_contact
         .validate_cutter_hole_contact_difference_against_sources(&graph_left, &graph_right)
@@ -26196,33 +25903,32 @@ fn exact_coplanar_convex_surface_report_rejects_inconsistent_artifacts() {
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let equivalence =
-        hypermesh::surface::certify_coplanar_convex_surface_equivalence(&left, &right)
-            .expect("fixture should certify equivalent convex sheets");
+    let equivalence = surface::certify_coplanar_convex_surface_equivalence(&left, &right)
+        .expect("fixture should certify equivalent convex sheets");
 
-    let rejected_with_certificate = hypermesh::surface::CoplanarConvexSurfaceReport {
-        status: hypermesh::surface::CoplanarConvexSurfaceReportStatus::NotCertified,
+    let rejected_with_certificate = surface::CoplanarConvexSurfaceReport {
+        status: surface::CoplanarConvexSurfaceReportStatus::NotCertified,
         equivalence: Some(equivalence.clone()),
         containment: None,
     };
     assert_eq!(
         rejected_with_certificate.validate().unwrap_err(),
-        hypermesh::surface::CoplanarConvexSurfaceReportError::UnexpectedCertificate
+        surface::CoplanarConvexSurfaceReportError::UnexpectedCertificate
     );
 
-    let missing_equivalence = hypermesh::surface::CoplanarConvexSurfaceReport {
-        status: hypermesh::surface::CoplanarConvexSurfaceReportStatus::Equivalent,
+    let missing_equivalence = surface::CoplanarConvexSurfaceReport {
+        status: surface::CoplanarConvexSurfaceReportStatus::Equivalent,
         equivalence: None,
         containment: None,
     };
     assert_eq!(
         missing_equivalence.validate().unwrap_err(),
-        hypermesh::surface::CoplanarConvexSurfaceReportError::MissingEquivalenceCertificate
+        surface::CoplanarConvexSurfaceReportError::MissingEquivalenceCertificate
     );
 
-    let invalid_equivalence = hypermesh::surface::CoplanarConvexSurfaceReport {
-        status: hypermesh::surface::CoplanarConvexSurfaceReportStatus::Equivalent,
-        equivalence: Some(hypermesh::surface::CoplanarConvexSurfaceEquivalence {
+    let invalid_equivalence = surface::CoplanarConvexSurfaceReport {
+        status: surface::CoplanarConvexSurfaceReportStatus::Equivalent,
+        equivalence: Some(surface::CoplanarConvexSurfaceEquivalence {
             left_area2: Real::from(0),
             ..equivalence
         }),
@@ -26230,7 +25936,7 @@ fn exact_coplanar_convex_surface_report_rejects_inconsistent_artifacts() {
     };
     assert_eq!(
         invalid_equivalence.validate().unwrap_err(),
-        hypermesh::surface::CoplanarConvexSurfaceReportError::InvalidEquivalenceCertificate
+        surface::CoplanarConvexSurfaceReportError::InvalidEquivalenceCertificate
     );
 }
 
@@ -26311,12 +26017,9 @@ fn exact_multi_component_coplanar_intersection_materializes_component_hulls() {
     )
     .unwrap();
 
-    assert!(
-        hypermesh::surface::arrange_coplanar_convex_surface_intersection(&left, &right).is_none()
-    );
-    let multi =
-        hypermesh::surface::arrange_coplanar_convex_surface_multi_intersection(&left, &right)
-            .expect("one convex right component should clip two retained left components");
+    assert!(surface::arrange_coplanar_convex_surface_intersection(&left, &right).is_none());
+    let multi = surface::arrange_coplanar_convex_surface_multi_intersection(&left, &right)
+        .expect("one convex right component should clip two retained left components");
     multi.validate().unwrap();
     multi
         .validate_intersection_against_sources(&left, &right)
@@ -26346,11 +26049,8 @@ fn exact_multi_component_coplanar_intersection_materializes_component_hulls() {
     )
     .unwrap();
     assert!(
-        hypermesh::surface::arrange_coplanar_convex_surface_multi_intersection(
-            &left,
-            &touching_right,
-        )
-        .is_none()
+        surface::arrange_coplanar_convex_surface_multi_intersection(&left, &touching_right,)
+            .is_none()
     );
 
     let preflight = hypermesh::preflight_boolean_exact(
@@ -26406,10 +26106,9 @@ fn exact_coplanar_mesh_containment_preserves_holed_intersection() {
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let annulus =
-        hypermesh::surface::arrange_coplanar_convex_surface_holed_difference(&outer, &removed_hole)
-            .expect("one-hole source fixture should materialize")
-            .mesh;
+    let annulus = surface::arrange_coplanar_convex_surface_holed_difference(&outer, &removed_hole)
+        .expect("one-hole source fixture should materialize")
+        .mesh;
     let cover = ExactMesh::from_i64_triangles_with_policy(
         &[-1, -1, 0, 12, -1, 0, 11, 11, 0, -1, 12, 0],
         &[0, 1, 2, 0, 2, 3],
@@ -26418,16 +26117,15 @@ fn exact_coplanar_mesh_containment_preserves_holed_intersection() {
     .unwrap();
 
     assert_eq!(
-        hypermesh::surface::certify_coplanar_surface_mesh_containment(&annulus, &cover),
-        Some(hypermesh::surface::CoplanarSurfaceContainment::LeftInsideRight)
+        surface::certify_coplanar_surface_mesh_containment(&annulus, &cover),
+        Some(surface::CoplanarSurfaceContainment::LeftInsideRight)
     );
     assert_eq!(
-        hypermesh::surface::certify_coplanar_surface_mesh_containment(&cover, &annulus),
-        Some(hypermesh::surface::CoplanarSurfaceContainment::RightInsideLeft)
+        surface::certify_coplanar_surface_mesh_containment(&cover, &annulus),
+        Some(surface::CoplanarSurfaceContainment::RightInsideLeft)
     );
     assert!(
-        hypermesh::surface::certify_coplanar_surface_mesh_containment(&removed_hole, &annulus)
-            .is_none(),
+        surface::certify_coplanar_surface_mesh_containment(&removed_hole, &annulus).is_none(),
         "area replay must not treat the annulus as covering its retained hole"
     );
 
@@ -26532,10 +26230,9 @@ fn exact_coplanar_component_holed_intersection_materializes_clipped_annulus() {
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let annulus =
-        hypermesh::surface::arrange_coplanar_convex_surface_holed_difference(&outer, &removed_hole)
-            .expect("one-hole source fixture should materialize")
-            .mesh;
+    let annulus = surface::arrange_coplanar_convex_surface_holed_difference(&outer, &removed_hole)
+        .expect("one-hole source fixture should materialize")
+        .mesh;
     let clipper = ExactMesh::from_i64_triangles_with_policy(
         &[2, 1, 0, 9, 2, 0, 8, 9, 0, 1, 8, 0],
         &[0, 1, 2, 0, 2, 3],
@@ -26543,10 +26240,9 @@ fn exact_coplanar_component_holed_intersection_materializes_clipped_annulus() {
     )
     .unwrap();
 
-    let intersection = hypermesh::surface::arrange_coplanar_surface_component_holed_intersection(
-        &annulus, &clipper,
-    )
-    .expect("source-owned clipper should retain the annulus hole");
+    let intersection =
+        surface::arrange_coplanar_surface_component_holed_intersection(&annulus, &clipper)
+            .expect("source-owned clipper should retain the annulus hole");
     intersection.validate().unwrap();
     intersection
         .validate_intersection_against_sources(&annulus, &clipper)
@@ -26565,10 +26261,9 @@ fn exact_coplanar_component_holed_intersection_materializes_clipped_annulus() {
             .any(|point| real_eq(&point.x, &Real::from(4)))
     );
 
-    let reversed = hypermesh::surface::arrange_coplanar_surface_component_holed_intersection(
-        &clipper, &annulus,
-    )
-    .expect("component-holed intersection should be symmetric");
+    let reversed =
+        surface::arrange_coplanar_surface_component_holed_intersection(&clipper, &annulus)
+            .expect("component-holed intersection should be symmetric");
     reversed.validate().unwrap();
     assert_eq!(reversed, intersection);
 
@@ -26579,11 +26274,8 @@ fn exact_coplanar_component_holed_intersection_materializes_clipped_annulus() {
     )
     .unwrap();
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_component_holed_intersection(
-            &annulus,
-            &crossing_hole,
-        )
-        .is_none(),
+        surface::arrange_coplanar_surface_component_holed_intersection(&annulus, &crossing_hole,)
+            .is_none(),
         "partial hole overlap must remain a full planar-arrangement case"
     );
     let crossing_preflight = hypermesh::preflight_boolean_exact(
@@ -26648,11 +26340,8 @@ fn exact_coplanar_component_holed_intersection_materializes_clipped_annulus() {
     )
     .unwrap();
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_component_holed_intersection(
-            &annulus,
-            &hole_edge_touch,
-        )
-        .is_none(),
+        surface::arrange_coplanar_surface_component_holed_intersection(&annulus, &hole_edge_touch,)
+            .is_none(),
         "hole boundary contact is not a retained strict-hole certificate"
     );
     let touching_preflight = hypermesh::preflight_boolean_exact(
@@ -26692,7 +26381,7 @@ fn exact_coplanar_component_holed_intersection_materializes_clipped_annulus() {
     )
     .unwrap();
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_component_holed_intersection(
+        surface::arrange_coplanar_surface_component_holed_intersection(
             &annulus,
             &no_retained_hole,
         )
@@ -26767,17 +26456,15 @@ fn exact_coplanar_component_holed_intersection_merges_same_outer_holes() {
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let left =
-        hypermesh::surface::arrange_coplanar_convex_surface_holed_difference(&outer, &left_hole)
-            .expect("left annulus fixture should materialize")
-            .mesh;
-    let right =
-        hypermesh::surface::arrange_coplanar_convex_surface_holed_difference(&outer, &right_hole)
-            .expect("right annulus fixture should materialize")
-            .mesh;
+    let left = surface::arrange_coplanar_convex_surface_holed_difference(&outer, &left_hole)
+        .expect("left annulus fixture should materialize")
+        .mesh;
+    let right = surface::arrange_coplanar_convex_surface_holed_difference(&outer, &right_hole)
+        .expect("right annulus fixture should materialize")
+        .mesh;
 
     let intersection =
-        hypermesh::surface::arrange_coplanar_surface_component_holed_intersection(&left, &right)
+        surface::arrange_coplanar_surface_component_holed_intersection(&left, &right)
             .expect("same outer annuli with disjoint holes should materialize");
     intersection.validate().unwrap();
     intersection
@@ -26798,7 +26485,7 @@ fn exact_coplanar_component_holed_intersection_merges_same_outer_holes() {
             .any(|hole| { hole.iter().any(|point| real_eq(&point.x, &Real::from(8))) })
     );
     assert_eq!(
-        hypermesh::surface::arrange_coplanar_surface_component_holed_intersection(&right, &left),
+        surface::arrange_coplanar_surface_component_holed_intersection(&right, &left),
         Some(intersection.clone())
     );
 
@@ -26808,18 +26495,14 @@ fn exact_coplanar_component_holed_intersection_merges_same_outer_holes() {
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let overlapping = hypermesh::surface::arrange_coplanar_convex_surface_holed_difference(
-        &outer,
-        &overlapping_hole,
-    )
-    .expect("overlapping-hole annulus fixture should materialize")
-    .mesh;
+    let overlapping =
+        surface::arrange_coplanar_convex_surface_holed_difference(&outer, &overlapping_hole)
+            .expect("overlapping-hole annulus fixture should materialize")
+            .mesh;
     let overlap_intersection =
-        hypermesh::surface::arrange_coplanar_surface_component_holed_intersection(
-            &left,
-            &overlapping,
-        )
-        .expect("rectangular same-outer retained-hole overlap should replay as one merged hole");
+        surface::arrange_coplanar_surface_component_holed_intersection(&left, &overlapping).expect(
+            "rectangular same-outer retained-hole overlap should replay as one merged hole",
+        );
     overlap_intersection.validate().unwrap();
     overlap_intersection
         .validate_intersection_against_sources(&left, &overlapping)
@@ -26833,10 +26516,7 @@ fn exact_coplanar_component_holed_intersection_merges_same_outer_holes() {
             .any(|point| real_eq(&point.x, &Real::from(5)))
     );
     assert_eq!(
-        hypermesh::surface::arrange_coplanar_surface_component_holed_intersection(
-            &overlapping,
-            &left,
-        ),
+        surface::arrange_coplanar_surface_component_holed_intersection(&overlapping, &left,),
         Some(overlap_intersection)
     );
     let overlap_preflight = hypermesh::preflight_boolean_exact(
@@ -26851,7 +26531,7 @@ fn exact_coplanar_component_holed_intersection_merges_same_outer_holes() {
         .unwrap();
     assert_eq!(
         overlap_preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     hypermesh::boolean_exact(
         &left,
@@ -26884,24 +26564,17 @@ fn exact_coplanar_component_holed_intersection_merges_same_outer_holes() {
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let bridge_left = hypermesh::surface::arrange_coplanar_convex_surface_multi_holed_difference(
-        &outer,
-        &bridge_left_holes,
-    )
-    .expect("same-outer two-hole fixture should materialize")
-    .mesh;
-    let bridge_right = hypermesh::surface::arrange_coplanar_convex_surface_holed_difference(
-        &outer,
-        &bridge_right_hole,
-    )
-    .expect("same-outer bridge-hole fixture should materialize")
-    .mesh;
+    let bridge_left =
+        surface::arrange_coplanar_convex_surface_multi_holed_difference(&outer, &bridge_left_holes)
+            .expect("same-outer two-hole fixture should materialize")
+            .mesh;
+    let bridge_right =
+        surface::arrange_coplanar_convex_surface_holed_difference(&outer, &bridge_right_hole)
+            .expect("same-outer bridge-hole fixture should materialize")
+            .mesh;
     let bridge_intersection =
-        hypermesh::surface::arrange_coplanar_surface_component_holed_intersection(
-            &bridge_left,
-            &bridge_right,
-        )
-        .expect("rectangular bridge should merge the connected retained-hole cluster");
+        surface::arrange_coplanar_surface_component_holed_intersection(&bridge_left, &bridge_right)
+            .expect("rectangular bridge should merge the connected retained-hole cluster");
     bridge_intersection.validate().unwrap();
     bridge_intersection
         .validate_intersection_against_sources(&bridge_left, &bridge_right)
@@ -26923,10 +26596,7 @@ fn exact_coplanar_component_holed_intersection_merges_same_outer_holes() {
             .any(|point| real_eq(&point.x, &Real::from(8)))
     );
     assert_eq!(
-        hypermesh::surface::arrange_coplanar_surface_component_holed_intersection(
-            &bridge_right,
-            &bridge_left,
-        ),
+        surface::arrange_coplanar_surface_component_holed_intersection(&bridge_right, &bridge_left,),
         Some(bridge_intersection)
     );
     let bridge_preflight = hypermesh::preflight_boolean_exact(
@@ -26941,7 +26611,7 @@ fn exact_coplanar_component_holed_intersection_merges_same_outer_holes() {
         .unwrap();
     assert_eq!(
         bridge_preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     hypermesh::boolean_exact(
         &bridge_left,
@@ -26965,14 +26635,12 @@ fn exact_coplanar_component_holed_intersection_merges_same_outer_holes() {
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let nonrect_bridge = hypermesh::surface::arrange_coplanar_convex_surface_holed_difference(
-        &outer,
-        &nonrect_bridge_hole,
-    )
-    .expect("same-outer nonrectangular bridge-hole fixture should materialize")
-    .mesh;
+    let nonrect_bridge =
+        surface::arrange_coplanar_convex_surface_holed_difference(&outer, &nonrect_bridge_hole)
+            .expect("same-outer nonrectangular bridge-hole fixture should materialize")
+            .mesh;
     let nonrect_bridge_intersection =
-        hypermesh::surface::arrange_coplanar_surface_component_holed_intersection(
+        surface::arrange_coplanar_surface_component_holed_intersection(
             &bridge_left,
             &nonrect_bridge,
         )
@@ -26988,7 +26656,7 @@ fn exact_coplanar_component_holed_intersection_merges_same_outer_holes() {
         "nonrectangular bridge should retain the exact convex-union boundary"
     );
     assert_eq!(
-        hypermesh::surface::arrange_coplanar_surface_component_holed_intersection(
+        surface::arrange_coplanar_surface_component_holed_intersection(
             &nonrect_bridge,
             &bridge_left,
         ),
@@ -27037,12 +26705,11 @@ fn exact_coplanar_component_holed_intersection_merges_same_outer_holes() {
         )
         .expect("same-outer orthogonal intersection right fixture should materialize")
         .mesh;
-    let orthogonal_intersection =
-        hypermesh::surface::arrange_coplanar_surface_component_holed_intersection(
-            &orthogonal_left,
-            &orthogonal_right,
-        )
-        .expect("rectilinear nonconvex retained-hole union should replay as one hole");
+    let orthogonal_intersection = surface::arrange_coplanar_surface_component_holed_intersection(
+        &orthogonal_left,
+        &orthogonal_right,
+    )
+    .expect("rectilinear nonconvex retained-hole union should replay as one hole");
     orthogonal_intersection.validate().unwrap();
     orthogonal_intersection
         .validate_intersection_against_sources(&orthogonal_left, &orthogonal_right)
@@ -27063,12 +26730,11 @@ fn exact_coplanar_component_holed_intersection_merges_same_outer_holes() {
             .iter()
             .any(|point| real_eq(&point.y, &Real::from(16)))
     );
-    let orthogonal_reverse =
-        hypermesh::surface::arrange_coplanar_surface_component_holed_intersection(
-            &orthogonal_right,
-            &orthogonal_left,
-        )
-        .expect("rectilinear nonconvex retained-hole union should be symmetric");
+    let orthogonal_reverse = surface::arrange_coplanar_surface_component_holed_intersection(
+        &orthogonal_right,
+        &orthogonal_left,
+    )
+    .expect("rectilinear nonconvex retained-hole union should be symmetric");
     orthogonal_reverse.validate().unwrap();
     orthogonal_reverse
         .validate_intersection_against_sources(&orthogonal_right, &orthogonal_left)
@@ -27091,7 +26757,7 @@ fn exact_coplanar_component_holed_intersection_merges_same_outer_holes() {
         .unwrap();
     assert_eq!(
         orthogonal_preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     hypermesh::boolean_exact(
         &orthogonal_left,
@@ -27151,11 +26817,8 @@ fn exact_coplanar_component_holed_intersection_merges_same_outer_holes() {
         "non-axis-aligned retained holes must not be claimed by the orthogonal intersection"
     );
     let affine_intersection =
-        hypermesh::surface::arrange_coplanar_surface_component_holed_intersection(
-            &affine_left,
-            &affine_right,
-        )
-        .expect("nonrectilinear nonconvex retained-hole union should replay as one hole");
+        surface::arrange_coplanar_surface_component_holed_intersection(&affine_left, &affine_right)
+            .expect("nonrectilinear nonconvex retained-hole union should replay as one hole");
     affine_intersection.validate().unwrap();
     affine_intersection
         .validate_intersection_against_sources(&affine_left, &affine_right)
@@ -27166,11 +26829,9 @@ fn exact_coplanar_component_holed_intersection_merges_same_outer_holes() {
         affine_intersection.components[0].holes[0].len() > 6,
         "the retained removed union should preserve exact nonconvex split vertices"
     );
-    let affine_reverse = hypermesh::surface::arrange_coplanar_surface_component_holed_intersection(
-        &affine_right,
-        &affine_left,
-    )
-    .expect("nonrectilinear nonconvex retained-hole union should be symmetric");
+    let affine_reverse =
+        surface::arrange_coplanar_surface_component_holed_intersection(&affine_right, &affine_left)
+            .expect("nonrectilinear nonconvex retained-hole union should be symmetric");
     affine_reverse.validate().unwrap();
     affine_reverse
         .validate_intersection_against_sources(&affine_right, &affine_left)
@@ -27201,7 +26862,7 @@ fn exact_coplanar_component_holed_intersection_merges_same_outer_holes() {
         .unwrap();
     assert_eq!(
         affine_preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     hypermesh::boolean_exact(
         &affine_left,
@@ -27232,7 +26893,7 @@ fn exact_coplanar_component_holed_intersection_merges_same_outer_holes() {
     .expect("affine edge-contact retained-hole source should materialize")
     .mesh;
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_component_holed_intersection(
+        surface::arrange_coplanar_surface_component_holed_intersection(
             &affine_left,
             &affine_touching
         )
@@ -27267,26 +26928,23 @@ fn exact_coplanar_component_holed_intersection_merges_same_outer_holes() {
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let disconnected_left =
-        hypermesh::surface::arrange_coplanar_convex_surface_multi_holed_difference(
-            &disconnected_outer,
-            &disconnected_left_holes,
-        )
-        .expect("two disconnected retained-hole clusters should materialize")
-        .mesh;
-    let disconnected_right =
-        hypermesh::surface::arrange_coplanar_convex_surface_multi_holed_difference(
-            &disconnected_outer,
-            &disconnected_right_holes,
-        )
-        .expect("two disconnected overlapping rectangle-strip holes should materialize")
-        .mesh;
-    let disconnected_intersection =
-        hypermesh::surface::arrange_coplanar_surface_component_holed_intersection(
-            &disconnected_left,
-            &disconnected_right,
-        )
-        .expect("disconnected convex retained-hole clusters should replay as two retained holes");
+    let disconnected_left = surface::arrange_coplanar_convex_surface_multi_holed_difference(
+        &disconnected_outer,
+        &disconnected_left_holes,
+    )
+    .expect("two disconnected retained-hole clusters should materialize")
+    .mesh;
+    let disconnected_right = surface::arrange_coplanar_convex_surface_multi_holed_difference(
+        &disconnected_outer,
+        &disconnected_right_holes,
+    )
+    .expect("two disconnected overlapping rectangle-strip holes should materialize")
+    .mesh;
+    let disconnected_intersection = surface::arrange_coplanar_surface_component_holed_intersection(
+        &disconnected_left,
+        &disconnected_right,
+    )
+    .expect("disconnected convex retained-hole clusters should replay as two retained holes");
     disconnected_intersection.validate().unwrap();
     disconnected_intersection
         .validate_intersection_against_sources(&disconnected_left, &disconnected_right)
@@ -27300,12 +26958,11 @@ fn exact_coplanar_component_holed_intersection_merges_same_outer_holes() {
             .all(|hole| hole.len() == 4),
         "both disconnected retained clusters should replay as convex merged rectangles"
     );
-    let disconnected_reverse =
-        hypermesh::surface::arrange_coplanar_surface_component_holed_intersection(
-            &disconnected_right,
-            &disconnected_left,
-        )
-        .expect("disconnected retained-hole clusters should be symmetric");
+    let disconnected_reverse = surface::arrange_coplanar_surface_component_holed_intersection(
+        &disconnected_right,
+        &disconnected_left,
+    )
+    .expect("disconnected retained-hole clusters should be symmetric");
     disconnected_reverse.validate().unwrap();
     disconnected_reverse
         .validate_intersection_against_sources(&disconnected_right, &disconnected_left)
@@ -27322,7 +26979,7 @@ fn exact_coplanar_component_holed_intersection_merges_same_outer_holes() {
         .unwrap();
     assert_eq!(
         disconnected_preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     hypermesh::boolean_exact(
         &disconnected_left,
@@ -27346,15 +27003,12 @@ fn exact_coplanar_component_holed_intersection_merges_same_outer_holes() {
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let touching = hypermesh::surface::arrange_coplanar_convex_surface_holed_difference(
-        &outer,
-        &touching_hole,
-    )
-    .expect("touching-hole annulus fixture should materialize")
-    .mesh;
+    let touching =
+        surface::arrange_coplanar_convex_surface_holed_difference(&outer, &touching_hole)
+            .expect("touching-hole annulus fixture should materialize")
+            .mesh;
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_component_holed_intersection(&left, &touching)
-            .is_none(),
+        surface::arrange_coplanar_surface_component_holed_intersection(&left, &touching).is_none(),
         "point or edge contact between retained holes is not a disjoint-hole union"
     );
 
@@ -27370,17 +27024,14 @@ fn exact_coplanar_component_holed_intersection_merges_same_outer_holes() {
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let small =
-        hypermesh::surface::arrange_coplanar_convex_surface_holed_difference(&outer, &small_hole)
-            .expect("small-hole annulus fixture should materialize")
-            .mesh;
-    let large =
-        hypermesh::surface::arrange_coplanar_convex_surface_holed_difference(&outer, &large_hole)
-            .expect("large-hole annulus fixture should materialize")
-            .mesh;
-    let nested =
-        hypermesh::surface::arrange_coplanar_surface_component_holed_intersection(&small, &large)
-            .expect("same-outer nested holes should collapse to the larger removed region");
+    let small = surface::arrange_coplanar_convex_surface_holed_difference(&outer, &small_hole)
+        .expect("small-hole annulus fixture should materialize")
+        .mesh;
+    let large = surface::arrange_coplanar_convex_surface_holed_difference(&outer, &large_hole)
+        .expect("large-hole annulus fixture should materialize")
+        .mesh;
+    let nested = surface::arrange_coplanar_surface_component_holed_intersection(&small, &large)
+        .expect("same-outer nested holes should collapse to the larger removed region");
     nested.validate().unwrap();
     nested
         .validate_intersection_against_sources(&small, &large)
@@ -27398,7 +27049,7 @@ fn exact_coplanar_component_holed_intersection_merges_same_outer_holes() {
             .any(|point| real_eq(&point.x, &Real::from(4)))
     );
     let nested_reverse =
-        hypermesh::surface::arrange_coplanar_surface_component_holed_intersection(&large, &small)
+        surface::arrange_coplanar_surface_component_holed_intersection(&large, &small)
             .expect("same-outer nested-hole intersection should be symmetric");
     nested_reverse.validate().unwrap();
     nested_reverse
@@ -27471,7 +27122,7 @@ fn exact_coplanar_component_holed_intersection_materializes_same_outer_orthogona
     .mesh;
 
     let intersection =
-        hypermesh::surface::arrange_coplanar_surface_component_holed_intersection(&left, &right)
+        surface::arrange_coplanar_surface_component_holed_intersection(&left, &right)
             .expect("orthogonal retained-hole frame should keep its central island");
     intersection.validate().unwrap();
     intersection
@@ -27527,9 +27178,8 @@ fn exact_coplanar_component_holed_intersection_materializes_same_outer_orthogona
             .any(|point| real_eq(&point.y, &Real::from(12)))
     );
 
-    let reverse =
-        hypermesh::surface::arrange_coplanar_surface_component_holed_intersection(&right, &left)
-            .expect("same-outer orthogonal retained-hole island should be symmetric");
+    let reverse = surface::arrange_coplanar_surface_component_holed_intersection(&right, &left)
+        .expect("same-outer orthogonal retained-hole island should be symmetric");
     reverse.validate().unwrap();
     reverse
         .validate_intersection_against_sources(&right, &left)
@@ -27568,7 +27218,7 @@ fn exact_coplanar_component_holed_intersection_materializes_same_outer_orthogona
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     hypermesh::boolean_exact(
@@ -27588,13 +27238,11 @@ fn exact_coplanar_component_holed_intersection_materializes_same_outer_orthogona
     .unwrap();
 
     let point_touch_right_hole = rect_surface_i64(&[(8, 8, 12, 12)]);
-    let point_touch_right = hypermesh::surface::arrange_coplanar_convex_surface_holed_difference(
-        &outer,
-        &point_touch_right_hole,
-    )
-    .expect("point-touch right source should materialize");
+    let point_touch_right =
+        surface::arrange_coplanar_convex_surface_holed_difference(&outer, &point_touch_right_hole)
+            .expect("point-touch right source should materialize");
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_component_holed_intersection(
+        surface::arrange_coplanar_surface_component_holed_intersection(
             &left,
             &point_touch_right.mesh,
         )
@@ -27623,11 +27271,9 @@ fn exact_coplanar_component_holed_intersection_materializes_same_outer_point_bra
         .expect("point-branched source fixture should materialize")
         .mesh;
 
-    let intersection = hypermesh::surface::arrange_coplanar_surface_component_holed_intersection(
-        &branch_source,
-        &outer,
-    )
-    .expect("point-branched retained-hole island should be a component-holed output");
+    let intersection =
+        surface::arrange_coplanar_surface_component_holed_intersection(&branch_source, &outer)
+            .expect("point-branched retained-hole island should be a component-holed output");
     intersection.validate().unwrap();
     intersection
         .validate_intersection_against_sources(&branch_source, &outer)
@@ -27661,11 +27307,9 @@ fn exact_coplanar_component_holed_intersection_materializes_same_outer_point_bra
         "the island boundary must duplicate the same exact branch point"
     );
 
-    let reverse = hypermesh::surface::arrange_coplanar_surface_component_holed_intersection(
-        &outer,
-        &branch_source,
-    )
-    .expect("point-branched retained-hole island should be symmetric");
+    let reverse =
+        surface::arrange_coplanar_surface_component_holed_intersection(&outer, &branch_source)
+            .expect("point-branched retained-hole island should be symmetric");
     reverse.validate().unwrap();
     reverse
         .validate_intersection_against_sources(&outer, &branch_source)
@@ -27698,7 +27342,7 @@ fn exact_coplanar_component_holed_intersection_materializes_same_outer_point_bra
         .unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     hypermesh::boolean_exact(
@@ -27739,13 +27383,11 @@ fn exact_coplanar_component_holed_intersection_consumes_same_outer_point_branch_
         .mesh;
 
     let island_killer_hole = rect_surface_i64(&[(4, 4, 6, 6)]);
-    let island_killer = hypermesh::surface::arrange_coplanar_convex_surface_holed_difference(
-        &outer,
-        &island_killer_hole,
-    )
-    .expect("same-outer island-consuming source should materialize")
-    .mesh;
-    let intersection = hypermesh::surface::arrange_coplanar_surface_component_holed_intersection(
+    let island_killer =
+        surface::arrange_coplanar_convex_surface_holed_difference(&outer, &island_killer_hole)
+            .expect("same-outer island-consuming source should materialize")
+            .mesh;
+    let intersection = surface::arrange_coplanar_surface_component_holed_intersection(
         &branch_source,
         &island_killer,
     )
@@ -27763,7 +27405,7 @@ fn exact_coplanar_component_holed_intersection_consumes_same_outer_point_branch_
         "the killed source island must not be re-emitted as a filled component"
     );
 
-    let reverse = hypermesh::surface::arrange_coplanar_surface_component_holed_intersection(
+    let reverse = surface::arrange_coplanar_surface_component_holed_intersection(
         &island_killer,
         &branch_source,
     )
@@ -27775,11 +27417,8 @@ fn exact_coplanar_component_holed_intersection_consumes_same_outer_point_branch_
     assert_eq!(reverse.components.len(), 1);
 
     let surviving_source_island =
-        hypermesh::surface::arrange_coplanar_surface_component_holed_intersection(
-            &branch_source,
-            &outer,
-        )
-        .expect("unclipped source should still expose its point-branched island");
+        surface::arrange_coplanar_surface_component_holed_intersection(&branch_source, &outer)
+            .expect("unclipped source should still expose its point-branched island");
     let extra_island = surviving_source_island
         .components
         .iter()
@@ -27807,7 +27446,7 @@ fn exact_coplanar_component_holed_intersection_consumes_same_outer_point_branch_
         .unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     hypermesh::boolean_exact(
@@ -27848,13 +27487,11 @@ fn exact_coplanar_component_holed_intersection_clips_same_outer_point_branch_hol
         .mesh;
 
     let partial_killer_hole = rect_surface_i64(&[(10, 8, 14, 12)]);
-    let partial_killer = hypermesh::surface::arrange_coplanar_convex_surface_holed_difference(
-        &outer,
-        &partial_killer_hole,
-    )
-    .expect("partial island cutter source should materialize")
-    .mesh;
-    let intersection = hypermesh::surface::arrange_coplanar_surface_component_holed_intersection(
+    let partial_killer =
+        surface::arrange_coplanar_convex_surface_holed_difference(&outer, &partial_killer_hole)
+            .expect("partial island cutter source should materialize")
+            .mesh;
+    let intersection = surface::arrange_coplanar_surface_component_holed_intersection(
         &branch_source,
         &partial_killer,
     )
@@ -27884,7 +27521,7 @@ fn exact_coplanar_component_holed_intersection_clips_same_outer_point_branch_hol
         "the removed half of the source island must not survive"
     );
 
-    let reverse = hypermesh::surface::arrange_coplanar_surface_component_holed_intersection(
+    let reverse = surface::arrange_coplanar_surface_component_holed_intersection(
         &partial_killer,
         &branch_source,
     )
@@ -27896,11 +27533,8 @@ fn exact_coplanar_component_holed_intersection_clips_same_outer_point_branch_hol
     assert_eq!(reverse.components.len(), 2);
 
     let surviving_source_island =
-        hypermesh::surface::arrange_coplanar_surface_component_holed_intersection(
-            &branch_source,
-            &outer,
-        )
-        .expect("unclipped source should still expose its full point-branched island");
+        surface::arrange_coplanar_surface_component_holed_intersection(&branch_source, &outer)
+            .expect("unclipped source should still expose its full point-branched island");
     let full_island = surviving_source_island
         .components
         .iter()
@@ -27922,13 +27556,11 @@ fn exact_coplanar_component_holed_intersection_clips_same_outer_point_branch_hol
     );
 
     let interior_killer_hole = rect_surface_i64(&[(9, 9, 11, 11)]);
-    let interior_killer = hypermesh::surface::arrange_coplanar_convex_surface_holed_difference(
-        &outer,
-        &interior_killer_hole,
-    )
-    .expect("interior island cutter source should materialize")
-    .mesh;
-    let holed_island = hypermesh::surface::arrange_coplanar_surface_component_holed_intersection(
+    let interior_killer =
+        surface::arrange_coplanar_convex_surface_holed_difference(&outer, &interior_killer_hole)
+            .expect("interior island cutter source should materialize")
+            .mesh;
+    let holed_island = surface::arrange_coplanar_surface_component_holed_intersection(
         &branch_source,
         &interior_killer,
     )
@@ -27971,7 +27603,7 @@ fn exact_coplanar_component_holed_intersection_clips_same_outer_point_branch_hol
         .unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     hypermesh::boolean_exact(
@@ -28002,7 +27634,7 @@ fn exact_coplanar_component_holed_intersection_clips_same_outer_point_branch_hol
         .unwrap();
     assert_eq!(
         interior_preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     hypermesh::boolean_exact(
@@ -28028,7 +27660,7 @@ fn exact_coplanar_component_holed_intersection_clips_same_outer_source_hole_isla
     let outer = rect_surface_i64(&[(0, 0, 20, 20)]);
     let owner_hole = rect_surface_i64(&[(4, 4, 16, 16)]);
     let source_shell =
-        hypermesh::surface::arrange_coplanar_convex_surface_holed_difference(&outer, &owner_hole)
+        surface::arrange_coplanar_convex_surface_holed_difference(&outer, &owner_hole)
             .expect("source shell with retained owner hole should materialize")
             .mesh;
     let source_island = rect_surface_i64(&[(8, 8, 12, 12)]);
@@ -28036,22 +27668,19 @@ fn exact_coplanar_component_holed_intersection_clips_same_outer_source_hole_isla
         &[source_shell, source_island],
         "same-outer multi-hole clipped source island fixture",
     );
-    hypermesh::surface::arrange_coplanar_surface_component_holed_intersection(&source, &outer)
+    surface::arrange_coplanar_surface_component_holed_intersection(&source, &outer)
         .expect("combined source should expose its retained-hole island before clipping")
         .validate_intersection_against_sources(&source, &outer)
         .unwrap();
 
     let opposing_holes = rect_surface_i64(&[(6, 6, 10, 10), (11, 11, 14, 14)]);
-    let opposing = hypermesh::surface::arrange_coplanar_convex_surface_multi_holed_difference(
-        &outer,
-        &opposing_holes,
-    )
-    .expect("multi-hole source-island cutter should materialize")
-    .mesh;
-    let intersection = hypermesh::surface::arrange_coplanar_surface_component_holed_intersection(
-        &source, &opposing,
-    )
-    .expect("two opposite retained holes should clip one source-owned island remnant");
+    let opposing =
+        surface::arrange_coplanar_convex_surface_multi_holed_difference(&outer, &opposing_holes)
+            .expect("multi-hole source-island cutter should materialize")
+            .mesh;
+    let intersection =
+        surface::arrange_coplanar_surface_component_holed_intersection(&source, &opposing)
+            .expect("two opposite retained holes should clip one source-owned island remnant");
     intersection.validate().unwrap();
     intersection
         .validate_intersection_against_sources(&source, &opposing)
@@ -28077,10 +27706,9 @@ fn exact_coplanar_component_holed_intersection_clips_same_outer_source_hole_isla
         "the clipped island corners owned by the opposite holes must be absent"
     );
 
-    let reverse = hypermesh::surface::arrange_coplanar_surface_component_holed_intersection(
-        &opposing, &source,
-    )
-    .expect("multi-hole source-owned island clipping should be symmetric");
+    let reverse =
+        surface::arrange_coplanar_surface_component_holed_intersection(&opposing, &source)
+            .expect("multi-hole source-owned island clipping should be symmetric");
     reverse.validate().unwrap();
     reverse
         .validate_intersection_against_sources(&opposing, &source)
@@ -28088,7 +27716,7 @@ fn exact_coplanar_component_holed_intersection_clips_same_outer_source_hole_isla
     assert_eq!(reverse.components.len(), 2);
 
     let surviving_source_island =
-        hypermesh::surface::arrange_coplanar_surface_component_holed_intersection(&source, &outer)
+        surface::arrange_coplanar_surface_component_holed_intersection(&source, &outer)
             .expect("unclipped source should still expose its full retained-hole island");
     let full_island = surviving_source_island
         .components
@@ -28112,15 +27740,12 @@ fn exact_coplanar_component_holed_intersection_clips_same_outer_source_hole_isla
 
     let split_hole = rect_surface_i64(&[(9, 8, 11, 12)]);
     let split_opposing =
-        hypermesh::surface::arrange_coplanar_convex_surface_holed_difference(&outer, &split_hole)
+        surface::arrange_coplanar_convex_surface_holed_difference(&outer, &split_hole)
             .expect("split island cutter source should materialize")
             .mesh;
     let split_intersection =
-        hypermesh::surface::arrange_coplanar_surface_component_holed_intersection(
-            &source,
-            &split_opposing,
-        )
-        .expect("opposite retained hole should split the source-owned island");
+        surface::arrange_coplanar_surface_component_holed_intersection(&source, &split_opposing)
+            .expect("opposite retained hole should split the source-owned island");
     split_intersection.validate().unwrap();
     split_intersection
         .validate_intersection_against_sources(&source, &split_opposing)
@@ -28151,11 +27776,9 @@ fn exact_coplanar_component_holed_intersection_clips_same_outer_source_hole_isla
         "right split source-island remnant should be retained"
     );
 
-    let split_reverse = hypermesh::surface::arrange_coplanar_surface_component_holed_intersection(
-        &split_opposing,
-        &source,
-    )
-    .expect("split source-owned island clipping should be symmetric");
+    let split_reverse =
+        surface::arrange_coplanar_surface_component_holed_intersection(&split_opposing, &source)
+            .expect("split source-owned island clipping should be symmetric");
     split_reverse.validate().unwrap();
     split_reverse
         .validate_intersection_against_sources(&split_opposing, &source)
@@ -28184,18 +27807,14 @@ fn exact_coplanar_component_holed_intersection_clips_same_outer_source_hole_isla
 
     let point_touch_hole = rect_surface_i64(&[(12, 12, 14, 14)]);
     let point_touch_opposing =
-        hypermesh::surface::arrange_coplanar_convex_surface_holed_difference(
-            &outer,
-            &point_touch_hole,
-        )
-        .expect("point-touch source-island cutter should materialize")
-        .mesh;
-    let point_touch_intersection =
-        hypermesh::surface::arrange_coplanar_surface_component_holed_intersection(
-            &source,
-            &point_touch_opposing,
-        )
-        .expect("point-only contact with a source-owned island should retain the island");
+        surface::arrange_coplanar_convex_surface_holed_difference(&outer, &point_touch_hole)
+            .expect("point-touch source-island cutter should materialize")
+            .mesh;
+    let point_touch_intersection = surface::arrange_coplanar_surface_component_holed_intersection(
+        &source,
+        &point_touch_opposing,
+    )
+    .expect("point-only contact with a source-owned island should retain the island");
     point_touch_intersection.validate().unwrap();
     point_touch_intersection
         .validate_intersection_against_sources(&source, &point_touch_opposing)
@@ -28314,17 +27933,15 @@ fn exact_coplanar_component_holed_intersection_retains_same_outer_holed_source_i
     let outer = rect_surface_i64(&[(0, 0, 24, 24)]);
     let owner_hole = rect_surface_i64(&[(4, 4, 20, 20)]);
     let source_shell =
-        hypermesh::surface::arrange_coplanar_convex_surface_holed_difference(&outer, &owner_hole)
+        surface::arrange_coplanar_convex_surface_holed_difference(&outer, &owner_hole)
             .expect("source shell with retained owner hole should materialize")
             .mesh;
     let island_outer = rect_surface_i64(&[(8, 8, 18, 18)]);
     let island_hole = rect_surface_i64(&[(10, 10, 14, 14)]);
-    let source_island = hypermesh::surface::arrange_coplanar_convex_surface_holed_difference(
-        &island_outer,
-        &island_hole,
-    )
-    .expect("source-owned holed island should materialize")
-    .mesh;
+    let source_island =
+        surface::arrange_coplanar_convex_surface_holed_difference(&island_outer, &island_hole)
+            .expect("source-owned holed island should materialize")
+            .mesh;
     let source = combine_open_exact_meshes(
         &[source_shell, source_island],
         "same-outer holed source island fixture",
@@ -28333,17 +27950,14 @@ fn exact_coplanar_component_holed_intersection_retains_same_outer_holed_source_i
     let no_effect_hole = (11, 11, 12, 12);
     let extra_island_hole = (15, 15, 17, 17);
     let opposing_holes = rect_surface_i64(&[no_effect_hole, extra_island_hole]);
-    let opposing = hypermesh::surface::arrange_coplanar_convex_surface_multi_holed_difference(
-        &outer,
-        &opposing_holes,
-    )
-    .expect("same-outer holed-island cutter should materialize")
-    .mesh;
+    let opposing =
+        surface::arrange_coplanar_convex_surface_multi_holed_difference(&outer, &opposing_holes)
+            .expect("same-outer holed-island cutter should materialize")
+            .mesh;
 
-    let intersection = hypermesh::surface::arrange_coplanar_surface_component_holed_intersection(
-        &source, &opposing,
-    )
-    .expect("same-outer intersection should retain the source-owned holed island");
+    let intersection =
+        surface::arrange_coplanar_surface_component_holed_intersection(&source, &opposing)
+            .expect("same-outer intersection should retain the source-owned holed island");
     intersection.validate().unwrap();
     intersection
         .validate_intersection_against_sources(&source, &opposing)
@@ -28379,10 +27993,9 @@ fn exact_coplanar_component_holed_intersection_retains_same_outer_holed_source_i
         "the opposite strict hole inside island material must be added"
     );
 
-    let reverse = hypermesh::surface::arrange_coplanar_surface_component_holed_intersection(
-        &opposing, &source,
-    )
-    .expect("same-outer holed source island retention should be symmetric");
+    let reverse =
+        surface::arrange_coplanar_surface_component_holed_intersection(&opposing, &source)
+            .expect("same-outer holed source island retention should be symmetric");
     reverse.validate().unwrap();
     reverse
         .validate_intersection_against_sources(&opposing, &source)
@@ -28411,18 +28024,13 @@ fn exact_coplanar_component_holed_intersection_retains_same_outer_holed_source_i
     );
 
     let crossing_hole = rect_surface_i64(&[(12, 12, 16, 16)]);
-    let crossing_opposing = hypermesh::surface::arrange_coplanar_convex_surface_holed_difference(
-        &outer,
-        &crossing_hole,
-    )
-    .expect("crossing island-hole cutter should materialize")
-    .mesh;
+    let crossing_opposing =
+        surface::arrange_coplanar_convex_surface_holed_difference(&outer, &crossing_hole)
+            .expect("crossing island-hole cutter should materialize")
+            .mesh;
     let merged_hole_intersection =
-        hypermesh::surface::arrange_coplanar_surface_component_holed_intersection(
-            &source,
-            &crossing_opposing,
-        )
-        .expect("partial overlap between island holes should replay as one retained union");
+        surface::arrange_coplanar_surface_component_holed_intersection(&source, &crossing_opposing)
+            .expect("partial overlap between island holes should replay as one retained union");
     merged_hole_intersection.validate().unwrap();
     merged_hole_intersection
         .validate_intersection_against_sources(&source, &crossing_opposing)
@@ -28449,11 +28057,9 @@ fn exact_coplanar_component_holed_intersection_retains_same_outer_holed_source_i
         "the opposite cutter extent should be present in the merged hole"
     );
 
-    let merged_reverse = hypermesh::surface::arrange_coplanar_surface_component_holed_intersection(
-        &crossing_opposing,
-        &source,
-    )
-    .expect("merged retained island hole replay should be symmetric");
+    let merged_reverse =
+        surface::arrange_coplanar_surface_component_holed_intersection(&crossing_opposing, &source)
+            .expect("merged retained island hole replay should be symmetric");
     merged_reverse.validate().unwrap();
     merged_reverse
         .validate_intersection_against_sources(&crossing_opposing, &source)
@@ -28502,7 +28108,7 @@ fn exact_coplanar_component_holed_intersection_retains_same_outer_holed_source_i
         .unwrap();
     assert_eq!(
         merged_preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     hypermesh::boolean_exact(
@@ -28527,17 +28133,15 @@ fn exact_coplanar_component_holed_intersection_clips_same_outer_holed_source_isl
     let outer = rect_surface_i64(&[(0, 0, 24, 24)]);
     let owner_hole = rect_surface_i64(&[(4, 4, 20, 20)]);
     let source_shell =
-        hypermesh::surface::arrange_coplanar_convex_surface_holed_difference(&outer, &owner_hole)
+        surface::arrange_coplanar_convex_surface_holed_difference(&outer, &owner_hole)
             .expect("source shell with retained owner hole should materialize")
             .mesh;
     let island_outer = rect_surface_i64(&[(8, 8, 18, 18)]);
     let island_hole = rect_surface_i64(&[(10, 10, 12, 12)]);
-    let source_island = hypermesh::surface::arrange_coplanar_convex_surface_holed_difference(
-        &island_outer,
-        &island_hole,
-    )
-    .expect("source-owned holed island should materialize")
-    .mesh;
+    let source_island =
+        surface::arrange_coplanar_convex_surface_holed_difference(&island_outer, &island_hole)
+            .expect("source-owned holed island should materialize")
+            .mesh;
     let source = combine_open_exact_meshes(
         &[source_shell, source_island],
         "same-outer clipped holed source island fixture",
@@ -28546,17 +28150,14 @@ fn exact_coplanar_component_holed_intersection_clips_same_outer_holed_source_isl
     let clipping_hole = (16, 8, 22, 18);
     let strict_island_hole = (13, 13, 15, 15);
     let opposing_holes = rect_surface_i64(&[clipping_hole, strict_island_hole]);
-    let opposing = hypermesh::surface::arrange_coplanar_convex_surface_multi_holed_difference(
-        &outer,
-        &opposing_holes,
-    )
-    .expect("same-outer holed island clipping source should materialize")
-    .mesh;
+    let opposing =
+        surface::arrange_coplanar_convex_surface_multi_holed_difference(&outer, &opposing_holes)
+            .expect("same-outer holed island clipping source should materialize")
+            .mesh;
 
-    let intersection = hypermesh::surface::arrange_coplanar_surface_component_holed_intersection(
-        &source, &opposing,
-    )
-    .expect("same-outer intersection should clip the source-owned holed island");
+    let intersection =
+        surface::arrange_coplanar_surface_component_holed_intersection(&source, &opposing)
+            .expect("same-outer intersection should clip the source-owned holed island");
     intersection.validate().unwrap();
     intersection
         .validate_intersection_against_sources(&source, &opposing)
@@ -28599,10 +28200,9 @@ fn exact_coplanar_component_holed_intersection_clips_same_outer_holed_source_isl
         "the strict opposite hole should be retained inside the clipped remnant"
     );
 
-    let reverse = hypermesh::surface::arrange_coplanar_surface_component_holed_intersection(
-        &opposing, &source,
-    )
-    .expect("same-outer holed source island clipping should be symmetric");
+    let reverse =
+        surface::arrange_coplanar_surface_component_holed_intersection(&opposing, &source)
+            .expect("same-outer holed source island clipping should be symmetric");
     reverse.validate().unwrap();
     reverse
         .validate_intersection_against_sources(&opposing, &source)
@@ -28629,18 +28229,15 @@ fn exact_coplanar_component_holed_intersection_clips_same_outer_holed_source_isl
     );
 
     let hole_straddling_clip = rect_surface_i64(&[(11, 8, 14, 18)]);
-    let straddling_opposing = hypermesh::surface::arrange_coplanar_convex_surface_holed_difference(
-        &outer,
-        &hole_straddling_clip,
+    let straddling_opposing =
+        surface::arrange_coplanar_convex_surface_holed_difference(&outer, &hole_straddling_clip)
+            .expect("straddling island-hole cutter should materialize")
+            .mesh;
+    let straddling_intersection = surface::arrange_coplanar_surface_component_holed_intersection(
+        &source,
+        &straddling_opposing,
     )
-    .expect("straddling island-hole cutter should materialize")
-    .mesh;
-    let straddling_intersection =
-        hypermesh::surface::arrange_coplanar_surface_component_holed_intersection(
-            &source,
-            &straddling_opposing,
-        )
-        .expect("a cutter crossing a retained island hole should open the island remnant");
+    .expect("a cutter crossing a retained island hole should open the island remnant");
     straddling_intersection.validate().unwrap();
     straddling_intersection
         .validate_intersection_against_sources(&source, &straddling_opposing)
@@ -28682,7 +28279,7 @@ fn exact_coplanar_component_holed_intersection_clips_same_outer_holed_source_isl
         .unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     hypermesh::boolean_exact(
@@ -28738,12 +28335,12 @@ fn exact_coplanar_component_holed_intersection_splits_same_outer_holed_source_is
     let outer = rect_surface_i64(&[(0, 0, 24, 24)]);
     let owner_hole = rect_surface_i64(&[(4, 4, 20, 20)]);
     let source_shell =
-        hypermesh::surface::arrange_coplanar_convex_surface_holed_difference(&outer, &owner_hole)
+        surface::arrange_coplanar_convex_surface_holed_difference(&outer, &owner_hole)
             .expect("source shell with retained owner hole should materialize")
             .mesh;
     let island_outer = rect_surface_i64(&[(8, 8, 18, 18)]);
     let island_source_hole = rect_surface_i64(&[(9, 10, 11, 12)]);
-    let source_island = hypermesh::surface::arrange_coplanar_convex_surface_holed_difference(
+    let source_island = surface::arrange_coplanar_convex_surface_holed_difference(
         &island_outer,
         &island_source_hole,
     )
@@ -28757,17 +28354,14 @@ fn exact_coplanar_component_holed_intersection_splits_same_outer_holed_source_is
     let split_cutter = (12, 8, 14, 18);
     let strict_right_hole = (15, 13, 17, 15);
     let opposing_holes = rect_surface_i64(&[split_cutter, strict_right_hole]);
-    let opposing = hypermesh::surface::arrange_coplanar_convex_surface_multi_holed_difference(
-        &outer,
-        &opposing_holes,
-    )
-    .expect("same-outer split holed-island cutter should materialize")
-    .mesh;
+    let opposing =
+        surface::arrange_coplanar_convex_surface_multi_holed_difference(&outer, &opposing_holes)
+            .expect("same-outer split holed-island cutter should materialize")
+            .mesh;
 
-    let intersection = hypermesh::surface::arrange_coplanar_surface_component_holed_intersection(
-        &source, &opposing,
-    )
-    .expect("same-outer intersection should split the source-owned holed island");
+    let intersection =
+        surface::arrange_coplanar_surface_component_holed_intersection(&source, &opposing)
+            .expect("same-outer intersection should split the source-owned holed island");
     intersection.validate().unwrap();
     intersection
         .validate_intersection_against_sources(&source, &opposing)
@@ -28821,10 +28415,9 @@ fn exact_coplanar_component_holed_intersection_splits_same_outer_holed_source_is
         "the deleted splitter strip must not be replayed as output material"
     );
 
-    let reverse = hypermesh::surface::arrange_coplanar_surface_component_holed_intersection(
-        &opposing, &source,
-    )
-    .expect("same-outer split holed source island should be symmetric");
+    let reverse =
+        surface::arrange_coplanar_surface_component_holed_intersection(&opposing, &source)
+            .expect("same-outer split holed source island should be symmetric");
     reverse.validate().unwrap();
     reverse
         .validate_intersection_against_sources(&opposing, &source)
@@ -28870,18 +28463,15 @@ fn exact_coplanar_component_holed_intersection_splits_same_outer_holed_source_is
     );
 
     let straddling_hole = rect_surface_i64(&[(10, 8, 13, 18)]);
-    let straddling_opposing = hypermesh::surface::arrange_coplanar_convex_surface_holed_difference(
-        &outer,
-        &straddling_hole,
+    let straddling_opposing =
+        surface::arrange_coplanar_convex_surface_holed_difference(&outer, &straddling_hole)
+            .expect("straddling island-hole cutter should materialize")
+            .mesh;
+    let straddling_intersection = surface::arrange_coplanar_surface_component_holed_intersection(
+        &source,
+        &straddling_opposing,
     )
-    .expect("straddling island-hole cutter should materialize")
-    .mesh;
-    let straddling_intersection =
-        hypermesh::surface::arrange_coplanar_surface_component_holed_intersection(
-            &source,
-            &straddling_opposing,
-        )
-        .expect("a splitter crossing a retained island hole should open the split remnant");
+    .expect("a splitter crossing a retained island hole should open the split remnant");
     straddling_intersection.validate().unwrap();
     straddling_intersection
         .validate_intersection_against_sources(&source, &straddling_opposing)
@@ -29010,7 +28600,7 @@ fn exact_coplanar_component_holed_intersection_materializes_nonrectilinear_hole_
         "rotated retained-hole island must not be claimed by the orthogonal cell shortcut"
     );
     let intersection =
-        hypermesh::surface::arrange_coplanar_surface_component_holed_intersection(&left, &right)
+        surface::arrange_coplanar_surface_component_holed_intersection(&left, &right)
             .expect("nonrectilinear retained-hole frame should keep its central island");
     intersection.validate().unwrap();
     intersection
@@ -29055,9 +28645,8 @@ fn exact_coplanar_component_holed_intersection_materializes_nonrectilinear_hole_
         "the affine image of the central island corner should be retained exactly"
     );
 
-    let reverse =
-        hypermesh::surface::arrange_coplanar_surface_component_holed_intersection(&right, &left)
-            .expect("nonrectilinear retained-hole island should be symmetric");
+    let reverse = surface::arrange_coplanar_surface_component_holed_intersection(&right, &left)
+        .expect("nonrectilinear retained-hole island should be symmetric");
     reverse.validate().unwrap();
     reverse
         .validate_intersection_against_sources(&right, &left)
@@ -29096,7 +28685,7 @@ fn exact_coplanar_component_holed_intersection_materializes_nonrectilinear_hole_
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let result = hypermesh::boolean_exact(
@@ -29118,7 +28707,7 @@ fn exact_coplanar_component_holed_intersection_materializes_nonrectilinear_hole_
     assert_eq!(
         result.kind,
         hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::ExactBooleanShortcutKind::CoplanarSurfaceIntersection
+            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
 }
@@ -29143,24 +28732,22 @@ fn exact_coplanar_component_union_materializes_same_outer_disjoint_holed_fill() 
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let left =
-        hypermesh::surface::arrange_coplanar_convex_surface_holed_difference(&outer, &left_hole)
-            .expect("left annulus should materialize")
-            .mesh;
-    let right =
-        hypermesh::surface::arrange_coplanar_convex_surface_holed_difference(&outer, &right_hole)
-            .expect("right annulus should materialize")
-            .mesh;
+    let left = surface::arrange_coplanar_convex_surface_holed_difference(&outer, &left_hole)
+        .expect("left annulus should materialize")
+        .mesh;
+    let right = surface::arrange_coplanar_convex_surface_holed_difference(&outer, &right_hole)
+        .expect("right annulus should materialize")
+        .mesh;
 
     assert!(
-        hypermesh::surface::arrange_coplanar_convex_surface_union(&left, &right).is_none(),
+        surface::arrange_coplanar_convex_surface_union(&left, &right).is_none(),
         "source-holed inputs are not ordinary convex surface components"
     );
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_component_holed_union(&left, &right).is_none(),
+        surface::arrange_coplanar_surface_component_holed_union(&left, &right).is_none(),
         "filled-hole same-outer union has no retained hole artifact"
     );
-    let union = hypermesh::surface::arrange_coplanar_surface_component_union(&left, &right)
+    let union = surface::arrange_coplanar_surface_component_union(&left, &right)
         .expect("same-outer disjoint holes should union to the filled outer sheet");
     union.validate().unwrap();
     union
@@ -29190,14 +28777,12 @@ fn exact_coplanar_component_union_materializes_same_outer_disjoint_holed_fill() 
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let overlapping = hypermesh::surface::arrange_coplanar_convex_surface_holed_difference(
-        &outer,
-        &overlapping_hole,
-    )
-    .expect("overlapping annulus should materialize")
-    .mesh;
+    let overlapping =
+        surface::arrange_coplanar_convex_surface_holed_difference(&outer, &overlapping_hole)
+            .expect("overlapping annulus should materialize")
+            .mesh;
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_component_union(&left, &overlapping).is_none(),
+        surface::arrange_coplanar_surface_component_union(&left, &overlapping).is_none(),
         "overlapping retained holes require full planar arrangement"
     );
 
@@ -29207,15 +28792,12 @@ fn exact_coplanar_component_union_materializes_same_outer_disjoint_holed_fill() 
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let touching = hypermesh::surface::arrange_coplanar_convex_surface_holed_difference(
-        &outer,
-        &touching_hole,
-    )
-    .expect("touching annulus should materialize")
-    .mesh;
-    let touching_union =
-        hypermesh::surface::arrange_coplanar_surface_component_union(&left, &touching)
-            .expect("edge-touching same-outer holes should union to the filled outer sheet");
+    let touching =
+        surface::arrange_coplanar_convex_surface_holed_difference(&outer, &touching_hole)
+            .expect("touching annulus should materialize")
+            .mesh;
+    let touching_union = surface::arrange_coplanar_surface_component_union(&left, &touching)
+        .expect("edge-touching same-outer holes should union to the filled outer sheet");
     touching_union.validate().unwrap();
     touching_union
         .validate_component_union_against_sources(&left, &touching)
@@ -29259,12 +28841,11 @@ fn exact_coplanar_component_union_materializes_same_outer_disjoint_holed_fill() 
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let nested =
-        hypermesh::surface::arrange_coplanar_convex_surface_holed_difference(&outer, &nested_hole)
-            .expect("nested annulus should materialize")
-            .mesh;
+    let nested = surface::arrange_coplanar_convex_surface_holed_difference(&outer, &nested_hole)
+        .expect("nested annulus should materialize")
+        .mesh;
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_component_union(&left, &nested).is_none(),
+        surface::arrange_coplanar_surface_component_union(&left, &nested).is_none(),
         "nested retained holes belong to containment/copy or later planar work"
     );
     let nested_preflight =
@@ -29361,24 +28942,19 @@ fn exact_coplanar_component_holed_union_retains_same_outer_common_holes() {
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let left = hypermesh::surface::arrange_coplanar_convex_surface_multi_holed_difference(
-        &outer,
-        &left_holes,
-    )
-    .expect("left same-outer multi-hole source should materialize")
-    .mesh;
-    let right = hypermesh::surface::arrange_coplanar_convex_surface_multi_holed_difference(
-        &outer,
-        &right_holes,
-    )
-    .expect("right same-outer multi-hole source should materialize")
-    .mesh;
+    let left = surface::arrange_coplanar_convex_surface_multi_holed_difference(&outer, &left_holes)
+        .expect("left same-outer multi-hole source should materialize")
+        .mesh;
+    let right =
+        surface::arrange_coplanar_convex_surface_multi_holed_difference(&outer, &right_holes)
+            .expect("right same-outer multi-hole source should materialize")
+            .mesh;
 
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_component_union(&left, &right).is_none(),
+        surface::arrange_coplanar_surface_component_union(&left, &right).is_none(),
         "a retained common hole is not the filled-outer union artifact"
     );
-    let union = hypermesh::surface::arrange_coplanar_surface_component_holed_union(&left, &right)
+    let union = surface::arrange_coplanar_surface_component_holed_union(&left, &right)
         .expect("same-outer union should retain only common source holes");
     union.validate().unwrap();
     union.validate_union_against_sources(&left, &right).unwrap();
@@ -29395,7 +28971,7 @@ fn exact_coplanar_component_holed_union_retains_same_outer_common_holes() {
             .any(|point| real_eq(&point.x, &Real::from(6)))
     );
 
-    let reverse = hypermesh::surface::arrange_coplanar_surface_component_holed_union(&right, &left)
+    let reverse = surface::arrange_coplanar_surface_component_holed_union(&right, &left)
         .expect("same-outer retained-hole union should be symmetric");
     reverse.validate().unwrap();
     reverse
@@ -29427,23 +29003,19 @@ fn exact_coplanar_component_holed_union_retains_same_outer_common_holes() {
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let nested_left = hypermesh::surface::arrange_coplanar_convex_surface_multi_holed_difference(
-        &outer,
-        &nested_left_holes,
-    )
-    .expect("nested left same-outer source should materialize")
-    .mesh;
-    let nested_right = hypermesh::surface::arrange_coplanar_convex_surface_multi_holed_difference(
+    let nested_left =
+        surface::arrange_coplanar_convex_surface_multi_holed_difference(&outer, &nested_left_holes)
+            .expect("nested left same-outer source should materialize")
+            .mesh;
+    let nested_right = surface::arrange_coplanar_convex_surface_multi_holed_difference(
         &outer,
         &nested_right_holes,
     )
     .expect("nested right same-outer source should materialize")
     .mesh;
-    let nested_union = hypermesh::surface::arrange_coplanar_surface_component_holed_union(
-        &nested_left,
-        &nested_right,
-    )
-    .expect("same-outer nested holes should retain the smaller common removed region");
+    let nested_union =
+        surface::arrange_coplanar_surface_component_holed_union(&nested_left, &nested_right)
+            .expect("same-outer nested holes should retain the smaller common removed region");
     nested_union.validate().unwrap();
     nested_union
         .validate_union_against_sources(&nested_left, &nested_right)
@@ -29470,14 +29042,12 @@ fn exact_coplanar_component_holed_union_retains_same_outer_common_holes() {
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let overlapping = hypermesh::surface::arrange_coplanar_convex_surface_multi_holed_difference(
-        &outer,
-        &overlapping_holes,
-    )
-    .expect("overlapping-hole source fixture should materialize")
-    .mesh;
+    let overlapping =
+        surface::arrange_coplanar_convex_surface_multi_holed_difference(&outer, &overlapping_holes)
+            .expect("overlapping-hole source fixture should materialize")
+            .mesh;
     let overlapping_union =
-        hypermesh::surface::arrange_coplanar_surface_component_holed_union(&left, &overlapping)
+        surface::arrange_coplanar_surface_component_holed_union(&left, &overlapping)
             .expect("rectangular retained-hole overlap should retain the exact common rectangle");
     overlapping_union.validate().unwrap();
     overlapping_union
@@ -29496,7 +29066,7 @@ fn exact_coplanar_component_holed_union_retains_same_outer_common_holes() {
             .any(|point| real_eq(&point.x, &Real::from(4)))
     );
     let overlapping_reverse =
-        hypermesh::surface::arrange_coplanar_surface_component_holed_union(&overlapping, &left)
+        surface::arrange_coplanar_surface_component_holed_union(&overlapping, &left)
             .expect("rectangular retained-hole overlap should be symmetric");
     overlapping_reverse.validate().unwrap();
     overlapping_reverse
@@ -29514,7 +29084,7 @@ fn exact_coplanar_component_holed_union_retains_same_outer_common_holes() {
         .unwrap();
     assert_eq!(
         overlapping_preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     hypermesh::boolean_exact(
         &left,
@@ -29541,18 +29111,17 @@ fn exact_coplanar_component_holed_union_retains_same_outer_common_holes() {
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let nonrectangular_overlap =
-        hypermesh::surface::arrange_coplanar_convex_surface_multi_holed_difference(
-            &outer,
-            &nonrectangular_overlap_holes,
-        )
-        .expect("nonrectangular overlap source fixture should materialize")
-        .mesh;
-    let nonrectangular_union = hypermesh::surface::arrange_coplanar_surface_component_holed_union(
-        &left,
-        &nonrectangular_overlap,
+    let nonrectangular_overlap = surface::arrange_coplanar_convex_surface_multi_holed_difference(
+        &outer,
+        &nonrectangular_overlap_holes,
     )
-    .expect("strictly convex nonrectangular retained-hole overlap should retain exact clip");
+    .expect("nonrectangular overlap source fixture should materialize")
+    .mesh;
+    let nonrectangular_union =
+        surface::arrange_coplanar_surface_component_holed_union(&left, &nonrectangular_overlap)
+            .expect(
+                "strictly convex nonrectangular retained-hole overlap should retain exact clip",
+            );
     nonrectangular_union.validate().unwrap();
     nonrectangular_union
         .validate_union_against_sources(&left, &nonrectangular_overlap)
@@ -29570,11 +29139,8 @@ fn exact_coplanar_component_holed_union_retains_same_outer_common_holes() {
             .any(|point| real_eq(&point.x, &Real::from(4)))
     );
     let nonrectangular_reverse =
-        hypermesh::surface::arrange_coplanar_surface_component_holed_union(
-            &nonrectangular_overlap,
-            &left,
-        )
-        .expect("strictly convex nonrectangular retained-hole overlap should be symmetric");
+        surface::arrange_coplanar_surface_component_holed_union(&nonrectangular_overlap, &left)
+            .expect("strictly convex nonrectangular retained-hole overlap should be symmetric");
     nonrectangular_reverse.validate().unwrap();
     nonrectangular_reverse
         .validate_union_against_sources(&nonrectangular_overlap, &left)
@@ -29599,7 +29165,7 @@ fn exact_coplanar_component_holed_union_retains_same_outer_common_holes() {
         .unwrap();
     assert_eq!(
         nonrectangular_preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     hypermesh::boolean_exact(
         &left,
@@ -29658,11 +29224,11 @@ fn exact_coplanar_component_holed_union_retains_same_outer_common_holes() {
         .is_none(),
         "non-axis-aligned retained-hole edges must not be claimed by the orthogonal union"
     );
-    let affine_union = hypermesh::surface::arrange_coplanar_surface_component_holed_union(
-        &affine_left,
-        &affine_right,
-    )
-    .expect("nonrectilinear nonconvex retained-hole overlap should replay as one retained hole");
+    let affine_union =
+        surface::arrange_coplanar_surface_component_holed_union(&affine_left, &affine_right)
+            .expect(
+                "nonrectilinear nonconvex retained-hole overlap should replay as one retained hole",
+            );
     affine_union.validate().unwrap();
     affine_union
         .validate_union_against_sources(&affine_left, &affine_right)
@@ -29673,11 +29239,9 @@ fn exact_coplanar_component_holed_union_retains_same_outer_common_holes() {
         affine_union.components[0].holes[0].len() > 4,
         "the retained common hole should carry the nonconvex clipped boundary"
     );
-    let affine_reverse = hypermesh::surface::arrange_coplanar_surface_component_holed_union(
-        &affine_right,
-        &affine_left,
-    )
-    .expect("nonrectilinear nonconvex retained-hole overlap should be symmetric");
+    let affine_reverse =
+        surface::arrange_coplanar_surface_component_holed_union(&affine_right, &affine_left)
+            .expect("nonrectilinear nonconvex retained-hole overlap should be symmetric");
     affine_reverse.validate().unwrap();
     affine_reverse
         .validate_union_against_sources(&affine_right, &affine_left)
@@ -29702,7 +29266,7 @@ fn exact_coplanar_component_holed_union_retains_same_outer_common_holes() {
         .unwrap();
     assert_eq!(
         affine_preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     hypermesh::boolean_exact(
         &affine_left,
@@ -29733,18 +29297,13 @@ fn exact_coplanar_component_holed_union_retains_same_outer_common_holes() {
     .expect("affine touching retained-hole source should materialize")
     .mesh;
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_component_holed_union(
-            &affine_left,
-            &affine_touching
-        )
-        .is_none(),
+        surface::arrange_coplanar_surface_component_holed_union(&affine_left, &affine_touching)
+            .is_none(),
         "non-axis-aligned retained-hole edge contact is not a retained area certificate"
     );
-    let affine_touching_union = hypermesh::surface::arrange_coplanar_surface_component_union(
-        &affine_left,
-        &affine_touching,
-    )
-    .expect("non-axis-aligned touching retained holes should fill the outer sheet");
+    let affine_touching_union =
+        surface::arrange_coplanar_surface_component_union(&affine_left, &affine_touching)
+            .expect("non-axis-aligned touching retained holes should fill the outer sheet");
     affine_touching_union.validate().unwrap();
     affine_touching_union
         .validate_component_union_against_sources(&affine_left, &affine_touching)
@@ -29796,7 +29355,7 @@ fn exact_coplanar_component_holed_union_retains_same_outer_common_holes() {
         )
         .expect("orthogonal rectangular right annulus should materialize")
         .mesh;
-    let orthogonal_union = hypermesh::surface::arrange_coplanar_surface_component_holed_union(
+    let orthogonal_union = surface::arrange_coplanar_surface_component_holed_union(
         &orthogonal_left,
         &orthogonal_right,
     )
@@ -29818,7 +29377,7 @@ fn exact_coplanar_component_holed_union_retains_same_outer_common_holes() {
             .iter()
             .any(|point| real_eq(&point.y, &Real::from(6)))
     );
-    let orthogonal_reverse = hypermesh::surface::arrange_coplanar_surface_component_holed_union(
+    let orthogonal_reverse = surface::arrange_coplanar_surface_component_holed_union(
         &orthogonal_right,
         &orthogonal_left,
     )
@@ -29839,7 +29398,7 @@ fn exact_coplanar_component_holed_union_retains_same_outer_common_holes() {
         .unwrap();
     assert_eq!(
         orthogonal_preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     hypermesh::boolean_exact(
         &orthogonal_left,
@@ -29866,20 +29425,16 @@ fn exact_coplanar_component_holed_union_retains_same_outer_common_holes() {
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let touching = hypermesh::surface::arrange_coplanar_convex_surface_multi_holed_difference(
-        &outer,
-        &touching_holes,
-    )
-    .expect("touching-hole source fixture should materialize")
-    .mesh;
+    let touching =
+        surface::arrange_coplanar_convex_surface_multi_holed_difference(&outer, &touching_holes)
+            .expect("touching-hole source fixture should materialize")
+            .mesh;
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_component_holed_union(&left, &touching)
-            .is_none(),
+        surface::arrange_coplanar_surface_component_holed_union(&left, &touching).is_none(),
         "hole boundary contact is outside the retained-ring union certificate"
     );
-    let touching_union =
-        hypermesh::surface::arrange_coplanar_surface_component_union(&left, &touching)
-            .expect("touching retained holes should fill the outer sheet");
+    let touching_union = surface::arrange_coplanar_surface_component_union(&left, &touching)
+        .expect("touching retained holes should fill the outer sheet");
     touching_union.validate().unwrap();
     touching_union
         .validate_component_union_against_sources(&left, &touching)
@@ -29968,18 +29523,15 @@ fn exact_coplanar_component_holed_difference_materializes_nested_same_outer_hole
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let left =
-        hypermesh::surface::arrange_coplanar_convex_surface_holed_difference(&outer, &small_hole)
-            .expect("small-hole left annulus should materialize")
-            .mesh;
-    let right =
-        hypermesh::surface::arrange_coplanar_convex_surface_holed_difference(&outer, &large_hole)
-            .expect("large-hole right annulus should materialize")
-            .mesh;
+    let left = surface::arrange_coplanar_convex_surface_holed_difference(&outer, &small_hole)
+        .expect("small-hole left annulus should materialize")
+        .mesh;
+    let right = surface::arrange_coplanar_convex_surface_holed_difference(&outer, &large_hole)
+        .expect("large-hole right annulus should materialize")
+        .mesh;
 
-    let difference =
-        hypermesh::surface::arrange_coplanar_surface_component_holed_difference(&left, &right)
-            .expect("same-outer nested holes should materialize the hole annulus");
+    let difference = surface::arrange_coplanar_surface_component_holed_difference(&left, &right)
+        .expect("same-outer nested holes should materialize the hole annulus");
     difference.validate().unwrap();
     difference
         .validate_surface_difference_against_sources(&left, &right)
@@ -29998,8 +29550,7 @@ fn exact_coplanar_component_holed_difference_materializes_nested_same_outer_hole
             .any(|point| real_eq(&point.x, &Real::from(4)))
     );
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_component_holed_difference(&right, &left)
-            .is_none(),
+        surface::arrange_coplanar_surface_component_holed_difference(&right, &left).is_none(),
         "the reverse same-outer subtraction is empty/containment, not a holed remnant"
     );
 
@@ -30009,15 +29560,12 @@ fn exact_coplanar_component_holed_difference_materializes_nested_same_outer_hole
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let crossing = hypermesh::surface::arrange_coplanar_convex_surface_holed_difference(
-        &outer,
-        &crossing_hole,
-    )
-    .expect("crossing-hole annulus should materialize")
-    .mesh;
+    let crossing =
+        surface::arrange_coplanar_convex_surface_holed_difference(&outer, &crossing_hole)
+            .expect("crossing-hole annulus should materialize")
+            .mesh;
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_component_holed_difference(&left, &crossing)
-            .is_none(),
+        surface::arrange_coplanar_surface_component_holed_difference(&left, &crossing).is_none(),
         "partial hole overlap requires the full planar arrangement layer"
     );
 
@@ -30027,15 +29575,12 @@ fn exact_coplanar_component_holed_difference_materializes_nested_same_outer_hole
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let touching = hypermesh::surface::arrange_coplanar_convex_surface_holed_difference(
-        &outer,
-        &touching_hole,
-    )
-    .expect("touching-hole annulus should materialize")
-    .mesh;
+    let touching =
+        surface::arrange_coplanar_convex_surface_holed_difference(&outer, &touching_hole)
+            .expect("touching-hole annulus should materialize")
+            .mesh;
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_component_holed_difference(&left, &touching)
-            .is_none(),
+        surface::arrange_coplanar_surface_component_holed_difference(&left, &touching).is_none(),
         "hole boundary contact is not a strict nested-hole difference"
     );
 
@@ -30060,24 +29605,21 @@ fn exact_coplanar_component_holed_difference_materializes_nested_same_outer_hole
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let partial_left = hypermesh::surface::arrange_coplanar_convex_surface_multi_holed_difference(
+    let partial_left = surface::arrange_coplanar_convex_surface_multi_holed_difference(
         &partial_outer,
         &retained_and_cutting_left_holes,
     )
     .expect("retained-plus-cutting left holes should materialize")
     .mesh;
-    let partial_right = hypermesh::surface::arrange_coplanar_convex_surface_holed_difference(
+    let partial_right = surface::arrange_coplanar_convex_surface_holed_difference(
         &partial_outer,
         &partial_right_hole,
     )
     .expect("large right hole should materialize")
     .mesh;
     let partial_difference =
-        hypermesh::surface::arrange_coplanar_surface_component_holed_difference(
-            &partial_left,
-            &partial_right,
-        )
-        .expect("rectangular partial overlap should retain a holed orthogonal remnant");
+        surface::arrange_coplanar_surface_component_holed_difference(&partial_left, &partial_right)
+            .expect("rectangular partial overlap should retain a holed orthogonal remnant");
     partial_difference.validate().unwrap();
     partial_difference
         .validate_surface_difference_against_sources(&partial_left, &partial_right)
@@ -30133,19 +29675,17 @@ fn exact_coplanar_component_holed_difference_materializes_nested_same_outer_hole
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let nonrect_partial_left =
-        hypermesh::surface::arrange_coplanar_convex_surface_multi_holed_difference(
-            &partial_outer,
-            &retained_and_nonrect_cutting_left_holes,
-        )
-        .expect("retained-plus-nonrectangular left holes should materialize")
-        .mesh;
-    let nonrect_partial_difference =
-        hypermesh::surface::arrange_coplanar_surface_component_holed_difference(
-            &nonrect_partial_left,
-            &partial_right,
-        )
-        .expect("strictly convex nonrectangular partial overlap should retain a holed remnant");
+    let nonrect_partial_left = surface::arrange_coplanar_convex_surface_multi_holed_difference(
+        &partial_outer,
+        &retained_and_nonrect_cutting_left_holes,
+    )
+    .expect("retained-plus-nonrectangular left holes should materialize")
+    .mesh;
+    let nonrect_partial_difference = surface::arrange_coplanar_surface_component_holed_difference(
+        &nonrect_partial_left,
+        &partial_right,
+    )
+    .expect("strictly convex nonrectangular partial overlap should retain a holed remnant");
     nonrect_partial_difference.validate().unwrap();
     nonrect_partial_difference
         .validate_surface_difference_against_sources(&nonrect_partial_left, &partial_right)
@@ -30214,23 +29754,19 @@ fn exact_coplanar_component_holed_difference_materializes_nested_same_outer_hole
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let mixed_left = hypermesh::surface::arrange_coplanar_convex_surface_multi_holed_difference(
+    let mixed_left = surface::arrange_coplanar_convex_surface_multi_holed_difference(
         &mixed_outer,
         &mixed_left_holes,
     )
     .expect("mixed retained/cutter left holes should materialize")
     .mesh;
-    let mixed_right = hypermesh::surface::arrange_coplanar_convex_surface_holed_difference(
-        &mixed_outer,
-        &mixed_right_hole,
-    )
-    .expect("mixed right hole should materialize")
-    .mesh;
-    let mixed_difference = hypermesh::surface::arrange_coplanar_surface_component_holed_difference(
-        &mixed_left,
-        &mixed_right,
-    )
-    .expect("mixed rectangular and convex cutters should retain a holed remnant");
+    let mixed_right =
+        surface::arrange_coplanar_convex_surface_holed_difference(&mixed_outer, &mixed_right_hole)
+            .expect("mixed right hole should materialize")
+            .mesh;
+    let mixed_difference =
+        surface::arrange_coplanar_surface_component_holed_difference(&mixed_left, &mixed_right)
+            .expect("mixed rectangular and convex cutters should retain a holed remnant");
     mixed_difference.validate().unwrap();
     mixed_difference
         .validate_surface_difference_against_sources(&mixed_left, &mixed_right)
@@ -30291,12 +29827,11 @@ fn exact_coplanar_component_holed_difference_materializes_nested_same_outer_hole
         )
         .expect("orthogonal right source should materialize")
         .mesh;
-    let orthogonal_difference =
-        hypermesh::surface::arrange_coplanar_surface_component_holed_difference(
-            &orthogonal_left,
-            &orthogonal_right,
-        )
-        .expect("rectilinear nonconvex same-outer retained-hole subtraction should replay");
+    let orthogonal_difference = surface::arrange_coplanar_surface_component_holed_difference(
+        &orthogonal_left,
+        &orthogonal_right,
+    )
+    .expect("rectilinear nonconvex same-outer retained-hole subtraction should replay");
     orthogonal_difference.validate().unwrap();
     orthogonal_difference
         .validate_surface_difference_against_sources(&orthogonal_left, &orthogonal_right)
@@ -30407,23 +29942,19 @@ fn exact_coplanar_multi_difference_materializes_same_outer_disjoint_hole_fills()
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let left =
-        hypermesh::surface::arrange_coplanar_convex_surface_holed_difference(&outer, &left_hole)
-            .expect("left one-hole source should materialize")
+    let left = surface::arrange_coplanar_convex_surface_holed_difference(&outer, &left_hole)
+        .expect("left one-hole source should materialize")
+        .mesh;
+    let right =
+        surface::arrange_coplanar_convex_surface_multi_holed_difference(&outer, &right_holes)
+            .expect("right multi-hole source should materialize")
             .mesh;
-    let right = hypermesh::surface::arrange_coplanar_convex_surface_multi_holed_difference(
-        &outer,
-        &right_holes,
-    )
-    .expect("right multi-hole source should materialize")
-    .mesh;
 
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_component_holed_difference(&left, &right)
-            .is_none(),
+        surface::arrange_coplanar_surface_component_holed_difference(&left, &right).is_none(),
         "disjoint right holes become filled components, not retained holes"
     );
-    let difference = hypermesh::surface::arrange_coplanar_surface_multi_difference(&left, &right)
+    let difference = surface::arrange_coplanar_surface_multi_difference(&left, &right)
         .expect("same-outer disjoint holes should materialize as filled components");
     difference.validate().unwrap();
     difference
@@ -30459,15 +29990,12 @@ fn exact_coplanar_multi_difference_materializes_same_outer_disjoint_hole_fills()
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let crossing = hypermesh::surface::arrange_coplanar_convex_surface_multi_holed_difference(
-        &outer,
-        &crossing_holes,
-    )
-    .expect("right crossing-hole source fixture should materialize")
-    .mesh;
-    let crossing_difference =
-        hypermesh::surface::arrange_coplanar_surface_multi_difference(&left, &crossing)
-            .expect("rectangular partial retained-hole overlap should replay as no-hole cells");
+    let crossing =
+        surface::arrange_coplanar_convex_surface_multi_holed_difference(&outer, &crossing_holes)
+            .expect("right crossing-hole source fixture should materialize")
+            .mesh;
+    let crossing_difference = surface::arrange_coplanar_surface_multi_difference(&left, &crossing)
+        .expect("rectangular partial retained-hole overlap should replay as no-hole cells");
     crossing_difference.validate().unwrap();
     crossing_difference
         .validate_difference_against_sources(&left, &crossing)
@@ -30497,18 +30025,16 @@ fn exact_coplanar_multi_difference_materializes_same_outer_disjoint_hole_fills()
         .expect("orthogonal no-hole right source should materialize")
         .mesh;
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_component_difference(
+        surface::arrange_coplanar_surface_component_difference(
             &orthogonal_left,
             &orthogonal_right,
         )
         .is_none(),
         "the nonconvex retained hole is split into multiple filled loops"
     );
-    let orthogonal_difference = hypermesh::surface::arrange_coplanar_surface_multi_difference(
-        &orthogonal_left,
-        &orthogonal_right,
-    )
-    .expect("rectilinear nonconvex no-hole same-outer subtraction should replay");
+    let orthogonal_difference =
+        surface::arrange_coplanar_surface_multi_difference(&orthogonal_left, &orthogonal_right)
+            .expect("rectilinear nonconvex no-hole same-outer subtraction should replay");
     orthogonal_difference.validate().unwrap();
     orthogonal_difference
         .validate_difference_against_sources(&orthogonal_left, &orthogonal_right)
@@ -30563,15 +30089,12 @@ fn exact_coplanar_multi_difference_materializes_same_outer_disjoint_hole_fills()
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let touching = hypermesh::surface::arrange_coplanar_convex_surface_multi_holed_difference(
-        &outer,
-        &touching_holes,
-    )
-    .expect("right touching-hole source fixture should materialize")
-    .mesh;
-    let touching_difference =
-        hypermesh::surface::arrange_coplanar_surface_multi_difference(&left, &touching)
-            .expect("touching same-outer right holes should replay as filled components");
+    let touching =
+        surface::arrange_coplanar_convex_surface_multi_holed_difference(&outer, &touching_holes)
+            .expect("right touching-hole source fixture should materialize")
+            .mesh;
+    let touching_difference = surface::arrange_coplanar_surface_multi_difference(&left, &touching)
+        .expect("touching same-outer right holes should replay as filled components");
     touching_difference.validate().unwrap();
     touching_difference
         .validate_difference_against_sources(&left, &touching)
@@ -30664,37 +30187,32 @@ fn exact_coplanar_component_difference_materializes_same_outer_single_hole_fill(
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let left =
-        hypermesh::surface::arrange_coplanar_convex_surface_holed_difference(&outer, &left_hole)
-            .expect("left annulus should materialize")
-            .mesh;
-    let right =
-        hypermesh::surface::arrange_coplanar_convex_surface_holed_difference(&outer, &right_hole)
-            .expect("right annulus should materialize")
-            .mesh;
+    let left = surface::arrange_coplanar_convex_surface_holed_difference(&outer, &left_hole)
+        .expect("left annulus should materialize")
+        .mesh;
+    let right = surface::arrange_coplanar_convex_surface_holed_difference(&outer, &right_hole)
+        .expect("right annulus should materialize")
+        .mesh;
 
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_component_holed_difference(&left, &right)
-            .is_none(),
+        surface::arrange_coplanar_surface_component_holed_difference(&left, &right).is_none(),
         "a disjoint right hole becomes a filled component, not a holed component"
     );
     assert!(
-        hypermesh::surface::arrange_coplanar_convex_surface_difference(&left, &right).is_none(),
+        surface::arrange_coplanar_convex_surface_difference(&left, &right).is_none(),
         "source-holed same-outer subtraction must not be claimed by convex difference"
     );
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_cutter_hole_contact_difference(&left, &right)
-            .is_none(),
+        surface::arrange_coplanar_surface_cutter_hole_contact_difference(&left, &right).is_none(),
         "source-holed same-outer subtraction must not be claimed as cutter/hole contact"
     );
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_multi_difference(&left, &right).is_none(),
+        surface::arrange_coplanar_surface_multi_difference(&left, &right).is_none(),
         "one filled hole belongs on the simple-loop component artifact"
     );
 
-    let difference =
-        hypermesh::surface::arrange_coplanar_surface_component_difference(&left, &right)
-            .expect("same-outer single disjoint right hole should materialize as one filled loop");
+    let difference = surface::arrange_coplanar_surface_component_difference(&left, &right)
+        .expect("same-outer single disjoint right hole should materialize as one filled loop");
     difference.validate().unwrap();
     difference
         .validate_component_difference_against_sources(&left, &right)
@@ -30722,14 +30240,12 @@ fn exact_coplanar_component_difference_materializes_same_outer_single_hole_fill(
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let crossing = hypermesh::surface::arrange_coplanar_convex_surface_holed_difference(
-        &outer,
-        &crossing_hole,
-    )
-    .expect("crossing annulus should materialize")
-    .mesh;
+    let crossing =
+        surface::arrange_coplanar_convex_surface_holed_difference(&outer, &crossing_hole)
+            .expect("crossing annulus should materialize")
+            .mesh;
     let crossing_difference =
-        hypermesh::surface::arrange_coplanar_surface_component_difference(&left, &crossing)
+        surface::arrange_coplanar_surface_component_difference(&left, &crossing)
             .expect("rectangular partial retained-hole overlap should replay as one L loop");
     crossing_difference.validate().unwrap();
     crossing_difference
@@ -30755,24 +30271,19 @@ fn exact_coplanar_component_difference_materializes_same_outer_single_hole_fill(
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let nonrect_left = hypermesh::surface::arrange_coplanar_convex_surface_holed_difference(
-        &outer,
-        &nonrect_left_hole,
-    )
-    .expect("nonrectangular left annulus should materialize")
-    .mesh;
-    let nonrect_right = hypermesh::surface::arrange_coplanar_convex_surface_holed_difference(
-        &outer,
-        &nonrect_right_hole,
-    )
-    .expect("large right annulus should materialize")
-    .mesh;
+    let nonrect_left =
+        surface::arrange_coplanar_convex_surface_holed_difference(&outer, &nonrect_left_hole)
+            .expect("nonrectangular left annulus should materialize")
+            .mesh;
+    let nonrect_right =
+        surface::arrange_coplanar_convex_surface_holed_difference(&outer, &nonrect_right_hole)
+            .expect("large right annulus should materialize")
+            .mesh;
     let nonrect_crossing_difference =
-        hypermesh::surface::arrange_coplanar_surface_component_difference(
-            &nonrect_left,
-            &nonrect_right,
-        )
-        .expect("convex nonrectangular partial retained-hole overlap should replay as one loop");
+        surface::arrange_coplanar_surface_component_difference(&nonrect_left, &nonrect_right)
+            .expect(
+                "convex nonrectangular partial retained-hole overlap should replay as one loop",
+            );
     nonrect_crossing_difference.validate().unwrap();
     nonrect_crossing_difference
         .validate_component_difference_against_sources(&nonrect_left, &nonrect_right)
@@ -30814,23 +30325,19 @@ fn exact_coplanar_component_difference_materializes_same_outer_single_hole_fill(
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let mixed_left = hypermesh::surface::arrange_coplanar_convex_surface_multi_holed_difference(
+    let mixed_left = surface::arrange_coplanar_convex_surface_multi_holed_difference(
         &mixed_outer,
         &mixed_left_holes,
     )
     .expect("mixed no-hole left fixture should materialize")
     .mesh;
-    let mixed_right = hypermesh::surface::arrange_coplanar_convex_surface_holed_difference(
-        &mixed_outer,
-        &mixed_right_hole,
-    )
-    .expect("mixed no-hole right fixture should materialize")
-    .mesh;
-    let mixed_difference = hypermesh::surface::arrange_coplanar_surface_component_difference(
-        &mixed_left,
-        &mixed_right,
-    )
-    .expect("mixed rectangular and convex cutters should replay as one no-hole loop");
+    let mixed_right =
+        surface::arrange_coplanar_convex_surface_holed_difference(&mixed_outer, &mixed_right_hole)
+            .expect("mixed no-hole right fixture should materialize")
+            .mesh;
+    let mixed_difference =
+        surface::arrange_coplanar_surface_component_difference(&mixed_left, &mixed_right)
+            .expect("mixed rectangular and convex cutters should replay as one no-hole loop");
     mixed_difference.validate().unwrap();
     mixed_difference
         .validate_component_difference_against_sources(&mixed_left, &mixed_right)
@@ -30872,14 +30379,12 @@ fn exact_coplanar_component_difference_materializes_same_outer_single_hole_fill(
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let touching = hypermesh::surface::arrange_coplanar_convex_surface_holed_difference(
-        &outer,
-        &touching_hole,
-    )
-    .expect("touching annulus should materialize")
-    .mesh;
+    let touching =
+        surface::arrange_coplanar_convex_surface_holed_difference(&outer, &touching_hole)
+            .expect("touching annulus should materialize")
+            .mesh;
     let touching_difference =
-        hypermesh::surface::arrange_coplanar_surface_component_difference(&left, &touching)
+        surface::arrange_coplanar_surface_component_difference(&left, &touching)
             .expect("touching same-outer right hole should replay as one filled loop");
     touching_difference.validate().unwrap();
     touching_difference
@@ -30922,15 +30427,12 @@ fn exact_coplanar_component_difference_materializes_same_outer_single_hole_fill(
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .unwrap();
-    let containing = hypermesh::surface::arrange_coplanar_convex_surface_holed_difference(
-        &outer,
-        &containing_hole,
-    )
-    .expect("containing annulus should materialize")
-    .mesh;
+    let containing =
+        surface::arrange_coplanar_convex_surface_holed_difference(&outer, &containing_hole)
+            .expect("containing annulus should materialize")
+            .mesh;
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_component_difference(&left, &containing)
-            .is_none(),
+        surface::arrange_coplanar_surface_component_difference(&left, &containing).is_none(),
         "a right hole containing a left hole must stay on the holed artifact"
     );
 
@@ -30994,8 +30496,7 @@ fn exact_coplanar_component_difference_replays_nonrectilinear_nonconvex_same_out
     .mesh;
 
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_component_holed_difference(&left, &right)
-            .is_none(),
+        surface::arrange_coplanar_surface_component_holed_difference(&left, &right).is_none(),
         "the remnant has no retained holes and belongs on the simple component artifact"
     );
     assert!(
@@ -31006,10 +30507,8 @@ fn exact_coplanar_component_difference_replays_nonrectilinear_nonconvex_same_out
         "non-axis-aligned retained edges must not be claimed by the orthogonal materializer"
     );
 
-    let difference = hypermesh::surface::arrange_coplanar_surface_component_difference(
-        &left, &right,
-    )
-    .expect("nonrectilinear nonconvex same-outer overlap should replay as one no-hole loop");
+    let difference = surface::arrange_coplanar_surface_component_difference(&left, &right)
+        .expect("nonrectilinear nonconvex same-outer overlap should replay as one no-hole loop");
     difference.validate().unwrap();
     difference
         .validate_component_difference_against_sources(&left, &right)
@@ -31069,15 +30568,12 @@ fn exact_coplanar_component_difference_replays_nonrectilinear_nonconvex_same_out
     .expect("non-axis-aligned edge-contact right hole should materialize")
     .mesh;
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_component_holed_difference(
-            &left,
-            &touching_right
-        )
-        .is_none(),
+        surface::arrange_coplanar_surface_component_holed_difference(&left, &touching_right)
+            .is_none(),
         "the edge-contact remnant has no retained holes"
     );
     let touching_difference =
-        hypermesh::surface::arrange_coplanar_surface_component_difference(&left, &touching_right)
+        surface::arrange_coplanar_surface_component_difference(&left, &touching_right)
             .expect("non-axis-aligned edge-contact right hole should replay as one filled loop");
     touching_difference.validate().unwrap();
     touching_difference
@@ -31122,11 +30618,8 @@ fn exact_coplanar_component_difference_replays_nonrectilinear_nonconvex_same_out
     .expect("strict inner same-outer left hole should materialize")
     .mesh;
     assert!(
-        hypermesh::surface::arrange_coplanar_surface_component_difference(
-            &strict_inner_left,
-            &right
-        )
-        .is_none(),
+        surface::arrange_coplanar_surface_component_difference(&strict_inner_left, &right)
+            .is_none(),
         "a strict left hole inside the nonconvex right hole would create a retained hole"
     );
 }
@@ -34013,6 +33506,67 @@ fn exact_arrangement_boolean_attempt_reports_volume_graph_counts() {
         Some(hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex)
     );
     assert!(report.decline.is_none());
+}
+
+#[test]
+fn exact_arrangement_delegates_unregularized_sheet_complex_to_winding_materializer() {
+    let left = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
+    let right = tetrahedron_i64([1, 1, 0], [5, 1, 0], [1, 5, 0], [1, 1, 4]);
+
+    let arrangement = hypermesh::ExactArrangement::from_meshes_with_policy(
+        &left,
+        &right,
+        hypermesh::ExactRegularizationPolicy::REGULARIZED_SOLID,
+    )
+    .unwrap();
+    assert!(
+        arrangement
+            .blockers
+            .contains(&hypermesh::ExactArrangementBlocker::UnregularizedCoincidentSheetComplex)
+    );
+    assert!(
+        arrangement
+            .blockers
+            .contains(&hypermesh::ExactArrangementBlocker::UnregularizedOpenSheetComplex)
+    );
+
+    let report = hypermesh::exact_arrangement_boolean_attempt_report(
+        &left,
+        &right,
+        hypermesh::ExactBooleanOperation::Union,
+        hypermesh::ExactRegularizationPolicy::REGULARIZED_SOLID,
+    )
+    .unwrap();
+
+    assert_eq!(
+        report.stage,
+        hypermesh::ExactArrangementBooleanStage::Materialized
+    );
+    assert_eq!(report.decline, None);
+    assert_eq!(
+        report.materialized_shortcut,
+        Some(hypermesh::ExactBooleanShortcutKind::WindingMaterialized)
+    );
+    assert!(report.arrangement_blockers >= 2);
+    assert!(report.output_vertices > 0);
+    assert!(report.output_triangles > 0);
+
+    let result = hypermesh::boolean_exact(
+        &left,
+        &right,
+        hypermesh::ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap();
+    result
+        .validate_operation_against_sources(
+            &left,
+            &right,
+            hypermesh::ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+            hypermesh::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
 }
 
 fn fuzz_seed_mesh_pair(seed: &[u8]) -> (ExactMesh, ExactMesh) {

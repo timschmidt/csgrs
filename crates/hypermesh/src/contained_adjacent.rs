@@ -25,6 +25,11 @@ use hyperlimit::{
     projected_polygon_area2_value,
 };
 
+use super::arrangement2d::{ExactArrangement2dBoundaryPolicy, ExactArrangement2dSetOperation};
+use super::boolean::{
+    ProjectedOverlayBoundaryPolicy, coplanar_mesh_overlay_carrier,
+    materialize_coplanar_mesh_overlay_mesh,
+};
 use super::construction::SegmentPlaneRelation;
 use super::graph::{
     ExactIntersectionGraph, FacePairEvents, IntersectionEvent, MeshSide, build_intersection_graph,
@@ -32,11 +37,6 @@ use super::graph::{
 use super::intersection::MeshFacePairRelation;
 use super::mesh::{ExactMesh, ExactMeshValidationError, Triangle};
 use super::provenance::SourceProvenance;
-use super::surface::{
-    arrange_coplanar_convex_surface_holed_difference,
-    arrange_coplanar_convex_surface_multi_holed_difference,
-    arrange_single_triangle_coplanar_holed_difference,
-};
 use super::validation::ValidationPolicy;
 use super::winding::{
     ClosedMeshWindingRelation, classify_mesh_vertices_against_closed_mesh_winding_report,
@@ -742,14 +742,8 @@ fn component_contained_boundary_difference_for_faces(
     if connected_face_components(&containing_mesh)?.len() != 1 {
         return None;
     }
-    let contained_components = connected_face_components(&contained_mesh)?;
-    let arrangement_projection = if contained_components.len() == 1 {
-        arrange_coplanar_convex_surface_holed_difference(&containing_mesh, &contained_mesh)
-            .map(|arrangement| arrangement.projection)
-    } else {
-        arrange_coplanar_convex_surface_multi_holed_difference(&containing_mesh, &contained_mesh)
-            .map(|arrangement| arrangement.projection)
-    }?;
+    let (_, arrangement_projection) =
+        materialize_contained_patch_difference(&containing_mesh, &contained_mesh)?;
     let sign = first_projected_mesh_triangle_sign(&containing_mesh, arrangement_projection)?;
     if !mesh_projected_faces_all_have_sign(&contained_mesh, arrangement_projection, sign)? {
         return None;
@@ -897,14 +891,8 @@ fn component_contained_adjacency_for_side(
     if connected_face_components(&containing_mesh)?.len() != 1 {
         return None;
     }
-    let contained_components = connected_face_components(&contained_mesh)?;
-    let arrangement_projection = if contained_components.len() == 1 {
-        arrange_coplanar_convex_surface_holed_difference(&containing_mesh, &contained_mesh)
-            .map(|arrangement| arrangement.projection)
-    } else {
-        arrange_coplanar_convex_surface_multi_holed_difference(&containing_mesh, &contained_mesh)
-            .map(|arrangement| arrangement.projection)
-    }?;
+    let (_, arrangement_projection) =
+        materialize_contained_patch_difference(&containing_mesh, &contained_mesh)?;
     let sign = first_projected_mesh_triangle_sign(&containing_mesh, arrangement_projection)?;
     Some(ContainedFaceAdjacencyCertificate {
         containing_side,
@@ -1289,14 +1277,8 @@ fn append_contained_face_patch_group(
         &group.contained_faces,
         "exact contained-face adjacency contained faces",
     )?;
-    let replacement = if group.contained_faces.len() == 1 {
-        arrange_single_triangle_coplanar_holed_difference(&containing_mesh, &contained_mesh)?.mesh
-    } else if connected_face_components(&contained_mesh)?.len() == 1 {
-        arrange_coplanar_convex_surface_holed_difference(&containing_mesh, &contained_mesh)?.mesh
-    } else {
-        arrange_coplanar_convex_surface_multi_holed_difference(&containing_mesh, &contained_mesh)?
-            .mesh
-    };
+    let (replacement, _) =
+        materialize_contained_patch_difference(&containing_mesh, &contained_mesh)?;
     append_holed_replacement(
         &replacement,
         group.projection,
@@ -1304,6 +1286,36 @@ fn append_contained_face_patch_group(
         vertices,
         triangles,
     )
+}
+
+fn materialize_contained_patch_difference(
+    containing_mesh: &ExactMesh,
+    contained_mesh: &ExactMesh,
+) -> Option<(ExactMesh, CoplanarProjection)> {
+    let (_, projection) = coplanar_mesh_overlay_carrier(containing_mesh, contained_mesh)?;
+    for (boundary_policy, projected_boundary_policy) in [
+        (
+            ExactArrangement2dBoundaryPolicy::SimplifyCollinear,
+            ProjectedOverlayBoundaryPolicy::SimplifyCollinear,
+        ),
+        (
+            ExactArrangement2dBoundaryPolicy::PreserveCollinear,
+            ProjectedOverlayBoundaryPolicy::PreserveCollinear,
+        ),
+    ] {
+        if let Some(mesh) = materialize_coplanar_mesh_overlay_mesh(
+            containing_mesh,
+            contained_mesh,
+            ExactArrangement2dSetOperation::Difference,
+            boundary_policy,
+            projected_boundary_policy,
+            "exact contained-adjacent arrangement patch difference",
+            false,
+        ) {
+            return Some((mesh, projection));
+        }
+    }
+    None
 }
 
 fn faces_mesh(mesh: &ExactMesh, faces: &[usize], label: &'static str) -> Option<ExactMesh> {

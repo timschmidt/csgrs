@@ -67,6 +67,17 @@ pub enum ExactArrangementBlocker {
     UnresolvedIntersection,
     /// The retained cell complex is not manifold under the requested policy.
     NonManifoldCellComplex,
+    /// Source boundary sheets overlap or cross in the arrangement, but the
+    /// retained face-cells have not yet been regularized into volume-boundary
+    /// cells. This is the exact arrangement handoff for closed-solid cases
+    /// that still need cell-complex volume construction rather than a generic
+    /// non-manifold topology failure.
+    UnregularizedCoincidentSheetComplex,
+    /// Source boundary sheets have been split into an open mixed-source sheet
+    /// complex. The exact intersections are retained, but the arrangement has
+    /// not yet reconstructed the missing regularized volume-boundary cells
+    /// needed to form closed shells.
+    UnregularizedOpenSheetComplex,
     /// The primitive family is outside the current exact arrangement kernel.
     UnsupportedCurvedPrimitive,
     /// The requested output requires an explicit approximation/export policy.

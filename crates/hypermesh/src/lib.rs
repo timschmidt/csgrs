@@ -65,8 +65,7 @@ pub mod scalar;
 pub mod simplify;
 pub mod solid;
 pub mod support;
-#[doc(hidden)]
-pub mod surface;
+pub(crate) mod surface;
 pub mod validation;
 pub mod view;
 #[doc(hidden)]

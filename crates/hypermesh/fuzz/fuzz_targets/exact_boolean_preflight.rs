@@ -8,7 +8,8 @@ use hypermesh::{CoplanarTriangleRelation, ExactBooleanOperation, ExactBooleanPol
 use hypermesh::graph::{FaceSplitBoundaryNode};
 
 use hypermesh::region::{ExactRegionSelection, FaceRegionPlaneRelation, build_selected_region_mesh};
-use hypermesh::surface::{CoplanarArrangementOperation, CoplanarSurfaceContainment, CoplanarSurfaceContainmentStatus, arrange_coplanar_convex_surface_component_holed_difference, arrange_coplanar_convex_surface_component_union, arrange_coplanar_convex_surface_difference, arrange_coplanar_convex_surface_holed_difference, arrange_coplanar_convex_surface_intersection, arrange_coplanar_convex_surface_multi_difference, arrange_coplanar_convex_surface_multi_holed_difference, arrange_coplanar_convex_surface_multi_intersection, arrange_coplanar_convex_surface_multi_union, arrange_coplanar_convex_surface_union, arrange_coplanar_surface_component_difference, arrange_coplanar_surface_component_holed_difference, arrange_coplanar_surface_component_holed_intersection, arrange_coplanar_surface_component_holed_union, arrange_coplanar_surface_component_intersection, arrange_coplanar_surface_component_union, arrange_coplanar_surface_cutter_hole_contact_difference, arrange_coplanar_surface_multi_component_intersection, arrange_coplanar_surface_multi_component_union, arrange_coplanar_surface_multi_difference, arrange_coplanar_surface_point_touch_difference, arrange_coplanar_surface_point_touch_union, arrange_coplanar_surface_side_cutter_difference, arrange_single_triangle_coplanar_difference, arrange_single_triangle_coplanar_holed_difference, arrange_single_triangle_coplanar_union, certify_coplanar_convex_surface_containment, certify_coplanar_convex_surface_equivalence, certify_coplanar_convex_surface_report, certify_coplanar_surface_boundary_touch, certify_coplanar_surface_mesh_containment, certify_single_triangle_coplanar_containment, certify_single_triangle_coplanar_containment_report, difference_single_triangle_coplanar_surfaces, intersect_single_triangle_coplanar_surfaces, union_single_triangle_coplanar_surfaces};
+mod support;
+use support::legacy_surface::{CoplanarArrangementOperation, CoplanarSurfaceContainment, CoplanarSurfaceContainmentStatus, arrange_coplanar_convex_surface_component_holed_difference, arrange_coplanar_convex_surface_component_union, arrange_coplanar_convex_surface_difference, arrange_coplanar_convex_surface_holed_difference, arrange_coplanar_convex_surface_intersection, arrange_coplanar_convex_surface_multi_difference, arrange_coplanar_convex_surface_multi_holed_difference, arrange_coplanar_convex_surface_multi_intersection, arrange_coplanar_convex_surface_multi_union, arrange_coplanar_convex_surface_union, arrange_coplanar_surface_component_difference, arrange_coplanar_surface_component_holed_difference, arrange_coplanar_surface_component_holed_intersection, arrange_coplanar_surface_component_holed_union, arrange_coplanar_surface_component_intersection, arrange_coplanar_surface_component_union, arrange_coplanar_surface_cutter_hole_contact_difference, arrange_coplanar_surface_multi_component_intersection, arrange_coplanar_surface_multi_component_union, arrange_coplanar_surface_multi_difference, arrange_coplanar_surface_point_touch_difference, arrange_coplanar_surface_point_touch_union, arrange_coplanar_surface_side_cutter_difference, arrange_single_triangle_coplanar_difference, arrange_single_triangle_coplanar_holed_difference, arrange_single_triangle_coplanar_union, certify_coplanar_convex_surface_containment, certify_coplanar_convex_surface_equivalence, certify_coplanar_convex_surface_report, certify_coplanar_surface_boundary_touch, certify_coplanar_surface_mesh_containment, certify_single_triangle_coplanar_containment, certify_single_triangle_coplanar_containment_report, difference_single_triangle_coplanar_surfaces, intersect_single_triangle_coplanar_surfaces, union_single_triangle_coplanar_surfaces};
 
 use hypermesh::affine_surface::{CoplanarAffineSurfaceArrangement, CoplanarAffineSurfaceBasis, arrange_coplanar_affine_surface_difference, arrange_coplanar_affine_surface_intersection, arrange_coplanar_affine_surface_union};
 use hypermesh::orthogonal_surface::{CoplanarOrthogonalSurfaceArrangement, CoplanarOrthogonalSurfaceComponent, CoplanarOrthogonalSurfaceOperation, arrange_coplanar_orthogonal_surface_difference, arrange_coplanar_orthogonal_surface_intersection, arrange_coplanar_orthogonal_surface_union};
@@ -1577,7 +1578,7 @@ fn exercise_multi_component_coplanar_union() {
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceMultiUnion
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let result = hypermesh::boolean_exact(
@@ -1660,7 +1661,7 @@ fn exercise_multi_component_coplanar_union() {
     point_touch_preflight.validate().unwrap();
     assert_eq!(
         point_touch_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchUnion
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let point_touch_result = hypermesh::boolean_exact(
         &edge_touch_left,
@@ -1684,7 +1685,7 @@ fn exercise_multi_component_coplanar_union() {
     point_touch_intersection.validate().unwrap();
     assert_eq!(
         point_touch_intersection.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchIntersection
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let point_touch_difference =
         preflight_boolean_exact(&edge_touch_left, &point_touch_right, ExactBooleanOperation::Difference)
@@ -1692,7 +1693,7 @@ fn exercise_multi_component_coplanar_union() {
     point_touch_difference.validate().unwrap();
     assert_eq!(
         point_touch_difference.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     hypermesh::boolean_exact(
         &edge_touch_left,
@@ -1744,7 +1745,7 @@ fn exercise_multi_component_coplanar_union() {
         )
         .expect("mixed edge/point union preflight should classify shortcut")
         .support,
-        ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchUnion
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     hypermesh::boolean_exact(
         &mixed_contact_left,
@@ -1790,7 +1791,7 @@ fn exercise_multi_component_coplanar_union() {
         )
         .expect("mixed overlap/point union preflight should classify shortcut")
         .support,
-        ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchUnion
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     hypermesh::boolean_exact(
         &mixed_overlap_left,
@@ -1932,7 +1933,7 @@ fn exercise_multi_component_coplanar_union() {
     nonconvex_edge_preflight.validate().unwrap();
     assert_eq!(
         nonconvex_edge_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     hypermesh::boolean_exact(
         &nonconvex_point_touch_left,
@@ -2052,7 +2053,7 @@ fn exercise_multi_component_coplanar_union() {
     bridge_preflight.validate().unwrap();
     assert_eq!(
         bridge_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceMultiUnion
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let bridge_result = hypermesh::boolean_exact(
         &bridge_left,
@@ -2211,7 +2212,7 @@ fn exercise_nonrectangular_component_union_hull_coverage() {
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceArrangementUnion
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let result = hypermesh::boolean_exact(
@@ -2423,7 +2424,7 @@ fn exercise_component_holed_coplanar_intersection() {
         .unwrap();
     assert_eq!(
         preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     hypermesh::boolean_exact(
         &annulus,
@@ -2684,7 +2685,7 @@ fn exercise_same_outer_component_holed_coplanar_intersection() {
         .unwrap();
     assert_eq!(
         orthogonal_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     hypermesh::boolean_exact(
         &orthogonal_left,
@@ -2765,7 +2766,7 @@ fn exercise_same_outer_component_holed_coplanar_intersection() {
         .unwrap();
     assert_eq!(
         affine_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     hypermesh::boolean_exact(
         &affine_left,
@@ -2871,7 +2872,7 @@ fn exercise_same_outer_component_holed_coplanar_intersection() {
         .unwrap();
     assert_eq!(
         disconnected_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     hypermesh::boolean_exact(
         &disconnected_left,
@@ -2926,7 +2927,7 @@ fn exercise_same_outer_component_holed_coplanar_intersection() {
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     hypermesh::boolean_exact(
         &left,
@@ -3004,7 +3005,7 @@ fn exercise_same_outer_component_holed_coplanar_intersection_with_island() {
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     hypermesh::boolean_exact(
         &left,
@@ -3562,7 +3563,7 @@ fn exercise_same_outer_component_holed_coplanar_intersection_with_island() {
         .unwrap();
     assert_eq!(
         affine_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     hypermesh::boolean_exact(
         &affine_left,
@@ -3642,7 +3643,7 @@ fn exercise_same_outer_source_island_point_touch_replay() {
         .unwrap();
     assert_eq!(
         preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     hypermesh::boolean_exact(
@@ -3782,7 +3783,7 @@ fn exercise_same_outer_component_holed_coplanar_difference() {
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     hypermesh::boolean_exact(
         &left,
@@ -3809,7 +3810,7 @@ fn exercise_same_outer_component_holed_coplanar_difference() {
         .unwrap();
     assert_eq!(
         partial_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     hypermesh::boolean_exact(
         &partial_left,
@@ -3839,7 +3840,7 @@ fn exercise_same_outer_component_holed_coplanar_difference() {
         .unwrap();
     assert_eq!(
         nonrect_partial_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     hypermesh::boolean_exact(
         &nonrect_partial_left,
@@ -3905,7 +3906,7 @@ fn exercise_same_outer_component_holed_coplanar_difference() {
         .unwrap();
     assert_eq!(
         mixed_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     hypermesh::boolean_exact(
         &mixed_left,
@@ -3960,7 +3961,7 @@ fn exercise_same_outer_component_holed_coplanar_difference() {
         .unwrap();
     assert_eq!(
         orthogonal_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     hypermesh::boolean_exact(
         &orthogonal_left,
@@ -4074,7 +4075,7 @@ fn exercise_same_outer_holed_coplanar_multi_difference() {
         .unwrap();
     assert_eq!(
         orthogonal_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceMultiDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     hypermesh::boolean_exact(
         &orthogonal_left,
@@ -4120,7 +4121,7 @@ fn exercise_same_outer_holed_coplanar_multi_difference() {
         .unwrap();
     assert_eq!(
         touching_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceMultiDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     hypermesh::boolean_exact(
         &left,
@@ -4144,7 +4145,7 @@ fn exercise_same_outer_holed_coplanar_multi_difference() {
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceMultiDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     hypermesh::boolean_exact(
         &left,
@@ -4249,7 +4250,7 @@ fn exercise_same_outer_holed_coplanar_component_difference() {
         .unwrap();
     assert_eq!(
         nonrect_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     hypermesh::boolean_exact(
         &nonrect_left,
@@ -4300,7 +4301,7 @@ fn exercise_same_outer_holed_coplanar_component_difference() {
         .unwrap();
     assert_eq!(
         affine_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     hypermesh::boolean_exact(
         &affine_left,
@@ -4351,7 +4352,7 @@ fn exercise_same_outer_holed_coplanar_component_difference() {
         .unwrap();
     assert_eq!(
         affine_touching_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     hypermesh::boolean_exact(
         &affine_left,
@@ -4414,7 +4415,7 @@ fn exercise_same_outer_holed_coplanar_component_difference() {
         .unwrap();
     assert_eq!(
         mixed_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     hypermesh::boolean_exact(
         &mixed_left,
@@ -4457,7 +4458,7 @@ fn exercise_same_outer_holed_coplanar_component_difference() {
         .unwrap();
     assert_eq!(
         touching_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     hypermesh::boolean_exact(
         &left,
@@ -4481,7 +4482,7 @@ fn exercise_same_outer_holed_coplanar_component_difference() {
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     hypermesh::boolean_exact(
         &left,
@@ -4557,7 +4558,7 @@ fn exercise_same_outer_holed_coplanar_filled_union() {
         .unwrap();
     assert_eq!(
         touching_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     hypermesh::boolean_exact(
         &left,
@@ -4593,7 +4594,7 @@ fn exercise_same_outer_holed_coplanar_filled_union() {
         .unwrap();
     assert_eq!(
         nested_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     hypermesh::boolean_exact(
         &left,
@@ -4617,7 +4618,7 @@ fn exercise_same_outer_holed_coplanar_filled_union() {
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     hypermesh::boolean_exact(
         &left,
@@ -4807,7 +4808,7 @@ fn exercise_same_outer_holed_coplanar_retained_union() {
         .unwrap();
     assert_eq!(
         touching_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     hypermesh::boolean_exact(
         &left,
@@ -4831,7 +4832,7 @@ fn exercise_same_outer_holed_coplanar_retained_union() {
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     hypermesh::boolean_exact(
         &left,
@@ -4858,7 +4859,7 @@ fn exercise_same_outer_holed_coplanar_retained_union() {
         .unwrap();
     assert_eq!(
         overlapping_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     hypermesh::boolean_exact(
         &left,
@@ -4885,7 +4886,7 @@ fn exercise_same_outer_holed_coplanar_retained_union() {
         .unwrap();
     assert_eq!(
         nonrectangular_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     hypermesh::boolean_exact(
         &left,
@@ -4943,7 +4944,7 @@ fn exercise_same_outer_holed_coplanar_retained_union() {
         .unwrap();
     assert_eq!(
         affine_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     hypermesh::boolean_exact(
         &affine_left,
@@ -4985,7 +4986,7 @@ fn exercise_same_outer_holed_coplanar_retained_union() {
         .unwrap();
     assert_eq!(
         affine_touching_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     hypermesh::boolean_exact(
         &affine_left,
@@ -5015,7 +5016,7 @@ fn exercise_same_outer_holed_coplanar_retained_union() {
         .unwrap();
     assert_eq!(
         orthogonal_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     hypermesh::boolean_exact(
         &orthogonal_left,
@@ -5074,7 +5075,7 @@ fn exercise_nonconvex_component_union_loop() {
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let result = hypermesh::boolean_exact(
@@ -5157,7 +5158,7 @@ fn exercise_nonconvex_multi_component_union_loop() {
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceMultiUnion
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let result = hypermesh::boolean_exact(
@@ -5248,7 +5249,7 @@ fn exercise_component_holed_coplanar_union() {
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let result = hypermesh::boolean_exact(
@@ -5343,7 +5344,7 @@ fn exercise_disconnected_component_holed_coplanar_union() {
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let result = hypermesh::boolean_exact(
@@ -5414,7 +5415,7 @@ fn exercise_two_disk_component_holed_coplanar_union() {
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     hypermesh::boolean_exact(
@@ -5485,7 +5486,7 @@ fn exercise_overlapping_component_holed_coplanar_union() {
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     hypermesh::boolean_exact(
@@ -5548,7 +5549,7 @@ fn exercise_nonconvex_overlap_component_holed_coplanar_union() {
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     hypermesh::boolean_exact(
@@ -5620,7 +5621,7 @@ fn exercise_point_branch_component_holed_coplanar_union() {
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     hypermesh::boolean_exact(
@@ -5689,7 +5690,7 @@ fn exercise_contact_opening_with_retained_hole() {
         .unwrap();
     assert_eq!(
         preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let result = hypermesh::boolean_exact(
@@ -5769,7 +5770,7 @@ fn exercise_independent_contact_openings() {
     preflight.validate_against_sources(&left, &openings).unwrap();
     assert_eq!(
         preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceCutterHoleContactDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let with_retained_hole = ExactMesh::from_i64_triangles_with_policy(
@@ -5858,7 +5859,7 @@ fn exercise_connected_multi_cutter_opening_with_retained_hole() {
         .unwrap();
     assert_eq!(
         preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let result = hypermesh::boolean_exact(
@@ -5941,7 +5942,7 @@ fn exercise_multiple_side_cutter_openings_with_retained_hole() {
     preflight.validate_against_sources(&left, &openings).unwrap();
     assert_eq!(
         preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let result = hypermesh::boolean_exact(
@@ -6027,7 +6028,7 @@ fn exercise_consumed_hole_side_cutter_openings() {
         .unwrap();
     assert_eq!(
         single_holed_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let single_consumed_only = ExactMesh::from_i64_triangles_with_policy(
@@ -6059,7 +6060,7 @@ fn exercise_consumed_hole_side_cutter_openings() {
         .unwrap();
     assert_eq!(
         single_consumed_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceCutterHoleContactDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let retained_and_consumed = ExactMesh::from_i64_triangles_with_policy(
@@ -6120,7 +6121,7 @@ fn exercise_consumed_hole_side_cutter_openings() {
         .unwrap();
     assert_eq!(
         preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let straddling_hole = ExactMesh::from_i64_triangles_with_policy(
@@ -6182,7 +6183,7 @@ fn exercise_consumed_hole_side_cutter_openings() {
         .unwrap();
     assert_eq!(
         straddling_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let split_straddling_hole = ExactMesh::from_i64_triangles_with_policy(
@@ -6239,7 +6240,7 @@ fn exercise_consumed_hole_side_cutter_openings() {
     split_preflight.validate().unwrap();
     assert_eq!(
         split_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let crossing_side_cutter_left = ExactMesh::from_i64_triangles_with_policy(
@@ -6285,7 +6286,7 @@ fn exercise_consumed_hole_side_cutter_openings() {
         .unwrap();
     assert_eq!(
         crossing_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceMultiDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let crossing_side_cutter_holed_right = ExactMesh::from_i64_triangles_with_policy(
@@ -6343,7 +6344,7 @@ fn exercise_consumed_hole_side_cutter_openings() {
         .unwrap();
     assert_eq!(
         crossing_holed_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let crossing_straddling_hole_right = ExactMesh::from_i64_triangles_with_policy(
@@ -6389,7 +6390,7 @@ fn exercise_consumed_hole_side_cutter_openings() {
     crossing_straddling_preflight.validate().unwrap();
     assert_eq!(
         crossing_straddling_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceMultiDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let multi_branch_left = ExactMesh::from_i64_triangles_with_policy(
@@ -6463,7 +6464,7 @@ fn exercise_consumed_hole_side_cutter_openings() {
     multi_branch_preflight.validate().unwrap();
     assert_eq!(
         multi_branch_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let branch_group_with_retained_holes = ExactMesh::from_i64_triangles_with_policy(
@@ -6531,7 +6532,7 @@ fn exercise_consumed_hole_side_cutter_openings() {
     branch_group_preflight.validate().unwrap();
     assert_eq!(
         branch_group_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let multi_component_consumed = ExactMesh::from_i64_triangles_with_policy(
@@ -6598,7 +6599,7 @@ fn exercise_consumed_hole_side_cutter_openings() {
     multi_component_preflight.validate().unwrap();
     assert_eq!(
         multi_component_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let multi_component_result = hypermesh::boolean_exact(
         &multi_component_consumed,
@@ -6670,7 +6671,7 @@ fn exercise_consumed_hole_side_cutter_openings() {
     multi_no_hole_preflight.validate().unwrap();
     assert_eq!(
         multi_no_hole_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceMultiDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let split_all_consumed = ExactMesh::from_i64_triangles_with_policy(
@@ -6704,7 +6705,7 @@ fn exercise_consumed_hole_side_cutter_openings() {
     split_no_hole_preflight.validate().unwrap();
     assert_eq!(
         split_no_hole_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceMultiDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let single_split_consumed = ExactMesh::from_i64_triangles_with_policy(
@@ -6744,7 +6745,7 @@ fn exercise_consumed_hole_side_cutter_openings() {
     single_split_preflight.validate().unwrap();
     assert_eq!(
         single_split_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceMultiDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let single_split_retained = ExactMesh::from_i64_triangles_with_policy(
@@ -6783,7 +6784,7 @@ fn exercise_consumed_hole_side_cutter_openings() {
     single_split_holed_preflight.validate().unwrap();
     assert_eq!(
         single_split_holed_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let multi_branch_all_consumed = ExactMesh::from_i64_triangles_with_policy(
@@ -6830,7 +6831,7 @@ fn exercise_consumed_hole_side_cutter_openings() {
     multi_branch_no_hole_preflight.validate().unwrap();
     assert_eq!(
         multi_branch_no_hole_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceMultiDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let branch_group_all_consumed = ExactMesh::from_i64_triangles_with_policy(
@@ -6875,7 +6876,7 @@ fn exercise_consumed_hole_side_cutter_openings() {
     branch_group_no_hole_preflight.validate().unwrap();
     assert_eq!(
         branch_group_no_hole_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceMultiDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 }
 
@@ -6930,7 +6931,7 @@ fn exercise_mixed_consumed_hole_and_side_openings_without_retained_holes() {
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceCutterHoleContactDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 }
 
@@ -6982,7 +6983,7 @@ fn exercise_side_cutter_opening_without_holes() {
         .unwrap();
     assert_eq!(
         single_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceArrangementDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let single_result = hypermesh::boolean_exact(
         &left,
@@ -7019,7 +7020,7 @@ fn exercise_side_cutter_opening_without_holes() {
     preflight.validate_against_sources(&left, &cutters).unwrap();
     assert_eq!(
         preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceSideCutterDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let result = hypermesh::boolean_exact(
@@ -7080,7 +7081,7 @@ fn exercise_side_cutter_opening_without_holes() {
         .unwrap();
     assert_eq!(
         multi_component_side_opening_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceMultiDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let multi_component_side_opening_result = hypermesh::boolean_exact(
         &multi_component_side_opening_left,
@@ -7128,7 +7129,7 @@ fn exercise_side_cutter_opening_without_holes() {
         .unwrap();
     assert_eq!(
         multi_component_single_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceMultiDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let multi_component_single_result = hypermesh::boolean_exact(
         &multi_component_side_opening_left,
@@ -7173,7 +7174,7 @@ fn exercise_side_cutter_opening_without_holes() {
         .unwrap();
     assert_eq!(
         point_branch_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let point_branch_result = hypermesh::boolean_exact(
         &left,
@@ -7194,7 +7195,7 @@ fn exercise_side_cutter_opening_without_holes() {
     assert_eq!(
         point_branch_result.kind,
         hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::ExactBooleanShortcutKind::CoplanarSurfacePointTouchDifference
+            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
 
@@ -7242,7 +7243,7 @@ fn exercise_side_cutter_opening_without_holes() {
         .unwrap();
     assert_eq!(
         vertex_edge_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let nonconvex_vertex_edge_branch_left = ExactMesh::from_i64_triangles_with_policy(
@@ -7302,7 +7303,7 @@ fn exercise_side_cutter_opening_without_holes() {
         .unwrap();
     assert_eq!(
         nonconvex_vertex_edge_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let point_branch_consumed_hole = ExactMesh::from_i64_triangles_with_policy(
@@ -7348,7 +7349,7 @@ fn exercise_side_cutter_opening_without_holes() {
         .unwrap();
     assert_eq!(
         point_branch_consumed_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let point_branch_straddling_hole = ExactMesh::from_i64_triangles_with_policy(
@@ -7392,7 +7393,7 @@ fn exercise_side_cutter_opening_without_holes() {
         .unwrap();
     assert_eq!(
         point_branch_straddling_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let grouped_straddling_branch_left = ExactMesh::from_i64_triangles_with_policy(
@@ -7456,7 +7457,7 @@ fn exercise_side_cutter_opening_without_holes() {
         .unwrap();
     assert_eq!(
         grouped_straddling_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let grouped_straddling_result = hypermesh::boolean_exact(
         &grouped_straddling_branch_left,
@@ -7524,7 +7525,7 @@ fn exercise_side_cutter_opening_without_holes() {
         .unwrap();
     assert_eq!(
         orthogonal_grouped_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let orthogonal_grouped_result = hypermesh::boolean_exact(
         &grouped_straddling_branch_left,
@@ -7604,7 +7605,7 @@ fn exercise_side_cutter_opening_without_holes() {
         .unwrap();
     assert_eq!(
         grouped_retained_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let grouped_retained_result = hypermesh::boolean_exact(
         &grouped_straddling_branch_left,
@@ -7685,7 +7686,7 @@ fn exercise_side_cutter_opening_without_holes() {
         .unwrap();
     assert_eq!(
         orthogonal_grouped_retained_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let multi_component_grouped_left = ExactMesh::from_i64_triangles_with_policy(
@@ -7752,7 +7753,7 @@ fn exercise_side_cutter_opening_without_holes() {
     multi_component_grouped_preflight.validate().unwrap();
     assert_eq!(
         multi_component_grouped_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     hypermesh::boolean_exact(
         &multi_component_grouped_left,
@@ -7821,7 +7822,7 @@ fn exercise_side_cutter_opening_without_holes() {
         .unwrap();
     assert_eq!(
         point_branch_straddling_holed_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let multi_component_point_branch_left = ExactMesh::from_i64_triangles_with_policy(
@@ -7862,7 +7863,7 @@ fn exercise_side_cutter_opening_without_holes() {
         .unwrap();
     assert_eq!(
         multi_component_point_branch_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let multi_component_point_branch_result = hypermesh::boolean_exact(
         &multi_component_point_branch_left,
@@ -7883,7 +7884,7 @@ fn exercise_side_cutter_opening_without_holes() {
     assert_eq!(
         multi_component_point_branch_result.kind,
         hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::ExactBooleanShortcutKind::CoplanarSurfacePointTouchDifference
+            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
 
@@ -7936,7 +7937,7 @@ fn exercise_side_cutter_opening_without_holes() {
         .unwrap();
     assert_eq!(
         multi_component_point_branch_holed_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let multi_component_point_branch_holed_result = hypermesh::boolean_exact(
         &multi_component_point_branch_left,
@@ -7986,7 +7987,7 @@ fn exercise_side_cutter_opening_without_holes() {
         .unwrap();
     assert_eq!(
         nonconvex_point_branch_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let nonconvex_point_branch_result = hypermesh::boolean_exact(
         &nonconvex_left,
@@ -8007,7 +8008,7 @@ fn exercise_side_cutter_opening_without_holes() {
     assert_eq!(
         nonconvex_point_branch_result.kind,
         hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::ExactBooleanShortcutKind::CoplanarSurfacePointTouchDifference
+            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
 
@@ -8027,7 +8028,7 @@ fn exercise_side_cutter_opening_without_holes() {
     nonconvex_consumed_preflight.validate().unwrap();
     assert_eq!(
         nonconvex_consumed_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let nonconvex_point_branch_straddling_hole = ExactMesh::from_i64_triangles_with_policy(
@@ -8072,7 +8073,7 @@ fn exercise_side_cutter_opening_without_holes() {
     nonconvex_straddling_preflight.validate().unwrap();
     assert_eq!(
         nonconvex_straddling_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let nonconvex_grouped_left = ExactMesh::from_i64_triangles_with_policy(
@@ -8127,7 +8128,7 @@ fn exercise_side_cutter_opening_without_holes() {
     nonconvex_grouped_preflight.validate().unwrap();
     assert_eq!(
         nonconvex_grouped_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     hypermesh::boolean_exact(
         &nonconvex_grouped_left,
@@ -8189,7 +8190,7 @@ fn exercise_side_cutter_opening_without_holes() {
     nonconvex_grouped_retained_preflight.validate().unwrap();
     assert_eq!(
         nonconvex_grouped_retained_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     hypermesh::boolean_exact(
         &nonconvex_grouped_left,
@@ -8284,7 +8285,7 @@ fn exercise_side_cutter_opening_without_holes() {
         .unwrap();
     assert_eq!(
         multi_component_nonconvex_grouped_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     hypermesh::boolean_exact(
         &multi_component_nonconvex_grouped_left,
@@ -8361,7 +8362,7 @@ fn exercise_side_cutter_opening_without_holes() {
         .unwrap();
     assert_eq!(
         nonconvex_straddling_holed_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let multi_component_nonconvex_left = ExactMesh::from_i64_triangles_with_policy(
@@ -8401,7 +8402,7 @@ fn exercise_side_cutter_opening_without_holes() {
         .unwrap();
     assert_eq!(
         multi_component_nonconvex_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfacePointTouchDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let multi_component_nonconvex_result = hypermesh::boolean_exact(
         &multi_component_nonconvex_left,
@@ -8422,7 +8423,7 @@ fn exercise_side_cutter_opening_without_holes() {
     assert_eq!(
         multi_component_nonconvex_result.kind,
         hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::ExactBooleanShortcutKind::CoplanarSurfacePointTouchDifference
+            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
 
@@ -8475,7 +8476,7 @@ fn exercise_side_cutter_opening_without_holes() {
         .unwrap();
     assert_eq!(
         multi_component_nonconvex_holed_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let multi_component_nonconvex_holed_result = hypermesh::boolean_exact(
         &multi_component_nonconvex_left,
@@ -8524,7 +8525,7 @@ fn exercise_side_cutter_opening_without_holes() {
     incidental_preflight.validate().unwrap();
     assert_eq!(
         incidental_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceSideCutterDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     hypermesh::boolean_exact(
         &left,
@@ -8575,7 +8576,7 @@ fn exercise_component_coplanar_intersection() {
     preflight.validate().unwrap();
     assert_eq!(
         preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceIntersection
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let touching_right = ExactMesh::from_i64_triangles_with_policy(
@@ -8614,7 +8615,7 @@ fn exercise_component_coplanar_intersection() {
     nonconvex_preflight.validate().unwrap();
     assert_eq!(
         nonconvex_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let nonconvex_result = hypermesh::boolean_exact(
         &nonconvex_left,
@@ -8683,7 +8684,7 @@ fn exercise_component_coplanar_intersection() {
     disconnected_preflight.validate().unwrap();
     assert_eq!(
         disconnected_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let disconnected_result = hypermesh::boolean_exact(
         &disconnected_nonconvex_left,
@@ -8734,7 +8735,7 @@ fn exercise_component_coplanar_difference() {
     preflight.validate().unwrap();
     assert_eq!(
         preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceMultiDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let result = hypermesh::boolean_exact(
@@ -8802,7 +8803,7 @@ fn exercise_component_coplanar_difference() {
     multi_preflight.validate().unwrap();
     assert_eq!(
         multi_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceMultiDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let wide_left = ExactMesh::from_i64_triangles_with_policy(
@@ -8881,7 +8882,7 @@ fn exercise_component_coplanar_difference() {
     nonrectangular_preflight.validate().unwrap();
     assert_eq!(
         nonrectangular_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceMultiDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let nonconvex_multi_cutter_right = ExactMesh::from_i64_triangles_with_policy(
@@ -8928,7 +8929,7 @@ fn exercise_component_coplanar_difference() {
     nonconvex_preflight.validate().unwrap();
     assert_eq!(
         nonconvex_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceMultiDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let component_opening_left = ExactMesh::from_i64_triangles_with_policy(
@@ -8978,7 +8979,7 @@ fn exercise_component_coplanar_difference() {
     component_opening_preflight.validate().unwrap();
     assert_eq!(
         component_opening_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let component_opening_result = hypermesh::boolean_exact(
         &component_opening_left,
@@ -9046,7 +9047,7 @@ fn exercise_component_coplanar_difference() {
     nonconvex_source_preflight.validate().unwrap();
     assert_eq!(
         nonconvex_source_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let nonconvex_source_hole = ExactMesh::from_i64_triangles_with_policy(
@@ -9113,7 +9114,7 @@ fn exercise_component_coplanar_difference() {
     nonconvex_source_holed_preflight.validate().unwrap();
     assert_eq!(
         nonconvex_source_holed_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let nonconvex_source_opening_and_hole = ExactMesh::from_i64_triangles_with_policy(
@@ -9213,7 +9214,7 @@ fn exercise_component_coplanar_difference() {
         .unwrap();
     assert_eq!(
         nonconvex_point_branch_holed_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let nonconvex_source_crossing_opening = ExactMesh::from_i64_triangles_with_policy(
@@ -9277,7 +9278,7 @@ fn exercise_component_coplanar_difference() {
         .unwrap();
     assert_eq!(
         nonconvex_source_consumed_clipped_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let nonconvex_split_left = ExactMesh::from_i64_triangles_with_policy(
@@ -9334,7 +9335,7 @@ fn exercise_component_coplanar_difference() {
     nonconvex_split_preflight.validate().unwrap();
     assert_eq!(
         nonconvex_split_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceMultiDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let nonconvex_split_crossing_consumed_and_retained_holes =
@@ -9473,7 +9474,7 @@ fn exercise_component_coplanar_difference() {
     nonconvex_source_incidental_preflight.validate().unwrap();
     assert_eq!(
         nonconvex_source_incidental_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let nonconvex_source_crossing_opening_and_hole = ExactMesh::from_i64_triangles_with_policy(
@@ -9681,7 +9682,7 @@ fn exercise_component_coplanar_difference() {
     partial_height_preflight.validate().unwrap();
     assert_eq!(
         partial_height_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceMultiDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let partial_height_result = hypermesh::boolean_exact(
         &wide_left,
@@ -9694,7 +9695,7 @@ fn exercise_component_coplanar_difference() {
     assert_eq!(
         partial_height_result.kind,
         hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::ExactBooleanShortcutKind::CoplanarSurfaceMultiDifference
+            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
     let contained_hole_cutters = ExactMesh::from_i64_triangles_with_policy(
@@ -9759,7 +9760,7 @@ fn exercise_component_coplanar_difference() {
     channel_preflight.validate().unwrap();
     assert_eq!(
         channel_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceMultiDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let nonrectilinear_channel_retained_hole_cutters =
         ExactMesh::from_i64_triangles_with_policy(
@@ -9824,7 +9825,7 @@ fn exercise_component_coplanar_difference() {
         .unwrap();
     assert_eq!(
         consumed_channel_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceMultiDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let nonrectilinear_channel_with_holes = ExactMesh::from_i64_triangles_with_policy(
@@ -9886,7 +9887,7 @@ fn exercise_component_coplanar_difference() {
     channel_holed_preflight.validate().unwrap();
     assert_eq!(
         channel_holed_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let point_branch_side_cutters_with_hole = ExactMesh::from_i64_triangles_with_policy(
@@ -9937,7 +9938,7 @@ fn exercise_component_coplanar_difference() {
         .unwrap();
     assert_eq!(
         point_branch_holed_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let nonrectilinear_channel_with_consumed_hole = ExactMesh::from_i64_triangles_with_policy(
@@ -9989,7 +9990,7 @@ fn exercise_component_coplanar_difference() {
         .unwrap();
     assert_eq!(
         consumed_channel_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let holed_left = ExactMesh::from_i64_triangles_with_policy(
@@ -10033,7 +10034,7 @@ fn exercise_component_coplanar_difference() {
     holed_preflight.validate().unwrap();
     assert_eq!(
         holed_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let holed_and_cut_right = ExactMesh::from_i64_triangles_with_policy(
@@ -10118,7 +10119,7 @@ fn exercise_component_coplanar_difference() {
     holed_multi_cut_preflight.validate().unwrap();
     assert_eq!(
         holed_multi_cut_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let holed_corner_cutters_right = ExactMesh::from_i64_triangles_with_policy(
@@ -10188,7 +10189,7 @@ fn exercise_component_coplanar_difference() {
     nonconvex_holed_preflight.validate().unwrap();
     assert_eq!(
         nonconvex_holed_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let holed_partial_height_cutters_right = ExactMesh::from_i64_triangles_with_policy(
@@ -10233,7 +10234,7 @@ fn exercise_component_coplanar_difference() {
         .unwrap();
     assert_eq!(
         partial_height_component_holed_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarConvexSurfaceComponentHoledDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let partial_height_component_holed_result = hypermesh::boolean_exact(
         &holed_left,
@@ -10246,8 +10247,7 @@ fn exercise_component_coplanar_difference() {
     assert_eq!(
         partial_height_component_holed_result.kind,
         hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::ExactBooleanShortcutKind::
-                CoplanarConvexSurfaceComponentHoledDifference
+            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
 
@@ -10285,7 +10285,7 @@ fn exercise_component_coplanar_difference() {
     contact_preflight.validate().unwrap();
     assert_eq!(
         contact_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceCutterHoleContactDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let nonrect_contact_left = ExactMesh::from_i64_triangles_with_policy(
@@ -10325,7 +10325,7 @@ fn exercise_component_coplanar_difference() {
     nonrect_contact_preflight.validate().unwrap();
     assert_eq!(
         nonrect_contact_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceCutterHoleContactDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let straddling_contact_right = ExactMesh::from_i64_triangles_with_policy(
         &[
@@ -10360,7 +10360,7 @@ fn exercise_component_coplanar_difference() {
     straddling_contact_preflight.validate().unwrap();
     assert_eq!(
         straddling_contact_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceCutterHoleContactDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let affine_contact_left = ExactMesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 20, 4, 0, 18, 18, 0, -2, 14, 0],
@@ -10401,7 +10401,7 @@ fn exercise_component_coplanar_difference() {
     affine_contact_preflight.validate().unwrap();
     assert_eq!(
         affine_contact_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceCutterHoleContactDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let affine_contact_boolean = hypermesh::boolean_exact(
         &affine_contact_left,
@@ -10414,8 +10414,7 @@ fn exercise_component_coplanar_difference() {
     assert_eq!(
         affine_contact_boolean.kind,
         hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::ExactBooleanShortcutKind::
-                CoplanarSurfaceCutterHoleContactDifference
+            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
     let affine_corner_contact = ExactMesh::from_i64_triangles_with_policy(
@@ -10528,7 +10527,7 @@ fn exercise_component_coplanar_difference() {
     pairwise_overlap_graph_preflight.validate().unwrap();
     assert_eq!(
         pairwise_overlap_graph_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceCutterHoleContactDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let triple_overlap_graph_right = ExactMesh::from_i64_triangles_with_policy(
         &[
@@ -10565,7 +10564,7 @@ fn exercise_component_coplanar_difference() {
     triple_overlap_graph_preflight.validate().unwrap();
     assert_eq!(
         triple_overlap_graph_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceCutterHoleContactDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let nonrect_contact_chain_right = ExactMesh::from_i64_triangles_with_policy(
         &[
@@ -10602,7 +10601,7 @@ fn exercise_component_coplanar_difference() {
     nonrect_contact_chain_preflight.validate().unwrap();
     assert_eq!(
         nonrect_contact_chain_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceCutterHoleContactDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let point_only_chain_right = ExactMesh::from_i64_triangles_with_policy(
         &[
@@ -10660,7 +10659,7 @@ fn exercise_component_coplanar_difference() {
     incidental_point_preflight.validate().unwrap();
     assert_eq!(
         incidental_point_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceCutterHoleContactDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     hypermesh::boolean_exact(
         &nonrect_contact_left,
@@ -10775,7 +10774,7 @@ fn exercise_component_coplanar_difference() {
     intersection_preflight.validate().unwrap();
     assert_eq!(
         intersection_preflight.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let holed_left = rect_surface_i64(&[(0, 0, 10, 10), (10, 0, 12, 2)]);
