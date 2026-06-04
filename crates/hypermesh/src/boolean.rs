@@ -36,10 +36,7 @@ use super::arrangement2d::{
 use super::arrangement3d::ExactArrangement;
 use super::bounds::AabbIntersectionKind;
 use super::box_solid::{
-    empty_difference_axis_aligned_boxes, has_axis_aligned_box_cell_difference,
-    has_axis_aligned_box_cell_union, has_axis_aligned_box_empty_difference,
-    has_axis_aligned_box_multi_difference, has_axis_aligned_box_nested_difference,
-    is_axis_aligned_box, multi_difference_axis_aligned_boxes, nested_difference_axis_aligned_boxes,
+    has_axis_aligned_box_cell_difference, has_axis_aligned_box_cell_union, is_axis_aligned_box,
 };
 use super::cells::triangulate_all_face_cells_with_cdt;
 use super::construction::SegmentPlaneRelation;
@@ -385,9 +382,6 @@ pub fn preflight_boolean_exact(
             | ExactBooleanSupport::CertifiedBoundsDisjoint
             | ExactBooleanSupport::CertifiedIdentical
             | ExactBooleanSupport::CertifiedSameSurface
-            | ExactBooleanSupport::CertifiedAxisAlignedBoxMultiDifference
-            | ExactBooleanSupport::CertifiedAxisAlignedBoxNestedDifference
-            | ExactBooleanSupport::CertifiedAxisAlignedBoxEmptyDifference
             | ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion
             | ExactBooleanSupport::CertifiedOpenSurfaceDisjoint
             | ExactBooleanSupport::CertifiedMixedDimensionalRegularizedSolid
@@ -838,17 +832,6 @@ fn preflight_tail_shortcut_support(
     operation: ExactBooleanOperation,
 ) -> Option<ExactBooleanSupport> {
     match operation {
-        ExactBooleanOperation::Difference if has_axis_aligned_box_multi_difference(left, right) => {
-            Some(ExactBooleanSupport::CertifiedAxisAlignedBoxMultiDifference)
-        }
-        ExactBooleanOperation::Difference
-            if has_axis_aligned_box_nested_difference(left, right) =>
-        {
-            Some(ExactBooleanSupport::CertifiedAxisAlignedBoxNestedDifference)
-        }
-        ExactBooleanOperation::Difference if has_axis_aligned_box_empty_difference(left, right) => {
-            Some(ExactBooleanSupport::CertifiedAxisAlignedBoxEmptyDifference)
-        }
         ExactBooleanOperation::Union if has_affine_box_union(left, right) => {
             Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
         }
@@ -1360,11 +1343,6 @@ pub fn boolean_exact_with_boundary_policy(
         ExactBooleanOperation::Union
         | ExactBooleanOperation::Intersection
         | ExactBooleanOperation::Difference => {
-            if let Some(result) = boolean_axis_aligned_box_special_difference_optional(
-                left, right, operation, validation,
-            )? {
-                return Ok(result);
-            }
             let graph = build_intersection_graph(left, right)?;
             validate_graph_source_handoff(&graph, left, right)?;
             match operation {
@@ -1805,6 +1783,8 @@ fn run_arrangement_cell_complex_attempt(
         output_triangles: 0,
     };
 
+    let axis_aligned_box_difference_cell_result =
+        has_axis_aligned_box_difference_cell_result(left, right, operation);
     if let Some(validation) = validation
         && let Some(outcome) = arrangement_orthogonal_solid_cell_recovery_outcome(
             &mut attempt,
@@ -1812,7 +1792,7 @@ fn run_arrangement_cell_complex_attempt(
             right,
             operation,
             validation,
-            true,
+            !axis_aligned_box_difference_cell_result,
         )?
     {
         return Ok(outcome);
@@ -3452,7 +3432,8 @@ fn arrangement_cell_complex_should_preempt_legacy_paths(
         ExactBooleanOperation::Union
             | ExactBooleanOperation::Intersection
             | ExactBooleanOperation::Difference
-    ) && has_single_rectangular_orthogonal_cell_result(left, right, operation))
+    ) && (has_single_rectangular_orthogonal_cell_result(left, right, operation)
+        || has_axis_aligned_box_difference_cell_result(left, right, operation)))
         || (matches!(
             operation,
             ExactBooleanOperation::Union
@@ -3480,6 +3461,21 @@ fn has_single_rectangular_orthogonal_cell_result(
     axis_aligned_orthogonal_solid_cell_plan(left, right, operation)
         .as_ref()
         .is_some_and(orthogonal_cell_plan_is_single_rectangular_block)
+}
+
+fn has_axis_aligned_box_difference_cell_result(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+) -> bool {
+    operation == ExactBooleanOperation::Difference
+        && both_axis_aligned_boxes(left, right)
+        && axis_aligned_orthogonal_solid_cell_plan(
+            left,
+            right,
+            AxisAlignedOrthogonalSolidOperation::Difference,
+        )
+        .is_some()
 }
 
 fn boolean_convex_intersection_meshes(
@@ -3605,36 +3601,6 @@ fn coplanar_surface_materializers_should_yield_to_closed_boundary_shortcut(
     operation: ExactBooleanOperation,
 ) -> Result<bool, MeshError> {
     coplanar_mesh_overlay_should_yield_to_closed_boundary_shortcut(left, right, operation)
-}
-
-fn boolean_axis_aligned_box_special_difference_optional(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
-    if operation != ExactBooleanOperation::Difference {
-        return Ok(None);
-    }
-    if let Some(mesh) = multi_difference_axis_aligned_boxes(left, right, validation)? {
-        return Ok(Some(certified_shortcut_result(
-            mesh,
-            ExactBooleanShortcutKind::AxisAlignedBoxMultiDifference,
-        )));
-    }
-    if let Some(mesh) = nested_difference_axis_aligned_boxes(left, right, validation)? {
-        return Ok(Some(certified_shortcut_result(
-            mesh,
-            ExactBooleanShortcutKind::AxisAlignedBoxNestedDifference,
-        )));
-    }
-    if let Some(mesh) = empty_difference_axis_aligned_boxes(left, right, validation)? {
-        return Ok(Some(certified_shortcut_result(
-            mesh,
-            ExactBooleanShortcutKind::AxisAlignedBoxEmptyDifference,
-        )));
-    }
-    Ok(None)
 }
 
 /// Return whether exact orthogonal occupancy certifies an empty intersection.

@@ -581,14 +581,6 @@ pub enum ExactBooleanShortcutKind {
     /// Exact coordinate equality and matching triangle sets, modulo indexing
     /// and face orientation.
     SameSurface,
-    /// Certified split difference of coplanar-volumetric axis-aligned boxes.
-    AxisAlignedBoxMultiDifference,
-    /// Certified nested-shell difference of coplanar-volumetric axis-aligned
-    /// boxes.
-    AxisAlignedBoxNestedDifference,
-    /// Certified empty difference because the left axis-aligned box is
-    /// contained by the right box.
-    AxisAlignedBoxEmptyDifference,
     /// Certified regularized union of closed solids whose exact graph proves
     /// only lower-dimensional boundary contact.
     ClosedBoundaryTouchingUnion,
@@ -1247,15 +1239,6 @@ pub enum ExactBooleanSupport {
     /// A named operation was answered by exact coordinate equality and matching
     /// triangle vertex sets, ignoring per-face orientation.
     CertifiedSameSurface,
-    /// Difference was materialized as two exact axis-aligned boxes after an
-    /// interior coplanar-volumetric slab cut.
-    CertifiedAxisAlignedBoxMultiDifference,
-    /// Difference was materialized as a closed outer box shell with a reversed
-    /// strictly nested inner box shell.
-    CertifiedAxisAlignedBoxNestedDifference,
-    /// Difference was materialized as empty because the left axis-aligned box
-    /// is contained by the right box.
-    CertifiedAxisAlignedBoxEmptyDifference,
     /// Union was materialized by preserving separate closed shells because
     /// closed solids only touch at exact lower-dimensional boundary features
     /// and share no interior volume.
@@ -1415,9 +1398,6 @@ impl ExactBooleanPreflight {
             | ExactBooleanSupport::CertifiedBoundsDisjoint
             | ExactBooleanSupport::CertifiedIdentical
             | ExactBooleanSupport::CertifiedSameSurface
-            | ExactBooleanSupport::CertifiedAxisAlignedBoxMultiDifference
-            | ExactBooleanSupport::CertifiedAxisAlignedBoxNestedDifference
-            | ExactBooleanSupport::CertifiedAxisAlignedBoxEmptyDifference
             | ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion
             | ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
             | ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference

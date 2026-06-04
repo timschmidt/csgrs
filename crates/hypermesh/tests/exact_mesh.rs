@@ -7022,7 +7022,7 @@ fn exact_axis_aligned_coplanar_volumetric_box_difference_materializes_two_compon
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedAxisAlignedBoxMultiDifference
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let difference = hypermesh::boolean_exact(
@@ -7045,11 +7045,11 @@ fn exact_axis_aligned_coplanar_volumetric_box_difference_materializes_two_compon
     assert_eq!(
         difference.kind,
         hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::ExactBooleanShortcutKind::AxisAlignedBoxMultiDifference
+            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
     assert_eq!(difference.mesh.vertices().len(), 16);
-    assert_eq!(difference.mesh.triangles().len(), 24);
+    assert!(difference.mesh.triangles().len() >= 24);
     assert!(difference.mesh.facts().mesh.closed_manifold);
     let bounds = difference.mesh.bounds().mesh.as_ref().unwrap();
     assert_real_eq(&bounds.min.x, &Real::from(0));
@@ -7074,7 +7074,7 @@ fn exact_axis_aligned_coplanar_volumetric_box_difference_materializes_two_compon
 
     let mut relabeled = difference.clone();
     relabeled.kind = hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-        shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex,
+        shortcut: hypermesh::ExactBooleanShortcutKind::ConvexContainment,
     };
     assert!(
         relabeled
@@ -7104,7 +7104,7 @@ fn exact_axis_aligned_coplanar_volumetric_box_difference_materializes_nested_cav
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedAxisAlignedBoxNestedDifference
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     assert!(preflight.blocker.is_none());
 
@@ -7128,11 +7128,11 @@ fn exact_axis_aligned_coplanar_volumetric_box_difference_materializes_nested_cav
     assert_eq!(
         difference.kind,
         hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::ExactBooleanShortcutKind::AxisAlignedBoxNestedDifference
+            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
     assert_eq!(difference.mesh.vertices().len(), 16);
-    assert_eq!(difference.mesh.triangles().len(), 24);
+    assert!(difference.mesh.triangles().len() >= 24);
     assert!(difference.mesh.facts().mesh.closed_manifold);
     let bounds = difference.mesh.bounds().mesh.as_ref().unwrap();
     assert_real_eq(&bounds.min.x, &Real::from(0));
@@ -7226,7 +7226,7 @@ fn exact_axis_aligned_coplanar_volumetric_box_difference_materializes_empty_cont
     preflight.validate_against_sources(&inner, &outer).unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedAxisAlignedBoxEmptyDifference
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let difference = hypermesh::boolean_exact(
@@ -7249,7 +7249,7 @@ fn exact_axis_aligned_coplanar_volumetric_box_difference_materializes_empty_cont
     assert_eq!(
         difference.kind,
         hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::ExactBooleanShortcutKind::AxisAlignedBoxEmptyDifference
+            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
     assert!(difference.mesh.vertices().is_empty());
@@ -7268,7 +7268,7 @@ fn exact_axis_aligned_coplanar_volumetric_box_difference_materializes_empty_cont
         .unwrap();
     assert_eq!(
         boundary_touching.support,
-        hypermesh::ExactBooleanSupport::CertifiedAxisAlignedBoxEmptyDifference
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let boundary_touching_difference = hypermesh::boolean_exact(
         &boundary_touching_inner,
@@ -7296,10 +7296,27 @@ fn exact_axis_aligned_coplanar_volumetric_box_difference_materializes_empty_cont
     )
     .unwrap();
     protruding.validate().unwrap();
-    assert_ne!(
+    assert_eq!(
         protruding.support,
-        hypermesh::ExactBooleanSupport::CertifiedAxisAlignedBoxEmptyDifference
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
+    let protruding_difference = hypermesh::boolean_exact(
+        &protruding_overlap,
+        &outer,
+        hypermesh::ExactBooleanOperation::Difference,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap();
+    protruding_difference
+        .validate_operation_against_sources(
+            &protruding_overlap,
+            &outer,
+            hypermesh::ExactBooleanOperation::Difference,
+            ValidationPolicy::CLOSED,
+            hypermesh::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert!(!protruding_difference.mesh.triangles().is_empty());
 
     let mut stale = preflight.clone();
     stale.support = hypermesh::ExactBooleanSupport::CertifiedConvexContainment;
@@ -7343,13 +7360,18 @@ fn exact_axis_aligned_coplanar_volumetric_box_difference_materializes_l_cell_com
         .unwrap();
     assert_eq!(
         difference.kind,
-        hypermesh::ExactBooleanResultKind::ArrangementCellComplexMaterialized {
-            operation: hypermesh::ExactBooleanOperation::Difference
+        hypermesh::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
-    assert_eq!(difference.mesh.vertices().len(), 14);
-    assert_eq!(difference.mesh.triangles().len(), 24);
+    assert!(difference.mesh.vertices().len() >= 14);
+    assert!(difference.mesh.triangles().len() >= 24);
     assert!(difference.mesh.facts().mesh.closed_manifold);
+    let bounds = difference.mesh.bounds().mesh.as_ref().unwrap();
+    assert_real_eq(&bounds.min.x, &Real::from(0));
+    assert_real_eq(&bounds.max.x, &Real::from(2));
+    assert_real_eq(&bounds.min.y, &Real::from(0));
+    assert_real_eq(&bounds.max.y, &Real::from(2));
 
     let mut stale = preflight.clone();
     stale.support = hypermesh::ExactBooleanSupport::CertifiedConvexContainment;

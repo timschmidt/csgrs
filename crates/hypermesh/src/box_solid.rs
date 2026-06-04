@@ -1,12 +1,11 @@
-//! Exact axis-aligned box solid shortcuts.
+//! Exact axis-aligned box solid certificates.
 //!
 //! This module is intentionally narrow. It recognizes closed triangular meshes
 //! whose exact vertices are exactly the eight corners of their retained AABB
-//! and materializes only slab cases whose output is one box, split slab cases
-//! whose output is two boxes, and bounded orthogonal-cell cases whose planes
-//! are exactly the source box faces. The point is not to replace general
-//! volumetric cell extraction; it is to keep bounded, fully replayable
-//! shortcut may mutate topology.
+//! and materializes only single-box primitive results for affine proof helpers.
+//! Multi-cell box differences are handled by the orthogonal arrangement layer,
+//! which replays occupancy on the merged exact grid instead of bypassing the
+//! cell-complex pipeline.
 
 use core::cmp::Ordering;
 
@@ -104,72 +103,6 @@ struct AxisAlignedBoxInputs {
     right: AxisAlignedBox,
 }
 
-/// Materialize `left - right` when a certified slab cut splits a box in two.
-pub(crate) fn multi_difference_axis_aligned_boxes(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    validation: ValidationPolicy,
-) -> Result<Option<ExactMesh>, MeshError> {
-    let Some(bounds) = multi_difference_axis_aligned_box_bounds(left, right) else {
-        return Ok(None);
-    };
-    Ok(Some(boxes_to_mesh(
-        &bounds,
-        "exact axis-aligned coplanar-volumetric box split difference",
-        validation,
-    )?))
-}
-
-/// Materialize `left - right` for a strictly nested AABB cavity.
-///
-/// The right box must be strictly inside the left box on every exact axis. The
-/// retained output is the outer left shell plus the right shell with reversed
-/// orientation, forming a closed cavity. Boundary-coincident containment is not
-/// accepted here because it is not a strict volumetric cavity; that state
-/// interval predicates decide whether a topology shortcut may introduce an
-/// inner shell.
-pub(crate) fn nested_difference_axis_aligned_boxes(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    validation: ValidationPolicy,
-) -> Result<Option<ExactMesh>, MeshError> {
-    let Some((outer, inner)) = nested_difference_axis_aligned_box_bounds(left, right) else {
-        return Ok(None);
-    };
-    Ok(Some(nested_boxes_to_mesh(
-        &outer,
-        &inner,
-        "exact axis-aligned coplanar-volumetric box nested difference",
-        validation,
-    )?))
-}
-
-/// Materialize `left - right` as empty when the left box is contained.
-///
-/// This is the regularized-set dual of [`nested_difference_axis_aligned_boxes`]:
-/// every left interval must be contained by the corresponding right interval,
-/// so any residual is lower-dimensional boundary material and no closed 3D
-/// volume is emitted. Boundary-coincident containment is accepted here because
-/// the output topology is empty rather than a boundary shell. We keep this as a
-/// separate shortcut instead of relying on a generic convex-containment report
-/// because the retained evidence is exactly the source AABB corner and interval
-/// exact structural predicates that justify it.
-pub(crate) fn empty_difference_axis_aligned_boxes(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    validation: ValidationPolicy,
-) -> Result<Option<ExactMesh>, MeshError> {
-    if !empty_difference_axis_aligned_box_bounds(left, right) {
-        return Ok(None);
-    }
-    Ok(Some(ExactMesh::new_with_policy(
-        Vec::new(),
-        Vec::new(),
-        SourceProvenance::exact("empty exact axis-aligned coplanar-volumetric box difference"),
-        validation,
-    )?))
-}
-
 /// Return whether the named operation is certified by the axis-aligned box layer.
 ///
 /// This is the certificate-only form used by affine normalization: source
@@ -203,21 +136,6 @@ pub(crate) fn materialize_axis_aligned_box_operation(
         return Ok(None);
     };
     materialize_axis_aligned_box_operation_from_inputs(&inputs, operation, validation)
-}
-
-/// Return whether a split box-difference shortcut is certified for operands.
-pub(crate) fn has_axis_aligned_box_multi_difference(left: &ExactMesh, right: &ExactMesh) -> bool {
-    multi_difference_axis_aligned_box_bounds(left, right).is_some()
-}
-
-/// Return whether a nested box-difference shortcut is certified for operands.
-pub(crate) fn has_axis_aligned_box_nested_difference(left: &ExactMesh, right: &ExactMesh) -> bool {
-    nested_difference_axis_aligned_box_bounds(left, right).is_some()
-}
-
-/// Return whether a contained box difference is certified empty.
-pub(crate) fn has_axis_aligned_box_empty_difference(left: &ExactMesh, right: &ExactMesh) -> bool {
-    empty_difference_axis_aligned_box_bounds(left, right)
 }
 
 /// Return whether an orthogonal cell union is certified for the operands.
@@ -348,20 +266,12 @@ fn intervals_touch_exactly(
     )
 }
 
-/// Certify a two-component box difference from an interior slab removal.
+/// Certify the two retained boxes for an interior slab removal.
 ///
-/// The shortcut accepts exactly the retained-structure case where `right` is a
+/// The predicate accepts exactly the retained-structure case where `right` is a
 /// positive-length slab strictly inside `left` on one axis and has equal exact
-/// bounds on the other two axes. The output is therefore the disjoint union of
-/// no hidden fallback to approximate topology.
-fn multi_difference_axis_aligned_box_bounds(
-    left: &ExactMesh,
-    right: &ExactMesh,
-) -> Option<[AxisAlignedBox; 2]> {
-    let inputs = certify_axis_aligned_box_inputs(left, right)?;
-    multi_difference_axis_aligned_box_bounds_from_boxes(&inputs.left, &inputs.right)
-}
-
+/// bounds on the other two axes. The caller decides whether to replay those
+/// boxes directly or through the orthogonal cell-complex grid.
 fn multi_difference_axis_aligned_box_bounds_from_boxes(
     left: &AxisAlignedBox,
     right: &AxisAlignedBox,
@@ -389,14 +299,6 @@ fn multi_difference_axis_aligned_box_bounds_from_boxes(
     Some([valid_box(lower)?, valid_box(upper)?])
 }
 
-fn nested_difference_axis_aligned_box_bounds(
-    left: &ExactMesh,
-    right: &ExactMesh,
-) -> Option<(AxisAlignedBox, AxisAlignedBox)> {
-    let inputs = certify_axis_aligned_box_inputs(left, right)?;
-    nested_difference_axis_aligned_box_bounds_from_boxes(&inputs.left, &inputs.right)
-}
-
 fn nested_difference_axis_aligned_box_bounds_from_boxes(
     left: &AxisAlignedBox,
     right: &AxisAlignedBox,
@@ -409,13 +311,6 @@ fn nested_difference_axis_aligned_box_bounds_from_boxes(
     } else {
         None
     }
-}
-
-fn empty_difference_axis_aligned_box_bounds(left: &ExactMesh, right: &ExactMesh) -> bool {
-    let Some(inputs) = certify_axis_aligned_box_inputs(left, right) else {
-        return false;
-    };
-    empty_difference_axis_aligned_box_bounds_from_boxes(&inputs.left, &inputs.right)
 }
 
 fn empty_difference_axis_aligned_box_bounds_from_boxes(

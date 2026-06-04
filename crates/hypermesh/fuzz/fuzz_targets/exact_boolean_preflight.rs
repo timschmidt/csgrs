@@ -14458,7 +14458,7 @@ fn exercise_axis_aligned_coplanar_volumetric_boxes() {
     split_difference.validate().unwrap();
     assert_eq!(
         split_difference.support,
-        hypermesh::ExactBooleanSupport::CertifiedAxisAlignedBoxMultiDifference
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let split_result = hypermesh::boolean_exact(
         &split_left,
@@ -14488,7 +14488,7 @@ fn exercise_axis_aligned_coplanar_volumetric_boxes() {
     nested_difference.validate().unwrap();
     assert_eq!(
         nested_difference.support,
-        ExactBooleanSupport::CertifiedAxisAlignedBoxNestedDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let nested_result = hypermesh::boolean_exact(
         &nested_left,
@@ -14546,7 +14546,7 @@ fn exercise_axis_aligned_coplanar_volumetric_boxes() {
     empty_difference.validate().unwrap();
     assert_eq!(
         empty_difference.support,
-        ExactBooleanSupport::CertifiedAxisAlignedBoxEmptyDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let empty_difference_result = hypermesh::boolean_exact(
         &contained_inner,
@@ -14575,7 +14575,7 @@ fn exercise_axis_aligned_coplanar_volumetric_boxes() {
     boundary_touching_difference.validate().unwrap();
     assert_eq!(
         boundary_touching_difference.support,
-        ExactBooleanSupport::CertifiedAxisAlignedBoxEmptyDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let boundary_touching_result = hypermesh::boolean_exact(
         &boundary_touching_inner,
@@ -14602,9 +14602,9 @@ fn exercise_axis_aligned_coplanar_volumetric_boxes() {
     )
     .expect("axis-aligned protruding overlap preflight should classify exactly");
     protruding_difference.validate().unwrap();
-    assert_ne!(
+    assert_eq!(
         protruding_difference.support,
-        ExactBooleanSupport::CertifiedAxisAlignedBoxEmptyDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let cell_left = axis_aligned_box_i64([0, 0, 0], [2, 2, 2]);
