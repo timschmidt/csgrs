@@ -31474,8 +31474,8 @@ fn exact_named_booleans_materialize_partial_convex_intersection() {
     result.validate().unwrap();
     assert_eq!(
         result.kind,
-        hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::ExactBooleanShortcutKind::ConvexIntersection
+        hypermesh::ExactBooleanResultKind::ArrangementCellComplexMaterialized {
+            operation: hypermesh::ExactBooleanOperation::Intersection
         }
     );
     assert_eq!(result.mesh.triangles().len(), 4);
@@ -31847,7 +31847,7 @@ fn exact_convex_difference_materializes_multi_face_overlap() {
     preflight.validate().unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedConvexDifference
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     assert!(preflight.blocker.is_none());
 
@@ -31869,8 +31869,8 @@ fn exact_convex_difference_materializes_multi_face_overlap() {
         .unwrap();
     assert_eq!(
         result.kind,
-        hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::ExactBooleanShortcutKind::ConvexDifference
+        hypermesh::ExactBooleanResultKind::ArrangementCellComplexMaterialized {
+            operation: hypermesh::ExactBooleanOperation::Difference
         }
     );
     assert!(result.mesh.facts().mesh.closed_manifold);

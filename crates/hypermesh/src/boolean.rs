@@ -1577,7 +1577,7 @@ fn arrangement_volume_graph_materializes(
         operation,
         ExactRegularizationPolicy::REGULARIZED_SOLID,
         Some(ValidationPolicy::CLOSED),
-        false,
+        true,
     ) {
         Ok(outcome) => outcome,
         Err(_) => return Ok(false),
@@ -1606,7 +1606,7 @@ fn arrangement_cell_complex_materializes_preemptively(
         operation,
         ExactRegularizationPolicy::REGULARIZED_SOLID,
         Some(ValidationPolicy::CLOSED),
-        false,
+        true,
     ) {
         Ok(ArrangementCellComplexOutcome::Materialized(_, attempt))
             if arrangement_cell_complex_attempt_is_certified_for_preflight(&attempt) =>
@@ -3546,7 +3546,8 @@ fn arrangement_cell_complex_should_preempt_legacy_paths(
             | ExactBooleanOperation::Difference
     ) && (has_single_rectangular_orthogonal_cell_result(left, right, operation)
         || has_axis_aligned_box_difference_cell_result(left, right, operation)
-        || has_convex_regularized_sheet_arrangement_result(left, right, operation)))
+        || has_convex_regularized_sheet_arrangement_result(left, right, operation)
+        || has_closed_solid_arrangement_preempt_result(left, right, operation)))
         || (matches!(
             operation,
             ExactBooleanOperation::Union
@@ -3574,6 +3575,46 @@ fn has_single_rectangular_orthogonal_cell_result(
     axis_aligned_orthogonal_solid_cell_plan(left, right, operation)
         .as_ref()
         .is_some_and(orthogonal_cell_plan_is_single_rectangular_block)
+}
+
+fn has_closed_solid_arrangement_preempt_result(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+) -> bool {
+    if !left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold {
+        return false;
+    }
+    if meshes_are_certified_bounds_disjoint(left, right)
+        || meshes_are_certified_identical(left, right)
+        || meshes_are_certified_same_surface(left, right)
+        || both_axis_aligned_boxes(left, right)
+    {
+        return false;
+    }
+    let Ok(graph) = build_intersection_graph(left, right) else {
+        return false;
+    };
+    if validate_graph_source_handoff(&graph, left, right).is_err() {
+        return false;
+    }
+    if matches!(
+        certified_convex_boolean_support_from_graph(&graph, left, right, operation),
+        Ok(Some(
+            ExactBooleanSupport::CertifiedConvexContainment
+                | ExactBooleanSupport::CertifiedConvexSeparated
+        ))
+    ) {
+        return false;
+    }
+    arrangement_cell_complex_materializes_with_validation(
+        left,
+        right,
+        operation,
+        ValidationPolicy::CLOSED,
+        true,
+    )
+    .unwrap_or(false)
 }
 
 fn has_axis_aligned_box_difference_cell_result(
@@ -3667,6 +3708,31 @@ fn arrangement_regularized_sheet_has_native_recovery(
         .is_ok_and(|result| result.is_some())
         || boolean_arrangement_affine_orthogonal_solid_recovery(left, right, operation, validation)
             .is_ok_and(|result| result.is_some())
+}
+
+fn arrangement_cell_complex_materializes_with_validation(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+    regularize_unregularized_sheet_complex: bool,
+) -> Result<bool, MeshError> {
+    match run_arrangement_cell_complex_attempt(
+        left,
+        right,
+        operation,
+        ExactRegularizationPolicy::REGULARIZED_SOLID,
+        Some(validation),
+        regularize_unregularized_sheet_complex,
+    ) {
+        Ok(ArrangementCellComplexOutcome::Materialized(_, attempt))
+            if arrangement_cell_complex_attempt_is_certified_for_preflight(&attempt) =>
+        {
+            Ok(true)
+        }
+        Ok(_) => Ok(false),
+        Err(error) => Err(error),
+    }
 }
 
 fn boolean_convex_intersection_meshes(
