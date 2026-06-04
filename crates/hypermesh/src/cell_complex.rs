@@ -325,10 +325,18 @@ fn label_volume_region(region: &ArrangementVolumeRegion) -> ExactCellComplexVolu
     }
 }
 
-fn select_face(face: &ExactCellComplexFace, operation: ExactBooleanOperation) -> Option<bool> {
+fn select_face(
+    face: &ExactCellComplexFace,
+    operation: ExactBooleanOperation,
+    policy: ExactRegularizationPolicy,
+) -> Option<bool> {
+    if face.opposite == ExactOppositeRegionLabel::Boundary {
+        return select_boundary_face(face, operation, policy);
+    }
     let inside = match face.opposite {
-        ExactOppositeRegionLabel::Inside | ExactOppositeRegionLabel::Boundary => true,
+        ExactOppositeRegionLabel::Inside => true,
         ExactOppositeRegionLabel::Outside => false,
+        ExactOppositeRegionLabel::Boundary => unreachable!("handled above"),
         ExactOppositeRegionLabel::Unknown => return None,
     };
     match operation {
@@ -337,6 +345,36 @@ fn select_face(face: &ExactCellComplexFace, operation: ExactBooleanOperation) ->
         ExactBooleanOperation::Difference => match face.source {
             ExactCellRegionLabel::LeftBoundary => Some(!inside),
             ExactCellRegionLabel::RightBoundary => Some(inside),
+        },
+        ExactBooleanOperation::SelectedRegions(selection) => {
+            Some(selection.keeps(mesh_side_for_source(face.source)))
+        }
+    }
+}
+
+fn select_boundary_face(
+    face: &ExactCellComplexFace,
+    operation: ExactBooleanOperation,
+    policy: ExactRegularizationPolicy,
+) -> Option<bool> {
+    if policy.lower_dimensional != ExactLowerDimensionalPolicy::Drop {
+        return match operation {
+            ExactBooleanOperation::Union => Some(false),
+            ExactBooleanOperation::Intersection => Some(true),
+            ExactBooleanOperation::Difference => match face.source {
+                ExactCellRegionLabel::LeftBoundary => Some(false),
+                ExactCellRegionLabel::RightBoundary => Some(true),
+            },
+            ExactBooleanOperation::SelectedRegions(selection) => {
+                Some(selection.keeps(mesh_side_for_source(face.source)))
+            }
+        };
+    }
+    match operation {
+        ExactBooleanOperation::Union | ExactBooleanOperation::Intersection => Some(false),
+        ExactBooleanOperation::Difference => match face.source {
+            ExactCellRegionLabel::LeftBoundary => Some(true),
+            ExactCellRegionLabel::RightBoundary => Some(false),
         },
         ExactBooleanOperation::SelectedRegions(selection) => {
             Some(selection.keeps(mesh_side_for_source(face.source)))
@@ -357,7 +395,7 @@ fn select_faces_from_face_labels(
         {
             blockers.push(ExactArrangementBlocker::LowerDimensionalContact);
         }
-        match select_face(face, operation) {
+        match select_face(face, operation, policy) {
             Some(true) => selected_faces.push(index),
             Some(false) => {}
             None => blockers.push(ExactArrangementBlocker::UnresolvedRegionClassification),
@@ -512,6 +550,13 @@ mod tests {
         }
     }
 
+    fn boundary_labeled_face(side: MeshSide) -> ExactCellComplexFace {
+        ExactCellComplexFace {
+            opposite: ExactOppositeRegionLabel::Boundary,
+            ..labeled_face(side)
+        }
+    }
+
     #[test]
     fn selected_region_operation_respects_requested_source_side() {
         let labeled = ExactLabeledCellComplex {
@@ -526,6 +571,61 @@ mod tests {
             .select(ExactBooleanOperation::SelectedRegions(
                 ExactRegionSelection::KeepLeft,
             ))
+            .unwrap();
+
+        assert_eq!(selected.selected_faces, vec![0]);
+        assert_eq!(
+            selected.selected_face_orientations,
+            vec![ExactSelectedFaceOrientation {
+                face: 0,
+                reverse: false,
+                from_volume_adjacency: false,
+            }]
+        );
+    }
+
+    #[test]
+    fn regularized_solid_selection_drops_boundary_contact_intersection() {
+        let labeled = ExactLabeledCellComplex {
+            faces: vec![
+                boundary_labeled_face(MeshSide::Left),
+                boundary_labeled_face(MeshSide::Right),
+            ],
+            volume_regions: Vec::new(),
+            volume_adjacencies: Vec::new(),
+            lower_dimensional_artifacts: Vec::new(),
+            blockers: Vec::new(),
+        };
+
+        let selected = labeled
+            .select_with_policy(
+                ExactBooleanOperation::Intersection,
+                ExactRegularizationPolicy::REGULARIZED_SOLID,
+            )
+            .unwrap();
+
+        assert!(selected.selected_faces.is_empty());
+        assert!(selected.selected_face_orientations.is_empty());
+    }
+
+    #[test]
+    fn regularized_solid_difference_keeps_only_left_boundary_contact() {
+        let labeled = ExactLabeledCellComplex {
+            faces: vec![
+                boundary_labeled_face(MeshSide::Left),
+                boundary_labeled_face(MeshSide::Right),
+            ],
+            volume_regions: Vec::new(),
+            volume_adjacencies: Vec::new(),
+            lower_dimensional_artifacts: Vec::new(),
+            blockers: Vec::new(),
+        };
+
+        let selected = labeled
+            .select_with_policy(
+                ExactBooleanOperation::Difference,
+                ExactRegularizationPolicy::REGULARIZED_SOLID,
+            )
             .unwrap();
 
         assert_eq!(selected.selected_faces, vec![0]);

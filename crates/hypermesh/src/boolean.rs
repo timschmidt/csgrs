@@ -399,13 +399,7 @@ pub fn preflight_boolean_exact(
         }
     };
 
-    if matches!(
-        support,
-        ExactBooleanSupport::CertifiedFullFaceAdjacentUnion
-            | ExactBooleanSupport::CertifiedFullFaceAdjacentIntersection
-            | ExactBooleanSupport::CertifiedFullFaceAdjacentDifference
-    ) && arrangement_cell_complex_materializes_preemptively(left, right, operation)?
-    {
+    if arrangement_cell_complex_materializes_preemptively(left, right, operation)? {
         return Ok(ExactBooleanPreflight {
             operation,
             support: ExactBooleanSupport::CertifiedArrangementCellComplex,
@@ -1781,6 +1775,46 @@ fn boolean_arrangement_volume_graph_meshes(
     }
 }
 
+fn boolean_arrangement_regularized_boundary_contact_from_graph(
+    graph: &super::graph::ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    if !matches!(
+        operation,
+        ExactBooleanOperation::Intersection | ExactBooleanOperation::Difference
+    ) {
+        return Ok(None);
+    }
+    let Some(report) =
+        certified_closed_boundary_touching_regularized_report_from_graph(graph, left, right)?
+    else {
+        return Ok(None);
+    };
+    validate_consumed_boundary_touching_report(
+        &report,
+        "arrangement regularized boundary contact",
+    )?;
+    let mesh = match operation {
+        ExactBooleanOperation::Intersection => empty_mesh(
+            "empty exact arrangement regularized boundary-contact intersection",
+            validation,
+        )?,
+        ExactBooleanOperation::Difference => copy_mesh(
+            left,
+            "exact arrangement regularized boundary-contact difference keeps left",
+            validation,
+        )?,
+        ExactBooleanOperation::Union | ExactBooleanOperation::SelectedRegions(_) => unreachable!(),
+    };
+    Ok(Some(certified_shortcut_result(
+        mesh,
+        ExactBooleanShortcutKind::ArrangementCellComplex,
+    )))
+}
+
 fn run_arrangement_cell_complex_attempt(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -1816,6 +1850,22 @@ fn run_arrangement_cell_complex_attempt(
         output_vertices: 0,
         output_triangles: 0,
     };
+
+    if let Some(validation) = validation
+        && let Some(result) = boolean_arrangement_regularized_boundary_contact_from_graph(
+            &arrangement.graph,
+            left,
+            right,
+            operation,
+            validation,
+        )?
+    {
+        attempt.stage = ExactArrangementBooleanStage::Materialized;
+        attempt.materialized_shortcut = Some(ExactBooleanShortcutKind::ArrangementCellComplex);
+        attempt.output_vertices = result.mesh.vertices().len();
+        attempt.output_triangles = result.mesh.triangles().len();
+        return Ok(ArrangementCellComplexOutcome::Materialized(result, attempt));
+    }
 
     if !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
         && let Some(validation) = validation
@@ -3271,8 +3321,15 @@ fn arrangement_cell_complex_should_preempt_legacy_paths(
 ) -> bool {
     (matches!(
         operation,
-        ExactBooleanOperation::Union | ExactBooleanOperation::Difference
+        ExactBooleanOperation::Union
+            | ExactBooleanOperation::Intersection
+            | ExactBooleanOperation::Difference
     ) && non_box_full_face_adjacency(left, right))
+        || (matches!(
+            operation,
+            ExactBooleanOperation::Intersection | ExactBooleanOperation::Difference
+        ) && !both_axis_aligned_boxes(left, right)
+            && has_contained_face_adjacent_union(left, right))
         || coplanar_mesh_overlay_should_preempt_surface_paths(left, right, operation)
 }
 
@@ -4034,31 +4091,9 @@ fn boolean_direct_adjacency_meshes(
                 return Ok(Some(result));
             }
         }
-        ExactBooleanOperation::Intersection => {
-            if let Some(result) =
-                boolean_contained_face_adjacency_optional(left, right, operation, validation)?
-            {
-                return Ok(Some(result));
-            }
-            if let Some(result) =
-                boolean_full_face_adjacency_optional(left, right, operation, validation)?
-            {
-                return Ok(Some(result));
-            }
-        }
-        ExactBooleanOperation::Difference => {
-            if let Some(result) =
-                boolean_contained_face_adjacency_optional(left, right, operation, validation)?
-            {
-                return Ok(Some(result));
-            }
-            if let Some(result) =
-                boolean_full_face_adjacency_optional(left, right, operation, validation)?
-            {
-                return Ok(Some(result));
-            }
-        }
-        ExactBooleanOperation::SelectedRegions(_) => {}
+        ExactBooleanOperation::Intersection
+        | ExactBooleanOperation::Difference
+        | ExactBooleanOperation::SelectedRegions(_) => {}
     }
     Ok(None)
 }
@@ -4087,13 +4122,9 @@ fn boolean_full_face_adjacency_optional(
             };
             boolean_full_face_adjacent_union_from_artifact(union)
         }
-        ExactBooleanOperation::Intersection => {
-            boolean_full_face_adjacent_intersection(left, right, validation)?
-        }
-        ExactBooleanOperation::Difference => {
-            boolean_full_face_adjacent_difference(left, right, validation)?
-        }
-        ExactBooleanOperation::SelectedRegions(_) => return Ok(None),
+        ExactBooleanOperation::Intersection
+        | ExactBooleanOperation::Difference
+        | ExactBooleanOperation::SelectedRegions(_) => return Ok(None),
     };
     Ok(Some(result))
 }
@@ -4122,98 +4153,11 @@ fn boolean_contained_face_adjacency_optional(
             };
             boolean_contained_face_adjacent_union_from_artifact(union)
         }
-        ExactBooleanOperation::Intersection => {
-            boolean_contained_face_adjacent_intersection(left, right, validation)?
-        }
-        ExactBooleanOperation::Difference => {
-            boolean_contained_face_adjacent_difference(left, right, validation)?
-        }
-        ExactBooleanOperation::SelectedRegions(_) => return Ok(None),
+        ExactBooleanOperation::Intersection
+        | ExactBooleanOperation::Difference
+        | ExactBooleanOperation::SelectedRegions(_) => return Ok(None),
     };
     Ok(Some(result))
-}
-
-/// Materialize the empty regularized intersection for contained-face adjacency.
-///
-/// A strictly contained opposite-oriented boundary face proves contact along a
-/// two-dimensional boundary subset, not positive volume. The dispatch guard
-/// has just replayed the contained-face adjacency certificate; the branch can
-/// therefore return the empty mesh without constructing a union artifact it
-/// and objects that justify each topological branch.
-fn boolean_contained_face_adjacent_intersection(
-    _left: &ExactMesh,
-    _right: &ExactMesh,
-    validation: ValidationPolicy,
-) -> Result<ExactBooleanResult, MeshError> {
-    Ok(certified_shortcut_result(
-        empty_mesh(
-            "empty exact contained-face adjacent regularized intersection",
-            validation,
-        )?,
-        ExactBooleanShortcutKind::ContainedFaceAdjacentIntersection,
-    ))
-}
-
-/// Materialize the left-preserving regularized difference for contained-face adjacency.
-///
-/// Boundary-only contained-face contact removes no left volume. The dispatch
-/// guard has just replayed the contained-face certificate, so this branch
-/// avoids constructing a union mesh that it discards.
-fn boolean_contained_face_adjacent_difference(
-    left: &ExactMesh,
-    _right: &ExactMesh,
-    validation: ValidationPolicy,
-) -> Result<ExactBooleanResult, MeshError> {
-    Ok(certified_shortcut_result(
-        copy_mesh(
-            left,
-            "exact contained-face adjacent regularized difference keeps left",
-            validation,
-        )?,
-        ExactBooleanShortcutKind::ContainedFaceAdjacentDifference,
-    ))
-}
-
-/// Materialize the empty regularized intersection for certified adjacency.
-///
-/// Regularized solid booleans drop lower-dimensional boundary contact from
-/// the intersection volume, so an exact full-face/fan-patch adjacency has no
-/// volume to emit. The dispatch guard has just replayed the certificate, so
-/// the branch can avoid constructing the adjacent union mesh that it discards,
-/// while still tying the topology decision to exact retained combinatorial
-fn boolean_full_face_adjacent_intersection(
-    _left: &ExactMesh,
-    _right: &ExactMesh,
-    validation: ValidationPolicy,
-) -> Result<ExactBooleanResult, MeshError> {
-    Ok(certified_shortcut_result(
-        empty_mesh(
-            "empty exact full-face adjacent regularized intersection",
-            validation,
-        )?,
-        ExactBooleanShortcutKind::FullFaceAdjacentIntersection,
-    ))
-}
-
-/// Materialize the left-preserving regularized difference for certified adjacency.
-///
-/// A boundary-only full-face/fan-patch contact removes no left volume. The
-/// dispatch guard has just replayed the exact adjacency certificate, so the
-/// left source can be copied without materializing a union mesh that this
-/// branch discards.
-fn boolean_full_face_adjacent_difference(
-    left: &ExactMesh,
-    _right: &ExactMesh,
-    validation: ValidationPolicy,
-) -> Result<ExactBooleanResult, MeshError> {
-    Ok(certified_shortcut_result(
-        copy_mesh(
-            left,
-            "exact full-face adjacent regularized difference keeps left",
-            validation,
-        )?,
-        ExactBooleanShortcutKind::FullFaceAdjacentDifference,
-    ))
 }
 
 fn certified_closed_boundary_touching_union_report_from_graph(

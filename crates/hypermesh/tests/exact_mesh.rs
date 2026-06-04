@@ -7859,12 +7859,13 @@ fn exact_affine_coplanar_volumetric_boxes_materialize_cell_complexes() {
         .unwrap();
     assert_eq!(
         intersection.kind,
-        hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::ExactBooleanShortcutKind::AffineBoxIntersection
+        hypermesh::ExactBooleanResultKind::ArrangementCellComplexMaterialized {
+            operation: hypermesh::ExactBooleanOperation::Intersection
         }
     );
-    assert_eq!(intersection.mesh.vertices().len(), 8);
-    assert_eq!(intersection.mesh.triangles().len(), 12);
+    assert!(intersection.mesh.facts().mesh.closed_manifold);
+    assert!(intersection.mesh.vertices().len() >= 8);
+    assert!(intersection.mesh.triangles().len() >= 12);
 
     let difference_preflight = hypermesh::preflight_boolean_exact(
         &left,
@@ -7898,8 +7899,8 @@ fn exact_affine_coplanar_volumetric_boxes_materialize_cell_complexes() {
         .unwrap();
     assert_eq!(
         difference.kind,
-        hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::ExactBooleanShortcutKind::AffineBoxDifference
+        hypermesh::ExactBooleanResultKind::ArrangementCellComplexMaterialized {
+            operation: hypermesh::ExactBooleanOperation::Difference
         }
     );
 
@@ -8393,10 +8394,16 @@ fn exact_mixed_coplanar_volumetric_overlap_materializes_from_face_cells() {
                 hypermesh::ExactBoundaryBooleanPolicy::Reject,
             )
             .unwrap();
-        assert_eq!(
-            result.kind,
+        let expected_kind = if matches!(
+            operation,
+            hypermesh::ExactBooleanOperation::Intersection
+                | hypermesh::ExactBooleanOperation::Difference
+        ) {
+            hypermesh::ExactBooleanResultKind::ArrangementCellComplexMaterialized { operation }
+        } else {
             hypermesh::ExactBooleanResultKind::CertifiedShortcut { shortcut }
-        );
+        };
+        assert_eq!(result.kind, expected_kind);
         assert!(result.mesh.facts().mesh.closed_manifold);
     }
 }
@@ -8506,8 +8513,25 @@ fn exact_full_face_adjacent_tetrahedra_union_deletes_internal_face() {
         .unwrap();
     assert_eq!(
         intersection_preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedFullFaceAdjacentIntersection
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
+    let intersection_attempt = hypermesh::exact_arrangement_boolean_attempt_report(
+        &left,
+        &right,
+        hypermesh::ExactBooleanOperation::Intersection,
+        hypermesh::ExactRegularizationPolicy::REGULARIZED_SOLID,
+    )
+    .unwrap();
+    assert_eq!(
+        intersection_attempt.stage,
+        hypermesh::ExactArrangementBooleanStage::Materialized
+    );
+    assert_eq!(
+        intersection_attempt.materialized_shortcut,
+        Some(hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex)
+    );
+    assert!(intersection_attempt.decline.is_none());
+    assert_eq!(intersection_attempt.output_triangles, 0);
     let intersection = hypermesh::boolean_exact(
         &left,
         &right,
@@ -8528,7 +8552,7 @@ fn exact_full_face_adjacent_tetrahedra_union_deletes_internal_face() {
     assert_eq!(
         intersection.kind,
         hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::ExactBooleanShortcutKind::FullFaceAdjacentIntersection
+            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
     assert!(intersection.mesh.triangles().is_empty());
@@ -8559,6 +8583,23 @@ fn exact_full_face_adjacent_tetrahedra_union_deletes_internal_face() {
         difference_preflight.support,
         hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
+    let difference_attempt = hypermesh::exact_arrangement_boolean_attempt_report(
+        &left,
+        &right,
+        hypermesh::ExactBooleanOperation::Difference,
+        hypermesh::ExactRegularizationPolicy::REGULARIZED_SOLID,
+    )
+    .unwrap();
+    assert_eq!(
+        difference_attempt.stage,
+        hypermesh::ExactArrangementBooleanStage::Materialized
+    );
+    assert_eq!(
+        difference_attempt.materialized_shortcut,
+        Some(hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex)
+    );
+    assert!(difference_attempt.decline.is_none());
+    assert_eq!(difference_attempt.output_triangles, left.triangles().len());
     let difference = hypermesh::boolean_exact(
         &left,
         &right,
@@ -8708,7 +8749,7 @@ fn exact_full_face_adjacent_fan_patch_union_deletes_nonconforming_internal_faces
         .unwrap();
     assert_eq!(
         intersection_preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedFullFaceAdjacentIntersection
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let intersection = hypermesh::boolean_exact(
         &left,
@@ -8729,7 +8770,7 @@ fn exact_full_face_adjacent_fan_patch_union_deletes_nonconforming_internal_faces
     assert_eq!(
         intersection.kind,
         hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::ExactBooleanShortcutKind::FullFaceAdjacentIntersection
+            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
     assert!(intersection.mesh.triangles().is_empty());
@@ -8792,7 +8833,7 @@ fn exact_full_face_adjacent_fan_patch_union_deletes_nonconforming_internal_faces
     assert_eq!(
         reverse_difference.kind,
         hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::ExactBooleanShortcutKind::FullFaceAdjacentDifference
+            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
     assert_eq!(reverse_difference.mesh.vertices(), right.vertices());
@@ -9976,8 +10017,25 @@ fn exact_contained_face_adjacent_tetrahedra_union_replaces_containing_face_with_
         .unwrap();
     assert_eq!(
         intersection_preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedContainedFaceAdjacentIntersection
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
+    let intersection_attempt = hypermesh::exact_arrangement_boolean_attempt_report(
+        &left,
+        &right,
+        hypermesh::ExactBooleanOperation::Intersection,
+        hypermesh::ExactRegularizationPolicy::REGULARIZED_SOLID,
+    )
+    .unwrap();
+    assert_eq!(
+        intersection_attempt.stage,
+        hypermesh::ExactArrangementBooleanStage::Materialized
+    );
+    assert_eq!(
+        intersection_attempt.materialized_shortcut,
+        Some(hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex)
+    );
+    assert!(intersection_attempt.decline.is_none());
+    assert_eq!(intersection_attempt.output_triangles, 0);
     let intersection = hypermesh::boolean_exact(
         &left,
         &right,
@@ -9997,7 +10055,7 @@ fn exact_contained_face_adjacent_tetrahedra_union_replaces_containing_face_with_
     assert_eq!(
         intersection.kind,
         hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::ExactBooleanShortcutKind::ContainedFaceAdjacentIntersection
+            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
     assert!(intersection.mesh.vertices().is_empty());
@@ -10015,7 +10073,7 @@ fn exact_contained_face_adjacent_tetrahedra_union_replaces_containing_face_with_
         .unwrap();
     assert_eq!(
         difference_preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let difference = hypermesh::boolean_exact(
@@ -10037,7 +10095,7 @@ fn exact_contained_face_adjacent_tetrahedra_union_replaces_containing_face_with_
     assert_eq!(
         difference.kind,
         hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::ExactBooleanShortcutKind::ClosedBoundaryTouchingDifference
+            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
     assert_eq!(difference.mesh.vertices(), left.vertices());
@@ -10055,7 +10113,7 @@ fn exact_contained_face_adjacent_tetrahedra_union_replaces_containing_face_with_
         .unwrap();
     assert_eq!(
         reverse_difference_preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let reverse_difference = hypermesh::boolean_exact(
         &right,
@@ -10076,7 +10134,7 @@ fn exact_contained_face_adjacent_tetrahedra_union_replaces_containing_face_with_
     assert_eq!(
         reverse_difference.kind,
         hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::ExactBooleanShortcutKind::ClosedBoundaryTouchingDifference
+            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
     assert_eq!(reverse_difference.mesh.vertices(), right.vertices());
@@ -31883,8 +31941,8 @@ fn exact_named_booleans_materialize_boundary_corner_convex_difference() {
         .unwrap();
     assert_eq!(
         result.kind,
-        hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::ExactBooleanShortcutKind::ConvexContainment
+        hypermesh::ExactBooleanResultKind::ArrangementCellComplexMaterialized {
+            operation: hypermesh::ExactBooleanOperation::Difference
         }
     );
     assert!(result.mesh.facts().mesh.closed_manifold);
