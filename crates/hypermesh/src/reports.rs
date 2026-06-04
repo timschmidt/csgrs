@@ -581,8 +581,6 @@ pub enum ExactBooleanShortcutKind {
     /// Exact coordinate equality and matching triangle sets, modulo indexing
     /// and face orientation.
     SameSurface,
-    /// Exact coplanar convex surface coverage, modulo triangulation.
-    CoplanarConvexSurfaceEquivalence,
     /// Exact coplanar convex surface containment, modulo triangulation.
     CoplanarConvexSurfaceContainment,
     /// Certified one-hole coplanar convex surface difference.
@@ -1315,9 +1313,6 @@ pub enum ExactBooleanSupport {
     /// triangle vertex sets, ignoring per-face orientation.
     CertifiedSameSurface,
     /// A named operation was answered by exact coplanar convex surface
-    /// equivalence, ignoring triangulation.
-    CertifiedCoplanarConvexSurfaceEquivalence,
-    /// A named operation was answered by exact coplanar convex surface
     /// containment, ignoring triangulation.
     CertifiedCoplanarConvexSurfaceContainment,
     /// Union was materialized as one exact axis-aligned box from two
@@ -1558,7 +1553,6 @@ impl ExactBooleanPreflight {
             | ExactBooleanSupport::CertifiedBoundsDisjoint
             | ExactBooleanSupport::CertifiedIdentical
             | ExactBooleanSupport::CertifiedSameSurface
-            | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceEquivalence
             | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceContainment
             | ExactBooleanSupport::CertifiedAxisAlignedBoxUnion
             | ExactBooleanSupport::CertifiedAxisAlignedBoxIntersection

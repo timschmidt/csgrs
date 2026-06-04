@@ -13366,7 +13366,7 @@ fn exact_named_booleans_handle_coplanar_convex_surface_retriangulation() {
             .unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedCoplanarConvexSurfaceEquivalence
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     assert!(preflight.blocker.is_none());
 
@@ -13381,10 +13381,19 @@ fn exact_named_booleans_handle_coplanar_convex_surface_retriangulation() {
     assert_eq!(
         union.kind,
         hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::ExactBooleanShortcutKind::CoplanarConvexSurfaceEquivalence
+            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
-    assert_eq!(union.mesh.triangles(), left.triangles());
+    union
+        .validate_operation_against_sources(
+            &left,
+            &right,
+            hypermesh::ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert!(exact_mesh_vertex_sets_equal(&union.mesh, &left));
 
     let difference = hypermesh::boolean_exact(
         &left,

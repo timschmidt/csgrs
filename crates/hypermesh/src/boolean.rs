@@ -432,7 +432,6 @@ pub fn preflight_boolean_exact(
             | ExactBooleanSupport::CertifiedBoundsDisjoint
             | ExactBooleanSupport::CertifiedIdentical
             | ExactBooleanSupport::CertifiedSameSurface
-            | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceEquivalence
             | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceContainment
             | ExactBooleanSupport::CertifiedAxisAlignedBoxUnion
             | ExactBooleanSupport::CertifiedAxisAlignedBoxIntersection
@@ -863,9 +862,6 @@ fn preflight_direct_coplanar_surface_support(
 ) -> Option<ExactBooleanSupport> {
     match operation {
         ExactBooleanOperation::Union => {
-            if certify_coplanar_convex_surface_equivalence(left, right).is_some() {
-                return Some(ExactBooleanSupport::CertifiedCoplanarConvexSurfaceEquivalence);
-            }
             if certify_coplanar_convex_surface_containment(left, right).is_some() {
                 return Some(ExactBooleanSupport::CertifiedCoplanarConvexSurfaceContainment);
             }
@@ -875,9 +871,6 @@ fn preflight_direct_coplanar_surface_support(
             None
         }
         ExactBooleanOperation::Intersection => {
-            if certify_coplanar_convex_surface_equivalence(left, right).is_some() {
-                return Some(ExactBooleanSupport::CertifiedCoplanarConvexSurfaceEquivalence);
-            }
             if certify_coplanar_convex_surface_containment(left, right).is_some() {
                 return Some(ExactBooleanSupport::CertifiedCoplanarConvexSurfaceContainment);
             }
@@ -889,9 +882,6 @@ fn preflight_direct_coplanar_surface_support(
             None
         }
         ExactBooleanOperation::Difference => {
-            if certify_coplanar_convex_surface_equivalence(left, right).is_some() {
-                return Some(ExactBooleanSupport::CertifiedCoplanarConvexSurfaceEquivalence);
-            }
             if coplanar_mesh_overlay_difference_ready(left, right)
                 || certify_coplanar_surface_boundary_touch(left, right).is_some()
             {
@@ -2477,7 +2467,10 @@ fn boolean_coplanar_mesh_overlay_optional(
     if coplanar_mesh_overlay_should_yield_to_closed_boundary_shortcut(left, right, operation)? {
         return Ok(None);
     }
-    let allow_empty_overlay = operation == ExactBooleanOperation::Intersection;
+    let allow_empty_overlay = matches!(
+        operation,
+        ExactBooleanOperation::Intersection | ExactBooleanOperation::Difference
+    );
     let boundary_policy = match operation {
         ExactBooleanOperation::Difference => {
             coplanar_mesh_overlay_materialized_difference_boundary_policy(left, right)
@@ -2846,9 +2839,6 @@ fn coplanar_mesh_overlay_should_preempt_surface_paths(
     if total_triangles > 96 {
         return false;
     }
-    if certify_coplanar_convex_surface_equivalence(left, right).is_some() {
-        return false;
-    }
     if certify_coplanar_convex_surface_containment(left, right).is_some()
         && !(operation == ExactBooleanOperation::Difference
             && coplanar_mesh_overlay_materialized_difference_boundary_policy(left, right).is_some())
@@ -3015,7 +3005,7 @@ fn coplanar_mesh_overlay_materialized_difference_boundary_policy(
         left,
         right,
         ExactArrangement2dSetOperation::Difference,
-        false,
+        true,
     )
 }
 
@@ -3087,7 +3077,6 @@ fn coplanar_mesh_overlay_difference_ready(left: &ExactMesh, right: &ExactMesh) -
     !left.facts().mesh.closed_manifold
         && !right.facts().mesh.closed_manifold
         && left.triangles().len() + right.triangles().len() <= 96
-        && certify_coplanar_convex_surface_equivalence(left, right).is_none()
         && coplanar_mesh_overlay_difference_materializes(left, right)
 }
 
@@ -3396,11 +3385,6 @@ fn boolean_direct_coplanar_surface_meshes(
     }
     match operation {
         ExactBooleanOperation::Union => {
-            if certify_coplanar_convex_surface_equivalence(left, right).is_some() {
-                return Ok(Some(boolean_coplanar_convex_equivalent_surfaces(
-                    left, operation, validation,
-                )?));
-            }
             if let Some(containment) = certify_coplanar_convex_surface_containment(left, right) {
                 return Ok(Some(boolean_coplanar_convex_containment_surfaces(
                     left,
@@ -3418,11 +3402,6 @@ fn boolean_direct_coplanar_surface_meshes(
             Ok(None)
         }
         ExactBooleanOperation::Intersection => {
-            if certify_coplanar_convex_surface_equivalence(left, right).is_some() {
-                return Ok(Some(boolean_coplanar_convex_equivalent_surfaces(
-                    left, operation, validation,
-                )?));
-            }
             if let Some(containment) = certify_coplanar_convex_surface_containment(left, right) {
                 return Ok(Some(boolean_coplanar_convex_containment_surfaces(
                     left,
@@ -3440,11 +3419,6 @@ fn boolean_direct_coplanar_surface_meshes(
             Ok(None)
         }
         ExactBooleanOperation::Difference => {
-            if certify_coplanar_convex_surface_equivalence(left, right).is_some() {
-                return Ok(Some(boolean_coplanar_convex_equivalent_surfaces(
-                    left, operation, validation,
-                )?));
-            }
             if let Some(result) = boolean_coplanar_surface_overlay_from_exact_arrangement(
                 left, right, operation, validation,
             )? {
@@ -4512,30 +4486,6 @@ fn boolean_full_face_adjacent_difference(
             validation,
         )?,
         ExactBooleanShortcutKind::FullFaceAdjacentDifference,
-    ))
-}
-
-fn boolean_coplanar_convex_equivalent_surfaces(
-    mesh: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-) -> Result<ExactBooleanResult, MeshError> {
-    let mesh = match operation {
-        ExactBooleanOperation::Union | ExactBooleanOperation::Intersection => copy_mesh(
-            mesh,
-            "exact coplanar convex equivalent surface result",
-            validation,
-        )?,
-        ExactBooleanOperation::Difference => empty_mesh(
-            "empty exact coplanar convex equivalent surface difference",
-            validation,
-        )?,
-        ExactBooleanOperation::SelectedRegions(_) => unreachable!("handled by caller"),
-    };
-
-    Ok(certified_shortcut_result(
-        mesh,
-        ExactBooleanShortcutKind::CoplanarConvexSurfaceEquivalence,
     ))
 }
 
