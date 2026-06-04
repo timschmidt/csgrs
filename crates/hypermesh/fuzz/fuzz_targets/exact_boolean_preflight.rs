@@ -4,7 +4,7 @@ use std::cmp::Ordering;
 
 use hyperlimit::{Point3, compare_reals};
 use hypermesh::proposal::certify_exact_mesh_proposal;
-use hypermesh::{CoplanarTriangleRelation, ExactBooleanOperation, ExactBooleanPolicy, ExactBooleanSupport, ExactBoundaryBooleanPolicy, ExactMesh, SourceProvenance, Triangle, ValidationPolicy, boolean_exact_with_boundary_policy, boolean_selected_regions, build_intersection_graph, certify_boundary_touching_report, certify_convex_solid, certify_open_surface_disjoint_report, certify_planar_arrangement_report, certify_refinement_report, certify_same_surface_report, certify_winding_readiness_report, classify_coplanar_triangles, classify_mesh_face_pair, classify_mesh_face_pairs, classify_mesh_vertices_against_convex_solid, classify_mesh_vertices_against_convex_solid_report, classify_point_against_convex_solid_report, classify_triangle_against_face_plane, classify_triangle_triangle, intersect_closed_convex_solids, preflight_boolean_exact, subtract_closed_convex_solids_single_cap};
+use hypermesh::{CoplanarTriangleRelation, ExactBooleanOperation, ExactBooleanPolicy, ExactBooleanSupport, ExactBoundaryBooleanPolicy, ExactMesh, SourceProvenance, Triangle, ValidationPolicy, boolean_exact_with_boundary_policy, boolean_selected_regions, build_intersection_graph, certify_boundary_touching_report, certify_convex_solid, certify_open_surface_disjoint_report, certify_planar_arrangement_report, certify_refinement_report, certify_same_surface_report, certify_winding_readiness_report, classify_coplanar_triangles, classify_mesh_face_pair, classify_mesh_face_pairs, classify_mesh_vertices_against_convex_solid, classify_mesh_vertices_against_convex_solid_report, classify_point_against_convex_solid_report, classify_triangle_against_face_plane, classify_triangle_triangle, intersect_closed_convex_solids, preflight_boolean_exact, subtract_closed_convex_solids};
 use hypermesh::graph::{FaceSplitBoundaryNode};
 
 use hypermesh::region::{ExactRegionSelection, FaceRegionPlaneRelation, build_selected_region_mesh};
@@ -1185,11 +1185,11 @@ fuzz_target!(|data: &[u8]| {
         let _ = intersection.validate();
         let _ = intersection.validate_against_sources(&right, &left);
     }
-    if let Some(difference) = subtract_closed_convex_solids_single_cap(&left, &right) {
+    if let Some(difference) = subtract_closed_convex_solids(&left, &right) {
         let _ = difference.validate();
         let _ = difference.validate_against_sources(&left, &right);
     }
-    if let Some(difference) = subtract_closed_convex_solids_single_cap(&right, &left) {
+    if let Some(difference) = subtract_closed_convex_solids(&right, &left) {
         let _ = difference.validate();
         let _ = difference.validate_against_sources(&right, &left);
     }

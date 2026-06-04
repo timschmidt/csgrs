@@ -696,12 +696,15 @@ pub enum ExactBooleanShortcutKind {
     LowerDimensionalRegularizedSolid,
     /// Certified closed-convex containment.
     ConvexContainment,
+    /// Certified closed-convex union materialized by exact source-face
+    /// subtraction.
+    ConvexUnion,
     /// Certified closed-convex intersection materialized by exact halfspace
     /// clipping.
     ConvexIntersection,
-    /// Certified closed-convex difference where the right solid removes one
-    /// triangular cap from the left solid.
-    ConvexSingleCapDifference,
+    /// Certified closed-convex difference materialized by exact source-face
+    /// cell subtraction.
+    ConvexDifference,
     /// Certified closed-convex separation.
     ConvexSeparated,
     /// Certified exact ray-parity containment for closed nonconvex-capable
@@ -1468,11 +1471,12 @@ pub enum ExactBooleanSupport {
     CertifiedOpenSurfaceArrangementDifference,
     /// A named operation was answered by certified closed-convex containment.
     CertifiedConvexContainment,
+    /// Union was materialized for two overlapping closed convex solids.
+    CertifiedConvexUnion,
     /// Intersection was materialized for two overlapping closed convex solids.
     CertifiedConvexIntersection,
-    /// Difference was materialized for a closed convex solid with one exact
-    /// triangular cap removed.
-    CertifiedConvexSingleCapDifference,
+    /// Difference was materialized for two overlapping closed convex solids.
+    CertifiedConvexDifference,
     /// A named operation was answered by certified single-triangle coplanar
     /// surface containment.
     CertifiedCoplanarSurfaceContainment,
@@ -1642,8 +1646,9 @@ impl ExactBooleanPreflight {
             | ExactBooleanSupport::CertifiedOpenSurfaceDisjoint
             | ExactBooleanSupport::CertifiedMixedDimensionalRegularizedSolid
             | ExactBooleanSupport::CertifiedConvexContainment
+            | ExactBooleanSupport::CertifiedConvexUnion
             | ExactBooleanSupport::CertifiedConvexIntersection
-            | ExactBooleanSupport::CertifiedConvexSingleCapDifference
+            | ExactBooleanSupport::CertifiedConvexDifference
             | ExactBooleanSupport::CertifiedCoplanarSurfaceContainment
             | ExactBooleanSupport::CertifiedConvexSeparated
             | ExactBooleanSupport::CertifiedWindingContainment

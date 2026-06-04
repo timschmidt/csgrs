@@ -11,12 +11,19 @@
 //! (1974), using `hyperlimit::orient3d_report` and exact determinant-ratio
 //! interpolation.
 
-use std::cmp::Ordering;
+use std::{cmp::Ordering, collections::BTreeSet};
 
 use hyperlimit::{
-    PlaneSide, Point3, compare_reals, interpolate_point3 as interpolate3, orient3d_report,
+    PlaneSide, Point2, Point3, compare_reals, interpolate_point3 as interpolate3, orient3d_report,
+    point_on_segment,
 };
 
+use super::arrangement2d::{
+    ExactArrangement2dBoundaryPolicy, ExactArrangement2dOutputLoop, ExactArrangement2dOverlay,
+    ExactArrangement2dRegion, ExactArrangement2dRegionRing, ExactArrangement2dSetOperation,
+    build_exact_arrangement2d_overlay_with_boundary_policy,
+};
+use super::coplanar::{CoplanarProjection, project_point3};
 use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
 use super::mesh::{ExactMesh, Triangle};
 use super::provenance::SourceProvenance;
@@ -35,6 +42,134 @@ pub struct ConvexSolidIntersection {
     pub right_facts: ConvexSolidFacts,
     /// Exact closed mesh materialized from clipped source-face polygons.
     pub mesh: ExactMesh,
+}
+
+/// Certified union of two closed convex solids.
+///
+/// The output is not assumed to be convex. Each source face is projected to an
+/// exact 2D carrier plane, the portion covered by the opposite convex solid is
+/// subtracted with the exact planar arrangement layer, and retained cells are
+/// triangulated back on the original source plane. Exact edge refinement is run
+/// before closed validation so retained whole-face fragments are split at
+/// neighboring intersection vertices instead of forming T-junctions.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ConvexSolidUnion {
+    /// Convexity and orientation facts for the left operand.
+    pub left_facts: ConvexSolidFacts,
+    /// Convexity and orientation facts for the right operand.
+    pub right_facts: ConvexSolidFacts,
+    /// Exact closed mesh materialized from outside source-face cells.
+    pub mesh: ExactMesh,
+}
+
+/// Certified difference of two closed convex solids.
+///
+/// The result may be nonconvex. It is materialized as exact source-face cells:
+/// left boundary portions outside the right solid keep their source
+/// orientation, while right boundary portions inside the left solid are
+/// retained with reversed orientation as cut/cavity faces.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ConvexSolidDifference {
+    /// Convexity and orientation facts for the left operand.
+    pub left_facts: ConvexSolidFacts,
+    /// Convexity and orientation facts for the right operand.
+    pub right_facts: ConvexSolidFacts,
+    /// Exact closed mesh materialized from retained source-face cells.
+    pub mesh: ExactMesh,
+}
+
+impl ConvexSolidUnion {
+    /// Validate retained facts and the materialized mesh.
+    pub fn validate(&self) -> Result<(), MeshError> {
+        self.left_facts.validate().map_err(report_error)?;
+        self.right_facts.validate().map_err(report_error)?;
+        if !self.left_facts.is_certified_convex() || !self.right_facts.is_certified_convex() {
+            return Err(MeshError::one(MeshDiagnostic::new(
+                Severity::Error,
+                DiagnosticKind::UnsupportedExactOperation,
+                "convex union retained non-certified solid facts",
+            )));
+        }
+        self.mesh.validate_retained_state().map_err(|error| {
+            MeshError::one(MeshDiagnostic::new(
+                Severity::Error,
+                DiagnosticKind::UnsupportedExactOperation,
+                format!("convex union output failed retained-state replay: {error:?}"),
+            ))
+        })
+    }
+
+    /// Recompute this union from the supplied source meshes.
+    pub fn validate_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<(), MeshError> {
+        self.validate()?;
+        let replay = union_closed_convex_solids(left, right).ok_or_else(|| {
+            MeshError::one(MeshDiagnostic::new(
+                Severity::Error,
+                DiagnosticKind::UnsupportedExactOperation,
+                "convex union source replay did not reproduce an output",
+            ))
+        })?;
+        if self == &replay {
+            Ok(())
+        } else {
+            Err(MeshError::one(MeshDiagnostic::new(
+                Severity::Error,
+                DiagnosticKind::UnsupportedExactOperation,
+                "convex union retained output no longer matches source replay",
+            )))
+        }
+    }
+}
+
+impl ConvexSolidDifference {
+    /// Validate retained facts and the materialized mesh.
+    pub fn validate(&self) -> Result<(), MeshError> {
+        self.left_facts.validate().map_err(report_error)?;
+        self.right_facts.validate().map_err(report_error)?;
+        if !self.left_facts.is_certified_convex() || !self.right_facts.is_certified_convex() {
+            return Err(MeshError::one(MeshDiagnostic::new(
+                Severity::Error,
+                DiagnosticKind::UnsupportedExactOperation,
+                "convex difference retained non-certified solid facts",
+            )));
+        }
+        self.mesh.validate_retained_state().map_err(|error| {
+            MeshError::one(MeshDiagnostic::new(
+                Severity::Error,
+                DiagnosticKind::UnsupportedExactOperation,
+                format!("convex difference output failed retained-state replay: {error:?}"),
+            ))
+        })
+    }
+
+    /// Recompute this difference from the supplied source meshes.
+    pub fn validate_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<(), MeshError> {
+        self.validate()?;
+        let replay = subtract_closed_convex_solids(left, right).ok_or_else(|| {
+            MeshError::one(MeshDiagnostic::new(
+                Severity::Error,
+                DiagnosticKind::UnsupportedExactOperation,
+                "convex difference source replay did not reproduce an output",
+            ))
+        })?;
+        if self == &replay {
+            Ok(())
+        } else {
+            Err(MeshError::one(MeshDiagnostic::new(
+                Severity::Error,
+                DiagnosticKind::UnsupportedExactOperation,
+                "convex difference retained output no longer matches source replay",
+            )))
+        }
+    }
 }
 
 impl ConvexSolidIntersection {
@@ -88,73 +223,88 @@ impl ConvexSolidIntersection {
     }
 }
 
-/// Certified difference of closed convex solids for a single cap.
+/// Certify and materialize the union of two closed convex solids.
 ///
-/// This is intentionally not a general convex difference implementation.
-/// Difference of two convex solids can be nonconvex or holed, so emitting a
-/// computation boundary. The supported case is narrower and auditable: every
-/// left vertex is inside all but one right halfspace, the remaining right
-/// halfspace cuts the left solid in exactly one cap loop, and the retained
-/// output is the closed convex solid on the outside of that one certified
-/// plane. This is the 3D analogue of a one-corner clipped polygon fragment,
-/// interpolation ratios remain exact.
-#[derive(Clone, Debug, PartialEq)]
-pub struct ConvexSolidSingleCapDifference {
-    /// Convexity and orientation facts for the left operand.
-    pub left_facts: ConvexSolidFacts,
-    /// Convexity and orientation facts for the right operand.
-    pub right_facts: ConvexSolidFacts,
-    /// Index of the right face whose oriented plane produced the cap.
-    pub cutting_face: usize,
-    /// Exact closed mesh materialized from the left solid and triangular cap.
-    pub mesh: ExactMesh,
+/// Unlike intersection, convex union can be nonconvex. This routine still
+/// stays inside exact arithmetic: it keeps the parts of each source face that
+/// are outside the opposite convex solid and revalidates the resulting shell as
+/// a closed exact mesh.
+pub fn union_closed_convex_solids(left: &ExactMesh, right: &ExactMesh) -> Option<ConvexSolidUnion> {
+    let left_facts = certify_convex_solid(left);
+    let right_facts = certify_convex_solid(right);
+    if !left_facts.is_certified_convex() || !right_facts.is_certified_convex() {
+        return None;
+    }
+
+    let mut vertices = Vec::new();
+    let mut triangles = Vec::new();
+    append_convex_union_source_faces(left, right, &right_facts, &mut vertices, &mut triangles)?;
+    append_convex_union_source_faces(right, left, &left_facts, &mut vertices, &mut triangles)?;
+    if triangles.is_empty() {
+        return None;
+    }
+    refine_triangles_at_existing_edge_vertices(&vertices, &mut triangles)?;
+    remove_duplicate_triangle_vertex_sets(&mut triangles);
+    let mesh = ExactMesh::new_with_policy(
+        vertices,
+        triangles,
+        SourceProvenance::exact("exact closed-convex solid union"),
+        ValidationPolicy::CLOSED,
+    )
+    .ok()?;
+    if !mesh_has_nonzero_signed_volume(&mesh)? {
+        return None;
+    }
+    let union = ConvexSolidUnion {
+        left_facts,
+        right_facts,
+        mesh,
+    };
+    union.validate().ok()?;
+    Some(union)
 }
 
-impl ConvexSolidSingleCapDifference {
-    /// Validate retained facts and the materialized mesh.
-    pub fn validate(&self) -> Result<(), MeshError> {
-        self.left_facts.validate().map_err(report_error)?;
-        self.right_facts.validate().map_err(report_error)?;
-        if !self.left_facts.is_certified_convex() || !self.right_facts.is_certified_convex() {
-            return Err(MeshError::one(MeshDiagnostic::new(
-                Severity::Error,
-                DiagnosticKind::UnsupportedExactOperation,
-                "convex difference retained non-certified solid facts",
-            )));
-        }
-        self.mesh.validate_retained_state().map_err(|error| {
-            MeshError::one(MeshDiagnostic::new(
-                Severity::Error,
-                DiagnosticKind::UnsupportedExactOperation,
-                format!("convex difference output failed retained-state replay: {error:?}"),
-            ))
-        })
+/// Certify and materialize `left - right` for two closed convex solids.
+///
+/// This is the exact source-face-cell construction for general convex
+/// difference. It returns `None` for empty/lower-dimensional results or when
+/// exact face-cell triangulation cannot be certified.
+pub fn subtract_closed_convex_solids(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Option<ConvexSolidDifference> {
+    let left_facts = certify_convex_solid(left);
+    let right_facts = certify_convex_solid(right);
+    if !left_facts.is_certified_convex() || !right_facts.is_certified_convex() {
+        return None;
     }
 
-    /// Recompute this single-cap difference from the supplied source meshes.
-    pub fn validate_against_sources(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> Result<(), MeshError> {
-        self.validate()?;
-        let replay = subtract_closed_convex_solids_single_cap(left, right).ok_or_else(|| {
-            MeshError::one(MeshDiagnostic::new(
-                Severity::Error,
-                DiagnosticKind::UnsupportedExactOperation,
-                "convex single-cap difference source replay did not reproduce an output",
-            ))
-        })?;
-        if self == &replay {
-            Ok(())
-        } else {
-            Err(MeshError::one(MeshDiagnostic::new(
-                Severity::Error,
-                DiagnosticKind::UnsupportedExactOperation,
-                "convex single-cap difference retained output no longer matches source replay",
-            )))
-        }
+    let mut vertices = Vec::new();
+    let mut triangles = Vec::new();
+    append_convex_difference_left_faces(left, right, &right_facts, &mut vertices, &mut triangles)?;
+    append_convex_difference_right_faces(right, left, &left_facts, &mut vertices, &mut triangles)?;
+    if triangles.is_empty() {
+        return None;
     }
+    refine_triangles_at_existing_edge_vertices(&vertices, &mut triangles)?;
+    remove_duplicate_triangle_vertex_sets(&mut triangles);
+    let mesh = ExactMesh::new_with_policy(
+        vertices,
+        triangles,
+        SourceProvenance::exact("exact closed-convex solid difference"),
+        ValidationPolicy::CLOSED,
+    )
+    .ok()?;
+    if !mesh_has_nonzero_signed_volume(&mesh)? {
+        return None;
+    }
+    let difference = ConvexSolidDifference {
+        left_facts,
+        right_facts,
+        mesh,
+    };
+    difference.validate().ok()?;
+    Some(difference)
 }
 
 /// Certify and materialize the intersection of two closed convex solids.
@@ -174,14 +324,15 @@ pub fn intersect_closed_convex_solids(
     }
 
     let mut polygons = Vec::new();
-    clipped_source_faces(left, right, &right_facts, ClipKeep::Inside, &mut polygons)?;
-    clipped_source_faces(right, left, &left_facts, ClipKeep::Inside, &mut polygons)?;
+    clipped_source_faces(left, right, &right_facts, &mut polygons)?;
+    clipped_source_faces(right, left, &left_facts, &mut polygons)?;
     if polygons.is_empty() {
         return None;
     }
 
+    let hull_polygons = convex_hull_polygons_from_clipped_faces(&polygons)?;
     let mesh = polygons_to_closed_mesh(
-        &polygons,
+        &hull_polygons,
         "exact closed-convex solid intersection",
         ValidationPolicy::CLOSED,
     )?;
@@ -238,76 +389,10 @@ fn determinant_from_origin(a: &Point3, b: &Point3, c: &Point3) -> Real {
     &(&x_term - &y_term) + &z_term
 }
 
-/// Certify and materialize `left - right` for one convex cap.
-///
-/// Returns `None` unless both operands are closed convex solids and the right
-/// operand removes exactly one cap from the left operand. The cap boundary is
-/// replayed from clipped source-face edges on the cutting plane rather than
-/// computation-history discipline. General convex difference remains a
-/// planar-cell/winding problem because the output can be nonconvex or contain
-/// holes.
-pub fn subtract_closed_convex_solids_single_cap(
-    left: &ExactMesh,
-    right: &ExactMesh,
-) -> Option<ConvexSolidSingleCapDifference> {
-    let left_facts = certify_convex_solid(left);
-    let right_facts = certify_convex_solid(right);
-    if !left_facts.is_certified_convex() || !right_facts.is_certified_convex() {
-        return None;
-    }
-
-    let cutting_face = single_active_cutting_face(left, right, &right_facts)?;
-    let face = right.triangles().get(cutting_face)?.0;
-    let mut polygons = Vec::new();
-    clipped_source_faces_by_face(
-        left,
-        right,
-        face,
-        &right_facts,
-        ClipKeep::Outside,
-        &mut polygons,
-    )?;
-    let cap = cap_polygon_from_clipped_faces(&polygons, right, face)?;
-    let cap_start = polygons.len();
-    polygons.extend(cap_polygons(&cap)?);
-    let mesh = polygons_to_closed_mesh(
-        &polygons,
-        "exact closed-convex single-cap difference",
-        ValidationPolicy::CLOSED,
-    )
-    .or_else(|| {
-        let mut reversed = polygons;
-        for polygon in &mut reversed[cap_start..] {
-            polygon.reverse();
-        }
-        polygons_to_closed_mesh(
-            &reversed,
-            "exact closed-convex single-cap difference",
-            ValidationPolicy::CLOSED,
-        )
-    })?;
-
-    let difference = ConvexSolidSingleCapDifference {
-        left_facts,
-        right_facts,
-        cutting_face,
-        mesh,
-    };
-    difference.validate().ok()?;
-    Some(difference)
-}
-
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-enum ClipKeep {
-    Inside,
-    Outside,
-}
-
 fn clipped_source_faces(
     source: &ExactMesh,
     clip: &ExactMesh,
     clip_facts: &ConvexSolidFacts,
-    keep: ClipKeep,
     polygons: &mut Vec<Vec<Point3>>,
 ) -> Option<()> {
     for triangle in source.triangles() {
@@ -317,34 +402,11 @@ fn clipped_source_faces(
             .map(|&index| source.vertices()[index].clone())
             .collect::<Vec<_>>();
         for clip_triangle in clip.triangles() {
-            polygon = clip_polygon_by_face(&polygon, clip, clip_triangle.0, clip_facts, keep)?;
+            polygon = clip_polygon_by_face(&polygon, clip, clip_triangle.0, clip_facts)?;
             if polygon.len() < 3 {
                 break;
             }
         }
-        simplify_polygon(&mut polygon);
-        if polygon.len() >= 3 && !polygon_is_degenerate(&polygon) {
-            polygons.push(polygon);
-        }
-    }
-    Some(())
-}
-
-fn clipped_source_faces_by_face(
-    source: &ExactMesh,
-    clip: &ExactMesh,
-    face: [usize; 3],
-    clip_facts: &ConvexSolidFacts,
-    keep: ClipKeep,
-    polygons: &mut Vec<Vec<Point3>>,
-) -> Option<()> {
-    for triangle in source.triangles() {
-        let mut polygon = triangle
-            .0
-            .iter()
-            .map(|&index| source.vertices()[index].clone())
-            .collect::<Vec<_>>();
-        polygon = clip_polygon_by_face(&polygon, clip, face, clip_facts, keep)?;
         simplify_polygon(&mut polygon);
         if polygon.len() >= 3 && !polygon_is_degenerate(&polygon) {
             polygons.push(polygon);
@@ -358,7 +420,6 @@ fn clip_polygon_by_face(
     clip: &ExactMesh,
     face: [usize; 3],
     clip_facts: &ConvexSolidFacts,
-    keep: ClipKeep,
 ) -> Option<Vec<Point3>> {
     if polygon.is_empty() {
         return Some(Vec::new());
@@ -369,17 +430,11 @@ fn clip_polygon_by_face(
 
     let mut output = Vec::new();
     let mut previous = polygon.last()?.clone();
-    let mut previous_inside = keep_side(
-        clip_facts.orientation,
-        point_side(&a, &b, &c, &previous)?,
-        keep,
-    );
+    let mut previous_inside =
+        keep_inside_side(clip_facts.orientation, point_side(&a, &b, &c, &previous)?);
     for current in polygon {
-        let current_inside = keep_side(
-            clip_facts.orientation,
-            point_side(&a, &b, &c, current)?,
-            keep,
-        );
+        let current_inside =
+            keep_inside_side(clip_facts.orientation, point_side(&a, &b, &c, current)?);
         match (previous_inside, current_inside) {
             (true, true) => output.push(current.clone()),
             (true, false) => {
@@ -402,101 +457,8 @@ fn clip_polygon_by_face(
     Some(output)
 }
 
-fn keep_side(orientation: ClosedMeshOrientation, side: PlaneSide, keep: ClipKeep) -> bool {
-    side == PlaneSide::On
-        || match keep {
-            ClipKeep::Inside => !side_is_outside(orientation, side),
-            ClipKeep::Outside => side_is_outside(orientation, side),
-        }
-}
-
-fn single_active_cutting_face(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    right_facts: &ConvexSolidFacts,
-) -> Option<usize> {
-    let mut active = None;
-    for (face_index, triangle) in right.triangles().iter().enumerate() {
-        let a = right.vertices()[triangle.0[0]].clone();
-        let b = right.vertices()[triangle.0[1]].clone();
-        let c = right.vertices()[triangle.0[2]].clone();
-        let mut outside = 0;
-        let mut inside = 0;
-        for vertex in left.vertices() {
-            let side = point_side(&a, &b, &c, &vertex.clone())?;
-            if side_is_outside(right_facts.orientation, side) {
-                outside += 1;
-            } else {
-                inside += 1;
-            }
-        }
-        match (outside, inside) {
-            (0, _) => {}
-            (_, 0) => return None,
-            (_, _) if active.replace(face_index).is_some() => return None,
-            (_, _) => {}
-        }
-    }
-    active
-}
-
-fn cap_polygon_from_clipped_faces(
-    polygons: &[Vec<Point3>],
-    clip: &ExactMesh,
-    face: [usize; 3],
-) -> Option<Vec<Point3>> {
-    let a = clip.vertices()[face[0]].clone();
-    let b = clip.vertices()[face[1]].clone();
-    let c = clip.vertices()[face[2]].clone();
-    let mut segments = Vec::new();
-    for polygon in polygons {
-        if polygon.len() < 2 {
-            continue;
-        }
-        for index in 0..polygon.len() {
-            let start = &polygon[index];
-            let end = &polygon[(index + 1) % polygon.len()];
-            if points_equal(start, end) {
-                continue;
-            }
-            if point_side(&a, &b, &c, start)? == PlaneSide::On
-                && point_side(&a, &b, &c, end)? == PlaneSide::On
-            {
-                push_unique_segment(&mut segments, [start.clone(), end.clone()]);
-            }
-        }
-    }
-    chain_segments_to_polygon(segments)
-}
-
-/// Triangulate one exact cap loop while preserving its boundary subdivision.
-///
-/// Clipped source faces may split a geometric cap edge at source-triangle
-/// diagonals. Collapsing those collinear points creates T-junctions, so the
-/// cap is triangulated through an exact rational centroid and every retained
-/// built from replayable exact construction facts, not a simplified float view.
-fn cap_polygons(cap: &[Point3]) -> Option<Vec<Vec<Point3>>> {
-    if cap.len() < 3 {
-        return None;
-    }
-    if cap.len() == 3 {
-        return Some(vec![cap.to_vec()]);
-    }
-
-    let center = polygon_centroid(cap)?;
-    let mut triangles = Vec::with_capacity(cap.len());
-    for index in 0..cap.len() {
-        let triangle = vec![
-            center.clone(),
-            cap[index].clone(),
-            cap[(index + 1) % cap.len()].clone(),
-        ];
-        if polygon_is_degenerate(&triangle) {
-            return None;
-        }
-        triangles.push(triangle);
-    }
-    Some(triangles)
+fn keep_inside_side(orientation: ClosedMeshOrientation, side: PlaneSide) -> bool {
+    side == PlaneSide::On || !side_is_outside(orientation, side)
 }
 
 fn polygon_centroid(points: &[Point3]) -> Option<Point3> {
@@ -514,6 +476,590 @@ fn polygon_centroid(points: &[Point3]) -> Option<Point3> {
         (y / &count).ok()?,
         (z / &count).ok()?,
     ))
+}
+
+fn append_convex_union_source_faces(
+    source: &ExactMesh,
+    clip: &ExactMesh,
+    clip_facts: &ConvexSolidFacts,
+    vertices: &mut Vec<Point3>,
+    triangles: &mut Vec<Triangle>,
+) -> Option<()> {
+    for source_triangle in source.triangles() {
+        let source_points = source_triangle
+            .0
+            .iter()
+            .map(|&index| source.vertices()[index].clone())
+            .collect::<Vec<_>>();
+        append_source_face_minus_convex_inside(
+            &source_points,
+            clip,
+            clip_facts,
+            vertices,
+            triangles,
+        )?;
+    }
+    Some(())
+}
+
+fn append_convex_difference_left_faces(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    right_facts: &ConvexSolidFacts,
+    vertices: &mut Vec<Point3>,
+    triangles: &mut Vec<Triangle>,
+) -> Option<()> {
+    append_convex_union_source_faces(left, right, right_facts, vertices, triangles)
+}
+
+fn append_convex_difference_right_faces(
+    right: &ExactMesh,
+    left: &ExactMesh,
+    left_facts: &ConvexSolidFacts,
+    vertices: &mut Vec<Point3>,
+    triangles: &mut Vec<Triangle>,
+) -> Option<()> {
+    for right_triangle in right.triangles() {
+        let source_points = right_triangle
+            .0
+            .iter()
+            .map(|&index| right.vertices()[index].clone())
+            .collect::<Vec<_>>();
+        append_source_face_convex_inside_reversed(
+            &source_points,
+            left,
+            left_facts,
+            vertices,
+            triangles,
+        )?;
+    }
+    Some(())
+}
+
+fn append_source_face_minus_convex_inside(
+    source_points: &[Point3],
+    clip: &ExactMesh,
+    clip_facts: &ConvexSolidFacts,
+    vertices: &mut Vec<Point3>,
+    triangles: &mut Vec<Triangle>,
+) -> Option<()> {
+    if source_points.len() < 3 || polygon_is_degenerate(source_points) {
+        return Some(());
+    }
+    let projection = choose_polygon_projection(source_points)?;
+    let source_projected = source_points
+        .iter()
+        .map(|point| project_point3(point, projection))
+        .collect::<Vec<_>>();
+    let source_sign = compare_reals(
+        &projected_polygon_area2_signed(source_points, projection),
+        &Real::from(0),
+    )
+    .value()?;
+    if source_sign == Ordering::Equal {
+        return None;
+    }
+
+    let mut inside = source_points.to_vec();
+    for clip_triangle in clip.triangles() {
+        inside = clip_polygon_by_face(&inside, clip, clip_triangle.0, clip_facts)?;
+        if inside.len() < 3 {
+            break;
+        }
+    }
+    simplify_polygon(&mut inside);
+    if inside.len() < 3 || polygon_is_degenerate(&inside) {
+        append_projected_polygon_triangles(
+            &source_projected,
+            source_points,
+            projection,
+            source_sign,
+            vertices,
+            triangles,
+        )?;
+        return Some(());
+    }
+
+    let inside_projected = inside
+        .iter()
+        .map(|point| project_point3(point, projection))
+        .collect::<Vec<_>>();
+    let overlay = build_exact_arrangement2d_overlay_with_boundary_policy(
+        &[
+            ExactArrangement2dRegionRing::new(ExactArrangement2dRegion::Left, source_projected),
+            ExactArrangement2dRegionRing::new(ExactArrangement2dRegion::Right, inside_projected),
+        ],
+        ExactArrangement2dSetOperation::Difference,
+        ExactArrangement2dBoundaryPolicy::PreserveCollinear,
+    );
+    if !overlay.is_complete() {
+        return None;
+    }
+    append_projected_overlay_triangles(
+        &overlay,
+        source_points,
+        projection,
+        source_sign,
+        vertices,
+        triangles,
+    )
+}
+
+fn append_source_face_convex_inside_reversed(
+    source_points: &[Point3],
+    clip: &ExactMesh,
+    clip_facts: &ConvexSolidFacts,
+    vertices: &mut Vec<Point3>,
+    triangles: &mut Vec<Triangle>,
+) -> Option<()> {
+    if source_points.len() < 3 || polygon_is_degenerate(source_points) {
+        return Some(());
+    }
+
+    let mut inside = source_points.to_vec();
+    for clip_triangle in clip.triangles() {
+        inside = clip_polygon_by_face(&inside, clip, clip_triangle.0, clip_facts)?;
+        if inside.len() < 3 {
+            break;
+        }
+    }
+    simplify_polygon(&mut inside);
+    if inside.len() < 3 || polygon_is_degenerate(&inside) {
+        return Some(());
+    }
+    if polygon_lies_on_any_clip_boundary_face(&inside, clip) {
+        return Some(());
+    }
+
+    let projection = choose_polygon_projection(&inside)?;
+    let source_sign = compare_reals(
+        &projected_polygon_area2_signed(&inside, projection),
+        &Real::from(0),
+    )
+    .value()?;
+    if source_sign == Ordering::Equal {
+        return None;
+    }
+    let reversed_sign = reverse_orientation_sign(source_sign);
+    let projected = inside
+        .iter()
+        .map(|point| project_point3(point, projection))
+        .collect::<Vec<_>>();
+    append_projected_polygon_triangles(
+        &projected,
+        &inside,
+        projection,
+        reversed_sign,
+        vertices,
+        triangles,
+    )
+}
+
+fn polygon_lies_on_any_clip_boundary_face(polygon: &[Point3], clip: &ExactMesh) -> bool {
+    clip.triangles().iter().any(|triangle| {
+        let [a, b, c] = triangle.0;
+        polygon.iter().all(|point| {
+            point_side(
+                &clip.vertices()[a],
+                &clip.vertices()[b],
+                &clip.vertices()[c],
+                point,
+            ) == Some(PlaneSide::On)
+        })
+    })
+}
+
+fn reverse_orientation_sign(sign: Ordering) -> Ordering {
+    match sign {
+        Ordering::Less => Ordering::Greater,
+        Ordering::Equal => Ordering::Equal,
+        Ordering::Greater => Ordering::Less,
+    }
+}
+
+fn append_projected_polygon_triangles(
+    projected_points: &[Point2],
+    carrier_points: &[Point3],
+    projection: CoplanarProjection,
+    source_sign: Ordering,
+    vertices: &mut Vec<Point3>,
+    triangles: &mut Vec<Triangle>,
+) -> Option<()> {
+    let projected = projected_points
+        .iter()
+        .map(point2_for_hypertri)
+        .collect::<Vec<_>>();
+    let indices = match hypertri::earcut(&projected, &[]) {
+        Ok(indices) if !indices.is_empty() && indices.len() % 3 == 0 => indices,
+        _ => return None,
+    };
+    let lifted = projected_points
+        .iter()
+        .map(|point| lift_projected_point_to_carrier(point, carrier_points, projection))
+        .collect::<Option<Vec<_>>>()?;
+    let local_to_global = lifted
+        .iter()
+        .map(|point| Some(intern_point(vertices, point)))
+        .collect::<Option<Vec<_>>>()?;
+    append_oriented_earcut_triangles(&indices, &local_to_global, source_sign, triangles);
+    Some(())
+}
+
+fn append_projected_overlay_triangles(
+    overlay: &ExactArrangement2dOverlay,
+    carrier_points: &[Point3],
+    projection: CoplanarProjection,
+    source_sign: Ordering,
+    vertices: &mut Vec<Point3>,
+    triangles: &mut Vec<Triangle>,
+) -> Option<()> {
+    for component in &overlay.output_components {
+        let outer = overlay.output_loops.get(component.outer_loop)?;
+        let mut projected = outer
+            .points
+            .iter()
+            .map(point2_for_hypertri)
+            .collect::<Vec<_>>();
+        let mut lifted = lifted_output_loop_points(outer, carrier_points, projection)?;
+        let mut hole_indices = Vec::with_capacity(component.hole_loops.len());
+        for &hole_loop in &component.hole_loops {
+            let hole = overlay.output_loops.get(hole_loop)?;
+            hole_indices.push(projected.len());
+            projected.extend(hole.points.iter().map(point2_for_hypertri));
+            lifted.extend(lifted_output_loop_points(hole, carrier_points, projection)?);
+        }
+        let local_to_global = lifted
+            .iter()
+            .map(|point| Some(intern_point(vertices, point)))
+            .collect::<Option<Vec<_>>>()?;
+        let indices = match hypertri::earcut(&projected, &hole_indices) {
+            Ok(indices) if !indices.is_empty() && indices.len() % 3 == 0 => indices,
+            _ => return None,
+        };
+        append_oriented_earcut_triangles(&indices, &local_to_global, source_sign, triangles);
+    }
+    Some(())
+}
+
+fn lifted_output_loop_points(
+    loop_: &ExactArrangement2dOutputLoop,
+    carrier_points: &[Point3],
+    projection: CoplanarProjection,
+) -> Option<Vec<Point3>> {
+    loop_
+        .points
+        .iter()
+        .map(|point| lift_projected_point_to_carrier(point, carrier_points, projection))
+        .collect()
+}
+
+fn append_oriented_earcut_triangles(
+    indices: &[usize],
+    local_to_global: &[usize],
+    source_sign: Ordering,
+    triangles: &mut Vec<Triangle>,
+) {
+    for triangle in indices.chunks_exact(3) {
+        let a = local_to_global[triangle[0]];
+        let b = local_to_global[triangle[1]];
+        let c = local_to_global[triangle[2]];
+        if a == b || b == c || c == a {
+            continue;
+        }
+        if source_sign == Ordering::Greater {
+            triangles.push(Triangle([a, b, c]));
+        } else {
+            triangles.push(Triangle([a, c, b]));
+        }
+    }
+}
+
+fn point2_for_hypertri(point: &Point2) -> hypertri::ExactPoint {
+    hypertri::ExactPoint::new(point.x.clone(), point.y.clone())
+}
+
+fn lift_projected_point_to_carrier(
+    point: &Point2,
+    carrier: &[Point3],
+    projection: CoplanarProjection,
+) -> Option<Point3> {
+    let projected = [
+        project_point3(&carrier[0], projection),
+        project_point3(&carrier[1], projection),
+        project_point3(&carrier[2], projection),
+    ];
+    let ux = projected[1].x.clone() - &projected[0].x;
+    let uy = projected[1].y.clone() - &projected[0].y;
+    let vx = projected[2].x.clone() - &projected[0].x;
+    let vy = projected[2].y.clone() - &projected[0].y;
+    let wx = point.x.clone() - &projected[0].x;
+    let wy = point.y.clone() - &projected[0].y;
+    let det = ux.clone() * &vy - &(uy.clone() * &vx);
+    let a = ((wx.clone() * &vy - &(wy.clone() * &vx)) / &det).ok()?;
+    let b = ((ux * &wy - &(uy * &wx)) / &det).ok()?;
+    let p1 = vector_between(&carrier[0], &carrier[1]);
+    let p2 = vector_between(&carrier[0], &carrier[2]);
+    Some(Point3::new(
+        carrier[0].x.clone() + &(p1.x * &a) + &(p2.x * &b),
+        carrier[0].y.clone() + &(p1.y * &a) + &(p2.y * &b),
+        carrier[0].z.clone() + &(p1.z * &a) + &(p2.z * &b),
+    ))
+}
+
+fn vector_between(from: &Point3, to: &Point3) -> Point3 {
+    Point3::new(
+        to.x.clone() - &from.x,
+        to.y.clone() - &from.y,
+        to.z.clone() - &from.z,
+    )
+}
+
+fn choose_polygon_projection(points: &[Point3]) -> Option<CoplanarProjection> {
+    for &projection in &[
+        CoplanarProjection::Xy,
+        CoplanarProjection::Xz,
+        CoplanarProjection::Yz,
+    ] {
+        let area = projected_polygon_area2_signed(points, projection);
+        if compare_reals(&area, &Real::from(0)).value()? != Ordering::Equal {
+            return Some(projection);
+        }
+    }
+    None
+}
+
+fn projected_polygon_area2_signed(points: &[Point3], projection: CoplanarProjection) -> Real {
+    let mut area = Real::from(0);
+    for index in 0..points.len() {
+        let current = project_point3(&points[index], projection);
+        let next = project_point3(&points[(index + 1) % points.len()], projection);
+        area = add(
+            &area,
+            &sub(&mul(&current.x, &next.y), &mul(&current.y, &next.x)),
+        );
+    }
+    area
+}
+
+fn convex_hull_polygons_from_clipped_faces(polygons: &[Vec<Point3>]) -> Option<Vec<Vec<Point3>>> {
+    let mut points = Vec::new();
+    for polygon in polygons {
+        for point in polygon {
+            intern_point(&mut points, point);
+        }
+    }
+    if points.len() < 4 {
+        return None;
+    }
+    let interior = polygon_centroid(&points)?;
+    let mut seen_faces = BTreeSet::new();
+    let mut hull_faces = Vec::new();
+    for a in 0..points.len() {
+        for b in a + 1..points.len() {
+            for c in b + 1..points.len() {
+                if points_are_collinear(&points[a], &points[b], &points[c]) {
+                    continue;
+                }
+                let mut saw_above = false;
+                let mut saw_below = false;
+                let mut coplanar = Vec::new();
+                for (index, point) in points.iter().enumerate() {
+                    match point_side(&points[a], &points[b], &points[c], point)? {
+                        PlaneSide::On => coplanar.push(index),
+                        PlaneSide::Above => saw_above = true,
+                        PlaneSide::Below => saw_below = true,
+                    }
+                    if saw_above && saw_below {
+                        break;
+                    }
+                }
+                if saw_above && saw_below {
+                    continue;
+                }
+                coplanar.sort_unstable();
+                if coplanar.len() < 3 || !seen_faces.insert(coplanar.clone()) {
+                    continue;
+                }
+                let mut face = convex_face_polygon_from_indices(&points, &coplanar)?;
+                orient_face_polygon_outward(&mut face, &interior)?;
+                hull_faces.push(face);
+            }
+        }
+    }
+    if hull_faces.len() >= 4 {
+        Some(hull_faces)
+    } else {
+        None
+    }
+}
+
+fn convex_face_polygon_from_indices(points: &[Point3], indices: &[usize]) -> Option<Vec<Point3>> {
+    if indices.len() == 3 {
+        return Some(indices.iter().map(|&index| points[index].clone()).collect());
+    }
+    let projection = choose_face_projection(points, indices)?;
+    let mut segments = Vec::new();
+    for (left_offset, &left) in indices.iter().enumerate() {
+        for &right in &indices[left_offset + 1..] {
+            if convex_face_pair_is_boundary_edge(points, indices, left, right, projection)? {
+                push_unique_segment(&mut segments, [points[left].clone(), points[right].clone()]);
+            }
+        }
+    }
+    let mut polygon = chain_segments_to_polygon(segments)?;
+    remove_collinear_polygon_vertices(&mut polygon, projection);
+    if polygon.len() >= 3 && !polygon_is_degenerate(&polygon) {
+        Some(polygon)
+    } else {
+        None
+    }
+}
+
+fn choose_face_projection(points: &[Point3], indices: &[usize]) -> Option<CoplanarProjection> {
+    for &projection in &[
+        CoplanarProjection::Xy,
+        CoplanarProjection::Xz,
+        CoplanarProjection::Yz,
+    ] {
+        for a in 0..indices.len() {
+            for b in a + 1..indices.len() {
+                for c in b + 1..indices.len() {
+                    let area = projected_area2_signed(
+                        &points[indices[a]],
+                        &points[indices[b]],
+                        &points[indices[c]],
+                        projection,
+                    );
+                    if compare_reals(&area, &Real::from(0)).value() != Some(Ordering::Equal) {
+                        return Some(projection);
+                    }
+                }
+            }
+        }
+    }
+    None
+}
+
+fn convex_face_pair_is_boundary_edge(
+    points: &[Point3],
+    indices: &[usize],
+    left: usize,
+    right: usize,
+    projection: CoplanarProjection,
+) -> Option<bool> {
+    let mut saw_positive = false;
+    let mut saw_negative = false;
+    for &candidate in indices {
+        if candidate == left || candidate == right {
+            continue;
+        }
+        if points_are_collinear(&points[left], &points[right], &points[candidate])
+            && point_lies_between_segment_endpoints(
+                &points[left],
+                &points[right],
+                &points[candidate],
+            )?
+        {
+            return Some(false);
+        }
+        match compare_reals(
+            &projected_area2_signed(
+                &points[left],
+                &points[right],
+                &points[candidate],
+                projection,
+            ),
+            &Real::from(0),
+        )
+        .value()?
+        {
+            Ordering::Greater => saw_positive = true,
+            Ordering::Less => saw_negative = true,
+            Ordering::Equal => {}
+        }
+        if saw_positive && saw_negative {
+            return Some(false);
+        }
+    }
+    Some(true)
+}
+
+fn point_lies_between_segment_endpoints(
+    start: &Point3,
+    end: &Point3,
+    point: &Point3,
+) -> Option<bool> {
+    Some(
+        coordinate_between(&point.x, &start.x, &end.x)?
+            && coordinate_between(&point.y, &start.y, &end.y)?
+            && coordinate_between(&point.z, &start.z, &end.z)?,
+    )
+}
+
+fn coordinate_between(value: &Real, start: &Real, end: &Real) -> Option<bool> {
+    let start_cmp = compare_reals(value, start).value()?;
+    let end_cmp = compare_reals(value, end).value()?;
+    Some(matches!(
+        (start_cmp, end_cmp),
+        (
+            Ordering::Greater | Ordering::Equal,
+            Ordering::Less | Ordering::Equal
+        ) | (
+            Ordering::Less | Ordering::Equal,
+            Ordering::Greater | Ordering::Equal
+        )
+    ))
+}
+
+fn projected_area2_signed(
+    a: &Point3,
+    b: &Point3,
+    c: &Point3,
+    projection: CoplanarProjection,
+) -> Real {
+    let (ax, ay, bx, by, cx, cy) = match projection {
+        CoplanarProjection::Xy => (&a.x, &a.y, &b.x, &b.y, &c.x, &c.y),
+        CoplanarProjection::Xz => (&a.x, &a.z, &b.x, &b.z, &c.x, &c.z),
+        CoplanarProjection::Yz => (&a.y, &a.z, &b.y, &b.z, &c.y, &c.z),
+    };
+    let abx = sub(bx, ax);
+    let aby = sub(by, ay);
+    let acx = sub(cx, ax);
+    let acy = sub(cy, ay);
+    sub(&mul(&abx, &acy), &mul(&aby, &acx))
+}
+
+fn orient_face_polygon_outward(face: &mut [Point3], interior: &Point3) -> Option<()> {
+    if face.len() < 3 {
+        return None;
+    }
+    match point_side(&face[0], &face[1], &face[2], interior)? {
+        PlaneSide::Above => {}
+        PlaneSide::Below => face.reverse(),
+        PlaneSide::On => return None,
+    }
+    Some(())
+}
+
+fn remove_collinear_polygon_vertices(points: &mut Vec<Point3>, projection: CoplanarProjection) {
+    loop {
+        let len = points.len();
+        if len < 3 {
+            return;
+        }
+        let Some(index) = (0..len).find(|&index| {
+            let area = projected_area2_signed(
+                &points[(index + len - 1) % len],
+                &points[index],
+                &points[(index + 1) % len],
+                projection,
+            );
+            compare_reals(&area, &Real::from(0)).value() == Some(Ordering::Equal)
+        }) else {
+            return;
+        };
+        points.remove(index);
+    }
 }
 
 fn push_unique_segment(segments: &mut Vec<[Point3; 2]>, segment: [Point3; 2]) {
@@ -621,6 +1167,7 @@ fn polygons_to_closed_mesh(
             }
         }
     }
+    remove_duplicate_triangle_vertex_sets(&mut triangles);
     if triangles.is_empty() {
         return None;
     }
@@ -631,6 +1178,102 @@ fn polygons_to_closed_mesh(
         validation,
     )
     .ok()
+}
+
+fn refine_triangles_at_existing_edge_vertices(
+    vertices: &[Point3],
+    triangles: &mut Vec<Triangle>,
+) -> Option<()> {
+    let mut guard = 0usize;
+    loop {
+        guard += 1;
+        if guard
+            > vertices
+                .len()
+                .saturating_mul(triangles.len().saturating_add(1))
+        {
+            return None;
+        }
+        let Some((triangle_index, edge, vertex)) =
+            find_triangle_edge_split(vertices, triangles.as_slice())?
+        else {
+            return Some(());
+        };
+        let original = triangles[triangle_index];
+        let a = original.0[edge];
+        let b = original.0[(edge + 1) % 3];
+        let c = original.0[(edge + 2) % 3];
+        triangles.splice(
+            triangle_index..triangle_index + 1,
+            [Triangle([a, vertex, c]), Triangle([vertex, b, c])],
+        );
+    }
+}
+
+fn find_triangle_edge_split(
+    vertices: &[Point3],
+    triangles: &[Triangle],
+) -> Option<Option<(usize, usize, usize)>> {
+    for (triangle_index, triangle) in triangles.iter().enumerate() {
+        let projection = choose_triangle_projection(vertices, triangle.0)?;
+        let [ta, tb, tc] = triangle.0;
+        for edge in 0..3 {
+            let start = triangle.0[edge];
+            let end = triangle.0[(edge + 1) % 3];
+            for candidate in 0..vertices.len() {
+                if candidate == ta || candidate == tb || candidate == tc {
+                    continue;
+                }
+                if PlaneSide::from(
+                    orient3d_report(
+                        &vertices[ta],
+                        &vertices[tb],
+                        &vertices[tc],
+                        &vertices[candidate],
+                    )
+                    .value()?,
+                ) != PlaneSide::On
+                {
+                    continue;
+                }
+                if point_equals_exact(&vertices[candidate], &vertices[start])
+                    || point_equals_exact(&vertices[candidate], &vertices[end])
+                {
+                    continue;
+                }
+                if point_on_segment(
+                    &project_point3(&vertices[start], projection),
+                    &project_point3(&vertices[end], projection),
+                    &project_point3(&vertices[candidate], projection),
+                )
+                .value()?
+                {
+                    return Some(Some((triangle_index, edge, candidate)));
+                }
+            }
+        }
+    }
+    Some(None)
+}
+
+fn choose_triangle_projection(
+    vertices: &[Point3],
+    triangle: [usize; 3],
+) -> Option<CoplanarProjection> {
+    choose_polygon_projection(&[
+        vertices[triangle[0]].clone(),
+        vertices[triangle[1]].clone(),
+        vertices[triangle[2]].clone(),
+    ])
+}
+
+fn remove_duplicate_triangle_vertex_sets(triangles: &mut Vec<Triangle>) {
+    let mut seen = BTreeSet::new();
+    triangles.retain(|triangle| {
+        let mut key = triangle.0;
+        key.sort_unstable();
+        seen.insert(key)
+    });
 }
 
 fn intern_point(vertices: &mut Vec<Point3>, point: &Point3) -> usize {

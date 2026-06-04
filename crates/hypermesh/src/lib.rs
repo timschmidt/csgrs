@@ -125,8 +125,8 @@ pub use construction::{
     intersect_segment_with_oriented_plane, intersect_segment_with_retained_face_plane,
 };
 pub use convex::{
-    ConvexSolidIntersection, ConvexSolidSingleCapDifference, intersect_closed_convex_solids,
-    subtract_closed_convex_solids_single_cap,
+    ConvexSolidDifference, ConvexSolidIntersection, ConvexSolidUnion,
+    intersect_closed_convex_solids, subtract_closed_convex_solids, union_closed_convex_solids,
 };
 pub use coplanar::{
     CoplanarProjection, CoplanarTriangleClassification, CoplanarTriangleRelation,

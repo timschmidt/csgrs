@@ -20566,10 +20566,8 @@ fn exact_coplanar_convex_surface_difference_materializes_multiple_holes() {
         result.mesh.vertices().len(),
         difference.mesh.vertices().len()
     );
-    assert_eq!(
-        result.mesh.triangles().len(),
-        difference.mesh.triangles().len()
-    );
+    assert_eq!(result.mesh.vertices(), difference.mesh.vertices());
+    assert_eq!(result.mesh.triangles(), difference.mesh.triangles());
 
     let square_holes = ExactMesh::from_i64_triangles_with_policy(
         &[
@@ -21228,10 +21226,8 @@ fn exact_coplanar_convex_surface_difference_materializes_component_holes() {
         }
     );
     assert!(exact_mesh_vertex_sets_equal(&result.mesh, &difference.mesh));
-    assert_eq!(
-        result.mesh.triangles().len(),
-        difference.mesh.triangles().len()
-    );
+    assert_eq!(result.mesh.vertices(), difference.mesh.vertices());
+    assert_eq!(result.mesh.triangles(), difference.mesh.triangles());
 }
 
 #[test]
@@ -31449,7 +31445,242 @@ fn exact_named_booleans_materialize_partial_convex_intersection() {
 }
 
 #[test]
-fn exact_named_booleans_materialize_single_cap_convex_difference() {
+fn exact_convex_intersection_handles_coplanar_box_tetra_overlap() {
+    let left = axis_aligned_box_i64([1, 1, 0], [5, 5, 4]);
+    let right = tetrahedron_i64([0, 0, 0], [6, 0, 0], [0, 6, 0], [0, 0, 6]);
+
+    let intersection = hypermesh::intersect_closed_convex_solids(&left, &right)
+        .expect("coplanar box/tetra overlap should materialize as a convex solid");
+    intersection.validate().unwrap();
+    intersection
+        .validate_against_sources(&left, &right)
+        .unwrap();
+    assert!(intersection.mesh.facts().mesh.closed_manifold);
+    assert_eq!(intersection.mesh.vertices().len(), 4);
+    assert_eq!(intersection.mesh.triangles().len(), 4);
+
+    let preflight = hypermesh::preflight_boolean_exact(
+        &left,
+        &right,
+        hypermesh::ExactBooleanOperation::Intersection,
+    )
+    .unwrap();
+    preflight.validate().unwrap();
+    assert_eq!(
+        preflight.support,
+        hypermesh::ExactBooleanSupport::CertifiedConvexIntersection
+    );
+    assert!(preflight.blocker.is_none());
+
+    let result = hypermesh::boolean_exact(
+        &left,
+        &right,
+        hypermesh::ExactBooleanOperation::Intersection,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap();
+    result
+        .validate_operation_against_sources(
+            &left,
+            &right,
+            hypermesh::ExactBooleanOperation::Intersection,
+            ValidationPolicy::CLOSED,
+            hypermesh::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        result.kind,
+        hypermesh::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::ExactBooleanShortcutKind::ConvexIntersection
+        }
+    );
+    assert_eq!(result.mesh.vertices().len(), 4);
+    assert_eq!(result.mesh.triangles().len(), 4);
+    assert!(result.mesh.facts().mesh.closed_manifold);
+}
+
+#[test]
+fn exact_union_recovers_single_coplanar_winding_boundary_loop() {
+    let left = axis_aligned_box_i64([1, 1, 0], [5, 5, 4]);
+    let right = tetrahedron_i64([0, 0, 0], [6, 0, 0], [0, 6, 0], [0, 0, 6]);
+
+    let preflight =
+        hypermesh::preflight_boolean_exact(&left, &right, hypermesh::ExactBooleanOperation::Union)
+            .unwrap();
+    preflight.validate().unwrap();
+    assert_eq!(
+        preflight.support,
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
+    );
+    assert!(preflight.blocker.is_none());
+
+    let result = hypermesh::boolean_exact(
+        &left,
+        &right,
+        hypermesh::ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap();
+    result
+        .validate_operation_against_sources(
+            &left,
+            &right,
+            hypermesh::ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+            hypermesh::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        result.kind,
+        hypermesh::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
+        }
+    );
+    assert_eq!(result.mesh.vertices().len(), 14);
+    assert_eq!(result.mesh.triangles().len(), 24);
+    assert_eq!(result.mesh.facts().mesh.boundary_edges, 0);
+    assert!(result.mesh.facts().mesh.closed_manifold);
+}
+
+#[test]
+fn exact_box_tetra_closed_booleans_decline_invalid_arrangement_and_use_convex_paths() {
+    let left = axis_aligned_box_i64([1, 1, 1], [5, 5, 5]);
+    let right = tetrahedron_i64([0, 0, 0], [7, 0, 0], [0, 7, 0], [0, 0, 7]);
+
+    let direct_union = hypermesh::union_closed_convex_solids(&left, &right)
+        .expect("box/tetra convex union should materialize exactly");
+    direct_union.validate().unwrap();
+    direct_union
+        .validate_against_sources(&left, &right)
+        .unwrap();
+    assert!(direct_union.mesh.facts().mesh.closed_manifold);
+
+    for (operation, support, shortcut) in [
+        (
+            hypermesh::ExactBooleanOperation::Union,
+            hypermesh::ExactBooleanSupport::CertifiedConvexUnion,
+            hypermesh::ExactBooleanShortcutKind::ConvexUnion,
+        ),
+        (
+            hypermesh::ExactBooleanOperation::Intersection,
+            hypermesh::ExactBooleanSupport::CertifiedConvexIntersection,
+            hypermesh::ExactBooleanShortcutKind::ConvexIntersection,
+        ),
+        (
+            hypermesh::ExactBooleanOperation::Difference,
+            hypermesh::ExactBooleanSupport::CertifiedConvexDifference,
+            hypermesh::ExactBooleanShortcutKind::ConvexDifference,
+        ),
+    ] {
+        let preflight = hypermesh::preflight_boolean_exact(&left, &right, operation).unwrap();
+        preflight.validate().unwrap();
+        assert_eq!(preflight.support, support);
+        assert!(preflight.blocker.is_none());
+
+        let result =
+            hypermesh::boolean_exact(&left, &right, operation, ValidationPolicy::CLOSED).unwrap();
+        result
+            .validate_operation_against_sources(
+                &left,
+                &right,
+                operation,
+                ValidationPolicy::CLOSED,
+                hypermesh::ExactBoundaryBooleanPolicy::Reject,
+            )
+            .unwrap();
+        assert_eq!(
+            result.kind,
+            hypermesh::ExactBooleanResultKind::CertifiedShortcut { shortcut }
+        );
+        assert!(result.mesh.facts().mesh.closed_manifold);
+    }
+}
+
+#[test]
+fn exact_convex_difference_materializes_multi_face_overlap() {
+    let left = tetrahedron_i64([0, 0, 0], [6, 0, 0], [0, 6, 0], [0, 0, 6]);
+    let right = tetrahedron_i64([2, -1, -1], [-1, 2, -1], [-1, -1, 2], [5, 5, 5]);
+
+    let difference = hypermesh::subtract_closed_convex_solids(&left, &right)
+        .expect("multi-face convex overlap should materialize exactly");
+    difference.validate().unwrap();
+    difference.validate_against_sources(&left, &right).unwrap();
+    assert!(difference.mesh.facts().mesh.closed_manifold);
+    assert!(!difference.mesh.triangles().is_empty());
+
+    let preflight = hypermesh::preflight_boolean_exact(
+        &left,
+        &right,
+        hypermesh::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    preflight.validate().unwrap();
+    assert_eq!(
+        preflight.support,
+        hypermesh::ExactBooleanSupport::CertifiedWindingMaterialized
+    );
+    assert!(preflight.blocker.is_none());
+
+    let result = hypermesh::boolean_exact(
+        &left,
+        &right,
+        hypermesh::ExactBooleanOperation::Difference,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap();
+    result
+        .validate_operation_against_sources(
+            &left,
+            &right,
+            hypermesh::ExactBooleanOperation::Difference,
+            ValidationPolicy::CLOSED,
+            hypermesh::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        result.kind,
+        hypermesh::ExactBooleanResultKind::WindingMaterialized {
+            operation: hypermesh::ExactBooleanOperation::Difference
+        }
+    );
+    assert!(result.mesh.facts().mesh.closed_manifold);
+}
+
+#[test]
+fn exact_convex_difference_drops_coplanar_boundary_cut_faces() {
+    let left = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
+    let right = tetrahedron_i64([1, 1, 0], [5, 1, 0], [1, 5, 0], [1, 1, 4]);
+
+    let difference = hypermesh::subtract_closed_convex_solids(&left, &right)
+        .expect("convex difference should drop coplanar boundary artifacts");
+    difference.validate().unwrap();
+    difference.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(difference.mesh.vertices().len(), 8);
+    assert_eq!(difference.mesh.triangles().len(), 12);
+    assert_eq!(difference.mesh.facts().mesh.boundary_edges, 0);
+    assert!(difference.mesh.facts().mesh.closed_manifold);
+
+    let result = hypermesh::boolean_exact(
+        &left,
+        &right,
+        hypermesh::ExactBooleanOperation::Difference,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap();
+    result
+        .validate_operation_against_sources(
+            &left,
+            &right,
+            hypermesh::ExactBooleanOperation::Difference,
+            ValidationPolicy::CLOSED,
+            hypermesh::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert!(result.mesh.facts().mesh.closed_manifold);
+}
+
+#[test]
+fn exact_named_booleans_materialize_boundary_corner_convex_difference() {
     let left = ExactMesh::from_i64_triangles(
         &[
             0, 0, 0, //
@@ -31471,7 +31702,7 @@ fn exact_named_booleans_materialize_single_cap_convex_difference() {
     )
     .unwrap();
 
-    let difference = hypermesh::subtract_closed_convex_solids_single_cap(&left, &cutter)
+    let difference = hypermesh::subtract_closed_convex_solids(&left, &cutter)
         .expect("small tetra at the origin should remove one triangular cap");
     difference.validate().unwrap();
     difference.validate_against_sources(&left, &cutter).unwrap();
@@ -31489,7 +31720,7 @@ fn exact_named_booleans_materialize_single_cap_convex_difference() {
     preflight.validate().unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedConvexSingleCapDifference
+        hypermesh::ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference
     );
 
     let result = hypermesh::boolean_exact(
@@ -31500,16 +31731,22 @@ fn exact_named_booleans_materialize_single_cap_convex_difference() {
     )
     .unwrap();
     result.validate().unwrap();
+    result
+        .validate_operation_against_sources(
+            &left,
+            &cutter,
+            hypermesh::ExactBooleanOperation::Difference,
+            ValidationPolicy::CLOSED,
+            hypermesh::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
     assert_eq!(
         result.kind,
         hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::ExactBooleanShortcutKind::ConvexSingleCapDifference
+            shortcut: hypermesh::ExactBooleanShortcutKind::ConvexContainment
         }
     );
-    assert_eq!(
-        result.mesh.triangles().len(),
-        difference.mesh.triangles().len()
-    );
+    assert!(result.mesh.facts().mesh.closed_manifold);
 
     let reverse_preflight = hypermesh::preflight_boolean_exact(
         &cutter,
@@ -31520,7 +31757,7 @@ fn exact_named_booleans_materialize_single_cap_convex_difference() {
     reverse_preflight.validate().unwrap();
     assert_eq!(
         reverse_preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedConvexContainment
+        hypermesh::ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference
     );
 
     let reverse = hypermesh::boolean_exact(
@@ -31583,12 +31820,11 @@ fn exact_named_booleans_materialize_polygonal_cap_convex_difference() {
     )
     .unwrap();
 
-    let difference = hypermesh::subtract_closed_convex_solids_single_cap(&cube, &cutter)
+    let difference = hypermesh::subtract_closed_convex_solids(&cube, &cutter)
         .expect("one large tetrahedron face should cut a hexagonal cap from the cube");
     difference.validate().unwrap();
     difference.validate_against_sources(&cube, &cutter).unwrap();
-    assert_eq!(difference.mesh.vertices().len(), 15);
-    assert_eq!(difference.mesh.triangles().len(), 26);
+    assert_eq!(difference.mesh.vertices().len(), 14);
     assert!(difference.mesh.facts().mesh.closed_manifold);
 
     let preflight = hypermesh::preflight_boolean_exact(
@@ -31600,7 +31836,7 @@ fn exact_named_booleans_materialize_polygonal_cap_convex_difference() {
     preflight.validate().unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedConvexSingleCapDifference
+        hypermesh::ExactBooleanSupport::CertifiedWindingMaterialized
     );
 
     let result = hypermesh::boolean_exact(
@@ -31613,14 +31849,11 @@ fn exact_named_booleans_materialize_polygonal_cap_convex_difference() {
     result.validate().unwrap();
     assert_eq!(
         result.kind,
-        hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::ExactBooleanShortcutKind::ConvexSingleCapDifference
+        hypermesh::ExactBooleanResultKind::WindingMaterialized {
+            operation: hypermesh::ExactBooleanOperation::Difference
         }
     );
-    assert_eq!(
-        result.mesh.triangles().len(),
-        difference.mesh.triangles().len()
-    );
+    assert!(result.mesh.facts().mesh.closed_manifold);
 }
 
 #[test]
