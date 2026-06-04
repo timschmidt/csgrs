@@ -6586,7 +6586,7 @@ fn exact_closed_vertex_touch_contact_materializes_regularized_shortcuts() {
         .unwrap();
     assert_eq!(
         intersection_preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let intersection = hypermesh::boolean_exact(
         &left,
@@ -6607,7 +6607,7 @@ fn exact_closed_vertex_touch_contact_materializes_regularized_shortcuts() {
     assert_eq!(
         intersection.kind,
         hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::ExactBooleanShortcutKind::ClosedBoundaryTouchingIntersection
+            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
     assert!(intersection.mesh.triangles().is_empty());
@@ -6624,7 +6624,7 @@ fn exact_closed_vertex_touch_contact_materializes_regularized_shortcuts() {
         .unwrap();
     assert_eq!(
         difference_preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let difference = hypermesh::boolean_exact(
         &left,
@@ -6645,7 +6645,7 @@ fn exact_closed_vertex_touch_contact_materializes_regularized_shortcuts() {
     assert_eq!(
         difference.kind,
         hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::ExactBooleanShortcutKind::ClosedBoundaryTouchingDifference
+            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
     assert_eq!(difference.mesh.vertices(), left.vertices());
@@ -6784,7 +6784,7 @@ fn exact_axis_aligned_face_touching_boxes_materialize_regularized_union_only() {
         .unwrap();
     assert_eq!(
         intersection_preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let intersection = hypermesh::boolean_exact(
         &left,
@@ -6806,7 +6806,7 @@ fn exact_axis_aligned_face_touching_boxes_materialize_regularized_union_only() {
     assert_eq!(
         intersection.kind,
         hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::ExactBooleanShortcutKind::ClosedBoundaryTouchingIntersection
+            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
     assert!(intersection.mesh.triangles().is_empty());
@@ -6865,7 +6865,7 @@ fn exact_axis_aligned_face_touching_boxes_materialize_regularized_union_only() {
         .unwrap();
     assert_eq!(
         edge_intersection_preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let edge_intersection = hypermesh::boolean_exact(
         &left,
@@ -6897,7 +6897,7 @@ fn exact_axis_aligned_face_touching_boxes_materialize_regularized_union_only() {
         .unwrap();
     assert_eq!(
         edge_difference_preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let edge_difference = hypermesh::boolean_exact(
         &left,
@@ -33875,7 +33875,7 @@ fn exact_boolean_native_regressions_replace_deleted_split_fixtures() {
     assert_eq!(
         endpoint_intersection.kind,
         hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::ExactBooleanShortcutKind::ClosedBoundaryTouchingIntersection
+            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
     assert!(endpoint_intersection.mesh.vertices().is_empty());
@@ -34021,13 +34021,13 @@ fn exact_l_prism_partial_boundary_contact_avoids_coplanar_cell_blocker() {
     for (operation, support, shortcut) in [
         (
             hypermesh::ExactBooleanOperation::Intersection,
-            hypermesh::ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection,
-            hypermesh::ExactBooleanShortcutKind::ClosedBoundaryTouchingIntersection,
+            hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex,
+            hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex,
         ),
         (
             hypermesh::ExactBooleanOperation::Difference,
-            hypermesh::ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference,
-            hypermesh::ExactBooleanShortcutKind::ClosedBoundaryTouchingDifference,
+            hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex,
+            hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex,
         ),
     ] {
         let preflight = hypermesh::preflight_boolean_exact(&left, &right, operation).unwrap();

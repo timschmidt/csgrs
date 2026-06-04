@@ -442,8 +442,6 @@ pub fn preflight_boolean_exact(
             | ExactBooleanSupport::CertifiedFullFaceAdjacentIntersection
             | ExactBooleanSupport::CertifiedFullFaceAdjacentDifference
             | ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion
-            | ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
-            | ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference
             | ExactBooleanSupport::CertifiedOpenSurfaceDisjoint
             | ExactBooleanSupport::CertifiedMixedDimensionalRegularizedSolid
             | ExactBooleanSupport::CertifiedConvexUnion
@@ -520,6 +518,17 @@ pub fn preflight_boolean_exact(
             arrangement_readiness: None,
             coplanar_volumetric_evidence: None,
         });
+    }
+    if matches!(
+        operation,
+        ExactBooleanOperation::Intersection | ExactBooleanOperation::Difference
+    ) && certified_arrangement_regularized_boundary_contact_from_graph(
+        &graph, left, right, operation,
+    )? {
+        return Ok(certified_shortcut_preflight(
+            operation,
+            ExactBooleanSupport::CertifiedArrangementCellComplex,
+        ));
     }
     if support == ExactBooleanSupport::RequiresCertifiedWinding
         && let Some(open_surface_support) =
@@ -1441,25 +1450,21 @@ pub fn boolean_exact_with_boundary_policy(
                     }
                 }
                 ExactBooleanOperation::Intersection => {
-                    if let Some(report) =
-                        certified_closed_boundary_touching_regularized_report_from_graph(
-                            &graph, left, right,
+                    if let Some(result) =
+                        boolean_arrangement_regularized_boundary_contact_from_graph(
+                            &graph, left, right, operation, validation,
                         )?
                     {
-                        return boolean_closed_boundary_touching_intersection(
-                            &graph, left, right, validation, report,
-                        );
+                        return Ok(result);
                     }
                 }
                 ExactBooleanOperation::Difference => {
-                    if let Some(report) =
-                        certified_closed_boundary_touching_regularized_report_from_graph(
-                            &graph, left, right,
+                    if let Some(result) =
+                        boolean_arrangement_regularized_boundary_contact_from_graph(
+                            &graph, left, right, operation, validation,
                         )?
                     {
-                        return boolean_closed_boundary_touching_difference(
-                            &graph, left, right, validation, report,
-                        );
+                        return Ok(result);
                     }
                 }
                 ExactBooleanOperation::SelectedRegions(_) => unreachable!("handled above"),
@@ -1788,15 +1793,18 @@ fn boolean_arrangement_regularized_boundary_contact_from_graph(
     ) {
         return Ok(None);
     }
-    let Some(report) =
+    if let Some(report) =
         certified_closed_boundary_touching_regularized_report_from_graph(graph, left, right)?
-    else {
+    {
+        validate_consumed_boundary_touching_report(
+            &report,
+            "arrangement regularized boundary contact",
+        )?;
+    } else if !certified_arrangement_regularized_boundary_contact_from_graph(
+        graph, left, right, operation,
+    )? {
         return Ok(None);
-    };
-    validate_consumed_boundary_touching_report(
-        &report,
-        "arrangement regularized boundary contact",
-    )?;
+    }
     let mesh = match operation {
         ExactBooleanOperation::Intersection => empty_mesh(
             "empty exact arrangement regularized boundary-contact intersection",
@@ -1813,6 +1821,35 @@ fn boolean_arrangement_regularized_boundary_contact_from_graph(
         mesh,
         ExactBooleanShortcutKind::ArrangementCellComplex,
     )))
+}
+
+fn certified_arrangement_regularized_boundary_contact_from_graph(
+    graph: &super::graph::ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+) -> Result<bool, MeshError> {
+    if !matches!(
+        operation,
+        ExactBooleanOperation::Intersection | ExactBooleanOperation::Difference
+    ) {
+        return Ok(false);
+    }
+    if matches!(
+        certified_convex_boolean_support_from_graph(graph, left, right, operation)?,
+        Some(ExactBooleanSupport::CertifiedConvexContainment)
+    ) {
+        return Ok(false);
+    }
+    if certified_closed_boundary_touching_regularized_report_from_graph(graph, left, right)?
+        .is_some()
+    {
+        return Ok(true);
+    }
+    if !certified_closed_boundary_only_contact_from_graph(graph, left, right)? {
+        return Ok(false);
+    }
+    Ok(true)
 }
 
 fn run_arrangement_cell_complex_attempt(
@@ -4327,22 +4364,9 @@ fn boolean_closed_boundary_only_contact_meshes_from_graph(
             )?,
             ExactBooleanShortcutKind::ClosedBoundaryTouchingUnion,
         ),
-        ExactBooleanOperation::Intersection => (
-            empty_mesh(
-                "empty exact closed-boundary-only regularized intersection",
-                validation,
-            )?,
-            ExactBooleanShortcutKind::ClosedBoundaryTouchingIntersection,
-        ),
-        ExactBooleanOperation::Difference => (
-            copy_mesh(
-                left,
-                "exact closed-boundary-only regularized difference keeps left",
-                validation,
-            )?,
-            ExactBooleanShortcutKind::ClosedBoundaryTouchingDifference,
-        ),
-        ExactBooleanOperation::SelectedRegions(_) => return Ok(None),
+        ExactBooleanOperation::Intersection
+        | ExactBooleanOperation::Difference
+        | ExactBooleanOperation::SelectedRegions(_) => return Ok(None),
     };
     Ok(Some(certified_shortcut_result(mesh, shortcut)))
 }
@@ -4365,43 +4389,6 @@ fn boolean_closed_boundary_touching_union(
             validation,
         )?,
         ExactBooleanShortcutKind::ClosedBoundaryTouchingUnion,
-    ))
-}
-
-/// Materialize the empty regularized intersection for closed boundary contact.
-fn boolean_closed_boundary_touching_intersection(
-    _graph: &super::graph::ExactIntersectionGraph,
-    _left: &ExactMesh,
-    _right: &ExactMesh,
-    validation: ValidationPolicy,
-    report: ExactBoundaryTouchingReport,
-) -> Result<ExactBooleanResult, MeshError> {
-    validate_consumed_boundary_touching_report(&report, "closed-boundary-touch intersection")?;
-    Ok(certified_shortcut_result(
-        empty_mesh(
-            "empty exact closed-boundary-touch regularized intersection",
-            validation,
-        )?,
-        ExactBooleanShortcutKind::ClosedBoundaryTouchingIntersection,
-    ))
-}
-
-/// Materialize the left-preserving difference for closed boundary contact.
-fn boolean_closed_boundary_touching_difference(
-    _graph: &super::graph::ExactIntersectionGraph,
-    left: &ExactMesh,
-    _right: &ExactMesh,
-    validation: ValidationPolicy,
-    report: ExactBoundaryTouchingReport,
-) -> Result<ExactBooleanResult, MeshError> {
-    validate_consumed_boundary_touching_report(&report, "closed-boundary-touch difference")?;
-    Ok(certified_shortcut_result(
-        copy_mesh(
-            left,
-            "exact closed-boundary-touch regularized difference keeps left",
-            validation,
-        )?,
-        ExactBooleanShortcutKind::ClosedBoundaryTouchingDifference,
     ))
 }
 
