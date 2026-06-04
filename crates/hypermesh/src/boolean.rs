@@ -404,10 +404,10 @@ pub fn preflight_boolean_exact(
         ExactBooleanOperation::Union
         | ExactBooleanOperation::Intersection
         | ExactBooleanOperation::Difference => {
-            preflight_direct_coplanar_surface_support(left, right, operation).unwrap_or_else(|| {
-                preflight_tail_shortcut_support(left, right, operation)
-                    .unwrap_or(ExactBooleanSupport::RequiresCertifiedWinding)
-            })
+            preflight_direct_coplanar_surface_support(left, right, operation)
+                .or_else(|| preflight_tail_shortcut_support(left, right, operation))
+                .or_else(|| certified_mixed_dimensional_regularized_solid_support(left, right))
+                .unwrap_or(ExactBooleanSupport::RequiresCertifiedWinding)
         }
     };
 
@@ -475,6 +475,7 @@ pub fn preflight_boolean_exact(
             | ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
             | ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference
             | ExactBooleanSupport::CertifiedOpenSurfaceDisjoint
+            | ExactBooleanSupport::CertifiedMixedDimensionalRegularizedSolid
             | ExactBooleanSupport::CertifiedCoplanarSurfaceContainment
             | ExactBooleanSupport::CertifiedConvexIntersection
             | ExactBooleanSupport::CertifiedConvexSingleCapDifference
@@ -616,6 +617,22 @@ pub fn preflight_boolean_exact(
         });
     }
     if support == ExactBooleanSupport::RequiresCertifiedWinding
+        && arrangement_cell_complex_materializes_for_preflight(left, right, operation)?
+    {
+        return Ok(ExactBooleanPreflight {
+            operation,
+            support: ExactBooleanSupport::CertifiedArrangementCellComplex,
+            graph_had_unknowns,
+            retained_face_pairs,
+            retained_events,
+            region_count: 0,
+            region_classifications: Vec::new(),
+            blocker: None,
+            arrangement_readiness: None,
+            coplanar_volumetric_evidence: None,
+        });
+    }
+    if support == ExactBooleanSupport::RequiresCertifiedWinding
         && let Some(winding_support) =
             certified_winding_boolean_support_from_graph(&graph, left, right)?
     {
@@ -731,6 +748,24 @@ pub fn preflight_boolean_exact(
         });
     }
     if graph_requires_coplanar_volumetric_cells_for_sources(&graph, left, right) {
+        if arrangement_volume_graph_materializes(left, right, operation)?
+            || arrangement_cell_complex_materializes_for_preflight(left, right, operation)?
+        {
+            return Ok(ExactBooleanPreflight {
+                operation,
+                support: ExactBooleanSupport::CertifiedArrangementCellComplex,
+                graph_had_unknowns,
+                retained_face_pairs,
+                retained_events,
+                region_count: 0,
+                region_classifications: Vec::new(),
+                blocker: None,
+                arrangement_readiness: None,
+                coplanar_volumetric_evidence: coplanar_volumetric_evidence_if_required(
+                    &graph, left, right,
+                ),
+            });
+        }
         return Ok(ExactBooleanPreflight {
             operation,
             support: ExactBooleanSupport::RequiresCoplanarVolumetricCells,
@@ -1368,6 +1403,11 @@ pub fn boolean_exact_with_boundary_policy(
             },
         );
     }
+    if let Some(result) =
+        boolean_closed_regularized_lower_dimensional_optional(left, right, operation, validation)?
+    {
+        return Ok(result);
+    }
     if left.triangles().is_empty() || right.triangles().is_empty() {
         return boolean_empty_operand(left, right, operation, validation);
     }
@@ -1704,6 +1744,27 @@ fn arrangement_cell_complex_materializes_preemptively(
     if !arrangement_cell_complex_should_preempt_legacy_paths(left, right, operation) {
         return Ok(false);
     }
+    match run_arrangement_cell_complex_attempt(
+        left,
+        right,
+        operation,
+        ExactRegularizationPolicy::REGULARIZED_SOLID,
+        Some(ValidationPolicy::CLOSED),
+    ) {
+        Ok(ArrangementCellComplexOutcome::Materialized(_, attempt))
+            if attempt.arrangement_blockers == 0 && attempt.decline.is_none() =>
+        {
+            Ok(true)
+        }
+        Ok(_) | Err(_) => Ok(false),
+    }
+}
+
+fn arrangement_cell_complex_materializes_for_preflight(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+) -> Result<bool, MeshError> {
     match run_arrangement_cell_complex_attempt(
         left,
         right,
@@ -3610,6 +3671,21 @@ fn mesh_is_open_surface(mesh: &ExactMesh) -> bool {
         && mesh.facts().mesh.boundary_edges > 0
         && mesh.facts().mesh.non_manifold_edges == 0
         && mesh.facts().mesh.non_manifold_vertices == 0
+}
+
+fn certified_mixed_dimensional_regularized_solid_support(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Option<ExactBooleanSupport> {
+    let left_closed = left.facts().mesh.closed_manifold;
+    let right_closed = right.facts().mesh.closed_manifold;
+    let left_open_surface = mesh_is_open_surface(left);
+    let right_open_surface = mesh_is_open_surface(right);
+    if (left_closed && right_open_surface) || (left_open_surface && right_closed) {
+        Some(ExactBooleanSupport::CertifiedMixedDimensionalRegularizedSolid)
+    } else {
+        None
+    }
 }
 
 /// Retained split-region artifacts that certify an open-surface arrangement.
@@ -6124,6 +6200,108 @@ fn sorted_triangle_sets(mesh: &ExactMesh, right_to_left: Option<&[usize]>) -> Ve
             vertices
         })
         .collect()
+}
+
+fn boolean_closed_regularized_lower_dimensional_optional(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    if !matches!(validation, ValidationPolicy::CLOSED) {
+        return Ok(None);
+    }
+
+    let Some(left_kind) = closed_regularized_operand_kind(left) else {
+        return Ok(None);
+    };
+    let Some(right_kind) = closed_regularized_operand_kind(right) else {
+        return Ok(None);
+    };
+    if left_kind.has_volume() && right_kind.has_volume() {
+        return Ok(None);
+    }
+
+    let (mesh, shortcut) = match (left_kind, right_kind, operation) {
+        (
+            ClosedRegularizedOperandKind::ClosedSolid,
+            ClosedRegularizedOperandKind::LowerDimensional,
+            ExactBooleanOperation::Union | ExactBooleanOperation::Difference,
+        ) => (
+            copy_mesh(
+                left,
+                "exact mixed-dimensional regularized solid keeps left",
+                validation,
+            )?,
+            ExactBooleanShortcutKind::MixedDimensionalRegularizedSolid,
+        ),
+        (
+            ClosedRegularizedOperandKind::LowerDimensional,
+            ClosedRegularizedOperandKind::ClosedSolid,
+            ExactBooleanOperation::Union,
+        ) => (
+            copy_mesh(
+                right,
+                "exact mixed-dimensional regularized solid keeps right",
+                validation,
+            )?,
+            ExactBooleanShortcutKind::MixedDimensionalRegularizedSolid,
+        ),
+        (
+            ClosedRegularizedOperandKind::ClosedSolid,
+            ClosedRegularizedOperandKind::LowerDimensional,
+            ExactBooleanOperation::Intersection,
+        )
+        | (
+            ClosedRegularizedOperandKind::LowerDimensional,
+            ClosedRegularizedOperandKind::ClosedSolid,
+            ExactBooleanOperation::Intersection | ExactBooleanOperation::Difference,
+        ) => (
+            empty_mesh(
+                "empty exact mixed-dimensional regularized solid result",
+                validation,
+            )?,
+            ExactBooleanShortcutKind::MixedDimensionalRegularizedSolid,
+        ),
+        (
+            ClosedRegularizedOperandKind::LowerDimensional,
+            ClosedRegularizedOperandKind::LowerDimensional,
+            ExactBooleanOperation::Union
+            | ExactBooleanOperation::Intersection
+            | ExactBooleanOperation::Difference,
+        ) => (
+            empty_mesh(
+                "empty exact lower-dimensional regularized solid result",
+                validation,
+            )?,
+            ExactBooleanShortcutKind::LowerDimensionalRegularizedSolid,
+        ),
+        _ => return Ok(None),
+    };
+
+    Ok(Some(certified_shortcut_result(mesh, shortcut)))
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum ClosedRegularizedOperandKind {
+    ClosedSolid,
+    LowerDimensional,
+}
+
+impl ClosedRegularizedOperandKind {
+    fn has_volume(self) -> bool {
+        matches!(self, Self::ClosedSolid)
+    }
+}
+
+fn closed_regularized_operand_kind(mesh: &ExactMesh) -> Option<ClosedRegularizedOperandKind> {
+    if !mesh.triangles().is_empty() && mesh.facts().mesh.closed_manifold {
+        Some(ClosedRegularizedOperandKind::ClosedSolid)
+    } else if mesh.triangles().is_empty() || mesh_is_open_surface(mesh) {
+        Some(ClosedRegularizedOperandKind::LowerDimensional)
+    } else {
+        None
+    }
 }
 
 fn boolean_disjoint_meshes(

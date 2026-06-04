@@ -688,6 +688,12 @@ pub enum ExactBooleanShortcutKind {
     ClosedBoundaryTouchingDifference,
     /// Certified graph absence for open surfaces.
     OpenSurfaceDisjoint,
+    /// Certified regularized closed-solid result for a mixed closed solid and
+    /// lower-dimensional open surface.
+    MixedDimensionalRegularizedSolid,
+    /// Certified empty regularized closed-solid result for operands with no
+    /// closed-volume contribution.
+    LowerDimensionalRegularizedSolid,
     /// Certified closed-convex containment.
     ConvexContainment,
     /// Certified closed-convex intersection materialized by exact halfspace
@@ -1448,6 +1454,9 @@ pub enum ExactBooleanSupport {
     /// A named operation was answered by exact no-intersection facts for open
     /// surface meshes.
     CertifiedOpenSurfaceDisjoint,
+    /// A named operation was answered by closed-output regularization for one
+    /// closed solid and one lower-dimensional open surface.
+    CertifiedMixedDimensionalRegularizedSolid,
     /// Open non-coplanar surfaces were unioned by exact split-region assembly.
     CertifiedOpenSurfaceArrangementUnion,
     /// Open non-coplanar surfaces were intersected by exact split-region
@@ -1586,6 +1595,7 @@ impl ExactBooleanPreflight {
             && !matches!(
                 self.support,
                 ExactBooleanSupport::CertifiedWindingMaterialized
+                    | ExactBooleanSupport::CertifiedArrangementCellComplex
                     | ExactBooleanSupport::RequiresCoplanarVolumetricCells
             )
         {
@@ -1630,14 +1640,14 @@ impl ExactBooleanPreflight {
             | ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
             | ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference
             | ExactBooleanSupport::CertifiedOpenSurfaceDisjoint
+            | ExactBooleanSupport::CertifiedMixedDimensionalRegularizedSolid
             | ExactBooleanSupport::CertifiedConvexContainment
             | ExactBooleanSupport::CertifiedConvexIntersection
             | ExactBooleanSupport::CertifiedConvexSingleCapDifference
             | ExactBooleanSupport::CertifiedCoplanarSurfaceContainment
             | ExactBooleanSupport::CertifiedConvexSeparated
             | ExactBooleanSupport::CertifiedWindingContainment
-            | ExactBooleanSupport::CertifiedWindingSeparated
-            | ExactBooleanSupport::CertifiedArrangementCellComplex => {
+            | ExactBooleanSupport::CertifiedWindingSeparated => {
                 if self.blocker.is_some() {
                     return Err(ExactReportValidationError::CertifiedReportHasBlocker);
                 }
@@ -1650,6 +1660,18 @@ impl ExactBooleanPreflight {
                     || self.retained_events != 0
                 {
                     return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
+                no_region_facts(self.region_count, &self.region_classifications)
+            }
+            ExactBooleanSupport::CertifiedArrangementCellComplex => {
+                if operation_is_selected_region(self.operation)
+                    || self.graph_had_unknowns
+                    || self.blocker.is_some()
+                {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
+                if self.arrangement_readiness.is_some() {
+                    return Err(ExactReportValidationError::UnexpectedArrangementReadiness);
                 }
                 no_region_facts(self.region_count, &self.region_classifications)
             }

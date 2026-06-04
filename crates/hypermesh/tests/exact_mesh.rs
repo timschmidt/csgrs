@@ -11022,6 +11022,220 @@ fn exact_coplanar_volumetric_cell_evidence_reports_mixed_and_boundary_cases() {
 }
 
 #[test]
+fn exact_preflight_uses_arrangement_for_materializable_winding_blocker() {
+    let left = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, -4]);
+    let right = tetrahedron_i64([1, -1, 0], [5, 0, 0], [0, 4, 1], [1, 1, 5]);
+
+    let preflight = hypermesh::preflight_boolean_exact(
+        &left,
+        &right,
+        hypermesh::ExactBooleanOperation::Intersection,
+    )
+    .unwrap();
+    preflight.validate().unwrap();
+    preflight.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        preflight.support,
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
+    );
+    assert!(preflight.blocker.is_none());
+
+    let result = hypermesh::boolean_exact(
+        &left,
+        &right,
+        hypermesh::ExactBooleanOperation::Intersection,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap();
+    result.validate().unwrap();
+    result
+        .validate_operation_against_sources(
+            &left,
+            &right,
+            hypermesh::ExactBooleanOperation::Intersection,
+            ValidationPolicy::CLOSED,
+            hypermesh::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        result.kind,
+        hypermesh::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
+        }
+    );
+}
+
+#[test]
+fn exact_regularized_closed_boolean_handles_mixed_solid_and_open_surface() {
+    let solid = axis_aligned_box_i64([0, 0, 0], [4, 4, 4]);
+    let open_surface = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 5, 0, 0, 0, 5, 1],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    assert!(solid.facts().mesh.closed_manifold);
+    assert!(!open_surface.facts().mesh.closed_manifold);
+    assert_eq!(open_surface.facts().mesh.boundary_edges, 3);
+
+    for operation in [
+        hypermesh::ExactBooleanOperation::Union,
+        hypermesh::ExactBooleanOperation::Intersection,
+        hypermesh::ExactBooleanOperation::Difference,
+    ] {
+        let preflight =
+            hypermesh::preflight_boolean_exact(&solid, &open_surface, operation).unwrap();
+        preflight
+            .validate_against_sources(&solid, &open_surface)
+            .unwrap();
+        assert_eq!(
+            preflight.support,
+            hypermesh::ExactBooleanSupport::CertifiedMixedDimensionalRegularizedSolid
+        );
+        assert!(preflight.blocker.is_none());
+
+        let result =
+            hypermesh::boolean_exact(&solid, &open_surface, operation, ValidationPolicy::CLOSED)
+                .unwrap();
+        result
+            .validate_operation_against_sources(
+                &solid,
+                &open_surface,
+                operation,
+                ValidationPolicy::CLOSED,
+                hypermesh::ExactBoundaryBooleanPolicy::Reject,
+            )
+            .unwrap();
+        assert_eq!(
+            result.kind,
+            hypermesh::ExactBooleanResultKind::CertifiedShortcut {
+                shortcut: hypermesh::ExactBooleanShortcutKind::MixedDimensionalRegularizedSolid
+            }
+        );
+        match operation {
+            hypermesh::ExactBooleanOperation::Union
+            | hypermesh::ExactBooleanOperation::Difference => {
+                assert_exact_mesh_same_vertex_set_and_face_count(&result.mesh, &solid);
+            }
+            hypermesh::ExactBooleanOperation::Intersection => {
+                assert!(result.mesh.vertices().is_empty());
+                assert!(result.mesh.triangles().is_empty());
+            }
+            hypermesh::ExactBooleanOperation::SelectedRegions(_) => unreachable!(),
+        }
+    }
+
+    let union = hypermesh::boolean_exact(
+        &open_surface,
+        &solid,
+        hypermesh::ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap();
+    assert_exact_mesh_same_vertex_set_and_face_count(&union.mesh, &solid);
+
+    for operation in [
+        hypermesh::ExactBooleanOperation::Intersection,
+        hypermesh::ExactBooleanOperation::Difference,
+    ] {
+        let result =
+            hypermesh::boolean_exact(&open_surface, &solid, operation, ValidationPolicy::CLOSED)
+                .unwrap();
+        result
+            .validate_operation_against_sources(
+                &open_surface,
+                &solid,
+                operation,
+                ValidationPolicy::CLOSED,
+                hypermesh::ExactBoundaryBooleanPolicy::Reject,
+            )
+            .unwrap();
+        assert!(result.mesh.vertices().is_empty());
+        assert!(result.mesh.triangles().is_empty());
+        assert_eq!(
+            result.kind,
+            hypermesh::ExactBooleanResultKind::CertifiedShortcut {
+                shortcut: hypermesh::ExactBooleanShortcutKind::MixedDimensionalRegularizedSolid
+            }
+        );
+    }
+
+    let disjoint_open_surface = ExactMesh::from_i64_triangles_with_policy(
+        &[10, 10, 0, 12, 10, 0, 10, 12, 0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let disjoint_union = hypermesh::boolean_exact(
+        &solid,
+        &disjoint_open_surface,
+        hypermesh::ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap();
+    disjoint_union
+        .validate_operation_against_sources(
+            &solid,
+            &disjoint_open_surface,
+            hypermesh::ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+            hypermesh::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_exact_mesh_same_vertex_set_and_face_count(&disjoint_union.mesh, &solid);
+    assert_eq!(
+        disjoint_union.kind,
+        hypermesh::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::ExactBooleanShortcutKind::MixedDimensionalRegularizedSolid
+        }
+    );
+}
+
+#[test]
+fn exact_closed_regularization_drops_open_surface_only_named_booleans() {
+    let left = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 5, 0, 0, 0, 5, 1],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let right = ExactMesh::from_i64_triangles_with_policy(
+        &[1, -1, 0, 5, 1, 1, 1, 5, 3],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    assert!(!left.facts().mesh.closed_manifold);
+    assert!(!right.facts().mesh.closed_manifold);
+
+    for operation in [
+        hypermesh::ExactBooleanOperation::Union,
+        hypermesh::ExactBooleanOperation::Intersection,
+        hypermesh::ExactBooleanOperation::Difference,
+    ] {
+        let result =
+            hypermesh::boolean_exact(&left, &right, operation, ValidationPolicy::CLOSED).unwrap();
+        result
+            .validate_operation_against_sources(
+                &left,
+                &right,
+                operation,
+                ValidationPolicy::CLOSED,
+                hypermesh::ExactBoundaryBooleanPolicy::Reject,
+            )
+            .unwrap();
+        assert!(result.mesh.vertices().is_empty());
+        assert!(result.mesh.triangles().is_empty());
+        assert_eq!(
+            result.kind,
+            hypermesh::ExactBooleanResultKind::CertifiedShortcut {
+                shortcut: hypermesh::ExactBooleanShortcutKind::LowerDimensionalRegularizedSolid
+            }
+        );
+    }
+}
+
+#[test]
 fn exact_coplanar_volumetric_cell_evidence_validation_rejects_stale_counts() {
     let left = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
     let right = tetrahedron_i64([1, 1, 0], [5, 1, 0], [1, 5, 0], [1, 1, 4]);
