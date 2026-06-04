@@ -7482,7 +7482,7 @@ fn exact_axis_aligned_orthogonal_solid_cell_complex_reenters_boolean() {
         .unwrap();
     assert_eq!(
         union_preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellUnion
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let union = hypermesh::boolean_exact(
@@ -7504,7 +7504,7 @@ fn exact_axis_aligned_orthogonal_solid_cell_complex_reenters_boolean() {
     assert_eq!(
         union.kind,
         hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::ExactBooleanShortcutKind::AxisAlignedOrthogonalSolidCellUnion
+            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
     assert!(union.mesh.facts().mesh.closed_manifold);
@@ -7521,7 +7521,7 @@ fn exact_axis_aligned_orthogonal_solid_cell_complex_reenters_boolean() {
         .unwrap();
     assert_eq!(
         intersection_preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellIntersection
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let intersection = hypermesh::boolean_exact(
         &complex,
@@ -7542,8 +7542,7 @@ fn exact_axis_aligned_orthogonal_solid_cell_complex_reenters_boolean() {
     assert_eq!(
         intersection.kind,
         hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut:
-                hypermesh::ExactBooleanShortcutKind::AxisAlignedOrthogonalSolidCellIntersection
+            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
     let intersection_bounds = intersection.mesh.bounds().mesh.as_ref().unwrap();
@@ -7564,7 +7563,7 @@ fn exact_axis_aligned_orthogonal_solid_cell_complex_reenters_boolean() {
         .unwrap();
     assert_eq!(
         difference_preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellDifference
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let difference = hypermesh::boolean_exact(
         &complex,
@@ -7585,7 +7584,7 @@ fn exact_axis_aligned_orthogonal_solid_cell_complex_reenters_boolean() {
     assert_eq!(
         difference.kind,
         hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::ExactBooleanShortcutKind::AxisAlignedOrthogonalSolidCellDifference
+            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
     assert!(difference.mesh.facts().mesh.closed_manifold);
@@ -7622,7 +7621,7 @@ fn exact_axis_aligned_orthogonal_solid_intersection_materializes_empty_cavity_ce
         .unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellIntersection
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let intersection = hypermesh::boolean_exact(
@@ -7645,15 +7644,14 @@ fn exact_axis_aligned_orthogonal_solid_intersection_materializes_empty_cavity_ce
     assert_eq!(
         intersection.kind,
         hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut:
-                hypermesh::ExactBooleanShortcutKind::AxisAlignedOrthogonalSolidCellIntersection
+            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
     assert!(intersection.mesh.vertices().is_empty());
     assert!(intersection.mesh.triangles().is_empty());
 
     let mut stale = preflight.clone();
-    stale.support = hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex;
+    stale.support = hypermesh::ExactBooleanSupport::CertifiedAxisAlignedBoxIntersection;
     assert!(stale.validate_against_sources(&hollow, &floating).is_err());
 }
 
@@ -7669,7 +7667,7 @@ fn exact_axis_aligned_orthogonal_solid_accepts_face_fan_cell_split() {
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellUnion
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let union = hypermesh::boolean_exact(
@@ -7706,7 +7704,7 @@ fn exact_axis_aligned_orthogonal_solid_accepts_face_fan_cell_split() {
     intersection_preflight.validate().unwrap();
     assert_eq!(
         intersection_preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellIntersection
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let difference_preflight = hypermesh::preflight_boolean_exact(
         &left,
@@ -7717,7 +7715,7 @@ fn exact_axis_aligned_orthogonal_solid_accepts_face_fan_cell_split() {
     difference_preflight.validate().unwrap();
     assert_eq!(
         difference_preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellDifference
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 }
 
@@ -7738,7 +7736,7 @@ fn exact_axis_aligned_orthogonal_solid_accepts_opposite_faces_on_same_plane() {
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellUnion
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let union = hypermesh::boolean_exact(
@@ -8349,18 +8347,18 @@ fn exact_mixed_coplanar_volumetric_overlap_materializes_from_face_cells() {
     for (operation, support, shortcut) in [
         (
             hypermesh::ExactBooleanOperation::Union,
-            hypermesh::ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellUnion,
+            hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex,
             hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex,
         ),
         (
             hypermesh::ExactBooleanOperation::Intersection,
-            hypermesh::ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellIntersection,
-            hypermesh::ExactBooleanShortcutKind::AxisAlignedOrthogonalSolidCellIntersection,
+            hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex,
+            hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex,
         ),
         (
             hypermesh::ExactBooleanOperation::Difference,
-            hypermesh::ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellDifference,
-            hypermesh::ExactBooleanShortcutKind::AxisAlignedOrthogonalSolidCellDifference,
+            hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex,
+            hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex,
         ),
     ] {
         let preflight = hypermesh::preflight_boolean_exact(&left, &right, operation).unwrap();
@@ -10960,7 +10958,7 @@ fn exact_nonconvex_boundary_containment_materializes_regularized_containment() {
         .unwrap();
     assert_eq!(
         reverse_preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellDifference
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let reverse_difference = hypermesh::boolean_exact(
@@ -10983,7 +10981,7 @@ fn exact_nonconvex_boundary_containment_materializes_regularized_containment() {
     assert_eq!(
         reverse_difference.kind,
         hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::ExactBooleanShortcutKind::AxisAlignedOrthogonalSolidCellDifference
+            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
     assert!(reverse_difference.mesh.triangles().is_empty());

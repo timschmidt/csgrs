@@ -60,9 +60,10 @@ use super::graph::{FacePairEvents, IntersectionEvent, MeshSide, build_intersecti
 use super::intersection::MeshFacePairRelation;
 use super::mesh::{ExactMesh, Triangle};
 use super::orthogonal_solid::{
-    AxisAlignedOrthogonalSolidOperation, has_axis_aligned_orthogonal_solid_cells,
+    AxisAlignedOrthogonalSolidOperation, axis_aligned_orthogonal_solid_cell_plan,
+    has_axis_aligned_orthogonal_solid_cells,
     has_empty_axis_aligned_orthogonal_solid_cell_intersection,
-    materialize_axis_aligned_orthogonal_solid_cells,
+    materialize_axis_aligned_orthogonal_solid_cell_plan,
 };
 use super::provenance::{PredicateUse, SourceProvenance};
 use super::region::{
@@ -401,9 +402,6 @@ pub fn preflight_boolean_exact(
             | ExactBooleanSupport::CertifiedAxisAlignedBoxMultiDifference
             | ExactBooleanSupport::CertifiedAxisAlignedBoxNestedDifference
             | ExactBooleanSupport::CertifiedAxisAlignedBoxEmptyDifference
-            | ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellUnion
-            | ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellIntersection
-            | ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellDifference
             | ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellUnion
             | ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellIntersection
             | ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellDifference
@@ -544,7 +542,7 @@ pub fn preflight_boolean_exact(
     {
         return Ok(certified_shortcut_preflight(
             operation,
-            ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellIntersection,
+            ExactBooleanSupport::CertifiedArrangementCellComplex,
         ));
     }
     if support == ExactBooleanSupport::RequiresCertifiedWinding
@@ -677,7 +675,7 @@ pub fn preflight_boolean_exact(
     {
         return Ok(ExactBooleanPreflight {
             operation,
-            support: axis_aligned_orthogonal_solid_support(solid_operation),
+            support: ExactBooleanSupport::CertifiedArrangementCellComplex,
             graph_had_unknowns,
             retained_face_pairs,
             retained_events,
@@ -1450,11 +1448,6 @@ pub fn boolean_exact_with_boundary_policy(
                     return Ok(result);
                 }
             }
-            if let Some(result) = boolean_axis_aligned_orthogonal_solid_cell_meshes(
-                left, right, operation, validation,
-            )? {
-                return Ok(result);
-            }
             if let Some(result) = boolean_closed_boundary_only_contact_meshes_from_graph(
                 &graph, left, right, operation, validation,
             )? {
@@ -1926,7 +1919,7 @@ fn run_arrangement_cell_complex_attempt(
                 return Ok(ArrangementCellComplexOutcome::Materialized(result, attempt));
             }
         }
-        if let Some(outcome) = arrangement_volumetric_split_cell_recovery_outcome_if_enabled(
+        if let Some(outcome) = arrangement_cell_complex_recovery_outcome_if_available(
             regularize_unregularized_sheet_complex,
             validation,
             &mut attempt,
@@ -1946,7 +1939,7 @@ fn run_arrangement_cell_complex_attempt(
     let labeled = match arrangement.label_regions(policy) {
         Ok(labeled) => labeled,
         Err(blocker) => {
-            if let Some(outcome) = arrangement_volumetric_split_cell_recovery_outcome_if_enabled(
+            if let Some(outcome) = arrangement_cell_complex_recovery_outcome_if_available(
                 regularize_unregularized_sheet_complex,
                 validation,
                 &mut attempt,
@@ -1966,7 +1959,7 @@ fn run_arrangement_cell_complex_attempt(
         Ok(selected) if selected.blockers.is_empty() => selected,
         Ok(selected) => {
             attempt.selected_faces = selected.selected_faces.len();
-            if let Some(outcome) = arrangement_volumetric_split_cell_recovery_outcome_if_enabled(
+            if let Some(outcome) = arrangement_cell_complex_recovery_outcome_if_available(
                 regularize_unregularized_sheet_complex,
                 validation,
                 &mut attempt,
@@ -1983,7 +1976,7 @@ fn run_arrangement_cell_complex_attempt(
             return Ok(ArrangementCellComplexOutcome::Declined(attempt));
         }
         Err(blocker) => {
-            if let Some(outcome) = arrangement_volumetric_split_cell_recovery_outcome_if_enabled(
+            if let Some(outcome) = arrangement_cell_complex_recovery_outcome_if_available(
                 regularize_unregularized_sheet_complex,
                 validation,
                 &mut attempt,
@@ -2004,7 +1997,7 @@ fn run_arrangement_cell_complex_attempt(
     let simplified = match selected.simplify_exact_with_policy(policy) {
         Ok(simplified) if simplified.blockers.is_empty() => simplified,
         Ok(simplified) => {
-            if let Some(outcome) = arrangement_volumetric_split_cell_recovery_outcome_if_enabled(
+            if let Some(outcome) = arrangement_cell_complex_recovery_outcome_if_available(
                 regularize_unregularized_sheet_complex,
                 validation,
                 &mut attempt,
@@ -2021,7 +2014,7 @@ fn run_arrangement_cell_complex_attempt(
             return Ok(ArrangementCellComplexOutcome::Declined(attempt));
         }
         Err(blocker) => {
-            if let Some(outcome) = arrangement_volumetric_split_cell_recovery_outcome_if_enabled(
+            if let Some(outcome) = arrangement_cell_complex_recovery_outcome_if_available(
                 regularize_unregularized_sheet_complex,
                 validation,
                 &mut attempt,
@@ -2040,7 +2033,7 @@ fn run_arrangement_cell_complex_attempt(
     let mesh = match simplified.triangulate() {
         Ok(mesh) => mesh,
         Err(blocker) => {
-            if let Some(outcome) = arrangement_volumetric_split_cell_recovery_outcome_if_enabled(
+            if let Some(outcome) = arrangement_cell_complex_recovery_outcome_if_available(
                 regularize_unregularized_sheet_complex,
                 validation,
                 &mut attempt,
@@ -2068,7 +2061,7 @@ fn run_arrangement_cell_complex_attempt(
     ) {
         Ok(mesh) => mesh,
         Err(_) => {
-            if let Some(outcome) = arrangement_volumetric_split_cell_recovery_outcome_if_enabled(
+            if let Some(outcome) = arrangement_cell_complex_recovery_outcome_if_available(
                 regularize_unregularized_sheet_complex,
                 Some(validation),
                 &mut attempt,
@@ -2089,6 +2082,68 @@ fn run_arrangement_cell_complex_attempt(
         certified_shortcut_result(mesh, ExactBooleanShortcutKind::ArrangementCellComplex),
         attempt,
     ))
+}
+
+fn boolean_arrangement_orthogonal_solid_cell_recovery(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    if match operation {
+        ExactBooleanOperation::Union => has_axis_aligned_box_cell_union(left, right),
+        ExactBooleanOperation::Difference => has_axis_aligned_box_cell_difference(left, right),
+        ExactBooleanOperation::Intersection | ExactBooleanOperation::SelectedRegions(_) => false,
+    } {
+        return Ok(None);
+    }
+    let Some(solid_operation) = axis_aligned_orthogonal_solid_operation(operation) else {
+        return Ok(None);
+    };
+    let Some(plan) = axis_aligned_orthogonal_solid_cell_plan(left, right, solid_operation) else {
+        return Ok(None);
+    };
+    let label = match solid_operation {
+        AxisAlignedOrthogonalSolidOperation::Union => {
+            "exact arrangement orthogonal solid cell union recovery"
+        }
+        AxisAlignedOrthogonalSolidOperation::Intersection => {
+            "exact arrangement orthogonal solid cell intersection recovery"
+        }
+        AxisAlignedOrthogonalSolidOperation::Difference => {
+            "exact arrangement orthogonal solid cell difference recovery"
+        }
+    };
+    let mesh = materialize_axis_aligned_orthogonal_solid_cell_plan(plan, label, validation)?;
+    let result = certified_shortcut_result(mesh, ExactBooleanShortcutKind::ArrangementCellComplex);
+    if result.validate().is_err() || result.validate_against_sources(left, right).is_err() {
+        return Ok(None);
+    }
+    Ok(Some(result))
+}
+
+fn arrangement_orthogonal_solid_cell_recovery_outcome(
+    attempt: &mut ExactArrangementBooleanAttempt,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ArrangementCellComplexOutcome>, MeshError> {
+    let Some(result) =
+        boolean_arrangement_orthogonal_solid_cell_recovery(left, right, operation, validation)?
+    else {
+        return Ok(None);
+    };
+    attempt.stage = ExactArrangementBooleanStage::Materialized;
+    attempt.decline = None;
+    attempt.materialized_shortcut = Some(ExactBooleanShortcutKind::ArrangementCellComplex);
+    attempt.arrangement_blockers = 0;
+    attempt.output_vertices = result.mesh.vertices().len();
+    attempt.output_triangles = result.mesh.triangles().len();
+    Ok(Some(ArrangementCellComplexOutcome::Materialized(
+        result,
+        attempt.clone(),
+    )))
 }
 
 fn boolean_arrangement_adjacency_union_completion(
@@ -2238,7 +2293,7 @@ fn arrangement_volumetric_split_cell_recovery_outcome(
     )))
 }
 
-fn arrangement_volumetric_split_cell_recovery_outcome_if_enabled(
+fn arrangement_cell_complex_recovery_outcome_if_available(
     enabled: bool,
     validation: Option<ValidationPolicy>,
     attempt: &mut ExactArrangementBooleanAttempt,
@@ -2247,12 +2302,17 @@ fn arrangement_volumetric_split_cell_recovery_outcome_if_enabled(
     right: &ExactMesh,
     operation: ExactBooleanOperation,
 ) -> Result<Option<ArrangementCellComplexOutcome>, MeshError> {
-    let Some(validation) = validation.filter(|_| enabled) else {
+    if let Some(validation) = validation.filter(|_| enabled)
+        && let Some(outcome) = arrangement_volumetric_split_cell_recovery_outcome(
+            attempt, graph, left, right, operation, validation,
+        )?
+    {
+        return Ok(Some(outcome));
+    }
+    let Some(validation) = validation else {
         return Ok(None);
     };
-    arrangement_volumetric_split_cell_recovery_outcome(
-        attempt, graph, left, right, operation, validation,
-    )
+    arrangement_orthogonal_solid_cell_recovery_outcome(attempt, left, right, operation, validation)
 }
 
 fn boolean_arrangement_volumetric_split_cell_recovery_from_graph(
@@ -3566,49 +3626,6 @@ fn boolean_axis_aligned_box_special_difference_optional(
     Ok(None)
 }
 
-fn boolean_axis_aligned_orthogonal_solid_cell_meshes(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
-    if match operation {
-        ExactBooleanOperation::Union => has_axis_aligned_box_cell_union(left, right),
-        ExactBooleanOperation::Difference => has_axis_aligned_box_cell_difference(left, right),
-        ExactBooleanOperation::Intersection | ExactBooleanOperation::SelectedRegions(_) => false,
-    } {
-        return Ok(None);
-    }
-    let Some(solid_operation) = axis_aligned_orthogonal_solid_operation(operation) else {
-        return Ok(None);
-    };
-    let label = match solid_operation {
-        AxisAlignedOrthogonalSolidOperation::Union => {
-            "exact axis-aligned orthogonal solid cell union"
-        }
-        AxisAlignedOrthogonalSolidOperation::Intersection => {
-            "exact axis-aligned orthogonal solid cell intersection"
-        }
-        AxisAlignedOrthogonalSolidOperation::Difference => {
-            "exact axis-aligned orthogonal solid cell difference"
-        }
-    };
-    let Some(mesh) = materialize_axis_aligned_orthogonal_solid_cells(
-        left,
-        right,
-        solid_operation,
-        label,
-        validation,
-    )?
-    else {
-        return Ok(None);
-    };
-    Ok(Some(certified_shortcut_result(
-        mesh,
-        axis_aligned_orthogonal_solid_shortcut(solid_operation),
-    )))
-}
-
 /// Return whether exact orthogonal occupancy certifies an empty intersection.
 ///
 /// This is intentionally narrower than the general orthogonal-cell shortcut:
@@ -3635,38 +3652,6 @@ const fn axis_aligned_orthogonal_solid_operation(
         }
         ExactBooleanOperation::Difference => Some(AxisAlignedOrthogonalSolidOperation::Difference),
         ExactBooleanOperation::SelectedRegions(_) => None,
-    }
-}
-
-const fn axis_aligned_orthogonal_solid_support(
-    operation: AxisAlignedOrthogonalSolidOperation,
-) -> ExactBooleanSupport {
-    match operation {
-        AxisAlignedOrthogonalSolidOperation::Union => {
-            ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellUnion
-        }
-        AxisAlignedOrthogonalSolidOperation::Intersection => {
-            ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellIntersection
-        }
-        AxisAlignedOrthogonalSolidOperation::Difference => {
-            ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellDifference
-        }
-    }
-}
-
-const fn axis_aligned_orthogonal_solid_shortcut(
-    operation: AxisAlignedOrthogonalSolidOperation,
-) -> ExactBooleanShortcutKind {
-    match operation {
-        AxisAlignedOrthogonalSolidOperation::Union => {
-            ExactBooleanShortcutKind::AxisAlignedOrthogonalSolidCellUnion
-        }
-        AxisAlignedOrthogonalSolidOperation::Intersection => {
-            ExactBooleanShortcutKind::AxisAlignedOrthogonalSolidCellIntersection
-        }
-        AxisAlignedOrthogonalSolidOperation::Difference => {
-            ExactBooleanShortcutKind::AxisAlignedOrthogonalSolidCellDifference
-        }
     }
 }
 

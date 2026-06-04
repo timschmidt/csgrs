@@ -199,24 +199,6 @@ pub(crate) fn is_axis_aligned_orthogonal_solid(mesh: &ExactMesh) -> bool {
     certify_axis_aligned_orthogonal_solid(mesh).is_some()
 }
 
-/// Materialize a named boolean over certified orthogonal solid cell complexes.
-///
-/// The output grid is the exact coordinate merge of both source grids. A
-/// refined cell is retained only when exact interval containment maps it into
-/// retained cell complex, not from approximate point sampling.
-pub(crate) fn materialize_axis_aligned_orthogonal_solid_cells(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: AxisAlignedOrthogonalSolidOperation,
-    label: &'static str,
-    validation: ValidationPolicy,
-) -> Result<Option<ExactMesh>, MeshError> {
-    let Some(plan) = axis_aligned_orthogonal_solid_cell_plan(left, right, operation) else {
-        return Ok(None);
-    };
-    materialize_axis_aligned_orthogonal_solid_cell_plan(plan, label, validation).map(Some)
-}
-
 pub(crate) fn axis_aligned_orthogonal_solid_cell_plan(
     left: &ExactMesh,
     right: &ExactMesh,

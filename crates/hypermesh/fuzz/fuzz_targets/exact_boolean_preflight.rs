@@ -14704,7 +14704,7 @@ fn exercise_axis_aligned_orthogonal_solid_cell_complexes() {
     union.validate().unwrap();
     assert_eq!(
         union.support,
-        ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellUnion
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let union_result = hypermesh::boolean_exact(
         &complex,
@@ -14729,7 +14729,7 @@ fn exercise_axis_aligned_orthogonal_solid_cell_complexes() {
     intersection.validate().unwrap();
     assert_eq!(
         intersection.support,
-        ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellIntersection
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let intersection_result = hypermesh::boolean_exact(
         &complex,
@@ -14753,7 +14753,7 @@ fn exercise_axis_aligned_orthogonal_solid_cell_complexes() {
     difference.validate().unwrap();
     assert_eq!(
         difference.support,
-        ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let difference_result = hypermesh::boolean_exact(
         &complex,
@@ -14777,7 +14777,7 @@ fn exercise_axis_aligned_orthogonal_solid_cell_complexes() {
     fan_union.validate().unwrap();
     assert_eq!(
         fan_union.support,
-        ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellUnion
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let fan_union_result = hypermesh::boolean_exact(
         &fan_left,
@@ -14802,7 +14802,7 @@ fn exercise_axis_aligned_orthogonal_solid_cell_complexes() {
     fan_intersection.validate().unwrap();
     assert_eq!(
         fan_intersection.support,
-        ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellIntersection
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let fan_difference =
@@ -14811,7 +14811,7 @@ fn exercise_axis_aligned_orthogonal_solid_cell_complexes() {
     fan_difference.validate().unwrap();
     assert_eq!(
         fan_difference.support,
-        ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let outer = axis_aligned_box_i64([0, 0, 0], [8, 8, 8]);
@@ -14831,7 +14831,7 @@ fn exercise_axis_aligned_orthogonal_solid_cell_complexes() {
     empty_intersection.validate().unwrap();
     assert_eq!(
         empty_intersection.support,
-        ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellIntersection
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let empty_intersection_result = hypermesh::boolean_exact(
         &hollow,
@@ -15178,15 +15178,15 @@ fn exercise_mixed_coplanar_volumetric_materialization() {
     for (operation, support) in [
         (
             ExactBooleanOperation::Union,
-            ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellUnion,
+            ExactBooleanSupport::CertifiedArrangementCellComplex,
         ),
         (
             ExactBooleanOperation::Intersection,
-            ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellIntersection,
+            ExactBooleanSupport::CertifiedArrangementCellComplex,
         ),
         (
             ExactBooleanOperation::Difference,
-            ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellDifference,
+            ExactBooleanSupport::CertifiedArrangementCellComplex,
         ),
     ] {
         let preflight = preflight_boolean_exact(&left, &right, operation)
