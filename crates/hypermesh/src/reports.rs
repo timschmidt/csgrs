@@ -583,12 +583,6 @@ pub enum ExactBooleanShortcutKind {
     SameSurface,
     /// Exact coplanar convex surface coverage, modulo triangulation.
     CoplanarConvexSurfaceEquivalence,
-    /// Certified empty coplanar intersection for positive-length boundary
-    /// touching surfaces.
-    CoplanarSurfaceBoundaryTouchIntersection,
-    /// Certified left-preserving coplanar difference for positive-length
-    /// boundary touching surfaces.
-    CoplanarSurfaceBoundaryTouchDifference,
     /// Exact coplanar convex surface containment, modulo triangulation.
     CoplanarConvexSurfaceContainment,
     /// Certified one-hole coplanar convex surface difference.
@@ -1323,12 +1317,6 @@ pub enum ExactBooleanSupport {
     /// A named operation was answered by exact coplanar convex surface
     /// equivalence, ignoring triangulation.
     CertifiedCoplanarConvexSurfaceEquivalence,
-    /// Intersection is empty as a surface because the operands meet only on
-    /// exact positive-length boundary arcs.
-    CertifiedCoplanarSurfaceBoundaryTouchIntersection,
-    /// Difference preserves the left coplanar surface because the right
-    /// surface only touches it on exact positive-length boundary arcs.
-    CertifiedCoplanarSurfaceBoundaryTouchDifference,
     /// A named operation was answered by exact coplanar convex surface
     /// containment, ignoring triangulation.
     CertifiedCoplanarConvexSurfaceContainment,
@@ -1571,8 +1559,6 @@ impl ExactBooleanPreflight {
             | ExactBooleanSupport::CertifiedIdentical
             | ExactBooleanSupport::CertifiedSameSurface
             | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceEquivalence
-            | ExactBooleanSupport::CertifiedCoplanarSurfaceBoundaryTouchIntersection
-            | ExactBooleanSupport::CertifiedCoplanarSurfaceBoundaryTouchDifference
             | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceContainment
             | ExactBooleanSupport::CertifiedAxisAlignedBoxUnion
             | ExactBooleanSupport::CertifiedAxisAlignedBoxIntersection

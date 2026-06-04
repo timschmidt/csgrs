@@ -1953,7 +1953,7 @@ fn exercise_multi_component_coplanar_union() {
     nonconvex_edge_intersection.validate().unwrap();
     assert_eq!(
         nonconvex_edge_intersection.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceBoundaryTouchIntersection
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let nonconvex_edge_intersection_result = hypermesh::boolean_exact(
         &nonconvex_point_touch_left,
@@ -1973,7 +1973,7 @@ fn exercise_multi_component_coplanar_union() {
     nonconvex_edge_difference.validate().unwrap();
     assert_eq!(
         nonconvex_edge_difference.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceBoundaryTouchDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let nonconvex_edge_difference_result = hypermesh::boolean_exact(
         &nonconvex_point_touch_left,
@@ -2010,9 +2010,9 @@ fn exercise_multi_component_coplanar_union() {
         ExactBooleanOperation::Intersection,
     )
     .expect("positive-overlap preflight should not fail");
-    assert_ne!(
+    assert_eq!(
         nonconvex_overlap_intersection.support,
-        ExactBooleanSupport::CertifiedCoplanarSurfaceBoundaryTouchIntersection
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let bridge_left = ExactMesh::from_i64_triangles_with_policy(

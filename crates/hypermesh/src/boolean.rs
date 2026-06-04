@@ -433,8 +433,6 @@ pub fn preflight_boolean_exact(
             | ExactBooleanSupport::CertifiedIdentical
             | ExactBooleanSupport::CertifiedSameSurface
             | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceEquivalence
-            | ExactBooleanSupport::CertifiedCoplanarSurfaceBoundaryTouchIntersection
-            | ExactBooleanSupport::CertifiedCoplanarSurfaceBoundaryTouchDifference
             | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceContainment
             | ExactBooleanSupport::CertifiedAxisAlignedBoxUnion
             | ExactBooleanSupport::CertifiedAxisAlignedBoxIntersection
@@ -888,22 +886,16 @@ fn preflight_direct_coplanar_surface_support(
             {
                 return Some(ExactBooleanSupport::CertifiedArrangementCellComplex);
             }
-            if certify_coplanar_surface_boundary_touch(left, right).is_some() {
-                return Some(
-                    ExactBooleanSupport::CertifiedCoplanarSurfaceBoundaryTouchIntersection,
-                );
-            }
             None
         }
         ExactBooleanOperation::Difference => {
             if certify_coplanar_convex_surface_equivalence(left, right).is_some() {
                 return Some(ExactBooleanSupport::CertifiedCoplanarConvexSurfaceEquivalence);
             }
-            if coplanar_mesh_overlay_difference_ready(left, right) {
+            if coplanar_mesh_overlay_difference_ready(left, right)
+                || certify_coplanar_surface_boundary_touch(left, right).is_some()
+            {
                 return Some(ExactBooleanSupport::CertifiedArrangementCellComplex);
-            }
-            if certify_coplanar_surface_boundary_touch(left, right).is_some() {
-                return Some(ExactBooleanSupport::CertifiedCoplanarSurfaceBoundaryTouchDifference);
             }
             None
         }
@@ -1635,37 +1627,6 @@ pub fn boolean_exact_with_boundary_policy(
             )))
         }
     }
-}
-
-fn boolean_coplanar_surface_boundary_touch_intersection(
-    _left: &ExactMesh,
-    _right: &ExactMesh,
-    validation: ValidationPolicy,
-) -> Result<ExactBooleanResult, MeshError> {
-    let mesh = empty_mesh(
-        "empty exact coplanar boundary-touch surface intersection",
-        validation,
-    )?;
-    Ok(certified_shortcut_result(
-        mesh,
-        ExactBooleanShortcutKind::CoplanarSurfaceBoundaryTouchIntersection,
-    ))
-}
-
-fn boolean_coplanar_surface_boundary_touch_difference(
-    left: &ExactMesh,
-    _right: &ExactMesh,
-    validation: ValidationPolicy,
-) -> Result<ExactBooleanResult, MeshError> {
-    let mesh = copy_mesh(
-        left,
-        "exact coplanar boundary-touch surface difference keeps left",
-        validation,
-    )?;
-    Ok(certified_shortcut_result(
-        mesh,
-        ExactBooleanShortcutKind::CoplanarSurfaceBoundaryTouchDifference,
-    ))
 }
 
 enum ArrangementCellComplexOutcome {
@@ -3476,22 +3437,12 @@ fn boolean_direct_coplanar_surface_meshes(
             )? {
                 return Ok(Some(result));
             }
-            if certify_coplanar_surface_boundary_touch(left, right).is_some() {
-                return Ok(Some(boolean_coplanar_surface_boundary_touch_intersection(
-                    left, right, validation,
-                )?));
-            }
             Ok(None)
         }
         ExactBooleanOperation::Difference => {
             if certify_coplanar_convex_surface_equivalence(left, right).is_some() {
                 return Ok(Some(boolean_coplanar_convex_equivalent_surfaces(
                     left, operation, validation,
-                )?));
-            }
-            if certify_coplanar_surface_boundary_touch(left, right).is_some() {
-                return Ok(Some(boolean_coplanar_surface_boundary_touch_difference(
-                    left, right, validation,
                 )?));
             }
             if let Some(result) = boolean_coplanar_surface_overlay_from_exact_arrangement(
@@ -6820,6 +6771,48 @@ mod tests {
             &left,
             ExactBooleanOperation::Union
         ));
+    }
+
+    #[test]
+    fn coplanar_overlay_regularizes_nonconvex_boundary_touch_intersection_to_empty() {
+        let left = ExactMesh::from_i64_triangles_with_policy(
+            &[
+                0, 0, 0, 10, 0, 0, 10, 4, 0, 7, 4, 0, 6, 6, 0, 10, 8, 0, 10, 12, 0, 0, 12, 0,
+            ],
+            &[
+                0, 1, 2, //
+                0, 2, 3, //
+                0, 3, 4, //
+                0, 4, 7, //
+                7, 4, 5, //
+                7, 5, 6,
+            ],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let right = ExactMesh::from_i64_triangles_with_policy(
+            &[4, 12, 0, 6, 12, 0, 6, 14, 0, 4, 14, 0],
+            &[0, 1, 2, 0, 2, 3],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+
+        assert!(certify_coplanar_surface_boundary_touch(&left, &right).is_some());
+        let result = boolean_coplanar_mesh_overlay_optional(
+            &left,
+            &right,
+            ExactBooleanOperation::Intersection,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap()
+        .expect("regularized boundary-touch intersection should materialize through overlay");
+        assert_eq!(
+            result.kind,
+            ExactBooleanResultKind::CertifiedShortcut {
+                shortcut: ExactBooleanShortcutKind::ArrangementCellComplex
+            }
+        );
+        assert!(result.mesh.triangles().is_empty());
     }
 
     fn tetrahedron_i64(a: [i64; 3], b: [i64; 3], c: [i64; 3], d: [i64; 3]) -> ExactMesh {
