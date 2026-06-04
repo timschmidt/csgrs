@@ -36,13 +36,10 @@ use super::arrangement2d::{
 use super::arrangement3d::ExactArrangement;
 use super::bounds::AabbIntersectionKind;
 use super::box_solid::{
-    AxisAlignedBoxOperation, empty_difference_axis_aligned_boxes,
-    has_axis_aligned_box_cell_difference, has_axis_aligned_box_cell_union,
-    has_axis_aligned_box_difference, has_axis_aligned_box_empty_difference,
-    has_axis_aligned_box_intersection, has_axis_aligned_box_multi_difference,
-    has_axis_aligned_box_nested_difference, has_axis_aligned_box_union, is_axis_aligned_box,
-    materialize_simple_axis_aligned_box_operation, multi_difference_axis_aligned_boxes,
-    nested_difference_axis_aligned_boxes,
+    empty_difference_axis_aligned_boxes, has_axis_aligned_box_cell_difference,
+    has_axis_aligned_box_cell_union, has_axis_aligned_box_empty_difference,
+    has_axis_aligned_box_multi_difference, has_axis_aligned_box_nested_difference,
+    is_axis_aligned_box, multi_difference_axis_aligned_boxes, nested_difference_axis_aligned_boxes,
 };
 use super::cells::triangulate_all_face_cells_with_cdt;
 use super::construction::SegmentPlaneRelation;
@@ -64,6 +61,7 @@ use super::orthogonal_solid::{
     has_axis_aligned_orthogonal_solid_cells,
     has_empty_axis_aligned_orthogonal_solid_cell_intersection,
     materialize_axis_aligned_orthogonal_solid_cell_plan,
+    orthogonal_cell_plan_is_single_rectangular_block,
 };
 use super::provenance::{PredicateUse, SourceProvenance};
 use super::region::{
@@ -356,15 +354,6 @@ pub fn preflight_boolean_exact(
         {
             ExactBooleanSupport::CertifiedSameSurface
         }
-        ExactBooleanOperation::Union if has_axis_aligned_box_union(left, right) => {
-            ExactBooleanSupport::CertifiedAxisAlignedBoxUnion
-        }
-        ExactBooleanOperation::Intersection if has_axis_aligned_box_intersection(left, right) => {
-            ExactBooleanSupport::CertifiedAxisAlignedBoxIntersection
-        }
-        ExactBooleanOperation::Difference if has_axis_aligned_box_difference(left, right) => {
-            ExactBooleanSupport::CertifiedAxisAlignedBoxDifference
-        }
         ExactBooleanOperation::Union
         | ExactBooleanOperation::Intersection
         | ExactBooleanOperation::Difference => {
@@ -396,9 +385,6 @@ pub fn preflight_boolean_exact(
             | ExactBooleanSupport::CertifiedBoundsDisjoint
             | ExactBooleanSupport::CertifiedIdentical
             | ExactBooleanSupport::CertifiedSameSurface
-            | ExactBooleanSupport::CertifiedAxisAlignedBoxUnion
-            | ExactBooleanSupport::CertifiedAxisAlignedBoxIntersection
-            | ExactBooleanSupport::CertifiedAxisAlignedBoxDifference
             | ExactBooleanSupport::CertifiedAxisAlignedBoxMultiDifference
             | ExactBooleanSupport::CertifiedAxisAlignedBoxNestedDifference
             | ExactBooleanSupport::CertifiedAxisAlignedBoxEmptyDifference
@@ -1354,11 +1340,6 @@ pub fn boolean_exact_with_boundary_policy(
         return boolean_same_surface_meshes(left, operation, validation);
     }
     if let Some(result) =
-        boolean_axis_aligned_box_operation_optional(left, right, operation, validation)?
-    {
-        return Ok(result);
-    }
-    if let Some(result) =
         boolean_arrangement_cell_complex_meshes(left, right, operation, validation, true)?
     {
         return Ok(result);
@@ -1825,6 +1806,19 @@ fn run_arrangement_cell_complex_attempt(
     };
 
     if let Some(validation) = validation
+        && let Some(outcome) = arrangement_orthogonal_solid_cell_recovery_outcome(
+            &mut attempt,
+            left,
+            right,
+            operation,
+            validation,
+            true,
+        )?
+    {
+        return Ok(outcome);
+    }
+
+    if let Some(validation) = validation
         && let Some(result) =
             boolean_arrangement_adjacency_union_completion(left, right, operation, validation)?
     {
@@ -2081,20 +2075,18 @@ fn boolean_arrangement_orthogonal_solid_cell_recovery(
     right: &ExactMesh,
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
+    require_single_rectangular_block: bool,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
-    if match operation {
-        ExactBooleanOperation::Union => has_axis_aligned_box_cell_union(left, right),
-        ExactBooleanOperation::Difference => has_axis_aligned_box_cell_difference(left, right),
-        ExactBooleanOperation::Intersection | ExactBooleanOperation::SelectedRegions(_) => false,
-    } {
-        return Ok(None);
-    }
     let Some(solid_operation) = axis_aligned_orthogonal_solid_operation(operation) else {
         return Ok(None);
     };
     let Some(plan) = axis_aligned_orthogonal_solid_cell_plan(left, right, solid_operation) else {
         return Ok(None);
     };
+    if require_single_rectangular_block && !orthogonal_cell_plan_is_single_rectangular_block(&plan)
+    {
+        return Ok(None);
+    }
     let label = match solid_operation {
         AxisAlignedOrthogonalSolidOperation::Union => {
             "exact arrangement orthogonal solid cell union recovery"
@@ -2120,9 +2112,15 @@ fn arrangement_orthogonal_solid_cell_recovery_outcome(
     right: &ExactMesh,
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
+    require_single_rectangular_block: bool,
 ) -> Result<Option<ArrangementCellComplexOutcome>, MeshError> {
-    let Some(result) =
-        boolean_arrangement_orthogonal_solid_cell_recovery(left, right, operation, validation)?
+    let Some(result) = boolean_arrangement_orthogonal_solid_cell_recovery(
+        left,
+        right,
+        operation,
+        validation,
+        require_single_rectangular_block,
+    )?
     else {
         return Ok(None);
     };
@@ -2329,7 +2327,7 @@ fn arrangement_cell_complex_recovery_outcome_if_available(
         return Ok(None);
     };
     if let Some(outcome) = arrangement_orthogonal_solid_cell_recovery_outcome(
-        attempt, left, right, operation, validation,
+        attempt, left, right, operation, validation, false,
     )? {
         return Ok(Some(outcome));
     }
@@ -3454,7 +3452,13 @@ fn arrangement_cell_complex_should_preempt_legacy_paths(
         ExactBooleanOperation::Union
             | ExactBooleanOperation::Intersection
             | ExactBooleanOperation::Difference
-    ) && non_box_full_face_adjacency(left, right))
+    ) && has_single_rectangular_orthogonal_cell_result(left, right, operation))
+        || (matches!(
+            operation,
+            ExactBooleanOperation::Union
+                | ExactBooleanOperation::Intersection
+                | ExactBooleanOperation::Difference
+        ) && non_box_full_face_adjacency(left, right))
         || (matches!(
             operation,
             ExactBooleanOperation::Union
@@ -3463,6 +3467,19 @@ fn arrangement_cell_complex_should_preempt_legacy_paths(
         ) && !both_axis_aligned_boxes(left, right)
             && has_contained_face_adjacent_union(left, right))
         || coplanar_mesh_overlay_should_preempt_surface_paths(left, right, operation)
+}
+
+fn has_single_rectangular_orthogonal_cell_result(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+) -> bool {
+    let Some(operation) = axis_aligned_orthogonal_solid_operation(operation) else {
+        return false;
+    };
+    axis_aligned_orthogonal_solid_cell_plan(left, right, operation)
+        .as_ref()
+        .is_some_and(orthogonal_cell_plan_is_single_rectangular_block)
 }
 
 fn boolean_convex_intersection_meshes(
@@ -3588,35 +3605,6 @@ fn coplanar_surface_materializers_should_yield_to_closed_boundary_shortcut(
     operation: ExactBooleanOperation,
 ) -> Result<bool, MeshError> {
     coplanar_mesh_overlay_should_yield_to_closed_boundary_shortcut(left, right, operation)
-}
-
-fn boolean_axis_aligned_box_operation_optional(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
-    let (operation, shortcut) = match operation {
-        ExactBooleanOperation::Union => (
-            AxisAlignedBoxOperation::Union,
-            ExactBooleanShortcutKind::AxisAlignedBoxUnion,
-        ),
-        ExactBooleanOperation::Intersection => (
-            AxisAlignedBoxOperation::Intersection,
-            ExactBooleanShortcutKind::AxisAlignedBoxIntersection,
-        ),
-        ExactBooleanOperation::Difference => (
-            AxisAlignedBoxOperation::Difference,
-            ExactBooleanShortcutKind::AxisAlignedBoxDifference,
-        ),
-        ExactBooleanOperation::SelectedRegions(_) => return Ok(None),
-    };
-    let Some(mesh) =
-        materialize_simple_axis_aligned_box_operation(left, right, operation, validation)?
-    else {
-        return Ok(None);
-    };
-    Ok(Some(certified_shortcut_result(mesh, shortcut)))
 }
 
 fn boolean_axis_aligned_box_special_difference_optional(

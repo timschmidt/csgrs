@@ -166,6 +166,13 @@ struct GridVertexKey {
     k: usize,
 }
 
+#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
+struct OrientedPlaneKey {
+    axis: Axis,
+    plane: usize,
+    normal_sign: i8,
+}
+
 /// Return whether both meshes certify as orthogonal solids for `operation`.
 pub(crate) fn has_axis_aligned_orthogonal_solid_cells(
     left: &ExactMesh,
@@ -214,6 +221,10 @@ pub(crate) fn materialize_axis_aligned_orthogonal_solid_cell_plan(
     validation: ValidationPolicy,
 ) -> Result<ExactMesh, MeshError> {
     plan.to_mesh(label, validation)
+}
+
+pub(crate) fn orthogonal_cell_plan_is_single_rectangular_block(plan: &OrthogonalCellPlan) -> bool {
+    plan.selected_rectangular_block_bounds().is_some()
 }
 
 fn certify_orthogonal_cell_inputs(
@@ -1106,83 +1117,178 @@ impl OrthogonalCellPlan {
         let mut vertices = Vec::new();
         let mut vertex_indices = BTreeMap::new();
         let mut triangles = Vec::new();
-        for i in 0..self.nx {
-            for j in 0..self.ny {
-                for k in 0..self.nz {
-                    if !self.is_selected(i, j, k) {
-                        continue;
-                    }
-                    if i == 0 || !self.is_selected(i - 1, j, k) {
-                        emit_cell_face(
-                            self,
-                            i,
-                            j,
-                            k,
-                            CellFace::XMin,
-                            &mut vertices,
-                            &mut vertex_indices,
-                            &mut triangles,
-                        );
-                    }
-                    if i + 1 == self.nx || !self.is_selected(i + 1, j, k) {
-                        emit_cell_face(
-                            self,
-                            i,
-                            j,
-                            k,
-                            CellFace::XMax,
-                            &mut vertices,
-                            &mut vertex_indices,
-                            &mut triangles,
-                        );
-                    }
-                    if j == 0 || !self.is_selected(i, j - 1, k) {
-                        emit_cell_face(
-                            self,
-                            i,
-                            j,
-                            k,
-                            CellFace::YMin,
-                            &mut vertices,
-                            &mut vertex_indices,
-                            &mut triangles,
-                        );
-                    }
-                    if j + 1 == self.ny || !self.is_selected(i, j + 1, k) {
-                        emit_cell_face(
-                            self,
-                            i,
-                            j,
-                            k,
-                            CellFace::YMax,
-                            &mut vertices,
-                            &mut vertex_indices,
-                            &mut triangles,
-                        );
-                    }
-                    if k == 0 || !self.is_selected(i, j, k - 1) {
-                        emit_cell_face(
-                            self,
-                            i,
-                            j,
-                            k,
-                            CellFace::ZMin,
-                            &mut vertices,
-                            &mut vertex_indices,
-                            &mut triangles,
-                        );
-                    }
-                    if k + 1 == self.nz || !self.is_selected(i, j, k + 1) {
-                        emit_cell_face(
-                            self,
-                            i,
-                            j,
-                            k,
-                            CellFace::ZMax,
-                            &mut vertices,
-                            &mut vertex_indices,
-                            &mut triangles,
-                        );
+        if let Some((i_min, i_max, j_min, j_max, k_min, k_max)) =
+            self.selected_rectangular_block_bounds()
+        {
+            emit_rect_face(
+                self,
+                OrientedPlaneKey {
+                    axis: Axis::X,
+                    plane: i_min,
+                    normal_sign: -1,
+                },
+                j_min,
+                j_max,
+                k_min,
+                k_max,
+                &mut vertices,
+                &mut vertex_indices,
+                &mut triangles,
+            );
+            emit_rect_face(
+                self,
+                OrientedPlaneKey {
+                    axis: Axis::X,
+                    plane: i_max,
+                    normal_sign: 1,
+                },
+                j_min,
+                j_max,
+                k_min,
+                k_max,
+                &mut vertices,
+                &mut vertex_indices,
+                &mut triangles,
+            );
+            emit_rect_face(
+                self,
+                OrientedPlaneKey {
+                    axis: Axis::Y,
+                    plane: j_min,
+                    normal_sign: -1,
+                },
+                i_min,
+                i_max,
+                k_min,
+                k_max,
+                &mut vertices,
+                &mut vertex_indices,
+                &mut triangles,
+            );
+            emit_rect_face(
+                self,
+                OrientedPlaneKey {
+                    axis: Axis::Y,
+                    plane: j_max,
+                    normal_sign: 1,
+                },
+                i_min,
+                i_max,
+                k_min,
+                k_max,
+                &mut vertices,
+                &mut vertex_indices,
+                &mut triangles,
+            );
+            emit_rect_face(
+                self,
+                OrientedPlaneKey {
+                    axis: Axis::Z,
+                    plane: k_min,
+                    normal_sign: -1,
+                },
+                i_min,
+                i_max,
+                j_min,
+                j_max,
+                &mut vertices,
+                &mut vertex_indices,
+                &mut triangles,
+            );
+            emit_rect_face(
+                self,
+                OrientedPlaneKey {
+                    axis: Axis::Z,
+                    plane: k_max,
+                    normal_sign: 1,
+                },
+                i_min,
+                i_max,
+                j_min,
+                j_max,
+                &mut vertices,
+                &mut vertex_indices,
+                &mut triangles,
+            );
+        } else {
+            for i in 0..self.nx {
+                for j in 0..self.ny {
+                    for k in 0..self.nz {
+                        if !self.is_selected(i, j, k) {
+                            continue;
+                        }
+                        if i == 0 || !self.is_selected(i - 1, j, k) {
+                            emit_cell_face(
+                                self,
+                                i,
+                                j,
+                                k,
+                                CellFace::XMin,
+                                &mut vertices,
+                                &mut vertex_indices,
+                                &mut triangles,
+                            );
+                        }
+                        if i + 1 == self.nx || !self.is_selected(i + 1, j, k) {
+                            emit_cell_face(
+                                self,
+                                i,
+                                j,
+                                k,
+                                CellFace::XMax,
+                                &mut vertices,
+                                &mut vertex_indices,
+                                &mut triangles,
+                            );
+                        }
+                        if j == 0 || !self.is_selected(i, j - 1, k) {
+                            emit_cell_face(
+                                self,
+                                i,
+                                j,
+                                k,
+                                CellFace::YMin,
+                                &mut vertices,
+                                &mut vertex_indices,
+                                &mut triangles,
+                            );
+                        }
+                        if j + 1 == self.ny || !self.is_selected(i, j + 1, k) {
+                            emit_cell_face(
+                                self,
+                                i,
+                                j,
+                                k,
+                                CellFace::YMax,
+                                &mut vertices,
+                                &mut vertex_indices,
+                                &mut triangles,
+                            );
+                        }
+                        if k == 0 || !self.is_selected(i, j, k - 1) {
+                            emit_cell_face(
+                                self,
+                                i,
+                                j,
+                                k,
+                                CellFace::ZMin,
+                                &mut vertices,
+                                &mut vertex_indices,
+                                &mut triangles,
+                            );
+                        }
+                        if k + 1 == self.nz || !self.is_selected(i, j, k + 1) {
+                            emit_cell_face(
+                                self,
+                                i,
+                                j,
+                                k,
+                                CellFace::ZMax,
+                                &mut vertices,
+                                &mut vertex_indices,
+                                &mut triangles,
+                            );
+                        }
                     }
                 }
             }
@@ -1193,6 +1299,52 @@ impl OrthogonalCellPlan {
             SourceProvenance::exact(label),
             validation,
         )
+    }
+
+    fn selected_rectangular_block_bounds(
+        &self,
+    ) -> Option<(usize, usize, usize, usize, usize, usize)> {
+        if self.selected_count == 0 {
+            return None;
+        }
+        let mut i_min = self.nx;
+        let mut i_max = 0usize;
+        let mut j_min = self.ny;
+        let mut j_max = 0usize;
+        let mut k_min = self.nz;
+        let mut k_max = 0usize;
+        for i in 0..self.nx {
+            for j in 0..self.ny {
+                for k in 0..self.nz {
+                    if !self.is_selected(i, j, k) {
+                        continue;
+                    }
+                    i_min = i_min.min(i);
+                    i_max = i_max.max(i + 1);
+                    j_min = j_min.min(j);
+                    j_max = j_max.max(j + 1);
+                    k_min = k_min.min(k);
+                    k_max = k_max.max(k + 1);
+                }
+            }
+        }
+        let volume = i_max
+            .checked_sub(i_min)?
+            .checked_mul(j_max.checked_sub(j_min)?)?
+            .checked_mul(k_max.checked_sub(k_min)?)?;
+        if volume != self.selected_count {
+            return None;
+        }
+        for i in i_min..i_max {
+            for j in j_min..j_max {
+                for k in k_min..k_max {
+                    if !self.is_selected(i, j, k) {
+                        return None;
+                    }
+                }
+            }
+        }
+        Some((i_min, i_max, j_min, j_max, k_min, k_max))
     }
 }
 
@@ -1265,6 +1417,80 @@ fn emit_cell_face(
             grid_vertex(i + 1, j + 1, k + 1),
             grid_vertex(i, j + 1, k + 1),
         ),
+    }
+}
+
+fn emit_rect_face(
+    plan: &OrthogonalCellPlan,
+    plane: OrientedPlaneKey,
+    u_min: usize,
+    u_max: usize,
+    v_min: usize,
+    v_max: usize,
+    vertices: &mut Vec<Point3>,
+    vertex_indices: &mut BTreeMap<GridVertexKey, usize>,
+    triangles: &mut Vec<Triangle>,
+) {
+    match (plane.axis, plane.normal_sign) {
+        (Axis::X, -1) => emit_quad(
+            plan,
+            vertices,
+            vertex_indices,
+            triangles,
+            grid_vertex(plane.plane, u_max, v_min),
+            grid_vertex(plane.plane, u_min, v_min),
+            grid_vertex(plane.plane, u_min, v_max),
+            grid_vertex(plane.plane, u_max, v_max),
+        ),
+        (Axis::X, 1) => emit_quad(
+            plan,
+            vertices,
+            vertex_indices,
+            triangles,
+            grid_vertex(plane.plane, u_min, v_min),
+            grid_vertex(plane.plane, u_max, v_min),
+            grid_vertex(plane.plane, u_max, v_max),
+            grid_vertex(plane.plane, u_min, v_max),
+        ),
+        (Axis::Y, -1) => emit_quad(
+            plan,
+            vertices,
+            vertex_indices,
+            triangles,
+            grid_vertex(u_min, plane.plane, v_min),
+            grid_vertex(u_max, plane.plane, v_min),
+            grid_vertex(u_max, plane.plane, v_max),
+            grid_vertex(u_min, plane.plane, v_max),
+        ),
+        (Axis::Y, 1) => emit_quad(
+            plan,
+            vertices,
+            vertex_indices,
+            triangles,
+            grid_vertex(u_max, plane.plane, v_min),
+            grid_vertex(u_min, plane.plane, v_min),
+            grid_vertex(u_min, plane.plane, v_max),
+            grid_vertex(u_max, plane.plane, v_max),
+        ),
+        (Axis::Z, -1) => {
+            let a = grid_vertex(u_min, v_min, plane.plane);
+            let b = grid_vertex(u_max, v_max, plane.plane);
+            let c = grid_vertex(u_max, v_min, plane.plane);
+            let d = grid_vertex(u_min, v_max, plane.plane);
+            emit_triangle(plan, vertices, vertex_indices, triangles, [a, b, c]);
+            emit_triangle(plan, vertices, vertex_indices, triangles, [a, d, b]);
+        }
+        (Axis::Z, 1) => emit_quad(
+            plan,
+            vertices,
+            vertex_indices,
+            triangles,
+            grid_vertex(u_min, v_min, plane.plane),
+            grid_vertex(u_max, v_min, plane.plane),
+            grid_vertex(u_max, v_max, plane.plane),
+            grid_vertex(u_min, v_max, plane.plane),
+        ),
+        (_, _) => {}
     }
 }
 

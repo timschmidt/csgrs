@@ -581,13 +581,6 @@ pub enum ExactBooleanShortcutKind {
     /// Exact coordinate equality and matching triangle sets, modulo indexing
     /// and face orientation.
     SameSurface,
-    /// Certified union of coplanar-volumetric axis-aligned boxes.
-    AxisAlignedBoxUnion,
-    /// Certified positive-volume intersection of coplanar-volumetric
-    /// axis-aligned boxes.
-    AxisAlignedBoxIntersection,
-    /// Certified slab difference of coplanar-volumetric axis-aligned boxes.
-    AxisAlignedBoxDifference,
     /// Certified split difference of coplanar-volumetric axis-aligned boxes.
     AxisAlignedBoxMultiDifference,
     /// Certified nested-shell difference of coplanar-volumetric axis-aligned
@@ -1254,15 +1247,6 @@ pub enum ExactBooleanSupport {
     /// A named operation was answered by exact coordinate equality and matching
     /// triangle vertex sets, ignoring per-face orientation.
     CertifiedSameSurface,
-    /// Union was materialized as one exact axis-aligned box from two
-    /// coplanar-volumetric slab-overlapping boxes.
-    CertifiedAxisAlignedBoxUnion,
-    /// Intersection was materialized as one exact axis-aligned box from two
-    /// positive-volume-overlapping axis-aligned boxes.
-    CertifiedAxisAlignedBoxIntersection,
-    /// Difference was materialized as one exact axis-aligned box after a
-    /// coplanar-volumetric slab cut.
-    CertifiedAxisAlignedBoxDifference,
     /// Difference was materialized as two exact axis-aligned boxes after an
     /// interior coplanar-volumetric slab cut.
     CertifiedAxisAlignedBoxMultiDifference,
@@ -1431,9 +1415,6 @@ impl ExactBooleanPreflight {
             | ExactBooleanSupport::CertifiedBoundsDisjoint
             | ExactBooleanSupport::CertifiedIdentical
             | ExactBooleanSupport::CertifiedSameSurface
-            | ExactBooleanSupport::CertifiedAxisAlignedBoxUnion
-            | ExactBooleanSupport::CertifiedAxisAlignedBoxIntersection
-            | ExactBooleanSupport::CertifiedAxisAlignedBoxDifference
             | ExactBooleanSupport::CertifiedAxisAlignedBoxMultiDifference
             | ExactBooleanSupport::CertifiedAxisAlignedBoxNestedDifference
             | ExactBooleanSupport::CertifiedAxisAlignedBoxEmptyDifference

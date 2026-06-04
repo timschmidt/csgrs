@@ -14243,7 +14243,7 @@ fn exercise_axis_aligned_coplanar_volumetric_boxes() {
     union.validate().unwrap();
     assert_eq!(
         union.support,
-        hypermesh::ExactBooleanSupport::CertifiedAxisAlignedBoxUnion
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let union_result = hypermesh::boolean_exact(
         &left,
@@ -14269,7 +14269,7 @@ fn exercise_axis_aligned_coplanar_volumetric_boxes() {
     face_union.validate().unwrap();
     assert_eq!(
         face_union.support,
-        ExactBooleanSupport::CertifiedAxisAlignedBoxUnion
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let face_union_result = hypermesh::boolean_exact(
         &face_left,
@@ -14293,7 +14293,7 @@ fn exercise_axis_aligned_coplanar_volumetric_boxes() {
     face_difference.validate().unwrap();
     assert_eq!(
         face_difference.support,
-        ExactBooleanSupport::CertifiedAxisAlignedBoxDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     assert!(intersect_closed_convex_solids(&face_left, &face_right).is_none());
     let face_difference_result = hypermesh::boolean_exact(
@@ -14431,7 +14431,7 @@ fn exercise_axis_aligned_coplanar_volumetric_boxes() {
     difference.validate().unwrap();
     assert_eq!(
         difference.support,
-        hypermesh::ExactBooleanSupport::CertifiedAxisAlignedBoxDifference
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let difference_result = hypermesh::boolean_exact(
         &left,
@@ -14518,7 +14518,7 @@ fn exercise_axis_aligned_coplanar_volumetric_boxes() {
     contained_union.validate().unwrap();
     assert_eq!(
         contained_union.support,
-        ExactBooleanSupport::CertifiedAxisAlignedBoxUnion
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let contained_union_result = hypermesh::boolean_exact(
         &contained_outer,
@@ -14639,7 +14639,7 @@ fn exercise_axis_aligned_coplanar_volumetric_boxes() {
     cell_intersection.validate().unwrap();
     assert_eq!(
         cell_intersection.support,
-        ExactBooleanSupport::CertifiedAxisAlignedBoxIntersection
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let cell_intersection_result = hypermesh::boolean_exact(
         &cell_left,

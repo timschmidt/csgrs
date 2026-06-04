@@ -205,72 +205,6 @@ pub(crate) fn materialize_axis_aligned_box_operation(
     materialize_axis_aligned_box_operation_from_inputs(&inputs, operation, validation)
 }
 
-/// Materialize only the single-box operation shortcuts.
-///
-/// This intentionally excludes split, nested, empty, and cell-complex
-/// difference/union outputs so public boolean dispatch can preserve the more
-/// specific shortcut labels for those broader AABB materializers.
-pub(crate) fn materialize_simple_axis_aligned_box_operation(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: AxisAlignedBoxOperation,
-    validation: ValidationPolicy,
-) -> Result<Option<ExactMesh>, MeshError> {
-    let Some(inputs) = certify_axis_aligned_box_inputs(left, right) else {
-        return Ok(None);
-    };
-    match operation {
-        AxisAlignedBoxOperation::Union => {
-            let Some(bounds) =
-                union_axis_aligned_box_bounds_from_boxes(&inputs.left, &inputs.right)
-            else {
-                return Ok(None);
-            };
-            Ok(Some(bounds.to_mesh(
-                "exact axis-aligned coplanar-volumetric box union",
-                validation,
-            )?))
-        }
-        AxisAlignedBoxOperation::Intersection => {
-            let Some(bounds) =
-                intersection_axis_aligned_box_bounds_from_boxes(&inputs.left, &inputs.right)
-            else {
-                return Ok(None);
-            };
-            Ok(Some(bounds.to_mesh(
-                "exact axis-aligned coplanar-volumetric box intersection",
-                validation,
-            )?))
-        }
-        AxisAlignedBoxOperation::Difference => {
-            let Some(bounds) =
-                difference_axis_aligned_box_bounds_from_boxes(&inputs.left, &inputs.right)
-            else {
-                return Ok(None);
-            };
-            Ok(Some(bounds.to_mesh(
-                "exact axis-aligned coplanar-volumetric box difference",
-                validation,
-            )?))
-        }
-    }
-}
-
-/// Return whether a box-union shortcut is certified for the operands.
-pub(crate) fn has_axis_aligned_box_union(left: &ExactMesh, right: &ExactMesh) -> bool {
-    union_axis_aligned_box_bounds(left, right).is_some()
-}
-
-/// Return whether a box-intersection shortcut is certified for operands.
-pub(crate) fn has_axis_aligned_box_intersection(left: &ExactMesh, right: &ExactMesh) -> bool {
-    intersection_axis_aligned_box_bounds(left, right).is_some()
-}
-
-/// Return whether a box-difference shortcut is certified for the operands.
-pub(crate) fn has_axis_aligned_box_difference(left: &ExactMesh, right: &ExactMesh) -> bool {
-    difference_axis_aligned_box_bounds(left, right).is_some()
-}
-
 /// Return whether a split box-difference shortcut is certified for operands.
 pub(crate) fn has_axis_aligned_box_multi_difference(left: &ExactMesh, right: &ExactMesh) -> bool {
     multi_difference_axis_aligned_box_bounds(left, right).is_some()
@@ -316,11 +250,7 @@ pub(crate) fn is_axis_aligned_box(mesh: &ExactMesh) -> bool {
 /// full-face-adjacent case whose regularized union is one closed box.
 /// Lower-dimensional intersection and subtraction outputs still stay with the
 /// boundary-policy layer. The equality, containment, and contact checks are
-fn union_axis_aligned_box_bounds(left: &ExactMesh, right: &ExactMesh) -> Option<AxisAlignedBox> {
-    let inputs = certify_axis_aligned_box_inputs(left, right)?;
-    union_axis_aligned_box_bounds_from_boxes(&inputs.left, &inputs.right)
-}
-
+/// exact `Real` comparisons.
 fn union_axis_aligned_box_bounds_from_boxes(
     left: &AxisAlignedBox,
     right: &AxisAlignedBox,
@@ -349,14 +279,6 @@ fn union_axis_aligned_box_bounds_from_boxes(
     Some(output)
 }
 
-fn intersection_axis_aligned_box_bounds(
-    left: &ExactMesh,
-    right: &ExactMesh,
-) -> Option<AxisAlignedBox> {
-    let inputs = certify_axis_aligned_box_inputs(left, right)?;
-    intersection_axis_aligned_box_bounds_from_boxes(&inputs.left, &inputs.right)
-}
-
 fn intersection_axis_aligned_box_bounds_from_boxes(
     left: &AxisAlignedBox,
     right: &AxisAlignedBox,
@@ -383,15 +305,7 @@ fn intersection_axis_aligned_box_bounds_from_boxes(
 /// or when the two boxes are full-face adjacent and the regularized
 /// difference is exactly the left box. The face-adjacent case follows the
 /// regularized-solid convention described by Requicha, "Representations for
-/// Rigid Solids: Theory, Methods, and Systems," *ACM Computing Surveys* 12.4
-fn difference_axis_aligned_box_bounds(
-    left: &ExactMesh,
-    right: &ExactMesh,
-) -> Option<AxisAlignedBox> {
-    let inputs = certify_axis_aligned_box_inputs(left, right)?;
-    difference_axis_aligned_box_bounds_from_boxes(&inputs.left, &inputs.right)
-}
-
+/// Rigid Solids: Theory, Methods, and Systems," *ACM Computing Surveys* 12.4.
 fn difference_axis_aligned_box_bounds_from_boxes(
     left: &AxisAlignedBox,
     right: &AxisAlignedBox,
