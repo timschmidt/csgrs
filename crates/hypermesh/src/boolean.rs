@@ -2192,7 +2192,7 @@ fn boolean_recovered_single_coplanar_boundary_union(
     };
     if !matches!(
         boundary_result.kind,
-        ExactBooleanResultKind::WindingMaterialized {
+        ExactBooleanResultKind::ArrangementCellComplexMaterialized {
             operation: ExactBooleanOperation::Union
         }
     ) {
@@ -5767,7 +5767,7 @@ fn boolean_volumetric_winding_regions_from_graph(
         return Ok(None);
     };
     let result = ExactBooleanResult {
-        kind: ExactBooleanResultKind::WindingMaterialized { operation },
+        kind: ExactBooleanResultKind::ArrangementCellComplexMaterialized { operation },
         graph_had_unknowns: false,
         region_classifications: materialized.region_classifications,
         triangulations: materialized.triangulations,
@@ -5779,7 +5779,7 @@ fn boolean_volumetric_winding_regions_from_graph(
         MeshError::one(MeshDiagnostic::new(
             Severity::Error,
             DiagnosticKind::UnsupportedExactOperation,
-            format!("exact winding-materialized result validation failed: {error:?}"),
+            format!("exact volumetric materialized result validation failed: {error:?}"),
         ))
     })?;
     Ok(Some(result))

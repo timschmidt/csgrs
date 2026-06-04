@@ -31344,12 +31344,12 @@ fn exact_named_booleans_materialize_partial_convex_intersection() {
             .all(|classification| classification.relation.is_strictly_decided())
     );
     let mut mislabeled_union = union.clone();
-    mislabeled_union.kind = hypermesh::ExactBooleanResultKind::WindingMaterialized {
+    mislabeled_union.kind = hypermesh::ExactBooleanResultKind::ArrangementCellComplexMaterialized {
         operation: hypermesh::ExactBooleanOperation::Difference,
     };
     assert_eq!(
         mislabeled_union.validate().unwrap_err(),
-        hypermesh::ExactReportValidationError::WindingMaterializedAssemblyViolatesOperation
+        hypermesh::ExactReportValidationError::VolumetricMaterializedAssemblyViolatesOperation
     );
     let mut wrong_union_orientation = union.clone();
     wrong_union_orientation.assembly.triangles[0].orientation =

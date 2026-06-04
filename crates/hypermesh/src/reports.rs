@@ -89,9 +89,9 @@ pub enum ExactReportValidationError {
     InvalidAssembly,
     /// A retained volumetric winding region classification failed its audit.
     InvalidVolumetricClassification(ExactVolumetricRegionError),
-    /// A winding-materialized result did not retain volumetric region facts.
+    /// An arrangement-materialized result did not retain volumetric region facts.
     MissingVolumetricClassifications,
-    /// A result that was not winding-materialized retained volumetric region
+    /// A result that was not arrangement-materialized retained volumetric region
     /// facts.
     UnexpectedVolumetricClassifications,
     /// A volumetric classification has no matching retained source-region
@@ -100,7 +100,7 @@ pub enum ExactReportValidationError {
     /// A retained source-region triangulation has no matching volumetric
     /// classification.
     UnclassifiedVolumetricTriangulation,
-    /// A winding-materialized result retained boundary, unknown, or nonclosed
+    /// An arrangement-materialized result retained boundary, unknown, or nonclosed
     /// region evidence.
     VolumetricClassificationNotDecided,
     /// The materialized output mesh failed retained-state validation.
@@ -122,9 +122,9 @@ pub enum ExactReportValidationError {
     /// A selected-region result retained output triangles from a source side
     /// excluded by its declared selection policy.
     SelectedRegionAssemblyViolatesSelection,
-    /// A winding-materialized result retained output triangles that do not
+    /// A volumetric materialized result retained output triangles that do not
     /// match the declared operation's per-cell volumetric retention policy.
-    WindingMaterializedAssemblyViolatesOperation,
+    VolumetricMaterializedAssemblyViolatesOperation,
     /// A certified graph shortcut retained graph events that contradict the
     /// shortcut status.
     UnexpectedGraphEvents,
@@ -513,7 +513,7 @@ pub struct ExactBooleanResult {
     pub triangulations: Vec<FaceRegionTriangulation>,
     /// Non-mutating exact output assembly.
     pub assembly: ExactBooleanAssemblyPlan,
-    /// Exact winding classifications used by [`ExactBooleanResultKind::WindingMaterialized`].
+    /// Exact winding classifications used by volumetric arrangement materialization.
     pub volumetric_classifications: Vec<ExactVolumetricRegionClassification>,
     /// Materialized exact output mesh validated under the requested policy.
     pub mesh: ExactMesh,
@@ -560,17 +560,6 @@ pub enum ExactBooleanResultKind {
     /// evidence for a named volumetric boolean.
     ArrangementCellComplexMaterialized {
         /// Named operation executed by the arrangement cell-complex pipeline.
-        operation: ExactBooleanOperation,
-    },
-    /// The result was produced by materializing split regions after exact
-    /// closed-mesh winding classified each source region against the opposite
-    /// operand.
-    ///
-    /// The exact geometry used for this path is the same region split evidence
-    /// as selected-region policy, but the retention policy is the certified
-    /// inside/outside decision for a named volumetric boolean.
-    WindingMaterialized {
-        /// Named operation executed by the winding-backed materialization.
         operation: ExactBooleanOperation,
     },
 }
@@ -719,9 +708,6 @@ pub enum ExactBooleanShortcutKind {
     /// Certified exact ray-parity separation for closed nonconvex-capable
     /// no-intersection meshes.
     WindingSeparated,
-    /// Certified exact split-region materialization driven by closed-mesh
-    /// winding classifications.
-    WindingMaterialized,
     /// Certified exact arrangement/cell-complex materialization.
     ///
     /// The output was produced by building retained 3D arrangement cells,
@@ -774,12 +760,10 @@ impl ExactBooleanResult {
             ExactBooleanResultKind::SelectedRegions { .. }
                 | ExactBooleanResultKind::OpenSurfaceArrangement { .. }
                 | ExactBooleanResultKind::ArrangementCellComplexMaterialized { .. }
-                | ExactBooleanResultKind::WindingMaterialized { .. }
         );
         let retains_volumetric_artifacts = matches!(
             self.kind,
             ExactBooleanResultKind::ArrangementCellComplexMaterialized { .. }
-                | ExactBooleanResultKind::WindingMaterialized { .. }
         );
         if !retains_region_artifacts
             && (!self.region_classifications.is_empty()
@@ -988,10 +972,9 @@ impl ExactBooleanResult {
             validate_output_mesh_matches_assembly(&self.assembly, &self.mesh)?;
         }
 
-        if let ExactBooleanResultKind::ArrangementCellComplexMaterialized { operation }
-        | ExactBooleanResultKind::WindingMaterialized { operation } = self.kind
+        if let ExactBooleanResultKind::ArrangementCellComplexMaterialized { operation } = self.kind
         {
-            validate_winding_materialized_assembly_matches_operation(
+            validate_volumetric_materialized_assembly_matches_operation(
                 operation,
                 &self.triangulations,
                 &self.volumetric_classifications,
@@ -1041,7 +1024,6 @@ impl ExactBooleanResult {
             ExactBooleanResultKind::SelectedRegions { .. }
                 | ExactBooleanResultKind::OpenSurfaceArrangement { .. }
                 | ExactBooleanResultKind::ArrangementCellComplexMaterialized { .. }
-                | ExactBooleanResultKind::WindingMaterialized { .. }
         ) {
             self.assembly
                 .validate_source_face_incidence(left, right)
@@ -1050,7 +1032,6 @@ impl ExactBooleanResult {
         if matches!(
             self.kind,
             ExactBooleanResultKind::ArrangementCellComplexMaterialized { .. }
-                | ExactBooleanResultKind::WindingMaterialized { .. }
         ) {
             for classification in &self.volumetric_classifications {
                 let Some(triangulation) = self.triangulations.iter().find(|triangulation| {
@@ -1117,7 +1098,7 @@ fn open_surface_arrangement_selection(
     }
 }
 
-/// Local per-cell retention state for a winding-materialized result.
+/// Local per-cell retention state for an arrangement-materialized result.
 ///
 /// This mirrors the named-boolean assembly policy, but lives in the public
 /// report validator so a copied result can be audited without re-running the
@@ -1125,13 +1106,13 @@ fn open_surface_arrangement_selection(
 /// only valid while the retained predicate facts still justify exactly the
 /// emitted combinatorics.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-enum WindingCellRetention {
+enum VolumetricCellRetention {
     Drop,
     Keep,
     KeepReversed,
 }
 
-fn validate_winding_materialized_assembly_matches_operation(
+fn validate_volumetric_materialized_assembly_matches_operation(
     operation: ExactBooleanOperation,
     triangulations: &[FaceRegionTriangulation],
     classifications: &[ExactVolumetricRegionClassification],
@@ -1140,7 +1121,7 @@ fn validate_winding_materialized_assembly_matches_operation(
     for triangulation in triangulations {
         for triangle in triangulation.triangles.chunks_exact(3) {
             let triangle = [triangle[0], triangle[1], triangle[2]];
-            let expected = winding_cell_retention_for_operation(
+            let expected = volumetric_cell_retention_for_operation(
                 operation,
                 triangulation,
                 triangle,
@@ -1173,15 +1154,15 @@ fn validate_winding_materialized_assembly_matches_operation(
                 })
                 .collect::<Vec<_>>();
             match expected {
-                WindingCellRetention::Drop if !source_matches.is_empty() => {
+                VolumetricCellRetention::Drop if !source_matches.is_empty() => {
                     return Err(
-                        ExactReportValidationError::WindingMaterializedAssemblyViolatesOperation,
+                        ExactReportValidationError::VolumetricMaterializedAssemblyViolatesOperation,
                     );
                 }
-                WindingCellRetention::Keep | WindingCellRetention::KeepReversed => {
+                VolumetricCellRetention::Keep | VolumetricCellRetention::KeepReversed => {
                     let _ = geometric_matches;
                 }
-                WindingCellRetention::Drop => {}
+                VolumetricCellRetention::Drop => {}
             }
         }
     }
@@ -1189,18 +1170,18 @@ fn validate_winding_materialized_assembly_matches_operation(
     Ok(())
 }
 
-fn winding_cell_retention_for_operation(
+fn volumetric_cell_retention_for_operation(
     operation: ExactBooleanOperation,
     triangulation: &FaceRegionTriangulation,
     triangle: [usize; 3],
     classifications: &[ExactVolumetricRegionClassification],
-) -> WindingCellRetention {
+) -> VolumetricCellRetention {
     let Some(classification) = classifications.iter().find(|classification| {
         classification.region_side == triangulation.side
             && classification.region_face == triangulation.face
             && classification.triangle == triangle
     }) else {
-        return WindingCellRetention::Drop;
+        return VolumetricCellRetention::Drop;
     };
     // Boundary cells are exact non-strict facts, not inside/outside guesses.
     // The executor consumes them through the deterministic owner policy
@@ -1233,13 +1214,13 @@ fn winding_cell_retention_for_operation(
             ExactBooleanOperation::Difference,
             MeshSide::Left,
             super::volumetric::ExactVolumetricRegionRelation::Outside,
-        ) => WindingCellRetention::Keep,
+        ) => VolumetricCellRetention::Keep,
         (
             ExactBooleanOperation::Difference,
             MeshSide::Right,
             super::volumetric::ExactVolumetricRegionRelation::Inside,
-        ) => WindingCellRetention::KeepReversed,
-        _ => WindingCellRetention::Drop,
+        ) => VolumetricCellRetention::KeepReversed,
+        _ => VolumetricCellRetention::Drop,
     }
 }
 
@@ -1295,7 +1276,7 @@ fn validate_output_mesh_matches_assembly(
     // The materialized mesh is an edge artifact of the retained assembly, not
     // combinatorial chain as part of the exact object state, so the triangle
     // soup returned to callers must replay exactly from the audited assembly
-    // plan for both selected-region and winding-materialized outputs.
+    // plan for both selected-region and arrangement-materialized outputs.
     for (assembly_vertex, mesh_vertex) in assembly.vertices.iter().zip(mesh.vertices()) {
         let mesh_point = mesh_vertex.clone();
         if !points_equal(&assembly_vertex.point, &mesh_point) {
@@ -1567,7 +1548,7 @@ pub struct ExactBooleanPreflight {
     /// This report separates boundary-only opposite-side shared faces from
     /// same-side or undecided positive-area coplanar overlap. Retaining it
     /// exact object evidence that authorized either a blocker or a
-    /// winding-materialized consumption of coplanar source-face cells.
+    /// arrangement-materialized consumption of coplanar source-face cells.
     pub coplanar_volumetric_evidence: Option<CoplanarVolumetricCellEvidenceReport>,
 }
 

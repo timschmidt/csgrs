@@ -236,7 +236,7 @@ pub enum ExactVolumetricRegionError {
 ///
 /// This compatibility entry point classifies the first certified
 /// nondegenerate triangle emitted by `hypertri` for the split region. New
-/// winding-materialized booleans classify every triangle through
+/// arrangement-materialized booleans classify every triangle through
 /// [`classify_triangulated_regions_against_opposite_meshes`]. The centroid is
 /// built as rational `Real` arithmetic, then classified by
 /// [`classify_point_against_closed_mesh_winding_report`]. No primitive-float

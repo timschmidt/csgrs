@@ -729,7 +729,7 @@ impl ExactBooleanAssemblyPlan {
     /// disconnected.
     ///
     /// The default assembly welds exact-equal coordinates globally. That is the
-    /// right handoff for ordinary edge-adjacent output, but winding-materialized
+    /// right handoff for ordinary edge-adjacent output, but arrangement-materialized
     /// booleans can produce regularized differences where two closed sheets touch
     /// at one exact coordinate while remaining distinct topological vertices. A
     /// global weld turns that point contact into a non-manifold vertex even

@@ -266,7 +266,7 @@ fuzz_target!(|data: &[u8]| {
             );
             if matches!(
                 result.kind,
-                hypermesh::ExactBooleanResultKind::WindingMaterialized { .. }
+                hypermesh::ExactBooleanResultKind::ArrangementCellComplexMaterialized { .. }
             ) {
                 let mut missing_volumetric = result.clone();
                 missing_volumetric.volumetric_classifications.clear();
@@ -15270,14 +15270,14 @@ fn exercise_non_rectilinear_coplanar_volumetric_materialization() {
         assert!(result.mesh.facts().mesh.closed_manifold);
         if operation == ExactBooleanOperation::Union {
             let mut mislabeled = result.clone();
-            mislabeled.kind = hypermesh::ExactBooleanResultKind::WindingMaterialized {
+            mislabeled.kind = hypermesh::ExactBooleanResultKind::ArrangementCellComplexMaterialized {
                 operation: ExactBooleanOperation::Difference,
             };
             assert!(matches!(
                 mislabeled.validate(),
                 Err(
                     hypermesh::ExactReportValidationError::
-                        WindingMaterializedAssemblyViolatesOperation
+                        VolumetricMaterializedAssemblyViolatesOperation
                 )
             ));
             let mut wrong_orientation = result.clone();

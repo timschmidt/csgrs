@@ -53,7 +53,7 @@ struct CoplanarCellEdgePoint {
     point: Point3,
 }
 
-/// Full-face cell plan used by winding-materialized booleans.
+/// Full-face cell plan used by arrangement-materialized booleans.
 pub type ExactFaceCellTriangulationPlan = (ExactFaceRegionPlan, Vec<FaceRegionTriangulation>);
 
 /// Triangulate every source face into exact constrained planar cells.
