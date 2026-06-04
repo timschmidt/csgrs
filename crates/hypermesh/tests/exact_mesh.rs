@@ -31668,6 +31668,36 @@ fn exact_convex_difference_materializes_multi_face_overlap() {
 }
 
 #[test]
+fn exact_arrangement_pipeline_triangulates_mixed_source_convex_difference() {
+    let left = tetrahedron_i64([0, 0, 0], [6, 0, 0], [0, 6, 0], [0, 0, 6]);
+    let right = tetrahedron_i64([2, -1, -1], [-1, 2, -1], [-1, -1, 2], [5, 5, 5]);
+
+    let report = hypermesh::exact_arrangement_boolean_attempt_report(
+        &left,
+        &right,
+        hypermesh::ExactBooleanOperation::Difference,
+        hypermesh::ExactRegularizationPolicy::REGULARIZED_SOLID,
+    )
+    .unwrap();
+
+    assert_eq!(
+        report.stage,
+        hypermesh::ExactArrangementBooleanStage::Materialized
+    );
+    assert_eq!(report.decline, None);
+    assert_eq!(
+        report.materialized_shortcut,
+        Some(hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex)
+    );
+    assert_eq!(report.arrangement_blockers, 0);
+    assert_eq!(report.volume_regions, 0);
+    assert_eq!(report.volume_adjacencies, 0);
+    assert!(report.selected_faces > 0);
+    assert!(report.output_vertices > 0);
+    assert!(report.output_triangles > 0);
+}
+
+#[test]
 fn exact_convex_difference_drops_coplanar_boundary_cut_faces() {
     let left = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
     let right = tetrahedron_i64([1, 1, 0], [5, 1, 0], [1, 5, 0], [1, 1, 4]);

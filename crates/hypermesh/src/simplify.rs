@@ -877,11 +877,14 @@ fn triangulate_loop_with_holes(
         .map(|point| find_or_insert_vertex(vertices, point.clone()))
         .collect::<Result<Vec<_>, _>>()?;
     if polygon_points.len() == 3 && hole_indices.is_empty() {
-        triangles.push(Triangle([
-            local_to_global[0],
-            local_to_global[1],
-            local_to_global[2],
-        ]));
+        let triangle = oriented_output_triangle(
+            &polygon_points,
+            projection,
+            &[0, 1, 2],
+            &local_to_global,
+            output_orientation,
+        )?;
+        triangles.push(triangle);
         return Ok(());
     }
     let indices = hypertri::earcut(&projected, &hole_indices)
@@ -891,25 +894,45 @@ fn triangulate_loop_with_holes(
     }
     let mut emitted_triangles = indices.chunks_exact(3);
     for triangle in &mut emitted_triangles {
-        validate_emitted_triangle_area(&polygon_points, projection, triangle)?;
-        if !hole_indices.is_empty() && output_orientation == Ordering::Less {
-            triangles.push(Triangle([
-                local_to_global[triangle[0]],
-                local_to_global[triangle[2]],
-                local_to_global[triangle[1]],
-            ]));
-        } else {
-            triangles.push(Triangle([
-                local_to_global[triangle[0]],
-                local_to_global[triangle[1]],
-                local_to_global[triangle[2]],
-            ]));
-        }
+        triangles.push(oriented_output_triangle(
+            &polygon_points,
+            projection,
+            triangle,
+            &local_to_global,
+            output_orientation,
+        )?);
     }
     if !emitted_triangles.remainder().is_empty() {
         return Err(ExactArrangementBlocker::NonManifoldCellComplex);
     }
     Ok(())
+}
+
+fn oriented_output_triangle(
+    polygon_points: &[Point3],
+    projection: CoplanarProjection,
+    triangle: &[usize],
+    local_to_global: &[usize],
+    output_orientation: Ordering,
+) -> Result<Triangle, ExactArrangementBlocker> {
+    let emitted_orientation = emitted_triangle_orientation(polygon_points, projection, triangle)?;
+    let [a, b, c] = triangle else {
+        return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+    };
+    let a = *local_to_global
+        .get(*a)
+        .ok_or(ExactArrangementBlocker::NonManifoldCellComplex)?;
+    let b = *local_to_global
+        .get(*b)
+        .ok_or(ExactArrangementBlocker::NonManifoldCellComplex)?;
+    let c = *local_to_global
+        .get(*c)
+        .ok_or(ExactArrangementBlocker::NonManifoldCellComplex)?;
+    if emitted_orientation == output_orientation {
+        Ok(Triangle([a, b, c]))
+    } else {
+        Ok(Triangle([a, c, b]))
+    }
 }
 
 fn projected_loop_orientation(
@@ -924,11 +947,11 @@ fn projected_loop_orientation(
     }
 }
 
-fn validate_emitted_triangle_area(
+fn emitted_triangle_orientation(
     polygon_points: &[Point3],
     projection: CoplanarProjection,
     triangle: &[usize],
-) -> Result<(), ExactArrangementBlocker> {
+) -> Result<Ordering, ExactArrangementBlocker> {
     let [a, b, c] = triangle else {
         return Err(ExactArrangementBlocker::NonManifoldCellComplex);
     };
@@ -952,7 +975,7 @@ fn validate_emitted_triangle_area(
     )
     .value()
     {
-        Some(Ordering::Less | Ordering::Greater) => Ok(()),
+        Some(ordering @ (Ordering::Less | Ordering::Greater)) => Ok(ordering),
         Some(Ordering::Equal) => Err(ExactArrangementBlocker::NonManifoldCellComplex),
         None => Err(ExactArrangementBlocker::UndecidableOrdering),
     }
@@ -1495,7 +1518,7 @@ mod tests {
         let points = [p(0, 0, 0), p(1, 0, 0), p(2, 0, 0)];
 
         assert_eq!(
-            validate_emitted_triangle_area(&points, CoplanarProjection::Xy, &[0, 1, 2]),
+            emitted_triangle_orientation(&points, CoplanarProjection::Xy, &[0, 1, 2]),
             Err(ExactArrangementBlocker::NonManifoldCellComplex)
         );
     }
