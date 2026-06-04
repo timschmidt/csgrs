@@ -1552,9 +1552,10 @@ mod tests {
     fn certifies_box_cell_union_output() {
         let left = axis_aligned_box_i64([0, 0, 0], [2, 2, 2]);
         let right = axis_aligned_box_i64([1, 1, 0], [3, 3, 2]);
-        let mesh = super::super::box_solid::cell_union_axis_aligned_boxes(
+        let mesh = super::super::box_solid::materialize_axis_aligned_box_operation(
             &left,
             &right,
+            super::super::box_solid::AxisAlignedBoxOperation::Union,
             ValidationPolicy::CLOSED,
         )
         .unwrap()

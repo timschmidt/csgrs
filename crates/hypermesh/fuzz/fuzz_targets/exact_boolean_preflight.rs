@@ -14614,7 +14614,7 @@ fn exercise_axis_aligned_coplanar_volumetric_boxes() {
     cell_union.validate().unwrap();
     assert_eq!(
         cell_union.support,
-        hypermesh::ExactBooleanSupport::CertifiedAxisAlignedBoxCellUnion
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let cell_union_result = hypermesh::boolean_exact(
         &cell_left,
@@ -14664,7 +14664,7 @@ fn exercise_axis_aligned_coplanar_volumetric_boxes() {
     cell_difference.validate().unwrap();
     assert_eq!(
         cell_difference.support,
-        hypermesh::ExactBooleanSupport::CertifiedAxisAlignedBoxCellDifference
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let cell_result = hypermesh::boolean_exact(
         &cell_left,

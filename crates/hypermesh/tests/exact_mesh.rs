@@ -7314,7 +7314,7 @@ fn exact_axis_aligned_coplanar_volumetric_box_difference_materializes_l_cell_com
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedAxisAlignedBoxCellDifference
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let difference = hypermesh::boolean_exact(
@@ -7336,12 +7336,12 @@ fn exact_axis_aligned_coplanar_volumetric_box_difference_materializes_l_cell_com
         .unwrap();
     assert_eq!(
         difference.kind,
-        hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::ExactBooleanShortcutKind::AxisAlignedBoxCellDifference
+        hypermesh::ExactBooleanResultKind::ArrangementCellComplexMaterialized {
+            operation: hypermesh::ExactBooleanOperation::Difference
         }
     );
-    assert_eq!(difference.mesh.vertices().len(), 16);
-    assert_eq!(difference.mesh.triangles().len(), 28);
+    assert_eq!(difference.mesh.vertices().len(), 14);
+    assert_eq!(difference.mesh.triangles().len(), 24);
     assert!(difference.mesh.facts().mesh.closed_manifold);
 
     let mut stale = preflight.clone();
@@ -7361,7 +7361,7 @@ fn exact_axis_aligned_coplanar_volumetric_box_union_materializes_orthogonal_cell
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedAxisAlignedBoxCellUnion
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let union = hypermesh::boolean_exact(
@@ -7383,8 +7383,8 @@ fn exact_axis_aligned_coplanar_volumetric_box_union_materializes_orthogonal_cell
         .unwrap();
     assert_eq!(
         union.kind,
-        hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::ExactBooleanShortcutKind::AxisAlignedBoxCellUnion
+        hypermesh::ExactBooleanResultKind::ArrangementCellComplexMaterialized {
+            operation: hypermesh::ExactBooleanOperation::Union
         }
     );
     assert!(union.mesh.triangles().len() > left.triangles().len() + right.triangles().len());
@@ -7591,7 +7591,7 @@ fn exact_axis_aligned_orthogonal_solid_cell_complex_reenters_boolean() {
     assert!(difference.mesh.facts().mesh.closed_manifold);
 
     let mut stale = union_preflight.clone();
-    stale.support = hypermesh::ExactBooleanSupport::CertifiedAxisAlignedBoxCellUnion;
+    stale.support = hypermesh::ExactBooleanSupport::CertifiedAxisAlignedBoxUnion;
     assert!(stale.validate_against_sources(&complex, &cutter).is_err());
 }
 

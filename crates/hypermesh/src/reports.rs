@@ -596,12 +596,6 @@ pub enum ExactBooleanShortcutKind {
     /// Certified empty difference because the left axis-aligned box is
     /// contained by the right box.
     AxisAlignedBoxEmptyDifference,
-    /// Certified orthogonal-cell union of coplanar-volumetric axis-aligned
-    /// boxes.
-    AxisAlignedBoxCellUnion,
-    /// Certified orthogonal-cell difference of coplanar-volumetric
-    /// axis-aligned boxes.
-    AxisAlignedBoxCellDifference,
     /// Certified orthogonal-cell union of axis-aligned solid cell complexes.
     AxisAlignedOrthogonalSolidCellUnion,
     /// Certified orthogonal-cell intersection of axis-aligned solid cell
@@ -1294,12 +1288,6 @@ pub enum ExactBooleanSupport {
     /// Difference was materialized as empty because the left axis-aligned box
     /// is contained by the right box.
     CertifiedAxisAlignedBoxEmptyDifference,
-    /// Union was materialized as an exact orthogonal cell complex for two
-    /// coplanar-volumetric axis-aligned boxes.
-    CertifiedAxisAlignedBoxCellUnion,
-    /// Difference was materialized as an exact orthogonal cell complex for two
-    /// coplanar-volumetric axis-aligned boxes.
-    CertifiedAxisAlignedBoxCellDifference,
     /// Union was materialized as an exact orthogonal cell complex from
     /// certified axis-aligned solid cell-complex sources.
     CertifiedAxisAlignedOrthogonalSolidCellUnion,
@@ -1552,20 +1540,6 @@ impl ExactBooleanPreflight {
                     return Err(ExactReportValidationError::UnexpectedArrangementReadiness);
                 }
                 checked_region_facts(self.region_count, &self.region_classifications)
-            }
-            ExactBooleanSupport::CertifiedAxisAlignedBoxCellUnion
-            | ExactBooleanSupport::CertifiedAxisAlignedBoxCellDifference => {
-                if operation_is_selected_region(self.operation)
-                    || self.graph_had_unknowns
-                    || self.blocker.is_some()
-                    || self.retained_face_pairs == 0
-                {
-                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
-                }
-                if self.arrangement_readiness.is_some() {
-                    return Err(ExactReportValidationError::UnexpectedArrangementReadiness);
-                }
-                no_region_facts(self.region_count, &self.region_classifications)
             }
             ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellUnion
             | ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellIntersection

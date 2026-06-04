@@ -170,47 +170,6 @@ pub(crate) fn empty_difference_axis_aligned_boxes(
     )?))
 }
 
-/// Materialize the union of certified boxes as an exact orthogonal cell mesh.
-///
-/// This is the bounded volumetric analogue of retained planar arrangements:
-/// all cell planes come from exact source box faces, and a cell is selected
-/// only when exact interval containment proves it belongs to the named set
-/// topology from retained exact predicates, but it must not infer topology
-/// from approximate coordinate perturbations.
-pub(crate) fn cell_union_axis_aligned_boxes(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    validation: ValidationPolicy,
-) -> Result<Option<ExactMesh>, MeshError> {
-    materialize_axis_aligned_box_cells(
-        left,
-        right,
-        BoxCellOperation::Union,
-        "exact axis-aligned coplanar-volumetric box cell union",
-        validation,
-    )
-}
-
-/// Materialize `left - right` as an exact orthogonal cell mesh.
-///
-/// Unlike the one-box and split-slab difference shortcuts, this path is
-/// allowed to emit a nonconvex orthogonal boundary. It is still narrow: both
-/// operands must be certified AABB-corner boxes, and every retained cell is
-/// decided by exact interval containment against those boxes.
-pub(crate) fn cell_difference_axis_aligned_boxes(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    validation: ValidationPolicy,
-) -> Result<Option<ExactMesh>, MeshError> {
-    materialize_axis_aligned_box_cells(
-        left,
-        right,
-        BoxCellOperation::Difference,
-        "exact axis-aligned coplanar-volumetric box cell difference",
-        validation,
-    )
-}
-
 /// Return whether the named operation is certified by the axis-aligned box layer.
 ///
 /// This is the certificate-only form used by affine normalization: source
@@ -550,23 +509,6 @@ fn empty_difference_axis_aligned_box_bounds_from_boxes(
     right: &AxisAlignedBox,
 ) -> bool {
     box_contains(right, left) == Some(true)
-}
-
-fn materialize_axis_aligned_box_cells(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: BoxCellOperation,
-    label: &'static str,
-    validation: ValidationPolicy,
-) -> Result<Option<ExactMesh>, MeshError> {
-    let Some(inputs) = certify_axis_aligned_box_inputs(left, right) else {
-        return Ok(None);
-    };
-    let Some(plan) = axis_aligned_box_cell_plan_from_boxes(&inputs.left, &inputs.right, operation)
-    else {
-        return Ok(None);
-    };
-    materialize_axis_aligned_box_cell_plan(plan, label, validation)
 }
 
 fn materialize_axis_aligned_box_cell_plan(
