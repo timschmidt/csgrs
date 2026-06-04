@@ -748,6 +748,27 @@ pub fn preflight_boolean_exact(
     {
         return Ok(certified_shortcut_preflight(operation, convex_support));
     }
+    if support == ExactBooleanSupport::RequiresCertifiedWinding
+        && arrangement_unregularized_sheet_complex_materialized_for_preflight(
+            left, right, operation,
+        )?
+        .is_some()
+    {
+        return Ok(ExactBooleanPreflight {
+            operation,
+            support: ExactBooleanSupport::CertifiedArrangementCellComplex,
+            graph_had_unknowns,
+            retained_face_pairs,
+            retained_events,
+            region_count: 0,
+            region_classifications: Vec::new(),
+            blocker: None,
+            arrangement_readiness: None,
+            coplanar_volumetric_evidence: coplanar_volumetric_evidence_if_required(
+                &graph, left, right,
+            ),
+        });
+    }
     if let Some(materialized) = materialize_volumetric_winding_region_plan_from_graph(
         &graph,
         left,
@@ -1979,19 +2000,6 @@ fn run_arrangement_cell_complex_attempt(
                 attempt.output_triangles = result.mesh.triangles().len();
                 return Ok(ArrangementCellComplexOutcome::Materialized(result, attempt));
             }
-            if let Some(result) = boolean_volumetric_winding_regions_from_graph(
-                &arrangement.graph,
-                left,
-                right,
-                operation,
-                validation,
-            )? {
-                attempt.stage = ExactArrangementBooleanStage::Materialized;
-                attempt.materialized_shortcut = Some(ExactBooleanShortcutKind::WindingMaterialized);
-                attempt.output_vertices = result.mesh.vertices().len();
-                attempt.output_triangles = result.mesh.triangles().len();
-                return Ok(ArrangementCellComplexOutcome::Materialized(result, attempt));
-            }
             if let Some(result) = boolean_recovered_single_coplanar_boundary_union(
                 &arrangement.graph,
                 left,
@@ -2117,6 +2125,28 @@ fn boolean_arrangement_unregularized_sheet_complex_meshes(
         right,
         operation,
         validation,
+    )
+}
+
+fn arrangement_unregularized_sheet_complex_materialized_for_preflight(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    let arrangement = ExactArrangement::from_meshes_with_policy(
+        left,
+        right,
+        ExactRegularizationPolicy::REGULARIZED_SOLID,
+    )?;
+    if !arrangement_blockers_are_unregularized_sheet_complex(&arrangement.blockers) {
+        return Ok(None);
+    }
+    boolean_arrangement_regularized_sheet_complex_from_graph(
+        &arrangement.graph,
+        left,
+        right,
+        operation,
+        ValidationPolicy::CLOSED,
     )
 }
 

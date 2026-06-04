@@ -10512,7 +10512,7 @@ fn exact_non_rectilinear_coplanar_volumetric_overlap_splits_source_faces() {
         preflight.validate_against_sources(&left, &right).unwrap();
         assert_eq!(
             preflight.support,
-            hypermesh::ExactBooleanSupport::CertifiedWindingMaterialized
+            hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
         );
         assert!(preflight.blocker.is_none());
         let preflight_evidence = preflight
@@ -10524,7 +10524,8 @@ fn exact_non_rectilinear_coplanar_volumetric_overlap_splits_source_faces() {
             preflight_evidence.obstacle,
             CoplanarVolumetricCellObstacle::MixedCoplanarAndCrossingCells
         );
-        assert!(preflight.region_count > 0);
+        assert_eq!(preflight.region_count, 0);
+        assert!(preflight.region_classifications.is_empty());
 
         let readiness =
             hypermesh::certify_winding_readiness_report(&left, &right, operation).unwrap();
@@ -10610,7 +10611,7 @@ fn exact_nonconvex_coplanar_volumetric_overlap_materializes_from_winding_cells()
         preflight.validate_against_sources(&left, &right).unwrap();
         assert_eq!(
             preflight.support,
-            hypermesh::ExactBooleanSupport::CertifiedWindingMaterialized
+            hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
         );
         assert!(preflight.blocker.is_none());
         let evidence = preflight
@@ -31288,7 +31289,7 @@ fn exact_named_booleans_materialize_partial_convex_intersection() {
     union_preflight.validate().unwrap();
     assert_eq!(
         union_preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedWindingMaterialized
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let graph = build_intersection_graph(&left, &right).unwrap();
     let (_cell_region_plan, cell_triangulations) =
@@ -31836,7 +31837,7 @@ fn exact_named_booleans_materialize_polygonal_cap_convex_difference() {
     preflight.validate().unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedWindingMaterialized
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let result = hypermesh::boolean_exact(
