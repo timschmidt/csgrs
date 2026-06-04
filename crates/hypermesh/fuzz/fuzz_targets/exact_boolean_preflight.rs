@@ -11649,7 +11649,7 @@ fn exercise_closed_coplanar_overlap_boundary_policy() {
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        ExactBooleanSupport::CertifiedFullFaceAdjacentUnion
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     assert!(preflight.blocker.is_none());
 
@@ -11674,7 +11674,7 @@ fn exercise_closed_coplanar_overlap_boundary_policy() {
     assert_eq!(
         union.kind,
         hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::ExactBooleanShortcutKind::FullFaceAdjacentUnion
+            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
     assert_eq!(union.mesh, direct_union.mesh);
@@ -11688,7 +11688,7 @@ fn exercise_closed_coplanar_overlap_boundary_policy() {
         .unwrap();
     assert_eq!(
         intersection_preflight.support,
-        ExactBooleanSupport::CertifiedFullFaceAdjacentIntersection
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let intersection = boolean_exact_with_boundary_policy(
         &left,
@@ -11710,7 +11710,7 @@ fn exercise_closed_coplanar_overlap_boundary_policy() {
     assert_eq!(
         intersection.kind,
         hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::ExactBooleanShortcutKind::FullFaceAdjacentIntersection
+            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
     assert!(intersection.mesh.triangles().is_empty());
@@ -11724,7 +11724,7 @@ fn exercise_closed_coplanar_overlap_boundary_policy() {
         .unwrap();
     assert_eq!(
         difference_preflight.support,
-        ExactBooleanSupport::CertifiedFullFaceAdjacentDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let difference = boolean_exact_with_boundary_policy(
         &left,
@@ -11746,7 +11746,7 @@ fn exercise_closed_coplanar_overlap_boundary_policy() {
     assert_eq!(
         difference.kind,
         hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::ExactBooleanShortcutKind::FullFaceAdjacentDifference
+            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
     assert_eq!(difference.mesh.vertices(), left.vertices());
@@ -12957,7 +12957,7 @@ fn exercise_full_face_adjacent_union() {
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        ExactBooleanSupport::CertifiedFullFaceAdjacentUnion
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let result = boolean_exact_with_boundary_policy(
@@ -12980,7 +12980,7 @@ fn exercise_full_face_adjacent_union() {
     assert_eq!(
         result.kind,
         hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::ExactBooleanShortcutKind::FullFaceAdjacentUnion
+            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
 
@@ -12992,7 +12992,7 @@ fn exercise_full_face_adjacent_union() {
         .unwrap();
     assert_eq!(
         intersection_preflight.support,
-        ExactBooleanSupport::CertifiedFullFaceAdjacentIntersection
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let intersection = boolean_exact_with_boundary_policy(
         &left,
@@ -13014,7 +13014,7 @@ fn exercise_full_face_adjacent_union() {
     assert_eq!(
         intersection.kind,
         hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::ExactBooleanShortcutKind::FullFaceAdjacentIntersection
+            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
     assert!(intersection.mesh.triangles().is_empty());
@@ -13027,7 +13027,7 @@ fn exercise_full_face_adjacent_union() {
         .unwrap();
     assert_eq!(
         difference_preflight.support,
-        ExactBooleanSupport::CertifiedFullFaceAdjacentDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let difference = boolean_exact_with_boundary_policy(
         &left,
@@ -13049,7 +13049,7 @@ fn exercise_full_face_adjacent_union() {
     assert_eq!(
         difference.kind,
         hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::ExactBooleanShortcutKind::FullFaceAdjacentDifference
+            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
     assert_eq!(difference.mesh.vertices(), left.vertices());
@@ -13100,7 +13100,7 @@ fn exercise_full_face_adjacent_union() {
         .unwrap();
     assert_eq!(
         fan_preflight.support,
-        ExactBooleanSupport::CertifiedFullFaceAdjacentUnion
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let fan_intersection_preflight =
@@ -13111,7 +13111,7 @@ fn exercise_full_face_adjacent_union() {
         .unwrap();
     assert_eq!(
         fan_intersection_preflight.support,
-        ExactBooleanSupport::CertifiedFullFaceAdjacentIntersection
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let fan_intersection = boolean_exact_with_boundary_policy(
         &left,
@@ -13140,7 +13140,7 @@ fn exercise_full_face_adjacent_union() {
         .unwrap();
     assert_eq!(
         fan_difference_preflight.support,
-        ExactBooleanSupport::CertifiedFullFaceAdjacentDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let fan_difference = boolean_exact_with_boundary_policy(
         &left,
@@ -13846,7 +13846,7 @@ fn exercise_contained_face_adjacent_union() {
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        ExactBooleanSupport::CertifiedContainedFaceAdjacentUnion
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let result = boolean_exact_with_boundary_policy(
@@ -13869,7 +13869,7 @@ fn exercise_contained_face_adjacent_union() {
     assert_eq!(
         result.kind,
         hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::ExactBooleanShortcutKind::ContainedFaceAdjacentUnion
+            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
     assert_eq!(result.mesh, union.mesh);
@@ -13882,7 +13882,7 @@ fn exercise_contained_face_adjacent_union() {
         .unwrap();
     assert_eq!(
         intersection_preflight.support,
-        ExactBooleanSupport::CertifiedContainedFaceAdjacentIntersection
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let intersection = boolean_exact_with_boundary_policy(
         &left,
@@ -13904,7 +13904,7 @@ fn exercise_contained_face_adjacent_union() {
     assert_eq!(
         intersection.kind,
         hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::ExactBooleanShortcutKind::ContainedFaceAdjacentIntersection
+            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
     assert!(intersection.mesh.vertices().is_empty());
@@ -13918,7 +13918,7 @@ fn exercise_contained_face_adjacent_union() {
         .unwrap();
     assert_eq!(
         difference_preflight.support,
-        ExactBooleanSupport::CertifiedContainedFaceAdjacentDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let difference = boolean_exact_with_boundary_policy(
@@ -13941,7 +13941,7 @@ fn exercise_contained_face_adjacent_union() {
     assert_eq!(
         difference.kind,
         hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::ExactBooleanShortcutKind::ContainedFaceAdjacentDifference
+            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
     assert_eq!(difference.mesh.vertices(), left.vertices());
@@ -13967,7 +13967,7 @@ fn exercise_contained_face_adjacent_union() {
     assert_eq!(
         reverse_difference.kind,
         hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::ExactBooleanShortcutKind::ContainedFaceAdjacentDifference
+            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
     assert_eq!(reverse_difference.mesh.vertices(), right.vertices());

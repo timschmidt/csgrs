@@ -624,24 +624,6 @@ pub enum ExactBooleanShortcutKind {
     /// Certified affine-frame orthogonal-cell difference of solid cell
     /// complexes.
     AffineOrthogonalSolidCellDifference,
-    /// Certified regularized union of closed solids sharing exact whole faces
-    /// or bounded opposite-oriented full-face fan patches.
-    FullFaceAdjacentUnion,
-    /// Certified regularized union of closed solids sharing one strictly
-    /// contained opposite-oriented triangular boundary face.
-    ContainedFaceAdjacentUnion,
-    /// Certified empty regularized intersection of closed solids whose only
-    /// overlap is an exact contained-face boundary contact.
-    ContainedFaceAdjacentIntersection,
-    /// Certified left-preserving regularized difference of closed solids whose
-    /// only overlap is an exact contained-face boundary contact.
-    ContainedFaceAdjacentDifference,
-    /// Certified empty regularized intersection of closed solids whose only
-    /// overlap is an exact full-face/fan-patch boundary contact.
-    FullFaceAdjacentIntersection,
-    /// Certified left-preserving regularized difference of closed solids whose
-    /// only overlap is an exact full-face/fan-patch boundary contact.
-    FullFaceAdjacentDifference,
     /// Certified regularized union of closed solids whose exact graph proves
     /// only lower-dimensional boundary contact.
     ClosedBoundaryTouchingUnion,
@@ -1351,25 +1333,6 @@ pub enum ExactBooleanSupport {
     /// Difference was materialized by normalizing affine-frame orthogonal
     /// solid cell complexes into one exact cell grid.
     CertifiedAffineOrthogonalSolidCellDifference,
-    /// Union was materialized by deleting exact coincident whole faces or
-    /// bounded fan patches between adjacent closed solids and welding only
-    /// those seam vertices.
-    CertifiedFullFaceAdjacentUnion,
-    /// Union was materialized by replacing one containing boundary face with a
-    /// holed remnant and deleting the strictly contained opposite face.
-    CertifiedContainedFaceAdjacentUnion,
-    /// Intersection was certified empty because adjacent closed solids only
-    /// share exact contained-face boundary contact.
-    CertifiedContainedFaceAdjacentIntersection,
-    /// Difference was certified as the left solid because adjacent closed
-    /// solids only share exact contained-face boundary contact.
-    CertifiedContainedFaceAdjacentDifference,
-    /// Intersection was certified empty because adjacent closed solids only
-    /// share exact coincident whole faces or bounded fan patches.
-    CertifiedFullFaceAdjacentIntersection,
-    /// Difference was certified as the left solid because adjacent closed
-    /// solids only share exact coincident whole faces or bounded fan patches.
-    CertifiedFullFaceAdjacentDifference,
     /// Union was materialized by preserving separate closed shells because
     /// closed solids only touch at exact lower-dimensional boundary features
     /// and share no interior volume.
@@ -1541,12 +1504,6 @@ impl ExactBooleanPreflight {
             | ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellUnion
             | ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellIntersection
             | ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellDifference
-            | ExactBooleanSupport::CertifiedFullFaceAdjacentUnion
-            | ExactBooleanSupport::CertifiedContainedFaceAdjacentUnion
-            | ExactBooleanSupport::CertifiedContainedFaceAdjacentIntersection
-            | ExactBooleanSupport::CertifiedContainedFaceAdjacentDifference
-            | ExactBooleanSupport::CertifiedFullFaceAdjacentIntersection
-            | ExactBooleanSupport::CertifiedFullFaceAdjacentDifference
             | ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion
             | ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
             | ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference

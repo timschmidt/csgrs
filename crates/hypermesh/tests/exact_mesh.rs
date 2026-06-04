@@ -7690,8 +7690,8 @@ fn exact_axis_aligned_orthogonal_solid_accepts_face_fan_cell_split() {
         .unwrap();
     assert_eq!(
         union.kind,
-        hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::ExactBooleanShortcutKind::AxisAlignedOrthogonalSolidCellUnion
+        hypermesh::ExactBooleanResultKind::ArrangementCellComplexMaterialized {
+            operation: hypermesh::ExactBooleanOperation::Union
         }
     );
     assert!(union.mesh.facts().mesh.closed_manifold);
@@ -7822,8 +7822,8 @@ fn exact_affine_coplanar_volumetric_boxes_materialize_cell_complexes() {
         .unwrap();
     assert_eq!(
         union.kind,
-        hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::ExactBooleanShortcutKind::AffineBoxUnion
+        hypermesh::ExactBooleanResultKind::ArrangementCellComplexMaterialized {
+            operation: hypermesh::ExactBooleanOperation::Union
         }
     );
 
@@ -8350,7 +8350,7 @@ fn exact_mixed_coplanar_volumetric_overlap_materializes_from_face_cells() {
         (
             hypermesh::ExactBooleanOperation::Union,
             hypermesh::ExactBooleanSupport::CertifiedAxisAlignedOrthogonalSolidCellUnion,
-            hypermesh::ExactBooleanShortcutKind::AxisAlignedOrthogonalSolidCellUnion,
+            hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex,
         ),
         (
             hypermesh::ExactBooleanOperation::Intersection,
@@ -8396,7 +8396,8 @@ fn exact_mixed_coplanar_volumetric_overlap_materializes_from_face_cells() {
             .unwrap();
         let expected_kind = if matches!(
             operation,
-            hypermesh::ExactBooleanOperation::Intersection
+            hypermesh::ExactBooleanOperation::Union
+                | hypermesh::ExactBooleanOperation::Intersection
                 | hypermesh::ExactBooleanOperation::Difference
         ) {
             hypermesh::ExactBooleanResultKind::ArrangementCellComplexMaterialized { operation }
@@ -9313,7 +9314,7 @@ fn exact_full_face_adjacent_nonconvex_l_patch_union_deletes_internal_faces() {
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedFullFaceAdjacentUnion
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let result = hypermesh::boolean_exact(
@@ -9618,7 +9619,7 @@ fn exact_full_face_adjacent_heptagon_to_fan_patch_union_deletes_internal_faces()
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedFullFaceAdjacentUnion
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let result = hypermesh::boolean_exact(
@@ -9714,7 +9715,7 @@ fn exact_full_face_adjacent_octagon_to_fan_patch_union_deletes_internal_faces() 
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedFullFaceAdjacentUnion
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let result = hypermesh::boolean_exact(
@@ -9802,7 +9803,7 @@ fn exact_full_face_adjacent_nonagon_to_fan_patch_union_deletes_internal_faces() 
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedFullFaceAdjacentUnion
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let result = hypermesh::boolean_exact(
@@ -9977,8 +9978,24 @@ fn exact_contained_face_adjacent_tetrahedra_union_replaces_containing_face_with_
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedContainedFaceAdjacentUnion
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
+    let union_attempt = hypermesh::exact_arrangement_boolean_attempt_report(
+        &left,
+        &right,
+        hypermesh::ExactBooleanOperation::Union,
+        hypermesh::ExactRegularizationPolicy::REGULARIZED_SOLID,
+    )
+    .unwrap();
+    assert_eq!(
+        union_attempt.stage,
+        hypermesh::ExactArrangementBooleanStage::Materialized
+    );
+    assert_eq!(
+        union_attempt.materialized_shortcut,
+        Some(hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex)
+    );
+    assert!(union_attempt.decline.is_none());
 
     let result = hypermesh::boolean_exact(
         &left,
@@ -10000,7 +10017,7 @@ fn exact_contained_face_adjacent_tetrahedra_union_replaces_containing_face_with_
     assert_eq!(
         result.kind,
         hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::ExactBooleanShortcutKind::ContainedFaceAdjacentUnion
+            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
     assert_exact_mesh_same_vertex_set_and_face_count(&result.mesh, &union.mesh);
@@ -10209,7 +10226,7 @@ fn exact_contained_face_adjacent_multi_tetrahedra_union_replaces_containing_face
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedContainedFaceAdjacentUnion
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let result = hypermesh::boolean_exact(
@@ -10231,7 +10248,7 @@ fn exact_contained_face_adjacent_multi_tetrahedra_union_replaces_containing_face
     assert_eq!(
         result.kind,
         hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::ExactBooleanShortcutKind::ContainedFaceAdjacentUnion
+            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
     assert_exact_mesh_same_vertex_set_and_face_count(&result.mesh, &union.mesh);
@@ -10290,7 +10307,7 @@ fn exact_contained_face_adjacent_multi_tetrahedra_union_replaces_containing_face
         .unwrap();
     assert_eq!(
         same_face_preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedContainedFaceAdjacentUnion
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let same_face_result = hypermesh::boolean_exact(
@@ -10360,7 +10377,7 @@ fn exact_contained_face_adjacent_square_cap_union_replaces_containing_face_with_
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedContainedFaceAdjacentUnion
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let result = hypermesh::boolean_exact(
@@ -10427,7 +10444,7 @@ fn exact_contained_face_adjacent_multi_face_container_union_replaces_component_w
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedContainedFaceAdjacentUnion
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let result = hypermesh::boolean_exact(
@@ -10513,7 +10530,7 @@ fn exact_contained_face_adjacent_independent_multi_face_components_union_replays
     preflight.validate_against_sources(&left, &right).unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedContainedFaceAdjacentUnion
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let result = hypermesh::boolean_exact(
