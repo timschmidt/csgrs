@@ -6154,8 +6154,8 @@ fn exact_preflight_materializes_open_point_touch_union_but_keeps_other_ops_bound
         hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     assert!(!open_intersection_preflight.graph_had_unknowns);
-    assert_eq!(open_intersection_preflight.retained_face_pairs, 0);
-    assert_eq!(open_intersection_preflight.retained_events, 0);
+    assert_eq!(open_intersection_preflight.retained_face_pairs, 1);
+    assert_eq!(open_intersection_preflight.retained_events, 6);
     assert_eq!(preflight.region_count, 0);
     assert!(preflight.region_classifications.is_empty());
     assert!(open_intersection_preflight.blocker.is_none());
@@ -10899,7 +10899,11 @@ fn exact_nonconvex_boundary_containment_difference_materializes_cavity() {
         preflight.support,
         hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
-    assert!(preflight.coplanar_volumetric_evidence.is_none());
+    let evidence = preflight
+        .coplanar_volumetric_evidence
+        .as_ref()
+        .expect("certified arrangement preflight should retain coplanar-volumetric evidence");
+    evidence.validate().unwrap();
 
     let result = hypermesh::boolean_exact(
         &container,
@@ -11540,7 +11544,7 @@ fn exact_named_booleans_handle_single_triangle_coplanar_containment() {
         preflight.support,
         hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
-    assert_eq!(preflight.retained_face_pairs, 0);
+    assert_eq!(preflight.retained_face_pairs, 1);
     assert!(preflight.blocker.is_none());
 }
 
@@ -31457,7 +31461,7 @@ fn exact_named_booleans_materialize_partial_convex_intersection() {
     preflight.validate().unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedConvexIntersection
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let result = hypermesh::boolean_exact(
@@ -31662,7 +31666,7 @@ fn exact_convex_intersection_handles_coplanar_box_tetra_overlap() {
     preflight.validate().unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedConvexIntersection
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     assert!(preflight.blocker.is_none());
 
@@ -31685,7 +31689,7 @@ fn exact_convex_intersection_handles_coplanar_box_tetra_overlap() {
     assert_eq!(
         result.kind,
         hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::ExactBooleanShortcutKind::ConvexIntersection
+            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
     assert_eq!(result.mesh.vertices().len(), 4);
@@ -31737,7 +31741,7 @@ fn exact_union_recovers_single_coplanar_winding_boundary_loop() {
 }
 
 #[test]
-fn exact_box_tetra_closed_booleans_decline_invalid_arrangement_and_use_convex_paths() {
+fn exact_box_tetra_closed_booleans_regularize_sheet_complex_through_arrangement() {
     let left = axis_aligned_box_i64([1, 1, 1], [5, 5, 5]);
     let right = tetrahedron_i64([0, 0, 0], [7, 0, 0], [0, 7, 0], [0, 0, 7]);
 
@@ -31749,26 +31753,35 @@ fn exact_box_tetra_closed_booleans_decline_invalid_arrangement_and_use_convex_pa
         .unwrap();
     assert!(direct_union.mesh.facts().mesh.closed_manifold);
 
-    for (operation, support, shortcut) in [
-        (
-            hypermesh::ExactBooleanOperation::Union,
-            hypermesh::ExactBooleanSupport::CertifiedConvexUnion,
-            hypermesh::ExactBooleanShortcutKind::ConvexUnion,
-        ),
-        (
-            hypermesh::ExactBooleanOperation::Intersection,
-            hypermesh::ExactBooleanSupport::CertifiedConvexIntersection,
-            hypermesh::ExactBooleanShortcutKind::ConvexIntersection,
-        ),
-        (
-            hypermesh::ExactBooleanOperation::Difference,
-            hypermesh::ExactBooleanSupport::CertifiedConvexDifference,
-            hypermesh::ExactBooleanShortcutKind::ConvexDifference,
-        ),
+    for operation in [
+        hypermesh::ExactBooleanOperation::Union,
+        hypermesh::ExactBooleanOperation::Intersection,
+        hypermesh::ExactBooleanOperation::Difference,
     ] {
+        let arrangement_report = hypermesh::exact_arrangement_boolean_attempt_report(
+            &left,
+            &right,
+            operation,
+            hypermesh::ExactRegularizationPolicy::REGULARIZED_SOLID,
+        )
+        .unwrap();
+        assert_eq!(
+            arrangement_report.stage,
+            hypermesh::ExactArrangementBooleanStage::Materialized
+        );
+        assert_eq!(arrangement_report.decline, None);
+        assert_eq!(arrangement_report.arrangement_blockers, 0);
+        assert_eq!(
+            arrangement_report.materialized_shortcut,
+            Some(hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex)
+        );
+
         let preflight = hypermesh::preflight_boolean_exact(&left, &right, operation).unwrap();
         preflight.validate().unwrap();
-        assert_eq!(preflight.support, support);
+        assert_eq!(
+            preflight.support,
+            hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
+        );
         assert!(preflight.blocker.is_none());
 
         let result =
@@ -31784,7 +31797,9 @@ fn exact_box_tetra_closed_booleans_decline_invalid_arrangement_and_use_convex_pa
             .unwrap();
         assert_eq!(
             result.kind,
-            hypermesh::ExactBooleanResultKind::CertifiedShortcut { shortcut }
+            hypermesh::ExactBooleanResultKind::CertifiedShortcut {
+                shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
+            }
         );
         assert!(result.mesh.facts().mesh.closed_manifold);
     }
@@ -31965,7 +31980,7 @@ fn exact_named_booleans_materialize_boundary_corner_convex_difference() {
     preflight.validate().unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let result = hypermesh::boolean_exact(

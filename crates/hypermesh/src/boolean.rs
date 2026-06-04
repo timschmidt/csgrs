@@ -362,17 +362,40 @@ pub fn preflight_boolean_exact(
     };
 
     if arrangement_cell_complex_materializes_preemptively(left, right, operation)? {
+        let graph = build_intersection_graph(left, right)?;
+        validate_graph_source_handoff(&graph, left, right)?;
         return Ok(ExactBooleanPreflight {
             operation,
             support: ExactBooleanSupport::CertifiedArrangementCellComplex,
-            graph_had_unknowns: false,
-            retained_face_pairs: 0,
-            retained_events: 0,
+            graph_had_unknowns: graph.has_unknowns(),
+            retained_face_pairs: graph.face_pairs.len(),
+            retained_events: graph.event_count(),
             region_count: 0,
             region_classifications: Vec::new(),
             blocker: None,
             arrangement_readiness: None,
-            coplanar_volumetric_evidence: None,
+            coplanar_volumetric_evidence: coplanar_volumetric_evidence_if_required(
+                &graph, left, right,
+            ),
+        });
+    }
+
+    if support == ExactBooleanSupport::CertifiedArrangementCellComplex {
+        let graph = build_intersection_graph(left, right)?;
+        validate_graph_source_handoff(&graph, left, right)?;
+        return Ok(ExactBooleanPreflight {
+            operation,
+            support,
+            graph_had_unknowns: graph.has_unknowns(),
+            retained_face_pairs: graph.face_pairs.len(),
+            retained_events: graph.event_count(),
+            region_count: 0,
+            region_classifications: Vec::new(),
+            blocker: None,
+            arrangement_readiness: None,
+            coplanar_volumetric_evidence: coplanar_volumetric_evidence_if_required(
+                &graph, left, right,
+            ),
         });
     }
 
@@ -392,7 +415,6 @@ pub fn preflight_boolean_exact(
             | ExactBooleanSupport::CertifiedConvexSeparated
             | ExactBooleanSupport::CertifiedWindingContainment
             | ExactBooleanSupport::CertifiedWindingSeparated
-            | ExactBooleanSupport::CertifiedArrangementCellComplex
     ) {
         return Ok(ExactBooleanPreflight {
             operation,
@@ -536,7 +558,9 @@ pub fn preflight_boolean_exact(
             region_classifications: Vec::new(),
             blocker: None,
             arrangement_readiness: None,
-            coplanar_volumetric_evidence: None,
+            coplanar_volumetric_evidence: coplanar_volumetric_evidence_if_required(
+                &graph, left, right,
+            ),
         });
     }
     if support == ExactBooleanSupport::RequiresCertifiedWinding
@@ -552,7 +576,9 @@ pub fn preflight_boolean_exact(
             region_classifications: Vec::new(),
             blocker: None,
             arrangement_readiness: None,
-            coplanar_volumetric_evidence: None,
+            coplanar_volumetric_evidence: coplanar_volumetric_evidence_if_required(
+                &graph, left, right,
+            ),
         });
     }
     if support == ExactBooleanSupport::RequiresCertifiedWinding
@@ -568,7 +594,9 @@ pub fn preflight_boolean_exact(
             region_classifications: Vec::new(),
             blocker: None,
             arrangement_readiness: None,
-            coplanar_volumetric_evidence: None,
+            coplanar_volumetric_evidence: coplanar_volumetric_evidence_if_required(
+                &graph, left, right,
+            ),
         });
     }
     if support == ExactBooleanSupport::RequiresCertifiedWinding
@@ -644,7 +672,9 @@ pub fn preflight_boolean_exact(
             region_classifications: Vec::new(),
             blocker: None,
             arrangement_readiness: None,
-            coplanar_volumetric_evidence: None,
+            coplanar_volumetric_evidence: coplanar_volumetric_evidence_if_required(
+                &graph, left, right,
+            ),
         });
     }
     if let Some(solid_operation) = axis_aligned_orthogonal_solid_operation(operation)
@@ -660,7 +690,9 @@ pub fn preflight_boolean_exact(
             region_classifications: Vec::new(),
             blocker: None,
             arrangement_readiness: None,
-            coplanar_volumetric_evidence: None,
+            coplanar_volumetric_evidence: coplanar_volumetric_evidence_if_required(
+                &graph, left, right,
+            ),
         });
     }
     if support == ExactBooleanSupport::RequiresCertifiedWinding
@@ -1896,6 +1928,18 @@ fn run_arrangement_cell_complex_attempt(
         )? {
             return Ok(outcome);
         }
+        if arrangement_blockers_are_unregularized_sheet_complex(&arrangement.blockers)
+            && let Some(validation) = validation
+            && let Some(outcome) = arrangement_convex_regularized_sheet_recovery_outcome(
+                &mut attempt,
+                left,
+                right,
+                operation,
+                validation,
+            )?
+        {
+            return Ok(outcome);
+        }
         attempt.decline = Some(ExactArrangementBooleanDecline::ArrangementBlockers(
             arrangement.blockers.clone(),
         ));
@@ -2287,6 +2331,30 @@ fn arrangement_volumetric_split_cell_recovery_outcome(
     )))
 }
 
+fn arrangement_convex_regularized_sheet_recovery_outcome(
+    attempt: &mut ExactArrangementBooleanAttempt,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ArrangementCellComplexOutcome>, MeshError> {
+    let Some(result) =
+        boolean_arrangement_convex_regularized_sheet_recovery(left, right, operation, validation)?
+    else {
+        return Ok(None);
+    };
+    attempt.stage = ExactArrangementBooleanStage::Materialized;
+    attempt.decline = None;
+    attempt.materialized_shortcut = Some(ExactBooleanShortcutKind::ArrangementCellComplex);
+    attempt.arrangement_blockers = 0;
+    attempt.output_vertices = result.mesh.vertices().len();
+    attempt.output_triangles = result.mesh.triangles().len();
+    Ok(Some(ArrangementCellComplexOutcome::Materialized(
+        result,
+        attempt.clone(),
+    )))
+}
+
 fn arrangement_cell_complex_recovery_outcome_if_available(
     enabled: bool,
     validation: Option<ValidationPolicy>,
@@ -2314,6 +2382,50 @@ fn arrangement_cell_complex_recovery_outcome_if_available(
     arrangement_affine_orthogonal_solid_recovery_outcome(
         attempt, left, right, operation, validation,
     )
+}
+
+fn boolean_arrangement_convex_regularized_sheet_recovery(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    let (mesh, label) = match operation {
+        ExactBooleanOperation::Union => {
+            let Some(union) = union_closed_convex_solids(left, right) else {
+                return Ok(None);
+            };
+            (
+                union.mesh,
+                "exact arrangement regularized convex sheet union",
+            )
+        }
+        ExactBooleanOperation::Intersection => {
+            let Some(intersection) = intersect_closed_convex_solids(left, right) else {
+                return Ok(None);
+            };
+            (
+                intersection.mesh,
+                "exact arrangement regularized convex sheet intersection",
+            )
+        }
+        ExactBooleanOperation::Difference => {
+            let Some(difference) = subtract_closed_convex_solids(left, right) else {
+                return Ok(None);
+            };
+            (
+                difference.mesh,
+                "exact arrangement regularized convex sheet difference",
+            )
+        }
+        ExactBooleanOperation::SelectedRegions(_) => return Ok(None),
+    };
+    let mesh = copy_mesh(&mesh, label, validation)?;
+    let result = certified_shortcut_result(mesh, ExactBooleanShortcutKind::ArrangementCellComplex);
+    if result.validate().is_err() || result.validate_against_sources(left, right).is_err() {
+        return Ok(None);
+    }
+    Ok(Some(result))
 }
 
 fn boolean_arrangement_volumetric_split_cell_recovery_from_graph(
@@ -3433,7 +3545,8 @@ fn arrangement_cell_complex_should_preempt_legacy_paths(
             | ExactBooleanOperation::Intersection
             | ExactBooleanOperation::Difference
     ) && (has_single_rectangular_orthogonal_cell_result(left, right, operation)
-        || has_axis_aligned_box_difference_cell_result(left, right, operation)))
+        || has_axis_aligned_box_difference_cell_result(left, right, operation)
+        || has_convex_regularized_sheet_arrangement_result(left, right, operation)))
         || (matches!(
             operation,
             ExactBooleanOperation::Union
@@ -3476,6 +3589,84 @@ fn has_axis_aligned_box_difference_cell_result(
             AxisAlignedOrthogonalSolidOperation::Difference,
         )
         .is_some()
+}
+
+fn has_convex_regularized_sheet_arrangement_result(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+) -> bool {
+    if !matches!(
+        operation,
+        ExactBooleanOperation::Union
+            | ExactBooleanOperation::Intersection
+            | ExactBooleanOperation::Difference
+    ) {
+        return false;
+    }
+    let Ok(arrangement) = ExactArrangement::from_meshes_with_policy(
+        left,
+        right,
+        ExactRegularizationPolicy::REGULARIZED_SOLID,
+    ) else {
+        return false;
+    };
+    if certified_closed_boundary_touching_support_from_graph(
+        &arrangement.graph,
+        left,
+        right,
+        operation,
+    )
+    .is_ok_and(|support| support.is_some())
+    {
+        return false;
+    }
+    arrangement_blockers_are_unregularized_sheet_complex(&arrangement.blockers)
+        && !arrangement_regularized_sheet_has_native_recovery(
+            &arrangement,
+            left,
+            right,
+            operation,
+            ValidationPolicy::CLOSED,
+        )
+        && boolean_arrangement_convex_regularized_sheet_recovery(
+            left,
+            right,
+            operation,
+            ValidationPolicy::CLOSED,
+        )
+        .is_ok_and(|result| result.is_some())
+}
+
+fn arrangement_regularized_sheet_has_native_recovery(
+    arrangement: &ExactArrangement,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> bool {
+    boolean_arrangement_volumetric_split_cell_recovery_from_graph(
+        &arrangement.graph,
+        left,
+        right,
+        operation,
+        validation,
+    )
+    .is_ok_and(|result| result.is_some())
+        || boolean_recovered_single_coplanar_boundary_union(
+            &arrangement.graph,
+            left,
+            right,
+            operation,
+            validation,
+        )
+        .is_ok_and(|result| result.is_some())
+        || boolean_arrangement_orthogonal_solid_cell_recovery(
+            left, right, operation, validation, false,
+        )
+        .is_ok_and(|result| result.is_some())
+        || boolean_arrangement_affine_orthogonal_solid_recovery(left, right, operation, validation)
+            .is_ok_and(|result| result.is_some())
 }
 
 fn boolean_convex_intersection_meshes(
