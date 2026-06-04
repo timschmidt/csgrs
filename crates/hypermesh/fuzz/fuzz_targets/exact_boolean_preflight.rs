@@ -14999,7 +14999,7 @@ fn exercise_affine_orthogonal_solid_cell_complexes() {
     union.validate().unwrap();
     assert_eq!(
         union.support,
-        ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellUnion
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     hypermesh::boolean_exact(
         &complex,
@@ -15023,7 +15023,7 @@ fn exercise_affine_orthogonal_solid_cell_complexes() {
     intersection.validate().unwrap();
     assert_eq!(
         intersection.support,
-        ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellIntersection
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     hypermesh::boolean_exact(
         &complex,
@@ -15046,7 +15046,7 @@ fn exercise_affine_orthogonal_solid_cell_complexes() {
     difference.validate().unwrap();
     assert_eq!(
         difference.support,
-        ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellDifference
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     hypermesh::boolean_exact(
         &complex,
@@ -15081,7 +15081,7 @@ fn exercise_affine_orthogonal_solid_cell_complexes() {
     empty_intersection.validate().unwrap();
     assert_eq!(
         empty_intersection.support,
-        ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellIntersection
+        ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let empty_intersection_result = hypermesh::boolean_exact(
         &hollow,
@@ -15131,15 +15131,15 @@ fn exercise_affine_orthogonal_solid_cell_complex_frame_discovery() {
     for (operation, support) in [
         (
             ExactBooleanOperation::Union,
-            ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellUnion,
+            ExactBooleanSupport::CertifiedArrangementCellComplex,
         ),
         (
             ExactBooleanOperation::Intersection,
-            ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellIntersection,
+            ExactBooleanSupport::CertifiedArrangementCellComplex,
         ),
         (
             ExactBooleanOperation::Difference,
-            ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellDifference,
+            ExactBooleanSupport::CertifiedArrangementCellComplex,
         ),
     ] {
         let preflight = preflight_boolean_exact(&left_complex, &right_complex, operation)

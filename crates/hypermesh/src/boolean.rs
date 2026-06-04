@@ -402,9 +402,6 @@ pub fn preflight_boolean_exact(
             | ExactBooleanSupport::CertifiedAxisAlignedBoxMultiDifference
             | ExactBooleanSupport::CertifiedAxisAlignedBoxNestedDifference
             | ExactBooleanSupport::CertifiedAxisAlignedBoxEmptyDifference
-            | ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellUnion
-            | ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellIntersection
-            | ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellDifference
             | ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion
             | ExactBooleanSupport::CertifiedOpenSurfaceDisjoint
             | ExactBooleanSupport::CertifiedMixedDimensionalRegularizedSolid
@@ -882,7 +879,7 @@ fn preflight_tail_shortcut_support(
                 AffineOrthogonalSolidOperation::Union,
             ) =>
         {
-            Some(ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellUnion)
+            Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
         }
         ExactBooleanOperation::Intersection
             if has_affine_orthogonal_solid_cells(
@@ -891,7 +888,7 @@ fn preflight_tail_shortcut_support(
                 AffineOrthogonalSolidOperation::Intersection,
             ) =>
         {
-            Some(ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellIntersection)
+            Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
         }
         ExactBooleanOperation::Difference
             if has_affine_orthogonal_solid_cells(
@@ -900,7 +897,7 @@ fn preflight_tail_shortcut_support(
                 AffineOrthogonalSolidOperation::Difference,
             ) =>
         {
-            Some(ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellDifference)
+            Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
         }
         ExactBooleanOperation::Union
         | ExactBooleanOperation::Intersection
@@ -1385,11 +1382,6 @@ pub fn boolean_exact_with_boundary_policy(
             if let Some(result) = boolean_axis_aligned_box_special_difference_optional(
                 left, right, operation, validation,
             )? {
-                return Ok(result);
-            }
-            if let Some(result) =
-                boolean_affine_orthogonal_solid_optional(left, right, operation, validation)?
-            {
                 return Ok(result);
             }
             let graph = build_intersection_graph(left, right)?;
@@ -2146,6 +2138,30 @@ fn arrangement_orthogonal_solid_cell_recovery_outcome(
     )))
 }
 
+fn arrangement_affine_orthogonal_solid_recovery_outcome(
+    attempt: &mut ExactArrangementBooleanAttempt,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ArrangementCellComplexOutcome>, MeshError> {
+    let Some(result) =
+        boolean_arrangement_affine_orthogonal_solid_recovery(left, right, operation, validation)?
+    else {
+        return Ok(None);
+    };
+    attempt.stage = ExactArrangementBooleanStage::Materialized;
+    attempt.decline = None;
+    attempt.materialized_shortcut = Some(ExactBooleanShortcutKind::ArrangementCellComplex);
+    attempt.arrangement_blockers = 0;
+    attempt.output_vertices = result.mesh.vertices().len();
+    attempt.output_triangles = result.mesh.triangles().len();
+    Ok(Some(ArrangementCellComplexOutcome::Materialized(
+        result,
+        attempt.clone(),
+    )))
+}
+
 fn boolean_arrangement_adjacency_union_completion(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -2312,7 +2328,14 @@ fn arrangement_cell_complex_recovery_outcome_if_available(
     let Some(validation) = validation else {
         return Ok(None);
     };
-    arrangement_orthogonal_solid_cell_recovery_outcome(attempt, left, right, operation, validation)
+    if let Some(outcome) = arrangement_orthogonal_solid_cell_recovery_outcome(
+        attempt, left, right, operation, validation,
+    )? {
+        return Ok(Some(outcome));
+    }
+    arrangement_affine_orthogonal_solid_recovery_outcome(
+        attempt, left, right, operation, validation,
+    )
 }
 
 fn boolean_arrangement_volumetric_split_cell_recovery_from_graph(
@@ -3655,7 +3678,7 @@ const fn axis_aligned_orthogonal_solid_operation(
     }
 }
 
-fn boolean_affine_orthogonal_solid_optional(
+fn boolean_arrangement_affine_orthogonal_solid_recovery(
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
@@ -3689,17 +3712,11 @@ fn boolean_affine_orthogonal_solid_optional(
     let Some(arrangement) = arrangement else {
         return Ok(None);
     };
-    let shortcut = match operation {
-        ExactBooleanOperation::Union => ExactBooleanShortcutKind::AffineOrthogonalSolidCellUnion,
-        ExactBooleanOperation::Intersection => {
-            ExactBooleanShortcutKind::AffineOrthogonalSolidCellIntersection
-        }
-        ExactBooleanOperation::Difference => {
-            ExactBooleanShortcutKind::AffineOrthogonalSolidCellDifference
-        }
-        ExactBooleanOperation::SelectedRegions(_) => unreachable!("returned above"),
-    };
-    Ok(Some(certified_shortcut_result(arrangement.mesh, shortcut)))
+    arrangement.validate_against_sources(left, right)?;
+    Ok(Some(certified_shortcut_result(
+        arrangement.mesh,
+        ExactBooleanShortcutKind::ArrangementCellComplex,
+    )))
 }
 
 fn materialize_open_surface_disjoint_meshes(

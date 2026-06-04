@@ -596,14 +596,6 @@ pub enum ExactBooleanShortcutKind {
     /// Certified empty difference because the left axis-aligned box is
     /// contained by the right box.
     AxisAlignedBoxEmptyDifference,
-    /// Certified affine-frame orthogonal-cell union of solid cell complexes.
-    AffineOrthogonalSolidCellUnion,
-    /// Certified affine-frame orthogonal-cell intersection of solid cell
-    /// complexes.
-    AffineOrthogonalSolidCellIntersection,
-    /// Certified affine-frame orthogonal-cell difference of solid cell
-    /// complexes.
-    AffineOrthogonalSolidCellDifference,
     /// Certified regularized union of closed solids whose exact graph proves
     /// only lower-dimensional boundary contact.
     ClosedBoundaryTouchingUnion,
@@ -1280,15 +1272,6 @@ pub enum ExactBooleanSupport {
     /// Difference was materialized as empty because the left axis-aligned box
     /// is contained by the right box.
     CertifiedAxisAlignedBoxEmptyDifference,
-    /// Union was materialized by normalizing affine-frame orthogonal solid
-    /// cell complexes into one exact cell grid.
-    CertifiedAffineOrthogonalSolidCellUnion,
-    /// Intersection was materialized by normalizing affine-frame orthogonal
-    /// solid cell complexes into one exact cell grid.
-    CertifiedAffineOrthogonalSolidCellIntersection,
-    /// Difference was materialized by normalizing affine-frame orthogonal
-    /// solid cell complexes into one exact cell grid.
-    CertifiedAffineOrthogonalSolidCellDifference,
     /// Union was materialized by preserving separate closed shells because
     /// closed solids only touch at exact lower-dimensional boundary features
     /// and share no interior volume.
@@ -1454,9 +1437,6 @@ impl ExactBooleanPreflight {
             | ExactBooleanSupport::CertifiedAxisAlignedBoxMultiDifference
             | ExactBooleanSupport::CertifiedAxisAlignedBoxNestedDifference
             | ExactBooleanSupport::CertifiedAxisAlignedBoxEmptyDifference
-            | ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellUnion
-            | ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellIntersection
-            | ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellDifference
             | ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion
             | ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
             | ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference

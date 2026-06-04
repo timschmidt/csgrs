@@ -7962,7 +7962,7 @@ fn exact_affine_orthogonal_solid_cell_complex_reenters_boolean() {
         .unwrap();
     assert_eq!(
         union_preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellUnion
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let union = hypermesh::boolean_exact(
         &complex,
@@ -7983,7 +7983,7 @@ fn exact_affine_orthogonal_solid_cell_complex_reenters_boolean() {
     assert_eq!(
         union.kind,
         hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::ExactBooleanShortcutKind::AffineOrthogonalSolidCellUnion
+            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
     assert!(union.mesh.facts().mesh.closed_manifold);
@@ -8000,7 +8000,7 @@ fn exact_affine_orthogonal_solid_cell_complex_reenters_boolean() {
         .unwrap();
     assert_eq!(
         intersection_preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellIntersection
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let intersection = hypermesh::boolean_exact(
         &complex,
@@ -8021,7 +8021,7 @@ fn exact_affine_orthogonal_solid_cell_complex_reenters_boolean() {
     assert_eq!(
         intersection.kind,
         hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::ExactBooleanShortcutKind::AffineOrthogonalSolidCellIntersection
+            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
 
@@ -8037,7 +8037,7 @@ fn exact_affine_orthogonal_solid_cell_complex_reenters_boolean() {
         .unwrap();
     assert_eq!(
         difference_preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellDifference
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
     let difference = hypermesh::boolean_exact(
         &complex,
@@ -8058,7 +8058,7 @@ fn exact_affine_orthogonal_solid_cell_complex_reenters_boolean() {
     assert_eq!(
         difference.kind,
         hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::ExactBooleanShortcutKind::AffineOrthogonalSolidCellDifference
+            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
     assert!(difference.mesh.facts().mesh.closed_manifold);
@@ -8109,7 +8109,7 @@ fn exact_affine_orthogonal_solid_cell_complexes_discover_shared_frame() {
         .unwrap();
     assert_eq!(
         union_preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellUnion
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let intersection = hypermesh::boolean_exact(
@@ -8131,7 +8131,7 @@ fn exact_affine_orthogonal_solid_cell_complexes_discover_shared_frame() {
     assert_eq!(
         intersection.kind,
         hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::ExactBooleanShortcutKind::AffineOrthogonalSolidCellIntersection
+            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
     assert!(intersection.mesh.facts().mesh.closed_manifold);
@@ -8155,13 +8155,13 @@ fn exact_affine_orthogonal_solid_cell_complexes_discover_shared_frame() {
     assert_eq!(
         difference.kind,
         hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::ExactBooleanShortcutKind::AffineOrthogonalSolidCellDifference
+            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
     assert!(difference.mesh.facts().mesh.closed_manifold);
 
     let mut stale = union_preflight.clone();
-    stale.support = hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex;
+    stale.support = hypermesh::ExactBooleanSupport::CertifiedAxisAlignedBoxUnion;
     assert!(stale.validate_against_sources(&first, &second).is_err());
 }
 
@@ -8196,7 +8196,7 @@ fn exact_affine_orthogonal_solid_intersection_materializes_empty_cavity_cell_set
         .unwrap();
     assert_eq!(
         preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellIntersection
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let intersection = hypermesh::boolean_exact(
@@ -8218,7 +8218,7 @@ fn exact_affine_orthogonal_solid_intersection_materializes_empty_cavity_cell_set
     assert_eq!(
         intersection.kind,
         hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::ExactBooleanShortcutKind::AffineOrthogonalSolidCellIntersection
+            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
     assert!(intersection.mesh.vertices().is_empty());
@@ -8259,9 +8259,12 @@ fn exact_affine_orthogonal_solid_rejects_unrelated_world_axis_cutter() {
     )
     .unwrap();
     preflight.validate().unwrap();
-    assert_ne!(
+    preflight
+        .validate_against_sources(&complex, &unrelated)
+        .unwrap();
+    assert_eq!(
         preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedAffineOrthogonalSolidCellUnion
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 }
 
