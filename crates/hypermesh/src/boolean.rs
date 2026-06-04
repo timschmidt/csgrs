@@ -3260,7 +3260,9 @@ fn boolean_coplanar_orthogonal_surface_optional(
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
     let arrangement = match operation {
         ExactBooleanOperation::Union => arrange_coplanar_orthogonal_surface_union(left, right),
-        ExactBooleanOperation::Intersection => None,
+        ExactBooleanOperation::Intersection => {
+            arrange_coplanar_orthogonal_surface_intersection(left, right)
+        }
         ExactBooleanOperation::Difference => {
             arrange_coplanar_orthogonal_surface_difference(left, right)
         }
@@ -3295,7 +3297,9 @@ fn boolean_coplanar_affine_surface_optional(
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
     let arrangement = match operation {
         ExactBooleanOperation::Union => arrange_coplanar_affine_surface_union(left, right),
-        ExactBooleanOperation::Intersection => None,
+        ExactBooleanOperation::Intersection => {
+            arrange_coplanar_affine_surface_intersection(left, right)
+        }
         ExactBooleanOperation::Difference => {
             arrange_coplanar_affine_surface_difference(left, right)
         }
