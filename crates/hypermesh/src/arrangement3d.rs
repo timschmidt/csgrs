@@ -1,0 +1,3648 @@
+//! Exact 3D arrangement artifact for mesh pairs.
+//!
+//! This module is deliberately an arrangement/cell-complex handoff, not a
+//! direct triangle-soup Boolean shortcut. It retains source vertices, exact
+//! graph-intersection vertices, split edge chains, face-region boundary loops,
+//! carrier-face provenance, and winding labels needed by later selection and
+//! simplification stages.
+
+use super::arrangement2d::{
+    ExactArrangement2d, ExactArrangement2dBlocker, ExactArrangement2dInputSegment,
+    ExactArrangement2dOverlay, ExactArrangement2dRegion, ExactArrangement2dRegionRing,
+    ExactArrangement2dSegmentSource, ExactArrangement2dSetOperation, build_exact_arrangement2d,
+    build_exact_arrangement2d_overlay, exact_arrangement2d_face_witness,
+};
+use super::boolean::ExactBooleanOperation;
+use super::cell_complex::{ExactCellComplex, ExactLabeledCellComplex};
+use super::coplanar::CoplanarProjection;
+use super::graph::{
+    CoplanarEdgeSplitConstruction, CoplanarOverlapGraph, ExactFaceRegionPlan,
+    ExactIntersectionGraph, ExactSplitTopologyPlan, FaceRegionBoundary, FaceSplitBoundaryNode,
+    MeshSide, SplitEdgeNode, SplitPlanValidationReport, build_intersection_graph,
+};
+use super::mesh::{ExactMesh, Triangle};
+use super::provenance::SourceProvenance;
+use super::regularization::{
+    ExactArrangementBlocker, ExactLowerDimensionalPolicy, ExactRegularizationPolicy,
+};
+use super::solid::ClosedMeshOrientation;
+use super::validation::ValidationPolicy;
+use super::winding::{
+    ClosedMeshWindingMeshRelation, ClosedMeshWindingRelation, PointMeshWindingReport,
+    classify_mesh_vertices_against_closed_mesh_winding_report,
+    classify_point_against_closed_mesh_winding_report,
+};
+use core::cmp::Ordering;
+use std::collections::{BTreeMap, BTreeSet};
+
+use hyperlimit::{
+    Point2, Point3, compare_point2_lexicographic, compare_reals, point2_equal, point3_equal,
+    project_point3,
+};
+use hyperreal::Real;
+
+/// Source of an arrangement vertex.
+#[derive(Clone, Debug, PartialEq)]
+pub enum ArrangementVertexProvenance {
+    /// Original source mesh vertex.
+    SourceVertex { side: MeshSide, vertex: usize },
+    /// Constructed intersection graph vertex.
+    GraphIntersection { graph_vertex: usize },
+    /// Vertex from a retained carrier-plane overlay arrangement.
+    CarrierPlaneVertex { overlay: usize, vertex: usize },
+    /// Vertex from a retained per-source-face split arrangement.
+    FacePlaneVertex { arrangement: usize, vertex: usize },
+}
+
+/// Exact arrangement vertex.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ArrangementVertex {
+    /// Exact coordinate.
+    pub point: Point3,
+    /// Construction/source provenance.
+    pub provenance: Vec<ArrangementVertexProvenance>,
+}
+
+/// Source of an arrangement edge.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum ArrangementEdgeProvenance {
+    /// Split segment from one original mesh edge.
+    SourceEdge { side: MeshSide, edge: [usize; 2] },
+    /// Split edge from one retained carrier-plane overlay arrangement.
+    CarrierPlaneEdge { overlay: usize, edge: usize },
+    /// Split edge from one retained per-source-face arrangement.
+    FacePlaneEdge { arrangement: usize, edge: usize },
+}
+
+/// Exact arrangement edge.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ArrangementEdge {
+    /// Endpoint arrangement vertex indices.
+    pub vertices: [usize; 2],
+    /// Construction/source provenance.
+    pub provenance: Vec<ArrangementEdgeProvenance>,
+}
+
+/// Boundary node reference for an arrangement face cell.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum ArrangementFaceCellNode {
+    /// Original source vertex.
+    SourceVertex { side: MeshSide, vertex: usize },
+    /// Constructed graph vertex.
+    GraphVertex { graph_vertex: usize },
+    /// Vertex from a retained carrier-plane 2D overlay.
+    CarrierPlaneVertex { overlay: usize, vertex: usize },
+    /// Vertex from a retained per-source-face 2D split arrangement.
+    FacePlaneVertex { arrangement: usize, vertex: usize },
+}
+
+/// Cell owner/carrier information.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct ArrangementFaceCarrier {
+    /// Source mesh side owning the carrier triangle.
+    pub side: MeshSide,
+    /// Source face index.
+    pub face: usize,
+    /// Source triangle vertex indices.
+    pub triangle: [usize; 3],
+}
+
+/// Winding classification of a face cell against the opposite mesh.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ArrangementOppositeClassification {
+    /// Exact representative point used for the winding query.
+    pub representative: Point3,
+    /// Winding report against the opposite mesh.
+    pub winding: PointMeshWindingReport,
+}
+
+/// Exact face cell in the retained arrangement.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ArrangementFaceCell {
+    /// Source carrier face.
+    pub carrier: ArrangementFaceCarrier,
+    /// Boundary nodes in carrier-face order.
+    pub boundary: Vec<ArrangementFaceCellNode>,
+    /// Exact boundary coordinates in carrier-face order.
+    pub boundary_points: Vec<Point3>,
+    /// Classification against the opposite mesh, when the query was meaningful.
+    pub opposite: Option<ArrangementOppositeClassification>,
+}
+
+/// Exact lower-dimensional contact retained by arrangement regularization.
+#[derive(Clone, Debug, PartialEq)]
+pub enum ArrangementLowerDimensionalArtifact {
+    /// A certified point contact between source faces.
+    PointContact {
+        /// Left source face.
+        left_face: usize,
+        /// Right source face.
+        right_face: usize,
+        /// Exact contact point.
+        point: Point3,
+    },
+    /// A certified positive-length edge/segment contact between source faces.
+    EdgeContact {
+        /// Left source face.
+        left_face: usize,
+        /// Right source face.
+        right_face: usize,
+        /// Exact interval endpoints.
+        endpoints: [Point3; 2],
+    },
+}
+
+/// Retained 2D arrangement for one coplanar carrier-plane face pair.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ArrangementCarrierPlaneOverlay {
+    /// Left carrier face.
+    pub left_face: usize,
+    /// Right carrier face.
+    pub right_face: usize,
+    /// Projection used by the retained exact coplanar predicates.
+    pub projection: CoplanarProjection,
+    /// Exact 2D cell overlay of the projected source face boundaries.
+    pub overlay: ExactArrangement2dOverlay,
+}
+
+/// Retained 2D arrangement for one source carrier face split by non-coplanar
+/// intersection chords.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ArrangementFacePlaneArrangement {
+    /// Source mesh side owning the carrier face.
+    pub side: MeshSide,
+    /// Source carrier face.
+    pub face: usize,
+    /// Projection used to run exact 2D subdivision on the carrier plane.
+    pub projection: CoplanarProjection,
+    /// Exact 2D arrangement over the source triangle boundary and retained
+    /// graph-vertex intersection chords.
+    pub arrangement: ExactArrangement2d,
+    /// Arrangement vertex classification back to original source vertices or
+    /// graph vertices. `None` means a local face-interior construction.
+    pub vertex_provenance: Vec<Option<ArrangementFaceCellNode>>,
+}
+
+/// Connected arrangement face-cell region.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ArrangementRegion {
+    /// Face-cell indices belonging to this connected component.
+    pub face_cells: Vec<usize>,
+    /// Undirected adjacency pairs between face-cells in this region.
+    pub adjacent_face_cells: Vec<[usize; 2]>,
+    /// Exact edge incidences internal or boundary to this shell component.
+    pub edge_incidences: Vec<ArrangementRegionEdgeIncidence>,
+    /// Oriented sides contributed by face cells in this shell component.
+    pub oriented_sides: Vec<ArrangementRegionSide>,
+    /// Number of exact boundary edges incident to only one face-cell.
+    pub boundary_edges: usize,
+    /// Number of exact boundary edges incident to more than two face-cells.
+    pub non_manifold_edges: usize,
+    /// Source sides represented by this connected shell component.
+    pub source_sides: Vec<MeshSide>,
+    /// Whether every retained boundary edge has exactly two incident cells.
+    pub closed: bool,
+    /// Whether no retained boundary edge has more than two incident cells.
+    pub manifold: bool,
+}
+
+/// Exact edge incidence for one connected arrangement shell.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ArrangementRegionEdgeIncidence {
+    /// Canonical exact boundary edge.
+    pub edge: [ArrangementFaceCellNode; 2],
+    /// Face-cells in the owning shell incident to this edge.
+    pub face_cells: Vec<usize>,
+    /// Whether this edge is used by exactly one retained face-cell.
+    pub boundary: bool,
+    /// Whether this edge has more than two retained incident face-cells.
+    pub non_manifold: bool,
+}
+
+/// Oriented side evidence for a face cell in a shell component.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ArrangementRegionSide {
+    /// Face-cell contributing this side.
+    pub face_cell: usize,
+    /// Source side whose boundary owns the face-cell carrier.
+    pub source: MeshSide,
+    /// Carrier face index in the source mesh.
+    pub source_face: usize,
+    /// Boundary node order as emitted by the carrier-face arrangement.
+    pub boundary: Vec<ArrangementFaceCellNode>,
+}
+
+/// Exact volume-region node induced by closed manifold shell components.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ArrangementVolumeRegion {
+    /// Volume-region index in the arrangement volume graph.
+    pub index: usize,
+    /// Whether this is the unbounded exterior region.
+    pub exterior: bool,
+    /// Shell components bounding this volume region.
+    pub boundary_shells: Vec<usize>,
+    /// Source sides whose closed shell interiors contribute this volume.
+    pub source_sides: Vec<MeshSide>,
+}
+
+/// Adjacency between two volume regions across one closed shell component.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ArrangementVolumeAdjacency {
+    /// Shell component crossed by this adjacency.
+    pub shell_region: usize,
+    /// Unbounded/outside volume-region index for the shell.
+    pub exterior_volume: usize,
+    /// Bounded/interior volume-region index for the shell.
+    pub interior_volume: usize,
+    /// Face-cells forming the separating shell.
+    pub separating_face_cells: Vec<usize>,
+    /// Oriented face-cell sides making this volume boundary explicit.
+    pub oriented_face_sides: Vec<ArrangementVolumeFaceSide>,
+}
+
+/// Oriented face-cell side crossing between two volume regions.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ArrangementVolumeFaceSide {
+    /// Face-cell contributing this volume side.
+    pub face_cell: usize,
+    /// Source side whose boundary owns the face-cell carrier.
+    pub source: MeshSide,
+    /// Carrier face index in the source mesh.
+    pub source_face: usize,
+    /// Boundary node order as emitted by the carrier-face arrangement.
+    pub boundary: Vec<ArrangementFaceCellNode>,
+    /// Volume on the outside of the owning shell.
+    pub exterior_volume: usize,
+    /// Volume on the inside of the owning shell.
+    pub interior_volume: usize,
+}
+
+/// Exact 3D arrangement over two source meshes.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactArrangement3d {
+    /// Exact vertices from source meshes and constructed intersections.
+    pub vertices: Vec<ArrangementVertex>,
+    /// Exact split edges from source edges and graph vertices.
+    pub edges: Vec<ArrangementEdge>,
+    /// Face cells retained in carrier-face coordinates.
+    pub face_cells: Vec<ArrangementFaceCell>,
+    /// Per-carrier-plane 2D arrangements for retained coplanar overlap graphs.
+    pub carrier_plane_overlays: Vec<ArrangementCarrierPlaneOverlay>,
+    /// Per-source-face 2D arrangements for non-coplanar intersection chords.
+    pub face_plane_arrangements: Vec<ArrangementFacePlaneArrangement>,
+    /// Lower-dimensional contacts retained by regularization policy.
+    pub lower_dimensional_artifacts: Vec<ArrangementLowerDimensionalArtifact>,
+    /// Connected face-cell regions/shell components retained by the arrangement.
+    pub shells_or_regions: Option<Vec<ArrangementRegion>>,
+    /// Explicit volume regions induced by closed manifold shell components.
+    pub volume_regions: Option<Vec<ArrangementVolumeRegion>>,
+    /// Volume adjacency through closed shell components.
+    pub volume_adjacencies: Option<Vec<ArrangementVolumeAdjacency>>,
+    /// Retained exact intersection graph.
+    pub graph: ExactIntersectionGraph,
+    /// Checked split topology, when exact ordering/equality completed.
+    pub topology: Option<ExactSplitTopologyPlan>,
+    /// Checked face-region loop plan, when available.
+    pub region_plan: Option<ExactFaceRegionPlan>,
+    /// Explicit blockers for incomplete exact arrangement construction.
+    pub blockers: Vec<ExactArrangementBlocker>,
+}
+
+/// Public arrangement entry point for the exact Boolean pipeline.
+pub type ExactArrangement = ExactArrangement3d;
+
+impl ExactArrangement3d {
+    /// Build a retained exact arrangement from two meshes.
+    pub fn from_meshes(
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<Self, super::error::MeshError> {
+        Self::from_meshes_with_policy(left, right, ExactRegularizationPolicy::default())
+    }
+
+    /// Build a retained exact arrangement from two meshes with explicit policy.
+    pub fn from_meshes_with_policy(
+        left: &ExactMesh,
+        right: &ExactMesh,
+        policy: ExactRegularizationPolicy,
+    ) -> Result<Self, super::error::MeshError> {
+        let graph = build_intersection_graph(left, right)?;
+        let mut blockers = blockers_from_graph_validation(&graph);
+        if graph.has_unknowns() {
+            blockers.push(ExactArrangementBlocker::UnresolvedIntersection);
+        }
+
+        let topology = match graph.checked_split_topology_plan() {
+            Ok(topology) => Some(topology),
+            Err(report) => {
+                extend_split_plan_blockers(&mut blockers, &report);
+                None
+            }
+        };
+
+        let region_plan = if topology.is_some() {
+            match graph.face_split_geometry_plan(left, right) {
+                Ok(geometry) => {
+                    let report = geometry.validate_boundary_incidence(left, right);
+                    if !report.is_valid() {
+                        extend_split_plan_blockers(&mut blockers, &report);
+                        None
+                    } else {
+                        let regions = geometry.region_plan(left, right);
+                        let region_report = regions.validate(left, right);
+                        if !region_report.is_valid() {
+                            extend_split_plan_blockers(&mut blockers, &region_report);
+                            None
+                        } else {
+                            Some(regions)
+                        }
+                    }
+                }
+                Err(_) => {
+                    blockers.push(ExactArrangementBlocker::UnresolvedIntersection);
+                    None
+                }
+            }
+        } else {
+            None
+        };
+
+        let carrier_plane_overlays = carrier_plane_overlays(&graph, left, right, &mut blockers);
+        let lower_dimensional_artifacts =
+            lower_dimensional_artifacts(&graph, left, right, policy, &mut blockers);
+        let face_plane_arrangements = face_plane_arrangements(
+            topology.as_ref(),
+            left,
+            right,
+            &carrier_plane_overlays,
+            &mut blockers,
+        );
+        let vertices = arrangement_vertices(
+            left,
+            right,
+            topology.as_ref(),
+            &carrier_plane_overlays,
+            &face_plane_arrangements,
+            &mut blockers,
+        );
+        let edges = arrangement_edges(
+            topology.as_ref(),
+            &vertices,
+            &carrier_plane_overlays,
+            &face_plane_arrangements,
+        );
+        let face_cells = arrangement_face_cells(
+            left,
+            right,
+            region_plan.as_ref(),
+            &carrier_plane_overlays,
+            &face_plane_arrangements,
+            &mut blockers,
+        );
+        let shells_or_regions = Some(arrangement_regions(&face_cells));
+        let (volume_regions, volume_adjacencies) = arrangement_volume_graph(
+            shells_or_regions.as_ref().map_or(&[][..], Vec::as_slice),
+            &face_cells,
+            left,
+            right,
+            &mut blockers,
+        );
+        validate_arrangement_volume_graph(
+            shells_or_regions.as_ref().map_or(&[][..], Vec::as_slice),
+            volume_regions.as_deref(),
+            volume_adjacencies.as_deref(),
+            &mut blockers,
+        );
+        if shells_or_regions.as_ref().is_some_and(|regions| {
+            regions.iter().any(|region| {
+                region.boundary_edges > 0
+                    && region.non_manifold_edges > 0
+                    && region.source_sides.len() > 1
+            })
+        }) {
+            push_unique_blocker(
+                &mut blockers,
+                ExactArrangementBlocker::UnregularizedOpenSheetComplex,
+            );
+        }
+        if shells_or_regions
+            .as_ref()
+            .is_some_and(|regions| regions.iter().any(|region| region.non_manifold_edges > 0))
+        {
+            let regularizable_closed_coincident =
+                shells_or_regions.as_ref().is_some_and(|regions| {
+                    regions.iter().all(|region| {
+                        region.non_manifold_edges == 0
+                            || (region.boundary_edges == 0 && region.source_sides.len() > 1)
+                    })
+                });
+            if !regularizable_closed_coincident {
+                // Closed coincident source sheets can still be selected from
+                // exact face labels and canonicalized away in simplification.
+                // Open mixed-source sheet complexes need true volume-boundary
+                // reconstruction and remain blockers.
+                let blocker = if shells_or_regions.as_ref().is_some_and(|regions| {
+                    regions.iter().any(|region| {
+                        region.boundary_edges > 0
+                            && region.non_manifold_edges > 0
+                            && region.source_sides.len() > 1
+                    })
+                }) {
+                    ExactArrangementBlocker::UnregularizedCoincidentSheetComplex
+                } else {
+                    ExactArrangementBlocker::NonManifoldCellComplex
+                };
+                push_unique_blocker(&mut blockers, blocker);
+            }
+        }
+        if policy == ExactRegularizationPolicy::REGULARIZED_SOLID
+            && (!left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold)
+            && shells_or_regions
+                .as_ref()
+                .is_some_and(|regions| regions.iter().any(|region| region.boundary_edges > 0))
+        {
+            blockers.push(ExactArrangementBlocker::NonManifoldCellComplex);
+        }
+
+        Ok(Self {
+            vertices,
+            edges,
+            face_cells,
+            carrier_plane_overlays,
+            face_plane_arrangements,
+            lower_dimensional_artifacts,
+            shells_or_regions,
+            volume_regions,
+            volume_adjacencies,
+            graph,
+            topology,
+            region_plan,
+            blockers,
+        })
+    }
+
+    /// Return whether construction reached a blocker-free arrangement handoff.
+    pub fn is_complete(&self) -> bool {
+        self.blockers.is_empty()
+    }
+
+    /// Validate this arrangement by rebuilding it from source operands.
+    pub fn validate_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<(), ExactArrangementBlocker> {
+        self.validate_against_sources_with_policy(left, right, ExactRegularizationPolicy::default())
+    }
+
+    /// Validate this arrangement by rebuilding it with an explicit
+    /// regularization policy.
+    pub fn validate_against_sources_with_policy(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+        policy: ExactRegularizationPolicy,
+    ) -> Result<(), ExactArrangementBlocker> {
+        let replay = Self::from_meshes_with_policy(left, right, policy)
+            .map_err(|_| ExactArrangementBlocker::UnresolvedIntersection)?;
+        if replay == *self {
+            Ok(())
+        } else {
+            Err(ExactArrangementBlocker::UnresolvedIntersection)
+        }
+    }
+
+    /// Convert retained arrangement cells into a labeled cell complex.
+    pub fn label_regions(
+        &self,
+        policy: ExactRegularizationPolicy,
+    ) -> Result<ExactLabeledCellComplex, ExactArrangementBlocker> {
+        ExactCellComplex::from_arrangement(self.clone(), policy).label_regions(policy)
+    }
+
+    /// Convenience entry point matching the intended public pipeline shape.
+    pub fn select(
+        &self,
+        operation: ExactBooleanOperation,
+    ) -> Result<super::cell_complex::ExactSelectedCellComplex, ExactArrangementBlocker> {
+        self.select_with_policy(operation, ExactRegularizationPolicy::default())
+    }
+
+    /// Convenience entry point with explicit regularization policy.
+    pub fn select_with_policy(
+        &self,
+        operation: ExactBooleanOperation,
+        policy: ExactRegularizationPolicy,
+    ) -> Result<super::cell_complex::ExactSelectedCellComplex, ExactArrangementBlocker> {
+        self.label_regions(policy)?
+            .select_with_policy(operation, policy)
+    }
+}
+
+fn blockers_from_graph_validation(graph: &ExactIntersectionGraph) -> Vec<ExactArrangementBlocker> {
+    match graph.validate() {
+        Ok(()) => Vec::new(),
+        Err(error) => vec![ExactArrangementBlocker::InvalidIntersectionGraph(error)],
+    }
+}
+
+fn extend_split_plan_blockers(
+    blockers: &mut Vec<ExactArrangementBlocker>,
+    report: &SplitPlanValidationReport,
+) {
+    for diagnostic in &report.diagnostics {
+        blockers.push(ExactArrangementBlocker::InvalidSplitPlan(diagnostic.kind));
+        match diagnostic.kind {
+            super::graph::SplitPlanDiagnosticKind::UnknownOrdering => {
+                blockers.push(ExactArrangementBlocker::UndecidableOrdering)
+            }
+            super::graph::SplitPlanDiagnosticKind::UnresolvedEquality
+            | super::graph::SplitPlanDiagnosticKind::UnresolvedVertexLookup
+            | super::graph::SplitPlanDiagnosticKind::UnknownBoundaryIncidence => {
+                blockers.push(ExactArrangementBlocker::UnresolvedIntersection)
+            }
+            _ => {}
+        }
+    }
+}
+
+fn arrangement_vertices(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    topology: Option<&ExactSplitTopologyPlan>,
+    carrier_plane_overlays: &[ArrangementCarrierPlaneOverlay],
+    face_plane_arrangements: &[ArrangementFacePlaneArrangement],
+    blockers: &mut Vec<ExactArrangementBlocker>,
+) -> Vec<ArrangementVertex> {
+    let mut vertices = Vec::new();
+    for (index, point) in left.vertices().iter().enumerate() {
+        push_arrangement_vertex(
+            &mut vertices,
+            point.clone(),
+            ArrangementVertexProvenance::SourceVertex {
+                side: MeshSide::Left,
+                vertex: index,
+            },
+            blockers,
+        );
+    }
+    for (index, point) in right.vertices().iter().enumerate() {
+        push_arrangement_vertex(
+            &mut vertices,
+            point.clone(),
+            ArrangementVertexProvenance::SourceVertex {
+                side: MeshSide::Right,
+                vertex: index,
+            },
+            blockers,
+        );
+    }
+    if let Some(topology) = topology {
+        for (index, vertex) in topology.graph_vertices.iter().enumerate() {
+            push_arrangement_vertex(
+                &mut vertices,
+                vertex.point.clone(),
+                ArrangementVertexProvenance::GraphIntersection {
+                    graph_vertex: index,
+                },
+                blockers,
+            );
+        }
+    }
+    for (overlay_index, overlay) in carrier_plane_overlays.iter().enumerate() {
+        for (vertex_index, vertex) in overlay.overlay.arrangement.vertices.iter().enumerate() {
+            if let Some(point) = lift_carrier_plane_point(
+                left,
+                overlay.left_face,
+                overlay.projection,
+                &vertex.point,
+                blockers,
+            ) {
+                push_arrangement_vertex(
+                    &mut vertices,
+                    point,
+                    ArrangementVertexProvenance::CarrierPlaneVertex {
+                        overlay: overlay_index,
+                        vertex: vertex_index,
+                    },
+                    blockers,
+                );
+            }
+        }
+    }
+    for (arrangement_index, arrangement) in face_plane_arrangements.iter().enumerate() {
+        let mesh = mesh_for_side(arrangement.side, left, right);
+        for (vertex_index, vertex) in arrangement.arrangement.vertices.iter().enumerate() {
+            if let Some(point) = lift_carrier_plane_point(
+                mesh,
+                arrangement.face,
+                arrangement.projection,
+                &vertex.point,
+                blockers,
+            ) {
+                push_arrangement_vertex(
+                    &mut vertices,
+                    point,
+                    ArrangementVertexProvenance::FacePlaneVertex {
+                        arrangement: arrangement_index,
+                        vertex: vertex_index,
+                    },
+                    blockers,
+                );
+            }
+        }
+    }
+    vertices
+}
+
+fn push_arrangement_vertex(
+    vertices: &mut Vec<ArrangementVertex>,
+    point: Point3,
+    provenance: ArrangementVertexProvenance,
+    blockers: &mut Vec<ExactArrangementBlocker>,
+) {
+    for existing in vertices.iter_mut() {
+        match point3_equal(&existing.point, &point).value() {
+            Some(true) => {
+                if !existing.provenance.contains(&provenance) {
+                    existing.provenance.push(provenance);
+                }
+                return;
+            }
+            Some(false) => {}
+            None => blockers.push(ExactArrangementBlocker::UndecidableOrdering),
+        }
+    }
+    vertices.push(ArrangementVertex {
+        point,
+        provenance: vec![provenance],
+    });
+}
+
+fn arrangement_edges(
+    topology: Option<&ExactSplitTopologyPlan>,
+    vertices: &[ArrangementVertex],
+    carrier_plane_overlays: &[ArrangementCarrierPlaneOverlay],
+    face_plane_arrangements: &[ArrangementFacePlaneArrangement],
+) -> Vec<ArrangementEdge> {
+    let mut edges = Vec::new();
+    if let Some(topology) = topology {
+        for chain in &topology.edge_chains {
+            for pair in chain.nodes.windows(2) {
+                let Some(left) = arrangement_node_index(&pair[0], vertices) else {
+                    continue;
+                };
+                let Some(right) = arrangement_node_index(&pair[1], vertices) else {
+                    continue;
+                };
+                push_arrangement_edge(
+                    &mut edges,
+                    vertices,
+                    left,
+                    right,
+                    ArrangementEdgeProvenance::SourceEdge {
+                        side: chain.side,
+                        edge: chain.edge,
+                    },
+                );
+            }
+        }
+    }
+    for (overlay_index, overlay) in carrier_plane_overlays.iter().enumerate() {
+        for (edge_index, edge) in overlay.overlay.arrangement.edges.iter().enumerate() {
+            let Some(left) = arrangement_vertex_index_by_provenance(
+                vertices,
+                &ArrangementVertexProvenance::CarrierPlaneVertex {
+                    overlay: overlay_index,
+                    vertex: edge.vertices[0],
+                },
+            ) else {
+                continue;
+            };
+            let Some(right) = arrangement_vertex_index_by_provenance(
+                vertices,
+                &ArrangementVertexProvenance::CarrierPlaneVertex {
+                    overlay: overlay_index,
+                    vertex: edge.vertices[1],
+                },
+            ) else {
+                continue;
+            };
+            push_arrangement_edge(
+                &mut edges,
+                vertices,
+                left,
+                right,
+                ArrangementEdgeProvenance::CarrierPlaneEdge {
+                    overlay: overlay_index,
+                    edge: edge_index,
+                },
+            );
+        }
+    }
+    for (arrangement_index, arrangement) in face_plane_arrangements.iter().enumerate() {
+        for (edge_index, edge) in arrangement.arrangement.edges.iter().enumerate() {
+            let Some(left) = arrangement_vertex_index_by_provenance(
+                vertices,
+                &ArrangementVertexProvenance::FacePlaneVertex {
+                    arrangement: arrangement_index,
+                    vertex: edge.vertices[0],
+                },
+            ) else {
+                continue;
+            };
+            let Some(right) = arrangement_vertex_index_by_provenance(
+                vertices,
+                &ArrangementVertexProvenance::FacePlaneVertex {
+                    arrangement: arrangement_index,
+                    vertex: edge.vertices[1],
+                },
+            ) else {
+                continue;
+            };
+            push_arrangement_edge(
+                &mut edges,
+                vertices,
+                left,
+                right,
+                ArrangementEdgeProvenance::FacePlaneEdge {
+                    arrangement: arrangement_index,
+                    edge: edge_index,
+                },
+            );
+        }
+    }
+    edges
+}
+
+fn push_arrangement_edge(
+    edges: &mut Vec<ArrangementEdge>,
+    _vertices: &[ArrangementVertex],
+    left: usize,
+    right: usize,
+    provenance: ArrangementEdgeProvenance,
+) {
+    if left == right {
+        return;
+    }
+    let key = if left < right {
+        [left, right]
+    } else {
+        [right, left]
+    };
+    match edges
+        .iter_mut()
+        .find(|edge: &&mut ArrangementEdge| edge.vertices == key)
+    {
+        Some(edge) => {
+            if !edge.provenance.contains(&provenance) {
+                edge.provenance.push(provenance);
+            }
+        }
+        None => edges.push(ArrangementEdge {
+            vertices: key,
+            provenance: vec![provenance],
+        }),
+    }
+}
+
+fn arrangement_vertex_index_by_provenance(
+    vertices: &[ArrangementVertex],
+    provenance: &ArrangementVertexProvenance,
+) -> Option<usize> {
+    vertices
+        .iter()
+        .position(|vertex| vertex.provenance.contains(provenance))
+}
+
+fn arrangement_node_index(node: &SplitEdgeNode, vertices: &[ArrangementVertex]) -> Option<usize> {
+    vertices.iter().position(|vertex| match node {
+        SplitEdgeNode::OriginalVertex {
+            side,
+            vertex: index,
+        } => vertex
+            .provenance
+            .contains(&ArrangementVertexProvenance::SourceVertex {
+                side: *side,
+                vertex: *index,
+            }),
+        SplitEdgeNode::GraphVertex { graph_vertex } => {
+            vertex
+                .provenance
+                .contains(&ArrangementVertexProvenance::GraphIntersection {
+                    graph_vertex: *graph_vertex,
+                })
+        }
+    })
+}
+
+fn arrangement_face_cells(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    region_plan: Option<&ExactFaceRegionPlan>,
+    carrier_plane_overlays: &[ArrangementCarrierPlaneOverlay],
+    face_plane_arrangements: &[ArrangementFacePlaneArrangement],
+    blockers: &mut Vec<ExactArrangementBlocker>,
+) -> Vec<ArrangementFaceCell> {
+    let mut cells = Vec::new();
+    let skipped_carriers = overlay_carriers(carrier_plane_overlays);
+    let skipped_face_arrangements = face_arrangement_carriers(face_plane_arrangements);
+
+    if let Some(region_plan) = region_plan
+        && !region_plan.regions.is_empty()
+    {
+        cells.extend(region_plan.regions.iter().filter_map(|region| {
+            if skipped_carriers.contains(&(region.side, region.face))
+                || skipped_face_arrangements.contains(&(region.side, region.face))
+            {
+                None
+            } else {
+                Some(face_cell_from_region(region, left, right, blockers))
+            }
+        }));
+        append_face_plane_arrangement_face_cells(
+            &mut cells,
+            face_plane_arrangements,
+            left,
+            right,
+            blockers,
+        );
+        append_carrier_plane_overlay_face_cells(
+            &mut cells,
+            carrier_plane_overlays,
+            left,
+            right,
+            blockers,
+        );
+        return cells;
+    }
+
+    for (face, triangle) in left.triangles().iter().enumerate() {
+        if skipped_carriers.contains(&(MeshSide::Left, face))
+            || skipped_face_arrangements.contains(&(MeshSide::Left, face))
+        {
+            continue;
+        }
+        cells.push(face_cell_from_original_triangle(
+            MeshSide::Left,
+            face,
+            triangle.0,
+            left,
+            right,
+            blockers,
+        ));
+    }
+    for (face, triangle) in right.triangles().iter().enumerate() {
+        if skipped_carriers.contains(&(MeshSide::Right, face))
+            || skipped_face_arrangements.contains(&(MeshSide::Right, face))
+        {
+            continue;
+        }
+        cells.push(face_cell_from_original_triangle(
+            MeshSide::Right,
+            face,
+            triangle.0,
+            left,
+            right,
+            blockers,
+        ));
+    }
+    append_face_plane_arrangement_face_cells(
+        &mut cells,
+        face_plane_arrangements,
+        left,
+        right,
+        blockers,
+    );
+    append_carrier_plane_overlay_face_cells(
+        &mut cells,
+        carrier_plane_overlays,
+        left,
+        right,
+        blockers,
+    );
+    cells
+}
+
+fn face_arrangement_carriers(
+    face_plane_arrangements: &[ArrangementFacePlaneArrangement],
+) -> Vec<(MeshSide, usize)> {
+    let mut carriers = Vec::new();
+    for arrangement in face_plane_arrangements {
+        push_unique_carrier(&mut carriers, arrangement.side, arrangement.face);
+    }
+    carriers
+}
+
+fn face_plane_arrangements(
+    topology: Option<&ExactSplitTopologyPlan>,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    carrier_plane_overlays: &[ArrangementCarrierPlaneOverlay],
+    blockers: &mut Vec<ExactArrangementBlocker>,
+) -> Vec<ArrangementFacePlaneArrangement> {
+    let Some(topology) = topology else {
+        return Vec::new();
+    };
+    let skipped_carriers = overlay_carriers(carrier_plane_overlays);
+    let mut pair_vertices = BTreeMap::<(usize, usize, usize, usize), BTreeSet<usize>>::new();
+    for (graph_vertex, vertex) in topology.graph_vertices.iter().enumerate() {
+        for source_use in &vertex.uses {
+            let edge_carrier = match source_use.side {
+                MeshSide::Left => source_use.face_pair[0],
+                MeshSide::Right => source_use.face_pair[1],
+            };
+            push_face_pair_vertex(
+                &mut pair_vertices,
+                source_use.side,
+                edge_carrier,
+                source_use.face_pair,
+                graph_vertex,
+            );
+
+            let plane_side = opposite_side(source_use.side);
+            push_face_pair_vertex(
+                &mut pair_vertices,
+                plane_side,
+                source_use.plane_face,
+                source_use.face_pair,
+                graph_vertex,
+            );
+        }
+    }
+
+    let mut per_face_groups = BTreeMap::<(usize, usize), Vec<Vec<usize>>>::new();
+    for ((side, face, _, _), vertices) in pair_vertices {
+        if vertices.len() < 2 {
+            continue;
+        }
+        let side = side_from_key(side);
+        if skipped_carriers.contains(&(side, face)) {
+            continue;
+        }
+        per_face_groups
+            .entry((side_key(side), face))
+            .or_default()
+            .push(vertices.into_iter().collect());
+    }
+
+    let mut arrangements = Vec::new();
+    for ((side, face), groups) in per_face_groups {
+        let side = side_from_key(side);
+        if let Some(arrangement) =
+            face_plane_arrangement(side, face, groups, topology, left, right, blockers)
+        {
+            arrangements.push(arrangement);
+        }
+    }
+    arrangements
+}
+
+fn push_face_pair_vertex(
+    pair_vertices: &mut BTreeMap<(usize, usize, usize, usize), BTreeSet<usize>>,
+    side: MeshSide,
+    face: usize,
+    face_pair: [usize; 2],
+    graph_vertex: usize,
+) {
+    pair_vertices
+        .entry((side_key(side), face, face_pair[0], face_pair[1]))
+        .or_default()
+        .insert(graph_vertex);
+}
+
+const fn opposite_side(side: MeshSide) -> MeshSide {
+    match side {
+        MeshSide::Left => MeshSide::Right,
+        MeshSide::Right => MeshSide::Left,
+    }
+}
+
+const fn side_from_key(side: usize) -> MeshSide {
+    match side {
+        0 => MeshSide::Left,
+        _ => MeshSide::Right,
+    }
+}
+
+fn face_plane_arrangement(
+    side: MeshSide,
+    face: usize,
+    groups: Vec<Vec<usize>>,
+    topology: &ExactSplitTopologyPlan,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    blockers: &mut Vec<ExactArrangementBlocker>,
+) -> Option<ArrangementFacePlaneArrangement> {
+    let mesh = mesh_for_side(side, left, right);
+    let triangle = mesh.triangles().get(face)?.0;
+    let projection = choose_triangle_projection(mesh, triangle, blockers)?;
+    let mut segments = Vec::new();
+    let mut next_source = 0usize;
+
+    for edge in [
+        [triangle[0], triangle[1]],
+        [triangle[1], triangle[2]],
+        [triangle[2], triangle[0]],
+    ] {
+        segments.push(ExactArrangement2dInputSegment::new(
+            [
+                project_point3(&mesh.vertices()[edge[0]], projection),
+                project_point3(&mesh.vertices()[edge[1]], projection),
+            ],
+            ExactArrangement2dSegmentSource::Anonymous(next_source),
+        ));
+        next_source += 1;
+    }
+
+    let mut graph_vertices_on_face = BTreeSet::new();
+    for mut group in groups {
+        group.sort_by(|left_index, right_index| {
+            let left_point =
+                project_point3(&topology.graph_vertices[*left_index].point, projection);
+            let right_point =
+                project_point3(&topology.graph_vertices[*right_index].point, projection);
+            compare_point2_lexicographic(&left_point, &right_point)
+                .value()
+                .unwrap_or_else(|| {
+                    blockers.push(ExactArrangementBlocker::UndecidableOrdering);
+                    Ordering::Equal
+                })
+        });
+        group.dedup();
+        for vertex in &group {
+            graph_vertices_on_face.insert(*vertex);
+        }
+        for pair in group.windows(2) {
+            let start = project_point3(&topology.graph_vertices[pair[0]].point, projection);
+            let end = project_point3(&topology.graph_vertices[pair[1]].point, projection);
+            match point2_equal(&start, &end).value() {
+                Some(true) => continue,
+                Some(false) => {}
+                None => {
+                    blockers.push(ExactArrangementBlocker::UndecidableOrdering);
+                    continue;
+                }
+            }
+            segments.push(ExactArrangement2dInputSegment::new(
+                [start, end],
+                ExactArrangement2dSegmentSource::Anonymous(next_source),
+            ));
+            next_source += 1;
+        }
+    }
+
+    let arrangement = build_exact_arrangement2d(&segments);
+    extend_arrangement2d_blockers(&arrangement.blockers, blockers);
+    let graph_vertices_on_face = graph_vertices_on_face.into_iter().collect::<Vec<_>>();
+    let vertex_provenance = arrangement
+        .vertices
+        .iter()
+        .map(|vertex| {
+            face_plane_vertex_provenance(
+                side,
+                face,
+                &vertex.point,
+                projection,
+                &graph_vertices_on_face,
+                topology,
+                left,
+                right,
+                blockers,
+            )
+        })
+        .collect();
+
+    Some(ArrangementFacePlaneArrangement {
+        side,
+        face,
+        projection,
+        arrangement,
+        vertex_provenance,
+    })
+}
+
+fn choose_triangle_projection(
+    mesh: &ExactMesh,
+    triangle: [usize; 3],
+    blockers: &mut Vec<ExactArrangementBlocker>,
+) -> Option<CoplanarProjection> {
+    let points = [
+        mesh.vertices()[triangle[0]].clone(),
+        mesh.vertices()[triangle[1]].clone(),
+        mesh.vertices()[triangle[2]].clone(),
+    ];
+    for projection in [
+        CoplanarProjection::Xy,
+        CoplanarProjection::Xz,
+        CoplanarProjection::Yz,
+    ] {
+        match compare_reals(
+            &projected_triangle_area2(&points, projection),
+            &Real::from(0),
+        )
+        .value()
+        {
+            Some(Ordering::Less | Ordering::Greater) => return Some(projection),
+            Some(Ordering::Equal) => {}
+            None => {
+                blockers.push(ExactArrangementBlocker::UndecidableOrdering);
+                return None;
+            }
+        }
+    }
+    blockers.push(ExactArrangementBlocker::NonManifoldCellComplex);
+    None
+}
+
+fn face_plane_vertex_provenance(
+    side: MeshSide,
+    face: usize,
+    point: &Point2,
+    projection: CoplanarProjection,
+    graph_vertices_on_face: &[usize],
+    topology: &ExactSplitTopologyPlan,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    blockers: &mut Vec<ExactArrangementBlocker>,
+) -> Option<ArrangementFaceCellNode> {
+    let mesh = mesh_for_side(side, left, right);
+    let triangle = mesh.triangles()[face].0;
+    for vertex in triangle {
+        match point2_equal(&project_point3(&mesh.vertices()[vertex], projection), point).value() {
+            Some(true) => return Some(ArrangementFaceCellNode::SourceVertex { side, vertex }),
+            Some(false) => {}
+            None => blockers.push(ExactArrangementBlocker::UndecidableOrdering),
+        }
+    }
+    for graph_vertex in graph_vertices_on_face {
+        match point2_equal(
+            &project_point3(&topology.graph_vertices[*graph_vertex].point, projection),
+            point,
+        )
+        .value()
+        {
+            Some(true) => {
+                return Some(ArrangementFaceCellNode::GraphVertex {
+                    graph_vertex: *graph_vertex,
+                });
+            }
+            Some(false) => {}
+            None => blockers.push(ExactArrangementBlocker::UndecidableOrdering),
+        }
+    }
+    None
+}
+
+fn overlay_carriers(
+    carrier_plane_overlays: &[ArrangementCarrierPlaneOverlay],
+) -> Vec<(MeshSide, usize)> {
+    let mut carriers = Vec::new();
+    for overlay in carrier_plane_overlays {
+        push_unique_carrier(&mut carriers, MeshSide::Left, overlay.left_face);
+        push_unique_carrier(&mut carriers, MeshSide::Right, overlay.right_face);
+    }
+    carriers
+}
+
+fn push_unique_carrier(carriers: &mut Vec<(MeshSide, usize)>, side: MeshSide, face: usize) {
+    let carrier = (side, face);
+    if !carriers.contains(&carrier) {
+        carriers.push(carrier);
+    }
+}
+
+fn lower_dimensional_artifacts(
+    graph: &ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    policy: ExactRegularizationPolicy,
+    blockers: &mut Vec<ExactArrangementBlocker>,
+) -> Vec<ArrangementLowerDimensionalArtifact> {
+    if policy.lower_dimensional == ExactLowerDimensionalPolicy::Drop {
+        return Vec::new();
+    }
+
+    let mut artifacts = non_coplanar_lower_dimensional_artifacts(graph);
+    let touching_pairs = graph
+        .coplanar_overlap_graphs()
+        .into_iter()
+        .filter(|overlap| {
+            overlap.relation == super::intersection::MeshFacePairRelation::CoplanarTouching
+        })
+        .map(|overlap| ((overlap.left_face, overlap.right_face), overlap))
+        .collect::<BTreeMap<_, _>>();
+
+    if !touching_pairs.is_empty() {
+        let split_plan = match graph.coplanar_overlap_split_plan(left, right) {
+            Ok(split_plan) => split_plan,
+            Err(_) => {
+                blockers.push(ExactArrangementBlocker::UnresolvedIntersection);
+                return artifacts;
+            }
+        };
+
+        for split_graph in split_plan.graphs {
+            if !touching_pairs.contains_key(&(split_graph.left_face, split_graph.right_face)) {
+                continue;
+            }
+            for edge_split in &split_graph.edge_splits {
+                push_lower_dimensional_edge_artifacts(
+                    &mut artifacts,
+                    split_graph.left_face,
+                    split_graph.right_face,
+                    edge_split,
+                );
+            }
+            for vertex_overlap in &split_graph.vertex_overlaps {
+                let mesh = mesh_for_side(vertex_overlap.vertex_side, left, right);
+                if let Some(point) = mesh.vertices().get(vertex_overlap.vertex) {
+                    push_lower_dimensional_artifact(
+                        &mut artifacts,
+                        ArrangementLowerDimensionalArtifact::PointContact {
+                            left_face: split_graph.left_face,
+                            right_face: split_graph.right_face,
+                            point: point.clone(),
+                        },
+                    );
+                }
+            }
+        }
+    }
+
+    if !artifacts.is_empty()
+        && policy.lower_dimensional == ExactLowerDimensionalPolicy::ReportBlocker
+    {
+        blockers.push(ExactArrangementBlocker::LowerDimensionalContact);
+    }
+    artifacts
+}
+
+fn non_coplanar_lower_dimensional_artifacts(
+    graph: &ExactIntersectionGraph,
+) -> Vec<ArrangementLowerDimensionalArtifact> {
+    let mut artifacts = Vec::new();
+    for pair in &graph.face_pairs {
+        if pair.relation != super::intersection::MeshFacePairRelation::Candidate {
+            continue;
+        }
+        if pair.events.iter().any(|event| {
+            matches!(
+                event,
+                super::graph::IntersectionEvent::SegmentPlane {
+                    relation: super::construction::SegmentPlaneRelation::ProperCrossing,
+                    ..
+                }
+            )
+        }) {
+            continue;
+        }
+        for event in &pair.events {
+            let super::graph::IntersectionEvent::SegmentPlane {
+                relation: super::construction::SegmentPlaneRelation::EndpointOnPlane,
+                point: Some(point),
+                ..
+            } = event
+            else {
+                continue;
+            };
+            push_lower_dimensional_artifact(
+                &mut artifacts,
+                ArrangementLowerDimensionalArtifact::PointContact {
+                    left_face: pair.left_face,
+                    right_face: pair.right_face,
+                    point: point.clone(),
+                },
+            );
+        }
+    }
+    artifacts
+}
+
+fn push_lower_dimensional_edge_artifacts(
+    artifacts: &mut Vec<ArrangementLowerDimensionalArtifact>,
+    left_face: usize,
+    right_face: usize,
+    edge_split: &CoplanarEdgeSplitConstruction,
+) {
+    for split_point in &edge_split.points {
+        push_lower_dimensional_artifact(
+            artifacts,
+            ArrangementLowerDimensionalArtifact::PointContact {
+                left_face,
+                right_face,
+                point: split_point.point.clone(),
+            },
+        );
+    }
+    if let Some(interval) = &edge_split.interval {
+        push_lower_dimensional_artifact(
+            artifacts,
+            ArrangementLowerDimensionalArtifact::EdgeContact {
+                left_face,
+                right_face,
+                endpoints: [
+                    interval.endpoints[0].point.clone(),
+                    interval.endpoints[1].point.clone(),
+                ],
+            },
+        );
+    }
+}
+
+fn push_lower_dimensional_artifact(
+    artifacts: &mut Vec<ArrangementLowerDimensionalArtifact>,
+    artifact: ArrangementLowerDimensionalArtifact,
+) {
+    if !artifacts.contains(&artifact) {
+        artifacts.push(artifact);
+    }
+}
+
+fn append_carrier_plane_overlay_face_cells(
+    cells: &mut Vec<ArrangementFaceCell>,
+    carrier_plane_overlays: &[ArrangementCarrierPlaneOverlay],
+    left: &ExactMesh,
+    right: &ExactMesh,
+    blockers: &mut Vec<ExactArrangementBlocker>,
+) {
+    for (overlay_index, overlay) in carrier_plane_overlays.iter().enumerate() {
+        for overlay_face in &overlay.overlay.faces {
+            if overlay_face.in_left {
+                if let Some(cell) = face_cell_from_carrier_plane_overlay(
+                    overlay_index,
+                    overlay,
+                    overlay_face.face,
+                    &overlay_face.witness,
+                    MeshSide::Left,
+                    left,
+                    right,
+                    blockers,
+                ) {
+                    cells.push(cell);
+                }
+            }
+            if overlay_face.in_right {
+                if let Some(cell) = face_cell_from_carrier_plane_overlay(
+                    overlay_index,
+                    overlay,
+                    overlay_face.face,
+                    &overlay_face.witness,
+                    MeshSide::Right,
+                    left,
+                    right,
+                    blockers,
+                ) {
+                    cells.push(cell);
+                }
+            }
+        }
+    }
+}
+
+fn append_face_plane_arrangement_face_cells(
+    cells: &mut Vec<ArrangementFaceCell>,
+    face_plane_arrangements: &[ArrangementFacePlaneArrangement],
+    left: &ExactMesh,
+    right: &ExactMesh,
+    blockers: &mut Vec<ExactArrangementBlocker>,
+) {
+    for (arrangement_index, arrangement) in face_plane_arrangements.iter().enumerate() {
+        for face in 0..arrangement.arrangement.faces.len() {
+            if let Some(cell) = face_cell_from_face_plane_arrangement(
+                arrangement_index,
+                arrangement,
+                face,
+                left,
+                right,
+                blockers,
+            ) {
+                cells.push(cell);
+            }
+        }
+    }
+}
+
+fn face_cell_from_face_plane_arrangement(
+    arrangement_index: usize,
+    arrangement: &ArrangementFacePlaneArrangement,
+    face: usize,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    blockers: &mut Vec<ExactArrangementBlocker>,
+) -> Option<ArrangementFaceCell> {
+    let mesh = mesh_for_side(arrangement.side, left, right);
+    let triangle = mesh.triangles().get(arrangement.face)?.0;
+    let arrangement_face = arrangement.arrangement.faces.get(face)?;
+    let mut boundary = Vec::with_capacity(arrangement_face.vertices.len());
+    let mut boundary_points = Vec::with_capacity(arrangement_face.vertices.len());
+    for vertex in &arrangement_face.vertices {
+        let point2 = &arrangement.arrangement.vertices.get(*vertex)?.point;
+        let Some(point3) = lift_carrier_plane_point(
+            mesh,
+            arrangement.face,
+            arrangement.projection,
+            point2,
+            blockers,
+        ) else {
+            return None;
+        };
+        boundary.push(arrangement.vertex_provenance[*vertex].clone().unwrap_or(
+            ArrangementFaceCellNode::FacePlaneVertex {
+                arrangement: arrangement_index,
+                vertex: *vertex,
+            },
+        ));
+        boundary_points.push(point3);
+    }
+    orient_overlay_boundary_to_carrier(
+        mesh,
+        arrangement.face,
+        arrangement.projection,
+        &mut boundary,
+        &mut boundary_points,
+        blockers,
+    );
+
+    let mut witness_blockers = Vec::new();
+    let witness =
+        exact_arrangement2d_face_witness(&arrangement.arrangement, face, &mut witness_blockers);
+    extend_arrangement2d_blockers(&witness_blockers, blockers);
+    let representative = lift_carrier_plane_point(
+        mesh,
+        arrangement.face,
+        arrangement.projection,
+        &witness?,
+        blockers,
+    )?;
+    let opposite = Some(classify_opposite(
+        arrangement.side,
+        representative,
+        left,
+        right,
+        blockers,
+    ));
+
+    Some(ArrangementFaceCell {
+        carrier: ArrangementFaceCarrier {
+            side: arrangement.side,
+            face: arrangement.face,
+            triangle,
+        },
+        boundary,
+        boundary_points,
+        opposite,
+    })
+}
+
+fn face_cell_from_carrier_plane_overlay(
+    overlay_index: usize,
+    overlay: &ArrangementCarrierPlaneOverlay,
+    face: usize,
+    witness: &Point2,
+    side: MeshSide,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    blockers: &mut Vec<ExactArrangementBlocker>,
+) -> Option<ArrangementFaceCell> {
+    let carrier_face = match side {
+        MeshSide::Left => overlay.left_face,
+        MeshSide::Right => overlay.right_face,
+    };
+    let mesh = mesh_for_side(side, left, right);
+    let triangle = mesh.triangles().get(carrier_face)?.0;
+    let overlay_face = overlay.overlay.arrangement.faces.get(face)?;
+    let mut boundary = Vec::with_capacity(overlay_face.vertices.len());
+    let mut boundary_points = Vec::with_capacity(overlay_face.vertices.len());
+    for vertex in &overlay_face.vertices {
+        let point2 = &overlay.overlay.arrangement.vertices.get(*vertex)?.point;
+        let Some(point3) =
+            lift_carrier_plane_point(mesh, carrier_face, overlay.projection, point2, blockers)
+        else {
+            return None;
+        };
+        boundary.push(ArrangementFaceCellNode::CarrierPlaneVertex {
+            overlay: overlay_index,
+            vertex: *vertex,
+        });
+        boundary_points.push(point3);
+    }
+    orient_overlay_boundary_to_carrier(
+        mesh,
+        carrier_face,
+        overlay.projection,
+        &mut boundary,
+        &mut boundary_points,
+        blockers,
+    );
+    let representative =
+        lift_carrier_plane_point(mesh, carrier_face, overlay.projection, witness, blockers)?;
+    let opposite = Some(classify_opposite(
+        side,
+        representative,
+        left,
+        right,
+        blockers,
+    ));
+
+    Some(ArrangementFaceCell {
+        carrier: ArrangementFaceCarrier {
+            side,
+            face: carrier_face,
+            triangle,
+        },
+        boundary,
+        boundary_points,
+        opposite,
+    })
+}
+
+fn extend_arrangement2d_blockers(
+    source: &[ExactArrangement2dBlocker],
+    blockers: &mut Vec<ExactArrangementBlocker>,
+) {
+    for blocker in source {
+        match blocker {
+            ExactArrangement2dBlocker::UnresolvedPointEquality { .. }
+            | ExactArrangement2dBlocker::UnresolvedSegmentRelation { .. }
+            | ExactArrangement2dBlocker::UnresolvedProperIntersectionConstruction { .. }
+            | ExactArrangement2dBlocker::UnresolvedPointOnSegment { .. } => {
+                blockers.push(ExactArrangementBlocker::UnresolvedIntersection)
+            }
+            ExactArrangement2dBlocker::UnresolvedSegmentOrdering { .. }
+            | ExactArrangement2dBlocker::UnresolvedAngleOrdering { .. }
+            | ExactArrangement2dBlocker::UnresolvedFaceArea { .. }
+            | ExactArrangement2dBlocker::UnresolvedRingNormalization { .. }
+            | ExactArrangement2dBlocker::UnresolvedOutputLoopContainment { .. } => {
+                blockers.push(ExactArrangementBlocker::UndecidableOrdering)
+            }
+            ExactArrangement2dBlocker::DegenerateSegment { .. }
+            | ExactArrangement2dBlocker::IncompleteFaceWalk { .. }
+            | ExactArrangement2dBlocker::InvalidRegionRing { .. }
+            | ExactArrangement2dBlocker::UnresolvedFaceWitness { .. }
+            | ExactArrangement2dBlocker::UnresolvedRingClassification { .. }
+            | ExactArrangement2dBlocker::FaceWitnessOnBoundary { .. }
+            | ExactArrangement2dBlocker::NonManifoldSelectedBoundary { .. }
+            | ExactArrangement2dBlocker::DegenerateOutputLoop { .. }
+            | ExactArrangement2dBlocker::OutputHoleWithoutOuter { .. }
+            | ExactArrangement2dBlocker::OutputLoopBoundaryContainment { .. } => {
+                blockers.push(ExactArrangementBlocker::NonManifoldCellComplex)
+            }
+        }
+    }
+}
+
+fn orient_overlay_boundary_to_carrier(
+    mesh: &ExactMesh,
+    face: usize,
+    projection: CoplanarProjection,
+    boundary: &mut [ArrangementFaceCellNode],
+    boundary_points: &mut [Point3],
+    blockers: &mut Vec<ExactArrangementBlocker>,
+) {
+    let Some(triangle) = mesh.triangles().get(face).map(|triangle| triangle.0) else {
+        blockers.push(ExactArrangementBlocker::UnresolvedIntersection);
+        return;
+    };
+    let points = [
+        mesh.vertices()[triangle[0]].clone(),
+        mesh.vertices()[triangle[1]].clone(),
+        mesh.vertices()[triangle[2]].clone(),
+    ];
+    match compare_reals(
+        &projected_triangle_area2(&points, projection),
+        &Real::from(0),
+    )
+    .value()
+    {
+        Some(Ordering::Less) => {
+            boundary.reverse();
+            boundary_points.reverse();
+        }
+        Some(Ordering::Greater) => {}
+        Some(Ordering::Equal) => blockers.push(ExactArrangementBlocker::NonManifoldCellComplex),
+        None => blockers.push(ExactArrangementBlocker::UndecidableOrdering),
+    }
+}
+
+fn carrier_plane_overlays(
+    graph: &ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    blockers: &mut Vec<ExactArrangementBlocker>,
+) -> Vec<ArrangementCarrierPlaneOverlay> {
+    graph
+        .coplanar_overlap_graphs()
+        .iter()
+        .filter_map(|overlap| carrier_plane_overlay(overlap, left, right, blockers))
+        .collect()
+}
+
+fn carrier_plane_overlay(
+    overlap: &CoplanarOverlapGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    blockers: &mut Vec<ExactArrangementBlocker>,
+) -> Option<ArrangementCarrierPlaneOverlay> {
+    if overlap.validate().is_err() {
+        blockers.push(ExactArrangementBlocker::UnresolvedIntersection);
+        return None;
+    }
+    let left_ring = projected_face_ring(
+        ExactArrangement2dRegion::Left,
+        left,
+        overlap.left_face,
+        overlap.projection,
+    )?;
+    let right_ring = projected_face_ring(
+        ExactArrangement2dRegion::Right,
+        right,
+        overlap.right_face,
+        overlap.projection,
+    )?;
+    let overlay = build_exact_arrangement2d_overlay(
+        &[left_ring, right_ring],
+        ExactArrangement2dSetOperation::Union,
+    );
+    if !overlay.blockers.is_empty() {
+        blockers.push(ExactArrangementBlocker::NonManifoldCellComplex);
+    }
+    Some(ArrangementCarrierPlaneOverlay {
+        left_face: overlap.left_face,
+        right_face: overlap.right_face,
+        projection: overlap.projection,
+        overlay,
+    })
+}
+
+fn projected_face_ring(
+    region: ExactArrangement2dRegion,
+    mesh: &ExactMesh,
+    face: usize,
+    projection: CoplanarProjection,
+) -> Option<ExactArrangement2dRegionRing> {
+    let triangle = mesh.triangles().get(face)?.0;
+    let vertices = triangle
+        .iter()
+        .map(|vertex| project_point3(&mesh.vertices()[*vertex], projection))
+        .collect::<Vec<Point2>>();
+    Some(ExactArrangement2dRegionRing::new(region, vertices))
+}
+
+fn arrangement_regions(face_cells: &[ArrangementFaceCell]) -> Vec<ArrangementRegion> {
+    if face_cells.is_empty() {
+        return Vec::new();
+    }
+    let mut adjacency = vec![Vec::<usize>::new(); face_cells.len()];
+    let edge_users = arrangement_edge_users(face_cells);
+    let mut adjacent_pairs = Vec::<[usize; 2]>::new();
+    for (_, users) in &edge_users {
+        for left_index in 0..users.len() {
+            for right_index in (left_index + 1)..users.len() {
+                let left = users[left_index];
+                let right = users[right_index];
+                adjacency[left].push(right);
+                adjacency[right].push(left);
+                adjacent_pairs.push(canonical_face_pair(left, right));
+            }
+        }
+    }
+    for neighbors in &mut adjacency {
+        neighbors.sort_unstable();
+        neighbors.dedup();
+    }
+    adjacent_pairs.sort_unstable();
+    adjacent_pairs.dedup();
+
+    let mut seen = vec![false; face_cells.len()];
+    let mut regions = Vec::new();
+    for start in 0..face_cells.len() {
+        if seen[start] {
+            continue;
+        }
+        let mut stack = vec![start];
+        let mut component = Vec::new();
+        seen[start] = true;
+        while let Some(cell) = stack.pop() {
+            component.push(cell);
+            for neighbor in &adjacency[cell] {
+                if !seen[*neighbor] {
+                    seen[*neighbor] = true;
+                    stack.push(*neighbor);
+                }
+            }
+        }
+        component.sort_unstable();
+        let adjacent_face_cells = adjacent_pairs
+            .iter()
+            .copied()
+            .filter(|[left, right]| component.contains(left) && component.contains(right))
+            .collect::<Vec<_>>();
+        let edge_incidences =
+            arrangement_region_edge_incidences(&component, &edge_users, face_cells);
+        let non_manifold_edges = edge_incidences
+            .iter()
+            .filter(|incidence| incidence.non_manifold)
+            .count();
+        let boundary_edges = edge_incidences
+            .iter()
+            .filter(|incidence| incidence.boundary)
+            .count();
+        let oriented_sides = arrangement_region_oriented_sides(&component, face_cells);
+        let source_sides = arrangement_region_source_sides(&component, face_cells);
+        regions.push(ArrangementRegion {
+            face_cells: component,
+            adjacent_face_cells,
+            edge_incidences,
+            oriented_sides,
+            boundary_edges,
+            non_manifold_edges,
+            source_sides,
+            closed: boundary_edges == 0,
+            manifold: non_manifold_edges == 0,
+        });
+    }
+    regions.sort_by_key(|region| region.face_cells.first().copied().unwrap_or(usize::MAX));
+    regions
+}
+
+const fn canonical_face_pair(left: usize, right: usize) -> [usize; 2] {
+    if left <= right {
+        [left, right]
+    } else {
+        [right, left]
+    }
+}
+
+fn arrangement_region_edge_incidences(
+    component: &[usize],
+    edge_users: &[([ArrangementFaceCellNode; 2], Vec<usize>)],
+    face_cells: &[ArrangementFaceCell],
+) -> Vec<ArrangementRegionEdgeIncidence> {
+    edge_users
+        .iter()
+        .filter_map(|(edge, users)| {
+            let mut incident_face_cells = users
+                .iter()
+                .copied()
+                .filter(|cell| component.contains(cell))
+                .collect::<Vec<_>>();
+            if incident_face_cells.is_empty() {
+                return None;
+            }
+            incident_face_cells.sort_unstable();
+            let incident_count = regularized_incident_sheet_count(&incident_face_cells, face_cells);
+            Some(ArrangementRegionEdgeIncidence {
+                edge: edge.clone(),
+                face_cells: incident_face_cells,
+                boundary: incident_count == 1,
+                non_manifold: incident_count > 2,
+            })
+        })
+        .collect()
+}
+
+fn regularized_incident_sheet_count(
+    incident_cells: &[usize],
+    all_face_cells: &[ArrangementFaceCell],
+) -> usize {
+    let mut representatives = Vec::<usize>::new();
+    'incident: for &cell in incident_cells {
+        for &representative in &representatives {
+            let Some(left) = all_face_cells.get(cell) else {
+                continue;
+            };
+            let Some(right) = all_face_cells.get(representative) else {
+                continue;
+            };
+            if exact_boundary_loops_equivalent(&left.boundary_points, &right.boundary_points) {
+                continue 'incident;
+            }
+        }
+        representatives.push(cell);
+    }
+    representatives.len()
+}
+
+fn exact_boundary_loops_equivalent(left: &[Point3], right: &[Point3]) -> bool {
+    exact_boundary_loops_same_orientation(left, right)
+        || exact_boundary_loops_opposite_orientation(left, right)
+}
+
+fn exact_boundary_loops_same_orientation(left: &[Point3], right: &[Point3]) -> bool {
+    if left.len() != right.len() {
+        return false;
+    }
+    if left.is_empty() {
+        return true;
+    }
+    (0..right.len()).any(|offset| {
+        (0..left.len()).all(|index| {
+            point3_equal(&left[index], &right[(offset + index) % right.len()]).value() == Some(true)
+        })
+    })
+}
+
+fn exact_boundary_loops_opposite_orientation(left: &[Point3], right: &[Point3]) -> bool {
+    if left.len() != right.len() {
+        return false;
+    }
+    if left.is_empty() {
+        return true;
+    }
+    (0..right.len()).any(|offset| {
+        (0..left.len()).all(|index| {
+            let right_index = (offset + right.len() - index) % right.len();
+            point3_equal(&left[index], &right[right_index]).value() == Some(true)
+        })
+    })
+}
+
+fn arrangement_region_oriented_sides(
+    component: &[usize],
+    face_cells: &[ArrangementFaceCell],
+) -> Vec<ArrangementRegionSide> {
+    component
+        .iter()
+        .map(|&face_cell| {
+            let cell = &face_cells[face_cell];
+            ArrangementRegionSide {
+                face_cell,
+                source: cell.carrier.side,
+                source_face: cell.carrier.face,
+                boundary: cell.boundary.clone(),
+            }
+        })
+        .collect()
+}
+
+fn arrangement_volume_graph(
+    shell_regions: &[ArrangementRegion],
+    face_cells: &[ArrangementFaceCell],
+    left: &ExactMesh,
+    right: &ExactMesh,
+    blockers: &mut Vec<ExactArrangementBlocker>,
+) -> (
+    Option<Vec<ArrangementVolumeRegion>>,
+    Option<Vec<ArrangementVolumeAdjacency>>,
+) {
+    if shell_regions.is_empty()
+        || shell_regions
+            .iter()
+            .any(|region| !region.closed || !region.manifold)
+    {
+        return (None, None);
+    }
+
+    if let Some(nested) = nested_shell_volume_graph(shell_regions, face_cells, blockers) {
+        return nested;
+    }
+
+    if let Some(nested) = nested_two_shell_volume_graph(shell_regions, left, right) {
+        return nested;
+    }
+
+    let mut volume_regions = Vec::with_capacity(shell_regions.len() + 1);
+    volume_regions.push(ArrangementVolumeRegion {
+        index: 0,
+        exterior: true,
+        boundary_shells: (0..shell_regions.len()).collect(),
+        source_sides: Vec::new(),
+    });
+
+    let mut volume_adjacencies = Vec::with_capacity(shell_regions.len());
+    for (shell_index, shell) in shell_regions.iter().enumerate() {
+        let interior_volume = volume_regions.len();
+        volume_regions.push(ArrangementVolumeRegion {
+            index: interior_volume,
+            exterior: false,
+            boundary_shells: vec![shell_index],
+            source_sides: shell.source_sides.clone(),
+        });
+        volume_adjacencies.push(ArrangementVolumeAdjacency {
+            shell_region: shell_index,
+            exterior_volume: 0,
+            interior_volume,
+            separating_face_cells: shell.face_cells.clone(),
+            oriented_face_sides: arrangement_volume_face_sides(shell, 0, interior_volume),
+        });
+    }
+
+    (Some(volume_regions), Some(volume_adjacencies))
+}
+
+fn validate_arrangement_volume_graph(
+    shell_regions: &[ArrangementRegion],
+    volume_regions: Option<&[ArrangementVolumeRegion]>,
+    volume_adjacencies: Option<&[ArrangementVolumeAdjacency]>,
+    blockers: &mut Vec<ExactArrangementBlocker>,
+) {
+    if shell_regions.is_empty() {
+        if volume_regions.is_some_and(|regions| !regions.is_empty())
+            || volume_adjacencies.is_some_and(|adjacencies| !adjacencies.is_empty())
+        {
+            push_unique_blocker(blockers, ExactArrangementBlocker::NonManifoldCellComplex);
+        }
+        return;
+    }
+    if shell_regions
+        .iter()
+        .any(|region| !region.closed || !region.manifold)
+    {
+        return;
+    }
+    let (Some(volume_regions), Some(volume_adjacencies)) = (volume_regions, volume_adjacencies)
+    else {
+        push_unique_blocker(blockers, ExactArrangementBlocker::NonManifoldCellComplex);
+        return;
+    };
+    if volume_regions
+        .iter()
+        .enumerate()
+        .any(|(index, region)| region.index != index)
+    {
+        push_unique_blocker(blockers, ExactArrangementBlocker::NonManifoldCellComplex);
+    }
+    if volume_regions
+        .iter()
+        .filter(|region| region.exterior)
+        .count()
+        != 1
+    {
+        push_unique_blocker(blockers, ExactArrangementBlocker::NonManifoldCellComplex);
+    }
+
+    let mut shell_adjacency_counts = vec![0usize; shell_regions.len()];
+    for adjacency in volume_adjacencies {
+        if adjacency.shell_region >= shell_regions.len()
+            || adjacency.exterior_volume >= volume_regions.len()
+            || adjacency.interior_volume >= volume_regions.len()
+            || adjacency.exterior_volume == adjacency.interior_volume
+        {
+            push_unique_blocker(blockers, ExactArrangementBlocker::NonManifoldCellComplex);
+            continue;
+        }
+        shell_adjacency_counts[adjacency.shell_region] += 1;
+        let shell = &shell_regions[adjacency.shell_region];
+        if !same_usize_set(&adjacency.separating_face_cells, &shell.face_cells)
+            || !volume_face_sides_match_shell(adjacency, shell)
+            || !volume_regions[adjacency.exterior_volume]
+                .boundary_shells
+                .contains(&adjacency.shell_region)
+            || !volume_regions[adjacency.interior_volume]
+                .boundary_shells
+                .contains(&adjacency.shell_region)
+        {
+            push_unique_blocker(blockers, ExactArrangementBlocker::NonManifoldCellComplex);
+        }
+    }
+    if shell_adjacency_counts.into_iter().any(|count| count != 1) {
+        push_unique_blocker(blockers, ExactArrangementBlocker::NonManifoldCellComplex);
+    }
+    if volume_regions.iter().any(|region| {
+        region
+            .boundary_shells
+            .iter()
+            .any(|shell| *shell >= shell_regions.len())
+    }) {
+        push_unique_blocker(blockers, ExactArrangementBlocker::NonManifoldCellComplex);
+    }
+}
+
+fn same_usize_set(left: &[usize], right: &[usize]) -> bool {
+    let mut left = left.to_vec();
+    let mut right = right.to_vec();
+    left.sort_unstable();
+    left.dedup();
+    right.sort_unstable();
+    right.dedup();
+    left == right
+}
+
+fn volume_face_sides_match_shell(
+    adjacency: &ArrangementVolumeAdjacency,
+    shell: &ArrangementRegion,
+) -> bool {
+    if adjacency.oriented_face_sides.len() != shell.oriented_sides.len() {
+        return false;
+    }
+    shell.oriented_sides.iter().all(|side| {
+        adjacency.oriented_face_sides.iter().any(|volume_side| {
+            volume_side.face_cell == side.face_cell
+                && volume_side.source == side.source
+                && volume_side.source_face == side.source_face
+                && volume_side.boundary == side.boundary
+                && volume_side.exterior_volume == adjacency.exterior_volume
+                && volume_side.interior_volume == adjacency.interior_volume
+        })
+    })
+}
+
+fn arrangement_volume_face_sides(
+    shell: &ArrangementRegion,
+    exterior_volume: usize,
+    interior_volume: usize,
+) -> Vec<ArrangementVolumeFaceSide> {
+    shell
+        .oriented_sides
+        .iter()
+        .map(|side| ArrangementVolumeFaceSide {
+            face_cell: side.face_cell,
+            source: side.source,
+            source_face: side.source_face,
+            boundary: side.boundary.clone(),
+            exterior_volume,
+            interior_volume,
+        })
+        .collect()
+}
+
+fn nested_shell_volume_graph(
+    shell_regions: &[ArrangementRegion],
+    face_cells: &[ArrangementFaceCell],
+    blockers: &mut Vec<ExactArrangementBlocker>,
+) -> Option<(
+    Option<Vec<ArrangementVolumeRegion>>,
+    Option<Vec<ArrangementVolumeAdjacency>>,
+)> {
+    if shell_regions
+        .iter()
+        .any(|region| region.source_sides.len() != 1)
+    {
+        return None;
+    }
+
+    let shell_meshes = shell_regions
+        .iter()
+        .map(|region| shell_region_mesh(region, face_cells))
+        .collect::<Option<Vec<_>>>()?;
+    let shell_orientations = shell_meshes
+        .iter()
+        .map(exact_mesh_orientation)
+        .collect::<Option<Vec<_>>>()?;
+    if shell_orientations.iter().any(|orientation| {
+        !matches!(
+            orientation,
+            ClosedMeshOrientation::Positive | ClosedMeshOrientation::Negative
+        )
+    }) {
+        push_unique_blocker(
+            blockers,
+            ExactArrangementBlocker::UnresolvedRegionClassification,
+        );
+        return None;
+    }
+    let mut contains = vec![vec![false; shell_regions.len()]; shell_regions.len()];
+    for contained in 0..shell_regions.len() {
+        let witness = shell_region_witness(shell_regions.get(contained)?, face_cells)?;
+        for container in 0..shell_regions.len() {
+            if contained == container {
+                continue;
+            }
+            match classify_point_against_closed_mesh_winding_report(
+                &witness,
+                &shell_meshes[container],
+            )
+            .relation
+            {
+                ClosedMeshWindingRelation::Inside => contains[contained][container] = true,
+                ClosedMeshWindingRelation::Outside => {}
+                ClosedMeshWindingRelation::Boundary => {
+                    push_unique_blocker(blockers, ExactArrangementBlocker::NonManifoldCellComplex);
+                    return None;
+                }
+                ClosedMeshWindingRelation::Unknown | ClosedMeshWindingRelation::NotClosed => {
+                    push_unique_blocker(
+                        blockers,
+                        ExactArrangementBlocker::UnresolvedRegionClassification,
+                    );
+                    return None;
+                }
+            }
+        }
+    }
+
+    for left in 0..shell_regions.len() {
+        for right in (left + 1)..shell_regions.len() {
+            if contains[left][right] && contains[right][left] {
+                push_unique_blocker(blockers, ExactArrangementBlocker::NonManifoldCellComplex);
+                return None;
+            }
+        }
+    }
+
+    let mut parents = vec![None; shell_regions.len()];
+    for shell in 0..shell_regions.len() {
+        let containers = (0..shell_regions.len())
+            .filter(|&candidate| contains[shell][candidate])
+            .collect::<Vec<_>>();
+        let Some(parent) = deepest_containing_shell(&containers, &contains) else {
+            continue;
+        };
+        parents[shell] = Some(parent);
+    }
+    diagnose_same_source_same_orientation_nesting(
+        shell_regions,
+        &shell_orientations,
+        &parents,
+        blockers,
+    );
+
+    let mut children = vec![Vec::<usize>::new(); shell_regions.len()];
+    for (shell, parent) in parents.iter().enumerate() {
+        if let Some(parent) = *parent {
+            children[parent].push(shell);
+        }
+    }
+
+    let roots = (0..shell_regions.len())
+        .filter(|&shell| parents[shell].is_none())
+        .collect::<Vec<_>>();
+    let mut volume_regions = Vec::with_capacity(shell_regions.len() + 1);
+    volume_regions.push(ArrangementVolumeRegion {
+        index: 0,
+        exterior: true,
+        boundary_shells: roots.clone(),
+        source_sides: Vec::new(),
+    });
+    let mut volume_adjacencies = Vec::with_capacity(shell_regions.len());
+    let mut shell_volume = vec![None; shell_regions.len()];
+    for root in roots {
+        push_nested_shell_volume(
+            root,
+            0,
+            &[],
+            &[],
+            &shell_orientations,
+            shell_regions,
+            &children,
+            &mut shell_volume,
+            &mut volume_regions,
+            &mut volume_adjacencies,
+        );
+    }
+
+    if shell_volume.iter().any(Option::is_none) {
+        return None;
+    }
+
+    Some((Some(volume_regions), Some(volume_adjacencies)))
+}
+
+fn deepest_containing_shell(containers: &[usize], contains: &[Vec<bool>]) -> Option<usize> {
+    let mut best = None;
+    let mut best_depth = 0usize;
+    for &candidate in containers {
+        let depth = containers
+            .iter()
+            .filter(|&&other| other != candidate && contains[candidate][other])
+            .count();
+        if best.is_none() || depth > best_depth {
+            best = Some(candidate);
+            best_depth = depth;
+        } else if depth == best_depth {
+            return None;
+        }
+    }
+    best
+}
+
+fn diagnose_same_source_same_orientation_nesting(
+    shell_regions: &[ArrangementRegion],
+    shell_orientations: &[ClosedMeshOrientation],
+    parents: &[Option<usize>],
+    blockers: &mut Vec<ExactArrangementBlocker>,
+) {
+    for (shell, parent) in parents.iter().enumerate() {
+        let Some(parent) = *parent else {
+            continue;
+        };
+        for source in &shell_regions[shell].source_sides {
+            if shell_regions[parent].source_sides.contains(source)
+                && shell_orientations.get(shell) == shell_orientations.get(parent)
+            {
+                push_unique_blocker(blockers, ExactArrangementBlocker::NonManifoldCellComplex);
+            }
+        }
+    }
+}
+
+fn push_unique_blocker(
+    blockers: &mut Vec<ExactArrangementBlocker>,
+    blocker: ExactArrangementBlocker,
+) {
+    if !blockers.contains(&blocker) {
+        blockers.push(blocker);
+    }
+}
+
+fn push_nested_shell_volume(
+    shell: usize,
+    exterior_volume: usize,
+    exterior_source_sides: &[MeshSide],
+    exterior_source_shells: &[(MeshSide, usize)],
+    shell_orientations: &[ClosedMeshOrientation],
+    shell_regions: &[ArrangementRegion],
+    children: &[Vec<usize>],
+    shell_volume: &mut [Option<usize>],
+    volume_regions: &mut Vec<ArrangementVolumeRegion>,
+    volume_adjacencies: &mut Vec<ArrangementVolumeAdjacency>,
+) {
+    let volume = volume_regions.len();
+    let mut source_sides = exterior_source_sides.to_vec();
+    let mut source_shells = exterior_source_shells.to_vec();
+    for side in &shell_regions[shell].source_sides {
+        apply_nested_shell_source_side(
+            &mut source_sides,
+            &mut source_shells,
+            *side,
+            shell,
+            shell_orientations,
+        );
+    }
+    let mut boundary_shells = Vec::with_capacity(children[shell].len() + 1);
+    boundary_shells.push(shell);
+    boundary_shells.extend(children[shell].iter().copied());
+    volume_regions.push(ArrangementVolumeRegion {
+        index: volume,
+        exterior: false,
+        boundary_shells,
+        source_sides: source_sides.clone(),
+    });
+    shell_volume[shell] = Some(volume);
+    volume_adjacencies.push(ArrangementVolumeAdjacency {
+        shell_region: shell,
+        exterior_volume,
+        interior_volume: volume,
+        separating_face_cells: shell_regions[shell].face_cells.clone(),
+        oriented_face_sides: arrangement_volume_face_sides(
+            &shell_regions[shell],
+            exterior_volume,
+            volume,
+        ),
+    });
+    for &child in &children[shell] {
+        push_nested_shell_volume(
+            child,
+            volume,
+            &source_sides,
+            &source_shells,
+            shell_orientations,
+            shell_regions,
+            children,
+            shell_volume,
+            volume_regions,
+            volume_adjacencies,
+        );
+    }
+}
+
+fn apply_nested_shell_source_side(
+    sides: &mut Vec<MeshSide>,
+    source_shells: &mut Vec<(MeshSide, usize)>,
+    side: MeshSide,
+    shell: usize,
+    shell_orientations: &[ClosedMeshOrientation],
+) {
+    match source_shells
+        .iter()
+        .rposition(|(active_side, _)| *active_side == side)
+        .and_then(|position| {
+            source_shells
+                .get(position)
+                .map(|(_, active_shell)| (position, *active_shell))
+        }) {
+        Some((position, active_shell))
+            if shell_orientations.get(active_shell) != shell_orientations.get(shell) =>
+        {
+            source_shells.remove(position);
+            sides.retain(|active| *active != side);
+        }
+        Some(_) => {}
+        None => {
+            source_shells.push((side, shell));
+            sides.push(side);
+        }
+    }
+}
+
+fn shell_region_witness(
+    shell: &ArrangementRegion,
+    face_cells: &[ArrangementFaceCell],
+) -> Option<Point3> {
+    shell
+        .face_cells
+        .iter()
+        .filter_map(|&cell| face_cells.get(cell))
+        .flat_map(|cell| cell.boundary_points.iter())
+        .next()
+        .cloned()
+}
+
+fn shell_region_mesh(
+    shell: &ArrangementRegion,
+    face_cells: &[ArrangementFaceCell],
+) -> Option<ExactMesh> {
+    let mut vertices = Vec::new();
+    let mut triangles = Vec::new();
+    for &cell_index in &shell.face_cells {
+        let cell = face_cells.get(cell_index)?;
+        if cell.boundary_points.len() < 3 {
+            return None;
+        }
+        let boundary = cell
+            .boundary_points
+            .iter()
+            .map(|point| find_or_insert_shell_vertex(&mut vertices, point))
+            .collect::<Option<Vec<_>>>()?;
+        for index in 1..cell.boundary_points.len() - 1 {
+            triangles.push(Triangle([
+                boundary[0],
+                boundary[index],
+                boundary[index + 1],
+            ]));
+        }
+    }
+    ExactMesh::new_with_policy(
+        vertices,
+        triangles,
+        SourceProvenance::exact("exact arrangement shell replay"),
+        ValidationPolicy::CLOSED,
+    )
+    .ok()
+}
+
+fn exact_mesh_orientation(mesh: &ExactMesh) -> Option<ClosedMeshOrientation> {
+    if !mesh.facts().mesh.closed_manifold {
+        return Some(ClosedMeshOrientation::NotClosed);
+    }
+    let signed_volume = mesh
+        .triangles()
+        .iter()
+        .map(|triangle| {
+            let tri = triangle.0;
+            determinant_from_origin(
+                &mesh.vertices()[tri[0]],
+                &mesh.vertices()[tri[1]],
+                &mesh.vertices()[tri[2]],
+            )
+        })
+        .fold(Real::from(0), |sum, det| &sum + &det);
+
+    match compare_reals(&signed_volume, &Real::from(0)).value()? {
+        Ordering::Greater => Some(ClosedMeshOrientation::Positive),
+        Ordering::Less => Some(ClosedMeshOrientation::Negative),
+        Ordering::Equal => Some(ClosedMeshOrientation::Unknown),
+    }
+}
+
+fn determinant_from_origin(a: &Point3, b: &Point3, c: &Point3) -> Real {
+    let by_cz = &b.y * &c.z;
+    let bz_cy = &b.z * &c.y;
+    let bx_cz = &b.x * &c.z;
+    let bz_cx = &b.z * &c.x;
+    let bx_cy = &b.x * &c.y;
+    let by_cx = &b.y * &c.x;
+
+    let x_minor = &by_cz - &bz_cy;
+    let y_minor = &bx_cz - &bz_cx;
+    let z_minor = &bx_cy - &by_cx;
+
+    let x_term = &a.x * &x_minor;
+    let y_term = &a.y * &y_minor;
+    let z_term = &a.z * &z_minor;
+
+    &(&x_term - &y_term) + &z_term
+}
+
+fn find_or_insert_shell_vertex(vertices: &mut Vec<Point3>, point: &Point3) -> Option<usize> {
+    for (index, existing) in vertices.iter().enumerate() {
+        if point3_equal(existing, point).value()? {
+            return Some(index);
+        }
+    }
+    let index = vertices.len();
+    vertices.push(point.clone());
+    Some(index)
+}
+
+fn nested_two_shell_volume_graph(
+    shell_regions: &[ArrangementRegion],
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Option<(
+    Option<Vec<ArrangementVolumeRegion>>,
+    Option<Vec<ArrangementVolumeAdjacency>>,
+)> {
+    if shell_regions.len() != 2 {
+        return None;
+    }
+    let left_shell = shell_regions
+        .iter()
+        .position(|region| region.source_sides == [MeshSide::Left]);
+    let right_shell = shell_regions
+        .iter()
+        .position(|region| region.source_sides == [MeshSide::Right]);
+    let (Some(left_shell), Some(right_shell)) = (left_shell, right_shell) else {
+        return None;
+    };
+
+    let left_in_right = classify_mesh_vertices_against_closed_mesh_winding_report(left, right);
+    let right_in_left = classify_mesh_vertices_against_closed_mesh_winding_report(right, left);
+    let (outer_shell, inner_shell, outer_side, inner_side) =
+        match (left_in_right.relation, right_in_left.relation) {
+            (ClosedMeshWindingMeshRelation::StrictlyInside, _) => {
+                (right_shell, left_shell, MeshSide::Right, MeshSide::Left)
+            }
+            (_, ClosedMeshWindingMeshRelation::StrictlyInside) => {
+                (left_shell, right_shell, MeshSide::Left, MeshSide::Right)
+            }
+            _ => return None,
+        };
+
+    let between_volume = 1;
+    let inner_volume = 2;
+    let mut inner_source_sides = vec![outer_side];
+    if inner_side != outer_side {
+        inner_source_sides.push(inner_side);
+    }
+    let volume_regions = vec![
+        ArrangementVolumeRegion {
+            index: 0,
+            exterior: true,
+            boundary_shells: vec![outer_shell],
+            source_sides: Vec::new(),
+        },
+        ArrangementVolumeRegion {
+            index: between_volume,
+            exterior: false,
+            boundary_shells: vec![outer_shell, inner_shell],
+            source_sides: vec![outer_side],
+        },
+        ArrangementVolumeRegion {
+            index: inner_volume,
+            exterior: false,
+            boundary_shells: vec![inner_shell],
+            source_sides: inner_source_sides,
+        },
+    ];
+    let volume_adjacencies = vec![
+        ArrangementVolumeAdjacency {
+            shell_region: outer_shell,
+            exterior_volume: 0,
+            interior_volume: between_volume,
+            separating_face_cells: shell_regions[outer_shell].face_cells.clone(),
+            oriented_face_sides: arrangement_volume_face_sides(
+                &shell_regions[outer_shell],
+                0,
+                between_volume,
+            ),
+        },
+        ArrangementVolumeAdjacency {
+            shell_region: inner_shell,
+            exterior_volume: between_volume,
+            interior_volume: inner_volume,
+            separating_face_cells: shell_regions[inner_shell].face_cells.clone(),
+            oriented_face_sides: arrangement_volume_face_sides(
+                &shell_regions[inner_shell],
+                between_volume,
+                inner_volume,
+            ),
+        },
+    ];
+    Some((Some(volume_regions), Some(volume_adjacencies)))
+}
+
+fn arrangement_region_source_sides(
+    component: &[usize],
+    face_cells: &[ArrangementFaceCell],
+) -> Vec<MeshSide> {
+    let mut has_left = false;
+    let mut has_right = false;
+    for &face_cell in component {
+        match face_cells[face_cell].carrier.side {
+            MeshSide::Left => has_left = true,
+            MeshSide::Right => has_right = true,
+        }
+    }
+    let mut sides = Vec::new();
+    if has_left {
+        sides.push(MeshSide::Left);
+    }
+    if has_right {
+        sides.push(MeshSide::Right);
+    }
+    sides
+}
+
+struct ArrangementFaceCellBoundaryEdge {
+    nodes: [ArrangementFaceCellNode; 2],
+    points: Option<[Point3; 2]>,
+}
+
+fn arrangement_edge_users(
+    face_cells: &[ArrangementFaceCell],
+) -> Vec<([ArrangementFaceCellNode; 2], Vec<usize>)> {
+    let mut edge_users = Vec::<(ArrangementFaceCellBoundaryEdge, Vec<usize>)>::new();
+    for (cell_index, cell) in face_cells.iter().enumerate() {
+        for edge in cell_boundary_edges(cell) {
+            if let Some((_, users)) = edge_users
+                .iter_mut()
+                .find(|(existing, _)| boundary_edges_equivalent(existing, &edge))
+            {
+                users.push(cell_index);
+            } else {
+                edge_users.push((edge, vec![cell_index]));
+            }
+        }
+    }
+    edge_users
+        .into_iter()
+        .map(|(edge, users)| (edge.nodes, users))
+        .collect()
+}
+
+fn cell_boundary_edges(cell: &ArrangementFaceCell) -> Vec<ArrangementFaceCellBoundaryEdge> {
+    if cell.boundary.len() < 2 {
+        return Vec::new();
+    }
+    (0..cell.boundary.len())
+        .map(|index| {
+            let next = (index + 1) % cell.boundary.len();
+            let nodes =
+                canonical_cell_edge(cell.boundary[index].clone(), cell.boundary[next].clone());
+            let points = if cell.boundary_points.len() == cell.boundary.len() {
+                Some([
+                    cell.boundary_points[index].clone(),
+                    cell.boundary_points[next].clone(),
+                ])
+            } else {
+                None
+            };
+            ArrangementFaceCellBoundaryEdge { nodes, points }
+        })
+        .collect()
+}
+
+fn boundary_edges_equivalent(
+    left: &ArrangementFaceCellBoundaryEdge,
+    right: &ArrangementFaceCellBoundaryEdge,
+) -> bool {
+    left.nodes == right.nodes
+        || match (&left.points, &right.points) {
+            (Some(left), Some(right)) => exact_undirected_point_edges_equal(left, right),
+            _ => false,
+        }
+}
+
+fn exact_undirected_point_edges_equal(left: &[Point3; 2], right: &[Point3; 2]) -> bool {
+    (point3_equal(&left[0], &right[0]).value() == Some(true)
+        && point3_equal(&left[1], &right[1]).value() == Some(true))
+        || (point3_equal(&left[0], &right[1]).value() == Some(true)
+            && point3_equal(&left[1], &right[0]).value() == Some(true))
+}
+
+fn canonical_cell_edge(
+    left: ArrangementFaceCellNode,
+    right: ArrangementFaceCellNode,
+) -> [ArrangementFaceCellNode; 2] {
+    if cell_node_key(&left) <= cell_node_key(&right) {
+        [left, right]
+    } else {
+        [right, left]
+    }
+}
+
+fn cell_node_key(node: &ArrangementFaceCellNode) -> (usize, usize, usize) {
+    match node {
+        ArrangementFaceCellNode::SourceVertex { side, vertex } => (0, side_key(*side), *vertex),
+        ArrangementFaceCellNode::GraphVertex { graph_vertex } => (1, 0, *graph_vertex),
+        ArrangementFaceCellNode::CarrierPlaneVertex { overlay, vertex } => (2, *overlay, *vertex),
+        ArrangementFaceCellNode::FacePlaneVertex {
+            arrangement,
+            vertex,
+        } => (3, *arrangement, *vertex),
+    }
+}
+
+const fn side_key(side: MeshSide) -> usize {
+    match side {
+        MeshSide::Left => 0,
+        MeshSide::Right => 1,
+    }
+}
+
+fn face_cell_from_region(
+    region: &FaceRegionBoundary,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    blockers: &mut Vec<ExactArrangementBlocker>,
+) -> ArrangementFaceCell {
+    let boundary = region
+        .boundary
+        .iter()
+        .filter_map(|node| match node {
+            FaceSplitBoundaryNode::OriginalVertex { vertex, .. } => {
+                Some(ArrangementFaceCellNode::SourceVertex {
+                    side: region.side,
+                    vertex: *vertex,
+                })
+            }
+            FaceSplitBoundaryNode::GraphVertex { graph_vertex, .. } => {
+                Some(ArrangementFaceCellNode::GraphVertex {
+                    graph_vertex: *graph_vertex,
+                })
+            }
+            FaceSplitBoundaryNode::FaceInterior { .. } => None,
+        })
+        .collect::<Vec<_>>();
+    let boundary_points = region
+        .boundary
+        .iter()
+        .map(|node| match node {
+            FaceSplitBoundaryNode::OriginalVertex { point, .. }
+            | FaceSplitBoundaryNode::GraphVertex { point, .. }
+            | FaceSplitBoundaryNode::FaceInterior { point } => point.clone(),
+        })
+        .collect::<Vec<_>>();
+    let representative = representative_from_boundary_nodes(&region.boundary);
+    let opposite =
+        representative.map(|point| classify_opposite(region.side, point, left, right, blockers));
+    ArrangementFaceCell {
+        carrier: ArrangementFaceCarrier {
+            side: region.side,
+            face: region.face,
+            triangle: region.triangle,
+        },
+        boundary,
+        boundary_points,
+        opposite,
+    }
+}
+
+fn face_cell_from_original_triangle(
+    side: MeshSide,
+    face: usize,
+    triangle: [usize; 3],
+    left: &ExactMesh,
+    right: &ExactMesh,
+    blockers: &mut Vec<ExactArrangementBlocker>,
+) -> ArrangementFaceCell {
+    let mesh = mesh_for_side(side, left, right);
+    let boundary = triangle
+        .iter()
+        .map(|vertex| ArrangementFaceCellNode::SourceVertex {
+            side,
+            vertex: *vertex,
+        })
+        .collect();
+    let boundary_points = triangle
+        .iter()
+        .map(|vertex| mesh.vertices()[*vertex].clone())
+        .collect();
+    let representative = triangle_centroid(
+        &mesh.vertices()[triangle[0]],
+        &mesh.vertices()[triangle[1]],
+        &mesh.vertices()[triangle[2]],
+    );
+    let opposite = Some(classify_opposite(
+        side,
+        representative,
+        left,
+        right,
+        blockers,
+    ));
+    ArrangementFaceCell {
+        carrier: ArrangementFaceCarrier {
+            side,
+            face,
+            triangle,
+        },
+        boundary,
+        boundary_points,
+        opposite,
+    }
+}
+
+fn lift_carrier_plane_point(
+    mesh: &ExactMesh,
+    face: usize,
+    projection: CoplanarProjection,
+    point: &Point2,
+    blockers: &mut Vec<ExactArrangementBlocker>,
+) -> Option<Point3> {
+    let triangle = mesh.triangles().get(face)?.0;
+    let a = mesh.vertices().get(triangle[0])?;
+    let b = mesh.vertices().get(triangle[1])?;
+    let c = mesh.vertices().get(triangle[2])?;
+    let ab = point3_sub(b, a);
+    let ac = point3_sub(c, a);
+    let normal = cross(&ab, &ac);
+    let plane_value = dot(&normal, a);
+
+    let lifted = match projection {
+        CoplanarProjection::Xy => {
+            let x = point.x.clone();
+            let y = point.y.clone();
+            let numerator =
+                plane_value.clone() - &(normal.x.clone() * &x) - &(normal.y.clone() * &y);
+            let z = match (numerator / &normal.z).ok() {
+                Some(z) => z,
+                None => {
+                    blockers.push(ExactArrangementBlocker::UnresolvedIntersection);
+                    return None;
+                }
+            };
+            Point3::new(x, y, z)
+        }
+        CoplanarProjection::Xz => {
+            let x = point.x.clone();
+            let z = point.y.clone();
+            let numerator =
+                plane_value.clone() - &(normal.x.clone() * &x) - &(normal.z.clone() * &z);
+            let y = match (numerator / &normal.y).ok() {
+                Some(y) => y,
+                None => {
+                    blockers.push(ExactArrangementBlocker::UnresolvedIntersection);
+                    return None;
+                }
+            };
+            Point3::new(x, y, z)
+        }
+        CoplanarProjection::Yz => {
+            let y = point.x.clone();
+            let z = point.y.clone();
+            let numerator =
+                plane_value.clone() - &(normal.y.clone() * &y) - &(normal.z.clone() * &z);
+            let x = match (numerator / &normal.x).ok() {
+                Some(x) => x,
+                None => {
+                    blockers.push(ExactArrangementBlocker::UnresolvedIntersection);
+                    return None;
+                }
+            };
+            Point3::new(x, y, z)
+        }
+    };
+
+    match point2_equal(&project_point3(&lifted, projection), point).value() {
+        Some(true) => Some(lifted),
+        Some(false) => {
+            blockers.push(ExactArrangementBlocker::UnresolvedIntersection);
+            None
+        }
+        None => {
+            blockers.push(ExactArrangementBlocker::UndecidableOrdering);
+            None
+        }
+    }
+}
+
+fn point3_sub(left: &Point3, right: &Point3) -> Point3 {
+    Point3::new(
+        left.x.clone() - &right.x,
+        left.y.clone() - &right.y,
+        left.z.clone() - &right.z,
+    )
+}
+
+fn cross(left: &Point3, right: &Point3) -> Point3 {
+    Point3::new(
+        left.y.clone() * &right.z - &(left.z.clone() * &right.y),
+        left.z.clone() * &right.x - &(left.x.clone() * &right.z),
+        left.x.clone() * &right.y - &(left.y.clone() * &right.x),
+    )
+}
+
+fn dot(left: &Point3, right: &Point3) -> Real {
+    left.x.clone() * &right.x + &(left.y.clone() * &right.y) + &(left.z.clone() * &right.z)
+}
+
+fn projected_triangle_area2(points: &[Point3; 3], projection: CoplanarProjection) -> Real {
+    let a = project_point3(&points[0], projection);
+    let b = project_point3(&points[1], projection);
+    let c = project_point3(&points[2], projection);
+    (b.x.clone() - &a.x) * &(c.y.clone() - &a.y) - &((b.y.clone() - &a.y) * &(c.x.clone() - &a.x))
+}
+
+fn classify_opposite(
+    side: MeshSide,
+    point: Point3,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    blockers: &mut Vec<ExactArrangementBlocker>,
+) -> ArrangementOppositeClassification {
+    let target = match side {
+        MeshSide::Left => right,
+        MeshSide::Right => left,
+    };
+    let winding = classify_point_against_closed_mesh_winding_report(&point, target);
+    if matches!(
+        winding.relation,
+        ClosedMeshWindingRelation::Unknown | ClosedMeshWindingRelation::NotClosed
+    ) {
+        blockers.push(ExactArrangementBlocker::UnresolvedRegionClassification);
+    }
+    ArrangementOppositeClassification {
+        representative: point,
+        winding,
+    }
+}
+
+fn representative_from_boundary_nodes(nodes: &[FaceSplitBoundaryNode]) -> Option<Point3> {
+    if nodes.is_empty() {
+        return None;
+    }
+    let inv = (Real::from(1) / &Real::from(nodes.len() as i64)).ok()?;
+    let mut x = Real::from(0);
+    let mut y = Real::from(0);
+    let mut z = Real::from(0);
+    for node in nodes {
+        let point = match node {
+            FaceSplitBoundaryNode::OriginalVertex { point, .. }
+            | FaceSplitBoundaryNode::GraphVertex { point, .. }
+            | FaceSplitBoundaryNode::FaceInterior { point } => point,
+        };
+        x = x + &point.x;
+        y = y + &point.y;
+        z = z + &point.z;
+    }
+    Some(Point3::new(x * &inv, y * &inv, z * &inv))
+}
+
+fn triangle_centroid(a: &Point3, b: &Point3, c: &Point3) -> Point3 {
+    let third = (Real::from(1) / &Real::from(3)).expect("3 is nonzero");
+    Point3::new(
+        (a.x.clone() + &b.x + &c.x) * &third,
+        (a.y.clone() + &b.y + &c.y) * &third,
+        (a.z.clone() + &b.z + &c.z) * &third,
+    )
+}
+
+fn mesh_for_side<'a>(side: MeshSide, left: &'a ExactMesh, right: &'a ExactMesh) -> &'a ExactMesh {
+    match side {
+        MeshSide::Left => left,
+        MeshSide::Right => right,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::boolean::ExactBooleanOperation;
+    use crate::validation::ValidationPolicy;
+
+    fn p3(x: i64, y: i64, z: i64) -> Point3 {
+        Point3::new(Real::from(x), Real::from(y), Real::from(z))
+    }
+
+    fn tetrahedron_i64(a: [i64; 3], b: [i64; 3], c: [i64; 3], d: [i64; 3]) -> ExactMesh {
+        ExactMesh::from_i64_triangles(
+            &[
+                a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2], d[0], d[1], d[2],
+            ],
+            &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
+        )
+        .unwrap()
+    }
+
+    fn two_tetrahedra_i64(tetrahedra: &[[[i64; 3]; 4]]) -> ExactMesh {
+        let mut vertices = Vec::new();
+        let mut triangles = Vec::new();
+        for tetrahedron in tetrahedra {
+            let start = vertices.len() / 3;
+            for point in tetrahedron {
+                vertices.extend(point);
+            }
+            triangles.extend([
+                start,
+                start + 2,
+                start + 1,
+                start,
+                start + 1,
+                start + 3,
+                start + 1,
+                start + 2,
+                start + 3,
+                start + 2,
+                start,
+                start + 3,
+            ]);
+        }
+        ExactMesh::from_i64_triangles(&vertices, &triangles).unwrap()
+    }
+
+    fn tetrahedron_with_reversed_inner_i64(
+        outer: [[i64; 3]; 4],
+        inner: [[i64; 3]; 4],
+    ) -> ExactMesh {
+        let mut vertices = Vec::new();
+        for point in outer.iter().chain(inner.iter()) {
+            vertices.extend(point);
+        }
+        let outer_start = 0usize;
+        let inner_start = 4usize;
+        let shell_triangles = [[0, 2, 1], [0, 1, 3], [1, 2, 3], [2, 0, 3]];
+        let mut triangles = Vec::new();
+        for tri in shell_triangles {
+            triangles.extend([
+                outer_start + tri[0],
+                outer_start + tri[1],
+                outer_start + tri[2],
+            ]);
+        }
+        for tri in shell_triangles {
+            triangles.extend([
+                inner_start + tri[0],
+                inner_start + tri[2],
+                inner_start + tri[1],
+            ]);
+        }
+        ExactMesh::from_i64_triangles(&vertices, &triangles).unwrap()
+    }
+
+    fn open_triangle_i64(a: [i64; 3], b: [i64; 3], c: [i64; 3]) -> ExactMesh {
+        ExactMesh::from_i64_triangles_with_policy(
+            &[a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2]],
+            &[0, 1, 2],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap()
+    }
+
+    #[test]
+    fn disjoint_tetrahedra_build_complete_arrangement_cells() {
+        let left = tetrahedron_i64([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]);
+        let right = tetrahedron_i64([3, 0, 0], [4, 0, 0], [3, 1, 0], [3, 0, 1]);
+
+        let arrangement = ExactArrangement::from_meshes(&left, &right).unwrap();
+
+        assert!(
+            arrangement.blockers.is_empty(),
+            "{:?}",
+            arrangement.blockers
+        );
+        assert_eq!(arrangement.face_cells.len(), 8);
+        assert_eq!(arrangement.vertices.len(), 8);
+        assert_eq!(
+            arrangement
+                .shells_or_regions
+                .as_ref()
+                .map(|regions| regions.len()),
+            Some(2)
+        );
+        let regions = arrangement.shells_or_regions.as_ref().unwrap();
+        assert!(regions.iter().all(|region| region.closed));
+        assert!(regions.iter().all(|region| region.manifold));
+        assert!(regions.iter().all(|region| region.face_cells.len() == 4));
+        assert!(
+            regions
+                .iter()
+                .all(|region| region.adjacent_face_cells.len() == 6)
+        );
+        assert!(
+            regions
+                .iter()
+                .all(|region| region.edge_incidences.len() == 6)
+        );
+        assert!(
+            regions.iter().all(
+                |region| region
+                    .edge_incidences
+                    .iter()
+                    .all(|incidence| incidence.face_cells.len() == 2
+                        && !incidence.boundary
+                        && !incidence.non_manifold)
+            )
+        );
+        assert!(
+            regions
+                .iter()
+                .all(|region| region.oriented_sides.len() == 4)
+        );
+        assert!(regions.iter().all(|region| {
+            region
+                .oriented_sides
+                .iter()
+                .all(|side| side.boundary.len() == 3)
+        }));
+        let volume_regions = arrangement
+            .volume_regions
+            .as_ref()
+            .expect("closed shell arrangement should expose volume regions");
+        assert_eq!(volume_regions.len(), 3);
+        assert!(volume_regions[0].exterior);
+        assert_eq!(volume_regions[0].boundary_shells, vec![0, 1]);
+        assert_eq!(volume_regions[1].boundary_shells, vec![0]);
+        assert_eq!(volume_regions[2].boundary_shells, vec![1]);
+        let volume_adjacencies = arrangement
+            .volume_adjacencies
+            .as_ref()
+            .expect("closed shell arrangement should expose volume adjacencies");
+        assert_eq!(volume_adjacencies.len(), 2);
+        assert!(
+            volume_adjacencies
+                .iter()
+                .all(|adjacency| adjacency.exterior_volume == 0
+                    && adjacency.separating_face_cells.len() == 4
+                    && adjacency.oriented_face_sides.len() == 4
+                    && adjacency.oriented_face_sides.iter().all(|side| {
+                        side.exterior_volume == adjacency.exterior_volume
+                            && side.interior_volume == adjacency.interior_volume
+                            && adjacency.separating_face_cells.contains(&side.face_cell)
+                    }))
+        );
+        assert!(arrangement.validate_against_sources(&left, &right).is_ok());
+    }
+
+    #[test]
+    fn volume_graph_validation_rejects_missing_shell_adjacency() {
+        let left = tetrahedron_i64([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]);
+        let right = tetrahedron_i64([3, 0, 0], [4, 0, 0], [3, 1, 0], [3, 0, 1]);
+        let arrangement = ExactArrangement::from_meshes(&left, &right).unwrap();
+        let shell_regions = arrangement.shells_or_regions.as_ref().unwrap();
+        let volume_regions = arrangement.volume_regions.as_ref().unwrap();
+        let mut stale_adjacencies = arrangement.volume_adjacencies.clone().unwrap();
+        stale_adjacencies.pop();
+        let mut blockers = Vec::new();
+
+        validate_arrangement_volume_graph(
+            shell_regions,
+            Some(volume_regions),
+            Some(&stale_adjacencies),
+            &mut blockers,
+        );
+
+        assert_eq!(
+            blockers,
+            vec![ExactArrangementBlocker::NonManifoldCellComplex]
+        );
+    }
+
+    #[test]
+    fn region_edge_users_merge_exact_geometric_edge_coincidence() {
+        let cell = |side, vertices: [usize; 3], points: [Point3; 3]| ArrangementFaceCell {
+            carrier: ArrangementFaceCarrier {
+                side,
+                face: 0,
+                triangle: vertices,
+            },
+            boundary: vertices
+                .iter()
+                .map(|vertex| ArrangementFaceCellNode::SourceVertex {
+                    side,
+                    vertex: *vertex,
+                })
+                .collect(),
+            boundary_points: points.to_vec(),
+            opposite: None,
+        };
+        let left = cell(
+            MeshSide::Left,
+            [0, 1, 2],
+            [p3(0, 0, 0), p3(1, 0, 0), p3(0, 1, 0)],
+        );
+        let right = cell(
+            MeshSide::Right,
+            [3, 4, 5],
+            [p3(1, 0, 0), p3(0, 0, 0), p3(1, 1, 0)],
+        );
+
+        let edge_users = arrangement_edge_users(&[left, right]);
+        let shared = edge_users
+            .iter()
+            .find(|(_, users)| users.as_slice() == [0, 1])
+            .expect("exact coincident geometric edge should share one incidence");
+
+        assert_eq!(shared.1, vec![0, 1]);
+    }
+
+    #[test]
+    fn nested_tetrahedra_build_nested_volume_regions() {
+        let left = tetrahedron_i64([0, 0, 0], [10, 0, 0], [0, 10, 0], [0, 0, 10]);
+        let right = tetrahedron_i64([1, 1, 1], [2, 1, 1], [1, 2, 1], [1, 1, 2]);
+
+        let arrangement = ExactArrangement::from_meshes(&left, &right).unwrap();
+
+        assert!(
+            arrangement.blockers.is_empty(),
+            "{:?}",
+            arrangement.blockers
+        );
+        let volume_regions = arrangement
+            .volume_regions
+            .as_ref()
+            .expect("nested closed shells should expose volume regions");
+        assert_eq!(volume_regions.len(), 3);
+        assert!(volume_regions[0].exterior);
+        assert_eq!(volume_regions[0].source_sides, Vec::<MeshSide>::new());
+        assert_eq!(volume_regions[1].source_sides, vec![MeshSide::Left]);
+        assert_eq!(
+            volume_regions[2].source_sides,
+            vec![MeshSide::Left, MeshSide::Right]
+        );
+        let volume_adjacencies = arrangement
+            .volume_adjacencies
+            .as_ref()
+            .expect("nested closed shells should expose volume adjacencies");
+        assert_eq!(volume_adjacencies.len(), 2);
+        assert_eq!(volume_adjacencies[0].exterior_volume, 0);
+        assert_eq!(volume_adjacencies[0].interior_volume, 1);
+        assert_eq!(volume_adjacencies[1].exterior_volume, 1);
+        assert_eq!(volume_adjacencies[1].interior_volume, 2);
+
+        let union = arrangement
+            .clone()
+            .label_regions(ExactRegularizationPolicy::REGULARIZED_SOLID)
+            .unwrap()
+            .select(ExactBooleanOperation::Union)
+            .unwrap();
+        assert_eq!(union.selected_volume_regions, vec![1, 2]);
+        assert_eq!(union.selected_faces.len(), 4);
+        assert!(
+            union
+                .selected_face_orientations
+                .iter()
+                .all(|orientation| !orientation.reverse && orientation.from_volume_adjacency)
+        );
+        let intersection = arrangement
+            .clone()
+            .label_regions(ExactRegularizationPolicy::REGULARIZED_SOLID)
+            .unwrap()
+            .select(ExactBooleanOperation::Intersection)
+            .unwrap();
+        assert_eq!(intersection.selected_volume_regions, vec![2]);
+        assert_eq!(intersection.selected_faces.len(), 4);
+        assert!(
+            intersection
+                .selected_face_orientations
+                .iter()
+                .all(|orientation| !orientation.reverse && orientation.from_volume_adjacency)
+        );
+        let difference = arrangement
+            .label_regions(ExactRegularizationPolicy::REGULARIZED_SOLID)
+            .unwrap()
+            .select(ExactBooleanOperation::Difference)
+            .unwrap();
+        assert_eq!(difference.selected_volume_regions, vec![1]);
+        assert_eq!(difference.selected_faces.len(), 8);
+        assert_eq!(
+            difference
+                .selected_face_orientations
+                .iter()
+                .filter(|orientation| orientation.reverse)
+                .count(),
+            4
+        );
+        assert!(
+            difference
+                .selected_face_orientations
+                .iter()
+                .all(|orientation| orientation.from_volume_adjacency)
+        );
+    }
+
+    #[test]
+    fn nested_tetrahedron_with_two_inner_shells_builds_volume_tree() {
+        let left = tetrahedron_i64([0, 0, 0], [20, 0, 0], [0, 20, 0], [0, 0, 20]);
+        let right = two_tetrahedra_i64(&[
+            [[1, 1, 1], [2, 1, 1], [1, 2, 1], [1, 1, 2]],
+            [[5, 1, 1], [6, 1, 1], [5, 2, 1], [5, 1, 2]],
+        ]);
+
+        let arrangement = ExactArrangement::from_meshes(&left, &right).unwrap();
+
+        assert!(
+            arrangement.blockers.is_empty(),
+            "{:?}",
+            arrangement.blockers
+        );
+        let volume_regions = arrangement
+            .volume_regions
+            .as_ref()
+            .expect("nested closed shells should expose volume regions");
+        assert_eq!(volume_regions.len(), 4);
+        assert!(volume_regions[0].exterior);
+        assert_eq!(volume_regions[0].source_sides, Vec::<MeshSide>::new());
+        let left_volume = volume_regions
+            .iter()
+            .find(|region| region.source_sides == [MeshSide::Left])
+            .expect("outer shell interior should be left-owned");
+        assert_eq!(left_volume.boundary_shells.len(), 3);
+        assert_eq!(
+            volume_regions
+                .iter()
+                .filter(|region| region.source_sides == [MeshSide::Left, MeshSide::Right])
+                .count(),
+            2
+        );
+        let volume_adjacencies = arrangement
+            .volume_adjacencies
+            .as_ref()
+            .expect("nested closed shells should expose volume adjacencies");
+        assert_eq!(volume_adjacencies.len(), 3);
+        assert_eq!(
+            volume_adjacencies
+                .iter()
+                .filter(|adjacency| adjacency.exterior_volume == left_volume.index)
+                .count(),
+            2
+        );
+
+        let difference = arrangement
+            .label_regions(ExactRegularizationPolicy::REGULARIZED_SOLID)
+            .unwrap()
+            .select(ExactBooleanOperation::Difference)
+            .unwrap();
+        assert_eq!(difference.selected_volume_regions, vec![left_volume.index]);
+    }
+
+    #[test]
+    fn same_source_reversed_nested_shell_builds_cavity_volume() {
+        let left = tetrahedron_with_reversed_inner_i64(
+            [[0, 0, 0], [20, 0, 0], [0, 20, 0], [0, 0, 20]],
+            [[1, 1, 1], [2, 1, 1], [1, 2, 1], [1, 1, 2]],
+        );
+        let right = tetrahedron_i64([30, 0, 0], [31, 0, 0], [30, 1, 0], [30, 0, 1]);
+
+        let arrangement = ExactArrangement::from_meshes(&left, &right).unwrap();
+
+        assert!(
+            arrangement.blockers.is_empty(),
+            "{:?}",
+            arrangement.blockers
+        );
+        let volume_regions = arrangement
+            .volume_regions
+            .as_ref()
+            .expect("closed shells should expose volume regions");
+        assert_eq!(volume_regions.len(), 4);
+        assert_eq!(
+            volume_regions
+                .iter()
+                .filter(|region| region.exterior && region.source_sides.is_empty())
+                .count(),
+            1
+        );
+        let cavity = volume_regions
+            .iter()
+            .find(|region| !region.exterior && region.source_sides.is_empty())
+            .expect("oppositely oriented nested left shell should bound an empty cavity");
+        let left_volume = volume_regions
+            .iter()
+            .find(|region| region.source_sides == [MeshSide::Left])
+            .expect("between outer shell and cavity should remain left-owned");
+        assert!(left_volume.boundary_shells.len() >= 2);
+
+        let union = arrangement
+            .clone()
+            .label_regions(ExactRegularizationPolicy::REGULARIZED_SOLID)
+            .unwrap()
+            .select(ExactBooleanOperation::Union)
+            .unwrap();
+        assert!(!union.selected_volume_regions.contains(&cavity.index));
+        assert!(union.selected_volume_regions.contains(&left_volume.index));
+        let difference = arrangement
+            .label_regions(ExactRegularizationPolicy::REGULARIZED_SOLID)
+            .unwrap()
+            .select(ExactBooleanOperation::Difference)
+            .unwrap();
+        assert_eq!(difference.selected_volume_regions, vec![left_volume.index]);
+    }
+
+    #[test]
+    fn same_source_same_orientation_nested_shell_reports_nonmanifold_volume() {
+        let left = two_tetrahedra_i64(&[
+            [[0, 0, 0], [20, 0, 0], [0, 20, 0], [0, 0, 20]],
+            [[1, 1, 1], [2, 1, 1], [1, 2, 1], [1, 1, 2]],
+        ]);
+        let right = tetrahedron_i64([30, 0, 0], [31, 0, 0], [30, 1, 0], [30, 0, 1]);
+
+        let arrangement = ExactArrangement::from_meshes(&left, &right).unwrap();
+
+        assert!(
+            arrangement
+                .blockers
+                .contains(&ExactArrangementBlocker::NonManifoldCellComplex),
+            "{:?}",
+            arrangement.blockers
+        );
+        assert!(
+            arrangement.volume_regions.is_some(),
+            "diagnostic volume graph should still be retained"
+        );
+        assert_eq!(
+            arrangement
+                .label_regions(ExactRegularizationPolicy::REGULARIZED_SOLID)
+                .unwrap_err(),
+            ExactArrangementBlocker::NonManifoldCellComplex
+        );
+    }
+
+    #[test]
+    fn arrangement_pipeline_labels_selects_and_simplifies() {
+        let left = tetrahedron_i64([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]);
+        let right = tetrahedron_i64([3, 0, 0], [4, 0, 0], [3, 1, 0], [3, 0, 1]);
+        let arrangement = ExactArrangement::from_meshes(&left, &right).unwrap();
+
+        let labeled = arrangement
+            .label_regions(ExactRegularizationPolicy::REGULARIZED_SOLID)
+            .unwrap();
+        assert!(
+            labeled
+                .validate_against_sources(
+                    &left,
+                    &right,
+                    ExactRegularizationPolicy::REGULARIZED_SOLID
+                )
+                .is_ok()
+        );
+        let selected = labeled.select(ExactBooleanOperation::Union).unwrap();
+        assert_eq!(selected.selected_faces.len(), 8);
+        assert_eq!(selected.volume_regions.len(), 3);
+        assert_eq!(selected.selected_volume_regions, vec![1, 2]);
+        assert!(
+            selected
+                .validate_against_sources(
+                    &left,
+                    &right,
+                    ExactRegularizationPolicy::REGULARIZED_SOLID
+                )
+                .is_ok()
+        );
+
+        let intersection = arrangement
+            .label_regions(ExactRegularizationPolicy::REGULARIZED_SOLID)
+            .unwrap()
+            .select(ExactBooleanOperation::Intersection)
+            .unwrap();
+        assert!(intersection.selected_volume_regions.is_empty());
+        let difference = arrangement
+            .label_regions(ExactRegularizationPolicy::REGULARIZED_SOLID)
+            .unwrap()
+            .select(ExactBooleanOperation::Difference)
+            .unwrap();
+        assert_eq!(difference.selected_volume_regions, vec![1]);
+
+        let simplified = selected.simplify_exact().unwrap();
+        assert_eq!(simplified.faces.len(), 8);
+        assert_eq!(simplified.duplicate_cells_removed, 0);
+        assert!(
+            simplified
+                .validate_against_sources(
+                    &left,
+                    &right,
+                    ExactRegularizationPolicy::REGULARIZED_SOLID
+                )
+                .is_ok()
+        );
+        let mesh = simplified.triangulate().unwrap();
+        assert_eq!(mesh.vertices().len(), 8);
+        assert_eq!(mesh.triangles().len(), 8);
+    }
+
+    #[test]
+    fn regularized_solid_arrangement_blocks_open_shell_regions() {
+        let left = open_triangle_i64([0, 0, 0], [2, 0, 0], [0, 2, 0]);
+        let right = open_triangle_i64([4, 0, 0], [6, 0, 0], [4, 2, 0]);
+
+        let arrangement = ExactArrangement::from_meshes_with_policy(
+            &left,
+            &right,
+            ExactRegularizationPolicy::REGULARIZED_SOLID,
+        )
+        .unwrap();
+
+        assert!(
+            arrangement
+                .blockers
+                .contains(&ExactArrangementBlocker::NonManifoldCellComplex),
+            "{:?}",
+            arrangement.blockers
+        );
+        let regions = arrangement
+            .shells_or_regions
+            .as_ref()
+            .expect("arrangement should retain region diagnostics");
+        assert_eq!(regions.len(), 2);
+        assert!(regions.iter().all(|region| region.boundary_edges == 3));
+        assert!(
+            regions
+                .iter()
+                .all(|region| region.edge_incidences.len() == 3)
+        );
+        assert!(regions.iter().all(|region| {
+            region
+                .edge_incidences
+                .iter()
+                .all(|incidence| incidence.boundary && incidence.face_cells.len() == 1)
+        }));
+        assert!(
+            regions
+                .iter()
+                .all(|region| region.oriented_sides.len() == 1)
+        );
+        assert!(regions.iter().all(|region| region.non_manifold_edges == 0));
+        assert!(regions.iter().all(|region| !region.closed));
+        assert!(regions.iter().all(|region| region.manifold));
+        assert!(arrangement.volume_regions.is_none());
+        assert!(arrangement.volume_adjacencies.is_none());
+        assert!(
+            regions
+                .iter()
+                .any(|region| region.source_sides == vec![MeshSide::Left])
+        );
+        assert!(
+            regions
+                .iter()
+                .any(|region| region.source_sides == vec![MeshSide::Right])
+        );
+    }
+
+    #[test]
+    fn coplanar_overlapping_triangles_retain_carrier_plane_overlay() {
+        let left = open_triangle_i64([0, 0, 0], [4, 0, 0], [0, 4, 0]);
+        let right = open_triangle_i64([1, 1, 0], [5, 1, 0], [1, 5, 0]);
+
+        let arrangement = ExactArrangement::from_meshes_with_policy(
+            &left,
+            &right,
+            ExactRegularizationPolicy::RETAIN_ARTIFACTS,
+        )
+        .unwrap();
+
+        assert_eq!(arrangement.carrier_plane_overlays.len(), 1);
+        let overlay = &arrangement.carrier_plane_overlays[0].overlay;
+        assert!(overlay.blockers.is_empty(), "{:?}", overlay.blockers);
+        assert!(!overlay.arrangement.faces.is_empty());
+        assert!(
+            overlay
+                .faces
+                .iter()
+                .any(|face| face.in_left && face.in_right)
+        );
+        assert!(
+            arrangement.face_cells.iter().any(|cell| cell
+                .boundary
+                .iter()
+                .any(|node| matches!(node, ArrangementFaceCellNode::CarrierPlaneVertex { .. }))),
+            "coplanar overlay cells should be lifted into 3D face cells"
+        );
+        assert!(
+            arrangement
+                .vertices
+                .iter()
+                .any(|vertex| vertex.provenance.iter().any(|provenance| matches!(
+                    provenance,
+                    ArrangementVertexProvenance::CarrierPlaneVertex { .. }
+                )))
+        );
+        assert!(
+            arrangement
+                .edges
+                .iter()
+                .any(|edge| edge.provenance.iter().any(|provenance| matches!(
+                    provenance,
+                    ArrangementEdgeProvenance::CarrierPlaneEdge { .. }
+                )))
+        );
+        assert!(arrangement.face_cells.len() > 2);
+    }
+
+    #[test]
+    fn crossing_triangles_build_face_plane_arrangement_cells() {
+        let left = open_triangle_i64([0, 0, 0], [4, 0, 0], [0, 4, 0]);
+        let right = open_triangle_i64([1, -1, -1], [1, 3, 1], [1, 3, -1]);
+
+        let arrangement = ExactArrangement::from_meshes_with_policy(
+            &left,
+            &right,
+            ExactRegularizationPolicy::RETAIN_ARTIFACTS,
+        )
+        .unwrap();
+
+        assert!(!arrangement.face_plane_arrangements.is_empty());
+        assert!(
+            arrangement
+                .face_plane_arrangements
+                .iter()
+                .all(|face_arrangement| !face_arrangement.arrangement.faces.is_empty())
+        );
+        assert!(
+            arrangement
+                .face_cells
+                .iter()
+                .any(|cell| cell.boundary.iter().any(|node| matches!(
+                    node,
+                    ArrangementFaceCellNode::FacePlaneVertex { .. }
+                        | ArrangementFaceCellNode::GraphVertex { .. }
+                ))),
+            "non-coplanar split cells should be lifted into 3D face cells"
+        );
+        assert!(
+            arrangement
+                .vertices
+                .iter()
+                .any(|vertex| vertex.provenance.iter().any(|provenance| matches!(
+                    provenance,
+                    ArrangementVertexProvenance::FacePlaneVertex { .. }
+                )))
+        );
+        assert!(
+            arrangement
+                .edges
+                .iter()
+                .any(|edge| edge.provenance.iter().any(|provenance| matches!(
+                    provenance,
+                    ArrangementEdgeProvenance::FacePlaneEdge { .. }
+                )))
+        );
+        assert!(arrangement.face_cells.len() > 2);
+    }
+
+    #[test]
+    fn lower_dimensional_policy_controls_coplanar_touch_artifacts() {
+        let left = open_triangle_i64([0, 0, 0], [2, 0, 0], [0, 2, 0]);
+        let right = open_triangle_i64([2, 0, 0], [4, 0, 0], [2, 2, 0]);
+
+        let dropped = ExactArrangement::from_meshes_with_policy(
+            &left,
+            &right,
+            ExactRegularizationPolicy::REGULARIZED_SOLID,
+        )
+        .unwrap();
+        assert!(dropped.lower_dimensional_artifacts.is_empty());
+
+        let retained = ExactArrangement::from_meshes_with_policy(
+            &left,
+            &right,
+            ExactRegularizationPolicy::RETAIN_ARTIFACTS,
+        )
+        .unwrap();
+        assert!(
+            retained
+                .lower_dimensional_artifacts
+                .iter()
+                .any(|artifact| matches!(
+                    artifact,
+                    ArrangementLowerDimensionalArtifact::PointContact { .. }
+                )),
+            "{:?}",
+            retained.lower_dimensional_artifacts
+        );
+        assert!(
+            retained
+                .validate_against_sources_with_policy(
+                    &left,
+                    &right,
+                    ExactRegularizationPolicy::RETAIN_ARTIFACTS
+                )
+                .is_ok()
+        );
+
+        let reported = ExactArrangement::from_meshes_with_policy(
+            &left,
+            &right,
+            ExactRegularizationPolicy {
+                lower_dimensional: ExactLowerDimensionalPolicy::ReportBlocker,
+                unresolved: crate::regularization::ExactUnresolvedPolicy::RetainArtifacts,
+            },
+        )
+        .unwrap();
+        assert!(
+            reported
+                .blockers
+                .contains(&ExactArrangementBlocker::LowerDimensionalContact)
+        );
+        assert!(!reported.lower_dimensional_artifacts.is_empty());
+    }
+
+    #[test]
+    fn lower_dimensional_policy_retains_noncoplanar_point_touch() {
+        let left = open_triangle_i64([0, 0, 0], [2, 0, 0], [0, 2, 0]);
+        let right = open_triangle_i64([0, 0, 0], [0, -2, 0], [0, 0, 2]);
+
+        let retained = ExactArrangement::from_meshes_with_policy(
+            &left,
+            &right,
+            ExactRegularizationPolicy::RETAIN_ARTIFACTS,
+        )
+        .unwrap();
+
+        assert!(
+            retained
+                .lower_dimensional_artifacts
+                .iter()
+                .any(|artifact| matches!(
+                    artifact,
+                    ArrangementLowerDimensionalArtifact::PointContact { .. }
+                )),
+            "{:?}",
+            retained.lower_dimensional_artifacts
+        );
+        assert!(
+            retained.face_plane_arrangements.is_empty(),
+            "point-only contact should not create positive-area face-plane cells"
+        );
+    }
+}

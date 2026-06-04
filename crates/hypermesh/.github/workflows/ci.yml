@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: default-exact
+            command: cargo test
+          - name: no-default-features
+            command: cargo check --no-default-features
+          - name: exact-only
+            command: cargo test --no-default-features --features exact
+          - name: exact-triangulation
+            command: cargo test --no-default-features --features exact-triangulation
+          - name: all-features
+            command: cargo test --all-features
+          - name: all-features-clippy
+            command: cargo clippy --all-features -- -D warnings
+          - name: all-features-docs
+            command: cargo doc --all-features --no-deps
+          - name: legacy-only
+            command: cargo test --no-default-features --features legacy-boolean
+          - name: rayon
+            command: cargo test --no-default-features --features legacy-boolean,rayon
+          - name: bevy-examples
+            command: cargo check --no-default-features --features bevy --examples
+          - name: benches
+            command: cargo bench --no-run
+          - name: exact-triangulation-benches
+            command: cargo bench --no-run --no-default-features --features exact-triangulation
+          - name: fuzz-targets
+            command: cargo check --manifest-path fuzz/Cargo.toml
+          - name: fuzz-targets-exact-triangulation
+            command: cargo check --manifest-path fuzz/Cargo.toml --features exact-triangulation
+          - name: fuzz-targets-legacy-adapter
+            command: cargo check --manifest-path fuzz/Cargo.toml --features legacy-boolean
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: hypermesh
+      - uses: actions/checkout@v4
+        with:
+          repository: timschmidt/hyperreal
+          path: hyperreal
+      - uses: actions/checkout@v4
+        with:
+          repository: timschmidt/hyperlattice
+          path: hyperlattice
+      - uses: actions/checkout@v4
+        with:
+          repository: timschmidt/hyperlimit
+          path: hyperlimit
+      - uses: actions/checkout@v4
+        with:
+          repository: timschmidt/hypertri
+          path: hypertri
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: hypermesh
+      - run: ${{ matrix.command }}
+        working-directory: hypermesh

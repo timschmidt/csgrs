@@ -1,0 +1,118 @@
+//! Consumer-readiness summaries for exact mesh artifacts.
+//!
+//! Downstream crates often need a fast routing decision before requesting a
+//! specific artifact: surface geometry, closed-solid evidence, or a lossy
+//! preview/export view. [`ExactMeshConsumerReadinessReport`] is that routing
+//! record. It is deliberately a summary, not a replacement for the underlying
+//! geometric systems should expose object facts, adapter boundaries, and
+//! cached readiness separately so approximate or domain-specific consumers
+//! cannot silently reinterpret topology evidence.
+
+use super::{
+    ExactMesh, ExactMeshAuditReport, MeshSource, ValidationPolicy, approximate_mesh_f64_view,
+    audit_exact_mesh, exact_solid_handoff, exact_surface_handoff,
+};
+
+/// Compact readiness summary for common exact-mesh consumers.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ExactMeshConsumerReadinessReport {
+    /// Whole-mesh retained-state audit used to derive the readiness summary.
+    pub audit: ExactMeshAuditReport,
+    /// Whether exact surface handoff currently replays for this mesh.
+    pub surface_handoff_ready: bool,
+    /// Whether exact closed-solid handoff currently replays for this mesh.
+    pub solid_handoff_ready: bool,
+    /// Whether a lossy `f64` display/export view currently replays.
+    pub approximate_f64_view_ready: bool,
+    /// Whether the artifact has at least one vertex and one face.
+    pub nonempty_topology: bool,
+    /// Whether retained topology is closed-manifold evidence.
+    pub closed_manifold: bool,
+    /// Whether the construction policy allows boundary edges.
+    pub boundary_allowed: bool,
+    /// Whether all retained coordinates are exact rational values.
+    pub exact_rational_coordinates: bool,
+    /// Whether this artifact came from exact caller input.
+    pub exact_source: bool,
+}
+
+/// Error returned when a retained consumer-readiness summary is stale.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum ExactMeshConsumerReadinessError {
+    /// The source mesh failed retained-state audit.
+    Audit(super::ExactMeshValidationError),
+    /// A downstream summary no longer matches replayed source evidence.
+    ReportMismatch {
+        /// Name of the mismatched field.
+        field: &'static str,
+    },
+}
+
+/// Freshness status for a retained consumer-readiness summary.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ExactMeshConsumerReadinessFreshness {
+    /// The readiness report replays exactly against the current mesh.
+    Current,
+    /// The mesh failed retained-state audit.
+    InvalidMeshState,
+    /// The retained readiness report differs from replayed source evidence.
+    StaleReport,
+}
+
+impl ExactMeshConsumerReadinessReport {
+    /// Build a consumer-readiness summary after retained-state replay.
+    ///
+    /// This constructor probes exact surface handoff, exact solid handoff, and
+    /// lossy `f64` view construction only as availability checks. Consumers
+    /// that need the actual artifact should still request and validate that
+    /// artifact directly. The summary prevents downstream code from treating
+    /// "mesh exists" as equivalent to "solid exists" or "lossy view exists."
+    pub fn from_mesh(mesh: &ExactMesh) -> Result<Self, ExactMeshConsumerReadinessError> {
+        let audit = audit_exact_mesh(mesh).map_err(ExactMeshConsumerReadinessError::Audit)?;
+        Ok(Self {
+            surface_handoff_ready: exact_surface_handoff(mesh).is_ok(),
+            solid_handoff_ready: exact_solid_handoff(mesh).is_ok(),
+            approximate_f64_view_ready: approximate_mesh_f64_view(mesh).is_ok(),
+            nonempty_topology: audit.vertex_count > 0 && audit.face_count > 0,
+            closed_manifold: audit.closed_manifold,
+            boundary_allowed: audit.validation_policy == ValidationPolicy::ALLOW_BOUNDARY,
+            exact_rational_coordinates: audit.fixed_coordinates_exact_rational,
+            exact_source: matches!(audit.source, MeshSource::Exact),
+            audit,
+        })
+    }
+
+    /// Validate that this readiness summary still replays against `mesh`.
+    pub fn validate_against_mesh(
+        &self,
+        mesh: &ExactMesh,
+    ) -> Result<(), ExactMeshConsumerReadinessError> {
+        let replay = Self::from_mesh(mesh)?;
+        if self != &replay {
+            return Err(ExactMeshConsumerReadinessError::ReportMismatch {
+                field: "exact_mesh_consumer_readiness",
+            });
+        }
+        Ok(())
+    }
+
+    /// Classify whether this retained readiness summary is fresh for `mesh`.
+    pub fn freshness_against_mesh(&self, mesh: &ExactMesh) -> ExactMeshConsumerReadinessFreshness {
+        match self.validate_against_mesh(mesh) {
+            Ok(()) => ExactMeshConsumerReadinessFreshness::Current,
+            Err(ExactMeshConsumerReadinessError::Audit(_)) => {
+                ExactMeshConsumerReadinessFreshness::InvalidMeshState
+            }
+            Err(ExactMeshConsumerReadinessError::ReportMismatch { .. }) => {
+                ExactMeshConsumerReadinessFreshness::StaleReport
+            }
+        }
+    }
+}
+
+/// Build a common-consumer readiness summary for an exact mesh.
+pub fn exact_mesh_consumer_readiness(
+    mesh: &ExactMesh,
+) -> Result<ExactMeshConsumerReadinessReport, ExactMeshConsumerReadinessError> {
+    ExactMeshConsumerReadinessReport::from_mesh(mesh)
+}

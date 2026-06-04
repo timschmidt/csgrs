@@ -1,0 +1,2142 @@
+//! Exact orthogonal-cell arrangements for coplanar surface booleans.
+//!
+//! This module is a bounded general planar-arrangement step for `hypermesh`.
+//! The accepted operands are coplanar axis-aligned rectangular surface pieces on
+//! one coordinate plane. They are lowered into an exact rectilinear cell complex,
+//! the requested boolean is evaluated per cell, and retained boundary loops are
+//! extracted before `hypertri` sees any polygon. Combinatorial topology is
+//! promoted from exact object structure, not from a primitive-float polygon
+//! repair pass.
+//! Same-operand rectangles may overlap in positive area; those cells use set
+//! occupancy (`covered by at least one retained source rectangle`) and are
+//! accepted only when the resulting loops and mesh replay. This keeps
+//! multiplicity out of the topology certificate while still retaining the exact
+//! grid facts that justified the set boundary. Retained output components may
+//! meet at exact grid vertices only; those branch points are kept as separate
+//! component vertices instead of being welded into non-manifold mesh topology.
+//! Components may also be nested inside retained holes: an island in a removed
+//! rectilinear ring is separate output topology, not an overlap with the
+//! containing component. If that island touches the containing hole boundary
+//! at exact grid vertices only, the branch is retained with duplicated mesh
+//! coordinates just like ordinary point-touch component branches.
+//!
+//! The grid subdivision is the orthogonal analogue of the arrangement viewpoint
+//! final triangulation handoff; retained loops and cell occupancy are the
+//! certified topology artifact.
+
+use core::cmp::Ordering;
+
+use hyperlimit::{
+    Point2, Point3, SegmentIntersection, Sign, classify_segment_intersection, compare_reals,
+    orient2d_report, project_point3 as project_point,
+};
+
+use super::coplanar::CoplanarProjection;
+use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
+use super::mesh::{ExactMesh, Triangle};
+use super::provenance::SourceProvenance;
+use super::validation::ValidationPolicy;
+use hyperreal::Real;
+
+/// Boolean operation handled by the orthogonal coplanar surface cell complex.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CoplanarOrthogonalSurfaceOperation {
+    /// Materialize the union of occupied rectangular surface cells.
+    Union,
+    /// Materialize the positive-area intersection of occupied surface cells.
+    Intersection,
+    /// Materialize cells occupied by the left operand and not by the right.
+    Difference,
+}
+
+/// One connected orthogonal output component.
+///
+/// The outer loop is retained counter-clockwise and holes are retained
+/// clockwise. The loops are exact topology evidence for the cell complex. They
+/// are not reconstructed from the triangulated mesh after the fact; that keeps
+#[derive(Clone, Debug, PartialEq)]
+pub struct CoplanarOrthogonalSurfaceComponent {
+    /// Counter-clockwise outer boundary of this connected component.
+    pub outer: Vec<Point3>,
+    /// Clockwise hole boundaries strictly inside [`Self::outer`].
+    pub holes: Vec<Vec<Point3>>,
+}
+
+/// Exact orthogonal-cell coplanar surface arrangement.
+///
+/// This artifact represents bounded rectilinear arrangements that are wider
+/// than the convex/simple-loop shortcuts: multi-component outputs, nonconvex
+/// outer loops, retained holes, and cutter/hole contact graphs are accepted when
+/// an exact axis-aligned cell replay proves the topology. Components that meet
+/// only at exact grid vertices are retained as separate components with
+/// duplicated coordinates, which is the cell-complex analogue of the bounded
+/// point-touch branch artifact in [`crate::surface`]. Components nested
+/// inside retained holes are also accepted when the island is strictly inside
+/// the hole or touches the hole boundary only at exact grid vertices. That
+/// covers rectilinear island outputs without requiring a general
+/// non-rectilinear planar-subdivision object. Positive-length component
+/// contact and positive-length/proper hole-boundary contact stay rejected.
+/// Cases outside that model stay explicit planar-arrangement work instead of
+/// being decided by a tolerance polygon kernel.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CoplanarOrthogonalSurfaceArrangement {
+    /// Projection plane used by the exact cell grid.
+    pub projection: CoplanarProjection,
+    /// Boolean operation used to produce the retained cells.
+    pub operation: CoplanarOrthogonalSurfaceOperation,
+    /// Retained connected components with optional holes.
+    pub components: Vec<CoplanarOrthogonalSurfaceComponent>,
+    /// Exact triangulated open surface mesh for the retained components.
+    pub mesh: ExactMesh,
+}
+
+impl CoplanarOrthogonalSurfaceArrangement {
+    /// Validate retained loops, hole nesting, mesh area, and exact mesh state.
+    ///
+    /// The validation is intentionally about the retained artifact, not only the
+    /// triangle soup: loops must be simple, oriented, mutually disjoint, and the
+    /// requirement that exact computation preserve enough combinatorial history
+    /// to audit later decisions.
+    pub fn validate(&self) -> Result<(), MeshError> {
+        validate_components(self.projection, &self.components)?;
+        validate_component_mesh(self.projection, &self.components, &self.mesh)?;
+        self.mesh
+            .validate_retained_state()
+            .map_err(|err| orthogonal_error(format!("orthogonal output mesh is stale: {err:?}")))?;
+        Ok(())
+    }
+
+    /// Validate this arrangement by replaying it from the original sources.
+    ///
+    /// A locally valid cell complex cannot be transplanted to another boolean
+    /// request. Rebuilding the exact grid from the source meshes keeps the
+    /// retained loops tied to the exact rectangular source objects that produced
+    pub fn validate_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<(), MeshError> {
+        self.validate()?;
+        let replay = arrange_coplanar_orthogonal_surface(left, right, self.operation)
+            .ok_or_else(|| orthogonal_error("source replay did not reproduce arrangement"))?;
+        if self == &replay {
+            Ok(())
+        } else {
+            Err(orthogonal_error(
+                "retained orthogonal arrangement does not match source replay",
+            ))
+        }
+    }
+}
+
+/// Certify and materialize an orthogonal coplanar surface union.
+pub fn arrange_coplanar_orthogonal_surface_union(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Option<CoplanarOrthogonalSurfaceArrangement> {
+    arrange_coplanar_orthogonal_surface(left, right, CoplanarOrthogonalSurfaceOperation::Union)
+}
+
+/// Certify and materialize an orthogonal coplanar surface intersection.
+pub fn arrange_coplanar_orthogonal_surface_intersection(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Option<CoplanarOrthogonalSurfaceArrangement> {
+    arrange_coplanar_orthogonal_surface(
+        left,
+        right,
+        CoplanarOrthogonalSurfaceOperation::Intersection,
+    )
+}
+
+/// Certify and materialize an orthogonal coplanar surface difference.
+pub fn arrange_coplanar_orthogonal_surface_difference(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Option<CoplanarOrthogonalSurfaceArrangement> {
+    arrange_coplanar_orthogonal_surface(left, right, CoplanarOrthogonalSurfaceOperation::Difference)
+}
+
+fn arrange_coplanar_orthogonal_surface(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: CoplanarOrthogonalSurfaceOperation,
+) -> Option<CoplanarOrthogonalSurfaceArrangement> {
+    let left_rectangles = extract_axis_aligned_rectangles(left)?;
+    let right_rectangles = extract_axis_aligned_rectangles(right)?;
+    let projection = left_rectangles.projection;
+    if right_rectangles.projection != projection
+        || !real_equal(&left_rectangles.dropped, &right_rectangles.dropped)
+    {
+        return None;
+    }
+
+    let cell_complex = build_orthogonal_cell_complex(
+        projection,
+        &left_rectangles.rectangles,
+        &right_rectangles.rectangles,
+        operation,
+    )?;
+    let components = extract_components_from_cells(&cell_complex)?;
+    if components.is_empty() {
+        return None;
+    }
+    let mesh = components_to_mesh(&components, projection)?;
+    let arrangement = CoplanarOrthogonalSurfaceArrangement {
+        projection,
+        operation,
+        components,
+        mesh,
+    };
+    arrangement.validate().ok()?;
+    Some(arrangement)
+}
+
+#[derive(Clone, Debug)]
+struct RectangleExtraction {
+    projection: CoplanarProjection,
+    dropped: Real,
+    rectangles: Vec<ProjectedRectangle>,
+}
+
+#[derive(Clone, Debug)]
+struct ProjectedRectangle {
+    min: Point2,
+    max: Point2,
+    dropped: Real,
+}
+
+#[derive(Clone, Debug)]
+struct RectangleGroup {
+    rectangle: ProjectedRectangle,
+    area2: Real,
+    corners: Vec<Point2>,
+    triangles: usize,
+}
+
+/// Extract exact rectangular source cells from a triangulated open surface.
+///
+/// The first path accepts the common two-triangle rectangle grammar. The
+/// fallback below replays arbitrary triangulations against their exact vertex
+/// grid and promotes only cells whose clipped source area exactly equals the
+/// accepted cells are certified by exact predicates and algebra, not by sampled
+/// occupancy or floating tolerances.
+fn extract_axis_aligned_rectangles(mesh: &ExactMesh) -> Option<RectangleExtraction> {
+    extract_axis_aligned_rectangle_halves(mesh).or_else(|| extract_axis_aligned_surface_cells(mesh))
+}
+
+/// Return whether a mesh can be replayed as exact axis-aligned surface cells.
+///
+/// Affine surface booleans use this as the post-normalization replay gate: a
+/// candidate affine basis is only evidence if each source mesh becomes a
+/// certified orthogonal cell complex under exact coordinate transformation.
+/// it as a heuristic change of coordinates.
+pub(super) fn certify_axis_aligned_surface_cells(mesh: &ExactMesh) -> bool {
+    extract_axis_aligned_rectangles(mesh).is_some()
+}
+
+fn extract_axis_aligned_rectangle_halves(mesh: &ExactMesh) -> Option<RectangleExtraction> {
+    if mesh.triangles().is_empty() {
+        return None;
+    }
+    let points = mesh.vertices().iter().cloned().collect::<Vec<_>>();
+    let (projection, dropped) = choose_coordinate_plane(&points)?;
+    let mut groups = Vec::<RectangleGroup>::new();
+    for triangle in mesh.triangles() {
+        let tri_points = triangle
+            .0
+            .iter()
+            .map(|&index| points.get(index).cloned())
+            .collect::<Option<Vec<_>>>()?;
+        let rectangle = triangle_axis_aligned_rectangle(&tri_points, projection, &dropped)?;
+        let area2 = projected_area2_abs(&tri_points, projection)?;
+        let Some(group) = groups
+            .iter_mut()
+            .find(|group| rectangles_equal(&group.rectangle, &rectangle))
+        else {
+            groups.push(RectangleGroup {
+                rectangle,
+                area2,
+                corners: tri_points
+                    .iter()
+                    .map(|point| project_point(point, projection))
+                    .collect(),
+                triangles: 1,
+            });
+            continue;
+        };
+        group.area2 = add(&group.area2, &area2);
+        for point in tri_points
+            .iter()
+            .map(|point| project_point(point, projection))
+        {
+            if !group
+                .corners
+                .iter()
+                .any(|corner| point2_equal(corner, &point))
+            {
+                group.corners.push(point);
+            }
+        }
+        group.triangles += 1;
+    }
+
+    let mut rectangles = Vec::with_capacity(groups.len());
+    for group in groups {
+        let rect_area2 = rectangle_area2(&group.rectangle);
+        if group.triangles < 2
+            || group.corners.len() != 4
+            || compare_reals(&group.area2, &rect_area2).value() != Some(Ordering::Equal)
+        {
+            return None;
+        }
+        rectangles.push(group.rectangle);
+    }
+    rectangles.sort_by(|left, right| {
+        compare_point2(&left.min, &right.min)
+            .and_then(|ordering| {
+                if ordering == Ordering::Equal {
+                    compare_point2(&left.max, &right.max)
+                } else {
+                    Some(ordering)
+                }
+            })
+            .unwrap_or(Ordering::Equal)
+    });
+    Some(RectangleExtraction {
+        projection,
+        dropped,
+        rectangles,
+    })
+}
+
+/// Extract exact occupied rectangular surface cells from arbitrary triangulation.
+///
+/// The paired-rectangle fast path above is intentionally structural: it accepts
+/// only the common two-triangle rectangle grammar. This fallback is the bounded
+/// cell-arrangement importer for harder source meshes whose orthogonal surface
+/// cells were split by extra diagonals or fan vertices. It builds the exact
+/// coordinate grid from retained source vertices, clips every source triangle
+/// the ACM* 17.1, 1974), and promotes a cell only when the sum of clipped exact
+/// triangle areas equals the cell area exactly.
+///
+/// so this importer uses retained source triangles plus exact area replay. A
+/// partially covered cell, overlapping source coverage, or undecidable
+/// arithmetic rejects instead of being rounded into an orthogonal cell.
+fn extract_axis_aligned_surface_cells(mesh: &ExactMesh) -> Option<RectangleExtraction> {
+    if mesh.triangles().is_empty() {
+        return None;
+    }
+    let points = mesh.vertices().iter().cloned().collect::<Vec<_>>();
+    let (projection, dropped) = choose_coordinate_plane(&points)?;
+    if points
+        .iter()
+        .any(|point| !real_equal(&dropped_coordinate(point, projection), &dropped))
+    {
+        return None;
+    }
+
+    let mut xs = Vec::new();
+    let mut ys = Vec::new();
+    for point in &points {
+        let projected = project_point(point, projection);
+        xs.push(projected.x);
+        ys.push(projected.y);
+    }
+    sort_reals_and_dedup(&mut xs)?;
+    sort_reals_and_dedup(&mut ys)?;
+    if xs.len() < 2 || ys.len() < 2 {
+        return None;
+    }
+
+    let triangles = mesh
+        .triangles()
+        .iter()
+        .map(|triangle| {
+            let projected = triangle
+                .0
+                .iter()
+                .map(|&index| {
+                    points
+                        .get(index)
+                        .map(|point| project_point(point, projection))
+                })
+                .collect::<Option<Vec<_>>>()?;
+            if projected.len() != 3
+                || compare_reals(&point2_polygon_area2_abs(&projected)?, &Real::from(0)).value()?
+                    == Ordering::Equal
+            {
+                return None;
+            }
+            Some(projected)
+        })
+        .collect::<Option<Vec<_>>>()?;
+
+    let mut rectangles = Vec::new();
+    for x in 0..xs.len() - 1 {
+        for y in 0..ys.len() - 1 {
+            if real_order(&xs[x], &xs[x + 1])? != Ordering::Less
+                || real_order(&ys[y], &ys[y + 1])? != Ordering::Less
+            {
+                return None;
+            }
+            let rectangle = ProjectedRectangle {
+                min: Point2::new(xs[x].clone(), ys[y].clone()),
+                max: Point2::new(xs[x + 1].clone(), ys[y + 1].clone()),
+                dropped: dropped.clone(),
+            };
+            let cell_area = rectangle_area2(&rectangle);
+            let mut covered_area = Real::from(0);
+            for triangle in &triangles {
+                let clipped = clip_projected_polygon_to_rectangle(triangle, &rectangle)?;
+                if clipped.len() >= 3 {
+                    covered_area = add(&covered_area, &point2_polygon_area2_abs(&clipped)?);
+                }
+                if compare_reals(&covered_area, &cell_area).value()? == Ordering::Greater {
+                    return None;
+                }
+            }
+            match compare_reals(&covered_area, &cell_area).value()? {
+                Ordering::Equal => rectangles.push(rectangle),
+                Ordering::Less
+                    if compare_reals(&covered_area, &Real::from(0)).value()? == Ordering::Equal => {
+                }
+                Ordering::Less | Ordering::Greater => return None,
+            }
+        }
+    }
+    if rectangles.is_empty() {
+        return None;
+    }
+    rectangles.sort_by(|left, right| {
+        compare_point2(&left.min, &right.min)
+            .and_then(|ordering| {
+                if ordering == Ordering::Equal {
+                    compare_point2(&left.max, &right.max)
+                } else {
+                    Some(ordering)
+                }
+            })
+            .unwrap_or(Ordering::Equal)
+    });
+    Some(RectangleExtraction {
+        projection,
+        dropped,
+        rectangles,
+    })
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum ClipBoundary {
+    MinX,
+    MaxX,
+    MinY,
+    MaxY,
+}
+
+fn clip_projected_polygon_to_rectangle(
+    polygon: &[Point2],
+    rectangle: &ProjectedRectangle,
+) -> Option<Vec<Point2>> {
+    let mut clipped = polygon.to_vec();
+    for boundary in [
+        ClipBoundary::MinX,
+        ClipBoundary::MaxX,
+        ClipBoundary::MinY,
+        ClipBoundary::MaxY,
+    ] {
+        clipped = clip_point2_polygon_half_plane(&clipped, rectangle, boundary)?;
+        if clipped.is_empty() {
+            break;
+        }
+    }
+    dedup_point2_neighbors(&mut clipped);
+    Some(clipped)
+}
+
+fn clip_point2_polygon_half_plane(
+    polygon: &[Point2],
+    rectangle: &ProjectedRectangle,
+    boundary: ClipBoundary,
+) -> Option<Vec<Point2>> {
+    if polygon.is_empty() {
+        return Some(Vec::new());
+    }
+    let mut output = Vec::new();
+    for index in 0..polygon.len() {
+        let current = &polygon[index];
+        let next = &polygon[(index + 1) % polygon.len()];
+        let current_inside = point2_inside_clip_boundary(current, rectangle, boundary)?;
+        let next_inside = point2_inside_clip_boundary(next, rectangle, boundary)?;
+        match (current_inside, next_inside) {
+            (true, true) => output.push(next.clone()),
+            (true, false) => {
+                output.push(point2_segment_clip_intersection(
+                    current, next, rectangle, boundary,
+                )?);
+            }
+            (false, true) => {
+                output.push(point2_segment_clip_intersection(
+                    current, next, rectangle, boundary,
+                )?);
+                output.push(next.clone());
+            }
+            (false, false) => {}
+        }
+    }
+    dedup_point2_neighbors(&mut output);
+    Some(output)
+}
+
+fn point2_inside_clip_boundary(
+    point: &Point2,
+    rectangle: &ProjectedRectangle,
+    boundary: ClipBoundary,
+) -> Option<bool> {
+    Some(match boundary {
+        ClipBoundary::MinX => real_order(&rectangle.min.x, &point.x)? != Ordering::Greater,
+        ClipBoundary::MaxX => real_order(&point.x, &rectangle.max.x)? != Ordering::Greater,
+        ClipBoundary::MinY => real_order(&rectangle.min.y, &point.y)? != Ordering::Greater,
+        ClipBoundary::MaxY => real_order(&point.y, &rectangle.max.y)? != Ordering::Greater,
+    })
+}
+
+fn point2_segment_clip_intersection(
+    start: &Point2,
+    end: &Point2,
+    rectangle: &ProjectedRectangle,
+    boundary: ClipBoundary,
+) -> Option<Point2> {
+    match boundary {
+        ClipBoundary::MinX | ClipBoundary::MaxX => {
+            let x = if boundary == ClipBoundary::MinX {
+                &rectangle.min.x
+            } else {
+                &rectangle.max.x
+            };
+            let dx = sub(&end.x, &start.x);
+            let t = (sub(x, &start.x) / &dx).ok()?;
+            Some(Point2::new(
+                x.clone(),
+                add(&start.y, &mul(&t, &sub(&end.y, &start.y))),
+            ))
+        }
+        ClipBoundary::MinY | ClipBoundary::MaxY => {
+            let y = if boundary == ClipBoundary::MinY {
+                &rectangle.min.y
+            } else {
+                &rectangle.max.y
+            };
+            let dy = sub(&end.y, &start.y);
+            let t = (sub(y, &start.y) / &dy).ok()?;
+            Some(Point2::new(
+                add(&start.x, &mul(&t, &sub(&end.x, &start.x))),
+                y.clone(),
+            ))
+        }
+    }
+}
+
+fn choose_coordinate_plane(points: &[Point3]) -> Option<(CoplanarProjection, Real)> {
+    let first = points.first()?;
+    if points.iter().all(|point| real_equal(&point.z, &first.z)) {
+        Some((CoplanarProjection::Xy, first.z.clone()))
+    } else if points.iter().all(|point| real_equal(&point.y, &first.y)) {
+        Some((CoplanarProjection::Xz, first.y.clone()))
+    } else if points.iter().all(|point| real_equal(&point.x, &first.x)) {
+        Some((CoplanarProjection::Yz, first.x.clone()))
+    } else {
+        None
+    }
+}
+
+fn triangle_axis_aligned_rectangle(
+    triangle: &[Point3],
+    projection: CoplanarProjection,
+    dropped: &Real,
+) -> Option<ProjectedRectangle> {
+    if triangle.len() != 3
+        || triangle
+            .iter()
+            .any(|point| !real_equal(&dropped_coordinate(point, projection), dropped))
+    {
+        return None;
+    }
+    let mut min = project_point(triangle.first()?, projection);
+    let mut max = min.clone();
+    for point in triangle
+        .iter()
+        .skip(1)
+        .map(|point| project_point(point, projection))
+    {
+        if real_order(&point.x, &min.x)? == Ordering::Less {
+            min.x = point.x.clone();
+        }
+        if real_order(&point.y, &min.y)? == Ordering::Less {
+            min.y = point.y.clone();
+        }
+        if real_order(&point.x, &max.x)? == Ordering::Greater {
+            max.x = point.x.clone();
+        }
+        if real_order(&point.y, &max.y)? == Ordering::Greater {
+            max.y = point.y.clone();
+        }
+    }
+    if real_order(&min.x, &max.x)? != Ordering::Less
+        || real_order(&min.y, &max.y)? != Ordering::Less
+    {
+        return None;
+    }
+    let rectangle = ProjectedRectangle {
+        min,
+        max,
+        dropped: dropped.clone(),
+    };
+    let corners = rectangle_corners2(&rectangle);
+    let mut unique = Vec::new();
+    for projected in triangle
+        .iter()
+        .map(|point| project_point(point, projection))
+    {
+        if !corners
+            .iter()
+            .any(|corner| point2_equal(corner, &projected))
+        {
+            return None;
+        }
+        if !unique.iter().any(|point| point2_equal(point, &projected)) {
+            unique.push(projected);
+        }
+    }
+    if unique.len() != 3 {
+        return None;
+    }
+    let tri_area2 = projected_area2_abs(triangle, projection)?;
+    let double_tri_area = add(&tri_area2, &tri_area2);
+    if compare_reals(&double_tri_area, &rectangle_area2(&rectangle)).value()
+        != Some(Ordering::Equal)
+    {
+        return None;
+    }
+    Some(rectangle)
+}
+
+#[derive(Clone, Debug)]
+struct OrthogonalCellComplex {
+    projection: CoplanarProjection,
+    dropped: Real,
+    xs: Vec<Real>,
+    ys: Vec<Real>,
+    y_cells: usize,
+    occupied: Vec<bool>,
+}
+
+/// Build the exact cell complex and evaluate one boolean operation.
+///
+/// Each open cell is classified by the exact midpoint of its bounding interval.
+/// Because all source boundaries are grid lines from exact rectangle
+/// coordinates, midpoint membership is a certified cell-level predicate rather
+/// than a sampling heuristic. Same-side overlaps are deliberately collapsed to
+/// boolean set occupancy before the operation is evaluated; the retained output
+/// is therefore a set arrangement, not a multiplicity-carrying surface cover.
+/// That promotion is allowed only because the exact cell grid remains retained
+fn build_orthogonal_cell_complex(
+    projection: CoplanarProjection,
+    left: &[ProjectedRectangle],
+    right: &[ProjectedRectangle],
+    operation: CoplanarOrthogonalSurfaceOperation,
+) -> Option<OrthogonalCellComplex> {
+    if left.is_empty() || right.is_empty() {
+        return None;
+    }
+    let dropped = left.first()?.dropped.clone();
+    if left
+        .iter()
+        .chain(right.iter())
+        .any(|rect| !real_equal(&rect.dropped, &dropped))
+    {
+        return None;
+    }
+
+    let mut xs = Vec::new();
+    let mut ys = Vec::new();
+    for rect in left.iter().chain(right.iter()) {
+        xs.push(rect.min.x.clone());
+        xs.push(rect.max.x.clone());
+        ys.push(rect.min.y.clone());
+        ys.push(rect.max.y.clone());
+    }
+    sort_reals_and_dedup(&mut xs)?;
+    sort_reals_and_dedup(&mut ys)?;
+    if xs.len() < 2 || ys.len() < 2 {
+        return None;
+    }
+
+    let x_cells = xs.len() - 1;
+    let y_cells = ys.len() - 1;
+    let mut occupied = vec![false; x_cells * y_cells];
+    for x in 0..x_cells {
+        for y in 0..y_cells {
+            if real_order(&xs[x], &xs[x + 1])? != Ordering::Less
+                || real_order(&ys[y], &ys[y + 1])? != Ordering::Less
+            {
+                return None;
+            }
+            let midpoint = Point2::new(
+                midpoint_real(&xs[x], &xs[x + 1]),
+                midpoint_real(&ys[y], &ys[y + 1]),
+            );
+            let in_left = left
+                .iter()
+                .any(|rect| point_strictly_inside_projected_rectangle(&midpoint, rect));
+            let in_right = right
+                .iter()
+                .any(|rect| point_strictly_inside_projected_rectangle(&midpoint, rect));
+            occupied[x * y_cells + y] = match operation {
+                CoplanarOrthogonalSurfaceOperation::Union => in_left || in_right,
+                CoplanarOrthogonalSurfaceOperation::Intersection => in_left && in_right,
+                CoplanarOrthogonalSurfaceOperation::Difference => in_left && !in_right,
+            };
+        }
+    }
+    if !occupied.iter().any(|cell| *cell) {
+        return None;
+    }
+    Some(OrthogonalCellComplex {
+        projection,
+        dropped,
+        xs,
+        ys,
+        y_cells,
+        occupied,
+    })
+}
+
+fn extract_components_from_cells(
+    complex: &OrthogonalCellComplex,
+) -> Option<Vec<CoplanarOrthogonalSurfaceComponent>> {
+    let x_cells = complex.xs.len() - 1;
+    let y_cells = complex.y_cells;
+    let mut seen = vec![false; complex.occupied.len()];
+    let mut components = Vec::new();
+    for x in 0..x_cells {
+        for y in 0..y_cells {
+            let index = cell_index(x, y, y_cells);
+            if seen[index] || !complex.occupied[index] {
+                continue;
+            }
+            let mut stack = vec![(x, y)];
+            let mut cells = Vec::new();
+            seen[index] = true;
+            while let Some((cx, cy)) = stack.pop() {
+                cells.push((cx, cy));
+                for (nx, ny) in cell_neighbors(cx, cy, x_cells, y_cells) {
+                    let neighbor = cell_index(nx, ny, y_cells);
+                    if !seen[neighbor] && complex.occupied[neighbor] {
+                        seen[neighbor] = true;
+                        stack.push((nx, ny));
+                    }
+                }
+            }
+            let mut loops = loops_for_component(complex, &cells)?;
+            let mut outer = None;
+            let mut holes = Vec::new();
+            for mut loop_points in loops.drain(..) {
+                loop_points = simplify_projected_polygon(loop_points, complex.projection);
+                let signed = projected_area2_signed(&loop_points, complex.projection)?;
+                match compare_reals(&signed, &Real::from(0)).value()? {
+                    Ordering::Greater => {
+                        if outer.replace(loop_points).is_some() {
+                            return None;
+                        }
+                    }
+                    Ordering::Less => holes.push(loop_points),
+                    Ordering::Equal => return None,
+                }
+            }
+            let outer = outer?;
+            holes.sort_by(|left, right| {
+                compare_point2(
+                    &polygon_min_projected_point(left, complex.projection),
+                    &polygon_min_projected_point(right, complex.projection),
+                )
+                .unwrap_or(Ordering::Equal)
+            });
+            components.push(CoplanarOrthogonalSurfaceComponent { outer, holes });
+        }
+    }
+    components.sort_by(|left, right| {
+        compare_point2(
+            &polygon_min_projected_point(&left.outer, complex.projection),
+            &polygon_min_projected_point(&right.outer, complex.projection),
+        )
+        .unwrap_or(Ordering::Equal)
+    });
+    Some(components)
+}
+
+fn cell_neighbors(
+    x: usize,
+    y: usize,
+    x_cells: usize,
+    y_cells: usize,
+) -> impl Iterator<Item = (usize, usize)> {
+    let mut neighbors = Vec::with_capacity(4);
+    if x > 0 {
+        neighbors.push((x - 1, y));
+    }
+    if x + 1 < x_cells {
+        neighbors.push((x + 1, y));
+    }
+    if y > 0 {
+        neighbors.push((x, y - 1));
+    }
+    if y + 1 < y_cells {
+        neighbors.push((x, y + 1));
+    }
+    neighbors.into_iter()
+}
+
+#[derive(Clone, Debug)]
+struct DirectedFragment {
+    start: Point3,
+    end: Point3,
+}
+
+fn loops_for_component(
+    complex: &OrthogonalCellComplex,
+    cells: &[(usize, usize)],
+) -> Option<Vec<Vec<Point3>>> {
+    let mut fragments = Vec::new();
+    for &(x, y) in cells {
+        let x0 = &complex.xs[x];
+        let x1 = &complex.xs[x + 1];
+        let y0 = &complex.ys[y];
+        let y1 = &complex.ys[y + 1];
+        let bottom_empty = y == 0 || !complex.occupied[cell_index(x, y - 1, complex.y_cells)];
+        let top_empty =
+            y + 1 == complex.y_cells || !complex.occupied[cell_index(x, y + 1, complex.y_cells)];
+        let left_empty = x == 0 || !complex.occupied[cell_index(x - 1, y, complex.y_cells)];
+        let right_empty = x + 1 == complex.xs.len() - 1
+            || !complex.occupied[cell_index(x + 1, y, complex.y_cells)];
+        if bottom_empty {
+            fragments.push(DirectedFragment {
+                start: point_from_projection(x0, y0, &complex.dropped, complex.projection),
+                end: point_from_projection(x1, y0, &complex.dropped, complex.projection),
+            });
+        }
+        if right_empty {
+            fragments.push(DirectedFragment {
+                start: point_from_projection(x1, y0, &complex.dropped, complex.projection),
+                end: point_from_projection(x1, y1, &complex.dropped, complex.projection),
+            });
+        }
+        if top_empty {
+            fragments.push(DirectedFragment {
+                start: point_from_projection(x1, y1, &complex.dropped, complex.projection),
+                end: point_from_projection(x0, y1, &complex.dropped, complex.projection),
+            });
+        }
+        if left_empty {
+            fragments.push(DirectedFragment {
+                start: point_from_projection(x0, y1, &complex.dropped, complex.projection),
+                end: point_from_projection(x0, y0, &complex.dropped, complex.projection),
+            });
+        }
+    }
+    stitch_loops(fragments, complex.projection)
+}
+
+fn stitch_loops(
+    mut fragments: Vec<DirectedFragment>,
+    projection: CoplanarProjection,
+) -> Option<Vec<Vec<Point3>>> {
+    let mut loops = Vec::new();
+    while !fragments.is_empty() {
+        let start_index = fragments
+            .iter()
+            .enumerate()
+            .min_by(|(_, left), (_, right)| {
+                compare_point2(
+                    &project_point(&left.start, projection),
+                    &project_point(&right.start, projection),
+                )
+                .unwrap_or(Ordering::Equal)
+            })?
+            .0;
+        let first = fragments.remove(start_index);
+        let start = first.start.clone();
+        let mut current = first.end;
+        let mut loop_points = vec![start.clone(), current.clone()];
+        while !points_equal(&current, &start) {
+            let matching = fragments
+                .iter()
+                .enumerate()
+                .filter(|(_, fragment)| points_equal(&fragment.start, &current))
+                .map(|(index, _)| index)
+                .collect::<Vec<_>>();
+            if matching.len() != 1 {
+                return None;
+            }
+            let fragment = fragments.remove(matching[0]);
+            current = fragment.end;
+            if !points_equal(&current, &start)
+                && loop_points
+                    .iter()
+                    .any(|point| points_equal(point, &current))
+            {
+                return None;
+            }
+            loop_points.push(current.clone());
+        }
+        loop_points.pop();
+        let simplified = simplify_projected_polygon(loop_points, projection);
+        if simplified.len() < 4 {
+            return None;
+        }
+        loops.push(simplified);
+    }
+    Some(loops)
+}
+
+fn components_to_mesh(
+    components: &[CoplanarOrthogonalSurfaceComponent],
+    projection: CoplanarProjection,
+) -> Option<ExactMesh> {
+    let mut vertices = Vec::new();
+    let mut triangles = Vec::new();
+    for component in components {
+        let offset = vertices.len();
+        let mesh = component_to_mesh(component, projection)?;
+        vertices.extend(mesh.vertices().iter().cloned());
+        triangles.extend(mesh.triangles().iter().map(|triangle| {
+            let [a, b, c] = triangle.0;
+            Triangle([a + offset, b + offset, c + offset])
+        }));
+    }
+    ExactMesh::new_with_policy(
+        vertices,
+        triangles,
+        SourceProvenance::exact("exact coplanar orthogonal surface arrangement"),
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .ok()
+}
+
+fn component_to_mesh(
+    component: &CoplanarOrthogonalSurfaceComponent,
+    projection: CoplanarProjection,
+) -> Option<ExactMesh> {
+    if let Some(mesh) = component_to_keyholed_mesh(component, projection) {
+        return Some(mesh);
+    }
+    component_to_earcut_mesh(component, projection)
+}
+
+fn component_to_earcut_mesh(
+    component: &CoplanarOrthogonalSurfaceComponent,
+    projection: CoplanarProjection,
+) -> Option<ExactMesh> {
+    let mut points = component.outer.clone();
+    let mut hole_indices = Vec::with_capacity(component.holes.len());
+    for hole in &component.holes {
+        hole_indices.push(points.len());
+        points.extend(hole.iter().cloned());
+    }
+    let vertices2 = points
+        .iter()
+        .map(|point| project_for_hypertri(point, projection))
+        .collect::<Vec<_>>();
+    let indices = hypertri::earcut(&vertices2, &hole_indices).ok()?;
+    if indices.is_empty() || indices.len() % 3 != 0 {
+        return None;
+    }
+    let vertices = points
+        .iter()
+        .map(|point| Point3::new(point.x.clone(), point.y.clone(), point.z.clone()))
+        .collect::<Vec<_>>();
+    let triangles = indices
+        .chunks_exact(3)
+        .map(|chunk| Triangle([chunk[0], chunk[1], chunk[2]]))
+        .collect::<Vec<_>>();
+    ExactMesh::new_with_policy(
+        vertices,
+        triangles,
+        SourceProvenance::exact("exact coplanar orthogonal surface component"),
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .ok()
+}
+
+/// Triangulate a one-hole orthogonal component by opening it along a bridge.
+///
+/// `hypertri::earcut` is reliable for ordinary simple rings, but the retained
+/// object here may contain a hole boundary that point-touches a separate
+/// island component. The hole is still a valid retained boundary, yet a direct
+/// holed earcut can emit a triangle made entirely from hole vertices. We avoid
+/// that by converting one holed ring into a simple "keyhole" polygon with an
+/// exact visible bridge, then mapping duplicated bridge endpoints back onto the
+/// retained outer and hole vertices. This is the keyhole construction used by
+/// the bridge is an internal proof edge, while all exported vertices and
+/// boundary edges remain the exact retained cell-complex topology.
+fn component_to_keyholed_mesh(
+    component: &CoplanarOrthogonalSurfaceComponent,
+    projection: CoplanarProjection,
+) -> Option<ExactMesh> {
+    if component.holes.len() != 1 || component.outer.len() < 4 {
+        return None;
+    }
+    let hole = component.holes.first()?;
+    if hole.len() < 4 {
+        return None;
+    }
+    for outer_index in 0..component.outer.len() {
+        for hole_index in 0..hole.len() {
+            if !keyhole_bridge_is_valid(
+                &component.outer,
+                hole,
+                outer_index,
+                hole_index,
+                projection,
+            )? {
+                continue;
+            }
+            if let Some(mesh) =
+                keyhole_mesh_for_bridge(&component.outer, hole, outer_index, hole_index, projection)
+                    .filter(|mesh| {
+                        validate_component_mesh(projection, core::slice::from_ref(component), mesh)
+                            .is_ok()
+                    })
+            {
+                return Some(mesh);
+            }
+        }
+    }
+    None
+}
+
+fn keyhole_mesh_for_bridge(
+    outer: &[Point3],
+    hole: &[Point3],
+    outer_index: usize,
+    hole_index: usize,
+    projection: CoplanarProjection,
+) -> Option<ExactMesh> {
+    let mut keyhole_points = Vec::with_capacity(outer.len() + hole.len() + 2);
+    let mut index_map = Vec::with_capacity(outer.len() + hole.len() + 2);
+    keyhole_points.push(outer[outer_index].clone());
+    index_map.push(outer_index);
+    keyhole_points.push(hole[hole_index].clone());
+    index_map.push(outer.len() + hole_index);
+    for step in 1..hole.len() {
+        let index = (hole_index + step) % hole.len();
+        keyhole_points.push(hole[index].clone());
+        index_map.push(outer.len() + index);
+    }
+    keyhole_points.push(hole[hole_index].clone());
+    index_map.push(outer.len() + hole_index);
+    keyhole_points.push(outer[outer_index].clone());
+    index_map.push(outer_index);
+    for step in 1..outer.len() {
+        let index = (outer_index + step) % outer.len();
+        keyhole_points.push(outer[index].clone());
+        index_map.push(index);
+    }
+
+    let vertices2 = keyhole_points
+        .iter()
+        .map(|point| project_for_hypertri(point, projection))
+        .collect::<Vec<_>>();
+    let indices = hypertri::earcut(&vertices2, &[]).ok()?;
+    if indices.is_empty() || indices.len() % 3 != 0 {
+        return None;
+    }
+
+    let points = outer.iter().chain(hole).cloned().collect::<Vec<_>>();
+    let mut triangles = Vec::new();
+    for chunk in indices.chunks_exact(3) {
+        let mapped = [
+            *index_map.get(chunk[0])?,
+            *index_map.get(chunk[1])?,
+            *index_map.get(chunk[2])?,
+        ];
+        if mapped[0] == mapped[1] || mapped[1] == mapped[2] || mapped[2] == mapped[0] {
+            continue;
+        }
+        if mapped.iter().all(|&index| index >= outer.len()) {
+            continue;
+        }
+        let cell = triangle_points(&points, mapped);
+        let signed_area = projected_area2_signed(&cell, projection)?;
+        match compare_reals(&signed_area, &Real::from(0)).value()? {
+            Ordering::Greater => triangles.push(Triangle(mapped)),
+            Ordering::Less => triangles.push(Triangle([mapped[2], mapped[1], mapped[0]])),
+            Ordering::Equal => {}
+        }
+    }
+    if triangles.is_empty() {
+        return None;
+    }
+    let vertices = points
+        .iter()
+        .map(|point| Point3::new(point.x.clone(), point.y.clone(), point.z.clone()))
+        .collect::<Vec<_>>();
+    ExactMesh::new_with_policy(
+        vertices,
+        triangles,
+        SourceProvenance::exact("exact coplanar orthogonal keyholed component"),
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .ok()
+}
+
+fn keyhole_bridge_is_valid(
+    outer: &[Point3],
+    hole: &[Point3],
+    outer_index: usize,
+    hole_index: usize,
+    projection: CoplanarProjection,
+) -> Option<bool> {
+    let a = outer.get(outer_index)?;
+    let b = hole.get(hole_index)?;
+    let midpoint = midpoint3(a, b);
+    if loop_point_location(&midpoint, outer, projection)? != LoopPointLocation::Inside {
+        return Some(false);
+    }
+    if loop_point_location(&midpoint, hole, projection)? != LoopPointLocation::Outside {
+        return Some(false);
+    }
+    if !keyhole_bridge_respects_ring(a, b, outer, outer_index, projection)? {
+        return Some(false);
+    }
+    if !keyhole_bridge_respects_ring(a, b, hole, hole_index, projection)? {
+        return Some(false);
+    }
+    Some(true)
+}
+
+fn keyhole_bridge_respects_ring(
+    a: &Point3,
+    b: &Point3,
+    ring: &[Point3],
+    allowed_vertex: usize,
+    projection: CoplanarProjection,
+) -> Option<bool> {
+    let start = project_point(a, projection);
+    let end = project_point(b, projection);
+    for edge in 0..ring.len() {
+        let edge_start = project_point(&ring[edge], projection);
+        let edge_end = project_point(&ring[(edge + 1) % ring.len()], projection);
+        match classify_segment_intersection(&start, &end, &edge_start, &edge_end).value()? {
+            SegmentIntersection::Disjoint => {}
+            SegmentIntersection::EndpointTouch => {
+                let incident = edge == allowed_vertex || (edge + 1) % ring.len() == allowed_vertex;
+                if !incident {
+                    return Some(false);
+                }
+            }
+            SegmentIntersection::Proper
+            | SegmentIntersection::CollinearOverlap
+            | SegmentIntersection::Identical => return Some(false),
+        }
+    }
+    Some(true)
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum LoopPointLocation {
+    Inside,
+    Boundary,
+    Outside,
+}
+
+fn loop_point_location(
+    point: &Point3,
+    loop_points: &[Point3],
+    projection: CoplanarProjection,
+) -> Option<LoopPointLocation> {
+    if loop_points.iter().enumerate().any(|(index, start)| {
+        point_on_projected_segment(
+            start,
+            &loop_points[(index + 1) % loop_points.len()],
+            point,
+            projection,
+        )
+    }) {
+        return Some(LoopPointLocation::Boundary);
+    }
+    match point_strictly_inside_loop(point, loop_points, projection) {
+        Ok(true) => Some(LoopPointLocation::Inside),
+        Ok(false) => Some(LoopPointLocation::Outside),
+        Err(_) => None,
+    }
+}
+
+fn validate_components(
+    projection: CoplanarProjection,
+    components: &[CoplanarOrthogonalSurfaceComponent],
+) -> Result<(), MeshError> {
+    if components.is_empty() {
+        return Err(orthogonal_error(
+            "orthogonal arrangement must retain at least one component",
+        ));
+    }
+    for component in components {
+        validate_loop(
+            &component.outer,
+            projection,
+            Sign::Positive,
+            "orthogonal outer loop",
+        )?;
+        for hole in &component.holes {
+            validate_loop(hole, projection, Sign::Negative, "orthogonal hole loop")?;
+            let witness = hole
+                .first()
+                .ok_or_else(|| orthogonal_error("orthogonal hole loop is empty"))?;
+            if !point_strictly_inside_loop(witness, &component.outer, projection)? {
+                return Err(orthogonal_error(
+                    "orthogonal hole loop is not strictly inside its outer loop",
+                ));
+            }
+            if loop_edges_intersect(hole, &component.outer, projection)? {
+                return Err(orthogonal_error(
+                    "orthogonal hole loop touches or crosses its outer loop",
+                ));
+            }
+        }
+        for left in 0..component.holes.len() {
+            for right in left + 1..component.holes.len() {
+                if loop_edges_intersect(
+                    &component.holes[left],
+                    &component.holes[right],
+                    projection,
+                )? {
+                    return Err(orthogonal_error(
+                        "orthogonal hole loops touch or cross each other",
+                    ));
+                }
+                let witness = component.holes[right]
+                    .first()
+                    .ok_or_else(|| orthogonal_error("orthogonal hole loop is empty"))?;
+                if point_strictly_inside_loop(witness, &component.holes[left], projection)? {
+                    return Err(orthogonal_error("orthogonal hole loops are nested"));
+                }
+            }
+        }
+    }
+    for left in 0..components.len() {
+        for right in left + 1..components.len() {
+            let left_component = &components[left];
+            let right_component = &components[right];
+            match loop_contact(&left_component.outer, &right_component.outer, projection)? {
+                LoopContact::Disjoint | LoopContact::PointOnly => {}
+                LoopContact::PositiveLengthOrArea => {
+                    return Err(orthogonal_error(
+                        "orthogonal output components overlap or share an edge",
+                    ));
+                }
+            }
+            validate_cross_component_hole_contacts(left_component, right_component, projection)?;
+            let right_witness = right_component
+                .outer
+                .first()
+                .ok_or_else(|| orthogonal_error("orthogonal outer loop is empty"))?;
+            let left_witness = left_component
+                .outer
+                .first()
+                .ok_or_else(|| orthogonal_error("orthogonal outer loop is empty"))?;
+            let right_inside_left =
+                point_strictly_inside_loop(right_witness, &left_component.outer, projection)?;
+            let left_inside_right =
+                point_strictly_inside_loop(left_witness, &right_component.outer, projection)?;
+            match (right_inside_left, left_inside_right) {
+                (false, false) => {}
+                (true, false) => {
+                    if !component_strictly_inside_retained_hole(
+                        right_component,
+                        left_component,
+                        projection,
+                    )? {
+                        return Err(orthogonal_error(
+                            "orthogonal nested component is not inside a retained hole",
+                        ));
+                    }
+                }
+                (false, true) => {
+                    if !component_strictly_inside_retained_hole(
+                        left_component,
+                        right_component,
+                        projection,
+                    )? {
+                        return Err(orthogonal_error(
+                            "orthogonal nested component is not inside a retained hole",
+                        ));
+                    }
+                }
+                (true, true) => {
+                    return Err(orthogonal_error(
+                        "orthogonal output components overlap by mutual nesting",
+                    ));
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
+/// Validate cross-component contact with retained hole boundaries.
+///
+/// Orthogonal cell extraction may produce a filled island inside a removed
+/// explicit in retained object topology. Exact point-only contact is retained
+/// as a named branch by duplicating the shared coordinate in each component
+/// mesh. Positive-length or proper contact is still a higher-valence planar
+/// subdivision that this bounded materializer does not claim to own.
+fn validate_cross_component_hole_contacts(
+    left: &CoplanarOrthogonalSurfaceComponent,
+    right: &CoplanarOrthogonalSurfaceComponent,
+    projection: CoplanarProjection,
+) -> Result<(), MeshError> {
+    for hole in &left.holes {
+        match loop_contact(hole, &right.outer, projection)? {
+            LoopContact::Disjoint | LoopContact::PointOnly => {}
+            LoopContact::PositiveLengthOrArea => {
+                return Err(orthogonal_error(
+                    "orthogonal output component has positive-dimensional contact with a retained hole boundary",
+                ));
+            }
+        }
+    }
+    for hole in &right.holes {
+        match loop_contact(hole, &left.outer, projection)? {
+            LoopContact::Disjoint | LoopContact::PointOnly => {}
+            LoopContact::PositiveLengthOrArea => {
+                return Err(orthogonal_error(
+                    "orthogonal output component has positive-dimensional contact with a retained hole boundary",
+                ));
+            }
+        }
+    }
+    Ok(())
+}
+
+/// Return whether `inner` is contained by one hole of `outer`.
+///
+/// This is the exact rectilinear island case: the inner component is not part
+/// of `outer`'s filled area, but is still a valid output component because it
+/// lies in a retained void of `outer`. The test uses one strict interior
+/// witness plus exact loop contact classification. For simple loops, a witness
+/// inside the hole and no positive-dimensional boundary crossing proves the
+/// whole outer loop of `inner` stays in that hole; point-only contact is
+/// retained as explicit branch topology. This is the finite cell-complex
+fn component_strictly_inside_retained_hole(
+    inner: &CoplanarOrthogonalSurfaceComponent,
+    outer: &CoplanarOrthogonalSurfaceComponent,
+    projection: CoplanarProjection,
+) -> Result<bool, MeshError> {
+    for hole in &outer.holes {
+        let has_strict_witness = inner
+            .outer
+            .iter()
+            .map(|point| point_strictly_inside_loop(point, hole, projection))
+            .collect::<Result<Vec<_>, _>>()?
+            .into_iter()
+            .any(|inside| inside);
+        if !has_strict_witness {
+            continue;
+        }
+        match loop_contact(&inner.outer, hole, projection)? {
+            LoopContact::Disjoint | LoopContact::PointOnly => return Ok(true),
+            LoopContact::PositiveLengthOrArea => {}
+        }
+    }
+    Ok(false)
+}
+
+fn validate_component_mesh(
+    projection: CoplanarProjection,
+    components: &[CoplanarOrthogonalSurfaceComponent],
+    mesh: &ExactMesh,
+) -> Result<(), MeshError> {
+    if mesh.triangles().is_empty() {
+        return Err(orthogonal_error(
+            "orthogonal arrangement mesh has no triangulation",
+        ));
+    }
+    let mut retained_rings = Vec::new();
+    let mut component_ranges = Vec::new();
+    let mut hole_ranges = Vec::new();
+    let mut expected_vertices = 0;
+    for component in components {
+        let component_start = expected_vertices;
+        let outer_start = expected_vertices;
+        expected_vertices += component.outer.len();
+        retained_rings.push(outer_start..expected_vertices);
+        for hole in &component.holes {
+            let hole_start = expected_vertices;
+            expected_vertices += hole.len();
+            retained_rings.push(hole_start..expected_vertices);
+            hole_ranges.push(hole_start..expected_vertices);
+        }
+        component_ranges.push(component_start..expected_vertices);
+    }
+    let retained_points = components
+        .iter()
+        .flat_map(|component| {
+            component
+                .outer
+                .iter()
+                .chain(component.holes.iter().flat_map(|hole| hole.iter()))
+        })
+        .collect::<Vec<_>>();
+    if mesh.vertices().len() != retained_points.len() {
+        return Err(orthogonal_error(
+            "orthogonal mesh vertex count does not match retained loops",
+        ));
+    }
+    for (mesh_point, retained_point) in mesh.vertices().iter().zip(retained_points) {
+        if !points_equal(&mesh_point.clone(), retained_point) {
+            return Err(orthogonal_error(
+                "orthogonal mesh vertex does not match retained loop point",
+            ));
+        }
+    }
+    for triangle in mesh.triangles() {
+        if triangle.0.iter().any(|&index| index >= expected_vertices) {
+            return Err(orthogonal_error(
+                "orthogonal mesh triangle index is out of retained loop range",
+            ));
+        }
+        let Some(first_component) = component_for_retained_vertex(triangle.0[0], &component_ranges)
+        else {
+            return Err(orthogonal_error(
+                "orthogonal mesh triangle has no retained component",
+            ));
+        };
+        if triangle.0.iter().any(|&index| {
+            component_for_retained_vertex(index, &component_ranges) != Some(first_component)
+        }) {
+            return Err(orthogonal_error(
+                "orthogonal mesh triangle spans retained components",
+            ));
+        }
+        for hole_range in &hole_ranges {
+            if triangle.0.iter().all(|index| hole_range.contains(index)) {
+                return Err(orthogonal_error(
+                    "orthogonal mesh triangle fills a retained hole",
+                ));
+            }
+        }
+    }
+    validate_mesh_edges_respect_retained_rings(
+        mesh,
+        projection,
+        &retained_rings,
+        "orthogonal mesh edge crosses a retained ring",
+    )?;
+    validate_mesh_uses_all_retained_vertices(mesh, expected_vertices)?;
+    validate_mesh_boundary_matches_retained_rings(
+        mesh,
+        &retained_rings,
+        "orthogonal mesh boundary does not match retained loops",
+    )?;
+    let mut retained_signed_area = Real::from(0);
+    for component in components {
+        retained_signed_area = add(
+            &retained_signed_area,
+            &projected_area2_signed(&component.outer, projection)
+                .ok_or_else(|| orthogonal_error("orthogonal outer area was undecided"))?,
+        );
+        for hole in &component.holes {
+            retained_signed_area = add(
+                &retained_signed_area,
+                &projected_area2_signed(hole, projection)
+                    .ok_or_else(|| orthogonal_error("orthogonal hole area was undecided"))?,
+            );
+        }
+    }
+    let mesh_signed_area = projected_mesh_area2_signed(mesh, projection)
+        .ok_or_else(|| orthogonal_error("orthogonal mesh area was undecided"))?;
+    if compare_reals(&retained_signed_area, &mesh_signed_area).value() != Some(Ordering::Equal) {
+        return Err(orthogonal_error(
+            "orthogonal mesh signed area does not match retained loops",
+        ));
+    }
+    Ok(())
+}
+
+/// Return the retained component range that owns a mesh vertex index.
+///
+/// Orthogonal cell arrangements retain topology as loop ranges before they are
+/// the exact object, so validation rejects triangles spanning components rather
+/// than letting a later area check hide the copied topology error.
+fn component_for_retained_vertex(
+    index: usize,
+    ranges: &[core::ops::Range<usize>],
+) -> Option<usize> {
+    ranges
+        .iter()
+        .position(|range| range.start <= index && index < range.end)
+}
+
+/// Validate that every retained output vertex participates in triangulation.
+///
+/// Retained ring vertices are certified boundary state, not optional display
+/// the exact object structure before signed-area summaries can certify it.
+fn validate_mesh_uses_all_retained_vertices(
+    mesh: &ExactMesh,
+    retained_vertices: usize,
+) -> Result<(), MeshError> {
+    let mut used = vec![false; retained_vertices];
+    for triangle in mesh.triangles() {
+        for &index in &triangle.0 {
+            if let Some(slot) = used.get_mut(index) {
+                *slot = true;
+            }
+        }
+    }
+    if used.iter().any(|used| !*used) {
+        return Err(orthogonal_error(
+            "orthogonal mesh leaves a retained loop vertex unused",
+        ));
+    }
+    Ok(())
+}
+
+/// Validate that mesh boundary edges exactly match retained ring edges.
+///
+/// A cell arrangement materializes retained loops, not an arbitrary triangle
+/// replay those loop edges exactly. The boundary-as-chain invariant is the
+/// Chapter 2.
+fn validate_mesh_boundary_matches_retained_rings(
+    mesh: &ExactMesh,
+    retained_rings: &[core::ops::Range<usize>],
+    message: &'static str,
+) -> Result<(), MeshError> {
+    let mut expected = Vec::new();
+    for ring in retained_rings {
+        let len = ring.end.saturating_sub(ring.start);
+        if len < 3 {
+            return Err(orthogonal_error(
+                "orthogonal retained ring has fewer than three vertices",
+            ));
+        }
+        for local in 0..len {
+            expected.push(canonical_edge(
+                ring.start + local,
+                ring.start + ((local + 1) % len),
+            ));
+        }
+    }
+    expected.sort_unstable();
+    if expected.windows(2).any(|window| window[0] == window[1]) {
+        return Err(orthogonal_error(
+            "orthogonal retained rings repeat a boundary edge",
+        ));
+    }
+
+    let mut edge_counts: Vec<((usize, usize), usize)> = Vec::new();
+    for triangle in mesh.triangles() {
+        let [a, b, c] = triangle.0;
+        for edge in [
+            canonical_edge(a, b),
+            canonical_edge(b, c),
+            canonical_edge(c, a),
+        ] {
+            if let Some((_, count)) = edge_counts.iter_mut().find(|(key, _)| *key == edge) {
+                *count += 1;
+            } else {
+                edge_counts.push((edge, 1));
+            }
+        }
+    }
+    let mut actual = edge_counts
+        .into_iter()
+        .filter_map(|(edge, count)| (count == 1).then_some(edge))
+        .collect::<Vec<_>>();
+    actual.sort_unstable();
+
+    if actual != expected {
+        return Err(orthogonal_error(message));
+    }
+    Ok(())
+}
+
+fn canonical_edge(a: usize, b: usize) -> (usize, usize) {
+    if a <= b { (a, b) } else { (b, a) }
+}
+
+/// Validate mesh edges against retained ring edges.
+///
+/// Interior triangulation edges may not cross, overlap, or touch retained
+/// boundary rings except at shared endpoints or identical boundary edges. This
+fn validate_mesh_edges_respect_retained_rings(
+    mesh: &ExactMesh,
+    projection: CoplanarProjection,
+    retained_rings: &[core::ops::Range<usize>],
+    message: &'static str,
+) -> Result<(), MeshError> {
+    let retained_edges = retained_ring_edges(retained_rings)?;
+    let mut mesh_edges = Vec::new();
+    for triangle in mesh.triangles() {
+        let [a, b, c] = triangle.0;
+        mesh_edges.extend([
+            canonical_edge(a, b),
+            canonical_edge(b, c),
+            canonical_edge(c, a),
+        ]);
+    }
+    mesh_edges.sort_unstable();
+    mesh_edges.dedup();
+
+    for &(edge_a, edge_b) in &mesh_edges {
+        for &(ring_a, ring_b) in &retained_edges {
+            if canonical_edge(edge_a, edge_b) == canonical_edge(ring_a, ring_b) {
+                continue;
+            }
+            let edge_start = mesh.vertices()[edge_a].clone();
+            let edge_end = mesh.vertices()[edge_b].clone();
+            let ring_start = mesh.vertices()[ring_a].clone();
+            let ring_end = mesh.vertices()[ring_b].clone();
+            match classify_segment_intersection(
+                &project_point(&edge_start, projection),
+                &project_point(&edge_end, projection),
+                &project_point(&ring_start, projection),
+                &project_point(&ring_end, projection),
+            )
+            .value()
+            {
+                Some(SegmentIntersection::Disjoint) => {}
+                Some(SegmentIntersection::EndpointTouch)
+                    if edge_a == ring_a
+                        || edge_a == ring_b
+                        || edge_b == ring_a
+                        || edge_b == ring_b
+                        || segment_endpoint_touch_shares_exact_coordinate(
+                            &edge_start,
+                            &edge_end,
+                            &ring_start,
+                            &ring_end,
+                        ) => {}
+                Some(
+                    SegmentIntersection::Proper
+                    | SegmentIntersection::EndpointTouch
+                    | SegmentIntersection::CollinearOverlap
+                    | SegmentIntersection::Identical,
+                ) => {
+                    return Err(orthogonal_error(message));
+                }
+                None => {
+                    return Err(orthogonal_error(
+                        "orthogonal mesh edge/ring predicate was undecided",
+                    ));
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
+fn retained_ring_edges(
+    retained_rings: &[core::ops::Range<usize>],
+) -> Result<Vec<(usize, usize)>, MeshError> {
+    let mut edges = Vec::new();
+    for ring in retained_rings {
+        let len = ring.end.saturating_sub(ring.start);
+        if len < 3 {
+            return Err(orthogonal_error(
+                "orthogonal retained ring has fewer than three vertices",
+            ));
+        }
+        for local in 0..len {
+            edges.push((ring.start + local, ring.start + ((local + 1) % len)));
+        }
+    }
+    Ok(edges)
+}
+
+fn validate_loop(
+    loop_points: &[Point3],
+    projection: CoplanarProjection,
+    expected: Sign,
+    label: &'static str,
+) -> Result<(), MeshError> {
+    if loop_points.len() < 4 {
+        return Err(orthogonal_error(format!(
+            "{label} has fewer than four vertices"
+        )));
+    }
+    for left in 0..loop_points.len() {
+        for right in left + 1..loop_points.len() {
+            if points_equal(&loop_points[left], &loop_points[right]) {
+                return Err(orthogonal_error(format!("{label} repeats an exact point")));
+            }
+        }
+    }
+    validate_simple_loop(loop_points, projection)?;
+    let area = projected_area2_signed(loop_points, projection)
+        .ok_or_else(|| orthogonal_error(format!("{label} signed area was undecided")))?;
+    match compare_reals(&area, &Real::from(0)).value() {
+        Some(Ordering::Greater) if expected == Sign::Positive => Ok(()),
+        Some(Ordering::Less) if expected == Sign::Negative => Ok(()),
+        Some(_) => Err(orthogonal_error(format!("{label} has wrong orientation"))),
+        None => Err(orthogonal_error(format!(
+            "{label} orientation was undecided"
+        ))),
+    }
+}
+
+fn validate_simple_loop(
+    loop_points: &[Point3],
+    projection: CoplanarProjection,
+) -> Result<(), MeshError> {
+    for left in 0..loop_points.len() {
+        let left_next = (left + 1) % loop_points.len();
+        let left_start = project_point(&loop_points[left], projection);
+        let left_end = project_point(&loop_points[left_next], projection);
+        for right in left + 1..loop_points.len() {
+            let right_next = (right + 1) % loop_points.len();
+            if left_next == right || right_next == left {
+                continue;
+            }
+            let right_start = project_point(&loop_points[right], projection);
+            let right_end = project_point(&loop_points[right_next], projection);
+            match classify_segment_intersection(&left_start, &left_end, &right_start, &right_end)
+                .value()
+            {
+                Some(SegmentIntersection::Disjoint) => {}
+                Some(
+                    SegmentIntersection::Proper
+                    | SegmentIntersection::EndpointTouch
+                    | SegmentIntersection::CollinearOverlap
+                    | SegmentIntersection::Identical,
+                ) => {
+                    return Err(orthogonal_error(
+                        "orthogonal loop has non-adjacent edge contact",
+                    ));
+                }
+                None => {
+                    return Err(orthogonal_error(
+                        "orthogonal loop simplicity predicate was undecided",
+                    ));
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
+fn loop_edges_intersect(
+    left: &[Point3],
+    right: &[Point3],
+    projection: CoplanarProjection,
+) -> Result<bool, MeshError> {
+    for left_edge in 0..left.len() {
+        let left_start = project_point(&left[left_edge], projection);
+        let left_end = project_point(&left[(left_edge + 1) % left.len()], projection);
+        for right_edge in 0..right.len() {
+            let right_start = project_point(&right[right_edge], projection);
+            let right_end = project_point(&right[(right_edge + 1) % right.len()], projection);
+            match classify_segment_intersection(&left_start, &left_end, &right_start, &right_end)
+                .value()
+            {
+                Some(SegmentIntersection::Disjoint) => {}
+                Some(
+                    SegmentIntersection::Proper
+                    | SegmentIntersection::EndpointTouch
+                    | SegmentIntersection::CollinearOverlap
+                    | SegmentIntersection::Identical,
+                ) => return Ok(true),
+                None => {
+                    return Err(orthogonal_error(
+                        "orthogonal cross-loop intersection predicate was undecided",
+                    ));
+                }
+            }
+        }
+    }
+    Ok(false)
+}
+
+/// Dimensional contact between two retained component loops.
+///
+/// Orthogonal cell booleans can leave several retained components meeting at a
+/// branch is acceptable only when it is explicitly retained as object topology:
+/// the loops remain separate and the mesh duplicates the shared coordinate.
+/// The segment relation itself is the orientation-predicate classifier of
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum LoopContact {
+    Disjoint,
+    PointOnly,
+    PositiveLengthOrArea,
+}
+
+fn loop_contact(
+    left: &[Point3],
+    right: &[Point3],
+    projection: CoplanarProjection,
+) -> Result<LoopContact, MeshError> {
+    let mut saw_point = false;
+    for left_edge in 0..left.len() {
+        let left_start = project_point(&left[left_edge], projection);
+        let left_end = project_point(&left[(left_edge + 1) % left.len()], projection);
+        for right_edge in 0..right.len() {
+            let right_start = project_point(&right[right_edge], projection);
+            let right_end = project_point(&right[(right_edge + 1) % right.len()], projection);
+            match classify_segment_intersection(&left_start, &left_end, &right_start, &right_end)
+                .value()
+            {
+                Some(SegmentIntersection::Disjoint) => {}
+                Some(SegmentIntersection::EndpointTouch) => saw_point = true,
+                Some(
+                    SegmentIntersection::Proper
+                    | SegmentIntersection::CollinearOverlap
+                    | SegmentIntersection::Identical,
+                ) => return Ok(LoopContact::PositiveLengthOrArea),
+                None => {
+                    return Err(orthogonal_error(
+                        "orthogonal cross-loop contact predicate was undecided",
+                    ));
+                }
+            }
+        }
+    }
+    if saw_point {
+        Ok(LoopContact::PointOnly)
+    } else {
+        Ok(LoopContact::Disjoint)
+    }
+}
+
+fn segment_endpoint_touch_shares_exact_coordinate(
+    edge_start: &Point3,
+    edge_end: &Point3,
+    ring_start: &Point3,
+    ring_end: &Point3,
+) -> bool {
+    points_equal(edge_start, ring_start)
+        || points_equal(edge_start, ring_end)
+        || points_equal(edge_end, ring_start)
+        || points_equal(edge_end, ring_end)
+}
+
+fn point_strictly_inside_loop(
+    point: &Point3,
+    loop_points: &[Point3],
+    projection: CoplanarProjection,
+) -> Result<bool, MeshError> {
+    let query = project_point(point, projection);
+    if loop_points.iter().enumerate().any(|(index, start)| {
+        point_on_projected_segment(
+            start,
+            &loop_points[(index + 1) % loop_points.len()],
+            point,
+            projection,
+        )
+    }) {
+        return Ok(false);
+    }
+    let mut crossings = 0_usize;
+    for edge in 0..loop_points.len() {
+        let a = project_point(&loop_points[edge], projection);
+        let b = project_point(&loop_points[(edge + 1) % loop_points.len()], projection);
+        let ay_gt = real_order(&a.y, &query.y)
+            .ok_or_else(|| orthogonal_error("orthogonal point-in-loop comparison was undecided"))?
+            == Ordering::Greater;
+        let by_gt = real_order(&b.y, &query.y)
+            .ok_or_else(|| orthogonal_error("orthogonal point-in-loop comparison was undecided"))?
+            == Ordering::Greater;
+        if ay_gt == by_gt {
+            continue;
+        }
+        let dy = sub(&b.y, &a.y);
+        let t = (sub(&query.y, &a.y) / &dy)
+            .ok()
+            .ok_or_else(|| orthogonal_error("orthogonal point-in-loop division failed"))?;
+        let x_at_y = add(&a.x, &mul(&t, &sub(&b.x, &a.x)));
+        if real_order(&query.x, &x_at_y)
+            .ok_or_else(|| orthogonal_error("orthogonal point-in-loop crossing was undecided"))?
+            == Ordering::Less
+        {
+            crossings += 1;
+        }
+    }
+    Ok(crossings % 2 == 1)
+}
+
+fn project_for_hypertri(point: &Point3, projection: CoplanarProjection) -> hypertri::ExactPoint {
+    match projection {
+        CoplanarProjection::Xy => hypertri::ExactPoint::new(point.x.clone(), point.y.clone()),
+        CoplanarProjection::Xz => hypertri::ExactPoint::new(point.x.clone(), point.z.clone()),
+        CoplanarProjection::Yz => hypertri::ExactPoint::new(point.y.clone(), point.z.clone()),
+    }
+}
+
+fn cell_index(x: usize, y: usize, y_cells: usize) -> usize {
+    x * y_cells + y
+}
+
+fn point_from_projection(
+    u: &Real,
+    v: &Real,
+    dropped: &Real,
+    projection: CoplanarProjection,
+) -> Point3 {
+    match projection {
+        CoplanarProjection::Xy => Point3::new(u.clone(), v.clone(), dropped.clone()),
+        CoplanarProjection::Xz => Point3::new(u.clone(), dropped.clone(), v.clone()),
+        CoplanarProjection::Yz => Point3::new(dropped.clone(), u.clone(), v.clone()),
+    }
+}
+
+fn dropped_coordinate(point: &Point3, projection: CoplanarProjection) -> Real {
+    match projection {
+        CoplanarProjection::Xy => point.z.clone(),
+        CoplanarProjection::Xz => point.y.clone(),
+        CoplanarProjection::Yz => point.x.clone(),
+    }
+}
+
+fn rectangle_corners2(rectangle: &ProjectedRectangle) -> [Point2; 4] {
+    [
+        Point2::new(rectangle.min.x.clone(), rectangle.min.y.clone()),
+        Point2::new(rectangle.max.x.clone(), rectangle.min.y.clone()),
+        Point2::new(rectangle.max.x.clone(), rectangle.max.y.clone()),
+        Point2::new(rectangle.min.x.clone(), rectangle.max.y.clone()),
+    ]
+}
+
+fn rectangle_area2(rectangle: &ProjectedRectangle) -> Real {
+    let area = mul(
+        &sub(&rectangle.max.x, &rectangle.min.x),
+        &sub(&rectangle.max.y, &rectangle.min.y),
+    );
+    add(&area, &area)
+}
+
+fn rectangles_equal(left: &ProjectedRectangle, right: &ProjectedRectangle) -> bool {
+    real_equal(&left.dropped, &right.dropped)
+        && point2_equal(&left.min, &right.min)
+        && point2_equal(&left.max, &right.max)
+}
+
+fn point_strictly_inside_projected_rectangle(point: &Point2, rect: &ProjectedRectangle) -> bool {
+    real_order(&rect.min.x, &point.x) == Some(Ordering::Less)
+        && real_order(&point.x, &rect.max.x) == Some(Ordering::Less)
+        && real_order(&rect.min.y, &point.y) == Some(Ordering::Less)
+        && real_order(&point.y, &rect.max.y) == Some(Ordering::Less)
+}
+
+fn point_on_projected_segment(
+    start: &Point3,
+    end: &Point3,
+    point: &Point3,
+    projection: CoplanarProjection,
+) -> bool {
+    let start = project_point(start, projection);
+    let end = project_point(end, projection);
+    let point = project_point(point, projection);
+    if orient2d_report(&start, &end, &point).value() != Some(Sign::Zero) {
+        return false;
+    }
+    let Some(min_x) = exact_min_real(&start.x, &end.x) else {
+        return false;
+    };
+    let Some(max_x) = exact_max_real(&start.x, &end.x) else {
+        return false;
+    };
+    let Some(min_y) = exact_min_real(&start.y, &end.y) else {
+        return false;
+    };
+    let Some(max_y) = exact_max_real(&start.y, &end.y) else {
+        return false;
+    };
+    matches!(
+        (real_order(&min_x, &point.x), real_order(&point.x, &max_x)),
+        (
+            Some(Ordering::Less | Ordering::Equal),
+            Some(Ordering::Less | Ordering::Equal)
+        )
+    ) && matches!(
+        (real_order(&min_y, &point.y), real_order(&point.y, &max_y)),
+        (
+            Some(Ordering::Less | Ordering::Equal),
+            Some(Ordering::Less | Ordering::Equal)
+        )
+    )
+}
+
+fn projected_area2_abs(points: &[Point3], projection: CoplanarProjection) -> Option<Real> {
+    hyperlimit::projected_polygon_area2_abs_value(points, projection)
+}
+
+fn projected_area2_signed(points: &[Point3], projection: CoplanarProjection) -> Option<Real> {
+    Some(hyperlimit::projected_polygon_area2_value(
+        points, projection,
+    ))
+}
+
+fn projected_mesh_area2_signed(mesh: &ExactMesh, projection: CoplanarProjection) -> Option<Real> {
+    let mut area = Real::from(0);
+    for triangle in mesh.triangles() {
+        let points = triangle
+            .0
+            .iter()
+            .map(|&index| mesh.vertices().get(index).cloned())
+            .collect::<Option<Vec<_>>>()?;
+        area = add(&area, &projected_area2_signed(&points, projection)?);
+    }
+    Some(area)
+}
+
+fn triangle_points(points: &[Point3], tri: [usize; 3]) -> Vec<Point3> {
+    tri.iter().map(|&index| points[index].clone()).collect()
+}
+
+fn polygon_min_projected_point(polygon: &[Point3], projection: CoplanarProjection) -> Point2 {
+    polygon
+        .iter()
+        .map(|point| project_point(point, projection))
+        .min_by(|left, right| compare_point2(left, right).unwrap_or(Ordering::Equal))
+        .unwrap_or_else(|| Point2::new(Real::from(0), Real::from(0)))
+}
+
+fn simplify_projected_polygon(
+    mut polygon: Vec<Point3>,
+    projection: CoplanarProjection,
+) -> Vec<Point3> {
+    remove_duplicate_neighbors(&mut polygon);
+    loop {
+        let original_len = polygon.len();
+        if original_len < 3 {
+            return polygon;
+        }
+        let mut simplified = Vec::with_capacity(original_len);
+        for index in 0..original_len {
+            let previous = &polygon[(index + original_len - 1) % original_len];
+            let current = &polygon[index];
+            let next = &polygon[(index + 1) % original_len];
+            let pa = project_point(previous, projection);
+            let pb = project_point(current, projection);
+            let pc = project_point(next, projection);
+            if orient2d_report(&pa, &pb, &pc).value() != Some(Sign::Zero) {
+                simplified.push(current.clone());
+            }
+        }
+        remove_duplicate_neighbors(&mut simplified);
+        if simplified.len() == original_len {
+            return simplified;
+        }
+        polygon = simplified;
+    }
+}
+
+fn remove_duplicate_neighbors(points: &mut Vec<Point3>) {
+    points.dedup_by(|right, left| points_equal(left, right));
+    if points.len() > 1 && points_equal(points.first().unwrap(), points.last().unwrap()) {
+        points.pop();
+    }
+}
+
+fn sort_reals_and_dedup(values: &mut Vec<Real>) -> Option<()> {
+    for index in 1..values.len() {
+        let mut cursor = index;
+        while cursor > 0 && real_order(&values[cursor], &values[cursor - 1])? == Ordering::Less {
+            values.swap(cursor, cursor - 1);
+            cursor -= 1;
+        }
+    }
+    values.dedup_by(|right, left| real_equal(left, right));
+    Some(())
+}
+
+fn midpoint_real(left: &Real, right: &Real) -> Real {
+    let half = (Real::from(1) / &Real::from(2)).expect("2 is nonzero");
+    mul(&add(left, right), &half)
+}
+
+fn midpoint3(left: &Point3, right: &Point3) -> Point3 {
+    hyperlimit::midpoint3(left, right)
+}
+
+fn compare_point2(left: &Point2, right: &Point2) -> Option<Ordering> {
+    match compare_reals(&left.x, &right.x).value()? {
+        Ordering::Equal => compare_reals(&left.y, &right.y).value(),
+        ordering => Some(ordering),
+    }
+}
+
+fn points_equal(left: &Point3, right: &Point3) -> bool {
+    real_equal(&left.x, &right.x) && real_equal(&left.y, &right.y) && real_equal(&left.z, &right.z)
+}
+
+fn point2_equal(left: &Point2, right: &Point2) -> bool {
+    real_equal(&left.x, &right.x) && real_equal(&left.y, &right.y)
+}
+
+fn dedup_point2_neighbors(points: &mut Vec<Point2>) {
+    points.dedup_by(|right, left| point2_equal(left, right));
+    if points.len() > 1 && point2_equal(points.first().unwrap(), points.last().unwrap()) {
+        points.pop();
+    }
+}
+
+fn point2_polygon_area2_abs(points: &[Point2]) -> Option<Real> {
+    if points.len() < 3 {
+        return Some(Real::from(0));
+    }
+    let mut signed = Real::from(0);
+    for index in 0..points.len() {
+        let current = &points[index];
+        let next = &points[(index + 1) % points.len()];
+        signed = add(
+            &signed,
+            &sub(&mul(&current.x, &next.y), &mul(&current.y, &next.x)),
+        );
+    }
+    match compare_reals(&signed, &Real::from(0)).value()? {
+        Ordering::Less => Some(sub(&Real::from(0), &signed)),
+        Ordering::Equal | Ordering::Greater => Some(signed),
+    }
+}
+
+fn real_order(left: &Real, right: &Real) -> Option<Ordering> {
+    compare_reals(left, right).value()
+}
+
+fn real_equal(left: &Real, right: &Real) -> bool {
+    real_order(left, right) == Some(Ordering::Equal)
+}
+
+fn exact_min_real(left: &Real, right: &Real) -> Option<Real> {
+    match real_order(left, right)? {
+        Ordering::Less | Ordering::Equal => Some(left.clone()),
+        Ordering::Greater => Some(right.clone()),
+    }
+}
+
+fn exact_max_real(left: &Real, right: &Real) -> Option<Real> {
+    match real_order(left, right)? {
+        Ordering::Greater | Ordering::Equal => Some(left.clone()),
+        Ordering::Less => Some(right.clone()),
+    }
+}
+
+fn add(left: &Real, right: &Real) -> Real {
+    left.clone() + right
+}
+
+fn sub(left: &Real, right: &Real) -> Real {
+    left.clone() - right
+}
+
+fn mul(left: &Real, right: &Real) -> Real {
+    left.clone() * right
+}
+
+fn orthogonal_error(message: impl Into<String>) -> MeshError {
+    MeshError::one(MeshDiagnostic::new(
+        Severity::Error,
+        DiagnosticKind::UnsupportedExactOperation,
+        message,
+    ))
+}
