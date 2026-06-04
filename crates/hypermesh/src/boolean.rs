@@ -2793,10 +2793,6 @@ fn coplanar_mesh_overlay_should_preempt_surface_paths(
     if left.facts().mesh.closed_manifold && right.facts().mesh.closed_manifold {
         return false;
     }
-    let total_triangles = left.triangles().len() + right.triangles().len();
-    if total_triangles > 96 {
-        return false;
-    }
     match operation {
         ExactBooleanOperation::Union => {
             coplanar_mesh_overlay_surface_union_boundary_policy(left, right).is_some()
@@ -2992,7 +2988,6 @@ fn coplanar_mesh_overlay_materialized_boundary_policy(
 fn coplanar_mesh_overlay_difference_ready(left: &ExactMesh, right: &ExactMesh) -> bool {
     !left.facts().mesh.closed_manifold
         && !right.facts().mesh.closed_manifold
-        && left.triangles().len() + right.triangles().len() <= 96
         && coplanar_mesh_overlay_difference_materializes(left, right)
 }
 

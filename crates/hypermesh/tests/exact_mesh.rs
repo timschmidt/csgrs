@@ -13583,6 +13583,52 @@ fn exact_named_booleans_handle_coplanar_convex_surface_containment() {
 }
 
 #[test]
+fn exact_coplanar_arrangement_handles_large_tiled_surface_without_size_cap() {
+    let left = tiled_rectangle_surface_i64(8, 7);
+    let right = rect_surface_i64(&[(2, 2, 5, 5)]);
+    assert!(left.triangles().len() + right.triangles().len() > 96);
+
+    for operation in [
+        hypermesh::ExactBooleanOperation::Union,
+        hypermesh::ExactBooleanOperation::Intersection,
+        hypermesh::ExactBooleanOperation::Difference,
+    ] {
+        let preflight = hypermesh::preflight_boolean_exact(&left, &right, operation).unwrap();
+        preflight.validate().unwrap();
+        preflight.validate_against_sources(&left, &right).unwrap();
+        assert_eq!(
+            preflight.support,
+            hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
+        );
+        assert!(preflight.blocker.is_none());
+
+        let result =
+            hypermesh::boolean_exact(&left, &right, operation, ValidationPolicy::ALLOW_BOUNDARY)
+                .unwrap();
+        result
+            .validate_operation_against_sources(
+                &left,
+                &right,
+                operation,
+                ValidationPolicy::ALLOW_BOUNDARY,
+                hypermesh::ExactBoundaryBooleanPolicy::Reject,
+            )
+            .unwrap();
+        assert_eq!(
+            result.kind,
+            hypermesh::ExactBooleanResultKind::CertifiedShortcut {
+                shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
+            }
+        );
+
+        if operation == hypermesh::ExactBooleanOperation::Intersection {
+            assert!(exact_mesh_vertex_sets_equal(&result.mesh, &right));
+            assert_eq!(result.mesh.triangles().len(), right.triangles().len());
+        }
+    }
+}
+
+#[test]
 fn exact_coplanar_convex_surface_union_materializes_simple_loop() {
     let left = ExactMesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 2, 0, 0, 2, 2, 0, 0, 2, 0],
@@ -33463,6 +33509,35 @@ fn rect_surface_i64(rectangles: &[(i64, i64, i64, i64)]) -> ExactMesh {
             x0, y1, 0,
         ]);
         indices.extend_from_slice(&[base, base + 1, base + 2, base, base + 2, base + 3]);
+    }
+    ExactMesh::from_i64_triangles_with_policy(
+        &coordinates,
+        &indices,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap()
+}
+
+fn tiled_rectangle_surface_i64(width: i64, height: i64) -> ExactMesh {
+    assert!(width > 0);
+    assert!(height > 0);
+    let vertex_count = ((width + 1) * (height + 1)) as usize;
+    let mut coordinates = Vec::with_capacity(vertex_count * 3);
+    for y in 0..=height {
+        for x in 0..=width {
+            coordinates.extend_from_slice(&[x, y, 0]);
+        }
+    }
+    let mut indices = Vec::with_capacity((width * height * 6) as usize);
+    let stride = (width + 1) as usize;
+    for y in 0..height as usize {
+        for x in 0..width as usize {
+            let a = y * stride + x;
+            let b = a + 1;
+            let d = (y + 1) * stride + x;
+            let c = d + 1;
+            indices.extend_from_slice(&[a, b, c, a, c, d]);
+        }
     }
     ExactMesh::from_i64_triangles_with_policy(
         &coordinates,
