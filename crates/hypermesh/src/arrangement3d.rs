@@ -39,8 +39,9 @@ use core::cmp::Ordering;
 use std::collections::{BTreeMap, BTreeSet};
 
 use hyperlimit::{
-    Point2, Point3, compare_point2_lexicographic, compare_reals, point2_equal, point3_equal,
-    project_point3,
+    Point2, Point3, RingPointLocation, Sign, TriangleLocation, classify_point_ring_even_odd,
+    classify_point_triangle, compare_point2_lexicographic, compare_reals, orient2d_report,
+    point2_equal, point3_equal, project_point3,
 };
 use hyperreal::Real;
 
@@ -2731,7 +2732,8 @@ fn face_cell_from_region(
             | FaceSplitBoundaryNode::FaceInterior { point } => point.clone(),
         })
         .collect::<Vec<_>>();
-    let representative = representative_from_boundary_nodes(&region.boundary);
+    let representative = face_region_interior_representative(region, left, right, blockers)
+        .or_else(|| representative_from_boundary_nodes(&region.boundary));
     let opposite =
         representative.map(|point| classify_opposite(region.side, point, left, right, blockers));
     ArrangementFaceCell {
@@ -2889,6 +2891,141 @@ fn projected_triangle_area2(points: &[Point3; 3], projection: CoplanarProjection
     let b = project_point3(&points[1], projection);
     let c = project_point3(&points[2], projection);
     (b.x.clone() - &a.x) * &(c.y.clone() - &a.y) - &((b.y.clone() - &a.y) * &(c.x.clone() - &a.x))
+}
+
+fn face_region_interior_representative(
+    region: &FaceRegionBoundary,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    blockers: &mut Vec<ExactArrangementBlocker>,
+) -> Option<Point3> {
+    let mesh = mesh_for_side(region.side, left, right);
+    let fallback = || representative_from_boundary_nodes(&region.boundary);
+    let mut witness_blockers = Vec::new();
+    let Some(projection) = choose_triangle_projection(mesh, region.triangle, &mut witness_blockers)
+    else {
+        let fallback = fallback();
+        if fallback.is_none() {
+            blockers.extend(witness_blockers);
+        }
+        return fallback;
+    };
+    let projected = region
+        .boundary
+        .iter()
+        .map(|node| project_point3(&face_split_boundary_node_point(node), projection))
+        .collect::<Vec<_>>();
+    let witness = match projected_loop_interior_witness(&projected) {
+        Ok(witness) => witness,
+        Err(blocker) => {
+            witness_blockers.push(blocker);
+            let fallback = fallback();
+            if fallback.is_none() {
+                blockers.extend(witness_blockers);
+            }
+            return fallback;
+        }
+    };
+    let mut lift_blockers = Vec::new();
+    let lifted =
+        lift_carrier_plane_point(mesh, region.face, projection, &witness, &mut lift_blockers);
+    if lifted.is_none() {
+        let fallback = fallback();
+        if fallback.is_none() {
+            blockers.extend(lift_blockers);
+        }
+        return fallback;
+    }
+    lifted
+}
+
+fn face_split_boundary_node_point(node: &FaceSplitBoundaryNode) -> Point3 {
+    match node {
+        FaceSplitBoundaryNode::OriginalVertex { point, .. }
+        | FaceSplitBoundaryNode::GraphVertex { point, .. }
+        | FaceSplitBoundaryNode::FaceInterior { point } => point.clone(),
+    }
+}
+
+fn projected_loop_interior_witness(points: &[Point2]) -> Result<Point2, ExactArrangementBlocker> {
+    if points.len() < 3 {
+        return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+    }
+    let signed_area_twice = signed_area_twice_points(points);
+    let orientation = match compare_reals(&signed_area_twice, &Real::from(0)).value() {
+        Some(Ordering::Greater) => Sign::Positive,
+        Some(Ordering::Less) => Sign::Negative,
+        Some(Ordering::Equal) => return Err(ExactArrangementBlocker::NonManifoldCellComplex),
+        None => return Err(ExactArrangementBlocker::UndecidableOrdering),
+    };
+
+    for index in 0..points.len() {
+        let previous = &points[(index + points.len() - 1) % points.len()];
+        let current = &points[index];
+        let next = &points[(index + 1) % points.len()];
+        match orient2d_report(previous, current, next).value() {
+            Some(sign) if sign == orientation => {}
+            Some(Sign::Zero | Sign::Positive | Sign::Negative) => continue,
+            None => return Err(ExactArrangementBlocker::UndecidableOrdering),
+        }
+
+        let mut contains_vertex = false;
+        for (candidate_index, candidate) in points.iter().enumerate() {
+            if candidate_index == index
+                || candidate_index == (index + points.len() - 1) % points.len()
+                || candidate_index == (index + 1) % points.len()
+            {
+                continue;
+            }
+            match classify_point_triangle(previous, current, next, candidate).value() {
+                Some(TriangleLocation::Inside | TriangleLocation::Degenerate) => {
+                    contains_vertex = true;
+                    break;
+                }
+                Some(
+                    TriangleLocation::Outside
+                    | TriangleLocation::OnEdge
+                    | TriangleLocation::OnVertex,
+                ) => {}
+                None => return Err(ExactArrangementBlocker::UndecidableOrdering),
+            }
+        }
+        if contains_vertex {
+            continue;
+        }
+
+        let witness = triangle_centroid_2d(previous, current, next)?;
+        match classify_point_ring_even_odd(points, &witness).value() {
+            Some(RingPointLocation::Inside) => return Ok(witness),
+            Some(RingPointLocation::Outside | RingPointLocation::Boundary) => {}
+            None => return Err(ExactArrangementBlocker::UndecidableOrdering),
+        }
+    }
+
+    Err(ExactArrangementBlocker::NonManifoldCellComplex)
+}
+
+fn signed_area_twice_points(points: &[Point2]) -> Real {
+    let mut area = Real::from(0);
+    for index in 0..points.len() {
+        let current = &points[index];
+        let next = &points[(index + 1) % points.len()];
+        area = area + &(current.x.clone() * &next.y) - &(current.y.clone() * &next.x);
+    }
+    area
+}
+
+fn triangle_centroid_2d(
+    a: &Point2,
+    b: &Point2,
+    c: &Point2,
+) -> Result<Point2, ExactArrangementBlocker> {
+    let third = (Real::from(1) / &Real::from(3))
+        .map_err(|_| ExactArrangementBlocker::UnresolvedIntersection)?;
+    Ok(Point2::new(
+        (a.x.clone() + &b.x + &c.x) * &third,
+        (a.y.clone() + &b.y + &c.y) * &third,
+    ))
 }
 
 fn classify_opposite(
@@ -3222,6 +3359,57 @@ mod tests {
         assert_eq!(
             classify_shell_witnesses_against_container(&[p3(1, 1, 1), p3(20, 20, 20)], &container),
             ShellContainmentRelation::Boundary
+        );
+    }
+
+    #[test]
+    fn split_face_region_uses_strict_loop_interior_witness() {
+        let mesh = open_triangle_i64([0, 0, 0], [10, 0, 0], [0, 10, 0]);
+        let boundary_points = [
+            p3(0, 0, 0),
+            p3(6, 0, 0),
+            p3(6, 2, 0),
+            p3(2, 2, 0),
+            p3(2, 6, 0),
+            p3(0, 6, 0),
+        ];
+        let region = FaceRegionBoundary {
+            side: MeshSide::Left,
+            face: 0,
+            triangle: [0, 1, 2],
+            boundary: boundary_points
+                .iter()
+                .cloned()
+                .map(|point| FaceSplitBoundaryNode::FaceInterior { point })
+                .collect(),
+        };
+        let projected = boundary_points
+            .iter()
+            .map(|point| project_point3(point, CoplanarProjection::Xy))
+            .collect::<Vec<_>>();
+        let boundary_average = representative_from_boundary_nodes(&region.boundary).unwrap();
+        assert_eq!(
+            classify_point_ring_even_odd(
+                &projected,
+                &project_point3(&boundary_average, CoplanarProjection::Xy)
+            )
+            .value(),
+            Some(RingPointLocation::Outside)
+        );
+        let mut blockers = Vec::new();
+
+        let representative =
+            face_region_interior_representative(&region, &mesh, &mesh, &mut blockers)
+                .expect("concave split face should have a strict exact witness");
+
+        assert!(blockers.is_empty(), "{blockers:?}");
+        assert_eq!(
+            classify_point_ring_even_odd(
+                &projected,
+                &project_point3(&representative, CoplanarProjection::Xy)
+            )
+            .value(),
+            Some(RingPointLocation::Inside)
         );
     }
 
