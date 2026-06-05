@@ -11,11 +11,8 @@ use core::cmp::Ordering;
 
 use hyperlimit::{Point3, compare_reals};
 
-use super::error::MeshError;
-use super::mesh::{ExactMesh, Triangle};
-use super::provenance::SourceProvenance;
+use super::mesh::ExactMesh;
 use super::solid::certify_convex_solid;
-use super::validation::ValidationPolicy;
 use hyperreal::Real;
 
 /// Certified exact AABB box bounds retained by the shortcut.
@@ -24,26 +21,6 @@ struct AxisAlignedBox {
     min: Point3,
     max: Point3,
 }
-
-/// Canonical outward triangle rows for [`AxisAlignedBox::corners`].
-///
-/// The rows are structural topology, not geometric predicates. We keep them in
-/// one table so single-box and multi-component outputs replay identical shell
-/// history beside the coordinates that certify it.
-const BOX_TRIANGLES: [[usize; 3]; 12] = [
-    [0, 2, 1],
-    [0, 3, 2],
-    [4, 5, 6],
-    [4, 6, 7],
-    [0, 1, 5],
-    [0, 5, 4],
-    [1, 2, 6],
-    [1, 6, 5],
-    [2, 3, 7],
-    [2, 7, 6],
-    [3, 0, 4],
-    [3, 4, 7],
-];
 
 /// Coordinate axis along which two boxes can merge or subtract as slabs.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -64,27 +41,6 @@ pub(crate) enum AxisAlignedBoxOperation {
 enum BoxCellOperation {
     Union,
     Difference,
-}
-
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-enum CellFace {
-    XMin,
-    XMax,
-    YMin,
-    YMax,
-    ZMin,
-    ZMax,
-}
-
-#[derive(Clone, Debug)]
-struct AxisAlignedBoxCellPlan {
-    x: Vec<Real>,
-    y: Vec<Real>,
-    z: Vec<Real>,
-    selected: Vec<bool>,
-    nx: usize,
-    ny: usize,
-    nz: usize,
 }
 
 #[derive(Clone, Debug)]
@@ -118,24 +74,6 @@ pub(crate) fn has_axis_aligned_box_operation(
         return false;
     };
     axis_aligned_box_operation_is_supported(&inputs, operation)
-}
-
-/// Materialize a certified axis-aligned box operation.
-///
-/// The branch priority matches the public boolean shortcuts: one-box union,
-/// positive-volume intersection, slab difference, split slab difference,
-/// strict nested cavity, contained-empty difference, then bounded orthogonal
-/// cell output for the remaining accepted union/difference cases.
-pub(crate) fn materialize_axis_aligned_box_operation(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: AxisAlignedBoxOperation,
-    validation: ValidationPolicy,
-) -> Result<Option<ExactMesh>, MeshError> {
-    let Some(inputs) = certify_axis_aligned_box_inputs(left, right) else {
-        return Ok(None);
-    };
-    materialize_axis_aligned_box_operation_from_inputs(&inputs, operation, validation)
 }
 
 /// Return whether an orthogonal cell union is certified for the operands.
@@ -320,96 +258,6 @@ fn empty_difference_axis_aligned_box_bounds_from_boxes(
     box_contains(right, left) == Some(true)
 }
 
-fn materialize_axis_aligned_box_cell_plan(
-    plan: AxisAlignedBoxCellPlan,
-    label: &'static str,
-    validation: ValidationPolicy,
-) -> Result<Option<ExactMesh>, MeshError> {
-    let mut vertices = Vec::new();
-    let mut triangles = Vec::new();
-    for i in 0..plan.nx {
-        for j in 0..plan.ny {
-            for k in 0..plan.nz {
-                if !plan.is_selected(i, j, k) {
-                    continue;
-                }
-                if i == 0 || !plan.is_selected(i - 1, j, k) {
-                    emit_cell_face(
-                        &plan,
-                        i,
-                        j,
-                        k,
-                        CellFace::XMin,
-                        &mut vertices,
-                        &mut triangles,
-                    );
-                }
-                if i + 1 == plan.nx || !plan.is_selected(i + 1, j, k) {
-                    emit_cell_face(
-                        &plan,
-                        i,
-                        j,
-                        k,
-                        CellFace::XMax,
-                        &mut vertices,
-                        &mut triangles,
-                    );
-                }
-                if j == 0 || !plan.is_selected(i, j - 1, k) {
-                    emit_cell_face(
-                        &plan,
-                        i,
-                        j,
-                        k,
-                        CellFace::YMin,
-                        &mut vertices,
-                        &mut triangles,
-                    );
-                }
-                if j + 1 == plan.ny || !plan.is_selected(i, j + 1, k) {
-                    emit_cell_face(
-                        &plan,
-                        i,
-                        j,
-                        k,
-                        CellFace::YMax,
-                        &mut vertices,
-                        &mut triangles,
-                    );
-                }
-                if k == 0 || !plan.is_selected(i, j, k - 1) {
-                    emit_cell_face(
-                        &plan,
-                        i,
-                        j,
-                        k,
-                        CellFace::ZMin,
-                        &mut vertices,
-                        &mut triangles,
-                    );
-                }
-                if k + 1 == plan.nz || !plan.is_selected(i, j, k + 1) {
-                    emit_cell_face(
-                        &plan,
-                        i,
-                        j,
-                        k,
-                        CellFace::ZMax,
-                        &mut vertices,
-                        &mut triangles,
-                    );
-                }
-            }
-        }
-    }
-    Ok(Some(ExactMesh::new_with_policy(
-        vertices,
-        triangles,
-        SourceProvenance::exact(label),
-        validation,
-    )?))
-}
-
 fn has_axis_aligned_box_cell_operation(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -464,40 +312,6 @@ fn axis_aligned_box_cell_selected_count_from_boxes(
         }
     }
     Some(selected_count)
-}
-
-fn axis_aligned_box_cell_plan_from_boxes(
-    left: &AxisAlignedBox,
-    right: &AxisAlignedBox,
-    operation: BoxCellOperation,
-) -> Option<AxisAlignedBoxCellPlan> {
-    let grid = axis_aligned_box_cell_grid_from_boxes(left, right)?;
-    let cell_count = grid.nx.checked_mul(grid.ny)?.checked_mul(grid.nz)?;
-    let mut selected = Vec::with_capacity(cell_count);
-    let mut selected_count = 0usize;
-    for i in 0..grid.nx {
-        for j in 0..grid.ny {
-            for k in 0..grid.nz {
-                let keep = axis_aligned_box_cell_selected(&grid, left, right, i, j, k, operation)?;
-                if keep {
-                    selected_count += 1;
-                }
-                selected.push(keep);
-            }
-        }
-    }
-    if selected_count == 0 {
-        return None;
-    }
-    Some(AxisAlignedBoxCellPlan {
-        x: grid.x,
-        y: grid.y,
-        z: grid.z,
-        selected,
-        nx: grid.nx,
-        ny: grid.ny,
-        nz: grid.nz,
-    })
 }
 
 fn axis_aligned_box_cell_selected(
@@ -577,99 +391,6 @@ fn axis_aligned_box_operation_is_supported(
     }
 }
 
-fn materialize_axis_aligned_box_operation_from_inputs(
-    inputs: &AxisAlignedBoxInputs,
-    operation: AxisAlignedBoxOperation,
-    validation: ValidationPolicy,
-) -> Result<Option<ExactMesh>, MeshError> {
-    match operation {
-        AxisAlignedBoxOperation::Union => {
-            if let Some(bounds) =
-                union_axis_aligned_box_bounds_from_boxes(&inputs.left, &inputs.right)
-            {
-                return Ok(Some(bounds.to_mesh(
-                    "exact axis-aligned coplanar-volumetric box union",
-                    validation,
-                )?));
-            }
-            let Some(plan) = axis_aligned_box_cell_plan_from_boxes(
-                &inputs.left,
-                &inputs.right,
-                BoxCellOperation::Union,
-            ) else {
-                return Ok(None);
-            };
-            materialize_axis_aligned_box_cell_plan(
-                plan,
-                "exact axis-aligned coplanar-volumetric box cell union",
-                validation,
-            )
-        }
-        AxisAlignedBoxOperation::Intersection => {
-            let Some(bounds) =
-                intersection_axis_aligned_box_bounds_from_boxes(&inputs.left, &inputs.right)
-            else {
-                return Ok(None);
-            };
-            Ok(Some(bounds.to_mesh(
-                "exact axis-aligned coplanar-volumetric box intersection",
-                validation,
-            )?))
-        }
-        AxisAlignedBoxOperation::Difference => {
-            if let Some(bounds) =
-                difference_axis_aligned_box_bounds_from_boxes(&inputs.left, &inputs.right)
-            {
-                return Ok(Some(bounds.to_mesh(
-                    "exact axis-aligned coplanar-volumetric box difference",
-                    validation,
-                )?));
-            }
-            if let Some(bounds) =
-                multi_difference_axis_aligned_box_bounds_from_boxes(&inputs.left, &inputs.right)
-            {
-                return Ok(Some(boxes_to_mesh(
-                    &bounds,
-                    "exact axis-aligned coplanar-volumetric box split difference",
-                    validation,
-                )?));
-            }
-            if let Some((outer, inner)) =
-                nested_difference_axis_aligned_box_bounds_from_boxes(&inputs.left, &inputs.right)
-            {
-                return Ok(Some(nested_boxes_to_mesh(
-                    &outer,
-                    &inner,
-                    "exact axis-aligned coplanar-volumetric box nested difference",
-                    validation,
-                )?));
-            }
-            if empty_difference_axis_aligned_box_bounds_from_boxes(&inputs.left, &inputs.right) {
-                return Ok(Some(ExactMesh::new_with_policy(
-                    Vec::new(),
-                    Vec::new(),
-                    SourceProvenance::exact(
-                        "empty exact axis-aligned coplanar-volumetric box difference",
-                    ),
-                    validation,
-                )?));
-            }
-            let Some(plan) = axis_aligned_box_cell_plan_from_boxes(
-                &inputs.left,
-                &inputs.right,
-                BoxCellOperation::Difference,
-            ) else {
-                return Ok(None);
-            };
-            materialize_axis_aligned_box_cell_plan(
-                plan,
-                "exact axis-aligned coplanar-volumetric box cell difference",
-                validation,
-            )
-        }
-    }
-}
-
 /// Recognize a closed exact mesh as exactly its retained AABB.
 fn certify_axis_aligned_box(mesh: &ExactMesh) -> Option<AxisAlignedBox> {
     if mesh.vertices().len() != 8 || mesh.triangles().len() != 12 {
@@ -720,177 +441,6 @@ impl AxisAlignedBox {
             Point3::new(min.x.clone(), max.y.clone(), max.z.clone()),
         ]
     }
-
-    fn to_mesh(
-        &self,
-        label: &'static str,
-        validation: ValidationPolicy,
-    ) -> Result<ExactMesh, MeshError> {
-        boxes_to_mesh(core::slice::from_ref(self), label, validation)
-    }
-}
-
-fn boxes_to_mesh(
-    boxes: &[AxisAlignedBox],
-    label: &'static str,
-    validation: ValidationPolicy,
-) -> Result<ExactMesh, MeshError> {
-    let mut vertices = Vec::with_capacity(boxes.len() * 8);
-    let mut triangles = Vec::with_capacity(boxes.len() * BOX_TRIANGLES.len());
-    for bounds in boxes {
-        append_box(bounds, false, &mut vertices, &mut triangles);
-    }
-    ExactMesh::new_with_policy(
-        vertices,
-        triangles,
-        SourceProvenance::exact(label),
-        validation,
-    )
-}
-
-fn nested_boxes_to_mesh(
-    outer: &AxisAlignedBox,
-    inner: &AxisAlignedBox,
-    label: &'static str,
-    validation: ValidationPolicy,
-) -> Result<ExactMesh, MeshError> {
-    let mut vertices = Vec::with_capacity(16);
-    let mut triangles = Vec::with_capacity(BOX_TRIANGLES.len() * 2);
-    append_box(outer, false, &mut vertices, &mut triangles);
-    append_box(inner, true, &mut vertices, &mut triangles);
-    ExactMesh::new_with_policy(
-        vertices,
-        triangles,
-        SourceProvenance::exact(label),
-        validation,
-    )
-}
-
-fn append_box(
-    bounds: &AxisAlignedBox,
-    reverse: bool,
-    vertices: &mut Vec<Point3>,
-    triangles: &mut Vec<Triangle>,
-) {
-    let offset = vertices.len();
-    vertices.extend(
-        bounds
-            .corners()
-            .into_iter()
-            .map(|point| Point3::new(point.x, point.y, point.z)),
-    );
-    triangles.extend(BOX_TRIANGLES.iter().map(|[a, b, c]| {
-        if reverse {
-            Triangle([c + offset, b + offset, a + offset])
-        } else {
-            Triangle([a + offset, b + offset, c + offset])
-        }
-    }));
-}
-
-impl AxisAlignedBoxCellPlan {
-    fn selected_index(&self, i: usize, j: usize, k: usize) -> usize {
-        (i * self.ny + j) * self.nz + k
-    }
-
-    fn is_selected(&self, i: usize, j: usize, k: usize) -> bool {
-        self.selected[self.selected_index(i, j, k)]
-    }
-}
-
-fn emit_cell_face(
-    plan: &AxisAlignedBoxCellPlan,
-    i: usize,
-    j: usize,
-    k: usize,
-    face: CellFace,
-    vertices: &mut Vec<Point3>,
-    triangles: &mut Vec<Triangle>,
-) {
-    let x0 = &plan.x[i];
-    let x1 = &plan.x[i + 1];
-    let y0 = &plan.y[j];
-    let y1 = &plan.y[j + 1];
-    let z0 = &plan.z[k];
-    let z1 = &plan.z[k + 1];
-    match face {
-        CellFace::XMin => {
-            let a = point(x0, y1, z0);
-            let b = point(x0, y0, z0);
-            let c = point(x0, y0, z1);
-            let d = point(x0, y1, z1);
-            emit_quad(vertices, triangles, a, b, c, d);
-        }
-        CellFace::XMax => {
-            let a = point(x1, y0, z0);
-            let b = point(x1, y1, z0);
-            let c = point(x1, y1, z1);
-            let d = point(x1, y0, z1);
-            emit_quad(vertices, triangles, a, b, c, d);
-        }
-        CellFace::YMin => {
-            let a = point(x0, y0, z0);
-            let b = point(x1, y0, z0);
-            let c = point(x1, y0, z1);
-            let d = point(x0, y0, z1);
-            emit_quad(vertices, triangles, a, b, c, d);
-        }
-        CellFace::YMax => {
-            let a = point(x1, y1, z0);
-            let b = point(x0, y1, z0);
-            let c = point(x0, y1, z1);
-            let d = point(x1, y1, z1);
-            emit_quad(vertices, triangles, a, b, c, d);
-        }
-        CellFace::ZMin => {
-            let a = point(x0, y0, z0);
-            let b = point(x1, y1, z0);
-            let c = point(x1, y0, z0);
-            let d = point(x0, y1, z0);
-            emit_triangle(vertices, triangles, [a.clone(), b.clone(), c]);
-            emit_triangle(vertices, triangles, [a, d, b]);
-        }
-        CellFace::ZMax => {
-            let a = point(x0, y0, z1);
-            let b = point(x1, y0, z1);
-            let c = point(x1, y1, z1);
-            let d = point(x0, y1, z1);
-            emit_quad(vertices, triangles, a, b, c, d);
-        }
-    }
-}
-
-fn emit_quad(
-    vertices: &mut Vec<Point3>,
-    triangles: &mut Vec<Triangle>,
-    a: Point3,
-    b: Point3,
-    c: Point3,
-    d: Point3,
-) {
-    emit_triangle(vertices, triangles, [a.clone(), b, c.clone()]);
-    emit_triangle(vertices, triangles, [a, c, d]);
-}
-
-fn emit_triangle(vertices: &mut Vec<Point3>, triangles: &mut Vec<Triangle>, points: [Point3; 3]) {
-    let [a, b, c] = points.map(|point| shared_vertex_index(vertices, point));
-    triangles.push(Triangle([a, b, c]));
-}
-
-fn shared_vertex_index(vertices: &mut Vec<Point3>, point: Point3) -> usize {
-    if let Some(index) = vertices
-        .iter()
-        .position(|vertex| points_equal(&vertex.clone(), &point))
-    {
-        return index;
-    }
-    let index = vertices.len();
-    vertices.push(Point3::new(point.x, point.y, point.z));
-    index
-}
-
-fn point(x: &Real, y: &Real, z: &Real) -> Point3 {
-    Point3::new(x.clone(), y.clone(), z.clone())
 }
 
 fn slab_merge_axis(left: &AxisAlignedBox, right: &AxisAlignedBox) -> Option<Axis> {

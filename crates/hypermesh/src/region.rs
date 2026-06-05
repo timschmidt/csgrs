@@ -13,16 +13,16 @@ use std::{cmp::Ordering, collections::BTreeMap};
 use hyperlimit::{PlaneSide, Point3, orient3d_report, point_on_segment};
 use hyperlimit::{Point2 as PredicatePoint2, Sign, compare_reals, orient2d_report, project_point3};
 
-use super::coplanar::CoplanarProjection;
 use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
 use super::graph::SplitPlanDiagnosticKind;
 use super::graph::SplitPlanValidationReport;
 use super::graph::{ExactFaceRegionPlan, FaceSplitBoundaryNode, MeshSide};
 use super::mesh::ExactMesh;
 use super::mesh::Triangle;
-use super::provenance::PredicateUse;
-use super::provenance::SourceProvenance;
 use super::validation::ValidationPolicy;
+use hyperlimit::CoplanarProjection;
+use hyperlimit::PredicateUse;
+use hyperlimit::SourceProvenance;
 
 /// Exact relation between a split region boundary and an opposite face plane.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -1360,84 +1360,6 @@ pub fn checked_triangulate_face_regions_with_earcut(
         triangulation.validate()?;
     }
     Ok(triangulations)
-}
-
-/// Build a validated exact mesh from selected split regions of two inputs.
-///
-/// This exact-stack pipeline replaces the old tolerance-driven "split then
-/// mutate" shape for the subset currently supported by the exact port. It
-/// intentionally accepts an explicit
-/// [`ExactRegionSelection`] instead of pretending that winding/inside-outside
-/// policy has been solved by a floating representative point. The internal
-/// exact triangulation, assembly plan, and final exact mesh validation.
-pub fn build_selected_region_mesh(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    selection: ExactRegionSelection,
-    policy: ValidationPolicy,
-) -> Result<ExactMesh, super::error::MeshError> {
-    let graph = super::graph::build_intersection_graph(left, right)?;
-    graph
-        .validate_against_meshes(left, right)
-        .map_err(|error| {
-            super::error::MeshError::one(super::error::MeshDiagnostic::new(
-                super::error::Severity::Error,
-                super::error::DiagnosticKind::UnsupportedExactOperation,
-                format!("exact selected-region graph/source replay failed: {error:?}"),
-            ))
-        })?;
-    if graph.has_unknowns() {
-        return Err(super::error::MeshError::one(
-            super::error::MeshDiagnostic::new(
-                super::error::Severity::Error,
-                super::error::DiagnosticKind::UnsupportedExactOperation,
-                "exact selected-region graph contains unresolved predicate events",
-            ),
-        ));
-    }
-    let geometry = graph.face_split_geometry_plan(left, right)?;
-    let region_plan = geometry.region_plan(left, right);
-    let region_classifications =
-        checked_classify_face_regions_against_opposite_planes(&region_plan, left, right)?;
-    // `build_selected_region_mesh` is a mesh-only convenience wrapper around
-    // the richer report API. It must still cross the same certified
-    // winding-handoff boundary as `boolean_selected_regions`: every retained
-    // region/plane fact is audited and proof-producing before triangulation
-    // undecided predicate state just because it returns fewer report fields.
-    if region_classifications
-        .iter()
-        .any(|classification| !classification.is_decided_and_proof_producing())
-    {
-        return Err(super::error::MeshError::one(
-            super::error::MeshDiagnostic::new(
-                super::error::Severity::Error,
-                super::error::DiagnosticKind::UnsupportedExactOperation,
-                "exact selected-region classification retained undecided predicate evidence",
-            ),
-        ));
-    }
-    let triangulations = checked_triangulate_face_regions_with_earcut(&region_plan, left, right)
-        .map_err(|error| {
-            super::error::MeshError::one(super::error::MeshDiagnostic::new(
-                super::error::Severity::Error,
-                super::error::DiagnosticKind::DegenerateTriangle,
-                format!("exact region triangulation failed: {error}"),
-            ))
-        })?;
-    let assembly = ExactBooleanAssemblyPlan::from_region_triangulations_with_sources(
-        &triangulations,
-        selection,
-        left,
-        right,
-    )
-    .map_err(|error| {
-        super::error::MeshError::one(super::error::MeshDiagnostic::new(
-            super::error::Severity::Error,
-            super::error::DiagnosticKind::IndexOutOfBounds,
-            format!("exact boolean assembly failed: {error}"),
-        ))
-    })?;
-    assembly.checked_to_exact_mesh_with_sources(left, right, policy)
 }
 
 fn assemble_region_triangulations_with_retention(

@@ -22,7 +22,6 @@ use hyperlimit::{
 use hypertri::Constraint;
 
 use super::construction::SegmentPlaneRelation;
-use super::coplanar::CoplanarProjection;
 use super::graph::{
     CoplanarOverlapSplitPlan, ExactFaceRegionPlan, ExactIntersectionGraph, ExactSplitTopologyPlan,
     FacePairEvents, FaceRegionBoundary, FaceSplitBoundaryNode, IntersectionEvent, MeshSide,
@@ -33,6 +32,7 @@ use super::region::{
     FaceRegionTriangulation, boundary_node_point, choose_region_projection, project_for_hypertri,
     project_for_predicate,
 };
+use hyperlimit::CoplanarProjection;
 use hyperreal::Real;
 
 /// Candidate constraint edge from the opposite coplanar triangle boundary.

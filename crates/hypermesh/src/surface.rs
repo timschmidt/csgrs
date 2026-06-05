@@ -12,12 +12,12 @@ use hyperlimit::{
 };
 use hyperreal::Real;
 
-use super::coplanar::{CoplanarProjection, CoplanarTriangleRelation, classify_coplanar_triangles};
 use super::mesh::ExactMesh;
 use super::narrow::{
     TrianglePlaneRelation, TriangleTriangleRelation,
     classify_mesh_triangle_against_retained_face_plane, classify_triangle_triangle,
 };
+use hyperlimit::{CoplanarProjection, CoplanarTriangleRelation, classify_coplanar_triangles};
 
 /// Certified equivalence of two convex coplanar surface meshes.
 #[derive(Clone, Debug, PartialEq)]

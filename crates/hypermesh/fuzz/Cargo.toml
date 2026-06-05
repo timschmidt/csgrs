@@ -42,13 +42,6 @@ doc = false
 bench = false
 
 [[bin]]
-name = "exact_boolean_preflight"
-path = "fuzz_targets/exact_boolean_preflight.rs"
-test = false
-doc = false
-bench = false
-
-[[bin]]
 name = "exact_adjacent_polygon"
 path = "fuzz_targets/exact_adjacent_polygon.rs"
 test = false
@@ -58,20 +51,6 @@ bench = false
 [[bin]]
 name = "exact_arrangement"
 path = "fuzz_targets/exact_arrangement.rs"
-test = false
-doc = false
-bench = false
-
-[[bin]]
-name = "exact_surface_arrangement_parity"
-path = "fuzz_targets/exact_surface_arrangement_parity.rs"
-test = false
-doc = false
-bench = false
-
-[[bin]]
-name = "exact_boolean_pipeline_parity"
-path = "fuzz_targets/exact_boolean_pipeline_parity.rs"
 test = false
 doc = false
 bench = false

@@ -18,8 +18,8 @@ use hyperlimit::{Point3, compare_reals};
 
 use super::error::MeshError;
 use super::mesh::{ExactMesh, Triangle};
-use super::provenance::SourceProvenance;
 use super::validation::ValidationPolicy;
+use hyperlimit::SourceProvenance;
 use hyperreal::Real;
 
 /// Named set operation over two certified orthogonal cell complexes.
@@ -1908,14 +1908,18 @@ mod tests {
     fn certifies_box_cell_union_output() {
         let left = axis_aligned_box_i64([0, 0, 0], [2, 2, 2]);
         let right = axis_aligned_box_i64([1, 1, 0], [3, 3, 2]);
-        let mesh = super::super::box_solid::materialize_axis_aligned_box_operation(
+        let plan = axis_aligned_orthogonal_solid_cell_plan(
             &left,
             &right,
-            super::super::box_solid::AxisAlignedBoxOperation::Union,
+            AxisAlignedOrthogonalSolidOperation::Union,
+        )
+        .expect("cell union should plan");
+        let mesh = materialize_axis_aligned_orthogonal_solid_cell_plan(
+            plan,
+            "test axis-aligned orthogonal solid cell union",
             ValidationPolicy::CLOSED,
         )
-        .unwrap()
-        .expect("cell union should materialize");
+        .unwrap();
         assert!(certify_axis_aligned_orthogonal_solid(&mesh).is_some());
 
         let cutter = axis_aligned_box_i64([2, 0, 0], [3, 2, 2]);

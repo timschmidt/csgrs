@@ -6,9 +6,9 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use super::provenance::PredicateUse;
 use super::validation::{ValidationPolicy, validate_triangles, validate_triangles_with_policy};
 use hyperlimit::Point3;
+use hyperlimit::PredicateUse;
 use hyperreal::Real;
 
 /// Facts known for one mesh vertex.

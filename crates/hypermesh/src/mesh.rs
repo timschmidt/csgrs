@@ -21,9 +21,6 @@ use super::handoff::{
 use super::package::{
     ExactMeshHandoffPackage, ExactMeshHandoffPackageError, exact_mesh_handoff_package,
 };
-use super::provenance::{
-    ConstructionProvenance, ConstructionProvenanceValidationError, PredicateUse, SourceProvenance,
-};
 use super::readiness::{
     ExactMeshConsumerReadinessError, ExactMeshConsumerReadinessReport,
     exact_mesh_consumer_readiness,
@@ -31,6 +28,9 @@ use super::readiness::{
 use super::scalar::LossyF64Import;
 use super::validation::{ValidationPolicy, ValidationReport, validate_triangles_with_policy};
 use super::view::{ApproximateMeshF64View, ApproximateMeshF64ViewError, approximate_mesh_f64_view};
+use hyperlimit::{
+    ConstructionProvenance, ConstructionProvenanceValidationError, PredicateUse, SourceProvenance,
+};
 use hyperreal::Real;
 
 /// Triangle index triplet.

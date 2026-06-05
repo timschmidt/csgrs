@@ -62,7 +62,6 @@ use super::orthogonal_solid::{
     materialize_axis_aligned_orthogonal_solid_cell_plan,
     orthogonal_cell_plan_is_single_rectangular_block,
 };
-use super::provenance::{PredicateUse, SourceProvenance};
 use super::region::{
     ExactBooleanAssemblyPlan, ExactRegionRetention, ExactRegionSelection,
     FaceRegionPlaneClassification, FaceRegionTriangulation,
@@ -104,6 +103,7 @@ use hyperlimit::{
     classify_point_triangle, compare_reals, compare_reals_report, orient3d_report, project_point3,
     projected_polygon_area2_value,
 };
+use hyperlimit::{PredicateUse, SourceProvenance};
 use hyperreal::Real;
 use std::cmp::Ordering;
 
@@ -6365,7 +6365,7 @@ fn copy_mesh(
     ExactMesh::new_with_policy(
         mesh.vertices().to_vec(),
         mesh.triangles().to_vec(),
-        super::provenance::SourceProvenance::exact(label),
+        hyperlimit::SourceProvenance::exact(label),
         validation,
     )
 }
@@ -6853,7 +6853,7 @@ fn concatenate_meshes_with_options(
     ExactMesh::new_with_policy(
         vertices,
         triangles,
-        super::provenance::SourceProvenance::exact(label),
+        hyperlimit::SourceProvenance::exact(label),
         validation,
     )
 }
@@ -7180,7 +7180,7 @@ fn boolean_empty_operand(
         ExactBooleanOperation::Difference => ExactMesh::new_with_policy(
             left.vertices().to_vec(),
             left.triangles().to_vec(),
-            super::provenance::SourceProvenance::exact("exact difference with empty right operand"),
+            hyperlimit::SourceProvenance::exact("exact difference with empty right operand"),
             validation,
         )?,
         ExactBooleanOperation::SelectedRegions(_) => unreachable!("handled by caller"),
@@ -7202,14 +7202,14 @@ fn boolean_identical_meshes(
             ExactMesh::new_with_policy(
                 mesh.vertices().to_vec(),
                 mesh.triangles().to_vec(),
-                super::provenance::SourceProvenance::exact("exact identical boolean result"),
+                hyperlimit::SourceProvenance::exact("exact identical boolean result"),
                 validation,
             )?
         }
         ExactBooleanOperation::Difference => ExactMesh::new_with_policy(
             Vec::new(),
             Vec::new(),
-            super::provenance::SourceProvenance::exact("empty exact identical difference"),
+            hyperlimit::SourceProvenance::exact("empty exact identical difference"),
             validation,
         )?,
         ExactBooleanOperation::SelectedRegions(_) => unreachable!("handled by caller"),
@@ -7225,7 +7225,7 @@ fn empty_mesh(label: &'static str, validation: ValidationPolicy) -> Result<Exact
     ExactMesh::new_with_policy(
         Vec::new(),
         Vec::new(),
-        super::provenance::SourceProvenance::exact(label),
+        hyperlimit::SourceProvenance::exact(label),
         validation,
     )
 }
@@ -7282,7 +7282,7 @@ fn concatenate_meshes(
     ExactMesh::new_with_policy(
         vertices,
         triangles,
-        super::provenance::SourceProvenance::exact("exact disjoint union"),
+        hyperlimit::SourceProvenance::exact("exact disjoint union"),
         validation,
     )
 }

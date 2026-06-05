@@ -22,11 +22,11 @@ use hyperlimit::{
 };
 
 use super::construction::{SegmentPlaneIntersection, intersect_segment_with_face_plane};
-use super::coplanar::{
-    CoplanarTriangleClassification, CoplanarTriangleRelation, classify_coplanar_triangles,
-};
 use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
 use super::mesh::ExactMesh;
+use hyperlimit::{
+    CoplanarTriangleClassification, CoplanarTriangleRelation, classify_coplanar_triangles,
+};
 use hyperreal::Real;
 
 pub use hyperlimit::{

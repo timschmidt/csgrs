@@ -17,12 +17,11 @@ use hyperlimit::{Point3, compare_reals};
 
 use super::box_solid::{
     AxisAlignedBoxOperation, has_axis_aligned_box_operation, is_axis_aligned_box,
-    materialize_axis_aligned_box_operation,
 };
-use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
+use super::error::MeshError;
 use super::mesh::{ExactMesh, Triangle};
-use super::provenance::SourceProvenance;
 use super::validation::ValidationPolicy;
+use hyperlimit::SourceProvenance;
 use hyperreal::Real;
 
 /// Exact 3D affine frame for normalized box coordinates.
@@ -54,102 +53,6 @@ pub enum AffineBoxOperation {
     Difference,
 }
 
-/// Exact affine-box boolean output.
-///
-/// This is a shortcut artifact, not a general convex boolean. It exists only
-/// when both input meshes certify as boxes in one exact affine frame and the
-/// corresponding normalized AABB operation is already supported by
-/// [`crate::box_solid`].
-#[derive(Clone, Debug, PartialEq)]
-pub struct AffineBoxArrangement {
-    /// Shared affine frame used to normalize both source boxes.
-    pub basis: AffineBoxBasis,
-    /// Boolean operation that produced the retained mesh.
-    pub operation: AffineBoxOperation,
-    /// Exact lifted closed output mesh in original 3D space.
-    pub mesh: ExactMesh,
-}
-
-#[derive(Clone, Debug)]
-struct AffineBoxInputs {
-    basis: AffineBoxBasis,
-    left_uvw: ExactMesh,
-    right_uvw: ExactMesh,
-}
-
-impl AffineBoxArrangement {
-    /// Validate the retained affine output mesh and basis replay.
-    ///
-    /// Local validation checks that the lifted mesh is a valid exact mesh and
-    /// that every output vertex maps back through the retained basis to exact
-    /// normalized coordinates. Source replay is handled by
-    /// [`Self::validate_against_sources`], because only the original operands
-    /// can prove that the retained operation was the correct normalized box
-    /// materialization.
-    pub fn validate(&self) -> Result<(), MeshError> {
-        self.mesh.validate_retained_state().map_err(|error| {
-            affine_box_error(format!("affine box output mesh is stale: {error:?}"))
-        })?;
-        mesh_to_uvw(&self.mesh, &self.basis, self.mesh.validation_policy())
-            .ok_or_else(|| affine_box_error("affine box output does not replay through basis"))?;
-        Ok(())
-    }
-
-    /// Validate this affine-box output by replaying it from source meshes.
-    ///
-    /// The source replay recomputes basis discovery, normalized box
-    /// boundary: a closed output shell is not trusted as a standalone triangle
-    /// soup when the retained source objects can still be checked.
-    pub fn validate_against_sources(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> Result<(), MeshError> {
-        self.validate()?;
-        let replay = materialize_affine_boxes(
-            left,
-            right,
-            self.operation,
-            self.mesh.validation_policy(),
-        )?
-        .ok_or_else(|| affine_box_error("source replay did not reproduce affine box output"))?;
-        if self == &replay {
-            Ok(())
-        } else {
-            Err(affine_box_error(
-                "retained affine box output does not match source replay",
-            ))
-        }
-    }
-}
-
-/// Certify and materialize an affine-box union.
-pub fn materialize_affine_box_union(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    validation: ValidationPolicy,
-) -> Result<Option<AffineBoxArrangement>, MeshError> {
-    materialize_affine_boxes(left, right, AffineBoxOperation::Union, validation)
-}
-
-/// Certify and materialize an affine-box intersection.
-pub fn materialize_affine_box_intersection(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    validation: ValidationPolicy,
-) -> Result<Option<AffineBoxArrangement>, MeshError> {
-    materialize_affine_boxes(left, right, AffineBoxOperation::Intersection, validation)
-}
-
-/// Certify and materialize an affine-box difference.
-pub fn materialize_affine_box_difference(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    validation: ValidationPolicy,
-) -> Result<Option<AffineBoxArrangement>, MeshError> {
-    materialize_affine_boxes(left, right, AffineBoxOperation::Difference, validation)
-}
-
 /// Return whether an affine-box union is certified for these operands.
 pub fn has_affine_box_union(left: &ExactMesh, right: &ExactMesh) -> bool {
     has_affine_box_operation(left, right, AffineBoxOperation::Union)
@@ -170,7 +73,7 @@ fn has_affine_box_operation(
     right: &ExactMesh,
     operation: AffineBoxOperation,
 ) -> bool {
-    certify_affine_box_inputs(left, right, operation).is_some()
+    affine_box_operation_is_supported(left, right, operation)
 }
 
 fn has_normalized_affine_box_operation(
@@ -181,69 +84,25 @@ fn has_normalized_affine_box_operation(
     has_axis_aligned_box_operation(left, right, operation.into())
 }
 
-fn materialize_affine_boxes(
+fn affine_box_operation_is_supported(
     left: &ExactMesh,
     right: &ExactMesh,
     operation: AffineBoxOperation,
-    validation: ValidationPolicy,
-) -> Result<Option<AffineBoxArrangement>, MeshError> {
-    let Some(inputs) = certify_affine_box_inputs(left, right, operation) else {
-        return Ok(None);
-    };
-
-    let uvw_output = materialize_normalized_boxes(&inputs.left_uvw, &inputs.right_uvw, operation)?;
-    let Some(uvw_output) = uvw_output else {
-        return Ok(None);
-    };
-    let mesh = mesh_from_uvw(
-        &uvw_output,
-        &inputs.basis,
-        operation.output_label(),
-        validation,
-    )?;
-    let arrangement = AffineBoxArrangement {
-        basis: inputs.basis,
-        operation,
-        mesh,
-    };
-    arrangement.validate()?;
-    Ok(Some(arrangement))
-}
-
-fn materialize_normalized_boxes(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: AffineBoxOperation,
-) -> Result<Option<ExactMesh>, MeshError> {
-    materialize_axis_aligned_box_operation(left, right, operation.into(), ValidationPolicy::CLOSED)
-}
-
-fn certify_affine_box_inputs(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: AffineBoxOperation,
-) -> Option<AffineBoxInputs> {
+) -> bool {
     if is_axis_aligned_box(left) && is_axis_aligned_box(right) {
-        return None;
+        return false;
     }
-    candidate_affine_box_bases(left)
-        .into_iter()
-        .find_map(|basis| {
-            let left_uvw = mesh_to_uvw(left, &basis, ValidationPolicy::CLOSED)?;
-            let right_uvw = mesh_to_uvw(right, &basis, ValidationPolicy::CLOSED)?;
-            if is_axis_aligned_box(&left_uvw)
-                && is_axis_aligned_box(&right_uvw)
-                && has_normalized_affine_box_operation(&left_uvw, &right_uvw, operation)
-            {
-                Some(AffineBoxInputs {
-                    basis,
-                    left_uvw,
-                    right_uvw,
-                })
-            } else {
-                None
-            }
-        })
+    candidate_affine_box_bases(left).into_iter().any(|basis| {
+        let Some(left_uvw) = mesh_to_uvw(left, &basis, ValidationPolicy::CLOSED) else {
+            return false;
+        };
+        let Some(right_uvw) = mesh_to_uvw(right, &basis, ValidationPolicy::CLOSED) else {
+            return false;
+        };
+        is_axis_aligned_box(&left_uvw)
+            && is_axis_aligned_box(&right_uvw)
+            && has_normalized_affine_box_operation(&left_uvw, &right_uvw, operation)
+    })
 }
 
 /// Return candidate exact affine frames from a source parallelepiped mesh.
@@ -458,16 +317,6 @@ impl AffineBoxBasis {
     }
 }
 
-impl AffineBoxOperation {
-    const fn output_label(self) -> &'static str {
-        match self {
-            Self::Union => "exact affine coplanar-volumetric box union",
-            Self::Intersection => "exact affine coplanar-volumetric box intersection",
-            Self::Difference => "exact affine coplanar-volumetric box difference",
-        }
-    }
-}
-
 impl From<AffineBoxOperation> for AxisAlignedBoxOperation {
     fn from(operation: AffineBoxOperation) -> Self {
         match operation {
@@ -522,12 +371,4 @@ fn sub(left: &Real, right: &Real) -> Real {
 
 fn mul(left: &Real, right: &Real) -> Real {
     left.clone() * right
-}
-
-fn affine_box_error(message: impl Into<String>) -> MeshError {
-    MeshError::one(MeshDiagnostic::new(
-        Severity::Error,
-        DiagnosticKind::UnsupportedExactOperation,
-        message,
-    ))
 }

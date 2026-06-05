@@ -23,12 +23,12 @@ use super::construction::{
     SegmentPlaneConstructionFailure, SegmentPlaneIntersection, SegmentPlaneParameterRatio,
     SegmentPlaneRelation,
 };
-use super::coplanar::{CoplanarProjection, CoplanarTriangleClassification};
 use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
 use super::intersection::{
     MeshFacePairClassification, MeshFacePairRelation, classify_mesh_face_pairs,
 };
 use super::mesh::ExactMesh;
+use hyperlimit::{CoplanarProjection, CoplanarTriangleClassification};
 use hyperreal::Real;
 
 /// Side of a two-mesh graph event.

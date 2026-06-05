@@ -23,14 +23,14 @@ use super::arrangement2d::{
     ExactArrangement2dRegion, ExactArrangement2dRegionRing, ExactArrangement2dSetOperation,
     build_exact_arrangement2d_overlay_with_boundary_policy,
 };
-use super::coplanar::{CoplanarProjection, project_point3};
 use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
 use super::mesh::{ExactMesh, Triangle};
-use super::provenance::SourceProvenance;
 use super::solid::{
     ClosedMeshOrientation, ConvexSolidFacts, ConvexSolidReportError, certify_convex_solid,
 };
 use super::validation::ValidationPolicy;
+use hyperlimit::SourceProvenance;
+use hyperlimit::{CoplanarProjection, project_point3};
 use hyperreal::Real;
 
 /// Certified intersection of two closed convex solids.

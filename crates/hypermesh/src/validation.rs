@@ -13,7 +13,9 @@ use super::facts::{
     EdgeFacts, FaceFacts, FacePlaneFacts, MeshFacts, MeshValidationFacts, OrientedFaceFacts,
     TriangleFacts, VertexFacts, VertexLinkKind,
 };
-use super::predicates::{TriangleDegeneracy, classify_triangle_degeneracy};
+use hyperlimit::{
+    TriangleDegeneracy, classify_triangle3_degeneracy as classify_triangle_degeneracy,
+};
 use hyperreal::Real;
 
 /// Validation result for a triangle mesh.

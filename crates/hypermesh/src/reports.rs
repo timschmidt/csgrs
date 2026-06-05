@@ -23,7 +23,6 @@ use super::graph::{
     IntersectionEvent, build_intersection_graph,
 };
 use super::intersection::MeshFacePairRelation;
-use super::provenance::PredicateUse;
 use super::region::{
     ExactBooleanAssemblyPlan, ExactOutputTriangle, ExactRegionSelection,
     FaceRegionPlaneClassification, FaceRegionPlaneValidationError, FaceRegionTriangulation,
@@ -32,6 +31,7 @@ use super::region::{
 use super::validation::ValidationPolicy;
 use super::volumetric::{ExactVolumetricRegionClassification, ExactVolumetricRegionError};
 use super::volumetric_cells::CoplanarVolumetricCellEvidenceReport;
+use hyperlimit::PredicateUse;
 
 /// Validation failure for an exact report object.
 ///

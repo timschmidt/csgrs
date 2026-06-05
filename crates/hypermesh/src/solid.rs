@@ -11,7 +11,7 @@ use std::cmp::Ordering;
 use hyperlimit::{PlaneSide, Point3, compare_reals, orient3d_report};
 
 use super::mesh::ExactMesh;
-use super::provenance::PredicateUse;
+use hyperlimit::PredicateUse;
 use hyperreal::Real;
 
 /// Certified orientation of a closed triangular surface.

@@ -3,8 +3,6 @@
 use hyperlimit::Point3;
 use hypermesh::{ExactMesh, audit_exact_mesh, build_intersection_graph, classify_coplanar_triangles, classify_mesh_face_pair, classify_mesh_face_pairs, classify_mesh_triangle_against_retained_face_plane, classify_triangle_triangle, inspect_i64_mesh_input, intersect_segment_with_face_plane, intersect_segment_with_retained_face_plane};
 
-use hypermesh::region::{classify_face_regions_against_opposite_planes};
-
 
 use hyperreal::Real;
 use libfuzzer_sys::fuzz_target;
@@ -362,45 +360,6 @@ fuzz_target!(|data: &[u8]| {
                     let _ = geometry_plan
                         .validate_against_sources(&mesh, &mesh)
                         .validate();
-                    let region_plan = geometry_plan.region_plan(&mesh, &mesh);
-                    let _ = region_plan.validate(&mesh, &mesh).validate();
-                    let _ = region_plan
-                        .validate_against_sources(&mesh, &mesh)
-                        .validate();
-                    let classifications =
-                        classify_face_regions_against_opposite_planes(&region_plan, &mesh, &mesh);
-                    for classification in classifications {
-                        let _ = classification.validate();
-                    }
-                                        let _ =
-                        hypermesh::region::checked_classify_face_regions_against_opposite_planes(
-                            &region_plan,
-                            &mesh,
-                            &mesh,
-                        )
-                        .map(|classifications| {
-                            for classification in classifications {
-                                let _ = classification.validate();
-                            }
-                        });
-                                        {
-                        if let Ok(triangulations) =
-                            hypermesh::region::checked_triangulate_face_regions_with_earcut(
-                                &region_plan,
-                                &mesh,
-                                &mesh,
-                            )
-                        {
-                            for triangulation in &triangulations {
-                                let _ = triangulation.validate();
-                            }
-                            let _ =
-                                hypermesh::region::ExactBooleanAssemblyPlan::from_region_triangulations(
-                                    &triangulations,
-                                    hypermesh::region::ExactRegionSelection::KeepAll,
-                                );
-                        }
-                    }
                 }
             }
         }

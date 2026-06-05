@@ -13,52 +13,35 @@
 //! implementation cannot prove a requested operation.
 
 pub mod adapter;
-#[doc(hidden)]
-pub mod adjacent;
+mod adjacent;
 pub(crate) mod adjacent_polygon;
-#[doc(hidden)]
-pub mod affine_box;
-#[doc(hidden)]
-pub mod affine_solid;
-#[doc(hidden)]
-pub mod affine_surface;
-#[doc(hidden)]
-pub mod arrangement2d;
+mod affine_box;
+mod affine_solid;
+mod arrangement2d;
 pub mod arrangement3d;
 pub mod artifact;
 pub mod audit;
 pub mod boolean;
 pub mod bounds;
-#[doc(hidden)]
-pub mod box_solid;
+mod box_solid;
 pub mod cell_complex;
-#[doc(hidden)]
-pub mod cells;
+mod cells;
 pub mod construction;
-#[doc(hidden)]
-pub mod contained_adjacent;
+mod contained_adjacent;
 pub mod convex;
-pub mod coplanar;
 pub mod error;
 pub mod facts;
 pub mod graph;
 pub mod handoff;
 pub mod intersection;
+pub(crate) mod loop_triangulation;
 pub mod mesh;
 pub mod narrow;
-#[doc(hidden)]
-pub mod orthogonal_solid;
-#[doc(hidden)]
-pub mod orthogonal_surface;
+mod orthogonal_solid;
 pub mod package;
-#[doc(hidden)]
-pub mod planar;
-pub mod predicates;
 pub mod proposal;
-pub mod provenance;
 pub mod readiness;
-#[doc(hidden)]
-pub mod region;
+mod region;
 pub mod regularization;
 pub mod reports;
 pub mod scalar;
@@ -68,13 +51,10 @@ pub mod support;
 pub(crate) mod surface;
 pub mod validation;
 pub mod view;
-#[doc(hidden)]
-pub mod volumetric;
-#[doc(hidden)]
-pub mod volumetric_cells;
+mod volumetric;
+mod volumetric_cells;
 pub mod winding;
-#[doc(hidden)]
-pub mod witness;
+mod witness;
 
 pub use adapter::{
     ExactI64MeshInputReadiness, ExactI64MeshInputReport, ExactI64MeshInputReportValidationError,
@@ -128,10 +108,6 @@ pub use convex::{
     ConvexSolidDifference, ConvexSolidIntersection, ConvexSolidUnion,
     intersect_closed_convex_solids, subtract_closed_convex_solids, union_closed_convex_solids,
 };
-pub use coplanar::{
-    CoplanarProjection, CoplanarTriangleClassification, CoplanarTriangleRelation,
-    CoplanarTriangleValidationError, classify_coplanar_triangles,
-};
 pub use error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
 pub use facts::{
     EdgeFacts, FaceFacts, FacePlaneFacts, MeshFacts, MeshFactsValidationError, MeshValidationFacts,
@@ -142,6 +118,12 @@ pub use handoff::{
     ExactSolidHandoffError, ExactSolidHandoffFreshness, ExactSolidHandoffReport,
     ExactSurfaceHandoffError, ExactSurfaceHandoffFreshness, ExactSurfaceHandoffReport,
     exact_solid_handoff, exact_surface_handoff,
+};
+pub use hyperlimit::{
+    ApproximationPolicy, ConstructionProvenance, ConstructionProvenanceValidationError,
+    CoplanarProjection, CoplanarTriangleClassification, CoplanarTriangleRelation,
+    CoplanarTriangleValidationError, MeshSource, PredicateUse, SourceProvenance,
+    TriangleDegeneracy, TrianglePredicateReport, classify_coplanar_triangles,
 };
 pub use intersection::{
     MeshFacePairClassification, MeshFacePairRelation, MeshFacePairValidationError,
@@ -158,11 +140,6 @@ pub use package::{
     ExactMeshConsumerDomain, ExactMeshDomainReportRef, ExactMeshDomainSummary,
     ExactMeshDomainSummaryError, ExactMeshDomainSummaryFreshness, ExactMeshHandoffPackage,
     ExactMeshHandoffPackageError, ExactMeshHandoffPackageFreshness, exact_mesh_handoff_package,
-};
-pub use predicates::{TriangleDegeneracy, TrianglePredicateReport};
-pub use provenance::{
-    ApproximationPolicy, ConstructionProvenance, ConstructionProvenanceValidationError, MeshSource,
-    PredicateUse, SourceProvenance,
 };
 pub use readiness::{
     ExactMeshConsumerReadinessError, ExactMeshConsumerReadinessFreshness,

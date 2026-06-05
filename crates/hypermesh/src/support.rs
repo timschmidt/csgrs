@@ -6,7 +6,7 @@
 use hyperlimit::Point3;
 
 use super::mesh::ExactMesh;
-use super::provenance::MeshSource;
+use hyperlimit::MeshSource;
 
 pub use hyperlimit::{
     SupportDopAxis3, SupportDopExpansionKind, SupportDopExpansionReport, SupportDopRefreshReport,

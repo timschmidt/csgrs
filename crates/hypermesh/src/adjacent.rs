@@ -31,11 +31,11 @@ use super::graph::{
 };
 use super::intersection::MeshFacePairRelation;
 use super::mesh::{ExactMesh, ExactMeshValidationError, Triangle};
-use super::provenance::SourceProvenance;
 use super::validation::ValidationPolicy;
 use super::winding::{
     ClosedMeshWindingRelation, classify_mesh_vertices_against_closed_mesh_winding_report,
 };
+use hyperlimit::SourceProvenance;
 use hyperreal::Real;
 
 /// One exact whole-face adjacency consumed by a merged union.
@@ -95,17 +95,13 @@ pub enum FullFaceAdjacentUnionError {
     OutputMesh(ExactMeshValidationError),
     /// The retained output mesh is locally valid but is not a closed manifold.
     OutputNotClosed,
-    /// Recomputing the materialization from source meshes did not reproduce it.
-    SourceReplayMismatch,
 }
 
 impl FullFaceAdjacentUnion {
     /// Validate retained face-pair uniqueness and output mesh state.
     ///
-    /// Local validation cannot prove the deleted faces still come from the
-    /// original sources; [`Self::validate_against_sources`] performs that
-    /// construction artifact must be internally coherent before it can be
-    /// checked against source objects.
+    /// Local validation checks that the retained construction artifact is
+    /// internally coherent before boolean code consumes it.
     pub fn validate(&self) -> Result<(), FullFaceAdjacentUnionError> {
         if self.shared_faces.is_empty() && self.shared_patches.is_empty() {
             return Err(FullFaceAdjacentUnionError::MissingSharedFace);
@@ -140,30 +136,6 @@ impl FullFaceAdjacentUnion {
         }
         Ok(())
     }
-
-    /// Validate this retained union by replaying it from source meshes.
-    ///
-    /// The replay rebuilds the exact intersection graph, rechecks boundary-only
-    /// winding evidence, rediscovers whole-face opposite-orientation pairs, and
-    /// rematerializes the union. Equality to the retained artifact is then the
-    /// certificate that the output still belongs to those exact sources.
-    pub fn validate_against_sources(
-        &self,
-        left: &ExactMesh,
-        right: &ExactMesh,
-    ) -> Result<(), FullFaceAdjacentUnionError> {
-        self.validate()?;
-        let Some(replay) =
-            materialize_full_face_adjacent_union(left, right, self.mesh.validation_policy())
-        else {
-            return Err(FullFaceAdjacentUnionError::SourceReplayMismatch);
-        };
-        if self == &replay {
-            Ok(())
-        } else {
-            Err(FullFaceAdjacentUnionError::SourceReplayMismatch)
-        }
-    }
 }
 
 /// Return whether the sources can be unioned by exact full-face adjacency.
@@ -178,21 +150,6 @@ pub(crate) fn full_face_adjacent_certificate(
 ) -> Option<FullFaceAdjacentCertificate> {
     full_face_adjacent_union_certificate(left, right)
         .map(|inner| FullFaceAdjacentCertificate { inner })
-}
-
-/// Materialize a regularized union across exact coincident whole faces.
-///
-/// Only the vertices belonging to certified shared faces are welded. Other
-/// lower-dimensional contacts remain separate mesh vertices, so this shortcut
-/// does not silently identify point/edge contact that still belongs to the
-/// boundary-policy layer.
-pub fn materialize_full_face_adjacent_union(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    validation: ValidationPolicy,
-) -> Option<FullFaceAdjacentUnion> {
-    let certificate = full_face_adjacent_certificate(left, right)?;
-    materialize_full_face_adjacent_union_from_certificate(left, right, &certificate, validation)
 }
 
 pub(crate) fn materialize_full_face_adjacent_union_from_certificate(
