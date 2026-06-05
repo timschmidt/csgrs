@@ -11397,6 +11397,20 @@ fn exact_preflight_uses_arrangement_for_materializable_winding_blocker() {
     );
     assert!(preflight.blocker.is_none());
 
+    let winding = hypermesh::certify_winding_readiness_report(
+        &left,
+        &right,
+        hypermesh::ExactBooleanOperation::Intersection,
+    )
+    .unwrap();
+    winding.validate().unwrap();
+    winding.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        winding.status,
+        hypermesh::ExactWindingReadinessStatus::Ready
+    );
+    assert!(winding.region_count > 0);
+
     let result = hypermesh::boolean_exact(
         &left,
         &right,

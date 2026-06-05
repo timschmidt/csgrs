@@ -878,6 +878,20 @@ pub fn preflight_boolean_exact(
     }
 
     let winding_report = winding_readiness_report_from_graph(&graph, left, right, operation)?;
+    if winding_report.status == ExactWindingReadinessStatus::Ready
+        && materialize_volumetric_winding_region_plan_from_graph(
+            &graph,
+            left,
+            right,
+            operation,
+            ValidationPolicy::CLOSED,
+        )?
+        .is_some()
+    {
+        return Ok(certified_arrangement_cell_complex_preflight_from_graph(
+            operation, &graph, left, right,
+        ));
+    }
 
     Ok(ExactBooleanPreflight {
         operation,
