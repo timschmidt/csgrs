@@ -49,7 +49,6 @@ pub mod scalar;
 pub mod simplify;
 pub mod solid;
 mod support;
-pub(crate) mod surface;
 pub mod validation;
 pub mod view;
 mod volumetric;
