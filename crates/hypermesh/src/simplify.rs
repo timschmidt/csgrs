@@ -134,15 +134,25 @@ pub fn simplify_selected_cell_complex(
         selected.operation,
         ExactBooleanOperation::SelectedRegions(_)
     ) && !selected.volume_adjacencies.is_empty();
+    let volume_adjacency_faces = volume_adjacency_face_membership(
+        selected.faces.len(),
+        &selected.volume_adjacencies,
+        require_volume_orientations,
+    );
 
     for source_face in selected.selected_faces {
         let mut face = selected.faces[source_face].clone();
+        let require_volume_orientation = require_volume_orientations
+            && volume_adjacency_faces
+                .get(source_face)
+                .copied()
+                .unwrap_or(false);
         match selected_face_reverse_orientation(
             &face,
             source_face,
             selected.operation,
             &selected_face_orientations,
-            require_volume_orientations,
+            require_volume_orientation,
         ) {
             Ok(true) => {
                 face.cell.boundary.reverse();
@@ -557,6 +567,25 @@ fn selected_face_reverse_orientation(
     }
     Ok(operation == ExactBooleanOperation::Difference
         && face.source == ExactCellRegionLabel::RightBoundary)
+}
+
+fn volume_adjacency_face_membership(
+    face_count: usize,
+    volume_adjacencies: &[super::arrangement3d::ArrangementVolumeAdjacency],
+    enabled: bool,
+) -> Vec<bool> {
+    let mut membership = vec![false; face_count];
+    if !enabled {
+        return membership;
+    }
+    for adjacency in volume_adjacencies {
+        for side in &adjacency.oriented_face_sides {
+            if let Some(member) = membership.get_mut(side.face_cell) {
+                *member = true;
+            }
+        }
+    }
+    membership
 }
 
 const fn side_key(side: super::graph::MeshSide) -> usize {
@@ -1332,6 +1361,54 @@ mod tests {
             simplify_selected_cell_complex(selected, ExactRegularizationPolicy::REGULARIZED_SOLID),
             Err(ExactArrangementBlocker::UnresolvedRegionClassification)
         );
+    }
+
+    #[test]
+    fn simplification_allows_label_orientation_outside_volume_adjacency() {
+        let volume_points = [p(0, 0, 0), p(1, 0, 0), p(0, 1, 0)];
+        let label_points = [p(2, 0, 0), p(3, 0, 0), p(2, 1, 0)];
+        let selected = ExactSelectedCellComplex {
+            faces: vec![
+                selected_face_with_source(
+                    MeshSide::Left,
+                    ExactCellRegionLabel::LeftBoundary,
+                    &[0, 1, 2],
+                    &volume_points,
+                ),
+                selected_face_with_source(
+                    MeshSide::Right,
+                    ExactCellRegionLabel::RightBoundary,
+                    &[3, 4, 5],
+                    &label_points,
+                ),
+            ],
+            volume_regions: Vec::new(),
+            volume_adjacencies: vec![dummy_volume_adjacency(0)],
+            lower_dimensional_artifacts: Vec::new(),
+            selected_faces: vec![0, 1],
+            selected_face_orientations: vec![
+                ExactSelectedFaceOrientation {
+                    face: 0,
+                    reverse: false,
+                    from_volume_adjacency: true,
+                },
+                ExactSelectedFaceOrientation {
+                    face: 1,
+                    reverse: false,
+                    from_volume_adjacency: false,
+                },
+            ],
+            selected_volume_regions: Vec::new(),
+            operation: ExactBooleanOperation::Union,
+            blockers: Vec::new(),
+        };
+
+        let simplified =
+            simplify_selected_cell_complex(selected, ExactRegularizationPolicy::REGULARIZED_SOLID)
+                .unwrap();
+
+        assert_eq!(simplified.faces.len(), 2);
+        assert!(simplified.blockers.is_empty());
     }
 
     #[test]

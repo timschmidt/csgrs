@@ -216,7 +216,12 @@ impl ExactLabeledCellComplex {
                 &self.volume_adjacencies,
                 operation,
             ) {
-            selected
+            select_faces_from_volume_adjacencies_and_labels(
+                &self.faces,
+                selected,
+                operation,
+                policy,
+            )
         } else {
             let selected_faces =
                 select_faces_from_face_labels(&self.faces, operation, policy, &mut blockers);
@@ -455,6 +460,43 @@ fn select_faces_from_volume_adjacencies(
     Some((selected_faces, selected))
 }
 
+fn select_faces_from_volume_adjacencies_and_labels(
+    faces: &[ExactCellComplexFace],
+    selected: (Vec<usize>, Vec<ExactSelectedFaceOrientation>),
+    operation: ExactBooleanOperation,
+    policy: ExactRegularizationPolicy,
+) -> (Vec<usize>, Vec<ExactSelectedFaceOrientation>) {
+    let (mut selected_faces, mut selected_face_orientations) = selected;
+    for (face, labeled) in faces.iter().enumerate() {
+        if !matches!(select_face(labeled, operation, policy), Some(true)) {
+            continue;
+        }
+        let label_reverse = operation_reverses_face(labeled, operation);
+        match selected_face_orientations
+            .iter()
+            .position(|orientation| orientation.face == face)
+        {
+            Some(index) if selected_face_orientations[index].reverse == label_reverse => {
+                selected_face_orientations[index].from_volume_adjacency = true;
+            }
+            Some(_) => {}
+            None => {
+                selected_faces.push(face);
+                selected_face_orientations.push(ExactSelectedFaceOrientation {
+                    face,
+                    reverse: label_reverse,
+                    from_volume_adjacency: false,
+                });
+            }
+        }
+    }
+    selected_faces.sort_unstable();
+    selected_faces.dedup();
+    selected_face_orientations.sort_by_key(|orientation| orientation.face);
+    selected_face_orientations.dedup_by_key(|orientation| orientation.face);
+    (selected_faces, selected_face_orientations)
+}
+
 fn selected_face_orientations_from_operation(
     faces: &[ExactCellComplexFace],
     selected_faces: &[usize],
@@ -555,6 +597,13 @@ mod tests {
             opposite: ExactOppositeRegionLabel::Boundary,
             ..labeled_face(side)
         }
+    }
+
+    fn translated_labeled_face(side: MeshSide, x_offset: i64) -> ExactCellComplexFace {
+        let mut face = labeled_face(side);
+        face.cell.boundary_points =
+            vec![p(x_offset, 0, 0), p(x_offset + 1, 0, 0), p(x_offset, 1, 0)];
+        face
     }
 
     #[test]
@@ -698,6 +747,77 @@ mod tests {
                 reverse: false,
                 from_volume_adjacency: true,
             }]
+        );
+        assert!(selected.blockers.is_empty());
+    }
+
+    #[test]
+    fn volume_selection_also_retains_non_conflicting_label_selected_faces() {
+        let volume_face = ExactCellComplexFace {
+            opposite: ExactOppositeRegionLabel::Unknown,
+            ..labeled_face(MeshSide::Left)
+        };
+        let label_face = translated_labeled_face(MeshSide::Right, 2);
+        let labeled = ExactLabeledCellComplex {
+            faces: vec![volume_face, label_face],
+            volume_regions: vec![
+                ExactCellComplexVolumeRegion {
+                    index: 0,
+                    exterior: true,
+                    boundary_shells: vec![0],
+                    in_left: false,
+                    in_right: false,
+                },
+                ExactCellComplexVolumeRegion {
+                    index: 1,
+                    exterior: false,
+                    boundary_shells: vec![0],
+                    in_left: true,
+                    in_right: false,
+                },
+            ],
+            volume_adjacencies: vec![ArrangementVolumeAdjacency {
+                shell_region: 0,
+                exterior_volume: 0,
+                interior_volume: 1,
+                separating_face_cells: vec![0],
+                oriented_face_sides: vec![ArrangementVolumeFaceSide {
+                    face_cell: 0,
+                    source: MeshSide::Left,
+                    source_face: 0,
+                    boundary: [0, 1, 2]
+                        .into_iter()
+                        .map(|vertex| ArrangementFaceCellNode::SourceVertex {
+                            side: MeshSide::Left,
+                            vertex,
+                        })
+                        .collect(),
+                    exterior_volume: 0,
+                    interior_volume: 1,
+                }],
+            }],
+            lower_dimensional_artifacts: Vec::new(),
+            blockers: Vec::new(),
+        };
+
+        let selected = labeled.select(ExactBooleanOperation::Union).unwrap();
+
+        assert_eq!(selected.selected_volume_regions, vec![1]);
+        assert_eq!(selected.selected_faces, vec![0, 1]);
+        assert_eq!(
+            selected.selected_face_orientations,
+            vec![
+                ExactSelectedFaceOrientation {
+                    face: 0,
+                    reverse: false,
+                    from_volume_adjacency: true,
+                },
+                ExactSelectedFaceOrientation {
+                    face: 1,
+                    reverse: false,
+                    from_volume_adjacency: false,
+                }
+            ]
         );
         assert!(selected.blockers.is_empty());
     }
