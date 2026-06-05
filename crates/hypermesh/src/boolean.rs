@@ -687,6 +687,13 @@ pub fn preflight_boolean_exact(
             coplanar_volumetric_evidence: None,
         });
     }
+    if planar_report.status == ExactPlanarArrangementStatus::AlreadyMaterialized
+        && let Some(preflight) = certified_arrangement_cell_complex_preflight_if_materialized(
+            operation, &graph, left, right,
+        )?
+    {
+        return Ok(preflight);
+    }
     let eager_axis_aligned_cell_support = match operation {
         ExactBooleanOperation::Union if has_axis_aligned_box_cell_union(left, right) => {
             Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
@@ -4983,6 +4990,13 @@ fn planar_arrangement_report_from_graph(
         ExactPlanarArrangementStatus::AlreadyMaterialized
     } else if graph_requires_boundary_policy(graph, left, right)? {
         ExactPlanarArrangementStatus::BoundaryPolicyRequired
+    } else if graph_requires_planar_arrangement(graph)
+        && certified_arrangement_cell_complex_preflight_if_materialized(
+            operation, graph, left, right,
+        )?
+        .is_some()
+    {
+        ExactPlanarArrangementStatus::AlreadyMaterialized
     } else if graph_requires_planar_arrangement(graph) {
         ExactPlanarArrangementStatus::Required
     } else {
