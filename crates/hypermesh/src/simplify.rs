@@ -224,6 +224,7 @@ struct DirectedBoundaryEdge {
     from: ArrangementFaceCellNode,
     to: ArrangementFaceCellNode,
     from_point: Point3,
+    to_point: Point3,
 }
 
 struct MergeSameLabelResult {
@@ -326,10 +327,11 @@ fn merge_same_label_group(
                 from: face.face.cell.boundary[index].clone(),
                 to: face.face.cell.boundary[next].clone(),
                 from_point: face.face.cell.boundary_points[index].clone(),
+                to_point: face.face.cell.boundary_points[next].clone(),
             };
             if let Some(reverse) = boundary_edges
                 .iter()
-                .position(|existing| existing.from == edge.to && existing.to == edge.from)
+                .position(|existing| exact_edges_are_reversed(existing, &edge))
             {
                 boundary_edges.remove(reverse);
                 interior_edges_removed += 1;
@@ -351,23 +353,27 @@ fn merge_same_label_group(
         let first = boundary_edges.remove(0);
         let start = first.from.clone();
         let mut current = first.to.clone();
+        let start_point = first.from_point.clone();
+        let mut current_point = first.to_point.clone();
         let mut boundary = vec![first.from];
         let mut boundary_points = vec![first.from_point];
         let max_steps = boundary_edges.len().saturating_add(1);
         let mut guard = 0usize;
-        while current != start {
+        while !same_node_or_point(&current, &current_point, &start, &start_point) {
             guard += 1;
             if guard > max_steps {
                 return Err(ExactArrangementBlocker::NonManifoldCellComplex);
             }
-            let Some(next_index) = boundary_edges.iter().position(|edge| edge.from == current)
-            else {
+            let Some(next_index) = boundary_edges.iter().position(|edge| {
+                same_node_or_point(&edge.from, &edge.from_point, &current, &current_point)
+            }) else {
                 return Err(ExactArrangementBlocker::NonManifoldCellComplex);
             };
             let next = boundary_edges.remove(next_index);
             boundary.push(next.from.clone());
             boundary_points.push(next.from_point.clone());
             current = next.to;
+            current_point = next.to_point;
         }
         loops.push((boundary, boundary_points));
     }
@@ -386,6 +392,21 @@ fn merge_same_label_group(
         })
         .collect();
     Ok((merged, interior_edges_removed))
+}
+
+fn exact_edges_are_reversed(left: &DirectedBoundaryEdge, right: &DirectedBoundaryEdge) -> bool {
+    (left.from == right.to && left.to == right.from)
+        || (point3_equal(&left.from_point, &right.to_point).value() == Some(true)
+            && point3_equal(&left.to_point, &right.from_point).value() == Some(true))
+}
+
+fn same_node_or_point(
+    left_node: &ArrangementFaceCellNode,
+    left_point: &Point3,
+    right_node: &ArrangementFaceCellNode,
+    right_point: &Point3,
+) -> bool {
+    left_node == right_node || point3_equal(left_point, right_point).value() == Some(true)
 }
 
 fn remove_consecutive_duplicate_nodes(face: &mut ExactCellComplexFace) -> usize {
@@ -1154,6 +1175,56 @@ mod tests {
         let mesh = simplified.triangulate().unwrap();
         assert_eq!(mesh.vertices().len(), 4);
         assert_eq!(mesh.triangles().len(), 2);
+    }
+
+    #[test]
+    fn simplification_merges_internal_edge_with_distinct_exact_nodes() {
+        let left = [p(0, 0, 0), p(1, 0, 0), p(0, 1, 0)];
+        let right = [p(0, 1, 0), p(1, 0, 0), p(1, 1, 0)];
+        let selected = ExactSelectedCellComplex {
+            faces: vec![
+                selected_face_with_source(
+                    MeshSide::Left,
+                    ExactCellRegionLabel::LeftBoundary,
+                    &[0, 1, 2],
+                    &left,
+                ),
+                selected_face_with_source(
+                    MeshSide::Left,
+                    ExactCellRegionLabel::LeftBoundary,
+                    &[3, 4, 5],
+                    &right,
+                ),
+            ],
+            volume_regions: Vec::new(),
+            volume_adjacencies: Vec::new(),
+            lower_dimensional_artifacts: Vec::new(),
+            selected_faces: vec![0, 1],
+            selected_face_orientations: vec![
+                ExactSelectedFaceOrientation {
+                    face: 0,
+                    reverse: false,
+                    from_volume_adjacency: false,
+                },
+                ExactSelectedFaceOrientation {
+                    face: 1,
+                    reverse: false,
+                    from_volume_adjacency: false,
+                },
+            ],
+            selected_volume_regions: Vec::new(),
+            operation: ExactBooleanOperation::Union,
+            blockers: Vec::new(),
+        };
+
+        let simplified =
+            simplify_selected_cell_complex(selected, ExactRegularizationPolicy::REGULARIZED_SOLID)
+                .unwrap();
+
+        assert_eq!(simplified.faces.len(), 1);
+        assert_eq!(simplified.interior_edges_removed, 1);
+        assert!(simplified.blockers.is_empty());
+        assert_eq!(simplified.faces[0].face.cell.boundary_points.len(), 4);
     }
 
     #[test]
