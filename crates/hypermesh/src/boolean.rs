@@ -5099,6 +5099,24 @@ fn winding_readiness_report_from_graph(
     }
     let planar_report = planar_arrangement_report_from_graph(graph, left, right, operation)?;
     if planar_report.is_required() {
+        if certified_arrangement_cell_complex_preflight_if_materialized(
+            operation, graph, left, right,
+        )?
+        .is_some()
+        {
+            return Ok(winding_readiness_report(
+                operation,
+                ExactWindingReadinessStatus::PlanarArrangementAlreadyMaterialized,
+                graph_had_unknowns,
+                graph.face_pairs.len(),
+                graph.event_count(),
+                0,
+                Vec::new(),
+                counts.into_blocker(ExactBooleanBlockerKind::NeedsPlanarArrangement),
+                planar_report.arrangement_readiness,
+                None,
+            ));
+        }
         return Ok(winding_readiness_report(
             operation,
             ExactWindingReadinessStatus::PlanarArrangementRequired,
