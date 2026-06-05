@@ -877,6 +877,15 @@ pub fn preflight_boolean_exact(
         });
     }
 
+    if support == ExactBooleanSupport::RequiresCertifiedWinding
+        && (arrangement_cell_complex_materializes_for_preflight(left, right, operation, false)?
+            || arrangement_cell_complex_materializes_for_preflight(left, right, operation, true)?)
+    {
+        return Ok(certified_arrangement_cell_complex_preflight_from_graph(
+            operation, &graph, left, right,
+        ));
+    }
+
     let winding_report = winding_readiness_report_from_graph(&graph, left, right, operation)?;
     if winding_report.status == ExactWindingReadinessStatus::Ready
         && materialize_volumetric_winding_region_plan_from_graph(
