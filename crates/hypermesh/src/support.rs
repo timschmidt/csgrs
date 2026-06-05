@@ -64,7 +64,8 @@ impl SupportDop3 {
 
     /// Validate this k-DOP against the current exact mesh.
     pub fn validate_against_mesh(&self, mesh: &ExactMesh) -> Result<(), SupportDopValidationError> {
-        validate_support_dop_against_mesh(self, mesh)
+        let points = mesh.vertices().iter().cloned().collect::<Vec<Point3>>();
+        self.validate_against_points(&points)
     }
 
     /// Refresh slabs after a bounded set of point updates.
@@ -108,15 +109,6 @@ pub fn support_dop_for_mesh(
         support_dop_expansion_for_mesh_source(mesh.provenance().source.source, axes.len());
     WitnessedSupportDop3::from_points_with_expansion(&points, axes, expansion)
         .map(SupportDop3::from)
-}
-
-/// Validate a retained support-DOP against the current exact mesh.
-pub fn validate_support_dop_against_mesh(
-    support: &SupportDop3,
-    mesh: &ExactMesh,
-) -> Result<(), SupportDopValidationError> {
-    let points = mesh.vertices().iter().cloned().collect::<Vec<Point3>>();
-    support.validate_against_points(&points)
 }
 
 fn support_dop_expansion_for_mesh_source(

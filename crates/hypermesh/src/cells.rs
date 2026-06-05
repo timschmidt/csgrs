@@ -53,9 +53,6 @@ struct CoplanarCellEdgePoint {
     point: Point3,
 }
 
-/// Full-face cell plan used by arrangement-materialized booleans.
-pub type ExactFaceCellTriangulationPlan = (ExactFaceRegionPlan, Vec<FaceRegionTriangulation>);
-
 /// Triangulate every source face into exact constrained planar cells.
 ///
 /// The returned region plan stores the exact 3D cell vertices retained for
@@ -71,7 +68,7 @@ pub fn triangulate_all_face_cells_with_cdt(
     graph: &ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
-) -> hypertri::Result<Option<ExactFaceCellTriangulationPlan>> {
+) -> hypertri::Result<Option<(ExactFaceRegionPlan, Vec<FaceRegionTriangulation>)>> {
     let topology = graph.split_topology_plan();
     if topology.unresolved_equalities != 0
         || topology.unresolved_vertex_lookups != 0

@@ -232,23 +232,6 @@ pub enum ExactVolumetricRegionError {
     SourceReplayMismatch,
 }
 
-/// Classify the first triangulated split cell against a closed target mesh.
-///
-/// This compatibility entry point classifies the first certified
-/// nondegenerate triangle emitted by `hypertri` for the split region. New
-/// arrangement-materialized booleans classify every triangle through
-/// [`classify_triangulated_regions_against_opposite_meshes`]. The centroid is
-/// built as rational `Real` arithmetic, then classified by
-/// [`classify_point_against_closed_mesh_winding_report`]. No primitive-float
-/// the proposal point and the winding decision inside exact arithmetic.
-pub fn classify_triangulated_region_against_closed_mesh(
-    triangulation: &FaceRegionTriangulation,
-    target: &ExactMesh,
-) -> Result<ExactVolumetricRegionClassification, ExactVolumetricRegionError> {
-    let triangle = first_triangle(triangulation)?;
-    classify_triangulated_region_triangle_against_closed_mesh(triangulation, triangle, target)
-}
-
 /// Classify one exact triangulated source-face cell against a closed mesh.
 ///
 /// The representative search starts with the exact centroid of the supplied
@@ -324,17 +307,6 @@ fn relation_from_winding(relation: ClosedMeshWindingRelation) -> ExactVolumetric
         ClosedMeshWindingRelation::Boundary => ExactVolumetricRegionRelation::Boundary,
         ClosedMeshWindingRelation::Unknown => ExactVolumetricRegionRelation::Unknown,
     }
-}
-
-fn first_triangle(
-    triangulation: &FaceRegionTriangulation,
-) -> Result<[usize; 3], ExactVolumetricRegionError> {
-    let triangle = triangulation
-        .triangles
-        .chunks_exact(3)
-        .next()
-        .ok_or(ExactVolumetricRegionError::EmptyTriangulation)?;
-    Ok([triangle[0], triangle[1], triangle[2]])
 }
 
 fn triangle_points(
