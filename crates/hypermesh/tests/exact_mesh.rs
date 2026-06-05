@@ -11398,6 +11398,98 @@ fn exact_regularized_closed_boolean_handles_mixed_solid_and_open_surface() {
 }
 
 #[test]
+fn exact_closed_boolean_decomposes_disconnected_components_against_solid() {
+    let two_tets = combine_exact_meshes(
+        &[
+            tetrahedron_i64([0, 0, 0], [2, 0, 0], [0, 2, 0], [0, 0, 2]),
+            tetrahedron_i64([3, 0, 0], [5, 0, 0], [3, 2, 0], [3, 0, 2]),
+        ],
+        "two disconnected tetrahedra",
+    );
+    let shifted_box = axis_aligned_box_i64([2, 1, 1], [6, 5, 5]);
+    assert!(two_tets.facts().mesh.closed_manifold);
+    assert!(shifted_box.facts().mesh.closed_manifold);
+
+    for operation in [
+        hypermesh::ExactBooleanOperation::Union,
+        hypermesh::ExactBooleanOperation::Intersection,
+        hypermesh::ExactBooleanOperation::Difference,
+    ] {
+        let preflight = hypermesh::preflight_boolean_exact(&two_tets, &shifted_box, operation)
+            .expect("disconnected component preflight should certify native coverage");
+        preflight.validate().unwrap();
+        preflight
+            .validate_against_sources(&two_tets, &shifted_box)
+            .unwrap();
+        assert_eq!(
+            preflight.support,
+            hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
+        );
+        assert!(preflight.blocker.is_none());
+
+        let result =
+            hypermesh::boolean_exact(&two_tets, &shifted_box, operation, ValidationPolicy::CLOSED)
+                .expect("disconnected component boolean should materialize");
+        result.validate().unwrap();
+        result
+            .validate_operation_against_sources(
+                &two_tets,
+                &shifted_box,
+                operation,
+                ValidationPolicy::CLOSED,
+                hypermesh::ExactBoundaryBooleanPolicy::Reject,
+            )
+            .unwrap();
+        assert_eq!(
+            result.kind,
+            hypermesh::ExactBooleanResultKind::CertifiedShortcut {
+                shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
+            }
+        );
+        assert_closed_clean(&result.mesh);
+    }
+
+    for operation in [
+        hypermesh::ExactBooleanOperation::Union,
+        hypermesh::ExactBooleanOperation::Intersection,
+        hypermesh::ExactBooleanOperation::Difference,
+    ] {
+        let preflight = hypermesh::preflight_boolean_exact(&shifted_box, &two_tets, operation)
+            .expect("reverse disconnected component preflight should certify native coverage");
+        preflight.validate().unwrap();
+        preflight
+            .validate_against_sources(&shifted_box, &two_tets)
+            .unwrap();
+        assert_eq!(
+            preflight.support,
+            hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
+        );
+        assert!(preflight.blocker.is_none());
+
+        let result =
+            hypermesh::boolean_exact(&shifted_box, &two_tets, operation, ValidationPolicy::CLOSED)
+                .expect("reverse disconnected component boolean should materialize");
+        result.validate().unwrap();
+        result
+            .validate_operation_against_sources(
+                &shifted_box,
+                &two_tets,
+                operation,
+                ValidationPolicy::CLOSED,
+                hypermesh::ExactBoundaryBooleanPolicy::Reject,
+            )
+            .unwrap();
+        assert_eq!(
+            result.kind,
+            hypermesh::ExactBooleanResultKind::CertifiedShortcut {
+                shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
+            }
+        );
+        assert_closed_clean(&result.mesh);
+    }
+}
+
+#[test]
 fn exact_closed_regularization_drops_open_surface_only_named_booleans() {
     let left = ExactMesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 5, 0, 0, 0, 5, 1],

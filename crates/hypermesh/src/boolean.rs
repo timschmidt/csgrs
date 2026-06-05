@@ -730,6 +730,31 @@ pub fn preflight_boolean_exact(
     {
         return Ok(certified_shortcut_preflight(operation, convex_support));
     }
+    if support == ExactBooleanSupport::RequiresCertifiedWinding
+        && boolean_disconnected_closed_component_meshes(
+            left,
+            right,
+            operation,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            ExactBoundaryBooleanPolicy::Reject,
+        )?
+        .is_some()
+    {
+        return Ok(ExactBooleanPreflight {
+            operation,
+            support: ExactBooleanSupport::CertifiedArrangementCellComplex,
+            graph_had_unknowns,
+            retained_face_pairs,
+            retained_events,
+            region_count: 0,
+            region_classifications: Vec::new(),
+            blocker: None,
+            arrangement_readiness: None,
+            coplanar_volumetric_evidence: coplanar_volumetric_evidence_if_required(
+                &graph, left, right,
+            ),
+        });
+    }
     if graph_requires_coplanar_volumetric_cells_for_sources(&graph, left, right) {
         if arrangement_volume_graph_materializes(left, right, operation)?
             || arrangement_cell_complex_materializes_for_preflight(left, right, operation, false)?
@@ -1350,6 +1375,15 @@ pub fn boolean_exact_with_boundary_policy(
     }
     if meshes_are_certified_same_surface(left, right) {
         return boolean_same_surface_meshes(left, operation, validation);
+    }
+    if let Some(result) = boolean_disconnected_closed_component_meshes(
+        left,
+        right,
+        operation,
+        validation,
+        boundary_policy,
+    )? {
+        return Ok(result);
     }
     if let Some(result) =
         boolean_arrangement_cell_complex_meshes(left, right, operation, validation, true)?
@@ -5696,6 +5730,442 @@ fn copy_mesh(
         mesh.vertices().to_vec(),
         mesh.triangles().to_vec(),
         super::provenance::SourceProvenance::exact(label),
+        validation,
+    )
+}
+
+fn boolean_disconnected_closed_component_meshes(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+    boundary_policy: ExactBoundaryBooleanPolicy,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+        || !left.facts().mesh.closed_manifold
+        || !right.facts().mesh.closed_manifold
+    {
+        return Ok(None);
+    }
+
+    let left_components = closed_mesh_edge_components(left)?;
+    let right_components = closed_mesh_edge_components(right)?;
+    if left_components.len() <= 1 && right_components.len() <= 1 {
+        return Ok(None);
+    }
+    // Edge-connected shells only decompose as independent solids when every
+    // pair is certified outside the other. Nested shells, such as cavities,
+    // remain one volume problem for the arrangement/orthogonal cell paths.
+    if (left_components.len() > 1 && !closed_components_are_mutually_separated(&left_components)?)
+        || (right_components.len() > 1
+            && !closed_components_are_mutually_separated(&right_components)?)
+    {
+        return Ok(None);
+    }
+
+    let mesh = match operation {
+        ExactBooleanOperation::Union => disconnected_closed_union_mesh(
+            left,
+            right,
+            &left_components,
+            &right_components,
+            validation,
+            boundary_policy,
+        )?,
+        ExactBooleanOperation::Intersection => disconnected_closed_intersection_mesh(
+            left,
+            right,
+            &left_components,
+            &right_components,
+            validation,
+            boundary_policy,
+        )?,
+        ExactBooleanOperation::Difference => disconnected_closed_difference_mesh(
+            left,
+            right,
+            &left_components,
+            &right_components,
+            validation,
+            boundary_policy,
+        )?,
+        ExactBooleanOperation::SelectedRegions(_) => unreachable!("handled above"),
+    };
+
+    Ok(mesh.map(|mesh| {
+        certified_shortcut_result(mesh, ExactBooleanShortcutKind::ArrangementCellComplex)
+    }))
+}
+
+fn disconnected_closed_union_mesh(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    left_components: &[ExactMesh],
+    right_components: &[ExactMesh],
+    validation: ValidationPolicy,
+    boundary_policy: ExactBoundaryBooleanPolicy,
+) -> Result<Option<ExactMesh>, MeshError> {
+    if left_components.len() > 1 {
+        let (mut separated, non_separated) =
+            partition_components_by_separation(left_components, right)?;
+        if non_separated.len() > 1 {
+            return Ok(None);
+        }
+        if let Some(component) = non_separated.into_iter().next() {
+            let result = boolean_exact_with_boundary_policy(
+                &component,
+                right,
+                ExactBooleanOperation::Union,
+                validation,
+                boundary_policy,
+            )?;
+            separated.push(result.mesh);
+        } else {
+            separated.push(copy_mesh(
+                right,
+                "exact disconnected component union keeps separated right",
+                validation,
+            )?);
+        }
+        return concatenate_mesh_sequence(
+            separated,
+            "exact disconnected closed-component union",
+            validation,
+        )
+        .map(Some);
+    }
+
+    if right_components.len() > 1 {
+        let (mut separated, non_separated) =
+            partition_components_by_separation(right_components, left)?;
+        if non_separated.len() > 1 {
+            return Ok(None);
+        }
+        if let Some(component) = non_separated.into_iter().next() {
+            let result = boolean_exact_with_boundary_policy(
+                left,
+                &component,
+                ExactBooleanOperation::Union,
+                validation,
+                boundary_policy,
+            )?;
+            separated.push(result.mesh);
+        } else {
+            separated.push(copy_mesh(
+                left,
+                "exact disconnected component union keeps separated left",
+                validation,
+            )?);
+        }
+        return concatenate_mesh_sequence(
+            separated,
+            "exact disconnected closed-component union",
+            validation,
+        )
+        .map(Some);
+    }
+
+    Ok(None)
+}
+
+fn disconnected_closed_intersection_mesh(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    left_components: &[ExactMesh],
+    right_components: &[ExactMesh],
+    validation: ValidationPolicy,
+    boundary_policy: ExactBoundaryBooleanPolicy,
+) -> Result<Option<ExactMesh>, MeshError> {
+    if left_components.len() > 1 {
+        let mut pieces = Vec::new();
+        for component in left_components {
+            if meshes_are_certified_closed_separated(component, right)? {
+                continue;
+            }
+            let result = boolean_exact_with_boundary_policy(
+                component,
+                right,
+                ExactBooleanOperation::Intersection,
+                validation,
+                boundary_policy,
+            )?;
+            if !result.mesh.triangles().is_empty() {
+                pieces.push(result.mesh);
+            }
+        }
+        return concatenate_mesh_sequence(
+            pieces,
+            "exact disconnected closed-component intersection",
+            validation,
+        )
+        .map(Some);
+    }
+
+    if right_components.len() > 1 {
+        let mut pieces = Vec::new();
+        for component in right_components {
+            if meshes_are_certified_closed_separated(left, component)? {
+                continue;
+            }
+            let result = boolean_exact_with_boundary_policy(
+                left,
+                component,
+                ExactBooleanOperation::Intersection,
+                validation,
+                boundary_policy,
+            )?;
+            if !result.mesh.triangles().is_empty() {
+                pieces.push(result.mesh);
+            }
+        }
+        return concatenate_mesh_sequence(
+            pieces,
+            "exact disconnected closed-component intersection",
+            validation,
+        )
+        .map(Some);
+    }
+
+    Ok(None)
+}
+
+fn disconnected_closed_difference_mesh(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    left_components: &[ExactMesh],
+    right_components: &[ExactMesh],
+    validation: ValidationPolicy,
+    boundary_policy: ExactBoundaryBooleanPolicy,
+) -> Result<Option<ExactMesh>, MeshError> {
+    if right_components.len() > 1 {
+        let mut current = copy_mesh(
+            left,
+            "exact disconnected component difference input",
+            validation,
+        )?;
+        for component in right_components {
+            if current.triangles().is_empty()
+                || meshes_are_certified_closed_separated(&current, component)?
+            {
+                continue;
+            }
+            current = boolean_exact_with_boundary_policy(
+                &current,
+                component,
+                ExactBooleanOperation::Difference,
+                validation,
+                boundary_policy,
+            )?
+            .mesh;
+        }
+        return Ok(Some(current));
+    }
+
+    if left_components.len() > 1 {
+        let mut pieces = Vec::new();
+        for component in left_components {
+            let piece = if meshes_are_certified_closed_separated(component, right)? {
+                copy_mesh(
+                    component,
+                    "exact disconnected component difference keeps separated left component",
+                    validation,
+                )?
+            } else {
+                boolean_exact_with_boundary_policy(
+                    component,
+                    right,
+                    ExactBooleanOperation::Difference,
+                    validation,
+                    boundary_policy,
+                )?
+                .mesh
+            };
+            if !piece.triangles().is_empty() {
+                pieces.push(piece);
+            }
+        }
+        return concatenate_mesh_sequence(
+            pieces,
+            "exact disconnected closed-component difference",
+            validation,
+        )
+        .map(Some);
+    }
+
+    Ok(None)
+}
+
+fn partition_components_by_separation(
+    components: &[ExactMesh],
+    other: &ExactMesh,
+) -> Result<(Vec<ExactMesh>, Vec<ExactMesh>), MeshError> {
+    let mut separated = Vec::new();
+    let mut non_separated = Vec::new();
+    for component in components {
+        if meshes_are_certified_closed_separated(component, other)? {
+            separated.push(component.clone());
+        } else {
+            non_separated.push(component.clone());
+        }
+    }
+    Ok((separated, non_separated))
+}
+
+fn closed_components_are_mutually_separated(components: &[ExactMesh]) -> Result<bool, MeshError> {
+    for left_index in 0..components.len() {
+        for right_index in (left_index + 1)..components.len() {
+            if !meshes_are_certified_closed_separated(
+                &components[left_index],
+                &components[right_index],
+            )? {
+                return Ok(false);
+            }
+        }
+    }
+    Ok(true)
+}
+
+fn meshes_are_certified_closed_separated(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Result<bool, MeshError> {
+    if meshes_are_certified_bounds_disjoint(left, right) {
+        return Ok(true);
+    }
+    if !left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold {
+        return Ok(false);
+    }
+
+    let graph = build_intersection_graph(left, right)?;
+    if validate_graph_source_handoff(&graph, left, right).is_err() {
+        return Ok(false);
+    }
+    let Some(shortcut) =
+        certified_closed_shell_no_intersection_shortcut_from_graph(&graph, left, right)
+            .ok()
+            .flatten()
+    else {
+        return Ok(false);
+    };
+
+    Ok(matches!(
+        (
+            shortcut.left_in_right.relation,
+            shortcut.right_in_left.relation
+        ),
+        (
+            ClosedMeshWindingMeshRelation::Outside,
+            ClosedMeshWindingMeshRelation::Outside
+        )
+    ))
+}
+
+fn closed_mesh_edge_components(mesh: &ExactMesh) -> Result<Vec<ExactMesh>, MeshError> {
+    if mesh.triangles().is_empty() {
+        return Ok(Vec::new());
+    }
+
+    let mut edge_faces = BTreeMap::<(usize, usize), Vec<usize>>::new();
+    for (face_index, triangle) in mesh.triangles().iter().enumerate() {
+        let [a, b, c] = triangle.0;
+        for (u, v) in [(a, b), (b, c), (c, a)] {
+            edge_faces
+                .entry(if u <= v { (u, v) } else { (v, u) })
+                .or_default()
+                .push(face_index);
+        }
+    }
+
+    let mut face_neighbors = vec![Vec::<usize>::new(); mesh.triangles().len()];
+    for faces in edge_faces.values() {
+        for &left_face in faces {
+            for &right_face in faces {
+                if left_face != right_face {
+                    face_neighbors[left_face].push(right_face);
+                }
+            }
+        }
+    }
+
+    let mut visited = vec![false; mesh.triangles().len()];
+    let mut components = Vec::new();
+    for start in 0..mesh.triangles().len() {
+        if visited[start] {
+            continue;
+        }
+        let mut stack = vec![start];
+        visited[start] = true;
+        let mut faces = Vec::new();
+        while let Some(face) = stack.pop() {
+            faces.push(face);
+            for &neighbor in &face_neighbors[face] {
+                if !visited[neighbor] {
+                    visited[neighbor] = true;
+                    stack.push(neighbor);
+                }
+            }
+        }
+        faces.sort_unstable();
+        components.push(mesh_component_from_faces(mesh, &faces)?);
+    }
+
+    Ok(components)
+}
+
+fn mesh_component_from_faces(mesh: &ExactMesh, faces: &[usize]) -> Result<ExactMesh, MeshError> {
+    let mut vertex_map = BTreeMap::<usize, usize>::new();
+    for &face in faces {
+        for vertex in mesh.triangles()[face].0 {
+            if !vertex_map.contains_key(&vertex) {
+                let next = vertex_map.len();
+                vertex_map.insert(vertex, next);
+            }
+        }
+    }
+
+    let mut vertices =
+        vec![Point3::new(Real::from(0), Real::from(0), Real::from(0)); vertex_map.len()];
+    for (&global, &local) in &vertex_map {
+        vertices[local] = mesh.vertices()[global].clone();
+    }
+
+    let triangles = faces
+        .iter()
+        .map(|&face| {
+            let [a, b, c] = mesh.triangles()[face].0;
+            Triangle([vertex_map[&a], vertex_map[&b], vertex_map[&c]])
+        })
+        .collect::<Vec<_>>();
+
+    ExactMesh::new_with_policy(
+        vertices,
+        triangles,
+        SourceProvenance::exact("exact closed mesh connected component"),
+        mesh.validation_policy(),
+    )
+}
+
+fn concatenate_mesh_sequence(
+    meshes: Vec<ExactMesh>,
+    label: &'static str,
+    validation: ValidationPolicy,
+) -> Result<ExactMesh, MeshError> {
+    let mut vertices = Vec::new();
+    let mut triangles = Vec::new();
+    for mesh in meshes
+        .into_iter()
+        .filter(|mesh| !mesh.triangles().is_empty())
+    {
+        let offset = vertices.len();
+        vertices.extend_from_slice(mesh.vertices());
+        triangles.extend(mesh.triangles().iter().map(|triangle| {
+            let [a, b, c] = triangle.0;
+            Triangle([a + offset, b + offset, c + offset])
+        }));
+    }
+    ExactMesh::new_with_policy(
+        vertices,
+        triangles,
+        SourceProvenance::exact(label),
         validation,
     )
 }
