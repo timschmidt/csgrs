@@ -2281,6 +2281,9 @@ fn run_arrangement_cell_complex_attempt(
     };
     attempt.stage = ExactArrangementBooleanStage::Materialized;
     attempt.materialized_shortcut = Some(ExactBooleanShortcutKind::ArrangementCellComplex);
+    if volume_resolves_region_classification {
+        attempt.arrangement_blockers = 0;
+    }
     Ok(ArrangementCellComplexOutcome::Materialized(
         certified_shortcut_result(mesh, ExactBooleanShortcutKind::ArrangementCellComplex),
         attempt,
