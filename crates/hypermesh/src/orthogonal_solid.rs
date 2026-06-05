@@ -203,6 +203,23 @@ pub(crate) fn has_empty_axis_aligned_orthogonal_solid_cell_intersection(
         .is_some_and(|selected_count| selected_count == 0)
 }
 
+/// Return whether exact orthogonal occupancy certifies a positive-volume
+/// intersection.
+pub(crate) fn has_non_empty_axis_aligned_orthogonal_solid_cell_intersection(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> bool {
+    certify_orthogonal_cell_inputs(left, right)
+        .as_ref()
+        .and_then(|inputs| {
+            orthogonal_cell_selected_count(
+                inputs,
+                AxisAlignedOrthogonalSolidOperation::Intersection,
+            )
+        })
+        .is_some_and(|selected_count| selected_count > 0)
+}
+
 /// Return whether one mesh certifies as an exact orthogonal solid cell complex.
 pub(crate) fn is_axis_aligned_orthogonal_solid(mesh: &ExactMesh) -> bool {
     certify_axis_aligned_orthogonal_solid(mesh).is_some()

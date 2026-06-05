@@ -7489,6 +7489,55 @@ fn exact_axis_aligned_coplanar_volumetric_box_union_materializes_orthogonal_cell
 }
 
 #[test]
+fn exact_axis_aligned_offset_box_union_preempts_winding_report() {
+    let left = axis_aligned_box_i64([0, 0, 0], [4, 4, 4]);
+    let right = axis_aligned_box_i64([2, 2, 2], [6, 6, 6]);
+
+    let preflight =
+        hypermesh::preflight_boolean_exact(&left, &right, hypermesh::ExactBooleanOperation::Union)
+            .unwrap();
+    preflight.validate().unwrap();
+    preflight.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        preflight.support,
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
+    );
+    assert!(preflight.blocker.is_none());
+
+    let union = hypermesh::boolean_exact(
+        &left,
+        &right,
+        hypermesh::ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap();
+    union.validate().unwrap();
+    union
+        .validate_operation_against_sources(
+            &left,
+            &right,
+            hypermesh::ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+            hypermesh::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        union.kind,
+        hypermesh::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
+        }
+    );
+    assert!(union.mesh.facts().mesh.closed_manifold);
+    let bounds = union.mesh.bounds().mesh.as_ref().unwrap();
+    assert_real_eq(&bounds.min.x, &Real::from(0));
+    assert_real_eq(&bounds.max.x, &Real::from(6));
+    assert_real_eq(&bounds.min.y, &Real::from(0));
+    assert_real_eq(&bounds.max.y, &Real::from(6));
+    assert_real_eq(&bounds.min.z, &Real::from(0));
+    assert_real_eq(&bounds.max.z, &Real::from(6));
+}
+
+#[test]
 fn exact_axis_aligned_coplanar_volumetric_box_intersection_materializes_box_shortcut() {
     let left = axis_aligned_box_i64([0, 0, 0], [2, 2, 2]);
     let right = axis_aligned_box_i64([1, 1, 0], [3, 3, 2]);

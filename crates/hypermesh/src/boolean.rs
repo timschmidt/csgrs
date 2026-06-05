@@ -57,6 +57,7 @@ use super::orthogonal_solid::{
     AxisAlignedOrthogonalSolidOperation, axis_aligned_orthogonal_solid_cell_plan,
     has_axis_aligned_orthogonal_solid_cells,
     has_empty_axis_aligned_orthogonal_solid_cell_intersection,
+    has_non_empty_axis_aligned_orthogonal_solid_cell_intersection,
     materialize_axis_aligned_orthogonal_solid_cell_plan,
     orthogonal_cell_plan_is_single_rectangular_block,
 };
@@ -526,6 +527,28 @@ pub fn preflight_boolean_exact(
             certified_convex_boolean_support_from_graph(&graph, left, right, operation)?
     {
         return Ok(certified_shortcut_preflight(operation, convex_support));
+    }
+    if support == ExactBooleanSupport::RequiresCertifiedWinding
+        && operation == ExactBooleanOperation::Union
+        && has_non_empty_axis_aligned_orthogonal_solid_cell_intersection(left, right)
+        && !graph_requires_coplanar_volumetric_cells_for_sources(&graph, left, right)
+        && let Some(solid_operation) = axis_aligned_orthogonal_solid_operation(operation)
+        && has_axis_aligned_orthogonal_solid_cells(left, right, solid_operation)
+    {
+        return Ok(ExactBooleanPreflight {
+            operation,
+            support: ExactBooleanSupport::CertifiedArrangementCellComplex,
+            graph_had_unknowns,
+            retained_face_pairs,
+            retained_events,
+            region_count: 0,
+            region_classifications: Vec::new(),
+            blocker: None,
+            arrangement_readiness: None,
+            coplanar_volumetric_evidence: coplanar_volumetric_evidence_if_required(
+                &graph, left, right,
+            ),
+        });
     }
     if support == ExactBooleanSupport::RequiresCertifiedWinding
         && let Some(boundary_support) =
@@ -1417,6 +1440,15 @@ pub fn boolean_exact_with_boundary_policy(
         | ExactBooleanOperation::Difference => {
             let graph = build_intersection_graph(left, right)?;
             validate_graph_source_handoff(&graph, left, right)?;
+            if operation == ExactBooleanOperation::Union
+                && has_non_empty_axis_aligned_orthogonal_solid_cell_intersection(left, right)
+                && !graph_requires_coplanar_volumetric_cells_for_sources(&graph, left, right)
+                && let Some(result) = boolean_arrangement_orthogonal_solid_cell_recovery(
+                    left, right, operation, validation, false,
+                )?
+            {
+                return Ok(result);
+            }
             match operation {
                 ExactBooleanOperation::Union => {
                     if let Some(report) =
