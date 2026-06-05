@@ -3961,7 +3961,7 @@ fn arrangement_cell_complex_should_preempt_specialized_paths(
             | ExactBooleanOperation::Difference
     ) && (has_single_rectangular_orthogonal_cell_result(left, right, operation)
         || has_axis_aligned_box_difference_cell_result(left, right, operation)
-        || has_convex_regularized_sheet_arrangement_result(left, right, operation)
+        || is_convex_regularized_sheet_arrangement_candidate(left, right, operation)
         || is_closed_solid_arrangement_preempt_candidate(left, right, operation)))
         || (matches!(
             operation,
@@ -4040,7 +4040,7 @@ fn has_axis_aligned_box_difference_cell_result(
         .is_some()
 }
 
-fn has_convex_regularized_sheet_arrangement_result(
+fn is_convex_regularized_sheet_arrangement_candidate(
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
@@ -4071,51 +4071,6 @@ fn has_convex_regularized_sheet_arrangement_result(
         return false;
     }
     arrangement_should_try_regularized_sheet_recovery(&arrangement, left, right)
-        && !arrangement_regularized_sheet_has_native_recovery(
-            &arrangement,
-            left,
-            right,
-            operation,
-            ValidationPolicy::CLOSED,
-        )
-        && boolean_arrangement_convex_regularized_sheet_recovery(
-            left,
-            right,
-            operation,
-            ValidationPolicy::CLOSED,
-        )
-        .is_ok_and(|result| result.is_some())
-}
-
-fn arrangement_regularized_sheet_has_native_recovery(
-    arrangement: &ExactArrangement,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-) -> bool {
-    boolean_arrangement_volumetric_split_cell_recovery_from_graph(
-        &arrangement.graph,
-        left,
-        right,
-        operation,
-        validation,
-    )
-    .is_ok_and(|result| result.is_some())
-        || boolean_recovered_single_coplanar_boundary_union(
-            &arrangement.graph,
-            left,
-            right,
-            operation,
-            validation,
-        )
-        .is_ok_and(|result| result.is_some())
-        || boolean_arrangement_orthogonal_solid_cell_recovery(
-            left, right, operation, validation, false,
-        )
-        .is_ok_and(|result| result.is_some())
-        || boolean_arrangement_affine_orthogonal_solid_recovery(left, right, operation, validation)
-            .is_ok_and(|result| result.is_some())
 }
 
 fn boolean_convex_intersection_meshes(
