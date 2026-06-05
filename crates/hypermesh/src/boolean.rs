@@ -1034,6 +1034,7 @@ fn certified_arrangement_cell_complex_preflight_if_materialized(
 ) -> Result<Option<ExactBooleanPreflight>, MeshError> {
     if arrangement_cell_complex_materializes_for_preflight(left, right, operation, false)?
         || arrangement_cell_complex_materializes_for_preflight(left, right, operation, true)?
+        || coplanar_surface_output_materializes_for_preflight(left, right, operation)?
         || arrangement_unregularized_sheet_complex_materialized_for_preflight(
             left, right, operation,
         )?
@@ -5000,7 +5001,7 @@ fn planar_arrangement_report_from_graph(
         ExactPlanarArrangementStatus::NotNamedOperation
     } else if graph_had_unknowns {
         ExactPlanarArrangementStatus::GraphUnknowns
-    } else if coplanar_surface_output_already_materialized(left, right, operation) {
+    } else if coplanar_surface_output_materializes_for_preflight(left, right, operation)? {
         ExactPlanarArrangementStatus::AlreadyMaterialized
     } else if graph_requires_boundary_policy(graph, left, right)? {
         ExactPlanarArrangementStatus::BoundaryPolicyRequired
@@ -5054,25 +5055,26 @@ fn planar_arrangement_report(
     }
 }
 
-fn coplanar_surface_output_already_materialized(
+fn coplanar_surface_output_materializes_for_preflight(
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
-) -> bool {
+) -> Result<bool, MeshError> {
     if certify_coplanar_convex_surface_equivalence(left, right).is_some() {
-        return true;
+        return Ok(true);
     }
-    match operation {
-        ExactBooleanOperation::Intersection => {
-            coplanar_mesh_overlay_surface_intersection_boundary_policy(left, right).is_some()
-                || certify_coplanar_surface_boundary_touch(left, right).is_some()
-        }
-        ExactBooleanOperation::Union => {
-            coplanar_mesh_overlay_surface_union_boundary_policy(left, right).is_some()
-        }
-        ExactBooleanOperation::Difference => coplanar_mesh_overlay_difference_ready(left, right),
-        ExactBooleanOperation::SelectedRegions(_) => false,
+    if certify_coplanar_surface_boundary_touch(left, right).is_some()
+        && matches!(operation, ExactBooleanOperation::Intersection)
+    {
+        return Ok(true);
     }
+    boolean_coplanar_mesh_overlay_optional(
+        left,
+        right,
+        operation,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .map(|result| result.is_some())
 }
 
 fn winding_readiness_report_from_graph(
