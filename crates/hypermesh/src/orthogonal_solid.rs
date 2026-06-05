@@ -181,10 +181,7 @@ pub(crate) fn has_axis_aligned_orthogonal_solid_cells(
     right: &ExactMesh,
     operation: AxisAlignedOrthogonalSolidOperation,
 ) -> bool {
-    certify_orthogonal_cell_inputs(left, right)
-        .as_ref()
-        .and_then(|inputs| orthogonal_cell_selected_count(inputs, operation))
-        .is_some()
+    axis_aligned_orthogonal_solid_cell_selected_count(left, right, operation).is_some()
 }
 
 /// Return whether exact orthogonal occupancy certifies an empty intersection.
@@ -192,15 +189,12 @@ pub(crate) fn has_empty_axis_aligned_orthogonal_solid_cell_intersection(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> bool {
-    certify_orthogonal_cell_inputs(left, right)
-        .as_ref()
-        .and_then(|inputs| {
-            orthogonal_cell_selected_count(
-                inputs,
-                AxisAlignedOrthogonalSolidOperation::Intersection,
-            )
-        })
-        .is_some_and(|selected_count| selected_count == 0)
+    axis_aligned_orthogonal_solid_cell_selected_count(
+        left,
+        right,
+        AxisAlignedOrthogonalSolidOperation::Intersection,
+    )
+    .is_some_and(|selected_count| selected_count == 0)
 }
 
 /// Return whether exact orthogonal occupancy certifies a positive-volume
@@ -209,15 +203,29 @@ pub(crate) fn has_non_empty_axis_aligned_orthogonal_solid_cell_intersection(
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> bool {
+    axis_aligned_orthogonal_solid_cell_selected_count(
+        left,
+        right,
+        AxisAlignedOrthogonalSolidOperation::Intersection,
+    )
+    .is_some_and(|selected_count| selected_count > 0)
+}
+
+/// Return the exact count of selected cells for a certified orthogonal
+/// operation.
+///
+/// This is a retained combinatorial predicate over the merged exact grid. It
+/// lets boundary/no-volume gates consume the same cell occupancy facts as the
+/// materializer instead of replaying closed-shell winding for shapes whose
+/// complete volume state is already certified.
+pub(crate) fn axis_aligned_orthogonal_solid_cell_selected_count(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: AxisAlignedOrthogonalSolidOperation,
+) -> Option<usize> {
     certify_orthogonal_cell_inputs(left, right)
         .as_ref()
-        .and_then(|inputs| {
-            orthogonal_cell_selected_count(
-                inputs,
-                AxisAlignedOrthogonalSolidOperation::Intersection,
-            )
-        })
-        .is_some_and(|selected_count| selected_count > 0)
+        .and_then(|inputs| orthogonal_cell_selected_count(inputs, operation))
 }
 
 /// Return whether one mesh certifies as an exact orthogonal solid cell complex.

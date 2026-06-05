@@ -25,6 +25,7 @@ use super::affine_box::{
 };
 use super::affine_solid::{
     AffineOrthogonalSolidOperation, has_affine_orthogonal_solid_cells,
+    has_empty_affine_orthogonal_solid_cell_intersection,
     materialize_affine_orthogonal_solid_difference,
     materialize_affine_orthogonal_solid_intersection, materialize_affine_orthogonal_solid_union,
 };
@@ -1057,7 +1058,18 @@ fn graph_requires_boundary_policy(
     if !graph_has_only_boundary_contact_pairs(graph, left, right) {
         return Ok(false);
     }
+    if exact_cell_complexes_certify_boundary_contact_without_shared_volume(left, right) {
+        return Ok(true);
+    }
     certified_closed_boundary_contact(left, right)
+}
+
+fn exact_cell_complexes_certify_boundary_contact_without_shared_volume(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> bool {
+    has_empty_axis_aligned_orthogonal_solid_cell_intersection(left, right)
+        || has_empty_affine_orthogonal_solid_cell_intersection(left, right)
 }
 
 fn graph_has_only_coplanar_touching_pairs(graph: &super::graph::ExactIntersectionGraph) -> bool {

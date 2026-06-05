@@ -7900,6 +7900,54 @@ fn exact_axis_aligned_orthogonal_solid_accepts_opposite_faces_on_same_plane() {
 }
 
 #[test]
+fn exact_orthogonal_cell_boundary_contact_certifies_no_shared_volume() {
+    let left = top_subdivided_axis_aligned_box_i64([0, 0, 0], [2, 2, 2]);
+    let right = axis_aligned_box_i64([2, 0, 0], [4, 2, 2]);
+
+    let boundary = hypermesh::certify_boundary_touching_report(&left, &right).unwrap();
+    boundary.validate().unwrap();
+    boundary.validate_against_sources(&left, &right).unwrap();
+    assert!(boundary.is_certified());
+
+    for operation in [
+        hypermesh::ExactBooleanOperation::Union,
+        hypermesh::ExactBooleanOperation::Intersection,
+        hypermesh::ExactBooleanOperation::Difference,
+    ] {
+        let preflight = hypermesh::preflight_boolean_exact(&left, &right, operation).unwrap();
+        preflight.validate().unwrap();
+        preflight.validate_against_sources(&left, &right).unwrap();
+        assert_eq!(
+            preflight.support,
+            hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
+        );
+
+        let result =
+            hypermesh::boolean_exact(&left, &right, operation, ValidationPolicy::CLOSED).unwrap();
+        result
+            .validate_operation_against_sources(
+                &left,
+                &right,
+                operation,
+                ValidationPolicy::CLOSED,
+                hypermesh::ExactBoundaryBooleanPolicy::Reject,
+            )
+            .unwrap();
+        assert_eq!(
+            result.kind,
+            hypermesh::ExactBooleanResultKind::CertifiedShortcut {
+                shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
+            }
+        );
+        if operation == hypermesh::ExactBooleanOperation::Intersection {
+            assert!(result.mesh.triangles().is_empty());
+        } else {
+            assert!(result.mesh.facts().mesh.closed_manifold);
+        }
+    }
+}
+
+#[test]
 fn exact_affine_coplanar_volumetric_boxes_materialize_cell_complexes() {
     let origin = [0, 0, 0];
     let basis_u = [2, 1, 0];
@@ -8364,6 +8412,72 @@ fn exact_affine_orthogonal_solid_intersection_materializes_empty_cavity_cell_set
     );
     assert!(intersection.mesh.vertices().is_empty());
     assert!(intersection.mesh.triangles().is_empty());
+}
+
+#[test]
+fn exact_affine_orthogonal_cell_boundary_contact_certifies_no_shared_volume() {
+    let origin = [0, 0, 0];
+    let basis_u = [2, 1, 0];
+    let basis_v = [-1, 2, 0];
+    let basis_w = [0, 1, 2];
+    let base = affine_box_i64([0, 0, 0], [2, 2, 2], origin, basis_u, basis_v, basis_w);
+    let overlap = affine_box_i64([1, 1, 0], [3, 3, 2], origin, basis_u, basis_v, basis_w);
+    let complex = hypermesh::boolean_exact(
+        &base,
+        &overlap,
+        hypermesh::ExactBooleanOperation::Union,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap()
+    .mesh;
+    let touching = affine_box_i64([3, 1, 0], [4, 3, 2], origin, basis_u, basis_v, basis_w);
+
+    let boundary = hypermesh::certify_boundary_touching_report(&complex, &touching).unwrap();
+    boundary.validate().unwrap();
+    boundary
+        .validate_against_sources(&complex, &touching)
+        .unwrap();
+    assert!(boundary.is_certified());
+
+    for operation in [
+        hypermesh::ExactBooleanOperation::Union,
+        hypermesh::ExactBooleanOperation::Intersection,
+        hypermesh::ExactBooleanOperation::Difference,
+    ] {
+        let preflight = hypermesh::preflight_boolean_exact(&complex, &touching, operation).unwrap();
+        preflight.validate().unwrap();
+        preflight
+            .validate_against_sources(&complex, &touching)
+            .unwrap();
+        assert_eq!(
+            preflight.support,
+            hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
+        );
+
+        let result =
+            hypermesh::boolean_exact(&complex, &touching, operation, ValidationPolicy::CLOSED)
+                .unwrap();
+        result
+            .validate_operation_against_sources(
+                &complex,
+                &touching,
+                operation,
+                ValidationPolicy::CLOSED,
+                hypermesh::ExactBoundaryBooleanPolicy::Reject,
+            )
+            .unwrap();
+        assert_eq!(
+            result.kind,
+            hypermesh::ExactBooleanResultKind::CertifiedShortcut {
+                shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
+            }
+        );
+        if operation == hypermesh::ExactBooleanOperation::Intersection {
+            assert!(result.mesh.triangles().is_empty());
+        } else {
+            assert!(result.mesh.facts().mesh.closed_manifold);
+        }
+    }
 }
 
 #[test]

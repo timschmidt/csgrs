@@ -18,7 +18,7 @@ use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
 use super::mesh::ExactMesh;
 use super::orthogonal_solid::{
     AxisAlignedOrthogonalSolidOperation, OrthogonalCellPlan,
-    axis_aligned_orthogonal_solid_cell_plan, has_axis_aligned_orthogonal_solid_cells,
+    axis_aligned_orthogonal_solid_cell_plan, axis_aligned_orthogonal_solid_cell_selected_count,
     is_axis_aligned_orthogonal_solid, materialize_axis_aligned_orthogonal_solid_cell_plan,
 };
 use super::validation::ValidationPolicy;
@@ -186,6 +186,25 @@ pub(crate) fn has_affine_orthogonal_solid_cells(
     affine_orthogonal_solid_operation_is_supported(left, right, operation)
 }
 
+/// Return whether exact affine-normalized occupancy certifies no shared
+/// positive-volume cells.
+///
+/// The affine frame is accepted only after both source meshes replay into exact
+/// axis-aligned orthogonal cell complexes in that frame. A zero selected
+/// intersection count is therefore an exact cell-complex fact, not a sampled
+/// winding or tolerance predicate.
+pub(crate) fn has_empty_affine_orthogonal_solid_cell_intersection(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> bool {
+    affine_orthogonal_solid_selected_count(
+        left,
+        right,
+        AffineOrthogonalSolidOperation::Intersection,
+    )
+    .is_some_and(|selected_count| selected_count == 0)
+}
+
 fn materialize_affine_orthogonal_solids(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -249,8 +268,16 @@ fn affine_orthogonal_solid_operation_is_supported(
     right: &ExactMesh,
     operation: AffineOrthogonalSolidOperation,
 ) -> bool {
+    affine_orthogonal_solid_selected_count(left, right, operation).is_some()
+}
+
+fn affine_orthogonal_solid_selected_count(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: AffineOrthogonalSolidOperation,
+) -> Option<usize> {
     if is_axis_aligned_orthogonal_solid(left) && is_axis_aligned_orthogonal_solid(right) {
-        return false;
+        return None;
     }
     for basis in candidate_shared_bases(left, right) {
         let Some(left_uvw) = mesh_to_uvw(left, &basis, ValidationPolicy::CLOSED) else {
@@ -259,15 +286,15 @@ fn affine_orthogonal_solid_operation_is_supported(
         let Some(right_uvw) = mesh_to_uvw(right, &basis, ValidationPolicy::CLOSED) else {
             continue;
         };
-        if has_axis_aligned_orthogonal_solid_cells(
+        if let Some(selected_count) = axis_aligned_orthogonal_solid_cell_selected_count(
             &left_uvw,
             &right_uvw,
             operation.to_axis_aligned(),
         ) {
-            return true;
+            return Some(selected_count);
         }
     }
-    false
+    None
 }
 
 /// Return exact affine bases that are plausible for both source meshes.
