@@ -1900,7 +1900,9 @@ fn arrangement_volume_graph(
         return (None, None);
     }
 
-    if let Some(nested) = nested_shell_volume_graph(shell_regions, face_cells, blockers) {
+    if let Some(nested) =
+        nested_shell_volume_graph(shell_regions, face_cells, left, right, blockers)
+    {
         return nested;
     }
 
@@ -2066,6 +2068,8 @@ fn arrangement_volume_face_sides(
 fn nested_shell_volume_graph(
     shell_regions: &[ArrangementRegion],
     face_cells: &[ArrangementFaceCell],
+    left: &ExactMesh,
+    right: &ExactMesh,
     blockers: &mut Vec<ExactArrangementBlocker>,
 ) -> Option<(
     Option<Vec<ArrangementVolumeRegion>>,
@@ -2100,7 +2104,8 @@ fn nested_shell_volume_graph(
     }
     let mut contains = vec![vec![false; shell_regions.len()]; shell_regions.len()];
     for contained in 0..shell_regions.len() {
-        let witnesses = shell_region_witnesses(shell_regions.get(contained)?, face_cells);
+        let witnesses =
+            shell_region_witnesses(shell_regions.get(contained)?, face_cells, left, right);
         if witnesses.is_empty() {
             push_unique_blocker(
                 blockers,
@@ -2388,22 +2393,52 @@ fn apply_nested_shell_source_side(
 fn shell_region_witnesses(
     shell: &ArrangementRegion,
     face_cells: &[ArrangementFaceCell],
+    left: &ExactMesh,
+    right: &ExactMesh,
 ) -> Vec<Point3> {
     let mut witnesses = Vec::new();
-    for point in shell
+    for cell in shell
         .face_cells
         .iter()
         .filter_map(|&cell| face_cells.get(cell))
-        .flat_map(|cell| cell.boundary_points.iter())
     {
-        if witnesses
-            .iter()
-            .all(|existing| point3_equal(existing, point).value() != Some(true))
-        {
-            witnesses.push(point.clone());
+        for point in &cell.boundary_points {
+            push_unique_witness(&mut witnesses, point.clone());
+        }
+        if let Some(point) = face_cell_interior_witness(cell, left, right) {
+            push_unique_witness(&mut witnesses, point);
         }
     }
     witnesses
+}
+
+fn push_unique_witness(witnesses: &mut Vec<Point3>, point: Point3) {
+    if witnesses
+        .iter()
+        .all(|existing| point3_equal(existing, &point).value() != Some(true))
+    {
+        witnesses.push(point);
+    }
+}
+
+fn face_cell_interior_witness(
+    cell: &ArrangementFaceCell,
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Option<Point3> {
+    if cell.boundary_points.len() < 3 {
+        return None;
+    }
+    let mesh = mesh_for_side(cell.carrier.side, left, right);
+    let mut blockers = Vec::new();
+    let projection = choose_triangle_projection(mesh, cell.carrier.triangle, &mut blockers)?;
+    let projected = cell
+        .boundary_points
+        .iter()
+        .map(|point| project_point3(point, projection))
+        .collect::<Vec<_>>();
+    let witness = projected_loop_interior_witness(&projected).ok()?;
+    lift_carrier_plane_point(mesh, cell.carrier.face, projection, &witness, &mut blockers)
 }
 
 fn shell_region_mesh(
@@ -3360,6 +3395,27 @@ mod tests {
             classify_shell_witnesses_against_container(&[p3(1, 1, 1), p3(20, 20, 20)], &container),
             ShellContainmentRelation::Boundary
         );
+    }
+
+    #[test]
+    fn shell_region_witnesses_include_exact_face_interior_points() {
+        let left = tetrahedron_i64([0, 0, 0], [6, 0, 0], [0, 6, 0], [0, 0, 6]);
+        let right = tetrahedron_i64([10, 0, 0], [16, 0, 0], [10, 6, 0], [10, 0, 6]);
+        let arrangement = ExactArrangement::from_meshes(&left, &right).unwrap();
+        let shell = &arrangement.shells_or_regions.as_ref().unwrap()[0];
+        let witnesses = shell_region_witnesses(shell, &arrangement.face_cells, &left, &right);
+        let boundary_points = shell
+            .face_cells
+            .iter()
+            .flat_map(|&cell| arrangement.face_cells[cell].boundary_points.iter())
+            .collect::<Vec<_>>();
+
+        assert!(witnesses.len() > boundary_points.len() / 3);
+        assert!(witnesses.iter().any(|witness| {
+            boundary_points
+                .iter()
+                .all(|boundary| point3_equal(witness, boundary).value() == Some(false))
+        }));
     }
 
     #[test]
