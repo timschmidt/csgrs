@@ -5597,7 +5597,24 @@ fn materialize_volumetric_winding_region_plan_from_graph(
         &triangulations,
         &volumetric_classifications,
     ) {
-        return Ok(None);
+        return match operation {
+            ExactBooleanOperation::Intersection | ExactBooleanOperation::Difference => {
+                Ok(Some(MaterializedVolumetricWindingRegionPlan {
+                    region_classifications,
+                    triangulations,
+                    volumetric_classifications,
+                    assembly: ExactBooleanAssemblyPlan {
+                        vertices: Vec::new(),
+                        triangles: Vec::new(),
+                    },
+                    mesh: empty_mesh(
+                        "empty exact volumetric arrangement cell-complex result",
+                        validation,
+                    )?,
+                }))
+            }
+            ExactBooleanOperation::Union | ExactBooleanOperation::SelectedRegions(_) => Ok(None),
+        };
     }
 
     let assembly_result =

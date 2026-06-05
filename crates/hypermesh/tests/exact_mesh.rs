@@ -7345,7 +7345,7 @@ fn exact_axis_aligned_coplanar_volumetric_box_difference_materializes_empty_cont
         .unwrap();
     assert_eq!(
         boundary_touching_winding.status,
-        hypermesh::ExactWindingReadinessStatus::CoplanarVolumetricCellsAlreadyMaterialized
+        hypermesh::ExactWindingReadinessStatus::Ready
     );
     assert_eq!(
         boundary_touching_winding
@@ -11262,11 +11262,12 @@ fn exact_nonconvex_boundary_containment_materializes_regularized_containment() {
         .unwrap();
     assert_eq!(
         reverse_difference.kind,
-        hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
+        hypermesh::ExactBooleanResultKind::ArrangementCellComplexMaterialized {
+            operation: hypermesh::ExactBooleanOperation::Difference
         }
     );
     assert!(reverse_difference.mesh.triangles().is_empty());
+    assert!(!reverse_difference.volumetric_classifications.is_empty());
 }
 
 #[test]
@@ -32514,7 +32515,7 @@ fn exact_named_booleans_materialize_boundary_corner_convex_difference() {
     reverse_preflight.validate().unwrap();
     assert_eq!(
         reverse_preflight.support,
-        hypermesh::ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
 
     let reverse = hypermesh::boolean_exact(
@@ -32536,11 +32537,12 @@ fn exact_named_booleans_materialize_boundary_corner_convex_difference() {
         .unwrap();
     assert_eq!(
         reverse.kind,
-        hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-            shortcut: hypermesh::ExactBooleanShortcutKind::ConvexContainment
+        hypermesh::ExactBooleanResultKind::ArrangementCellComplexMaterialized {
+            operation: hypermesh::ExactBooleanOperation::Difference
         }
     );
     assert!(reverse.mesh.triangles().is_empty());
+    assert!(!reverse.volumetric_classifications.is_empty());
 }
 
 #[test]
@@ -34854,12 +34856,12 @@ fn exact_arrangement_regularizes_no_volume_sheet_contact_without_winding_fallbac
             hypermesh::ExactBooleanOperation::Intersection => {
                 assert_eq!(
                     result.kind,
-                    hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-                        shortcut:
-                            hypermesh::ExactBooleanShortcutKind::ClosedBoundaryTouchingIntersection
+                    hypermesh::ExactBooleanResultKind::ArrangementCellComplexMaterialized {
+                        operation: hypermesh::ExactBooleanOperation::Intersection
                     }
                 );
                 assert!(result.mesh.triangles().is_empty());
+                assert!(!result.volumetric_classifications.is_empty());
             }
             _ => unreachable!(),
         }
