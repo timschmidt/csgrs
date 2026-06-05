@@ -707,27 +707,6 @@ pub fn preflight_boolean_exact(
         return Ok(certified_shortcut_preflight(operation, convex_support));
     }
     if support == ExactBooleanSupport::RequiresCertifiedWinding
-        && arrangement_unregularized_sheet_complex_materialized_for_preflight(
-            left, right, operation,
-        )?
-        .is_some()
-    {
-        return Ok(ExactBooleanPreflight {
-            operation,
-            support: ExactBooleanSupport::CertifiedArrangementCellComplex,
-            graph_had_unknowns,
-            retained_face_pairs,
-            retained_events,
-            region_count: 0,
-            region_classifications: Vec::new(),
-            blocker: None,
-            arrangement_readiness: None,
-            coplanar_volumetric_evidence: coplanar_volumetric_evidence_if_required(
-                &graph, left, right,
-            ),
-        });
-    }
-    if support == ExactBooleanSupport::RequiresCertifiedWinding
         && let Some(convex_support) = certified_convex_difference_support(left, right, operation)
     {
         return Ok(certified_shortcut_preflight(operation, convex_support));
@@ -812,18 +791,6 @@ pub fn preflight_boolean_exact(
             arrangement_readiness: None,
             coplanar_volumetric_evidence: None,
         });
-    }
-
-    if support == ExactBooleanSupport::RequiresCertifiedWinding
-        && let Some(preflight) = cached_certified_arrangement_cell_complex_preflight(
-            &mut certified_arrangement_preflight,
-            operation,
-            &graph,
-            left,
-            right,
-        )?
-    {
-        return Ok(preflight);
     }
 
     let winding_report = winding_readiness_report_from_graph(&graph, left, right, operation)?;
