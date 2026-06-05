@@ -1971,6 +1971,8 @@ fn run_arrangement_cell_complex_attempt(
         output_vertices: 0,
         output_triangles: 0,
     };
+    let regularized_sheet_recovery_surface =
+        arrangement_has_regularized_closed_sheet_recovery_surface(&arrangement, left, right);
 
     let axis_aligned_box_difference_cell_result =
         has_axis_aligned_box_difference_cell_result(left, right, operation);
@@ -2076,6 +2078,7 @@ fn run_arrangement_cell_complex_attempt(
         }
         if let Some(outcome) = arrangement_cell_complex_recovery_outcome_if_available(
             regularize_unregularized_sheet_complex,
+            regularized_sheet_recovery_surface,
             validation,
             &mut attempt,
             &arrangement.graph,
@@ -2108,6 +2111,7 @@ fn run_arrangement_cell_complex_attempt(
         Err(blocker) => {
             if let Some(outcome) = arrangement_cell_complex_recovery_outcome_if_available(
                 regularize_unregularized_sheet_complex,
+                regularized_sheet_recovery_surface,
                 validation,
                 &mut attempt,
                 &arrangement.graph,
@@ -2128,6 +2132,7 @@ fn run_arrangement_cell_complex_attempt(
             attempt.selected_faces = selected.selected_faces.len();
             if let Some(outcome) = arrangement_cell_complex_recovery_outcome_if_available(
                 regularize_unregularized_sheet_complex,
+                regularized_sheet_recovery_surface,
                 validation,
                 &mut attempt,
                 &arrangement.graph,
@@ -2145,6 +2150,7 @@ fn run_arrangement_cell_complex_attempt(
         Err(blocker) => {
             if let Some(outcome) = arrangement_cell_complex_recovery_outcome_if_available(
                 regularize_unregularized_sheet_complex,
+                regularized_sheet_recovery_surface,
                 validation,
                 &mut attempt,
                 &arrangement.graph,
@@ -2166,6 +2172,7 @@ fn run_arrangement_cell_complex_attempt(
         Ok(simplified) => {
             if let Some(outcome) = arrangement_cell_complex_recovery_outcome_if_available(
                 regularize_unregularized_sheet_complex,
+                regularized_sheet_recovery_surface,
                 validation,
                 &mut attempt,
                 &arrangement.graph,
@@ -2183,6 +2190,7 @@ fn run_arrangement_cell_complex_attempt(
         Err(blocker) => {
             if let Some(outcome) = arrangement_cell_complex_recovery_outcome_if_available(
                 regularize_unregularized_sheet_complex,
+                regularized_sheet_recovery_surface,
                 validation,
                 &mut attempt,
                 &arrangement.graph,
@@ -2202,6 +2210,7 @@ fn run_arrangement_cell_complex_attempt(
         Err(blocker) => {
             if let Some(outcome) = arrangement_cell_complex_recovery_outcome_if_available(
                 regularize_unregularized_sheet_complex,
+                regularized_sheet_recovery_surface,
                 validation,
                 &mut attempt,
                 &arrangement.graph,
@@ -2230,6 +2239,7 @@ fn run_arrangement_cell_complex_attempt(
         Err(_) => {
             if let Some(outcome) = arrangement_cell_complex_recovery_outcome_if_available(
                 regularize_unregularized_sheet_complex,
+                regularized_sheet_recovery_surface,
                 Some(validation),
                 &mut attempt,
                 &arrangement.graph,
@@ -2402,6 +2412,36 @@ fn arrangement_blockers_are_unregularized_sheet_complex(
         })
 }
 
+fn arrangement_has_mixed_source_sheet_complex(arrangement: &ExactArrangement) -> bool {
+    arrangement
+        .shells_or_regions
+        .as_ref()
+        .is_some_and(|regions| {
+            regions
+                .iter()
+                .any(|region| region.non_manifold_edges > 0 && region.source_sides.len() > 1)
+        })
+}
+
+fn arrangement_has_regularized_closed_sheet_recovery_surface(
+    arrangement: &ExactArrangement,
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> bool {
+    left.facts().mesh.closed_manifold
+        && right.facts().mesh.closed_manifold
+        && arrangement_has_mixed_source_sheet_complex(arrangement)
+}
+
+fn arrangement_should_try_regularized_sheet_recovery(
+    arrangement: &ExactArrangement,
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> bool {
+    arrangement_blockers_are_unregularized_sheet_complex(&arrangement.blockers)
+        || arrangement_has_regularized_closed_sheet_recovery_surface(arrangement, left, right)
+}
+
 fn boolean_arrangement_unregularized_sheet_complex_meshes(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -2413,16 +2453,19 @@ fn boolean_arrangement_unregularized_sheet_complex_meshes(
         right,
         ExactRegularizationPolicy::REGULARIZED_SOLID,
     )?;
-    if !arrangement_blockers_are_unregularized_sheet_complex(&arrangement.blockers) {
+    if !arrangement_should_try_regularized_sheet_recovery(&arrangement, left, right) {
         return Ok(None);
     }
-    boolean_arrangement_regularized_sheet_complex_from_graph(
+    if let Some(result) = boolean_arrangement_regularized_sheet_or_boundary_from_graph(
         &arrangement.graph,
         left,
         right,
         operation,
         validation,
-    )
+    )? {
+        return Ok(Some(result));
+    }
+    boolean_arrangement_convex_regularized_sheet_recovery(left, right, operation, validation)
 }
 
 fn arrangement_unregularized_sheet_complex_materialized_for_preflight(
@@ -2435,11 +2478,19 @@ fn arrangement_unregularized_sheet_complex_materialized_for_preflight(
         right,
         ExactRegularizationPolicy::REGULARIZED_SOLID,
     )?;
-    if !arrangement_blockers_are_unregularized_sheet_complex(&arrangement.blockers) {
+    if !arrangement_should_try_regularized_sheet_recovery(&arrangement, left, right) {
         return Ok(None);
     }
-    boolean_arrangement_regularized_sheet_complex_from_graph(
+    if let Some(result) = boolean_arrangement_regularized_sheet_or_boundary_from_graph(
         &arrangement.graph,
+        left,
+        right,
+        operation,
+        ValidationPolicy::CLOSED,
+    )? {
+        return Ok(Some(result));
+    }
+    boolean_arrangement_convex_regularized_sheet_recovery(
         left,
         right,
         operation,
@@ -2465,6 +2516,21 @@ fn boolean_arrangement_regularized_sheet_complex_from_graph(
     boolean_arrangement_regularized_no_volume_overlap_from_graph(
         graph, left, right, operation, validation,
     )
+}
+
+fn boolean_arrangement_regularized_sheet_or_boundary_from_graph(
+    graph: &super::graph::ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    if let Some(result) = boolean_arrangement_regularized_sheet_complex_from_graph(
+        graph, left, right, operation, validation,
+    )? {
+        return Ok(Some(result));
+    }
+    boolean_recovered_single_coplanar_boundary_union(graph, left, right, operation, validation)
 }
 
 fn boolean_arrangement_regularized_no_volume_overlap_from_graph(
@@ -2668,6 +2734,7 @@ fn arrangement_convex_regularized_sheet_recovery_outcome(
 
 fn arrangement_cell_complex_recovery_outcome_if_available(
     enabled: bool,
+    regularized_sheet_recovery_surface: bool,
     validation: Option<ValidationPolicy>,
     attempt: &mut ExactArrangementBooleanAttempt,
     graph: &super::graph::ExactIntersectionGraph,
@@ -2675,6 +2742,39 @@ fn arrangement_cell_complex_recovery_outcome_if_available(
     right: &ExactMesh,
     operation: ExactBooleanOperation,
 ) -> Result<Option<ArrangementCellComplexOutcome>, MeshError> {
+    if enabled
+        && regularized_sheet_recovery_surface
+        && let Some(validation) = validation
+    {
+        if let Some(result) = boolean_arrangement_regularized_sheet_or_boundary_from_graph(
+            graph, left, right, operation, validation,
+        )? {
+            attempt.stage = ExactArrangementBooleanStage::Materialized;
+            attempt.decline = None;
+            attempt.materialized_shortcut = Some(ExactBooleanShortcutKind::ArrangementCellComplex);
+            attempt.arrangement_blockers = 0;
+            attempt.output_vertices = result.mesh.vertices().len();
+            attempt.output_triangles = result.mesh.triangles().len();
+            return Ok(Some(ArrangementCellComplexOutcome::Materialized(
+                result,
+                attempt.clone(),
+            )));
+        }
+        if let Some(result) = boolean_arrangement_convex_regularized_sheet_recovery(
+            left, right, operation, validation,
+        )? {
+            attempt.stage = ExactArrangementBooleanStage::Materialized;
+            attempt.decline = None;
+            attempt.materialized_shortcut = Some(ExactBooleanShortcutKind::ArrangementCellComplex);
+            attempt.arrangement_blockers = 0;
+            attempt.output_vertices = result.mesh.vertices().len();
+            attempt.output_triangles = result.mesh.triangles().len();
+            return Ok(Some(ArrangementCellComplexOutcome::Materialized(
+                result,
+                attempt.clone(),
+            )));
+        }
+    }
     if let Some(validation) = validation.filter(|_| enabled)
         && let Some(outcome) = arrangement_volumetric_split_cell_recovery_outcome(
             attempt, graph, left, right, operation, validation,
@@ -3973,7 +4073,7 @@ fn has_convex_regularized_sheet_arrangement_result(
     {
         return false;
     }
-    arrangement_blockers_are_unregularized_sheet_complex(&arrangement.blockers)
+    arrangement_should_try_regularized_sheet_recovery(&arrangement, left, right)
         && !arrangement_regularized_sheet_has_native_recovery(
             &arrangement,
             left,
@@ -5068,13 +5168,8 @@ fn coplanar_surface_output_materializes_for_preflight(
     {
         return Ok(true);
     }
-    boolean_coplanar_mesh_overlay_optional(
-        left,
-        right,
-        operation,
-        ValidationPolicy::ALLOW_BOUNDARY,
-    )
-    .map(|result| result.is_some())
+    boolean_coplanar_mesh_overlay_optional(left, right, operation, ValidationPolicy::ALLOW_BOUNDARY)
+        .map(|result| result.is_some())
 }
 
 fn winding_readiness_report_from_graph(

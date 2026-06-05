@@ -419,13 +419,19 @@ impl ExactArrangement3d {
             volume_adjacencies.as_deref(),
             &mut blockers,
         );
-        if shells_or_regions.as_ref().is_some_and(|regions| {
-            regions.iter().any(|region| {
-                region.boundary_edges > 0
-                    && region.non_manifold_edges > 0
-                    && region.source_sides.len() > 1
-            })
-        }) {
+        let has_mixed_source_open_sheet_complex =
+            shells_or_regions.as_ref().is_some_and(|regions| {
+                regions.iter().any(|region| {
+                    region.boundary_edges > 0
+                        && region.non_manifold_edges > 0
+                        && region.source_sides.len() > 1
+                })
+            });
+        let regularized_closed_solid_sheet_complex = has_mixed_source_open_sheet_complex
+            && policy == ExactRegularizationPolicy::REGULARIZED_SOLID
+            && left.facts().mesh.closed_manifold
+            && right.facts().mesh.closed_manifold;
+        if has_mixed_source_open_sheet_complex && !regularized_closed_solid_sheet_complex {
             push_unique_blocker(
                 &mut blockers,
                 ExactArrangementBlocker::UnregularizedOpenSheetComplex,
@@ -445,20 +451,23 @@ impl ExactArrangement3d {
             if !regularizable_closed_coincident {
                 // Closed coincident source sheets can still be selected from
                 // exact face labels and canonicalized away in simplification.
-                // Open mixed-source sheet complexes need true volume-boundary
-                // reconstruction and remain blockers.
-                let blocker = if shells_or_regions.as_ref().is_some_and(|regions| {
-                    regions.iter().any(|region| {
-                        region.boundary_edges > 0
-                            && region.non_manifold_edges > 0
-                            && region.source_sides.len() > 1
-                    })
-                }) {
-                    ExactArrangementBlocker::UnregularizedCoincidentSheetComplex
+                // Closed regularized solid open sheet contacts are also
+                // supportable: the volume-boundary materializer may drop the
+                // lower-dimensional contact while retaining exact provenance
+                // for the selected cells. Open or non-regularized sheet
+                // complexes still report blockers.
+                let blocker = if has_mixed_source_open_sheet_complex {
+                    if regularized_closed_solid_sheet_complex {
+                        None
+                    } else {
+                        Some(ExactArrangementBlocker::UnregularizedCoincidentSheetComplex)
+                    }
                 } else {
-                    ExactArrangementBlocker::NonManifoldCellComplex
+                    Some(ExactArrangementBlocker::NonManifoldCellComplex)
                 };
-                push_unique_blocker(&mut blockers, blocker);
+                if let Some(blocker) = blocker {
+                    push_unique_blocker(&mut blockers, blocker);
+                }
             }
         }
         if policy == ExactRegularizationPolicy::REGULARIZED_SOLID

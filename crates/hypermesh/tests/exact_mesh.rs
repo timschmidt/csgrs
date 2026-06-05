@@ -31972,8 +31972,8 @@ fn exact_named_booleans_materialize_partial_convex_intersection() {
     result.validate().unwrap();
     assert_eq!(
         result.kind,
-        hypermesh::ExactBooleanResultKind::ArrangementCellComplexMaterialized {
-            operation: hypermesh::ExactBooleanOperation::Intersection
+        hypermesh::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
         }
     );
     assert_eq!(result.mesh.triangles().len(), 4);
@@ -32265,7 +32265,8 @@ fn exact_box_tetra_closed_booleans_regularize_sheet_complex_through_arrangement(
         .unwrap();
         assert_eq!(
             arrangement_report.stage,
-            hypermesh::ExactArrangementBooleanStage::Materialized
+            hypermesh::ExactArrangementBooleanStage::Materialized,
+            "{operation:?} arrangement report: {arrangement_report:?}"
         );
         assert_eq!(arrangement_report.decline, None);
         assert_eq!(arrangement_report.arrangement_blockers, 0);
@@ -34755,14 +34756,9 @@ fn exact_arrangement_regularizes_unregularized_sheet_complex_without_winding_fal
     )
     .unwrap();
     assert!(
-        arrangement
-            .blockers
-            .contains(&hypermesh::ExactArrangementBlocker::UnregularizedCoincidentSheetComplex)
-    );
-    assert!(
-        arrangement
-            .blockers
-            .contains(&hypermesh::ExactArrangementBlocker::UnregularizedOpenSheetComplex)
+        arrangement.blockers.is_empty(),
+        "closed regularized solid sheet contacts should be materializable without lower-level sheet blockers: {:?}",
+        arrangement.blockers
     );
 
     let report = hypermesh::exact_arrangement_boolean_attempt_report(
