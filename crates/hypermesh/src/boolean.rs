@@ -1481,11 +1481,6 @@ pub fn boolean_exact_with_boundary_policy(
     {
         return Ok(result);
     }
-    if let Some(result) =
-        boolean_direct_coplanar_surface_meshes(left, right, operation, validation)?
-    {
-        return Ok(result);
-    }
 
     match operation {
         ExactBooleanOperation::SelectedRegions(_) => unreachable!("handled by caller"),
@@ -4289,108 +4284,6 @@ fn boolean_convex_intersection_meshes(
         mesh,
         ExactBooleanShortcutKind::ConvexIntersection,
     )))
-}
-
-fn boolean_direct_coplanar_surface_meshes(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
-    if coplanar_surface_materializers_should_yield_to_closed_boundary_shortcut(
-        left, right, operation,
-    )? {
-        return Ok(None);
-    }
-    match operation {
-        ExactBooleanOperation::Union => {
-            if let Some(result) = boolean_coplanar_surface_overlay_from_exact_arrangement(
-                left, right, operation, validation,
-            )? {
-                return Ok(Some(result));
-            }
-            Ok(None)
-        }
-        ExactBooleanOperation::Intersection => {
-            if let Some(result) = boolean_coplanar_surface_overlay_from_exact_arrangement(
-                left, right, operation, validation,
-            )? {
-                return Ok(Some(result));
-            }
-            Ok(None)
-        }
-        ExactBooleanOperation::Difference => {
-            if let Some(result) = boolean_coplanar_surface_overlay_from_exact_arrangement(
-                left, right, operation, validation,
-            )? {
-                return Ok(Some(result));
-            }
-            Ok(None)
-        }
-        ExactBooleanOperation::SelectedRegions(_) => Ok(None),
-    }
-}
-
-fn boolean_coplanar_surface_overlay_from_exact_arrangement(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
-    let (operation, boundary_policy) = match operation {
-        ExactBooleanOperation::Union => (
-            ExactArrangement2dSetOperation::Union,
-            coplanar_mesh_overlay_surface_union_boundary_policy(left, right),
-        ),
-        ExactBooleanOperation::Intersection => (
-            ExactArrangement2dSetOperation::Intersection,
-            coplanar_mesh_overlay_surface_intersection_boundary_policy(left, right),
-        ),
-        ExactBooleanOperation::Difference => (
-            ExactArrangement2dSetOperation::Difference,
-            coplanar_mesh_overlay_materialized_difference_boundary_policy(left, right),
-        ),
-        ExactBooleanOperation::SelectedRegions(_) => return Ok(None),
-    };
-    let Some(boundary_policy) = boundary_policy else {
-        return Ok(None);
-    };
-    let projected_boundary_policy = match boundary_policy {
-        ExactArrangement2dBoundaryPolicy::SimplifyCollinear => {
-            ProjectedOverlayBoundaryPolicy::SimplifyCollinear
-        }
-        ExactArrangement2dBoundaryPolicy::PreserveCollinear => {
-            ProjectedOverlayBoundaryPolicy::PreserveCollinear
-        }
-    };
-    let Some(mesh) = materialize_coplanar_mesh_overlay_mesh(
-        left,
-        right,
-        operation,
-        boundary_policy,
-        projected_boundary_policy,
-        "exact coplanar mesh overlay arrangement",
-        false,
-    ) else {
-        return Ok(None);
-    };
-    let mesh = copy_mesh(
-        &mesh,
-        "exact coplanar mesh overlay arrangement boolean result",
-        validation,
-    )?;
-    Ok(Some(certified_shortcut_result(
-        mesh,
-        ExactBooleanShortcutKind::ArrangementCellComplex,
-    )))
-}
-
-fn coplanar_surface_materializers_should_yield_to_closed_boundary_shortcut(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-) -> Result<bool, MeshError> {
-    coplanar_mesh_overlay_should_yield_to_closed_boundary_shortcut(left, right, operation)
 }
 
 /// Return whether exact orthogonal occupancy certifies an empty intersection.
