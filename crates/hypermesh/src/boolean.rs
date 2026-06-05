@@ -433,6 +433,7 @@ pub fn preflight_boolean_exact(
     let retained_face_pairs = graph.face_pairs.len();
     let retained_events = graph.event_count();
     let relation_counts = graph_relation_counts(&graph);
+    let mut certified_arrangement_preflight = None;
     if graph_had_unknowns {
         return Ok(ExactBooleanPreflight {
             operation,
@@ -572,8 +573,12 @@ pub fn preflight_boolean_exact(
         ));
     }
     if support == ExactBooleanSupport::RequiresCertifiedWinding
-        && let Some(preflight) = certified_arrangement_cell_complex_preflight_if_materialized(
-            operation, &graph, left, right,
+        && let Some(preflight) = cached_certified_arrangement_cell_complex_preflight(
+            &mut certified_arrangement_preflight,
+            operation,
+            &graph,
+            left,
+            right,
         )?
     {
         return Ok(preflight);
@@ -618,8 +623,12 @@ pub fn preflight_boolean_exact(
     }
     let planar_report = planar_arrangement_report_from_graph(&graph, left, right, operation)?;
     if planar_report.is_required() {
-        if let Some(preflight) = certified_arrangement_cell_complex_preflight_if_materialized(
-            operation, &graph, left, right,
+        if let Some(preflight) = cached_certified_arrangement_cell_complex_preflight(
+            &mut certified_arrangement_preflight,
+            operation,
+            &graph,
+            left,
+            right,
         )? {
             return Ok(preflight);
         }
@@ -637,8 +646,12 @@ pub fn preflight_boolean_exact(
         });
     }
     if planar_report.status == ExactPlanarArrangementStatus::AlreadyMaterialized
-        && let Some(preflight) = certified_arrangement_cell_complex_preflight_if_materialized(
-            operation, &graph, left, right,
+        && let Some(preflight) = cached_certified_arrangement_cell_complex_preflight(
+            &mut certified_arrangement_preflight,
+            operation,
+            &graph,
+            left,
+            right,
         )?
     {
         return Ok(preflight);
@@ -750,8 +763,12 @@ pub fn preflight_boolean_exact(
         });
     }
     if graph_requires_coplanar_volumetric_cells_for_sources(&graph, left, right) {
-        if let Some(preflight) = certified_arrangement_cell_complex_preflight_if_materialized(
-            operation, &graph, left, right,
+        if let Some(preflight) = cached_certified_arrangement_cell_complex_preflight(
+            &mut certified_arrangement_preflight,
+            operation,
+            &graph,
+            left,
+            right,
         )? {
             return Ok(preflight);
         }
@@ -798,8 +815,12 @@ pub fn preflight_boolean_exact(
     }
 
     if support == ExactBooleanSupport::RequiresCertifiedWinding
-        && let Some(preflight) = certified_arrangement_cell_complex_preflight_if_materialized(
-            operation, &graph, left, right,
+        && let Some(preflight) = cached_certified_arrangement_cell_complex_preflight(
+            &mut certified_arrangement_preflight,
+            operation,
+            &graph,
+            left,
+            right,
         )?
     {
         return Ok(preflight);
@@ -942,6 +963,23 @@ fn certified_arrangement_cell_complex_preflight_if_materialized(
     } else {
         Ok(None)
     }
+}
+
+fn cached_certified_arrangement_cell_complex_preflight(
+    cache: &mut Option<Option<ExactBooleanPreflight>>,
+    operation: ExactBooleanOperation,
+    graph: &super::graph::ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Result<Option<ExactBooleanPreflight>, MeshError> {
+    if cache.is_none() {
+        *cache = Some(
+            certified_arrangement_cell_complex_preflight_if_materialized(
+                operation, graph, left, right,
+            )?,
+        );
+    }
+    Ok(cache.clone().flatten())
 }
 
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
