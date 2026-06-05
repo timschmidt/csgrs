@@ -83,10 +83,7 @@ use super::solid::{
     ConvexSolidMeshClassification, ConvexSolidMeshRelation, ConvexSolidPointRelation,
     classify_mesh_vertices_against_convex_solid_report,
 };
-use super::surface::{
-    certify_coplanar_convex_surface_equivalence, certify_coplanar_surface_boundary_touch,
-    order_mesh_boundary_loops,
-};
+use super::surface::order_mesh_boundary_loops;
 use super::validation::ValidationPolicy;
 use super::volumetric::{
     ExactVolumetricRegionClassification, ExactVolumetricRegionError, ExactVolumetricRegionRelation,
@@ -931,17 +928,13 @@ fn preflight_direct_coplanar_surface_support(
             None
         }
         ExactBooleanOperation::Intersection => {
-            if coplanar_mesh_overlay_surface_intersection_boundary_policy(left, right).is_some()
-                || certify_coplanar_surface_boundary_touch(left, right).is_some()
-            {
+            if coplanar_mesh_overlay_surface_intersection_boundary_policy(left, right).is_some() {
                 return Some(ExactBooleanSupport::CertifiedArrangementCellComplex);
             }
             None
         }
         ExactBooleanOperation::Difference => {
-            if coplanar_mesh_overlay_difference_ready(left, right)
-                || certify_coplanar_surface_boundary_touch(left, right).is_some()
-            {
+            if coplanar_mesh_overlay_difference_ready(left, right) {
                 return Some(ExactBooleanSupport::CertifiedArrangementCellComplex);
             }
             None
@@ -5207,14 +5200,6 @@ fn coplanar_surface_output_materializes_for_preflight(
     right: &ExactMesh,
     operation: ExactBooleanOperation,
 ) -> Result<bool, MeshError> {
-    if certify_coplanar_convex_surface_equivalence(left, right).is_some() {
-        return Ok(true);
-    }
-    if certify_coplanar_surface_boundary_touch(left, right).is_some()
-        && matches!(operation, ExactBooleanOperation::Intersection)
-    {
-        return Ok(true);
-    }
     boolean_coplanar_mesh_overlay_optional(left, right, operation, ValidationPolicy::ALLOW_BOUNDARY)
         .map(|result| result.is_some())
 }
@@ -7618,7 +7603,6 @@ mod tests {
         )
         .unwrap();
 
-        assert!(certify_coplanar_surface_boundary_touch(&left, &right).is_some());
         let result = boolean_coplanar_mesh_overlay_optional(
             &left,
             &right,
