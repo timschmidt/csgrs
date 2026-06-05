@@ -200,7 +200,7 @@ impl PointMeshWindingReport {
                 }
             }
             ClosedMeshWindingRelation::Inside => {
-                self.axis.ok_or(WindingReportError::MissingAxis)?;
+                self.validate_axis_was_tested()?;
                 if self.crossings % 2 == 1 && self.boundary_hits == 0 && self.unknown_hits == 0 {
                     Ok(())
                 } else {
@@ -208,7 +208,7 @@ impl PointMeshWindingReport {
                 }
             }
             ClosedMeshWindingRelation::Outside => {
-                self.axis.ok_or(WindingReportError::MissingAxis)?;
+                self.validate_axis_was_tested()?;
                 if self.crossings.is_multiple_of(2)
                     && self.boundary_hits == 0
                     && self.unknown_hits == 0
@@ -219,7 +219,7 @@ impl PointMeshWindingReport {
                 }
             }
             ClosedMeshWindingRelation::Boundary => {
-                self.axis.ok_or(WindingReportError::MissingAxis)?;
+                self.validate_axis_was_tested()?;
                 if self.boundary_hits != 0 {
                     Ok(())
                 } else {
@@ -236,6 +236,21 @@ impl PointMeshWindingReport {
                     Err(WindingReportError::StatusEvidenceMismatch)
                 }
             }
+        }
+    }
+
+    fn validate_axis_was_tested(&self) -> Result<(), WindingReportError> {
+        let axis = self.axis.ok_or(WindingReportError::MissingAxis)?;
+        let Some(position) = winding_ray_candidates()
+            .iter()
+            .position(|candidate| *candidate == axis)
+        else {
+            return Err(WindingReportError::InvalidAxisCount);
+        };
+        if self.tested_axes > position {
+            Ok(())
+        } else {
+            Err(WindingReportError::StatusEvidenceMismatch)
         }
     }
 
@@ -896,6 +911,47 @@ mod tests {
         assert_eq!(
             classify_ray_triangle(&point, &triangle, generated),
             RayTriangleRelation::Crossing
+        );
+    }
+
+    #[test]
+    fn winding_report_rejects_unreplayable_generated_axis() {
+        let report = PointMeshWindingReport {
+            relation: ClosedMeshWindingRelation::Inside,
+            axis: Some(WindingRayAxis::Generated {
+                dx: 4,
+                dy: 4,
+                dz: 4,
+            }),
+            tested_axes: winding_ray_candidate_count(),
+            triangle_count: 1,
+            crossings: 1,
+            boundary_hits: 0,
+            degenerate_hits: 0,
+            parallel_faces: 0,
+            unknown_hits: 0,
+        };
+
+        assert_eq!(report.validate(), Err(WindingReportError::InvalidAxisCount));
+    }
+
+    #[test]
+    fn winding_report_rejects_axis_not_reached_by_test_count() {
+        let report = PointMeshWindingReport {
+            relation: ClosedMeshWindingRelation::Outside,
+            axis: Some(WindingRayAxis::D123),
+            tested_axes: 3,
+            triangle_count: 1,
+            crossings: 0,
+            boundary_hits: 0,
+            degenerate_hits: 0,
+            parallel_faces: 0,
+            unknown_hits: 0,
+        };
+
+        assert_eq!(
+            report.validate(),
+            Err(WindingReportError::StatusEvidenceMismatch)
         );
     }
 }
