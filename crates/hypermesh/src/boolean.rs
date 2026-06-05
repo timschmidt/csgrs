@@ -3962,7 +3962,7 @@ fn arrangement_cell_complex_should_preempt_specialized_paths(
     ) && (has_single_rectangular_orthogonal_cell_result(left, right, operation)
         || has_axis_aligned_box_difference_cell_result(left, right, operation)
         || has_convex_regularized_sheet_arrangement_result(left, right, operation)
-        || has_closed_solid_arrangement_preempt_result(left, right, operation)))
+        || is_closed_solid_arrangement_preempt_candidate(left, right, operation)))
         || (matches!(
             operation,
             ExactBooleanOperation::Union
@@ -3992,7 +3992,7 @@ fn has_single_rectangular_orthogonal_cell_result(
         .is_some_and(orthogonal_cell_plan_is_single_rectangular_block)
 }
 
-fn has_closed_solid_arrangement_preempt_result(
+fn is_closed_solid_arrangement_preempt_candidate(
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
@@ -4022,14 +4022,7 @@ fn has_closed_solid_arrangement_preempt_result(
     ) {
         return false;
     }
-    arrangement_cell_complex_materializes_with_validation(
-        left,
-        right,
-        operation,
-        ValidationPolicy::CLOSED,
-        true,
-    )
-    .unwrap_or(false)
+    true
 }
 
 fn has_axis_aligned_box_difference_cell_result(
@@ -4123,31 +4116,6 @@ fn arrangement_regularized_sheet_has_native_recovery(
         .is_ok_and(|result| result.is_some())
         || boolean_arrangement_affine_orthogonal_solid_recovery(left, right, operation, validation)
             .is_ok_and(|result| result.is_some())
-}
-
-fn arrangement_cell_complex_materializes_with_validation(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-    regularize_unregularized_sheet_complex: bool,
-) -> Result<bool, MeshError> {
-    match run_arrangement_cell_complex_attempt(
-        left,
-        right,
-        operation,
-        ExactRegularizationPolicy::REGULARIZED_SOLID,
-        Some(validation),
-        regularize_unregularized_sheet_complex,
-    ) {
-        Ok(ArrangementCellComplexOutcome::Materialized(_, attempt))
-            if arrangement_cell_complex_attempt_is_certified_for_preflight(&attempt) =>
-        {
-            Ok(true)
-        }
-        Ok(_) => Ok(false),
-        Err(error) => Err(error),
-    }
 }
 
 fn boolean_convex_intersection_meshes(
