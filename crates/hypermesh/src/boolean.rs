@@ -5910,10 +5910,6 @@ fn boolean_closed_regularized_lower_dimensional_optional(
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
-    if !matches!(validation, ValidationPolicy::CLOSED) {
-        return Ok(None);
-    }
-
     let Some(left_kind) = closed_regularized_operand_kind(left) else {
         return Ok(None);
     };
@@ -5921,6 +5917,12 @@ fn boolean_closed_regularized_lower_dimensional_optional(
         return Ok(None);
     };
     if left_kind.has_volume() && right_kind.has_volume() {
+        return Ok(None);
+    }
+    if !left_kind.has_volume()
+        && !right_kind.has_volume()
+        && !matches!(validation, ValidationPolicy::CLOSED)
+    {
         return Ok(None);
     }
 

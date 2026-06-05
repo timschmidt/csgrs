@@ -11241,6 +11241,14 @@ fn exact_preflight_uses_arrangement_for_materializable_winding_blocker() {
 #[test]
 fn exact_regularized_closed_boolean_handles_mixed_solid_and_open_surface() {
     let solid = axis_aligned_box_i64([0, 0, 0], [4, 4, 4]);
+    let nonconvex_solid = upward_l_prism_i64([[0, 0], [8, 0], [8, 3], [3, 3], [3, 8], [0, 8]], 5);
+    let disconnected_solid = combine_exact_meshes(
+        &[
+            tetrahedron_i64([0, 0, 0], [2, 0, 0], [0, 2, 0], [0, 0, 2]),
+            tetrahedron_i64([4, 0, 0], [6, 0, 0], [4, 2, 0], [4, 0, 2]),
+        ],
+        "disconnected mixed-dimensional regression solid",
+    );
     let open_surface = ExactMesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 5, 0, 0, 0, 5, 1],
         &[0, 1, 2],
@@ -11248,89 +11256,114 @@ fn exact_regularized_closed_boolean_handles_mixed_solid_and_open_surface() {
     )
     .unwrap();
     assert!(solid.facts().mesh.closed_manifold);
+    assert!(nonconvex_solid.facts().mesh.closed_manifold);
+    assert!(disconnected_solid.facts().mesh.closed_manifold);
     assert!(!open_surface.facts().mesh.closed_manifold);
     assert_eq!(open_surface.facts().mesh.boundary_edges, 3);
 
-    for operation in [
-        hypermesh::ExactBooleanOperation::Union,
-        hypermesh::ExactBooleanOperation::Intersection,
-        hypermesh::ExactBooleanOperation::Difference,
-    ] {
-        let preflight =
-            hypermesh::preflight_boolean_exact(&solid, &open_surface, operation).unwrap();
-        preflight
-            .validate_against_sources(&solid, &open_surface)
-            .unwrap();
-        assert_eq!(
-            preflight.support,
-            hypermesh::ExactBooleanSupport::CertifiedMixedDimensionalRegularizedSolid
-        );
-        assert!(preflight.blocker.is_none());
+    for solid_operand in [&solid, &nonconvex_solid, &disconnected_solid] {
+        for validation in [ValidationPolicy::CLOSED, ValidationPolicy::ALLOW_BOUNDARY] {
+            for operation in [
+                hypermesh::ExactBooleanOperation::Union,
+                hypermesh::ExactBooleanOperation::Intersection,
+                hypermesh::ExactBooleanOperation::Difference,
+            ] {
+                let preflight =
+                    hypermesh::preflight_boolean_exact(solid_operand, &open_surface, operation)
+                        .unwrap();
+                preflight
+                    .validate_against_sources(solid_operand, &open_surface)
+                    .unwrap();
+                assert_eq!(
+                    preflight.support,
+                    hypermesh::ExactBooleanSupport::CertifiedMixedDimensionalRegularizedSolid
+                );
+                assert!(preflight.blocker.is_none());
 
-        let result =
-            hypermesh::boolean_exact(&solid, &open_surface, operation, ValidationPolicy::CLOSED)
-                .unwrap();
-        result
-            .validate_operation_against_sources(
-                &solid,
-                &open_surface,
-                operation,
-                ValidationPolicy::CLOSED,
-                hypermesh::ExactBoundaryBooleanPolicy::Reject,
-            )
-            .unwrap();
-        assert_eq!(
-            result.kind,
-            hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-                shortcut: hypermesh::ExactBooleanShortcutKind::MixedDimensionalRegularizedSolid
+                let result =
+                    hypermesh::boolean_exact(solid_operand, &open_surface, operation, validation)
+                        .unwrap();
+                result
+                    .validate_operation_against_sources(
+                        solid_operand,
+                        &open_surface,
+                        operation,
+                        validation,
+                        hypermesh::ExactBoundaryBooleanPolicy::Reject,
+                    )
+                    .unwrap();
+                assert_eq!(
+                    result.kind,
+                    hypermesh::ExactBooleanResultKind::CertifiedShortcut {
+                        shortcut:
+                            hypermesh::ExactBooleanShortcutKind::MixedDimensionalRegularizedSolid
+                    }
+                );
+                match operation {
+                    hypermesh::ExactBooleanOperation::Union
+                    | hypermesh::ExactBooleanOperation::Difference => {
+                        assert_exact_mesh_same_vertex_set_and_face_count(
+                            &result.mesh,
+                            solid_operand,
+                        );
+                    }
+                    hypermesh::ExactBooleanOperation::Intersection => {
+                        assert!(result.mesh.vertices().is_empty());
+                        assert!(result.mesh.triangles().is_empty());
+                    }
+                    hypermesh::ExactBooleanOperation::SelectedRegions(_) => unreachable!(),
+                }
             }
-        );
-        match operation {
-            hypermesh::ExactBooleanOperation::Union
-            | hypermesh::ExactBooleanOperation::Difference => {
-                assert_exact_mesh_same_vertex_set_and_face_count(&result.mesh, &solid);
-            }
-            hypermesh::ExactBooleanOperation::Intersection => {
-                assert!(result.mesh.vertices().is_empty());
-                assert!(result.mesh.triangles().is_empty());
-            }
-            hypermesh::ExactBooleanOperation::SelectedRegions(_) => unreachable!(),
         }
     }
 
-    let union = hypermesh::boolean_exact(
-        &open_surface,
-        &solid,
-        hypermesh::ExactBooleanOperation::Union,
-        ValidationPolicy::CLOSED,
-    )
-    .unwrap();
-    assert_exact_mesh_same_vertex_set_and_face_count(&union.mesh, &solid);
-
-    for operation in [
-        hypermesh::ExactBooleanOperation::Intersection,
-        hypermesh::ExactBooleanOperation::Difference,
-    ] {
-        let result =
-            hypermesh::boolean_exact(&open_surface, &solid, operation, ValidationPolicy::CLOSED)
-                .unwrap();
-        result
-            .validate_operation_against_sources(
+    for solid_operand in [&solid, &nonconvex_solid, &disconnected_solid] {
+        for validation in [ValidationPolicy::CLOSED, ValidationPolicy::ALLOW_BOUNDARY] {
+            let union = hypermesh::boolean_exact(
                 &open_surface,
-                &solid,
-                operation,
-                ValidationPolicy::CLOSED,
-                hypermesh::ExactBoundaryBooleanPolicy::Reject,
+                solid_operand,
+                hypermesh::ExactBooleanOperation::Union,
+                validation,
             )
             .unwrap();
-        assert!(result.mesh.vertices().is_empty());
-        assert!(result.mesh.triangles().is_empty());
-        assert_eq!(
-            result.kind,
-            hypermesh::ExactBooleanResultKind::CertifiedShortcut {
-                shortcut: hypermesh::ExactBooleanShortcutKind::MixedDimensionalRegularizedSolid
+            union
+                .validate_operation_against_sources(
+                    &open_surface,
+                    solid_operand,
+                    hypermesh::ExactBooleanOperation::Union,
+                    validation,
+                    hypermesh::ExactBoundaryBooleanPolicy::Reject,
+                )
+                .unwrap();
+            assert_exact_mesh_same_vertex_set_and_face_count(&union.mesh, solid_operand);
+
+            for operation in [
+                hypermesh::ExactBooleanOperation::Intersection,
+                hypermesh::ExactBooleanOperation::Difference,
+            ] {
+                let result =
+                    hypermesh::boolean_exact(&open_surface, solid_operand, operation, validation)
+                        .unwrap();
+                result
+                    .validate_operation_against_sources(
+                        &open_surface,
+                        solid_operand,
+                        operation,
+                        validation,
+                        hypermesh::ExactBoundaryBooleanPolicy::Reject,
+                    )
+                    .unwrap();
+                assert!(result.mesh.vertices().is_empty());
+                assert!(result.mesh.triangles().is_empty());
+                assert_eq!(
+                    result.kind,
+                    hypermesh::ExactBooleanResultKind::CertifiedShortcut {
+                        shortcut:
+                            hypermesh::ExactBooleanShortcutKind::MixedDimensionalRegularizedSolid
+                    }
+                );
             }
-        );
+        }
     }
 
     let disjoint_open_surface = ExactMesh::from_i64_triangles_with_policy(
