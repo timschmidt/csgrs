@@ -38,10 +38,12 @@ pub enum WindingRayAxis {
     D235,
     /// Positive ray in direction `(3, 5, 7)`.
     D357,
+    /// Deterministically generated primitive integer ray direction.
+    Generated { dx: i16, dy: i16, dz: i16 },
 }
 
 impl WindingRayAxis {
-    const ALL: [Self; 10] = [
+    const FIXED: [Self; 10] = [
         Self::X,
         Self::Y,
         Self::Z,
@@ -66,8 +68,54 @@ impl WindingRayAxis {
             Self::D123 => [1, 2, 3],
             Self::D235 => [2, 3, 5],
             Self::D357 => [3, 5, 7],
+            Self::Generated { dx, dy, dz } => [dx as i64, dy as i64, dz as i64],
         }
     }
+}
+
+const GENERATED_RAY_BOUND: i16 = 4;
+
+fn winding_ray_candidates() -> Vec<WindingRayAxis> {
+    let mut candidates = WindingRayAxis::FIXED.to_vec();
+    for dx in -GENERATED_RAY_BOUND..=GENERATED_RAY_BOUND {
+        for dy in -GENERATED_RAY_BOUND..=GENERATED_RAY_BOUND {
+            for dz in -GENERATED_RAY_BOUND..=GENERATED_RAY_BOUND {
+                if dx == 0 && dy == 0 && dz == 0 {
+                    continue;
+                }
+                if gcd3_i16(dx, dy, dz) != 1 {
+                    continue;
+                }
+                let candidate = WindingRayAxis::Generated { dx, dy, dz };
+                if candidates
+                    .iter()
+                    .all(|existing| existing.direction() != candidate.direction())
+                {
+                    candidates.push(candidate);
+                }
+            }
+        }
+    }
+    candidates
+}
+
+fn winding_ray_candidate_count() -> usize {
+    winding_ray_candidates().len()
+}
+
+fn gcd3_i16(a: i16, b: i16, c: i16) -> i16 {
+    gcd_i16(gcd_i16(a, b), c)
+}
+
+fn gcd_i16(a: i16, b: i16) -> i16 {
+    let mut a = a.unsigned_abs();
+    let mut b = b.unsigned_abs();
+    while b != 0 {
+        let next = a % b;
+        a = b;
+        b = next;
+    }
+    a as i16
 }
 
 /// Exact point/closed-mesh winding relation.
@@ -132,7 +180,8 @@ impl PointMeshWindingReport {
     /// blocked by degeneracy or undecidable comparisons. The split mirrors
     /// unresolved states are separate public values, not nearby booleans.
     pub fn validate(&self) -> Result<(), WindingReportError> {
-        if self.tested_axes > WindingRayAxis::ALL.len() {
+        let candidate_count = winding_ray_candidate_count();
+        if self.tested_axes > candidate_count {
             return Err(WindingReportError::InvalidAxisCount);
         }
         match self.relation {
@@ -179,7 +228,7 @@ impl PointMeshWindingReport {
             }
             ClosedMeshWindingRelation::Unknown => {
                 if self.axis.is_none()
-                    && self.tested_axes == WindingRayAxis::ALL.len()
+                    && self.tested_axes == candidate_count
                     && (self.degenerate_hits != 0 || self.unknown_hits != 0)
                 {
                     Ok(())
@@ -366,7 +415,8 @@ pub fn classify_point_against_closed_mesh_winding_report(
 
     let mut last_degenerate = 0_usize;
     let mut last_unknown = 0_usize;
-    for (tested, axis) in WindingRayAxis::ALL.into_iter().enumerate() {
+    let ray_candidates = winding_ray_candidates();
+    for (tested, axis) in ray_candidates.iter().copied().enumerate() {
         let axis_report = classify_axis(point, &triangles, axis);
         if axis_report.boundary_hits != 0 {
             return PointMeshWindingReport {
@@ -408,7 +458,7 @@ pub fn classify_point_against_closed_mesh_winding_report(
         return PointMeshWindingReport {
             relation: ClosedMeshWindingRelation::Boundary,
             axis: Some(WindingRayAxis::X),
-            tested_axes: WindingRayAxis::ALL.len(),
+            tested_axes: ray_candidates.len(),
             triangle_count: triangles.len(),
             crossings: 0,
             boundary_hits,
@@ -421,7 +471,7 @@ pub fn classify_point_against_closed_mesh_winding_report(
     PointMeshWindingReport {
         relation: ClosedMeshWindingRelation::Unknown,
         axis: None,
-        tested_axes: WindingRayAxis::ALL.len(),
+        tested_axes: ray_candidates.len(),
         triangle_count: triangles.len(),
         crossings: 0,
         boundary_hits: 0,
@@ -458,7 +508,7 @@ fn point_on_closed_triangle(point: &Point3, triangle: &[Point3; 3]) -> Option<bo
     }
 
     let mut unresolved = false;
-    for axis in WindingRayAxis::ALL {
+    for axis in winding_ray_candidates() {
         match projected_point_relation(point, triangle, axis) {
             ProjectedPointRelation::Inside | ProjectedPointRelation::Boundary => {
                 return Some(true);
@@ -829,6 +879,23 @@ mod tests {
         assert_eq!(
             classify_ray_triangle(&point, &triangle, WindingRayAxis::X),
             RayTriangleRelation::NoHit
+        );
+    }
+
+    #[test]
+    fn generated_primitive_rays_are_replayable_classifier_inputs() {
+        let generated = WindingRayAxis::Generated {
+            dx: 4,
+            dy: 1,
+            dz: 3,
+        };
+        assert!(winding_ray_candidates().contains(&generated));
+
+        let point = p(0, 0, 0);
+        let triangle = [p(0, 1, 4), p(4, 0, 1), p(4, 4, 4)];
+        assert_eq!(
+            classify_ray_triangle(&point, &triangle, generated),
+            RayTriangleRelation::Crossing
         );
     }
 }
