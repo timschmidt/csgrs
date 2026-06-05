@@ -669,6 +669,11 @@ pub fn preflight_boolean_exact(
     }
     let planar_report = planar_arrangement_report_from_graph(&graph, left, right, operation)?;
     if planar_report.is_required() {
+        if let Some(preflight) = certified_arrangement_cell_complex_preflight_if_materialized(
+            operation, &graph, left, right,
+        )? {
+            return Ok(preflight);
+        }
         return Ok(ExactBooleanPreflight {
             operation,
             support: ExactBooleanSupport::RequiresPlanarArrangement,
@@ -977,6 +982,47 @@ fn certified_shortcut_preflight(
         blocker: None,
         arrangement_readiness: None,
         coplanar_volumetric_evidence: None,
+    }
+}
+
+fn certified_arrangement_cell_complex_preflight_from_graph(
+    operation: ExactBooleanOperation,
+    graph: &super::graph::ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> ExactBooleanPreflight {
+    ExactBooleanPreflight {
+        operation,
+        support: ExactBooleanSupport::CertifiedArrangementCellComplex,
+        graph_had_unknowns: graph.has_unknowns(),
+        retained_face_pairs: graph.face_pairs.len(),
+        retained_events: graph.event_count(),
+        region_count: 0,
+        region_classifications: Vec::new(),
+        blocker: None,
+        arrangement_readiness: None,
+        coplanar_volumetric_evidence: coplanar_volumetric_evidence_if_required(graph, left, right),
+    }
+}
+
+fn certified_arrangement_cell_complex_preflight_if_materialized(
+    operation: ExactBooleanOperation,
+    graph: &super::graph::ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Result<Option<ExactBooleanPreflight>, MeshError> {
+    if arrangement_cell_complex_materializes_for_preflight(left, right, operation, false)?
+        || arrangement_cell_complex_materializes_for_preflight(left, right, operation, true)?
+        || arrangement_unregularized_sheet_complex_materialized_for_preflight(
+            left, right, operation,
+        )?
+        .is_some()
+    {
+        Ok(Some(
+            certified_arrangement_cell_complex_preflight_from_graph(operation, graph, left, right),
+        ))
+    } else {
+        Ok(None)
     }
 }
 
@@ -7295,6 +7341,32 @@ mod tests {
             &left,
             ExactBooleanOperation::Union
         ));
+    }
+
+    #[test]
+    fn materialized_arrangement_preflight_probe_certifies_full_pipeline_output() {
+        let left = axis_aligned_box_i64([0, 0, 0], [2, 2, 2]);
+        let right = axis_aligned_box_i64([1, 1, 0], [3, 3, 2]);
+        let graph = build_intersection_graph(&left, &right).unwrap();
+
+        let preflight = certified_arrangement_cell_complex_preflight_if_materialized(
+            ExactBooleanOperation::Union,
+            &graph,
+            &left,
+            &right,
+        )
+        .unwrap()
+        .expect("overlapping exact boxes should materialize through arrangement");
+
+        preflight.validate().unwrap();
+        preflight.validate_against_sources(&left, &right).unwrap();
+        assert_eq!(
+            preflight.support,
+            ExactBooleanSupport::CertifiedArrangementCellComplex
+        );
+        assert!(preflight.blocker.is_none());
+        assert_eq!(preflight.retained_face_pairs, graph.face_pairs.len());
+        assert_eq!(preflight.retained_events, graph.event_count());
     }
 
     #[test]
