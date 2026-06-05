@@ -11490,6 +11490,62 @@ fn exact_closed_boolean_decomposes_disconnected_components_against_solid() {
 }
 
 #[test]
+fn exact_closed_difference_drops_non_strictly_contained_boundary_components() {
+    let two_tets = combine_exact_meshes(
+        &[
+            tetrahedron_i64([0, 0, 0], [2, 0, 0], [0, 2, 0], [0, 0, 2]),
+            tetrahedron_i64([3, 0, 0], [5, 0, 0], [3, 2, 0], [3, 0, 2]),
+        ],
+        "two boundary-contained tetrahedra",
+    );
+    let l_prism = upward_l_prism_i64([[0, 0], [6, 0], [6, 2], [2, 2], [2, 6], [0, 6]], 4);
+    assert!(two_tets.facts().mesh.closed_manifold);
+    assert!(l_prism.facts().mesh.closed_manifold);
+
+    let preflight = hypermesh::preflight_boolean_exact(
+        &two_tets,
+        &l_prism,
+        hypermesh::ExactBooleanOperation::Difference,
+    )
+    .expect("non-strict containment difference should certify native coverage");
+    preflight.validate().unwrap();
+    preflight
+        .validate_against_sources(&two_tets, &l_prism)
+        .unwrap();
+    assert_eq!(
+        preflight.support,
+        hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
+    );
+    assert!(preflight.blocker.is_none());
+
+    let difference = hypermesh::boolean_exact(
+        &two_tets,
+        &l_prism,
+        hypermesh::ExactBooleanOperation::Difference,
+        ValidationPolicy::CLOSED,
+    )
+    .expect("non-strict containment difference should materialize");
+    difference.validate().unwrap();
+    difference
+        .validate_operation_against_sources(
+            &two_tets,
+            &l_prism,
+            hypermesh::ExactBooleanOperation::Difference,
+            ValidationPolicy::CLOSED,
+            hypermesh::ExactBoundaryBooleanPolicy::Reject,
+        )
+        .unwrap();
+    assert_eq!(
+        difference.kind,
+        hypermesh::ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
+        }
+    );
+    assert!(difference.mesh.vertices().is_empty());
+    assert!(difference.mesh.triangles().is_empty());
+}
+
+#[test]
 fn exact_closed_regularization_drops_open_surface_only_named_booleans() {
     let left = ExactMesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 5, 0, 0, 0, 5, 1],
