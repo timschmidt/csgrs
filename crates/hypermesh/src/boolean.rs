@@ -6010,12 +6010,11 @@ fn disconnected_closed_union_mesh(
     boundary_policy: ExactBoundaryBooleanPolicy,
 ) -> Result<Option<ExactMesh>, MeshError> {
     if left_components.len() > 1 {
-        let (mut separated, non_separated) =
-            partition_components_by_separation(left_components, right)?;
-        if non_separated.len() > 1 {
+        let (mut appendable, consuming) = partition_components_for_union(left_components, right)?;
+        if consuming.len() > 1 {
             return Ok(None);
         }
-        if let Some(component) = non_separated.into_iter().next() {
+        if let Some(component) = consuming.into_iter().next() {
             let result = boolean_exact_with_boundary_policy(
                 &component,
                 right,
@@ -6023,16 +6022,16 @@ fn disconnected_closed_union_mesh(
                 validation,
                 boundary_policy,
             )?;
-            separated.push(result.mesh);
+            appendable.push(result.mesh);
         } else {
-            separated.push(copy_mesh(
+            appendable.push(copy_mesh(
                 right,
                 "exact disconnected component union keeps separated right",
                 validation,
             )?);
         }
         return concatenate_mesh_sequence(
-            separated,
+            appendable,
             "exact disconnected closed-component union",
             validation,
         )
@@ -6040,12 +6039,11 @@ fn disconnected_closed_union_mesh(
     }
 
     if right_components.len() > 1 {
-        let (mut separated, non_separated) =
-            partition_components_by_separation(right_components, left)?;
-        if non_separated.len() > 1 {
+        let (mut appendable, consuming) = partition_components_for_union(right_components, left)?;
+        if consuming.len() > 1 {
             return Ok(None);
         }
-        if let Some(component) = non_separated.into_iter().next() {
+        if let Some(component) = consuming.into_iter().next() {
             let result = boolean_exact_with_boundary_policy(
                 left,
                 &component,
@@ -6053,16 +6051,16 @@ fn disconnected_closed_union_mesh(
                 validation,
                 boundary_policy,
             )?;
-            separated.push(result.mesh);
+            appendable.push(result.mesh);
         } else {
-            separated.push(copy_mesh(
+            appendable.push(copy_mesh(
                 left,
                 "exact disconnected component union keeps separated left",
                 validation,
             )?);
         }
         return concatenate_mesh_sequence(
-            separated,
+            appendable,
             "exact disconnected closed-component union",
             validation,
         )
@@ -6199,20 +6197,47 @@ fn disconnected_closed_difference_mesh(
     Ok(None)
 }
 
-fn partition_components_by_separation(
+fn partition_components_for_union(
     components: &[ExactMesh],
     other: &ExactMesh,
 ) -> Result<(Vec<ExactMesh>, Vec<ExactMesh>), MeshError> {
-    let mut separated = Vec::new();
-    let mut non_separated = Vec::new();
+    let mut appendable = Vec::new();
+    let mut consuming = Vec::new();
     for component in components {
-        if meshes_are_certified_closed_separated(component, other)? {
-            separated.push(component.clone());
+        if meshes_are_certified_closed_separated(component, other)?
+            || meshes_have_certified_boundary_touching_union(component, other)?
+        {
+            appendable.push(component.clone());
         } else {
-            non_separated.push(component.clone());
+            consuming.push(component.clone());
         }
     }
-    Ok((separated, non_separated))
+    Ok((appendable, consuming))
+}
+
+fn meshes_have_certified_boundary_touching_union(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Result<bool, MeshError> {
+    if !left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold {
+        return Ok(false);
+    }
+    let graph = build_intersection_graph(left, right)?;
+    if validate_graph_source_handoff(&graph, left, right).is_err() {
+        return Ok(false);
+    }
+    if certified_closed_boundary_touching_union_report_from_graph(&graph, left, right)?.is_some() {
+        return Ok(true);
+    }
+    if closed_mesh_edge_components(right)?.len() > 1 {
+        return Ok(false);
+    }
+    Ok(
+        preflight_boolean_exact(left, right, ExactBooleanOperation::Union).is_ok_and(|preflight| {
+            preflight.support == ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion
+                && preflight.blocker.is_none()
+        }),
+    )
 }
 
 fn closed_components_are_mutually_separated(components: &[ExactMesh]) -> Result<bool, MeshError> {
