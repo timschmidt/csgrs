@@ -34610,6 +34610,64 @@ fn exact_arrangement_regularizes_unregularized_sheet_complex_without_winding_fal
         .unwrap();
 }
 
+#[test]
+fn exact_arrangement_regularizes_no_volume_sheet_contact_without_winding_fallback() {
+    let left = tetrahedron_i64([2, -1, 0], [5, -1, 0], [2, 2, 0], [2, -1, -3]);
+    let right = tetrahedron_i64([1, 1, -1], [3, 1, 3], [1, 3, 3], [3, 3, 1]);
+
+    for operation in [
+        hypermesh::ExactBooleanOperation::Union,
+        hypermesh::ExactBooleanOperation::Intersection,
+    ] {
+        let preflight = hypermesh::preflight_boolean_exact(&left, &right, operation).unwrap();
+        assert_eq!(
+            preflight.support,
+            hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
+        );
+        assert_eq!(preflight.blocker, None);
+
+        let report = hypermesh::exact_arrangement_boolean_attempt_report(
+            &left,
+            &right,
+            operation,
+            hypermesh::ExactRegularizationPolicy::REGULARIZED_SOLID,
+        )
+        .unwrap();
+        assert_eq!(
+            report.stage,
+            hypermesh::ExactArrangementBooleanStage::Materialized
+        );
+        assert_eq!(report.decline, None);
+        assert_eq!(report.arrangement_blockers, 0);
+
+        let result =
+            hypermesh::boolean_exact(&left, &right, operation, ValidationPolicy::CLOSED).unwrap();
+        result.validate_against_sources(&left, &right).unwrap();
+        match operation {
+            hypermesh::ExactBooleanOperation::Union => {
+                assert_eq!(
+                    result.kind,
+                    hypermesh::ExactBooleanResultKind::CertifiedShortcut {
+                        shortcut: hypermesh::ExactBooleanShortcutKind::ClosedBoundaryTouchingUnion
+                    }
+                );
+                assert_eq!(result.mesh.triangles().len(), 8);
+            }
+            hypermesh::ExactBooleanOperation::Intersection => {
+                assert_eq!(
+                    result.kind,
+                    hypermesh::ExactBooleanResultKind::CertifiedShortcut {
+                        shortcut:
+                            hypermesh::ExactBooleanShortcutKind::ClosedBoundaryTouchingIntersection
+                    }
+                );
+                assert!(result.mesh.triangles().is_empty());
+            }
+            _ => unreachable!(),
+        }
+    }
+}
+
 fn fuzz_seed_mesh_pair(seed: &[u8]) -> (ExactMesh, ExactMesh) {
     let mut values = Vec::new();
     let mut indices = Vec::new();

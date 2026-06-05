@@ -65,7 +65,7 @@ use super::region::{
     ExactBooleanAssemblyPlan, ExactRegionRetention, ExactRegionSelection,
     FaceRegionPlaneClassification, FaceRegionTriangulation,
     checked_classify_face_regions_against_opposite_planes,
-    checked_triangulate_face_regions_with_earcut,
+    checked_triangulate_face_regions_with_earcut, choose_region_projection,
 };
 use super::regularization::{ExactArrangementBlocker, ExactRegularizationPolicy};
 use super::reports::{
@@ -2345,9 +2345,163 @@ fn boolean_arrangement_regularized_sheet_complex_from_graph(
     // Unregularized sheet arrangements already retain exact split cells but can
     // lack a closed shell graph. The volumetric split-cell assembly supplies
     // the missing regularized caps without changing predicates or tolerances.
-    boolean_arrangement_volumetric_split_cell_recovery_from_graph(
+    if let Some(result) = boolean_arrangement_volumetric_split_cell_recovery_from_graph(
+        graph, left, right, operation, validation,
+    )? {
+        return Ok(Some(result));
+    }
+    boolean_arrangement_regularized_no_volume_overlap_from_graph(
         graph, left, right, operation, validation,
     )
+}
+
+fn boolean_arrangement_regularized_no_volume_overlap_from_graph(
+    graph: &super::graph::ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+        || !left.facts().mesh.closed_manifold
+        || !right.facts().mesh.closed_manifold
+    {
+        return Ok(None);
+    }
+
+    let Some(left_minus_right) = boolean_arrangement_volumetric_split_cell_recovery_from_graph(
+        graph,
+        left,
+        right,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::CLOSED,
+    )?
+    else {
+        return Ok(None);
+    };
+    if !arrangement_difference_preserves_source_surface(&left_minus_right, left, MeshSide::Left) {
+        return Ok(None);
+    }
+
+    let reverse_graph = build_intersection_graph(right, left)?;
+    validate_graph_source_handoff(&reverse_graph, right, left)?;
+    let Some(right_minus_left) = boolean_arrangement_volumetric_split_cell_recovery_from_graph(
+        &reverse_graph,
+        right,
+        left,
+        ExactBooleanOperation::Difference,
+        ValidationPolicy::CLOSED,
+    )?
+    else {
+        return Ok(None);
+    };
+    if !arrangement_difference_preserves_source_surface(&right_minus_left, right, MeshSide::Left) {
+        return Ok(None);
+    }
+
+    let (mesh, shortcut) = match operation {
+        ExactBooleanOperation::Union => (
+            concatenate_meshes_with_options(
+                left,
+                right,
+                false,
+                "exact arrangement no-volume-overlap regularized union preserving separate shells",
+                validation,
+            )?,
+            ExactBooleanShortcutKind::ClosedBoundaryTouchingUnion,
+        ),
+        ExactBooleanOperation::Intersection => (
+            empty_mesh(
+                "empty exact arrangement no-volume-overlap regularized intersection",
+                validation,
+            )?,
+            ExactBooleanShortcutKind::ClosedBoundaryTouchingIntersection,
+        ),
+        ExactBooleanOperation::Difference => (
+            copy_mesh(
+                left,
+                "exact arrangement no-volume-overlap difference preserving left shell",
+                validation,
+            )?,
+            ExactBooleanShortcutKind::ClosedBoundaryTouchingDifference,
+        ),
+        ExactBooleanOperation::SelectedRegions(_) => unreachable!("handled above"),
+    };
+    let result = certified_shortcut_result(mesh, shortcut);
+    if result.validate().is_err() || result.validate_against_sources(left, right).is_err() {
+        return Ok(None);
+    }
+    Ok(Some(result))
+}
+
+fn arrangement_difference_preserves_source_surface(
+    result: &ExactBooleanResult,
+    source: &ExactMesh,
+    source_side: MeshSide,
+) -> bool {
+    if !matches!(
+        result.kind,
+        ExactBooleanResultKind::ArrangementCellComplexMaterialized {
+            operation: ExactBooleanOperation::Difference
+        }
+    ) {
+        return false;
+    }
+    if result.validate().is_err() {
+        return false;
+    }
+    let mut retained_area_by_face = vec![Real::from(0); source.triangles().len()];
+    for triangle in &result.assembly.triangles {
+        if triangle.source_side != source_side || triangle.source_face >= source.triangles().len() {
+            return false;
+        }
+        let Ok(projection) = choose_region_projection(source, triangle.source_face) else {
+            return false;
+        };
+        let Some(points) = triangle
+            .vertices
+            .iter()
+            .map(|vertex| {
+                result
+                    .assembly
+                    .vertices
+                    .get(*vertex)
+                    .map(|vertex| vertex.point.clone())
+            })
+            .collect::<Option<Vec<_>>>()
+        else {
+            return false;
+        };
+        let Some(area) = real_abs(&projected_polygon_area2_value(&points, projection)) else {
+            return false;
+        };
+        if compare_reals(&area, &Real::from(0)).value() != Some(Ordering::Greater) {
+            return false;
+        }
+        retained_area_by_face[triangle.source_face] =
+            retained_area_by_face[triangle.source_face].clone() + area;
+    }
+
+    source.triangles().iter().enumerate().all(|(face, _)| {
+        let Some(points) = triangle_points(source, face) else {
+            return false;
+        };
+        let Ok(projection) = choose_region_projection(source, face) else {
+            return false;
+        };
+        let Some(source_area) = real_abs(&projected_polygon_area2_value(&points, projection))
+        else {
+            return false;
+        };
+        compare_reals(&retained_area_by_face[face], &source_area).value() == Some(Ordering::Equal)
+    })
+}
+
+fn real_abs(value: &Real) -> Option<Real> {
+    match real_sign(value)? {
+        Sign::Negative => Some(Real::from(0) - value),
+        Sign::Zero | Sign::Positive => Some(value.clone()),
+    }
 }
 
 fn arrangement_volumetric_split_cell_recovery_outcome(
