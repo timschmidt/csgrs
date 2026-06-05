@@ -68,7 +68,9 @@ use super::region::{
     checked_classify_face_regions_against_opposite_planes,
     checked_triangulate_face_regions_with_earcut, choose_region_projection,
 };
-use super::regularization::{ExactArrangementBlocker, ExactRegularizationPolicy};
+use super::regularization::{
+    ExactArrangementBlocker, ExactRegularizationPolicy, ExactUnresolvedPolicy,
+};
 use super::reports::{
     ExactBooleanBlocker, ExactBooleanBlockerKind, ExactBooleanPreflight, ExactBooleanResult,
     ExactBooleanResultKind, ExactBooleanShortcutKind, ExactBooleanSupport,
@@ -1982,6 +1984,8 @@ fn run_arrangement_cell_complex_attempt(
     };
     let regularized_sheet_recovery_surface =
         arrangement_has_regularized_closed_sheet_recovery_surface(&arrangement, left, right);
+    let volume_resolves_region_classification =
+        arrangement_region_classification_blockers_are_volume_resolved(&arrangement);
 
     let axis_aligned_box_difference_cell_result =
         has_axis_aligned_box_difference_cell_result(left, right, operation);
@@ -2037,7 +2041,7 @@ fn run_arrangement_cell_complex_attempt(
         return Ok(ArrangementCellComplexOutcome::Materialized(result, attempt));
     }
 
-    if !arrangement.is_complete() {
+    if !arrangement.is_complete() && !volume_resolves_region_classification {
         if let Some(result) = materialize_simple_coplanar_overlay_arrangement(
             left,
             right,
@@ -2115,7 +2119,15 @@ fn run_arrangement_cell_complex_attempt(
         return Ok(ArrangementCellComplexOutcome::Declined(attempt));
     }
 
-    let labeled = match arrangement.label_regions(policy) {
+    let labeling_policy = if volume_resolves_region_classification {
+        ExactRegularizationPolicy {
+            unresolved: ExactUnresolvedPolicy::RetainArtifacts,
+            ..policy
+        }
+    } else {
+        policy
+    };
+    let labeled = match arrangement.label_regions(labeling_policy) {
         Ok(labeled) => labeled,
         Err(blocker) => {
             if let Some(outcome) = arrangement_cell_complex_recovery_outcome_if_available(
@@ -2135,7 +2147,12 @@ fn run_arrangement_cell_complex_attempt(
         }
     };
     attempt.stage = ExactArrangementBooleanStage::Labeled;
-    let selected = match labeled.select_with_policy(operation, policy) {
+    let selected_result = if volume_resolves_region_classification {
+        labeled.select_volume_resolved_with_policy(operation, policy)
+    } else {
+        labeled.select_with_policy(operation, policy)
+    };
+    let selected = match selected_result {
         Ok(selected) if selected.blockers.is_empty() => selected,
         Ok(selected) => {
             attempt.selected_faces = selected.selected_faces.len();
@@ -2440,6 +2457,24 @@ fn arrangement_has_regularized_closed_sheet_recovery_surface(
     left.facts().mesh.closed_manifold
         && right.facts().mesh.closed_manifold
         && arrangement_has_mixed_source_sheet_complex(arrangement)
+}
+
+fn arrangement_region_classification_blockers_are_volume_resolved(
+    arrangement: &ExactArrangement,
+) -> bool {
+    !arrangement.blockers.is_empty()
+        && arrangement
+            .blockers
+            .iter()
+            .all(|blocker| *blocker == ExactArrangementBlocker::UnresolvedRegionClassification)
+        && arrangement
+            .volume_regions
+            .as_ref()
+            .is_some_and(|regions| !regions.is_empty())
+        && arrangement
+            .volume_adjacencies
+            .as_ref()
+            .is_some_and(|adjacencies| !adjacencies.is_empty())
 }
 
 fn arrangement_should_try_regularized_sheet_recovery(
