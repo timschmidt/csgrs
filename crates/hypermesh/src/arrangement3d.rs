@@ -2099,24 +2099,26 @@ fn nested_shell_volume_graph(
     }
     let mut contains = vec![vec![false; shell_regions.len()]; shell_regions.len()];
     for contained in 0..shell_regions.len() {
-        let witness = shell_region_witness(shell_regions.get(contained)?, face_cells)?;
+        let witnesses = shell_region_witnesses(shell_regions.get(contained)?, face_cells);
+        if witnesses.is_empty() {
+            push_unique_blocker(
+                blockers,
+                ExactArrangementBlocker::UnresolvedRegionClassification,
+            );
+            return None;
+        }
         for container in 0..shell_regions.len() {
             if contained == container {
                 continue;
             }
-            match classify_point_against_closed_mesh_winding_report(
-                &witness,
-                &shell_meshes[container],
-            )
-            .relation
-            {
-                ClosedMeshWindingRelation::Inside => contains[contained][container] = true,
-                ClosedMeshWindingRelation::Outside => {}
-                ClosedMeshWindingRelation::Boundary => {
+            match classify_shell_witnesses_against_container(&witnesses, &shell_meshes[container]) {
+                ShellContainmentRelation::Inside => contains[contained][container] = true,
+                ShellContainmentRelation::Outside => {}
+                ShellContainmentRelation::Boundary => {
                     push_unique_blocker(blockers, ExactArrangementBlocker::NonManifoldCellComplex);
                     return None;
                 }
-                ClosedMeshWindingRelation::Unknown | ClosedMeshWindingRelation::NotClosed => {
+                ShellContainmentRelation::Unknown => {
                     push_unique_blocker(
                         blockers,
                         ExactArrangementBlocker::UnresolvedRegionClassification,
@@ -2192,6 +2194,57 @@ fn nested_shell_volume_graph(
     }
 
     Some((Some(volume_regions), Some(volume_adjacencies)))
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum ShellContainmentRelation {
+    Inside,
+    Outside,
+    Boundary,
+    Unknown,
+}
+
+fn classify_shell_witnesses_against_container(
+    witnesses: &[Point3],
+    container: &ExactMesh,
+) -> ShellContainmentRelation {
+    let mut decided = None;
+    for witness in witnesses {
+        match classify_shell_witness_against_container(witness, container) {
+            ShellContainmentRelation::Boundary => return ShellContainmentRelation::Boundary,
+            ShellContainmentRelation::Unknown => {}
+            relation @ (ShellContainmentRelation::Inside | ShellContainmentRelation::Outside) => {
+                match decided {
+                    Some(existing) if existing != relation => {
+                        return ShellContainmentRelation::Boundary;
+                    }
+                    Some(_) => {}
+                    None => decided = Some(relation),
+                }
+            }
+        }
+    }
+    decided.unwrap_or(ShellContainmentRelation::Unknown)
+}
+
+fn classify_shell_witness_against_container(
+    witness: &Point3,
+    container: &ExactMesh,
+) -> ShellContainmentRelation {
+    match classify_point_against_closed_mesh_winding_report(witness, container).relation {
+        ClosedMeshWindingRelation::Inside => ShellContainmentRelation::Inside,
+        ClosedMeshWindingRelation::Outside => ShellContainmentRelation::Outside,
+        ClosedMeshWindingRelation::Boundary => ShellContainmentRelation::Boundary,
+        ClosedMeshWindingRelation::Unknown | ClosedMeshWindingRelation::NotClosed => {
+            match classify_point_against_convex_solid_report(witness, container).relation {
+                ConvexSolidPointRelation::Inside => ShellContainmentRelation::Inside,
+                ConvexSolidPointRelation::Outside => ShellContainmentRelation::Outside,
+                ConvexSolidPointRelation::Boundary => ShellContainmentRelation::Boundary,
+                ConvexSolidPointRelation::Unknown
+                | ConvexSolidPointRelation::NotCertifiedConvex => ShellContainmentRelation::Unknown,
+            }
+        }
+    }
 }
 
 fn deepest_containing_shell(containers: &[usize], contains: &[Vec<bool>]) -> Option<usize> {
@@ -2331,17 +2384,25 @@ fn apply_nested_shell_source_side(
     }
 }
 
-fn shell_region_witness(
+fn shell_region_witnesses(
     shell: &ArrangementRegion,
     face_cells: &[ArrangementFaceCell],
-) -> Option<Point3> {
-    shell
+) -> Vec<Point3> {
+    let mut witnesses = Vec::new();
+    for point in shell
         .face_cells
         .iter()
         .filter_map(|&cell| face_cells.get(cell))
         .flat_map(|cell| cell.boundary_points.iter())
-        .next()
-        .cloned()
+    {
+        if witnesses
+            .iter()
+            .all(|existing| point3_equal(existing, point).value() != Some(true))
+        {
+            witnesses.push(point.clone());
+        }
+    }
+    witnesses
 }
 
 fn shell_region_mesh(
@@ -3137,6 +3198,31 @@ mod tests {
             .expect("exact coincident geometric edge should share one incidence");
 
         assert_eq!(shared.1, vec![0, 1]);
+    }
+
+    #[test]
+    fn shell_containment_classifier_uses_consistent_exact_witnesses() {
+        let container = tetrahedron_i64([0, 0, 0], [10, 0, 0], [0, 10, 0], [0, 0, 10]);
+
+        assert_eq!(
+            classify_shell_witnesses_against_container(&[p3(1, 1, 1), p3(2, 1, 1)], &container),
+            ShellContainmentRelation::Inside
+        );
+        assert_eq!(
+            classify_shell_witnesses_against_container(
+                &[p3(20, 20, 20), p3(21, 20, 20)],
+                &container
+            ),
+            ShellContainmentRelation::Outside
+        );
+        assert_eq!(
+            classify_shell_witnesses_against_container(&[p3(0, 0, 0), p3(1, 1, 1)], &container),
+            ShellContainmentRelation::Boundary
+        );
+        assert_eq!(
+            classify_shell_witnesses_against_container(&[p3(1, 1, 1), p3(20, 20, 20)], &container),
+            ShellContainmentRelation::Boundary
+        );
     }
 
     #[test]
