@@ -208,7 +208,7 @@ pub struct ExactArrangementBooleanAttempt {
 /// Exact boolean operation request.
 ///
 /// Named booleans are represented now, but they intentionally do not fall back
-/// to legacy float winding. Certified shortcut cases execute directly, while
+/// to approximate float winding. Certified shortcut cases execute directly, while
 /// remaining named overlaps return [`DiagnosticKind::UnsupportedExactOperation`]
 /// until split-region inside/outside classification is complete.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -1431,7 +1431,7 @@ fn mesh_vertices_touch_boundary(report: &ClosedMeshWindingMeshReport) -> bool {
 /// Run an exact boolean operation request.
 ///
 /// This entry point makes unsupported named booleans explicit rather than
-/// silently dispatching to legacy tolerance code. That is a deliberate
+/// silently dispatching to specialized tolerance code. That is a deliberate
 /// exact computation boundary: unsupported topology semantics are diagnostics,
 /// not approximate decisions.
 pub fn boolean_exact(
@@ -1458,7 +1458,7 @@ pub fn boolean_exact(
 /// events have no proper crossings, construction failures, or unknowns. In
 /// that narrow case, [`ExactBoundaryBooleanPolicy::PreserveSeparateShells`]
 /// projects lower-dimensional contact into triangle-mesh output instead of
-/// silently invoking the legacy tolerance path. Closed-solid regularized
+/// silently invoking the specialized tolerance path. Closed-solid regularized
 /// intersection and difference do not need that projection policy once the
 /// same exact boundary-touch report proves no shared interior volume; those
 /// two operations use certified shortcuts before the policy layer.
@@ -1680,7 +1680,7 @@ enum ArrangementCellComplexOutcome {
 }
 
 /// Report how far the arrangement/cell-complex Boolean pipeline gets for an
-/// operation without falling through to legacy/specialized materializers.
+/// operation without falling through to specialized materializers.
 pub fn exact_arrangement_boolean_attempt_report(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -1710,7 +1710,7 @@ fn boolean_arrangement_cell_complex_meshes(
     require_preempt_certification: bool,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
     if require_preempt_certification
-        && !arrangement_cell_complex_should_preempt_legacy_paths(left, right, operation)
+        && !arrangement_cell_complex_should_preempt_specialized_paths(left, right, operation)
     {
         return Ok(None);
     }
@@ -1763,7 +1763,7 @@ fn arrangement_cell_complex_materializes_preemptively(
     right: &ExactMesh,
     operation: ExactBooleanOperation,
 ) -> Result<bool, MeshError> {
-    if !arrangement_cell_complex_should_preempt_legacy_paths(left, right, operation) {
+    if !arrangement_cell_complex_should_preempt_specialized_paths(left, right, operation) {
         return Ok(false);
     }
     match run_arrangement_cell_complex_attempt(
@@ -3954,7 +3954,7 @@ fn vector_between(from: &Point3, to: &Point3) -> Point3 {
     )
 }
 
-fn arrangement_cell_complex_should_preempt_legacy_paths(
+fn arrangement_cell_complex_should_preempt_specialized_paths(
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
@@ -7511,7 +7511,7 @@ mod tests {
             &right,
             ExactBooleanOperation::Union
         ));
-        assert!(arrangement_cell_complex_should_preempt_legacy_paths(
+        assert!(arrangement_cell_complex_should_preempt_specialized_paths(
             &left,
             &right,
             ExactBooleanOperation::Union
@@ -7523,7 +7523,7 @@ mod tests {
             ValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap();
-        assert!(arrangement_cell_complex_should_preempt_legacy_paths(
+        assert!(arrangement_cell_complex_should_preempt_specialized_paths(
             &inner,
             &left,
             ExactBooleanOperation::Union

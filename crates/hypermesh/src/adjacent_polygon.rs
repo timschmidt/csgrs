@@ -84,40 +84,6 @@ pub(crate) fn polygon_patch_pairs(
     Some(pairs)
 }
 
-/// Internal fuzz hook for source-disk full-face adjacency discovery.
-///
-/// This is intentionally available only under `internal-fuzzing`. It lets the
-/// stable hypermesh API.
-#[cfg(feature = "internal-fuzzing")]
-#[doc(hidden)]
-pub fn polygon_patch_pairs_for_internal_fuzz(
-    left: &ExactMesh,
-    consumed_left_faces: &BTreeSet<usize>,
-    right: &ExactMesh,
-    consumed_right_faces: &BTreeSet<usize>,
-) -> Option<Vec<(Vec<usize>, Vec<usize>)>> {
-    polygon_patch_pairs(left, consumed_left_faces, right, consumed_right_faces)
-}
-
-/// Internal fuzz hook returning only candidate face sets.
-///
-/// The hook deliberately strips geometry from the result so fuzz assertions can
-/// check bounded-certificate invariants without depending on private candidate
-/// fields or serializing exact coordinates.
-#[cfg(feature = "internal-fuzzing")]
-#[doc(hidden)]
-pub fn polygon_patch_candidate_face_sets_for_internal_fuzz(
-    mesh: &ExactMesh,
-    consumed_faces: &BTreeSet<usize>,
-) -> Option<Vec<Vec<usize>>> {
-    Some(
-        polygon_patch_candidates(mesh, consumed_faces)?
-            .into_iter()
-            .map(|candidate| candidate.faces)
-            .collect(),
-    )
-}
-
 fn polygon_patch_candidates(
     mesh: &ExactMesh,
     consumed_faces: &BTreeSet<usize>,

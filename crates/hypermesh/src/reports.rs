@@ -1270,7 +1270,7 @@ pub enum ExactBooleanSupport {
     /// separated relation that was not caught by mesh-level AABBs.
     CertifiedConvexSeparated,
     /// A named operation was materialized by the exact arrangement/cell-complex
-    /// pipeline with legacy surface materializers retained only as proof
+    /// pipeline with specialized surface materializers retained only as proof
     /// fixtures.
     CertifiedArrangementCellComplex,
     /// The retained graph contains certified boundary contact events. This
@@ -1301,7 +1301,7 @@ pub enum ExactBooleanSupport {
 /// boundary. Shortcut variants are executable by `boolean_exact`. For
 /// nontrivial named booleans, the report exposes the certified split-region
 /// plane classifications that a future exact winding/inside-outside rule must
-/// consume, without dispatching to the legacy tolerance kernel.
+/// consume, without dispatching to the specialized tolerance kernel.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactBooleanPreflight {
     /// Requested operation.

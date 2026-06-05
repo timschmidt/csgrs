@@ -315,7 +315,7 @@ pub enum CoplanarOverlapSplitValidationError {
     DisjointEdgeSplit,
     /// A collinear interval contact did not retain interval state.
     MissingIntervalConstruction,
-    /// A collinear interval contact retained only the legacy interval flag
+    /// A collinear interval contact retained only the older interval flag
     /// without exact interval endpoints.
     MissingIntervalEndpoints,
     /// A non-interval contact unexpectedly retained interval state.

@@ -4,6 +4,7 @@
 #![allow(clippy::too_many_arguments)]
 #![allow(clippy::cast_abs_to_unsigned)]
 #![allow(unused_braces)]
+#![forbid(unsafe_code)]
 
 //! Exact-facing mesh API for the hyper geometry stack.
 //!
@@ -47,7 +48,7 @@ pub mod reports;
 pub mod scalar;
 pub mod simplify;
 pub mod solid;
-pub mod support;
+mod support;
 pub(crate) mod surface;
 pub mod validation;
 pub mod view;
@@ -60,10 +61,6 @@ pub use adapter::{
     ExactI64MeshInputReadiness, ExactI64MeshInputReport, ExactI64MeshInputReportValidationError,
     LossyF64MeshInputReadiness, LossyF64MeshInputReport, LossyF64MeshInputReportValidationError,
     inspect_f64_mesh_input, inspect_i64_mesh_input,
-};
-#[cfg(feature = "internal-fuzzing")]
-pub use adjacent_polygon::{
-    polygon_patch_candidate_face_sets_for_internal_fuzz, polygon_patch_pairs_for_internal_fuzz,
 };
 pub use arrangement2d::{
     ExactArrangement2d, ExactArrangement2dBlocker, ExactArrangement2dEdge, ExactArrangement2dFace,

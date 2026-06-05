@@ -2,7 +2,7 @@
 //!
 //! Full triangle/triangle intersection is deliberately not reimplemented here
 //! as another local tolerance algorithm. Instead this module exposes certified
-//! primitives that legacy kernels can migrate onto: classify triangle vertices
+//! primitives that specialized kernels can migrate onto: classify triangle vertices
 //! against an oriented face plane and retain the predicate route. Plane-side
 //! orientation predicates come from `hyperlimit`, and each classification
 //! retains the certificate that produced it.
