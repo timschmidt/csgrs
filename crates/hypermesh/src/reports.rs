@@ -611,12 +611,6 @@ pub enum ExactBooleanShortcutKind {
     ConvexDifference,
     /// Certified closed-convex separation.
     ConvexSeparated,
-    /// Certified exact ray-parity containment for closed nonconvex-capable
-    /// no-intersection meshes.
-    WindingContainment,
-    /// Certified exact ray-parity separation for closed nonconvex-capable
-    /// no-intersection meshes.
-    WindingSeparated,
     /// Certified exact arrangement/cell-complex materialization.
     ///
     /// The output was produced by building retained 3D arrangement cells,
@@ -1275,12 +1269,6 @@ pub enum ExactBooleanSupport {
     /// A named operation was answered by a certified no-intersection convex
     /// separated relation that was not caught by mesh-level AABBs.
     CertifiedConvexSeparated,
-    /// A named operation was answered by exact ray-parity containment for
-    /// closed, possibly nonconvex meshes with no retained face intersections.
-    CertifiedWindingContainment,
-    /// A named operation was answered by exact ray-parity separation for
-    /// closed, possibly nonconvex meshes with no retained face intersections.
-    CertifiedWindingSeparated,
     /// A named operation was materialized by the exact arrangement/cell-complex
     /// pipeline with legacy surface materializers retained only as proof
     /// fixtures.
@@ -1407,9 +1395,7 @@ impl ExactBooleanPreflight {
             | ExactBooleanSupport::CertifiedConvexUnion
             | ExactBooleanSupport::CertifiedConvexIntersection
             | ExactBooleanSupport::CertifiedConvexDifference
-            | ExactBooleanSupport::CertifiedConvexSeparated
-            | ExactBooleanSupport::CertifiedWindingContainment
-            | ExactBooleanSupport::CertifiedWindingSeparated => {
+            | ExactBooleanSupport::CertifiedConvexSeparated => {
                 if self.blocker.is_some() {
                     return Err(ExactReportValidationError::CertifiedReportHasBlocker);
                 }

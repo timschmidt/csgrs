@@ -311,11 +311,10 @@ pub fn boolean_selected_regions(
 /// Preflight an exact boolean operation without materializing output topology.
 ///
 /// The preflight path deliberately shares the exact graph, region, and
-/// classification stages with the executable selected-region pipeline. For
-/// named booleans that are not covered by a certified shortcut, it returns
-/// [`ExactBooleanSupport::RequiresCertifiedWinding`] once all available
-/// classifications are proof-producing. This keeps the missing operation
-/// semantics visible at the API boundary instead of approximating them.
+/// classification stages with the executable arrangement pipeline. For named
+/// booleans that still need unresolved inside/outside semantics, it returns
+/// [`ExactBooleanSupport::RequiresCertifiedWinding`] with replayable facts
+/// instead of approximating them.
 pub fn preflight_boolean_exact(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -413,8 +412,6 @@ pub fn preflight_boolean_exact(
             | ExactBooleanSupport::CertifiedConvexDifference
             | ExactBooleanSupport::CertifiedConvexContainment
             | ExactBooleanSupport::CertifiedConvexSeparated
-            | ExactBooleanSupport::CertifiedWindingContainment
-            | ExactBooleanSupport::CertifiedWindingSeparated
     ) {
         return Ok(ExactBooleanPreflight {
             operation,
@@ -601,7 +598,7 @@ pub fn preflight_boolean_exact(
     }
     if support == ExactBooleanSupport::RequiresCertifiedWinding
         && let Some(winding_support) =
-            certified_winding_boolean_support_from_graph(&graph, left, right)?
+            certified_closed_shell_no_intersection_support_from_graph(&graph, left, right)?
     {
         return Ok(certified_shortcut_preflight(operation, winding_support));
     }
@@ -1469,8 +1466,8 @@ pub fn boolean_exact_with_boundary_policy(
                 return Ok(result);
             }
             if let Some(shortcut) =
-                certified_winding_boolean_shortcut_from_graph(&graph, left, right)?
-                && let Some(result) = materialize_winding_containment_meshes(
+                certified_closed_shell_no_intersection_shortcut_from_graph(&graph, left, right)?
+                && let Some(result) = materialize_closed_shell_no_intersection_meshes(
                     shortcut, left, right, operation, validation,
                 )?
             {
@@ -5111,8 +5108,8 @@ fn boolean_convex_containment_meshes_from_graph(
     )))
 }
 
-fn materialize_winding_containment_meshes(
-    shortcut: CertifiedWindingBooleanShortcut,
+fn materialize_closed_shell_no_intersection_meshes(
+    shortcut: CertifiedClosedShellNoIntersectionShortcut,
     left: &ExactMesh,
     right: &ExactMesh,
     operation: ExactBooleanOperation,
@@ -5126,31 +5123,34 @@ fn materialize_winding_containment_meshes(
         (ClosedMeshWindingMeshRelation::StrictlyInside, _, ExactBooleanOperation::Union) => {
             copy_mesh(
                 right,
-                "exact winding containment union keeps outer right",
+                "exact arrangement closed-shell containment union keeps outer right",
                 validation,
             )?
         }
         (ClosedMeshWindingMeshRelation::StrictlyInside, _, ExactBooleanOperation::Intersection) => {
             copy_mesh(
                 left,
-                "exact winding containment intersection keeps inner left",
+                "exact arrangement closed-shell containment intersection keeps inner left",
                 validation,
             )?
         }
         (ClosedMeshWindingMeshRelation::StrictlyInside, _, ExactBooleanOperation::Difference) => {
-            empty_mesh("empty exact winding containment difference", validation)?
+            empty_mesh(
+                "empty exact arrangement closed-shell containment difference",
+                validation,
+            )?
         }
         (_, ClosedMeshWindingMeshRelation::StrictlyInside, ExactBooleanOperation::Union) => {
             copy_mesh(
                 left,
-                "exact winding containment union keeps outer left",
+                "exact arrangement closed-shell containment union keeps outer left",
                 validation,
             )?
         }
         (_, ClosedMeshWindingMeshRelation::StrictlyInside, ExactBooleanOperation::Intersection) => {
             copy_mesh(
                 right,
-                "exact winding containment intersection keeps inner right",
+                "exact arrangement closed-shell containment intersection keeps inner right",
                 validation,
             )?
         }
@@ -5159,7 +5159,7 @@ fn materialize_winding_containment_meshes(
                 left,
                 right,
                 true,
-                "exact winding containment difference with inner reversed shell",
+                "exact arrangement closed-shell containment difference with inner reversed shell",
                 validation,
             )?
         }
@@ -5171,21 +5171,24 @@ fn materialize_winding_containment_meshes(
             left,
             right,
             false,
-            "exact winding separated union",
+            "exact arrangement closed-shell separated union",
             validation,
         )?,
         (
             ClosedMeshWindingMeshRelation::Outside,
             ClosedMeshWindingMeshRelation::Outside,
             ExactBooleanOperation::Intersection,
-        ) => empty_mesh("empty exact winding separated intersection", validation)?,
+        ) => empty_mesh(
+            "empty exact arrangement closed-shell separated intersection",
+            validation,
+        )?,
         (
             ClosedMeshWindingMeshRelation::Outside,
             ClosedMeshWindingMeshRelation::Outside,
             ExactBooleanOperation::Difference,
         ) => copy_mesh(
             left,
-            "exact winding separated difference keeps left",
+            "exact arrangement closed-shell separated difference keeps left",
             validation,
         )?,
         (_, _, ExactBooleanOperation::SelectedRegions(_)) => unreachable!("handled by caller"),
@@ -5194,15 +5197,7 @@ fn materialize_winding_containment_meshes(
 
     Ok(Some(certified_shortcut_result(
         mesh,
-        match shortcut.support {
-            ExactBooleanSupport::CertifiedWindingContainment => {
-                ExactBooleanShortcutKind::WindingContainment
-            }
-            ExactBooleanSupport::CertifiedWindingSeparated => {
-                ExactBooleanShortcutKind::WindingSeparated
-            }
-            _ => unreachable!("winding support helper returns only winding shortcuts"),
-        },
+        ExactBooleanShortcutKind::ArrangementCellComplex,
     )))
 }
 
@@ -5626,28 +5621,27 @@ fn convex_boundary_containment_is_supported(
             .any(|vertex| matches!(vertex.relation, ConvexSolidPointRelation::Outside))
 }
 
-struct CertifiedWindingBooleanShortcut {
-    support: ExactBooleanSupport,
+struct CertifiedClosedShellNoIntersectionShortcut {
     left_in_right: ClosedMeshWindingMeshReport,
     right_in_left: ClosedMeshWindingMeshReport,
 }
 
-fn certified_winding_boolean_support_from_graph(
+fn certified_closed_shell_no_intersection_support_from_graph(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
 ) -> Result<Option<ExactBooleanSupport>, MeshError> {
     Ok(
-        certified_winding_boolean_shortcut_from_graph(graph, left, right)?
-            .map(|shortcut| shortcut.support),
+        certified_closed_shell_no_intersection_shortcut_from_graph(graph, left, right)?
+            .map(|_| ExactBooleanSupport::CertifiedArrangementCellComplex),
     )
 }
 
-fn certified_winding_boolean_shortcut_from_graph(
+fn certified_closed_shell_no_intersection_shortcut_from_graph(
     graph: &super::graph::ExactIntersectionGraph,
     left: &ExactMesh,
     right: &ExactMesh,
-) -> Result<Option<CertifiedWindingBooleanShortcut>, MeshError> {
+) -> Result<Option<CertifiedClosedShellNoIntersectionShortcut>, MeshError> {
     if graph.has_unknowns()
         || !graph.face_pairs.is_empty()
         || !left.facts().mesh.closed_manifold
@@ -5660,21 +5654,21 @@ fn certified_winding_boolean_shortcut_from_graph(
     left_in_right.validate().map_err(winding_error)?;
     let right_in_left = classify_mesh_vertices_against_closed_mesh_winding_report(right, left);
     right_in_left.validate().map_err(winding_error)?;
-    let support = match (left_in_right.relation, right_in_left.relation) {
+    let supported = matches!(
+        (left_in_right.relation, right_in_left.relation),
         (ClosedMeshWindingMeshRelation::StrictlyInside, _)
-        | (_, ClosedMeshWindingMeshRelation::StrictlyInside) => {
-            Some(ExactBooleanSupport::CertifiedWindingContainment)
-        }
-        (ClosedMeshWindingMeshRelation::Outside, ClosedMeshWindingMeshRelation::Outside) => {
-            Some(ExactBooleanSupport::CertifiedWindingSeparated)
-        }
-        _ => None,
-    };
-    Ok(support.map(|support| CertifiedWindingBooleanShortcut {
-        support,
-        left_in_right,
-        right_in_left,
-    }))
+            | (_, ClosedMeshWindingMeshRelation::StrictlyInside)
+            | (
+                ClosedMeshWindingMeshRelation::Outside,
+                ClosedMeshWindingMeshRelation::Outside,
+            )
+    );
+    Ok(
+        supported.then_some(CertifiedClosedShellNoIntersectionShortcut {
+            left_in_right,
+            right_in_left,
+        }),
+    )
 }
 
 fn winding_error(error: WindingReportError) -> MeshError {

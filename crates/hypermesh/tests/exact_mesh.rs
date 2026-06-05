@@ -6102,6 +6102,69 @@ fn exact_named_booleans_handle_certified_aabb_disjoint_meshes() {
 }
 
 #[test]
+fn exact_closed_nonconvex_containment_is_arrangement_owned() {
+    let outer = upward_l_prism_i64([[0, 0], [8, 0], [8, 3], [3, 3], [3, 8], [0, 8]], 8);
+    let inner = tetrahedron_i64([1, 1, 1], [2, 1, 1], [1, 2, 1], [1, 1, 2]);
+
+    let winding =
+        hypermesh::classify_mesh_vertices_against_closed_mesh_winding_report(&inner, &outer);
+    winding.validate().unwrap();
+    assert_eq!(
+        winding.relation,
+        hypermesh::ClosedMeshWindingMeshRelation::StrictlyInside
+    );
+    assert_ne!(
+        hypermesh::classify_mesh_vertices_against_convex_solid_report(&inner, &outer).relation,
+        hypermesh::ConvexSolidMeshRelation::StrictlyInside
+    );
+
+    for (operation, expected_triangles) in [
+        (
+            hypermesh::ExactBooleanOperation::Union,
+            outer.triangles().len(),
+        ),
+        (
+            hypermesh::ExactBooleanOperation::Intersection,
+            inner.triangles().len(),
+        ),
+        (
+            hypermesh::ExactBooleanOperation::Difference,
+            outer.triangles().len() + inner.triangles().len(),
+        ),
+    ] {
+        let preflight = hypermesh::preflight_boolean_exact(&outer, &inner, operation).unwrap();
+        preflight.validate().unwrap();
+        preflight.validate_against_sources(&outer, &inner).unwrap();
+        assert_eq!(
+            preflight.support,
+            hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
+        );
+        assert!(preflight.blocker.is_none());
+
+        let result =
+            hypermesh::boolean_exact(&outer, &inner, operation, ValidationPolicy::CLOSED).unwrap();
+        result.validate().unwrap();
+        result
+            .validate_operation_against_sources(
+                &outer,
+                &inner,
+                operation,
+                ValidationPolicy::CLOSED,
+                hypermesh::ExactBoundaryBooleanPolicy::Reject,
+            )
+            .unwrap();
+        assert_eq!(
+            result.kind,
+            hypermesh::ExactBooleanResultKind::CertifiedShortcut {
+                shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
+            }
+        );
+        assert_eq!(result.mesh.triangles().len(), expected_triangles);
+        assert!(result.mesh.facts().mesh.closed_manifold);
+    }
+}
+
+#[test]
 fn exact_preflight_materializes_open_point_touch_union_but_keeps_other_ops_boundary_policy() {
     let left = ExactMesh::from_i64_triangles_with_policy(
         &[0, 0, 0, 2, 0, 0, 0, 2, 0],
