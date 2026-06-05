@@ -590,7 +590,11 @@ fn classify_ray_triangle(
             if point_on_triangle_plane(point, triangle) == Some(true) {
                 RayTriangleRelation::Boundary
             } else {
-                RayTriangleRelation::Degenerate
+                match ray_parameter_sign(point, triangle, axis) {
+                    Some(RealSign::Negative) => RayTriangleRelation::NoHit,
+                    Some(RealSign::Positive | RealSign::Zero) => RayTriangleRelation::Degenerate,
+                    None => RayTriangleRelation::Unknown,
+                }
             }
         }
         ProjectedPointRelation::Inside => {
@@ -815,5 +819,16 @@ mod tests {
             )
         ));
         report.validate_against_sources(&p(0, 0, 0), &mesh).unwrap();
+    }
+
+    #[test]
+    fn projected_boundary_hit_behind_ray_origin_does_not_reject_axis() {
+        let point = p(0, 0, 0);
+        let triangle = [p(-1, -1, -1), p(-1, 1, 1), p(-1, 1, -1)];
+
+        assert_eq!(
+            classify_ray_triangle(&point, &triangle, WindingRayAxis::X),
+            RayTriangleRelation::NoHit
+        );
     }
 }
