@@ -572,48 +572,11 @@ pub fn preflight_boolean_exact(
         ));
     }
     if support == ExactBooleanSupport::RequiresCertifiedWinding
-        && contained_boundary_arrangement_should_preflight(&graph, left, right, operation)
         && let Some(preflight) = certified_arrangement_cell_complex_preflight_if_materialized(
             operation, &graph, left, right,
         )?
     {
         return Ok(preflight);
-    }
-    if support == ExactBooleanSupport::RequiresCertifiedWinding
-        && arrangement_volume_graph_materializes(left, right, operation)?
-    {
-        return Ok(ExactBooleanPreflight {
-            operation,
-            support: ExactBooleanSupport::CertifiedArrangementCellComplex,
-            graph_had_unknowns,
-            retained_face_pairs,
-            retained_events,
-            region_count: 0,
-            region_classifications: Vec::new(),
-            blocker: None,
-            arrangement_readiness: None,
-            coplanar_volumetric_evidence: coplanar_volumetric_evidence_if_required(
-                &graph, left, right,
-            ),
-        });
-    }
-    if support == ExactBooleanSupport::RequiresCertifiedWinding
-        && arrangement_cell_complex_materializes_for_preflight(left, right, operation, false)?
-    {
-        return Ok(ExactBooleanPreflight {
-            operation,
-            support: ExactBooleanSupport::CertifiedArrangementCellComplex,
-            graph_had_unknowns,
-            retained_face_pairs,
-            retained_events,
-            region_count: 0,
-            region_classifications: Vec::new(),
-            blocker: None,
-            arrangement_readiness: None,
-            coplanar_volumetric_evidence: coplanar_volumetric_evidence_if_required(
-                &graph, left, right,
-            ),
-        });
     }
     if support == ExactBooleanSupport::RequiresCertifiedWinding
         && let Some(winding_support) =
@@ -787,23 +750,10 @@ pub fn preflight_boolean_exact(
         });
     }
     if graph_requires_coplanar_volumetric_cells_for_sources(&graph, left, right) {
-        if arrangement_volume_graph_materializes(left, right, operation)?
-            || arrangement_cell_complex_materializes_for_preflight(left, right, operation, false)?
-        {
-            return Ok(ExactBooleanPreflight {
-                operation,
-                support: ExactBooleanSupport::CertifiedArrangementCellComplex,
-                graph_had_unknowns,
-                retained_face_pairs,
-                retained_events,
-                region_count: 0,
-                region_classifications: Vec::new(),
-                blocker: None,
-                arrangement_readiness: None,
-                coplanar_volumetric_evidence: coplanar_volumetric_evidence_if_required(
-                    &graph, left, right,
-                ),
-            });
+        if let Some(preflight) = certified_arrangement_cell_complex_preflight_if_materialized(
+            operation, &graph, left, right,
+        )? {
+            return Ok(preflight);
         }
         if let Some(convex_support) = certified_convex_union_support(left, right, operation) {
             return Ok(certified_shortcut_preflight(operation, convex_support));
@@ -812,22 +762,6 @@ pub fn preflight_boolean_exact(
             certified_direct_convex_boolean_support(left, right, operation)
         {
             return Ok(certified_shortcut_preflight(operation, convex_support));
-        }
-        if arrangement_cell_complex_materializes_for_preflight(left, right, operation, true)? {
-            return Ok(ExactBooleanPreflight {
-                operation,
-                support: ExactBooleanSupport::CertifiedArrangementCellComplex,
-                graph_had_unknowns,
-                retained_face_pairs,
-                retained_events,
-                region_count: 0,
-                region_classifications: Vec::new(),
-                blocker: None,
-                arrangement_readiness: None,
-                coplanar_volumetric_evidence: coplanar_volumetric_evidence_if_required(
-                    &graph, left, right,
-                ),
-            });
         }
         return Ok(ExactBooleanPreflight {
             operation,
@@ -864,12 +798,11 @@ pub fn preflight_boolean_exact(
     }
 
     if support == ExactBooleanSupport::RequiresCertifiedWinding
-        && (arrangement_cell_complex_materializes_for_preflight(left, right, operation, false)?
-            || arrangement_cell_complex_materializes_for_preflight(left, right, operation, true)?)
-    {
-        return Ok(certified_arrangement_cell_complex_preflight_from_graph(
+        && let Some(preflight) = certified_arrangement_cell_complex_preflight_if_materialized(
             operation, &graph, left, right,
-        ));
+        )?
+    {
+        return Ok(preflight);
     }
 
     let winding_report = winding_readiness_report_from_graph(&graph, left, right, operation)?;
@@ -1679,32 +1612,6 @@ fn boolean_arrangement_cell_complex_meshes(
         ArrangementCellComplexOutcome::Materialized(result, _) => Ok(Some(result)),
         ArrangementCellComplexOutcome::Declined(_) => Ok(None),
     }
-}
-
-fn arrangement_volume_graph_materializes(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-) -> Result<bool, MeshError> {
-    let outcome = match run_arrangement_cell_complex_attempt(
-        left,
-        right,
-        operation,
-        ExactRegularizationPolicy::REGULARIZED_SOLID,
-        Some(ValidationPolicy::CLOSED),
-        true,
-    ) {
-        Ok(outcome) => outcome,
-        Err(_) => return Ok(false),
-    };
-    Ok(matches!(
-        outcome,
-        ArrangementCellComplexOutcome::Materialized(_, attempt)
-            if attempt.arrangement_blockers == 0
-                && attempt.volume_regions > 0
-                && attempt.volume_adjacencies > 0
-                && attempt.decline.is_none()
-    ))
 }
 
 fn arrangement_cell_complex_materializes_preemptively(
