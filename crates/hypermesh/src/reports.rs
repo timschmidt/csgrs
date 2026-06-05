@@ -2478,6 +2478,10 @@ pub enum ExactWindingReadinessStatus {
     /// Coplanar source-face cells are part of a closed-volumetric overlap and
     /// must be materialized before winding can consume the split cells.
     CoplanarVolumetricCellsRequired,
+    /// Coplanar source-face cells were required, but the certified
+    /// arrangement/cell-complex path has already materialized them, so no
+    /// unresolved winding blocker remains at this handoff.
+    CoplanarVolumetricCellsAlreadyMaterialized,
     /// The graph contains no retained face pairs requiring winding.
     NoNontrivialOverlap,
     /// Split regions and opposite-plane classifications were checked and are
@@ -2590,6 +2594,7 @@ impl ExactWindingReadinessReport {
             && !matches!(
                 self.status,
                 ExactWindingReadinessStatus::Ready
+                    | ExactWindingReadinessStatus::CoplanarVolumetricCellsAlreadyMaterialized
                     | ExactWindingReadinessStatus::CoplanarVolumetricCellsRequired
             )
         {
@@ -2685,6 +2690,34 @@ impl ExactWindingReadinessReport {
                 no_region_facts(self.region_count, &self.region_classifications)
             }
             ExactWindingReadinessStatus::CoplanarVolumetricCellsRequired => {
+                if self.arrangement_readiness.is_some() {
+                    return Err(ExactReportValidationError::UnexpectedArrangementReadiness);
+                }
+                if matches!(self.operation, ExactBooleanOperation::SelectedRegions(_)) {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
+                blocker_kind(
+                    Some(&self.blocker),
+                    ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells,
+                )?;
+                self.blocker
+                    .validate_for_kind(ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells)?;
+                validate_blocker_count_bounds(
+                    &self.blocker,
+                    self.retained_face_pairs,
+                    self.retained_events,
+                )?;
+                let evidence = self
+                    .coplanar_volumetric_evidence
+                    .as_ref()
+                    .ok_or(ExactReportValidationError::MissingCoplanarVolumetricEvidence)?;
+                validate_coplanar_volumetric_evidence_matches_blocker(evidence, &self.blocker)?;
+                if !evidence.obstacle.requires_coplanar_volumetric_cells() {
+                    return Err(ExactReportValidationError::CoplanarVolumetricEvidenceMismatch);
+                }
+                no_region_facts(self.region_count, &self.region_classifications)
+            }
+            ExactWindingReadinessStatus::CoplanarVolumetricCellsAlreadyMaterialized => {
                 if self.arrangement_readiness.is_some() {
                     return Err(ExactReportValidationError::UnexpectedArrangementReadiness);
                 }

@@ -7333,6 +7333,27 @@ fn exact_axis_aligned_coplanar_volumetric_box_difference_materializes_empty_cont
         boundary_touching.support,
         hypermesh::ExactBooleanSupport::CertifiedArrangementCellComplex
     );
+    let boundary_touching_winding = hypermesh::certify_winding_readiness_report(
+        &boundary_touching_inner,
+        &outer,
+        hypermesh::ExactBooleanOperation::Difference,
+    )
+    .unwrap();
+    boundary_touching_winding.validate().unwrap();
+    boundary_touching_winding
+        .validate_against_sources(&boundary_touching_inner, &outer)
+        .unwrap();
+    assert_eq!(
+        boundary_touching_winding.status,
+        hypermesh::ExactWindingReadinessStatus::CoplanarVolumetricCellsAlreadyMaterialized
+    );
+    assert_eq!(
+        boundary_touching_winding
+            .coplanar_volumetric_evidence
+            .as_ref()
+            .map(|evidence| evidence.obstacle),
+        Some(CoplanarVolumetricCellObstacle::NeedsCoplanarVolumetricCells)
+    );
     let boundary_touching_difference = hypermesh::boolean_exact(
         &boundary_touching_inner,
         &outer,

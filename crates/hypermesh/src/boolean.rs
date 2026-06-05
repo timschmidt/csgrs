@@ -5183,6 +5183,24 @@ fn winding_readiness_report_from_graph(
         ));
     }
     if graph_requires_coplanar_volumetric_cells_for_sources(graph, left, right) {
+        if certified_arrangement_cell_complex_preflight_if_materialized(
+            operation, graph, left, right,
+        )?
+        .is_some()
+        {
+            return Ok(winding_readiness_report(
+                operation,
+                ExactWindingReadinessStatus::CoplanarVolumetricCellsAlreadyMaterialized,
+                graph_had_unknowns,
+                graph.face_pairs.len(),
+                graph.event_count(),
+                0,
+                Vec::new(),
+                counts.into_blocker(ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells),
+                None,
+                coplanar_volumetric_evidence_if_required(graph, left, right),
+            ));
+        }
         return Ok(winding_readiness_report(
             operation,
             ExactWindingReadinessStatus::CoplanarVolumetricCellsRequired,
