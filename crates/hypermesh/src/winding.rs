@@ -1,8 +1,8 @@
 //! Exact ray-parity winding classification for closed triangle meshes.
 //!
 //! This module is the general, nonconvex counterpart to the convex halfspace
-//! classifier in [`crate::solid`]. It uses axis-aligned rays and exact
-//! `Real` arithmetic, then treats ray/edge and ray/vertex degeneracies as
+//! classifier in [`crate::solid`]. It uses a deterministic set of exact rays
+//! over `Real` arithmetic, then treats ray/edge and ray/vertex degeneracies as
 //! explicit blockers so a selected parity result was obtained without hidden
 //! tolerance choices. The parity query is the standard ray-crossing point
 //! classification described by Preparata and Shamos, *Computational Geometry:
@@ -15,7 +15,7 @@ use hyperreal::Real;
 
 use super::mesh::ExactMesh;
 
-/// Coordinate-axis direction used by an exact ray-parity query.
+/// Deterministic exact ray direction used by an exact ray-parity query.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum WindingRayAxis {
     /// Positive X ray, projected to the YZ plane.
@@ -24,10 +24,50 @@ pub enum WindingRayAxis {
     Y,
     /// Positive Z ray, projected to the XY plane.
     Z,
+    /// Positive ray in direction `(1, 1, 1)`.
+    Xyz,
+    /// Positive ray in direction `(1, 1, -1)`.
+    XyNegZ,
+    /// Positive ray in direction `(1, -1, 1)`.
+    XNegYZ,
+    /// Positive ray in direction `(-1, 1, 1)`.
+    NegXYZ,
+    /// Positive ray in direction `(1, 2, 3)`.
+    D123,
+    /// Positive ray in direction `(2, 3, 5)`.
+    D235,
+    /// Positive ray in direction `(3, 5, 7)`.
+    D357,
 }
 
 impl WindingRayAxis {
-    const ALL: [Self; 3] = [Self::X, Self::Y, Self::Z];
+    const ALL: [Self; 10] = [
+        Self::X,
+        Self::Y,
+        Self::Z,
+        Self::Xyz,
+        Self::XyNegZ,
+        Self::XNegYZ,
+        Self::NegXYZ,
+        Self::D123,
+        Self::D235,
+        Self::D357,
+    ];
+
+    const fn direction(self) -> [i64; 3] {
+        match self {
+            Self::X => [1, 0, 0],
+            Self::Y => [0, 1, 0],
+            Self::Z => [0, 0, 1],
+            Self::Xyz => [1, 1, 1],
+            Self::XyNegZ => [1, 1, -1],
+            Self::XNegYZ => [1, -1, 1],
+            Self::NegXYZ => [-1, 1, 1],
+            Self::D123 => [1, 2, 3],
+            Self::D235 => [2, 3, 5],
+            Self::D357 => [3, 5, 7],
+        }
+    }
 }
 
 /// Exact point/closed-mesh winding relation.
@@ -52,9 +92,9 @@ pub enum ClosedMeshWindingRelation {
 pub struct PointMeshWindingReport {
     /// Final certified or unresolved relation.
     pub relation: ClosedMeshWindingRelation,
-    /// Axis that produced the retained parity decision or boundary hit.
+    /// Ray direction that produced the retained parity decision or boundary hit.
     pub axis: Option<WindingRayAxis>,
-    /// Number of coordinate-axis rays attempted.
+    /// Number of rays attempted.
     pub tested_axes: usize,
     /// Number of source triangles scanned by each attempted ray.
     pub triangle_count: usize,
@@ -88,7 +128,7 @@ impl PointMeshWindingReport {
     ///
     /// This audits the report shape, not the source mesh. Inside/outside
     /// relations must carry an axis and parity-compatible crossing count;
-    /// unknown reports must retain evidence that all attempted axes were
+    /// unknown reports must retain evidence that all attempted ray directions were
     /// blocked by degeneracy or undecidable comparisons. The split mirrors
     /// unresolved states are separate public values, not nearby booleans.
     pub fn validate(&self) -> Result<(), WindingReportError> {
@@ -263,7 +303,7 @@ impl ClosedMeshWindingMeshReport {
 /// Validation or source-replay failure for winding reports.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum WindingReportError {
-    /// A report retained an impossible number of attempted axes.
+    /// A report retained an impossible number of attempted ray directions.
     InvalidAxisCount,
     /// A decided relation did not retain the axis that decided it.
     MissingAxis,
@@ -285,11 +325,14 @@ pub fn classify_point_against_closed_mesh_winding(
 
 /// Classify `point` against a closed triangle mesh and retain parity evidence.
 ///
-/// The classifier tries positive X, Y, and Z axis rays. For each axis, triangle
-/// tests are carried out in the projected plane perpendicular to the ray and
-/// the 3D plane intersection sign is compared exactly. If a ray hits a
-/// projected edge/vertex, that axis is rejected rather than "nudged" by an
-/// epsilon; another exact axis may still decide the relation. This keeps the
+/// The classifier tries positive X, Y, and Z rays first, then deterministic
+/// primitive non-axis rays. For each ray, triangle tests are carried out in an
+/// exact quotient projection whose kernel is the ray direction and the 3D plane
+/// intersection sign is compared exactly. If a ray hits a projected
+/// edge/vertex, that ray is rejected rather than "nudged" by an epsilon;
+/// another exact ray may still decide the relation. This keeps the report
+/// stable and replayable: a decided report includes the exact ray, crossing
+/// count, and blocker counts used to reach the decision.
 pub fn classify_point_against_closed_mesh_winding_report(
     point: &Point3,
     mesh: &ExactMesh,
@@ -629,11 +672,7 @@ fn ray_parameter_sign(
 ) -> Option<RealSign> {
     let normal = normal(triangle);
     let numerator = dot_point(&normal, &triangle[0]) - dot_point(&normal, point);
-    let denominator = match axis {
-        WindingRayAxis::X => normal[0].clone(),
-        WindingRayAxis::Y => normal[1].clone(),
-        WindingRayAxis::Z => normal[2].clone(),
-    };
+    let denominator = dot_i64(&normal, axis.direction());
     let numerator_sign = sign(&numerator)?;
     let denominator_sign = sign(&denominator)?;
     match (numerator_sign, denominator_sign) {
@@ -656,11 +695,14 @@ fn projected_orient(a: &Point3, b: &Point3, c: &Point3, axis: WindingRayAxis) ->
 }
 
 fn project(point: &Point3, axis: WindingRayAxis) -> (Real, Real) {
-    match axis {
-        WindingRayAxis::X => (point.y.clone(), point.z.clone()),
-        WindingRayAxis::Y => (point.x.clone(), point.z.clone()),
-        WindingRayAxis::Z => (point.x.clone(), point.y.clone()),
-    }
+    let [dx, dy, dz] = axis.direction();
+    let basis_u = if dx == 0 && dy == 0 {
+        [1, 0, 0]
+    } else {
+        [dy, -dx, 0]
+    };
+    let basis_v = cross_i64([dx, dy, dz], basis_u);
+    (dot_point_i64(point, basis_u), dot_point_i64(point, basis_v))
 }
 
 fn normal(triangle: &[Point3; 3]) -> [Real; 3] {
@@ -686,6 +728,26 @@ fn dot_point(normal: &[Real; 3], point: &Point3) -> Real {
         + normal[2].clone() * point.z.clone()
 }
 
+fn dot_i64(left: &[Real; 3], right: [i64; 3]) -> Real {
+    left[0].clone() * Real::from(right[0])
+        + left[1].clone() * Real::from(right[1])
+        + left[2].clone() * Real::from(right[2])
+}
+
+fn dot_point_i64(point: &Point3, coeffs: [i64; 3]) -> Real {
+    point.x.clone() * Real::from(coeffs[0])
+        + point.y.clone() * Real::from(coeffs[1])
+        + point.z.clone() * Real::from(coeffs[2])
+}
+
+const fn cross_i64(left: [i64; 3], right: [i64; 3]) -> [i64; 3] {
+    [
+        left[1] * right[2] - left[2] * right[1],
+        left[2] * right[0] - left[0] * right[2],
+        left[0] * right[1] - left[1] * right[0],
+    ]
+}
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum RealSign {
     Negative,
@@ -698,5 +760,60 @@ fn sign(value: &Real) -> Option<RealSign> {
         Ordering::Less => Some(RealSign::Negative),
         Ordering::Equal => Some(RealSign::Zero),
         Ordering::Greater => Some(RealSign::Positive),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn p(x: i64, y: i64, z: i64) -> Point3 {
+        Point3::new(Real::from(x), Real::from(y), Real::from(z))
+    }
+
+    fn cube_with_centered_positive_face_diagonals() -> ExactMesh {
+        ExactMesh::from_i64_triangles(
+            &[
+                -1, -1, -1, //
+                1, -1, -1, //
+                1, 1, -1, //
+                -1, 1, -1, //
+                -1, -1, 1, //
+                1, -1, 1, //
+                1, 1, 1, //
+                -1, 1, 1, //
+            ],
+            &[
+                0, 3, 2, 0, 2, 1, // -Z
+                4, 5, 6, 4, 6, 7, // +Z, diagonal through +Z ray hit
+                0, 4, 7, 0, 7, 3, // -X
+                1, 2, 6, 1, 6, 5, // +X, diagonal through +X ray hit
+                0, 1, 5, 0, 5, 4, // -Y
+                3, 7, 6, 3, 6, 2, // +Y, diagonal through +Y ray hit
+            ],
+        )
+        .unwrap()
+    }
+
+    #[test]
+    fn non_axis_exact_ray_classifies_when_coordinate_rays_are_degenerate() {
+        let mesh = cube_with_centered_positive_face_diagonals();
+        let report = classify_point_against_closed_mesh_winding_report(&p(0, 0, 0), &mesh);
+
+        assert_eq!(report.relation, ClosedMeshWindingRelation::Inside);
+        assert!(report.tested_axes > 3);
+        assert!(matches!(
+            report.axis,
+            Some(
+                WindingRayAxis::Xyz
+                    | WindingRayAxis::XyNegZ
+                    | WindingRayAxis::XNegYZ
+                    | WindingRayAxis::NegXYZ
+                    | WindingRayAxis::D123
+                    | WindingRayAxis::D235
+                    | WindingRayAxis::D357
+            )
+        ));
+        report.validate_against_sources(&p(0, 0, 0), &mesh).unwrap();
     }
 }
