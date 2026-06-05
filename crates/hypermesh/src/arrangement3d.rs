@@ -41,7 +41,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use hyperlimit::{
     Point2, Point3, RingPointLocation, Sign, TriangleLocation, classify_point_ring_even_odd,
     classify_point_triangle, compare_point2_lexicographic, compare_reals, orient2d_report,
-    point2_equal, point3_equal, project_point3,
+    point2_equal, point3_equal, project_point3, projected_polygon_area2_value,
 };
 use hyperreal::Real;
 
@@ -2091,10 +2091,17 @@ fn nested_shell_volume_graph(
         return None;
     }
 
-    let shell_meshes = shell_regions
+    let shell_meshes = match shell_regions
         .iter()
         .map(|region| shell_region_mesh(region, face_cells))
-        .collect::<Option<Vec<_>>>()?;
+        .collect::<Result<Vec<_>, _>>()
+    {
+        Ok(meshes) => meshes,
+        Err(blocker) => {
+            push_unique_blocker(blockers, blocker);
+            return None;
+        }
+    };
     let shell_orientations = shell_meshes
         .iter()
         .map(exact_mesh_orientation)
@@ -2453,26 +2460,17 @@ fn face_cell_interior_witness(
 fn shell_region_mesh(
     shell: &ArrangementRegion,
     face_cells: &[ArrangementFaceCell],
-) -> Option<ExactMesh> {
+) -> Result<ExactMesh, ExactArrangementBlocker> {
     let mut vertices = Vec::new();
     let mut triangles = Vec::new();
     for &cell_index in &shell.face_cells {
-        let cell = face_cells.get(cell_index)?;
+        let cell = face_cells
+            .get(cell_index)
+            .ok_or(ExactArrangementBlocker::NonManifoldCellComplex)?;
         if cell.boundary_points.len() < 3 {
-            return None;
+            return Err(ExactArrangementBlocker::NonManifoldCellComplex);
         }
-        let boundary = cell
-            .boundary_points
-            .iter()
-            .map(|point| find_or_insert_shell_vertex(&mut vertices, point))
-            .collect::<Option<Vec<_>>>()?;
-        for index in 1..cell.boundary_points.len() - 1 {
-            triangles.push(Triangle([
-                boundary[0],
-                boundary[index],
-                boundary[index + 1],
-            ]));
-        }
+        triangulate_shell_face_cell(cell, &mut vertices, &mut triangles)?;
     }
     ExactMesh::new_with_policy(
         vertices,
@@ -2480,7 +2478,156 @@ fn shell_region_mesh(
         SourceProvenance::exact("exact arrangement shell replay"),
         ValidationPolicy::CLOSED,
     )
-    .ok()
+    .map_err(|_| ExactArrangementBlocker::NonManifoldCellComplex)
+}
+
+fn triangulate_shell_face_cell(
+    cell: &ArrangementFaceCell,
+    vertices: &mut Vec<Point3>,
+    triangles: &mut Vec<Triangle>,
+) -> Result<(), ExactArrangementBlocker> {
+    let projection = choose_polygon_projection(&cell.boundary_points)?;
+    let output_orientation = projected_loop_orientation(&cell.boundary_points, projection)?;
+    let projected = cell
+        .boundary_points
+        .iter()
+        .map(|point| project_for_hypertri(point, projection))
+        .collect::<Vec<_>>();
+    let local_to_global = cell
+        .boundary_points
+        .iter()
+        .map(|point| find_or_insert_shell_vertex(vertices, point))
+        .collect::<Result<Vec<_>, _>>()?;
+
+    if cell.boundary_points.len() == 3 {
+        triangles.push(oriented_shell_triangle(
+            &cell.boundary_points,
+            projection,
+            &[0, 1, 2],
+            &local_to_global,
+            output_orientation,
+        )?);
+        return Ok(());
+    }
+
+    let indices = hypertri::earcut(&projected, &[])
+        .map_err(|_| ExactArrangementBlocker::NonManifoldCellComplex)?;
+    if indices.is_empty() {
+        return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+    }
+
+    let mut emitted = indices.chunks_exact(3);
+    for triangle in &mut emitted {
+        triangles.push(oriented_shell_triangle(
+            &cell.boundary_points,
+            projection,
+            triangle,
+            &local_to_global,
+            output_orientation,
+        )?);
+    }
+    if !emitted.remainder().is_empty() {
+        return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+    }
+    Ok(())
+}
+
+fn oriented_shell_triangle(
+    points: &[Point3],
+    projection: CoplanarProjection,
+    triangle: &[usize],
+    local_to_global: &[usize],
+    output_orientation: Ordering,
+) -> Result<Triangle, ExactArrangementBlocker> {
+    let emitted_orientation = emitted_shell_triangle_orientation(points, projection, triangle)?;
+    let [a, b, c] = triangle else {
+        return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+    };
+    let a = *local_to_global
+        .get(*a)
+        .ok_or(ExactArrangementBlocker::NonManifoldCellComplex)?;
+    let b = *local_to_global
+        .get(*b)
+        .ok_or(ExactArrangementBlocker::NonManifoldCellComplex)?;
+    let c = *local_to_global
+        .get(*c)
+        .ok_or(ExactArrangementBlocker::NonManifoldCellComplex)?;
+    if emitted_orientation == output_orientation {
+        Ok(Triangle([a, b, c]))
+    } else {
+        Ok(Triangle([a, c, b]))
+    }
+}
+
+fn emitted_shell_triangle_orientation(
+    points: &[Point3],
+    projection: CoplanarProjection,
+    triangle: &[usize],
+) -> Result<Ordering, ExactArrangementBlocker> {
+    let [a, b, c] = triangle else {
+        return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+    };
+    let triangle_points = [
+        points
+            .get(*a)
+            .ok_or(ExactArrangementBlocker::NonManifoldCellComplex)?
+            .clone(),
+        points
+            .get(*b)
+            .ok_or(ExactArrangementBlocker::NonManifoldCellComplex)?
+            .clone(),
+        points
+            .get(*c)
+            .ok_or(ExactArrangementBlocker::NonManifoldCellComplex)?
+            .clone(),
+    ];
+    projected_loop_orientation(&triangle_points, projection)
+}
+
+fn projected_loop_orientation(
+    points: &[Point3],
+    projection: CoplanarProjection,
+) -> Result<Ordering, ExactArrangementBlocker> {
+    match compare_reals(
+        &projected_polygon_area2_value(points, projection),
+        &Real::from(0),
+    )
+    .value()
+    {
+        Some(ordering @ (Ordering::Less | Ordering::Greater)) => Ok(ordering),
+        Some(Ordering::Equal) => Err(ExactArrangementBlocker::NonManifoldCellComplex),
+        None => Err(ExactArrangementBlocker::UndecidableOrdering),
+    }
+}
+
+fn choose_polygon_projection(
+    points: &[Point3],
+) -> Result<CoplanarProjection, ExactArrangementBlocker> {
+    for projection in [
+        CoplanarProjection::Xy,
+        CoplanarProjection::Xz,
+        CoplanarProjection::Yz,
+    ] {
+        match compare_reals(
+            &projected_polygon_area2_value(points, projection),
+            &Real::from(0),
+        )
+        .value()
+        {
+            Some(Ordering::Less | Ordering::Greater) => return Ok(projection),
+            Some(Ordering::Equal) => {}
+            None => return Err(ExactArrangementBlocker::UndecidableOrdering),
+        }
+    }
+    Err(ExactArrangementBlocker::NonManifoldCellComplex)
+}
+
+fn project_for_hypertri(point: &Point3, projection: CoplanarProjection) -> hypertri::ExactPoint {
+    match projection {
+        CoplanarProjection::Xy => hypertri::ExactPoint::new(point.x.clone(), point.y.clone()),
+        CoplanarProjection::Xz => hypertri::ExactPoint::new(point.x.clone(), point.z.clone()),
+        CoplanarProjection::Yz => hypertri::ExactPoint::new(point.y.clone(), point.z.clone()),
+    }
 }
 
 fn exact_mesh_orientation(mesh: &ExactMesh) -> Option<ClosedMeshOrientation> {
@@ -2526,15 +2673,20 @@ fn determinant_from_origin(a: &Point3, b: &Point3, c: &Point3) -> Real {
     &(&x_term - &y_term) + &z_term
 }
 
-fn find_or_insert_shell_vertex(vertices: &mut Vec<Point3>, point: &Point3) -> Option<usize> {
+fn find_or_insert_shell_vertex(
+    vertices: &mut Vec<Point3>,
+    point: &Point3,
+) -> Result<usize, ExactArrangementBlocker> {
     for (index, existing) in vertices.iter().enumerate() {
-        if point3_equal(existing, point).value()? {
-            return Some(index);
+        match point3_equal(existing, point).value() {
+            Some(true) => return Ok(index),
+            Some(false) => {}
+            None => return Err(ExactArrangementBlocker::UndecidableOrdering),
         }
     }
     let index = vertices.len();
     vertices.push(point.clone());
-    Some(index)
+    Ok(index)
 }
 
 fn nested_two_shell_volume_graph(
@@ -3232,6 +3384,66 @@ mod tests {
             ValidationPolicy::ALLOW_BOUNDARY,
         )
         .unwrap()
+    }
+
+    #[test]
+    fn shell_replay_triangulates_concave_face_cell_with_exact_earcut() {
+        let points = vec![
+            p3(0, 0, 0),
+            p3(4, 0, 0),
+            p3(4, 1, 0),
+            p3(1, 1, 0),
+            p3(1, 4, 0),
+            p3(0, 4, 0),
+        ];
+        let cell = ArrangementFaceCell {
+            carrier: ArrangementFaceCarrier {
+                side: MeshSide::Left,
+                face: 0,
+                triangle: [0, 1, 2],
+            },
+            boundary: points
+                .iter()
+                .enumerate()
+                .map(|(vertex, _)| ArrangementFaceCellNode::FacePlaneVertex {
+                    arrangement: 0,
+                    vertex,
+                })
+                .collect(),
+            boundary_points: points.clone(),
+            opposite: None,
+        };
+        let mut vertices = Vec::new();
+        let mut triangles = Vec::new();
+
+        triangulate_shell_face_cell(&cell, &mut vertices, &mut triangles).unwrap();
+
+        assert_eq!(vertices.len(), points.len());
+        assert_eq!(triangles.len(), points.len() - 2);
+        let expected_orientation =
+            projected_loop_orientation(&points, CoplanarProjection::Xy).unwrap();
+        let mut triangle_area_sum = Real::from(0);
+        for triangle in &triangles {
+            let triangle_points = [
+                vertices[triangle.0[0]].clone(),
+                vertices[triangle.0[1]].clone(),
+                vertices[triangle.0[2]].clone(),
+            ];
+            assert_eq!(
+                projected_loop_orientation(&triangle_points, CoplanarProjection::Xy).unwrap(),
+                expected_orientation
+            );
+            triangle_area_sum = triangle_area_sum
+                + &projected_polygon_area2_value(&triangle_points, CoplanarProjection::Xy);
+        }
+        assert_eq!(
+            compare_reals(
+                &triangle_area_sum,
+                &projected_polygon_area2_value(&points, CoplanarProjection::Xy),
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
     }
 
     #[test]
