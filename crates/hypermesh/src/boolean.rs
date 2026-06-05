@@ -354,8 +354,7 @@ pub fn preflight_boolean_exact(
         ExactBooleanOperation::Union
         | ExactBooleanOperation::Intersection
         | ExactBooleanOperation::Difference => {
-            preflight_direct_coplanar_surface_support(left, right, operation)
-                .or_else(|| preflight_tail_shortcut_support(left, right, operation))
+            preflight_tail_shortcut_support(left, right, operation)
                 .or_else(|| certified_mixed_dimensional_regularized_solid_support(left, right))
                 .unwrap_or(ExactBooleanSupport::RequiresCertifiedWinding)
         }
@@ -912,34 +911,6 @@ pub fn preflight_boolean_exact(
         arrangement_readiness: None,
         coplanar_volumetric_evidence: winding_report.coplanar_volumetric_evidence,
     })
-}
-
-fn preflight_direct_coplanar_surface_support(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-) -> Option<ExactBooleanSupport> {
-    match operation {
-        ExactBooleanOperation::Union => {
-            if coplanar_mesh_overlay_surface_union_boundary_policy(left, right).is_some() {
-                return Some(ExactBooleanSupport::CertifiedArrangementCellComplex);
-            }
-            None
-        }
-        ExactBooleanOperation::Intersection => {
-            if coplanar_mesh_overlay_surface_intersection_boundary_policy(left, right).is_some() {
-                return Some(ExactBooleanSupport::CertifiedArrangementCellComplex);
-            }
-            None
-        }
-        ExactBooleanOperation::Difference => {
-            if coplanar_mesh_overlay_difference_ready(left, right) {
-                return Some(ExactBooleanSupport::CertifiedArrangementCellComplex);
-            }
-            None
-        }
-        ExactBooleanOperation::SelectedRegions(_) => None,
-    }
 }
 
 fn preflight_tail_shortcut_support(
@@ -3851,12 +3822,6 @@ fn coplanar_mesh_overlay_materialized_boundary_policy(
         }
     }
     None
-}
-
-fn coplanar_mesh_overlay_difference_ready(left: &ExactMesh, right: &ExactMesh) -> bool {
-    !left.facts().mesh.closed_manifold
-        && !right.facts().mesh.closed_manifold
-        && coplanar_mesh_overlay_difference_materializes(left, right)
 }
 
 fn coplanar_mesh_overlay_difference_materializes(left: &ExactMesh, right: &ExactMesh) -> bool {
@@ -7555,7 +7520,7 @@ mod tests {
         )
         .unwrap();
 
-        assert!(coplanar_mesh_overlay_difference_ready(
+        assert!(coplanar_mesh_overlay_difference_materializes(
             &left,
             &opening_plus_hole
         ));
