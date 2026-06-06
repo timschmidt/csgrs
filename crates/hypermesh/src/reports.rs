@@ -19,6 +19,9 @@ use super::boolean::{
     preflight_boolean_exact, preflight_boolean_exact_with_validation,
 };
 use super::bounds::AabbIntersectionKind;
+use super::convex::{
+    intersect_closed_convex_solids, subtract_closed_convex_solids, union_closed_convex_solids,
+};
 use super::graph::MeshSide;
 use super::graph::{
     CoplanarArrangementReadinessReport, CoplanarArrangementReadinessStatus, ExactIntersectionGraph,
@@ -31,9 +34,16 @@ use super::region::{
     boundary_node_point,
 };
 use super::regularization::ExactArrangementBlocker;
+use super::solid::{
+    ConvexSolidMeshClassification, ConvexSolidMeshRelation, ConvexSolidPointRelation,
+    classify_mesh_vertices_against_convex_solid_report,
+};
 use super::validation::ValidationPolicy;
 use super::volumetric::{ExactVolumetricRegionClassification, ExactVolumetricRegionError};
 use super::volumetric_cells::CoplanarVolumetricCellEvidenceReport;
+use super::winding::{
+    ClosedMeshWindingMeshRelation, classify_mesh_vertices_against_closed_mesh_winding_report,
+};
 use hyperlimit::PredicateUse;
 
 /// Validation failure for an exact report object.
@@ -1058,13 +1068,17 @@ fn certified_shortcut_sources_match(
             closed_boundary_touching_sources_match(shortcut, left, right)
         }
         ExactBooleanShortcutKind::ClosedWindingSeparated
-        | ExactBooleanShortcutKind::ClosedWindingContainment
-        | ExactBooleanShortcutKind::ConvexContainment
+        | ExactBooleanShortcutKind::ClosedWindingContainment => {
+            closed_winding_sources_match(shortcut, left, right)
+        }
+        ExactBooleanShortcutKind::ConvexContainment
         | ExactBooleanShortcutKind::ConvexUnion
         | ExactBooleanShortcutKind::ConvexIntersection
         | ExactBooleanShortcutKind::ConvexDifference
-        | ExactBooleanShortcutKind::ConvexSeparated
-        | ExactBooleanShortcutKind::ArrangementCellComplex => Ok(true),
+        | ExactBooleanShortcutKind::ConvexSeparated => {
+            convex_shortcut_sources_match(shortcut, left, right)
+        }
+        ExactBooleanShortcutKind::ArrangementCellComplex => Ok(true),
     }
 }
 
@@ -1129,6 +1143,127 @@ fn closed_boundary_touching_sources_match(
         }
     }
     Ok(true)
+}
+
+fn closed_winding_sources_match(
+    shortcut: ExactBooleanShortcutKind,
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Result<bool, ExactReportValidationError> {
+    if !mesh_is_closed_solid(left) || !mesh_is_closed_solid(right) {
+        return Ok(false);
+    }
+    let graph = build_intersection_graph(left, right)
+        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+    graph
+        .validate_against_sources(left, right)
+        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+    if graph.has_unknowns() || !graph.face_pairs.is_empty() {
+        return Ok(false);
+    }
+
+    let left_in_right = classify_mesh_vertices_against_closed_mesh_winding_report(left, right);
+    left_in_right
+        .validate_against_sources(left, right)
+        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+    let right_in_left = classify_mesh_vertices_against_closed_mesh_winding_report(right, left);
+    right_in_left
+        .validate_against_sources(right, left)
+        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+
+    Ok(match shortcut {
+        ExactBooleanShortcutKind::ClosedWindingSeparated => {
+            left_in_right.relation == ClosedMeshWindingMeshRelation::Outside
+                && right_in_left.relation == ClosedMeshWindingMeshRelation::Outside
+        }
+        ExactBooleanShortcutKind::ClosedWindingContainment => {
+            left_in_right.relation == ClosedMeshWindingMeshRelation::StrictlyInside
+                || right_in_left.relation == ClosedMeshWindingMeshRelation::StrictlyInside
+        }
+        _ => unreachable!("only closed winding shortcuts are replayed here"),
+    })
+}
+
+fn convex_shortcut_sources_match(
+    shortcut: ExactBooleanShortcutKind,
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Result<bool, ExactReportValidationError> {
+    Ok(match shortcut {
+        ExactBooleanShortcutKind::ConvexUnion => union_closed_convex_solids(left, right).is_some(),
+        ExactBooleanShortcutKind::ConvexIntersection => {
+            intersect_closed_convex_solids(left, right).is_some()
+        }
+        ExactBooleanShortcutKind::ConvexDifference => {
+            subtract_closed_convex_solids(left, right).is_some()
+        }
+        ExactBooleanShortcutKind::ConvexContainment | ExactBooleanShortcutKind::ConvexSeparated => {
+            convex_relation_shortcut_sources_match(shortcut, left, right)?
+        }
+        _ => unreachable!("only convex shortcuts are replayed here"),
+    })
+}
+
+fn convex_relation_shortcut_sources_match(
+    shortcut: ExactBooleanShortcutKind,
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Result<bool, ExactReportValidationError> {
+    let graph = build_intersection_graph(left, right)
+        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+    graph
+        .validate_against_sources(left, right)
+        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+    if graph.has_unknowns() {
+        return Ok(false);
+    }
+    let left_in_right = classify_mesh_vertices_against_convex_solid_report(left, right);
+    left_in_right
+        .validate_against_sources(left, right)
+        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+    let right_in_left = classify_mesh_vertices_against_convex_solid_report(right, left);
+    right_in_left
+        .validate_against_sources(right, left)
+        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+
+    Ok(match shortcut {
+        ExactBooleanShortcutKind::ConvexContainment if graph.face_pairs.is_empty() => {
+            left_in_right.relation == ConvexSolidMeshRelation::StrictlyInside
+                || right_in_left.relation == ConvexSolidMeshRelation::StrictlyInside
+        }
+        ExactBooleanShortcutKind::ConvexContainment => {
+            convex_boundary_containment_sources_match(&left_in_right, &right_in_left)
+                || convex_boundary_containment_sources_match(&right_in_left, &left_in_right)
+        }
+        ExactBooleanShortcutKind::ConvexSeparated => {
+            graph.face_pairs.is_empty()
+                && left_in_right.relation == ConvexSolidMeshRelation::Outside
+                && right_in_left.relation == ConvexSolidMeshRelation::Outside
+        }
+        _ => unreachable!("only convex relation shortcuts are replayed here"),
+    })
+}
+
+fn convex_boundary_containment_sources_match(
+    subject_in_container: &ConvexSolidMeshClassification,
+    container_in_subject: &ConvexSolidMeshClassification,
+) -> bool {
+    subject_in_container.solid_facts.is_certified_convex()
+        && container_in_subject.solid_facts.is_certified_convex()
+        && subject_in_container.vertices.iter().all(|vertex| {
+            matches!(
+                vertex.relation,
+                ConvexSolidPointRelation::Inside | ConvexSolidPointRelation::Boundary
+            )
+        })
+        && subject_in_container
+            .vertices
+            .iter()
+            .any(|vertex| matches!(vertex.relation, ConvexSolidPointRelation::Boundary))
+        && container_in_subject
+            .vertices
+            .iter()
+            .any(|vertex| matches!(vertex.relation, ConvexSolidPointRelation::Outside))
 }
 
 fn mesh_is_closed_solid(mesh: &ExactMesh) -> bool {

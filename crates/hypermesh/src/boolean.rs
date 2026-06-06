@@ -7647,6 +7647,7 @@ mod tests {
         let container = concatenate_meshes(&outer, &disjoint_shell, ValidationPolicy::CLOSED)
             .expect("disconnected closed container fixture should validate");
         let contained = tetrahedron_i64([1, 1, 1], [2, 1, 1], [1, 2, 1], [1, 1, 2]);
+        let uncontained = tetrahedron_i64([30, 0, 0], [31, 0, 0], [30, 1, 0], [30, 0, 1]);
 
         assert!(container.facts().mesh.closed_manifold);
         assert!(contained.facts().mesh.closed_manifold);
@@ -7712,6 +7713,17 @@ mod tests {
                 );
                 result.validate().unwrap();
                 result.validate_against_sources(left, right).unwrap();
+                let stale_sources_rejected = if right_inside_left {
+                    result.validate_against_sources(left, &uncontained).is_err()
+                } else {
+                    result
+                        .validate_against_sources(&uncontained, right)
+                        .is_err()
+                };
+                assert!(
+                    stale_sources_rejected,
+                    "{right_inside_left:?} {operation:?}: {result:?}"
+                );
 
                 match (operation, right_inside_left) {
                     (ExactBooleanOperation::Union, _) => {
@@ -7742,6 +7754,7 @@ mod tests {
         let left_b = tetrahedron_i64([10, 0, 0], [11, 0, 0], [10, 1, 0], [10, 0, 1]);
         let left = concatenate_meshes(&left_a, &left_b, ValidationPolicy::CLOSED).unwrap();
         let right = tetrahedron_i64([5, 0, 0], [6, 0, 0], [5, 1, 0], [5, 0, 1]);
+        let intersecting_right = tetrahedron_i64([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]);
 
         assert!(left.facts().mesh.closed_manifold);
         assert!(right.facts().mesh.closed_manifold);
@@ -7798,6 +7811,12 @@ mod tests {
             );
             result.validate().unwrap();
             result.validate_against_sources(&left, &right).unwrap();
+            assert!(
+                result
+                    .validate_against_sources(&left, &intersecting_right)
+                    .is_err(),
+                "{operation:?}: {result:?}"
+            );
             match operation {
                 ExactBooleanOperation::Union => {
                     assert_eq!(
