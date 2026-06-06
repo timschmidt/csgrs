@@ -222,6 +222,9 @@ pub enum ExactReportFreshness {
     InvalidReportShape,
     /// The report is locally valid but no longer replays from the sources.
     SourceReplayMismatch,
+    /// The report replays from the sources, but not for the requested
+    /// operation, validation policy, or boundary policy.
+    OperationReplayMismatch,
 }
 
 impl From<ExactReportValidationError> for ExactReportFreshness {
@@ -1186,15 +1189,18 @@ impl ExactBooleanResult {
         validation: ValidationPolicy,
         boundary_policy: ExactBoundaryBooleanPolicy,
     ) -> ExactReportFreshness {
-        match self.validate_operation_against_sources(
+        if let Err(error) = self.validate_against_sources(left, right) {
+            return error.into();
+        }
+        match boolean_exact_with_boundary_policy(
             left,
             right,
             operation,
             validation,
             boundary_policy,
         ) {
-            Ok(()) => ExactReportFreshness::Current,
-            Err(error) => error.into(),
+            Ok(replay) if self == &replay => ExactReportFreshness::Current,
+            Ok(_) | Err(_) => ExactReportFreshness::OperationReplayMismatch,
         }
     }
 }
@@ -4278,7 +4284,7 @@ mod tests {
                 ValidationPolicy::CLOSED,
                 ExactBoundaryBooleanPolicy::Reject,
             ),
-            ExactReportFreshness::SourceReplayMismatch
+            ExactReportFreshness::OperationReplayMismatch
         );
     }
 
