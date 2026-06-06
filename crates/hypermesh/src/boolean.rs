@@ -4936,29 +4936,56 @@ fn winding_readiness_report_from_graph(
             },
         ));
     }
-    if let Some(materialized) = materialize_volumetric_winding_region_plan_from_graph(
-        graph,
-        left,
-        right,
-        operation,
-        ValidationPolicy::CLOSED,
-    )? {
-        return Ok(winding_readiness_report(
+    if let Some((region_classifications, triangulations, volumetric_classifications)) =
+        volumetric_winding_region_plan_from_graph(graph, left, right)?
+    {
+        let needs_coplanar_volumetric =
+            graph_requires_coplanar_volumetric_cells_for_sources(graph, left, right);
+        let blocker_kind = if needs_coplanar_volumetric {
+            ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells
+        } else {
+            ExactBooleanBlockerKind::NeedsWinding
+        };
+        if let Some(materialized) = materialize_volumetric_winding_region_plan(
+            region_classifications.clone(),
+            triangulations,
+            volumetric_classifications.clone(),
+            left,
+            right,
             operation,
-            ExactWindingReadinessStatus::Ready,
-            graph_had_unknowns,
-            graph.face_pairs.len(),
-            graph.event_count(),
-            materialized.triangulations.len(),
-            materialized.region_classifications,
-            if graph_requires_coplanar_volumetric_cells_for_sources(graph, left, right) {
-                counts.into_blocker(ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells)
-            } else {
-                counts.into_blocker(ExactBooleanBlockerKind::NeedsWinding)
-            },
-            None,
-            coplanar_volumetric_evidence_if_required(graph, left, right),
-        ));
+            ValidationPolicy::CLOSED,
+        )? {
+            return Ok(winding_readiness_report(
+                operation,
+                ExactWindingReadinessStatus::Ready,
+                graph_had_unknowns,
+                graph.face_pairs.len(),
+                graph.event_count(),
+                materialized.triangulations.len(),
+                materialized.region_classifications,
+                counts.into_blocker(blocker_kind),
+                None,
+                coplanar_volumetric_evidence_if_required(graph, left, right),
+            ));
+        }
+        if volumetric_classifications
+            .iter()
+            .all(|classification| classification.relation.is_materialization_decided())
+        {
+            let region_count = unique_classified_region_count(&region_classifications);
+            return Ok(winding_readiness_report(
+                operation,
+                ExactWindingReadinessStatus::VolumetricAssemblyRequired,
+                graph_had_unknowns,
+                graph.face_pairs.len(),
+                graph.event_count(),
+                region_count,
+                region_classifications,
+                counts.into_blocker(blocker_kind),
+                None,
+                coplanar_volumetric_evidence_if_required(graph, left, right),
+            ));
+        }
     }
     if graph_requires_coplanar_volumetric_cells_for_sources(graph, left, right) {
         if certified_arrangement_cell_complex_preflight_if_materialized(
@@ -5131,6 +5158,26 @@ fn materialize_volumetric_winding_region_plan_from_graph(
     else {
         return Ok(None);
     };
+    materialize_volumetric_winding_region_plan(
+        region_classifications,
+        triangulations,
+        volumetric_classifications,
+        left,
+        right,
+        operation,
+        validation,
+    )
+}
+
+fn materialize_volumetric_winding_region_plan(
+    region_classifications: Vec<FaceRegionPlaneClassification>,
+    triangulations: Vec<FaceRegionTriangulation>,
+    volumetric_classifications: Vec<ExactVolumetricRegionClassification>,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<MaterializedVolumetricWindingRegionPlan>, MeshError> {
     if !volumetric_classifications
         .iter()
         .all(|classification| classification.relation.is_materialization_decided())
@@ -6794,6 +6841,7 @@ mod tests {
             ExactWindingReadinessStatus::BoundaryPolicyRequired,
             ExactWindingReadinessStatus::PlanarArrangementRequired,
             ExactWindingReadinessStatus::CoplanarVolumetricCellsRequired,
+            ExactWindingReadinessStatus::VolumetricAssemblyRequired,
             ExactWindingReadinessStatus::NoNontrivialOverlap,
             ExactWindingReadinessStatus::Ready,
         ] {
@@ -7228,7 +7276,7 @@ mod tests {
             certify_winding_readiness_report(&left, &right, ExactBooleanOperation::Union).unwrap();
         assert_eq!(
             readiness.status,
-            ExactWindingReadinessStatus::Ready,
+            ExactWindingReadinessStatus::VolumetricAssemblyRequired,
             "{readiness:?}"
         );
         assert!(readiness.region_count > 0, "{readiness:?}");

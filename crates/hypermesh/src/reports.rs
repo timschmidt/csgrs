@@ -2507,6 +2507,9 @@ pub enum ExactWindingReadinessStatus {
     /// arrangement/cell-complex path has already materialized them, so no
     /// unresolved winding blocker remains at this handoff.
     CoplanarVolumetricCellsAlreadyMaterialized,
+    /// Exact volumetric winding classifications are decided, but the retained
+    /// split cells could not yet be assembled into certified output topology.
+    VolumetricAssemblyRequired,
     /// A certified arrangement/cell-complex shortcut has already materialized
     /// this named Boolean, so no unresolved winding blocker remains at this
     /// handoff.
@@ -2651,6 +2654,7 @@ impl ExactWindingReadinessReport {
             && !matches!(
                 self.status,
                 ExactWindingReadinessStatus::Ready
+                    | ExactWindingReadinessStatus::VolumetricAssemblyRequired
                     | ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized
                     | ExactWindingReadinessStatus::CoplanarVolumetricCellsAlreadyMaterialized
                     | ExactWindingReadinessStatus::CoplanarVolumetricCellsRequired
@@ -2802,6 +2806,57 @@ impl ExactWindingReadinessReport {
                     return Err(ExactReportValidationError::CoplanarVolumetricEvidenceMismatch);
                 }
                 no_region_facts(self.region_count, &self.region_classifications)
+            }
+            ExactWindingReadinessStatus::VolumetricAssemblyRequired => {
+                if self.arrangement_readiness.is_some() {
+                    return Err(ExactReportValidationError::UnexpectedArrangementReadiness);
+                }
+                if matches!(self.operation, ExactBooleanOperation::SelectedRegions(_))
+                    || self.retained_face_pairs == 0
+                {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
+                let expected = match self.blocker.kind {
+                    ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells => {
+                        ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells
+                    }
+                    _ => ExactBooleanBlockerKind::NeedsWinding,
+                };
+                blocker_kind(Some(&self.blocker), expected)?;
+                self.blocker.validate_for_kind(expected)?;
+                validate_blocker_count_bounds(
+                    &self.blocker,
+                    self.retained_face_pairs,
+                    self.retained_events,
+                )?;
+                match (
+                    self.blocker.kind,
+                    self.coplanar_volumetric_evidence.as_ref(),
+                ) {
+                    (ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells, Some(evidence)) => {
+                        validate_coplanar_volumetric_evidence_matches_blocker(
+                            evidence,
+                            &self.blocker,
+                        )?;
+                        if !evidence.obstacle.requires_coplanar_volumetric_cells() {
+                            return Err(
+                                ExactReportValidationError::CoplanarVolumetricEvidenceMismatch,
+                            );
+                        }
+                    }
+                    (ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells, None) => {
+                        return Err(ExactReportValidationError::MissingCoplanarVolumetricEvidence);
+                    }
+                    (_, Some(evidence)) => {
+                        validate_coplanar_volumetric_evidence_shape(
+                            evidence,
+                            self.retained_face_pairs,
+                            self.retained_events,
+                        )?;
+                    }
+                    (_, None) => {}
+                }
+                checked_region_facts(self.region_count, &self.region_classifications)
             }
             ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized => {
                 if self.arrangement_readiness.is_some() {
