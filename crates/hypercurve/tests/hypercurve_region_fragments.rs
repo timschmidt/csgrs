@@ -1,6 +1,6 @@
 use hypercurve::{
-    BulgeVertex2, Classification, Contour2, CurvePolicy, Real, Region2, RegionContourKey,
-    RegionContourRole, RegionSide,
+    BulgeVertex2, Classification, Contour2, CurveError, CurvePolicy, Real, Region2,
+    RegionContourFragments, RegionContourKey, RegionContourRole, RegionFragmentSet, RegionSide,
 };
 
 fn s(value: i32) -> Real {
@@ -30,6 +30,14 @@ fn rectangle(xmin: i32, ymin: i32, xmax: i32, ymax: i32) -> Contour2 {
 
 fn policy() -> CurvePolicy {
     CurvePolicy::certified()
+}
+
+fn assert_topology_error<T>(result: hypercurve::CurveResult<T>) {
+    match result {
+        Err(CurveError::Topology(_)) => {}
+        Ok(_) => panic!("expected topology error"),
+        Err(error) => panic!("expected topology error, got {error:?}"),
+    }
 }
 
 #[test]
@@ -74,6 +82,57 @@ fn region_fragments_split_all_keyed_contours() {
             .len(),
         8
     );
+}
+
+#[test]
+fn region_fragment_set_constructor_validates_unique_contour_keys() {
+    RegionFragmentSet::new(Vec::new()).unwrap();
+
+    let first = Region2::from_material_contours(vec![rectangle(0, 0, 2, 2)]);
+    let second = Region2::from_material_contours(vec![rectangle(4, 4, 6, 6)]);
+    let intersections = first.intersect_region(&second, &policy()).unwrap();
+    let Classification::Decided(fragments) = intersections
+        .split_regions(&first.as_view(), &second.as_view(), &policy())
+        .unwrap()
+    else {
+        panic!("expected decided disjoint fragments");
+    };
+
+    let first_key = RegionContourKey::new(RegionSide::First, RegionContourRole::Material, 0);
+    let second_key = RegionContourKey::new(RegionSide::Second, RegionContourRole::Material, 0);
+    let first_fragments = fragments
+        .fragments_for_contour(first_key)
+        .unwrap()
+        .fragments
+        .clone();
+    let second_fragments = fragments
+        .fragments_for_contour(second_key)
+        .unwrap()
+        .fragments
+        .clone();
+
+    RegionFragmentSet::new(vec![
+        RegionContourFragments {
+            key: first_key,
+            fragments: first_fragments.clone(),
+        },
+        RegionContourFragments {
+            key: second_key,
+            fragments: second_fragments,
+        },
+    ])
+    .unwrap();
+
+    assert_topology_error(RegionFragmentSet::new(vec![
+        RegionContourFragments {
+            key: first_key,
+            fragments: first_fragments.clone(),
+        },
+        RegionContourFragments {
+            key: first_key,
+            fragments: first_fragments,
+        },
+    ]));
 }
 
 #[test]

@@ -10,9 +10,9 @@
 //! 1177-1185, 2009).
 
 use crate::{
-    Classification, Contour2, ContourFragmentSet, ContourOperand, ContourSplitMarkers, CurvePolicy,
-    CurveResult, RegionContourKey, RegionContourRole, RegionIntersectionSet, RegionSide,
-    RegionView2,
+    Classification, Contour2, ContourFragmentSet, ContourOperand, ContourSplitMarkers, CurveError,
+    CurvePolicy, CurveResult, RegionContourKey, RegionContourRole, RegionIntersectionSet,
+    RegionSide, RegionView2,
 };
 
 /// Fragments for one keyed contour in a region-pair query.
@@ -32,8 +32,9 @@ pub struct RegionFragmentSet {
 
 impl RegionFragmentSet {
     /// Constructs a fragment set from already-built keyed contour fragments.
-    pub const fn new(contours: Vec<RegionContourFragments>) -> Self {
-        Self { contours }
+    pub fn new(contours: Vec<RegionContourFragments>) -> CurveResult<Self> {
+        validate_region_fragment_keys(&contours)?;
+        Ok(Self { contours })
     }
 
     /// Returns keyed contour fragments.
@@ -115,7 +116,21 @@ pub(crate) fn split_region_views_at_intersections(
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     }
 
-    Ok(Classification::Decided(RegionFragmentSet::new(contours)))
+    Ok(Classification::Decided(RegionFragmentSet::new(contours)?))
+}
+
+fn validate_region_fragment_keys(contours: &[RegionContourFragments]) -> CurveResult<()> {
+    let mut keys = contours
+        .iter()
+        .map(|contour_fragments| contour_fragments.key)
+        .collect::<Vec<_>>();
+    keys.sort_unstable();
+    if keys.windows(2).any(|window| window[0] == window[1]) {
+        return Err(CurveError::Topology(
+            "region fragment set must not contain duplicate contour keys".into(),
+        ));
+    }
+    Ok(())
 }
 
 fn append_region_contours(
