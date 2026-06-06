@@ -149,6 +149,12 @@ pub use narrow::{
     TriangleTriangleValidationError, classify_mesh_triangle_against_retained_face_plane,
     classify_triangle_against_face_plane, classify_triangle_triangle,
 };
+pub use orthogonal_solid::{
+    AxisAlignedOrthogonalSolidArrangement, AxisAlignedOrthogonalSolidFreshness,
+    AxisAlignedOrthogonalSolidOperation, materialize_axis_aligned_orthogonal_solid_difference,
+    materialize_axis_aligned_orthogonal_solid_intersection,
+    materialize_axis_aligned_orthogonal_solid_union,
+};
 pub use package::{
     ExactMeshConsumerDomain, ExactMeshDomainReportRef, ExactMeshDomainSummary,
     ExactMeshDomainSummaryError, ExactMeshDomainSummaryFreshness, ExactMeshHandoffPackage,

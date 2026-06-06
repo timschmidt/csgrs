@@ -1,12 +1,12 @@
 use hyperlimit::{Point3, SourceProvenance};
 use hypermesh::{
-    AffineOrthogonalSolidFreshness, ClosedMeshOrientation, ConvexSolidMeshRelation,
-    ConvexSolidPointRelation, ConvexSolidReportFreshness, CoplanarArrangementReadinessFreshness,
-    CoplanarOverlapGraphFreshness, CoplanarOverlapSplitFreshness,
-    CoplanarVolumetricCellEvidenceFreshness, ExactArrangement, ExactArrangementFreshness,
-    ExactBooleanOperation, ExactBooleanResultKind, ExactBoundaryBooleanPolicy,
-    ExactI64MeshInputReadiness, ExactLabeledCellComplexFreshness, ExactMesh,
-    ExactRegularizationPolicy, ExactReportFreshness, ExactSelectedCellComplexFreshness,
+    AffineOrthogonalSolidFreshness, AxisAlignedOrthogonalSolidFreshness, ClosedMeshOrientation,
+    ConvexSolidMeshRelation, ConvexSolidPointRelation, ConvexSolidReportFreshness,
+    CoplanarArrangementReadinessFreshness, CoplanarOverlapGraphFreshness,
+    CoplanarOverlapSplitFreshness, CoplanarVolumetricCellEvidenceFreshness, ExactArrangement,
+    ExactArrangementFreshness, ExactBooleanOperation, ExactBooleanResultKind,
+    ExactBoundaryBooleanPolicy, ExactI64MeshInputReadiness, ExactLabeledCellComplexFreshness,
+    ExactMesh, ExactRegularizationPolicy, ExactReportFreshness, ExactSelectedCellComplexFreshness,
     ExactSimplifiedCellComplexFreshness, ExactVolumetricRegionFreshness,
     ExactVolumetricRegionRelation, IntersectionGraphFreshness, MeshFacePairFreshness,
     MeshFacePairRelation, MeshFacePairValidationError, SplitPlanFreshness,
@@ -18,7 +18,9 @@ use hypermesh::{
     classify_mesh_vertices_against_convex_solid_report,
     classify_point_against_closed_mesh_winding_report, classify_point_against_convex_solid_report,
     classify_triangle_triangle, exact_arrangement_boolean_attempt_report, inspect_i64_mesh_input,
-    materialize_affine_orthogonal_solid_intersection, preflight_boolean_exact,
+    materialize_affine_orthogonal_solid_intersection,
+    materialize_axis_aligned_orthogonal_solid_intersection,
+    materialize_axis_aligned_orthogonal_solid_union, preflight_boolean_exact,
     preflight_boolean_exact_with_boundary_policy,
 };
 use hyperreal::Real;
@@ -62,6 +64,21 @@ fn tetra_from_corners(a: [i64; 3], b: [i64; 3], c: [i64; 3], d: [i64; 3]) -> Exa
             a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2], d[0], d[1], d[2],
         ],
         &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
+    )
+    .unwrap()
+}
+
+fn axis_aligned_box(min: [i64; 3], max: [i64; 3]) -> ExactMesh {
+    ExactMesh::from_i64_triangles(
+        &[
+            min[0], min[1], min[2], max[0], min[1], min[2], max[0], max[1], min[2], min[0], max[1],
+            min[2], min[0], min[1], max[2], max[0], min[1], max[2], max[0], max[1], max[2], min[0],
+            max[1], max[2],
+        ],
+        &[
+            0, 2, 1, 0, 3, 2, 4, 5, 6, 4, 6, 7, 0, 1, 5, 0, 5, 4, 1, 2, 6, 1, 6, 5, 2, 3, 7, 2, 7,
+            6, 3, 0, 4, 3, 4, 7,
+        ],
     )
     .unwrap()
 }
@@ -247,6 +264,58 @@ fn exact_affine_orthogonal_solid_materializer_is_publicly_replayable() {
     assert_eq!(
         arrangement.freshness_against_sources(&left, &separated_right),
         AffineOrthogonalSolidFreshness::SourceReplayMismatch
+    );
+}
+
+#[test]
+fn exact_axis_aligned_orthogonal_solid_materializer_is_publicly_replayable() {
+    let horizontal = axis_aligned_box([0, 0, 0], [2, 1, 1]);
+    let vertical = axis_aligned_box([0, 1, 0], [1, 2, 1]);
+    let left = materialize_axis_aligned_orthogonal_solid_union(
+        &horizontal,
+        &vertical,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap()
+    .expect("adjacent exact boxes should materialize an L-shaped orthogonal solid")
+    .mesh;
+    let right = axis_aligned_box([1, 0, 0], [3, 1, 1]);
+
+    let arrangement = materialize_axis_aligned_orthogonal_solid_intersection(
+        &left,
+        &right,
+        ValidationPolicy::CLOSED,
+    )
+    .unwrap()
+    .expect("L solid and box should materialize by exact orthogonal cells");
+    arrangement.validate().unwrap();
+    arrangement.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        arrangement.freshness_against_sources(&left, &right),
+        AxisAlignedOrthogonalSolidFreshness::Current
+    );
+    assert!(arrangement.selected_cells > 0);
+    assert!(arrangement.mesh.facts().mesh.closed_manifold);
+    assert!(!arrangement.mesh.triangles().is_empty());
+
+    let mut stale_selected_count = arrangement.clone();
+    stale_selected_count.selected_cells += 1;
+    assert_eq!(
+        stale_selected_count.freshness_against_sources(&left, &right),
+        AxisAlignedOrthogonalSolidFreshness::SourceReplayMismatch
+    );
+
+    let mut invalid_output = arrangement.clone();
+    invalid_output.mesh = tetra([0, 0, 0]);
+    assert_eq!(
+        invalid_output.freshness_against_sources(&left, &right),
+        AxisAlignedOrthogonalSolidFreshness::InvalidOutput
+    );
+
+    let separated_right = axis_aligned_box([5, 0, 0], [6, 1, 1]);
+    assert_eq!(
+        arrangement.freshness_against_sources(&left, &separated_right),
+        AxisAlignedOrthogonalSolidFreshness::SourceReplayMismatch
     );
 }
 
