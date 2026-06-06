@@ -57,6 +57,7 @@ use super::convex::{
 use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
 use super::graph::{FacePairEvents, IntersectionEvent, MeshSide, build_intersection_graph};
 use super::intersection::MeshFacePairRelation;
+use super::loop_triangulation::triangulate_exact_loop_group;
 use super::mesh::{ExactMesh, Triangle};
 use super::orthogonal_solid::{
     AxisAlignedOrthogonalSolidOperation, axis_aligned_orthogonal_solid_cell_plan,
@@ -3342,57 +3343,38 @@ fn mesh_from_selected_projected_overlay_faces(
     for component in selected_projected_overlay_face_components(overlay) {
         let mut component_vertices = Vec::new();
         let component_offset = vertices.len();
-        for face_index in component {
-            let face = overlay.arrangement.faces.get(face_index)?;
-            if face.vertices.len() < 3 {
-                continue;
-            }
-            let mut points = face
-                .vertices
-                .iter()
-                .map(|vertex| {
-                    overlay
-                        .arrangement
-                        .vertices
-                        .get(*vertex)
-                        .map(|vertex| vertex.point.clone())
-                })
-                .collect::<Option<Vec<_>>>()?;
-            points = projected_loop_points_with_policy(
-                &points,
-                ProjectedOverlayBoundaryPolicy::SimplifyCollinear,
-            )?;
-            if points.len() < 3 {
-                continue;
-            }
-            match compare_reals(&projected_loop_signed_area_twice(&points), &Real::from(0))
-                .value()?
-            {
-                Ordering::Greater => {}
-                Ordering::Less => points.reverse(),
-                Ordering::Equal => continue,
-            }
-            let projected = points.iter().map(point2_for_hypertri).collect::<Vec<_>>();
-            let lifted = points
-                .iter()
-                .map(|point| lift_projected_point_to_carrier(point, carrier_points, projection))
-                .collect::<Option<Vec<_>>>()?;
-            let local_to_component = lifted
-                .iter()
-                .map(|point| find_or_insert_exact_vertex(&mut component_vertices, point))
-                .collect::<Option<Vec<_>>>()?;
-            let indices = match hypertri::earcut(&projected, &[]) {
-                Ok(indices) if !indices.is_empty() && indices.len() % 3 == 0 => indices,
-                _ => return None,
-            };
-            for triangle in indices.chunks_exact(3) {
-                triangles.push(Triangle([
-                    component_offset + local_to_component[triangle[0]],
-                    component_offset + local_to_component[triangle[1]],
-                    component_offset + local_to_component[triangle[2]],
-                ]));
-            }
-        }
+        let boundary_loops =
+            selected_projected_overlay_component_boundary_loops(overlay, &component)?;
+        let lifted_loops = boundary_loops
+            .iter()
+            .map(|loop_| {
+                let loop_ = projected_loop_points_with_policy(
+                    loop_,
+                    ProjectedOverlayBoundaryPolicy::SimplifyCollinear,
+                )?;
+                if loop_.len() < 3 {
+                    return None;
+                }
+                loop_
+                    .iter()
+                    .map(|point| lift_projected_point_to_carrier(point, carrier_points, projection))
+                    .collect::<Option<Vec<_>>>()
+            })
+            .collect::<Option<Vec<_>>>()?;
+        let mut component_triangles = Vec::new();
+        triangulate_exact_loop_group(
+            &lifted_loops,
+            &mut component_vertices,
+            &mut component_triangles,
+        )
+        .ok()?;
+        triangles.extend(component_triangles.into_iter().map(|triangle| {
+            Triangle([
+                component_offset + triangle.0[0],
+                component_offset + triangle.0[1],
+                component_offset + triangle.0[2],
+            ])
+        }));
         vertices.extend(component_vertices);
     }
     if triangles.is_empty() {
@@ -3405,6 +3387,75 @@ fn mesh_from_selected_projected_overlay_faces(
         ValidationPolicy::ALLOW_BOUNDARY,
     )
     .ok()
+}
+
+fn selected_projected_overlay_component_boundary_loops(
+    overlay: &ExactArrangement2dOverlay,
+    component: &[usize],
+) -> Option<Vec<Vec<Point2>>> {
+    let mut boundary_edges = Vec::<[usize; 2]>::new();
+    for &face_index in component {
+        let face = overlay.arrangement.faces.get(face_index)?;
+        if face.vertices.len() < 3 {
+            continue;
+        }
+        for index in 0..face.vertices.len() {
+            let edge = [
+                face.vertices[index],
+                face.vertices[(index + 1) % face.vertices.len()],
+            ];
+            if let Some(reverse) = boundary_edges
+                .iter()
+                .position(|candidate| candidate[0] == edge[1] && candidate[1] == edge[0])
+            {
+                boundary_edges.remove(reverse);
+            } else {
+                boundary_edges.push(edge);
+            }
+        }
+    }
+    if boundary_edges.is_empty() {
+        return None;
+    }
+
+    let mut loops = Vec::new();
+    while let Some(first) = boundary_edges.pop() {
+        let start = first[0];
+        let mut current = first[1];
+        let mut loop_vertices = vec![start];
+        let max_steps = boundary_edges.len().saturating_add(1);
+        let mut steps = 0usize;
+        while current != start {
+            steps += 1;
+            if steps > max_steps || loop_vertices.contains(&current) {
+                return None;
+            }
+            loop_vertices.push(current);
+            let Some(next_index) = boundary_edges
+                .iter()
+                .position(|candidate| candidate[0] == current)
+            else {
+                return None;
+            };
+            let next = boundary_edges.remove(next_index);
+            current = next[1];
+        }
+        if loop_vertices.len() < 3 {
+            return None;
+        }
+        let loop_points = loop_vertices
+            .iter()
+            .map(|vertex| {
+                overlay
+                    .arrangement
+                    .vertices
+                    .get(*vertex)
+                    .map(|vertex| vertex.point.clone())
+            })
+            .collect::<Option<Vec<_>>>()?;
+        loops.push(loop_points);
+    }
+    if loops.is_empty() { None } else { Some(loops) }
 }
 
 fn selected_projected_overlay_face_components(
@@ -7287,6 +7338,68 @@ mod tests {
             boundary_policy,
             projected_boundary_policy,
             "test canonical coplanar overlay difference",
+            false,
+        )
+        .expect("canonical overlay should materialize");
+        assert!(exact_meshes_have_same_shape(&selected_faces, &canonical));
+    }
+
+    #[test]
+    fn selected_overlay_faces_recover_point_touching_hole_components() {
+        let left = ExactMesh::from_i64_triangles_with_policy(
+            &[0, 0, 0, 8, 0, 0, 8, 8, 0, 0, 8, 0],
+            &[0, 1, 2, 0, 2, 3],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let right = ExactMesh::from_i64_triangles_with_policy(
+            &[
+                1, 1, 0, 3, 1, 0, 3, 3, 0, 1, 3, 0, //
+                3, 3, 0, 5, 3, 0, 5, 5, 0, 3, 5, 0,
+            ],
+            &[0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let (carrier_points, projection) = coplanar_mesh_overlay_carrier(&left, &right).unwrap();
+        let boundary_policy =
+            coplanar_mesh_overlay_materialized_difference_boundary_policy(&left, &right).unwrap();
+        let projected_boundary_policy = match boundary_policy {
+            ExactArrangement2dBoundaryPolicy::SimplifyCollinear => {
+                ProjectedOverlayBoundaryPolicy::SimplifyCollinear
+            }
+            ExactArrangement2dBoundaryPolicy::PreserveCollinear => {
+                ProjectedOverlayBoundaryPolicy::PreserveCollinear
+            }
+        };
+        let mut rings =
+            projected_mesh_boundary_rings(ExactArrangement2dRegion::Left, &left, projection)
+                .unwrap();
+        rings.extend(
+            projected_mesh_boundary_rings(ExactArrangement2dRegion::Right, &right, projection)
+                .unwrap(),
+        );
+        let overlay = build_exact_arrangement2d_overlay_with_boundary_policy(
+            &rings,
+            ExactArrangement2dSetOperation::Difference,
+            boundary_policy,
+        );
+        assert!(overlay.is_complete(), "{:?}", overlay.blockers);
+
+        let selected_faces = mesh_from_selected_projected_overlay_faces(
+            &overlay,
+            &carrier_points,
+            projection,
+            "test selected-face point-touching hole overlay difference",
+        )
+        .expect("selected arrangement faces should recover component loops");
+        let canonical = materialize_coplanar_mesh_overlay_mesh(
+            &left,
+            &right,
+            ExactArrangement2dSetOperation::Difference,
+            boundary_policy,
+            projected_boundary_policy,
+            "test canonical point-touching hole overlay difference",
             false,
         )
         .expect("canonical overlay should materialize");
