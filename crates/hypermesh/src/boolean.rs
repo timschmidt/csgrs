@@ -1322,6 +1322,11 @@ pub fn boolean_exact_with_boundary_policy(
         return boolean_identical_meshes(left, operation, validation);
     }
     if let Some(result) =
+        boolean_arrangement_affine_orthogonal_solid_recovery(left, right, operation, validation)?
+    {
+        return Ok(result);
+    }
+    if let Some(result) =
         boolean_arrangement_cell_complex_meshes(left, right, operation, validation)?
     {
         return Ok(result);
@@ -3552,14 +3557,6 @@ fn boolean_arrangement_affine_orthogonal_solid_recovery(
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
-    if match operation {
-        ExactBooleanOperation::Union => has_affine_box_union(left, right),
-        ExactBooleanOperation::Intersection => has_affine_box_intersection(left, right),
-        ExactBooleanOperation::Difference => has_affine_box_difference(left, right),
-        ExactBooleanOperation::SelectedRegions(_) => false,
-    } {
-        return Ok(None);
-    }
     let affine_operation = match operation {
         ExactBooleanOperation::Union => AffineOrthogonalSolidOperation::Union,
         ExactBooleanOperation::Intersection => AffineOrthogonalSolidOperation::Intersection,
@@ -5945,6 +5942,51 @@ mod tests {
         assert_eq!(preflight.retained_events, graph.event_count());
     }
 
+    #[test]
+    fn affine_box_booleans_materialize_from_certified_preflight_support() {
+        let left = affine_box_i64([0, 0, 0], [2, 2, 2]);
+        let right = affine_box_i64([1, 0, 0], [3, 2, 2]);
+
+        assert!(has_affine_box_union(&left, &right));
+        assert!(has_affine_box_intersection(&left, &right));
+        assert!(has_affine_box_difference(&left, &right));
+
+        for operation in [
+            ExactBooleanOperation::Union,
+            ExactBooleanOperation::Intersection,
+            ExactBooleanOperation::Difference,
+        ] {
+            let preflight = preflight_boolean_exact(&left, &right, operation).unwrap();
+            assert_eq!(
+                preflight.support,
+                ExactBooleanSupport::CertifiedArrangementCellComplex,
+                "{operation:?}: {preflight:?}"
+            );
+            assert!(preflight.blocker.is_none(), "{operation:?}: {preflight:?}");
+
+            let result = boolean_exact(&left, &right, operation, ValidationPolicy::CLOSED)
+                .expect("certified affine-box support should materialize");
+            assert_eq!(
+                result.kind,
+                ExactBooleanResultKind::CertifiedShortcut {
+                    shortcut: ExactBooleanShortcutKind::ArrangementCellComplex
+                },
+                "{operation:?}: {result:?}"
+            );
+            result.validate().unwrap();
+            result.validate_against_sources(&left, &right).unwrap();
+            assert!(
+                result.mesh.facts().mesh.closed_manifold,
+                "{operation:?}: {:?}",
+                result.mesh.facts().mesh
+            );
+            assert!(
+                !result.mesh.triangles().is_empty(),
+                "{operation:?}: {result:?}"
+            );
+        }
+    }
+
     fn arrangement_attempt_certified_for_preflight_with_validation(
         left: &ExactMesh,
         right: &ExactMesh,
@@ -6647,6 +6689,31 @@ mod tests {
                 max[1], min[2], min[0], min[1], max[2], max[0], min[1], max[2], max[0], max[1],
                 max[2], min[0], max[1], max[2],
             ],
+            &[
+                0, 2, 1, 0, 3, 2, 4, 5, 6, 4, 6, 7, 0, 1, 5, 0, 5, 4, 1, 2, 6, 1, 6, 5, 2, 3, 7, 2,
+                7, 6, 3, 0, 4, 3, 4, 7,
+            ],
+        )
+        .unwrap()
+    }
+
+    fn affine_box_i64(min: [i64; 3], max: [i64; 3]) -> ExactMesh {
+        let p = |u: i64, v: i64, w: i64| [2 * u + v, 2 * v, 2 * w];
+        let corners = [
+            p(min[0], min[1], min[2]),
+            p(max[0], min[1], min[2]),
+            p(max[0], max[1], min[2]),
+            p(min[0], max[1], min[2]),
+            p(min[0], min[1], max[2]),
+            p(max[0], min[1], max[2]),
+            p(max[0], max[1], max[2]),
+            p(min[0], max[1], max[2]),
+        ];
+        ExactMesh::from_i64_triangles(
+            &corners
+                .iter()
+                .flat_map(|point| point.iter().copied())
+                .collect::<Vec<_>>(),
             &[
                 0, 2, 1, 0, 3, 2, 4, 5, 6, 4, 6, 7, 0, 1, 5, 0, 5, 4, 1, 2, 6, 1, 6, 5, 2, 3, 7, 2,
                 7, 6, 3, 0, 4, 3, 4, 7,
