@@ -742,15 +742,16 @@ pub fn preflight_boolean_exact(
     }
 
     let winding_report = winding_readiness_report_from_graph(&graph, left, right, operation)?;
-    if winding_report.status == ExactWindingReadinessStatus::Ready
-        && materialize_volumetric_winding_region_plan_from_graph(
-            &graph,
-            left,
-            right,
-            operation,
-            ValidationPolicy::CLOSED,
-        )?
-        .is_some()
+    if winding_readiness_status_already_materialized(&winding_report.status)
+        || (winding_report.status == ExactWindingReadinessStatus::Ready
+            && materialize_volumetric_winding_region_plan_from_graph(
+                &graph,
+                left,
+                right,
+                operation,
+                ValidationPolicy::CLOSED,
+            )?
+            .is_some())
     {
         return Ok(certified_arrangement_cell_complex_preflight_from_graph(
             operation, &graph, left, right,
@@ -769,6 +770,17 @@ pub fn preflight_boolean_exact(
         arrangement_readiness: None,
         coplanar_volumetric_evidence: winding_report.coplanar_volumetric_evidence,
     })
+}
+
+const fn winding_readiness_status_already_materialized(
+    status: &ExactWindingReadinessStatus,
+) -> bool {
+    matches!(
+        status,
+        ExactWindingReadinessStatus::PlanarArrangementAlreadyMaterialized
+            | ExactWindingReadinessStatus::CoplanarVolumetricCellsAlreadyMaterialized
+            | ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized
+    )
 }
 
 fn preflight_tail_shortcut_support(
@@ -6050,6 +6062,9 @@ mod tests {
                 ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
                 "{operation:?}: {readiness:?}"
             );
+            assert!(winding_readiness_status_already_materialized(
+                &readiness.status
+            ));
             assert_eq!(
                 readiness.blocker.kind,
                 ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells,
@@ -6057,6 +6072,10 @@ mod tests {
             );
             readiness.validate().unwrap();
             readiness.validate_against_sources(&left, &right).unwrap();
+
+            let planar = certify_planar_arrangement_report(&left, &right, operation).unwrap();
+            planar.validate().unwrap();
+            planar.validate_against_sources(&left, &right).unwrap();
 
             let direct = boolean_arrangement_orthogonal_solid_cell_recovery(
                 &left,
@@ -6194,6 +6213,9 @@ mod tests {
                 ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
                 "{operation:?}: {readiness:?}"
             );
+            assert!(winding_readiness_status_already_materialized(
+                &readiness.status
+            ));
             assert_eq!(
                 readiness.blocker.kind,
                 ExactBooleanBlockerKind::NeedsWinding,
@@ -6201,6 +6223,33 @@ mod tests {
             );
             readiness.validate().unwrap();
             readiness.validate_against_sources(&left, &right).unwrap();
+
+            let planar = certify_planar_arrangement_report(&left, &right, operation).unwrap();
+            planar.validate().unwrap();
+            planar.validate_against_sources(&left, &right).unwrap();
+        }
+    }
+
+    #[test]
+    fn winding_readiness_status_partition_identifies_materialized_handoffs() {
+        for status in [
+            ExactWindingReadinessStatus::PlanarArrangementAlreadyMaterialized,
+            ExactWindingReadinessStatus::CoplanarVolumetricCellsAlreadyMaterialized,
+            ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
+        ] {
+            assert!(winding_readiness_status_already_materialized(&status));
+        }
+
+        for status in [
+            ExactWindingReadinessStatus::NotNamedOperation,
+            ExactWindingReadinessStatus::GraphUnknowns,
+            ExactWindingReadinessStatus::BoundaryPolicyRequired,
+            ExactWindingReadinessStatus::PlanarArrangementRequired,
+            ExactWindingReadinessStatus::CoplanarVolumetricCellsRequired,
+            ExactWindingReadinessStatus::NoNontrivialOverlap,
+            ExactWindingReadinessStatus::Ready,
+        ] {
+            assert!(!winding_readiness_status_already_materialized(&status));
         }
     }
 
