@@ -88,7 +88,7 @@ impl RetainedImportRecord2 {
     ) -> CurveResult<Self> {
         if input_point_count < 2
             || emitted_segment_count == 0
-            || emitted_segment_count > input_point_count
+            || emitted_segment_count >= input_point_count
             || discarded_duplicate_count > input_point_count
             || emitted_segment_count
                 .checked_add(discarded_duplicate_count)

@@ -243,6 +243,11 @@ fn retained_import_record_rejects_inconsistent_counts() {
         CurveError::InvalidImportRecord
     );
     assert_eq!(
+        RetainedImportRecord2::try_new(RetainedImportFormat2::FinitePolyline, 0, None, 2, 2, 0)
+            .unwrap_err(),
+        CurveError::InvalidImportRecord
+    );
+    assert_eq!(
         RetainedImportRecord2::try_new(RetainedImportFormat2::FinitePolyline, 0, None, 3, 2, 2)
             .unwrap_err(),
         CurveError::InvalidImportRecord
