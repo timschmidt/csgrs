@@ -1,8 +1,10 @@
 use hypercurve::{
     BezierBoundaryLoop2, BezierRegion2, BezierSubcurve2, Classification, CurveError, CurvePolicy,
     Point2, PolynomialBSplineCurve2, RationalBSplineCurve2, RationalQuadraticBSplineCurve2, Real,
-    RetainedCurveFamily2, RetainedCurvePeriodicity1, RetainedSpanAxisMonotonicity,
-    RetainedTopologyStatus, RetainedTrimDirection, RetainedTrimInterval1,
+    RetainedCurveCacheSummary2, RetainedCurveFamily2, RetainedCurveIdentity2,
+    RetainedCurvePeriodicity1, RetainedCurveProfile2, RetainedEndpointEvidence2,
+    RetainedParameterDomain1, RetainedSpanAxisMonotonicity, RetainedTopologyStatus,
+    RetainedTrimDirection, RetainedTrimInterval1,
 };
 
 fn r(value: i32) -> Real {
@@ -26,6 +28,10 @@ fn decided<T>(classification: Classification<T>) -> T {
         Classification::Decided(value) => value,
         Classification::Uncertain(reason) => panic!("unexpected uncertainty: {reason:?}"),
     }
+}
+
+fn assert_topology_error<T>(result: Result<T, CurveError>) {
+    assert!(matches!(result, Err(CurveError::Topology(_))));
 }
 
 fn assert_point_eq(left: &Point2, right: &Point2) {
@@ -473,6 +479,58 @@ fn retained_bspline_profile_reports_exact_domain_trim_and_endpoints() {
     assert_eq!(profile.cache_summary().span_count(), 2);
     assert_eq!(profile.cache_summary().native_span_count(), 2);
     assert_eq!(profile.cache_summary().retained_span_count(), 0);
+}
+
+#[test]
+fn retained_curve_cache_summary_rejects_inconsistent_span_counts() {
+    assert_topology_error(RetainedCurveCacheSummary2::new(5, 9, 2, 2, 1));
+    assert_topology_error(RetainedCurveCacheSummary2::new(5, 9, 0, 0, 0));
+    assert_topology_error(RetainedCurveCacheSummary2::new(0, 9, 2, 2, 0));
+}
+
+#[test]
+fn retained_curve_profile_rejects_mismatched_endpoint_evidence_without_blocking_trim() {
+    let policy = policy();
+    let domain = decided(RetainedParameterDomain1::try_new(r(0), r(2), &policy).unwrap());
+    let full_trim = decided(RetainedTrimInterval1::try_new(r(0), r(2), &domain, &policy).unwrap());
+    let partial_trim =
+        decided(RetainedTrimInterval1::try_new(r(0), r(1), &domain, &policy).unwrap());
+    let cache = RetainedCurveCacheSummary2::new(5, 9, 2, 2, 0).unwrap();
+    let identity = RetainedCurveIdentity2::new(RetainedCurveFamily2::PolynomialBSpline, 42);
+    let endpoints = RetainedEndpointEvidence2::new(r(0), r(2), p(0, 0), p(2, 0));
+    RetainedCurveProfile2::new(
+        identity,
+        domain.clone(),
+        full_trim.clone(),
+        RetainedCurvePeriodicity1::NonPeriodic,
+        RetainedTopologyStatus::NativeExact,
+        endpoints,
+        cache.clone(),
+    )
+    .unwrap();
+
+    let endpoints = RetainedEndpointEvidence2::new(r(0), r(2), p(0, 0), p(2, 0));
+    RetainedCurveProfile2::new(
+        identity,
+        domain.clone(),
+        partial_trim,
+        RetainedCurvePeriodicity1::NonPeriodic,
+        RetainedTopologyStatus::NativeExact,
+        endpoints,
+        cache.clone(),
+    )
+    .unwrap();
+
+    let bad_endpoints = RetainedEndpointEvidence2::new(r(0), r(1), p(0, 0), p(2, 0));
+    assert_topology_error(RetainedCurveProfile2::new(
+        identity,
+        domain.clone(),
+        full_trim,
+        RetainedCurvePeriodicity1::NonPeriodic,
+        RetainedTopologyStatus::NativeExact,
+        bad_endpoints,
+        cache.clone(),
+    ));
 }
 
 #[test]

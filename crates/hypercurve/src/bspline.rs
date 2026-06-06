@@ -329,6 +329,13 @@ impl PolynomialBSplineCurve2 {
             Classification::Decided(extraction) => extraction,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
+        let cache_summary = RetainedCurveCacheSummary2::new(
+            self.control_points.len(),
+            self.knots.len(),
+            extraction.spans().len(),
+            extraction.spans().len(),
+            0,
+        )?;
         Ok(Classification::Decided(RetainedCurveProfile2::new(
             RetainedCurveIdentity2::new(RetainedCurveFamily2::PolynomialBSpline, source_index),
             domain.clone(),
@@ -336,14 +343,8 @@ impl PolynomialBSplineCurve2 {
             RetainedCurvePeriodicity1::NonPeriodic,
             RetainedTopologyStatus::NativeExact,
             endpoint_evidence(&self.control_points, &domain),
-            RetainedCurveCacheSummary2::new(
-                self.control_points.len(),
-                self.knots.len(),
-                extraction.spans().len(),
-                extraction.spans().len(),
-                0,
-            ),
-        )))
+            cache_summary,
+        )?))
     }
 }
 
@@ -514,6 +515,13 @@ impl RationalQuadraticBSplineCurve2 {
             Classification::Decided(extraction) => extraction,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
+        let cache_summary = RetainedCurveCacheSummary2::new(
+            self.control_points.len(),
+            self.knots.len(),
+            extraction.spans().len(),
+            extraction.spans().len(),
+            0,
+        )?;
         Ok(Classification::Decided(RetainedCurveProfile2::new(
             RetainedCurveIdentity2::new(
                 RetainedCurveFamily2::RationalQuadraticBSpline,
@@ -524,14 +532,8 @@ impl RationalQuadraticBSplineCurve2 {
             RetainedCurvePeriodicity1::NonPeriodic,
             RetainedTopologyStatus::NativeExact,
             endpoint_evidence(&self.control_points, &domain),
-            RetainedCurveCacheSummary2::new(
-                self.control_points.len(),
-                self.knots.len(),
-                extraction.spans().len(),
-                extraction.spans().len(),
-                0,
-            ),
-        )))
+            cache_summary,
+        )?))
     }
 }
 
@@ -762,6 +764,13 @@ impl RationalBSplineCurve2 {
         } else {
             RetainedTopologyStatus::Unsupported
         };
+        let cache_summary = RetainedCurveCacheSummary2::new(
+            self.control_points.len(),
+            self.knots.len(),
+            report.span_reports().len(),
+            native_span_count,
+            retained_span_count,
+        )?;
 
         Ok(Classification::Decided(RetainedCurveProfile2::new(
             RetainedCurveIdentity2::new(RetainedCurveFamily2::RationalBSpline, source_index),
@@ -770,14 +779,8 @@ impl RationalBSplineCurve2 {
             RetainedCurvePeriodicity1::NonPeriodic,
             topology_status,
             endpoint_evidence(&self.control_points, &domain),
-            RetainedCurveCacheSummary2::new(
-                self.control_points.len(),
-                self.knots.len(),
-                report.span_reports().len(),
-                native_span_count,
-                retained_span_count,
-            ),
-        )))
+            cache_summary,
+        )?))
     }
 }
 

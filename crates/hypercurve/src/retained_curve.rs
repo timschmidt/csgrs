@@ -265,20 +265,27 @@ impl RetainedEndpointEvidence2 {
 
 impl RetainedCurveCacheSummary2 {
     /// Constructs a retained cache summary.
-    pub const fn new(
+    pub fn new(
         control_count: usize,
         knot_count: usize,
         span_count: usize,
         native_span_count: usize,
         retained_span_count: usize,
-    ) -> Self {
-        Self {
+    ) -> CurveResult<Self> {
+        validate_cache_summary_counts(
             control_count,
             knot_count,
             span_count,
             native_span_count,
             retained_span_count,
-        }
+        )?;
+        Ok(Self {
+            control_count,
+            knot_count,
+            span_count,
+            native_span_count,
+            retained_span_count,
+        })
     }
 
     /// Returns the number of retained controls.
@@ -309,7 +316,7 @@ impl RetainedCurveCacheSummary2 {
 
 impl RetainedCurveProfile2 {
     /// Constructs a retained curve profile.
-    pub const fn new(
+    pub fn new(
         identity: RetainedCurveIdentity2,
         domain: RetainedParameterDomain1,
         trim: RetainedTrimInterval1,
@@ -317,8 +324,9 @@ impl RetainedCurveProfile2 {
         topology_status: RetainedTopologyStatus,
         endpoints: RetainedEndpointEvidence2,
         cache_summary: RetainedCurveCacheSummary2,
-    ) -> Self {
-        Self {
+    ) -> CurveResult<Self> {
+        validate_curve_profile_evidence(&domain, &endpoints)?;
+        Ok(Self {
             identity,
             domain,
             trim,
@@ -326,7 +334,7 @@ impl RetainedCurveProfile2 {
             topology_status,
             endpoints,
             cache_summary,
-        }
+        })
     }
 
     /// Returns retained source identity.
@@ -363,4 +371,36 @@ impl RetainedCurveProfile2 {
     pub const fn cache_summary(&self) -> &RetainedCurveCacheSummary2 {
         &self.cache_summary
     }
+}
+
+fn validate_cache_summary_counts(
+    control_count: usize,
+    knot_count: usize,
+    span_count: usize,
+    native_span_count: usize,
+    retained_span_count: usize,
+) -> CurveResult<()> {
+    if control_count == 0 || knot_count == 0 || span_count == 0 {
+        return Err(CurveError::Topology(
+            "retained curve cache summary must carry nonempty controls, knots, and spans".into(),
+        ));
+    }
+    if native_span_count + retained_span_count != span_count {
+        return Err(CurveError::Topology(
+            "retained curve cache summary span decomposition does not match span count".into(),
+        ));
+    }
+    Ok(())
+}
+
+fn validate_curve_profile_evidence(
+    domain: &RetainedParameterDomain1,
+    endpoints: &RetainedEndpointEvidence2,
+) -> CurveResult<()> {
+    if endpoints.start_parameter() != domain.start() || endpoints.end_parameter() != domain.end() {
+        return Err(CurveError::Topology(
+            "retained curve endpoint evidence must match the active parameter domain".into(),
+        ));
+    }
+    Ok(())
 }
