@@ -403,6 +403,7 @@ impl ExactArrangement3d {
         let face_cells = arrangement_face_cells(
             left,
             right,
+            policy,
             region_plan.as_ref(),
             &carrier_plane_overlays,
             &face_plane_arrangements,
@@ -866,6 +867,7 @@ fn arrangement_node_index(node: &SplitEdgeNode, vertices: &[ArrangementVertex]) 
 fn arrangement_face_cells(
     left: &ExactMesh,
     right: &ExactMesh,
+    policy: ExactRegularizationPolicy,
     region_plan: Option<&ExactFaceRegionPlan>,
     carrier_plane_overlays: &[ArrangementCarrierPlaneOverlay],
     face_plane_arrangements: &[ArrangementFacePlaneArrangement],
@@ -884,7 +886,7 @@ fn arrangement_face_cells(
             {
                 None
             } else {
-                Some(face_cell_from_region(region, left, right, blockers))
+                Some(face_cell_from_region(region, left, right, policy, blockers))
             }
         }));
         append_face_plane_arrangement_face_cells(
@@ -892,6 +894,7 @@ fn arrangement_face_cells(
             face_plane_arrangements,
             left,
             right,
+            policy,
             blockers,
         );
         append_carrier_plane_overlay_face_cells(
@@ -899,6 +902,7 @@ fn arrangement_face_cells(
             carrier_plane_overlays,
             left,
             right,
+            policy,
             blockers,
         );
         return cells;
@@ -916,6 +920,7 @@ fn arrangement_face_cells(
             triangle.0,
             left,
             right,
+            policy,
             blockers,
         ));
     }
@@ -931,6 +936,7 @@ fn arrangement_face_cells(
             triangle.0,
             left,
             right,
+            policy,
             blockers,
         ));
     }
@@ -939,6 +945,7 @@ fn arrangement_face_cells(
         face_plane_arrangements,
         left,
         right,
+        policy,
         blockers,
     );
     append_carrier_plane_overlay_face_cells(
@@ -946,6 +953,7 @@ fn arrangement_face_cells(
         carrier_plane_overlays,
         left,
         right,
+        policy,
         blockers,
     );
     cells
@@ -1391,6 +1399,7 @@ fn append_carrier_plane_overlay_face_cells(
     carrier_plane_overlays: &[ArrangementCarrierPlaneOverlay],
     left: &ExactMesh,
     right: &ExactMesh,
+    policy: ExactRegularizationPolicy,
     blockers: &mut Vec<ExactArrangementBlocker>,
 ) {
     for (overlay_index, overlay) in carrier_plane_overlays.iter().enumerate() {
@@ -1404,6 +1413,7 @@ fn append_carrier_plane_overlay_face_cells(
                     MeshSide::Left,
                     left,
                     right,
+                    policy,
                     blockers,
                 ) {
                     cells.push(cell);
@@ -1418,6 +1428,7 @@ fn append_carrier_plane_overlay_face_cells(
                     MeshSide::Right,
                     left,
                     right,
+                    policy,
                     blockers,
                 ) {
                     cells.push(cell);
@@ -1432,6 +1443,7 @@ fn append_face_plane_arrangement_face_cells(
     face_plane_arrangements: &[ArrangementFacePlaneArrangement],
     left: &ExactMesh,
     right: &ExactMesh,
+    policy: ExactRegularizationPolicy,
     blockers: &mut Vec<ExactArrangementBlocker>,
 ) {
     for (arrangement_index, arrangement) in face_plane_arrangements.iter().enumerate() {
@@ -1442,6 +1454,7 @@ fn append_face_plane_arrangement_face_cells(
                 face,
                 left,
                 right,
+                policy,
                 blockers,
             ) {
                 cells.push(cell);
@@ -1456,6 +1469,7 @@ fn face_cell_from_face_plane_arrangement(
     face: usize,
     left: &ExactMesh,
     right: &ExactMesh,
+    policy: ExactRegularizationPolicy,
     blockers: &mut Vec<ExactArrangementBlocker>,
 ) -> Option<ArrangementFaceCell> {
     let mesh = mesh_for_side(arrangement.side, left, right);
@@ -1507,6 +1521,7 @@ fn face_cell_from_face_plane_arrangement(
         representative,
         left,
         right,
+        policy,
         blockers,
     ));
 
@@ -1530,6 +1545,7 @@ fn face_cell_from_carrier_plane_overlay(
     side: MeshSide,
     left: &ExactMesh,
     right: &ExactMesh,
+    policy: ExactRegularizationPolicy,
     blockers: &mut Vec<ExactArrangementBlocker>,
 ) -> Option<ArrangementFaceCell> {
     let carrier_face = match side {
@@ -1569,6 +1585,7 @@ fn face_cell_from_carrier_plane_overlay(
         representative,
         left,
         right,
+        policy,
         blockers,
     ));
 
@@ -2773,6 +2790,7 @@ fn face_cell_from_region(
     region: &FaceRegionBoundary,
     left: &ExactMesh,
     right: &ExactMesh,
+    policy: ExactRegularizationPolicy,
     blockers: &mut Vec<ExactArrangementBlocker>,
 ) -> ArrangementFaceCell {
     let boundary = region
@@ -2804,8 +2822,8 @@ fn face_cell_from_region(
         .collect::<Vec<_>>();
     let representative = face_region_interior_representative(region, left, right, blockers)
         .or_else(|| representative_from_boundary_nodes(&region.boundary));
-    let opposite =
-        representative.map(|point| classify_opposite(region.side, point, left, right, blockers));
+    let opposite = representative
+        .map(|point| classify_opposite(region.side, point, left, right, policy, blockers));
     ArrangementFaceCell {
         carrier: ArrangementFaceCarrier {
             side: region.side,
@@ -2824,6 +2842,7 @@ fn face_cell_from_original_triangle(
     triangle: [usize; 3],
     left: &ExactMesh,
     right: &ExactMesh,
+    policy: ExactRegularizationPolicy,
     blockers: &mut Vec<ExactArrangementBlocker>,
 ) -> ArrangementFaceCell {
     let mesh = mesh_for_side(side, left, right);
@@ -2848,6 +2867,7 @@ fn face_cell_from_original_triangle(
         representative,
         left,
         right,
+        policy,
         blockers,
     ));
     ArrangementFaceCell {
@@ -3022,6 +3042,7 @@ fn classify_opposite(
     point: Point3,
     left: &ExactMesh,
     right: &ExactMesh,
+    policy: ExactRegularizationPolicy,
     blockers: &mut Vec<ExactArrangementBlocker>,
 ) -> ArrangementOppositeClassification {
     let target = match side {
@@ -3048,6 +3069,7 @@ fn classify_opposite(
         winding.relation,
         ClosedMeshWindingRelation::Unknown | ClosedMeshWindingRelation::NotClosed
     ) && convex_fallback.is_none()
+        && policy.unresolved == super::regularization::ExactUnresolvedPolicy::Block
     {
         blockers.push(ExactArrangementBlocker::UnresolvedRegionClassification);
     }
@@ -3914,6 +3936,11 @@ mod tests {
             ExactRegularizationPolicy::RETAIN_ARTIFACTS,
         )
         .unwrap();
+        assert!(
+            arrangement.blockers.is_empty(),
+            "{:?}",
+            arrangement.blockers
+        );
 
         assert_eq!(arrangement.carrier_plane_overlays.len(), 1);
         let overlay = &arrangement.carrier_plane_overlays[0].overlay;
@@ -3965,10 +3992,7 @@ mod tests {
         )
         .unwrap();
         assert!(
-            arrangement
-                .blockers
-                .iter()
-                .all(|blocker| *blocker == ExactArrangementBlocker::UnresolvedRegionClassification),
+            arrangement.blockers.is_empty(),
             "{:?}",
             arrangement.blockers
         );
@@ -3994,6 +4018,27 @@ mod tests {
             mesh.facts().mesh.boundary_edges > 0,
             "{:?}",
             mesh.facts().mesh
+        );
+    }
+
+    #[test]
+    fn blocking_policy_reports_open_coplanar_overlap_winding_blockers() {
+        let left = open_triangle_i64([0, 0, 0], [4, 0, 0], [0, 4, 0]);
+        let right = open_triangle_i64([1, 1, 0], [5, 1, 0], [1, 5, 0]);
+
+        let arrangement = ExactArrangement::from_meshes_with_policy(
+            &left,
+            &right,
+            ExactRegularizationPolicy::REGULARIZED_SOLID,
+        )
+        .unwrap();
+
+        assert!(
+            arrangement
+                .blockers
+                .contains(&ExactArrangementBlocker::UnresolvedRegionClassification),
+            "{:?}",
+            arrangement.blockers
         );
     }
 
