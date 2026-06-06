@@ -325,7 +325,13 @@ impl RetainedCurveProfile2 {
         endpoints: RetainedEndpointEvidence2,
         cache_summary: RetainedCurveCacheSummary2,
     ) -> CurveResult<Self> {
-        validate_curve_profile_evidence(&domain, topology_status, &endpoints, &cache_summary)?;
+        validate_curve_profile_evidence(
+            &domain,
+            &trim,
+            topology_status,
+            &endpoints,
+            &cache_summary,
+        )?;
         Ok(Self {
             identity,
             domain,
@@ -398,10 +404,19 @@ fn validate_cache_summary_counts(
 
 fn validate_curve_profile_evidence(
     domain: &RetainedParameterDomain1,
+    trim: &RetainedTrimInterval1,
     topology_status: RetainedTopologyStatus,
     endpoints: &RetainedEndpointEvidence2,
     cache_summary: &RetainedCurveCacheSummary2,
 ) -> CurveResult<()> {
+    let policy = CurvePolicy::certified();
+    for parameter in [trim.start(), trim.end()] {
+        if domain.contains(parameter, &policy) != Classification::Decided(true) {
+            return Err(CurveError::Topology(
+                "retained curve trim evidence must lie inside the active parameter domain".into(),
+            ));
+        }
+    }
     if endpoints.start_parameter() != domain.start() || endpoints.end_parameter() != domain.end() {
         return Err(CurveError::Topology(
             "retained curve endpoint evidence must match the active parameter domain".into(),
