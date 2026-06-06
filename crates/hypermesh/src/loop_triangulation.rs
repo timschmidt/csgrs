@@ -59,7 +59,7 @@ pub(crate) fn group_exact_coplanar_loops(
             continue;
         }
         if !point_loop_is_exactly_coplanar(&boundary, (&carrier[0], &carrier[1], &carrier[2]))? {
-            return Err(ExactArrangementBlocker::UndecidableOrdering);
+            return Err(ExactArrangementBlocker::NonManifoldCellComplex);
         }
         groups.push(ExactCoplanarLoopGroup {
             carrier,
@@ -898,6 +898,16 @@ mod tests {
             vertices
                 .iter()
                 .any(|vertex| { point3_equal(vertex, &p(3, 3, 0)).value() == Some(true) })
+        );
+    }
+
+    #[test]
+    fn coplanar_loop_grouping_rejects_exact_non_planar_loop_as_topology() {
+        let loops = vec![vec![p(0, 0, 0), p(4, 0, 0), p(4, 4, 0), p(0, 4, 1)]];
+
+        assert_eq!(
+            group_exact_coplanar_loops(loops),
+            Err(ExactArrangementBlocker::NonManifoldCellComplex)
         );
     }
 }
