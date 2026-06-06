@@ -1378,6 +1378,11 @@ pub fn boolean_exact_with_boundary_policy(
         return Ok(result);
     }
     if let Some(result) =
+        boolean_arrangement_volumetric_split_cell_recovery(left, right, operation, validation)?
+    {
+        return Ok(result);
+    }
+    if let Some(result) =
         boolean_arrangement_cell_complex_meshes(left, right, operation, validation)?
     {
         return Ok(result);
@@ -1510,7 +1515,13 @@ fn arrangement_cell_complex_materializes_for_preflight(
     operation: ExactBooleanOperation,
     regularize_unregularized_sheet_complex: bool,
 ) -> Result<bool, MeshError> {
-    for validation in [ValidationPolicy::CLOSED, ValidationPolicy::ALLOW_BOUNDARY] {
+    let validation_policies: &[ValidationPolicy] =
+        if left.facts().mesh.closed_manifold && right.facts().mesh.closed_manifold {
+            &[ValidationPolicy::CLOSED]
+        } else {
+            &[ValidationPolicy::CLOSED, ValidationPolicy::ALLOW_BOUNDARY]
+        };
+    for &validation in validation_policies {
         match run_arrangement_cell_complex_attempt(
             left,
             right,
@@ -2572,6 +2583,19 @@ fn boolean_arrangement_convex_regularized_sheet_recovery(
         return Ok(None);
     }
     Ok(Some(result))
+}
+
+fn boolean_arrangement_volumetric_split_cell_recovery(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    let graph = build_intersection_graph(left, right)?;
+    validate_graph_source_handoff(&graph, left, right)?;
+    boolean_arrangement_volumetric_split_cell_recovery_from_graph(
+        &graph, left, right, operation, validation,
+    )
 }
 
 fn boolean_arrangement_volumetric_split_cell_recovery_from_graph(
@@ -6534,6 +6558,61 @@ mod tests {
                 }
             }
         }
+    }
+
+    #[test]
+    fn closed_preflight_does_not_certify_boundary_only_arrangement_output() {
+        let left = ExactMesh::from_i64_triangles(
+            &[
+                0, 0, 0, //
+                4, 0, 0, //
+                0, 4, 0, //
+                0, 0, 4, //
+                2, 2, 3,
+            ],
+            &[
+                0, 2, 1, //
+                1, 2, 3, //
+                2, 0, 3, //
+                0, 1, 4, //
+                1, 3, 4, //
+                3, 0, 4,
+            ],
+        )
+        .unwrap();
+        let right = tetrahedron_i64([1, 1, 1], [5, 1, 1], [1, 5, 1], [1, 1, 5]);
+        assert!(left.facts().mesh.closed_manifold, "{:?}", left.facts().mesh);
+        assert!(right.facts().mesh.closed_manifold);
+
+        let preflight =
+            preflight_boolean_exact(&left, &right, ExactBooleanOperation::Union).unwrap();
+        assert_eq!(
+            preflight.support,
+            ExactBooleanSupport::RequiresCertifiedWinding,
+            "{preflight:?}"
+        );
+        assert!(preflight.blocker.is_some(), "{preflight:?}");
+        preflight.validate().unwrap();
+        preflight.validate_against_sources(&left, &right).unwrap();
+
+        let readiness =
+            certify_winding_readiness_report(&left, &right, ExactBooleanOperation::Union).unwrap();
+        assert_eq!(
+            readiness.status,
+            ExactWindingReadinessStatus::Ready,
+            "{readiness:?}"
+        );
+        assert!(readiness.region_count > 0, "{readiness:?}");
+        readiness.validate().unwrap();
+        readiness.validate_against_sources(&left, &right).unwrap();
+
+        let result = boolean_exact(
+            &left,
+            &right,
+            ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+        );
+        assert!(result.is_err(), "{result:?}");
     }
 
     fn arrangement_attempt_certified_for_preflight_with_validation(
