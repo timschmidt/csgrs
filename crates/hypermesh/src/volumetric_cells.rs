@@ -14,6 +14,7 @@
 //! structure before traversal.
 
 use std::cmp::Ordering;
+use std::collections::{BTreeSet, HashMap};
 
 use hyperlimit::{
     CoplanarProjection, PlaneSide, Point3, SegmentIntersection, TriangleLocation,
@@ -233,7 +234,12 @@ impl CoplanarVolumetricCellEvidenceReport {
                     report.coplanar_overlapping_pairs += 1;
                     if coplanar_pair_has_positive_area_overlap(&pair.events) {
                         report.positive_area_coplanar_overlapping_pairs += 1;
-                        match classify_coplanar_overlap_sides(left, right, pair.left_face) {
+                        match classify_coplanar_overlap_sides(
+                            left,
+                            right,
+                            pair.left_face,
+                            pair.right_face,
+                        ) {
                             Some(CoplanarOverlapSideEvidence::OppositeSides) => {
                                 report.opposite_side_coplanar_overlapping_pairs += 1;
                             }
@@ -450,15 +456,128 @@ fn classify_coplanar_overlap_sides(
     left: &ExactMesh,
     right: &ExactMesh,
     left_face: usize,
+    right_face: usize,
 ) -> Option<CoplanarOverlapSideEvidence> {
     let left_plane = &left.facts().faces.get(left_face)?.plane;
-    let left_side = mesh_off_plane_side(left, left_plane)?;
-    let right_side = mesh_off_plane_side(right, left_plane)?;
+    let left_side = mesh_local_off_plane_side(left, left_face, left_plane)
+        .or_else(|| mesh_off_plane_side(left, left_plane))?;
+    let right_side = mesh_local_off_plane_side(right, right_face, left_plane)
+        .or_else(|| mesh_off_plane_side(right, left_plane))?;
     if left_side == right_side {
         Some(CoplanarOverlapSideEvidence::SameSide)
     } else {
         Some(CoplanarOverlapSideEvidence::OppositeSides)
     }
+}
+
+fn mesh_local_off_plane_side(
+    mesh: &ExactMesh,
+    face: usize,
+    plane: &super::facts::FacePlaneFacts,
+) -> Option<PlaneSide> {
+    if mesh.triangles().get(face).is_none() || !mesh_face_is_coplanar_with_plane(mesh, face, plane)
+    {
+        return None;
+    }
+    let edge_to_faces = mesh_edge_to_faces(mesh);
+    let mut patch = BTreeSet::new();
+    let mut stack = vec![face];
+    while let Some(current) = stack.pop() {
+        if !patch.insert(current) {
+            continue;
+        }
+        for edge in mesh_face_edges(mesh, current)? {
+            for &neighbor in edge_to_faces
+                .get(&edge)
+                .into_iter()
+                .flat_map(|faces| faces.iter())
+            {
+                if !patch.contains(&neighbor)
+                    && mesh_face_is_coplanar_with_plane(mesh, neighbor, plane)
+                {
+                    stack.push(neighbor);
+                }
+            }
+        }
+    }
+
+    let mut side = None;
+    for &patch_face in &patch {
+        for edge in mesh_face_edges(mesh, patch_face)? {
+            for &neighbor in edge_to_faces
+                .get(&edge)
+                .into_iter()
+                .flat_map(|faces| faces.iter())
+            {
+                if patch.contains(&neighbor) {
+                    continue;
+                }
+                let triangle = mesh.triangles().get(neighbor)?.0;
+                for vertex in triangle {
+                    if edge.contains(&vertex) {
+                        continue;
+                    }
+                    match retained_plane_side(plane, mesh.vertices().get(vertex)?)? {
+                        PlaneSide::On => {}
+                        candidate => {
+                            if let Some(existing) = side {
+                                if existing != candidate {
+                                    return None;
+                                }
+                            } else {
+                                side = Some(candidate);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    side
+}
+
+fn mesh_edge_to_faces(mesh: &ExactMesh) -> HashMap<[usize; 2], Vec<usize>> {
+    let mut edge_to_faces = HashMap::<[usize; 2], Vec<usize>>::new();
+    for face in 0..mesh.triangles().len() {
+        if let Some(edges) = mesh_face_edges(mesh, face) {
+            for edge in edges {
+                edge_to_faces.entry(edge).or_default().push(face);
+            }
+        }
+    }
+    edge_to_faces
+}
+
+fn mesh_face_edges(mesh: &ExactMesh, face: usize) -> Option<[[usize; 2]; 3]> {
+    let triangle = mesh.triangles().get(face)?.0;
+    Some([
+        sorted_edge([triangle[0], triangle[1]]),
+        sorted_edge([triangle[1], triangle[2]]),
+        sorted_edge([triangle[2], triangle[0]]),
+    ])
+}
+
+fn sorted_edge(edge: [usize; 2]) -> [usize; 2] {
+    if edge[0] < edge[1] {
+        edge
+    } else {
+        [edge[1], edge[0]]
+    }
+}
+
+fn mesh_face_is_coplanar_with_plane(
+    mesh: &ExactMesh,
+    face: usize,
+    plane: &super::facts::FacePlaneFacts,
+) -> bool {
+    mesh.triangles().get(face).is_some_and(|triangle| {
+        triangle.0.iter().all(|&vertex| {
+            mesh.vertices()
+                .get(vertex)
+                .and_then(|point| retained_plane_side(plane, point))
+                == Some(PlaneSide::On)
+        })
+    })
 }
 
 fn coplanar_pair_has_positive_area_overlap(events: &[IntersectionEvent]) -> bool {
@@ -615,6 +734,32 @@ fn volumetric_cell_graph_mesh_error(
 mod tests {
     use super::*;
 
+    fn two_tetrahedra_i64(tetrahedra: &[[[i64; 3]; 4]]) -> ExactMesh {
+        let mut vertices = Vec::new();
+        let mut triangles = Vec::new();
+        for tetrahedron in tetrahedra {
+            let start = vertices.len() / 3;
+            for point in tetrahedron {
+                vertices.extend(point);
+            }
+            triangles.extend([
+                start,
+                start + 2,
+                start + 1,
+                start,
+                start + 1,
+                start + 3,
+                start + 1,
+                start + 2,
+                start + 3,
+                start + 2,
+                start,
+                start + 3,
+            ]);
+        }
+        ExactMesh::from_i64_triangles(&vertices, &triangles).unwrap()
+    }
+
     fn crossing_with_coplanar_overlap_report() -> CoplanarVolumetricCellEvidenceReport {
         CoplanarVolumetricCellEvidenceReport {
             left_closed_manifold: true,
@@ -666,5 +811,20 @@ mod tests {
         );
         assert!(report.obstacle.requires_coplanar_volumetric_cells());
         assert_eq!(report.validate(), Ok(()));
+    }
+
+    #[test]
+    fn local_coplanar_patch_side_handles_disconnected_global_sides() {
+        let mesh = two_tetrahedra_i64(&[
+            [[0, 0, 0], [2, 0, 0], [0, 2, 0], [0, 0, 2]],
+            [[10, 0, -2], [12, 0, -2], [10, 2, -2], [10, 0, -4]],
+        ]);
+        let plane = &mesh.facts().faces[0].plane;
+
+        assert_eq!(mesh_off_plane_side(&mesh, plane), None);
+        assert_eq!(
+            mesh_local_off_plane_side(&mesh, 0, plane),
+            Some(PlaneSide::Above)
+        );
     }
 }
