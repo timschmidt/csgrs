@@ -827,6 +827,16 @@ mod tests {
         .unwrap()
     }
 
+    fn tetrahedron_i64(a: [i64; 3], b: [i64; 3], c: [i64; 3], d: [i64; 3]) -> ExactMesh {
+        ExactMesh::from_i64_triangles(
+            &[
+                a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2], d[0], d[1], d[2],
+            ],
+            &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
+        )
+        .unwrap()
+    }
+
     fn crossing_with_coplanar_overlap_report() -> CoplanarVolumetricCellEvidenceReport {
         CoplanarVolumetricCellEvidenceReport {
             left_closed_manifold: true,
@@ -907,6 +917,18 @@ mod tests {
         ];
 
         assert!(coplanar_pair_has_positive_area_overlap(&events));
+    }
+
+    #[test]
+    fn source_replay_counts_boundary_vertex_coplanar_overlap_as_area() {
+        let left = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
+        let right = tetrahedron_i64([0, 0, 0], [8, 0, 0], [0, 8, 0], [0, 0, 8]);
+        let report = certify_coplanar_volumetric_cell_evidence(&left, &right).unwrap();
+
+        assert!(report.positive_area_coplanar_overlapping_pairs > 0);
+        assert!(report.same_side_coplanar_overlapping_pairs > 0);
+        assert!(report.obstacle.requires_coplanar_volumetric_cells());
+        report.validate_against_sources(&left, &right).unwrap();
     }
 
     #[test]
