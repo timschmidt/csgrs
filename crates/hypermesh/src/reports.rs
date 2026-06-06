@@ -2527,6 +2527,29 @@ impl ExactBooleanBlocker {
             Err(ExactReportValidationError::SourceReplayMismatch)
         }
     }
+
+    /// Classify whether this retained blocker is fresh for the source meshes.
+    pub fn freshness_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> ExactReportFreshness {
+        if let Err(error) = self.validate_for_kind(self.kind) {
+            return error.into();
+        }
+        let Ok(graph) = build_intersection_graph(left, right) else {
+            return ExactReportFreshness::SourceReplayMismatch;
+        };
+        if graph.validate_against_sources(left, right).is_err() {
+            return ExactReportFreshness::SourceReplayMismatch;
+        }
+        let replay = blocker_source_counts(&graph).into_blocker(self.kind);
+        if replay.validate_for_kind(self.kind).is_ok() && self == &replay {
+            ExactReportFreshness::Current
+        } else {
+            ExactReportFreshness::SourceReplayMismatch
+        }
+    }
 }
 
 /// Exact boolean preflight blocker kind.
@@ -2606,6 +2629,21 @@ impl ExactRefinementReport {
             Ok(())
         } else {
             Err(ExactReportValidationError::SourceReplayMismatch)
+        }
+    }
+
+    /// Classify whether this retained refinement report is fresh.
+    pub fn freshness_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> ExactReportFreshness {
+        if let Err(error) = self.validate() {
+            return error.into();
+        }
+        match certify_refinement_report(left, right, self.operation) {
+            Ok(replay) if self == &replay => ExactReportFreshness::Current,
+            Ok(_) | Err(_) => ExactReportFreshness::SourceReplayMismatch,
         }
     }
 
@@ -2783,6 +2821,22 @@ impl ExactSameSurfaceReport {
             Err(ExactReportValidationError::SourceReplayMismatch)
         }
     }
+
+    /// Classify whether this retained same-surface report is fresh.
+    pub fn freshness_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> ExactReportFreshness {
+        if let Err(error) = self.validate() {
+            return error.into();
+        }
+        if self == &certify_same_surface_report(left, right) {
+            ExactReportFreshness::Current
+        } else {
+            ExactReportFreshness::SourceReplayMismatch
+        }
+    }
 }
 
 fn validate_full_permutation(
@@ -2868,6 +2922,21 @@ impl ExactOpenSurfaceDisjointReport {
             Ok(())
         } else {
             Err(ExactReportValidationError::SourceReplayMismatch)
+        }
+    }
+
+    /// Classify whether this retained open-surface disjoint report is fresh.
+    pub fn freshness_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> ExactReportFreshness {
+        if let Err(error) = self.validate() {
+            return error.into();
+        }
+        match certify_open_surface_disjoint_report(left, right) {
+            Ok(replay) if self == &replay => ExactReportFreshness::Current,
+            Ok(_) | Err(_) => ExactReportFreshness::SourceReplayMismatch,
         }
     }
 
@@ -3061,6 +3130,21 @@ impl ExactBoundaryTouchingReport {
             Ok(())
         } else {
             Err(ExactReportValidationError::SourceReplayMismatch)
+        }
+    }
+
+    /// Classify whether this retained boundary-touching report is fresh.
+    pub fn freshness_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> ExactReportFreshness {
+        if let Err(error) = self.validate() {
+            return error.into();
+        }
+        match certify_boundary_touching_report(left, right) {
+            Ok(replay) if self == &replay => ExactReportFreshness::Current,
+            Ok(_) | Err(_) => ExactReportFreshness::SourceReplayMismatch,
         }
     }
 }
@@ -3947,6 +4031,25 @@ mod tests {
         .unwrap()
     }
 
+    fn report_test_triangle(points: &[[i64; 3]; 3]) -> ExactMesh {
+        ExactMesh::from_i64_triangles_with_policy(
+            &[
+                points[0][0],
+                points[0][1],
+                points[0][2],
+                points[1][0],
+                points[1][1],
+                points[1][2],
+                points[2][0],
+                points[2][1],
+                points[2][2],
+            ],
+            &[0, 1, 2],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap()
+    }
+
     #[test]
     fn preflight_and_closure_freshness_classify_local_and_source_drift() {
         let left = report_test_tetra([0, 0, 0]);
@@ -3993,6 +4096,64 @@ mod tests {
         assert_eq!(
             stale_closure.freshness_against_sources(&left, &right),
             ExactReportFreshness::StaleStatusEvidence
+        );
+    }
+
+    #[test]
+    fn shortcut_and_blocker_reports_classify_freshness() {
+        let left = report_test_tetra([0, 0, 0]);
+        let right = report_test_tetra([3, 0, 0]);
+
+        let refinement =
+            certify_refinement_report(&left, &right, ExactBooleanOperation::Union).unwrap();
+        assert_eq!(
+            refinement.freshness_against_sources(&left, &right),
+            ExactReportFreshness::Current
+        );
+
+        let mut stale_refinement = refinement.clone();
+        stale_refinement.graph_had_unknowns = true;
+        assert_eq!(
+            stale_refinement.freshness_against_sources(&left, &right),
+            ExactReportFreshness::StaleBlockerEvidence
+        );
+
+        let same_surface = certify_same_surface_report(&left, &left);
+        assert_eq!(
+            same_surface.freshness_against_sources(&left, &left),
+            ExactReportFreshness::Current
+        );
+        assert_eq!(
+            same_surface.freshness_against_sources(&left, &right),
+            ExactReportFreshness::SourceReplayMismatch
+        );
+
+        let open_left = report_test_triangle(&[[0, 0, 0], [2, 0, 0], [0, 2, 0]]);
+        let open_right = report_test_triangle(&[[5, 0, 0], [7, 0, 0], [5, 2, 0]]);
+        let open_disjoint = certify_open_surface_disjoint_report(&open_left, &open_right).unwrap();
+        assert_eq!(
+            open_disjoint.freshness_against_sources(&open_left, &open_right),
+            ExactReportFreshness::Current
+        );
+
+        let touching_right = report_test_triangle(&[[2, 0, 0], [0, 2, 0], [2, 2, 2]]);
+        let boundary = certify_boundary_touching_report(&open_left, &touching_right).unwrap();
+        assert_eq!(
+            boundary.freshness_against_sources(&open_left, &touching_right),
+            ExactReportFreshness::Current
+        );
+        assert_eq!(
+            boundary
+                .blocker
+                .freshness_against_sources(&open_left, &touching_right),
+            ExactReportFreshness::Current
+        );
+
+        let mut stale_boundary = boundary.clone();
+        stale_boundary.retained_events = 0;
+        assert_eq!(
+            stale_boundary.freshness_against_sources(&open_left, &touching_right),
+            ExactReportFreshness::StaleBlockerEvidence
         );
     }
 
