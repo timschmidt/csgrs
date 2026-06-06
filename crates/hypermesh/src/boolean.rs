@@ -341,7 +341,8 @@ pub fn preflight_boolean_exact(
         ExactBooleanOperation::Union
         | ExactBooleanOperation::Intersection
         | ExactBooleanOperation::Difference
-            if meshes_are_certified_identical(left, right) =>
+            if (!left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold)
+                && meshes_are_certified_identical(left, right) =>
         {
             ExactBooleanSupport::CertifiedIdentical
         }
@@ -1385,13 +1386,15 @@ pub fn boolean_exact_with_boundary_policy(
     if meshes_are_certified_bounds_disjoint(left, right) {
         return boolean_disjoint_meshes(left, right, operation, validation);
     }
+    if (!left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold)
+        && meshes_are_certified_identical(left, right)
+    {
+        return boolean_identical_meshes(left, operation, validation);
+    }
     if let Some(result) =
         boolean_arrangement_cell_complex_meshes(left, right, operation, validation, true)?
     {
         return Ok(result);
-    }
-    if meshes_are_certified_identical(left, right) {
-        return boolean_identical_meshes(left, operation, validation);
     }
     if (!left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold)
         && meshes_are_certified_same_surface(left, right)
@@ -7581,6 +7584,35 @@ mod tests {
             union.kind,
             ExactBooleanResultKind::CertifiedShortcut {
                 shortcut: ExactBooleanShortcutKind::ArrangementCellComplex
+            }
+        );
+    }
+
+    #[test]
+    fn open_identical_sheets_keep_identity_shortcut() {
+        let left = ExactMesh::from_i64_triangles_with_policy(
+            &[0, 0, 0, 4, 0, 0, 0, 4, 0],
+            &[0, 1, 2],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let right = left.clone();
+
+        let preflight =
+            preflight_boolean_exact(&left, &right, ExactBooleanOperation::Union).unwrap();
+        assert_eq!(preflight.support, ExactBooleanSupport::CertifiedIdentical);
+
+        let union = boolean_exact(
+            &left,
+            &right,
+            ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        assert_eq!(
+            union.kind,
+            ExactBooleanResultKind::CertifiedShortcut {
+                shortcut: ExactBooleanShortcutKind::Identical
             }
         );
     }
