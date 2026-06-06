@@ -67,6 +67,17 @@ pub struct AffineOrthogonalSolidArrangement {
     pub mesh: ExactMesh,
 }
 
+/// Freshness status for a retained affine orthogonal-solid materialization.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum AffineOrthogonalSolidFreshness {
+    /// The retained arrangement locally validates and replays from source operands.
+    Current,
+    /// The retained output mesh or affine frame no longer passes local replay.
+    InvalidOutput,
+    /// The artifact is locally valid but no longer replays from source operands.
+    SourceReplayMismatch,
+}
+
 #[derive(Clone, Debug)]
 struct AffineOrthogonalSolidInputs {
     basis: AffineBoxBasis,
@@ -131,6 +142,27 @@ impl AffineOrthogonalSolidArrangement {
             Err(affine_solid_error(
                 "retained affine orthogonal solid output does not match source replay",
             ))
+        }
+    }
+
+    /// Classify whether this retained affine materialization is fresh for the sources.
+    pub fn freshness_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> AffineOrthogonalSolidFreshness {
+        if self.validate().is_err() {
+            return AffineOrthogonalSolidFreshness::InvalidOutput;
+        }
+        let replay = materialize_affine_orthogonal_solids(
+            left,
+            right,
+            self.operation,
+            self.mesh.validation_policy(),
+        );
+        match replay {
+            Ok(Some(replay)) if replay == *self => AffineOrthogonalSolidFreshness::Current,
+            Ok(_) | Err(_) => AffineOrthogonalSolidFreshness::SourceReplayMismatch,
         }
     }
 }

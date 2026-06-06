@@ -1,7 +1,7 @@
 use hyperlimit::{Point3, SourceProvenance};
 use hypermesh::{
-    ClosedMeshOrientation, ConvexSolidMeshRelation, ConvexSolidPointRelation,
-    ConvexSolidReportFreshness, CoplanarArrangementReadinessFreshness,
+    AffineOrthogonalSolidFreshness, ClosedMeshOrientation, ConvexSolidMeshRelation,
+    ConvexSolidPointRelation, ConvexSolidReportFreshness, CoplanarArrangementReadinessFreshness,
     CoplanarOverlapGraphFreshness, CoplanarOverlapSplitFreshness, ExactArrangement,
     ExactArrangementFreshness, ExactBooleanOperation, ExactBooleanResultKind,
     ExactBoundaryBooleanPolicy, ExactI64MeshInputReadiness, ExactLabeledCellComplexFreshness,
@@ -16,7 +16,8 @@ use hypermesh::{
     classify_mesh_vertices_against_convex_solid_report,
     classify_point_against_closed_mesh_winding_report, classify_point_against_convex_solid_report,
     classify_triangle_triangle, exact_arrangement_boolean_attempt_report, inspect_i64_mesh_input,
-    preflight_boolean_exact, preflight_boolean_exact_with_boundary_policy,
+    materialize_affine_orthogonal_solid_intersection, preflight_boolean_exact,
+    preflight_boolean_exact_with_boundary_policy,
 };
 use hyperreal::Real;
 
@@ -49,6 +50,31 @@ fn tetra(offset: [i64; 3]) -> ExactMesh {
             hypermesh::Triangle([2, 0, 3]),
         ],
         SourceProvenance::exact("test tetra"),
+    )
+    .unwrap()
+}
+
+fn skew_affine_box(min: [i64; 3], max: [i64; 3]) -> ExactMesh {
+    let p = |u: i64, v: i64, w: i64| [u + 10 * v, v, w];
+    let corners = [
+        p(min[0], min[1], min[2]),
+        p(max[0], min[1], min[2]),
+        p(max[0], max[1], min[2]),
+        p(min[0], max[1], min[2]),
+        p(min[0], min[1], max[2]),
+        p(max[0], min[1], max[2]),
+        p(max[0], max[1], max[2]),
+        p(min[0], max[1], max[2]),
+    ];
+    ExactMesh::from_i64_triangles(
+        &corners
+            .iter()
+            .flat_map(|point| point.iter().copied())
+            .collect::<Vec<_>>(),
+        &[
+            0, 2, 1, 0, 3, 2, 4, 5, 6, 4, 6, 7, 0, 1, 5, 0, 5, 4, 1, 2, 6, 1, 6, 5, 2, 3, 7, 2, 7,
+            6, 3, 0, 4, 3, 4, 7,
+        ],
     )
     .unwrap()
 }
@@ -177,6 +203,38 @@ fn exact_convex_reports_classify_freshness_publicly() {
     assert_eq!(
         mesh_report.freshness_against_sources(&solid, &shifted),
         ConvexSolidReportFreshness::SourceReplayMismatch
+    );
+}
+
+#[test]
+fn exact_affine_orthogonal_solid_materializer_is_publicly_replayable() {
+    let left = skew_affine_box([0, 0, 0], [2, 2, 2]);
+    let right = skew_affine_box([1, 1, 1], [3, 3, 3]);
+
+    let arrangement =
+        materialize_affine_orthogonal_solid_intersection(&left, &right, ValidationPolicy::CLOSED)
+            .unwrap()
+            .expect("skew affine boxes should materialize by exact affine orthogonal replay");
+    arrangement.validate().unwrap();
+    arrangement.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        arrangement.freshness_against_sources(&left, &right),
+        AffineOrthogonalSolidFreshness::Current
+    );
+    assert!(arrangement.mesh.facts().mesh.closed_manifold);
+    assert!(!arrangement.mesh.triangles().is_empty());
+
+    let mut invalid_basis = arrangement.clone();
+    invalid_basis.basis.basis_u = p(0, 0, 0);
+    assert_eq!(
+        invalid_basis.freshness_against_sources(&left, &right),
+        AffineOrthogonalSolidFreshness::InvalidOutput
+    );
+
+    let separated_right = skew_affine_box([4, 4, 4], [5, 5, 5]);
+    assert_eq!(
+        arrangement.freshness_against_sources(&left, &separated_right),
+        AffineOrthogonalSolidFreshness::SourceReplayMismatch
     );
 }
 

@@ -61,6 +61,15 @@ pub use adapter::{
     LossyF64MeshInputReadiness, LossyF64MeshInputReport, LossyF64MeshInputReportValidationError,
     inspect_f64_mesh_input, inspect_i64_mesh_input,
 };
+pub use affine_box::{
+    AffineBoxBasis, AffineBoxOperation, has_affine_box_difference, has_affine_box_intersection,
+    has_affine_box_union,
+};
+pub use affine_solid::{
+    AffineOrthogonalSolidArrangement, AffineOrthogonalSolidFreshness,
+    AffineOrthogonalSolidOperation, materialize_affine_orthogonal_solid_difference,
+    materialize_affine_orthogonal_solid_intersection, materialize_affine_orthogonal_solid_union,
+};
 pub use arrangement2d::{
     ExactArrangement2d, ExactArrangement2dBlocker, ExactArrangement2dEdge, ExactArrangement2dFace,
     ExactArrangement2dInputSegment, ExactArrangement2dOutputComponent,
