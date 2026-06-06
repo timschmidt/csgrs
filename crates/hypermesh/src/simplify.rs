@@ -1310,7 +1310,7 @@ mod tests {
     }
 
     #[test]
-    fn triangulation_rejects_point_touching_same_depth_loops() {
+    fn triangulation_accepts_point_touching_same_depth_loops() {
         let left = [p(0, 0, 0), p(2, 0, 0), p(2, 2, 0), p(0, 2, 0)];
         let right = [p(2, 2, 0), p(4, 2, 0), p(4, 4, 0), p(2, 4, 0)];
         let selected = ExactSelectedCellComplex {
@@ -1332,10 +1332,9 @@ mod tests {
             simplify_selected_cell_complex(selected, ExactRegularizationPolicy::REGULARIZED_SOLID)
                 .unwrap();
 
-        assert_eq!(
-            simplified.triangulate(),
-            Err(ExactArrangementBlocker::NonManifoldCellComplex)
-        );
+        let mesh = simplified.triangulate().unwrap();
+        assert_eq!(mesh.vertices().len(), 8);
+        assert_eq!(mesh.triangles().len(), 4);
     }
 
     #[test]

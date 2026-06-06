@@ -51,6 +51,7 @@ pub(crate) fn triangulate_exact_loop_group(
         });
     }
     compute_loop_depths(&mut loops)?;
+    let isolate_component_vertices = same_depth_endpoint_touch_flags(&loops)?;
     validate_loop_topology(&loops)?;
     let mut used_as_hole = vec![false; loops.len()];
     for outer_index in 0..loops.len() {
@@ -69,7 +70,14 @@ pub(crate) fn triangulate_exact_loop_group(
                 used_as_hole[hole_index] = true;
             }
         }
-        triangulate_loop_with_holes(&loops, outer_index, &hole_indices, vertices, triangles)?;
+        triangulate_loop_with_holes(
+            &loops,
+            outer_index,
+            &hole_indices,
+            vertices,
+            triangles,
+            isolate_component_vertices[outer_index],
+        )?;
     }
     for (index, loop_) in loops.iter().enumerate() {
         if loop_.depth % 2 != 0 && !used_as_hole[index] {
@@ -77,6 +85,25 @@ pub(crate) fn triangulate_exact_loop_group(
         }
     }
     Ok(())
+}
+
+fn same_depth_endpoint_touch_flags(
+    loops: &[ProjectedFaceLoop],
+) -> Result<Vec<bool>, ExactArrangementBlocker> {
+    let mut touches = vec![false; loops.len()];
+    for left_index in 0..loops.len() {
+        for right_index in (left_index + 1)..loops.len() {
+            let endpoint_touching = validate_loop_boundaries_do_not_cross_or_overlap(
+                &loops[left_index].projected,
+                &loops[right_index].projected,
+            )?;
+            if endpoint_touching && loops[left_index].depth == loops[right_index].depth {
+                touches[left_index] = true;
+                touches[right_index] = true;
+            }
+        }
+    }
+    Ok(touches)
 }
 
 pub(crate) fn triangulate_exact_loop(
@@ -90,10 +117,13 @@ pub(crate) fn triangulate_exact_loop(
 fn validate_loop_topology(loops: &[ProjectedFaceLoop]) -> Result<(), ExactArrangementBlocker> {
     for left_index in 0..loops.len() {
         for right_index in (left_index + 1)..loops.len() {
-            validate_loop_boundaries_are_disjoint(
+            let endpoint_touching = validate_loop_boundaries_do_not_cross_or_overlap(
                 &loops[left_index].projected,
                 &loops[right_index].projected,
             )?;
+            if endpoint_touching && loops[left_index].depth != loops[right_index].depth {
+                return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+            }
             if loops[left_index].depth == loops[right_index].depth {
                 validate_same_depth_loops_are_area_disjoint(
                     &loops[left_index],
@@ -105,10 +135,11 @@ fn validate_loop_topology(loops: &[ProjectedFaceLoop]) -> Result<(), ExactArrang
     Ok(())
 }
 
-fn validate_loop_boundaries_are_disjoint(
+fn validate_loop_boundaries_do_not_cross_or_overlap(
     left: &[Point2],
     right: &[Point2],
-) -> Result<(), ExactArrangementBlocker> {
+) -> Result<bool, ExactArrangementBlocker> {
+    let mut endpoint_touching = false;
     for left_index in 0..left.len() {
         let left_next = (left_index + 1) % left.len();
         for right_index in 0..right.len() {
@@ -122,9 +153,9 @@ fn validate_loop_boundaries_are_disjoint(
             .value()
             {
                 Some(SegmentIntersection::Disjoint) => {}
+                Some(SegmentIntersection::EndpointTouch) => endpoint_touching = true,
                 Some(
                     SegmentIntersection::Proper
-                    | SegmentIntersection::EndpointTouch
                     | SegmentIntersection::CollinearOverlap
                     | SegmentIntersection::Identical,
                 ) => return Err(ExactArrangementBlocker::NonManifoldCellComplex),
@@ -132,7 +163,7 @@ fn validate_loop_boundaries_are_disjoint(
             }
         }
     }
-    Ok(())
+    Ok(endpoint_touching)
 }
 
 fn validate_same_depth_loops_are_area_disjoint(
@@ -176,18 +207,21 @@ fn loop_contains_loop(
     container: &ProjectedFaceLoop,
     child: &ProjectedFaceLoop,
 ) -> Result<bool, ExactArrangementBlocker> {
+    let mut boundary_touch = false;
     for point in &child.projected {
         match classify_point_ring_even_odd(&container.projected, point).value() {
             Some(RingPointLocation::Inside) => {}
             Some(RingPointLocation::Outside) => return Ok(false),
-            Some(RingPointLocation::Boundary) => {
-                return Err(ExactArrangementBlocker::NonManifoldCellComplex);
-            }
+            Some(RingPointLocation::Boundary) => boundary_touch = true,
             None => return Err(ExactArrangementBlocker::UndecidableOrdering),
         }
     }
     match classify_point_ring_even_odd(&container.projected, &child.witness).value() {
-        Some(RingPointLocation::Inside) => {}
+        Some(RingPointLocation::Inside) => {
+            if boundary_touch {
+                return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+            }
+        }
         Some(RingPointLocation::Outside) => return Ok(false),
         Some(RingPointLocation::Boundary) => {
             return Err(ExactArrangementBlocker::NonManifoldCellComplex);
@@ -287,6 +321,7 @@ fn triangulate_loop_with_holes(
     hole_loop_indices: &[usize],
     vertices: &mut Vec<Point3>,
     triangles: &mut Vec<Triangle>,
+    isolate_component_vertices: bool,
 ) -> Result<(), ExactArrangementBlocker> {
     let projection = loops[outer_index].projection;
     let output_orientation = projected_loop_orientation(&loops[outer_index].boundary, projection)?;
@@ -321,10 +356,14 @@ fn triangulate_loop_with_holes(
                 .map(|point| project_for_hypertri(point, projection)),
         );
     }
-    let local_to_global = polygon_points
-        .iter()
-        .map(|point| find_or_insert_vertex(vertices, point.clone()))
-        .collect::<Result<Vec<_>, _>>()?;
+    let local_to_global = if isolate_component_vertices {
+        append_component_local_vertices(vertices, &polygon_points)?
+    } else {
+        polygon_points
+            .iter()
+            .map(|point| find_or_insert_vertex(vertices, point.clone()))
+            .collect::<Result<Vec<_>, _>>()?
+    };
     if polygon_points.len() == 3 && hole_indices.is_empty() {
         let triangle = oriented_output_triangle(
             &polygon_points,
@@ -355,6 +394,21 @@ fn triangulate_loop_with_holes(
         return Err(ExactArrangementBlocker::NonManifoldCellComplex);
     }
     Ok(())
+}
+
+fn append_component_local_vertices(
+    vertices: &mut Vec<Point3>,
+    polygon_points: &[Point3],
+) -> Result<Vec<usize>, ExactArrangementBlocker> {
+    let offset = vertices.len();
+    let mut component_vertices = Vec::<Point3>::new();
+    let mut local_to_global = Vec::with_capacity(polygon_points.len());
+    for point in polygon_points {
+        let local = find_or_insert_vertex(&mut component_vertices, point.clone())?;
+        local_to_global.push(offset + local);
+    }
+    vertices.extend(component_vertices);
+    Ok(local_to_global)
 }
 
 fn oriented_output_triangle(
