@@ -426,6 +426,45 @@ fn operation_is_selected_region(operation: ExactBooleanOperation) -> bool {
     matches!(operation, ExactBooleanOperation::SelectedRegions(_))
 }
 
+const fn certified_preflight_support_matches_operation(
+    support: ExactBooleanSupport,
+    operation: ExactBooleanOperation,
+) -> bool {
+    match (support, operation) {
+        (
+            ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion
+            | ExactBooleanSupport::CertifiedConvexUnion,
+            ExactBooleanOperation::Union,
+        )
+        | (
+            ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
+            | ExactBooleanSupport::CertifiedConvexIntersection,
+            ExactBooleanOperation::Intersection,
+        )
+        | (
+            ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference
+            | ExactBooleanSupport::CertifiedConvexDifference,
+            ExactBooleanOperation::Difference,
+        ) => true,
+        (
+            ExactBooleanSupport::CertifiedEmptyOperand
+            | ExactBooleanSupport::CertifiedBoundsDisjoint
+            | ExactBooleanSupport::CertifiedIdentical
+            | ExactBooleanSupport::CertifiedSameSurface
+            | ExactBooleanSupport::CertifiedOpenSurfaceDisjoint
+            | ExactBooleanSupport::CertifiedClosedWindingSeparated
+            | ExactBooleanSupport::CertifiedClosedWindingContainment
+            | ExactBooleanSupport::CertifiedMixedDimensionalRegularizedSolid
+            | ExactBooleanSupport::CertifiedConvexContainment
+            | ExactBooleanSupport::CertifiedConvexSeparated,
+            ExactBooleanOperation::Union
+            | ExactBooleanOperation::Intersection
+            | ExactBooleanOperation::Difference,
+        ) => true,
+        _ => false,
+    }
+}
+
 fn checked_region_facts(
     region_count: usize,
     classifications: &[FaceRegionPlaneClassification],
@@ -2080,6 +2119,7 @@ impl ExactBooleanPreflight {
                     || self.graph_had_unknowns
                     || self.retained_face_pairs != 0
                     || self.retained_events != 0
+                    || !certified_preflight_support_matches_operation(self.support, self.operation)
                 {
                     return Err(ExactReportValidationError::StatusEvidenceMismatch);
                 }

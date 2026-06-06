@@ -8727,6 +8727,12 @@ mod tests {
             ExactBooleanSupport::CertifiedConvexDifference
         );
         assert!(preflight.blocker.is_none(), "{preflight:?}");
+        let mut relabeled_preflight = preflight.clone();
+        relabeled_preflight.operation = ExactBooleanOperation::Union;
+        assert_eq!(
+            relabeled_preflight.validate(),
+            Err(crate::ExactReportValidationError::StatusEvidenceMismatch)
+        );
         let readiness =
             certify_winding_readiness_report(&left, &right, ExactBooleanOperation::Difference)
                 .unwrap();
