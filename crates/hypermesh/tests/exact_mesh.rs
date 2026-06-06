@@ -1,13 +1,16 @@
 use hyperlimit::{Point3, SourceProvenance};
 use hypermesh::{
-    ExactArrangement, ExactArrangementFreshness, ExactBooleanOperation, ExactBooleanResultKind,
-    ExactBoundaryBooleanPolicy, ExactI64MeshInputReadiness, ExactLabeledCellComplexFreshness,
-    ExactMesh, ExactRegularizationPolicy, ExactReportFreshness, ExactSelectedCellComplexFreshness,
-    ExactSimplifiedCellComplexFreshness, MeshFacePairRelation, MeshFacePairValidationError,
-    TriangleTriangleRelation, ValidationPolicy, boolean_exact, boolean_exact_with_boundary_policy,
-    build_intersection_graph, certify_boundary_touching_report, classify_mesh_face_pair,
-    classify_triangle_triangle, exact_arrangement_boolean_attempt_report, inspect_i64_mesh_input,
-    preflight_boolean_exact, preflight_boolean_exact_with_boundary_policy,
+    CoplanarArrangementReadinessFreshness, CoplanarOverlapGraphFreshness,
+    CoplanarOverlapSplitFreshness, ExactArrangement, ExactArrangementFreshness,
+    ExactBooleanOperation, ExactBooleanResultKind, ExactBoundaryBooleanPolicy,
+    ExactI64MeshInputReadiness, ExactLabeledCellComplexFreshness, ExactMesh,
+    ExactRegularizationPolicy, ExactReportFreshness, ExactSelectedCellComplexFreshness,
+    ExactSimplifiedCellComplexFreshness, IntersectionGraphFreshness, MeshFacePairRelation,
+    MeshFacePairValidationError, SplitPlanFreshness, TriangleTriangleRelation, ValidationPolicy,
+    boolean_exact, boolean_exact_with_boundary_policy, build_intersection_graph,
+    certify_boundary_touching_report, classify_mesh_face_pair, classify_triangle_triangle,
+    exact_arrangement_boolean_attempt_report, inspect_i64_mesh_input, preflight_boolean_exact,
+    preflight_boolean_exact_with_boundary_policy,
 };
 use hyperreal::Real;
 
@@ -121,6 +124,56 @@ fn exact_face_pair_classifier_matches_local_triangle_report() {
     assert_eq!(pair.relation, MeshFacePairRelation::CoplanarOverlapping);
     assert_eq!(pair.triangle.as_ref().unwrap(), &direct);
     pair.validate_against_sources(&left, &right).unwrap();
+
+    let graph = build_intersection_graph(&left, &right).unwrap();
+    let overlap = graph.coplanar_overlap_graphs().pop().unwrap();
+    assert_eq!(
+        overlap.freshness_against_sources(&left, &right),
+        CoplanarOverlapGraphFreshness::Current
+    );
+    let mut invalid_overlap = overlap.clone();
+    invalid_overlap.edge_overlaps.clear();
+    invalid_overlap.vertex_overlaps.clear();
+    assert_eq!(
+        invalid_overlap.freshness_against_sources(&left, &right),
+        CoplanarOverlapGraphFreshness::InvalidGraph
+    );
+
+    let split_plan = graph.coplanar_overlap_split_plan(&left, &right).unwrap();
+    assert_eq!(
+        split_plan.freshness_against_sources(&left, &right),
+        CoplanarOverlapSplitFreshness::Current
+    );
+    let mut stale_split_plan = split_plan.clone();
+    stale_split_plan.graphs.clear();
+    assert_eq!(
+        stale_split_plan.freshness_against_sources(&left, &right),
+        CoplanarOverlapSplitFreshness::SourceReplayMismatch
+    );
+
+    let readiness = graph
+        .coplanar_arrangement_readiness_report(&left, &right)
+        .unwrap();
+    assert_eq!(
+        readiness.freshness_against_sources(&left, &right),
+        CoplanarArrangementReadinessFreshness::Current
+    );
+    let mut invalid_readiness = readiness.clone();
+    invalid_readiness.graph_count += 1;
+    assert_eq!(
+        invalid_readiness.freshness_against_sources(&left, &right),
+        CoplanarArrangementReadinessFreshness::InvalidReadiness
+    );
+    let separated_right = ExactMesh::from_i64_triangles_with_policy(
+        &[9, 0, 0, 10, 0, 0, 9, 1, 0, -9, -9, -9],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    assert_eq!(
+        readiness.freshness_against_sources(&left, &separated_right),
+        CoplanarArrangementReadinessFreshness::SourceReplayMismatch
+    );
 }
 
 #[test]
@@ -153,6 +206,75 @@ fn exact_face_pair_candidate_retains_source_plane_split_events() {
             .all(|event| event.predicates.is_empty())
     );
     pair.validate_against_sources(&left, &right).unwrap();
+
+    let graph = build_intersection_graph(&left, &right).unwrap();
+    assert_eq!(
+        graph.face_pairs[0].freshness_against_sources(&left, &right),
+        IntersectionGraphFreshness::Current
+    );
+    assert_eq!(
+        graph.freshness_against_sources(&left, &right),
+        IntersectionGraphFreshness::Current
+    );
+    let mut stale_graph = graph.clone();
+    stale_graph.face_pairs[0].events.clear();
+    assert_eq!(
+        stale_graph.freshness_against_sources(&left, &right),
+        IntersectionGraphFreshness::InvalidGraph
+    );
+
+    let separated_right = ExactMesh::from_i64_triangles_with_policy(
+        &[9, -1, -1, 9, 3, 1, 9, 3, -1],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    assert_eq!(
+        graph.freshness_against_sources(&left, &separated_right),
+        IntersectionGraphFreshness::SourceReplayMismatch
+    );
+
+    let edge_splits = graph.edge_split_plan();
+    assert_eq!(
+        edge_splits.freshness_against_sources(&left, &right),
+        SplitPlanFreshness::Current
+    );
+    assert_eq!(
+        edge_splits.freshness_against_sources(&left, &separated_right),
+        SplitPlanFreshness::SourceReplayMismatch
+    );
+    let mut stale_edge_splits = edge_splits.clone();
+    stale_edge_splits.unknown_orderings += 1;
+    assert_eq!(
+        stale_edge_splits.freshness_against_sources(&left, &right),
+        SplitPlanFreshness::InvalidPlan
+    );
+
+    let graph_vertices = graph.graph_vertex_plan();
+    assert_eq!(
+        graph_vertices.freshness_against_sources(&left, &right),
+        SplitPlanFreshness::Current
+    );
+    let topology = graph.split_topology_plan();
+    assert_eq!(
+        topology.freshness_against_sources(&left, &right),
+        SplitPlanFreshness::Current
+    );
+    let face_plan = graph.face_split_plan();
+    assert_eq!(
+        face_plan.freshness_against_sources(&left, &right),
+        SplitPlanFreshness::Current
+    );
+    let geometry = graph.face_split_geometry_plan(&left, &right).unwrap();
+    assert_eq!(
+        geometry.freshness_against_sources(&left, &right),
+        SplitPlanFreshness::Current
+    );
+    let regions = geometry.region_plan(&left, &right);
+    assert_eq!(
+        regions.freshness_against_sources(&left, &right),
+        SplitPlanFreshness::Current
+    );
 
     let mut truncated = pair.clone();
     truncated.triangle.as_mut().unwrap().right_edge_events.pop();

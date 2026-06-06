@@ -324,6 +324,17 @@ pub enum CoplanarOverlapGraphValidationError {
     SourceReplayMismatch,
 }
 
+/// Freshness status for a retained coplanar overlap graph.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CoplanarOverlapGraphFreshness {
+    /// The overlap graph is locally valid and replays from the source operands.
+    Current,
+    /// The retained overlap graph is internally inconsistent.
+    InvalidGraph,
+    /// The graph is locally valid but no longer replays from the source operands.
+    SourceReplayMismatch,
+}
+
 /// Structural inconsistency in retained coplanar split construction records.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum CoplanarOverlapSplitValidationError {
@@ -367,6 +378,17 @@ pub enum CoplanarOverlapSplitValidationError {
     SourceReplayMismatch,
 }
 
+/// Freshness status for retained coplanar split-construction evidence.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CoplanarOverlapSplitFreshness {
+    /// The split evidence is locally valid and replays from the source operands.
+    Current,
+    /// The retained split evidence is internally inconsistent.
+    InvalidSplit,
+    /// The split evidence is locally valid but no longer replays from the sources.
+    SourceReplayMismatch,
+}
+
 /// Structural inconsistency in a coplanar arrangement readiness report.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum CoplanarArrangementReadinessValidationError {
@@ -390,6 +412,73 @@ pub enum CoplanarArrangementReadinessValidationError {
     /// Recomputing the readiness summary from the supplied source meshes did
     /// not reproduce this retained report.
     SourceReplayMismatch,
+}
+
+/// Freshness status for a retained coplanar arrangement readiness summary.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CoplanarArrangementReadinessFreshness {
+    /// The readiness summary is locally valid and replays from the source operands.
+    Current,
+    /// The retained readiness summary is internally inconsistent.
+    InvalidReadiness,
+    /// The summary is locally valid but no longer replays from the source operands.
+    SourceReplayMismatch,
+}
+
+impl From<CoplanarOverlapGraphValidationError> for CoplanarOverlapGraphFreshness {
+    fn from(error: CoplanarOverlapGraphValidationError) -> Self {
+        match error {
+            CoplanarOverlapGraphValidationError::SourceReplayMismatch => Self::SourceReplayMismatch,
+            CoplanarOverlapGraphValidationError::NonCoplanarRelation
+            | CoplanarOverlapGraphValidationError::EmptyOverlapGraph
+            | CoplanarOverlapGraphValidationError::DisjointEdgeOverlap
+            | CoplanarOverlapGraphValidationError::NonConstructiveVertexOverlap
+            | CoplanarOverlapGraphValidationError::SameSideVertexOverlap => Self::InvalidGraph,
+        }
+    }
+}
+
+impl From<CoplanarOverlapSplitValidationError> for CoplanarOverlapSplitFreshness {
+    fn from(error: CoplanarOverlapSplitValidationError) -> Self {
+        match error {
+            CoplanarOverlapSplitValidationError::SourceReplayMismatch => Self::SourceReplayMismatch,
+            CoplanarOverlapSplitValidationError::MissingPointConstruction
+            | CoplanarOverlapSplitValidationError::DisjointEdgeSplit
+            | CoplanarOverlapSplitValidationError::MissingIntervalConstruction
+            | CoplanarOverlapSplitValidationError::MissingIntervalEndpoints
+            | CoplanarOverlapSplitValidationError::UnexpectedIntervalConstruction
+            | CoplanarOverlapSplitValidationError::UnexpectedPointConstruction
+            | CoplanarOverlapSplitValidationError::SplitParameterOutOfRange
+            | CoplanarOverlapSplitValidationError::UnknownSplitParameterOrder
+            | CoplanarOverlapSplitValidationError::EndpointTouchWithoutEndpointParameter
+            | CoplanarOverlapSplitValidationError::ProperCrossingEndpointParameter
+            | CoplanarOverlapSplitValidationError::DegenerateInterval
+            | CoplanarOverlapSplitValidationError::UnknownIntervalOrder
+            | CoplanarOverlapSplitValidationError::SplitPointDoesNotMatchLeftParameter
+            | CoplanarOverlapSplitValidationError::SplitPointDoesNotMatchRightParameter
+            | CoplanarOverlapSplitValidationError::UnknownSplitPointEquality => Self::InvalidSplit,
+        }
+    }
+}
+
+impl From<CoplanarArrangementReadinessValidationError> for CoplanarArrangementReadinessFreshness {
+    fn from(error: CoplanarArrangementReadinessValidationError) -> Self {
+        match error {
+            CoplanarArrangementReadinessValidationError::SourceReplayMismatch => {
+                Self::SourceReplayMismatch
+            }
+            CoplanarArrangementReadinessValidationError::NoOverlapWithEvidence
+            | CoplanarArrangementReadinessValidationError::BoundaryOnlyHasOverlap
+            | CoplanarArrangementReadinessValidationError::BoundaryOnlyMissingTouchingGraph
+            | CoplanarArrangementReadinessValidationError::NeedsCellsMissingOverlap
+            | CoplanarArrangementReadinessValidationError::MissingOverlapEvidence
+            | CoplanarArrangementReadinessValidationError::GraphCountMismatch
+            | CoplanarArrangementReadinessValidationError::SplitCountExceedsEdgeEvidence
+            | CoplanarArrangementReadinessValidationError::IntervalEndpointCountMismatch => {
+                Self::InvalidReadiness
+            }
+        }
+    }
 }
 
 impl CoplanarOverlapGraph {
@@ -442,6 +531,18 @@ impl CoplanarOverlapGraph {
             Ok(())
         } else {
             Err(CoplanarOverlapGraphValidationError::SourceReplayMismatch)
+        }
+    }
+
+    /// Classify whether this retained overlap graph is fresh for the source operands.
+    pub fn freshness_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> CoplanarOverlapGraphFreshness {
+        match self.validate_against_sources(left, right) {
+            Ok(()) => CoplanarOverlapGraphFreshness::Current,
+            Err(error) => error.into(),
         }
     }
 
@@ -551,6 +652,18 @@ impl CoplanarArrangementReadinessReport {
             Err(CoplanarArrangementReadinessValidationError::SourceReplayMismatch)
         }
     }
+
+    /// Classify whether this retained readiness summary is fresh for the sources.
+    pub fn freshness_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> CoplanarArrangementReadinessFreshness {
+        match self.validate_against_sources(left, right) {
+            Ok(()) => CoplanarArrangementReadinessFreshness::Current,
+            Err(error) => error.into(),
+        }
+    }
 }
 
 impl CoplanarOverlapSplitPlan {
@@ -602,6 +715,18 @@ impl CoplanarOverlapSplitPlan {
             Ok(())
         } else {
             Err(CoplanarOverlapSplitValidationError::SourceReplayMismatch)
+        }
+    }
+
+    /// Classify whether this retained split plan is fresh for the source operands.
+    pub fn freshness_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> CoplanarOverlapSplitFreshness {
+        match self.validate_against_sources(left, right) {
+            Ok(()) => CoplanarOverlapSplitFreshness::Current,
+            Err(error) => error.into(),
         }
     }
 }
@@ -660,6 +785,18 @@ impl CoplanarOverlapSplitGraph {
             Err(CoplanarOverlapSplitValidationError::SourceReplayMismatch)
         }
     }
+
+    /// Classify whether this retained split graph is fresh for the source operands.
+    pub fn freshness_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> CoplanarOverlapSplitFreshness {
+        match self.validate_against_sources(left, right) {
+            Ok(()) => CoplanarOverlapSplitFreshness::Current,
+            Err(error) => error.into(),
+        }
+    }
 }
 
 /// Structural inconsistency in a retained intersection graph event.
@@ -697,6 +834,39 @@ pub enum IntersectionGraphValidationError {
     /// Recomputing graph events from the supplied source meshes did not
     /// reproduce this retained graph artifact.
     SourceReplayMismatch,
+}
+
+/// Freshness status for retained exact intersection graph event evidence.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum IntersectionGraphFreshness {
+    /// The graph event evidence is locally valid and replays from the sources.
+    Current,
+    /// The retained graph event evidence is internally inconsistent.
+    InvalidGraph,
+    /// The graph is locally valid but no longer replays from the source operands.
+    SourceReplayMismatch,
+}
+
+impl From<IntersectionGraphValidationError> for IntersectionGraphFreshness {
+    fn from(error: IntersectionGraphValidationError) -> Self {
+        match error {
+            IntersectionGraphValidationError::SourceReplayMismatch => Self::SourceReplayMismatch,
+            IntersectionGraphValidationError::FaceIndexOutOfRange
+            | IntersectionGraphValidationError::EventSourceOutOfRange
+            | IntersectionGraphValidationError::EventSourceMismatch
+            | IntersectionGraphValidationError::RejectedPairHasEvents
+            | IntersectionGraphValidationError::RetainedPairHasNoEvents
+            | IntersectionGraphValidationError::UnknownPairMissingUnknownEvent
+            | IntersectionGraphValidationError::CoplanarPairMissingProjection
+            | IntersectionGraphValidationError::NonCoplanarPairHasProjection
+            | IntersectionGraphValidationError::DisjointSegmentPlaneEvent
+            | IntersectionGraphValidationError::InvalidSegmentPlaneEvent
+            | IntersectionGraphValidationError::DisjointCoplanarEdgeEvent
+            | IntersectionGraphValidationError::NonConstructiveCoplanarVertexEvent => {
+                Self::InvalidGraph
+            }
+        }
+    }
 }
 
 /// Event records for one retained face pair.
@@ -828,6 +998,18 @@ impl FacePairEvents {
             Ok(())
         } else {
             Err(IntersectionGraphValidationError::SourceReplayMismatch)
+        }
+    }
+
+    /// Classify whether this retained face-pair event record is fresh for the sources.
+    pub fn freshness_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> IntersectionGraphFreshness {
+        match self.validate_against_sources(left, right) {
+            Ok(()) => IntersectionGraphFreshness::Current,
+            Err(error) => error.into(),
         }
     }
 
@@ -964,6 +1146,18 @@ impl ExactIntersectionGraph {
             Ok(())
         } else {
             Err(IntersectionGraphValidationError::SourceReplayMismatch)
+        }
+    }
+
+    /// Classify whether this retained intersection graph is fresh for the sources.
+    pub fn freshness_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> IntersectionGraphFreshness {
+        match self.validate_against_sources(left, right) {
+            Ok(()) => IntersectionGraphFreshness::Current,
+            Err(error) => error.into(),
         }
     }
 
@@ -1311,6 +1505,15 @@ impl ExactEdgeSplitPlan {
     ) -> SplitPlanValidationReport {
         validate_edge_split_plan_against_sources(self, left, right)
     }
+
+    /// Classify whether this retained edge split plan is fresh for the sources.
+    pub fn freshness_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> SplitPlanFreshness {
+        self.validate_against_sources(left, right).freshness()
+    }
 }
 
 /// One merged exact graph vertex.
@@ -1376,6 +1579,15 @@ impl ExactGraphVertexPlan {
         right: &ExactMesh,
     ) -> SplitPlanValidationReport {
         validate_graph_vertex_plan_against_sources(self, left, right)
+    }
+
+    /// Classify whether this retained graph-vertex plan is fresh for the sources.
+    pub fn freshness_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> SplitPlanFreshness {
+        self.validate_against_sources(left, right).freshness()
     }
 }
 
@@ -1453,6 +1665,15 @@ impl ExactSplitTopologyPlan {
     ) -> SplitPlanValidationReport {
         validate_split_topology_plan_against_sources(self, left, right)
     }
+
+    /// Classify whether this retained split-topology plan is fresh for the sources.
+    pub fn freshness_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> SplitPlanFreshness {
+        self.validate_against_sources(left, right).freshness()
+    }
 }
 
 /// One split edge chain as used by an affected face.
@@ -1520,6 +1741,15 @@ impl ExactFaceSplitPlan {
         right: &ExactMesh,
     ) -> SplitPlanValidationReport {
         validate_face_split_plan_against_sources(self, left, right)
+    }
+
+    /// Classify whether this retained face split plan is fresh for the sources.
+    pub fn freshness_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> SplitPlanFreshness {
+        self.validate_against_sources(left, right).freshness()
     }
 }
 
@@ -1610,6 +1840,17 @@ pub enum SplitPlanReportValidationError {
     MissingLocation,
 }
 
+/// Freshness status for retained exact split-plan artifacts.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum SplitPlanFreshness {
+    /// The split plan is locally valid and replays from the source operands.
+    Current,
+    /// The retained split plan is internally inconsistent.
+    InvalidPlan,
+    /// The plan is locally valid but no longer replays from the source operands.
+    SourceReplayMismatch,
+}
+
 impl SplitPlanDiagnostic {
     fn new(kind: SplitPlanDiagnosticKind, message: impl Into<String>) -> Self {
         Self {
@@ -1690,6 +1931,21 @@ impl SplitPlanValidationReport {
             validate_split_plan_diagnostic(diagnostic)?;
         }
         Ok(())
+    }
+
+    /// Classify this validation report as a compact freshness status.
+    pub fn freshness(&self) -> SplitPlanFreshness {
+        if self.is_valid() {
+            SplitPlanFreshness::Current
+        } else if self
+            .diagnostics
+            .iter()
+            .any(|diagnostic| diagnostic.kind == SplitPlanDiagnosticKind::SourceReplayMismatch)
+        {
+            SplitPlanFreshness::SourceReplayMismatch
+        } else {
+            SplitPlanFreshness::InvalidPlan
+        }
     }
 }
 
@@ -1883,6 +2139,15 @@ impl ExactFaceSplitGeometryPlan {
         validate_face_split_geometry_against_sources(self, left, right)
     }
 
+    /// Classify whether this retained face-boundary geometry is fresh for the sources.
+    pub fn freshness_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> SplitPlanFreshness {
+        self.validate_against_sources(left, right).freshness()
+    }
+
     /// Build full face-region boundary loops for downstream exact triangulation.
     ///
     /// The geometry handoff stores only split edge chains. This method expands
@@ -1950,6 +2215,15 @@ impl ExactFaceRegionPlan {
         right: &ExactMesh,
     ) -> SplitPlanValidationReport {
         validate_face_region_plan_against_sources(self, left, right)
+    }
+
+    /// Classify whether this retained face-region plan is fresh for the sources.
+    pub fn freshness_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> SplitPlanFreshness {
+        self.validate_against_sources(left, right).freshness()
     }
 }
 

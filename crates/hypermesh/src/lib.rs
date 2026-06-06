@@ -109,7 +109,22 @@ pub use facts::{
     EdgeFacts, FaceFacts, FacePlaneFacts, MeshFacts, MeshFactsValidationError, MeshValidationFacts,
     OrientedFaceFacts, TriangleFacts, VertexFacts, VertexLinkKind,
 };
-pub use graph::build_intersection_graph;
+pub use graph::{
+    CoplanarArrangementReadinessFreshness, CoplanarArrangementReadinessReport,
+    CoplanarArrangementReadinessStatus, CoplanarArrangementReadinessValidationError,
+    CoplanarEdgeInterval, CoplanarEdgeOverlap, CoplanarEdgeSplitConstruction,
+    CoplanarEdgeSplitPoint, CoplanarOverlapGraph, CoplanarOverlapGraphFreshness,
+    CoplanarOverlapGraphValidationError, CoplanarOverlapSplitFreshness, CoplanarOverlapSplitGraph,
+    CoplanarOverlapSplitPlan, CoplanarOverlapSplitValidationError, CoplanarVertexOverlap,
+    EdgeSplit, EdgeSplitPoint, ExactEdgeSplitPlan, ExactFaceRegionPlan, ExactFaceSplitGeometryPlan,
+    ExactFaceSplitPlan, ExactGraphVertex, ExactGraphVertexPlan, ExactGraphVertexUse,
+    ExactIntersectionGraph, ExactSplitTopologyPlan, FacePairEvents, FaceRegionBoundary,
+    FaceSplitBoundaryChain, FaceSplitBoundaryNode, FaceSplitEdge, FaceSplitGeometry, FaceSplitPlan,
+    IntersectionEvent, IntersectionGraphFreshness, IntersectionGraphValidationError, MeshSide,
+    SplitEdgeChain, SplitEdgeNode, SplitPlanDiagnostic, SplitPlanDiagnosticKind,
+    SplitPlanFreshness, SplitPlanReportValidationError, SplitPlanValidationReport,
+    build_intersection_graph,
+};
 pub use handoff::{
     ExactSolidHandoffError, ExactSolidHandoffFreshness, ExactSolidHandoffReport,
     ExactSurfaceHandoffError, ExactSurfaceHandoffFreshness, ExactSurfaceHandoffReport,
