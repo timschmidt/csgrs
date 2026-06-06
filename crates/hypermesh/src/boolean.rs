@@ -4434,6 +4434,33 @@ fn winding_readiness_report_from_graph(
             None,
         ));
     }
+    if preflight_tail_shortcut_support(left, right, operation)
+        == Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
+    {
+        let needs_coplanar_volumetric =
+            graph_requires_coplanar_volumetric_cells_for_sources(graph, left, right);
+        let blocker_kind = if needs_coplanar_volumetric {
+            ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells
+        } else {
+            ExactBooleanBlockerKind::NeedsWinding
+        };
+        return Ok(winding_readiness_report(
+            operation,
+            ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
+            graph_had_unknowns,
+            graph.face_pairs.len(),
+            graph.event_count(),
+            0,
+            Vec::new(),
+            counts.into_blocker(blocker_kind),
+            None,
+            if needs_coplanar_volumetric {
+                coplanar_volumetric_evidence_if_required(graph, left, right)
+            } else {
+                None
+            },
+        ));
+    }
     if let Some(materialized) = materialize_volumetric_winding_region_plan_from_graph(
         graph,
         left,
@@ -6017,6 +6044,20 @@ mod tests {
             );
             assert!(preflight.blocker.is_none(), "{operation:?}: {preflight:?}");
 
+            let readiness = certify_winding_readiness_report(&left, &right, operation).unwrap();
+            assert_eq!(
+                readiness.status,
+                ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
+                "{operation:?}: {readiness:?}"
+            );
+            assert_eq!(
+                readiness.blocker.kind,
+                ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells,
+                "{operation:?}: {readiness:?}"
+            );
+            readiness.validate().unwrap();
+            readiness.validate_against_sources(&left, &right).unwrap();
+
             let direct = boolean_arrangement_orthogonal_solid_cell_recovery(
                 &left,
                 &right,
@@ -6128,6 +6169,39 @@ mod tests {
         result.validate().unwrap();
         result.validate_against_sources(&left, &right).unwrap();
         assert!(result.mesh.triangles().is_empty());
+    }
+
+    #[test]
+    fn affine_shortcut_winding_report_retains_already_materialized_status() {
+        let left = skew_affine_box_i64([0, 0, 0], [2, 2, 2]);
+        let right = skew_affine_box_i64([1, 1, 1], [3, 3, 3]);
+
+        for operation in [
+            ExactBooleanOperation::Union,
+            ExactBooleanOperation::Intersection,
+            ExactBooleanOperation::Difference,
+        ] {
+            let preflight = preflight_boolean_exact(&left, &right, operation).unwrap();
+            assert_eq!(
+                preflight.support,
+                ExactBooleanSupport::CertifiedArrangementCellComplex,
+                "{operation:?}: {preflight:?}"
+            );
+
+            let readiness = certify_winding_readiness_report(&left, &right, operation).unwrap();
+            assert_eq!(
+                readiness.status,
+                ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
+                "{operation:?}: {readiness:?}"
+            );
+            assert_eq!(
+                readiness.blocker.kind,
+                ExactBooleanBlockerKind::NeedsWinding,
+                "{operation:?}: {readiness:?}"
+            );
+            readiness.validate().unwrap();
+            readiness.validate_against_sources(&left, &right).unwrap();
+        }
     }
 
     fn arrangement_attempt_certified_for_preflight_with_validation(
