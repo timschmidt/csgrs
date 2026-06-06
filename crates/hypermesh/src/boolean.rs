@@ -1409,15 +1409,6 @@ pub fn boolean_exact_with_boundary_policy(
         | ExactBooleanOperation::Difference => {
             let graph = build_intersection_graph(left, right)?;
             validate_graph_source_handoff(&graph, left, right)?;
-            if operation == ExactBooleanOperation::Union
-                && has_non_empty_axis_aligned_orthogonal_solid_cell_intersection(left, right)
-                && !graph_requires_coplanar_volumetric_cells_for_sources(&graph, left, right)
-                && let Some(result) = boolean_arrangement_orthogonal_solid_cell_recovery(
-                    left, right, operation, validation, false,
-                )?
-            {
-                return Ok(result);
-            }
             match operation {
                 ExactBooleanOperation::Union => {
                     if let Some(report) =
