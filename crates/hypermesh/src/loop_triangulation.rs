@@ -13,6 +13,10 @@ use hyperlimit::{
 };
 use hyperreal::Real;
 
+use super::arrangement2d::{
+    ExactArrangement2dBoundaryPolicy, ExactArrangement2dRegion, ExactArrangement2dRegionRing,
+    ExactArrangement2dSetOperation, build_exact_arrangement2d_overlay_with_boundary_policy,
+};
 use super::mesh::Triangle;
 use super::regularization::ExactArrangementBlocker;
 use hyperlimit::CoplanarProjection;
@@ -375,7 +379,214 @@ fn triangulate_loop_with_holes(
         triangles.push(triangle);
         return Ok(());
     }
-    let indices = hypertri::earcut(&projected, &hole_indices)
+    let indices = match hypertri::earcut(&projected, &hole_indices) {
+        Ok(indices) if !indices.is_empty() => indices,
+        Ok(_) | Err(_)
+            if !hole_loop_indices.is_empty() && hole_loops_touch(loops, hole_loop_indices)? =>
+        {
+            return triangulate_touching_hole_loop_group_via_arrangement(
+                loops,
+                outer_index,
+                hole_loop_indices,
+                vertices,
+                triangles,
+                output_orientation,
+            );
+        }
+        Ok(_) | Err(_) => return Err(ExactArrangementBlocker::NonManifoldCellComplex),
+    };
+    let mut emitted_triangles = indices.chunks_exact(3);
+    for triangle in &mut emitted_triangles {
+        triangles.push(oriented_output_triangle(
+            &polygon_points,
+            projection,
+            triangle,
+            &local_to_global,
+            output_orientation,
+        )?);
+    }
+    if !emitted_triangles.remainder().is_empty() {
+        return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+    }
+    Ok(())
+}
+
+fn hole_loops_touch(
+    loops: &[ProjectedFaceLoop],
+    hole_loop_indices: &[usize],
+) -> Result<bool, ExactArrangementBlocker> {
+    for left in 0..hole_loop_indices.len() {
+        for right in (left + 1)..hole_loop_indices.len() {
+            if validate_loop_boundaries_do_not_cross_or_overlap(
+                &loops[hole_loop_indices[left]].projected,
+                &loops[hole_loop_indices[right]].projected,
+            )? {
+                return Ok(true);
+            }
+        }
+    }
+    Ok(false)
+}
+
+fn triangulate_touching_hole_loop_group_via_arrangement(
+    loops: &[ProjectedFaceLoop],
+    outer_index: usize,
+    hole_loop_indices: &[usize],
+    vertices: &mut Vec<Point3>,
+    triangles: &mut Vec<Triangle>,
+    output_orientation: Ordering,
+) -> Result<(), ExactArrangementBlocker> {
+    let projection = loops[outer_index].projection;
+    let carrier = carrier_triangle_for_projection(&loops[outer_index].boundary, projection)?;
+    let mut rings = Vec::with_capacity(hole_loop_indices.len() + 1);
+    rings.push(ExactArrangement2dRegionRing::new(
+        ExactArrangement2dRegion::Left,
+        loops[outer_index].projected.clone(),
+    ));
+    for &hole_index in hole_loop_indices {
+        if loops[hole_index].projection != projection {
+            return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+        }
+        rings.push(ExactArrangement2dRegionRing::new(
+            ExactArrangement2dRegion::Left,
+            loops[hole_index].projected.clone(),
+        ));
+    }
+
+    let overlay = build_exact_arrangement2d_overlay_with_boundary_policy(
+        &rings,
+        ExactArrangement2dSetOperation::Union,
+        ExactArrangement2dBoundaryPolicy::SimplifyCollinear,
+    );
+    if !overlay.is_complete() {
+        return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+    }
+
+    for overlay_face in overlay.faces.iter().filter(|face| face.selected) {
+        let face = overlay
+            .arrangement
+            .faces
+            .get(overlay_face.face)
+            .ok_or(ExactArrangementBlocker::NonManifoldCellComplex)?;
+        let boundary = face
+            .vertices
+            .iter()
+            .map(|&vertex| {
+                let point = &overlay
+                    .arrangement
+                    .vertices
+                    .get(vertex)
+                    .ok_or(ExactArrangementBlocker::NonManifoldCellComplex)?
+                    .point;
+                lift_projected_point_to_carrier(point, &carrier, projection)
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+        triangulate_simple_arrangement_face(
+            &boundary,
+            projection,
+            output_orientation,
+            vertices,
+            triangles,
+        )?;
+    }
+    Ok(())
+}
+
+fn carrier_triangle_for_projection(
+    boundary: &[Point3],
+    projection: CoplanarProjection,
+) -> Result<[Point3; 3], ExactArrangementBlocker> {
+    for first in 0..boundary.len() {
+        for second in (first + 1)..boundary.len() {
+            for third in (second + 1)..boundary.len() {
+                let points = [
+                    project_point3(&boundary[first], projection),
+                    project_point3(&boundary[second], projection),
+                    project_point3(&boundary[third], projection),
+                ];
+                match orient2d_report(&points[0], &points[1], &points[2]).value() {
+                    Some(Sign::Positive | Sign::Negative) => {
+                        return Ok([
+                            boundary[first].clone(),
+                            boundary[second].clone(),
+                            boundary[third].clone(),
+                        ]);
+                    }
+                    Some(Sign::Zero) => {}
+                    None => return Err(ExactArrangementBlocker::UndecidableOrdering),
+                }
+            }
+        }
+    }
+    Err(ExactArrangementBlocker::NonManifoldCellComplex)
+}
+
+fn lift_projected_point_to_carrier(
+    point: &Point2,
+    carrier: &[Point3; 3],
+    projection: CoplanarProjection,
+) -> Result<Point3, ExactArrangementBlocker> {
+    let projected = [
+        project_point3(&carrier[0], projection),
+        project_point3(&carrier[1], projection),
+        project_point3(&carrier[2], projection),
+    ];
+    let ux = projected[1].x.clone() - &projected[0].x;
+    let uy = projected[1].y.clone() - &projected[0].y;
+    let vx = projected[2].x.clone() - &projected[0].x;
+    let vy = projected[2].y.clone() - &projected[0].y;
+    let wx = point.x.clone() - &projected[0].x;
+    let wy = point.y.clone() - &projected[0].y;
+    let det = ux.clone() * &vy - &(uy.clone() * &vx);
+    let a = ((wx.clone() * &vy - &(wy.clone() * &vx)) / &det)
+        .ok()
+        .ok_or(ExactArrangementBlocker::UndecidableOrdering)?;
+    let b = ((ux * &wy - &(uy * &wx)) / &det)
+        .ok()
+        .ok_or(ExactArrangementBlocker::UndecidableOrdering)?;
+    let p1 = vector_between(&carrier[0], &carrier[1]);
+    let p2 = vector_between(&carrier[0], &carrier[2]);
+    Ok(Point3::new(
+        carrier[0].x.clone() + &(p1.x * &a) + &(p2.x * &b),
+        carrier[0].y.clone() + &(p1.y * &a) + &(p2.y * &b),
+        carrier[0].z.clone() + &(p1.z * &a) + &(p2.z * &b),
+    ))
+}
+
+fn vector_between(from: &Point3, to: &Point3) -> Point3 {
+    Point3::new(
+        to.x.clone() - &from.x,
+        to.y.clone() - &from.y,
+        to.z.clone() - &from.z,
+    )
+}
+
+fn triangulate_simple_arrangement_face(
+    boundary: &[Point3],
+    projection: CoplanarProjection,
+    output_orientation: Ordering,
+    vertices: &mut Vec<Point3>,
+    triangles: &mut Vec<Triangle>,
+) -> Result<(), ExactArrangementBlocker> {
+    let projected = boundary
+        .iter()
+        .map(|point| project_for_hypertri(point, projection))
+        .collect::<Vec<_>>();
+    let local_to_global = boundary
+        .iter()
+        .map(|point| find_or_insert_vertex(vertices, point.clone()))
+        .collect::<Result<Vec<_>, _>>()?;
+    if boundary.len() == 3 {
+        triangles.push(oriented_output_triangle(
+            boundary,
+            projection,
+            &[0, 1, 2],
+            &local_to_global,
+            output_orientation,
+        )?);
+        return Ok(());
+    }
+    let indices = hypertri::earcut(&projected, &[])
         .map_err(|_| ExactArrangementBlocker::NonManifoldCellComplex)?;
     if indices.is_empty() {
         return Err(ExactArrangementBlocker::NonManifoldCellComplex);
@@ -383,7 +594,7 @@ fn triangulate_loop_with_holes(
     let mut emitted_triangles = indices.chunks_exact(3);
     for triangle in &mut emitted_triangles {
         triangles.push(oriented_output_triangle(
-            &polygon_points,
+            boundary,
             projection,
             triangle,
             &local_to_global,
@@ -541,5 +752,34 @@ fn project_for_hypertri(point: &Point3, projection: CoplanarProjection) -> hyper
         CoplanarProjection::Xy => hypertri::ExactPoint::new(point.x.clone(), point.y.clone()),
         CoplanarProjection::Xz => hypertri::ExactPoint::new(point.x.clone(), point.z.clone()),
         CoplanarProjection::Yz => hypertri::ExactPoint::new(point.y.clone(), point.z.clone()),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn p(x: i64, y: i64, z: i64) -> Point3 {
+        Point3::new(Real::from(x), Real::from(y), Real::from(z))
+    }
+
+    #[test]
+    fn triangulates_endpoint_touching_holes_via_exact_arrangement_cells() {
+        let loops = vec![
+            vec![p(0, 0, 0), p(8, 0, 0), p(8, 8, 0), p(0, 8, 0)],
+            vec![p(1, 1, 0), p(3, 1, 0), p(3, 3, 0), p(1, 3, 0)],
+            vec![p(3, 3, 0), p(5, 3, 0), p(5, 5, 0), p(3, 5, 0)],
+        ];
+
+        let mut vertices = Vec::new();
+        let mut triangles = Vec::new();
+        triangulate_exact_loop_group(&loops, &mut vertices, &mut triangles).unwrap();
+
+        assert!(!triangles.is_empty());
+        assert!(
+            vertices
+                .iter()
+                .any(|vertex| { point3_equal(vertex, &p(3, 3, 0)).value() == Some(true) })
+        );
     }
 }

@@ -3129,13 +3129,13 @@ fn mesh_from_selected_projected_overlay_faces(
     projection: CoplanarProjection,
     provenance: &'static str,
 ) -> Option<ExactMesh> {
-    if let Some(mesh) = mesh_from_projected_overlay_output_components(
-        overlay,
-        carrier_points,
-        projection,
-        provenance,
-    ) {
-        return Some(mesh);
+    if !overlay.output_components.is_empty() {
+        return mesh_from_projected_overlay_output_components(
+            overlay,
+            carrier_points,
+            projection,
+            provenance,
+        );
     }
 
     let mut vertices = Vec::new();
@@ -7244,6 +7244,19 @@ mod tests {
         .expect("certified output components should triangulate without face-walk replay");
         mesh.validate_retained_state().unwrap();
         assert!(!mesh.triangles().is_empty());
+
+        let mut stale_overlay = overlay;
+        let outer_loop = stale_overlay.output_components[0].outer_loop;
+        stale_overlay.output_loops[outer_loop].points.truncate(2);
+        assert!(
+            mesh_from_selected_projected_overlay_faces(
+                &stale_overlay,
+                &carrier_points,
+                projection,
+                "test stale certified output-component overlay",
+            )
+            .is_none()
+        );
     }
 
     #[test]
