@@ -495,13 +495,11 @@ fn faces_share_reversed_exact_edge(
     left: &ExactSimplifiedFaceCell,
     right: &ExactSimplifiedFaceCell,
 ) -> bool {
-    face_boundary_edges(left)
-        .iter()
-        .any(|left_edge| {
-            face_boundary_edges(right)
-                .iter()
-                .any(|right_edge| exact_edges_are_reversed(left_edge, right_edge))
-        })
+    face_boundary_edges(left).iter().any(|left_edge| {
+        face_boundary_edges(right)
+            .iter()
+            .any(|right_edge| exact_edges_are_reversed(left_edge, right_edge))
+    })
 }
 
 fn face_boundary_edges(face: &ExactSimplifiedFaceCell) -> Vec<DirectedBoundaryEdge> {
@@ -791,6 +789,12 @@ fn triangulate_simplified_cell_complex(
         triangulate_simplified_face_group(complex, face_indices, &mut vertices, &mut triangles)?;
     }
 
+    orient_paired_triangle_edges(&mut triangles)?;
+    remove_duplicate_triangle_vertex_sets(&mut triangles);
+    orient_paired_triangle_edges(&mut triangles)?;
+    split_disconnected_triangle_vertex_fans(&mut vertices, &mut triangles);
+    orient_paired_triangle_edges(&mut triangles)?;
+
     ExactMesh::new_with_policy(
         vertices,
         triangles,
@@ -815,6 +819,229 @@ fn triangulate_simplified_face_group(
         boundaries.push(boundary);
     }
     triangulate_exact_loop_group(&boundaries, vertices, triangles)
+}
+
+#[derive(Clone, Copy)]
+struct SimplifiedTriangleEdgeUse {
+    triangle: usize,
+    forward_with_key: bool,
+}
+
+#[derive(Clone, Copy)]
+struct SimplifiedTriangleOrientationConstraint {
+    triangle: usize,
+    flip_relative_to_current: bool,
+}
+
+fn orient_paired_triangle_edges(
+    triangles: &mut [Triangle],
+) -> Result<usize, ExactArrangementBlocker> {
+    let edge_uses = simplified_triangle_edge_uses(triangles);
+    let mut adjacency =
+        vec![Vec::<SimplifiedTriangleOrientationConstraint>::new(); triangles.len()];
+    for uses in edge_uses.values() {
+        let [left, right] = uses.as_slice() else {
+            continue;
+        };
+        let same_direction = left.forward_with_key == right.forward_with_key;
+        adjacency[left.triangle].push(SimplifiedTriangleOrientationConstraint {
+            triangle: right.triangle,
+            flip_relative_to_current: same_direction,
+        });
+        adjacency[right.triangle].push(SimplifiedTriangleOrientationConstraint {
+            triangle: left.triangle,
+            flip_relative_to_current: same_direction,
+        });
+    }
+
+    let mut flips = vec![None; triangles.len()];
+    for start in 0..triangles.len() {
+        if flips[start].is_some() {
+            continue;
+        }
+        flips[start] = Some(false);
+        let mut stack = vec![start];
+        while let Some(triangle) = stack.pop() {
+            let current_flip =
+                flips[triangle].ok_or(ExactArrangementBlocker::NonManifoldCellComplex)?;
+            for constraint in &adjacency[triangle] {
+                let required = current_flip ^ constraint.flip_relative_to_current;
+                match flips[constraint.triangle] {
+                    Some(existing) if existing != required => {
+                        return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+                    }
+                    Some(_) => {}
+                    None => {
+                        flips[constraint.triangle] = Some(required);
+                        stack.push(constraint.triangle);
+                    }
+                }
+            }
+        }
+    }
+
+    let mut flipped = 0;
+    for (triangle, flip) in triangles.iter_mut().zip(flips) {
+        if flip == Some(true) {
+            triangle.0.swap(1, 2);
+            flipped += 1;
+        }
+    }
+    Ok(flipped)
+}
+
+fn simplified_triangle_edge_uses(
+    triangles: &[Triangle],
+) -> std::collections::BTreeMap<[usize; 2], Vec<SimplifiedTriangleEdgeUse>> {
+    let mut edge_uses =
+        std::collections::BTreeMap::<[usize; 2], Vec<SimplifiedTriangleEdgeUse>>::new();
+    for (triangle_index, triangle) in triangles.iter().enumerate() {
+        for edge in [
+            [triangle.0[0], triangle.0[1]],
+            [triangle.0[1], triangle.0[2]],
+            [triangle.0[2], triangle.0[0]],
+        ] {
+            let mut key = edge;
+            key.sort_unstable();
+            edge_uses
+                .entry(key)
+                .or_default()
+                .push(SimplifiedTriangleEdgeUse {
+                    triangle: triangle_index,
+                    forward_with_key: edge == key,
+                });
+        }
+    }
+    edge_uses
+}
+
+fn remove_duplicate_triangle_vertex_sets(triangles: &mut Vec<Triangle>) -> usize {
+    let original_len = triangles.len();
+    let mut seen = std::collections::BTreeSet::<[usize; 3]>::new();
+    triangles.retain(|triangle| {
+        let mut key = triangle.0;
+        key.sort_unstable();
+        seen.insert(key)
+    });
+    original_len - triangles.len()
+}
+
+#[derive(Clone, Copy)]
+struct VertexFanEdgeUse {
+    local_triangle: usize,
+    other: usize,
+    forward_from_vertex: bool,
+}
+
+fn split_disconnected_triangle_vertex_fans(
+    vertices: &mut Vec<Point3>,
+    triangles: &mut [Triangle],
+) -> usize {
+    let original_vertex_count = vertices.len();
+    let mut cloned_vertices = 0;
+    for vertex in 0..original_vertex_count {
+        let incident = incident_triangle_indices(triangles, vertex);
+        if incident.len() <= 1 {
+            continue;
+        }
+        let components = triangle_vertex_fan_components(triangles, vertex, &incident);
+        if components.len() <= 1 {
+            continue;
+        }
+        for component in components.into_iter().skip(1) {
+            let clone_index = vertices.len();
+            vertices.push(vertices[vertex].clone());
+            for triangle in component {
+                replace_triangle_vertex(&mut triangles[triangle], vertex, clone_index);
+            }
+            cloned_vertices += 1;
+        }
+    }
+    cloned_vertices
+}
+
+fn incident_triangle_indices(triangles: &[Triangle], vertex: usize) -> Vec<usize> {
+    triangles
+        .iter()
+        .enumerate()
+        .filter_map(|(triangle, vertices)| vertices.0.contains(&vertex).then_some(triangle))
+        .collect()
+}
+
+fn triangle_vertex_fan_components(
+    triangles: &[Triangle],
+    vertex: usize,
+    incident: &[usize],
+) -> Vec<Vec<usize>> {
+    let mut parent = (0..incident.len()).collect::<Vec<_>>();
+    let mut edge_uses = std::collections::BTreeMap::<usize, Vec<VertexFanEdgeUse>>::new();
+    for (local_triangle, &triangle_index) in incident.iter().enumerate() {
+        for use_ in vertex_fan_edge_uses(local_triangle, vertex, triangles[triangle_index].0) {
+            edge_uses.entry(use_.other).or_default().push(use_);
+        }
+    }
+    for uses in edge_uses.values() {
+        if let [left, right] = uses.as_slice()
+            && left.forward_from_vertex != right.forward_from_vertex
+        {
+            union_vertex_fan(&mut parent, left.local_triangle, right.local_triangle);
+        }
+    }
+    let mut components = std::collections::BTreeMap::<usize, Vec<usize>>::new();
+    for (local, &triangle) in incident.iter().enumerate() {
+        let root = find_vertex_fan_root(&mut parent, local);
+        components.entry(root).or_default().push(triangle);
+    }
+    components.into_values().collect()
+}
+
+fn vertex_fan_edge_uses(
+    local_triangle: usize,
+    vertex: usize,
+    triangle: [usize; 3],
+) -> Vec<VertexFanEdgeUse> {
+    let mut uses = Vec::new();
+    for edge in 0..3 {
+        let start = triangle[edge];
+        let end = triangle[(edge + 1) % 3];
+        if start == vertex {
+            uses.push(VertexFanEdgeUse {
+                local_triangle,
+                other: end,
+                forward_from_vertex: true,
+            });
+        } else if end == vertex {
+            uses.push(VertexFanEdgeUse {
+                local_triangle,
+                other: start,
+                forward_from_vertex: false,
+            });
+        }
+    }
+    uses
+}
+
+fn union_vertex_fan(parent: &mut [usize], left: usize, right: usize) {
+    let left_root = find_vertex_fan_root(parent, left);
+    let right_root = find_vertex_fan_root(parent, right);
+    if left_root != right_root {
+        parent[right_root] = left_root;
+    }
+}
+
+fn find_vertex_fan_root(parent: &mut [usize], index: usize) -> usize {
+    if parent[index] != index {
+        parent[index] = find_vertex_fan_root(parent, parent[index]);
+    }
+    parent[index]
+}
+
+fn replace_triangle_vertex(triangle: &mut Triangle, old: usize, new: usize) {
+    for vertex in &mut triangle.0 {
+        if *vertex == old {
+            *vertex = new;
+        }
+    }
 }
 
 #[cfg(test)]
@@ -861,11 +1088,21 @@ mod tests {
         vertices: &[usize],
         points: &[Point3],
     ) -> ExactCellComplexFace {
+        selected_face_with_carrier(side, source, 0, vertices, points)
+    }
+
+    fn selected_face_with_carrier(
+        side: MeshSide,
+        source: ExactCellRegionLabel,
+        carrier_face: usize,
+        vertices: &[usize],
+        points: &[Point3],
+    ) -> ExactCellComplexFace {
         ExactCellComplexFace {
             cell: ArrangementFaceCell {
                 carrier: ArrangementFaceCarrier {
                     side,
-                    face: 0,
+                    face: carrier_face,
                     triangle: [0, 1, 2],
                 },
                 boundary: vertices
@@ -1539,6 +1776,46 @@ mod tests {
             simplified.triangulate(),
             Err(ExactArrangementBlocker::NonManifoldCellComplex)
         );
+    }
+
+    #[test]
+    fn triangulation_splits_disconnected_vertex_fans_across_face_groups() {
+        let shared = p(0, 0, 0);
+        let selected = ExactSelectedCellComplex {
+            faces: vec![
+                selected_face_with_carrier(
+                    MeshSide::Left,
+                    ExactCellRegionLabel::LeftBoundary,
+                    0,
+                    &[0, 1, 2],
+                    &[shared.clone(), p(1, 0, 0), p(0, 1, 0)],
+                ),
+                selected_face_with_carrier(
+                    MeshSide::Left,
+                    ExactCellRegionLabel::LeftBoundary,
+                    1,
+                    &[0, 3, 4],
+                    &[shared, p(0, 0, 1), p(0, 1, 1)],
+                ),
+            ],
+            volume_regions: Vec::new(),
+            volume_adjacencies: Vec::new(),
+            lower_dimensional_artifacts: Vec::new(),
+            selected_faces: vec![0, 1],
+            selected_face_orientations: Vec::new(),
+            selected_volume_regions: Vec::new(),
+            operation: ExactBooleanOperation::Union,
+            blockers: Vec::new(),
+        };
+
+        let simplified =
+            simplify_selected_cell_complex(selected, ExactRegularizationPolicy::RETAIN_ARTIFACTS)
+                .unwrap();
+        let mesh = simplified.triangulate().unwrap();
+
+        assert_eq!(mesh.triangles().len(), 2);
+        assert_eq!(mesh.vertices().len(), 6);
+        assert_eq!(mesh.facts().mesh.non_manifold_vertices, 0);
     }
 
     #[test]

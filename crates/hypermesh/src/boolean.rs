@@ -7415,6 +7415,97 @@ mod tests {
     }
 
     #[test]
+    fn partial_face_boundary_touch_is_regularized_without_coplanar_cell_blocker() {
+        let left = tetrahedron_i64([0, 0, 0], [6, 0, 0], [0, 6, 0], [0, 0, 6]);
+        let right = tetrahedron_i64([2, 2, 2], [4, 1, 1], [1, 4, 1], [3, 3, 3]);
+
+        let intersection =
+            preflight_boolean_exact(&left, &right, ExactBooleanOperation::Intersection).unwrap();
+        assert_eq!(
+            intersection.support,
+            ExactBooleanSupport::CertifiedArrangementCellComplex
+        );
+        assert!(intersection.blocker.is_none());
+
+        let difference =
+            preflight_boolean_exact(&left, &right, ExactBooleanOperation::Difference).unwrap();
+        assert_eq!(
+            difference.support,
+            ExactBooleanSupport::CertifiedArrangementCellComplex
+        );
+        assert!(difference.blocker.is_none());
+
+        let intersection = boolean_exact(
+            &left,
+            &right,
+            ExactBooleanOperation::Intersection,
+            ValidationPolicy::CLOSED,
+        )
+        .unwrap();
+        assert!(intersection.mesh.triangles().is_empty());
+
+        let difference = boolean_exact(
+            &left,
+            &right,
+            ExactBooleanOperation::Difference,
+            ValidationPolicy::CLOSED,
+        )
+        .unwrap();
+        assert!(exact_meshes_have_same_shape(&difference.mesh, &left));
+    }
+
+    #[test]
+    fn boundary_attached_contained_tetrahedron_difference_materializes() {
+        let left = tetrahedron_i64([0, 0, 0], [6, 0, 0], [0, 6, 0], [0, 0, 6]);
+        let right = tetrahedron_i64([2, 2, 2], [4, 1, 1], [1, 4, 1], [1, 1, 1]);
+
+        let preflight =
+            preflight_boolean_exact(&left, &right, ExactBooleanOperation::Difference).unwrap();
+        assert_eq!(
+            preflight.support,
+            ExactBooleanSupport::CertifiedArrangementCellComplex
+        );
+        assert!(preflight.blocker.is_none(), "{preflight:?}");
+
+        let difference = boolean_exact(
+            &left,
+            &right,
+            ExactBooleanOperation::Difference,
+            ValidationPolicy::CLOSED,
+        )
+        .unwrap();
+        difference.validate().unwrap();
+        difference.validate_against_sources(&left, &right).unwrap();
+        assert!(difference.mesh.triangles().len() >= left.triangles().len());
+    }
+
+    #[test]
+    fn straddling_coplanar_crossing_tetrahedron_boundary_attempt_materializes() {
+        let left = tetrahedron_i64([0, 0, 0], [6, 0, 0], [0, 6, 0], [0, 0, 6]);
+        let right = tetrahedron_i64([2, 2, 2], [8, -1, -1], [-1, 8, -1], [3, 2, 0]);
+
+        for operation in [
+            ExactBooleanOperation::Union,
+            ExactBooleanOperation::Difference,
+        ] {
+            let attempt = exact_arrangement_boolean_attempt_report(
+                &left,
+                &right,
+                operation,
+                ExactRegularizationPolicy::REGULARIZED_SOLID,
+            )
+            .unwrap();
+            assert_eq!(
+                attempt.materialized_shortcut,
+                Some(ExactBooleanShortcutKind::ArrangementCellComplex),
+                "{operation:?}: {attempt:?}"
+            );
+            assert_eq!(attempt.decline, None, "{operation:?}: {attempt:?}");
+            assert!(attempt.output_triangles > 0, "{operation:?}: {attempt:?}");
+        }
+    }
+
+    #[test]
     fn closed_identical_solids_route_through_arrangement_pipeline() {
         let left = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
         let right = left.clone();
