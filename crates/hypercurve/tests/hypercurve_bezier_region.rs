@@ -583,6 +583,8 @@ fn retained_curved_nesting_role_report_assigns_same_orientation_nonlinear_hole()
         ]
     );
     assert_eq!(nesting.nesting_depths(), &[0, 1]);
+    assert_eq!(nesting.signed_areas()[0], q(-64, 3));
+    assert_eq!(nesting.signed_areas()[1], q(-8, 3));
     assert_eq!(nesting.material_loop_indices(), vec![0]);
     assert_eq!(nesting.hole_loop_indices(), vec![1]);
     assert_eq!(nesting.sample_points().len(), 2);

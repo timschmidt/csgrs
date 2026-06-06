@@ -134,6 +134,7 @@ pub struct BezierRetainedSignedAreaRoleReport2 {
 pub struct BezierRetainedCurvedNestingRoleReport2 {
     roles: Vec<BezierRetainedRegionLoopRole>,
     nesting_depths: Vec<usize>,
+    signed_areas: Vec<Real>,
     sample_points: Vec<Point2>,
 }
 
@@ -273,11 +274,13 @@ impl BezierRetainedCurvedNestingRoleReport2 {
     pub const fn new(
         roles: Vec<BezierRetainedRegionLoopRole>,
         nesting_depths: Vec<usize>,
+        signed_areas: Vec<Real>,
         sample_points: Vec<Point2>,
     ) -> Self {
         Self {
             roles,
             nesting_depths,
+            signed_areas,
             sample_points,
         }
     }
@@ -290,6 +293,11 @@ impl BezierRetainedCurvedNestingRoleReport2 {
     /// Returns the certified count of containing loops for each retained loop.
     pub fn nesting_depths(&self) -> &[usize] {
         &self.nesting_depths
+    }
+
+    /// Returns exact signed areas used to certify nondegenerate native loops.
+    pub fn signed_areas(&self) -> &[Real] {
+        &self.signed_areas
     }
 
     /// Returns exact sample points used for nesting classification.
@@ -661,6 +669,7 @@ impl BezierRetainedRegion2 {
     ) -> CurveResult<Classification<BezierRetainedCurvedNestingRoleReport2>> {
         let mut native_loops = Vec::with_capacity(self.boundary_loops.len());
         let mut sample_points = Vec::with_capacity(self.boundary_loops.len());
+        let mut signed_areas = Vec::with_capacity(self.boundary_loops.len());
         for boundary_loop in &self.boundary_loops {
             let native_loop = match retained_loop_to_native(boundary_loop) {
                 Some(loop_) => loop_,
@@ -681,6 +690,7 @@ impl BezierRetainedRegion2 {
                 Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
             };
             sample_points.push(sample);
+            signed_areas.push(area);
             native_loops.push(native_loop);
         }
 
@@ -712,7 +722,12 @@ impl BezierRetainedRegion2 {
         }
 
         Ok(Classification::Decided(
-            BezierRetainedCurvedNestingRoleReport2::new(roles, nesting_depths, sample_points),
+            BezierRetainedCurvedNestingRoleReport2::new(
+                roles,
+                nesting_depths,
+                signed_areas,
+                sample_points,
+            ),
         ))
     }
 
