@@ -17,6 +17,7 @@ use super::boolean::{
     certify_planar_arrangement_report, certify_refinement_report, certify_same_surface_report,
     certify_volumetric_boundary_closure_report, certify_winding_readiness_report,
     preflight_boolean_exact, preflight_boolean_exact_with_validation,
+    replay_volumetric_winding_region_plan,
 };
 use super::bounds::AabbIntersectionKind;
 use super::convex::{
@@ -1015,6 +1016,17 @@ impl ExactBooleanResult {
                 classification
                     .validate_against_sources(left, right)
                     .map_err(ExactReportValidationError::InvalidRegionClassification)?;
+            }
+        }
+        if matches!(
+            self.kind,
+            ExactBooleanResultKind::ArrangementCellComplexMaterialized { .. }
+        ) {
+            let replay = replay_volumetric_winding_region_plan(left, right)
+                .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?
+                .ok_or(ExactReportValidationError::SourceReplayMismatch)?;
+            if self.region_classifications != replay.0 || self.triangulations != replay.1 {
+                return Err(ExactReportValidationError::SourceReplayMismatch);
             }
         }
         if matches!(

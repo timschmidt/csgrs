@@ -5968,6 +5968,25 @@ fn volumetric_winding_region_plan_from_graph(
     )))
 }
 
+pub(crate) fn replay_volumetric_winding_region_plan(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Result<
+    Option<(
+        Vec<FaceRegionPlaneClassification>,
+        Vec<FaceRegionTriangulation>,
+    )>,
+    MeshError,
+> {
+    let graph = build_intersection_graph(left, right)?;
+    validate_graph_source_handoff(&graph, left, right)?;
+    Ok(
+        volumetric_winding_region_plan_from_graph(&graph, left, right)?.map(
+            |(region_classifications, triangulations, _)| (region_classifications, triangulations),
+        ),
+    )
+}
+
 fn operation_retains_any_volumetric_region(
     operation: ExactBooleanOperation,
     triangulations: &[FaceRegionTriangulation],
@@ -8199,6 +8218,28 @@ mod tests {
         boundary_result
             .validate_against_sources(&left, &right)
             .unwrap();
+        let mut stale_region_fact = boundary_result.clone();
+        let stale_classification = stale_region_fact
+            .region_classifications
+            .iter_mut()
+            .find(|classification| {
+                classification.relation != crate::region::FaceRegionPlaneRelation::StrictlyAbove
+            })
+            .expect("materialized arrangement output should retain replayable region-plane facts");
+        stale_classification
+            .node_sides
+            .fill(Some(hyperlimit::PlaneSide::Above));
+        stale_classification.relation = crate::region::FaceRegionPlaneRelation::StrictlyAbove;
+        assert!(
+            stale_region_fact.validate().is_ok(),
+            "{stale_region_fact:?}"
+        );
+        assert!(
+            stale_region_fact
+                .validate_against_sources(&left, &right)
+                .is_err(),
+            "materialized arrangement output must replay retained region-plane facts"
+        );
         boundary_result
             .validate_operation_against_sources(
                 &left,
