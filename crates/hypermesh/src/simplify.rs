@@ -1964,6 +1964,32 @@ mod tests {
     }
 
     #[test]
+    fn simplification_retains_lower_dimensional_edge_artifacts() {
+        let artifact = ArrangementLowerDimensionalArtifact::EdgeContact {
+            left_face: 0,
+            right_face: 1,
+            endpoints: [p(0, 0, 0), p(1, 0, 0)],
+        };
+        let selected = ExactSelectedCellComplex {
+            faces: Vec::new(),
+            volume_regions: Vec::new(),
+            volume_adjacencies: Vec::new(),
+            lower_dimensional_artifacts: vec![artifact.clone()],
+            selected_faces: Vec::new(),
+            selected_face_orientations: Vec::new(),
+            selected_volume_regions: Vec::new(),
+            operation: ExactBooleanOperation::Intersection,
+            blockers: Vec::new(),
+        };
+
+        let simplified =
+            simplify_selected_cell_complex(selected, ExactRegularizationPolicy::RETAIN_ARTIFACTS)
+                .unwrap();
+
+        assert_eq!(simplified.lower_dimensional_artifacts, vec![artifact]);
+    }
+
+    #[test]
     fn triangulation_uses_interior_witness_for_nested_hole_ownership() {
         let outer = vec![
             Point2::new(Real::from(0), Real::from(0)),
