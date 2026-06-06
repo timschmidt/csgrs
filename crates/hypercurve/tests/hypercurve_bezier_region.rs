@@ -428,6 +428,18 @@ fn retained_role_report_constructors_reject_mismatched_evidence() {
         roles.clone(),
         Vec::new(),
     ));
+    assert_topology_error(BezierRetainedSignedAreaRoleReport2::new(
+        vec![BezierRetainedRegionLoopRole::Material],
+        vec![r(1)],
+    ));
+    assert_topology_error(BezierRetainedSignedAreaRoleReport2::new(
+        vec![BezierRetainedRegionLoopRole::Hole],
+        vec![r(-1)],
+    ));
+    assert_topology_error(BezierRetainedSignedAreaRoleReport2::new(
+        vec![BezierRetainedRegionLoopRole::Material],
+        vec![r(0)],
+    ));
     assert_topology_error(BezierRetainedCurvedNestingRoleReport2::new(
         roles.clone(),
         vec![0],

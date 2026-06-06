@@ -303,6 +303,7 @@ impl BezierRetainedSignedAreaRoleReport2 {
         signed_areas: Vec<Real>,
     ) -> CurveResult<Self> {
         validate_report_length(roles.len(), "signed area", signed_areas.len())?;
+        validate_signed_area_roles(&roles, &signed_areas)?;
         Ok(Self {
             roles,
             signed_areas,
@@ -987,6 +988,31 @@ fn validate_nesting_depth_roles(
         if *role != expected {
             return Err(CurveError::Topology(
                 "retained nesting role report role does not match certified nesting depth".into(),
+            ));
+        }
+    }
+    Ok(())
+}
+
+fn validate_signed_area_roles(
+    roles: &[BezierRetainedRegionLoopRole],
+    signed_areas: &[Real],
+) -> CurveResult<()> {
+    let policy = CurvePolicy::certified();
+    for (role, signed_area) in roles.iter().zip(signed_areas) {
+        let expected = match real_sign(signed_area, &policy) {
+            Some(RealSign::Negative) => BezierRetainedRegionLoopRole::Material,
+            Some(RealSign::Positive) => BezierRetainedRegionLoopRole::Hole,
+            Some(RealSign::Zero) | None => {
+                return Err(CurveError::Topology(
+                    "retained signed-area role report must carry certified nonzero area evidence"
+                        .into(),
+                ));
+            }
+        };
+        if *role != expected {
+            return Err(CurveError::Topology(
+                "retained signed-area role report role does not match signed-area evidence".into(),
             ));
         }
     }
