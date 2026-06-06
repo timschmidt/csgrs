@@ -203,6 +203,11 @@ pub use volumetric::{
     classify_triangulated_region_triangle_against_closed_mesh,
     classify_triangulated_regions_against_opposite_meshes,
 };
+pub use volumetric_cells::{
+    CoplanarVolumetricCellEvidenceError, CoplanarVolumetricCellEvidenceFreshness,
+    CoplanarVolumetricCellEvidenceReport, CoplanarVolumetricCellObstacle,
+    certify_coplanar_volumetric_cell_evidence,
+};
 pub use winding::{
     ClosedMeshWindingMeshRelation, ClosedMeshWindingMeshReport, ClosedMeshWindingRelation,
     PointMeshWindingReport, WindingRayAxis, WindingReportError, WindingReportFreshness,

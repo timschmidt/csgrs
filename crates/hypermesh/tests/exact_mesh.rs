@@ -2,16 +2,18 @@ use hyperlimit::{Point3, SourceProvenance};
 use hypermesh::{
     AffineOrthogonalSolidFreshness, ClosedMeshOrientation, ConvexSolidMeshRelation,
     ConvexSolidPointRelation, ConvexSolidReportFreshness, CoplanarArrangementReadinessFreshness,
-    CoplanarOverlapGraphFreshness, CoplanarOverlapSplitFreshness, ExactArrangement,
-    ExactArrangementFreshness, ExactBooleanOperation, ExactBooleanResultKind,
-    ExactBoundaryBooleanPolicy, ExactI64MeshInputReadiness, ExactLabeledCellComplexFreshness,
-    ExactMesh, ExactRegularizationPolicy, ExactReportFreshness, ExactSelectedCellComplexFreshness,
+    CoplanarOverlapGraphFreshness, CoplanarOverlapSplitFreshness,
+    CoplanarVolumetricCellEvidenceFreshness, ExactArrangement, ExactArrangementFreshness,
+    ExactBooleanOperation, ExactBooleanResultKind, ExactBoundaryBooleanPolicy,
+    ExactI64MeshInputReadiness, ExactLabeledCellComplexFreshness, ExactMesh,
+    ExactRegularizationPolicy, ExactReportFreshness, ExactSelectedCellComplexFreshness,
     ExactSimplifiedCellComplexFreshness, ExactVolumetricRegionFreshness,
     ExactVolumetricRegionRelation, IntersectionGraphFreshness, MeshFacePairFreshness,
     MeshFacePairRelation, MeshFacePairValidationError, SplitPlanFreshness,
     TriangleTriangleFreshness, TriangleTriangleRelation, ValidationPolicy, WindingReportFreshness,
     boolean_exact, boolean_exact_with_boundary_policy, build_intersection_graph,
-    certify_boundary_touching_report, certify_convex_solid, classify_mesh_face_pair,
+    certify_boundary_touching_report, certify_convex_solid,
+    certify_coplanar_volumetric_cell_evidence, classify_mesh_face_pair,
     classify_mesh_vertices_against_closed_mesh_winding_report,
     classify_mesh_vertices_against_convex_solid_report,
     classify_point_against_closed_mesh_winding_report, classify_point_against_convex_solid_report,
@@ -50,6 +52,16 @@ fn tetra(offset: [i64; 3]) -> ExactMesh {
             hypermesh::Triangle([2, 0, 3]),
         ],
         SourceProvenance::exact("test tetra"),
+    )
+    .unwrap()
+}
+
+fn tetra_from_corners(a: [i64; 3], b: [i64; 3], c: [i64; 3], d: [i64; 3]) -> ExactMesh {
+    ExactMesh::from_i64_triangles(
+        &[
+            a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2], d[0], d[1], d[2],
+        ],
+        &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
     )
     .unwrap()
 }
@@ -235,6 +247,36 @@ fn exact_affine_orthogonal_solid_materializer_is_publicly_replayable() {
     assert_eq!(
         arrangement.freshness_against_sources(&left, &separated_right),
         AffineOrthogonalSolidFreshness::SourceReplayMismatch
+    );
+}
+
+#[test]
+fn exact_coplanar_volumetric_cell_evidence_is_publicly_replayable() {
+    let left = tetra_from_corners([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
+    let right = tetra_from_corners([0, 0, 0], [8, 0, 0], [0, 8, 0], [0, 0, 8]);
+
+    let report = certify_coplanar_volumetric_cell_evidence(&left, &right).unwrap();
+    report.validate().unwrap();
+    report.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        report.freshness_against_sources(&left, &right),
+        CoplanarVolumetricCellEvidenceFreshness::Current
+    );
+    assert!(report.obstacle.requires_coplanar_volumetric_cells());
+    assert!(report.positive_area_coplanar_overlapping_pairs > 0);
+    assert!(report.same_side_coplanar_overlapping_pairs > 0);
+
+    let mut stale_counts = report.clone();
+    stale_counts.retained_face_pair_count += 1;
+    assert_eq!(
+        stale_counts.freshness_against_sources(&left, &right),
+        CoplanarVolumetricCellEvidenceFreshness::StaleFacePairCounts
+    );
+
+    let separated_right = tetra([10, 0, 0]);
+    assert_eq!(
+        report.freshness_against_sources(&left, &separated_right),
+        CoplanarVolumetricCellEvidenceFreshness::SourceReplayMismatch
     );
 }
 
