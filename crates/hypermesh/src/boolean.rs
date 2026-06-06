@@ -1468,6 +1468,11 @@ pub fn boolean_exact_with_boundary_policy(
                 }
                 ExactBooleanOperation::SelectedRegions(_) => unreachable!("handled above"),
             }
+            if let Some(result) =
+                boolean_arrangement_cell_complex_meshes(left, right, operation, validation, false)?
+            {
+                return Ok(result);
+            }
             if let Some(result) = boolean_open_surface_disjoint_or_arrangement_meshes_from_graph(
                 &graph, left, right, operation, validation,
             )? {
@@ -1482,18 +1487,6 @@ pub fn boolean_exact_with_boundary_policy(
                 &graph, left, right, operation, validation,
             )? {
                 return Ok(result);
-            }
-            if contained_boundary_arrangement_should_preflight(&graph, left, right, operation) {
-                if let Some(result) =
-                    boolean_arrangement_volume_graph_meshes(left, right, operation, validation)?
-                {
-                    return Ok(result);
-                }
-                if let Some(result) = boolean_arrangement_cell_complex_meshes(
-                    left, right, operation, validation, false,
-                )? {
-                    return Ok(result);
-                }
             }
             if let Some(result) = boolean_closed_boundary_only_contact_meshes_from_graph(
                 &graph, left, right, operation, validation,
@@ -1685,20 +1678,6 @@ fn arrangement_cell_complex_materializes_for_preflight(
         }
         Ok(_) | Err(_) => Ok(false),
     }
-}
-
-fn contained_boundary_arrangement_should_preflight(
-    graph: &super::graph::ExactIntersectionGraph,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-) -> bool {
-    matches!(
-        operation,
-        ExactBooleanOperation::Union
-            | ExactBooleanOperation::Intersection
-            | ExactBooleanOperation::Difference
-    ) && contained_boundary_difference_certificate_from_graph(left, right, graph).is_some()
 }
 
 fn boolean_arrangement_volume_graph_meshes(
