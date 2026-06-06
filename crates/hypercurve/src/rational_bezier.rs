@@ -2774,11 +2774,11 @@ fn rational_line_contacts_from_parameters(
         let Some(kind) = rational_line_contact_kind_from_derivative(&derivative, policy) else {
             return Classification::Uncertain(UncertaintyReason::RealSign);
         };
-        push_unique_rational_line_contact(
-            &mut contacts,
-            BezierLineContact::new(root, kind),
-            policy,
-        );
+        let contact = match BezierLineContact::new(root, kind) {
+            Ok(contact) => contact,
+            Err(_) => return Classification::Uncertain(UncertaintyReason::Ordering),
+        };
+        push_unique_rational_line_contact(&mut contacts, contact, policy);
     }
     Classification::Decided(BezierLineContactRelation::Contacts { contacts })
 }

@@ -1,15 +1,15 @@
 use hypercurve::{
     BezierAlgebraicEndpointImage2, BezierAlgebraicParameter2, BezierArrangementChain2,
-    BezierArrangementGraph2, BezierArrangementTraversal2, BezierMonotoneSpan, BezierParameter2,
-    BezierParameterInterval, BezierParameterPolynomial, BezierRetainedLineOverlapExtent2,
-    BezierRetainedLineOverlapSplit2, BezierRetainedLinearOverlapSplit2,
-    BezierRetainedLinearOverlapSplitGraph2, BezierRetainedLinearOverlapTraversal2,
-    BezierRetainedOverlap2, BezierRetainedOverlapOrientation2,
-    BezierRetainedOverlapRefinedFragment2, BezierRetainedOverlapRelation2,
-    BezierRetainedOverlapReport2, BezierRetainedResolvedLinearOverlap2, BezierSplitFragment2,
-    BezierSubcurve2, Classification, CubicBezier2, CurveError, CurvePolicy, IntersectionKind,
-    LineLineIntersection, LineSeg2, ParamRange, Point2, QuadraticBezier2, RationalQuadraticBezier2,
-    Real, UncertaintyReason,
+    BezierArrangementGraph2, BezierArrangementTraversal2, BezierGraphContact, BezierLineContact,
+    BezierLineContactKind, BezierMonotoneSpan, BezierParameter2, BezierParameterInterval,
+    BezierParameterPolynomial, BezierRetainedLineOverlapExtent2, BezierRetainedLineOverlapSplit2,
+    BezierRetainedLinearOverlapSplit2, BezierRetainedLinearOverlapSplitGraph2,
+    BezierRetainedLinearOverlapTraversal2, BezierRetainedOverlap2,
+    BezierRetainedOverlapOrientation2, BezierRetainedOverlapRefinedFragment2,
+    BezierRetainedOverlapRelation2, BezierRetainedOverlapReport2,
+    BezierRetainedResolvedLinearOverlap2, BezierSplitFragment2, BezierSubcurve2, Classification,
+    CubicBezier2, CurveError, CurvePolicy, IntersectionKind, LineLineIntersection, LineSeg2,
+    ParamRange, Point2, QuadraticBezier2, RationalQuadraticBezier2, Real, UncertaintyReason,
 };
 use proptest::prelude::*;
 
@@ -78,6 +78,15 @@ fn arrangement_graph_rejects_duplicate_source_fragment_evidence() {
 #[test]
 fn monotone_span_rejects_reversed_parameter_evidence() {
     assert_topology_error(BezierMonotoneSpan::new(r(1), r(0)));
+}
+
+#[test]
+fn contact_constructors_reject_out_of_domain_parameter_evidence() {
+    assert_topology_error(BezierGraphContact::new(
+        r(-1),
+        BezierLineContactKind::Crossing,
+    ));
+    assert_topology_error(BezierLineContact::new(r(2), BezierLineContactKind::Tangent));
 }
 
 fn exact(value: Real) -> BezierParameter2 {

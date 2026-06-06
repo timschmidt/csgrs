@@ -102,8 +102,13 @@ pub struct BezierGraphContact {
 
 impl BezierGraphContact {
     /// Constructs a represented shared-graph contact.
-    pub const fn new(parameter: Real, kind: BezierLineContactKind) -> Self {
-        Self { parameter, kind }
+    pub fn new(parameter: Real, kind: BezierLineContactKind) -> CurveResult<Self> {
+        match in_closed_unit_interval(&parameter, &CurvePolicy::certified()) {
+            Some(true) => Ok(Self { parameter, kind }),
+            Some(false) | None => Err(CurveError::Topology(
+                "Bezier graph contact parameter must be certified inside the unit interval".into(),
+            )),
+        }
     }
 
     /// Returns the exact shared graph parameter.
@@ -286,8 +291,13 @@ pub enum BezierLineContactRelation {
 
 impl BezierLineContact {
     /// Constructs a represented Bezier/supporting-line contact.
-    pub const fn new(parameter: Real, kind: BezierLineContactKind) -> Self {
-        Self { parameter, kind }
+    pub fn new(parameter: Real, kind: BezierLineContactKind) -> CurveResult<Self> {
+        match in_closed_unit_interval(&parameter, &CurvePolicy::certified()) {
+            Some(true) => Ok(Self { parameter, kind }),
+            Some(false) | None => Err(CurveError::Topology(
+                "Bezier line contact parameter must be certified inside the unit interval".into(),
+            )),
+        }
     }
 
     /// Returns the exact Bezier parameter of the contact.
@@ -2303,7 +2313,8 @@ fn graph_contact_order_over_shared_axis(
                     };
                     push_unique_graph_contact(
                         &mut contacts,
-                        BezierGraphContact::new(parameter, kind),
+                        BezierGraphContact::new(parameter, kind)
+                            .expect("same-parameter graph roots are isolated in the unit interval"),
                         policy,
                     );
                 }
@@ -2937,7 +2948,11 @@ fn quadratic_line_contact_relation(
         let Some(kind) = contact_kind_from_derivative(&derivative, policy) else {
             return Classification::Uncertain(UncertaintyReason::RealSign);
         };
-        push_unique_line_contact(&mut contacts, BezierLineContact::new(root, kind), policy);
+        let contact = match BezierLineContact::new(root, kind) {
+            Ok(contact) => contact,
+            Err(_) => return Classification::Uncertain(UncertaintyReason::Ordering),
+        };
+        push_unique_line_contact(&mut contacts, contact, policy);
     }
     Classification::Decided(BezierLineContactRelation::Contacts { contacts })
 }
@@ -2981,7 +2996,8 @@ fn cubic_line_contact_relation(
         };
         push_unique_line_contact(
             &mut contacts,
-            BezierLineContact::new(parameter, kind),
+            BezierLineContact::new(parameter, kind)
+                .expect("isolated cubic line contact roots are in the unit interval"),
             policy,
         );
     }
