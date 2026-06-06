@@ -394,6 +394,7 @@ pub fn preflight_boolean_exact(
             | ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion
             | ExactBooleanSupport::CertifiedOpenSurfaceDisjoint
             | ExactBooleanSupport::CertifiedClosedWindingSeparated
+            | ExactBooleanSupport::CertifiedClosedWindingContainment
             | ExactBooleanSupport::CertifiedMixedDimensionalRegularizedSolid
             | ExactBooleanSupport::CertifiedConvexUnion
             | ExactBooleanSupport::CertifiedConvexIntersection
@@ -485,6 +486,12 @@ pub fn preflight_boolean_exact(
             certified_closed_winding_separated_support_from_graph(&graph, left, right, operation)?
     {
         return Ok(certified_shortcut_preflight(operation, separated_support));
+    }
+    if support == ExactBooleanSupport::RequiresCertifiedWinding
+        && let Some(containment_support) =
+            certified_closed_winding_containment_support_from_graph(&graph, left, right, operation)?
+    {
+        return Ok(certified_shortcut_preflight(operation, containment_support));
     }
     if support == ExactBooleanSupport::RequiresCertifiedWinding
         && let Some(preflight) = cached_certified_arrangement_cell_complex_preflight(
@@ -808,6 +815,7 @@ const fn winding_readiness_status_already_materialized(
             | ExactWindingReadinessStatus::BoundsDisjointAlreadyMaterialized
             | ExactWindingReadinessStatus::OpenSurfaceDisjointAlreadyMaterialized
             | ExactWindingReadinessStatus::ClosedWindingSeparatedAlreadyMaterialized
+            | ExactWindingReadinessStatus::ClosedWindingContainmentAlreadyMaterialized
     )
 }
 
@@ -1298,8 +1306,29 @@ fn certified_closed_winding_separated_support_from_graph(
     right: &ExactMesh,
     operation: ExactBooleanOperation,
 ) -> Result<Option<ExactBooleanSupport>, MeshError> {
-    if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
-        || !left.facts().mesh.closed_manifold
+    if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
+        return Ok(None);
+    }
+    let Some((left_in_right, right_in_left)) =
+        closed_winding_vertex_relations_from_empty_graph(graph, left, right)?
+    else {
+        return Ok(None);
+    };
+    if left_in_right == ClosedMeshWindingMeshRelation::Outside
+        && right_in_left == ClosedMeshWindingMeshRelation::Outside
+    {
+        Ok(Some(ExactBooleanSupport::CertifiedClosedWindingSeparated))
+    } else {
+        Ok(None)
+    }
+}
+
+fn closed_winding_vertex_relations_from_empty_graph(
+    graph: &super::graph::ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Result<Option<(ClosedMeshWindingMeshRelation, ClosedMeshWindingMeshRelation)>, MeshError> {
+    if !left.facts().mesh.closed_manifold
         || !right.facts().mesh.closed_manifold
         || graph.has_unknowns()
         || !graph.face_pairs.is_empty()
@@ -1321,14 +1350,117 @@ fn certified_closed_winding_separated_support_from_graph(
     right_in_left
         .validate_against_sources(right, left)
         .map_err(winding_error)?;
+    Ok(Some((left_in_right.relation, right_in_left.relation)))
+}
 
-    if left_in_right.relation == ClosedMeshWindingMeshRelation::Outside
-        && right_in_left.relation == ClosedMeshWindingMeshRelation::Outside
-    {
-        Ok(Some(ExactBooleanSupport::CertifiedClosedWindingSeparated))
-    } else {
-        Ok(None)
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum ClosedWindingContainmentRelation {
+    LeftInsideRight,
+    RightInsideLeft,
+}
+
+fn certified_closed_winding_containment_relation_from_graph(
+    graph: &super::graph::ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Result<Option<ClosedWindingContainmentRelation>, MeshError> {
+    let Some((left_in_right, right_in_left)) =
+        closed_winding_vertex_relations_from_empty_graph(graph, left, right)?
+    else {
+        return Ok(None);
+    };
+    match (left_in_right, right_in_left) {
+        (ClosedMeshWindingMeshRelation::StrictlyInside, _) => {
+            Ok(Some(ClosedWindingContainmentRelation::LeftInsideRight))
+        }
+        (_, ClosedMeshWindingMeshRelation::StrictlyInside) => {
+            Ok(Some(ClosedWindingContainmentRelation::RightInsideLeft))
+        }
+        _ => Ok(None),
     }
+}
+
+fn certified_closed_winding_containment_support_from_graph(
+    graph: &super::graph::ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+) -> Result<Option<ExactBooleanSupport>, MeshError> {
+    if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
+        return Ok(None);
+    }
+    Ok(
+        certified_closed_winding_containment_relation_from_graph(graph, left, right)?
+            .map(|_| ExactBooleanSupport::CertifiedClosedWindingContainment),
+    )
+}
+
+fn boolean_closed_winding_containment_meshes(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    let graph = build_intersection_graph(left, right)?;
+    validate_graph_source_handoff(&graph, left, right)?;
+    let Some(containment) =
+        certified_closed_winding_containment_relation_from_graph(&graph, left, right)?
+    else {
+        return Ok(None);
+    };
+
+    let mesh = match (operation, containment) {
+        (ExactBooleanOperation::Union, ClosedWindingContainmentRelation::LeftInsideRight) => {
+            copy_mesh(
+                right,
+                "exact closed-winding containment union keeps right",
+                validation,
+            )?
+        }
+        (ExactBooleanOperation::Union, ClosedWindingContainmentRelation::RightInsideLeft) => {
+            copy_mesh(
+                left,
+                "exact closed-winding containment union keeps left",
+                validation,
+            )?
+        }
+        (
+            ExactBooleanOperation::Intersection,
+            ClosedWindingContainmentRelation::LeftInsideRight,
+        ) => copy_mesh(
+            left,
+            "exact closed-winding containment intersection keeps left",
+            validation,
+        )?,
+        (
+            ExactBooleanOperation::Intersection,
+            ClosedWindingContainmentRelation::RightInsideLeft,
+        ) => copy_mesh(
+            right,
+            "exact closed-winding containment intersection keeps right",
+            validation,
+        )?,
+        (ExactBooleanOperation::Difference, ClosedWindingContainmentRelation::LeftInsideRight) => {
+            empty_mesh(
+                "empty exact closed-winding containment difference",
+                validation,
+            )?
+        }
+        (ExactBooleanOperation::Difference, ClosedWindingContainmentRelation::RightInsideLeft) => {
+            concatenate_meshes_with_options(
+                left,
+                right,
+                true,
+                "exact closed-winding containment difference with cavity",
+                validation,
+            )?
+        }
+        (ExactBooleanOperation::SelectedRegions(_), _) => unreachable!("handled by caller"),
+    };
+    Ok(Some(certified_shortcut_result(
+        mesh,
+        ExactBooleanShortcutKind::ClosedWindingContainment,
+    )))
 }
 
 fn boolean_closed_winding_separated_meshes(
@@ -1475,6 +1607,11 @@ pub fn boolean_exact_with_boundary_policy(
     }
     if let Some(result) =
         boolean_closed_winding_separated_meshes(left, right, operation, validation)?
+    {
+        return Ok(result);
+    }
+    if let Some(result) =
+        boolean_closed_winding_containment_meshes(left, right, operation, validation)?
     {
         return Ok(result);
     }
@@ -4871,6 +5008,22 @@ fn winding_readiness_report_from_graph(
             None,
         ));
     }
+    if certified_closed_winding_containment_support_from_graph(graph, left, right, operation)?
+        .is_some()
+    {
+        return Ok(winding_readiness_report(
+            operation,
+            ExactWindingReadinessStatus::ClosedWindingContainmentAlreadyMaterialized,
+            graph_had_unknowns,
+            0,
+            graph.event_count(),
+            0,
+            Vec::new(),
+            counts.into_blocker(ExactBooleanBlockerKind::NeedsWinding),
+            None,
+            None,
+        ));
+    }
     if graph.face_pairs.is_empty() {
         if !meshes_are_certified_bounds_disjoint(left, right)
             && certified_arrangement_cell_complex_preflight_if_materialized(
@@ -6630,6 +6783,7 @@ mod tests {
             ExactWindingReadinessStatus::BoundsDisjointAlreadyMaterialized,
             ExactWindingReadinessStatus::OpenSurfaceDisjointAlreadyMaterialized,
             ExactWindingReadinessStatus::ClosedWindingSeparatedAlreadyMaterialized,
+            ExactWindingReadinessStatus::ClosedWindingContainmentAlreadyMaterialized,
         ] {
             assert!(winding_readiness_status_already_materialized(&status));
         }
@@ -6679,6 +6833,7 @@ mod tests {
             ExactWindingReadinessStatus::BoundsDisjointAlreadyMaterialized,
             ExactWindingReadinessStatus::OpenSurfaceDisjointAlreadyMaterialized,
             ExactWindingReadinessStatus::ClosedWindingSeparatedAlreadyMaterialized,
+            ExactWindingReadinessStatus::ClosedWindingContainmentAlreadyMaterialized,
         ] {
             assert!(!winding_readiness_status_materializes_arrangement_cell_complex(&status));
         }
@@ -6779,6 +6934,102 @@ mod tests {
                 );
                 result.validate().unwrap();
                 result.validate_against_sources(left, right).unwrap();
+            }
+        }
+    }
+
+    #[test]
+    fn graph_empty_closed_winding_containment_materializes_named_booleans() {
+        let outer = tetrahedron_i64([0, 0, 0], [10, 0, 0], [0, 10, 0], [0, 0, 10]);
+        let disjoint_shell = tetrahedron_i64([20, 0, 0], [21, 0, 0], [20, 1, 0], [20, 0, 1]);
+        let container = concatenate_meshes(&outer, &disjoint_shell, ValidationPolicy::CLOSED)
+            .expect("disconnected closed container fixture should validate");
+        let contained = tetrahedron_i64([1, 1, 1], [2, 1, 1], [1, 2, 1], [1, 1, 2]);
+
+        assert!(container.facts().mesh.closed_manifold);
+        assert!(contained.facts().mesh.closed_manifold);
+        assert!(!meshes_are_certified_bounds_disjoint(
+            &container, &contained
+        ));
+        let graph = build_intersection_graph(&container, &contained).unwrap();
+        validate_graph_source_handoff(&graph, &container, &contained).unwrap();
+        assert!(!graph.has_unknowns());
+        assert!(graph.face_pairs.is_empty());
+
+        for (left, right, right_inside_left) in [
+            (&container, &contained, true),
+            (&contained, &container, false),
+        ] {
+            for operation in [
+                ExactBooleanOperation::Union,
+                ExactBooleanOperation::Intersection,
+                ExactBooleanOperation::Difference,
+            ] {
+                let preflight = preflight_boolean_exact(left, right, operation).unwrap();
+                assert_eq!(
+                    preflight.support,
+                    ExactBooleanSupport::CertifiedClosedWindingContainment,
+                    "{right_inside_left:?} {operation:?}: {preflight:?}"
+                );
+                assert!(preflight.blocker.is_none(), "{operation:?}: {preflight:?}");
+                preflight.validate().unwrap();
+                preflight.validate_against_sources(left, right).unwrap();
+
+                let readiness = certify_winding_readiness_report(left, right, operation).unwrap();
+                assert_eq!(
+                    readiness.status,
+                    ExactWindingReadinessStatus::ClosedWindingContainmentAlreadyMaterialized,
+                    "{right_inside_left:?} {operation:?}: {readiness:?}"
+                );
+                assert_eq!(
+                    readiness.blocker.kind,
+                    ExactBooleanBlockerKind::NeedsWinding,
+                    "{operation:?}: {readiness:?}"
+                );
+                assert_eq!(readiness.retained_face_pairs, 0, "{operation:?}");
+                assert_eq!(readiness.retained_events, 0, "{operation:?}");
+                assert!(winding_readiness_status_already_materialized(
+                    &readiness.status
+                ));
+                assert!(
+                    !winding_readiness_status_materializes_arrangement_cell_complex(
+                        &readiness.status
+                    )
+                );
+                readiness.validate().unwrap();
+                readiness.validate_against_sources(left, right).unwrap();
+
+                let result = boolean_exact(left, right, operation, ValidationPolicy::CLOSED)
+                    .expect("strict closed containment should materialize");
+                assert_eq!(
+                    result.kind,
+                    ExactBooleanResultKind::CertifiedShortcut {
+                        shortcut: ExactBooleanShortcutKind::ClosedWindingContainment
+                    },
+                    "{right_inside_left:?} {operation:?}: {result:?}"
+                );
+                result.validate().unwrap();
+                result.validate_against_sources(left, right).unwrap();
+
+                match (operation, right_inside_left) {
+                    (ExactBooleanOperation::Union, _) => {
+                        assert!(exact_meshes_have_same_shape(&result.mesh, &container));
+                    }
+                    (ExactBooleanOperation::Intersection, _) => {
+                        assert!(exact_meshes_have_same_shape(&result.mesh, &contained));
+                    }
+                    (ExactBooleanOperation::Difference, false) => {
+                        assert!(result.mesh.triangles().is_empty());
+                    }
+                    (ExactBooleanOperation::Difference, true) => {
+                        assert!(result.mesh.facts().mesh.closed_manifold);
+                        assert_eq!(
+                            result.mesh.triangles().len(),
+                            container.triangles().len() + contained.triangles().len()
+                        );
+                    }
+                    (ExactBooleanOperation::SelectedRegions(_), _) => unreachable!(),
+                }
             }
         }
     }

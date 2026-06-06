@@ -604,6 +604,9 @@ pub enum ExactBooleanShortcutKind {
     /// Certified closed-solid separation from an empty intersection graph and
     /// exact vertex winding reports.
     ClosedWindingSeparated,
+    /// Certified closed-solid containment from an empty intersection graph and
+    /// exact vertex winding reports.
+    ClosedWindingContainment,
     /// Certified regularized closed-solid result for a mixed closed solid and
     /// lower-dimensional open surface.
     MixedDimensionalRegularizedSolid,
@@ -1262,6 +1265,10 @@ pub enum ExactBooleanSupport {
     /// replayable closed-mesh winding reports proving both closed solids are
     /// strictly outside the other.
     CertifiedClosedWindingSeparated,
+    /// A named operation was answered by an empty exact intersection graph and
+    /// replayable closed-mesh winding reports proving one closed solid is
+    /// strictly inside the other.
+    CertifiedClosedWindingContainment,
     /// A named operation was answered by closed-output regularization for one
     /// closed solid and one lower-dimensional open surface.
     CertifiedMixedDimensionalRegularizedSolid,
@@ -1407,6 +1414,7 @@ impl ExactBooleanPreflight {
             | ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference
             | ExactBooleanSupport::CertifiedOpenSurfaceDisjoint
             | ExactBooleanSupport::CertifiedClosedWindingSeparated
+            | ExactBooleanSupport::CertifiedClosedWindingContainment
             | ExactBooleanSupport::CertifiedMixedDimensionalRegularizedSolid
             | ExactBooleanSupport::CertifiedConvexContainment
             | ExactBooleanSupport::CertifiedConvexUnion
@@ -2528,6 +2536,9 @@ pub enum ExactWindingReadinessStatus {
     /// The named Boolean was already answered by an empty exact intersection
     /// graph and replayable closed-mesh winding reports proving separation.
     ClosedWindingSeparatedAlreadyMaterialized,
+    /// The named Boolean was already answered by an empty exact intersection
+    /// graph and replayable closed-mesh winding reports proving containment.
+    ClosedWindingContainmentAlreadyMaterialized,
     /// The graph contains no retained face pairs requiring winding.
     NoNontrivialOverlap,
     /// Split regions and opposite-plane classifications were checked and are
@@ -2906,7 +2917,8 @@ impl ExactWindingReadinessReport {
             ExactWindingReadinessStatus::EmptyOperandAlreadyMaterialized
             | ExactWindingReadinessStatus::BoundsDisjointAlreadyMaterialized
             | ExactWindingReadinessStatus::OpenSurfaceDisjointAlreadyMaterialized
-            | ExactWindingReadinessStatus::ClosedWindingSeparatedAlreadyMaterialized => {
+            | ExactWindingReadinessStatus::ClosedWindingSeparatedAlreadyMaterialized
+            | ExactWindingReadinessStatus::ClosedWindingContainmentAlreadyMaterialized => {
                 if self.arrangement_readiness.is_some()
                     || self.coplanar_volumetric_evidence.is_some()
                     || matches!(self.operation, ExactBooleanOperation::SelectedRegions(_))
