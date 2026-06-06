@@ -13,7 +13,7 @@ use super::arrangement3d::{
 use super::boolean::ExactBooleanOperation;
 use super::cell_complex::{
     ExactCellComplexFace, ExactCellRegionLabel, ExactOppositeRegionLabel, ExactSelectedCellComplex,
-    ExactSelectedFaceOrientation,
+    ExactSelectedFaceOrientation, select_arrangement_for_replay,
 };
 use super::loop_triangulation::{choose_polygon_projection, triangulate_exact_loop_group};
 use super::mesh::{ExactMesh, Triangle};
@@ -69,10 +69,9 @@ impl ExactSimplifiedCellComplex {
         right: &ExactMesh,
         policy: ExactRegularizationPolicy,
     ) -> Result<(), ExactArrangementBlocker> {
-        let replay = ExactArrangement::from_meshes_with_policy(left, right, policy)
-            .map_err(|_| ExactArrangementBlocker::UnresolvedIntersection)?
-            .label_regions(policy)?
-            .select_with_policy(self.operation, policy)?
+        let arrangement = ExactArrangement::from_meshes_with_policy(left, right, policy)
+            .map_err(|_| ExactArrangementBlocker::UnresolvedIntersection)?;
+        let replay = select_arrangement_for_replay(arrangement, self.operation, policy)?
             .simplify_exact_with_policy(policy)?;
         if replay == *self {
             Ok(())

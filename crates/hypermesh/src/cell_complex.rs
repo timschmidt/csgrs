@@ -13,6 +13,7 @@ use super::boolean::ExactBooleanOperation;
 use super::graph::MeshSide;
 use super::regularization::{
     ExactArrangementBlocker, ExactLowerDimensionalPolicy, ExactRegularizationPolicy,
+    ExactUnresolvedPolicy,
 };
 use super::simplify::{ExactSimplifiedCellComplex, simplify_selected_cell_complex};
 use super::solid::ConvexSolidPointRelation;
@@ -300,10 +301,9 @@ impl ExactSelectedCellComplex {
         right: &super::mesh::ExactMesh,
         policy: ExactRegularizationPolicy,
     ) -> Result<(), ExactArrangementBlocker> {
-        let replay = ExactArrangement::from_meshes_with_policy(left, right, policy)
-            .map_err(|_| ExactArrangementBlocker::UnresolvedIntersection)?
-            .label_regions(policy)?
-            .select_with_policy(self.operation, policy)?;
+        let arrangement = ExactArrangement::from_meshes_with_policy(left, right, policy)
+            .map_err(|_| ExactArrangementBlocker::UnresolvedIntersection)?;
+        let replay = select_arrangement_for_replay(arrangement, self.operation, policy)?;
         if replay == *self {
             Ok(())
         } else {
@@ -323,6 +323,47 @@ impl ExactSelectedCellComplex {
     ) -> Result<ExactSimplifiedCellComplex, ExactArrangementBlocker> {
         simplify_selected_cell_complex(self, policy)
     }
+}
+
+pub(crate) fn select_arrangement_for_replay(
+    arrangement: ExactArrangement3d,
+    operation: ExactBooleanOperation,
+    policy: ExactRegularizationPolicy,
+) -> Result<ExactSelectedCellComplex, ExactArrangementBlocker> {
+    let volume_resolved =
+        arrangement_region_classification_blockers_are_volume_resolved(&arrangement);
+    let labeling_policy = if volume_resolved {
+        ExactRegularizationPolicy {
+            unresolved: ExactUnresolvedPolicy::RetainArtifacts,
+            ..policy
+        }
+    } else {
+        policy
+    };
+    let labeled = arrangement.label_regions(labeling_policy)?;
+    if volume_resolved {
+        labeled.select_volume_resolved_with_policy(operation, policy)
+    } else {
+        labeled.select_with_policy(operation, policy)
+    }
+}
+
+fn arrangement_region_classification_blockers_are_volume_resolved(
+    arrangement: &ExactArrangement3d,
+) -> bool {
+    !arrangement.blockers.is_empty()
+        && arrangement
+            .blockers
+            .iter()
+            .all(|blocker| *blocker == ExactArrangementBlocker::UnresolvedRegionClassification)
+        && arrangement
+            .volume_regions
+            .as_ref()
+            .is_some_and(|regions| !regions.is_empty())
+        && arrangement
+            .volume_adjacencies
+            .as_ref()
+            .is_some_and(|adjacencies| !adjacencies.is_empty())
 }
 
 fn label_face_cell(cell: ArrangementFaceCell) -> ExactCellComplexFace {
@@ -564,8 +605,9 @@ mod tests {
     use super::*;
     use crate::arrangement3d::{
         ArrangementFaceCarrier, ArrangementFaceCell, ArrangementFaceCellNode,
-        ArrangementVolumeFaceSide,
+        ArrangementVolumeFaceSide, ArrangementVolumeRegion,
     };
+    use crate::mesh::ExactMesh;
     use crate::region::ExactRegionSelection;
     use hyperlimit::Point3;
     use hyperreal::Real;
@@ -603,6 +645,59 @@ mod tests {
             opposite: ExactOppositeRegionLabel::Boundary,
             ..labeled_face(side)
         }
+    }
+
+    fn tetrahedron_i64(a: [i64; 3], b: [i64; 3], c: [i64; 3], d: [i64; 3]) -> ExactMesh {
+        ExactMesh::from_i64_triangles(
+            &[
+                a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2], d[0], d[1], d[2],
+            ],
+            &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
+        )
+        .unwrap()
+    }
+
+    fn replay_arrangement_with_blocker(blocker: ExactArrangementBlocker) -> ExactArrangement {
+        let left = tetrahedron_i64([0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]);
+        let right = tetrahedron_i64([3, 0, 0], [4, 0, 0], [3, 1, 0], [3, 0, 1]);
+        let mut arrangement = ExactArrangement::from_meshes(&left, &right).unwrap();
+        arrangement.face_cells = vec![labeled_face(MeshSide::Left).cell];
+        arrangement.volume_regions = Some(vec![
+            ArrangementVolumeRegion {
+                index: 0,
+                exterior: true,
+                boundary_shells: vec![0],
+                source_sides: Vec::new(),
+            },
+            ArrangementVolumeRegion {
+                index: 1,
+                exterior: false,
+                boundary_shells: vec![0],
+                source_sides: vec![MeshSide::Left],
+            },
+        ]);
+        arrangement.volume_adjacencies = Some(vec![ArrangementVolumeAdjacency {
+            shell_region: 0,
+            exterior_volume: 0,
+            interior_volume: 1,
+            separating_face_cells: vec![0],
+            oriented_face_sides: vec![ArrangementVolumeFaceSide {
+                face_cell: 0,
+                source: MeshSide::Left,
+                source_face: 0,
+                boundary: [0, 1, 2]
+                    .into_iter()
+                    .map(|vertex| ArrangementFaceCellNode::SourceVertex {
+                        side: MeshSide::Left,
+                        vertex,
+                    })
+                    .collect(),
+                exterior_volume: 0,
+                interior_volume: 1,
+            }],
+        }]);
+        arrangement.blockers = vec![blocker];
+        arrangement
     }
 
     #[test]
@@ -829,6 +924,45 @@ mod tests {
 
         assert_eq!(
             labeled.select_volume_resolved_with_policy(
+                ExactBooleanOperation::Union,
+                ExactRegularizationPolicy::REGULARIZED_SOLID,
+            ),
+            Err(ExactArrangementBlocker::UnresolvedIntersection)
+        );
+    }
+
+    #[test]
+    fn replay_selection_uses_volume_resolved_path_for_region_classification_blockers() {
+        let arrangement = replay_arrangement_with_blocker(
+            ExactArrangementBlocker::UnresolvedRegionClassification,
+        );
+
+        let selected = select_arrangement_for_replay(
+            arrangement,
+            ExactBooleanOperation::Union,
+            ExactRegularizationPolicy::REGULARIZED_SOLID,
+        )
+        .unwrap();
+
+        assert_eq!(selected.selected_faces, vec![0]);
+        assert_eq!(selected.selected_volume_regions, vec![1]);
+        assert!(selected.blockers.is_empty());
+        assert!(
+            selected
+                .selected_face_orientations
+                .iter()
+                .all(|orientation| orientation.from_volume_adjacency)
+        );
+    }
+
+    #[test]
+    fn replay_selection_rejects_non_region_classification_blockers() {
+        let arrangement =
+            replay_arrangement_with_blocker(ExactArrangementBlocker::UnresolvedIntersection);
+
+        assert_eq!(
+            select_arrangement_for_replay(
+                arrangement,
                 ExactBooleanOperation::Union,
                 ExactRegularizationPolicy::REGULARIZED_SOLID,
             ),
