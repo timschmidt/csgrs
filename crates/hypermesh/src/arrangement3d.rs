@@ -45,8 +45,9 @@ use hyperlimit::SourceProvenance;
 use std::collections::{BTreeMap, BTreeSet};
 
 use hyperlimit::{
-    Point2, Point3, TriangleLocation, classify_point_triangle, compare_point2_lexicographic,
-    compare_reals, point2_equal, point3_equal, project_point3,
+    Point2, Point3, SegmentIntersection, TriangleLocation, classify_point_triangle,
+    classify_segment_intersection, compare_point2_lexicographic, compare_reals, point_on_segment,
+    point2_equal, point3_equal, project_point3, proper_segment_intersection_point,
 };
 use hyperreal::Real;
 
@@ -1410,20 +1411,71 @@ fn non_coplanar_edge_contact_artifact(
     let a = project_point3(plane_mesh.vertices().get(triangle[0])?, projection);
     let b = project_point3(plane_mesh.vertices().get(triangle[1])?, projection);
     let c = project_point3(plane_mesh.vertices().get(triangle[2])?, projection);
-    let start_location =
-        classify_point_triangle(&a, &b, &c, &project_point3(start, projection)).value()?;
-    let end_location =
-        classify_point_triangle(&a, &b, &c, &project_point3(end, projection)).value()?;
-    if !constructive_triangle_location(start_location)
-        || !constructive_triangle_location(end_location)
-    {
-        return None;
-    }
+    let endpoints = coplanar_segment_triangle_interval(start, end, [&a, &b, &c], projection)?;
     Some(ArrangementLowerDimensionalArtifact::EdgeContact {
         left_face,
         right_face,
-        endpoints: [start.clone(), end.clone()],
+        endpoints,
     })
+}
+
+fn coplanar_segment_triangle_interval(
+    start: &Point3,
+    end: &Point3,
+    triangle: [&Point2; 3],
+    projection: CoplanarProjection,
+) -> Option<[Point3; 2]> {
+    let segment_start = project_point3(start, projection);
+    let segment_end = project_point3(end, projection);
+    let mut points = Vec::<Point3>::new();
+    for (point, projected) in [(start, &segment_start), (end, &segment_end)] {
+        let location =
+            classify_point_triangle(triangle[0], triangle[1], triangle[2], projected).value()?;
+        if constructive_triangle_location(location) {
+            push_unique_contact_point(&mut points, point.clone());
+        }
+    }
+
+    for index in 0..3 {
+        let a = triangle[index];
+        let b = triangle[(index + 1) % 3];
+        match classify_segment_intersection(&segment_start, &segment_end, a, b).value()? {
+            SegmentIntersection::Disjoint => {}
+            SegmentIntersection::Proper => {
+                let point = proper_segment_intersection_point(&segment_start, &segment_end, a, b)
+                    .value()??;
+                push_unique_contact_point(
+                    &mut points,
+                    lift_projected_point_to_segment(start, end, &point, projection)?,
+                );
+            }
+            SegmentIntersection::EndpointTouch
+            | SegmentIntersection::CollinearOverlap
+            | SegmentIntersection::Identical => {
+                for point in [a, b] {
+                    if point_on_segment(&segment_start, &segment_end, point).value()? {
+                        push_unique_contact_point(
+                            &mut points,
+                            lift_projected_point_to_segment(start, end, point, projection)?,
+                        );
+                    }
+                }
+                for (point, projected) in [(start, &segment_start), (end, &segment_end)] {
+                    if point_on_segment(a, b, projected).value()? {
+                        push_unique_contact_point(&mut points, point.clone());
+                    }
+                }
+            }
+        }
+    }
+
+    if points.len() < 2 {
+        return None;
+    }
+    sort_points_along_segment(&mut points, start, end)?;
+    let first = points.first()?.clone();
+    let last = points.last()?.clone();
+    (point3_equal(&first, &last).value()? == false).then_some([first, last])
 }
 
 fn constructive_triangle_location(location: TriangleLocation) -> bool {
@@ -1431,6 +1483,80 @@ fn constructive_triangle_location(location: TriangleLocation) -> bool {
         location,
         TriangleLocation::Inside | TriangleLocation::OnEdge | TriangleLocation::OnVertex
     )
+}
+
+fn lift_projected_point_to_segment(
+    start: &Point3,
+    end: &Point3,
+    point: &Point2,
+    projection: CoplanarProjection,
+) -> Option<Point3> {
+    let projected_start = project_point3(start, projection);
+    let projected_end = project_point3(end, projection);
+    let parameter = if compare_reals(&projected_start.x, &projected_end.x).value()?
+        != Ordering::Equal
+    {
+        ((point.x.clone() - &projected_start.x) / &(projected_end.x - &projected_start.x)).ok()?
+    } else if compare_reals(&projected_start.y, &projected_end.y).value()? != Ordering::Equal {
+        ((point.y.clone() - &projected_start.y) / &(projected_end.y - &projected_start.y)).ok()?
+    } else {
+        return None;
+    };
+    Some(Point3::new(
+        start.x.clone() + &((end.x.clone() - &start.x) * &parameter),
+        start.y.clone() + &((end.y.clone() - &start.y) * &parameter),
+        start.z.clone() + &((end.z.clone() - &start.z) * &parameter),
+    ))
+}
+
+fn push_unique_contact_point(points: &mut Vec<Point3>, point: Point3) {
+    if points
+        .iter()
+        .all(|existing| point3_equal(existing, &point).value() != Some(true))
+    {
+        points.push(point);
+    }
+}
+
+fn sort_points_along_segment(points: &mut [Point3], start: &Point3, end: &Point3) -> Option<()> {
+    let axis = segment_order_axis(start, end)?;
+    points.sort_by(|left, right| {
+        compare_point3_on_axis(left, right, axis, start, end).unwrap_or(Ordering::Equal)
+    });
+    Some(())
+}
+
+fn segment_order_axis(start: &Point3, end: &Point3) -> Option<usize> {
+    if compare_reals(&start.x, &end.x).value()? != Ordering::Equal {
+        Some(0)
+    } else if compare_reals(&start.y, &end.y).value()? != Ordering::Equal {
+        Some(1)
+    } else if compare_reals(&start.z, &end.z).value()? != Ordering::Equal {
+        Some(2)
+    } else {
+        None
+    }
+}
+
+fn compare_point3_on_axis(
+    left: &Point3,
+    right: &Point3,
+    axis: usize,
+    start: &Point3,
+    end: &Point3,
+) -> Option<Ordering> {
+    let (left_value, right_value, start_value, end_value) = match axis {
+        0 => (&left.x, &right.x, &start.x, &end.x),
+        1 => (&left.y, &right.y, &start.y, &end.y),
+        2 => (&left.z, &right.z, &start.z, &end.z),
+        _ => return None,
+    };
+    let order = compare_reals(left_value, right_value).value()?;
+    if compare_reals(start_value, end_value).value()? == Ordering::Less {
+        Some(order)
+    } else {
+        Some(order.reverse())
+    }
 }
 
 fn push_lower_dimensional_edge_artifacts(
@@ -4410,6 +4536,44 @@ mod tests {
                 .any(|artifact| matches!(
                     artifact,
                     ArrangementLowerDimensionalArtifact::EdgeContact { .. }
+                )),
+            "{:?}",
+            retained.lower_dimensional_artifacts
+        );
+        assert!(
+            retained
+                .validate_against_sources_with_policy(
+                    &left,
+                    &right,
+                    ExactRegularizationPolicy::RETAIN_ARTIFACTS
+                )
+                .is_ok()
+        );
+    }
+
+    #[test]
+    fn lower_dimensional_policy_retains_noncoplanar_partial_edge_touch() {
+        let left = open_triangle_i64([-1, 0, 0], [3, 0, 0], [-1, 2, 0]);
+        let right = open_triangle_i64([0, 0, 0], [2, 0, 0], [0, 0, 2]);
+
+        let retained = ExactArrangement::from_meshes_with_policy(
+            &left,
+            &right,
+            ExactRegularizationPolicy::RETAIN_ARTIFACTS,
+        )
+        .unwrap();
+
+        let expected_start = p3(0, 0, 0);
+        let expected_end = p3(2, 0, 0);
+        assert!(
+            retained
+                .lower_dimensional_artifacts
+                .iter()
+                .any(|artifact| matches!(
+                    artifact,
+                    ArrangementLowerDimensionalArtifact::EdgeContact { endpoints, .. }
+                        if point3_equal(&endpoints[0], &expected_start).value() == Some(true)
+                            && point3_equal(&endpoints[1], &expected_end).value() == Some(true)
                 )),
             "{:?}",
             retained.lower_dimensional_artifacts
