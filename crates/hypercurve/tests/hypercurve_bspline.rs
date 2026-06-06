@@ -594,6 +594,7 @@ fn retained_span_weight_report_rejects_inconsistent_counts() {
 fn retained_span_fact_constructors_reject_forged_evidence() {
     let bounds = Aabb2::from_point(p(0, 0));
 
+    assert_topology_error(RetainedBSplineSpanFactReport2::new(Vec::new()));
     assert_topology_error(RetainedBSplineSpanFacts2::new(
         0,
         r(0),
@@ -621,6 +622,7 @@ fn retained_span_fact_constructors_reject_forged_evidence() {
 
 #[test]
 fn retained_rational_span_topology_reports_reject_forged_native_evidence() {
+    assert_topology_error(RationalBSplineNativeTopologyReport2::new(Vec::new()));
     assert_topology_error(RationalBezierSpanTopologyReport2::new(
         0,
         2,

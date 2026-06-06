@@ -1150,6 +1150,11 @@ fn validate_span_fact_evidence(
 }
 
 fn validate_span_fact_report_indices(span_facts: &[RetainedBSplineSpanFacts2]) -> CurveResult<()> {
+    if span_facts.is_empty() {
+        return Err(CurveError::Topology(
+            "retained span fact report must carry at least one span".into(),
+        ));
+    }
     for (expected_index, fact) in span_facts.iter().enumerate() {
         if fact.span_index() != expected_index {
             return Err(CurveError::Topology(
@@ -1163,6 +1168,11 @@ fn validate_span_fact_report_indices(span_facts: &[RetainedBSplineSpanFacts2]) -
 fn validate_span_topology_report_indices(
     span_reports: &[RationalBezierSpanTopologyReport2],
 ) -> CurveResult<()> {
+    if span_reports.is_empty() {
+        return Err(CurveError::Topology(
+            "retained span topology report must carry at least one span".into(),
+        ));
+    }
     for (expected_index, report) in span_reports.iter().enumerate() {
         if report.span_index() != expected_index {
             return Err(CurveError::Topology(
