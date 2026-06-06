@@ -1833,20 +1833,6 @@ fn run_arrangement_cell_complex_attempt(
                 attempt.output_triangles = result.mesh.triangles().len();
                 return Ok(ArrangementCellComplexOutcome::Materialized(result, attempt));
             }
-            if let Some(result) = boolean_recovered_single_coplanar_boundary_union(
-                &arrangement.graph,
-                left,
-                right,
-                operation,
-                validation,
-            )? {
-                attempt.stage = ExactArrangementBooleanStage::Materialized;
-                attempt.materialized_shortcut =
-                    Some(ExactBooleanShortcutKind::ArrangementCellComplex);
-                attempt.output_vertices = result.mesh.vertices().len();
-                attempt.output_triangles = result.mesh.triangles().len();
-                return Ok(ArrangementCellComplexOutcome::Materialized(result, attempt));
-            }
         }
         if let Some(outcome) = arrangement_cell_complex_recovery_outcome_if_available(
             regularize_unregularized_sheet_complex,
@@ -2314,7 +2300,7 @@ fn boolean_arrangement_regularized_sheet_or_boundary_from_graph(
     )? {
         return Ok(Some(result));
     }
-    boolean_recovered_single_coplanar_boundary_union(graph, left, right, operation, validation)
+    Ok(None)
 }
 
 fn boolean_arrangement_regularized_no_volume_overlap_from_graph(
@@ -2649,61 +2635,6 @@ fn boolean_arrangement_volumetric_split_cell_recovery_from_graph(
         return Ok(None);
     }
     Ok(Some(result))
-}
-
-fn boolean_recovered_single_coplanar_boundary_union(
-    graph: &super::graph::ExactIntersectionGraph,
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
-    if operation != ExactBooleanOperation::Union || !matches!(validation, ValidationPolicy::CLOSED)
-    {
-        return Ok(None);
-    }
-
-    let Some(boundary_result) = boolean_arrangement_volumetric_split_cell_recovery_from_graph(
-        graph,
-        left,
-        right,
-        operation,
-        ValidationPolicy::ALLOW_BOUNDARY,
-    )?
-    else {
-        return Ok(None);
-    };
-    if !matches!(
-        boundary_result.kind,
-        ExactBooleanResultKind::ArrangementCellComplexMaterialized {
-            operation: ExactBooleanOperation::Union
-        }
-    ) {
-        return Ok(None);
-    }
-    let Some(mesh) = close_single_exact_coplanar_boundary_loop(
-        &boundary_result.mesh,
-        "exact arrangement delegated winding single-loop closed union",
-        validation,
-    ) else {
-        return Ok(None);
-    };
-    Ok(Some(certified_shortcut_result(
-        mesh,
-        ExactBooleanShortcutKind::ArrangementCellComplex,
-    )))
-}
-
-fn close_single_exact_coplanar_boundary_loop(
-    mesh: &ExactMesh,
-    label: &'static str,
-    validation: ValidationPolicy,
-) -> Option<ExactMesh> {
-    let loops = directed_boundary_loops(mesh)?;
-    if loops.len() != 1 {
-        return None;
-    }
-    close_exact_coplanar_boundary_loops_from_loops(mesh, loops, label, validation)
 }
 
 fn close_exact_coplanar_boundary_loops(
