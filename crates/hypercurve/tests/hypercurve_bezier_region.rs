@@ -325,6 +325,7 @@ fn retained_line_image_role_report_assigns_nested_material_and_hole() {
     let outer = retained_line_loop(&[p(0, 0), p(6, 0), p(6, 6), p(0, 6)]);
     let same_orientation_inner = retained_line_loop(&[p(2, 2), p(4, 2), p(4, 4), p(2, 4)]);
     let retained = BezierRetainedRegion2::new(vec![outer, same_orientation_inner]);
+    assert!(retained.boundary_loops()[0].arrangement_sources().is_none());
 
     let report = decided(retained.line_image_role_report(&policy()).unwrap());
 
@@ -649,6 +650,16 @@ fn retained_curve_envelope_includes_native_bezier_interior_extrema() {
     let retained = decided(BezierRetainedRegion2::from_retained_arrangement_traversal(
         &graph, &traversal,
     ));
+    let sources = retained.boundary_loops()[0]
+        .arrangement_sources()
+        .expect("graph-built retained loop keeps source provenance");
+    assert_eq!(sources.len(), 2);
+    assert_eq!(sources[0].arrangement_fragment_index(), 0);
+    assert_eq!(sources[0].source_curve_index(), 0);
+    assert_eq!(sources[0].source_fragment_index(), 0);
+    assert_eq!(sources[1].arrangement_fragment_index(), 1);
+    assert_eq!(sources[1].source_curve_index(), 1);
+    assert_eq!(sources[1].source_fragment_index(), 0);
 
     let endpoint_envelope = decided(BezierRetainedEndpointEnvelope2::from_region(
         &retained,
@@ -784,6 +795,12 @@ fn retained_region_materializes_closed_algebraic_carrier_loop_without_area_sampl
     let retained = decided(BezierRetainedRegion2::from_retained_arrangement_traversal(
         &graph, &traversal,
     ));
+    let sources = retained.boundary_loops()[0]
+        .arrangement_sources()
+        .expect("graph-built algebraic carrier keeps source provenance");
+    assert_eq!(sources.len(), 2);
+    assert_eq!(sources[0].source_curve_index(), 0);
+    assert_eq!(sources[1].source_curve_index(), 1);
 
     assert_eq!(retained.len(), 1);
     assert_eq!(retained.boundary_loops()[0].len(), 2);

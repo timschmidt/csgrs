@@ -24,8 +24,8 @@ use crate::{
     Aabb2, BezierArrangementGraph2, BezierArrangementTraversal2, BezierEndpointPointImage2,
     BezierLineContactKind, BezierLineContactRelation, BezierLineImageFitRelation, BezierParameter2,
     BezierRetainedLinearOverlapTraversal2, BezierSplitFragment2, BezierSubcurve2, Classification,
-    Contour2, ContourPointLocation, CurvePolicy, CurveResult, LineSeg2, Point2, Region2, Segment2,
-    UncertaintyReason,
+    Contour2, ContourPointLocation, CurveError, CurvePolicy, CurveResult, LineSeg2, Point2,
+    Region2, Segment2, UncertaintyReason,
 };
 
 /// A closed native Bezier/conic boundary loop.
@@ -49,6 +49,45 @@ pub struct BezierRegion2 {
 #[derive(Clone, Debug, PartialEq)]
 pub struct BezierRetainedBoundaryLoop2 {
     fragments: Vec<BezierSplitFragment2>,
+    arrangement_sources: Option<Vec<BezierRetainedFragmentSource2>>,
+}
+
+/// Arrangement provenance for one retained boundary fragment.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct BezierRetainedFragmentSource2 {
+    arrangement_fragment_index: usize,
+    source_curve_index: usize,
+    source_fragment_index: usize,
+}
+
+impl BezierRetainedFragmentSource2 {
+    /// Constructs retained fragment provenance from arrangement graph indices.
+    pub const fn new(
+        arrangement_fragment_index: usize,
+        source_curve_index: usize,
+        source_fragment_index: usize,
+    ) -> Self {
+        Self {
+            arrangement_fragment_index,
+            source_curve_index,
+            source_fragment_index,
+        }
+    }
+
+    /// Returns the retained arrangement-graph fragment index.
+    pub const fn arrangement_fragment_index(self) -> usize {
+        self.arrangement_fragment_index
+    }
+
+    /// Returns the source curve index carried by the graph fragment.
+    pub const fn source_curve_index(self) -> usize {
+        self.source_curve_index
+    }
+
+    /// Returns the split-fragment index within the source curve materialization.
+    pub const fn source_fragment_index(self) -> usize {
+        self.source_fragment_index
+    }
 }
 
 /// A higher-order retained region built from accepted native/algebraic carriers.
@@ -469,7 +508,26 @@ impl BezierRegion2 {
 impl BezierRetainedBoundaryLoop2 {
     /// Constructs a retained boundary loop from accepted split fragments.
     pub const fn new(fragments: Vec<BezierSplitFragment2>) -> Self {
-        Self { fragments }
+        Self {
+            fragments,
+            arrangement_sources: None,
+        }
+    }
+
+    /// Constructs a retained boundary loop with one source record per fragment.
+    pub fn try_new_with_arrangement_sources(
+        fragments: Vec<BezierSplitFragment2>,
+        arrangement_sources: Vec<BezierRetainedFragmentSource2>,
+    ) -> CurveResult<Self> {
+        if fragments.len() != arrangement_sources.len() {
+            return Err(CurveError::Topology(
+                "retained boundary source count does not match fragment count".to_owned(),
+            ));
+        }
+        Ok(Self {
+            fragments,
+            arrangement_sources: Some(arrangement_sources),
+        })
     }
 
     /// Returns retained split fragments in loop order.
@@ -480,6 +538,16 @@ impl BezierRetainedBoundaryLoop2 {
     /// Consumes the loop and returns retained split fragments.
     pub fn into_fragments(self) -> Vec<BezierSplitFragment2> {
         self.fragments
+    }
+
+    /// Returns arrangement/source indices for graph-built loops, when retained.
+    pub fn arrangement_sources(&self) -> Option<&[BezierRetainedFragmentSource2]> {
+        self.arrangement_sources.as_deref()
+    }
+
+    /// Returns true when every retained fragment has graph source provenance.
+    pub const fn has_arrangement_sources(&self) -> bool {
+        self.arrangement_sources.is_some()
     }
 
     /// Returns the number of retained fragments in the loop.
@@ -542,6 +610,7 @@ impl BezierRetainedRegion2 {
             }
 
             let mut fragments = Vec::with_capacity(chain.len());
+            let mut arrangement_sources = Vec::with_capacity(chain.len());
             for index in chain.fragment_indices() {
                 let Some(fragment) = graph.fragments().get(*index) else {
                     return Classification::Uncertain(UncertaintyReason::Unsupported);
@@ -555,8 +624,20 @@ impl BezierRetainedRegion2 {
                         return Classification::Uncertain(UncertaintyReason::Boundary);
                     }
                 }
+                arrangement_sources.push(BezierRetainedFragmentSource2::new(
+                    *index,
+                    fragment.source_curve_index(),
+                    fragment.source_fragment_index(),
+                ));
             }
-            loops.push(BezierRetainedBoundaryLoop2::new(fragments));
+            let loop_ = match BezierRetainedBoundaryLoop2::try_new_with_arrangement_sources(
+                fragments,
+                arrangement_sources,
+            ) {
+                Ok(loop_) => loop_,
+                Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
+            };
+            loops.push(loop_);
         }
 
         Classification::Decided(Self::new(loops))
