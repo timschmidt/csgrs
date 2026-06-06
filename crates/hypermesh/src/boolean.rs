@@ -1396,12 +1396,6 @@ pub fn boolean_exact_with_boundary_policy(
     )? {
         return Ok(result);
     }
-    if let Some(result) =
-        boolean_coplanar_mesh_overlay_optional(left, right, operation, validation)?
-    {
-        return Ok(result);
-    }
-
     match operation {
         ExactBooleanOperation::SelectedRegions(_) => unreachable!("handled by caller"),
         ExactBooleanOperation::Union
