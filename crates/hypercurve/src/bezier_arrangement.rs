@@ -32,9 +32,10 @@ use crate::{
     BezierAlgebraicSameTangentOrderStatus, BezierAlgebraicTangentOrderStatus,
     BezierAlgebraicTangentVector2, BezierEndpoint, BezierEndpointPointImage2,
     BezierEndpointTangentImage2, BezierSplitFragment2, BezierSplitMaterialization2,
-    BezierSubcurve2, BezierTangentTurnOrdering2, Classification, CurvePolicy, Point2,
-    UncertaintyReason, ZeroStatus, compare_algebraic_same_tangent_second_order,
-    compare_algebraic_same_tangent_third_order, compare_algebraic_tangent_turn_from_base,
+    BezierSubcurve2, BezierTangentTurnOrdering2, Classification, CurveError, CurvePolicy,
+    CurveResult, Point2, UncertaintyReason, ZeroStatus,
+    compare_algebraic_same_tangent_second_order, compare_algebraic_same_tangent_third_order,
+    compare_algebraic_tangent_turn_from_base,
 };
 
 /// One retained Bezier arrangement fragment with source provenance.
@@ -175,7 +176,7 @@ impl BezierArrangementGraph2 {
             }
         }
 
-        Classification::Decided(BezierArrangementTraversal2::new(chains))
+        decided_arrangement_traversal(chains)
     }
 
     /// Traverses materialized fragments and resolves simple branches by tangent order.
@@ -234,7 +235,7 @@ impl BezierArrangementGraph2 {
             }
         }
 
-        Classification::Decided(BezierArrangementTraversal2::new(chains))
+        decided_arrangement_traversal(chains)
     }
 
     /// Traverses retained fragments using native and algebraic endpoint evidence.
@@ -301,17 +302,18 @@ impl BezierArrangementGraph2 {
             }
         }
 
-        Classification::Decided(BezierArrangementTraversal2::new(chains))
+        decided_arrangement_traversal(chains)
     }
 }
 
 impl BezierArrangementChain2 {
     /// Constructs a traversal chain from retained fragment indices.
-    pub const fn new(fragment_indices: Vec<usize>, closed: bool) -> Self {
-        Self {
+    pub fn new(fragment_indices: Vec<usize>, closed: bool) -> CurveResult<Self> {
+        validate_arrangement_chain_indices(&fragment_indices)?;
+        Ok(Self {
             fragment_indices,
             closed,
-        }
+        })
     }
 
     /// Returns retained fragment indices in traversal order.
@@ -342,8 +344,9 @@ impl BezierArrangementChain2 {
 
 impl BezierArrangementTraversal2 {
     /// Constructs a traversal result from chains.
-    pub const fn new(chains: Vec<BezierArrangementChain2>) -> Self {
-        Self { chains }
+    pub fn new(chains: Vec<BezierArrangementChain2>) -> CurveResult<Self> {
+        validate_arrangement_traversal_indices(&chains)?;
+        Ok(Self { chains })
     }
 
     /// Returns endpoint-connected chains.
@@ -369,6 +372,58 @@ impl BezierArrangementTraversal2 {
     /// Counts closed chains.
     pub fn closed_count(&self) -> usize {
         self.chains.iter().filter(|chain| chain.is_closed()).count()
+    }
+}
+
+fn validate_arrangement_chain_indices(fragment_indices: &[usize]) -> CurveResult<()> {
+    if fragment_indices.is_empty() {
+        return Err(CurveError::Topology(
+            "retained Bezier arrangement chain must carry at least one fragment index".to_owned(),
+        ));
+    }
+
+    let mut sorted = fragment_indices.to_vec();
+    sorted.sort_unstable();
+    if sorted.windows(2).any(|window| window[0] == window[1]) {
+        return Err(CurveError::Topology(
+            "retained Bezier arrangement chain fragment indices must be unique".to_owned(),
+        ));
+    }
+    Ok(())
+}
+
+fn validate_arrangement_traversal_indices(chains: &[BezierArrangementChain2]) -> CurveResult<()> {
+    let mut indices = Vec::new();
+    for chain in chains {
+        validate_arrangement_chain_indices(chain.fragment_indices())?;
+        indices.extend_from_slice(chain.fragment_indices());
+    }
+    indices.sort_unstable();
+    if indices.windows(2).any(|window| window[0] == window[1]) {
+        return Err(CurveError::Topology(
+            "retained Bezier arrangement traversal chains must not reuse fragment indices"
+                .to_owned(),
+        ));
+    }
+    Ok(())
+}
+
+fn decided_arrangement_chain(
+    fragment_indices: Vec<usize>,
+    closed: bool,
+) -> Classification<BezierArrangementChain2> {
+    match BezierArrangementChain2::new(fragment_indices, closed) {
+        Ok(chain) => Classification::Decided(chain),
+        Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
+    }
+}
+
+fn decided_arrangement_traversal(
+    chains: Vec<BezierArrangementChain2>,
+) -> Classification<BezierArrangementTraversal2> {
+    match BezierArrangementTraversal2::new(chains) {
+        Ok(traversal) => Classification::Decided(traversal),
+        Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
     }
 }
 
@@ -604,11 +659,11 @@ fn follow_chain(
                 Some(value) => value,
                 None => return Classification::Uncertain(UncertaintyReason::RealSign),
             };
-            return Classification::Decided(BezierArrangementChain2::new(indices, closed));
+            return decided_arrangement_chain(indices, closed);
         };
         current = next;
         if current == start {
-            return Classification::Decided(BezierArrangementChain2::new(indices, true));
+            return decided_arrangement_chain(indices, true);
         }
     }
 
@@ -739,12 +794,12 @@ fn follow_retained_tangent_ordered_chain(
                 },
                 _ => false,
             };
-            return Classification::Decided(BezierArrangementChain2::new(indices, closed));
+            return decided_arrangement_chain(indices, closed);
         };
 
         current = next;
         if current == start {
-            return Classification::Decided(BezierArrangementChain2::new(indices, true));
+            return decided_arrangement_chain(indices, true);
         }
     }
 
@@ -833,12 +888,12 @@ fn follow_tangent_ordered_chain(
                 Some(value) => value,
                 None => return Classification::Uncertain(UncertaintyReason::RealSign),
             };
-            return Classification::Decided(BezierArrangementChain2::new(indices, closed));
+            return decided_arrangement_chain(indices, closed);
         };
 
         current = next;
         if current == start {
-            return Classification::Decided(BezierArrangementChain2::new(indices, true));
+            return decided_arrangement_chain(indices, true);
         }
     }
 

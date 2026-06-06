@@ -1,14 +1,15 @@
 use hypercurve::{
-    BezierAlgebraicEndpointImage2, BezierAlgebraicParameter2, BezierArrangementGraph2,
-    BezierParameter2, BezierParameterInterval, BezierParameterPolynomial,
-    BezierRetainedLineOverlapExtent2, BezierRetainedLineOverlapSplit2,
-    BezierRetainedLinearOverlapSplit2, BezierRetainedLinearOverlapSplitGraph2,
-    BezierRetainedLinearOverlapTraversal2, BezierRetainedOverlap2,
-    BezierRetainedOverlapOrientation2, BezierRetainedOverlapRefinedFragment2,
-    BezierRetainedOverlapRelation2, BezierRetainedOverlapReport2,
-    BezierRetainedResolvedLinearOverlap2, BezierSplitFragment2, BezierSubcurve2, Classification,
-    CubicBezier2, CurveError, CurvePolicy, IntersectionKind, LineLineIntersection, LineSeg2,
-    ParamRange, Point2, QuadraticBezier2, RationalQuadraticBezier2, Real, UncertaintyReason,
+    BezierAlgebraicEndpointImage2, BezierAlgebraicParameter2, BezierArrangementChain2,
+    BezierArrangementGraph2, BezierArrangementTraversal2, BezierParameter2,
+    BezierParameterInterval, BezierParameterPolynomial, BezierRetainedLineOverlapExtent2,
+    BezierRetainedLineOverlapSplit2, BezierRetainedLinearOverlapSplit2,
+    BezierRetainedLinearOverlapSplitGraph2, BezierRetainedLinearOverlapTraversal2,
+    BezierRetainedOverlap2, BezierRetainedOverlapOrientation2,
+    BezierRetainedOverlapRefinedFragment2, BezierRetainedOverlapRelation2,
+    BezierRetainedOverlapReport2, BezierRetainedResolvedLinearOverlap2, BezierSplitFragment2,
+    BezierSubcurve2, Classification, CubicBezier2, CurveError, CurvePolicy, IntersectionKind,
+    LineLineIntersection, LineSeg2, ParamRange, Point2, QuadraticBezier2, RationalQuadraticBezier2,
+    Real, UncertaintyReason,
 };
 use proptest::prelude::*;
 
@@ -731,6 +732,19 @@ fn retained_overlap_report_constructor_rejects_unsorted_or_duplicate_pairs() {
         first.clone(),
         first,
     ]));
+}
+
+#[test]
+fn retained_arrangement_traversal_constructors_validate_fragment_ownership() {
+    assert_topology_error(BezierArrangementChain2::new(Vec::new(), false));
+    assert_topology_error(BezierArrangementChain2::new(vec![0, 0], true));
+
+    let first = BezierArrangementChain2::new(vec![0], false).unwrap();
+    let second = BezierArrangementChain2::new(vec![1], false).unwrap();
+    BezierArrangementTraversal2::new(vec![first.clone(), second]).unwrap();
+
+    let duplicate = BezierArrangementChain2::new(vec![0], true).unwrap();
+    assert_topology_error(BezierArrangementTraversal2::new(vec![first, duplicate]));
 }
 
 #[test]

@@ -990,8 +990,9 @@ fn retained_region_rejects_unresolved_carriers_even_when_marked_closed() {
         },
     )]);
     let traversal = hypercurve::BezierArrangementTraversal2::new(vec![
-        hypercurve::BezierArrangementChain2::new(vec![0], true),
-    ]);
+        hypercurve::BezierArrangementChain2::new(vec![0], true).unwrap(),
+    ])
+    .unwrap();
 
     assert_eq!(
         BezierRetainedRegion2::from_retained_arrangement_traversal(&graph, &traversal),

@@ -837,7 +837,10 @@ impl BezierArrangementGraph2 {
                 Classification::Decided(traversal) => traversal,
                 Classification::Uncertain(reason) => return Classification::Uncertain(reason),
             };
-            remap_traversal_indices(filtered_traversal, &original_indices)
+            match remap_traversal_indices(filtered_traversal, &original_indices) {
+                Ok(traversal) => traversal,
+                Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
+            }
         };
 
         Classification::Decided(BezierRetainedOverlapTraversal2 {
@@ -1597,8 +1600,12 @@ fn traverse_consuming_resolved_linear_overlaps(
         Classification::Decided(traversal) => traversal,
         Classification::Uncertain(reason) => return Classification::Uncertain(reason),
     };
+    let traversal = match remap_traversal_indices(filtered_traversal, &original_indices) {
+        Ok(traversal) => traversal,
+        Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
+    };
     Classification::Decided(BezierRetainedOverlapTraversal2 {
-        traversal: remap_traversal_indices(filtered_traversal, &original_indices),
+        traversal,
         overlap_report: refinement.overlap_report().clone(),
         shadowed_fragment_indices: consumed_fragment_indices,
     })
@@ -1716,12 +1723,12 @@ fn filtered_graph(
 fn remap_traversal_indices(
     traversal: BezierArrangementTraversal2,
     original_indices: &[usize],
-) -> BezierArrangementTraversal2 {
+) -> CurveResult<BezierArrangementTraversal2> {
     BezierArrangementTraversal2::new(
         traversal
             .into_chains()
             .into_iter()
-            .map(|chain| {
+            .map(|chain| -> CurveResult<BezierArrangementChain2> {
                 let closed = chain.is_closed();
                 let indices = chain
                     .into_fragment_indices()
@@ -1730,7 +1737,7 @@ fn remap_traversal_indices(
                     .collect();
                 BezierArrangementChain2::new(indices, closed)
             })
-            .collect(),
+            .collect::<CurveResult<Vec<_>>>()?,
     )
 }
 
