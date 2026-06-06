@@ -2767,6 +2767,9 @@ impl ExactWindingReadinessReport {
                     return Err(ExactReportValidationError::StatusEvidenceMismatch);
                 }
                 let expected = match self.blocker.kind {
+                    ExactBooleanBlockerKind::NeedsBoundaryPolicy => {
+                        ExactBooleanBlockerKind::NeedsBoundaryPolicy
+                    }
                     ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells => {
                         ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells
                     }

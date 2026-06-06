@@ -4403,6 +4403,36 @@ fn winding_readiness_report_from_graph(
             None,
         ));
     }
+    if preflight_tail_shortcut_support(left, right, operation)
+        == Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
+    {
+        let needs_boundary_policy = graph_requires_boundary_policy(graph, left, right)?;
+        let needs_coplanar_volumetric = !needs_boundary_policy
+            && graph_requires_coplanar_volumetric_cells_for_sources(graph, left, right);
+        let blocker_kind = if needs_boundary_policy {
+            ExactBooleanBlockerKind::NeedsBoundaryPolicy
+        } else if needs_coplanar_volumetric {
+            ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells
+        } else {
+            ExactBooleanBlockerKind::NeedsWinding
+        };
+        return Ok(winding_readiness_report(
+            operation,
+            ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
+            graph_had_unknowns,
+            graph.face_pairs.len(),
+            graph.event_count(),
+            0,
+            Vec::new(),
+            counts.into_blocker(blocker_kind),
+            None,
+            if needs_coplanar_volumetric {
+                coplanar_volumetric_evidence_if_required(graph, left, right)
+            } else {
+                None
+            },
+        ));
+    }
     if graph_requires_boundary_policy(graph, left, right)? {
         return Ok(winding_readiness_report(
             operation,
@@ -4444,33 +4474,6 @@ fn winding_readiness_report_from_graph(
             counts.into_blocker(ExactBooleanBlockerKind::NeedsPlanarArrangement),
             planar_report.arrangement_readiness,
             None,
-        ));
-    }
-    if preflight_tail_shortcut_support(left, right, operation)
-        == Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
-    {
-        let needs_coplanar_volumetric =
-            graph_requires_coplanar_volumetric_cells_for_sources(graph, left, right);
-        let blocker_kind = if needs_coplanar_volumetric {
-            ExactBooleanBlockerKind::NeedsCoplanarVolumetricCells
-        } else {
-            ExactBooleanBlockerKind::NeedsWinding
-        };
-        return Ok(winding_readiness_report(
-            operation,
-            ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
-            graph_had_unknowns,
-            graph.face_pairs.len(),
-            graph.event_count(),
-            0,
-            Vec::new(),
-            counts.into_blocker(blocker_kind),
-            None,
-            if needs_coplanar_volumetric {
-                coplanar_volumetric_evidence_if_required(graph, left, right)
-            } else {
-                None
-            },
         ));
     }
     if let Some(materialized) = materialize_volumetric_winding_region_plan_from_graph(
@@ -6483,6 +6486,43 @@ mod tests {
         result.validate().unwrap();
         result.validate_against_sources(&left, &right).unwrap();
         assert!(result.mesh.facts().mesh.closed_manifold);
+    }
+
+    #[test]
+    fn boundary_touching_orthogonal_shortcuts_report_materialized_readiness() {
+        let left = axis_aligned_box_i64([0, 0, 0], [1, 1, 1]);
+        let right = axis_aligned_box_i64([1, 0, 0], [2, 1, 1]);
+
+        for operation in [
+            ExactBooleanOperation::Union,
+            ExactBooleanOperation::Intersection,
+            ExactBooleanOperation::Difference,
+        ] {
+            let preflight = preflight_boolean_exact(&left, &right, operation).unwrap();
+            assert_eq!(
+                preflight.support,
+                ExactBooleanSupport::CertifiedArrangementCellComplex,
+                "{operation:?}: {preflight:?}"
+            );
+            assert!(preflight.blocker.is_none(), "{operation:?}: {preflight:?}");
+
+            let readiness = certify_winding_readiness_report(&left, &right, operation).unwrap();
+            assert_eq!(
+                readiness.status,
+                ExactWindingReadinessStatus::ArrangementCellComplexAlreadyMaterialized,
+                "{operation:?}: {readiness:?}"
+            );
+            assert_eq!(
+                readiness.blocker.kind,
+                ExactBooleanBlockerKind::NeedsBoundaryPolicy,
+                "{operation:?}: {readiness:?}"
+            );
+            assert!(winding_readiness_status_already_materialized(
+                &readiness.status
+            ));
+            readiness.validate().unwrap();
+            readiness.validate_against_sources(&left, &right).unwrap();
+        }
     }
 
     #[test]
