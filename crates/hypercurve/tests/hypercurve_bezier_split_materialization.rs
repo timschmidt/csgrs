@@ -270,6 +270,107 @@ fn split_materialization_constructor_rejects_duplicate_fragments() {
 }
 
 #[test]
+fn split_materialization_constructor_rejects_noncontiguous_fragments() {
+    let curve = QuadraticBezier2::new(p(0, 0), p(2, 4), p(4, 0));
+    let materialization = match curve
+        .split_at_parameters(&[exact(q(1, 3)), exact(q(2, 3))], &policy())
+        .unwrap()
+    {
+        Classification::Decided(value) => value,
+        Classification::Uncertain(reason) => panic!("split unexpectedly uncertain: {reason:?}"),
+    };
+
+    let first = materialization.fragments()[0].clone();
+    let third = materialization.fragments()[2].clone();
+    assert_topology_error(BezierSplitMaterialization2::new(vec![first, third]));
+}
+
+#[test]
+fn split_materialization_constructor_rejects_materialized_algebraic_range() {
+    let curve = QuadraticBezier2::new(p(0, 0), p(2, 4), p(4, 0));
+    let materialized = BezierSubcurve2::Quadratic(
+        curve
+            .subcurve_between_exact(&r(0), &q(1, 2), &policy())
+            .unwrap(),
+    );
+    let fragment = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: algebraic_sqrt_half_interval(),
+        curve: materialized,
+    };
+
+    assert_topology_error(BezierSplitMaterialization2::new(vec![fragment]));
+}
+
+#[test]
+fn split_materialization_constructor_rejects_forged_algebraic_endpoint_evidence() {
+    let curve = QuadraticBezier2::new(p(0, 0), p(2, 4), p(4, 0));
+    let materialization = match curve
+        .split_at_parameters(
+            &[
+                exact(q(1, 4)),
+                algebraic_sqrt_half_interval(),
+                exact(q(4, 5)),
+            ],
+            &policy(),
+        )
+        .unwrap()
+    {
+        Classification::Decided(value) => value,
+        Classification::Uncertain(reason) => panic!("split unexpectedly uncertain: {reason:?}"),
+    };
+    BezierSplitMaterialization2::new(materialization.fragments().to_vec()).unwrap();
+
+    let BezierSplitFragment2::AlgebraicEndpointImages {
+        start,
+        end,
+        source_curve,
+        start_image,
+        end_image,
+    } = materialization.fragments()[1].clone()
+    else {
+        panic!("expected algebraic endpoint-image fragment");
+    };
+
+    assert_topology_error(BezierSplitMaterialization2::new(vec![
+        BezierSplitFragment2::AlgebraicEndpointImages {
+            start: start.clone(),
+            end: end.clone(),
+            source_curve: source_curve.clone(),
+            start_image: start_image.clone(),
+            end_image: None,
+        },
+    ]));
+
+    let wrong_parameter = match algebraic_cubic_midpoint_interval() {
+        BezierParameter2::Algebraic(parameter) => parameter,
+        BezierParameter2::Exact(_) => panic!("expected algebraic parameter"),
+    };
+    let wrong_parameter_image =
+        BezierAlgebraicEndpointImage2::quadratic(&curve, &wrong_parameter, &policy()).unwrap();
+    assert_topology_error(BezierSplitMaterialization2::new(vec![
+        BezierSplitFragment2::AlgebraicEndpointImages {
+            start: start.clone(),
+            end: end.clone(),
+            source_curve: source_curve.clone(),
+            start_image: start_image.clone(),
+            end_image: Some(wrong_parameter_image),
+        },
+    ]));
+
+    let wrong_source = BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(0, 4), p(4, 0)));
+    assert_topology_error(BezierSplitMaterialization2::new(vec![
+        BezierSplitFragment2::AlgebraicEndpointImages {
+            start,
+            end,
+            source_curve: Some(wrong_source),
+            start_image,
+            end_image,
+        },
+    ]));
+}
+
+#[test]
 fn exact_cubic_subcurve_matches_original_endpoints_at_range_bounds() {
     let curve = CubicBezier2::new(p(0, 0), p(2, 6), p(6, -2), p(8, 0));
     let subcurve = curve

@@ -130,7 +130,12 @@ impl BezierSplitMaterialization2 {
 }
 
 fn validate_bezier_split_fragments(fragments: &[BezierSplitFragment2]) -> CurveResult<()> {
+    let policy = CurvePolicy::certified();
     for (left_index, left) in fragments.iter().enumerate() {
+        validate_bezier_split_fragment(left, &policy)?;
+        if let Some(right) = fragments.get(left_index + 1) {
+            validate_adjacent_bezier_split_fragments(left, right)?;
+        }
         if fragments[left_index + 1..]
             .iter()
             .any(|right| right == left)
@@ -141,6 +146,158 @@ fn validate_bezier_split_fragments(fragments: &[BezierSplitFragment2]) -> CurveR
         }
     }
     Ok(())
+}
+
+fn validate_bezier_split_fragment(
+    fragment: &BezierSplitFragment2,
+    policy: &CurvePolicy,
+) -> CurveResult<()> {
+    let (start, end) = bezier_split_fragment_range(fragment);
+    validate_parameter(start, policy)?;
+    validate_parameter(end, policy)?;
+    validate_bezier_parameter_order(start, end, policy)?;
+
+    match fragment {
+        BezierSplitFragment2::Materialized { start, end, .. } => {
+            if !start.is_exact() || !end.is_exact() {
+                return Err(CurveError::Topology(
+                    "materialized Bezier split fragment must have exact range boundaries".into(),
+                ));
+            }
+        }
+        BezierSplitFragment2::AlgebraicEndpointImages {
+            start,
+            end,
+            source_curve,
+            start_image,
+            end_image,
+        } => {
+            let Some(source_curve) = source_curve else {
+                return Err(CurveError::Topology(
+                    "algebraic Bezier split endpoint images must retain source curve provenance"
+                        .into(),
+                ));
+            };
+            validate_algebraic_endpoint_image_boundary(
+                "start",
+                start,
+                start_image.as_ref(),
+                source_curve,
+                policy,
+            )?;
+            validate_algebraic_endpoint_image_boundary(
+                "end",
+                end,
+                end_image.as_ref(),
+                source_curve,
+                policy,
+            )?;
+        }
+        BezierSplitFragment2::Unresolved { start, end } => {
+            if start.is_exact() && end.is_exact() {
+                return Err(CurveError::Topology(
+                    "unresolved Bezier split fragment must have an algebraic range boundary".into(),
+                ));
+            }
+        }
+    }
+
+    Ok(())
+}
+
+fn validate_adjacent_bezier_split_fragments(
+    left: &BezierSplitFragment2,
+    right: &BezierSplitFragment2,
+) -> CurveResult<()> {
+    let (_, left_end) = bezier_split_fragment_range(left);
+    let (right_start, _) = bezier_split_fragment_range(right);
+    if left_end != right_start {
+        return Err(CurveError::Topology(
+            "Bezier split materialization fragments must be contiguous and ordered".into(),
+        ));
+    }
+    Ok(())
+}
+
+fn bezier_split_fragment_range(
+    fragment: &BezierSplitFragment2,
+) -> (&BezierParameter2, &BezierParameter2) {
+    match fragment {
+        BezierSplitFragment2::Materialized { start, end, .. }
+        | BezierSplitFragment2::AlgebraicEndpointImages { start, end, .. }
+        | BezierSplitFragment2::Unresolved { start, end } => (start, end),
+    }
+}
+
+fn validate_bezier_parameter_order(
+    start: &BezierParameter2,
+    end: &BezierParameter2,
+    policy: &CurvePolicy,
+) -> CurveResult<()> {
+    match start.cmp_by_interval(end, policy)? {
+        Classification::Decided(Ordering::Less) => Ok(()),
+        Classification::Decided(Ordering::Equal | Ordering::Greater) => Err(CurveError::Topology(
+            "Bezier split fragment range must be strictly increasing".into(),
+        )),
+        Classification::Uncertain(reason) => Err(CurveError::Topology(format!(
+            "Bezier split fragment range ordering is uncertain: {reason:?}"
+        ))),
+    }
+}
+
+fn validate_algebraic_endpoint_image_boundary(
+    name: &str,
+    boundary: &BezierParameter2,
+    image: Option<&BezierAlgebraicEndpointImage2>,
+    source_curve: &BezierSubcurve2,
+    policy: &CurvePolicy,
+) -> CurveResult<()> {
+    match (boundary, image) {
+        (BezierParameter2::Exact(_), None) => Ok(()),
+        (BezierParameter2::Exact(_), Some(_)) => Err(CurveError::Topology(format!(
+            "exact {name} Bezier split boundary must not carry algebraic endpoint image evidence"
+        ))),
+        (BezierParameter2::Algebraic(parameter), Some(image)) => {
+            if image.parameter() != parameter {
+                return Err(CurveError::Topology(format!(
+                    "algebraic {name} Bezier split endpoint image parameter does not match boundary"
+                )));
+            }
+            if !image.is_transformed() {
+                return Err(CurveError::Topology(format!(
+                    "algebraic {name} Bezier split endpoint image must be exact transformed evidence"
+                )));
+            }
+            let expected = algebraic_endpoint_image_from_source(source_curve, parameter, policy)?;
+            if &expected != image {
+                return Err(CurveError::Topology(format!(
+                    "algebraic {name} Bezier split endpoint image does not match retained source curve"
+                )));
+            }
+            Ok(())
+        }
+        (BezierParameter2::Algebraic(_), None) => Err(CurveError::Topology(format!(
+            "algebraic {name} Bezier split boundary must carry endpoint image evidence"
+        ))),
+    }
+}
+
+fn algebraic_endpoint_image_from_source(
+    source_curve: &BezierSubcurve2,
+    parameter: &BezierAlgebraicParameter2,
+    policy: &CurvePolicy,
+) -> CurveResult<BezierAlgebraicEndpointImage2> {
+    match source_curve {
+        BezierSubcurve2::Quadratic(curve) => {
+            BezierAlgebraicEndpointImage2::quadratic(curve, parameter, policy)
+        }
+        BezierSubcurve2::Cubic(curve) => {
+            BezierAlgebraicEndpointImage2::cubic(curve, parameter, policy)
+        }
+        BezierSubcurve2::RationalQuadratic(curve) => {
+            BezierAlgebraicEndpointImage2::rational_quadratic(curve, parameter, policy)
+        }
+    }
 }
 
 impl QuadraticBezier2 {
