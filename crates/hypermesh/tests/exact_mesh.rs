@@ -23,7 +23,8 @@ use hypermesh::{
     materialize_axis_aligned_orthogonal_solid_intersection,
     materialize_axis_aligned_orthogonal_solid_union, materialize_contained_face_adjacent_union,
     materialize_full_face_adjacent_union, materialize_open_surface_arrangement,
-    preflight_boolean_exact, preflight_boolean_exact_with_boundary_policy,
+    materialize_volumetric_winding_arrangement, preflight_boolean_exact,
+    preflight_boolean_exact_with_boundary_policy,
 };
 use hyperreal::Real;
 
@@ -451,6 +452,66 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
             ExactReportFreshness::SourceReplayMismatch
         );
     }
+}
+
+#[test]
+fn exact_volumetric_winding_arrangement_is_publicly_replayable() {
+    let left = ExactMesh::from_i64_triangles(
+        &[
+            0, 0, 0, //
+            4, 0, 0, //
+            0, 4, 0, //
+            0, 0, 4, //
+            2, 2, 3,
+        ],
+        &[
+            0, 2, 1, //
+            1, 2, 3, //
+            2, 0, 3, //
+            0, 1, 4, //
+            1, 3, 4, //
+            3, 0, 4,
+        ],
+    )
+    .unwrap();
+    let right = ExactMesh::from_i64_triangles(
+        &[1, 1, 1, 5, 1, 1, 1, 5, 1, 1, 1, 5],
+        &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
+    )
+    .unwrap();
+
+    let result = materialize_volumetric_winding_arrangement(
+        &left,
+        &right,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap()
+    .expect("overlapping closed solids should materialize by exact volumetric winding");
+
+    assert_eq!(
+        result.kind,
+        ExactBooleanResultKind::ArrangementCellComplexMaterialized {
+            operation: ExactBooleanOperation::Union
+        }
+    );
+    result.validate().unwrap();
+    result.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        result.freshness_against_sources(&left, &right),
+        ExactReportFreshness::Current
+    );
+    assert!(!result.region_classifications.is_empty());
+    assert!(!result.triangulations.is_empty());
+    assert!(!result.volumetric_classifications.is_empty());
+    assert!(!result.assembly.triangles.is_empty());
+    assert!(!result.mesh.triangles().is_empty());
+
+    let separated_right = tetra([10, 10, 10]);
+    assert_eq!(
+        result.freshness_against_sources(&left, &separated_right),
+        ExactReportFreshness::SourceReplayMismatch
+    );
 }
 
 #[test]
