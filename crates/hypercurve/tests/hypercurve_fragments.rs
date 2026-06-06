@@ -54,6 +54,14 @@ fn approx_policy() -> CurvePolicy {
     CurvePolicy::edge_preview(Tolerance::new(1e-7, 1e-7))
 }
 
+fn assert_topology_error<T>(result: hypercurve::CurveResult<T>) {
+    match result {
+        Err(CurveError::Topology(_)) => {}
+        Ok(_) => panic!("expected topology error"),
+        Err(error) => panic!("expected topology error, got {error:?}"),
+    }
+}
+
 #[test]
 fn contour_fragments_split_line_segments_at_point_events() {
     let a = rectangle(0, 0, 4, 4);
@@ -79,6 +87,30 @@ fn contour_fragments_split_line_segments_at_point_events() {
     assert_line(&fragments.fragments()[0].segment, p(0, 0), p(1, 0));
     assert_line(&fragments.fragments()[1].segment, p(1, 0), p(3, 0));
     assert_line(&fragments.fragments()[2].segment, p(3, 0), p(4, 0));
+}
+
+#[test]
+fn contour_fragment_set_constructor_rejects_duplicate_fragments() {
+    ContourFragmentSet::new(Vec::new()).unwrap();
+
+    let a = rectangle(0, 0, 4, 4);
+    let b = contour(&[
+        vertex(3, -1, 0),
+        vertex(3, 1, 0),
+        vertex(1, 1, 0),
+        vertex(1, -1, 0),
+    ]);
+    let events = a.intersect_contour(&b, &policy()).unwrap();
+    let Classification::Decided(fragments) = a
+        .split_at_intersections(&events, ContourOperand::First, &policy())
+        .unwrap()
+    else {
+        panic!("expected decided fragments");
+    };
+    let first = fragments.fragments()[0].clone();
+    let second = fragments.fragments()[1].clone();
+    ContourFragmentSet::new(vec![first.clone(), second]).unwrap();
+    assert_topology_error(ContourFragmentSet::new(vec![first.clone(), first]));
 }
 
 #[test]

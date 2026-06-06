@@ -14,8 +14,9 @@ use hyperreal::Real;
 
 use crate::classify::{compare_reals_for_split_ordering, is_zero};
 use crate::{
-    CircularArc2, Classification, Contour2, ContourSplitMarkers, CurvePolicy, CurveResult,
-    LineSeg2, NumericMode, ParamRange, Segment2, SegmentSplitMarker, UncertaintyReason,
+    CircularArc2, Classification, Contour2, ContourSplitMarkers, CurveError, CurvePolicy,
+    CurveResult, LineSeg2, NumericMode, ParamRange, Segment2, SegmentSplitMarker,
+    UncertaintyReason,
 };
 
 /// One source-contour fragment between adjacent split markers.
@@ -37,8 +38,9 @@ pub struct ContourFragmentSet {
 
 impl ContourFragmentSet {
     /// Constructs a fragment set from already-built fragments.
-    pub const fn new(fragments: Vec<ContourFragment>) -> Self {
-        Self { fragments }
+    pub fn new(fragments: Vec<ContourFragment>) -> CurveResult<Self> {
+        validate_contour_fragments(&fragments)?;
+        Ok(Self { fragments })
     }
 
     /// Builds fragments from point-bearing contour split markers.
@@ -69,7 +71,7 @@ impl ContourFragmentSet {
             }
         }
 
-        Ok(Classification::Decided(Self { fragments }))
+        Ok(Classification::Decided(Self::new(fragments)?))
     }
 
     /// Returns fragments in contour traversal order.
@@ -91,6 +93,20 @@ impl ContourFragmentSet {
     pub fn len(&self) -> usize {
         self.fragments.len()
     }
+}
+
+fn validate_contour_fragments(fragments: &[ContourFragment]) -> CurveResult<()> {
+    for (left_index, left) in fragments.iter().enumerate() {
+        if fragments[left_index + 1..]
+            .iter()
+            .any(|right| right == left)
+        {
+            return Err(CurveError::Topology(
+                "contour fragment set must not contain duplicate fragments".into(),
+            ));
+        }
+    }
+    Ok(())
 }
 
 pub(crate) fn split_contour_at_intersections(
