@@ -1054,8 +1054,10 @@ fn certified_shortcut_sources_match(
         }
         ExactBooleanShortcutKind::ClosedBoundaryTouchingUnion
         | ExactBooleanShortcutKind::ClosedBoundaryTouchingIntersection
-        | ExactBooleanShortcutKind::ClosedBoundaryTouchingDifference
-        | ExactBooleanShortcutKind::ClosedWindingSeparated
+        | ExactBooleanShortcutKind::ClosedBoundaryTouchingDifference => {
+            closed_boundary_touching_sources_match(shortcut, left, right)
+        }
+        ExactBooleanShortcutKind::ClosedWindingSeparated
         | ExactBooleanShortcutKind::ClosedWindingContainment
         | ExactBooleanShortcutKind::ConvexContainment
         | ExactBooleanShortcutKind::ConvexUnion
@@ -1094,6 +1096,39 @@ fn mixed_dimensional_regularized_sources(left: &ExactMesh, right: &ExactMesh) ->
 
 fn lower_dimensional_regularized_sources(left: &ExactMesh, right: &ExactMesh) -> bool {
     mesh_is_lower_dimensional(left) && mesh_is_lower_dimensional(right)
+}
+
+fn closed_boundary_touching_sources_match(
+    shortcut: ExactBooleanShortcutKind,
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Result<bool, ExactReportValidationError> {
+    if !mesh_is_closed_solid(left) || !mesh_is_closed_solid(right) {
+        return Ok(false);
+    }
+    let report = certify_boundary_touching_report(left, right)
+        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+    report.validate()?;
+    if !report.is_certified() {
+        return Ok(false);
+    }
+    if shortcut == ExactBooleanShortcutKind::ClosedBoundaryTouchingUnion
+        && report.blocker.coplanar_overlapping_pairs != 0
+    {
+        let graph = build_intersection_graph(left, right)
+            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+        graph
+            .validate_against_sources(left, right)
+            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+        let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(&graph, left, right);
+        evidence
+            .validate()
+            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+        if evidence.positive_area_coplanar_overlapping_pairs != 0 {
+            return Ok(false);
+        }
+    }
+    Ok(true)
 }
 
 fn mesh_is_closed_solid(mesh: &ExactMesh) -> bool {

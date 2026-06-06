@@ -8445,6 +8445,7 @@ mod tests {
         let left = concatenate_meshes(&left_a, &left_b, ValidationPolicy::CLOSED)
             .expect("disconnected nonconvex boundary fixture should validate");
         let right = tetrahedron_i64([0, 0, 0], [-4, 0, 0], [0, -4, 0], [0, 0, -4]);
+        let separated_right = tetrahedron_i64([100, 0, 0], [104, 0, 0], [100, 4, 0], [100, 0, 4]);
         let graph = build_intersection_graph(&left, &right).unwrap();
         validate_graph_source_handoff(&graph, &left, &right).unwrap();
         assert!(!graph.has_unknowns());
@@ -8503,6 +8504,12 @@ mod tests {
             );
             result.validate().unwrap();
             result.validate_against_sources(&left, &right).unwrap();
+            assert!(
+                result
+                    .validate_against_sources(&left, &separated_right)
+                    .is_err(),
+                "{operation:?}: {result:?}"
+            );
             match operation {
                 ExactBooleanOperation::Union => {
                     assert_eq!(
