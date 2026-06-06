@@ -92,7 +92,12 @@ impl RetainedImportRecord2 {
             || discarded_duplicate_count > input_point_count
             || emitted_segment_count
                 .checked_add(discarded_duplicate_count)
-                .is_none_or(|count| count > input_point_count)
+                .is_none_or(|count| {
+                    count > input_point_count
+                        || count
+                            .checked_add(1)
+                            .is_none_or(|edge_count| edge_count < input_point_count)
+                })
         {
             return Err(CurveError::InvalidImportRecord);
         }
