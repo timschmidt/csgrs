@@ -922,8 +922,9 @@ impl BezierRetainedOverlapReport2 {
     }
 
     /// Constructs a report from already-certified overlaps.
-    pub const fn new(overlaps: Vec<BezierRetainedOverlap2>) -> Self {
-        Self { overlaps }
+    pub fn new(overlaps: Vec<BezierRetainedOverlap2>) -> CurveResult<Self> {
+        validate_overlap_report_order(&overlaps)?;
+        Ok(Self { overlaps })
     }
 
     /// Returns certified overlap pairs.
@@ -1028,6 +1029,23 @@ impl BezierRetainedOverlapReport2 {
         }
         Classification::Decided(promoted)
     }
+}
+
+fn validate_overlap_report_order(overlaps: &[BezierRetainedOverlap2]) -> CurveResult<()> {
+    let mut previous_pair = None;
+    for overlap in overlaps {
+        let pair = (
+            overlap.first_fragment_index(),
+            overlap.second_fragment_index(),
+        );
+        if previous_pair.is_some_and(|previous| previous >= pair) {
+            return Err(CurveError::Topology(
+                "retained overlap report pairs must be strictly increasing".to_owned(),
+            ));
+        }
+        previous_pair = Some(pair);
+    }
+    Ok(())
 }
 
 fn fragment_is_linearly_parameterized(

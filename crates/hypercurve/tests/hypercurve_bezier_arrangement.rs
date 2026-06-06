@@ -698,6 +698,26 @@ fn retained_overlap_pair_constructor_rejects_unordered_indices() {
 }
 
 #[test]
+fn retained_overlap_report_constructor_rejects_unsorted_or_duplicate_pairs() {
+    let first =
+        BezierRetainedOverlap2::new(0, 1, BezierRetainedOverlapRelation2::SameControlPolygon)
+            .unwrap();
+    let second =
+        BezierRetainedOverlap2::new(0, 2, BezierRetainedOverlapRelation2::SameControlPolygon)
+            .unwrap();
+
+    BezierRetainedOverlapReport2::new(vec![first.clone(), second.clone()]).unwrap();
+    assert_topology_error(BezierRetainedOverlapReport2::new(vec![
+        second,
+        first.clone(),
+    ]));
+    assert_topology_error(BezierRetainedOverlapReport2::new(vec![
+        first.clone(),
+        first,
+    ]));
+}
+
+#[test]
 fn retained_overlap_split_constructors_reject_unordered_indices() {
     let overlap_segment = LineSeg2::try_new(p(0, 0), p(1, 0)).unwrap();
     let first_range = ParamRange::new(r(0), r(1));
@@ -735,7 +755,7 @@ fn retained_linear_overlap_split_graph_rejects_missing_refined_provenance() {
     assert_topology_error(BezierRetainedLinearOverlapSplitGraph2::new(
         graph,
         Vec::new(),
-        BezierRetainedOverlapReport2::new(Vec::new()),
+        BezierRetainedOverlapReport2::new(Vec::new()).unwrap(),
         Vec::new(),
         Vec::new(),
     ));
@@ -810,7 +830,7 @@ fn retained_linear_overlap_split_graph_rejects_missing_split_report_evidence() {
     assert_topology_error(BezierRetainedLinearOverlapSplitGraph2::new(
         refined_graph,
         refined_fragments,
-        BezierRetainedOverlapReport2::new(Vec::new()),
+        BezierRetainedOverlapReport2::new(Vec::new()).unwrap(),
         split_plan,
         resolved_overlaps,
     ));
@@ -830,7 +850,7 @@ fn retained_linear_overlap_traversal_rejects_indices_outside_refinement() {
     let empty_refinement = BezierRetainedLinearOverlapSplitGraph2::new(
         BezierArrangementGraph2::new(Vec::new()),
         Vec::<BezierRetainedOverlapRefinedFragment2>::new(),
-        BezierRetainedOverlapReport2::new(Vec::new()),
+        BezierRetainedOverlapReport2::new(Vec::new()).unwrap(),
         Vec::new(),
         Vec::new(),
     )
