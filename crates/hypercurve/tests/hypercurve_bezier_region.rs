@@ -391,6 +391,13 @@ fn retained_role_report_constructors_reject_mismatched_evidence() {
     ])]);
     let report = decided(retained.line_image_role_report(&policy()).unwrap());
     assert_topology_error(BezierRetainedLineRegionRoleReport2::new(
+        vec![BezierRetainedRegionLoopRole::Hole],
+        vec![0],
+        report.materialized_fragment_count(),
+        report.algebraic_fragment_count(),
+        report.contours().to_vec(),
+    ));
+    assert_topology_error(BezierRetainedLineRegionRoleReport2::new(
         report.roles().to_vec(),
         report.nesting_depths().to_vec(),
         0,
@@ -422,10 +429,16 @@ fn retained_role_report_constructors_reject_mismatched_evidence() {
         Vec::new(),
     ));
     assert_topology_error(BezierRetainedCurvedNestingRoleReport2::new(
-        roles,
+        roles.clone(),
         vec![0],
         vec![r(1)],
         Vec::new(),
+    ));
+    assert_topology_error(BezierRetainedCurvedNestingRoleReport2::new(
+        roles,
+        vec![1],
+        vec![r(1)],
+        vec![p(0, 0)],
     ));
 }
 

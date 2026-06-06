@@ -191,6 +191,7 @@ impl BezierRetainedLineRegionRoleReport2 {
     ) -> CurveResult<Self> {
         validate_report_length(roles.len(), "nesting depth", nesting_depths.len())?;
         validate_report_length(roles.len(), "line contour", contours.len())?;
+        validate_nesting_depth_roles(&roles, &nesting_depths)?;
         validate_line_role_report_fragment_counts(
             materialized_fragment_count,
             algebraic_fragment_count,
@@ -370,6 +371,7 @@ impl BezierRetainedCurvedNestingRoleReport2 {
         validate_report_length(roles.len(), "nesting depth", nesting_depths.len())?;
         validate_report_length(roles.len(), "signed area", signed_areas.len())?;
         validate_report_length(roles.len(), "sample point", sample_points.len())?;
+        validate_nesting_depth_roles(&roles, &nesting_depths)?;
         Ok(Self {
             roles,
             nesting_depths,
@@ -968,6 +970,25 @@ fn validate_report_length(
         return Err(CurveError::Topology(format!(
             "retained role report {evidence_name} count does not match loop count"
         )));
+    }
+    Ok(())
+}
+
+fn validate_nesting_depth_roles(
+    roles: &[BezierRetainedRegionLoopRole],
+    nesting_depths: &[usize],
+) -> CurveResult<()> {
+    for (role, depth) in roles.iter().zip(nesting_depths) {
+        let expected = if depth.is_multiple_of(2) {
+            BezierRetainedRegionLoopRole::Material
+        } else {
+            BezierRetainedRegionLoopRole::Hole
+        };
+        if *role != expected {
+            return Err(CurveError::Topology(
+                "retained nesting role report role does not match certified nesting depth".into(),
+            ));
+        }
     }
     Ok(())
 }
