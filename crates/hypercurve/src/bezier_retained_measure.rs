@@ -48,6 +48,16 @@ pub struct BezierRetainedCurveEnvelope2 {
     exact_fragment_count: usize,
     native_fragment_count: usize,
     algebraic_fragment_count: usize,
+    fragment_source_kinds: Vec<BezierRetainedEnvelopeSourceKind>,
+}
+
+/// Source class of one retained envelope witness.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum BezierRetainedEnvelopeSourceKind {
+    /// A materialized native Bezier/conic object contributed the witness.
+    Native,
+    /// A retained algebraic endpoint-image carrier contributed the witness.
+    Algebraic,
 }
 
 impl BezierRetainedCurveEnvelope2 {
@@ -106,6 +116,11 @@ impl BezierRetainedCurveEnvelope2 {
     pub const fn has_algebraic_fragments(&self) -> bool {
         self.algebraic_fragment_count > 0
     }
+
+    /// Returns one source-kind witness per retained fragment that contributed bounds.
+    pub fn fragment_source_kinds(&self) -> &[BezierRetainedEnvelopeSourceKind] {
+        &self.fragment_source_kinds
+    }
 }
 
 /// Exact endpoint envelope for a retained Bezier region or loop.
@@ -114,6 +129,7 @@ pub struct BezierRetainedEndpointEnvelope2 {
     envelope: Aabb2,
     native_endpoint_count: usize,
     algebraic_endpoint_count: usize,
+    endpoint_source_kinds: Vec<BezierRetainedEnvelopeSourceKind>,
 }
 
 impl BezierRetainedEndpointEnvelope2 {
@@ -169,6 +185,11 @@ impl BezierRetainedEndpointEnvelope2 {
     pub const fn has_algebraic_endpoints(&self) -> bool {
         self.algebraic_endpoint_count > 0
     }
+
+    /// Returns one source-kind witness per endpoint image that contributed bounds.
+    pub fn endpoint_source_kinds(&self) -> &[BezierRetainedEnvelopeSourceKind] {
+        &self.endpoint_source_kinds
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -181,19 +202,7 @@ struct CoordinateInterval {
 struct EndpointInterval {
     x: CoordinateInterval,
     y: CoordinateInterval,
-    kind: EndpointIntervalKind,
-}
-
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-enum EndpointIntervalKind {
-    Native,
-    Algebraic,
-}
-
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-enum CurveEnvelopeFragmentKind {
-    Native,
-    Algebraic,
+    kind: BezierRetainedEnvelopeSourceKind,
 }
 
 #[derive(Default)]
@@ -204,6 +213,7 @@ struct EndpointEnvelopeAccumulator {
     max_y: Option<Real>,
     native_endpoint_count: usize,
     algebraic_endpoint_count: usize,
+    endpoint_source_kinds: Vec<BezierRetainedEnvelopeSourceKind>,
 }
 
 #[derive(Default)]
@@ -212,6 +222,7 @@ struct CurveEnvelopeAccumulator {
     exact_fragment_count: usize,
     native_fragment_count: usize,
     algebraic_fragment_count: usize,
+    fragment_source_kinds: Vec<BezierRetainedEnvelopeSourceKind>,
 }
 
 impl CurveEnvelopeAccumulator {
@@ -238,7 +249,7 @@ impl CurveEnvelopeAccumulator {
             BezierSplitFragment2::Materialized { curve, .. } => {
                 match retained_curve_bounds(curve, policy) {
                     Classification::Decided(curve_box) => {
-                        (curve_box, CurveEnvelopeFragmentKind::Native)
+                        (curve_box, BezierRetainedEnvelopeSourceKind::Native)
                     }
                     Classification::Uncertain(reason) => return Classification::Uncertain(reason),
                 }
@@ -263,7 +274,7 @@ impl CurveEnvelopeAccumulator {
                     policy,
                 ) {
                     Classification::Decided(curve_box) => {
-                        (curve_box, CurveEnvelopeFragmentKind::Algebraic)
+                        (curve_box, BezierRetainedEnvelopeSourceKind::Algebraic)
                     }
                     Classification::Uncertain(reason) => return Classification::Uncertain(reason),
                 }
@@ -281,9 +292,10 @@ impl CurveEnvelopeAccumulator {
         };
         self.exact_fragment_count += 1;
         match kind {
-            CurveEnvelopeFragmentKind::Native => self.native_fragment_count += 1,
-            CurveEnvelopeFragmentKind::Algebraic => self.algebraic_fragment_count += 1,
+            BezierRetainedEnvelopeSourceKind::Native => self.native_fragment_count += 1,
+            BezierRetainedEnvelopeSourceKind::Algebraic => self.algebraic_fragment_count += 1,
         }
+        self.fragment_source_kinds.push(kind);
         Classification::Decided(())
     }
 
@@ -296,6 +308,7 @@ impl CurveEnvelopeAccumulator {
             exact_fragment_count: self.exact_fragment_count,
             native_fragment_count: self.native_fragment_count,
             algebraic_fragment_count: self.algebraic_fragment_count,
+            fragment_source_kinds: self.fragment_source_kinds,
         })
     }
 }
@@ -647,9 +660,10 @@ impl EndpointEnvelopeAccumulator {
             return Classification::Uncertain(UncertaintyReason::Ordering);
         }
         match endpoint.kind {
-            EndpointIntervalKind::Native => self.native_endpoint_count += 1,
-            EndpointIntervalKind::Algebraic => self.algebraic_endpoint_count += 1,
+            BezierRetainedEnvelopeSourceKind::Native => self.native_endpoint_count += 1,
+            BezierRetainedEnvelopeSourceKind::Algebraic => self.algebraic_endpoint_count += 1,
         }
+        self.endpoint_source_kinds.push(endpoint.kind);
         Classification::Decided(())
     }
 
@@ -695,6 +709,7 @@ impl EndpointEnvelopeAccumulator {
             envelope: Aabb2::new_unchecked(Point2::new(min_x, min_y), Point2::new(max_x, max_y)),
             native_endpoint_count: self.native_endpoint_count,
             algebraic_endpoint_count: self.algebraic_endpoint_count,
+            endpoint_source_kinds: self.endpoint_source_kinds,
         })
     }
 }
@@ -715,7 +730,7 @@ fn native_endpoint_interval(point: &Point2) -> EndpointInterval {
             lower: point.y().clone(),
             upper: point.y().clone(),
         },
-        kind: EndpointIntervalKind::Native,
+        kind: BezierRetainedEnvelopeSourceKind::Native,
     }
 }
 
@@ -730,12 +745,12 @@ fn algebraic_endpoint_interval(point: &BezierEndpointPointImage2) -> Option<Endp
                 point.y()?,
                 point.parameter().polynomial_coefficients.as_slice(),
             ),
-            kind: EndpointIntervalKind::Algebraic,
+            kind: BezierRetainedEnvelopeSourceKind::Algebraic,
         }),
         BezierEndpointPointImage2::RationalQuadratic(point) => Some(EndpointInterval {
             x: represented_coordinate_interval(point.x()?.representation()?),
             y: represented_coordinate_interval(point.y()?.representation()?),
-            kind: EndpointIntervalKind::Algebraic,
+            kind: BezierRetainedEnvelopeSourceKind::Algebraic,
         }),
     }
 }

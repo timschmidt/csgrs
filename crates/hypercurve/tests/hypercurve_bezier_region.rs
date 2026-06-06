@@ -3,9 +3,10 @@ use hypercurve::{
     BezierArrangementGraph2, BezierParameter2, BezierParameterInterval, BezierParameterPolynomial,
     BezierRegion2, BezierRetainedBoundaryLoop2, BezierRetainedCurveEnvelope2,
     BezierRetainedCurvedNestingRoleReport2, BezierRetainedEndpointEnvelope2,
-    BezierRetainedLineRegionRoleReport2, BezierRetainedRegion2, BezierRetainedRegionLoopRole,
-    BezierRetainedSignedAreaRoleReport2, BezierSplitFragment2, Classification, CurveError,
-    CurvePolicy, Point2, QuadraticBezier2, RationalQuadraticBezier2, Real, UncertaintyReason,
+    BezierRetainedEnvelopeSourceKind, BezierRetainedLineRegionRoleReport2, BezierRetainedRegion2,
+    BezierRetainedRegionLoopRole, BezierRetainedSignedAreaRoleReport2, BezierSplitFragment2,
+    Classification, CurveError, CurvePolicy, Point2, QuadraticBezier2, RationalQuadraticBezier2,
+    Real, UncertaintyReason,
 };
 use proptest::prelude::*;
 
@@ -722,6 +723,15 @@ fn retained_curve_envelope_includes_native_bezier_interior_extrema() {
     ));
     assert_eq!(endpoint_envelope.envelope().min(), &p(0, 0));
     assert_eq!(endpoint_envelope.envelope().max(), &p(4, 0));
+    assert_eq!(
+        endpoint_envelope.endpoint_source_kinds(),
+        &[
+            BezierRetainedEnvelopeSourceKind::Native,
+            BezierRetainedEnvelopeSourceKind::Native,
+            BezierRetainedEnvelopeSourceKind::Native,
+            BezierRetainedEnvelopeSourceKind::Native,
+        ]
+    );
 
     let curve_envelope = decided(BezierRetainedCurveEnvelope2::from_region(
         &retained,
@@ -733,6 +743,13 @@ fn retained_curve_envelope_includes_native_bezier_interior_extrema() {
     assert_eq!(curve_envelope.native_fragment_count(), 2);
     assert_eq!(curve_envelope.algebraic_fragment_count(), 0);
     assert!(!curve_envelope.has_algebraic_fragments());
+    assert_eq!(
+        curve_envelope.fragment_source_kinds(),
+        &[
+            BezierRetainedEnvelopeSourceKind::Native,
+            BezierRetainedEnvelopeSourceKind::Native,
+        ]
+    );
 }
 
 #[test]
@@ -760,6 +777,13 @@ fn retained_curve_envelope_uses_source_bounds_for_algebraic_split_fragments() {
     assert_eq!(curve_envelope.native_fragment_count(), 0);
     assert_eq!(curve_envelope.algebraic_fragment_count(), 2);
     assert!(curve_envelope.has_algebraic_fragments());
+    assert_eq!(
+        curve_envelope.fragment_source_kinds(),
+        &[
+            BezierRetainedEnvelopeSourceKind::Algebraic,
+            BezierRetainedEnvelopeSourceKind::Algebraic,
+        ]
+    );
 }
 
 #[test]
@@ -870,6 +894,15 @@ fn retained_region_materializes_closed_algebraic_carrier_loop_without_area_sampl
     assert_eq!(envelope.algebraic_endpoint_count(), 4);
     assert_eq!(envelope.native_endpoint_count(), 0);
     assert!(envelope.has_algebraic_endpoints());
+    assert_eq!(
+        envelope.endpoint_source_kinds(),
+        &[
+            BezierRetainedEnvelopeSourceKind::Algebraic,
+            BezierRetainedEnvelopeSourceKind::Algebraic,
+            BezierRetainedEnvelopeSourceKind::Algebraic,
+            BezierRetainedEnvelopeSourceKind::Algebraic,
+        ]
+    );
     assert_eq!(
         BezierRetainedCurveEnvelope2::from_region(&retained, &policy()),
         Classification::Uncertain(UncertaintyReason::Unsupported)

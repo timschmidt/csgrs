@@ -92,7 +92,9 @@ pub use bezier_region::{
     BezierRetainedLineRegionRoleReport2, BezierRetainedRegion2, BezierRetainedRegionLoopRole,
     BezierRetainedSignedAreaRoleReport2,
 };
-pub use bezier_retained_measure::{BezierRetainedCurveEnvelope2, BezierRetainedEndpointEnvelope2};
+pub use bezier_retained_measure::{
+    BezierRetainedCurveEnvelope2, BezierRetainedEndpointEnvelope2, BezierRetainedEnvelopeSourceKind,
+};
 pub use bezier_retained_overlap::{
     BezierRetainedLineOverlapExtent2, BezierRetainedLineOverlapSplit2,
     BezierRetainedLinearOverlapSplit2, BezierRetainedLinearOverlapSplitGraph2,
