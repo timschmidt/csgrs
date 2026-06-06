@@ -227,16 +227,11 @@ impl RetainedCurvePeriodicity1 {
 }
 
 impl RetainedEndpointEvidence2 {
-    /// Constructs exact endpoint evidence.
-    pub const fn new(
-        start_parameter: Real,
-        end_parameter: Real,
-        start_point: Point2,
-        end_point: Point2,
-    ) -> Self {
+    /// Constructs exact endpoint evidence for a certified retained domain.
+    pub fn new(domain: &RetainedParameterDomain1, start_point: Point2, end_point: Point2) -> Self {
         Self {
-            start_parameter,
-            end_parameter,
+            start_parameter: domain.start().clone(),
+            end_parameter: domain.end().clone(),
             start_point,
             end_point,
         }

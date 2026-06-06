@@ -508,7 +508,7 @@ fn retained_curve_profile_rejects_mismatched_endpoint_evidence_without_blocking_
     let cache = RetainedCurveCacheSummary2::new(5, 9, 2, 2, 0).unwrap();
     let mixed_cache = RetainedCurveCacheSummary2::new(5, 9, 2, 1, 1).unwrap();
     let identity = RetainedCurveIdentity2::new(RetainedCurveFamily2::PolynomialBSpline, 42);
-    let endpoints = RetainedEndpointEvidence2::new(r(0), r(2), p(0, 0), p(2, 0));
+    let endpoints = RetainedEndpointEvidence2::new(&domain, p(0, 0), p(2, 0));
     RetainedCurveProfile2::new(
         identity,
         domain.clone(),
@@ -520,7 +520,7 @@ fn retained_curve_profile_rejects_mismatched_endpoint_evidence_without_blocking_
     )
     .unwrap();
 
-    let endpoints = RetainedEndpointEvidence2::new(r(0), r(2), p(0, 0), p(2, 0));
+    let endpoints = RetainedEndpointEvidence2::new(&domain, p(0, 0), p(2, 0));
     RetainedCurveProfile2::new(
         identity,
         domain.clone(),
@@ -535,10 +535,10 @@ fn retained_curve_profile_rejects_mismatched_endpoint_evidence_without_blocking_
     let smaller_domain = decided(RetainedParameterDomain1::try_new(r(0), r(1), &policy).unwrap());
     let transplanted_trim =
         decided(RetainedTrimInterval1::try_new(r(0), r(2), &domain, &policy).unwrap());
-    let endpoints = RetainedEndpointEvidence2::new(r(0), r(1), p(0, 0), p(1, 0));
+    let endpoints = RetainedEndpointEvidence2::new(&smaller_domain, p(0, 0), p(1, 0));
     assert_topology_error(RetainedCurveProfile2::new(
         identity,
-        smaller_domain,
+        smaller_domain.clone(),
         transplanted_trim,
         RetainedCurvePeriodicity1::NonPeriodic,
         RetainedTopologyStatus::NativeExact,
@@ -546,7 +546,7 @@ fn retained_curve_profile_rejects_mismatched_endpoint_evidence_without_blocking_
         cache.clone(),
     ));
 
-    let bad_endpoints = RetainedEndpointEvidence2::new(r(0), r(1), p(0, 0), p(2, 0));
+    let bad_endpoints = RetainedEndpointEvidence2::new(&smaller_domain, p(0, 0), p(2, 0));
     assert_topology_error(RetainedCurveProfile2::new(
         identity,
         domain.clone(),
@@ -557,7 +557,7 @@ fn retained_curve_profile_rejects_mismatched_endpoint_evidence_without_blocking_
         cache.clone(),
     ));
 
-    let endpoints = RetainedEndpointEvidence2::new(r(0), r(2), p(0, 0), p(2, 0));
+    let endpoints = RetainedEndpointEvidence2::new(&domain, p(0, 0), p(2, 0));
     assert_topology_error(RetainedCurveProfile2::new(
         identity,
         domain,

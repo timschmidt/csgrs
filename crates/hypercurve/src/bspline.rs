@@ -1718,12 +1718,7 @@ fn endpoint_evidence(
         .last()
         .expect("validated B-spline has at least one control point")
         .clone();
-    RetainedEndpointEvidence2::new(
-        domain.start().clone(),
-        domain.end().clone(),
-        start_point,
-        end_point,
-    )
+    RetainedEndpointEvidence2::new(domain, start_point, end_point)
 }
 
 fn distinct_interior_knots(
