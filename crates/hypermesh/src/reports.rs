@@ -853,10 +853,12 @@ impl ExactBooleanResult {
                     let Some(assembly_vertex) = self.assembly.vertices.get(vertex) else {
                         return Err(ExactReportValidationError::InvalidAssembly);
                     };
-                    if !triangulation.boundary.iter().any(|source| {
-                        source == &assembly_vertex.source
-                            || points_equal(&assembly_vertex.point, boundary_node_point(source))
-                    }) {
+                    if !retains_volumetric_artifacts
+                        && !triangulation.boundary.iter().any(|source| {
+                            source == &assembly_vertex.source
+                                || points_equal(&assembly_vertex.point, boundary_node_point(source))
+                        })
+                    {
                         return Err(ExactReportValidationError::AssemblyVertexOutsideTriangulation);
                     }
                 }

@@ -7439,13 +7439,22 @@ mod tests {
         .expect("public exact boolean should support boundary output");
         assert_eq!(
             boundary_result.kind,
-            ExactBooleanResultKind::CertifiedShortcut {
-                shortcut: ExactBooleanShortcutKind::ArrangementCellComplex
+            ExactBooleanResultKind::ArrangementCellComplexMaterialized {
+                operation: ExactBooleanOperation::Union
             }
         );
         boundary_result.validate().unwrap();
         boundary_result
             .validate_against_sources(&left, &right)
+            .unwrap();
+        boundary_result
+            .validate_operation_against_sources(
+                &left,
+                &right,
+                ExactBooleanOperation::Union,
+                ValidationPolicy::ALLOW_BOUNDARY,
+                ExactBoundaryBooleanPolicy::Reject,
+            )
             .unwrap();
     }
 
