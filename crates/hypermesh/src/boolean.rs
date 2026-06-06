@@ -2862,6 +2862,22 @@ fn boolean_arrangement_orthogonal_solid_cell_recovery(
     Ok(Some(result))
 }
 
+/// Certify and materialize a named boolean for axis-aligned orthogonal solids.
+///
+/// This exposes the exact cell-recovery path used by [`boolean_exact`] as an
+/// [`ExactBooleanResult`], retaining the named operation and the
+/// arrangement-cell shortcut provenance. Inputs outside the supportable
+/// orthogonal cell model return `None` rather than falling through to unrelated
+/// topology paths.
+pub fn materialize_axis_aligned_orthogonal_solid_boolean(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    boolean_arrangement_orthogonal_solid_cell_recovery(left, right, operation, validation, false)
+}
+
 fn arrangement_orthogonal_solid_cell_recovery_outcome(
     attempt: &mut ExactArrangementBooleanAttempt,
     left: &ExactMesh,
@@ -4824,11 +4840,29 @@ fn boolean_arrangement_affine_orthogonal_solid_recovery(
         return Ok(None);
     };
     arrangement.validate_against_sources(left, right)?;
-    Ok(Some(certified_shortcut_result(
+    let result = certified_shortcut_result(
         arrangement.mesh,
         operation,
         ExactBooleanShortcutKind::ArrangementCellComplex,
-    )))
+    );
+    if result.validate().is_err() || result.validate_against_sources(left, right).is_err() {
+        return Ok(None);
+    }
+    Ok(Some(result))
+}
+
+/// Certify and materialize a named boolean for affine orthogonal solids.
+///
+/// The output is the boolean-result wrapper around the exact affine-cell
+/// materializer, so callers can validate both the output mesh and the retained
+/// decision provenance through [`ExactBooleanResult`] replay.
+pub fn materialize_affine_orthogonal_solid_boolean(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    boolean_arrangement_affine_orthogonal_solid_recovery(left, right, operation, validation)
 }
 
 fn materialize_open_surface_disjoint_meshes(

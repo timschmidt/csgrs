@@ -19,7 +19,8 @@ use hypermesh::{
     classify_mesh_vertices_against_convex_solid_report,
     classify_point_against_closed_mesh_winding_report, classify_point_against_convex_solid_report,
     classify_triangle_triangle, exact_arrangement_boolean_attempt_report, inspect_i64_mesh_input,
-    materialize_affine_orthogonal_solid_intersection,
+    materialize_affine_orthogonal_solid_boolean, materialize_affine_orthogonal_solid_intersection,
+    materialize_axis_aligned_orthogonal_solid_boolean,
     materialize_axis_aligned_orthogonal_solid_intersection,
     materialize_axis_aligned_orthogonal_solid_union, materialize_boundary_touching_policy_boolean,
     materialize_bounds_disjoint_boolean, materialize_closed_boundary_touching_regularized_boolean,
@@ -295,6 +296,48 @@ fn exact_affine_orthogonal_solid_materializer_is_publicly_replayable() {
         arrangement.freshness_against_sources(&left, &separated_right),
         AffineOrthogonalSolidFreshness::SourceReplayMismatch
     );
+
+    for operation in [
+        ExactBooleanOperation::Union,
+        ExactBooleanOperation::Intersection,
+        ExactBooleanOperation::Difference,
+    ] {
+        let result = materialize_affine_orthogonal_solid_boolean(
+            &left,
+            &right,
+            operation,
+            ValidationPolicy::CLOSED,
+        )
+        .unwrap()
+        .expect("skew affine boxes should materialize as a boolean result");
+        assert_eq!(
+            result.kind,
+            ExactBooleanResultKind::CertifiedShortcut {
+                operation,
+                shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
+            }
+        );
+        result.validate().unwrap();
+        result.validate_against_sources(&left, &right).unwrap();
+        assert_eq!(
+            result.freshness_against_sources(&left, &right),
+            ExactReportFreshness::Current
+        );
+        assert_eq!(
+            result.freshness_against_sources(&left, &separated_right),
+            ExactReportFreshness::SourceReplayMismatch
+        );
+        result
+            .validate_operation_against_sources(
+                &left,
+                &right,
+                operation,
+                ValidationPolicy::CLOSED,
+                ExactBoundaryBooleanPolicy::Reject,
+            )
+            .unwrap();
+        assert!(result.mesh.facts().mesh.closed_manifold);
+    }
 }
 
 #[test]
@@ -347,6 +390,48 @@ fn exact_axis_aligned_orthogonal_solid_materializer_is_publicly_replayable() {
         arrangement.freshness_against_sources(&left, &separated_right),
         AxisAlignedOrthogonalSolidFreshness::SourceReplayMismatch
     );
+
+    for operation in [
+        ExactBooleanOperation::Union,
+        ExactBooleanOperation::Intersection,
+        ExactBooleanOperation::Difference,
+    ] {
+        let result = materialize_axis_aligned_orthogonal_solid_boolean(
+            &left,
+            &right,
+            operation,
+            ValidationPolicy::CLOSED,
+        )
+        .unwrap()
+        .expect("L solid and box should materialize as a boolean result");
+        assert_eq!(
+            result.kind,
+            ExactBooleanResultKind::CertifiedShortcut {
+                operation,
+                shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
+            }
+        );
+        result.validate().unwrap();
+        result.validate_against_sources(&left, &right).unwrap();
+        assert_eq!(
+            result.freshness_against_sources(&left, &right),
+            ExactReportFreshness::Current
+        );
+        assert_eq!(
+            result.freshness_against_sources(&left, &separated_right),
+            ExactReportFreshness::SourceReplayMismatch
+        );
+        result
+            .validate_operation_against_sources(
+                &left,
+                &right,
+                operation,
+                ValidationPolicy::CLOSED,
+                ExactBoundaryBooleanPolicy::Reject,
+            )
+            .unwrap();
+        assert!(result.mesh.facts().mesh.closed_manifold);
+    }
 }
 
 #[test]
