@@ -165,16 +165,17 @@ impl PlanarPcurveImageRelation2 {
 
 impl PlanarPcurveImageEqualityReport2 {
     /// Constructs a planar pcurve image-equality report.
-    pub const fn new(
+    pub fn new(
         relation: PlanarPcurveImageRelation2,
         surface: Option<RetainedPlanarSurfaceIdentity2>,
         segment_count: usize,
-    ) -> Self {
-        Self {
+    ) -> CurveResult<Self> {
+        validate_planar_pcurve_image_report(relation, surface, segment_count)?;
+        Ok(Self {
             relation,
             surface,
             segment_count,
-        }
+        })
     }
 
     /// Returns the certified relation.
@@ -222,7 +223,8 @@ impl RetainedPlanarPcurve2 {
                 PlanarPcurveImageRelation2::SurfaceMismatch,
                 None,
                 0,
-            );
+            )
+            .expect("surface-mismatch pcurve report has no surface evidence");
         }
         let relation = if same_directed_segments(self.curve.segments(), other.curve.segments()) {
             PlanarPcurveImageRelation2::SameDirected
@@ -233,6 +235,7 @@ impl RetainedPlanarPcurve2 {
         };
         let segment_count = usize::from(relation.is_same_image()) * self.curve.len();
         PlanarPcurveImageEqualityReport2::new(relation, Some(self.surface), segment_count)
+            .expect("same-surface pcurve report has consistent image evidence")
     }
 }
 
@@ -264,7 +267,8 @@ impl RetainedPlanarTrimLoop2 {
                 PlanarPcurveImageRelation2::SurfaceMismatch,
                 None,
                 0,
-            );
+            )
+            .expect("surface-mismatch trim-loop report has no surface evidence");
         }
         let relation =
             if same_directed_segment_cycle(self.contour.segments(), other.contour.segments()) {
@@ -277,6 +281,7 @@ impl RetainedPlanarTrimLoop2 {
             };
         let segment_count = usize::from(relation.is_same_image()) * self.contour.len();
         PlanarPcurveImageEqualityReport2::new(relation, Some(self.surface), segment_count)
+            .expect("same-surface trim-loop report has consistent image evidence")
     }
 }
 
@@ -384,7 +389,7 @@ impl RetainedPlanarFace2 {
                     None,
                     self.material_loops.len(),
                     self.hole_loops.len(),
-                ),
+                )?,
             ));
         }
 
@@ -428,7 +433,8 @@ impl RetainedPlanarFace2 {
                 None,
                 None,
                 0,
-            );
+            )
+            .expect("surface-mismatch edge-use report has no trim evidence");
         }
 
         face_edge_use_report_from_loops(self, pcurve.curve.segments())
@@ -480,7 +486,7 @@ impl<'a> PreparedRetainedPlanarFace2<'a> {
                     None,
                     self.material_loop_count(),
                     self.hole_loop_count(),
-                ),
+                )?,
             ));
         }
 
@@ -511,7 +517,8 @@ impl<'a> PreparedRetainedPlanarFace2<'a> {
                 None,
                 None,
                 0,
-            );
+            )
+            .expect("surface-mismatch prepared edge-use report has no trim evidence");
         }
 
         face_edge_use_report_from_loops(self.face, pcurve.curve.segments())
@@ -554,22 +561,30 @@ impl RetainedPlanarFaceEdgeUseRelation2 {
 
 impl RetainedPlanarFaceEdgeUseReport2 {
     /// Constructs a retained planar face edge-use report.
-    pub const fn new(
+    pub fn new(
         relation: RetainedPlanarFaceEdgeUseRelation2,
         surface: Option<RetainedPlanarSurfaceIdentity2>,
         trim_role: Option<RetainedPlanarTrimLoopRole2>,
         trim_loop_index: Option<usize>,
         trim_segment_index: Option<usize>,
         segment_count: usize,
-    ) -> Self {
-        Self {
+    ) -> CurveResult<Self> {
+        validate_planar_face_edge_use_report(
             relation,
             surface,
             trim_role,
             trim_loop_index,
             trim_segment_index,
             segment_count,
-        }
+        )?;
+        Ok(Self {
+            relation,
+            surface,
+            trim_role,
+            trim_loop_index,
+            trim_segment_index,
+            segment_count,
+        })
     }
 
     /// Returns the certified edge-use relation or blocker.
@@ -608,18 +623,19 @@ impl RetainedPlanarFaceEdgeUseReport2 {
 
 impl RetainedPlanarFacePointReport2 {
     /// Constructs a retained planar face point-query report.
-    pub const fn new(
+    pub fn new(
         location: RetainedPlanarFacePointLocation2,
         surface: Option<RetainedPlanarSurfaceIdentity2>,
         material_loop_count: usize,
         hole_loop_count: usize,
-    ) -> Self {
-        Self {
+    ) -> CurveResult<Self> {
+        validate_planar_face_point_report(location, surface, material_loop_count)?;
+        Ok(Self {
             location,
             surface,
             material_loop_count,
             hole_loop_count,
-        }
+        })
     }
 
     /// Returns the exact query location or blocker.
@@ -641,6 +657,121 @@ impl RetainedPlanarFacePointReport2 {
     pub const fn hole_loop_count(&self) -> usize {
         self.hole_loop_count
     }
+}
+
+fn validate_planar_pcurve_image_report(
+    relation: PlanarPcurveImageRelation2,
+    surface: Option<RetainedPlanarSurfaceIdentity2>,
+    segment_count: usize,
+) -> CurveResult<()> {
+    match relation {
+        PlanarPcurveImageRelation2::SurfaceMismatch => {
+            if surface.is_some() || segment_count != 0 {
+                return Err(CurveError::Topology(
+                    "surface-mismatch pcurve image report must not carry image evidence".into(),
+                ));
+            }
+        }
+        PlanarPcurveImageRelation2::Different => {
+            if surface.is_none() || segment_count != 0 {
+                return Err(CurveError::Topology(
+                    "different pcurve image report must carry only matching-surface evidence"
+                        .into(),
+                ));
+            }
+        }
+        PlanarPcurveImageRelation2::SameDirected | PlanarPcurveImageRelation2::SameReversed => {
+            if surface.is_none() || segment_count == 0 {
+                return Err(CurveError::Topology(
+                    "same-image pcurve report must carry surface and positive segment evidence"
+                        .into(),
+                ));
+            }
+        }
+    }
+    Ok(())
+}
+
+fn validate_planar_face_point_report(
+    location: RetainedPlanarFacePointLocation2,
+    surface: Option<RetainedPlanarSurfaceIdentity2>,
+    material_loop_count: usize,
+) -> CurveResult<()> {
+    if material_loop_count == 0 {
+        return Err(CurveError::Topology(
+            "retained planar face point report must reference a face with material loops".into(),
+        ));
+    }
+    match location {
+        RetainedPlanarFacePointLocation2::SurfaceMismatch => {
+            if surface.is_some() {
+                return Err(CurveError::Topology(
+                    "surface-mismatch point report must not carry trim-classification surface evidence"
+                        .into(),
+                ));
+            }
+        }
+        RetainedPlanarFacePointLocation2::Outside
+        | RetainedPlanarFacePointLocation2::Boundary
+        | RetainedPlanarFacePointLocation2::Inside => {
+            if surface.is_none() {
+                return Err(CurveError::Topology(
+                    "trim-classified point report must carry matching surface evidence".into(),
+                ));
+            }
+        }
+    }
+    Ok(())
+}
+
+fn validate_planar_face_edge_use_report(
+    relation: RetainedPlanarFaceEdgeUseRelation2,
+    surface: Option<RetainedPlanarSurfaceIdentity2>,
+    trim_role: Option<RetainedPlanarTrimLoopRole2>,
+    trim_loop_index: Option<usize>,
+    trim_segment_index: Option<usize>,
+    segment_count: usize,
+) -> CurveResult<()> {
+    match relation {
+        RetainedPlanarFaceEdgeUseRelation2::SurfaceMismatch => {
+            if surface.is_some()
+                || trim_role.is_some()
+                || trim_loop_index.is_some()
+                || trim_segment_index.is_some()
+                || segment_count != 0
+            {
+                return Err(CurveError::Topology(
+                    "surface-mismatch edge-use report must not carry trim evidence".into(),
+                ));
+            }
+        }
+        RetainedPlanarFaceEdgeUseRelation2::NotTrimBoundary => {
+            if surface.is_none()
+                || trim_role.is_some()
+                || trim_loop_index.is_some()
+                || trim_segment_index.is_some()
+                || segment_count != 0
+            {
+                return Err(CurveError::Topology(
+                    "non-boundary edge-use report must carry only matching-surface evidence".into(),
+                ));
+            }
+        }
+        RetainedPlanarFaceEdgeUseRelation2::BoundarySameDirected
+        | RetainedPlanarFaceEdgeUseRelation2::BoundarySameReversed => {
+            if surface.is_none()
+                || trim_role.is_none()
+                || trim_loop_index.is_none()
+                || trim_segment_index.is_none()
+                || segment_count == 0
+            {
+                return Err(CurveError::Topology(
+                    "boundary edge-use report must carry complete positive trim evidence".into(),
+                ));
+            }
+        }
+    }
+    Ok(())
 }
 
 fn same_directed_segments(first: &[Segment2], second: &[Segment2]) -> bool {
@@ -696,7 +827,8 @@ fn face_edge_use_report_from_loops(
                 Some(loop_index),
                 Some(segment_index),
                 query_segments.len(),
-            );
+            )
+            .expect("material edge-use match has complete trim evidence");
         }
     }
     for (loop_index, trim) in face.hole_loops.iter().enumerate() {
@@ -710,7 +842,8 @@ fn face_edge_use_report_from_loops(
                 Some(loop_index),
                 Some(segment_index),
                 query_segments.len(),
-            );
+            )
+            .expect("hole edge-use match has complete trim evidence");
         }
     }
 
@@ -722,6 +855,7 @@ fn face_edge_use_report_from_loops(
         None,
         0,
     )
+    .expect("not-trim-boundary edge-use report has only surface evidence")
 }
 
 fn segment_subchain_relation(
@@ -798,6 +932,6 @@ fn face_point_report_from_region_classification(
             Some(surface),
             material_loop_count,
             hole_loop_count,
-        ),
+        )?,
     ))
 }

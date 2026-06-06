@@ -1,7 +1,8 @@
 use hypercurve::{
     BulgeVertex2, Classification, Contour2, CurveError, CurvePolicy, CurveString2, FillRule,
-    PlanarPcurveImageRelation2, Point2, Real, RetainedPlanarFace2,
-    RetainedPlanarFaceEdgeUseRelation2, RetainedPlanarFacePointLocation2, RetainedPlanarPcurve2,
+    PlanarPcurveImageEqualityReport2, PlanarPcurveImageRelation2, Point2, Real,
+    RetainedPlanarFace2, RetainedPlanarFaceEdgeUseRelation2, RetainedPlanarFaceEdgeUseReport2,
+    RetainedPlanarFacePointLocation2, RetainedPlanarFacePointReport2, RetainedPlanarPcurve2,
     RetainedPlanarSurfaceIdentity2, RetainedPlanarTrimLoop2, RetainedPlanarTrimLoopRole2,
 };
 
@@ -39,6 +40,10 @@ fn policy() -> CurvePolicy {
 
 fn trim(surface: RetainedPlanarSurfaceIdentity2, points: &[(i32, i32)]) -> RetainedPlanarTrimLoop2 {
     RetainedPlanarTrimLoop2::new(surface, rectangle(points, FillRule::NonZero))
+}
+
+fn assert_topology_error<T>(result: Result<T, CurveError>) {
+    assert!(matches!(result, Err(CurveError::Topology(_))));
 }
 
 #[test]
@@ -83,6 +88,27 @@ fn planar_pcurve_equality_blocks_surface_mismatch_before_uv_match() {
     );
     assert_eq!(report.surface(), None);
     assert_eq!(report.segment_count(), 0);
+}
+
+#[test]
+fn planar_pcurve_image_report_constructor_rejects_inconsistent_evidence() {
+    let surface = RetainedPlanarSurfaceIdentity2::new(5);
+
+    assert_topology_error(PlanarPcurveImageEqualityReport2::new(
+        PlanarPcurveImageRelation2::SameDirected,
+        Some(surface),
+        0,
+    ));
+    assert_topology_error(PlanarPcurveImageEqualityReport2::new(
+        PlanarPcurveImageRelation2::Different,
+        None,
+        0,
+    ));
+    assert_topology_error(PlanarPcurveImageEqualityReport2::new(
+        PlanarPcurveImageRelation2::SurfaceMismatch,
+        Some(surface),
+        1,
+    ));
 }
 
 #[test]
@@ -196,6 +222,30 @@ fn retained_planar_face_reports_surface_mismatch_before_trim_classification() {
     );
     assert_eq!(report.surface(), None);
     assert!(!report.location().is_trim_classification());
+}
+
+#[test]
+fn retained_planar_face_point_report_constructor_rejects_inconsistent_evidence() {
+    let surface = RetainedPlanarSurfaceIdentity2::new(45);
+
+    assert_topology_error(RetainedPlanarFacePointReport2::new(
+        RetainedPlanarFacePointLocation2::Inside,
+        None,
+        1,
+        0,
+    ));
+    assert_topology_error(RetainedPlanarFacePointReport2::new(
+        RetainedPlanarFacePointLocation2::SurfaceMismatch,
+        Some(surface),
+        1,
+        0,
+    ));
+    assert_topology_error(RetainedPlanarFacePointReport2::new(
+        RetainedPlanarFacePointLocation2::Outside,
+        Some(surface),
+        0,
+        0,
+    ));
 }
 
 #[test]
@@ -357,6 +407,36 @@ fn retained_planar_face_edge_use_rejects_surface_mismatch_and_nonboundary_chords
     assert_eq!(report.surface(), Some(surface));
     assert_eq!(report.trim_role(), None);
     assert_eq!(report.segment_count(), 0);
+}
+
+#[test]
+fn retained_planar_face_edge_use_report_constructor_rejects_inconsistent_evidence() {
+    let surface = RetainedPlanarSurfaceIdentity2::new(95);
+
+    assert_topology_error(RetainedPlanarFaceEdgeUseReport2::new(
+        RetainedPlanarFaceEdgeUseRelation2::BoundarySameDirected,
+        Some(surface),
+        Some(RetainedPlanarTrimLoopRole2::Material),
+        Some(0),
+        Some(0),
+        0,
+    ));
+    assert_topology_error(RetainedPlanarFaceEdgeUseReport2::new(
+        RetainedPlanarFaceEdgeUseRelation2::NotTrimBoundary,
+        Some(surface),
+        Some(RetainedPlanarTrimLoopRole2::Material),
+        Some(0),
+        Some(0),
+        1,
+    ));
+    assert_topology_error(RetainedPlanarFaceEdgeUseReport2::new(
+        RetainedPlanarFaceEdgeUseRelation2::SurfaceMismatch,
+        Some(surface),
+        None,
+        None,
+        None,
+        0,
+    ));
 }
 
 #[test]
