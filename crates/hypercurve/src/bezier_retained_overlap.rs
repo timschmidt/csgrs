@@ -136,6 +136,31 @@ fn validate_positive_unit_overlap_range(range: &ParamRange) -> CurveResult<()> {
     }
 }
 
+fn validate_refined_fragment_local_range(range: &ParamRange) -> CurveResult<()> {
+    let policy = CurvePolicy::certified();
+    if in_closed_unit_interval(range.start(), &policy) != Some(true)
+        || in_closed_unit_interval(range.end(), &policy) != Some(true)
+    {
+        return Err(CurveError::Topology(
+            "retained refined overlap fragment range endpoints must be certified inside the unit interval"
+                .to_owned(),
+        ));
+    }
+    match compare_reals(range.start(), range.end(), &policy) {
+        Some(std::cmp::Ordering::Less) => Ok(()),
+        Some(std::cmp::Ordering::Equal) => Err(CurveError::Topology(
+            "retained refined overlap fragment range must be positive-dimensional".to_owned(),
+        )),
+        Some(std::cmp::Ordering::Greater) => Err(CurveError::Topology(
+            "retained refined overlap fragment range must be forward in local parameter".to_owned(),
+        )),
+        None => Err(CurveError::Topology(
+            "retained refined overlap fragment range endpoint ordering must be certified"
+                .to_owned(),
+        )),
+    }
+}
+
 fn validate_overlap_relation_evidence(
     relation: &BezierRetainedOverlapRelation2,
 ) -> CurveResult<()> {
@@ -354,11 +379,12 @@ impl BezierRetainedLinearOverlapSplit2 {
 
 impl BezierRetainedOverlapRefinedFragment2 {
     /// Constructs provenance for one refined overlap-split graph fragment.
-    pub const fn new(original_fragment_index: usize, local_range: ParamRange) -> Self {
-        Self {
+    pub fn new(original_fragment_index: usize, local_range: ParamRange) -> CurveResult<Self> {
+        validate_refined_fragment_local_range(&local_range)?;
+        Ok(Self {
             original_fragment_index,
             local_range,
-        }
+        })
     }
 
     /// Returns the fragment index in the graph that was refined.
@@ -1279,10 +1305,14 @@ fn refine_graph_at_boundaries(
         };
         if fragment_boundaries.len() <= 2 {
             refined_graph_fragments.push(arrangement_fragment.clone());
-            refined_fragments.push(BezierRetainedOverlapRefinedFragment2::new(
+            let refined_fragment = match BezierRetainedOverlapRefinedFragment2::new(
                 original_index,
                 ParamRange::new(Real::zero(), Real::one()),
-            ));
+            ) {
+                Ok(refined_fragment) => refined_fragment,
+                Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
+            };
+            refined_fragments.push(refined_fragment);
             continue;
         }
 
@@ -1317,10 +1347,12 @@ fn refine_graph_at_boundaries(
                     curve: subcurve,
                 },
             ));
-            refined_fragments.push(BezierRetainedOverlapRefinedFragment2::new(
-                original_index,
-                local_range,
-            ));
+            let refined_fragment =
+                match BezierRetainedOverlapRefinedFragment2::new(original_index, local_range) {
+                    Ok(refined_fragment) => refined_fragment,
+                    Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
+                };
+            refined_fragments.push(refined_fragment);
         }
     }
 

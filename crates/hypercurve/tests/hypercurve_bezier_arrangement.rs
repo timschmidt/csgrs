@@ -805,6 +805,23 @@ fn retained_overlap_split_constructors_validate_range_evidence() {
 }
 
 #[test]
+fn retained_overlap_refined_fragment_constructor_validates_local_range() {
+    BezierRetainedOverlapRefinedFragment2::new(0, ParamRange::new(r(0), r(1))).unwrap();
+    assert_topology_error(BezierRetainedOverlapRefinedFragment2::new(
+        0,
+        ParamRange::new(r(1), r(0)),
+    ));
+    assert_topology_error(BezierRetainedOverlapRefinedFragment2::new(
+        0,
+        ParamRange::new(q(1, 2), q(1, 2)),
+    ));
+    assert_topology_error(BezierRetainedOverlapRefinedFragment2::new(
+        0,
+        ParamRange::new(r(-1), r(1)),
+    ));
+}
+
+#[test]
 fn retained_linear_overlap_split_graph_rejects_missing_refined_provenance() {
     let fragment = BezierSplitFragment2::Materialized {
         start: exact(r(0)),
