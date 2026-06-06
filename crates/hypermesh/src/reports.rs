@@ -971,6 +971,17 @@ impl ExactBooleanResult {
             self.kind,
             ExactBooleanResultKind::SelectedRegions { .. }
                 | ExactBooleanResultKind::OpenSurfaceArrangement { .. }
+        ) {
+            for classification in &self.region_classifications {
+                classification
+                    .validate_against_sources(left, right)
+                    .map_err(ExactReportValidationError::InvalidRegionClassification)?;
+            }
+        }
+        if matches!(
+            self.kind,
+            ExactBooleanResultKind::SelectedRegions { .. }
+                | ExactBooleanResultKind::OpenSurfaceArrangement { .. }
                 | ExactBooleanResultKind::ArrangementCellComplexMaterialized { .. }
         ) {
             self.assembly

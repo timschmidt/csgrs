@@ -8337,6 +8337,32 @@ mod tests {
             );
             result.validate().unwrap();
             result.validate_against_sources(&left, &right).unwrap();
+            let mut stale_region_fact = result.clone();
+            let classification = stale_region_fact
+                .region_classifications
+                .first_mut()
+                .expect("open-surface arrangement should retain region classifications");
+            match classification.relation {
+                crate::region::FaceRegionPlaneRelation::StrictlyAbove => {
+                    classification.relation = crate::region::FaceRegionPlaneRelation::StrictlyBelow;
+                    classification
+                        .node_sides
+                        .fill(Some(hyperlimit::PlaneSide::Below));
+                }
+                _ => {
+                    classification.relation = crate::region::FaceRegionPlaneRelation::StrictlyAbove;
+                    classification
+                        .node_sides
+                        .fill(Some(hyperlimit::PlaneSide::Above));
+                }
+            }
+            stale_region_fact.validate().unwrap();
+            assert!(
+                stale_region_fact
+                    .validate_against_sources(&left, &right)
+                    .is_err(),
+                "{operation:?}: stale region classification should fail source replay"
+            );
             let selection = match operation {
                 ExactBooleanOperation::Union => ExactRegionSelection::KeepAll,
                 ExactBooleanOperation::Intersection => ExactRegionSelection::KeepNone,
