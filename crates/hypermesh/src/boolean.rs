@@ -918,10 +918,7 @@ impl GraphRelationCounts {
 fn graph_relation_counts(graph: &super::graph::ExactIntersectionGraph) -> GraphRelationCounts {
     let mut counts = GraphRelationCounts::default();
     for pair in &graph.face_pairs {
-        let pair_has_unknown_event = pair
-            .events
-            .iter()
-            .any(|event| matches!(event, super::graph::IntersectionEvent::Unknown));
+        let pair_has_unknown_event = pair.events.iter().any(graph_event_has_unknown_relation);
         match pair.relation {
             MeshFacePairRelation::Candidate => counts.candidate_pairs += 1,
             MeshFacePairRelation::CoplanarOverlapping => counts.coplanar_overlapping_pairs += 1,
@@ -947,6 +944,17 @@ fn graph_relation_counts(graph: &super::graph::ExactIntersectionGraph) -> GraphR
             .count();
     }
     counts
+}
+
+fn graph_event_has_unknown_relation(event: &super::graph::IntersectionEvent) -> bool {
+    matches!(
+        event,
+        super::graph::IntersectionEvent::Unknown
+            | super::graph::IntersectionEvent::SegmentPlane {
+                relation: SegmentPlaneRelation::Unknown,
+                ..
+            }
+    )
 }
 
 fn unique_classified_region_count(classifications: &[FaceRegionPlaneClassification]) -> usize {
@@ -5422,6 +5430,45 @@ mod tests {
             &same_side_left,
             &same_side_right
         ));
+    }
+
+    #[test]
+    fn graph_relation_counts_include_unknown_segment_plane_events() {
+        let graph = super::super::graph::ExactIntersectionGraph {
+            face_pairs: vec![FacePairEvents {
+                left_face: 0,
+                right_face: 0,
+                relation: MeshFacePairRelation::Candidate,
+                projection: None,
+                events: vec![IntersectionEvent::SegmentPlane {
+                    segment_side: MeshSide::Left,
+                    edge: [0, 1],
+                    plane_side: MeshSide::Right,
+                    plane_face: 0,
+                    relation: SegmentPlaneRelation::Unknown,
+                    point: None,
+                    parameter: None,
+                    parameter_ratio: None,
+                    construction_failure: None,
+                    endpoint_sides: [None, Some(hyperlimit::PlaneSide::Above)],
+                }],
+            }],
+        };
+
+        let counts = graph_relation_counts(&graph);
+        assert_eq!(counts.candidate_pairs, 1);
+        assert_eq!(counts.unknown_pairs, 1);
+        assert_eq!(
+            counts.into_blocker(ExactBooleanBlockerKind::NeedsRefinement),
+            ExactBooleanBlocker {
+                kind: ExactBooleanBlockerKind::NeedsRefinement,
+                candidate_pairs: 1,
+                coplanar_overlapping_pairs: 0,
+                coplanar_touching_pairs: 0,
+                unknown_pairs: 1,
+                construction_failed_events: 0,
+            }
+        );
     }
 
     #[test]
