@@ -418,14 +418,14 @@ fn derive_obstacle(
     if report.coplanar_face_pairs() == 0 {
         return CoplanarVolumetricCellObstacle::NonCoplanarOnly;
     }
-    if report.proper_crossing_events > 0 {
-        return CoplanarVolumetricCellObstacle::MixedCoplanarAndCrossingCells;
-    }
-    if report.same_side_coplanar_overlapping_pairs > 0
+    let requires_coplanar_volumetric_cells = report.same_side_coplanar_overlapping_pairs > 0
         || report.undecided_side_coplanar_overlapping_pairs > 0
         || report.opposite_side_coplanar_overlapping_pairs
-            < report.positive_area_coplanar_overlapping_pairs
-    {
+            < report.positive_area_coplanar_overlapping_pairs;
+    if report.proper_crossing_events > 0 && requires_coplanar_volumetric_cells {
+        return CoplanarVolumetricCellObstacle::MixedCoplanarAndCrossingCells;
+    }
+    if requires_coplanar_volumetric_cells {
         return CoplanarVolumetricCellObstacle::NeedsCoplanarVolumetricCells;
     }
     CoplanarVolumetricCellObstacle::BoundaryOnlyContact
@@ -609,4 +609,62 @@ fn volumetric_cell_graph_mesh_error(
         DiagnosticKind::UnsupportedExactOperation,
         format!("retained volumetric-cell graph failed source-mesh validation: {error:?}"),
     ))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn crossing_with_coplanar_overlap_report() -> CoplanarVolumetricCellEvidenceReport {
+        CoplanarVolumetricCellEvidenceReport {
+            left_closed_manifold: true,
+            right_closed_manifold: true,
+            retained_face_pair_count: 2,
+            candidate_pairs: 1,
+            proper_crossing_candidate_pairs: 1,
+            coplanar_touching_pairs: 0,
+            coplanar_overlapping_pairs: 1,
+            positive_area_coplanar_overlapping_pairs: 1,
+            opposite_side_coplanar_overlapping_pairs: 0,
+            same_side_coplanar_overlapping_pairs: 0,
+            undecided_side_coplanar_overlapping_pairs: 0,
+            unknown_pairs: 0,
+            segment_plane_events: 1,
+            proper_crossing_events: 1,
+            boundary_segment_events: 0,
+            construction_failed_events: 0,
+            unknown_events: 0,
+            coplanar_edge_events: 3,
+            coplanar_vertex_events: 0,
+            obstacle: CoplanarVolumetricCellObstacle::NoRetainedOverlap,
+        }
+    }
+
+    #[test]
+    fn opposite_side_coplanar_contact_mixed_with_crossing_is_not_cell_blocker() {
+        let mut report = crossing_with_coplanar_overlap_report();
+        report.opposite_side_coplanar_overlapping_pairs = 1;
+        report.obstacle = derive_obstacle(&report);
+
+        assert_eq!(
+            report.obstacle,
+            CoplanarVolumetricCellObstacle::BoundaryOnlyContact
+        );
+        assert!(!report.obstacle.requires_coplanar_volumetric_cells());
+        assert_eq!(report.validate(), Ok(()));
+    }
+
+    #[test]
+    fn same_side_coplanar_overlap_mixed_with_crossing_still_needs_cells() {
+        let mut report = crossing_with_coplanar_overlap_report();
+        report.same_side_coplanar_overlapping_pairs = 1;
+        report.obstacle = derive_obstacle(&report);
+
+        assert_eq!(
+            report.obstacle,
+            CoplanarVolumetricCellObstacle::MixedCoplanarAndCrossingCells
+        );
+        assert!(report.obstacle.requires_coplanar_volumetric_cells());
+        assert_eq!(report.validate(), Ok(()));
+    }
 }
