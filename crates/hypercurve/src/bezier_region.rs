@@ -755,11 +755,31 @@ fn validate_retained_region_loops(
     boundary_loops: &[BezierRetainedBoundaryLoop2],
 ) -> CurveResult<()> {
     validate_bezier_region_loops(boundary_loops)?;
+    validate_retained_region_arrangement_sources(boundary_loops)?;
     let policy = CurvePolicy::certified();
     for boundary_loop in boundary_loops {
         validate_retained_boundary_loop_connectivity(boundary_loop.fragments(), &policy)?;
     }
     Ok(())
+}
+
+fn validate_retained_region_arrangement_sources(
+    boundary_loops: &[BezierRetainedBoundaryLoop2],
+) -> CurveResult<()> {
+    let mut indices = Vec::new();
+    for boundary_loop in boundary_loops {
+        if let Some(sources) = boundary_loop.arrangement_sources() {
+            indices.extend(
+                sources
+                    .iter()
+                    .map(|source| source.arrangement_fragment_index()),
+            );
+        }
+    }
+    validate_unique_arrangement_source_indices(
+        indices,
+        "retained Bezier region boundary loops must not reuse arrangement source fragments",
+    )
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -1187,7 +1207,31 @@ fn validate_loop_arrangement_sources(
         loop_count,
         "loop arrangement source",
         loop_arrangement_sources.len(),
+    )?;
+    let indices = loop_arrangement_sources
+        .iter()
+        .filter_map(Option::as_ref)
+        .flat_map(|sources| {
+            sources
+                .iter()
+                .map(|source| source.arrangement_fragment_index())
+        })
+        .collect::<Vec<_>>();
+    validate_unique_arrangement_source_indices(
+        indices,
+        "retained role report loop arrangement sources must not reuse arrangement fragments",
     )
+}
+
+fn validate_unique_arrangement_source_indices(
+    mut indices: Vec<usize>,
+    error: &str,
+) -> CurveResult<()> {
+    indices.sort_unstable();
+    if indices.windows(2).any(|window| window[0] == window[1]) {
+        return Err(CurveError::Topology(error.into()));
+    }
+    Ok(())
 }
 
 fn validate_report_length(

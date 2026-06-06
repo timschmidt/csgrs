@@ -172,6 +172,17 @@ fn retained_line_loop(vertices: &[Point2]) -> BezierRetainedBoundaryLoop2 {
     retained_loop(fragments)
 }
 
+fn retained_line_loop_with_sources(
+    vertices: &[Point2],
+    sources: Vec<BezierRetainedFragmentSource2>,
+) -> BezierRetainedBoundaryLoop2 {
+    BezierRetainedBoundaryLoop2::try_new_with_arrangement_sources(
+        retained_line_loop(vertices).into_fragments(),
+        sources,
+    )
+    .unwrap()
+}
+
 #[test]
 fn closed_polynomial_arrangement_materializes_retained_region_with_exact_area() {
     let upper = QuadraticBezier2::new(p(0, 0), p(2, 4), p(4, 0));
@@ -447,6 +458,35 @@ fn retained_role_report_constructors_reject_mismatched_evidence() {
             BezierRetainedFragmentSource2::new(0, 0, 0),
         ])]),
     );
+    let two_loop_retained = retained_region(vec![
+        retained_line_loop(&[p(0, 0), p(6, 0), p(6, 6), p(0, 6)]),
+        retained_line_loop(&[p(2, 2), p(4, 2), p(4, 4), p(2, 4)]),
+    ]);
+    let two_loop_report = decided(two_loop_retained.line_image_role_report(&policy()).unwrap());
+    assert_topology_error(
+        BezierRetainedLineRegionRoleReport2::new(
+            two_loop_report.roles().to_vec(),
+            two_loop_report.nesting_depths().to_vec(),
+            two_loop_report.materialized_fragment_count(),
+            two_loop_report.algebraic_fragment_count(),
+            two_loop_report.contours().to_vec(),
+        )
+        .unwrap()
+        .with_loop_arrangement_sources(vec![
+            Some(vec![
+                BezierRetainedFragmentSource2::new(0, 0, 0),
+                BezierRetainedFragmentSource2::new(1, 0, 1),
+                BezierRetainedFragmentSource2::new(2, 0, 2),
+                BezierRetainedFragmentSource2::new(3, 0, 3),
+            ]),
+            Some(vec![
+                BezierRetainedFragmentSource2::new(0, 1, 0),
+                BezierRetainedFragmentSource2::new(4, 1, 1),
+                BezierRetainedFragmentSource2::new(5, 1, 2),
+                BezierRetainedFragmentSource2::new(6, 1, 3),
+            ]),
+        ]),
+    );
     assert_topology_error(BezierRetainedSignedAreaRoleReport2::new(
         roles.clone(),
         Vec::new(),
@@ -531,6 +571,30 @@ fn retained_boundary_loop_constructor_rejects_duplicate_arrangement_sources() {
             ],
         ),
     );
+}
+
+#[test]
+fn retained_region_constructor_rejects_reused_arrangement_sources_across_loops() {
+    let outer = retained_line_loop_with_sources(
+        &[p(0, 0), p(6, 0), p(6, 6), p(0, 6)],
+        vec![
+            BezierRetainedFragmentSource2::new(0, 0, 0),
+            BezierRetainedFragmentSource2::new(1, 0, 1),
+            BezierRetainedFragmentSource2::new(2, 0, 2),
+            BezierRetainedFragmentSource2::new(3, 0, 3),
+        ],
+    );
+    let inner = retained_line_loop_with_sources(
+        &[p(2, 2), p(4, 2), p(4, 4), p(2, 4)],
+        vec![
+            BezierRetainedFragmentSource2::new(0, 1, 0),
+            BezierRetainedFragmentSource2::new(4, 1, 1),
+            BezierRetainedFragmentSource2::new(5, 1, 2),
+            BezierRetainedFragmentSource2::new(6, 1, 3),
+        ],
+    );
+
+    assert_topology_error(BezierRetainedRegion2::new(vec![outer, inner]));
 }
 
 #[test]
