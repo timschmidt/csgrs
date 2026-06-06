@@ -76,12 +76,14 @@ pub enum BezierRetainedRegionLoopRole {
 /// Exact role assignment for retained line-image Bezier boundary loops.
 ///
 /// This report is intentionally narrower than arbitrary retained Bezier role
-/// assignment.  It accepts only materialized polynomial Bezier fragments whose
-/// control nets are exact degree-elevated line segments, lowers them to native
-/// [`Contour2`] line loops, and then runs the same exact nesting rule used by
-/// [`Region2::from_boundary_contours`].  This follows Yap's exact-geometric-
-/// computation boundary: unsupported curve families remain explicit evidence
-/// gaps rather than being sampled into polygon surrogates.  The containment
+/// assignment.  It accepts materialized Bezier/conic fragments only through a
+/// certified exact line-image fit, accepts algebraic endpoint-image fragments
+/// only when they provide exact endpoint witnesses, lowers those loops to
+/// native [`Contour2`] line loops, and then runs exact nesting.  This follows
+/// Yap's exact-geometric-computation boundary: unsupported curve families
+/// remain explicit evidence gaps rather than being sampled into polygon
+/// surrogates.  The source counters retain whether role assignment consumed
+/// native fit certificates or algebraic endpoint evidence.  The containment
 /// step uses boundary-first point-in-contour classification as surveyed by
 /// Hormann and Agathos, "The Point in Polygon Problem for Arbitrary Polygons,"
 /// *Computational Geometry* 20(3), 131-144 (2001).
@@ -89,6 +91,8 @@ pub enum BezierRetainedRegionLoopRole {
 pub struct BezierRetainedLineRegionRoleReport2 {
     roles: Vec<BezierRetainedRegionLoopRole>,
     nesting_depths: Vec<usize>,
+    materialized_fragment_count: usize,
+    algebraic_fragment_count: usize,
     contours: Vec<Contour2>,
 }
 
@@ -138,11 +142,15 @@ impl BezierRetainedLineRegionRoleReport2 {
     pub const fn new(
         roles: Vec<BezierRetainedRegionLoopRole>,
         nesting_depths: Vec<usize>,
+        materialized_fragment_count: usize,
+        algebraic_fragment_count: usize,
         contours: Vec<Contour2>,
     ) -> Self {
         Self {
             roles,
             nesting_depths,
+            materialized_fragment_count,
+            algebraic_fragment_count,
             contours,
         }
     }
@@ -155,6 +163,21 @@ impl BezierRetainedLineRegionRoleReport2 {
     /// Returns the certified count of containing loops for each retained loop.
     pub fn nesting_depths(&self) -> &[usize] {
         &self.nesting_depths
+    }
+
+    /// Returns how many materialized fragments contributed certified line-image fits.
+    pub const fn materialized_fragment_count(&self) -> usize {
+        self.materialized_fragment_count
+    }
+
+    /// Returns how many algebraic endpoint-image fragments contributed exact endpoints.
+    pub const fn algebraic_fragment_count(&self) -> usize {
+        self.algebraic_fragment_count
+    }
+
+    /// Returns true when algebraic endpoint evidence contributed to the line contours.
+    pub const fn has_algebraic_fragments(&self) -> bool {
+        self.algebraic_fragment_count > 0
     }
 
     /// Returns exact native line contours used for role assignment.
@@ -564,12 +587,16 @@ impl BezierRetainedRegion2 {
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<BezierRetainedLineRegionRoleReport2>> {
         let mut contours = Vec::with_capacity(self.boundary_loops.len());
+        let mut materialized_fragment_count = 0_usize;
+        let mut algebraic_fragment_count = 0_usize;
         for boundary_loop in &self.boundary_loops {
-            let contour = match retained_line_loop_to_contour(boundary_loop, policy)? {
-                Classification::Decided(contour) => contour,
+            let line_loop = match retained_line_loop_to_contour(boundary_loop, policy)? {
+                Classification::Decided(line_loop) => line_loop,
                 Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
             };
-            contours.push(contour);
+            materialized_fragment_count += line_loop.materialized_fragment_count;
+            algebraic_fragment_count += line_loop.algebraic_fragment_count;
+            contours.push(line_loop.contour);
         }
 
         let roles = match retained_line_loop_roles(&contours, policy)? {
@@ -577,7 +604,13 @@ impl BezierRetainedRegion2 {
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
         Ok(Classification::Decided(
-            BezierRetainedLineRegionRoleReport2::new(roles.roles, roles.nesting_depths, contours),
+            BezierRetainedLineRegionRoleReport2::new(
+                roles.roles,
+                roles.nesting_depths,
+                materialized_fragment_count,
+                algebraic_fragment_count,
+                contours,
+            ),
         ))
     }
 
@@ -724,19 +757,49 @@ impl BezierRetainedRegion2 {
     }
 }
 
+struct RetainedLineLoopContour {
+    contour: Contour2,
+    materialized_fragment_count: usize,
+    algebraic_fragment_count: usize,
+}
+
 fn retained_line_loop_to_contour(
     boundary_loop: &BezierRetainedBoundaryLoop2,
     policy: &CurvePolicy,
-) -> CurveResult<Classification<Contour2>> {
+) -> CurveResult<Classification<RetainedLineLoopContour>> {
     let mut segments = Vec::with_capacity(boundary_loop.fragments().len());
+    let mut materialized_fragment_count = 0_usize;
+    let mut algebraic_fragment_count = 0_usize;
     for fragment in boundary_loop.fragments() {
-        let (start, end) = match retained_line_fragment_endpoints(fragment, policy)? {
+        let endpoints = match retained_line_fragment_endpoints(fragment, policy)? {
             Classification::Decided(endpoints) => endpoints,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
+        match endpoints.source {
+            RetainedLineFragmentSource::MaterializedFit => materialized_fragment_count += 1,
+            RetainedLineFragmentSource::AlgebraicEndpoints => algebraic_fragment_count += 1,
+        }
+        let (start, end) = endpoints.points;
         segments.push(Segment2::Line(LineSeg2::try_new(start, end)?));
     }
-    Contour2::try_new(segments).map(Classification::Decided)
+    Contour2::try_new(segments).map(|contour| {
+        Classification::Decided(RetainedLineLoopContour {
+            contour,
+            materialized_fragment_count,
+            algebraic_fragment_count,
+        })
+    })
+}
+
+struct RetainedLineFragmentEndpoints {
+    points: (Point2, Point2),
+    source: RetainedLineFragmentSource,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum RetainedLineFragmentSource {
+    MaterializedFit,
+    AlgebraicEndpoints,
 }
 
 /// Returns exact line-segment endpoints for a retained line-image fragment.
@@ -754,7 +817,7 @@ fn retained_line_loop_to_contour(
 fn retained_line_fragment_endpoints(
     fragment: &BezierSplitFragment2,
     policy: &CurvePolicy,
-) -> CurveResult<Classification<(Point2, Point2)>> {
+) -> CurveResult<Classification<RetainedLineFragmentEndpoints>> {
     match fragment {
         BezierSplitFragment2::Materialized { curve, .. } => {
             let fit = match subcurve_fit_exact_line_image(curve, policy)? {
@@ -766,10 +829,10 @@ fn retained_line_fragment_endpoints(
                     return Ok(Classification::Uncertain(reason));
                 }
             };
-            Ok(Classification::Decided((
-                fit.line().start().clone(),
-                fit.line().end().clone(),
-            )))
+            Ok(Classification::Decided(RetainedLineFragmentEndpoints {
+                points: (fit.line().start().clone(), fit.line().end().clone()),
+                source: RetainedLineFragmentSource::MaterializedFit,
+            }))
         }
         BezierSplitFragment2::AlgebraicEndpointImages {
             start,
@@ -796,7 +859,10 @@ fn retained_line_fragment_endpoints(
                         return Ok(Classification::Uncertain(reason));
                     }
                 };
-            Ok(Classification::Decided((start, end)))
+            Ok(Classification::Decided(RetainedLineFragmentEndpoints {
+                points: (start, end),
+                source: RetainedLineFragmentSource::AlgebraicEndpoints,
+            }))
         }
         BezierSplitFragment2::Unresolved { .. } => {
             Ok(Classification::Uncertain(UncertaintyReason::Boundary))
