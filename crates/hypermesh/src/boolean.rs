@@ -1493,11 +1493,6 @@ pub fn boolean_exact_with_boundary_policy(
             )? {
                 return Ok(result);
             }
-            if let Some(result) =
-                boolean_arrangement_volume_graph_meshes(left, right, operation, validation)?
-            {
-                return Ok(result);
-            }
             if !graph_requires_coplanar_volumetric_cells_for_sources(&graph, left, right) {
                 if let Some(result) =
                     boolean_convex_intersection_meshes(left, right, operation, validation)?
@@ -1512,11 +1507,6 @@ pub fn boolean_exact_with_boundary_policy(
             }
             if let Some(result) =
                 boolean_convex_difference_meshes(left, right, operation, validation)?
-            {
-                return Ok(result);
-            }
-            if let Some(result) =
-                boolean_arrangement_cell_complex_meshes(left, right, operation, validation, false)?
             {
                 return Ok(result);
             }
@@ -1677,36 +1667,6 @@ fn arrangement_cell_complex_materializes_for_preflight(
             Ok(true)
         }
         Ok(_) | Err(_) => Ok(false),
-    }
-}
-
-fn boolean_arrangement_volume_graph_meshes(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-    validation: ValidationPolicy,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
-    let outcome = match run_arrangement_cell_complex_attempt(
-        left,
-        right,
-        operation,
-        ExactRegularizationPolicy::REGULARIZED_SOLID,
-        Some(validation),
-        false,
-    ) {
-        Ok(outcome) => outcome,
-        Err(_) => return Ok(None),
-    };
-    match outcome {
-        ArrangementCellComplexOutcome::Materialized(result, attempt)
-            if attempt.arrangement_blockers == 0
-                && attempt.volume_regions > 0
-                && attempt.volume_adjacencies > 0
-                && attempt.decline.is_none() =>
-        {
-            Ok(Some(result))
-        }
-        _ => Ok(None),
     }
 }
 
