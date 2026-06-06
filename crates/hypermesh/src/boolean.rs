@@ -5987,6 +5987,43 @@ mod tests {
         }
     }
 
+    #[test]
+    fn affine_empty_intersection_materializes_without_winding_fallback() {
+        let left = skew_affine_box_i64([0, 0, 0], [1, 1, 1]);
+        let right = skew_affine_box_i64([2, 0, 0], [3, 1, 1]);
+
+        assert!(!meshes_are_certified_bounds_disjoint(&left, &right));
+        assert!(has_empty_affine_orthogonal_solid_cell_intersection(
+            &left, &right
+        ));
+
+        let preflight =
+            preflight_boolean_exact(&left, &right, ExactBooleanOperation::Intersection).unwrap();
+        assert_eq!(
+            preflight.support,
+            ExactBooleanSupport::CertifiedArrangementCellComplex,
+            "{preflight:?}"
+        );
+        assert!(preflight.blocker.is_none(), "{preflight:?}");
+
+        let result = boolean_exact(
+            &left,
+            &right,
+            ExactBooleanOperation::Intersection,
+            ValidationPolicy::CLOSED,
+        )
+        .expect("empty affine-normalized intersection should materialize");
+        assert_eq!(
+            result.kind,
+            ExactBooleanResultKind::CertifiedShortcut {
+                shortcut: ExactBooleanShortcutKind::ArrangementCellComplex
+            }
+        );
+        result.validate().unwrap();
+        result.validate_against_sources(&left, &right).unwrap();
+        assert!(result.mesh.triangles().is_empty());
+    }
+
     fn arrangement_attempt_certified_for_preflight_with_validation(
         left: &ExactMesh,
         right: &ExactMesh,
@@ -6699,6 +6736,19 @@ mod tests {
 
     fn affine_box_i64(min: [i64; 3], max: [i64; 3]) -> ExactMesh {
         let p = |u: i64, v: i64, w: i64| [2 * u + v, 2 * v, 2 * w];
+        affine_box_from_map_i64(min, max, p)
+    }
+
+    fn skew_affine_box_i64(min: [i64; 3], max: [i64; 3]) -> ExactMesh {
+        let p = |u: i64, v: i64, w: i64| [u + 10 * v, v, w];
+        affine_box_from_map_i64(min, max, p)
+    }
+
+    fn affine_box_from_map_i64(
+        min: [i64; 3],
+        max: [i64; 3],
+        p: impl Fn(i64, i64, i64) -> [i64; 3],
+    ) -> ExactMesh {
         let corners = [
             p(min[0], min[1], min[2]),
             p(max[0], min[1], min[2]),
