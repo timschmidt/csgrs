@@ -2944,10 +2944,6 @@ fn materialize_simple_coplanar_overlay_arrangement(
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
     if arrangement.carrier_plane_overlays.len() != 1
         || !arrangement.face_plane_arrangements.is_empty()
-        || !arrangement
-            .carrier_plane_overlays
-            .iter()
-            .all(|overlay| overlay.overlay.is_complete())
     {
         return Ok(None);
     }
@@ -2955,6 +2951,10 @@ fn materialize_simple_coplanar_overlay_arrangement(
         return Ok(None);
     };
     let overlay = &arrangement.carrier_plane_overlays[0];
+    let allow_empty = matches!(
+        operation,
+        ExactBooleanOperation::Intersection | ExactBooleanOperation::Difference
+    );
     let operation = match operation {
         ExactBooleanOperation::Union => ExactArrangement2dSetOperation::Union,
         ExactBooleanOperation::Intersection => ExactArrangement2dSetOperation::Intersection,
@@ -2978,9 +2978,19 @@ fn materialize_simple_coplanar_overlay_arrangement(
     };
     let requested_overlay = build_exact_arrangement2d_overlay(&[left_ring, right_ring], operation);
     if !requested_overlay.is_complete()
-        || !requested_overlay.faces.iter().any(|face| face.selected)
-        || requested_overlay.output_loops.is_empty()
+        && !overlay_allows_selected_face_materialization(&requested_overlay)
     {
+        return Ok(None);
+    }
+    let has_selected_area = requested_overlay.faces.iter().any(|face| face.selected);
+    if !has_selected_area {
+        if allow_empty {
+            let mesh = empty_mesh("empty exact coplanar overlay arrangement", validation)?;
+            return Ok(Some(certified_shortcut_result(
+                mesh,
+                ExactBooleanShortcutKind::ArrangementCellComplex,
+            )));
+        }
         return Ok(None);
     }
 
@@ -2996,7 +3006,15 @@ fn materialize_simple_coplanar_overlay_arrangement(
         overlay.projection,
         "exact coplanar overlay arrangement",
         ProjectedOverlayBoundaryPolicy::SimplifyCollinear,
-    ) else {
+    )
+    .or_else(|| {
+        mesh_from_selected_projected_overlay_faces(
+            &requested_overlay,
+            &carrier_points,
+            overlay.projection,
+            "exact coplanar selected-face overlay arrangement",
+        )
+    }) else {
         return Ok(None);
     };
     let mesh = copy_mesh(
@@ -7238,6 +7256,41 @@ mod tests {
                 shortcut: ExactBooleanShortcutKind::ArrangementCellComplex
             }
         );
+    }
+
+    #[test]
+    fn coplanar_overlay_materializes_point_touching_hole_difference() {
+        let left = ExactMesh::from_i64_triangles_with_policy(
+            &[0, 0, 0, 8, 0, 0, 8, 8, 0, 0, 8, 0],
+            &[0, 1, 2, 0, 2, 3],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let touching_holes = ExactMesh::from_i64_triangles_with_policy(
+            &[
+                1, 1, 0, 3, 1, 0, 3, 3, 0, 1, 3, 0, //
+                3, 3, 0, 5, 3, 0, 5, 5, 0, 3, 5, 0,
+            ],
+            &[0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+
+        let result = boolean_coplanar_mesh_overlay_optional(
+            &left,
+            &touching_holes,
+            ExactBooleanOperation::Difference,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap()
+        .expect("point-touching holed difference should materialize");
+        assert_eq!(
+            result.kind,
+            ExactBooleanResultKind::CertifiedShortcut {
+                shortcut: ExactBooleanShortcutKind::ArrangementCellComplex
+            }
+        );
+        result.mesh.validate_retained_state().unwrap();
     }
 
     #[test]

@@ -1963,4 +1963,56 @@ mod tests {
             1
         );
     }
+
+    #[test]
+    fn point_touching_difference_emits_exact_selected_cells() {
+        let overlay = build_exact_arrangement2d_overlay(
+            &[
+                ring(
+                    ExactArrangement2dRegion::Left,
+                    &[(0, 0), (6, 0), (6, 6), (0, 6)],
+                ),
+                ring(
+                    ExactArrangement2dRegion::Right,
+                    &[(3, 3), (5, 3), (5, 5), (3, 5)],
+                ),
+                ring(
+                    ExactArrangement2dRegion::Right,
+                    &[(0, 0), (2, 0), (2, 2), (0, 2)],
+                ),
+            ],
+            ExactArrangement2dSetOperation::Difference,
+        );
+
+        assert!(overlay.blockers.is_empty(), "{:?}", overlay.blockers);
+        assert_eq!(overlay.output_components.len(), 1);
+        assert_eq!(overlay.output_components[0].hole_loops.len(), 1);
+        assert_eq!(overlay.output_loops.len(), 2);
+    }
+
+    #[test]
+    fn point_touching_holes_are_retained_as_separate_exact_loops() {
+        let overlay = build_exact_arrangement2d_overlay(
+            &[
+                ring(
+                    ExactArrangement2dRegion::Left,
+                    &[(0, 0), (8, 0), (8, 8), (0, 8)],
+                ),
+                ring(
+                    ExactArrangement2dRegion::Right,
+                    &[(1, 1), (3, 1), (3, 3), (1, 3)],
+                ),
+                ring(
+                    ExactArrangement2dRegion::Right,
+                    &[(3, 3), (5, 3), (5, 5), (3, 5)],
+                ),
+            ],
+            ExactArrangement2dSetOperation::Difference,
+        );
+
+        assert!(overlay.blockers.is_empty(), "{:?}", overlay.blockers);
+        assert_eq!(overlay.output_components.len(), 1);
+        assert_eq!(overlay.output_components[0].hole_loops.len(), 2);
+        assert_eq!(overlay.output_loops.len(), 3);
+    }
 }
