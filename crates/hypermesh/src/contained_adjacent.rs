@@ -74,6 +74,19 @@ pub enum ContainedFaceAdjacentUnionError {
     OutputMesh(ExactMeshValidationError),
     /// The retained output mesh is locally valid but is not a closed manifold.
     OutputNotClosed,
+    /// Replaying the retained source operands did not reproduce this union.
+    SourceReplayMismatch,
+}
+
+/// Freshness status for a retained contained-face adjacent union.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ContainedFaceAdjacentUnionFreshness {
+    /// The retained union locally validates and replays from source operands.
+    Current,
+    /// The retained output mesh no longer passes local exact output validation.
+    InvalidOutput,
+    /// The artifact is locally valid but no longer replays from source operands.
+    SourceReplayMismatch,
 }
 
 impl ContainedFaceAdjacentUnion {
@@ -90,6 +103,55 @@ impl ContainedFaceAdjacentUnion {
         }
         Ok(())
     }
+
+    /// Validate this union by replaying the contained-face adjacency certificate
+    /// and materialization from the source operands.
+    pub fn validate_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<(), ContainedFaceAdjacentUnionError> {
+        self.validate()?;
+        let replay =
+            materialize_contained_face_adjacent_union(left, right, self.mesh.validation_policy())
+                .ok_or(ContainedFaceAdjacentUnionError::SourceReplayMismatch)?;
+        if self == &replay {
+            Ok(())
+        } else {
+            Err(ContainedFaceAdjacentUnionError::SourceReplayMismatch)
+        }
+    }
+
+    /// Classify whether this retained union is fresh for the source operands.
+    pub fn freshness_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> ContainedFaceAdjacentUnionFreshness {
+        if self.validate().is_err() {
+            return ContainedFaceAdjacentUnionFreshness::InvalidOutput;
+        }
+        match materialize_contained_face_adjacent_union(left, right, self.mesh.validation_policy())
+        {
+            Some(replay) if replay == *self => ContainedFaceAdjacentUnionFreshness::Current,
+            Some(_) | None => ContainedFaceAdjacentUnionFreshness::SourceReplayMismatch,
+        }
+    }
+}
+
+/// Certify and materialize a contained-face adjacent closed-solid union.
+pub fn materialize_contained_face_adjacent_union(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    validation: ValidationPolicy,
+) -> Option<ContainedFaceAdjacentUnion> {
+    let certificate = contained_face_adjacent_certificate(left, right)?;
+    materialize_contained_face_adjacent_union_from_certificate(
+        left,
+        right,
+        &certificate,
+        validation,
+    )
 }
 
 /// Return the retained contained-face adjacency certificate for these sources.

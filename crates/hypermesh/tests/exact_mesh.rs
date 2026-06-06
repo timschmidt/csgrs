@@ -1,12 +1,13 @@
 use hyperlimit::{Point3, SourceProvenance};
 use hypermesh::{
     AffineOrthogonalSolidFreshness, AxisAlignedOrthogonalSolidFreshness, ClosedMeshOrientation,
-    ConvexSolidMeshRelation, ConvexSolidPointRelation, ConvexSolidReportFreshness,
-    CoplanarArrangementReadinessFreshness, CoplanarOverlapGraphFreshness,
-    CoplanarOverlapSplitFreshness, CoplanarVolumetricCellEvidenceFreshness, ExactArrangement,
-    ExactArrangementFreshness, ExactBooleanOperation, ExactBooleanResultKind,
-    ExactBoundaryBooleanPolicy, ExactI64MeshInputReadiness, ExactLabeledCellComplexFreshness,
-    ExactMesh, ExactRegularizationPolicy, ExactReportFreshness, ExactSelectedCellComplexFreshness,
+    ContainedFaceAdjacentUnionFreshness, ConvexSolidMeshRelation, ConvexSolidPointRelation,
+    ConvexSolidReportFreshness, CoplanarArrangementReadinessFreshness,
+    CoplanarOverlapGraphFreshness, CoplanarOverlapSplitFreshness,
+    CoplanarVolumetricCellEvidenceFreshness, ExactArrangement, ExactArrangementFreshness,
+    ExactBooleanOperation, ExactBooleanResultKind, ExactBoundaryBooleanPolicy,
+    ExactI64MeshInputReadiness, ExactLabeledCellComplexFreshness, ExactMesh,
+    ExactRegularizationPolicy, ExactReportFreshness, ExactSelectedCellComplexFreshness,
     ExactSimplifiedCellComplexFreshness, ExactVolumetricRegionFreshness,
     ExactVolumetricRegionRelation, IntersectionGraphFreshness, MeshFacePairFreshness,
     MeshFacePairRelation, MeshFacePairValidationError, SplitPlanFreshness,
@@ -20,8 +21,8 @@ use hypermesh::{
     classify_triangle_triangle, exact_arrangement_boolean_attempt_report, inspect_i64_mesh_input,
     materialize_affine_orthogonal_solid_intersection,
     materialize_axis_aligned_orthogonal_solid_intersection,
-    materialize_axis_aligned_orthogonal_solid_union, preflight_boolean_exact,
-    preflight_boolean_exact_with_boundary_policy,
+    materialize_axis_aligned_orthogonal_solid_union, materialize_contained_face_adjacent_union,
+    preflight_boolean_exact, preflight_boolean_exact_with_boundary_policy,
 };
 use hyperreal::Real;
 
@@ -346,6 +347,43 @@ fn exact_coplanar_volumetric_cell_evidence_is_publicly_replayable() {
     assert_eq!(
         report.freshness_against_sources(&left, &separated_right),
         CoplanarVolumetricCellEvidenceFreshness::SourceReplayMismatch
+    );
+}
+
+#[test]
+fn exact_contained_face_adjacent_union_is_publicly_replayable() {
+    let left = tetra_from_corners([0, 0, 0], [10, 0, 0], [0, 10, 0], [0, 0, 10]);
+    let right = tetra_from_corners([1, 1, 0], [1, 3, 0], [3, 1, 0], [1, 1, -2]);
+
+    let union = materialize_contained_face_adjacent_union(&left, &right, ValidationPolicy::CLOSED)
+        .expect("contained coplanar cap should materialize as a holed union");
+    union.validate().unwrap();
+    union.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        union.freshness_against_sources(&left, &right),
+        ContainedFaceAdjacentUnionFreshness::Current
+    );
+    assert!(union.mesh.facts().mesh.closed_manifold);
+    assert!(!union.contained_faces.is_empty());
+    assert!(!union.containing_faces.is_empty());
+    assert!(!union.mesh.triangles().is_empty());
+
+    let mut invalid_output = union.clone();
+    invalid_output.mesh = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 1, 0, 0, 0, 1, 0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    assert_eq!(
+        invalid_output.freshness_against_sources(&left, &right),
+        ContainedFaceAdjacentUnionFreshness::InvalidOutput
+    );
+
+    let separated_right = tetra([20, 0, 0]);
+    assert_eq!(
+        union.freshness_against_sources(&left, &separated_right),
+        ContainedFaceAdjacentUnionFreshness::SourceReplayMismatch
     );
 }
 

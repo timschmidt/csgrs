@@ -109,6 +109,10 @@ pub use cell_complex::{
 pub use construction::{
     intersect_segment_with_face_plane, intersect_segment_with_retained_face_plane,
 };
+pub use contained_adjacent::{
+    ContainedFaceAdjacentUnion, ContainedFaceAdjacentUnionError,
+    ContainedFaceAdjacentUnionFreshness, materialize_contained_face_adjacent_union,
+};
 pub use convex::{
     ConvexSolidDifference, ConvexSolidIntersection, ConvexSolidUnion,
     intersect_closed_convex_solids, subtract_closed_convex_solids, union_closed_convex_solids,
