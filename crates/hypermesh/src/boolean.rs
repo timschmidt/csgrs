@@ -1602,21 +1602,24 @@ fn arrangement_cell_complex_materializes_for_preflight(
     operation: ExactBooleanOperation,
     regularize_unregularized_sheet_complex: bool,
 ) -> Result<bool, MeshError> {
-    match run_arrangement_cell_complex_attempt(
-        left,
-        right,
-        operation,
-        ExactRegularizationPolicy::REGULARIZED_SOLID,
-        Some(ValidationPolicy::CLOSED),
-        regularize_unregularized_sheet_complex,
-    ) {
-        Ok(ArrangementCellComplexOutcome::Materialized(_, attempt))
-            if arrangement_cell_complex_attempt_is_certified_for_preflight(&attempt) =>
-        {
-            Ok(true)
+    for validation in [ValidationPolicy::CLOSED, ValidationPolicy::ALLOW_BOUNDARY] {
+        match run_arrangement_cell_complex_attempt(
+            left,
+            right,
+            operation,
+            ExactRegularizationPolicy::REGULARIZED_SOLID,
+            Some(validation),
+            regularize_unregularized_sheet_complex,
+        ) {
+            Ok(ArrangementCellComplexOutcome::Materialized(_, attempt))
+                if arrangement_cell_complex_attempt_is_certified_for_preflight(&attempt) =>
+            {
+                return Ok(true);
+            }
+            Ok(_) | Err(_) => {}
         }
-        Ok(_) | Err(_) => Ok(false),
     }
+    Ok(false)
 }
 
 fn boolean_arrangement_regularized_boundary_contact_from_graph(
@@ -7319,6 +7322,67 @@ mod tests {
         assert!(preflight.blocker.is_none());
         assert_eq!(preflight.retained_face_pairs, graph.face_pairs.len());
         assert_eq!(preflight.retained_events, graph.event_count());
+    }
+
+    fn arrangement_attempt_certified_for_preflight_with_validation(
+        left: &ExactMesh,
+        right: &ExactMesh,
+        operation: ExactBooleanOperation,
+        validation: ValidationPolicy,
+    ) -> bool {
+        match run_arrangement_cell_complex_attempt(
+            left,
+            right,
+            operation,
+            ExactRegularizationPolicy::REGULARIZED_SOLID,
+            Some(validation),
+            true,
+        ) {
+            Ok(ArrangementCellComplexOutcome::Materialized(_, attempt)) => {
+                arrangement_cell_complex_attempt_is_certified_for_preflight(&attempt)
+            }
+            Ok(ArrangementCellComplexOutcome::Declined(_)) | Err(_) => false,
+        }
+    }
+
+    #[test]
+    fn arrangement_preflight_probe_accepts_boundary_valid_open_output() {
+        let left = ExactMesh::from_i64_triangles_with_policy(
+            &[0, 0, 0, 4, 0, 0, 0, 4, 0],
+            &[0, 1, 2],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let right = ExactMesh::from_i64_triangles_with_policy(
+            &[1, 1, 0, 5, 1, 0, 1, 5, 0],
+            &[0, 1, 2],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+
+        for operation in [
+            ExactBooleanOperation::Union,
+            ExactBooleanOperation::Intersection,
+        ] {
+            assert!(
+                !arrangement_attempt_certified_for_preflight_with_validation(
+                    &left,
+                    &right,
+                    operation,
+                    ValidationPolicy::CLOSED
+                )
+            );
+            assert!(arrangement_attempt_certified_for_preflight_with_validation(
+                &left,
+                &right,
+                operation,
+                ValidationPolicy::ALLOW_BOUNDARY
+            ));
+            assert!(
+                arrangement_cell_complex_materializes_for_preflight(&left, &right, operation, true)
+                    .unwrap()
+            );
+        }
     }
 
     #[test]
