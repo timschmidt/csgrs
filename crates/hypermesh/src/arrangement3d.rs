@@ -22,7 +22,7 @@ use super::graph::{
     ExactIntersectionGraph, ExactSplitTopologyPlan, FaceRegionBoundary, FaceSplitBoundaryNode,
     MeshSide, SplitEdgeNode, SplitPlanValidationReport, build_intersection_graph,
 };
-use super::loop_triangulation::{projected_loop_interior_witness, triangulate_exact_loop};
+use super::loop_triangulation::{projected_loop_interior_witness, triangulate_exact_loop_group};
 use super::mesh::ExactMesh;
 use super::regularization::{
     ExactArrangementBlocker, ExactLowerDimensionalPolicy, ExactRegularizationPolicy,
@@ -2556,7 +2556,7 @@ fn shell_region_mesh(
     shell: &ArrangementRegion,
     face_cells: &[ArrangementFaceCell],
 ) -> Result<ExactMesh, ExactArrangementBlocker> {
-    let mut boundary_loops = Vec::<Vec<Point3>>::new();
+    let mut boundary_loop_groups = BTreeMap::<(u8, usize), Vec<Vec<Point3>>>::new();
     for &cell_index in &shell.face_cells {
         let cell = face_cells
             .get(cell_index)
@@ -2564,18 +2564,22 @@ fn shell_region_mesh(
         if cell.boundary_points.len() < 3 {
             return Err(ExactArrangementBlocker::NonManifoldCellComplex);
         }
-        if boundary_loops
-            .iter()
+        if boundary_loop_groups
+            .values()
+            .flatten()
             .any(|existing| exact_boundary_loops_equivalent(existing, &cell.boundary_points))
         {
             continue;
         }
-        boundary_loops.push(cell.boundary_points.clone());
+        boundary_loop_groups
+            .entry((mesh_side_key(cell.carrier.side), cell.carrier.face))
+            .or_default()
+            .push(cell.boundary_points.clone());
     }
     let mut vertices = Vec::new();
     let mut triangles = Vec::new();
-    for boundary in &boundary_loops {
-        triangulate_exact_loop(boundary, &mut vertices, &mut triangles)?;
+    for boundary_group in boundary_loop_groups.values() {
+        triangulate_exact_loop_group(boundary_group, &mut vertices, &mut triangles)?;
     }
     ExactMesh::new_with_policy(
         vertices,
@@ -2584,6 +2588,13 @@ fn shell_region_mesh(
         ValidationPolicy::CLOSED,
     )
     .map_err(|_| ExactArrangementBlocker::NonManifoldCellComplex)
+}
+
+fn mesh_side_key(side: MeshSide) -> u8 {
+    match side {
+        MeshSide::Left => 0,
+        MeshSide::Right => 1,
+    }
 }
 
 fn nested_two_shell_volume_graph(
@@ -3137,6 +3148,26 @@ mod tests {
         Point3::new(Real::from(x), Real::from(y), Real::from(z))
     }
 
+    fn test_face_cell(face: usize, points: Vec<Point3>) -> ArrangementFaceCell {
+        ArrangementFaceCell {
+            carrier: ArrangementFaceCarrier {
+                side: MeshSide::Left,
+                face,
+                triangle: [0, 1, 2],
+            },
+            boundary: points
+                .iter()
+                .enumerate()
+                .map(|(vertex, _)| ArrangementFaceCellNode::FacePlaneVertex {
+                    arrangement: 0,
+                    vertex,
+                })
+                .collect(),
+            boundary_points: points,
+            opposite: None,
+        }
+    }
+
     fn tetrahedron_i64(a: [i64; 3], b: [i64; 3], c: [i64; 3], d: [i64; 3]) -> ExactMesh {
         ExactMesh::from_i64_triangles(
             &[
@@ -3241,7 +3272,12 @@ mod tests {
         let mut vertices = Vec::new();
         let mut triangles = Vec::new();
 
-        triangulate_exact_loop(&cell.boundary_points, &mut vertices, &mut triangles).unwrap();
+        triangulate_exact_loop_group(
+            &[cell.boundary_points.clone()],
+            &mut vertices,
+            &mut triangles,
+        )
+        .unwrap();
 
         assert_eq!(vertices.len(), points.len());
         assert_eq!(triangles.len(), points.len() - 2);
@@ -3268,6 +3304,56 @@ mod tests {
             )
             .value(),
             Some(Ordering::Equal)
+        );
+    }
+
+    #[test]
+    fn shell_replay_triangulates_grouped_hole_carrier_loops() {
+        let loops = [
+            (0, vec![p3(0, 0, 1), p3(4, 0, 1), p3(4, 4, 1), p3(0, 4, 1)]),
+            (0, vec![p3(1, 3, 1), p3(3, 3, 1), p3(3, 1, 1), p3(1, 1, 1)]),
+            (1, vec![p3(0, 4, 0), p3(4, 4, 0), p3(4, 0, 0), p3(0, 0, 0)]),
+            (1, vec![p3(1, 1, 0), p3(3, 1, 0), p3(3, 3, 0), p3(1, 3, 0)]),
+            (2, vec![p3(0, 0, 0), p3(4, 0, 0), p3(4, 0, 1), p3(0, 0, 1)]),
+            (3, vec![p3(4, 0, 0), p3(4, 4, 0), p3(4, 4, 1), p3(4, 0, 1)]),
+            (4, vec![p3(4, 4, 0), p3(0, 4, 0), p3(0, 4, 1), p3(4, 4, 1)]),
+            (5, vec![p3(0, 4, 0), p3(0, 0, 0), p3(0, 0, 1), p3(0, 4, 1)]),
+            (6, vec![p3(1, 1, 0), p3(1, 1, 1), p3(3, 1, 1), p3(3, 1, 0)]),
+            (7, vec![p3(3, 1, 0), p3(3, 1, 1), p3(3, 3, 1), p3(3, 3, 0)]),
+            (8, vec![p3(3, 3, 0), p3(3, 3, 1), p3(1, 3, 1), p3(1, 3, 0)]),
+            (9, vec![p3(1, 3, 0), p3(1, 3, 1), p3(1, 1, 1), p3(1, 1, 0)]),
+        ];
+        let face_cells = loops
+            .into_iter()
+            .map(|(face, points)| test_face_cell(face, points))
+            .collect::<Vec<_>>();
+        let shell = ArrangementRegion {
+            face_cells: (0..face_cells.len()).collect(),
+            adjacent_face_cells: Vec::new(),
+            edge_incidences: Vec::new(),
+            oriented_sides: Vec::new(),
+            boundary_edges: 0,
+            non_manifold_edges: 0,
+            source_sides: vec![MeshSide::Left],
+            closed: true,
+            manifold: true,
+        };
+
+        let mesh = shell_region_mesh(&shell, &face_cells).unwrap();
+
+        assert!(mesh.facts().mesh.closed_manifold, "{:?}", mesh.facts().mesh);
+        assert_ne!(
+            exact_mesh_orientation(&mesh),
+            ClosedMeshOrientation::Unknown
+        );
+        assert!(
+            mesh.vertices().iter().all(|point| point3_equal(
+                point,
+                &Point3::new(Real::from(2), Real::from(2), Real::from(1))
+            )
+            .value()
+                == Some(false)),
+            "shell replay must preserve annular cap holes instead of fan-filling them"
         );
     }
 

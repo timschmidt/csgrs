@@ -111,14 +111,6 @@ fn same_depth_endpoint_touch_flags(
     Ok(touches)
 }
 
-pub(crate) fn triangulate_exact_loop(
-    boundary: &[Point3],
-    vertices: &mut Vec<Point3>,
-    triangles: &mut Vec<Triangle>,
-) -> Result<(), ExactArrangementBlocker> {
-    triangulate_exact_loop_group(&[boundary.to_vec()], vertices, triangles)
-}
-
 fn validate_loop_topology(loops: &[ProjectedFaceLoop]) -> Result<(), ExactArrangementBlocker> {
     for left_index in 0..loops.len() {
         for right_index in (left_index + 1)..loops.len() {
