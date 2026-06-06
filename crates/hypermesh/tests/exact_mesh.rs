@@ -5,7 +5,7 @@ use hypermesh::{
     ConvexSolidReportFreshness, CoplanarArrangementReadinessFreshness,
     CoplanarOverlapGraphFreshness, CoplanarOverlapSplitFreshness,
     CoplanarVolumetricCellEvidenceFreshness, ExactArrangement, ExactArrangementFreshness,
-    ExactBooleanOperation, ExactBooleanResultKind, ExactBoundaryBooleanPolicy,
+    ExactBooleanOperation, ExactBooleanResult, ExactBooleanResultKind, ExactBoundaryBooleanPolicy,
     ExactI64MeshInputReadiness, ExactLabeledCellComplexFreshness, ExactMesh,
     ExactRegularizationPolicy, ExactReportFreshness, ExactSelectedCellComplexFreshness,
     ExactSimplifiedCellComplexFreshness, ExactVolumetricRegionFreshness,
@@ -22,11 +22,13 @@ use hypermesh::{
     materialize_affine_orthogonal_solid_intersection,
     materialize_axis_aligned_orthogonal_solid_intersection,
     materialize_axis_aligned_orthogonal_solid_union, materialize_boundary_touching_policy_boolean,
-    materialize_closed_boundary_touching_regularized_boolean,
+    materialize_bounds_disjoint_boolean, materialize_closed_boundary_touching_regularized_boolean,
     materialize_closed_regularized_lower_dimensional_boolean,
     materialize_closed_winding_containment_boolean, materialize_closed_winding_separated_boolean,
     materialize_contained_face_adjacent_union, materialize_coplanar_mesh_overlay_arrangement,
-    materialize_full_face_adjacent_union, materialize_open_surface_arrangement,
+    materialize_empty_operand_boolean, materialize_full_face_adjacent_union,
+    materialize_identical_mesh_boolean, materialize_open_surface_arrangement,
+    materialize_open_surface_disjoint_boolean, materialize_same_surface_boolean,
     materialize_volumetric_winding_arrangement, preflight_boolean_exact,
     preflight_boolean_exact_with_boundary_policy,
 };
@@ -1237,6 +1239,209 @@ fn exact_boolean_public_shortcuts_handle_disjoint_operands() {
     )
     .unwrap();
     assert!(intersection.mesh.triangles().is_empty());
+}
+
+#[test]
+fn trivial_boolean_materializers_are_publicly_replayable() {
+    let empty = ExactMesh::new(
+        Vec::new(),
+        Vec::new(),
+        SourceProvenance::exact("test empty mesh"),
+    )
+    .unwrap();
+    let solid = tetra([0, 0, 0]);
+    let disjoint_solid = tetra([3, 0, 0]);
+
+    let open_identical_left = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 4, 0, 0, 0, 4, 0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let open_identical_right = open_identical_left.clone();
+    let open_same_surface_right = ExactMesh::from_i64_triangles_with_policy(
+        &[4, 0, 0, 0, 4, 0, 0, 0, 0],
+        &[2, 0, 1],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let open_disjoint_left = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 4, 0, 4, 0, 4, 0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let open_disjoint_right = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 1, 4, 0, 5, 0, 4, 1],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+
+    let assert_shortcut =
+        |result: &ExactBooleanResult,
+         left: &ExactMesh,
+         right: &ExactMesh,
+         stale_left: &ExactMesh,
+         stale_right: &ExactMesh,
+         operation: ExactBooleanOperation,
+         validation: ValidationPolicy,
+         shortcut: hypermesh::ExactBooleanShortcutKind| {
+            assert_eq!(
+                result.kind,
+                ExactBooleanResultKind::CertifiedShortcut {
+                    operation,
+                    shortcut
+                }
+            );
+            result.validate().unwrap();
+            result.validate_against_sources(left, right).unwrap();
+            assert_eq!(
+                result.freshness_against_sources(left, right),
+                ExactReportFreshness::Current
+            );
+            assert_eq!(
+                result.freshness_against_sources(stale_left, stale_right),
+                ExactReportFreshness::SourceReplayMismatch
+            );
+            result
+                .validate_operation_against_sources(
+                    left,
+                    right,
+                    operation,
+                    validation,
+                    ExactBoundaryBooleanPolicy::Reject,
+                )
+                .unwrap();
+        };
+
+    for operation in [
+        ExactBooleanOperation::Union,
+        ExactBooleanOperation::Intersection,
+        ExactBooleanOperation::Difference,
+    ] {
+        let empty_result =
+            materialize_empty_operand_boolean(&empty, &solid, operation, ValidationPolicy::CLOSED)
+                .unwrap()
+                .expect("empty operand should materialize as an exact shortcut");
+        assert_shortcut(
+            &empty_result,
+            &empty,
+            &solid,
+            &solid,
+            &disjoint_solid,
+            operation,
+            ValidationPolicy::CLOSED,
+            hypermesh::ExactBooleanShortcutKind::EmptyOperand,
+        );
+
+        let disjoint_result = materialize_bounds_disjoint_boolean(
+            &solid,
+            &disjoint_solid,
+            operation,
+            ValidationPolicy::CLOSED,
+        )
+        .unwrap()
+        .expect("bounds-disjoint operands should materialize as an exact shortcut");
+        assert_shortcut(
+            &disjoint_result,
+            &solid,
+            &disjoint_solid,
+            &solid,
+            &solid,
+            operation,
+            ValidationPolicy::CLOSED,
+            hypermesh::ExactBooleanShortcutKind::BoundsDisjoint,
+        );
+
+        let identical_result = materialize_identical_mesh_boolean(
+            &open_identical_left,
+            &open_identical_right,
+            operation,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap()
+        .expect("identical open surfaces should materialize as an exact shortcut");
+        assert_shortcut(
+            &identical_result,
+            &open_identical_left,
+            &open_identical_right,
+            &open_identical_left,
+            &open_same_surface_right,
+            operation,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::ExactBooleanShortcutKind::Identical,
+        );
+
+        let same_surface_result = materialize_same_surface_boolean(
+            &open_identical_left,
+            &open_same_surface_right,
+            operation,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap()
+        .expect("same-surface open meshes should materialize as an exact shortcut");
+        assert_shortcut(
+            &same_surface_result,
+            &open_identical_left,
+            &open_same_surface_right,
+            &open_identical_left,
+            &open_disjoint_right,
+            operation,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::ExactBooleanShortcutKind::SameSurface,
+        );
+
+        let open_disjoint_result = materialize_open_surface_disjoint_boolean(
+            &open_disjoint_left,
+            &open_disjoint_right,
+            operation,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap()
+        .expect("open surfaces with an empty exact graph should materialize as disjoint");
+        assert_shortcut(
+            &open_disjoint_result,
+            &open_disjoint_left,
+            &open_disjoint_right,
+            &open_disjoint_left,
+            &open_identical_left,
+            operation,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            hypermesh::ExactBooleanShortcutKind::OpenSurfaceDisjoint,
+        );
+    }
+
+    assert!(
+        materialize_empty_operand_boolean(
+            &solid,
+            &disjoint_solid,
+            ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+        )
+        .unwrap()
+        .is_none()
+    );
+    assert!(
+        materialize_same_surface_boolean(
+            &open_identical_left,
+            &open_identical_right,
+            ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap()
+        .is_none()
+    );
+    assert!(
+        materialize_open_surface_disjoint_boolean(
+            &solid,
+            &disjoint_solid,
+            ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+        )
+        .unwrap()
+        .is_none()
+    );
 }
 
 #[test]

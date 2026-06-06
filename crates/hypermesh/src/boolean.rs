@@ -4856,6 +4856,28 @@ fn boolean_open_surface_disjoint_meshes_from_graph(
     Ok(None)
 }
 
+/// Certify and materialize a named boolean for open surfaces with no retained
+/// exact face-pair intersections.
+///
+/// Bounds-disjoint inputs are handled by an earlier exact shortcut, so this
+/// function returns `None` for that case and only materializes the graph-backed
+/// open-surface disjoint certificate used by [`boolean_exact`].
+pub fn materialize_open_surface_disjoint_boolean(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+        || meshes_are_certified_bounds_disjoint(left, right)
+    {
+        return Ok(None);
+    }
+    let graph = build_intersection_graph(left, right)?;
+    validate_graph_source_handoff(&graph, left, right)?;
+    boolean_open_surface_disjoint_meshes_from_graph(&graph, left, right, operation, validation)
+}
+
 /// Certify whether two open surface meshes are disjoint by exact graph facts.
 ///
 /// This is the report form of the open-surface named-boolean shortcut. It
@@ -5187,6 +5209,51 @@ fn boolean_same_surface_meshes(
         operation,
         ExactBooleanShortcutKind::SameSurface,
     ))
+}
+
+/// Certify and materialize a named boolean for identical non-closed meshes.
+///
+/// This exposes the same exact shortcut used by [`boolean_exact`]. Closed
+/// solids that are identical route through the closed arrangement path instead,
+/// so this function returns `None` for those cases to preserve dispatcher
+/// provenance. Unsupported operations or non-identical sources also return
+/// `None`.
+pub fn materialize_identical_mesh_boolean(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+        || (left.facts().mesh.closed_manifold && right.facts().mesh.closed_manifold)
+        || !meshes_are_certified_identical(left, right)
+    {
+        return Ok(None);
+    }
+    boolean_identical_meshes(left, operation, validation).map(Some)
+}
+
+/// Certify and materialize a named boolean for equal non-closed surfaces with
+/// different retained mesh encodings.
+///
+/// The retained same-surface report proves exact coordinate equality and
+/// triangle-set equality after vertex remapping. Byte-identical meshes and
+/// closed solids are deliberately left to their earlier exact dispatcher paths,
+/// so they return `None` here instead of changing replay provenance.
+pub fn materialize_same_surface_boolean(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+        || (left.facts().mesh.closed_manifold && right.facts().mesh.closed_manifold)
+        || meshes_are_certified_identical(left, right)
+        || !meshes_are_certified_same_surface(left, right)
+    {
+        return Ok(None);
+    }
+    boolean_same_surface_meshes(left, operation, validation).map(Some)
 }
 
 fn certified_closed_boundary_touching_union_report_from_graph(
@@ -6961,6 +7028,26 @@ fn boolean_disjoint_meshes(
     ))
 }
 
+/// Certify and materialize a named boolean for operands whose exact mesh bounds
+/// are disjoint.
+///
+/// The AABB intersection classification is an exact retained fact. Unsupported
+/// selected-region operations or sources whose bounds are not certified
+/// disjoint return `None` rather than invoking later topology paths.
+pub fn materialize_bounds_disjoint_boolean(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+        || !meshes_are_certified_bounds_disjoint(left, right)
+    {
+        return Ok(None);
+    }
+    boolean_disjoint_meshes(left, right, operation, validation).map(Some)
+}
+
 fn boolean_empty_operand(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -6989,6 +7076,26 @@ fn boolean_empty_operand(
         operation,
         ExactBooleanShortcutKind::EmptyOperand,
     ))
+}
+
+/// Certify and materialize a named boolean when either operand has no
+/// triangles.
+///
+/// Empty-source handling is the first exact named-boolean shortcut in the
+/// dispatcher. Unsupported selected-region operations or non-empty operand
+/// pairs return `None`.
+pub fn materialize_empty_operand_boolean(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+        || (!left.triangles().is_empty() && !right.triangles().is_empty())
+    {
+        return Ok(None);
+    }
+    boolean_empty_operand(left, right, operation, validation).map(Some)
 }
 
 fn boolean_identical_meshes(
