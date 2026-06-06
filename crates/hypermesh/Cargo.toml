@@ -14,11 +14,9 @@ exclude = ["/examples", ".gitignore"]
 [dependencies]
 # Hyper sibling dependency switch: keep both local path and crates.io lines; do not remove either.
 # Development mode uses the local path lines. For release, comment those and uncomment the crates.io lines.
-hyperlattice = { path = "../hyperlattice" }
 hyperlimit = { path = "../hyperlimit" }
 hyperreal = { path = "../hyperreal" }
 hypertri = { path = "../hypertri", default-features = false, features = ["earcut", "cdt"] }
-# hyperlattice = { version = "0.6.0" }
 # hyperlimit = { version = "0.4.0" }
 # hyperreal = { version = "0.13.0" }
 # hypertri = { version = "0.3.0", default-features = false, features = ["earcut", "cdt"] }
@@ -30,7 +28,6 @@ proptest = "1.7.0"
 
 [features]
 default = []
-verbose = []
 
 bevy = [
     "dep:bevy",

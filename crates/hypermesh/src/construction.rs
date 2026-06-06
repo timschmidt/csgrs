@@ -6,18 +6,13 @@
 //! mesh-specific adapters here, such as indexing a face plane from a mesh or
 //! reusing retained [`FacePlaneFacts`].
 
-use hyperlimit::{PlaneSide, Point3, compare_reals, intersect_segment_with_plane_values};
+use hyperlimit::{
+    PlaneSide, Point3, SegmentPlaneIntersection, compare_reals,
+    intersect_segment_with_oriented_plane, intersect_segment_with_plane_values,
+};
 
 use super::facts::FacePlaneFacts;
 use hyperreal::Real;
-
-pub use hyperlimit::{
-    SegmentPlaneConstructionFailure, SegmentPlaneIntersection, SegmentPlaneParameterRatio,
-    SegmentPlaneRelation, SegmentPlaneValidationError,
-    construct_segment_plane_crossing_from_values, interpolate_point3,
-    intersect_segment_with_oriented_plane, intersect_segment_with_plane, point_plane_value,
-    segment_parameter_from_axis,
-};
 
 /// Intersect a mesh segment with the oriented plane of one triangular face.
 ///

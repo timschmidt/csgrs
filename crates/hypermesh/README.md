@@ -232,7 +232,5 @@ Useful local checks:
 ```sh
 cargo test
 cargo test --no-default-features
-cargo check --features internal-fuzzing
 cargo fuzz run exact_arrangement
-cargo bench --bench exact_validation
 ```

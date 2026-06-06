@@ -33,6 +33,7 @@ use super::solid::{
     ClosedMeshOrientation, ConvexSolidPointClassification, ConvexSolidPointRelation,
     classify_point_against_convex_solid_report, exact_mesh_orientation,
 };
+use super::topology::mesh_for_side;
 use super::validation::ValidationPolicy;
 use super::winding::{
     ClosedMeshWindingMeshRelation, ClosedMeshWindingRelation, PointMeshWindingReport,
@@ -142,6 +143,7 @@ pub struct ArrangementFaceCell {
 }
 
 /// Exact lower-dimensional contact retained by arrangement regularization.
+#[allow(clippy::large_enum_variant)]
 #[derive(Clone, Debug, PartialEq)]
 pub enum ArrangementLowerDimensionalArtifact {
     /// A certified point contact between source faces.
@@ -1336,7 +1338,7 @@ fn non_coplanar_lower_dimensional_artifacts(
             matches!(
                 event,
                 super::graph::IntersectionEvent::SegmentPlane {
-                    relation: super::construction::SegmentPlaneRelation::ProperCrossing,
+                    relation: hyperlimit::SegmentPlaneRelation::ProperCrossing,
                     ..
                 }
             )
@@ -1378,7 +1380,7 @@ fn non_coplanar_point_contact_artifact(
     let super::graph::IntersectionEvent::SegmentPlane {
         plane_side,
         plane_face,
-        relation: super::construction::SegmentPlaneRelation::EndpointOnPlane,
+        relation: hyperlimit::SegmentPlaneRelation::EndpointOnPlane,
         point: Some(point),
         ..
     } = event
@@ -1418,7 +1420,7 @@ fn non_coplanar_edge_contact_artifact(
         edge,
         plane_side,
         plane_face,
-        relation: super::construction::SegmentPlaneRelation::Coplanar,
+        relation: hyperlimit::SegmentPlaneRelation::Coplanar,
         endpoint_sides:
             [
                 Some(hyperlimit::PlaneSide::On),
@@ -1506,7 +1508,7 @@ fn coplanar_segment_triangle_interval(
     sort_points_along_segment(&mut points, start, end)?;
     let first = points.first()?.clone();
     let last = points.last()?.clone();
-    (point3_equal(&first, &last).value()? == false).then_some([first, last])
+    (!point3_equal(&first, &last).value()?).then_some([first, last])
 }
 
 fn constructive_triangle_location(location: TriangleLocation) -> bool {
@@ -1640,8 +1642,8 @@ fn append_carrier_plane_overlay_face_cells(
 ) {
     for (overlay_index, overlay) in carrier_plane_overlays.iter().enumerate() {
         for overlay_face in &overlay.overlay.faces {
-            if overlay_face.in_left {
-                if let Some(cell) = face_cell_from_carrier_plane_overlay(
+            if overlay_face.in_left
+                && let Some(cell) = face_cell_from_carrier_plane_overlay(
                     overlay_index,
                     overlay,
                     overlay_face.face,
@@ -1651,12 +1653,12 @@ fn append_carrier_plane_overlay_face_cells(
                     right,
                     policy,
                     blockers,
-                ) {
-                    cells.push(cell);
-                }
+                )
+            {
+                cells.push(cell);
             }
-            if overlay_face.in_right {
-                if let Some(cell) = face_cell_from_carrier_plane_overlay(
+            if overlay_face.in_right
+                && let Some(cell) = face_cell_from_carrier_plane_overlay(
                     overlay_index,
                     overlay,
                     overlay_face.face,
@@ -1666,9 +1668,9 @@ fn append_carrier_plane_overlay_face_cells(
                     right,
                     policy,
                     blockers,
-                ) {
-                    cells.push(cell);
-                }
+                )
+            {
+                cells.push(cell);
             }
         }
     }
@@ -1715,15 +1717,13 @@ fn face_cell_from_face_plane_arrangement(
     let mut boundary_points = Vec::with_capacity(arrangement_face.vertices.len());
     for vertex in &arrangement_face.vertices {
         let point2 = &arrangement.arrangement.vertices.get(*vertex)?.point;
-        let Some(point3) = lift_carrier_plane_point(
+        let point3 = lift_carrier_plane_point(
             mesh,
             arrangement.face,
             arrangement.projection,
             point2,
             blockers,
-        ) else {
-            return None;
-        };
+        )?;
         boundary.push(arrangement.vertex_provenance[*vertex].clone().unwrap_or(
             ArrangementFaceCellNode::FacePlaneVertex {
                 arrangement: arrangement_index,
@@ -1795,11 +1795,8 @@ fn face_cell_from_carrier_plane_overlay(
     let mut boundary_points = Vec::with_capacity(overlay_face.vertices.len());
     for vertex in &overlay_face.vertices {
         let point2 = &overlay.overlay.arrangement.vertices.get(*vertex)?.point;
-        let Some(point3) =
-            lift_carrier_plane_point(mesh, carrier_face, overlay.projection, point2, blockers)
-        else {
-            return None;
-        };
+        let point3 =
+            lift_carrier_plane_point(mesh, carrier_face, overlay.projection, point2, blockers)?;
         boundary.push(ArrangementFaceCellNode::CarrierPlaneVertex {
             overlay: overlay_index,
             vertex: *vertex,
@@ -2394,16 +2391,18 @@ fn exact_node_loops_opposite_orientation(
     })
 }
 
+type NestedVolumeGraph = (
+    Option<Vec<ArrangementVolumeRegion>>,
+    Option<Vec<ArrangementVolumeAdjacency>>,
+);
+
 fn nested_shell_volume_graph(
     shell_regions: &[ArrangementRegion],
     face_cells: &[ArrangementFaceCell],
     left: &ExactMesh,
     right: &ExactMesh,
     blockers: &mut Vec<ExactArrangementBlocker>,
-) -> Option<(
-    Option<Vec<ArrangementVolumeRegion>>,
-    Option<Vec<ArrangementVolumeAdjacency>>,
-)> {
+) -> Option<NestedVolumeGraph> {
     if shell_regions
         .iter()
         .any(|region| region.source_sides.is_empty())
@@ -2439,7 +2438,7 @@ fn nested_shell_volume_graph(
         return None;
     }
     let mut contains = vec![vec![false; shell_regions.len()]; shell_regions.len()];
-    for contained in 0..shell_regions.len() {
+    for (contained, contained_by) in contains.iter_mut().enumerate() {
         let witnesses =
             shell_region_witnesses(shell_regions.get(contained)?, face_cells, left, right);
         if witnesses.is_empty() {
@@ -2449,12 +2448,12 @@ fn nested_shell_volume_graph(
             );
             return None;
         }
-        for container in 0..shell_regions.len() {
+        for (container, contained_by_container) in contained_by.iter_mut().enumerate() {
             if contained == container {
                 continue;
             }
             match classify_shell_witnesses_against_container(&witnesses, &shell_meshes[container]) {
-                ShellContainmentRelation::Inside => contains[contained][container] = true,
+                ShellContainmentRelation::Inside => *contained_by_container = true,
                 ShellContainmentRelation::Outside => {}
                 ShellContainmentRelation::Boundary => {
                     push_unique_blocker(blockers, ExactArrangementBlocker::NonManifoldCellComplex);
@@ -2471,9 +2470,9 @@ fn nested_shell_volume_graph(
         }
     }
 
-    for left in 0..shell_regions.len() {
-        for right in (left + 1)..shell_regions.len() {
-            if contains[left][right] && contains[right][left] {
+    for (left, left_contains) in contains.iter().enumerate() {
+        for (right, right_contains) in contains.iter().enumerate().skip(left + 1) {
+            if left_contains[right] && right_contains[left] {
                 push_unique_blocker(blockers, ExactArrangementBlocker::NonManifoldCellComplex);
                 return None;
             }
@@ -2821,10 +2820,7 @@ fn nested_two_shell_volume_graph(
     shell_regions: &[ArrangementRegion],
     left: &ExactMesh,
     right: &ExactMesh,
-) -> Option<(
-    Option<Vec<ArrangementVolumeRegion>>,
-    Option<Vec<ArrangementVolumeAdjacency>>,
-)> {
+) -> Option<NestedVolumeGraph> {
     if shell_regions.len() != 2 {
         return None;
     }
@@ -3331,9 +3327,9 @@ fn representative_from_boundary_nodes(nodes: &[FaceSplitBoundaryNode]) -> Option
             | FaceSplitBoundaryNode::GraphVertex { point, .. }
             | FaceSplitBoundaryNode::FaceInterior { point } => point,
         };
-        x = x + &point.x;
-        y = y + &point.y;
-        z = z + &point.z;
+        x += &point.x;
+        y += &point.y;
+        z += &point.z;
     }
     Some(Point3::new(x * &inv, y * &inv, z * &inv))
 }
@@ -3345,13 +3341,6 @@ fn triangle_centroid(a: &Point3, b: &Point3, c: &Point3) -> Point3 {
         (a.y.clone() + &b.y + &c.y) * &third,
         (a.z.clone() + &b.z + &c.z) * &third,
     )
-}
-
-fn mesh_for_side<'a>(side: MeshSide, left: &'a ExactMesh, right: &'a ExactMesh) -> &'a ExactMesh {
-    match side {
-        MeshSide::Left => left,
-        MeshSide::Right => right,
-    }
 }
 
 #[cfg(test)]
@@ -3493,7 +3482,7 @@ mod tests {
         let mut triangles = Vec::new();
 
         triangulate_exact_loop_group(
-            &[cell.boundary_points.clone()],
+            std::slice::from_ref(&cell.boundary_points),
             &mut vertices,
             &mut triangles,
         )
@@ -3514,8 +3503,8 @@ mod tests {
                 projected_loop_orientation(&triangle_points, CoplanarProjection::Xy).unwrap(),
                 expected_orientation
             );
-            triangle_area_sum = triangle_area_sum
-                + &projected_polygon_area2_value(&triangle_points, CoplanarProjection::Xy);
+            triangle_area_sum +=
+                &projected_polygon_area2_value(&triangle_points, CoplanarProjection::Xy);
         }
         assert_eq!(
             compare_reals(
@@ -4555,7 +4544,7 @@ mod tests {
                 .any(|event| matches!(
                     event,
                     crate::graph::IntersectionEvent::SegmentPlane {
-                        relation: crate::construction::SegmentPlaneRelation::EndpointOnPlane,
+                        relation: hyperlimit::SegmentPlaneRelation::EndpointOnPlane,
                         point: Some(point),
                         ..
                     } if point3_equal(point, &outside_endpoint).value() == Some(true)

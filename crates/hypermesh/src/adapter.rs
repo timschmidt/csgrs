@@ -9,10 +9,9 @@
 //! objects only after their approximation policy and conversion evidence are
 //! explicit.
 
-use super::{
-    ApproximationPolicy, DiagnosticKind, LossyF64Import, MeshDiagnostic, MeshSource, Severity,
-    SourceProvenance,
-};
+use hyperlimit::{ApproximationPolicy, MeshSource, SourceProvenance};
+
+use super::{DiagnosticKind, LossyF64Import, MeshDiagnostic, Severity};
 
 /// Audited primitive-float mesh input stream.
 #[derive(Clone, Debug, Eq, PartialEq)]

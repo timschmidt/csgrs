@@ -1,10 +1,10 @@
-use hyperlimit::Point3;
+use hyperlimit::{Point3, SourceProvenance};
 use hypermesh::{
     ExactArrangement, ExactBooleanOperation, ExactBoundaryBooleanPolicy,
     ExactI64MeshInputReadiness, ExactMesh, ExactRegularizationPolicy, MeshFacePairRelation,
-    SourceProvenance, TriangleTriangleRelation, ValidationPolicy, boolean_exact,
-    boolean_exact_with_boundary_policy, build_intersection_graph, classify_mesh_face_pair,
-    classify_triangle_triangle, inspect_i64_mesh_input, preflight_boolean_exact,
+    TriangleTriangleRelation, ValidationPolicy, boolean_exact, boolean_exact_with_boundary_policy,
+    build_intersection_graph, classify_mesh_face_pair, classify_triangle_triangle,
+    inspect_i64_mesh_input, preflight_boolean_exact,
 };
 use hyperreal::Real;
 

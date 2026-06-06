@@ -17,21 +17,18 @@
 use core::cmp::Ordering;
 
 use hyperlimit::{
-    PlaneSide, Point3, classify_triangle_against_oriented_plane, compare_reals,
+    PlaneSide, Point3, SegmentPlaneIntersection, TrianglePlaneClassification,
+    TrianglePlaneRelation, classify_triangle_against_oriented_plane, compare_reals,
     triangle_plane_relation_from_sides,
 };
 
-use super::construction::{SegmentPlaneIntersection, intersect_segment_with_face_plane};
+use super::construction::intersect_segment_with_face_plane;
 use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
 use super::mesh::ExactMesh;
 use hyperlimit::{
     CoplanarTriangleClassification, CoplanarTriangleRelation, classify_coplanar_triangles,
 };
 use hyperreal::Real;
-
-pub use hyperlimit::{
-    TrianglePlaneClassification, TrianglePlaneRelation, TrianglePlaneValidationError,
-};
 
 /// Certified coarse relation between two exact triangles.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]

@@ -374,7 +374,7 @@ fn blocker_source_counts(graph: &ExactIntersectionGraph) -> BlockerSourceCounts 
                 matches!(
                     event,
                     IntersectionEvent::SegmentPlane {
-                        relation: super::construction::SegmentPlaneRelation::ConstructionFailed,
+                        relation: hyperlimit::SegmentPlaneRelation::ConstructionFailed,
                         ..
                     }
                 )

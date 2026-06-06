@@ -6,6 +6,7 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
+use super::topology::sorted_edge;
 use super::validation::{ValidationPolicy, validate_triangles, validate_triangles_with_policy};
 use hyperlimit::Point3;
 use hyperlimit::PredicateUse;
@@ -582,13 +583,5 @@ fn expect_count(
             expected,
             actual,
         })
-    }
-}
-
-fn sorted_edge(edge: [usize; 2]) -> [usize; 2] {
-    if edge[0] <= edge[1] {
-        edge
-    } else {
-        [edge[1], edge[0]]
     }
 }

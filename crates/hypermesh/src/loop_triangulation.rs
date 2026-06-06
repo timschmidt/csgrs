@@ -383,7 +383,7 @@ fn signed_area_twice_points(points: &[Point2]) -> Real {
     for index in 0..points.len() {
         let current = &points[index];
         let next = &points[(index + 1) % points.len()];
-        area = area + &(current.x.clone() * &next.y) - &(current.y.clone() * &next.x);
+        area += &(current.x.clone() * &next.y) - &(current.y.clone() * &next.x);
     }
     area
 }

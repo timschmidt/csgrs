@@ -16,19 +16,17 @@
 //! exact predicates supply the topology guards here instead of tolerance tests.
 
 use hyperlimit::{
-    CoplanarProjection, Point3, SegmentIntersection, Sign, TriangleLocation,
+    CoplanarProjection, Point3, SegmentIntersection, SegmentPlaneRelation, Sign, TriangleLocation,
     classify_point_triangle, compare_reals, orient3d_report, project_point3,
     projected_polygon_area2_value,
 };
 
 use super::arrangement2d::{ExactArrangement2dBoundaryPolicy, ExactArrangement2dSetOperation};
 use super::boolean::{coplanar_mesh_overlay_carrier, materialize_coplanar_mesh_overlay_mesh};
-use super::construction::SegmentPlaneRelation;
-use super::graph::{
-    FacePairEvents, IntersectionEvent, MeshSide, build_intersection_graph,
-};
+use super::graph::{FacePairEvents, IntersectionEvent, MeshSide, build_intersection_graph};
 use super::intersection::MeshFacePairRelation;
 use super::mesh::{ExactMesh, ExactMeshValidationError, Triangle};
+use super::topology::{mesh_for_side, triangle_tuple_edges};
 use super::validation::ValidationPolicy;
 use super::winding::{
     ClosedMeshWindingRelation, classify_mesh_vertices_against_closed_mesh_winding_report,
@@ -798,25 +796,11 @@ impl PairUnionFind {
 }
 
 fn triangles_share_edge(left: Triangle, right: Triangle) -> bool {
-    triangle_edges(left)
-        .iter()
-        .any(|left| triangle_edges(right).iter().any(|right| left == right))
-}
-
-fn triangle_edges(triangle: Triangle) -> [(usize, usize); 3] {
-    [
-        canonical_edge(triangle.0[0], triangle.0[1]),
-        canonical_edge(triangle.0[1], triangle.0[2]),
-        canonical_edge(triangle.0[2], triangle.0[0]),
-    ]
-}
-
-const fn canonical_edge(left: usize, right: usize) -> (usize, usize) {
-    if left <= right {
-        (left, right)
-    } else {
-        (right, left)
-    }
+    triangle_tuple_edges(left).iter().any(|left| {
+        triangle_tuple_edges(right)
+            .iter()
+            .any(|right| left == right)
+    })
 }
 
 fn append_source_mesh_without_face(
@@ -896,13 +880,6 @@ const fn opposite_side(side: MeshSide) -> MeshSide {
     match side {
         MeshSide::Left => MeshSide::Right,
         MeshSide::Right => MeshSide::Left,
-    }
-}
-
-fn mesh_for_side<'a>(side: MeshSide, left: &'a ExactMesh, right: &'a ExactMesh) -> &'a ExactMesh {
-    match side {
-        MeshSide::Left => left,
-        MeshSide::Right => right,
     }
 }
 

@@ -371,6 +371,7 @@ fn replay_region_plan(
 
 /// Region selection policy for exact output assembly.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[allow(clippy::enum_variant_names)]
 pub enum ExactRegionSelection {
     /// Drop regions from both meshes.
     KeepNone,
@@ -851,20 +852,18 @@ impl ExactBooleanAssemblyPlan {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> hypertri::Result<usize> {
-        let mut splits = 0;
         let max_passes = self
             .triangles
             .len()
             .saturating_mul(self.vertices.len())
             .saturating_mul(3)
             .max(1);
-        for _ in 0..max_passes {
+        for splits in 0..max_passes {
             let Some(split) = find_existing_vertex_edge_split(self, left, right)? else {
                 self.validate()?;
                 return Ok(splits);
             };
             apply_existing_vertex_edge_split(self, split, left, right)?;
-            splits += 1;
         }
         Err(hypertri::Error::InvalidInput {
             reason: "assembly edge refinement did not converge",

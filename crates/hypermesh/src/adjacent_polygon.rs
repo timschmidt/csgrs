@@ -22,6 +22,7 @@ use hyperlimit::{
 };
 
 use super::mesh::ExactMesh;
+use super::topology::triangle_edges_tuple;
 use hyperreal::Real;
 
 const MAX_POLYGON_PATCH_ENUMERATION_FACES: usize = 9;
@@ -212,7 +213,7 @@ fn polygon_patch_candidate(
     let mut edge_counts = BTreeMap::<(usize, usize), usize>::new();
     for &face in faces {
         let triangle = mesh.triangles().get(face)?.0;
-        for edge in triangle_edges(triangle) {
+        for edge in triangle_edges_tuple(triangle) {
             let count = edge_counts.entry(edge).or_default();
             *count += 1;
             if *count > 2 {
@@ -238,7 +239,7 @@ fn polygon_patch_candidate(
     }
     let boundary_points = boundary_vertices
         .iter()
-        .map(|&vertex| mesh.vertices().get(vertex).map(|point| point.clone()))
+        .map(|&vertex| mesh.vertices().get(vertex).cloned())
         .collect::<Option<Vec<_>>>()?;
     let Some(projection) = choose_polygon_projection(&boundary_points) else {
         return Some(None);
@@ -304,7 +305,7 @@ fn edge_connected_face_neighbors(
 ) -> Option<BTreeMap<usize, BTreeSet<usize>>> {
     let mut edge_faces = BTreeMap::<(usize, usize), Vec<usize>>::new();
     for &face in faces {
-        for edge in triangle_edges(mesh.triangles().get(face)?.0) {
+        for edge in triangle_edges_tuple(mesh.triangles().get(face)?.0) {
             edge_faces.entry(edge).or_default().push(face);
         }
     }
@@ -532,22 +533,6 @@ fn triangle_points(mesh: &ExactMesh, triangle: [usize; 3]) -> Option<[Point3; 3]
         mesh.vertices().get(triangle[1])?.clone(),
         mesh.vertices().get(triangle[2])?.clone(),
     ])
-}
-
-fn triangle_edges(triangle: [usize; 3]) -> [(usize, usize); 3] {
-    [
-        canonical_edge(triangle[0], triangle[1]),
-        canonical_edge(triangle[1], triangle[2]),
-        canonical_edge(triangle[2], triangle[0]),
-    ]
-}
-
-const fn canonical_edge(left: usize, right: usize) -> (usize, usize) {
-    if left <= right {
-        (left, right)
-    } else {
-        (right, left)
-    }
 }
 
 fn real_abs(value: &Real) -> Option<Real> {

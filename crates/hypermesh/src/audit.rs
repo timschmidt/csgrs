@@ -8,7 +8,9 @@
 //! proof-bearing and cache-bearing boundaries explicit instead of accepting
 //! rounded representatives or stale facts as topology.
 
-use super::{ExactMesh, ExactMeshValidationError, MeshSource, ValidationPolicy};
+use hyperlimit::MeshSource;
+
+use super::{ExactMesh, ExactMeshValidationError, ValidationPolicy};
 
 /// Compact validated summary of an exact mesh artifact.
 #[derive(Clone, Debug, Eq, PartialEq)]

@@ -17,16 +17,16 @@ use std::cmp::Ordering;
 use std::collections::{BTreeSet, HashMap};
 
 use hyperlimit::{
-    CoplanarProjection, PlaneSide, Point3, SegmentIntersection, TriangleLocation,
-    classify_point_triangle, compare_reals, project_point3,
+    CoplanarProjection, PlaneSide, Point3, SegmentIntersection, SegmentPlaneRelation,
+    TriangleLocation, classify_point_triangle, compare_reals, project_point3,
 };
 
-use super::construction::SegmentPlaneRelation;
 use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
 use super::graph::{ExactIntersectionGraph, IntersectionEvent, MeshSide, build_intersection_graph};
 use super::intersection::MeshFacePairRelation;
 use super::mesh::ExactMesh;
 use super::solid::{ClosedMeshOrientation, exact_mesh_orientation};
+use super::topology::{mesh_for_side, sorted_edge};
 use hyperreal::Real;
 
 /// Most specific retained obstacle for volumetric coplanar source-face cells.
@@ -66,6 +66,7 @@ impl CoplanarVolumetricCellObstacle {
 
 /// Validation failure for a coplanar volumetric-cell evidence report.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[allow(clippy::enum_variant_names)]
 pub enum CoplanarVolumetricCellEvidenceError {
     /// Relation counters do not sum to the retained face-pair count.
     FacePairCountMismatch,
@@ -560,14 +561,6 @@ fn mesh_face_edges(mesh: &ExactMesh, face: usize) -> Option<[[usize; 2]; 3]> {
     ])
 }
 
-fn sorted_edge(edge: [usize; 2]) -> [usize; 2] {
-    if edge[0] < edge[1] {
-        edge
-    } else {
-        [edge[1], edge[0]]
-    }
-}
-
 fn mesh_face_is_coplanar_with_plane(
     mesh: &ExactMesh,
     face: usize,
@@ -714,13 +707,6 @@ fn proper_crossing_event(event: &IntersectionEvent, left: &ExactMesh, right: &Ex
     )
     .value()
         == Some(TriangleLocation::Inside)
-}
-
-fn mesh_for_side<'a>(side: MeshSide, left: &'a ExactMesh, right: &'a ExactMesh) -> &'a ExactMesh {
-    match side {
-        MeshSide::Left => left,
-        MeshSide::Right => right,
-    }
 }
 
 fn triangle_points(mesh: &ExactMesh, face: usize) -> Option<[Point3; 3]> {

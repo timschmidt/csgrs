@@ -14,20 +14,18 @@ use std::cmp::Ordering;
 use std::collections::{BTreeMap, BTreeSet};
 
 use hyperlimit::{
-    PlaneSide, Point3, SegmentIntersection, Sign, TriangleLocation, compare_reals,
-    interpolate_point3, orient3d_report, point_on_segment, project_point3,
-    projected_line_parameter3, projected_segment_parameter3,
+    PlaneSide, Point3, SegmentIntersection, SegmentPlaneConstructionFailure,
+    SegmentPlaneIntersection, SegmentPlaneParameterRatio, SegmentPlaneRelation, Sign,
+    TriangleLocation, compare_reals, interpolate_point3, orient3d_report, point_on_segment,
+    project_point3, projected_line_parameter3, projected_segment_parameter3,
 };
 
-use super::construction::{
-    SegmentPlaneConstructionFailure, SegmentPlaneIntersection, SegmentPlaneParameterRatio,
-    SegmentPlaneRelation,
-};
 use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
 use super::intersection::{
     MeshFacePairClassification, MeshFacePairRelation, classify_mesh_face_pairs,
 };
 use super::mesh::ExactMesh;
+use super::topology::{mesh_for_side, triangle_edges};
 use hyperlimit::{CoplanarProjection, CoplanarTriangleClassification};
 use hyperreal::Real;
 
@@ -3065,13 +3063,6 @@ fn face_boundary_node(
     }
 }
 
-fn mesh_for_side<'a>(side: MeshSide, left: &'a ExactMesh, right: &'a ExactMesh) -> &'a ExactMesh {
-    match side {
-        MeshSide::Left => left,
-        MeshSide::Right => right,
-    }
-}
-
 fn validate_face_split_geometry_incidence(
     geometry: &ExactFaceSplitGeometryPlan,
     left: &ExactMesh,
@@ -3889,10 +3880,6 @@ fn append_vertex_event(
         None => events.push(IntersectionEvent::Unknown),
         Some(TriangleLocation::Outside | TriangleLocation::Degenerate) => {}
     }
-}
-
-fn triangle_edges(tri: [usize; 3]) -> [[usize; 2]; 3] {
-    [[tri[0], tri[1]], [tri[1], tri[2]], [tri[2], tri[0]]]
 }
 
 fn side_key(side: MeshSide) -> u8 {

@@ -12,10 +12,9 @@
 //! replay. The report keeps validity and source semantics explicit.
 
 use super::audit::{ExactMeshAuditError, ExactMeshAuditReport, audit_exact_mesh};
-use super::{
-    ApproximationPolicy, ConstructionProvenanceValidationError, ExactMesh,
-    ExactMeshValidationError, MeshSource, ValidationPolicy,
-};
+use hyperlimit::{ApproximationPolicy, ConstructionProvenanceValidationError, MeshSource};
+
+use super::{ExactMesh, ExactMeshValidationError, ValidationPolicy};
 
 /// Source class retained by an accepted mesh proposal report.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]

@@ -13,6 +13,7 @@ use super::facts::{
     EdgeFacts, FaceFacts, FacePlaneFacts, MeshFacts, MeshValidationFacts, OrientedFaceFacts,
     TriangleFacts, VertexFacts, VertexLinkKind,
 };
+use super::topology::sorted_edge;
 use hyperlimit::{
     TriangleDegeneracy, classify_triangle3_degeneracy as classify_triangle_degeneracy,
 };
@@ -365,14 +366,6 @@ impl EdgeAccumulator {
         } else {
             self.reverse += 1;
         }
-    }
-}
-
-fn sorted_edge(edge: [usize; 2]) -> [usize; 2] {
-    if edge[0] <= edge[1] {
-        edge
-    } else {
-        [edge[1], edge[0]]
     }
 }
 

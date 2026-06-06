@@ -2410,7 +2410,6 @@ version = "0.3.0"
 dependencies = [
  "bevy",
  "bevy_panorbit_camera",
- "hyperlattice",
  "hyperlimit",
  "hyperreal",
  "hypertri",

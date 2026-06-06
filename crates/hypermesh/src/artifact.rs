@@ -14,7 +14,8 @@
 //! evidence.
 
 use super::proposal::{ExactMeshProposalReport, ExactMeshProposalReportError};
-use super::{ExactMesh, ExactMeshValidationError, MeshSource, ValidationPolicy, audit_exact_mesh};
+use super::{ExactMesh, ExactMeshValidationError, ValidationPolicy, audit_exact_mesh};
+use hyperlimit::MeshSource;
 
 /// Producer family for a mesh-shaped artifact.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]

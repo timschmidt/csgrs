@@ -9,16 +9,17 @@
 //! triangle classifier is rebuilt, and candidate split events reuse those
 //! mutations wait for certified predicates and exact constructions.
 
-use hyperlimit::PredicateOutcome;
+use hyperlimit::{PredicateOutcome, SegmentPlaneIntersection, TrianglePlaneRelation};
 
 use super::bounds::AabbIntersectionKind;
-use super::construction::{SegmentPlaneIntersection, intersect_segment_with_retained_face_plane};
+use super::construction::intersect_segment_with_retained_face_plane;
 use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
 use super::mesh::ExactMesh;
 use super::narrow::{
-    TrianglePlaneRelation, TriangleTriangleClassification, TriangleTriangleRelation,
+    TriangleTriangleClassification, TriangleTriangleRelation,
     classify_mesh_triangle_against_retained_face_plane, classify_triangle_triangle,
 };
+use super::topology::triangle_edges;
 
 /// Structural inconsistency in one exact face-pair scheduler record.
 ///
@@ -249,13 +250,9 @@ pub fn classify_mesh_face_pair(
         });
     }
 
-    let mut points = left
-        .vertices()
-        .iter()
-        .map(|point| point.clone())
-        .collect::<Vec<_>>();
+    let mut points = left.vertices().to_vec();
     let right_offset = points.len();
-    points.extend(right.vertices().iter().map(|point| point.clone()));
+    points.extend(right.vertices().iter().cloned());
 
     let left_tri = left.triangles()[left_face].0;
     let mut right_tri = right.triangles()[right_face].0;
@@ -336,14 +333,6 @@ fn retained_triangle_edge_events(
             intersect_segment_with_retained_face_plane(plane, &p0, &p1)
         })
         .collect()
-}
-
-fn triangle_edges(triangle: [usize; 3]) -> [[usize; 2]; 3] {
-    [
-        [triangle[0], triangle[1]],
-        [triangle[1], triangle[2]],
-        [triangle[2], triangle[0]],
-    ]
 }
 
 fn mesh_relation_from_triangle(relation: TriangleTriangleRelation) -> MeshFacePairRelation {

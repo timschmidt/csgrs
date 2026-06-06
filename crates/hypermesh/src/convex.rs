@@ -31,9 +31,10 @@ use super::mesh::{ExactMesh, Triangle};
 use super::solid::{
     ClosedMeshOrientation, ConvexSolidFacts, ConvexSolidReportError, certify_convex_solid,
 };
+use super::topology::triangle_edges;
 use super::validation::ValidationPolicy;
 use hyperlimit::SourceProvenance;
-use hyperlimit::{CoplanarProjection, project_point3};
+use hyperlimit::{CoplanarProjection, project_point3, projected_polygon_area2_value};
 use hyperreal::Real;
 
 /// Certified intersection of two closed convex solids.
@@ -410,14 +411,6 @@ fn directed_boundary_loops(triangles: &[Triangle]) -> Option<Vec<Vec<usize>>> {
     Some(loops)
 }
 
-fn triangle_edges(triangle: [usize; 3]) -> [[usize; 2]; 3] {
-    [
-        [triangle[0], triangle[1]],
-        [triangle[1], triangle[2]],
-        [triangle[2], triangle[0]],
-    ]
-}
-
 fn loop_is_planar(vertices: &[Point3], loop_: &[usize]) -> Option<bool> {
     let a = vertices.get(loop_[0])?;
     let b = vertices.get(loop_[1])?;
@@ -678,7 +671,7 @@ fn append_source_face_minus_convex_inside(
         .map(|point| project_point3(point, projection))
         .collect::<Vec<_>>();
     let source_sign = compare_reals(
-        &projected_polygon_area2_signed(source_points, projection),
+        &projected_polygon_area2_value(source_points, projection),
         &Real::from(0),
     )
     .value()?;
@@ -759,7 +752,7 @@ fn append_source_face_convex_inside_reversed(
 
     let projection = choose_polygon_projection(&inside)?;
     let source_sign = compare_reals(
-        &projected_polygon_area2_signed(&inside, projection),
+        &projected_polygon_area2_value(&inside, projection),
         &Real::from(0),
     )
     .value()?;
@@ -946,25 +939,12 @@ fn choose_polygon_projection(points: &[Point3]) -> Option<CoplanarProjection> {
         CoplanarProjection::Xz,
         CoplanarProjection::Yz,
     ] {
-        let area = projected_polygon_area2_signed(points, projection);
+        let area = projected_polygon_area2_value(points, projection);
         if compare_reals(&area, &Real::from(0)).value()? != Ordering::Equal {
             return Some(projection);
         }
     }
     None
-}
-
-fn projected_polygon_area2_signed(points: &[Point3], projection: CoplanarProjection) -> Real {
-    let mut area = Real::from(0);
-    for index in 0..points.len() {
-        let current = project_point3(&points[index], projection);
-        let next = project_point3(&points[(index + 1) % points.len()], projection);
-        area = add(
-            &area,
-            &sub(&mul(&current.x, &next.y), &mul(&current.y, &next.x)),
-        );
-    }
-    area
 }
 
 fn convex_hull_polygons_from_clipped_faces(polygons: &[Vec<Point3>]) -> Option<Vec<Vec<Point3>>> {

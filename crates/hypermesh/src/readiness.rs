@@ -9,9 +9,10 @@
 //! cannot silently reinterpret topology evidence.
 
 use super::{
-    ExactMesh, ExactMeshAuditReport, MeshSource, ValidationPolicy, approximate_mesh_f64_view,
-    audit_exact_mesh, exact_solid_handoff, exact_surface_handoff,
+    ExactMesh, ExactMeshAuditReport, ValidationPolicy, approximate_mesh_f64_view, audit_exact_mesh,
+    exact_solid_handoff, exact_surface_handoff,
 };
+use hyperlimit::MeshSource;
 
 /// Compact readiness summary for common exact-mesh consumers.
 #[derive(Clone, Debug, Eq, PartialEq)]

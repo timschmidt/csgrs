@@ -8,7 +8,9 @@
 //! topology, retain exact rational coordinates, and expose exact face-plane
 //! views, and certified predicate decisions are distinct artifacts.
 
-use super::{ExactMesh, ExactMeshAuditReport, MeshSource, ValidationPolicy, audit_exact_mesh};
+use hyperlimit::MeshSource;
+
+use super::{ExactMesh, ExactMeshAuditReport, ValidationPolicy, audit_exact_mesh};
 
 /// Exact solid handoff report for downstream crates.
 #[derive(Clone, Debug, Eq, PartialEq)]

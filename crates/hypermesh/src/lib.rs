@@ -3,7 +3,6 @@
 
 #![allow(clippy::too_many_arguments)]
 #![allow(clippy::cast_abs_to_unsigned)]
-#![allow(unused_braces)]
 #![forbid(unsafe_code)]
 
 //! Exact-facing mesh API for the hyper geometry stack.
@@ -13,47 +12,48 @@
 //! predicate reports, certified outputs, or explicit blockers when the
 //! implementation cannot prove a requested operation.
 
-pub mod adapter;
+mod adapter;
 mod adjacent;
 pub(crate) mod adjacent_polygon;
 mod affine_box;
 mod affine_solid;
 mod arrangement2d;
-pub mod arrangement3d;
+mod arrangement3d;
 pub mod artifact;
-pub mod audit;
-pub mod boolean;
-pub mod bounds;
+mod audit;
+mod boolean;
+mod bounds;
 mod box_solid;
-pub mod cell_complex;
+mod cell_complex;
 mod cells;
-pub mod construction;
+mod construction;
 mod contained_adjacent;
-pub mod convex;
-pub mod error;
-pub mod facts;
-pub mod graph;
-pub mod handoff;
-pub mod intersection;
+mod convex;
+mod error;
+mod facts;
+mod graph;
+mod handoff;
+mod intersection;
 pub(crate) mod loop_triangulation;
-pub mod mesh;
-pub mod narrow;
+mod mesh;
+mod narrow;
 mod orthogonal_solid;
-pub mod package;
+mod package;
 pub mod proposal;
-pub mod readiness;
+mod readiness;
 mod region;
-pub mod regularization;
-pub mod reports;
-pub mod scalar;
-pub mod simplify;
-pub mod solid;
+mod regularization;
+mod reports;
+mod scalar;
+mod simplify;
+mod solid;
 mod support;
-pub mod validation;
-pub mod view;
+mod topology;
+mod validation;
+mod view;
 mod volumetric;
 mod volumetric_cells;
-pub mod winding;
+mod winding;
 mod witness;
 
 pub use adapter::{
@@ -96,9 +96,7 @@ pub use cell_complex::{
     ExactSelectedFaceOrientation,
 };
 pub use construction::{
-    SegmentPlaneConstructionFailure, SegmentPlaneIntersection, SegmentPlaneParameterRatio,
-    SegmentPlaneRelation, SegmentPlaneValidationError, intersect_segment_with_face_plane,
-    intersect_segment_with_oriented_plane, intersect_segment_with_retained_face_plane,
+    intersect_segment_with_face_plane, intersect_segment_with_retained_face_plane,
 };
 pub use convex::{
     ConvexSolidDifference, ConvexSolidIntersection, ConvexSolidUnion,
@@ -115,19 +113,12 @@ pub use handoff::{
     ExactSurfaceHandoffError, ExactSurfaceHandoffFreshness, ExactSurfaceHandoffReport,
     exact_solid_handoff, exact_surface_handoff,
 };
-pub use hyperlimit::{
-    ApproximationPolicy, ConstructionProvenance, ConstructionProvenanceValidationError,
-    CoplanarProjection, CoplanarTriangleClassification, CoplanarTriangleRelation,
-    CoplanarTriangleValidationError, MeshSource, PredicateUse, SourceProvenance,
-    TriangleDegeneracy, TrianglePredicateReport, classify_coplanar_triangles,
-};
 pub use intersection::{
     MeshFacePairClassification, MeshFacePairRelation, MeshFacePairValidationError,
     classify_mesh_face_pair, classify_mesh_face_pairs,
 };
 pub use mesh::{ExactMesh, ExactMeshValidationError, Triangle};
 pub use narrow::{
-    TrianglePlaneClassification, TrianglePlaneRelation, TrianglePlaneValidationError,
     TriangleTriangleClassification, TriangleTriangleRelation, TriangleTriangleValidationError,
     classify_mesh_triangle_against_retained_face_plane, classify_triangle_against_face_plane,
     classify_triangle_triangle,
@@ -164,11 +155,7 @@ pub use solid::{
     classify_mesh_vertices_against_convex_solid_report, classify_point_against_convex_solid,
     classify_point_against_convex_solid_report,
 };
-pub use support::{
-    SupportDop3, SupportDopAxis3, SupportDopExpansionKind, SupportDopExpansionReport,
-    SupportDopRefreshReport, SupportDopValidationError, SupportSlab3, SupportWitness3,
-    support_dop_for_mesh,
-};
+pub use support::support_dop_for_mesh;
 pub use validation::{
     BoundaryPolicy, ValidationPolicy, ValidationReport, validate_triangles,
     validate_triangles_with_policy,
@@ -184,7 +171,3 @@ pub use winding::{
     classify_mesh_vertices_against_closed_mesh_winding_report,
     classify_point_against_closed_mesh_winding, classify_point_against_closed_mesh_winding_report,
 };
-
-pub mod prelude {
-    pub use crate::{ExactMesh, MeshFacts, Triangle};
-}

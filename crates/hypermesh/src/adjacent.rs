@@ -19,13 +19,12 @@ use std::cmp::Ordering;
 use std::collections::{BTreeMap, BTreeSet};
 
 use hyperlimit::{
-    CoplanarProjection, Point3, SegmentIntersection, Sign, TriangleLocation,
+    CoplanarProjection, Point3, SegmentIntersection, SegmentPlaneRelation, Sign, TriangleLocation,
     classify_point_triangle, compare_reals, orient3d_report, project_point3,
     projected_polygon_area2_value,
 };
 
 use super::adjacent_polygon::polygon_patch_pairs;
-use super::construction::SegmentPlaneRelation;
 use super::graph::{
     ExactIntersectionGraph, FacePairEvents, IntersectionEvent, MeshSide, build_intersection_graph,
 };

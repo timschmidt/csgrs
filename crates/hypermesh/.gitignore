@@ -4,3 +4,7 @@
 /.idea
 /.vscode
 /fuzz/target
+/fuzz/artifacts
+/fuzz/corpus/exact_adjacent_polygon
+/fuzz/corpus/exact_boolean_preflight
+/crash-*

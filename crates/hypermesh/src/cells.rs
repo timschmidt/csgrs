@@ -17,13 +17,12 @@
 use std::{cmp::Ordering, collections::BTreeSet};
 
 use hyperlimit::{
-    Point2, Point3, SegmentIntersection, TriangleLocation, classify_point_triangle,
-    classify_segment_intersection, compare_reals, point_on_segment, projected_segment_parameter3,
-    proper_segment_intersection_point,
+    Point2, Point3, SegmentIntersection, SegmentPlaneRelation, TriangleLocation,
+    classify_point_triangle, classify_segment_intersection, compare_reals, point_on_segment,
+    projected_segment_parameter3, proper_segment_intersection_point,
 };
 use hypertri::Constraint;
 
-use super::construction::SegmentPlaneRelation;
 use super::graph::{
     CoplanarOverlapSplitPlan, ExactFaceRegionPlan, ExactIntersectionGraph, ExactSplitTopologyPlan,
     FacePairEvents, FaceRegionBoundary, FaceSplitBoundaryNode, IntersectionEvent, MeshSide,
@@ -34,6 +33,7 @@ use super::region::{
     FaceRegionTriangulation, boundary_node_point, choose_region_projection, project_for_hypertri,
     project_for_predicate,
 };
+use super::topology::triangle_edges;
 use hyperlimit::CoplanarProjection;
 use hyperreal::Real;
 
@@ -458,11 +458,12 @@ fn seed_contained_coplanar_opposite_edge_endpoints(
         MeshSide::Left => left,
         MeshSide::Right => right,
     };
-    for edge in edges.to_vec() {
-        for (vertex, parameter) in [(edge.edge[0], Real::from(0)), (edge.edge[1], Real::from(1))] {
+    let edge_keys = edges.iter().map(|edge| edge.edge).collect::<Vec<_>>();
+    for edge in edge_keys {
+        for (vertex, parameter) in [(edge[0], Real::from(0)), (edge[1], Real::from(1))] {
             let point = vertex_point_for_side(opposite_side, vertex, left, right)?;
             if point_lies_on_mesh_face_closed(source_mesh, face, &point)? {
-                push_coplanar_cell_edge_point(edges, edge.edge, parameter, point)?;
+                push_coplanar_cell_edge_point(edges, edge, parameter, point)?;
             }
         }
     }
@@ -502,9 +503,10 @@ fn seed_source_boundary_vertices_on_coplanar_opposite_edges(
             })?;
     let projection = choose_region_projection(source_mesh, face)?;
 
-    for edge in edges.to_vec() {
-        let start = vertex_point_for_side(opposite_side, edge.edge[0], left, right)?;
-        let end = vertex_point_for_side(opposite_side, edge.edge[1], left, right)?;
+    let edge_keys = edges.iter().map(|edge| edge.edge).collect::<Vec<_>>();
+    for edge in edge_keys {
+        let start = vertex_point_for_side(opposite_side, edge[0], left, right)?;
+        let end = vertex_point_for_side(opposite_side, edge[1], left, right)?;
         let projected_start = project_for_predicate(&start, projection);
         let projected_end = project_for_predicate(&end, projection);
         for &vertex in &source_triangle.0 {
@@ -522,7 +524,7 @@ fn seed_source_boundary_vertices_on_coplanar_opposite_edges(
                         .ok_or(hypertri::Error::InvalidInput {
                             reason: "face-cell coplanar source-boundary parameter is undefined",
                         })?;
-                    push_coplanar_cell_edge_point(edges, edge.edge, parameter, point)?;
+                    push_coplanar_cell_edge_point(edges, edge, parameter, point)?;
                 }
                 Some(false) => {}
                 None => {
@@ -569,9 +571,10 @@ fn seed_source_boundary_edge_crossings_on_coplanar_opposite_edges(
     let projection = choose_region_projection(source_mesh, face)?;
     let source_edges = triangle_edges(source_triangle.0);
 
-    for edge in edges.to_vec() {
-        let opposite_start = vertex_point_for_side(opposite_side, edge.edge[0], left, right)?;
-        let opposite_end = vertex_point_for_side(opposite_side, edge.edge[1], left, right)?;
+    let edge_keys = edges.iter().map(|edge| edge.edge).collect::<Vec<_>>();
+    for edge in edge_keys {
+        let opposite_start = vertex_point_for_side(opposite_side, edge[0], left, right)?;
+        let opposite_end = vertex_point_for_side(opposite_side, edge[1], left, right)?;
         let projected_opposite_start = project_for_predicate(&opposite_start, projection);
         let projected_opposite_end = project_for_predicate(&opposite_end, projection);
         for source_edge in source_edges {
@@ -623,7 +626,7 @@ fn seed_source_boundary_edge_crossings_on_coplanar_opposite_edges(
                         .ok_or(hypertri::Error::InvalidInput {
                             reason: "face-cell coplanar source-boundary crossing parameter is undefined",
                         })?;
-                    push_coplanar_cell_edge_point(edges, edge.edge, parameter, lifted)?;
+                    push_coplanar_cell_edge_point(edges, edge, parameter, lifted)?;
                 }
                 Some(
                     SegmentIntersection::Disjoint
@@ -682,15 +685,6 @@ fn coplanar_opposite_edges(
         .collect())
 }
 
-/// Return exact directed triangle edges incident to a retained vertex.
-fn triangle_edges(triangle: [usize; 3]) -> [[usize; 2]; 3] {
-    [
-        [triangle[0], triangle[1]],
-        [triangle[1], triangle[2]],
-        [triangle[2], triangle[0]],
-    ]
-}
-
 /// Return opposite-face edges that use `vertex` as an endpoint.
 fn coplanar_edges_incident_to_vertex(edges: &[CoplanarCellEdge], vertex: usize) -> Vec<[usize; 2]> {
     edges
@@ -713,7 +707,7 @@ fn vertex_point_for_side(
     };
     mesh.vertices()
         .get(vertex)
-        .map(|point| point.clone())
+        .cloned()
         .ok_or(hypertri::Error::InvalidInput {
             reason: "face-cell coplanar vertex overlap references a missing vertex",
         })
@@ -1292,7 +1286,7 @@ fn point_lies_strictly_between(
     if exact_points_equal(point_ref, start_ref)? || exact_points_equal(point_ref, end_ref)? {
         return Ok(false);
     }
-    Ok(point_on_closed_segment(point_ref, start_ref, end_ref)?)
+    point_on_closed_segment(point_ref, start_ref, end_ref)
 }
 
 fn compare_ordering(

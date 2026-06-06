@@ -16,6 +16,8 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
+use hyperlimit::SegmentPlaneRelation;
+
 use super::adjacent::{
     full_face_adjacent_certificate, materialize_full_face_adjacent_union_from_certificate,
 };
@@ -43,7 +45,6 @@ use super::cell_complex::{
     selected_region_selection_ignores_opposite_classification,
 };
 use super::cells::triangulate_all_face_cells_with_cdt;
-use super::construction::SegmentPlaneRelation;
 use super::contained_adjacent::{
     contained_face_adjacent_certificate, materialize_contained_face_adjacent_union_from_certificate,
 };
@@ -84,6 +85,9 @@ use super::solid::{
     ConvexSolidMeshClassification, ConvexSolidMeshRelation, ConvexSolidPointRelation,
     classify_mesh_vertices_against_convex_solid_report,
 };
+use super::topology::mesh_for_side;
+#[cfg(test)]
+use super::topology::triangle_edges as topology_triangle_edges;
 use super::validation::ValidationPolicy;
 use super::volumetric::{
     ExactVolumetricRegionClassification, ExactVolumetricRegionError, ExactVolumetricRegionRelation,
@@ -935,7 +939,7 @@ fn graph_relation_counts(graph: &super::graph::ExactIntersectionGraph) -> GraphR
                 matches!(
                     event,
                     super::graph::IntersectionEvent::SegmentPlane {
-                        relation: super::construction::SegmentPlaneRelation::ConstructionFailed,
+                        relation: SegmentPlaneRelation::ConstructionFailed,
                         ..
                     }
                 )
@@ -1141,13 +1145,6 @@ fn proper_crossing_outside_plane_face(
     )
     .value()
         == Some(TriangleLocation::Outside)
-}
-
-fn mesh_for_side<'a>(side: MeshSide, left: &'a ExactMesh, right: &'a ExactMesh) -> &'a ExactMesh {
-    match side {
-        MeshSide::Left => left,
-        MeshSide::Right => right,
-    }
 }
 
 fn triangle_points(mesh: &ExactMesh, face: usize) -> Option<[Point3; 3]> {
@@ -1388,8 +1385,17 @@ pub fn boolean_exact_with_boundary_policy(
 }
 
 enum ArrangementCellComplexOutcome {
-    Materialized(ExactBooleanResult, ExactArrangementBooleanAttempt),
+    Materialized(Box<ExactBooleanResult>, ExactArrangementBooleanAttempt),
     Declined(ExactArrangementBooleanAttempt),
+}
+
+impl ArrangementCellComplexOutcome {
+    fn materialized(
+        result: ExactBooleanResult,
+        attempt: ExactArrangementBooleanAttempt,
+    ) -> ArrangementCellComplexOutcome {
+        ArrangementCellComplexOutcome::Materialized(Box::new(result), attempt)
+    }
 }
 
 /// Report how far the arrangement/cell-complex Boolean pipeline gets for an
@@ -1433,7 +1439,7 @@ fn boolean_arrangement_cell_complex_meshes(
         Err(_) => return Ok(None),
     };
     match outcome {
-        ArrangementCellComplexOutcome::Materialized(result, _) => Ok(Some(result)),
+        ArrangementCellComplexOutcome::Materialized(result, _) => Ok(Some(*result)),
         ArrangementCellComplexOutcome::Declined(_) => Ok(None),
     }
 }
@@ -1622,7 +1628,7 @@ fn run_arrangement_cell_complex_attempt(
         attempt.materialized_shortcut = Some(ExactBooleanShortcutKind::ArrangementCellComplex);
         attempt.output_vertices = result.mesh.vertices().len();
         attempt.output_triangles = result.mesh.triangles().len();
-        return Ok(ArrangementCellComplexOutcome::Materialized(result, attempt));
+        return Ok(ArrangementCellComplexOutcome::materialized(result, attempt));
     }
 
     if let Some(validation) = validation
@@ -1638,7 +1644,7 @@ fn run_arrangement_cell_complex_attempt(
         attempt.materialized_shortcut = Some(ExactBooleanShortcutKind::ArrangementCellComplex);
         attempt.output_vertices = result.mesh.vertices().len();
         attempt.output_triangles = result.mesh.triangles().len();
-        return Ok(ArrangementCellComplexOutcome::Materialized(result, attempt));
+        return Ok(ArrangementCellComplexOutcome::materialized(result, attempt));
     }
 
     if !matches!(operation, ExactBooleanOperation::SelectedRegions(_))
@@ -1650,7 +1656,7 @@ fn run_arrangement_cell_complex_attempt(
         attempt.materialized_shortcut = Some(ExactBooleanShortcutKind::ArrangementCellComplex);
         attempt.output_vertices = result.mesh.vertices().len();
         attempt.output_triangles = result.mesh.triangles().len();
-        return Ok(ArrangementCellComplexOutcome::Materialized(result, attempt));
+        return Ok(ArrangementCellComplexOutcome::materialized(result, attempt));
     }
 
     if let Some(validation) = validation
@@ -1681,27 +1687,25 @@ fn run_arrangement_cell_complex_attempt(
             attempt.materialized_shortcut = Some(ExactBooleanShortcutKind::ArrangementCellComplex);
             attempt.output_vertices = result.mesh.vertices().len();
             attempt.output_triangles = result.mesh.triangles().len();
-            return Ok(ArrangementCellComplexOutcome::Materialized(result, attempt));
+            return Ok(ArrangementCellComplexOutcome::materialized(result, attempt));
         }
         if regularize_unregularized_sheet_complex
             && arrangement_blockers_are_unregularized_sheet_complex(&arrangement.blockers)
             && let Some(validation) = validation
-        {
-            if let Some(result) = boolean_arrangement_regularized_sheet_complex_from_graph(
+            && let Some(result) = boolean_arrangement_regularized_sheet_complex_from_graph(
                 &arrangement.graph,
                 left,
                 right,
                 operation,
                 validation,
-            )? {
-                attempt.stage = ExactArrangementBooleanStage::Materialized;
-                attempt.materialized_shortcut =
-                    Some(ExactBooleanShortcutKind::ArrangementCellComplex);
-                attempt.arrangement_blockers = 0;
-                attempt.output_vertices = result.mesh.vertices().len();
-                attempt.output_triangles = result.mesh.triangles().len();
-                return Ok(ArrangementCellComplexOutcome::Materialized(result, attempt));
-            }
+            )?
+        {
+            attempt.stage = ExactArrangementBooleanStage::Materialized;
+            attempt.materialized_shortcut = Some(ExactBooleanShortcutKind::ArrangementCellComplex);
+            attempt.arrangement_blockers = 0;
+            attempt.output_vertices = result.mesh.vertices().len();
+            attempt.output_triangles = result.mesh.triangles().len();
+            return Ok(ArrangementCellComplexOutcome::materialized(result, attempt));
         }
         if let Some(outcome) = arrangement_cell_complex_recovery_outcome_if_available(
             regularize_unregularized_sheet_complex,
@@ -1891,7 +1895,7 @@ fn run_arrangement_cell_complex_attempt(
                     Some(ExactBooleanShortcutKind::ArrangementCellComplex);
                 attempt.output_vertices = mesh.vertices().len();
                 attempt.output_triangles = mesh.triangles().len();
-                return Ok(ArrangementCellComplexOutcome::Materialized(
+                return Ok(ArrangementCellComplexOutcome::materialized(
                     certified_shortcut_result(
                         mesh,
                         ExactBooleanShortcutKind::ArrangementCellComplex,
@@ -1920,7 +1924,7 @@ fn run_arrangement_cell_complex_attempt(
     if volume_resolves_region_classification {
         attempt.arrangement_blockers = 0;
     }
-    Ok(ArrangementCellComplexOutcome::Materialized(
+    Ok(ArrangementCellComplexOutcome::materialized(
         certified_shortcut_result(mesh, ExactBooleanShortcutKind::ArrangementCellComplex),
         attempt,
     ))
@@ -1986,7 +1990,7 @@ fn arrangement_orthogonal_solid_cell_recovery_outcome(
     attempt.arrangement_blockers = 0;
     attempt.output_vertices = result.mesh.vertices().len();
     attempt.output_triangles = result.mesh.triangles().len();
-    Ok(Some(ArrangementCellComplexOutcome::Materialized(
+    Ok(Some(ArrangementCellComplexOutcome::materialized(
         result,
         attempt.clone(),
     )))
@@ -2019,7 +2023,7 @@ fn arrangement_open_surface_recovery_outcome(
     attempt.decline = None;
     attempt.output_vertices = result.mesh.vertices().len();
     attempt.output_triangles = result.mesh.triangles().len();
-    Ok(Some(ArrangementCellComplexOutcome::Materialized(
+    Ok(Some(ArrangementCellComplexOutcome::materialized(
         result,
         attempt.clone(),
     )))
@@ -2043,7 +2047,7 @@ fn arrangement_affine_orthogonal_solid_recovery_outcome(
     attempt.arrangement_blockers = 0;
     attempt.output_vertices = result.mesh.vertices().len();
     attempt.output_triangles = result.mesh.triangles().len();
-    Ok(Some(ArrangementCellComplexOutcome::Materialized(
+    Ok(Some(ArrangementCellComplexOutcome::materialized(
         result,
         attempt.clone(),
     )))
@@ -2335,7 +2339,7 @@ fn arrangement_volumetric_split_cell_recovery_outcome(
     attempt.arrangement_blockers = 0;
     attempt.output_vertices = result.mesh.vertices().len();
     attempt.output_triangles = result.mesh.triangles().len();
-    Ok(Some(ArrangementCellComplexOutcome::Materialized(
+    Ok(Some(ArrangementCellComplexOutcome::materialized(
         result,
         attempt.clone(),
     )))
@@ -2359,7 +2363,7 @@ fn arrangement_convex_regularized_sheet_recovery_outcome(
     attempt.arrangement_blockers = 0;
     attempt.output_vertices = result.mesh.vertices().len();
     attempt.output_triangles = result.mesh.triangles().len();
-    Ok(Some(ArrangementCellComplexOutcome::Materialized(
+    Ok(Some(ArrangementCellComplexOutcome::materialized(
         result,
         attempt.clone(),
     )))
@@ -2388,7 +2392,7 @@ fn arrangement_cell_complex_recovery_outcome_if_available(
             attempt.arrangement_blockers = 0;
             attempt.output_vertices = result.mesh.vertices().len();
             attempt.output_triangles = result.mesh.triangles().len();
-            return Ok(Some(ArrangementCellComplexOutcome::Materialized(
+            return Ok(Some(ArrangementCellComplexOutcome::materialized(
                 result,
                 attempt.clone(),
             )));
@@ -2402,7 +2406,7 @@ fn arrangement_cell_complex_recovery_outcome_if_available(
             attempt.arrangement_blockers = 0;
             attempt.output_vertices = result.mesh.vertices().len();
             attempt.output_triangles = result.mesh.triangles().len();
-            return Ok(Some(ArrangementCellComplexOutcome::Materialized(
+            return Ok(Some(ArrangementCellComplexOutcome::materialized(
                 result,
                 attempt.clone(),
             )));
@@ -3309,11 +3313,13 @@ fn coplanar_mesh_overlay_materialized_boundary_policy(
     operation: ExactArrangement2dSetOperation,
     allow_empty: bool,
 ) -> Option<ExactArrangement2dBoundaryPolicy> {
-    for boundary_policy in [
+    [
         ExactArrangement2dBoundaryPolicy::SimplifyCollinear,
         ExactArrangement2dBoundaryPolicy::PreserveCollinear,
-    ] {
-        if materialize_coplanar_mesh_overlay_mesh(
+    ]
+    .into_iter()
+    .find(|&boundary_policy| {
+        materialize_coplanar_mesh_overlay_mesh(
             left,
             right,
             operation,
@@ -3322,11 +3328,7 @@ fn coplanar_mesh_overlay_materialized_boundary_policy(
             allow_empty,
         )
         .is_some()
-        {
-            return Some(boundary_policy);
-        }
-    }
-    None
+    })
 }
 
 fn coplanar_mesh_overlay_difference_materializes(left: &ExactMesh, right: &ExactMesh) -> bool {
@@ -3442,11 +3444,7 @@ fn exact_mesh_boundary_edges(mesh: &ExactMesh) -> Option<Vec<ExactBoundaryEdge>>
 
 #[cfg(test)]
 fn triangle_edges(triangle: &Triangle) -> [[usize; 2]; 3] {
-    [
-        [triangle.0[0], triangle.0[1]],
-        [triangle.0[1], triangle.0[2]],
-        [triangle.0[2], triangle.0[0]],
-    ]
+    topology_triangle_edges(triangle.0)
 }
 
 #[cfg(test)]
@@ -3463,7 +3461,7 @@ fn projected_loop_signed_area_twice(points: &[Point2]) -> Real {
     for index in 0..points.len() {
         let current = &points[index];
         let next = &points[(index + 1) % points.len()];
-        area = area + &(current.x.clone() * &next.y) - &(current.y.clone() * &next.x);
+        area += &(current.x.clone() * &next.y) - &(current.y.clone() * &next.x);
     }
     area
 }

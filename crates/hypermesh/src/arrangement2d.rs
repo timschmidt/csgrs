@@ -340,8 +340,8 @@ pub fn build_exact_arrangement2d(
         if !active[left] {
             continue;
         }
-        for right in (left + 1)..segments.len() {
-            if !active[right] {
+        for (right, right_active) in active.iter().enumerate().skip(left + 1) {
+            if !*right_active {
                 continue;
             }
             add_pair_intersections(segments, left, right, &mut split_points, &mut blockers);
@@ -365,10 +365,9 @@ pub fn build_exact_arrangement2d(
         let mut segment_vertices = Vec::new();
         for point in points.iter() {
             if let Some(vertex) = find_or_insert_vertex(&mut vertices, point.clone(), &mut blockers)
+                && segment_vertices.last().copied() != Some(vertex)
             {
-                if segment_vertices.last().copied() != Some(vertex) {
-                    segment_vertices.push(vertex);
-                }
+                segment_vertices.push(vertex);
             }
         }
         for pair in segment_vertices.windows(2) {
@@ -876,9 +875,8 @@ fn extract_bounded_faces(
         });
     }
 
-    for vertex in 0..adjacency.len() {
-        if sort_neighbors_around_vertex(vertex, &mut adjacency[vertex], vertices, blockers).is_err()
-        {
+    for (vertex, neighbors) in adjacency.iter_mut().enumerate() {
+        if sort_neighbors_around_vertex(vertex, neighbors, vertices, blockers).is_err() {
             return Vec::new();
         }
     }
@@ -1060,7 +1058,7 @@ fn signed_area_twice(vertices_in_face: &[usize], vertices: &[ExactArrangement2dV
         let current = &vertices[vertices_in_face[index]].point;
         let next = &vertices[vertices_in_face[(index + 1) % vertices_in_face.len()]].point;
         let wedge = current.x.clone() * &next.y - &(current.y.clone() * &next.x);
-        area = area + &wedge;
+        area += &wedge;
     }
     area
 }
@@ -1243,8 +1241,8 @@ fn polygon_vertex_average(
     let mut x = Real::from(0);
     let mut y = Real::from(0);
     for vertex in &face.vertices {
-        x = x + &vertices[*vertex].point.x;
-        y = y + &vertices[*vertex].point.y;
+        x += &vertices[*vertex].point.x;
+        y += &vertices[*vertex].point.y;
     }
     Some(Point2::new(x * &inv, y * &inv))
 }

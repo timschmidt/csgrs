@@ -1,7 +1,15 @@
 #![no_main]
 
-use hyperlimit::Point3;
-use hypermesh::{ExactMesh, audit_exact_mesh, build_intersection_graph, classify_coplanar_triangles, classify_mesh_face_pair, classify_mesh_face_pairs, classify_mesh_triangle_against_retained_face_plane, classify_triangle_triangle, inspect_i64_mesh_input, intersect_segment_with_face_plane, intersect_segment_with_retained_face_plane};
+use hyperlimit::{
+    Point3, SupportDopAxis3, SupportDopExpansionKind, WitnessedSupportDop3,
+    classify_coplanar_triangles,
+};
+use hypermesh::{
+    ExactMesh, audit_exact_mesh, build_intersection_graph, classify_mesh_face_pair,
+    classify_mesh_face_pairs, classify_mesh_triangle_against_retained_face_plane,
+    classify_triangle_triangle, inspect_i64_mesh_input, intersect_segment_with_face_plane,
+    intersect_segment_with_retained_face_plane,
+};
 
 
 use hyperreal::Real;
@@ -256,16 +264,16 @@ fuzz_target!(|data: &[u8]| {
             .bounds()
             .validate(mesh.vertices().len(), mesh.triangles().len());
         let _ = mesh.bounds().candidate_face_pairs(mesh.bounds());
-        let axes = hypermesh::SupportDopAxis3::kdop26_axes();
+        let axes = SupportDopAxis3::kdop26_axes();
         let support = hypermesh::support_dop_for_mesh(&mesh, &axes);
         if mesh.vertices().is_empty() {
             assert!(support.is_err());
         } else {
             let support = support.unwrap();
-            support.validate_against_mesh(&mesh).unwrap();
+            support.validate_against_points(mesh.vertices()).unwrap();
             assert_eq!(
                 support.expansion.kind,
-                hypermesh::SupportDopExpansionKind::None
+                SupportDopExpansionKind::None
             );
         }
         if mesh.facts().mesh.closed_manifold && !mesh.triangles().is_empty() {
@@ -379,8 +387,8 @@ fuzz_target!(|data: &[u8]| {
             })
             .collect::<Vec<_>>();
         let _ = intersect_segment_with_face_plane(&points, [0, 1, 2], [3, 4]).validate();
-        let axes = hypermesh::SupportDopAxis3::orthogonal_axes();
-        if let Ok(mut support) = hypermesh::SupportDop3::from_points(&points, &axes) {
+        let axes = SupportDopAxis3::orthogonal_axes();
+        if let Ok(mut support) = WitnessedSupportDop3::from_points(&points, &axes) {
             support.validate_against_points(&points).unwrap();
             let _ = support.refresh_for_changed_vertices(&points, &[0]).unwrap();
         }

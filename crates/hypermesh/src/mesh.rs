@@ -4,8 +4,6 @@
 //! `hyperreal::Real`. Primitive-float construction is a named lossy adapter
 //! and validates every coordinate before import.
 
-pub use hyperlimit::Point3;
-
 use super::adapter::{
     ExactI64MeshInputReport, LossyF64MeshInputReport, inspect_f64_mesh_input,
     inspect_i64_mesh_input,
@@ -29,7 +27,8 @@ use super::scalar::LossyF64Import;
 use super::validation::{ValidationPolicy, ValidationReport, validate_triangles_with_policy};
 use super::view::{ApproximateMeshF64View, ApproximateMeshF64ViewError, approximate_mesh_f64_view};
 use hyperlimit::{
-    ConstructionProvenance, ConstructionProvenanceValidationError, PredicateUse, SourceProvenance,
+    ConstructionProvenance, ConstructionProvenanceValidationError, Point3, PredicateUse,
+    SourceProvenance,
 };
 use hyperreal::Real;
 
@@ -109,7 +108,7 @@ impl ExactMesh {
             return Err(MeshError::new(index_diagnostics));
         }
 
-        let points = vertices.iter().cloned().collect::<Vec<_>>();
+        let points = vertices.to_vec();
         let triangle_indices = triangles.iter().map(|tri| tri.0).collect::<Vec<_>>();
         let bounds = MeshBounds::from_triangles(&points, &triangle_indices);
         let report = validate_triangles_with_policy(&points, &triangle_indices, policy);
@@ -349,7 +348,7 @@ impl ExactMesh {
                 actual: self.facts.mesh.face_count,
             });
         }
-        let points = self.vertices.iter().cloned().collect::<Vec<_>>();
+        let points = self.vertices.to_vec();
         let triangles = self
             .triangles
             .iter()
