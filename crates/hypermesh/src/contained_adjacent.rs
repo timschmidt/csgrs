@@ -26,10 +26,7 @@ use hyperlimit::{
 };
 
 use super::arrangement2d::{ExactArrangement2dBoundaryPolicy, ExactArrangement2dSetOperation};
-use super::boolean::{
-    ProjectedOverlayBoundaryPolicy, coplanar_mesh_overlay_carrier,
-    materialize_coplanar_mesh_overlay_mesh,
-};
+use super::boolean::{coplanar_mesh_overlay_carrier, materialize_coplanar_mesh_overlay_mesh};
 use super::construction::SegmentPlaneRelation;
 use super::graph::{
     ExactIntersectionGraph, FacePairEvents, IntersectionEvent, MeshSide, build_intersection_graph,
@@ -1038,22 +1035,15 @@ fn materialize_contained_patch_difference(
     contained_mesh: &ExactMesh,
 ) -> Option<(ExactMesh, CoplanarProjection)> {
     let (_, projection) = coplanar_mesh_overlay_carrier(containing_mesh, contained_mesh)?;
-    for (boundary_policy, projected_boundary_policy) in [
-        (
-            ExactArrangement2dBoundaryPolicy::SimplifyCollinear,
-            ProjectedOverlayBoundaryPolicy::SimplifyCollinear,
-        ),
-        (
-            ExactArrangement2dBoundaryPolicy::PreserveCollinear,
-            ProjectedOverlayBoundaryPolicy::PreserveCollinear,
-        ),
+    for boundary_policy in [
+        ExactArrangement2dBoundaryPolicy::SimplifyCollinear,
+        ExactArrangement2dBoundaryPolicy::PreserveCollinear,
     ] {
         if let Some(mesh) = materialize_coplanar_mesh_overlay_mesh(
             containing_mesh,
             contained_mesh,
             ExactArrangement2dSetOperation::Difference,
             boundary_policy,
-            projected_boundary_policy,
             "exact contained-adjacent arrangement patch difference",
             false,
         ) {

@@ -3084,16 +3084,7 @@ fn materialize_simple_coplanar_overlay_arrangement(
         &carrier_points,
         overlay.projection,
         "exact coplanar selected-face overlay arrangement",
-    )
-    .or_else(|| {
-        mesh_from_projected_overlay(
-            &requested_overlay,
-            &carrier_points,
-            overlay.projection,
-            "exact coplanar overlay arrangement",
-            ProjectedOverlayBoundaryPolicy::SimplifyCollinear,
-        )
-    }) else {
+    ) else {
         return Ok(None);
     };
     let mesh = copy_mesh(
@@ -3105,12 +3096,6 @@ fn materialize_simple_coplanar_overlay_arrangement(
         mesh,
         ExactBooleanShortcutKind::ArrangementCellComplex,
     )))
-}
-
-#[derive(Clone, Debug)]
-struct MaterializedProjectedLoop {
-    points: Vec<Point2>,
-    lifted: Vec<Point3>,
 }
 
 fn boolean_coplanar_mesh_overlay_optional(
@@ -3142,14 +3127,6 @@ fn boolean_coplanar_mesh_overlay_optional(
             ExactArrangement2dBoundaryPolicy::SimplifyCollinear
         }
     };
-    let projected_boundary_policy = match boundary_policy {
-        ExactArrangement2dBoundaryPolicy::SimplifyCollinear => {
-            ProjectedOverlayBoundaryPolicy::SimplifyCollinear
-        }
-        ExactArrangement2dBoundaryPolicy::PreserveCollinear => {
-            ProjectedOverlayBoundaryPolicy::PreserveCollinear
-        }
-    };
     let operation = match operation {
         ExactBooleanOperation::Union => ExactArrangement2dSetOperation::Union,
         ExactBooleanOperation::Intersection => ExactArrangement2dSetOperation::Intersection,
@@ -3161,7 +3138,6 @@ fn boolean_coplanar_mesh_overlay_optional(
         right,
         operation,
         boundary_policy,
-        projected_boundary_policy,
         "exact coplanar mesh overlay arrangement",
         allow_empty_overlay,
     ) else {
@@ -3206,7 +3182,6 @@ pub(crate) fn materialize_coplanar_mesh_overlay_mesh(
     right: &ExactMesh,
     operation: ExactArrangement2dSetOperation,
     boundary_policy: ExactArrangement2dBoundaryPolicy,
-    projected_boundary_policy: ProjectedOverlayBoundaryPolicy,
     provenance: &'static str,
     allow_empty: bool,
 ) -> Option<ExactMesh> {
@@ -3241,15 +3216,6 @@ pub(crate) fn materialize_coplanar_mesh_overlay_mesh(
             .flatten();
     }
     mesh_from_selected_projected_overlay_faces(&overlay, &carrier_points, projection, provenance)
-        .or_else(|| {
-            mesh_from_projected_overlay(
-                &overlay,
-                &carrier_points,
-                projection,
-                provenance,
-                projected_boundary_policy,
-            )
-        })
 }
 
 fn overlay_allows_selected_face_materialization(overlay: &ExactArrangement2dOverlay) -> bool {
@@ -3264,67 +3230,6 @@ fn overlay_allows_selected_face_materialization(overlay: &ExactArrangement2dOver
                     | ExactArrangement2dBlocker::OutputLoopBoundaryContainment { .. }
             )
         })
-}
-
-fn mesh_from_projected_overlay(
-    overlay: &ExactArrangement2dOverlay,
-    carrier_points: &[Point3; 3],
-    projection: CoplanarProjection,
-    provenance: &'static str,
-    boundary_policy: ProjectedOverlayBoundaryPolicy,
-) -> Option<ExactMesh> {
-    let loops = materialized_projected_overlay_loops(
-        &overlay.output_loops,
-        carrier_points,
-        projection,
-        boundary_policy,
-    )?;
-    let mut vertices = Vec::new();
-    let mut triangles = Vec::new();
-    for component in &overlay.output_components {
-        let outer = loops.get(component.outer_loop)?;
-        let mut projected = outer
-            .points
-            .iter()
-            .map(point2_for_hypertri)
-            .collect::<Vec<_>>();
-        let mut polygon_points = outer.lifted.clone();
-        let mut hole_indices = Vec::with_capacity(component.hole_loops.len());
-        for &hole_index in &component.hole_loops {
-            let hole = loops.get(hole_index)?;
-            hole_indices.push(projected.len());
-            projected.extend(hole.points.iter().map(point2_for_hypertri));
-            polygon_points.extend(hole.lifted.iter().cloned());
-        }
-        let mut component_vertices = Vec::new();
-        let local_to_component = polygon_points
-            .iter()
-            .map(|point| find_or_insert_exact_vertex(&mut component_vertices, point))
-            .collect::<Option<Vec<_>>>()?;
-        let indices = match hypertri::earcut(&projected, &hole_indices) {
-            Ok(indices) if !indices.is_empty() && indices.len() % 3 == 0 => indices,
-            _ => return None,
-        };
-        let component_offset = vertices.len();
-        vertices.extend(component_vertices);
-        for triangle in indices.chunks_exact(3) {
-            triangles.push(Triangle([
-                component_offset + local_to_component[triangle[0]],
-                component_offset + local_to_component[triangle[1]],
-                component_offset + local_to_component[triangle[2]],
-            ]));
-        }
-    }
-    if triangles.is_empty() {
-        return None;
-    }
-    ExactMesh::new_with_policy(
-        vertices,
-        triangles,
-        SourceProvenance::exact(provenance),
-        ValidationPolicy::ALLOW_BOUNDARY,
-    )
-    .ok()
 }
 
 fn mesh_from_selected_projected_overlay_faces(
@@ -3343,10 +3248,7 @@ fn mesh_from_selected_projected_overlay_faces(
         let lifted_loops = boundary_loops
             .iter()
             .map(|loop_| {
-                let loop_ = projected_loop_points_with_policy(
-                    loop_,
-                    ProjectedOverlayBoundaryPolicy::SimplifyCollinear,
-                )?;
+                let loop_ = projected_loop_points(loop_)?;
                 if loop_.len() < 3 {
                     return None;
                 }
@@ -3596,12 +3498,6 @@ fn arrangement_face_edge_key(left: usize, right: usize) -> [usize; 2] {
     }
 }
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub(crate) enum ProjectedOverlayBoundaryPolicy {
-    SimplifyCollinear,
-    PreserveCollinear,
-}
-
 fn coplanar_mesh_overlay_should_preempt_surface_paths(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -3811,35 +3707,6 @@ fn canonical_mesh_edge(a: usize, b: usize) -> (usize, usize) {
     if a <= b { (a, b) } else { (b, a) }
 }
 
-fn materialized_projected_overlay_loops(
-    loops: &[super::arrangement2d::ExactArrangement2dOutputLoop],
-    carrier_points: &[Point3; 3],
-    projection: CoplanarProjection,
-    boundary_policy: ProjectedOverlayBoundaryPolicy,
-) -> Option<Vec<MaterializedProjectedLoop>> {
-    let mut materialized = Vec::with_capacity(loops.len());
-    for loop_ in loops {
-        let loop_points = projected_loop_points_with_policy(&loop_.points, boundary_policy)?;
-        if loop_points.len() < 3 {
-            return None;
-        }
-        let signed_area_twice = projected_loop_signed_area_twice(&loop_points);
-        let area_ordering = compare_reals(&signed_area_twice, &Real::from(0)).value()?;
-        if area_ordering == Ordering::Equal {
-            return None;
-        }
-        let lifted = loop_points
-            .iter()
-            .map(|point| lift_projected_point_to_carrier(point, carrier_points, projection))
-            .collect::<Option<Vec<_>>>()?;
-        materialized.push(MaterializedProjectedLoop {
-            points: loop_points,
-            lifted,
-        });
-    }
-    Some(materialized)
-}
-
 fn projected_mesh_face_ring(
     region: ExactArrangement2dRegion,
     mesh: &ExactMesh,
@@ -3854,17 +3721,7 @@ fn projected_mesh_face_ring(
     Some(ExactArrangement2dRegionRing::new(region, vertices))
 }
 
-fn find_or_insert_exact_vertex(vertices: &mut Vec<Point3>, point: &Point3) -> Option<usize> {
-    for (index, existing) in vertices.iter().enumerate() {
-        if point3_exact_equal(existing, point)? {
-            return Some(index);
-        }
-    }
-    let index = vertices.len();
-    vertices.push(point.clone());
-    Some(index)
-}
-
+#[cfg(test)]
 fn point3_exact_equal(left: &Point3, right: &Point3) -> Option<bool> {
     Some(
         compare_reals(&left.x, &right.x).value()? == Ordering::Equal
@@ -3895,20 +3752,11 @@ fn coplanar_mesh_overlay_materialized_boundary_policy(
         ExactArrangement2dBoundaryPolicy::SimplifyCollinear,
         ExactArrangement2dBoundaryPolicy::PreserveCollinear,
     ] {
-        let projected_boundary_policy = match boundary_policy {
-            ExactArrangement2dBoundaryPolicy::SimplifyCollinear => {
-                ProjectedOverlayBoundaryPolicy::SimplifyCollinear
-            }
-            ExactArrangement2dBoundaryPolicy::PreserveCollinear => {
-                ProjectedOverlayBoundaryPolicy::PreserveCollinear
-            }
-        };
         if materialize_coplanar_mesh_overlay_mesh(
             left,
             right,
             operation,
             boundary_policy,
-            projected_boundary_policy,
             "exact coplanar mesh overlay arrangement",
             allow_empty,
         )
@@ -4049,10 +3897,6 @@ fn point3_edge_exact_equal(left: &[Point3; 2], right: &[Point3; 2]) -> Option<bo
     )
 }
 
-fn point2_for_hypertri(point: &Point2) -> hypertri::ExactPoint {
-    hypertri::ExactPoint::new(point.x.clone(), point.y.clone())
-}
-
 fn projected_loop_signed_area_twice(points: &[Point2]) -> Real {
     let mut area = Real::from(0);
     for index in 0..points.len() {
@@ -4063,10 +3907,7 @@ fn projected_loop_signed_area_twice(points: &[Point2]) -> Real {
     area
 }
 
-fn projected_loop_points_with_policy(
-    points: &[Point2],
-    boundary_policy: ProjectedOverlayBoundaryPolicy,
-) -> Option<Vec<Point2>> {
+fn projected_loop_points(points: &[Point2]) -> Option<Vec<Point2>> {
     let mut simplified = Vec::<Point2>::new();
     for point in points {
         if simplified
@@ -4082,10 +3923,6 @@ fn projected_loop_points_with_policy(
     {
         simplified.pop();
     }
-    if boundary_policy == ProjectedOverlayBoundaryPolicy::PreserveCollinear {
-        return Some(simplified);
-    }
-
     let mut changed = true;
     while changed && simplified.len() >= 3 {
         changed = false;
@@ -7373,14 +7210,6 @@ mod tests {
         let (carrier_points, projection) = coplanar_mesh_overlay_carrier(&left, &right).unwrap();
         let boundary_policy =
             coplanar_mesh_overlay_materialized_difference_boundary_policy(&left, &right).unwrap();
-        let projected_boundary_policy = match boundary_policy {
-            ExactArrangement2dBoundaryPolicy::SimplifyCollinear => {
-                ProjectedOverlayBoundaryPolicy::SimplifyCollinear
-            }
-            ExactArrangement2dBoundaryPolicy::PreserveCollinear => {
-                ProjectedOverlayBoundaryPolicy::PreserveCollinear
-            }
-        };
         let mut rings =
             projected_mesh_boundary_rings(ExactArrangement2dRegion::Left, &left, projection)
                 .unwrap();
@@ -7406,7 +7235,6 @@ mod tests {
             &right,
             ExactArrangement2dSetOperation::Difference,
             boundary_policy,
-            projected_boundary_policy,
             "test canonical coplanar overlay difference",
             false,
         )
@@ -7434,14 +7262,6 @@ mod tests {
         let (carrier_points, projection) = coplanar_mesh_overlay_carrier(&left, &right).unwrap();
         let boundary_policy =
             coplanar_mesh_overlay_materialized_difference_boundary_policy(&left, &right).unwrap();
-        let projected_boundary_policy = match boundary_policy {
-            ExactArrangement2dBoundaryPolicy::SimplifyCollinear => {
-                ProjectedOverlayBoundaryPolicy::SimplifyCollinear
-            }
-            ExactArrangement2dBoundaryPolicy::PreserveCollinear => {
-                ProjectedOverlayBoundaryPolicy::PreserveCollinear
-            }
-        };
         let mut rings =
             projected_mesh_boundary_rings(ExactArrangement2dRegion::Left, &left, projection)
                 .unwrap();
@@ -7468,7 +7288,6 @@ mod tests {
             &right,
             ExactArrangement2dSetOperation::Difference,
             boundary_policy,
-            projected_boundary_policy,
             "test canonical point-touching hole overlay difference",
             false,
         )
@@ -7637,7 +7456,6 @@ mod tests {
                 inner,
                 ExactArrangement2dSetOperation::Union,
                 ExactArrangement2dBoundaryPolicy::SimplifyCollinear,
-                ProjectedOverlayBoundaryPolicy::SimplifyCollinear,
                 "test coplanar containment union overlay",
                 false,
             )
@@ -7649,7 +7467,6 @@ mod tests {
                 inner,
                 ExactArrangement2dSetOperation::Intersection,
                 ExactArrangement2dBoundaryPolicy::SimplifyCollinear,
-                ProjectedOverlayBoundaryPolicy::SimplifyCollinear,
                 "test coplanar containment intersection overlay",
                 false,
             )
