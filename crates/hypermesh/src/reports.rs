@@ -228,11 +228,14 @@ impl From<ExactReportValidationError> for ExactReportFreshness {
     fn from(error: ExactReportValidationError) -> Self {
         match error {
             ExactReportValidationError::GraphUnknownStatusMismatch => Self::StaleGraphUnknownStatus,
-            ExactReportValidationError::MissingBlocker
+            ExactReportValidationError::CertifiedReportHasBlocker
+            | ExactReportValidationError::MissingBlocker
             | ExactReportValidationError::WrongBlockerKind
             | ExactReportValidationError::InvalidBlockerCounts
             | ExactReportValidationError::MissingRelationCount => Self::StaleBlockerEvidence,
-            ExactReportValidationError::StatusEvidenceMismatch => Self::StaleStatusEvidence,
+            ExactReportValidationError::StatusEvidenceMismatch
+            | ExactReportValidationError::InvalidPermutation
+            | ExactReportValidationError::MismatchedTriangleSets => Self::StaleStatusEvidence,
             ExactReportValidationError::UnexpectedRegionFacts
             | ExactReportValidationError::MissingRegionFacts
             | ExactReportValidationError::UnclassifiedRegionTriangulation
@@ -253,7 +256,12 @@ impl From<ExactReportValidationError> for ExactReportFreshness {
             | ExactReportValidationError::OrphanedVolumetricClassification
             | ExactReportValidationError::UnclassifiedVolumetricTriangulation
             | ExactReportValidationError::VolumetricClassificationNotDecided
+            | ExactReportValidationError::InvalidOutputMesh
+            | ExactReportValidationError::ShortcutResultHasAssemblyArtifacts
             | ExactReportValidationError::OutputMeshAssemblyMismatch => Self::StaleRegionFacts,
+            ExactReportValidationError::ShortcutResultHasUnknownGraph
+            | ExactReportValidationError::SelectedRegionResultHasUnknownGraph
+            | ExactReportValidationError::UnexpectedGraphEvents => Self::StaleGraphUnknownStatus,
             ExactReportValidationError::OutputSourceReplayMismatch => Self::SourceReplayMismatch,
             ExactReportValidationError::SelectedRegionAssemblyViolatesSelection
             | ExactReportValidationError::VolumetricMaterializedAssemblyViolatesOperation => {
@@ -284,7 +292,6 @@ impl From<ExactReportValidationError> for ExactReportFreshness {
                 Self::StaleCoplanarVolumetricEvidence
             }
             ExactReportValidationError::SourceReplayMismatch => Self::SourceReplayMismatch,
-            _ => Self::InvalidReportShape,
         }
     }
 }
@@ -3996,6 +4003,8 @@ mod tests {
             ExactReportValidationError::OrphanedVolumetricClassification,
             ExactReportValidationError::UnclassifiedVolumetricTriangulation,
             ExactReportValidationError::VolumetricClassificationNotDecided,
+            ExactReportValidationError::InvalidOutputMesh,
+            ExactReportValidationError::ShortcutResultHasAssemblyArtifacts,
         ];
         for error in stale_region_errors {
             assert_eq!(
@@ -4008,6 +4017,34 @@ mod tests {
             ExactReportFreshness::from(ExactReportValidationError::OutputSourceReplayMismatch),
             ExactReportFreshness::SourceReplayMismatch
         );
+        for error in [
+            ExactReportValidationError::ShortcutResultHasUnknownGraph,
+            ExactReportValidationError::SelectedRegionResultHasUnknownGraph,
+            ExactReportValidationError::UnexpectedGraphEvents,
+        ] {
+            assert_eq!(
+                ExactReportFreshness::from(error),
+                ExactReportFreshness::StaleGraphUnknownStatus
+            );
+        }
+        for error in [
+            ExactReportValidationError::CertifiedReportHasBlocker,
+            ExactReportValidationError::MissingBlocker,
+        ] {
+            assert_eq!(
+                ExactReportFreshness::from(error),
+                ExactReportFreshness::StaleBlockerEvidence
+            );
+        }
+        for error in [
+            ExactReportValidationError::InvalidPermutation,
+            ExactReportValidationError::MismatchedTriangleSets,
+        ] {
+            assert_eq!(
+                ExactReportFreshness::from(error),
+                ExactReportFreshness::StaleStatusEvidence
+            );
+        }
         assert_eq!(
             ExactReportFreshness::from(
                 ExactReportValidationError::SelectedRegionAssemblyViolatesSelection
