@@ -605,6 +605,26 @@ fn retained_span_fact_constructors_reject_forged_evidence() {
         RetainedTopologyStatus::Unsupported,
         Some(RetainedSpanWeightDomainReport2::new(3, 3, true).unwrap()),
     ));
+    assert_topology_error(RetainedBSplineSpanFacts2::new(
+        0,
+        r(1),
+        r(1),
+        bounds.clone(),
+        RetainedSpanAxisMonotonicity::CertifiedMonotone,
+        RetainedSpanAxisMonotonicity::CertifiedMonotone,
+        RetainedTopologyStatus::NativeExact,
+        None,
+    ));
+    assert_topology_error(RetainedBSplineSpanFacts2::new(
+        0,
+        r(2),
+        r(1),
+        bounds.clone(),
+        RetainedSpanAxisMonotonicity::CertifiedMonotone,
+        RetainedSpanAxisMonotonicity::CertifiedMonotone,
+        RetainedTopologyStatus::NativeExact,
+        None,
+    ));
 
     let skipped_index = RetainedBSplineSpanFacts2::new(
         1,
@@ -623,6 +643,30 @@ fn retained_span_fact_constructors_reject_forged_evidence() {
 #[test]
 fn retained_rational_span_topology_reports_reject_forged_native_evidence() {
     assert_topology_error(RationalBSplineNativeTopologyReport2::new(Vec::new()));
+    assert_topology_error(RationalBezierSpanTopologyReport2::new(
+        0,
+        1,
+        r(0),
+        r(1),
+        RetainedTopologyStatus::Unsupported,
+        None,
+    ));
+    assert_topology_error(RationalBezierSpanTopologyReport2::new(
+        0,
+        2,
+        r(1),
+        r(1),
+        RetainedTopologyStatus::Unsupported,
+        None,
+    ));
+    assert_topology_error(RationalBezierSpanTopologyReport2::new(
+        0,
+        2,
+        r(2),
+        r(1),
+        RetainedTopologyStatus::Unsupported,
+        None,
+    ));
     assert_topology_error(RationalBezierSpanTopologyReport2::new(
         0,
         2,

@@ -974,7 +974,13 @@ impl RetainedBSplineSpanFacts2 {
         topology_status: RetainedTopologyStatus,
         weight_domain: Option<RetainedSpanWeightDomainReport2>,
     ) -> CurveResult<Self> {
-        validate_span_fact_evidence(topology_status, x_monotonicity, y_monotonicity)?;
+        validate_span_fact_evidence(
+            &knot_start,
+            &knot_end,
+            topology_status,
+            x_monotonicity,
+            y_monotonicity,
+        )?;
         Ok(Self {
             span_index,
             knot_start,
@@ -1078,7 +1084,13 @@ impl RationalBezierSpanTopologyReport2 {
         status: RetainedTopologyStatus,
         native_subcurve: Option<BezierSubcurve2>,
     ) -> CurveResult<Self> {
-        validate_rational_span_topology_evidence(degree, status, native_subcurve.as_ref())?;
+        validate_rational_span_topology_evidence(
+            degree,
+            &knot_start,
+            &knot_end,
+            status,
+            native_subcurve.as_ref(),
+        )?;
         Ok(Self {
             span_index,
             degree,
@@ -1134,10 +1146,13 @@ fn validate_weight_domain_report(
 }
 
 fn validate_span_fact_evidence(
+    knot_start: &Real,
+    knot_end: &Real,
     topology_status: RetainedTopologyStatus,
     x_monotonicity: RetainedSpanAxisMonotonicity,
     y_monotonicity: RetainedSpanAxisMonotonicity,
 ) -> CurveResult<()> {
+    validate_positive_knot_interval(knot_start, knot_end)?;
     if topology_status == RetainedTopologyStatus::Unsupported
         && (x_monotonicity != RetainedSpanAxisMonotonicity::Unsupported
             || y_monotonicity != RetainedSpanAxisMonotonicity::Unsupported)
@@ -1185,9 +1200,17 @@ fn validate_span_topology_report_indices(
 
 fn validate_rational_span_topology_evidence(
     degree: usize,
+    knot_start: &Real,
+    knot_end: &Real,
     status: RetainedTopologyStatus,
     native_subcurve: Option<&BezierSubcurve2>,
 ) -> CurveResult<()> {
+    validate_positive_knot_interval(knot_start, knot_end)?;
+    if degree < 2 {
+        return Err(CurveError::Topology(
+            "retained rational span topology report degree must be at least two".into(),
+        ));
+    }
     match (status.is_native_exact(), native_subcurve) {
         (true, Some(BezierSubcurve2::RationalQuadratic(_))) if degree == 2 => Ok(()),
         (true, Some(BezierSubcurve2::Cubic(_))) if degree == 3 => Ok(()),
@@ -1202,6 +1225,16 @@ fn validate_rational_span_topology_evidence(
         )),
         (false, None) => Ok(()),
     }
+}
+
+fn validate_positive_knot_interval(knot_start: &Real, knot_end: &Real) -> CurveResult<()> {
+    let policy = CurvePolicy::certified();
+    if compare_reals(knot_start, knot_end, &policy) != Some(Ordering::Less) {
+        return Err(CurveError::Topology(
+            "retained B-spline span report must carry certified positive knot interval".into(),
+        ));
+    }
+    Ok(())
 }
 
 impl RationalBezierSpan2 {
