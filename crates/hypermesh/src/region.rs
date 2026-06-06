@@ -369,6 +369,30 @@ fn replay_region_plan(
     Ok(geometry.region_plan(left, right))
 }
 
+pub(crate) fn replay_region_facts_against_sources(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Result<
+    (
+        Vec<FaceRegionPlaneClassification>,
+        Vec<FaceRegionTriangulation>,
+    ),
+    super::error::MeshError,
+> {
+    let region_plan = replay_region_plan(left, right)?;
+    let classifications =
+        checked_classify_face_regions_against_opposite_planes(&region_plan, left, right)?;
+    let triangulations = checked_triangulate_face_regions_with_earcut(&region_plan, left, right)
+        .map_err(|error| {
+            super::error::MeshError::one(super::error::MeshDiagnostic::new(
+                super::error::Severity::Error,
+                super::error::DiagnosticKind::DegenerateTriangle,
+                format!("region fact source replay triangulation failed: {error}"),
+            ))
+        })?;
+    Ok((classifications, triangulations))
+}
+
 /// Region selection policy for exact output assembly.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 #[allow(clippy::enum_variant_names)]

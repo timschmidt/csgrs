@@ -8444,6 +8444,26 @@ mod tests {
                     .is_err(),
                 "{operation:?}: stale triangulation should fail source replay"
             );
+            if matches!(operation, ExactBooleanOperation::Intersection) {
+                let mut incomplete_region_set = result.clone();
+                let dropped = incomplete_region_set
+                    .triangulations
+                    .pop()
+                    .expect("open-surface arrangement should retain triangulations");
+                incomplete_region_set
+                    .region_classifications
+                    .retain(|classification| {
+                        classification.region_side != dropped.side
+                            || classification.region_face != dropped.face
+                    });
+                incomplete_region_set.validate().unwrap();
+                assert!(
+                    incomplete_region_set
+                        .validate_against_sources(&left, &right)
+                        .is_err(),
+                    "open-surface intersection must retain the complete replayed region set"
+                );
+            }
             let selection = match operation {
                 ExactBooleanOperation::Union => ExactRegionSelection::KeepAll,
                 ExactBooleanOperation::Intersection => ExactRegionSelection::KeepNone,

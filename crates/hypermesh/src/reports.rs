@@ -32,7 +32,7 @@ use super::intersection::MeshFacePairRelation;
 use super::region::{
     ExactBooleanAssemblyPlan, ExactOutputTriangle, ExactRegionSelection,
     FaceRegionPlaneClassification, FaceRegionPlaneValidationError, FaceRegionTriangulation,
-    boundary_node_point,
+    boundary_node_point, replay_region_facts_against_sources,
 };
 use super::regularization::ExactArrangementBlocker;
 use super::solid::{
@@ -1012,15 +1012,10 @@ impl ExactBooleanResult {
             ExactBooleanResultKind::SelectedRegions { .. }
                 | ExactBooleanResultKind::OpenSurfaceArrangement { .. }
         ) {
-            for classification in &self.region_classifications {
-                classification
-                    .validate_against_sources(left, right)
-                    .map_err(ExactReportValidationError::InvalidRegionClassification)?;
-            }
-            for triangulation in &self.triangulations {
-                triangulation
-                    .validate_against_sources(left, right)
-                    .map_err(|_| ExactReportValidationError::InvalidTriangulation)?;
+            let replay = replay_region_facts_against_sources(left, right)
+                .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+            if self.region_classifications != replay.0 || self.triangulations != replay.1 {
+                return Err(ExactReportValidationError::SourceReplayMismatch);
             }
         }
         if matches!(
