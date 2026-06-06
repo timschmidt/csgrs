@@ -3,10 +3,12 @@ use hypercurve::{
     BezierParameter2, BezierParameterInterval, BezierParameterPolynomial,
     BezierRetainedLineOverlapExtent2, BezierRetainedLineOverlapSplit2,
     BezierRetainedLinearOverlapSplit2, BezierRetainedLinearOverlapSplitGraph2,
-    BezierRetainedOverlap2, BezierRetainedOverlapOrientation2, BezierRetainedOverlapRelation2,
-    BezierRetainedOverlapReport2, BezierRetainedResolvedLinearOverlap2, BezierSplitFragment2,
-    BezierSubcurve2, Classification, CubicBezier2, CurveError, CurvePolicy, LineSeg2, ParamRange,
-    Point2, QuadraticBezier2, RationalQuadraticBezier2, Real, UncertaintyReason,
+    BezierRetainedLinearOverlapTraversal2, BezierRetainedOverlap2,
+    BezierRetainedOverlapOrientation2, BezierRetainedOverlapRefinedFragment2,
+    BezierRetainedOverlapRelation2, BezierRetainedOverlapReport2,
+    BezierRetainedResolvedLinearOverlap2, BezierSplitFragment2, BezierSubcurve2, Classification,
+    CubicBezier2, CurveError, CurvePolicy, LineSeg2, ParamRange, Point2, QuadraticBezier2,
+    RationalQuadraticBezier2, Real, UncertaintyReason,
 };
 use proptest::prelude::*;
 
@@ -20,6 +22,23 @@ fn q(numerator: i32, denominator: i32) -> Real {
 
 fn p(x: i32, y: i32) -> Point2 {
     Point2::new(r(x), r(y))
+}
+
+fn partial_line_overlap_graph() -> BezierArrangementGraph2 {
+    let first = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(2, 0), p(4, 0))),
+    };
+    let second = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(2, 0), p(4, 0), p(6, 0))),
+    };
+    BezierArrangementGraph2::new(vec![
+        hypercurve::BezierArrangementFragment2::new(0, 0, first),
+        hypercurve::BezierArrangementFragment2::new(1, 0, second),
+    ])
 }
 
 fn policy() -> CurvePolicy {
@@ -749,6 +768,77 @@ fn retained_resolved_overlap_constructor_rejects_unordered_indices() {
         overlap_segment,
         BezierRetainedOverlapOrientation2::Same,
         BezierRetainedLineOverlapExtent2::FullBoth,
+    ));
+}
+
+#[test]
+fn retained_linear_overlap_split_graph_rejects_forged_resolved_provenance() {
+    let graph = partial_line_overlap_graph();
+    let refinement = decided(graph.split_retained_linear_overlaps(&policy()));
+    let (refined_graph, refined_fragments, overlap_report, split_plan, _) =
+        refinement.clone().into_parts();
+    let split = &split_plan[0];
+    let forged = BezierRetainedResolvedLinearOverlap2::new(
+        0,
+        2,
+        split.first_fragment_index(),
+        split.second_fragment_index(),
+        split.first_bezier_range().clone(),
+        split.second_bezier_range().clone(),
+        split.overlap_segment().clone(),
+        BezierRetainedOverlapOrientation2::Same,
+        split.extent(),
+    )
+    .unwrap();
+
+    assert_topology_error(BezierRetainedLinearOverlapSplitGraph2::new(
+        refined_graph,
+        refined_fragments,
+        overlap_report,
+        split_plan,
+        vec![forged],
+    ));
+}
+
+#[test]
+fn retained_linear_overlap_split_graph_rejects_missing_split_report_evidence() {
+    let graph = partial_line_overlap_graph();
+    let refinement = decided(graph.split_retained_linear_overlaps(&policy()));
+    let (refined_graph, refined_fragments, _, split_plan, resolved_overlaps) =
+        refinement.into_parts();
+
+    assert_topology_error(BezierRetainedLinearOverlapSplitGraph2::new(
+        refined_graph,
+        refined_fragments,
+        BezierRetainedOverlapReport2::new(Vec::new()),
+        split_plan,
+        resolved_overlaps,
+    ));
+}
+
+#[test]
+fn retained_linear_overlap_traversal_rejects_indices_outside_refinement() {
+    let fragment = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0))),
+    };
+    let graph = BezierArrangementGraph2::new(vec![hypercurve::BezierArrangementFragment2::new(
+        0, 0, fragment,
+    )]);
+    let traversal = decided(graph.traverse_retained_deduplicating_materialized_overlaps(&policy()));
+    let empty_refinement = BezierRetainedLinearOverlapSplitGraph2::new(
+        BezierArrangementGraph2::new(Vec::new()),
+        Vec::<BezierRetainedOverlapRefinedFragment2>::new(),
+        BezierRetainedOverlapReport2::new(Vec::new()),
+        Vec::new(),
+        Vec::new(),
+    )
+    .unwrap();
+
+    assert_topology_error(BezierRetainedLinearOverlapTraversal2::new(
+        empty_refinement,
+        traversal,
     ));
 }
 

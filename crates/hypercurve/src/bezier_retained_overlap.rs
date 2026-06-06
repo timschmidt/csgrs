@@ -329,6 +329,13 @@ impl BezierRetainedLinearOverlapSplitGraph2 {
                     .to_owned(),
             ));
         }
+        validate_linear_overlap_refinement_provenance(
+            graph.len(),
+            &refined_fragments,
+            &overlap_report,
+            &split_plan,
+            &resolved_overlaps,
+        )?;
         Ok(Self {
             graph,
             refined_fragments,
@@ -381,6 +388,157 @@ impl BezierRetainedLinearOverlapSplitGraph2 {
             self.resolved_overlaps,
         )
     }
+}
+
+fn validate_linear_overlap_refinement_provenance(
+    refined_fragment_count: usize,
+    refined_fragments: &[BezierRetainedOverlapRefinedFragment2],
+    overlap_report: &BezierRetainedOverlapReport2,
+    split_plan: &[BezierRetainedLinearOverlapSplit2],
+    resolved_overlaps: &[BezierRetainedResolvedLinearOverlap2],
+) -> CurveResult<()> {
+    if split_plan.len() != resolved_overlaps.len() {
+        return Err(CurveError::Topology(
+            "retained linear-overlap resolved span count does not match split plan".to_owned(),
+        ));
+    }
+
+    for split in split_plan {
+        if !overlap_report.overlaps().iter().any(|overlap| {
+            overlap.first_fragment_index() == split.first_fragment_index()
+                && overlap.second_fragment_index() == split.second_fragment_index()
+                && matches!(
+                    overlap.relation(),
+                    BezierRetainedOverlapRelation2::LineSegmentOverlap { .. }
+                )
+        }) {
+            return Err(CurveError::Topology(
+                "retained linear-overlap split lacks source overlap report evidence".to_owned(),
+            ));
+        }
+        if !refined_fragment_carries_range(
+            refined_fragments,
+            split.first_fragment_index(),
+            split.first_bezier_range(),
+        ) || !refined_fragment_carries_range(
+            refined_fragments,
+            split.second_fragment_index(),
+            split.second_bezier_range(),
+        ) {
+            return Err(CurveError::Topology(
+                "retained linear-overlap split lacks refined fragment provenance".to_owned(),
+            ));
+        }
+    }
+
+    for resolved in resolved_overlaps {
+        validate_resolved_overlap_refined_index(
+            refined_fragment_count,
+            refined_fragments,
+            resolved.first_refined_fragment_index(),
+            resolved.first_original_fragment_index(),
+            resolved.first_local_range(),
+        )?;
+        validate_resolved_overlap_refined_index(
+            refined_fragment_count,
+            refined_fragments,
+            resolved.second_refined_fragment_index(),
+            resolved.second_original_fragment_index(),
+            resolved.second_local_range(),
+        )?;
+
+        if !split_plan.iter().any(|split| {
+            split.first_fragment_index() == resolved.first_original_fragment_index()
+                && split.second_fragment_index() == resolved.second_original_fragment_index()
+                && split.first_bezier_range() == resolved.first_local_range()
+                && split.second_bezier_range() == resolved.second_local_range()
+                && split.overlap_segment() == resolved.overlap_segment()
+                && split.extent() == resolved.extent()
+        }) {
+            return Err(CurveError::Topology(
+                "retained resolved overlap lacks matching split-plan evidence".to_owned(),
+            ));
+        }
+    }
+
+    Ok(())
+}
+
+fn refined_fragment_carries_range(
+    refined_fragments: &[BezierRetainedOverlapRefinedFragment2],
+    original_fragment_index: usize,
+    local_range: &ParamRange,
+) -> bool {
+    refined_fragments.iter().any(|refined| {
+        refined.original_fragment_index() == original_fragment_index
+            && ranges_match_exact_or_reversed(refined.local_range(), local_range)
+    })
+}
+
+fn validate_resolved_overlap_refined_index(
+    refined_fragment_count: usize,
+    refined_fragments: &[BezierRetainedOverlapRefinedFragment2],
+    refined_fragment_index: usize,
+    original_fragment_index: usize,
+    local_range: &ParamRange,
+) -> CurveResult<()> {
+    if refined_fragment_index >= refined_fragment_count {
+        return Err(CurveError::Topology(
+            "retained resolved overlap refined index is outside the refined graph".to_owned(),
+        ));
+    }
+    let Some(refined) = refined_fragments.get(refined_fragment_index) else {
+        return Err(CurveError::Topology(
+            "retained resolved overlap refined provenance is missing".to_owned(),
+        ));
+    };
+    if refined.original_fragment_index() != original_fragment_index
+        || !ranges_match_exact_or_reversed(refined.local_range(), local_range)
+    {
+        return Err(CurveError::Topology(
+            "retained resolved overlap provenance does not match refined fragment".to_owned(),
+        ));
+    }
+    Ok(())
+}
+
+fn ranges_match_exact_or_reversed(first: &ParamRange, second: &ParamRange) -> bool {
+    (first.start() == second.start() && first.end() == second.end())
+        || (first.start() == second.end() && first.end() == second.start())
+}
+
+fn validate_linear_overlap_traversal_indices(
+    refinement: &BezierRetainedLinearOverlapSplitGraph2,
+    refined_traversal: &BezierRetainedOverlapTraversal2,
+) -> CurveResult<()> {
+    let refined_fragment_count = refinement.graph().len();
+    for chain in refined_traversal.traversal().chains() {
+        for fragment_index in chain.fragment_indices() {
+            if *fragment_index >= refined_fragment_count {
+                return Err(CurveError::Topology(
+                    "retained linear-overlap traversal index is outside the refined graph"
+                        .to_owned(),
+                ));
+            }
+        }
+    }
+
+    let mut previous_shadowed = None;
+    for fragment_index in refined_traversal.shadowed_fragment_indices() {
+        if *fragment_index >= refined_fragment_count {
+            return Err(CurveError::Topology(
+                "retained linear-overlap consumed index is outside the refined graph".to_owned(),
+            ));
+        }
+        if previous_shadowed.is_some_and(|previous| previous >= *fragment_index) {
+            return Err(CurveError::Topology(
+                "retained linear-overlap consumed indices must be strictly increasing".to_owned(),
+            ));
+        }
+        previous_shadowed = Some(*fragment_index);
+    }
+
+    Ok(())
 }
 
 impl BezierRetainedResolvedLinearOverlap2 {
@@ -466,14 +624,15 @@ impl BezierRetainedResolvedLinearOverlap2 {
 
 impl BezierRetainedLinearOverlapTraversal2 {
     /// Constructs a traversal through a refined linear-overlap graph.
-    pub const fn new(
+    pub fn new(
         refinement: BezierRetainedLinearOverlapSplitGraph2,
         refined_traversal: BezierRetainedOverlapTraversal2,
-    ) -> Self {
-        Self {
+    ) -> CurveResult<Self> {
+        validate_linear_overlap_traversal_indices(&refinement, &refined_traversal)?;
+        Ok(Self {
             refinement,
             refined_traversal,
-        }
+        })
     }
 
     /// Returns the original graph refinement evidence.
@@ -685,10 +844,10 @@ impl BezierArrangementGraph2 {
             }
             Classification::Uncertain(reason) => return Classification::Uncertain(reason),
         };
-        Classification::Decided(BezierRetainedLinearOverlapTraversal2::new(
-            refinement,
-            refined_traversal,
-        ))
+        match BezierRetainedLinearOverlapTraversal2::new(refinement, refined_traversal) {
+            Ok(traversal) => Classification::Decided(traversal),
+            Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
+        }
     }
 }
 
