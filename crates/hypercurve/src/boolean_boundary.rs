@@ -7,7 +7,7 @@
 use crate::boolean::BooleanFragmentClassification;
 use crate::classify::is_zero;
 use crate::{
-    Classification, Contour2, CurvePolicy, CurveResult, FillRule, RegionContourKey,
+    Classification, Contour2, CurveError, CurvePolicy, CurveResult, FillRule, RegionContourKey,
     RegionContourRole, RegionSide, Segment2,
 };
 
@@ -124,7 +124,7 @@ impl BooleanBoundaryFragmentSet {
             }
         }
 
-        Classification::Decided(BooleanBoundaryChainSet::new(chains))
+        decided_boolean_boundary_chain_set(chains)
     }
 }
 
@@ -137,8 +137,9 @@ pub struct BooleanBoundaryChain {
 
 impl BooleanBoundaryChain {
     /// Constructs a boundary chain from already-ordered fragments.
-    pub const fn new(fragments: Vec<DirectedBooleanFragment>, closed: bool) -> Self {
-        Self { fragments, closed }
+    pub fn new(fragments: Vec<DirectedBooleanFragment>, closed: bool) -> CurveResult<Self> {
+        validate_directed_boolean_fragments(&fragments, "boolean boundary chain")?;
+        Ok(Self { fragments, closed })
     }
 
     /// Returns fragments in traversal order.
@@ -175,8 +176,9 @@ pub struct BooleanBoundaryChainSet {
 
 impl BooleanBoundaryChainSet {
     /// Constructs a chain set from already-assembled chains.
-    pub const fn new(chains: Vec<BooleanBoundaryChain>) -> Self {
-        Self { chains }
+    pub fn new(chains: Vec<BooleanBoundaryChain>) -> CurveResult<Self> {
+        validate_boolean_boundary_chains(&chains)?;
+        Ok(Self { chains })
     }
 
     /// Returns chains in assembly order.
@@ -222,12 +224,16 @@ impl BooleanBoundaryChainSet {
             return Classification::Uncertain(crate::UncertaintyReason::Unsupported);
         }
 
-        Classification::Decided(BooleanBoundaryLoopSet::new(
-            self.chains
-                .iter()
-                .map(|chain| BooleanBoundaryLoop::new(chain.fragments.clone()))
-                .collect(),
-        ))
+        let loops = match self
+            .chains
+            .iter()
+            .map(|chain| BooleanBoundaryLoop::new(chain.fragments.clone()))
+            .collect::<CurveResult<Vec<_>>>()
+        {
+            Ok(loops) => loops,
+            Err(_) => return Classification::Uncertain(crate::UncertaintyReason::Unsupported),
+        };
+        decided_boolean_boundary_loop_set(loops)
     }
 
     /// Consumes the chain set and extracts closed chains as boundary loops.
@@ -236,12 +242,16 @@ impl BooleanBoundaryChainSet {
             return Classification::Uncertain(crate::UncertaintyReason::Unsupported);
         }
 
-        Classification::Decided(BooleanBoundaryLoopSet::new(
-            self.chains
-                .into_iter()
-                .map(|chain| BooleanBoundaryLoop::new(chain.fragments))
-                .collect(),
-        ))
+        let loops = match self
+            .chains
+            .into_iter()
+            .map(|chain| BooleanBoundaryLoop::new(chain.fragments))
+            .collect::<CurveResult<Vec<_>>>()
+        {
+            Ok(loops) => loops,
+            Err(_) => return Classification::Uncertain(crate::UncertaintyReason::Unsupported),
+        };
+        decided_boolean_boundary_loop_set(loops)
     }
 }
 
@@ -258,8 +268,9 @@ pub struct BooleanBoundaryLoop {
 
 impl BooleanBoundaryLoop {
     /// Constructs a loop from already-ordered directed fragments.
-    pub const fn new(fragments: Vec<DirectedBooleanFragment>) -> Self {
-        Self { fragments }
+    pub fn new(fragments: Vec<DirectedBooleanFragment>) -> CurveResult<Self> {
+        validate_directed_boolean_fragments(&fragments, "boolean boundary loop")?;
+        Ok(Self { fragments })
     }
 
     /// Returns directed fragments in traversal order.
@@ -321,8 +332,9 @@ pub struct BooleanBoundaryLoopSet {
 
 impl BooleanBoundaryLoopSet {
     /// Constructs a loop set from already-extracted loops.
-    pub const fn new(loops: Vec<BooleanBoundaryLoop>) -> Self {
-        Self { loops }
+    pub fn new(loops: Vec<BooleanBoundaryLoop>) -> CurveResult<Self> {
+        validate_boolean_boundary_loops(&loops)?;
+        Ok(Self { loops })
     }
 
     /// Builds a loop set from already-decided closed contours.
@@ -356,10 +368,13 @@ impl BooleanBoundaryLoopSet {
                     segment: segment.clone(),
                 })
                 .collect();
-            loops.push(BooleanBoundaryLoop::new(fragments));
+            loops.push(
+                BooleanBoundaryLoop::new(fragments)
+                    .expect("closed contours mint nonempty boolean boundary loops"),
+            );
         }
 
-        Self { loops }
+        Self::new(loops).expect("closed contours mint uniquely owned boolean boundary loops")
     }
 
     /// Returns loops in extraction order.
@@ -400,6 +415,120 @@ impl BooleanBoundaryLoopSet {
 }
 
 type EndpointAdjacency = (Vec<Option<usize>>, Vec<Option<usize>>);
+
+fn directed_boolean_fragment_owner(fragment: &DirectedBooleanFragment) -> (u8, u8, usize, usize) {
+    let side = match fragment.key.side {
+        RegionSide::First => 0,
+        RegionSide::Second => 1,
+    };
+    let role = match fragment.key.role {
+        RegionContourRole::Material => 0,
+        RegionContourRole::Hole => 1,
+    };
+    (side, role, fragment.key.index, fragment.fragment_index)
+}
+
+fn validate_directed_boolean_fragments(
+    fragments: &[DirectedBooleanFragment],
+    owner: &str,
+) -> CurveResult<()> {
+    if fragments.is_empty() {
+        return Err(CurveError::Topology(format!(
+            "{owner} must carry at least one directed fragment"
+        )));
+    }
+
+    let mut fragment_owners = fragments
+        .iter()
+        .map(directed_boolean_fragment_owner)
+        .collect::<Vec<_>>();
+    fragment_owners.sort_unstable();
+    if fragment_owners
+        .windows(2)
+        .any(|window| window[0] == window[1])
+    {
+        return Err(CurveError::Topology(format!(
+            "{owner} directed fragment ownership must be unique"
+        )));
+    }
+    Ok(())
+}
+
+fn validate_boolean_boundary_chains(chains: &[BooleanBoundaryChain]) -> CurveResult<()> {
+    let mut fragment_owners = Vec::new();
+    for chain in chains {
+        validate_directed_boolean_fragments(chain.fragments(), "boolean boundary chain")?;
+        fragment_owners.extend(
+            chain
+                .fragments()
+                .iter()
+                .map(directed_boolean_fragment_owner),
+        );
+    }
+    validate_unique_boolean_fragment_owners(
+        fragment_owners,
+        "boolean boundary chain set must not reuse directed fragment ownership",
+    )
+}
+
+fn validate_boolean_boundary_loops(loops: &[BooleanBoundaryLoop]) -> CurveResult<()> {
+    let mut fragment_owners = Vec::new();
+    for boundary_loop in loops {
+        validate_directed_boolean_fragments(boundary_loop.fragments(), "boolean boundary loop")?;
+        fragment_owners.extend(
+            boundary_loop
+                .fragments()
+                .iter()
+                .map(directed_boolean_fragment_owner),
+        );
+    }
+    validate_unique_boolean_fragment_owners(
+        fragment_owners,
+        "boolean boundary loop set must not reuse directed fragment ownership",
+    )
+}
+
+fn validate_unique_boolean_fragment_owners(
+    mut fragment_owners: Vec<(u8, u8, usize, usize)>,
+    message: &str,
+) -> CurveResult<()> {
+    fragment_owners.sort_unstable();
+    if fragment_owners
+        .windows(2)
+        .any(|window| window[0] == window[1])
+    {
+        return Err(CurveError::Topology(message.to_owned()));
+    }
+    Ok(())
+}
+
+fn decided_boolean_boundary_chain(
+    fragments: Vec<DirectedBooleanFragment>,
+    closed: bool,
+) -> Classification<BooleanBoundaryChain> {
+    match BooleanBoundaryChain::new(fragments, closed) {
+        Ok(chain) => Classification::Decided(chain),
+        Err(_) => Classification::Uncertain(crate::UncertaintyReason::Unsupported),
+    }
+}
+
+fn decided_boolean_boundary_chain_set(
+    chains: Vec<BooleanBoundaryChain>,
+) -> Classification<BooleanBoundaryChainSet> {
+    match BooleanBoundaryChainSet::new(chains) {
+        Ok(chain_set) => Classification::Decided(chain_set),
+        Err(_) => Classification::Uncertain(crate::UncertaintyReason::Unsupported),
+    }
+}
+
+fn decided_boolean_boundary_loop_set(
+    loops: Vec<BooleanBoundaryLoop>,
+) -> Classification<BooleanBoundaryLoopSet> {
+    match BooleanBoundaryLoopSet::new(loops) {
+        Ok(loop_set) => Classification::Decided(loop_set),
+        Err(_) => Classification::Uncertain(crate::UncertaintyReason::Unsupported),
+    }
+}
 
 fn endpoint_adjacency(
     fragments: &[DirectedBooleanFragment],
@@ -466,7 +595,7 @@ fn follow_chain(
         current = next;
     }
 
-    Classification::Decided(BooleanBoundaryChain::new(chain, closed))
+    decided_boolean_boundary_chain(chain, closed)
 }
 
 fn points_match(

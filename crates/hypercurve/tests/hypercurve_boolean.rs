@@ -1,7 +1,8 @@
 use hypercurve::{
-    BooleanBoundaryFragmentSet, BooleanFragmentAction, BooleanOp, BulgeVertex2, Classification,
-    Contour2, CurvePolicy, DirectedBooleanFragment, FillRule, Real, Region2, RegionContourKey,
-    RegionContourRole, RegionSide, Segment2, UncertaintyReason,
+    BooleanBoundaryChain, BooleanBoundaryChainSet, BooleanBoundaryFragmentSet, BooleanBoundaryLoop,
+    BooleanBoundaryLoopSet, BooleanFragmentAction, BooleanOp, BulgeVertex2, Classification,
+    Contour2, CurveError, CurvePolicy, DirectedBooleanFragment, FillRule, Real, Region2,
+    RegionContourKey, RegionContourRole, RegionSide, Segment2, UncertaintyReason,
 };
 
 fn s(value: i32) -> Real {
@@ -35,6 +36,28 @@ fn policy() -> CurvePolicy {
 
 fn line_segment(x0: i32, y0: i32, x1: i32, y1: i32) -> Segment2 {
     Segment2::Line(hypercurve::LineSeg2::try_new(p(x0, y0), p(x1, y1)).unwrap())
+}
+
+fn assert_topology_error<T>(result: hypercurve::CurveResult<T>) {
+    match result {
+        Err(CurveError::Topology(_)) => {}
+        Ok(_) => panic!("expected topology error"),
+        Err(error) => panic!("expected topology error, got {error:?}"),
+    }
+}
+
+fn directed_fragment(
+    fragment_index: usize,
+    x0: i32,
+    y0: i32,
+    x1: i32,
+    y1: i32,
+) -> DirectedBooleanFragment {
+    DirectedBooleanFragment {
+        key: RegionContourKey::new(RegionSide::First, RegionContourRole::Material, 0),
+        fragment_index,
+        segment: line_segment(x0, y0, x1, y1),
+    }
 }
 
 fn overlapping_fragments() -> (Region2, Region2, hypercurve::RegionFragmentSet) {
@@ -304,6 +327,42 @@ fn reversing_segments_swaps_endpoints_and_arc_orientation() {
     assert_eq!(reversed_arc.end(), &p(0, 0));
     assert!(reversed_arc.is_clockwise());
     assert_eq!(reversed_arc.bulge(), Some(&s(-1)));
+}
+
+#[test]
+fn boolean_boundary_chain_constructors_validate_fragment_ownership() {
+    assert_topology_error(BooleanBoundaryChain::new(Vec::new(), false));
+    assert_topology_error(BooleanBoundaryChain::new(
+        vec![
+            directed_fragment(0, 0, 0, 1, 0),
+            directed_fragment(0, 1, 0, 0, 0),
+        ],
+        true,
+    ));
+
+    let first = BooleanBoundaryChain::new(vec![directed_fragment(0, 0, 0, 1, 0)], false).unwrap();
+    let second = BooleanBoundaryChain::new(vec![directed_fragment(1, 1, 0, 2, 0)], false).unwrap();
+    BooleanBoundaryChainSet::new(vec![first.clone(), second]).unwrap();
+
+    let duplicate =
+        BooleanBoundaryChain::new(vec![directed_fragment(0, 2, 0, 3, 0)], false).unwrap();
+    assert_topology_error(BooleanBoundaryChainSet::new(vec![first, duplicate]));
+}
+
+#[test]
+fn boolean_boundary_loop_constructors_validate_fragment_ownership() {
+    assert_topology_error(BooleanBoundaryLoop::new(Vec::new()));
+    assert_topology_error(BooleanBoundaryLoop::new(vec![
+        directed_fragment(0, 0, 0, 1, 0),
+        directed_fragment(0, 1, 0, 0, 0),
+    ]));
+
+    let first = BooleanBoundaryLoop::new(vec![directed_fragment(0, 0, 0, 1, 0)]).unwrap();
+    let second = BooleanBoundaryLoop::new(vec![directed_fragment(1, 1, 0, 2, 0)]).unwrap();
+    BooleanBoundaryLoopSet::new(vec![first.clone(), second]).unwrap();
+
+    let duplicate = BooleanBoundaryLoop::new(vec![directed_fragment(0, 2, 0, 3, 0)]).unwrap();
+    assert_topology_error(BooleanBoundaryLoopSet::new(vec![first, duplicate]));
 }
 
 #[test]
