@@ -61,6 +61,11 @@ pub use adapter::{
     LossyF64MeshInputReadiness, LossyF64MeshInputReport, LossyF64MeshInputReportValidationError,
     inspect_f64_mesh_input, inspect_i64_mesh_input,
 };
+pub use adjacent::{
+    FullFaceAdjacentFacePair, FullFaceAdjacentPatch, FullFaceAdjacentUnion,
+    FullFaceAdjacentUnionError, FullFaceAdjacentUnionFreshness,
+    materialize_full_face_adjacent_union,
+};
 pub use affine_box::{
     AffineBoxBasis, AffineBoxOperation, has_affine_box_difference, has_affine_box_intersection,
     has_affine_box_union,

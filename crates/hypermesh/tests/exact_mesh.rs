@@ -9,8 +9,8 @@ use hypermesh::{
     ExactI64MeshInputReadiness, ExactLabeledCellComplexFreshness, ExactMesh,
     ExactRegularizationPolicy, ExactReportFreshness, ExactSelectedCellComplexFreshness,
     ExactSimplifiedCellComplexFreshness, ExactVolumetricRegionFreshness,
-    ExactVolumetricRegionRelation, IntersectionGraphFreshness, MeshFacePairFreshness,
-    MeshFacePairRelation, MeshFacePairValidationError, SplitPlanFreshness,
+    ExactVolumetricRegionRelation, FullFaceAdjacentUnionFreshness, IntersectionGraphFreshness,
+    MeshFacePairFreshness, MeshFacePairRelation, MeshFacePairValidationError, SplitPlanFreshness,
     TriangleTriangleFreshness, TriangleTriangleRelation, ValidationPolicy, WindingReportFreshness,
     boolean_exact, boolean_exact_with_boundary_policy, build_intersection_graph,
     certify_boundary_touching_report, certify_convex_solid,
@@ -22,7 +22,8 @@ use hypermesh::{
     materialize_affine_orthogonal_solid_intersection,
     materialize_axis_aligned_orthogonal_solid_intersection,
     materialize_axis_aligned_orthogonal_solid_union, materialize_contained_face_adjacent_union,
-    preflight_boolean_exact, preflight_boolean_exact_with_boundary_policy,
+    materialize_full_face_adjacent_union, preflight_boolean_exact,
+    preflight_boolean_exact_with_boundary_policy,
 };
 use hyperreal::Real;
 
@@ -347,6 +348,50 @@ fn exact_coplanar_volumetric_cell_evidence_is_publicly_replayable() {
     assert_eq!(
         report.freshness_against_sources(&left, &separated_right),
         CoplanarVolumetricCellEvidenceFreshness::SourceReplayMismatch
+    );
+}
+
+#[test]
+fn exact_full_face_adjacent_union_is_publicly_replayable() {
+    let left = axis_aligned_box([0, 0, 0], [1, 1, 1]);
+    let right = axis_aligned_box([1, 0, 0], [2, 1, 1]);
+
+    let union = materialize_full_face_adjacent_union(&left, &right, ValidationPolicy::CLOSED)
+        .expect("full-face adjacent boxes should materialize as a welded union");
+    union.validate().unwrap();
+    union.validate_against_sources(&left, &right).unwrap();
+    assert_eq!(
+        union.freshness_against_sources(&left, &right),
+        FullFaceAdjacentUnionFreshness::Current
+    );
+    assert!(union.mesh.facts().mesh.closed_manifold);
+    assert!(!union.shared_faces.is_empty() || !union.shared_patches.is_empty());
+    assert!(!union.mesh.triangles().is_empty());
+
+    let mut invalid_shared_faces = union.clone();
+    invalid_shared_faces.shared_faces.clear();
+    invalid_shared_faces.shared_patches.clear();
+    assert_eq!(
+        invalid_shared_faces.freshness_against_sources(&left, &right),
+        FullFaceAdjacentUnionFreshness::InvalidSharedFaces
+    );
+
+    let mut invalid_output = union.clone();
+    invalid_output.mesh = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 1, 0, 0, 0, 1, 0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    assert_eq!(
+        invalid_output.freshness_against_sources(&left, &right),
+        FullFaceAdjacentUnionFreshness::InvalidOutput
+    );
+
+    let separated_right = axis_aligned_box([3, 0, 0], [4, 1, 1]);
+    assert_eq!(
+        union.freshness_against_sources(&left, &separated_right),
+        FullFaceAdjacentUnionFreshness::SourceReplayMismatch
     );
 }
 
