@@ -1,6 +1,7 @@
 use hypercurve::{
     BulgeVertex2, Contour2, CurveError, CurveString2, FillRule, Point2,
-    PolylineReconstructionOptions, Real, RetainedImportFormat2, RetainedSourceTolerance2, Segment2,
+    PolylineReconstructionOptions, Real, RetainedImportFormat2, RetainedImportRecord2,
+    RetainedSourceTolerance2, Segment2,
 };
 
 fn r(value: f64) -> Real {
@@ -225,6 +226,37 @@ fn source_tolerance_rejects_nonfinite_or_negative_values() {
     );
     assert_eq!(
         RetainedSourceTolerance2::try_new(0.0, -1.0).unwrap_err(),
+        CurveError::InvalidImportRecord
+    );
+}
+
+#[test]
+fn retained_import_record_rejects_inconsistent_counts() {
+    assert_eq!(
+        RetainedImportRecord2::try_new(RetainedImportFormat2::FinitePolyline, 0, None, 0, 0, 0)
+            .unwrap_err(),
+        CurveError::InvalidImportRecord
+    );
+    assert_eq!(
+        RetainedImportRecord2::try_new(RetainedImportFormat2::FinitePolyline, 0, None, 2, 0, 0)
+            .unwrap_err(),
+        CurveError::InvalidImportRecord
+    );
+    assert_eq!(
+        RetainedImportRecord2::try_new(RetainedImportFormat2::FinitePolyline, 0, None, 3, 2, 2)
+            .unwrap_err(),
+        CurveError::InvalidImportRecord
+    );
+    assert_eq!(
+        RetainedImportRecord2::try_new(
+            RetainedImportFormat2::FinitePolyline,
+            0,
+            None,
+            usize::MAX,
+            usize::MAX,
+            1
+        )
+        .unwrap_err(),
         CurveError::InvalidImportRecord
     );
 }
