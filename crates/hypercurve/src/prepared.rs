@@ -771,7 +771,7 @@ impl<'a> PreparedRegionView2<'a> {
             policy,
         )?;
 
-        Ok(RegionIntersectionSet::new(pairs))
+        RegionIntersectionSet::new(pairs)
     }
 
     /// Collects normalized topology events against an ordinary region view.

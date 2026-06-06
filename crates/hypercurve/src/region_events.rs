@@ -6,7 +6,9 @@
 //! be optimized, but topology still depends on the exact segment relation.
 
 use crate::bbox::{aabbs_decided_disjoint, decided_contour_aabb};
-use crate::{Classification, ContourIntersectionSet, CurvePolicy, CurveResult, RegionView2};
+use crate::{
+    Classification, ContourIntersectionSet, CurveError, CurvePolicy, CurveResult, RegionView2,
+};
 
 /// Which region side a contour key belongs to.
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
@@ -63,8 +65,9 @@ pub struct RegionIntersectionSet {
 
 impl RegionIntersectionSet {
     /// Constructs a set from already-normalized region contour pairs.
-    pub const fn new(pairs: Vec<RegionContourIntersection>) -> Self {
-        Self { pairs }
+    pub fn new(pairs: Vec<RegionContourIntersection>) -> CurveResult<Self> {
+        validate_region_intersection_pairs(&pairs)?;
+        Ok(Self { pairs })
     }
 
     /// Returns nonempty contour-pair event sets.
@@ -148,7 +151,27 @@ pub(crate) fn intersect_region_views(
         policy,
     )?;
 
-    Ok(RegionIntersectionSet::new(pairs))
+    RegionIntersectionSet::new(pairs)
+}
+
+fn validate_region_intersection_pairs(pairs: &[RegionContourIntersection]) -> CurveResult<()> {
+    let mut keys = Vec::with_capacity(pairs.len());
+    for pair in pairs {
+        if pair.first.side != RegionSide::First || pair.second.side != RegionSide::Second {
+            return Err(CurveError::Topology(
+                "region intersection pair must be keyed from first region to second region".into(),
+            ));
+        }
+        keys.push((pair.first, pair.second));
+    }
+
+    keys.sort_unstable();
+    if keys.windows(2).any(|window| window[0] == window[1]) {
+        return Err(CurveError::Topology(
+            "region intersection set must not contain duplicate contour pairs".into(),
+        ));
+    }
+    Ok(())
 }
 
 fn collect_role_pairs(

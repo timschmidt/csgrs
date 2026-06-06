@@ -1,6 +1,7 @@
 use hypercurve::{
     BulgeVertex2, Classification, Contour2, ContourOperand, ContourSplitMap, CurvePolicy, Real,
-    Region2, RegionContourKey, RegionContourRole, RegionSide,
+    Region2, RegionContourIntersection, RegionContourKey, RegionContourRole, RegionIntersectionSet,
+    RegionSide,
 };
 
 fn s(value: i32) -> Real {
@@ -32,6 +33,14 @@ fn policy() -> CurvePolicy {
     CurvePolicy::certified()
 }
 
+fn assert_topology_error<T>(result: hypercurve::CurveResult<T>) {
+    match result {
+        Err(hypercurve::CurveError::Topology(_)) => {}
+        Ok(_) => panic!("expected topology error"),
+        Err(error) => panic!("expected topology error, got {error:?}"),
+    }
+}
+
 #[test]
 fn region_events_keep_material_and_hole_roles() {
     let region = Region2::new(vec![rectangle(0, 0, 10, 10)], vec![rectangle(3, 3, 7, 7)]);
@@ -51,6 +60,26 @@ fn region_events_keep_material_and_hole_roles() {
         pair.first == hole_key && pair.second == cutter_key && pair.intersections.len() == 2
     }));
     assert_eq!(events.pairs_for_contour(cutter_key).count(), 2);
+}
+
+#[test]
+fn region_intersection_set_constructor_validates_pair_ownership() {
+    RegionIntersectionSet::new(Vec::new()).unwrap();
+
+    let first = Region2::from_material_contours(vec![rectangle(0, 0, 4, 4)]);
+    let second = Region2::from_material_contours(vec![rectangle(2, -1, 6, 3)]);
+    let events = first.intersect_region(&second, &policy()).unwrap();
+    let pair = events.pairs()[0].clone();
+    RegionIntersectionSet::new(vec![pair.clone()]).unwrap();
+
+    assert_topology_error(RegionIntersectionSet::new(vec![pair.clone(), pair.clone()]));
+    assert_topology_error(RegionIntersectionSet::new(vec![
+        RegionContourIntersection {
+            first: pair.second,
+            second: pair.first,
+            intersections: pair.intersections,
+        },
+    ]));
 }
 
 #[test]
