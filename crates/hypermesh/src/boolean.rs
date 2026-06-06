@@ -7875,6 +7875,10 @@ mod tests {
                 );
                 result.validate().unwrap();
                 result.validate_against_sources(left, right).unwrap();
+                assert!(
+                    result.validate_against_sources(&sheet, &sheet).is_err(),
+                    "{operation:?}: {result:?}"
+                );
 
                 let keeps_solid = matches!(operation, ExactBooleanOperation::Union)
                     || (std::ptr::eq(left, &solid)

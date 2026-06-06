@@ -1046,13 +1046,17 @@ fn certified_shortcut_sources_match(
             report.validate()?;
             Ok(report.is_certified())
         }
+        ExactBooleanShortcutKind::MixedDimensionalRegularizedSolid => {
+            Ok(mixed_dimensional_regularized_sources(left, right))
+        }
+        ExactBooleanShortcutKind::LowerDimensionalRegularizedSolid => {
+            Ok(lower_dimensional_regularized_sources(left, right))
+        }
         ExactBooleanShortcutKind::ClosedBoundaryTouchingUnion
         | ExactBooleanShortcutKind::ClosedBoundaryTouchingIntersection
         | ExactBooleanShortcutKind::ClosedBoundaryTouchingDifference
         | ExactBooleanShortcutKind::ClosedWindingSeparated
         | ExactBooleanShortcutKind::ClosedWindingContainment
-        | ExactBooleanShortcutKind::MixedDimensionalRegularizedSolid
-        | ExactBooleanShortcutKind::LowerDimensionalRegularizedSolid
         | ExactBooleanShortcutKind::ConvexContainment
         | ExactBooleanShortcutKind::ConvexUnion
         | ExactBooleanShortcutKind::ConvexIntersection
@@ -1078,6 +1082,34 @@ fn meshes_are_certified_identical(left: &ExactMesh, right: &ExactMesh) -> bool {
             .iter()
             .zip(right.vertices())
             .all(|(left, right)| points_equal(left, right))
+}
+
+fn mixed_dimensional_regularized_sources(left: &ExactMesh, right: &ExactMesh) -> bool {
+    let left_closed = mesh_is_closed_solid(left);
+    let right_closed = mesh_is_closed_solid(right);
+    let left_lower = mesh_is_lower_dimensional(left);
+    let right_lower = mesh_is_lower_dimensional(right);
+    (left_closed && right_lower) || (left_lower && right_closed)
+}
+
+fn lower_dimensional_regularized_sources(left: &ExactMesh, right: &ExactMesh) -> bool {
+    mesh_is_lower_dimensional(left) && mesh_is_lower_dimensional(right)
+}
+
+fn mesh_is_closed_solid(mesh: &ExactMesh) -> bool {
+    !mesh.triangles().is_empty() && mesh.facts().mesh.closed_manifold
+}
+
+fn mesh_is_lower_dimensional(mesh: &ExactMesh) -> bool {
+    mesh.triangles().is_empty() || mesh_is_open_surface(mesh)
+}
+
+fn mesh_is_open_surface(mesh: &ExactMesh) -> bool {
+    !mesh.triangles().is_empty()
+        && !mesh.facts().mesh.closed_manifold
+        && mesh.facts().mesh.boundary_edges > 0
+        && mesh.facts().mesh.non_manifold_edges == 0
+        && mesh.facts().mesh.non_manifold_vertices == 0
 }
 
 fn open_surface_arrangement_selection(
