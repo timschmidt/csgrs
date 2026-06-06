@@ -353,10 +353,7 @@ impl BlockerSourceCounts {
 fn blocker_source_counts(graph: &ExactIntersectionGraph) -> BlockerSourceCounts {
     let mut counts = BlockerSourceCounts::default();
     for pair in &graph.face_pairs {
-        let pair_has_unknown_event = pair
-            .events
-            .iter()
-            .any(|event| matches!(event, IntersectionEvent::Unknown));
+        let pair_has_unknown_event = pair.events.iter().any(graph_event_has_unknown_relation);
         match pair.relation {
             MeshFacePairRelation::Candidate => counts.candidate_pairs += 1,
             MeshFacePairRelation::CoplanarOverlapping => counts.coplanar_overlapping_pairs += 1,
@@ -382,6 +379,17 @@ fn blocker_source_counts(graph: &ExactIntersectionGraph) -> BlockerSourceCounts 
             .count();
     }
     counts
+}
+
+fn graph_event_has_unknown_relation(event: &IntersectionEvent) -> bool {
+    matches!(
+        event,
+        IntersectionEvent::Unknown
+            | IntersectionEvent::SegmentPlane {
+                relation: hyperlimit::SegmentPlaneRelation::Unknown,
+                ..
+            }
+    )
 }
 
 fn validate_refinement_partition(
@@ -2824,5 +2832,45 @@ impl ExactWindingReadinessReport {
                 no_region_facts(self.region_count, &self.region_classifications)
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn blocker_source_counts_include_unknown_segment_plane_events() {
+        let graph = ExactIntersectionGraph {
+            face_pairs: vec![crate::graph::FacePairEvents {
+                left_face: 0,
+                right_face: 0,
+                relation: MeshFacePairRelation::Candidate,
+                projection: None,
+                events: vec![IntersectionEvent::SegmentPlane {
+                    segment_side: MeshSide::Left,
+                    edge: [0, 1],
+                    plane_side: MeshSide::Right,
+                    plane_face: 0,
+                    relation: hyperlimit::SegmentPlaneRelation::Unknown,
+                    point: None,
+                    parameter: None,
+                    parameter_ratio: None,
+                    construction_failure: None,
+                    endpoint_sides: [None, Some(hyperlimit::PlaneSide::Above)],
+                }],
+            }],
+        };
+
+        let blocker =
+            blocker_source_counts(&graph).into_blocker(ExactBooleanBlockerKind::NeedsRefinement);
+        assert_eq!(blocker.candidate_pairs, 1);
+        assert_eq!(blocker.unknown_pairs, 1);
+        assert_eq!(blocker.construction_failed_events, 0);
+        assert!(
+            blocker
+                .validate_for_kind(ExactBooleanBlockerKind::NeedsRefinement)
+                .is_ok()
+        );
     }
 }
