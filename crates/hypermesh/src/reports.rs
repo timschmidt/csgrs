@@ -1507,13 +1507,7 @@ impl ExactVolumetricBoundaryClosureReport {
                     || self.boundary_edges == 0
                     || self.boundary_loops == 0
                     || self.noncoplanar_boundary_loops != 0
-                    || self.repeated_exact_boundary_points == 0
-                    || self.self_contact_exact_points == 0
-                    || self.self_contact_topological_vertices < 2 * self.self_contact_exact_points
-                    || self.repeated_exact_boundary_points
-                        < self.self_contact_topological_vertices - self.self_contact_exact_points
-                    || self.self_contact_degenerate_cycles + self.self_contact_nondegenerate_cycles
-                        != self.self_contact_topological_vertices
+                    || !self.has_valid_self_contact_evidence()
                     || self.coplanar_loop_groups != 0
                 {
                     return Err(ExactReportValidationError::StatusEvidenceMismatch);
@@ -1537,12 +1531,37 @@ impl ExactVolumetricBoundaryClosureReport {
                 if self.output_triangles == 0
                     || self.boundary_edges == 0
                     || self.boundary_loops == 0
+                    || self.coplanar_loop_groups != 0
+                    || !self.has_valid_optional_self_contact_evidence()
                 {
                     return Err(ExactReportValidationError::StatusEvidenceMismatch);
                 }
             }
         }
         Ok(())
+    }
+
+    fn has_valid_optional_self_contact_evidence(&self) -> bool {
+        if self.repeated_exact_boundary_points == 0
+            && self.self_contact_exact_points == 0
+            && self.self_contact_topological_vertices == 0
+            && self.self_contact_degenerate_cycles == 0
+            && self.self_contact_nondegenerate_cycles == 0
+        {
+            true
+        } else {
+            self.has_valid_self_contact_evidence()
+        }
+    }
+
+    fn has_valid_self_contact_evidence(&self) -> bool {
+        self.repeated_exact_boundary_points != 0
+            && self.self_contact_exact_points != 0
+            && self.self_contact_topological_vertices >= 2 * self.self_contact_exact_points
+            && self.repeated_exact_boundary_points
+                >= self.self_contact_topological_vertices - self.self_contact_exact_points
+            && self.self_contact_degenerate_cycles + self.self_contact_nondegenerate_cycles
+                == self.self_contact_topological_vertices
     }
 }
 
@@ -3325,6 +3344,25 @@ mod tests {
         }
     }
 
+    fn valid_blocked_closure_report() -> ExactVolumetricBoundaryClosureReport {
+        ExactVolumetricBoundaryClosureReport {
+            operation: ExactBooleanOperation::Union,
+            status: ExactVolumetricBoundaryClosureStatus::BoundaryClosureBlocked(
+                ExactArrangementBlocker::UndecidableOrdering,
+            ),
+            output_triangles: 1,
+            boundary_edges: 3,
+            boundary_loops: 1,
+            noncoplanar_boundary_loops: 0,
+            repeated_exact_boundary_points: 0,
+            self_contact_exact_points: 0,
+            self_contact_topological_vertices: 0,
+            self_contact_degenerate_cycles: 0,
+            self_contact_nondegenerate_cycles: 0,
+            coplanar_loop_groups: 0,
+        }
+    }
+
     #[test]
     fn volumetric_boundary_self_contact_report_rejects_contradictory_status_evidence() {
         let mut report = valid_self_contact_closure_report();
@@ -3366,6 +3404,33 @@ mod tests {
             report.validate(),
             Err(ExactReportValidationError::StatusEvidenceMismatch)
         );
+    }
+
+    #[test]
+    fn volumetric_boundary_blocked_report_rejects_stale_closure_evidence() {
+        let mut report = valid_blocked_closure_report();
+        report.validate().unwrap();
+
+        report.coplanar_loop_groups = 1;
+        assert_eq!(
+            report.validate(),
+            Err(ExactReportValidationError::StatusEvidenceMismatch)
+        );
+
+        let mut report = valid_blocked_closure_report();
+        report.self_contact_exact_points = 1;
+        assert_eq!(
+            report.validate(),
+            Err(ExactReportValidationError::StatusEvidenceMismatch)
+        );
+
+        let mut report = valid_blocked_closure_report();
+        report.repeated_exact_boundary_points = 1;
+        report.self_contact_exact_points = 1;
+        report.self_contact_topological_vertices = 2;
+        report.self_contact_degenerate_cycles = 1;
+        report.self_contact_nondegenerate_cycles = 1;
+        report.validate().unwrap();
     }
 
     #[test]
