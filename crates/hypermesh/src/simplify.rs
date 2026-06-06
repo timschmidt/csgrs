@@ -193,6 +193,16 @@ pub fn simplify_selected_cell_complex(
             duplicate_cells_removed += 1;
             continue;
         }
+        if let Some(opposite) = faces.iter().position(|existing: &ExactSimplifiedFaceCell| {
+            exact_boundary_loops_opposite_orientation(
+                &existing.face.cell.boundary_points,
+                &face.cell.boundary_points,
+            )
+        }) {
+            faces.remove(opposite);
+            duplicate_cells_removed += 2;
+            continue;
+        }
         faces.push(ExactSimplifiedFaceCell { source_face, face });
     }
 
@@ -538,6 +548,21 @@ fn exact_boundary_loops_same_orientation(left: &[Point3], right: &[Point3]) -> b
     })
 }
 
+fn exact_boundary_loops_opposite_orientation(left: &[Point3], right: &[Point3]) -> bool {
+    if left.len() != right.len() {
+        return false;
+    }
+    if left.is_empty() {
+        return true;
+    }
+    (0..right.len()).any(|offset| {
+        (0..left.len()).all(|index| {
+            let right_index = (offset + right.len() - index) % right.len();
+            point3_equal(&left[index], &right[right_index]).value() == Some(true)
+        })
+    })
+}
+
 fn selected_face_reverse_orientation(
     face: &ExactCellComplexFace,
     source_face: usize,
@@ -853,6 +878,55 @@ mod tests {
 
         assert_eq!(simplified.faces.len(), 1);
         assert_eq!(simplified.duplicate_cells_removed, 1);
+    }
+
+    #[test]
+    fn simplification_cancels_opposite_duplicate_selected_geometry() {
+        let points = [p(0, 0, 0), p(1, 0, 0), p(0, 1, 0)];
+        let reversed = [points[0].clone(), points[2].clone(), points[1].clone()];
+        let selected = ExactSelectedCellComplex {
+            faces: vec![
+                selected_face_with_source(
+                    MeshSide::Left,
+                    ExactCellRegionLabel::LeftBoundary,
+                    &[0, 1, 2],
+                    &points,
+                ),
+                selected_face_with_source(
+                    MeshSide::Right,
+                    ExactCellRegionLabel::RightBoundary,
+                    &[3, 5, 4],
+                    &reversed,
+                ),
+            ],
+            volume_regions: Vec::new(),
+            volume_adjacencies: Vec::new(),
+            lower_dimensional_artifacts: Vec::new(),
+            selected_faces: vec![0, 1],
+            selected_face_orientations: vec![
+                ExactSelectedFaceOrientation {
+                    face: 0,
+                    reverse: false,
+                    from_volume_adjacency: true,
+                },
+                ExactSelectedFaceOrientation {
+                    face: 1,
+                    reverse: false,
+                    from_volume_adjacency: true,
+                },
+            ],
+            selected_volume_regions: Vec::new(),
+            operation: ExactBooleanOperation::Union,
+            blockers: Vec::new(),
+        };
+
+        let simplified =
+            simplify_selected_cell_complex(selected, ExactRegularizationPolicy::REGULARIZED_SOLID)
+                .unwrap();
+
+        assert!(simplified.faces.is_empty());
+        assert_eq!(simplified.duplicate_cells_removed, 2);
+        assert!(simplified.blockers.is_empty());
     }
 
     #[test]
