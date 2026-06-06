@@ -250,16 +250,17 @@ pub fn classify_mesh_face_pair(
         });
     }
 
-    let mut points = left.vertices().to_vec();
-    let right_offset = points.len();
-    points.extend(right.vertices().iter().cloned());
-
     let left_tri = left.triangles()[left_face].0;
-    let mut right_tri = right.triangles()[right_face].0;
-    right_tri
-        .iter_mut()
-        .for_each(|vertex| *vertex += right_offset);
-    let mut triangle = classify_triangle_triangle(&points, left_tri, right_tri);
+    let right_tri = right.triangles()[right_face].0;
+    let points = [
+        left.vertices()[left_tri[0]].clone(),
+        left.vertices()[left_tri[1]].clone(),
+        left.vertices()[left_tri[2]].clone(),
+        right.vertices()[right_tri[0]].clone(),
+        right.vertices()[right_tri[1]].clone(),
+        right.vertices()[right_tri[2]].clone(),
+    ];
+    let mut triangle = classify_triangle_triangle(&points, [0, 1, 2], [3, 4, 5]);
     if triangle.relation == TriangleTriangleRelation::Candidate {
         triangle.right_edge_events =
             retained_triangle_edge_events(left, left_face, right, right_face);

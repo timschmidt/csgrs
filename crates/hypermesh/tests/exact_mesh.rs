@@ -90,6 +90,37 @@ fn exact_triangle_classifier_reports_degenerate_coplanar_overlap() {
 }
 
 #[test]
+fn exact_face_pair_classifier_matches_local_triangle_report() {
+    let left = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 2, 0, 0, 0, 2, 0, 9, 9, 9],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let right = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 1, 0, 0, 0, 1, 0, -9, -9, -9],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+
+    let pair = classify_mesh_face_pair(&left, 0, &right, 0).unwrap();
+    let points = vec![
+        left.vertices()[0].clone(),
+        left.vertices()[1].clone(),
+        left.vertices()[2].clone(),
+        right.vertices()[0].clone(),
+        right.vertices()[1].clone(),
+        right.vertices()[2].clone(),
+    ];
+    let direct = classify_triangle_triangle(&points, [0, 1, 2], [3, 4, 5]);
+
+    assert_eq!(pair.relation, MeshFacePairRelation::CoplanarOverlapping);
+    assert_eq!(pair.triangle.as_ref().unwrap(), &direct);
+    pair.validate_against_sources(&left, &right).unwrap();
+}
+
+#[test]
 fn exact_boolean_public_shortcuts_handle_disjoint_operands() {
     let left = tetra([0, 0, 0]);
     let right = tetra([3, 0, 0]);
