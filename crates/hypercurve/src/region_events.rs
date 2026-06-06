@@ -162,6 +162,11 @@ fn validate_region_intersection_pairs(pairs: &[RegionContourIntersection]) -> Cu
                 "region intersection pair must be keyed from first region to second region".into(),
             ));
         }
+        if pair.intersections.is_empty() {
+            return Err(CurveError::Topology(
+                "region intersection pair must carry nonempty contour event evidence".into(),
+            ));
+        }
         keys.push((pair.first, pair.second));
     }
 

@@ -1,7 +1,7 @@
 use hypercurve::{
-    BulgeVertex2, Classification, Contour2, ContourOperand, ContourSplitMap, CurvePolicy, Real,
-    Region2, RegionContourIntersection, RegionContourKey, RegionContourRole, RegionIntersectionSet,
-    RegionSide,
+    BulgeVertex2, Classification, Contour2, ContourIntersectionSet, ContourOperand,
+    ContourSplitMap, CurvePolicy, Real, Region2, RegionContourIntersection, RegionContourKey,
+    RegionContourRole, RegionIntersectionSet, RegionSide,
 };
 
 fn s(value: i32) -> Real {
@@ -78,6 +78,14 @@ fn region_intersection_set_constructor_validates_pair_ownership() {
             first: pair.second,
             second: pair.first,
             intersections: pair.intersections,
+        },
+    ]));
+
+    assert_topology_error(RegionIntersectionSet::new(vec![
+        RegionContourIntersection {
+            first: pair.first,
+            second: pair.second,
+            intersections: ContourIntersectionSet::new(Vec::new()).unwrap(),
         },
     ]));
 }
