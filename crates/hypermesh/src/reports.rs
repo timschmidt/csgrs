@@ -15,8 +15,8 @@ use super::boolean::{
     ExactBooleanOperation, ExactBoundaryBooleanPolicy, boolean_exact_with_boundary_policy,
     certify_boundary_touching_report, certify_open_surface_disjoint_report,
     certify_planar_arrangement_report, certify_refinement_report, certify_same_surface_report,
-    certify_winding_readiness_report, preflight_boolean_exact,
-    preflight_boolean_exact_with_validation,
+    certify_volumetric_boundary_closure_report, certify_winding_readiness_report,
+    preflight_boolean_exact, preflight_boolean_exact_with_validation,
 };
 use super::graph::MeshSide;
 use super::graph::{
@@ -29,6 +29,7 @@ use super::region::{
     FaceRegionPlaneClassification, FaceRegionPlaneValidationError, FaceRegionTriangulation,
     boundary_node_point,
 };
+use super::regularization::ExactArrangementBlocker;
 use super::validation::ValidationPolicy;
 use super::volumetric::{ExactVolumetricRegionClassification, ExactVolumetricRegionError};
 use super::volumetric_cells::CoplanarVolumetricCellEvidenceReport;
@@ -1363,6 +1364,126 @@ pub struct ExactBooleanPreflight {
     /// exact object evidence that authorized either a blocker or a
     /// arrangement-materialized consumption of coplanar source-face cells.
     pub coplanar_volumetric_evidence: Option<CoplanarVolumetricCellEvidenceReport>,
+}
+
+/// Closure status for a materialized volumetric boundary-output Boolean.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum ExactVolumetricBoundaryClosureStatus {
+    /// No retained volumetric boundary output was materialized for the request.
+    NoMaterializedBoundaryOutput,
+    /// The materialized output is already closed under the requested topology.
+    AlreadyClosed,
+    /// Every boundary loop is exactly coplanar and can be handled by the
+    /// existing coplanar cap generator.
+    CoplanarClosureAvailable,
+    /// Boundary loops are valid, but at least one loop is not exactly
+    /// coplanar and needs non-coplanar cap-cell generation.
+    NonCoplanarBoundaryClosureRequired,
+    /// Boundary edges could not be organized into simple directed loops.
+    BoundaryTopologyNotLoop,
+    /// The coplanar loop grouping or closure check hit an exact arrangement
+    /// blocker.
+    BoundaryClosureBlocked(ExactArrangementBlocker),
+}
+
+/// Auditable closure-readiness report for volumetric split-cell output.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ExactVolumetricBoundaryClosureReport {
+    /// Requested named operation.
+    pub operation: ExactBooleanOperation,
+    /// Certified closure status.
+    pub status: ExactVolumetricBoundaryClosureStatus,
+    /// Number of output triangles in the retained boundary materialization.
+    pub output_triangles: usize,
+    /// Number of boundary edges retained by the materialized output mesh.
+    pub boundary_edges: usize,
+    /// Number of directed boundary loops, when loop extraction succeeded.
+    pub boundary_loops: usize,
+    /// Number of boundary loops proven not exactly coplanar.
+    pub noncoplanar_boundary_loops: usize,
+    /// Number of coplanar loop groups produced by exact loop grouping.
+    pub coplanar_loop_groups: usize,
+}
+
+impl ExactVolumetricBoundaryClosureReport {
+    /// Validate this report against the source meshes that produced it.
+    pub fn validate_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<(), ExactReportValidationError> {
+        self.validate()?;
+        let replay = certify_volumetric_boundary_closure_report(left, right, self.operation)
+            .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+        if self == &replay {
+            Ok(())
+        } else {
+            Err(ExactReportValidationError::SourceReplayMismatch)
+        }
+    }
+
+    /// Validate status and retained closure counts.
+    pub fn validate(&self) -> Result<(), ExactReportValidationError> {
+        match &self.status {
+            ExactVolumetricBoundaryClosureStatus::NoMaterializedBoundaryOutput => {
+                if self.output_triangles != 0
+                    || self.boundary_edges != 0
+                    || self.boundary_loops != 0
+                    || self.noncoplanar_boundary_loops != 0
+                    || self.coplanar_loop_groups != 0
+                {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
+            }
+            ExactVolumetricBoundaryClosureStatus::AlreadyClosed => {
+                if self.output_triangles == 0
+                    || self.boundary_edges != 0
+                    || self.boundary_loops != 0
+                    || self.noncoplanar_boundary_loops != 0
+                    || self.coplanar_loop_groups != 0
+                {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
+            }
+            ExactVolumetricBoundaryClosureStatus::CoplanarClosureAvailable => {
+                if self.output_triangles == 0
+                    || self.boundary_edges == 0
+                    || self.boundary_loops == 0
+                    || self.noncoplanar_boundary_loops != 0
+                    || self.coplanar_loop_groups == 0
+                {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
+            }
+            ExactVolumetricBoundaryClosureStatus::NonCoplanarBoundaryClosureRequired => {
+                if self.output_triangles == 0
+                    || self.boundary_edges == 0
+                    || self.boundary_loops == 0
+                    || self.noncoplanar_boundary_loops == 0
+                {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
+            }
+            ExactVolumetricBoundaryClosureStatus::BoundaryTopologyNotLoop => {
+                if self.output_triangles == 0
+                    || self.boundary_edges == 0
+                    || self.boundary_loops != 0
+                    || self.coplanar_loop_groups != 0
+                {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
+            }
+            ExactVolumetricBoundaryClosureStatus::BoundaryClosureBlocked(_) => {
+                if self.output_triangles == 0
+                    || self.boundary_edges == 0
+                    || self.boundary_loops == 0
+                {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
+            }
+        }
+        Ok(())
+    }
 }
 
 impl ExactBooleanPreflight {

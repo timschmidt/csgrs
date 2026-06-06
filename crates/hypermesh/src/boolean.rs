@@ -79,6 +79,7 @@ use super::reports::{
     ExactBoundaryTouchingReport, ExactBoundaryTouchingStatus, ExactOpenSurfaceDisjointReport,
     ExactOpenSurfaceDisjointStatus, ExactPlanarArrangementReport, ExactPlanarArrangementStatus,
     ExactRefinementReport, ExactRefinementStatus, ExactSameSurfaceReport, ExactSameSurfaceStatus,
+    ExactVolumetricBoundaryClosureReport, ExactVolumetricBoundaryClosureStatus,
     ExactWindingReadinessReport, ExactWindingReadinessStatus,
 };
 use super::solid::{
@@ -845,6 +846,139 @@ pub fn preflight_boolean_exact_with_validation(
         ));
     }
     Ok(preflight)
+}
+
+/// Certify why retained volumetric boundary output can or cannot become closed.
+///
+/// This report is intentionally narrower than `boolean_exact`: it asks whether
+/// the exact split-cell materializer can produce boundary output under
+/// [`ValidationPolicy::ALLOW_BOUNDARY`], then audits the remaining boundary
+/// loops for the existing coplanar cap generator. Non-coplanar loops remain an
+/// explicit topology-construction obligation rather than a silent closure.
+pub fn certify_volumetric_boundary_closure_report(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+) -> Result<ExactVolumetricBoundaryClosureReport, MeshError> {
+    let graph = build_intersection_graph(left, right)?;
+    validate_graph_source_handoff(&graph, left, right)?;
+    let Some(materialized) = materialize_volumetric_winding_region_plan_from_graph(
+        &graph,
+        left,
+        right,
+        operation,
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )?
+    else {
+        return Ok(ExactVolumetricBoundaryClosureReport {
+            operation,
+            status: ExactVolumetricBoundaryClosureStatus::NoMaterializedBoundaryOutput,
+            output_triangles: 0,
+            boundary_edges: 0,
+            boundary_loops: 0,
+            noncoplanar_boundary_loops: 0,
+            coplanar_loop_groups: 0,
+        });
+    };
+    materialized
+        .mesh
+        .validate_retained_state()
+        .map_err(|error| {
+            MeshError::one(MeshDiagnostic::new(
+                Severity::Error,
+                DiagnosticKind::UnsupportedExactOperation,
+                format!("volumetric boundary closure source mesh validation failed: {error:?}"),
+            ))
+        })?;
+    let output_triangles = materialized.mesh.triangles().len();
+    let boundary_edges = materialized.mesh.facts().mesh.boundary_edges;
+    if materialized.mesh.facts().mesh.closed_manifold || boundary_edges == 0 {
+        return Ok(ExactVolumetricBoundaryClosureReport {
+            operation,
+            status: ExactVolumetricBoundaryClosureStatus::AlreadyClosed,
+            output_triangles,
+            boundary_edges: 0,
+            boundary_loops: 0,
+            noncoplanar_boundary_loops: 0,
+            coplanar_loop_groups: 0,
+        });
+    }
+    let Some(boundary_loops) = directed_boundary_loops(&materialized.mesh) else {
+        return Ok(ExactVolumetricBoundaryClosureReport {
+            operation,
+            status: ExactVolumetricBoundaryClosureStatus::BoundaryTopologyNotLoop,
+            output_triangles,
+            boundary_edges,
+            boundary_loops: 0,
+            noncoplanar_boundary_loops: 0,
+            coplanar_loop_groups: 0,
+        });
+    };
+    let boundary_points = boundary_loops
+        .iter()
+        .map(|boundary_loop| {
+            boundary_loop
+                .iter()
+                .map(|&vertex| materialized.mesh.vertices().get(vertex).cloned())
+                .collect::<Option<Vec<_>>>()
+        })
+        .collect::<Option<Vec<_>>>()
+        .ok_or_else(|| {
+            MeshError::one(MeshDiagnostic::new(
+                Severity::Error,
+                DiagnosticKind::IndexOutOfBounds,
+                "volumetric boundary closure report referenced a missing output vertex",
+            ))
+        })?;
+    let mut noncoplanar_boundary_loops = 0;
+    for boundary in &boundary_points {
+        match exact_loop_is_coplanar(boundary) {
+            Ok(true) => {}
+            Ok(false) => noncoplanar_boundary_loops += 1,
+            Err(blocker) => {
+                return Ok(ExactVolumetricBoundaryClosureReport {
+                    operation,
+                    status: ExactVolumetricBoundaryClosureStatus::BoundaryClosureBlocked(blocker),
+                    output_triangles,
+                    boundary_edges,
+                    boundary_loops: boundary_loops.len(),
+                    noncoplanar_boundary_loops,
+                    coplanar_loop_groups: 0,
+                });
+            }
+        }
+    }
+    if noncoplanar_boundary_loops != 0 {
+        return Ok(ExactVolumetricBoundaryClosureReport {
+            operation,
+            status: ExactVolumetricBoundaryClosureStatus::NonCoplanarBoundaryClosureRequired,
+            output_triangles,
+            boundary_edges,
+            boundary_loops: boundary_loops.len(),
+            noncoplanar_boundary_loops,
+            coplanar_loop_groups: 0,
+        });
+    }
+    match group_exact_coplanar_loops(boundary_points) {
+        Ok(groups) => Ok(ExactVolumetricBoundaryClosureReport {
+            operation,
+            status: ExactVolumetricBoundaryClosureStatus::CoplanarClosureAvailable,
+            output_triangles,
+            boundary_edges,
+            boundary_loops: boundary_loops.len(),
+            noncoplanar_boundary_loops: 0,
+            coplanar_loop_groups: groups.len(),
+        }),
+        Err(blocker) => Ok(ExactVolumetricBoundaryClosureReport {
+            operation,
+            status: ExactVolumetricBoundaryClosureStatus::BoundaryClosureBlocked(blocker),
+            output_triangles,
+            boundary_edges,
+            boundary_loops: boundary_loops.len(),
+            noncoplanar_boundary_loops: 0,
+            coplanar_loop_groups: 0,
+        }),
+    }
 }
 
 #[cfg(test)]
@@ -3010,6 +3144,67 @@ fn point3_exact_equal(left: &Point3, right: &Point3) -> Option<bool> {
             && compare_reals(&left.y, &right.y).value()? == Ordering::Equal
             && compare_reals(&left.z, &right.z).value()? == Ordering::Equal,
     )
+}
+
+fn exact_loop_is_coplanar(points: &[Point3]) -> Result<bool, ExactArrangementBlocker> {
+    if points.len() < 3 {
+        return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+    }
+    let Some(carrier) = exact_loop_carrier(points)? else {
+        return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+    };
+    for point in points {
+        match orient3d_report(&carrier[0], &carrier[1], &carrier[2], point).value() {
+            Some(Sign::Zero) => {}
+            Some(Sign::Negative | Sign::Positive) => return Ok(false),
+            None => return Err(ExactArrangementBlocker::UndecidableOrdering),
+        }
+    }
+    Ok(true)
+}
+
+fn exact_loop_carrier(points: &[Point3]) -> Result<Option<[Point3; 3]>, ExactArrangementBlocker> {
+    let Some(anchor) = points.first() else {
+        return Ok(None);
+    };
+    for first_index in 1..points.len().saturating_sub(1) {
+        for second_index in first_index + 1..points.len() {
+            let first = &points[first_index];
+            let second = &points[second_index];
+            if !exact_points_are_collinear(anchor, first, second)? {
+                return Ok(Some([anchor.clone(), first.clone(), second.clone()]));
+            }
+        }
+    }
+    Ok(None)
+}
+
+fn exact_points_are_collinear(
+    a: &Point3,
+    b: &Point3,
+    c: &Point3,
+) -> Result<bool, ExactArrangementBlocker> {
+    let abx = b.x.clone() - &a.x;
+    let aby = b.y.clone() - &a.y;
+    let abz = b.z.clone() - &a.z;
+    let acx = c.x.clone() - &a.x;
+    let acy = c.y.clone() - &a.y;
+    let acz = c.z.clone() - &a.z;
+    let cross_x = aby.clone() * &acz - &(abz.clone() * &acy);
+    let cross_y = abz * &acx - &(abx.clone() * &acz);
+    let cross_z = abx * &acy - &(aby * &acx);
+    Ok(compare_reals(&cross_x, &Real::from(0))
+        .value()
+        .ok_or(ExactArrangementBlocker::UndecidableOrdering)?
+        == Ordering::Equal
+        && compare_reals(&cross_y, &Real::from(0))
+            .value()
+            .ok_or(ExactArrangementBlocker::UndecidableOrdering)?
+            == Ordering::Equal
+        && compare_reals(&cross_z, &Real::from(0))
+            .value()
+            .ok_or(ExactArrangementBlocker::UndecidableOrdering)?
+            == Ordering::Equal)
 }
 
 fn directed_boundary_edges(mesh: &ExactMesh) -> BTreeMap<[usize; 2], (usize, usize)> {
@@ -7504,6 +7699,21 @@ mod tests {
         materialized.mesh.validate_retained_state().unwrap();
         assert!(!materialized.mesh.facts().mesh.closed_manifold);
         assert!(!materialized.assembly.triangles.is_empty());
+
+        let closure =
+            certify_volumetric_boundary_closure_report(&left, &right, ExactBooleanOperation::Union)
+                .unwrap();
+        assert_eq!(
+            closure.status,
+            ExactVolumetricBoundaryClosureStatus::NonCoplanarBoundaryClosureRequired,
+            "{closure:?}"
+        );
+        assert_eq!(closure.boundary_loops, 1, "{closure:?}");
+        assert_eq!(closure.noncoplanar_boundary_loops, 1, "{closure:?}");
+        assert!(closure.boundary_edges > 0, "{closure:?}");
+        assert!(closure.output_triangles > 0, "{closure:?}");
+        closure.validate().unwrap();
+        closure.validate_against_sources(&left, &right).unwrap();
 
         let boundary_result = boolean_exact(
             &left,

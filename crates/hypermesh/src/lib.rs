@@ -86,7 +86,8 @@ pub use boolean::{
     ExactBooleanOperation, ExactBooleanPolicy, ExactBoundaryBooleanPolicy, boolean_exact,
     boolean_exact_with_boundary_policy, boolean_selected_regions, certify_boundary_touching_report,
     certify_open_surface_disjoint_report, certify_planar_arrangement_report,
-    certify_refinement_report, certify_same_surface_report, certify_winding_readiness_report,
+    certify_refinement_report, certify_same_surface_report,
+    certify_volumetric_boundary_closure_report, certify_winding_readiness_report,
     exact_arrangement_boolean_attempt_report, preflight_boolean_exact,
     preflight_boolean_exact_with_validation,
 };
@@ -143,8 +144,8 @@ pub use reports::{
     ExactBoundaryTouchingReport, ExactBoundaryTouchingStatus, ExactOpenSurfaceDisjointReport,
     ExactOpenSurfaceDisjointStatus, ExactPlanarArrangementReport, ExactPlanarArrangementStatus,
     ExactRefinementReport, ExactRefinementStatus, ExactReportFreshness, ExactReportValidationError,
-    ExactSameSurfaceReport, ExactSameSurfaceStatus, ExactWindingReadinessReport,
-    ExactWindingReadinessStatus,
+    ExactSameSurfaceReport, ExactSameSurfaceStatus, ExactVolumetricBoundaryClosureReport,
+    ExactVolumetricBoundaryClosureStatus, ExactWindingReadinessReport, ExactWindingReadinessStatus,
 };
 pub use scalar::LossyF64Import;
 pub use simplify::{ExactSimplifiedCellComplex, ExactSimplifiedFaceCell};
