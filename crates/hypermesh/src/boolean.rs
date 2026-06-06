@@ -392,6 +392,8 @@ pub fn preflight_boolean_exact(
             | ExactBooleanSupport::CertifiedIdentical
             | ExactBooleanSupport::CertifiedSameSurface
             | ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion
+            | ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
+            | ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference
             | ExactBooleanSupport::CertifiedOpenSurfaceDisjoint
             | ExactBooleanSupport::CertifiedClosedWindingSeparated
             | ExactBooleanSupport::CertifiedClosedWindingContainment
@@ -5349,23 +5351,18 @@ fn materialize_volumetric_winding_region_plan(
     {
         return Ok(None);
     }
-    if assembly.orient_paired_edge_uses().is_err() {
-        return Ok(None);
-    }
     if assembly.remove_duplicate_triangle_vertex_sets().is_err() {
         return Ok(None);
     }
-    if assembly.orient_paired_edge_uses().is_err() {
+    if assembly.split_disconnected_vertex_fans().is_err() {
         return Ok(None);
     }
-    if operation == ExactBooleanOperation::Difference
-        && assembly.split_disconnected_vertex_fans().is_err()
-    {
+    if assembly.orient_paired_edge_uses().is_err() {
         return Ok(None);
     }
     let mesh = match assembly.checked_to_exact_mesh_with_sources(left, right, validation) {
         Ok(mesh) => mesh,
-        Err(_error) => return Ok(None),
+        Err(_) => return Ok(None),
     };
     Ok(Some(MaterializedVolumetricWindingRegionPlan {
         region_classifications,
@@ -6942,6 +6939,7 @@ mod tests {
             ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized,
             ExactWindingReadinessStatus::OpenSurfaceArrangementAlreadyMaterialized,
             ExactWindingReadinessStatus::SurfaceEqualityAlreadyMaterialized,
+            ExactWindingReadinessStatus::ClosedBoundaryTouchingAlreadyMaterialized,
             ExactWindingReadinessStatus::EmptyOperandAlreadyMaterialized,
             ExactWindingReadinessStatus::BoundsDisjointAlreadyMaterialized,
             ExactWindingReadinessStatus::OpenSurfaceDisjointAlreadyMaterialized,
@@ -6990,6 +6988,11 @@ mod tests {
         assert!(
             !winding_readiness_status_materializes_arrangement_cell_complex(
                 &ExactWindingReadinessStatus::SurfaceEqualityAlreadyMaterialized,
+            )
+        );
+        assert!(
+            !winding_readiness_status_materializes_arrangement_cell_complex(
+                &ExactWindingReadinessStatus::ClosedBoundaryTouchingAlreadyMaterialized,
             )
         );
         for status in [
@@ -7376,6 +7379,8 @@ mod tests {
         let right = tetrahedron_i64([1, 1, 1], [5, 1, 1], [1, 5, 1], [1, 1, 5]);
         assert!(left.facts().mesh.closed_manifold, "{:?}", left.facts().mesh);
         assert!(right.facts().mesh.closed_manifold);
+        let graph = build_intersection_graph(&left, &right).unwrap();
+        validate_graph_source_handoff(&graph, &left, &right).unwrap();
 
         let preflight =
             preflight_boolean_exact(&left, &right, ExactBooleanOperation::Union).unwrap();
@@ -7406,6 +7411,42 @@ mod tests {
             ValidationPolicy::CLOSED,
         );
         assert!(result.is_err(), "{result:?}");
+
+        let materialized = materialize_volumetric_winding_region_plan_from_graph(
+            &graph,
+            &left,
+            &right,
+            ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap()
+        .expect("volumetric split-cell materializer should retain boundary-output assembly");
+        materialized.assembly.validate().unwrap();
+        materialized
+            .assembly
+            .validate_source_face_incidence(&left, &right)
+            .unwrap();
+        materialized.mesh.validate_retained_state().unwrap();
+        assert!(!materialized.mesh.facts().mesh.closed_manifold);
+        assert!(!materialized.assembly.triangles.is_empty());
+
+        let boundary_result = boolean_exact(
+            &left,
+            &right,
+            ExactBooleanOperation::Union,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .expect("public exact boolean should support boundary output");
+        assert_eq!(
+            boundary_result.kind,
+            ExactBooleanResultKind::CertifiedShortcut {
+                shortcut: ExactBooleanShortcutKind::ArrangementCellComplex
+            }
+        );
+        boundary_result.validate().unwrap();
+        boundary_result
+            .validate_against_sources(&left, &right)
+            .unwrap();
     }
 
     fn arrangement_attempt_certified_for_preflight_with_validation(
