@@ -7552,6 +7552,23 @@ mod tests {
             ExactBooleanOperation::Union,
             ExactBooleanOperation::Difference,
         ] {
+            let preflight = preflight_boolean_exact(&left, &right, operation).unwrap();
+            assert_eq!(
+                preflight.support,
+                ExactBooleanSupport::CertifiedArrangementCellComplex,
+                "{operation:?}: {preflight:?}"
+            );
+            assert!(preflight.blocker.is_none(), "{operation:?}: {preflight:?}");
+
+            let result = boolean_exact(&left, &right, operation, ValidationPolicy::CLOSED).unwrap();
+            result.validate().unwrap();
+            result.validate_against_sources(&left, &right).unwrap();
+            assert!(
+                result.mesh.facts().mesh.closed_manifold,
+                "{operation:?}: {:?}",
+                result.mesh.facts().mesh
+            );
+
             let attempt = exact_arrangement_boolean_attempt_report(
                 &left,
                 &right,

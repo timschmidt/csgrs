@@ -11,7 +11,10 @@
 //! (1974), using `hyperlimit::orient3d_report` and exact determinant-ratio
 //! interpolation.
 
-use std::{cmp::Ordering, collections::BTreeSet};
+use std::{
+    cmp::Ordering,
+    collections::{BTreeMap, BTreeSet},
+};
 
 use hyperlimit::{
     PlaneSide, Point2, Point3, compare_reals, interpolate_point3 as interpolate3, orient3d_report,
@@ -245,13 +248,17 @@ pub fn union_closed_convex_solids(left: &ExactMesh, right: &ExactMesh) -> Option
     }
     refine_triangles_at_existing_edge_vertices(&vertices, &mut triangles)?;
     remove_duplicate_triangle_vertex_sets(&mut triangles);
+    orient_paired_triangle_edges(&mut triangles)?;
     let mesh = ExactMesh::new_with_policy(
-        vertices,
-        triangles,
+        vertices.clone(),
+        triangles.clone(),
         SourceProvenance::exact("exact closed-convex solid union"),
         ValidationPolicy::CLOSED,
     )
-    .ok()?;
+    .ok()
+    .or_else(|| close_planar_boundary_loops(vertices.clone(), triangles.clone()))
+    .or_else(|| union_from_difference_and_operand(left, right))
+    .or_else(|| union_from_difference_and_operand(right, left))?;
     if !mesh_has_nonzero_signed_volume(&mesh)? {
         return None;
     }
@@ -288,6 +295,7 @@ pub fn subtract_closed_convex_solids(
     }
     refine_triangles_at_existing_edge_vertices(&vertices, &mut triangles)?;
     remove_duplicate_triangle_vertex_sets(&mut triangles);
+    orient_paired_triangle_edges(&mut triangles)?;
     let mesh = ExactMesh::new_with_policy(
         vertices,
         triangles,
@@ -305,6 +313,124 @@ pub fn subtract_closed_convex_solids(
     };
     difference.validate().ok()?;
     Some(difference)
+}
+
+fn union_from_difference_and_operand(left: &ExactMesh, right: &ExactMesh) -> Option<ExactMesh> {
+    let difference = subtract_closed_convex_solids(left, right)?;
+    let mut vertices = difference.mesh.vertices().to_vec();
+    let mut triangles = difference.mesh.triangles().to_vec();
+    let right_vertex_map = right
+        .vertices()
+        .iter()
+        .map(|point| intern_point(&mut vertices, point))
+        .collect::<Vec<_>>();
+    triangles.extend(right.triangles().iter().map(|triangle| {
+        Triangle([
+            right_vertex_map[triangle.0[0]],
+            right_vertex_map[triangle.0[1]],
+            right_vertex_map[triangle.0[2]],
+        ])
+    }));
+    refine_triangles_at_existing_edge_vertices(&vertices, &mut triangles)?;
+    remove_duplicate_triangle_vertex_sets(&mut triangles);
+    orient_paired_triangle_edges(&mut triangles)?;
+    ExactMesh::new_with_policy(
+        vertices,
+        triangles,
+        SourceProvenance::exact("exact closed-convex solid union from exact difference"),
+        ValidationPolicy::CLOSED,
+    )
+    .ok()
+}
+
+fn close_planar_boundary_loops(
+    vertices: Vec<Point3>,
+    mut triangles: Vec<Triangle>,
+) -> Option<ExactMesh> {
+    let loops = directed_boundary_loops(&triangles)?;
+    if loops.is_empty() {
+        return None;
+    }
+    for loop_ in loops {
+        if loop_.len() < 3 || !loop_is_planar(&vertices, &loop_)? {
+            return None;
+        }
+        for index in 1..loop_.len() - 1 {
+            triangles.push(Triangle([loop_[0], loop_[index], loop_[index + 1]]));
+        }
+    }
+    remove_duplicate_triangle_vertex_sets(&mut triangles);
+    orient_paired_triangle_edges(&mut triangles)?;
+    ExactMesh::new_with_policy(
+        vertices,
+        triangles,
+        SourceProvenance::exact("exact closed-convex solid union with exact planar caps"),
+        ValidationPolicy::CLOSED,
+    )
+    .ok()
+}
+
+fn directed_boundary_loops(triangles: &[Triangle]) -> Option<Vec<Vec<usize>>> {
+    let mut edge_counts = BTreeMap::<[usize; 2], usize>::new();
+    for triangle in triangles {
+        for edge in triangle_edges(triangle.0) {
+            let mut key = edge;
+            key.sort_unstable();
+            *edge_counts.entry(key).or_insert(0) += 1;
+        }
+    }
+    let mut next = BTreeMap::<usize, usize>::new();
+    for triangle in triangles {
+        for edge in triangle_edges(triangle.0) {
+            let mut key = edge;
+            key.sort_unstable();
+            if edge_counts.get(&key).copied() == Some(1) && next.insert(edge[0], edge[1]).is_some()
+            {
+                return None;
+            }
+        }
+    }
+    let mut loops = Vec::new();
+    while let Some((&start, _)) = next.iter().next() {
+        let mut loop_ = vec![start];
+        let mut current = start;
+        loop {
+            let end = next.remove(&current)?;
+            if end == start {
+                break;
+            }
+            if loop_.contains(&end) {
+                return None;
+            }
+            loop_.push(end);
+            current = end;
+        }
+        loops.push(loop_);
+    }
+    Some(loops)
+}
+
+fn triangle_edges(triangle: [usize; 3]) -> [[usize; 2]; 3] {
+    [
+        [triangle[0], triangle[1]],
+        [triangle[1], triangle[2]],
+        [triangle[2], triangle[0]],
+    ]
+}
+
+fn loop_is_planar(vertices: &[Point3], loop_: &[usize]) -> Option<bool> {
+    let a = vertices.get(loop_[0])?;
+    let b = vertices.get(loop_[1])?;
+    let c = vertices.get(loop_[2])?;
+    if points_are_collinear(a, b, c) {
+        return Some(false);
+    }
+    for &vertex in loop_ {
+        if point_side(a, b, c, vertices.get(vertex)?)? != PlaneSide::On {
+            return Some(false);
+        }
+    }
+    Some(true)
 }
 
 /// Certify and materialize the intersection of two closed convex solids.
@@ -1276,6 +1402,84 @@ fn remove_duplicate_triangle_vertex_sets(triangles: &mut Vec<Triangle>) {
     });
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+struct TriangleOrientationConstraint {
+    triangle: usize,
+    flip_relative_to_current: bool,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+struct TriangleEdgeUse {
+    triangle: usize,
+    forward_with_key: bool,
+}
+
+fn orient_paired_triangle_edges(triangles: &mut [Triangle]) -> Option<usize> {
+    let mut edge_uses = BTreeMap::<[usize; 2], Vec<TriangleEdgeUse>>::new();
+    for (triangle_index, triangle) in triangles.iter().enumerate() {
+        for edge in [
+            [triangle.0[0], triangle.0[1]],
+            [triangle.0[1], triangle.0[2]],
+            [triangle.0[2], triangle.0[0]],
+        ] {
+            let mut key = edge;
+            key.sort_unstable();
+            edge_uses.entry(key).or_default().push(TriangleEdgeUse {
+                triangle: triangle_index,
+                forward_with_key: edge == key,
+            });
+        }
+    }
+
+    let mut adjacency = vec![Vec::<TriangleOrientationConstraint>::new(); triangles.len()];
+    for uses in edge_uses.values() {
+        let [left, right] = uses.as_slice() else {
+            continue;
+        };
+        let same_direction = left.forward_with_key == right.forward_with_key;
+        adjacency[left.triangle].push(TriangleOrientationConstraint {
+            triangle: right.triangle,
+            flip_relative_to_current: same_direction,
+        });
+        adjacency[right.triangle].push(TriangleOrientationConstraint {
+            triangle: left.triangle,
+            flip_relative_to_current: same_direction,
+        });
+    }
+
+    let mut flips = vec![None; triangles.len()];
+    for start in 0..triangles.len() {
+        if flips[start].is_some() {
+            continue;
+        }
+        flips[start] = Some(false);
+        let mut stack = vec![start];
+        while let Some(triangle) = stack.pop() {
+            let current_flip = flips[triangle]?;
+            for constraint in &adjacency[triangle] {
+                let required = current_flip ^ constraint.flip_relative_to_current;
+                match flips[constraint.triangle] {
+                    Some(existing) if existing != required => return None,
+                    Some(_) => {}
+                    None => {
+                        flips[constraint.triangle] = Some(required);
+                        stack.push(constraint.triangle);
+                    }
+                }
+            }
+        }
+    }
+
+    let mut flipped = 0;
+    for (triangle, flip) in triangles.iter_mut().zip(flips) {
+        if flip == Some(true) {
+            triangle.0.swap(1, 2);
+            flipped += 1;
+        }
+    }
+    Some(flipped)
+}
+
 fn intern_point(vertices: &mut Vec<Point3>, point: &Point3) -> usize {
     if let Some(index) = vertices
         .iter()
@@ -1365,4 +1569,39 @@ fn report_error(error: ConvexSolidReportError) -> MeshError {
         DiagnosticKind::UnsupportedExactOperation,
         format!("invalid convex-solid facts retained by intersection: {error:?}"),
     ))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn tetrahedron_i64(a: [i64; 3], b: [i64; 3], c: [i64; 3], d: [i64; 3]) -> ExactMesh {
+        ExactMesh::from_i64_triangles(
+            &[
+                a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2], d[0], d[1], d[2],
+            ],
+            &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
+        )
+        .unwrap()
+    }
+
+    #[test]
+    fn straddling_coplanar_convex_union_and_difference_materialize_closed() {
+        let left = tetrahedron_i64([0, 0, 0], [6, 0, 0], [0, 6, 0], [0, 0, 6]);
+        let right = tetrahedron_i64([2, 2, 2], [8, -1, -1], [-1, 8, -1], [3, 2, 0]);
+
+        let union = union_closed_convex_solids(&left, &right)
+            .expect("certified convex union should close exact planar boundary loop");
+        union.validate().unwrap();
+        union.validate_against_sources(&left, &right).unwrap();
+        assert!(union.mesh.facts().mesh.closed_manifold);
+        assert_eq!(union.mesh.facts().mesh.boundary_edges, 0);
+
+        let difference = subtract_closed_convex_solids(&left, &right)
+            .expect("certified convex difference should orient paired cut faces");
+        difference.validate().unwrap();
+        difference.validate_against_sources(&left, &right).unwrap();
+        assert!(difference.mesh.facts().mesh.closed_manifold);
+        assert_eq!(difference.mesh.facts().mesh.boundary_edges, 0);
+    }
 }
