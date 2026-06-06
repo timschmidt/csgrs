@@ -776,6 +776,11 @@ fn preflight_tail_shortcut_support(
     right: &ExactMesh,
     operation: ExactBooleanOperation,
 ) -> Option<ExactBooleanSupport> {
+    if let Some(solid_operation) = axis_aligned_orthogonal_solid_operation(operation)
+        && has_axis_aligned_orthogonal_solid_cells(left, right, solid_operation)
+    {
+        return Some(ExactBooleanSupport::CertifiedArrangementCellComplex);
+    }
     match operation {
         ExactBooleanOperation::Union if has_affine_box_union(left, right) => {
             Some(ExactBooleanSupport::CertifiedArrangementCellComplex)
@@ -1320,6 +1325,11 @@ pub fn boolean_exact_with_boundary_policy(
         && meshes_are_certified_identical(left, right)
     {
         return boolean_identical_meshes(left, operation, validation);
+    }
+    if let Some(result) = boolean_arrangement_orthogonal_solid_cell_recovery(
+        left, right, operation, validation, false,
+    )? {
+        return Ok(result);
     }
     if let Some(result) =
         boolean_arrangement_affine_orthogonal_solid_recovery(left, right, operation, validation)?
@@ -5982,6 +5992,63 @@ mod tests {
     }
 
     #[test]
+    fn axis_aligned_orthogonal_cell_booleans_materialize_from_shortcut_support() {
+        let left = axis_aligned_orthogonal_l_solid_i64();
+        let right = axis_aligned_box_i64([1, 0, 0], [3, 1, 1]);
+
+        assert!(!is_axis_aligned_box(&left));
+
+        for operation in [
+            ExactBooleanOperation::Union,
+            ExactBooleanOperation::Intersection,
+            ExactBooleanOperation::Difference,
+        ] {
+            assert_eq!(
+                preflight_tail_shortcut_support(&left, &right, operation),
+                Some(ExactBooleanSupport::CertifiedArrangementCellComplex),
+                "{operation:?}"
+            );
+
+            let preflight = preflight_boolean_exact(&left, &right, operation).unwrap();
+            assert_eq!(
+                preflight.support,
+                ExactBooleanSupport::CertifiedArrangementCellComplex,
+                "{operation:?}: {preflight:?}"
+            );
+            assert!(preflight.blocker.is_none(), "{operation:?}: {preflight:?}");
+
+            let direct = boolean_arrangement_orthogonal_solid_cell_recovery(
+                &left,
+                &right,
+                operation,
+                ValidationPolicy::CLOSED,
+                false,
+            )
+            .unwrap()
+            .expect("orthogonal cell shortcut should materialize directly");
+            direct.validate().unwrap();
+            direct.validate_against_sources(&left, &right).unwrap();
+
+            let result = boolean_exact(&left, &right, operation, ValidationPolicy::CLOSED)
+                .expect("certified orthogonal cell support should materialize");
+            assert_eq!(
+                result.kind,
+                ExactBooleanResultKind::CertifiedShortcut {
+                    shortcut: ExactBooleanShortcutKind::ArrangementCellComplex
+                },
+                "{operation:?}: {result:?}"
+            );
+            result.validate().unwrap();
+            result.validate_against_sources(&left, &right).unwrap();
+            assert!(
+                result.mesh.facts().mesh.closed_manifold || result.mesh.triangles().is_empty(),
+                "{operation:?}: {:?}",
+                result.mesh.facts().mesh
+            );
+        }
+    }
+
+    #[test]
     fn affine_box_booleans_materialize_from_certified_preflight_support() {
         let left = affine_box_i64([0, 0, 0], [2, 2, 2]);
         let right = affine_box_i64([1, 0, 0], [3, 2, 2]);
@@ -6769,6 +6836,23 @@ mod tests {
                 0, 2, 1, 0, 3, 2, 4, 5, 6, 4, 6, 7, 0, 1, 5, 0, 5, 4, 1, 2, 6, 1, 6, 5, 2, 3, 7, 2,
                 7, 6, 3, 0, 4, 3, 4, 7,
             ],
+        )
+        .unwrap()
+    }
+
+    fn axis_aligned_orthogonal_l_solid_i64() -> ExactMesh {
+        let horizontal = axis_aligned_box_i64([0, 0, 0], [2, 1, 1]);
+        let vertical = axis_aligned_box_i64([0, 1, 0], [1, 2, 1]);
+        let plan = axis_aligned_orthogonal_solid_cell_plan(
+            &horizontal,
+            &vertical,
+            AxisAlignedOrthogonalSolidOperation::Union,
+        )
+        .expect("L solid should have an orthogonal cell plan");
+        materialize_axis_aligned_orthogonal_solid_cell_plan(
+            plan,
+            "test axis-aligned orthogonal L solid",
+            ValidationPolicy::CLOSED,
         )
         .unwrap()
     }
