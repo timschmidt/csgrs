@@ -591,6 +591,12 @@ impl BezierRetainedBoundaryLoop2 {
         fragments: Vec<BezierSplitFragment2>,
         arrangement_sources: Vec<BezierRetainedFragmentSource2>,
     ) -> CurveResult<Self> {
+        if fragments.is_empty() {
+            return Err(CurveError::Topology(
+                "retained boundary loop source provenance must reference nonempty fragments"
+                    .to_owned(),
+            ));
+        }
         if fragments.len() != arrangement_sources.len() {
             return Err(CurveError::Topology(
                 "retained boundary source count does not match fragment count".to_owned(),

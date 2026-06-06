@@ -373,6 +373,9 @@ fn retained_line_image_role_report_assigns_nested_material_and_hole() {
 fn retained_role_report_constructors_reject_mismatched_evidence() {
     let roles = vec![BezierRetainedRegionLoopRole::Material];
 
+    assert_topology_error(
+        BezierRetainedBoundaryLoop2::try_new_with_arrangement_sources(Vec::new(), Vec::new()),
+    );
     assert_topology_error(BezierRetainedLineRegionRoleReport2::new(
         roles.clone(),
         Vec::new(),
