@@ -1384,6 +1384,11 @@ pub fn boolean_exact_with_boundary_policy(
     if meshes_are_certified_bounds_disjoint(left, right) {
         return boolean_disjoint_meshes(left, right, operation, validation);
     }
+    if let Some(result) =
+        boolean_arrangement_cell_complex_meshes(left, right, operation, validation, true)?
+    {
+        return Ok(result);
+    }
     if meshes_are_certified_identical(left, right) {
         return boolean_identical_meshes(left, operation, validation);
     }
@@ -1397,11 +1402,6 @@ pub fn boolean_exact_with_boundary_policy(
         validation,
         boundary_policy,
     )? {
-        return Ok(result);
-    }
-    if let Some(result) =
-        boolean_arrangement_cell_complex_meshes(left, right, operation, validation, true)?
-    {
         return Ok(result);
     }
     if let Some(result) =
@@ -1734,6 +1734,10 @@ fn boolean_arrangement_regularized_boundary_contact_from_graph(
     ) {
         return Ok(None);
     }
+    if meshes_are_certified_identical(left, right) || meshes_are_certified_same_surface(left, right)
+    {
+        return Ok(None);
+    }
     if let Some(report) =
         certified_closed_boundary_touching_regularized_report_from_graph(graph, left, right)?
     {
@@ -1774,6 +1778,10 @@ fn certified_arrangement_regularized_boundary_contact_from_graph(
         operation,
         ExactBooleanOperation::Intersection | ExactBooleanOperation::Difference
     ) {
+        return Ok(false);
+    }
+    if meshes_are_certified_identical(left, right) || meshes_are_certified_same_surface(left, right)
+    {
         return Ok(false);
     }
     if matches!(
@@ -3984,8 +3992,8 @@ fn is_closed_solid_arrangement_preempt_candidate(
         return false;
     }
     if meshes_are_certified_bounds_disjoint(left, right)
-        || meshes_are_certified_identical(left, right)
-        || meshes_are_certified_same_surface(left, right)
+        || (!meshes_are_certified_identical(left, right)
+            && meshes_are_certified_same_surface(left, right))
         || both_axis_aligned_boxes(left, right)
     {
         return false;
@@ -7345,6 +7353,49 @@ mod tests {
         assert!(preflight.blocker.is_none());
         assert_eq!(preflight.retained_face_pairs, graph.face_pairs.len());
         assert_eq!(preflight.retained_events, graph.event_count());
+    }
+
+    #[test]
+    fn closed_identical_solids_route_through_arrangement_pipeline() {
+        let left = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
+        let right = left.clone();
+
+        let preflight =
+            preflight_boolean_exact(&left, &right, ExactBooleanOperation::Union).unwrap();
+        assert_eq!(
+            preflight.support,
+            ExactBooleanSupport::CertifiedArrangementCellComplex
+        );
+
+        let union = boolean_exact(
+            &left,
+            &right,
+            ExactBooleanOperation::Union,
+            ValidationPolicy::CLOSED,
+        )
+        .unwrap();
+        assert_eq!(
+            union.kind,
+            ExactBooleanResultKind::CertifiedShortcut {
+                shortcut: ExactBooleanShortcutKind::ArrangementCellComplex
+            }
+        );
+        assert!(exact_meshes_have_same_shape(&union.mesh, &left));
+
+        let difference = boolean_exact(
+            &left,
+            &right,
+            ExactBooleanOperation::Difference,
+            ValidationPolicy::CLOSED,
+        )
+        .unwrap();
+        assert_eq!(
+            difference.kind,
+            ExactBooleanResultKind::CertifiedShortcut {
+                shortcut: ExactBooleanShortcutKind::ArrangementCellComplex
+            }
+        );
+        assert!(difference.mesh.triangles().is_empty());
     }
 
     #[test]
