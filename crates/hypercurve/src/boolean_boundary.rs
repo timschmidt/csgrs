@@ -4,7 +4,9 @@
 //! fragments are already classified, oriented, and ready to be connected into
 //! chains. It deliberately stops before material/hole role assignment.
 
-use crate::boolean::BooleanFragmentClassification;
+use crate::boolean::{
+    BooleanFragmentClassification, validate_boolean_fragment_classification_boundary_action,
+};
 use crate::classify::is_zero;
 use crate::{
     Classification, Contour2, CurveError, CurvePolicy, CurveResult, FillRule, RegionContourKey,
@@ -501,6 +503,10 @@ fn validate_boolean_boundary_fragment_set(
     directed_fragments: &[DirectedBooleanFragment],
     unresolved_boundaries: &[BooleanFragmentClassification],
 ) -> CurveResult<()> {
+    for unresolved in unresolved_boundaries {
+        validate_boolean_fragment_classification_boundary_action(unresolved)?;
+    }
+
     let mut fragment_owners = directed_fragments
         .iter()
         .map(directed_boolean_fragment_owner)

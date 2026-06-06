@@ -236,6 +236,10 @@ fn fragment_for_classification<'a>(
 fn validate_boolean_fragment_classifications(
     classifications: &[BooleanFragmentClassification],
 ) -> CurveResult<()> {
+    for classification in classifications {
+        validate_boolean_fragment_classification_boundary_action(classification)?;
+    }
+
     let mut owners = classifications
         .iter()
         .map(|classification| (classification.key, classification.fragment_index))
@@ -247,6 +251,21 @@ fn validate_boolean_fragment_classifications(
         ));
     }
     Ok(())
+}
+
+pub(crate) fn validate_boolean_fragment_classification_boundary_action(
+    classification: &BooleanFragmentClassification,
+) -> CurveResult<()> {
+    match (classification.opposite_location, classification.action) {
+        (RegionPointLocation::Boundary, BooleanFragmentAction::BoundaryNeedsResolution) => Ok(()),
+        (RegionPointLocation::Boundary, _) => Err(CurveError::Topology(
+            "boolean boundary classification must remain unresolved".into(),
+        )),
+        (_, BooleanFragmentAction::BoundaryNeedsResolution) => Err(CurveError::Topology(
+            "boolean unresolved classification must carry boundary evidence".into(),
+        )),
+        _ => Ok(()),
+    }
 }
 
 impl RegionFragmentSet {

@@ -65,12 +65,28 @@ fn fragment_classification(
     fragment_index: usize,
     action: BooleanFragmentAction,
 ) -> BooleanFragmentClassification {
+    fragment_classification_with_location(fragment_index, RegionPointLocation::Outside, action)
+}
+
+fn fragment_classification_with_location(
+    fragment_index: usize,
+    opposite_location: RegionPointLocation,
+    action: BooleanFragmentAction,
+) -> BooleanFragmentClassification {
     BooleanFragmentClassification {
         key: RegionContourKey::new(RegionSide::First, RegionContourRole::Material, 0),
         fragment_index,
-        opposite_location: RegionPointLocation::Outside,
+        opposite_location,
         action,
     }
+}
+
+fn unresolved_boundary_classification(fragment_index: usize) -> BooleanFragmentClassification {
+    fragment_classification_with_location(
+        fragment_index,
+        RegionPointLocation::Boundary,
+        BooleanFragmentAction::BoundaryNeedsResolution,
+    )
 }
 
 fn overlapping_fragments() -> (Region2, Region2, hypercurve::RegionFragmentSet) {
@@ -353,7 +369,17 @@ fn boolean_fragment_selection_constructor_validates_source_ownership() {
 
     assert_topology_error(BooleanFragmentSelection::new(vec![
         fragment_classification(0, BooleanFragmentAction::KeepSourceDirection),
-        fragment_classification(0, BooleanFragmentAction::BoundaryNeedsResolution),
+        unresolved_boundary_classification(0),
+    ]));
+    assert_topology_error(BooleanFragmentSelection::new(vec![
+        fragment_classification_with_location(
+            2,
+            RegionPointLocation::Boundary,
+            BooleanFragmentAction::KeepSourceDirection,
+        ),
+    ]));
+    assert_topology_error(BooleanFragmentSelection::new(vec![
+        fragment_classification(3, BooleanFragmentAction::BoundaryNeedsResolution),
     ]));
 }
 
@@ -362,10 +388,7 @@ fn boolean_boundary_fragment_set_constructor_validates_source_ownership() {
     BooleanBoundaryFragmentSet::new(Vec::new(), Vec::new()).unwrap();
     BooleanBoundaryFragmentSet::new(
         vec![directed_fragment(0, 0, 0, 1, 0)],
-        vec![fragment_classification(
-            1,
-            BooleanFragmentAction::BoundaryNeedsResolution,
-        )],
+        vec![unresolved_boundary_classification(1)],
     )
     .unwrap();
 
@@ -378,9 +401,21 @@ fn boolean_boundary_fragment_set_constructor_validates_source_ownership() {
     ));
     assert_topology_error(BooleanBoundaryFragmentSet::new(
         vec![directed_fragment(0, 0, 0, 1, 0)],
+        vec![unresolved_boundary_classification(0)],
+    ));
+    assert_topology_error(BooleanBoundaryFragmentSet::new(
+        Vec::new(),
         vec![fragment_classification(
-            0,
+            2,
             BooleanFragmentAction::BoundaryNeedsResolution,
+        )],
+    ));
+    assert_topology_error(BooleanBoundaryFragmentSet::new(
+        Vec::new(),
+        vec![fragment_classification_with_location(
+            3,
+            RegionPointLocation::Boundary,
+            BooleanFragmentAction::KeepSourceDirection,
         )],
     ));
 }
