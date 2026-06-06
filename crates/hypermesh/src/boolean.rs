@@ -916,10 +916,6 @@ fn certified_arrangement_cell_complex_preflight_if_materialized(
     if arrangement_cell_complex_materializes_for_preflight(left, right, operation, false)?
         || arrangement_cell_complex_materializes_for_preflight(left, right, operation, true)?
         || coplanar_surface_output_materializes_for_preflight(left, right, operation)?
-        || arrangement_unregularized_sheet_complex_materialized_for_preflight(
-            left, right, operation,
-        )?
-        .is_some()
     {
         Ok(Some(
             certified_arrangement_cell_complex_preflight_from_graph(operation, graph, left, right),
@@ -2227,45 +2223,6 @@ fn arrangement_has_regularized_closed_sheet_recovery_surface(
     left.facts().mesh.closed_manifold
         && right.facts().mesh.closed_manifold
         && arrangement_has_mixed_source_sheet_complex(arrangement)
-}
-
-fn arrangement_should_try_regularized_sheet_recovery(
-    arrangement: &ExactArrangement,
-    left: &ExactMesh,
-    right: &ExactMesh,
-) -> bool {
-    arrangement_blockers_are_unregularized_sheet_complex(&arrangement.blockers)
-        || arrangement_has_regularized_closed_sheet_recovery_surface(arrangement, left, right)
-}
-
-fn arrangement_unregularized_sheet_complex_materialized_for_preflight(
-    left: &ExactMesh,
-    right: &ExactMesh,
-    operation: ExactBooleanOperation,
-) -> Result<Option<ExactBooleanResult>, MeshError> {
-    let arrangement = ExactArrangement::from_meshes_with_policy(
-        left,
-        right,
-        ExactRegularizationPolicy::REGULARIZED_SOLID,
-    )?;
-    if !arrangement_should_try_regularized_sheet_recovery(&arrangement, left, right) {
-        return Ok(None);
-    }
-    if let Some(result) = boolean_arrangement_regularized_sheet_or_boundary_from_graph(
-        &arrangement.graph,
-        left,
-        right,
-        operation,
-        ValidationPolicy::CLOSED,
-    )? {
-        return Ok(Some(result));
-    }
-    boolean_arrangement_convex_regularized_sheet_recovery(
-        left,
-        right,
-        operation,
-        ValidationPolicy::CLOSED,
-    )
 }
 
 fn boolean_arrangement_regularized_sheet_complex_from_graph(
