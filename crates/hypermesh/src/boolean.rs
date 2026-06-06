@@ -494,6 +494,14 @@ pub fn preflight_boolean_exact(
         return Ok(certified_shortcut_preflight(operation, containment_support));
     }
     if support == ExactBooleanSupport::RequiresCertifiedWinding
+        && let Some(boundary_support) =
+            certified_closed_zero_area_boundary_contact_support_from_graph(
+                &graph, left, right, operation,
+            )?
+    {
+        return Ok(certified_shortcut_preflight(operation, boundary_support));
+    }
+    if support == ExactBooleanSupport::RequiresCertifiedWinding
         && let Some(preflight) = cached_certified_arrangement_cell_complex_preflight(
             &mut certified_arrangement_preflight,
             operation,
@@ -811,6 +819,7 @@ const fn winding_readiness_status_already_materialized(
             | ExactWindingReadinessStatus::ConvexBooleanAlreadyMaterialized
             | ExactWindingReadinessStatus::OpenSurfaceArrangementAlreadyMaterialized
             | ExactWindingReadinessStatus::SurfaceEqualityAlreadyMaterialized
+            | ExactWindingReadinessStatus::ClosedBoundaryTouchingAlreadyMaterialized
             | ExactWindingReadinessStatus::EmptyOperandAlreadyMaterialized
             | ExactWindingReadinessStatus::BoundsDisjointAlreadyMaterialized
             | ExactWindingReadinessStatus::OpenSurfaceDisjointAlreadyMaterialized
@@ -1612,6 +1621,11 @@ pub fn boolean_exact_with_boundary_policy(
     }
     if let Some(result) =
         boolean_closed_winding_containment_meshes(left, right, operation, validation)?
+    {
+        return Ok(result);
+    }
+    if let Some(result) =
+        boolean_closed_boundary_touching_regularized_meshes(left, right, operation, validation)?
     {
         return Ok(result);
     }
@@ -4418,6 +4432,92 @@ fn certified_closed_boundary_only_contact_support_from_graph(
     }))
 }
 
+fn certified_closed_zero_area_boundary_contact_support_from_graph(
+    graph: &super::graph::ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+) -> Result<Option<ExactBooleanSupport>, MeshError> {
+    if matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+        || !certified_closed_boundary_only_contact_from_graph(graph, left, right)?
+    {
+        return Ok(None);
+    }
+    let evidence = CoplanarVolumetricCellEvidenceReport::from_graph(graph, left, right);
+    evidence.validate().map_err(|error| {
+        MeshError::one(MeshDiagnostic::new(
+            Severity::Error,
+            DiagnosticKind::UnsupportedExactOperation,
+            format!("exact zero-area boundary contact evidence validation failed: {error:?}"),
+        ))
+    })?;
+    if evidence.positive_area_coplanar_overlapping_pairs != 0 {
+        return Ok(None);
+    }
+    Ok(Some(match operation {
+        ExactBooleanOperation::Union => ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion,
+        ExactBooleanOperation::Intersection => {
+            ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection
+        }
+        ExactBooleanOperation::Difference => {
+            ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference
+        }
+        ExactBooleanOperation::SelectedRegions(_) => unreachable!(),
+    }))
+}
+
+fn boolean_closed_boundary_touching_regularized_meshes(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    let graph = build_intersection_graph(left, right)?;
+    validate_graph_source_handoff(&graph, left, right)?;
+    let Some(support) = certified_closed_zero_area_boundary_contact_support_from_graph(
+        &graph, left, right, operation,
+    )?
+    else {
+        return Ok(None);
+    };
+    let shortcut = match support {
+        ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion => {
+            ExactBooleanShortcutKind::ClosedBoundaryTouchingUnion
+        }
+        ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection => {
+            ExactBooleanShortcutKind::ClosedBoundaryTouchingIntersection
+        }
+        ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference => {
+            ExactBooleanShortcutKind::ClosedBoundaryTouchingDifference
+        }
+        _ => return Ok(None),
+    };
+    let mesh = match operation {
+        ExactBooleanOperation::Union => concatenate_meshes_with_options(
+            left,
+            right,
+            false,
+            "exact closed-boundary-touching union preserving separate shells",
+            validation,
+        )?,
+        ExactBooleanOperation::Intersection => empty_mesh(
+            "empty exact closed-boundary-touching intersection",
+            validation,
+        )?,
+        ExactBooleanOperation::Difference => copy_mesh(
+            left,
+            "exact closed-boundary-touching difference keeps left",
+            validation,
+        )?,
+        ExactBooleanOperation::SelectedRegions(_) => unreachable!("handled by support check"),
+    };
+    let result = certified_shortcut_result(mesh, shortcut);
+    if result.validate().is_err() || result.validate_against_sources(left, right).is_err() {
+        return Ok(None);
+    }
+    Ok(Some(result))
+}
+
 fn validate_consumed_boundary_touching_report(
     report: &ExactBoundaryTouchingReport,
     label: &str,
@@ -4854,6 +4954,22 @@ fn winding_readiness_report_from_graph(
     let tail_shortcut_materializes = preflight_tail_shortcut_support(left, right, operation)
         == Some(ExactBooleanSupport::CertifiedArrangementCellComplex);
     let boundary_policy_required = graph_requires_boundary_policy(graph, left, right)?;
+    if let Some(_support) = certified_closed_zero_area_boundary_contact_support_from_graph(
+        graph, left, right, operation,
+    )? {
+        return Ok(winding_readiness_report(
+            operation,
+            ExactWindingReadinessStatus::ClosedBoundaryTouchingAlreadyMaterialized,
+            graph_had_unknowns,
+            graph.face_pairs.len(),
+            graph.event_count(),
+            0,
+            Vec::new(),
+            counts.into_blocker(ExactBooleanBlockerKind::NeedsBoundaryPolicy),
+            None,
+            None,
+        ));
+    }
     if tail_shortcut_materializes && boundary_policy_required {
         return Ok(winding_readiness_report(
             operation,
@@ -7664,6 +7780,89 @@ mod tests {
             ));
             readiness.validate().unwrap();
             readiness.validate_against_sources(&left, &right).unwrap();
+        }
+    }
+
+    #[test]
+    fn nonorthogonal_closed_boundary_touching_shortcuts_report_provenance() {
+        let left_a = tetrahedron_i64([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
+        let left_b = tetrahedron_i64([10, 0, 0], [12, 0, 0], [10, 2, 0], [10, 0, 2]);
+        let left = concatenate_meshes(&left_a, &left_b, ValidationPolicy::CLOSED)
+            .expect("disconnected nonconvex boundary fixture should validate");
+        let right = tetrahedron_i64([0, 0, 0], [-4, 0, 0], [0, -4, 0], [0, 0, -4]);
+        let graph = build_intersection_graph(&left, &right).unwrap();
+        validate_graph_source_handoff(&graph, &left, &right).unwrap();
+        assert!(!graph.has_unknowns());
+        assert!(!graph.face_pairs.is_empty());
+        assert!(
+            boundary_touching_report_from_graph(&graph, &left, &right)
+                .unwrap()
+                .is_certified()
+        );
+
+        for (operation, support, shortcut) in [
+            (
+                ExactBooleanOperation::Union,
+                ExactBooleanSupport::CertifiedClosedBoundaryTouchingUnion,
+                ExactBooleanShortcutKind::ClosedBoundaryTouchingUnion,
+            ),
+            (
+                ExactBooleanOperation::Intersection,
+                ExactBooleanSupport::CertifiedClosedBoundaryTouchingIntersection,
+                ExactBooleanShortcutKind::ClosedBoundaryTouchingIntersection,
+            ),
+            (
+                ExactBooleanOperation::Difference,
+                ExactBooleanSupport::CertifiedClosedBoundaryTouchingDifference,
+                ExactBooleanShortcutKind::ClosedBoundaryTouchingDifference,
+            ),
+        ] {
+            let preflight = preflight_boolean_exact(&left, &right, operation).unwrap();
+            assert_eq!(preflight.support, support, "{operation:?}: {preflight:?}");
+            assert!(preflight.blocker.is_none(), "{operation:?}: {preflight:?}");
+            preflight.validate().unwrap();
+            preflight.validate_against_sources(&left, &right).unwrap();
+
+            let readiness = certify_winding_readiness_report(&left, &right, operation).unwrap();
+            assert_eq!(
+                readiness.status,
+                ExactWindingReadinessStatus::ClosedBoundaryTouchingAlreadyMaterialized,
+                "{operation:?}: {readiness:?}"
+            );
+            assert_eq!(
+                readiness.blocker.kind,
+                ExactBooleanBlockerKind::NeedsBoundaryPolicy,
+                "{operation:?}: {readiness:?}"
+            );
+            assert!(winding_readiness_status_already_materialized(
+                &readiness.status
+            ));
+            readiness.validate().unwrap();
+            readiness.validate_against_sources(&left, &right).unwrap();
+
+            let result = boolean_exact(&left, &right, operation, ValidationPolicy::CLOSED).unwrap();
+            assert_eq!(
+                result.kind,
+                ExactBooleanResultKind::CertifiedShortcut { shortcut },
+                "{operation:?}: {result:?}"
+            );
+            result.validate().unwrap();
+            result.validate_against_sources(&left, &right).unwrap();
+            match operation {
+                ExactBooleanOperation::Union => {
+                    assert_eq!(
+                        result.mesh.triangles().len(),
+                        left.triangles().len() + right.triangles().len()
+                    );
+                }
+                ExactBooleanOperation::Intersection => {
+                    assert!(result.mesh.triangles().is_empty());
+                }
+                ExactBooleanOperation::Difference => {
+                    assert!(exact_meshes_have_same_shape(&result.mesh, &left));
+                }
+                ExactBooleanOperation::SelectedRegions(_) => unreachable!(),
+            }
         }
     }
 

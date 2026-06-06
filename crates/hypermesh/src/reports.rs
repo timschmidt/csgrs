@@ -2527,6 +2527,9 @@ pub enum ExactWindingReadinessStatus {
     /// The named Boolean was already answered by exact surface identity or
     /// same-surface equality, so no winding handoff is needed.
     SurfaceEqualityAlreadyMaterialized,
+    /// The named Boolean was already answered by certified closed-boundary
+    /// touching regularized semantics, so no winding handoff is needed.
+    ClosedBoundaryTouchingAlreadyMaterialized,
     /// The named Boolean was already answered by exact empty-operand
     /// semantics, so no winding handoff is needed.
     EmptyOperandAlreadyMaterialized,
@@ -2967,6 +2970,28 @@ impl ExactWindingReadinessReport {
                 blocker_kind(Some(&self.blocker), ExactBooleanBlockerKind::NeedsWinding)?;
                 self.blocker
                     .validate_for_kind(ExactBooleanBlockerKind::NeedsWinding)?;
+                no_region_facts(self.region_count, &self.region_classifications)
+            }
+            ExactWindingReadinessStatus::ClosedBoundaryTouchingAlreadyMaterialized => {
+                if self.arrangement_readiness.is_some()
+                    || self.coplanar_volumetric_evidence.is_some()
+                    || matches!(self.operation, ExactBooleanOperation::SelectedRegions(_))
+                    || self.graph_had_unknowns
+                    || self.retained_face_pairs == 0
+                {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
+                blocker_kind(
+                    Some(&self.blocker),
+                    ExactBooleanBlockerKind::NeedsBoundaryPolicy,
+                )?;
+                self.blocker
+                    .validate_for_kind(ExactBooleanBlockerKind::NeedsBoundaryPolicy)?;
+                validate_blocker_count_bounds(
+                    &self.blocker,
+                    self.retained_face_pairs,
+                    self.retained_events,
+                )?;
                 no_region_facts(self.region_count, &self.region_classifications)
             }
             ExactWindingReadinessStatus::EmptyOperandAlreadyMaterialized
