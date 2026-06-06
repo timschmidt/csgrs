@@ -13,9 +13,9 @@ use hyperreal::Real;
 use crate::bbox::{Aabb2, aabbs_decided_disjoint, decided_contour_aabb, decided_segment_aabb};
 use crate::classify::{compare_reals, is_zero, min_real};
 use crate::{
-    ArcArcIntersection, Classification, Contour2, CurvePolicy, CurveResult, IntersectionKind,
-    LineArcIntersection, LineArcOrder, LineLineIntersection, ParamRange, Point2, Segment2,
-    SegmentIntersection, UncertaintyReason,
+    ArcArcIntersection, Classification, Contour2, CurveError, CurvePolicy, CurveResult,
+    IntersectionKind, LineArcIntersection, LineArcOrder, LineLineIntersection, ParamRange, Point2,
+    Segment2, SegmentIntersection, UncertaintyReason,
 };
 
 /// Which side of a contour-pair event to inspect.
@@ -35,8 +35,9 @@ pub struct ContourIntersectionSet {
 
 impl ContourIntersectionSet {
     /// Constructs an event set from already-normalized events.
-    pub const fn new(events: Vec<ContourIntersection>) -> Self {
-        Self { events }
+    pub fn new(events: Vec<ContourIntersection>) -> CurveResult<Self> {
+        validate_contour_intersection_events(&events)?;
+        Ok(Self { events })
     }
 
     /// Returns all events in segment-pair scan order.
@@ -90,6 +91,17 @@ impl ContourIntersectionSet {
 
         Classification::Decided(sorted.into_iter().map(|(event, _)| event).collect())
     }
+}
+
+fn validate_contour_intersection_events(events: &[ContourIntersection]) -> CurveResult<()> {
+    for (left_index, left) in events.iter().enumerate() {
+        if events[left_index + 1..].iter().any(|right| right == left) {
+            return Err(CurveError::Topology(
+                "contour intersection set must not contain duplicate events".into(),
+            ));
+        }
+    }
+    Ok(())
 }
 
 /// One normalized contour-pair topology event.
@@ -247,7 +259,7 @@ pub(crate) fn intersect_contours_with_cached_aabbs(
     if let (Some(a_box), Some(b_box)) = (a_box, b_box)
         && aabbs_decided_disjoint(a_box, b_box, policy)
     {
-        return Ok(ContourIntersectionSet::new(Vec::new()));
+        return ContourIntersectionSet::new(Vec::new());
     }
 
     let mut events = Vec::new();
@@ -275,7 +287,7 @@ pub(crate) fn intersect_contours_with_cached_aabbs(
         }
     }
 
-    Ok(ContourIntersectionSet::new(events))
+    ContourIntersectionSet::new(events)
 }
 
 pub(crate) fn intersect_contour_self_with_cached_aabbs(
@@ -324,7 +336,7 @@ pub(crate) fn intersect_contour_self_with_cached_aabbs(
         }
     }
 
-    Ok(ContourIntersectionSet::new(events))
+    ContourIntersectionSet::new(events)
 }
 
 fn append_segment_relation_events(

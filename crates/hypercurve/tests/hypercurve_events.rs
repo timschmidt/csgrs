@@ -1,6 +1,7 @@
 use hypercurve::{
-    BulgeVertex2, CircularArc2, Classification, Contour2, ContourIntersection, ContourOperand,
-    CurvePolicy, IntersectionKind, LineSeg2, Real, Segment2,
+    BulgeVertex2, CircularArc2, Classification, Contour2, ContourIntersection,
+    ContourIntersectionSet, ContourOperand, CurveError, CurvePolicy, IntersectionKind, LineSeg2,
+    Real, Segment2,
 };
 
 fn s(value: i32) -> Real {
@@ -39,6 +40,14 @@ fn point_event_point(event: &ContourIntersection) -> hypercurve::Point2 {
     point.point.clone()
 }
 
+fn assert_topology_error<T>(result: hypercurve::CurveResult<T>) {
+    match result {
+        Err(CurveError::Topology(_)) => {}
+        Ok(_) => panic!("expected topology error"),
+        Err(error) => panic!("expected topology error, got {error:?}"),
+    }
+}
+
 #[test]
 fn contour_events_sort_points_by_first_segment_parameter() {
     let a = rectangle(0, 0, 4, 4);
@@ -60,6 +69,29 @@ fn contour_events_sort_points_by_first_segment_parameter() {
     assert_eq!(sorted.len(), 2);
     assert_eq!(point_event_point(sorted[0]), p(1, 0));
     assert_eq!(point_event_point(sorted[1]), p(3, 0));
+}
+
+#[test]
+fn contour_intersection_set_constructor_rejects_duplicate_events() {
+    ContourIntersectionSet::new(Vec::new()).unwrap();
+
+    let a = rectangle(0, 0, 4, 4);
+    let b = contour(&[
+        vertex(3, -1, 0),
+        vertex(3, 1, 0),
+        vertex(1, 1, 0),
+        vertex(1, -1, 0),
+    ]);
+
+    let events = a.intersect_contour(&b, &policy()).unwrap();
+    assert_eq!(events.len(), 2);
+    ContourIntersectionSet::new(events.events().to_vec()).unwrap();
+
+    let duplicate = events.events()[0].clone();
+    assert_topology_error(ContourIntersectionSet::new(vec![
+        duplicate.clone(),
+        duplicate,
+    ]));
 }
 
 #[test]
