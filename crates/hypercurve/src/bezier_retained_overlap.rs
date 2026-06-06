@@ -316,20 +316,26 @@ impl BezierRetainedOverlapRefinedFragment2 {
 
 impl BezierRetainedLinearOverlapSplitGraph2 {
     /// Constructs a retained graph refinement and its replay metadata.
-    pub const fn new(
+    pub fn new(
         graph: BezierArrangementGraph2,
         refined_fragments: Vec<BezierRetainedOverlapRefinedFragment2>,
         overlap_report: BezierRetainedOverlapReport2,
         split_plan: Vec<BezierRetainedLinearOverlapSplit2>,
         resolved_overlaps: Vec<BezierRetainedResolvedLinearOverlap2>,
-    ) -> Self {
-        Self {
+    ) -> CurveResult<Self> {
+        if graph.len() != refined_fragments.len() {
+            return Err(CurveError::Topology(
+                "retained linear-overlap refinement provenance count does not match graph fragment count"
+                    .to_owned(),
+            ));
+        }
+        Ok(Self {
             graph,
             refined_fragments,
             overlap_report,
             split_plan,
             resolved_overlaps,
-        }
+        })
     }
 
     /// Returns the refined retained arrangement graph.
@@ -625,13 +631,16 @@ impl BezierArrangementGraph2 {
                 Classification::Decided(resolved) => resolved,
                 Classification::Uncertain(reason) => return Classification::Uncertain(reason),
             };
-        Classification::Decided(BezierRetainedLinearOverlapSplitGraph2::new(
+        match BezierRetainedLinearOverlapSplitGraph2::new(
             graph,
             refined_fragments,
             overlap_report,
             split_plan,
             resolved_overlaps,
-        ))
+        ) {
+            Ok(refinement) => Classification::Decided(refinement),
+            Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
+        }
     }
 
     /// Traverses after resolving certified linearly-parameterized overlaps.

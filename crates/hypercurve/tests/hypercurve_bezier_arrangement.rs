@@ -2,10 +2,11 @@ use hypercurve::{
     BezierAlgebraicEndpointImage2, BezierAlgebraicParameter2, BezierArrangementGraph2,
     BezierParameter2, BezierParameterInterval, BezierParameterPolynomial,
     BezierRetainedLineOverlapExtent2, BezierRetainedLineOverlapSplit2,
-    BezierRetainedLinearOverlapSplit2, BezierRetainedOverlap2, BezierRetainedOverlapOrientation2,
-    BezierRetainedOverlapRelation2, BezierRetainedOverlapReport2, BezierSplitFragment2,
-    BezierSubcurve2, Classification, CubicBezier2, CurveError, CurvePolicy, LineSeg2, ParamRange,
-    Point2, QuadraticBezier2, RationalQuadraticBezier2, Real, UncertaintyReason,
+    BezierRetainedLinearOverlapSplit2, BezierRetainedLinearOverlapSplitGraph2,
+    BezierRetainedOverlap2, BezierRetainedOverlapOrientation2, BezierRetainedOverlapRelation2,
+    BezierRetainedOverlapReport2, BezierSplitFragment2, BezierSubcurve2, Classification,
+    CubicBezier2, CurveError, CurvePolicy, LineSeg2, ParamRange, Point2, QuadraticBezier2,
+    RationalQuadraticBezier2, Real, UncertaintyReason,
 };
 use proptest::prelude::*;
 
@@ -698,6 +699,26 @@ fn retained_overlap_split_constructors_reject_unordered_indices() {
         first_range,
         second_range,
         BezierRetainedLineOverlapExtent2::FullBoth,
+    ));
+}
+
+#[test]
+fn retained_linear_overlap_split_graph_rejects_missing_refined_provenance() {
+    let fragment = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0))),
+    };
+    let graph = BezierArrangementGraph2::new(vec![hypercurve::BezierArrangementFragment2::new(
+        0, 0, fragment,
+    )]);
+
+    assert_topology_error(BezierRetainedLinearOverlapSplitGraph2::new(
+        graph,
+        Vec::new(),
+        BezierRetainedOverlapReport2::new(Vec::new()),
+        Vec::new(),
+        Vec::new(),
     ));
 }
 
