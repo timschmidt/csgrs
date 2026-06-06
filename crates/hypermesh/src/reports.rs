@@ -3077,7 +3077,10 @@ impl ExactPlanarArrangementReport {
                 }
             }
             ExactPlanarArrangementStatus::Required => {
-                if matches!(self.operation, ExactBooleanOperation::SelectedRegions(_)) {
+                if matches!(
+                    self.operation,
+                    ExactBooleanOperation::SelectedRegions(_) | ExactBooleanOperation::Intersection
+                ) {
                     return Err(ExactReportValidationError::StatusEvidenceMismatch);
                 }
             }
@@ -3958,6 +3961,43 @@ mod tests {
 
         let mut report = valid_blocked_closure_report();
         report.overused_boundary_edges = 1;
+        assert_eq!(
+            report.validate(),
+            Err(ExactReportValidationError::StatusEvidenceMismatch)
+        );
+    }
+
+    #[test]
+    fn planar_arrangement_required_rejects_intersection_relabel() {
+        let mut report = ExactPlanarArrangementReport {
+            operation: ExactBooleanOperation::Difference,
+            status: ExactPlanarArrangementStatus::Required,
+            graph_had_unknowns: false,
+            retained_face_pairs: 1,
+            retained_events: 1,
+            blocker: ExactBooleanBlocker {
+                kind: ExactBooleanBlockerKind::NeedsPlanarArrangement,
+                candidate_pairs: 0,
+                coplanar_overlapping_pairs: 1,
+                coplanar_touching_pairs: 0,
+                unknown_pairs: 0,
+                construction_failed_events: 0,
+            },
+            arrangement_readiness: Some(CoplanarArrangementReadinessReport {
+                status: CoplanarArrangementReadinessStatus::NeedsPlanarCells,
+                graph_count: 1,
+                overlapping_graphs: 1,
+                touching_graphs: 0,
+                edge_overlap_count: 1,
+                vertex_overlap_count: 0,
+                point_split_count: 0,
+                interval_overlap_count: 0,
+                interval_endpoint_count: 0,
+            }),
+        };
+        report.validate().unwrap();
+
+        report.operation = ExactBooleanOperation::Intersection;
         assert_eq!(
             report.validate(),
             Err(ExactReportValidationError::StatusEvidenceMismatch)
