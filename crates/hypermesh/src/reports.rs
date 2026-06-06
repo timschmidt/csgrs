@@ -2055,6 +2055,13 @@ impl ExactBooleanPreflight {
                 if self.arrangement_readiness.is_some() {
                     return Err(ExactReportValidationError::UnexpectedArrangementReadiness);
                 }
+                if let Some(evidence) = self.coplanar_volumetric_evidence.as_ref() {
+                    validate_coplanar_volumetric_evidence_shape(
+                        evidence,
+                        self.retained_face_pairs,
+                        self.retained_events,
+                    )?;
+                }
                 no_region_facts(self.region_count, &self.region_classifications)
             }
             ExactBooleanSupport::CertifiedOpenSurfaceArrangementUnion

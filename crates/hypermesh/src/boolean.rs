@@ -7342,6 +7342,16 @@ mod tests {
                 "{operation:?}: {preflight:?}"
             );
             assert!(preflight.blocker.is_none(), "{operation:?}: {preflight:?}");
+            let mut stale_preflight = preflight.clone();
+            stale_preflight
+                .coplanar_volumetric_evidence
+                .as_mut()
+                .expect("orthogonal overlap should retain consumed coplanar-cell evidence")
+                .retained_face_pair_count += 1;
+            assert!(
+                stale_preflight.validate().is_err(),
+                "{operation:?}: {stale_preflight:?}"
+            );
 
             let readiness = certify_winding_readiness_report(&left, &right, operation).unwrap();
             assert_eq!(
