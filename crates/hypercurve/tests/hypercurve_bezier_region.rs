@@ -2,9 +2,10 @@ use hypercurve::{
     BezierAlgebraicEndpointImage2, BezierAlgebraicParameter2, BezierArrangementFragment2,
     BezierArrangementGraph2, BezierParameter2, BezierParameterInterval, BezierParameterPolynomial,
     BezierRegion2, BezierRetainedBoundaryLoop2, BezierRetainedCurveEnvelope2,
-    BezierRetainedEndpointEnvelope2, BezierRetainedRegion2, BezierRetainedRegionLoopRole,
-    BezierSplitFragment2, Classification, CurvePolicy, Point2, QuadraticBezier2,
-    RationalQuadraticBezier2, Real, UncertaintyReason,
+    BezierRetainedCurvedNestingRoleReport2, BezierRetainedEndpointEnvelope2,
+    BezierRetainedLineRegionRoleReport2, BezierRetainedRegion2, BezierRetainedRegionLoopRole,
+    BezierRetainedSignedAreaRoleReport2, BezierSplitFragment2, Classification, CurveError,
+    CurvePolicy, Point2, QuadraticBezier2, RationalQuadraticBezier2, Real, UncertaintyReason,
 };
 use proptest::prelude::*;
 
@@ -42,6 +43,10 @@ fn assert_real_close(left: &Real, right: &Real, tolerance: f64) {
         (left - right).abs() <= tolerance,
         "expected {left} to be within {tolerance} of {right}"
     );
+}
+
+fn assert_topology_error<T>(result: Result<T, CurveError>) {
+    assert!(matches!(result, Err(CurveError::Topology(_))));
 }
 
 fn exact(value: Real) -> BezierParameter2 {
@@ -361,6 +366,29 @@ fn retained_line_image_role_report_assigns_nested_material_and_hole() {
         report.to_region().filled_area(&policy()).unwrap(),
         Classification::Decided(Some(r(32)))
     );
+}
+
+#[test]
+fn retained_role_report_constructors_reject_mismatched_evidence() {
+    let roles = vec![BezierRetainedRegionLoopRole::Material];
+
+    assert_topology_error(BezierRetainedLineRegionRoleReport2::new(
+        roles.clone(),
+        Vec::new(),
+        0,
+        0,
+        Vec::new(),
+    ));
+    assert_topology_error(BezierRetainedSignedAreaRoleReport2::new(
+        roles.clone(),
+        Vec::new(),
+    ));
+    assert_topology_error(BezierRetainedCurvedNestingRoleReport2::new(
+        roles,
+        vec![0],
+        vec![r(1)],
+        Vec::new(),
+    ));
 }
 
 #[test]

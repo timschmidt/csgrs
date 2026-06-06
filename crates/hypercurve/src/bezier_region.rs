@@ -182,21 +182,23 @@ pub struct BezierRetainedCurvedNestingRoleReport2 {
 
 impl BezierRetainedLineRegionRoleReport2 {
     /// Constructs a retained line-image role report.
-    pub const fn new(
+    pub fn new(
         roles: Vec<BezierRetainedRegionLoopRole>,
         nesting_depths: Vec<usize>,
         materialized_fragment_count: usize,
         algebraic_fragment_count: usize,
         contours: Vec<Contour2>,
-    ) -> Self {
-        Self {
+    ) -> CurveResult<Self> {
+        validate_report_length(roles.len(), "nesting depth", nesting_depths.len())?;
+        validate_report_length(roles.len(), "line contour", contours.len())?;
+        Ok(Self {
             roles,
             nesting_depths,
             materialized_fragment_count,
             algebraic_fragment_count,
             contours,
             loop_arrangement_sources: None,
-        }
+        })
     }
 
     /// Attaches one optional arrangement source trail per retained loop.
@@ -289,12 +291,16 @@ impl BezierRetainedLineRegionRoleReport2 {
 
 impl BezierRetainedSignedAreaRoleReport2 {
     /// Constructs a retained signed-area role report.
-    pub const fn new(roles: Vec<BezierRetainedRegionLoopRole>, signed_areas: Vec<Real>) -> Self {
-        Self {
+    pub fn new(
+        roles: Vec<BezierRetainedRegionLoopRole>,
+        signed_areas: Vec<Real>,
+    ) -> CurveResult<Self> {
+        validate_report_length(roles.len(), "signed area", signed_areas.len())?;
+        Ok(Self {
             roles,
             signed_areas,
             loop_arrangement_sources: None,
-        }
+        })
     }
 
     /// Attaches one optional arrangement source trail per retained loop.
@@ -349,19 +355,22 @@ impl BezierRetainedSignedAreaRoleReport2 {
 
 impl BezierRetainedCurvedNestingRoleReport2 {
     /// Constructs a retained curved-loop nesting role report.
-    pub const fn new(
+    pub fn new(
         roles: Vec<BezierRetainedRegionLoopRole>,
         nesting_depths: Vec<usize>,
         signed_areas: Vec<Real>,
         sample_points: Vec<Point2>,
-    ) -> Self {
-        Self {
+    ) -> CurveResult<Self> {
+        validate_report_length(roles.len(), "nesting depth", nesting_depths.len())?;
+        validate_report_length(roles.len(), "signed area", signed_areas.len())?;
+        validate_report_length(roles.len(), "sample point", sample_points.len())?;
+        Ok(Self {
             roles,
             nesting_depths,
             signed_areas,
             sample_points,
             loop_arrangement_sources: None,
-        }
+        })
     }
 
     /// Attaches one optional arrangement source trail per retained loop.
@@ -755,7 +764,7 @@ impl BezierRetainedRegion2 {
             materialized_fragment_count,
             algebraic_fragment_count,
             contours,
-        )
+        )?
         .with_loop_arrangement_sources(retained_loop_arrangement_sources(&self.boundary_loops))?;
         Ok(Classification::Decided(report))
     }
@@ -789,7 +798,7 @@ impl BezierRetainedRegion2 {
             roles.push(role);
             signed_areas.push(area);
         }
-        let report = BezierRetainedSignedAreaRoleReport2::new(roles, signed_areas)
+        let report = BezierRetainedSignedAreaRoleReport2::new(roles, signed_areas)?
             .with_loop_arrangement_sources(retained_loop_arrangement_sources(
                 &self.boundary_loops,
             ))?;
@@ -866,7 +875,7 @@ impl BezierRetainedRegion2 {
             nesting_depths,
             signed_areas,
             sample_points,
-        )
+        )?
         .with_loop_arrangement_sources(retained_loop_arrangement_sources(&self.boundary_loops))?;
         Ok(Classification::Decided(report))
     }
@@ -931,10 +940,22 @@ fn validate_loop_arrangement_sources(
     loop_count: usize,
     loop_arrangement_sources: &[Option<Vec<BezierRetainedFragmentSource2>>],
 ) -> CurveResult<()> {
-    if loop_count != loop_arrangement_sources.len() {
-        return Err(CurveError::Topology(
-            "retained role report source count does not match loop count".to_owned(),
-        ));
+    validate_report_length(
+        loop_count,
+        "loop arrangement source",
+        loop_arrangement_sources.len(),
+    )
+}
+
+fn validate_report_length(
+    loop_count: usize,
+    evidence_name: &str,
+    evidence_count: usize,
+) -> CurveResult<()> {
+    if loop_count != evidence_count {
+        return Err(CurveError::Topology(format!(
+            "retained role report {evidence_name} count does not match loop count"
+        )));
     }
     Ok(())
 }
