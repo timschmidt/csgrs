@@ -76,7 +76,7 @@ pub use arrangement3d::{
     ArrangementOppositeClassification, ArrangementRegion, ArrangementRegionEdgeIncidence,
     ArrangementRegionSide, ArrangementVertex, ArrangementVertexProvenance,
     ArrangementVolumeAdjacency, ArrangementVolumeFaceSide, ArrangementVolumeRegion,
-    ExactArrangement, ExactArrangement3d,
+    ExactArrangement, ExactArrangement3d, ExactArrangementFreshness,
 };
 pub use audit::{
     ExactMeshAuditError, ExactMeshAuditFreshness, ExactMeshAuditReport, audit_exact_mesh,
@@ -94,8 +94,8 @@ pub use boolean::{
 pub use bounds::{AabbIntersectionKind, BoundsValidationError, ExactAabb3, MeshBounds};
 pub use cell_complex::{
     ExactCellComplex, ExactCellComplexFace, ExactCellComplexVolumeRegion, ExactCellRegionLabel,
-    ExactLabeledCellComplex, ExactOppositeRegionLabel, ExactSelectedCellComplex,
-    ExactSelectedFaceOrientation,
+    ExactLabeledCellComplex, ExactLabeledCellComplexFreshness, ExactOppositeRegionLabel,
+    ExactSelectedCellComplex, ExactSelectedCellComplexFreshness, ExactSelectedFaceOrientation,
 };
 pub use construction::{
     intersect_segment_with_face_plane, intersect_segment_with_retained_face_plane,
@@ -148,7 +148,9 @@ pub use reports::{
     ExactVolumetricBoundaryClosureStatus, ExactWindingReadinessReport, ExactWindingReadinessStatus,
 };
 pub use scalar::LossyF64Import;
-pub use simplify::{ExactSimplifiedCellComplex, ExactSimplifiedFaceCell};
+pub use simplify::{
+    ExactSimplifiedCellComplex, ExactSimplifiedCellComplexFreshness, ExactSimplifiedFaceCell,
+};
 pub use solid::{
     ClosedMeshOrientation, ConvexSolidClassification, ConvexSolidFacts,
     ConvexSolidMeshClassification, ConvexSolidMeshRelation, ConvexSolidPointClassification,

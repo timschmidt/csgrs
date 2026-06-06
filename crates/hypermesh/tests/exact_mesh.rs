@@ -1,12 +1,13 @@
 use hyperlimit::{Point3, SourceProvenance};
 use hypermesh::{
-    ExactArrangement, ExactBooleanOperation, ExactBooleanResultKind, ExactBoundaryBooleanPolicy,
-    ExactI64MeshInputReadiness, ExactMesh, ExactRegularizationPolicy, ExactReportFreshness,
-    MeshFacePairRelation, MeshFacePairValidationError, TriangleTriangleRelation, ValidationPolicy,
-    boolean_exact, boolean_exact_with_boundary_policy, build_intersection_graph,
-    certify_boundary_touching_report, classify_mesh_face_pair, classify_triangle_triangle,
-    exact_arrangement_boolean_attempt_report, inspect_i64_mesh_input, preflight_boolean_exact,
-    preflight_boolean_exact_with_boundary_policy,
+    ExactArrangement, ExactArrangementFreshness, ExactBooleanOperation, ExactBooleanResultKind,
+    ExactBoundaryBooleanPolicy, ExactI64MeshInputReadiness, ExactLabeledCellComplexFreshness,
+    ExactMesh, ExactRegularizationPolicy, ExactReportFreshness, ExactSelectedCellComplexFreshness,
+    ExactSimplifiedCellComplexFreshness, MeshFacePairRelation, MeshFacePairValidationError,
+    TriangleTriangleRelation, ValidationPolicy, boolean_exact, boolean_exact_with_boundary_policy,
+    build_intersection_graph, certify_boundary_touching_report, classify_mesh_face_pair,
+    classify_triangle_triangle, exact_arrangement_boolean_attempt_report, inspect_i64_mesh_input,
+    preflight_boolean_exact, preflight_boolean_exact_with_boundary_policy,
 };
 use hyperreal::Real;
 
@@ -225,6 +226,93 @@ fn exact_arrangement_public_path_reports_blockers_or_cells() {
     )
     .unwrap();
     assert!(arrangement.validate_against_sources(&left, &right).is_ok());
+    assert_eq!(
+        arrangement.freshness_against_sources_with_policy(
+            &left,
+            &right,
+            ExactRegularizationPolicy::REGULARIZED_SOLID
+        ),
+        ExactArrangementFreshness::Current
+    );
+    let mut stale_arrangement = arrangement.clone();
+    stale_arrangement.vertices.pop();
+    assert_eq!(
+        stale_arrangement.freshness_against_sources_with_policy(
+            &left,
+            &right,
+            ExactRegularizationPolicy::REGULARIZED_SOLID
+        ),
+        ExactArrangementFreshness::StaleArrangement
+    );
+
+    let labeled = arrangement
+        .label_regions(ExactRegularizationPolicy::REGULARIZED_SOLID)
+        .unwrap();
+    assert_eq!(
+        labeled.freshness_against_sources(
+            &left,
+            &right,
+            ExactRegularizationPolicy::REGULARIZED_SOLID
+        ),
+        ExactLabeledCellComplexFreshness::Current
+    );
+    let mut stale_labeled = labeled.clone();
+    stale_labeled.faces.pop();
+    assert_eq!(
+        stale_labeled.freshness_against_sources(
+            &left,
+            &right,
+            ExactRegularizationPolicy::REGULARIZED_SOLID
+        ),
+        ExactLabeledCellComplexFreshness::StaleLabeledCells
+    );
+
+    let selected = labeled
+        .select_with_policy(
+            ExactBooleanOperation::Union,
+            ExactRegularizationPolicy::REGULARIZED_SOLID,
+        )
+        .unwrap();
+    assert_eq!(
+        selected.freshness_against_sources(
+            &left,
+            &right,
+            ExactRegularizationPolicy::REGULARIZED_SOLID
+        ),
+        ExactSelectedCellComplexFreshness::Current
+    );
+    let mut stale_selected = selected.clone();
+    stale_selected.selected_faces.pop();
+    assert_eq!(
+        stale_selected.freshness_against_sources(
+            &left,
+            &right,
+            ExactRegularizationPolicy::REGULARIZED_SOLID
+        ),
+        ExactSelectedCellComplexFreshness::StaleSelectedCells
+    );
+
+    let simplified = selected
+        .simplify_exact_with_policy(ExactRegularizationPolicy::REGULARIZED_SOLID)
+        .unwrap();
+    assert_eq!(
+        simplified.freshness_against_sources(
+            &left,
+            &right,
+            ExactRegularizationPolicy::REGULARIZED_SOLID
+        ),
+        ExactSimplifiedCellComplexFreshness::Current
+    );
+    let mut stale_simplified = simplified.clone();
+    stale_simplified.duplicate_cells_removed += 1;
+    assert_eq!(
+        stale_simplified.freshness_against_sources(
+            &left,
+            &right,
+            ExactRegularizationPolicy::REGULARIZED_SOLID
+        ),
+        ExactSimplifiedCellComplexFreshness::StaleSimplifiedCells
+    );
 
     let attempt = exact_arrangement_boolean_attempt_report(
         &left,

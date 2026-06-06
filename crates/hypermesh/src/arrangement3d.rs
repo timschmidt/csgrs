@@ -325,6 +325,17 @@ pub struct ExactArrangement3d {
 /// Public arrangement entry point for the exact Boolean pipeline.
 pub type ExactArrangement = ExactArrangement3d;
 
+/// Freshness status for a retained exact 3D arrangement.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ExactArrangementFreshness {
+    /// The arrangement replays exactly from the current source operands.
+    Current,
+    /// Rebuilding the arrangement from the source operands is currently blocked.
+    SourceReplayBlocked,
+    /// The source operands rebuild, but the retained arrangement no longer matches.
+    StaleArrangement,
+}
+
 impl ExactArrangement3d {
     /// Build a retained exact arrangement from two meshes.
     pub fn from_meshes(
@@ -539,6 +550,33 @@ impl ExactArrangement3d {
             Ok(())
         } else {
             Err(ExactArrangementBlocker::UnresolvedIntersection)
+        }
+    }
+
+    /// Classify whether this retained arrangement is fresh for the source operands.
+    pub fn freshness_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> ExactArrangementFreshness {
+        self.freshness_against_sources_with_policy(
+            left,
+            right,
+            ExactRegularizationPolicy::default(),
+        )
+    }
+
+    /// Classify arrangement freshness under an explicit regularization policy.
+    pub fn freshness_against_sources_with_policy(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+        policy: ExactRegularizationPolicy,
+    ) -> ExactArrangementFreshness {
+        match Self::from_meshes_with_policy(left, right, policy) {
+            Ok(replay) if replay == *self => ExactArrangementFreshness::Current,
+            Ok(_) => ExactArrangementFreshness::StaleArrangement,
+            Err(_) => ExactArrangementFreshness::SourceReplayBlocked,
         }
     }
 

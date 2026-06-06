@@ -60,6 +60,21 @@ pub struct ExactSimplifiedCellComplex {
     pub blockers: Vec<ExactArrangementBlocker>,
 }
 
+/// Freshness status for a retained simplified cell complex.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ExactSimplifiedCellComplexFreshness {
+    /// The simplified complex replays exactly from the current source operands.
+    Current,
+    /// Rebuilding the arrangement from the source operands is currently blocked.
+    SourceReplayBlocked,
+    /// Arrangement construction replays, but labeling or selection is blocked.
+    SelectionReplayBlocked,
+    /// Selection replays, but exact simplification is currently blocked.
+    SimplificationReplayBlocked,
+    /// The source operands simplify, but the retained simplified complex no longer matches.
+    StaleSimplifiedCells,
+}
+
 impl ExactSimplifiedCellComplex {
     /// Validate this simplified complex by replaying the full arrangement,
     /// label, selection, and simplification pipeline from source operands.
@@ -77,6 +92,28 @@ impl ExactSimplifiedCellComplex {
             Ok(())
         } else {
             Err(ExactArrangementBlocker::NonManifoldCellComplex)
+        }
+    }
+
+    /// Classify whether this retained simplified complex is fresh for the source operands.
+    pub fn freshness_against_sources(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+        policy: ExactRegularizationPolicy,
+    ) -> ExactSimplifiedCellComplexFreshness {
+        let arrangement = match ExactArrangement::from_meshes_with_policy(left, right, policy) {
+            Ok(arrangement) => arrangement,
+            Err(_) => return ExactSimplifiedCellComplexFreshness::SourceReplayBlocked,
+        };
+        let selected = match select_arrangement_for_replay(arrangement, self.operation, policy) {
+            Ok(selected) => selected,
+            Err(_) => return ExactSimplifiedCellComplexFreshness::SelectionReplayBlocked,
+        };
+        match selected.simplify_exact_with_policy(policy) {
+            Ok(replay) if replay == *self => ExactSimplifiedCellComplexFreshness::Current,
+            Ok(_) => ExactSimplifiedCellComplexFreshness::StaleSimplifiedCells,
+            Err(_) => ExactSimplifiedCellComplexFreshness::SimplificationReplayBlocked,
         }
     }
 

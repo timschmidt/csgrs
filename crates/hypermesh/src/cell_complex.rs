@@ -125,6 +125,32 @@ pub struct ExactSelectedFaceOrientation {
     pub from_volume_adjacency: bool,
 }
 
+/// Freshness status for a retained labeled cell complex.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ExactLabeledCellComplexFreshness {
+    /// The labeled complex replays exactly from the current source operands.
+    Current,
+    /// Rebuilding the arrangement from the source operands is currently blocked.
+    SourceReplayBlocked,
+    /// Arrangement construction replays, but region labeling is blocked.
+    LabelingReplayBlocked,
+    /// The source operands relabel, but the retained labeled complex no longer matches.
+    StaleLabeledCells,
+}
+
+/// Freshness status for a retained selected cell complex.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ExactSelectedCellComplexFreshness {
+    /// The selected complex replays exactly from the current source operands.
+    Current,
+    /// Rebuilding the arrangement from the source operands is currently blocked.
+    SourceReplayBlocked,
+    /// Arrangement construction replays, but labeling or selection is blocked.
+    SelectionReplayBlocked,
+    /// The source operands select, but the retained selected complex no longer matches.
+    StaleSelectedCells,
+}
+
 impl ExactCellComplex {
     /// Build a cell-complex view over an arrangement.
     pub fn from_arrangement(
@@ -192,6 +218,24 @@ impl ExactLabeledCellComplex {
             Ok(())
         } else {
             Err(ExactArrangementBlocker::UnresolvedRegionClassification)
+        }
+    }
+
+    /// Classify whether this retained labeled complex is fresh for the source operands.
+    pub fn freshness_against_sources(
+        &self,
+        left: &super::mesh::ExactMesh,
+        right: &super::mesh::ExactMesh,
+        policy: ExactRegularizationPolicy,
+    ) -> ExactLabeledCellComplexFreshness {
+        let arrangement = match ExactArrangement::from_meshes_with_policy(left, right, policy) {
+            Ok(arrangement) => arrangement,
+            Err(_) => return ExactLabeledCellComplexFreshness::SourceReplayBlocked,
+        };
+        match arrangement.label_regions(policy) {
+            Ok(replay) if replay == *self => ExactLabeledCellComplexFreshness::Current,
+            Ok(_) => ExactLabeledCellComplexFreshness::StaleLabeledCells,
+            Err(_) => ExactLabeledCellComplexFreshness::LabelingReplayBlocked,
         }
     }
 
@@ -316,6 +360,24 @@ impl ExactSelectedCellComplex {
             Ok(())
         } else {
             Err(ExactArrangementBlocker::UnresolvedRegionClassification)
+        }
+    }
+
+    /// Classify whether this retained selected complex is fresh for the source operands.
+    pub fn freshness_against_sources(
+        &self,
+        left: &super::mesh::ExactMesh,
+        right: &super::mesh::ExactMesh,
+        policy: ExactRegularizationPolicy,
+    ) -> ExactSelectedCellComplexFreshness {
+        let arrangement = match ExactArrangement::from_meshes_with_policy(left, right, policy) {
+            Ok(arrangement) => arrangement,
+            Err(_) => return ExactSelectedCellComplexFreshness::SourceReplayBlocked,
+        };
+        match select_arrangement_for_replay(arrangement, self.operation, policy) {
+            Ok(replay) if replay == *self => ExactSelectedCellComplexFreshness::Current,
+            Ok(_) => ExactSelectedCellComplexFreshness::StaleSelectedCells,
+            Err(_) => ExactSelectedCellComplexFreshness::SelectionReplayBlocked,
         }
     }
 
