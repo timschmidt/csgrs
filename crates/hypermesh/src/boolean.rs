@@ -1351,6 +1351,11 @@ pub fn boolean_exact_with_boundary_policy(
     {
         return boolean_identical_meshes(left, operation, validation);
     }
+    if (!left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold)
+        && meshes_are_certified_same_surface(left, right)
+    {
+        return boolean_same_surface_meshes(left, operation, validation);
+    }
     if let Some(result) = boolean_arrangement_orthogonal_solid_cell_recovery(
         left, right, operation, validation, false,
     )? {
@@ -1365,11 +1370,6 @@ pub fn boolean_exact_with_boundary_policy(
         boolean_arrangement_cell_complex_meshes(left, right, operation, validation)?
     {
         return Ok(result);
-    }
-    if (!left.facts().mesh.closed_manifold || !right.facts().mesh.closed_manifold)
-        && meshes_are_certified_same_surface(left, right)
-    {
-        return boolean_same_surface_meshes(left, operation, validation);
     }
     match operation {
         ExactBooleanOperation::SelectedRegions(_) => unreachable!("handled by caller"),
@@ -7031,27 +7031,35 @@ mod tests {
         .unwrap();
         assert!(meshes_are_certified_same_surface(&left, &right));
 
-        let preflight =
-            preflight_boolean_exact(&left, &right, ExactBooleanOperation::Union).unwrap();
-        assert!(matches!(
-            preflight.support,
-            ExactBooleanSupport::CertifiedArrangementCellComplex
-                | ExactBooleanSupport::CertifiedSameSurface
-        ));
-
-        let union = boolean_exact(
-            &left,
-            &right,
+        for operation in [
             ExactBooleanOperation::Union,
-            ValidationPolicy::ALLOW_BOUNDARY,
-        )
-        .unwrap();
-        assert_eq!(
-            union.kind,
-            ExactBooleanResultKind::CertifiedShortcut {
-                shortcut: ExactBooleanShortcutKind::ArrangementCellComplex
+            ExactBooleanOperation::Intersection,
+            ExactBooleanOperation::Difference,
+        ] {
+            let preflight = preflight_boolean_exact(&left, &right, operation).unwrap();
+            assert_eq!(
+                preflight.support,
+                ExactBooleanSupport::CertifiedSameSurface,
+                "{operation:?}: {preflight:?}"
+            );
+
+            let result =
+                boolean_exact(&left, &right, operation, ValidationPolicy::ALLOW_BOUNDARY).unwrap();
+            assert_eq!(
+                result.kind,
+                ExactBooleanResultKind::CertifiedShortcut {
+                    shortcut: ExactBooleanShortcutKind::SameSurface
+                },
+                "{operation:?}: {result:?}"
+            );
+            result.validate().unwrap();
+            result.validate_against_sources(&left, &right).unwrap();
+            if matches!(operation, ExactBooleanOperation::Difference) {
+                assert!(result.mesh.triangles().is_empty(), "{result:?}");
+            } else {
+                assert!(exact_meshes_have_same_shape(&result.mesh, &left));
             }
-        );
+        }
     }
 
     #[test]
