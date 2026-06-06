@@ -14,8 +14,9 @@ use hyperlimit::{
 use hyperreal::Real;
 
 use super::arrangement2d::{
-    ExactArrangement2dBoundaryPolicy, ExactArrangement2dRegion, ExactArrangement2dRegionRing,
-    ExactArrangement2dSetOperation, build_exact_arrangement2d_overlay_with_boundary_policy,
+    ExactArrangement2dBlocker, ExactArrangement2dBoundaryPolicy, ExactArrangement2dRegion,
+    ExactArrangement2dRegionRing, ExactArrangement2dSetOperation,
+    build_exact_arrangement2d_overlay_with_boundary_policy,
 };
 use super::mesh::Triangle;
 use super::regularization::ExactArrangementBlocker;
@@ -459,7 +460,12 @@ fn triangulate_touching_hole_loop_group_via_arrangement(
         ExactArrangement2dBoundaryPolicy::SimplifyCollinear,
     );
     if !overlay.is_complete() {
-        return Err(ExactArrangementBlocker::NonManifoldCellComplex);
+        return Err(map_arrangement2d_blocker(
+            overlay
+                .blockers
+                .first()
+                .ok_or(ExactArrangementBlocker::NonManifoldCellComplex)?,
+        ));
     }
 
     for overlay_face in overlay.faces.iter().filter(|face| face.selected) {
@@ -490,6 +496,36 @@ fn triangulate_touching_hole_loop_group_via_arrangement(
         )?;
     }
     Ok(())
+}
+
+fn map_arrangement2d_blocker(blocker: &ExactArrangement2dBlocker) -> ExactArrangementBlocker {
+    match blocker {
+        ExactArrangement2dBlocker::UnresolvedPointEquality { .. }
+        | ExactArrangement2dBlocker::UnresolvedSegmentRelation { .. }
+        | ExactArrangement2dBlocker::UnresolvedProperIntersectionConstruction { .. }
+        | ExactArrangement2dBlocker::UnresolvedPointOnSegment { .. } => {
+            ExactArrangementBlocker::UnresolvedIntersection
+        }
+        ExactArrangement2dBlocker::UnresolvedSegmentOrdering { .. }
+        | ExactArrangement2dBlocker::UnresolvedAngleOrdering { .. }
+        | ExactArrangement2dBlocker::UnresolvedFaceArea { .. }
+        | ExactArrangement2dBlocker::UnresolvedRingNormalization { .. }
+        | ExactArrangement2dBlocker::UnresolvedOutputLoopContainment { .. } => {
+            ExactArrangementBlocker::UndecidableOrdering
+        }
+        ExactArrangement2dBlocker::DegenerateSegment { .. }
+        | ExactArrangement2dBlocker::IncompleteFaceWalk { .. }
+        | ExactArrangement2dBlocker::InvalidRegionRing { .. }
+        | ExactArrangement2dBlocker::UnresolvedFaceWitness { .. }
+        | ExactArrangement2dBlocker::UnresolvedRingClassification { .. }
+        | ExactArrangement2dBlocker::FaceWitnessOnBoundary { .. }
+        | ExactArrangement2dBlocker::NonManifoldSelectedBoundary { .. }
+        | ExactArrangement2dBlocker::DegenerateOutputLoop { .. }
+        | ExactArrangement2dBlocker::OutputHoleWithoutOuter { .. }
+        | ExactArrangement2dBlocker::OutputLoopBoundaryContainment { .. } => {
+            ExactArrangementBlocker::NonManifoldCellComplex
+        }
+    }
 }
 
 fn carrier_triangle_for_projection(
