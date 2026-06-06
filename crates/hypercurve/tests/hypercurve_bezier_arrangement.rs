@@ -1,6 +1,6 @@
 use hypercurve::{
     BezierAlgebraicEndpointImage2, BezierAlgebraicParameter2, BezierArrangementChain2,
-    BezierArrangementGraph2, BezierArrangementTraversal2, BezierParameter2,
+    BezierArrangementGraph2, BezierArrangementTraversal2, BezierMonotoneSpan, BezierParameter2,
     BezierParameterInterval, BezierParameterPolynomial, BezierRetainedLineOverlapExtent2,
     BezierRetainedLineOverlapSplit2, BezierRetainedLinearOverlapSplit2,
     BezierRetainedLinearOverlapSplitGraph2, BezierRetainedLinearOverlapTraversal2,
@@ -73,6 +73,11 @@ fn arrangement_graph_rejects_duplicate_source_fragment_evidence() {
         hypercurve::BezierArrangementFragment2::new(0, 0, fragment.clone()),
         hypercurve::BezierArrangementFragment2::new(0, 0, fragment),
     ]));
+}
+
+#[test]
+fn monotone_span_rejects_reversed_parameter_evidence() {
+    assert_topology_error(BezierMonotoneSpan::new(r(1), r(0)));
 }
 
 fn exact(value: Real) -> BezierParameter2 {

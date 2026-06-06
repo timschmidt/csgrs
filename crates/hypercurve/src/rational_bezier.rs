@@ -1519,7 +1519,11 @@ fn isolate_scalar_bernstein_roots(
         .filter(|sign| *sign != RealSign::Zero)
         .collect::<Vec<_>>();
     if strict_signs.is_empty() {
-        push_unique_graph_region_span(spans, BezierMonotoneSpan::new(start, end), policy);
+        push_unique_graph_region_span(
+            spans,
+            BezierMonotoneSpan::new(start, end).map_err(|_| UncertaintyReason::Ordering)?,
+            policy,
+        );
         return Ok(());
     }
     if strict_signs.iter().all(|sign| *sign == strict_signs[0]) {
@@ -1533,7 +1537,11 @@ fn isolate_scalar_bernstein_roots(
     }
 
     if depth >= 32 {
-        push_unique_graph_region_span(spans, BezierMonotoneSpan::new(start, end), policy);
+        push_unique_graph_region_span(
+            spans,
+            BezierMonotoneSpan::new(start, end).map_err(|_| UncertaintyReason::Ordering)?,
+            policy,
+        );
         return Ok(());
     }
 
@@ -2075,7 +2083,8 @@ fn relation_from_mixed_graph_order(
             for parameter in parameters {
                 push_unique_graph_region_span(
                     &mut spans,
-                    BezierMonotoneSpan::new(parameter.clone(), parameter),
+                    BezierMonotoneSpan::new(parameter.clone(), parameter)
+                        .expect("zero-width exact parameter span is ordered"),
                     policy,
                 );
             }
@@ -2698,7 +2707,8 @@ fn isolate_rational_quadratic_line_roots(
         for parameter in exact_parameters {
             push_unique_graph_region_span(
                 &mut spans,
-                BezierMonotoneSpan::new(parameter.clone(), parameter),
+                BezierMonotoneSpan::new(parameter.clone(), parameter)
+                    .expect("zero-width exact parameter span is ordered"),
                 policy,
             );
         }
@@ -2734,7 +2744,8 @@ fn rational_line_contact_relation_from_isolation(
         for parameter in exact_parameters {
             push_unique_graph_region_span(
                 &mut spans,
-                BezierMonotoneSpan::new(parameter.clone(), parameter),
+                BezierMonotoneSpan::new(parameter.clone(), parameter)
+                    .expect("zero-width exact parameter span is ordered"),
                 policy,
             );
         }
@@ -2894,7 +2905,8 @@ fn relation_from_matching_weight_graph_root_cover(
             for parameter in exact {
                 push_unique_graph_region_span(
                     &mut regions,
-                    BezierMonotoneSpan::new(parameter.clone(), parameter),
+                    BezierMonotoneSpan::new(parameter.clone(), parameter)
+                        .expect("zero-width exact parameter span is ordered"),
                     policy,
                 );
             }
@@ -2934,7 +2946,11 @@ fn isolate_scalar_quadratic_roots(
         .filter(|sign| *sign != RealSign::Zero)
         .collect::<Vec<_>>();
     if strict_signs.is_empty() {
-        push_unique_graph_region_span(spans, BezierMonotoneSpan::new(start, end), policy);
+        push_unique_graph_region_span(
+            spans,
+            BezierMonotoneSpan::new(start, end).map_err(|_| UncertaintyReason::Ordering)?,
+            policy,
+        );
         return Ok(());
     }
     if strict_signs.iter().all(|sign| *sign == strict_signs[0]) {
@@ -2948,7 +2964,11 @@ fn isolate_scalar_quadratic_roots(
     }
 
     if depth >= 32 {
-        push_unique_graph_region_span(spans, BezierMonotoneSpan::new(start, end), policy);
+        push_unique_graph_region_span(
+            spans,
+            BezierMonotoneSpan::new(start, end).map_err(|_| UncertaintyReason::Ordering)?,
+            policy,
+        );
         return Ok(());
     }
 
@@ -3215,7 +3235,8 @@ fn line_image_regions_from_curve_spans(
     spans: Vec<BezierMonotoneSpan>,
     line_is_first: bool,
 ) -> BezierCurveRelation {
-    let line_span = BezierMonotoneSpan::new(Real::zero(), Real::one());
+    let line_span =
+        BezierMonotoneSpan::new(Real::zero(), Real::one()).expect("unit line span is ordered");
     let regions = spans
         .into_iter()
         .map(|curve_span| {
@@ -3313,7 +3334,8 @@ impl RationalSubdivisionNode {
         Self {
             controls: curve.control_points().into_iter().cloned().collect(),
             weights: Some(curve.weights().into_iter().cloned().collect()),
-            span: BezierMonotoneSpan::new(Real::zero(), Real::one()),
+            span: BezierMonotoneSpan::new(Real::zero(), Real::one())
+                .expect("unit subdivision span is ordered"),
         }
     }
 
@@ -3321,7 +3343,8 @@ impl RationalSubdivisionNode {
         Self {
             controls: controls.iter().map(|point| (*point).clone()).collect(),
             weights: None,
-            span: BezierMonotoneSpan::new(Real::zero(), Real::one()),
+            span: BezierMonotoneSpan::new(Real::zero(), Real::one())
+                .expect("unit subdivision span is ordered"),
         }
     }
 
@@ -3334,7 +3357,8 @@ impl RationalSubdivisionNode {
         Self {
             controls,
             weights,
-            span: BezierMonotoneSpan::new(start, end),
+            span: BezierMonotoneSpan::new(start, end)
+                .expect("subdivision child span endpoints are ordered"),
         }
     }
 

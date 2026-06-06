@@ -16,8 +16,8 @@ use crate::classify::{
     real_sign,
 };
 use crate::{
-    Aabb2, Classification, CubicBezier2, CurveError, CurvePolicy, LineLineIntersection, LineSeg2,
-    LineSide, Point2, QuadraticBezier2, UncertaintyReason,
+    Aabb2, Classification, CubicBezier2, CurveError, CurvePolicy, CurveResult,
+    LineLineIntersection, LineSeg2, LineSide, Point2, QuadraticBezier2, UncertaintyReason,
 };
 
 /// Current finite dyadic frontier for exact same-parameter Bezier candidates.
@@ -190,8 +190,13 @@ impl BezierCurveIntersectionRegion {
 
 impl BezierMonotoneSpan {
     /// Constructs a closed monotone parameter span.
-    pub const fn new(start: Real, end: Real) -> Self {
-        Self { start, end }
+    pub fn new(start: Real, end: Real) -> CurveResult<Self> {
+        match compare_reals(&start, &end, &CurvePolicy::certified()) {
+            Some(Ordering::Less | Ordering::Equal) => Ok(Self { start, end }),
+            Some(Ordering::Greater) | None => Err(CurveError::Topology(
+                "Bezier monotone span endpoints must be certified in nondecreasing order".into(),
+            )),
+        }
     }
 
     /// Returns the start parameter.
@@ -1703,7 +1708,8 @@ fn spans_with_exact_parameters(
     for parameter in exact {
         push_unique_span(
             &mut all,
-            BezierMonotoneSpan::new(parameter.clone(), parameter.clone()),
+            BezierMonotoneSpan::new(parameter.clone(), parameter.clone())
+                .expect("zero-width exact parameter span is ordered"),
             policy,
         );
     }
@@ -1726,7 +1732,9 @@ fn span_intersection(
         None => return Err(UncertaintyReason::Ordering),
     };
     match compare_reals(&start, &end, policy) {
-        Some(Ordering::Less | Ordering::Equal) => Ok(Some(BezierMonotoneSpan::new(start, end))),
+        Some(Ordering::Less | Ordering::Equal) => Ok(Some(
+            BezierMonotoneSpan::new(start, end).map_err(|_| UncertaintyReason::Ordering)?,
+        )),
         Some(Ordering::Greater) => Ok(None),
         None => Err(UncertaintyReason::Ordering),
     }
@@ -2495,7 +2503,8 @@ where
                 Classification::Decided(false) => {}
                 Classification::Uncertain(reason) => return Classification::Uncertain(reason),
             }
-            let line_span = BezierMonotoneSpan::new(Real::zero(), Real::one());
+            let line_span = BezierMonotoneSpan::new(Real::zero(), Real::one())
+                .expect("unit line span is ordered");
             let regions = spans
                 .into_iter()
                 .map(|curve_span| {
@@ -2585,14 +2594,16 @@ impl BezierSubdivisionNode {
     fn new(controls: Vec<Point2>) -> Self {
         Self {
             controls,
-            span: BezierMonotoneSpan::new(Real::zero(), Real::one()),
+            span: BezierMonotoneSpan::new(Real::zero(), Real::one())
+                .expect("unit subdivision span is ordered"),
         }
     }
 
     fn with_span(controls: Vec<Point2>, start: Real, end: Real) -> Self {
         Self {
             controls,
-            span: BezierMonotoneSpan::new(start, end),
+            span: BezierMonotoneSpan::new(start, end)
+                .expect("subdivision child span endpoints are ordered"),
         }
     }
 
@@ -3218,7 +3229,8 @@ fn merge_exact_parameters_into_spans(
     for parameter in exact_parameters {
         push_unique_span(
             spans,
-            BezierMonotoneSpan::new(parameter.clone(), parameter),
+            BezierMonotoneSpan::new(parameter.clone(), parameter)
+                .expect("zero-width exact parameter span is ordered"),
             policy,
         );
     }
@@ -3251,7 +3263,11 @@ fn isolate_scalar_cubic_roots(
         .filter(|sign| *sign != RealSign::Zero)
         .collect::<Vec<_>>();
     if strict_signs.is_empty() {
-        push_unique_span(spans, BezierMonotoneSpan::new(start, end), policy);
+        push_unique_span(
+            spans,
+            BezierMonotoneSpan::new(start, end).map_err(|_| UncertaintyReason::Ordering)?,
+            policy,
+        );
         return Ok(());
     }
     if strict_signs.iter().all(|sign| *sign == strict_signs[0]) {
@@ -3265,7 +3281,11 @@ fn isolate_scalar_cubic_roots(
     }
 
     if depth >= 32 {
-        push_unique_span(spans, BezierMonotoneSpan::new(start, end), policy);
+        push_unique_span(
+            spans,
+            BezierMonotoneSpan::new(start, end).map_err(|_| UncertaintyReason::Ordering)?,
+            policy,
+        );
         return Ok(());
     }
 
@@ -3584,10 +3604,14 @@ pub(crate) fn monotone_spans_from_parameters(
         }
     }
 
-    let spans = split_parameters
-        .windows(2)
-        .map(|pair| BezierMonotoneSpan::new(pair[0].clone(), pair[1].clone()))
-        .collect();
+    let mut spans = Vec::with_capacity(split_parameters.len().saturating_sub(1));
+    for pair in split_parameters.windows(2) {
+        let span = match BezierMonotoneSpan::new(pair[0].clone(), pair[1].clone()) {
+            Ok(span) => span,
+            Err(_) => return Classification::Uncertain(UncertaintyReason::Ordering),
+        };
+        spans.push(span);
+    }
     Classification::Decided(spans)
 }
 

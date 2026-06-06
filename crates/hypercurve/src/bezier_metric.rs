@@ -325,7 +325,8 @@ fn inverse_length_parameter_region_for_controls(
             return Ok(Classification::Decided(
                 BezierArcLengthParameterRegion2::new(
                     target_length,
-                    BezierMonotoneSpan::new(Real::zero(), Real::zero()),
+                    BezierMonotoneSpan::new(Real::zero(), Real::zero())
+                        .expect("zero arc-length parameter span is ordered"),
                     zero_bounds,
                 ),
             ));
@@ -368,7 +369,8 @@ fn inverse_length_parameter_region_for_controls(
                 return Ok(Classification::Decided(
                     BezierArcLengthParameterRegion2::new(
                         target_length,
-                        BezierMonotoneSpan::new(mid.clone(), mid),
+                        BezierMonotoneSpan::new(mid.clone(), mid)
+                            .expect("zero-width bisection span is ordered"),
                         mid_bounds,
                     ),
                 ));
@@ -388,7 +390,8 @@ fn inverse_length_parameter_region_for_controls(
     Ok(Classification::Decided(
         BezierArcLengthParameterRegion2::new(
             target_length,
-            BezierMonotoneSpan::new(low, high),
+            BezierMonotoneSpan::new(low, high)
+                .expect("inverse length search maintains ordered bounds"),
             high_bounds,
         ),
     ))
@@ -430,7 +433,8 @@ fn exact_linear_parameter_inverse_length_region(
     Ok(Classification::Decided(Some(
         BezierArcLengthParameterRegion2::new(
             target_length,
-            BezierMonotoneSpan::new(parameter.clone(), parameter),
+            BezierMonotoneSpan::new(parameter.clone(), parameter)
+                .expect("zero-width exact inverse length span is ordered"),
             bounds,
         ),
     )))
