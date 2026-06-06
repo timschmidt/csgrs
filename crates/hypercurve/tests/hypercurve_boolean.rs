@@ -1,8 +1,9 @@
 use hypercurve::{
     BooleanBoundaryChain, BooleanBoundaryChainSet, BooleanBoundaryFragmentSet, BooleanBoundaryLoop,
-    BooleanBoundaryLoopSet, BooleanFragmentAction, BooleanOp, BulgeVertex2, Classification,
-    Contour2, CurveError, CurvePolicy, DirectedBooleanFragment, FillRule, Real, Region2,
-    RegionContourKey, RegionContourRole, RegionSide, Segment2, UncertaintyReason,
+    BooleanBoundaryLoopSet, BooleanFragmentAction, BooleanFragmentClassification,
+    BooleanFragmentSelection, BooleanOp, BulgeVertex2, Classification, Contour2, CurveError,
+    CurvePolicy, DirectedBooleanFragment, FillRule, Real, Region2, RegionContourKey,
+    RegionContourRole, RegionPointLocation, RegionSide, Segment2, UncertaintyReason,
 };
 
 fn s(value: i32) -> Real {
@@ -57,6 +58,18 @@ fn directed_fragment(
         key: RegionContourKey::new(RegionSide::First, RegionContourRole::Material, 0),
         fragment_index,
         segment: line_segment(x0, y0, x1, y1),
+    }
+}
+
+fn fragment_classification(
+    fragment_index: usize,
+    action: BooleanFragmentAction,
+) -> BooleanFragmentClassification {
+    BooleanFragmentClassification {
+        key: RegionContourKey::new(RegionSide::First, RegionContourRole::Material, 0),
+        fragment_index,
+        opposite_location: RegionPointLocation::Outside,
+        action,
     }
 }
 
@@ -330,6 +343,49 @@ fn reversing_segments_swaps_endpoints_and_arc_orientation() {
 }
 
 #[test]
+fn boolean_fragment_selection_constructor_validates_source_ownership() {
+    BooleanFragmentSelection::new(Vec::new()).unwrap();
+    BooleanFragmentSelection::new(vec![
+        fragment_classification(0, BooleanFragmentAction::KeepSourceDirection),
+        fragment_classification(1, BooleanFragmentAction::Discard),
+    ])
+    .unwrap();
+
+    assert_topology_error(BooleanFragmentSelection::new(vec![
+        fragment_classification(0, BooleanFragmentAction::KeepSourceDirection),
+        fragment_classification(0, BooleanFragmentAction::BoundaryNeedsResolution),
+    ]));
+}
+
+#[test]
+fn boolean_boundary_fragment_set_constructor_validates_source_ownership() {
+    BooleanBoundaryFragmentSet::new(Vec::new(), Vec::new()).unwrap();
+    BooleanBoundaryFragmentSet::new(
+        vec![directed_fragment(0, 0, 0, 1, 0)],
+        vec![fragment_classification(
+            1,
+            BooleanFragmentAction::BoundaryNeedsResolution,
+        )],
+    )
+    .unwrap();
+
+    assert_topology_error(BooleanBoundaryFragmentSet::new(
+        vec![
+            directed_fragment(0, 0, 0, 1, 0),
+            directed_fragment(0, 1, 0, 2, 0),
+        ],
+        Vec::new(),
+    ));
+    assert_topology_error(BooleanBoundaryFragmentSet::new(
+        vec![directed_fragment(0, 0, 0, 1, 0)],
+        vec![fragment_classification(
+            0,
+            BooleanFragmentAction::BoundaryNeedsResolution,
+        )],
+    ));
+}
+
+#[test]
 fn boolean_boundary_chain_constructors_validate_fragment_ownership() {
     assert_topology_error(BooleanBoundaryChain::new(Vec::new(), false));
     assert_topology_error(BooleanBoundaryChain::new(
@@ -387,7 +443,8 @@ fn boundary_chain_assembly_rejects_branch_points() {
             },
         ],
         Vec::new(),
-    );
+    )
+    .unwrap();
 
     assert_eq!(
         fragments.assemble_chains(&policy()),
@@ -412,7 +469,8 @@ fn boundary_loop_extraction_rejects_open_chains() {
             },
         ],
         Vec::new(),
-    );
+    )
+    .unwrap();
 
     let Classification::Decided(chains) = fragments.assemble_chains(&policy()) else {
         panic!("expected open chain assembly to succeed");

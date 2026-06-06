@@ -9,7 +9,7 @@ use crate::bbox::{aabbs_decided_disjoint, decided_contour_aabb};
 use crate::{Classification, ContourIntersectionSet, CurvePolicy, CurveResult, RegionView2};
 
 /// Which region side a contour key belongs to.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub enum RegionSide {
     /// First region passed to the query.
     First,
@@ -18,7 +18,7 @@ pub enum RegionSide {
 }
 
 /// Semantic role of a contour inside a region.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub enum RegionContourRole {
     /// Positive material contour.
     Material,
@@ -27,7 +27,7 @@ pub enum RegionContourRole {
 }
 
 /// Identifies one contour inside a region-pair query.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub struct RegionContourKey {
     /// Region side.
     pub side: RegionSide,

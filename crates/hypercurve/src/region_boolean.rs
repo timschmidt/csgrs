@@ -1249,7 +1249,7 @@ pub(crate) fn boundary_contours_dropping_unresolved(
     // caller additionally uses Foster, Hormann, and Popa's degeneracy split to
     // keep positive-area overlap and branch cases out of this helper.
     let emitted =
-        BooleanBoundaryFragmentSet::new(emitted.directed_fragments().to_vec(), Vec::new());
+        BooleanBoundaryFragmentSet::new(emitted.directed_fragments().to_vec(), Vec::new())?;
     let chains = match emitted.assemble_chains(policy) {
         Classification::Decided(chains) => chains,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),

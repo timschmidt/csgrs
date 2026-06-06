@@ -68,8 +68,9 @@ pub struct BooleanFragmentSelection {
 
 impl BooleanFragmentSelection {
     /// Constructs a selection from already-classified fragments.
-    pub const fn new(classifications: Vec<BooleanFragmentClassification>) -> Self {
-        Self { classifications }
+    pub fn new(classifications: Vec<BooleanFragmentClassification>) -> CurveResult<Self> {
+        validate_boolean_fragment_classifications(&classifications)?;
+        Ok(Self { classifications })
     }
 
     /// Returns all fragment classifications in region-fragment order.
@@ -144,10 +145,7 @@ impl BooleanFragmentSelection {
             }
         }
 
-        Ok(BooleanBoundaryFragmentSet::new(
-            directed_fragments,
-            unresolved_boundaries,
-        ))
+        BooleanBoundaryFragmentSet::new(directed_fragments, unresolved_boundaries)
     }
 }
 
@@ -235,6 +233,22 @@ fn fragment_for_classification<'a>(
         })
 }
 
+fn validate_boolean_fragment_classifications(
+    classifications: &[BooleanFragmentClassification],
+) -> CurveResult<()> {
+    let mut owners = classifications
+        .iter()
+        .map(|classification| (classification.key, classification.fragment_index))
+        .collect::<Vec<_>>();
+    owners.sort_unstable();
+    if owners.windows(2).any(|window| window[0] == window[1]) {
+        return Err(CurveError::Topology(
+            "boolean fragment selection must not classify the same source fragment twice".into(),
+        ));
+    }
+    Ok(())
+}
+
 impl RegionFragmentSet {
     /// Classifies fragments against the opposite region for a boolean operation.
     ///
@@ -315,6 +329,6 @@ impl RegionFragmentSet {
 
         Ok(Classification::Decided(BooleanFragmentSelection::new(
             classifications,
-        )))
+        )?))
     }
 }

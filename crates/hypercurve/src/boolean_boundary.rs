@@ -31,14 +31,15 @@ pub struct BooleanBoundaryFragmentSet {
 
 impl BooleanBoundaryFragmentSet {
     /// Constructs a boundary-fragment set from preclassified pieces.
-    pub const fn new(
+    pub fn new(
         directed_fragments: Vec<DirectedBooleanFragment>,
         unresolved_boundaries: Vec<BooleanFragmentClassification>,
-    ) -> Self {
-        Self {
+    ) -> CurveResult<Self> {
+        validate_boolean_boundary_fragment_set(&directed_fragments, &unresolved_boundaries)?;
+        Ok(Self {
             directed_fragments,
             unresolved_boundaries,
-        }
+        })
     }
 
     /// Returns fragments that can be passed to graph traversal immediately.
@@ -416,16 +417,10 @@ impl BooleanBoundaryLoopSet {
 
 type EndpointAdjacency = (Vec<Option<usize>>, Vec<Option<usize>>);
 
-fn directed_boolean_fragment_owner(fragment: &DirectedBooleanFragment) -> (u8, u8, usize, usize) {
-    let side = match fragment.key.side {
-        RegionSide::First => 0,
-        RegionSide::Second => 1,
-    };
-    let role = match fragment.key.role {
-        RegionContourRole::Material => 0,
-        RegionContourRole::Hole => 1,
-    };
-    (side, role, fragment.key.index, fragment.fragment_index)
+fn directed_boolean_fragment_owner(
+    fragment: &DirectedBooleanFragment,
+) -> (RegionContourKey, usize) {
+    (fragment.key, fragment.fragment_index)
 }
 
 fn validate_directed_boolean_fragments(
@@ -489,7 +484,7 @@ fn validate_boolean_boundary_loops(loops: &[BooleanBoundaryLoop]) -> CurveResult
 }
 
 fn validate_unique_boolean_fragment_owners(
-    mut fragment_owners: Vec<(u8, u8, usize, usize)>,
+    mut fragment_owners: Vec<(RegionContourKey, usize)>,
     message: &str,
 ) -> CurveResult<()> {
     fragment_owners.sort_unstable();
@@ -500,6 +495,25 @@ fn validate_unique_boolean_fragment_owners(
         return Err(CurveError::Topology(message.to_owned()));
     }
     Ok(())
+}
+
+fn validate_boolean_boundary_fragment_set(
+    directed_fragments: &[DirectedBooleanFragment],
+    unresolved_boundaries: &[BooleanFragmentClassification],
+) -> CurveResult<()> {
+    let mut fragment_owners = directed_fragments
+        .iter()
+        .map(directed_boolean_fragment_owner)
+        .collect::<Vec<_>>();
+    fragment_owners.extend(
+        unresolved_boundaries
+            .iter()
+            .map(|classification| (classification.key, classification.fragment_index)),
+    );
+    validate_unique_boolean_fragment_owners(
+        fragment_owners,
+        "boolean boundary fragment set must not contain duplicate source fragment ownership",
+    )
 }
 
 fn decided_boolean_boundary_chain(
