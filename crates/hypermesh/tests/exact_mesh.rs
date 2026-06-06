@@ -5,7 +5,7 @@ use hypermesh::{
     MeshFacePairValidationError, TriangleTriangleRelation, ValidationPolicy, boolean_exact,
     boolean_exact_with_boundary_policy, build_intersection_graph, certify_boundary_touching_report,
     classify_mesh_face_pair, classify_triangle_triangle, inspect_i64_mesh_input,
-    preflight_boolean_exact,
+    preflight_boolean_exact, preflight_boolean_exact_with_boundary_policy,
 };
 use hyperreal::Real;
 
@@ -251,6 +251,58 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
         hypermesh::ExactBooleanSupport::RequiresBoundaryPolicy,
         "{preflight:?}"
     );
+    let rejected_policy_preflight = preflight_boolean_exact_with_boundary_policy(
+        &left,
+        &right,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        ExactBoundaryBooleanPolicy::Reject,
+    )
+    .unwrap();
+    assert_eq!(rejected_policy_preflight, preflight);
+
+    let policy_preflight = preflight_boolean_exact_with_boundary_policy(
+        &left,
+        &right,
+        ExactBooleanOperation::Union,
+        ValidationPolicy::ALLOW_BOUNDARY,
+        ExactBoundaryBooleanPolicy::PreserveSeparateShells,
+    )
+    .unwrap();
+    assert_eq!(
+        policy_preflight.support,
+        hypermesh::ExactBooleanSupport::CertifiedBoundaryPolicyShortcut,
+        "{policy_preflight:?}"
+    );
+    assert!(policy_preflight.blocker.is_none(), "{policy_preflight:?}");
+    assert_eq!(
+        policy_preflight.retained_face_pairs,
+        report.retained_face_pairs
+    );
+    assert_eq!(policy_preflight.retained_events, report.retained_events);
+    policy_preflight
+        .validate_against_sources_with_boundary_policy(
+            &left,
+            &right,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            ExactBoundaryBooleanPolicy::PreserveSeparateShells,
+        )
+        .unwrap();
+    assert_eq!(
+        policy_preflight.freshness_against_sources_with_boundary_policy(
+            &left,
+            &right,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            ExactBoundaryBooleanPolicy::PreserveSeparateShells,
+        ),
+        hypermesh::ExactReportFreshness::Current
+    );
+    assert!(
+        policy_preflight
+            .validate_against_sources(&left, &right)
+            .is_err(),
+        "strict replay should not certify a boundary-policy preflight"
+    );
     assert!(
         boolean_exact(
             &left,
@@ -287,6 +339,16 @@ fn boundary_policy_remains_explicit_for_named_booleans() {
     assert!(
         projected
             .validate_against_sources(&left, &separated_right)
+            .is_err()
+    );
+    assert!(
+        policy_preflight
+            .validate_against_sources_with_boundary_policy(
+                &left,
+                &separated_right,
+                ValidationPolicy::ALLOW_BOUNDARY,
+                ExactBoundaryBooleanPolicy::PreserveSeparateShells,
+            )
             .is_err()
     );
 }

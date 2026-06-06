@@ -16,8 +16,8 @@ use super::boolean::{
     certify_boundary_touching_report, certify_open_surface_disjoint_report,
     certify_planar_arrangement_report, certify_refinement_report, certify_same_surface_report,
     certify_volumetric_boundary_closure_report, certify_winding_readiness_report,
-    preflight_boolean_exact, preflight_boolean_exact_with_validation,
-    replay_volumetric_winding_region_plan,
+    preflight_boolean_exact, preflight_boolean_exact_with_boundary_policy,
+    preflight_boolean_exact_with_validation, replay_volumetric_winding_region_plan,
 };
 use super::bounds::AabbIntersectionKind;
 use super::convex::{
@@ -485,6 +485,7 @@ const fn certified_preflight_support_matches_operation(
             | ExactBooleanSupport::CertifiedClosedWindingSeparated
             | ExactBooleanSupport::CertifiedClosedWindingContainment
             | ExactBooleanSupport::CertifiedMixedDimensionalRegularizedSolid
+            | ExactBooleanSupport::CertifiedBoundaryPolicyShortcut
             | ExactBooleanSupport::CertifiedConvexContainment
             | ExactBooleanSupport::CertifiedConvexSeparated,
             ExactBooleanOperation::Union
@@ -1819,6 +1820,10 @@ pub enum ExactBooleanSupport {
     /// pipeline with specialized surface materializers retained only as proof
     /// fixtures.
     CertifiedArrangementCellComplex,
+    /// A caller supplied a certified boundary-output policy, so boundary-only
+    /// contact can be projected into triangle-mesh output without treating the
+    /// lower-dimensional contact itself as volume.
+    CertifiedBoundaryPolicyShortcut,
     /// The retained graph contains certified boundary contact events. This
     /// includes coplanar touching and the closed-solid case where positive-area
     /// coplanar overlaps plus adjacent contact-only candidates are proven
@@ -2181,6 +2186,37 @@ impl ExactBooleanPreflight {
         }
     }
 
+    /// Validate this preflight report against source meshes, validation policy,
+    /// and boundary-output policy.
+    ///
+    /// Boundary-only named booleans are intentionally blocked by the default
+    /// preflight until a caller chooses how to project lower-dimensional
+    /// contact. This replay includes that chosen policy, allowing a retained
+    /// `CertifiedBoundaryPolicyShortcut` preflight to prove it still matches
+    /// the exact graph and output validation contract.
+    pub fn validate_against_sources_with_boundary_policy(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+        validation: ValidationPolicy,
+        boundary_policy: ExactBoundaryBooleanPolicy,
+    ) -> Result<(), ExactReportValidationError> {
+        self.validate()?;
+        let replay = preflight_boolean_exact_with_boundary_policy(
+            left,
+            right,
+            self.operation,
+            validation,
+            boundary_policy,
+        )
+        .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+        if self == &replay {
+            Ok(())
+        } else {
+            Err(ExactReportValidationError::SourceReplayMismatch)
+        }
+    }
+
     /// Classify whether this retained preflight is fresh for the source meshes.
     ///
     /// This uses the default strict closed-output preflight contract. Use
@@ -2211,6 +2247,30 @@ impl ExactBooleanPreflight {
             return error.into();
         }
         match preflight_boolean_exact_with_validation(left, right, self.operation, validation) {
+            Ok(replay) if self == &replay => ExactReportFreshness::Current,
+            Ok(_) | Err(_) => ExactReportFreshness::SourceReplayMismatch,
+        }
+    }
+
+    /// Classify whether this retained preflight is fresh under `validation`
+    /// and `boundary_policy`.
+    pub fn freshness_against_sources_with_boundary_policy(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+        validation: ValidationPolicy,
+        boundary_policy: ExactBoundaryBooleanPolicy,
+    ) -> ExactReportFreshness {
+        if let Err(error) = self.validate() {
+            return error.into();
+        }
+        match preflight_boolean_exact_with_boundary_policy(
+            left,
+            right,
+            self.operation,
+            validation,
+            boundary_policy,
+        ) {
             Ok(replay) if self == &replay => ExactReportFreshness::Current,
             Ok(_) | Err(_) => ExactReportFreshness::SourceReplayMismatch,
         }
@@ -2262,6 +2322,18 @@ impl ExactBooleanPreflight {
                     || self.graph_had_unknowns
                     || self.retained_face_pairs != 0
                     || self.retained_events != 0
+                    || !certified_preflight_support_matches_operation(self.support, self.operation)
+                {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
+                no_region_facts(self.region_count, &self.region_classifications)
+            }
+            ExactBooleanSupport::CertifiedBoundaryPolicyShortcut => {
+                if operation_is_selected_region(self.operation)
+                    || self.graph_had_unknowns
+                    || self.blocker.is_some()
+                    || self.retained_face_pairs == 0
+                    || self.arrangement_readiness.is_some()
                     || !certified_preflight_support_matches_operation(self.support, self.operation)
                 {
                     return Err(ExactReportValidationError::StatusEvidenceMismatch);

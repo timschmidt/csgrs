@@ -857,6 +857,48 @@ pub fn preflight_boolean_exact_with_validation(
     Ok(preflight)
 }
 
+/// Preflight an exact boolean operation for explicit output validation and
+/// boundary-only projection policies.
+///
+/// The strict [`preflight_boolean_exact`] contract keeps lower-dimensional
+/// boundary contact as [`ExactBooleanSupport::RequiresBoundaryPolicy`]. This
+/// variant lets callers prove that their chosen boundary policy is sufficient
+/// for the current graph and validation policy, mirroring
+/// [`boolean_exact_with_boundary_policy`] without hiding the policy decision.
+pub fn preflight_boolean_exact_with_boundary_policy(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+    boundary_policy: ExactBoundaryBooleanPolicy,
+) -> Result<ExactBooleanPreflight, MeshError> {
+    let preflight = preflight_boolean_exact_with_validation(left, right, operation, validation)?;
+    if boundary_policy == ExactBoundaryBooleanPolicy::Reject
+        || matches!(operation, ExactBooleanOperation::SelectedRegions(_))
+        || preflight.support != ExactBooleanSupport::RequiresBoundaryPolicy
+    {
+        return Ok(preflight);
+    }
+
+    let graph = build_intersection_graph(left, right)?;
+    validate_graph_source_handoff(&graph, left, right)?;
+    if boolean_boundary_touching_meshes_from_graph(
+        &graph,
+        left,
+        right,
+        operation,
+        validation,
+        boundary_policy,
+    )?
+    .is_some()
+    {
+        return Ok(certified_boundary_policy_preflight_from_graph(
+            operation, &graph,
+        ));
+    }
+    Ok(preflight)
+}
+
 /// Certify why retained volumetric boundary output can or cannot become closed.
 ///
 /// This report is intentionally narrower than `boolean_exact`: it asks whether
@@ -1245,6 +1287,24 @@ fn certified_arrangement_cell_complex_preflight_from_graph(
         blocker: None,
         arrangement_readiness: None,
         coplanar_volumetric_evidence: coplanar_volumetric_evidence_if_required(graph, left, right),
+    }
+}
+
+fn certified_boundary_policy_preflight_from_graph(
+    operation: ExactBooleanOperation,
+    graph: &super::graph::ExactIntersectionGraph,
+) -> ExactBooleanPreflight {
+    ExactBooleanPreflight {
+        operation,
+        support: ExactBooleanSupport::CertifiedBoundaryPolicyShortcut,
+        graph_had_unknowns: graph.has_unknowns(),
+        retained_face_pairs: graph.face_pairs.len(),
+        retained_events: graph.event_count(),
+        region_count: 0,
+        region_classifications: Vec::new(),
+        blocker: None,
+        arrangement_readiness: None,
+        coplanar_volumetric_evidence: None,
     }
 }
 
