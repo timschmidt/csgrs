@@ -5442,6 +5442,34 @@ fn boolean_boundary_touching_meshes_from_graph(
     Ok(Some(boundary_policy_shortcut_result(mesh, operation)))
 }
 
+/// Certify and materialize a named boolean for exact boundary-only contact
+/// under an explicit boundary-output policy.
+///
+/// This is the direct materializer form of
+/// [`preflight_boolean_exact_with_boundary_policy`]: strict boundary-only
+/// contact remains blocked until the caller chooses
+/// [`ExactBoundaryBooleanPolicy::PreserveSeparateShells`]. Unsupported contact
+/// states or rejected policies return `None` rather than projecting
+/// lower-dimensional contact implicitly.
+pub fn materialize_boundary_touching_policy_boolean(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+    boundary_policy: ExactBoundaryBooleanPolicy,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    let graph = build_intersection_graph(left, right)?;
+    validate_graph_source_handoff(&graph, left, right)?;
+    boolean_boundary_touching_meshes_from_graph(
+        &graph,
+        left,
+        right,
+        operation,
+        validation,
+        boundary_policy,
+    )
+}
+
 /// Certify whether retained graph pairs are exclusively boundary-only contacts.
 ///
 /// The report keeps the exact graph relation counts used by boundary-policy

@@ -21,7 +21,7 @@ use hypermesh::{
     classify_triangle_triangle, exact_arrangement_boolean_attempt_report, inspect_i64_mesh_input,
     materialize_affine_orthogonal_solid_intersection,
     materialize_axis_aligned_orthogonal_solid_intersection,
-    materialize_axis_aligned_orthogonal_solid_union,
+    materialize_axis_aligned_orthogonal_solid_union, materialize_boundary_touching_policy_boolean,
     materialize_closed_regularized_lower_dimensional_boolean,
     materialize_contained_face_adjacent_union, materialize_coplanar_mesh_overlay_arrangement,
     materialize_full_face_adjacent_union, materialize_open_surface_arrangement,
@@ -565,6 +565,79 @@ fn lower_dimensional_regularized_boolean_is_publicly_replayable() {
                 operation,
                 ValidationPolicy::CLOSED,
                 ExactBoundaryBooleanPolicy::Reject,
+            )
+            .unwrap();
+    }
+}
+
+#[test]
+fn boundary_touching_policy_boolean_is_publicly_replayable() {
+    let left = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 2, 0, 0, 0, 2, 0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let right = ExactMesh::from_i64_triangles_with_policy(
+        &[2, 0, 0, 0, 2, 0, 2, 2, 2],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let separated_right = ExactMesh::from_i64_triangles_with_policy(
+        &[5, 0, 0, 7, 0, 0, 5, 2, 0],
+        &[0, 1, 2],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+
+    for operation in [
+        ExactBooleanOperation::Union,
+        ExactBooleanOperation::Intersection,
+        ExactBooleanOperation::Difference,
+    ] {
+        assert!(
+            materialize_boundary_touching_policy_boolean(
+                &left,
+                &right,
+                operation,
+                ValidationPolicy::ALLOW_BOUNDARY,
+                ExactBoundaryBooleanPolicy::Reject,
+            )
+            .unwrap()
+            .is_none()
+        );
+
+        let result = materialize_boundary_touching_policy_boolean(
+            &left,
+            &right,
+            operation,
+            ValidationPolicy::ALLOW_BOUNDARY,
+            ExactBoundaryBooleanPolicy::PreserveSeparateShells,
+        )
+        .unwrap()
+        .expect("certified boundary-only contact should materialize under explicit policy");
+        assert_eq!(
+            result.kind,
+            ExactBooleanResultKind::BoundaryPolicyShortcut { operation }
+        );
+        result.validate().unwrap();
+        result.validate_against_sources(&left, &right).unwrap();
+        assert_eq!(
+            result.freshness_against_sources(&left, &right),
+            ExactReportFreshness::Current
+        );
+        assert_eq!(
+            result.freshness_against_sources(&left, &separated_right),
+            ExactReportFreshness::SourceReplayMismatch
+        );
+        result
+            .validate_operation_against_sources(
+                &left,
+                &right,
+                operation,
+                ValidationPolicy::ALLOW_BOUNDARY,
+                ExactBoundaryBooleanPolicy::PreserveSeparateShells,
             )
             .unwrap();
     }
