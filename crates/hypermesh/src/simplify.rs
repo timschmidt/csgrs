@@ -23,7 +23,7 @@ use super::view::{ApproximateMeshF64View, approximate_mesh_f64_view};
 use hyperlimit::CoplanarProjection;
 use hyperlimit::{ApproximationPolicy, SourceProvenance};
 use hyperlimit::{
-    Point3, Sign, compare_reals, orient2d_report, point3_equal, project_point3,
+    Point3, Sign, compare_reals, orient2d_report, orient3d_report, point3_equal, project_point3,
     projected_polygon_area2_value,
 };
 use hyperreal::Real;
@@ -210,6 +210,11 @@ pub fn simplify_selected_cell_complex(
     interior_edges_removed += merged.interior_edges_removed;
     collinear_boundary_nodes_removed += merged.collinear_boundary_nodes_removed;
     zero_area_cells_removed += merged.zero_area_cells_removed;
+    let merged = merge_coplanar_same_label_faces_across_carriers(faces, &mut blockers);
+    faces = merged.faces;
+    interior_edges_removed += merged.interior_edges_removed;
+    collinear_boundary_nodes_removed += merged.collinear_boundary_nodes_removed;
+    zero_area_cells_removed += merged.zero_area_cells_removed;
 
     faces.sort_by_key(|face| {
         (
@@ -315,6 +320,73 @@ fn simplified_group_key(face: &ExactSimplifiedFaceCell) -> (usize, usize, usize,
     )
 }
 
+fn simplified_label_key(face: &ExactSimplifiedFaceCell) -> (usize, usize, usize) {
+    (
+        side_key(face.face.cell.carrier.side),
+        region_label_key(face.face.source),
+        opposite_label_key(face.face.opposite),
+    )
+}
+
+fn merge_coplanar_same_label_faces_across_carriers(
+    mut faces: Vec<ExactSimplifiedFaceCell>,
+    blockers: &mut Vec<ExactArrangementBlocker>,
+) -> MergeSameLabelResult {
+    let mut interior_edges_removed = 0;
+    let mut collinear_boundary_nodes_removed = 0;
+    let mut zero_area_cells_removed = 0;
+    let mut changed = true;
+    while changed {
+        changed = false;
+        'pairs: for left in 0..faces.len() {
+            for right in (left + 1)..faces.len() {
+                if simplified_label_key(&faces[left]) != simplified_label_key(&faces[right])
+                    || faces[left].face.cell.carrier.face == faces[right].face.cell.carrier.face
+                    || !faces_share_reversed_exact_edge(&faces[left], &faces[right])
+                    || !face_boundaries_are_coplanar(
+                        &faces[left].face.cell.boundary_points,
+                        &faces[right].face.cell.boundary_points,
+                        blockers,
+                    )
+                {
+                    continue;
+                }
+                let pair = vec![faces[left].clone(), faces[right].clone()];
+                match merge_same_label_group(pair) {
+                    Ok((mut merged, removed)) if removed > 0 => {
+                        let right_face = faces.remove(right);
+                        let left_face = faces.remove(left);
+                        let _ = (left_face, right_face);
+                        interior_edges_removed += removed;
+                        for mut face in merged.drain(..) {
+                            collinear_boundary_nodes_removed +=
+                                remove_collinear_boundary_nodes(&mut face.face, blockers);
+                            match boundary_has_nonzero_area(&face.face.cell.boundary_points) {
+                                Ok(true) => {
+                                    canonicalize_boundary_start(&mut face.face);
+                                    faces.push(face);
+                                }
+                                Ok(false) => zero_area_cells_removed += 1,
+                                Err(blocker) => blockers.push(blocker),
+                            }
+                        }
+                        changed = true;
+                        break 'pairs;
+                    }
+                    Ok(_) => {}
+                    Err(blocker) => blockers.push(blocker),
+                }
+            }
+        }
+    }
+    MergeSameLabelResult {
+        faces,
+        interior_edges_removed,
+        collinear_boundary_nodes_removed,
+        zero_area_cells_removed,
+    }
+}
+
 const fn region_label_key(label: ExactCellRegionLabel) -> usize {
     match label {
         ExactCellRegionLabel::LeftBoundary => 0,
@@ -417,6 +489,88 @@ fn exact_edges_are_reversed(left: &DirectedBoundaryEdge, right: &DirectedBoundar
     (left.from == right.to && left.to == right.from)
         || (point3_equal(&left.from_point, &right.to_point).value() == Some(true)
             && point3_equal(&left.to_point, &right.from_point).value() == Some(true))
+}
+
+fn faces_share_reversed_exact_edge(
+    left: &ExactSimplifiedFaceCell,
+    right: &ExactSimplifiedFaceCell,
+) -> bool {
+    face_boundary_edges(left)
+        .iter()
+        .any(|left_edge| {
+            face_boundary_edges(right)
+                .iter()
+                .any(|right_edge| exact_edges_are_reversed(left_edge, right_edge))
+        })
+}
+
+fn face_boundary_edges(face: &ExactSimplifiedFaceCell) -> Vec<DirectedBoundaryEdge> {
+    let mut edges = Vec::new();
+    if face.face.cell.boundary.len() != face.face.cell.boundary_points.len()
+        || face.face.cell.boundary.len() < 2
+    {
+        return edges;
+    }
+    for index in 0..face.face.cell.boundary.len() {
+        let next = (index + 1) % face.face.cell.boundary.len();
+        edges.push(DirectedBoundaryEdge {
+            from: face.face.cell.boundary[index].clone(),
+            to: face.face.cell.boundary[next].clone(),
+            from_point: face.face.cell.boundary_points[index].clone(),
+            to_point: face.face.cell.boundary_points[next].clone(),
+        });
+    }
+    edges
+}
+
+fn face_boundaries_are_coplanar(
+    left: &[Point3],
+    right: &[Point3],
+    blockers: &mut Vec<ExactArrangementBlocker>,
+) -> bool {
+    let Some([a, b, c]) = non_collinear_point_triple(left) else {
+        return false;
+    };
+    for point in left.iter().chain(right.iter()) {
+        match orient3d_report(&a, &b, &c, point).value() {
+            Some(Sign::Zero) => {}
+            Some(Sign::Positive | Sign::Negative) => return false,
+            None => {
+                blockers.push(ExactArrangementBlocker::UndecidableOrdering);
+                return false;
+            }
+        }
+    }
+    true
+}
+
+fn non_collinear_point_triple(points: &[Point3]) -> Option<[Point3; 3]> {
+    for projection in [
+        CoplanarProjection::Xy,
+        CoplanarProjection::Xz,
+        CoplanarProjection::Yz,
+    ] {
+        for first in 0..points.len() {
+            for second in first + 1..points.len() {
+                for third in second + 1..points.len() {
+                    let a = project_point3(&points[first], projection);
+                    let b = project_point3(&points[second], projection);
+                    let c = project_point3(&points[third], projection);
+                    match orient2d_report(&a, &b, &c).value() {
+                        Some(Sign::Positive | Sign::Negative) => {
+                            return Some([
+                                points[first].clone(),
+                                points[second].clone(),
+                                points[third].clone(),
+                            ]);
+                        }
+                        Some(Sign::Zero) | None => {}
+                    }
+                }
+            }
+        }
+    }
+    None
 }
 
 fn same_node_or_point(
@@ -830,6 +984,84 @@ mod tests {
         assert_eq!(simplified.interior_edges_removed, 1);
         assert!(simplified.blockers.is_empty());
         assert_eq!(simplified.faces[0].face.cell.boundary_points.len(), 4);
+    }
+
+    #[test]
+    fn simplification_merges_coplanar_cells_across_source_carriers() {
+        let left = [p(0, 0, 0), p(1, 0, 0), p(0, 1, 0)];
+        let right = [p(0, 1, 0), p(1, 0, 0), p(1, 1, 0)];
+        let mut left_face = selected_face_with_source(
+            MeshSide::Left,
+            ExactCellRegionLabel::LeftBoundary,
+            &[0, 1, 2],
+            &left,
+        );
+        left_face.cell.carrier.face = 0;
+        let mut right_face = selected_face_with_source(
+            MeshSide::Left,
+            ExactCellRegionLabel::LeftBoundary,
+            &[3, 4, 5],
+            &right,
+        );
+        right_face.cell.carrier.face = 1;
+        let selected = ExactSelectedCellComplex {
+            faces: vec![left_face, right_face],
+            volume_regions: Vec::new(),
+            volume_adjacencies: Vec::new(),
+            lower_dimensional_artifacts: Vec::new(),
+            selected_faces: vec![0, 1],
+            selected_face_orientations: Vec::new(),
+            selected_volume_regions: Vec::new(),
+            operation: ExactBooleanOperation::Union,
+            blockers: Vec::new(),
+        };
+
+        let simplified =
+            simplify_selected_cell_complex(selected, ExactRegularizationPolicy::REGULARIZED_SOLID)
+                .unwrap();
+
+        assert_eq!(simplified.faces.len(), 1);
+        assert_eq!(simplified.interior_edges_removed, 1);
+        assert_eq!(simplified.faces[0].face.cell.boundary_points.len(), 4);
+    }
+
+    #[test]
+    fn simplification_keeps_non_coplanar_adjacent_carriers_separate() {
+        let floor = [p(0, 0, 0), p(1, 0, 0), p(0, 1, 0)];
+        let wall = [p(0, 1, 0), p(1, 0, 0), p(0, 1, 1)];
+        let mut floor_face = selected_face_with_source(
+            MeshSide::Left,
+            ExactCellRegionLabel::LeftBoundary,
+            &[0, 1, 2],
+            &floor,
+        );
+        floor_face.cell.carrier.face = 0;
+        let mut wall_face = selected_face_with_source(
+            MeshSide::Left,
+            ExactCellRegionLabel::LeftBoundary,
+            &[3, 4, 5],
+            &wall,
+        );
+        wall_face.cell.carrier.face = 1;
+        let selected = ExactSelectedCellComplex {
+            faces: vec![floor_face, wall_face],
+            volume_regions: Vec::new(),
+            volume_adjacencies: Vec::new(),
+            lower_dimensional_artifacts: Vec::new(),
+            selected_faces: vec![0, 1],
+            selected_face_orientations: Vec::new(),
+            selected_volume_regions: Vec::new(),
+            operation: ExactBooleanOperation::Union,
+            blockers: Vec::new(),
+        };
+
+        let simplified =
+            simplify_selected_cell_complex(selected, ExactRegularizationPolicy::REGULARIZED_SOLID)
+                .unwrap();
+
+        assert_eq!(simplified.faces.len(), 2);
+        assert_eq!(simplified.interior_edges_removed, 0);
+        assert!(simplified.blockers.is_empty());
     }
 
     #[test]
