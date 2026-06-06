@@ -585,6 +585,8 @@ fn mesh_face_is_coplanar_with_plane(
 
 fn coplanar_pair_has_positive_area_overlap(events: &[IntersectionEvent]) -> bool {
     let mut identical_edges = 0usize;
+    let mut left_vertices_in_right = BTreeSet::new();
+    let mut right_vertices_in_left = BTreeSet::new();
     for event in events {
         match event {
             IntersectionEvent::CoplanarVertex {
@@ -595,6 +597,19 @@ fn coplanar_pair_has_positive_area_overlap(events: &[IntersectionEvent]) -> bool
                 relation: SegmentIntersection::Proper,
                 ..
             } => return true,
+            IntersectionEvent::CoplanarVertex {
+                vertex_side,
+                vertex,
+                location: TriangleLocation::OnEdge | TriangleLocation::OnVertex,
+                ..
+            } => match vertex_side {
+                MeshSide::Left => {
+                    left_vertices_in_right.insert(*vertex);
+                }
+                MeshSide::Right => {
+                    right_vertices_in_left.insert(*vertex);
+                }
+            },
             IntersectionEvent::CoplanarEdge {
                 relation: SegmentIntersection::Identical,
                 ..
@@ -602,7 +617,7 @@ fn coplanar_pair_has_positive_area_overlap(events: &[IntersectionEvent]) -> bool
             _ => {}
         }
     }
-    identical_edges >= 3
+    identical_edges >= 3 || left_vertices_in_right.len() >= 3 || right_vertices_in_left.len() >= 3
 }
 
 fn mesh_off_plane_side(
@@ -863,6 +878,35 @@ mod tests {
         );
         assert!(report.obstacle.requires_coplanar_volumetric_cells());
         assert_eq!(report.validate(), Ok(()));
+    }
+
+    #[test]
+    fn boundary_vertex_containment_certifies_positive_area_overlap() {
+        let events = vec![
+            IntersectionEvent::CoplanarVertex {
+                vertex_side: MeshSide::Left,
+                vertex: 0,
+                triangle_side: MeshSide::Right,
+                triangle_face: 0,
+                location: TriangleLocation::OnVertex,
+            },
+            IntersectionEvent::CoplanarVertex {
+                vertex_side: MeshSide::Left,
+                vertex: 1,
+                triangle_side: MeshSide::Right,
+                triangle_face: 0,
+                location: TriangleLocation::OnEdge,
+            },
+            IntersectionEvent::CoplanarVertex {
+                vertex_side: MeshSide::Left,
+                vertex: 2,
+                triangle_side: MeshSide::Right,
+                triangle_face: 0,
+                location: TriangleLocation::OnEdge,
+            },
+        ];
+
+        assert!(coplanar_pair_has_positive_area_overlap(&events));
     }
 
     #[test]
