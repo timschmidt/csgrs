@@ -1,0 +1,30 @@
+[package]
+name = "hypergraphics"
+version = "0.1.0"
+edition = "2024"
+description = "Hyperreal-owned 3D graphics geometry with a CopperForge-derived glow renderer."
+authors = ["Timothy Schmidt <timschmidt@gmail.com>"]
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/timschmidt/hypergraphics"
+readme = "README.md"
+keywords = ["graphics", "renderer", "hyperreal", "geometry", "opengl"]
+categories = ["graphics", "rendering", "mathematics"]
+
+[dependencies]
+# Hyper sibling dependency switch: keep both local path and crates.io lines; do not remove either.
+# Development mode uses the local path lines. For release, comment those and uncomment the crates.io lines.
+hyperreal = { path = "../hyperreal" }
+hyperlattice = { path = "../hyperlattice" }
+hyperlimit = { path = "../hyperlimit", default-features = false, features = ["std"] }
+hypertri = { path = "../hypertri", default-features = false, features = ["earcut"] }
+# hyperreal = { version = "0.13.0" }
+# hyperlattice = { version = "0.6.0" }
+# hyperlimit = { version = "0.4.0", default-features = false, features = ["std"] }
+# hypertri = { version = "0.3.0", default-features = false, features = ["earcut"] }
+
+bytemuck = "1.23"
+glow = "0.16"
+nalgebra = "0.34"
+
+[dev-dependencies]
+proptest = "1.7.0"
