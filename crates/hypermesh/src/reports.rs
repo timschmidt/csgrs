@@ -498,10 +498,14 @@ fn validate_coplanar_volumetric_evidence_shape(
 fn coplanar_volumetric_evidence_event_count(
     evidence: &CoplanarVolumetricCellEvidenceReport,
 ) -> usize {
+    let explicit_unknown_events = evidence
+        .unknown_events
+        .saturating_sub(evidence.unknown_segment_plane_events);
     evidence
         .segment_plane_events
         .saturating_add(evidence.coplanar_edge_events)
         .saturating_add(evidence.coplanar_vertex_events)
+        .saturating_add(explicit_unknown_events)
 }
 
 /// Auditable result of an exact selected-region boolean pipeline.

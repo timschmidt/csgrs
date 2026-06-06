@@ -177,6 +177,8 @@ pub struct CoplanarVolumetricCellEvidenceReport {
     /// Segment/plane events whose construction failed after predicate
     /// classification.
     pub construction_failed_events: usize,
+    /// Segment/plane events whose endpoint-side relation stayed unknown.
+    pub unknown_segment_plane_events: usize,
     /// Retained unknown graph events.
     pub unknown_events: usize,
     /// Retained non-disjoint coplanar edge events.
@@ -213,6 +215,7 @@ impl CoplanarVolumetricCellEvidenceReport {
             proper_crossing_events: 0,
             boundary_segment_events: 0,
             construction_failed_events: 0,
+            unknown_segment_plane_events: 0,
             unknown_events: 0,
             coplanar_edge_events: 0,
             coplanar_vertex_events: 0,
@@ -276,7 +279,10 @@ impl CoplanarVolumetricCellEvidenceReport {
                             | SegmentPlaneRelation::EndpointOnPlane => {
                                 report.boundary_segment_events += 1
                             }
-                            SegmentPlaneRelation::Unknown => report.unknown_events += 1,
+                            SegmentPlaneRelation::Unknown => {
+                                report.unknown_segment_plane_events += 1;
+                                report.unknown_events += 1;
+                            }
                         }
                     }
                     IntersectionEvent::CoplanarEdge { relation, .. } => {
@@ -321,10 +327,13 @@ impl CoplanarVolumetricCellEvidenceReport {
         if self.proper_crossing_candidate_pairs > self.candidate_pairs {
             return Err(CoplanarVolumetricCellEvidenceError::CandidatePairCountMismatch);
         }
-        if self.proper_crossing_events
-            + self.boundary_segment_events
-            + self.construction_failed_events
+        if self
+            .proper_crossing_events
+            .saturating_add(self.boundary_segment_events)
+            .saturating_add(self.construction_failed_events)
+            .saturating_add(self.unknown_segment_plane_events)
             > self.segment_plane_events
+            || self.unknown_segment_plane_events > self.unknown_events
         {
             return Err(CoplanarVolumetricCellEvidenceError::SegmentPlaneEventCountMismatch);
         }
@@ -841,6 +850,7 @@ mod tests {
             proper_crossing_events: 1,
             boundary_segment_events: 0,
             construction_failed_events: 0,
+            unknown_segment_plane_events: 0,
             unknown_events: 0,
             coplanar_edge_events: 3,
             coplanar_vertex_events: 0,
@@ -874,6 +884,29 @@ mod tests {
         );
         assert!(report.obstacle.requires_coplanar_volumetric_cells());
         assert_eq!(report.validate(), Ok(()));
+    }
+
+    #[test]
+    fn unknown_segment_plane_events_are_validated_as_segment_partition() {
+        let mut report = crossing_with_coplanar_overlap_report();
+        report.proper_crossing_events = 0;
+        report.opposite_side_coplanar_overlapping_pairs = 1;
+        report.unknown_segment_plane_events = 1;
+        report.unknown_events = 1;
+        report.obstacle = derive_obstacle(&report);
+        assert_eq!(
+            report.obstacle,
+            CoplanarVolumetricCellObstacle::UnknownGraphEvidence
+        );
+        assert_eq!(report.validate(), Ok(()));
+
+        report.unknown_segment_plane_events = 2;
+        report.unknown_events = 2;
+        report.obstacle = derive_obstacle(&report);
+        assert_eq!(
+            report.validate(),
+            Err(CoplanarVolumetricCellEvidenceError::SegmentPlaneEventCountMismatch)
+        );
     }
 
     #[test]
