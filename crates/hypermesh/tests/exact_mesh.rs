@@ -22,6 +22,7 @@ use hypermesh::{
     materialize_affine_orthogonal_solid_intersection,
     materialize_axis_aligned_orthogonal_solid_intersection,
     materialize_axis_aligned_orthogonal_solid_union, materialize_boundary_touching_policy_boolean,
+    materialize_closed_boundary_touching_regularized_boolean,
     materialize_closed_regularized_lower_dimensional_boolean,
     materialize_contained_face_adjacent_union, materialize_coplanar_mesh_overlay_arrangement,
     materialize_full_face_adjacent_union, materialize_open_surface_arrangement,
@@ -638,6 +639,87 @@ fn boundary_touching_policy_boolean_is_publicly_replayable() {
                 operation,
                 ValidationPolicy::ALLOW_BOUNDARY,
                 ExactBoundaryBooleanPolicy::PreserveSeparateShells,
+            )
+            .unwrap();
+    }
+}
+
+#[test]
+fn closed_boundary_touching_regularized_boolean_is_publicly_replayable() {
+    let left_a = tetra_from_corners([0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]);
+    let left_b = tetra_from_corners([10, 0, 0], [12, 0, 0], [10, 2, 0], [10, 0, 2]);
+    let left = ExactMesh::new(
+        left_a
+            .vertices()
+            .iter()
+            .chain(left_b.vertices())
+            .cloned()
+            .collect(),
+        left_a
+            .triangles()
+            .iter()
+            .copied()
+            .chain(left_b.triangles().iter().map(|triangle| {
+                let [a, b, c] = triangle.0;
+                hypermesh::Triangle([
+                    a + left_a.vertices().len(),
+                    b + left_a.vertices().len(),
+                    c + left_a.vertices().len(),
+                ])
+            }))
+            .collect(),
+        SourceProvenance::exact("test disconnected closed boundary fixture"),
+    )
+    .unwrap();
+    let right = tetra_from_corners([0, 0, 0], [-4, 0, 0], [0, -4, 0], [0, 0, -4]);
+    let separated_right = tetra_from_corners([100, 0, 0], [104, 0, 0], [100, 4, 0], [100, 0, 4]);
+
+    for (operation, shortcut) in [
+        (
+            ExactBooleanOperation::Union,
+            hypermesh::ExactBooleanShortcutKind::ClosedBoundaryTouchingUnion,
+        ),
+        (
+            ExactBooleanOperation::Intersection,
+            hypermesh::ExactBooleanShortcutKind::ClosedBoundaryTouchingIntersection,
+        ),
+        (
+            ExactBooleanOperation::Difference,
+            hypermesh::ExactBooleanShortcutKind::ClosedBoundaryTouchingDifference,
+        ),
+    ] {
+        let result = materialize_closed_boundary_touching_regularized_boolean(
+            &left,
+            &right,
+            operation,
+            ValidationPolicy::CLOSED,
+        )
+        .unwrap()
+        .expect("closed boundary-only contact should materialize by exact regularization");
+        assert_eq!(
+            result.kind,
+            ExactBooleanResultKind::CertifiedShortcut {
+                operation,
+                shortcut
+            }
+        );
+        result.validate().unwrap();
+        result.validate_against_sources(&left, &right).unwrap();
+        assert_eq!(
+            result.freshness_against_sources(&left, &right),
+            ExactReportFreshness::Current
+        );
+        assert_eq!(
+            result.freshness_against_sources(&left, &separated_right),
+            ExactReportFreshness::SourceReplayMismatch
+        );
+        result
+            .validate_operation_against_sources(
+                &left,
+                &right,
+                operation,
+                ValidationPolicy::CLOSED,
+                ExactBoundaryBooleanPolicy::Reject,
             )
             .unwrap();
     }

@@ -5389,6 +5389,23 @@ fn boolean_closed_boundary_touching_regularized_meshes(
     Ok(Some(result))
 }
 
+/// Certify and materialize a named regularized boolean for closed solids that
+/// touch only at exact boundary features.
+///
+/// The retained graph and boundary-touching report must prove there is no
+/// shared interior volume. In that supportable case union preserves both
+/// shells, intersection is empty, and difference preserves the left shell.
+/// Non-boundary-only contacts return `None` rather than falling back to
+/// tolerance geometry.
+pub fn materialize_closed_boundary_touching_regularized_boolean(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    boolean_closed_boundary_touching_regularized_meshes(left, right, operation, validation)
+}
+
 fn validate_consumed_boundary_touching_report(
     report: &ExactBoundaryTouchingReport,
     label: &str,
