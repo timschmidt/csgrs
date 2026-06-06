@@ -885,6 +885,9 @@ pub fn certify_volumetric_boundary_closure_report(
             output_triangles: 0,
             boundary_edges: 0,
             boundary_loops: 0,
+            boundary_vertices_with_invalid_outgoing_degree: 0,
+            boundary_vertices_with_invalid_incoming_degree: 0,
+            overused_boundary_edges: 0,
             noncoplanar_boundary_loops: 0,
             repeated_exact_boundary_points: 0,
             self_contact_exact_points: 0,
@@ -913,6 +916,9 @@ pub fn certify_volumetric_boundary_closure_report(
             output_triangles,
             boundary_edges: 0,
             boundary_loops: 0,
+            boundary_vertices_with_invalid_outgoing_degree: 0,
+            boundary_vertices_with_invalid_incoming_degree: 0,
+            overused_boundary_edges: 0,
             noncoplanar_boundary_loops: 0,
             repeated_exact_boundary_points: 0,
             self_contact_exact_points: 0,
@@ -922,6 +928,7 @@ pub fn certify_volumetric_boundary_closure_report(
             coplanar_loop_groups: 0,
         });
     }
+    let boundary_topology = boundary_topology_evidence(&materialized.mesh);
     let Some(boundary_loops) = directed_boundary_loops(&materialized.mesh) else {
         return Ok(ExactVolumetricBoundaryClosureReport {
             operation,
@@ -929,6 +936,11 @@ pub fn certify_volumetric_boundary_closure_report(
             output_triangles,
             boundary_edges,
             boundary_loops: 0,
+            boundary_vertices_with_invalid_outgoing_degree: boundary_topology
+                .invalid_outgoing_degree_vertices,
+            boundary_vertices_with_invalid_incoming_degree: boundary_topology
+                .invalid_incoming_degree_vertices,
+            overused_boundary_edges: boundary_topology.overused_edges,
             noncoplanar_boundary_loops: 0,
             repeated_exact_boundary_points: 0,
             self_contact_exact_points: 0,
@@ -965,6 +977,9 @@ pub fn certify_volumetric_boundary_closure_report(
                     output_triangles,
                     boundary_edges,
                     boundary_loops: boundary_loops.len(),
+                    boundary_vertices_with_invalid_outgoing_degree: 0,
+                    boundary_vertices_with_invalid_incoming_degree: 0,
+                    overused_boundary_edges: 0,
                     noncoplanar_boundary_loops: 0,
                     repeated_exact_boundary_points: self_contact.repeated_exact_point_pairs,
                     self_contact_exact_points: self_contact.exact_points,
@@ -983,6 +998,9 @@ pub fn certify_volumetric_boundary_closure_report(
             output_triangles,
             boundary_edges,
             boundary_loops: boundary_loops.len(),
+            boundary_vertices_with_invalid_outgoing_degree: 0,
+            boundary_vertices_with_invalid_incoming_degree: 0,
+            overused_boundary_edges: 0,
             noncoplanar_boundary_loops: 0,
             repeated_exact_boundary_points: self_contact.repeated_exact_point_pairs,
             self_contact_exact_points: self_contact.exact_points,
@@ -1005,6 +1023,9 @@ pub fn certify_volumetric_boundary_closure_report(
                     output_triangles,
                     boundary_edges,
                     boundary_loops: boundary_loops.len(),
+                    boundary_vertices_with_invalid_outgoing_degree: 0,
+                    boundary_vertices_with_invalid_incoming_degree: 0,
+                    overused_boundary_edges: 0,
                     noncoplanar_boundary_loops,
                     repeated_exact_boundary_points,
                     self_contact_exact_points: self_contact.exact_points,
@@ -1023,6 +1044,9 @@ pub fn certify_volumetric_boundary_closure_report(
             output_triangles,
             boundary_edges,
             boundary_loops: boundary_loops.len(),
+            boundary_vertices_with_invalid_outgoing_degree: 0,
+            boundary_vertices_with_invalid_incoming_degree: 0,
+            overused_boundary_edges: 0,
             noncoplanar_boundary_loops,
             repeated_exact_boundary_points,
             self_contact_exact_points: self_contact.exact_points,
@@ -1039,6 +1063,9 @@ pub fn certify_volumetric_boundary_closure_report(
             output_triangles,
             boundary_edges,
             boundary_loops: boundary_loops.len(),
+            boundary_vertices_with_invalid_outgoing_degree: 0,
+            boundary_vertices_with_invalid_incoming_degree: 0,
+            overused_boundary_edges: 0,
             noncoplanar_boundary_loops: 0,
             repeated_exact_boundary_points: 0,
             self_contact_exact_points: 0,
@@ -1053,6 +1080,9 @@ pub fn certify_volumetric_boundary_closure_report(
             output_triangles,
             boundary_edges,
             boundary_loops: boundary_loops.len(),
+            boundary_vertices_with_invalid_outgoing_degree: 0,
+            boundary_vertices_with_invalid_incoming_degree: 0,
+            overused_boundary_edges: 0,
             noncoplanar_boundary_loops: 0,
             repeated_exact_boundary_points: 0,
             self_contact_exact_points: 0,
@@ -3382,6 +3412,56 @@ fn exact_points_are_collinear(
             .value()
             .ok_or(ExactArrangementBlocker::UndecidableOrdering)?
             == Ordering::Equal)
+}
+
+#[derive(Clone, Copy, Default)]
+struct BoundaryTopologyEvidence {
+    invalid_outgoing_degree_vertices: usize,
+    invalid_incoming_degree_vertices: usize,
+    overused_edges: usize,
+}
+
+fn boundary_topology_evidence(mesh: &ExactMesh) -> BoundaryTopologyEvidence {
+    let mut edge_uses: BTreeMap<[usize; 2], Vec<(usize, usize)>> = BTreeMap::new();
+    for triangle in mesh.triangles() {
+        let [a, b, c] = triangle.0;
+        for (start, end) in [(a, b), (b, c), (c, a)] {
+            let key = if start < end {
+                [start, end]
+            } else {
+                [end, start]
+            };
+            edge_uses.entry(key).or_default().push((start, end));
+        }
+    }
+
+    let mut outgoing = BTreeMap::<usize, usize>::new();
+    let mut incoming = BTreeMap::<usize, usize>::new();
+    let mut boundary_vertices = BTreeSet::<usize>::new();
+    let mut overused_edges = 0;
+    for uses in edge_uses.values() {
+        if uses.len() == 1 {
+            let (start, end) = uses[0];
+            *outgoing.entry(start).or_default() += 1;
+            *incoming.entry(end).or_default() += 1;
+            boundary_vertices.insert(start);
+            boundary_vertices.insert(end);
+        } else if uses.len() > 2 {
+            overused_edges += 1;
+        }
+    }
+
+    BoundaryTopologyEvidence {
+        invalid_outgoing_degree_vertices: boundary_vertices
+            .iter()
+            .filter(|&&vertex| outgoing.get(&vertex).copied().unwrap_or(0) != 1)
+            .count(),
+        invalid_incoming_degree_vertices: boundary_vertices
+            .iter()
+            .filter(|&&vertex| incoming.get(&vertex).copied().unwrap_or(0) != 1)
+            .count(),
+        overused_edges,
+    }
 }
 
 fn directed_boundary_edges(mesh: &ExactMesh) -> BTreeMap<[usize; 2], (usize, usize)> {
