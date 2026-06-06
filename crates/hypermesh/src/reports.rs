@@ -18,6 +18,7 @@ use super::boolean::{
     certify_volumetric_boundary_closure_report, certify_winding_readiness_report,
     preflight_boolean_exact, preflight_boolean_exact_with_validation,
 };
+use super::bounds::AabbIntersectionKind;
 use super::graph::MeshSide;
 use super::graph::{
     CoplanarArrangementReadinessReport, CoplanarArrangementReadinessStatus, ExactIntersectionGraph,
@@ -983,6 +984,11 @@ impl ExactBooleanResult {
                 return Err(ExactReportValidationError::SourceReplayMismatch);
             }
         }
+        if let ExactBooleanResultKind::CertifiedShortcut { shortcut } = self.kind
+            && !certified_shortcut_sources_match(shortcut, left, right)?
+        {
+            return Err(ExactReportValidationError::SourceReplayMismatch);
+        }
         Ok(())
     }
 
@@ -1014,6 +1020,64 @@ impl ExactBooleanResult {
             Err(ExactReportValidationError::SourceReplayMismatch)
         }
     }
+}
+
+fn certified_shortcut_sources_match(
+    shortcut: ExactBooleanShortcutKind,
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Result<bool, ExactReportValidationError> {
+    match shortcut {
+        ExactBooleanShortcutKind::EmptyOperand => {
+            Ok(left.triangles().is_empty() || right.triangles().is_empty())
+        }
+        ExactBooleanShortcutKind::BoundsDisjoint => {
+            Ok(meshes_are_certified_bounds_disjoint(left, right))
+        }
+        ExactBooleanShortcutKind::Identical => Ok(meshes_are_certified_identical(left, right)),
+        ExactBooleanShortcutKind::SameSurface => {
+            let report = certify_same_surface_report(left, right);
+            report.validate()?;
+            Ok(report.is_certified())
+        }
+        ExactBooleanShortcutKind::OpenSurfaceDisjoint => {
+            let report = certify_open_surface_disjoint_report(left, right)
+                .map_err(|_| ExactReportValidationError::SourceReplayMismatch)?;
+            report.validate()?;
+            Ok(report.is_certified())
+        }
+        ExactBooleanShortcutKind::ClosedBoundaryTouchingUnion
+        | ExactBooleanShortcutKind::ClosedBoundaryTouchingIntersection
+        | ExactBooleanShortcutKind::ClosedBoundaryTouchingDifference
+        | ExactBooleanShortcutKind::ClosedWindingSeparated
+        | ExactBooleanShortcutKind::ClosedWindingContainment
+        | ExactBooleanShortcutKind::MixedDimensionalRegularizedSolid
+        | ExactBooleanShortcutKind::LowerDimensionalRegularizedSolid
+        | ExactBooleanShortcutKind::ConvexContainment
+        | ExactBooleanShortcutKind::ConvexUnion
+        | ExactBooleanShortcutKind::ConvexIntersection
+        | ExactBooleanShortcutKind::ConvexDifference
+        | ExactBooleanShortcutKind::ConvexSeparated
+        | ExactBooleanShortcutKind::ArrangementCellComplex => Ok(true),
+    }
+}
+
+fn meshes_are_certified_bounds_disjoint(left: &ExactMesh, right: &ExactMesh) -> bool {
+    let (Some(left_bounds), Some(right_bounds)) = (&left.bounds().mesh, &right.bounds().mesh)
+    else {
+        return left.triangles().is_empty() || right.triangles().is_empty();
+    };
+    left_bounds.classify_intersection(right_bounds).value() == Some(AabbIntersectionKind::Disjoint)
+}
+
+fn meshes_are_certified_identical(left: &ExactMesh, right: &ExactMesh) -> bool {
+    left.triangles() == right.triangles()
+        && left.vertices().len() == right.vertices().len()
+        && left
+            .vertices()
+            .iter()
+            .zip(right.vertices())
+            .all(|(left, right)| points_equal(left, right))
 }
 
 fn open_surface_arrangement_selection(

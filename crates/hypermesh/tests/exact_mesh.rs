@@ -175,7 +175,15 @@ fn exact_boolean_public_shortcuts_handle_disjoint_operands() {
         ValidationPolicy::CLOSED,
     )
     .unwrap();
+    assert_eq!(
+        union.kind,
+        ExactBooleanResultKind::CertifiedShortcut {
+            shortcut: hypermesh::ExactBooleanShortcutKind::BoundsDisjoint
+        }
+    );
     union.mesh.validate_retained_state().unwrap();
+    union.validate_against_sources(&left, &right).unwrap();
+    assert!(union.validate_against_sources(&left, &left).is_err());
 
     let intersection = boolean_exact(
         &left,
