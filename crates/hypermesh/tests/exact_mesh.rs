@@ -22,9 +22,9 @@ use hypermesh::{
     materialize_affine_orthogonal_solid_intersection,
     materialize_axis_aligned_orthogonal_solid_intersection,
     materialize_axis_aligned_orthogonal_solid_union, materialize_contained_face_adjacent_union,
-    materialize_full_face_adjacent_union, materialize_open_surface_arrangement,
-    materialize_volumetric_winding_arrangement, preflight_boolean_exact,
-    preflight_boolean_exact_with_boundary_policy,
+    materialize_coplanar_mesh_overlay_arrangement, materialize_full_face_adjacent_union,
+    materialize_open_surface_arrangement, materialize_volumetric_winding_arrangement,
+    preflight_boolean_exact, preflight_boolean_exact_with_boundary_policy,
 };
 use hyperreal::Real;
 
@@ -447,6 +447,61 @@ fn exact_open_surface_arrangement_is_publicly_replayable() {
         } else {
             assert!(!result.mesh.triangles().is_empty());
         }
+        assert_eq!(
+            result.freshness_against_sources(&left, &separated_right),
+            ExactReportFreshness::SourceReplayMismatch
+        );
+    }
+}
+
+#[test]
+fn exact_coplanar_mesh_overlay_arrangement_is_publicly_replayable() {
+    let left = ExactMesh::from_i64_triangles_with_policy(
+        &[0, 0, 0, 4, 0, 0, 4, 4, 0, 0, 4, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let right = ExactMesh::from_i64_triangles_with_policy(
+        &[2, 2, 0, 6, 2, 0, 6, 6, 0, 2, 6, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+    let separated_right = ExactMesh::from_i64_triangles_with_policy(
+        &[8, 2, 0, 12, 2, 0, 12, 6, 0, 8, 6, 0],
+        &[0, 1, 2, 0, 2, 3],
+        ValidationPolicy::ALLOW_BOUNDARY,
+    )
+    .unwrap();
+
+    for operation in [
+        ExactBooleanOperation::Union,
+        ExactBooleanOperation::Intersection,
+        ExactBooleanOperation::Difference,
+    ] {
+        let result = materialize_coplanar_mesh_overlay_arrangement(
+            &left,
+            &right,
+            operation,
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap()
+        .expect("overlapping coplanar surfaces should materialize by exact overlay");
+        assert_eq!(
+            result.kind,
+            ExactBooleanResultKind::CertifiedShortcut {
+                operation,
+                shortcut: hypermesh::ExactBooleanShortcutKind::ArrangementCellComplex
+            }
+        );
+        result.validate().unwrap();
+        result.validate_against_sources(&left, &right).unwrap();
+        assert_eq!(
+            result.freshness_against_sources(&left, &right),
+            ExactReportFreshness::Current
+        );
+        assert!(!result.mesh.triangles().is_empty());
         assert_eq!(
             result.freshness_against_sources(&left, &separated_right),
             ExactReportFreshness::SourceReplayMismatch

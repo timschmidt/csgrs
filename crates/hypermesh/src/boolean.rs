@@ -4032,6 +4032,22 @@ fn boolean_coplanar_mesh_overlay_optional(
     )))
 }
 
+/// Certify and materialize a named coplanar mesh-overlay arrangement boolean.
+///
+/// This path is intentionally limited to exact coplanar surface overlays whose
+/// selected planar cells can be replayed through the retained 2D arrangement.
+/// Unsupported topology returns `None` rather than relaxing to tolerance-based
+/// geometry. The returned [`ExactBooleanResult`] retains the arrangement-cell
+/// shortcut kind, output mesh provenance, and source-replay freshness checks.
+pub fn materialize_coplanar_mesh_overlay_arrangement(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    boolean_coplanar_mesh_overlay_optional(left, right, operation, validation)
+}
+
 fn coplanar_mesh_overlay_should_yield_to_closed_boundary_shortcut(
     left: &ExactMesh,
     right: &ExactMesh,
