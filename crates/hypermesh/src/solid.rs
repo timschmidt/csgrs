@@ -352,7 +352,7 @@ pub fn certify_convex_solid(mesh: &ExactMesh) -> ConvexSolidFacts {
         };
     }
 
-    let orientation = mesh_orientation(mesh);
+    let orientation = exact_mesh_orientation(mesh);
     if !matches!(
         orientation,
         ClosedMeshOrientation::Positive | ClosedMeshOrientation::Negative
@@ -549,7 +549,7 @@ fn classify_point_with_convex_facts_report(
     }
 }
 
-fn mesh_orientation(mesh: &ExactMesh) -> ClosedMeshOrientation {
+pub(crate) fn exact_mesh_orientation(mesh: &ExactMesh) -> ClosedMeshOrientation {
     let signed_volume = mesh
         .triangles()
         .iter()

@@ -26,6 +26,7 @@ use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
 use super::graph::{ExactIntersectionGraph, IntersectionEvent, MeshSide, build_intersection_graph};
 use super::intersection::MeshFacePairRelation;
 use super::mesh::ExactMesh;
+use super::solid::{ClosedMeshOrientation, exact_mesh_orientation};
 use hyperreal::Real;
 
 /// Most specific retained obstacle for volumetric coplanar source-face cells.
@@ -447,11 +448,11 @@ enum CoplanarOverlapSideEvidence {
 ///
 /// This does not decide a boolean output. It only separates full-face boundary
 /// adjacency from coplanar volumetric cell ownership by replaying every
-/// operand vertex against the retained plane of the left face. If all off-plane
-/// vertices of an operand lie on one exact side, that side is used as the local
-/// ownership witness. This is deliberately an object-level certificate in
-/// same-side/opposite-side evidence instead of a tolerance-derived "touching"
-/// label.
+/// operand vertex against the retained plane of the left face. If local
+/// adjacent off-plane vertices are not sufficient, the fallback uses the
+/// closed-surface orientation and the retained oriented face plane as an exact
+/// ownership witness. This is deliberately object-level certificate evidence
+/// instead of a tolerance-derived "touching" label.
 fn classify_coplanar_overlap_sides(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -460,8 +461,10 @@ fn classify_coplanar_overlap_sides(
 ) -> Option<CoplanarOverlapSideEvidence> {
     let left_plane = &left.facts().faces.get(left_face)?.plane;
     let left_side = mesh_local_off_plane_side(left, left_face, left_plane)
+        .or_else(|| mesh_oriented_face_interior_side(left, left_face, left_plane))
         .or_else(|| mesh_off_plane_side(left, left_plane))?;
     let right_side = mesh_local_off_plane_side(right, right_face, left_plane)
+        .or_else(|| mesh_oriented_face_interior_side(right, right_face, left_plane))
         .or_else(|| mesh_off_plane_side(right, left_plane))?;
     if left_side == right_side {
         Some(CoplanarOverlapSideEvidence::SameSide)
@@ -624,6 +627,31 @@ fn mesh_off_plane_side(
     side
 }
 
+fn mesh_oriented_face_interior_side(
+    mesh: &ExactMesh,
+    face: usize,
+    reference_plane: &super::facts::FacePlaneFacts,
+) -> Option<PlaneSide> {
+    if !mesh.facts().mesh.closed_manifold {
+        return None;
+    }
+    let orientation = exact_mesh_orientation(mesh);
+    let face_plane = &mesh.facts().faces.get(face)?.plane;
+    let dot = &(&reference_plane.normal[0] * &face_plane.normal[0])
+        + &(&reference_plane.normal[1] * &face_plane.normal[1])
+        + &(&reference_plane.normal[2] * &face_plane.normal[2]);
+    let interior_direction_dot = match orientation {
+        ClosedMeshOrientation::Positive => Real::from(0) - dot,
+        ClosedMeshOrientation::Negative => dot,
+        ClosedMeshOrientation::NotClosed | ClosedMeshOrientation::Unknown => return None,
+    };
+    match compare_reals(&interior_direction_dot, &Real::from(0)).value()? {
+        Ordering::Less => Some(PlaneSide::Above),
+        Ordering::Equal => None,
+        Ordering::Greater => Some(PlaneSide::Below),
+    }
+}
+
 fn retained_plane_side(
     plane: &super::facts::FacePlaneFacts,
     point: &hyperlimit::Point3,
@@ -760,6 +788,30 @@ mod tests {
         ExactMesh::from_i64_triangles(&vertices, &triangles).unwrap()
     }
 
+    fn skew_octahedron_i64() -> ExactMesh {
+        ExactMesh::from_i64_triangles(
+            &[
+                0, 0, 2, //
+                2, 0, 0, //
+                0, 2, 0, //
+                -2, 0, 8, //
+                0, -2, 0, //
+                0, 0, -2,
+            ],
+            &[
+                0, 2, 1, //
+                0, 3, 2, //
+                0, 4, 3, //
+                0, 1, 4, //
+                5, 1, 2, //
+                5, 2, 3, //
+                5, 3, 4, //
+                5, 4, 1,
+            ],
+        )
+        .unwrap()
+    }
+
     fn crossing_with_coplanar_overlap_report() -> CoplanarVolumetricCellEvidenceReport {
         CoplanarVolumetricCellEvidenceReport {
             left_closed_manifold: true,
@@ -826,5 +878,17 @@ mod tests {
             mesh_local_off_plane_side(&mesh, 0, plane),
             Some(PlaneSide::Above)
         );
+    }
+
+    #[test]
+    fn oriented_face_side_certifies_when_adjacent_vertices_are_mixed() {
+        let mesh = skew_octahedron_i64();
+        let plane = &mesh.facts().faces[0].plane;
+
+        assert_eq!(mesh_local_off_plane_side(&mesh, 0, plane), None);
+        assert!(matches!(
+            mesh_oriented_face_interior_side(&mesh, 0, plane),
+            Some(PlaneSide::Above | PlaneSide::Below)
+        ));
     }
 }
